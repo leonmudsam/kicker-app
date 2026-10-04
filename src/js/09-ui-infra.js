@@ -144,7 +144,8 @@ function renderNav(){
   document.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>{
     tab=b.dataset.nav;teamSearch='';ligaSeasonId=null;ligaSicht='spieler';
     awPeriod='season';awSeasonId=null;awWeekStart=null;rekKammer='';einblickOffen='';
-    window.scrollTo(0,0);_renderNachEingabe();});
+    window.scrollTo(0,0);_renderNachEingabe();
+    if(tab==='ranking') _ligaAktualisieren();});
   nav._navKnoop=nav.firstElementChild;
   }
   document.querySelectorAll('[data-nav]').forEach(b=>{
@@ -155,6 +156,24 @@ function renderNav(){
   // FAB nur außerhalb des Match-Tabs sinnvoll: dort führt er auf die Seite,
   // auf der man schon ist, und lag über dem Knopf „Mischen".
   document.getElementById('fab').style.display = tab==='match' ? 'none' : 'grid';
+}
+
+let _ligaRefreshAuftrag=null;
+function _ligaAktualisieren(){
+  // Auch der schon aktive Liga-Knopf aktualisiert. Erst nach der sichtbaren
+  // Rückmeldung beginnen die bestehenden vier Abfragen, niemals ein Reload.
+  // Ein Tap-Burst teilt genau EINEN Auftrag bis zum Ende seines Abrufs.
+  // War vorher schon ein anderer Abruf offen, fordert loadAll einmal frisch
+  // nach; weitere Liga-Taps können diesen Folgelauf nicht endlos erneuern.
+  if(_ligaRefreshAuftrag) return;
+  const a={frame:0,timer:0};_ligaRefreshAuftrag=a;
+  a.frame=requestAnimationFrame(()=>{
+    a.timer=setTimeout(()=>{
+      Promise.resolve().then(()=>loadAll({leise:true})).catch(e=>{
+        console.warn('Liga aktualisieren:',e);
+      }).finally(()=>{if(_ligaRefreshAuftrag===a) _ligaRefreshAuftrag=null;});
+    },0);
+  });
 }
 
 function _eingabeOffen(){

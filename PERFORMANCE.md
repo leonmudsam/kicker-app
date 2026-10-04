@@ -223,3 +223,65 @@ Die drei neuen Suiten prüfen 16 Bedienungs-, 24 Bewegungs- und 42
 Eingabeinvarianten am gebauten Artefakt. Neue Zusicherungen wurden vor ihrer
 jeweiligen Behebung rot ausgeführt; Geometriegrenzen bleiben unverändert.
 Elo-/Prestigeformeln und publizierte Story-/Grafikentscheidungen sind unverändert.
+
+## Vierte Runde: stille Liga-Aktualisierung und saubere Detailabschlüsse
+
+Vergleich `4e2949b`, gleiche 466 Partien, unveränderte gemeinsame
+Story-Snapshots, Chromium 151, 390 × 844 px, CPU ×4, drei Läufe je Aktion.
+Neue Award-Markierungen dürfen den Vergleich nicht durch andere ausgewählte
+Stories verändern. Gemessen ist die vollständige Arbeit einschließlich
+verzögertem Render, erstem Layout und zwei rAF-Gelegenheiten, nicht nur ein
+kurzer Klickhandler und auch nicht der fertige GPU-Paint.
+
+- Liga-Tap (auch erneut auf den aktiven Knopf) aktualisiert über denselben
+  Datenweg im Hintergrund. Ein Auftrag bündelt weitere Taps bis zum Abrufende;
+  ein bereits früher gestarteter Abruf wird einmal frisch nachgeholt.
+  Unveränderte Antworten zeichnen/invalidieren nichts; Fehler lassen die letzte
+  Ansicht stehen. Keine zweite Datenbank-/Elo-Rechnung und kein Dokumentreload.
+- Die komplette Ansicht startet nicht nach jedem Filter oder Datenwechsel
+  erneut mit 320 ms Verblassen/Verschieben. Segmentwähler und erklärende
+  Grafiken behalten ihre eigene Bewegung.
+- Story-Details beginnen synchron vor neuem Markup oben, ohne den Feed
+  zurückzusetzen. Nicht gezeigte Ergebnisbänder und doppelte Zeilenlisten
+  werden gar nicht erst gebaut.
+- Übergangsabschlüsse haben einen abbrechbaren Listener/Timer je Eigenschaft.
+  Doppeltes Schließen invalidiert keinen Cleanup; abgeschlossene Wische leeren
+  sofort, ohne zweite Wartephase. Im Vergleich eines 500-Zeilen-Blatts:
+  ein statt zwei Abschlüsse und 0 statt 1007 verbleibende Knoten beim ersten
+  Wischabschluss. Der alte Doppel-Close konnte diese Knoten dauerhaft behalten.
+- Wiederholungsmedaillen lesen die historische Vergabezahl aus kanonischen
+  Badge-Events. Ein kompakter Index je Datenstand ersetzt aktuelle Vollzensen
+  pro Spieler und Medaille; ein Legacy-Rang braucht nur binäre Suche. Neue
+  Snapshots halten ihre Zahl und höchstens drei Marken, alte V2-Daten bleiben
+  unverändert. Elo- und Prestigeformeln sind nicht betroffen.
+
+Belastbar in allen drei Diagnoseläufen: drei sichtbare Match-Anlasszeilen
+brauchen drei statt sieben Textaufbauten und kein verworfenes Ergebnisband;
+sechs Tafelzeilen werden sechs statt zwölf Mal gezeichnet.
+
+| Vollständige Aktion bis zwei rAF-Gelegenheiten, Median | Vorher | Nachher |
+|---|--:|--:|
+| Matchdetail warm | 83,1 ms | 65,9 ms |
+| Tafeldetail warm | 108,3 ms | 100,0 ms |
+| Fünf schnelle Tababsichten warm | 250,5 ms | 215,9 ms |
+| Story-Detail schließen | 49,9 ms | 49,8 ms |
+
+Die kalten Matchdetails bleiben bei rund 350 ms Bildlücke, die kalten
+Tafeldetails wurden nicht schneller (416,6 → 432,5 ms vollständige Aktion).
+Schließen hatte schon vorher keine Longtasks. Es sind lokale Richtwerte,
+keine CI-Zeitgrenzen und kein belastbarer Nachweis von Handy-FPS oder INP;
+die teure kalte Statistik-/Storyarbeit bleibt ein Engpass.
+
+```powershell
+node tests/aktualisierung.test.js
+node tests/storyscroll.test.js
+node tests/bewegung.test.js
+node tests/wiederholung.test.js
+node tools/interaktion.cjs --cpu=4 --runden=3 --ausgabe=dist/interaktion.json
+```
+
+Die neuen/erweiterten Suiten prüfen 16 Aktualisierungs-, 20 Storydetail-,
+31 Bewegungs- und 44 Wiederholungsinvarianten, einschließlich Rotnachweis vor
+den Änderungen, gleicher Snapshotbühne im Bündel/Detail und Geometrie bei
+288/360 px. Die lokale Vorher-/Nachher-Diagnose mit identischen Stories liegt
+im ignorierten `dist`; sie verändert weder den Backendbestand noch den Code.

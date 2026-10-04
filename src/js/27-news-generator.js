@@ -928,7 +928,9 @@ function _buildStories(){
         desc: _bdesc,
         when: ev.when,
         prio: rarPrio,
-        dataRef: {type:'badge_unlocked', playerId: ev.playerId, badgeId: ev.badge.id, badgeName: ev.badge.name, matchId: ev.matchId, rarity: rar, nemesisOppId: _nemOpp || undefined}
+        // Der Rang dieser Verleihung gehoert ihrem Match, nicht dem spaeteren
+        // Profilstand. Die Anlassgrafik speichert ihn im visuellen Snapshot.
+        dataRef: {type:'badge_unlocked', playerId: ev.playerId, badgeId: ev.badge.id, badgeName: ev.badge.name, matchId: ev.matchId, rarity: rar, rang:_bRang(ev), nemesisOppId: _nemOpp || undefined}
       });
     });
     // ── Die kleinen Marken einer Partie stehen zusammen ────────────

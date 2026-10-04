@@ -29,15 +29,23 @@ let _lastLoadFingerprint = null;
 let _lastLoadDay = null;
 let _loadAllPromise = null;
 let _loadAllNochmals = false;
+let _loadAllLeise = false;
 // Sichtbarkeit, Polling und Speichern koennen gleichzeitig laden wollen.
 // Nur ein Durchlauf darf Daten einbauen; explizite Anforderungen verlangen
 // EINEN frischen Folgedurchlauf. Reines Polling schliesst sich dagegen an:
 // dauert ein Abruf laenger als der Takt, darf er nicht endlos veralten.
 function loadAll(opts){
   if(_loadAllPromise){
+    // Ein expliziter Vordergrundaufruf (z.B. Speichern) behält seine normale
+    // Fehleranzeige, auch wenn er sich an eine stille Navigation anschließt.
+    // Reines Polling schließt sich dagegen still an. Ein langsamer
+    // Liga-Abruf darf durch einen 30s-Tick nicht plötzlich den Fehlerpfad
+    // wechseln und bei Netzverlust die zuvor bedienbare Ansicht ersetzen.
+    if((!opts || opts.leise !== true) && (!opts || opts.nachladen !== false)) _loadAllLeise = false;
     if(!opts || opts.nachladen !== false) _loadAllNochmals = true;
     return _loadAllPromise;
   }
+  _loadAllLeise = !!opts && opts.leise === true;
   _loadAllPromise = (async()=>{
     try {
       do {
@@ -48,12 +56,13 @@ function loadAll(opts){
       // Vor dem Erfuellen freigeben, ohne weitere finally-Microtask: eine
       // neue Anforderung darf nicht an einen schon beendeten Lauf geraten.
       _loadAllPromise = null;
+      _loadAllLeise = false;
     }
   })();
   return _loadAllPromise;
 }
 async function _loadAllDurchlauf(){
-  setConn('verbinde…','load');
+  if(!_loadAllLeise) setConn('verbinde…','load');
   try{
     const antworten=await Promise.allSettled([
       sb.from('players').select('*').order('elo',{ascending:false}),
@@ -162,7 +171,7 @@ async function _loadAllDurchlauf(){
   }catch(e){
     _lastLoadFingerprint=null; _lastLoadDay=null;
     console.error(e); setConn('Verbindung fehlgeschlagen','bad');
-    if(_eingabeOffen()) toast('Konnte nicht laden.',true);
+    if(_loadAllLeise || _eingabeOffen()) toast('Konnte nicht laden.',true);
     else document.getElementById('main').innerHTML=`<div class="card"><div class="empty" style="color:var(--red)">
       <div class="ee"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="13"/><circle cx="12" cy="16.5" r=".6" fill="currentColor"/></svg></div>Konnte nicht laden.<br><span class="num" style="font-size:11px">${esc(e.message||e)}</span></div></div>`;
   }

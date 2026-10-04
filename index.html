@@ -133,9 +133,8 @@
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
   main{padding:6px 16px 0}
-  .view{display:none;animation:slideup .32s cubic-bezier(.2,.7,.2,1)}
+  .view{display:none}
   .view.active{display:block}
-  @keyframes slideup{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 
   .view-head{margin:8px 2px 18px}
   .view-head h2{font-family:'Archivo Black',sans-serif;font-size:27px;letter-spacing:-.03em;line-height:1}
@@ -4438,6 +4437,19 @@
 .sp-md-p.punkte i{width:7px;height:7px;border-radius:50%;background:var(--surface3)}
 .sp-md-p.punkte i.hat{background:#b9a3ff}
 .sp-md-p.punkte i.neu{box-shadow:0 0 0 1.5px var(--ink)}
+.sp-md-wieder{--medaille:var(--purple);background:linear-gradient(110deg,rgba(163,134,224,.06),transparent 82%)}
+.sp-md-wieder.gold{--medaille:var(--gold);background:linear-gradient(110deg,rgba(247,207,74,.06),transparent 82%)}
+.sp-md-zahl{display:flex;align-items:baseline;flex-wrap:wrap;gap:5px;margin:8px 0 7px;min-width:0}
+.sp-md-zahl > b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:28px;line-height:1;color:var(--medaille)}
+.sp-md-zahl > span{font:600 10px 'Sometype Mono',monospace;color:var(--muted)}
+.sp-md-zahl > .av{align-self:center;margin-left:auto}
+.sp-md-marken{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+.sp-md-marken > span{position:relative;padding:5px 2px;border-radius:6px;text-align:center;min-width:0;
+  border:1px solid var(--line2);color:var(--muted);background:var(--surface2)}
+.sp-md-marken b{font:600 9px 'Sometype Mono',monospace}
+.sp-md-marken .hat{color:var(--ink2);border-color:var(--medaille)}
+.sp-md-marken .jetzt{color:var(--medaille);border-color:var(--medaille);background:var(--surface3)}
+.sp-md-wieder .sp-lg{margin-top:7px}
 
 .sp-tg{padding:9px 13px 10px;border-top:1px solid var(--line)}
 .sp-tg svg{display:block;width:100%;height:auto;overflow:visible}
@@ -4996,7 +5008,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.03.d1fdd888';
+const BUILD_VERSION='2026.10.04.c1e1cc97';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -6475,11 +6487,14 @@ let _lastLoadFingerprint = null;
 let _lastLoadDay = null;
 let _loadAllPromise = null;
 let _loadAllNochmals = false;
+let _loadAllLeise = false;
 function loadAll(opts){
   if(_loadAllPromise){
+    if((!opts || opts.leise !== true) && (!opts || opts.nachladen !== false)) _loadAllLeise = false;
     if(!opts || opts.nachladen !== false) _loadAllNochmals = true;
     return _loadAllPromise;
   }
+  _loadAllLeise = !!opts && opts.leise === true;
   _loadAllPromise = (async()=>{
     try {
       do {
@@ -6488,12 +6503,13 @@ function loadAll(opts){
       } while(_loadAllNochmals);
     } finally {
       _loadAllPromise = null;
+      _loadAllLeise = false;
     }
   })();
   return _loadAllPromise;
 }
 async function _loadAllDurchlauf(){
-  setConn('verbinde…','load');
+  if(!_loadAllLeise) setConn('verbinde…','load');
   try{
     const antworten=await Promise.allSettled([
       sb.from('players').select('*').order('elo',{ascending:false}),
@@ -6570,7 +6586,7 @@ async function _loadAllDurchlauf(){
   }catch(e){
     _lastLoadFingerprint=null; _lastLoadDay=null;
     console.error(e); setConn('Verbindung fehlgeschlagen','bad');
-    if(_eingabeOffen()) toast('Konnte nicht laden.',true);
+    if(_loadAllLeise || _eingabeOffen()) toast('Konnte nicht laden.',true);
     else document.getElementById('main').innerHTML=`<div class="card"><div class="empty" style="color:var(--red)">
       <div class="ee"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="13"/><circle cx="12" cy="16.5" r=".6" fill="currentColor"/></svg></div>Konnte nicht laden.<br><span class="num" style="font-size:11px">${esc(e.message||e)}</span></div></div>`;
   }
@@ -8245,7 +8261,8 @@ function renderNav(){
   document.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>{
     tab=b.dataset.nav;teamSearch='';ligaSeasonId=null;ligaSicht='spieler';
     awPeriod='season';awSeasonId=null;awWeekStart=null;rekKammer='';einblickOffen='';
-    window.scrollTo(0,0);_renderNachEingabe();});
+    window.scrollTo(0,0);_renderNachEingabe();
+    if(tab==='ranking') _ligaAktualisieren();});
   nav._navKnoop=nav.firstElementChild;
   }
   document.querySelectorAll('[data-nav]').forEach(b=>{
@@ -8254,6 +8271,19 @@ function renderNav(){
     if(aktiv)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');
   });
   document.getElementById('fab').style.display = tab==='match' ? 'none' : 'grid';
+}
+
+let _ligaRefreshAuftrag=null;
+function _ligaAktualisieren(){
+  if(_ligaRefreshAuftrag) return;
+  const a={frame:0,timer:0};_ligaRefreshAuftrag=a;
+  a.frame=requestAnimationFrame(()=>{
+    a.timer=setTimeout(()=>{
+      Promise.resolve().then(()=>loadAll({leise:true})).catch(e=>{
+        console.warn('Liga aktualisieren:',e);
+      }).finally(()=>{if(_ligaRefreshAuftrag===a) _ligaRefreshAuftrag=null;});
+    },0);
+  });
 }
 
 function _eingabeOffen(){
@@ -11609,18 +11639,28 @@ function _pushCurrentSheet(){
 }
 let _sheetAnimating = false;
 function _afterTransition(el, prop, ms, fn){
+  const wartend = el._transitionAb || (el._transitionAb = {});
+  if(wartend[prop]) wartend[prop]();
   let fertig = false;
   let rueckfall;
+  const ab = () => {
+    if(fertig) return;
+    fertig = true;
+    el.removeEventListener('transitionend', los);
+    clearTimeout(rueckfall);
+    if(wartend[prop] === ab) delete wartend[prop];
+  };
   const los = (e) => {
     if(e && e.target !== el) return;
     if(e && e.propertyName && e.propertyName !== prop) return;
-    if(fertig) return; fertig = true;
-    el.removeEventListener('transitionend', los);
-    clearTimeout(rueckfall);
+    if(fertig) return;
+    ab();
     fn();
   };
+  wartend[prop] = ab;
   el.addEventListener('transitionend', los);
   rueckfall = setTimeout(los, ms + 60);
+  return ab;
 }
 function _animateSheetSwap(swapFn){
   const sheet = document.getElementById('sheet');
@@ -11700,6 +11740,8 @@ function openSheet(html, opts){
   const bg=document.getElementById('sheetBg');
   if(!bg.classList.contains('show') && !_sheetPopping){ _sheetStack.length = 0; }
   if(sheet._swipeCleanup){ sheet._swipeCleanup(); sheet._swipeCleanup=null; }
+  if(sheet._transitionAb) Object.values(sheet._transitionAb).forEach(ab => ab());
+  sheet.classList.remove('sheet-nudge');
   sheet.scrollTop = 0;
   sheet._auf = (sheet._auf || 0) + 1;
   _sheetAnimating = false;
@@ -11738,26 +11780,31 @@ function closeSheet(force){
   }
   _sheetForceClose(sheet,bg);
 }
-function _sheetForceClose(sheet,bg){
+function _sheetForceClose(sheet,bg,schonUnten){
   _sheetStack.length = 0; _sheetReopen = null;
-  sheet._auf = (sheet._auf || 0) + 1;
-  _sheetAnimating = false;
-  if(sheet._swipeCleanup){ sheet._swipeCleanup(); sheet._swipeCleanup=null; }
-  const warOffen = sheet.classList.contains('show');
-  sheet.classList.remove('show','is-dragging');
-  const auf = sheet._auf;
-  if(warOffen){
-    const leeren = () => {
-      if(sheet._auf === auf && !sheet.classList.contains('show')) sheet.innerHTML = '';
-    };
-    if(window.matchMedia('(prefers-reduced-motion:reduce)').matches) leeren();
-    else _afterTransition(sheet, 'transform', 340, leeren);
-  }
-  sheet.style.transform='';
-  bg.style.opacity='';
-  bg.classList.remove('show');
   const bpBg = document.getElementById('bpBg');
   if(bpBg && bpBg.classList.contains('show')) bpBg.classList.remove('show');
+  const warOffen = sheet.classList.contains('show');
+  if(warOffen || bg.classList.contains('show')){
+    sheet._auf = (sheet._auf || 0) + 1;
+    _sheetAnimating = false;
+    if(sheet._swipeCleanup){ sheet._swipeCleanup(); sheet._swipeCleanup=null; }
+    if(sheet._transitionAb) Object.values(sheet._transitionAb).forEach(ab => ab());
+    sheet.style.transition='';
+    bg.style.transition='';
+    sheet.classList.remove('show','is-dragging','sheet-nudge');
+    const auf = sheet._auf;
+    if(warOffen){
+      const leeren = () => {
+        if(sheet._auf === auf && !sheet.classList.contains('show')) sheet.innerHTML = '';
+      };
+      if(schonUnten || window.matchMedia('(prefers-reduced-motion:reduce)').matches) leeren();
+      else _afterTransition(sheet, 'transform', 340, leeren);
+    }
+    sheet.style.transform='';
+    bg.style.opacity='';
+    bg.classList.remove('show');
+  }
   try { if(window._processDeferredNewsToast) window._processDeferredNewsToast(); } catch(e){}
 }
 
@@ -11905,7 +11952,7 @@ function bindSheetSwipe(){
       const eigeneGeste = geste;
       _afterTransition(sheet,'transform',280,()=>{
         if(sheet._auf !== auf || geste !== eigeneGeste) return;
-        closeSheet();
+        _sheetForceClose(sheet,bg,true);
         sheet.style.transition='';
         bg.style.transition='';
       });
@@ -16003,12 +16050,17 @@ const NEWS_DB_SEITENGROESSE = 500;
 
 const SAISON_ENDSPURT_ELO = 25;
 
-const NEWS_BADGE_MARKEN = [1, 5, 10, 25, 50, 100];
+const NEWS_BADGE_MARKEN = [1, 5, 10, 20, 25, 50, 75, 100, 125];
 const NEWS_BADGE_MARKEN_KLEIN = [5, 10, 25, 50, 100];
 function _badgeTakt(rar, rang){
   if(rar === 'legendary') return true;
-  return (rar === 'common' ? NEWS_BADGE_MARKEN_KLEIN : NEWS_BADGE_MARKEN)
-    .indexOf(rang) >= 0;
+  if(rar === 'rare') return NEWS_BADGE_MARKEN.indexOf(rang) >= 0
+    || (Number.isInteger(rang) && rang >= 150 && rang % 25 === 0);
+  return NEWS_BADGE_MARKEN_KLEIN.indexOf(rang) >= 0 || (rar !== 'common' && rang === 1);
+}
+function _badgeNaechsteMarke(rang){
+  const n = Math.max(0, Math.floor(Number(rang) || 0));
+  return NEWS_BADGE_MARKEN.find(k => k > n) || Math.max(150, (Math.floor(n / 25) + 1) * 25);
 }
 
 const FORM_FENSTER = 10;
@@ -16823,7 +16875,7 @@ function _buildStories(){
         desc: _bdesc,
         when: ev.when,
         prio: rarPrio,
-        dataRef: {type:'badge_unlocked', playerId: ev.playerId, badgeId: ev.badge.id, badgeName: ev.badge.name, matchId: ev.matchId, rarity: rar, nemesisOppId: _nemOpp || undefined}
+        dataRef: {type:'badge_unlocked', playerId: ev.playerId, badgeId: ev.badge.id, badgeName: ev.badge.name, matchId: ev.matchId, rarity: rar, rang:_bRang(ev), nemesisOppId: _nemOpp || undefined}
       });
     });
     const _kleine = Object.values(dedupe).filter(ev => {
@@ -21786,8 +21838,8 @@ function _spAnlass(s){
   let x;
   if((x = f('lead_change')) && x.newLeader) return {key:'spitze', m, x};
   if((x = fakten.find(y => y.type === 'badge_unlocked' && (y.rarity === 'rare' || y.rarity === 'legendary')
-      && !SP_ERGEBNIS_BADGE.has(y.badgeId))) && x.badgeId)
-    return {key:'medaille', m, x:{pid:x.playerId, badgeId:x.badgeId}};
+      && (!SP_ERGEBNIS_BADGE.has(y.badgeId) || (y.rang > 1 && _badgeTakt('rare', y.rang))))) && x.badgeId)
+    return {key:'medaille', m, x:{pid:x.playerId, badgeId:x.badgeId, rang:x.rang}};
   if((x = f('streak_killer')) && x.victimPid) return {key:'riss', m, x};
   if((x = f('win_streak')) && x.streak) return {key:'serie', m, x};
   if((x = f('team_streak')) && x.streak && x.a && x.b) return {key:'teamserie', m, x};
@@ -22141,14 +22193,58 @@ function _spMedailleDaten(a){
   const b = (typeof BADGES !== 'undefined' ? BADGES : []).find(x => x.id === a.x.badgeId);
   if(!b) return null;
   const ids = activePlayers().map(p => p.id);
-  const traeger = ids.filter(id => (getCachedBadges(id) || []).some(x => x.id === b.id));
-  return {name:b.name, ic:b.ic, klasse:rarityOf(b.id), wer:a.x.pid, rang:a.x.rang || 0, ids, traeger};
+  const B = _spBasis(), quelle = getBadgeEarnedCache();
+  if(!B.medaillen || B.medaillen.quelle !== quelle){
+    const erste = new Map(), vergaben = new Map();
+    B.chrono.forEach((m, i) => {
+      const gesehen = new Set();
+      (quelle[m.id] || []).forEach(ev => {
+        const badge = ev.badge && ev.badge.id, pid = ev.playerId;
+        if(!badge || !pid) return;
+        const k = pid + '|' + badge;
+        if(gesehen.has(k)) return;
+        gesehen.add(k);
+        let traeger = erste.get(badge);
+        if(!traeger){ traeger = new Map(); erste.set(badge, traeger); }
+        if(!traeger.has(pid)) traeger.set(pid, i);
+        let folge = vergaben.get(k);
+        if(!folge){ folge = []; vergaben.set(k, folge); }
+        folge.push(i);
+      });
+    });
+    B.medaillen = {quelle, erste, vergaben};
+  }
+  const i = B.idx.get(a.m && a.m.id), erst = B.medaillen.erste.get(b.id);
+  const traeger = ids.filter(id => erst && erst.has(id) && erst.get(id) <= i);
+  let rang = Number.isInteger(a.x.rang) && a.x.rang > 0 ? a.x.rang : 0;
+  if(!rang && i != null){
+    const folge = B.medaillen.vergaben.get(a.x.pid + '|' + b.id) || [];
+    let lo = 0, hi = folge.length;
+    while(lo < hi){ const mid = (lo + hi) >>> 1; if(folge[mid] <= i) lo = mid + 1; else hi = mid; }
+    if(lo && folge[lo - 1] === i) rang = lo;
+  }
+  const erreicht = rang >= 150 ? [Math.floor(rang / 25) * 25 - 25, Math.floor(rang / 25) * 25]
+    : NEWS_BADGE_MARKEN.filter(k => k <= rang).slice(-2);
+  return {name:b.name, ic:b.ic, klasse:rarityOf(b.id), wer:a.x.pid, rang, ids, traeger,
+    wiederholung:rang > 1, marken:erreicht.concat(_badgeNaechsteMarke(rang))};
 }
 function _spMedailleBild(d){
   if(!d) return '';
   const tr = new Set(d.traeger), viele = d.ids.length > 16;
   const ton = d.klasse === 'legendary' ? 'gold' : 'viol';
   const kl = {legendary:'Legendär', rare:'Selten', common:'Gewöhnlich'}[d.klasse] || '';
+  if(d.wiederholung && d.rang > 1){
+    const marken = (d.marken || []).slice(-3);
+    const schritte = marken.map(n => `<span class="${n < d.rang ? 'hat' : n === d.rang ? 'jetzt' : ''}"><b class="num">${_spZahl(n)}</b></span>`).join('');
+    const naechste = marken.find(n => n > d.rang);
+    return `<div class="sp-md sp-md-wieder ${ton}">${zkHtml(d.ic, 'g', ton)}<div class="sp-md-r">`
+      + `<div class="sp-md-k"><b>${esc(d.name)}</b><em class="${ton}">${kl}</em></div>`
+      + `<div class="sp-md-zahl"><b class="num">${_spZahl(d.rang)}.</b><span>Mal</span>${_spChip(d.wer)}</div>`
+      + (schritte ? `<div class="sp-md-marken" aria-label="Verleihungsmarken">${schritte}</div>` : '')
+      + _spUnter(`${_spNb(d.wer)} erreicht sie erneut.`
+        + (naechste ? ` Noch ${_spZahl(naechste - d.rang)} bis zur ${_spZahl(naechste)}. Vergabe.` : ''))
+      + `</div></div>`;
+  }
   const plaetze = d.ids.slice().sort((a, b) => (tr.has(b) - tr.has(a)) || ((b === d.wer) - (a === d.wer))).map(id =>
     viele ? `<i class="${tr.has(id) ? 'hat' : ''}${id === d.wer ? ' neu' : ''}"></i>`
           : `<span class="${tr.has(id) ? 'hat' : ''}${id === d.wer ? ' neu' : ''}">${tr.has(id) ? _spChip(id) : ''}</span>`).join('');
@@ -22754,8 +22850,8 @@ function _spAnlassSnapshot(m, fakten, scoreKey){
   if((x = f('lead_change')) && x.newLeader) a = {key:'spitze', m, x};
   else if((x = fakten.find(y => y.type === 'badge_unlocked'
       && (y.rarity === 'rare' || y.rarity === 'legendary')
-      && !SP_ERGEBNIS_BADGE.has(y.badgeId))) && x.badgeId)
-    a = {key:'medaille', m, x:{pid:x.playerId, badgeId:x.badgeId}};
+      && (!SP_ERGEBNIS_BADGE.has(y.badgeId) || (y.rang > 1 && _badgeTakt('rare', y.rang))))) && x.badgeId)
+    a = {key:'medaille', m, x:{pid:x.playerId, badgeId:x.badgeId, rang:x.rang}};
   else if((x = f('streak_killer')) && x.victimPid) a = {key:'riss', m, x};
   else if((x = f('jubilee')) && x.pid && x.total)
     a = {key:'zaehlwerk', m, x:{wer:x.pid, wert:Number(x.total), label:'Partie'}};
@@ -23042,6 +23138,7 @@ function openNewsDetail(sid){
   nd.className = 'nd nd-s-' + sorte + (tafelTon ? ' nd-tafel-' + tafelTon : '')
     + (faktStil ? ' nd-fakt-' + faktStil.ton : '')
     + (negativ ? ' nd-neg' : '') + (brk ? ' nd-brk' : '');
+  nd.scrollTop = 0;
   nd.innerHTML = `
     ${_newsMotiv(sorte, s)}
     ${brk ? '<div class="nf-brk-band"><span class="nf-brk-punkt"></span>BREAKING</div>' : ''}
@@ -23162,11 +23259,11 @@ function _newsBlattKopf(s){
   const nm = pid => (pm[pid] && pm[pid].name) || '';
   let ids = [];
   try { ids = (_newsPids(s) || []).filter(id => pm[id]); } catch(e){}
-  const erg = d.matchId ? _newsBlattErgebnis(d.matchId) : '';
-  if(d.type === 'season_recap') return erg;
+  if(d.type === 'season_recap') return d.matchId ? _newsBlattErgebnis(d.matchId) : '';
   if(d.type === 'runde') return '';
   if(d.matchId && (d.type === 'spiel' || (d.type === 'sammel' && _newsSorte(s) === 'spiel'))){ const b = _ndBuehne(s); if(b) return b; }
   { const x = _ndEigenesBlatt(s); if(x) return x.kopf; }
+  const erg = d.matchId ? _newsBlattErgebnis(d.matchId) : '';
   if(!ids.length) return erg;
   if(ids.length > 1){
     const zeig = ids.slice(0, 3);
@@ -24091,6 +24188,7 @@ function _newsDetailMitte(s){
         const gruppiert = (function(){
           if(d.quelle !== 'tafel' && d.quelle !== 'form') return '';
           if(typeof rcpAbschnitt !== 'function') return '';
+          if(teile.length < 4) return '';
           const typ = t => String((t && (t.typ || t.type)) || '');
           const gr = [
             {t:'Bestmarken', f:x => typ(x).indexOf('rekord_') === 0
@@ -24108,9 +24206,8 @@ function _newsDetailMitte(s){
               + `<div class="nw-liste">${l.map(_zeile).join('')}</div>`);
           });
           if(rest.length) aus.push(`<div class="nw-liste">${rest.map(_zeile).join('')}</div>`);
-          return teile.length >= 4 ? aus.join('') : '';
+          return aus.join('');
         })();
-        const zeilen = teile.map(_zeile).join('');
         const wirkung = (function(){
           const je = {};
           teile.forEach(t => {
@@ -24129,6 +24226,7 @@ function _newsDetailMitte(s){
           return (zl ? `<div class="nd-section">Was dazu gehört</div><div class="nw-liste">${zl}</div>` : '')
             + _ndPartieAbschnitte(s) + wirkung;
         }
+        const zeilen = gruppiert ? '' : teile.map(_zeile).join('');
         const mv = d.matchId ? _newsMatchVsBlock(d.matchId) : '';
         const uebersicht = (function(){
           if(d.quelle !== 'tafel' && d.quelle !== 'form') return '';

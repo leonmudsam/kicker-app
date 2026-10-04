@@ -78,6 +78,11 @@ function openNewsDetail(sid){
   nd.className = 'nd nd-s-' + sorte + (tafelTon ? ' nd-tafel-' + tafelTon : '')
     + (faktStil ? ' nd-fakt-' + faktStil.ton : '')
     + (negativ ? ' nd-neg' : '') + (brk ? ' nd-brk' : '');
+  // #nd ist der Scrollbehälter, nicht der Feed darunter. Eine Öffnung ist
+  // immer ein neuer Lesestart, auch bei derselben Story oder einem Faden
+  // aus dem offenen Blatt. Vor dem Markup zurücksetzen: kein Zwischenlayout
+  // des neuen Inhalts und kein späterer Frame, der das Lesen zurückzieht.
+  nd.scrollTop = 0;
   nd.innerHTML = `
     ${_newsMotiv(sorte, s)}
     ${brk ? '<div class="nf-brk-band"><span class="nf-brk-punkt"></span>BREAKING</div>' : ''}
@@ -249,10 +254,9 @@ function _newsBlattKopf(s){
   const nm = pid => (pm[pid] && pm[pid].name) || '';
   let ids = [];
   try { ids = (_newsPids(s) || []).filter(id => pm[id]); } catch(e){}
-  const erg = d.matchId ? _newsBlattErgebnis(d.matchId) : '';
   // Die Meisterbühne IST der Kopf: das Podest darunter zeigt den Meister
   // groß, ein Wappen darüber sagte dasselbe ein zweites Mal [§C27].
-  if(d.type === 'season_recap') return erg;
+  if(d.type === 'season_recap') return d.matchId ? _newsBlattErgebnis(d.matchId) : '';
   // Die Runde hat ihre Tabelle als Kopf; vier Wappen darüber sagten dasselbe.
   if(d.type === 'runde') return '';
   // Das Blatt einer Partie trägt die Zeichnung ihrer Karte als Bühne. Es
@@ -261,6 +265,9 @@ function _newsBlattKopf(s){
   // wer sie öffnete, verlor das Bild, wegen dem er getippt hatte.
   if(d.matchId && (d.type === 'spiel' || (d.type === 'sammel' && _newsSorte(s) === 'spiel'))){ const b = _ndBuehne(s); if(b) return b; }
   { const x = _ndEigenesBlatt(s); if(x) return x.kopf; }
+  // Eigene Bühnen und die Runde verwenden kein Ergebnisband. Sein Markup
+  // erst für den sichtbaren Rückfall bauen, statt es jedes Mal zu verwerfen.
+  const erg = d.matchId ? _newsBlattErgebnis(d.matchId) : '';
   if(!ids.length) return erg;
   // Ein Duo hat keinen Rang [§C27] — zwei Wappen, zwei Namen, keine Zeile
   // darunter, die es fuer beide gaebe.
@@ -1526,6 +1533,9 @@ function _newsDetailMitte(s){
         const gruppiert = (function(){
           if(d.quelle !== 'tafel' && d.quelle !== 'form') return '';
           if(typeof rcpAbschnitt !== 'function') return '';
+          // Unter vier Zeilen sagt eine Gruppierung nichts. Erst danach
+          // zeichnen, sonst würde ihre komplette, verworfene Liste gebaut.
+          if(teile.length < 4) return '';
           const typ = t => String((t && (t.typ || t.type)) || '');
           const gr = [
             {t:'Bestmarken', f:x => typ(x).indexOf('rekord_') === 0
@@ -1543,10 +1553,8 @@ function _newsDetailMitte(s){
               + `<div class="nw-liste">${l.map(_zeile).join('')}</div>`);
           });
           if(rest.length) aus.push(`<div class="nw-liste">${rest.map(_zeile).join('')}</div>`);
-          // Unter vier Zeilen sagt eine Gruppierung nichts.
-          return teile.length >= 4 ? aus.join('') : '';
+          return aus.join('');
         })();
-        const zeilen = teile.map(_zeile).join('');
         // ── Ein Bereich für die Wirkung, nicht einer je Zeile ───────────
         // Die Punktewirkung eines Spieltags ist je Spieler EINE Zahl, egal
         // aus welcher Zeile sie kommt: beide Stände gehören dem Tag, nicht
@@ -1577,6 +1585,9 @@ function _newsDetailMitte(s){
           return (zl ? `<div class="nd-section">Was dazu gehört</div><div class="nw-liste">${zl}</div>` : '')
             + _ndPartieAbschnitte(s) + wirkung;
         }
+        // Die Gruppierung und das Matchblatt haben ihre Zeilen bereits.
+        // Nur der tatsächlich sichtbare Rückfall zeichnet die flache Liste.
+        const zeilen = gruppiert ? '' : teile.map(_zeile).join('');
         const mv = d.matchId ? _newsMatchVsBlock(d.matchId) : '';
         // Die Ueberschrift sagt, was die Liste ist. „In dieser Partie" stand
         // auch ueber der Karte, auf der drei Spieler dieselbe Stufe

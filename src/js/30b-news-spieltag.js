@@ -182,8 +182,8 @@ function _spAnlass(s){
   let x;
   if((x = f('lead_change')) && x.newLeader) return {key:'spitze', m, x};
   if((x = fakten.find(y => y.type === 'badge_unlocked' && (y.rarity === 'rare' || y.rarity === 'legendary')
-      && !SP_ERGEBNIS_BADGE.has(y.badgeId))) && x.badgeId)
-    return {key:'medaille', m, x:{pid:x.playerId, badgeId:x.badgeId}};
+      && (!SP_ERGEBNIS_BADGE.has(y.badgeId) || (y.rang > 1 && _badgeTakt('rare', y.rang))))) && x.badgeId)
+    return {key:'medaille', m, x:{pid:x.playerId, badgeId:x.badgeId, rang:x.rang}};
   if((x = f('streak_killer')) && x.victimPid) return {key:'riss', m, x};
   if((x = f('win_streak')) && x.streak) return {key:'serie', m, x};
   if((x = f('team_streak')) && x.streak && x.a && x.b) return {key:'teamserie', m, x};
@@ -634,14 +634,69 @@ function _spMedailleDaten(a){
   const b = (typeof BADGES !== 'undefined' ? BADGES : []).find(x => x.id === a.x.badgeId);
   if(!b) return null;
   const ids = activePlayers().map(p => p.id);
-  const traeger = ids.filter(id => (getCachedBadges(id) || []).some(x => x.id === b.id));
-  return {name:b.name, ic:b.ic, klasse:rarityOf(b.id), wer:a.x.pid, rang:a.x.rang || 0, ids, traeger};
+  // Kein heutiger Badge-Zensus fuer eine vergangene Partie: der kanonische
+  // Event-Cache weiss, WANN jemand Traeger wurde und das wievielte Mal es
+  // war. Ein Index am vorhandenen Datenstand ersetzt Vollrechnungen je
+  // Spieler und Medaille. Cache-Versionen koennen den Event-Cache ersetzen,
+  // ohne matches zu ersetzen, darum gehoert seine Referenz in den Guard.
+  const B = _spBasis(), quelle = getBadgeEarnedCache();
+  if(!B.medaillen || B.medaillen.quelle !== quelle){
+    const erste = new Map(), vergaben = new Map();
+    B.chrono.forEach((m, i) => {
+      const gesehen = new Set();
+      (quelle[m.id] || []).forEach(ev => {
+        const badge = ev.badge && ev.badge.id, pid = ev.playerId;
+        if(!badge || !pid) return;
+        const k = pid + '|' + badge;
+        if(gesehen.has(k)) return;
+        gesehen.add(k);
+        let traeger = erste.get(badge);
+        if(!traeger){ traeger = new Map(); erste.set(badge, traeger); }
+        if(!traeger.has(pid)) traeger.set(pid, i);
+        let folge = vergaben.get(k);
+        if(!folge){ folge = []; vergaben.set(k, folge); }
+        folge.push(i);
+      });
+    });
+    B.medaillen = {quelle, erste, vergaben};
+  }
+  const i = B.idx.get(a.m && a.m.id), erst = B.medaillen.erste.get(b.id);
+  const traeger = ids.filter(id => erst && erst.has(id) && erst.get(id) <= i);
+  // Numerische Matchpositionen statt eines langen UUID-Schluessels je
+  // Vergabe halten den Index klein. Der Rang braucht nur eine binaere Suche
+  // im bereits vorhandenen Eventverlauf, keine neue Badge-Rechnung.
+  let rang = Number.isInteger(a.x.rang) && a.x.rang > 0 ? a.x.rang : 0;
+  if(!rang && i != null){
+    const folge = B.medaillen.vergaben.get(a.x.pid + '|' + b.id) || [];
+    let lo = 0, hi = folge.length;
+    while(lo < hi){ const mid = (lo + hi) >>> 1; if(folge[mid] <= i) lo = mid + 1; else hi = mid; }
+    if(lo && folge[lo - 1] === i) rang = lo;
+  }
+  const erreicht = rang >= 150 ? [Math.floor(rang / 25) * 25 - 25, Math.floor(rang / 25) * 25]
+    : NEWS_BADGE_MARKEN.filter(k => k <= rang).slice(-2);
+  return {name:b.name, ic:b.ic, klasse:rarityOf(b.id), wer:a.x.pid, rang, ids, traeger,
+    wiederholung:rang > 1, marken:erreicht.concat(_badgeNaechsteMarke(rang))};
 }
 function _spMedailleBild(d){
   if(!d) return '';
   const tr = new Set(d.traeger), viele = d.ids.length > 16;
   const ton = d.klasse === 'legendary' ? 'gold' : 'viol';
   const kl = {legendary:'Legendär', rare:'Selten', common:'Gewöhnlich'}[d.klasse] || '';
+  // Nur neue Snapshots besitzen diesen Schalter. Alte V2-Drawings ohne ihn
+  // bleiben in ihrer publizierten Traegerform, auch wenn inzwischen mehr
+  // Verleihungen existieren. Wiederholungen sagen nie "neu dabei".
+  if(d.wiederholung && d.rang > 1){
+    const marken = (d.marken || []).slice(-3);
+    const schritte = marken.map(n => `<span class="${n < d.rang ? 'hat' : n === d.rang ? 'jetzt' : ''}"><b class="num">${_spZahl(n)}</b></span>`).join('');
+    const naechste = marken.find(n => n > d.rang);
+    return `<div class="sp-md sp-md-wieder ${ton}">${zkHtml(d.ic, 'g', ton)}<div class="sp-md-r">`
+      + `<div class="sp-md-k"><b>${esc(d.name)}</b><em class="${ton}">${kl}</em></div>`
+      + `<div class="sp-md-zahl"><b class="num">${_spZahl(d.rang)}.</b><span>Mal</span>${_spChip(d.wer)}</div>`
+      + (schritte ? `<div class="sp-md-marken" aria-label="Verleihungsmarken">${schritte}</div>` : '')
+      + _spUnter(`${_spNb(d.wer)} erreicht sie erneut.`
+        + (naechste ? ` Noch ${_spZahl(naechste - d.rang)} bis zur ${_spZahl(naechste)}. Vergabe.` : ''))
+      + `</div></div>`;
+  }
   const plaetze = d.ids.slice().sort((a, b) => (tr.has(b) - tr.has(a)) || ((b === d.wer) - (a === d.wer))).map(id =>
     viele ? `<i class="${tr.has(id) ? 'hat' : ''}${id === d.wer ? ' neu' : ''}"></i>`
           : `<span class="${tr.has(id) ? 'hat' : ''}${id === d.wer ? ' neu' : ''}">${tr.has(id) ? _spChip(id) : ''}</span>`).join('');
@@ -1375,8 +1430,8 @@ function _spAnlassSnapshot(m, fakten, scoreKey){
   if((x = f('lead_change')) && x.newLeader) a = {key:'spitze', m, x};
   else if((x = fakten.find(y => y.type === 'badge_unlocked'
       && (y.rarity === 'rare' || y.rarity === 'legendary')
-      && !SP_ERGEBNIS_BADGE.has(y.badgeId))) && x.badgeId)
-    a = {key:'medaille', m, x:{pid:x.playerId, badgeId:x.badgeId}};
+      && (!SP_ERGEBNIS_BADGE.has(y.badgeId) || (y.rang > 1 && _badgeTakt('rare', y.rang))))) && x.badgeId)
+    a = {key:'medaille', m, x:{pid:x.playerId, badgeId:x.badgeId, rang:x.rang}};
   else if((x = f('streak_killer')) && x.victimPid) a = {key:'riss', m, x};
   else if((x = f('jubilee')) && x.pid && x.total)
     a = {key:'zaehlwerk', m, x:{wer:x.pid, wert:Number(x.total), label:'Partie'}};

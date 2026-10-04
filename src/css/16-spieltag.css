@@ -258,6 +258,21 @@
 .sp-md-p.punkte i{width:7px;height:7px;border-radius:50%;background:var(--surface3)}
 .sp-md-p.punkte i.hat{background:#b9a3ff}
 .sp-md-p.punkte i.neu{box-shadow:0 0 0 1.5px var(--ink)}
+/* Wiederverleihung: die persoenliche Zahl statt eines vermeintlich neuen
+   Traegers. Drei Nachbarmarken, nie ein Feld je bisheriger Verleihung. */
+.sp-md-wieder{--medaille:var(--purple);background:linear-gradient(110deg,rgba(163,134,224,.06),transparent 82%)}
+.sp-md-wieder.gold{--medaille:var(--gold);background:linear-gradient(110deg,rgba(247,207,74,.06),transparent 82%)}
+.sp-md-zahl{display:flex;align-items:baseline;flex-wrap:wrap;gap:5px;margin:8px 0 7px;min-width:0}
+.sp-md-zahl > b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:28px;line-height:1;color:var(--medaille)}
+.sp-md-zahl > span{font:600 10px 'Sometype Mono',monospace;color:var(--muted)}
+.sp-md-zahl > .av{align-self:center;margin-left:auto}
+.sp-md-marken{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+.sp-md-marken > span{position:relative;padding:5px 2px;border-radius:6px;text-align:center;min-width:0;
+  border:1px solid var(--line2);color:var(--muted);background:var(--surface2)}
+.sp-md-marken b{font:600 9px 'Sometype Mono',monospace}
+.sp-md-marken .hat{color:var(--ink2);border-color:var(--medaille)}
+.sp-md-marken .jetzt{color:var(--medaille);border-color:var(--medaille);background:var(--surface3)}
+.sp-md-wieder .sp-lg{margin-top:7px}
 
 /* ── Der Spieler des Tages ── */
 .sp-tg{padding:9px 13px 10px;border-top:1px solid var(--line)}
