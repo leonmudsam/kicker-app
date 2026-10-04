@@ -138,6 +138,80 @@ const ok=(c,msg)=>{checks++;if(!c)fails++;console.log((c?'  ok  ':'  ✗   ')+ms
       window.cancelAnimationFrame=window.__echtesCancelRaf;
       Object.defineProperty(performance,'now',{configurable:true,value:window.__echteZeit});
     });
+    const wartende=await K(`(() => {
+      const el=document.createElement('div');let alt=0,neu=0,opacity=0;
+      const ab=_afterTransition(el,'transform',1000,()=>alt++);
+      _afterTransition(el,'opacity',1000,()=>opacity++);
+      _afterTransition(el,'transform',1000,()=>neu++);
+      el.dispatchEvent(new TransitionEvent('transitionend',{propertyName:'transform'}));
+      el.dispatchEvent(new TransitionEvent('transitionend',{propertyName:'opacity'}));
+      return {ab:typeof ab==='function',alt,neu,opacity};
+    })()`);
+    ok(wartende.ab && wartende.alt===0 && wartende.neu===1 && wartende.opacity===1,
+      'Ein neuer Übergang ersetzt nur den wartenden Abschluss derselben Eigenschaft');
+    const abbruch=await K(`(() => {
+      const el=document.createElement('div');let n=0;
+      const ab=_afterTransition(el,'transform',1000,()=>n++);
+      if(typeof ab==='function'){ab();ab();}
+      el.dispatchEvent(new TransitionEvent('transitionend',{propertyName:'transform'}));
+      return n===0;
+    })()`);
+    ok(abbruch,'Ein abgebrochener Übergang ruft auch bei spätem transitionend keinen Abschluss auf');
+    const neueBesitzer=await K(`(() => {
+      openSheet('<p>Alt</p>');const sh=document.getElementById('sheet');let alt=0;
+      _afterTransition(sh,'transform',1000,()=>alt++);
+      sh.classList.add('sheet-nudge');openSheet('<p data-neuer-besitz>Neu</p>');
+      sh.dispatchEvent(new TransitionEvent('transitionend',{propertyName:'transform'}));
+      return alt===0 && !sh.classList.contains('sheet-nudge')
+        && !!sh.querySelector('[data-neuer-besitz]');
+    })()`);
+    ok(neueBesitzer,'Neuöffnen entfernt den alten Übergangsabschluss und den alten Schutz-Bounce');
+    const hartZu=await K(`(() => {
+      openSheet('<p>Alt</p>');const sh=document.getElementById('sheet');
+      const bg=document.getElementById('sheetBg');let alt=0;
+      _afterTransition(sh,'transform',1000,()=>alt++);
+      sh.style.transition='transform 2s linear';bg.style.transition='opacity 2s linear';
+      sh.classList.add('sheet-nudge');closeSheet(true);
+      sh.dispatchEvent(new TransitionEvent('transitionend',{propertyName:'transform'}));
+      return alt===0 && !sh.style.transition && !bg.style.transition
+        && !sh.classList.contains('sheet-nudge') && !sh.innerHTML;
+    })()`);
+    ok(hartZu,'Schließen übernimmt keine alte Snap-/Swap-Dauer und verwirft alte Abschlussarbeit');
+    const einAbschluss=await K(`(() => {
+      const original=_afterTransition;const fertig=[];
+      try{
+        _afterTransition=(el,p,ms,fn)=>fertig.push({ms,fn});
+        openSheet('<div data-wisch-alt style="height:3000px">Abschließen</div>');
+        document.getElementById('sheetGrab')
+          .dispatchEvent(new MouseEvent('mousedown',{bubbles:true,clientY:0}));
+        window.dispatchEvent(new MouseEvent('mousemove',{clientY:240}));
+        window.dispatchEvent(new MouseEvent('mouseup',{clientY:240}));
+        const wisch=fertig.shift();if(wisch)wisch.fn();
+        const sh=document.getElementById('sheet');
+        return !sh.classList.contains('show') && !sh.innerHTML && fertig.length===0;
+      }finally{_afterTransition=original;}
+    })()`);
+    ok(einAbschluss,'Ein vollständig heruntergewischtes Blatt wird ohne zweite Schließwartephase geleert');
+    const zweimalZu=await K(`(() => {
+      const original=_afterTransition;const fertig=[];
+      try{
+        _afterTransition=(el,p,ms,fn)=>fertig.push(fn);
+        openSheet('<p data-doppelt-zu>Doppelt schließen</p>');
+        const sh=document.getElementById('sheet');closeSheet(true);const auf=sh._auf;
+        closeSheet(true);const gleicherAuftrag=sh._auf===auf && fertig.length===1
+          && !!sh.querySelector('[data-doppelt-zu]');
+        fertig.forEach(fn=>fn());return gleicherAuftrag && !sh.innerHTML;
+      }finally{_afterTransition=original;}
+    })()`);
+    ok(zweimalZu,'Doppeltes Schließen bewahrt den einzigen Leerschritt und den Inhalt bis zum Bewegungsende');
+    ok(await K(`(() => {
+      const bg=document.getElementById('bpBg');bg.classList.add('show');
+      const orig=window._processDeferredNewsToast;let n=0;
+      try{
+        window._processDeferredNewsToast=()=>n++;closeSheet(true);
+        return !bg.classList.contains('show') && n===1;
+      }finally{window._processDeferredNewsToast=orig;}
+    })()`),'Hartes Schließen räumt auch ohne offenes Blatt Popover auf und holt deferred News nach');
     await page.emulateMedia({reducedMotion:'reduce'});
     const ruhig=await K(`(() => {
       openSheet('<p>Alt</p>');_animateSheetSwap(()=>openSheet('<p data-ruhig>Neu</p>'));

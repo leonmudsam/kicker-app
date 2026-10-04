@@ -6665,7 +6665,42 @@ const _bogen = JSON.parse(K.eval(`JSON.stringify((function(){
     spitze = text(_spTabelleBild(_spTabelleDaten({m:sp, x:{newLeader:neu, prevLeader:alt}}, true)));
     spitze = spitze.indexOf(pmap()[neu].name + ' steigt von ' + r.preRank[neu] + ' auf 1 und führt') >= 0 ? 'ok' : spitze;
   }
-  const med = _spMedailleBild(_spMedailleDaten({x:{pid:players[0].id, badgeId:BADGES[0].id, rang:5}}));
+  // Eine echte wiederholbare Auszeichnung statt eines kuenstlichen fuenften
+  // Debuets ohne Partie. Erstvergabe und Wiederholung sind zwei Formen:
+  // historische Traeger beim ersten Mal, persoenliche Zahl an der Marke.
+  const bMap = getBadgeEarnedCache(), medFolgen = new Map();
+  reihe.forEach(m => (bMap[m.id] || []).forEach(ev => {
+    if(!['rare','legendary'].includes(rarityOf(ev.badge.id))) return;
+    const k = ev.playerId + '|' + ev.badge.id;
+    if(!medFolgen.has(k)) medFolgen.set(k, []);
+    const folge = medFolgen.get(k);
+    if(!folge.some(x => x.m.id === m.id)) folge.push({m, ev});
+  }));
+  const medFolge = [...medFolgen.values()].find(f => f.length >= 5);
+  let medPasst = false;
+  if(medFolge){
+    const ev = medFolge[0].ev, x = {pid:ev.playerId, badgeId:ev.badge.id};
+    const ersteDaten = _spMedailleDaten({m:medFolge[0].m, x});
+    const markeDaten = _spMedailleDaten({m:medFolge[4].m, x});
+    const erste = _spMedailleBild(ersteDaten), marke = _spMedailleBild(markeDaten);
+    const traeger = new Set();
+    reihe.slice(0, reihe.indexOf(medFolge[0].m) + 1).forEach(m => (bMap[m.id] || []).forEach(y => {
+      if(y.badge.id === ev.badge.id && activePlayers().some(p => p.id === y.playerId)) traeger.add(y.playerId);
+    }));
+    const name = pmap()[ev.playerId].name;
+    medPasst = ersteDaten.rang === 1 && !ersteDaten.wiederholung
+      && erste.includes(esc(ev.badge.name)) && marke.includes(esc(ev.badge.name))
+      && ersteDaten.traeger.slice().sort().join() === [...traeger].sort().join()
+      && !/sp-md-wieder/.test(erste) && /class="sp-md-p/.test(erste)
+      && text(erste).includes(traeger.size + ' von ' + activePlayers().length + ' tragen sie')
+      && text(erste).includes('neu dabei ' + name)
+      && markeDaten.rang === 5 && markeDaten.wiederholung
+      && markeDaten.marken.join() === '1,5,10'
+      && /class="sp-md sp-md-wieder /.test(marke)
+      && /class="sp-md-zahl"><b class="num">5\\.<\\/b><span>Mal<\\/span>/.test(marke)
+      && text(marke).includes(name + ' erreicht sie erneut.')
+      && !/neu dabei/.test(text(marke));
+  }
   const ser = [_newsSerienBand(4, false, true), _newsSerienBand(8, false, true),
                _newsSerienBand(6, true, true), _newsSerienBand(5, false, false)];
   const leer = h => (h.match(/<i class="x">/g) || []).length;
@@ -6680,7 +6715,7 @@ const _bogen = JSON.parse(K.eval(`JSON.stringify((function(){
       || text(_spRolleBild(d)).indexOf(dort + ' von ' + vorher.length + ' Partien') < 0;
   }).map(x => x[0].id);
   return {n, falsch, wiederholt, formen, spitze, feldN, rolle:{n:ro.length, falsch:roFalsch},
-    gestellt: med.indexOf(esc(BADGES[0].name)) >= 0 && /zum 5\\. Mal/.test(text(med)),
+    gestellt: medPasst,
     ser: ser.map(h => leer(h) + (/Marke (\\d+)/.exec(h) || [,'-'])[1])};
 })())`));
 const _formZahl = Object.keys(_bogen.formen).length;
@@ -6918,8 +6953,8 @@ ok(_bogen.rolle.n >= 3 && !_bogen.rolle.falsch.length,
    'der Rollentausch ist ein Sieg auf einer Seite, die vorher unter einem Viertel der eigenen Partien lag',
    _bogen.rolle.n + ' Fundstellen, falsch: ' + _bogen.rolle.falsch.slice(0, 3));
 ok(_bogen.spitze === 'ok' && _bogen.gestellt,
-   'der Spitzenwechsel zeigt die Tabelle vorher und nachher, die Auszeichnung ihre Träger und die Zahl',
-   String(_bogen.spitze).slice(0, 120));
+   'der Spitzenwechsel zeigt vorher und nachher, die Erstvergabe historische Träger und die Wiederholung ihre Zahl',
+   String(_bogen.spitze).slice(0, 120) + ' · Medaille ' + String(_bogen.gestellt));
 ok(_bogen.ser.join() === '15,210,0-,0-',
    'der Lauf zeigt die nächste Marke als leere Felder, eine Pleitenserie hat keine',
    _bogen.ser.join(' · '));

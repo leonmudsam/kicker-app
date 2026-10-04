@@ -36,18 +36,32 @@ let _sheetAnimating = false;
 // Transition gar nicht startet (gleicher Wert, `prefers-reduced-motion`,
 // Element im Hintergrund-Tab), und dann dürfte das Sheet nie mehr zurück.
 function _afterTransition(el, prop, ms, fn){
+  // Derselbe Knoten wird für jedes Blatt und jeden Snap wiederverwendet.
+  // Ein neuer Übergang besitzt daher nur EINEN Abschluss je Eigenschaft:
+  // alte Listener und Rückfall-Timer dürfen nicht bis zum nächsten Öffnen
+  // mitlaufen und dessen transitionend als ihren eigenen Abschluss nehmen.
+  const wartend = el._transitionAb || (el._transitionAb = {});
+  if(wartend[prop]) wartend[prop]();
   let fertig = false;
   let rueckfall;
+  const ab = () => {
+    if(fertig) return;
+    fertig = true;
+    el.removeEventListener('transitionend', los);
+    clearTimeout(rueckfall);
+    if(wartend[prop] === ab) delete wartend[prop];
+  };
   const los = (e) => {
     if(e && e.target !== el) return;              // Kinder animieren mit
     if(e && e.propertyName && e.propertyName !== prop) return;
-    if(fertig) return; fertig = true;
-    el.removeEventListener('transitionend', los);
-    clearTimeout(rueckfall);
+    if(fertig) return;
+    ab();
     fn();
   };
+  wartend[prop] = ab;
   el.addEventListener('transitionend', los);
   rueckfall = setTimeout(los, ms + 60);
+  return ab;
 }
 function _animateSheetSwap(swapFn){
   const sheet = document.getElementById('sheet');
@@ -170,6 +184,8 @@ function openSheet(html, opts){
   // closeSheet dazwischen), zuerst dessen Swipe-Listener aufräumen — sonst
   // stapeln sich window-mousemove/mouseup-Listener und lecken.
   if(sheet._swipeCleanup){ sheet._swipeCleanup(); sheet._swipeCleanup=null; }
+  if(sheet._transitionAb) Object.values(sheet._transitionAb).forEach(ab => ab());
+  sheet.classList.remove('sheet-nudge');
   // Zurücksetzen, solange der bisherige Inhalt noch gültig gezeichnet ist.
   // Nach innerHTML erzwingt selbst scrollTop=0 das komplette neue Layout,
   // bevor das Blatt überhaupt sichtbar ist. Das neue Blatt übernimmt null;
@@ -231,37 +247,50 @@ function closeSheet(force){
   }
   _sheetForceClose(sheet,bg);
 }
-function _sheetForceClose(sheet,bg){
+function _sheetForceClose(sheet,bg,schonUnten){
   _sheetStack.length = 0; _sheetReopen = null;
-  // Schließen entzieht auch noch wartenden Navigations-/Wischabschlüssen
-  // den Besitz. Sie dürfen das zugeschobene Blatt nicht wieder öffnen.
-  sheet._auf = (sheet._auf || 0) + 1;
-  _sheetAnimating = false;
-  // Swipe-Listener aufräumen
-  if(sheet._swipeCleanup){ sheet._swipeCleanup(); sheet._swipeCleanup=null; }
-  const warOffen = sheet.classList.contains('show');
-  sheet.classList.remove('show','is-dragging');
-  // Ist es unten, wird es geleert. Ein geschlossenes Blatt liegt nur unter
-  // dem Bildschirmrand, in einer eigenen Schicht — und behielt seinen
-  // Inhalt: nach dem Feed 5400 Knoten, die jede Stilberechnung der Seite
-  // mitlief, bis das nächste Blatt sie ersetzte. Geleert wird erst am Ende
-  // des Zuschiebens, sonst führe es leer hinunter, und nur, wenn in der
-  // Zwischenzeit kein neues Blatt aufgegangen ist.
-  const auf = sheet._auf;
-  if(warOffen){
-    const leeren = () => {
-      if(sheet._auf === auf && !sheet.classList.contains('show')) sheet.innerHTML = '';
-    };
-    if(window.matchMedia('(prefers-reduced-motion:reduce)').matches) leeren();
-    else _afterTransition(sheet, 'transform', 340, leeren);
-  }
-  sheet.style.transform='';
-  bg.style.opacity='';
-  bg.classList.remove('show');
-  // Falls Badge-Popover noch offen war (Navigation aus Popover heraus zu
-  // Match-Detail → Sheet schließt mit), Popover auch schließen.
+  // Das Popover kann auch allein über der Hauptansicht stehen. Home soll
+  // es weiterhin schließen, selbst wenn für das Blatt nichts mehr zu tun ist.
   const bpBg = document.getElementById('bpBg');
   if(bpBg && bpBg.classList.contains('show')) bpBg.classList.remove('show');
+  // Ein zweiter Schließknopf während des Zuschiebens darf dessen einzigen
+  // Abschluss nicht ersetzen und den Inhalt mitten in der Bewegung leeren.
+  const warOffen = sheet.classList.contains('show');
+  if(warOffen || bg.classList.contains('show')){
+    // Schließen entzieht auch noch wartenden Navigations-/Wischabschlüssen
+    // den Besitz. Sie dürfen das zugeschobene Blatt nicht wieder öffnen.
+    sheet._auf = (sheet._auf || 0) + 1;
+    _sheetAnimating = false;
+    // Swipe-Listener aufräumen
+    if(sheet._swipeCleanup){ sheet._swipeCleanup(); sheet._swipeCleanup=null; }
+    if(sheet._transitionAb) Object.values(sheet._transitionAb).forEach(ab => ab());
+    // Ein Knopf kann während eines Snap/Swap schließen. Er übernimmt nicht
+    // dessen Inline-Dauer; insbesondere ein alter Bounce darf die Bewegung
+    // nach unten nicht noch einmal mit translateY(0) überlagern.
+    sheet.style.transition='';
+    bg.style.transition='';
+    sheet.classList.remove('show','is-dragging','sheet-nudge');
+    // Ist es unten, wird es geleert. Ein geschlossenes Blatt liegt nur unter
+    // dem Bildschirmrand, in einer eigenen Schicht — und behielt seinen
+    // Inhalt: nach dem Feed 5400 Knoten, die jede Stilberechnung der Seite
+    // mitlief, bis das nächste Blatt sie ersetzte. Geleert wird erst am Ende
+    // des Zuschiebens, sonst führe es leer hinunter, und nur, wenn in der
+    // Zwischenzeit kein neues Blatt aufgegangen ist.
+    const auf = sheet._auf;
+    if(warOffen){
+      const leeren = () => {
+        if(sheet._auf === auf && !sheet.classList.contains('show')) sheet.innerHTML = '';
+      };
+      // Der root-Wisch wartet bereits bis ganz unten. Noch einmal auf die
+      // unveränderte Zielposition zu warten erzeugte keine Transition, nur
+      // einen weiteren 400-ms-Rückfall mit allen unsichtbaren Blattknoten.
+      if(schonUnten || window.matchMedia('(prefers-reduced-motion:reduce)').matches) leeren();
+      else _afterTransition(sheet, 'transform', 340, leeren);
+    }
+    sheet.style.transform='';
+    bg.style.opacity='';
+    bg.classList.remove('show');
+  }
   // v8.2: gequeuten News-Toast nachholen, falls beim Boot ein Recap
   // ihn blockiert hat. Verzögerung kommt aus _processDeferredNewsToast.
   try { if(window._processDeferredNewsToast) window._processDeferredNewsToast(); } catch(e){}
@@ -465,7 +494,7 @@ function bindSheetSwipe(){
       const eigeneGeste = geste;
       _afterTransition(sheet,'transform',280,()=>{
         if(sheet._auf !== auf || geste !== eigeneGeste) return;
-        closeSheet();
+        _sheetForceClose(sheet,bg,true);
         sheet.style.transition='';
         bg.style.transition='';
       });

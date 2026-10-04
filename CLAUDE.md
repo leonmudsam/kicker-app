@@ -220,7 +220,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **1061**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **1065**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -273,6 +273,11 @@ und ist sonst leer. Ein Neuzeichnen im selben Reiter lässt ihn offen — eine
 neue Partie oder ein anderer Zeitraum klappt nichts zu, was man gerade
 liest —, der Tabwechsel und der Klick aufs Logo leeren ihn: ein neuer Reiter
 beginnt mit der Rangliste oben und nicht mit einer Grafik darüber.
+
+Zeitweilige Arbeitsaufträge sind keine Ansichtsauswahl: `_ligaRefreshAuftrag`
+lebt im Navigations-Layer und wird nach Ende des gemeinsamen Datenabrufs
+geleert; `_loadAllLeise` gilt nur für dessen Lauf und wird im `finally`
+zurückgesetzt. Ein Vordergrundaufruf hat Vorrang vor stiller Fehleranzeige.
 
 > **Pflegepflicht.** Kommt eine Zustandsvariable dazu, wird sie hier genannt
 > und ihr Rücksetzverhalten beschrieben.
@@ -346,6 +351,9 @@ Vorlagen und fremd ersetzter Inhalt erzwingen einen Umbau. Eingabe und
 Einstellungen sind ausgenommen. Die fünf Navigationsknöpfe werden einmal
 gebaut und gebunden, danach ändert sich nur ihre aktive Klasse. Kein
 unbegrenzter HTML-Cache je Ansicht oder Filter.
+Die ganze `.view` wird nicht bei jedem Umbau verblasst/verschoben: Filter
+und Datenantworten wirkten sonst 320 ms lang wie ein erneuter Seitenstart.
+Erklärende Grafiken und Segmentwähler behalten ihre eigene Bewegung.
 
 Benutzerseitige Reiter-/Filterwechsel verwenden `_renderNachEingabe`:
 die Navigation antwortet synchron, genau ein Frame mit anschließender Aufgabe
@@ -486,6 +494,14 @@ bleibt. Unveränderte erfolgreiche Antworten behalten weiterhin den Cache.
 Reine Hintergrundticks verwenden `loadAll({nachladen:false})` und schließen
 sich nur an einen laufenden Abruf an. Sonst würde ein langsamer Abruf, der
 länger als dreißig Sekunden dauert, durch jeden Tick erneut verworfen.
+Jedes Tippen auf den unteren Liga-Knopf, auch wenn er schon aktiv ist,
+ruft `_ligaAktualisieren`: nach einem Rückmeldungsbild lädt der vorhandene
+Datenweg mit `leise:true`, ohne Dokumentreload oder Ladeansicht. Ein einzelner
+`_ligaRefreshAuftrag` bündelt weitere Liga-Taps bis zum Abrufende. Eine schon
+vor dem Tap gestartete Abfrage wird einmal frisch nachgeholt, nicht durch
+jeden weiteren Tap erneut verworfen. Unveränderte Daten behalten DOM/Caches;
+Abruffehler behalten die letzte Ansicht. Ein sich anschließender expliziter
+Vordergrundaufruf hebt den stillen Modus auf (`_loadAllLeise`).
 
 Kommen neue Daten, zeichnet `loadAll` zuerst und rechnet den News-Generator
 (kalt rund 370 ms) erst in einem ruhigen Moment danach (`_leerlauf` in
@@ -537,7 +553,10 @@ globalem Zustand ist.
 | `ambient` | Story-Snapshots, verlustfreie Bündel samt positiven und negativen Matchanlässen, historische Duellzuordnung, heutige rollende Ewige Tafel, 15-Uhr-Funfacts samt Mehrtages-Backfill, Realtime-Schutz, getrennte Score-/Anlassgrafiken mit publizierter Variationsspur, visuelle Stabilität, Feed-Texte und Story-Details | 582 |
 | `leistung` | DOM- und Navigations-Wiederverwendung samt Fokus und frischer Datenversion, Kalenderwechsel ohne Datenänderung, tatsächlich verzögerter vollständiger Feed samt großem Spieltag, Tageskarte, Filter-, Versions- und Schließschutz, begrenzte Portionen und Idle-Rückfall, gebündelte Datenabfragen, Fehler/Teilantworten, Wiederholen und frischer Folgedurchlauf auch während der Story-Synchronisierung, und Polling ohne unnötigen Zusatzabruf oder Verhungern langsamer Abrufe | 49 |
 | `bedienung` | Sofortige Navigationsantwort vor dem teuren Render, nur die letzte schnelle Auswahl, inerte alte Reiter, Freigabe nach Zeichnen/Abbrechen, alte Frame-Aufträge ohne Besitz, aktuelle Datenversion, ARIA-Navigation und geschützte Einstellungen, freie Texte/Cursor/Fokus und Regler auch bei späten oder fehlerhaften Datenantworten | 16 |
-| `bewegung` | Ein Zeichenauftrag je Wischbild, echte kurze Wischgeschwindigkeit samt Pause und Wegschwellen, Abbruch/Zweitfinger, Eingabe- und Scrollbesitz, Rückzug, Maus, neue und geschlossene Blätter ohne alte Zugbilder, transformbasierte Wähler mit unveränderter Zielgeometrie, Bewegungsruhe, Scrollbegrenzung, Knopfgeste und sichtbarer Tastaturfokus | 24 |
+| `bewegung` | Ein Zeichenauftrag je Wischbild, echte kurze Wischgeschwindigkeit samt Pause und Wegschwellen, Abbruch/Zweitfinger, Eingabe- und Scrollbesitz, Rückzug, Maus, neue und geschlossene Blätter ohne alte Zugbilder, transformbasierte Wähler mit unveränderter Zielgeometrie, Bewegungsruhe, Scrollbegrenzung, Knopfgeste und sichtbarer Tastaturfokus, abbrechbare Übergangsabschlüsse ohne alte Timer/Listener, idempotentes doppeltes Schließen, vollständiger Wisch ohne zweite Wartephase und unberührte Popover-/News-Nachholung | 31 |
+| `aktualisierung` | Stille Aktualisierung bei Awards → Liga und erneutem Liga-Tap, unmittelbare Navigation, bedienbare vorhandene Ansicht, gebündelte Mehrfach-Taps, unveränderte Daten ohne Cache-/DOM-Umbau, neue fremde Partien ohne Reload, Fehlerfreigabe ohne Verlust der Ansicht auch bei gleichzeitigem Hintergrundtick, einmaliger frischer Folgelauf und erhaltene neue Eingaben, Reiter/Filter ohne globale Eintrittsanimation | 16 |
+| `storyscroll` | Jede Storyöffnung oben, unabhängig von vorheriger Story und Feed-Scroll, synchroner Reset vor Markup, gleiche Story und direkter Faden, keine verspäteten Rückzüge, nur sichtbare Gruppen-/Fallback-Zeilen und Ergebnisbänder ohne doppelte verworfene Zeichnung | 20 |
+| `wiederholung` | Auszeichnungsmarken, historischer Vergabestand und Trägerfeld, einmaliger Eventindex, neue Wiederholungsmedaille samt nächster Marke, unveränderte Legacy-Snapshots, Stabilität nach neuen Partien und Kaltstart, Bündel und Detail mit derselben Bühne, mobile Geometrie | 44 |
 | `eingabe` | Eine kanonische Matchrechnung samt gültigem Memo, unverändertes Chancen-DOM, gebündelte Vorschau, unmittelbarer Stand und Gültigkeit, Eingabegrenzen, IME und Tastatur-/Pointerauswahl, stabile Teamsuche, alte Aufgaben, Einzelspeicherung, Fehlerfreigabe, Erfolg/Fehler nach Insert ohne Verlust neuer Entwürfe, Edit-Snapshot und eigene Blattbindungen | 42 |
 | `mobil` | Scrollreset vor neuem Markup, Blattstapel und Scroll-Restore, Besitzerprüfung jeder verspäteten Übergangs- und Wischphase, echtes verzögertes Leeren, auf das Profil begrenzte Knopfbindungen und bedarfsweises Layout samt unberührtem Wappen, erreichbaren Abschnitten und Handybreite — im Browser, ohne geräteabhängige Zeitgrenzen | 21 |
 | `prefix` | Vollständige kanonische Sim-Ergebnisse und History an exakten historischen Prefixen, gleichen Zeitstempeln, fremden Teilmengen und Array-Kopien, einmaliger Sim für Rekord und Saison-Peak, begrenzte Cache-Töpfe, Konfigurationswechsel, Edits, Adds mit und ohne Tick, Quellenidentität, Empty-State, stabile Saison-Gruppierungen, Monatsmemo und alle abgeleiteten Maps beim Kalenderwechsel — ohne Browser | 76 |
@@ -692,7 +711,14 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   kostet der Feed dabei über 100 ms Hauptthread, 94 % seines Markups sind die
   SVG der Wappen. `_afterTransition` horcht auf `transitionend` des eigenen
   Elements und hält einen Timer als Rückfall, denn eine Transition, die nie
-  startet, endet auch nie. `tests/blatt` misst den Abstand zwischen beidem.
+  startet, endet auch nie. Je Element/Eigenschaft gehört genau ein abbrechbarer
+  Abschluss zum aktuellen Übergang; Öffnen/Schließen oder ein neuer Übergang
+  entfernt alte Listener und Rückfall-Timer. Doppeltes Schließen invalidiert
+  keinen laufenden Leerschritt. Ein schon abgeschlossener Wisch leert sofort,
+  ohne auf eine zweite, gar nicht mehr stattfindende Bewegung zu warten.
+  Inline-Snap-/Swap-Dauern und Nudge werden nicht übernommen. Popover und
+  gequeute News-Hinweise bleiben auch bei bereits geschlossenem Blatt erreichbar.
+  `tests/blatt` und `tests/bewegung` messen Abschlüsse und verbleibende Arbeit.
   **Der Finger besitzt den Zug.** Eingabefelder und bereits gescrollte
   innere Listen gehören nicht der Schließgeste. Waagerechte/aufwärts gerichtete
   Gesten lösen den nicht passiven Zug-Lauscher. Gezeichnet wird nur der
@@ -858,6 +884,11 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   nacheinander öffnete, fand nichts an derselben Stelle. Die Partie steht dabei
   höchstens einmal im Blatt — `_ndKopfMatch` merkt sich, was der Kopf schon
   zeigt, damit `_newsMatchVsBlock` sie nicht wiederholt.
+  Jede Öffnung setzt den tatsächlichen Scrollbehälter `#nd` vor dem Markup auf
+  null, auch dieselbe Story und ein Faden aus dem offenen Detail; der Feed
+  darunter bleibt an seiner Stelle. Nur sichtbare Bausteine werden gebaut:
+  eigene Bühnen brauchen kein verworfenes Ergebnisband, gruppierte Listen
+  keine zweite flache Liste und Matchbündel nur die tatsächlich gezeigten Zeilen.
   **Das Blatt setzt fort, was die Karte angefangen hat**: dieselbe Rubrik,
   dasselbe Motiv, dieselbe Zeichenkachel, dieselben fetten Akzente, dazu eine
   Haarlinie und einen schwachen Flächenschimmer in der Farbe der Sorte am
@@ -1494,7 +1525,16 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   obwohl die Anzeigetafel genau das zeigt. Eine gewöhnliche Auszeichnung steht
   als Zeile im Sammelband, und was eine seltene nur als Ergebnis erzählt
   (`SP_ERGEBNIS_BADGE`, dieselbe Liste wie `BADGE_DECKT`), zeigt das Bild des
-  Ergebnisses. **Der Rangsprung braucht eine Tabelle**: am Monatsanfang
+  Ergebnisses. Eine runde Wiederholung ist dagegen eine persönliche Leistung:
+  `dataRef.rang` hält ihre historische Vergabezahl, die neue Medaille zeigt
+  „x. Mal" und höchstens drei Nachbarmarken statt „neu dabei". Auch reine
+  Ergebnis-Badges dürfen an diesen Wiederholungsmarken die Medaille tragen.
+  Takt und Grafik teilen `_badgeNaechsteMarke`; neue Occasiondaten speichern
+  `rang`, `wiederholung` und `marken`, alte V2-Daten ohne den Schalter bleiben
+  in ihrer publizierten Trägerform. Der erste Trägerstand und ein Legacy-Rang
+  kommen aus dem kanonischen Vergabe-Eventindex am `_spBasis`, gebunden an die
+  Eventcache-Referenz, nicht aus einem heutigen Vollzensus je Spieler.
+  **Der Rangsprung braucht eine Tabelle**: am Monatsanfang
   springt jeder Sieger zwei Plätze, weil die Tabelle aus drei Leuten besteht;
   er zählt erst, wenn die Rangliste belastbar ist (`_storyRangFrei`).
   **Die gewöhnliche Partie hat dreizehn Gesichter** (`SP_FORM`, `_spForm`).
@@ -2185,7 +2225,8 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   `NEWS_DB_SEITENGROESSE`; weder Datenweg noch Anzeige besitzen einen
   fachlichen Gesamtdeckel.
   **Dieselbe Auszeichnung ist einmal Nachricht, dann an runden Marken**
-  (`NEWS_BADGE_MARKEN`: 1, 5, 10, 25, 50, 100). Die Karte entstand jedes Mal
+  (`NEWS_BADGE_MARKEN`: 1, 5, 10, 20, 25, 50, 75, 100, 125; ab 150 jeder
+  weitere 25er-Schritt). Die Karte entstand jedes Mal
   neu, wenn jemand ein Badge wieder holte: gemessen stand „Martin: Mauer"
   vierzehnmal im Feed, wortgleich — der Text ist die Bedingung aus dem
   Katalog und ändert sich nie. 93 der 866 je gebildeten Karten gingen darauf

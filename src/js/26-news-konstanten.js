@@ -200,7 +200,9 @@ const NEWS_DB_SEITENGROESSE = 500;
 // gemessen etwa zwei gewonnene Spitzenspiele.
 const SAISON_ENDSPURT_ELO = 25;
 
-const NEWS_BADGE_MARKEN = [1, 5, 10, 25, 50, 100];
+// Die seltene Wiederholung bleibt auch oberhalb der hundertsten sichtbar.
+// 25 bleibt eine Marke alter Verleihungen; ab 150 geht es je 25 weiter.
+const NEWS_BADGE_MARKEN = [1, 5, 10, 20, 25, 50, 75, 100, 125];
 // Und die Klasse entscheidet mit, wie oft. Eine Liste fuer alle drei war zu
 // grob in beide Richtungen: eine LEGENDAERE Auszeichnung ist das Seltenste,
 // was der Katalog hergibt — „Absoluter Sieger" ist der Grund, warum jemand
@@ -212,8 +214,15 @@ const NEWS_BADGE_MARKEN = [1, 5, 10, 25, 50, 100];
 const NEWS_BADGE_MARKEN_KLEIN = [5, 10, 25, 50, 100];
 function _badgeTakt(rar, rang){
   if(rar === 'legendary') return true;
-  return (rar === 'common' ? NEWS_BADGE_MARKEN_KLEIN : NEWS_BADGE_MARKEN)
-    .indexOf(rang) >= 0;
+  if(rar === 'rare') return NEWS_BADGE_MARKEN.indexOf(rang) >= 0
+    || (Number.isInteger(rang) && rang >= 150 && rang % 25 === 0);
+  // Die neue Leiter betrifft Seltenes, nicht den bisherigen Takt kleiner
+  // oder negativer Meldungen.
+  return NEWS_BADGE_MARKEN_KLEIN.indexOf(rang) >= 0 || (rar !== 'common' && rang === 1);
+}
+function _badgeNaechsteMarke(rang){
+  const n = Math.max(0, Math.floor(Number(rang) || 0));
+  return NEWS_BADGE_MARKEN.find(k => k > n) || Math.max(150, (Math.floor(n / 25) + 1) * 25);
 }
 
 // ─── §11.0b — Wann jemand über sich hinauswächst ─────────────────────
