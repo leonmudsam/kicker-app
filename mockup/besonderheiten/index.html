@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Besonderheiten · Rekorde und Monatschroniken</title>
+  <link rel="stylesheet" href="entwurf.css">
+  <script src="katalog.js" defer></script>
+  <script src="erweiterung.js" defer></script>
+  <script src="partie-rekorde.js" defer></script>
+  <script src="monats-muster.js" defer></script>
+  <script src="umschalt-monat.js" defer></script>
+  <script src="entwurf.js" defer></script>
+</head>
+<body>
+<main class="seite">
+  <header class="kopf">
+    <p class="rubrik">Kicker Liga · Awards · Konzept</p>
+    <h1>Besonderheiten statt mehr Siege.</h1>
+    <p class="intro">Offene Reihenfolgemuster und auffällige Monatsbilder. Ergänzend zum bestehenden Katalog – auch für Spieler, die selten gewinnen.</p>
+    <p class="basis"><strong>71 Rekorde · 60 Monatschroniken geprüft.</strong> Die App bleibt unverändert. Karten und Blätter verwenden die bestehende dunkle Designsprache.</p>
+  </header>
+
+  <nav class="reiter" aria-label="Konzeptbereiche" role="tablist">
+    <button type="button" id="tab-rekorde" role="tab" aria-controls="rekorde" aria-selected="true">Rekorde <span>15</span></button>
+    <button type="button" id="tab-monate" role="tab" aria-controls="monate" aria-selected="false">Monatschroniken <span>24</span></button>
+    <button type="button" id="tab-pruefung" role="tab" aria-controls="pruefung" aria-selected="false">Abgleich</button>
+  </nav>
+
+  <section id="rekorde" role="tabpanel" aria-labelledby="tab-rekorde">
+    <div class="abschnitt"><h2>Eine kleine Bestmarke bleibt eine Bestmarke.</h2><p>Direkt an Partien erreichen und ausbauen, nicht erst am Monatsende. Keine Mindestquote, kein Mindest-Elo, keine zusätzliche Längenlatte. Die vorhandene Zulassung ab 30 Laufbahnpartien bleibt; fehlende Daten sind keine Niederlagen.</p></div>
+    <div class="hinweis"><b>Muster, Ereignisse und Beziehungsbilder</b><span>Pendler führt einen Entwurf fort, Ausbruch ergänzt einen vorhandenen Eintrag. Doppelgesicht hat eine gemeinsame Monats- und Allzeitfrage. Zusätzliche Beispiele sind gekennzeichnet, nicht als Live-Rekorde ausgegeben.</span></div>
+    <div class="karten" id="rekord-karten"></div>
+    <p class="klein">Offene Serien, einzelne abgeschlossene Ereignisse und kontinuierliche Abstände statt einer endlichen Sammlung „aller Partner“. Mehr Partien bieten trotzdem mehr Gelegenheiten. Neutrale Muster bleiben Fügungen; abgeschlossene besondere Leistungen stehen unter Bestmarken.</p>
+  </section>
+
+  <section id="monate" role="tabpanel" aria-labelledby="tab-monate" hidden>
+    <div class="abschnitt"><h2>Der größte Ausschlag, nicht die höchste Quote.</h2><p>Ein Monat mit 40 % kann auffälliger sein als einer mit 80 %. Verglichen wird die passende eigene Vorgeschichte, die Erwartung oder ein besonderes Reihenfolgemuster – nie einfach die Zahl der Siege.</p></div>
+    <div class="hinweis"><b>Keine feste Erfolgsquote als Eintrittskarte</b><span>Mindeststichproben unten sind Vorschläge. Klassen und Prestige bleiben offen, bis die Kandidaten an mehreren Monaten geprüft wurden. Alle Karten zeigen erfundene Beispiele für den Monatsabschluss; laufende Werte wären vorläufig.</span></div>
+    <div class="karten" id="monats-karten"></div>
+    <p class="klein">Keine garantierte Verteilung: Tatsächliche Bestwerte werden geteilt, nicht an einen schwächeren Wert weitergereicht. Ein fehlender Vormonat ist kein Nullwert. Archivierte Chroniken bleiben unverändert.</p>
+  </section>
+
+  <section id="pruefung" role="tabpanel" aria-labelledby="tab-pruefung" hidden>
+    <div class="abschnitt"><h2>Nicht noch einmal dieselbe Geschichte.</h2><p>Der Abgleich zählt den aktuellen Quellkatalog, nicht veraltete Zahlen aus früheren Entwürfen. Gleiche Messfrage auf zwei Zeitachsen bleibt eine Disziplin.</p></div>
+    <div class="abgleich-grid">
+      <article class="notiz"><p class="rubrik">Messung · 466 gespeicherte Testpartien</p><h3>Echo bleibt in Reserve</h3><p>Sieben von elf zugelassenen Spielern teilen bereits die längste identische Ergebnisfolge: <strong>3 Partien</strong>. Kein ungültiger Rekord, aber derzeit wenig unterscheidbare Geschichten. Deshalb nicht in der empfohlenen Auswahl.</p><p class="klein">Echo ist nicht Wiedergänger: unmittelbare Folge statt Häufigkeit an einem Tag. Die Abgrenzung ist echt, der Mehrwert noch dünn.</p></article>
+      <article class="notiz"><p class="rubrik">Verwandte Familie</p><h3>Herzschlaglauf sorgfältig bündeln</h3><p>Nadelöhr zählt den gesamten Ein-Tor-Anteil, Herzschlaglauf eine zusammenhängende Folge. Die Rangfolgen sind in der Testbasis ähnlich. Wenn beide auf dasselbe Match reagieren, gehören sie als Zeilen auf dieselbe Karte, nicht in doppelte Stories.</p><p class="klein">Gleichstände bleiben gültig. Ein niedriger Bestwert wird nicht durch eine erfundene Mindestlänge ausgeschlossen.</p></article>
+      <article class="notiz"><p class="rubrik">Alternative, nicht Zusatz</p><h3>Rollen-Aufbruch</h3><p>Die vorher schwächere eigene Position verbessert sich. Das wäre eine Spezialisierung des Quantensprungs. Erst aufnehmen, wenn eigene Halter und Belege einen zusätzlichen Nutzen zeigen – nicht dieselbe Formsteigerung zweimal auszeichnen.</p></article>
+      <article class="notiz"><p class="rubrik">Eine Achse</p><h3>Keine gespiegelten Kopien</h3><p>Formbruch wäre die negative Seite des Quantensprungs. Rückgang und Anstieg nutzen dieselbe Rechnung. Eine Schattenvariante würde keinen positiven Leistungswert erhalten; sie ist hier kein weiterer unabhängiger Vorschlag.</p></article>
+      <article class="notiz"><p class="rubrik">Eine Disziplin, zwei Zeitachsen</p><h3>Doppelgesicht und Umschaltmoment</h3><p>Beide haben dieselbe jeweilige Messfrage im Monat und über die Laufbahn. Monats- und Rekordansicht sind keine zwei unabhängigen Auszeichnungen. Die unterschiedlichen Mindeststichproben gehören zur jeweiligen Zeitachse.</p></article>
+      <article class="notiz"><p class="rubrik">Direkt an einer Partie</p><h3>Begegnungsfäden statt Monatsleiter</h3><p>Grenzverkehr wächst beim nächsten passenden Wiedersehen. Fixpunkt braucht dagegen eine lückenlose eigene Matchfolge gegen dieselbe Person. Treffen ohne diese Person verhalten sich bewusst unterschiedlich – keine zwei Namen für denselben Zähler.</p></article>
+      <article class="notiz"><p class="rubrik">Bewusst in Reserve</p><h3>Kein automatischer Gegneranstieg</h3><p>Immer stärkere Gegner können bloß dadurch entstehen, dass dieselben Gegner zuvor gegen den Spieler gewonnen haben. Das wird nicht als weitere Leiter ausgezeichnet. Gegensprung verlangt deshalb zwei ausgetauschte Gegner und kanonische Anpfiffwerte.</p></article>
+      <article class="notiz"><p class="rubrik">Vor dem späteren Einbau prüfen</p><h3>Abweichung ist noch kein Beweis</h3><p>Das ruhige Feld kann durch Stichprobenrauschen glatter werden. Bilanzparadox ist mit knappen und deutlichen Ergebnissen verwandt. Der Entwurf zeigt eigenständige Fragen, nicht bereits kalibrierte neue Prestige-Werte.</p></article>
+    </div>
+    <h2 class="zwischenkopf">Bereits abgedeckt oder nicht belegbar</h2>
+    <div class="ausschluss" id="ausschluss"></div>
+    <details class="bestand">
+      <summary>Implementierten Katalog ansehen · 71 Rekorde / 60 Monatschroniken</summary>
+      <div id="bestand"></div>
+    </details>
+  </section>
+  <footer>Konzept · keine Änderung an App, Datenbank oder bestehenden Story-Snapshots · Quellenstand 04.10.2026</footer>
+</main>
+
+<dialog id="detail" aria-labelledby="detail-titel">
+  <div class="blatt-kopf"><div><p class="rubrik" id="detail-kategorie"></p><h2 id="detail-titel"></h2></div><button type="button" id="detail-schliessen" class="schliessen" aria-label="Details schließen">×</button></div>
+  <div class="blatt-inhalt" id="detail-inhalt"></div>
+</dialog>
+</body>
+</html>
