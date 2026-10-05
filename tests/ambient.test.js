@@ -6345,7 +6345,8 @@ const _bisPartie = JSON.parse(K.eval(`JSON.stringify((function(){
   const s = {id:'test_jubilee', when:m100.created_at, title:'x', desc:'y',
     dataRef:{type:'jubilee', pid, total:100, matchId:m100.id}};
   const h = String(_newsDetailMitte(s)).replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ');
-  const z = h.match(/Siege \\/ Niederlagen (\\d+) \\/ (\\d+)/);
+  // Die Bilanz steht als Balken mit „x Siege … y Niederlagen" darunter.
+  const z = h.match(/(\\d+) Siege [^]*? (\\d+) Niederlagen/);
   const ms = {id:'test_ms', when:m100.created_at, title:'x', desc:'y',
     dataRef:{type:'milestone_wins', pid, milestone:'x', matchId:m100.id}};
   const h2 = String(_newsDetailMitte(ms)).replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ');
@@ -7138,6 +7139,150 @@ ok(_rg.drei.length === 1 && _rg.drei[0] === 'runde_tr1@' + _runde.ende && !_rg.f
    && !_rg.offen.length && _rg.zu.length === 1,
    'eine Runde braucht drei Partien derselben vier ohne einen Fünften und entsteht dreißig Minuten nach der letzten',
    JSON.stringify(_rg));
+
+console.log('=== DIE BLAETTER DER EWIGEN TAFEL ZEIGEN IHRE STORY ALS BILD ===');
+// Monatschronik, Monatstafel, Erstling und Insignium-Stufe öffneten eine
+// Spalte aus Zahlenkästen und Textzeilen. Sie tragen jetzt eine Bühne, und
+// deren Zahlen werden hier gegen ihre Quelle gehalten: die Tafel gegen
+// `seasonTitles`, die drei Quellen der Stufe gegen die gespeicherten Punkte,
+// der Wechsel gegen die Halter der Karte.
+const _tafelBl = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  const typ = t => roh.filter(s => (s.dataRef||{}).type === t);
+  const blatt = s => { _ndBlattJetzt = null; return {k:_newsBlattKopf(s) || '', m:_newsDetailMitte(s) || ''}; };
+  const zahl = (re, h) => (h.match(re) || []).length;
+  const r = {};
+  const ins = typ('insignium_stufe')[0];
+  if(ins){
+    const b = blatt(ins), d = ins.dataRef;
+    const ql = (b.m.match(/<span class="(auszeichnung|monat|rekord)"><b class="num">(\\d+)<\\/b>/g) || [])
+      .map(x => +x.replace(/\\D+(\\d+)<.*/, '$1'));
+    r.ins = {buehne:/class="nd-is-z"/.test(b.k), grade:zahl(/class="nd-is-gf/g, b.m),
+      quellen:ql.length, summe:ql.reduce((a, x) => a + x, 0), punkte:d.punkte,
+      stufe:b.k.indexOf('>' + INSIGNIEN[insigniumStufeVon(d.punkte)].name + '<') >= 0};
+  }
+  const mo = typ('chronik_monat')[0];
+  if(mo){
+    const b = blatt(mo), aw = seasonTitles(mo.dataRef.sid).awarded;
+    const je = {}; aw.forEach(a => { je[a.pid] = (je[a.pid] || 0) + 1; });
+    const max = Math.max(...Object.values(je));
+    const erste = (b.k.match(/class="nd-bk-z hell"[\\s\\S]*?<b class="num">(\\d+)<\\/b>/) || [])[1];
+    r.monat = {zellen:zahl(/class="nd-mo-z"/g, b.m), soll:aw.length,
+      balken:zahl(/class="nd-bk-z/g, b.k), traeger:Math.min(6, Object.keys(je).length),
+      erste:+erste, max};
+  }
+  const ch = typ('chronik_geholt')[0];
+  if(ch){
+    const b = blatt(ch), d = ch.dataRef;
+    const alle = (d.alle && d.alle.length ? d.alle : d.playerIds);
+    const weg = (d.vorher || []).filter(id => alle.indexOf(id) < 0);
+    r.chronik = {buehne:/nd-buehne nd-rk/.test(b.k),
+      namen:alle.every(id => b.k.indexOf(esc(pname(id))) >= 0),
+      vorher:weg.length ? /nd-rk-alt/.test(b.k) : !/nd-rk-alt/.test(b.k),
+      name:b.k.indexOf(esc(d.chronName)) >= 0, tafel:b.m.indexOf('Ganze Tafel') >= 0};
+  }
+  // Der Erstling entsteht nur am Monatswechsel; gestellt an einem echten Eintrag.
+  const a = seasonTitles('2026-07').awarded[0];
+  if(a){
+    const s = {id:'x_erst', cat:'tafel', ic:a.ic, title:'Erst', desc:'', when:new Date(2026,7,1,0,1),
+      dataRef:{type:'chronik_erstling', sid:'2026-07', pid:a.pid, titel:a.name}};
+    const b = blatt(s);
+    const monate = (seasonTitleHistory(a.pid) || []).filter(x => x.sid >= '2026-07');
+    r.erst = {buehne:/nd-buehne nd-er/.test(b.k), name:b.k.indexOf(esc(a.name)) >= 0,
+      monate:zahl(/<span class="(da)?"><i>/g, b.m), soll:monate.length > 1 ? monate.length : 0};
+  }
+  // Der Tafel-Moment: jede Bewegung ein Zeichen auf der Uhr des Tages, jeder
+  // Beteiligte mit Namen, und jede Zeile mit Haltern als Bild statt Satz.
+  _cache._stories = roh.slice().sort((a,b)=>new Date(b.when)-new Date(a.when));
+  _cache._consolFrom = null; _cache._frischVon = null;
+  const tm = getStoriesCache().find(s => (s.dataRef||{}).type === 'sammel' && s.dataRef.quelle === 'tafel');
+  if(tm){
+    const b = blatt(tm), teile = tm.dataRef.teile;
+    const mehr = (b.k.match(/<b class="num">\\+(\\d+)<\\/b><\\/span>/g) || []).map(x => +x.replace(/\\D/g, ''));
+    const pids = [...new Set(teile.flatMap(t => t.pids || []))];
+    const mitHalter = teile.filter(t => t.rname && (t.halter || []).length);
+    r.moment = {zeichen:zahl(/<i class="tm-(rek|chr|aus|ins)">/g, b.k) + mehr.reduce((a, x) => a + x, 0), teile:teile.length,
+      namen:pids.every(id => b.k.indexOf('<b>' + esc(pname(id)) + '</b>') >= 0),
+      bilder:zahl(/class="nw-zeile nw-tz/g, b.m), mitHalter:mitHalter.length + teile.filter(t => (t.typ || t.type) === 'insignium_stufe').length,
+      saetze:zahl(/class="nw-zeile nw-tz[^]*?class="nw-satz/g, b.m)};
+  }
+  return r;
+})())`));
+const _tb = _tafelBl;
+ok(_tb.moment && _tb.moment.zeichen === _tb.moment.teile && _tb.moment.namen
+   && _tb.moment.bilder === _tb.moment.mitHalter && _tb.moment.saetze === 0,
+   'das Blatt eines Tafel-Moments legt jede Bewegung auf die Uhr des Tages, nennt jeden Beteiligten und zeigt jede Zeile mit Haltern als Bild ohne Satz',
+   JSON.stringify(_tb.moment));
+ok(_tb.ins && _tb.ins.buehne && _tb.ins.grade === 3 && _tb.ins.quellen === 3
+   && _tb.ins.summe === _tb.ins.punkte && _tb.ins.stufe,
+   'das Blatt einer Insignium-Stufe zeigt die Verwandlung, drei Quellen, die zusammen die Punkte der Karte ergeben, und die drei Grade',
+   JSON.stringify(_tb.ins));
+ok(_tb.monat && _tb.monat.zellen === _tb.monat.soll && _tb.monat.balken === _tb.monat.traeger
+   && _tb.monat.erste === _tb.monat.max,
+   'das Blatt der Monatschronik zeigt jeden Eintrag der Tafel als Zelle und die Träger als Balken',
+   JSON.stringify(_tb.monat));
+ok(_tb.chronik && _tb.chronik.buehne && _tb.chronik.namen && _tb.chronik.vorher && _tb.chronik.name && _tb.chronik.tafel,
+   'das Blatt eines Chronik-Wechsels zeigt dieselbe Bühne wie ein Rekord, mit allen Haltern und nur echten Vorgängern',
+   JSON.stringify(_tb.chronik));
+ok(_tb.erst && _tb.erst.buehne && _tb.erst.name && _tb.erst.monate === _tb.erst.soll,
+   'das Blatt eines ersten Eintrags zeigt das Wappen mit der Chronik und die Monate seitdem',
+   JSON.stringify(_tb.erst));
+
+console.log('=== EIN WAPPEN UND EINE ZAHL, UND KEINE LEERE UEBERSCHRIFT ===');
+// Meilenstein, Jubiläum, Form, Ausschlag, Spitzenspiel und runde Marken
+// tragen eine Bühne, deren Zahl die der Karte ist. Und kein Blatt trägt eine
+// Überschrift ohne etwas darunter: „Die Partie zum Meilenstein" stand über
+// nichts, weil die Partie schon im Kopf stand.
+const _wz = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  const blatt = s => { _ndBlattJetzt = null; return {k:_newsBlattKopf(s) || '', m:_newsDetailMitte(s) || ''}; };
+  const falsch = [], gesehen = {};
+  let n = 0, leer = [];
+  roh.forEach(s => {
+    const d = s.dataRef || {};
+    let b; try { b = blatt(s); } catch(e){ return; }
+    if(/class="nd-section">[^<]*<\\/div>\\s*(<div class="nd-section"|$)/.test(b.m.trim())) leer.push(d.type);
+    if(gesehen[d.type]) return;
+    const zahl = {jubilee:() => d.total, milestone_wins:() => parseInt(d.milestone, 10), milestone_goals:() => parseInt(d.milestone, 10),
+      milestone_elo:() => d.mark, elo_swing:() => '−' + Math.abs(d.delta), top_form:() => '+' + d.vorsprung}[d.type];
+    if(zahl){
+      gesehen[d.type] = 1; n++;
+      const z = String(zahl());
+      // Die Zahl der Bühne, nicht die gleiche Zahl in der Leiter darunter.
+      const groß = (b.k.match(/class="nd-hz-t"><em>[^<]*<\\/em><b class="num">([^<]*)<\\/b>/) || [])[1];
+      if(!/nd-buehne nd-hz/.test(b.k) || groß !== (/^\\d+$/.test(z) ? _spZahl(+z) : z)) falsch.push(d.type + ' ' + z + ' statt ' + groß);
+    }
+    if(d.type === 'top_clash'){
+      gesehen[d.type] = 1; n++;
+      const m = matches.find(x => x.id === d.matchId);
+      if(!/nd-buehne nd-ts/.test(b.k) || b.k.indexOf('>' + m.score_a + '</em>') < 0 || b.k.indexOf('>' + m.score_b + '</em>') < 0) falsch.push('top_clash');
+    }
+    if(d.type === 'badge_marken'){
+      gesehen[d.type] = 1; n++;
+      if((b.k.match(/class="nd-bm-k/g) || []).length !== d.marken.length) falsch.push('badge_marken');
+    }
+  });
+  // Der Fun Fact eines Spielers: dieselbe Bühne mit seinem Wert. Gezogen an
+  // mehreren Tagen, weil je Tag genau einer entsteht.
+  let fakten = 0;
+  for(let t = 10; t <= 26; t += 2){
+    let l = []; try { l = _buildAmbientStories(new Date(2026, 7, t, 15, 5), pmap(), id => pname(id), []) || []; } catch(e){}
+    l.forEach(s => { const d = s.dataRef || {};
+      if(d.leiter || !d.ambientPid || d.vv == null || d.vv === '') return;
+      fakten++;
+      const b = blatt(s);
+      const groß = (b.k.match(/class="nd-hz-t"><em>[^<]*<\\/em><b class="num">([^<]*)<\\/b>/) || [])[1];
+      if(groß !== esc(String(d.vv))) falsch.push('ambient ' + d.sub + ': ' + groß + ' statt ' + d.vv);
+      if(!b.m.trim()) falsch.push('ambient ' + d.sub + ' ohne Mitte');
+    });
+  }
+  n += fakten ? 1 : 0;
+  return {n, falsch, leer:[...new Set(leer)], fakten};
+})())`));
+ok(_wz.n >= 6 && _wz.fakten > 0 && !_wz.falsch.length,
+   'Meilenstein, Jubiläum, Form, Ausschlag, Spitzenspiel, runde Marken und der Fun Fact tragen ihre Zahl auf einer Bühne',
+   _wz.falsch.join(' | ') || _wz.n + ' Arten, ' + _wz.fakten + ' Fun Facts');
+ok(!_wz.leer.length, 'kein Blatt trägt eine Überschrift ohne etwas darunter', _wz.leer.join(', '));
 
 console.log('\n' + (fails ? '✗ ' + fails + ' von ' + checks + ' CHECKS FEHLGESCHLAGEN' : '✓ ALLE ' + checks + ' CHECKS BESTANDEN'));
 process.exit(fails ? 1 : 0);

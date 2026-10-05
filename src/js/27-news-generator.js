@@ -2603,7 +2603,9 @@ function _buildStories(){
         stories.push({
           id: `chronik_frei_${_sid}`,
           cat: 'tafel',
-          ic: 'chronicle',
+          // „chronicle" gibt es im Katalog nicht, und der Kopf des Blatts
+          // stand ohne Zeichen da.
+          ic: 'scroll',
           title: `Die Monatstafel im ${seasonLabel(_sid)} ist offen`,
           desc: `Ab dem ${CHRONIK_MIN_TAGE}. Spieltag wird der Monat gewertet. `
               + `${_fEintraege} ${_fEintraege === 1 ? 'Eintrag steht' : 'Einträge stehen'} `
@@ -2907,6 +2909,9 @@ function _buildStories(){
                         + (stand.naechste
                            ? ` Bis zum ${stand.naechste.name} fehlen ${stand.fehlt}.` : ''),
                       stufeName:INSIGNIEN[stufe].name, punkte:stand.punkte, oben,
+                      // Die Aufteilung als Zahlen: das Blatt zeichnet sie als Balken
+                      // und las sie sonst aus dem Satz der Karte.
+                      teile:Object.assign({}, stand.teile),
                       // Eine wiedererreichte Stufe ist kein erstmaliger
                       // Aufstieg: das Blatt soll den Unterschied nennen
                       // koennen, ohne ihn aus dem Titel zu lesen.

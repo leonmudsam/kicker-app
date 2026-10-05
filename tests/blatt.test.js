@@ -2414,8 +2414,11 @@ const ok = (c, msg, det) => {
       const brauchtZeichen = d.type === 'insignium_stufe' || (d.type === 'ambient' && d.prestige);
       if(brauchtZeichen){
         insBlaetter++;
-        box.innerHTML = m;
-        if(box.querySelector('.nd-ins svg')) mitZeichen++;
+        // Die Stufe steht seit ihrem eigenen Blatt groß auf der Bühne, also
+        // im Kopf; die Prestige-Karte trägt sie weiter als Block in der Mitte.
+        let ganz = ''; try { ganz = body(s) || ''; } catch(e){}
+        box.innerHTML = ganz;
+        if(box.querySelector('.nd-ins svg, .nd-is-z svg')) mitZeichen++;
         if(box.querySelector('.nf-leiter')) mitLeiter++;
         // Und der Kopf nennt Stufe und Prestige dann nicht noch einmal als Text.
         let h = ''; try { h = body(s) || ''; } catch(e){}
