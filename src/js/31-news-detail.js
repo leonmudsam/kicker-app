@@ -948,7 +948,7 @@ function _ndBadgeBlatt(s){
   const kopf = `<div class="nd-buehne nd-bd">${medaille}<div class="nd-bd-w">${pids.slice(0, 4).map(id =>
     `<span data-pid="${esc(id)}">${avHtml(pm[id], '', {ins:true, px:52, feuer:0})}<b>${esc(_spName(id))}</b></span>`).join('')}</div></div>`;
   const m = d.matchId ? (matches || []).find(x => x.id === d.matchId) : null;
-  const alle = Object.keys(pm).filter(id => !pm[id].hidden);
+  const alle = Object.keys(pm).filter(id => sichtbar(pm[id]));
   const hat = id => (getCachedBadges(id) || []).some(b => b.id === d.badgeId);
   const traeger = alle.filter(hat).length;
   const feld = `<div class="nd-tg">${alle.sort((x, y) => hat(y) - hat(x)).map((id, k) => `<span class="${hat(id) ? 'hat' : ''}${pids.includes(id) ? ' dies' : ''}" data-pid="${esc(id)}" style="--k:${k}">`

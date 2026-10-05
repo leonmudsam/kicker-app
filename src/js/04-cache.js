@@ -306,8 +306,12 @@ function getSeasonPositionHistory(seasonId){
   }
 
   // Aktive Spieler in dieser Saison = wer ≥1 Saison-Match hat
+  // Wer im Monat antritt, steht im Verlauf [§C40]: ein Monat, der vor dem
+  // Karriereende zu war, behält ihn; der laufende vergleicht ohne ihn — sonst
+  // stünde er in der Kurve über dem, der die Tabelle wirklich anführt.
   const activeSet = new Set();
-  sMatches.forEach(m => [m.a1,m.a2,m.b1,m.b2].forEach(id => activeSet.add(id)));
+  const _bis = sEnd.getTime();
+  sMatches.forEach(m => [m.a1,m.a2,m.b1,m.b2].forEach(id => { if(ligaAktiv(id, _bis)) activeSet.add(id); }));
   const activeIds = [...activeSet];
 
   // Empty-State: 0 oder 1 aktive Spieler → kein sinnvolles Diagramm
@@ -466,7 +470,9 @@ function getSeasonRankingsCache(){
     const list=Object.keys(endElos)
       .filter(pid=>{
         const p=pm[pid];
-        if(!p||p.hidden) return false;
+        // Ein Monat, der vor dem Karriereende zu war, behält seine
+        // Rangliste; der laufende vergleicht nur, wer noch spielt [§C40].
+        if(!p||!ligaAktiv(p,seasonEnd(sid).getTime())) return false;
         return (playedMap[pid]||0)>0;
       })
       .map(pid=>({pid,elo:endElos[pid]}))

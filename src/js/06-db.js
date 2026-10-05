@@ -13,8 +13,10 @@ function pmap(){
   return m;
 }
 
-// Nur sichtbare Spieler (für Ranglisten)
-function activePlayers(){ return players.filter(p=>!p.hidden); }
+// Wer heute in der Liga antritt: nicht ausgeblendet und nicht im Ruhestand
+// [§C40]. Die Ranglisten, die Eingabe und der Feed lesen von hier; wer die
+// Geschichte zeigt, fragt `sichtbar`.
+function activePlayers(){ return players.filter(p=>ligaAktiv(p)); }
 function pname(id){const p=pmap()[id];return p?p.name:'?';}
 function gamesPlayed(id){return matches.filter(m=>[m.a1,m.a2,m.b1,m.b2].includes(id)).length;}
 

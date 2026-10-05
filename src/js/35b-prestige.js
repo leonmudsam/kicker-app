@@ -323,7 +323,9 @@ function prestigeTabelle(bisMs){
     _topfDeckel(_cache._prestigeBis, 20);
   }
 
-  const aktive = (players || []).filter(p => p && !p.hidden);
+  // Wer in der Liga antritt [§C40]: der Rang im Prestige vergleicht die, die
+  // noch spielen. Ein Ruheständler hat seinen eingefrorenen Stand.
+  const aktive = (players || []).filter(p => ligaAktiv(p));
   const gesamt = aktive.length || 1;
   const quelleMatches = bisMs ? matches.filter(m => mts(m) <= bisMs) : matches;
 
@@ -446,13 +448,27 @@ function rekordQuelleVon(pid, cid){
   return (P.quellen || []).find(q => q.q === 'rekord' && q.id === cid) || null;
 }
 
+// Wer nichts geholt hat, steht am Fuß der Leiter. Eine Stelle für den
+// leeren Stand, damit der eingefrorene Rückfall nicht anders aussieht als
+// der eines Neulings.
+function prestigeLeer(von){
+  return {punkte:0, stufe:0, insignie:INSIGNIEN[0], naechste:INSIGNIEN[1],
+          fehlt:INSIGNIEN[1].min, zacken:0, grad:0,
+          teile:{auszeichnung:0,monat:0,rekord:0},
+          zahlen:{auszeichnung:0,monat:0,rekord:0}, quellen:[], platz:0, von:von || 0};
+}
+
 function prestigeOf(pid, bisMs){
+  // Ein Ruheständler steht, wie er beim Karriereende stand [§C40]: Punkte,
+  // Stufe, Grad und Quellen. Ein Zeitpunkt davor wird in der Zeitmaschine
+  // gerechnet — in der Liga von heute kommt er nicht mehr vor.
+  if(imRuhestand(pid)){
+    if(bisMs == null || bisMs >= ruhestandMs(pid)) return ruhestandStand(pid).prestige || prestigeLeer(0);
+    return _ruheBis(pid, bisMs, () => prestigeOf(pid, bisMs));
+  }
   const T = prestigeTabelle(bisMs);
   const e = T.byPid[pid];
-  if(!e) return {punkte:0, stufe:0, insignie:INSIGNIEN[0], naechste:INSIGNIEN[1],
-                 fehlt:INSIGNIEN[1].min, zacken:0, grad:0,
-                 teile:{auszeichnung:0,monat:0,rekord:0},
-                 zahlen:{auszeichnung:0,monat:0,rekord:0}, quellen:[], platz:0, von:T.gesamt};
+  if(!e) return prestigeLeer(T.gesamt);
   const i = insigniumStufeVon(e.punkte);
   const letzte = i === INSIGNIEN.length - 1;
   // Der Grad folgt den Schwellen oben. Die letzte Stufe hat kein Ende;

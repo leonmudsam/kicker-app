@@ -1389,7 +1389,8 @@ function _newsTafelWert(s){
 function _newsGesamtrang(pid){
   try {
     const career = (getGlobalSim() || {}).careerElo || {};
-    const ids = Object.keys(career).filter(id => pmap()[id] && !pmap()[id].hidden);
+    // Ein Ruheständler hat keinen Platz in der Liga von heute [§C40].
+    const ids = Object.keys(career).filter(id => ligaAktiv(pmap()[id]));
     ids.sort((a, b) => (career[b] ?? 0) - (career[a] ?? 0));
     return ids.indexOf(pid) + 1;
   } catch(e){ return 0; }
@@ -1412,7 +1413,7 @@ function _newsRarityLabel(r){
 function _newsBadgeHalterText(badgeId){
   if(!badgeId) return '';
   try {
-    const ids = Object.keys(pmap()).filter(id => !pmap()[id].hidden);
+    const ids = Object.keys(pmap()).filter(id => sichtbar(pmap()[id]));
     const n = ids.filter(id => (getCachedBadges(id) || []).some(b => b.id === badgeId)).length;
     if(!n) return '';
     return n === 1 ? 'als Einziger in der Liga' : `${n} von ${ids.length} tragen sie`;

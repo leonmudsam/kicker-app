@@ -484,9 +484,15 @@ function _chronicleCtx(bisMs){
   };
 
   // Zu kurze Laufbahnen und versteckte Spieler fliegen raus, BEVOR die
-  // Rekorde vergeben werden — sonst hält ein Gast den Liga-Rekord.
+  // Rekorde vergeben werden — sonst hält ein Gast den Liga-Rekord. Ein
+  // Ruheständler auch, und zwar auch in einem Zeitschnitt vor seinem
+  // Karriereende [§C40]: ein Liga-Rekord ist ein Vergleich mit der Liga von
+  // heute. Sonst schriebe der Feed am Tag nach dem Abschied „X übernimmt"
+  // für jeden Rekord, den der Ruheständler abgeben musste, und hängte es an
+  // eine Partie, die damit nichts zu tun hat. Seine eigenen Rekorde stehen
+  // eingefroren im Profil (`ruhestandStand`).
   Object.keys(P).forEach(id => {
-    if(!pm[id] || pm[id].hidden || P[id].games < CHRON_MIN_GAMES){ delete P[id]; return; }
+    if(!ligaAktiv(id) || P[id].games < CHRON_MIN_GAMES){ delete P[id]; return; }
   });
 
   // ── Die zwei Kammern [§C35]: ein Durchlauf ueber die Rohsicht ──────
@@ -995,9 +1001,11 @@ function saisonRekorde(sid){
 // Alle Liga-Rekorde, die ein Spieler haelt — in Katalog-Reihenfolge, also
 // wertvollster zuerst. `chronicleOf` liefert davon nur den ersten; das Profil
 // zeigt den Rest hinter „Mehr anzeigen".
-function chroniclesOfPlayer(pid){
+function chroniclesOfPlayer(pid, bisMs){
+  // Ein Ruheständler hält, was er beim Karriereende hielt [§C40].
+  if(bisMs == null && imRuhestand(pid)) return ruhestandStand(pid).rekorde || [];
   let all;
-  try { all = allChronicles(); } catch(e){ return []; }
+  try { all = allChronicles(bisMs); } catch(e){ return []; }
   const out = [];
   CHRONICLES.forEach(def => {
     const e = all.byId[def.id];
@@ -1067,6 +1075,7 @@ function nextRecordFor(pid){
 
 // Die eine Chronik eines Spielers — oder null.
 function chronicleOf(pid){
+  if(imRuhestand(pid)) return (ruhestandStand(pid).rekorde || [])[0] || null;
   try { return allChronicles().byPid[pid] || null; } catch(e){ return null; }
 }
 

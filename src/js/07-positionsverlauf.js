@@ -456,7 +456,7 @@ function showPotwRecap(opts){
     // Tiebreaker bei Gleichstand auf Winrate: mehr absolute Siege, dann mehr Elo-Delta.
     const POTW_MIN_WINS = 5;
     const candidates = Object.entries(ps)
-      .filter(([id,s]) => s.wins >= POTW_MIN_WINS && pm[id] && !pm[id].hidden)
+      .filter(([id,s]) => s.wins >= POTW_MIN_WINS && sichtbar(pm[id]))
       .map(([id,s]) => {
         const games = s.wins + s.losses;
         return [id, s, games ? s.wins/games : 0];
@@ -527,7 +527,7 @@ function showPotwRecap(opts){
     const bestDefender=bestDefenderArr[0];
 
     const biggestEloGainArr=Object.entries(ps)
-      .filter(([id,s])=>s.wins+s.losses > 0 && pm[id] && !pm[id].hidden)
+      .filter(([id,s])=>s.wins+s.losses > 0 && sichtbar(pm[id]))
       .sort((a,b)=>b[1].eloDelta-a[1].eloDelta);
     const biggestEloGain=biggestEloGainArr[0];
 
@@ -544,7 +544,7 @@ function showPotwRecap(opts){
     const totwCandidates = Object.entries(teamEloDeltaRaw)
       .filter(([k,v]) => {
         const ids = k.split('|');
-        return teamGames[k] >= 2 && pm[ids[0]] && !pm[ids[0]].hidden && pm[ids[1]] && !pm[ids[1]].hidden;
+        return teamGames[k] >= 2 && sichtbar(pm[ids[0]]) && sichtbar(pm[ids[1]]);
       })
       .map(([k,v]) => ({ ids: k.split('|'), eloDelta: v, games: teamGames[k], wins: teamWins[k] }))
       .sort((a,b) => b.eloDelta - a.eloDelta || (b.wins/b.games) - (a.wins/a.games));
@@ -711,7 +711,7 @@ function _potdLastDayData(){
       if(!wins[id]) wins[id]=0;
       if(w) wins[id]++;
     }));
-    const qualified=Object.entries(wins).some(([id,w])=>w>=3 && pm[id] && !pm[id].hidden);
+    const qualified=Object.entries(wins).some(([id,w])=>w>=3 && sichtbar(pm[id]));
     if(qualified) return {dayKey:dk, dayMatches:dms};
   }
   return null;
@@ -800,7 +800,7 @@ function showPotdRecap(opts){
     // Player of the Day: min. 3 Siege, Tiebreak via Elo-Delta des Tages.
     const pm=pmap();
     const candidates=Object.entries(ps)
-      .filter(([id,s])=> s.wins>=3 && pm[id] && !pm[id].hidden)
+      .filter(([id,s])=> s.wins>=3 && sichtbar(pm[id]))
       .sort((a,b)=>{
         if(b[1].wins!==a[1].wins) return b[1].wins-a[1].wins;
         return b[1].eloDelta-a[1].eloDelta;
@@ -841,11 +841,11 @@ function showPotdRecap(opts){
     });
     const tagScorer = Object.keys(tagAtk)
       .map(id => ({id, g:tagAtk[id].g, goals:tagAtk[id].goals, avg:tagAtk[id].goals/tagAtk[id].g}))
-      .filter(x => x.goals > 0 && pm[x.id] && !pm[x.id].hidden)
+      .filter(x => x.goals > 0 && sichtbar(pm[x.id]))
       .sort((a,b) => b.avg - a.avg || b.goals - a.goals)[0];
 
     const tagAufstieg = Object.keys(ps)
-      .filter(id => pm[id] && !pm[id].hidden && ps[id].eloDelta > 0)
+      .filter(id => sichtbar(pm[id]) && ps[id].eloDelta > 0)
       .map(id => ({id, d:Math.round(ps[id].eloDelta)}))
       .sort((a,b) => b.d - a.d)[0];
 
@@ -929,7 +929,9 @@ function allPlayerStats(){
   const run={};
   
   // Initialisierung: nur aktive Spieler (verringert die Anzahl der zu verarbeitenden IDs)
-  const activeIds = new Set(players.filter(p=>!p.hidden).map(p=>p.id));
+  // Die Laufbahn ist Geschichte: auch ein Ruheständler behält seine Zahlen
+  // fürs Profil [§C40]. Wer im Positionen-Reiter mitvergleicht, filtert dort.
+  const activeIds = new Set(players.filter(p=>sichtbar(p)).map(p=>p.id));
   activeIds.forEach(id=>{
     stats[id]={games:0,wins:0,losses:0,gf:0,ga:0,
       atkG:0,atkW:0,defG:0,defW:0,

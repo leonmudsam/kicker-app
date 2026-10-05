@@ -248,12 +248,8 @@ function showPlayer(id){
   // Perzentil-Berechnung
   let percentileTxt = '', percentilePct = 0;
   if(rInfo){
-    const avgs = getSeasonAvgElos();
-    const ranked = players.filter(pp=>!pp.hidden && avgs[pp.id]!==null)
-      .sort((a,b)=>avgs[b.id]-avgs[a.id]);
-    const idx = ranked.findIndex(x=>x.id===id);
-    if(idx>=0){
-      const pct = ((idx+1)/ranked.length)*100;
+    const pct = rangPerzentil(id);
+    if(pct > 0){
       percentileTxt = 'Top ' + Math.ceil(pct) + '%';
       percentilePct = pct;
     }
@@ -950,7 +946,8 @@ function computeSeasonHistory(playerId, limit){
     const startElo = cfg.start_elo;
     const endElo = snapshot[playerId] ?? startElo;
     const eloDelta = Math.round(endElo - startElo);
-    const playersInSeason = players.filter(pp=>!pp.hidden);
+    // Ein Monat, der vor dem Karriereende zu war, behält seine Plätze [§C40].
+    const playersInSeason = players.filter(pp=>ligaAktiv(pp, seasonEnd(sid).getTime()));
     const seasonRanking = playersInSeason.map(pp=>({
       id:pp.id, e: (snapshot[pp.id] ?? startElo), g: (seasonPlayedMap[pp.id]||0)
     })).filter(x=>x.g>0).sort((a,b)=>b.e-a.e);
@@ -967,7 +964,7 @@ function computeSeasonHistory(playerId, limit){
 function showRangSystem(){
   _sheetSetReopen(()=>showRangSystem());
   const avgs=getSeasonAvgElos();
-  const ranked=players.filter(p=>!p.hidden&&avgs[p.id]!==null)
+  const ranked=players.filter(p=>ligaAktiv(p)&&avgs[p.id]!==null)
     .sort((a,b)=>avgs[b.id]-avgs[a.id]);
   const rows=RANKS.map((r,i)=>{
     const prev=RANKS[i-1];

@@ -48,7 +48,9 @@ function fingerFeld(){
   const key = 'f_' + matches.length + '_' + _cache.version;
   if(_cache._fingerKey === key) return _cache._finger;
 
-  const feld = activePlayers()
+  // Das Feld ist die Laufbahn aller, auch der Ruheständler [§C40]: ihr
+  // Profil zeigt den Fingerabdruck weiter, und eine Laufbahn ist Geschichte.
+  const feld = players.filter(p => sichtbar(p))
     .map(p => ({id:p.id, st:playerStats(p.id), serie:longestPlayerStreakInfo(p.id, matches).best}))
     .filter(d => d.st.games >= FINGER_MIN_SPIELE);
 

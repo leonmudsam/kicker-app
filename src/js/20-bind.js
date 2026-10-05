@@ -276,7 +276,7 @@ function bindCombo(inp){
   const chosenIds=()=>[M.A1,M.A2,M.B1,M.B2].filter((v,i)=>['A1','A2','B1','B2'][i]!==key&&v);
   const waehlen=o=>{
     const p=pmap()[o.dataset.pick];
-    if(!inp.isConnected || !p || p.hidden || chosenIds().includes(p.id)) return;
+    if(!inp.isConnected || !ligaAktiv(p) || chosenIds().includes(p.id)) return;
     M[key]=p.id;inp.value=p.name;inp.classList.add('filled');schliessen();
     readM();requestMatchPreview();
   };

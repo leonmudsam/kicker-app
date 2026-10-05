@@ -477,10 +477,13 @@ function _backupMatchRows(){
   return rows;
 }
 function _backupPlayerRows(){
-  const rows = [['Spieler-ID','Name','Elo','Angriffs-Wert','Avatar','Ausgeblendet','Erstellt']];
+  // Das Karriereende ist die einzige gespeicherte Angabe des Ruhestands
+  // [§C40]; ohne die Spalte käme ein Ruheständler aus der Sicherung als
+  // aktiver Spieler zurück und stünde wieder in jeder Rangliste.
+  const rows = [['Spieler-ID','Name','Elo','Angriffs-Wert','Avatar','Ausgeblendet','Erstellt','Karriereende']];
   for(const p of players){
     rows.push([p.id, p.name, Number(p.elo) || 0, Number(p.atk) || 0,
-               p.avatar_id || '', p.hidden ? 'ja' : 'nein', p.created_at || '']);
+               p.avatar_id || '', p.hidden ? 'ja' : 'nein', p.created_at || '', p.retired_at || '']);
   }
   return rows;
 }
@@ -741,6 +744,10 @@ async function startBackupImport(){
         avatar_id: _col(row, pidx, 'Avatar', 'avatar_id') || null,
         hidden: /^(ja|true|1)$/i.test(_col(row, pidx, 'Ausgeblendet', 'hidden'))
       };
+      // Nur mitschicken, wenn gesetzt: ohne die Migration gibt es die Spalte
+      // nicht, und ein leerer Wert soll den Import nicht scheitern lassen.
+      const ruhe = _col(row, pidx, 'Karriereende', 'retired_at');
+      if(ruhe && isFinite(Date.parse(ruhe))) entry.retired_at = ruhe;
       neueSpieler.push(entry);
       if(pid) extra[nm.toLowerCase()] = pid;
     }

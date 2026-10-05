@@ -116,6 +116,10 @@ function tagKey(when){
 // ist aufsteigend sortiert, also ist die letzte auch die neueste.
 function _schnitt(bisMs){
   if(!bisMs || !matches.length) return undefined;
+  // In der Zeitmaschine des Karriereendes [§C40] bleibt jeder Schnitt: dort
+  // heißt „ohne Schnitt" die Liga von heute, und in der steht der
+  // Ruheständler nicht mehr.
+  if(_ruheStichtag !== Infinity) return bisMs;
   return bisMs >= mts(matches[matches.length - 1]) ? undefined : bisMs;
 }
 

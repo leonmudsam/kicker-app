@@ -936,7 +936,7 @@ function avatarRings(){
     // Serien zuletzt — sie überschreiben alles außer dem Titelverteidiger,
     // wenn sie lang genug sind. Eine 9er-Serie ist die Nachricht des Tages.
     Object.keys(pm).forEach(id => {
-      if(pm[id].hidden) return;
+      if(!ligaAktiv(pm[id])) return;
       const cs = gSim.curStreak[id] || 0;
       if(cs >= 8)      put(id, 'blaze', cs + ' Siege in Folge');
       else if(cs >= 5) put(id, 'hot',   cs + ' Siege in Folge');

@@ -388,7 +388,7 @@ function _buildStories(){
       const endElos = sim.elo || {};
       const playedMap = (sim.seasonPlayed && sim.seasonPlayed[sid]) || {};
       const rankList = Object.keys(endElos)
-        .filter(pid => pm[pid] && !pm[pid].hidden && (playedMap[pid]||0) > 0)
+        .filter(pid => ligaAktiv(pm[pid], seasonEnd(sid).getTime()) && (playedMap[pid]||0) > 0)
         .map(pid => ({pid, elo: Math.round(endElos[pid])}))
         .sort((a,b)=>b.elo-a.elo);
       const gap = rankList.length >= 2 ? rankList[0].elo - rankList[1].elo : Infinity;
@@ -447,7 +447,7 @@ function _buildStories(){
         if(h && h.eloAfter) Object.keys(h.eloAfter).forEach(pid => { stand[pid] = h.eloAfter[pid]; });
       }
       const rang = Object.keys(stand)
-        .filter(pid => pm[pid] && !pm[pid].hidden)
+        .filter(pid => ligaAktiv(pm[pid], seasonEnd(sid).getTime()))
         .map(pid => ({pid, elo: Math.round(stand[pid])}))
         .sort((a, b) => b.elo - a.elo);
       if(rang.length >= 2){
@@ -500,7 +500,7 @@ function _buildStories(){
       const sim = getGlobalSim();
       const played = (sim.seasonPlayed && sim.seasonPlayed[sid]) || {};
       const rang = Object.keys(sim.elo || {})
-        .filter(pid => pm[pid] && !pm[pid].hidden && (played[pid] || 0) > 0)
+        .filter(pid => ligaAktiv(pm[pid], seasonEnd(sid).getTime()) && (played[pid] || 0) > 0)
         .map(pid => ({pid, elo: Math.round(sim.elo[pid])}))
         .sort((a, b) => b.elo - a.elo);
       const desTages = saison.filter(m => mts(m) >= tg.vonMs && mts(m) <= tg.letzte);
@@ -609,7 +609,7 @@ function _buildStories(){
         const n = lauf[k];
         if(!(TEAM_STREAK_MS.has(n) || (n > 20 && n % 5 === 0))) return;
         if(mts(m) < seit) return;
-        if(!pm[ids[0]] || !pm[ids[1]] || pm[ids[0]].hidden || pm[ids[1]].hidden) return;
+        if(!ligaAktiv(pm[ids[0]], mts(m)) || !ligaAktiv(pm[ids[1]], mts(m))) return;
         kand.push({ids, streak:n, when:new Date(m.created_at), matchId:m.id,
                    lauf:laufStart[k] || ''});
       });
@@ -658,7 +658,7 @@ function _buildStories(){
         const n = lauf[k];
         if(!(TEAM_LOSS_MS.has(n) || (n > 10 && n % 5 === 0))) return;
         if(mts(m) < seit) return;
-        if(!pm[ids[0]] || !pm[ids[1]] || pm[ids[0]].hidden || pm[ids[1]].hidden) return;
+        if(!ligaAktiv(pm[ids[0]], mts(m)) || !ligaAktiv(pm[ids[1]], mts(m))) return;
         kand.push({ids, streak:n, when:new Date(m.created_at), matchId:m.id,
                    lauf:laufStart[k] || '', firstT:ersteT[k]});
       });
@@ -778,7 +778,7 @@ function _buildStories(){
         if(lauf[pid] === 1) laufStart[pid] = m.id;
         const n = lauf[pid];
         if(!(marken.has(n) || (n > 10 && n % 5 === 0))) return;
-        if(mts(m) < seit || !pm[pid] || pm[pid].hidden) return;
+        if(mts(m) < seit || !ligaAktiv(pm[pid], mts(m))) return;
         // Der Zeitpunkt der Partie, mit der die Serie angefangen hat: die
         // Karte nennt ihn im Satz, damit sie nicht zweimal dasselbe sagt.
         const _st = matches.find(x => x.id === laufStart[pid]);
@@ -1021,7 +1021,7 @@ function _buildStories(){
         const [a,b] = k.split('|');
         return {a, b, n: v.n, aw: v.aw, when: new Date(v.last), matchId:v.mid};
       })
-      .filter(r => pm[r.a] && pm[r.b] && !pm[r.a].hidden && !pm[r.b].hidden)
+      .filter(r => ligaAktiv(pm[r.a], +r.when) && ligaAktiv(pm[r.b], +r.when))
       .sort((a,b) => b.n - a.n)
       .slice(0, NEWS_LIMITS.rivalry);
     ranked.forEach(r => {
@@ -1260,7 +1260,7 @@ function _buildStories(){
     }
     let topPid = null, topGain = 0;
     for(const pid in gains){
-      if(!pm[pid] || pm[pid].hidden) continue;
+      if(!sichtbar(pm[pid])) continue;
       if(gains[pid] > topGain){ topGain = gains[pid]; topPid = pid; }
     }
     if(topPid && topGain >= 50){
@@ -1290,7 +1290,7 @@ function _buildStories(){
     }
     let worstPid = null, worstDelta = 0;
     for(const pid in losses){
-      if(!pm[pid] || pm[pid].hidden) continue;
+      if(!sichtbar(pm[pid])) continue;
       if(losses[pid] < worstDelta){ worstDelta = losses[pid]; worstPid = pid; }
     }
     if(worstPid && worstDelta <= -25){ // v8.8: -20→-25 — nur echte Pech-Tage
@@ -1409,7 +1409,7 @@ function _buildStories(){
         if(winnerBest === 1 && loserBest === 2){
           const p1 = winners.find(p => (snap.preRank[p]||99) === 1); // Platz-1-Spieler (Sieger-Team)
           const p2 = losers.find(p  => (snap.preRank[p]||99) === 2); // Platz-2-Spieler (Verlierer-Team)
-          if(p1 && p2 && pm[p1] && pm[p2] && !pm[p1].hidden && !pm[p2].hidden){
+          if(p1 && p2 && ligaAktiv(pm[p1], t) && ligaAktiv(pm[p2], t)){
             best = {m, t, winners, losers, p1, p2}; break;
           }
         }
@@ -1466,7 +1466,7 @@ function _buildStories(){
     // ist die laengste Serie ihrer Geschichte eine Nachricht.
     if(mature && rec.streakRec && rec.streakRec.when && rec.streakRec.val >= 5){
       const pid = rec.streakRec.pid;
-      if((nowTs - new Date(rec.streakRec.when).getTime()) < RECENT && pm[pid] && !pm[pid].hidden){
+      if((nowTs - new Date(rec.streakRec.when).getTime()) < RECENT && ligaAktiv(pm[pid], new Date(rec.streakRec.when).getTime())){
         stories.push({
           id: 'streak_record_'+rec.streakRec.matchId,
           cat: 'highlight', ic: 'crownFlame',
@@ -1496,7 +1496,7 @@ function _buildStories(){
         if(winnerChance < CHANCE_SENSATION){
           const winners = m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2];
           const losers  = m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2];
-          if(winners.every(p => pm[p] && !pm[p].hidden))
+          if(winners.every(p => ligaAktiv(pm[p], mts(m))))
             kandidaten.push({ m, chance: winnerChance, winners, losers, t });
         }
       }
@@ -1557,7 +1557,7 @@ function _buildStories(){
       const diff = hoch - tief;
       const winners = (m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2]).filter(Boolean);
       const losers = (m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2]).filter(Boolean);
-      if(!winners.length || winners.some(id => !pm[id] || pm[id].hidden)) continue;
+      if(!winners.length || winners.some(id => !ligaAktiv(pm[id], mts(m)))) continue;
       const h = histMap.get(m.id);
       const expA = h && h.expA != null ? h.expA : (m.exp_a == null ? 0.5 : m.exp_a);
       const chance = m.winner === 'A' ? expA : 1 - expA;
@@ -1769,7 +1769,7 @@ function _buildStories(){
     gekreuzt.sort((x, y) => y.ts - x.ts);
     gekreuzt.slice(0, NEWS_LIMITS.rivalryMarke).forEach(g => {
       const [a, b] = g.k.split('|');
-      if(!pm[a] || !pm[b] || pm[a].hidden || pm[b].hidden) return;
+      if(!ligaAktiv(pm[a], g.ts) || !ligaAktiv(pm[b], g.ts)) return;
       stories.push({
         id: 'rivalry_milestone_'+g.k+'_'+g.n,
         cat: 'rivalry',
@@ -1825,7 +1825,7 @@ function _buildStories(){
     const RECENT = 14 * _dayMs;
     const nowTs = now.getTime();
     _eloMilestones().forEach(e => {
-      if(!e.when || !pm[e.pid] || pm[e.pid].hidden) return;
+      if(!e.when || !ligaAktiv(pm[e.pid], new Date(e.when).getTime())) return;
       if(nowTs - new Date(e.when).getTime() > RECENT) return;
       stories.push({
         id: 'milestone_elo_'+e.pid+'_'+e.mark,
@@ -1871,7 +1871,7 @@ function _buildStories(){
         if(lauf[pid] === 1) laufStart[pid] = m.id;
         const n = lauf[pid];
         const istMarke = istSerienMarke(n);
-        if(istMarke && mts(m) >= seit && pm[pid] && !pm[pid].hidden)
+        if(istMarke && mts(m) >= seit && ligaAktiv(pm[pid], mts(m)))
           kandidaten.push({pid, streak:n, when:new Date(m.created_at), matchId:m.id,
                            lauf:laufStart[pid]});
       });
@@ -2076,7 +2076,7 @@ function _buildStories(){
       });
       if(wochenMs.length){
         const duos = teamStatsFromMatches(wochenMs)
-          .filter(t => t.g >= 4 && t.ids.every(id => pm[id] && !pm[id].hidden))
+          .filter(t => t.g >= 4 && t.ids.every(id => sichtbar(pm[id])))
           // Quote zuerst, dann die Zahl der Partien: ein 4:0 ist stärker als
           // ein 9:3, aber bei gleicher Quote zählt, wer öfter angetreten ist.
           .sort((a, b) => (b.w/b.g) - (a.w/a.g) || b.g - a.g || (b.gf-b.ga) - (a.gf-a.ga));
@@ -2853,7 +2853,7 @@ function _buildStories(){
         return _insBestand.filter(id => id.indexOf(pre) === 0)
           .map(id => id.slice(pre.length)).filter(t => t < tag).sort().pop() || '';
       };
-      (players || []).filter(p => p && !p.hidden).forEach(p => {
+      (players || []).filter(p => ligaAktiv(p)).forEach(p => {
         // Derselbe Vergleich wie bei Rekord und Chronik und aus denselben
         // zwei Staenden [§11.0e]: eine Stufe ist ein Uebergang, kein
         // Naehefenster. Vorher fragte dieser Block `prestigeOf` selbst und
@@ -2999,7 +2999,7 @@ function _newsPeriodWinner(rangeMatches, minWins, mode){
   }
   const pm = pmap();
   const cand = Object.entries(ps)
-    .filter(([id, s]) => s.wins >= minWins && pm[id] && !pm[id].hidden)
+    .filter(([id, s]) => s.wins >= minWins && sichtbar(pm[id]))
     .map(([id, s]) => { const g = s.wins + s.losses; return {id, wins: s.wins, losses: s.losses, eloDelta: s.eloDelta, wr: g ? s.wins/g : 0}; })
     .sort((a, b) => {
       if(byWins){
