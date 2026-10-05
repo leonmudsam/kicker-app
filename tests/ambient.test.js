@@ -7249,27 +7249,35 @@ const _tafelBl = JSON.parse(K.eval(`JSON.stringify((function(){
     r.erst = {buehne:/nd-buehne nd-er/.test(b.k), name:b.k.indexOf(esc(a.name)) >= 0,
       monate:zahl(/<span class="(da)?"><i>/g, b.m), soll:monate.length > 1 ? monate.length : 0};
   }
-  // Der Tafel-Moment: jede Bewegung ein Zeichen auf der Uhr des Tages, jeder
-  // Beteiligte mit Namen, und jede Zeile mit Haltern als Bild statt Satz.
+  // Der Tafel-Moment: je Beteiligtem eine Zeile mit den Zeichen seiner
+  // Bewegungen. Die Zeitachse davor stapelte die Zeichen über den Minuten,
+  // und wem welches gehörte, war nicht zu erkennen. Nachgezählt wird an den
+  // Haltern vorher und nachher: wer weg ist, trägt ein rotes Zeichen.
   _cache._stories = roh.slice().sort((a,b)=>new Date(b.when)-new Date(a.when));
   _cache._consolFrom = null; _cache._frischVon = null;
   const tm = getStoriesCache().find(s => (s.dataRef||{}).type === 'sammel' && s.dataRef.quelle === 'tafel');
   if(tm){
     const b = blatt(tm), teile = tm.dataRef.teile;
-    const mehr = (b.k.match(/<b class="num">\\+(\\d+)<\\/b><\\/span>/g) || []).map(x => +x.replace(/\\D/g, ''));
-    const pids = [...new Set(teile.flatMap(t => t.pids || []))];
+    const ty = t => String(t.typ || t.type || '');
+    const pids = [...new Set(teile.flatMap(t => (t.pids || []).concat(t.halter || [], ty(t) === 'rekord_gesteigert' ? [] : t.vorher || [])))].filter(id => pmap()[id]);
+    const zeilen = new Set((b.k.match(/class="nd-tw-z[^"]*" data-pid="([^"]+)"/g) || []).map(x => x.replace(/.*data-pid="|"$/g, '')));
+    const wegSoll = teile.filter(t => ty(t) !== 'rekord_gesteigert' && ty(t) !== 'insignium_stufe' && (t.halter || []).length)
+      .reduce((a, t) => a + (t.vorher || []).filter(id => (t.halter || []).indexOf(id) < 0 && pmap()[id]).length, 0);
     const mitHalter = teile.filter(t => t.rname && (t.halter || []).length);
-    r.moment = {zeichen:zahl(/<i class="tm-(rek|chr|aus|ins)">/g, b.k) + mehr.reduce((a, x) => a + x, 0), teile:teile.length,
+    r.moment = {zeilen:pids.every(id => zeilen.has(id)), weg:zahl(/<i class="tw-weg">/g, b.k), wegSoll,
+      ins:zahl(/<i class="tw-ins">/g, b.k), insSoll:teile.filter(t => ty(t) === 'insignium_stufe').length,
+      zeichen:zahl(/<i class="tw-(rek|chr|aus|ins)">/g, b.k), teile:teile.length,
       namen:pids.every(id => b.k.indexOf('<b>' + esc(pname(id)) + '</b>') >= 0),
-      bilder:zahl(/class="nw-zeile nw-tz/g, b.m), mitHalter:mitHalter.length + teile.filter(t => (t.typ || t.type) === 'insignium_stufe').length,
+      bilder:zahl(/class="nw-zeile nw-tz/g, b.m), mitHalter:mitHalter.length + teile.filter(t => ty(t) === 'insignium_stufe').length,
       saetze:zahl(/class="nw-zeile nw-tz[^]*?class="nw-satz/g, b.m)};
   }
   return r;
 })())`));
 const _tb = _tafelBl;
-ok(_tb.moment && _tb.moment.zeichen === _tb.moment.teile && _tb.moment.namen
+ok(_tb.moment && _tb.moment.zeilen && _tb.moment.namen && _tb.moment.zeichen >= _tb.moment.teile
+   && _tb.moment.weg === _tb.moment.wegSoll && _tb.moment.ins === _tb.moment.insSoll
    && _tb.moment.bilder === _tb.moment.mitHalter && _tb.moment.saetze === 0,
-   'das Blatt eines Tafel-Moments legt jede Bewegung auf die Uhr des Tages, nennt jeden Beteiligten und zeigt jede Zeile mit Haltern als Bild ohne Satz',
+   'das Blatt eines Tafel-Moments zeigt je Beteiligtem seine Bewegungen samt dem Abgegebenen und jede Zeile mit Haltern als Bild ohne Satz',
    JSON.stringify(_tb.moment));
 ok(_tb.ins && _tb.ins.buehne && _tb.ins.grade === 3 && _tb.ins.quellen === 3
    && _tb.ins.summe === _tb.ins.punkte && _tb.ins.stufe,

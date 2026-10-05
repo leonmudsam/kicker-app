@@ -1331,34 +1331,57 @@ function _ndTafelMomentBlatt(s){
   const pm = pmap();
   const teile = (Array.isArray(d.teile) ? d.teile : []).filter(t => Number.isFinite(t.ms));
   if(!teile.length) return null;
+  // ── Wer hat was bewegt ──────────────────────────────────────────
+  // Hier stand eine Zeitachse des Tages mit gestapelten Zeichen über jeder
+  // Minute, und darunter die Namen als lose Chips: welches Zeichen wem
+  // gehörte und was es bedeutete, war nicht zu erkennen. Die Uhrzeit trägt
+  // ohnehin jede Zeile der Liste darunter. Jetzt steht je Spieler eine
+  // Zeile: Gesicht und Name, was er bewegt hat in Worten, und jede Bewegung
+  // als Zeichen ihres Eintrags — Gold geholt, Silber ausgebaut, Violett die
+  // Stufe, Rot abgegeben [§C25]. Wer am meisten gewonnen hat, steht oben.
+  // Die Klassen heißen `nd-tw…`: `.nd-tm` ist die Partienzeile im Blatt des
+  // Spielers des Tages, `.rek` die Karte des Rekorde-Reiters.
   const typ = t => String(t.typ || t.type || '');
-  // Eigene Namen: `.rek` ist die Karte des Rekorde-Reiters und zog ihr
-  // Raster über das Zeichen.
-  const art = t => typ(t) === 'insignium_stufe' ? 'tm-ins' : typ(t).indexOf('chronik_') === 0 ? 'tm-chr'
-    : typ(t) === 'rekord_gesteigert' ? 'tm-aus' : 'tm-rek';
-  const ms = teile.map(t => t.ms), t0 = Math.min(...ms), t1 = Math.max(...ms);
-  const jeMinute = new Map();
-  teile.slice().sort((a, b) => a.ms - b.ms).forEach(t => {
-    const k = Math.floor(t.ms / 60000);
-    if(!jeMinute.has(k)) jeMinute.set(k, []);
-    jeMinute.get(k).push(t);
+  const je = new Map();
+  const zu = (id, art, ic) => {
+    if(!pm[id]) return;
+    if(!je.has(id)) je.set(id, {rek:[], chr:[], aus:[], ins:[], weg:[]});
+    je.get(id)[art].push(ic || 'trophy');
+  };
+  teile.forEach(t => {
+    const ref = t.ref || {}, ty = typ(t);
+    if(ty === 'insignium_stufe'){ zu(ref.pid || (t.pids || [])[0], 'ins', t.ic || 'medalTrio'); return; }
+    const art = ty === 'rekord_gesteigert' ? 'aus' : ty.indexOf('chronik_') === 0 ? 'chr' : 'rek';
+    const neu = (Array.isArray(t.halter) ? t.halter : []).filter(id => pm[id]);
+    const vor = (Array.isArray(t.vorher) ? t.vorher : []).filter(id => pm[id]);
+    if(!neu.length){ (t.pids || []).forEach(id => zu(id, art, t.ic)); return; }
+    const dazu = neu.filter(id => vor.indexOf(id) < 0);
+    const wer = art === 'aus' ? neu : vor.length && neu.length > vor.length && dazu.length ? dazu : neu;
+    wer.forEach(id => zu(id, art, t.ic));
+    if(art !== 'aus') vor.filter(id => neu.indexOf(id) < 0).forEach(id => zu(id, 'weg', t.ic));
   });
-  const marken = [...jeMinute.values()].map((l, k) => {
-    const x = t1 === t0 ? 50 : 4 + (l[0].ms - t0) / (t1 - t0) * 92;
-    return `<span class="nd-tm-m" style="left:${x.toFixed(1)}%;--k:${k}">${l.slice(0, 5).map(t =>
-      `<i class="${art(t)}">${svgI(t.ic || 'trophy')}</i>`).join('')}${l.length > 5 ? `<b class="num">+${l.length - 5}</b>` : ''}</span>`;
-  }).join('');
-  let ids = [];
-  try { ids = (_newsPids(s) || []).slice(); } catch(e){}
-  teile.forEach(t => (t.pids || []).forEach(id => { if(ids.indexOf(id) < 0) ids.push(id); }));
-  ids = ids.filter(id => pm[id]);
-  const kopf = `<div class="nd-buehne nd-tm${d.quelle === 'form' ? ' form' : ''}">`
-    + `<div class="nd-tm-k"><b class="num">${teile.length}</b><span>${teile.length === 1 ? 'Bewegung' : 'Bewegungen'}`
-    + `${d.quelle === 'form' ? ' auf kurzer Strecke' : ' an der Ewigen Tafel'}</span></div>`
-    + `<div class="nd-tm-a" style="height:${20 + 23 * Math.min(6, Math.max(...[...jeMinute.values()].map(l => l.length)))}px"><i class="nd-tm-x"></i>${marken}</div>`
-    + `<div class="nd-tm-u num"><span>${esc(_newsUhrzeit(t0))}</span>${t1 !== t0 ? `<span>${esc(_newsUhrzeit(t1))}</span>` : ''}</div>`
-    + (ids.length ? `<div class="nd-tm-cs">${ids.map(id => `<span class="nd-tm-c" data-pid="${esc(id)}">${_spChip(id)}<b>${esc(_spName(id))}</b></span>`).join('')}</div>` : '')
-    + `</div>`;
+  const anz = (n, ein, mehr) => n === 1 ? 'eine ' + ein : (_BELEG_ZAHL[n] || String(n)) + ' ' + mehr;
+  const zeilen = [...je.entries()].map(([id, x]) => {
+    const gew = x.rek.length + x.chr.length + x.ins.length;
+    const worte = [];
+    if(x.rek.length) worte.push(anz(x.rek.length, 'Bestmarke', 'Bestmarken'));
+    if(x.chr.length) worte.push(anz(x.chr.length, 'Monatschronik', 'Monatschroniken'));
+    if(x.ins.length) worte.push('die nächste Stufe');
+    if(x.aus.length) worte.push(x.aus.length === 1 ? 'ein Ausbau' : (_BELEG_ZAHL[x.aus.length] || String(x.aus.length)) + ' Ausbauten');
+    const satz = (worte.length ? worte.join(', ').replace(/, ([^,]*)$/, ' und $1') : '')
+      + (x.weg.length ? (worte.length ? ', ' : '') + 'gibt ' + (x.weg.length === 1 ? 'eine' : (_BELEG_ZAHL[x.weg.length] || String(x.weg.length))) + ' ab' : '');
+    const zeichen = ['rek', 'chr', 'ins', 'aus', 'weg'].map(a => x[a].map(ic => `<i class="tw-${a}">${svgI(ic)}</i>`).join('')).join('');
+    return {id, gew, alle:gew + x.aus.length, weg:x.weg.length,
+      html:`<div class="nd-tw-z${gew ? '' : x.aus.length ? ' nur-aus' : ' nur-weg'}" data-pid="${esc(id)}">${_spChip(id)}`
+        + `<span class="nd-tw-m"><b>${esc(_spName(id))}</b><small>${esc(satz)}</small></span>`
+        + `<span class="nd-tw-i">${zeichen}</span></div>`};
+  }).sort((a, b) => b.gew - a.gew || b.alle - a.alle || a.weg - b.weg || (_spName(a.id) < _spName(b.id) ? -1 : 1));
+  const ms = teile.map(t => t.ms), t0 = Math.min(...ms), t1 = Math.max(...ms);
+  const kopf = `<div class="nd-buehne nd-tw${d.quelle === 'form' ? ' form' : ''}">`
+    + `<div class="nd-tw-k"><b class="num">${teile.length}</b><span>${teile.length === 1 ? 'Bewegung' : 'Bewegungen'}`
+    + `${d.quelle === 'form' ? ' auf kurzer Strecke' : ' an der Ewigen Tafel'}</span>`
+    + `<small class="num">${esc(_newsUhrzeit(t0))}${t1 !== t0 ? ' bis ' + esc(_newsUhrzeit(t1)) : ''}</small></div>`
+    + `<div class="nd-tw-l">${zeilen.map((z, k) => z.html.replace('class="nd-tw-z', `style="--k:${k}" class="nd-tw-z`)).join('')}</div></div>`;
   return {kopf, mitte:null};
 }
 
