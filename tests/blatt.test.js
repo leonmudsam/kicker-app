@@ -3636,6 +3636,37 @@ return JSON.stringify(funde,null,1);
   ok(ruhe.karte && ruhe.karte.brk && ruhe.karte.raus === 0,
      'im Feed steht das Karriereende als Breaking-Karte mit seiner Bühne, nichts ragt hinaus', JSON.stringify(ruhe.karte));
 
+  // ── Entfernen heißt bei Partien nicht Löschen [§C40] ──────────────
+  //    „Komplett löschen" ließ in jeder Partie ein Fragezeichen zurück. Mit
+  //    Partien bietet das Blatt das Karriereende und das Ausblenden an, und
+  //    wer schon aufgehört hat, bekommt das Karriereende nicht ein zweites Mal.
+  const weg = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const sh = document.getElementById('sheet');
+    const blick = async (pid) => {
+      K(`closeSheet(true); showPlayer('${pid}'); 'x'`);
+      for(let t = 0; t < 40 && !document.getElementById('delPlayer'); t++) await new Promise(r => setTimeout(r, 50));
+      document.getElementById('delPlayer').click();
+      for(let t = 0; t < 20 && !sh.querySelector('.pp-weg'); t++) await new Promise(r => setTimeout(r, 50));
+      document.getAnimations().forEach(a => { try { a.finish(); } catch(e){} });
+      const W = window.innerWidth;
+      return {weg: !!sh.querySelector('.pp-weg'), loeschen: !!sh.querySelector('#deletePlayerBtn'),
+        ende: !!sh.querySelector('#retirePlayerBtn'), aus: !!sh.querySelector('#hidePlayerBtn'),
+        raus: [...sh.querySelectorAll('.pp-weg *')].filter(e => { const r = e.getBoundingClientRect();
+          return r.width && (r.right > W + 1 || r.left < -1); }).length};
+    };
+    const pid = K('players.find(p => matches.some(m => [m.a1,m.a2,m.b1,m.b2].includes(p.id))).id');
+    const aktiv = await blick(pid);
+    K(`pmap()['${pid}'].retired_at = new Date(Date.now() - 864e5).toISOString(); invalidateCache(); 'x'`);
+    const ruhend = await blick(pid);
+    K(`closeSheet(true); pmap()['${pid}'].retired_at = null; invalidateCache(); 'x'`);
+    return {aktiv, ruhend};
+  });
+  ok(weg.aktiv.weg && !weg.aktiv.loeschen && weg.aktiv.ende && weg.aktiv.aus && weg.aktiv.raus === 0
+     && weg.ruhend.weg && !weg.ruhend.loeschen && !weg.ruhend.ende && weg.ruhend.aus,
+     'wer Partien hat, wird nicht gelöscht: das Blatt bietet Karriereende und Ausblenden, ein Ruheständler nur das Ausblenden',
+     JSON.stringify(weg));
+
   // ── Der Positionsverlauf trägt das Titelrennen ───────────────────
   //    Das Titelrennen stand einmal als eigener Einblick über der
   //    Rangliste und war dieselbe Frage wie der Positionsverlauf darunter.

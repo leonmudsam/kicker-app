@@ -170,3 +170,23 @@ async function karriereSetzen(pid, beenden){
   }
   return {ok:true, wert};
 }
+
+// ── Gelöscht wird nur, wer nie gespielt hat [§C40] ────────────────────
+// Ohne Partie gibt es nichts, das bleiben müsste: Name und Bild sind alles.
+// Wer gespielt hat, ist Teil der Geschichte der anderen — jede seiner
+// Partien trägt drei weitere Namen, deren Elo, Serien und Rekorde gegen ihn
+// gerechnet sind. Gelöscht stand dort ein Fragezeichen, und die Rechnung
+// der drei anderen lief gegen niemanden. Für jemanden, der aufhört, gibt es
+// das Karriereende, für einen Fehlgriff das Ausblenden.
+// Gefragt wird die DATENBANK, nicht die geladene Liste: die ist leer,
+// solange der erste Abruf läuft oder wenn er fehlschlug, und dann hätte das
+// Profil einen Spieler mit Partien für löschbar gehalten.
+async function spielerLoeschen(pid){
+  const {count, error} = await sb.from('matches').select('id', {count:'exact', head:true})
+    .or(['a1', 'a2', 'b1', 'b2'].map(k => k + '.eq.' + pid).join(','));
+  if(error || typeof count !== 'number') return {ok:false, grund:'netz'};
+  if(count > 0) return {ok:false, grund:'partien', zahl:count};
+  const {error:e2} = await sb.from('players').delete().eq('id', pid);
+  if(e2) return {ok:false, grund:'netz'};
+  return {ok:true};
+}

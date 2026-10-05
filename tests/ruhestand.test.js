@@ -56,8 +56,17 @@ globalThis.supabase = { createClient: () => ({
   from: (tbl) => ({
     upsert: async (row) => { globalThis.__written.push({tbl, row}); return {error:null}; },
     update: () => ({ eq: async () => ({error:null}) }),
-    select: () => ({ order: async () => ({data:[], error:null}) }),
-    delete: () => ({ lt: async () => ({error:null}) })
+    select: () => ({ order: async () => ({data:[], error:null}),
+      // Die Zählung der Partien eines Spielers fragt die Datenbank, nicht
+      // die geladene Liste; hier steht dafür ein eigener Bestand.
+      or: async (f) => {
+        const id = (String(f).match(/\.eq\.([^,]+)/) || [])[1];
+        if(globalThis.__dbFehler) return {count:null, error:{message:'netz'}};
+        const n = (globalThis.__dbPartien || []).filter(m => [m.a1, m.a2, m.b1, m.b2].includes(id)).length;
+        return {count:n, error:null};
+      } }),
+    delete: () => ({ lt: async () => ({error:null}),
+      eq: async (k, v) => { globalThis.__written.push({tbl, geloescht:v}); return {error:null}; } })
   }),
   channel:()=>ch(), removeChannel(){}, rpc:()=>ch() }) };
 globalThis.alert = ()=>{}; globalThis.confirm = ()=>true; globalThis.prompt = ()=>null;
@@ -274,5 +283,29 @@ ok(J('Object.keys(getAllPlayerRanks())').includes(MARTIN), 'zurück in der Ewige
 K.eval(`matches = matches.filter(m => !/^neu/.test(m.id)); invalidateCache();`);
 ok(gleich(VOR.prestige, stand().prestige), 'ohne Partien in der Pause steht er mit genau dem Prestige von vorher da');
 
-console.log('\n' + (fails ? '✗ ' + fails + ' von ' + checks + ' CHECKS FEHLGESCHLAGEN' : '✓ ALLE ' + checks + ' CHECKS BESTANDEN'));
-process.exit(fails ? 1 : 0);
+console.log('\n=== LÖSCHEN NUR OHNE PARTIE ===');
+// Wer gespielt hat, trägt die Geschichte von drei anderen mit: gelöscht
+// stand in jeder Partie ein Fragezeichen. Gefragt wird die Datenbank, nicht
+// die geladene Liste — die ist leer, solange der erste Abruf läuft.
+(async () => {
+  globalThis.__dbPartien = realMatches;
+  const geloescht = () => globalThis.__written.filter(w => w.geloescht).map(w => w.geloescht);
+  const r1 = await K.eval(`spielerLoeschen('${MARTIN}')`);
+  ok(!r1.ok && r1.grund === 'partien' && r1.zahl > 0 && !geloescht().includes(MARTIN),
+     'ein Spieler mit Partien wird nicht gelöscht', JSON.stringify(r1));
+  const vorher = K.eval('matches.length');
+  K.eval('globalThis.__alle = matches; matches = []');
+  const r2 = await K.eval(`spielerLoeschen('${MARTIN}')`);
+  K.eval('matches = globalThis.__alle');
+  ok(!r2.ok && r2.grund === 'partien' && !geloescht().includes(MARTIN) && K.eval('matches.length') === vorher,
+     'auch wenn die geladene Liste leer ist, zählt die Datenbank seine Partien', JSON.stringify(r2));
+  globalThis.__dbFehler = true;
+  const r3 = await K.eval(`spielerLoeschen('neu-ohne-partie')`);
+  globalThis.__dbFehler = false;
+  ok(!r3.ok && r3.grund === 'netz' && !geloescht().includes('neu-ohne-partie'),
+     'ohne Antwort der Datenbank wird nichts gelöscht', JSON.stringify(r3));
+  const r4 = await K.eval(`spielerLoeschen('neu-ohne-partie')`);
+  ok(r4.ok && geloescht().includes('neu-ohne-partie'), 'ein Spieler ohne Partie wird gelöscht', JSON.stringify(r4));
+  console.log('\n' + (fails ? '✗ ' + fails + ' von ' + checks + ' CHECKS FEHLGESCHLAGEN' : '✓ ALLE ' + checks + ' CHECKS BESTANDEN'));
+  process.exit(fails ? 1 : 0);
+})();

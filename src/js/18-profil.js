@@ -761,7 +761,7 @@ const rankProgHtml = rInfo ? `
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="3,6 5,6 21,6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/>
         </svg>
-        Spieler löschen
+        ${_hatPartien ? 'Spieler entfernen' : 'Spieler löschen'}
       </button>
     </div>
    </div>
@@ -820,19 +820,19 @@ const rankProgHtml = rInfo ? `
 
   // Karriere beenden und fortsetzen [§C40]. Gespeichert wird nur der
   // Zeitpunkt; was er bewirkt, rechnet die App aus den Partien.
+  // Derselbe Weg aus dem Knopf und aus dem Blatt „Spieler entfernen".
   const rp=document.getElementById('ruhePlayer');
-  if(rp) rp.onclick=async()=>{
-    const beenden = rp.dataset.ruhe === '1';
+  const karriere=async(beenden)=>{
     const ja = await bestaetigen(beenden
       ? {ic:'hourglass', ja:'Karriere beenden', nein:'Abbrechen', titel:p.name + ' beendet die Karriere',
          text:'Abgeschlossene Monate, Auszeichnungen, Titel und Chroniken bleiben. Ewige Tafel, Rekorde und der laufende Monat vergleichen ab jetzt ohne ' + p.name + '. Das Profil bleibt auf dem heutigen Stand stehen.'}
       : {ic:'hourglass', ja:'Karriere fortsetzen', nein:'Abbrechen', titel:p.name + ' kehrt zurück',
          text:p.name + ' steht danach wieder in Ewiger Tafel, Rekorden und Rangliste.'});
     if(!ja) return;
-    rp.disabled = true;
+    if(rp) rp.disabled = true;
     const r = await karriereSetzen(id, beenden);
     if(!r.ok){
-      rp.disabled = false;
+      if(rp) rp.disabled = false;
       toast('Nicht gespeichert', 'err', {sub: r.fehlt
         ? 'In der Datenbank fehlt die Spalte für das Karriereende (datenbank/karriereende.sql).'
         : 'Die Verbindung zur Datenbank ist fehlgeschlagen.'});
@@ -845,53 +845,54 @@ const rankProgHtml = rInfo ? `
     if(beenden && imRuhestand(id)){ _recapMarkSeen(_abschiedSchluessel(id), 'abschied:' + id); zeigeAbschied(id); }
   };
 
-  // Delete-Handler – identisch zur Original-Logik
+  if(rp) rp.onclick=()=>karriere(rp.dataset.ruhe === '1');
+
+  // Entfernen [§C40]: ohne Partie wird gelöscht, mit Partien nie. Dort
+  // stand „Komplett löschen", und danach trug jede Partie des Spielers ein
+  // Fragezeichen, während die Elo der drei anderen gegen niemanden lief.
   const dp=document.getElementById('delPlayer');
   if(dp) dp.onclick=async()=>{
-    const inMatches=matches.some(m=>[m.a1,m.a2,m.b1,m.b2].includes(id));
-    if(inMatches){
-      _pushCurrentSheet(); // Spielerprofil stapeln → „Zurück" möglich
-      openSheet(`
-        ${blattKopfHtml({ic:'trash', ton:'rot', titel:'Spieler entfernen', unter:p.name + ' · ' + gamesPlayed(id) + ' Matches'})}
-        <div style="margin-top:20px;display:flex;flex-direction:column;gap:10px">
-          <button class="btn ghost" id="hidePlayerBtn" style="text-align:left;padding:16px">
-            <div style="font-weight:700">Aus Rangliste ausblenden</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:4px;font-weight:400">
-              Spieler verschwindet aus der Rangliste.<br>
-              Matches, Awards & Badges bleiben vollständig erhalten.
-            </div>
-          </button>
-          <button class="btn ghost" id="deletePlayerBtn" style="text-align:left;padding:16px;color:var(--red);border-color:rgba(240,86,106,.3)">
-            <div style="font-weight:700">Komplett löschen</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:4px;font-weight:400">
-              Spieler wird gelöscht. Matches bleiben aber<br>
-              Namen erscheinen als "?" in der Historie.
-            </div>
-          </button>
-          <button class="btn ghost sm" id="cancelDelBtn">Abbrechen</button>
-        </div>
-      `);
-      document.getElementById('hidePlayerBtn').onclick=async()=>{
-        await sb.from('players').update({hidden:true}).eq('id',id);
-        // textContent, nicht HTML: esc() stand hier und zeigte „&amp;".
-        closeSheet(true); toast(p.name+' ausgeblendet','ok'); await loadAll();
-      };
-      document.getElementById('deletePlayerBtn').onclick=async()=>{
-        if(!(await bestaetigen({ic:'trash', gefahr:true, ja:'Löschen', nein:'Behalten',
-          titel:p.name+' löschen?',
-          text:'In allen Partien erscheint danach ein Fragezeichen statt des Namens. Das lässt sich nicht rückgängig machen.'}))) return;
-        await sb.from('players').delete().eq('id',id);
-        closeSheet(true); toast('Gelöscht'); await loadAll();
-      };
-      document.getElementById('cancelDelBtn').onclick=()=>{
-        closeSheet(); // zurück zum Spielerprofil (Stack-Pop)
-      };
-    } else {
+    if(!_hatPartien){
       if(!(await bestaetigen({ic:'trash', gefahr:true, ja:'Löschen', nein:'Behalten',
-        titel:p.name+' löschen?', text:'Der Spieler hat noch keine Partie.'}))) return;
-      await sb.from('players').delete().eq('id',id);
-      closeSheet(true); toast('Gelöscht'); await loadAll();
+        titel:p.name+' löschen?', text:'Ohne Partie bleibt nichts zurück: Name und Bild werden endgültig gelöscht.'}))) return;
+      const r = await spielerLoeschen(id);
+      if(!r.ok){
+        toast('Nicht gelöscht', 'err', {sub: r.grund === 'partien'
+          ? p.name + ' hat ' + r.zahl + (r.zahl === 1 ? ' Partie' : ' Partien') + ' in der Datenbank.'
+          : 'Die Verbindung zur Datenbank ist fehlgeschlagen.'});
+        return;
+      }
+      // textContent, nicht HTML: esc() stand hier und zeigte „&amp;".
+      closeSheet(true); toast(p.name+' gelöscht','ok'); await loadAll();
+      return;
     }
+    _pushCurrentSheet(); // Spielerprofil stapeln → „Zurück" möglich
+    const ruhe = imRuhestand(id);
+    openSheet(`
+      ${blattKopfHtml({ic:'trash', ton:'rot', titel:'Spieler entfernen', unter:p.name + ' · ' + gamesPlayed(id) + ' Partien'})}
+      <div class="pp-weg">
+        ${ruhe ? '' : `<button class="btn ghost" id="retirePlayerBtn" type="button">
+          <b>Karriere beenden</b>
+          <span>Profil, Titel und Auszeichnungen bleiben. Ewige Tafel, Rekorde und der laufende Monat vergleichen ohne ${esc(p.name)}.</span>
+        </button>`}
+        <button class="btn ghost" id="hidePlayerBtn" type="button">
+          <b>Ausblenden</b>
+          <span>Für einen versehentlich angelegten Spieler. Der Name fällt aus jeder Rechnung, auch aus abgeschlossenen Monaten; die Partien bleiben gespeichert.</span>
+        </button>
+        <p class="pp-weg-n">Löschen lässt sich nur ein Spieler ohne Partie: jede Partie von ${esc(p.name)} gehört auch drei anderen.</p>
+        <button class="btn ghost sm" id="cancelDelBtn" type="button">Abbrechen</button>
+      </div>
+    `);
+    const rb=document.getElementById('retirePlayerBtn');
+    if(rb) rb.onclick=()=>karriere(true);
+    document.getElementById('hidePlayerBtn').onclick=async()=>{
+      const {error} = await sb.from('players').update({hidden:true}).eq('id',id);
+      if(error){ toast('Nicht gespeichert', 'err', {sub:'Die Verbindung zur Datenbank ist fehlgeschlagen.'}); return; }
+      closeSheet(true); toast(p.name+' ausgeblendet','ok'); await loadAll();
+    };
+    document.getElementById('cancelDelBtn').onclick=()=>{
+      closeSheet(); // zurück zum Spielerprofil (Stack-Pop)
+    };
   };
 }
 
