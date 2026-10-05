@@ -58,6 +58,12 @@ function ligaAktiv(x, bisMs){
   return bisMs != null && isFinite(bisMs) && bisMs <= ruhestandMs(p);
 }
 
+// Die Ruheständler, der jüngste Abschied zuerst.
+function ruhestandSpieler(){
+  return players.filter(p => sichtbar(p) && imRuhestand(p))
+    .sort((a, b) => ruhestandMs(b) - ruhestandMs(a));
+}
+
 // ── Die Zeitmaschine ────────────────────────────────────────────────────
 // Rechnet `fn` so, wie die Liga im Moment des Karriereendes stand. Alle
 // Töpfe hängen an `_cache`, und der wird für die Dauer der Rechnung gegen

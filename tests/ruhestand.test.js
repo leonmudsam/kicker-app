@@ -155,6 +155,14 @@ const aug = J("Object.values(seasonTitles('2026-08')||{})").map(v => JSON.string
 ok(!aug.includes(MARTIN), 'die Monatschronik des laufenden Monats ohne ihn');
 ok(!J(`(getCachedAwardRankings('season','${'2026-08'}').single||[]).map(x=>x.id)`).includes(MARTIN), 'die Awards des laufenden Monats ohne ihn');
 ok(!J("prestigeTabelle().rang").includes(MARTIN), 'der Prestige-Rang ohne ihn');
+// Eine Serie, die nicht mehr läuft, brennt nicht: das Feuer am Wappen stand
+// sonst für immer über dem letzten Spieltag der Laufbahn.
+K.eval(`getGlobalSim().curStreak['${MARTIN}'] = 9;`);
+ok(J(`znFeuer('${MARTIN}')`) === 0 && J(`avRingOf('${MARTIN}')`) === null, 'kein Feuer und kein Serienring am Wappen');
+K.eval('invalidateCache();');
+const teams = J('vTeams(true)');
+ok(!teams.html.includes(MARTIN) && teams.ruhe.includes(MARTIN) && teams.ruheZahl > 0,
+   'die Duos mit ihm stehen nicht in der Teamliste, sondern am Ende', teams.ruheZahl + ' Duos');
 
 console.log('\n=== DIE LEGACY BLEIBT ===');
 const NACH = stand();

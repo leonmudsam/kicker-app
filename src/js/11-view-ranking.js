@@ -27,7 +27,12 @@ function _seasonToolsHtml(){
   // laufende oben, bleibt es beim letzten abgeschlossenen Monat.
   const recapS = laeuft ? past[0] : seasons.find(s => s.id === sid);
   const hasRecap = !!recapS;
-  if(!hasPos && !hasRecap) return '';
+  // Die Ruheständler stehen unter Gesamt, zu und am Ende [§C40]: die Ewige
+  // Tafel darüber vergleicht nur, wer noch spielt, und ihre Laufbahn ist
+  // trotzdem nicht weg.
+  const ruhe = period === 'all' ? ruhestandSpieler() : [];
+  const ruheHtml = ruhe.length ? einblickHtml('ruhe_liga', ruhe.length === 1 ? 'ein Spieler' : ruhe.length + ' Spieler') : '';
+  if(!hasPos && !hasRecap && !ruheHtml) return '';
   const recapIc = `<svg viewBox="0 0 24 24"><path d="M7 4v6a5 5 0 0010 0V4H7zM7 4H4v2a3 3 0 003 3M17 4h3v2a3 3 0 01-3 3M12 15v3M9 21h6"/></svg>`;
   const posIc   = `<svg viewBox="0 0 24 24"><path d="M5 21V11M12 21V7M19 21V3M3 21h18"/></svg>`;
   let cards = '';
@@ -58,7 +63,41 @@ function _seasonToolsHtml(){
       <span class="st-k"><span class="st-ic">${recapIc}</span><span class="st-kt"><span class="st-tt">Saison-Rückblick</span>
       <span class="st-su">${esc(seasonLabel(recapS.id))} ansehen</span></span><i class="st-pf">${svgI('chevron')}</i></span></button>`;
   }
-  return `<div class="seasontools"><div class="st-sec">Mehr zur Saison</div><div class="st-grid one">${cards}</div></div>`;
+  return `<div class="seasontools"><div class="st-sec">Mehr zur Saison</div>${cards ? `<div class="st-grid one">${cards}</div>` : ''}${ruheHtml}</div>`;
+}
+
+// ── Die Tafel der Ruheständler [§C40] ───────────────────────────────
+// Dieselbe Zeile wie in der Ewigen Tafel [§C27], nur ohne Platz: wer
+// aufgehört hat, steht in keiner Rangfolge der aktiven Liga mehr. Geordnet
+// nach Karriere-Elo, der Zahl, nach der die Tafel darüber sortiert. Das
+// Wappen ist das eingefrorene, die Rekorde die beim Abschied, und ein Feuer
+// brennt nicht — eine Serie, die nicht mehr läuft, hat keins (`znFeuer`).
+function ruhestandTafelHtml(){
+  const sim = getGlobalSim();
+  const elo = id => Math.round(sim.careerElo[id] ?? cfg.start_elo);
+  const stats = allPlayerStats();
+  const zeilen = ruhestandSpieler().slice().sort((a, b) => elo(b.id) - elo(a.id)).map(p => {
+    const s = stats[p.id] || playerStats(p.id);
+    const t = meisterTitel(p.id);
+    const rek = chroniclesOfPlayer(p.id).filter(x => !x.neg).length;
+    // Die Rangstufe steht rechts wie in jeder Zeile der Tafel [§C27] — die
+    // eingefrorene, mit der er aufgehört hat. Spiele, Titel und Rekorde
+    // stehen in einer eigenen Zeile: neben dem Datum liefen sie bei 390 px
+    // in die Zahl hinein.
+    const r = getPlayerRank(p.id);
+    const zweite = [s.games + ' Spiele', t ? t + ' Titel' : '',
+                    rek ? rek + (rek === 1 ? ' Rekord' : ' Rekorde') : ''].filter(Boolean).join(' · ');
+    return `<div class="rrow ruhe-row" data-detail="${esc(p.id)}">
+      ${avHtml(p, '', {ins:true, px:52})}
+      <div class="rmid">
+        <div class="rname">${esc(p.name)}</div>
+        <div class="rmeta"><span>Karriereende ${esc(datumFmt(ruhestandMs(p), 'tmj'))}</span></div>
+        <div class="rmeta rmeta-tore">${esc(zweite)}</div>
+      </div>
+      <div class="rval"><div class="big num">${elo(p.id)}</div><div class="small">${r ? `<span class="ic svg-ic" style="font-size:11px;color:${r.color};margin-right:3px;vertical-align:-1px">${svgI(r.icon)}</span>${esc(r.label)}` : 'Elo'}</div></div>
+    </div>`;
+  });
+  return zeilen.length ? `<div class="rlist ruhe-liste">${zeilen.join('')}</div>` : '';
 }
 // ── Die Form der letzten fuenf [§C26] ───────────────────────────────
 // Die Punkte einer laufenden Siegesserie brennen mit — dieselbe Aussage wie

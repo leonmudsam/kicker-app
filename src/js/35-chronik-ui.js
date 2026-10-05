@@ -949,6 +949,7 @@ function avatarRings(){
   return out;
 }
 function avRingOf(pid){
+  if(imRuhestand(pid)) return null;
   try { return avatarRings()[pid] || null; } catch(e){ return null; }
 }
 

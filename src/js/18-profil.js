@@ -307,7 +307,7 @@ function showPlayer(id){
         const eloTxt = (sn.eloDelta>=0?'+':'')+sn.eloDelta;
         return `<div class="pp-sn ${cls}">
           <div class="mo">${esc(sn.label)}</div>
-          <div class="pl"><span class="n big">${sn.place||'–'}.</span></div>
+          <div class="pl"><span class="n big">${sn.place?sn.place+'.':'–'}</span></div>
           <div class="el ${eloCls}">${eloTxt}</div>
           <div class="rc">${sn.wins}–${sn.losses}</div>
         </div>`;
@@ -368,6 +368,10 @@ const rankProgHtml = rInfo ? `
   //     eigene Farbe mitzubringen.
   const _ton = rangTon(id);
   const _stufe = 'st-' + prestigeOf(id).insignie.key;
+  // Das Profil eines Ruheständlers steht, wie es beim Abschied stand [§C40]:
+  // Wappen, Rekorde und Rang kommen aus dem eingefrorenen Stand.
+  const _ruhe = imRuhestand(id);
+  const _hatPartien = matches.some(m => m.a1 === id || m.a2 === id || m.b1 === id || m.b2 === id);
 
   openSheet(`
    <div class="pp-root pp-player ${_stufe}" style="--ak:${_ton.c};--ak-rgb:${_ton.rgb}">
@@ -424,21 +428,25 @@ const rankProgHtml = rInfo ? `
           ${esc(rInfo.label)}
         </span>`:''}
         <span class="pp-pill">${posIcon}${esc(posLabel)}</span>
+        ${_ruhe ? `<span class="pp-pill ruhe">${svgI('hourglass')}Karriereende ${esc(datumFmt(ruhestandMs(id), 'tmj'))}</span>` : ''}
       </div>
 
       ${(()=>{
         // ── SIGNATURE: Peak-Elo-Trinity ──
         // Drei zusammenhängende Werte: Aktuell (acid) | Peak Saison | Peak Allzeit (tier-getönt)
         const games=gSim.playedSeason[id]||0;
-        const curElo = games>0 ? Math.round(gSim.elo[id]) : '—';
+        // Ein Ruheständler hat keine laufende Saison [§C40]: vorn steht die
+        // Karriere-Elo, mit der er aufgehört hat.
+        const curElo = _ruhe ? Math.round(gSim.careerElo[id] ?? cfg.start_elo)
+          : games>0 ? Math.round(gSim.elo[id]) : '—';
         const ps = peakSeason !== null ? peakSeason : '—';
         const pa = peakAlltime !== null ? peakAlltime : '—';
         const paSub = peakAlltimeSeason ? esc(peakAlltimeSeason) : 'saison-übergreifend';
         return `<div class="pp-elo-trinity">
           <div class="pp-et-col now">
-            <div class="label">Aktuell</div>
+            <div class="label">${_ruhe ? 'Abschied' : 'Aktuell'}</div>
             <div class="val">${curElo}</div>
-            <div class="sub">Saison</div>
+            <div class="sub">${_ruhe ? 'Karriere-Elo' : 'Saison'}</div>
           </div>
           <div class="pp-et-col peak">
             <div class="label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS['peak']||''}</svg> Spitze</div>
@@ -745,6 +753,9 @@ const rankProgHtml = rInfo ? `
       </div>
     </div>
 
+    ${_hatPartien ? `<div class="pp-ruhe">
+      <button id="ruhePlayer" type="button" data-ruhe="${_ruhe ? '0' : '1'}">${svgI('hourglass')}${_ruhe ? 'Karriere fortsetzen' : 'Karriere beenden'}</button>
+    </div>` : ''}
     <div class="pp-del">
       <button id="delPlayer">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -803,6 +814,31 @@ const rankProgHtml = rInfo ? `
   });
   // Chronik-Zellen öffnen die Saison-Tafel (§13)
   _bindChronikClicks(document.getElementById('sheet'));
+
+  // Karriere beenden und fortsetzen [§C40]. Gespeichert wird nur der
+  // Zeitpunkt; was er bewirkt, rechnet die App aus den Partien.
+  const rp=document.getElementById('ruhePlayer');
+  if(rp) rp.onclick=async()=>{
+    const beenden = rp.dataset.ruhe === '1';
+    const ja = await bestaetigen(beenden
+      ? {ic:'hourglass', ja:'Karriere beenden', nein:'Abbrechen', titel:p.name + ' beendet die Karriere',
+         text:'Abgeschlossene Monate, Auszeichnungen, Titel und Chroniken bleiben. Ewige Tafel, Rekorde und der laufende Monat vergleichen ab jetzt ohne ' + p.name + '. Das Profil bleibt auf dem heutigen Stand stehen.'}
+      : {ic:'hourglass', ja:'Karriere fortsetzen', nein:'Abbrechen', titel:p.name + ' kehrt zurück',
+         text:p.name + ' steht danach wieder in Ewiger Tafel, Rekorden und Rangliste.'});
+    if(!ja) return;
+    rp.disabled = true;
+    const r = await karriereSetzen(id, beenden);
+    if(!r.ok){
+      rp.disabled = false;
+      toast('Nicht gespeichert', 'err', {sub: r.fehlt
+        ? 'In der Datenbank fehlt die Spalte für das Karriereende (datenbank/karriereende.sql).'
+        : 'Die Verbindung zur Datenbank ist fehlgeschlagen.'});
+      return;
+    }
+    toast(beenden ? p.name + ' beendet die Karriere' : p.name + ' ist zurück', 'ok');
+    closeSheet(true);
+    await loadAll();
+  };
 
   // Delete-Handler – identisch zur Original-Logik
   const dp=document.getElementById('delPlayer');

@@ -2808,6 +2808,20 @@
 
 
 
+  .seasontools .einblick{margin:10px 0 0}
+  .ruhe-ende{margin-top:14px}
+  .ruhe-ende .einblick{margin:0}
+  .ruhe-liste,.einblick-i .rlist{margin-top:4px}
+  .rrow.ruhe-row{background:var(--surface2);border-style:dashed}
+  .pp-pill.ruhe{border-color:var(--line2);color:var(--ink)}
+  .pp-ruhe{margin-top:24px}
+  .pp-ruhe + .pp-del{margin-top:10px;padding-top:0}
+  .pp-ruhe button{width:100%;background:var(--surface);border:1px solid var(--line2);
+    color:var(--ink2);padding:12px;border-radius:13px;font-family:inherit;font-size:12px;
+    font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+  .pp-ruhe button:disabled{opacity:.5}
+  .pp-ruhe button .ic{width:14px;height:14px}
+
 
   .wk-highlights{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
     gap:7px;margin-bottom:14px}
@@ -5411,7 +5425,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.05.76cc6c02';
+const BUILD_VERSION='2026.10.05.335d61dc';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -7347,6 +7361,11 @@ function ligaAktiv(x, bisMs){
   return bisMs != null && isFinite(bisMs) && bisMs <= ruhestandMs(p);
 }
 
+function ruhestandSpieler(){
+  return players.filter(p => sichtbar(p) && imRuhestand(p))
+    .sort((a, b) => ruhestandMs(b) - ruhestandMs(a));
+}
+
 function _ruheRechnen(pid, fn){
   const t = ruhestandMs(pid);
   const altCache = _cache, altStichtag = _ruheStichtag;
@@ -9071,12 +9090,14 @@ function znTitel(pid){
   try { return _znTitelMap()[pid] || 0; } catch(e){ return 0; }
 }
 function znFeuer(pid){
+  if(imRuhestand(pid)) return 0;
   try {
     const cs = getGlobalSim().curStreak[pid] || 0;
     return cs >= 7 ? 3 : cs >= 5 ? 2 : cs >= 3 ? 1 : 0;
   } catch(e){ return 0; }
 }
 function znStreak(pid){
+  if(imRuhestand(pid)) return 0;
   try { return getGlobalSim().curStreak[pid] || 0; } catch(e){ return 0; }
 }
 
@@ -9596,7 +9617,9 @@ function _seasonToolsHtml(){
     .sort((a, b) => String(b.start_date).localeCompare(String(a.start_date)));
   const recapS = laeuft ? past[0] : seasons.find(s => s.id === sid);
   const hasRecap = !!recapS;
-  if(!hasPos && !hasRecap) return '';
+  const ruhe = period === 'all' ? ruhestandSpieler() : [];
+  const ruheHtml = ruhe.length ? einblickHtml('ruhe_liga', ruhe.length === 1 ? 'ein Spieler' : ruhe.length + ' Spieler') : '';
+  if(!hasPos && !hasRecap && !ruheHtml) return '';
   const recapIc = `<svg viewBox="0 0 24 24"><path d="M7 4v6a5 5 0 0010 0V4H7zM7 4H4v2a3 3 0 003 3M17 4h3v2a3 3 0 01-3 3M12 15v3M9 21h6"/></svg>`;
   const posIc   = `<svg viewBox="0 0 24 24"><path d="M5 21V11M12 21V7M19 21V3M3 21h18"/></svg>`;
   let cards = '';
@@ -9618,7 +9641,31 @@ function _seasonToolsHtml(){
       <span class="st-k"><span class="st-ic">${recapIc}</span><span class="st-kt"><span class="st-tt">Saison-Rückblick</span>
       <span class="st-su">${esc(seasonLabel(recapS.id))} ansehen</span></span><i class="st-pf">${svgI('chevron')}</i></span></button>`;
   }
-  return `<div class="seasontools"><div class="st-sec">Mehr zur Saison</div><div class="st-grid one">${cards}</div></div>`;
+  return `<div class="seasontools"><div class="st-sec">Mehr zur Saison</div>${cards ? `<div class="st-grid one">${cards}</div>` : ''}${ruheHtml}</div>`;
+}
+
+function ruhestandTafelHtml(){
+  const sim = getGlobalSim();
+  const elo = id => Math.round(sim.careerElo[id] ?? cfg.start_elo);
+  const stats = allPlayerStats();
+  const zeilen = ruhestandSpieler().slice().sort((a, b) => elo(b.id) - elo(a.id)).map(p => {
+    const s = stats[p.id] || playerStats(p.id);
+    const t = meisterTitel(p.id);
+    const rek = chroniclesOfPlayer(p.id).filter(x => !x.neg).length;
+    const r = getPlayerRank(p.id);
+    const zweite = [s.games + ' Spiele', t ? t + ' Titel' : '',
+                    rek ? rek + (rek === 1 ? ' Rekord' : ' Rekorde') : ''].filter(Boolean).join(' · ');
+    return `<div class="rrow ruhe-row" data-detail="${esc(p.id)}">
+      ${avHtml(p, '', {ins:true, px:52})}
+      <div class="rmid">
+        <div class="rname">${esc(p.name)}</div>
+        <div class="rmeta"><span>Karriereende ${esc(datumFmt(ruhestandMs(p), 'tmj'))}</span></div>
+        <div class="rmeta rmeta-tore">${esc(zweite)}</div>
+      </div>
+      <div class="rval"><div class="big num">${elo(p.id)}</div><div class="small">${r ? `<span class="ic svg-ic" style="font-size:11px;color:${r.color};margin-right:3px;vertical-align:-1px">${svgI(r.icon)}</span>${esc(r.label)}` : 'Elo'}</div></div>
+    </div>`;
+  });
+  return zeilen.length ? `<div class="rlist ruhe-liste">${zeilen.join('')}</div>` : '';
 }
 function formDotsHtml(erg, curStreak){
   let glut = 0;
@@ -10041,9 +10088,9 @@ function rrow(p, s, i, metric, globalElo, letzte){
   </div>`;
 }
 
-function positionsListe(pos){
+function positionsListe(pos, spieler){
   const statsMap = allPlayerStats();
-  return activePlayers().map(p=>{
+  return (spieler || activePlayers()).map(p=>{
     const s = statsMap[p.id] || playerStats(p.id);
     const g  = pos==='atk' ? s.atkG       : s.defG;
     const w  = pos==='atk' ? s.atkW       : s.defW;
@@ -10058,31 +10105,39 @@ function positionsListe(pos){
     .sort((a,b)=> b.score-a.score || b.pAvg-a.pAvg || b.wr-a.wr);
 }
 
-function vPositions(){
-  const atk=positionsListe('atk'), def=positionsListe('def');
-  const block=(arr,pos)=>{
-    if(!arr.length)return emptyState(pos==='atk'?'bolt':'shield','Noch keine Spiele auf dieser Position');
-    const valLbl = pos==='atk' ? 'Tore je Spiel' : 'Gegentore je Spiel';
-    return `<div class="rlist">${arr.map((x,i)=>{
-      const perfChip = x.pAvg>0.08?'<span class="perf-up">▲</span>':x.pAvg<-0.08?'<span class="perf-dn">▼</span>':'';
-      const goalsTxt = komma(x.goalsAvg,1);
-      const wert = Math.round(x.score*100);
-      return `<div class="rrow ${i<3?'top'+(i+1):''}" data-detail="${x.p.id}">
-        <span class="pos num">${i+1}</span>
-        ${avHtml(x.p, '', {ins:true, px:52})}
-        <div class="rmid">
-          <div class="rname">${esc(x.p.name)} ${perfChip}</div>
-          <div class="rmeta">
-            <span>${x.w}–${x.g-x.w}</span>
-            <span class="wbar"><i style="width:${Math.round(x.wr*100)}%"></i></span>
-            <span>${Math.round(x.wr*100)}%</span>
-          </div>
-          <div class="rmeta rmeta-tore">Ø ${goalsTxt} ${valLbl}</div>
+function positionsBlockHtml(arr, pos, ohneRang){
+  if(!arr.length) return emptyState(pos==='atk'?'bolt':'shield','Noch keine Spiele auf dieser Position');
+  const valLbl = pos==='atk' ? 'Tore je Spiel' : 'Gegentore je Spiel';
+  return `<div class="rlist">${arr.map((x,i)=>{
+    const perfChip = x.pAvg>0.08?'<span class="perf-up">▲</span>':x.pAvg<-0.08?'<span class="perf-dn">▼</span>':'';
+    const goalsTxt = komma(x.goalsAvg,1);
+    const wert = Math.round(x.score*100);
+    return `<div class="rrow ${!ohneRang&&i<3?'top'+(i+1):''}${ohneRang?' ruhe-row':''}" data-detail="${x.p.id}">
+      ${ohneRang ? '' : `<span class="pos num">${i+1}</span>`}
+      ${avHtml(x.p, '', {ins:true, px:52})}
+      <div class="rmid">
+        <div class="rname">${esc(x.p.name)} ${perfChip}</div>
+        <div class="rmeta">
+          <span>${x.w}–${x.g-x.w}</span>
+          <span class="wbar"><i style="width:${Math.round(x.wr*100)}%"></i></span>
+          <span>${Math.round(x.wr*100)}%</span>
         </div>
-        <div class="rval"><div class="big num">${wert}</div><div class="small">Wert</div></div>
-      </div>`;}).join('')}</div>`;
-  };
+        <div class="rmeta rmeta-tore">Ø ${goalsTxt} ${valLbl}</div>
+      </div>
+      <div class="rval"><div class="big num">${wert}</div><div class="small">Wert</div></div>
+    </div>`;}).join('')}</div>`;
+}
+
+function positionenRuheHtml(){
+  const pos = rankMetric==='def'?'def':'atk';
+  const arr = positionsListe(pos, ruhestandSpieler());
+  return arr.length ? positionsBlockHtml(arr, pos, true) : '';
+}
+
+function vPositions(){
   const which = rankMetric==='def'?'def':'atk';
+  const arr = positionsListe(which);
+  const ruhe = positionsListe(which, ruhestandSpieler()).length;
   return `
     <div class="view-head"><h2>Positionen <button class="kopf-info" type="button" data-info="positionen" aria-label="So entsteht der Wert">${svgI('info')}</button></h2><p>Sturm und Abwehr, über alle Partien</p></div>
     ${einblickHtml('rollen')}
@@ -10091,7 +10146,8 @@ function vPositions(){
       <button data-postoggle="def" class="${which==='def'?'on':''}"><span class="pos-chip def">${svgI('shield')}Abwehr</span></button>
     </div>
     <div class="mini-label">▲ über · ▼ unter der Erwartung, gemessen an Partner und Gegnern</div>
-    ${which==='atk'?block(atk,'atk'):block(def,'def')}`;
+    ${positionsBlockHtml(arr, which)}
+    ${ruhe ? `<div class="ruhe-ende">${einblickHtml('ruhe_pos', ruhe === 1 ? 'ein Spieler' : ruhe + ' Spieler')}</div>` : ''}`;
 }
 
 
@@ -11509,13 +11565,16 @@ function showAward(key){
 
 
 function vTeams(nurErgebnis=false){
-  const T=teamStats().filter(t=>t.g>=4);
-  if(!T.length){
+  const T0=teamStats().filter(t=>t.g>=4);
+  const T=T0.filter(t=>t.ids.every(id=>ligaAktiv(id)));
+  const ruheT=T0.filter(t=>t.ids.every(id=>sichtbar(id))&&t.ids.some(id=>imRuhestand(id)));
+  if(!T.length&&!ruheT.length){
     const html=emptyState('handshake','Noch nicht genug Daten');
-    return nurErgebnis?{kopf:'Ab 4 gemeinsamen Spielen',html}:`<div class="view-head"><h2>Teams</h2><p>Ab 4 gemeinsamen Spielen</p></div>${html}`;
+    return nurErgebnis?{kopf:'Ab 4 gemeinsamen Spielen',html,ruhe:''}:`<div class="view-head"><h2>Teams</h2><p>Ab 4 gemeinsamen Spielen</p></div>${html}`;
   }
   const showBest=teamView!=='worst';
   
+  const ordnen=T=>{
   let sorted;
   if(teamSort==='wr'){
     sorted=[...T].sort((a,b)=>(b.w/b.g)-(a.w/a.g)||(b.gf-b.ga)-(a.gf-a.ga)||b.g-a.g);
@@ -11535,6 +11594,9 @@ function vTeams(nurErgebnis=false){
     sorted=[...T].sort((a,b)=>(b.w/b.g)-(a.w/a.g)||(b.gf-b.ga)-(a.gf-a.ga)||b.g-a.g);
   }
   
+  return sorted;
+  };
+  const sorted=ordnen(T);
   const arr=showBest?sorted:[...sorted].reverse();
 
 
@@ -11560,14 +11622,15 @@ function vTeams(nurErgebnis=false){
 
   const _tq = (teamSearch||'').trim().toLowerCase();
   const _tqTokens = _tq.split(/[\s&]+/).filter(Boolean);
-  const arrF = _tqTokens.length
-    ? arr.filter(t => {
+  const filtern = list => _tqTokens.length
+    ? list.filter(t => {
         const names = t.ids.map(id => ((pm[id]&&pm[id].name)||'').toLowerCase());
         return _tqTokens.every(tok => names.some(nm => nm.includes(tok)));
       })
-    : arr;
+    : list;
+  const arrF = filtern(arr);
 
-  const rows=arrF.map((t,i)=>{
+  const zeile=(t,i,ohneRang)=>{
     const wr=Math.round(t.w/t.g*100);
     const gd=t.gf-t.ga;
     const keyTeam=[t.ids[0],t.ids[1]].sort().join('|');
@@ -11586,10 +11649,10 @@ function vTeams(nurErgebnis=false){
     }
 
     
-    const isTop=showBest&&i<3&&!_tq;
+    const isTop=showBest&&i<3&&!_tq&&!ohneRang;
     const top=isTop?TOP[i]:null;
     const borderColor=top?top.border:'var(--line)';
-    const rankBlock=top
+    const rankBlock=ohneRang?'':top
       ? `<div style="width:24px;height:24px;border-radius:8px;background:${top.bg};color:${top.fg};display:grid;place-items:center;font-family:'Archivo Black',sans-serif;font-size:12px;flex-shrink:0">${i+1}</div>`
       : `<div style="width:24px;text-align:center;font-family:'Archivo Black',sans-serif;font-size:14px;color:var(--faint);flex-shrink:0">${i+1}</div>`;
     
@@ -11605,11 +11668,15 @@ function vTeams(nurErgebnis=false){
         <div class="tm-wert" style="color:${i===0&&isTop&&teamSort==='wr'?'var(--gold)':mainColor}">${mainValue}</div>
       </div>
     </div>`;
-  }).join('');
+  };
+  const rows=arrF.map((t,i)=>zeile(t,i,false)).join('');
+  const ruheF=filtern(showBest?ordnen(ruheT):[...ordnen(ruheT)].reverse());
+  const ruhe=ruheF.length?`<div class="rlist">${ruheF.map((t,i)=>zeile(t,i,true)).join('')}</div>`:'';
 
 
   const ergebnis={kopf:`${arrF.length} Duo${arrF.length===1?'':'s'}${_tq?' gefunden':' ab 4 gemeinsamen Spielen, über alle Partien'}`,
-    html:arrF.length ? `<div class="rlist">${rows}</div>` : emptyState('search','Keine Teams gefunden')};
+    html:arrF.length ? `<div class="rlist">${rows}</div>` : emptyState('search','Keine Teams gefunden'),
+    ruhe, ruheZahl:ruheF.length};
   if(nurErgebnis) return ergebnis;
   return `
     <div class="view-head"><h2>Teams</h2><p id="teamCount">${ergebnis.kopf}</p></div>
@@ -11629,7 +11696,8 @@ function vTeams(nurErgebnis=false){
       <button data-teamsort="gd" class="${teamSort==='gd'?'on':''}">Torbilanz</button>
       <button data-teamsort="elo" class="${teamSort==='elo'?'on':''}">Elo-Zuwachs</button>
     </div>
-    <div id="teamResults">${ergebnis.html}</div>`;
+    <div id="teamResults">${ergebnis.html}</div>
+    ${ruheT.length ? `<div class="ruhe-ende">${einblickHtml('ruhe_teams', ruheT.length === 1 ? 'ein Duo' : ruheT.length + ' Duos')}</div>` : ''}`;
 }
 
 
@@ -12049,12 +12117,16 @@ async function doSaveMatch(){
 
 const EINBLICK = {
   rollen:{titel:'Die Rollen-Landkarte', ic:'sideSwap', inhalt:() => _einblickRollen()},
-  netz:{titel:'Das Netz der Duos', ic:'duo', inhalt:() => _einblickNetz()}
+  netz:{titel:'Das Netz der Duos', ic:'duo', inhalt:() => _einblickNetz()},
+  ruhe_liga:{titel:'Karriere beendet', ic:'hourglass', inhalt:() => ruhestandTafelHtml()},
+  ruhe_pos:{titel:'Karriere beendet', ic:'hourglass', inhalt:() => positionenRuheHtml()},
+  ruhe_teams:{titel:'Duos mit Karriereende', ic:'hourglass', inhalt:() => vTeams(true).ruhe}
 };
+function _einblickAuf(key){ return einblickOffen.split(' ').includes(key); }
 function einblickHtml(key, rechts){
   const e = EINBLICK[key];
   if(!e) return '';
-  const auf = einblickOffen === key;
+  const auf = _einblickAuf(key);
   let inhalt = '';
   if(auf){ try { inhalt = e.inhalt() || ''; } catch(err){ inhalt = ''; } }
   return `<div class="einblick${auf ? ' auf' : ''}" data-einblick="${key}">
@@ -12066,8 +12138,10 @@ function einblickBinden(wurzel){
   (wurzel || document).querySelectorAll('[data-einblick] > .einblick-k').forEach(k => {
     k.onclick = () => {
       const box = k.parentElement, key = box.dataset.einblick;
-      const auf = einblickOffen !== key;
-      einblickOffen = auf ? key : '';
+      const auf = !_einblickAuf(key);
+      const offen = einblickOffen.split(' ').filter(k => k && k !== key);
+      if(auf) offen.push(key);
+      einblickOffen = offen.join(' ');
       const i = box.querySelector('.einblick-i');
       if(auf && !i.innerHTML.trim()){
         try { i.innerHTML = EINBLICK[key].inhalt() || ''; } catch(err){ i.innerHTML = ''; }
@@ -12081,6 +12155,9 @@ function einblickBinden(wurzel){
 function bindDetailLinks(el){
   el.querySelectorAll('[data-detail]').forEach(x => {
     x.onclick = () => sheetNav(() => showPlayer(x.dataset.detail));
+  });
+  el.querySelectorAll('[data-team]').forEach(x => {
+    x.onclick = () => { const [a, b] = x.dataset.team.split('|'); if(a && b) showTeam(a, b); };
   });
 }
 
@@ -14097,7 +14174,7 @@ function showPlayer(id){
         const eloTxt = (sn.eloDelta>=0?'+':'')+sn.eloDelta;
         return `<div class="pp-sn ${cls}">
           <div class="mo">${esc(sn.label)}</div>
-          <div class="pl"><span class="n big">${sn.place||'–'}.</span></div>
+          <div class="pl"><span class="n big">${sn.place?sn.place+'.':'–'}</span></div>
           <div class="el ${eloCls}">${eloTxt}</div>
           <div class="rc">${sn.wins}–${sn.losses}</div>
         </div>`;
@@ -14150,6 +14227,8 @@ const rankProgHtml = rInfo ? `
 
   const _ton = rangTon(id);
   const _stufe = 'st-' + prestigeOf(id).insignie.key;
+  const _ruhe = imRuhestand(id);
+  const _hatPartien = matches.some(m => m.a1 === id || m.a2 === id || m.b1 === id || m.b2 === id);
 
   openSheet(`
    <div class="pp-root pp-player ${_stufe}" style="--ak:${_ton.c};--ak-rgb:${_ton.rgb}">
@@ -14189,19 +14268,21 @@ const rankProgHtml = rInfo ? `
           ${esc(rInfo.label)}
         </span>`:''}
         <span class="pp-pill">${posIcon}${esc(posLabel)}</span>
+        ${_ruhe ? `<span class="pp-pill ruhe">${svgI('hourglass')}Karriereende ${esc(datumFmt(ruhestandMs(id), 'tmj'))}</span>` : ''}
       </div>
 
       ${(()=>{
         const games=gSim.playedSeason[id]||0;
-        const curElo = games>0 ? Math.round(gSim.elo[id]) : '—';
+        const curElo = _ruhe ? Math.round(gSim.careerElo[id] ?? cfg.start_elo)
+          : games>0 ? Math.round(gSim.elo[id]) : '—';
         const ps = peakSeason !== null ? peakSeason : '—';
         const pa = peakAlltime !== null ? peakAlltime : '—';
         const paSub = peakAlltimeSeason ? esc(peakAlltimeSeason) : 'saison-übergreifend';
         return `<div class="pp-elo-trinity">
           <div class="pp-et-col now">
-            <div class="label">Aktuell</div>
+            <div class="label">${_ruhe ? 'Abschied' : 'Aktuell'}</div>
             <div class="val">${curElo}</div>
-            <div class="sub">Saison</div>
+            <div class="sub">${_ruhe ? 'Karriere-Elo' : 'Saison'}</div>
           </div>
           <div class="pp-et-col peak">
             <div class="label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS['peak']||''}</svg> Spitze</div>
@@ -14479,6 +14560,9 @@ const rankProgHtml = rInfo ? `
       </div>
     </div>
 
+    ${_hatPartien ? `<div class="pp-ruhe">
+      <button id="ruhePlayer" type="button" data-ruhe="${_ruhe ? '0' : '1'}">${svgI('hourglass')}${_ruhe ? 'Karriere fortsetzen' : 'Karriere beenden'}</button>
+    </div>` : ''}
     <div class="pp-del">
       <button id="delPlayer">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -14532,6 +14616,29 @@ const rankProgHtml = rInfo ? `
     };
   });
   _bindChronikClicks(document.getElementById('sheet'));
+
+  const rp=document.getElementById('ruhePlayer');
+  if(rp) rp.onclick=async()=>{
+    const beenden = rp.dataset.ruhe === '1';
+    const ja = await bestaetigen(beenden
+      ? {ic:'hourglass', ja:'Karriere beenden', nein:'Abbrechen', titel:p.name + ' beendet die Karriere',
+         text:'Abgeschlossene Monate, Auszeichnungen, Titel und Chroniken bleiben. Ewige Tafel, Rekorde und der laufende Monat vergleichen ab jetzt ohne ' + p.name + '. Das Profil bleibt auf dem heutigen Stand stehen.'}
+      : {ic:'hourglass', ja:'Karriere fortsetzen', nein:'Abbrechen', titel:p.name + ' kehrt zurück',
+         text:p.name + ' steht danach wieder in Ewiger Tafel, Rekorden und Rangliste.'});
+    if(!ja) return;
+    rp.disabled = true;
+    const r = await karriereSetzen(id, beenden);
+    if(!r.ok){
+      rp.disabled = false;
+      toast('Nicht gespeichert', 'err', {sub: r.fehlt
+        ? 'In der Datenbank fehlt die Spalte für das Karriereende (datenbank/karriereende.sql).'
+        : 'Die Verbindung zur Datenbank ist fehlgeschlagen.'});
+      return;
+    }
+    toast(beenden ? p.name + ' beendet die Karriere' : p.name + ' ist zurück', 'ok');
+    closeSheet(true);
+    await loadAll();
+  };
 
   const dp=document.getElementById('delPlayer');
   if(dp) dp.onclick=async()=>{
@@ -15303,6 +15410,8 @@ function bind(){
         liste.querySelectorAll('[data-team]').forEach(el=>el.onclick=()=>{
           const [a,b]=el.dataset.team.split('|');if(a&&b) showTeam(a,b);
         });
+        const ruhe=document.querySelector('[data-einblick="ruhe_teams"].auf .einblick-i');
+        if(ruhe){ ruhe.innerHTML=ergebnis.ruhe||''; bindDetailLinks(ruhe); }
         document.getElementById('main')._renderHtml=null;
       });
     };
@@ -29838,6 +29947,7 @@ function avatarRings(){
   return out;
 }
 function avRingOf(pid){
+  if(imRuhestand(pid)) return null;
   try { return avatarRings()[pid] || null; } catch(e){ return null; }
 }
 

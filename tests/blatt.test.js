@@ -3562,6 +3562,50 @@ return JSON.stringify(funde,null,1);
      'ein Neuzeichnen im selben Reiter klappt sie nicht zu, ein Reiterwechsel schon',
      JSON.stringify(_eb.map(x => [x.nachRender, x.nachTab])));
 
+  // ── Die Ruheständler stehen am Ende, zu [§C40] ─────────────────────
+  //    Unter Gesamt, unter den Positionen und unter den Teams eine Zeile,
+  //    die aufklappt. Darüber steht er nicht mehr: die Liste ist die der
+  //    aktiven Liga. Aufgeklappt läuft keine Zeile über den Rand, und ein
+  //    zweiter Einblick im selben Reiter klappt den ersten nicht zu — mit
+  //    EINEM gemerkten Wert stand die Rollen-Landkarte nach dem nächsten
+  //    Neuzeichnen geschlossen da.
+  const ruhe = await page.evaluate(async (pruefenSrc) => {
+    const pruefen = eval('(' + pruefenSrc + ')');
+    const K = window.__k.eval.bind(window.__k);
+    const M = K("players.find(p => p.name === 'Martin').id");
+    K(`pmap()['${M}'].retired_at = '2026-08-26T19:30:00Z'; invalidateCache(); 'x'`);
+    const W = document.documentElement.clientWidth, out = {};
+    for(const [name, setz, key] of [['gesamt', "tab='ranking';period='all'", 'ruhe_liga'],
+        ['positionen', "tab='positions';period='season';rankMetric='atk'", 'ruhe_pos'],
+        ['teams', "tab='teams';period='season'", 'ruhe_teams']]){
+      K(`closeSheet(true); ${setz}; einblickOffen=''; render(); 'x'`);
+      const box = document.querySelector('#main [data-einblick="' + key + '"]');
+      if(!box){ out[name] = {fehlt:true}; continue; }
+      const ausserhalb = [...document.querySelectorAll('#main [data-detail="' + M + '"], #main [data-team*="' + M + '"]')]
+        .filter(e => !box.contains(e)).length;
+      const leer = !box.querySelector('.einblick-i').innerHTML.trim();
+      box.querySelector('.einblick-k').click();
+      const i = box.querySelector('.einblick-i');
+      const drin = i.querySelectorAll('[data-detail="' + M + '"], [data-team*="' + M + '"]').length;
+      const raus = [...i.querySelectorAll('*')].filter(e => { const r = e.getBoundingClientRect();
+        return r.width && (r.right > W + 1 || r.left < -1); }).length;
+      const ohneRang = !i.querySelector('.rrow .pos') && !i.querySelector('.tm-top');
+      out[name] = {ausserhalb, leer, drin, raus, ohneRang, fehler: pruefen(box).fehler.slice(0, 2)};
+    }
+    K(`closeSheet(true); tab='positions'; einblickOffen='rollen ruhe_pos'; render(); 'x'`);
+    out.beide = document.querySelectorAll('#main .einblick.auf').length;
+    K(`pmap()['${M}'].retired_at = null; einblickOffen=''; invalidateCache(); tab='ranking'; period='season'; render(); 'x'`);
+    return out;
+  }, PRUEFEN.toString());
+  const _ru = [ruhe.gesamt, ruhe.positionen, ruhe.teams];
+  ok(_ru.every(x => x && !x.fehlt && x.ausserhalb === 0 && x.leer && x.drin > 0),
+     'Gesamt, Positionen und Teams zeigen den Ruheständler nur in der Zeile am Ende, zu und ohne Inhalt',
+     JSON.stringify(ruhe));
+  ok(_ru.every(x => x && x.raus === 0 && x.ohneRang && !(x.fehler || []).length),
+     'aufgeklappt läuft keine Zeile bei 360 px über den Rand, und keine trägt einen Platz',
+     JSON.stringify(_ru.map(x => x && [x.raus, x.ohneRang, x.fehler])));
+  ok(ruhe.beide === 2, 'zwei Einblicke im selben Reiter bleiben beide offen', String(ruhe.beide));
+
   // ── Der Positionsverlauf trägt das Titelrennen ───────────────────
   //    Das Titelrennen stand einmal als eigener Einblick über der
   //    Rangliste und war dieselbe Frage wie der Positionsverlauf darunter.

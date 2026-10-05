@@ -29,6 +29,10 @@ function bind(){
         liste.querySelectorAll('[data-team]').forEach(el=>el.onclick=()=>{
           const [a,b]=el.dataset.team.split('|');if(a&&b) showTeam(a,b);
         });
+        // Die Duos mit Karriereende folgen derselben Suche [§C40]; zu
+        // gezeichnet wird ihr Inhalt erst beim Aufklappen.
+        const ruhe=document.querySelector('[data-einblick="ruhe_teams"].auf .einblick-i');
+        if(ruhe){ ruhe.innerHTML=ergebnis.ruhe||''; bindDetailLinks(ruhe); }
         // Der letzte vollständige Render darf nicht dieselben alten Ergebnisse
         // behaupten, nachdem die Liste gezielt ausgetauscht worden ist.
         document.getElementById('main')._renderHtml=null;
