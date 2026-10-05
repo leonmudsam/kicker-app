@@ -7190,9 +7190,28 @@ const _tafelBl = JSON.parse(K.eval(`JSON.stringify((function(){
     r.erst = {buehne:/nd-buehne nd-er/.test(b.k), name:b.k.indexOf(esc(a.name)) >= 0,
       monate:zahl(/<span class="(da)?"><i>/g, b.m), soll:monate.length > 1 ? monate.length : 0};
   }
+  // Der Tafel-Moment: jede Bewegung ein Zeichen auf der Uhr des Tages, jeder
+  // Beteiligte mit Namen, und jede Zeile mit Haltern als Bild statt Satz.
+  _cache._stories = roh.slice().sort((a,b)=>new Date(b.when)-new Date(a.when));
+  _cache._consolFrom = null; _cache._frischVon = null;
+  const tm = getStoriesCache().find(s => (s.dataRef||{}).type === 'sammel' && s.dataRef.quelle === 'tafel');
+  if(tm){
+    const b = blatt(tm), teile = tm.dataRef.teile;
+    const mehr = (b.k.match(/<b class="num">\\+(\\d+)<\\/b><\\/span>/g) || []).map(x => +x.replace(/\\D/g, ''));
+    const pids = [...new Set(teile.flatMap(t => t.pids || []))];
+    const mitHalter = teile.filter(t => t.rname && (t.halter || []).length);
+    r.moment = {zeichen:zahl(/<i class="tm-(rek|chr|aus|ins)">/g, b.k) + mehr.reduce((a, x) => a + x, 0), teile:teile.length,
+      namen:pids.every(id => b.k.indexOf('<b>' + esc(pname(id)) + '</b>') >= 0),
+      bilder:zahl(/class="nw-zeile nw-tz/g, b.m), mitHalter:mitHalter.length + teile.filter(t => (t.typ || t.type) === 'insignium_stufe').length,
+      saetze:zahl(/class="nw-zeile nw-tz[^]*?class="nw-satz/g, b.m)};
+  }
   return r;
 })())`));
 const _tb = _tafelBl;
+ok(_tb.moment && _tb.moment.zeichen === _tb.moment.teile && _tb.moment.namen
+   && _tb.moment.bilder === _tb.moment.mitHalter && _tb.moment.saetze === 0,
+   'das Blatt eines Tafel-Moments legt jede Bewegung auf die Uhr des Tages, nennt jeden Beteiligten und zeigt jede Zeile mit Haltern als Bild ohne Satz',
+   JSON.stringify(_tb.moment));
 ok(_tb.ins && _tb.ins.buehne && _tb.ins.grade === 3 && _tb.ins.quellen === 3
    && _tb.ins.summe === _tb.ins.punkte && _tb.ins.stufe,
    'das Blatt einer Insignium-Stufe zeigt die Verwandlung, drei Quellen, die zusammen die Punkte der Karte ergeben, und die drei Grade',

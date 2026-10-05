@@ -779,6 +779,56 @@
 .nd-ce > em{font-style:normal;font-size:11px;font-weight:600;color:var(--ink2);text-align:right}
 .nd-ce > em.g{color:var(--acid)}
 
+/* ── Der Tafel-Moment [§C33] ──────────────────────────────────────── */
+/* Jede Bewegung als Zeichen auf der Uhr des Tages, von der ersten bis zur
+   jüngsten, darunter jeder, um den es geht. Die Farbe des Zeichens sagt die
+   Art: Gold die Bestmarke und die Chronik, Silber der Ausbau, Violett die
+   Stufe [§C25]. */
+.nd-tm{display:flex;flex-direction:column;align-items:stretch;gap:8px}
+.nd-tm-a{align-self:stretch}
+.nd-tm-k{display:flex;align-items:baseline;gap:10px}
+.nd-tm-k > b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:36px;line-height:1;color:var(--silber)}
+.nd-tm-k > span{font:600 9px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink2)}
+.nd-tm-a{position:relative;margin-top:4px}
+.nd-tm-x{position:absolute;left:0;right:0;bottom:6px;height:2px;border-radius:1px;
+  background:linear-gradient(90deg,rgba(194,201,208,.12),rgba(194,201,208,.5))}
+.nd-tm-m{position:absolute;bottom:0;transform:translateX(-50%);display:flex;flex-direction:column-reverse;align-items:center;gap:3px}
+.nd-tm-m::after{content:'';order:-1;width:8px;height:8px;border-radius:50%;background:var(--ink);box-shadow:0 0 0 3px var(--surface)}
+.nd-tm-m > i{display:grid;place-items:center;width:20px;height:20px;border-radius:7px;
+  background:rgba(247,207,74,.14);box-shadow:inset 0 0 0 1px rgba(247,207,74,.5);color:var(--gold)}
+.nd-tm-m > i svg{width:12px;height:12px}
+.nd-tm-m > i.tm-aus{background:rgba(194,201,208,.1);box-shadow:inset 0 0 0 1px rgba(194,201,208,.4);color:var(--silber)}
+.nd-tm-m > i.tm-ins{background:rgba(167,139,250,.14);box-shadow:inset 0 0 0 1px rgba(167,139,250,.5);color:var(--purple)}
+.nd-tm-m > b{font-size:9px;color:var(--muted)}
+.nd-tm-u{display:flex;justify-content:space-between;font-size:10px;color:var(--muted)}
+.nd-tm-u span:only-child{margin:0 auto}
+.nd-tm-cs{display:flex;flex-wrap:wrap;gap:6px}
+.nd-tm-c{display:flex;align-items:center;gap:5px;padding:3px 9px 3px 3px;border-radius:99px;background:var(--surface2);cursor:pointer}
+.nd-tm-c > .av{--av:22px;width:22px;height:22px;font-size:8.5px;flex:0 0 auto}
+.nd-tm-c > b{font-size:11px;font-weight:600;color:var(--ink2)}
+@media (prefers-reduced-motion:no-preference){
+  .nd-tm-m{animation:ndMarke .4s cubic-bezier(.2,.9,.3,1) both;animation-delay:calc(.2s + var(--k,0) * 70ms)}
+}
+@keyframes ndMarke{from{opacity:0;transform:translate(-50%,10px)}}
+/* Eine Zeile der Tafel: Zeichen, Eintrag und wer was tat, rechts der Wechsel
+   aus Gesichtern und der Wert darunter. */
+.nw-tz{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:9px}
+.nw-tz-t{display:flex;flex-wrap:wrap;align-items:center;gap:3px 6px;min-width:0}
+.nw-tz-t .nw-label{flex:0 1 auto}
+.nw-tz-t small{flex:1 0 100%;font-size:10.5px;color:var(--muted);line-height:1.35}
+.nw-tz-r{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.nd-tz-w{display:flex;align-items:center}
+.nd-tz-f > .av{--av:22px;width:22px;height:22px;font-size:8.5px;box-shadow:0 0 0 2px var(--bg2)}
+.nd-tz-f + .nd-tz-f{margin-left:-6px}
+.nd-tz-f.aus{opacity:.45}
+.nd-tz-pf{width:16px;height:10px;margin:0 3px}
+.nd-tz-pf path{fill:none;stroke:var(--gold);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.nd-tz-z{width:26px;height:26px;margin-left:2px}
+.nd-tz-z svg{width:26px;height:26px;display:block}
+.nd-tz-mehr{font-size:9.5px;color:var(--muted);margin-left:3px}
+.nd-tz-v{font-family:'Sometype Mono',monospace;font-size:11px;font-weight:600;color:var(--gold);white-space:nowrap}
+.nd-tz-v s{color:var(--muted);font-weight:400}
+
 /* ── Die Monatstafel [§C33] ───────────────────────────────────────── */
 /* Die Zahl der Einträge, daneben je Träger eine Säule so hoch wie seine
    Einträge. Darunter die Tafel selbst als Zellen. */

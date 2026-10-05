@@ -1316,6 +1316,86 @@ function _ndInsigniumBlatt(s){
   return {kopf, mitte:ab('Woraus die Punkte kommen', quellen) + ab('Der Weg durch die Stufe', weg) + ab('Die Leiter', leiter)};
 }
 
+// ── Der Tafel-Moment als Zeitleiste [§C33] ──────────────────────────
+// Die Tafel eines Tages rollt: jeder weitere Wechsel ersetzt ihre Karte
+// [§C33], und das Blatt zeigte davon nur eine Liste aus Sätzen. Die Bühne
+// legt jetzt jede Bewegung als Zeichen auf die Uhr des Tages, von der ersten
+// bis zur jüngsten, und darunter jeden, um den es geht, mit Gesicht und
+// Namen. Was eine Bewegung wert war, steht in der Wirkung darunter.
+function _ndTafelMomentBlatt(s){
+  const d = s.dataRef || {};
+  if(d.type !== 'sammel' || (d.quelle !== 'tafel' && d.quelle !== 'form')) return null;
+  const pm = pmap();
+  const teile = (Array.isArray(d.teile) ? d.teile : []).filter(t => Number.isFinite(t.ms));
+  if(!teile.length) return null;
+  const typ = t => String(t.typ || t.type || '');
+  // Eigene Namen: `.rek` ist die Karte des Rekorde-Reiters und zog ihr
+  // Raster über das Zeichen.
+  const art = t => typ(t) === 'insignium_stufe' ? 'tm-ins' : typ(t).indexOf('chronik_') === 0 ? 'tm-chr'
+    : typ(t) === 'rekord_gesteigert' ? 'tm-aus' : 'tm-rek';
+  const ms = teile.map(t => t.ms), t0 = Math.min(...ms), t1 = Math.max(...ms);
+  const jeMinute = new Map();
+  teile.slice().sort((a, b) => a.ms - b.ms).forEach(t => {
+    const k = Math.floor(t.ms / 60000);
+    if(!jeMinute.has(k)) jeMinute.set(k, []);
+    jeMinute.get(k).push(t);
+  });
+  const marken = [...jeMinute.values()].map((l, k) => {
+    const x = t1 === t0 ? 50 : 4 + (l[0].ms - t0) / (t1 - t0) * 92;
+    return `<span class="nd-tm-m" style="left:${x.toFixed(1)}%;--k:${k}">${l.slice(0, 5).map(t =>
+      `<i class="${art(t)}">${svgI(t.ic || 'trophy')}</i>`).join('')}${l.length > 5 ? `<b class="num">+${l.length - 5}</b>` : ''}</span>`;
+  }).join('');
+  let ids = [];
+  try { ids = (_newsPids(s) || []).slice(); } catch(e){}
+  teile.forEach(t => (t.pids || []).forEach(id => { if(ids.indexOf(id) < 0) ids.push(id); }));
+  ids = ids.filter(id => pm[id]);
+  const kopf = `<div class="nd-buehne nd-tm${d.quelle === 'form' ? ' form' : ''}">`
+    + `<div class="nd-tm-k"><b class="num">${teile.length}</b><span>${teile.length === 1 ? 'Bewegung' : 'Bewegungen'}`
+    + `${d.quelle === 'form' ? ' auf kurzer Strecke' : ' an der Ewigen Tafel'}</span></div>`
+    + `<div class="nd-tm-a" style="height:${20 + 23 * Math.min(6, Math.max(...[...jeMinute.values()].map(l => l.length)))}px"><i class="nd-tm-x"></i>${marken}</div>`
+    + `<div class="nd-tm-u num"><span>${esc(_newsUhrzeit(t0))}</span>${t1 !== t0 ? `<span>${esc(_newsUhrzeit(t1))}</span>` : ''}</div>`
+    + (ids.length ? `<div class="nd-tm-cs">${ids.map(id => `<span class="nd-tm-c" data-pid="${esc(id)}">${_spChip(id)}<b>${esc(_spName(id))}</b></span>`).join('')}</div>` : '')
+    + `</div>`;
+  return {kopf, mitte:null};
+}
+
+// Eine Zeile der Tafel als Bild statt als Satz: der Name des Eintrags, was
+// geschah, und rechts der Wechsel aus Gesichtern mit dem Wert darunter. Ohne
+// Halter (ältere Läufe) bleibt die Zeile, wie sie war.
+function _ndTafelZeileBild(t){
+  const pm = pmap();
+  const typ = String(t.typ || t.type || '');
+  const ref = t.ref || {};
+  const chip = (id, aus) => pm[id] ? `<span class="nd-tz-f${aus ? ' aus' : ''}">${_spChip(id)}</span>` : '';
+  if(typ === 'insignium_stufe' && ref.pid && pm[ref.pid]){
+    const p = Number(ref.punkte) || 0;
+    const i = p ? insigniumStufeVon(p) : (ref.stufe | 0);
+    let z = '';
+    try { z = insigniumStufeSvg(INSIGNIEN[i].key, (getPlayerRank(ref.pid) || {}).label, 0, 0, {bild:true}) || ''; } catch(e){}
+    return {label:INSIGNIEN[i].name, verb:_spName(ref.pid) + ' erreicht', rechts:`<span class="nd-tz-w">${chip(ref.pid)}<span class="nd-tz-z">${z}</span></span>`
+      + (p ? `<b class="nd-tz-v num">${p} P</b>` : '')};
+  }
+  const neu = (Array.isArray(t.halter) ? t.halter : []).filter(id => pm[id]);
+  const vor = (Array.isArray(t.vorher) ? t.vorher : []).filter(id => pm[id]);
+  if(!neu.length || !t.rname) return null;
+  const weg = vor.filter(id => neu.indexOf(id) < 0);
+  // Wer etwas getan hat: beim Gleichziehen die Neuen, sonst alle Halter.
+  const dazu = neu.filter(id => vor.indexOf(id) < 0);
+  const wer = vor.length && neu.length > vor.length && dazu.length ? dazu : neu;
+  const mehr = wer.length > 1;
+  const verb = typ === 'rekord_gesteigert' ? (mehr ? 'bauen aus' : 'baut aus')
+    : !vor.length ? (mehr ? 'holen' : 'holt') : weg.length ? (mehr ? 'übernehmen' : 'übernimmt')
+    : neu.length < vor.length ? (mehr ? 'halten allein' : 'hält allein')
+    : neu.length > vor.length ? (mehr ? 'ziehen gleich' : 'zieht gleich') : (mehr ? 'halten' : 'hält');
+  const wert = ref.ev ? _chronKurz(ref.ev) : '';
+  const alt = typ === 'rekord_gesteigert' && ref.evVorher ? _chronKurz(ref.evVorher) : '';
+  const pf = `<svg class="nd-tz-pf" viewBox="0 0 16 10" aria-hidden="true"><path d="M1 5H13"/><path d="M10 2L14 5L10 8"/></svg>`;
+  return {label:t.rname, verb:_namenKurz(wer.map(_spName)) + ' ' + verb, rechts:`<span class="nd-tz-w">${weg.slice(0, 2).map(id => chip(id, true)).join('')}`
+    + (weg.length ? pf : '') + neu.slice(0, 3).map(id => chip(id)).join('')
+    + (neu.length > 3 ? `<span class="nd-tz-mehr num">+${neu.length - 3}</span>` : '') + `</span>`
+    + (wert ? `<b class="nd-tz-v num">${alt ? `<s>${esc(alt)}</s> ` : ''}${esc(wert)}</b>` : '')};
+}
+
 // Welche Story ein eigenes Blatt mit Bühne hat. Kopf und Mitte kommen aus
 // demselben Aufruf, gemerkt je Story, damit nichts doppelt gerechnet wird.
 const _ND_BLATT = {win_streak:_ndSerieBlatt, loss_streak:_ndSerieBlatt, team_streak:_ndSerieBlatt,
@@ -1324,7 +1404,7 @@ const _ND_BLATT = {win_streak:_ndSerieBlatt, loss_streak:_ndSerieBlatt, team_str
   rekord_erstmals:_ndRekordBlatt, rekord_gesteigert:_ndRekordBlatt, rekord_geholt:_ndRekordBlatt,
   potd:_ndPotdBlatt, season_endgame:_ndEndspurtBlatt, chronik_geholt:_ndChronikBlatt,
   chronik_frei:_ndMonatBlatt, chronik_monat:_ndMonatBlatt, chronik_erstling:_ndErstlingBlatt,
-  insignium_stufe:_ndInsigniumBlatt};
+  insignium_stufe:_ndInsigniumBlatt, sammel:_ndTafelMomentBlatt};
 // Gemerkt nur für einen Aufbau (`_newsDetailBody` leert es): an der Story
 // hängend hielte es nach einer neuen Partie den alten Stand fest.
 let _ndBlattJetzt = null;
@@ -1376,7 +1456,10 @@ function _ndPartieAbschnitte(s){
 
 function _newsDetailMitte(s){
   const d = s.dataRef || {};
-  { const x = _ndEigenesBlatt(s); if(x) return x.mitte; }
+  // Ein Blatt kann nur seine Bühne mitbringen und die Mitte dem Schalter
+  // lassen (`mitte:null`): der Tafel-Moment teilt seine Liste mit den
+  // übrigen Sammelkarten.
+  { const x = _ndEigenesBlatt(s); if(x && x.mitte != null) return x.mitte; }
   const pm = pmap();
   const avM = (pid) => (typeof avHtml === 'function' && pm[pid]) ? avHtml(pm[pid]) : '';
   const nameOf = (pid) => (pm[pid] && pm[pid].name) || '?';
@@ -1724,10 +1807,21 @@ function _newsDetailMitte(s){
           if(!m) return '';
           return standFuer(m);
         };
+        const tafelBild = d.quelle === 'tafel' || d.quelle === 'form';
         const _zeile = t => {
           const uhr = t.ms ? _newsUhrzeit(t.ms) : '';
           const stand = zeileStand(t);
           const zeit = [uhr, stand].filter(Boolean).join(' · ');
+          // Eine Zeile der Tafel ist ein Bild aus Gesichtern und Wert; ihr
+          // Satz stand darunter und wiederholte beides [§C33].
+          const bild = tafelBild ? _ndTafelZeileBild(t) : null;
+          if(bild) return `<div class="nw-zeile nw-tz${t.neg ? ' neg' : ''}"${
+              (t.pids && t.pids[0]) ? ` data-pid="${esc(t.pids[0])}" style="cursor:pointer"` : ''}>
+              ${t.ic ? `<i class="nw-ic">${svgI(t.ic)}</i>` : ''}
+              <span class="nw-tz-t"><span class="nw-label">${esc(bild.label)}</span>${
+                t.klasse ? `<b class="nw-kl">${esc(t.klasse)}</b>` : ''}${t.marke ? `<b class="nw-mk">${esc(t.marke)}</b>` : ''}
+                <small>${esc([bild.verb, zeit].filter(Boolean).join(' · '))}</small></span>
+              <span class="nw-tz-r">${bild.rechts}</span></div>`;
           return `<div class="nw-zeile${t.neg ? ' neg' : ''}"${
               (t.pids && t.pids[0]) ? ` data-pid="${esc(t.pids[0])}" style="cursor:pointer"` : ''}>
               <div class="nw-zeile-kopf">${t.ic
