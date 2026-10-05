@@ -3436,7 +3436,6 @@
   .posv-grid line{stroke:var(--line);stroke-width:1;opacity:.55}
   .posv-x-tick{font-size:10px;fill:var(--muted);font-family:'Sometype Mono',monospace;text-anchor:middle}
   .posv-y-tick{font-size:11px;fill:var(--muted);font-family:'Sometype Mono',monospace;text-anchor:end;dominant-baseline:central}
-  .posv-axis-cap{font-size:9px;fill:var(--muted);font-family:'Sometype Mono',monospace;letter-spacing:.14em;text-transform:uppercase}
 
   .posv-line{fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;
     transition:opacity .15s,stroke-width .15s;pointer-events:none}
@@ -3444,44 +3443,68 @@
     cursor:pointer;pointer-events:stroke}
   .posv-dot{transition:opacity .15s;pointer-events:none}
   .posv-end-av{cursor:pointer;transition:opacity .15s,transform .15s;transform-box:fill-box;transform-origin:center}
-  .posv-end-label{font-size:11px;font-family:'Archivo Black',sans-serif;fill:var(--ink);
-    transition:opacity .15s,fill .15s,font-size .15s;cursor:pointer;dominant-baseline:central}
+  .posv-end-d{font-size:10px;font-family:'Sometype Mono',monospace;fill:var(--muted);
+    dominant-baseline:central;transition:opacity .15s;pointer-events:none}
+  .posv-end-d.auf{fill:var(--acid)}
+  .posv-end-d.ab{fill:var(--red)}
+  .posv-eins{fill:var(--gold);opacity:.07}
+  .posv-y-tick.eins{fill:var(--gold);font-weight:700}
+  .posv-st{fill:var(--muted);opacity:.7}
+
+  @media (prefers-reduced-motion:no-preference){
+    .posv-line{stroke-dasharray:1;stroke-dashoffset:1;
+      animation:posvZug .9s cubic-bezier(.3,.7,.3,1) forwards;animation-delay:calc(var(--k,0) * 60ms)}
+    .posv-row{animation:posvZeile .35s ease both;animation-delay:calc(var(--k,0) * 30ms)}
+    .posv-tz span{animation:posvZeile .3s ease both;animation-delay:calc(var(--k,0) * 12ms)}
+  }
+  @keyframes posvZug{to{stroke-dashoffset:0}}
+  @keyframes posvZeile{from{opacity:0;transform:translateY(4px)}}
 
   .posv-dim .posv-line:not(.hl){opacity:.14}
   .posv-dim .posv-dot:not(.hl){opacity:.14}
   .posv-dim .posv-end-av:not(.hl){opacity:.32;filter:grayscale(.85)}
-  .posv-dim .posv-end-label:not(.hl){opacity:.4;fill:var(--muted)}
+  .posv-dim .posv-end-d:not(.hl){opacity:.3}
   .posv-line.hl{stroke-width:3.4;filter:drop-shadow(0 0 6px currentColor)}
   .posv-dot.hl{opacity:1}
   .posv-end-av.hl{transform:scale(1.15)}
-  .posv-end-label.hl{font-size:12.5px}
 
-  .posv-hint{font-size:11px;color:var(--muted);text-align:center;margin:2px 0 12px;
-    font-family:'Sometype Mono',monospace;letter-spacing:.04em}
+  .posv-info-n{display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0;line-height:1}
+  .posv-info-n b{font-family:'Archivo Black',sans-serif;font-size:20px;color:var(--ink)}
+  .posv-info-n small{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;
+    margin-top:3px;font-family:'Sometype Mono',monospace}
+
+  .posv-tab{display:flex;flex-direction:column;gap:2px;margin-bottom:12px}
+  .posv-row{display:grid;grid-template-columns:22px 26px minmax(0,1fr) 56px 30px 34px;align-items:center;
+    gap:8px;padding:6px 8px;border-radius:10px;cursor:pointer;border:1px solid transparent;
+    transition:background .15s,border-color .15s}
+  .posv-row:active{background:var(--surface)}
+  .posv-row.hl{background:var(--surface);border-color:var(--c)}
+  .posv-pl{font-family:'Archivo Black',sans-serif;font-size:13px;color:var(--muted);text-align:right}
+  .posv-row.eins .posv-pl{color:var(--gold)}
+  .posv-row .av{width:26px;height:26px;font-size:10px}
+  .posv-nm{font-size:13px;font-weight:600;color:var(--ink);overflow-wrap:anywhere;line-height:1.15}
+  .posv-spark{width:56px;height:18px;display:block}
+  .posv-spark polyline{fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+  .posv-bw{font-size:10.5px;font-family:'Sometype Mono',monospace;color:var(--muted);text-align:right}
+  .posv-bw.auf{color:var(--acid)}
+  .posv-bw.ab{color:var(--red)}
+  .posv-elo{font-size:12px;font-family:'Sometype Mono',monospace;color:var(--ink);text-align:right}
 
   .posv-detail{background:var(--surface);border:1px solid var(--line);border-radius:14px;
-    padding:12px 14px;margin-bottom:10px;min-height:96px;
-    transition:border-color .15s,opacity .15s}
-  .posv-detail.empty{opacity:.55}
-  .posv-detail-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-  .posv-detail-av{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;
-    font-size:22px;flex-shrink:0;border:2px solid var(--line);background:var(--surface3);
-    overflow:hidden;font-family:'Archivo Black',sans-serif;color:#0a0c0b}
-  .posv-detail-av .em{font-size:22px;line-height:1;
-    font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji','Twemoji Mozilla',sans-serif}
-  .posv-detail-name-wrap{flex:1;min-width:0;display:flex;align-items:center;gap:8px}
-  .posv-detail-name{font-family:'Archivo Black',sans-serif;font-size:16px;letter-spacing:-.01em;
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .posv-detail-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0}
-  .posv-detail-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-  .posv-detail-stat{text-align:center;padding:4px 2px}
-  .posv-detail-stat-label{font-size:9px;color:var(--muted);text-transform:uppercase;
-    letter-spacing:.1em;margin-bottom:2px;font-family:'Sometype Mono',monospace}
-  .posv-detail-stat-val{font-family:'Archivo Black',sans-serif;font-size:14.5px;color:var(--ink);line-height:1.1}
-  .posv-detail-stat-val.pos{color:var(--acid)}
-  .posv-detail-stat-val.neg{color:var(--red)}
-  .posv-detail-empty-text{color:var(--muted);font-size:12px;text-align:center;padding:18px 0;
-    font-family:'Sometype Mono',monospace}
+    padding:12px 14px;margin-bottom:12px}
+  .posv-dk{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+  .posv-dk-t{flex:1;min-width:0;display:flex;flex-direction:column}
+  .posv-dk-t b{font-family:'Archivo Black',sans-serif;font-size:16px;letter-spacing:-.01em;overflow-wrap:anywhere}
+  .posv-dk-t small{font-size:11px;color:var(--muted);font-family:'Sometype Mono',monospace;margin-top:2px}
+  .posv-dk-c{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+  .posv-tz{display:grid;grid-template-columns:repeat(auto-fill,minmax(24px,1fr));gap:3px;margin-bottom:6px}
+  .posv-tz span{display:flex;flex-direction:column;align-items:center;justify-content:center;
+    height:32px;border-radius:6px;background:var(--surface2);color:var(--muted);opacity:.6}
+  .posv-tz span.gespielt{opacity:1;color:var(--ink);background:var(--surface3)}
+  .posv-tz span.eins{color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+  .posv-tz span.leer{background:transparent;box-shadow:inset 0 0 0 1px var(--line);opacity:.5}
+  .posv-tz b{font-family:'Archivo Black',sans-serif;font-size:11px;line-height:1}
+  .posv-tz small{font-size:8px;font-family:'Sometype Mono',monospace;margin-top:2px;opacity:.7}
 
   .posv-update{font-size:10px;color:var(--muted);text-align:center;
     font-family:'Sometype Mono',monospace;letter-spacing:.04em;
@@ -5202,7 +5225,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.05.90d1514e';
+const BUILD_VERSION='2026.10.05.cc040cc9';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -7128,14 +7151,28 @@ function _posvAvSvg(player, color, dataPid){
   </g>`;
 }
 
+function _posvBewegung(data, pid){
+  const st = data.spielTage || [];
+  const arr = data.positionsByDay[pid] || [];
+  const jetzt = st.length ? arr[st[st.length - 1] - 1] : null;
+  const vorher = st.length > 1 ? arr[st[st.length - 2] - 1] : null;
+  if(jetzt == null) return null;
+  if(vorher == null) return {neu:true, d:0};
+  return {neu:false, d:vorher - jetzt};
+}
+function _posvJetzt(data, pid){
+  const arr = data.positionsByDay[pid] || [];
+  for(let i = arr.length - 1; i >= 0; i--) if(arr[i] !== null) return arr[i];
+  return null;
+}
+
 function _buildPositionChartSvg(data){
   const VB_W = 360, VB_H = 280;
-  const ML = 24, MR = 92, MT = 10, MB = 30;
+  const ML = 24, MR = 62, MT = 12, MB = 34;
   const PW = VB_W - ML - MR;
   const PH = VB_H - MT - MB;
   const N = data.activeIds.length;
   const D = data.lastDay;
-
   const xOf = day => ML + (D <= 1 ? PW/2 : (day-1)/(D-1) * PW);
   const yOf = pos => MT + (N <= 1 ? PH/2 : (pos-1)/(N-1) * PH);
 
@@ -7146,9 +7183,8 @@ function _buildPositionChartSvg(data){
   }
   let yTicks = '';
   for(let p=1; p<=N; p++){
-    yTicks += `<text class="posv-y-tick" x="${ML-7}" y="${yOf(p)}">${p}</text>`;
+    yTicks += `<text class="posv-y-tick${p === 1 ? ' eins' : ''}" x="${ML-7}" y="${yOf(p)}">${p}</text>`;
   }
-  let xTicks = '';
   const tickDays = [];
   if(D <= 7){
     for(let d=1; d<=D; d++) tickDays.push(d);
@@ -7161,63 +7197,60 @@ function _buildPositionChartSvg(data){
     }
   }
   const seenTicks = new Set();
+  let xTicks = '';
   tickDays.filter(d => !seenTicks.has(d) && seenTicks.add(d)).forEach(d => {
-    xTicks += `<text class="posv-x-tick" x="${xOf(d)}" y="${MT+PH+18}">${d}</text>`;
+    xTicks += `<text class="posv-x-tick" x="${xOf(d)}" y="${MT+PH+24}">${d}</text>`;
   });
-  const xCap = `<text class="posv-axis-cap" x="0" y="${MT+PH+18}">Tag</text>`;
+  const spieltage = (data.spielTage || []).map(d => `<circle class="posv-st" cx="${xOf(d).toFixed(1)}" cy="${MT+PH+10}" r="2.2"/>`).join('');
 
   const playersByEndPos = data.activeIds
-    .map(id => {
-      const arr = data.positionsByDay[id];
-      let lastVal = null, lastDayIdx = -1;
-      for(let i=arr.length-1; i>=0; i--){
-        if(arr[i] !== null){ lastVal = arr[i]; lastDayIdx = i; break; }
-      }
-      return {id, lastPos: lastVal, lastDayIdx};
-    })
+    .map(id => ({id, lastPos:_posvJetzt(data, id)}))
     .filter(o => o.lastPos !== null)
     .sort((a,b)=> a.lastPos - b.lastPos);
 
   let lines = '', hits = '', dots = '', ends = '';
   const pm = pmap();
-  for(const o of playersByEndPos){
+  playersByEndPos.forEach((o, k) => {
     const pid = o.id;
     const color = data.colorOf[pid] || '#888';
     const arr = data.positionsByDay[pid];
     const pts = [];
     for(let i=0; i<arr.length; i++){
-      if(arr[i] !== null){
-        pts.push({x: xOf(i+1), y: yOf(arr[i])});
-      }
+      if(arr[i] !== null) pts.push({x: xOf(i+1), y: yOf(arr[i])});
     }
-    if(pts.length === 0) continue;
+    if(pts.length === 0) return;
     let d;
     if(pts.length === 1){
-      d = `M ${pts[0].x-2} ${pts[0].y} L ${pts[0].x+2} ${pts[0].y}`;
+      d = `M ${(pts[0].x-2).toFixed(1)} ${pts[0].y.toFixed(1)} L ${(pts[0].x+2).toFixed(1)} ${pts[0].y.toFixed(1)}`;
     } else {
-      d = 'M ' + pts.map(p => `${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' L ');
+      d = `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`;
+      for(let i=1; i<pts.length; i++){
+        const a = pts[i-1], b = pts[i], h = (b.x - a.x) / 2;
+        d += ` C ${(a.x+h).toFixed(1)} ${a.y.toFixed(1)} ${(b.x-h).toFixed(1)} ${b.y.toFixed(1)} ${b.x.toFixed(1)} ${b.y.toFixed(1)}`;
+      }
     }
-    lines += `<path class="posv-line" data-pid="${esc(pid)}" d="${d}" stroke="${color}"/>`;
+    lines += `<path class="posv-line" data-pid="${esc(pid)}" d="${d}" stroke="${color}" pathLength="1" style="--k:${k}"/>`;
     hits  += `<path class="posv-line-hit" data-pid="${esc(pid)}" d="${d}"/>`;
-    for(let i=0; i<pts.length; i++){
-      const r = (i === pts.length-1) ? 3.2 : 2;
-      dots += `<circle class="posv-dot" data-pid="${esc(pid)}" cx="${pts[i].x.toFixed(1)}" cy="${pts[i].y.toFixed(1)}" r="${r}" fill="${color}"/>`;
+    const st = new Set(data.spielTage || []);
+    for(let i=0; i<arr.length; i++){
+      if(arr[i] === null || (!st.has(i + 1) && i !== arr.length - 1)) continue;
+      const last = i === arr.length - 1;
+      dots += `<circle class="posv-dot" data-pid="${esc(pid)}" cx="${xOf(i+1).toFixed(1)}" cy="${yOf(arr[i]).toFixed(1)}" r="${last ? 3.2 : 2}" fill="${color}"/>`;
     }
-    const xEnd = pts[pts.length-1].x;
-    const yEnd = pts[pts.length-1].y;
-    const avX = Math.min(xEnd + 16, VB_W - 72);
-    const labelX = avX + 14;
-    const p = pm[pid];
-    const name = p ? p.name : '?';
-    ends += `<g transform="translate(${avX.toFixed(1)},${yEnd.toFixed(1)})">${_posvAvSvg(p, color, pid)}</g>`;
-    const shortName = name.length > 8 ? name.slice(0,8)+'…' : name;
-    ends += `<text class="posv-end-label" data-pid="${esc(pid)}" x="${labelX.toFixed(1)}" y="${yEnd.toFixed(1)}">${esc(shortName)}</text>`;
-  }
+    const xEnd = pts[pts.length-1].x, yEnd = pts[pts.length-1].y;
+    const avX = Math.min(xEnd + 16, VB_W - 46);
+    ends += `<g transform="translate(${avX.toFixed(1)},${yEnd.toFixed(1)})">${_posvAvSvg(pm[pid], color, pid)}</g>`;
+    const bw = _posvBewegung(data, pid);
+    const txt = !bw ? '' : bw.neu ? 'neu' : bw.d > 0 ? '▲' + bw.d : bw.d < 0 ? '▼' + Math.abs(bw.d) : '';
+    if(txt) ends += `<text class="posv-end-d ${!bw || bw.neu ? '' : bw.d > 0 ? 'auf' : 'ab'}" data-pid="${esc(pid)}" x="${(avX + 15).toFixed(1)}" y="${yEnd.toFixed(1)}">${txt}</text>`;
+  });
 
   return `<svg class="posv-svg" viewBox="0 0 ${VB_W} ${VB_H}" preserveAspectRatio="xMinYMin meet" xmlns="http://www.w3.org/2000/svg">
+    <rect class="posv-eins" x="${ML}" y="${(yOf(1) - (N > 1 ? PH/(N-1)/2 : 10)).toFixed(1)}" width="${PW}" height="${(N > 1 ? PH/(N-1) : 20).toFixed(1)}" rx="6"/>
     <g class="posv-grid">${grid}</g>
     ${yTicks}
-    ${xCap}${xTicks}
+    ${spieltage}
+    ${xTicks}
     <g>${hits}</g>
     <g>${lines}</g>
     <g>${dots}</g>
@@ -7225,63 +7258,58 @@ function _buildPositionChartSvg(data){
   </svg>`;
 }
 
+function _posvSpark(data, pid){
+  const arr = data.positionsByDay[pid] || [], N = Math.max(2, data.activeIds.length), D = data.lastDay;
+  const pts = [];
+  arr.forEach((p, i) => { if(p !== null) pts.push([D <= 1 ? 28 : 2 + i / (D - 1) * 52, 2 + (p - 1) / (N - 1) * 14]); });
+  if(pts.length < 2) return `<svg class="posv-spark" viewBox="0 0 56 18" aria-hidden="true"></svg>`;
+  return `<svg class="posv-spark" viewBox="0 0 56 18" aria-hidden="true"><polyline points="${pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}" stroke="${data.colorOf[pid] || '#888'}"/>`
+    + `<circle cx="${pts[pts.length - 1][0].toFixed(1)}" cy="${pts[pts.length - 1][1].toFixed(1)}" r="2" fill="${data.colorOf[pid] || '#888'}"/></svg>`;
+}
+
+function _posvTabelle(data){
+  const pm = pmap();
+  const ids = data.activeIds.filter(id => _posvJetzt(data, id) !== null)
+    .sort((a, b) => _posvJetzt(data, a) - _posvJetzt(data, b));
+  return `<div class="posv-tab">${ids.map((id, k) => {
+    const bw = _posvBewegung(data, id);
+    const bew = !bw ? '' : bw.neu ? '<span class="posv-bw neu">neu</span>'
+      : bw.d > 0 ? `<span class="posv-bw auf num">▲${bw.d}</span>`
+      : bw.d < 0 ? `<span class="posv-bw ab num">▼${Math.abs(bw.d)}</span>` : '<span class="posv-bw num">–</span>';
+    const elo = data.finalElo[id];
+    return `<div class="posv-row${_posvJetzt(data, id) === 1 ? ' eins' : ''}" data-pid="${esc(id)}" style="--k:${k};--c:${data.colorOf[id] || '#888'}">`
+      + `<b class="posv-pl num">${_posvJetzt(data, id)}.</b>${pm[id] ? avHtml(pm[id], '', {px:26}) : ''}`
+      + `<span class="posv-nm">${esc((pm[id] || {}).name || '?')}</span>${_posvSpark(data, id)}${bew}`
+      + `<span class="posv-elo num">${elo === undefined ? '–' : Math.round(elo)}</span></div>`;
+  }).join('')}</div>`;
+}
+
 function _renderPosvDetail(el, data, hlId){
-  const stats = getSeasonPlayerStats(data.seasonId);
-  if(!hlId){
-    el.classList.add('empty');
-    el.innerHTML = `<div class="posv-detail-empty-text">Hier stehen die Einzelheiten,<br>sobald ein Spieler gewählt ist.</div>`;
-    return;
-  }
-  el.classList.remove('empty');
+  if(!hlId){ el.hidden = true; el.innerHTML = ''; return; }
+  el.hidden = false;
   const p = pmap()[hlId];
+  const s = getSeasonPlayerStats(data.seasonId)[hlId] || {wins:0, losses:0, games:0};
   const arr = data.positionsByDay[hlId] || [];
-  let curPos = '–';
-  for(let i=arr.length-1; i>=0; i--){ if(arr[i] !== null){ curPos = arr[i]; break; } }
+  const st = new Set(data.spielTage || []);
+  const jetzt = _posvJetzt(data, hlId);
+  const best = Math.min(...arr.filter(x => x !== null));
+  const vorn = (data.spielTage || []).filter(d => arr[d - 1] === 1).length;
   const elo = data.finalElo[hlId];
-  const eloStr = (elo===undefined) ? '–' : Math.round(elo);
-  const s = stats[hlId] || {wins:0,losses:0,games:0};
-  const balance = `${s.wins}–${s.losses}`;
-  const quote = s.games ? Math.round(s.wins/s.games*100)+'%' : '–';
-  const color = data.colorOf[hlId] || '#888';
-
-  let avInner;
-  if(p && p.avatar_id){
-    const em = avatarEmoji(p.avatar_id);
-    avInner = `<span class="em">${em}</span>`;
-  } else if(p){
-    avInner = esc(initials(p.name));
-  } else {
-    avInner = '?';
-  }
-  const avBg = p && p.avatar_id ? 'var(--surface3)' : (p ? avColor(p.id) : 'var(--surface3)');
-
-  el.innerHTML = `
-    <div class="posv-detail-head">
-      <div class="posv-detail-av" style="background:${avBg};border-color:${color}">${avInner}</div>
-      <div class="posv-detail-name-wrap">
-        <div class="posv-detail-name">${esc(p ? p.name : '?')}</div>
-        <span class="posv-detail-dot" style="background:${color}"></span>
-      </div>
-    </div>
-    <div class="posv-detail-stats">
-      <div class="posv-detail-stat">
-        <div class="posv-detail-stat-label">Position</div>
-        <div class="posv-detail-stat-val">${curPos}.</div>
-      </div>
-      <div class="posv-detail-stat">
-        <div class="posv-detail-stat-label">Elo</div>
-        <div class="posv-detail-stat-val">${eloStr}</div>
-      </div>
-      <div class="posv-detail-stat">
-        <div class="posv-detail-stat-label">Bilanz</div>
-        <div class="posv-detail-stat-val">${balance}</div>
-      </div>
-      <div class="posv-detail-stat">
-        <div class="posv-detail-stat-label">Quote</div>
-        <div class="posv-detail-stat-val">${quote}</div>
-      </div>
-    </div>
-  `;
+  const zellen = arr.map((pos, i) => `<span class="${pos === null ? 'leer' : pos === 1 ? 'eins' : ''}${st.has(i + 1) ? ' gespielt' : ''}" style="--k:${i}">`
+    + `${pos === null ? '' : `<b class="num">${pos}</b>`}<small class="num">${i + 1}</small></span>`).join('');
+  el.innerHTML = `<div class="posv-dk">${p ? avHtml(p, '', {ins:true, px:48, feuer:0}) : ''}
+      <div class="posv-dk-t"><b>${esc(p ? p.name : '?')}</b><small>Platz ${jetzt} von ${data.activeIds.length}</small></div>
+      <i class="posv-dk-c" style="background:${data.colorOf[hlId] || '#888'}"></i></div>`
+    + rcpZahlenHtml([
+        {v:jetzt + '.', l:'Platz', ton:jetzt === 1 ? 'gold' : ''},
+        {v:elo === undefined ? '–' : String(Math.round(elo)), l:'Elo'},
+        {v:s.wins + '–' + s.losses, l:'Bilanz'},
+        {v:s.games ? Math.round(s.wins / s.games * 100) + ' %' : '–', l:'Siegquote'},
+        {v:best + '.', l:'Bester Platz'},
+        {v:String(vorn), l:vorn === 1 ? 'Spieltag vorn' : 'Spieltage vorn'}
+      ])
+    + `<div class="nd-section">Platz an jedem Tag</div><div class="posv-tz">${zellen}</div>`
+    + `<div class="nd-section">Die Partien der Saison</div>${saisonZellenHtml(data.seasonId, hlId)}`;
 }
 
 function _attachPosvHighlight(rootEl, data){
@@ -7293,19 +7321,20 @@ function _attachPosvHighlight(rootEl, data){
     if(pid && pid === curHl) pid = null;
     curHl = pid;
     chartHost.classList.toggle('posv-dim', !!pid);
-    chartHost.querySelectorAll('.hl').forEach(el => el.classList.remove('hl'));
+    rootEl.querySelectorAll('.posv-chart-host .hl, .posv-row.hl').forEach(el => el.classList.remove('hl'));
     if(pid){
-      chartHost.querySelectorAll(`[data-pid="${CSS.escape(pid)}"]`)
+      rootEl.querySelectorAll(`.posv-chart-host [data-pid="${CSS.escape(pid)}"], .posv-row[data-pid="${CSS.escape(pid)}"]`)
         .forEach(el => el.classList.add('hl'));
     }
     _renderPosvDetail(detailEl, data, pid);
   }
 
   rootEl.addEventListener('click', (e) => {
+    if(detailEl.contains(e.target)) return;
     let target = e.target;
     let pid = null;
     while(target && target !== rootEl){
-      if(target.dataset && target.dataset.pid){ pid = target.dataset.pid; break; }
+      if(target.dataset && target.dataset.pid && (chartHost.contains(target) || target.classList.contains('posv-row'))){ pid = target.dataset.pid; break; }
       target = target.parentNode;
     }
     if(pid){
@@ -7313,9 +7342,7 @@ function _attachPosvHighlight(rootEl, data){
       applyHl(pid);
       return;
     }
-    if(curHl && chartHost.contains(e.target)){
-      applyHl(null);
-    }
+    if(curHl && chartHost.contains(e.target)) applyHl(null);
   });
 }
 
@@ -7339,6 +7366,10 @@ function showPositionHistory(seasonId){
   const subInfo = data.isCurrent
     ? `${sLabel} · Tag ${data.lastDay} von ${data.totalDays}`
     : `${sLabel} · Saison abgeschlossen`;
+  const n = (data.spielTage || []).length;
+  const podium = data.activeIds.filter(id => _posvJetzt(data, id) !== null)
+    .sort((a, b) => _posvJetzt(data, a) - _posvJetzt(data, b)).slice(0, 3);
+  const spitze = saisonSpitzeHtml(seasonId, podium);
 
   openSheet(`
     <div style="padding:0 0 8px">
@@ -7353,6 +7384,7 @@ function showPositionHistory(seasonId){
           <div class="posv-info-title">${data.isCurrent ? 'Aktuelle Saison' : 'Vergangene Saison'}</div>
           <div class="posv-info-sub">${esc(subInfo)}</div>
         </div>
+        <div class="posv-info-n"><b class="num">${n}</b><small>${n === 1 ? 'Spieltag' : 'Spieltage'}</small></div>
       </div>
 
       <div class="posv-chart-host" id="posvChartHost">
@@ -7360,11 +7392,11 @@ function showPositionHistory(seasonId){
         ${_buildPositionChartSvg(data)}
       </div>
 
-      <div class="posv-hint">Linie oder Gesicht antippen, um einen Spieler hervorzuheben</div>
+      <div class="posv-detail" id="posvDetail" hidden></div>
 
-      <div class="posv-detail empty" id="posvDetail">
-        <div class="posv-detail-empty-text">Hier stehen die Einzelheiten,<br>sobald ein Spieler gewählt ist.</div>
-      </div>
+      <div class="nd-section">Die Tabelle</div>
+      ${_posvTabelle(data)}
+      ${spitze ? `<div class="nd-section">Tage an der Spitze</div>${spitze}` : ''}
 
       <div class="posv-update">
         <span>Stand: heute, ${headerDate}</span>

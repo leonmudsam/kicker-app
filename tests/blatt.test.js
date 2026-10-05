@@ -3596,6 +3596,54 @@ return JSON.stringify(funde,null,1);
      'der Positionsverlauf steht unter der Rangliste als erste Karte, zeigt das Titelrennen und öffnet den Verlauf',
      JSON.stringify(Object.assign({}, posKarte, {fehler: (posKarte.fehler || []).slice(0, 2)})));
 
+  // ── Der Positionsverlauf liest sich als Tabelle über die Zeit ─────
+  //    Er zeigte gerade Linien, die Namen mit „…" gekürzt neben dem
+  //    Gesicht, einen Hinweis „Linie oder Gesicht antippen" und darunter
+  //    einen leeren Kasten „Hier stehen die Einzelheiten". Jetzt: Kurven,
+  //    die Tabelle des letzten Stands mit der Bewegung seit dem vorletzten
+  //    Spieltag, und ein Detail erst, wenn jemand gewählt ist — mit seinem
+  //    Platz an jedem Tag. Die Bewegung wird hier aus `positionsByDay`
+  //    nachgerechnet, nicht aus dem Markup abgelesen.
+  const posv = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    K(`closeSheet(true); showPositionHistory(seasons[3].id); 'x'`);
+    document.getAnimations().forEach(a => { try { a.finish(); } catch(e){} });
+    const d = K(`getSeasonPositionHistory(seasons[3].id)`);
+    const jetzt = id => { const a = d.positionsByDay[id]; for(let i = a.length - 1; i >= 0; i--) if(a[i] !== null) return a[i]; return null; };
+    const st = d.spielTage, out = {fehler: []};
+    const sh = document.getElementById('sheet');
+    const txt = sh.innerText;
+    if(/…|antippen|Einzelheiten/.test(txt)) out.fehler.push('Hinweis oder Kürzung: ' + (txt.match(/.{0,20}(…|antippen|Einzelheiten).{0,10}/) || [''])[0]);
+    const kurven = [...sh.querySelectorAll('.posv-line')].filter(p => / C /.test(p.getAttribute('d'))).length;
+    if(kurven < d.activeIds.length - 1) out.fehler.push('Kurven ' + kurven);
+    const ids = d.activeIds.filter(id => jetzt(id) !== null).sort((a, b) => jetzt(a) - jetzt(b));
+    const rows = [...sh.querySelectorAll('.posv-row')];
+    if(rows.map(r => r.dataset.pid).join() !== ids.join()) out.fehler.push('Reihenfolge der Tabelle');
+    rows.forEach(r => {
+      const a = d.positionsByDay[r.dataset.pid];
+      const n = a[st[st.length - 1] - 1], v = st.length > 1 ? a[st[st.length - 2] - 1] : null;
+      const soll = n == null ? '' : v == null ? 'neu' : v > n ? '▲' + (v - n) : v < n ? '▼' + (n - v) : '–';
+      const ist = (r.querySelector('.posv-bw') || {}).textContent || '';
+      if(ist !== soll) out.fehler.push(r.querySelector('.posv-nm').textContent + ': ' + ist + ' statt ' + soll);
+      if(r.querySelector('.posv-nm').scrollWidth > r.querySelector('.posv-nm').clientWidth + 1) out.fehler.push('Name abgeschnitten');
+    });
+    const det = document.getElementById('posvDetail');
+    out.vorher = det.hidden;
+    const wahl = rows[2];
+    wahl.click();
+    document.getAnimations().forEach(a => { try { a.finish(); } catch(e){} });
+    const a = d.positionsByDay[wahl.dataset.pid];
+    out.nachher = !det.hidden;
+    out.zellen = det.querySelectorAll('.posv-tz span').length === d.lastDay;
+    out.gold = det.querySelectorAll('.posv-tz span.eins').length === a.filter(x => x === 1).length;
+    out.hl = wahl.classList.contains('hl') && !!sh.querySelector('.posv-line.hl[data-pid="' + wahl.dataset.pid + '"]');
+    K(`closeSheet(true); 'x'`);
+    return out;
+  });
+  ok(posv.fehler.length === 0 && posv.vorher && posv.nachher && posv.zellen && posv.gold && posv.hl,
+     'der Positionsverlauf zeigt Kurven, die Tabelle mit ihrer Bewegung und erst nach der Wahl den Platz an jedem Tag',
+     JSON.stringify(Object.assign({}, posv, {fehler: posv.fehler.slice(0, 3)})));
+
   // ── Die Siegchance steht beim Aufstellen unter der Score-Karte ────
   //    Ohne Erklärsatz, aus derselben Rechnung, mit der die Partie danach
   //    gewertet wird, und in der Vorschau nach dem Stand nicht noch einmal.

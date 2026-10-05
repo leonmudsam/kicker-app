@@ -173,7 +173,6 @@
   .posv-grid line{stroke:var(--line);stroke-width:1;opacity:.55}
   .posv-x-tick{font-size:10px;fill:var(--muted);font-family:'Sometype Mono',monospace;text-anchor:middle}
   .posv-y-tick{font-size:11px;fill:var(--muted);font-family:'Sometype Mono',monospace;text-anchor:end;dominant-baseline:central}
-  .posv-axis-cap{font-size:9px;fill:var(--muted);font-family:'Sometype Mono',monospace;letter-spacing:.14em;text-transform:uppercase}
 
   /* Lines sind weich. Hit-Area ist ein zweites unsichtbares Pfad mit großer
      stroke-width darunter — sonst sind 2px-Lines auf Touch fast nicht treffbar. */
@@ -183,45 +182,78 @@
     cursor:pointer;pointer-events:stroke}
   .posv-dot{transition:opacity .15s;pointer-events:none}
   .posv-end-av{cursor:pointer;transition:opacity .15s,transform .15s;transform-box:fill-box;transform-origin:center}
-  .posv-end-label{font-size:11px;font-family:'Archivo Black',sans-serif;fill:var(--ink);
-    transition:opacity .15s,fill .15s,font-size .15s;cursor:pointer;dominant-baseline:central}
+  /* Die Bewegung seit dem letzten Spieltag steht neben dem Gesicht: Grün und
+     Rot nur für die Richtung [§C25]. */
+  .posv-end-d{font-size:10px;font-family:'Sometype Mono',monospace;fill:var(--muted);
+    dominant-baseline:central;transition:opacity .15s;pointer-events:none}
+  .posv-end-d.auf{fill:var(--acid)}
+  .posv-end-d.ab{fill:var(--red)}
+  /* Der erste Platz als Band über die ganze Breite, in Gold: wer darin
+     läuft, führt die Tabelle [§C25]. */
+  .posv-eins{fill:var(--gold);opacity:.07}
+  .posv-y-tick.eins{fill:var(--gold);font-weight:700}
+  .posv-st{fill:var(--muted);opacity:.7}
+
+  /* Die Linien laufen beim Öffnen von links auf, eine nach der anderen:
+     so liest man die Saison in der Richtung, in der sie passiert ist. */
+  @media (prefers-reduced-motion:no-preference){
+    .posv-line{stroke-dasharray:1;stroke-dashoffset:1;
+      animation:posvZug .9s cubic-bezier(.3,.7,.3,1) forwards;animation-delay:calc(var(--k,0) * 60ms)}
+    .posv-row{animation:posvZeile .35s ease both;animation-delay:calc(var(--k,0) * 30ms)}
+    .posv-tz span{animation:posvZeile .3s ease both;animation-delay:calc(var(--k,0) * 12ms)}
+  }
+  @keyframes posvZug{to{stroke-dashoffset:0}}
+  @keyframes posvZeile{from{opacity:0;transform:translateY(4px)}}
 
   /* Highlight-Zustand: Container kriegt .posv-dim, alle Linien außer .hl werden gedimmt */
   .posv-dim .posv-line:not(.hl){opacity:.14}
   .posv-dim .posv-dot:not(.hl){opacity:.14}
   .posv-dim .posv-end-av:not(.hl){opacity:.32;filter:grayscale(.85)}
-  .posv-dim .posv-end-label:not(.hl){opacity:.4;fill:var(--muted)}
+  .posv-dim .posv-end-d:not(.hl){opacity:.3}
   .posv-line.hl{stroke-width:3.4;filter:drop-shadow(0 0 6px currentColor)}
   .posv-dot.hl{opacity:1}
   .posv-end-av.hl{transform:scale(1.15)}
-  .posv-end-label.hl{font-size:12.5px}
 
-  .posv-hint{font-size:11px;color:var(--muted);text-align:center;margin:2px 0 12px;
-    font-family:'Sometype Mono',monospace;letter-spacing:.04em}
+  .posv-info-n{display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0;line-height:1}
+  .posv-info-n b{font-family:'Archivo Black',sans-serif;font-size:20px;color:var(--ink)}
+  .posv-info-n small{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;
+    margin-top:3px;font-family:'Sometype Mono',monospace}
+
+  /* Die Tabelle unter der Grafik ist zugleich die Wahl des Spielers. */
+  .posv-tab{display:flex;flex-direction:column;gap:2px;margin-bottom:12px}
+  .posv-row{display:grid;grid-template-columns:22px 26px minmax(0,1fr) 56px 30px 34px;align-items:center;
+    gap:8px;padding:6px 8px;border-radius:10px;cursor:pointer;border:1px solid transparent;
+    transition:background .15s,border-color .15s}
+  .posv-row:active{background:var(--surface)}
+  .posv-row.hl{background:var(--surface);border-color:var(--c)}
+  .posv-pl{font-family:'Archivo Black',sans-serif;font-size:13px;color:var(--muted);text-align:right}
+  .posv-row.eins .posv-pl{color:var(--gold)}
+  .posv-row .av{width:26px;height:26px;font-size:10px}
+  .posv-nm{font-size:13px;font-weight:600;color:var(--ink);overflow-wrap:anywhere;line-height:1.15}
+  .posv-spark{width:56px;height:18px;display:block}
+  .posv-spark polyline{fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+  .posv-bw{font-size:10.5px;font-family:'Sometype Mono',monospace;color:var(--muted);text-align:right}
+  .posv-bw.auf{color:var(--acid)}
+  .posv-bw.ab{color:var(--red)}
+  .posv-elo{font-size:12px;font-family:'Sometype Mono',monospace;color:var(--ink);text-align:right}
 
   .posv-detail{background:var(--surface);border:1px solid var(--line);border-radius:14px;
-    padding:12px 14px;margin-bottom:10px;min-height:96px;
-    transition:border-color .15s,opacity .15s}
-  .posv-detail.empty{opacity:.55}
-  .posv-detail-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-  .posv-detail-av{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;
-    font-size:22px;flex-shrink:0;border:2px solid var(--line);background:var(--surface3);
-    overflow:hidden;font-family:'Archivo Black',sans-serif;color:#0a0c0b}
-  .posv-detail-av .em{font-size:22px;line-height:1;
-    font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji','Twemoji Mozilla',sans-serif}
-  .posv-detail-name-wrap{flex:1;min-width:0;display:flex;align-items:center;gap:8px}
-  .posv-detail-name{font-family:'Archivo Black',sans-serif;font-size:16px;letter-spacing:-.01em;
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .posv-detail-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0}
-  .posv-detail-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-  .posv-detail-stat{text-align:center;padding:4px 2px}
-  .posv-detail-stat-label{font-size:9px;color:var(--muted);text-transform:uppercase;
-    letter-spacing:.1em;margin-bottom:2px;font-family:'Sometype Mono',monospace}
-  .posv-detail-stat-val{font-family:'Archivo Black',sans-serif;font-size:14.5px;color:var(--ink);line-height:1.1}
-  .posv-detail-stat-val.pos{color:var(--acid)}
-  .posv-detail-stat-val.neg{color:var(--red)}
-  .posv-detail-empty-text{color:var(--muted);font-size:12px;text-align:center;padding:18px 0;
-    font-family:'Sometype Mono',monospace}
+    padding:12px 14px;margin-bottom:12px}
+  .posv-dk{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+  .posv-dk-t{flex:1;min-width:0;display:flex;flex-direction:column}
+  .posv-dk-t b{font-family:'Archivo Black',sans-serif;font-size:16px;letter-spacing:-.01em;overflow-wrap:anywhere}
+  .posv-dk-t small{font-size:11px;color:var(--muted);font-family:'Sometype Mono',monospace;margin-top:2px}
+  .posv-dk-c{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+  /* Der Platz an jedem Kalendertag: hell, wo gespielt wurde, Gold auf Platz
+     eins, leer vor dem ersten eigenen Spieltag. */
+  .posv-tz{display:grid;grid-template-columns:repeat(auto-fill,minmax(24px,1fr));gap:3px;margin-bottom:6px}
+  .posv-tz span{display:flex;flex-direction:column;align-items:center;justify-content:center;
+    height:32px;border-radius:6px;background:var(--surface2);color:var(--muted);opacity:.6}
+  .posv-tz span.gespielt{opacity:1;color:var(--ink);background:var(--surface3)}
+  .posv-tz span.eins{color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+  .posv-tz span.leer{background:transparent;box-shadow:inset 0 0 0 1px var(--line);opacity:.5}
+  .posv-tz b{font-family:'Archivo Black',sans-serif;font-size:11px;line-height:1}
+  .posv-tz small{font-size:8px;font-family:'Sometype Mono',monospace;margin-top:2px;opacity:.7}
 
   .posv-update{font-size:10px;color:var(--muted);text-align:center;
     font-family:'Sometype Mono',monospace;letter-spacing:.04em;
