@@ -135,6 +135,8 @@ const stand = () => ({
   meister: J("allPastSeasons().map(s => seasonChampion(s))"),
 });
 const VOR = stand();
+const auszeichnungen = () => J("Object.fromEntries(players.map(p => [p.id, (getCachedBadges(p.id) || []).map(b => b.id + ':' + (b.count || 1)).sort()]))");
+const VOR_BADGES = auszeichnungen();
 const vorPerz = J(`rangPerzentil('${MARTIN}')`);
 
 console.log('\n=== DIE AKTIVE LIGA VERGLEICHT OHNE IHN ===');
@@ -172,6 +174,8 @@ ok(gleich(VOR.juliRang, NACH.juliRang) && NACH.juliRang.some(r => r.id === MARTI
 ok(gleich(VOR.juliStats, NACH.juliStats), 'die Juli-Statistik unverändert');
 ok(gleich(VOR.juliAwards, NACH.juliAwards), 'die Juli-Awards unverändert');
 ok(gleich(VOR.juliVerlauf, NACH.juliVerlauf), 'der Juli-Positionsverlauf unverändert');
+ok(gleich(VOR_BADGES, auszeichnungen()), 'keine Auszeichnung ändert sich, weder seine noch die der anderen',
+   Object.values(VOR_BADGES).reduce((s, l) => s + l.length, 0) + ' Auszeichnungen');
 ok(gleich(VOR.meister, NACH.meister), 'die Meister abgeschlossener Monate bleiben',
    NACH.meister.map(nm).join(', '));
 
@@ -189,6 +193,25 @@ ok(!J('Object.keys(getAllPlayerRanks()).includes("' + MARTIN + '")'), 'nach der 
 ok(!J(`Object.values(allChronicles(ruhestandMs('${MARTIN}')).byId).some(r => (r.pids||[]).includes('${MARTIN}'))`)
    && !J(`prestigeTabelle(ruhestandMs('${MARTIN}')).rang.includes('${MARTIN}')`),
    'der Schnitt am Karriereende kommt aus der aktiven Liga, nicht aus der Zeitmaschine');
+
+console.log('\n=== DIE NACHRICHT ===');
+{
+  const st = J(`_buildStories().filter(s => (s.dataRef||{}).type === 'karriereende')`);
+  ok(st.length === 1 && st[0].id === 'karriereende_' + MARTIN + '_2026-08-26' && J('_isBreaking(' + JSON.stringify(st[0]) + ')'),
+     'das Karriereende ist eine Breaking-Story mit dem Tag in der ID', st.map(x => x.id).join(', '));
+  const d = J(`abschiedDaten('${MARTIN}')`);
+  ok(st[0] && st[0].dataRef.spiele === d.spiele && d.spiele === J(`matches.filter(m => [m.a1,m.a2,m.b1,m.b2].includes('${MARTIN}')).length`),
+     'Story und Abschied zählen dieselben Partien', d.spiele + ' Partien');
+  ok(d.partner.length > 0 && d.saisons.length > 0 && d.rekorde.length === VOR.rekorde.length - J(`chroniclesOfPlayer('${MARTIN}').filter(r=>r.neg).length`),
+     'der Abschied kennt Partner, Saisons und die Rekorde beim Abschied', d.rekorde.length + ' Rekorde');
+  // Zurückgenommen gilt die Karte nicht mehr, ein neues Karriereende bekäme
+  // eine eigene.
+  K.eval(`globalThis.__st = ${JSON.stringify(st[0] || {})};`);
+  ok(J('_consolidateStories([__st]).length') === 1, 'solange das Karriereende gilt, steht die Karte im Feed');
+  K.eval(`pmap()['${MARTIN}'].retired_at = '2026-08-25T10:00:00Z'; invalidateCache();`);
+  ok(J('_consolidateStories([__st]).length') === 0, 'ein anderes oder zurückgenommenes Karriereende nimmt die Karte aus dem Feed');
+  K.eval(`pmap()['${MARTIN}'].retired_at = '${ENDE}'; invalidateCache();`);
+}
 
 console.log('\n=== NEUE PARTIEN ÄNDERN DEN STAND NICHT ===');
 K.eval(`
@@ -211,6 +234,14 @@ K.eval(`
   _ruheStandMemo.clear();
 `);
 const NEU = stand();
+// Nach dem Karriereende erzählt keine Story mehr von ihm — außer der vom
+// Abschied selbst.
+{
+  const spaeter = J(`_buildStories().filter(s => +new Date(s.when) > Date.parse('${ENDE}')
+    && (s.dataRef||{}).type !== 'karriereende' && JSON.stringify(s).includes('${MARTIN}')).map(s => s.id)`);
+  const alle = J(`_buildStories().filter(s => +new Date(s.when) > Date.parse('${ENDE}')).length`);
+  ok(alle > 0 && spaeter.length === 0, 'nach dem Karriereende nennt ihn keine neue Story', alle + ' neue Stories · ' + (spaeter.join(', ') || 'keine mit ihm'));
+}
 ok(!J(`Object.values(allChronicles(ruhestandMs('${MARTIN}')).byId).some(r => (r.pids||[]).includes('${MARTIN}'))`)
    && !J(`prestigeTabelle(ruhestandMs('${MARTIN}')).rang.includes('${MARTIN}')`),
    'auch mit Partien danach kommt der Schnitt am Karriereende aus der aktiven Liga');

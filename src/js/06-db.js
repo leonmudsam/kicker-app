@@ -169,6 +169,9 @@ async function _loadAllDurchlauf(){
     // und der Saison-Abschluss. Der Tages-Recap (POTD) kam an jedem Spieltag
     // hoch — das war schlicht zu oft. Er ist weiterhin über den Button in
     // der Wochenliga erreichbar (showPotdRecap({force:true})).
+    // Ein Karriereende geht vor: es gibt es seltener als jede Woche, und der
+    // Wochenrückblick wartet, solange ein Blatt offen ist [§C40].
+    setTimeout(autoZeigeAbschied, 900);
     setTimeout(autoShowPotwRecap, 900);
   }catch(e){
     _lastLoadFingerprint=null; _lastLoadDay=null;

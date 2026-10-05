@@ -4,6 +4,7 @@
     font-size:10px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);
     padding:5px 12px;background:rgba(247,207,74,.10);border:1px solid rgba(247,207,74,.3);border-radius:99px}
   .rcp-label svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+  .rcp-label.metall{color:var(--silber);background:rgba(194,201,208,.08);border-color:rgba(194,201,208,.3)}
   .rcp-month{font-family:'Archivo Black',sans-serif;font-size:32px;letter-spacing:-.03em;margin-top:10px;line-height:1}
   .rcp-meta{font-size:11.5px;color:var(--muted);font-family:'Sometype Mono',monospace;margin-top:6px;letter-spacing:.04em}
   /* Der Monatsstreifen steht mittig wie alles andere im Kopf; im Liga-Tab
@@ -456,3 +457,84 @@
 
 /* Eine Grafik im Rückblick hält Abstand zur nächsten Überschrift. */
 .rcp-block{margin:0 0 18px}
+
+  /* ============ DER ABSCHIED [§C40] ============
+     Die Bühne eines Karriereendes. Kein Gold: ein Abschied ist kein Titel
+     [§C25]. Der Kranz hinter dem Wappen ist kühles Metall, Licht und keine
+     Form — er dreht sich langsam und steht bei Bewegungsruhe still. Gold
+     tragen hier nur, was ohnehin Gold ist: der Titel und die legendären
+     Auszeichnungen. */
+  .ab-buehne{position:relative;isolation:isolate;text-align:center;padding:14px 0 18px;margin-bottom:6px}
+  .ab-strahl,.nf-ab-strahl{position:absolute;left:50%;z-index:-1;pointer-events:none;border-radius:50%;
+    background:repeating-conic-gradient(from 0deg,rgba(194,201,208,.13) 0 4deg,transparent 4deg 13deg);
+    -webkit-mask:radial-gradient(circle,#000 0 18%,transparent 66%);
+            mask:radial-gradient(circle,#000 0 18%,transparent 66%);
+    animation:msDreh 64s linear infinite}
+  .ab-strahl{top:96px;width:340px;height:340px;margin:-170px 0 0 -170px}
+  .ab-strahl::after,.nf-ab-strahl::after{content:"";position:absolute;inset:26%;border-radius:50%;
+    background:radial-gradient(circle,rgba(194,201,208,.22),transparent 70%)}
+  .ab-av{display:flex;justify-content:center;animation:abHeben .9s cubic-bezier(.2,.8,.2,1) both}
+  .ab-rang{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px;margin-top:8px;
+    font-size:12px;color:var(--ink2);animation:abHeben .9s .2s cubic-bezier(.2,.8,.2,1) both}
+  .ab-zeit{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:10px;
+    font-family:'Sometype Mono',monospace;font-size:11px;letter-spacing:.08em;color:var(--muted);
+    animation:abHeben .9s .28s cubic-bezier(.2,.8,.2,1) both}
+  .ab-zeit i{display:block;width:44px;height:1px;background:linear-gradient(90deg,var(--line2),var(--silber),var(--line2))}
+  @keyframes abHeben{from{opacity:0;transform:translateY(10px)}}
+
+  /* Saison für Saison: ein Feld je Monat. */
+  .ab-sz{display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:7px;margin:0 0 16px}
+  .ab-sz-f{display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 4px 8px;
+    border:1px solid var(--line);border-radius:12px;background:var(--surface);
+    animation:abHeben .6s calc(var(--k,0) * 60ms) both}
+  .ab-sz-f b{font-family:'Archivo Black',sans-serif;font-size:22px;line-height:1.05;color:var(--ink)}
+  .ab-sz-m{font-family:'Sometype Mono',monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .ab-sz-e{font-size:11.5px;color:var(--ink2)}
+  .ab-sz-n{font-size:9.5px;color:var(--faint)}
+  .ab-sz-f.gold{border-color:rgba(247,207,74,.45);background:linear-gradient(180deg,rgba(247,207,74,.1),var(--surface))}
+  .ab-sz-f.gold b{color:var(--gold)}
+  .ab-sz-f.silber b{color:var(--silber)} .ab-sz-f.bronze b{color:var(--bronze)}
+
+  /* Partner und Gegner: zwei Gesichter, der Name, die Bilanz als Balken. */
+  .ab-duos{display:grid;gap:8px;margin:0 0 16px}
+  .ab-duo{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:11px;
+    padding:10px 12px;border:1px solid var(--line);border-radius:13px;background:var(--surface);cursor:pointer}
+  .ab-duo:active{background:var(--surface2)}
+  .ab-duo-t{display:flex;flex-direction:column;gap:6px;min-width:0}
+  .ab-duo-t b{font-size:13.5px;font-weight:700;color:var(--ink)}
+  .ab-duo-b{display:block;height:5px;border-radius:3px;background:rgba(240,86,106,.35);overflow:hidden}
+  .ab-duo-b i{display:block;height:100%;background:var(--acid);border-radius:3px;
+    transform-origin:left center;animation:abFuell .9s cubic-bezier(.3,.7,.2,1) .2s both}
+  @keyframes abFuell{from{transform:scaleX(0)}}
+  .ab-duo-z{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+  .ab-duo-z b{font-family:'Archivo Black',sans-serif;font-size:16px;color:var(--ink)}
+  .ab-duo-z small{font-size:10.5px;color:var(--muted)}
+  .ab-gg{margin:0 0 10px}
+  .ab-gg:last-child{margin-bottom:16px}
+  .ab-gg-l{display:block;margin:0 2px 6px;font-family:'Sometype Mono',monospace;font-size:9.5px;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+
+  /* Die Stärken: der Fingerabdruck des Profils [§C27]. */
+  .ab-fa{max-width:260px;margin:0 auto 6px}
+  .ab-fa svg{display:block;width:100%;height:auto}
+
+  /* Die legendären Auszeichnungen als Plaketten. */
+  .ab-lg{display:flex;flex-wrap:wrap;gap:6px;margin:-6px 0 16px}
+  .ab-lg-c{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:9px;
+    border:1px solid rgba(247,207,74,.35);background:rgba(247,207,74,.07);font-size:12px;color:var(--gold)}
+  .ab-lg-c .ic{width:14px;height:14px}
+  .ab-lg-c b{font-family:'Sometype Mono',monospace;font-size:10.5px;color:var(--ink2)}
+  .ab-fuss{margin-top:18px}
+  /* Ein Moment ist ein Satz und kein Kürzel: bei 360 px endete
+     „13 Siege in Folge" mit „…". Im Abschied brechen die Kacheln um. */
+  .ab-momente .rcp-aw-name,.ab-momente .rcp-aw-val{white-space:normal;overflow:visible;text-overflow:clip}
+
+  /* Die Karte im Feed: dieselbe Bühne, kleiner. */
+  .nf-abschied{position:relative;isolation:isolate;display:flex;justify-content:center;padding:10px 0 6px;margin:2px 0 8px}
+  .nf-ab-strahl{top:50%;width:230px;height:230px;margin:-115px 0 0 -115px}
+
+  @media (prefers-reduced-motion:reduce){
+    .ab-strahl,.nf-ab-strahl{animation:none}
+    .ab-av,.ab-rang,.ab-zeit,.ab-sz-f{animation:none}
+    .ab-duo-b i{animation:none}
+  }

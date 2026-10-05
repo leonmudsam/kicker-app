@@ -14,12 +14,13 @@
 // Eckdaten aus Teilen, die es geben kann oder nicht („12 Matches · 8 Spieler").
 function rcpMeta(teile){ return teile.filter(Boolean).join(' · '); }
 
-// Der Kopf. Die Marke ist immer Gold: Saison-Sieger, Spieler der Woche und
+// Der Kopf. Die Marke ist Gold: Saison-Sieger, Spieler der Woche und
 // Spieler des Tages sind Titel, und Gold gehört den Titeln [§C25]. Vorher
 // war sie zweimal grün und einmal gold — dieselbe Aussage in zwei Farben.
+// Ein Abschied ist kein Titel und trägt Metall (`o.metall`) [§C40].
 function rcpKopfHtml(o){
   return `<div class="rcp-head">
-    <span class="rcp-label">${svgI(o.ic || 'trophy')}${esc(o.marke)}</span>
+    <span class="rcp-label${o.metall ? ' metall' : ''}">${svgI(o.ic || 'trophy')}${esc(o.marke)}</span>
     <div class="rcp-month">${esc(o.titel)}</div>
     ${o.meta ? `<div class="rcp-meta">${esc(o.meta)}</div>` : ''}
     ${o.extra || ''}

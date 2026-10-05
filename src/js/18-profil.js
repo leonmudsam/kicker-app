@@ -428,7 +428,7 @@ const rankProgHtml = rInfo ? `
           ${esc(rInfo.label)}
         </span>`:''}
         <span class="pp-pill">${posIcon}${esc(posLabel)}</span>
-        ${_ruhe ? `<span class="pp-pill ruhe">${svgI('hourglass')}Karriereende ${esc(datumFmt(ruhestandMs(id), 'tmj'))}</span>` : ''}
+        ${_ruhe ? `<button type="button" class="pp-pill ruhe" id="ppAbschied">${svgI('hourglass')}Karriereende ${esc(datumFmt(ruhestandMs(id), 'tmj'))}</button>` : ''}
       </div>
 
       ${(()=>{
@@ -768,6 +768,9 @@ const rankProgHtml = rInfo ? `
   `);
 
   // Click-Handler
+  // Die Pille des Karriereendes öffnet den Abschied [§C40].
+  const pab=document.getElementById('ppAbschied');
+  if(pab) pab.onclick=()=>{ sheetNav(()=>zeigeAbschied(id)); };
   const eb=document.getElementById('ppEditBtn');
   if(eb) eb.onclick=()=>{ sheetNav(()=>showEditPlayer(id)); };
   const ag=document.getElementById('ppAwardsGrid');
@@ -838,6 +841,8 @@ const rankProgHtml = rInfo ? `
     toast(beenden ? p.name + ' beendet die Karriere' : p.name + ' ist zurück', 'ok');
     closeSheet(true);
     await loadAll();
+    // Wer gerade jemanden verabschiedet hat, sieht den Abschied sofort.
+    if(beenden && imRuhestand(id)){ _recapMarkSeen(_abschiedSchluessel(id), 'abschied:' + id); zeigeAbschied(id); }
   };
 
   // Delete-Handler – identisch zur Original-Logik

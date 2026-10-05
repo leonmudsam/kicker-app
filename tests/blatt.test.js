@@ -3594,6 +3594,26 @@ return JSON.stringify(funde,null,1);
     }
     K(`closeSheet(true); tab='positions'; einblickOffen='rollen ruhe_pos'; render(); 'x'`);
     out.beide = document.querySelectorAll('#main .einblick.auf').length;
+    // Der Abschied: ein langes Blatt aus dem Baukasten der Rückblicke. Kein
+    // Teil läuft über den Rand, kein Text endet mit „…", und die Karte im
+    // Feed trägt dieselbe Bühne.
+    K(`closeSheet(true); zeigeAbschied('${M}'); 'x'`);
+    document.getAnimations().forEach(a => { try { a.finish(); } catch(e){} });
+    const sh = document.getElementById('sheet');
+    out.abschied = {
+      abschnitte: [...sh.querySelectorAll('.rcp-section')].map(e => e.textContent.trim().replace(/\d+$/, '').trim()),
+      raus: [...sh.querySelectorAll('*')].filter(e => { const r = e.getBoundingClientRect(); return r.width && (r.right > W + 1 || r.left < -1); }).length,
+      kurz: [...sh.querySelectorAll('.rcp-zeile-s, .rcp-aw-name, .rcp-aw-val, .ab-duo-t b')]
+        .filter(e => e.scrollWidth > e.clientWidth + 1).map(e => e.textContent).slice(0, 3),
+      gold: !!sh.querySelector('.rcp-label:not(.metall)'),
+      fehler: pruefen(sh.querySelector('.ab-buehne')).fehler.slice(0, 2)};
+    K(`closeSheet(true); _cache._stories = _buildStories().slice().sort((a,b)=>new Date(b.when)-new Date(a.when)); openNewsFeed(); _newsFeedRest(); 'x'`);
+    const karte = document.querySelector('.nf-card .nf-abschied');
+    const kc = karte && karte.closest('.nf-card');
+    out.karte = kc ? {brk: kc.classList.contains('nf-brk') || !!kc.querySelector('.nf-brk-band'),
+      raus: [...kc.querySelectorAll('*')].filter(e => { const r = e.getBoundingClientRect(), k = kc.getBoundingClientRect();
+        return r.width && (r.right > k.right + 1 || r.left < k.left - 1); }).length} : null;
+    K('closeSheet(true); "x"');
     K(`pmap()['${M}'].retired_at = null; einblickOffen=''; invalidateCache(); tab='ranking'; period='season'; render(); 'x'`);
     return out;
   }, PRUEFEN.toString());
@@ -3605,6 +3625,16 @@ return JSON.stringify(funde,null,1);
      'aufgeklappt läuft keine Zeile bei 360 px über den Rand, und keine trägt einen Platz',
      JSON.stringify(_ru.map(x => x && [x.raus, x.ohneRang, x.fehler])));
   ok(ruhe.beide === 2, 'zwei Einblicke im selben Reiter bleiben beide offen', String(ruhe.beide));
+  const _ab = ruhe.abschied || {};
+  ok(['Saison für Saison', 'Besondere Momente', 'Die besten Partner', 'Gegenüber', 'Die Stärken',
+      'Rekorde beim Abschied', 'Auszeichnungen'].every(t => (_ab.abschnitte || []).includes(t)),
+     'der Abschied erzählt die Laufbahn: Saisons, Momente, Partner, Gegner, Stärken, Rekorde, Auszeichnungen',
+     (_ab.abschnitte || []).join(' · '));
+  ok(_ab.raus === 0 && !(_ab.kurz || []).length && !(_ab.fehler || []).length && !_ab.gold,
+     'bei 360 px läuft im Abschied nichts über den Rand, nichts wird gekürzt, und die Marke ist Metall statt Gold',
+     JSON.stringify({raus:_ab.raus, kurz:_ab.kurz, fehler:_ab.fehler, gold:_ab.gold}));
+  ok(ruhe.karte && ruhe.karte.brk && ruhe.karte.raus === 0,
+     'im Feed steht das Karriereende als Breaking-Karte mit seiner Bühne, nichts ragt hinaus', JSON.stringify(ruhe.karte));
 
   // ── Der Positionsverlauf trägt das Titelrennen ───────────────────
   //    Das Titelrennen stand einmal als eigener Einblick über der

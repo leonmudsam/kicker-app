@@ -101,6 +101,18 @@ const STORY_ABGEMELDET = [
   // Umschreiben kann sie niemand, den Praefix bildet der Generator nicht mehr.
   'match_result_'
 ];
+// ── Ein zurückgenommenes Karriereende [§C40] ─────────────────────────
+// Die Karte bleibt in der Datenbank wie jede andere, sie gilt aber nur,
+// solange genau dieses Karriereende gilt: wer versehentlich verabschiedet
+// und gleich zurückgeholt wurde, stünde sonst für immer als Breaking im
+// Feed. Ein zweites Karriereende trägt einen anderen Zeitpunkt und eine
+// eigene Karte.
+function _storyWiderrufen(s){
+  const d = (s && s.dataRef) || {};
+  if(d.type !== 'karriereende') return false;
+  const p = pmap()[d.pid];
+  return !p || !p.retired_at || ruhestandMs(p) !== Date.parse(d.retiredAt);
+}
 function _storyAbgemeldet(id){
   const t = String(id || '');
   for(let i = 0; i < STORY_ABGEMELDET.length; i++){
@@ -142,7 +154,7 @@ function _consolidateStories(list){
     if(!l){ l = new Map(); duellMoment.set(key, l); }
     l.set(n, m);
   })));
-  const quelle = list.filter(s => !_storyAbgemeldet(s && s.id));
+  const quelle = list.filter(s => !_storyAbgemeldet(s && s.id) && !_storyWiderrufen(s));
   const marken = new Map(), normal = [];
   // Alte kleine Marken wurden je Tag gespeichert, neue je Partie. Die alten
   // Snapshots bleiben erhalten: nur ihre Anzeige wird an den gespeicherten
@@ -232,7 +244,7 @@ function _consolidateStoriesLegacy(list){
   // genau die Karte, die ihre Schlagzeile ist. Solange das Fenster sieben
   // Tage breit war, fiel das nicht auf: da passten zwei Sieger hinein.
   const TAG_PFLICHT = new Set(['potd', 'woche', 'chronik_monat', 'season_recap',
-    'chronik_frei']);
+    'chronik_frei', 'karriereende']);
 
   // ── Was eine Auszeichnung erzaehlt, erzaehlt das Ergebnis nicht ──
   // Der Generator laesst die Ergebnis-Karte weg, wenn eine Auszeichnung aus
@@ -289,7 +301,7 @@ function _consolidateStoriesLegacy(list){
   };
   // Historische Fakten bleiben wahr. Spätere Zustände oder weitere Partien
   // dürfen einen bereits publizierten Snapshot nicht wieder entfernen.
-  const src = list.filter(s => !_storyAbgemeldet(s && s.id));
+  const src = list.filter(s => !_storyAbgemeldet(s && s.id) && !_storyWiderrufen(s));
 
   // Frühere Anzeige-Suppressions bleiben bewusst leer: veröffentlichte
   // Snapshot-Ereignisse werden weder durch ähnliche Badges noch durch spätere
@@ -384,7 +396,8 @@ function _consolidateStoriesLegacy(list){
   // Die Runde fasst ihre Partien zusammen wie der Spieler des Tages seinen
   // Tag: es gibt sie je Runde genau einmal, also wiederholt sie nichts.
   const _OHNE_SPERRE = new Set(['ambient', 'sammel', 'season_endgame', 'spiel',
-                                'potd', 'woche', 'chronik_monat', 'season_recap', 'runde']);
+                                'potd', 'woche', 'chronik_monat', 'season_recap', 'runde',
+                                'karriereende']);
   const _aussage = st => {
     const d = (st && st.dataRef) || {};
     const typ = d.type || '';

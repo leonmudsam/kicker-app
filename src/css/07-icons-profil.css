@@ -1794,7 +1794,7 @@
   .ruhe-ende .einblick{margin:0}
   .ruhe-liste,.einblick-i .rlist{margin-top:4px}
   .rrow.ruhe-row{background:var(--surface2);border-style:dashed}
-  .pp-pill.ruhe{border-color:var(--line2);color:var(--ink)}
+  .pp-pill.ruhe{border-color:var(--line2);color:var(--ink);font-family:inherit;cursor:pointer}
   .pp-ruhe{margin-top:24px}
   .pp-ruhe + .pp-del{margin-top:10px;padding-top:0}
   .pp-ruhe button{width:100%;background:var(--surface);border:1px solid var(--line2);

@@ -235,8 +235,13 @@ function getRankSnapshots(){
     const sid = seasonOf(m.created_at).id;
     if(!seasonElo[sid]) seasonElo[sid] = {};
     const elos = seasonElo[sid];
-    // Pre-Rank: aktueller Stand VOR diesem Match
-    const preEntries = Object.entries(elos);
+    // Pre-Rank: aktueller Stand VOR diesem Match. Wer zur Zeit der Partie
+    // schon aufgehört hatte, steht nicht mehr in der Tabelle [§C40]: sonst
+    // gab er nach seinem Abschied noch die Spitze ab, und der Feed meldete
+    // einen Wechsel, den niemand gespielt hat.
+    const t = mts(m);
+    const dabei = ([pid]) => !imRuhestandAm(pid, t);
+    const preEntries = Object.entries(elos).filter(dabei);
     preEntries.sort((a,b) => b[1] - a[1] || a[0].localeCompare(b[0]));
     const preRank = {};
     preEntries.forEach(([pid], idx) => preRank[pid] = idx + 1);
@@ -252,7 +257,7 @@ function getRankSnapshots(){
       });
     }
     // Post-Rank: Stand NACH diesem Match
-    const postEntries = Object.entries(elos);
+    const postEntries = Object.entries(elos).filter(dabei);
     postEntries.sort((a,b) => b[1] - a[1] || a[0].localeCompare(b[0]));
     const postRank = {};
     postEntries.forEach(([pid], idx) => postRank[pid] = idx + 1);

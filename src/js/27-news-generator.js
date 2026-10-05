@@ -1204,6 +1204,35 @@ function _buildStories(){
     }
   } catch(e){}
 
+  // ── Das Karriereende [§C40] ──────────────────────────────────────
+  // Die einzige Nachricht über einen Ruheständler, die nach seinem Abschied
+  // entsteht — und sie ist Breaking: es gibt sie je Spieler einmal. Die ID
+  // trägt den Tag, also bekommt ein zweites Karriereende nach einer
+  // Rückkehr eine eigene Karte. Die Zahlen stehen im dataRef, wie bei jeder
+  // Story: eine Karte von damals erzählt vom Stand von damals.
+  try {
+    const nowTs = now.getTime();
+    players.forEach(p => {
+      const t = ruhestandMs(p);
+      if(!t || !sichtbar(p) || t > nowTs || nowTs - t > NEWS_FENSTER_TAGE * _dayMs) return;
+      const d = abschiedDaten(p.id);
+      if(!d) return;
+      const rek = d.rekorde.length;
+      stories.push({
+        id: 'karriereende_' + p.id + '_' + tagKey(t),
+        cat: 'season', ic: 'hourglass',
+        title: `${p.name} beendet die Karriere`,
+        desc: `${_spZahl(d.spiele)} Partien, ${_spZahl(d.siege)} Siege und ${Math.round(d.quote * 100)} % Siegquote. `
+            + (rek ? `Beim Abschied ${rek === 1 ? 'steht ein Rekord' : 'stehen ' + rek + ' Rekorde'} in der Ewigen Tafel.` : `Die Karriere-Elo steht bei ${d.elo}.`),
+        when: new Date(t),
+        prio: STORY_PRIO.karriereende,
+        dataRef: {type:'karriereende', pid:p.id, playerId:p.id, playerIds:[p.id], retiredAt:p.retired_at,
+                  spiele:d.spiele, siege:d.siege, quote:d.quote, elo:d.elo, titel:d.titel,
+                  rekorde:rek, prestige:d.prestige.punkte, stufe:d.prestige.stufe}
+      });
+    });
+  } catch(e){}
+
   // ── 11. Persönliche Sieg-Milestones (unbegrenzte Leiter ab 100) ──
   // Nutzt byPlayer + bestehendes won(). Trigger nur, wenn das JÜNGSTE Match
   // (ein Sieg) eine Leiter-Marke reißt → stabil & einmalig (ID enthält Marke).

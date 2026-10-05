@@ -120,7 +120,7 @@ function openNewsDetail(sid){
     el.onclick = () => {
       const [art, k] = String(el.dataset.rueckblick).split('|');
       closeNewsDetail();
-      sheetNav(() => { try { art === 'tag' ? showPotdRecap({force:true, tag:k}) : showPotwRecap({woche:k}); } catch(e){} });
+      sheetNav(() => { try { art === 'abschied' ? zeigeAbschied(k) : art === 'tag' ? showPotdRecap({force:true, tag:k}) : showPotwRecap({woche:k}); } catch(e){} });
     };
   });
   // Match-Refs: bei Klick zum Match-Detail springen
@@ -170,6 +170,8 @@ function openNewsDetail(sid){
 // oder IHRER Woche.
 function _newsRueckblickKnopf(s){
   const d = (s && s.dataRef) || {};
+  if(d.type === 'karriereende' && d.pid && pmap()[d.pid])
+    return `<button class="btn nd-rueck" type="button" data-rueckblick="${esc('abschied|' + d.pid)}">${svgI('hourglass')}Der ganze Abschied</button>`;
   const ziel = d.type === 'potd' && d.dayKey ? 'tag|' + d.dayKey
     : (d.type === 'woche' || d.type === 'potw') && d.woche ? 'woche|' + d.woche : '';
   if(!ziel) return '';
@@ -1599,7 +1601,15 @@ const _ND_BLATT = {win_streak:_ndSerieBlatt, loss_streak:_ndSerieBlatt, team_str
   insignium_stufe:_ndInsigniumBlatt, sammel:_ndTafelMomentBlatt,
   jubilee:_ndMeilensteinBlatt, milestone_wins:_ndMeilensteinBlatt, milestone_goals:_ndMeilensteinBlatt,
   milestone_elo:_ndMeilensteinBlatt, top_form:_ndFormBlatt, elo_swing:_ndAusschlagBlatt,
-  top_clash:_ndSpitzenspielBlatt, badge_marken:_ndMarkenBlatt, dry_spell:_ndFaktBlatt, ambient:_ndFaktBlatt};
+  top_clash:_ndSpitzenspielBlatt, badge_marken:_ndMarkenBlatt, dry_spell:_ndFaktBlatt, ambient:_ndFaktBlatt,
+  karriereende:_ndAbschiedBlatt};
+// Das Blatt eines Karriereendes zeigt die Bühne und den Anfang des
+// Abschieds; der ganze steht einen Knopf weiter [§C40].
+function _ndAbschiedBlatt(s){
+  const d = s.dataRef || {};
+  if(!pmap()[d.pid]) return null;
+  return {kopf:abschiedBuehneHtml(d.pid), mitte:abschiedMitteHtml(d.pid, true)};
+}
 // Gemerkt nur für einen Aufbau (`_newsDetailBody` leert es): an der Story
 // hängend hielte es nach einer neuen Partie den alten Stand fest.
 let _ndBlattJetzt = null;

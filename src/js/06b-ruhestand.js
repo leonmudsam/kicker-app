@@ -58,6 +58,15 @@ function ligaAktiv(x, bisMs){
   return bisMs != null && isFinite(bisMs) && bisMs <= ruhestandMs(p);
 }
 
+// Hatte er zum Zeitpunkt `ms` schon aufgehört? Für alles, was je Partie
+// gerechnet wird: eine Partie vor dem Karriereende gehört der Liga, in der
+// er noch spielte, und die Auszeichnungen daraus bleiben [§C40]. Ausblenden
+// ist davon unberührt — es nahm schon immer nur aus der Anzeige.
+function imRuhestandAm(x, ms){
+  const t = ruhestandMs(x);
+  return t > 0 && t <= _ruheStichtag && ms > t;
+}
+
 // Die Ruheständler, der jüngste Abschied zuerst.
 function ruhestandSpieler(){
   return players.filter(p => sichtbar(p) && imRuhestand(p))

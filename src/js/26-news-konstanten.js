@@ -319,6 +319,7 @@ const STORY_PRIO = {
   streak_record:     94,
   lead_change:       93,
   season_recap:      92,   // der Meister steht fest
+  karriereende:      92,   // ein Spieler beendet die Karriere [§C40]
   // badge_unlocked und insignium_stufe erreichen das Band über ihren
   // Zuschlag, weil nur ein Teil ihrer Fälle Breaking ist.
 
