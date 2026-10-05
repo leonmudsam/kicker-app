@@ -51,6 +51,13 @@ function openNewsDetail(sid){
   // Sätze dazu standen im Kopf ein zweites Mal [§C33 `_ndNeu`].
   if(body.indexOf('nd-rk') >= 0) lead = lead.split(/(?<=\.)\s+/)
     .filter(x => !/^(Vorher (gehörte|hielt|hielten)|Für .+ heißt der Spieltag)/.test(x)).join(' ');
+  // Die Bühne einer Stufe zeigt die Punkte, ihre drei Quellen und den Weg
+  // zur nächsten; der Satz zählte dieselben Zahlen davor auf.
+  if(body.indexOf('nd-is') >= 0) lead = lead.split(/(?<=\.)\s+/)
+    .filter(x => !/(Prestige zusammen|bis zum .+ fehlen|^Zuletzt stand die Stufe)/.test(x)).join(' ');
+  // Die Monatstafel zeigt Einträge und Träger als Säulen.
+  if(body.indexOf('nd-mo') >= 0) lead = lead.split(/(?<=\.)\s+/)
+    .filter(x => !/(Einträge? (gehen|geht|stehen|steht)|^Vorn steh)/.test(x)).join(' ');
   try { if(_newsSorte(s) === 'spiel') lead = _newsSpielSatz(lead, SP_ZEIGT_ALLES); } catch(e){}
   const nd = document.getElementById('nd');
   const bg = document.getElementById('ndBg');
@@ -87,7 +94,7 @@ function openNewsDetail(sid){
     ${_newsMotiv(sorte, s)}
     ${brk ? '<div class="nf-brk-band"><span class="nf-brk-punkt"></span>BREAKING</div>' : ''}
     <div class="nd-head">
-      <div class="nd-ic nv-cat-${dcat}">${svgI(s.ic || cat.ic)}</div>
+      <div class="nd-ic nv-cat-${dcat}">${svgI(ICONS[s.ic] ? s.ic : cat.ic)}</div>
       <div class="nd-title-wrap">
         <div class="nd-cat">${esc(_newsRubrik(sorte, s))}</div>
         <div class="nd-title">${esc(s.title)}</div>
@@ -970,16 +977,8 @@ function _ndRekordBlatt(s){
   const def = (typeof CHRONICLE_BY_ID !== 'undefined') ? CHRONICLE_BY_ID[d.rekordId] : null;
   const wert = _chronKurz(d.ev);
   const alt = d.type === 'rekord_gesteigert' && d.evVorher ? _chronKurz(d.evVorher) : '';
-  const wap = (id, px) => `<span data-pid="${esc(id)}">${avHtml(pm[id], '', {ins:true, px, feuer:0})}</span>`;
-  const zeig = neu.slice(0, 4), rest = neu.length - zeig.length;
-  const kopf = `<div class="nd-buehne nd-rk${d.zufall ? ' metall' : ''}"><div class="nd-rk-w">`
-    + (weg.length ? `<div class="nd-rk-alt">${weg.slice(0, 3).map(id => wap(id, 48)).join('')}<small>vorher</small></div>`
-      + `<svg class="nd-rk-pf" viewBox="0 0 40 16" aria-hidden="true"><path d="M2 8H34"/><path d="M28 3L35 8L28 13"/></svg>` : '')
-    + `<div class="nd-rk-neu">${zeig.map(id => wap(id, weg.length ? 52 : 60)).join('')}${rest > 0 ? `<span class="av nf-face-mehr">+${rest}</span>` : ''}`
-    + `<small>${weg.length ? 'jetzt' : (neu.length > 1 ? 'halten ihn' : 'hält ihn')}</small></div></div>`
-    + `<em class="nd-rk-h">${esc(_namenListe(neu.map(_spName)))}</em>`
-    + `<div class="nd-rk-v">${alt ? `<s class="num">${esc(alt)}</s>` : ''}<b class="num">${esc(wert)}</b><span>${esc(d.kammerLabel || 'Bestmarke')}</span></div>`
-    + `<div class="nd-rk-n">${esc(d.rekordName || (def && def.name) || '')}</div></div>`;
+  const kopf = _ndWechselBuehne({neu, weg, wert, alt, metall:!!d.zufall,
+    label:d.kammerLabel || 'Bestmarke', name:d.rekordName || (def && def.name) || ''});
   // Die Wirkung aus den gespeicherten Ständen: eine Karte von vorletzter
   // Woche erzählt vom Stand von damals [§C31]. Ohne Stände (ältere Läufe)
   // steht, was der Rekord heute bringt, und kein Zuwachs.
@@ -1064,13 +1063,268 @@ function _ndEndspurtBlatt(s){
   return {kopf, mitte:linie ? `<div class="nd-section">Der Abstand Tag für Tag</div>${linie}` : ''};
 }
 
-// Welche Story ein eigenes Blatt mit Bühne hat.// Welche Story ein eigenes Blatt mit Bühne hat.// Welche Story ein eigenes Blatt mit Bühne hat. Kopf und Mitte kommen aus
+// ── Ein Wechsel an der Ewigen Tafel als Bild [§C33] ─────────────────
+// Rekord und Monatschronik wechseln auf dieselbe Weise den Halter, also
+// zeigt sie EIN Bauteil [§C27]: wer weg ist, ein Pfeil, wer jetzt hält, der
+// Wert groß und darunter der Name. Die Chronik trägt darüber ihr Zeichen —
+// ihr Blatt war eine Spalte aus Zahlenkästen, Podest und Textzeilen.
+function _ndWechselBuehne(o){
+  const pm = pmap();
+  const wap = (id, px) => `<span data-pid="${esc(id)}">${avHtml(pm[id], '', {ins:true, px, feuer:0})}</span>`;
+  const neu = o.neu || [], weg = o.weg || [];
+  const zeig = neu.slice(0, 4), rest = neu.length - zeig.length;
+  return `<div class="nd-buehne nd-rk${o.metall ? ' metall' : ''}">`
+    + (o.ic ? `<span class="nd-rk-ic">${zkHtml(o.ic, 'g', o.metall ? '' : 'gold')}</span>` : '')
+    + `<div class="nd-rk-w">`
+    + (weg.length ? `<div class="nd-rk-alt">${weg.slice(0, 3).map(id => wap(id, 48)).join('')}<small>vorher</small></div>`
+      + `<svg class="nd-rk-pf" viewBox="0 0 40 16" aria-hidden="true"><path d="M2 8H34"/><path d="M28 3L35 8L28 13"/></svg>` : '')
+    + `<div class="nd-rk-neu">${zeig.map(id => wap(id, weg.length ? 52 : neu.length > 1 ? 60 : 76)).join('')}${rest > 0 ? `<span class="av nf-face-mehr">+${rest}</span>` : ''}`
+    + `<small>${weg.length ? 'jetzt' : (neu.length > 1 ? 'halten ihn' : 'hält ihn')}</small></div></div>`
+    + `<em class="nd-rk-h">${esc(_namenListe(neu.map(_spName)))}</em>`
+    + (o.wert ? `<div class="nd-rk-v">${o.alt ? `<s class="num">${esc(o.alt)}</s>` : ''}<b class="num">${esc(o.wert)}</b><span>${esc(o.label || '')}</span></div>` : '')
+    + `<div class="nd-rk-n">${esc(o.name || '')}</div>`
+    + (o.marken && o.marken.length ? `<div class="nd-rk-m">${o.marken.map(x => `<span>${esc(x)}</span>`).join('')}</div>` : '')
+    + `</div>`;
+}
+
+// ── Drei Ebenen, die nicht dasselbe sind [§C32] ─────────────────────
+// In der MONATSTAFEL kann ein Spieler mehrere Disziplinen führen, im PROFIL
+// steht genau eine davon, und nur diese eine zählt fürs PRESTIGE [§C34].
+// Die Zeile nannte einen Namen und einen Wert: wer „Der Nervenkitzel" neben
+// „kein zusätzliches Prestige" las, konnte nicht sehen, dass dieser Name
+// einem ANDEREN Eintrag gehört. Gezählt wird aus `seasonTitles` — derselben
+// Quelle, aus der die Tafel selbst kommt — und zwar am Stand der Karte: die
+// laufende Monatstafel ändert sich bei jeder Partie, und eine Karte von
+// Dienstag erzählt vom Dienstag. Ein Bauteil für die beiden Karten, die
+// davon erzählen [§C27]: den Wechsel und den Tag, an dem die Tafel aufgeht.
+function _ndChronikEbenen(d, bisMs, ids, wertVon, modus, titleId){
+  const pm = pmap();
+  let T = null;
+  try { T = seasonTitles(d.sid, bisMs); } catch(e){ T = null; }
+  const awarded = (T && T.awarded) || [];
+  return ids.map(pid => {
+    const plus = Number(wertVon(pid)) || 0;
+    const tp = awarded.find(a => a.pid === pid) || null;
+    const titel = (tp && tp.name) || (d.titelJeSpieler || {})[pid] || '';
+    const diese = (titleId && tp) ? tp.titleId === titleId : false;
+    const n = awarded.filter(a => a.pid === pid).length;
+    const ebenen = [];
+    if(n) ebenen.push(n + (n === 1 ? ' Eintrag' : ' Einträge') + ' in der Tafel');
+    if(diese) ebenen.push('im Profil steht diese');
+    else if(titel) ebenen.push('im Profil „' + titel + '"');
+    const aussage = modus === 'zuwachs'
+      ? (plus > 0 ? '+' + plus + ' Prestige' : 'kein zusätzliches Prestige')
+      : (plus > 0 ? String(plus).replace('.', ',') + ' Prestige · zählt aktuell'
+                  : 'zählt aktuell nicht');
+    return `<div class="nd-ce" data-pid="${esc(pid)}">${pm[pid] ? avHtml(pm[pid], '', {px:30}) : ''}
+      <span class="nd-ce-t"><b>${esc(_spName(pid))}</b>${ebenen.length ? `<small>${esc(ebenen.join(' · '))}</small>` : ''}</span>
+      <em class="${plus > 0 ? 'g' : ''}">${esc(aussage)}</em></div>`;
+  }).join('');
+}
+
+// ── Eine Monatschronik wechselt den Halter [§C33] ───────────────────
+// Dieselbe Bühne wie beim Rekord, dazu das Zeichen der Chronik und ihre
+// Klasse. Darunter die vier Angaben ihres Werts, das Feld im Monat, wenn
+// mehr als einer die Bedingung erfüllt (sonst stünde der Halter ein zweites
+// Mal als Podest da), und die Wirkung gezeichnet wie an der Tafel.
+function _ndChronikBlatt(s){
+  const d = s.dataRef || {}, pm = pmap();
+  const def = (typeof SEASON_TITLE_BY_ID !== 'undefined') ? SEASON_TITLE_BY_ID[d.titleId] : null;
+  const neu = ((Array.isArray(d.alle) && d.alle.length) ? d.alle : (d.playerIds || [])).filter(id => pm[id]);
+  if(!neu.length || !d.sid) return null;
+  const vor = (Array.isArray(d.vorher) ? d.vorher : []).filter(id => pm[id]);
+  const weg = vor.filter(id => neu.indexOf(id) < 0);
+  const name = d.chronName || (def && def.name) || '';
+  const kl = CHRONIK_KLASSE_NAME[d.chronKlasse || (def && def.klasse)];
+  const kopf = _ndWechselBuehne({neu, weg, wert:d.ev ? _chronKurz(d.ev) : '', label:'Monatschronik',
+    name, marken:[kl, seasonLabel(d.sid)].filter(Boolean)});
+  const bis = new Date(s.when).getTime() + 1;
+  let podest = '';
+  try {
+    const C = _seasonTitleCtx(d.sid, Number.isFinite(bis) ? bis : undefined);
+    const r = def && def.pick ? def.pick(C, new Set()) : null;
+    if(r && r.rang && r.rang.length > 1){
+      podest = _chronPodestHtml(r.rang.map(pid => {
+        let w = ''; try { w = r.evFuer ? r.evFuer(pid) : ''; } catch(e){}
+        return {pid, wert:_chronKurz(w), v:r.wert ? r.wert(pid) : null};
+      }));
+    }
+  } catch(e){}
+  const lb = d.laufbahn || {}, je = {};
+  Object.keys(lb).forEach(id => { if(pm[id] && lb[id] && lb[id].vor != null && lb[id].nach != null) je[id] = lb[id]; });
+  const wirkung = Object.keys(je).length
+    ? _ndWirkungBlock(je, _ndWirkungsGruende([{halter:neu, vorher:vor, rname:name}])) : '';
+  const beitragIds = (Array.isArray(d.playerIds) ? d.playerIds : []).filter(id => pm[id]);
+  const laufbahn = _newsChronikPrestige(d);
+  const ebenen = beitragIds.length
+    ? _ndChronikEbenen(d, Number.isFinite(bis) ? bis : undefined, beitragIds, pid => laufbahn.werte[pid], laufbahn.modus, d.titleId) : '';
+  const ab = (t, html) => html ? `<div class="nd-section">${esc(t)}</div>${html}` : '';
+  const cond = def && def.cond && _ndNeu(def.cond) ? def.cond : '';
+  return {kopf, mitte:(cond ? `<div class="tnote nd-rk-c">${esc(cond)}</div>` : '')
+    + (def ? _chronFaktenHtml(def) : '')
+    + ab('Das Feld im Monat', podest)
+    + ab('Wirkung auf die Laufbahn', wirkung)
+    + ab('Tafel, Profil und Laufbahn', ebenen)
+    + `<button class="btn ghost sm" data-season-table="${esc(d.sid)}" style="margin-top:12px;width:100%">Ganze Tafel öffnen</button>`};
+}
+
+// ── Die Monatstafel als Bild [§C33] ─────────────────────────────────
+// Zwei Karten erzählen von der ganzen Tafel eines Monats: der Tag, an dem
+// sie aufgeht, und der Monatswechsel, an dem sie feststeht. Beide zeigten
+// eine Zahl in einem Kasten und darunter Namen mit Textzeilen. Die Bühne
+// trägt jetzt die Zahl der Einträge und je Träger einen Balken so lang wie
+// seine Einträge; darunter steht jeder Eintrag als Zelle aus Zeichen,
+// Kurzname und Gesicht — die Tafel selbst, so wie sie am Tag der Karte
+// stand. Ein abgeschlossener Monat ist eingefroren, ein laufender wird an
+// der Karte geschnitten.
+function _ndMonatBlatt(s){
+  const d = s.dataRef || {}, pm = pmap();
+  if(!d.sid) return null;
+  const offen = d.type === 'chronik_frei';
+  const bis = offen ? new Date(s.when).getTime() + 1 : undefined;
+  let T = null;
+  try { T = seasonTitles(d.sid, Number.isFinite(bis) ? bis : undefined); } catch(e){ T = null; }
+  const aw = ((T && T.awarded) || []).filter(a => pm[a.pid]);
+  if(!aw.length) return null;
+  const je = {};
+  aw.forEach(a => { je[a.pid] = (je[a.pid] || 0) + 1; });
+  const ids = Object.keys(je).sort((a, b) => je[b] - je[a] || _spName(a).localeCompare(_spName(b)));
+  const max = Math.max(...ids.map(id => je[id]));
+  // Je Träger ein Balken so lang wie seine Einträge, mit Gesicht und Name:
+  // dasselbe Bauteil wie das Feld des Spielers des Tages [§C27].
+  const balken = ids.slice(0, 6).map((id, k) => `<div class="nd-bk-z${k === 0 ? ' hell' : ''}" data-pid="${esc(id)}" style="--k:${k}">`
+    + `${_spChip(id)}<span class="nd-bk-n">${esc(_spName(id))}</span>`
+    + `<span class="nd-bk-b"><i style="width:${Math.round(je[id] / max * 100)}%"><u style="width:100%"></u></i></span>`
+    + `<b class="num">${je[id]}</b></div>`).join('')
+    + (ids.length > 6 ? `<div class="nd-mo-r num">und ${ids.length - 6} weitere</div>` : '');
+  const kopf = `<div class="nd-buehne nd-mo${offen ? ' offen' : ''}"><div class="nd-mo-k"><b class="num">${aw.length}</b>`
+    + `<span>${aw.length === 1 ? 'Eintrag' : 'Einträge'} · ${esc(seasonLabel(d.sid) || '')}</span>`
+    + `<small>${ids.length === 1 ? 'ein Spieler' : ids.length + ' Spieler'}${offen ? ' · bis Monatsende offen' : ''}</small></div>`
+    + `<div class="nd-bk nd-ft">${balken}</div></div>`;
+  const zellen = aw.map((a, k) => `<span class="nd-mo-z" data-pid="${esc(a.pid)}" style="--k:${k}">`
+    + `<i>${svgI(a.ic || 'scroll')}</i><b>${esc(a.name || a.short || '')}</b>${avHtml(pm[a.pid], '', {px:22})}</span>`).join('');
+  // Am Tag, an dem die Tafel aufgeht, zählt ab jetzt jeder Eintrag fürs
+  // Prestige [§C34]: die vorläufigen Profileinträge stehen deshalb dabei.
+  let ebenen = '';
+  if(offen){
+    const tr = (Array.isArray(d.traeger) ? d.traeger : []).filter(id => pm[id]);
+    const monatWert = pid => {
+      try {
+        const q = ((prestigeTabelle().byPid[pid] || {}).quellen || [])
+          .find(x => x.q === 'monat' && (!x.sid || x.sid === d.sid));
+        return q ? Math.round((q.p || 0) * 10) / 10 : 0;
+      } catch(e){ return 0; }
+    };
+    if(tr.length) ebenen = `<div class="nd-section">Tafel, Profil und Laufbahn</div>`
+      + _ndChronikEbenen(d, Number.isFinite(bis) ? bis : undefined, tr, monatWert, 'bestand', '');
+  }
+  return {kopf, mitte:`<div class="nd-section">${offen ? 'Die Tafel an diesem Tag' : 'Die Tafel'}</div><div class="nd-mo-g">${zellen}</div>`
+    + ebenen + `<button class="btn ghost sm" data-season-table="${esc(d.sid)}" style="margin-top:12px;width:100%">Ganze Tafel öffnen</button>`};
+}
+
+// ── Der erste Eintrag überhaupt [§C33] ──────────────────────────────
+// Der Moment, den ein Spieler aus der unteren Hälfte sonst nie im Feed
+// sieht. Das Blatt zeigte „1." in einem Kasten und darunter das Medaillon;
+// jetzt steht das Wappen mit dem Zeichen der Chronik auf der Bühne, die
+// Zahl Eins dahinter, und darunter, wie die Laufbahn in der Chronik weiterging.
+function _ndErstlingBlatt(s){
+  const d = s.dataRef || {}, pm = pmap(), pid = d.pid;
+  if(!pid || !pm[pid] || !d.sid) return null;
+  let t = null; try { t = seasonTitleOf(pid, d.sid); } catch(e){}
+  const def = (t && typeof SEASON_TITLE_BY_ID !== 'undefined') ? SEASON_TITLE_BY_ID[t.titleId] : null;
+  const kopf = `<div class="nd-buehne nd-er"><span class="nd-er-eins num">1</span>`
+    + `<span class="nd-er-w" data-pid="${esc(pid)}">${avHtml(pm[pid], '', {ins:true, px:84, feuer:0})}`
+    + `<span class="nd-er-ic">${zkHtml((t && t.ic) || (def && def.ic) || 'scroll', '', 'gold')}</span></span>`
+    + `<b class="nd-er-n">${esc((t && t.name) || d.titel || '')}</b>`
+    + `<span class="nd-er-m">${esc(seasonLabel(d.sid) || '')} · der erste Monatseintrag</span></div>`;
+  // Die Monate seitdem als Zellen: hell, wo ein Eintrag steht.
+  let reihe = '';
+  try {
+    const h = (seasonTitleHistory(pid) || []).filter(r => r.sid >= d.sid);
+    if(h.length > 1) reihe = `<div class="nd-er-r">${h.map(r => `<span class="${r.title ? 'da' : ''}">`
+      + `<i>${r.title ? svgI(r.title.ic || 'scroll') : ''}</i><small>${esc((seasonLabel(r.sid) || r.sid).split(' ')[0].slice(0, 3))}</small></span>`).join('')}</div>`;
+  } catch(e){}
+  const ab = (x, html) => html ? `<div class="nd-section">${esc(x)}</div>${html}` : '';
+  return {kopf, mitte:(def && _ndNeu(def.cond) ? `<div class="tnote nd-rk-c">${esc(def.cond)}</div>` : '')
+    + (t && _ndNeu(t.ev) ? `<div class="nd-er-ev">${_newsBetont(t.ev)}</div>` : '')
+    + ab('Die Monate seitdem', reihe)
+    + `<button class="btn ghost sm" data-season-table="${esc(d.sid)}" style="margin-top:12px;width:100%">Ganze Tafel öffnen</button>`};
+}
+
+// ── Die neue Stufe [§C30] ───────────────────────────────────────────
+// Die Stufe IST die Story. Das Blatt trug denselben Block wie jede
+// Prestige-Karte: ein kleines Zeichen, eine Zeile Text und die Leiter. Die
+// Bühne zeigt jetzt die Verwandlung — die Stufe davor leise, ein Pfeil, die
+// neue groß um das Gesicht —, darunter woraus die Punkte kommen als ein
+// Balken in drei Farben, der Weg durch die drei Grade dieser Stufe und die
+// Leiter. Gerechnet wird mit dem gespeicherten Stand: eine Karte von
+// vorletzter Woche erzählt vom Stand von damals, und die Stufe ist eine
+// Ableitung aus den Punkten.
+function _ndInsigniumBlatt(s){
+  const d = s.dataRef || {}, pm = pmap(), pid = d.pid;
+  if(!pid || !pm[pid]) return null;
+  const lb = (d.laufbahn || {})[pid] || null;
+  const punkte = Number(d.punkte) || (lb && Number(lb.nach)) || 0;
+  if(!punkte && d.stufe == null) return null;
+  const i = punkte ? insigniumStufeVon(punkte) : (d.stufe | 0);
+  const ins = INSIGNIEN[i], next = INSIGNIEN[i + 1];
+  const rl = (getPlayerRank(pid) || {}).label;
+  const gs = insigniumGradSchwellen(i);
+  let grad = 0; gs.forEach((x, g) => { if(punkte >= x) grad = g; });
+  const zacken = ins.key === 'stern' ? ORDENSSTERN_START + Math.floor(Math.max(0, punkte - ins.min) / ORDENSSTERN_SCHRITT) : 0;
+  const zeichen = (key, z, g, bild) => { try { return insigniumStufeSvg(key, rl, z, g, bild ? {bild:true} : undefined) || ''; } catch(e){ return ''; } };
+  const vorher = i > 0 ? INSIGNIEN[i - 1] : null;
+  const kopf = `<div class="nd-buehne nd-is">`
+    + `<div class="nd-is-w">${vorher ? `<span class="nd-is-alt">${zeichen(vorher.key, 0, 2, true)}<small>${esc(vorher.name)}</small></span>`
+      + `<svg class="nd-rk-pf" viewBox="0 0 40 16" aria-hidden="true"><path d="M2 8H34"/><path d="M28 3L35 8L28 13"/></svg>` : ''}`
+    + `<span class="nd-is-neu" data-pid="${esc(pid)}"><span class="nd-is-z">${zeichen(ins.key, zacken, grad)}</span>`
+    + `<span class="nd-is-av">${avHtml(pm[pid], '', {px:58})}</span></span></div>`
+    + `<b class="nd-is-n">${esc(ins.name)}</b><span class="nd-is-p"><b class="num">${punkte}</b> Prestige · ${esc(_spName(pid))}</span>`
+    + (d.wieder ? `<span class="nd-is-wd">wieder getragen${typeof d.wieder === 'string'
+      ? ' · zuletzt ' + esc(datumFmt(d.wieder + 'T12:00:00', 'tm')) : ''}</span>` : '') + `</div>`;
+  // Woraus die Punkte kommen. Gespeichert ist die Aufteilung im Satz der
+  // Karte; jüngere Karten tragen sie zusätzlich als Zahlen.
+  let teile = d.teile || null;
+  if(!teile){
+    const m = /(\d+) aus Auszeichnungen, (\d+) aus Monatschroniken und (\d+) aus Rekorden/.exec(String(s.desc || ''));
+    if(m) teile = {auszeichnung:+m[1], monat:+m[2], rekord:+m[3]};
+  }
+  let quellen = '';
+  if(teile){
+    const q = [['auszeichnung', 'Auszeichnungen'], ['monat', 'Chroniken'], ['rekord', 'Rekorde']]
+      .map(([k, l]) => ({k, l, v:Math.max(0, Math.round(Number(teile[k]) || 0))}));
+    const sum = q.reduce((a, x) => a + x.v, 0);
+    if(sum > 0) quellen = `<div class="nd-is-q"><span class="nd-is-qb">${q.map(x => x.v ? `<i class="${x.k}" style="width:${(x.v / sum * 100).toFixed(1)}%"></i>` : '').join('')}</span>`
+      + `<span class="nd-is-ql">${q.map(x => `<span class="${x.k}"><b class="num">${x.v}</b>${x.l}</span>`).join('')}</span></div>`;
+  }
+  // Der Weg durch die Stufe: drei Grade als Strecken, je mit ihrem Bild,
+  // der Stand als Marke, und am Ende die nächste Stufe mit ihrer Schwelle.
+  // Was fehlt, steht im Satz der Karte; hier zeigt es die Strecke.
+  let weg = '';
+  if(next){
+    const spanne = Math.max(1, next.min - ins.min);
+    const lage = x => Math.max(0, Math.min(100, (x - ins.min) / spanne * 100));
+    const grenzen = gs.concat([next.min]);
+    weg = `<div class="nd-is-g"><div class="nd-is-gs">${gs.map((x, g) => `<span class="nd-is-gf${g <= grad ? ' da' : ''}${g === grad ? ' jetzt' : ''}" style="flex:${(lage(grenzen[g + 1]) - lage(x)).toFixed(1)} 1 0">`
+      + `<span class="nd-is-gz">${zeichen(ins.key, 0, g, true)}</span><i></i><small class="num">${x}</small></span>`).join('')}`
+      + `<em class="nd-is-gm" style="left:${lage(punkte).toFixed(1)}%"></em></div>`
+      + `<span class="nd-is-ge"><span class="nd-is-gz">${zeichen(next.key, 0, 0, true)}</span><small class="num">${next.min}</small></span></div>`;
+  }
+  const leiter = `<div class="nf-leiter nd-is-l">${INSIGNIEN.map((x, k) => `<span class="nf-lt-p${k <= i ? ' hat' : ''}${k === i ? ' jetzt' : ''}">`
+    + `${zeichen(x.key, k === i ? zacken : 0, k === i ? grad : 0, true)}</span>`).join('')}</div>`;
+  const ab = (x, html) => html ? `<div class="nd-section">${esc(x)}</div>${html}` : '';
+  return {kopf, mitte:ab('Woraus die Punkte kommen', quellen) + ab('Der Weg durch die Stufe', weg) + ab('Die Leiter', leiter)};
+}
+
+// Welche Story ein eigenes Blatt mit Bühne hat. Kopf und Mitte kommen aus
 // demselben Aufruf, gemerkt je Story, damit nichts doppelt gerechnet wird.
 const _ND_BLATT = {win_streak:_ndSerieBlatt, loss_streak:_ndSerieBlatt, team_streak:_ndSerieBlatt,
   team_loss_streak:_ndSerieBlatt, streak_killer:_ndSerieBlatt, rivalry:_ndRivalBlatt,
   rivalry_milestone:_ndRivalBlatt, badge_unlocked:_ndBadgeBlatt,
   rekord_erstmals:_ndRekordBlatt, rekord_gesteigert:_ndRekordBlatt, rekord_geholt:_ndRekordBlatt,
-  potd:_ndPotdBlatt, season_endgame:_ndEndspurtBlatt};
+  potd:_ndPotdBlatt, season_endgame:_ndEndspurtBlatt, chronik_geholt:_ndChronikBlatt,
+  chronik_frei:_ndMonatBlatt, chronik_monat:_ndMonatBlatt, chronik_erstling:_ndErstlingBlatt,
+  insignium_stufe:_ndInsigniumBlatt};
 // Gemerkt nur für einen Aufbau (`_newsDetailBody` leert es): an der Story
 // hängend hielte es nach einer neuen Partie den alten Stand fest.
 let _ndBlattJetzt = null;
@@ -1178,42 +1432,6 @@ function _newsDetailMitte(s){
     return zeilen ? `<div class="nd-section">Für die Laufbahn</div>${zeilen}` : '';
   };
 
-  // ── Drei Ebenen, die nicht dasselbe sind [§C32] ─────────────────
-  // In der MONATSTAFEL kann ein Spieler mehrere Disziplinen führen, im
-  // PROFIL steht genau eine davon, und nur diese eine zählt fürs PRESTIGE
-  // [§C34]. Die Zeile nannte einen Namen und einen Wert: wer „Der
-  // Nervenkitzel" neben „kein zusätzliches Prestige" las, konnte nicht
-  // sehen, dass dieser Name einem ANDEREN Eintrag gehört und die Chronik
-  // dieser Karte nur in der Tafel steht. Gezählt wird aus `seasonTitles` —
-  // derselben Quelle, aus der die Tafel selbst kommt. EIN Bauteil für beide
-  // Karten, die davon erzählen [§C27]: der Chronik-Wechsel und der Tag, an
-  // dem die Tafel aufgeht.
-  const chronikEbenen = (sid, ids, wertVon, modus, titleId) => ids.map(pid => {
-    const plus = Number(wertVon(pid)) || 0;
-    let tp = null;
-    try { tp = seasonTitleOf(pid, sid); } catch(e){}
-    const titel = (tp && tp.name) || (d.titelJeSpieler || {})[pid] || '';
-    const diese = (titleId && tp) ? tp.titleId === titleId : false;
-    let n = 0;
-    try {
-      const T = seasonTitles(sid);
-      n = ((T && T.awarded) || []).filter(a => a.pid === pid).length;
-    } catch(e){}
-    const ebenen = [];
-    if(n) ebenen.push(n + (n === 1 ? ' Eintrag' : ' Einträge') + ' in der Tafel');
-    if(diese) ebenen.push('im Profil steht diese');
-    else if(titel) ebenen.push('im Profil „' + titel + '"');
-    const aussage = modus === 'zuwachs'
-      ? (plus > 0 ? '+' + plus + ' Prestige' : 'kein zusätzliches Prestige')
-      : (plus > 0 ? String(plus).replace('.', ',') + ' Prestige · zählt aktuell'
-                  : 'zählt aktuell nicht');
-    return `<div class="nd-stat-row" data-pid="${esc(pid)}" style="cursor:pointer">
-      <div class="nd-stat-label">${esc(nameOf(pid))}${ebenen.length
-        ? `<small>${esc(ebenen.join(' · '))}</small>` : ''}</div>
-      <div class="nd-stat-val ${plus > 0 ? 'acid' : ''}">${aussage} ›</div>
-    </div>`;
-  }).join('');
-
   try {
     switch(d.type){
       // Die Runde der Vier [§11.6c]: Tabelle, Aufstellung je Partie und jede
@@ -1284,7 +1502,7 @@ function _newsDetailMitte(s){
         const laufbahn = _newsChronikPrestige(d);
         const beitrag = beitragIds.length
           ? `<div class="nd-section">Tafel, Profil und Laufbahn</div>`
-            + chronikEbenen(d.sid, beitragIds, pid => laufbahn.werte[pid],
+            + _ndChronikEbenen(d, undefined, beitragIds, pid => laufbahn.werte[pid],
                             laufbahn.modus, d.titleId)
           : '';
         return (def ? _chronFaktenHtml(def) : '')
@@ -1314,7 +1532,7 @@ function _newsDetailMitte(s){
         return `<div class="nd-gwert metall"><b>${esc(String(d.eintraege != null ? d.eintraege : ''))}</b>
             <span>Einträge in der Chronik</span></div>
           ${ids.length ? `<div class="nd-section">Tafel, Profil und Laufbahn</div>`
-            + chronikEbenen(d.sid, ids, monatWert, 'bestand', '') : ''}
+            + _ndChronikEbenen(d, undefined, ids, monatWert, 'bestand', '') : ''}
           <button class="btn ghost sm" data-season-table="${esc(d.sid)}" style="margin-top:12px;width:100%">Ganze Tafel öffnen</button>`;
       }
       case 'chronik_monat': {

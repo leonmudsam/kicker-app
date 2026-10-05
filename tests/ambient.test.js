@@ -7139,5 +7139,74 @@ ok(_rg.drei.length === 1 && _rg.drei[0] === 'runde_tr1@' + _runde.ende && !_rg.f
    'eine Runde braucht drei Partien derselben vier ohne einen Fünften und entsteht dreißig Minuten nach der letzten',
    JSON.stringify(_rg));
 
+console.log('=== DIE BLAETTER DER EWIGEN TAFEL ZEIGEN IHRE STORY ALS BILD ===');
+// Monatschronik, Monatstafel, Erstling und Insignium-Stufe öffneten eine
+// Spalte aus Zahlenkästen und Textzeilen. Sie tragen jetzt eine Bühne, und
+// deren Zahlen werden hier gegen ihre Quelle gehalten: die Tafel gegen
+// `seasonTitles`, die drei Quellen der Stufe gegen die gespeicherten Punkte,
+// der Wechsel gegen die Halter der Karte.
+const _tafelBl = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  const typ = t => roh.filter(s => (s.dataRef||{}).type === t);
+  const blatt = s => { _ndBlattJetzt = null; return {k:_newsBlattKopf(s) || '', m:_newsDetailMitte(s) || ''}; };
+  const zahl = (re, h) => (h.match(re) || []).length;
+  const r = {};
+  const ins = typ('insignium_stufe')[0];
+  if(ins){
+    const b = blatt(ins), d = ins.dataRef;
+    const ql = (b.m.match(/<span class="(auszeichnung|monat|rekord)"><b class="num">(\\d+)<\\/b>/g) || [])
+      .map(x => +x.replace(/\\D+(\\d+)<.*/, '$1'));
+    r.ins = {buehne:/class="nd-is-z"/.test(b.k), grade:zahl(/class="nd-is-gf/g, b.m),
+      quellen:ql.length, summe:ql.reduce((a, x) => a + x, 0), punkte:d.punkte,
+      stufe:b.k.indexOf('>' + INSIGNIEN[insigniumStufeVon(d.punkte)].name + '<') >= 0};
+  }
+  const mo = typ('chronik_monat')[0];
+  if(mo){
+    const b = blatt(mo), aw = seasonTitles(mo.dataRef.sid).awarded;
+    const je = {}; aw.forEach(a => { je[a.pid] = (je[a.pid] || 0) + 1; });
+    const max = Math.max(...Object.values(je));
+    const erste = (b.k.match(/class="nd-bk-z hell"[\\s\\S]*?<b class="num">(\\d+)<\\/b>/) || [])[1];
+    r.monat = {zellen:zahl(/class="nd-mo-z"/g, b.m), soll:aw.length,
+      balken:zahl(/class="nd-bk-z/g, b.k), traeger:Math.min(6, Object.keys(je).length),
+      erste:+erste, max};
+  }
+  const ch = typ('chronik_geholt')[0];
+  if(ch){
+    const b = blatt(ch), d = ch.dataRef;
+    const alle = (d.alle && d.alle.length ? d.alle : d.playerIds);
+    const weg = (d.vorher || []).filter(id => alle.indexOf(id) < 0);
+    r.chronik = {buehne:/nd-buehne nd-rk/.test(b.k),
+      namen:alle.every(id => b.k.indexOf(esc(pname(id))) >= 0),
+      vorher:weg.length ? /nd-rk-alt/.test(b.k) : !/nd-rk-alt/.test(b.k),
+      name:b.k.indexOf(esc(d.chronName)) >= 0, tafel:b.m.indexOf('Ganze Tafel') >= 0};
+  }
+  // Der Erstling entsteht nur am Monatswechsel; gestellt an einem echten Eintrag.
+  const a = seasonTitles('2026-07').awarded[0];
+  if(a){
+    const s = {id:'x_erst', cat:'tafel', ic:a.ic, title:'Erst', desc:'', when:new Date(2026,7,1,0,1),
+      dataRef:{type:'chronik_erstling', sid:'2026-07', pid:a.pid, titel:a.name}};
+    const b = blatt(s);
+    const monate = (seasonTitleHistory(a.pid) || []).filter(x => x.sid >= '2026-07');
+    r.erst = {buehne:/nd-buehne nd-er/.test(b.k), name:b.k.indexOf(esc(a.name)) >= 0,
+      monate:zahl(/<span class="(da)?"><i>/g, b.m), soll:monate.length > 1 ? monate.length : 0};
+  }
+  return r;
+})())`));
+const _tb = _tafelBl;
+ok(_tb.ins && _tb.ins.buehne && _tb.ins.grade === 3 && _tb.ins.quellen === 3
+   && _tb.ins.summe === _tb.ins.punkte && _tb.ins.stufe,
+   'das Blatt einer Insignium-Stufe zeigt die Verwandlung, drei Quellen, die zusammen die Punkte der Karte ergeben, und die drei Grade',
+   JSON.stringify(_tb.ins));
+ok(_tb.monat && _tb.monat.zellen === _tb.monat.soll && _tb.monat.balken === _tb.monat.traeger
+   && _tb.monat.erste === _tb.monat.max,
+   'das Blatt der Monatschronik zeigt jeden Eintrag der Tafel als Zelle und die Träger als Balken',
+   JSON.stringify(_tb.monat));
+ok(_tb.chronik && _tb.chronik.buehne && _tb.chronik.namen && _tb.chronik.vorher && _tb.chronik.name && _tb.chronik.tafel,
+   'das Blatt eines Chronik-Wechsels zeigt dieselbe Bühne wie ein Rekord, mit allen Haltern und nur echten Vorgängern',
+   JSON.stringify(_tb.chronik));
+ok(_tb.erst && _tb.erst.buehne && _tb.erst.name && _tb.erst.monate === _tb.erst.soll,
+   'das Blatt eines ersten Eintrags zeigt das Wappen mit der Chronik und die Monate seitdem',
+   JSON.stringify(_tb.erst));
+
 console.log('\n' + (fails ? '✗ ' + fails + ' von ' + checks + ' CHECKS FEHLGESCHLAGEN' : '✓ ALLE ' + checks + ' CHECKS BESTANDEN'));
 process.exit(fails ? 1 : 0);

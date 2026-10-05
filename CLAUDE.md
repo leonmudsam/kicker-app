@@ -220,7 +220,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **1065**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **1071**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -550,7 +550,7 @@ globalem Zustand ist.
 |---|---|--:|
 | `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter und -Grade, Prestige ausschließlich aus Auszeichnungen, Chroniken und Rekorden, paarweise gedämpfte Wiederholungen mit unbegrenzter Erreichbarkeit, den Skill-/Spielzahl-Vergleich, wertsortierte Wurzelstaffeln, nachvollziehbare Chronik-Werte und historische Saisonwürden, Katalog-Karten, historische Rekordlage je Monat, Positionsrekorde und die gemeinsame Wandler-Formel, die Fügungen, neutrale Sprache, Wochenherr, Spieltagssieger, Zähler der Auszeichnungen, Monatskatalog, Kurznamen, Ausschlag und Beinamen, die offene Kammer samt ihren Rennen, die gleitenden Fenster, den Halterdeckel, die Rohsicht, die nicht im Cache landet, die Bedingung samt Erklärung jedes Rekords, den Rekord, der ausser einem Fund immer vergeben ist, die zwei Hälften einer Rolle, die nicht demselben gehören, und die Schandtafel samt ihrer Verteilung, die eine Monatsquelle je Spieler und Monat und den Rekord, der mit dem Verlust wieder abgezogen wird, den Katalog der fünfundsechzig samt seinen fünf Kammern, Grundwerten, eindeutigen Zeichen und vollständigen Angaben, die festen Endfenster, den Serienstand vor der Partie, die Rekordlage ohne spätere Partien, die Gegenpaare mit derselben Mindestbasis, den Rekord ohne Wertlatte in Prozent, Elo oder Serienlänge, die gestrichenen Rekorde samt ihrer alten Karten und die Laufbahn aus lauter Niederlagen, die nichts gewinnt, den sichtbaren Text, der die App nicht erklärt, und die acht Rekorde aus engen Partien, Gegnerkreis, Niederlagen, Wiedersehen, Pleitenserie, Serienantwort, Pause und Rolle, jeder ein zweites Mal aus den rohen Partien nachgerechnet, die Beschreibung jeder Auszeichnung als Satz ohne Kürzel, die Einzahl, wo eins steht, „jeder" statt „mindestens 100 %" und keine Auszeichnung, die wie eine Rangstufe heißt, die Breaking-Grenze der beiden obersten Insignium-Stufen und den Schimmer, der mit der Leiter wächst, die Schwellen im Schritt von mindestens 500, drei verschiedene Zeichnungen je Stufe und die Rangfarbe, die in jedem Rang gezeichnet ist statt gefiltert, den dritten Grad, der nie mehr Steine oder Gold trägt als der erste der nächsten Stufe, und die Zeichnung, die keinen Filter trägt, und die Rangfarbe im Auge der Schnecke, die vom Zierkranz zum Lorbeerreif nicht verloren geht, und das Regelblatt, das jede legendäre Auszeichnung nach ihrem Startwert ordnet | 1456 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards, den Zeitschnitt, der nichts abschneidet, den Kalendertag, der an einer Stelle gebildet wird, und den vollen Topf, der seinen ältesten Eintrag verliert, die Erwartungsformel und die Chancen-Linien, die zwei Rechnungen über die längste Serie, jede CSS-Variable, die auch gelesen wird, die Erklärung jeder Award-Kachel, die die Schwelle nennt, die gilt, und jede Schriftangabe mit einer Schriftfamilie dahinter, jedes Award-Zeichen, das im Katalog steht, das Podest, auf dem punktgleiche Halter denselben Platz tragen, und keinen Award, der wie eine Chronik heißt, die etwas anderes misst, und jede Award-Kachel, die Zahl und Einheit aus derselben Tabelle nennt wie Blatt und Profil, und jedes Zeichen, das seinen Strich aus einer Regel zieht, und den Beleg, der seine Stichprobe zählt, die Halter im Feld zeigt, den Vorsprung in Ergebnissen richtig zählt, ohne Statistiksprache auskommt und beim Bestwert endet, und den Knopf des Rekord-Blatts, der den Halter nennt, und die Meisterbühne, deren Tage an der Spitze und deren Titelrennen aus den rohen Partien nachgerechnet werden, samt Karte und Blatt des Meisters ohne Saison-ID und ohne Satzfragment, und jede Rekordkarte, deren Feldstreifen den Halter am Ende und den Ersten dahinter aus derselben Reihenfolge zeigt wie das Blatt, und die Auslieferung ohne Kommentare | 223 |
-| `ambient` | Story-Snapshots, verlustfreie Bündel samt positiven und negativen Matchanlässen, historische Duellzuordnung, heutige rollende Ewige Tafel, 15-Uhr-Funfacts samt Mehrtages-Backfill, Realtime-Schutz, getrennte Score-/Anlassgrafiken mit publizierter Variationsspur, visuelle Stabilität, Feed-Texte und Story-Details | 582 |
+| `ambient` | Story-Snapshots, verlustfreie Bündel samt positiven und negativen Matchanlässen, historische Duellzuordnung, heutige rollende Ewige Tafel, 15-Uhr-Funfacts samt Mehrtages-Backfill, Realtime-Schutz, getrennte Score-/Anlassgrafiken mit publizierter Variationsspur, visuelle Stabilität, Feed-Texte und Story-Details, die Blätter der Ewigen Tafel mit Bühne, deren Zahlen zu ihrer Quelle passen | 586 |
 | `leistung` | DOM- und Navigations-Wiederverwendung samt Fokus und frischer Datenversion, Kalenderwechsel ohne Datenänderung, tatsächlich verzögerter vollständiger Feed samt großem Spieltag, Tageskarte, Filter-, Versions- und Schließschutz, begrenzte Portionen und Idle-Rückfall, gebündelte Datenabfragen, Fehler/Teilantworten, Wiederholen und frischer Folgedurchlauf auch während der Story-Synchronisierung, und Polling ohne unnötigen Zusatzabruf oder Verhungern langsamer Abrufe | 49 |
 | `bedienung` | Sofortige Navigationsantwort vor dem teuren Render, nur die letzte schnelle Auswahl, inerte alte Reiter, Freigabe nach Zeichnen/Abbrechen, alte Frame-Aufträge ohne Besitz, aktuelle Datenversion, ARIA-Navigation und geschützte Einstellungen, freie Texte/Cursor/Fokus und Regler auch bei späten oder fehlerhaften Datenantworten | 16 |
 | `bewegung` | Ein Zeichenauftrag je Wischbild, echte kurze Wischgeschwindigkeit samt Pause und Wegschwellen, Abbruch/Zweitfinger, Eingabe- und Scrollbesitz, Rückzug, Maus, neue und geschlossene Blätter ohne alte Zugbilder, transformbasierte Wähler mit unveränderter Zielgeometrie, Bewegungsruhe, Scrollbegrenzung, Knopfgeste und sichtbarer Tastaturfokus, abbrechbare Übergangsabschlüsse ohne alte Timer/Listener, idempotentes doppeltes Schließen, vollständiger Wisch ohne zweite Wartephase und unberührte Popover-/News-Nachholung | 31 |
@@ -3850,6 +3850,28 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   dieses Blatt**: nur „übernommen" hatte einen Fall im Schalter, ein erstmals
   vergebener und ein ausgebauter Rekord öffneten gemessen ein Blatt mit null
   Zeichen Mitte. `tests/ambient` misst das alles.
+  **Die übrigen Blätter der Ewigen Tafel tragen ebenfalls eine Bühne**
+  (`_ndWechselBuehne`, `_ndChronikBlatt`, `_ndMonatBlatt`, `_ndErstlingBlatt`,
+  `_ndInsigniumBlatt`). Sie waren eine Spalte aus Zahlenkästen, Podest und
+  Textzeilen. Der **Chronik-Wechsel** steht auf derselben Bühne wie der
+  Rekord — ein Wechsel ist ein Wechsel [§C27] — mit Klasse und Monat als
+  Marken; das Podest des Monats nur, wenn mehr als einer die Bedingung
+  erfüllt, sonst stünde der Halter zweimal da. Die **Monatstafel** (der Tag,
+  an dem sie aufgeht, und der Monatswechsel) zeigt die Zahl der Einträge, je
+  Träger einen Balken mit Gesicht und Name (dasselbe Bauteil wie das Feld des
+  Spielers des Tages) und jeden Eintrag als Zelle aus Zeichen, Name und
+  Gesicht; eine laufende Tafel wird dabei an der Karte geschnitten
+  (`seasonTitles(sid, bisMs)`), denn eine Karte von Dienstag erzählt vom
+  Dienstag. Der **erste Eintrag** zeigt das Wappen mit dem Zeichen der Chronik
+  und die Monate seitdem als Zellen. Die **Insignium-Stufe** zeigt die
+  Verwandlung — die Stufe davor leise, ein Pfeil, die neue groß um das
+  Gesicht —, woraus die Punkte kommen als ein Balken in drei Farben, den Weg
+  durch die drei Grade bis zur nächsten Schwelle und die Leiter; gerechnet
+  wird mit den gespeicherten Punkten, die Aufteilung trägt die Karte als
+  `teile` und eine ältere im Satz. Was die Bühne zeigt, fällt aus dem Satz
+  darüber weg (`_ndNeu`). Die Zeilen „Tafel, Profil und Laufbahn"
+  (`_ndChronikEbenen`) bleiben [§C32]. `tests/ambient` hält die Zahlen jeder
+  Bühne an ihrer Quelle fest.
   Die Seltenheitsklasse (`BADGE_RARITY`) sagt, wie schwer eine Auszeichnung
   zu HOLEN ist. Die Halterzahl ist die Gegenprobe, nicht die Definition: die
   zehn legendären halten null bis fünf der zwölf Spieler, die vierzehn
