@@ -30,35 +30,54 @@ function _posvAvSvg(player, color, dataPid){
   </g>`;
 }
 
+// Wie sich der Platz eines Spielers vom vorletzten zum letzten Spieltag
+// bewegt hat: positiv heißt aufwärts. `null` vor seinem ersten Spieltag.
+function _posvBewegung(data, pid){
+  const st = data.spielTage || [];
+  const arr = data.positionsByDay[pid] || [];
+  const jetzt = st.length ? arr[st[st.length - 1] - 1] : null;
+  const vorher = st.length > 1 ? arr[st[st.length - 2] - 1] : null;
+  if(jetzt == null) return null;
+  if(vorher == null) return {neu:true, d:0};
+  return {neu:false, d:vorher - jetzt};
+}
+function _posvJetzt(data, pid){
+  const arr = data.positionsByDay[pid] || [];
+  for(let i = arr.length - 1; i >= 0; i--) if(arr[i] !== null) return arr[i];
+  return null;
+}
+
 // Baut das komplette SVG für den Positionsverlauf. Eine Funktion, ein String —
 // kein DOM-Build aus Performance-Gründen. Highlight wird via CSS-Klassen-Toggle
 // nachträglich angewendet.
+//
+// Die Linien sind Kurven von Tag zu Tag, wie eine Tabelle über die Zeit
+// gelesen wird: gerade Linien kreuzten sich in Spitzen, und bei acht
+// Spielern war nicht zu sehen, wer wen überholt. Am Ende steht das Gesicht
+// und die Bewegung seit dem letzten Spieltag; der Name stand dort mit „…"
+// gekürzt und steht jetzt ganz in der Tabelle darunter [§C33]. Die Tage mit
+// Partie tragen eine Marke auf der Achse: ohne sie sah ein Tag ohne Spiel
+// aus wie einer, an dem sich nichts bewegt hat.
 function _buildPositionChartSvg(data){
   const VB_W = 360, VB_H = 280;
-  const ML = 24, MR = 92, MT = 10, MB = 30;
+  const ML = 24, MR = 62, MT = 12, MB = 34;
   const PW = VB_W - ML - MR;
   const PH = VB_H - MT - MB;
-  const N = data.activeIds.length; // Anzahl Positions-Slots
+  const N = data.activeIds.length;
   const D = data.lastDay;
-
-  // Edge: nur 1 Spieler → Linie wäre konstant Position 1, kaum sinnvoll, aber rendern wir
-  // Edge: lastDay=1 → ein einzelner Punkt pro Spieler, X-Mitte
   const xOf = day => ML + (D <= 1 ? PW/2 : (day-1)/(D-1) * PW);
   const yOf = pos => MT + (N <= 1 ? PH/2 : (pos-1)/(N-1) * PH);
 
-  // ── Grid: horizontale Linie pro Position
   let grid = '';
   for(let p=1; p<=N; p++){
     const y = yOf(p);
     grid += `<line x1="${ML}" y1="${y}" x2="${ML+PW}" y2="${y}"/>`;
   }
-  // ── Y-Achse Ticks: jede Position
   let yTicks = '';
   for(let p=1; p<=N; p++){
-    yTicks += `<text class="posv-y-tick" x="${ML-7}" y="${yOf(p)}">${p}</text>`;
+    yTicks += `<text class="posv-y-tick${p === 1 ? ' eins' : ''}" x="${ML-7}" y="${yOf(p)}">${p}</text>`;
   }
-  // ── X-Achse Ticks: smart spacing — bei ≤7 Tagen jeder Tag, sonst 1,5,10,15,…
-  let xTicks = '';
+  // ── X-Achse Ticks: bei ≤7 Tagen jeder Tag, sonst 1,5,10,15,…
   const tickDays = [];
   if(D <= 7){
     for(let d=1; d<=D; d++) tickDays.push(d);
@@ -72,77 +91,63 @@ function _buildPositionChartSvg(data){
       tickDays.push(D);
     }
   }
-  // Dedup
   const seenTicks = new Set();
+  let xTicks = '';
   tickDays.filter(d => !seenTicks.has(d) && seenTicks.add(d)).forEach(d => {
-    xTicks += `<text class="posv-x-tick" x="${xOf(d)}" y="${MT+PH+18}">${d}</text>`;
+    xTicks += `<text class="posv-x-tick" x="${xOf(d)}" y="${MT+PH+24}">${d}</text>`;
   });
-  // X-Achsen-Caption "Tag" links unten
-  const xCap = `<text class="posv-axis-cap" x="0" y="${MT+PH+18}">Tag</text>`;
+  const spieltage = (data.spielTage || []).map(d => `<circle class="posv-st" cx="${xOf(d).toFixed(1)}" cy="${MT+PH+10}" r="2.2"/>`).join('');
 
-  // ── Linien + Dots + Endpunkte pro Spieler
-  // Sortierung: Endpunkt-Position aufsteigend (Position 1 oben zuerst) — verhindert
-  // dass Avatar-Labels sich willkürlich überdecken; oben startet die Reihenfolge.
   const playersByEndPos = data.activeIds
-    .map(id => {
-      // Letzter nicht-null Wert im positionsByDay-Array
-      const arr = data.positionsByDay[id];
-      let lastVal = null, lastDayIdx = -1;
-      for(let i=arr.length-1; i>=0; i--){
-        if(arr[i] !== null){ lastVal = arr[i]; lastDayIdx = i; break; }
-      }
-      return {id, lastPos: lastVal, lastDayIdx};
-    })
+    .map(id => ({id, lastPos:_posvJetzt(data, id)}))
     .filter(o => o.lastPos !== null)
     .sort((a,b)=> a.lastPos - b.lastPos);
 
   let lines = '', hits = '', dots = '', ends = '';
   const pm = pmap();
-  for(const o of playersByEndPos){
+  playersByEndPos.forEach((o, k) => {
     const pid = o.id;
     const color = data.colorOf[pid] || '#888';
     const arr = data.positionsByDay[pid];
-    // Pfad bauen: nur nicht-null-Punkte verbinden
     const pts = [];
     for(let i=0; i<arr.length; i++){
-      if(arr[i] !== null){
-        pts.push({x: xOf(i+1), y: yOf(arr[i])});
-      }
+      if(arr[i] !== null) pts.push({x: xOf(i+1), y: yOf(arr[i])});
     }
-    if(pts.length === 0) continue;
+    if(pts.length === 0) return;
     let d;
     if(pts.length === 1){
-      // Single point — Mini-Strich für Sichtbarkeit
-      d = `M ${pts[0].x-2} ${pts[0].y} L ${pts[0].x+2} ${pts[0].y}`;
+      d = `M ${(pts[0].x-2).toFixed(1)} ${pts[0].y.toFixed(1)} L ${(pts[0].x+2).toFixed(1)} ${pts[0].y.toFixed(1)}`;
     } else {
-      d = 'M ' + pts.map(p => `${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' L ');
+      d = `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`;
+      for(let i=1; i<pts.length; i++){
+        const a = pts[i-1], b = pts[i], h = (b.x - a.x) / 2;
+        d += ` C ${(a.x+h).toFixed(1)} ${a.y.toFixed(1)} ${(b.x-h).toFixed(1)} ${b.y.toFixed(1)} ${b.x.toFixed(1)} ${b.y.toFixed(1)}`;
+      }
     }
-    // Visible line
-    lines += `<path class="posv-line" data-pid="${esc(pid)}" d="${d}" stroke="${color}"/>`;
-    // Hit area (transparent, breit für Touch)
+    lines += `<path class="posv-line" data-pid="${esc(pid)}" d="${d}" stroke="${color}" pathLength="1" style="--k:${k}"/>`;
     hits  += `<path class="posv-line-hit" data-pid="${esc(pid)}" d="${d}"/>`;
-    // Dots an jedem Datenpunkt — klein, am Endpunkt größer
-    for(let i=0; i<pts.length; i++){
-      const r = (i === pts.length-1) ? 3.2 : 2;
-      dots += `<circle class="posv-dot" data-pid="${esc(pid)}" cx="${pts[i].x.toFixed(1)}" cy="${pts[i].y.toFixed(1)}" r="${r}" fill="${color}"/>`;
+    // Ein Punkt je Spieltag, nicht je Kalendertag: an einem Tag ohne Partie
+    // gibt es nichts zu markieren.
+    const st = new Set(data.spielTage || []);
+    for(let i=0; i<arr.length; i++){
+      if(arr[i] === null || (!st.has(i + 1) && i !== arr.length - 1)) continue;
+      const last = i === arr.length - 1;
+      dots += `<circle class="posv-dot" data-pid="${esc(pid)}" cx="${xOf(i+1).toFixed(1)}" cy="${yOf(arr[i]).toFixed(1)}" r="${last ? 3.2 : 2}" fill="${color}"/>`;
     }
-    // Endpunkt: Avatar + Name. Avatar bei xEnd+12, Name dahinter.
-    const xEnd = pts[pts.length-1].x;
-    const yEnd = pts[pts.length-1].y;
-    const avX = Math.min(xEnd + 16, VB_W - 72); // nicht ins Right-Margin reinrennen
-    const labelX = avX + 14;
-    const p = pm[pid];
-    const name = p ? p.name : '?';
-    ends += `<g transform="translate(${avX.toFixed(1)},${yEnd.toFixed(1)})">${_posvAvSvg(p, color, pid)}</g>`;
-    // Name-Text nach rechts; clipt am Right-Edge via maxlength
-    const shortName = name.length > 8 ? name.slice(0,8)+'…' : name;
-    ends += `<text class="posv-end-label" data-pid="${esc(pid)}" x="${labelX.toFixed(1)}" y="${yEnd.toFixed(1)}">${esc(shortName)}</text>`;
-  }
+    const xEnd = pts[pts.length-1].x, yEnd = pts[pts.length-1].y;
+    const avX = Math.min(xEnd + 16, VB_W - 46);
+    ends += `<g transform="translate(${avX.toFixed(1)},${yEnd.toFixed(1)})">${_posvAvSvg(pm[pid], color, pid)}</g>`;
+    const bw = _posvBewegung(data, pid);
+    const txt = !bw ? '' : bw.neu ? 'neu' : bw.d > 0 ? '▲' + bw.d : bw.d < 0 ? '▼' + Math.abs(bw.d) : '';
+    if(txt) ends += `<text class="posv-end-d ${!bw || bw.neu ? '' : bw.d > 0 ? 'auf' : 'ab'}" data-pid="${esc(pid)}" x="${(avX + 15).toFixed(1)}" y="${yEnd.toFixed(1)}">${txt}</text>`;
+  });
 
   return `<svg class="posv-svg" viewBox="0 0 ${VB_W} ${VB_H}" preserveAspectRatio="xMinYMin meet" xmlns="http://www.w3.org/2000/svg">
+    <rect class="posv-eins" x="${ML}" y="${(yOf(1) - (N > 1 ? PH/(N-1)/2 : 10)).toFixed(1)}" width="${PW}" height="${(N > 1 ? PH/(N-1) : 20).toFixed(1)}" rx="6"/>
     <g class="posv-grid">${grid}</g>
     ${yTicks}
-    ${xCap}${xTicks}
+    ${spieltage}
+    ${xTicks}
     <g>${hits}</g>
     <g>${lines}</g>
     <g>${dots}</g>
@@ -150,71 +155,73 @@ function _buildPositionChartSvg(data){
   </svg>`;
 }
 
-// Detail-Karte unten: zeigt entweder Empty-State oder Stats des hervorgehobenen
-// Spielers. innerHTML-Update, kein Sheet-Re-Render.
+// Der Verlauf eines Spielers in einer Zeile der Tabelle, so klein wie ein
+// Wort: dieselbe Kurve wie oben, ohne Achsen.
+function _posvSpark(data, pid){
+  const arr = data.positionsByDay[pid] || [], N = Math.max(2, data.activeIds.length), D = data.lastDay;
+  const pts = [];
+  arr.forEach((p, i) => { if(p !== null) pts.push([D <= 1 ? 28 : 2 + i / (D - 1) * 52, 2 + (p - 1) / (N - 1) * 14]); });
+  if(pts.length < 2) return `<svg class="posv-spark" viewBox="0 0 56 18" aria-hidden="true"></svg>`;
+  return `<svg class="posv-spark" viewBox="0 0 56 18" aria-hidden="true"><polyline points="${pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}" stroke="${data.colorOf[pid] || '#888'}"/>`
+    + `<circle cx="${pts[pts.length - 1][0].toFixed(1)}" cy="${pts[pts.length - 1][1].toFixed(1)}" r="2" fill="${data.colorOf[pid] || '#888'}"/></svg>`;
+}
+
+// Die Tabelle des letzten Stands: Platz, Gesicht, Name, Verlauf, Bewegung
+// und Elo. Sie ist zugleich die Wahl des Spielers — ein Hinweis „Linie
+// antippen" erklärte vorher, wie man die Grafik bedient.
+function _posvTabelle(data){
+  const pm = pmap();
+  const ids = data.activeIds.filter(id => _posvJetzt(data, id) !== null)
+    .sort((a, b) => _posvJetzt(data, a) - _posvJetzt(data, b));
+  return `<div class="posv-tab">${ids.map((id, k) => {
+    const bw = _posvBewegung(data, id);
+    const bew = !bw ? '' : bw.neu ? '<span class="posv-bw neu">neu</span>'
+      : bw.d > 0 ? `<span class="posv-bw auf num">▲${bw.d}</span>`
+      : bw.d < 0 ? `<span class="posv-bw ab num">▼${Math.abs(bw.d)}</span>` : '<span class="posv-bw num">–</span>';
+    const elo = data.finalElo[id];
+    return `<div class="posv-row${_posvJetzt(data, id) === 1 ? ' eins' : ''}" data-pid="${esc(id)}" style="--k:${k};--c:${data.colorOf[id] || '#888'}">`
+      + `<b class="posv-pl num">${_posvJetzt(data, id)}.</b>${pm[id] ? avHtml(pm[id], '', {px:26}) : ''}`
+      + `<span class="posv-nm">${esc((pm[id] || {}).name || '?')}</span>${_posvSpark(data, id)}${bew}`
+      + `<span class="posv-elo num">${elo === undefined ? '–' : Math.round(elo)}</span></div>`;
+  }).join('')}</div>`;
+}
+
+// Der gewählte Spieler: Wappen und Name, die Zahlen der Saison als
+// Zahlenreihe [§C31], sein Platz an jedem Tag als Zelle — Gold, wo er vorn
+// lag — und seine Partien als Lauf [§C27]. Vorher stand hier ein leerer
+// Kasten mit „Hier stehen die Einzelheiten, sobald ein Spieler gewählt ist".
 function _renderPosvDetail(el, data, hlId){
-  const stats = getSeasonPlayerStats(data.seasonId);
-  if(!hlId){
-    el.classList.add('empty');
-    el.innerHTML = `<div class="posv-detail-empty-text">Hier stehen die Einzelheiten,<br>sobald ein Spieler gewählt ist.</div>`;
-    return;
-  }
-  el.classList.remove('empty');
+  if(!hlId){ el.hidden = true; el.innerHTML = ''; return; }
+  el.hidden = false;
   const p = pmap()[hlId];
+  const s = getSeasonPlayerStats(data.seasonId)[hlId] || {wins:0, losses:0, games:0};
   const arr = data.positionsByDay[hlId] || [];
-  // Aktuelle Position = letzter nicht-null Wert
-  let curPos = '–';
-  for(let i=arr.length-1; i>=0; i--){ if(arr[i] !== null){ curPos = arr[i]; break; } }
+  const st = new Set(data.spielTage || []);
+  const jetzt = _posvJetzt(data, hlId);
+  const best = Math.min(...arr.filter(x => x !== null));
+  const vorn = (data.spielTage || []).filter(d => arr[d - 1] === 1).length;
   const elo = data.finalElo[hlId];
-  const eloStr = (elo===undefined) ? '–' : Math.round(elo);
-  const s = stats[hlId] || {wins:0,losses:0,games:0};
-  const balance = `${s.wins}–${s.losses}`;
-  const quote = s.games ? Math.round(s.wins/s.games*100)+'%' : '–';
-  const color = data.colorOf[hlId] || '#888';
-
-  let avInner;
-  if(p && p.avatar_id){
-    const em = avatarEmoji(p.avatar_id);
-    avInner = `<span class="em">${em}</span>`;
-  } else if(p){
-    avInner = esc(initials(p.name));
-  } else {
-    avInner = '?';
-  }
-  const avBg = p && p.avatar_id ? 'var(--surface3)' : (p ? avColor(p.id) : 'var(--surface3)');
-
-  el.innerHTML = `
-    <div class="posv-detail-head">
-      <div class="posv-detail-av" style="background:${avBg};border-color:${color}">${avInner}</div>
-      <div class="posv-detail-name-wrap">
-        <div class="posv-detail-name">${esc(p ? p.name : '?')}</div>
-        <span class="posv-detail-dot" style="background:${color}"></span>
-      </div>
-    </div>
-    <div class="posv-detail-stats">
-      <div class="posv-detail-stat">
-        <div class="posv-detail-stat-label">Position</div>
-        <div class="posv-detail-stat-val">${curPos}.</div>
-      </div>
-      <div class="posv-detail-stat">
-        <div class="posv-detail-stat-label">Elo</div>
-        <div class="posv-detail-stat-val">${eloStr}</div>
-      </div>
-      <div class="posv-detail-stat">
-        <div class="posv-detail-stat-label">Bilanz</div>
-        <div class="posv-detail-stat-val">${balance}</div>
-      </div>
-      <div class="posv-detail-stat">
-        <div class="posv-detail-stat-label">Quote</div>
-        <div class="posv-detail-stat-val">${quote}</div>
-      </div>
-    </div>
-  `;
+  const zellen = arr.map((pos, i) => `<span class="${pos === null ? 'leer' : pos === 1 ? 'eins' : ''}${st.has(i + 1) ? ' gespielt' : ''}" style="--k:${i}">`
+    + `${pos === null ? '' : `<b class="num">${pos}</b>`}<small class="num">${i + 1}</small></span>`).join('');
+  el.innerHTML = `<div class="posv-dk">${p ? avHtml(p, '', {ins:true, px:48, feuer:0}) : ''}
+      <div class="posv-dk-t"><b>${esc(p ? p.name : '?')}</b><small>Platz ${jetzt} von ${data.activeIds.length}</small></div>
+      <i class="posv-dk-c" style="background:${data.colorOf[hlId] || '#888'}"></i></div>`
+    + rcpZahlenHtml([
+        {v:jetzt + '.', l:'Platz', ton:jetzt === 1 ? 'gold' : ''},
+        {v:elo === undefined ? '–' : String(Math.round(elo)), l:'Elo'},
+        {v:s.wins + '–' + s.losses, l:'Bilanz'},
+        {v:s.games ? Math.round(s.wins / s.games * 100) + ' %' : '–', l:'Siegquote'},
+        {v:best + '.', l:'Bester Platz'},
+        {v:String(vorn), l:vorn === 1 ? 'Spieltag vorn' : 'Spieltage vorn'}
+      ])
+    + `<div class="nd-section">Platz an jedem Tag</div><div class="posv-tz">${zellen}</div>`
+    + `<div class="nd-section">Die Partien der Saison</div>${saisonZellenHtml(data.seasonId, hlId)}`;
 }
 
 // Highlight-Logik: zentraler Click-Handler auf das Sheet-Root via Event-Delegation,
 // damit wir keine pro-Element-Listener leaken müssen und SVG-Elemente innerhalb
-// nachträglich gewechselt werden können.
+// nachträglich gewechselt werden können. Die Zeilen der Tabelle wählen
+// denselben Spieler wie Linie und Gesicht.
 function _attachPosvHighlight(rootEl, data){
   const chartHost = rootEl.querySelector('.posv-chart-host');
   const detailEl  = rootEl.querySelector('#posvDetail');
@@ -223,22 +230,22 @@ function _attachPosvHighlight(rootEl, data){
   function applyHl(pid){
     if(pid && pid === curHl) pid = null; // gleiche Linie nochmal → reset
     curHl = pid;
-    // Highlight-Klassen toggeln
     chartHost.classList.toggle('posv-dim', !!pid);
-    chartHost.querySelectorAll('.hl').forEach(el => el.classList.remove('hl'));
+    rootEl.querySelectorAll('.posv-chart-host .hl, .posv-row.hl').forEach(el => el.classList.remove('hl'));
     if(pid){
-      chartHost.querySelectorAll(`[data-pid="${CSS.escape(pid)}"]`)
+      rootEl.querySelectorAll(`.posv-chart-host [data-pid="${CSS.escape(pid)}"], .posv-row[data-pid="${CSS.escape(pid)}"]`)
         .forEach(el => el.classList.add('hl'));
     }
     _renderPosvDetail(detailEl, data, pid);
   }
 
   rootEl.addEventListener('click', (e) => {
-    // Erstes Element mit data-pid in Aufstiegskette (für SVG-Click-Targets innerhalb von <g>)
+    // Das Detail selbst führt nicht weiter: ein Wappen darin ist kein Wechsel.
+    if(detailEl.contains(e.target)) return;
     let target = e.target;
     let pid = null;
     while(target && target !== rootEl){
-      if(target.dataset && target.dataset.pid){ pid = target.dataset.pid; break; }
+      if(target.dataset && target.dataset.pid && (chartHost.contains(target) || target.classList.contains('posv-row'))){ pid = target.dataset.pid; break; }
       target = target.parentNode;
     }
     if(pid){
@@ -246,10 +253,7 @@ function _attachPosvHighlight(rootEl, data){
       applyHl(pid);
       return;
     }
-    // Click auf leeren Chart-Bereich → reset
-    if(curHl && chartHost.contains(e.target)){
-      applyHl(null);
-    }
+    if(curHl && chartHost.contains(e.target)) applyHl(null);
   });
 }
 
@@ -260,7 +264,6 @@ function showPositionHistory(seasonId){
   const data = getSeasonPositionHistory(seasonId);
   const sLabel = seasonLabel(seasonId);
 
-  // Empty-State: keine Saison-Matches
   if(data.empty || data.activeIds.length === 0 || data.lastDay === 0){
     openSheet(`
       <div class="posv-empty">
@@ -275,6 +278,12 @@ function showPositionHistory(seasonId){
   const subInfo = data.isCurrent
     ? `${sLabel} · Tag ${data.lastDay} von ${data.totalDays}`
     : `${sLabel} · Saison abgeschlossen`;
+  const n = (data.spielTage || []).length;
+  // Die Tage an der Spitze als Balken — dasselbe Bauteil wie im
+  // Saison-Rückblick und auf der Meisterbühne [§C27].
+  const podium = data.activeIds.filter(id => _posvJetzt(data, id) !== null)
+    .sort((a, b) => _posvJetzt(data, a) - _posvJetzt(data, b)).slice(0, 3);
+  const spitze = saisonSpitzeHtml(seasonId, podium);
 
   openSheet(`
     <div style="padding:0 0 8px">
@@ -289,6 +298,7 @@ function showPositionHistory(seasonId){
           <div class="posv-info-title">${data.isCurrent ? 'Aktuelle Saison' : 'Vergangene Saison'}</div>
           <div class="posv-info-sub">${esc(subInfo)}</div>
         </div>
+        <div class="posv-info-n"><b class="num">${n}</b><small>${n === 1 ? 'Spieltag' : 'Spieltage'}</small></div>
       </div>
 
       <div class="posv-chart-host" id="posvChartHost">
@@ -296,11 +306,11 @@ function showPositionHistory(seasonId){
         ${_buildPositionChartSvg(data)}
       </div>
 
-      <div class="posv-hint">Linie oder Gesicht antippen, um einen Spieler hervorzuheben</div>
+      <div class="posv-detail" id="posvDetail" hidden></div>
 
-      <div class="posv-detail empty" id="posvDetail">
-        <div class="posv-detail-empty-text">Hier stehen die Einzelheiten,<br>sobald ein Spieler gewählt ist.</div>
-      </div>
+      <div class="nd-section">Die Tabelle</div>
+      ${_posvTabelle(data)}
+      ${spitze ? `<div class="nd-section">Tage an der Spitze</div>${spitze}` : ''}
 
       <div class="posv-update">
         <span>Stand: heute, ${headerDate}</span>

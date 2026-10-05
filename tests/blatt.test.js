@@ -1216,7 +1216,7 @@ const ok = (c, msg, det) => {
     // das Gesicht selbst.
     // Die Karte am Spieltag traegt ihren Kopf nach dem Anlass [§11.6c], die
     // Runde ihre Tabelle.
-    const BILD = ['nf-erg','nf-wert','nf-leiter','nf-bil','nf-ser','nf-sam',
+    const BILD = ['ff','nf-erg','nf-wert','nf-leiter','nf-bil','nf-ser','nf-sam',
                   'nf-zb','nf-wl','nf-duell-band','nf-bd','nf-gr-l','nf-face',
                   'sp-zeile','sp-feld','sp-at','sp-wp','sp-band','sp-rd-tafel','sp-tg','sp-rq',
                   // V2 waehlt auch Mosaik, Tacho, Streuung und Gefaelle. Ihr
@@ -3595,6 +3595,108 @@ return JSON.stringify(funde,null,1);
      && posKarte.imBild && posKarte.fehler.length === 0 && posKarte.oeffnet,
      'der Positionsverlauf steht unter der Rangliste als erste Karte, zeigt das Titelrennen und öffnet den Verlauf',
      JSON.stringify(Object.assign({}, posKarte, {fehler: (posKarte.fehler || []).slice(0, 2)})));
+
+  // ── Der Positionsverlauf liest sich als Tabelle über die Zeit ─────
+  //    Er zeigte gerade Linien, die Namen mit „…" gekürzt neben dem
+  //    Gesicht, einen Hinweis „Linie oder Gesicht antippen" und darunter
+  //    einen leeren Kasten „Hier stehen die Einzelheiten". Jetzt: Kurven,
+  //    die Tabelle des letzten Stands mit der Bewegung seit dem vorletzten
+  //    Spieltag, und ein Detail erst, wenn jemand gewählt ist — mit seinem
+  //    Platz an jedem Tag. Die Bewegung wird hier aus `positionsByDay`
+  //    nachgerechnet, nicht aus dem Markup abgelesen.
+  const posv = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    K(`closeSheet(true); showPositionHistory(seasons[3].id); 'x'`);
+    document.getAnimations().forEach(a => { try { a.finish(); } catch(e){} });
+    const d = K(`getSeasonPositionHistory(seasons[3].id)`);
+    const jetzt = id => { const a = d.positionsByDay[id]; for(let i = a.length - 1; i >= 0; i--) if(a[i] !== null) return a[i]; return null; };
+    const st = d.spielTage, out = {fehler: []};
+    const sh = document.getElementById('sheet');
+    const txt = sh.innerText;
+    if(/…|antippen|Einzelheiten/.test(txt)) out.fehler.push('Hinweis oder Kürzung: ' + (txt.match(/.{0,20}(…|antippen|Einzelheiten).{0,10}/) || [''])[0]);
+    const kurven = [...sh.querySelectorAll('.posv-line')].filter(p => / C /.test(p.getAttribute('d'))).length;
+    if(kurven < d.activeIds.length - 1) out.fehler.push('Kurven ' + kurven);
+    const ids = d.activeIds.filter(id => jetzt(id) !== null).sort((a, b) => jetzt(a) - jetzt(b));
+    const rows = [...sh.querySelectorAll('.posv-row')];
+    if(rows.map(r => r.dataset.pid).join() !== ids.join()) out.fehler.push('Reihenfolge der Tabelle');
+    rows.forEach(r => {
+      const a = d.positionsByDay[r.dataset.pid];
+      const n = a[st[st.length - 1] - 1], v = st.length > 1 ? a[st[st.length - 2] - 1] : null;
+      const soll = n == null ? '' : v == null ? 'neu' : v > n ? '▲' + (v - n) : v < n ? '▼' + (n - v) : '–';
+      const ist = (r.querySelector('.posv-bw') || {}).textContent || '';
+      if(ist !== soll) out.fehler.push(r.querySelector('.posv-nm').textContent + ': ' + ist + ' statt ' + soll);
+      if(r.querySelector('.posv-nm').scrollWidth > r.querySelector('.posv-nm').clientWidth + 1) out.fehler.push('Name abgeschnitten');
+    });
+    const det = document.getElementById('posvDetail');
+    out.vorher = det.hidden;
+    const wahl = rows[2];
+    wahl.click();
+    document.getAnimations().forEach(a => { try { a.finish(); } catch(e){} });
+    const a = d.positionsByDay[wahl.dataset.pid];
+    out.nachher = !det.hidden;
+    out.zellen = det.querySelectorAll('.posv-tz span').length === d.lastDay;
+    out.gold = det.querySelectorAll('.posv-tz span.eins').length === a.filter(x => x === 1).length;
+    out.hl = wahl.classList.contains('hl') && !!sh.querySelector('.posv-line.hl[data-pid="' + wahl.dataset.pid + '"]');
+    K(`closeSheet(true); 'x'`);
+    return out;
+  });
+  ok(posv.fehler.length === 0 && posv.vorher && posv.nachher && posv.zellen && posv.gold && posv.hl,
+     'der Positionsverlauf zeigt Kurven, die Tabelle mit ihrer Bewegung und erst nach der Wahl den Platz an jedem Tag',
+     JSON.stringify(Object.assign({}, posv, {fehler: posv.fehler.slice(0, 3)})));
+
+  // ── Jeder Fun Fact zeichnet seinen Anlass ─────────────────────────
+  //    Alle Fun Facts standen als große Zahl links neben ihrem Satz. Jetzt
+  //    trägt jede Vorlage ihr Bild — Rennen, Podest, Tauziehen, Pause,
+  //    Vitrine … —, und das muss bei 288 und 360 px in seiner Karte bleiben:
+  //    kein Text auf einem anderen, keiner abgeschnitten oder mit „…".
+  const fakt = await page.evaluate(async (pruefenSrc) => {
+    const pruefen = eval('(' + pruefenSrc + ')');
+    const K = window.__k.eval.bind(window.__k);
+    K(`closeSheet(true); 'x'`);
+    const html = K(`(function(){
+      const pm = pmap(), nameOf = pid => (pm[pid]||{}).name || '?', seen = new Set(), out = [];
+      [new Date(2026, 7, 26, 15, 5), new Date(2026, 6, 20, 15, 5)].forEach(now => {
+        const T = _ambientTemplatePool(now, pm, nameOf);
+        for(let seed = 1; seed <= 4; seed++) T.forEach(t => {
+          let r = null; try { r = t.make(_ambientRng(seed)); } catch(e){ return; }
+          const b = r && r.dataRef && r.dataRef.bild;
+          if(!b || seen.has(b.f + (b.ins ? 'i' : ''))) return; seen.add(b.f + (b.ins ? 'i' : ''));
+          out.push(_newsCardHtmlM2({id:'ffb_' + t.key, title:r.title, desc:r.desc, when:now, cat:r.cat, ic:r.ic,
+            dataRef:Object.assign({type:'ambient', sub:t.key}, r.dataRef)}, false, false, ''));
+        });
+      });
+      out.push(_newsCardHtmlM2({id:'ffb_pause', title:'5 Tage ohne Spiel', desc:'Die längste Pause der Liga waren 9 Tage.',
+        when:new Date(2026, 7, 26), cat:'fun', ic:'clock', dataRef:{type:'dry_spell', daysSince:5, maxGapDays:9}}, false, false, ''));
+      return out.join('');
+    })()`);
+    const w = document.createElement('div');
+    w.className = 'nf-wrap';
+    document.body.appendChild(w);
+    const out = {formen:0, fehler:[]};
+    for(const breite of [288, 360]){
+      w.style.cssText = 'position:absolute;left:0;top:0;width:' + breite + 'px;z-index:99999';
+      w.innerHTML = html;
+      w.querySelectorAll('.nf-card').forEach(c => { c.style.contentVisibility = 'visible'; });
+      document.getAnimations().forEach(a => { try { a.finish(); } catch(e){} });
+      await new Promise(r => requestAnimationFrame(r));
+      const ffs = [...w.querySelectorAll('.ff')];
+      out.formen = Math.max(out.formen, ffs.length);
+      ffs.forEach(ff => {
+        const k = ff.closest('.nf-card').dataset.sid + ' ' + breite + ': ';
+        const r = ff.getBoundingClientRect();
+        ff.querySelectorAll('*').forEach(e => {
+          const b = e.getBoundingClientRect();
+          if(b.width && (b.right > r.right + .5 || b.left < r.left - .5)) out.fehler.push(k + 'läuft hinaus ' + (e.className.baseVal ?? e.className));
+        });
+        pruefen(ff).fehler.forEach(f => out.fehler.push(k + f));
+      });
+    }
+    w.remove();
+    return out;
+  }, PRUEFEN.toString());
+  ok(fakt.formen >= 12 && fakt.fehler.length === 0,
+     'jedes Fun-Fact-Bild bleibt bei 288 und 360 px in seiner Karte, ohne Text auf Text und ohne Kürzung',
+     fakt.formen + ' Bilder · ' + fakt.fehler.slice(0, 4).join(' | '));
 
   // ── Die Siegchance steht beim Aufstellen unter der Score-Karte ────
   //    Ohne Erklärsatz, aus derselben Rechnung, mit der die Partie danach

@@ -1533,6 +1533,20 @@ function _ndMarkenBlatt(s){
 // um Prestige geht, sonst die letzten zehn Partien bis zum Tag der Karte.
 function _ndFaktBlatt(s){
   const d = s.dataRef || {}, pm = pmap(), pid = d.ambientPid;
+  // Ein Fun Fact mit Bild trägt es groß als Bühne [30c-news-fakt] — dasselbe
+  // Bild wie die Karte, sonst verlöre das Blatt, wegen dem man getippt hat.
+  // Darunter steht, was das Bild nicht zeigt.
+  const bild = d.leiter ? '' : _faktBild(s, true);
+  if(bild){
+    const ab = (t, html) => html ? `<div class="nd-section">${esc(t)}</div>${html}` : '';
+    const b = d.bild || {};
+    let mitte = '';
+    if(d.type === 'dry_spell') mitte = ab('Die letzte Partie', d.lastMatchId ? _newsBlattErgebnis(d.lastMatchId) : '');
+    else if(b.f === 'duell' && pm[b.a] && pm[b.b]) mitte = ab('Jede Begegnung', h2hBegegnungenHtml(b.a, b.b));
+    else if(d.prestige && pid && pm[pid]) mitte = ab('Der Stand am Zeichen', _newsInsigniumBlock(pid));
+    else if(pid && pm[pid]) mitte = ab('Die letzten zehn Partien', _ndFaktLauf(pid, s));
+    return {kopf:`<div class="nd-buehne nd-ff">${bild}</div>`, mitte};
+  }
   if(d.leiter || !pid || !pm[pid] || d.vv == null || d.vv === '') return null;
   const kopf = _ndHeldBuehne(pid, d.vv, d.vl || '', false, '');
   const ab = (t, html) => html ? `<div class="nd-section">${esc(t)}</div>${html}` : '';
@@ -1562,7 +1576,7 @@ const _ND_BLATT = {win_streak:_ndSerieBlatt, loss_streak:_ndSerieBlatt, team_str
   insignium_stufe:_ndInsigniumBlatt, sammel:_ndTafelMomentBlatt,
   jubilee:_ndMeilensteinBlatt, milestone_wins:_ndMeilensteinBlatt, milestone_goals:_ndMeilensteinBlatt,
   milestone_elo:_ndMeilensteinBlatt, top_form:_ndFormBlatt, elo_swing:_ndAusschlagBlatt,
-  top_clash:_ndSpitzenspielBlatt, badge_marken:_ndMarkenBlatt, ambient:_ndFaktBlatt};
+  top_clash:_ndSpitzenspielBlatt, badge_marken:_ndMarkenBlatt, dry_spell:_ndFaktBlatt, ambient:_ndFaktBlatt};
 // Gemerkt nur für einen Aufbau (`_newsDetailBody` leert es): an der Story
 // hängend hielte es nach einer neuen Partie den alten Stand fest.
 let _ndBlattJetzt = null;
