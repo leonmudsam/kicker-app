@@ -336,6 +336,35 @@ function _ambientTemplatePool(now, pm, nameOf){
     return best;
   };
 
+  // ── Das Bild eines Fun Facts [§C33] ──────────────────────────────
+  // Jede Karte trug dieselbe Form: eine große Zahl links, der Satz rechts —
+  // die Pause sah aus wie die Vitrine, das Duell wie das Prestige. Jede
+  // Vorlage legt jetzt die Daten ihres Bilds in `bild`, und der Feed zeichnet
+  // daraus den Kopf ihres Anlasses (`_faktBild`). Gespeichert wird es mit der
+  // Karte: ein Fun Fact ist eine Ziehung und erzählt vom Tag, an dem er stand.
+  // Die Breite eines Balkens steht mit dabei, weil ein Wert wie „Ø 6,5
+  // Gegentore" kleiner besser ist und das Bild das nicht wissen soll.
+  // `kleinerBesser` nur für eine Reihe, die aufsteigend sortiert ist. Die
+  // Reihenfolge eines Rekords (`chronicleRang`) ist schon nach dem Wert
+  // geordnet, auch wo weniger besser ist — dort steht der Wert negiert.
+  const _bRennen = (l, kleinerBesser, form) => {
+    const r = l.filter(x => x && pm[x.p]).slice(0, 3);
+    if(!r.length) return null;
+    const v = r.map(x => Number(x.v) || 0), max = Math.max(...v), min = Math.min(...v);
+    return {f:form || 'rennen', r:r.map((x, k) => ({p:x.p, t:String(x.t), n:x.n, w:+(
+      kleinerBesser ? (max > 0 ? min / Math.max(v[k], 1e-9) : 1 - k * .2)
+      : (max > 0 && min >= 0 ? v[k] / max : 1 - k * .2)).toFixed(3)}))};
+  };
+  const _bReihe = (pool, val, fmt, kleinerBesser, form) => _bRennen(pool
+    .map(pid => ({p:pid, v:val(pid)})).filter(x => x.v != null && isFinite(x.v))
+    .sort((a, b) => kleinerBesser ? a.v - b.v : b.v - a.v)
+    .map(x => ({p:x.p, v:x.v, t:fmt(x.v), n:x.v})), kleinerBesser, form);
+  // Eine große Summe als Zählwerk, dahinter der Zweite und der Abstand.
+  const _bZahl = (pool, val) => {
+    const r = pool.filter(pid => pm[pid]).map(pid => ({p:pid, v:val(pid)})).sort((a, b) => b.v - a.v);
+    return r.length ? {f:'zahl', p:r[0].p, n:r[0].v, zweiter:r[1] ? {p:r[1].p, n:r[1].v} : null} : null;
+  };
+
   // ── Fun Fact: Tore insgesamt ──
   // ── Fun Fact: die Tore der Liga ──
   // Vorher standen hier drei Karten: „Tor-Bilanz", „Kicker-Tag" und „Liga in
@@ -359,7 +388,8 @@ function _ambientTemplatePool(now, pm, nameOf){
     return { cat:'fun', ic:'thriller', prio:3,
       title:`${g} Tore in ${matches.length} Partien`,
       desc:`Im Schnitt fallen ${komma(g/matches.length)} Tore pro Spiel. Am häufigsten endet eine Partie ${bk}, das war ${bn} Mal so.`,
-      vv: g, vl:'Tore' };
+      vv: g, vl:'Tore',
+      dataRef:{ bild:{f:'verteilung', je:[0,1,2,3,4,5,6,7,8,9].map(i => cnt['10:' + i] || 0), hl:[Number(bk.split(':')[1])]} } };
   }});
 
   // ── Persönlich: Siegquoten-Führer (min. 5 Spiele) ──
@@ -374,7 +404,7 @@ function _ambientTemplatePool(now, pm, nameOf){
       title:`${nameOf(pid)} gewinnt einfach`,
       desc:`Beste Siegquote der Liga (ab 5 Spielen): ${Math.round(st.wr*100)}% aus ${st.games} Partien.`,
       vv: Math.round(st.wr*100)+'%', vl:'Siegquote',
-      dataRef:{ ambientPid: pid } };
+      dataRef:{ ambientPid: pid, bild:_bReihe(elig, p2 => stats[p2].wr, v => Math.round(v * 100) + ' %', false, 'podest') } };
   }});
 
   // ── Persönlich: Vielspieler ──
@@ -386,7 +416,7 @@ function _ambientTemplatePool(now, pm, nameOf){
       title:`${nameOf(pid)} ist Dauergast`,
       desc:`Niemand spielt mehr: ${stats[pid].games} Partien auf dem Konto.`,
       vv: stats[pid].games, vl:'Spiele',
-      dataRef:{ ambientPid: pid } };
+      dataRef:{ ambientPid: pid, bild:_bZahl(withStats, p2 => stats[p2].games) } };
   }});
 
   // ── Persönlich: heißeste aktuelle Serie ──
@@ -399,7 +429,7 @@ function _ambientTemplatePool(now, pm, nameOf){
       title:`${nameOf(pid)} läuft heiß`,
       desc:`${cs} Siege in Folge. Aktuell die heißeste Serie der Liga.`,
       vv: cs+'×', vl:'in Folge',
-      dataRef:{ ambientPid: pid } };
+      dataRef:{ ambientPid: pid, bild:{f:'lauf', p:pid, n:cs} } };
   }});
 
   // ── Persönlich: die meisten eigenen Tore je Partie ──
@@ -418,7 +448,7 @@ function _ambientTemplatePool(now, pm, nameOf){
         title:`Gleichstand im Torrausch`,
         desc:`${_namesOf(lead)} treffen je ${komma(top.wert)} mal je Sturmspiel. Näher kommt niemand.`,
         vv: komma(top.wert), vl:'Ø Tore',
-        dataRef:{ ambientPids: lead.slice(0,2).map(x=>x.pid), pairKind:'duel' } };
+        dataRef:{ ambientPids: lead.slice(0,2).map(x=>x.pid), pairKind:'duel', bild:_bRennen(rank.map(x => ({p:x.pid, v:x.wert, t:komma(x.wert)}))) } };
     }
     return { cat:'personal', ic:'ball', prio:3,
       title:`${nameOf(top.pid)} trifft am laufenden Band`,
@@ -426,7 +456,7 @@ function _ambientTemplatePool(now, pm, nameOf){
         ? `${_evSatz(top.ev)}. Bestwert der Liga, ${nameOf(nxt.pid)} folgt mit ${komma(nxt.wert)}.`
         : `${_evSatz(top.ev)}. Bestwert der Liga.`,
       vv: komma(top.wert), vl:'Ø Tore',
-      dataRef:{ ambientPid: top.pid } };
+      dataRef:{ ambientPid: top.pid, bild:_bRennen(rank.map(x => ({p:x.pid, v:x.wert, t:komma(x.wert)}))) } };
   }});
 
   // ── Rivalität: meistgespieltes Duell ──
@@ -446,7 +476,7 @@ function _ambientTemplatePool(now, pm, nameOf){
       title:`Duell der Liga: ${nameOf(best.pa)} vs ${nameOf(best.pb)}`,
       desc:`${best.total} direkte Duelle. Siege: ${nameOf(best.pa)} ${best.wa}, ${nameOf(best.pb)} ${best.wb}.`,
       vv: best.total, vl:'Duelle',
-      dataRef:{ ambientPids:[best.pa, best.pb], pairKind:'duel' } };
+      dataRef:{ ambientPids:[best.pa, best.pb], pairKind:'duel', bild:{f:'duell', a:best.pa, b:best.pb, wa:best.wa, wb:best.wb} } };
   }});
 
   // ── Rivalität: engste Bilanz (min. 4) ──
@@ -470,7 +500,7 @@ function _ambientTemplatePool(now, pm, nameOf){
       // jetzt als Doppelpunkt-Paar da, wie ueberall sonst in der App.
       desc:`${best.total} direkte Duelle, ${best.diff === 0 ? 'absolut ausgeglichen' : 'nur ' + best.diff + ' Sieg' + (best.diff === 1 ? '' : 'e') + ' Unterschied'}. ${best.diff === 0 ? `Es steht ${best.wa}:${best.wb}.` : `Es steht ${Math.max(best.wa, best.wb)}:${Math.min(best.wa, best.wb)} für ${nameOf(best.wa > best.wb ? best.pa : best.pb)}.`}`,
       vv: best.wa+':'+best.wb, vl:'Bilanz',
-      dataRef:{ ambientPids:[best.pa, best.pb], pairKind:'duel' } };
+      dataRef:{ ambientPids:[best.pa, best.pb], pairKind:'duel', bild:{f:'duell', a:best.pa, b:best.pb, wa:best.wa, wb:best.wb} } };
   }});
 
   // ── Historie: Liga-Alter ──
@@ -494,7 +524,9 @@ function _ambientTemplatePool(now, pm, nameOf){
       desc: sieger.length
         ? `Gespielt am ${dd}, gewonnen von ${sieger.join(' und ')} mit ${standFuer(mObj)}.`
         : `Gespielt am ${dd}, Endstand ${mObj.score_a}:${mObj.score_b}.`,
-      vv: marke, vl:'Partien' };
+      vv: marke, vl:'Partien',
+      dataRef:{ bild:{f:'zaehler', n:marke, sieger:(mObj.winner === 'A' ? [mObj.a1, mObj.a2] : [mObj.b1, mObj.b2]).filter(id => pm[id]),
+        stand:standFuer(mObj)} } };
   }});
 
   // ── Fun Fact: Torschützenkönig (meiste Karriere-Tore, v8.8) ──
@@ -513,7 +545,7 @@ function _ambientTemplatePool(now, pm, nameOf){
         ? `${stats[pid].gf} Tore insgesamt. ${runnerUp} mehr als ${nameOf(sorted[1])} dahinter.`
         : `${stats[pid].gf} Tore insgesamt. Kein Spieler hat mehr erzielt.`,
       vv: stats[pid].gf, vl:'Tore',
-      dataRef:{ ambientPid: pid } };
+      dataRef:{ ambientPid: pid, bild:_bZahl(sorted, p2 => stats[p2].gf) } };
   }});
 
   // ── Fun Fact: aktueller Spitzenreiter (Elo-#1, v8.8) ──
@@ -537,7 +569,7 @@ function _ambientTemplatePool(now, pm, nameOf){
       title:`${nameOf(ranked[0].id)} thront an der Spitze`,
       desc:`${ranked[0].elo} Elo in dieser Saison. ${lead} Punkte vor ${nameOf(ranked[1].id)}.`,
       vv: ranked[0].elo, vl:'Elo',
-      dataRef:{ ambientPid: ranked[0].id } };
+      dataRef:{ ambientPid: ranked[0].id, bild:_bRennen(ranked.map(r => ({p:r.id, v:r.elo, t:r.elo + ' Elo'})), false, 'podest') } };
   }});
 
   // ── Fun Fact: höchster Sieg aller Zeiten (v8.8) ──
@@ -554,7 +586,9 @@ function _ambientTemplatePool(now, pm, nameOf){
     return { cat:'fun', ic:'thriller', prio:3,
       title:'Klarste Klatsche der Liga',
       desc:`Höchster Sieg aller Zeiten: ${best.hi}:${best.lo} am ${String(dt.getDate()).padStart(2,'0')}.${String(dt.getMonth()+1).padStart(2,'0')}.`,
-      vv: best.hi+':'+best.lo, vl:'Rekord' };
+      vv: best.hi+':'+best.lo, vl:'Rekord',
+      dataRef:{ bild:{f:'verteilung', je:[0,1,2,3,4,5,6,7,8,9].map(i => matches.filter(m =>
+        Math.max(m.score_a||0, m.score_b||0) === 10 && Math.min(m.score_a||0, m.score_b||0) === i).length), hl:[best.lo]} } };
   }});
 
   // ── Fun Fact: aktivster Spieltag (v8.8) ──
@@ -572,7 +606,10 @@ function _ambientTemplatePool(now, pm, nameOf){
     return { cat:'fun', ic:'calendar', prio:2,
       title:'Rekord-Spieltag',
       desc:`Meiste Spiele an einem Tag: ${bn} Partien am ${p[2]}.${p[1]}.${p[0]}.`,
-      vv: bn, vl:'Spiele' };
+      vv: bn, vl:'Spiele',
+      dataRef:{ bild:(() => { const ks = Object.keys(byDay).sort().slice(-24);
+        if(!ks.includes(bk)){ ks.shift(); ks.push(bk); ks.sort(); }
+        return {f:'saeulen', v:ks.map(k => byDay[k]), hl:[ks.indexOf(bk)], l:'Spieltage'}; })() } };
   }});
 
   // Spielreichste oder ruhigste tatsächlich bespielte Kalenderwoche. Das
@@ -596,7 +633,10 @@ function _ambientTemplatePool(now, pm, nameOf){
       title:istLaut ? 'Die spielreichste Woche bisher' : 'Die ruhigste Spielwoche bisher',
       desc:`${x.n} ${x.n === 1 ? 'Partie' : 'Partien'} zwischen ${datumFmt(x.von, 'tm')} und ${datumFmt(bis, 'tm')}. `
         + (istLaut ? `Der bisherige Wochenrekord.` : `Weniger wurde in keiner Woche mit Spielbetrieb gespielt.`),
-      vv:String(x.n), vl:'Partien'};
+      vv:String(x.n), vl:'Partien',
+      dataRef:{ bild:(() => { const ws = Object.values(wochen).sort((a, b) => a.von - b.von).slice(-24);
+        if(!ws.includes(x)){ ws.shift(); ws.push(x); ws.sort((a, b) => a.von - b.von); }
+        return {f:'saeulen', v:ws.map(w => w.n), hl:[ws.indexOf(x)], l:'Wochen', still:!istLaut}; })() }};
   }});
 
   // Ein Rekord aus dem echten Awards-Katalog, mit Halter und Beleg. So macht
@@ -612,7 +652,10 @@ function _ambientTemplatePool(now, pm, nameOf){
     return {cat:'history', ic:r.ic || 'trophy', prio:5,
       title:`Rekord im Fokus: ${r.name}`,
       desc:`${_namenListe(namen)} ${pids.length === 1 ? 'hält' : 'halten'} diese Bestmarke. ${String(r.ev || r.cond || 'Der Beleg steht in der Ewigen Tafel.').replace(/\s*[·•]\s*/g, '. ')}`,
-      vv:String(r.val), vl:'Bestwert', dataRef:{ambientPids:pids.slice(0, 3), rekordId:r.id}};
+      // Der Wert stand roh da: „0.72" mit englischem Punkt für 72 Prozent.
+      // Der Beleg beginnt mit dem Sortierwert [§C35] und trägt seine Einheit.
+      vv:_chronKurz(r.ev) || String(r.val), vl:'Bestwert', dataRef:{ambientPids:pids.slice(0, 3), rekordId:r.id,
+        bild:_bRennen(_rekRang(r.id).map(x => ({p:x.pid, v:x.wert, t:_chronKurz(x.ev) || komma(x.wert)})), false, 'podest')}};
   }});
 
   // ══ Neue lebendige Fun Facts (v9.1) ══
@@ -652,7 +695,7 @@ function _ambientTemplatePool(now, pm, nameOf){
         ? `${c.fmt(best.v)}. Liga-Bestwert${c.qual||''}, vor ${nameOf(second.pid)} mit ${c.fmt(second.v)}.`
         : `${nameOf(best.pid)} hält den Liga-Bestwert${c.qual||''}. ${c.fmt(best.v)}.`,
       vv: best.v, vl: c.noun.replace(/^(Meiste|Bestes|Höchste)\s+/, ''),
-      dataRef:{ ambientPid: best.pid } };
+      dataRef:{ ambientPid: best.pid, bild:_bReihe(c.pool, c.val, v => (c.fmt(v).match(/^[+-]?\d+/) || [String(v)])[0]) } };
   }});
 
   // ── Fun Fact: Random Stat zu random Spieler ──
@@ -695,7 +738,7 @@ function _ambientTemplatePool(now, pm, nameOf){
          + `Das ist die Kennzahl, in der ${nameOf(pid)} am weitesten vorne steht.`,
       // „1 Platz" las sich wie eine Anzahl. Ein Rang heisst „Platz 1".
       vv: 'Platz ' + bestes.platz, vl:'von ' + (bestes.von || ''),
-      dataRef:{ ambientPid: pid } };
+      dataRef:{ ambientPid: pid, bild:{f:'platz', p:pid, platz:bestes.platz, von:bestes.von, t:bestes.f.fmt(bestes.wert)} } };
   }});
 
   // ── Fun Fact: Platzierung in der ewigen Gesamt-Rangliste (random Spieler) ──
@@ -746,7 +789,7 @@ function _ambientTemplatePool(now, pm, nameOf){
         : `${t.best} gemeinsame Siege in Serie. Das ist Platz ${rank} von ${ranked.length} Duos, `
           + `nur ${topBest - t.best} hinter der Bestmarke.`,
       vv: t.best, vl:'in Serie',
-      dataRef:{ ambientPids:[t.ids[0], t.ids[1]], pairKind:'team' } };
+      dataRef:{ ambientPids:[t.ids[0], t.ids[1]], pairKind:'team', bild:{f:'duo', a:t.ids[0], b:t.ids[1], lauf:t.best, best:topBest} } };
   }});
 
   // ══ Zeitbasierte Form-Fakten (v9.13) — Momentaufnahme der letzten 14 Tage ══
@@ -769,7 +812,7 @@ function _ambientTemplatePool(now, pm, nameOf){
       title:`${nameOf(best.pid)} ist in Topform`,
       desc:`Beste Siegquote der letzten 14 Tage: ${Math.round(best.v*100)}% aus ${a.g} Spielen.`,
       vv: Math.round(best.v*100)+'%', vl:'14 Tage',
-      dataRef:{ ambientPid: best.pid } };
+      dataRef:{ ambientPid: best.pid, bild:_bReihe(elig, id => agg[id].w / agg[id].g, v => Math.round(v * 100) + ' %') } };
   }});
 
   // ── Aktuell bester Stürmer (Ø Tore + Siegquote im Sturm, letzte 14 Tage) ──
@@ -785,7 +828,7 @@ function _ambientTemplatePool(now, pm, nameOf){
       title:`${nameOf(best.pid)} ist der Sturm-Chef`,
       desc:`Bester Stürmer der letzten 14 Tage: Ø ${komma(best.v)} Tore und ${wrAtk}% Siege im Sturm.`,
       vv: komma(best.v), vl:'Ø Tore',
-      dataRef:{ ambientPid: best.pid } };
+      dataRef:{ ambientPid: best.pid, bild:_bReihe(elig, id => agg[id].aGoals / agg[id].aG, v => komma(v)) } };
   }});
 
   // ── Aktuell bester Abwehrspieler (wenigste Gegentore als Abwehr, 14 Tage) ──
@@ -801,7 +844,7 @@ function _ambientTemplatePool(now, pm, nameOf){
       title:`${nameOf(best.pid)} macht die Bude dicht`,
       desc:`Hinten kommt kaum etwas durch: ${komma(a.dGa/a.dG)} Gegentore im Schnitt aus ${a.dG} Spielen in der Abwehr, gerechnet über die letzten 14 Tage.`,
       vv: komma(a.dGa/a.dG), vl:'Ø Gegentore',
-      dataRef:{ ambientPid: best.pid } };
+      dataRef:{ ambientPid: best.pid, bild:_bReihe(elig, id => agg[id].dGa / agg[id].dG, v => komma(v), true) } };
   }});
 
   // ── Clutch: höchste Siegquote in engen Spielen (Tordiff ≤ 2, 14 Tage) ──
@@ -816,7 +859,7 @@ function _ambientTemplatePool(now, pm, nameOf){
       title:`${nameOf(best.pid)} hat Nerven aus Stahl`,
       desc:`Gewinnt aktuell ${Math.round(best.v*100)}% der engen Spiele (höchstens 2 Tore Unterschied). ${a.cw} von ${a.cg} in 14 Tagen.`,
       vv: Math.round(best.v*100)+'%', vl:'eng gewonnen',
-      dataRef:{ ambientPid: best.pid } };
+      dataRef:{ ambientPid: best.pid, bild:_bReihe(elig, id => agg[id].cw / agg[id].cg, v => Math.round(v * 100) + ' %') } };
   }});
 
   // ── Knappe Siege: höchster Anteil 1-Tor-Siege an allen Spielen (14 Tage) ──
@@ -837,7 +880,7 @@ function _ambientTemplatePool(now, pm, nameOf){
         + `${nameOf(best.pid)} mit einem Tor Unterschied, das sind `
         + `${Math.round(best.v*100)} %.`,
       vv: a.c1w, vl:'Zittersiege',
-      dataRef:{ ambientPid: best.pid } };
+      dataRef:{ ambientPid: best.pid, bild:_bReihe(elig, id => agg[id].c1w / agg[id].g, v => Math.round(v * 100) + ' %') } };
   }});
 
   // ── Aktivster Spieler der letzten 14 Tage ──
@@ -850,7 +893,7 @@ function _ambientTemplatePool(now, pm, nameOf){
       title:`${nameOf(best.pid)} gibt Vollgas`,
       desc:`Aktivster Spieler der letzten 14 Tage: ${best.v} Partien in zwei Wochen.`,
       vv: best.v, vl:'Spiele',
-      dataRef:{ ambientPid: best.pid } };
+      dataRef:{ ambientPid: best.pid, bild:_bReihe(Object.keys(agg), id => agg[id].g, v => String(v)) } };
   }});
 
   // ══ Award-Fokus (v9.17) ═══════════════════════════════════════════════
@@ -897,6 +940,12 @@ function _ambientTemplatePool(now, pm, nameOf){
   // Alle, die den Bestwert punktgleich halten. Bei Gleichstand darf kein
   // Einzelner als Halter ausgerufen werden.
   const _rekSpitze = (r) => r.filter(x => x.wert === r[0].wert);
+  // Wer wie viele Einträge der laufenden Tafel hält, die drei vorn.
+  const _tafelTraeger = (aw) => {
+    const n = {};
+    (aw || []).forEach(a => { if(pm[a.pid]) n[a.pid] = (n[a.pid] || 0) + 1; });
+    return Object.keys(n).sort((x, y) => n[y] - n[x] || (x < y ? -1 : 1)).slice(0, 3).map(pid => [pid, n[pid]]);
+  };
 
   // ── Award: der höchste Anteil gewonnener eigener Spieltage ──
   //    Dasselbe Maß wie „Der Platzhirsch" [§C35], aus derselben Reihenfolge.
@@ -910,7 +959,7 @@ function _ambientTemplatePool(now, pm, nameOf){
         title:`Kopf-an-Kopf um die Spieltage`,
         desc:`${_namesOf(lead)} beherrschen je ${pct(top)} der eigenen Spieltage.`,
         vv: pct(top), vl:'Spieltage',
-        dataRef:{ ambientPids: lead.slice(0,2).map(x=>x.pid), pairKind:'duel' } };
+        dataRef:{ ambientPids: lead.slice(0,2).map(x=>x.pid), pairKind:'duel', bild:_bRennen(rank.map(x => ({p:x.pid, v:x.wert, t:pct(x)})), false, 'podest') } };
     }
     return { cat:'badge', ic:'trophyDay', prio:5,
       title:`${nameOf(top.pid)} ist der Tageskönig`,
@@ -921,7 +970,7 @@ function _ambientTemplatePool(now, pm, nameOf){
         ? `${_evSatz(top.ev)}. Bestwert der Liga, ${nameOf(nxt.pid)} folgt mit ${pct(nxt)}.`
         : `${_evSatz(top.ev)}. Bisher hat das sonst niemand geschafft.`,
       vv: pct(top), vl:'Spieltage',
-      dataRef:{ ambientPid: top.pid } };
+      dataRef:{ ambientPid: top.pid, bild:_bRennen(rank.map(x => ({p:x.pid, v:x.wert, t:pct(x)})), false, 'podest') } };
   }});
 
   // ── Der alte Zähler-Weg, nur noch für die Auszeichnungs-Vitrine ──
@@ -935,7 +984,7 @@ function _ambientTemplatePool(now, pm, nameOf){
         title:`Kopf-an-Kopf um die Tagessiege`,
         desc:`${_namesOf(lead)} stehen gleichauf bei je ${top.v}× Spieler des Tages.`,
         vv: top.v + '×', vl:'Tagessiege',
-        dataRef:{ ambientPids: lead.slice(0,2).map(x=>x.pid), pairKind:'duel' } };
+        dataRef:{ ambientPids: lead.slice(0,2).map(x=>x.pid), pairKind:'duel', bild:_bRennen(rank.map(x => ({p:x.pid, v:x.v, n:x.v, t:x.v + '×'})), false, 'sammlung') } };
     }
     // Hier steht bewusst KEIN „Bestwert der Liga": die Anzahl ist eine
     // Sammlung und keine Bestmarke, und der Rekord darauf misst den Anteil.
@@ -945,7 +994,7 @@ function _ambientTemplatePool(now, pm, nameOf){
         ? `${top.v}× Spieler des Tages, so oft wie sonst niemand. ${nameOf(nxt.pid)} kommt auf ${nxt.v}.`
         : `${top.v}× Spieler des Tages. Bislang der Einzige mit diesem Titel.`,
       vv: top.v + '×', vl:'Tagessiege',
-      dataRef:{ ambientPid: top.pid } };
+      dataRef:{ ambientPid: top.pid, bild:_bRennen(rank.map(x => ({p:x.pid, v:x.v, n:x.v, t:x.v + '×'})), false, 'sammlung') } };
   }});
 
   // ── Award: der höchste Anteil gewonnener eigener Wochen ──
@@ -964,7 +1013,7 @@ function _ambientTemplatePool(now, pm, nameOf){
         title:`Geteilte Macht über die Wochen`,
         desc:`${_namesOf(lead)} liegen gleichauf: je ${pct(top)} der eigenen Wochen gewonnen.`,
         vv: pct(top), vl:'Wochen',
-        dataRef:{ ambientPids: lead.slice(0,2).map(x=>x.pid), pairKind:'duel' } };
+        dataRef:{ ambientPids: lead.slice(0,2).map(x=>x.pid), pairKind:'duel', bild:_bRennen(rank.map(x => ({p:x.pid, v:x.wert, t:pct(x)})), false, 'podest') } };
     }
     return { cat:'badge', ic:'weekKing', prio:5,
       title:`${nameOf(top.pid)} beherrscht die Wochen`,
@@ -972,7 +1021,7 @@ function _ambientTemplatePool(now, pm, nameOf){
         ? `${_evSatz(top.ev)}. Bestwert der Liga, ${nameOf(nxt.pid)} folgt mit ${pct(nxt)}.`
         : `${_evSatz(top.ev)}. Bisher hat das sonst niemand geschafft.`,
       vv: pct(top), vl:'Wochen',
-      dataRef:{ ambientPid: top.pid } };
+      dataRef:{ ambientPid: top.pid, bild:_bRennen(rank.map(x => ({p:x.pid, v:x.wert, t:pct(x)})), false, 'podest') } };
   }});
 
   // ── Der Zähler daneben: eine Sammlung, keine Bestmarke ──
@@ -988,7 +1037,7 @@ function _ambientTemplatePool(now, pm, nameOf){
         ? `${top.v}× Spieler der Woche, so oft wie sonst niemand. ${nameOf(nxt.pid)} kommt auf ${nxt.v}.`
         : `${top.v}× Spieler der Woche. Bisher hat das sonst niemand geschafft.`,
       vv: top.v + '×', vl:'Wochensiege',
-      dataRef:{ ambientPid: top.pid } };
+      dataRef:{ ambientPid: top.pid, bild:_bRennen(rank.map(x => ({p:x.pid, v:x.v, n:x.v, t:x.v + '×'})), false, 'sammlung') } };
   }});
 
   // ── Award: meiste goldene Auszeichnungen ──
@@ -1003,7 +1052,7 @@ function _ambientTemplatePool(now, pm, nameOf){
         title:`Wettrüsten in Gold`,
         desc:`${_namesOf(lead)} halten je ${top.v} goldene ${top.v === 1 ? 'Auszeichnung' : 'Auszeichnungen'}. Niemand hat mehr.`,
         vv: top.v, vl:'Gold',
-        dataRef:{ ambientPids: lead.slice(0,2).map(x=>x.pid), pairKind:'duel' } };
+        dataRef:{ ambientPids: lead.slice(0,2).map(x=>x.pid), pairKind:'duel', bild:_bRennen(rank.map(x => ({p:x.pid, v:x.v, n:x.v, t:String(x.v)})), false, 'sammlung') } };
     }
     const gold = getCachedBadges(top.pid).filter(b => rarityOf(b.id) === 'legendary');
     const names = gold.map(b => b.name);
@@ -1011,7 +1060,7 @@ function _ambientTemplatePool(now, pm, nameOf){
       title:`${nameOf(top.pid)} sammelt Gold`,
       desc:`${top.v} goldene ${top.v === 1 ? 'Auszeichnung' : 'Auszeichnungen'}. ${names.join(', ')}.`,
       vv: top.v, vl:'Gold',
-      dataRef:{ ambientPid: top.pid } };
+      dataRef:{ ambientPid: top.pid, bild:{f:'vitrine', p:top.pid, gold:true, hat:gold.map(b => b.id)} } };
   }});
 
   // ── Award: die zuletzt vergebene goldene Auszeichnung ──
@@ -1046,7 +1095,8 @@ function _ambientTemplatePool(now, pm, nameOf){
       // Ohne Wert blieb der grosse Block der Karte leer [§6].
       vv:String(days === 0 ? 'heute' : days === 1 ? 'gestern' : days),
       vl:days > 1 ? 'Tage her' : 'geholt',
-      dataRef:{ ambientPid: latest.pid } };
+      dataRef:{ ambientPid: latest.pid, bild:{f:'medaille', p:latest.pid, b:latest.badge.id,
+        n:activePids.filter(p2 => getCachedBadges(p2).some(b => b.id === latest.badge.id)).length} } };
   }});
 
   // ── Award: die meisten Auszeichnungen insgesamt ──
@@ -1060,7 +1110,7 @@ function _ambientTemplatePool(now, pm, nameOf){
       title:`${nameOf(top.pid)} hat die volle Vitrine`,
       desc:`${top.v} verschiedene Auszeichnungen freigeschaltet. ${nameOf(nxt.pid)} kommt auf ${nxt.v}.`,
       vv: top.v, vl:'Awards',
-      dataRef:{ ambientPid: top.pid } };
+      dataRef:{ ambientPid: top.pid, bild:{f:'vitrine', p:top.pid, hat:getCachedBadges(top.pid).map(b => b.id), zweiter:nxt.v} } };
   }});
 
   // ══ Persönliche Nuggets (v9.17) ═══════════════════════════════════════
@@ -1087,7 +1137,7 @@ function _ambientTemplatePool(now, pm, nameOf){
       title:`${nameOf(c.opp)} ist ${nameOf(c.pid)}s Lieblingsgegner`,
       desc:`${c.w}:${c.l} aus ${c.total} direkten Duellen. Diese Paarung geht fast immer gleich aus.`,
       vv: c.w + ':' + c.l, vl:'Duelle',
-      dataRef:{ ambientPids:[c.pid, c.opp], pairKind:'duel' } };
+      dataRef:{ ambientPids:[c.pid, c.opp], pairKind:'duel', bild:{f:'duell', a:c.pid, b:c.opp, wa:c.w, wb:c.l} } };
   }});
 
   // ── Persönlich: Lieblings-Mate (bestes gemeinsames Team) ──
@@ -1110,7 +1160,7 @@ function _ambientTemplatePool(now, pm, nameOf){
       title:`Beste Freunde: ${nameOf(c.pid)} und ${nameOf(c.mate)}`,
       desc:`Zusammen ${c.w} von ${c.g} Spielen gewonnen. ${Math.round(c.wr*100)}% als Duo.`,
       vv: Math.round(c.wr*100) + '%', vl:'als Duo',
-      dataRef:{ ambientPids:[c.pid, c.mate], pairKind:'team' } };
+      dataRef:{ ambientPids:[c.pid, c.mate], pairKind:'team', bild:{f:'duo', a:c.pid, b:c.mate, w:c.w, g:c.g} } };
   }});
 
   // ── Persönlich: Lieblingsposition (Sturm vs. Abwehr) ──
@@ -1130,7 +1180,7 @@ function _ambientTemplatePool(now, pm, nameOf){
         // hier gerade null sein soll.
         vv: Math.round((st.atkW + st.defW) / (st.atkG + st.defG) * 100) + '%',
         vl:'in beiden Rollen',
-        dataRef:{ ambientPid: pid } };
+        dataRef:{ ambientPid: pid, bild:{f:'rolle', p:pid, s:Math.round(atkWr*100), a:Math.round(defWr*100), gs:st.atkG, ga:st.defG} } };
     }
     const strong = atkWr > defWr;
     return { cat:'personal', ic: strong ? 'bolt2' : 'shieldStar', prio:4,
@@ -1139,7 +1189,7 @@ function _ambientTemplatePool(now, pm, nameOf){
         ? `Im Sturm ${Math.round(atkWr*100)}% Siege (${st.atkG} Spiele), in der Abwehr nur ${Math.round(defWr*100)}%.`
         : `In der Abwehr ${Math.round(defWr*100)}% Siege (${st.defG} Spiele), im Sturm nur ${Math.round(atkWr*100)}%.`,
       vv: Math.round((strong ? atkWr : defWr)*100) + '%', vl: strong ? 'im Sturm' : 'in Abwehr',
-      dataRef:{ ambientPid: pid } };
+      dataRef:{ ambientPid: pid, bild:{f:'rolle', p:pid, s:Math.round(atkWr*100), a:Math.round(defWr*100), gs:st.atkG, ga:st.defG} } };
   }});
 
   // ── Fun Fact: häufigstes Endergebnis der Liga ──
@@ -1182,7 +1232,8 @@ function _ambientTemplatePool(now, pm, nameOf){
       // Block die Zahl des Rennens. Der Satz nennt dafuer nur noch die
       // vergebenen — zweimal dieselbe Zahl waere eine zu viel [§C27].
       vv:String(open), vl:'noch offen',
-      dataRef:{ ambientPid:a.pid, seasonTable:T2.sid } };
+      dataRef:{ ambientPid:a.pid, seasonTable:T2.sid, bild:{f:'tafel', voll:held, alle:SEASON_TITLES.length,
+        traeger:_tafelTraeger(T2.awarded)} } };
   }});
 
   // ── Chronik: ein Liga-Rekord im Rampenlicht (§13.4b) ────────────────
@@ -1226,7 +1277,8 @@ function _ambientTemplatePool(now, pm, nameOf){
       // `_chronKurz` hier das Richtige.
       vv:_chronKurz(h.ev),
       vl:((CHRON_KINDS[d.kind] || {}).label || 'Bestwert'),
-      dataRef:{ ambientPid:h.pid, chronicle:d.id } };
+      dataRef:{ ambientPid:h.pid, chronicle:d.id,
+        bild:_bRennen(_rekRang(d.id).map(x => ({p:x.pid, v:x.wert, t:_chronKurz(x.ev) || komma(x.wert)})), false, 'podest') } };
   }});
 
 
@@ -1249,7 +1301,8 @@ function _ambientTemplatePool(now, pm, nameOf){
         + `Am Wappen trägt ${nameOf(rang[0])} damit den ${e.insignie.name}`
         + (e.naechste ? `, bis zum ${e.naechste.name} fehlen ${e.fehlt}.` : `, die letzte Stufe.`),
       vv:String(a.punkte), vl:'Prestige',
-      dataRef:{ ambientPid:rang[0], prestige:true } };
+      dataRef:{ ambientPid:rang[0], prestige:true,
+        bild:Object.assign(_bRennen(rang.map(id => ({p:id, v:P.byPid[id].punkte, t:String(P.byPid[id].punkte)})), false, 'podest') || {}, {ins:true}) } };
   }});
 
   T.push({ key:'prestige_schwelle', weight:2, make: () => {
@@ -1272,7 +1325,8 @@ function _ambientTemplatePool(now, pm, nameOf){
         + `${Math.round((1 - best.fehlt / spanne) * 100)} % der Stufe sind geschafft. `
         + `Dann ändert der Reif um das Wappen seine Form.`,
       vv:String(best.fehlt), vl:'fehlen',
-      dataRef:{ ambientPid:best.pid, prestige:true } };
+      dataRef:{ ambientPid:best.pid, prestige:true, bild:{f:'stufe', p:best.pid, punkte:best.punkte,
+        von:best.insignie.key, vonMin:best.insignie.min, nach:best.naechste.key, nachMin:best.naechste.min} } };
   }});
 
   T.push({ key:'prestige_schritt', weight:2, make: (rng) => {
@@ -1318,7 +1372,10 @@ function _ambientTemplatePool(now, pm, nameOf){
       // Wert dort — auch das ist eine Tatsache und keine Aussicht.
       vv: s.mein || s.stand || ('+' + s.gewinn),
       vl: s.mein ? 'aktuell' : (s.stand ? 'zu schlagen' : 'Prestige'),
-      dataRef:{ ambientPid:pid, prestige:true } };
+      dataRef:{ ambientPid:pid, prestige:true, bild:{f:'ziel', p:pid, ic:s.ic || 'trophy', mein:s.mein || '',
+        stand:s.stand || '', gewinn:s.gewinn,
+        nah:+Math.max(0, Math.min(1, 1 - (s.rel || 0))).toFixed(3),
+        halter:(((allChronicles() || {}).byId || {})[s.id] || {pids:[]}).pids.filter(id => pm[id]).slice(0, 3)} } };
   }});
 
   // ── Die Leiter der Liga [§C30] ────────────────────────────────────
@@ -1371,14 +1428,18 @@ function _ambientTemplatePool(now, pm, nameOf){
     const top = mit[0];
     const gesamt = mit.reduce((a, x) => a + x.n, 0);
     return { cat:'history', ic:'crown', prio:4,
-      title:`${nameOf(top.pid)} trägt die breiteste Schwinge`,
+      // Die Karte sprach von der Schwinge, vom Titelband als leerem Umriss
+      // und von einer Krone ab fünf Titeln — drei Zeichen, die es seit der
+      // Aura nicht mehr gibt [§C36], und „Die hat er" setzte ein Pronomen
+      // unter ein Wappen [§6].
+      title:`${nameOf(top.pid)} trägt die hellste Aura`,
       desc:`${top.n} Meistertitel von ${gesamt}, die die Liga bisher vergeben hat. `
         + (mit.length === 1
-            ? `Sonst hat noch niemand einen Monat gewonnen. Bei allen anderen steht das Titelband als leerer Umriss.`
-            : `${mit.length} Spieler haben überhaupt schon einen geholt.`)
-        + (top.n >= 5 ? ` Ab fünf Titeln sitzt die Krone obenauf. Die hat er.` : ''),
+            ? `Sonst hat noch niemand einen Monat gewonnen.`
+            : `${mit.length} Spieler haben überhaupt schon einen geholt.`),
       vv:String(top.n), vl:'Titel',
-      dataRef:{ ambientPid:top.pid, prestige:true } };
+      dataRef:{ ambientPid:top.pid, prestige:true,
+        bild:_bRennen(mit.map(x => ({p:x.pid, v:x.n, n:x.n, t:x.n + ' Titel'})), false, 'sterne') } };
   }});
 
 
@@ -1407,7 +1468,8 @@ function _ambientTemplatePool(now, pm, nameOf){
           + (ohne ? `, ${ohne} Spieler ${ohne === 1 ? 'trägt' : 'tragen'} noch keine.` : '.')
           + ` Die zweite Monatshälfte entscheidet.`,
         vv:String(offen), vl:'noch offen',
-        dataRef:{ ambientPid: fuehrend ? fuehrend.pid : null, seasonTable:sid } };
+        dataRef:{ ambientPid: fuehrend ? fuehrend.pid : null, seasonTable:sid, bild:{f:'tafel', voll:T2.awarded.length,
+          alle:SEASON_TITLES.length, traeger:_tafelTraeger(T2.awarded)} } };
     }});
 
   T.push({ key:'rueckblick_jahr',

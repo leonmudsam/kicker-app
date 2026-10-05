@@ -1216,7 +1216,7 @@ const ok = (c, msg, det) => {
     // das Gesicht selbst.
     // Die Karte am Spieltag traegt ihren Kopf nach dem Anlass [§11.6c], die
     // Runde ihre Tabelle.
-    const BILD = ['nf-erg','nf-wert','nf-leiter','nf-bil','nf-ser','nf-sam',
+    const BILD = ['ff','nf-erg','nf-wert','nf-leiter','nf-bil','nf-ser','nf-sam',
                   'nf-zb','nf-wl','nf-duell-band','nf-bd','nf-gr-l','nf-face',
                   'sp-zeile','sp-feld','sp-at','sp-wp','sp-band','sp-rd-tafel','sp-tg','sp-rq',
                   // V2 waehlt auch Mosaik, Tacho, Streuung und Gefaelle. Ihr
@@ -3643,6 +3643,60 @@ return JSON.stringify(funde,null,1);
   ok(posv.fehler.length === 0 && posv.vorher && posv.nachher && posv.zellen && posv.gold && posv.hl,
      'der Positionsverlauf zeigt Kurven, die Tabelle mit ihrer Bewegung und erst nach der Wahl den Platz an jedem Tag',
      JSON.stringify(Object.assign({}, posv, {fehler: posv.fehler.slice(0, 3)})));
+
+  // ── Jeder Fun Fact zeichnet seinen Anlass ─────────────────────────
+  //    Alle Fun Facts standen als große Zahl links neben ihrem Satz. Jetzt
+  //    trägt jede Vorlage ihr Bild — Rennen, Podest, Tauziehen, Pause,
+  //    Vitrine … —, und das muss bei 288 und 360 px in seiner Karte bleiben:
+  //    kein Text auf einem anderen, keiner abgeschnitten oder mit „…".
+  const fakt = await page.evaluate(async (pruefenSrc) => {
+    const pruefen = eval('(' + pruefenSrc + ')');
+    const K = window.__k.eval.bind(window.__k);
+    K(`closeSheet(true); 'x'`);
+    const html = K(`(function(){
+      const pm = pmap(), nameOf = pid => (pm[pid]||{}).name || '?', seen = new Set(), out = [];
+      [new Date(2026, 7, 26, 15, 5), new Date(2026, 6, 20, 15, 5)].forEach(now => {
+        const T = _ambientTemplatePool(now, pm, nameOf);
+        for(let seed = 1; seed <= 4; seed++) T.forEach(t => {
+          let r = null; try { r = t.make(_ambientRng(seed)); } catch(e){ return; }
+          const b = r && r.dataRef && r.dataRef.bild;
+          if(!b || seen.has(b.f + (b.ins ? 'i' : ''))) return; seen.add(b.f + (b.ins ? 'i' : ''));
+          out.push(_newsCardHtmlM2({id:'ffb_' + t.key, title:r.title, desc:r.desc, when:now, cat:r.cat, ic:r.ic,
+            dataRef:Object.assign({type:'ambient', sub:t.key}, r.dataRef)}, false, false, ''));
+        });
+      });
+      out.push(_newsCardHtmlM2({id:'ffb_pause', title:'5 Tage ohne Spiel', desc:'Die längste Pause der Liga waren 9 Tage.',
+        when:new Date(2026, 7, 26), cat:'fun', ic:'clock', dataRef:{type:'dry_spell', daysSince:5, maxGapDays:9}}, false, false, ''));
+      return out.join('');
+    })()`);
+    const w = document.createElement('div');
+    w.className = 'nf-wrap';
+    document.body.appendChild(w);
+    const out = {formen:0, fehler:[]};
+    for(const breite of [288, 360]){
+      w.style.cssText = 'position:absolute;left:0;top:0;width:' + breite + 'px;z-index:99999';
+      w.innerHTML = html;
+      w.querySelectorAll('.nf-card').forEach(c => { c.style.contentVisibility = 'visible'; });
+      document.getAnimations().forEach(a => { try { a.finish(); } catch(e){} });
+      await new Promise(r => requestAnimationFrame(r));
+      const ffs = [...w.querySelectorAll('.ff')];
+      out.formen = Math.max(out.formen, ffs.length);
+      ffs.forEach(ff => {
+        const k = ff.closest('.nf-card').dataset.sid + ' ' + breite + ': ';
+        const r = ff.getBoundingClientRect();
+        ff.querySelectorAll('*').forEach(e => {
+          const b = e.getBoundingClientRect();
+          if(b.width && (b.right > r.right + .5 || b.left < r.left - .5)) out.fehler.push(k + 'läuft hinaus ' + (e.className.baseVal ?? e.className));
+        });
+        pruefen(ff).fehler.forEach(f => out.fehler.push(k + f));
+      });
+    }
+    w.remove();
+    return out;
+  }, PRUEFEN.toString());
+  ok(fakt.formen >= 12 && fakt.fehler.length === 0,
+     'jedes Fun-Fact-Bild bleibt bei 288 und 360 px in seiner Karte, ohne Text auf Text und ohne Kürzung',
+     fakt.formen + ' Bilder · ' + fakt.fehler.slice(0, 4).join(' | '));
 
   // ── Die Siegchance steht beim Aufstellen unter der Score-Karte ────
   //    Ohne Erklärsatz, aus derselben Rechnung, mit der die Partie danach

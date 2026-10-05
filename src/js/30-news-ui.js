@@ -561,7 +561,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
   // ── Je Sorte ein eigener Kopf und ein eigener Fuß ──────────────────
   // Vorher unterschied die Sorten nur eine Randfarbe, und zehn Karten
   // untereinander sahen alle gleich aus.
-  let kopf = '', fuss = '', gesicht = '';
+  let kopf = '', fuss = '', gesicht = '', faktBild = '';
   // Der Satz unter der Schlagzeile. Nur die Partie-Karte kürzt ihn: was ihr
   // Fuß als Bogen und Chips zeigt, sagt er nicht noch einmal (_newsSpielSatz).
   let satz = s.desc;
@@ -693,8 +693,13 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
     const label = d.delta != null ? 'Elo' : (d.streak != null ? 'in Folge' : 'erreicht');
     gesicht = `<div class="nf-gr-l">${av(d.pid, 48)}`
       + (wert ? _newsWertBlock(wert, label, d.delta < 0 ? 'rot' : 'metall') : '') + `</div>`;
+  } else if(sorte === 'fakt' && (faktBild = _faktBild(s))){
+    // Ein Fun Fact mit Bild trägt es als Kopf [30c-news-fakt]; Zahl und
+    // Gesichter stehen darin, links stünden sie ein zweites Mal [§C27].
+    kopf = faktBild;
   } else {
-    // Fun Fact: die Zahl links, der Satz rechts. Bewusst der leiseste Bau.
+    // Fun Fact ohne Bild — eine Karte aus der Zeit davor: die Zahl links,
+    // der Satz rechts.
     if(d.vv != null && d.vv !== '') gesicht = `<div class="nf-gr-l">${_newsWertBlock(d.vv, d.vl, 'metall')}</div>`;
     else gesicht = `<div class="nf-gr-l">${_newsGesichtHtml(s)}</div>`;
     // Die Leiter der Liga zeigt ihre Stufen, darunter die Zahl der Träger.
@@ -711,7 +716,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
   }
   // Das Duell traegt seine Wappen im Band ueber dem Text; die Ersatzgesichter
   // haetten sie ein zweites Mal daneben gestellt.
-  if(!gesicht && sorte !== 'spiel' && sorte !== 'woche' && sorte !== 'duell'
+  if(!gesicht && !faktBild && sorte !== 'spiel' && sorte !== 'woche' && sorte !== 'duell'
      && d.type !== 'season_recap'){
     const g = _newsGesichtHtml(s);
     if(g) gesicht = `<div class="nf-gr-l">${g}</div>`;

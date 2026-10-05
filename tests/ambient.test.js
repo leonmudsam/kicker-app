@@ -462,6 +462,64 @@ ok(!_leiter.fehlt && _leiter.je.length === 7
 ok(!_leiter.fehlt && _leiter.falsch === 0,
    'und jeder steht auf dem Feld, das er traegt', JSON.stringify(_leiter));
 
+console.log('\n=== 8b. JEDER FUN FACT HAT SEIN BILD ===');
+// Jeder Fun Fact trug dieselbe Form: eine große Zahl links, der Satz rechts —
+// „3 Tage ohne Spiel" sah aus wie „41 Awards" und „7:2 Duelle". Jede Vorlage
+// legt jetzt die Daten ihres Bilds in `dataRef.bild`, und die Karte zeichnet
+// daraus den Kopf ihres Anlasses. Geprüft wird, dass jede Vorlage eins trägt,
+// dass es gezeichnet wird und jeden Namen nennt, und dass seine Zahlen zu
+// ihrer Quelle passen: das Tauziehen zur Bilanz der beiden, der Erste eines
+// Rennens zum Helden der Karte, das Zählwerk zur großen Zahl.
+const _ffB = JSON.parse(K.eval(`(function(){
+  const pm = pmap(), nameOf = pid => (pm[pid]||{}).name || '?';
+  const out = [], seen = new Set(), h2h = _ensureH2HMap();
+  [new Date(2026, 7, 26, 15, 5), new Date(2026, 6, 20, 15, 5), new Date(2026, 5, 18, 15, 5)].forEach(now => {
+    const T = _ambientTemplatePool(now, pm, nameOf);
+    for(let seed = 1; seed <= 6; seed++) T.forEach(t => {
+      let r = null; try { r = t.make(_ambientRng(seed)); } catch(e){ out.push({k:t.key, err:e.message}); return; }
+      if(!r) return;
+      const d = r.dataRef || {}, b = d.bild || null;
+      const sig = t.key + JSON.stringify(b);
+      if(seen.has(sig)) return; seen.add(sig);
+      const s = {id:'t_' + t.key, title:r.title, desc:r.desc, when:now, cat:r.cat, ic:r.ic,
+        dataRef:Object.assign({type:'ambient', sub:t.key}, d, r.vv != null ? {vv:String(r.vv), vl:r.vl || ''} : {})};
+      const html = _faktBild(s), karte = _newsCardHtmlM2(s, false, false, '');
+      const pids = !b ? [] : [b.p, b.a, b.b].concat((b.r || []).map(x => x.p), b.halter || [], b.sieger || [],
+        (b.traeger || []).map(x => x[0]), b.zweiter ? [b.zweiter.p] : []).filter(x => x && pm[x]);
+      const f = [];
+      if(b && b.f === 'duell'){
+        const e = h2h.get([b.a, b.b].sort().join('|'));
+        if(!e || (e.wins[b.a] || 0) !== b.wa || (e.wins[b.b] || 0) !== b.wb) f.push('Bilanz ' + b.wa + ':' + b.wb);
+      }
+      if(b && b.r){
+        const held = [d.ambientPid].concat(d.ambientPids || []).filter(Boolean);
+        if(held.length && !held.includes(b.r[0].p)) f.push('der Erste ist nicht der Held');
+        if(b.r[0].w !== 1 || b.r.some((x, i) => i && x.w > b.r[i - 1].w + 1e-9)) f.push('Balken nicht absteigend');
+      }
+      if(b && b.f === 'zahl' && String(b.n) !== String(r.vv)) f.push('Zählwerk ' + b.n + ' statt ' + r.vv);
+      if(b && b.f === 'vitrine' && b.hat.length !== +r.vv) f.push('Vitrine ' + b.hat.length + ' statt ' + r.vv);
+      if(b && b.f === 'tafel' && b.alle - b.voll !== +r.vv) f.push('Tafel ' + (b.alle - b.voll) + ' statt ' + r.vv);
+      if(b && b.f === 'platz' && 'Platz ' + b.platz !== r.vv) f.push('Platz ' + b.platz + ' statt ' + r.vv);
+      out.push({k:t.key, f:b ? b.f : null, leiter:!!d.leiter, gezeichnet:!!html && karte.indexOf('class="ff ff-' + (b && b.f)) >= 0,
+        namen:pids.filter(id => html.indexOf('>' + esc(pm[id].name) + '<') < 0).map(id => pm[id].name), fehler:f});
+    });
+  });
+  return JSON.stringify(out);
+})()`));
+const _ffOhne = _ffB.filter(x => !x.err && !x.leiter && !x.f).map(x => x.k);
+ok(_ffB.length > 30 && !_ffB.some(x => x.err) && _ffOhne.length === 0,
+   'jede Fun-Fact-Vorlage trägt die Daten ihres Bilds', [...new Set(_ffOhne)].join(' ') || _ffB.filter(x => x.err).map(x => x.k + ': ' + x.err).join(' '));
+ok(new Set(_ffB.map(x => x.f).filter(Boolean)).size >= 12,
+   'und es sind mindestens zwölf verschiedene Bilder', [...new Set(_ffB.map(x => x.f))].join(' '));
+const _ffFalsch = _ffB.filter(x => x.f && (!x.gezeichnet || x.namen.length || x.fehler.length));
+ok(_ffFalsch.length === 0,
+   'jedes Bild steht auf der Karte, nennt jeden Namen und passt zu seiner Quelle',
+   _ffFalsch.slice(0, 4).map(x => x.k + ':' + x.f + (x.gezeichnet ? '' : ' nicht gezeichnet') + (x.namen.length ? ' ohne ' + x.namen.join(',') : '') + ' ' + x.fehler.join(',')).join(' | '));
+// Die Pause trägt ihre Zahlen schon und zeichnet je Tag ein Feld.
+const _ffPz = K.eval(`_faktBild({dataRef:{type:'dry_spell', daysSince:5, maxGapDays:9}})`);
+ok((_ffPz.match(/class="still/g) || []).length === 5 && /pz-max/.test(_ffPz),
+   'die Pause zeigt je stillen Tag ein Feld und die Marke der längsten Pause', _ffPz.slice(0, 200));
+
 console.log('\n=== 9. BREAKING: NUR DAS SELTENSTE ===');
 // Breaking heisst: extrem seltene Auszeichnung oder echtes Ereignis. Ein
 // Countdown gehoert nicht dazu — `season_endgame` („Noch 5 Tage") war zeitweise
@@ -7271,8 +7329,13 @@ const _wz = JSON.parse(K.eval(`JSON.stringify((function(){
       if(d.leiter || !d.ambientPid || d.vv == null || d.vv === '') return;
       fakten++;
       const b = blatt(s);
-      const groß = (b.k.match(/class="nd-hz-t"><em>[^<]*<\\/em><b class="num">([^<]*)<\\/b>/) || [])[1];
-      if(groß !== esc(String(d.vv))) falsch.push('ambient ' + d.sub + ': ' + groß + ' statt ' + d.vv);
+      // Ein Fun Fact mit Bild trägt das Bild seiner Karte als Bühne.
+      if(d.bild){
+        if(!/nd-buehne nd-ff/.test(b.k) || b.k.indexOf('ff-' + d.bild.f) < 0) falsch.push('ambient ' + d.sub + ' ohne sein Bild');
+      } else {
+        const groß = (b.k.match(/class="nd-hz-t"><em>[^<]*<\\/em><b class="num">([^<]*)<\\/b>/) || [])[1];
+        if(groß !== esc(String(d.vv))) falsch.push('ambient ' + d.sub + ': ' + groß + ' statt ' + d.vv);
+      }
       if(!b.m.trim()) falsch.push('ambient ' + d.sub + ' ohne Mitte');
     });
   }

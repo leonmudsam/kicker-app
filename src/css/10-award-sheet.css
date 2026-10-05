@@ -228,7 +228,7 @@
   .posv-row.hl{background:var(--surface);border-color:var(--c)}
   .posv-pl{font-family:'Archivo Black',sans-serif;font-size:13px;color:var(--muted);text-align:right}
   .posv-row.eins .posv-pl{color:var(--gold)}
-  .posv-row .av{width:26px;height:26px;font-size:10px}
+  .posv-row .av{--av:26px}
   .posv-nm{font-size:13px;font-weight:600;color:var(--ink);overflow-wrap:anywhere;line-height:1.15}
   .posv-spark{width:56px;height:18px;display:block}
   .posv-spark polyline{fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
