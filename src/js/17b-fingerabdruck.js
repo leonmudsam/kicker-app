@@ -75,6 +75,9 @@ function fingerFeld(){
 // Die sechs Achsen eines Spielers — oder null, wenn seine Laufbahn dafür
 // noch zu kurz ist.
 function fingerabdruck(pid){
+  // Ein Ruheständler zeigt den Abdruck seines Abschieds [§C40].
+  const g = imRuhestand(pid) ? _ruheGespeichert(pid) : null;
+  if(g && Array.isArray(g.finger)) return g.finger;
   const F = fingerFeld();
   if(F.ids.indexOf(pid) < 0) return null;
   return F.achsen.map(a => {

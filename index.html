@@ -5504,7 +5504,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.05.901cc6a6';
+const BUILD_VERSION='2026.10.05.40bc4cce';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -7455,6 +7455,24 @@ function ruhestandSpieler(){
     .sort((a, b) => ruhestandMs(b) - ruhestandMs(a));
 }
 
+const _storyText = new WeakMap();
+function ohneStoriesNachAbschied(list){
+  if(!Array.isArray(list)) return list;
+  const weg = ruhestandSpieler().map(p => ({id:p.id, t:ruhestandMs(p)}));
+  if(!weg.length) return list;
+  const text = s => {
+    let x = _storyText.get(s);
+    if(x == null){ x = JSON.stringify(s.dataRef || {}); _storyText.set(s, x); }
+    return x;
+  };
+  const bleibt = list.filter(s => {
+    if(!s || (s.dataRef || {}).type === 'karriereende') return true;
+    const t = +new Date(s.when);
+    return !weg.some(w => t > w.t && text(s).indexOf(w.id) >= 0);
+  });
+  return bleibt.length === list.length ? list : bleibt;
+}
+
 function _ruheRechnen(pid, fn){
   const t = ruhestandMs(pid);
   const altCache = _cache, altStichtag = _ruheStichtag, altGerechnet = _ruheGerechnet;
@@ -7521,9 +7539,17 @@ function _ruheGespeichert(pid){
   if(merk && merk.roh === roh && merk.t === t) return merk.wert;
   let o = roh;
   if(typeof roh === 'string'){ try { o = JSON.parse(roh); } catch(e){ o = null; } }
-  const wert = (o && o.v === RUHE_STAND_FASSUNG && o.stand && o.t === t) ? o : null;
+  const wert = (o && o.v === RUHE_STAND_FASSUNG && o.stand && o.t === t) ? _ruheStufeNachName(o) : null;
   _ruheGespeichertMemo.set(p.id, {roh, t, wert});
   return wert;
+}
+
+function _ruheStufeNachName(o){
+  const pr = o.stand.prestige, key = pr && pr.insignie && pr.insignie.key;
+  const j = key ? INSIGNIEN.findIndex(x => x.key === key) : -1;
+  if(j < 0) return o;
+  const prestige = Object.assign({}, pr, {stufe:j, insignie:INSIGNIEN[j], naechste:INSIGNIEN[j + 1] || null});
+  return Object.assign({}, o, {stand:Object.assign({}, o.stand, {prestige})});
 }
 
 function ruhestandAuszeichnungen(pid){
@@ -7540,7 +7566,9 @@ function _ruheStandBauen(pid){
     badges = _ruheRechnen(pid, () => computeBadges(pid, matches.filter(m => mts(m) <= t), t))
       .map(b => ({id:b.id, em:b.em, ic:b.ic, name:b.name, desc:b.desc, count:b.count}));
   } catch(e){ badges = []; }
-  return JSON.parse(JSON.stringify({v:RUHE_STAND_FASSUNG, t, stand, badges}));
+  let finger = null;
+  if(matches.every(m => mts(m) <= t)){ try { finger = fingerabdruck(pid); } catch(e){ finger = null; } }
+  return JSON.parse(JSON.stringify(Object.assign({v:RUHE_STAND_FASSUNG, t, stand, badges}, finger ? {finger} : {})));
 }
 
 const _ruheNachgetragen = new Set();
@@ -13996,6 +14024,8 @@ function fingerFeld(){
 }
 
 function fingerabdruck(pid){
+  const g = imRuhestand(pid) ? _ruheGespeichert(pid) : null;
+  if(g && Array.isArray(g.finger)) return g.finger;
   const F = fingerFeld();
   if(F.ids.indexOf(pid) < 0) return null;
   return F.achsen.map(a => {
@@ -17653,7 +17683,6 @@ function _buildStories(){
         const n = lauf[k];
         if(!(TEAM_STREAK_MS.has(n) || (n > 20 && n % 5 === 0))) return;
         if(mts(m) < seit) return;
-        if(!ligaAktiv(pm[ids[0]], mts(m)) || !ligaAktiv(pm[ids[1]], mts(m))) return;
         kand.push({ids, streak:n, when:new Date(m.created_at), matchId:m.id,
                    lauf:laufStart[k] || ''});
       });
@@ -17694,7 +17723,6 @@ function _buildStories(){
         const n = lauf[k];
         if(!(TEAM_LOSS_MS.has(n) || (n > 10 && n % 5 === 0))) return;
         if(mts(m) < seit) return;
-        if(!ligaAktiv(pm[ids[0]], mts(m)) || !ligaAktiv(pm[ids[1]], mts(m))) return;
         kand.push({ids, streak:n, when:new Date(m.created_at), matchId:m.id,
                    lauf:laufStart[k] || '', firstT:ersteT[k]});
       });
@@ -17781,7 +17809,7 @@ function _buildStories(){
         if(lauf[pid] === 1) laufStart[pid] = m.id;
         const n = lauf[pid];
         if(!(marken.has(n) || (n > 10 && n % 5 === 0))) return;
-        if(mts(m) < seit || !ligaAktiv(pm[pid], mts(m))) return;
+        if(mts(m) < seit) return;
         const _st = matches.find(x => x.id === laufStart[pid]);
         kand.push({pid, streak:n, when:new Date(m.created_at), matchId:m.id,
                    lauf:laufStart[pid] || '', seit:_st ? mts(_st) : 0});
@@ -17951,7 +17979,6 @@ function _buildStories(){
         const [a,b] = k.split('|');
         return {a, b, n: v.n, aw: v.aw, when: new Date(v.last), matchId:v.mid};
       })
-      .filter(r => ligaAktiv(pm[r.a], +r.when) && ligaAktiv(pm[r.b], +r.when))
       .sort((a,b) => b.n - a.n)
       .slice(0, NEWS_LIMITS.rivalry);
     ranked.forEach(r => {
@@ -18276,7 +18303,7 @@ function _buildStories(){
         if(winnerBest === 1 && loserBest === 2){
           const p1 = winners.find(p => (snap.preRank[p]||99) === 1);
           const p2 = losers.find(p  => (snap.preRank[p]||99) === 2);
-          if(p1 && p2 && ligaAktiv(pm[p1], t) && ligaAktiv(pm[p2], t)){
+          if(p1 && p2){
             best = {m, t, winners, losers, p1, p2}; break;
           }
         }
@@ -18314,7 +18341,7 @@ function _buildStories(){
 
     if(mature && rec.streakRec && rec.streakRec.when && rec.streakRec.val >= 5){
       const pid = rec.streakRec.pid;
-      if((nowTs - new Date(rec.streakRec.when).getTime()) < RECENT && ligaAktiv(pm[pid], new Date(rec.streakRec.when).getTime())){
+      if((nowTs - new Date(rec.streakRec.when).getTime()) < RECENT){
         stories.push({
           id: 'streak_record_'+rec.streakRec.matchId,
           cat: 'highlight', ic: 'crownFlame',
@@ -18339,8 +18366,7 @@ function _buildStories(){
         if(winnerChance < CHANCE_SENSATION){
           const winners = m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2];
           const losers  = m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2];
-          if(winners.every(p => ligaAktiv(pm[p], mts(m))))
-            kandidaten.push({ m, chance: winnerChance, winners, losers, t });
+          kandidaten.push({ m, chance: winnerChance, winners, losers, t });
         }
       }
       const jeTag = new Map();
@@ -18379,7 +18405,7 @@ function _buildStories(){
       const diff = hoch - tief;
       const winners = (m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2]).filter(Boolean);
       const losers = (m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2]).filter(Boolean);
-      if(!winners.length || winners.some(id => !ligaAktiv(pm[id], mts(m)))) continue;
+      if(!winners.length) continue;
       const h = histMap.get(m.id);
       const expA = h && h.expA != null ? h.expA : (m.exp_a == null ? 0.5 : m.exp_a);
       const chance = m.winner === 'A' ? expA : 1 - expA;
@@ -18529,7 +18555,6 @@ function _buildStories(){
     gekreuzt.sort((x, y) => y.ts - x.ts);
     gekreuzt.slice(0, NEWS_LIMITS.rivalryMarke).forEach(g => {
       const [a, b] = g.k.split('|');
-      if(!ligaAktiv(pm[a], g.ts) || !ligaAktiv(pm[b], g.ts)) return;
       stories.push({
         id: 'rivalry_milestone_'+g.k+'_'+g.n,
         cat: 'rivalry',
@@ -18578,7 +18603,7 @@ function _buildStories(){
     const RECENT = 14 * _dayMs;
     const nowTs = now.getTime();
     _eloMilestones().forEach(e => {
-      if(!e.when || !ligaAktiv(pm[e.pid], new Date(e.when).getTime())) return;
+      if(!e.when) return;
       if(nowTs - new Date(e.when).getTime() > RECENT) return;
       stories.push({
         id: 'milestone_elo_'+e.pid+'_'+e.mark,
@@ -18606,7 +18631,7 @@ function _buildStories(){
         if(lauf[pid] === 1) laufStart[pid] = m.id;
         const n = lauf[pid];
         const istMarke = istSerienMarke(n);
-        if(istMarke && mts(m) >= seit && ligaAktiv(pm[pid], mts(m)))
+        if(istMarke && mts(m) >= seit)
           kandidaten.push({pid, streak:n, when:new Date(m.created_at), matchId:m.id,
                            lauf:laufStart[pid]});
       });
@@ -19212,9 +19237,10 @@ function _buildStories(){
     return b.prio - a.prio;
   });
 
+  const ergebnis = ohneStoriesNachAbschied(stories);
   _cache._buildStoriesKey = _buildStoriesKey;
-  _cache._buildStoriesResult = stories;
-  return stories;
+  _cache._buildStoriesResult = ergebnis;
+  return ergebnis;
 
 }
 
@@ -20416,7 +20442,7 @@ function _consolidateStories(list){
     if(!l){ l = new Map(); duellMoment.set(key, l); }
     l.set(n, m);
   })));
-  const quelle = list.filter(s => !_storyAbgemeldet(s && s.id) && !_storyWiderrufen(s));
+  const quelle = ohneStoriesNachAbschied(list).filter(s => !_storyAbgemeldet(s && s.id) && !_storyWiderrufen(s));
   const marken = new Map(), normal = [];
   quelle.forEach(s => {
     const d = s.dataRef || {}, l = d.marken || [];
@@ -20507,7 +20533,7 @@ function _consolidateStoriesLegacy(list){
     const set = _badgeJeMatch.get(d.matchId);
     return !!set && liste.some(b => set.has(b));
   };
-  const src = list.filter(s => !_storyAbgemeldet(s && s.id) && !_storyWiderrufen(s));
+  const src = ohneStoriesNachAbschied(list).filter(s => !_storyAbgemeldet(s && s.id) && !_storyWiderrufen(s));
 
   const suppressMatch = new Set(), suppressPlayer = new Set();
   const rivalryMsPairs = new Set();

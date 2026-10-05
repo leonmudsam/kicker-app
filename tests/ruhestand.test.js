@@ -265,6 +265,29 @@ const NEU = stand();
   const alle = J(`_buildStories().filter(s => +new Date(s.when) > Date.parse('${ENDE}')).length`);
   ok(alle > 0 && spaeter.length === 0, 'nach dem Karriereende nennt ihn keine neue Story', alle + ' neue Stories · ' + (spaeter.join(', ') || 'keine mit ihm'));
 }
+// Das Tor des Feeds: die Regel steht an einer Stelle und nicht je
+// Story-Typ. Ein neuer Typ, der sie nicht kennt, kommt trotzdem nicht durch —
+// weder aus dem Generator noch als Zeile aus der Datenbank.
+{
+  const nach = new Date(Date.parse(ENDE) + 3600e3).toISOString();
+  const vor = new Date(Date.parse(ENDE) - 3600e3).toISOString();
+  const ANDERER = IDS[NAMES.indexOf('Leon')];
+  K.eval(`globalThis.__neu = [
+    {id:'neu_nach', cat:'tafel', title:'a', desc:'a', prio:40, when:new Date('${nach}'), dataRef:{type:'neu_typ', verfolger:[{pid:'${MARTIN}', wert:3}]}},
+    {id:'neu_vor', cat:'tafel', title:'b', desc:'b', prio:40, when:new Date('${vor}'), dataRef:{type:'neu_typ', playerIds:['${MARTIN}']}},
+    {id:'neu_anderer', cat:'tafel', title:'c', desc:'c', prio:40, when:new Date('${nach}'), dataRef:{type:'neu_typ', playerIds:['${ANDERER}']}}];`);
+  const ids = J('ohneStoriesNachAbschied(__neu).map(s => s.id)');
+  ok(gleich(ids, ['neu_vor', 'neu_anderer']), 'ein neuer Story-Typ ohne eigene Abfrage nennt ihn nach dem Karriereende nicht, auch nicht in einer Liste',
+     ids.join(', '));
+  // Eine echte Karte mit ihm, als käme sie nach dem Karriereende aus der Datenbank.
+  const alt = J(`_buildStories().find(s => +new Date(s.when) < Date.parse('${ENDE}') && (s.dataRef||{}).type === 'spiel'
+    && JSON.stringify(s.dataRef).includes('${MARTIN}'))`);
+  K.eval(`globalThis.__db = Object.assign({}, ${JSON.stringify(alt)}, {id:'db_nach_abschied', when:new Date('${nach}')});
+    globalThis.__db0 = Object.assign({}, ${JSON.stringify(alt)}, {when:new Date(${JSON.stringify(alt && alt.when)})});`);
+  ok(!!alt && !J(`JSON.stringify(_consolidateStories([__db])).includes('${MARTIN}')`)
+     && J(`JSON.stringify(_consolidateStories([__db0])).includes('${MARTIN}')`),
+     'im Feed fällt eine Zeile nach dem Karriereende, die von vorher bleibt', alt && alt.id);
+}
 ok(!J(`Object.values(allChronicles(ruhestandMs('${MARTIN}')).byId).some(r => (r.pids||[]).includes('${MARTIN}'))`)
    && !J(`prestigeTabelle(ruhestandMs('${MARTIN}')).rang.includes('${MARTIN}')`),
    'auch mit Partien danach kommt der Schnitt am Karriereende aus der aktiven Liga');
@@ -338,6 +361,33 @@ console.log('\n=== DER GESPEICHERTE STAND ===');
      && gleich(nachher, gespeichert) && gleich(J(`getCachedBadges('${MARTIN}').map(b=>b.id+b.count)`), st.badges.map(b => b.id + b.count)),
      'eine neue Fassung der App verändert das Profil eines Ruheständlers nicht: keine neue Auszeichnung, dasselbe Prestige',
      JSON.stringify({nachher:nachher.punkte, vorher:gespeichert.punkte}));
+  // Eine Stufe mehr in der Leiter: die gespeicherte Zahl zeigte danach auf
+  // den Nachbarn. Der Schlüssel der Stufe gilt, die Zahl folgt ihm.
+  {
+    const key = st.stand.prestige.insignie.key;
+    K.eval(`INSIGNIEN.splice(1, 0, {key:'zz_zwischen', name:'Zwischenreif', min:300}); _ruheGespeichertMemo.clear(); invalidateCache();`);
+    const p = J(`(p=>({key:p.insignie.key, stufe:p.stufe}))(prestigeOf('${MARTIN}'))`);
+    K.eval(`INSIGNIEN.splice(1, 1); _ruheGespeichertMemo.clear(); invalidateCache();`);
+    ok(p.key === key && p.stufe === st.stand.prestige.stufe + 1 && J(`prestigeOf('${MARTIN}').stufe`) === st.stand.prestige.stufe,
+       'eine neue Stufe in der Leiter verschiebt sein Zeichen nicht', key + ': Stufe ' + st.stand.prestige.stufe + ' → ' + p.stufe + ' mit der neuen');
+  }
+  // Das Feld spielt weiter: dreißig Partien der anderen verschieben jeden
+  // Platz darin, sein Fingerabdruck bleibt der vom Abschied.
+  {
+    K.eval(`globalThis.__mAlt = matches;
+      const _o = players.filter(p => p.id !== '${MARTIN}').map(p => p.id);
+      matches = matches.concat(Array.from({length:30}, (_, i) => ({id:'fa' + i, a1:_o[i % 3], a2:_o[3 + i % 3], b1:_o[6 + i % 3], b2:_o[9 + i % 2],
+        a1_pos:'atk', a2_pos:'def', b1_pos:'atk', b2_pos:'def', score_a:10, score_b:0, winner:'A', exp_a:0.5,
+        created_at:new Date(Date.parse('2026-08-27T09:00:00Z') + i * 60000).toISOString(), deltas:{}})));
+      invalidateCache();`);
+    const jetzt = J(`fingerabdruck('${MARTIN}')`);
+    K.eval(`globalThis.__stAlt = pmap()['${MARTIN}'].retired_stand; pmap()['${MARTIN}'].retired_stand = null; invalidateCache();`);
+    const live = J(`fingerabdruck('${MARTIN}')`);
+    K.eval(`pmap()['${MARTIN}'].retired_stand = __stAlt; matches = __mAlt; invalidateCache();`);
+    ok(Array.isArray(st.finger) && gleich(jetzt, st.finger) && !gleich(live, st.finger),
+       'der Fingerabdruck bleibt der vom Abschied, auch wenn das Feld weiterspielt',
+       st.finger ? st.finger.map(a => a.id + ' ' + Math.round(a.perz * 100)).join(', ') : 'nicht gespeichert');
+  }
   // Gegenprobe: ohne gespeicherten Stand folgt das Profil der neuen Fassung.
   K.eval(`pmap()['${MARTIN}'].retired_stand = null; _ruheStandMemo.clear(); invalidateCache();`);
   const gerechnet = J(`prestigeOf('${MARTIN}').punkte`);

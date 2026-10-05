@@ -81,6 +81,35 @@ function ruhestandSpieler(){
     .sort((a, b) => ruhestandMs(b) - ruhestandMs(a));
 }
 
+// ── Das Tor des Feeds ───────────────────────────────────────────────────
+// Nach dem Karriereende erzählt keine Story mehr von ihm, außer der vom
+// Abschied. Gefragt wurde das einmal je Story-Typ im Generator, an rund
+// einem Dutzend Stellen — und ein neuer Typ, der die Abfrage vergisst, hätte
+// ihn wieder in den Feed gebracht. Jetzt steht die Regel hier, einmal für
+// alles, was der Generator bildet und was aus der Datenbank kommt.
+// Eine Story nach dem Karriereende, die ihn irgendwo nennt — als Halter,
+// Verfolger, Vorgänger oder in einer Liste —, erzählt von einer Liga, in der
+// er nicht mehr antritt. Was VOR dem Karriereende geschah, bleibt.
+// Ohne Ruheständler kommt die Liste unverändert zurück: die Identität trägt
+// die Merker dahinter.
+const _storyText = new WeakMap();
+function ohneStoriesNachAbschied(list){
+  if(!Array.isArray(list)) return list;
+  const weg = ruhestandSpieler().map(p => ({id:p.id, t:ruhestandMs(p)}));
+  if(!weg.length) return list;
+  const text = s => {
+    let x = _storyText.get(s);
+    if(x == null){ x = JSON.stringify(s.dataRef || {}); _storyText.set(s, x); }
+    return x;
+  };
+  const bleibt = list.filter(s => {
+    if(!s || (s.dataRef || {}).type === 'karriereende') return true;
+    const t = +new Date(s.when);
+    return !weg.some(w => t > w.t && text(s).indexOf(w.id) >= 0);
+  });
+  return bleibt.length === list.length ? list : bleibt;
+}
+
 // ── Die Zeitmaschine ────────────────────────────────────────────────────
 // Rechnet `fn` so, wie die Liga im Moment des Karriereendes stand. Alle
 // Töpfe hängen an `_cache`, und der wird für die Dauer der Rechnung gegen
@@ -177,9 +206,21 @@ function _ruheGespeichert(pid){
   if(merk && merk.roh === roh && merk.t === t) return merk.wert;
   let o = roh;
   if(typeof roh === 'string'){ try { o = JSON.parse(roh); } catch(e){ o = null; } }
-  const wert = (o && o.v === RUHE_STAND_FASSUNG && o.stand && o.t === t) ? o : null;
+  const wert = (o && o.v === RUHE_STAND_FASSUNG && o.stand && o.t === t) ? _ruheStufeNachName(o) : null;
   _ruheGespeichertMemo.set(p.id, {roh, t, wert});
   return wert;
+}
+
+// Die Stufe steht im Stand als Zahl, und eine Zahl zeigt nach dem Einfügen
+// einer Stufe auf die falsche: aus dem Zierkranz würde der Lorbeerreif. Der
+// Schlüssel der Stufe (`insignie.key`) bleibt, also gilt er; die Zahl folgt
+// ihm. Gibt es den Schlüssel nicht mehr, bleibt die gespeicherte Zahl.
+function _ruheStufeNachName(o){
+  const pr = o.stand.prestige, key = pr && pr.insignie && pr.insignie.key;
+  const j = key ? INSIGNIEN.findIndex(x => x.key === key) : -1;
+  if(j < 0) return o;
+  const prestige = Object.assign({}, pr, {stufe:j, insignie:INSIGNIEN[j], naechste:INSIGNIEN[j + 1] || null});
+  return Object.assign({}, o, {stand:Object.assign({}, o.stand, {prestige})});
 }
 
 // Die Auszeichnungen beim Karriereende. Sie kommen aus dem Katalog, und ein
@@ -205,7 +246,14 @@ function _ruheStandBauen(pid){
     badges = _ruheRechnen(pid, () => computeBadges(pid, matches.filter(m => mts(m) <= t), t))
       .map(b => ({id:b.id, em:b.em, ic:b.ic, name:b.name, desc:b.desc, count:b.count}));
   } catch(e){ badges = []; }
-  return JSON.parse(JSON.stringify({v:RUHE_STAND_FASSUNG, t, stand, badges}));
+  // Der Fingerabdruck ist ein Platz im Feld, und das Feld spielt weiter: in
+  // zwei Jahren läge er sonst woanders, ohne dass er gespielt hat. Er wird nur
+  // gespeichert, wenn nach dem Karriereende noch keine Partie liegt — dann ist
+  // das Feld von heute das Feld von damals. Beim Knopf ist das immer so; ein
+  // nachgetragener Stand ohne ihn zeigt den Abdruck weiter gerechnet.
+  let finger = null;
+  if(matches.every(m => mts(m) <= t)){ try { finger = fingerabdruck(pid); } catch(e){ finger = null; } }
+  return JSON.parse(JSON.stringify(Object.assign({v:RUHE_STAND_FASSUNG, t, stand, badges}, finger ? {finger} : {})));
 }
 
 // Ein Karriereende ohne gespeicherten Stand — aus der Zeit vor dieser

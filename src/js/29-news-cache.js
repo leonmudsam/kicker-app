@@ -154,7 +154,7 @@ function _consolidateStories(list){
     if(!l){ l = new Map(); duellMoment.set(key, l); }
     l.set(n, m);
   })));
-  const quelle = list.filter(s => !_storyAbgemeldet(s && s.id) && !_storyWiderrufen(s));
+  const quelle = ohneStoriesNachAbschied(list).filter(s => !_storyAbgemeldet(s && s.id) && !_storyWiderrufen(s));
   const marken = new Map(), normal = [];
   // Alte kleine Marken wurden je Tag gespeichert, neue je Partie. Die alten
   // Snapshots bleiben erhalten: nur ihre Anzeige wird an den gespeicherten
@@ -301,7 +301,7 @@ function _consolidateStoriesLegacy(list){
   };
   // Historische Fakten bleiben wahr. Spätere Zustände oder weitere Partien
   // dürfen einen bereits publizierten Snapshot nicht wieder entfernen.
-  const src = list.filter(s => !_storyAbgemeldet(s && s.id) && !_storyWiderrufen(s));
+  const src = ohneStoriesNachAbschied(list).filter(s => !_storyAbgemeldet(s && s.id) && !_storyWiderrufen(s));
 
   // Frühere Anzeige-Suppressions bleiben bewusst leer: veröffentlichte
   // Snapshot-Ereignisse werden weder durch ähnliche Badges noch durch spätere

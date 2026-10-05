@@ -609,7 +609,6 @@ function _buildStories(){
         const n = lauf[k];
         if(!(TEAM_STREAK_MS.has(n) || (n > 20 && n % 5 === 0))) return;
         if(mts(m) < seit) return;
-        if(!ligaAktiv(pm[ids[0]], mts(m)) || !ligaAktiv(pm[ids[1]], mts(m))) return;
         kand.push({ids, streak:n, when:new Date(m.created_at), matchId:m.id,
                    lauf:laufStart[k] || ''});
       });
@@ -658,7 +657,6 @@ function _buildStories(){
         const n = lauf[k];
         if(!(TEAM_LOSS_MS.has(n) || (n > 10 && n % 5 === 0))) return;
         if(mts(m) < seit) return;
-        if(!ligaAktiv(pm[ids[0]], mts(m)) || !ligaAktiv(pm[ids[1]], mts(m))) return;
         kand.push({ids, streak:n, when:new Date(m.created_at), matchId:m.id,
                    lauf:laufStart[k] || '', firstT:ersteT[k]});
       });
@@ -778,7 +776,7 @@ function _buildStories(){
         if(lauf[pid] === 1) laufStart[pid] = m.id;
         const n = lauf[pid];
         if(!(marken.has(n) || (n > 10 && n % 5 === 0))) return;
-        if(mts(m) < seit || !ligaAktiv(pm[pid], mts(m))) return;
+        if(mts(m) < seit) return;
         // Der Zeitpunkt der Partie, mit der die Serie angefangen hat: die
         // Karte nennt ihn im Satz, damit sie nicht zweimal dasselbe sagt.
         const _st = matches.find(x => x.id === laufStart[pid]);
@@ -1021,7 +1019,6 @@ function _buildStories(){
         const [a,b] = k.split('|');
         return {a, b, n: v.n, aw: v.aw, when: new Date(v.last), matchId:v.mid};
       })
-      .filter(r => ligaAktiv(pm[r.a], +r.when) && ligaAktiv(pm[r.b], +r.when))
       .sort((a,b) => b.n - a.n)
       .slice(0, NEWS_LIMITS.rivalry);
     ranked.forEach(r => {
@@ -1438,7 +1435,7 @@ function _buildStories(){
         if(winnerBest === 1 && loserBest === 2){
           const p1 = winners.find(p => (snap.preRank[p]||99) === 1); // Platz-1-Spieler (Sieger-Team)
           const p2 = losers.find(p  => (snap.preRank[p]||99) === 2); // Platz-2-Spieler (Verlierer-Team)
-          if(p1 && p2 && ligaAktiv(pm[p1], t) && ligaAktiv(pm[p2], t)){
+          if(p1 && p2){
             best = {m, t, winners, losers, p1, p2}; break;
           }
         }
@@ -1495,7 +1492,7 @@ function _buildStories(){
     // ist die laengste Serie ihrer Geschichte eine Nachricht.
     if(mature && rec.streakRec && rec.streakRec.when && rec.streakRec.val >= 5){
       const pid = rec.streakRec.pid;
-      if((nowTs - new Date(rec.streakRec.when).getTime()) < RECENT && ligaAktiv(pm[pid], new Date(rec.streakRec.when).getTime())){
+      if((nowTs - new Date(rec.streakRec.when).getTime()) < RECENT){
         stories.push({
           id: 'streak_record_'+rec.streakRec.matchId,
           cat: 'highlight', ic: 'crownFlame',
@@ -1525,8 +1522,7 @@ function _buildStories(){
         if(winnerChance < CHANCE_SENSATION){
           const winners = m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2];
           const losers  = m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2];
-          if(winners.every(p => ligaAktiv(pm[p], mts(m))))
-            kandidaten.push({ m, chance: winnerChance, winners, losers, t });
+          kandidaten.push({ m, chance: winnerChance, winners, losers, t });
         }
       }
       const jeTag = new Map();
@@ -1586,7 +1582,7 @@ function _buildStories(){
       const diff = hoch - tief;
       const winners = (m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2]).filter(Boolean);
       const losers = (m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2]).filter(Boolean);
-      if(!winners.length || winners.some(id => !ligaAktiv(pm[id], mts(m)))) continue;
+      if(!winners.length) continue;
       const h = histMap.get(m.id);
       const expA = h && h.expA != null ? h.expA : (m.exp_a == null ? 0.5 : m.exp_a);
       const chance = m.winner === 'A' ? expA : 1 - expA;
@@ -1798,7 +1794,6 @@ function _buildStories(){
     gekreuzt.sort((x, y) => y.ts - x.ts);
     gekreuzt.slice(0, NEWS_LIMITS.rivalryMarke).forEach(g => {
       const [a, b] = g.k.split('|');
-      if(!ligaAktiv(pm[a], g.ts) || !ligaAktiv(pm[b], g.ts)) return;
       stories.push({
         id: 'rivalry_milestone_'+g.k+'_'+g.n,
         cat: 'rivalry',
@@ -1854,7 +1849,7 @@ function _buildStories(){
     const RECENT = 14 * _dayMs;
     const nowTs = now.getTime();
     _eloMilestones().forEach(e => {
-      if(!e.when || !ligaAktiv(pm[e.pid], new Date(e.when).getTime())) return;
+      if(!e.when) return;
       if(nowTs - new Date(e.when).getTime() > RECENT) return;
       stories.push({
         id: 'milestone_elo_'+e.pid+'_'+e.mark,
@@ -1900,7 +1895,7 @@ function _buildStories(){
         if(lauf[pid] === 1) laufStart[pid] = m.id;
         const n = lauf[pid];
         const istMarke = istSerienMarke(n);
-        if(istMarke && mts(m) >= seit && ligaAktiv(pm[pid], mts(m)))
+        if(istMarke && mts(m) >= seit)
           kandidaten.push({pid, streak:n, when:new Date(m.created_at), matchId:m.id,
                            lauf:laufStart[pid]});
       });
@@ -2991,9 +2986,12 @@ function _buildStories(){
 
   // Der vollständige Snapshot-Satz ist das Generator-Ergebnis. Verdichtung
   // erfolgt danach verlustfrei; hier verwirft kein Mengenlimit ein Ereignis.
+  // Das Tor [§C40]: keine Story nach dem Karriereende nennt den, der aufgehört
+  // hat. Hier und nicht je Typ, damit es kein neuer Typ vergessen kann.
+  const ergebnis = ohneStoriesNachAbschied(stories);
   _cache._buildStoriesKey = _buildStoriesKey;
-  _cache._buildStoriesResult = stories;
-  return stories;
+  _cache._buildStoriesResult = ergebnis;
+  return ergebnis;
 
 }
 
