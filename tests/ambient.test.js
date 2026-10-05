@@ -7262,11 +7262,26 @@ const _wz = JSON.parse(K.eval(`JSON.stringify((function(){
       if((b.k.match(/class="nd-bm-k/g) || []).length !== d.marken.length) falsch.push('badge_marken');
     }
   });
-  return {n, falsch, leer:[...new Set(leer)]};
+  // Der Fun Fact eines Spielers: dieselbe Bühne mit seinem Wert. Gezogen an
+  // mehreren Tagen, weil je Tag genau einer entsteht.
+  let fakten = 0;
+  for(let t = 10; t <= 26; t += 2){
+    let l = []; try { l = _buildAmbientStories(new Date(2026, 7, t, 15, 5), pmap(), id => pname(id), []) || []; } catch(e){}
+    l.forEach(s => { const d = s.dataRef || {};
+      if(d.leiter || !d.ambientPid || d.vv == null || d.vv === '') return;
+      fakten++;
+      const b = blatt(s);
+      const groß = (b.k.match(/class="nd-hz-t"><em>[^<]*<\\/em><b class="num">([^<]*)<\\/b>/) || [])[1];
+      if(groß !== esc(String(d.vv))) falsch.push('ambient ' + d.sub + ': ' + groß + ' statt ' + d.vv);
+      if(!b.m.trim()) falsch.push('ambient ' + d.sub + ' ohne Mitte');
+    });
+  }
+  n += fakten ? 1 : 0;
+  return {n, falsch, leer:[...new Set(leer)], fakten};
 })())`));
-ok(_wz.n >= 5 && !_wz.falsch.length,
-   'Meilenstein, Jubiläum, Form, Ausschlag, Spitzenspiel und runde Marken tragen ihre Zahl auf einer Bühne',
-   _wz.falsch.join(' | ') || _wz.n + ' Arten');
+ok(_wz.n >= 6 && _wz.fakten > 0 && !_wz.falsch.length,
+   'Meilenstein, Jubiläum, Form, Ausschlag, Spitzenspiel, runde Marken und der Fun Fact tragen ihre Zahl auf einer Bühne',
+   _wz.falsch.join(' | ') || _wz.n + ' Arten, ' + _wz.fakten + ' Fun Facts');
 ok(!_wz.leer.length, 'kein Blatt trägt eine Überschrift ohne etwas darunter', _wz.leer.join(', '));
 
 console.log('\n' + (fails ? '✗ ' + fails + ' von ' + checks + ' CHECKS FEHLGESCHLAGEN' : '✓ ALLE ' + checks + ' CHECKS BESTANDEN'));

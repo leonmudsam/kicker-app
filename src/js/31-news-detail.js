@@ -1525,6 +1525,32 @@ function _ndMarkenBlatt(s){
     + (d.matchId ? ab('Die Partie', _newsMatchVsBlock(d.matchId)) : '')};
 }
 
+// ── Der Fun Fact [§C33] ─────────────────────────────────────────────
+// Der Fun Fact zeigte das Wappen im Kopf und die Zahl darunter in einem
+// Kasten. Er handelt meistens von einem Spieler und einer Zahl, also steht
+// beides auf derselben Bühne wie Meilenstein und Form. Darunter, was die
+// Zahl einordnet: wer bei einem Rekord dahinter liegt, das Zeichen, wenn es
+// um Prestige geht, sonst die letzten zehn Partien bis zum Tag der Karte.
+function _ndFaktBlatt(s){
+  const d = s.dataRef || {}, pm = pmap(), pid = d.ambientPid;
+  if(d.leiter || !pid || !pm[pid] || d.vv == null || d.vv === '') return null;
+  const kopf = _ndHeldBuehne(pid, d.vv, d.vl || '', false, '');
+  const ab = (t, html) => html ? `<div class="nd-section">${esc(t)}</div>${html}` : '';
+  if(d.prestige) return {kopf, mitte:ab('Der Stand am Zeichen', _newsInsigniumBlock(pid))};
+  if(d.chronicle) return {kopf, mitte:_newsVerfolger(d.chronicle, [pid], null)
+    || ab('Die letzten zehn Partien', _ndFaktLauf(pid, s))};
+  return {kopf, mitte:ab('Die letzten zehn Partien', _ndFaktLauf(pid, s))};
+}
+// Die zehn Partien vor der Karte als Lauf und als Bilanz.
+function _ndFaktLauf(pid, s){
+  const t = new Date(s.when).getTime();
+  const l = matchesOfPlayer(pid, matches).filter(m => mts(m) <= t).slice(-10);
+  if(!l.length) return '';
+  const w = l.filter(m => _spGew(m, pid)).length;
+  return `<span class="nd-lf nd-hz-lf">${l.map(m => `<i class="${_spGew(m, pid) ? 'w' : 'l'}"></i>`).join('')}</span>`
+    + _ndBilanzBalken({wins:w, losses:l.length - w, winRate:Math.round(w / l.length * 100)});
+}
+
 // Welche Story ein eigenes Blatt mit Bühne hat. Kopf und Mitte kommen aus
 // demselben Aufruf, gemerkt je Story, damit nichts doppelt gerechnet wird.
 const _ND_BLATT = {win_streak:_ndSerieBlatt, loss_streak:_ndSerieBlatt, team_streak:_ndSerieBlatt,
@@ -1536,7 +1562,7 @@ const _ND_BLATT = {win_streak:_ndSerieBlatt, loss_streak:_ndSerieBlatt, team_str
   insignium_stufe:_ndInsigniumBlatt, sammel:_ndTafelMomentBlatt,
   jubilee:_ndMeilensteinBlatt, milestone_wins:_ndMeilensteinBlatt, milestone_goals:_ndMeilensteinBlatt,
   milestone_elo:_ndMeilensteinBlatt, top_form:_ndFormBlatt, elo_swing:_ndAusschlagBlatt,
-  top_clash:_ndSpitzenspielBlatt, badge_marken:_ndMarkenBlatt};
+  top_clash:_ndSpitzenspielBlatt, badge_marken:_ndMarkenBlatt, ambient:_ndFaktBlatt};
 // Gemerkt nur für einen Aufbau (`_newsDetailBody` leert es): an der Story
 // hängend hielte es nach einer neuen Partie den alten Stand fest.
 let _ndBlattJetzt = null;

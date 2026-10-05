@@ -789,7 +789,7 @@
 .nd-hz.neg .nd-hz-t b{color:var(--red)}
 .nd-hz-t small{font:600 9px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:3px}
 .nd-hz .sp-tg{margin:0}
-.nd-hz-lf{justify-content:center}
+.nd-hz-lf{display:flex;justify-content:center;margin:2px 0 10px}
 .nd-hz-lf i{width:14px;height:18px}
 /* Die Leiter einer Marke: davor erreicht, diese in Gold, die nächste offen. */
 .nd-ml{display:flex;align-items:center;justify-content:center;gap:0}

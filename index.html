@@ -4920,7 +4920,7 @@
 .nd-hz.neg .nd-hz-t b{color:var(--red)}
 .nd-hz-t small{font:600 9px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:3px}
 .nd-hz .sp-tg{margin:0}
-.nd-hz-lf{justify-content:center}
+.nd-hz-lf{display:flex;justify-content:center;margin:2px 0 10px}
 .nd-hz-lf i{width:14px;height:18px}
 .nd-ml{display:flex;align-items:center;justify-content:center;gap:0}
 .nd-ml > i{flex:0 1 22px;height:2px;background:rgba(194,201,208,.3)}
@@ -5202,7 +5202,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.05.d11c4e45';
+const BUILD_VERSION='2026.10.05.90d1514e';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -24426,6 +24426,25 @@ function _ndMarkenBlatt(s){
     + (d.matchId ? ab('Die Partie', _newsMatchVsBlock(d.matchId)) : '')};
 }
 
+function _ndFaktBlatt(s){
+  const d = s.dataRef || {}, pm = pmap(), pid = d.ambientPid;
+  if(d.leiter || !pid || !pm[pid] || d.vv == null || d.vv === '') return null;
+  const kopf = _ndHeldBuehne(pid, d.vv, d.vl || '', false, '');
+  const ab = (t, html) => html ? `<div class="nd-section">${esc(t)}</div>${html}` : '';
+  if(d.prestige) return {kopf, mitte:ab('Der Stand am Zeichen', _newsInsigniumBlock(pid))};
+  if(d.chronicle) return {kopf, mitte:_newsVerfolger(d.chronicle, [pid], null)
+    || ab('Die letzten zehn Partien', _ndFaktLauf(pid, s))};
+  return {kopf, mitte:ab('Die letzten zehn Partien', _ndFaktLauf(pid, s))};
+}
+function _ndFaktLauf(pid, s){
+  const t = new Date(s.when).getTime();
+  const l = matchesOfPlayer(pid, matches).filter(m => mts(m) <= t).slice(-10);
+  if(!l.length) return '';
+  const w = l.filter(m => _spGew(m, pid)).length;
+  return `<span class="nd-lf nd-hz-lf">${l.map(m => `<i class="${_spGew(m, pid) ? 'w' : 'l'}"></i>`).join('')}</span>`
+    + _ndBilanzBalken({wins:w, losses:l.length - w, winRate:Math.round(w / l.length * 100)});
+}
+
 const _ND_BLATT = {win_streak:_ndSerieBlatt, loss_streak:_ndSerieBlatt, team_streak:_ndSerieBlatt,
   team_loss_streak:_ndSerieBlatt, streak_killer:_ndSerieBlatt, rivalry:_ndRivalBlatt,
   rivalry_milestone:_ndRivalBlatt, badge_unlocked:_ndBadgeBlatt,
@@ -24435,7 +24454,7 @@ const _ND_BLATT = {win_streak:_ndSerieBlatt, loss_streak:_ndSerieBlatt, team_str
   insignium_stufe:_ndInsigniumBlatt, sammel:_ndTafelMomentBlatt,
   jubilee:_ndMeilensteinBlatt, milestone_wins:_ndMeilensteinBlatt, milestone_goals:_ndMeilensteinBlatt,
   milestone_elo:_ndMeilensteinBlatt, top_form:_ndFormBlatt, elo_swing:_ndAusschlagBlatt,
-  top_clash:_ndSpitzenspielBlatt, badge_marken:_ndMarkenBlatt};
+  top_clash:_ndSpitzenspielBlatt, badge_marken:_ndMarkenBlatt, ambient:_ndFaktBlatt};
 let _ndBlattJetzt = null;
 function _ndEigenesBlatt(s){
   const f = _ND_BLATT[(s.dataRef || {}).type];
