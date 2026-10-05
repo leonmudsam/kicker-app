@@ -22,15 +22,23 @@
 // nächsten neuen Feature wieder irgendwo aufgetaucht.
 //
 // Das Profil eines Ruheständlers ist EINGEFROREN: Prestige, Insignium,
-// Rekorde und Rang stehen so, wie sie im Moment des Karriereendes standen
-// (`ruhestandStand`). Gerechnet wird mit derselben Engine wie für alle,
-// nur zum Zeitpunkt des Karriereendes und in einem eigenen Cache
-// (`_ruheRechnen`) — gespeichert wird nichts als der Zeitpunkt.
+// Rekorde, Rang und Auszeichnungen stehen so, wie sie im Moment des
+// Karriereendes standen (`ruhestandStand`). Gerechnet wird der Stand einmal,
+// mit derselben Engine wie für alle, zum Zeitpunkt des Karriereendes und in
+// einem eigenen Cache (`_ruheRechnen`), und dann mit dem Spieler gespeichert
+// (`players.retired_stand`). Nur gerechnet hielt er so lange, wie die App
+// dieselbe blieb: ein neuer Rekord im Katalog, ein anderer Startwert einer
+// Auszeichnung oder eine neue Auszeichnung hätten das Profil eines
+// Ruheständlers zwei Jahre später verändert, ohne dass er gespielt hat.
 
 // Bis wann ein Karriereende zählt. Außerhalb der Zeitmaschine zählt jedes;
 // in ihr nur die, die VOR dem gerechneten Spieler lagen — er selbst steht
 // in seinem eigenen Stand noch mitten in der Liga.
 let _ruheStichtag = Infinity;
+// Wessen Stand die Zeitmaschine gerade rechnet. Der Monat seines
+// Karriereendes läuft dort noch, und seine Chronik darin ist vorläufig —
+// die Liga vergleicht diesen Monat ohne ihn, und das Profil zeigt sie nie.
+let _ruheGerechnet = null;
 
 function _spielerVon(x){ return typeof x === 'string' ? pmap()[x] : x; }
 
@@ -83,11 +91,12 @@ function ruhestandSpieler(){
 // nicht daran, wer antritt (`tests/ruhestand` misst das am Ergebnis).
 function _ruheRechnen(pid, fn){
   const t = ruhestandMs(pid);
-  const altCache = _cache, altStichtag = _ruheStichtag;
+  const altCache = _cache, altStichtag = _ruheStichtag, altGerechnet = _ruheGerechnet;
   _cache = {version: altCache.version};
   _ruheStichtag = t - 1;
+  _ruheGerechnet = pid;
   try { return fn(t); }
-  finally { _cache = altCache; _ruheStichtag = altStichtag; }
+  finally { _cache = altCache; _ruheStichtag = altStichtag; _ruheGerechnet = altGerechnet; }
 }
 
 // Was den eingefrorenen Stand bestimmt: die Partien bis zum Karriereende,
@@ -124,6 +133,14 @@ function _ruheSig(pid){
 // hieße, bei jedem Öffnen des Feeds die Liga zweimal zu rechnen.
 const _ruheStandMemo = new Map();
 function ruhestandStand(pid){
+  // Der gespeicherte Stand gilt, solange er zu diesem Karriereende gehört.
+  // Er kostet keine Rechnung: weder den Abdruck über die Partien noch die
+  // Zeitmaschine.
+  const g = _ruheGespeichert(pid);
+  if(g) return g.stand;
+  return _ruheStandGerechnet(pid);
+}
+function _ruheStandGerechnet(pid){
   const sig = _ruheSig(pid);
   const alt = _ruheStandMemo.get(pid);
   if(alt && alt.sig === sig) return alt.stand;
@@ -143,6 +160,76 @@ function ruhestandStand(pid){
   return stand;
 }
 
+// ── Der gespeicherte Stand ──────────────────────────────────────────────
+// Gültig ist er nur mit seiner Fassung und für genau dieses Karriereende:
+// wird `retired_at` von Hand geändert, gehört der Stand zu einem anderen
+// Zeitpunkt und wird neu gerechnet. Gemerkt je Spieler und Zeichenkette,
+// damit nicht jedes Lesen den JSON-Text neu zerlegt.
+const RUHE_STAND_FASSUNG = 1;
+const _ruheGespeichertMemo = new Map();
+function _ruheGespeichert(pid){
+  const p = _spielerVon(pid);
+  if(!p || !p.retired_stand || !imRuhestand(p)) return null;
+  const roh = p.retired_stand, t = ruhestandMs(p);
+  // Der Zeitpunkt gehört in den Merker: derselbe Text unter einem anderen
+  // Karriereende ist ein fremder Stand.
+  const merk = _ruheGespeichertMemo.get(p.id);
+  if(merk && merk.roh === roh && merk.t === t) return merk.wert;
+  let o = roh;
+  if(typeof roh === 'string'){ try { o = JSON.parse(roh); } catch(e){ o = null; } }
+  const wert = (o && o.v === RUHE_STAND_FASSUNG && o.stand && o.t === t) ? o : null;
+  _ruheGespeichertMemo.set(p.id, {roh, t, wert});
+  return wert;
+}
+
+// Die Auszeichnungen beim Karriereende. Sie kommen aus dem Katalog, und ein
+// neuer Katalog liest dieselben Partien anders: eine Auszeichnung, die es
+// beim Abschied nicht gab, stünde danach im Profil eines Spielers, der nie
+// wieder gespielt hat. Ohne gespeicherten Stand `null` — dann rechnet
+// `getCachedBadges` wie für jeden.
+function ruhestandAuszeichnungen(pid){
+  const g = _ruheGespeichert(pid);
+  return g && Array.isArray(g.badges) ? g.badges : null;
+}
+
+// Der Stand, der gespeichert wird: derselbe, den `ruhestandStand` rechnet,
+// und die Auszeichnungen bis zum Karriereende — mit demselben Schnitt, mit
+// dem das Prestige sie zählt (`prestigeTabelle(t)`), sonst stünde im Profil
+// eine andere Zahl als in der Laufbahn.
+function _ruheStandBauen(pid){
+  const t = ruhestandMs(pid);
+  if(!t) return null;
+  const stand = _ruheStandGerechnet(pid);
+  let badges = [];
+  try {
+    badges = _ruheRechnen(pid, () => computeBadges(pid, matches.filter(m => mts(m) <= t), t))
+      .map(b => ({id:b.id, em:b.em, ic:b.ic, name:b.name, desc:b.desc, count:b.count}));
+  } catch(e){ badges = []; }
+  return JSON.parse(JSON.stringify({v:RUHE_STAND_FASSUNG, t, stand, badges}));
+}
+
+// Ein Karriereende ohne gespeicherten Stand — aus der Zeit vor dieser
+// Spalte — bekommt ihn beim ersten Blick nachgetragen, einmal je Sitzung.
+// Nur, wenn die Spalte existiert: dann steht sie in der geladenen Zeile,
+// auch wenn sie leer ist. Ohne sie bleibt es beim Rechnen.
+const _ruheNachgetragen = new Set();
+function _ruheStandNachtragen(){
+  for(const p of (players || [])){
+    if(!imRuhestand(p) || !sichtbar(p) || !('retired_stand' in p)) continue;
+    if(_ruheGespeichert(p.id) || _ruheNachgetragen.has(p.id + '_' + p.retired_at)) continue;
+    _ruheNachgetragen.add(p.id + '_' + p.retired_at);
+    let wert = null;
+    try { wert = _ruheStandBauen(p.id); } catch(e){ wert = null; }
+    if(!wert) continue;
+    const bei = p.retired_at;
+    // Nur, solange dasselbe Karriereende gilt: ein anderes Gerät kann es
+    // in der Zwischenzeit zurückgenommen haben.
+    Promise.resolve(sb.from('players').update({retired_stand: wert}).eq('id', p.id).eq('retired_at', p.retired_at))
+      .then(r => { if(r && !r.error && p.retired_at === bei){ p.retired_stand = wert; } })
+      .catch(() => {});
+  }
+}
+
 // Ein Stand zu einem früheren Zeitpunkt, für ein Blatt aus der Zeit vor
 // dem Karriereende. Selten, also klein gemerkt.
 const _ruheBisMemo = new Map();
@@ -156,19 +243,36 @@ function _ruheBis(pid, bisMs, fn){
 }
 
 // ── Speichern ───────────────────────────────────────────────────────────
-// Gespeichert wird nur der Zeitpunkt (`players.retired_at`). Alles andere ist
-// eine Ableitung — sonst hätte ein Eintrag, den es beim Karriereende noch
-// nicht gab, keinen Stand, und eine bearbeitete alte Partie stünde neben
-// einem Profil, das sie nicht kennt.
+// Gespeichert werden der Zeitpunkt (`players.retired_at`) und der Stand in
+// diesem Moment (`players.retired_stand`). Gerechnet wird der Stand vor dem
+// Schreiben, mit dem Zeitpunkt schon am Spieler: beides geht in EINEM
+// Schreiben, damit es kein Karriereende ohne seinen Stand gibt. Fehlt die
+// Spalte des Stands (die Migration in datenbank/ ist älter), wird nur der
+// Zeitpunkt geschrieben — das Profil wird dann gerechnet wie bisher. Die
+// Rückkehr leert beides: ein späteres Karriereende hat seinen eigenen Stand.
 async function karriereSetzen(pid, beenden){
+  const p = pmap()[pid];
   const wert = beenden ? new Date().toISOString() : null;
-  const {error} = await sb.from('players').update({retired_at: wert}).eq('id', pid);
+  let stand = null;
+  if(beenden && p){
+    const alt = p.retired_at, altStand = p.retired_stand;
+    p.retired_at = wert; p.retired_stand = null;
+    try { stand = _ruheStandBauen(pid); } catch(e){ stand = null; }
+    finally { p.retired_at = alt; p.retired_stand = altStand; }
+  }
+  const spalteFehlt = e => /retired_stand/i.test(String((e && (e.message || e.details || e.code)) || ''));
+  let {error} = await sb.from('players').update({retired_at: wert, retired_stand: stand}).eq('id', pid);
+  let ohneStand = false;
+  if(error && spalteFehlt(error)){
+    ohneStand = true;
+    ({error} = await sb.from('players').update({retired_at: wert}).eq('id', pid));
+  }
   if(error){
     // 42703: die Spalte gibt es nicht — die Migration in datenbank/ fehlt.
     const fehlt = /retired_at|42703|column/i.test(String(error.message || error.code || ''));
     return {ok:false, fehlt, error};
   }
-  return {ok:true, wert};
+  return {ok:true, wert, ohneStand};
 }
 
 // ── Gelöscht wird nur, wer nie gespielt hat [§C40] ────────────────────

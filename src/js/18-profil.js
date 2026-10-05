@@ -838,7 +838,11 @@ const rankProgHtml = rInfo ? `
         : 'Die Verbindung zur Datenbank ist fehlgeschlagen.'});
       return;
     }
-    toast(beenden ? p.name + ' beendet die Karriere' : p.name + ' ist zurück', 'ok');
+    // Ohne die Spalte des Stands gilt das Karriereende trotzdem; das Profil
+    // wird dann aus den Partien gerechnet und folgt künftigen Fassungen der
+    // App. Das sagt der Hinweis, statt es still hinzunehmen.
+    toast(beenden ? p.name + ' beendet die Karriere' : p.name + ' ist zurück', 'ok',
+      beenden && r.ohneStand ? {sub:'Der Stand des Profils wird erst gespeichert, wenn datenbank/karriereende.sql ausgeführt ist.'} : undefined);
     closeSheet(true);
     await loadAll();
     // Wer gerade jemanden verabschiedet hat, sieht den Abschied sofort.

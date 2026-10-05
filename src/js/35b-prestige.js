@@ -349,6 +349,12 @@ function prestigeTabelle(bisMs){
   // [§C32] — sonst stünde im Profil eine Zahl, die nirgends nachzuzählen ist.
   aktive.forEach(p => {
     (seasonTitleHistory(p.id, bisMs) || []).forEach(r => {
+      // Im eigenen Stand eines Ruheständlers zählt der Monat seines
+      // Karriereendes nicht [§C40]: er lief noch, die Liga vergleicht ihn
+      // ohne ihn, und die Matrix im Profil zeigt seine Chronik nicht.
+      // Gezählt stand sie trotzdem im Prestige, eine Chronik mehr, als das
+      // Profil nennt.
+      if(p.id === _ruheGerechnet && seasonEnd(r.sid).getTime() > _ruheStichtag) return;
       if(r.title) roh[p.id].monat.push(
         {id:r.title.titleId, name:r.title.name, label:r.label, sid:r.sid});
     });

@@ -3667,6 +3667,40 @@ return JSON.stringify(funde,null,1);
      'wer Partien hat, wird nicht gelöscht: das Blatt bietet Karriereende und Ausblenden, ein Ruheständler nur das Ausblenden',
      JSON.stringify(weg));
 
+  // ── Keine Partie nach dem Karriereende [§C40] ─────────────────────
+  //    Das Bearbeiten einer Partie bot jeden Spieler an. Wer vor ihr
+  //    aufgehört hat, steht nicht zur Wahl; wer schon in ihr steht, bleibt
+  //    wählbar, und vor dem Karriereende gehört er dazu.
+  const bearb = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const r = JSON.parse(K(`(() => {
+      const ms = matches.slice().sort((a,b) => mts(a) - mts(b));
+      const mitte = mts(ms[Math.floor(ms.length / 2)]);
+      const p = players.find(x => ms.some(m => mts(m) > mitte && [m.a1,m.a2,m.b1,m.b2].includes(x.id)));
+      p.retired_at = new Date(mitte).toISOString(); invalidateCache();
+      const ohne = ms.find(m => mts(m) > mitte && ![m.a1,m.a2,m.b1,m.b2].includes(p.id));
+      const mit = ms.find(m => mts(m) > mitte && [m.a1,m.a2,m.b1,m.b2].includes(p.id));
+      const frueh = ms.find(m => mts(m) < mitte && ![m.a1,m.a2,m.b1,m.b2].includes(p.id));
+      const angeboten = m => { closeSheet(true); showEditMatch(m.id);
+        return !!document.querySelector('#sheet select[data-ep="A1"] option[value="' + p.id + '"]'); };
+      const out = {nachher: angeboten(ohne), drin: angeboten(mit), vorher: angeboten(frueh)};
+      // Auch gesetzt, etwa über ein altes Formular, speichert es nicht.
+      closeSheet(true); showEditMatch(ohne.id);
+      E.A1 = p.id; document.querySelector('#sheet [data-ep="A1"]').dispatchEvent(new Event('change'));
+      const sel = document.querySelector('#sheet select[data-ep="A1"]');
+      const o = document.createElement('option'); o.value = p.id; sel.appendChild(o); sel.value = p.id;
+      sel.dispatchEvent(new Event('change'));
+      out.gesperrt = document.getElementById('saveEdit').disabled;
+      out.hinweis = document.getElementById('editWarn').textContent;
+      closeSheet(true); p.retired_at = null; invalidateCache();
+      return JSON.stringify(out);
+    })()`));
+    return r;
+  });
+  ok(!bearb.nachher && bearb.drin && bearb.vorher && bearb.gesperrt && /Karriere/.test(bearb.hinweis),
+     'eine Partie nach dem Karriereende bietet den Ruheständler nicht an und speichert ihn nicht, eine davor schon',
+     JSON.stringify(bearb));
+
   // ── Der Positionsverlauf trägt das Titelrennen ───────────────────
   //    Das Titelrennen stand einmal als eigener Einblick über der
   //    Rangliste und war dieselbe Frage wie der Positionsverlauf darunter.

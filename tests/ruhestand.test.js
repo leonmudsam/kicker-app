@@ -55,7 +55,14 @@ globalThis.__written = [];
 globalThis.supabase = { createClient: () => ({
   from: (tbl) => ({
     upsert: async (row) => { globalThis.__written.push({tbl, row}); return {error:null}; },
-    update: () => ({ eq: async () => ({error:null}) }),
+    // Jedes Schreiben wird mitgeschrieben; `__updFehler` kann eine Antwort
+    // der Datenbank vorgeben (eine fehlende Spalte etwa).
+    update: (row) => {
+      globalThis.__written.push({tbl, upd:row});
+      const antwort = Promise.resolve({error: (globalThis.__updFehler && globalThis.__updFehler(row)) || null});
+      antwort.eq = () => antwort;
+      return {eq: () => antwort};
+    },
     select: () => ({ order: async () => ({data:[], error:null}),
       // Die Zählung der Partien eines Spielers fragt die Datenbank, nicht
       // die geladene Liste; hier steht dafür ein eigener Bestand.
@@ -191,7 +198,14 @@ ok(gleich(VOR.meister, NACH.meister), 'die Meister abgeschlossener Monate bleibe
 console.log('\n=== DAS PROFIL IST EINGEFROREN ===');
 ok(gleich(VOR.rang, NACH.rang), 'der Rang wie beim Abschied', NACH.rang && NACH.rang.label);
 ok(Math.abs(J(`rangPerzentil('${MARTIN}')`) - vorPerz) < 1e-9, 'das Perzentil wie beim Abschied');
-ok(gleich(VOR.prestige, NACH.prestige), 'Prestige, Stufe, Grad und Platz wie beim Abschied', NACH.prestige.punkte + ' P');
+// Auszeichnungen, Rekorde und Platz wie beim Abschied. Die Chroniken ohne
+// den Monat, der beim Abschied noch lief: die Liga vergleicht ihn ohne ihn,
+// und die Matrix im Profil zeigt ihn nicht [§C40].
+ok(NACH.prestige.teile.auszeichnung === VOR.prestige.teile.auszeichnung && NACH.prestige.teile.rekord === VOR.prestige.teile.rekord
+   && NACH.prestige.platz === VOR.prestige.platz && NACH.prestige.teile.monat <= VOR.prestige.teile.monat
+   && NACH.prestige.punkte === NACH.prestige.teile.auszeichnung + NACH.prestige.teile.monat + NACH.prestige.teile.rekord,
+   'Auszeichnungen, Rekorde und Platz wie beim Abschied, die Chroniken ohne den laufenden Monat',
+   VOR.prestige.punkte + ' vorher, ' + NACH.prestige.punkte + ' P eingefroren');
 ok(gleich(VOR.rekorde, NACH.rekorde), 'die Rekorde wie beim Abschied', NACH.rekorde.length + ' Rekorde');
 // Der Stand wird gemerkt und nicht bei jedem Aufruf neu gerechnet.
 ok(J(`ruhestandStand('${MARTIN}') === ruhestandStand('${MARTIN}')`), 'der eingefrorene Stand wird einmal gerechnet');
@@ -254,7 +268,7 @@ const NEU = stand();
 ok(!J(`Object.values(allChronicles(ruhestandMs('${MARTIN}')).byId).some(r => (r.pids||[]).includes('${MARTIN}'))`)
    && !J(`prestigeTabelle(ruhestandMs('${MARTIN}')).rang.includes('${MARTIN}')`),
    'auch mit Partien danach kommt der Schnitt am Karriereende aus der aktiven Liga');
-ok(gleich(VOR.prestige, NEU.prestige), 'Prestige unverändert nach Partien anderer');
+ok(gleich(NACH.prestige, NEU.prestige), 'Prestige unverändert nach Partien anderer');
 ok(gleich(VOR.rang, NEU.rang) && Math.abs(J(`rangPerzentil('${MARTIN}')`) - vorPerz) < 1e-9,
    'Rang und Perzentil unverändert nach Partien anderer', J(`rangPerzentil('${MARTIN}')`).toFixed(1) + ' %');
 ok(gleich(VOR.rekorde, NEU.rekorde), 'die Rekorde unverändert nach Partien anderer');
@@ -283,6 +297,82 @@ ok(J('Object.keys(getAllPlayerRanks())').includes(MARTIN), 'zurück in der Ewige
 K.eval(`matches = matches.filter(m => !/^neu/.test(m.id)); invalidateCache();`);
 ok(gleich(VOR.prestige, stand().prestige), 'ohne Partien in der Pause steht er mit genau dem Prestige von vorher da');
 
+console.log('\n=== DER GESPEICHERTE STAND ===');
+// Gerechnet hielt der eingefrorene Stand nur, solange die App dieselbe
+// blieb: ein neuer Eintrag im Katalog veränderte das Profil eines Spielers,
+// der nie wieder gespielt hat. Der Stand wird beim Karriereende gespeichert
+// und danach gelesen, nicht gerechnet.
+(async () => {
+  const schreibe = () => globalThis.__written.filter(w => w.upd);
+  const vorSchreiben = schreibe().length;
+  const r = await K.eval(`karriereSetzen('${MARTIN}', true)`);
+  const zeile = schreibe().slice(vorSchreiben)[0] || {};
+  const st = zeile.upd && zeile.upd.retired_stand;
+  ok(r.ok && !r.ohneStand && st && st.v === 1 && st.t === Date.parse(zeile.upd.retired_at)
+     && st.stand && st.stand.prestige && Array.isArray(st.badges) && st.badges.length > 5,
+     'das Karriereende schreibt Zeitpunkt und Stand in EINEM Schreiben',
+     JSON.stringify({ok:r.ok, t:st && st.t, badges:st && st.badges.length}));
+  // So, wie es die Datenbank zurückgibt: als Text-JSON.
+  K.eval(`pmap()['${MARTIN}'].retired_at = ${JSON.stringify(zeile.upd.retired_at)};
+          pmap()['${MARTIN}'].retired_stand = ${JSON.stringify(JSON.stringify(st))};
+          invalidateCache(); _ruheStandMemo.clear(); delete _cache._ruheSig;`);
+  const gespeichert = J(`(p=>({punkte:p.punkte,stufe:p.stufe,grad:p.grad,teile:p.teile}))(prestigeOf('${MARTIN}'))`);
+  // Das Prestige zählt die Chroniken, die das Profil zeigt [§C32]. Der Monat
+  // des Karriereendes war noch offen und vergleicht ohne ihn: seine
+  // vorläufige Chronik steht nicht in der Matrix, also auch nicht im Stand.
+  const matrix = J(`(seasonTitleHistory('${MARTIN}') || []).filter(r => r.title).map(r => r.sid)`);
+  ok(st.stand.prestige.zahlen.monat === matrix.length,
+     'der Stand zählt genau die Monatschroniken, die das Profil zeigt — ohne den Monat, der beim Abschied noch lief',
+     st.stand.prestige.zahlen.monat + ' gezählt, ' + matrix.length + ' in der Matrix (' + matrix.join(', ') + ')');
+  ok(gespeichert.punkte === st.stand.prestige.punkte && J(`_ruheStandMemo.size`) === 0 && !J(`!!_cache._ruheSig`),
+     'mit gespeichertem Stand rechnet weder der Abdruck über die Partien noch die Zeitmaschine', JSON.stringify(gespeichert));
+  // Eine neue Fassung der App: eine Auszeichnung, die jeder hat, der je
+  // gespielt hat, und ein höherer Startwert für die seltenen.
+  K.eval(`BADGES.push({id:'zz_neu', ic:'star', name:'Neu im Katalog', desc:'Eine Partie', count:(id, q) => q.some(m => [m.a1,m.a2,m.b1,m.b2].includes(id)) ? 1 : 0});
+          globalThis.__rareAlt = PRESTIGE_AUSZEICHNUNG.rare.start; PRESTIGE_AUSZEICHNUNG.rare.start += 40;
+          // Eine neue Fassung ist ein frischer Start: nichts ist gemerkt.
+          invalidateCache(); _ruheStandMemo.clear();`);
+  const andere = IDS.find(id => id !== MARTIN && J("getCachedBadges('" + id + "').length") > 0);
+  const nachher = J(`(p=>({punkte:p.punkte,stufe:p.stufe,grad:p.grad,teile:p.teile}))(prestigeOf('${MARTIN}'))`);
+  ok(J(`getCachedBadges('${andere}').some(b => b.id === 'zz_neu')`) && !J(`getCachedBadges('${MARTIN}').some(b => b.id === 'zz_neu')`)
+     && gleich(nachher, gespeichert) && gleich(J(`getCachedBadges('${MARTIN}').map(b=>b.id+b.count)`), st.badges.map(b => b.id + b.count)),
+     'eine neue Fassung der App verändert das Profil eines Ruheständlers nicht: keine neue Auszeichnung, dasselbe Prestige',
+     JSON.stringify({nachher:nachher.punkte, vorher:gespeichert.punkte}));
+  // Gegenprobe: ohne gespeicherten Stand folgt das Profil der neuen Fassung.
+  K.eval(`pmap()['${MARTIN}'].retired_stand = null; _ruheStandMemo.clear(); invalidateCache();`);
+  const gerechnet = J(`prestigeOf('${MARTIN}').punkte`);
+  ok(gerechnet !== gespeichert.punkte, 'ohne gespeicherten Stand hätte die neue Fassung das Prestige verschoben',
+     gespeichert.punkte + ' gespeichert, ' + gerechnet + ' gerechnet');
+  K.eval(`BADGES.pop(); PRESTIGE_AUSZEICHNUNG.rare.start = globalThis.__rareAlt; invalidateCache(); _ruheStandMemo.clear();`);
+  // Ein Stand gehört zu genau einem Karriereende.
+  K.eval(`pmap()['${MARTIN}'].retired_stand = ${JSON.stringify(JSON.stringify(st))};
+          pmap()['${MARTIN}'].retired_at = '2026-08-20T12:00:00Z'; invalidateCache();`);
+  ok(J(`ruhestandAuszeichnungen('${MARTIN}')`) === null, 'ein geändertes Karriereende verwirft den gespeicherten Stand');
+  // Ein Karriereende aus der Zeit vor der Spalte bekommt den Stand nachgetragen.
+  K.eval(`pmap()['${MARTIN}'].retired_at = ${JSON.stringify(zeile.upd.retired_at)}; pmap()['${MARTIN}'].retired_stand = null; invalidateCache();`);
+  const vorNach = schreibe().length;
+  K.eval(`_ruheStandNachtragen(); _ruheStandNachtragen();`);
+  const nach = schreibe().slice(vorNach);
+  ok(nach.length === 1 && nach[0].upd.retired_stand && nach[0].upd.retired_stand.t === st.t && !('retired_at' in nach[0].upd),
+     'ein Karriereende ohne Stand bekommt ihn einmal nachgetragen und behält seinen Zeitpunkt', String(nach.length));
+  // Fehlt die Spalte des Stands, gilt das Karriereende trotzdem.
+  K.eval(`pmap()['${MARTIN}'].retired_at = null; pmap()['${MARTIN}'].retired_stand = null; invalidateCache();`);
+  globalThis.__updFehler = row => 'retired_stand' in row ? {message:'column "retired_stand" of relation "players" does not exist', code:'42703'} : null;
+  const vorFehlt = schreibe().length;
+  const r2 = await K.eval(`karriereSetzen('${MARTIN}', true)`);
+  globalThis.__updFehler = null;
+  const w2 = schreibe().slice(vorFehlt);
+  ok(r2.ok && r2.ohneStand && w2.length === 2 && !('retired_stand' in w2[1].upd) && w2[1].upd.retired_at,
+     'ohne die Spalte des Stands wird nur der Zeitpunkt geschrieben, und der Hinweis sagt es', JSON.stringify(r2));
+  // Die Rückkehr leert beides.
+  const vorZur = schreibe().length;
+  const r3 = await K.eval(`karriereSetzen('${MARTIN}', false)`);
+  const w3 = schreibe().slice(vorZur)[0] || {};
+  ok(r3.ok && w3.upd && w3.upd.retired_at === null && w3.upd.retired_stand === null,
+     'die Rückkehr leert Zeitpunkt und Stand', JSON.stringify(w3.upd));
+  K.eval(`pmap()['${MARTIN}'].retired_at = null; pmap()['${MARTIN}'].retired_stand = null; invalidateCache();`);
+})().then(() => {
+
 console.log('\n=== LÖSCHEN NUR OHNE PARTIE ===');
 // Wer gespielt hat, trägt die Geschichte von drei anderen mit: gelöscht
 // stand in jeder Partie ein Fragezeichen. Gefragt wird die Datenbank, nicht
@@ -309,3 +399,4 @@ console.log('\n=== LÖSCHEN NUR OHNE PARTIE ===');
   console.log('\n' + (fails ? '✗ ' + fails + ' von ' + checks + ' CHECKS FEHLGESCHLAGEN' : '✓ ALLE ' + checks + ' CHECKS BESTANDEN'));
   process.exit(fails ? 1 : 0);
 })();
+});

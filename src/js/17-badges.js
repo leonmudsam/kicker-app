@@ -1161,6 +1161,10 @@ function countNemesis(id,ms){
 }
 
 function getCachedBadges(id){
+  // Ein Ruheständler trägt, was er beim Karriereende trug [§C40]: ein
+  // neuer Katalog liest seine Partien sonst anders als damals.
+  const ruhe = imRuhestand(id) ? ruhestandAuszeichnungen(id) : null;
+  if(ruhe) return ruhe;
   const key='badges_'+id+'_'+matches.length+'_'+_cache.version;
   if(!_cache._badges) _cache._badges={};
   if(_cache._badges[key]) return _cache._badges[key];

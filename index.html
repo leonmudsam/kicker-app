@@ -5504,7 +5504,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.05.f3d5b2f5';
+const BUILD_VERSION='2026.10.05.901cc6a6';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -7093,6 +7093,7 @@ async function _loadAllDurchlauf(){
     } catch(e){ console.warn('[news] sync failed', e); }
     try { if(window.newsBadgeRefresh) window.newsBadgeRefresh(); } catch(e){}
     setTimeout(autoZeigeAbschied, 900);
+    setTimeout(_ruheStandNachtragen, 2500);
     setTimeout(autoShowPotwRecap, 900);
   }catch(e){
     _lastLoadFingerprint=null; _lastLoadDay=null;
@@ -7423,6 +7424,7 @@ function potwHasData(){
 
 
 let _ruheStichtag = Infinity;
+let _ruheGerechnet = null;
 
 function _spielerVon(x){ return typeof x === 'string' ? pmap()[x] : x; }
 
@@ -7455,11 +7457,12 @@ function ruhestandSpieler(){
 
 function _ruheRechnen(pid, fn){
   const t = ruhestandMs(pid);
-  const altCache = _cache, altStichtag = _ruheStichtag;
+  const altCache = _cache, altStichtag = _ruheStichtag, altGerechnet = _ruheGerechnet;
   _cache = {version: altCache.version};
   _ruheStichtag = t - 1;
+  _ruheGerechnet = pid;
   try { return fn(t); }
-  finally { _cache = altCache; _ruheStichtag = altStichtag; }
+  finally { _cache = altCache; _ruheStichtag = altStichtag; _ruheGerechnet = altGerechnet; }
 }
 
 function _ruheSig(pid){
@@ -7486,6 +7489,11 @@ function _ruheSig(pid){
 
 const _ruheStandMemo = new Map();
 function ruhestandStand(pid){
+  const g = _ruheGespeichert(pid);
+  if(g) return g.stand;
+  return _ruheStandGerechnet(pid);
+}
+function _ruheStandGerechnet(pid){
   const sig = _ruheSig(pid);
   const alt = _ruheStandMemo.get(pid);
   if(alt && alt.sig === sig) return alt.stand;
@@ -7503,6 +7511,54 @@ function ruhestandStand(pid){
   return stand;
 }
 
+const RUHE_STAND_FASSUNG = 1;
+const _ruheGespeichertMemo = new Map();
+function _ruheGespeichert(pid){
+  const p = _spielerVon(pid);
+  if(!p || !p.retired_stand || !imRuhestand(p)) return null;
+  const roh = p.retired_stand, t = ruhestandMs(p);
+  const merk = _ruheGespeichertMemo.get(p.id);
+  if(merk && merk.roh === roh && merk.t === t) return merk.wert;
+  let o = roh;
+  if(typeof roh === 'string'){ try { o = JSON.parse(roh); } catch(e){ o = null; } }
+  const wert = (o && o.v === RUHE_STAND_FASSUNG && o.stand && o.t === t) ? o : null;
+  _ruheGespeichertMemo.set(p.id, {roh, t, wert});
+  return wert;
+}
+
+function ruhestandAuszeichnungen(pid){
+  const g = _ruheGespeichert(pid);
+  return g && Array.isArray(g.badges) ? g.badges : null;
+}
+
+function _ruheStandBauen(pid){
+  const t = ruhestandMs(pid);
+  if(!t) return null;
+  const stand = _ruheStandGerechnet(pid);
+  let badges = [];
+  try {
+    badges = _ruheRechnen(pid, () => computeBadges(pid, matches.filter(m => mts(m) <= t), t))
+      .map(b => ({id:b.id, em:b.em, ic:b.ic, name:b.name, desc:b.desc, count:b.count}));
+  } catch(e){ badges = []; }
+  return JSON.parse(JSON.stringify({v:RUHE_STAND_FASSUNG, t, stand, badges}));
+}
+
+const _ruheNachgetragen = new Set();
+function _ruheStandNachtragen(){
+  for(const p of (players || [])){
+    if(!imRuhestand(p) || !sichtbar(p) || !('retired_stand' in p)) continue;
+    if(_ruheGespeichert(p.id) || _ruheNachgetragen.has(p.id + '_' + p.retired_at)) continue;
+    _ruheNachgetragen.add(p.id + '_' + p.retired_at);
+    let wert = null;
+    try { wert = _ruheStandBauen(p.id); } catch(e){ wert = null; }
+    if(!wert) continue;
+    const bei = p.retired_at;
+    Promise.resolve(sb.from('players').update({retired_stand: wert}).eq('id', p.id).eq('retired_at', p.retired_at))
+      .then(r => { if(r && !r.error && p.retired_at === bei){ p.retired_stand = wert; } })
+      .catch(() => {});
+  }
+}
+
 const _ruheBisMemo = new Map();
 function _ruheBis(pid, bisMs, fn){
   const k = pid + '_' + bisMs + '_' + _ruheSig(pid);
@@ -7514,13 +7570,27 @@ function _ruheBis(pid, bisMs, fn){
 }
 
 async function karriereSetzen(pid, beenden){
+  const p = pmap()[pid];
   const wert = beenden ? new Date().toISOString() : null;
-  const {error} = await sb.from('players').update({retired_at: wert}).eq('id', pid);
+  let stand = null;
+  if(beenden && p){
+    const alt = p.retired_at, altStand = p.retired_stand;
+    p.retired_at = wert; p.retired_stand = null;
+    try { stand = _ruheStandBauen(pid); } catch(e){ stand = null; }
+    finally { p.retired_at = alt; p.retired_stand = altStand; }
+  }
+  const spalteFehlt = e => /retired_stand/i.test(String((e && (e.message || e.details || e.code)) || ''));
+  let {error} = await sb.from('players').update({retired_at: wert, retired_stand: stand}).eq('id', pid);
+  let ohneStand = false;
+  if(error && spalteFehlt(error)){
+    ohneStand = true;
+    ({error} = await sb.from('players').update({retired_at: wert}).eq('id', pid));
+  }
   if(error){
     const fehlt = /retired_at|42703|column/i.test(String(error.message || error.code || ''));
     return {ok:false, fehlt, error};
   }
-  return {ok:true, wert};
+  return {ok:true, wert, ohneStand};
 }
 
 async function spielerLoeschen(pid){
@@ -13541,6 +13611,8 @@ function countNemesis(id,ms){
 }
 
 function getCachedBadges(id){
+  const ruhe = imRuhestand(id) ? ruhestandAuszeichnungen(id) : null;
+  if(ruhe) return ruhe;
   const key='badges_'+id+'_'+matches.length+'_'+_cache.version;
   if(!_cache._badges) _cache._badges={};
   if(_cache._badges[key]) return _cache._badges[key];
@@ -14733,7 +14805,8 @@ const rankProgHtml = rInfo ? `
         : 'Die Verbindung zur Datenbank ist fehlgeschlagen.'});
       return;
     }
-    toast(beenden ? p.name + ' beendet die Karriere' : p.name + ' ist zurück', 'ok');
+    toast(beenden ? p.name + ' beendet die Karriere' : p.name + ' ist zurück', 'ok',
+      beenden && r.ohneStand ? {sub:'Der Stand des Profils wird erst gespeichert, wenn datenbank/karriereende.sql ausgeführt ist.'} : undefined);
     closeSheet(true);
     await loadAll();
     if(beenden && imRuhestand(id)){ _recapMarkSeen(_abschiedSchluessel(id), 'abschied:' + id); zeigeAbschied(id); }
@@ -16664,8 +16737,10 @@ function showEditMatch(mid){
   const gSim=getGlobalSim();
   const sortElo=p=>gSim.careerElo[p.id]??p.elo;
   const showElo=p=>Math.round(gSim.elo[p.id]??cfg.start_elo);
+  const drin=new Set([m.a1,m.a2,m.b1,m.b2]);
+  const zuSpaet=id=>!drin.has(id)&&imRuhestandAm(id,mts(m));
   const opts=sel=>`<option value="">Spieler…</option>`+
-    [...players].sort((a,b)=>sortElo(b)-sortElo(a)).map(p=>`<option value="${p.id}" ${E[sel]===p.id?'selected':''}>${esc(p.name)} · ${showElo(p)}</option>`).join('');
+    [...players].filter(p=>!zuSpaet(p.id)).sort((a,b)=>sortElo(b)-sortElo(a)).map(p=>`<option value="${p.id}" ${E[sel]===p.id?'selected':''}>${esc(p.name)} · ${showElo(p)}</option>`).join('');
   const pos=k=>`<select data-epos="${k}"><option value="atk" ${E['p'+k]==='atk'?'selected':''}>↑ Sturm</option><option value="def" ${E['p'+k]==='def'?'selected':''}>↓ Abwehr</option></select>`;
   const slot=(t,n)=>`<div class="slot">
     <div class="psel"><select data-ep="${t}${n}">${opts(t+n)}</select></div>
@@ -16695,7 +16770,9 @@ function showEditMatch(mid){
     const tie=E.sa===E.sb; const incomplete=ids.some(x=>!x);
     const samePosA=E.pA1===E.pA2, samePosB=E.pB1===E.pB2;
     let ok=true,msg='';
+    const spaet=ids.find(x=>x&&zuSpaet(x));
     if(incomplete){ok=false;}
+    else if(spaet){ok=false;msg=(pmap()[spaet]||{}).name+' hat die Karriere vor dieser Partie beendet.';}
     else if(dup){ok=false;msg='Ein Spieler steht doppelt.';}
     else if(tie){ok=false;msg='Unentschieden ist nicht möglich.';}
     else if(samePosA||samePosB){ok=false;msg='Jedes Team braucht Sturm + Abwehr.';}
@@ -16709,6 +16786,7 @@ function showEditMatch(mid){
     if(speichert) return;
     readE(); const ids=[E.A1,E.A2,E.B1,E.B2];
     if(ids.some(x=>!x)||new Set(ids).size!==4||E.sa===E.sb||E.pA1===E.pA2||E.pB1===E.pB2){toast('Eingabe unvollständig',true);return;}
+    if(ids.some(zuSpaet)){toast('Ein Spieler hat die Karriere vor dieser Partie beendet.',true);return;}
     const state=E,draft={...E},save=document.getElementById('saveEdit');
     speichert=true;save.disabled=true;save.setAttribute('aria-busy','true');
     toast('Speichere & berechne neu…');
@@ -31278,6 +31356,7 @@ function prestigeTabelle(bisMs){
 
   aktive.forEach(p => {
     (seasonTitleHistory(p.id, bisMs) || []).forEach(r => {
+      if(p.id === _ruheGerechnet && seasonEnd(r.sid).getTime() > _ruheStichtag) return;
       if(r.title) roh[p.id].monat.push(
         {id:r.title.titleId, name:r.title.name, label:r.label, sid:r.sid});
     });
@@ -32583,10 +32662,11 @@ function _backupMatchRows(){
   return rows;
 }
 function _backupPlayerRows(){
-  const rows = [['Spieler-ID','Name','Elo','Angriffs-Wert','Avatar','Ausgeblendet','Erstellt','Karriereende']];
+  const rows = [['Spieler-ID','Name','Elo','Angriffs-Wert','Avatar','Ausgeblendet','Erstellt','Karriereende','Stand beim Karriereende']];
   for(const p of players){
+    const stand = p.retired_stand ? (typeof p.retired_stand === 'string' ? p.retired_stand : JSON.stringify(p.retired_stand)) : '';
     rows.push([p.id, p.name, Number(p.elo) || 0, Number(p.atk) || 0,
-               p.avatar_id || '', p.hidden ? 'ja' : 'nein', p.created_at || '', p.retired_at || '']);
+               p.avatar_id || '', p.hidden ? 'ja' : 'nein', p.created_at || '', p.retired_at || '', stand]);
   }
   return rows;
 }
@@ -32831,7 +32911,11 @@ async function startBackupImport(){
         hidden: /^(ja|true|1)$/i.test(_col(row, pidx, 'Ausgeblendet', 'hidden'))
       };
       const ruhe = _col(row, pidx, 'Karriereende', 'retired_at');
-      if(ruhe && isFinite(Date.parse(ruhe))) entry.retired_at = ruhe;
+      if(ruhe && isFinite(Date.parse(ruhe))){
+        entry.retired_at = ruhe;
+        const stand = _col(row, pidx, 'Stand beim Karriereende', 'retired_stand');
+        if(stand){ try { entry.retired_stand = JSON.parse(stand); } catch(e){} }
+      }
       neueSpieler.push(entry);
       if(pid) extra[nm.toLowerCase()] = pid;
     }
@@ -32922,7 +33006,10 @@ async function _applyBackupImport(){
       }
     } else {
       if(p.neueSpieler.length){
-        const {error} = await sb.from('players').insert(p.neueSpieler);
+        let {error} = await sb.from('players').insert(p.neueSpieler);
+        if(error && /retired_stand/i.test(String(error.message || ''))){
+          ({error} = await sb.from('players').insert(p.neueSpieler.map(x => { const y = Object.assign({}, x); delete y.retired_stand; return y; })));
+        }
         if(error) throw new Error('Spieler: ' + error.message);
         addedP = p.neueSpieler.length;
         invalidateCache();
