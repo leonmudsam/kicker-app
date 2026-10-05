@@ -3894,6 +3894,51 @@ return JSON.stringify(funde,null,1);
      'die Story des Spielers des Tages und der Woche öffnet per Knopf den Rückblick ihres Tages und ihrer Woche',
      JSON.stringify(knopf).slice(0, 240));
 
+  // ── Der Tafel-Moment: der Tag als Achse, die Zeile als Weg ──────────
+  //    Oben stand je Spieler eine Zeile mit seinen Bewegungen — dieselbe
+  //    Aussage wie die Liste darunter. Jetzt steht dort der Spieltag als
+  //    Achse, und keine Säule ragt bei 360 px aus ihr heraus. Eine Zeile der
+  //    Liste führte ins Profil; sie öffnet jetzt das Blatt ihres Eintrags.
+  await page.setViewportSize({width:360, height:780});
+  const moment = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    K(`_cache._stories=_buildStories().sort((a,b)=>new Date(b.when)-new Date(a.when));_cache._consolFrom=null;_cache._frischVon=null;'x'`);
+    const id = K(`(getStoriesCache().find(s=>(s.dataRef||{}).type==='sammel'&&s.dataRef.quelle==='tafel')||{}).id||''`);
+    if(!id) return null;
+    const auf = () => K(`closeSheet(true); openNewsFeed(); openNewsDetail(${JSON.stringify(id)}); 'x'`);
+    auf();
+    const nd = document.getElementById('nd');
+    const f = nd.querySelector('.nd-ta-f');
+    const fr = f ? f.getBoundingClientRect() : null;
+    const raus = f ? [...f.querySelectorAll('.nd-ta-s')].filter(x => {
+      const r = x.getBoundingClientRect();
+      return r.left < fr.left - 0.5 || r.right > fr.right + 0.5 || r.top < fr.top - 0.5;
+    }).length : -1;
+    const out = {achse:!!f, saeulen:f ? f.querySelectorAll('.nd-ta-s').length : 0, raus,
+      gesichter:nd.querySelectorAll('.nd-ta .av').length, wege:[]};
+    const sh = document.getElementById('sheet');
+    for(const art of ['chron', 'disz', 'laufbahn']){
+      auf();
+      const z = document.querySelector(`#nd .nw-tz[data-${art}]`);
+      if(!z) continue;
+      const wert = z.getAttribute('data-' + art);
+      const soll = art === 'chron' ? K(`CHRONICLE_BY_ID[${JSON.stringify(wert)}].name`)
+        : art === 'disz' ? K(`SEASON_TITLE_BY_ID[${JSON.stringify(wert.split('|')[0])}].name`)
+        : 'Laufbahn';
+      z.click();
+      for(let t = 0; t < 30 && sh.textContent.indexOf(soll) < 0; t++) await new Promise(r => setTimeout(r, 100));
+      out.wege.push({art, soll, auf:sh.textContent.indexOf(soll) >= 0, profil:!!sh.querySelector('.pp-header')});
+    }
+    K('closeSheet(true)');
+    return out;
+  });
+  ok(moment && moment.achse && moment.saeulen > 0 && moment.raus === 0 && moment.gesichter === 0,
+     'der Tafel-Moment zeigt oben den Spieltag als Achse ohne Gesichter, und keine Säule ragt bei 360 px hinaus',
+     JSON.stringify(moment));
+  ok(moment && moment.wege.some(w => w.art === 'chron') && moment.wege.every(w => w.auf && !w.profil),
+     'eine Zeile des Tafel-Moments öffnet das Blatt ihres Rekords, ihrer Chronik oder die Laufbahn statt des Profils',
+     JSON.stringify(moment && moment.wege));
+
   await page.setViewportSize({width:430, height:932});
 
   console.log('\n' + '═'.repeat(60));

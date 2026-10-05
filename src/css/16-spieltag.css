@@ -843,32 +843,36 @@
 }
 
 /* ── Der Tafel-Moment [§C33] ──────────────────────────────────────── */
-/* Jede Bewegung als Zeichen auf der Uhr des Tages, von der ersten bis zur
-   jüngsten, darunter jeder, um den es geht. Die Farbe des Zeichens sagt die
-   Art: Gold die Bestmarke und die Chronik, Silber der Ausbau, Violett die
-   Stufe [§C25]. */
-.nd-tw{display:flex;flex-direction:column;align-items:stretch;gap:10px}
-.nd-tw-k{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px}
-.nd-tw-k > b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:36px;line-height:1;color:var(--silber)}
-.nd-tw-k > span{font:600 9px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink2)}
-.nd-tw-k > small{margin-left:auto;font-size:10px;color:var(--muted)}
-.nd-tw-l{display:flex;flex-direction:column;gap:1px;border-radius:12px;overflow:hidden;background:var(--line)}
-.nd-tw-z{display:grid;grid-template-columns:30px minmax(0,1fr);grid-template-areas:"av m" "av i";gap:3px 10px;
-  align-items:center;padding:9px 12px;background:var(--surface);cursor:pointer}
-.nd-tw-z > .av{--av:30px;grid-area:av;align-self:start}
-.nd-tw-m{grid-area:m;display:flex;flex-direction:column;min-width:0}
-.nd-tw-m b{font-size:13px;font-weight:700;color:var(--ink)}
-.nd-tw-m small{font-size:11px;color:var(--ink2);line-height:1.3}
-.nd-tw-z.nur-aus .nd-tw-m b,.nd-tw-z.nur-weg .nd-tw-m b{color:var(--ink2);font-weight:600}
-.nd-tw-i{grid-area:i;display:flex;flex-wrap:wrap;gap:4px}
-.nd-tw-i > i{display:grid;place-items:center;width:22px;height:22px;border-radius:7px;
-  background:rgba(247,207,74,.13);box-shadow:inset 0 0 0 1px rgba(247,207,74,.5);color:var(--gold)}
-.nd-tw-i > i svg{width:13px;height:13px}
-.nd-tw-i > i.tw-aus{background:rgba(194,201,208,.1);box-shadow:inset 0 0 0 1px rgba(194,201,208,.4);color:var(--silber)}
-.nd-tw-i > i.tw-ins{background:rgba(167,139,250,.14);box-shadow:inset 0 0 0 1px rgba(167,139,250,.5);color:var(--purple)}
-.nd-tw-i > i.tw-weg{background:transparent;box-shadow:inset 0 0 0 1px rgba(240,86,106,.55);color:var(--red);opacity:.85}
+/* Der Spieltag als Achse: die Partien als Striche darunter, darüber jede
+   Bewegung als Punkt in der Farbe ihrer Art — Gold Bestmarke und Chronik,
+   Silber der Ausbau, Violett die Stufe [§C25]. Wer was bewegt hat, steht in
+   der Liste darunter; hier stünde es ein zweites Mal. */
+.nd-ta{display:flex;flex-direction:column;align-items:stretch;gap:8px}
+.nd-ta-k{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px}
+.nd-ta-k > b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:36px;line-height:1;color:var(--silber)}
+.nd-ta-k > span{font:600 9px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink2)}
+.nd-ta-f{position:relative;height:calc(26px + var(--h,1) * 12px);margin:4px 6px 0}
+.nd-ta-a{position:absolute;left:0;right:0;bottom:8px;height:2px;border-radius:2px;
+  background:linear-gradient(90deg,rgba(194,201,208,.08),rgba(194,201,208,.35) 12%,rgba(194,201,208,.35) 88%,rgba(194,201,208,.08))}
+.nd-ta-p{position:absolute;bottom:6px;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:var(--surface);box-shadow:inset 0 0 0 1.5px rgba(194,201,208,.4)}
+.nd-ta-p.an{background:var(--silber);box-shadow:0 0 6px rgba(194,201,208,.5)}
+.nd-ta-s{position:absolute;bottom:18px;display:flex;flex-direction:column-reverse;align-items:center;gap:3px;transform:translateX(-50%)}
+.nd-ta-s::after{content:"";position:absolute;bottom:-6px;left:50%;width:1px;height:5px;margin-left:-.5px;background:rgba(194,201,208,.5)}
+.nd-ta-s i{display:block;width:9px;height:9px;border-radius:3px;background:var(--gold);box-shadow:0 0 8px rgba(247,207,74,.45)}
+.nd-ta-s i.ta-chr{background:transparent;box-shadow:inset 0 0 0 2px var(--gold),0 0 6px rgba(247,207,74,.3)}
+.nd-ta-s i.ta-aus{background:var(--silber);box-shadow:none;opacity:.75}
+.nd-ta-s i.ta-ins{background:var(--purple);box-shadow:0 0 8px rgba(167,139,250,.5)}
+.nd-ta-s b{display:block;font:600 9px/9px 'Sometype Mono',monospace;color:var(--ink2)}
+.nd-ta-u{display:flex;justify-content:space-between;margin:0 2px;font-size:10px;color:var(--muted)}
+.nd-ta-u span:nth-child(2){color:var(--ink2)}
+.nd-ta-l{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:10.5px;color:var(--ink2)}
+.nd-ta-l span{display:inline-flex;align-items:center;gap:5px}
+.nd-ta-l i{display:block;width:8px;height:8px;border-radius:2.5px;background:var(--gold)}
+.nd-ta-l .ta-chr i{background:transparent;box-shadow:inset 0 0 0 1.5px var(--gold)}
+.nd-ta-l .ta-aus i{background:var(--silber);opacity:.75}
+.nd-ta-l .ta-ins i{background:var(--purple)}
 @media (prefers-reduced-motion:no-preference){
-  .nd-tw-z{animation:ndMarke .4s cubic-bezier(.2,.9,.3,1) both;animation-delay:calc(.15s + var(--k,0) * 60ms)}
+  .nd-ta-s i{animation:ndMarke .4s cubic-bezier(.2,.9,.3,1) both;animation-delay:calc(.15s + var(--k,0) * 70ms)}
 }
 @keyframes ndMarke{from{opacity:0;transform:translateY(6px)}}
 /* Eine Zeile der Tafel: Zeichen, Eintrag und wer was tat, rechts der Wechsel

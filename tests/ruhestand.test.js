@@ -251,9 +251,28 @@ ok(gleich(VOR.rang, NEU.rang) && Math.abs(J(`rangPerzentil('${MARTIN}')`) - vorP
 ok(gleich(VOR.rekorde, NEU.rekorde), 'die Rekorde unverändert nach Partien anderer');
 
 console.log('\n=== DIE RÜCKKEHR ===');
-K.eval(`matches = matches.filter(m => !/^neu/.test(m.id)); pmap()['${MARTIN}'].retired_at = null; invalidateCache();`);
+// Wer zurückkehrt, steht in der Liga von HEUTE, nicht im Stand seines
+// Abschieds: die Rekorde haben sich in der Pause weiterbewegt. Die sechzig
+// Siege der beiden anderen schlagen einen Teil seiner Bestwerte, und andere
+// Werte werden seine, weil das Feld dort schwächer geworden ist. Was er
+// selbst geholt hat — Auszeichnungen und Monatschroniken —, bleibt.
+K.eval(`pmap()['${MARTIN}'].retired_at = null; invalidateCache();`);
 ok(J('Object.keys(getAllPlayerRanks())').includes(MARTIN), 'zurück in der Ewigen Tafel');
-ok(gleich(VOR.prestige, stand().prestige), 'mit genau dem Prestige von vorher');
+{
+  const Z = stand();
+  const live = J(`Object.values(allChronicles().byId).filter(r => (r.pids||[]).includes('${MARTIN}')).map(r => r.id)`);
+  const weg = VOR.rekorde.filter(x => !Z.rekorde.includes(x));
+  ok(weg.length > 0 && gleich(Z.rekorde.slice().sort(), live.slice().sort()),
+     'nach der Rückkehr hält er die Rekorde, die ihm heute gehören, nicht die vom Abschied',
+     'weg: ' + weg.join(', ') + ' · neu: ' + Z.rekorde.filter(x => !VOR.rekorde.includes(x)).join(', '));
+  ok(Z.prestige.teile.auszeichnung === VOR.prestige.teile.auszeichnung && Z.prestige.teile.monat === VOR.prestige.teile.monat
+     && Z.prestige.teile.rekord !== VOR.prestige.teile.rekord
+     && Z.prestige.punkte === Z.prestige.teile.auszeichnung + Z.prestige.teile.monat + Z.prestige.teile.rekord,
+     'sein Prestige rechnet die Rekorde neu, Auszeichnungen und Chroniken bleiben',
+     VOR.prestige.punkte + ' beim Abschied, ' + Z.prestige.punkte + ' zurück');
+}
+K.eval(`matches = matches.filter(m => !/^neu/.test(m.id)); invalidateCache();`);
+ok(gleich(VOR.prestige, stand().prestige), 'ohne Partien in der Pause steht er mit genau dem Prestige von vorher da');
 
 console.log('\n' + (fails ? '✗ ' + fails + ' von ' + checks + ' CHECKS FEHLGESCHLAGEN' : '✓ ALLE ' + checks + ' CHECKS BESTANDEN'));
 process.exit(fails ? 1 : 0);
