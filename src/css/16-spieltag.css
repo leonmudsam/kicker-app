@@ -779,6 +779,69 @@
 .nd-ce > em{font-style:normal;font-size:11px;font-weight:600;color:var(--ink2);text-align:right}
 .nd-ce > em.g{color:var(--acid)}
 
+/* ── Ein Wappen und eine Zahl [§C33] ──────────────────────────────── */
+.nd-hz{display:flex;flex-direction:column;align-items:stretch;gap:10px}
+.nd-hz-k{display:flex;align-items:center;gap:14px}
+.nd-hz-k > span[data-pid]{cursor:pointer;flex:0 0 auto}
+.nd-hz-t{display:flex;flex-direction:column;min-width:0}
+.nd-hz-t em{font-style:normal;font-size:13px;font-weight:600;color:var(--ink2)}
+.nd-hz-t b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:40px;line-height:1.05;color:var(--gold)}
+.nd-hz.neg .nd-hz-t b{color:var(--red)}
+.nd-hz-t small{font:600 9px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+.nd-hz .sp-tg{margin:0}
+.nd-hz-lf{justify-content:center}
+.nd-hz-lf i{width:14px;height:18px}
+/* Die Leiter einer Marke: davor erreicht, diese in Gold, die nächste offen. */
+.nd-ml{display:flex;align-items:center;justify-content:center;gap:0}
+.nd-ml > i{flex:0 1 22px;height:2px;background:rgba(194,201,208,.3)}
+.nd-ml > span{display:grid;place-items:center;min-width:44px;height:28px;padding:0 8px;border-radius:99px;
+  background:var(--surface2);font-size:11px;color:var(--ink2)}
+.nd-ml > span.jetzt{background:rgba(247,207,74,.16);box-shadow:inset 0 0 0 1.5px var(--gold),0 0 16px -4px rgba(247,207,74,.7);color:var(--gold)}
+.nd-ml > span.naechst{background:transparent;box-shadow:inset 0 0 0 1px var(--line2);color:var(--muted)}
+.nd-bb{margin-bottom:6px}
+.nd-bb-b{display:flex;height:12px;border-radius:6px;overflow:hidden;gap:2px}
+.nd-bb-b i{display:block;background:rgba(190,242,100,.75)}
+.nd-bb-b u{display:block;background:rgba(240,86,106,.6)}
+.nd-bb-z{display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--muted)}
+.nd-bb-z b{color:var(--ink)}
+.nd-el .nd-li-0{stroke-dasharray:4 4}
+/* Die Form gegen den eigenen Schnitt. */
+.nd-fv{display:flex;flex-direction:column;gap:6px}
+.nd-fv-z{display:grid;grid-template-columns:62px minmax(0,1fr) 42px;align-items:center;gap:8px;font-size:10.5px;color:var(--muted)}
+.nd-fv-b{height:10px;border-radius:5px;background:var(--surface2);overflow:hidden}
+.nd-fv-b i{display:block;height:100%;border-radius:5px;background:rgba(194,201,208,.45)}
+.nd-fv-z.jetzt .nd-fv-b i{background:var(--acid)}
+.nd-fv-z.jetzt{color:var(--ink)}
+.nd-fv-z b{text-align:right;color:var(--ink)}
+/* Das Spitzenspiel: Platz eins gegen Platz zwei, das Ergebnis dazwischen. */
+.nd-ts{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px}
+.nd-ts-p{display:flex;flex-direction:column;align-items:center;gap:4px;opacity:.6;cursor:pointer;text-align:center}
+.nd-ts-p.w{opacity:1}
+.nd-ts-p > i{font-style:normal;font-family:'Archivo Black',sans-serif;font-size:13px;color:var(--muted)}
+.nd-ts-p.w > i{color:var(--gold)}
+.nd-ts-p > b{font-size:12.5px;color:var(--ink)}
+.nd-ts-m{display:flex;flex-direction:column;align-items:center;gap:4px}
+.nd-ts-m > b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:34px;line-height:1;color:var(--muted)}
+.nd-ts-m > b em{font-style:normal}
+.nd-ts-m > b em.w{color:var(--acid)}
+.nd-ts-m > b i{font-style:normal;margin:0 2px}
+.nd-ts-m small{font-size:10px;color:var(--muted)}
+/* Die runden Marken eines Tages als Kacheln. */
+.nd-bm{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.nd-bm-k{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 8px;border-radius:14px;text-align:center;
+  background:var(--surface2);cursor:pointer}
+.nd-bm-ic{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;color:var(--purple);
+  box-shadow:inset 0 0 0 1.5px rgba(167,139,250,.5);background:rgba(167,139,250,.1)}
+.nd-bm-ic svg{width:20px;height:20px}
+.nd-bm-k > b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:24px;line-height:1.1;color:var(--ink)}
+.nd-bm-k > em{font-style:normal;font-size:11.5px;font-weight:600;color:var(--ink2)}
+.nd-bm-w{display:flex;align-items:center;gap:5px;margin-top:3px}
+.nd-bm-w > .av{--av:20px;width:20px;height:20px;font-size:8px}
+.nd-bm-w small{font-size:10.5px;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){
+  .nd-bm-k{animation:spDa .35s ease-out both;animation-delay:calc(.15s + var(--k,0) * 60ms)}
+}
+
 /* ── Der Tafel-Moment [§C33] ──────────────────────────────────────── */
 /* Jede Bewegung als Zeichen auf der Uhr des Tages, von der ersten bis zur
    jüngsten, darunter jeder, um den es geht. Die Farbe des Zeichens sagt die

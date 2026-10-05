@@ -55,6 +55,9 @@ function openNewsDetail(sid){
   // zur nächsten; der Satz zählte dieselben Zahlen davor auf.
   if(body.indexOf('nd-is') >= 0) lead = lead.split(/(?<=\.)\s+/)
     .filter(x => !/(Prestige zusammen|bis zum .+ fehlen|^Zuletzt stand die Stufe)/.test(x)).join(' ');
+  // Die Form zeigt beide Quoten als Balken; der Satz bestand nur aus ihnen.
+  if(body.indexOf('nd-fv') >= 0) lead = lead.split(/(?<=\.)\s+/)
+    .filter(x => !/(aus den letzten \d+ Partien|Laufbahn davor sind es)/.test(x)).join(' ');
   // Die Monatstafel zeigt Einträge und Träger als Säulen.
   if(body.indexOf('nd-mo') >= 0) lead = lead.split(/(?<=\.)\s+/)
     .filter(x => !/(Einträge? (gehen|geht|stehen|steht)|^Vorn steh)/.test(x)).join(' ');
@@ -1396,6 +1399,132 @@ function _ndTafelZeileBild(t){
     + (wert ? `<b class="nd-tz-v num">${alt ? `<s>${esc(alt)}</s> ` : ''}${esc(wert)}</b>` : '')};
 }
 
+// ── Ein Wappen und eine Zahl [§C33] ─────────────────────────────────
+// Meilenstein, Jubiläum, Form und Ausschlag erzählen von EINEM Spieler und
+// EINER Zahl. Ihre Blätter zeigten das Wappen im Kopf und die Zahl darunter
+// in einem Kasten oder einer Zeile; die Bühne stellt beides zusammen.
+function _ndHeldBuehne(pid, wert, label, neg, extra){
+  const pm = pmap();
+  return `<div class="nd-buehne nd-hz${neg ? ' neg' : ''}"><div class="nd-hz-k"><span data-pid="${esc(pid)}">${avHtml(pm[pid], '', {ins:true, px:64, feuer:0})}</span>`
+    + `<span class="nd-hz-t"><em>${esc(_spName(pid))}</em><b class="num">${esc(String(wert))}</b><small>${esc(label)}</small></span></div>`
+    + (extra || '') + `</div>`;
+}
+// Die Leiter einer Marke: zwei davor, diese, die nächste. Dieselbe Leiter,
+// nach der der Generator die Marke vergibt (`_ladderCrossing`).
+function _ndMarkenLeiter(wert, min, schritt){
+  const marken = [];
+  if(schritt){ for(let v = min; v <= wert + schritt; v += schritt) marken.push(v); }
+  else { let p = 1; while(p <= wert * 10){ [1, 2.5, 5].forEach(r => { const v = r * p; if(Number.isInteger(v) && v >= min && v <= wert * 10) marken.push(v); }); p *= 10; } }
+  marken.sort((a, b) => a - b);
+  const i = marken.indexOf(wert);
+  if(i < 0) return '';
+  const zeig = marken.slice(Math.max(0, i - 2), i + 2);
+  return `<div class="nd-ml">${zeig.map(v => `<span class="${v < wert ? 'da' : v === wert ? 'jetzt' : 'naechst'}"><b class="num">${_spZahl(v)}</b></span>`).join('<i></i>')}</div>`;
+}
+// Siege und Niederlagen bis zu einer Partie als ein Balken.
+function _ndBilanzBalken(st){
+  if(!st || !(st.wins + st.losses)) return '';
+  const n = st.wins + st.losses, w = st.wins / n * 100;
+  return `<div class="nd-bb"><span class="nd-bb-b"><i style="width:${w.toFixed(1)}%"></i><u style="width:${(100 - w).toFixed(1)}%"></u></span>`
+    + `<span class="nd-bb-z"><span><b class="num">${_spZahl(st.wins)}</b> Siege</span><span><b class="num">${st.winRate} %</b></span><span><b class="num">${_spZahl(st.losses)}</b> Niederlagen</span></span></div>`;
+}
+// Die Elo einer Laufbahn bis zu einer Partie als Linie, die Marke gestrichelt.
+function _ndEloLinie(pid, bisId, marke){
+  let pkt = [];
+  try {
+    for(const h of (getGlobalSim().history || [])){
+      const v = h.eloAfter && h.eloAfter[pid];
+      if(v != null) pkt.push(v);
+      if(h.matchId === bisId) break;
+    }
+  } catch(e){ pkt = []; }
+  if(pkt.length < 3) return '';
+  const lo = Math.min(...pkt, marke), hi = Math.max(...pkt, marke), W = 300, H = 90;
+  const X = i => 4 + i / (pkt.length - 1) * (W - 8), Y = v => 6 + (hi - v) / Math.max(1, hi - lo) * (H - 12);
+  return `<div class="nd-li nd-el"><svg viewBox="0 0 ${W} ${H}" aria-hidden="true"><line class="nd-li-0" x1="0" x2="${W}" y1="${Y(marke).toFixed(1)}" y2="${Y(marke).toFixed(1)}"/>`
+    + `<polyline points="${pkt.map((v, i) => X(i).toFixed(1) + ',' + Y(v).toFixed(1)).join(' ')}"/>`
+    + `<circle cx="${X(pkt.length - 1).toFixed(1)}" cy="${Y(pkt[pkt.length - 1]).toFixed(1)}" r="3.5"/></svg>`
+    + `<span class="nd-li-o num">${_spZahl(marke)}</span></div>`;
+}
+function _ndMeilensteinBlatt(s){
+  const d = s.dataRef || {}, pm = pmap(), pid = d.pid;
+  if(!pid || !pm[pid]) return null;
+  const art = {jubilee:['Partien', 10, 0], milestone_wins:['Siege', 100, 0], milestone_goals:['Tore', 500, 0],
+    milestone_elo:['Elo', (cfg.start_elo ?? 1000) + 200, 100]}[d.type];
+  const wert = d.type === 'jubilee' ? Number(d.total) : d.type === 'milestone_elo' ? Number(d.mark) || parseInt(d.milestone, 10) : parseInt(d.milestone, 10);
+  if(!art || !Number.isFinite(wert)) return null;
+  const kopf = _ndHeldBuehne(pid, _spZahl(wert), art[0], false, _ndMarkenLeiter(wert, art[1], art[2]));
+  const st = _ndBilanzBis(pid, s);
+  const ab = (t, html) => html ? `<div class="nd-section">${esc(t)}</div>${html}` : '';
+  const m = d.matchId ? (matches || []).find(x => x.id === d.matchId) : null;
+  return {kopf, mitte:(d.type === 'milestone_elo' ? ab('Die Elo bis hierher', _ndEloLinie(pid, d.matchId, wert)) : '')
+    + ab('Die Bilanz bis hierher', _ndBilanzBalken(st))
+    + (m ? ab('Die Partie', _newsMatchVsBlock(d.matchId)) : '')};
+}
+// Die Form gegen den eigenen Schnitt: zwei Balken, und darunter die zehn
+// Partien, aus denen die erste Zahl besteht.
+function _ndFormBlatt(s){
+  const d = s.dataRef || {}, pm = pmap(), pid = d.pid;
+  if(!pid || !pm[pid] || d.qJetzt == null || d.qBasis == null) return null;
+  const m = d.matchId ? (matches || []).find(x => x.id === d.matchId) : null;
+  const lauf = m ? _ndLauf(pid, null, m, FORM_FENSTER) : [];
+  const zeile = (l, q, kl) => `<div class="nd-fv-z ${kl}"><span>${esc(l)}</span><span class="nd-fv-b"><i style="width:${Math.max(0, Math.min(100, q))}%"></i></span><b class="num">${q} %</b></div>`;
+  const extra = `<div class="nd-fv">${zeile('letzte ' + FORM_FENSTER, d.qJetzt, 'jetzt')}${zeile('davor', d.qBasis, '')}</div>`
+    + (lauf.length ? `<span class="nd-lf nd-hz-lf">${lauf.map((y, j) => `<i class="${_spGew(y, pid) ? 'w' : 'l'}${j === lauf.length - 1 ? ' dies' : ''}"></i>`).join('')}</span>` : '');
+  const kopf = _ndHeldBuehne(pid, '+' + (d.vorsprung != null ? d.vorsprung : d.qJetzt - d.qBasis), 'Prozentpunkte über dem eigenen Schnitt', false, extra);
+  const ab = (t, html) => html ? `<div class="nd-section">${esc(t)}</div>${html}` : '';
+  return {kopf, mitte:ab('Die zehn Partien', lauf.length ? _ndPartieListe(lauf, pid) : '')};
+}
+// Der härteste Tag: die Elo des Tages als Kurve unter der Zahl, darunter
+// der Tag in Partien.
+function _ndAusschlagBlatt(s){
+  const d = s.dataRef || {}, pm = pmap(), pid = d.pid;
+  if(!pid || !pm[pid] || d.delta == null) return null;
+  let kurve = '';
+  try { kurve = _spTagBild(_spTagDaten({when:s.when, dataRef:{playerId:pid}})); } catch(e){}
+  const kopf = _ndHeldBuehne(pid, (d.delta > 0 ? '+' : '−') + Math.abs(d.delta), 'Elo an diesem Tag', d.delta < 0, kurve);
+  const liste = _newsTagPartien(tagKey(s.when), [pid]);
+  const ab = (t, html) => html ? `<div class="nd-section">${esc(t)}</div>${html}` : '';
+  return {kopf, mitte:ab('Der Tag in Partien', _ndTagesbahn(pid, liste))};
+}
+// ── Das Spitzenspiel [§C33] ─────────────────────────────────────────
+// Platz 1 gegen Platz 2 stand als zwei Zeilen „Platz 1 · Martin ›". Die
+// Bühne zeigt beide mit ihrem Platz und das Ergebnis dazwischen, den Sieger
+// hell; darunter dieselben Abschnitte wie das Blatt jeder Partie.
+function _ndSpitzenspielBlatt(s){
+  const d = s.dataRef || {}, pm = pmap();
+  const m = d.matchId ? (matches || []).find(x => x.id === d.matchId) : null;
+  if(!m || !pm[d.p1] || !pm[d.p2]) return null;
+  const sieger = _spSieger(m);
+  const seite = (pid, platz) => `<span class="nd-ts-p${sieger.includes(pid) ? ' w' : ''}" data-pid="${esc(pid)}"><i class="num">${platz}.</i>`
+    + `${avHtml(pm[pid], '', {ins:true, px:64, feuer:0})}<b>${esc(_spName(pid))}</b></span>`;
+  const kopf = `<div class="nd-buehne nd-ts">${seite(d.p1, 1)}<span class="nd-ts-m"><b class="num">${_spStand({sa:m.score_a, sb:m.score_b, aw:m.winner === 'A'})}</b>`
+    + `<small>${esc(_newsUhrzeit(mts(m)))}</small></span>${seite(d.p2, 2)}</div>`;
+  return {kopf, mitte:_ndPartieAbschnitte(s)};
+}
+// ── Die runden Marken eines Tages ───────────────────────────────────
+// Je Marke eine Kachel aus Zeichen, Zahl und Gesicht. Darunter, wofür es
+// sie gibt — bei einer einzigen Marke steht das schon im Satz der Karte.
+function _ndMarkenBlatt(s){
+  const d = s.dataRef || {}, pm = pmap();
+  const l = (Array.isArray(d.marken) ? d.marken : []).filter(x => pm[x.pid]);
+  if(!l.length) return null;
+  const def = id => (typeof BADGES !== 'undefined') ? BADGES.find(b => b.id === id) : null;
+  const kopf = `<div class="nd-buehne nd-bm">${l.map((x, k) => {
+    const b = def(x.badgeId) || {};
+    const kl = (typeof rarityOf === 'function') ? rarityOf(x.badgeId) : 'common';
+    return `<span class="nd-bm-k nf-bd-${esc(kl)}" data-pid="${esc(x.pid)}" style="--k:${k}"><span class="nd-bm-ic">${svgI(b.ic || 'medal')}</span>`
+      + `<b class="num">${x.rang}.</b><em>${esc(x.name || b.name || '')}</em>`
+      + `<span class="nd-bm-w">${_spChip(x.pid)}<small>${esc(_spName(x.pid))}</small></span></span>`;
+  }).join('')}</div>`;
+  const ids = [...new Set(l.map(x => x.badgeId))];
+  const bed = l.length > 1 ? ids.map(id => { const b = def(id) || {};
+    return rcpZeileHtml({ic:b.ic || 'medal', name:b.name || id, sub:b.desc || ''}); }).join('') : '';
+  const ab = (t, html) => html ? `<div class="nd-section">${esc(t)}</div>${html}` : '';
+  return {kopf, mitte:ab('Wofür es sie gibt', bed)
+    + (d.matchId ? ab('Die Partie', _newsMatchVsBlock(d.matchId)) : '')};
+}
+
 // Welche Story ein eigenes Blatt mit Bühne hat. Kopf und Mitte kommen aus
 // demselben Aufruf, gemerkt je Story, damit nichts doppelt gerechnet wird.
 const _ND_BLATT = {win_streak:_ndSerieBlatt, loss_streak:_ndSerieBlatt, team_streak:_ndSerieBlatt,
@@ -1404,7 +1533,10 @@ const _ND_BLATT = {win_streak:_ndSerieBlatt, loss_streak:_ndSerieBlatt, team_str
   rekord_erstmals:_ndRekordBlatt, rekord_gesteigert:_ndRekordBlatt, rekord_geholt:_ndRekordBlatt,
   potd:_ndPotdBlatt, season_endgame:_ndEndspurtBlatt, chronik_geholt:_ndChronikBlatt,
   chronik_frei:_ndMonatBlatt, chronik_monat:_ndMonatBlatt, chronik_erstling:_ndErstlingBlatt,
-  insignium_stufe:_ndInsigniumBlatt, sammel:_ndTafelMomentBlatt};
+  insignium_stufe:_ndInsigniumBlatt, sammel:_ndTafelMomentBlatt,
+  jubilee:_ndMeilensteinBlatt, milestone_wins:_ndMeilensteinBlatt, milestone_goals:_ndMeilensteinBlatt,
+  milestone_elo:_ndMeilensteinBlatt, top_form:_ndFormBlatt, elo_swing:_ndAusschlagBlatt,
+  top_clash:_ndSpitzenspielBlatt, badge_marken:_ndMarkenBlatt};
 // Gemerkt nur für einen Aufbau (`_newsDetailBody` leert es): an der Story
 // hängend hielte es nach einer neuen Partie den alten Stand fest.
 let _ndBlattJetzt = null;
@@ -1454,7 +1586,16 @@ function _ndPartieAbschnitte(s){
     + ab('Die direkten Duelle', duelle) + ab('Der Tag', tag) + ab('Wie oft es so ausgeht', vert);
 }
 
-function _newsDetailMitte(s){
+// Eine Überschrift ohne etwas darunter fällt weg. „Die Partie zum
+// Meilenstein" stand über nichts, weil die Partie schon im Kopf stand und
+// `_newsMatchVsBlock` sie nicht ein zweites Mal zeigt; dasselbe galt für
+// jeden Abschnitt, dessen Inhalt leer ausfällt. Eine Regel an einer Stelle
+// statt einer Bedingung an jeder Überschrift.
+function _ndOhneLeere(html){
+  return String(html || '').replace(/<div class="nd-section">[^<]*<\/div>\s*(?=<div class="nd-section">|$)/g, '');
+}
+function _newsDetailMitte(s){ return _ndOhneLeere(_ndMitteRoh(s)); }
+function _ndMitteRoh(s){
   const d = s.dataRef || {};
   // Ein Blatt kann nur seine Bühne mitbringen und die Mitte dem Schalter
   // lassen (`mitte:null`): der Tafel-Moment teilt seine Liste mit den

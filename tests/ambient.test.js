@@ -6345,7 +6345,8 @@ const _bisPartie = JSON.parse(K.eval(`JSON.stringify((function(){
   const s = {id:'test_jubilee', when:m100.created_at, title:'x', desc:'y',
     dataRef:{type:'jubilee', pid, total:100, matchId:m100.id}};
   const h = String(_newsDetailMitte(s)).replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ');
-  const z = h.match(/Siege \\/ Niederlagen (\\d+) \\/ (\\d+)/);
+  // Die Bilanz steht als Balken mit „x Siege … y Niederlagen" darunter.
+  const z = h.match(/(\\d+) Siege [^]*? (\\d+) Niederlagen/);
   const ms = {id:'test_ms', when:m100.created_at, title:'x', desc:'y',
     dataRef:{type:'milestone_wins', pid, milestone:'x', matchId:m100.id}};
   const h2 = String(_newsDetailMitte(ms)).replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ');
@@ -7226,6 +7227,47 @@ ok(_tb.chronik && _tb.chronik.buehne && _tb.chronik.namen && _tb.chronik.vorher 
 ok(_tb.erst && _tb.erst.buehne && _tb.erst.name && _tb.erst.monate === _tb.erst.soll,
    'das Blatt eines ersten Eintrags zeigt das Wappen mit der Chronik und die Monate seitdem',
    JSON.stringify(_tb.erst));
+
+console.log('=== EIN WAPPEN UND EINE ZAHL, UND KEINE LEERE UEBERSCHRIFT ===');
+// Meilenstein, Jubiläum, Form, Ausschlag, Spitzenspiel und runde Marken
+// tragen eine Bühne, deren Zahl die der Karte ist. Und kein Blatt trägt eine
+// Überschrift ohne etwas darunter: „Die Partie zum Meilenstein" stand über
+// nichts, weil die Partie schon im Kopf stand.
+const _wz = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  const blatt = s => { _ndBlattJetzt = null; return {k:_newsBlattKopf(s) || '', m:_newsDetailMitte(s) || ''}; };
+  const falsch = [], gesehen = {};
+  let n = 0, leer = [];
+  roh.forEach(s => {
+    const d = s.dataRef || {};
+    let b; try { b = blatt(s); } catch(e){ return; }
+    if(/class="nd-section">[^<]*<\\/div>\\s*(<div class="nd-section"|$)/.test(b.m.trim())) leer.push(d.type);
+    if(gesehen[d.type]) return;
+    const zahl = {jubilee:() => d.total, milestone_wins:() => parseInt(d.milestone, 10), milestone_goals:() => parseInt(d.milestone, 10),
+      milestone_elo:() => d.mark, elo_swing:() => '−' + Math.abs(d.delta), top_form:() => '+' + d.vorsprung}[d.type];
+    if(zahl){
+      gesehen[d.type] = 1; n++;
+      const z = String(zahl());
+      // Die Zahl der Bühne, nicht die gleiche Zahl in der Leiter darunter.
+      const groß = (b.k.match(/class="nd-hz-t"><em>[^<]*<\\/em><b class="num">([^<]*)<\\/b>/) || [])[1];
+      if(!/nd-buehne nd-hz/.test(b.k) || groß !== (/^\\d+$/.test(z) ? _spZahl(+z) : z)) falsch.push(d.type + ' ' + z + ' statt ' + groß);
+    }
+    if(d.type === 'top_clash'){
+      gesehen[d.type] = 1; n++;
+      const m = matches.find(x => x.id === d.matchId);
+      if(!/nd-buehne nd-ts/.test(b.k) || b.k.indexOf('>' + m.score_a + '</em>') < 0 || b.k.indexOf('>' + m.score_b + '</em>') < 0) falsch.push('top_clash');
+    }
+    if(d.type === 'badge_marken'){
+      gesehen[d.type] = 1; n++;
+      if((b.k.match(/class="nd-bm-k/g) || []).length !== d.marken.length) falsch.push('badge_marken');
+    }
+  });
+  return {n, falsch, leer:[...new Set(leer)]};
+})())`));
+ok(_wz.n >= 5 && !_wz.falsch.length,
+   'Meilenstein, Jubiläum, Form, Ausschlag, Spitzenspiel und runde Marken tragen ihre Zahl auf einer Bühne',
+   _wz.falsch.join(' | ') || _wz.n + ' Arten');
+ok(!_wz.leer.length, 'kein Blatt trägt eine Überschrift ohne etwas darunter', _wz.leer.join(', '));
 
 console.log('\n' + (fails ? '✗ ' + fails + ' von ' + checks + ' CHECKS FEHLGESCHLAGEN' : '✓ ALLE ' + checks + ' CHECKS BESTANDEN'));
 process.exit(fails ? 1 : 0);
