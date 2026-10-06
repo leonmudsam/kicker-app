@@ -1872,7 +1872,20 @@
   .st-card .st-kt{flex:1;min-width:0}
   .st-card .st-pf{flex:0 0 auto;display:grid;place-items:center;width:18px;height:18px;color:var(--muted)}
   .st-card .st-pf .ic,.st-card .st-pf svg{width:15px;height:15px}
-  .st-card.gross .srn{margin-top:12px}
+  .posv-mini{display:block;margin-top:12px}
+  .posv-mini svg{display:block;width:100%;height:auto;overflow:visible}
+  .posv-mini-r line{stroke:var(--line);stroke-width:1;stroke-dasharray:2 4}
+  .posv-mini-l{fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+  .posv-mini-l.leise{stroke-width:1.5;opacity:.32}
+  .posv-mini-p.leise{opacity:.45}
+  .posv-mini-y{font-family:'Sometype Mono',monospace;font-size:10px;fill:var(--muted);
+    text-anchor:end;dominant-baseline:central}
+  .posv-mini-y.eins{fill:var(--gold);font-weight:700}
+  .posv-mini-lg{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px}
+  .posv-mini-lg span{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;
+    font-weight:700;color:var(--ink);min-width:0}
+  .posv-mini-lg i{width:12px;height:3px;border-radius:2px;background:var(--c);flex:0 0 auto}
+  .posv-mini-lg b{font-family:'Sometype Mono',monospace;font-size:11px;color:var(--muted);font-weight:500}
   .st-card.zeile{padding:11px 14px}
   .st-card.zeile .st-ic{width:32px;height:32px;border-radius:10px}
   .nf-empty{padding:32px 20px;text-align:center;color:var(--muted);font-size:12px;line-height:1.5}
@@ -3538,7 +3551,6 @@
     dominant-baseline:central;transition:opacity .15s;pointer-events:none}
   .posv-end-d.auf{fill:var(--acid)}
   .posv-end-d.ab{fill:var(--red)}
-  .posv-eins{fill:var(--gold);opacity:.07}
   .posv-y-tick.eins{fill:var(--gold);font-weight:700}
   .posv-st{fill:var(--muted);opacity:.7}
 
@@ -5506,7 +5518,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.06.0f8811f4';
+const BUILD_VERSION='2026.10.06.6191fa89';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -7682,16 +7694,7 @@ function _buildPositionChartSvg(data){
       if(arr[i] !== null) pts.push({x: xOf(i+1), y: yOf(arr[i])});
     }
     if(pts.length === 0) return;
-    let d;
-    if(pts.length === 1){
-      d = `M ${(pts[0].x-2).toFixed(1)} ${pts[0].y.toFixed(1)} L ${(pts[0].x+2).toFixed(1)} ${pts[0].y.toFixed(1)}`;
-    } else {
-      d = `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`;
-      for(let i=1; i<pts.length; i++){
-        const a = pts[i-1], b = pts[i], h = (b.x - a.x) / 2;
-        d += ` C ${(a.x+h).toFixed(1)} ${a.y.toFixed(1)} ${(b.x-h).toFixed(1)} ${b.y.toFixed(1)} ${b.x.toFixed(1)} ${b.y.toFixed(1)}`;
-      }
-    }
+    const d = _posvPfad(pts);
     lines += `<path class="posv-line" data-pid="${esc(pid)}" d="${d}" stroke="${color}" pathLength="1" style="--k:${k}"/>`;
     hits  += `<path class="posv-line-hit" data-pid="${esc(pid)}" d="${d}"/>`;
     const st = new Set(data.spielTage || []);
@@ -7709,7 +7712,6 @@ function _buildPositionChartSvg(data){
   });
 
   return `<svg class="posv-svg" viewBox="0 0 ${VB_W} ${VB_H}" preserveAspectRatio="xMinYMin meet" xmlns="http://www.w3.org/2000/svg">
-    <rect class="posv-eins" x="${ML}" y="${(yOf(1) - (N > 1 ? PH/(N-1)/2 : 10)).toFixed(1)}" width="${PW}" height="${(N > 1 ? PH/(N-1) : 20).toFixed(1)}" rx="6"/>
     <g class="posv-grid">${grid}</g>
     ${yTicks}
     ${spieltage}
@@ -7719,6 +7721,53 @@ function _buildPositionChartSvg(data){
     <g>${dots}</g>
     <g>${ends}</g>
   </svg>`;
+}
+
+function _posvPfad(pts){
+  if(pts.length === 1){
+    return `M ${(pts[0].x-2).toFixed(1)} ${pts[0].y.toFixed(1)} L ${(pts[0].x+2).toFixed(1)} ${pts[0].y.toFixed(1)}`;
+  }
+  let d = `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`;
+  for(let i=1; i<pts.length; i++){
+    const a = pts[i-1], b = pts[i], h = (b.x - a.x) / 2;
+    d += ` C ${(a.x+h).toFixed(1)} ${a.y.toFixed(1)} ${(b.x-h).toFixed(1)} ${b.y.toFixed(1)} ${b.x.toFixed(1)} ${b.y.toFixed(1)}`;
+  }
+  return d;
+}
+
+function posvVorschauHtml(sid){
+  const data = getSeasonPositionHistory(sid);
+  if(data.empty || !data.activeIds.length || !data.lastDay) return '';
+  const W = 320, H = 132, ML = 16, MR = 10, MT = 8, MB = 16;
+  const PW = W - ML - MR, PH = H - MT - MB;
+  const N = data.activeIds.length, D = data.lastDay;
+  const xOf = day => ML + (D <= 1 ? PW / 2 : (day - 1) / (D - 1) * PW);
+  const yOf = pos => MT + (N <= 1 ? PH / 2 : (pos - 1) / (N - 1) * PH);
+  const ids = data.activeIds.filter(id => _posvJetzt(data, id) !== null)
+    .sort((a, b) => _posvJetzt(data, a) - _posvJetzt(data, b));
+  if(ids.length < 2) return '';
+  let linien = '', punkte = '';
+  ids.slice().reverse().forEach(id => {
+    const arr = data.positionsByDay[id] || [];
+    const pts = [];
+    arr.forEach((p, i) => { if(p !== null) pts.push({x:xOf(i + 1), y:yOf(p)}); });
+    if(!pts.length) return;
+    const vorn = _posvJetzt(data, id) <= 3;
+    const c = data.colorOf[id] || '#888';
+    linien += `<path class="posv-mini-l${vorn ? '' : ' leise'}" d="${_posvPfad(pts)}" stroke="${c}"/>`;
+    const e = pts[pts.length - 1];
+    punkte += `<circle class="posv-mini-p${vorn ? '' : ' leise'}" cx="${e.x.toFixed(1)}" cy="${e.y.toFixed(1)}" r="${vorn ? 3.4 : 2.2}" fill="${c}"/>`;
+  });
+  const st = (data.spielTage || []).map(d => `<circle class="posv-st" cx="${xOf(d).toFixed(1)}" cy="${H - 5}" r="1.8"/>`).join('');
+  const raster = Array.from({length:N}, (_, i) => `<line x1="${ML}" x2="${ML + PW}" y1="${yOf(i + 1).toFixed(1)}" y2="${yOf(i + 1).toFixed(1)}"/>`).join('');
+  const pm = pmap();
+  const legende = ids.slice(0, 3).map(id => `<span style="--c:${data.colorOf[id] || '#888'}"><i></i>`
+    + `<b class="num">${_posvJetzt(data, id)}.</b>${esc((pm[id] || {}).name || '?')}</span>`).join('');
+  return `<span class="posv-mini"><svg viewBox="0 0 ${W} ${H}" aria-hidden="true">`
+    + `<g class="posv-mini-r">${raster}</g>`
+    + `<text class="posv-mini-y eins" x="${ML - 6}" y="${yOf(1).toFixed(1)}">1</text>`
+    + `<text class="posv-mini-y" x="${ML - 6}" y="${yOf(N).toFixed(1)}">${N}</text>`
+    + `${st}${linien}${punkte}</svg><span class="posv-mini-lg">${legende}</span></span>`;
 }
 
 function _posvSpark(data, pid){
@@ -9782,14 +9831,11 @@ function _seasonToolsHtml(){
   let cards = '';
   if(hasPos){
     let bild = '';
-    try {
-      const drei = saisonRang(sid).slice(0, 3).map(e => e.id);
-      if(drei.length >= 2) bild = saisonRennenHtml(sid, drei);
-    } catch(e){ bild = ''; }
+    try { bild = posvVorschauHtml(sid); } catch(e){ bild = ''; }
     cards += `<button type="button" class="st-card pos${bild ? ' gross' : ''}" data-seasontool="pos"
       data-sid="${esc(sid)}">
       <span class="st-k"><span class="st-ic">${posIc}</span><span class="st-kt"><span class="st-tt">Positionsverlauf</span>
-      <span class="st-su">${esc(seasonLabel(sid))}${bild ? ' · Elo der ersten drei' : ''}</span></span>${bild ? `<i class="st-pf">${svgI('chevron')}</i>` : ''}</span>
+      <span class="st-su">${esc(seasonLabel(sid))}${bild ? ' · Tabellenplätze' : ''}</span></span>${bild ? `<i class="st-pf">${svgI('chevron')}</i>` : ''}</span>
       ${bild}</button>`;
   }
   if(hasRecap){

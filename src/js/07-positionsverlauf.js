@@ -114,16 +114,7 @@ function _buildPositionChartSvg(data){
       if(arr[i] !== null) pts.push({x: xOf(i+1), y: yOf(arr[i])});
     }
     if(pts.length === 0) return;
-    let d;
-    if(pts.length === 1){
-      d = `M ${(pts[0].x-2).toFixed(1)} ${pts[0].y.toFixed(1)} L ${(pts[0].x+2).toFixed(1)} ${pts[0].y.toFixed(1)}`;
-    } else {
-      d = `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`;
-      for(let i=1; i<pts.length; i++){
-        const a = pts[i-1], b = pts[i], h = (b.x - a.x) / 2;
-        d += ` C ${(a.x+h).toFixed(1)} ${a.y.toFixed(1)} ${(b.x-h).toFixed(1)} ${b.y.toFixed(1)} ${b.x.toFixed(1)} ${b.y.toFixed(1)}`;
-      }
-    }
+    const d = _posvPfad(pts);
     lines += `<path class="posv-line" data-pid="${esc(pid)}" d="${d}" stroke="${color}" pathLength="1" style="--k:${k}"/>`;
     hits  += `<path class="posv-line-hit" data-pid="${esc(pid)}" d="${d}"/>`;
     // Ein Punkt je Spieltag, nicht je Kalendertag: an einem Tag ohne Partie
@@ -143,7 +134,6 @@ function _buildPositionChartSvg(data){
   });
 
   return `<svg class="posv-svg" viewBox="0 0 ${VB_W} ${VB_H}" preserveAspectRatio="xMinYMin meet" xmlns="http://www.w3.org/2000/svg">
-    <rect class="posv-eins" x="${ML}" y="${(yOf(1) - (N > 1 ? PH/(N-1)/2 : 10)).toFixed(1)}" width="${PW}" height="${(N > 1 ? PH/(N-1) : 20).toFixed(1)}" rx="6"/>
     <g class="posv-grid">${grid}</g>
     ${yTicks}
     ${spieltage}
@@ -153,6 +143,65 @@ function _buildPositionChartSvg(data){
     <g>${dots}</g>
     <g>${ends}</g>
   </svg>`;
+}
+
+// Die Kurve eines Spielers von Tag zu Tag. Sie steht an EINER Stelle, weil
+// Blatt und Vorschau dieselbe Linie zeichnen [§C27]: zwei Formeln für die
+// Kurve hätten in der Karte unter der Rangliste einen anderen Verlauf
+// gezeigt als im Blatt, das sie öffnet.
+function _posvPfad(pts){
+  if(pts.length === 1){
+    return `M ${(pts[0].x-2).toFixed(1)} ${pts[0].y.toFixed(1)} L ${(pts[0].x+2).toFixed(1)} ${pts[0].y.toFixed(1)}`;
+  }
+  let d = `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`;
+  for(let i=1; i<pts.length; i++){
+    const a = pts[i-1], b = pts[i], h = (b.x - a.x) / 2;
+    d += ` C ${(a.x+h).toFixed(1)} ${a.y.toFixed(1)} ${(b.x-h).toFixed(1)} ${b.y.toFixed(1)} ${b.x.toFixed(1)} ${b.y.toFixed(1)}`;
+  }
+  return d;
+}
+
+// Die Vorschau unter der Rangliste: derselbe Verlauf wie im Blatt, nur
+// vereinfacht — jede Linie, aber ohne Gesichter, ohne Achsen und ohne
+// Bewegung am Ende. Sie zeigte vorher die Elo der ersten drei, also eine
+// andere Grafik als das Blatt, das sie öffnet: wer tippte, sah etwas
+// anderes, als die Karte versprochen hatte. Die ersten drei tragen ihre
+// Linie voll, alle übrigen leise; darunter stehen sie mit Platz und Farbe,
+// weil die Grafik keine Namen trägt.
+function posvVorschauHtml(sid){
+  const data = getSeasonPositionHistory(sid);
+  if(data.empty || !data.activeIds.length || !data.lastDay) return '';
+  const W = 320, H = 132, ML = 16, MR = 10, MT = 8, MB = 16;
+  const PW = W - ML - MR, PH = H - MT - MB;
+  const N = data.activeIds.length, D = data.lastDay;
+  const xOf = day => ML + (D <= 1 ? PW / 2 : (day - 1) / (D - 1) * PW);
+  const yOf = pos => MT + (N <= 1 ? PH / 2 : (pos - 1) / (N - 1) * PH);
+  const ids = data.activeIds.filter(id => _posvJetzt(data, id) !== null)
+    .sort((a, b) => _posvJetzt(data, a) - _posvJetzt(data, b));
+  if(ids.length < 2) return '';
+  let linien = '', punkte = '';
+  // Von hinten nach vorn gezeichnet: die Linie des Ersten liegt oben.
+  ids.slice().reverse().forEach(id => {
+    const arr = data.positionsByDay[id] || [];
+    const pts = [];
+    arr.forEach((p, i) => { if(p !== null) pts.push({x:xOf(i + 1), y:yOf(p)}); });
+    if(!pts.length) return;
+    const vorn = _posvJetzt(data, id) <= 3;
+    const c = data.colorOf[id] || '#888';
+    linien += `<path class="posv-mini-l${vorn ? '' : ' leise'}" d="${_posvPfad(pts)}" stroke="${c}"/>`;
+    const e = pts[pts.length - 1];
+    punkte += `<circle class="posv-mini-p${vorn ? '' : ' leise'}" cx="${e.x.toFixed(1)}" cy="${e.y.toFixed(1)}" r="${vorn ? 3.4 : 2.2}" fill="${c}"/>`;
+  });
+  const st = (data.spielTage || []).map(d => `<circle class="posv-st" cx="${xOf(d).toFixed(1)}" cy="${H - 5}" r="1.8"/>`).join('');
+  const raster = Array.from({length:N}, (_, i) => `<line x1="${ML}" x2="${ML + PW}" y1="${yOf(i + 1).toFixed(1)}" y2="${yOf(i + 1).toFixed(1)}"/>`).join('');
+  const pm = pmap();
+  const legende = ids.slice(0, 3).map(id => `<span style="--c:${data.colorOf[id] || '#888'}"><i></i>`
+    + `<b class="num">${_posvJetzt(data, id)}.</b>${esc((pm[id] || {}).name || '?')}</span>`).join('');
+  return `<span class="posv-mini"><svg viewBox="0 0 ${W} ${H}" aria-hidden="true">`
+    + `<g class="posv-mini-r">${raster}</g>`
+    + `<text class="posv-mini-y eins" x="${ML - 6}" y="${yOf(1).toFixed(1)}">1</text>`
+    + `<text class="posv-mini-y" x="${ML - 6}" y="${yOf(N).toFixed(1)}">${N}</text>`
+    + `${st}${linien}${punkte}</svg><span class="posv-mini-lg">${legende}</span></span>`;
 }
 
 // Der Verlauf eines Spielers in einer Zeile der Tabelle, so klein wie ein

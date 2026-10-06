@@ -229,7 +229,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **1161**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **1163**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -1251,20 +1251,24 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Grund, warum man den Reiter öffnet. Gezeichnet wird erst beim Aufklappen;
   zu kostet der Einblick keine Rechnung. Im Liga-Reiter gibt es keinen: das
   Titelrennen der Saison war dieselbe Frage wie der Positionsverlauf, und der
-  trägt es jetzt selbst — seine Karte unter „Mehr zur Saison" zeigt das
-  Rennen der ersten drei (`saisonRennenHtml`, dasselbe Bauteil wie im
-  Saison-Rückblick und im Blatt des Meisters) und öffnet beim Tippen den
-  ganzen Verlauf; der Saison-Rückblick darunter ist eine schmale Zeile. Oben
+  trägt es jetzt selbst — seine Karte unter „Mehr zur Saison" zeigt den
+  Verlauf vereinfacht (`posvVorschauHtml`: jede Linie mit derselben Kurve
+  wie im Blatt, `_posvPfad`, ohne Gesichter und Achsen, die ersten drei voll
+  und darunter mit Platz und Farbe) und öffnet beim Tippen den ganzen
+  Verlauf. Sie trug vorher die Elo der ersten drei, also eine andere Grafik
+  als das Blatt, das sie öffnet. Der Saison-Rückblick darunter ist eine
+  schmale Zeile. Oben
   bleibt die Rangliste das Erste. Dieselbe Zeile trägt die Ruheständler
   [§C40] am Ende von Gesamt, Positionen und Teams.
   **Der Positionsverlauf liest sich als Tabelle über die Zeit**
   (`07-positionsverlauf.js`). Er zeigte gerade Linien, die sich in Spitzen
   kreuzten, die Namen mit „…" gekürzt neben dem Gesicht, einen Hinweis
   „Linie oder Gesicht antippen" und darunter einen leeren Kasten „Hier
-  stehen die Einzelheiten". Jetzt laufen Kurven von Tag zu Tag, Platz eins
-  liegt als goldenes Band darunter, die Tage mit Partie tragen eine Marke
+  stehen die Einzelheiten". Jetzt laufen Kurven von Tag zu Tag, die Tage mit Partie tragen eine Marke
   auf der Achse, und am Ende steht das Gesicht mit der Bewegung seit dem
-  vorletzten Spieltag. Die Namen stehen ganz in der **Tabelle** darunter
+  vorletzten Spieltag. Platz eins trägt nur die goldene Ziffer an der Achse:
+  ein goldenes Band lag quer über die ganze Breite und las sich wie eine
+  markierte Zeile, über die die Linien der anderen hinweglaufen. Die Namen stehen ganz in der **Tabelle** darunter
   (`_posvTabelle`: Platz, Gesicht, Name, Verlauf klein, Bewegung, Elo); sie
   ist zugleich die Wahl des Spielers, also braucht es keinen Satz, der die
   Bedienung erklärt. Das Detail erscheint erst nach der Wahl: die Zahlen der

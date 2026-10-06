@@ -44,21 +44,18 @@ function _seasonToolsHtml(){
   // zwischen Zeichnen und Klick geändert haben, das Attribut nicht.
   // ── Der Positionsverlauf zeigt, was er enthält [§C27] ──────────────
   // Er war eine Kachel mit einem Zeichen und einem Monatsnamen, und wie die
-  // Saison gelaufen ist, sah man erst nach dem Tippen. Jetzt trägt er das
-  // Titelrennen der ersten drei — dasselbe Bauteil wie Saison-Rückblick und
-  // Meister-Blatt — und öffnet beim Tippen den ganzen Verlauf. Er steht
-  // UNTER der Rangliste: oben bleibt die Rangliste das Wichtigste, eine
-  // eigene Karte über ihr war dieselbe Frage ein zweites Mal.
+  // Saison gelaufen ist, sah man erst nach dem Tippen. Danach trug er die
+  // Elo der ersten drei — eine andere Grafik als das Blatt, das er öffnet.
+  // Jetzt zeigt er den Verlauf selbst, vereinfacht (`posvVorschauHtml`):
+  // jede Linie, ohne Gesichter und Achsen. Er steht UNTER der Rangliste:
+  // oben bleibt die Rangliste das Wichtigste.
   if(hasPos){
     let bild = '';
-    try {
-      const drei = saisonRang(sid).slice(0, 3).map(e => e.id);
-      if(drei.length >= 2) bild = saisonRennenHtml(sid, drei);
-    } catch(e){ bild = ''; }
+    try { bild = posvVorschauHtml(sid); } catch(e){ bild = ''; }
     cards += `<button type="button" class="st-card pos${bild ? ' gross' : ''}" data-seasontool="pos"
       data-sid="${esc(sid)}">
       <span class="st-k"><span class="st-ic">${posIc}</span><span class="st-kt"><span class="st-tt">Positionsverlauf</span>
-      <span class="st-su">${esc(seasonLabel(sid))}${bild ? ' · Elo der ersten drei' : ''}</span></span>${bild ? `<i class="st-pf">${svgI('chevron')}</i>` : ''}</span>
+      <span class="st-su">${esc(seasonLabel(sid))}${bild ? ' · Tabellenplätze' : ''}</span></span>${bild ? `<i class="st-pf">${svgI('chevron')}</i>` : ''}</span>
       ${bild}</button>`;
   }
   if(hasRecap){
