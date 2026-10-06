@@ -130,6 +130,7 @@
   .dot.ok{background:var(--acid);box-shadow:0 0 8px var(--acid)}
   .dot.bad{background:var(--red);box-shadow:0 0 8px var(--red)}
   .dot.load{background:var(--gold);animation:pulse 1s infinite}
+  @media(prefers-reduced-motion:reduce){.dot.load{animation:none}}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
   main{padding:6px 16px 0}
@@ -1033,7 +1034,6 @@
   .blatt-text{font-size:12.5px;color:var(--ink2);line-height:1.55;padding:0 2px}
   [class="empty"]{text-align:center;color:var(--muted);padding:48px 20px;font-size:13px}
   [class="empty"] .ee{font-size:34px;margin-bottom:12px;opacity:.5}
-  @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
   @keyframes glanzLauf{0%,78%{background-position:140% 0}100%{background-position:-40% 0}}
   .pod-karte.erster.gold::after,
@@ -1052,6 +1052,10 @@
       no-repeat;background-size:250% 100%;background-position:140% 0;
     animation:glanzLauf 11s ease-in-out infinite;animation-delay:var(--gv,0s)}
   .nd-s-held .nd-head,.nd-s-woche .nd-head{position:relative;border-radius:14px}
+  .nf-card.nf-glanz::after,.nf-card.nf-s-held:not(.read)::after,.nf-card.nf-s-woche:not(.read)::after{
+    inset:0 auto 0 0;width:250%;border-radius:0;background-size:100% 100%;background-position:0 0;
+    transform:translateX(-84%);animation-name:glanzZug}
+  @keyframes glanzZug{0%,78%{transform:translateX(-84%)}100%{transform:translateX(24%)}}
   @media(prefers-reduced-motion:reduce){
     .nf-glanz::after,
     .pod-karte.erster.gold::after,
@@ -1458,11 +1462,12 @@
   @keyframes ppFadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
   @keyframes ppFadeScale{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
   @keyframes ppPulse{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.05)}}
-  @keyframes ppFloat{0%,100%{transform:translateX(-50%) translateY(0) rotate(-2deg)}
-    50%{transform:translateX(-50%) translateY(-3px) rotate(-2deg)}}
   @keyframes ppBarIn{from{width:0 !important}}
   @keyframes ppSlideIn{from{width:0 !important}}
   @keyframes ppSlideThumb{from{left:0 !important}}
+  @media(prefers-reduced-motion:reduce){
+    .pp-header,.pp-av-wrap,.pp-av-ring::before,.pp-name,.pp-form,.pp-sec,
+    .pp-pos-c .bar > i,.pp-slider .pp-fill,.pp-slider .pp-thumb{animation:none}}
 
   .text-in{width:100%;font-family:inherit;font-size:15px;background:var(--bg2);border:1px solid var(--line);
     color:var(--ink);padding:14px;border-radius:13px;outline:none;transition:.18s}
@@ -1968,13 +1973,14 @@
     background:rgba(240,86,106,.16);font-family:'Sometype Mono',monospace;
     font-size:10px;letter-spacing:.22em;color:#ff8a8a;font-weight:700;
     border-bottom:1px solid rgba(240,86,106,.24)}
-  .nf-brk-punkt{width:7px;height:7px;border-radius:50%;background:var(--red);
-    box-shadow:0 0 0 0 rgba(240,86,106,.6);animation:nfPuls 2.4s ease-out infinite}
+  .nf-brk-punkt{width:7px;height:7px;border-radius:50%;background:var(--red);position:relative}
+  .nf-brk-punkt::before{content:"";position:absolute;inset:0;border-radius:50%;
+    background:rgb(240,86,106);opacity:0;animation:nfPuls 2.4s ease-out infinite}
   @keyframes nfPuls{
-    0%{box-shadow:0 0 0 0 rgba(240,86,106,.55)}
-    70%{box-shadow:0 0 0 7px rgba(240,86,106,0)}
-    100%{box-shadow:0 0 0 0 rgba(240,86,106,0)}}
-  @media(prefers-reduced-motion:reduce){.nf-brk-punkt{animation:none}}
+    0%{transform:scale(1);opacity:.55}
+    70%{transform:scale(3);opacity:0}
+    100%{transform:scale(1);opacity:0}}
+  @media(prefers-reduced-motion:reduce){.nf-brk-punkt::before{animation:none}}
   .nf-brk-zeit{margin-left:auto;letter-spacing:.06em;color:rgba(255,138,138,.7)}
   .nf-brk-n{flex:0 0 auto;padding:1px 6px;border-radius:5px;
     background:rgba(240,86,106,.18);border:1px solid rgba(240,86,106,.34);
@@ -2316,11 +2322,13 @@
     background:radial-gradient(circle,currentColor,transparent 68%);opacity:.16}
   .nf-s-held .nf-motiv{opacity:.1}
   .nf-s-fakt .nf-motiv{opacity:.05}
-  .nf-s-tafel:not(.read) .nf-rub i{animation:nfTafelAtmen 5.4s ease-in-out infinite}
-  @keyframes nfTafelAtmen{
-    0%,100%{box-shadow:inset 0 0 0 1px rgba(var(--story-rgb),.17),0 0 0 rgba(var(--story-rgb),0)}
-    50%{box-shadow:inset 0 0 0 1px rgba(var(--story-rgb),.3),0 0 10px -3px rgba(var(--story-rgb),.34)}}
-  @media(prefers-reduced-motion:reduce){.nf-s-tafel .nf-rub i{animation:none}}
+  .nf-s-tafel:not(.read) .nf-rub i{position:relative}
+  .nf-s-tafel:not(.read) .nf-rub i::after{content:"";position:absolute;inset:0;border-radius:inherit;
+    pointer-events:none;opacity:0;
+    box-shadow:inset 0 0 0 1px rgba(var(--story-rgb),.157),0 0 10px -3px rgba(var(--story-rgb),.34);
+    animation:nfTafelAtmen 5.4s ease-in-out infinite}
+  @keyframes nfTafelAtmen{0%,100%{opacity:0}50%{opacity:1}}
+  @media(prefers-reduced-motion:reduce){.nf-s-tafel .nf-rub i::after{animation:none}}
   .nf-card.nf-neg .nf-motiv{opacity:.07}
   .nf-card.read .nf-motiv{opacity:.055}
   .nf-card > *:not(.nf-motiv){position:relative;z-index:1}
@@ -2372,16 +2380,16 @@
   .nd-faeden{display:flex;flex-direction:column;gap:6px;margin:14px 0 4px}
   .nd-faeden .nf-faden{border:1px dashed var(--line2);border-radius:12px;padding:9px 11px}
 
-  .nf-brk{margin:6px -5px;border-width:2px;border-style:solid;
+  .nf-brk{border-width:2px;border-style:solid}
+  .nf-brk-hof{position:relative;z-index:0;margin:6px -5px}
+  .nf-brk-hof::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+    border-radius:4px 14px 14px 4px;opacity:0;
+    box-shadow:0 0 22px -4px rgba(240,86,106,.34),0 14px 34px -18px rgba(240,86,106,.55);
     animation:nfBrkGlut 3.6s ease-in-out infinite}
-  @keyframes nfBrkGlut{
-    0%,100%{box-shadow:inset 0 1px 0 rgba(255,255,255,.045),
-                       0 0 0 0 rgba(240,86,106,0),
-                       0 14px 34px -22px rgba(240,86,106,.5)}
-    50%{box-shadow:inset 0 1px 0 rgba(255,255,255,.045),
-                   0 0 22px -4px rgba(240,86,106,.34),
-                   0 14px 34px -18px rgba(240,86,106,.7)}}
-  @media(prefers-reduced-motion:reduce){.nf-brk{animation:none}}
+  @keyframes nfBrkGlut{0%,100%{opacity:0}50%{opacity:1}}
+  @media(prefers-reduced-motion:no-preference){
+    .nf-brk-hof > .nf-card.nf-brk{box-shadow:inset 0 1px 0 rgba(255,255,255,.045),0 14px 34px -22px rgba(240,86,106,.5)}}
+  @media(prefers-reduced-motion:reduce){.nf-brk-hof::before{animation:none}}
   .nf-brk .nf-motiv{color:var(--red);opacity:.16;width:120px;height:120px;right:12px}
   .nf-brk-band{background:linear-gradient(90deg,rgba(240,86,106,.34),rgba(240,86,106,.08));
     color:#ffdde1;font-size:10.5px;letter-spacing:.26em;position:relative;overflow:hidden}
@@ -5539,7 +5547,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.06.ceb7f44d';
+const BUILD_VERSION='2026.10.06.1088c5e1';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -22207,7 +22215,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
     if(String(h || '').trim() !== String(s.desc || '').trim()) brkSub = h;
   }
   const glanz = !negativ && !brk && !gross && _newsGlanz(s, sorte, sorte === 'spiel' && d.matchId ? (_spBild(s).glanz ? 'form' : _spBild(s).key) : '');
-  return `<div class="nf-card nf-s-${sorte} nfc-${dcat}${tafelTon?' nf-tafel-'+tafelTon:''}${faktStil?' nf-fakt-'+faktStil.ton:''}${negativ?' nf-neg':''}${brk?' nf-brk':''}${gross?' nf-gross':''}${glanz?' nf-glanz':''}${isRead?' read':''}${imp}" data-sid="${esc(s.id)}"${glanz ? ` style="--gv:${_newsGlanzVersatz(s.id)}s"` : ''}>
+  return (brk ? '<div class="nf-brk-hof">' : '') + `<div class="nf-card nf-s-${sorte} nfc-${dcat}${tafelTon?' nf-tafel-'+tafelTon:''}${faktStil?' nf-fakt-'+faktStil.ton:''}${negativ?' nf-neg':''}${brk?' nf-brk':''}${gross?' nf-gross':''}${glanz?' nf-glanz':''}${isRead?' read':''}${imp}" data-sid="${esc(s.id)}"${glanz ? ` style="--gv:${_newsGlanzVersatz(s.id)}s"` : ''}>
     ${_newsMotiv(sorte, s)}
     ${gross ? '<div class="nf-gross-band">' + svgI('star') + 'DIE KARTE DES TAGES</div>' : ''}
     ${balken}
@@ -22226,7 +22234,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
     ${fuss}
     ${brkSub ? `<div class="nf-brk-sub">${esc(brkSub)}</div>` : ''}
     ${fadenHtml || ''}
-  </div>`;
+  </div>` + (brk ? '</div>' : '');
 }
 
 function _newsRubrik(sorte, s){

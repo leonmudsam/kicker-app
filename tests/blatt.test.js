@@ -2072,11 +2072,15 @@ const ok = (c, msg, det) => {
     host.remove(); return out;
   });
   const gl = await glanz();
-  ok(gl.gold === 'glanzLauf' && gl.held === 'glanzLauf' && gl.rueckblick === 'glanzLauf'
+  // Derselbe Lauf unter zwei Namen: im Feed fährt er per `transform`
+  // (`glanzZug`, die Karte schneidet ab), auf Podest, Blattkopf und Rückblick
+  // per Position (`glanzLauf`, dort ragt die Schwinge heraus).
+  const istGlanz = n => n === 'glanzLauf' || n === 'glanzZug';
+  ok(gl.gold === 'glanzLauf' && gl.held === 'glanzZug' && gl.rueckblick === 'glanzLauf'
      && gl.blatt === 'glanzLauf',
      'der Erste in Gold, der Spieler des Tages samt Blatt und der Held tragen den Glanz',
      JSON.stringify(gl));
-  ok(gl.silber !== 'glanzLauf' && gl.gelesen !== 'glanzLauf' && gl.spiel !== 'glanzLauf',
+  ok(!istGlanz(gl.silber) && !istGlanz(gl.gelesen) && !istGlanz(gl.spiel),
      'ein silberner Erster, eine gelesene und eine gewoehnliche Karte nicht',
      JSON.stringify(gl));
   // Das Seltene im Feed trägt einen leisen Lichtlauf in der Farbe seiner
@@ -2089,7 +2093,7 @@ const ok = (c, msg, det) => {
       falsch: ks.filter(k => k.matches('.nf-neg,.nf-brk,.nf-gross,.nf-s-held,.nf-s-woche')
         || /247,\s*207,\s*74/.test(getComputedStyle(k, '::after').backgroundImage)).map(k => k.dataset.sid)};
   });
-  ok(gl.selten === 'glanzLauf' && glFeed.n >= 3 && glFeed.n <= glFeed.alle / 3 && !glFeed.falsch.length,
+  ok(gl.selten === 'glanzZug' && glFeed.n >= 3 && glFeed.n <= glFeed.alle / 3 && !glFeed.falsch.length,
      'das Seltene im Feed traegt einen Lichtlauf in seiner Familienfarbe, nicht in Gold und nicht auf einer negativen Karte',
      glFeed.n + ' von ' + glFeed.alle + ' Karten, falsch: ' + glFeed.falsch.slice(0, 3));
   // Der Hinweis „x neue Stories" ist ein Ereignis: die Zahl groß neben
@@ -2372,16 +2376,19 @@ const ok = (c, msg, det) => {
     const html = window.__k.eval('_newsCardHtmlM2')(fake, false, false);
     const huelle = document.createElement('div');
     huelle.innerHTML = html;
-    const karte = huelle.firstElementChild;
-    feed.appendChild(karte);
+    // Breaking steht in einer Hülle, die seinen Schein trägt.
+    const aussen = huelle.firstElementChild;
+    const karte = aussen.matches('.nf-card') ? aussen : aussen.querySelector('.nf-card');
+    feed.appendChild(aussen);
     const bb = karte.getBoundingClientRect();
     const andere = [...feed.querySelectorAll('.nf-card:not(.nf-brk)')]
       .map(c => c.getBoundingClientRect().width);
     const band = karte.querySelector('.nf-brk-band');
     const res = {istBrk: karte.classList.contains('nf-brk'), breite: bb.width,
                  maxAndere: Math.max.apply(null, andere), band: !!band,
-                 rahmen: getComputedStyle(karte).borderTopStyle};
-    karte.remove();
+                 rahmen: getComputedStyle(karte).borderTopStyle,
+                 schein: aussen.classList.contains('nf-brk-hof') ? getComputedStyle(aussen, '::before').animationName : 'keine Hülle'};
+    aussen.remove();
     return res;
   });
   ok(brk.istBrk, 'ein Breaking-Anlass macht die Karte zur Breaking-Karte');
@@ -2389,6 +2396,26 @@ const ok = (c, msg, det) => {
      brk.breite + ' gegen ' + brk.maxAndere);
   ok(brk.band, 'Breaking traegt seinen Balken');
   ok(brk.rahmen === 'solid', 'Breaking traegt immer den vollen Rahmen', brk.rahmen);
+  ok(brk.schein === 'nfBrkGlut', 'der Schein von Breaking glimmt auf der Hülle hinter der Karte', brk.schein);
+
+  // Was im Feed endlos läuft, rechnet die Grafikkarte: nur `transform` und
+  // `opacity`. Ein wechselnder `box-shadow` oder eine wandernde
+  // `background-position` verlangten jedes Bild einen Takt des
+  // Hauptthreads über den ganzen Feed — gemessen rund 490 ms je Sekunde bei
+  // vierfach gedrosselter CPU, solange der Feed offen stand, statt 3.
+  const endlos = await page.evaluate(() => {
+    const falsch = [];
+    for(const a of document.getAnimations()){
+      const t = a.effect && a.effect.getTiming ? a.effect.getTiming() : {};
+      if(t.iterations !== Infinity || !a.effect.target || !a.effect.target.closest('#sheet')) continue;
+      const props = new Set(a.effect.getKeyframes().flatMap(k => Object.keys(k))
+        .filter(k => !['offset', 'computedOffset', 'easing', 'composite'].includes(k)));
+      const fremd = [...props].filter(k => k !== 'transform' && k !== 'opacity');
+      if(fremd.length) falsch.push((a.animationName || '?') + ':' + fremd.join('+'));
+    }
+    return [...new Set(falsch)];
+  });
+  ok(!endlos.length, 'was im Feed endlos läuft, bewegt nur transform und opacity', endlos.join(', '));
 
   console.log('\n═══ JEDES BLATT ZEIGT SEINE STORY ═══');
   const inhalt = await page.evaluate(() => {

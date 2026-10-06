@@ -89,6 +89,7 @@
   .dot.ok{background:var(--acid);box-shadow:0 0 8px var(--acid)}
   .dot.bad{background:var(--red);box-shadow:0 0 8px var(--red)}
   .dot.load{background:var(--gold);animation:pulse 1s infinite}
+  @media(prefers-reduced-motion:reduce){.dot.load{animation:none}}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
   /* ============ [§C2] CONTENT ============ */

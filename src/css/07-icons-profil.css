@@ -598,13 +598,23 @@
     background:rgba(240,86,106,.16);font-family:'Sometype Mono',monospace;
     font-size:10px;letter-spacing:.22em;color:#ff8a8a;font-weight:700;
     border-bottom:1px solid rgba(240,86,106,.24)}
-  .nf-brk-punkt{width:7px;height:7px;border-radius:50%;background:var(--red);
-    box-shadow:0 0 0 0 rgba(240,86,106,.6);animation:nfPuls 2.4s ease-out infinite}
+  /* Der Punkt pulst als Ring, der wächst und vergeht. Vorher wuchs ein
+     `box-shadow`: jedes Bild des Pulses verlangte einen vollen Takt des
+     Hauptthreads über den ganzen Feed — gemessen mit vierfach gedrosselter
+     CPU rund 240 ms je Sekunde, solange der Feed offen stand, für einen
+     Punkt von sieben Pixeln. Jetzt wächst eine Scheibe derselben Farbe per
+     `transform` und vergeht per `opacity`: der Ring steht an derselben
+     Stelle (Radius 3,5 → 10,5 px) mit derselben Deckkraft, und beides
+     rechnet die Grafikkarte. Innen deckt die Scheibe den Punkt in dessen
+     eigener Farbe. */
+  .nf-brk-punkt{width:7px;height:7px;border-radius:50%;background:var(--red);position:relative}
+  .nf-brk-punkt::before{content:"";position:absolute;inset:0;border-radius:50%;
+    background:rgb(240,86,106);opacity:0;animation:nfPuls 2.4s ease-out infinite}
   @keyframes nfPuls{
-    0%{box-shadow:0 0 0 0 rgba(240,86,106,.55)}
-    70%{box-shadow:0 0 0 7px rgba(240,86,106,0)}
-    100%{box-shadow:0 0 0 0 rgba(240,86,106,0)}}
-  @media(prefers-reduced-motion:reduce){.nf-brk-punkt{animation:none}}
+    0%{transform:scale(1);opacity:.55}
+    70%{transform:scale(3);opacity:0}
+    100%{transform:scale(1);opacity:0}}
+  @media(prefers-reduced-motion:reduce){.nf-brk-punkt::before{animation:none}}
   .nf-brk-zeit{margin-left:auto;letter-spacing:.06em;color:rgba(255,138,138,.7)}
   /* Wie viel die gebuendelte Karte traegt. Sie trug denselben Balken wie eine
      einzelne Breaking-Karte, und die fuenf Meldungen darunter sah nur, wer
@@ -1150,11 +1160,19 @@
   .nf-s-fakt .nf-motiv{opacity:.05}
   /* Kleine Bewegung nur auf der Tafel-Rubrikkachel: genug Leben beim
      Scrollen, ohne dass die ganze Karte pulsiert. */
-  .nf-s-tafel:not(.read) .nf-rub i{animation:nfTafelAtmen 5.4s ease-in-out infinite}
-  @keyframes nfTafelAtmen{
-    0%,100%{box-shadow:inset 0 0 0 1px rgba(var(--story-rgb),.17),0 0 0 rgba(var(--story-rgb),0)}
-    50%{box-shadow:inset 0 0 0 1px rgba(var(--story-rgb),.3),0 0 10px -3px rgba(var(--story-rgb),.34)}}
-  @media(prefers-reduced-motion:reduce){.nf-s-tafel .nf-rub i{animation:none}}
+  /* Das Atmen ist eine zweite Ebene mit dem hellen Rand und dem Schein, die
+     per `opacity` kommt und geht; die Kachel selbst steht still. Als
+     wechselnder `box-shadow` kostete es jedes Bild einen Takt des
+     Hauptthreads über den ganzen Feed (gemessen rund 230 ms je Sekunde bei
+     vierfach gedrosselter CPU). Der Rand der Ebene ist so hell, dass er
+     über dem stehenden Rand (0,17) zusammen dessen Hochpunkt 0,3 ergibt. */
+  .nf-s-tafel:not(.read) .nf-rub i{position:relative}
+  .nf-s-tafel:not(.read) .nf-rub i::after{content:"";position:absolute;inset:0;border-radius:inherit;
+    pointer-events:none;opacity:0;
+    box-shadow:inset 0 0 0 1px rgba(var(--story-rgb),.157),0 0 10px -3px rgba(var(--story-rgb),.34);
+    animation:nfTafelAtmen 5.4s ease-in-out infinite}
+  @keyframes nfTafelAtmen{0%,100%{opacity:0}50%{opacity:1}}
+  @media(prefers-reduced-motion:reduce){.nf-s-tafel .nf-rub i::after{animation:none}}
   .nf-card.nf-neg .nf-motiv{opacity:.07}
   .nf-card.read .nf-motiv{opacity:.055}
   /* Alles Uebrige liegt darueber, sonst schneidet das Motiv in die Schrift. */
@@ -1238,18 +1256,29 @@
      erkannt, bevor ein Wort gelesen ist. */
   /* Breaking traegt immer den vollen Rahmen — auch wenn seine Sorte sonst
      gestrichelt ist. */
-  .nf-brk{margin:6px -5px;border-width:2px;border-style:solid;
-    animation:nfBrkGlut 3.6s ease-in-out infinite}
+  .nf-brk{border-width:2px;border-style:solid}
   /* Der Rahmen glimmt. Ein stehender roter Rahmen war beim Scrollen ein
-     Farbton unter vielen; ein Schein, der kommt und geht, ist ein Signal. */
-  @keyframes nfBrkGlut{
-    0%,100%{box-shadow:inset 0 1px 0 rgba(255,255,255,.045),
-                       0 0 0 0 rgba(240,86,106,0),
-                       0 14px 34px -22px rgba(240,86,106,.5)}
-    50%{box-shadow:inset 0 1px 0 rgba(255,255,255,.045),
-                   0 0 22px -4px rgba(240,86,106,.34),
-                   0 14px 34px -18px rgba(240,86,106,.7)}}
-  @media(prefers-reduced-motion:reduce){.nf-brk{animation:none}}
+     Farbton unter vielen; ein Schein, der kommt und geht, ist ein Signal.
+     Der Schein liegt auf einer eigenen Ebene HINTER der Karte, in einer
+     Hülle (`.nf-brk-hof`, sie trägt den Rand der Karte), und kommt und geht
+     per `opacity`. Vorher wechselte die Karte selbst ihren `box-shadow`:
+     jedes Bild verlangte einen Takt des Hauptthreads über den ganzen Feed,
+     gemessen rund 240 ms je Sekunde bei vierfach gedrosselter CPU, solange
+     der Feed offen stand. In der Karte selbst ging es nicht: sie schneidet
+     ab, was über ihren Rand ragt. Die Karte trägt den ruhigen Schein, die
+     Ebene darüber, was im Hochpunkt dazukommt. */
+  .nf-brk-hof{position:relative;z-index:0;margin:6px -5px}
+  .nf-brk-hof::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+    border-radius:4px 14px 14px 4px;opacity:0;
+    box-shadow:0 0 22px -4px rgba(240,86,106,.34),0 14px 34px -18px rgba(240,86,106,.55);
+    animation:nfBrkGlut 3.6s ease-in-out infinite}
+  @keyframes nfBrkGlut{0%,100%{opacity:0}50%{opacity:1}}
+  /* Der ruhige Schein steht, wo die Animation stand: sie überschrieb jede
+     andere Angabe, auch die von `.important` und `.read.important` —
+     deshalb dieses Gewicht. */
+  @media(prefers-reduced-motion:no-preference){
+    .nf-brk-hof > .nf-card.nf-brk{box-shadow:inset 0 1px 0 rgba(255,255,255,.045),0 14px 34px -22px rgba(240,86,106,.5)}}
+  @media(prefers-reduced-motion:reduce){.nf-brk-hof::before{animation:none}}
   .nf-brk .nf-motiv{color:var(--red);opacity:.16;width:120px;height:120px;right:12px}
   .nf-brk-band{background:linear-gradient(90deg,rgba(240,86,106,.34),rgba(240,86,106,.08));
     color:#ffdde1;font-size:10.5px;letter-spacing:.26em;position:relative;overflow:hidden}
