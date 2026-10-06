@@ -147,7 +147,7 @@ function _consolidateStories(list){
   const matchById = new Map((matches || []).map(m => [m.id, m]));
   const duellMoment = new Map(), duellAnzahl = new Map();
   _spBasis().chrono.forEach(m => [m.a1,m.a2].forEach(a => [m.b1,m.b2].forEach(b => {
-    const paar = [a,b].sort().join('|'), n = (duellAnzahl.get(paar) || 0) + 1;
+    const paar = paarKey(a, b), n = (duellAnzahl.get(paar) || 0) + 1;
     duellAnzahl.set(paar, n);
     const key = paar + '|' + mts(m);
     let l = duellMoment.get(key);
@@ -199,7 +199,7 @@ function _consolidateStories(list){
     // Partie ableiten; Titel, Zahl und Zeitpunkt bleiben unveraendert.
     if(d.type === 'rivalry' && !d.matchId && d.a && d.b && Number(d.n) > 0){
       const zeit = new Date(s.when).getTime();
-      const l = duellMoment.get([d.a,d.b].sort().join('|') + '|' + zeit);
+      const l = duellMoment.get(paarKey(d.a, d.b) + '|' + zeit);
       // Gleiche Sekunde ist nicht dieselbe Partie. Bei mehreren Kandidaten
       // identifiziert nur der damalige Duellstand den urspruenglichen Match.
       const m = l && (l.get(Number(d.n)) || (l.size === 1 ? l.values().next().value : null));
@@ -438,7 +438,7 @@ function _consolidateStoriesLegacy(list){
     const d = s.dataRef || {};
     // v9.4: allgemeine Rivalitäts-Story entfällt, wenn dasselbe Paar bereits
     // eine (spezifischere) Meilenstein-Story hat.
-    if(d.type === 'rivalry' && d.a && d.b && rivalryMsPairs.has([d.a, d.b].sort().join('|'))) continue;
+    if(d.type === 'rivalry' && d.a && d.b && rivalryMsPairs.has(paarKey(d.a, d.b))) continue;
     // v9.5: Top-Form-Story entfällt für Spieler, die ohnehin schon eine
     // (konkretere) „Siege in Folge"-Story haben — sonst steht dieselbe heiße
     // Phase doppelt im Feed.

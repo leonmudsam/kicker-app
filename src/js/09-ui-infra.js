@@ -285,8 +285,7 @@ function schlittenFahren(root){
 function periodStart(period){
   const now=new Date();
   if(period==='season') return seasonStart();
-  if(period==='week'){ const d=new Date(now); d.setHours(0,0,0,0);
-    const wd=(d.getDay()+6)%7; d.setDate(d.getDate()-wd); return d; }
+  if(period==='week') return wochenBeginn(now);
   if(period==='day'){ const d=new Date(now); d.setHours(0,0,0,0); return d; }
   return null; // all
 }
@@ -367,6 +366,21 @@ function saisonWaehlerHtml(id, gewaehlt, opts){
     }).join('')}</div>`;
 }
 
+// Der Wochentag mit Montag als 0. `getDay()` zählt ab Sonntag; die Liga
+// rechnet Wochen ab Montag, und `(getDay()+6)%7` stand dafür an sieben
+// Stellen ausgeschrieben.
+function wochentagMo(d){ return (d.getDay() + 6) % 7; }
+// Montag 00:00 Ortszeit der Woche, in der `d` liegt. Dieselbe Grenze für
+// den Zeitraum „Woche", den Wochenrückblick und die Wochen des Feeds.
+function wochenBeginn(d){
+  const x = new Date(d); x.setHours(0,0,0,0);
+  x.setDate(x.getDate() - wochentagMo(x));
+  return x;
+}
+// Der Schlüssel eines Paars, ob Duo oder zwei Gegner: sortiert, damit A|B
+// und B|A derselbe sind. Stand 34 Mal ausgeschrieben; alle Töpfe für Duos,
+// Rivalitäten und Teamstatistik hängen an genau dieser Schreibweise.
+function paarKey(a, b){ return [a, b].sort().join('|'); }
 function isoWeek(d){
   const date=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
   const dayNum=(date.getUTCDay()+6)%7; date.setUTCDate(date.getUTCDate()-dayNum+3);

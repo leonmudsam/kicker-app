@@ -79,7 +79,7 @@ function ruhestandAbschlussMs(x){
   const monat = seasonEnd(seasonOf(new Date(t)).id).getTime();
   const woche = new Date(t);
   woche.setHours(0, 0, 0, 0);
-  woche.setDate(woche.getDate() + 7 - (woche.getDay() + 6) % 7);
+  woche.setDate(woche.getDate() + 7 - wochentagMo(woche));
   return Math.max(monat, woche.getTime() - 1) + 864e5;
 }
 

@@ -621,7 +621,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     if(matches.length < 12) return null;
     const wochen = {};
     for(const m of matches){
-      const d = new Date(m.created_at), tag = (d.getDay() + 6) % 7;
+      const d = new Date(m.created_at), tag = wochentagMo(d);
       const mo = new Date(d.getFullYear(), d.getMonth(), d.getDate() - tag);
       const k = tagKey(mo);
       if(!wochen[k]) wochen[k] = {n:0, von:mo};

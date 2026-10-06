@@ -485,7 +485,7 @@ function showPotwRecap(opts){
       // Team-Stats
       [[m.a1,m.a2,m.winner==='A'],[m.b1,m.b2,m.winner==='B']]
       .forEach(([p1,p2,wonTeam])=>{
-        const k=[p1,p2].sort().join('|');
+        const k=paarKey(p1, p2);
         if(!teamGames[k]) teamGames[k]=0;
         if(!teamWins[k]) teamWins[k]=0;
         if(!teamEloDeltaRaw[k]) teamEloDeltaRaw[k]=0;
@@ -699,7 +699,7 @@ function showPotwRecap(opts){
 function autoShowPotwRecap(){
   try{
     const now=new Date();
-    const wd=(now.getDay()+6)%7; // 0=Mo
+    const wd=wochentagMo(now);
     if(wd>=2) return;            // nur Mo/Di
     if(!matches.length) return;
     const {start}=_potwLastWeekRange();
@@ -812,7 +812,7 @@ function showPotdRecap(opts){
       }
       // POTW hat Vorrang am Mo/Di der neuen Woche
       {
-        const wd=(now.getDay()+6)%7;
+        const wd=wochentagMo(now);
         if(wd<2 && potwHasData()){
           const {start}=_potwLastWeekRange();
           if(!_recapSeen('potw_shown_'+_potwKeyOf(start), 'potw:'+_potwKeyOf(start))) return;

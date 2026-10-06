@@ -271,7 +271,7 @@ function _buildStories(){
   const _dayMs = 86400000;
   const _startOfToday     = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const _startOfYesterday = _startOfToday - _dayMs;
-  const _weekStartOf = (ts) => { const x = new Date(ts); x.setHours(0,0,0,0); x.setDate(x.getDate() - ((x.getDay()+6)%7)); return x.getTime(); };
+  const _weekStartOf = (ts) => wochenBeginn(ts).getTime();
   const _thisWeekStart = _weekStartOf(now.getTime());
   const _prevWeekStart = _thisWeekStart - 7*_dayMs;
   const _yesterdayKey  = new Date(_startOfYesterday).toISOString().slice(0,10);

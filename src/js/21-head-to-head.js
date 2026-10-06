@@ -76,7 +76,7 @@ function showH2H(idA, idB){
           <div class="num" style="font-family:'Archivo Black',sans-serif;font-size:14px;line-height:1;color:${teamEloCol}">${teamEloStr}</div>
           <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:3px">Elo zusammen</div>
         </div>
-        <button data-team="${esc([idA,idB].sort().join('|'))}" style="flex:1.2;background:rgba(86,180,232,.1);border:1px solid rgba(86,180,232,.3);border-radius:9px;padding:8px;color:var(--blue);font-family:'Sometype Mono',monospace;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">
+        <button data-team="${esc(paarKey(idA, idB))}" style="flex:1.2;background:rgba(86,180,232,.1);border:1px solid rgba(86,180,232,.3);border-radius:9px;padding:8px;color:var(--blue);font-family:'Sometype Mono',monospace;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">
           Zum Duo
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
         </button>

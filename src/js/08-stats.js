@@ -70,7 +70,7 @@ function teamStats(){
   const T={};
   matches.forEach(m=>{
     [[m.a1,m.a2,m.winner==='A',m.score_a,m.score_b],[m.b1,m.b2,m.winner==='B',m.score_b,m.score_a]]
-    .forEach(([x,y,won,gf,ga])=>{ const k=[x,y].sort().join('|');
+    .forEach(([x,y,won,gf,ga])=>{ const k=paarKey(x, y);
       if(!T[k])T[k]={ids:[x,y].sort(),g:0,w:0,gf:0,ga:0};
       T[k].g++; if(won)T[k].w++; T[k].gf+=gf; T[k].ga+=ga; });
   });
@@ -202,7 +202,7 @@ function teamDetail(p1,p2){
 
   // ═══ KONSISTENTE ELO-BERECHNUNG ═══
   const globalSim=getGlobalSim();
-  const teamKey=[ids[0],ids[1]].sort().join('|');
+  const teamKey=paarKey(ids[0], ids[1]);
   const consistentEloDelta=Math.round(globalSim.teamElo[teamKey]||0);
 
   const games=teamMatches.length;
@@ -300,7 +300,7 @@ function teamDetail(p1,p2){
 // in idsA oder idsB sein.
 function teamAchievements(p1Id, p2Id){
   const R = awardRankings('all');
-  const sortKey = [p1Id, p2Id].sort().join('|');
+  const sortKey = paarKey(p1Id, p2Id);
   const duo = ids => ids.slice().sort().join('|') === sortKey;
   // Platz und Wert aus AW_WERT [§5.3d], wie Kachel, Blatt und Profil. Hier
   // stand die dritte Kopie der Sortier- und Anzeigeregeln (VAL_FNS,

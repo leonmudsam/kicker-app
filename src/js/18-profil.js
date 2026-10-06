@@ -299,7 +299,7 @@ function showPlayer(id){
           <div class="ti">Player of<br>the Season</div>
           <div class="su">${esc(t.label)}</div>
         </div>`;
-        const teamAttr = t.mate ? ` data-team="${esc([id,t.mate].sort().join('|'))}"` : '';
+        const teamAttr = t.mate ? ` data-team="${esc(paarKey(id, t.mate))}"` : '';
         return `
         <div class="pp-tr team"${teamAttr}>
           <span class="ic svg-ic">${svgI('handshake')}</span>
@@ -652,12 +652,12 @@ const rankProgHtml = rInfo ? `
             </div>`;
           };
           // Bester Mate
-          const bestAttr  = best?` data-team="${esc([id,best.mid].sort().join('|'))}"`:'';
+          const bestAttr  = best?` data-team="${esc(paarKey(id, best.mid))}"`:'';
           const bestCard  = best
             ? card('good', bestAttr, 'handshake', 'Bester Partner', {id:best.mid,label:pname(best.mid)}, best.wr, Math.round(best.wr*best.g), best.g)
             : card('good', '', 'handshake', 'Bester Partner', null);
           // Schlechtester Mate (nur wenn ≠ Bester)
-          const worstAttr = worst&&best&&worst.mid!==best.mid?` data-team="${esc([id,worst.mid].sort().join('|'))}"`:'';
+          const worstAttr = worst&&best&&worst.mid!==best.mid?` data-team="${esc(paarKey(id, worst.mid))}"`:'';
           const worstCard = worst&&best&&worst.mid!==best.mid
             ? card('bad', worstAttr, 'chartDown', 'Schwächster Partner', {id:worst.mid,label:pname(worst.mid)}, worst.wr, Math.round(worst.wr*worst.g), worst.g)
             : card('bad', '', 'chartDown', 'Schwächster Partner', null);

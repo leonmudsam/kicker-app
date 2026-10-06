@@ -139,7 +139,7 @@ function _einblickNetz(){
   const duo = {};
   matches.forEach(m => [[m.a1, m.a2, m.winner === 'A'], [m.b1, m.b2, m.winner === 'B']].forEach(([x, y, w]) => {
     if(!lage[x] || !lage[y]) return;
-    const k = [x, y].sort().join('|');
+    const k = paarKey(x, y);
     duo[k] = duo[k] || {g:0, w:0}; duo[k].g++; if(w) duo[k].w++;
   }));
   const ks = Object.keys(duo).filter(k => duo[k].g >= 4).sort((a, b) => duo[b].g - duo[a].g).slice(0, 18).reverse();

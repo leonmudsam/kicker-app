@@ -427,7 +427,7 @@ function _seasonTeamOfBerechnet(sid){
     matchesInSeason(sid).forEach(m => {
       [[m.a1,m.a2],[m.b1,m.b2]].forEach(([x,y]) => {
         if(!x || !y) return;
-        const k = [x,y].sort().join('|');
+        const k = paarKey(x, y);
         spiele[k] = (spiele[k] || 0) + 1;
       });
     });
@@ -589,7 +589,7 @@ const _winnerCountsMemo = new WeakMap(); // msArray → { '<kind>_<curKey>': {pi
 function _periodWinnerMap(allMs, kind){
   const now=new Date();
   let curKey;
-  if(kind==='week')       curKey=now.getFullYear()+'-W'+isoWeek(now);
+  if(kind==='week')       curKey=_wochenKey(now);
   else if(kind==='month') curKey=now.getFullYear()+'-'+now.getMonth();
   else                    curKey=''; // day: kein Ausschluss des laufenden Tages (wie bisher)
   let slot=_winnerCountsMemo.get(allMs);
@@ -603,8 +603,7 @@ function _periodWinnerMap(allMs, kind){
   allMs.forEach(m=>{
     let key;
     if(kind==='week'){
-      const d=new Date(m.created_at);
-      key=d.getFullYear()+'-W'+isoWeek(d);
+      key=_wochenKey(m.created_at);
     } else if(kind==='month'){
       const d=new Date(m.created_at);
       key=d.getFullYear()+'-'+d.getMonth();

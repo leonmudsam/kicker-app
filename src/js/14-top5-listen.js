@@ -30,7 +30,7 @@ function _seasonTeamRanking(seasonMs, sid){
   const counts={};
   seasonMs.forEach(m=>{
     [[m.a1,m.a2,m.winner==='A'],[m.b1,m.b2,m.winner==='B']].forEach(([x,y,won])=>{
-      const k=[x,y].sort().join('|');
+      const k=paarKey(x, y);
       if(!counts[k]) counts[k]={g:0,w:0};
       counts[k].g++; if(won) counts[k].w++;
     });

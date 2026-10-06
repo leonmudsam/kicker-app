@@ -1588,7 +1588,7 @@ function _newsRundeStory(r, ende){
   const top = spieler[0];
   const vorn = spieler.filter(x => x.w === top.w).map(x => x.id);
   const n = ms.length;
-  const paarungen = new Set(ms.map(m => [[m.a1, m.a2].sort().join('+'), [m.b1, m.b2].sort().join('+')].sort().join('|'))).size;
+  const paarungen = new Set(ms.map(m => paarKey([m.a1, m.a2].sort().join('+'), [m.b1, m.b2].sort().join('+')))).size;
   // Die Schlagzeile nennt, wer die Runde gewonnen hat. Spielen immer
   // dieselben zwei Teams, ist es ein Duell und kein Turnier: dann gewinnt
   // ein Team oder beide trennen sich. Wechseln die Paarungen und steht

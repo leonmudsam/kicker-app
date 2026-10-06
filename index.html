@@ -5539,7 +5539,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.06.05b8b0d9';
+const BUILD_VERSION='2026.10.06.2ace665f';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -7182,7 +7182,7 @@ async function autoArchiveSeasons(){
     const teamGames={};
     ms.forEach(m=>{
       [[m.a1,m.a2],[m.b1,m.b2]].forEach(([x,y])=>{
-        const k=[x,y].sort().join('|');
+        const k=paarKey(x, y);
         teamGames[k]=(teamGames[k]||0)+1;
       });
     });
@@ -7285,7 +7285,7 @@ function showSeasonRecap(season, opts){
       if(aufA){ tg++; if(m.winner==='A')tw++; }
       else if(aufB){ tg++; if(m.winner==='B')tw++; }
     });
-    teamHtml = `<div class="rcp-tos klick" data-team="${esc([a,b].sort().join('|'))}">
+    teamHtml = `<div class="rcp-tos klick" data-team="${esc(paarKey(a, b))}">
       <div class="rcp-tos-pair">${rcpPaarHtml([a,b],40)}</div>
       <div class="rcp-tos-info">
         <div class="rcp-tos-label">Team der Saison</div>
@@ -7427,9 +7427,7 @@ function showSeasonRecap(season, opts){
 
 function _potwLastWeekRange(){
   const now=new Date();
-  const monday=new Date(now); monday.setHours(0,0,0,0);
-  const wd=(monday.getDay()+6)%7;
-  monday.setDate(monday.getDate()-wd);
+  const monday=wochenBeginn(now);
   const abschluss=new Date(monday); abschluss.setDate(abschluss.getDate()+6); abschluss.setHours(23,0,0,0);
   if(now.getTime() < abschluss.getTime()) monday.setDate(monday.getDate()-7);
   const end=new Date(monday); end.setDate(end.getDate()+7); end.setMilliseconds(-1);
@@ -7441,7 +7439,7 @@ function _potwWocheVon(key){
   const iso = k.match(/^(\d{4})-W(\d{1,2})$/);
   if(iso){
     const jan4 = new Date(+iso[1], 0, 4);
-    start = new Date(+iso[1], 0, 4 - ((jan4.getDay() + 6) % 7) + (+iso[2] - 1) * 7);
+    start = new Date(+iso[1], 0, 4 - wochentagMo(jan4) + (+iso[2] - 1) * 7);
   } else {
     const [y, m, d] = k.split('-').map(Number);
     start = new Date(y, m - 1, d);
@@ -7494,7 +7492,7 @@ function ruhestandAbschlussMs(x){
   const monat = seasonEnd(seasonOf(new Date(t)).id).getTime();
   const woche = new Date(t);
   woche.setHours(0, 0, 0, 0);
-  woche.setDate(woche.getDate() + 7 - (woche.getDay() + 6) % 7);
+  woche.setDate(woche.getDate() + 7 - wochentagMo(woche));
   return Math.max(monat, woche.getTime() - 1) + 864e5;
 }
 
@@ -8038,7 +8036,7 @@ function showPotwRecap(opts){
 
       [[m.a1,m.a2,m.winner==='A'],[m.b1,m.b2,m.winner==='B']]
       .forEach(([p1,p2,wonTeam])=>{
-        const k=[p1,p2].sort().join('|');
+        const k=paarKey(p1, p2);
         if(!teamGames[k]) teamGames[k]=0;
         if(!teamWins[k]) teamWins[k]=0;
         if(!teamEloDeltaRaw[k]) teamEloDeltaRaw[k]=0;
@@ -8229,7 +8227,7 @@ function showPotwRecap(opts){
 function autoShowPotwRecap(){
   try{
     const now=new Date();
-    const wd=(now.getDay()+6)%7;
+    const wd=wochentagMo(now);
     if(wd>=2) return;
     if(!matches.length) return;
     const {start}=_potwLastWeekRange();
@@ -8304,7 +8302,7 @@ function showPotdRecap(opts){
         if(last && last.id!==currentSeason().id && !_recapSeen('recap_shown_'+last.id, 'season:'+last.id)) return;
       }
       {
-        const wd=(now.getDay()+6)%7;
+        const wd=wochentagMo(now);
         if(wd<2 && potwHasData()){
           const {start}=_potwLastWeekRange();
           if(!_recapSeen('potw_shown_'+_potwKeyOf(start), 'potw:'+_potwKeyOf(start))) return;
@@ -8631,7 +8629,7 @@ function teamStats(){
   const T={};
   matches.forEach(m=>{
     [[m.a1,m.a2,m.winner==='A',m.score_a,m.score_b],[m.b1,m.b2,m.winner==='B',m.score_b,m.score_a]]
-    .forEach(([x,y,won,gf,ga])=>{ const k=[x,y].sort().join('|');
+    .forEach(([x,y,won,gf,ga])=>{ const k=paarKey(x, y);
       if(!T[k])T[k]={ids:[x,y].sort(),g:0,w:0,gf:0,ga:0};
       T[k].g++; if(won)T[k].w++; T[k].gf+=gf; T[k].ga+=ga; });
   });
@@ -8741,7 +8739,7 @@ function teamDetail(p1,p2){
   const recent=[...teamMatches].sort((a,b)=>b.t-a.t).slice(0,10);
 
   const globalSim=getGlobalSim();
-  const teamKey=[ids[0],ids[1]].sort().join('|');
+  const teamKey=paarKey(ids[0], ids[1]);
   const consistentEloDelta=Math.round(globalSim.teamElo[teamKey]||0);
 
   const games=teamMatches.length;
@@ -8814,7 +8812,7 @@ function teamDetail(p1,p2){
 
 function teamAchievements(p1Id, p2Id){
   const R = awardRankings('all');
-  const sortKey = [p1Id, p2Id].sort().join('|');
+  const sortKey = paarKey(p1Id, p2Id);
   const duo = ids => ids.slice().sort().join('|') === sortKey;
   const found = [];
   Object.keys(AW_WERT).forEach(key => {
@@ -9127,8 +9125,7 @@ function schlittenFahren(root){
 function periodStart(period){
   const now=new Date();
   if(period==='season') return seasonStart();
-  if(period==='week'){ const d=new Date(now); d.setHours(0,0,0,0);
-    const wd=(d.getDay()+6)%7; d.setDate(d.getDate()-wd); return d; }
+  if(period==='week') return wochenBeginn(now);
   if(period==='day'){ const d=new Date(now); d.setHours(0,0,0,0); return d; }
   return null;
 }
@@ -9176,6 +9173,13 @@ function saisonWaehlerHtml(id, gewaehlt, opts){
     }).join('')}</div>`;
 }
 
+function wochentagMo(d){ return (d.getDay() + 6) % 7; }
+function wochenBeginn(d){
+  const x = new Date(d); x.setHours(0,0,0,0);
+  x.setDate(x.getDate() - wochentagMo(x));
+  return x;
+}
+function paarKey(a, b){ return [a, b].sort().join('|'); }
 function isoWeek(d){
   const date=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
   const dayNum=(date.getUTCDay()+6)%7; date.setUTCDate(date.getUTCDate()-dayNum+3);
@@ -10511,8 +10515,8 @@ function _awardRankingsUncached(period, sid){
       }
     }
     
-    const tA=[m.a1,m.a2].sort().join('|');
-    const tB=[m.b1,m.b2].sort().join('|');
+    const tA=paarKey(m.a1, m.a2);
+    const tB=paarKey(m.b1, m.b2);
     if(!agg.tElo[tA]) agg.tElo[tA]=0;
     if(!agg.tElo[tB]) agg.tElo[tB]=0;
     if(!agg.tWins[tA]) agg.tWins[tA]=0;
@@ -10747,8 +10751,8 @@ function _awardRankingsUncached(period, sid){
   const _tStreak = {};
   for(let i=0;i<_orderedForStreak.length;i++){
     const m=_orderedForStreak[i];
-    const wKey = m.winner==='A' ? [m.a1,m.a2].sort().join('|') : [m.b1,m.b2].sort().join('|');
-    const lKey = m.winner==='A' ? [m.b1,m.b2].sort().join('|') : [m.a1,m.a2].sort().join('|');
+    const wKey = m.winner==='A' ? paarKey(m.a1, m.a2) : paarKey(m.b1, m.b2);
+    const lKey = m.winner==='A' ? paarKey(m.b1, m.b2) : paarKey(m.a1, m.a2);
     if(!_tStreak[wKey]) _tStreak[wKey]={cur:0,best:0,ids:wKey.split('|')};
     if(!_tStreak[lKey]) _tStreak[lKey]={cur:0,best:0,ids:lKey.split('|')};
     _tStreak[wKey].cur++;
@@ -10977,8 +10981,8 @@ function _computeZirkus(ms){
   const tPleiten={};
   for(let i=0; i<ms.length; i++){
     const m=ms[i];
-    const teamA=[m.a1,m.a2].sort().join('|');
-    const teamB=[m.b1,m.b2].sort().join('|');
+    const teamA=paarKey(m.a1, m.a2);
+    const teamB=paarKey(m.b1, m.b2);
     const loserTeam=m.winner==='A'?teamB:teamA;
     tPleiten[loserTeam] = (tPleiten[loserTeam]||0) + 1;
     if(Math.abs(m.score_a-m.score_b)<5) continue;
@@ -11000,8 +11004,8 @@ function _computeBarstelle(ms){
   const ordered=[...ms].sort((a,b)=>mts(a)-mts(b));
   for(let i=0; i<ordered.length; i++){
     const m=ordered[i];
-    const loserKey=m.winner==='A'?[m.b1,m.b2].sort().join('|'):[m.a1,m.a2].sort().join('|');
-    const winnerKey=m.winner==='A'?[m.a1,m.a2].sort().join('|'):[m.b1,m.b2].sort().join('|');
+    const loserKey=m.winner==='A'?paarKey(m.b1, m.b2):paarKey(m.a1, m.a2);
+    const winnerKey=m.winner==='A'?paarKey(m.a1, m.a2):paarKey(m.b1, m.b2);
     if(!teamLossStreaks[loserKey])teamLossStreaks[loserKey]={cur:0,best:0,ids:loserKey.split('|')};
     teamLossStreaks[loserKey].cur++;
     if(teamLossStreaks[loserKey].cur>teamLossStreaks[loserKey].best)teamLossStreaks[loserKey].best=teamLossStreaks[loserKey].cur;
@@ -11025,7 +11029,7 @@ function teamStatsFromMatches(ms){
   const T={};
   ms.forEach(m=>{
     [[m.a1,m.a2,m.winner==='A',m.score_a,m.score_b],[m.b1,m.b2,m.winner==='B',m.score_b,m.score_a]]
-    .forEach(([x,y,won,gf,ga])=>{const k=[x,y].sort().join('|');
+    .forEach(([x,y,won,gf,ga])=>{const k=paarKey(x, y);
       if(!T[k])T[k]={ids:[x,y].sort(),g:0,w:0,gf:0,ga:0};
       T[k].g++;if(won)T[k].w++;T[k].gf+=gf;T[k].ga+=ga;});
   });
@@ -11431,7 +11435,7 @@ function _seasonTeamRanking(seasonMs, sid){
   const counts={};
   seasonMs.forEach(m=>{
     [[m.a1,m.a2,m.winner==='A'],[m.b1,m.b2,m.winner==='B']].forEach(([x,y,won])=>{
-      const k=[x,y].sort().join('|');
+      const k=paarKey(x, y);
       if(!counts[k]) counts[k]={g:0,w:0};
       counts[k].g++; if(won) counts[k].w++;
     });
@@ -11811,8 +11815,8 @@ function vTeams(nurErgebnis=false){
   } else if(teamSort==='elo'){
     const gSim=getGlobalSim();
     sorted=[...T].sort((a,b)=>{
-      const keyA=[a.ids[0],a.ids[1]].sort().join('|');
-      const keyB=[b.ids[0],b.ids[1]].sort().join('|');
+      const keyA=paarKey(a.ids[0], a.ids[1]);
+      const keyB=paarKey(b.ids[0], b.ids[1]);
       const eloA=gSim.teamElo[keyA]||0;
       const eloB=gSim.teamElo[keyB]||0;
       return eloB-eloA || (b.w/b.g)-(a.w/a.g) || (b.gf-b.ga)-(a.gf-a.ga);
@@ -11861,7 +11865,7 @@ function vTeams(nurErgebnis=false){
   const zeile=(t,i,ohneRang)=>{
     const wr=Math.round(t.w/t.g*100);
     const gd=t.gf-t.ga;
-    const keyTeam=[t.ids[0],t.ids[1]].sort().join('|');
+    const keyTeam=paarKey(t.ids[0], t.ids[1]);
     
     let mainValue, mainColor;
     if(teamSort==='wr'){
@@ -12442,7 +12446,7 @@ function _einblickNetz(){
   const duo = {};
   matches.forEach(m => [[m.a1, m.a2, m.winner === 'A'], [m.b1, m.b2, m.winner === 'B']].forEach(([x, y, w]) => {
     if(!lage[x] || !lage[y]) return;
-    const k = [x, y].sort().join('|');
+    const k = paarKey(x, y);
     duo[k] = duo[k] || {g:0, w:0}; duo[k].g++; if(w) duo[k].w++;
   }));
   const ks = Object.keys(duo).filter(k => duo[k].g >= 4).sort((a, b) => duo[b].g - duo[a].g).slice(0, 18).reverse();
@@ -13107,7 +13111,7 @@ function _seasonTeamOfBerechnet(sid){
     matchesInSeason(sid).forEach(m => {
       [[m.a1,m.a2],[m.b1,m.b2]].forEach(([x,y]) => {
         if(!x || !y) return;
-        const k = [x,y].sort().join('|');
+        const k = paarKey(x, y);
         spiele[k] = (spiele[k] || 0) + 1;
       });
     });
@@ -13225,7 +13229,7 @@ const _winnerCountsMemo = new WeakMap();
 function _periodWinnerMap(allMs, kind){
   const now=new Date();
   let curKey;
-  if(kind==='week')       curKey=now.getFullYear()+'-W'+isoWeek(now);
+  if(kind==='week')       curKey=_wochenKey(now);
   else if(kind==='month') curKey=now.getFullYear()+'-'+now.getMonth();
   else                    curKey='';
   let slot=_winnerCountsMemo.get(allMs);
@@ -13237,8 +13241,7 @@ function _periodWinnerMap(allMs, kind){
   allMs.forEach(m=>{
     let key;
     if(kind==='week'){
-      const d=new Date(m.created_at);
-      key=d.getFullYear()+'-W'+isoWeek(d);
+      key=_wochenKey(m.created_at);
     } else if(kind==='month'){
       const d=new Date(m.created_at);
       key=d.getFullYear()+'-'+d.getMonth();
@@ -14392,7 +14395,7 @@ function showPlayer(id){
           <div class="ti">Player of<br>the Season</div>
           <div class="su">${esc(t.label)}</div>
         </div>`;
-        const teamAttr = t.mate ? ` data-team="${esc([id,t.mate].sort().join('|'))}"` : '';
+        const teamAttr = t.mate ? ` data-team="${esc(paarKey(id, t.mate))}"` : '';
         return `
         <div class="pp-tr team"${teamAttr}>
           <span class="ic svg-ic">${svgI('handshake')}</span>
@@ -14693,11 +14696,11 @@ const rankProgHtml = rInfo ? `
               </div>
             </div>`;
           };
-          const bestAttr  = best?` data-team="${esc([id,best.mid].sort().join('|'))}"`:'';
+          const bestAttr  = best?` data-team="${esc(paarKey(id, best.mid))}"`:'';
           const bestCard  = best
             ? card('good', bestAttr, 'handshake', 'Bester Partner', {id:best.mid,label:pname(best.mid)}, best.wr, Math.round(best.wr*best.g), best.g)
             : card('good', '', 'handshake', 'Bester Partner', null);
-          const worstAttr = worst&&best&&worst.mid!==best.mid?` data-team="${esc([id,worst.mid].sort().join('|'))}"`:'';
+          const worstAttr = worst&&best&&worst.mid!==best.mid?` data-team="${esc(paarKey(id, worst.mid))}"`:'';
           const worstCard = worst&&best&&worst.mid!==best.mid
             ? card('bad', worstAttr, 'chartDown', 'Schwächster Partner', {id:worst.mid,label:pname(worst.mid)}, worst.wr, Math.round(worst.wr*worst.g), worst.g)
             : card('bad', '', 'chartDown', 'Schwächster Partner', null);
@@ -15632,7 +15635,7 @@ function _abMomenteHtml(d){
 function _abDuoHtml(pid, x, art){
   const g = art === 'team' ? x.teamG : x.oppG, w = art === 'team' ? x.teamW : x.oppW;
   const q = g ? Math.round(w / g * 100) : 0;
-  const attr = art === 'team' ? `data-team="${esc([pid, x.oid].sort().join('|'))}"` : `data-h2h="${esc(pid + '|' + x.oid)}"`;
+  const attr = art === 'team' ? `data-team="${esc(paarKey(pid, x.oid))}"` : `data-h2h="${esc(pid + '|' + x.oid)}"`;
   return `<div class="ab-duo klick" ${attr}>
     ${art === 'team' ? rcpPaarHtml([pid, x.oid], 36) : rcpAvHtml(x.oid, 36)}
     <span class="ab-duo-t"><b>${esc(art === 'team' ? pname(pid) + ' & ' + pname(x.oid) : pname(x.oid))}</b>
@@ -16211,7 +16214,7 @@ function showH2H(idA, idB){
           <div class="num" style="font-family:'Archivo Black',sans-serif;font-size:14px;line-height:1;color:${teamEloCol}">${teamEloStr}</div>
           <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:3px">Elo zusammen</div>
         </div>
-        <button data-team="${esc([idA,idB].sort().join('|'))}" style="flex:1.2;background:rgba(86,180,232,.1);border:1px solid rgba(86,180,232,.3);border-radius:9px;padding:8px;color:var(--blue);font-family:'Sometype Mono',monospace;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">
+        <button data-team="${esc(paarKey(idA, idB))}" style="flex:1.2;background:rgba(86,180,232,.1);border:1px solid rgba(86,180,232,.3);border-radius:9px;padding:8px;color:var(--blue);font-family:'Sometype Mono',monospace;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">
           Zum Duo
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
         </button>
@@ -17521,7 +17524,7 @@ function _buildStories(){
   const _dayMs = 86400000;
   const _startOfToday     = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const _startOfYesterday = _startOfToday - _dayMs;
-  const _weekStartOf = (ts) => { const x = new Date(ts); x.setHours(0,0,0,0); x.setDate(x.getDate() - ((x.getDay()+6)%7)); return x.getTime(); };
+  const _weekStartOf = (ts) => wochenBeginn(ts).getTime();
   const _thisWeekStart = _weekStartOf(now.getTime());
   const _prevWeekStart = _thisWeekStart - 7*_dayMs;
   const _yesterdayKey  = new Date(_startOfYesterday).toISOString().slice(0,10);
@@ -19757,7 +19760,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     if(matches.length < 12) return null;
     const wochen = {};
     for(const m of matches){
-      const d = new Date(m.created_at), tag = (d.getDay() + 6) % 7;
+      const d = new Date(m.created_at), tag = wochentagMo(d);
       const mo = new Date(d.getFullYear(), d.getMonth(), d.getDate() - tag);
       const k = tagKey(mo);
       if(!wochen[k]) wochen[k] = {n:0, von:mo};
@@ -20469,7 +20472,7 @@ function _consolidateStories(list){
   const matchById = new Map((matches || []).map(m => [m.id, m]));
   const duellMoment = new Map(), duellAnzahl = new Map();
   _spBasis().chrono.forEach(m => [m.a1,m.a2].forEach(a => [m.b1,m.b2].forEach(b => {
-    const paar = [a,b].sort().join('|'), n = (duellAnzahl.get(paar) || 0) + 1;
+    const paar = paarKey(a, b), n = (duellAnzahl.get(paar) || 0) + 1;
     duellAnzahl.set(paar, n);
     const key = paar + '|' + mts(m);
     let l = duellMoment.get(key);
@@ -20513,7 +20516,7 @@ function _consolidateStories(list){
     const d = (s && s.dataRef) || {};
     if(d.type === 'rivalry' && !d.matchId && d.a && d.b && Number(d.n) > 0){
       const zeit = new Date(s.when).getTime();
-      const l = duellMoment.get([d.a,d.b].sort().join('|') + '|' + zeit);
+      const l = duellMoment.get(paarKey(d.a, d.b) + '|' + zeit);
       const m = l && (l.get(Number(d.n)) || (l.size === 1 ? l.values().next().value : null));
       if(m) return Object.assign({}, s, {dataRef:Object.assign({}, d, {matchId:m.id})});
     }
@@ -20614,7 +20617,7 @@ function _consolidateStoriesLegacy(list){
   const _srcAlt = src;
   for(const s of _srcAlt){
     const d = s.dataRef || {};
-    if(d.type === 'rivalry' && d.a && d.b && rivalryMsPairs.has([d.a, d.b].sort().join('|'))) continue;
+    if(d.type === 'rivalry' && d.a && d.b && rivalryMsPairs.has(paarKey(d.a, d.b))) continue;
     if(d.type === 'top_form' && d.pid && winStreakPids.has(d.pid + '|' + tagKey(s.when))) continue;
     if(d.type === 'win_streak' && d.pid
        && (Number(d.streak) || 0)
@@ -24136,7 +24139,7 @@ function _newsRundeStory(r, ende){
   const top = spieler[0];
   const vorn = spieler.filter(x => x.w === top.w).map(x => x.id);
   const n = ms.length;
-  const paarungen = new Set(ms.map(m => [[m.a1, m.a2].sort().join('+'), [m.b1, m.b2].sort().join('+')].sort().join('|'))).size;
+  const paarungen = new Set(ms.map(m => paarKey([m.a1, m.a2].sort().join('+'), [m.b1, m.b2].sort().join('+')))).size;
   const teamA = [ms[0].a1, ms[0].a2], teamB = [ms[0].b1, ms[0].b2];
   const zwei = t => _namenListe(t.map(_spName));
   let title;
@@ -29243,8 +29246,7 @@ function _chronicleCtx(bisMs){
     allDays.add(day);
     const runVor = {};
     [m.a1, m.a2, m.b1, m.b2].forEach(x => { if(x) runVor[x] = run[x] || 0; });
-    const _wd = new Date(m.created_at);
-    const wkey = _wd.getFullYear() + '-W' + isoWeek(_wd);
+    const wkey = _wochenKey(m.created_at);
     const sid = (seasonOf(m.created_at) || {}).id;
     if(sid) allSeasons.add(sid);
     const ids = [m.a1, m.a2, m.b1, m.b2];
