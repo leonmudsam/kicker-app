@@ -8,8 +8,8 @@
  *  Reihenfolge, in der sie vorher in index.html standen. Darum die
  *  Nummern-Präfixe der Dateinamen: sie SIND die Reihenfolge.
  *
- *    node tools/build.mjs            → dist/index.html
- *    BUILD_STAMP=2026.09.01.1 node … → dist/index.html mit fester Version
+ *    node tools/build.mjs            → dist/index.html, dist/sw.js
+ *    BUILD_STAMP=2026.09.01.1 node … → dieselben mit fester Version
  *
  *  DIE VERSION IST EIN FINGERABDRUCK DES AUSGELIEFERTEN INHALTS, keine von
  *  Hand gepflegte Nummer. Von Hand gepflegt stand sie sechs Veröffentlichungen
@@ -182,8 +182,19 @@ if (!version) {
 }
 html = html.replace(OHNE_VERSION, `const BUILD_VERSION='${version}'`);
 
+// Der Service Worker [§C42] trägt dieselbe Fassung wie die Seite: ändert
+// sich die Auslieferung, ist er ein neuer Worker und räumt die Töpfe der
+// alten. Ohne Kommentare und geparst wie das Skript der Seite.
+const SW_FASSUNG = /const SW_FASSUNG = '[^']*';/;
+let sw = ohneKommentare(readFileSync('src/sw.js', 'utf8'), false);
+if (!SW_FASSUNG.test(sw)) throw new Error('src/sw.js: SW_FASSUNG nicht gefunden');
+sw = sw.replace(SW_FASSUNG, `const SW_FASSUNG = '${version}';`);
+try { new vm.Script(sw); }
+catch (e) { throw new Error('src/sw.js ist nach dem Entfernen der Kommentare kaputt: ' + e.message); }
+
 mkdirSync('dist', { recursive: true });
 writeFileSync('dist/index.html', html);
+writeFileSync('dist/sw.js', sw);
 copyFileSync('icon.png', 'dist/icon.png');
 
 console.log(`dist/index.html — ${(html.length/1024).toFixed(0)} kB, Version ${version}`);

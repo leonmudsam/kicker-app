@@ -34,6 +34,11 @@ neue Partie oder ein anderer Zeitraum klappt nichts zu, was man gerade
 liest —, der Tabwechsel und der Klick aufs Logo leeren ihn: ein neuer Reiter
 beginnt mit der Rangliste oben und nicht mit einer Grafik darüber.
 
+Der Schnellstart [§C42] hält zwei Werte in `06c-stand.js`: `_standOffen`
+(nur der erste `loadAll`-Durchlauf darf den gespeicherten Stand zeigen) und
+`_standGezeigt` (sein Fingerabdruck, bis der Live-Abruf ihn bestätigt oder
+ersetzt; ein Fehler leert ihn).
+
 Zeitweilige Arbeitsaufträge sind keine Ansichtsauswahl: `_ligaRefreshAuftrag`
 lebt im Navigations-Layer und wird nach Ende des gemeinsamen Datenabrufs
 geleert; `_loadAllLeise` gilt nur für dessen Lauf und wird im `finally`
@@ -252,6 +257,21 @@ Reihenfolge, die nur die fertige Liste kennt. Die vier Kennzahlen der Schandtafe
 selben Durchlauf ab — gemessen 8,6 auf 10,3 ms kalt, warm weiterhin null. `tests/disziplinen` sieht nach, dass kein Spielerobjekt im
 Cache eine Liste trägt.
 
+**Der Stand des Geräts** (IndexedDB `kicker-stand`, ein Eintrag `liga`)
+ist der einzige Topf, der eine Sitzung überlebt. Sein Schlüssel ist
+`BUILD_VERSION`: ein Stand einer anderen Fassung wird nicht gezeichnet. Er
+hält die vier Antworten der Datenbank, wie sie kamen, den Story-Bestand und
+den Fingerabdruck `_standHash` über ihren Text; geschrieben wird er am Ende
+jedes Live-Durchlaufs mit neuen Daten, gelesen nur im ersten. Liefert der
+Live-Abruf denselben Fingerabdruck, bleiben Daten, Töpfe und DOM aus dem
+Stand stehen — sonst rechnete der Start alles zweimal kalt.
+
+**Die Töpfe des Service Workers** (`src/sw.js`) überleben ebenfalls:
+`kicker-seite-<Fassung>` hält Seite und Symbol, `kicker-fremd` Schriften und
+Supabase-Bibliothek. Die Fassung ist die BUILD_VERSION; eine neue räumt beim
+Aktivieren die Seitentöpfe der alten. Antworten der Datenbank und Anfragen
+mit `_cb` (Update-Check, Neu laden) liegen nie darin.
+
 > **Pflegepflicht.** Kommt ein Topf dazu, steht seine Schlüsselregel hier.
 
 # Takt
@@ -290,6 +310,15 @@ vor dem Tap gestartete Abfrage wird einmal frisch nachgeholt, nicht durch
 jeden weiteren Tap erneut verworfen. Unveränderte Daten behalten DOM/Caches;
 Abruffehler behalten die letzte Ansicht. Ein sich anschließender expliziter
 Vordergrundaufruf hebt den stillen Modus auf (`_loadAllLeise`).
+
+Der erste Durchlauf startet den Abruf und zeichnet, während das Netz noch
+antwortet, aus dem gespeicherten Stand (`_standZeigen`, höchstens 400 ms
+Warten auf IndexedDB); aus dem Stand wird nichts geschrieben [§C42].
+Scheitert der Abruf danach, bleibt der Stand stehen und ein Hinweis sagt es.
+Mit neuen Daten zeichnet `loadAll` vor `autoArchiveSeasons`: das Archiv
+wartet je abgeschlossenem Monat auf einen Upsert, und am ersten Tag eines
+Monats stand die Rangliste so lange leer; ändert das Archiv die Version,
+wird noch einmal gezeichnet.
 
 Kommen neue Daten, zeichnet `loadAll` zuerst und lässt den News-Generator
 danach in einem Worker rechnen (`_storiesImWorker`, `29c-news-worker.js`):

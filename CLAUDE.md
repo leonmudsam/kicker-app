@@ -2,7 +2,8 @@
 
 Deutschsprachige Einzeldatei-PWA für eine 2-gegen-2-Tischkicker-Liga:
 Elo, Saisons, Awards, Rekorde, Chronik, News. Backend ist Supabase,
-ausgeliefert wird **eine** `index.html` über GitHub Pages.
+ausgeliefert wird **eine** `index.html` über GitHub Pages, daneben ihr
+Service Worker `sw.js` [§C42].
 
 > **Diese Datei ist Teil des Codes, nicht Begleitmaterial.**
 > Wer die Struktur, den Ablauf oder eine Regel ändert, ändert sie hier im
@@ -14,16 +15,16 @@ ausgeliefert wird **eine** `index.html` über GitHub Pages.
 
 ## 1. Der Bauablauf
 
-`index.html` im Wurzelverzeichnis ist **Build-Ergebnis**, nicht Quelle.
-Niemals direkt bearbeiten.
+`index.html` und `sw.js` im Wurzelverzeichnis sind **Build-Ergebnis**, nicht
+Quelle. Niemals direkt bearbeiten.
 
 ```
 1. in src/ ändern
-2. node tools/build.mjs            → dist/index.html
-3. cp dist/index.html index.html   ← wird am häufigsten vergessen
+2. node tools/build.mjs            → dist/index.html, dist/sw.js
+3. cp dist/index.html dist/sw.js .  ← wird am häufigsten vergessen
 4. node tools/check.mjs            → acht Wächter, alle müssen grün sein
 5. node tests/run.mjs              → alle Suiten müssen grün sein
-6. committen, MIT index.html      → git status --short index.html muss leer sein
+6. committen, MIT index.html und sw.js → git status --short index.html sw.js muss leer sein
 ```
 
 Wächter 1 heißt „index.html entspricht src/" und schlägt genau dann an,
@@ -67,8 +68,9 @@ mit rotem Wächter oder roter Suite.
 
 ```
 src/index.html        Gerüst mit den Platzhaltern /*@@CSS*/ und /*@@JS*/
+src/sw.js             der Service Worker; build.mjs setzt seine Fassung [§C42]
 src/css/              17 Dateien
-src/js/               58 Dateien
+src/js/               59 Dateien
 tools/build.mjs       hängt src/css/* und src/js/* ALPHABETISCH aneinander,
                       ohne Kommentare
 tools/check.mjs       acht Wächter
@@ -83,6 +85,7 @@ tests/runtime.js      die App ohne Browser, für reine Rechentests
 tests/browser.js      findet Chromium oder meldet, dass keins da ist
 tests/fixtures/       die echten Partien der Liga, gepackt
 index.html            das ausgelieferte Ergebnis, mitversioniert
+sw.js                 sein Service Worker, ebenso gebaut und mitversioniert
 mockup/               Entwürfe ohne Bauablauf, kein Teil der App —
                       Übersicht in mockup/README.md
 datenbank/            SQL, das der Betreiber selbst ausführt — die App ändert
@@ -118,7 +121,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **1193**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **1202**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -134,7 +137,7 @@ Datei, deren Aufgabe niemand aufgeschrieben hat.
 
 | Bereich | Dateien |
 |---|---|
-| Rahmen, Zustand, Daten | `00-prolog` (Konstanten, Supabase-Client) · `01-update` (Version, Update-Banner, **aller Zustand**) · `04-cache` · `06-db` (Laden, Speichern, Saison-Rückblick) · `06b-ruhestand` (Karriereende: `ligaAktiv`, `sichtbar`, der eingefrorene Stand) · `37-boot` |
+| Rahmen, Zustand, Daten | `00-prolog` (Konstanten, Supabase-Client) · `01-update` (Version, Update-Banner, **aller Zustand**) · `04-cache` · `06-db` (Laden, Speichern, Saison-Rückblick) · `06b-ruhestand` (Karriereende: `ligaAktiv`, `sichtbar`, der eingefrorene Stand) · `06c-stand` (der letzte Stand des Geräts, Schnellstart) · `37-boot` |
 | Rechnen | `03-saison` · `05-rang-elo` (Ränge, `posWert`, Metrikleiste) · `08-stats` · `10-elo-engine` |
 | Ansichten | `11-view-ranking` · `12-view-positionen` · `13-view-awards` · `15-views-rest` (Teams, Verlauf, Einstellungen) · `15b-einblick` (Rollen-Landkarte, Netz der Duos, als Zeile, die aufklappt) · `18-profil` · `18a-badge-popover` (eine Auszeichnung im Detail) · `22-team-profil` |
 | Blätter (Sheets) | `14-top5-listen` · `16-sheet-infra` (Öffnen, Stapel, Wischgeste) · `19-bilanzen` · `21-head-to-head` |
@@ -187,11 +190,11 @@ ihn dort ein — im selben Commit.
 
 | Wächter | fängt ab |
 |---|---|
-| 1 Drift | `index.html` wurde direkt bearbeitet statt `src/` |
+| 1 Drift | `index.html` oder `sw.js` wurde direkt bearbeitet statt `src/` (oder nicht kopiert) |
 | 2 Parser | Syntaxfehler an einer Dateigrenze — sonst erst im Browser sichtbar |
 | 3 CSS-Klammern | eine offene `{` am Dateiende frisst still die nächste Datei |
 | 4 Bezeichner | derselbe Name auf oberster Ebene in zwei Dateien — **oder** ein Name, den niemand mehr ruft |
-| 5 Fingerabdruck | die Auslieferung trägt eine Version, die nicht zu ihrem Inhalt gehört — dann erfährt kein Gerät von einer neuen Fassung |
+| 5 Fingerabdruck | die Auslieferung trägt eine Version, die nicht zu ihrem Inhalt gehört, oder `sw.js` eine andere Fassung als die Seite — dann erfährt kein Gerät von einer neuen Fassung |
 | 6 Arbeitsanweisung | diese Datei, die Landkarte (JS und CSS), der Baum oder die Tabelle der Suiten in `tests/README.md` nennen eine Datei nicht, die es gibt, eine, die es nicht gibt, oder eine Zahl, die nicht stimmt |
 | 7 Verweise | ein Kürzel `§Cnn`, ein Link oder ein Pfad in der Doku zeigt auf etwas, das es nicht gibt, ein Gesetz wird nirgends im Code zitiert, eine Abschnittsnummer `§n.m` steht zweimal im Code, ein Zitat `[§n.m]` zeigt auf keinen Abschnitt, oder einem Gesetz fehlt `## Regel`, `## Stellen` oder eine `## Prüfung`, die eine bestehende Suite nennt |
 | 8 Verzeichnisse | `docs/README.md` oder `docs/anker.md` sind nicht mehr das, was `node tools/doku.mjs` aus den Dateien erzeugt |
@@ -263,6 +266,7 @@ die drei Abschnitte und die genannte Suite fest.
 | [§C38](docs/gesetze/C38-chronik-mitte.md) | Die Chronik gehört nicht nur den besten Drei |
 | [§C39](docs/gesetze/C39-monatschronik.md) | Die Monatschronik fragt nicht, wer der Beste ist |
 | [§C40](docs/gesetze/C40-karriereende.md) | Das Karriereende: vier Regeln, mehr gibt es nicht |
+| [§C42](docs/gesetze/C42-start.md) | Der Start zeigt den letzten Stand und schreibt nie (Stand des Geräts, Service Worker) |
 
 Dazu die [allgemeinen Regeln](docs/gesetze/allgemein.md) ohne Kürzel: Detail folgt
 der Größe, ein Duo hat keinen Rang, nichts sagt zweimal dasselbe, keine
