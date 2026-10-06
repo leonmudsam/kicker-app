@@ -6,16 +6,18 @@ sich eine Datei geändert, und der Aufruf zieht es nach.
 
 | Datei | worum es geht |
 |---|---|
-| [README.md](../README.md) — kicker-app |  |
+| [README.md](../README.md) — Kicker-Liga | Eine App für eine 2-gegen-2-Tischkicker-Liga: Elo, Saisons, Auszeichnungen, Liga-Rekorde, Monatschronik, Insignien und ein Nachrichten-Feed. |
 | [CLAUDE.md](../CLAUDE.md) — Kicker-Liga — Arbeitsanweisung | Deutschsprachige Einzeldatei-PWA für eine 2-gegen-2-Tischkicker-Liga: Elo, Saisons, Awards, Rekorde, Chronik, News. |
 | [docs/anker.md](anker.md) — Abschnitte im Code | Jede Datei in `src/` mit den Bannern, die sie trägt, in der Reihenfolge des Baus. |
 | [docs/architektur.md](architektur.md) — Herleitung | Die Liga ist ein Dutzend Leute und ein Tischkicker. |
 | [docs/befunde.md](befunde.md) — Bewusst behaltene Doppelungen und Abweichungen | Was beim Aufräumen gefunden und absichtlich NICHT vereinheitlicht wurde, mit dem Grund. |
 | [docs/erweitern.md](erweitern.md) — Etwas hinzufügen — und was daran hängt | Auszeichnungen, Monatswertungen und Liga-Rekorde sind nicht nur Listen. |
 | [docs/laufzeit.md](laufzeit.md) — Laufzeit: Zustand, Caching, Takt | Was die App zur Laufzeit festhält, wie lange und wann sie es verwirft. |
-| [docs/leistung.md](leistung.md) — Performance und Cache-Gültigkeit | Stand: 3. Oktober 2026. Vergleich zum Stand `5445ba8`. |
+| [docs/leistung.md](leistung.md) — Performance und Cache-Gültigkeit | Wie die App gemessen wird und was die Messungen in vier Runden ergeben haben. |
 | [tests/README.md](../tests/README.md) — Die Testsuiten | Geprüft wird immer das **gebaute** Ergebnis (`dist/index.html`), nie die Quelle: nur so fällt auch ein Fehler auf, der erst beim Zusammensetzen entsteht. |
-| [mockup/README.md](../mockup/README.md) — Entwürfe (mockup/) | Entwürfe. |
+| [tools/README.md](../tools/README.md) — Werkzeuge | Alle laufen mit Node ohne Abhängigkeiten; die mit Browser nehmen den vorhandenen Chromium (`tests/browser.js`). |
+| [mockup/README.md](../mockup/README.md) — Entwürfe (mockup/) | Eigenständige Seiten ohne Bauablauf, Vorlage für einen Umbau — kein Teil der App. |
+| [datenbank/README.md](../datenbank/README.md) — Datenbank | SQL, das der Betreiber selbst im Supabase-Editor ausführt. |
 
 ## Gestaltungsgesetze
 

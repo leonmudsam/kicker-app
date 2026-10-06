@@ -197,7 +197,7 @@ const imBaum = new Set(baum.split('\n').map(z => z.split(/\s+/)[0]).filter(Boole
 const wurzel = execFileSync('git', ['ls-files'], { encoding: 'utf8' }).split('\n').filter(Boolean)
   .map(f => f.includes('/') ? f.split('/')[0] + '/' : f).filter(f => !f.startsWith('.') || f === '.github/');
 const sollImBaum = [...new Set(wurzel.map(f => f === '.github/' ? '.github/workflows/' : f)),
-  ...readdirSync('tools').map(f => 'tools/' + f),
+  ...readdirSync('tools').filter(f => f !== 'README.md').map(f => 'tools/' + f),
   ...readdirSync('tests').filter(f => /\.(m?js|cjs)$/.test(f) && !f.endsWith('.test.js')).map(f => 'tests/' + f)];
 const nichtImBaum = sollImBaum.filter(f => !imBaum.has(f) && !(f.endsWith('/') && [...imBaum].some(x => x.startsWith(f))));
 if (!imBaum.has('src/js/') || !imBaum.has('src/css/')) schief('§2 Baum: src/js/ und src/css/ fehlen');
