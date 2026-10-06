@@ -211,7 +211,6 @@ datenbank/            SQL, das der Betreiber selbst ausführt — die App änder
                       Spalte, sagt der Knopf das
 ARCHITEKTUR.md        ausführliche Herleitung, dort steht das Warum
 .github/workflows/    pages.yml — Prüf-Job, Veröffentlichung schaltbar
-kicker-app-main/      alter Abzug, liegt bewusst brach — nicht anfassen
 ```
 
 > **Pflegepflicht.** Kommt eine Datei in `src/` dazu, fällt eine weg oder
