@@ -1202,6 +1202,11 @@ function getBadgeEarnedCache(){
 
   const map={};
   const ordered=[...matches].sort((a,b)=>mts(a)-mts(b));
+  // `fire` suchte das Badge bei jeder Vergabe mit `BADGES.find` — bei
+  // fünfzig Badges und jeder Partie der Liga die meiste Zeit dieser Schleife
+  // im Suchen. Die erste Fundstelle gewinnt wie bei `find`.
+  const badgeVonId=new Map();
+  BADGES.forEach(b=>{ if(!badgeVonId.has(b.id)) badgeVonId.set(b.id,b); });
 
   // Globale Sim für Carry (historische Elo-Stände vor jedem Match) — gecached
   const snapMap=getSnapMap();
@@ -1336,7 +1341,7 @@ function getBadgeEarnedCache(){
 
       // ── Helper ──
       const fire=(bid, meta)=>{
-        const b=BADGES.find(x=>x.id===bid);
+        const b=badgeVonId.get(bid);
         if(b) earned.push(meta ? {playerId:id,badge:b,meta} : {playerId:id,badge:b});
       };
 

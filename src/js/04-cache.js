@@ -124,6 +124,43 @@ function getSimAt(bisMs){
   }
   return _prefixSim(lo);
 }
+// Die Partien bis zu einem Zeitschnitt, als EIN Array je Stand. Prestige,
+// Monatstitel und Badges schnitten sich denselben Stand jedes Mal frisch
+// zurecht (`matches.filter(m => mts(m) <= bisMs)`): `prestigeTabelle(bis)`
+// tat es einmal und `seasonTitleHistory` für jeden Spieler noch einmal —
+// zwölf gleiche Kopien der Liga je Schnitt, und die Memos, die an der
+// Identität ihres Arrays hängen (`matchesOfPlayer`, `matchesByDay`,
+// `getSimForMatches` …), trafen über diese Grenzen nie. Der Schlüssel ist
+// wie bei `getSimAt` die Zahl der eingeschlossenen Partien; alle Partien am
+// selben Zeitstempel gehören dazu. Das Array ist nur zu lesen.
+// Eine Liga, die nicht aufsteigend vorliegt, bekommt den alten Filter: die
+// Binärsuche setzt die Reihenfolge der Datenbank voraus.
+const _partienBisMemo = new WeakMap();
+function _partienBis(bisMs){
+  let topf = _partienBisMemo.get(matches);
+  if(!topf){
+    let sortiert = true;
+    for(let i = 1; i < matches.length && sortiert; i++) if(mts(matches[i]) < mts(matches[i-1])) sortiert = false;
+    topf = {sortiert, je:new Map()};
+    _partienBisMemo.set(matches, topf);
+  }
+  if(!topf.sortiert) return matches.filter(m => mts(m) <= bisMs);
+  let lo = 0, hi = matches.length;
+  while(lo < hi){
+    const mitte = (lo + hi) >>> 1;
+    if(mts(matches[mitte]) <= bisMs) lo = mitte + 1;
+    else hi = mitte;
+  }
+  let a = topf.je.get(lo);
+  if(!a){
+    a = matches.slice(0, lo);
+    topf.je.set(lo, a);
+    // Älteste zuerst geräumt, wie `_topfDeckel`; der Generator fragt je Lauf
+    // eine Handvoll Schnitte.
+    if(topf.je.size > 24) topf.je.delete(topf.je.keys().next().value);
+  }
+  return a;
+}
 const _subsetSimMemo = new WeakMap();
 function getSimForMatches(quelle){
   if(quelle === matches) return getGlobalSim();

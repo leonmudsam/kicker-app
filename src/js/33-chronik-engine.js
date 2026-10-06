@@ -33,10 +33,20 @@ function _seasonTitleCtx(sid, bisMs){
 // gar nicht gibt. Er stand viermal ausgeschrieben. Das Jahr ist das
 // Kalenderjahr, nicht das ISO-Jahr: in der ersten Januarwoche weicht das ab,
 // aber der Schluessel steckt in gespeicherten Staenden und bleibt, wie er ist.
-// Nimmt einen Zeitstempel oder ein Date.
+// Nimmt einen Zeitstempel oder ein Date. Text und Zahl werden gemerkt wie
+// bei `mts`: der Schlüssel fiel je Partie und Aufrufer neu an, mit drei
+// Date-Objekten je Aufruf.
+const _wochenKeyMemo = new Map();
 function _wochenKey(iso){
+  const merk = (typeof iso === 'string' || typeof iso === 'number') ? iso : null;
+  if(merk !== null){ const hit = _wochenKeyMemo.get(merk); if(hit !== undefined) return hit; }
   const d = new Date(iso);
-  return d.getFullYear() + '-W' + isoWeek(d);
+  const k = d.getFullYear() + '-W' + isoWeek(d);
+  if(merk !== null){
+    if(_wochenKeyMemo.size > 50000) _wochenKeyMemo.clear(); // Wachstums-Schutz
+    _wochenKeyMemo.set(merk, k);
+  }
+  return k;
 }
 
 // Die laengste Pleitenserie gegen EINEN Gegner, die in diesem Monat gebrochen
@@ -815,6 +825,27 @@ function seasonTitleOf(pid, sid, bisMs){
   return t.awarded.find(a => a.pid === pid) || null;
 }
 
+// Wer in welchem Monat gespielt hat, einmal je Partienliste. Die Historie
+// fragte für jeden Spieler jeden Monat mit `quelle.some(...)` über die ganze
+// Liga ab — zwölf Spieler, fünf Monate, je Zeitschnitt. `seasonOf` hängt nur
+// am Zeitstempel, die Antwort also nur an der Liste; `ids` behält die
+// Reihenfolge des ersten Auftretens, wie das `Set` vorher.
+const _spielerJeSaisonMemo = new WeakMap();
+function _spielerJeSaison(quelle){
+  let r = _spielerJeSaisonMemo.get(quelle);
+  if(r) return r;
+  r = {ids:[], spieler:new Map()};
+  quelle.forEach(m => {
+    const sid = (seasonOf(m.created_at) || {}).id;
+    if(!sid) return;
+    let set = r.spieler.get(sid);
+    if(!set){ set = new Set(); r.spieler.set(sid, set); r.ids.push(sid); }
+    [m.a1, m.a2, m.b1, m.b2].forEach(x => { if(x) set.add(x); });
+  });
+  _spielerJeSaisonMemo.set(quelle, r);
+  return r;
+}
+
 // ─── §13.4 Saisontitel-Historie eines Spielers ───────────────────────
 // Chronik = ein Eintrag je Saison, in der der Spieler gespielt hat.
 // `title` ist null, wenn er leer ausging — die Lücke gehört dazu.
@@ -827,8 +858,9 @@ function seasonTitleHistory(pid, bisMs){
   _topfDeckel(_cache._chronicle, 80);
 
   const cur = currentSeason().id;
-  const quelle = bisMs ? matches.filter(m => mts(m) <= bisMs) : matches;
-  const ids = [...new Set(quelle.map(m => (seasonOf(m.created_at) || {}).id).filter(Boolean))];
+  const quelle = bisMs ? _partienBis(bisMs) : matches;
+  const je = _spielerJeSaison(quelle);
+  const ids = je.ids.slice();
   if(!bisMs){
     allPastSeasons().forEach(sid => { if(!ids.includes(sid)) ids.push(sid); });
     if(!ids.includes(cur)) ids.push(cur);
@@ -836,8 +868,7 @@ function seasonTitleHistory(pid, bisMs){
   ids.sort(); // chronologisch, unabhängig davon wie der Aufrufer sortiert hat
   const rows = [];
   ids.forEach(sid => {
-    const played = quelle.some(m => (seasonOf(m.created_at)||{}).id === sid
-      && (m.a1===pid||m.a2===pid||m.b1===pid||m.b2===pid));
+    const played = !!(je.spieler.get(sid) && je.spieler.get(sid).has(pid));
     if(!played) return;
     rows.push({sid, label:seasonLabel(sid), live:(sid===cur), title:seasonTitleOf(pid, sid, bisMs)});
   });

@@ -5539,7 +5539,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.06.f07c1c6c';
+const BUILD_VERSION='2026.10.06.6bd6c132';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -6024,6 +6024,30 @@ function getSimAt(bisMs){
     else hi = mitte;
   }
   return _prefixSim(lo);
+}
+const _partienBisMemo = new WeakMap();
+function _partienBis(bisMs){
+  let topf = _partienBisMemo.get(matches);
+  if(!topf){
+    let sortiert = true;
+    for(let i = 1; i < matches.length && sortiert; i++) if(mts(matches[i]) < mts(matches[i-1])) sortiert = false;
+    topf = {sortiert, je:new Map()};
+    _partienBisMemo.set(matches, topf);
+  }
+  if(!topf.sortiert) return matches.filter(m => mts(m) <= bisMs);
+  let lo = 0, hi = matches.length;
+  while(lo < hi){
+    const mitte = (lo + hi) >>> 1;
+    if(mts(matches[mitte]) <= bisMs) lo = mitte + 1;
+    else hi = mitte;
+  }
+  let a = topf.je.get(lo);
+  if(!a){
+    a = matches.slice(0, lo);
+    topf.je.set(lo, a);
+    if(topf.je.size > 24) topf.je.delete(topf.je.keys().next().value);
+  }
+  return a;
 }
 const _subsetSimMemo = new WeakMap();
 function getSimForMatches(quelle){
@@ -13682,6 +13706,8 @@ function getBadgeEarnedCache(){
 
   const map={};
   const ordered=[...matches].sort((a,b)=>mts(a)-mts(b));
+  const badgeVonId=new Map();
+  BADGES.forEach(b=>{ if(!badgeVonId.has(b.id)) badgeVonId.set(b.id,b); });
 
   const snapMap=getSnapMap();
   const histById=getHistoryByMatchId();
@@ -13773,7 +13799,7 @@ function getBadgeEarnedCache(){
       }
 
       const fire=(bid, meta)=>{
-        const b=BADGES.find(x=>x.id===bid);
+        const b=badgeVonId.get(bid);
         if(b) earned.push(meta ? {playerId:id,badge:b,meta} : {playerId:id,badge:b});
       };
 
@@ -28547,9 +28573,17 @@ function _seasonTitleCtx(sid, bisMs){
   _cache._stCtx[ck] = res;
   return res;
 }
+const _wochenKeyMemo = new Map();
 function _wochenKey(iso){
+  const merk = (typeof iso === 'string' || typeof iso === 'number') ? iso : null;
+  if(merk !== null){ const hit = _wochenKeyMemo.get(merk); if(hit !== undefined) return hit; }
   const d = new Date(iso);
-  return d.getFullYear() + '-W' + isoWeek(d);
+  const k = d.getFullYear() + '-W' + isoWeek(d);
+  if(merk !== null){
+    if(_wochenKeyMemo.size > 50000) _wochenKeyMemo.clear();
+    _wochenKeyMemo.set(merk, k);
+  }
+  return k;
 }
 
 function _bannLaufDerLiga(P, ms){
@@ -29101,6 +29135,22 @@ function seasonTitleOf(pid, sid, bisMs){
   return t.awarded.find(a => a.pid === pid) || null;
 }
 
+const _spielerJeSaisonMemo = new WeakMap();
+function _spielerJeSaison(quelle){
+  let r = _spielerJeSaisonMemo.get(quelle);
+  if(r) return r;
+  r = {ids:[], spieler:new Map()};
+  quelle.forEach(m => {
+    const sid = (seasonOf(m.created_at) || {}).id;
+    if(!sid) return;
+    let set = r.spieler.get(sid);
+    if(!set){ set = new Set(); r.spieler.set(sid, set); r.ids.push(sid); }
+    [m.a1, m.a2, m.b1, m.b2].forEach(x => { if(x) set.add(x); });
+  });
+  _spielerJeSaisonMemo.set(quelle, r);
+  return r;
+}
+
 function seasonTitleHistory(pid, bisMs){
   bisMs = _schnitt(bisMs);
   const key = pid + '_' + matches.length + '_' + _cache.version + (bisMs ? '_' + bisMs : '');
@@ -29110,8 +29160,9 @@ function seasonTitleHistory(pid, bisMs){
   _topfDeckel(_cache._chronicle, 80);
 
   const cur = currentSeason().id;
-  const quelle = bisMs ? matches.filter(m => mts(m) <= bisMs) : matches;
-  const ids = [...new Set(quelle.map(m => (seasonOf(m.created_at) || {}).id).filter(Boolean))];
+  const quelle = bisMs ? _partienBis(bisMs) : matches;
+  const je = _spielerJeSaison(quelle);
+  const ids = je.ids.slice();
   if(!bisMs){
     allPastSeasons().forEach(sid => { if(!ids.includes(sid)) ids.push(sid); });
     if(!ids.includes(cur)) ids.push(cur);
@@ -29119,8 +29170,7 @@ function seasonTitleHistory(pid, bisMs){
   ids.sort();
   const rows = [];
   ids.forEach(sid => {
-    const played = quelle.some(m => (seasonOf(m.created_at)||{}).id === sid
-      && (m.a1===pid||m.a2===pid||m.b1===pid||m.b2===pid));
+    const played = !!(je.spieler.get(sid) && je.spieler.get(sid).has(pid));
     if(!played) return;
     rows.push({sid, label:seasonLabel(sid), live:(sid===cur), title:seasonTitleOf(pid, sid, bisMs)});
   });
@@ -31608,7 +31658,7 @@ function prestigeTabelle(bisMs){
   const ruhe = (players || []).filter(p => sichtbar(p) && imRuhestand(p));
   const alle = aktive.concat(ruhe);
   const gesamt = aktive.length || 1;
-  const quelleMatches = bisMs ? matches.filter(m => mts(m) <= bisMs) : matches;
+  const quelleMatches = bisMs ? _partienBis(bisMs) : matches;
 
   const roh = {};
   alle.forEach(p => { roh[p.id] = {badges:[], monat:[], rekord:[]}; });

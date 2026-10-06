@@ -331,7 +331,7 @@ function prestigeTabelle(bisMs){
   const ruhe = (players || []).filter(p => sichtbar(p) && imRuhestand(p));
   const alle = aktive.concat(ruhe);
   const gesamt = aktive.length || 1;
-  const quelleMatches = bisMs ? matches.filter(m => mts(m) <= bisMs) : matches;
+  const quelleMatches = bisMs ? _partienBis(bisMs) : matches;
 
   // 1. Rohdaten je Spieler einsammeln.
   const roh = {};

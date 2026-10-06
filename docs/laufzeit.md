@@ -187,6 +187,19 @@ Rechnung an der Identität eines Arrays hängt statt an einer Version
 — `matches` wird immer **ersetzt**, nie an Ort und Stelle verändert, und ein
 frisches Array verwirft den Memo von selbst.
 
+**Ein Zeitschnitt ist ein Array je Stand** (`_partienBis`, `04-cache.js`):
+die Partien bis `bisMs`, gefunden per Binärsuche wie in `getSimAt`, gemerkt
+in einer `WeakMap` an `matches` je Zahl der eingeschlossenen Partien
+(höchstens 24, der älteste geht zuerst). `prestigeTabelle(bis)` und
+`seasonTitleHistory(pid, bis)` schnitten sich denselben Stand vorher jeder
+selbst zurecht — zwölf gleiche Kopien der Liga je Schnitt —, und die Memos,
+die an der Identität ihres Arrays hängen, trafen über diese Grenze nie. Das
+Array ist nur zu lesen; `tests/prefix` sieht nach einem Generatorlauf nach,
+dass keines verändert wurde. Liegt die Liga nicht aufsteigend vor, gilt der
+alte Filter. Wer in welchem Monat gespielt hat, steht je Liste einmal in
+`_spielerJeSaison` (`WeakMap`), `_wochenKey` merkt sich Text und Zahl wie
+`mts`, und die Badge-Vergabe sucht ein Badge in einer Map statt in `BADGES`.
+
 **Der Verlauf eines Rekords** (`_rekVerlauf`, Schlüssel Rekord, Partienzahl
 und Version, Deckel 16) wird nach dem Öffnen des Blatts gerechnet, ein
 Monatsende je Takt: ein Zeitschnitt rechnet die Elo-Bahn bis dorthin nach,
