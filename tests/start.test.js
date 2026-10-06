@@ -173,6 +173,34 @@ async function neueSeite(ctx){
     // Ein zweiter Lauf ohne neue Daten schickt den Stand nicht noch einmal.
     ok(await w.page.evaluate(async () => { const K = window.__K; const v = K('_storyWorkerStand');
       await K('_storiesImWorker()'); return K('_storyWorkerStand') === v; }), 'Unveränderter Stand wird nicht erneut übertragen');
+    // ── Vorwärmen im Leerlauf ─────────────────────────────────────────
+    // Nach dem Start rechnet niemand mehr kalt, wenn ein Reiter aufgeht.
+    await w.page.waitForFunction(() => window.__K('_vorwaermAuftrag === null'), null, {timeout:60000});
+    const kalt = await w.page.evaluate(() => {
+      const K = window.__K;
+      K(`window.__kalt = 0;
+        for(const f of ['simulateElo','_awardRankingsUncached','_seasonTitleCtxRechnen','teamStatsFromMatches']){
+          const alt = eval(f); eval(f + ' = function(){ window.__kalt++; return alt.apply(this, arguments); }');
+        }`);
+      const je = {};
+      for(const z of ["tab='positions';rankMetric='atk'", "tab='awards';awView='awards';awPeriod='season';awSeasonId=null",
+                      "tab='awards';awView='rekorde'", "tab='awards';awView='chronik'", "tab='teams'"]){
+        // Der Kontext der Rekorde ist ein Memo, das auch bei jedem Treffer
+        // gerufen wird; gezählt wird, ob sein Topf wächst.
+        const ctx = () => Object.keys(_cache._chronCtxBis || {}).length + (_cache._chronCtxKey ? 1 : 0);
+        const vor = window.__kalt, c0 = K('(' + ctx + ')()'); K(z + ';render()');
+        je[z] = window.__kalt - vor + (K('(' + ctx + ')()') - c0);
+      }
+      return je;
+    });
+    for(const [z, n] of Object.entries(kalt)) ok(n === 0, 'Nach dem Vorwärmen rechnet der erste Aufruf nichts kalt: ' + z + (n ? ' (' + n + ' kalte Rechnungen)' : ''));
+    // Neue Daten brechen einen laufenden Auftrag ab; er rechnet nicht für
+    // einen Stand weiter, den es nicht mehr gibt.
+    ok(await w.page.evaluate(async () => {
+      const K = window.__K; K('_vorwaermen(); window.__auftrag = _vorwaermAuftrag; invalidateCache();');
+      await new Promise(r => setTimeout(r, 1500));
+      return K('window.__auftrag.schritt === 0');
+    }), 'Ein neuer Datenstand bricht das Vorwärmen ab');
     ok(w.fehler.length === 0, 'Worker-Start ohne Seitenfehler' + (w.fehler.length ? ': ' + w.fehler[0] : ''));
     await w.page.close();
 

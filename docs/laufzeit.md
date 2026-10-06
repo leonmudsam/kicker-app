@@ -308,6 +308,17 @@ Worker für die Sitzung aus. `tests/start` hält Worker und Hauptthread
 aneinander, `tests/ambient` sieht nach, dass der Generator nicht im selben
 Aufruf wie das Zeichnen läuft.
 
+Nach jedem Zeichnen mit neuen Daten rechnet `_vorwaermen` (`04-cache.js`
+§2.1b) die Töpfe der übrigen Reiter vor — Positionen, Awards der laufenden
+Saison, Rekorde, Chronik, Teams, Prestige —, EINEN je ruhigem Moment
+(`_leerlauf`) und mit genau den Aufrufen, die die Ansicht beim Betreten
+macht, sonst träfe der Schlüssel nicht. Seit der Generator im Worker rechnet,
+wärmt er den Hauptthread nicht mehr nebenbei; ohne das Vorwärmen rechneten
+Awards und Teams beim ersten Öffnen kalt. Ein neuer Datenstand (andere
+Version) oder ein neuerer Auftrag bricht den laufenden ab
+(`_vorwaermAuftrag`), eine versteckte Seite wartet. `tests/start` zählt nach
+dem Start beim ersten Öffnen jedes Reiters die kalten Rechnungen: null.
+
 `_tickDaten` lässt außerdem ein offenes Blatt, den Eingabe-Tab und die
 Einstellungen in Ruhe:
 was man gerade unter den Fingern hat, wird nicht neu gezeichnet. `tests/blatt`

@@ -23,6 +23,7 @@ Wächter 8 vergleicht. Ein Kürzel `§n.m` ist ein Abschnitt des Codes,
   - §2.4b Saison-Positionsverlauf (für §C21 Position-History-Sheet)
   - §2.5 Matches-pro-Saison Cache
   - §2.6 Saison-Rangliste Cache (Saison-End-Stand)
+  - §2.1b Vorwärmen im Leerlauf
 - **05-rang-elo.js**
   - §2.7 RANG-SYSTEM (Durchschnitts-Saison-Elo)
   - §2.8 ERWEITERTES ELO + AUTO-POSITION

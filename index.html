@@ -5539,7 +5539,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.06.6bd6c132';
+const BUILD_VERSION='2026.10.06.91ef864d';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -6369,6 +6369,29 @@ async function syncSeasonEloToDB(){
   if(updates.length) await Promise.all(updates);
 }
 
+
+let _vorwaermAuftrag = null;
+const VORWAERMEN = [
+  () => { allPlayerStats(); positionsListe('atk'); positionsListe('def'); },
+  () => getCachedAwardRankings('season', currentSeason().id),
+  () => allChronicles(),
+  () => allSeasonTitles(),
+  () => teamStats(),
+  () => prestigeTabelle(),
+];
+function _vorwaermen(){
+  const auftrag = {version:_cache.version, schritt:0};
+  _vorwaermAuftrag = auftrag;
+  const weiter = () => {
+    if(_vorwaermAuftrag !== auftrag || _cache.version !== auftrag.version) return;
+    if(auftrag.schritt >= VORWAERMEN.length){ _vorwaermAuftrag = null; return; }
+    if(document.hidden){ _leerlauf(1000).then(weiter); return; }
+    try { VORWAERMEN[auftrag.schritt](); } catch(e){}
+    auftrag.schritt++;
+    _leerlauf(1000).then(weiter);
+  };
+  _leerlauf(1000).then(weiter);
+}
 const RANKS=[
   {label:'Legende',   icon:'crown',  color:'var(--gold)',   pct:0.10},
   {label:'Elite',     icon:'star',   color:'var(--purple)', pct:0.30},
@@ -7168,6 +7191,7 @@ async function _loadAllDurchlauf(){
     if(_eingabeOffen()){
       if(tab==='match') requestMatchPreview();
     }else render();
+    _vorwaermen();
     try {
       await syncStoriesViaDb();
     } catch(e){ console.warn('[news] sync failed', e); }

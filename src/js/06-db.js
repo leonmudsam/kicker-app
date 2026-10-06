@@ -153,6 +153,8 @@ async function _loadAllDurchlauf(){
     if(_eingabeOffen()){
       if(tab==='match') requestMatchPreview();
     }else render();
+    // Die übrigen Reiter rechnen im Leerlauf vor [§2.1b].
+    _vorwaermen();
     // News-System v8.3: Stories aus DB synchronisieren.
     //   1. Generator erzeugt Story-Objekte aus Live-Daten
     //   2. INSERT ON CONFLICT DO NOTHING in Supabase

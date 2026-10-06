@@ -574,3 +574,38 @@ async function syncSeasonEloToDB(){
   if(updates.length) await Promise.all(updates);
 }
 
+
+// ─── §2.1b Vorwärmen im Leerlauf ─────────────────────────────────────
+// Ein Reiter, der zum ersten Mal aufgeht, rechnet seine Töpfe kalt: gemessen
+// mit vierfach gedrosselter CPU stand der erste Wechsel auf Positionen eine
+// halbe Sekunde, der längste Task 413 ms. Früher wärmte der Story-Generator
+// nebenbei einen Teil davor; seit er im Worker rechnet [§11.8b], tut das
+// niemand mehr auf dem Hauptthread. Nach jedem Zeichnen mit neuen Daten
+// rechnet `_vorwaermen` deshalb die Töpfe der übrigen Reiter vor, EINEN je
+// ruhigem Moment, in der Reihenfolge, in der man sie am ehesten öffnet.
+// Gerechnet wird genau das, was die Ansicht beim Betreten fragt — dieselben
+// Funktionen mit denselben Argumenten, sonst träfe der Schlüssel nicht.
+// Abgebrochen wird bei neuen Daten (eine andere Version), bei einem neueren
+// Auftrag und solange die Seite versteckt ist.
+let _vorwaermAuftrag = null;
+const VORWAERMEN = [
+  () => { allPlayerStats(); positionsListe('atk'); positionsListe('def'); },   // Positionen
+  () => getCachedAwardRankings('season', currentSeason().id),                  // Awards
+  () => allChronicles(),                                                       // Rekorde
+  () => allSeasonTitles(),                                                     // Chronik
+  () => teamStats(),                                                           // Teams
+  () => prestigeTabelle(),                                                     // Prestige, Profil
+];
+function _vorwaermen(){
+  const auftrag = {version:_cache.version, schritt:0};
+  _vorwaermAuftrag = auftrag;
+  const weiter = () => {
+    if(_vorwaermAuftrag !== auftrag || _cache.version !== auftrag.version) return;
+    if(auftrag.schritt >= VORWAERMEN.length){ _vorwaermAuftrag = null; return; }
+    if(document.hidden){ _leerlauf(1000).then(weiter); return; }
+    try { VORWAERMEN[auftrag.schritt](); } catch(e){}
+    auftrag.schritt++;
+    _leerlauf(1000).then(weiter);
+  };
+  _leerlauf(1000).then(weiter);
+}
