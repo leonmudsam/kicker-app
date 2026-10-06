@@ -5539,7 +5539,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.06.1ccc481c';
+const BUILD_VERSION='2026.10.06.d2f26e0d';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -13424,6 +13424,9 @@ function countMrPerfect(id, matchSubset){
 }
 
 function countAllwetter(id, matchSubset){
+  return _allwetterTage(id, matchSubset).size >= 5 ? 1 : 0;
+}
+function _allwetterTage(id, matchSubset){
   const quelle = Array.isArray(matchSubset) ? matchSubset : matches;
   const sieger = _periodWinnerMap(quelle, 'day');
   const heute = new Date().toISOString().slice(0, 10);
@@ -13434,7 +13437,7 @@ function countAllwetter(id, matchSubset){
     const [y, mo, d] = tag.split('-').map(Number);
     wochentage.add(new Date(y, mo - 1, d).getDay());
   }
-  return wochentage.size >= 5 ? 1 : 0;
+  return wochentage;
 }
 
 function countGodlyStreak(id, matchSubset){
@@ -15236,27 +15239,7 @@ function _badgeStreakState(badgeId, playerId){
     };
   }
   if(badgeId === 'allwetter'){
-    const byDay = {};
-    matches.forEach(m => {
-      const day = mdayKey(m);
-      if(!byDay[day]) byDay[day] = { ms: [], jsDate: new Date(m.created_at) };
-      byDay[day].ms.push(m);
-    });
-    const today = new Date().toISOString().slice(0,10);
-    const weekdays = new Set();
-    Object.entries(byDay).forEach(([day, info]) => {
-      if(day === today) return;
-      if(info.ms.length < 2) return;
-      const winsById = {};
-      info.ms.forEach(m => [m.a1,m.a2,m.b1,m.b2].forEach(pid => {
-        if(!winsById[pid]) winsById[pid] = 0;
-        const onA = (pid===m.a1||pid===m.a2);
-        if((onA && m.winner==='A') || (!onA && m.winner==='B')) winsById[pid]++;
-      }));
-      const maxW = Math.max(...Object.values(winsById));
-      if(maxW < 3) return;
-      if((winsById[playerId]||0) === maxW) weekdays.add(info.jsDate.getDay());
-    });
+    const weekdays = _allwetterTage(playerId);
     return {weekdays, tgt:5, label:'Wochentage als Tagessieger', kind:'weekday'};
   }
 

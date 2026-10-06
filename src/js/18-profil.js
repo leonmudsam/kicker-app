@@ -1344,29 +1344,8 @@ function _badgeStreakState(badgeId, playerId){
     };
   }
   if(badgeId === 'allwetter'){
-    // Wochentage, an denen bereits Player-of-the-Day — 1:1 aus countAllwetter,
-    // aber wir behalten das Set (statt nur size≥5) für die Chip-Anzeige.
-    const byDay = {};
-    matches.forEach(m => {
-      const day = mdayKey(m);
-      if(!byDay[day]) byDay[day] = { ms: [], jsDate: new Date(m.created_at) };
-      byDay[day].ms.push(m);
-    });
-    const today = new Date().toISOString().slice(0,10);
-    const weekdays = new Set();
-    Object.entries(byDay).forEach(([day, info]) => {
-      if(day === today) return;       // laufender Tag zählt nicht
-      if(info.ms.length < 2) return;  // POTD braucht min. 2 Spiele am Tag
-      const winsById = {};
-      info.ms.forEach(m => [m.a1,m.a2,m.b1,m.b2].forEach(pid => {
-        if(!winsById[pid]) winsById[pid] = 0;
-        const onA = (pid===m.a1||pid===m.a2);
-        if((onA && m.winner==='A') || (!onA && m.winner==='B')) winsById[pid]++;
-      }));
-      const maxW = Math.max(...Object.values(winsById));
-      if(maxW < 3) return;
-      if((winsById[playerId]||0) === maxW) weekdays.add(info.jsDate.getDay());
-    });
+    // Dieselben Wochentage, die die Auszeichnung zählt — als Menge für die Chips.
+    const weekdays = _allwetterTage(playerId);
     return {weekdays, tgt:5, label:'Wochentage als Tagessieger', kind:'weekday'};
   }
 

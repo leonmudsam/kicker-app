@@ -890,6 +890,13 @@ function countMrPerfect(id, matchSubset){
 // Karriere-Stat — sobald 5 erreicht, bleibt das Badge dauerhaft erreicht.
 // Counter ist deshalb max. 1 (entweder erreicht oder nicht).
 function countAllwetter(id, matchSubset){
+  return _allwetterTage(id, matchSubset).size >= 5 ? 1 : 0;
+}
+// Die Wochentage, an denen ein Spieler Player of the Day war. Auszeichnung
+// und Fortschritt im Popover lesen beide hier: das Popover zählte den Tag
+// selbst nach und ohne den Tiebreak über die Elo, und bei Gleichstand an
+// Siegen markierte es Wochentage, die die Auszeichnung nicht zählt.
+function _allwetterTage(id, matchSubset){
   const quelle = Array.isArray(matchSubset) ? matchSubset : matches;
   // „Player of the Day" gibt es genau einmal im Code: `_periodWinnerMap`
   // bestimmt den Sieger eines Tages, mit Tiebreak über das Elo-Delta. Hier
@@ -907,7 +914,7 @@ function countAllwetter(id, matchSubset){
     const [y, mo, d] = tag.split('-').map(Number);
     wochentage.add(new Date(y, mo - 1, d).getDay());
   }
-  return wochentage.size >= 5 ? 1 : 0;
+  return wochentage;
 }
 
 // Tag der Götter: 3 aufeinanderfolgende EIGENE Spieltage als POTD gewonnen.
