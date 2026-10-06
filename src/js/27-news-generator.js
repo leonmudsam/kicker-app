@@ -51,7 +51,7 @@ function _allTimeRecords(){
   return result;
 }
 
-// ─── §11.0c — Unbegrenzte Meilenstein-Leiter (v9.5) ──────────────────
+// ─── §11.0f — Unbegrenzte Meilenstein-Leiter (v9.5) ──────────────────
 // Ersetzt feste Schwellen-Arrays (…, 500, 1000 → ENDE) durch eine Leiter
 // nach dem 1–2.5–5 ×10^k-Muster: 10, 25, 50, 100, 250, 500, 1000, 2500,
 // 5000, 10000, 25000, 50000, … So laufen Meilensteine bei hohen Zahlen
@@ -84,7 +84,7 @@ function _isAmbientDay(d){
   return true;
 }
 
-// ─── §11.0d — Persönliche Elo-Meilensteine (v9.5) ────────────────────
+// ─── §11.0g — Persönliche Elo-Meilensteine (v9.5) ────────────────────
 // Allzeit-Höchst-Elo eines Spielers überschreitet eine runde 100er-Marke
 // (ab Start-Elo + 200, danach unbegrenzt: 1200, 1300, 1400, …). Ein
 // O(N)-Walk über die (saison-isolierte) Elo-Historie, gecacht per
@@ -1372,10 +1372,6 @@ function _buildStories(){
     }
   } catch(e){}
 
-  // ── Gestrichen: „Vor genau einem Jahr" ───────────────────────────────
-  // Der Typ suchte ein Match von vor 365 Tagen. Die Liga läuft seit 66 Tagen,
-  // die Karte hat also noch nie erscheinen können — und ihr Text lautete nur
-  // „Damals stand es 10:8", ohne Spieler und ohne Grund.
 
   // ── 16. Upset der Woche (Underdog schlägt Top-Spieler) ──
   // Sucht in der vergangenen Woche das Match mit dem größten preRank-Vorteil
@@ -2167,7 +2163,7 @@ function _buildStories(){
     }
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] wochenkarte', e); }
 
-  // ── §11.8 Die Ewige Tafel meldet sich ────────────────────────────────
+  // ── §11.1a Die Ewige Tafel meldet sich ────────────────────────────────
   // Der ganze Awards-Reiter kam im Feed nicht vor. Wer einen Liga-Rekord
   // übernahm, eine Monatschronik holte oder eine Insignium-Stufe erreichte,
   // erfuhr davon nur, wenn er selbst nachsah — und genau das hätte eine

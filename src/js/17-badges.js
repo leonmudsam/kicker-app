@@ -16,7 +16,7 @@
 // Berechnet clientseitig aus der Match-Historie — kein DB-Umbau nötig.
 // Reihenfolge im Array = Anzeige-Reihenfolge im Badge-Sheet (Grid mit 2 Spalten).
 // Paare unten: jede Zeile hier = eine Zeile im 2-Spalten-Grid (links/rechts).
-// ⚑ HOTSPOT — BADGES-Array. Die vollständige Liste steht in CLAUDE.md §10.1;
+// ⚑ HOTSPOT — BADGES-Array. Die vollständige Liste steht in docs/erweitern.md §10.1;
 //   eine Auszeichnung hängt an mehr als dieser einen Datei:
 //   - Eintrag hier (mit ic/name/desc/count), Icon in §1.1
 //   - Eintrag in BADGE_RARITY (§7.2) — ohne ihn gilt still `common`, die
@@ -26,6 +26,7 @@
 //     Nachricht auslösen soll [§11.0c]
 //   - ggf. fire('badge_id') in getBadgeEarnedCache (§7.4) — sonst kein
 //     Match-Trigger / kein Achievement-Toast / kein Chip im Match-Review
+// ─── §7.1 Der Katalog der Auszeichnungen ─────────────────────────────
 const BADGES=[
   // ══ EINMALIGE BADGES (Karriere-Meilensteine) ══
   // Zeile 1 — Debütant, Stammgast
@@ -229,6 +230,7 @@ const BADGES=[
 // ⚑ Wer eine Klasse ändert, zieht RARITY_META.total nach — die Anzeige
 // „3 / 14" im Blatt zählt aus dieser Zahl, nicht aus dem Bucket.
 // ═════════════════════════════════════════════════════════════════════
+// ─── §7.2 Die Klassen ─────────────────────────────────────────────────
 // ⚑ HOTSPOT — BADGE_RARITY: ordnet jeder Badge-ID eine Rarity-Klasse zu.
 // MUSS alle IDs aus BADGES (§7.1) abdecken — fehlt eine, fliegt die Badge
 // aus der UI (kein Bucket, kein Icon-Wrapper).
@@ -1187,6 +1189,7 @@ function computeBadges(id, matchSubset, bisMs){
   return result;
 }
 
+// ─── §7.4 Wer in welcher Partie was geholt hat ────────────────────────
 // Ermittelt welche Badges durch ein bestimmtes Match NEU freigeschaltet / erneut erreicht wurden
 function getBadgeEarnedCache(){
   const key='badgeEarned_'+matches.length+'_'+_cache.version;

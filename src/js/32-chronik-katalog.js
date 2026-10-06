@@ -34,7 +34,7 @@
 //     zu streichen verändert deshalb nur die Zukunft; alte Monate zeigen
 //     weiter, was damals galt, auch wenn es den Eintrag heute nicht mehr gibt.
 //
-//     ⚑ HOTSPOT — neue Disziplinen brauchen (vollständig: CLAUDE.md §10.2):
+//     ⚑ HOTSPOT — neue Disziplinen brauchen (vollständig: docs/erweitern.md §10.2):
 //       - Eintrag in DISZIPLINEN [§13.1] an der richtigen Stelle im Block
 //       - ein neues Feld in BEIDEN Kontext-Pässen, [§13.2] für `monat` und
 //         [§13.4b] für `allzeit`. Nur einer davon ist der häufigste Fehler:

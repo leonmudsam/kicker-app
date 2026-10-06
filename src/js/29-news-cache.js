@@ -227,6 +227,9 @@ function _consolidateStories(list){
   return aus;
 }
 
+// Trotz des Namens der AKTIVE Hauptweg der Konsolidierung: _consolidateStories
+// ruft ihn für jeden Bestand. „Legacy" meint, dass er auch Zeilen aus älteren
+// Läufen ohne causalKey, matchId oder visual verstehen muss [§C33].
 function _consolidateStoriesLegacy(list){
   if(!Array.isArray(list)) return [];
   if(_cache._consolFrom === list && Array.isArray(_cache._consolList)) return _cache._consolList;

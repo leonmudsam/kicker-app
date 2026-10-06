@@ -142,8 +142,9 @@ Bewusst **keine** Zeilenzahlen hier: die veralten bei jeder Änderung.
 
 ### CSS
 
-Die Reihenfolge trägt Bedeutung (später geladene Regeln gewinnen); die
-Kürzel im Kopf von `00-tokens.css` sind die Banner im CSS.
+Die Reihenfolge trägt Bedeutung (später geladene Regeln gewinnen). Die Spalte
+„Abschnitt" erklärt die Kürzel `§C0` bis `§C24`: sie sind die Banner im CSS,
+und Wächter 7 liest sie hier.
 
 | Datei | Abschnitt | Inhalt |
 |---|---|---|
@@ -185,7 +186,7 @@ ihn dort ein — im selben Commit.
 | 4 Bezeichner | derselbe Name auf oberster Ebene in zwei Dateien — **oder** ein Name, den niemand mehr ruft |
 | 5 Fingerabdruck | die Auslieferung trägt eine Version, die nicht zu ihrem Inhalt gehört — dann erfährt kein Gerät von einer neuen Fassung |
 | 6 Arbeitsanweisung | diese Datei, die Landkarte (JS und CSS), der Baum oder die Tabelle der Suiten in `tests/README.md` nennen eine Datei nicht, die es gibt, eine, die es nicht gibt, oder eine Zahl, die nicht stimmt |
-| 7 Verweise | ein Kürzel `§Cnn`, ein Link oder ein Pfad in der Doku zeigt auf etwas, das es nicht gibt — oder ein Gesetz wird nirgends im Code zitiert |
+| 7 Verweise | ein Kürzel `§Cnn`, ein Link oder ein Pfad in der Doku zeigt auf etwas, das es nicht gibt, ein Gesetz wird nirgends im Code zitiert, eine Abschnittsnummer `§n.m` steht zweimal im Code oder ein Zitat `[§n.m]` zeigt auf keinen Abschnitt |
 | 8 Verzeichnisse | `docs/README.md` oder `docs/anker.md` sind nicht mehr das, was `node tools/doku.mjs` aus den Dateien erzeugt |
 
 Wächter 6 bis 8 machen die Pflegepflichten dieser Datei prüfbar: Landkarte,
@@ -255,7 +256,7 @@ persönliche Ansprache, eine Schrift hat einen Rückfall, dieselbe Sache hat
 einen Namen, keine Possessivpronomen über einen Spieler, kein „Abend", ein
 leeres Feld liest sich als Fehler.
 
-Kürzel `§C0` bis `§C24` sind Abschnitte des CSS (Kopf von `00-tokens.css`),
+Kürzel `§C0` bis `§C24` sind Abschnitte des CSS (CSS-Landkarte in §3),
 Kürzel wie `§5.2` Abschnitte im Code; beide stehen in
 [docs/anker.md](docs/anker.md).
 

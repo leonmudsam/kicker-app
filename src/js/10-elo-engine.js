@@ -10,7 +10,7 @@
 // ════════════════════════════════════════════════════════════════════════
 // simulateElo()           → aggregiert m.deltas aus DB (KEINE Slider-Berechnung)
 // simulateEloWithSliders()→ berechnet Deltas neu mit aktuellen Slidern
-// computeMatchDelta()     → berechnet Delta für EIN Match mit Slidern (Match-Eingabe)
+// computeMatch()          → berechnet Delta für EIN Match mit Slidern (Match-Eingabe, 05-rang-elo.js)
 //
 // Die DB ist die Wahrheit. simulateEloWithSliders wird nur aufgerufen bei:
 //   • Match-Eingabe (für das frische Delta) → via computeMatch

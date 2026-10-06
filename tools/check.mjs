@@ -35,7 +35,7 @@ import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join as pjoin } from 'node:path';
 import { existsSync } from 'node:fs';
-import { abschnitt, ERZEUGT, dokuDateien } from './doku.mjs';
+import { abschnitt, ERZEUGT, dokuDateien, ankerVon } from './doku.mjs';
 
 let fehler = 0;
 const rot = s => { console.error('  ✗ ' + s); fehler++; };
@@ -213,11 +213,11 @@ const codeDateien = [...jsDateien.map(f => 'src/js/' + f), ...cssDateien.map(f =
   ...suiten.map(f => 'tests/' + f), 'src/index.html'];
 const doku = dokuDateien();
 
-// (a) Ein Kürzel §Cnn ist bis 24 ein Abschnitt des CSS (Kopf von
-// 00-tokens.css, Bereiche wie „§C4–C6"), ab 25 ein Gesetz mit eigener Datei.
-const tokens = lesen('src/css/00-tokens.css');
+// (a) Ein Kürzel §Cnn ist bis 24 ein Abschnitt des CSS (CSS-Landkarte in
+// CLAUDE.md §3, Bereiche wie „§C4–C6"), ab 25 ein Gesetz mit eigener Datei.
+const cssKarte = abschnitt(anweisung, '### CSS') || '';
 const cssKuerzel = new Set();
-for (const m of tokens.matchAll(/\[§C(\d+)(?:–C(\d+))?\]/g))
+for (const m of cssKarte.matchAll(/^\| `[^`]+\.css` \| §C(\d+)(?:–C(\d+))?/gm))
   for (let n = +m[1]; n <= +(m[2] || m[1]); n++) cssKuerzel.add(n);
 const gesetzDateien = existsSync('docs/gesetze') ? readdirSync('docs/gesetze').filter(f => /^C\d+-/.test(f)) : [];
 const gesetzNr = new Map(gesetzDateien.map(f => [+f.match(/^C(\d+)-/)[1], f]));
@@ -231,7 +231,7 @@ for (const f of [...codeDateien, ...doku])
 for (const [n, wo] of [...zitiert].sort((a, b) => a[0] - b[0])){
   if (n < 25 ? !cssKuerzel.has(n) : !gesetzNr.has(n))
     vs(`§C${n} ist nirgends erklärt (zitiert in ${[...wo].slice(0, 3).join(', ')})`
-      + (n < 25 ? ' — Kopf von 00-tokens.css' : ' — docs/gesetze/C' + n + '-….md anlegen'));
+      + (n < 25 ? ' — CSS-Landkarte in CLAUDE.md §3' : ' — docs/gesetze/C' + n + '-….md anlegen'));
 }
 // (b) Jedes Gesetz wird im Code zitiert: sonst gilt es nirgends.
 for (const [n, f] of gesetzNr)
@@ -252,6 +252,19 @@ for (const f of doku){
       vs(`${f}: Pfad ${pfad} gibt es nicht`);
   }
 }
+// (d) Ein Abschnitt im Code hat eine Nummer, die es nur einmal gibt, und
+// jedes Zitat [§n.m] in Code und Tests zeigt auf einen Abschnitt. Sieben
+// Nummern standen doppelt (§3.4 war Positionsverlauf UND Statistik), und
+// [§9.6] zeigte auf nichts — der Autosync heißt §11.9. Ein Zitat hinter
+// „….md" meint den Abschnitt eines Dokuments, nicht des Codes.
+const anker = new Map();
+for (const f of jsDateien)
+  for (const [k] of ankerVon('src/js/' + f)) anker.set(k, [...(anker.get(k) || []), f]);
+for (const [k, wo] of anker) if (wo.length > 1) vs(`${k} steht als Abschnitt mehrfach: ${wo.join(', ')}`);
+for (const f of [...jsDateien.map(f => 'src/js/' + f), ...suiten.map(f => 'tests/' + f)])
+  for (const m of lesen(f).matchAll(/(\.md )?§(\d+\.\d+[a-z]?)\b/g))
+    if (!m[1] && !anker.has('§' + m[2])) vs(`${f}: §${m[2]} zeigt auf keinen Abschnitt (docs/anker.md)`);
+
 if (!verweisSchief) ok(`jeder Verweis der Doku trägt (${zitiert.size} Kürzel, ${doku.length} Dateien)`);
 
 // ── 8 ─ die erzeugten Verzeichnisse sind aktuell ──────────────────

@@ -1,4 +1,4 @@
-// ─── §5.8 — Der Einblick: eine Grafik über einer Rangliste [§C27] ────
+// ─── §5.9 — Der Einblick: eine Grafik über einer Rangliste [§C27] ────
 // Positionen und Teams tragen je eine Grafik, die die Liste darunter nicht
 // zeigen kann: die Rollen-Landkarte aus Sturm und Abwehr und das Netz der
 // Duos. Im Liga-Reiter gibt es keinen: das Titelrennen der Saison war

@@ -111,8 +111,9 @@ function awHeroPair(p1,p2){
 
 
 // ╔═══ §4.3 ─── NAVIGATION (Tabs/Filter/History-State) ─────────────────╗
-//     setTab() ist die zentrale Wechsel-Funktion. tab + period + filterPos +
-//     filterPlayer steuern, was render() zeichnet.
+//     tab, period, awView und die übrigen Ansichtsvariablen aus 01-update.js
+//     steuern, was render() zeichnet; ein Reiterwechsel geht durch
+//     _renderNachEingabe (docs/laufzeit.md).
 // ╚═════════════════════════════════════════════════════════════════════════╝
 // Dieselbe Zeichensprache wie der Katalog [§C27]: Linien mit Rand im
 // 24er-Raster, keine gefüllten Kästen. Die Liga war drei Rechtecke, der
@@ -278,8 +279,8 @@ function schlittenFahren(root){
 }
 
 // ╔═══ §4.4 ─── ZEITRÄUME (Saison/Woche/Gesamt) ────────────────────────╗
-//     periodBounds() liefert {from,to} für die aktuelle Periode.
-//     periodMatches() filtert matches[] entsprechend.
+//     periodStart() liefert den Beginn des Zeitraums (Saison, Woche, Tag),
+//     matchesInPeriod() die Partien darin.
 // ╚═════════════════════════════════════════════════════════════════════════╝
 function periodStart(period){
   const now=new Date();

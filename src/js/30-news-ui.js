@@ -281,13 +281,6 @@ function _processDeferredNewsToast(){
 }
 window._processDeferredNewsToast = _processDeferredNewsToast;
 
-// ─── §11.5 — Das Mini-Popup ist entfallen ────────────────────────────
-// Es zeigte fünf Stories in einer eigenen, viel einfacheren Karte: Kategorie-
-// Pille aus der Datenbank („Badge & Awards"), Titel, Text. Genau die Pille,
-// die der Feed seit dem Rubrikband nicht mehr trägt [§C33], und ohne Motiv,
-// ohne Sammelband, ohne Gesicht. Erreichbar war es zuletzt gar nicht mehr:
-// der Glockenknopf öffnet seit v8.9 direkt den vollen Feed, und geöffnet
-// wurde das Popup nur noch von der Auffrischung — wenn es schon offen war.
 
 // Datumsformatierung: "Heute, 16:07" / "Gestern, 21:11" / "12.06., 14:30"
 function _newsWhenLabel(when){

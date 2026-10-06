@@ -1,4 +1,4 @@
-// ╔═══ §3.4 ─── SAISON-POSITIONSVERLAUF (§C21 UI) ──────────────────────╗
+// ╔═══ §3.7 ─── SAISON-POSITIONSVERLAUF (§C21 UI) ──────────────────────╗
 //     Bottom-Sheet mit Liniendiagramm der Tabellenpositionen über die
 //     Tage der aktuellen Saison. Hervorhebung per Tap auf Linie/Endpunkt-
 //     Avatar — Detail-Karte zeigt selektierten Spieler. CSS-Toggle für
@@ -694,7 +694,6 @@ function showPotwRecap(opts){
     console.error('POTW Recap Fehler:',e);
   }
 }
-// HIER ENDET DER showPotwRecap FUNKTIONSBLOCK
 
 // Auto-Trigger: an Mo/Di der neuen Woche einmal pro Gerät
 function autoShowPotwRecap(){

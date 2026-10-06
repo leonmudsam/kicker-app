@@ -1,3 +1,7 @@
+// ╔═══ §8 ─── SPIELERPROFIL ─────────────────────────────────────────────╗
+//     playerAwards, showPlayer und die Blätter, die das Profil öffnet:
+//     Auszeichnungen samt Popover, Saisonverlauf, Rangsystem.
+// ╚═════════════════════════════════════════════════════════════════════════╝
 // Ermittelt alle Awards, die ein Spieler aktuell hält (Platz 1–3)
 function playerAwards(id){
   // Cache pro Spieler — wird beim Profil-Öffnen UND von showPlayerAwards aufgerufen.

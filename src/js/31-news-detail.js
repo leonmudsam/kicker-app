@@ -2837,8 +2837,8 @@ function _ndBilanzBis(pid, s){
     const btn = document.getElementById('newsBtn');
     if(btn && !btn._newsBound){
       btn._newsBound = true;
-      // Der Knopf öffnet direkt den vollen Feed. Das Vorschau-Popup davor
-      // gibt es nicht mehr [§11.5].
+      // Der Knopf öffnet direkt den vollen Feed; eine zweite, einfachere
+      // Kartenform davor wäre ein zweites Bauteil für dieselbe Aussage [§C27].
       btn.onclick = openNewsFeed;
     }
     // ndBg (Story-Detail): KEIN Backdrop-Close (User-Wunsch v8.1): Stories

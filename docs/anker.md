@@ -34,7 +34,7 @@ Wächter 8 vergleicht. Ein Kürzel `§n.m` ist ein Abschnitt des Codes,
   - §3.3 Player-of-the-Week / Player-of-the-Day Recap
 - **06b-ruhestand.js** — ohne Banner
 - **07-positionsverlauf.js**
-  - §3.4 SAISON-POSITIONSVERLAUF (§C21 UI)
+  - §3.7 SAISON-POSITIONSVERLAUF (§C21 UI)
 - **08-stats.js**
   - §3.4 STATS ENGINE
 - **09-ui-infra.js**
@@ -65,11 +65,14 @@ Wächter 8 vergleicht. Ein Kürzel `§n.m` ist ein Abschnitt des Codes,
   - §5.7 VIEW: SETTINGS
   - §5.8 MATCH PREVIEW & SAVE-LOGIK
 - **15b-einblick.js**
-  - §5.8 — Der Einblick: eine Grafik über einer Rangliste [§C27]
+  - §5.9 — Der Einblick: eine Grafik über einer Rangliste [§C27]
 - **16-sheet-infra.js**
   - §6.1 DETAIL-SHEET-INFRASTRUKTUR
 - **17-badges.js**
+  - §7.1 Der Katalog der Auszeichnungen
+  - §7.2 Die Klassen
   - §7.3 Count-Funktionen für die neuen Badges
+  - §7.4 Wer in welcher Partie was geholt hat
 - **17b-fingerabdruck.js**
   - §13.11 DER FINGERABDRUCK
 - **18-profil.js** — ohne Banner
@@ -94,16 +97,17 @@ Wächter 8 vergleicht. Ein Kürzel `§n.m` ist ein Abschnitt des Codes,
   - §11.0c — Wie oft dieselbe Auszeichnung Nachricht ist
   - §11.0b — Wann jemand über sich hinauswächst
   - §11.0a — Die eine Rangfolge
-  - §11.0b — Badge-Whitelist (v8.1)
+  - §11.0h — Badge-Whitelist (v8.1)
 - **26b-story-fakten.js**
   - §11.0e DIE FAKTEN EINER STORY
 - **27-news-generator.js**
   - §11.1 — Story-Generator
-  - §11.0c — Unbegrenzte Meilenstein-Leiter (v9.5)
-  - §11.0d — Persönliche Elo-Meilensteine (v9.5)
-  - §11.8 Die Ewige Tafel meldet sich
+  - §11.0f — Unbegrenzte Meilenstein-Leiter (v9.5)
+  - §11.0g — Persönliche Elo-Meilensteine (v9.5)
+  - §11.1a Die Ewige Tafel meldet sich
 - **28-news-ambient.js**
   - §11.1b — Ambiente Fun-Fact-Stories (v8.5, v9.5)
+  - §11.1c Rückblicke mit festem Termin
 - **29-news-cache.js**
   - §11.2 — Story-Cache (DB-basiert, v8.3) + Display-Konsolidierung
   - §11.8 — Realtime-Subscription auf `stories` (v8.4)
@@ -112,7 +116,6 @@ Wächter 8 vergleicht. Ein Kürzel `§n.m` ist ein Abschnitt des Codes,
   - §11.3 — LocalStorage (Read-State)
   - §11.4 — Header-Badge-Refresh
   - §11.4b — Toast-Logik (v8.1, erweitert v8.2)
-  - §11.5 — Das Mini-Popup ist entfallen
   - §11.6 — Voller Feed (im Sheet) mit Filter-Pills
   - §11.6b — Breaking-Erkennung + M2-Karten (v9)
 - **30b-news-spieltag.js**
@@ -140,7 +143,7 @@ Wächter 8 vergleicht. Ein Kürzel `§n.m` ist ein Abschnitt des Codes,
 - **35b-prestige.js**
   - §13.8 PRESTIGE & INSIGNIUM
   - §13.9 Das Zeichen: Insignium und Titelband
-  - §13.9 Das Zeichen
+  - §13.9b Das Zeichen
   - §13.10 Die Laufbahn: wo stehe ich, und was fehlt
 - **35c-titel-aura.js** — ohne Banner
 - **36-backup.js**

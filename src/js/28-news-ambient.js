@@ -1446,7 +1446,7 @@ function _ambientTemplatePool(now, pm, nameOf){
   }});
 
 
-  // ── Rückblicke mit festem Termin (§11.1c) ───────────────────────────
+  // ── §11.1c Rückblicke mit festem Termin ─────────────────────────────
   // Woche und Monat hat der Generator schon: der gestaffelte Montags-Block
   // [§11.1] und der season_recap beim Archivieren. Was fehlte, waren die
   // beiden langen Blicke — Monatshalbzeit und Jahreswechsel. Sie hängen

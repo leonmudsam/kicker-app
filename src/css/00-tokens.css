@@ -1,29 +1,12 @@
   /* ════════════════════════════════════════════════════════════════════════
-   *  CSS-INHALTSVERZEICHNIS
-   *  Jede Datei in src/css/ deckt einen zusammenhängenden Block ab.
-   *  [§Cn] steht weiterhin als Banner im Code — für den Sprung reicht
-   *  aber inzwischen der Dateiname.
-   * ════════════════════════════════════════════════════════════════════════
-   *  00-tokens          [§C0]         Variablen & Reset (--bg, --acid, Fonts)
-   *  01-shell           [§C1–C3]      App-Shell, Content, Stat-Strip
-   *  02-ranking         [§C4–C6]      Segmented Control, Rank-List, Saison
-   *  03-match           [§C7]         Match-Builder
-   *  04-awards          [§C8–C9]      Trophäen-Cards, Award-Detail-Sheet
-   *  05-nav-sheet       [§C10–C14]    History, Modal, Bottom-Nav, FAB, Toast
-   *  06-misc            [§C15]        Empty-State, kleine Helpers
-   *  07-icons-profil    [§C16]        SVG-Icons, Spieler-Profil-Layout
-   *  08-highlights      [§C17–C19]    Zusatzstyles, POTD/POTW, Hall of Fame
-   *  09-recap           [§C20]        Season-Recap-Vollbild
-   *  10-award-sheet     [§C21]        Winner-Hero + Positionsverlauf
-   *  11-chronik         [§C22]        Saison-Titel & Chronik
-   *  12-insignium       [§C23]        Insignium, Titelband, Laufbahn
-   *  13-fingerabdruck   [§C24]        Sechs-Achsen-Profil
-   *  14-farbgesetz      [§C25]        Eine Seite, eine Farbe
-   *  15-zeichen         [§C26]        Sterne unten, Feuer hinten
-   *
-   *  ⚑ Neue Sections: eigene Datei anlegen ODER Banner
+   *  CSS der Liga. Jede Datei in src/css/ deckt einen zusammenhängenden
+   *  Block ab; die Reihenfolge der Präfixe ist die Reihenfolge im Bau, und
+   *  später geladene Regeln gewinnen. Welche Datei welchen Abschnitt [§Cn]
+   *  trägt, steht in der Landkarte von CLAUDE.md §3 (von Wächter 6 und 7
+   *  geprüft), die Banner jeder Datei in docs/anker.md.
+   *  Neue Sections: eigene Datei mit Präfix ODER Banner
    *    [§Cn] (slash-stern) ============ NAME ============ (stern-slash)
-   *    setzen — und HIER eintragen.
+   *  setzen — und in der Landkarte eintragen.
    * ════════════════════════════════════════════════════════════════════════ */
   :root{
     --bg:#0a0c0b; --bg2:#0f1311; --surface:#141a16; --surface2:#1a221d;

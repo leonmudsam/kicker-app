@@ -1,7 +1,7 @@
 // ╔═══ §3.1 ─── DATENBANK-LAYER ────────────────────────────────────────╗
 //     loadAll() lädt Spieler/Matches/Config/Seasons, persistRecalc()
 //     schreibt Elos/Deltas atomar zurück. Saison-Archivierung am
-//     Monatswechsel via archiveSeasonAndStartNew().
+//     Monatswechsel via autoArchiveSeasons().
 // ╚═════════════════════════════════════════════════════════════════════════╝
 function pmap(){
   const key='pmap_'+players.length+'_'+_cache.version;
