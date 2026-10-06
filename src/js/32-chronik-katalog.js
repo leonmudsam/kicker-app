@@ -202,9 +202,14 @@ const _stStreu = a => {
   const m = _stMittel(a);
   return Math.sqrt(_stMittel(a.map(x => (x - m) * (x - m))));
 };
-// Die Siegquote einer Teilmenge von Partien. Stand achtmal als
-// `a.filter(s=>s.win).length/a.length` in der Datei.
-const _stQuote = a => a.length ? a.filter(s => s.win).length / a.length : 0;
+// Die Siegquote einer Teilmenge von Partien, 0 für die leere Menge.
+const _stQuote = a => a.length ? _stSiege(a) / a.length : 0;
+// Die Siege einer Teilmenge, und ihr Anteil OHNE Schutz vor der leeren Menge:
+// `_stQuoteRoh([])` ist NaN. Das ist ein anderes Ergebnis als `_stQuote` (0),
+// sobald eine Schwelle, ein Math.min oder ein Vergleich darauf folgt — deshalb
+// zwei Namen. Beide Formen standen zusammen über fünfzigmal ausgeschrieben.
+function _stSiege(a){ return a.filter(s => s.win).length; }
+function _stQuoteRoh(a){ return _stSiege(a) / a.length; }
 // Wochen mit genug Partien fuer eine Wahrscheinlichkeitsrechnung. `_stWochen`
 // nimmt fuenf; unter sechs ist eine ganze Woche kaum unwahrscheinlich zu
 // nennen, weil schon vier Siege in Folge eine Woche fuellen.
@@ -252,8 +257,8 @@ function _stHaelften(p){
   const mitte = tage[Math.floor(tage.length / 2)];
   const e1 = p.partien.filter(s => s.tag < mitte), e2 = p.partien.filter(s => s.tag >= mitte);
   if(e1.length < 4 || e2.length < 4) return null;
-  return {q1: e1.filter(s => s.win).length / e1.length,
-          q2: e2.filter(s => s.win).length / e2.length};
+  return {q1: _stQuoteRoh(e1),
+          q2: _stQuoteRoh(e2)};
 }
 
 // Die letzten zehn Partien gegen ALLE davor. Nicht gegen die Gesamtquote:
@@ -300,7 +305,7 @@ function _stLagen(p, c){
   const q = {};
   for(const k in grp){
     if(grp[k].length < ST_TEIL) return null;
-    q[k] = grp[k].filter(s => s.win).length / grp[k].length;
+    q[k] = _stQuoteRoh(grp[k]);
   }
   return q;
 }
@@ -396,9 +401,9 @@ const DISZIPLINEN = [
       cond:'An jedem eigenen Spieltag eine ausgeglichene oder positive Bilanz, ab 3 Spieltagen',
       ...(_stWertung(
         p=>p.tagN>=3,
-        p=>{const t=Object.values(p.tagGrp);return t.filter(a=>a.filter(s=>s.win).length*2>=a.length).length/t.length;},
+        p=>{const t=Object.values(p.tagGrp);return t.filter(a=>_stSiege(a)*2>=a.length).length/t.length;},
         1,
-        p=>{const t=Object.values(p.tagGrp);return `${t.filter(a=>a.filter(s=>s.win).length*2>=a.length).length} von ${t.length} Spieltagen nicht negativ`;}))}},
+        p=>{const t=Object.values(p.tagGrp);return `${t.filter(a=>_stSiege(a)*2>=a.length).length} von ${t.length} Spieltagen nicht negativ`;}))}},
 
   {id:'catalyst', name:'Der Katalysator', short:'Katalyse', ic:'handshake', tone:'gold', art:'leistung',
     allzeit:{
@@ -436,10 +441,10 @@ const DISZIPLINEN = [
       ...(_stWertung(
         p=>Object.values(p.partnerGrp).filter(a=>a.length>=ST_TEIL).length>=3,
         p=>Math.min(...Object.values(p.partnerGrp).filter(a=>a.length>=ST_TEIL)
-      .map(a=>a.filter(s=>s.win).length/a.length)),
+      .map(a=>_stQuoteRoh(a))),
         0.6,
         (p,v)=>{const k=Object.keys(p.partnerGrp).filter(k=>p.partnerGrp[k].length>=ST_TEIL)
-      .map(k=>({k,q:p.partnerGrp[k].filter(s=>s.win).length/p.partnerGrp[k].length})).sort((a,b)=>a.q-b.q)[0];
+      .map(k=>({k,q:_stQuoteRoh(p.partnerGrp[k])})).sort((a,b)=>a.q-b.q)[0];
       return `selbst neben ${pname(k.k)} noch ${pct(k.q)} % · ${Object.values(p.partnerGrp).filter(a=>a.length>=ST_TEIL).length} Partner`;}))}},
 
   {id:'clutch', name:'Die ruhige Hand', short:'Nerven', ic:'nerves', tone:'gold', art:'leistung',
@@ -499,10 +504,10 @@ const DISZIPLINEN = [
       cond:'In offenen Partien mindestens 20 Prozentpunkte stärker als sonst, ab 5 offenen Partien',
       ...(_stWertung(
         p=>p.partien.filter(_stAugenhoehe).length>=ST_TEIL,
-        p=>{const d=p.partien.filter(_stAugenhoehe);return d.filter(s=>s.win).length/d.length-p.q;},
+        p=>{const d=p.partien.filter(_stAugenhoehe);return _stQuoteRoh(d)-p.q;},
         0.2,
         p=>{const d=p.partien.filter(_stAugenhoehe);
-      return `${d.filter(s=>s.win).length} von ${d.length} offenen Partien · sonst ${pct(p.q)} %`;}))}},
+      return `${_stSiege(d)} von ${d.length} offenen Partien · sonst ${pct(p.q)} %`;}))}},
 
   {id:'gegenwind', name:'Gegen den Wind', short:'Gegenwind', ic:'tornado', tone:'acid', art:'leistung',
     allzeit:{
@@ -536,10 +541,10 @@ const DISZIPLINEN = [
       ...(_stWertung(
         p=>Object.values(p.gegnerGrp).filter(d=>d.length>=3).length>=4,
         p=>{const r=Object.values(p.gegnerGrp).filter(d=>d.length>=3);
-      return r.filter(d=>d.filter(s=>s.win).length*2>d.length).length/r.length;},
+      return r.filter(d=>_stSiege(d)*2>d.length).length/r.length;},
         1,
         p=>{const r=Object.values(p.gegnerGrp).filter(d=>d.length>=3);
-      return `gegen ${r.filter(d=>d.filter(s=>s.win).length*2>d.length).length} von ${r.length} regelmäßigen Gegnern im Plus`;}))},
+      return `gegen ${r.filter(d=>_stSiege(d)*2>d.length).length} von ${r.length} regelmäßigen Gegnern im Plus`;}))},
     // Die Laufbahn-Achse fragt nach der SCHWAECHSTEN Bilanz und nicht mehr
     // nach dem Anteil der positiven. Der Anteil beantwortete eine andere
     // Frage als der Name: wer gegen neun von zehn Gegnern im Plus steht und
@@ -751,7 +756,7 @@ const DISZIPLINEN = [
       cond:'Zwischen bestem und schwächstem Spieltag höchstens 15 Prozentpunkte, ab 3 Spieltagen mit je 3 Partien',
       ...(_stWertung(
         p=>Object.values(p.tagGrp).filter(a=>a.length>=3).length>=3,
-        p=>{const q=Object.values(p.tagGrp).filter(a=>a.length>=3).map(a=>a.filter(s=>s.win).length/a.length);
+        p=>{const q=Object.values(p.tagGrp).filter(a=>a.length>=3).map(a=>_stQuoteRoh(a));
       return -(Math.max(...q)-Math.min(...q));},
         -0.15,
         (p,v)=>`${pct(-v)} %-Punkte zwischen bestem und schwächstem Tag`))}},
@@ -952,9 +957,9 @@ const DISZIPLINEN = [
       cond:'Mindestens 85 % der ersten Partien eines Spieltags gewonnen, ab 5 Spieltagen',
       ...(_stWertung(
         p=>p.tagN>=ST_TEIL,
-        p=>{const l=Object.values(p.tagGrp).map(a=>a[0]);return l.filter(s=>s.win).length/l.length;},
+        p=>{const l=Object.values(p.tagGrp).map(a=>a[0]);return _stQuoteRoh(l);},
         0.85,
-        p=>{const l=Object.values(p.tagGrp).map(a=>a[0]);return `${l.filter(s=>s.win).length} von ${l.length} Auftaktpartien gewonnen`;}))},
+        p=>{const l=Object.values(p.tagGrp).map(a=>a[0]);return `${_stSiege(l)} von ${l.length} Auftaktpartien gewonnen`;}))},
     allzeit:{
       kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, je Spieltag',
@@ -1565,7 +1570,7 @@ const DISZIPLINEN = [
       ...(_stWertung(
         p=>Object.values(p.gegnerGrp).some(a=>a.length>=8),
         p=>{let b=null;Object.keys(p.gegnerGrp).forEach(g=>{const d=p.gegnerGrp[g];if(d.length<8)return;
-      const q=d.filter(s=>s.win).length/d.length;if(!b||q<b.q)b={q,g,n:d.length,w:d.filter(s=>s.win).length};});
+      const q=_stQuoteRoh(d);if(!b||q<b.q)b={q,g,n:d.length,w:_stSiege(d)};});
       p._ag=b;return b?-b.q:null;},
         0,
         p=>`${p._ag.w} von ${p._ag.n} gegen ${pname(p._ag.g)}`))},
@@ -1729,7 +1734,7 @@ const DISZIPLINEN = [
       cond:'Gegen JEDEN regelmäßigen Gegner mindestens 75 %, ab 5 Gegnern mit je 4 Duellen',
       ...(_stWertung(
         p=>Object.values(p.gegnerGrp).filter(a=>a.length>=4).length>=5,
-        p=>Math.min(...Object.values(p.gegnerGrp).filter(a=>a.length>=4).map(a=>a.filter(s=>s.win).length/a.length)),
+        p=>Math.min(...Object.values(p.gegnerGrp).filter(a=>a.length>=4).map(a=>_stQuoteRoh(a))),
         0.75,
         (p,v)=>{const g=Object.values(p.gegnerGrp).filter(a=>a.length>=4);
       return `${g.length} regelmäßige Gegner, gegen keinen unter ${pct(v)} %`;}))}},
@@ -1775,9 +1780,9 @@ const DISZIPLINEN = [
       cond:'In den letzten 5 Partien des Monats mindestens 3 Siege mehr als in den ersten 5',
       ...(_stWertung(
         p=>p.games>=12,
-        p=>(p.partien.slice(-5).filter(s=>s.win).length-p.partien.slice(0,5).filter(s=>s.win).length)/5,
+        p=>(_stSiege(p.partien.slice(-5))-_stSiege(p.partien.slice(0,5)))/5,
         0.6,
-        p=>`${p.partien.slice(-5).filter(s=>s.win).length} von 5 zum Schluss, ${p.partien.slice(0,5).filter(s=>s.win).length} von 5 zum Auftakt`))}},
+        p=>`${_stSiege(p.partien.slice(-5))} von 5 zum Schluss, ${_stSiege(p.partien.slice(0,5))} von 5 zum Auftakt`))}},
 
   {id:'schattenmann', name:'Der Schattenmann', short:'Zuspieler', ic:'users', tone:'gold', art:'leistung',
     monat:{
@@ -1791,8 +1796,8 @@ const DISZIPLINEN = [
         (p,c)=>{let b=null;
       Object.keys(p.partnerGrp).forEach(mid=>{const z=p.partnerGrp[mid];if(z.length<ST_TEIL)return;
       const o=c.P[mid];if(!o)return;const ohne=o.partien.filter(s=>s.mate!==p.pid);if(ohne.length<ST_TEIL)return;
-      const d=z.filter(s=>s.win).length/z.length-ohne.filter(s=>s.win).length/ohne.length;
-      if(!b||d>b.d)b={d,mid,q:z.filter(s=>s.win).length/z.length};});
+      const d=_stQuoteRoh(z)-_stQuoteRoh(ohne);
+      if(!b||d>b.d)b={d,mid,q:_stQuoteRoh(z)};});
       p._sm=b;return b?b.d:null;},
         0.6,
         (p,v)=>`${pname(p._sm.mid)} gewinnt an dieser Seite ${pct(p._sm.q)} %, sonst ${pct(p._sm.q-v)} %`))}},
@@ -1833,10 +1838,10 @@ const DISZIPLINEN = [
       ...(_stWertung(
         p=>Object.values(p.tagGrp).some(a=>a.length>=4),
         p=>{let b=null;Object.keys(p.tagGrp).forEach(t=>{const a=p.tagGrp[t];if(a.length<4)return;
-      const q=Math.max(_stPBinom(a.map(s=>s.exp),a.filter(s=>s.win).length),1e-6);
+      const q=Math.max(_stPBinom(a.map(s=>s.exp),_stSiege(a)),1e-6);
       if(!b||q<b.q)b={q,a};});p._au=b;return b?-Math.log10(b.q):null;},
         1.5228787452803376,
-        (p,v)=>`${p._au.a.filter(s=>s.win).length} von ${p._au.a.length} an einem Tag · erwartet waren ${komma(p._au.q*100, 1)} %`))}},
+        (p,v)=>`${_stSiege(p._au.a)} von ${p._au.a.length} an einem Tag · erwartet waren ${komma(p._au.q*100, 1)} %`))}},
 
   {id:'endspurt', name:'Der Endspurt', short:'Endspurt', ic:'rocket', tone:'gold', art:'leistung',
     monat:{
@@ -1847,9 +1852,9 @@ const DISZIPLINEN = [
       cond:'Mindestens 75 % der letzten Partien eines Spieltags gewonnen, ab 5 Spieltagen',
       ...(_stWertung(
         p=>p.tagN>=ST_TEIL,
-        p=>{const l=Object.values(p.tagGrp).map(a=>a[a.length-1]);return l.filter(s=>s.win).length/l.length;},
+        p=>{const l=Object.values(p.tagGrp).map(a=>a[a.length-1]);return _stQuoteRoh(l);},
         0.75,
-        p=>{const l=Object.values(p.tagGrp).map(a=>a[a.length-1]);return `${l.filter(s=>s.win).length} von ${l.length} Tagesabschlüssen gewonnen`;}))}},
+        p=>{const l=Object.values(p.tagGrp).map(a=>a[a.length-1]);return `${_stSiege(l)} von ${l.length} Tagesabschlüssen gewonnen`;}))}},
 
   {id:'umschwung', name:'Der Umschwung', short:'Wende', ic:'overtake', tone:'gold', art:'leistung',
     monat:{
@@ -1862,7 +1867,7 @@ const DISZIPLINEN = [
         p=>Object.values(p.tagGrp).filter(a=>a.length>=4).length>=2,
         p=>{const t=Object.keys(p.tagGrp).sort().map(k=>p.tagGrp[k]).filter(a=>a.length>=4);
       let b=null;for(let i=1;i<t.length;i++){
-      const x=t[i-1].filter(s=>s.win).length/t[i-1].length, y=t[i].filter(s=>s.win).length/t[i].length;
+      const x=_stQuoteRoh(t[i-1]), y=_stQuoteRoh(t[i]);
       if(!b||y-x>b.d) b={d:y-x,x,y};}
       p._um=b;return b?b.d:null;},
         0.65,
@@ -1917,9 +1922,9 @@ const DISZIPLINEN = [
       cond:'Mindestens 80 % der Partien direkt nach einer Niederlage gewonnen, ab 5 Gelegenheiten',
       ...(_stWertung(
         p=>_stNachPleite(p).length>=ST_TEIL,
-        p=>{const d=_stNachPleite(p);return d.filter(s=>s.win).length/d.length;},
+        p=>{const d=_stNachPleite(p);return _stQuoteRoh(d);},
         0.8,
-        p=>{const d=_stNachPleite(p);return `${d.filter(s=>s.win).length} von ${d.length} Antworten nach einer Pleite`;}))}},
+        p=>{const d=_stNachPleite(p);return `${_stSiege(d)} von ${d.length} Antworten nach einer Pleite`;}))}},
 
   {id:'favschreck', name:'Der Favoritenschreck', short:'Schreck', ic:'giantSlayer', tone:'gold', art:'leistung',
     monat:{
@@ -1930,9 +1935,9 @@ const DISZIPLINEN = [
       cond:'Mindestens 40 % gegen klare Favoriten, ab 5 solchen Partien',
       ...(_stWertung(
         p=>p.partien.filter(s=>s.exp<=CHANCE_UPSET).length>=ST_TEIL,
-        p=>{const d=p.partien.filter(s=>s.exp<=CHANCE_UPSET);return d.filter(s=>s.win).length/d.length;},
+        p=>{const d=p.partien.filter(s=>s.exp<=CHANCE_UPSET);return _stQuoteRoh(d);},
         0.4,
-        p=>{const d=p.partien.filter(s=>s.exp<=CHANCE_UPSET);return `${d.filter(s=>s.win).length} von ${d.length} gegen klare Favoriten`;}))}},
+        p=>{const d=p.partien.filter(s=>s.exp<=CHANCE_UPSET);return `${_stSiege(d)} von ${d.length} gegen klare Favoriten`;}))}},
 
   {id:'formgipfel', name:'Der Formgipfel', short:'Formgipfel', ic:'chartUp', tone:'gold', art:'leistung',
     monat:{
@@ -1943,7 +1948,7 @@ const DISZIPLINEN = [
       cond:'Ein Block aus 5 Partien mindestens 55 Prozentpunkte über dem eigenen Monatsschnitt',
       ...(_stWertung(
         p=>p.games>=10,
-        p=>{let b=-9;for(let i=0;i+5<=p.games;i++){const q=p.partien.slice(i,i+5).filter(s=>s.win).length/5;if(q-p.q>b)b=q-p.q;}return b;},
+        p=>{let b=-9;for(let i=0;i+5<=p.games;i++){const q=_stSiege(p.partien.slice(i,i+5))/5;if(q-p.q>b)b=q-p.q;}return b;},
         0.55,
         (p,v)=>`${Math.round((p.q+v)*5)} von 5 am Stück · sonst ${pct(p.q)} %`))}},
 
@@ -1984,10 +1989,10 @@ const DISZIPLINEN = [
       cond:'Auch in der schwächsten Kalenderwoche höchstens 2 Prozentpunkte unter der eigenen Monatsquote, ab 3 Wochen mit je 5 Partien',
       ...(_stWertung(
         p=>_stWochen(p).length>=3,
-        p=>{const m=Math.min(..._stWochen(p).map(a=>a.filter(s=>s.win).length/a.length));
+        p=>{const m=Math.min(..._stWochen(p).map(a=>_stQuoteRoh(a)));
       return -Math.log10(Math.max(p.q-m,0.005));},
         1.6989700043360187,
-        p=>{const W=_stWochen(p), m=Math.min(...W.map(a=>a.filter(s=>s.win).length/a.length));
+        p=>{const W=_stWochen(p), m=Math.min(...W.map(a=>_stQuoteRoh(a)));
       return `${W.length} Wochen, die schwächste bei ${pct(m)} % · Monat ${pct(p.q)} %`;}))}},
 
   {id:'punktgenau2', name:'Der Erwartungstreue', short:'Erwartung', ic:'stopwatch', tone:'blue', art:'leistung',
@@ -2012,7 +2017,7 @@ const DISZIPLINEN = [
       cond:'Auch am schwächsten eigenen Spieltag noch mindestens 60 %, ab 5 Spieltagen mit je 3 Partien',
       ...(_stWertung(
         p=>Object.values(p.tagGrp).filter(a=>a.length>=3).length>=5,
-        p=>Math.min(...Object.values(p.tagGrp).filter(a=>a.length>=3).map(a=>a.filter(s=>s.win).length/a.length)),
+        p=>Math.min(...Object.values(p.tagGrp).filter(a=>a.length>=3).map(a=>_stQuoteRoh(a))),
         0.6,
         (p,v)=>{const t=Object.values(p.tagGrp).filter(a=>a.length>=3);
       return `${t.length} Spieltage, keiner unter ${pct(v)} %`;}))}},
@@ -2027,12 +2032,12 @@ const DISZIPLINEN = [
       ...(_stWertung(
         p=>p.partien.filter(s=>s.pos==='atk').length>=ST_TEIL&&p.partien.filter(s=>s.pos==='def').length>=ST_TEIL,
         p=>{const a=p.partien.filter(s=>s.pos==='atk'),d=p.partien.filter(s=>s.pos==='def');
-      const m=Math.max(Math.abs(a.filter(s=>s.win).length/a.length-p.q),
-      Math.abs(d.filter(s=>s.win).length/d.length-p.q));
+      const m=Math.max(Math.abs(_stQuoteRoh(a)-p.q),
+      Math.abs(_stQuoteRoh(d)-p.q));
       return -Math.log10(Math.max(m,0.0005));},
         2,
         p=>{const a=p.partien.filter(s=>s.pos==='atk'),d=p.partien.filter(s=>s.pos==='def');
-      return `${pct(a.filter(s=>s.win).length/a.length)} % vorne, ${pct(d.filter(s=>s.win).length/d.length)} % hinten`;}))}},
+      return `${pct(_stQuoteRoh(a))} % vorne, ${pct(_stQuoteRoh(d))} % hinten`;}))}},
 
   // ── Zweite Runde: neun Chroniken mehr [§C39] ─────────────────────
   // Alle an den echten Partien kalibriert. Was hier nicht steht, hat eine
@@ -2051,7 +2056,7 @@ const DISZIPLINEN = [
       ...(_stWertung(
         p=>_stWochGross(p).length>=1,
         p=>-Math.log10(Math.max(1e-6, Math.min(..._stWochGross(p)
-             .map(a=>_stPBinom(a.map(s=>s.exp), a.filter(s=>s.win).length))))),
+             .map(a=>_stPBinom(a.map(s=>s.exp), _stSiege(a)))))),
         -Math.log10(0.005),
         (p,v)=>`Eine Woche, die mit ${komma(Math.pow(10,-v)*100)} % erwartet war · ${_stWochGross(p).length} Wochen gewertet`))}},
 
@@ -2094,7 +2099,7 @@ const DISZIPLINEN = [
         p=>_stQuote(_stNachZwei(p)),
         1,
         (p)=>{const a=_stNachZwei(p);
-          return `${a.filter(s=>s.win).length} von ${a.length} Partien nach zwei Pleiten am Stück`;}))}},
+          return `${_stSiege(a)} von ${a.length} Partien nach zwei Pleiten am Stück`;}))}},
 
   {id:'nulldiaet', name:'Die Nulldiät', short:'Nulldiät', ic:'egg', tone:'gold', art:'leistung',
     monat:{
@@ -2134,7 +2139,7 @@ const DISZIPLINEN = [
         p=>_stQuote(_stWochLetzte(p)),
         1,
         (p)=>{const a=_stWochLetzte(p);
-          return `${a.filter(s=>s.win).length} von ${a.length} Wochenabschlüssen gewonnen`;}))}},
+          return `${_stSiege(a)} von ${a.length} Wochenabschlüssen gewonnen`;}))}},
 
   {id:'rollenfest', name:'Favorit wie Außenseiter', short:'Rollen', ic:'swords', tone:'blue', art:'leistung',
     monat:{
@@ -2199,10 +2204,10 @@ const DISZIPLINEN = [
       ...(_stWertung(
         p=>p.partien.filter(s=>s.pos==='atk').length>=ST_TEIL&&p.partien.filter(s=>s.pos==='def').length>=ST_TEIL,
         p=>{const a=p.partien.filter(s=>s.pos==='atk'),d=p.partien.filter(s=>s.pos==='def');
-      return Math.abs(a.filter(s=>s.win).length/a.length-d.filter(s=>s.win).length/d.length);},
+      return Math.abs(_stQuoteRoh(a)-_stQuoteRoh(d));},
         0.5,
         (p,v)=>{const a=p.partien.filter(s=>s.pos==='atk'),d=p.partien.filter(s=>s.pos==='def');
-      return `${pct(v)} %-Punkte Unterschied, stärker ${a.filter(s=>s.win).length/a.length>d.filter(s=>s.win).length/d.length?'vorne':'hinten'}`;}))}},
+      return `${pct(v)} %-Punkte Unterschied, stärker ${_stQuoteRoh(a)>_stQuoteRoh(d)?'vorne':'hinten'}`;}))}},
 
   {id:'torhagel', name:'Der Torhagel', short:'Torhagel', ic:'crashDay', tone:'purple', art:'ereignis',
     monat:{
@@ -2240,10 +2245,10 @@ const DISZIPLINEN = [
       cond:'Die Tagesquoten streuen mindestens 25 Prozentpunkte um die eigene Monatsquote, ab 5 Spieltagen mit je 3 Partien',
       ...(_stWertung(
         p=>Object.values(p.tagGrp).filter(a=>a.length>=3).length>=5,
-        p=>{const q=Object.values(p.tagGrp).filter(a=>a.length>=3).map(a=>a.filter(s=>s.win).length/a.length);
+        p=>{const q=Object.values(p.tagGrp).filter(a=>a.length>=3).map(a=>_stQuoteRoh(a));
       return Math.sqrt(q.reduce((x,y)=>x+(y-p.q)*(y-p.q),0)/q.length);},
         0.25,
-        (p,v)=>{const q=Object.values(p.tagGrp).filter(a=>a.length>=3).map(a=>a.filter(s=>s.win).length/a.length);
+        (p,v)=>{const q=Object.values(p.tagGrp).filter(a=>a.length>=3).map(a=>_stQuoteRoh(a));
       return `${pct(Math.min(...q))} % am schwächsten, ${pct(Math.max(...q))} % am stärksten Tag`;}))}},
 
   {id:'kontrast', name:'Der Kontrast', short:'Kontrast', ic:'chartBar', tone:'purple', art:'ereignis',
@@ -2256,7 +2261,7 @@ const DISZIPLINEN = [
       ...(_stWertung(
         p=>Object.values(p.partnerGrp).filter(a=>a.length>=ST_TEIL).length>=3,
         p=>{const q=Object.keys(p.partnerGrp).filter(k=>p.partnerGrp[k].length>=ST_TEIL)
-      .map(k=>({k,q:p.partnerGrp[k].filter(s=>s.win).length/p.partnerGrp[k].length})).sort((a,b)=>b.q-a.q);
+      .map(k=>({k,q:_stQuoteRoh(p.partnerGrp[k])})).sort((a,b)=>b.q-a.q);
       p._ko=q;return q[0].q-q[q.length-1].q;},
         0.8,
         p=>`${pct(p._ko[0].q)} % neben ${pname(p._ko[0].k)}, ${pct(p._ko[p._ko.length-1].q)} % neben ${pname(p._ko[p._ko.length-1].k)}`))}},
@@ -2313,7 +2318,7 @@ const DISZIPLINEN = [
         p=>_stQuote(_stEinTor(p)),
         0.80,
         (p,v)=>{const a=_stEinTor(p);
-          return `${a.filter(s=>s.win).length} von ${a.length} Partien um den letzten Ball · ${pct(v)} %`;}))}},
+          return `${_stSiege(a)} von ${a.length} Partien um den letzten Ball · ${pct(v)} %`;}))}},
 
   {id:'randlage', name:'Immer am Rand', short:'Am Rand', ic:'search', tone:'purple', art:'ereignis',
     monat:{
