@@ -63,15 +63,85 @@ function loadAll(opts){
   })();
   return _loadAllPromise;
 }
+// Die Töpfe, die ein neuer Datenstand leert. Der Live-Abruf und der
+// Schnellstart [§3.1b] leeren dieselben — zwei Listen liefen auseinander.
+const LADEN_TOEPFE = ['global', 'stats', 'awards', 'teams', 'allTeamStats', 'period', 'badges', 'playerSeasonAwards', 'allPastSeasons'];
+
+// Die vier Antworten in den Zustand einbauen, so wie sie aus der Datenbank
+// kommen. Rein lokal: der Schnellstart baut damit den gespeicherten Stand
+// ein, und der darf nichts schreiben [§3.1b]. Was schreibt, steht in
+// `_overridesNachziehen` und läuft nur nach einem Live-Abruf.
+function _datenEinbauen(roh){
+  // Alle Spieler laden (auch hidden) → für Match-Berechnungen nötig
+  players=roh.p||[];
+  // Lokaler Fallback: Wenn DB-Spalte avatar_id nicht existiert,
+  // wird Edit aus localStorage übernommen.
+  players.forEach(pp=>{
+    if(pp.avatar_id==null){
+      try{
+        const raw=localStorage.getItem('playerEdit_'+pp.id);
+        if(raw){
+          const e=JSON.parse(raw);
+          if(pp.avatar_id==null && e.avatar_id!=null) pp.avatar_id=e.avatar_id;
+        }
+      }catch(err){}
+    }
+  });
+  matches=roh.m||[];
+  if(roh.c)cfg=roh.c;
+  // localStorage-Overrides für neue cfg-Felder, die noch nicht in der DB-Spalte existieren
+  try{
+    const overrides=JSON.parse(localStorage.getItem('cfg_overrides')||'{}');
+    Object.keys(overrides).forEach(k=>{
+      if(overrides[k]!==undefined && overrides[k]!==null) cfg[k]=overrides[k];
+    });
+  }catch(e){}
+  seasons=roh.se||[];
+}
+// Auto-Migration: wenn die DB inzwischen die Spalten kennt, Overrides
+// synchronisieren und localStorage aufräumen. Läuft fire-and-forget im
+// Hintergrund — blockt loadAll nicht.
+function _overridesNachziehen(){
+  try{
+    const overrides=JSON.parse(localStorage.getItem('cfg_overrides')||'{}');
+    const overrideKeys=Object.keys(overrides);
+    if(!overrideKeys.length) return;
+    (async()=>{
+      // Pro Key einzeln updaten: andere bleiben heile wenn einer fehlschlägt
+      const remaining={};
+      for(const k of overrideKeys){
+        try{
+          const o={};o[k]=overrides[k];
+          const {error}=await sb.from('config').update(o).eq('id',1);
+          if(error) remaining[k]=overrides[k];
+          // Bei !error: Spalte existiert nun → Override darf raus
+        }catch(e){ remaining[k]=overrides[k]; }
+      }
+      try{
+        if(Object.keys(remaining).length) localStorage.setItem('cfg_overrides',JSON.stringify(remaining));
+        else localStorage.removeItem('cfg_overrides');
+      }catch(e){}
+    })();
+  }catch(e){}
+}
+
 async function _loadAllDurchlauf(){
   if(!_loadAllLeise) setConn('verbinde…','load');
+  // Ob die Ansicht schon aus dem gespeicherten Stand steht [§3.1b]: dann
+  // ersetzt ein Abruffehler sie nicht durch die Fehlerkarte.
+  let ausStand = false;
   try{
-    const antworten=await Promise.allSettled([
+    let abrufFertig = false;
+    const abruf=Promise.allSettled([
       sb.from('players').select('*').order('elo',{ascending:false}),
       sb.from('matches').select('*').order('created_at',{ascending:true}),
       sb.from('config').select('*').eq('id',1).single(),
       sb.from('seasons').select('*').order('start_date',{ascending:false})
-    ]);
+    ]).then(a=>{ abrufFertig=true; return a; });
+    // Der erste Durchlauf zeichnet, während das Netz noch antwortet, den
+    // letzten Stand des Geräts. Der Abruf läuft schon; gewartet wird nicht.
+    if(_standOffen){ _standOffen=false; ausStand=await _standZeigen(()=>abrufFertig); }
+    const antworten=await abruf;
     // Waerend des Abrufs kam etwa eine Speicheranforderung hinzu. Dieser
     // Zwischenstand ist ueberholt: keine Cache-Leerung, kein DOM-Umbau und
     // keine Story-Publikation aus einer potentiell alten Antwort.
@@ -92,69 +162,42 @@ async function _loadAllDurchlauf(){
     }
     _lastLoadFingerprint = _fp;
     _lastLoadDay = _today;
-    // Alle Spieler laden (auch hidden) → für Match-Berechnungen nötig
-    players=p.data||[];
-    // Lokaler Fallback: Wenn DB-Spalte avatar_id nicht existiert,
-    // wird Edit aus localStorage übernommen.
-    players.forEach(pp=>{
-      if(pp.avatar_id==null){
-        try{
-          const raw=localStorage.getItem('playerEdit_'+pp.id);
-          if(raw){
-            const e=JSON.parse(raw);
-            if(pp.avatar_id==null && e.avatar_id!=null) pp.avatar_id=e.avatar_id;
-          }
-        }catch(err){}
-      }
-    });
-    matches=m.data||[];
-    if(c.data)cfg=c.data;
-    // localStorage-Overrides für neue cfg-Felder, die noch nicht in der DB-Spalte existieren
-    try{
-      const overrides=JSON.parse(localStorage.getItem('cfg_overrides')||'{}');
-      Object.keys(overrides).forEach(k=>{
-        if(overrides[k]!==undefined && overrides[k]!==null) cfg[k]=overrides[k];
-      });
-      // Auto-Migration: wenn die DB inzwischen die Spalten kennt, Overrides synchronisieren
-      // und localStorage aufräumen. Läuft fire-and-forget im Hintergrund — blockt loadAll nicht.
-      const overrideKeys=Object.keys(overrides);
-      if(overrideKeys.length){
-        (async()=>{
-          // Pro Key einzeln updaten: andere bleiben heile wenn einer fehlschlägt
-          const remaining={};
-          for(const k of overrideKeys){
-            try{
-              const o={};o[k]=overrides[k];
-              const {error}=await sb.from('config').update(o).eq('id',1);
-              if(error) remaining[k]=overrides[k];
-              // Bei !error: Spalte existiert nun → Override darf raus
-            }catch(e){ remaining[k]=overrides[k]; }
-          }
-          try{
-            if(Object.keys(remaining).length) localStorage.setItem('cfg_overrides',JSON.stringify(remaining));
-            else localStorage.removeItem('cfg_overrides');
-          }catch(e){}
-        })();
-      }
-    }catch(e){}
-    seasons=se.data||[];
-  // NEU: Alle relevanten Caches invalidieren
-  invalidateCache(['global', 'stats', 'awards', 'teams', 'allTeamStats', 'period', 'badges', 'playerSeasonAwards', 'allPastSeasons']);
+    const roh={p:p.data, m:m.data, c:c.data, se:se.data};
+    const fp=_standHash(_fp);
+    // Ist der Live-Stand derselbe, den der Schnellstart gezeichnet hat,
+    // bleiben Daten, Töpfe und DOM, wie sie sind: dieselbe Antwort ergäbe
+    // dieselbe Ansicht noch einmal, nur nach einer zweiten kalten Rechnung.
+    const bestaetigt = !!_standGezeigt && _standGezeigt === fp;
+    _standGezeigt = null;
+    if(!bestaetigt){
+      _datenEinbauen(roh);
+      invalidateCache(LADEN_TOEPFE);
+    }
+    _overridesNachziehen();
     // Nur aktive Spieler zählen für Anzeige
     const active=activePlayers();
     setConn(active.length+' Spieler · '+matches.length+' Matches','ok');
-    await autoArchiveSeasons();
-    if(window._updateRecapBtn) window._updateRecapBtn();
-    if(window._updatePosHistBtn) window._updatePosHistBtn();
+    // Erst zeichnen, dann archivieren: `autoArchiveSeasons` wartet je
+    // abgeschlossenem Monat auf einen Upsert, und am ersten Tag eines Monats
+    // stand die Rangliste so lange leer. Ändert das Archiv etwas, wird neu
+    // gezeichnet.
     // Ein Abruf kann schon vor dem Öffnen der Eingabe begonnen haben. Die
     // Daten werden frisch, das bestehende Formular aber nicht ersetzt:
     // freier Suchtext steht nicht in M, und ein neuer DOM-Knoten verlöre
     // Cursor, Bildschirmtastatur und den Regler unter dem Finger.
-    if(_eingabeOffen()){
-      if(tab==='match') requestMatchPreview();
-    }else render();
+    const zeichnen = () => {
+      if(_eingabeOffen()){
+        if(tab==='match') requestMatchPreview();
+      }else render();
+    };
+    if(!bestaetigt) zeichnen();
+    const vorArchiv=_cache.version;
+    await autoArchiveSeasons();
+    if(_cache.version!==vorArchiv) zeichnen();
+    if(window._updateRecapBtn) window._updateRecapBtn();
+    if(window._updatePosHistBtn) window._updatePosHistBtn();
     // Die übrigen Reiter rechnen im Leerlauf vor [§2.1b].
-    _vorwaermen();
+    if(!bestaetigt || _cache.version!==vorArchiv) _vorwaermen();
     // News-System v8.3: Stories aus DB synchronisieren.
     //   1. Generator erzeugt Story-Objekte aus Live-Daten
     //   2. INSERT ON CONFLICT DO NOTHING in Supabase
@@ -167,6 +210,8 @@ async function _loadAllDurchlauf(){
       await syncStoriesViaDb();
     } catch(e){ console.warn('[news] sync failed', e); }
     try { if(window.newsBadgeRefresh) window.newsBadgeRefresh(); } catch(e){}
+    // Der Stand für den nächsten Start [§3.1b], mit den Stories von eben.
+    _standSchreiben(roh, fp);
     // Automatisch aufpoppen dürfen nur zwei Dinge: der Wochen-Recap (POTW)
     // und der Saison-Abschluss. Der Tages-Recap (POTD) kam an jedem Spieltag
     // hoch — das war schlicht zu oft. Er ist weiterhin über den Button in
@@ -180,9 +225,9 @@ async function _loadAllDurchlauf(){
     setTimeout(_ruheAbschliessen, 2500);
     setTimeout(autoShowPotwRecap, 900);
   }catch(e){
-    _lastLoadFingerprint=null; _lastLoadDay=null;
+    _lastLoadFingerprint=null; _lastLoadDay=null; _standGezeigt=null;
     console.error(e); setConn('Verbindung fehlgeschlagen','bad');
-    if(_loadAllLeise || _eingabeOffen()) toast('Konnte nicht laden.',true);
+    if(_loadAllLeise || ausStand || _eingabeOffen()) toast('Konnte nicht laden.',true);
     else document.getElementById('main').innerHTML=`<div class="card"><div class="empty" style="color:var(--red)">
       <div class="ee"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="13"/><circle cx="12" cy="16.5" r=".6" fill="currentColor"/></svg></div>Konnte nicht laden.<br><span class="num" style="font-size:11px">${esc(e.message||e)}</span></div></div>`;
   }

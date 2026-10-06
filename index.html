@@ -5539,7 +5539,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.06.91ef864d';
+const BUILD_VERSION='2026.10.06.78b230a5';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -7121,15 +7121,66 @@ function loadAll(opts){
   })();
   return _loadAllPromise;
 }
+const LADEN_TOEPFE = ['global', 'stats', 'awards', 'teams', 'allTeamStats', 'period', 'badges', 'playerSeasonAwards', 'allPastSeasons'];
+
+function _datenEinbauen(roh){
+  players=roh.p||[];
+  players.forEach(pp=>{
+    if(pp.avatar_id==null){
+      try{
+        const raw=localStorage.getItem('playerEdit_'+pp.id);
+        if(raw){
+          const e=JSON.parse(raw);
+          if(pp.avatar_id==null && e.avatar_id!=null) pp.avatar_id=e.avatar_id;
+        }
+      }catch(err){}
+    }
+  });
+  matches=roh.m||[];
+  if(roh.c)cfg=roh.c;
+  try{
+    const overrides=JSON.parse(localStorage.getItem('cfg_overrides')||'{}');
+    Object.keys(overrides).forEach(k=>{
+      if(overrides[k]!==undefined && overrides[k]!==null) cfg[k]=overrides[k];
+    });
+  }catch(e){}
+  seasons=roh.se||[];
+}
+function _overridesNachziehen(){
+  try{
+    const overrides=JSON.parse(localStorage.getItem('cfg_overrides')||'{}');
+    const overrideKeys=Object.keys(overrides);
+    if(!overrideKeys.length) return;
+    (async()=>{
+      const remaining={};
+      for(const k of overrideKeys){
+        try{
+          const o={};o[k]=overrides[k];
+          const {error}=await sb.from('config').update(o).eq('id',1);
+          if(error) remaining[k]=overrides[k];
+        }catch(e){ remaining[k]=overrides[k]; }
+      }
+      try{
+        if(Object.keys(remaining).length) localStorage.setItem('cfg_overrides',JSON.stringify(remaining));
+        else localStorage.removeItem('cfg_overrides');
+      }catch(e){}
+    })();
+  }catch(e){}
+}
+
 async function _loadAllDurchlauf(){
   if(!_loadAllLeise) setConn('verbinde…','load');
+  let ausStand = false;
   try{
-    const antworten=await Promise.allSettled([
+    let abrufFertig = false;
+    const abruf=Promise.allSettled([
       sb.from('players').select('*').order('elo',{ascending:false}),
       sb.from('matches').select('*').order('created_at',{ascending:true}),
       sb.from('config').select('*').eq('id',1).single(),
       sb.from('seasons').select('*').order('start_date',{ascending:false})
-    ]);
+    ]).then(a=>{ abrufFertig=true; return a; });
+    if(_standOffen){ _standOffen=false; ausStand=await _standZeigen(()=>abrufFertig); }
+    const antworten=await abruf;
     if(_loadAllNochmals) return;
     for(const a of antworten){
       if(a.status === 'rejected') throw a.reason;
@@ -7144,65 +7195,41 @@ async function _loadAllDurchlauf(){
     }
     _lastLoadFingerprint = _fp;
     _lastLoadDay = _today;
-    players=p.data||[];
-    players.forEach(pp=>{
-      if(pp.avatar_id==null){
-        try{
-          const raw=localStorage.getItem('playerEdit_'+pp.id);
-          if(raw){
-            const e=JSON.parse(raw);
-            if(pp.avatar_id==null && e.avatar_id!=null) pp.avatar_id=e.avatar_id;
-          }
-        }catch(err){}
-      }
-    });
-    matches=m.data||[];
-    if(c.data)cfg=c.data;
-    try{
-      const overrides=JSON.parse(localStorage.getItem('cfg_overrides')||'{}');
-      Object.keys(overrides).forEach(k=>{
-        if(overrides[k]!==undefined && overrides[k]!==null) cfg[k]=overrides[k];
-      });
-      const overrideKeys=Object.keys(overrides);
-      if(overrideKeys.length){
-        (async()=>{
-          const remaining={};
-          for(const k of overrideKeys){
-            try{
-              const o={};o[k]=overrides[k];
-              const {error}=await sb.from('config').update(o).eq('id',1);
-              if(error) remaining[k]=overrides[k];
-            }catch(e){ remaining[k]=overrides[k]; }
-          }
-          try{
-            if(Object.keys(remaining).length) localStorage.setItem('cfg_overrides',JSON.stringify(remaining));
-            else localStorage.removeItem('cfg_overrides');
-          }catch(e){}
-        })();
-      }
-    }catch(e){}
-    seasons=se.data||[];
-  invalidateCache(['global', 'stats', 'awards', 'teams', 'allTeamStats', 'period', 'badges', 'playerSeasonAwards', 'allPastSeasons']);
+    const roh={p:p.data, m:m.data, c:c.data, se:se.data};
+    const fp=_standHash(_fp);
+    const bestaetigt = !!_standGezeigt && _standGezeigt === fp;
+    _standGezeigt = null;
+    if(!bestaetigt){
+      _datenEinbauen(roh);
+      invalidateCache(LADEN_TOEPFE);
+    }
+    _overridesNachziehen();
     const active=activePlayers();
     setConn(active.length+' Spieler · '+matches.length+' Matches','ok');
+    const zeichnen = () => {
+      if(_eingabeOffen()){
+        if(tab==='match') requestMatchPreview();
+      }else render();
+    };
+    if(!bestaetigt) zeichnen();
+    const vorArchiv=_cache.version;
     await autoArchiveSeasons();
+    if(_cache.version!==vorArchiv) zeichnen();
     if(window._updateRecapBtn) window._updateRecapBtn();
     if(window._updatePosHistBtn) window._updatePosHistBtn();
-    if(_eingabeOffen()){
-      if(tab==='match') requestMatchPreview();
-    }else render();
-    _vorwaermen();
+    if(!bestaetigt || _cache.version!==vorArchiv) _vorwaermen();
     try {
       await syncStoriesViaDb();
     } catch(e){ console.warn('[news] sync failed', e); }
     try { if(window.newsBadgeRefresh) window.newsBadgeRefresh(); } catch(e){}
+    _standSchreiben(roh, fp);
     setTimeout(autoZeigeAbschied, 900);
     setTimeout(_ruheAbschliessen, 2500);
     setTimeout(autoShowPotwRecap, 900);
   }catch(e){
-    _lastLoadFingerprint=null; _lastLoadDay=null;
+    _lastLoadFingerprint=null; _lastLoadDay=null; _standGezeigt=null;
     console.error(e); setConn('Verbindung fehlgeschlagen','bad');
-    if(_loadAllLeise || _eingabeOffen()) toast('Konnte nicht laden.',true);
+    if(_loadAllLeise || ausStand || _eingabeOffen()) toast('Konnte nicht laden.',true);
     else document.getElementById('main').innerHTML=`<div class="card"><div class="empty" style="color:var(--red)">
       <div class="ee"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="13"/><circle cx="12" cy="16.5" r=".6" fill="currentColor"/></svg></div>Konnte nicht laden.<br><span class="num" style="font-size:11px">${esc(e.message||e)}</span></div></div>`;
   }
@@ -7687,6 +7714,79 @@ async function spielerLoeschen(pid){
   const {error:e2} = await sb.from('players').delete().eq('id', pid);
   if(e2) return {ok:false, grund:'netz'};
   return {ok:true};
+}
+const STAND_DB = 'kicker-stand', STAND_TOPF = 'stand', STAND_SCHLUESSEL = 'liga';
+const STAND_WARTEN_MS = 400;
+let _standOffen = true;
+let _standGezeigt = null;
+
+function _standHash(text){
+  let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+  for(let i = 0; i < text.length; i++){
+    const c = text.charCodeAt(i);
+    h1 = Math.imul(h1 ^ c, 2654435761);
+    h2 = Math.imul(h2 ^ c, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return text.length + ':' + (4294967296 * (2097151 & h2) + (h1 >>> 0));
+}
+
+function _standDb(){
+  return new Promise((ja, nein) => {
+    if(typeof indexedDB === 'undefined' || !indexedDB) return nein(new Error('kein IndexedDB'));
+    const r = indexedDB.open(STAND_DB, 1);
+    r.onupgradeneeded = () => r.result.createObjectStore(STAND_TOPF);
+    r.onsuccess = () => ja(r.result);
+    r.onerror = () => nein(r.error);
+    r.onblocked = () => nein(new Error('blockiert'));
+  });
+}
+
+async function _standLesen(){
+  try {
+    const lesen = (async () => {
+      const db = await _standDb();
+      try {
+        return await new Promise((ja, nein) => {
+          const q = db.transaction(STAND_TOPF, 'readonly').objectStore(STAND_TOPF).get(STAND_SCHLUESSEL);
+          q.onsuccess = () => ja(q.result || null);
+          q.onerror = () => nein(q.error);
+        });
+      } finally { db.close(); }
+    })();
+    const rec = await Promise.race([lesen, new Promise(ja => setTimeout(() => ja(null), STAND_WARTEN_MS))]);
+    if(!rec || rec.version !== BUILD_VERSION || !rec.roh || !Array.isArray(rec.roh.p) || !Array.isArray(rec.roh.m)) return null;
+    return rec;
+  } catch(e){ return null; }
+}
+
+async function _standSchreiben(roh, fp){
+  try {
+    const db = await _standDb();
+    try {
+      await new Promise((ja, nein) => {
+        const tx = db.transaction(STAND_TOPF, 'readwrite');
+        tx.objectStore(STAND_TOPF).put({version:BUILD_VERSION, fp, roh,
+          stories:Array.isArray(_cache._stories) ? _cache._stories : null, zeit:Date.now()}, STAND_SCHLUESSEL);
+        tx.oncomplete = () => ja();
+        tx.onerror = () => nein(tx.error);
+        tx.onabort = () => nein(tx.error);
+      });
+    } finally { db.close(); }
+  } catch(e){  }
+}
+
+async function _standZeigen(abrufFertig){
+  const rec = await _standLesen();
+  if(!rec || abrufFertig() || _lastLoadFingerprint) return false;
+  _datenEinbauen(rec.roh);
+  invalidateCache(LADEN_TOEPFE);
+  if(Array.isArray(rec.stories)) _cache._stories = rec.stories;
+  _standGezeigt = rec.fp;
+  if(!_eingabeOffen()) render();
+  _vorwaermen();
+  return true;
 }
 
 function _posvAvSvg(player, color, dataPid){
