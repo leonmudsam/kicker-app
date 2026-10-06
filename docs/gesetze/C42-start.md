@@ -8,14 +8,16 @@
 - Der Live-Abruf mit demselben Fingerabdruck lässt Daten, Töpfe und DOM stehen (`_standGezeigt`); ein anderer ersetzt alles wie ohne Stand.
 - Scheitert der Live-Abruf, bleibt der Stand stehen und ein Hinweis sagt es; die Fehlerkarte kommt nur ohne Stand.
 - Dieselbe Liste leerer Töpfe gilt für Stand und Live-Abruf (`LADEN_TOEPFE`), dasselbe Einbauen (`_datenEinbauen`).
+- Der Service Worker (`src/sw.js`, ausgeliefert als `sw.js`) hält die Seite, das Symbol, die Schriften und die Supabase-Bibliothek: aus dem Topf, im Hintergrund nachgefüllt. Die Antworten der Datenbank hält er nie, und jede Anfrage mit `_cb` geht ans Netz — der Update-Check ganz, `forceReload` holt die Seite frisch und legt sie in den Topf.
+- Er trägt die Fassung der Seite (`SW_FASSUNG`, gesetzt von `tools/build.mjs`); eine neue Fassung räumt beim Aktivieren die Töpfe der alten. Registriert wird er nur über https oder auf dem eigenen Rechner.
 
 ## Stellen
 
-`06c-stand.js`, `06-db.js` (`_loadAllDurchlauf`, `_datenEinbauen`, `_overridesNachziehen`).
+`06c-stand.js`, `06-db.js` (`_loadAllDurchlauf`, `_datenEinbauen`, `_overridesNachziehen`), `src/sw.js`, `37-boot.js` (Registrierung), `tools/build.mjs` und Wächter 1 und 5 in `tools/check.mjs`.
 
 ## Prüfung
 
-`tests/start` (die Liga steht aus dem Stand, bevor das Netz antwortet; kein Schreibzugriff bis dahin; dasselbe Markup und derselbe Knoten nach dem Live-Abruf mit denselben Daten; ohne Netz bleibt der Stand; ein Stand einer anderen Fassung gilt nicht).
+`tests/start` (die Liga steht aus dem Stand, bevor das Netz antwortet; kein Schreibzugriff bis dahin; dasselbe Markup und derselbe Knoten nach dem Live-Abruf mit denselben Daten; ohne Netz bleibt der Stand; ein Stand einer anderen Fassung gilt nicht; der Service Worker hält die Seite unter ihrer Fassung, ohne Netz öffnet die App aus ihm, Update-Check und Neu laden gehen ans Netz, eine neue Fassung räumt den Topf der alten, keine Anfrage geht an eine fremde Adresse).
 
 ## Herleitung
 
@@ -48,3 +50,13 @@ Schnellstart hätte den Start teurer gemacht, nicht billiger.
 
 Gemessen in `tests/start` mit drei Sekunden Netz: die Liga steht nach rund
 400 ms; vorher nach dem Netz.
+
+Der Service Worker gehört zur selben Regel: ohne ihn holte jedes Öffnen die
+Seite, das Skript von jsdelivr und die Schriften von Google, bevor etwas zu
+sehen war. Er darf aber das Update nicht verschlucken. Der Update-Check
+(`checkForUpdate`) und das Neuladen (`forceReload`) tragen `_cb`; beide gehen
+am Topf vorbei, sonst verglich die Seite wieder ihre eigene Version mit sich
+selbst — genau der Fehler, den die Version aus dem Fingerabdruck einmal
+behoben hat. Im Test geht keine Anfrage an eine fremde Adresse: ein Service
+Worker holt fremde Quellen selbst, an jeder Umleitung des Browsers vorbei,
+und mit der echten Bibliothek spräche der Test mit der echten Datenbank.

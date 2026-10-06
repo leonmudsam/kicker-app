@@ -5539,7 +5539,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.06.78b230a5';
+const BUILD_VERSION='2026.10.06.ceb7f44d';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -33505,6 +33505,10 @@ function _tickVersion(){ if(!document.hidden) checkForUpdate(); }
 
 loadAll();
 checkForUpdate();
+if(typeof navigator !== 'undefined' && navigator.serviceWorker && typeof location !== 'undefined'
+   && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')){
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
 setInterval(_tickVersion, 5*60*1000);
 setInterval(_tickDaten, 30000);
 document.addEventListener('visibilitychange', () => {

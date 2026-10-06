@@ -59,6 +59,14 @@ const geliefert = readFileSync('index.html', 'utf8');
 if (strip(gebaut) !== strip(geliefert)) {
   rot('index.html weicht von src/ ab — wurde index.html direkt bearbeitet?');
 } else ok('index.html entspricht src/');
+// Der Service Worker ist die zweite ausgelieferte Datei [§C42]. Er trägt die
+// Fassung der Seite; verglichen wird ohne sie, wie bei der Seite.
+const swStrip = s => s.replace(/\r\n/g, '\n').replace(/const SW_FASSUNG = '[^']*';/, "const SW_FASSUNG = 'x';");
+const swGebaut = readFileSync('dist/sw.js', 'utf8');
+const swGeliefert = existsSync('sw.js') ? readFileSync('sw.js', 'utf8') : '';
+if (swStrip(swGebaut) !== swStrip(swGeliefert))
+  rot('sw.js weicht von src/sw.js ab — cp dist/sw.js sw.js');
+else ok('sw.js entspricht src/sw.js');
 
 // ── 2 ─ die Logik parst ───────────────────────────────────────────────────
 const scriptMatch = gebaut.match(/<script>\r?\n([\s\S]*)\r?\n<\/script>/);
@@ -136,6 +144,12 @@ else if (!gelieferteV.endsWith('.' + fp))
   rot(`index.html trägt Version ${gelieferteV}, der Inhalt ergibt ….${fp}`
     + ' — neu bauen und kopieren');
 else ok(`Version ${gelieferteV} passt zum ausgelieferten Inhalt`);
+// Ein Service Worker mit einer anderen Fassung als die Seite räumte die
+// Töpfe der Seite nie oder zur falschen Zeit.
+const swFassung = (swGeliefert.match(/const SW_FASSUNG = '([^']*)';/) || [])[1];
+if (gelieferteV && swFassung !== gelieferteV)
+  rot(`sw.js trägt Fassung ${swFassung}, die Seite ${gelieferteV} — neu bauen und beide kopieren`);
+else if (gelieferteV) ok('sw.js trägt die Fassung der Seite');
 
 // ── 6 ─ die Arbeitsanweisung stimmt ───────────────────────────────
 // CLAUDE.md ist die erste Datei, die eine neue Sitzung liest. Was hier falsch

@@ -21,6 +21,13 @@ function _tickVersion(){ if(!document.hidden) checkForUpdate(); }
 
 loadAll();
 checkForUpdate();
+// Der Service Worker hält Seite, Schriften und Supabase-Bibliothek auf dem
+// Gerät [§C42]. Nur über https oder auf dem eigenen Rechner: anderswo lässt
+// der Browser ihn nicht zu, und im Worker des Generators gibt es ihn nicht.
+if(typeof navigator !== 'undefined' && navigator.serviceWorker && typeof location !== 'undefined'
+   && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')){
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
 setInterval(_tickVersion, 5*60*1000);
 setInterval(_tickDaten, 30000);
 document.addEventListener('visibilitychange', () => {

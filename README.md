@@ -9,12 +9,12 @@ Supabase.
 
 ```
 node tools/build.mjs            # src/ → dist/index.html
-cp dist/index.html index.html   # die ausgelieferte Datei, mitversioniert
+cp dist/index.html dist/sw.js .  # die ausgelieferten Dateien, mitversioniert
 node tools/check.mjs            # acht Wächter
 node tests/run.mjs              # zwanzig Suiten (dreizehn brauchen Chromium)
 ```
 
-`index.html` ist ein Bauergebnis und wird nie von Hand bearbeitet. Der
+`index.html` und `sw.js` sind Bauergebnisse und werden nie von Hand bearbeitet. Der
 Prüf-Job in `.github/workflows/pages.yml` führt dieselben Schritte aus.
 
 ## Wo was steht

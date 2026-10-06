@@ -266,6 +266,12 @@ jedes Live-Durchlaufs mit neuen Daten, gelesen nur im ersten. Liefert der
 Live-Abruf denselben Fingerabdruck, bleiben Daten, Töpfe und DOM aus dem
 Stand stehen — sonst rechnete der Start alles zweimal kalt.
 
+**Die Töpfe des Service Workers** (`src/sw.js`) überleben ebenfalls:
+`kicker-seite-<Fassung>` hält Seite und Symbol, `kicker-fremd` Schriften und
+Supabase-Bibliothek. Die Fassung ist die BUILD_VERSION; eine neue räumt beim
+Aktivieren die Seitentöpfe der alten. Antworten der Datenbank und Anfragen
+mit `_cb` (Update-Check, Neu laden) liegen nie darin.
+
 > **Pflegepflicht.** Kommt ein Topf dazu, steht seine Schlüsselregel hier.
 
 # Takt

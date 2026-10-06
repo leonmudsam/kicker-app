@@ -27,13 +27,35 @@ const SEITE = (() => {
   const html = fs.readFileSync(ZIEL, 'utf8');
   const boot = html.search(/loadAll\(\);\s*\ncheckForUpdate\(\);/);
   if(boot < 0) throw new Error('Boot-Zeile nicht gefunden');
-  return html.slice(0, boot) + 'if(window.__vorStart) window.__vorStart(s => eval(s));\n' + html.slice(boot);
+  // Keine Anfrage verlässt den Rechner: die Supabase-Bibliothek und die
+  // Schriften kommen vom eigenen Server. Ein Service Worker holt fremde
+  // Quellen selbst, an jeder Umleitung des Browsers vorbei — mit der echten
+  // Bibliothek spräche der Test sonst mit der echten Datenbank.
+  return (html.slice(0, boot) + 'if(window.__vorStart) window.__vorStart(s => eval(s));\n' + html.slice(boot))
+    .replace(/https:\/\/cdn\.jsdelivr\.net\/npm\/@supabase\/supabase-js@2/g, '/attrappe.js')
+    .replace(/https:\/\/fonts\.googleapis\.com\/css2\?[^"]*/g, '/schrift.css');
 })();
+if(/cdn\.jsdelivr\.net|fonts\.googleapis\.com\/css2/.test(SEITE)) throw new Error('Eine fremde Adresse ist übrig');
+// Der Service Worker neben der Seite. `swFassung` gibt ihm eine andere
+// Fassung (eine neue Auslieferung), `seiteAus` lässt die Seite scheitern
+// (kein Netz).
+const SW_DATEI = path.join(path.dirname(ZIEL), 'sw.js');
+let swFassung = null, seiteAus = false;
 const ETAG = '"seite-1"';
 const anfragen = [];
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, 'http://x');
-  anfragen.push({pfad:url.pathname, cb:url.searchParams.has('_cb'), inm:req.headers['if-none-match'] || null, t:Date.now()});
+  anfragen.push({pfad:url.pathname, cb:url.searchParams.has('_cb'), inm:req.headers['if-none-match'] || null, t:Date.now(),
+    modus:req.headers['sec-fetch-mode'] || ''});
+  if(url.pathname === '/attrappe.js'){ res.writeHead(200, {'Content-Type':'text/javascript'}); return res.end(ATTRAPPE); }
+  if(url.pathname === '/schrift.css'){ res.writeHead(200, {'Content-Type':'text/css'}); return res.end(''); }
+  if(url.pathname === '/sw.js'){
+    if(!fs.existsSync(SW_DATEI)){ res.writeHead(404); return res.end(); }
+    let sw = fs.readFileSync(SW_DATEI, 'utf8');
+    if(swFassung) sw = sw.replace(/const SW_FASSUNG = '[^']*';/, `const SW_FASSUNG = '${swFassung}';`);
+    res.writeHead(200, {'Content-Type':'text/javascript', 'Cache-Control':'no-cache'}); return res.end(sw);
+  }
+  if((url.pathname === '/' || url.pathname === '/index.html') && seiteAus){ res.writeHead(503); return res.end(); }
   if(url.pathname === '/' || url.pathname === '/index.html'){
     if(req.headers['if-none-match'] === ETAG){ res.writeHead(304, {ETag:ETAG}); return res.end(); }
     res.writeHead(200, {'Content-Type':'text/html; charset=utf-8', ETag:ETAG, 'Cache-Control':'no-cache'});
@@ -118,7 +140,9 @@ async function neueSeite(ctx){
   const BASIS = 'http://127.0.0.1:' + server.address().port + '/';
   const browser = await chromium.launch();
   try{
-    const ctx = await browser.newContext({viewport:{width:390, height:844}});
+    // Der Service Worker bekommt einen eigenen Kontext (unten): hier stünde
+    // er zwischen der Seite und jeder Zusicherung über den Start ohne ihn.
+    const ctx = await browser.newContext({viewport:{width:390, height:844}, serviceWorkers:'block'});
     await ctx.addInitScript(({daten, jetzt}) => {
       window.__startDaten = daten;
       const RD = Date;
@@ -284,6 +308,67 @@ async function neueSeite(ctx){
     await r.page.waitForFunction(() => window.__K && window.__K('Array.isArray(_cache._stories) && _cache._stories.length > 20'), null, {timeout:60000});
     ok(await r.page.evaluate(() => window.__haupt >= 1), 'Ohne Worker rechnet der Hauptthread wie bisher');
     await r.page.close();
+
+    // ── Der Service Worker ────────────────────────────────────────────
+    const swCtx = await browser.newContext({viewport:{width:390, height:844}});
+    await swCtx.addInitScript(({daten, jetzt}) => {
+      window.__startDaten = daten;
+      const RD = Date;
+      window.Date = class extends RD{ constructor(...a){ a.length ? super(...a) : super(jetzt); } static now(){ return jetzt; } };
+      window.setInterval = () => 0;
+      window.__vorStart = K => { window.__K = K; };
+    }, {daten:DATEN, jetzt:JETZT});
+    // Jede Anfrage dieses Kontexts, die nicht an den eigenen Server geht.
+    const fremd = [];
+    swCtx.on('request', r => { if(!r.url().startsWith(BASIS) && !r.url().startsWith('blob:') && !r.url().startsWith('data:')) fremd.push(r.url()); });
+    const s1 = await swCtx.newPage();
+    const swFehler = []; s1.on('pageerror', e => swFehler.push(e.message));
+    await s1.goto(BASIS);
+    await s1.waitForFunction(() => document.querySelector('#main .rlist'), null, {timeout:20000});
+    const fassung = await s1.evaluate(() => window.__K('BUILD_VERSION'));
+    const topf = await s1.evaluate(async () => {
+      await navigator.serviceWorker.ready;
+      for(let i = 0; i < 50; i++){
+        const namen = await caches.keys();
+        const seite = namen.find(n => n.startsWith('kicker-seite-'));
+        if(seite && await (await caches.open(seite)).match(navigator.serviceWorker.controller ? location.origin + '/' : location.href)) return namen;
+        await new Promise(r => setTimeout(r, 100));
+      }
+      return caches.keys();
+    });
+    ok(topf.includes('kicker-seite-' + fassung), 'Der Service Worker hält die Seite unter ihrer Fassung (' + topf.join(', ') + ')');
+    await s1.close();
+    // Ohne Netz kommt die Seite aus dem Topf, die Liga aus dem Stand.
+    seiteAus = true; anfragen.length = 0;
+    const s2 = await swCtx.newPage(); s2.on('pageerror', e => swFehler.push(e.message));
+    await s2.goto(BASIS);
+    await s2.waitForFunction(() => document.querySelector('#main .rlist'), null, {timeout:20000});
+    ok(await s2.evaluate(() => !!navigator.serviceWorker.controller), 'Ohne Netz öffnet die App aus dem Service Worker');
+    // Der Update-Check geht trotzdem ans Netz, nicht an den Topf.
+    for(let i = 0; i < 80 && !anfragen.some(x => x.cb); i++) await s2.waitForTimeout(100);
+    ok(anfragen.some(x => x.cb && x.modus !== 'navigate'), 'Der Update-Check fragt das Netz, nicht den Service Worker');
+    // `forceReload` lädt die Seite aus dem Netz, nicht aus dem Topf.
+    seiteAus = false; anfragen.length = 0;
+    await Promise.all([s2.waitForNavigation({timeout:20000}), s2.evaluate(() => window.__K('forceReload()'))]);
+    await s2.waitForFunction(() => document.querySelector('#main .rlist'), null, {timeout:20000});
+    ok(anfragen.some(x => x.cb && x.modus === 'navigate'), 'Neu laden holt die Seite aus dem Netz');
+    // Eine neue Fassung räumt den Topf der alten.
+    swFassung = 'neu-1';
+    const nachher = await s2.evaluate(async () => {
+      const reg = await navigator.serviceWorker.getRegistration();
+      await reg.update();
+      for(let i = 0; i < 80; i++){
+        const namen = await caches.keys();
+        if(namen.includes('kicker-seite-neu-1') && namen.filter(n => n.startsWith('kicker-seite-')).length === 1) return namen;
+        await new Promise(r => setTimeout(r, 100));
+      }
+      return caches.keys();
+    });
+    ok(nachher.includes('kicker-seite-neu-1') && !nachher.includes('kicker-seite-' + fassung),
+      'Eine neue Fassung räumt den Topf der alten (' + nachher.join(', ') + ')');
+    ok(fremd.length === 0, 'Keine Anfrage geht an eine fremde Adresse' + (fremd.length ? ': ' + fremd[0] : ''));
+    ok(swFehler.length === 0, 'Service Worker ohne Seitenfehler' + (swFehler.length ? ': ' + swFehler[0] : ''));
+    await swCtx.close();
   } finally {
     await browser.close();
     server.close();
