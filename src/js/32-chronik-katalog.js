@@ -235,6 +235,16 @@ const _stRollen = p => ({
 // Partien, die mit genau einem Tor Unterschied endeten: der letzte Ball hat
 // entschieden. `_stEng` nimmt zwei — das ist eine andere Frage.
 const _stEinTor = p => p.partien.filter(s => Math.abs(s.gf - s.ga) === 1);
+// Jede Partie mit ihrer direkten Vorgaengerin am SELBEN Tag. Die erste Partie
+// eines Tages hat keine: was am Vortag war, ist kein Uebergang, sondern eine
+// Nacht dazwischen. „Der Staffellauf" und „Das Seitenbündnis" fragen beide,
+// was nach einem Partnerwechsel kam, und zaehlen damit ueber dieselben Paare.
+// Der Wert einer Partie ist ihr Ergebnis gegen die Rechnung, Sieg minus
+// Siegchance: dieselbe Groesse wie beim Übersoll [§C38].
+const _stUebergaenge = p => p.partien.map((s, i) => ({vor:p.partien[i-1], s}))
+  .filter(x => x.vor && x.vor.tag === x.s.tag && x.vor.mate && x.s.mate)
+  .map(x => ({wechsel:x.vor.mate !== x.s.mate, bund:x.vor.geg.includes(x.s.mate),
+              r:(x.s.win ? 1 : 0) - x.s.exp}));
 
 function _stHaelften(p){
   const tage = Object.keys(p.tagGrp).sort();
@@ -1858,6 +1868,46 @@ const DISZIPLINEN = [
         0.65,
         p=>`von ${pct(p._um.x)} % auf ${pct(p._um.y)} % am nächsten Spieltag`))}},
 
+  // Der Zeitpunkt eines Partnerwechsels, nicht der Partner selbst: „Der
+  // Kontrast" fragt, NEBEN WEM es laeuft, „Der Katalysator", was der Spieler
+  // seinen Partnern bringt. Hier zaehlt die Partie direkt nach einem Wechsel
+  // gegen die mit demselben Partner wie davor, beide gegen die Rechnung —
+  // dann kann auch gewinnen, wer unter 50 % liegt. Das sagt nicht, dass
+  // Wechsel helfen, nur dass danach mehr gelang.
+  {id:'staffellauf', name:'Der Staffellauf', short:'Staffel', ic:'baton', tone:'gold', art:'leistung',
+    monat:{
+      beiname:'Der Anschlussfinder',
+      art:'koennen',
+      klasse:'besonders', aus:1.60,
+      wie:'Jede Partie wird mit der direkt davor gespielten Partie desselben Spieltags verglichen: nach einem Partnerwechsel gegen mit demselben Partner wie davor. Gemessen wird jeweils das Ergebnis gegen die Siegchance vor dem Anpfiff, also über oder unter der Rechnung, und nicht die Siegquote. Die erste Partie eines Tages zählt in keiner Gruppe.',
+      cond:'Nach einem Partnerwechsel mindestens 30 Prozentpunkte weiter über der Rechnung als mit demselben Partner, ab 5 Partien in jeder Gruppe an 3 Spieltagen',
+      ...(_stWertung(
+        p=>{const u=_stUebergaenge(p);return p.tagN>=3&&u.filter(x=>x.wechsel).length>=ST_TEIL&&u.filter(x=>!x.wechsel).length>=ST_TEIL;},
+        p=>{const u=_stUebergaenge(p),m=a=>a.reduce((x,y)=>x+y.r,0)/a.length;
+      return m(u.filter(x=>x.wechsel))-m(u.filter(x=>!x.wechsel));},
+        0.30,
+        (p,v)=>{const u=_stUebergaenge(p);
+      return `${pct(v)} %-Punkte besser gegen die Rechnung nach einem Partnerwechsel · ${u.filter(x=>x.wechsel).length} Partien danach, ${u.filter(x=>!x.wechsel).length} mit demselben Partner`;}))}},
+
+  // Unter den Partnerwechseln nur die, bei denen der neue Partner eben noch
+  // auf der anderen Seite stand, gegen alle uebrigen Wechsel. Anders als beim
+  // Staffellauf wechseln beide Gruppen den Partner; verglichen wird, woher er
+  // kommt.
+  {id:'seitenbuendnis', name:'Das Seitenbündnis', short:'Bündnis', ic:'sideJoin', tone:'gold', art:'leistung',
+    monat:{
+      beiname:'Der Seitenverbinder',
+      art:'koennen',
+      klasse:'selten', aus:1.65,
+      wie:'Gezählt werden nur Partien desselben Spieltags nach einem Partnerwechsel. Stand der neue Partner in der Partie davor auf der Gegenseite, ist es ein Bündnis, sonst ein gewöhnlicher Wechsel. Gemessen wird jeweils das Ergebnis gegen die Siegchance vor dem Anpfiff, nicht die Siegquote.',
+      cond:'Neben dem Gegner der Partie davor mindestens 35 Prozentpunkte weiter über der Rechnung als nach anderen Partnerwechseln, ab 5 Partien in jeder Gruppe an 3 Spieltagen',
+      ...(_stWertung(
+        p=>{const u=_stUebergaenge(p).filter(x=>x.wechsel);return p.tagN>=3&&u.filter(x=>x.bund).length>=ST_TEIL&&u.filter(x=>!x.bund).length>=ST_TEIL;},
+        p=>{const u=_stUebergaenge(p).filter(x=>x.wechsel),m=a=>a.reduce((x,y)=>x+y.r,0)/a.length;
+      return m(u.filter(x=>x.bund))-m(u.filter(x=>!x.bund));},
+        0.35,
+        (p,v)=>{const u=_stUebergaenge(p).filter(x=>x.wechsel);
+      return `${pct(v)} %-Punkte besser gegen die Rechnung neben dem Gegner von eben · ${u.filter(x=>x.bund).length} solche Partien, ${u.filter(x=>!x.bund).length} nach anderen Wechseln`;}))}},
+
   {id:'aufholjagd', name:'Die Antwort', short:'Antwort', ic:'rematch', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Trotzige',
@@ -2210,6 +2260,46 @@ const DISZIPLINEN = [
       p._ko=q;return q[0].q-q[q.length-1].q;},
         0.8,
         p=>`${pct(p._ko[0].q)} % neben ${pname(p._ko[0].k)}, ${pct(p._ko[p._ko.length-1].q)} % neben ${pname(p._ko[p._ko.length-1].k)}`))}},
+
+  // Das andere Ende von „Favorit wie Außenseiter": dort zaehlt, wer in
+  // beiden Lagen gleich gut ist, hier, wer als Aussenseiter OEFTER gewinnt als
+  // als Favorit. Die Schwelle liegt ueber dem Band jener Chronik, damit
+  // dieselbe Lage nicht zweimal vergeben wird. Wer welche Lage bekommt,
+  // entscheidet die Aufstellung — eine Fuegung.
+  {id:'quertreiber', name:'Der Quertreiber', short:'Quer', ic:'crossFlip', tone:'purple', art:'ereignis',
+    monat:{
+      beiname:'Der Quertreiber',
+      art:'fuegung',
+      klasse:'selten', aus:2.03,
+      wie:'Favorit heißt über 55 % Siegchance vor dem Anpfiff, Außenseiter unter 45 %. Verglichen werden die beiden Siegquoten: als Außenseiter höher als als Favorit ist die Umkehrung dessen, was die Rechnung erwartet.',
+      cond:'Als Außenseiter mindestens 5 Prozentpunkte öfter gewonnen als als Favorit, ab 5 Partien in jeder Lage',
+      ...(_stWertung(
+        p=>_stRollen(p).fav.length>=ST_TEIL && _stRollen(p).aus.length>=ST_TEIL,
+        p=>{const r=_stRollen(p); return _stQuote(r.aus)-_stQuote(r.fav);},
+        0.05,
+        (p,v)=>{const r=_stRollen(p);
+          return `${pct(v)} %-Punkte öfter gewonnen als Außenseiter · ${pct(_stQuote(r.aus))} % gegen ${pct(_stQuote(r.fav))} % als Favorit`;}))}},
+
+  // Erste und letzte Partie eines Spieltags mit verschiedenem Ergebnis.
+  // Wer die Haelfte seiner Partien gewinnt, hat dafuer von selbst die
+  // groesste Chance; verglichen wird deshalb mit dem Anteil, den die eigene
+  // Monatsbilanz bei zufaelliger Reihenfolge erwarten liesse, 2·S·N durch
+  // n·(n−1). Ohne diesen Bezug gehoerte die Chronik dem, der bei 50 % steht.
+  {id:'tagesumkehr', name:'Die Tagesumkehr', short:'Umkehr', ic:'uTurn', tone:'purple', art:'ereignis',
+    monat:{
+      beiname:'Der Umkehrspieler',
+      art:'fuegung',
+      klasse:'selten', aus:1.70,
+      wie:'Gezählt werden die eigenen Spieltage ab drei Partien, an denen das erste und das letzte Ergebnis verschieden waren, egal in welche Richtung. Verglichen wird mit dem Anteil, den die eigene Monatsbilanz bei zufälliger Reihenfolge der Partien erwarten ließe.',
+      cond:'Mindestens 25 Prozentpunkte mehr Spieltage, die anders endeten als sie begannen, als die eigene Bilanz erwarten lässt, ab 5 Spieltagen mit je 3 Partien',
+      ...(_stWertung(
+        p=>Object.values(p.tagGrp).filter(a=>a.length>=3).length>=ST_TEIL,
+        p=>{const t=Object.values(p.tagGrp).filter(a=>a.length>=3);
+      const um=t.filter(a=>a[0].win!==a[a.length-1].win).length/t.length;
+      return um-2*p.wins*p.losses/(p.games*(p.games-1));},
+        0.25,
+        (p,v)=>{const t=Object.values(p.tagGrp).filter(a=>a.length>=3);
+      return `${pct(v)} %-Punkte über der eigenen Bilanz · ${t.filter(a=>a[0].win!==a[a.length-1].win).length} von ${t.length} Spieltagen endeten anders, als sie begannen`;}))}},
 
   {id:'kaltblut', name:'Das Kaltblut', short:'Kaltblut', ic:'iceCube', tone:'purple', art:'ereignis',
     monat:{

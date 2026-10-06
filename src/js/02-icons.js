@@ -321,6 +321,18 @@ const ICONS = {
   // Serienstopp: eine erhobene Hand. Ein Feuer wie beim Laufstopper waere
   // bei 62 px dieselbe Zeichnung gewesen.
   handStop:      `<path d="M8 12V6a1.5 1.5 0 013 0v5M11 11V4.5a1.5 1.5 0 013 0V11M14 11V5.5a1.5 1.5 0 013 0V13M17 13v-2.5a1.5 1.5 0 013 0V15a6 6 0 01-6 6h-1.5a6 6 0 01-4.8-2.4L4.4 15a1.5 1.5 0 012.3-1.9L8 14.5"/>`,
+  // Quertreiber: zwei Pfeile, die sich kreuzen — der eine steigt, wo der
+  // andere fallen muesste.
+  crossFlip:     `<path d="M4 19L18 5"/><polyline points="13 5 18 5 18 10"/><path d="M4 5l5 5M13 14l5 5"/><polyline points="13 19 18 19 18 14"/>`,
+  // Tagesumkehr: ein Pfeil, der umkehrt — der Tag endet anders, als er
+  // begann.
+  uTurn:         `<path d="M7 21V10a5 5 0 0110 0v7"/><polyline points="13.5 14 17 17.5 20.5 14"/>`,
+  // Staffellauf: ein Stab und zwei Haende an seinen Enden — die Uebergabe
+  // an einen neuen Partner.
+  baton:         `<path d="M6 18L18 6"/><path d="M4.5 15.5l4 4M15.5 4.5l4 4"/><circle cx="5" cy="5" r="1.6"/><circle cx="19" cy="19" r="1.6"/>`,
+  // Seitenbuendnis: zwei Gesichter, die eben noch gegenueberstanden, und ein
+  // Plus dazwischen — wer Gegner war, steht jetzt daneben.
+  sideJoin:      `<circle cx="6.5" cy="7" r="2.5"/><circle cx="17.5" cy="7" r="2.5"/><path d="M3 20v-2a3.5 3.5 0 013.5-3.5M21 20v-2a3.5 3.5 0 00-3.5-3.5"/><path d="M12 13v6M9 16h6"/>`,
   // Bedienung: Schließen, Warten, Warnen, Löschen — der Hinweis und die
   // Bestätigung tragen ihre Rolle als Zeichen [§C27].
   x:             `<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>`,
