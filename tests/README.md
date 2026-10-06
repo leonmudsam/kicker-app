@@ -57,7 +57,7 @@ Ruheständler, leere Liga) und vergleicht Wort für Wort: die zentralen
 Rechnungen samt Story-IDs, jeden Reiter in jeder Auswahl, jedes Blatt und
 jede Story, den Hash des CSS, jeden Schreibzugriff auf die Datenbank und
 jeden Seitenfehler. `node tools/golden.mjs --basis=<rev>` (Vorgabe `HEAD`),
-`--schnell` nur den Spieltag ohne Blätter. Der Abzug der Basis liegt in
+`--schnell` nur den Spieltag ohne Blätter. `--bilder` vergleicht statt des Markups die Bilder jedes Reiters und der wichtigsten Blätter, in Bewegungsruhe und mit Animationen, die bei 0, ¼ und ½ ihrer Dauer angehalten sind — für einen Umbau am CSS, der gleich aussehen soll. Der Abzug der Basis liegt in
 `.golden/` und ist nicht versioniert. Ein Unterschied wird nie durch eine
 neue Normalisierung weggeregelt: entweder ändert der Code etwas, oder die
 Stelle bleibt, wie sie war. Nur Blob-Adressen (je Lauf neu vergeben) und
