@@ -28,13 +28,7 @@ function _seasonTeamRanking(seasonMs, sid){
   const gsim=getGlobalSim();
   const map=gsim.seasonTeamElo[sid||currentSeason().id]||{};
   const counts={};
-  seasonMs.forEach(m=>{
-    [[m.a1,m.a2,m.winner==='A'],[m.b1,m.b2,m.winner==='B']].forEach(([x,y,won])=>{
-      const k=paarKey(x, y);
-      if(!counts[k]) counts[k]={g:0,w:0};
-      counts[k].g++; if(won) counts[k].w++;
-    });
-  });
+  teamStatsFromMatches(seasonMs).forEach(t=>{ counts[paarKey(t.ids[0], t.ids[1])]=t; });
   return Object.entries(map).map(([k,elo])=>{
     const c=counts[k];
     return c ? {ids:k.split('|'), elo, g:c.g, w:c.w} : null;

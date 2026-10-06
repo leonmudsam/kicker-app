@@ -938,11 +938,11 @@ function countGodlyStreak(id, matchSubset){
   return count;
 }
 
+// Die Länge allein; die Rechnung steht einmal, in longestPlayerStreakInfo.
+// `longestStreaks` im Awards-Tab bleibt eine eigene Rechnung über alle
+// Spieler zugleich, und tests/tafel hält beide aneinander [§C27].
 function longestPlayerStreak(id,ms){
-  const ordered=matchesOfPlayer(id,ms);
-  let cur=0,best=0;
-  ordered.forEach(m=>{if(won(id,m)){cur++;if(cur>best)best=cur;}else cur=0;});
-  return best;
+  return longestPlayerStreakInfo(id,ms).best;
 }
 // Erweiterte Variante: liefert auch das Datum des Match, das die längste
 // Siegesserie abgeschlossen hat (also den Peak-Match). Bei mehreren Serien

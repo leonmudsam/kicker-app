@@ -5539,7 +5539,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.06.2ace665f';
+const BUILD_VERSION='2026.10.06.54c275a9';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -5768,23 +5768,6 @@ function lossStreakInline(cs){
   return `<span class="streak-badge fire" title="${-cs}er Niederlagenserie">${svgI(drops)}</span>`;
 }
 
-function awPeriodLabel(){
-  if(awPeriod==='season') return seasonLabel(awSeasonId||currentSeason().id);
-  if(awPeriod==='week'){
-    if(awWeekStart){
-      const start=new Date(awWeekStart); start.setHours(0,0,0,0);
-      const end=new Date(start); end.setDate(end.getDate()+6);
-      return 'KW '+isoWeek(start)+' · '+datumFmt(start, 'tm')+'–'+datumFmt(end, 'tm');
-    }
-    return periodLabel('week');
-  }
-  return 'Gesamte Liga';
-}
-function availableSeasons(){
-  const past=allPastSeasons().slice().reverse();
-  const cur=currentSeason().id;
-  return [cur,...past];
-}
 
 const _seasonLabelMemo = {};
 function _seasonLabelOf(y, m){
@@ -5922,6 +5905,24 @@ function allPastSeasons(){
 
 let seasons=[];
 let _histPage = 0;
+
+function awPeriodLabel(){
+  if(awPeriod==='season') return seasonLabel(awSeasonId||currentSeason().id);
+  if(awPeriod==='week'){
+    if(awWeekStart){
+      const start=new Date(awWeekStart); start.setHours(0,0,0,0);
+      const end=new Date(start); end.setDate(end.getDate()+6);
+      return 'KW '+isoWeek(start)+' · '+datumFmt(start, 'tm')+'–'+datumFmt(end, 'tm');
+    }
+    return periodLabel('week');
+  }
+  return 'Gesamte Liga';
+}
+function availableSeasons(){
+  const past=allPastSeasons().slice().reverse();
+  const cur=currentSeason().id;
+  return [cur,...past];
+}
 let _cache={version:0};
 
 function _topfDeckel(topf, max){
@@ -7458,6 +7459,7 @@ function potwHasData(){
   return _potwMatchesInRange(start,end).length>0;
 }
 
+function setConn(t,c){document.getElementById('connText').textContent=t;document.getElementById('connDot').className='dot '+c;}
 
 function _spielerVon(x){ return typeof x === 'string' ? pmap()[x] : x; }
 
@@ -8443,8 +8445,44 @@ function showPotdRecap(opts){
     console.error('POTD Recap Fehler:',e);
   }
 }
+function playerStats(id, matchSubset){
+  const ms = matchSubset || matches;
 
-function setConn(t,c){document.getElementById('connText').textContent=t;document.getElementById('connDot').className='dot '+c;}
+  if (ms === matches) {
+    const allStats = allPlayerStats();
+    if (allStats[id]) {
+      return { ...allStats[id] };
+    }
+  }
+
+  const s={games:0,wins:0,losses:0,gf:0,ga:0,atkG:0,atkW:0,defG:0,defW:0,
+           atkGoals:0,defConceded:0,
+           mates:{},opps:{},best:-1e9,worst:1e9,curStreak:0};
+  let run=0;
+  ms.forEach(m=>{
+    const onA=(id===m.a1||id===m.a2),onB=(id===m.b1||id===m.b2);
+    if(!onA&&!onB)return;
+    const won=(onA&&m.winner==='A')||(onB&&m.winner==='B');
+    const myPos=id===m.a1?m.a1_pos:id===m.a2?m.a2_pos:id===m.b1?m.b1_pos:m.b2_pos;
+    const gf=onA?m.score_a:m.score_b, ga=onA?m.score_b:m.score_a;
+    s.games++; s.gf+=gf; s.ga+=ga;
+    if(won){s.wins++; run=run>=0?run+1:1;} else {s.losses++; run=run<=0?run-1:-1;}
+    if(myPos==='atk'){s.atkG++; if(won)s.atkW++; s.atkGoals+=gf;} else {s.defG++; if(won)s.defW++; s.defConceded+=ga;}
+    const mate=onA?(id===m.a1?m.a2:m.a1):(id===m.b1?m.b2:m.b1);
+    if(!s.mates[mate])s.mates[mate]={g:0,w:0}; s.mates[mate].g++; if(won)s.mates[mate].w++;
+    const opps=onA?[m.b1,m.b2]:[m.a1,m.a2];
+    opps.forEach(o=>{if(!s.opps[o])s.opps[o]={g:0,w:0};s.opps[o].g++;if(won)s.opps[o].w++;});
+    const d=(m.deltas&&m.deltas[id])||0;
+    if(d>s.best)s.best=d; if(d<s.worst)s.worst=d;
+  });
+  s.curStreak=run;
+  s.wr=s.games?s.wins/s.games:0;
+  s.atkWr=s.atkG?s.atkW/s.atkG:null;
+  s.defWr=s.defG?s.defW/s.defG:null;
+  s.gd=s.gf-s.ga;
+  return s;
+}
+
 function allPlayerStats(){
   const key='allStats_'+matches.length+'_'+_cache.version;
   if(_cache._allStatsKey===key) return _cache._allStatsData;
@@ -8566,46 +8604,6 @@ function allPlayerStats(){
 }
 
 
-
-function playerStats(id, matchSubset){
-  const ms = matchSubset || matches;
-
-  if (ms === matches) {
-    const allStats = allPlayerStats();
-    if (allStats[id]) {
-      return { ...allStats[id] };
-    }
-  }
-
-  const s={games:0,wins:0,losses:0,gf:0,ga:0,atkG:0,atkW:0,defG:0,defW:0,
-           atkGoals:0,defConceded:0,
-           mates:{},opps:{},best:-1e9,worst:1e9,curStreak:0};
-  let run=0;
-  ms.forEach(m=>{
-    const onA=(id===m.a1||id===m.a2),onB=(id===m.b1||id===m.b2);
-    if(!onA&&!onB)return;
-    const won=(onA&&m.winner==='A')||(onB&&m.winner==='B');
-    const myPos=id===m.a1?m.a1_pos:id===m.a2?m.a2_pos:id===m.b1?m.b1_pos:m.b2_pos;
-    const gf=onA?m.score_a:m.score_b, ga=onA?m.score_b:m.score_a;
-    s.games++; s.gf+=gf; s.ga+=ga;
-    if(won){s.wins++; run=run>=0?run+1:1;} else {s.losses++; run=run<=0?run-1:-1;}
-    if(myPos==='atk'){s.atkG++; if(won)s.atkW++; s.atkGoals+=gf;} else {s.defG++; if(won)s.defW++; s.defConceded+=ga;}
-    const mate=onA?(id===m.a1?m.a2:m.a1):(id===m.b1?m.b2:m.b1);
-    if(!s.mates[mate])s.mates[mate]={g:0,w:0}; s.mates[mate].g++; if(won)s.mates[mate].w++;
-    const opps=onA?[m.b1,m.b2]:[m.a1,m.a2];
-    opps.forEach(o=>{if(!s.opps[o])s.opps[o]={g:0,w:0};s.opps[o].g++;if(won)s.opps[o].w++;});
-    const d=(m.deltas&&m.deltas[id])||0;
-    if(d>s.best)s.best=d; if(d<s.worst)s.worst=d;
-  });
-  s.curStreak=run;
-  s.wr=s.games?s.wins/s.games:0;
-  s.atkWr=s.atkG?s.atkW/s.atkG:null;
-  s.defWr=s.defG?s.defW/s.defG:null;
-  s.gd=s.gf-s.ga;
-  return s;
-}
-
-
 function bestWorstMate(id, s_param){
   const s= s_param || playerStats(id);
   let best=null,worst=null;
@@ -8626,14 +8624,7 @@ function teamStats(){
   const key='allTeamStats_'+matches.length+'_'+_cache.version;
   if(_cache._allTeamStatsKey===key) return _cache._allTeamStatsData;
 
-  const T={};
-  matches.forEach(m=>{
-    [[m.a1,m.a2,m.winner==='A',m.score_a,m.score_b],[m.b1,m.b2,m.winner==='B',m.score_b,m.score_a]]
-    .forEach(([x,y,won,gf,ga])=>{ const k=paarKey(x, y);
-      if(!T[k])T[k]={ids:[x,y].sort(),g:0,w:0,gf:0,ga:0};
-      T[k].g++; if(won)T[k].w++; T[k].gf+=gf; T[k].ga+=ga; });
-  });
-  const result = Object.values(T);
+  const result = teamStatsFromMatches(matches);
   _cache._allTeamStatsKey = key;
   _cache._allTeamStatsData = result;
   return result;
@@ -11433,13 +11424,7 @@ function _seasonTeamRanking(seasonMs, sid){
   const gsim=getGlobalSim();
   const map=gsim.seasonTeamElo[sid||currentSeason().id]||{};
   const counts={};
-  seasonMs.forEach(m=>{
-    [[m.a1,m.a2,m.winner==='A'],[m.b1,m.b2,m.winner==='B']].forEach(([x,y,won])=>{
-      const k=paarKey(x, y);
-      if(!counts[k]) counts[k]={g:0,w:0};
-      counts[k].g++; if(won) counts[k].w++;
-    });
-  });
+  teamStatsFromMatches(seasonMs).forEach(t=>{ counts[paarKey(t.ids[0], t.ids[1])]=t; });
   return Object.entries(map).map(([k,elo])=>{
     const c=counts[k];
     return c ? {ids:k.split('|'), elo, g:c.g, w:c.w} : null;
@@ -13498,10 +13483,7 @@ function countGodlyStreak(id, matchSubset){
 }
 
 function longestPlayerStreak(id,ms){
-  const ordered=matchesOfPlayer(id,ms);
-  let cur=0,best=0;
-  ordered.forEach(m=>{if(won(id,m)){cur++;if(cur>best)best=cur;}else cur=0;});
-  return best;
+  return longestPlayerStreakInfo(id,ms).best;
 }
 function longestPlayerStreakInfo(id,ms){
   const ordered=matchesOfPlayer(id,ms);

@@ -605,3 +605,5 @@ function potwHasData(){
   return _potwMatchesInRange(start,end).length>0;
 }
 
+// Der Verbindungspunkt oben rechts: Text und Farbe des Ladezustands.
+function setConn(t,c){document.getElementById('connText').textContent=t;document.getElementById('connDot').className='dot '+c;}
