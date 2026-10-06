@@ -35,6 +35,8 @@ Wächter 8 vergleicht. Ein Kürzel `§n.m` ist ein Abschnitt des Codes,
 - **06b-ruhestand.js** — ohne Banner
 - **07-positionsverlauf.js**
   - §3.7 SAISON-POSITIONSVERLAUF (§C21 UI)
+- **07b-rueckblick.js**
+  - §3.8 WOCHEN- UND TAGESRÜCKBLICK
 - **08-stats.js**
   - §3.4 STATS ENGINE
 - **09-ui-infra.js**
@@ -76,6 +78,8 @@ Wächter 8 vergleicht. Ein Kürzel `§n.m` ist ein Abschnitt des Codes,
 - **17b-fingerabdruck.js**
   - §13.11 DER FINGERABDRUCK
 - **18-profil.js** — ohne Banner
+- **18a-badge-popover.js**
+  - §8.5 Eine Auszeichnung im Detail (Popover über dem Blatt)
 - **18b-abschied.js** — ohne Banner
 - **19-bilanzen.js**
   - §9.1 BILANZEN-SHEET (Mitspieler-Liste)
@@ -100,16 +104,19 @@ Wächter 8 vergleicht. Ein Kürzel `§n.m` ist ein Abschnitt des Codes,
   - §11.0h — Badge-Whitelist (v8.1)
 - **26b-story-fakten.js**
   - §11.0e DIE FAKTEN EINER STORY
-- **27-news-generator.js**
-  - §11.1 — Story-Generator
+- **26c-news-bausteine.js**
+  - §11.0i — Bausteine des Generators
   - §11.0f — Unbegrenzte Meilenstein-Leiter (v9.5)
   - §11.0g — Persönliche Elo-Meilensteine (v9.5)
+- **27-news-generator.js**
+  - §11.1 — Story-Generator
   - §11.1a Die Ewige Tafel meldet sich
 - **28-news-ambient.js**
   - §11.1b — Ambiente Fun-Fact-Stories (v8.5, v9.5)
   - §11.1c Rückblicke mit festem Termin
 - **29-news-cache.js**
   - §11.2 — Story-Cache (DB-basiert, v8.3) + Display-Konsolidierung
+- **29b-news-sync.js**
   - §11.8 — Realtime-Subscription auf `stories` (v8.4)
   - §11.9 — Periodischer News-Auto-Sync (v8.5)
 - **30-news-ui.js**
@@ -118,11 +125,16 @@ Wächter 8 vergleicht. Ein Kürzel `§n.m` ist ein Abschnitt des Codes,
   - §11.4b — Toast-Logik (v8.1, erweitert v8.2)
   - §11.6 — Voller Feed (im Sheet) mit Filter-Pills
   - §11.6b — Breaking-Erkennung + M2-Karten (v9)
+- **30a-news-karte.js**
+  - §11.6d — Die Bausteine einer Karte im Feed
 - **30b-news-spieltag.js**
   - §11.6c — Die Karten „Am Spieltag" [§C33]
 - **30c-news-fakt.js** — ohne Banner
 - **31-news-detail.js**
   - §11.7 — Story-Detail (dynamisch je Typ)
+- **31a-news-detail-mitte.js**
+  - §11.7a — Die Mitte eines Story-Blatts, je Typ
+- **31b-news-detail-helfer.js**
   - §11.7b — Detail-Body Helper (v8.1)
 - **32-chronik-katalog.js**
   - §13.1 Der Disziplinen-Katalog
