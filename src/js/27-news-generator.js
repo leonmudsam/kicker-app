@@ -2001,7 +2001,7 @@ function _buildStories(){
       // ein zweites Mal, Zeile für Zeile dieselbe — und zwei Rechnungen über
       // dieselbe Frage nennen irgendwann zwei verschiedene Beste.
       const wm = _potwMatchesInRange(range.start, range.end);
-      const res = _newsPeriodWinner(wm, 5, 'wr'); // Wochen-Regel = höchste Quote
+      const res = _newsPeriodWinner(wm, 5, 'wr', range.end.getTime()); // Wochen-Regel = höchste Quote
       if(res){
         const main = res.main;
         const names = res.winners.map(w => nameOf(w.id));
@@ -2046,7 +2046,7 @@ function _buildStories(){
       if(now.getTime() < rep.getTime()) return;
       // Tages-Regel = meiste Siege (Tiebreak Elo-Delta) — identisch zu
       // showPotdRecap und zum Badge-Zaehler countDayWins.
-      const res = _newsPeriodWinner(dayMatches, 3, 'wins');
+      const res = _newsPeriodWinner(dayMatches, 3, 'wins', tagEndeMs(dayKey));
       if(!res) return;
       const main = res.main;
       const names = res.winners.map(w => nameOf(w.id));
@@ -3010,7 +3010,9 @@ function _buildStories(){
 //   mode 'wr'   (POTW) → Quote ↓, Siege ↓, Elo ↓     (= showPotwRecap / kind 'week')
 // Geteilter Sieg nur bei Gleichstand über ALLE Kriterien des Modus.
 // Liefert {winners:[…], main} oder null. (v8.7, v9.17)
-function _newsPeriodWinner(rangeMatches, minWins, mode){
+// `endeMs`: das Ende des Zeitraums. Wer bis dahin aufgehört hat, gewinnt ihn
+// nicht [§C40] — dieselbe Regel wie `_periodWinnerMap` und die Rückblicke.
+function _newsPeriodWinner(rangeMatches, minWins, mode, endeMs){
   if(!Array.isArray(rangeMatches) || !rangeMatches.length) return null;
   const byWins = mode !== 'wr'; // Default = Tages-Regel (absolute Siege)
   const ps = {};
@@ -3026,7 +3028,7 @@ function _newsPeriodWinner(rangeMatches, minWins, mode){
   }
   const pm = pmap();
   const cand = Object.entries(ps)
-    .filter(([id, s]) => s.wins >= minWins && sichtbar(pm[id]))
+    .filter(([id, s]) => s.wins >= minWins && ligaAktiv(pm[id], endeMs))
     .map(([id, s]) => { const g = s.wins + s.losses; return {id, wins: s.wins, losses: s.losses, eloDelta: s.eloDelta, wr: g ? s.wins/g : 0}; })
     .sort((a, b) => {
       if(byWins){

@@ -456,7 +456,7 @@ function showPotwRecap(opts){
     // Tiebreaker bei Gleichstand auf Winrate: mehr absolute Siege, dann mehr Elo-Delta.
     const POTW_MIN_WINS = 5;
     const candidates = Object.entries(ps)
-      .filter(([id,s]) => s.wins >= POTW_MIN_WINS && sichtbar(pm[id]))
+      .filter(([id,s]) => s.wins >= POTW_MIN_WINS && ligaAktiv(pm[id], weekEnd.getTime()))
       .map(([id,s]) => {
         const games = s.wins + s.losses;
         return [id, s, games ? s.wins/games : 0];
@@ -711,7 +711,7 @@ function _potdLastDayData(){
       if(!wins[id]) wins[id]=0;
       if(w) wins[id]++;
     }));
-    const qualified=Object.entries(wins).some(([id,w])=>w>=3 && sichtbar(pm[id]));
+    const qualified=Object.entries(wins).some(([id,w])=>w>=3 && ligaAktiv(pm[id], tagEndeMs(dk)));
     if(qualified) return {dayKey:dk, dayMatches:dms};
   }
   return null;
@@ -800,7 +800,7 @@ function showPotdRecap(opts){
     // Player of the Day: min. 3 Siege, Tiebreak via Elo-Delta des Tages.
     const pm=pmap();
     const candidates=Object.entries(ps)
-      .filter(([id,s])=> s.wins>=3 && sichtbar(pm[id]))
+      .filter(([id,s])=> s.wins>=3 && ligaAktiv(pm[id], tagEndeMs(lastDayKey)))
       .sort((a,b)=>{
         if(b[1].wins!==a[1].wins) return b[1].wins-a[1].wins;
         return b[1].eloDelta-a[1].eloDelta;

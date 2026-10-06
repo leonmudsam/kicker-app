@@ -75,6 +75,15 @@ function imRuhestandAm(x, ms){
   return t > 0 && t <= _ruheStichtag && ms > t;
 }
 
+// Das Ende des Kalendertags `dk` („2026-08-26", Ortszeit wie `tagKey`). Für
+// den Sieger eines Tages: ein Tag, der beim Karriereende noch lief, vergleicht
+// ohne ihn — wie jeder andere Zeitraum (`ligaAktiv`).
+function tagEndeMs(dk){
+  const d = new Date(dk + 'T00:00:00');
+  d.setHours(23, 59, 59, 999);
+  return d.getTime();
+}
+
 // Die Ruheständler, der jüngste Abschied zuerst.
 function ruhestandSpieler(){
   return players.filter(p => sichtbar(p) && imRuhestand(p))
@@ -233,6 +242,19 @@ function ruhestandAuszeichnungen(pid){
   return g && Array.isArray(g.badges) ? g.badges : null;
 }
 
+// Der Katalog der Auszeichnungen, gegen den ein Profil zählt: für einen
+// Ruheständler der beim Karriereende, mit der Klasse von damals. Mit dem von
+// heute stand im Blatt zwei Jahre später „37 von 51" statt „37 von 50" und
+// darunter eine gesperrte Auszeichnung, die es beim Abschied nicht gab. Eine
+// inzwischen gestrichene zeigt er mit Name und Zeichen aus dem Stand.
+function badgeKatalog(pid){
+  const g = imRuhestand(pid) ? _ruheGespeichert(pid) : null;
+  if(!g || !Array.isArray(g.katalog)) return BADGES.map(b => ({b, r:rarityOf(b.id)}));
+  const jetzt = new Map(BADGES.map(b => [b.id, b]));
+  const geholt = new Map((g.badges || []).map(b => [b.id, b]));
+  return g.katalog.map(k => ({b:jetzt.get(k.id) || geholt.get(k.id) || null, r:k.r})).filter(x => x.b);
+}
+
 // Der Stand, der gespeichert wird: derselbe, den `ruhestandStand` rechnet,
 // und die Auszeichnungen bis zum Karriereende — mit demselben Schnitt, mit
 // dem das Prestige sie zählt (`prestigeTabelle(t)`), sonst stünde im Profil
@@ -253,7 +275,8 @@ function _ruheStandBauen(pid){
   // nachgetragener Stand ohne ihn zeigt den Abdruck weiter gerechnet.
   let finger = null;
   if(matches.every(m => mts(m) <= t)){ try { finger = fingerabdruck(pid); } catch(e){ finger = null; } }
-  return JSON.parse(JSON.stringify(Object.assign({v:RUHE_STAND_FASSUNG, t, stand, badges}, finger ? {finger} : {})));
+  const katalog = BADGES.map(b => ({id:b.id, r:rarityOf(b.id)}));
+  return JSON.parse(JSON.stringify(Object.assign({v:RUHE_STAND_FASSUNG, t, stand, badges, katalog}, finger ? {finger} : {})));
 }
 
 // Ein Karriereende ohne gespeicherten Stand — aus der Zeit vor dieser

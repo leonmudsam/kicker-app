@@ -76,7 +76,13 @@ function showPlayer(id){
   // Nicht für 15 Punkte, fünf Punkte und das Peak-Datum die ganze Liga
   // dreimal filtern und sortieren. Die gemeinsamen Arrays bleiben lesbar.
   const playerMs = matchesOfPlayer(id, matches);
-  const seasonMs = matchesOfPlayer(id, matchesInSeason());
+  // Die Gegenwart eines Ruheständlers ist sein Abschied [§C40]: „diese
+  // Saison" heißt für ihn die Saison, in der er aufgehört hat. Mit der
+  // laufenden stand dort zwei Monate später ein Strich, und die Kurve der
+  // Saison war verschwunden — ohne dass er gespielt hatte.
+  const _ruhe = imRuhestand(id);
+  const _profilSid = _ruhe ? seasonOf(new Date(ruhestandMs(id))).id : currentSeason().id;
+  const seasonMs = matchesOfPlayer(id, matchesInSeason(_profilSid));
   const _last15 = playerMs.slice(-15);
   const last15DotsHtml = _last15.map(m=>{
     const onA=(id===m.a1||id===m.a2);
@@ -148,7 +154,7 @@ function showPlayer(id){
           </svg>
         </div>
         <div class="pp-spark-foot">
-          <span>Elo · ${esc(seasonLabel(currentSeason().id))}</span>
+          <span>Elo · ${esc(seasonLabel(_profilSid))}</span>
           <span class="delta ${netCls}">${netTxt}</span>
         </div>`;
     }
@@ -200,8 +206,9 @@ function showPlayer(id){
     }
   }
 
-  // Awards: NUR Platz 1
-  const awards=playerAwards(id).filter(a=>a.rank===0);
+  // Awards: NUR Platz 1. Sie gehören dem laufenden Monat, und darin tritt
+  // ein Ruheständler nicht an [§C40].
+  const awards=_ruhe ? [] : playerAwards(id).filter(a=>a.rank===0);
   const awardCount=awards.length;
 
   // Jede Auszeichnung gehört zu GENAU EINER von drei Gruppen, und die Gruppe
@@ -370,7 +377,6 @@ const rankProgHtml = rInfo ? `
   const _stufe = 'st-' + prestigeOf(id).insignie.key;
   // Das Profil eines Ruheständlers steht, wie es beim Abschied stand [§C40]:
   // Wappen, Rekorde und Rang kommen aus dem eingefrorenen Stand.
-  const _ruhe = imRuhestand(id);
   const _hatPartien = matches.some(m => m.a1 === id || m.a2 === id || m.b1 === id || m.b2 === id);
 
   openSheet(`
@@ -451,7 +457,7 @@ const rankProgHtml = rInfo ? `
           <div class="pp-et-col peak">
             <div class="label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS['peak']||''}</svg> Spitze</div>
             <div class="val">${ps}</div>
-            <div class="sub">diese Saison</div>
+            <div class="sub">${_ruhe ? esc(seasonLabel(_profilSid)) : 'diese Saison'}</div>
           </div>
           <div class="pp-et-col alltime">
             <div class="label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS['star']||''}</svg> Allzeit</div>
@@ -565,7 +571,8 @@ const rankProgHtml = rInfo ? `
       // Dünne Bar darunter zeigt segmentiert den Gesamt-Fortschritt nach Tier.
       const _STRIP_MAX = 8;
       const _byRarity = {legendary:[], rare:[], common:[], negative:[]};
-      badges.forEach(b => { const r = rarityOf(b.id); if(_byRarity[r]) _byRarity[r].push(b); });
+      const _kat = badgeKatalog(id), _rOf = new Map(_kat.map(x => [x.b.id, x.r]));
+      badges.forEach(b => { const r = _rOf.get(b.id) || rarityOf(b.id); if(_byRarity[r]) _byRarity[r].push(b); });
       const _strip = [];
       RARITY_ORDER.forEach(r => _byRarity[r].forEach(b => _strip.push({b, r})));
       const _visible = _strip.slice(0, _STRIP_MAX);
@@ -577,7 +584,7 @@ const rankProgHtml = rInfo ? `
       // Bar-Segmente: ein Stück pro Tier-Count, Rest dunkel
       const _seg = (r) => _byRarity[r].length;
       const _have = _seg('legendary')+_seg('rare')+_seg('common')+_seg('negative');
-      const _missing = BADGES.length - _have;
+      const _missing = _kat.length - _have;
       const _barHtml = `
         <div class="pp-bcard-bar">
           ${_seg('legendary')?`<div class="seg legendary" style="flex:${_seg('legendary')}"></div>`:''}
@@ -590,7 +597,7 @@ const rankProgHtml = rInfo ? `
     <div class="pp-sec" style="animation-delay:.425s">
       <div class="pp-sec-title">
         <div class="l">${svgI('star')}<h4>Auszeichnungen</h4></div>
-        <div class="m">${_have} / ${BADGES.length}</div>
+        <div class="m">${_have} / ${_kat.length}</div>
       </div>
       <div class="pp-bcard" id="ppBadgesBtn">
         <div class="pp-bcard-row">
@@ -974,12 +981,15 @@ function computeSeasonHistory(playerId, limit){
   // in anderer Reihenfolge, stand im Rail plötzlich Juli, Mai, Juni. Jetzt wird
   // absteigend nach Saison-ID (YYYY-MM, lexikografisch = chronologisch)
   // sortiert und danach gekürzt → links immer die neueste, rechts die älteste.
+  // Gekürzt wird nach den EIGENEN Saisons. Gekürzt nach denen der Liga
+  // verlor ein Ruheständler mit jedem Monat, in dem die anderen spielten,
+  // eine Saison aus seinem Verlauf — und wer eine Pause machte, ebenso.
   const allSeasonIds = [...new Set([...allPastSeasons(), currentSeason().id])]
     .sort((a,b)=> a<b?1:a>b?-1:0);
-  const last = allSeasonIds.slice(0, limit);
-  return last.map(sid=>{
-    const sMatches = matchesInSeason(sid).filter(m=>[m.a1,m.a2,m.b1,m.b2].includes(playerId));
-    if(!sMatches.length) return null;
+  const eigene = allSeasonIds.map(sid => ({sid,
+    sMatches: matchesInSeason(sid).filter(m=>[m.a1,m.a2,m.b1,m.b2].includes(playerId))}))
+    .filter(x => x.sMatches.length).slice(0, limit);
+  return eigene.map(({sid, sMatches})=>{
     let w=0, l=0;
     sMatches.forEach(m=>{
       const onA=(playerId===m.a1||playerId===m.a2);
@@ -1100,9 +1110,9 @@ function showPlayerBadges(playerId){
   // Katalogreihenfolge stabil. Einmalige Badges springen nicht mehr vor
   // wichtigere Saison- und Serienleistungen (Allwetter stand dadurch ganz
   // vorne, obwohl es nur einmal freigeschaltet werden kann).
+  // Der Katalog des Spielers: für einen Ruheständler der beim Abschied [§C40].
   const buckets = {legendary:[], rare:[], common:[], negative:[]};
-  BADGES.forEach(b => {
-    const r = rarityOf(b.id);
+  badgeKatalog(playerId).forEach(({b, r}) => {
     if(buckets[r]) buckets[r].push(b);
   });
   Object.keys(buckets).forEach(r => {
@@ -1114,10 +1124,9 @@ function showPlayerBadges(playerId){
 
   // ─── Tier-Counter-Bar (oben im Sheet) ───
   const pill = (r) => {
-    const meta = RARITY_META[r];
     const h = have(r);
     const dim = h===0 ? 'dim' : '';
-    return `<span class="tc-pill ${r} ${dim}"><span class="dot"></span><span class="n">${h} / ${meta.total}</span></span>`;
+    return `<span class="tc-pill ${r} ${dim}"><span class="dot"></span><span class="n">${h} / ${buckets[r].length}</span></span>`;
   };
   const counterHtml = `
     <div class="bsh-counter">
@@ -1171,7 +1180,7 @@ function showPlayerBadges(playerId){
 
   openSheet(`
     ${blattKopfHtml({ic:'medal', ton:'viol', titel:'Auszeichnungen',
-      unter:p.name + ' · ' + haveTotal + ' von ' + BADGES.length + ' · ' + trigCount + '× geholt'})}
+      unter:p.name + ' · ' + haveTotal + ' von ' + (buckets.legendary.length + buckets.rare.length + buckets.common.length + buckets.negative.length) + ' · ' + trigCount + '× geholt'})}
     <div style="height:12px"></div>
     ${counterHtml}
     <div class="bsh-grid">${positiveCards}</div>

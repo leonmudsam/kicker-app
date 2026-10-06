@@ -592,25 +592,29 @@ function _periodWinnerMap(allMs, kind){
   else                    curKey=''; // day: kein Ausschluss des laufenden Tages (wie bisher)
   let slot=_winnerCountsMemo.get(allMs);
   if(!slot){ slot={}; _winnerCountsMemo.set(allMs, slot); }
-  const slotKey='win_'+kind+'_'+curKey;
+  // Ein Karriereende verschiebt den Sieger des Zeitraums, in dem es lag: der
+  // Schlüssel trägt deshalb, wer gerade im Ruhestand ist. Die Partien allein
+  // reichen nicht, sie ändern sich beim Karriereende nicht.
+  const ruhe=ruhestandSpieler();
+  const slotKey='win_'+kind+'_'+curKey+'_'+ruhe.map(p=>p.id+ruhestandMs(p)).join(',');
   if(slot[slotKey]) return slot[slotKey];
 
+  const keyOf=d=>kind==='week' ? d.getFullYear()+'-W'+isoWeek(d)
+    : kind==='month' ? d.getFullYear()+'-'+d.getMonth()
+    : d.toISOString().slice(0,10);
   // Buckets bilden (Woche / Monat / Tag)
   const buckets={};
   allMs.forEach(m=>{
-    let key;
-    if(kind==='week'){
-      const d=new Date(m.created_at);
-      key=d.getFullYear()+'-W'+isoWeek(d);
-    } else if(kind==='month'){
-      const d=new Date(m.created_at);
-      key=d.getFullYear()+'-'+d.getMonth();
-    } else {
-      key=mdayKey(m);
-    }
+    const key=kind==='day' ? mdayKey(m) : keyOf(new Date(m.created_at));
     if(!buckets[key])buckets[key]=[];
     buckets[key].push(m);
   });
+  // Ein Zeitraum, der beim Karriereende noch lief, vergleicht ohne ihn
+  // [§C40], wie die Awards derselben Woche: sonst holte er nach dem Abschied
+  // noch den Player of the Week für die Woche, in der er aufgehört hat, und
+  // Badge, Rückblick und Awards nannten drei verschiedene Sieger.
+  const ruheKey={};
+  ruhe.forEach(p=>{ ruheKey[p.id]={key:keyOf(new Date(ruhestandMs(p))), t:ruhestandMs(p)}; });
 
   const winners={};
   Object.entries(buckets).forEach(([key,ms])=>{
@@ -626,6 +630,11 @@ function _periodWinnerMap(allMs, kind){
       if((onA&&m.winner==='A')||(!onA&&m.winner==='B'))winsById[pid]++;
       eloById[pid] += (m.deltas && m.deltas[pid]) || 0;
     }));
+    Object.keys(winsById).forEach(pid=>{
+      const r=ruheKey[pid];
+      if(r && (r.key===key || ms.some(m=>mts(m)>r.t))) delete winsById[pid];
+    });
+    if(!Object.keys(winsById).length) return;
     let winner=null;
     if(kind==='day'){
       const maxW=Math.max(...Object.values(winsById));

@@ -5504,7 +5504,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.05.40bc4cce';
+const BUILD_VERSION='2026.10.06.5f25ceaa';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -7450,6 +7450,12 @@ function imRuhestandAm(x, ms){
   return t > 0 && t <= _ruheStichtag && ms > t;
 }
 
+function tagEndeMs(dk){
+  const d = new Date(dk + 'T00:00:00');
+  d.setHours(23, 59, 59, 999);
+  return d.getTime();
+}
+
 function ruhestandSpieler(){
   return players.filter(p => sichtbar(p) && imRuhestand(p))
     .sort((a, b) => ruhestandMs(b) - ruhestandMs(a));
@@ -7557,6 +7563,14 @@ function ruhestandAuszeichnungen(pid){
   return g && Array.isArray(g.badges) ? g.badges : null;
 }
 
+function badgeKatalog(pid){
+  const g = imRuhestand(pid) ? _ruheGespeichert(pid) : null;
+  if(!g || !Array.isArray(g.katalog)) return BADGES.map(b => ({b, r:rarityOf(b.id)}));
+  const jetzt = new Map(BADGES.map(b => [b.id, b]));
+  const geholt = new Map((g.badges || []).map(b => [b.id, b]));
+  return g.katalog.map(k => ({b:jetzt.get(k.id) || geholt.get(k.id) || null, r:k.r})).filter(x => x.b);
+}
+
 function _ruheStandBauen(pid){
   const t = ruhestandMs(pid);
   if(!t) return null;
@@ -7568,7 +7582,8 @@ function _ruheStandBauen(pid){
   } catch(e){ badges = []; }
   let finger = null;
   if(matches.every(m => mts(m) <= t)){ try { finger = fingerabdruck(pid); } catch(e){ finger = null; } }
-  return JSON.parse(JSON.stringify(Object.assign({v:RUHE_STAND_FASSUNG, t, stand, badges}, finger ? {finger} : {})));
+  const katalog = BADGES.map(b => ({id:b.id, r:rarityOf(b.id)}));
+  return JSON.parse(JSON.stringify(Object.assign({v:RUHE_STAND_FASSUNG, t, stand, badges, katalog}, finger ? {finger} : {})));
 }
 
 const _ruheNachgetragen = new Set();
@@ -8025,7 +8040,7 @@ function showPotwRecap(opts){
 
     const POTW_MIN_WINS = 5;
     const candidates = Object.entries(ps)
-      .filter(([id,s]) => s.wins >= POTW_MIN_WINS && sichtbar(pm[id]))
+      .filter(([id,s]) => s.wins >= POTW_MIN_WINS && ligaAktiv(pm[id], weekEnd.getTime()))
       .map(([id,s]) => {
         const games = s.wins + s.losses;
         return [id, s, games ? s.wins/games : 0];
@@ -8243,7 +8258,7 @@ function _potdLastDayData(){
       if(!wins[id]) wins[id]=0;
       if(w) wins[id]++;
     }));
-    const qualified=Object.entries(wins).some(([id,w])=>w>=3 && sichtbar(pm[id]));
+    const qualified=Object.entries(wins).some(([id,w])=>w>=3 && ligaAktiv(pm[id], tagEndeMs(dk)));
     if(qualified) return {dayKey:dk, dayMatches:dms};
   }
   return null;
@@ -8307,7 +8322,7 @@ function showPotdRecap(opts){
 
     const pm=pmap();
     const candidates=Object.entries(ps)
-      .filter(([id,s])=> s.wins>=3 && sichtbar(pm[id]))
+      .filter(([id,s])=> s.wins>=3 && ligaAktiv(pm[id], tagEndeMs(lastDayKey)))
       .sort((a,b)=>{
         if(b[1].wins!==a[1].wins) return b[1].wins-a[1].wins;
         return b[1].eloDelta-a[1].eloDelta;
@@ -13194,24 +13209,21 @@ function _periodWinnerMap(allMs, kind){
   else                    curKey='';
   let slot=_winnerCountsMemo.get(allMs);
   if(!slot){ slot={}; _winnerCountsMemo.set(allMs, slot); }
-  const slotKey='win_'+kind+'_'+curKey;
+  const ruhe=ruhestandSpieler();
+  const slotKey='win_'+kind+'_'+curKey+'_'+ruhe.map(p=>p.id+ruhestandMs(p)).join(',');
   if(slot[slotKey]) return slot[slotKey];
 
+  const keyOf=d=>kind==='week' ? d.getFullYear()+'-W'+isoWeek(d)
+    : kind==='month' ? d.getFullYear()+'-'+d.getMonth()
+    : d.toISOString().slice(0,10);
   const buckets={};
   allMs.forEach(m=>{
-    let key;
-    if(kind==='week'){
-      const d=new Date(m.created_at);
-      key=d.getFullYear()+'-W'+isoWeek(d);
-    } else if(kind==='month'){
-      const d=new Date(m.created_at);
-      key=d.getFullYear()+'-'+d.getMonth();
-    } else {
-      key=mdayKey(m);
-    }
+    const key=kind==='day' ? mdayKey(m) : keyOf(new Date(m.created_at));
     if(!buckets[key])buckets[key]=[];
     buckets[key].push(m);
   });
+  const ruheKey={};
+  ruhe.forEach(p=>{ ruheKey[p.id]={key:keyOf(new Date(ruhestandMs(p))), t:ruhestandMs(p)}; });
 
   const winners={};
   Object.entries(buckets).forEach(([key,ms])=>{
@@ -13227,6 +13239,11 @@ function _periodWinnerMap(allMs, kind){
       if((onA&&m.winner==='A')||(!onA&&m.winner==='B'))winsById[pid]++;
       eloById[pid] += (m.deltas && m.deltas[pid]) || 0;
     }));
+    Object.keys(winsById).forEach(pid=>{
+      const r=ruheKey[pid];
+      if(r && (r.key===key || ms.some(m=>mts(m)>r.t))) delete winsById[pid];
+    });
+    if(!Object.keys(winsById).length) return;
     let winner=null;
     if(kind==='day'){
       const maxW=Math.max(...Object.values(winsById));
@@ -14178,7 +14195,9 @@ function showPlayer(id){
     ? new Date(_streakInfo.peakDate).toLocaleDateString('de-DE',{month:'long',year:'numeric'})
     : '';
   const playerMs = matchesOfPlayer(id, matches);
-  const seasonMs = matchesOfPlayer(id, matchesInSeason());
+  const _ruhe = imRuhestand(id);
+  const _profilSid = _ruhe ? seasonOf(new Date(ruhestandMs(id))).id : currentSeason().id;
+  const seasonMs = matchesOfPlayer(id, matchesInSeason(_profilSid));
   const _last15 = playerMs.slice(-15);
   const last15DotsHtml = _last15.map(m=>{
     const onA=(id===m.a1||id===m.a2);
@@ -14238,7 +14257,7 @@ function showPlayer(id){
           </svg>
         </div>
         <div class="pp-spark-foot">
-          <span>Elo · ${esc(seasonLabel(currentSeason().id))}</span>
+          <span>Elo · ${esc(seasonLabel(_profilSid))}</span>
           <span class="delta ${netCls}">${netTxt}</span>
         </div>`;
     }
@@ -14282,7 +14301,7 @@ function showPlayer(id){
     }
   }
 
-  const awards=playerAwards(id).filter(a=>a.rank===0);
+  const awards=_ruhe ? [] : playerAwards(id).filter(a=>a.rank===0);
   const awardCount=awards.length;
 
   const awArt = a => awNeg(a.key) ? 'neg' : awIds(a.key, a.x).length >= 2 ? 'team' : 'pos';
@@ -14426,7 +14445,6 @@ const rankProgHtml = rInfo ? `
 
   const _ton = rangTon(id);
   const _stufe = 'st-' + prestigeOf(id).insignie.key;
-  const _ruhe = imRuhestand(id);
   const _hatPartien = matches.some(m => m.a1 === id || m.a2 === id || m.b1 === id || m.b2 === id);
 
   openSheet(`
@@ -14486,7 +14504,7 @@ const rankProgHtml = rInfo ? `
           <div class="pp-et-col peak">
             <div class="label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS['peak']||''}</svg> Spitze</div>
             <div class="val">${ps}</div>
-            <div class="sub">diese Saison</div>
+            <div class="sub">${_ruhe ? esc(seasonLabel(_profilSid)) : 'diese Saison'}</div>
           </div>
           <div class="pp-et-col alltime">
             <div class="label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS['star']||''}</svg> Allzeit</div>
@@ -14583,7 +14601,8 @@ const rankProgHtml = rInfo ? `
     ${badgeTotal?(()=>{
       const _STRIP_MAX = 8;
       const _byRarity = {legendary:[], rare:[], common:[], negative:[]};
-      badges.forEach(b => { const r = rarityOf(b.id); if(_byRarity[r]) _byRarity[r].push(b); });
+      const _kat = badgeKatalog(id), _rOf = new Map(_kat.map(x => [x.b.id, x.r]));
+      badges.forEach(b => { const r = _rOf.get(b.id) || rarityOf(b.id); if(_byRarity[r]) _byRarity[r].push(b); });
       const _strip = [];
       RARITY_ORDER.forEach(r => _byRarity[r].forEach(b => _strip.push({b, r})));
       const _visible = _strip.slice(0, _STRIP_MAX);
@@ -14594,7 +14613,7 @@ const rankProgHtml = rInfo ? `
       }).join('') + (_rest ? `<span class="pp-bcard-rest">+${_rest}</span>` : '');
       const _seg = (r) => _byRarity[r].length;
       const _have = _seg('legendary')+_seg('rare')+_seg('common')+_seg('negative');
-      const _missing = BADGES.length - _have;
+      const _missing = _kat.length - _have;
       const _barHtml = `
         <div class="pp-bcard-bar">
           ${_seg('legendary')?`<div class="seg legendary" style="flex:${_seg('legendary')}"></div>`:''}
@@ -14607,7 +14626,7 @@ const rankProgHtml = rInfo ? `
     <div class="pp-sec" style="animation-delay:.425s">
       <div class="pp-sec-title">
         <div class="l">${svgI('star')}<h4>Auszeichnungen</h4></div>
-        <div class="m">${_have} / ${BADGES.length}</div>
+        <div class="m">${_have} / ${_kat.length}</div>
       </div>
       <div class="pp-bcard" id="ppBadgesBtn">
         <div class="pp-bcard-row">
@@ -14954,10 +14973,10 @@ function showEditPlayer(id){
 function computeSeasonHistory(playerId, limit){
   const allSeasonIds = [...new Set([...allPastSeasons(), currentSeason().id])]
     .sort((a,b)=> a<b?1:a>b?-1:0);
-  const last = allSeasonIds.slice(0, limit);
-  return last.map(sid=>{
-    const sMatches = matchesInSeason(sid).filter(m=>[m.a1,m.a2,m.b1,m.b2].includes(playerId));
-    if(!sMatches.length) return null;
+  const eigene = allSeasonIds.map(sid => ({sid,
+    sMatches: matchesInSeason(sid).filter(m=>[m.a1,m.a2,m.b1,m.b2].includes(playerId))}))
+    .filter(x => x.sMatches.length).slice(0, limit);
+  return eigene.map(({sid, sMatches})=>{
     let w=0, l=0;
     sMatches.forEach(m=>{
       const onA=(playerId===m.a1||playerId===m.a2);
@@ -15061,8 +15080,7 @@ function showPlayerBadges(playerId){
     'allwetter']);
 
   const buckets = {legendary:[], rare:[], common:[], negative:[]};
-  BADGES.forEach(b => {
-    const r = rarityOf(b.id);
+  badgeKatalog(playerId).forEach(({b, r}) => {
     if(buckets[r]) buckets[r].push(b);
   });
   Object.keys(buckets).forEach(r => {
@@ -15073,10 +15091,9 @@ function showPlayerBadges(playerId){
   const trigCount = earned.reduce((s,b)=>s+b.count,0);
 
   const pill = (r) => {
-    const meta = RARITY_META[r];
     const h = have(r);
     const dim = h===0 ? 'dim' : '';
-    return `<span class="tc-pill ${r} ${dim}"><span class="dot"></span><span class="n">${h} / ${meta.total}</span></span>`;
+    return `<span class="tc-pill ${r} ${dim}"><span class="dot"></span><span class="n">${h} / ${buckets[r].length}</span></span>`;
   };
   const counterHtml = `
     <div class="bsh-counter">
@@ -15125,7 +15142,7 @@ function showPlayerBadges(playerId){
 
   openSheet(`
     ${blattKopfHtml({ic:'medal', ton:'viol', titel:'Auszeichnungen',
-      unter:p.name + ' · ' + haveTotal + ' von ' + BADGES.length + ' · ' + trigCount + '× geholt'})}
+      unter:p.name + ' · ' + haveTotal + ' von ' + (buckets.legendary.length + buckets.rare.length + buckets.common.length + buckets.negative.length) + ' · ' + trigCount + '× geholt'})}
     <div style="height:12px"></div>
     ${counterHtml}
     <div class="bsh-grid">${positiveCards}</div>
@@ -18701,7 +18718,7 @@ function _buildStories(){
     if(typeof _potwLastWeekRange === 'function' && typeof _potwKeyOf === 'function'){
       const range = _potwLastWeekRange();
       const wm = _potwMatchesInRange(range.start, range.end);
-      const res = _newsPeriodWinner(wm, 5, 'wr');
+      const res = _newsPeriodWinner(wm, 5, 'wr', range.end.getTime());
       if(res){
         const main = res.main;
         const names = res.winners.map(w => nameOf(w.id));
@@ -18731,7 +18748,7 @@ function _buildStories(){
     potdTage.forEach((dayMatches, dayKey) => {
       const rep = new Date(dayKey + 'T00:00:00'); rep.setHours(23, 59, 0, 0);
       if(now.getTime() < rep.getTime()) return;
-      const res = _newsPeriodWinner(dayMatches, 3, 'wins');
+      const res = _newsPeriodWinner(dayMatches, 3, 'wins', tagEndeMs(dayKey));
       if(!res) return;
       const main = res.main;
       const names = res.winners.map(w => nameOf(w.id));
@@ -19244,7 +19261,7 @@ function _buildStories(){
 
 }
 
-function _newsPeriodWinner(rangeMatches, minWins, mode){
+function _newsPeriodWinner(rangeMatches, minWins, mode, endeMs){
   if(!Array.isArray(rangeMatches) || !rangeMatches.length) return null;
   const byWins = mode !== 'wr';
   const ps = {};
@@ -19260,7 +19277,7 @@ function _newsPeriodWinner(rangeMatches, minWins, mode){
   }
   const pm = pmap();
   const cand = Object.entries(ps)
-    .filter(([id, s]) => s.wins >= minWins && sichtbar(pm[id]))
+    .filter(([id, s]) => s.wins >= minWins && ligaAktiv(pm[id], endeMs))
     .map(([id, s]) => { const g = s.wins + s.losses; return {id, wins: s.wins, losses: s.losses, eloDelta: s.eloDelta, wr: g ? s.wins/g : 0}; })
     .sort((a, b) => {
       if(byWins){

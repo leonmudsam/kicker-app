@@ -27,7 +27,7 @@ const lc = code.lastIndexOf('})();');
 code = code.slice(0, lc) + '\nglobalThis.__k={eval:c=>eval(c)};\n' + code.slice(lc);
 
 // Fester Zeitpunkt: 27.08.2026, damit August die laufende Saison ist.
-const FIXED = new Date('2026-08-27T12:00:00Z').getTime();
+let FIXED = new Date('2026-08-27T12:00:00Z').getTime();
 const RealDate = Date;
 class FakeDate extends RealDate {
   constructor(...a){ if(a.length===0) super(FIXED); else super(...a); }
@@ -446,6 +446,65 @@ console.log('\n=== LÖSCHEN NUR OHNE PARTIE ===');
      'ohne Antwort der Datenbank wird nichts gelöscht', JSON.stringify(r3));
   const r4 = await K.eval(`spielerLoeschen('neu-ohne-partie')`);
   ok(r4.ok && geloescht().includes('neu-ohne-partie'), 'ein Spieler ohne Partie wird gelöscht', JSON.stringify(r4));
+
+  console.log('\n=== ZWEI MONATE SPÄTER, MIT EINER NEUEN FASSUNG DER APP ===');
+  // Verglichen wird, was zu LESEN ist: das Profil und jedes Blatt, das von
+  // ihm ausgeht, als Text. Nicht einzelne Funktionen — ein Teil des Profils,
+  // den es heute noch nicht gibt, fällt damit genauso auf, sobald er etwas
+  // zeigt, das sich nach dem Karriereende bewegt.
+  {
+    const text = h => String(h).replace(/<style[\s\S]*?<\/style>/g, ' ').replace(/<[^>]+>/g, ' ')
+      .replace(/&[a-z#0-9]+;/g, ' ').replace(/\s+/g, ' ').trim();
+    const BLAETTER = [['Profil', 'showPlayer'], ['Laufbahn', 'showLaufbahn'], ['Auszeichnungen', 'showPlayerBadges'],
+      ['Bilanzen', 'showPlayerH2HList'], ['Abschied', 'zeigeAbschied']];
+    K.eval(`globalThis.__openSheet = openSheet; openSheet = function(h){ globalThis.__blatt.push(h); };`);
+    const bild = () => Object.fromEntries(BLAETTER.map(([n, f]) => {
+      K.eval(`globalThis.__blatt = []; try { ${f}('${MARTIN}'); } catch(e){ globalThis.__blatt.push('FEHLER ' + e.message); }`);
+      return [n, text(K.eval('globalThis.__blatt.join(" | ")'))];
+    }));
+    const vorDiff = (a, b) => { const x = a.split(' '), y = b.split(' '); let i = 0; while(i < x.length && x[i] === y[i]) i++;
+      return x.slice(Math.max(0, i - 6), i + 8).join(' ') + '  →  ' + y.slice(Math.max(0, i - 6), i + 8).join(' '); };
+    const r = await K.eval(`karriereSetzen('${MARTIN}', true)`);
+    const zeile = globalThis.__written.filter(w => w.upd).pop().upd;
+    K.eval(`pmap()['${MARTIN}'].retired_at = ${JSON.stringify(zeile.retired_at)};
+            pmap()['${MARTIN}'].retired_stand = ${JSON.stringify(JSON.stringify(zeile.retired_stand))}; invalidateCache();`);
+    const A = bild();
+    // Zwei Monate weiter: die anderen spielen 120 Partien, ein Monat schließt,
+    // und die App hat eine neue Auszeichnung, einen neuen Liga-Rekord und
+    // einen höheren Startwert der seltenen Auszeichnungen.
+    FIXED = new RealDate('2026-10-20T12:00:00Z').getTime();
+    K.eval(`
+      const _o = players.filter(p => p.id !== '${MARTIN}').map(p => p.id);
+      const _neu = [];
+      for(let i = 0; i < 120; i++) _neu.push({id:'sp' + i, a1:_o[i % 11], a2:_o[(i + 3) % 11], b1:_o[(i + 5) % 11], b2:_o[(i + 8) % 11],
+        a1_pos:'atk', a2_pos:'def', b1_pos:'atk', b2_pos:'def', score_a:10, score_b:i % 9, winner:'A', exp_a:0.5,
+        created_at:new Date(Date.parse('2026-09-02T10:00:00Z') + i * 11 * 3600e3).toISOString(), deltas:{}});
+      matches = matches.concat(_neu);
+      const _rc = simulateEloWithSliders(matches);
+      const _d = {}; _rc.history.forEach(h => { _d[h.matchId] = h.deltas; });
+      matches.forEach(m => { m.deltas = _d[m.id] || {}; });
+      BADGES.push({id:'zz_spaeter', ic:'star', name:'Neu im Katalog', desc:'Eine Partie',
+        count:(id, q) => q.some(m => [m.a1,m.a2,m.b1,m.b2].includes(id)) ? 1 : 0});
+      CHRONICLES.push(Object.assign({}, CHRONICLES[0], {id:'zz_rekord', name:'Der Neue', val:P => P.games || 0}));
+      PRESTIGE_AUSZEICHNUNG.rare.start += 40;
+      invalidateCache(); _ruheStandMemo.clear(); _ruheGespeichertMemo.clear();`);
+    const B = bild();
+    for(const [n] of BLAETTER){
+      ok(A[n].length > 200 && A[n] === B[n] && !/FEHLER/.test(A[n]),
+         n + ' eines Ruheständlers liest sich zwei Monate und eine Fassung später wie beim Abschied',
+         A[n] === B[n] ? A[n].length + ' Zeichen' : vorDiff(A[n], B[n]));
+    }
+    // Die Woche des Karriereendes lief noch, als er aufhörte: sie vergleicht
+    // ohne ihn, wie die Awards derselben Woche. Sonst holte er nach dem
+    // Abschied ihren Player of the Week.
+    const woche = J(`(() => { const t = ruhestandMs('${MARTIN}'), d = new Date(t);
+      const w = _periodWinnerMap(matches, 'week')[d.getFullYear() + '-W' + isoWeek(d)];
+      return {w: w || null, hatGespielt: matches.some(m => mts(m) <= t && [m.a1,m.a2,m.b1,m.b2].includes('${MARTIN}')
+        && (new Date(m.created_at).getFullYear() + '-W' + isoWeek(new Date(m.created_at))) === (d.getFullYear() + '-W' + isoWeek(d)))}; })()`);
+    ok(woche.hatGespielt && woche.w !== MARTIN, 'die Woche, in der er aufhörte, gewinnt er nach dem Abschied nicht mehr',
+       'Sieger ' + (woche.w ? nm(woche.w) : 'keiner'));
+    K.eval(`openSheet = globalThis.__openSheet; BADGES.pop(); CHRONICLES.pop();`);
+  }
   console.log('\n' + (fails ? '✗ ' + fails + ' von ' + checks + ' CHECKS FEHLGESCHLAGEN' : '✓ ALLE ' + checks + ' CHECKS BESTANDEN'));
   process.exit(fails ? 1 : 0);
 })();
