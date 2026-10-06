@@ -5539,7 +5539,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.06.40302b31';
+const BUILD_VERSION='2026.10.06.05b8b0d9';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -6686,7 +6686,7 @@ function rcpKachelHtml(o){
 }
 
 function rcpZeileHtml(o){
-  const t = o.ton && typeof titleTone === 'function' ? titleTone(o.ton) : null;
+  const t = o.ton ? titleTone(o.ton) : null;
   return `<div class="rcp-zeile${o.attr ? ' klick' : ''}"${
       t ? ` style="--tt:${t.c}"` : ''} ${o.attr || ''}>
     <span class="rcp-zeile-ic">${svgI(o.ic || 'trophy')}</span>
@@ -8959,7 +8959,7 @@ function avatarInnerHtml(player){
 function avHtml(player, extraStyle, opts){
   if(!player) return '';
   let cls = '', style = '', attr = '';
-  if(opts && opts.ring && typeof _avRingAttrs === 'function'){
+  if(opts && opts.ring){
     const r = _avRingAttrs(player.id);
     if(r){ cls = r.cls; style = r.style; attr = r.attr; }
   }
@@ -8967,8 +8967,8 @@ function avHtml(player, extraStyle, opts){
   const inner = em
     ? `<span class="av av-emoji${cls}"${attr} style="${style}${extraStyle||''}"><span class="em">${em}</span></span>`
     : `<span class="av${cls}"${attr} style="${style}background:${avColor(player.id)};${extraStyle||''}">${initials(player.name)}</span>`;
-  if(opts && opts.ins && typeof insAvWrap === 'function') return insAvWrap(player.id, inner, opts);
-  if(opts && opts.zn && typeof znWrap === 'function') return znWrap(player.id, inner, opts);
+  if(opts && opts.ins) return insAvWrap(player.id, inner, opts);
+  if(opts && opts.zn) return znWrap(player.id, inner, opts);
   return inner;
 }
 function initials(n){return n.trim().slice(0,2).toUpperCase();}
@@ -8982,7 +8982,7 @@ function awLiAv(pid, isTiedRow = false, schande = false){
   const kreis = em
     ? `<div class="aw-li-av has-emoji" style="background:var(--surface3);color:inherit;${sizeStyle}">${em}</div>`
     : `<div class="aw-li-av" style="background:${avColor(p.id)};${sizeStyle}">${esc(initials(p.name))}</div>`;
-  const f = (!schande && typeof znFeuer === 'function') ? znFeuer(pid) : 0;
+  const f = !schande ? znFeuer(pid) : 0;
   if(!f || typeof znWrap !== 'function') return kreis;
   return znWrap(pid, kreis, {px:px, titel:0, klasse:'aw-li-zn'});
 }
@@ -12841,7 +12841,7 @@ document.addEventListener('keydown', (e) => {
   if(e.key === 'Escape'){
     const ndBg = document.getElementById('ndBg');
     if(ndBg && ndBg.classList.contains('show')){
-      if(typeof closeNewsDetail === 'function') closeNewsDetail();
+      closeNewsDetail();
       return;
     }
     const bpBg = document.getElementById('bpBg');
@@ -15877,8 +15877,8 @@ function bind(){
   main.querySelectorAll('[data-rekkammer]').forEach(b=>b.onclick=()=>{rekKammer=b.dataset.rekkammer;_renderNachEingabe();});
   if(awView!=='awards'){
     const c=document.getElementById('main');
-    if(c && typeof _bindChronikClicks==='function') _bindChronikClicks(c);
-    if(typeof chronikMatrixScrollen==='function') chronikMatrixScrollen(c);
+    if(c) _bindChronikClicks(c);
+    chronikMatrixScrollen(c);
   }
   const swBind=(id,fn)=>{
     const el=document.getElementById(id);
@@ -17527,7 +17527,7 @@ function _buildStories(){
   const _yesterdayKey  = new Date(_startOfYesterday).toISOString().slice(0,10);
   let   _lastWeekKey   = isoWeek(new Date(_prevWeekStart));
 
-  const _wr = (typeof _potwLastWeekRange === 'function') ? _potwLastWeekRange() : null;
+  const _wr = _potwLastWeekRange();
   const _wocheStart = _wr ? _wr.start.getTime() : _prevWeekStart;
   const _wocheEnde  = _wr ? (_wr.end.getTime() + 1) : _thisWeekStart;
   const _wocheSlotTs = _wocheEnde - 3600000;
@@ -17914,22 +17914,22 @@ function _buildStories(){
       .filter(ev => {
         if(!pm[ev.playerId]) return false;
         const wuerde = (typeof BADGE_WUERDE !== 'undefined') && BADGE_WUERDE.has(ev.badge.id);
-        const rar = (typeof rarityOf === 'function') ? rarityOf(ev.badge.id) : 'common';
+        const rar = rarityOf(ev.badge.id);
         if(!wuerde && !_badgeTakt(rar, _bRang(ev))) return false;
         return rar === 'legendary' || rar === 'rare' || NEWS_BADGE_WHITELIST.has(ev.badge.id);
       });
     const list = whitelisted.sort((a,b) => b.when - a.when);
     list.forEach(ev => {
-      const rar = (typeof rarityOf === 'function') ? rarityOf(ev.badge.id) : 'common';
+      const rar = rarityOf(ev.badge.id);
       const rarPrio = STORY_PRIO.badge_unlocked
                     + ({legendary:36, rare:8, common:0, negative:0}[rar] || 0);
       const _nemOpp = (ev.badge.id === 'nemesis' && ev.meta && ev.meta.oppId) ? ev.meta.oppId : null;
       let _bdesc;
       if(_nemOpp){
         _bdesc = `5 Pleiten in Folge gegen ${nameOf(_nemOpp)}.`;
-      } else if(ev.badge.id === 'games250' && typeof countGames === 'function'){
+      } else if(ev.badge.id === 'games250'){
         _bdesc = `300 Partien am Kicker. ${nameOf(ev.playerId)} steht nach dieser Partie bei ${_spEigene(ev.playerId, badgeMatches.get(ev.matchId)).length} Spielen.`;
-      } else if(ev.badge.id === 'wins200' && typeof countWins === 'function'){
+      } else if(ev.badge.id === 'wins200'){
         _bdesc = `300 Siege in der Karriere. ${nameOf(ev.playerId)} hält nach dieser Partie bei ${_spEigene(ev.playerId, badgeMatches.get(ev.matchId)).filter(m => _spGew(m, ev.playerId)).length}.`;
       } else {
         _bdesc = ev.badge.desc || 'Neue Auszeichnung freigeschaltet';
@@ -17948,7 +17948,7 @@ function _buildStories(){
     });
     const _kleine = Object.values(dedupe).filter(ev => {
       if(!pm[ev.playerId]) return false;
-      const rar = (typeof rarityOf === 'function') ? rarityOf(ev.badge.id) : 'common';
+      const rar = rarityOf(ev.badge.id);
       if(rar !== 'common') return false;
       if(NEWS_BADGE_WHITELIST.has(ev.badge.id)) return false;
       return _badgeTakt('common', _bRang(ev));
@@ -18479,7 +18479,7 @@ function _buildStories(){
       }
       if(art === 'normal' || art === 'eng'){
         let tx = null;
-        try { tx = typeof _spScoreText === 'function' ? _spScoreText(m) : _spFormText(m); }
+        try { tx = _spScoreText(m); }
         catch(e){ tx = null; }
         if(tx){ title = tx.t; desc = tx.d; }
       }
@@ -18500,7 +18500,7 @@ function _buildStories(){
   try {
     const wk = 14 * 86400000;
     const tsNow = now.getTime();
-    const streakSnaps = (typeof getStreakSnapshots === 'function') ? getStreakSnapshots() : {};
+    const streakSnaps = getStreakSnapshots();
     const kills = [];
     for(let i = 0; i < matches.length; i++){
       const m = matches[i];
@@ -18733,7 +18733,7 @@ function _buildStories(){
   } catch(e){}
 
   try {
-    if(typeof _potwLastWeekRange === 'function' && typeof _potwKeyOf === 'function'){
+    {
       const range = _potwLastWeekRange();
       const wm = _potwMatchesInRange(range.start, range.end);
       const res = _newsPeriodWinner(wm, 5, 'wr');
@@ -19039,7 +19039,7 @@ function _buildStories(){
 
   try {
     const _sid = currentSeason().id;
-    if(_tafelTag && typeof seasonTitleHalter === 'function'){
+    if(_tafelTag){
       const _letzteMs2 = _tafelTag.letzte;
       const _amTag2 = new Map();
       matches.forEach(m => {
@@ -19092,7 +19092,7 @@ function _buildStories(){
         const a = _vorherH[t.id];
         const neuKey = n.pids.join(',');
         if(a && a.pids.join(',') === neuKey) return;
-        const punkte = (typeof chronikPunkte === 'function') ? chronikPunkte(t.id) : 0;
+        const punkte = chronikPunkte(t.id);
         const artikel = t.klasse === 'legendaer' ? 'Eine legendäre' :
                         t.klasse === 'selten' ? 'Eine seltene' : 'Eine besondere';
         const alt = (a && a.pids) || [];
@@ -19486,7 +19486,7 @@ function _ambientShuffle(arr, rng){
 }
 
 function _ambientTemplatePool(now, pm, nameOf){
-  const stats = (typeof allPlayerStats === 'function') ? (allPlayerStats() || {}) : {};
+  const stats = allPlayerStats() || {};
   const aktiv = id => ligaAktiv(pm[id]);
   const activePids = Object.keys(pm).filter(aktiv);
   const withStats = activePids.filter(pid => stats[pid] && stats[pid].games > 0);
@@ -19625,7 +19625,7 @@ function _ambientTemplatePool(now, pm, nameOf){
   }});
 
   T.push({ key:'rivalry_most', make: () => {
-    const map = (typeof _ensureH2HMap === 'function') ? _ensureH2HMap() : null;
+    const map = _ensureH2HMap();
     if(!map || !map.size) return null;
     let best = null;
     for(const [k, e] of map){
@@ -19644,7 +19644,7 @@ function _ambientTemplatePool(now, pm, nameOf){
   }});
 
   T.push({ key:'rivalry_close', make: () => {
-    const map = (typeof _ensureH2HMap === 'function') ? _ensureH2HMap() : null;
+    const map = _ensureH2HMap();
     if(!map || !map.size) return null;
     let best = null;
     for(const [k, e] of map){
@@ -19793,7 +19793,7 @@ function _ambientTemplatePool(now, pm, nameOf){
         bild:_bRennen(_rekRang(r.id).map(x => ({p:x.pid, v:x.wert, t:_chronKurz(x.ev) || komma(x.wert)})), false, 'podest')}};
   }});
 
-  const _gsim = () => (typeof getGlobalSim === 'function') ? (getGlobalSim() || {}) : {};
+  const _gsim = () => getGlobalSim() || {};
 
   T.push({ key:'fun_award_leader', make: (rng) => {
     const career = _gsim().careerElo || {};
@@ -20136,7 +20136,7 @@ function _ambientTemplatePool(now, pm, nameOf){
 
 
   T.push({ key:'personal_favourite_opp', weight:2, make: (rng) => {
-    const map = (typeof _ensureH2HMap === 'function') ? _ensureH2HMap() : null;
+    const map = _ensureH2HMap();
     if(!map || !map.size) return null;
     const cands = [];
     for(const [k, e] of map){
@@ -20539,7 +20539,7 @@ function _consolidateStories(list){
 function _consolidateStoriesLegacy(list){
   if(!Array.isArray(list)) return [];
   if(_cache._consolFrom === list && Array.isArray(_cache._consolList)) return _cache._consolList;
-  const pm = (typeof pmap === 'function') ? pmap() : {};
+  const pm = pmap();
   const nameOf = pid => (pm[pid] && pm[pid].name) || '?';
   const fmtNames = arr => arr.length <= 1 ? (arr[0] || '') : arr.slice(0, -1).join(', ') + ' & ' + arr[arr.length - 1];
   const TAG_PFLICHT = new Set(['potd', 'woche', 'chronik_monat', 'season_recap',
@@ -20603,9 +20603,9 @@ function _consolidateStoriesLegacy(list){
     const d = (st && st.dataRef) || {};
     const typ = d.type || '';
     if(!typ || _OHNE_SPERRE.has(typ)) return null;
-    try { if(typeof _isBreaking === 'function' && _isBreaking(st)) return null; } catch(e){}
+    try { if(_isBreaking(st)) return null; } catch(e){}
     let ids = [];
-    try { ids = (typeof _newsPids === 'function' ? _newsPids(st) : []) || []; } catch(e){}
+    try { ids = _newsPids(st) || []; } catch(e){}
     const sache = d.rekordId || d.badgeId || d.disziplinId || d.titleId || d.titel || '';
     return typ + '|' + ids.slice().sort().join(',') + '|' + sache;
   };
@@ -20790,7 +20790,7 @@ function _consolidateStoriesLegacy(list){
     if(g.teile.length < (g.max || Infinity)) g.teile.push(st);
   };
   const _sammelEinzeln = (st, d) => {
-    try { if(typeof _isBreaking === 'function' && _isBreaking(st)) return true; } catch(e){}
+    try { if(_isBreaking(st)) return true; } catch(e){}
     if(d.type === 'chronik_geholt' && d.chronKlasse === 'legendaer') return true;
     return d.type === 'badge_unlocked'
         && (d.rarity === 'rare' || d.rarity === 'legendary');
@@ -20970,7 +20970,7 @@ function _consolidateStoriesLegacy(list){
     const pids = [];
     teile.forEach(t => {
       let ids = [];
-      try { ids = (typeof _newsPids === 'function') ? _newsPids(t) : []; } catch(e){}
+      try { ids = _newsPids(t); } catch(e){}
       ids.forEach(id => { if(pids.indexOf(id) < 0) pids.push(id); });
     });
     const _achseZeile = t => {
@@ -21070,8 +21070,7 @@ function _consolidateStoriesLegacy(list){
       const wer = namen.length ? _namenKurz(namen, 3) : 'die Beteiligten';
       let brkBundle = false;
       try {
-        brkBundle = (typeof _isBreaking === 'function')
-          && teile.some(t => _isBreaking(t));
+        brkBundle = teile.some(t => _isBreaking(t));
       } catch(e){}
       const ERGEBNIS_ORT = {zu_null:'mit einem Sieg ohne Gegentor', upset:'im Favoritensturz',
                             krimi:'im Ein-Tor-Krimi', kanter:'mit einem klaren Sieg', eng:'im engen Spiel'};
@@ -21269,7 +21268,7 @@ function _consolidateStoriesLegacy(list){
     const t = (s && s.dataRef || {}).type;
     if(TAG_PFLICHT.has(t) || TAG_SUMME.has(t)) return false;
     if(_istPartie(s)) return false;
-    try { if(typeof _isBreaking === 'function' && _isBreaking(s)) return false; } catch(e){}
+    try { if(_isBreaking(s)) return false; } catch(e){}
     return true;
   };
   const _tafelSoll = NEWS_LIMITS.tafelProTagMin || 0;
@@ -21292,7 +21291,7 @@ function _consolidateStoriesLegacy(list){
     if(TAG_PFLICHT.has((s.dataRef || {}).type)) return true;
     if(TAG_SUMME.has((s.dataRef || {}).type)) return true;
     if(_istPartie(s)) return true;
-    try { return (typeof _isBreaking === 'function') && _isBreaking(s); } catch(e){ return false; }
+    try { return _isBreaking(s); } catch(e){ return false; }
   });
 
   let ausbalanciert = fertig;
@@ -21553,7 +21552,7 @@ window.addEventListener('beforeunload', () => {
 });
 
 function _refreshOpenNewsViews(){
-  try { if(typeof newsBadgeRefresh === 'function') newsBadgeRefresh(); } catch(e){}
+  try { newsBadgeRefresh(); } catch(e){}
   try { if(_isNewsFeedOpen()) _renderNewsFeed(); } catch(e){}
 }
 
@@ -21888,7 +21887,7 @@ function _newsGlanz(s, sorte, anlass){
   if(d.type === 'badge_unlocked' && (d.rarity === 'rare' || d.rarity === 'legendary')) return true;
   if((d.type === 'win_streak' || d.type === 'team_streak') && Number(d.streak) >= 5) return true;
   if(anlass === 'serie' || anlass === 'teamserie'){
-    const f = (typeof _newsSpielFakten === 'function' ? _newsSpielFakten(s) : [])
+    const f = _newsSpielFakten(s)
       .find(x => x.type === 'win_streak' || x.type === 'team_streak');
     if(f && Number(f.streak) >= 5) return true;
   }
@@ -22611,7 +22610,7 @@ function _newsMeisterFuss(d){
 
 function _breakingHeroText(s){
   const d = (s && s.dataRef) || {};
-  const pm = (typeof pmap === 'function') ? pmap() : {};
+  const pm = pmap();
   const nm = id => (pm[id] && pm[id].name) || '?';
   try {
     switch(d.type){
@@ -22619,7 +22618,7 @@ function _breakingHeroText(s){
         const te = Array.isArray(d.topElo) ? d.topElo : [];
         const cid = d.championId || (te[0] && te[0].id);
         const champ = nm(cid);
-        const monat = d.sid && typeof seasonLabel === 'function' ? seasonLabel(d.sid) : 'Die Saison';
+        const monat = d.sid ? seasonLabel(d.sid) : 'Die Saison';
         let lauf = '';
         try {
           const sp = saisonSpitze(d.sid), f = sp.folge;
@@ -23738,11 +23737,6 @@ function _spForm(m){
   }
   return FB.wahl.get(m.id) || _spFormKand(m)[0];
 }
-function _spFormText(m){
-  if(!_spIstFeld(m)) return null;
-  const w = _spForm(m);
-  return SP_FORM[w.key].text(_spFakten(m), w.x);
-}
 function _spScoreText(m){
   if(!_spIstFeld(m)) return null;
   const w = _spScoreWahl(m);
@@ -24612,7 +24606,7 @@ function closeNewsDetail(){
 function _newsRangZeile(pid){
   try {
     const rang = _newsGesamtrang(pid);
-    const P = (typeof prestigeOf === 'function') ? prestigeOf(pid) : null;
+    const P = prestigeOf(pid);
     const teile = [];
     if(rang > 0) teile.push('Platz ' + rang + ' der Gesamtliga');
     if(!_ndZeichenUnten){
@@ -24913,7 +24907,6 @@ function _ndWirkungBlock(je, gruende){
   const ids = Object.keys(je || {});
   if(!ids.length) return '';
   const pm = pmap();
-  const hat = typeof INSIGNIEN !== 'undefined' && typeof insigniumStufeVon === 'function';
   const dl = pid => Math.round(Number(je[pid].nach) || 0) - Math.round(Number(je[pid].vor) || 0);
   return ids.sort((a, b) => dl(b) - dl(a))
     .map(pid => {
@@ -24921,15 +24914,15 @@ function _ndWirkungBlock(je, gruende){
       const nach = Math.round(Number(w.nach) || 0);
       const vor = Math.round(Number(w.vor) || 0);
       const delta = nach - vor;
-      const sn = hat ? insigniumStufeVon(nach) : null;
-      const sv = hat ? insigniumStufeVon(vor) : null;
+      const sn = insigniumStufeVon(nach);
+      const sv = insigniumStufeVon(vor);
       const ins = sn != null ? INSIGNIEN[sn] : null;
       const next = sn != null ? INSIGNIEN[sn + 1] : null;
       const auf = sn != null && sn > sv;
       const ab = sn != null && sn < sv;
       let zeichen = '';
       try {
-        if(ins && typeof insigniumStufeSvg === 'function')
+        if(ins)
           zeichen = insigniumStufeSvg(ins.key, (getPlayerRank(pid) || {}).label, 0, 0) || '';
       } catch(e){}
       let balken = '', rest = '';
@@ -25627,7 +25620,7 @@ function _ndMarkenBlatt(s){
   const def = id => (typeof BADGES !== 'undefined') ? BADGES.find(b => b.id === id) : null;
   const kopf = `<div class="nd-buehne nd-bm">${l.map((x, k) => {
     const b = def(x.badgeId) || {};
-    const kl = (typeof rarityOf === 'function') ? rarityOf(x.badgeId) : 'common';
+    const kl = rarityOf(x.badgeId);
     return `<span class="nd-bm-k nf-bd-${esc(kl)}" data-pid="${esc(x.pid)}" style="--k:${k}"><span class="nd-bm-ic">${svgI(b.ic || 'medal')}</span>`
       + `<b class="num">${x.rang}.</b><em>${esc(x.name || b.name || '')}</em>`
       + `<span class="nd-bm-w">${_spChip(x.pid)}<small>${esc(_spName(x.pid))}</small></span></span>`;
@@ -25729,7 +25722,7 @@ function _ndMitteRoh(s){
   const d = s.dataRef || {};
   { const x = _ndEigenesBlatt(s); if(x && x.mitte != null) return x.mitte; }
   const pm = pmap();
-  const avM = (pid) => (typeof avHtml === 'function' && pm[pid]) ? avHtml(pm[pid]) : '';
+  const avM = (pid) => pm[pid] ? avHtml(pm[pid]) : '';
   const nameOf = (pid) => (pm[pid] && pm[pid].name) || '?';
   if(d.chronicle && CHRONICLE_BY_ID[d.chronicle]){
     const def = CHRONICLE_BY_ID[d.chronicle];
@@ -26210,7 +26203,7 @@ function _ndMitteRoh(s){
         if(l.length === 1){
           const b0 = def(l[0].badgeId);
           return _newsMedaillon((b0 && b0.ic) || s.ic || 'medal',
-              (typeof rarityOf === 'function') ? rarityOf(l[0].badgeId) : 'common',
+              rarityOf(l[0].badgeId),
               l[0].name || (b0 && b0.name) || '', b0 ? b0.desc : '', l[0].badgeId)
             + (d.matchId ? `<div class="nd-section">Die Partie</div>`
                 + _newsMatchVsBlock(d.matchId) : '');
@@ -26283,7 +26276,7 @@ function _ndMitteRoh(s){
         const rang = saisonRang(d.sid);
         const te = Array.isArray(d.topElo) ? d.topElo : [];
         const ids = te.map(x => x && x.id).filter(id => id && pm[id]);
-        const monat = typeof seasonLabel === 'function' ? seasonLabel(d.sid) : '';
+        const monat = seasonLabel(d.sid);
         const buehne = rang.length ? `<div class="nd-meister">
             <div class="nd-ms-band">${svgI('crown')}<span>Meister</span><i>${esc(monat)}</i></div>
             <div class="nf-meister gross"><span class="nf-ms-strahl" aria-hidden="true"></span>${
@@ -26330,10 +26323,10 @@ function _ndMitteRoh(s){
               <div class="nd-vs-elo">${pB.elo} Elo</div>
             </div>
           </div>` : '';
-        const z = (typeof rcpZahlenHtml === 'function') ? rcpZahlenHtml([
+        const z = rcpZahlenHtml([
           d.partien ? {v: d.partien, l: d.partien === 1 ? 'Partie' : 'Partien'} : null,
           d.aktive ? {v: d.aktive, l:'Gewertete'} : null
-        ].filter(Boolean)) : '';
+        ].filter(Boolean));
         return (vs ? `<div class="nd-section">Oben in der Tabelle</div>${vs}` : '')
           + (z ? `<div class="nd-section">Die Stichprobe</div>${z}` : '');
       }
@@ -26372,8 +26365,7 @@ function _ndMitteRoh(s){
           </div>`;
         const zeit = lauf.von ? `<div class="nd-satz">Die Serie begann am <b>${esc(lauf.von)}</b>`
             + (lauf.bis ? ` und endete am <b>${esc(lauf.bis)}</b>.` : '.') + `</div>` : '';
-        const band = (typeof _newsSerienBand === 'function')
-          ? _newsSerienBand(d.streak, false) : '';
+        const band = _newsSerienBand(d.streak, false);
         return `<div class="nd-section">Die Serie von ${esc(nameOf(d.victimPid))}</div>`
           + band + gitter + zeit;
       }
@@ -26437,7 +26429,7 @@ function _newsMatchVsBlock(matchId){
     const m = matches.find(x => x.id === matchId);
     if(!m) return '';
     const pm = pmap();
-    const av = pid => (pm[pid] && typeof avHtml === 'function')
+    const av = pid => pm[pid]
       ? avHtml(pm[pid], '')
       : '<span class="av" style="background:var(--surface)"></span>';
     const nm = pid => (pm[pid] && pm[pid].name) || '?';
@@ -28565,7 +28557,7 @@ function _bannLaufDerLiga(P, ms){
 function _thronDerLiga(P, ms){
   if(!ms.length) return;
   const hist = {};
-  const sim = (typeof getGlobalSim === 'function') ? getGlobalSim() : null;
+  const sim = getGlobalSim();
   ((sim && sim.history) || []).forEach(h => { hist[h.matchId] = h; });
   const stand = {};
   let tag = null;

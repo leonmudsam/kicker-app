@@ -23,7 +23,7 @@ Niemals direkt bearbeiten.
 3. cp dist/index.html index.html   ← wird am häufigsten vergessen
 4. node tools/check.mjs            → acht Wächter, alle müssen grün sein
 5. node tests/run.mjs              → alle Suiten müssen grün sein
-6. committen (deutsche Nachricht, siehe §7)
+6. committen, MIT index.html      → git status --short index.html muss leer sein
 ```
 
 Wächter 1 heißt „index.html entspricht src/" und schlägt genau dann an,
@@ -50,6 +50,13 @@ Adressen und `/*` in regulären Ausdrücken steht; der Bau parst das Ergebnis,
 bevor er es schreibt, und `tests/tafel` sieht nach, dass keiner übrig ist.
 Wer einen Fehler im ausgelieferten Code sucht, liest ihn deshalb in `src/` —
 in `dist/` fehlt das Warum.
+
+**`index.html` gehört in denselben Commit wie seine Quelle.** Der Prüf-Job
+baut aus dem Commit und vergleicht mit dem `index.html` des Commits, nicht
+mit dem Arbeitsverzeichnis: lokal ist alles grün, solange die frisch gebaute
+Datei dort liegt, und im Job schlägt Wächter 1 an. Genau das ist einem
+Commit passiert, der `git add` nur für `src`, `tests` und `docs` rief. Die
+Nachricht ist deutsch (§7).
 
 Ein Durchlauf ohne Schritt 4 und 5 gilt als nicht erledigt. Kein Commit
 mit rotem Wächter oder roter Suite.
