@@ -1,5 +1,36 @@
 # §C33 Im Feed hat jeder ein Gesicht
 
+## Regel
+
+- **Snapshot-Vertrag, er geht allem anderen vor:** eine veröffentlichte Zeile in `stories` bleibt in ID, Text, Zeitpunkt, Priorität, Beteiligten und Bild unverändert; weder gleicher Wortlaut noch spätere Stände noch ein Kontingent entfernen sie. Wo die Herleitung von Deckeln, Auffrischen oder Wegfallen erzählt, beschreibt sie, was der Generator VOR dem Veröffentlichen tut, oder einen früheren Stand. `_newsTexteAuffrischen` ist nur noch ein Identitätsweg; `_consolidateStories` verdichtet verlustfrei (`memberIds`, `sourceIds`). Das Fenster (`NEWS_FENSTER_TAGE`, vierzehn Tage) wird vollständig geladen.
+- Einzige veränderliche Veröffentlichung: die heutige Ewige Tafel (`tafel:<Datum>`), eine Karte je Tag, die per Upsert wächst.
+- Jede Story, die einen Spieler nennt, zeigt ihn (`_newsPids`, `_newsGesichtHtml`); die Farbfamilie folgt der Kartenform, nicht der Datenkategorie [§C25].
+- Eine Partie, eine Karte: jede Partie bekommt ihre Karte (`spiel_<Partie>`), und alles mit derselben `matchId` bündelt sich daran, auch Breaking, seltene Auszeichnungen und negative Zeilen (`neg`). Verschiedene Match-IDs werden nie über eine Minute zusammengelegt. Das Ergebnisband steht einmal (`bandFremd`).
+- Kopf und Fuß einer Partie folgen dem Anlass in fester Rangfolge (`_spAnlass`, `_spBild`); die gewöhnliche Partie hat Formen mit Regel und Gewicht (`SP_FORM`); neue Karten speichern ihr Bild als `dataRef.visual` Version 2 (`score`, `occasion`, `_spScoreWahl`), alte bleiben über den V1-Pfad lesbar. Jedes Bauteil trennt `…Daten` und `…Bild`; nichts wird gekürzt oder geschrumpft (`_spPasst`, `.sp-lg`).
+- Dieselben Vier am Tisch (mindestens drei Partien ohne Pause über `RUNDE_PAUSE_MS`) bekommen eine zusätzliche Karte, die Runde (`type:'runde'`), dreißig Minuten nach der letzten Partie; sie zählt gegen keinen Deckel.
+- Was im selben Moment passiert, kommt in eine Sammelkarte nach seinem Grund (`causalKey`): die dauerhafte Tafel eines Spieltags (`table:<Tag>`), die kurze Strecke (`form:<Tag>`), die Spieler-Karte (`quelle:'spieler'`) und die Erfolgs-Karte (`quelle:'erfolg'`). Der Schlüssel kommt aus dem Inhalt; die Uhrzeit ist die früheste Zeile, die die Karte zeigt; Titel und Text fassen die Gruppe zusammen; die Karte zeigt höchstens `NEWS_LIMITS.sammelZeilen` Zeilen ohne Ausbauten, das Blatt alle, gegliedert nach Sorte.
+- Die Reihenfolge ist die Zeit; nichts sortiert um. `prio` steht auf EINER Skala (`STORY_PRIO`, `_newsPrio`: Breaking 90+, Spieltag 38–89, Hintergrund 10–37) und wiegt nur Sammelkarte und Karte des Tages.
+- Was der Generator bildet: jede ID aus Fachlichem (Spieler, Sache, Spieltag), nie aus Uhrzeit oder Zufall, sodass derselbe Datenstand dieselben Karten ergibt; was es je Tag genau einmal gibt, fällt dort nicht weg (`GEN_PFLICHT`, `GEN_PARTIE`); Marken einer Serie hängen an ihrer Partie und bleiben stehen; der Spieler des Tages steht an jedem Spieltag des Fensters um 23:59; Auszeichnungen sind nach Klasse Nachricht (`_badgeTakt`, `NEWS_BADGE_MARKEN`), kleine Marken einer Partie stehen zusammen (`badge_marken`); was der Generator nicht mehr bildet, meldet `STORY_ABGEMELDET` ab, was abläuft `STORY_LAEUFT_AB`.
+- Breaking ist das Seltenste und scheitert an keinem Deckel und keiner Sperre: legendäre Auszeichnung, längste Siegesserie aller Zeiten, Tabellenführer eines belastbaren Spieltags, feststehender Meister, Schlusssprint, erster Aufstieg in die obersten Insignium-Stufen, Karriereende. Entschieden nach dem Bündeln (`_isBreaking`); eine gebündelte Breaking-Karte nennt ihren Anlass zuerst (`brk`).
+- Die Karte des Tages (`_newsTagKarte`) steht nur an Spieltagen ab `NEWS_LIMITS.tagKartePartien` Partien oder `tagKarteStunde`, nie auf Breaking, dem Spieler des Tages, einem Rückblick oder einer negativen Karte (`_newsTagKarteWuerdig`, `_newsTagSpannung`).
+- Die Ewige Tafel meldet Rekord-, Chronik- und Insigniumwechsel gegen den Stand vor dem Spieltag (`_storyStand`), in vier Fällen (`_halterFall`) plus Ausbau; ein Ausbau heißt besser geworden (`_rekordArt`), ein Fenster meldet keinen; die Karte trägt ihre ganze Lage im `dataRef` und ihre Wirkung auf die Laufbahn samt Verlusten (`_tafelLaufbahn`, `_newsVerlustBand`, `_ndWirkungBlock`). Wer nicht gespielt hat, bekommt keine Karte; die Schandtafel meldet der Feed nicht.
+- Fun Facts: ein Slot um 15:00 (`ambient_<Tag>_15`), nachgetragen für stille Tage im Fenster, deterministisch gezogen mit Rotation von Vorlage, Rubrik (`ambientRubrik`) und These (`AMBIENT_PAAR_COOLDOWN_DAYS`); jedes Bild aus `dataRef.bild` (`30c-news-fakt.js`).
+- Neu ist, was seit dem Lesestand dazukam (`NEWS_LS_STAND`, `_newsGelesen`); eine Karte, die eine frühere fortsetzt, sagt es mit einem Faden, an den Partien nachgeprüft (`_newsFaeden`).
+- So spricht die Liga: jede Zahl mit Komma, Ergebnis aus Sicht des Siegers, der Elo-Gewinn gehört einem (`eloPid`), kein Gedankenstrich, kein Etikett mit Doppelpunkt, kein Satzfragment, keine englische Aufschrift, der Text wiederholt nicht die Schlagzeile und nicht, was die Zeichnung zeigt (`_ndNeu`, `_ndLead`); kein Blatt erklärt die App.
+- Jedes Story-Blatt hat Kopf, typ-eigene Mitte und Fuß (§C27) und zeigt, wovon seine Story handelt: Serie mit ihren Partien, Rivalität mit ihrem Verlauf, Auszeichnung mit ihren Trägern, Spitzenwechsel mit jedem Wechsel, Spieler des Tages mit seiner Bahn, Woche mit allen sechs Wertungen, Rückblick per Knopf (`_newsRueckblickKnopf`).
+
+## Stellen
+
+`26-news-konstanten.js` (`NEWS_LIMITS`, `STORY_PRIO`, `TAG_PFLICHT`), `26b-story-fakten.js`, `26c-news-bausteine.js`, `27-news-generator.js` (`_buildStories`), `28-news-ambient.js`, `29-news-cache.js` (`_consolidateStories`), `29b-news-sync.js`, `30-news-ui.js`, `30a-news-karte.js`, `30b-news-spieltag.js`, `30c-news-fakt.js`, `31-news-detail.js`, `31a-news-detail-mitte.js`, `31b-news-detail-helfer.js`.
+
+## Prüfung
+
+`tests/ambient` (Snapshots, Bündel, IDs bei zweitem Lauf, Sprache über jeden vierten Spieltag, Breaking-Anlässe, Fun-Fact-Bilder), `tests/blatt` (jede Karte und jedes Blatt bei 288 und 360 px, Bildzonen, Faden, Bewegung), `tests/wiederholung` (Auszeichnungsmarken), `tests/storyscroll`, `tests/leistung` (Feed in Portionen).
+
+## Herleitung
+
+Wie es dazu kam und was vorher falsch war — der Grund jeder Regel oben.
+
 Jede Story, die einen Spieler
 nennt, zeigt ihn: ein Einzelner sein Wappen wie überall sonst [§C27], ein
 Duo zwei überlappende Chips. `_newsPids` sucht die Beteiligten in den über

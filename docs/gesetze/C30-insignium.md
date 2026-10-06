@@ -1,5 +1,30 @@
 # §C30 Sieben Stufen, sieben Gegenstände — gezeichnet nach der Vorlage
 
+## Regel
+
+- Sieben Stufen (`INSIGNIEN`): Reif ab 0, Schildring ab 600, Volutenkranz ab 1200, Zierkranz ab 2100, Lorbeerreif ab 3100, Kronenreif ab 4300, Ordensstern ab 5600 Prestige. Keine Spanne ist kürzer als die vorige.
+- Die Stufe ist eine Ableitung aus den Punkten (`insigniumStufeVon`), nie eine gespeicherte Zahl.
+- Zwischen zwei Schwellen liegen drei Grade (`INSIGNIUM_GRADE`, `insigniumGradSchwellen`: Drittel, abgerundet auf Hundert). Der Ordensstern zählt Zacken, alle `ORDENSSTERN_SCHRITT` (500) eine. Die beiden obersten Stufen stehen als `INSIGNIUM_OBEN`.
+- Jede Stufe ist ein eigener Gegenstand, gezeichnet als Vektor nach der Vorlage (`INS_ZEICHEN`, je Stufe drei Zeichnungen); die Leiter steigt, kein Grad trägt mehr als der erste der nächsten Stufe.
+- Der Bau ist Silber (ab Schildring III Platin), Gold ist Akzent ab dem Lorbeerreif, in der Fläche erst am Ordensstern. Der Rang ist ein Schimmer in den Tönen der Rangfarbe (`INS_RANGFARBE`, `_izStein`), dazu Glut und Hof (`data-schein`).
+- Groß Vektor, klein Bild (`_insZeichnung`, `insBild`, `INS_VEKTOR_PX`); das Bild unter einer kurzen Blob-Adresse (`insBildHref`). Keine Zeichnung trägt einen Filter, keine Ebene darüber einen Filter oder eine Skalierung.
+- Die Raute am Fuß trägt die Ligaposition (`_insFuss`); die Sterne stehen darüber auf Radius `INS_STERN_R`; dahinter die Aura [§C36].
+- Verläufe und Zeichnungen stehen je einmal im Topf `<svg id="insDefs">` außerhalb von `#app` und des Blatts (`insigniumRef`, Gruppe in `<defs>`, kein `<symbol>`); `{eigen:true}` liefert das volle Markup.
+- Leistung des Feeds und der Blätter: `content-visibility:auto` an `.nf-card` (außer Breaking und Karte des Tages), zuerst die sichtbaren Karten (`NEWS_FEED_SOFORT`, `_newsFeedRest`), ein geschlossenes Blatt ist leer (`_sheetForceClose`), der Zug-Lauscher nur, wenn die Geste schließen kann, kein `backdrop-filter` an stillstehenden Leisten, `will-change:transform` am Blatt.
+- Die kleine Leiter (`_newsLeiter`) und die Laufbahn (Vitrine `.lb-karus`, ganze Leiter `#lbAlle`) zeigen die echten Zeichen; die Liga erfährt den Stand als Fun Fact (`insignium_stand`, gespeichert in `dataRef.leiter`).
+
+## Stellen
+
+`35a-insignium-zeichen.js`, `35b-prestige.js`, `src/css/12-insignium.css`, für den Feed `30-news-ui.js` und `16-sheet-infra.js`.
+
+## Prüfung
+
+`tests/zeichen` rastert alle 21 Zeichnungen (mittig, spiegelgleich, Loch, Reif bei 22–25 %, Rangfarbe im Stein); `tests/disziplinen` (Schwellen, Grade, Steine und Gold an jedem Übergang); `tests/blatt` (kein Filter, Vektor gegen Bild, Topf, Leiter, Vitrine).
+
+## Herleitung
+
+Wie es dazu kam und was vorher falsch war — der Grund jeder Regel oben.
+
 Das
 Insignium hat sieben Stufen (`INSIGNIEN`): **Reif** ab 0, **Schildring**
 ab 600, **Volutenkranz** ab 1200, **Zierkranz** ab 2100, **Lorbeerreif**

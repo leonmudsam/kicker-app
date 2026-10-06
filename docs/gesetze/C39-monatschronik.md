@@ -1,5 +1,32 @@
 # §C39 Die Monatschronik fragt nicht, wer der Beste ist
 
+## Regel
+
+- Die Monatschronik fragt nach Abweichung von der Erwartung, Konstanz, dem Verhältnis zum Ligamittel desselben Monats, zu einem bestimmten anderen Spieler oder einem seltenen Einzelereignis, nicht nach dem Können.
+- Das Stichproben-Tor ist niedrig und für alle gleich: acht Partien im Monat, fünf in einer Teilmenge (`ST_TEIL`), drei Spieltage. Die Besonderheit steckt in der Schwelle.
+- Jede `monat`-Wertung trägt `art` (koennen, konstanz, fuegung, schatten), `klasse` (legendaer, selten, besonders) und `aus` (Ausschlag der Schwelle in σ), einmal an den Daten geprüft und dann festgeschrieben.
+- Die Klasse zählt keine Halter. Gedeckelt ist die Rate: höchstens ein Halter je gewerteten Monat.
+- Prestige einer Chronik: `PRESTIGE_SOCKEL` (55, nicht für Schattenseiten) + `PRESTIGE_CHRONIK[art]` × `aus` + `PRESTIGE_SELTEN[klasse]`, gerundet auf fünf, mit dem Ausschlag der SCHWELLE, nicht des Halters.
+- Eine Chronik schiebt ihre Schwelle mindestens 1,5 σ hinaus, korreliert höchstens 0,35 mit der Spielzahl, misst eine Leistung und keine reine Zählung von Gelegenheiten.
+- Vorgegeben und nicht kalibriert: „Der Tagesregent" (60 % der eigenen Spieltage), „Die Wochenkrone" (jede eigene Woche, über `_periodWinnerMap`), „Auf dem Thron" (Platz zwei oder besser an jedem Spieltag ab der ersten eigenen Partie, aus der Elo-Bahn von `getGlobalSim`, `_thronDerLiga`).
+- Im Profilkopf steht der Beiname (`monat.beiname`, `chronBeiname`), überall sonst der Katalogname; das Blatt nennt den Beinamen in `.chron-kose`, außer er ist der Katalogname.
+- Die Klasse ist sichtbar: Gewicht der Zelle (`data-kl`), Name auf der Plakette (`CHRONIK_KLASSE_NAME`), Zahlenreihe im Blatt (`rcpZahlenHtml`).
+- Die Matrix ordnet nach Prestige, dann Zahl der Einträge, dann Name; sie steht in einer Karte (`_lchronTabelle`), Ruheständler in einer eigenen Karte (`ruhe_chronik`). Strich heißt gewertet ohne Eintrag, leer heißt nicht gewertet.
+- Ein Kürzel (`short`) ist ein ganzes Wort und passt gerendert in 54 px.
+- Die Rohsicht liegt in der Engine (`_seasonTitleCtx`: `partien`, `tagGrp`, `wochGrp`, `partnerGrp`, `gegnerGrp`).
+
+## Stellen
+
+`32-chronik-katalog.js` (`DISZIPLINEN`, `_stWertung`), `33-chronik-engine.js` (`_seasonTitleCtx`), `35-chronik-ui.js`, `35b-prestige.js` (`chronikPunkte`).
+
+## Prüfung
+
+`tests/disziplinen` hält jede Chronik an 1,5 σ, an der Spielzahl-Korrelation und am Halterdeckel; `tests/blatt` misst die Kürzel in der Zelle.
+
+## Herleitung
+
+Wie es dazu kam und was vorher falsch war — der Grund jeder Regel oben.
+
 Der alte
 Monatskatalog maß fast überall das Können, und wer eine Quote gewinnt,
 gewinnt fast jede. Er ist vollständig ersetzt: vierundsechzig Chroniken, die

@@ -1,5 +1,30 @@
 # §C27 Ein Bauteil, überall dasselbe
 
+## Regel
+
+- Derselbe Spieler sieht überall gleich aus, und dieselbe Aussage hat ein Bauteil: Wappen `.rav` (`insAvWrap`), Podest `.podest`/`.pod-karte` (`_chronPodestHtml`, Platz aus dem Wert, `_chronPlatz`), Segmentwähler `.ui-switch` (außen, Schlitten) und `.ui-tabs` (innen, Strich), Rangabzeichen `.rangab` (`rankBadgeHtml`), Gesicht `.av`, Zeichenkachel `.zk` (`zkHtml`), Award-Kachel `.aw-trophy` (`awKachelHtml`, `awVitrineHtml`), Beleg (`belegHtml`), Blattkopf und -fuß (`blattKopfHtml`, `blattAbschnittHtml`, `blattFussHtml`), Bühne (`buehneHtml`), Hinweis (`toast`), Bestätigung (`bestaetigen`), Einblick (`einblickHtml`). Wer ein zweites Bauteil für dieselbe Aussage baut, hat einen Fehler gemacht.
+- Bewegung: der Schlitten fährt nur über `transform` (`schlittenFahren`); eine Animation endet an `transitionend` mit Rückfall-Timer und genau einem Abschluss je Element (`_afterTransition`); der Finger besitzt den Zug (Eingabefelder und gescrollte Listen gehören nicht der Schließgeste, ein Bild je Frame); ein Balken wächst in der Höhe, nie in der Breite; alles ruht bei Bewegungsruhe.
+- Ein Award hat ein Zeichen (`AW_IC`), einen Namen (`AWARD_META.title`) und einen Wert aus EINER Tabelle (`AW_WERT`: Liste, Zahl, Einheit, Stichprobe, `gilt`); die Kachel beantwortet wer, wie viel, woraus (`awFeldHtml`, `awLaufHtml`) und trägt drei Töne (`ton-pos`, `ton-team`, `ton-neg`). Ein Name gehört einer Frage.
+- Feed-Karte: Tageskopf als Marke (`.nf-tag`), Rubrikband (`_newsRubrik`, `_newsSorteIcon`), zwölf Kartenformen (`_newsSorte`) mit je einer Bildzone, Motiv (`_newsMotiv`), keine zwei Rubriken mit demselben Zeichen; die Bildzone macht die Karte nicht höher und nimmt der Schlagzeile nicht den Platz; ein Deckel schneidet ab statt zu schrumpfen; Zahl, Datum, Name fett (`_newsBetont`). Es gibt eine Kartenform, kein Mini-Popup.
+- Licht und Rand: Breaking bricht die Spalte und glimmt; die Karte des Tages schimmert leise golden; `glanzLauf` nur dort, wo EINER einen goldenen Titel trägt; das Seltene trägt einen leisen Lauf in seiner Familienfarbe (`_newsGlanz`); der Rand (`--kante`, `--rahmen`) sagt das Gewicht; negativ trägt `.nf-neg`.
+- Story-Blatt: derselbe Bau (`_newsBlattKopf`, `_newsDetailMitte`, `_newsBlattFuss`), die Mitte zuerst gebaut, die Partie höchstens einmal, Scroll vor dem Markup auf null; was oben steht, steht unten nicht noch einmal (`_ndNeu`, `_ndOben`); kein Satz erklärt eine Grafik; das Blatt einer Partie zeigt Bühne, Siegchance auf der Skala, Elo-Wirkung, Duelle, Tagesleiste und Verteilung (`_ndBuehne`, `_ndChanceSkala`, `_ndEloWirkung`, `_ndDuelle`, `_ndTagLeiste`, `_ndVerteilung`); der Spieltag als Bahn (`_ndTagesbahn`); jedes Blatt zeigt, wovon seine Story handelt.
+- Zeichen: ein Strich aus EINER Regel (`--strich`); der Strahl des Positionsprofils gehört der überwiegenden Seite, die stärkere Rolle trägt ihre Farbe; das Insignium hat Reif, Kopf und Raute an fester Stelle; das Banner nur, wo ein Spieler allein und groß steht; die Kachel misst am Reif.
+- Eine Form je Sache: Kalendertag `tagKey`, Uhrzeit `datumFmt`, Dezimalkomma `komma`, Stand aus Sicht des Nebenstehenden `standFuer`, Überraschung als Siegchance der Sieger, Namen mit „&" nur in schmalen Zellen (`_chronHolderNames`), im Satz mit „und" (`_chronHalterSatz`, `_namenListe`), Elo-Grenzen in `expected` und `CHANCE_*`, der Platz im Feed aus der Gesamtliga (`_newsGesamtrang`). Zwei Rechnungen über dieselbe Frage, die bleiben müssen, hält ein Test aneinander.
+- Layout: Raster mit `minmax(0,1fr)`; ein Knopf in einer Zeile so breit wie sein Wort; ein Reiter nennt sein Wort ganz (`METRIC_REITER`), ein langes Wort wird kleiner statt gebrochen (`_awLblLang`); eine Bilanz bricht nicht um; ein langer Wert in der Zahlenreihe wird kleiner, nicht breiter.
+- Ansichten: eine Grafik über einer Rangliste ist eine Zeile, die aufklappt (`einblickHtml`); der Positionsverlauf ist eine Tabelle über die Zeit (`_posvTabelle`, `posvVorschauHtml`); die Partie im Verlauf zeigt den Sieger (`vHistory`), das Duo seine Bilanz als Balken; die Siegchance steht beim Aufstellen unter der Score-Karte (`_matchChanceHtml`); der Direkte Vergleich zeigt jede Begegnung (`h2hBegegnungenHtml`); die Kammern des Rekorde-Reiters sind Felder; eine lange Erklärung steht hinter `.kopf-info`.
+
+## Stellen
+
+quer durch `src/js` und `src/css`; die Bauteile selbst in `05b-recap-teile.js`, `09-ui-infra.js`, `09c-zeichen.js`, `13-view-awards.js`, `16-sheet-infra.js`, `30a-news-karte.js`, `31-news-detail.js`, `31a-news-detail-mitte.js`.
+
+## Prüfung
+
+`tests/blatt` (Geometrie, Bauteile, Text und Bewegung jedes Reiters und Blatts bei 360 px), `tests/bewegung` (Wischgeste, Abschlüsse), `tests/tafel` (Strich, Award-Tabelle, Kalendertag, Formatierer), `tests/zeichen`.
+
+## Herleitung
+
+Wie es dazu kam und was vorher falsch war — der Grund jeder Regel oben.
+
 Derselbe Spieler sieht in
 Rangliste, Positionen, Awards, Team-Blatt, Podest und Profil gleich aus.
 Das Wappen ist `.rav` (`insAvWrap`), das Podest ist `.podest`/`.pod-karte`

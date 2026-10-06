@@ -1,5 +1,23 @@
 # §C37 Ein Anteil misst gegen die Menge, um die es geht
 
+## Regel
+
+- Ein Anteil misst gegen die Teilmenge, um die es geht, nicht gegen alle Partien: enge Partien beim Pechvogel und Clutch-Player (`agg.clutch`), enge Partien des Duos bei den Glückspilzen, die Pleiten beim Zirkus, die Außenseiter-Partien beim Underdog-Held.
+- Auf der Kachel steht „x von y", nicht nur der Anteil.
+- Die Mindestzahlen passen zum Zeitraum Saison und Woche und stehen an einer Stelle (`AW_MIN`, keine über fünf); die Erklärung (`AWARD_META.why`) liest ihre Zahl aus `AW_MIN`.
+
+## Stellen
+
+`13-view-awards.js` (`AW_MIN`, `AWARD_META`, `AW_WERT`).
+
+## Prüfung
+
+`tests/tafel` prüft Schwellen und Nenner der Awards und was nach einer vollen Woche leer bleibt.
+
+## Herleitung
+
+Wie es dazu kam und was vorher falsch war — der Grund jeder Regel oben.
+
 „Pechvogel"
 zählte knappe Niederlagen gegen ALLE Partien und kürte damit den, der viele
 enge Spiele hatte, statt den, der sie verliert: wer zwanzig Partien spielt,

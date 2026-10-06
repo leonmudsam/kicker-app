@@ -1,5 +1,25 @@
 # §C32 Ein Chronik-Eintrag gehört dem, der ihn hält
 
+## Regel
+
+- Ein Monatseintrag gehört dem, der den Bestwert in diesem Monat hält, oder niemandem; punktgleich tragen ihn alle.
+- Die Matrix zeigt je Spieler und Monat einen Eintrag (`seasonTitleOf`, der erste in Katalogreihenfolge); das ist eine Anzeigeregel, die Tafel (`showSeasonTable`) zeigt alles, und nur dieser eine zählt fürs Prestige [§C34].
+- Der Feed sagt bei einem alleinigen Halter mehrerer Einträge, welcher im Profil steht (`_chronikZeigtSich`, Marke `.nf-sam-k` neben dem Text), und nennt den stärkeren Eintrag nur für EINEN Spieler.
+- Ein Monat unter `CHRONIK_MIN_TAGE` Spieltagen bekommt keine Chronik; `seasonTitleHalter` zieht dieselbe Grenze und antwortet dann mit `null`. Das Aufgehen der Tafel ist kein Wechsel, aber eine eigene Karte (`chronik_frei`, ohne Partie, Träger in `traeger`).
+- Eine Monatswertung findet höchstens einen Halter je gewerteten Monat; die Schwellen (`ab` in `_stWertung`) sind an den echten Partien geeicht.
+
+## Stellen
+
+`33-chronik-engine.js` (`seasonTitles`, `seasonTitleOf`, `seasonTitleHalter`), `26c-news-bausteine.js` (`_chronikZeigtSich`), `27-news-generator.js`.
+
+## Prüfung
+
+`tests/disziplinen` zählt Halter je Monat und nennt die zu tief hängende Schwelle; `tests/ambient` prüft die Chronik-Karten.
+
+## Herleitung
+
+Wie es dazu kam und was vorher falsch war — der Grund jeder Regel oben.
+
 Jeder Monatseintrag
 geht an den, der den Bestwert in diesem Monat wirklich hält — oder an
 niemanden. Halten ihn mehrere punktgleich, tragen ihn alle. Genau wie bei

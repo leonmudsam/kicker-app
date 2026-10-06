@@ -1,5 +1,28 @@
 # §C40 Das Karriereende: vier Regeln, mehr gibt es nicht
 
+## Regel
+
+- Gespeichert werden nur der Zeitpunkt (`players.retired_at`) und der Stand des Profils (`players.retired_stand`); alles andere folgt aus vier Regeln.
+- 1. Ein Zeitraum (Tag, Woche, Monat) fragt `sichtbar`: wer darin gespielt hat, steht darin und kann ihn gewinnen, auch nach dem Karriereende. Eine Monatschronik bleibt dem, der sie geholt hat.
+- 2. Ein Laufbahn-Vergleich (Ewige Tafel, Gesamt, Rangstufen, Liga-Rekorde, Prestige-Rang, Teams- und Positionslisten, Wertungen über die Laufbahn, Spielerwahl, Fun Facts, Insignium-Meldungen) fragt `ligaAktiv` ohne Zeitpunkt, auch in einem Zeitschnitt. Die Abfrage steht in den Engines, ein neuer Eintrag erbt sie.
+- 3. Das Profil steht im gespeicherten Stand: der Karriere-Teil beim Klick (`_ruheKarriereBauen`, `karriereSetzen`), der Abschluss-Teil nach `ruhestandAbschlussMs` einmal geschrieben (`_ruheAbschliessen`). Danach rechnet für ihn nichts mehr; gültig nur mit `RUHE_STAND_FASSUNG` und genau diesem Karriereende.
+- 4. Nach dem Abschluss nennt ihn keine Story mehr außer der seines Karriereendes (`ohneStoriesNachAbschied`, ein Tor im Generator und in `_consolidateStories`).
+- Eine Partie nach dem Karriereende gibt es nicht (`imRuhestandAm`). Gelöscht wird nur, wer nie gespielt hat (`spielerLoeschen`, gefragt bei der Datenbank). Kehrt er zurück, gilt wieder die Liga von heute.
+- Er steht als zugeklappter Einblick am Ende von Gesamt, Positionen, Teams und Chronik-Matrix, ohne Platz; seine Serie brennt nicht. Die Story `karriereende_<Spieler>_<Tag>` ist Breaking und gilt nur, solange das Karriereende gilt (`_storyWiderrufen`); das Blatt ist `zeigeAbschied`.
+- Wer etwas Neues baut, entscheidet nur: Zeitraum oder aus seinen Partien (`sichtbar`), oder Laufbahn-Vergleich (`ligaAktiv`). Eine rohe `.hidden`-Abfrage gibt es nicht.
+
+## Stellen
+
+`06b-ruhestand.js`, `18b-abschied.js`, Spalten aus `datenbank/karriereende.sql`.
+
+## Prüfung
+
+`tests/ruhestand` (die vier Regeln an den echten Partien, Profil zwei Monate und eine Fassung später Wort für Wort gleich), `tests/ruheliga` (kein Ruheständler auf dem Bildschirm außerhalb von `[data-ruhestand]` und `[data-bis]`), `tests/blatt` (Abschied bei 360 px).
+
+## Herleitung
+
+Wie es dazu kam und was vorher falsch war — der Grund jeder Regel oben.
+
 Wer die Gruppe verlässt, spielt keine Partie mehr. Löschen oder Ausblenden
 (`hidden`) nähme auch seine Geschichte; Ausblenden bleibt der Weg für einen
 versehentlich angelegten Spieler. Gespeichert werden der Zeitpunkt

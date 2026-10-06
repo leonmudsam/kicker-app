@@ -1,5 +1,26 @@
 # §C31 Drei Rückblicke, ein Baukasten
 
+## Regel
+
+- Saison-, Wochen- und Tagesrückblick bauen aus denselben Teilen (`rcpKopfHtml`, `rcpHeldHtml`, `rcpZahlenHtml`, `rcpKachelHtml`, `rcpZeileHtml`, `rcpNotizHtml`, `rcpAbschnitt`) und aus den Bauteilen, die die App schon hat (`.podest`, `.rrow`).
+- Ein Gold je Blatt: die Marke im Kopf und der Sieger. Der Saison-Rückblick hat keine Heldenkarte, das Podest ist der Held.
+- Der Meister hat eine Bühne (`saisonRang`, `saisonPodestHtml`, `saisonSpitze`, `saisonRennenHtml`, `saisonSpitzeHtml`, `saisonZellenHtml`); die Elo je Tag kommt aus `getSeasonPositionHistory`, keiner zweiten Rechnung.
+- Woche und Tag zeigen Held und Feld (`rcpWocheHtml`, `rcpEloBahnHtml`, `rcpFeldHtml`).
+- Ein Rückblick zeigt den Stand von damals (`insigniumSvg` mit `opt.titel`, `opt.pos`); der Reif bleibt der heutige.
+- Gestaltung steht im CSS; ein `style`-Attribut trägt nur einen berechneten Wert.
+
+## Stellen
+
+`05b-recap-teile.js`, `07b-rueckblick.js`, `06-db.js` (`showSeasonRecap`), `src/css/09-recap.css`.
+
+## Prüfung
+
+`tests/tafel` rechnet Tage an der Spitze und das Titelrennen aus den rohen Partien nach und misst die Inline-Styles.
+
+## Herleitung
+
+Wie es dazu kam und was vorher falsch war — der Grund jeder Regel oben.
+
 Saison, Woche und Tag bauen aus
 denselben Teilen (`05b-recap-teile.js`): `rcpKopfHtml`, `rcpHeldHtml`,
 `rcpZahlenHtml`, `rcpKachelHtml`, `rcpZeileHtml`, `rcpNotizHtml`,

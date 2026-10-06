@@ -1,5 +1,22 @@
 # §C38 Die Chronik gehört nicht nur den besten Drei
 
+## Regel
+
+- Ein Monatseintrag für die Mitte des Feldes misst den Abstand zum eigenen Niveau, nicht das Niveau: „Auf Augenhöhe", „Die Steigerung", „Der Sonntagsschuss", „Der Staffellauf", „Das Seitenbündnis" (beide über `_stUebergaenge`), „Der Quertreiber", „Die Tagesumkehr" (gegen den Erwartungswert 2·S·N durch n·(n−1)).
+- Nicht eingebaut wird, was einen zweiten Monat zur Eichung braucht, nur mit einer Zufallsreferenz zu rechnen ist, Statistiksprache braucht, die 1,5 σ nicht erreicht oder an der Spielzahl hängt.
+
+## Stellen
+
+`32-chronik-katalog.js` (`DISZIPLINEN`), `33-chronik-engine.js`.
+
+## Prüfung
+
+`tests/disziplinen` fällt, wenn ein solcher Eintrag wieder an die Spitze der Siegquote geht, und rechnet die vier neuen Chroniken aus den rohen Partien nach.
+
+## Herleitung
+
+Wie es dazu kam und was vorher falsch war — der Grund jeder Regel oben.
+
 Wer eine Quote
 gewinnt, gewinnt fast jede: gemessen gingen sechzig Prozent der
 Monatseinträge an die besten Drei der Siegquote, und der Monatserste allein

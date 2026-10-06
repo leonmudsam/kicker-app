@@ -193,7 +193,7 @@ ihn dort ein — im selben Commit.
 | 4 Bezeichner | derselbe Name auf oberster Ebene in zwei Dateien — **oder** ein Name, den niemand mehr ruft |
 | 5 Fingerabdruck | die Auslieferung trägt eine Version, die nicht zu ihrem Inhalt gehört — dann erfährt kein Gerät von einer neuen Fassung |
 | 6 Arbeitsanweisung | diese Datei, die Landkarte (JS und CSS), der Baum oder die Tabelle der Suiten in `tests/README.md` nennen eine Datei nicht, die es gibt, eine, die es nicht gibt, oder eine Zahl, die nicht stimmt |
-| 7 Verweise | ein Kürzel `§Cnn`, ein Link oder ein Pfad in der Doku zeigt auf etwas, das es nicht gibt, ein Gesetz wird nirgends im Code zitiert, eine Abschnittsnummer `§n.m` steht zweimal im Code oder ein Zitat `[§n.m]` zeigt auf keinen Abschnitt |
+| 7 Verweise | ein Kürzel `§Cnn`, ein Link oder ein Pfad in der Doku zeigt auf etwas, das es nicht gibt, ein Gesetz wird nirgends im Code zitiert, eine Abschnittsnummer `§n.m` steht zweimal im Code, ein Zitat `[§n.m]` zeigt auf keinen Abschnitt, oder einem Gesetz fehlt `## Regel`, `## Stellen` oder eine `## Prüfung`, die eine bestehende Suite nennt |
 | 8 Verzeichnisse | `docs/README.md` oder `docs/anker.md` sind nicht mehr das, was `node tools/doku.mjs` aus den Dateien erzeugt |
 
 Wächter 6 bis 8 machen die Pflegepflichten dieser Datei prüfbar: Landkarte,
@@ -237,6 +237,13 @@ Diese Regeln stehen als Kommentar im Code und werden dort mit ihrem Kürzel
 zitiert. Sie sind nicht Geschmack, sondern Absprache. Jedes Gesetz steht in
 einer eigenen Datei unter `docs/gesetze/`; wer eine Ansicht, eine Story oder
 eine Wertung anfasst, liest vorher das Gesetz, das sie zitiert.
+
+Jede Gesetzesdatei beginnt mit **Regel**, **Stellen** und **Prüfung** — das
+reicht zum Arbeiten. Darunter steht die **Herleitung**: wie es dazu kam und
+was vorher falsch war. Sie wird gelesen, wenn eine Regel im Weg zu stehen
+scheint, denn dort steht der Fehler, den sie verhindert. Eine geänderte
+Regel ändert die Zeile oben und, wo nötig, die Herleitung; Wächter 7 hält
+die drei Abschnitte und die genannte Suite fest.
 
 | Kürzel | Gesetz |
 |---|---|
@@ -412,7 +419,7 @@ Immer im **selben Commit** wie die Änderung, die sie auslöst:
 | Datei in `tools/` oder Hilfsdatei in `tests/` kommt dazu | §2 Baum — Wächter 6 besteht darauf |
 | Banner im Code kommt dazu oder ändert sich | `node tools/doku.mjs` — Wächter 8 besteht darauf |
 | Zahl der Bezeichner ändert sich | §2, letzter Absatz |
-| Gestaltungsgesetz kommt dazu, ändert sich, fällt weg | seine Datei in `docs/gesetze/`, der Index in §6 |
+| Gestaltungsgesetz kommt dazu, ändert sich, fällt weg | seine Datei in `docs/gesetze/` (oben Regel, Stellen, Prüfung; darunter die Herleitung), der Index in §6 |
 | Zustandsvariable kommt dazu oder ändert ihr Zurücksetzen | `docs/laufzeit.md` |
 | Zeitgeber kommt dazu oder ändert seine Bedingung | `docs/laufzeit.md` |
 | Cache-Topf kommt dazu | `docs/laufzeit.md` |

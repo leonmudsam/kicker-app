@@ -1,5 +1,31 @@
 # §C35 Nicht jeder Eintrag darf am Können hängen
 
+## Regel
+
+- Sechsundsiebzig Liga-Rekorde in fünf Kammern (30 Können, 8 Aktuelle Form, 10 Bestmarken, 17 Fügungen, 11 Schattenseiten). Die Kammer steht am Eintrag (`allzeit.kammer`), nicht aus `art` erraten.
+- Die Karte nennt Zeitraum, Grundwert und Mindestbasis (`zeitraum`, `basis`, `mind`) und zeigt, wie weit der Halter vorn liegt (`_rekFeldHtml`, aus `chronicleRang`); der Kopf jeder Kammer sagt in einem Satz, was sie misst (`CHRON_KINDS.satz`). Kein Text beschreibt die App oder eine frühere Rechnung.
+- Ein Rekord hat keine Wertlatte, nur eine Stichprobe (Partien, Spieltage, Wochen, Niederlagen). Was ein Wert von sich aus braucht (erstes Glied, zwei Partien, eine Richtung), bleibt; eine Teilmenge, die beschreibt, welche Partien zählen, ist keine Latte.
+- Aktuelle Form ist ein festes Endfenster der letzten 10, 20, 25, 30 oder 50 eigenen Partien, nie der beste Abschnitt. Ein gleitendes Fenster (`fenster`) meldet kein „ausgebaut" und nennt nicht den Wert seines Vorgängers.
+- Gemessen wird der Anteil, nicht die Anzahl; der Beleg (`ev`) beginnt mit dem Sortierwert. Ein Anteil an den eigenen Gelegenheiten kennt die Spielzahl nicht.
+- `offen`: erfüllbar mit fünfzig Partien in der Laufbahn — im Rennen steht jemand mit unter hundert Partien, der Rekord ist vergeben und gehört nicht nur den drei Besten.
+- Vierzehn Gegenpaare tragen dieselbe Mindestbasis; ein `paar` (zwei Enden eines Werts mit Vorzeichen) zeigt zurück, und die Rennen schneiden sich nicht.
+- Fügungen tragen `zufall` (`quote`: erreichbar, mindestens die halbe Liga im Rennen; `fund`: darf selten und unbesetzt sein, höchstens die Hälfte leer) und wiegen 75 statt 150. Eine Laufbahn aus lauter Niederlagen erreicht keinen Rekord mit Grundwert 150.
+- Kein Halter trägt mehr als ein Viertel der Tafel; jeder gewertete Spieler mindestens einen Eintrag. Die Schandtafel (`art:'schatten'`) zählt nichts und fragt eher den Abstand zum Eigenen als das Niveau; kein Halter über zwei Fünftel davon, mindestens sechs Namen.
+- Dieselbe Frage auf zwei Zeitachsen bleibt EINE Disziplin (zwanzig tragen beide); ein neuer Rekord steht im Katalog neben seinem nächsten Verwandten. Was eine Beziehung zweier Spieler misst oder an der Spielzahl hängt, wird kein Rekord.
+- `cond` nennt jede Schwelle der Wertfunktion, `wie` sagt, wie gemessen wird, samt Nenner. Gestrichene Rekorde stehen namentlich in `STORY_ABGEMELDET`; eine ID wechselt nicht, wenn ein Eintrag seine Frage wechselt.
+
+## Stellen
+
+`32-chronik-katalog.js` (`DISZIPLINEN`), `34-chronik-rekorde.js` (`_chronicleCtx`, `CHRONICLES`, `CHRON_KINDS`, `chronicleRang`, `rekordZaehlung`), `35-chronik-ui.js` (`ligaRekordeHtml`, `_rekFeldHtml`).
+
+## Prüfung
+
+`tests/disziplinen` (Katalog, Kammern und ihre Zahlen, Schwellen im Text, offene Rennen, Paare, Fenster, Halterdeckel, Schandtafel, sichtbarer Text), `tests/ambient` (jede Rekord-Karte gegen den ganzen Katalog), `tests/blatt` (Kammerfelder und Besitzleiste).
+
+## Herleitung
+
+Wie es dazu kam und was vorher falsch war — der Grund jeder Regel oben.
+
 Wer besser spielt,
 gewinnt jede Quote und jede Serie — am Ende liegen alle Liga-Einträge bei
 denselben drei Spielern. Zweiundzwanzig von sechsunddreißig Rekorden

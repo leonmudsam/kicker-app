@@ -1,5 +1,25 @@
 # §C36 Die Titel sind Licht
 
+## Regel
+
+- Die Meistertitel sind eine Aura hinter Avatar und Insignium (`AURA_STUFEN`): zehn Stufen, je Titel eine, danach zählen die Sterne weiter [§C26].
+- Maß aus dem Entwurf: die Aura ist 1/0,7 so breit wie das Zeichen (`AURA_SEITE`), ihre Mitte bis Radius 184 von 1000 frei — durch das Gesicht fällt kein Licht.
+- Jede Stufe wird einmal gerechnet und als Blob-Adresse gemerkt (`auraHref`); im Wappen steht sie still als `<image>`.
+- Bewegt nur im Profilkopf (`auraLebendHtml`), in drei Bildebenen, die nur `transform` und Deckkraft ändern; bei Bewegungsruhe still.
+- In der Laufbahn stehen die zehn Stufen klein als zweite Leiter (`.lb-auren`).
+
+## Stellen
+
+`35c-titel-aura.js`, `35b-prestige.js` (`insigniumSvg`), `src/css/12-insignium.css`.
+
+## Prüfung
+
+`tests/zeichen` misst Lage, Größe, Loch und Helligkeit je Stufe; `tests/blatt` die Bewegung.
+
+## Herleitung
+
+Wie es dazu kam und was vorher falsch war — der Grund jeder Regel oben.
+
 Hinter Avatar und Insignium steht die
 **Aura** der Meistertitel (`35c-titel-aura.js`, `AURA_STUFEN`), die Korona
 aus `mockup/titel-aura`: ein weicher Goldschein mit ungleich langen

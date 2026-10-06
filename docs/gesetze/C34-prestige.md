@@ -1,5 +1,29 @@
 # §C34 Drei belegbare Quellen, kein versteckter Leistungswert
 
+## Regel
+
+- Prestige kommt ausschließlich aus Auszeichnungen, Monatschroniken und aktuell gehaltenen Liga-Rekorden. Nur Rekorde können wieder sinken; Auszeichnungen und Chroniken bleiben Teil der Laufbahn.
+- Je Monat zählt der Eintrag, der in der Matrix steht [§C32]; für abgeschlossene Monate aus dem Einfrierer (`_frozenTitlesOf`), nicht aus einer neuen Rechnung.
+- Jede positive Auszeichnung zählt jedes Mal. Standard je Klasse in `PRESTIGE_AUSZEICHNUNG` (Rare 25 / −18 %, Common 3 / −25 %); jede legendäre und POTW/POTD tragen einen eigenen Startwert in `PRESTIGE_AUSZEICHNUNG_SPEZIAL`. Je zwei Verleihungen teilen eine Stufe, danach flacht die harmonische Kurve paarweise ab und endet nie. Schanden geben null.
+- Das Regelblatt liest die Startwerte aus der Tabelle (`_prestigeRegelListe`), nicht aus einer festen Liste.
+- Chroniken behalten ihren Wert aus `chronikPunkte`; die Sammlung wird nach Wert gedämpft: Platz 1–2 voll, 3–5 ÷ √2, 6–8 ÷ √3, danach alle drei eine Wurzelstufe weiter.
+- Rekorde beginnen bei `allzeit.basis` (`_rekordBasis`; 150 Können/Form/Bestmarke, 75 Rollenwert/Fügung, 0 Schattenseite), werden durch die Zahl der heutigen Halter geteilt und wie Chroniken gestapelt. Keine Quelle hat einen harten Deckel.
+- Das Blatt einer Rekord- oder Tafel-Karte zeigt die Wirkung aus den beiden gespeicherten Ständen (`laufbahn`, `_ndWirkungBlock`), keinen Rechentext; die Rechnung steht im Laufbahnblatt (`_prestigeQuellSatz`). Alle drei Rekordfälle teilen dieses Blatt.
+- Die Blätter der Ewigen Tafel tragen eine Bühne (`_ndWechselBuehne`, `_ndChronikBlatt`, `_ndMonatBlatt`, `_ndErstlingBlatt`, `_ndInsigniumBlatt`, `_ndTafelMomentBlatt`, `_ndHeldBuehne`, `_ndFaktBlatt`); eine Zeile führt zu ihrem Eintrag (`_ndTafelZiel`); keine Überschrift ohne Inhalt (`_ndOhneLeere`).
+- Die Seltenheitsklasse (`BADGE_RARITY`) sagt, wie schwer eine Auszeichnung zu holen ist; Gold gehört nicht der Anwesenheit. Wer eine Klasse verschiebt, zieht `RARITY_META.total` mit.
+
+## Stellen
+
+`35b-prestige.js` (`prestigeTabelle`, `prestigeOf`, `PRESTIGE_*`), `17-badges.js` (`BADGE_RARITY`), `31a-news-detail-mitte.js` (Blätter der Ewigen Tafel).
+
+## Prüfung
+
+`tests/disziplinen` (Quellen, Folgen, Dämpfung, Erreichbarkeit), `tests/archiv` (eingefrorene Monate), `tests/rechnen` (dieselbe Restverteilung in Laufbahn und Story), `tests/ambient` (Zahlen jeder Bühne).
+
+## Herleitung
+
+Wie es dazu kam und was vorher falsch war — der Grund jeder Regel oben.
+
 Prestige
 [§13.8] kommt ausschließlich aus **Auszeichnungen, Monatschroniken und
 aktuell gehaltenen Liga-Rekorden**. Siegquote, Elo-Hoch oder Spielzahl

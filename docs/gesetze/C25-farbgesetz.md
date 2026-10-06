@@ -1,5 +1,26 @@
 # §C25 Farbgesetz
 
+## Regel
+
+- Status- und Wertfarben haben vier Rollen: Rangfarbe heißt „ich", Gold heißt Titel oder heute gehaltener Rekord, Grün und Rot zeigen ausschließlich eine Richtung, alles Übrige ist Metall.
+- Der Feed trägt daneben eine leise Navigationsschicht und keine Wertung: Gold für Spieler des Tages und der Woche, kühles Metall für Ewige Tafel und Bestmarken, Violett für Insignien und Auszeichnungen, Grün für positive Spieltagsdynamik, Bronze für das Duell, Rot für Breaking und negative Richtung. Fun Facts tragen davon nur einen schwachen Farbschnitt.
+- Diese Farben sitzen nur an Kante, Rubrik, Zeichen und einem schwachen Schimmer; Kartenflächen bleiben dunkel.
+- Im Rekorde-Reiter tragen Können, Aktuelle Form und Bestmarke Gold, die Fügung Metall, die Schattenseite Rot: fünf Kammern, drei Töne.
+- Was negativ ist (`neg`, aus `art:'schatten'` oder `negativ:true`), trägt Rot, steht hinten und zählt nirgends als Rekord (`rekordZaehlung`); `nextRecordFor` schlägt es nicht vor. Das gilt auch für die Beinamen-Pille im Profilkopf.
+- Die Kammer steht als `data-kammer` an der Karte, nicht als Farbklasse: eine Fügung kann rot sein und bleibt eine Fügung.
+
+## Stellen
+
+`src/css/14-farbgesetz.css`, `_newsSorte` und `--story` im Feed, `rekordZaehlung` und `nextRecordFor` (`34-chronik-rekorde.js`).
+
+## Prüfung
+
+`tests/blatt` hält Besitzleiste und Podest je Spieler aneinander und misst Farbfamilien und Kanten im Feed.
+
+## Herleitung
+
+Wie es dazu kam und was vorher falsch war — der Grund jeder Regel oben.
+
 Status- und Wertfarben haben vier feste Rollen:
 1. Rangfarbe = „ich"
 2. Gold = Titel und heute gehaltene Rekorde

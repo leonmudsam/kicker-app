@@ -23,8 +23,8 @@
  *       in tests/README.md. Eine veraltete Arbeitsanweisung ist schlimmer
  *       als keine — sie wird geglaubt.
  *    7  Folgt jedem Verweis der Doku: ein Kürzel §Cnn, ein Link, ein Pfad
- *       muss auf etwas zeigen, das es gibt, und jedes Gesetz muss im Code
- *       zitiert sein. Ein Verweis ins Leere wird nicht rot, er wird
+ *       muss auf etwas zeigen, das es gibt, jedes Gesetz muss im Code
+ *       zitiert sein und mit Regel, Stellen und Prüfung beginnen. Ein Verweis ins Leere wird nicht rot, er wird
  *       geglaubt.
  *    8  Erzeugt docs/README.md und docs/anker.md im Speicher neu und
  *       vergleicht sie mit dem Eingecheckten, wie Wächter 1 den Bau.
@@ -264,6 +264,28 @@ for (const [k, wo] of anker) if (wo.length > 1) vs(`${k} steht als Abschnitt meh
 for (const f of [...jsDateien.map(f => 'src/js/' + f), ...suiten.map(f => 'tests/' + f)])
   for (const m of lesen(f).matchAll(/(\.md )?§(\d+\.\d+[a-z]?)\b/g))
     if (!m[1] && !anker.has('§' + m[2])) vs(`${f}: §${m[2]} zeigt auf keinen Abschnitt (docs/anker.md)`);
+
+// (e) Jedes Gesetz beginnt mit seiner Regel, seinen Stellen und seiner
+// Prüfung, und die Prüfung nennt eine Suite, die es gibt. Vorher stand
+// die Regel irgendwo im Verlauf, und wer sie suchte, las den ganzen
+// Hergang; ein Gesetz ohne Suite ist eine Bitte (CLAUDE.md, Pflege).
+// Ein Kürzel wie „§30c" ist weder Gesetz noch Abschnitt — gemeint war die
+// Datei, und so ein Verweis zeigte ins Leere, ohne dass (a) oder (d) ihn sahen.
+const suitenNamen = new Set(suiten.map(f => f.replace(/\.test\.js$/, '')));
+for (const f of [...gesetzDateien, 'allgemein.md']){
+  const pfad = 'docs/gesetze/' + f;
+  if (!existsSync(pfad)) continue;
+  const text = lesen(pfad);
+  for (const k of ['## Regel', '## Stellen', '## Prüfung'])
+    if (!abschnitt(text, k)) vs(`${pfad}: Abschnitt „${k}" fehlt`);
+  const pruef = abschnitt(text, '## Prüfung') || '';
+  const genannt = [...pruef.matchAll(/`tests\/([a-z]+)`/g)].map(m => m[1]);
+  if (!genannt.length) vs(`${pfad}: die Prüfung nennt keine Suite (\`tests/<name>\`)`);
+  for (const s of genannt) if (!suitenNamen.has(s)) vs(`${pfad}: Suite tests/${s} gibt es nicht`);
+}
+for (const f of doku)
+  for (const m of lesen(f).matchAll(/§\d+[a-z]\b/g))
+    vs(`${f}: ${m[0]} ist weder Gesetz (§Cnn) noch Abschnitt (§n.m)`);
 
 if (!verweisSchief) ok(`jeder Verweis der Doku trägt (${zitiert.size} Kürzel, ${doku.length} Dateien)`);
 

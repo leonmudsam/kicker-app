@@ -1,5 +1,27 @@
 # Allgemeine Gestaltungsregeln
 
+## Regel
+
+- Detail folgt der Größe: unter 26 px weder Sterne noch Feuer, unter 48 px kein Wappen (`znWrap`, `insAvWrap`).
+- Ein Duo hat keinen Rang und kein Wappen: zwei überlappende Chips.
+- Nichts sagt zweimal dasselbe — keine Zahl ein zweites Mal in einer Karte über der Tabelle, keine Rechnung zweimal (wer einen Tag oder eine Woche gewinnt, sagt `_periodeRangliste`).
+- Keine persönliche Ansprache, keine Possessivpronomen über einen Spieler, kein „Abend".
+- Jede `font-family` endet auf einer Familie (`sans-serif`, `monospace`).
+- Dieselbe Sache hat einen Namen (Siegquote, Partner, Torbilanz, Größte Überraschung, Direkter Vergleich); kein Befehl in Du-Form, kein englisches Wort außer den Namen der Wertungen, kein Kürzel, Einzahl wo eins steht.
+- Ein leeres Feld liest sich als Fehler: nicht vergebene Auszeichnungen gestrichelt, eine ungerade Kachel nimmt die ganze Reihe.
+
+## Stellen
+
+quer durch `src/`.
+
+## Prüfung
+
+`tests/blatt` liest Reiter und Blätter auf Namen und Sprache, `tests/disziplinen` prüft Belege und Bedingungen auf Pronomen, `tests/tafel` die Schriftangaben.
+
+## Herleitung
+
+Wie es dazu kam und was vorher falsch war — der Grund jeder Regel oben.
+
 Regeln ohne eigenes Kürzel. Sie gelten überall und werden im Code mit ihrem
 Wortlaut zitiert, nicht mit einer Nummer.
 
