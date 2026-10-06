@@ -1,6 +1,34 @@
 # Besonderheiten: Rekorde und Monatschroniken
 
-[Mockup öffnen](index.html). Eine eigenständige, offline lesbare Konzeptseite im Stil der vorhandenen Rekord- und Chronikentwürfe. **Kein Einbau in die App**, keine Datenbankabfragen, keine Änderung veröffentlichter Stories. Den eigenen unversionierten Entwurf `../ewige-tafel-story/` berührt diese Arbeit nicht.
+[Mockup öffnen](index.html). Eine eigenständige, offline lesbare Konzeptseite im Stil der vorhandenen Rekord- und Chronikentwürfe. Die Seite selbst baut nichts in die App ein, keine Datenbankabfragen, keine Änderung veröffentlichter Stories. Den eigenen unversionierten Entwurf `../ewige-tafel-story/` berührt diese Arbeit nicht.
+
+## Eingebaut
+
+Jeder Vorschlag wurde an den 466 echten Partien nachgerechnet und an den Regeln der App gemessen (CLAUDE.md §C35, §C38, §C39, §10.2). Neun tragen und stehen im Katalog, mit denselben Feldern wie jeder andere Eintrag; die Seite bleibt als Herleitung.
+
+| Eintrag | Art | Halter in den Fixtures |
+|---|---|---|
+| Der Pendler | Liga-Rekord, Fügung | Leo, Maxi · 10 |
+| Der Wanderpass | Liga-Rekord, Fügung | Stefan · 21 |
+| Der Spurwechsel | Liga-Rekord, Fügung | Maxi · 8 |
+| Der Ausbruch (Laufbahn) | Liga-Rekord an der bestehenden Disziplin `ausbruch` | Stefan · 17 |
+| Der Serienstopp | Liga-Rekord, Fügung (die Länge hat der Gegner gespielt) | Leon, Martin, Johannes · 13 |
+| Der Staffellauf | Monatschronik, Können, 1,6 σ | Alex (Juni), Martin (Juli) |
+| Das Seitenbündnis | Monatschronik, Können, 1,65 σ | Leo (Juli) |
+| Der Quertreiber | Monatschronik, Fügung, 2,03 σ | Henry (Juli) |
+| Die Tagesumkehr | Monatschronik, Fügung, 1,7 σ | Martin (August) |
+
+Nicht eingebaut, mit dem Grund:
+
+- **Misst eine Beziehung zweier Spieler** (es gibt keine Einträge, die ein Duo beschreiben): Teamgefälle und Gegensprung tragen beide Partner mit demselben Wert, Grenzverkehr gehört beiden Enden des Fadens, Doppelgesicht sucht aus vielen Paaren (0,58 bzw. 0,52 zur Spielzahl).
+- **Hängt an der Spielzahl**: Rückeroberung und Fixpunkt (je 0,64).
+- **Landet beim Halter einer verwandten Wertung**: Amplitude bei „Der große Sprung", Herzschlaglauf beim Nadelöhr (Werte 1 bis 3).
+- **Zu wenige im Rennen**: Gegenhalt (fünf Spieler, Bestwert unter null), Umschaltmoment (drei Spieler, im Monat zwei Spieler-Monate), Positionspakt (acht Spieler-Monate), Startzeit (kein einziger).
+- **Braucht einen zweiten Monat**: Quantensprung, Anderes Trikot, Rivalitätswende, Ruhiges Feld, Gegnerbalance, Torwende. Drei Monatspaare reichen nicht zum Eichen.
+- **Braucht eine Zufallsreferenz oder Statistiksprache**: Erwartungskorridor, Ergebnisdialekt (Bit), Verdichtung (Rangkorrelation).
+- **Erreicht keine 1,5 σ oder kommt kaum vor**: Rückspielwelle (1,49 σ), Bilanzparadox und Gegenläufer (fast nie erfüllt), Chancenpendel und Doppelzone (Effekte von wenigen Punkten).
+- **Hängt an einem willkürlichen Raster**: Spiegelmonat (feste Viererblöcke).
+- **Sucht das günstigste Paar**: Gegnergeflecht.
 
 ## Abgleich statt zweiter Katalog
 

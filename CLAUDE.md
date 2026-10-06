@@ -161,7 +161,12 @@ mockup/               Entwürfe. Eigenständige HTML-Seiten ohne Bauablauf,
                       Siegchance, jede Begegnung, Woche und Feld in den
                       Rückblicken; das Titelrennen trägt der
                       Positionsverlauf, Verlauf und Profil bleiben, wie sie
-                      sind (aufwertung-3/), und
+                      sind (aufwertung-3/), und der Vorschlag für Rekorde und
+                      Monatschroniken aus Besonderheiten: fünfzehn Rekorde
+                      und vierundzwanzig Monatsideen, nachgerechnet an den
+                      echten Partien. Fünf Rekorde und vier Chroniken sind
+                      eingebaut [§C35, §C38], die Seite nennt den Grund für
+                      jeden übrigen (besonderheiten/), und
                       die vierte: die Karten „Am Spieltag", deren Kopf dem
                       Anlass folgt — Spielfeld mit Rollen, Anzeigetafel samt
                       Bilanz in engen Partien, Ergebnisverteilung, Wippe des
