@@ -119,6 +119,8 @@ Wächter 8 vergleicht. Ein Kürzel `§n.m` ist ein Abschnitt des Codes,
 - **29b-news-sync.js**
   - §11.8 — Realtime-Subscription auf `stories` (v8.4)
   - §11.9 — Periodischer News-Auto-Sync (v8.5)
+- **29c-news-worker.js**
+  - §11.8b — Der Story-Generator in einem Worker
 - **30-news-ui.js**
   - §11.3 — LocalStorage (Read-State)
   - §11.4 — Header-Badge-Refresh

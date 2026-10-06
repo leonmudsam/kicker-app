@@ -278,12 +278,22 @@ jeden weiteren Tap erneut verworfen. Unveränderte Daten behalten DOM/Caches;
 Abruffehler behalten die letzte Ansicht. Ein sich anschließender expliziter
 Vordergrundaufruf hebt den stillen Modus auf (`_loadAllLeise`).
 
-Kommen neue Daten, zeichnet `loadAll` zuerst und rechnet den News-Generator
-(kalt rund 370 ms) erst in einem ruhigen Moment danach (`_leerlauf` in
-`syncStoriesViaDb`, höchstens anderthalb Sekunden später): beides lief in
-derselben Aufgabe, und die neue Rangliste stand erst nach dem Generator auf
-dem Bildschirm. `tests/ambient` sieht nach, dass er im selben Aufruf nicht
-läuft.
+Kommen neue Daten, zeichnet `loadAll` zuerst und lässt den News-Generator
+danach in einem Worker rechnen (`_storiesImWorker`, `29c-news-worker.js`):
+derselbe ausgelieferte Code, vor ihm eine Attrappe für DOM und Speicher. Kalt
+rechnet er an den Fixtures mit vierfach gedrosselter CPU rund eine Sekunde am
+Stück; auf dem Hauptthread blieb in dieser Sekunde jedes Tippen liegen. Der
+Worker lebt die Sitzung lang und bekommt den Datenstand nur, wenn sich
+`players`, `matches`, `cfg`, `seasons` oder `_cache.version` geändert haben
+(`_storyWorkerStand`), den Story-Bestand jedes Mal — so trifft sein Memo genau
+dann, wenn er auf dem Hauptthread getroffen hätte. Hat sich der Stand während
+der Rechnung geändert, gilt die Antwort nicht. Ohne Worker, ohne Skripttext,
+bei einem Fehler oder nach zwanzig Sekunden ohne Antwort (`STORY_WORKER_MS`)
+rechnet der Hauptthread wie zuvor, in einem ruhigen Moment (`_leerlauf`,
+höchstens anderthalb Sekunden später); nach einem Fehlschlag bleibt der
+Worker für die Sitzung aus. `tests/start` hält Worker und Hauptthread
+aneinander, `tests/ambient` sieht nach, dass der Generator nicht im selben
+Aufruf wie das Zeichnen läuft.
 
 `_tickDaten` lässt außerdem ein offenes Blatt, den Eingabe-Tab und die
 Einstellungen in Ruhe:

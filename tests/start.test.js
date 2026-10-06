@@ -20,7 +20,15 @@ let checks = 0, fails = 0;
 const ok = (c, msg) => { checks++; if(!c) fails++; console.log((c ? '  ok  ' : '  ✗   ') + msg); };
 
 // ── Der Server: die gebaute Seite mit ETag, wie GitHub Pages ────────────
-const SEITE = fs.readFileSync(ZIEL);
+// Mit einem Zugang in den Gültigkeitsbereich der App, gesetzt VOR dem Boot:
+// `window.__vorStart` (aus dem Init-Skript) bekommt `eval` der IIFE und kann
+// so mitzählen, was der Start tut. Ohne `__vorStart` ändert er nichts.
+const SEITE = (() => {
+  const html = fs.readFileSync(ZIEL, 'utf8');
+  const boot = html.search(/loadAll\(\);\s*\ncheckForUpdate\(\);/);
+  if(boot < 0) throw new Error('Boot-Zeile nicht gefunden');
+  return html.slice(0, boot) + 'if(window.__vorStart) window.__vorStart(s => eval(s));\n' + html.slice(boot);
+})();
 const ETAG = '"seite-1"';
 const anfragen = [];
 const server = http.createServer((req, res) => {
@@ -135,6 +143,50 @@ async function neueSeite(ctx){
     const dritter = anfragen.filter(x => x.cb);
     ok(dritter.length === 1 && dritter[0].inm === null, 'Ein ETag einer anderen Version wird nicht gesendet');
     await c.page.close();
+
+    // ── Der Generator im Worker ───────────────────────────────────────
+    // Der Start rechnet die Stories nicht auf dem Hauptthread, und der Worker
+    // kommt zu denselben Stories wie der Hauptthread mit demselben Code.
+    const w = await neueSeite(ctx);
+    await w.page.addInitScript(() => {
+      window.__vorStart = K => { window.__K = K; window.__haupt = 0;
+        K('const __bs=_buildStories; _buildStories=function(){ window.__haupt++; return __bs.apply(this, arguments); }'); };
+    });
+    await w.page.goto(BASIS);
+    await w.page.waitForFunction(() => window.__K && window.__K('Array.isArray(_cache._stories) && _cache._stories.length > 20'), null, {timeout:60000});
+    ok(await w.page.evaluate(() => window.__haupt === 0), 'Beim Start rechnet der Hauptthread keine Story');
+    ok(await w.page.evaluate(() => window.__K('window.__schreib.some(x => x.startsWith("stories."))')), 'Die Stories aus dem Worker werden veröffentlicht wie bisher');
+    const gleich = await w.page.evaluate(async () => {
+      const K = window.__K;
+      const ausWorker = await K('_storiesImWorker()');
+      const haupt = K('_buildStories()');
+      const text = x => JSON.stringify(x);
+      return {n:haupt.length, gleich:!!ausWorker && text(ausWorker) === text(haupt),
+        // JSON macht aus Datum und Zahl dasselbe; der Typ jedes Zeitpunkts
+        // muss eigens gleich sein. Gefragt wird nach dem Typ, nicht nach
+        // `instanceof`: die feste Uhr der Suite ersetzt `Date`.
+        when:!!ausWorker && ausWorker.length === haupt.length && ausWorker.every((s, i) =>
+          Object.prototype.toString.call(s.when) === Object.prototype.toString.call(haupt[i].when))};
+    });
+    ok(gleich.n > 20 && gleich.gleich, `Worker und Hauptthread ergeben dieselben ${gleich.n} Stories (IDs, Texte, dataRef, Zeit)`);
+    ok(gleich.when, 'Jeder Zeitpunkt kommt mit seinem Typ zurück (Datum bleibt Datum, Zahl bleibt Zahl)');
+    // Ein zweiter Lauf ohne neue Daten schickt den Stand nicht noch einmal.
+    ok(await w.page.evaluate(async () => { const K = window.__K; const v = K('_storyWorkerStand');
+      await K('_storiesImWorker()'); return K('_storyWorkerStand') === v; }), 'Unveränderter Stand wird nicht erneut übertragen');
+    ok(w.fehler.length === 0, 'Worker-Start ohne Seitenfehler' + (w.fehler.length ? ': ' + w.fehler[0] : ''));
+    await w.page.close();
+
+    // Ohne Worker rechnet der Hauptthread, und der Feed hat seine Stories.
+    const r = await neueSeite(ctx);
+    await r.page.addInitScript(() => {
+      window.Worker = undefined;
+      window.__vorStart = K => { window.__K = K; window.__haupt = 0;
+        K('const __bs=_buildStories; _buildStories=function(){ window.__haupt++; return __bs.apply(this, arguments); }'); };
+    });
+    await r.page.goto(BASIS);
+    await r.page.waitForFunction(() => window.__K && window.__K('Array.isArray(_cache._stories) && _cache._stories.length > 20'), null, {timeout:60000});
+    ok(await r.page.evaluate(() => window.__haupt >= 1), 'Ohne Worker rechnet der Hauptthread wie bisher');
+    await r.page.close();
   } finally {
     await browser.close();
     server.close();
