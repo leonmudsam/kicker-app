@@ -12,17 +12,31 @@
 // Offen bleibt er, bis der Reiter gewechselt wird (`einblickOffen`,
 // 01-update.js): ein Neuzeichnen nach einer neuen Partie oder einem anderen
 // Zeitraum klappt ihn nicht zu, ein neuer Reiter beginnt geschlossen.
+//
+// Die Ruheständler stehen in derselben Zeile [§C40]: unter Gesamt, unter den
+// Positionen und unter den Teams, zu und am Ende. Sie gehören nicht in die
+// Rangliste der aktiven Liga, aber ihre Laufbahn ist nicht weg. Weil ein
+// Reiter damit zwei Einblicke tragen kann, merkt `einblickOffen` jeden
+// offenen; mit einem einzigen Wert klappte der zweite den ersten im Zustand
+// zu, und nach dem nächsten Neuzeichnen stand er geschlossen da.
 const EINBLICK = {
   rollen:{titel:'Die Rollen-Landkarte', ic:'sideSwap', inhalt:() => _einblickRollen()},
-  netz:{titel:'Das Netz der Duos', ic:'duo', inhalt:() => _einblickNetz()}
+  netz:{titel:'Das Netz der Duos', ic:'duo', inhalt:() => _einblickNetz()},
+  ruhe_liga:{titel:'Karriere beendet', ic:'hourglass', ruhestand:true, inhalt:() => ruhestandTafelHtml()},
+  ruhe_pos:{titel:'Karriere beendet', ic:'hourglass', ruhestand:true, inhalt:() => positionenRuheHtml()},
+  ruhe_teams:{titel:'Duos mit Karriereende', ic:'hourglass', ruhestand:true, inhalt:() => vTeams(true).ruhe}
 };
+function _einblickAuf(key){ return einblickOffen.split(' ').includes(key); }
 function einblickHtml(key, rechts){
   const e = EINBLICK[key];
   if(!e) return '';
-  const auf = einblickOffen === key;
+  const auf = _einblickAuf(key);
   let inhalt = '';
   if(auf){ try { inhalt = e.inhalt() || ''; } catch(err){ inhalt = ''; } }
-  return `<div class="einblick${auf ? ' auf' : ''}" data-einblick="${key}">
+  // `data-ruhestand` ist die eine Erlaubnis, in einer Ansicht der aktiven
+  // Liga einen Ruheständler zu zeigen [§C40]; `tests/ruheliga` sucht ihn
+  // überall sonst.
+  return `<div class="einblick${auf ? ' auf' : ''}" data-einblick="${key}"${e.ruhestand ? ' data-ruhestand' : ''}>
     <button class="einblick-k" type="button" aria-expanded="${auf}">${svgI(e.ic)}<span>${esc(e.titel)}</span>`
     + `${rechts ? `<em>${esc(rechts)}</em>` : ''}<i class="einblick-pf">${svgI('chevron')}</i></button>
     <div class="einblick-i">${inhalt}</div></div>`;
@@ -33,8 +47,10 @@ function einblickBinden(wurzel){
   (wurzel || document).querySelectorAll('[data-einblick] > .einblick-k').forEach(k => {
     k.onclick = () => {
       const box = k.parentElement, key = box.dataset.einblick;
-      const auf = einblickOffen !== key;
-      einblickOffen = auf ? key : '';
+      const auf = !_einblickAuf(key);
+      const offen = einblickOffen.split(' ').filter(k => k && k !== key);
+      if(auf) offen.push(key);
+      einblickOffen = offen.join(' ');
       const i = box.querySelector('.einblick-i');
       if(auf && !i.innerHTML.trim()){
         try { i.innerHTML = EINBLICK[key].inhalt() || ''; } catch(err){ i.innerHTML = ''; }
@@ -48,6 +64,11 @@ function einblickBinden(wurzel){
 function bindDetailLinks(el){
   el.querySelectorAll('[data-detail]').forEach(x => {
     x.onclick = () => sheetNav(() => showPlayer(x.dataset.detail));
+  });
+  // Die Duos eines Einblicks entstehen erst beim Aufklappen und waren damit
+  // nach dem Binden der Ansicht gar nicht mehr erreichbar.
+  el.querySelectorAll('[data-team]').forEach(x => {
+    x.onclick = () => { const [a, b] = x.dataset.team.split('|'); if(a && b) showTeam(a, b); };
   });
 }
 

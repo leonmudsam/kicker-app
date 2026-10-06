@@ -10,10 +10,13 @@ const RANKS=[
   {label:'Einsteiger',icon:'user',   color:'var(--orange)', pct:1.00},
 ];
 
-function getSeasonAvgElos(){
+// Mit `bisMs` der Stand bis dorthin — für den eingefrorenen Rang eines
+// Ruheständlers [§C40], der sich mit späteren Partien anderer nicht
+// verschieben darf.
+function getSeasonAvgElos(bisMs){
   // Direkter Lookup aus getGlobalSim — der globale Sim hat bereits Karriere-Elo
   // (gewichteter Durchschnitt aller Saison-End-Elos). Vermeidet Doppelberechnung.
-  const sim=getGlobalSim();
+  const sim=bisMs==null?getGlobalSim():getSimAt(bisMs);
   const avgs={};
   players.forEach(p=>{
     avgs[p.id]=sim.careerElo[p.id]!==null && sim.careerElo[p.id]!==undefined
@@ -21,25 +24,41 @@ function getSeasonAvgElos(){
   });
   return avgs;
 }
-function getAllPlayerRanks(){
-  const key='allRanks_'+matches.length+'_'+_cache.version;
-  if(_cache._allRanksKey===key) return _cache._allRanksData;
-  const avgs=getSeasonAvgElos();
+// Die Rangstufen der Ewigen Tafel aus einer Elo-Tabelle. Eine Stelle für
+// die Reihenfolge, damit der eingefrorene Rang dieselbe Rechnung nimmt wie
+// der heutige [§C27].
+function _rangTabelle(avgs){
   const ranked=players
-    .filter(p=>!p.hidden&&avgs[p.id]!==null&&avgs[p.id]!==undefined)
+    .filter(p=>ligaAktiv(p)&&avgs[p.id]!==null&&avgs[p.id]!==undefined)
     .sort((a,b)=>avgs[b.id]-avgs[a.id]);
   const result={};
   ranked.forEach((p,idx)=>{
     const pct=(idx+1)/ranked.length;
     const rank=RANKS.find(r=>pct<=r.pct)||RANKS[RANKS.length-1];
-    result[p.id]={...rank,avg:avgs[p.id]};
+    result[p.id]={...rank,avg:avgs[p.id],perzentil:pct*100};
   });
+  return result;
+}
+function getAllPlayerRanks(){
+  const key='allRanks_'+matches.length+'_'+_cache.version;
+  if(_cache._allRanksKey===key) return _cache._allRanksData;
+  const result=_rangTabelle(getSeasonAvgElos());
   _cache._allRanksKey=key;
   _cache._allRanksData=result;
   return result;
 }
 
+// Wie weit vorn jemand in der Ewigen Tafel steht, in Prozent der aktiven
+// Liga. Ein Ruheständler behält den Wert seines Karriereendes [§C40].
+function rangPerzentil(id){
+  const r=getPlayerRank(id);
+  return r&&r.perzentil||0;
+}
+
 function getPlayerRank(id){
+  // Ein Ruheständler trägt den Rang, mit dem er aufgehört hat [§C40] — die
+  // Liga von heute vergleicht ihn nicht mehr.
+  if(imRuhestand(id)) return ruhestandStand(id).rang||null;
   return getAllPlayerRanks()[id]||null;
 }
 

@@ -351,6 +351,7 @@ function _isBreaking(s){
     case 'streak_record':    // längste Siegesserie aller Zeiten
     case 'season_recap':     // der Meister steht fest
     case 'season_endgame':   // der Schlusssprint, und nur bei offener Lage
+    case 'karriereende':     // ein Spieler beendet die Karriere [§C40]
       return true;
     case 'badge_unlocked':   // nur legendäre Auszeichnungen
       return d.rarity === 'legendary';
@@ -599,6 +600,15 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
     // Spitze, klein, samt der Tage vorn und dem Vorsprung.
     kopf = _newsMeisterKopf(d);
     fuss = _newsMeisterFuss(d);
+  } else if(sorte === 'held' && d.type === 'karriereende'){
+    // Die Bühne des Abschieds und darunter die Zahlen, die die Karte bei
+    // ihrer Entstehung trug — der Stand von damals, nicht von heute.
+    kopf = _newsAbschiedKopf(d);
+    fuss = _newsZahlband([
+      {v: d.spiele != null ? _spZahl(d.spiele) : null, l:'Partien'},
+      {v: d.quote != null ? Math.round(d.quote * 100) + ' %' : null, l:'Siegquote'},
+      {v: d.rekorde ? d.rekorde : (d.elo != null ? d.elo : null), l: d.rekorde ? (d.rekorde === 1 ? 'Rekord' : 'Rekorde') : 'Karriere-Elo', f: d.rekorde ? 'g' : ''}
+    ]);
   } else if(sorte === 'held'){
     const pid = d.playerId || (Array.isArray(d.playerIds) ? d.playerIds[0] : null);
     gesicht = `<div class="nf-gr-l">${av(pid, 52)}</div>`;
@@ -717,7 +727,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
   // Das Duell traegt seine Wappen im Band ueber dem Text; die Ersatzgesichter
   // haetten sie ein zweites Mal daneben gestellt.
   if(!gesicht && !faktBild && sorte !== 'spiel' && sorte !== 'woche' && sorte !== 'duell'
-     && d.type !== 'season_recap'){
+     && d.type !== 'season_recap' && d.type !== 'karriereende'){
     const g = _newsGesichtHtml(s);
     if(g) gesicht = `<div class="nf-gr-l">${g}</div>`;
   }
@@ -1389,7 +1399,8 @@ function _newsTafelWert(s){
 function _newsGesamtrang(pid){
   try {
     const career = (getGlobalSim() || {}).careerElo || {};
-    const ids = Object.keys(career).filter(id => pmap()[id] && !pmap()[id].hidden);
+    // Ein Ruheständler hat keinen Platz in der Liga von heute [§C40].
+    const ids = Object.keys(career).filter(id => ligaAktiv(pmap()[id]));
     ids.sort((a, b) => (career[b] ?? 0) - (career[a] ?? 0));
     return ids.indexOf(pid) + 1;
   } catch(e){ return 0; }
@@ -1412,7 +1423,7 @@ function _newsRarityLabel(r){
 function _newsBadgeHalterText(badgeId){
   if(!badgeId) return '';
   try {
-    const ids = Object.keys(pmap()).filter(id => !pmap()[id].hidden);
+    const ids = Object.keys(pmap()).filter(id => sichtbar(pmap()[id]));
     const n = ids.filter(id => (getCachedBadges(id) || []).some(b => b.id === badgeId)).length;
     if(!n) return '';
     return n === 1 ? 'als Einziger in der Liga' : `${n} von ${ids.length} tragen sie`;
@@ -1435,6 +1446,9 @@ function _newsSorte(s){
   // „fakt" — die leiseste Karte des Feeds trug die Nachricht, die es je
   // Monat genau einmal gibt, und Gold gehört den Titeln [§C25].
   if(t === 'season_recap') return 'held';
+  // Das Karriereende erzählt eine ganze Laufbahn: der Held mit seinem
+  // Wappen, wie es beim Abschied stand [§C40].
+  if(t === 'karriereende') return 'held';
   if(t === 'badge_unlocked') return 'badge';              // das Zeichen der Auszeichnung
   // Die gesammelten runden Marken eines Tages sind dieselbe Sache in der
   // Mehrzahl und tragen deshalb dieselbe Form [§C27]. Ohne diese Zeile fiele
@@ -1578,6 +1592,14 @@ function _newsZahlband(werte){
 // 64 und 52 px, darunter bliebe vom Wappen nichts [§6]. Hinter dem Ersten
 // liegt ein Strahlenkranz in Gold — er ist Licht und keine Form, und bei
 // Bewegungsruhe steht er still.
+// Der Kopf der Karte eines Karriereendes: dasselbe Wappen wie im Blatt,
+// kleiner — 84 px, darunter bliebe vom Band nichts [§6].
+function _newsAbschiedKopf(d){
+  const p = pmap()[d.pid];
+  if(!p) return '';
+  return `<div class="nf-abschied" data-pid="${esc(d.pid)}"><span class="nf-ab-strahl" aria-hidden="true"></span>`
+    + `${rcpAvHtml(d.pid, 84, {band:true, titel:d.titel || 0})}</div>`;
+}
 function _newsMeisterKopf(d){
   try {
     const rang = saisonRang(d.sid);

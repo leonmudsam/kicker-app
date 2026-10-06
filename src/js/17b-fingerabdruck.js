@@ -48,7 +48,9 @@ function fingerFeld(){
   const key = 'f_' + matches.length + '_' + _cache.version;
   if(_cache._fingerKey === key) return _cache._finger;
 
-  const feld = activePlayers()
+  // Das Feld ist die Laufbahn aller, auch der Ruheständler [§C40]: ihr
+  // Profil zeigt den Fingerabdruck weiter, und eine Laufbahn ist Geschichte.
+  const feld = players.filter(p => sichtbar(p))
     .map(p => ({id:p.id, st:playerStats(p.id), serie:longestPlayerStreakInfo(p.id, matches).best}))
     .filter(d => d.st.games >= FINGER_MIN_SPIELE);
 
@@ -73,6 +75,10 @@ function fingerFeld(){
 // Die sechs Achsen eines Spielers — oder null, wenn seine Laufbahn dafür
 // noch zu kurz ist.
 function fingerabdruck(pid){
+  // Ein Ruheständler zeigt nach seinem Abschluss den gespeicherten Abdruck
+  // [§C40]: das Feld spielt weiter, und sein Platz darin verschöbe sich.
+  const a = imRuhestand(pid) ? ruhestandAbschluss(pid) : null;
+  if(a && Array.isArray(a.finger)) return a.finger;
   const F = fingerFeld();
   if(F.ids.indexOf(pid) < 0) return null;
   return F.achsen.map(a => {

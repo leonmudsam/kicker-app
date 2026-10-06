@@ -433,7 +433,7 @@ function playerH2HList(id, minTotal=3){
   const out = Object.entries(stats)
     .filter(([oid, s]) => {
       const p = pm[oid];
-      return p && !p.hidden && (s.teamG + s.oppG) >= minTotal;
+      return sichtbar(p) && (s.teamG + s.oppG) >= minTotal;
     })
     .map(([oid, s]) => ({oid, ...s, total: s.teamG + s.oppG}))
     .sort((a,b)=> b.total - a.total);

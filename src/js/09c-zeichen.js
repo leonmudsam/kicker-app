@@ -253,12 +253,16 @@ function znTitel(pid){
 // dasselbe, und genau das soll man von weitem sehen. Die Stufe steuert Bogen,
 // Höhe, Takt und Deckkraft — nachzulesen in _znBild und 15-zeichen.css.
 function znFeuer(pid){
+  // Ein Ruheständler hat keine laufende Serie [§C40]: das Feuer am Wappen
+  // brannte sonst für immer über dem letzten Spieltag seiner Laufbahn.
+  if(imRuhestand(pid)) return 0;
   try {
     const cs = getGlobalSim().curStreak[pid] || 0;
     return cs >= 7 ? 3 : cs >= 5 ? 2 : cs >= 3 ? 1 : 0;
   } catch(e){ return 0; }
 }
 function znStreak(pid){
+  if(imRuhestand(pid)) return 0;
   try { return getGlobalSim().curStreak[pid] || 0; } catch(e){ return 0; }
 }
 

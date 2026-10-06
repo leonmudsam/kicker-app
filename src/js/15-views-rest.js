@@ -2,14 +2,20 @@
 //     Team-Tab mit Team-Statistiken und Top-Teams.
 // ╚═════════════════════════════════════════════════════════════════════════╝
 function vTeams(nurErgebnis=false){
-  const T=teamStats().filter(t=>t.g>=4);
-  if(!T.length){
+  // Ein Duo mit einem Ruheständler spielt nie wieder [§C40]: es steht nicht
+  // in der Liste der aktiven Liga, sondern am Ende in einer Zeile, die
+  // aufklappt. Ein Duo mit einem ausgeblendeten Spieler steht nirgends.
+  const T0=teamStats().filter(t=>t.g>=4);
+  const T=T0.filter(t=>t.ids.every(id=>ligaAktiv(id)));
+  const ruheT=T0.filter(t=>t.ids.every(id=>sichtbar(id))&&t.ids.some(id=>imRuhestand(id)));
+  if(!T.length&&!ruheT.length){
     const html=emptyState('handshake','Noch nicht genug Daten');
-    return nurErgebnis?{kopf:'Ab 4 gemeinsamen Spielen',html}:`<div class="view-head"><h2>Teams</h2><p>Ab 4 gemeinsamen Spielen</p></div>${html}`;
+    return nurErgebnis?{kopf:'Ab 4 gemeinsamen Spielen',html,ruhe:''}:`<div class="view-head"><h2>Teams</h2><p>Ab 4 gemeinsamen Spielen</p></div>${html}`;
   }
   const showBest=teamView!=='worst';
   
   // ═══ SORTIERUNG BASIEREND AUF teamSort VARIABLE ═══
+  const ordnen=T=>{
   let sorted;
   if(teamSort==='wr'){
     // Standard: nach Siegquote
@@ -33,6 +39,9 @@ function vTeams(nurErgebnis=false){
     sorted=[...T].sort((a,b)=>(b.w/b.g)-(a.w/a.g)||(b.gf-b.ga)-(a.gf-a.ga)||b.g-a.g);
   }
   
+  return sorted;
+  };
+  const sorted=ordnen(T);
   const arr=showBest?sorted:[...sorted].reverse();
 
 
@@ -66,14 +75,16 @@ function vTeams(nurErgebnis=false){
   // Dadurch findet „Leon & Martin", „Martin & Leon", „Leon Martin" und „Martin Leon"
   // dasselbe Duo. Jeder Term muss auf mind. einen der beiden Spielernamen passen.
   const _tqTokens = _tq.split(/[\s&]+/).filter(Boolean);
-  const arrF = _tqTokens.length
-    ? arr.filter(t => {
+  const filtern = list => _tqTokens.length
+    ? list.filter(t => {
         const names = t.ids.map(id => ((pm[id]&&pm[id].name)||'').toLowerCase());
         return _tqTokens.every(tok => names.some(nm => nm.includes(tok)));
       })
-    : arr;
+    : list;
+  const arrF = filtern(arr);
 
-  const rows=arrF.map((t,i)=>{
+  // `ohneRang` für die Duos mit Karriereende: kein Platz, kein Metall.
+  const zeile=(t,i,ohneRang)=>{
     const wr=Math.round(t.w/t.g*100);
     const gd=t.gf-t.ga;
     const keyTeam=[t.ids[0],t.ids[1]].sort().join('|');
@@ -96,10 +107,10 @@ function vTeams(nurErgebnis=false){
     }
 
     
-    const isTop=showBest&&i<3&&!_tq;
+    const isTop=showBest&&i<3&&!_tq&&!ohneRang;
     const top=isTop?TOP[i]:null;
     const borderColor=top?top.border:'var(--line)';
-    const rankBlock=top
+    const rankBlock=ohneRang?'':top
       ? `<div style="width:24px;height:24px;border-radius:8px;background:${top.bg};color:${top.fg};display:grid;place-items:center;font-family:'Archivo Black',sans-serif;font-size:12px;flex-shrink:0">${i+1}</div>`
       : `<div style="width:24px;text-align:center;font-family:'Archivo Black',sans-serif;font-size:14px;color:var(--faint);flex-shrink:0">${i+1}</div>`;
     
@@ -119,11 +130,16 @@ function vTeams(nurErgebnis=false){
         <div class="tm-wert" style="color:${i===0&&isTop&&teamSort==='wr'?'var(--gold)':mainColor}">${mainValue}</div>
       </div>
     </div>`;
-  }).join('');
+  };
+  const rows=arrF.map((t,i)=>zeile(t,i,false)).join('');
+  // Dieselbe Ordnung und dieselbe Suche wie die Liste darüber.
+  const ruheF=filtern(showBest?ordnen(ruheT):[...ordnen(ruheT)].reverse());
+  const ruhe=ruheF.length?`<div class="rlist">${ruheF.map((t,i)=>zeile(t,i,true)).join('')}</div>`:'';
 
 
   const ergebnis={kopf:`${arrF.length} Duo${arrF.length===1?'':'s'}${_tq?' gefunden':' ab 4 gemeinsamen Spielen, über alle Partien'}`,
-    html:arrF.length ? `<div class="rlist">${rows}</div>` : emptyState('search','Keine Teams gefunden')};
+    html:arrF.length ? `<div class="rlist">${rows}</div>` : emptyState('search','Keine Teams gefunden'),
+    ruhe, ruheZahl:ruheF.length};
   // Die Suche zeichnet nur die Ergebnisse. Keine zweite Filter-/Sortierformel
   // und kein Ersetzen des Eingabefelds samt Fokus, Cursor oder IME-Komposition.
   if(nurErgebnis) return ergebnis;
@@ -145,7 +161,8 @@ function vTeams(nurErgebnis=false){
       <button data-teamsort="gd" class="${teamSort==='gd'?'on':''}">Torbilanz</button>
       <button data-teamsort="elo" class="${teamSort==='elo'?'on':''}">Elo-Zuwachs</button>
     </div>
-    <div id="teamResults">${ergebnis.html}</div>`;
+    <div id="teamResults">${ergebnis.html}</div>
+    ${ruheT.length ? `<div class="ruhe-ende">${einblickHtml('ruhe_teams', ruheT.length === 1 ? 'ein Duo' : ruheT.length + ' Duos')}</div>` : ''}`;
 }
 
 

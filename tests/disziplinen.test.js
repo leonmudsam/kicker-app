@@ -1168,6 +1168,68 @@ ok(K.eval(`(function(){
   return bad.join(',');
 })()`) === '', 'die Geteilt-Marke steht genau bei geteilten Rekorden');
 
+// Die vier Monatschroniken aus `mockup/besonderheiten`, ein zweites Mal aus
+// den rohen Partien gerechnet. Monat und Kalendertag kommen aus der App
+// (`seasonOf`, `mdayKey`), weil das die Grenzen SIND; alles andere zaehlt
+// der Test selbst: Staffellauf und Seitenbuendnis ueber die Paare aus Partie
+// und direkter Vorgaengerin am selben Tag, der Quertreiber ueber die beiden
+// Chancenlagen, die Tagesumkehr ueber erste und letzte Partie eines Tages
+// gegen 2·S·N/(n·(n−1)).
+const _monSoll = (() => {
+  const zu = JSON.parse(K.eval(`JSON.stringify(matches.reduce((o, m) =>
+    (o[m.id] = {sid:(seasonOf(m.created_at) || {}).id, tag:mdayKey(m)}, o), {}))`));
+  const ms = realMatches.slice().sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  const P = {};
+  ms.forEach(m => [m.a1, m.a2, m.b1, m.b2].forEach(id => {
+    const onA = id === m.a1 || id === m.a2, z = zu[m.id];
+    const k = z.sid + '|' + id;
+    (P[k] = P[k] || []).push({w:(m.winner === 'A') === onA, tag:z.tag,
+      mate:id === m.a1 ? m.a2 : id === m.a2 ? m.a1 : id === m.b1 ? m.b2 : m.b1,
+      geg:onA ? [m.b1, m.b2] : [m.a1, m.a2], e:onA ? m.exp_a : 1 - m.exp_a});
+  }));
+  const mit = a => a.reduce((x, y) => x + y, 0) / a.length;
+  const W = {
+    staffellauf: a => { const w = [], b = [];
+      a.forEach((x, i) => { const v = a[i-1]; if(!v || v.tag !== x.tag) return;
+        (v.mate !== x.mate ? w : b).push((x.w ? 1 : 0) - x.e); });
+      return w.length >= 5 && b.length >= 5 ? mit(w) - mit(b) : null; },
+    seitenbuendnis: a => { const j = [], o = [];
+      a.forEach((x, i) => { const v = a[i-1]; if(!v || v.tag !== x.tag || v.mate === x.mate) return;
+        (v.geg.includes(x.mate) ? j : o).push((x.w ? 1 : 0) - x.e); });
+      return j.length >= 5 && o.length >= 5 ? mit(j) - mit(o) : null; },
+    quertreiber: a => { const u = a.filter(x => x.e < 0.45), f = a.filter(x => x.e > 0.55);
+      return u.length >= 5 && f.length >= 5
+        ? u.filter(x => x.w).length / u.length - f.filter(x => x.w).length / f.length : null; },
+    tagesumkehr: a => { const t = {}; a.forEach(x => (t[x.tag] = t[x.tag] || []).push(x));
+      const v = Object.values(t).filter(d => d.length >= 3); if(v.length < 5) return null;
+      const S = a.filter(x => x.w).length, n = a.length;
+      return v.filter(d => d[0].w !== d[d.length-1].w).length / v.length - 2 * S * (n - S) / (n * (n - 1)); }
+  };
+  const AB = {staffellauf:0.30, seitenbuendnis:0.35, quertreiber:0.05, tagesumkehr:0.25};
+  const out = {};
+  ['2026-06','2026-07','2026-08'].forEach(sid => Object.keys(W).forEach(id => {
+    const feld = Object.keys(P).filter(k => k.startsWith(sid + '|'))
+      .filter(k => P[k].length >= 8 && new Set(P[k].map(x => x.tag)).size >= 3)
+      .map(k => ({pid:k.split('|')[1], v:W[id](P[k])})).filter(f => f.v != null && f.v >= AB[id] - 1e-12);
+    const best = Math.max(...feld.map(f => f.v));
+    out[sid + ' ' + id] = feld.filter(f => Math.abs(f.v - best) < 1e-9).map(f => f.pid).sort().join();
+  }));
+  return out;
+})();
+const _monIst = JSON.parse(K.eval(`JSON.stringify(['2026-06','2026-07','2026-08'].reduce((o, sid) => {
+  const C = _seasonTitleCtx(sid);
+  ['staffellauf','seitenbuendnis','quertreiber','tagesumkehr'].forEach(id => {
+    const r = SEASON_TITLE_BY_ID[id].pick(C, new Set());
+    o[sid + ' ' + id] = r && r.halter ? r.halter.slice().sort().join() : ''; });
+  return o; }, {}))`));
+const _monAb = Object.keys(_monSoll).filter(k => _monSoll[k] !== _monIst[k]);
+ok(_monAb.length === 0, 'die vier neuen Monatschroniken stimmen mit der Nachrechnung aus den rohen Partien',
+   _monAb.map(k => k + ': ' + (_monIst[k].split(',').map(nm).join('/') || '–') + ' statt '
+     + (_monSoll[k].split(',').map(nm).join('/') || '–')).join(' · '));
+ok(Object.values(_monIst).filter(Boolean).length === 5,
+   'die vier neuen Monatschroniken sind fuenfmal vergeben, wie kalibriert',
+   Object.keys(_monIst).filter(k => _monIst[k]).map(k => k + ' ' + nm(_monIst[k])).join(' · '));
+
 // ─── 17. v9.22: Ausnahmetage und alle Rekorde im Profil ─────────────
 console.log('\n=== 17. AUSNAHMETAGE UND ALLE REKORDE IM PROFIL ===');
 
@@ -2776,14 +2838,83 @@ const _rk = JSON.parse(K.eval(`JSON.stringify(CHRONICLES.map(c => ({
   mind:c.mind, zeitraum:c.zeitraum, cond:c.cond, wie:c.wie,
   neg:c.neg, fenster:c.fenster, hatVal:typeof c.val === 'function'
 })))`));
-ok(_rk.length === 71, 'der aktive Katalog enthaelt genau 71 Rekorde', _rk.length + '');
+ok(_rk.length === 76, 'der aktive Katalog enthaelt genau 76 Rekorde', _rk.length + '');
 const _rkZahl = {};
 _rk.forEach(c => { _rkZahl[c.kind] = (_rkZahl[c.kind] || 0) + 1; });
-const _rkSoll = {koennen:30, form:8, mark:10, fuegung:12, shame:11};
+const _rkSoll = {koennen:30, form:8, mark:10, fuegung:17, shame:11};
 Object.keys(_rkSoll).forEach(k => ok(_rkZahl[k] === _rkSoll[k],
   'die Kammer ' + k + ' hat ' + _rkSoll[k] + ' Rekorde', (_rkZahl[k] || 0) + ''));
 ok(Object.keys(_rkZahl).length === 5, 'es gibt genau fuenf Kammern',
    Object.keys(_rkZahl).join(', '));
+
+// Die fuenf Folgen aus `mockup/besonderheiten`, ein zweites Mal aus den
+// rohen Partien gerechnet und nicht aus der Rohsicht der Engine: die Engine
+// zaehlt ueber `roh`, der Test ueber die gepackten Fixtures. Pendler,
+// Wanderpass und Spurwechsel sind laengste Folgen (Partien, nicht
+// Uebergaenge), Ausbruch die laengste BEENDETE Pleitenserie gegen einen
+// Gegner, Serienstopp die laengste Gegner-Siegesserie, die ein eigener Sieg
+// beendet — je Partie die laengere der beiden, nicht ihre Summe.
+const _folgeSoll = (() => {
+  const ms = realMatches.slice().sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  const P = {}, lauf = {};
+  const hin = (x, k, passt, weiter) => {
+    const st = x.st[k] || (x.st[k] = {n:0, best:0, prev:null});
+    if(!passt){ st.n = 0; st.prev = null; return; }
+    st.n = (st.n > 0 && weiter(st.prev)) ? st.n + 1 : 1;
+    st.best = Math.max(st.best, st.n);
+  };
+  ms.forEach(m => {
+    const vor = {}; [m.a1, m.a2, m.b1, m.b2].forEach(id => vor[id] = lauf[id] || 0);
+    [m.a1, m.a2, m.b1, m.b2].forEach(id => {
+      const onA = id === m.a1 || id === m.a2;
+      const w = (m.winner === 'A') === onA;
+      const mate = id === m.a1 ? m.a2 : id === m.a2 ? m.a1 : id === m.b1 ? m.b2 : m.b1;
+      const pos = m[(id === m.a1 ? 'a1' : id === m.a2 ? 'a2' : id === m.b1 ? 'b1' : 'b2') + '_pos'];
+      const geg = onA ? [m.b1, m.b2] : [m.a1, m.a2];
+      const e = onA ? m.exp_a : 1 - m.exp_a;
+      const lage = e < 0.45 ? 'u' : e > 0.55 ? 'f' : '';
+      const x = P[id] || (P[id] = {g:0, st:{}, bann:{}, bannMax:0, stopp:0, last:null});
+      x.g++;
+      const l = x.last;
+      hin(x, 'pd', true, () => l && l.pos !== pos);
+      hin(x, 'wp', true, () => l && l.mate !== mate);
+      hin(x, 'sp', !!lage, () => l && l.lage && l.lage !== lage);
+      geg.forEach(g => { if(w){ x.bannMax = Math.max(x.bannMax, x.bann[g] || 0); x.bann[g] = 0; }
+                         else x.bann[g] = (x.bann[g] || 0) + 1; });
+      if(w) x.stopp = Math.max(x.stopp, vor[geg[0]], vor[geg[1]]);
+      x.last = {pos, mate, lage};
+    });
+    [m.a1, m.a2, m.b1, m.b2].forEach(id => {
+      lauf[id] = ((m.winner === 'A') === (id === m.a1 || id === m.a2)) ? (lauf[id] || 0) + 1 : 0; });
+  });
+  const wert = {pendler:x => x.st.pd.best, wanderpass:x => x.st.wp.best,
+                spurwechsel:x => (x.st.sp || {best:0}).best,
+                ausbruch:x => x.bannMax, serienstopp:x => x.stopp};
+  const out = {};
+  Object.keys(wert).forEach(id => {
+    const feld = Object.keys(P).filter(pid => P[pid].g >= 30).map(pid => ({pid, v:wert[id](P[pid])}));
+    const best = Math.max(...feld.map(f => f.v));
+    out[id] = {best, halter:feld.filter(f => f.v === best).map(f => f.pid).sort()};
+  });
+  return out;
+})();
+const _folgeIst = JSON.parse(K.eval(`JSON.stringify(['pendler','wanderpass','spurwechsel','ausbruch','serienstopp']
+  .reduce((o, id) => { const e = allChronicles().byId[id];
+    o[id] = e ? {best:e.val, halter:e.pids.slice().sort()} : null; return o; }, {}))`));
+Object.keys(_folgeSoll).forEach(id => {
+  const s = _folgeSoll[id], i = _folgeIst[id];
+  ok(i && i.best === s.best && i.halter.join() === s.halter.join(),
+     '„' + id + '" stimmt mit der Nachrechnung aus den rohen Partien',
+     i ? i.best + ' ' + i.halter.map(nm).join('/') + ' statt ' + s.best + ' ' + s.halter.map(nm).join('/')
+       : 'nicht vergeben');
+});
+// Eine Folge ist eine Laenge und keine Summe: der Ausbruch nennt EINEN Gegner,
+// der Serienstopp EINE Serie. Der Beleg beginnt mit dieser Zahl.
+ok(K.eval(`['pendler','wanderpass','spurwechsel','ausbruch','serienstopp'].every(id => {
+  const e = allChronicles().byId[id]; if(!e) return false;
+  const c = CHRONICLE_BY_ID[id];
+  return parseInt(c.ev(_chronicleCtx().P[e.pid], e.val), 10) === e.val && !!c.zeit(_chronicleCtx().P[e.pid]);
+})`), 'jede neue Folge belegt ihren Wert und nennt, wann sie lag');
 
 // Jede ID und jedes Zeichen genau einmal. Zwei Rekorde mit derselben
 // Zeichnung sind in einer Kachel von 34 Pixeln nicht zu unterscheiden.

@@ -29,6 +29,10 @@ function bind(){
         liste.querySelectorAll('[data-team]').forEach(el=>el.onclick=()=>{
           const [a,b]=el.dataset.team.split('|');if(a&&b) showTeam(a,b);
         });
+        // Die Duos mit Karriereende folgen derselben Suche [§C40]; zu
+        // gezeichnet wird ihr Inhalt erst beim Aufklappen.
+        const ruhe=document.querySelector('[data-einblick="ruhe_teams"].auf .einblick-i');
+        if(ruhe){ ruhe.innerHTML=ergebnis.ruhe||''; bindDetailLinks(ruhe); }
         // Der letzte vollständige Render darf nicht dieselben alten Ergebnisse
         // behaupten, nachdem die Liste gezielt ausgetauscht worden ist.
         document.getElementById('main')._renderHtml=null;
@@ -276,7 +280,7 @@ function bindCombo(inp){
   const chosenIds=()=>[M.A1,M.A2,M.B1,M.B2].filter((v,i)=>['A1','A2','B1','B2'][i]!==key&&v);
   const waehlen=o=>{
     const p=pmap()[o.dataset.pick];
-    if(!inp.isConnected || !p || p.hidden || chosenIds().includes(p.id)) return;
+    if(!inp.isConnected || !ligaAktiv(p) || chosenIds().includes(p.id)) return;
     M[key]=p.id;inp.value=p.name;inp.classList.add('filled');schliessen();
     readM();requestMatchPreview();
   };

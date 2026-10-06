@@ -235,7 +235,10 @@ function getRankSnapshots(){
     const sid = seasonOf(m.created_at).id;
     if(!seasonElo[sid]) seasonElo[sid] = {};
     const elos = seasonElo[sid];
-    // Pre-Rank: aktueller Stand VOR diesem Match
+    // Pre-Rank: aktueller Stand VOR diesem Match. Die Monatstabelle ist ein
+    // Zeitraum [§C40]: wer im Monat gespielt hat, steht darin, auch nach
+    // seinem Karriereende — sonst gab er mit dem Abschied die Spitze ab, und
+    // der Feed meldete einen Wechsel, den niemand gespielt hat.
     const preEntries = Object.entries(elos);
     preEntries.sort((a,b) => b[1] - a[1] || a[0].localeCompare(b[0]));
     const preRank = {};
@@ -305,9 +308,10 @@ function getSeasonPositionHistory(seasonId){
     lastDay = Math.max(1, mx);
   }
 
-  // Aktive Spieler in dieser Saison = wer ≥1 Saison-Match hat
+  // Aktive Spieler in dieser Saison = wer ≥1 Saison-Match hat. Ein Monat
+  // ist ein Zeitraum [§C40]: wer darin gespielt hat, steht im Verlauf.
   const activeSet = new Set();
-  sMatches.forEach(m => [m.a1,m.a2,m.b1,m.b2].forEach(id => activeSet.add(id)));
+  sMatches.forEach(m => [m.a1,m.a2,m.b1,m.b2].forEach(id => { if(sichtbar(id)) activeSet.add(id); }));
   const activeIds = [...activeSet];
 
   // Empty-State: 0 oder 1 aktive Spieler → kein sinnvolles Diagramm
@@ -466,7 +470,8 @@ function getSeasonRankingsCache(){
     const list=Object.keys(endElos)
       .filter(pid=>{
         const p=pm[pid];
-        if(!p||p.hidden) return false;
+        // Ein Monat ist ein Zeitraum [§C40]: wer darin spielte, steht darin.
+        if(!p||!sichtbar(p)) return false;
         return (playedMap[pid]||0)>0;
       })
       .map(pid=>({pid,elo:endElos[pid]}))

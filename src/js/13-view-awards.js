@@ -38,8 +38,14 @@ const AW_MIN = {
 function awardRankings(period, sid){return getCachedAwardRankings(period, sid);}
 function _awardRankingsUncached(period, sid){
   let ms;
+  // Wer in der Wertung steht [§C40]: über die ganze Laufbahn nur, wer noch
+  // antritt; in einem Monat oder einer Woche jeder, der darin gespielt hat.
+  const dabei = period==='all' ? ligaAktiv : sichtbar;
   if(period==='all') ms = matches;
-  else if(period==='season') ms = matchesInSeason(sid || awSeasonId || currentSeason().id);
+  else if(period==='season'){
+    const s = sid || awSeasonId || currentSeason().id;
+    ms = matchesInSeason(s);
+  }
   else if(period==='week' && awWeekStart){
     const start=new Date(awWeekStart); start.setHours(0,0,0,0);
     const end=new Date(start); end.setDate(end.getDate()+7);
@@ -424,8 +430,8 @@ function _awardRankingsUncached(period, sid){
   
   // ═══ CARRY, SOLO, FORMTIEF, etc. ═══
   const carryList=_computeCarry(ms, agg.snapMap);
-  const soloList=_computeSolo(ms, agg.snapMap);
-  const formtief=_computeFormtief(ms);
+  const soloList=_computeSolo(ms, agg.snapMap, dabei);
+  const formtief=_computeFormtief(ms, dabei);
   const worstTeam=[...teamStatsFromMatches(ms)].filter(t=>t.g>=2).sort((a,b)=>(a.w/a.g)-(b.w/b.g));
   const bestDuo=[...teamStatsFromMatches(ms)].sort((a,b)=>b.g-a.g);
   const onFire=currentStreaks(ms,true);
@@ -439,7 +445,7 @@ function _awardRankingsUncached(period, sid){
   // Beide Funktionen schließen den laufenden Zeitraum automatisch aus und sind identisch
   // mit dem Zähler der POTW-/POTD-Badges → konsistent zwischen Award und Badge.
   // Für period='week' bleibt die Liste leer (Zeitraum = 1 Woche, läuft noch).
-  const visiblePlayers = activePlayers();
+  const visiblePlayers = players.filter(dabei);
   const weekKingList = visiblePlayers
     .map(p=>({id:p.id, v:countPeriodWins(p.id, ms, 'week')}))
     .filter(x=>x.v>0)
@@ -575,14 +581,15 @@ function _awardRankingsUncached(period, sid){
     .sort((a,b) => b.pct - a.pct);
 
   // ════════════════════════════════════════════════════════════════════
-  // HIDDEN-FILTER für ALLE Award-Listen (zentral, konsistent)
+  // FILTER für ALLE Award-Listen (zentral, konsistent)
   // ════════════════════════════════════════════════════════════════════
-  // Hidden-Spieler werden aus allen Single- und Team-Listen entfernt.
-  // Bei Team-Awards fliegt das Team raus, sobald EIN Mitglied hidden ist.
+  // Wer nicht in der Wertung steht (ausgeblendet, oder über die ganze
+  // Laufbahn im Ruhestand [§C40]), fällt aus allen Single- und Team-Listen. Bei Team-Awards fliegt das
+  // Team raus, sobald EIN Mitglied nicht antritt.
   // Sortierung bleibt erhalten, ranks/medals werden weiter korrekt vergeben.
   // ════════════════════════════════════════════════════════════════════
   const _pm = pmap();
-  const _isHidden = id => { const p = _pm[id]; return !p || p.hidden; };
+  const _isHidden = id => !dabei(_pm[id]);
   const _fSingle = arr => arr.filter(x => !_isHidden(x.id));
   const _fTeam   = arr => arr.filter(x => !x.ids.some(_isHidden));
 
@@ -647,9 +654,9 @@ function _computeCarry(ms, snapMap){
   return Object.entries(result).filter(([,v])=>v>0).map(([id,v])=>({id,v})).sort((a,b)=>b.v-a.v);
 }
 
-function _computeSolo(ms, snapMap){
+function _computeSolo(ms, snapMap, dabei){
   const result={};
-  const allActivePlayers=activePlayers();
+  const allActivePlayers=players.filter(dabei);
   for(let i=0; i<ms.length; i++){
     const m=ms[i];
     const snap=snapMap[m.id]; if(!snap)continue;
@@ -673,7 +680,7 @@ function _computeSolo(ms, snapMap){
     .map(([id,v])=>({id,wr:v.w/v.g,g:v.g,w:v.w})).sort((a,b)=>b.wr-a.wr||b.g-a.g);
 }
 
-function _computeFormtief(ms){
+function _computeFormtief(ms, dabei){
   // ════════════════════════════════════════════════════════════════════
   // FORMTIEF — saison-bewusste Peak-zu-Aktuell-Berechnung
   // ════════════════════════════════════════════════════════════════════
@@ -731,7 +738,7 @@ function _computeFormtief(ms){
 
   const result = [];
   Object.entries(perPlayer).forEach(([id, data])=>{
-    const p = pm[id]; if(!p || p.hidden) return;
+    const p = pm[id]; if(!dabei(p)) return;
     let bestDrop=0, bestPeak=0, bestLast=0;
     Object.values(data.seasons).forEach(s=>{
       const d = s.peak - s.last;
@@ -1049,7 +1056,14 @@ function vAwards(){
     const matrix = ligaChronikMatrixHtml();
     return kopf + (matrix || emptyState('scroll','Sobald ein Monat gespielt ist, füllt sich die Chronik.'));
   }
-  return kopf + _vAwardsCore();
+  // Ein abgeschlossener Monat oder eine vergangene Woche ist Geschichte [§C40].
+  let bis = null;
+  if(awPeriod==='season' && awSeasonId && awSeasonId !== currentSeason().id) bis = seasonEnd(awSeasonId).getTime();
+  if(awPeriod==='week' && awWeekStart){
+    const ende = new Date(awWeekStart); ende.setHours(0,0,0,0); ende.setDate(ende.getDate() + 7);
+    if(ende.getTime() <= Date.now()) bis = ende.getTime() - 1;
+  }
+  return kopf + geschichteHtml(_vAwardsCore(), bis);
 }
 
 // Award-ID -> Icon-Name. Eine Tabelle für Awards-Reiter, Award-Blatt,

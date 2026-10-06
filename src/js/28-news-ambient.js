@@ -283,7 +283,10 @@ function _ambientShuffle(arr, rng){
 // Icons sind bewusst auf die in NEWS_CATEGORIES bekannten beschränkt.
 function _ambientTemplatePool(now, pm, nameOf){
   const stats = (typeof allPlayerStats === 'function') ? (allPlayerStats() || {}) : {};
-  const activePids = Object.keys(pm).filter(pid => pm[pid] && !pm[pid].hidden);
+  // Ein Fun Fact erzählt von der Liga, wie sie heute antritt [§C40]: ein
+  // Ruheständler kommt nicht vor — auch nicht als Paar oder Partner.
+  const aktiv = id => ligaAktiv(pm[id]);
+  const activePids = Object.keys(pm).filter(aktiv);
   const withStats = activePids.filter(pid => stats[pid] && stats[pid].games > 0);
   const T = [];
 
@@ -309,7 +312,7 @@ function _ambientTemplatePool(now, pm, nameOf){
       const aWon = m.winner === 'A';
       const seats = [[m.a1, m.a1_pos, true], [m.a2, m.a2_pos, true], [m.b1, m.b1_pos, false], [m.b2, m.b2_pos, false]];
       for(const [id, pos, onA] of seats){
-        if(!id || !pm[id] || pm[id].hidden) continue;
+        if(!id || !aktiv(id)) continue;
         const won = onA ? aWon : !aWon;
         const gf = onA ? (m.score_a||0) : (m.score_b||0);
         const ga = onA ? (m.score_b||0) : (m.score_a||0);
@@ -466,7 +469,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     let best = null;
     for(const [k, e] of map){
       const [pa, pb] = k.split('|');
-      if(!pm[pa] || !pm[pb] || pm[pa].hidden || pm[pb].hidden) continue;
+      if(!aktiv(pa) || !aktiv(pb)) continue;
       const wa = e.wins[pa]||0, wb = e.wins[pb]||0, total = wa + wb;
       if(total < 3) continue;
       if(!best || total > best.total) best = { pa, pb, total, wa, wb };
@@ -486,7 +489,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     let best = null;
     for(const [k, e] of map){
       const [pa, pb] = k.split('|');
-      if(!pm[pa] || !pm[pb] || pm[pa].hidden || pm[pb].hidden) continue;
+      if(!aktiv(pa) || !aktiv(pb)) continue;
       const wa = e.wins[pa]||0, wb = e.wins[pb]||0, total = wa + wb;
       if(total < 4) continue;
       const diff = Math.abs(wa - wb);
@@ -516,7 +519,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     const mObj = matches[marke - 1];
     if(!mObj) return null;
     const sieger = (mObj.winner === 'A' ? [mObj.a1, mObj.a2] : [mObj.b1, mObj.b2])
-      .filter(id => pm[id] && !pm[id].hidden).map(nameOf);
+      .filter(id => sichtbar(pm[id])).map(nameOf);
     const d = new Date(mObj.created_at);
     const dd = String(d.getDate()).padStart(2,'0') + '.' + String(d.getMonth()+1).padStart(2,'0') + '.';
     return { cat:'history', ic:'calendar', prio:5,
@@ -559,7 +562,7 @@ function _ambientTemplatePool(now, pm, nameOf){
   T.push({ key:'fun_leader', make: () => {
     if(typeof periodPlayerStats !== 'function') return null;
     const ranked = periodPlayerStats('season')
-      .filter(r => pm[r.id] && !pm[r.id].hidden)
+      .filter(r => aktiv(r.id))
       .slice()
       .sort((a,b) => b.elo - a.elo || b.wins - a.wins);
     if(ranked.length < 2) return null;
@@ -645,9 +648,9 @@ function _ambientTemplatePool(now, pm, nameOf){
     let byId = null;
     try { byId = (allChronicles() || {}).byId; } catch(e){ return null; }
     const l = Object.values(byId || {}).filter(r => r && r.pids && r.pids.length
-      && r.pids.some(pid => pm[pid] && !pm[pid].hidden));
+      && r.pids.some(aktiv));
     if(!l.length) return null;
-    const r = l[Math.floor(rng() * l.length)], pids = r.pids.filter(pid => pm[pid] && !pm[pid].hidden);
+    const r = l[Math.floor(rng() * l.length)], pids = r.pids.filter(aktiv);
     const namen = pids.slice(0, 3).map(nameOf);
     return {cat:'history', ic:r.ic || 'trophy', prio:5,
       title:`Rekord im Fokus: ${r.name}`,
@@ -768,7 +771,7 @@ function _ambientTemplatePool(now, pm, nameOf){
       }
     }
     const cands = Object.values(rec).filter(t =>
-      t.best >= 3 && pm[t.ids[0]] && pm[t.ids[1]] && !pm[t.ids[0]].hidden && !pm[t.ids[1]].hidden);
+      t.best >= 3 && aktiv(t.ids[0]) && aktiv(t.ids[1]));
     if(!cands.length) return null;
     // Bestmarke + Rang aus derselben Liste — keine zweite Berechnung.
     const ranked = cands.slice().sort((a,b) => b.best - a.best || (a.ids[0] < b.ids[0] ? -1 : 1));
@@ -1078,7 +1081,7 @@ function _ambientTemplatePool(now, pm, nameOf){
       const t = mts(mObj);
       for(const ev of (bMap[mid] || [])){
         if(rarityOf(ev.badge.id) !== 'legendary') continue;
-        if(!pm[ev.playerId] || pm[ev.playerId].hidden) continue;
+        if(!aktiv(ev.playerId)) continue;
         // ── Ein Fun Fact weiss nichts von einer spaeteren Partie ──
         // `now` ist die Uhrzeit des Slots, `matches` aber die ganze Liste.
         // Die Karte von 10 Uhr sah damit eine Auszeichnung aus einer Partie
@@ -1125,7 +1128,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     const cands = [];
     for(const [k, e] of map){
       const [pa, pb] = k.split('|');
-      if(!pm[pa] || !pm[pb] || pm[pa].hidden || pm[pb].hidden) continue;
+      if(!aktiv(pa) || !aktiv(pb)) continue;
       const wa = e.wins[pa]||0, wb = e.wins[pb]||0, total = wa + wb;
       if(total < 6) continue;
       if(wa >= wb && wa / total >= 0.7) cands.push({ pid: pa, opp: pb, w: wa, l: wb, total });
@@ -1147,7 +1150,7 @@ function _ambientTemplatePool(now, pm, nameOf){
       const mates = stats[pid].mates || {};
       for(const mid in mates){
         const g = mates[mid].g, w = mates[mid].w;
-        if(g < 6 || !pm[mid] || pm[mid].hidden) continue;
+        if(g < 6 || !aktiv(mid)) continue;
         if(w / g < 0.65) continue;
         // Nur einmal pro Paar (kleinere pid führt), sonst doppelte Kandidaten.
         if(pid > mid) continue;

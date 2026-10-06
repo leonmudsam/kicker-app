@@ -159,7 +159,7 @@ function _ffVitrine(b){
 function _ffMedaille(b){
   const pm = pmap(), x = BADGES.find(y => y.id === b.b);
   if(!pm[b.p] || !x) return '';
-  const alle = Object.keys(pm).filter(id => !pm[id].hidden).length;
+  const alle = Object.keys(pm).filter(id => sichtbar(pm[id])).length;
   const n = Math.max(1, Math.min(alle, b.n | 0));
   return `<div class="ff-md"><span class="ff-md-z">${zkHtml(x.ic || 'trophyStar', 'g', 'viol')}${_ffChip(b.p)}</span>`
     + `<span class="ff-md-m"><b>${esc(x.name)}</b>${_ffNm(b.p)}`

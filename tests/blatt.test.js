@@ -3562,6 +3562,151 @@ return JSON.stringify(funde,null,1);
      'ein Neuzeichnen im selben Reiter klappt sie nicht zu, ein Reiterwechsel schon',
      JSON.stringify(_eb.map(x => [x.nachRender, x.nachTab])));
 
+  // ── Die Ruheständler stehen am Ende, zu [§C40] ─────────────────────
+  //    Unter Gesamt, unter den Positionen und unter den Teams eine Zeile,
+  //    die aufklappt. Darüber steht er nicht mehr: die Liste ist die der
+  //    aktiven Liga. Aufgeklappt läuft keine Zeile über den Rand, und ein
+  //    zweiter Einblick im selben Reiter klappt den ersten nicht zu — mit
+  //    EINEM gemerkten Wert stand die Rollen-Landkarte nach dem nächsten
+  //    Neuzeichnen geschlossen da.
+  const ruhe = await page.evaluate(async (pruefenSrc) => {
+    const pruefen = eval('(' + pruefenSrc + ')');
+    const K = window.__k.eval.bind(window.__k);
+    const M = K("players.find(p => p.name === 'Martin').id");
+    // Wie der Knopf: der Karriere-Teil wird vor dem Setzen gerechnet [§C40].
+    K(`(() => { const p = pmap()['${M}'], t = Date.parse('2026-08-26T19:30:00Z'), k = _ruheKarriereBauen(p.id);
+      p.retired_at = new Date(t).toISOString(); p.retired_stand = {v:RUHE_STAND_FASSUNG, t, karriere:k, abschluss:null};
+      invalidateCache(); })(); 'x'`);
+    const W = document.documentElement.clientWidth, out = {};
+    for(const [name, setz, key] of [['gesamt', "tab='ranking';period='all'", 'ruhe_liga'],
+        ['positionen', "tab='positions';period='season';rankMetric='atk'", 'ruhe_pos'],
+        ['teams', "tab='teams';period='season'", 'ruhe_teams']]){
+      K(`closeSheet(true); ${setz}; einblickOffen=''; render(); 'x'`);
+      const box = document.querySelector('#main [data-einblick="' + key + '"]');
+      if(!box){ out[name] = {fehlt:true}; continue; }
+      const ausserhalb = [...document.querySelectorAll('#main [data-detail="' + M + '"], #main [data-team*="' + M + '"]')]
+        .filter(e => !box.contains(e)).length;
+      const leer = !box.querySelector('.einblick-i').innerHTML.trim();
+      box.querySelector('.einblick-k').click();
+      const i = box.querySelector('.einblick-i');
+      const drin = i.querySelectorAll('[data-detail="' + M + '"], [data-team*="' + M + '"]').length;
+      const raus = [...i.querySelectorAll('*')].filter(e => { const r = e.getBoundingClientRect();
+        return r.width && (r.right > W + 1 || r.left < -1); }).length;
+      const ohneRang = !i.querySelector('.rrow .pos') && !i.querySelector('.tm-top');
+      out[name] = {ausserhalb, leer, drin, raus, ohneRang, fehler: pruefen(box).fehler.slice(0, 2)};
+    }
+    K(`closeSheet(true); tab='positions'; einblickOffen='rollen ruhe_pos'; render(); 'x'`);
+    out.beide = document.querySelectorAll('#main .einblick.auf').length;
+    // Der Abschied: ein langes Blatt aus dem Baukasten der Rückblicke. Kein
+    // Teil läuft über den Rand, kein Text endet mit „…", und die Karte im
+    // Feed trägt dieselbe Bühne.
+    K(`closeSheet(true); zeigeAbschied('${M}'); 'x'`);
+    document.getAnimations().forEach(a => { try { a.finish(); } catch(e){} });
+    const sh = document.getElementById('sheet');
+    out.abschied = {
+      abschnitte: [...sh.querySelectorAll('.rcp-section')].map(e => e.textContent.trim().replace(/\d+$/, '').trim()),
+      raus: [...sh.querySelectorAll('*')].filter(e => { const r = e.getBoundingClientRect(); return r.width && (r.right > W + 1 || r.left < -1); }).length,
+      kurz: [...sh.querySelectorAll('.rcp-zeile-s, .rcp-aw-name, .rcp-aw-val, .ab-duo-t b')]
+        .filter(e => e.scrollWidth > e.clientWidth + 1).map(e => e.textContent).slice(0, 3),
+      gold: !!sh.querySelector('.rcp-label:not(.metall)'),
+      fehler: pruefen(sh.querySelector('.ab-buehne')).fehler.slice(0, 2)};
+    K(`closeSheet(true); _cache._stories = _buildStories().slice().sort((a,b)=>new Date(b.when)-new Date(a.when)); openNewsFeed(); _newsFeedRest(); 'x'`);
+    const karte = document.querySelector('.nf-card .nf-abschied');
+    const kc = karte && karte.closest('.nf-card');
+    out.karte = kc ? {brk: kc.classList.contains('nf-brk') || !!kc.querySelector('.nf-brk-band'),
+      raus: [...kc.querySelectorAll('*')].filter(e => { const r = e.getBoundingClientRect(), k = kc.getBoundingClientRect();
+        return r.width && (r.right > k.right + 1 || r.left < k.left - 1); }).length} : null;
+    K('closeSheet(true); "x"');
+    K(`pmap()['${M}'].retired_at = null; pmap()['${M}'].retired_stand = null; einblickOffen=''; invalidateCache(); tab='ranking'; period='season'; render(); 'x'`);
+    return out;
+  }, PRUEFEN.toString());
+  const _ru = [ruhe.gesamt, ruhe.positionen, ruhe.teams];
+  ok(_ru.every(x => x && !x.fehlt && x.ausserhalb === 0 && x.leer && x.drin > 0),
+     'Gesamt, Positionen und Teams zeigen den Ruheständler nur in der Zeile am Ende, zu und ohne Inhalt',
+     JSON.stringify(ruhe));
+  ok(_ru.every(x => x && x.raus === 0 && x.ohneRang && !(x.fehler || []).length),
+     'aufgeklappt läuft keine Zeile bei 360 px über den Rand, und keine trägt einen Platz',
+     JSON.stringify(_ru.map(x => x && [x.raus, x.ohneRang, x.fehler])));
+  ok(ruhe.beide === 2, 'zwei Einblicke im selben Reiter bleiben beide offen', String(ruhe.beide));
+  const _ab = ruhe.abschied || {};
+  ok(['Saison für Saison', 'Besondere Momente', 'Die besten Partner', 'Gegenüber', 'Die Stärken',
+      'Rekorde beim Abschied', 'Auszeichnungen'].every(t => (_ab.abschnitte || []).includes(t)),
+     'der Abschied erzählt die Laufbahn: Saisons, Momente, Partner, Gegner, Stärken, Rekorde, Auszeichnungen',
+     (_ab.abschnitte || []).join(' · '));
+  ok(_ab.raus === 0 && !(_ab.kurz || []).length && !(_ab.fehler || []).length && !_ab.gold,
+     'bei 360 px läuft im Abschied nichts über den Rand, nichts wird gekürzt, und die Marke ist Metall statt Gold',
+     JSON.stringify({raus:_ab.raus, kurz:_ab.kurz, fehler:_ab.fehler, gold:_ab.gold}));
+  ok(ruhe.karte && ruhe.karte.brk && ruhe.karte.raus === 0,
+     'im Feed steht das Karriereende als Breaking-Karte mit seiner Bühne, nichts ragt hinaus', JSON.stringify(ruhe.karte));
+
+  // ── Entfernen heißt bei Partien nicht Löschen [§C40] ──────────────
+  //    „Komplett löschen" ließ in jeder Partie ein Fragezeichen zurück. Mit
+  //    Partien bietet das Blatt das Karriereende und das Ausblenden an, und
+  //    wer schon aufgehört hat, bekommt das Karriereende nicht ein zweites Mal.
+  const weg = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const sh = document.getElementById('sheet');
+    const blick = async (pid) => {
+      K(`closeSheet(true); showPlayer('${pid}'); 'x'`);
+      for(let t = 0; t < 40 && !document.getElementById('delPlayer'); t++) await new Promise(r => setTimeout(r, 50));
+      document.getElementById('delPlayer').click();
+      for(let t = 0; t < 20 && !sh.querySelector('.pp-weg'); t++) await new Promise(r => setTimeout(r, 50));
+      document.getAnimations().forEach(a => { try { a.finish(); } catch(e){} });
+      const W = window.innerWidth;
+      return {weg: !!sh.querySelector('.pp-weg'), loeschen: !!sh.querySelector('#deletePlayerBtn'),
+        ende: !!sh.querySelector('#retirePlayerBtn'), aus: !!sh.querySelector('#hidePlayerBtn'),
+        raus: [...sh.querySelectorAll('.pp-weg *')].filter(e => { const r = e.getBoundingClientRect();
+          return r.width && (r.right > W + 1 || r.left < -1); }).length};
+    };
+    const pid = K('players.find(p => matches.some(m => [m.a1,m.a2,m.b1,m.b2].includes(p.id))).id');
+    const aktiv = await blick(pid);
+    // Wie der Knopf: der Karriere-Teil wird vor dem Setzen gerechnet [§C40].
+    K(`(() => { const p = pmap()['${pid}'], t = Date.now() - 864e5, k = _ruheKarriereBauen(p.id);
+      p.retired_at = new Date(t).toISOString(); p.retired_stand = {v:RUHE_STAND_FASSUNG, t, karriere:k, abschluss:null};
+      invalidateCache(); })(); 'x'`);
+    const ruhend = await blick(pid);
+    K(`closeSheet(true); pmap()['${pid}'].retired_at = null; pmap()['${pid}'].retired_stand = null; invalidateCache(); 'x'`);
+    return {aktiv, ruhend};
+  });
+  ok(weg.aktiv.weg && !weg.aktiv.loeschen && weg.aktiv.ende && weg.aktiv.aus && weg.aktiv.raus === 0
+     && weg.ruhend.weg && !weg.ruhend.loeschen && !weg.ruhend.ende && weg.ruhend.aus,
+     'wer Partien hat, wird nicht gelöscht: das Blatt bietet Karriereende und Ausblenden, ein Ruheständler nur das Ausblenden',
+     JSON.stringify(weg));
+
+  // ── Keine Partie nach dem Karriereende [§C40] ─────────────────────
+  //    Das Bearbeiten einer Partie bot jeden Spieler an. Wer vor ihr
+  //    aufgehört hat, steht nicht zur Wahl; wer schon in ihr steht, bleibt
+  //    wählbar, und vor dem Karriereende gehört er dazu.
+  const bearb = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const r = JSON.parse(K(`(() => {
+      const ms = matches.slice().sort((a,b) => mts(a) - mts(b));
+      const mitte = mts(ms[Math.floor(ms.length / 2)]);
+      const p = players.find(x => ms.some(m => mts(m) > mitte && [m.a1,m.a2,m.b1,m.b2].includes(x.id)));
+      p.retired_at = new Date(mitte).toISOString(); invalidateCache();
+      const ohne = ms.find(m => mts(m) > mitte && ![m.a1,m.a2,m.b1,m.b2].includes(p.id));
+      const mit = ms.find(m => mts(m) > mitte && [m.a1,m.a2,m.b1,m.b2].includes(p.id));
+      const frueh = ms.find(m => mts(m) < mitte && ![m.a1,m.a2,m.b1,m.b2].includes(p.id));
+      const angeboten = m => { closeSheet(true); showEditMatch(m.id);
+        return !!document.querySelector('#sheet select[data-ep="A1"] option[value="' + p.id + '"]'); };
+      const out = {nachher: angeboten(ohne), drin: angeboten(mit), vorher: angeboten(frueh)};
+      // Auch gesetzt, etwa über ein altes Formular, speichert es nicht.
+      closeSheet(true); showEditMatch(ohne.id);
+      E.A1 = p.id; document.querySelector('#sheet [data-ep="A1"]').dispatchEvent(new Event('change'));
+      const sel = document.querySelector('#sheet select[data-ep="A1"]');
+      const o = document.createElement('option'); o.value = p.id; sel.appendChild(o); sel.value = p.id;
+      sel.dispatchEvent(new Event('change'));
+      out.gesperrt = document.getElementById('saveEdit').disabled;
+      out.hinweis = document.getElementById('editWarn').textContent;
+      closeSheet(true); p.retired_at = null; invalidateCache();
+      return JSON.stringify(out);
+    })()`));
+    return r;
+  });
+  ok(!bearb.nachher && bearb.drin && bearb.vorher && bearb.gesperrt && /Karriere/.test(bearb.hinweis),
+     'eine Partie nach dem Karriereende bietet den Ruheständler nicht an und speichert ihn nicht, eine davor schon',
+     JSON.stringify(bearb));
+
   // ── Der Positionsverlauf trägt das Titelrennen ───────────────────
   //    Das Titelrennen stand einmal als eigener Einblick über der
   //    Rangliste und war dieselbe Frage wie der Positionsverlauf darunter.
@@ -3819,6 +3964,51 @@ return JSON.stringify(funde,null,1);
   ok(knopf.length >= 2 && knopf.every(x => x.knopf && x.auf),
      'die Story des Spielers des Tages und der Woche öffnet per Knopf den Rückblick ihres Tages und ihrer Woche',
      JSON.stringify(knopf).slice(0, 240));
+
+  // ── Der Tafel-Moment: der Tag als Achse, die Zeile als Weg ──────────
+  //    Oben stand je Spieler eine Zeile mit seinen Bewegungen — dieselbe
+  //    Aussage wie die Liste darunter. Jetzt steht dort der Spieltag als
+  //    Achse, und keine Säule ragt bei 360 px aus ihr heraus. Eine Zeile der
+  //    Liste führte ins Profil; sie öffnet jetzt das Blatt ihres Eintrags.
+  await page.setViewportSize({width:360, height:780});
+  const moment = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    K(`_cache._stories=_buildStories().sort((a,b)=>new Date(b.when)-new Date(a.when));_cache._consolFrom=null;_cache._frischVon=null;'x'`);
+    const id = K(`(getStoriesCache().find(s=>(s.dataRef||{}).type==='sammel'&&s.dataRef.quelle==='tafel')||{}).id||''`);
+    if(!id) return null;
+    const auf = () => K(`closeSheet(true); openNewsFeed(); openNewsDetail(${JSON.stringify(id)}); 'x'`);
+    auf();
+    const nd = document.getElementById('nd');
+    const f = nd.querySelector('.nd-ta-f');
+    const fr = f ? f.getBoundingClientRect() : null;
+    const raus = f ? [...f.querySelectorAll('.nd-ta-s')].filter(x => {
+      const r = x.getBoundingClientRect();
+      return r.left < fr.left - 0.5 || r.right > fr.right + 0.5 || r.top < fr.top - 0.5;
+    }).length : -1;
+    const out = {achse:!!f, saeulen:f ? f.querySelectorAll('.nd-ta-s').length : 0, raus,
+      gesichter:nd.querySelectorAll('.nd-ta .av').length, wege:[]};
+    const sh = document.getElementById('sheet');
+    for(const art of ['chron', 'disz', 'laufbahn']){
+      auf();
+      const z = document.querySelector(`#nd .nw-tz[data-${art}]`);
+      if(!z) continue;
+      const wert = z.getAttribute('data-' + art);
+      const soll = art === 'chron' ? K(`CHRONICLE_BY_ID[${JSON.stringify(wert)}].name`)
+        : art === 'disz' ? K(`SEASON_TITLE_BY_ID[${JSON.stringify(wert.split('|')[0])}].name`)
+        : 'Laufbahn';
+      z.click();
+      for(let t = 0; t < 30 && sh.textContent.indexOf(soll) < 0; t++) await new Promise(r => setTimeout(r, 100));
+      out.wege.push({art, soll, auf:sh.textContent.indexOf(soll) >= 0, profil:!!sh.querySelector('.pp-header')});
+    }
+    K('closeSheet(true)');
+    return out;
+  });
+  ok(moment && moment.achse && moment.saeulen > 0 && moment.raus === 0 && moment.gesichter === 0,
+     'der Tafel-Moment zeigt oben den Spieltag als Achse ohne Gesichter, und keine Säule ragt bei 360 px hinaus',
+     JSON.stringify(moment));
+  ok(moment && moment.wege.some(w => w.art === 'chron') && moment.wege.every(w => w.auf && !w.profil),
+     'eine Zeile des Tafel-Moments öffnet das Blatt ihres Rekords, ihrer Chronik oder die Laufbahn statt des Profils',
+     JSON.stringify(moment && moment.wege));
 
   await page.setViewportSize({width:430, height:932});
 

@@ -595,7 +595,8 @@ function _periodWinnerMap(allMs, kind){
   const slotKey='win_'+kind+'_'+curKey;
   if(slot[slotKey]) return slot[slotKey];
 
-  // Buckets bilden (Woche / Monat / Tag)
+  // Buckets bilden (Woche / Monat / Tag). Ein Zeitraum kennt keinen
+  // Ruhestand [§C40]: wer darin gespielt hat, kann ihn gewinnen.
   const buckets={};
   allMs.forEach(m=>{
     let key;
@@ -1161,6 +1162,10 @@ function countNemesis(id,ms){
 }
 
 function getCachedBadges(id){
+  // Ein Ruheständler trägt, was er beim Karriereende trug [§C40]: ein
+  // neuer Katalog liest seine Partien sonst anders als damals.
+  const ruhe = imRuhestand(id) ? ruhestandAuszeichnungen(id) : null;
+  if(ruhe) return ruhe;
   const key='badges_'+id+'_'+matches.length+'_'+_cache.version;
   if(!_cache._badges) _cache._badges={};
   if(_cache._badges[key]) return _cache._badges[key];

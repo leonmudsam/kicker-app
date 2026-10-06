@@ -1784,3 +1784,29 @@
   /* ─── ENDE PLAYER PROFILE V3 OVERHAUL ─── */
 
 
+
+  /* ─── Das Karriereende [§C40] ───────────────────────────────────────
+     Metall und keine Rangfarbe: es zeichnet niemanden aus und ist keine
+     Richtung [§C25]. Die Zeilen sind die der Listen darüber, nur ohne
+     Platz — wer aufgehört hat, steht in keiner Rangfolge mehr. */
+  .seasontools .einblick{margin:10px 0 0}
+  .ruhe-ende{margin-top:14px}
+  .ruhe-ende .einblick{margin:0}
+  .ruhe-liste,.einblick-i .rlist{margin-top:4px}
+  .rrow.ruhe-row{background:var(--surface2);border-style:dashed}
+  .pp-pill.ruhe{border-color:var(--line2);color:var(--ink);font-family:inherit;cursor:pointer}
+  .pp-ruhe{margin-top:24px}
+  .pp-ruhe + .pp-del{margin-top:10px;padding-top:0}
+  .pp-ruhe button{width:100%;background:var(--surface);border:1px solid var(--line2);
+    color:var(--ink2);padding:12px;border-radius:13px;font-family:inherit;font-size:12px;
+    font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+  .pp-ruhe button:disabled{opacity:.5}
+  .pp-ruhe button .ic{width:14px;height:14px}
+  /* Spieler entfernen [§C40]: zwei Wege, und der Grund, warum Löschen keiner
+     ist. Die Knöpfe tragen Überschrift und Satz übereinander, links bündig. */
+  .pp-weg{margin-top:20px;display:flex;flex-direction:column;gap:10px}
+  .pp-weg > .btn:not(.sm){display:flex;flex-direction:column;align-items:flex-start;gap:4px;
+    text-align:left;padding:14px 16px}
+  .pp-weg > .btn b{font-size:14px;font-weight:700;color:var(--ink)}
+  .pp-weg > .btn span{font-size:11.5px;font-weight:400;color:var(--muted);line-height:1.4}
+  .pp-weg-n{margin:2px 2px 0;font-size:11.5px;color:var(--muted);line-height:1.45}

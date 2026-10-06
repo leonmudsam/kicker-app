@@ -120,7 +120,7 @@ function openNewsDetail(sid){
     el.onclick = () => {
       const [art, k] = String(el.dataset.rueckblick).split('|');
       closeNewsDetail();
-      sheetNav(() => { try { art === 'tag' ? showPotdRecap({force:true, tag:k}) : showPotwRecap({woche:k}); } catch(e){} });
+      sheetNav(() => { try { art === 'abschied' ? zeigeAbschied(k) : art === 'tag' ? showPotdRecap({force:true, tag:k}) : showPotwRecap({woche:k}); } catch(e){} });
     };
   });
   // Match-Refs: bei Klick zum Match-Detail springen
@@ -154,6 +154,22 @@ function openNewsDetail(sid){
       sheetNav(() => { try { showSeasonTable(sid); } catch(e){} });
     };
   });
+  // Eine Monatschronik öffnet ihre Wertung im Monat der Karte, ein
+  // Insignium die Laufbahn: dorthin führt eine Zeile der Tafel [§C33].
+  nd.querySelectorAll('[data-disz]').forEach(el => {
+    el.onclick = () => {
+      const [tid, sid] = String(el.dataset.disz).split('|');
+      closeNewsDetail();
+      sheetNav(() => { try { showDisziplin(tid, sid); } catch(e){} });
+    };
+  });
+  nd.querySelectorAll('[data-laufbahn]').forEach(el => {
+    el.onclick = () => {
+      const pid = el.dataset.laufbahn;
+      closeNewsDetail();
+      sheetNav(() => { try { showLaufbahn(pid); } catch(e){} });
+    };
+  });
   nd.querySelectorAll('[data-chron]').forEach(el => {
     el.onclick = () => {
       const cid = el.dataset.chron;
@@ -170,6 +186,8 @@ function openNewsDetail(sid){
 // oder IHRER Woche.
 function _newsRueckblickKnopf(s){
   const d = (s && s.dataRef) || {};
+  if(d.type === 'karriereende' && d.pid && pmap()[d.pid])
+    return `<button class="btn nd-rueck" type="button" data-rueckblick="${esc('abschied|' + d.pid)}">${svgI('hourglass')}Der ganze Abschied</button>`;
   const ziel = d.type === 'potd' && d.dayKey ? 'tag|' + d.dayKey
     : (d.type === 'woche' || d.type === 'potw') && d.woche ? 'woche|' + d.woche : '';
   if(!ziel) return '';
@@ -948,7 +966,7 @@ function _ndBadgeBlatt(s){
   const kopf = `<div class="nd-buehne nd-bd">${medaille}<div class="nd-bd-w">${pids.slice(0, 4).map(id =>
     `<span data-pid="${esc(id)}">${avHtml(pm[id], '', {ins:true, px:52, feuer:0})}<b>${esc(_spName(id))}</b></span>`).join('')}</div></div>`;
   const m = d.matchId ? (matches || []).find(x => x.id === d.matchId) : null;
-  const alle = Object.keys(pm).filter(id => !pm[id].hidden);
+  const alle = Object.keys(pm).filter(id => sichtbar(pm[id]));
   const hat = id => (getCachedBadges(id) || []).some(b => b.id === d.badgeId);
   const traeger = alle.filter(hat).length;
   const feld = `<div class="nd-tg">${alle.sort((x, y) => hat(y) - hat(x)).map((id, k) => `<span class="${hat(id) ? 'hat' : ''}${pids.includes(id) ? ' dies' : ''}" data-pid="${esc(id)}" style="--k:${k}">`
@@ -1321,45 +1339,93 @@ function _ndInsigniumBlatt(s){
 
 // ── Der Tafel-Moment als Zeitleiste [§C33] ──────────────────────────
 // Die Tafel eines Tages rollt: jeder weitere Wechsel ersetzt ihre Karte
-// [§C33], und das Blatt zeigte davon nur eine Liste aus Sätzen. Die Bühne
-// legt jetzt jede Bewegung als Zeichen auf die Uhr des Tages, von der ersten
-// bis zur jüngsten, und darunter jeden, um den es geht, mit Gesicht und
-// Namen. Was eine Bewegung wert war, steht in der Wirkung darunter.
+// [§C33]. Die Bühne zeigt, WANN sich an diesem Tag etwas bewegt hat: die
+// Partien des Tages als Striche auf einer Achse, und über jedem Augenblick
+// seine Bewegungen als Punkte in der Farbe ihrer Art — Gold Bestmarke und
+// Chronik, Silber der Ausbau, Violett die Stufe [§C25].
+// Hier stand vorher je Spieler eine Zeile mit Gesicht, Namen, einem Satz
+// und einem Zeichen je Bewegung. Genau das zeigt die Liste darunter schon,
+// Zeile für Zeile und mit dem Wechsel aus Gesichtern: das Blatt sagte
+// dieselbe Sache zweimal untereinander. Namen stehen deshalb nur unten.
+// Davor stand eine Zeitachse mit gestapelten ZEICHEN und losen Namenschips;
+// welches Zeichen wem gehörte, war nicht zu erkennen. Ohne Namen ist das
+// keine Frage mehr: oben steht der Tag, unten stehen die Leute.
+// Die Klassen tragen `nd-ta`/`ta-`: `.nd-tl` ist die Tagesleiste, und
+// `.rek` ist die Karte des Rekorde-Reiters, die ihr Raster über den Punkt
+// zog — er war damit 22 statt 9 Pixel hoch.
+function _ndTafelArt(t){
+  const ty = String(t.typ || t.type || '');
+  return ty === 'insignium_stufe' ? 'ins' : ty === 'rekord_gesteigert' ? 'aus'
+    : ty.indexOf('chronik_') === 0 ? 'chr' : 'rek';
+}
 function _ndTafelMomentBlatt(s){
   const d = s.dataRef || {};
   if(d.type !== 'sammel' || (d.quelle !== 'tafel' && d.quelle !== 'form')) return null;
-  const pm = pmap();
   const teile = (Array.isArray(d.teile) ? d.teile : []).filter(t => Number.isFinite(t.ms));
   if(!teile.length) return null;
-  const typ = t => String(t.typ || t.type || '');
-  // Eigene Namen: `.rek` ist die Karte des Rekorde-Reiters und zog ihr
-  // Raster über das Zeichen.
-  const art = t => typ(t) === 'insignium_stufe' ? 'tm-ins' : typ(t).indexOf('chronik_') === 0 ? 'tm-chr'
-    : typ(t) === 'rekord_gesteigert' ? 'tm-aus' : 'tm-rek';
-  const ms = teile.map(t => t.ms), t0 = Math.min(...ms), t1 = Math.max(...ms);
-  const jeMinute = new Map();
+  const ms = teile.map(t => t.ms);
+  // Die Achse ist der Spieltag, nicht nur die Spanne der Bewegungen: erst
+  // daneben sieht man, nach welcher Partie sich die Tafel bewegt hat und
+  // nach welchen nicht.
+  const tag = tagKey(Math.max(...ms));
+  const partien = (matches || []).map(mts).filter(x => Number.isFinite(x) && tagKey(x) === tag);
+  const A = Math.min(...ms, ...partien), B = Math.max(...ms, ...partien);
+  const lage = x => B > A ? 6 + (x - A) / (B - A) * 88 : 50;
+  // Was näher als ein Punkt beieinander liegt, steht in einer Säule —
+  // nebeneinander überlappten die Punkte, und dann war ihre Zahl nicht mehr
+  // zu zählen.
+  const ORDNUNG = {rek:0, chr:1, ins:2, aus:3};
+  const saeulen = [];
   teile.slice().sort((a, b) => a.ms - b.ms).forEach(t => {
-    const k = Math.floor(t.ms / 60000);
-    if(!jeMinute.has(k)) jeMinute.set(k, []);
-    jeMinute.get(k).push(t);
+    const x = lage(t.ms), letzte = saeulen[saeulen.length - 1];
+    if(letzte && x - letzte.x0 < 6) letzte.arten.push(_ndTafelArt(t));
+    else saeulen.push({x0:x, arten:[_ndTafelArt(t)], ms:t.ms});
   });
-  const marken = [...jeMinute.values()].map((l, k) => {
-    const x = t1 === t0 ? 50 : 4 + (l[0].ms - t0) / (t1 - t0) * 92;
-    return `<span class="nd-tm-m" style="left:${x.toFixed(1)}%;--k:${k}">${l.slice(0, 5).map(t =>
-      `<i class="${art(t)}">${svgI(t.ic || 'trophy')}</i>`).join('')}${l.length > 5 ? `<b class="num">+${l.length - 5}</b>` : ''}</span>`;
+  const HOCH = 6;
+  const saeulenHtml = saeulen.map((z, k) => {
+    const arten = z.arten.sort((a, b) => ORDNUNG[a] - ORDNUNG[b]);
+    const zeig = arten.length > HOCH ? arten.slice(0, HOCH - 1) : arten;
+    return `<span class="nd-ta-s" style="left:${z.x0.toFixed(1)}%;--k:${k}">`
+      + zeig.map(a => `<i class="ta-${a}"></i>`).join('')
+      + (arten.length > zeig.length ? `<b class="num">+${arten.length - zeig.length}</b>` : '') + `</span>`;
   }).join('');
-  let ids = [];
-  try { ids = (_newsPids(s) || []).slice(); } catch(e){}
-  teile.forEach(t => (t.pids || []).forEach(id => { if(ids.indexOf(id) < 0) ids.push(id); }));
-  ids = ids.filter(id => pm[id]);
-  const kopf = `<div class="nd-buehne nd-tm${d.quelle === 'form' ? ' form' : ''}">`
-    + `<div class="nd-tm-k"><b class="num">${teile.length}</b><span>${teile.length === 1 ? 'Bewegung' : 'Bewegungen'}`
-    + `${d.quelle === 'form' ? ' auf kurzer Strecke' : ' an der Ewigen Tafel'}</span></div>`
-    + `<div class="nd-tm-a" style="height:${20 + 23 * Math.min(6, Math.max(...[...jeMinute.values()].map(l => l.length)))}px"><i class="nd-tm-x"></i>${marken}</div>`
-    + `<div class="nd-tm-u num"><span>${esc(_newsUhrzeit(t0))}</span>${t1 !== t0 ? `<span>${esc(_newsUhrzeit(t1))}</span>` : ''}</div>`
-    + (ids.length ? `<div class="nd-tm-cs">${ids.map(id => `<span class="nd-tm-c" data-pid="${esc(id)}">${_spChip(id)}<b>${esc(_spName(id))}</b></span>`).join('')}</div>` : '')
-    + `</div>`;
+  // Die Partie, nach der sich etwas bewegt hat, ist hell; die übrigen
+  // bleiben leise Striche auf der Achse.
+  const bewegt = new Set(ms);
+  const striche = partien.map(x => `<i class="nd-ta-p${bewegt.has(x) ? ' an' : ''}" style="left:${lage(x).toFixed(1)}%"></i>`).join('');
+  // So hoch wie die höchste Säule: fest bemessen stand über zwei Punkten
+  // eine leere Fläche, so groß wie die Liste darunter.
+  const hoehe = Math.max(...saeulen.map(z => Math.min(HOCH, z.arten.length)));
+  const NAME = {rek:'Bestmarke', chr:'Monatschronik', ins:'Insignium', aus:'Ausbau'};
+  const da = Object.keys(NAME).filter(a => teile.some(t => _ndTafelArt(t) === a));
+  const uhr = x => esc(_newsUhrzeit(x));
+  const kopf = `<div class="nd-buehne nd-ta${d.quelle === 'form' ? ' form' : ''}">`
+    + `<div class="nd-ta-k"><b class="num">${teile.length}</b><span>${teile.length === 1 ? 'Bewegung' : 'Bewegungen'}`
+    + `${d.quelle === 'form' ? ' auf kurzer Strecke' : ' an der Ewigen Tafel'}</span>`
+    + `</div>`
+    + `<div class="nd-ta-f" aria-hidden="true" style="--h:${hoehe}">${saeulenHtml}<span class="nd-ta-a"></span>${striche}</div>`
+    + `<div class="nd-ta-u num"><span>${uhr(A)}</span><span>${partien.length === 1 ? 'eine Partie'
+      : (_BELEG_ZAHL[partien.length] || String(partien.length)) + ' Partien'}</span>${B > A ? `<span>${uhr(B)}</span>` : ''}</div>`
+    + `<div class="nd-ta-l">${da.map(a => `<span class="ta-${a}"><i></i>${NAME[a]}</span>`).join('')}</div></div>`;
   return {kopf, mitte:null};
+}
+
+// Wohin eine Zeile der Tafel führt: zu dem, wovon sie erzählt. Sie führte
+// ins Profil des ersten Genannten, und wer auf „Der Zerstörer" tippte, um
+// zu sehen, wer dahinter liegt, landete auf einer Seite über einen Menschen.
+// Ein Rekord öffnet sein Blatt, eine Monatschronik ihre Wertung im Monat
+// der Karte, ein Insignium die Laufbahn. Nur was keines davon kennt — eine
+// Zeile aus einem älteren Lauf ohne Verweis —, bleibt beim Profil.
+function _ndTafelZiel(t){
+  const ref = t.ref || {}, ty = String(t.typ || t.type || '');
+  const pid = ref.pid || (t.pids || [])[0];
+  if(ty.indexOf('rekord_') === 0 && ref.rekordId && CHRONICLE_BY_ID[ref.rekordId])
+    return ` data-chron="${esc(ref.rekordId)}"`;
+  if(ty === 'chronik_geholt' && ref.titleId && SEASON_TITLE_BY_ID[ref.titleId] && ref.sid)
+    return ` data-disz="${esc(ref.titleId + '|' + ref.sid)}"`;
+  if(ty.indexOf('chronik_') === 0 && ref.sid) return ` data-season-table="${esc(ref.sid)}"`;
+  if(ty === 'insignium_stufe' && pid && pmap()[pid]) return ` data-laufbahn="${esc(pid)}"`;
+  return pid && pmap()[pid] ? ` data-pid="${esc(pid)}"` : '';
 }
 
 // Eine Zeile der Tafel als Bild statt als Satz: der Name des Eintrags, was
@@ -1576,7 +1642,15 @@ const _ND_BLATT = {win_streak:_ndSerieBlatt, loss_streak:_ndSerieBlatt, team_str
   insignium_stufe:_ndInsigniumBlatt, sammel:_ndTafelMomentBlatt,
   jubilee:_ndMeilensteinBlatt, milestone_wins:_ndMeilensteinBlatt, milestone_goals:_ndMeilensteinBlatt,
   milestone_elo:_ndMeilensteinBlatt, top_form:_ndFormBlatt, elo_swing:_ndAusschlagBlatt,
-  top_clash:_ndSpitzenspielBlatt, badge_marken:_ndMarkenBlatt, dry_spell:_ndFaktBlatt, ambient:_ndFaktBlatt};
+  top_clash:_ndSpitzenspielBlatt, badge_marken:_ndMarkenBlatt, dry_spell:_ndFaktBlatt, ambient:_ndFaktBlatt,
+  karriereende:_ndAbschiedBlatt};
+// Das Blatt eines Karriereendes zeigt die Bühne und den Anfang des
+// Abschieds; der ganze steht einen Knopf weiter [§C40].
+function _ndAbschiedBlatt(s){
+  const d = s.dataRef || {};
+  if(!pmap()[d.pid]) return null;
+  return {kopf:abschiedBuehneHtml(d.pid), mitte:abschiedMitteHtml(d.pid, true)};
+}
 // Gemerkt nur für einen Aufbau (`_newsDetailBody` leert es): an der Story
 // hängend hielte es nach einer neuen Partie den alten Stand fest.
 let _ndBlattJetzt = null;
@@ -1996,15 +2070,16 @@ function _ndMitteRoh(s){
           // Eine Zeile der Tafel ist ein Bild aus Gesichtern und Wert; ihr
           // Satz stand darunter und wiederholte beides [§C33].
           const bild = tafelBild ? _ndTafelZeileBild(t) : null;
-          if(bild) return `<div class="nw-zeile nw-tz${t.neg ? ' neg' : ''}"${
-              (t.pids && t.pids[0]) ? ` data-pid="${esc(t.pids[0])}" style="cursor:pointer"` : ''}>
+          // Die Zeile führt zu ihrem Eintrag, nicht zum Profil.
+          const ziel = tafelBild ? _ndTafelZiel(t) : '';
+          if(bild) return `<div class="nw-zeile nw-tz${t.neg ? ' neg' : ''}"${ziel}${ziel ? ' style="cursor:pointer"' : ''}>
               ${t.ic ? `<i class="nw-ic">${svgI(t.ic)}</i>` : ''}
               <span class="nw-tz-t"><span class="nw-label">${esc(bild.label)}</span>${
                 t.klasse ? `<b class="nw-kl">${esc(t.klasse)}</b>` : ''}${t.marke ? `<b class="nw-mk">${esc(t.marke)}</b>` : ''}
                 <small>${esc([bild.verb, zeit].filter(Boolean).join(' · '))}</small></span>
               <span class="nw-tz-r">${bild.rechts}</span></div>`;
-          return `<div class="nw-zeile${t.neg ? ' neg' : ''}"${
-              (t.pids && t.pids[0]) ? ` data-pid="${esc(t.pids[0])}" style="cursor:pointer"` : ''}>
+          return `<div class="nw-zeile${t.neg ? ' neg' : ''}"${ziel ? ziel + ' style="cursor:pointer"'
+              : (t.pids && t.pids[0]) ? ` data-pid="${esc(t.pids[0])}" style="cursor:pointer"` : ''}>
               <div class="nw-zeile-kopf">${t.ic
                 ? `<i class="nw-ic">${svgI(t.ic)}</i>` : ''}<span class="nw-label">${
                 esc(t.titel || '')}</span>${

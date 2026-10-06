@@ -63,7 +63,7 @@ let awView='awards';       // awards | rekorde | chronik (Reiter im Awards-Tab)
 // Welcher Einblick über der Rangliste aufgeklappt ist (15b-einblick.js).
 // Er gehört zum Reiter: ein neuer Reiter beginnt geschlossen, ein
 // Neuzeichnen im selben Reiter klappt ihn nicht zu.
-let einblickOffen='';      // '' | rollen | netz
+let einblickOffen='';      // offene Einblicke, durch Leerzeichen getrennt: rollen netz ruhe_liga ruhe_pos ruhe_teams
 // Welche Kammer der Rekorde-Reiter zeigt. Leer heißt alle vier. Sie gehört
 // zum Reiter und nicht zur App: wer den Tab wechselt, will beim Zurückkommen
 // die ganze Tafel sehen und nicht den Ausschnitt von vorhin.

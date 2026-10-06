@@ -14,12 +14,13 @@
 // Eckdaten aus Teilen, die es geben kann oder nicht („12 Matches · 8 Spieler").
 function rcpMeta(teile){ return teile.filter(Boolean).join(' · '); }
 
-// Der Kopf. Die Marke ist immer Gold: Saison-Sieger, Spieler der Woche und
+// Der Kopf. Die Marke ist Gold: Saison-Sieger, Spieler der Woche und
 // Spieler des Tages sind Titel, und Gold gehört den Titeln [§C25]. Vorher
 // war sie zweimal grün und einmal gold — dieselbe Aussage in zwei Farben.
+// Ein Abschied ist kein Titel und trägt Metall (`o.metall`) [§C40].
 function rcpKopfHtml(o){
   return `<div class="rcp-head">
-    <span class="rcp-label">${svgI(o.ic || 'trophy')}${esc(o.marke)}</span>
+    <span class="rcp-label${o.metall ? ' metall' : ''}">${svgI(o.ic || 'trophy')}${esc(o.marke)}</span>
     <div class="rcp-month">${esc(o.titel)}</div>
     ${o.meta ? `<div class="rcp-meta">${esc(o.meta)}</div>` : ''}
     ${o.extra || ''}
@@ -353,7 +354,8 @@ function saisonRang(sid){
       });
     });
   });
-  return Object.keys(gespielt).filter(id => gespielt[id] > 0 && pmap()[id])
+  // Ein Monat ist ein Zeitraum [§C40]: wer darin spielte, steht darin.
+  return Object.keys(gespielt).filter(id => gespielt[id] > 0 && sichtbar(id))
     .map(id => ({id, elo:Math.round(stand[id] ?? cfg.start_elo),
                  wins:sw[id] || 0, losses:sl[id] || 0, diff:(gf[id] || 0) - (ga[id] || 0)}))
     .sort((a, b) => b.elo - a.elo);

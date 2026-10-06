@@ -1880,6 +1880,14 @@ const _kopfN = JSON.parse(K.eval(`JSON.stringify((function(){
       return;
     }
     const kopf = _newsBlattKopf(s);
+    // Der Tafel-Moment zeigt oben nur den Tag als Achse; wer was bewegt
+    // hat, nennt die Liste darunter, und dort steht dann jeder Genannte.
+    if(kopf.indexOf('nd-ta') >= 0){
+      const mitte = _newsDetailMitte(s) || '';
+      const fehlt = ids.filter(x => mitte.indexOf(esc(pmap()[x].name)) < 0);
+      if(fehlt.length) falsch.push(s.title + ' → Liste ohne ' + fehlt.map(x => pmap()[x].name).join(', '));
+      return;
+    }
     // Eine Partie trägt ihre Bühne als Kopf [§C33]: dort steht jeder
     // Genannte mit Namen, in der Zeichnung oder darunter.
     if(kopf.indexOf('nd-buehne') >= 0){
@@ -7249,27 +7257,44 @@ const _tafelBl = JSON.parse(K.eval(`JSON.stringify((function(){
     r.erst = {buehne:/nd-buehne nd-er/.test(b.k), name:b.k.indexOf(esc(a.name)) >= 0,
       monate:zahl(/<span class="(da)?"><i>/g, b.m), soll:monate.length > 1 ? monate.length : 0};
   }
-  // Der Tafel-Moment: jede Bewegung ein Zeichen auf der Uhr des Tages, jeder
-  // Beteiligte mit Namen, und jede Zeile mit Haltern als Bild statt Satz.
+  // Der Tafel-Moment: oben der Spieltag als Achse — jede Partie ein Strich,
+  // jede Bewegung ein Punkt in der Farbe ihrer Art —, und ohne einen Namen:
+  // wer was bewegt hat, steht in der Liste darunter. Jede Zeile der Liste
+  // führt zu ihrem Eintrag und nicht ins Profil. Nachgezählt wird an den
+  // Teilen der Karte und an den rohen Partien des Tages.
   _cache._stories = roh.slice().sort((a,b)=>new Date(b.when)-new Date(a.when));
   _cache._consolFrom = null; _cache._frischVon = null;
   const tm = getStoriesCache().find(s => (s.dataRef||{}).type === 'sammel' && s.dataRef.quelle === 'tafel');
   if(tm){
     const b = blatt(tm), teile = tm.dataRef.teile;
-    const mehr = (b.k.match(/<b class="num">\\+(\\d+)<\\/b><\\/span>/g) || []).map(x => +x.replace(/\\D/g, ''));
-    const pids = [...new Set(teile.flatMap(t => t.pids || []))];
+    const ty = t => String(t.typ || t.type || '');
+    const tag = tagKey(Math.max(...teile.map(t => t.ms)));
+    const mehr = (b.k.match(/<b class="num">\\+(\\d+)<\\/b><\\/span>/g) || []).reduce((a, x) => a + +x.replace(/\\D/g, ''), 0);
+    const ziel = t => {
+      const ref = t.ref || {};
+      if(ty(t).indexOf('rekord_') === 0) return 'data-chron="' + esc(ref.rekordId) + '"';
+      if(ty(t) === 'chronik_geholt') return 'data-disz="' + esc(ref.titleId + '|' + ref.sid) + '"';
+      if(ty(t) === 'insignium_stufe') return 'data-laufbahn="' + esc(ref.pid) + '"';
+      return '';
+    };
+    const zeilen = b.m.match(/<div class="nw-zeile nw-tz[^>]*>/g) || [];
     const mitHalter = teile.filter(t => t.rname && (t.halter || []).length);
-    r.moment = {zeichen:zahl(/<i class="tm-(rek|chr|aus|ins)">/g, b.k) + mehr.reduce((a, x) => a + x, 0), teile:teile.length,
-      namen:pids.every(id => b.k.indexOf('<b>' + esc(pname(id)) + '</b>') >= 0),
-      bilder:zahl(/class="nw-zeile nw-tz/g, b.m), mitHalter:mitHalter.length + teile.filter(t => (t.typ || t.type) === 'insignium_stufe').length,
+    r.moment = {punkte:zahl(/<i class="ta-(rek|chr|aus|ins)"><\\/i>/g, b.k) + mehr, teile:teile.length,
+      striche:zahl(/class="nd-ta-p( an)?"/g, b.k), hell:zahl(/class="nd-ta-p an"/g, b.k), partien:(matches || []).filter(m => tagKey(mts(m)) === tag).length,
+      ohneNamen:!/class="av\\b|data-pid=/.test(b.k),
+      ziele:teile.filter(t => ziel(t)).every(t => zeilen.some(z => z.indexOf(ziel(t)) >= 0)),
+      zielZahl:teile.filter(t => ziel(t)).length,
+      profil:zeilen.filter(z => /data-pid=/.test(z)).length,
+      bilder:zeilen.length, mitHalter:mitHalter.length + teile.filter(t => ty(t) === 'insignium_stufe').length,
       saetze:zahl(/class="nw-zeile nw-tz[^]*?class="nw-satz/g, b.m)};
   }
   return r;
 })())`));
 const _tb = _tafelBl;
-ok(_tb.moment && _tb.moment.zeichen === _tb.moment.teile && _tb.moment.namen
-   && _tb.moment.bilder === _tb.moment.mitHalter && _tb.moment.saetze === 0,
-   'das Blatt eines Tafel-Moments legt jede Bewegung auf die Uhr des Tages, nennt jeden Beteiligten und zeigt jede Zeile mit Haltern als Bild ohne Satz',
+ok(_tb.moment && _tb.moment.punkte === _tb.moment.teile && _tb.moment.striche === _tb.moment.partien
+   && _tb.moment.partien > 0 && _tb.moment.hell > 0 && _tb.moment.ohneNamen && _tb.moment.zielZahl > 0 && _tb.moment.ziele
+   && _tb.moment.profil === 0 && _tb.moment.bilder === _tb.moment.mitHalter && _tb.moment.saetze === 0,
+   'das Blatt eines Tafel-Moments zeigt den Spieltag als Achse mit jeder Partie und jeder Bewegung ohne Namen, und jede Zeile führt zu ihrem Eintrag statt ins Profil',
    JSON.stringify(_tb.moment));
 ok(_tb.ins && _tb.ins.buehne && _tb.ins.grade === 3 && _tb.ins.quellen === 3
    && _tb.ins.summe === _tb.ins.punkte && _tb.ins.stufe,

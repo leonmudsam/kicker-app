@@ -56,7 +56,8 @@ function showPlayer(id){
   // Wer 0 Saison-Spiele hat, bekommt keinen #-Badge.
   // Sortierung: Saison-Elo (gSim.elo enthält nach Saison-Reset die aktuelle Saison-Elo).
   const gSim=getGlobalSim();
-  const rankedSeason=activePlayers()
+  // Der Monat ist ein Zeitraum [§C40]: derselbe Platz wie in der Liga.
+  const rankedSeason=players.filter(x=>sichtbar(x))
     .filter(x=>(gSim.playedSeason[x.id]||0)>0)
     .sort((a,b)=>(gSim.elo[b.id]??cfg.start_elo)-(gSim.elo[a.id]??cfg.start_elo));
   const rank=rankedSeason.findIndex(x=>x.id===id)+1;
@@ -76,7 +77,13 @@ function showPlayer(id){
   // Nicht für 15 Punkte, fünf Punkte und das Peak-Datum die ganze Liga
   // dreimal filtern und sortieren. Die gemeinsamen Arrays bleiben lesbar.
   const playerMs = matchesOfPlayer(id, matches);
-  const seasonMs = matchesOfPlayer(id, matchesInSeason());
+  // Die Gegenwart eines Ruheständlers ist sein Abschied [§C40]: „diese
+  // Saison" heißt für ihn die Saison, in der er aufgehört hat. Mit der
+  // laufenden stand dort zwei Monate später ein Strich, und die Kurve der
+  // Saison war verschwunden — ohne dass er gespielt hatte.
+  const _ruhe = imRuhestand(id);
+  const _profilSid = _ruhe ? seasonOf(new Date(ruhestandMs(id))).id : currentSeason().id;
+  const seasonMs = matchesOfPlayer(id, matchesInSeason(_profilSid));
   const _last15 = playerMs.slice(-15);
   const last15DotsHtml = _last15.map(m=>{
     const onA=(id===m.a1||id===m.a2);
@@ -148,7 +155,7 @@ function showPlayer(id){
           </svg>
         </div>
         <div class="pp-spark-foot">
-          <span>Elo · ${esc(seasonLabel(currentSeason().id))}</span>
+          <span>Elo · ${esc(seasonLabel(_profilSid))}</span>
           <span class="delta ${netCls}">${netTxt}</span>
         </div>`;
     }
@@ -248,12 +255,8 @@ function showPlayer(id){
   // Perzentil-Berechnung
   let percentileTxt = '', percentilePct = 0;
   if(rInfo){
-    const avgs = getSeasonAvgElos();
-    const ranked = players.filter(pp=>!pp.hidden && avgs[pp.id]!==null)
-      .sort((a,b)=>avgs[b.id]-avgs[a.id]);
-    const idx = ranked.findIndex(x=>x.id===id);
-    if(idx>=0){
-      const pct = ((idx+1)/ranked.length)*100;
+    const pct = rangPerzentil(id);
+    if(pct > 0){
       percentileTxt = 'Top ' + Math.ceil(pct) + '%';
       percentilePct = pct;
     }
@@ -311,7 +314,7 @@ function showPlayer(id){
         const eloTxt = (sn.eloDelta>=0?'+':'')+sn.eloDelta;
         return `<div class="pp-sn ${cls}">
           <div class="mo">${esc(sn.label)}</div>
-          <div class="pl"><span class="n big">${sn.place||'–'}.</span></div>
+          <div class="pl"><span class="n big">${sn.place?sn.place+'.':'–'}</span></div>
           <div class="el ${eloCls}">${eloTxt}</div>
           <div class="rc">${sn.wins}–${sn.losses}</div>
         </div>`;
@@ -372,6 +375,9 @@ const rankProgHtml = rInfo ? `
   //     eigene Farbe mitzubringen.
   const _ton = rangTon(id);
   const _stufe = 'st-' + prestigeOf(id).insignie.key;
+  // Das Profil eines Ruheständlers steht, wie es beim Abschied stand [§C40]:
+  // Wappen, Rekorde und Rang kommen aus dem eingefrorenen Stand.
+  const _hatPartien = matches.some(m => m.a1 === id || m.a2 === id || m.b1 === id || m.b2 === id);
 
   openSheet(`
    <div class="pp-root pp-player ${_stufe}" style="--ak:${_ton.c};--ak-rgb:${_ton.rgb}">
@@ -428,26 +434,30 @@ const rankProgHtml = rInfo ? `
           ${esc(rInfo.label)}
         </span>`:''}
         <span class="pp-pill">${posIcon}${esc(posLabel)}</span>
+        ${_ruhe ? `<button type="button" class="pp-pill ruhe" id="ppAbschied">${svgI('hourglass')}Karriereende ${esc(datumFmt(ruhestandMs(id), 'tmj'))}</button>` : ''}
       </div>
 
       ${(()=>{
         // ── SIGNATURE: Peak-Elo-Trinity ──
         // Drei zusammenhängende Werte: Aktuell (acid) | Peak Saison | Peak Allzeit (tier-getönt)
         const games=gSim.playedSeason[id]||0;
-        const curElo = games>0 ? Math.round(gSim.elo[id]) : '—';
+        // Ein Ruheständler hat keine laufende Saison [§C40]: vorn steht die
+        // Karriere-Elo, mit der er aufgehört hat.
+        const curElo = _ruhe ? Math.round(gSim.careerElo[id] ?? cfg.start_elo)
+          : games>0 ? Math.round(gSim.elo[id]) : '—';
         const ps = peakSeason !== null ? peakSeason : '—';
         const pa = peakAlltime !== null ? peakAlltime : '—';
         const paSub = peakAlltimeSeason ? esc(peakAlltimeSeason) : 'saison-übergreifend';
         return `<div class="pp-elo-trinity">
           <div class="pp-et-col now">
-            <div class="label">Aktuell</div>
+            <div class="label">${_ruhe ? 'Abschied' : 'Aktuell'}</div>
             <div class="val">${curElo}</div>
-            <div class="sub">Saison</div>
+            <div class="sub">${_ruhe ? 'Karriere-Elo' : 'Saison'}</div>
           </div>
           <div class="pp-et-col peak">
             <div class="label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS['peak']||''}</svg> Spitze</div>
             <div class="val">${ps}</div>
-            <div class="sub">diese Saison</div>
+            <div class="sub">${_ruhe ? esc(seasonLabel(_profilSid)) : 'diese Saison'}</div>
           </div>
           <div class="pp-et-col alltime">
             <div class="label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS['star']||''}</svg> Allzeit</div>
@@ -561,7 +571,8 @@ const rankProgHtml = rInfo ? `
       // Dünne Bar darunter zeigt segmentiert den Gesamt-Fortschritt nach Tier.
       const _STRIP_MAX = 8;
       const _byRarity = {legendary:[], rare:[], common:[], negative:[]};
-      badges.forEach(b => { const r = rarityOf(b.id); if(_byRarity[r]) _byRarity[r].push(b); });
+      const _kat = badgeKatalog(id), _rOf = new Map(_kat.map(x => [x.b.id, x.r]));
+      badges.forEach(b => { const r = _rOf.get(b.id) || rarityOf(b.id); if(_byRarity[r]) _byRarity[r].push(b); });
       const _strip = [];
       RARITY_ORDER.forEach(r => _byRarity[r].forEach(b => _strip.push({b, r})));
       const _visible = _strip.slice(0, _STRIP_MAX);
@@ -573,7 +584,7 @@ const rankProgHtml = rInfo ? `
       // Bar-Segmente: ein Stück pro Tier-Count, Rest dunkel
       const _seg = (r) => _byRarity[r].length;
       const _have = _seg('legendary')+_seg('rare')+_seg('common')+_seg('negative');
-      const _missing = BADGES.length - _have;
+      const _missing = _kat.length - _have;
       const _barHtml = `
         <div class="pp-bcard-bar">
           ${_seg('legendary')?`<div class="seg legendary" style="flex:${_seg('legendary')}"></div>`:''}
@@ -586,7 +597,7 @@ const rankProgHtml = rInfo ? `
     <div class="pp-sec" style="animation-delay:.425s">
       <div class="pp-sec-title">
         <div class="l">${svgI('star')}<h4>Auszeichnungen</h4></div>
-        <div class="m">${_have} / ${BADGES.length}</div>
+        <div class="m">${_have} / ${_kat.length}</div>
       </div>
       <div class="pp-bcard" id="ppBadgesBtn">
         <div class="pp-bcard-row">
@@ -749,18 +760,24 @@ const rankProgHtml = rInfo ? `
       </div>
     </div>
 
+    ${_hatPartien ? `<div class="pp-ruhe">
+      <button id="ruhePlayer" type="button" data-ruhe="${_ruhe ? '0' : '1'}">${svgI('hourglass')}${_ruhe ? 'Karriere fortsetzen' : 'Karriere beenden'}</button>
+    </div>` : ''}
     <div class="pp-del">
       <button id="delPlayer">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="3,6 5,6 21,6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/>
         </svg>
-        Spieler löschen
+        ${_hatPartien ? 'Spieler entfernen' : 'Spieler löschen'}
       </button>
     </div>
    </div>
   `);
 
   // Click-Handler
+  // Die Pille des Karriereendes öffnet den Abschied [§C40].
+  const pab=document.getElementById('ppAbschied');
+  if(pab) pab.onclick=()=>{ sheetNav(()=>zeigeAbschied(id)); };
   const eb=document.getElementById('ppEditBtn');
   if(eb) eb.onclick=()=>{ sheetNav(()=>showEditPlayer(id)); };
   const ag=document.getElementById('ppAwardsGrid');
@@ -808,53 +825,81 @@ const rankProgHtml = rInfo ? `
   // Chronik-Zellen öffnen die Saison-Tafel (§13)
   _bindChronikClicks(document.getElementById('sheet'));
 
-  // Delete-Handler – identisch zur Original-Logik
+  // Karriere beenden und fortsetzen [§C40]. Gespeichert wird nur der
+  // Zeitpunkt; was er bewirkt, rechnet die App aus den Partien.
+  // Derselbe Weg aus dem Knopf und aus dem Blatt „Spieler entfernen".
+  const rp=document.getElementById('ruhePlayer');
+  const karriere=async(beenden)=>{
+    const ja = await bestaetigen(beenden
+      ? {ic:'hourglass', ja:'Karriere beenden', nein:'Abbrechen', titel:p.name + ' beendet die Karriere',
+         text:'Jede Partie bleibt und mit ihr jeder Tag, jede Woche und jeder Monat, in dem ' + p.name + ' gespielt hat, samt Auszeichnungen und Titeln. Ewige Tafel und Rekorde vergleichen ab jetzt ohne ' + p.name + '. Das Profil bleibt stehen, sobald diese Woche und dieser Monat vorbei sind.'}
+      : {ic:'hourglass', ja:'Karriere fortsetzen', nein:'Abbrechen', titel:p.name + ' kehrt zurück',
+         text:p.name + ' steht danach wieder in Ewiger Tafel, Rekorden und Rangliste.'});
+    if(!ja) return;
+    if(rp) rp.disabled = true;
+    const r = await karriereSetzen(id, beenden);
+    if(!r.ok){
+      if(rp) rp.disabled = false;
+      toast('Nicht gespeichert', 'err', {sub: r.fehlt
+        ? 'In der Datenbank fehlt die Spalte für das Karriereende (datenbank/karriereende.sql).'
+        : 'Die Verbindung zur Datenbank ist fehlgeschlagen.'});
+      return;
+    }
+    toast(beenden ? p.name + ' beendet die Karriere' : p.name + ' ist zurück', 'ok');
+    closeSheet(true);
+    await loadAll();
+    // Wer gerade jemanden verabschiedet hat, sieht den Abschied sofort.
+    if(beenden && imRuhestand(id)){ _recapMarkSeen(_abschiedSchluessel(id), 'abschied:' + id); zeigeAbschied(id); }
+  };
+
+  if(rp) rp.onclick=()=>karriere(rp.dataset.ruhe === '1');
+
+  // Entfernen [§C40]: ohne Partie wird gelöscht, mit Partien nie. Dort
+  // stand „Komplett löschen", und danach trug jede Partie des Spielers ein
+  // Fragezeichen, während die Elo der drei anderen gegen niemanden lief.
   const dp=document.getElementById('delPlayer');
   if(dp) dp.onclick=async()=>{
-    const inMatches=matches.some(m=>[m.a1,m.a2,m.b1,m.b2].includes(id));
-    if(inMatches){
-      _pushCurrentSheet(); // Spielerprofil stapeln → „Zurück" möglich
-      openSheet(`
-        ${blattKopfHtml({ic:'trash', ton:'rot', titel:'Spieler entfernen', unter:p.name + ' · ' + gamesPlayed(id) + ' Matches'})}
-        <div style="margin-top:20px;display:flex;flex-direction:column;gap:10px">
-          <button class="btn ghost" id="hidePlayerBtn" style="text-align:left;padding:16px">
-            <div style="font-weight:700">Aus Rangliste ausblenden</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:4px;font-weight:400">
-              Spieler verschwindet aus der Rangliste.<br>
-              Matches, Awards & Badges bleiben vollständig erhalten.
-            </div>
-          </button>
-          <button class="btn ghost" id="deletePlayerBtn" style="text-align:left;padding:16px;color:var(--red);border-color:rgba(240,86,106,.3)">
-            <div style="font-weight:700">Komplett löschen</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:4px;font-weight:400">
-              Spieler wird gelöscht. Matches bleiben aber<br>
-              Namen erscheinen als "?" in der Historie.
-            </div>
-          </button>
-          <button class="btn ghost sm" id="cancelDelBtn">Abbrechen</button>
-        </div>
-      `);
-      document.getElementById('hidePlayerBtn').onclick=async()=>{
-        await sb.from('players').update({hidden:true}).eq('id',id);
-        // textContent, nicht HTML: esc() stand hier und zeigte „&amp;".
-        closeSheet(true); toast(p.name+' ausgeblendet','ok'); await loadAll();
-      };
-      document.getElementById('deletePlayerBtn').onclick=async()=>{
-        if(!(await bestaetigen({ic:'trash', gefahr:true, ja:'Löschen', nein:'Behalten',
-          titel:p.name+' löschen?',
-          text:'In allen Partien erscheint danach ein Fragezeichen statt des Namens. Das lässt sich nicht rückgängig machen.'}))) return;
-        await sb.from('players').delete().eq('id',id);
-        closeSheet(true); toast('Gelöscht'); await loadAll();
-      };
-      document.getElementById('cancelDelBtn').onclick=()=>{
-        closeSheet(); // zurück zum Spielerprofil (Stack-Pop)
-      };
-    } else {
+    if(!_hatPartien){
       if(!(await bestaetigen({ic:'trash', gefahr:true, ja:'Löschen', nein:'Behalten',
-        titel:p.name+' löschen?', text:'Der Spieler hat noch keine Partie.'}))) return;
-      await sb.from('players').delete().eq('id',id);
-      closeSheet(true); toast('Gelöscht'); await loadAll();
+        titel:p.name+' löschen?', text:'Ohne Partie bleibt nichts zurück: Name und Bild werden endgültig gelöscht.'}))) return;
+      const r = await spielerLoeschen(id);
+      if(!r.ok){
+        toast('Nicht gelöscht', 'err', {sub: r.grund === 'partien'
+          ? p.name + ' hat ' + r.zahl + (r.zahl === 1 ? ' Partie' : ' Partien') + ' in der Datenbank.'
+          : 'Die Verbindung zur Datenbank ist fehlgeschlagen.'});
+        return;
+      }
+      // textContent, nicht HTML: esc() stand hier und zeigte „&amp;".
+      closeSheet(true); toast(p.name+' gelöscht','ok'); await loadAll();
+      return;
     }
+    _pushCurrentSheet(); // Spielerprofil stapeln → „Zurück" möglich
+    const ruhe = imRuhestand(id);
+    openSheet(`
+      ${blattKopfHtml({ic:'trash', ton:'rot', titel:'Spieler entfernen', unter:p.name + ' · ' + gamesPlayed(id) + ' Partien'})}
+      <div class="pp-weg">
+        ${ruhe ? '' : `<button class="btn ghost" id="retirePlayerBtn" type="button">
+          <b>Karriere beenden</b>
+          <span>Profil, Titel und Auszeichnungen bleiben. Ewige Tafel, Rekorde und der laufende Monat vergleichen ohne ${esc(p.name)}.</span>
+        </button>`}
+        <button class="btn ghost" id="hidePlayerBtn" type="button">
+          <b>Ausblenden</b>
+          <span>Für einen versehentlich angelegten Spieler. Der Name fällt aus jeder Rechnung, auch aus abgeschlossenen Monaten; die Partien bleiben gespeichert.</span>
+        </button>
+        <p class="pp-weg-n">Löschen lässt sich nur ein Spieler ohne Partie: jede Partie von ${esc(p.name)} gehört auch drei anderen.</p>
+        <button class="btn ghost sm" id="cancelDelBtn" type="button">Abbrechen</button>
+      </div>
+    `);
+    const rb=document.getElementById('retirePlayerBtn');
+    if(rb) rb.onclick=()=>karriere(true);
+    document.getElementById('hidePlayerBtn').onclick=async()=>{
+      const {error} = await sb.from('players').update({hidden:true}).eq('id',id);
+      if(error){ toast('Nicht gespeichert', 'err', {sub:'Die Verbindung zur Datenbank ist fehlgeschlagen.'}); return; }
+      closeSheet(true); toast(p.name+' ausgeblendet','ok'); await loadAll();
+    };
+    document.getElementById('cancelDelBtn').onclick=()=>{
+      closeSheet(); // zurück zum Spielerprofil (Stack-Pop)
+    };
   };
 }
 
@@ -932,12 +977,15 @@ function computeSeasonHistory(playerId, limit){
   // in anderer Reihenfolge, stand im Rail plötzlich Juli, Mai, Juni. Jetzt wird
   // absteigend nach Saison-ID (YYYY-MM, lexikografisch = chronologisch)
   // sortiert und danach gekürzt → links immer die neueste, rechts die älteste.
+  // Gekürzt wird nach den EIGENEN Saisons. Gekürzt nach denen der Liga
+  // verlor ein Ruheständler mit jedem Monat, in dem die anderen spielten,
+  // eine Saison aus seinem Verlauf — und wer eine Pause machte, ebenso.
   const allSeasonIds = [...new Set([...allPastSeasons(), currentSeason().id])]
     .sort((a,b)=> a<b?1:a>b?-1:0);
-  const last = allSeasonIds.slice(0, limit);
-  return last.map(sid=>{
-    const sMatches = matchesInSeason(sid).filter(m=>[m.a1,m.a2,m.b1,m.b2].includes(playerId));
-    if(!sMatches.length) return null;
+  const eigene = allSeasonIds.map(sid => ({sid,
+    sMatches: matchesInSeason(sid).filter(m=>[m.a1,m.a2,m.b1,m.b2].includes(playerId))}))
+    .filter(x => x.sMatches.length).slice(0, limit);
+  return eigene.map(({sid, sMatches})=>{
     let w=0, l=0;
     sMatches.forEach(m=>{
       const onA=(playerId===m.a1||playerId===m.a2);
@@ -950,7 +998,8 @@ function computeSeasonHistory(playerId, limit){
     const startElo = cfg.start_elo;
     const endElo = snapshot[playerId] ?? startElo;
     const eloDelta = Math.round(endElo - startElo);
-    const playersInSeason = players.filter(pp=>!pp.hidden);
+    // Ein Monat ist ein Zeitraum [§C40]: wer darin spielte, hat seinen Platz.
+    const playersInSeason = players.filter(pp=>sichtbar(pp));
     const seasonRanking = playersInSeason.map(pp=>({
       id:pp.id, e: (snapshot[pp.id] ?? startElo), g: (seasonPlayedMap[pp.id]||0)
     })).filter(x=>x.g>0).sort((a,b)=>b.e-a.e);
@@ -967,7 +1016,7 @@ function computeSeasonHistory(playerId, limit){
 function showRangSystem(){
   _sheetSetReopen(()=>showRangSystem());
   const avgs=getSeasonAvgElos();
-  const ranked=players.filter(p=>!p.hidden&&avgs[p.id]!==null)
+  const ranked=players.filter(p=>ligaAktiv(p)&&avgs[p.id]!==null)
     .sort((a,b)=>avgs[b.id]-avgs[a.id]);
   const rows=RANKS.map((r,i)=>{
     const prev=RANKS[i-1];
@@ -1057,9 +1106,9 @@ function showPlayerBadges(playerId){
   // Katalogreihenfolge stabil. Einmalige Badges springen nicht mehr vor
   // wichtigere Saison- und Serienleistungen (Allwetter stand dadurch ganz
   // vorne, obwohl es nur einmal freigeschaltet werden kann).
+  // Der Katalog des Spielers: für einen Ruheständler der beim Abschied [§C40].
   const buckets = {legendary:[], rare:[], common:[], negative:[]};
-  BADGES.forEach(b => {
-    const r = rarityOf(b.id);
+  badgeKatalog(playerId).forEach(({b, r}) => {
     if(buckets[r]) buckets[r].push(b);
   });
   Object.keys(buckets).forEach(r => {
@@ -1071,10 +1120,9 @@ function showPlayerBadges(playerId){
 
   // ─── Tier-Counter-Bar (oben im Sheet) ───
   const pill = (r) => {
-    const meta = RARITY_META[r];
     const h = have(r);
     const dim = h===0 ? 'dim' : '';
-    return `<span class="tc-pill ${r} ${dim}"><span class="dot"></span><span class="n">${h} / ${meta.total}</span></span>`;
+    return `<span class="tc-pill ${r} ${dim}"><span class="dot"></span><span class="n">${h} / ${buckets[r].length}</span></span>`;
   };
   const counterHtml = `
     <div class="bsh-counter">
@@ -1128,7 +1176,7 @@ function showPlayerBadges(playerId){
 
   openSheet(`
     ${blattKopfHtml({ic:'medal', ton:'viol', titel:'Auszeichnungen',
-      unter:p.name + ' · ' + haveTotal + ' von ' + BADGES.length + ' · ' + trigCount + '× geholt'})}
+      unter:p.name + ' · ' + haveTotal + ' von ' + (buckets.legendary.length + buckets.rare.length + buckets.common.length + buckets.negative.length) + ' · ' + trigCount + '× geholt'})}
     <div style="height:12px"></div>
     ${counterHtml}
     <div class="bsh-grid">${positiveCards}</div>

@@ -8,8 +8,15 @@ function showEditMatch(mid){
   const gSim=getGlobalSim();
   const sortElo=p=>gSim.careerElo[p.id]??p.elo;
   const showElo=p=>Math.round(gSim.elo[p.id]??cfg.start_elo);
+  // Wer vor dieser Partie die Karriere beendet hat, steht nicht zur Wahl
+  // [§C40]: eine Partie nach dem Karriereende gibt es für ihn nicht, und
+  // eingesetzt hätte sie die aktive Liga gegen jemanden rechnen lassen, der
+  // nicht mehr antritt. Wer schon in der Partie steht, bleibt wählbar —
+  // eine Korrektur des Stands darf ihn nicht hinauswerfen.
+  const drin=new Set([m.a1,m.a2,m.b1,m.b2]);
+  const zuSpaet=id=>!drin.has(id)&&imRuhestandAm(id,mts(m));
   const opts=sel=>`<option value="">Spieler…</option>`+
-    [...players].sort((a,b)=>sortElo(b)-sortElo(a)).map(p=>`<option value="${p.id}" ${E[sel]===p.id?'selected':''}>${esc(p.name)} · ${showElo(p)}</option>`).join('');
+    [...players].filter(p=>!zuSpaet(p.id)).sort((a,b)=>sortElo(b)-sortElo(a)).map(p=>`<option value="${p.id}" ${E[sel]===p.id?'selected':''}>${esc(p.name)} · ${showElo(p)}</option>`).join('');
   const pos=k=>`<select data-epos="${k}"><option value="atk" ${E['p'+k]==='atk'?'selected':''}>↑ Sturm</option><option value="def" ${E['p'+k]==='def'?'selected':''}>↓ Abwehr</option></select>`;
   const slot=(t,n)=>`<div class="slot">
     <div class="psel"><select data-ep="${t}${n}">${opts(t+n)}</select></div>
@@ -39,7 +46,9 @@ function showEditMatch(mid){
     const tie=E.sa===E.sb; const incomplete=ids.some(x=>!x);
     const samePosA=E.pA1===E.pA2, samePosB=E.pB1===E.pB2;
     let ok=true,msg='';
+    const spaet=ids.find(x=>x&&zuSpaet(x));
     if(incomplete){ok=false;}
+    else if(spaet){ok=false;msg=(pmap()[spaet]||{}).name+' hat die Karriere vor dieser Partie beendet.';}
     else if(dup){ok=false;msg='Ein Spieler steht doppelt.';}
     else if(tie){ok=false;msg='Unentschieden ist nicht möglich.';}
     else if(samePosA||samePosB){ok=false;msg='Jedes Team braucht Sturm + Abwehr.';}
@@ -53,6 +62,7 @@ function showEditMatch(mid){
     if(speichert) return;
     readE(); const ids=[E.A1,E.A2,E.B1,E.B2];
     if(ids.some(x=>!x)||new Set(ids).size!==4||E.sa===E.sb||E.pA1===E.pA2||E.pB1===E.pB2){toast('Eingabe unvollständig',true);return;}
+    if(ids.some(zuSpaet)){toast('Ein Spieler hat die Karriere vor dieser Partie beendet.',true);return;}
     const state=E,draft={...E},save=document.getElementById('saveEdit');
     speichert=true;save.disabled=true;save.setAttribute('aria-busy','true');
     toast('Speichere & berechne neu…');

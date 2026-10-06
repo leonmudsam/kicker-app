@@ -13,8 +13,10 @@ function pmap(){
   return m;
 }
 
-// Nur sichtbare Spieler (für Ranglisten)
-function activePlayers(){ return players.filter(p=>!p.hidden); }
+// Wer heute in der Liga antritt: nicht ausgeblendet und nicht im Ruhestand
+// [§C40]. Die Ranglisten, die Eingabe und der Feed lesen von hier; wer die
+// Geschichte zeigt, fragt `sichtbar`.
+function activePlayers(){ return players.filter(p=>ligaAktiv(p)); }
 function pname(id){const p=pmap()[id];return p?p.name:'?';}
 function gamesPlayed(id){return matches.filter(m=>[m.a1,m.a2,m.b1,m.b2].includes(id)).length;}
 
@@ -167,6 +169,13 @@ async function _loadAllDurchlauf(){
     // und der Saison-Abschluss. Der Tages-Recap (POTD) kam an jedem Spieltag
     // hoch — das war schlicht zu oft. Er ist weiterhin über den Button in
     // der Wochenliga erreichbar (showPotdRecap({force:true})).
+    // Ein Karriereende geht vor: es gibt es seltener als jede Woche, und der
+    // Wochenrückblick wartet, solange ein Blatt offen ist [§C40].
+    setTimeout(autoZeigeAbschied, 900);
+    // Ein Karriereende aus der Zeit vor dem gespeicherten Stand bekommt ihn
+    // jetzt [§C40] — nach dem Zeichnen, damit die Rechnung niemanden warten
+    // lässt, und je Karriereende einmal.
+    setTimeout(_ruheAbschliessen, 2500);
     setTimeout(autoShowPotwRecap, 900);
   }catch(e){
     _lastLoadFingerprint=null; _lastLoadDay=null;

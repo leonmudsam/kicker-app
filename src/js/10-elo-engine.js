@@ -548,7 +548,9 @@ function periodPlayerStats(period, seasonId){
       else  {s.losses++; s.curStreak=s.curStreak<0?s.curStreak-1:-1;}
     });
   });
-  const hidden=new Set(players.filter(p=>p.hidden).map(p=>p.id));
+  // Gesamt ist ein Laufbahn-Vergleich und ohne Ruheständler; Tag, Woche und
+  // Monat sind Zeiträume, in denen steht, wer darin gespielt hat [§C40].
+  const hidden=new Set(players.filter(p=>!(period==='all'?ligaAktiv(p):sichtbar(p))).map(p=>p.id));
   // Für 'season': absoluter Elo-Stand aus globalSim (deckt sich mit Profil & Recap).
   // Für 'week'/'all': eloNet = Summe der Deltas in der Periode (Net = Gain + Loss).
   const gSim=getGlobalSim();

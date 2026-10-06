@@ -477,10 +477,16 @@ function _backupMatchRows(){
   return rows;
 }
 function _backupPlayerRows(){
-  const rows = [['Spieler-ID','Name','Elo','Angriffs-Wert','Avatar','Ausgeblendet','Erstellt']];
+  // Das Karriereende ist die einzige gespeicherte Angabe des Ruhestands
+  // [§C40]; ohne die Spalte käme ein Ruheständler aus der Sicherung als
+  // aktiver Spieler zurück und stünde wieder in jeder Rangliste.
+  // Der Stand beim Karriereende gehört dazu: ohne ihn rechnete die App das
+  // Profil nach einer Wiederherstellung mit ihrer dann aktuellen Fassung.
+  const rows = [['Spieler-ID','Name','Elo','Angriffs-Wert','Avatar','Ausgeblendet','Erstellt','Karriereende','Stand beim Karriereende']];
   for(const p of players){
+    const stand = p.retired_stand ? (typeof p.retired_stand === 'string' ? p.retired_stand : JSON.stringify(p.retired_stand)) : '';
     rows.push([p.id, p.name, Number(p.elo) || 0, Number(p.atk) || 0,
-               p.avatar_id || '', p.hidden ? 'ja' : 'nein', p.created_at || '']);
+               p.avatar_id || '', p.hidden ? 'ja' : 'nein', p.created_at || '', p.retired_at || '', stand]);
   }
   return rows;
 }
@@ -741,6 +747,14 @@ async function startBackupImport(){
         avatar_id: _col(row, pidx, 'Avatar', 'avatar_id') || null,
         hidden: /^(ja|true|1)$/i.test(_col(row, pidx, 'Ausgeblendet', 'hidden'))
       };
+      // Nur mitschicken, wenn gesetzt: ohne die Migration gibt es die Spalte
+      // nicht, und ein leerer Wert soll den Import nicht scheitern lassen.
+      const ruhe = _col(row, pidx, 'Karriereende', 'retired_at');
+      if(ruhe && isFinite(Date.parse(ruhe))){
+        entry.retired_at = ruhe;
+        const stand = _col(row, pidx, 'Stand beim Karriereende', 'retired_stand');
+        if(stand){ try { entry.retired_stand = JSON.parse(stand); } catch(e){} }
+      }
       neueSpieler.push(entry);
       if(pid) extra[nm.toLowerCase()] = pid;
     }
@@ -835,7 +849,12 @@ async function _applyBackupImport(){
       }
     } else {
       if(p.neueSpieler.length){
-        const {error} = await sb.from('players').insert(p.neueSpieler);
+        let {error} = await sb.from('players').insert(p.neueSpieler);
+        // Eine Datenbank ohne die Spalte des Stands [§C40] nimmt die Spieler
+        // trotzdem: das Profil wird dann gerechnet statt gelesen.
+        if(error && /retired_stand/i.test(String(error.message || ''))){
+          ({error} = await sb.from('players').insert(p.neueSpieler.map(x => { const y = Object.assign({}, x); delete y.retired_stand; return y; })));
+        }
         if(error) throw new Error('Spieler: ' + error.message);
         addedP = p.neueSpieler.length;
         // Frisch angelegte Spieler haben jetzt echte IDs — neu einlesen und die
