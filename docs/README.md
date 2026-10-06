@@ -10,6 +10,7 @@ sich eine Datei geändert, und der Aufruf zieht es nach.
 | [CLAUDE.md](../CLAUDE.md) — Kicker-Liga — Arbeitsanweisung | Deutschsprachige Einzeldatei-PWA für eine 2-gegen-2-Tischkicker-Liga: Elo, Saisons, Awards, Rekorde, Chronik, News. |
 | [docs/anker.md](anker.md) — Abschnitte im Code | Jede Datei in `src/` mit den Bannern, die sie trägt, in der Reihenfolge des Baus. |
 | [docs/architektur.md](architektur.md) — Herleitung | Die Liga ist ein Dutzend Leute und ein Tischkicker. |
+| [docs/befunde.md](befunde.md) — Bewusst behaltene Doppelungen und Abweichungen | Was beim Aufräumen gefunden und absichtlich NICHT vereinheitlicht wurde, mit dem Grund. |
 | [docs/erweitern.md](erweitern.md) — Etwas hinzufügen — und was daran hängt | Auszeichnungen, Monatswertungen und Liga-Rekorde sind nicht nur Listen. |
 | [docs/laufzeit.md](laufzeit.md) — Laufzeit: Zustand, Caching, Takt | Was die App zur Laufzeit festhält, wie lange und wann sie es verwirft. |
 | [docs/leistung.md](leistung.md) — Performance und Cache-Gültigkeit | Stand: 3. Oktober 2026. Vergleich zum Stand `5445ba8`. |

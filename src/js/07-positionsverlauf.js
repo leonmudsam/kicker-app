@@ -503,18 +503,8 @@ function showPotwRecap(opts){
     // POTW ermitteln — gleiche Regel wie Achievement (countPeriodWins):
     // Min 5 Siege in der Woche, höchste Winrate gewinnt.
     // Tiebreaker bei Gleichstand auf Winrate: mehr absolute Siege, dann mehr Elo-Delta.
-    const POTW_MIN_WINS = 5;
-    const candidates = Object.entries(ps)
-      .filter(([id,s]) => s.wins >= POTW_MIN_WINS && sichtbar(pm[id]))
-      .map(([id,s]) => {
-        const games = s.wins + s.losses;
-        return [id, s, games ? s.wins/games : 0];
-      })
-      .sort((a,b) => {
-        if(b[2] !== a[2]) return b[2] - a[2];               // winrate desc
-        if(b[1].wins !== a[1].wins) return b[1].wins - a[1].wins;
-        return b[1].eloDelta - a[1].eloDelta;
-      });
+    const candidates = _periodeRangliste(orderedMatchesForWeek, 'woche', true)
+      .map(r => [r.id, ps[r.id], r.wr]);
 
     let potwWinners = [];
     if (candidates.length > 0) {
@@ -847,12 +837,7 @@ function showPotdRecap(opts){
 
     // Player of the Day: min. 3 Siege, Tiebreak via Elo-Delta des Tages.
     const pm=pmap();
-    const candidates=Object.entries(ps)
-      .filter(([id,s])=> s.wins>=3 && sichtbar(pm[id]))
-      .sort((a,b)=>{
-        if(b[1].wins!==a[1].wins) return b[1].wins-a[1].wins;
-        return b[1].eloDelta-a[1].eloDelta;
-      });
+    const candidates=_periodeRangliste(ordered, 'tag', true).map(r=>[r.id, ps[r.id]]);
     if(!candidates.length) return;
 
     const potdId=candidates[0][0];

@@ -5539,7 +5539,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.06.54c275a9';
+const BUILD_VERSION='2026.10.06.4f8ebd56';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -8053,18 +8053,8 @@ function showPotwRecap(opts){
       });
     });
 
-    const POTW_MIN_WINS = 5;
-    const candidates = Object.entries(ps)
-      .filter(([id,s]) => s.wins >= POTW_MIN_WINS && sichtbar(pm[id]))
-      .map(([id,s]) => {
-        const games = s.wins + s.losses;
-        return [id, s, games ? s.wins/games : 0];
-      })
-      .sort((a,b) => {
-        if(b[2] !== a[2]) return b[2] - a[2];
-        if(b[1].wins !== a[1].wins) return b[1].wins - a[1].wins;
-        return b[1].eloDelta - a[1].eloDelta;
-      });
+    const candidates = _periodeRangliste(orderedMatchesForWeek, 'woche', true)
+      .map(r => [r.id, ps[r.id], r.wr]);
 
     let potwWinners = [];
     if (candidates.length > 0) {
@@ -8336,12 +8326,7 @@ function showPotdRecap(opts){
     });
 
     const pm=pmap();
-    const candidates=Object.entries(ps)
-      .filter(([id,s])=> s.wins>=3 && sichtbar(pm[id]))
-      .sort((a,b)=>{
-        if(b[1].wins!==a[1].wins) return b[1].wins-a[1].wins;
-        return b[1].eloDelta-a[1].eloDelta;
-      });
+    const candidates=_periodeRangliste(ordered, 'tag', true).map(r=>[r.id, ps[r.id]]);
     if(!candidates.length) return;
 
     const potdId=candidates[0][0];
@@ -13211,6 +13196,25 @@ function countGames(id,ms){return matchesOfPlayer(id,ms).length;}
 function countWins(id,ms){return matchesOfPlayer(id,ms).filter(m=>won(id,m)).length;}
 
 const _winnerCountsMemo = new WeakMap();
+function _periodeRangliste(ms, regel, nurSichtbar){
+  const ps={};
+  ms.forEach(m=>[m.a1,m.a2,m.b1,m.b2].forEach(pid=>{
+    const s=ps[pid]||(ps[pid]={id:pid,wins:0,losses:0,eloDelta:0,wr:0});
+    const onA=(pid===m.a1||pid===m.a2);
+    if((onA&&m.winner==='A')||(!onA&&m.winner==='B')) s.wins++; else s.losses++;
+    s.eloDelta += (m.deltas && m.deltas[pid]) || 0;
+  }));
+  const minW = regel==='tag' ? 3 : regel==='woche' ? 5 : 10;
+  const pm = nurSichtbar ? pmap() : null;
+  return Object.values(ps)
+    .filter(s=>s.wins>=minW && (!pm || sichtbar(pm[s.id])))
+    .map(s=>{ s.wr=s.wins/((s.wins+s.losses)||1); return s; })
+    .sort(regel==='tag'
+      ? (a,b)=> b.wins!==a.wins ? b.wins-a.wins : b.eloDelta-a.eloDelta
+      : (a,b)=> Math.abs(a.wr-b.wr)>0.001 ? b.wr-a.wr
+             : a.wins!==b.wins ? b.wins-a.wins : b.eloDelta-a.eloDelta);
+}
+
 function _periodWinnerMap(allMs, kind){
   const now=new Date();
   let curKey;
@@ -13237,41 +13241,12 @@ function _periodWinnerMap(allMs, kind){
     buckets[key].push(m);
   });
 
+  const regel={day:'tag', week:'woche', month:'monat'}[kind];
   const winners={};
   Object.entries(buckets).forEach(([key,ms])=>{
     if(kind!=='day' && key===curKey)return;
-    if(ms.length<2)return;
-    const winsById={}, gamesById={}, eloById={};
-    ms.forEach(m=>[m.a1,m.a2,m.b1,m.b2].forEach(pid=>{
-      if(!winsById[pid])winsById[pid]=0;
-      if(!gamesById[pid])gamesById[pid]=0;
-      if(!eloById[pid])eloById[pid]=0;
-      gamesById[pid]++;
-      const onA=(pid===m.a1||pid===m.a2);
-      if((onA&&m.winner==='A')||(!onA&&m.winner==='B'))winsById[pid]++;
-      eloById[pid] += (m.deltas && m.deltas[pid]) || 0;
-    }));
-    let winner=null;
-    if(kind==='day'){
-      const maxW=Math.max(...Object.values(winsById));
-      if(maxW<3)return;
-      const candidates=Object.keys(winsById).filter(pid=>winsById[pid]===maxW);
-      candidates.sort((a,b)=>eloById[b]-eloById[a]);
-      winner=candidates[0];
-    } else {
-      const minW=kind==='week'?5:10;
-      const qual=Object.keys(winsById).filter(pid=>winsById[pid]>=minW);
-      if(!qual.length)return;
-      qual.sort((a,b)=>{
-        const wrA=winsById[a]/(gamesById[a]||1);
-        const wrB=winsById[b]/(gamesById[b]||1);
-        if(Math.abs(wrA-wrB)>0.001) return wrB-wrA;
-        if(winsById[a]!==winsById[b]) return winsById[b]-winsById[a];
-        return eloById[b]-eloById[a];
-      });
-      winner=qual[0];
-    }
-    if(winner!=null) winners[key]=winner;
+    const erster=_periodeRangliste(ms, regel, false)[0];
+    if(erster) winners[key]=erster.id;
   });
   slot[slotKey]=winners;
   return winners;
@@ -18721,7 +18696,7 @@ function _buildStories(){
     {
       const range = _potwLastWeekRange();
       const wm = _potwMatchesInRange(range.start, range.end);
-      const res = _newsPeriodWinner(wm, 5, 'wr');
+      const res = _newsPeriodWinner(wm, 'woche');
       if(res){
         const main = res.main;
         const names = res.winners.map(w => nameOf(w.id));
@@ -18751,7 +18726,7 @@ function _buildStories(){
     potdTage.forEach((dayMatches, dayKey) => {
       const rep = new Date(dayKey + 'T00:00:00'); rep.setHours(23, 59, 0, 0);
       if(now.getTime() < rep.getTime()) return;
-      const res = _newsPeriodWinner(dayMatches, 3, 'wins');
+      const res = _newsPeriodWinner(dayMatches, 'tag');
       if(!res) return;
       const main = res.main;
       const names = res.winners.map(w => nameOf(w.id));
@@ -19264,33 +19239,10 @@ function _buildStories(){
 
 }
 
-function _newsPeriodWinner(rangeMatches, minWins, mode){
+function _newsPeriodWinner(rangeMatches, regel){
   if(!Array.isArray(rangeMatches) || !rangeMatches.length) return null;
-  const byWins = mode !== 'wr';
-  const ps = {};
-  for(const m of rangeMatches){
-    const aWon = m.winner === 'A';
-    [m.a1, m.a2, m.b1, m.b2].forEach(id => {
-      if(!ps[id]) ps[id] = {wins:0, losses:0, eloDelta:0};
-      const onA = (m.a1 === id || m.a2 === id);
-      const won = (onA && aWon) || (!onA && !aWon);
-      ps[id].eloDelta += (m.deltas && m.deltas[id]) || 0;
-      if(won) ps[id].wins++; else ps[id].losses++;
-    });
-  }
-  const pm = pmap();
-  const cand = Object.entries(ps)
-    .filter(([id, s]) => s.wins >= minWins && sichtbar(pm[id]))
-    .map(([id, s]) => { const g = s.wins + s.losses; return {id, wins: s.wins, losses: s.losses, eloDelta: s.eloDelta, wr: g ? s.wins/g : 0}; })
-    .sort((a, b) => {
-      if(byWins){
-        if(b.wins !== a.wins) return b.wins - a.wins;
-        return b.eloDelta - a.eloDelta;
-      }
-      if(Math.abs(b.wr - a.wr) > 0.001) return b.wr - a.wr;
-      if(b.wins !== a.wins) return b.wins - a.wins;
-      return b.eloDelta - a.eloDelta;
-    });
+  const byWins = regel === 'tag';
+  const cand = _periodeRangliste(rangeMatches, regel, true);
   if(!cand.length) return null;
   const top = cand[0];
   const tied = byWins

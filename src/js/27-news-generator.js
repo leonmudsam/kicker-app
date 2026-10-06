@@ -2005,7 +2005,7 @@ function _buildStories(){
       // ein zweites Mal, Zeile für Zeile dieselbe — und zwei Rechnungen über
       // dieselbe Frage nennen irgendwann zwei verschiedene Beste.
       const wm = _potwMatchesInRange(range.start, range.end);
-      const res = _newsPeriodWinner(wm, 5, 'wr'); // Wochen-Regel = höchste Quote
+      const res = _newsPeriodWinner(wm, 'woche');
       if(res){
         const main = res.main;
         const names = res.winners.map(w => nameOf(w.id));
@@ -2050,7 +2050,7 @@ function _buildStories(){
       if(now.getTime() < rep.getTime()) return;
       // Tages-Regel = meiste Siege (Tiebreak Elo-Delta) — identisch zu
       // showPotdRecap und zum Badge-Zaehler countDayWins.
-      const res = _newsPeriodWinner(dayMatches, 3, 'wins');
+      const res = _newsPeriodWinner(dayMatches, 'tag');
       if(!res) return;
       const main = res.main;
       const names = res.winners.map(w => nameOf(w.id));
@@ -3014,33 +3014,12 @@ function _buildStories(){
 //   mode 'wr'   (POTW) → Quote ↓, Siege ↓, Elo ↓     (= showPotwRecap / kind 'week')
 // Geteilter Sieg nur bei Gleichstand über ALLE Kriterien des Modus.
 // Liefert {winners:[…], main} oder null. (v8.7, v9.17)
-function _newsPeriodWinner(rangeMatches, minWins, mode){
+// Die Reihenfolge kommt aus `_periodeRangliste`, derselben Regel wie
+// Auszeichnung und Rückblick; hier kommt nur dazu, wer sich den Titel teilt.
+function _newsPeriodWinner(rangeMatches, regel){
   if(!Array.isArray(rangeMatches) || !rangeMatches.length) return null;
-  const byWins = mode !== 'wr'; // Default = Tages-Regel (absolute Siege)
-  const ps = {};
-  for(const m of rangeMatches){
-    const aWon = m.winner === 'A';
-    [m.a1, m.a2, m.b1, m.b2].forEach(id => {
-      if(!ps[id]) ps[id] = {wins:0, losses:0, eloDelta:0};
-      const onA = (m.a1 === id || m.a2 === id);
-      const won = (onA && aWon) || (!onA && !aWon);
-      ps[id].eloDelta += (m.deltas && m.deltas[id]) || 0;
-      if(won) ps[id].wins++; else ps[id].losses++;
-    });
-  }
-  const pm = pmap();
-  const cand = Object.entries(ps)
-    .filter(([id, s]) => s.wins >= minWins && sichtbar(pm[id]))
-    .map(([id, s]) => { const g = s.wins + s.losses; return {id, wins: s.wins, losses: s.losses, eloDelta: s.eloDelta, wr: g ? s.wins/g : 0}; })
-    .sort((a, b) => {
-      if(byWins){
-        if(b.wins !== a.wins) return b.wins - a.wins;
-        return b.eloDelta - a.eloDelta;
-      }
-      if(Math.abs(b.wr - a.wr) > 0.001) return b.wr - a.wr;
-      if(b.wins !== a.wins) return b.wins - a.wins;
-      return b.eloDelta - a.eloDelta;
-    });
+  const byWins = regel === 'tag';
+  const cand = _periodeRangliste(rangeMatches, regel, true);
   if(!cand.length) return null;
   const top = cand[0];
   const tied = byWins
