@@ -65,8 +65,14 @@ src/js/               50 Dateien
 tools/build.mjs       hängt src/css/* und src/js/* ALPHABETISCH aneinander,
                       ohne Kommentare
 tools/check.mjs       sechs Wächter
+tools/golden.mjs      Vergleich zweier Fassungen: jede Rechnung und Ansicht
+                      gegen einen früheren Stand (Umbau ohne sichtbare Folgen)
+tools/performance.cjs Messung und das Gerüst für Chromium (createHarness)
+tools/interaktion.cjs Messung der Bedienung
 tests/run.mjs         Testläufer, jede Suite ein eigener Prozess
 tests/ziel.js         entscheidet, welche Datei geprüft wird (dist vor Wurzel)
+tests/runtime.js      die App ohne Browser, für reine Rechentests
+tests/browser.js      findet Chromium oder meldet, dass keins da ist
 tests/fixtures/       die echten Partien der Liga, gepackt
 index.html            das ausgelieferte Ergebnis, mitversioniert
 mockup/               Entwürfe. Eigenständige HTML-Seiten ohne Bauablauf,
@@ -602,6 +608,24 @@ Annäherung an schwächere Telefone, nicht als Garantie für reale Geräte.
 `node tools/interaktion.cjs --cpu=4` misst ergänzend schnelle Score-Tipps,
 Suchbuchstaben, kalte und schnelle Reiterwechsel sowie den Blattzug. Eingaben
 sind synthetisch gequeued; rAF-Gelegenheiten sind weder Hardware-FPS noch INP.
+
+**Ein Umbau, der nichts ändern soll, beweist das** (`tools/golden.mjs`). Die
+Suiten prüfen, was jemand als Zusicherung aufgeschrieben hat; der Vergleich
+prüft alles, was die App zeigt und rechnet. Er lädt den Bau und einen
+früheren Stand (`git show <basis>:index.html`) unter denselben Bedingungen —
+dieselben Partien, Zeitpunkt, Zeitzone Europe/Berlin, Bewegungsruhe — in
+sechs Szenarien (Spieltag, Wochen- und Monatswechsel, Winterzeit, ein
+Ruheständler, leere Liga) und vergleicht Wort für Wort: die zentralen
+Rechnungen samt Story-IDs, jeden Reiter in jeder Auswahl, jedes Blatt und
+jede Story, den Hash des CSS, jeden Schreibzugriff auf die Datenbank und
+jeden Seitenfehler. `node tools/golden.mjs --basis=<rev>` (Vorgabe `HEAD`),
+`--schnell` nur den Spieltag ohne Blätter. Der Abzug der Basis liegt in
+`.golden/` und ist nicht versioniert. Ein Unterschied wird nie durch eine
+neue Normalisierung weggeregelt: entweder ändert der Code etwas, oder die
+Stelle bleibt, wie sie war. Nur Blob-Adressen (je Lauf neu vergeben) und
+lange Daten-Adressen (zu groß) werden durch einen Hash ihres Inhalts ersetzt.
+Einen Commit, der nur Kommentare oder Doku ändert, prüft schon
+`git diff --exit-code index.html`: der Bau entfernt die Kommentare.
 
 > **Pflegepflicht.** Ändert sich eine Zahl in dieser Tabelle oder kommt eine
 > Suite dazu, wird die Tabelle im selben Commit nachgezogen.
