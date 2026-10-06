@@ -440,7 +440,23 @@
   .st-card .st-kt{flex:1;min-width:0}
   .st-card .st-pf{flex:0 0 auto;display:grid;place-items:center;width:18px;height:18px;color:var(--muted)}
   .st-card .st-pf .ic,.st-card .st-pf svg{width:15px;height:15px}
-  .st-card.gross .srn{margin-top:12px}
+  /* Die Vorschau des Positionsverlaufs: dieselben Linien wie im Blatt, ohne
+     Gesichter und Achsen. Die ersten drei voll, die übrigen leise — sonst
+     sind zwölf gleich laute Linien ein Knäuel. */
+  .posv-mini{display:block;margin-top:12px}
+  .posv-mini svg{display:block;width:100%;height:auto;overflow:visible}
+  .posv-mini-r line{stroke:var(--line);stroke-width:1;stroke-dasharray:2 4}
+  .posv-mini-l{fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+  .posv-mini-l.leise{stroke-width:1.5;opacity:.32}
+  .posv-mini-p.leise{opacity:.45}
+  .posv-mini-y{font-family:'Sometype Mono',monospace;font-size:10px;fill:var(--muted);
+    text-anchor:end;dominant-baseline:central}
+  .posv-mini-y.eins{fill:var(--gold);font-weight:700}
+  .posv-mini-lg{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px}
+  .posv-mini-lg span{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;
+    font-weight:700;color:var(--ink);min-width:0}
+  .posv-mini-lg i{width:12px;height:3px;border-radius:2px;background:var(--c);flex:0 0 auto}
+  .posv-mini-lg b{font-family:'Sometype Mono',monospace;font-size:11px;color:var(--muted);font-weight:500}
   .st-card.zeile{padding:11px 14px}
   .st-card.zeile .st-ic{width:32px;height:32px;border-radius:10px}
   /* Das Mini-Popup ist entfallen [§11.5]; mit ihm die .nv-* Karte, ihre

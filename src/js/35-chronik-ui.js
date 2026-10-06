@@ -692,36 +692,61 @@ function _rekFeldHtml(d, h){
 }
 
 // Die Saison-Matrix: Zeilen sind Spieler, Spalten Monate, Zellen Titel.
+// Zeilen sind die aktive Liga; wer seine Karriere beendet hat, steht in
+// einer eigenen Karte am Ende, zu, wie unter Gesamt, Positionen und Teams
+// [§C40] — dieselbe Tabelle, nur mit seinen Zeilen. In der Matrix der
+// aktiven Liga stand er sonst zwischen denen, die um die nächste Chronik
+// spielen, und konnte nie mehr eine Zelle dazubekommen.
 function ligaChronikMatrixHtml(){
   const all = allSeasonTitles();           // neueste zuerst
   const cols = all.slice(0, 8).reverse();  // älteste links, wie eine Zeitleiste
   if(!cols.length) return '';
-  // Zeilen: alle Spieler, die in einer der Spalten-Saisons gewertet wurden.
-  // Sortiert nach dem PRESTIGE der gehaltenen Chroniken, dann nach ihrer Zahl,
-  // dann nach Name. Nach der Zahl allein stand ein Monat mit drei billigen
-  // Einträgen über einem mit einer legendären Chronik, und seit die Chroniken
-  // nach ihrem Ausschlag verschieden viel wert sind [§C39], ist die Zahl gar
-  // keine Ordnung mehr: „Der Wechselhafte" wiegt 75, „Die Wochenkrone" 175.
-  // Gezählt wird nur, was in den sichtbaren Spalten steht — die Tabelle soll
-  // die Ordnung erklären, die man sieht.
+  const rows = _lchronZeilen(cols);
+  const aktiv = rows.filter(pid => ligaAktiv(pid));
+  const ruhe = rows.length - aktiv.length;
+  return `${_lchronTabelle(cols, aktiv)}
+    <div class="lchron-lg" aria-hidden="true"><span data-kl="legendaer">legendär</span><span data-kl="selten">selten</span>`
+    + `<span data-kl="besonders">besonders</span><span class="live">läuft noch</span></div>`
+    + (ruhe ? `<div class="ruhe-ende">${einblickHtml('ruhe_chronik', ruhe === 1 ? 'ein Spieler' : ruhe + ' Spieler')}</div>` : '');
+}
+// Die Zeilen der Matrix: alle, die in einer der Spalten gewertet wurden.
+// Sortiert nach dem PRESTIGE der gehaltenen Chroniken, dann nach ihrer Zahl,
+// dann nach Name. Nach der Zahl allein stand ein Monat mit drei billigen
+// Einträgen über einem mit einer legendären Chronik, und seit die Chroniken
+// nach ihrem Ausschlag verschieden viel wert sind [§C39], ist die Zahl gar
+// keine Ordnung mehr: „Der Wechselhafte" wiegt 75, „Die Wochenkrone" 175.
+// Gezählt wird nur, was in den sichtbaren Spalten steht — die Tabelle soll
+// die Ordnung erklären, die man sieht.
+function _lchronZeilen(cols){
   const seen = {}, wert = {};
   cols.forEach(T => {
     T.awarded.forEach(a => {
       seen[a.pid] = (seen[a.pid] || 0) + 1;
       wert[a.pid] = (wert[a.pid] || 0) + chronikPunkte(a.titleId);
     });
-    T.empty.forEach(pid => { if(seen[pid] === undefined){ seen[pid] = 0; wert[pid] = 0; } });
+    (T.empty || []).forEach(pid => { if(seen[pid] === undefined){ seen[pid] = 0; wert[pid] = 0; } });
   });
-  const rows = Object.keys(seen)
+  return Object.keys(seen)
     .filter(pid => pmap()[pid])
     .sort((a,b) => (wert[b] || 0) - (wert[a] || 0)
                 || seen[b] - seen[a]
                 || pname(a).localeCompare(pname(b)));
+}
+// Die Tabelle selbst. Der Kopf jeder Spalte nennt den Monat und darunter, wie
+// viele Einträge er trägt; die laufende Spalte ist getönt, weil ihre Zellen
+// bis zum Monatsende noch wechseln können. Eine leere Zelle sagt zweierlei:
+// ein Strich heißt gewertet ohne Eintrag, eine leere Zelle heißt in diesem
+// Monat nicht gewertet — vorher stand in beiden Fällen derselbe Strich, und
+// wer einen Monat ausgesetzt hatte, sah aus wie einer, der leer ausging.
+function _lchronTabelle(cols, rows){
+  if(!rows.length) return '';
+  const gewertet = cols.map(T => new Set((T.awarded || []).map(a => a.pid).concat(T.empty || [])));
   return `
     <div class="lchron-wrap">
       <table class="lchron">
         <thead><tr><th>Spieler</th>${cols.map(T =>
-          `<th data-season-table="${esc(T.sid)}">${esc(String(T.label).split(' ')[0].slice(0,3))}</th>`
+          `<th class="${T.live ? 'live' : ''}" data-season-table="${esc(T.sid)}"><span class="lc-m">${esc(String(T.label).split(' ')[0].slice(0,3))}</span>`
+          + `<span class="lc-z num">${T.awarded.length}</span></th>`
         ).join('')}</tr></thead>
         <tbody>
           ${rows.map(pid => {
@@ -730,14 +755,16 @@ function ligaChronikMatrixHtml(){
             // darf in ihr stehen, solange dieser Monat vor seinem
             // Karriereende zu war.
             const bis = Math.max(...cols.filter(T => T.awarded.some(x => x.pid === pid)).map(T => seasonEnd(T.sid).getTime()));
+            const n = cols.reduce((k, T) => k + (T.awarded.some(x => x.pid === pid) ? 1 : 0), 0);
             return `<tr${isFinite(bis) ? ` data-bis="${bis}"` : ''}>
-            <td class="who" data-tplayer="${esc(pid)}"><div class="w">${avHtml(pmap()[pid],'width:18px;height:18px;font-size:8px;border-radius:6px')}<span>${esc(pname(pid))}</span></div></td>
-            ${cols.map(T => {
+            <td class="who" data-tplayer="${esc(pid)}"><div class="w">${avHtml(pmap()[pid])}`
+              + `<span class="wt"><span>${esc(pname(pid))}</span><small class="num">${n === 1 ? '1 Eintrag' : n + ' Einträge'}</small></span></div></td>
+            ${cols.map((T, k) => {
               const a = T.awarded.find(x => x.pid === pid);
-              if(!a) return `<td><span class="lc-dash">—</span></td>`;
+              if(!a) return `<td class="${T.live ? 'live' : ''}">${gewertet[k].has(pid) ? '<span class="lc-dash">—</span>' : ''}</td>`;
               const t = titleTone(a.tone);
               const kl = _chronKlasse(a.titleId);
-              return `<td><span class="lc-cell${T.live?' live':''}" style="--tt:${t.c};--ttr:${t.rgb}"${
+              return `<td class="${T.live ? 'live' : ''}"><span class="lc-cell${T.live?' live':''}" style="--tt:${t.c};--ttr:${t.rgb}"${
                 kl ? ` data-kl="${esc(kl)}"` : ''}
                 data-season-table="${esc(T.sid)}">
                 <span class="i">${svgI(a.ic)}</span>
@@ -746,8 +773,12 @@ function ligaChronikMatrixHtml(){
           </tr>`; }).join('')}
         </tbody>
       </table>
-    </div>
-    <div class="tnote">Gestrichelt = laufende Saison, noch nicht entschieden. Tippen öffnet den Monat.</div>`;
+    </div>`;
+}
+// Die Karte der Ruheständler: dieselben Spalten, nur ihre Zeilen [§C40].
+function ruhestandChronikHtml(){
+  const cols = allSeasonTitles().slice(0, 8).reverse();
+  return _lchronTabelle(cols, _lchronZeilen(cols).filter(pid => !ligaAktiv(pid)));
 }
 
 // Ans rechte Ende scrollen: die jüngste Saison interessiert am meisten,
@@ -755,8 +786,9 @@ function ligaChronikMatrixHtml(){
 // bei vier Saisons passt alles aufs Handy, und ein halb abgeschnittener
 // erster Monat sähe nach Fehler aus statt nach Absicht.
 function chronikMatrixScrollen(root){
-  const lw = (root || document).querySelector('.lchron-wrap');
-  if(lw && lw.scrollWidth > lw.clientWidth + 24) lw.scrollLeft = lw.scrollWidth;
+  (root || document).querySelectorAll('.lchron-wrap').forEach(lw => {
+    if(lw.scrollWidth > lw.clientWidth + 24) lw.scrollLeft = lw.scrollWidth;
+  });
 }
 
 function showLigaChronik(){
@@ -784,6 +816,7 @@ function showLigaChronik(){
   `);
   chronikMatrixScrollen(document.getElementById('sheet'));
   _bindChronikClicks(document.getElementById('sheet'));
+  einblickBinden(document.getElementById('sheet'));
 }
 
 // Klick-Verdrahtung für Chronik-Elemente. `data-tplayer` statt `data-detail`,

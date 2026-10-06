@@ -3707,13 +3707,12 @@ return JSON.stringify(funde,null,1);
      'eine Partie nach dem Karriereende bietet den Ruheständler nicht an und speichert ihn nicht, eine davor schon',
      JSON.stringify(bearb));
 
-  // ── Der Positionsverlauf trägt das Titelrennen ───────────────────
-  //    Das Titelrennen stand einmal als eigener Einblick über der
-  //    Rangliste und war dieselbe Frage wie der Positionsverlauf darunter.
-  //    Jetzt zeigt dessen Karte unter „Mehr zur Saison" das Rennen der
-  //    ersten drei und öffnet beim Tippen den ganzen Verlauf. Sie steht
-  //    UNTER der Rangliste, ganz im Bild, und kein Text liegt auf einem
-  //    anderen.
+  // ── Der Positionsverlauf zeigt sich selbst ───────────────────────
+  //    Die Karte unter „Mehr zur Saison" trug die Elo der ersten drei —
+  //    eine andere Grafik als das Blatt, das sie öffnet. Jetzt trägt sie
+  //    denselben Verlauf vereinfacht: eine Linie je Spieler, der im Blatt
+  //    eine Kurve hat, und die ersten drei darunter. Sie steht UNTER der
+  //    Rangliste, ganz im Bild, und kein Text liegt auf einem anderen.
   const posKarte = await page.evaluate((pruefenSrc) => {
     const pruefen = eval('(' + pruefenSrc + ')');
     const K = window.__k.eval.bind(window.__k);
@@ -3724,7 +3723,9 @@ return JSON.stringify(funde,null,1);
     const r = karte.getBoundingClientRect();
     const out = {
       gross: karte.classList.contains('gross'),
-      rennen: !!karte.querySelector('.srn-l'),
+      linien: karte.querySelectorAll('.posv-mini-l').length,
+      soll: K(`getSeasonPositionHistory(ligaSaisonId()).activeIds.filter(id => getSeasonPositionHistory(ligaSaisonId()).positionsByDay[id].some(p => p !== null)).length`),
+      legende: karte.querySelectorAll('.posv-mini-lg span').length,
       unterListe: r.top >= liste.getBoundingClientRect().bottom - 1,
       erste: karte === document.querySelector('#main .seasontools .st-card'),
       imBild: r.left >= 0 && r.right <= window.innerWidth + .5,
@@ -3736,9 +3737,10 @@ return JSON.stringify(funde,null,1);
     K(`closeSheet(true); 'x'`);
     return out;
   }, PRUEFEN.toString());
-  ok(!posKarte.fehlt && posKarte.gross && posKarte.rennen && posKarte.unterListe && posKarte.erste
+  ok(!posKarte.fehlt && posKarte.gross && posKarte.linien >= 2 && posKarte.linien === posKarte.soll
+     && posKarte.legende === Math.min(3, posKarte.soll) && posKarte.unterListe && posKarte.erste
      && posKarte.imBild && posKarte.fehler.length === 0 && posKarte.oeffnet,
-     'der Positionsverlauf steht unter der Rangliste als erste Karte, zeigt das Titelrennen und öffnet den Verlauf',
+     'der Positionsverlauf steht unter der Rangliste als erste Karte, zeigt jede Linie des Verlaufs und öffnet ihn',
      JSON.stringify(Object.assign({}, posKarte, {fehler: (posKarte.fehler || []).slice(0, 2)})));
 
   // ── Der Positionsverlauf liest sich als Tabelle über die Zeit ─────

@@ -24,7 +24,11 @@ const EINBLICK = {
   netz:{titel:'Das Netz der Duos', ic:'duo', inhalt:() => _einblickNetz()},
   ruhe_liga:{titel:'Karriere beendet', ic:'hourglass', ruhestand:true, inhalt:() => ruhestandTafelHtml()},
   ruhe_pos:{titel:'Karriere beendet', ic:'hourglass', ruhestand:true, inhalt:() => positionenRuheHtml()},
-  ruhe_teams:{titel:'Duos mit Karriereende', ic:'hourglass', ruhestand:true, inhalt:() => vTeams(true).ruhe}
+  ruhe_teams:{titel:'Duos mit Karriereende', ic:'hourglass', ruhestand:true, inhalt:() => vTeams(true).ruhe},
+  // Die Chronik-Matrix trägt eigene Knöpfe (Monat, Spieler, Zelle), die erst
+  // mit ihrem Inhalt entstehen — `nach` verdrahtet sie, wenn er aufgeht.
+  ruhe_chronik:{titel:'Karriere beendet', ic:'hourglass', ruhestand:true, inhalt:() => ruhestandChronikHtml(),
+    nach:i => { _bindChronikClicks(i); chronikMatrixScrollen(i); }}
 };
 function _einblickAuf(key){ return einblickOffen.split(' ').includes(key); }
 function einblickHtml(key, rechts){
@@ -55,6 +59,7 @@ function einblickBinden(wurzel){
       if(auf && !i.innerHTML.trim()){
         try { i.innerHTML = EINBLICK[key].inhalt() || ''; } catch(err){ i.innerHTML = ''; }
         bindDetailLinks(i);
+        if(EINBLICK[key].nach) EINBLICK[key].nach(i);
       }
       box.classList.toggle('auf', auf);
       k.setAttribute('aria-expanded', String(auf));

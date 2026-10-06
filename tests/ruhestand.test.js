@@ -166,6 +166,34 @@ const zeitraeume = () => J(`({
 const setzeRuhestand = iso => K.eval(`(() => { const p = pmap()['${MARTIN}'], t = Date.parse('${iso}');
   const k = _ruheKarriereBauen(p.id); p.retired_at = '${iso}';
   p.retired_stand = JSON.stringify({v:RUHE_STAND_FASSUNG, t, karriere:k, abschluss:null}); invalidateCache(); })()`);
+// ── Eine Monatschronik bleibt dem, der sie geholt hat ──────────────
+// Wer im Juni Chroniken holt und im Juni aufhört, behält sie: sie sind ein
+// Teil seiner Laufbahn, und der Nächstbeste hat sie in diesem Monat nicht
+// verdient. Geprüft wird jeder Monat — die Tafel, jede Wertung samt
+// Halterfeld, der Stand für den Feed und der eingefrorene Juni — vor und
+// nach dem Karriereende, an dem Spieler mit den meisten Juni-Einträgen.
+{
+  const monate = ['2026-05','2026-06','2026-07','2026-08'];
+  const tafel = () => J(`(${JSON.stringify(monate)}).reduce((o, sid) => {
+    const C = _seasonTitleCtx(sid);
+    o[sid] = {aw:(seasonTitles(sid).awarded || []).map(a => a.titleId + ':' + a.pid).sort(),
+      halter:seasonTitleHalter(sid),
+      wertung:SEASON_TITLES.map(t => { const r = t.pick(C, new Set());
+        return t.id + ':' + (r && r.halter ? r.halter.slice().sort().join('/') : ''); })};
+    return o; }, {})`);
+  const eingefroren = () => J(`(_freezeSeasonTitles('2026-06').awarded || []).map(a => a.titleId + ':' + a.pid).sort()`);
+  const vor = tafel(), vorFrost = eingefroren();
+  const zahl = {}; vor['2026-06'].aw.forEach(x => { const p = x.split(':')[1]; zahl[p] = (zahl[p] || 0) + 1; });
+  const wer = Object.keys(zahl).sort((a, b) => zahl[b] - zahl[a])[0];
+  K.eval(`pmap()['${wer}'].retired_at = '2026-06-20T12:00:00Z'; invalidateCache();`);
+  const nach = tafel(), nachFrost = eingefroren();
+  const ab = monate.filter(sid => JSON.stringify(vor[sid]) !== JSON.stringify(nach[sid]));
+  ok(!J(`ligaAktiv('${wer}')`) && zahl[wer] > 0 && ab.length === 0 && gleich(vorFrost, nachFrost)
+     && nach['2026-06'].aw.filter(x => x.endsWith(':' + wer)).length === zahl[wer],
+     'wer im Juni aufhört, behält jede Juni-Chronik, und kein Monat vergibt sie an den Nächstbesten',
+     nm(wer) + ' ' + zahl[wer] + ' Einträge · abweichend: ' + (ab.join(', ') || '—'));
+  K.eval(`pmap()['${wer}'].retired_at = null; invalidateCache();`);
+}
 const VOR = stand();
 const VOR_Z = zeitraeume();
 const auszeichnungen = () => J("Object.fromEntries(players.map(p => [p.id, (getCachedBadges(p.id) || []).map(b => b.id + ':' + (b.count || 1)).sort()]))");
@@ -206,6 +234,15 @@ ok(!J('activePlayers().map(p => p.id)').includes(MARTIN), 'die Spielerwahl ohne 
 const teams = J('vTeams(true)');
 ok(!teams.html.includes(MARTIN) && teams.ruhe.includes(MARTIN) && teams.ruheZahl > 0,
    'die Duos mit ihm stehen nicht in der Teamliste, sondern am Ende', teams.ruheZahl + ' Duos');
+// Die Chronik-Matrix: seine Zeile steht nicht zwischen denen, die um die
+// nächste Chronik spielen, sondern in der Karte der Ruheständler am Ende.
+{
+  const mx = J('ligaChronikMatrixHtml()'), cut = mx.indexOf('data-einblick="ruhe_chronik"');
+  const ruheMx = J('ruhestandChronikHtml()');
+  ok(cut > 0 && !mx.slice(0, cut).includes(MARTIN) && ruheMx.includes('data-tplayer="' + MARTIN + '"')
+     && !J(`_lchronZeilen(allSeasonTitles().slice(0, 8).reverse()).filter(p => ligaAktiv(p))`).includes(MARTIN),
+     'die Chronik-Matrix zeigt ihn nur in der Karte der Ruheständler am Ende');
+}
 // Eine Serie, die nicht mehr läuft, brennt nicht.
 K.eval(`getGlobalSim().curStreak['${MARTIN}'] = 9;`);
 ok(J(`znFeuer('${MARTIN}')`) === 0 && J(`avRingOf('${MARTIN}')`) === null, 'kein Feuer und kein Serienring am Wappen');

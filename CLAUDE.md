@@ -229,7 +229,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **1161**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **1166**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -278,7 +278,7 @@ Zeitraumwechsel geleert: die gewählte Saison gehört zur Ansicht „Saison",
 und die Saison-Tools darunter (Recap, Positionsverlauf) folgen ihr.
 
 `einblickOffen` nennt die aufgeklappten Einblicke (`rollen`, `netz`,
-`ruhe_liga`, `ruhe_pos`, `ruhe_teams`), durch Leerzeichen getrennt, und ist
+`ruhe_liga`, `ruhe_pos`, `ruhe_teams`, `ruhe_chronik`), durch Leerzeichen getrennt, und ist
 sonst leer. Es sind mehrere, weil ein Reiter zwei tragen kann: mit einem
 einzigen Wert klappte der zweite den ersten im Zustand zu, und nach dem
 nächsten Neuzeichnen stand er geschlossen da. Ein Neuzeichnen im selben
@@ -586,7 +586,7 @@ globalem Zustand ist.
 | `blatt` | Wem eine Wischgeste gehört, Laufbahn-Vitrine, das lesbare Regel-Popup und nachvollziehbare Chronik-Herunterrechnung, Wappenverläufe, Hintergrundtakt, Rekorde-Reiter, Tafel und spannendste Tageskarte, Story-Blätter, Rubrikband, Motive, ruhige Farbfamilien samt typ-eigenem Schimmer, Sorten, Ränder, Bewegung, Breaking, Chronik-Matrix, Leiter, gemeinsame Erfolge sowie Rollen-Gewichtung, Rangfarbe und Positionsstrahl bei 360 px, die Karte zweier verdrängter Ergebnisse, die Höhe einer großen Sammelkarte, der gemeinsame Breaking-Moment, der Inhaltstausch am Ende des Zuschiebens, das Wappen als Verweis auf sein Symbol und die Besitzleiste, die je Spieler dieselbe Zahl sagt wie das Podest, die fünf Kammern samt ihren Zählern und die Kammerleiste, die auf dem Telefon erreichbar bleibt, und die Bildzone jeder der zwölf Kartensorten, die der Schlagzeile nicht den Platz nimmt und ihr eigenes Bild nicht abschneidet, die Siegchance einer Partie auf ihrer Skala, die Elo-Wirkung je Spieler, das Blatt eines Tafel-Moments samt seiner Zahlenreihe und dem Weg zur nächsten Insignium-Schwelle, den Balken hinter jedem Verfolger, den Spieltag als Bahn, die Bildzone jeder Karte, den Balken, der aufwächst und bei Bewegungsruhe stillsteht, den Lichtlauf des Seltenen in seiner Familienfarbe, den Hinweis auf neue Stories mit Zahl, Lichtlauf und Ring, den Sieger im Verlauf hell unter seinem Tag und die Bilanz eines Duos als Balken, den Feed, der zuerst die oberen Tage zeichnet und den Rest nach dem ersten Bild nachreicht, die Anlass-Zeile eines gebündelten Breaking samt ihrer eigenen Kante und Fläche, und jedes Story-Blatt und jede Karte bei 360 px, jeden Reiter bei 360 px ohne Überlauf, jedes Gesicht mit mittigen Initialen, das Komma jeder Dezimalzahl in Reitern und Blättern, die Bilanz einer Ranglistenzeile und jeden Reiter, die nicht umbrechen oder abgeschnitten werden, jedes Blatt, das nicht über seinen Innenrand läuft und keine Achsenbeschriftung übereinanderlegt, jedes Gesicht in einem Blatt mit Größe, das Blatt einer Partie mit Siegern, Siegchance, einer Zeile je Spieler und Namen, die ins Profil führen, die Beziehung unter den Wappen eines Story-Blatts, die etwas sagt, das Blatt einer Serie am Stand ihrer Partie, jeden Kachelnamen ungekürzt und ohne ein Wort, das mitten durch bricht, den Feed, der Karten außerhalb des Bildschirms erst beim Hineinscrollen legt, dieselbe Sache unter demselben deutschen Namen ohne Anrede, den Knopf „Match eintragen", der auf der Match-Seite fehlt, jedes Award-Blatt mit ausgeschriebener Einheit, einer Serie ab dem zweiten Ergebnis, dem eigenen Stand zuerst, derselben Zahl für dieselbe Überraschung und derselben Spitze wie im Profil, und die Nebenwertungen der Liga und die zwei Aufstellungen eines Duos, die nicht abgeschnitten werden oder über den Rand laufen, den Schlitten jedes Segmentwählers unter seiner Wahl, der nach dem Neuzeichnen gleitet und bei Bewegungsruhe springt, und den Monat als Zellen, und jedes Blatt mit demselben Kopf, Schließen und höchstens einem gefüllten Knopf, die Bühne mit Gesichtern, den Hinweis mit Rolle und Rückgängig und die Bestätigung mit dem sicheren Knopf links, den Glanz, der nur dem Titel gehört und bei Bewegungsruhe ruht, und den Faden, der in seiner Karte bleibt, und den Faden, der öffnet, wohin er zeigt — **im echten Browser gemessen**, und die ganze Leiter in der Laufbahn, deren Felder die Vitrine auf ihre Stufe stellen, und die Meisterbühne bei 360 px, deren Strahlenkranz hinter dem Podest liegt und bei Bewegungsruhe mit den Linien stillsteht, und jedes Insignium in Liga, Positionen, Awards, Rekorden, Profil, Laufbahn und Feed, das unter keinem Filter und keiner Skalierung liegt und groß als Vektor, klein als Bild steht — auch die einundzwanzig Felder der ganzen Leiter —, und den Verlust in der Wirkung auf die Laufbahn: ein rotes Stück im Balken, ein Minus, der Fall unter die Schwelle und der geteilte Rekord, und jedes Wappenbild unter einer kurzen Adresse, und die Aura im Profilkopf, die einmal steht und nur transform und Deckkraft bewegt, und jede Karte am Spieltag und jede Runde, auf der kein Text auf einem anderen oder einem Gesicht liegt, keiner hinausragt, abgeschnitten, mit „…" gekürzt oder unter 8 px geschrumpft ist — im Feed und mit Grenzwerten und langen Namen bei 288 und 360 px, und die Einblicke als Zeile, die erst beim Aufklappen zeichnet, die Siegchance unter der Score-Karte, jede Begegnung im Direkten Vergleich, Woche und Tag im Rückblick samt dem Knopf der Story, die Kammerfelder und die Besitzleiste in ihrer Karte und den Positionsverlauf mit dem Titelrennen unter der Rangliste, und das Blatt einer Partie und ihres Bündels mit der Zeichnung der Karte als Bühne, ohne zweiten Stand, zweite Siegchance oder zweite Elo, ohne den Satz aus Siegchance und Elo, mit jeder übrigen Zeile des Bündels und mit den direkten Duellen aus den rohen Partien, und den Positionsverlauf als Kurven mit der Tabelle des letzten Stands, deren Bewegung aus den rohen Plätzen nachgerechnet wird, ohne Hinweis und ohne gekürzten Namen, und dem Platz an jedem Tag erst nach der Wahl, und jedes Fun-Fact-Bild, das bei 288 und 360 px in seiner Karte bleibt, und die Ruheständler am Ende von Gesamt, Positionen und Teams: nur dort, zu und ohne Inhalt, aufgeklappt ohne Platz und ohne Überlauf bei 360 px, und zwei Einblicke im selben Reiter, die beide offen bleiben, und den Abschied bei 360 px mit allen Abschnitten, ohne Überlauf, ohne gekürzten Text und mit einer Marke aus Metall, samt seiner Breaking-Karte im Feed, und den Tafel-Moment bei 360 px mit seiner Achse ohne Gesichter und Zeilen, die das Blatt ihres Rekords, ihrer Chronik oder die Laufbahn öffnen, und das Blatt „Spieler entfernen", das bei Partien nicht löscht, sondern Karriereende und Ausblenden anbietet, und das Bearbeiten einer Partie, das einen Ruheständler nach seinem Karriereende weder anbietet noch speichert | 238 |
 | `archiv` | Einfrieren abgeschlossener Monate und den Profileintrag, der daraus gelesen wird | 9 |
 | `ruheliga` | Kein Ruheständler in den Ansichten der aktiven Liga, nach seinem Abschluss und während die anderen weiterspielen: jeder Reiter der Navigation, jeder Knopf darin bis zur Tiefe drei und die Spielerwahl der Eingabe, abgesucht nach Name und ID außerhalb von `[data-ruhestand]` und einer Geschichte, die spätestens mit seinem Abschluss endet — mit der Gegenprobe, dass dieselbe Suche ihn ohne Karriereende unter Gesamt findet. **Im echten Browser** | 10 |
-| `ruhestand` | Das Karriereende an den echten Partien, nach den vier Regeln [§C40]: keine rohe `hidden`-Abfrage außerhalb der Regel; jeder Zeitraum — Monat, Woche, Monatsrang, Positionsverlauf, Monatschronik, Awards, Tages- und Wochensieger, Ligaposition — mit und ohne Karriereende gleich, er steht im Monat, in dem er gespielt hat, und die Woche, in der er aufhörte, gewinnt, wer darin vorn lag; Ewige Tafel, Gesamt, Liga-Rekorde auch in einem Zeitschnitt davor, Prestige-Rang, Spielerwahl und die Wertungen über die ganze Laufbahn ohne ihn, seine Duos am Ende der Teamliste, kein Feuer am Wappen; abgeschlossene Monate, Meister und jede Auszeichnung der Liga unverändert; Rang, Perzentil, Rekorde und Prestige beim Karriereende unverändert und nach Partien anderer; die Breaking-Story mit denselben Partien wie der Abschied, die mit einem zurückgenommenen Karriereende verschwindet; der Abschluss einen Tag nach Woche und Monat, danach keine Story mehr, die ihn nennt — auch kein neuer Story-Typ ohne eigene Abfrage und keine Zeile aus der Datenbank, davor schon; die Rückkehr, die die Rekorde gegen das Feld von heute rechnet; der Stand: Karriere-Teil mit dem Zeitpunkt in einem Schreiben, vor dem Abschluss nichts nachgeschrieben, danach der Abschluss-Teil einmal, mit genau den Monatschroniken des Profils, unverändert durch eine neue Fassung der App mit neuer Auszeichnung und anderem Startwert, mit derselben Stufe nach einer neuen Stufe in der Leiter und demselben Fingerabdruck, während das Feld weiterspielt, verworfen bei einem anderen Karriereende, ohne Spalte gar nicht gesetzt, bei der Rückkehr geleert; das Löschen nur ohne Partie, gefragt bei der Datenbank, auch wenn die geladene Liste leer ist, und ohne ihre Antwort gar nicht; und Profil, Laufbahn, Auszeichnungen, Bilanzen und Abschied, die sich nach dem Abschluss zwei Monate und eine neue Fassung der App später Wort für Wort gleich lesen | 71 |
+| `ruhestand` | Das Karriereende an den echten Partien, nach den vier Regeln [§C40]: keine rohe `hidden`-Abfrage außerhalb der Regel; jeder Zeitraum — Monat, Woche, Monatsrang, Positionsverlauf, Monatschronik, Awards, Tages- und Wochensieger, Ligaposition — mit und ohne Karriereende gleich, er steht im Monat, in dem er gespielt hat, und die Woche, in der er aufhörte, gewinnt, wer darin vorn lag; Ewige Tafel, Gesamt, Liga-Rekorde auch in einem Zeitschnitt davor, Prestige-Rang, Spielerwahl und die Wertungen über die ganze Laufbahn ohne ihn, seine Duos am Ende der Teamliste, seine Zeile der Chronik-Matrix in der Karte der Ruheständler, kein Feuer am Wappen; abgeschlossene Monate, Meister und jede Auszeichnung der Liga unverändert; jede Monatschronik samt Halterfeld und eingefrorenem Monat, wenn ihr Halter im selben Monat aufhört; Rang, Perzentil, Rekorde und Prestige beim Karriereende unverändert und nach Partien anderer; die Breaking-Story mit denselben Partien wie der Abschied, die mit einem zurückgenommenen Karriereende verschwindet; der Abschluss einen Tag nach Woche und Monat, danach keine Story mehr, die ihn nennt — auch kein neuer Story-Typ ohne eigene Abfrage und keine Zeile aus der Datenbank, davor schon; die Rückkehr, die die Rekorde gegen das Feld von heute rechnet; der Stand: Karriere-Teil mit dem Zeitpunkt in einem Schreiben, vor dem Abschluss nichts nachgeschrieben, danach der Abschluss-Teil einmal, mit genau den Monatschroniken des Profils, unverändert durch eine neue Fassung der App mit neuer Auszeichnung und anderem Startwert, mit derselben Stufe nach einer neuen Stufe in der Leiter und demselben Fingerabdruck, während das Feld weiterspielt, verworfen bei einem anderen Karriereende, ohne Spalte gar nicht gesetzt, bei der Rückkehr geleert; das Löschen nur ohne Partie, gefragt bei der Datenbank, auch wenn die geladene Liste leer ist, und ohne ihre Antwort gar nicht; und Profil, Laufbahn, Auszeichnungen, Bilanzen und Abschied, die sich nach dem Abschluss zwei Monate und eine neue Fassung der App später Wort für Wort gleich lesen | 73 |
 | `backup` | Export und Wiederherstellung, braucht Chromium | — |
 
 Ohne Browser steigt `backup` mit Code 2 aus und wird als *übersprungen*
@@ -1251,20 +1251,24 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Grund, warum man den Reiter öffnet. Gezeichnet wird erst beim Aufklappen;
   zu kostet der Einblick keine Rechnung. Im Liga-Reiter gibt es keinen: das
   Titelrennen der Saison war dieselbe Frage wie der Positionsverlauf, und der
-  trägt es jetzt selbst — seine Karte unter „Mehr zur Saison" zeigt das
-  Rennen der ersten drei (`saisonRennenHtml`, dasselbe Bauteil wie im
-  Saison-Rückblick und im Blatt des Meisters) und öffnet beim Tippen den
-  ganzen Verlauf; der Saison-Rückblick darunter ist eine schmale Zeile. Oben
+  trägt es jetzt selbst — seine Karte unter „Mehr zur Saison" zeigt den
+  Verlauf vereinfacht (`posvVorschauHtml`: jede Linie mit derselben Kurve
+  wie im Blatt, `_posvPfad`, ohne Gesichter und Achsen, die ersten drei voll
+  und darunter mit Platz und Farbe) und öffnet beim Tippen den ganzen
+  Verlauf. Sie trug vorher die Elo der ersten drei, also eine andere Grafik
+  als das Blatt, das sie öffnet. Der Saison-Rückblick darunter ist eine
+  schmale Zeile. Oben
   bleibt die Rangliste das Erste. Dieselbe Zeile trägt die Ruheständler
   [§C40] am Ende von Gesamt, Positionen und Teams.
   **Der Positionsverlauf liest sich als Tabelle über die Zeit**
   (`07-positionsverlauf.js`). Er zeigte gerade Linien, die sich in Spitzen
   kreuzten, die Namen mit „…" gekürzt neben dem Gesicht, einen Hinweis
   „Linie oder Gesicht antippen" und darunter einen leeren Kasten „Hier
-  stehen die Einzelheiten". Jetzt laufen Kurven von Tag zu Tag, Platz eins
-  liegt als goldenes Band darunter, die Tage mit Partie tragen eine Marke
+  stehen die Einzelheiten". Jetzt laufen Kurven von Tag zu Tag, die Tage mit Partie tragen eine Marke
   auf der Achse, und am Ende steht das Gesicht mit der Bewegung seit dem
-  vorletzten Spieltag. Die Namen stehen ganz in der **Tabelle** darunter
+  vorletzten Spieltag. Platz eins trägt nur die goldene Ziffer an der Achse:
+  ein goldenes Band lag quer über die ganze Breite und las sich wie eine
+  markierte Zeile, über die die Linien der anderen hinweglaufen. Die Namen stehen ganz in der **Tabelle** darunter
   (`_posvTabelle`: Platz, Gesicht, Name, Verlauf klein, Bewegung, Elo); sie
   ist zugleich die Wahl des Spielers, also braucht es keinen Satz, der die
   Bedienung erklärt. Das Detail erscheint erst nach der Wahl: die Zahlen der
@@ -3252,7 +3256,10 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
      er kann ihn gewinnen. Danach spielt er nicht mehr und kommt in späteren
      Zeiträumen von selbst nicht vor. Ebenso alles, was aus seinen Partien
      entsteht: Serien, Jubiläen, Meilensteine, Auszeichnungen und wer sie
-     trägt. Eine frühere Fassung fragte hier nach dem Ende jedes Zeitraums,
+     trägt. **Eine Monatschronik bleibt dem, der sie geholt hat**: wer im
+     Juni Chroniken holt und aufhört, behält sie, und kein Nächstbester
+     rückt nach, der sie in diesem Monat nicht verdient hat — die
+     Monatsrechnung fragt deshalb `sichtbar` und nie `ligaAktiv`. Eine frühere Fassung fragte hier nach dem Ende jedes Zeitraums,
      an über zwanzig Stellen, und ließ ihn den Monat und die Woche seines
      Karriereendes verlieren, obwohl er darin gespielt hatte.
   2. **Ein Laufbahn-Vergleich ist ohne ihn, ab dem Karriereende**
@@ -3324,10 +3331,10 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Auszeichnungen und Chroniken bleiben, die Rekorde werden gegen das Feld
   von heute gerechnet — das Prestige ist danach niedriger oder höher als beim
   Abschied, unverändert nur, wenn in der Pause niemand gespielt hat.
-  **Wo er steht:** am Ende von Gesamt unter „Mehr zur Saison", der Positionen
-  und der Teams, jeweils als Einblick [§C27], der zu ist — dieselben Zeilen
-  wie darüber (`ruhestandTafelHtml`, `positionsBlockHtml`,
-  `vTeams(true).ruhe`), ohne Platz und ohne das Metall der ersten drei. Im
+  **Wo er steht:** am Ende von Gesamt unter „Mehr zur Saison", der Positionen,
+  der Teams und der Chronik-Matrix, jeweils als Einblick [§C27], der zu ist —
+  dieselben Zeilen wie darüber (`ruhestandTafelHtml`, `positionsBlockHtml`,
+  `vTeams(true).ruhe`, `ruhestandChronikHtml`), ohne Platz und ohne das Metall der ersten drei. Im
   Profil die Pille „Karriereende" und vorn die Karriere-Elo des Abschieds.
   Eine Serie, die nicht mehr läuft, brennt nicht (`znFeuer`, `avRingOf`). Die
   Knöpfe „Karriere beenden" und „Karriere fortsetzen" erscheinen nur für
@@ -3502,6 +3509,16 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Einträgen über einem mit einer legendären Chronik — und seit die Chroniken
   nach ihrem Ausschlag verschieden viel wert sind, ist die Zahl gar keine
   Ordnung mehr.
+  **Die Matrix steht in einer Karte und sagt mehr als ihre Zellen**
+  (`_lchronTabelle`). Der Kopf jeder Spalte nennt unter dem Monat die Zahl
+  seiner Einträge, die laufende Spalte ist getönt, die Namensspalte nennt die
+  Einträge der Zeile, und eine Legende zeigt die drei Stärken und die
+  gestrichelte Kante ohne einen Satz dazu. Ein Strich heißt gewertet ohne
+  Eintrag, eine leere Zelle nicht gewertet: vorher stand in beiden Fällen
+  derselbe Strich, und wer einen Monat ausgesetzt hatte, sah aus wie einer,
+  der leer ausging. Die Ruheständler stehen in einer Karte am Ende, zu
+  (`ruhe_chronik`, `ruhestandChronikHtml`) [§C40]: in der Matrix der aktiven
+  Liga standen sie zwischen denen, die um die nächste Chronik spielen.
   **Ein Kürzel ist ein ganzes Wort und passt in die Zelle.** Fünf endeten auf
   einem Punkt („Punktland.", „Angstgegn."), drei liefen über die 54 px der
   Zelle. Gezählt wird dafür nicht in Zeichen — „Umschwung" ist kürzer als

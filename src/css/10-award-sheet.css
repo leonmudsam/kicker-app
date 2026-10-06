@@ -190,7 +190,6 @@
   .posv-end-d.ab{fill:var(--red)}
   /* Der erste Platz als Band über die ganze Breite, in Gold: wer darin
      läuft, führt die Tabelle [§C25]. */
-  .posv-eins{fill:var(--gold);opacity:.07}
   .posv-y-tick.eins{fill:var(--gold);font-weight:700}
   .posv-st{fill:var(--muted);opacity:.7}
 

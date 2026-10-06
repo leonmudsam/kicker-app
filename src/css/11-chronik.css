@@ -127,14 +127,28 @@
   .chron-honor b{font-family:'Sometype Mono',monospace;font-size:10px;opacity:.75}
 
   /* Liga-Chronik-Matrix */
-  .lchron-wrap{overflow-x:auto;margin-top:12px;-webkit-overflow-scrolling:touch}
+  /* Die Matrix steht in einer Karte: frei auf dem Grund stand sie wie eine
+     Liste ohne Rand, und die stehende Namensspalte hatte keinen Hintergrund,
+     von dem sie sich abhob. */
+  .lchron-wrap{overflow-x:auto;margin-top:12px;-webkit-overflow-scrolling:touch;
+    background:var(--surface);border:1px solid var(--line);border-radius:16px}
   /* table-layout:fixed — sonst ignoriert der Browser die Spaltenbreiten und
      die Namensspalte frisst so viel Platz, dass die erste Saison abgeschnitten
      wird. Mit fester Aufteilung passen vier Saisons ohne Scrollen aufs Handy. */
   .lchron{border-collapse:collapse;width:100%;table-layout:fixed}
   .lchron th{font-family:'Sometype Mono',monospace;font-size:9px;letter-spacing:.14em;
-    text-transform:uppercase;color:var(--muted);font-weight:500;padding:7px 4px;
-    text-align:center;border-bottom:1px solid var(--line);white-space:nowrap}
+    text-transform:uppercase;color:var(--muted);font-weight:500;padding:9px 4px 7px;
+    text-align:center;border-bottom:1px solid var(--line);white-space:nowrap;vertical-align:bottom}
+  /* Der Monat und darunter, wie viele Einträge er trägt: eine Spalte voller
+     Zellen und eine mit zwei sahen im Kopf gleich aus. */
+  .lchron th .lc-m{display:block}
+  .lchron th .lc-z{display:block;margin-top:3px;font-size:13px;font-weight:700;
+    letter-spacing:0;color:var(--ink)}
+  /* Die laufende Spalte ist getönt: ihre Zellen können bis zum Monatsende
+     noch wechseln. Gestrichelt allein war das nur an den gefüllten Zellen zu
+     sehen, nicht an der Spalte. */
+  .lchron th.live,.lchron td.live{background:rgba(190,242,100,.045)}
+  .lchron th.live .lc-m{color:var(--acid)}
   .lchron th:first-child{text-align:left;padding-left:10px}
   .lchron th[data-season-table]{cursor:pointer}
   .lchron td{padding:4px 3px;text-align:center;border-bottom:1px solid var(--line)}
@@ -143,7 +157,7 @@
   /* Namensspalte bleibt stehen, während die Saisons seitlich durchlaufen —
      ohne das verliert man beim Scrollen die Zeile, zu der eine Zelle gehört. */
   .lchron th:first-child,.lchron td.who{position:sticky;left:0;z-index:2;
-    background:var(--bg2);box-shadow:1px 0 0 var(--line)}
+    background:var(--surface);box-shadow:1px 0 0 var(--line)}
   /* Namensspalte gedeckelt, damit vier Saisons ohne Seitwärts-Scrollen aufs
      Handy passen — lange Namen laufen mit Auslassungspunkten aus.
      Die 10 px links sind kein Geschmack: der Avatar saß vorher auf 2 px und
@@ -153,10 +167,27 @@
      insgesamt nicht mehr Platz gebraucht wird als vorher. */
   .lchron th:first-child,.lchron td.who{max-width:112px;width:112px}
   .lchron td.who{text-align:left;white-space:nowrap;cursor:pointer;padding-left:10px;padding-right:8px}
-  .lchron td.who .w span{overflow:hidden;text-overflow:ellipsis;min-width:0}
-  .lchron td.who .w{display:flex;align-items:center;gap:6px;
-    font-size:12px;font-weight:700;color:var(--ink)}
+  .lchron td.who .w{display:flex;align-items:center;gap:8px;
+    font-size:12.5px;font-weight:700;color:var(--ink)}
+  .lchron td.who .av{--av:24px;font-size:9.5px;border-radius:8px}
+  .lchron td.who .wt{display:flex;flex-direction:column;min-width:0;gap:2px}
+  .lchron td.who .wt > span{overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .lchron td.who .wt small{font-family:'Sometype Mono',monospace;font-size:9.5px;
+    font-weight:500;color:var(--muted)}
+  .lchron tbody tr:active td{background:var(--surface2)}
   .lc-dash{color:var(--faint);font-family:'Sometype Mono',monospace;font-size:12px}
+  /* Die Legende: dieselben drei Stärken wie die Zellen und die gestrichelte
+     Kante der laufenden Spalte, ohne einen Satz dazu. */
+  .lchron-lg{display:flex;flex-wrap:wrap;gap:6px 14px;margin:10px 2px 0;
+    font-family:'Sometype Mono',monospace;font-size:10px;letter-spacing:.06em;color:var(--muted)}
+  .lchron-lg span{display:inline-flex;align-items:center;gap:6px}
+  .lchron-lg span::before{content:"";width:14px;height:10px;border-radius:4px;
+    background:rgba(247,207,74,.11)}
+  .lchron-lg [data-kl="legendaer"]::before{background:rgba(247,207,74,.19);
+    box-shadow:inset 0 0 0 1px rgba(247,207,74,.34)}
+  .lchron-lg [data-kl="besonders"]::before{background:rgba(247,207,74,.08)}
+  .lchron-lg .live::before{background:none;outline:1px dashed rgba(247,207,74,.55);outline-offset:-1px}
+  .ruhe-ende .lchron-wrap{margin-top:4px}
   .lc-cell{display:flex;flex-direction:column;align-items:center;gap:3px;
     padding:6px 3px;border-radius:11px;background:rgba(var(--ttr),.11);cursor:pointer;
     width:60px;margin:0 auto}
