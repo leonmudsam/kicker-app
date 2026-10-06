@@ -3738,24 +3738,45 @@
   .chron-honor .i svg{width:13px;height:13px}
   .chron-honor b{font-family:'Sometype Mono',monospace;font-size:10px;opacity:.75}
 
-  .lchron-wrap{overflow-x:auto;margin-top:12px;-webkit-overflow-scrolling:touch}
+  .lchron-wrap{overflow-x:auto;margin-top:12px;-webkit-overflow-scrolling:touch;
+    background:var(--surface);border:1px solid var(--line);border-radius:16px}
   .lchron{border-collapse:collapse;width:100%;table-layout:fixed}
   .lchron th{font-family:'Sometype Mono',monospace;font-size:9px;letter-spacing:.14em;
-    text-transform:uppercase;color:var(--muted);font-weight:500;padding:7px 4px;
-    text-align:center;border-bottom:1px solid var(--line);white-space:nowrap}
+    text-transform:uppercase;color:var(--muted);font-weight:500;padding:9px 4px 7px;
+    text-align:center;border-bottom:1px solid var(--line);white-space:nowrap;vertical-align:bottom}
+  .lchron th .lc-m{display:block}
+  .lchron th .lc-z{display:block;margin-top:3px;font-size:13px;font-weight:700;
+    letter-spacing:0;color:var(--ink)}
+  .lchron th.live,.lchron td.live{background:rgba(190,242,100,.045)}
+  .lchron th.live .lc-m{color:var(--acid)}
   .lchron th:first-child{text-align:left;padding-left:10px}
   .lchron th[data-season-table]{cursor:pointer}
   .lchron td{padding:4px 3px;text-align:center;border-bottom:1px solid var(--line)}
   .lchron th:not(:first-child),.lchron td:not(.who){width:64px}
   .lchron tr:last-child td{border-bottom:none}
   .lchron th:first-child,.lchron td.who{position:sticky;left:0;z-index:2;
-    background:var(--bg2);box-shadow:1px 0 0 var(--line)}
+    background:var(--surface);box-shadow:1px 0 0 var(--line)}
   .lchron th:first-child,.lchron td.who{max-width:112px;width:112px}
   .lchron td.who{text-align:left;white-space:nowrap;cursor:pointer;padding-left:10px;padding-right:8px}
-  .lchron td.who .w span{overflow:hidden;text-overflow:ellipsis;min-width:0}
-  .lchron td.who .w{display:flex;align-items:center;gap:6px;
-    font-size:12px;font-weight:700;color:var(--ink)}
+  .lchron td.who .w{display:flex;align-items:center;gap:8px;
+    font-size:12.5px;font-weight:700;color:var(--ink)}
+  .lchron td.who .av{--av:24px;font-size:9.5px;border-radius:8px}
+  .lchron td.who .wt{display:flex;flex-direction:column;min-width:0;gap:2px}
+  .lchron td.who .wt > span{overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .lchron td.who .wt small{font-family:'Sometype Mono',monospace;font-size:9.5px;
+    font-weight:500;color:var(--muted)}
+  .lchron tbody tr:active td{background:var(--surface2)}
   .lc-dash{color:var(--faint);font-family:'Sometype Mono',monospace;font-size:12px}
+  .lchron-lg{display:flex;flex-wrap:wrap;gap:6px 14px;margin:10px 2px 0;
+    font-family:'Sometype Mono',monospace;font-size:10px;letter-spacing:.06em;color:var(--muted)}
+  .lchron-lg span{display:inline-flex;align-items:center;gap:6px}
+  .lchron-lg span::before{content:"";width:14px;height:10px;border-radius:4px;
+    background:rgba(247,207,74,.11)}
+  .lchron-lg [data-kl="legendaer"]::before{background:rgba(247,207,74,.19);
+    box-shadow:inset 0 0 0 1px rgba(247,207,74,.34)}
+  .lchron-lg [data-kl="besonders"]::before{background:rgba(247,207,74,.08)}
+  .lchron-lg .live::before{background:none;outline:1px dashed rgba(247,207,74,.55);outline-offset:-1px}
+  .ruhe-ende .lchron-wrap{margin-top:4px}
   .lc-cell{display:flex;flex-direction:column;align-items:center;gap:3px;
     padding:6px 3px;border-radius:11px;background:rgba(var(--ttr),.11);cursor:pointer;
     width:60px;margin:0 auto}
@@ -5518,7 +5539,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.06.6191fa89';
+const BUILD_VERSION='2026.10.06.40302b31';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -12327,7 +12348,9 @@ const EINBLICK = {
   netz:{titel:'Das Netz der Duos', ic:'duo', inhalt:() => _einblickNetz()},
   ruhe_liga:{titel:'Karriere beendet', ic:'hourglass', ruhestand:true, inhalt:() => ruhestandTafelHtml()},
   ruhe_pos:{titel:'Karriere beendet', ic:'hourglass', ruhestand:true, inhalt:() => positionenRuheHtml()},
-  ruhe_teams:{titel:'Duos mit Karriereende', ic:'hourglass', ruhestand:true, inhalt:() => vTeams(true).ruhe}
+  ruhe_teams:{titel:'Duos mit Karriereende', ic:'hourglass', ruhestand:true, inhalt:() => vTeams(true).ruhe},
+  ruhe_chronik:{titel:'Karriere beendet', ic:'hourglass', ruhestand:true, inhalt:() => ruhestandChronikHtml(),
+    nach:i => { _bindChronikClicks(i); chronikMatrixScrollen(i); }}
 };
 function _einblickAuf(key){ return einblickOffen.split(' ').includes(key); }
 function einblickHtml(key, rechts){
@@ -12353,6 +12376,7 @@ function einblickBinden(wurzel){
       if(auf && !i.innerHTML.trim()){
         try { i.innerHTML = EINBLICK[key].inhalt() || ''; } catch(err){ i.innerHTML = ''; }
         bindDetailLinks(i);
+        if(EINBLICK[key].nach) EINBLICK[key].nach(i);
       }
       box.classList.toggle('auf', auf);
       k.setAttribute('aria-expanded', String(auf));
@@ -30409,36 +30433,52 @@ function ligaChronikMatrixHtml(){
   const all = allSeasonTitles();
   const cols = all.slice(0, 8).reverse();
   if(!cols.length) return '';
+  const rows = _lchronZeilen(cols);
+  const aktiv = rows.filter(pid => ligaAktiv(pid));
+  const ruhe = rows.length - aktiv.length;
+  return `${_lchronTabelle(cols, aktiv)}
+    <div class="lchron-lg" aria-hidden="true"><span data-kl="legendaer">legendär</span><span data-kl="selten">selten</span>`
+    + `<span data-kl="besonders">besonders</span><span class="live">läuft noch</span></div>`
+    + (ruhe ? `<div class="ruhe-ende">${einblickHtml('ruhe_chronik', ruhe === 1 ? 'ein Spieler' : ruhe + ' Spieler')}</div>` : '');
+}
+function _lchronZeilen(cols){
   const seen = {}, wert = {};
   cols.forEach(T => {
     T.awarded.forEach(a => {
       seen[a.pid] = (seen[a.pid] || 0) + 1;
       wert[a.pid] = (wert[a.pid] || 0) + chronikPunkte(a.titleId);
     });
-    T.empty.forEach(pid => { if(seen[pid] === undefined){ seen[pid] = 0; wert[pid] = 0; } });
+    (T.empty || []).forEach(pid => { if(seen[pid] === undefined){ seen[pid] = 0; wert[pid] = 0; } });
   });
-  const rows = Object.keys(seen)
+  return Object.keys(seen)
     .filter(pid => pmap()[pid])
     .sort((a,b) => (wert[b] || 0) - (wert[a] || 0)
                 || seen[b] - seen[a]
                 || pname(a).localeCompare(pname(b)));
+}
+function _lchronTabelle(cols, rows){
+  if(!rows.length) return '';
+  const gewertet = cols.map(T => new Set((T.awarded || []).map(a => a.pid).concat(T.empty || [])));
   return `
     <div class="lchron-wrap">
       <table class="lchron">
         <thead><tr><th>Spieler</th>${cols.map(T =>
-          `<th data-season-table="${esc(T.sid)}">${esc(String(T.label).split(' ')[0].slice(0,3))}</th>`
+          `<th class="${T.live ? 'live' : ''}" data-season-table="${esc(T.sid)}"><span class="lc-m">${esc(String(T.label).split(' ')[0].slice(0,3))}</span>`
+          + `<span class="lc-z num">${T.awarded.length}</span></th>`
         ).join('')}</tr></thead>
         <tbody>
           ${rows.map(pid => {
             const bis = Math.max(...cols.filter(T => T.awarded.some(x => x.pid === pid)).map(T => seasonEnd(T.sid).getTime()));
+            const n = cols.reduce((k, T) => k + (T.awarded.some(x => x.pid === pid) ? 1 : 0), 0);
             return `<tr${isFinite(bis) ? ` data-bis="${bis}"` : ''}>
-            <td class="who" data-tplayer="${esc(pid)}"><div class="w">${avHtml(pmap()[pid],'width:18px;height:18px;font-size:8px;border-radius:6px')}<span>${esc(pname(pid))}</span></div></td>
-            ${cols.map(T => {
+            <td class="who" data-tplayer="${esc(pid)}"><div class="w">${avHtml(pmap()[pid])}`
+              + `<span class="wt"><span>${esc(pname(pid))}</span><small class="num">${n === 1 ? '1 Eintrag' : n + ' Einträge'}</small></span></div></td>
+            ${cols.map((T, k) => {
               const a = T.awarded.find(x => x.pid === pid);
-              if(!a) return `<td><span class="lc-dash">—</span></td>`;
+              if(!a) return `<td class="${T.live ? 'live' : ''}">${gewertet[k].has(pid) ? '<span class="lc-dash">—</span>' : ''}</td>`;
               const t = titleTone(a.tone);
               const kl = _chronKlasse(a.titleId);
-              return `<td><span class="lc-cell${T.live?' live':''}" style="--tt:${t.c};--ttr:${t.rgb}"${
+              return `<td class="${T.live ? 'live' : ''}"><span class="lc-cell${T.live?' live':''}" style="--tt:${t.c};--ttr:${t.rgb}"${
                 kl ? ` data-kl="${esc(kl)}"` : ''}
                 data-season-table="${esc(T.sid)}">
                 <span class="i">${svgI(a.ic)}</span>
@@ -30447,13 +30487,17 @@ function ligaChronikMatrixHtml(){
           </tr>`; }).join('')}
         </tbody>
       </table>
-    </div>
-    <div class="tnote">Gestrichelt = laufende Saison, noch nicht entschieden. Tippen öffnet den Monat.</div>`;
+    </div>`;
+}
+function ruhestandChronikHtml(){
+  const cols = allSeasonTitles().slice(0, 8).reverse();
+  return _lchronTabelle(cols, _lchronZeilen(cols).filter(pid => !ligaAktiv(pid)));
 }
 
 function chronikMatrixScrollen(root){
-  const lw = (root || document).querySelector('.lchron-wrap');
-  if(lw && lw.scrollWidth > lw.clientWidth + 24) lw.scrollLeft = lw.scrollWidth;
+  (root || document).querySelectorAll('.lchron-wrap').forEach(lw => {
+    if(lw.scrollWidth > lw.clientWidth + 24) lw.scrollLeft = lw.scrollWidth;
+  });
 }
 
 function showLigaChronik(){
@@ -30481,6 +30525,7 @@ function showLigaChronik(){
   `);
   chronikMatrixScrollen(document.getElementById('sheet'));
   _bindChronikClicks(document.getElementById('sheet'));
+  einblickBinden(document.getElementById('sheet'));
 }
 
 function _bindChronikClicks(root){

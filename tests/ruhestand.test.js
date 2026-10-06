@@ -206,6 +206,15 @@ ok(!J('activePlayers().map(p => p.id)').includes(MARTIN), 'die Spielerwahl ohne 
 const teams = J('vTeams(true)');
 ok(!teams.html.includes(MARTIN) && teams.ruhe.includes(MARTIN) && teams.ruheZahl > 0,
    'die Duos mit ihm stehen nicht in der Teamliste, sondern am Ende', teams.ruheZahl + ' Duos');
+// Die Chronik-Matrix: seine Zeile steht nicht zwischen denen, die um die
+// nächste Chronik spielen, sondern in der Karte der Ruheständler am Ende.
+{
+  const mx = J('ligaChronikMatrixHtml()'), cut = mx.indexOf('data-einblick="ruhe_chronik"');
+  const ruheMx = J('ruhestandChronikHtml()');
+  ok(cut > 0 && !mx.slice(0, cut).includes(MARTIN) && ruheMx.includes('data-tplayer="' + MARTIN + '"')
+     && !J(`_lchronZeilen(allSeasonTitles().slice(0, 8).reverse()).filter(p => ligaAktiv(p))`).includes(MARTIN),
+     'die Chronik-Matrix zeigt ihn nur in der Karte der Ruheständler am Ende');
+}
 // Eine Serie, die nicht mehr läuft, brennt nicht.
 K.eval(`getGlobalSim().curStreak['${MARTIN}'] = 9;`);
 ok(J(`znFeuer('${MARTIN}')`) === 0 && J(`avRingOf('${MARTIN}')`) === null, 'kein Feuer und kein Serienring am Wappen');
