@@ -529,3 +529,7 @@
   @media (prefers-reduced-motion:reduce){ .einblick-pf{transition:none} }
   @keyframes einblickDa{from{opacity:0}}
   @keyframes einblickL{from{opacity:0}}
+
+/* Ein Stück Geschichte [§C40]: nur die Markierung `data-bis` für das, was
+   damals galt. Es ist kein Kasten und ändert am Layout nichts. */
+.geschichte{display:contents}

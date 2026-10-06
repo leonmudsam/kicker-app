@@ -1,7 +1,11 @@
 // ╔═══ §5.1 ─── VIEW: RANKING ──────────────────────────────────────────╗
 //     Zeigt Saison/Woche/Gesamt-Rangliste, Hall of Fame, POTW/POTD.
 // ╚═════════════════════════════════════════════════════════════════════════╝
-function vRanking(){ return _vRankingCore() + _seasonToolsHtml(); }
+function vRanking(){
+  // Ein abgeschlossener Monat ist Geschichte [§C40].
+  const sid = period==='season' && ligaSeasonId && ligaSeasonId !== currentSeason().id ? ligaSeasonId : null;
+  return geschichteHtml(_vRankingCore() + _seasonToolsHtml(), sid ? seasonEnd(sid).getTime() : null);
+}
 // v9: „Saison-Tools" am Ende der Rangliste — Recap + Positionsverlauf, aus dem
 // App-Header hierher verschoben (Idee E). Konditional wie die alten Buttons:
 //   • Recap nur wenn eine vergangene Saison existiert

@@ -307,7 +307,9 @@ function matchesInPeriod(period, seasonId){
   if(period==='season') result=matchesInSeason(sid);
   else{
     const ab=start?start.getTime():null;
-    result=start?matches.filter(m=>mts(m)>=ab):matches;
+    // Gesamt ist eine eigene Liste und nicht `matches` selbst: sie trägt,
+    // dass ihr Zeitraum noch läuft [§C40], und `matches` gehört allen.
+    result=zeitraumMerken(start?matches.filter(m=>mts(m)>=ab):matches.slice(), {laufend:true});
   }
   _cache._mperiod[key]=result;
   return result;

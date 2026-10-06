@@ -724,7 +724,13 @@ function ligaChronikMatrixHtml(){
           `<th data-season-table="${esc(T.sid)}">${esc(String(T.label).split(' ')[0].slice(0,3))}</th>`
         ).join('')}</tr></thead>
         <tbody>
-          ${rows.map(pid => `<tr>
+          ${rows.map(pid => {
+            // Die Zeile ist Geschichte bis zum Ende des letzten Monats, in dem
+            // sie einen Eintrag trägt (`data-bis`, [§C40]): ein Ruheständler
+            // darf in ihr stehen, solange dieser Monat vor seinem
+            // Karriereende zu war.
+            const bis = Math.max(...cols.filter(T => T.awarded.some(x => x.pid === pid)).map(T => seasonEnd(T.sid).getTime()));
+            return `<tr${isFinite(bis) ? ` data-bis="${bis}"` : ''}>
             <td class="who" data-tplayer="${esc(pid)}"><div class="w">${avHtml(pmap()[pid],'width:18px;height:18px;font-size:8px;border-radius:6px')}<span>${esc(pname(pid))}</span></div></td>
             ${cols.map(T => {
               const a = T.awarded.find(x => x.pid === pid);
@@ -737,7 +743,7 @@ function ligaChronikMatrixHtml(){
                 <span class="i">${svgI(a.ic)}</span>
                 <span class="n">${esc(a.short || a.name)}</span></span></td>`;
             }).join('')}
-          </tr>`).join('')}
+          </tr>`; }).join('')}
         </tbody>
       </table>
     </div>

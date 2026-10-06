@@ -22,9 +22,9 @@
 const EINBLICK = {
   rollen:{titel:'Die Rollen-Landkarte', ic:'sideSwap', inhalt:() => _einblickRollen()},
   netz:{titel:'Das Netz der Duos', ic:'duo', inhalt:() => _einblickNetz()},
-  ruhe_liga:{titel:'Karriere beendet', ic:'hourglass', inhalt:() => ruhestandTafelHtml()},
-  ruhe_pos:{titel:'Karriere beendet', ic:'hourglass', inhalt:() => positionenRuheHtml()},
-  ruhe_teams:{titel:'Duos mit Karriereende', ic:'hourglass', inhalt:() => vTeams(true).ruhe}
+  ruhe_liga:{titel:'Karriere beendet', ic:'hourglass', ruhestand:true, inhalt:() => ruhestandTafelHtml()},
+  ruhe_pos:{titel:'Karriere beendet', ic:'hourglass', ruhestand:true, inhalt:() => positionenRuheHtml()},
+  ruhe_teams:{titel:'Duos mit Karriereende', ic:'hourglass', ruhestand:true, inhalt:() => vTeams(true).ruhe}
 };
 function _einblickAuf(key){ return einblickOffen.split(' ').includes(key); }
 function einblickHtml(key, rechts){
@@ -33,7 +33,10 @@ function einblickHtml(key, rechts){
   const auf = _einblickAuf(key);
   let inhalt = '';
   if(auf){ try { inhalt = e.inhalt() || ''; } catch(err){ inhalt = ''; } }
-  return `<div class="einblick${auf ? ' auf' : ''}" data-einblick="${key}">
+  // `data-ruhestand` ist die eine Erlaubnis, in einer Ansicht der aktiven
+  // Liga einen Ruheständler zu zeigen [§C40]; `tests/ruheliga` sucht ihn
+  // überall sonst.
+  return `<div class="einblick${auf ? ' auf' : ''}" data-einblick="${key}"${e.ruhestand ? ' data-ruhestand' : ''}>
     <button class="einblick-k" type="button" aria-expanded="${auf}">${svgI(e.ic)}<span>${esc(e.titel)}</span>`
     + `${rechts ? `<em>${esc(rechts)}</em>` : ''}<i class="einblick-pf">${svgI('chevron')}</i></button>
     <div class="einblick-i">${inhalt}</div></div>`;

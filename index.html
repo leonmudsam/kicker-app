@@ -1508,6 +1508,8 @@
   @media (prefers-reduced-motion:reduce){ .einblick-pf{transition:none} }
   @keyframes einblickDa{from{opacity:0}}
   @keyframes einblickL{from{opacity:0}}
+
+.geschichte{display:contents}
   .ic{display:inline-grid;place-items:center;vertical-align:middle;line-height:1}
   svg[viewBox="0 0 24 24"]{stroke-width:var(--strich);stroke-linecap:round;stroke-linejoin:round}
   .ic svg{display:block;width:1em;height:1em;stroke:currentColor;fill:none;
@@ -5504,7 +5506,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.06.5f25ceaa';
+const BUILD_VERSION='2026.10.06.196865de';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -5845,7 +5847,7 @@ function matchesInSeason(seasonId){
   if(_cache._mseason[key]) return _cache._mseason[key];
   _topfDeckel(_cache._mseason, 40);
   const start=seasonStart(seasonId),end=seasonEnd(seasonId);
-  const result=matches.filter(m=>{const d=new Date(m.created_at);return d>=start&&d<=end;});
+  const result=zeitraumMerken(matches.filter(m=>{const d=new Date(m.created_at);return d>=start&&d<=end;}), {sid:seasonId});
   _cache._mseason[key]=result;
   return result;
 }
@@ -7454,6 +7456,21 @@ function tagEndeMs(dk){
   const d = new Date(dk + 'T00:00:00');
   d.setHours(23, 59, 59, 999);
   return d.getTime();
+}
+
+function zeitraumMerken(liste, z){
+  Object.defineProperty(liste, '_zeitraum', {value:z, configurable:true});
+  return liste;
+}
+function antrittImZeitraum(ms, pid){
+  const z = ms && ms._zeitraum;
+  if(!z) return true;
+  const bis = z.sid && z.sid !== currentSeason().id ? seasonEnd(z.sid).getTime() : undefined;
+  return ligaAktiv(pid, bis);
+}
+
+function geschichteHtml(html, bisMs){
+  return bisMs != null && isFinite(bisMs) ? `<div class="geschichte" data-bis="${bisMs}">${html}</div>` : html;
 }
 
 function ruhestandSpieler(){
@@ -9128,7 +9145,7 @@ function matchesInPeriod(period, seasonId){
   if(period==='season') result=matchesInSeason(sid);
   else{
     const ab=start?start.getTime():null;
-    result=start?matches.filter(m=>mts(m)>=ab):matches;
+    result=zeitraumMerken(start?matches.filter(m=>mts(m)>=ab):matches.slice(), {laufend:true});
   }
   _cache._mperiod[key]=result;
   return result;
@@ -9817,7 +9834,10 @@ function periodPlayerStats(period, seasonId){
   return result;
 }
 
-function vRanking(){ return _vRankingCore() + _seasonToolsHtml(); }
+function vRanking(){
+  const sid = period==='season' && ligaSeasonId && ligaSeasonId !== currentSeason().id ? ligaSeasonId : null;
+  return geschichteHtml(_vRankingCore() + _seasonToolsHtml(), sid ? seasonEnd(sid).getTime() : null);
+}
 function _seasonToolsHtml(){
   const cur = currentSeason();
   const sid = ligaSaisonId();
@@ -11044,7 +11064,7 @@ function longestStreaks(ms){
       else cur[id]=0;
     });
   });
-  return Object.entries(best).map(([id,v])=>({id,v})).filter(x=>x.v>=2).sort((a,b)=>b.v-a.v);
+  return Object.entries(best).map(([id,v])=>({id,v})).filter(x=>x.v>=2 && antrittImZeitraum(ms, x.id)).sort((a,b)=>b.v-a.v);
 }
 
 function longestLossStreaks(ms){
@@ -11058,7 +11078,7 @@ function longestLossStreaks(ms){
       else cur[id]=0;
     });
   });
-  return Object.entries(best).map(([id,v])=>({id,v})).filter(x=>x.v>=2).sort((a,b)=>b.v-a.v);
+  return Object.entries(best).map(([id,v])=>({id,v})).filter(x=>x.v>=2 && antrittImZeitraum(ms, x.id)).sort((a,b)=>b.v-a.v);
 }
 
 function _vAwardsCore(){
@@ -11177,7 +11197,13 @@ function vAwards(){
     const matrix = ligaChronikMatrixHtml();
     return kopf + (matrix || emptyState('scroll','Sobald ein Monat gespielt ist, füllt sich die Chronik.'));
   }
-  return kopf + _vAwardsCore();
+  let bis = null;
+  if(awPeriod==='season' && awSeasonId && awSeasonId !== currentSeason().id) bis = seasonEnd(awSeasonId).getTime();
+  if(awPeriod==='week' && awWeekStart){
+    const ende = new Date(awWeekStart); ende.setHours(0,0,0,0); ende.setDate(ende.getDate() + 7);
+    if(ende.getTime() <= Date.now()) bis = ende.getTime() - 1;
+  }
+  return kopf + geschichteHtml(_vAwardsCore(), bis);
 }
 
 const AW_IC = {
@@ -11405,7 +11431,7 @@ function _teamEloRanking(ms, minGames){
       T[k].elo += ((m.deltas||{})[x]||0) + ((m.deltas||{})[y]||0);
     });
   });
-  return Object.values(T).filter(t=>t.g>=(minGames||1)).sort((a,b)=>b.elo-a.elo||b.g-a.g);
+  return Object.values(T).filter(t=>t.g>=(minGames||1) && t.ids.every(id=>antrittImZeitraum(ms, id))).sort((a,b)=>b.elo-a.elo||b.g-a.g);
 }
 function _seasonTeamRanking(seasonMs, sid){
   const gsim=getGlobalSim();
@@ -11421,10 +11447,10 @@ function _seasonTeamRanking(seasonMs, sid){
   return Object.entries(map).map(([k,elo])=>{
     const c=counts[k];
     return c ? {ids:k.split('|'), elo, g:c.g, w:c.w} : null;
-  }).filter(t=>t && t.g>=2).sort((a,b)=>b.elo-a.elo||b.g-a.g);
+  }).filter(t=>t && t.g>=2 && t.ids.every(id=>antrittImZeitraum(seasonMs, id))).sort((a,b)=>b.elo-a.elo||b.g-a.g);
 }
 function _upsetRanking(ms){
-  return ms.map(m=>{
+  return ms.filter(m=>(m.winner==='A'?[m.a1,m.a2]:[m.b1,m.b2]).every(id=>antrittImZeitraum(ms, id))).map(m=>{
     const expA=m.exp_a??0.5;
     const we=m.winner==='A'?expA:(1-expA);
     return {m, winPct:Math.round(we*100), sp:1-we};
@@ -12328,9 +12354,9 @@ async function doSaveMatch(){
 const EINBLICK = {
   rollen:{titel:'Die Rollen-Landkarte', ic:'sideSwap', inhalt:() => _einblickRollen()},
   netz:{titel:'Das Netz der Duos', ic:'duo', inhalt:() => _einblickNetz()},
-  ruhe_liga:{titel:'Karriere beendet', ic:'hourglass', inhalt:() => ruhestandTafelHtml()},
-  ruhe_pos:{titel:'Karriere beendet', ic:'hourglass', inhalt:() => positionenRuheHtml()},
-  ruhe_teams:{titel:'Duos mit Karriereende', ic:'hourglass', inhalt:() => vTeams(true).ruhe}
+  ruhe_liga:{titel:'Karriere beendet', ic:'hourglass', ruhestand:true, inhalt:() => ruhestandTafelHtml()},
+  ruhe_pos:{titel:'Karriere beendet', ic:'hourglass', ruhestand:true, inhalt:() => positionenRuheHtml()},
+  ruhe_teams:{titel:'Duos mit Karriereende', ic:'hourglass', ruhestand:true, inhalt:() => vTeams(true).ruhe}
 };
 function _einblickAuf(key){ return einblickOffen.split(' ').includes(key); }
 function einblickHtml(key, rechts){
@@ -12339,7 +12365,7 @@ function einblickHtml(key, rechts){
   const auf = _einblickAuf(key);
   let inhalt = '';
   if(auf){ try { inhalt = e.inhalt() || ''; } catch(err){ inhalt = ''; } }
-  return `<div class="einblick${auf ? ' auf' : ''}" data-einblick="${key}">
+  return `<div class="einblick${auf ? ' auf' : ''}" data-einblick="${key}"${e.ruhestand ? ' data-ruhestand' : ''}>
     <button class="einblick-k" type="button" aria-expanded="${auf}">${svgI(e.ic)}<span>${esc(e.titel)}</span>`
     + `${rechts ? `<em>${esc(rechts)}</em>` : ''}<i class="einblick-pf">${svgI('chevron')}</i></button>
     <div class="einblick-i">${inhalt}</div></div>`;
@@ -30273,7 +30299,9 @@ function ligaChronikMatrixHtml(){
           `<th data-season-table="${esc(T.sid)}">${esc(String(T.label).split(' ')[0].slice(0,3))}</th>`
         ).join('')}</tr></thead>
         <tbody>
-          ${rows.map(pid => `<tr>
+          ${rows.map(pid => {
+            const bis = Math.max(...cols.filter(T => T.awarded.some(x => x.pid === pid)).map(T => seasonEnd(T.sid).getTime()));
+            return `<tr${isFinite(bis) ? ` data-bis="${bis}"` : ''}>
             <td class="who" data-tplayer="${esc(pid)}"><div class="w">${avHtml(pmap()[pid],'width:18px;height:18px;font-size:8px;border-radius:6px')}<span>${esc(pname(pid))}</span></div></td>
             ${cols.map(T => {
               const a = T.awarded.find(x => x.pid === pid);
@@ -30286,7 +30314,7 @@ function ligaChronikMatrixHtml(){
                 <span class="i">${svgI(a.ic)}</span>
                 <span class="n">${esc(a.short || a.name)}</span></span></td>`;
             }).join('')}
-          </tr>`).join('')}
+          </tr>`; }).join('')}
         </tbody>
       </table>
     </div>

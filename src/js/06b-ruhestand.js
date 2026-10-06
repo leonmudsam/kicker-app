@@ -84,6 +84,36 @@ function tagEndeMs(dk){
   return d.getTime();
 }
 
+// ── Die Partien eines Zeitraums kennen ihn ──────────────────────────────
+// Eine Rangliste, die nur aus den Partien eines Zeitraums rechnet — die
+// längste Serie der Woche, das beste Duo des Monats —, sah den Ruhestand
+// nicht: die Partien vor dem Karriereende liegen im laufenden Zeitraum noch
+// drin, und so stand er in der Liga unter „Woche" mit seiner Serie und unter
+// „Teams" als Team der Saison. `matchesInSeason` und `matchesInPeriod`
+// hängen deshalb an ihre Liste, welcher Zeitraum es ist, und
+// `antrittImZeitraum` beantwortet daraus die Frage aus `ligaAktiv`: ein
+// Monat, der beim Karriereende zu war, gehört ihm weiter, ein laufender
+// nicht. Eine Liste ohne diese Angabe bleibt, wie sie war.
+function zeitraumMerken(liste, z){
+  Object.defineProperty(liste, '_zeitraum', {value:z, configurable:true});
+  return liste;
+}
+function antrittImZeitraum(ms, pid){
+  const z = ms && ms._zeitraum;
+  if(!z) return true;
+  const bis = z.sid && z.sid !== currentSeason().id ? seasonEnd(z.sid).getTime() : undefined;
+  return ligaAktiv(pid, bis);
+}
+
+// Ein Stück Geschichte, das bei `bisMs` endet: die Ansicht eines
+// abgeschlossenen Monats oder einer vergangenen Woche. Darin steht, wer damals
+// gespielt hat, auch ein Ruheständler. `data-bis` sagt es dem Markup, damit
+// `tests/ruheliga` ihn dort nicht sucht — und überall sonst schon. Ohne Ende
+// (der laufende Zeitraum) bleibt das Markup, wie es ist.
+function geschichteHtml(html, bisMs){
+  return bisMs != null && isFinite(bisMs) ? `<div class="geschichte" data-bis="${bisMs}">${html}</div>` : html;
+}
+
 // Die Ruheständler, der jüngste Abschied zuerst.
 function ruhestandSpieler(){
   return players.filter(p => sichtbar(p) && imRuhestand(p))

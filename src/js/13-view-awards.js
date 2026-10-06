@@ -855,7 +855,7 @@ function longestStreaks(ms){
       else cur[id]=0;
     });
   });
-  return Object.entries(best).map(([id,v])=>({id,v})).filter(x=>x.v>=2).sort((a,b)=>b.v-a.v);
+  return Object.entries(best).map(([id,v])=>({id,v})).filter(x=>x.v>=2 && antrittImZeitraum(ms, x.id)).sort((a,b)=>b.v-a.v);
 }
 
 // Längste Niederlagenserie je Spieler (insgesamt, nicht nur aktuell laufend)
@@ -870,7 +870,7 @@ function longestLossStreaks(ms){
       else cur[id]=0;
     });
   });
-  return Object.entries(best).map(([id,v])=>({id,v})).filter(x=>x.v>=2).sort((a,b)=>b.v-a.v);
+  return Object.entries(best).map(([id,v])=>({id,v})).filter(x=>x.v>=2 && antrittImZeitraum(ms, x.id)).sort((a,b)=>b.v-a.v);
 }
 
 function _vAwardsCore(){
@@ -1058,7 +1058,14 @@ function vAwards(){
     const matrix = ligaChronikMatrixHtml();
     return kopf + (matrix || emptyState('scroll','Sobald ein Monat gespielt ist, füllt sich die Chronik.'));
   }
-  return kopf + _vAwardsCore();
+  // Ein abgeschlossener Monat oder eine vergangene Woche ist Geschichte [§C40].
+  let bis = null;
+  if(awPeriod==='season' && awSeasonId && awSeasonId !== currentSeason().id) bis = seasonEnd(awSeasonId).getTime();
+  if(awPeriod==='week' && awWeekStart){
+    const ende = new Date(awWeekStart); ende.setHours(0,0,0,0); ende.setDate(ende.getDate() + 7);
+    if(ende.getTime() <= Date.now()) bis = ende.getTime() - 1;
+  }
+  return kopf + geschichteHtml(_vAwardsCore(), bis);
 }
 
 // Award-ID -> Icon-Name. Eine Tabelle für Awards-Reiter, Award-Blatt,

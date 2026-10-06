@@ -160,7 +160,7 @@ function matchesInSeason(seasonId){
   // Mit der Version im Schluessel waechst der Topf sonst ueber jede Version mit.
   _topfDeckel(_cache._mseason, 40);
   const start=seasonStart(seasonId),end=seasonEnd(seasonId);
-  const result=matches.filter(m=>{const d=new Date(m.created_at);return d>=start&&d<=end;});
+  const result=zeitraumMerken(matches.filter(m=>{const d=new Date(m.created_at);return d>=start&&d<=end;}), {sid:seasonId});
   _cache._mseason[key]=result;
   return result;
 }
