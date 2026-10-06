@@ -5539,7 +5539,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.06.40302b31';
+const BUILD_VERSION='2026.10.06.d079db4d';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -5768,23 +5768,6 @@ function lossStreakInline(cs){
   return `<span class="streak-badge fire" title="${-cs}er Niederlagenserie">${svgI(drops)}</span>`;
 }
 
-function awPeriodLabel(){
-  if(awPeriod==='season') return seasonLabel(awSeasonId||currentSeason().id);
-  if(awPeriod==='week'){
-    if(awWeekStart){
-      const start=new Date(awWeekStart); start.setHours(0,0,0,0);
-      const end=new Date(start); end.setDate(end.getDate()+6);
-      return 'KW '+isoWeek(start)+' · '+datumFmt(start, 'tm')+'–'+datumFmt(end, 'tm');
-    }
-    return periodLabel('week');
-  }
-  return 'Gesamte Liga';
-}
-function availableSeasons(){
-  const past=allPastSeasons().slice().reverse();
-  const cur=currentSeason().id;
-  return [cur,...past];
-}
 
 const _seasonLabelMemo = {};
 function _seasonLabelOf(y, m){
@@ -5922,6 +5905,24 @@ function allPastSeasons(){
 
 let seasons=[];
 let _histPage = 0;
+
+function awPeriodLabel(){
+  if(awPeriod==='season') return seasonLabel(awSeasonId||currentSeason().id);
+  if(awPeriod==='week'){
+    if(awWeekStart){
+      const start=new Date(awWeekStart); start.setHours(0,0,0,0);
+      const end=new Date(start); end.setDate(end.getDate()+6);
+      return 'KW '+isoWeek(start)+' · '+datumFmt(start, 'tm')+'–'+datumFmt(end, 'tm');
+    }
+    return periodLabel('week');
+  }
+  return 'Gesamte Liga';
+}
+function availableSeasons(){
+  const past=allPastSeasons().slice().reverse();
+  const cur=currentSeason().id;
+  return [cur,...past];
+}
 let _cache={version:0};
 
 function _topfDeckel(topf, max){
@@ -6686,7 +6687,7 @@ function rcpKachelHtml(o){
 }
 
 function rcpZeileHtml(o){
-  const t = o.ton && typeof titleTone === 'function' ? titleTone(o.ton) : null;
+  const t = o.ton ? titleTone(o.ton) : null;
   return `<div class="rcp-zeile${o.attr ? ' klick' : ''}"${
       t ? ` style="--tt:${t.c}"` : ''} ${o.attr || ''}>
     <span class="rcp-zeile-ic">${svgI(o.ic || 'trophy')}</span>
@@ -7182,7 +7183,7 @@ async function autoArchiveSeasons(){
     const teamGames={};
     ms.forEach(m=>{
       [[m.a1,m.a2],[m.b1,m.b2]].forEach(([x,y])=>{
-        const k=[x,y].sort().join('|');
+        const k=paarKey(x, y);
         teamGames[k]=(teamGames[k]||0)+1;
       });
     });
@@ -7285,7 +7286,7 @@ function showSeasonRecap(season, opts){
       if(aufA){ tg++; if(m.winner==='A')tw++; }
       else if(aufB){ tg++; if(m.winner==='B')tw++; }
     });
-    teamHtml = `<div class="rcp-tos klick" data-team="${esc([a,b].sort().join('|'))}">
+    teamHtml = `<div class="rcp-tos klick" data-team="${esc(paarKey(a, b))}">
       <div class="rcp-tos-pair">${rcpPaarHtml([a,b],40)}</div>
       <div class="rcp-tos-info">
         <div class="rcp-tos-label">Team der Saison</div>
@@ -7427,9 +7428,7 @@ function showSeasonRecap(season, opts){
 
 function _potwLastWeekRange(){
   const now=new Date();
-  const monday=new Date(now); monday.setHours(0,0,0,0);
-  const wd=(monday.getDay()+6)%7;
-  monday.setDate(monday.getDate()-wd);
+  const monday=wochenBeginn(now);
   const abschluss=new Date(monday); abschluss.setDate(abschluss.getDate()+6); abschluss.setHours(23,0,0,0);
   if(now.getTime() < abschluss.getTime()) monday.setDate(monday.getDate()-7);
   const end=new Date(monday); end.setDate(end.getDate()+7); end.setMilliseconds(-1);
@@ -7441,7 +7440,7 @@ function _potwWocheVon(key){
   const iso = k.match(/^(\d{4})-W(\d{1,2})$/);
   if(iso){
     const jan4 = new Date(+iso[1], 0, 4);
-    start = new Date(+iso[1], 0, 4 - ((jan4.getDay() + 6) % 7) + (+iso[2] - 1) * 7);
+    start = new Date(+iso[1], 0, 4 - wochentagMo(jan4) + (+iso[2] - 1) * 7);
   } else {
     const [y, m, d] = k.split('-').map(Number);
     start = new Date(y, m - 1, d);
@@ -7460,6 +7459,7 @@ function potwHasData(){
   return _potwMatchesInRange(start,end).length>0;
 }
 
+function setConn(t,c){document.getElementById('connText').textContent=t;document.getElementById('connDot').className='dot '+c;}
 
 function _spielerVon(x){ return typeof x === 'string' ? pmap()[x] : x; }
 
@@ -7494,7 +7494,7 @@ function ruhestandAbschlussMs(x){
   const monat = seasonEnd(seasonOf(new Date(t)).id).getTime();
   const woche = new Date(t);
   woche.setHours(0, 0, 0, 0);
-  woche.setDate(woche.getDate() + 7 - (woche.getDay() + 6) % 7);
+  woche.setDate(woche.getDate() + 7 - wochentagMo(woche));
   return Math.max(monat, woche.getTime() - 1) + 864e5;
 }
 
@@ -8038,7 +8038,7 @@ function showPotwRecap(opts){
 
       [[m.a1,m.a2,m.winner==='A'],[m.b1,m.b2,m.winner==='B']]
       .forEach(([p1,p2,wonTeam])=>{
-        const k=[p1,p2].sort().join('|');
+        const k=paarKey(p1, p2);
         if(!teamGames[k]) teamGames[k]=0;
         if(!teamWins[k]) teamWins[k]=0;
         if(!teamEloDeltaRaw[k]) teamEloDeltaRaw[k]=0;
@@ -8053,18 +8053,8 @@ function showPotwRecap(opts){
       });
     });
 
-    const POTW_MIN_WINS = 5;
-    const candidates = Object.entries(ps)
-      .filter(([id,s]) => s.wins >= POTW_MIN_WINS && sichtbar(pm[id]))
-      .map(([id,s]) => {
-        const games = s.wins + s.losses;
-        return [id, s, games ? s.wins/games : 0];
-      })
-      .sort((a,b) => {
-        if(b[2] !== a[2]) return b[2] - a[2];
-        if(b[1].wins !== a[1].wins) return b[1].wins - a[1].wins;
-        return b[1].eloDelta - a[1].eloDelta;
-      });
+    const candidates = _periodeRangliste(orderedMatchesForWeek, 'woche', true)
+      .map(r => [r.id, ps[r.id], r.wr]);
 
     let potwWinners = [];
     if (candidates.length > 0) {
@@ -8229,7 +8219,7 @@ function showPotwRecap(opts){
 function autoShowPotwRecap(){
   try{
     const now=new Date();
-    const wd=(now.getDay()+6)%7;
+    const wd=wochentagMo(now);
     if(wd>=2) return;
     if(!matches.length) return;
     const {start}=_potwLastWeekRange();
@@ -8304,7 +8294,7 @@ function showPotdRecap(opts){
         if(last && last.id!==currentSeason().id && !_recapSeen('recap_shown_'+last.id, 'season:'+last.id)) return;
       }
       {
-        const wd=(now.getDay()+6)%7;
+        const wd=wochentagMo(now);
         if(wd<2 && potwHasData()){
           const {start}=_potwLastWeekRange();
           if(!_recapSeen('potw_shown_'+_potwKeyOf(start), 'potw:'+_potwKeyOf(start))) return;
@@ -8336,12 +8326,7 @@ function showPotdRecap(opts){
     });
 
     const pm=pmap();
-    const candidates=Object.entries(ps)
-      .filter(([id,s])=> s.wins>=3 && sichtbar(pm[id]))
-      .sort((a,b)=>{
-        if(b[1].wins!==a[1].wins) return b[1].wins-a[1].wins;
-        return b[1].eloDelta-a[1].eloDelta;
-      });
+    const candidates=_periodeRangliste(ordered, 'tag', true).map(r=>[r.id, ps[r.id]]);
     if(!candidates.length) return;
 
     const potdId=candidates[0][0];
@@ -8445,8 +8430,44 @@ function showPotdRecap(opts){
     console.error('POTD Recap Fehler:',e);
   }
 }
+function playerStats(id, matchSubset){
+  const ms = matchSubset || matches;
 
-function setConn(t,c){document.getElementById('connText').textContent=t;document.getElementById('connDot').className='dot '+c;}
+  if (ms === matches) {
+    const allStats = allPlayerStats();
+    if (allStats[id]) {
+      return { ...allStats[id] };
+    }
+  }
+
+  const s={games:0,wins:0,losses:0,gf:0,ga:0,atkG:0,atkW:0,defG:0,defW:0,
+           atkGoals:0,defConceded:0,
+           mates:{},opps:{},best:-1e9,worst:1e9,curStreak:0};
+  let run=0;
+  ms.forEach(m=>{
+    const onA=(id===m.a1||id===m.a2),onB=(id===m.b1||id===m.b2);
+    if(!onA&&!onB)return;
+    const won=(onA&&m.winner==='A')||(onB&&m.winner==='B');
+    const myPos=id===m.a1?m.a1_pos:id===m.a2?m.a2_pos:id===m.b1?m.b1_pos:m.b2_pos;
+    const gf=onA?m.score_a:m.score_b, ga=onA?m.score_b:m.score_a;
+    s.games++; s.gf+=gf; s.ga+=ga;
+    if(won){s.wins++; run=run>=0?run+1:1;} else {s.losses++; run=run<=0?run-1:-1;}
+    if(myPos==='atk'){s.atkG++; if(won)s.atkW++; s.atkGoals+=gf;} else {s.defG++; if(won)s.defW++; s.defConceded+=ga;}
+    const mate=onA?(id===m.a1?m.a2:m.a1):(id===m.b1?m.b2:m.b1);
+    if(!s.mates[mate])s.mates[mate]={g:0,w:0}; s.mates[mate].g++; if(won)s.mates[mate].w++;
+    const opps=onA?[m.b1,m.b2]:[m.a1,m.a2];
+    opps.forEach(o=>{if(!s.opps[o])s.opps[o]={g:0,w:0};s.opps[o].g++;if(won)s.opps[o].w++;});
+    const d=(m.deltas&&m.deltas[id])||0;
+    if(d>s.best)s.best=d; if(d<s.worst)s.worst=d;
+  });
+  s.curStreak=run;
+  s.wr=s.games?s.wins/s.games:0;
+  s.atkWr=s.atkG?s.atkW/s.atkG:null;
+  s.defWr=s.defG?s.defW/s.defG:null;
+  s.gd=s.gf-s.ga;
+  return s;
+}
+
 function allPlayerStats(){
   const key='allStats_'+matches.length+'_'+_cache.version;
   if(_cache._allStatsKey===key) return _cache._allStatsData;
@@ -8568,46 +8589,6 @@ function allPlayerStats(){
 }
 
 
-
-function playerStats(id, matchSubset){
-  const ms = matchSubset || matches;
-
-  if (ms === matches) {
-    const allStats = allPlayerStats();
-    if (allStats[id]) {
-      return { ...allStats[id] };
-    }
-  }
-
-  const s={games:0,wins:0,losses:0,gf:0,ga:0,atkG:0,atkW:0,defG:0,defW:0,
-           atkGoals:0,defConceded:0,
-           mates:{},opps:{},best:-1e9,worst:1e9,curStreak:0};
-  let run=0;
-  ms.forEach(m=>{
-    const onA=(id===m.a1||id===m.a2),onB=(id===m.b1||id===m.b2);
-    if(!onA&&!onB)return;
-    const won=(onA&&m.winner==='A')||(onB&&m.winner==='B');
-    const myPos=id===m.a1?m.a1_pos:id===m.a2?m.a2_pos:id===m.b1?m.b1_pos:m.b2_pos;
-    const gf=onA?m.score_a:m.score_b, ga=onA?m.score_b:m.score_a;
-    s.games++; s.gf+=gf; s.ga+=ga;
-    if(won){s.wins++; run=run>=0?run+1:1;} else {s.losses++; run=run<=0?run-1:-1;}
-    if(myPos==='atk'){s.atkG++; if(won)s.atkW++; s.atkGoals+=gf;} else {s.defG++; if(won)s.defW++; s.defConceded+=ga;}
-    const mate=onA?(id===m.a1?m.a2:m.a1):(id===m.b1?m.b2:m.b1);
-    if(!s.mates[mate])s.mates[mate]={g:0,w:0}; s.mates[mate].g++; if(won)s.mates[mate].w++;
-    const opps=onA?[m.b1,m.b2]:[m.a1,m.a2];
-    opps.forEach(o=>{if(!s.opps[o])s.opps[o]={g:0,w:0};s.opps[o].g++;if(won)s.opps[o].w++;});
-    const d=(m.deltas&&m.deltas[id])||0;
-    if(d>s.best)s.best=d; if(d<s.worst)s.worst=d;
-  });
-  s.curStreak=run;
-  s.wr=s.games?s.wins/s.games:0;
-  s.atkWr=s.atkG?s.atkW/s.atkG:null;
-  s.defWr=s.defG?s.defW/s.defG:null;
-  s.gd=s.gf-s.ga;
-  return s;
-}
-
-
 function bestWorstMate(id, s_param){
   const s= s_param || playerStats(id);
   let best=null,worst=null;
@@ -8628,14 +8609,7 @@ function teamStats(){
   const key='allTeamStats_'+matches.length+'_'+_cache.version;
   if(_cache._allTeamStatsKey===key) return _cache._allTeamStatsData;
 
-  const T={};
-  matches.forEach(m=>{
-    [[m.a1,m.a2,m.winner==='A',m.score_a,m.score_b],[m.b1,m.b2,m.winner==='B',m.score_b,m.score_a]]
-    .forEach(([x,y,won,gf,ga])=>{ const k=[x,y].sort().join('|');
-      if(!T[k])T[k]={ids:[x,y].sort(),g:0,w:0,gf:0,ga:0};
-      T[k].g++; if(won)T[k].w++; T[k].gf+=gf; T[k].ga+=ga; });
-  });
-  const result = Object.values(T);
+  const result = teamStatsFromMatches(matches);
   _cache._allTeamStatsKey = key;
   _cache._allTeamStatsData = result;
   return result;
@@ -8741,7 +8715,7 @@ function teamDetail(p1,p2){
   const recent=[...teamMatches].sort((a,b)=>b.t-a.t).slice(0,10);
 
   const globalSim=getGlobalSim();
-  const teamKey=[ids[0],ids[1]].sort().join('|');
+  const teamKey=paarKey(ids[0], ids[1]);
   const consistentEloDelta=Math.round(globalSim.teamElo[teamKey]||0);
 
   const games=teamMatches.length;
@@ -8814,7 +8788,7 @@ function teamDetail(p1,p2){
 
 function teamAchievements(p1Id, p2Id){
   const R = awardRankings('all');
-  const sortKey = [p1Id, p2Id].sort().join('|');
+  const sortKey = paarKey(p1Id, p2Id);
   const duo = ids => ids.slice().sort().join('|') === sortKey;
   const found = [];
   Object.keys(AW_WERT).forEach(key => {
@@ -8959,7 +8933,7 @@ function avatarInnerHtml(player){
 function avHtml(player, extraStyle, opts){
   if(!player) return '';
   let cls = '', style = '', attr = '';
-  if(opts && opts.ring && typeof _avRingAttrs === 'function'){
+  if(opts && opts.ring){
     const r = _avRingAttrs(player.id);
     if(r){ cls = r.cls; style = r.style; attr = r.attr; }
   }
@@ -8967,8 +8941,8 @@ function avHtml(player, extraStyle, opts){
   const inner = em
     ? `<span class="av av-emoji${cls}"${attr} style="${style}${extraStyle||''}"><span class="em">${em}</span></span>`
     : `<span class="av${cls}"${attr} style="${style}background:${avColor(player.id)};${extraStyle||''}">${initials(player.name)}</span>`;
-  if(opts && opts.ins && typeof insAvWrap === 'function') return insAvWrap(player.id, inner, opts);
-  if(opts && opts.zn && typeof znWrap === 'function') return znWrap(player.id, inner, opts);
+  if(opts && opts.ins) return insAvWrap(player.id, inner, opts);
+  if(opts && opts.zn) return znWrap(player.id, inner, opts);
   return inner;
 }
 function initials(n){return n.trim().slice(0,2).toUpperCase();}
@@ -8982,7 +8956,7 @@ function awLiAv(pid, isTiedRow = false, schande = false){
   const kreis = em
     ? `<div class="aw-li-av has-emoji" style="background:var(--surface3);color:inherit;${sizeStyle}">${em}</div>`
     : `<div class="aw-li-av" style="background:${avColor(p.id)};${sizeStyle}">${esc(initials(p.name))}</div>`;
-  const f = (!schande && typeof znFeuer === 'function') ? znFeuer(pid) : 0;
+  const f = !schande ? znFeuer(pid) : 0;
   if(!f || typeof znWrap !== 'function') return kreis;
   return znWrap(pid, kreis, {px:px, titel:0, klasse:'aw-li-zn'});
 }
@@ -9127,8 +9101,7 @@ function schlittenFahren(root){
 function periodStart(period){
   const now=new Date();
   if(period==='season') return seasonStart();
-  if(period==='week'){ const d=new Date(now); d.setHours(0,0,0,0);
-    const wd=(d.getDay()+6)%7; d.setDate(d.getDate()-wd); return d; }
+  if(period==='week') return wochenBeginn(now);
   if(period==='day'){ const d=new Date(now); d.setHours(0,0,0,0); return d; }
   return null;
 }
@@ -9176,6 +9149,13 @@ function saisonWaehlerHtml(id, gewaehlt, opts){
     }).join('')}</div>`;
 }
 
+function wochentagMo(d){ return (d.getDay() + 6) % 7; }
+function wochenBeginn(d){
+  const x = new Date(d); x.setHours(0,0,0,0);
+  x.setDate(x.getDate() - wochentagMo(x));
+  return x;
+}
+function paarKey(a, b){ return [a, b].sort().join('|'); }
 function isoWeek(d){
   const date=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
   const dayNum=(date.getUTCDay()+6)%7; date.setUTCDate(date.getUTCDate()-dayNum+3);
@@ -10511,8 +10491,8 @@ function _awardRankingsUncached(period, sid){
       }
     }
     
-    const tA=[m.a1,m.a2].sort().join('|');
-    const tB=[m.b1,m.b2].sort().join('|');
+    const tA=paarKey(m.a1, m.a2);
+    const tB=paarKey(m.b1, m.b2);
     if(!agg.tElo[tA]) agg.tElo[tA]=0;
     if(!agg.tElo[tB]) agg.tElo[tB]=0;
     if(!agg.tWins[tA]) agg.tWins[tA]=0;
@@ -10747,8 +10727,8 @@ function _awardRankingsUncached(period, sid){
   const _tStreak = {};
   for(let i=0;i<_orderedForStreak.length;i++){
     const m=_orderedForStreak[i];
-    const wKey = m.winner==='A' ? [m.a1,m.a2].sort().join('|') : [m.b1,m.b2].sort().join('|');
-    const lKey = m.winner==='A' ? [m.b1,m.b2].sort().join('|') : [m.a1,m.a2].sort().join('|');
+    const wKey = m.winner==='A' ? paarKey(m.a1, m.a2) : paarKey(m.b1, m.b2);
+    const lKey = m.winner==='A' ? paarKey(m.b1, m.b2) : paarKey(m.a1, m.a2);
     if(!_tStreak[wKey]) _tStreak[wKey]={cur:0,best:0,ids:wKey.split('|')};
     if(!_tStreak[lKey]) _tStreak[lKey]={cur:0,best:0,ids:lKey.split('|')};
     _tStreak[wKey].cur++;
@@ -10977,8 +10957,8 @@ function _computeZirkus(ms){
   const tPleiten={};
   for(let i=0; i<ms.length; i++){
     const m=ms[i];
-    const teamA=[m.a1,m.a2].sort().join('|');
-    const teamB=[m.b1,m.b2].sort().join('|');
+    const teamA=paarKey(m.a1, m.a2);
+    const teamB=paarKey(m.b1, m.b2);
     const loserTeam=m.winner==='A'?teamB:teamA;
     tPleiten[loserTeam] = (tPleiten[loserTeam]||0) + 1;
     if(Math.abs(m.score_a-m.score_b)<5) continue;
@@ -11000,8 +10980,8 @@ function _computeBarstelle(ms){
   const ordered=[...ms].sort((a,b)=>mts(a)-mts(b));
   for(let i=0; i<ordered.length; i++){
     const m=ordered[i];
-    const loserKey=m.winner==='A'?[m.b1,m.b2].sort().join('|'):[m.a1,m.a2].sort().join('|');
-    const winnerKey=m.winner==='A'?[m.a1,m.a2].sort().join('|'):[m.b1,m.b2].sort().join('|');
+    const loserKey=m.winner==='A'?paarKey(m.b1, m.b2):paarKey(m.a1, m.a2);
+    const winnerKey=m.winner==='A'?paarKey(m.a1, m.a2):paarKey(m.b1, m.b2);
     if(!teamLossStreaks[loserKey])teamLossStreaks[loserKey]={cur:0,best:0,ids:loserKey.split('|')};
     teamLossStreaks[loserKey].cur++;
     if(teamLossStreaks[loserKey].cur>teamLossStreaks[loserKey].best)teamLossStreaks[loserKey].best=teamLossStreaks[loserKey].cur;
@@ -11025,7 +11005,7 @@ function teamStatsFromMatches(ms){
   const T={};
   ms.forEach(m=>{
     [[m.a1,m.a2,m.winner==='A',m.score_a,m.score_b],[m.b1,m.b2,m.winner==='B',m.score_b,m.score_a]]
-    .forEach(([x,y,won,gf,ga])=>{const k=[x,y].sort().join('|');
+    .forEach(([x,y,won,gf,ga])=>{const k=paarKey(x, y);
       if(!T[k])T[k]={ids:[x,y].sort(),g:0,w:0,gf:0,ga:0};
       T[k].g++;if(won)T[k].w++;T[k].gf+=gf;T[k].ga+=ga;});
   });
@@ -11429,13 +11409,7 @@ function _seasonTeamRanking(seasonMs, sid){
   const gsim=getGlobalSim();
   const map=gsim.seasonTeamElo[sid||currentSeason().id]||{};
   const counts={};
-  seasonMs.forEach(m=>{
-    [[m.a1,m.a2,m.winner==='A'],[m.b1,m.b2,m.winner==='B']].forEach(([x,y,won])=>{
-      const k=[x,y].sort().join('|');
-      if(!counts[k]) counts[k]={g:0,w:0};
-      counts[k].g++; if(won) counts[k].w++;
-    });
-  });
+  teamStatsFromMatches(seasonMs).forEach(t=>{ counts[paarKey(t.ids[0], t.ids[1])]=t; });
   return Object.entries(map).map(([k,elo])=>{
     const c=counts[k];
     return c ? {ids:k.split('|'), elo, g:c.g, w:c.w} : null;
@@ -11811,8 +11785,8 @@ function vTeams(nurErgebnis=false){
   } else if(teamSort==='elo'){
     const gSim=getGlobalSim();
     sorted=[...T].sort((a,b)=>{
-      const keyA=[a.ids[0],a.ids[1]].sort().join('|');
-      const keyB=[b.ids[0],b.ids[1]].sort().join('|');
+      const keyA=paarKey(a.ids[0], a.ids[1]);
+      const keyB=paarKey(b.ids[0], b.ids[1]);
       const eloA=gSim.teamElo[keyA]||0;
       const eloB=gSim.teamElo[keyB]||0;
       return eloB-eloA || (b.w/b.g)-(a.w/a.g) || (b.gf-b.ga)-(a.gf-a.ga);
@@ -11861,7 +11835,7 @@ function vTeams(nurErgebnis=false){
   const zeile=(t,i,ohneRang)=>{
     const wr=Math.round(t.w/t.g*100);
     const gd=t.gf-t.ga;
-    const keyTeam=[t.ids[0],t.ids[1]].sort().join('|');
+    const keyTeam=paarKey(t.ids[0], t.ids[1]);
     
     let mainValue, mainColor;
     if(teamSort==='wr'){
@@ -12442,7 +12416,7 @@ function _einblickNetz(){
   const duo = {};
   matches.forEach(m => [[m.a1, m.a2, m.winner === 'A'], [m.b1, m.b2, m.winner === 'B']].forEach(([x, y, w]) => {
     if(!lage[x] || !lage[y]) return;
-    const k = [x, y].sort().join('|');
+    const k = paarKey(x, y);
     duo[k] = duo[k] || {g:0, w:0}; duo[k].g++; if(w) duo[k].w++;
   }));
   const ks = Object.keys(duo).filter(k => duo[k].g >= 4).sort((a, b) => duo[b].g - duo[a].g).slice(0, 18).reverse();
@@ -12841,7 +12815,7 @@ document.addEventListener('keydown', (e) => {
   if(e.key === 'Escape'){
     const ndBg = document.getElementById('ndBg');
     if(ndBg && ndBg.classList.contains('show')){
-      if(typeof closeNewsDetail === 'function') closeNewsDetail();
+      closeNewsDetail();
       return;
     }
     const bpBg = document.getElementById('bpBg');
@@ -13107,7 +13081,7 @@ function _seasonTeamOfBerechnet(sid){
     matchesInSeason(sid).forEach(m => {
       [[m.a1,m.a2],[m.b1,m.b2]].forEach(([x,y]) => {
         if(!x || !y) return;
-        const k = [x,y].sort().join('|');
+        const k = paarKey(x, y);
         spiele[k] = (spiele[k] || 0) + 1;
       });
     });
@@ -13222,10 +13196,29 @@ function countGames(id,ms){return matchesOfPlayer(id,ms).length;}
 function countWins(id,ms){return matchesOfPlayer(id,ms).filter(m=>won(id,m)).length;}
 
 const _winnerCountsMemo = new WeakMap();
+function _periodeRangliste(ms, regel, nurSichtbar){
+  const ps={};
+  ms.forEach(m=>[m.a1,m.a2,m.b1,m.b2].forEach(pid=>{
+    const s=ps[pid]||(ps[pid]={id:pid,wins:0,losses:0,eloDelta:0,wr:0});
+    const onA=(pid===m.a1||pid===m.a2);
+    if((onA&&m.winner==='A')||(!onA&&m.winner==='B')) s.wins++; else s.losses++;
+    s.eloDelta += (m.deltas && m.deltas[pid]) || 0;
+  }));
+  const minW = regel==='tag' ? 3 : regel==='woche' ? 5 : 10;
+  const pm = nurSichtbar ? pmap() : null;
+  return Object.values(ps)
+    .filter(s=>s.wins>=minW && (!pm || sichtbar(pm[s.id])))
+    .map(s=>{ s.wr=s.wins/((s.wins+s.losses)||1); return s; })
+    .sort(regel==='tag'
+      ? (a,b)=> b.wins!==a.wins ? b.wins-a.wins : b.eloDelta-a.eloDelta
+      : (a,b)=> Math.abs(a.wr-b.wr)>0.001 ? b.wr-a.wr
+             : a.wins!==b.wins ? b.wins-a.wins : b.eloDelta-a.eloDelta);
+}
+
 function _periodWinnerMap(allMs, kind){
   const now=new Date();
   let curKey;
-  if(kind==='week')       curKey=now.getFullYear()+'-W'+isoWeek(now);
+  if(kind==='week')       curKey=_wochenKey(now);
   else if(kind==='month') curKey=now.getFullYear()+'-'+now.getMonth();
   else                    curKey='';
   let slot=_winnerCountsMemo.get(allMs);
@@ -13237,8 +13230,7 @@ function _periodWinnerMap(allMs, kind){
   allMs.forEach(m=>{
     let key;
     if(kind==='week'){
-      const d=new Date(m.created_at);
-      key=d.getFullYear()+'-W'+isoWeek(d);
+      key=_wochenKey(m.created_at);
     } else if(kind==='month'){
       const d=new Date(m.created_at);
       key=d.getFullYear()+'-'+d.getMonth();
@@ -13249,41 +13241,12 @@ function _periodWinnerMap(allMs, kind){
     buckets[key].push(m);
   });
 
+  const regel={day:'tag', week:'woche', month:'monat'}[kind];
   const winners={};
   Object.entries(buckets).forEach(([key,ms])=>{
     if(kind!=='day' && key===curKey)return;
-    if(ms.length<2)return;
-    const winsById={}, gamesById={}, eloById={};
-    ms.forEach(m=>[m.a1,m.a2,m.b1,m.b2].forEach(pid=>{
-      if(!winsById[pid])winsById[pid]=0;
-      if(!gamesById[pid])gamesById[pid]=0;
-      if(!eloById[pid])eloById[pid]=0;
-      gamesById[pid]++;
-      const onA=(pid===m.a1||pid===m.a2);
-      if((onA&&m.winner==='A')||(!onA&&m.winner==='B'))winsById[pid]++;
-      eloById[pid] += (m.deltas && m.deltas[pid]) || 0;
-    }));
-    let winner=null;
-    if(kind==='day'){
-      const maxW=Math.max(...Object.values(winsById));
-      if(maxW<3)return;
-      const candidates=Object.keys(winsById).filter(pid=>winsById[pid]===maxW);
-      candidates.sort((a,b)=>eloById[b]-eloById[a]);
-      winner=candidates[0];
-    } else {
-      const minW=kind==='week'?5:10;
-      const qual=Object.keys(winsById).filter(pid=>winsById[pid]>=minW);
-      if(!qual.length)return;
-      qual.sort((a,b)=>{
-        const wrA=winsById[a]/(gamesById[a]||1);
-        const wrB=winsById[b]/(gamesById[b]||1);
-        if(Math.abs(wrA-wrB)>0.001) return wrB-wrA;
-        if(winsById[a]!==winsById[b]) return winsById[b]-winsById[a];
-        return eloById[b]-eloById[a];
-      });
-      winner=qual[0];
-    }
-    if(winner!=null) winners[key]=winner;
+    const erster=_periodeRangliste(ms, regel, false)[0];
+    if(erster) winners[key]=erster.id;
   });
   slot[slotKey]=winners;
   return winners;
@@ -13461,6 +13424,9 @@ function countMrPerfect(id, matchSubset){
 }
 
 function countAllwetter(id, matchSubset){
+  return _allwetterTage(id, matchSubset).size >= 5 ? 1 : 0;
+}
+function _allwetterTage(id, matchSubset){
   const quelle = Array.isArray(matchSubset) ? matchSubset : matches;
   const sieger = _periodWinnerMap(quelle, 'day');
   const heute = new Date().toISOString().slice(0, 10);
@@ -13471,7 +13437,7 @@ function countAllwetter(id, matchSubset){
     const [y, mo, d] = tag.split('-').map(Number);
     wochentage.add(new Date(y, mo - 1, d).getDay());
   }
-  return wochentage.size >= 5 ? 1 : 0;
+  return wochentage;
 }
 
 function countGodlyStreak(id, matchSubset){
@@ -13495,10 +13461,7 @@ function countGodlyStreak(id, matchSubset){
 }
 
 function longestPlayerStreak(id,ms){
-  const ordered=matchesOfPlayer(id,ms);
-  let cur=0,best=0;
-  ordered.forEach(m=>{if(won(id,m)){cur++;if(cur>best)best=cur;}else cur=0;});
-  return best;
+  return longestPlayerStreakInfo(id,ms).best;
 }
 function longestPlayerStreakInfo(id,ms){
   const ordered=matchesOfPlayer(id,ms);
@@ -14392,7 +14355,7 @@ function showPlayer(id){
           <div class="ti">Player of<br>the Season</div>
           <div class="su">${esc(t.label)}</div>
         </div>`;
-        const teamAttr = t.mate ? ` data-team="${esc([id,t.mate].sort().join('|'))}"` : '';
+        const teamAttr = t.mate ? ` data-team="${esc(paarKey(id, t.mate))}"` : '';
         return `
         <div class="pp-tr team"${teamAttr}>
           <span class="ic svg-ic">${svgI('handshake')}</span>
@@ -14693,11 +14656,11 @@ const rankProgHtml = rInfo ? `
               </div>
             </div>`;
           };
-          const bestAttr  = best?` data-team="${esc([id,best.mid].sort().join('|'))}"`:'';
+          const bestAttr  = best?` data-team="${esc(paarKey(id, best.mid))}"`:'';
           const bestCard  = best
             ? card('good', bestAttr, 'handshake', 'Bester Partner', {id:best.mid,label:pname(best.mid)}, best.wr, Math.round(best.wr*best.g), best.g)
             : card('good', '', 'handshake', 'Bester Partner', null);
-          const worstAttr = worst&&best&&worst.mid!==best.mid?` data-team="${esc([id,worst.mid].sort().join('|'))}"`:'';
+          const worstAttr = worst&&best&&worst.mid!==best.mid?` data-team="${esc(paarKey(id, worst.mid))}"`:'';
           const worstCard = worst&&best&&worst.mid!==best.mid
             ? card('bad', worstAttr, 'chartDown', 'Schwächster Partner', {id:worst.mid,label:pname(worst.mid)}, worst.wr, Math.round(worst.wr*worst.g), worst.g)
             : card('bad', '', 'chartDown', 'Schwächster Partner', null);
@@ -15276,27 +15239,7 @@ function _badgeStreakState(badgeId, playerId){
     };
   }
   if(badgeId === 'allwetter'){
-    const byDay = {};
-    matches.forEach(m => {
-      const day = mdayKey(m);
-      if(!byDay[day]) byDay[day] = { ms: [], jsDate: new Date(m.created_at) };
-      byDay[day].ms.push(m);
-    });
-    const today = new Date().toISOString().slice(0,10);
-    const weekdays = new Set();
-    Object.entries(byDay).forEach(([day, info]) => {
-      if(day === today) return;
-      if(info.ms.length < 2) return;
-      const winsById = {};
-      info.ms.forEach(m => [m.a1,m.a2,m.b1,m.b2].forEach(pid => {
-        if(!winsById[pid]) winsById[pid] = 0;
-        const onA = (pid===m.a1||pid===m.a2);
-        if((onA && m.winner==='A') || (!onA && m.winner==='B')) winsById[pid]++;
-      }));
-      const maxW = Math.max(...Object.values(winsById));
-      if(maxW < 3) return;
-      if((winsById[playerId]||0) === maxW) weekdays.add(info.jsDate.getDay());
-    });
+    const weekdays = _allwetterTage(playerId);
     return {weekdays, tgt:5, label:'Wochentage als Tagessieger', kind:'weekday'};
   }
 
@@ -15632,7 +15575,7 @@ function _abMomenteHtml(d){
 function _abDuoHtml(pid, x, art){
   const g = art === 'team' ? x.teamG : x.oppG, w = art === 'team' ? x.teamW : x.oppW;
   const q = g ? Math.round(w / g * 100) : 0;
-  const attr = art === 'team' ? `data-team="${esc([pid, x.oid].sort().join('|'))}"` : `data-h2h="${esc(pid + '|' + x.oid)}"`;
+  const attr = art === 'team' ? `data-team="${esc(paarKey(pid, x.oid))}"` : `data-h2h="${esc(pid + '|' + x.oid)}"`;
   return `<div class="ab-duo klick" ${attr}>
     ${art === 'team' ? rcpPaarHtml([pid, x.oid], 36) : rcpAvHtml(x.oid, 36)}
     <span class="ab-duo-t"><b>${esc(art === 'team' ? pname(pid) + ' & ' + pname(x.oid) : pname(x.oid))}</b>
@@ -15877,8 +15820,8 @@ function bind(){
   main.querySelectorAll('[data-rekkammer]').forEach(b=>b.onclick=()=>{rekKammer=b.dataset.rekkammer;_renderNachEingabe();});
   if(awView!=='awards'){
     const c=document.getElementById('main');
-    if(c && typeof _bindChronikClicks==='function') _bindChronikClicks(c);
-    if(typeof chronikMatrixScrollen==='function') chronikMatrixScrollen(c);
+    if(c) _bindChronikClicks(c);
+    chronikMatrixScrollen(c);
   }
   const swBind=(id,fn)=>{
     const el=document.getElementById(id);
@@ -16211,7 +16154,7 @@ function showH2H(idA, idB){
           <div class="num" style="font-family:'Archivo Black',sans-serif;font-size:14px;line-height:1;color:${teamEloCol}">${teamEloStr}</div>
           <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:3px">Elo zusammen</div>
         </div>
-        <button data-team="${esc([idA,idB].sort().join('|'))}" style="flex:1.2;background:rgba(86,180,232,.1);border:1px solid rgba(86,180,232,.3);border-radius:9px;padding:8px;color:var(--blue);font-family:'Sometype Mono',monospace;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">
+        <button data-team="${esc(paarKey(idA, idB))}" style="flex:1.2;background:rgba(86,180,232,.1);border:1px solid rgba(86,180,232,.3);border-radius:9px;padding:8px;color:var(--blue);font-family:'Sometype Mono',monospace;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">
           Zum Duo
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
         </button>
@@ -17521,13 +17464,13 @@ function _buildStories(){
   const _dayMs = 86400000;
   const _startOfToday     = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const _startOfYesterday = _startOfToday - _dayMs;
-  const _weekStartOf = (ts) => { const x = new Date(ts); x.setHours(0,0,0,0); x.setDate(x.getDate() - ((x.getDay()+6)%7)); return x.getTime(); };
+  const _weekStartOf = (ts) => wochenBeginn(ts).getTime();
   const _thisWeekStart = _weekStartOf(now.getTime());
   const _prevWeekStart = _thisWeekStart - 7*_dayMs;
   const _yesterdayKey  = new Date(_startOfYesterday).toISOString().slice(0,10);
   let   _lastWeekKey   = isoWeek(new Date(_prevWeekStart));
 
-  const _wr = (typeof _potwLastWeekRange === 'function') ? _potwLastWeekRange() : null;
+  const _wr = _potwLastWeekRange();
   const _wocheStart = _wr ? _wr.start.getTime() : _prevWeekStart;
   const _wocheEnde  = _wr ? (_wr.end.getTime() + 1) : _thisWeekStart;
   const _wocheSlotTs = _wocheEnde - 3600000;
@@ -17914,22 +17857,22 @@ function _buildStories(){
       .filter(ev => {
         if(!pm[ev.playerId]) return false;
         const wuerde = (typeof BADGE_WUERDE !== 'undefined') && BADGE_WUERDE.has(ev.badge.id);
-        const rar = (typeof rarityOf === 'function') ? rarityOf(ev.badge.id) : 'common';
+        const rar = rarityOf(ev.badge.id);
         if(!wuerde && !_badgeTakt(rar, _bRang(ev))) return false;
         return rar === 'legendary' || rar === 'rare' || NEWS_BADGE_WHITELIST.has(ev.badge.id);
       });
     const list = whitelisted.sort((a,b) => b.when - a.when);
     list.forEach(ev => {
-      const rar = (typeof rarityOf === 'function') ? rarityOf(ev.badge.id) : 'common';
+      const rar = rarityOf(ev.badge.id);
       const rarPrio = STORY_PRIO.badge_unlocked
                     + ({legendary:36, rare:8, common:0, negative:0}[rar] || 0);
       const _nemOpp = (ev.badge.id === 'nemesis' && ev.meta && ev.meta.oppId) ? ev.meta.oppId : null;
       let _bdesc;
       if(_nemOpp){
         _bdesc = `5 Pleiten in Folge gegen ${nameOf(_nemOpp)}.`;
-      } else if(ev.badge.id === 'games250' && typeof countGames === 'function'){
+      } else if(ev.badge.id === 'games250'){
         _bdesc = `300 Partien am Kicker. ${nameOf(ev.playerId)} steht nach dieser Partie bei ${_spEigene(ev.playerId, badgeMatches.get(ev.matchId)).length} Spielen.`;
-      } else if(ev.badge.id === 'wins200' && typeof countWins === 'function'){
+      } else if(ev.badge.id === 'wins200'){
         _bdesc = `300 Siege in der Karriere. ${nameOf(ev.playerId)} hält nach dieser Partie bei ${_spEigene(ev.playerId, badgeMatches.get(ev.matchId)).filter(m => _spGew(m, ev.playerId)).length}.`;
       } else {
         _bdesc = ev.badge.desc || 'Neue Auszeichnung freigeschaltet';
@@ -17948,7 +17891,7 @@ function _buildStories(){
     });
     const _kleine = Object.values(dedupe).filter(ev => {
       if(!pm[ev.playerId]) return false;
-      const rar = (typeof rarityOf === 'function') ? rarityOf(ev.badge.id) : 'common';
+      const rar = rarityOf(ev.badge.id);
       if(rar !== 'common') return false;
       if(NEWS_BADGE_WHITELIST.has(ev.badge.id)) return false;
       return _badgeTakt('common', _bRang(ev));
@@ -18479,7 +18422,7 @@ function _buildStories(){
       }
       if(art === 'normal' || art === 'eng'){
         let tx = null;
-        try { tx = typeof _spScoreText === 'function' ? _spScoreText(m) : _spFormText(m); }
+        try { tx = _spScoreText(m); }
         catch(e){ tx = null; }
         if(tx){ title = tx.t; desc = tx.d; }
       }
@@ -18500,7 +18443,7 @@ function _buildStories(){
   try {
     const wk = 14 * 86400000;
     const tsNow = now.getTime();
-    const streakSnaps = (typeof getStreakSnapshots === 'function') ? getStreakSnapshots() : {};
+    const streakSnaps = getStreakSnapshots();
     const kills = [];
     for(let i = 0; i < matches.length; i++){
       const m = matches[i];
@@ -18733,10 +18676,10 @@ function _buildStories(){
   } catch(e){}
 
   try {
-    if(typeof _potwLastWeekRange === 'function' && typeof _potwKeyOf === 'function'){
+    {
       const range = _potwLastWeekRange();
       const wm = _potwMatchesInRange(range.start, range.end);
-      const res = _newsPeriodWinner(wm, 5, 'wr');
+      const res = _newsPeriodWinner(wm, 'woche');
       if(res){
         const main = res.main;
         const names = res.winners.map(w => nameOf(w.id));
@@ -18766,7 +18709,7 @@ function _buildStories(){
     potdTage.forEach((dayMatches, dayKey) => {
       const rep = new Date(dayKey + 'T00:00:00'); rep.setHours(23, 59, 0, 0);
       if(now.getTime() < rep.getTime()) return;
-      const res = _newsPeriodWinner(dayMatches, 3, 'wins');
+      const res = _newsPeriodWinner(dayMatches, 'tag');
       if(!res) return;
       const main = res.main;
       const names = res.winners.map(w => nameOf(w.id));
@@ -19039,7 +18982,7 @@ function _buildStories(){
 
   try {
     const _sid = currentSeason().id;
-    if(_tafelTag && typeof seasonTitleHalter === 'function'){
+    if(_tafelTag){
       const _letzteMs2 = _tafelTag.letzte;
       const _amTag2 = new Map();
       matches.forEach(m => {
@@ -19092,7 +19035,7 @@ function _buildStories(){
         const a = _vorherH[t.id];
         const neuKey = n.pids.join(',');
         if(a && a.pids.join(',') === neuKey) return;
-        const punkte = (typeof chronikPunkte === 'function') ? chronikPunkte(t.id) : 0;
+        const punkte = chronikPunkte(t.id);
         const artikel = t.klasse === 'legendaer' ? 'Eine legendäre' :
                         t.klasse === 'selten' ? 'Eine seltene' : 'Eine besondere';
         const alt = (a && a.pids) || [];
@@ -19279,33 +19222,10 @@ function _buildStories(){
 
 }
 
-function _newsPeriodWinner(rangeMatches, minWins, mode){
+function _newsPeriodWinner(rangeMatches, regel){
   if(!Array.isArray(rangeMatches) || !rangeMatches.length) return null;
-  const byWins = mode !== 'wr';
-  const ps = {};
-  for(const m of rangeMatches){
-    const aWon = m.winner === 'A';
-    [m.a1, m.a2, m.b1, m.b2].forEach(id => {
-      if(!ps[id]) ps[id] = {wins:0, losses:0, eloDelta:0};
-      const onA = (m.a1 === id || m.a2 === id);
-      const won = (onA && aWon) || (!onA && !aWon);
-      ps[id].eloDelta += (m.deltas && m.deltas[id]) || 0;
-      if(won) ps[id].wins++; else ps[id].losses++;
-    });
-  }
-  const pm = pmap();
-  const cand = Object.entries(ps)
-    .filter(([id, s]) => s.wins >= minWins && sichtbar(pm[id]))
-    .map(([id, s]) => { const g = s.wins + s.losses; return {id, wins: s.wins, losses: s.losses, eloDelta: s.eloDelta, wr: g ? s.wins/g : 0}; })
-    .sort((a, b) => {
-      if(byWins){
-        if(b.wins !== a.wins) return b.wins - a.wins;
-        return b.eloDelta - a.eloDelta;
-      }
-      if(Math.abs(b.wr - a.wr) > 0.001) return b.wr - a.wr;
-      if(b.wins !== a.wins) return b.wins - a.wins;
-      return b.eloDelta - a.eloDelta;
-    });
+  const byWins = regel === 'tag';
+  const cand = _periodeRangliste(rangeMatches, regel, true);
   if(!cand.length) return null;
   const top = cand[0];
   const tied = byWins
@@ -19486,7 +19406,7 @@ function _ambientShuffle(arr, rng){
 }
 
 function _ambientTemplatePool(now, pm, nameOf){
-  const stats = (typeof allPlayerStats === 'function') ? (allPlayerStats() || {}) : {};
+  const stats = allPlayerStats() || {};
   const aktiv = id => ligaAktiv(pm[id]);
   const activePids = Object.keys(pm).filter(aktiv);
   const withStats = activePids.filter(pid => stats[pid] && stats[pid].games > 0);
@@ -19625,7 +19545,7 @@ function _ambientTemplatePool(now, pm, nameOf){
   }});
 
   T.push({ key:'rivalry_most', make: () => {
-    const map = (typeof _ensureH2HMap === 'function') ? _ensureH2HMap() : null;
+    const map = _ensureH2HMap();
     if(!map || !map.size) return null;
     let best = null;
     for(const [k, e] of map){
@@ -19644,7 +19564,7 @@ function _ambientTemplatePool(now, pm, nameOf){
   }});
 
   T.push({ key:'rivalry_close', make: () => {
-    const map = (typeof _ensureH2HMap === 'function') ? _ensureH2HMap() : null;
+    const map = _ensureH2HMap();
     if(!map || !map.size) return null;
     let best = null;
     for(const [k, e] of map){
@@ -19757,7 +19677,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     if(matches.length < 12) return null;
     const wochen = {};
     for(const m of matches){
-      const d = new Date(m.created_at), tag = (d.getDay() + 6) % 7;
+      const d = new Date(m.created_at), tag = wochentagMo(d);
       const mo = new Date(d.getFullYear(), d.getMonth(), d.getDate() - tag);
       const k = tagKey(mo);
       if(!wochen[k]) wochen[k] = {n:0, von:mo};
@@ -19793,7 +19713,7 @@ function _ambientTemplatePool(now, pm, nameOf){
         bild:_bRennen(_rekRang(r.id).map(x => ({p:x.pid, v:x.wert, t:_chronKurz(x.ev) || komma(x.wert)})), false, 'podest')}};
   }});
 
-  const _gsim = () => (typeof getGlobalSim === 'function') ? (getGlobalSim() || {}) : {};
+  const _gsim = () => getGlobalSim() || {};
 
   T.push({ key:'fun_award_leader', make: (rng) => {
     const career = _gsim().careerElo || {};
@@ -20136,7 +20056,7 @@ function _ambientTemplatePool(now, pm, nameOf){
 
 
   T.push({ key:'personal_favourite_opp', weight:2, make: (rng) => {
-    const map = (typeof _ensureH2HMap === 'function') ? _ensureH2HMap() : null;
+    const map = _ensureH2HMap();
     if(!map || !map.size) return null;
     const cands = [];
     for(const [k, e] of map){
@@ -20469,7 +20389,7 @@ function _consolidateStories(list){
   const matchById = new Map((matches || []).map(m => [m.id, m]));
   const duellMoment = new Map(), duellAnzahl = new Map();
   _spBasis().chrono.forEach(m => [m.a1,m.a2].forEach(a => [m.b1,m.b2].forEach(b => {
-    const paar = [a,b].sort().join('|'), n = (duellAnzahl.get(paar) || 0) + 1;
+    const paar = paarKey(a, b), n = (duellAnzahl.get(paar) || 0) + 1;
     duellAnzahl.set(paar, n);
     const key = paar + '|' + mts(m);
     let l = duellMoment.get(key);
@@ -20513,7 +20433,7 @@ function _consolidateStories(list){
     const d = (s && s.dataRef) || {};
     if(d.type === 'rivalry' && !d.matchId && d.a && d.b && Number(d.n) > 0){
       const zeit = new Date(s.when).getTime();
-      const l = duellMoment.get([d.a,d.b].sort().join('|') + '|' + zeit);
+      const l = duellMoment.get(paarKey(d.a, d.b) + '|' + zeit);
       const m = l && (l.get(Number(d.n)) || (l.size === 1 ? l.values().next().value : null));
       if(m) return Object.assign({}, s, {dataRef:Object.assign({}, d, {matchId:m.id})});
     }
@@ -20539,7 +20459,7 @@ function _consolidateStories(list){
 function _consolidateStoriesLegacy(list){
   if(!Array.isArray(list)) return [];
   if(_cache._consolFrom === list && Array.isArray(_cache._consolList)) return _cache._consolList;
-  const pm = (typeof pmap === 'function') ? pmap() : {};
+  const pm = pmap();
   const nameOf = pid => (pm[pid] && pm[pid].name) || '?';
   const fmtNames = arr => arr.length <= 1 ? (arr[0] || '') : arr.slice(0, -1).join(', ') + ' & ' + arr[arr.length - 1];
   const TAG_PFLICHT = new Set(['potd', 'woche', 'chronik_monat', 'season_recap',
@@ -20603,9 +20523,9 @@ function _consolidateStoriesLegacy(list){
     const d = (st && st.dataRef) || {};
     const typ = d.type || '';
     if(!typ || _OHNE_SPERRE.has(typ)) return null;
-    try { if(typeof _isBreaking === 'function' && _isBreaking(st)) return null; } catch(e){}
+    try { if(_isBreaking(st)) return null; } catch(e){}
     let ids = [];
-    try { ids = (typeof _newsPids === 'function' ? _newsPids(st) : []) || []; } catch(e){}
+    try { ids = _newsPids(st) || []; } catch(e){}
     const sache = d.rekordId || d.badgeId || d.disziplinId || d.titleId || d.titel || '';
     return typ + '|' + ids.slice().sort().join(',') + '|' + sache;
   };
@@ -20614,7 +20534,7 @@ function _consolidateStoriesLegacy(list){
   const _srcAlt = src;
   for(const s of _srcAlt){
     const d = s.dataRef || {};
-    if(d.type === 'rivalry' && d.a && d.b && rivalryMsPairs.has([d.a, d.b].sort().join('|'))) continue;
+    if(d.type === 'rivalry' && d.a && d.b && rivalryMsPairs.has(paarKey(d.a, d.b))) continue;
     if(d.type === 'top_form' && d.pid && winStreakPids.has(d.pid + '|' + tagKey(s.when))) continue;
     if(d.type === 'win_streak' && d.pid
        && (Number(d.streak) || 0)
@@ -20790,7 +20710,7 @@ function _consolidateStoriesLegacy(list){
     if(g.teile.length < (g.max || Infinity)) g.teile.push(st);
   };
   const _sammelEinzeln = (st, d) => {
-    try { if(typeof _isBreaking === 'function' && _isBreaking(st)) return true; } catch(e){}
+    try { if(_isBreaking(st)) return true; } catch(e){}
     if(d.type === 'chronik_geholt' && d.chronKlasse === 'legendaer') return true;
     return d.type === 'badge_unlocked'
         && (d.rarity === 'rare' || d.rarity === 'legendary');
@@ -20970,7 +20890,7 @@ function _consolidateStoriesLegacy(list){
     const pids = [];
     teile.forEach(t => {
       let ids = [];
-      try { ids = (typeof _newsPids === 'function') ? _newsPids(t) : []; } catch(e){}
+      try { ids = _newsPids(t); } catch(e){}
       ids.forEach(id => { if(pids.indexOf(id) < 0) pids.push(id); });
     });
     const _achseZeile = t => {
@@ -21070,8 +20990,7 @@ function _consolidateStoriesLegacy(list){
       const wer = namen.length ? _namenKurz(namen, 3) : 'die Beteiligten';
       let brkBundle = false;
       try {
-        brkBundle = (typeof _isBreaking === 'function')
-          && teile.some(t => _isBreaking(t));
+        brkBundle = teile.some(t => _isBreaking(t));
       } catch(e){}
       const ERGEBNIS_ORT = {zu_null:'mit einem Sieg ohne Gegentor', upset:'im Favoritensturz',
                             krimi:'im Ein-Tor-Krimi', kanter:'mit einem klaren Sieg', eng:'im engen Spiel'};
@@ -21255,45 +21174,7 @@ function _consolidateStoriesLegacy(list){
     : behalten;
   const entzerrt = entdoppelt;
 
-  const _proTagKey = s => tagKey(s.when);
-  const _tagRang = {};
-  entzerrt.forEach(s => {
-    const k = _proTagKey(s);
-    (_tagRang[k] = _tagRang[k] || []).push(s);
-  });
-  const _istTafelKarte = s => !!s && (s.cat === 'tafel'
-    || (s.dataRef || {}).quelle === 'tafel' || (s.dataRef || {}).quelle === 'form');
-  const _behalten = new Set();
-  const TAG_SUMME = new Set(['elo_swing', 'runde']);
-  const _zaehltGegenDeckel = s => {
-    const t = (s && s.dataRef || {}).type;
-    if(TAG_PFLICHT.has(t) || TAG_SUMME.has(t)) return false;
-    if(_istPartie(s)) return false;
-    try { if(typeof _isBreaking === 'function' && _isBreaking(s)) return false; } catch(e){}
-    return true;
-  };
-  const _tafelSoll = NEWS_LIMITS.tafelProTagMin || 0;
-  Object.keys(_tagRang).forEach(k => {
-    const rang = _tagRang[k].slice()
-      .sort((a, b) => new Date(a.when) - new Date(b.when));
-    const frei = new Set(rang.filter(_istTafelKarte).slice(0, _tafelSoll).map(s => s.id));
-    frei.forEach(id => _behalten.add(id));
-    let belegt = 0;
-    rang.filter(_zaehltGegenDeckel).forEach(s => {
-      if(frei.has(s.id)) return;
-      if(belegt >= NEWS_LIMITS.proTag) return;
-      belegt++;
-      _behalten.add(s.id);
-    });
-  });
-  entzerrt.forEach(s => _behalten.add(s.id));
-  const fertig = entzerrt.filter(s => {
-    if(_behalten.has(s.id)) return true;
-    if(TAG_PFLICHT.has((s.dataRef || {}).type)) return true;
-    if(TAG_SUMME.has((s.dataRef || {}).type)) return true;
-    if(_istPartie(s)) return true;
-    try { return (typeof _isBreaking === 'function') && _isBreaking(s); } catch(e){ return false; }
-  });
+  const fertig = entzerrt;
 
   let ausbalanciert = fertig;
   {
@@ -21553,7 +21434,7 @@ window.addEventListener('beforeunload', () => {
 });
 
 function _refreshOpenNewsViews(){
-  try { if(typeof newsBadgeRefresh === 'function') newsBadgeRefresh(); } catch(e){}
+  try { newsBadgeRefresh(); } catch(e){}
   try { if(_isNewsFeedOpen()) _renderNewsFeed(); } catch(e){}
 }
 
@@ -21888,7 +21769,7 @@ function _newsGlanz(s, sorte, anlass){
   if(d.type === 'badge_unlocked' && (d.rarity === 'rare' || d.rarity === 'legendary')) return true;
   if((d.type === 'win_streak' || d.type === 'team_streak') && Number(d.streak) >= 5) return true;
   if(anlass === 'serie' || anlass === 'teamserie'){
-    const f = (typeof _newsSpielFakten === 'function' ? _newsSpielFakten(s) : [])
+    const f = _newsSpielFakten(s)
       .find(x => x.type === 'win_streak' || x.type === 'team_streak');
     if(f && Number(f.streak) >= 5) return true;
   }
@@ -22611,7 +22492,7 @@ function _newsMeisterFuss(d){
 
 function _breakingHeroText(s){
   const d = (s && s.dataRef) || {};
-  const pm = (typeof pmap === 'function') ? pmap() : {};
+  const pm = pmap();
   const nm = id => (pm[id] && pm[id].name) || '?';
   try {
     switch(d.type){
@@ -22619,7 +22500,7 @@ function _breakingHeroText(s){
         const te = Array.isArray(d.topElo) ? d.topElo : [];
         const cid = d.championId || (te[0] && te[0].id);
         const champ = nm(cid);
-        const monat = d.sid && typeof seasonLabel === 'function' ? seasonLabel(d.sid) : 'Die Saison';
+        const monat = d.sid ? seasonLabel(d.sid) : 'Die Saison';
         let lauf = '';
         try {
           const sp = saisonSpitze(d.sid), f = sp.folge;
@@ -23738,11 +23619,6 @@ function _spForm(m){
   }
   return FB.wahl.get(m.id) || _spFormKand(m)[0];
 }
-function _spFormText(m){
-  if(!_spIstFeld(m)) return null;
-  const w = _spForm(m);
-  return SP_FORM[w.key].text(_spFakten(m), w.x);
-}
 function _spScoreText(m){
   if(!_spIstFeld(m)) return null;
   const w = _spScoreWahl(m);
@@ -24142,7 +24018,7 @@ function _newsRundeStory(r, ende){
   const top = spieler[0];
   const vorn = spieler.filter(x => x.w === top.w).map(x => x.id);
   const n = ms.length;
-  const paarungen = new Set(ms.map(m => [[m.a1, m.a2].sort().join('+'), [m.b1, m.b2].sort().join('+')].sort().join('|'))).size;
+  const paarungen = new Set(ms.map(m => paarKey([m.a1, m.a2].sort().join('+'), [m.b1, m.b2].sort().join('+')))).size;
   const teamA = [ms[0].a1, ms[0].a2], teamB = [ms[0].b1, ms[0].b2];
   const zwei = t => _namenListe(t.map(_spName));
   let title;
@@ -24612,7 +24488,7 @@ function closeNewsDetail(){
 function _newsRangZeile(pid){
   try {
     const rang = _newsGesamtrang(pid);
-    const P = (typeof prestigeOf === 'function') ? prestigeOf(pid) : null;
+    const P = prestigeOf(pid);
     const teile = [];
     if(rang > 0) teile.push('Platz ' + rang + ' der Gesamtliga');
     if(!_ndZeichenUnten){
@@ -24913,7 +24789,6 @@ function _ndWirkungBlock(je, gruende){
   const ids = Object.keys(je || {});
   if(!ids.length) return '';
   const pm = pmap();
-  const hat = typeof INSIGNIEN !== 'undefined' && typeof insigniumStufeVon === 'function';
   const dl = pid => Math.round(Number(je[pid].nach) || 0) - Math.round(Number(je[pid].vor) || 0);
   return ids.sort((a, b) => dl(b) - dl(a))
     .map(pid => {
@@ -24921,15 +24796,15 @@ function _ndWirkungBlock(je, gruende){
       const nach = Math.round(Number(w.nach) || 0);
       const vor = Math.round(Number(w.vor) || 0);
       const delta = nach - vor;
-      const sn = hat ? insigniumStufeVon(nach) : null;
-      const sv = hat ? insigniumStufeVon(vor) : null;
+      const sn = insigniumStufeVon(nach);
+      const sv = insigniumStufeVon(vor);
       const ins = sn != null ? INSIGNIEN[sn] : null;
       const next = sn != null ? INSIGNIEN[sn + 1] : null;
       const auf = sn != null && sn > sv;
       const ab = sn != null && sn < sv;
       let zeichen = '';
       try {
-        if(ins && typeof insigniumStufeSvg === 'function')
+        if(ins)
           zeichen = insigniumStufeSvg(ins.key, (getPlayerRank(pid) || {}).label, 0, 0) || '';
       } catch(e){}
       let balken = '', rest = '';
@@ -25627,7 +25502,7 @@ function _ndMarkenBlatt(s){
   const def = id => (typeof BADGES !== 'undefined') ? BADGES.find(b => b.id === id) : null;
   const kopf = `<div class="nd-buehne nd-bm">${l.map((x, k) => {
     const b = def(x.badgeId) || {};
-    const kl = (typeof rarityOf === 'function') ? rarityOf(x.badgeId) : 'common';
+    const kl = rarityOf(x.badgeId);
     return `<span class="nd-bm-k nf-bd-${esc(kl)}" data-pid="${esc(x.pid)}" style="--k:${k}"><span class="nd-bm-ic">${svgI(b.ic || 'medal')}</span>`
       + `<b class="num">${x.rang}.</b><em>${esc(x.name || b.name || '')}</em>`
       + `<span class="nd-bm-w">${_spChip(x.pid)}<small>${esc(_spName(x.pid))}</small></span></span>`;
@@ -25729,7 +25604,7 @@ function _ndMitteRoh(s){
   const d = s.dataRef || {};
   { const x = _ndEigenesBlatt(s); if(x && x.mitte != null) return x.mitte; }
   const pm = pmap();
-  const avM = (pid) => (typeof avHtml === 'function' && pm[pid]) ? avHtml(pm[pid]) : '';
+  const avM = (pid) => pm[pid] ? avHtml(pm[pid]) : '';
   const nameOf = (pid) => (pm[pid] && pm[pid].name) || '?';
   if(d.chronicle && CHRONICLE_BY_ID[d.chronicle]){
     const def = CHRONICLE_BY_ID[d.chronicle];
@@ -26210,7 +26085,7 @@ function _ndMitteRoh(s){
         if(l.length === 1){
           const b0 = def(l[0].badgeId);
           return _newsMedaillon((b0 && b0.ic) || s.ic || 'medal',
-              (typeof rarityOf === 'function') ? rarityOf(l[0].badgeId) : 'common',
+              rarityOf(l[0].badgeId),
               l[0].name || (b0 && b0.name) || '', b0 ? b0.desc : '', l[0].badgeId)
             + (d.matchId ? `<div class="nd-section">Die Partie</div>`
                 + _newsMatchVsBlock(d.matchId) : '');
@@ -26283,7 +26158,7 @@ function _ndMitteRoh(s){
         const rang = saisonRang(d.sid);
         const te = Array.isArray(d.topElo) ? d.topElo : [];
         const ids = te.map(x => x && x.id).filter(id => id && pm[id]);
-        const monat = typeof seasonLabel === 'function' ? seasonLabel(d.sid) : '';
+        const monat = seasonLabel(d.sid);
         const buehne = rang.length ? `<div class="nd-meister">
             <div class="nd-ms-band">${svgI('crown')}<span>Meister</span><i>${esc(monat)}</i></div>
             <div class="nf-meister gross"><span class="nf-ms-strahl" aria-hidden="true"></span>${
@@ -26330,10 +26205,10 @@ function _ndMitteRoh(s){
               <div class="nd-vs-elo">${pB.elo} Elo</div>
             </div>
           </div>` : '';
-        const z = (typeof rcpZahlenHtml === 'function') ? rcpZahlenHtml([
+        const z = rcpZahlenHtml([
           d.partien ? {v: d.partien, l: d.partien === 1 ? 'Partie' : 'Partien'} : null,
           d.aktive ? {v: d.aktive, l:'Gewertete'} : null
-        ].filter(Boolean)) : '';
+        ].filter(Boolean));
         return (vs ? `<div class="nd-section">Oben in der Tabelle</div>${vs}` : '')
           + (z ? `<div class="nd-section">Die Stichprobe</div>${z}` : '');
       }
@@ -26372,8 +26247,7 @@ function _ndMitteRoh(s){
           </div>`;
         const zeit = lauf.von ? `<div class="nd-satz">Die Serie begann am <b>${esc(lauf.von)}</b>`
             + (lauf.bis ? ` und endete am <b>${esc(lauf.bis)}</b>.` : '.') + `</div>` : '';
-        const band = (typeof _newsSerienBand === 'function')
-          ? _newsSerienBand(d.streak, false) : '';
+        const band = _newsSerienBand(d.streak, false);
         return `<div class="nd-section">Die Serie von ${esc(nameOf(d.victimPid))}</div>`
           + band + gitter + zeit;
       }
@@ -26437,7 +26311,7 @@ function _newsMatchVsBlock(matchId){
     const m = matches.find(x => x.id === matchId);
     if(!m) return '';
     const pm = pmap();
-    const av = pid => (pm[pid] && typeof avHtml === 'function')
+    const av = pid => pm[pid]
       ? avHtml(pm[pid], '')
       : '<span class="av" style="background:var(--surface)"></span>';
     const nm = pid => (pm[pid] && pm[pid].name) || '?';
@@ -26629,7 +26503,9 @@ const _stStreu = a => {
   const m = _stMittel(a);
   return Math.sqrt(_stMittel(a.map(x => (x - m) * (x - m))));
 };
-const _stQuote = a => a.length ? a.filter(s => s.win).length / a.length : 0;
+const _stQuote = a => a.length ? _stSiege(a) / a.length : 0;
+function _stSiege(a){ return a.filter(s => s.win).length; }
+function _stQuoteRoh(a){ return _stSiege(a) / a.length; }
 const _stWochGross = p => Object.values(p.wochGrp).filter(a => a.length >= 6);
 function _stTagBlock(p){
   const frueh = [], spaet = [];
@@ -26658,8 +26534,8 @@ function _stHaelften(p){
   const mitte = tage[Math.floor(tage.length / 2)];
   const e1 = p.partien.filter(s => s.tag < mitte), e2 = p.partien.filter(s => s.tag >= mitte);
   if(e1.length < 4 || e2.length < 4) return null;
-  return {q1: e1.filter(s => s.win).length / e1.length,
-          q2: e2.filter(s => s.win).length / e2.length};
+  return {q1: _stQuoteRoh(e1),
+          q2: _stQuoteRoh(e2)};
 }
 
 function _stLetzteZehn(p){
@@ -26693,7 +26569,7 @@ function _stLagen(p, c){
   const q = {};
   for(const k in grp){
     if(grp[k].length < ST_TEIL) return null;
-    q[k] = grp[k].filter(s => s.win).length / grp[k].length;
+    q[k] = _stQuoteRoh(grp[k]);
   }
   return q;
 }
@@ -26776,9 +26652,9 @@ const DISZIPLINEN = [
       cond:'An jedem eigenen Spieltag eine ausgeglichene oder positive Bilanz, ab 3 Spieltagen',
       ...(_stWertung(
         p=>p.tagN>=3,
-        p=>{const t=Object.values(p.tagGrp);return t.filter(a=>a.filter(s=>s.win).length*2>=a.length).length/t.length;},
+        p=>{const t=Object.values(p.tagGrp);return t.filter(a=>_stSiege(a)*2>=a.length).length/t.length;},
         1,
-        p=>{const t=Object.values(p.tagGrp);return `${t.filter(a=>a.filter(s=>s.win).length*2>=a.length).length} von ${t.length} Spieltagen nicht negativ`;}))}},
+        p=>{const t=Object.values(p.tagGrp);return `${t.filter(a=>_stSiege(a)*2>=a.length).length} von ${t.length} Spieltagen nicht negativ`;}))}},
 
   {id:'catalyst', name:'Der Katalysator', short:'Katalyse', ic:'handshake', tone:'gold', art:'leistung',
     allzeit:{
@@ -26810,10 +26686,10 @@ const DISZIPLINEN = [
       ...(_stWertung(
         p=>Object.values(p.partnerGrp).filter(a=>a.length>=ST_TEIL).length>=3,
         p=>Math.min(...Object.values(p.partnerGrp).filter(a=>a.length>=ST_TEIL)
-      .map(a=>a.filter(s=>s.win).length/a.length)),
+      .map(a=>_stQuoteRoh(a))),
         0.6,
         (p,v)=>{const k=Object.keys(p.partnerGrp).filter(k=>p.partnerGrp[k].length>=ST_TEIL)
-      .map(k=>({k,q:p.partnerGrp[k].filter(s=>s.win).length/p.partnerGrp[k].length})).sort((a,b)=>a.q-b.q)[0];
+      .map(k=>({k,q:_stQuoteRoh(p.partnerGrp[k])})).sort((a,b)=>a.q-b.q)[0];
       return `selbst neben ${pname(k.k)} noch ${pct(k.q)} % · ${Object.values(p.partnerGrp).filter(a=>a.length>=ST_TEIL).length} Partner`;}))}},
 
   {id:'clutch', name:'Die ruhige Hand', short:'Nerven', ic:'nerves', tone:'gold', art:'leistung',
@@ -26862,10 +26738,10 @@ const DISZIPLINEN = [
       cond:'In offenen Partien mindestens 20 Prozentpunkte stärker als sonst, ab 5 offenen Partien',
       ...(_stWertung(
         p=>p.partien.filter(_stAugenhoehe).length>=ST_TEIL,
-        p=>{const d=p.partien.filter(_stAugenhoehe);return d.filter(s=>s.win).length/d.length-p.q;},
+        p=>{const d=p.partien.filter(_stAugenhoehe);return _stQuoteRoh(d)-p.q;},
         0.2,
         p=>{const d=p.partien.filter(_stAugenhoehe);
-      return `${d.filter(s=>s.win).length} von ${d.length} offenen Partien · sonst ${pct(p.q)} %`;}))}},
+      return `${_stSiege(d)} von ${d.length} offenen Partien · sonst ${pct(p.q)} %`;}))}},
 
   {id:'gegenwind', name:'Gegen den Wind', short:'Gegenwind', ic:'tornado', tone:'acid', art:'leistung',
     allzeit:{
@@ -26899,10 +26775,10 @@ const DISZIPLINEN = [
       ...(_stWertung(
         p=>Object.values(p.gegnerGrp).filter(d=>d.length>=3).length>=4,
         p=>{const r=Object.values(p.gegnerGrp).filter(d=>d.length>=3);
-      return r.filter(d=>d.filter(s=>s.win).length*2>d.length).length/r.length;},
+      return r.filter(d=>_stSiege(d)*2>d.length).length/r.length;},
         1,
         p=>{const r=Object.values(p.gegnerGrp).filter(d=>d.length>=3);
-      return `gegen ${r.filter(d=>d.filter(s=>s.win).length*2>d.length).length} von ${r.length} regelmäßigen Gegnern im Plus`;}))},
+      return `gegen ${r.filter(d=>_stSiege(d)*2>d.length).length} von ${r.length} regelmäßigen Gegnern im Plus`;}))},
     allzeit:{
       kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn',
@@ -27060,7 +26936,7 @@ const DISZIPLINEN = [
       cond:'Zwischen bestem und schwächstem Spieltag höchstens 15 Prozentpunkte, ab 3 Spieltagen mit je 3 Partien',
       ...(_stWertung(
         p=>Object.values(p.tagGrp).filter(a=>a.length>=3).length>=3,
-        p=>{const q=Object.values(p.tagGrp).filter(a=>a.length>=3).map(a=>a.filter(s=>s.win).length/a.length);
+        p=>{const q=Object.values(p.tagGrp).filter(a=>a.length>=3).map(a=>_stQuoteRoh(a));
       return -(Math.max(...q)-Math.min(...q));},
         -0.15,
         (p,v)=>`${pct(-v)} %-Punkte zwischen bestem und schwächstem Tag`))}},
@@ -27224,9 +27100,9 @@ const DISZIPLINEN = [
       cond:'Mindestens 85 % der ersten Partien eines Spieltags gewonnen, ab 5 Spieltagen',
       ...(_stWertung(
         p=>p.tagN>=ST_TEIL,
-        p=>{const l=Object.values(p.tagGrp).map(a=>a[0]);return l.filter(s=>s.win).length/l.length;},
+        p=>{const l=Object.values(p.tagGrp).map(a=>a[0]);return _stQuoteRoh(l);},
         0.85,
-        p=>{const l=Object.values(p.tagGrp).map(a=>a[0]);return `${l.filter(s=>s.win).length} von ${l.length} Auftaktpartien gewonnen`;}))},
+        p=>{const l=Object.values(p.tagGrp).map(a=>a[0]);return `${_stSiege(l)} von ${l.length} Auftaktpartien gewonnen`;}))},
     allzeit:{
       kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, je Spieltag',
@@ -27745,7 +27621,7 @@ const DISZIPLINEN = [
       ...(_stWertung(
         p=>Object.values(p.gegnerGrp).some(a=>a.length>=8),
         p=>{let b=null;Object.keys(p.gegnerGrp).forEach(g=>{const d=p.gegnerGrp[g];if(d.length<8)return;
-      const q=d.filter(s=>s.win).length/d.length;if(!b||q<b.q)b={q,g,n:d.length,w:d.filter(s=>s.win).length};});
+      const q=_stQuoteRoh(d);if(!b||q<b.q)b={q,g,n:d.length,w:_stSiege(d)};});
       p._ag=b;return b?-b.q:null;},
         0,
         p=>`${p._ag.w} von ${p._ag.n} gegen ${pname(p._ag.g)}`))},
@@ -27887,7 +27763,7 @@ const DISZIPLINEN = [
       cond:'Gegen JEDEN regelmäßigen Gegner mindestens 75 %, ab 5 Gegnern mit je 4 Duellen',
       ...(_stWertung(
         p=>Object.values(p.gegnerGrp).filter(a=>a.length>=4).length>=5,
-        p=>Math.min(...Object.values(p.gegnerGrp).filter(a=>a.length>=4).map(a=>a.filter(s=>s.win).length/a.length)),
+        p=>Math.min(...Object.values(p.gegnerGrp).filter(a=>a.length>=4).map(a=>_stQuoteRoh(a))),
         0.75,
         (p,v)=>{const g=Object.values(p.gegnerGrp).filter(a=>a.length>=4);
       return `${g.length} regelmäßige Gegner, gegen keinen unter ${pct(v)} %`;}))}},
@@ -27927,9 +27803,9 @@ const DISZIPLINEN = [
       cond:'In den letzten 5 Partien des Monats mindestens 3 Siege mehr als in den ersten 5',
       ...(_stWertung(
         p=>p.games>=12,
-        p=>(p.partien.slice(-5).filter(s=>s.win).length-p.partien.slice(0,5).filter(s=>s.win).length)/5,
+        p=>(_stSiege(p.partien.slice(-5))-_stSiege(p.partien.slice(0,5)))/5,
         0.6,
-        p=>`${p.partien.slice(-5).filter(s=>s.win).length} von 5 zum Schluss, ${p.partien.slice(0,5).filter(s=>s.win).length} von 5 zum Auftakt`))}},
+        p=>`${_stSiege(p.partien.slice(-5))} von 5 zum Schluss, ${_stSiege(p.partien.slice(0,5))} von 5 zum Auftakt`))}},
 
   {id:'schattenmann', name:'Der Schattenmann', short:'Zuspieler', ic:'users', tone:'gold', art:'leistung',
     monat:{
@@ -27943,8 +27819,8 @@ const DISZIPLINEN = [
         (p,c)=>{let b=null;
       Object.keys(p.partnerGrp).forEach(mid=>{const z=p.partnerGrp[mid];if(z.length<ST_TEIL)return;
       const o=c.P[mid];if(!o)return;const ohne=o.partien.filter(s=>s.mate!==p.pid);if(ohne.length<ST_TEIL)return;
-      const d=z.filter(s=>s.win).length/z.length-ohne.filter(s=>s.win).length/ohne.length;
-      if(!b||d>b.d)b={d,mid,q:z.filter(s=>s.win).length/z.length};});
+      const d=_stQuoteRoh(z)-_stQuoteRoh(ohne);
+      if(!b||d>b.d)b={d,mid,q:_stQuoteRoh(z)};});
       p._sm=b;return b?b.d:null;},
         0.6,
         (p,v)=>`${pname(p._sm.mid)} gewinnt an dieser Seite ${pct(p._sm.q)} %, sonst ${pct(p._sm.q-v)} %`))}},
@@ -27985,10 +27861,10 @@ const DISZIPLINEN = [
       ...(_stWertung(
         p=>Object.values(p.tagGrp).some(a=>a.length>=4),
         p=>{let b=null;Object.keys(p.tagGrp).forEach(t=>{const a=p.tagGrp[t];if(a.length<4)return;
-      const q=Math.max(_stPBinom(a.map(s=>s.exp),a.filter(s=>s.win).length),1e-6);
+      const q=Math.max(_stPBinom(a.map(s=>s.exp),_stSiege(a)),1e-6);
       if(!b||q<b.q)b={q,a};});p._au=b;return b?-Math.log10(b.q):null;},
         1.5228787452803376,
-        (p,v)=>`${p._au.a.filter(s=>s.win).length} von ${p._au.a.length} an einem Tag · erwartet waren ${komma(p._au.q*100, 1)} %`))}},
+        (p,v)=>`${_stSiege(p._au.a)} von ${p._au.a.length} an einem Tag · erwartet waren ${komma(p._au.q*100, 1)} %`))}},
 
   {id:'endspurt', name:'Der Endspurt', short:'Endspurt', ic:'rocket', tone:'gold', art:'leistung',
     monat:{
@@ -27999,9 +27875,9 @@ const DISZIPLINEN = [
       cond:'Mindestens 75 % der letzten Partien eines Spieltags gewonnen, ab 5 Spieltagen',
       ...(_stWertung(
         p=>p.tagN>=ST_TEIL,
-        p=>{const l=Object.values(p.tagGrp).map(a=>a[a.length-1]);return l.filter(s=>s.win).length/l.length;},
+        p=>{const l=Object.values(p.tagGrp).map(a=>a[a.length-1]);return _stQuoteRoh(l);},
         0.75,
-        p=>{const l=Object.values(p.tagGrp).map(a=>a[a.length-1]);return `${l.filter(s=>s.win).length} von ${l.length} Tagesabschlüssen gewonnen`;}))}},
+        p=>{const l=Object.values(p.tagGrp).map(a=>a[a.length-1]);return `${_stSiege(l)} von ${l.length} Tagesabschlüssen gewonnen`;}))}},
 
   {id:'umschwung', name:'Der Umschwung', short:'Wende', ic:'overtake', tone:'gold', art:'leistung',
     monat:{
@@ -28014,7 +27890,7 @@ const DISZIPLINEN = [
         p=>Object.values(p.tagGrp).filter(a=>a.length>=4).length>=2,
         p=>{const t=Object.keys(p.tagGrp).sort().map(k=>p.tagGrp[k]).filter(a=>a.length>=4);
       let b=null;for(let i=1;i<t.length;i++){
-      const x=t[i-1].filter(s=>s.win).length/t[i-1].length, y=t[i].filter(s=>s.win).length/t[i].length;
+      const x=_stQuoteRoh(t[i-1]), y=_stQuoteRoh(t[i]);
       if(!b||y-x>b.d) b={d:y-x,x,y};}
       p._um=b;return b?b.d:null;},
         0.65,
@@ -28059,9 +27935,9 @@ const DISZIPLINEN = [
       cond:'Mindestens 80 % der Partien direkt nach einer Niederlage gewonnen, ab 5 Gelegenheiten',
       ...(_stWertung(
         p=>_stNachPleite(p).length>=ST_TEIL,
-        p=>{const d=_stNachPleite(p);return d.filter(s=>s.win).length/d.length;},
+        p=>{const d=_stNachPleite(p);return _stQuoteRoh(d);},
         0.8,
-        p=>{const d=_stNachPleite(p);return `${d.filter(s=>s.win).length} von ${d.length} Antworten nach einer Pleite`;}))}},
+        p=>{const d=_stNachPleite(p);return `${_stSiege(d)} von ${d.length} Antworten nach einer Pleite`;}))}},
 
   {id:'favschreck', name:'Der Favoritenschreck', short:'Schreck', ic:'giantSlayer', tone:'gold', art:'leistung',
     monat:{
@@ -28072,9 +27948,9 @@ const DISZIPLINEN = [
       cond:'Mindestens 40 % gegen klare Favoriten, ab 5 solchen Partien',
       ...(_stWertung(
         p=>p.partien.filter(s=>s.exp<=CHANCE_UPSET).length>=ST_TEIL,
-        p=>{const d=p.partien.filter(s=>s.exp<=CHANCE_UPSET);return d.filter(s=>s.win).length/d.length;},
+        p=>{const d=p.partien.filter(s=>s.exp<=CHANCE_UPSET);return _stQuoteRoh(d);},
         0.4,
-        p=>{const d=p.partien.filter(s=>s.exp<=CHANCE_UPSET);return `${d.filter(s=>s.win).length} von ${d.length} gegen klare Favoriten`;}))}},
+        p=>{const d=p.partien.filter(s=>s.exp<=CHANCE_UPSET);return `${_stSiege(d)} von ${d.length} gegen klare Favoriten`;}))}},
 
   {id:'formgipfel', name:'Der Formgipfel', short:'Formgipfel', ic:'chartUp', tone:'gold', art:'leistung',
     monat:{
@@ -28085,7 +27961,7 @@ const DISZIPLINEN = [
       cond:'Ein Block aus 5 Partien mindestens 55 Prozentpunkte über dem eigenen Monatsschnitt',
       ...(_stWertung(
         p=>p.games>=10,
-        p=>{let b=-9;for(let i=0;i+5<=p.games;i++){const q=p.partien.slice(i,i+5).filter(s=>s.win).length/5;if(q-p.q>b)b=q-p.q;}return b;},
+        p=>{let b=-9;for(let i=0;i+5<=p.games;i++){const q=_stSiege(p.partien.slice(i,i+5))/5;if(q-p.q>b)b=q-p.q;}return b;},
         0.55,
         (p,v)=>`${Math.round((p.q+v)*5)} von 5 am Stück · sonst ${pct(p.q)} %`))}},
 
@@ -28126,10 +28002,10 @@ const DISZIPLINEN = [
       cond:'Auch in der schwächsten Kalenderwoche höchstens 2 Prozentpunkte unter der eigenen Monatsquote, ab 3 Wochen mit je 5 Partien',
       ...(_stWertung(
         p=>_stWochen(p).length>=3,
-        p=>{const m=Math.min(..._stWochen(p).map(a=>a.filter(s=>s.win).length/a.length));
+        p=>{const m=Math.min(..._stWochen(p).map(a=>_stQuoteRoh(a)));
       return -Math.log10(Math.max(p.q-m,0.005));},
         1.6989700043360187,
-        p=>{const W=_stWochen(p), m=Math.min(...W.map(a=>a.filter(s=>s.win).length/a.length));
+        p=>{const W=_stWochen(p), m=Math.min(...W.map(a=>_stQuoteRoh(a)));
       return `${W.length} Wochen, die schwächste bei ${pct(m)} % · Monat ${pct(p.q)} %`;}))}},
 
   {id:'punktgenau2', name:'Der Erwartungstreue', short:'Erwartung', ic:'stopwatch', tone:'blue', art:'leistung',
@@ -28154,7 +28030,7 @@ const DISZIPLINEN = [
       cond:'Auch am schwächsten eigenen Spieltag noch mindestens 60 %, ab 5 Spieltagen mit je 3 Partien',
       ...(_stWertung(
         p=>Object.values(p.tagGrp).filter(a=>a.length>=3).length>=5,
-        p=>Math.min(...Object.values(p.tagGrp).filter(a=>a.length>=3).map(a=>a.filter(s=>s.win).length/a.length)),
+        p=>Math.min(...Object.values(p.tagGrp).filter(a=>a.length>=3).map(a=>_stQuoteRoh(a))),
         0.6,
         (p,v)=>{const t=Object.values(p.tagGrp).filter(a=>a.length>=3);
       return `${t.length} Spieltage, keiner unter ${pct(v)} %`;}))}},
@@ -28169,12 +28045,12 @@ const DISZIPLINEN = [
       ...(_stWertung(
         p=>p.partien.filter(s=>s.pos==='atk').length>=ST_TEIL&&p.partien.filter(s=>s.pos==='def').length>=ST_TEIL,
         p=>{const a=p.partien.filter(s=>s.pos==='atk'),d=p.partien.filter(s=>s.pos==='def');
-      const m=Math.max(Math.abs(a.filter(s=>s.win).length/a.length-p.q),
-      Math.abs(d.filter(s=>s.win).length/d.length-p.q));
+      const m=Math.max(Math.abs(_stQuoteRoh(a)-p.q),
+      Math.abs(_stQuoteRoh(d)-p.q));
       return -Math.log10(Math.max(m,0.0005));},
         2,
         p=>{const a=p.partien.filter(s=>s.pos==='atk'),d=p.partien.filter(s=>s.pos==='def');
-      return `${pct(a.filter(s=>s.win).length/a.length)} % vorne, ${pct(d.filter(s=>s.win).length/d.length)} % hinten`;}))}},
+      return `${pct(_stQuoteRoh(a))} % vorne, ${pct(_stQuoteRoh(d))} % hinten`;}))}},
 
   {id:'wochwunder', name:'Die Woche gegen die Rechnung', short:'Wunder', ic:'underdog', tone:'gold', art:'leistung',
     monat:{
@@ -28186,7 +28062,7 @@ const DISZIPLINEN = [
       ...(_stWertung(
         p=>_stWochGross(p).length>=1,
         p=>-Math.log10(Math.max(1e-6, Math.min(..._stWochGross(p)
-             .map(a=>_stPBinom(a.map(s=>s.exp), a.filter(s=>s.win).length))))),
+             .map(a=>_stPBinom(a.map(s=>s.exp), _stSiege(a)))))),
         -Math.log10(0.005),
         (p,v)=>`Eine Woche, die mit ${komma(Math.pow(10,-v)*100)} % erwartet war · ${_stWochGross(p).length} Wochen gewertet`))}},
 
@@ -28229,7 +28105,7 @@ const DISZIPLINEN = [
         p=>_stQuote(_stNachZwei(p)),
         1,
         (p)=>{const a=_stNachZwei(p);
-          return `${a.filter(s=>s.win).length} von ${a.length} Partien nach zwei Pleiten am Stück`;}))}},
+          return `${_stSiege(a)} von ${a.length} Partien nach zwei Pleiten am Stück`;}))}},
 
   {id:'nulldiaet', name:'Die Nulldiät', short:'Nulldiät', ic:'egg', tone:'gold', art:'leistung',
     monat:{
@@ -28269,7 +28145,7 @@ const DISZIPLINEN = [
         p=>_stQuote(_stWochLetzte(p)),
         1,
         (p)=>{const a=_stWochLetzte(p);
-          return `${a.filter(s=>s.win).length} von ${a.length} Wochenabschlüssen gewonnen`;}))}},
+          return `${_stSiege(a)} von ${a.length} Wochenabschlüssen gewonnen`;}))}},
 
   {id:'rollenfest', name:'Favorit wie Außenseiter', short:'Rollen', ic:'swords', tone:'blue', art:'leistung',
     monat:{
@@ -28334,10 +28210,10 @@ const DISZIPLINEN = [
       ...(_stWertung(
         p=>p.partien.filter(s=>s.pos==='atk').length>=ST_TEIL&&p.partien.filter(s=>s.pos==='def').length>=ST_TEIL,
         p=>{const a=p.partien.filter(s=>s.pos==='atk'),d=p.partien.filter(s=>s.pos==='def');
-      return Math.abs(a.filter(s=>s.win).length/a.length-d.filter(s=>s.win).length/d.length);},
+      return Math.abs(_stQuoteRoh(a)-_stQuoteRoh(d));},
         0.5,
         (p,v)=>{const a=p.partien.filter(s=>s.pos==='atk'),d=p.partien.filter(s=>s.pos==='def');
-      return `${pct(v)} %-Punkte Unterschied, stärker ${a.filter(s=>s.win).length/a.length>d.filter(s=>s.win).length/d.length?'vorne':'hinten'}`;}))}},
+      return `${pct(v)} %-Punkte Unterschied, stärker ${_stQuoteRoh(a)>_stQuoteRoh(d)?'vorne':'hinten'}`;}))}},
 
   {id:'torhagel', name:'Der Torhagel', short:'Torhagel', ic:'crashDay', tone:'purple', art:'ereignis',
     monat:{
@@ -28375,10 +28251,10 @@ const DISZIPLINEN = [
       cond:'Die Tagesquoten streuen mindestens 25 Prozentpunkte um die eigene Monatsquote, ab 5 Spieltagen mit je 3 Partien',
       ...(_stWertung(
         p=>Object.values(p.tagGrp).filter(a=>a.length>=3).length>=5,
-        p=>{const q=Object.values(p.tagGrp).filter(a=>a.length>=3).map(a=>a.filter(s=>s.win).length/a.length);
+        p=>{const q=Object.values(p.tagGrp).filter(a=>a.length>=3).map(a=>_stQuoteRoh(a));
       return Math.sqrt(q.reduce((x,y)=>x+(y-p.q)*(y-p.q),0)/q.length);},
         0.25,
-        (p,v)=>{const q=Object.values(p.tagGrp).filter(a=>a.length>=3).map(a=>a.filter(s=>s.win).length/a.length);
+        (p,v)=>{const q=Object.values(p.tagGrp).filter(a=>a.length>=3).map(a=>_stQuoteRoh(a));
       return `${pct(Math.min(...q))} % am schwächsten, ${pct(Math.max(...q))} % am stärksten Tag`;}))}},
 
   {id:'kontrast', name:'Der Kontrast', short:'Kontrast', ic:'chartBar', tone:'purple', art:'ereignis',
@@ -28391,7 +28267,7 @@ const DISZIPLINEN = [
       ...(_stWertung(
         p=>Object.values(p.partnerGrp).filter(a=>a.length>=ST_TEIL).length>=3,
         p=>{const q=Object.keys(p.partnerGrp).filter(k=>p.partnerGrp[k].length>=ST_TEIL)
-      .map(k=>({k,q:p.partnerGrp[k].filter(s=>s.win).length/p.partnerGrp[k].length})).sort((a,b)=>b.q-a.q);
+      .map(k=>({k,q:_stQuoteRoh(p.partnerGrp[k])})).sort((a,b)=>b.q-a.q);
       p._ko=q;return q[0].q-q[q.length-1].q;},
         0.8,
         p=>`${pct(p._ko[0].q)} % neben ${pname(p._ko[0].k)}, ${pct(p._ko[p._ko.length-1].q)} % neben ${pname(p._ko[p._ko.length-1].k)}`))}},
@@ -28438,7 +28314,7 @@ const DISZIPLINEN = [
         p=>_stQuote(_stEinTor(p)),
         0.80,
         (p,v)=>{const a=_stEinTor(p);
-          return `${a.filter(s=>s.win).length} von ${a.length} Partien um den letzten Ball · ${pct(v)} %`;}))}},
+          return `${_stSiege(a)} von ${a.length} Partien um den letzten Ball · ${pct(v)} %`;}))}},
 
   {id:'randlage', name:'Immer am Rand', short:'Am Rand', ic:'search', tone:'purple', art:'ereignis',
     monat:{
@@ -28565,7 +28441,7 @@ function _bannLaufDerLiga(P, ms){
 function _thronDerLiga(P, ms){
   if(!ms.length) return;
   const hist = {};
-  const sim = (typeof getGlobalSim === 'function') ? getGlobalSim() : null;
+  const sim = getGlobalSim();
   ((sim && sim.history) || []).forEach(h => { hist[h.matchId] = h; });
   const stand = {};
   let tag = null;
@@ -29251,8 +29127,7 @@ function _chronicleCtx(bisMs){
     allDays.add(day);
     const runVor = {};
     [m.a1, m.a2, m.b1, m.b2].forEach(x => { if(x) runVor[x] = run[x] || 0; });
-    const _wd = new Date(m.created_at);
-    const wkey = _wd.getFullYear() + '-W' + isoWeek(_wd);
+    const wkey = _wochenKey(m.created_at);
     const sid = (seasonOf(m.created_at) || {}).id;
     if(sid) allSeasons.add(sid);
     const ids = [m.a1, m.a2, m.b1, m.b2];

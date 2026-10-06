@@ -132,7 +132,7 @@ function rcpKachelHtml(o){
 // benutzt sie NICHT: dort ist `.rrow` das Bauteil, dasselbe wie im
 // Liga-Tab [§C27].
 function rcpZeileHtml(o){
-  const t = o.ton && typeof titleTone === 'function' ? titleTone(o.ton) : null;
+  const t = o.ton ? titleTone(o.ton) : null;
   return `<div class="rcp-zeile${o.attr ? ' klick' : ''}"${
       t ? ` style="--tt:${t.c}"` : ''} ${o.attr || ''}>
     <span class="rcp-zeile-ic">${svgI(o.ic || 'trophy')}</span>

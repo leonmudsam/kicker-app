@@ -145,7 +145,7 @@ function _abMomenteHtml(d){
 function _abDuoHtml(pid, x, art){
   const g = art === 'team' ? x.teamG : x.oppG, w = art === 'team' ? x.teamW : x.oppW;
   const q = g ? Math.round(w / g * 100) : 0;
-  const attr = art === 'team' ? `data-team="${esc([pid, x.oid].sort().join('|'))}"` : `data-h2h="${esc(pid + '|' + x.oid)}"`;
+  const attr = art === 'team' ? `data-team="${esc(paarKey(pid, x.oid))}"` : `data-h2h="${esc(pid + '|' + x.oid)}"`;
   return `<div class="ab-duo klick" ${attr}>
     ${art === 'team' ? rcpPaarHtml([pid, x.oid], 36) : rcpAvHtml(x.oid, 36)}
     <span class="ab-duo-t"><b>${esc(art === 'team' ? pname(pid) + ' & ' + pname(x.oid) : pname(x.oid))}</b>

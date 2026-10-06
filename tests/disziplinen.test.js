@@ -2777,7 +2777,7 @@ const _potdEin = JSON.parse(K.eval(`JSON.stringify((function(){
     if(Object.keys(w).filter(p => w[p] === mx).length > 1) gleich++;
   });
   const tage = Object.keys(proTag).filter(d => d !== heute).sort();
-  const abweichung = [];
+  const abweichung = [], popAbw = [];
   players.forEach(p => {
     // Allwetter: fuenf verschiedene Wochentage als SIEGER.
     const wt = new Set();
@@ -2792,17 +2792,25 @@ const _potdEin = JSON.parse(K.eval(`JSON.stringify((function(){
       if(sieger[t] === p.id){ cur++; if(cur >= 3){ sollGod++; cur = 0; } }
       else cur = 0;
     });
+    // Das Popover der Auszeichnung zeigt dieselben Wochentage als Chips. Es
+    // zaehlte den Tag selbst nach, ohne den Tiebreak, und markierte bei
+    // Gleichstand an Siegen Tage, die die Auszeichnung nicht zaehlt.
+    const pop = [...(_badgeStreakState('allwetter', p.id).weekdays || [])].sort().join(',');
+    if(pop !== [...wt].sort().join(',')) popAbw.push(pmap()[p.id].name + ' ' + pop + '≠' + [...wt].sort().join(','));
     const istAll = countAllwetter(p.id), istGod = countGodlyStreak(p.id);
     if(istAll !== sollAll) abweichung.push(pmap()[p.id].name + ' Allwetter ' + istAll + '≠' + sollAll);
     if(istGod !== sollGod) abweichung.push(pmap()[p.id].name + ' Goetter ' + istGod + '≠' + sollGod);
   });
-  return {entschieden, gleich, abweichung};
+  return {entschieden, gleich, abweichung, popAbw};
 })())`));
 ok(_potdEin.gleich > 0, 'es gibt punktgleiche Spieltage — sonst prueft der Vergleich nichts',
    _potdEin.gleich + ' von ' + _potdEin.entschieden + ' entschiedenen Tagen');
 ok(_potdEin.abweichung.length === 0,
    'Allwetter und Tag der Goetter zaehlen denselben Sieger wie das POTD-Badge',
    _potdEin.abweichung.join(' · ') || 'alle gleich');
+ok(_potdEin.popAbw.length === 0,
+   'das Popover von Allwetter zeigt dieselben Wochentage, die die Auszeichnung zaehlt',
+   _potdEin.popAbw.join(' · ') || 'alle gleich');
 
 // ── Der Wandler liest exakt dasselbe Positionsprofil wie das Profil ──
 const _wandler = JSON.parse(K.eval(`JSON.stringify((function(){

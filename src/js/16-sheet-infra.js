@@ -566,7 +566,7 @@ document.addEventListener('keydown', (e) => {
     // Reihenfolge: News-Detail > Badge-Popover (innerster zuerst)
     const ndBg = document.getElementById('ndBg');
     if(ndBg && ndBg.classList.contains('show')){
-      if(typeof closeNewsDetail === 'function') closeNewsDetail();
+      closeNewsDetail();
       return;
     }
     const bpBg = document.getElementById('bpBg');

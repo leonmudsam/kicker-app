@@ -8,7 +8,7 @@
  *  Zustand, zwei Suiten im selben Prozess wuerden sich gegenseitig die
  *  Caches umschreiben. Exit-Code 1, sobald eine Suite rot ist.
  *
- *  Zum Schluss wird die Tabelle in CLAUDE.md §5 nachgezaehlt. Die Zahl der
+ *  Zum Schluss wird die Tabelle in tests/README.md nachgezaehlt. Die Zahl der
  *  Checks steht dort, damit man sieht, ob eine Suite gewachsen oder still
  *  geschrumpft ist — und eine Zahl, die niemand nachzaehlt, ist nach drei
  *  Aenderungen falsch. Welche Suiten es ueberhaupt gibt, prueft check.mjs.
@@ -17,6 +17,7 @@ import { readdirSync, existsSync, readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
+import { abschnitt } from '../tools/doku.mjs';
 
 const DIR  = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(DIR, '..');
@@ -29,7 +30,7 @@ if(!existsSync(join(ROOT, 'dist/index.html')) && !existsSync(join(ROOT, 'index.h
 const suiten = readdirSync(DIR).filter(f => f.endsWith('.test.js')).sort();
 let rot = 0, grau = 0;
 const zeilen = [];
-// Name der Suite → Zahl der Checks, fuer den Abgleich mit CLAUDE.md §5.
+// Name der Suite → Zahl der Checks, fuer den Abgleich mit tests/README.md.
 const gezaehlt = new Map();
 
 for(const f of suiten){
@@ -60,21 +61,22 @@ for(const f of suiten){
   }
 }
 
-// ── Stimmt die Tabelle in CLAUDE.md? ────────────────────────────
-// Nur wenn alles gelaufen ist: eine uebersprungene Suite nennt keine Zahl,
-// und eine rote Suite hat gerade groessere Sorgen.
-if(!rot && !grau){
-  const anweisung = readFileSync(join(ROOT, 'CLAUDE.md'), 'utf8');
-  const tabelle = anweisung.split('## 5. Die Testsuiten')[1] || '';
+// ── Stimmt die Tabelle in tests/README.md? ──────────────────────
+// Nachgezaehlt wird jede Suite, die gruen gelaufen ist. Frueher nur, wenn
+// keine uebersprungen war — und auf dem CI-Runner ohne Browser sind das
+// zwoelf, der Abgleich lief dort also nie. Bei Rot hat der Lauf gerade
+// groessere Sorgen.
+if(!rot){
+  const tabelle = abschnitt(readFileSync(join(ROOT, 'tests/README.md'), 'utf8'), '## Die Suiten') || '';
   const schief = [];
   for(const [name, zahl] of gezaehlt){
     const m = tabelle.match(new RegExp('^\\| `' + name + '` \\|[^\\n|]*\\|\\s*([\\d—-]+)\\s*\\|', 'm'));
-    if(!m){ schief.push(`${name}: keine Zeile in §5`); continue; }
+    if(!m){ schief.push(`${name}: keine Zeile in der Tabelle`); continue; }
     if(m[1] !== String(zahl)) schief.push(`${name}: dort steht ${m[1]}, gelaufen sind ${zahl}`);
   }
   if(schief.length){
     zeilen.push('');
-    schief.forEach(x => zeilen.push('  ✗ CLAUDE.md §5 — ' + x));
+    schief.forEach(x => zeilen.push('  ✗ tests/README.md — ' + x));
     rot++;
   }
 }

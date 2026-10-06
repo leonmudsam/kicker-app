@@ -46,6 +46,136 @@ function playerStats(id, matchSubset){
   return s;
 }
 
+// Alle Spieler auf einmal, in einem Durchlauf über die Partien und gemerkt;
+// playerStats(id) liest daraus, wenn nach allen Partien gefragt wird. Sie
+// stand im Positionsverlauf, weil sie dort zuerst gebraucht wurde.
+function allPlayerStats(){
+  const key='allStats_'+matches.length+'_'+_cache.version;
+  if(_cache._allStatsKey===key) return _cache._allStatsData;
+  
+  const stats={};
+  const run={};
+  
+  // Initialisierung: nur aktive Spieler (verringert die Anzahl der zu verarbeitenden IDs)
+  // Die Laufbahn ist Geschichte: auch ein Ruheständler behält seine Zahlen
+  // fürs Profil [§C40]. Wer im Positionen-Reiter mitvergleicht, filtert dort.
+  const activeIds = new Set(players.filter(p=>sichtbar(p)).map(p=>p.id));
+  activeIds.forEach(id=>{
+    stats[id]={games:0,wins:0,losses:0,gf:0,ga:0,
+      atkG:0,atkW:0,defG:0,defW:0,
+      atkGoals:0,defConceded:0, // Ø Tore (Sturm) / Ø Gegentore (Abwehr) — Basis für Rollen-Donuts und Positionen-Tab
+      mates:{},opps:{},best:-1e9,worst:1e9,curStreak:0};
+    run[id]=0;
+  });
+  
+  // Single-Pass durch die Matches, sortiert nach Zeit
+  const ordered=[...matches].sort((a,b)=>mts(a)-mts(b));
+  for(let i=0; i<ordered.length; i++){
+    const m = ordered[i];
+    const d_a = m.deltas || {}; // Match-Deltas für alle Spieler im Match
+    
+    // Team A Spieler verarbeiten
+    const teamA_players = [m.a1, m.a2];
+    const teamA_won = m.winner === 'A';
+    const teamA_gf = m.score_a;
+    const teamA_ga = m.score_b;
+
+    for(let j=0; j<2; j++){
+      const id = teamA_players[j];
+      const s = stats[id];
+      if(!s) continue; // Überspringen, wenn Spieler nicht aktiv oder nicht existiert
+      
+      const won = teamA_won;
+      const gf = teamA_gf;
+      const ga = teamA_ga;
+      const pos = (id === m.a1) ? m.a1_pos : m.a2_pos;
+      const delta = d_a[id] || 0;
+      
+      s.games++;
+      s.gf += gf;
+      s.ga += ga;
+      if(won){ s.wins++; run[id] = run[id]>=0 ? run[id]+1 : 1; }
+      else   { s.losses++; run[id] = run[id]<=0 ? run[id]-1 : -1; }
+      
+      if(pos==='atk'){ s.atkG++; if(won) s.atkW++; s.atkGoals += gf; }
+      else            { s.defG++; if(won) s.defW++; s.defConceded += ga; }
+      
+      const mate = (id === m.a1) ? m.a2 : m.a1;
+      if(!s.mates[mate]) s.mates[mate]={g:0,w:0};
+      s.mates[mate].g++;
+      if(won) s.mates[mate].w++;
+      
+      const opp1=m.b1, opp2=m.b2;
+      if(!s.opps[opp1]) s.opps[opp1]={g:0,w:0};
+      s.opps[opp1].g++;
+      if(won) s.opps[opp1].w++;
+      if(!s.opps[opp2]) s.opps[opp2]={g:0,w:0};
+      s.opps[opp2].g++;
+      if(won) s.opps[opp2].w++;
+      
+      if(delta > s.best) s.best = delta;
+      if(delta < s.worst) s.worst = delta;
+    }
+    
+    // Team B Spieler verarbeiten (analog zu Team A)
+    const teamB_players = [m.b1, m.b2];
+    const teamB_won = m.winner === 'B';
+    const teamB_gf = m.score_b;
+    const teamB_ga = m.score_a;
+    
+    for(let j=0; j<2; j++){
+      const id = teamB_players[j];
+      const s = stats[id];
+      if(!s) continue; // Überspringen, wenn Spieler nicht aktiv oder nicht existiert
+      
+      const won = teamB_won;
+      const gf = teamB_gf;
+      const ga = teamB_ga;
+      const pos = (id === m.b1) ? m.b1_pos : m.b2_pos;
+      const delta = d_a[id] || 0;
+      
+      s.games++;
+      s.gf += gf;
+      s.ga += ga;
+      if(won){ s.wins++; run[id] = run[id]>=0 ? run[id]+1 : 1; }
+      else   { s.losses++; run[id] = run[id]<=0 ? run[id]-1 : -1; }
+      
+      if(pos==='atk'){ s.atkG++; if(won) s.atkW++; s.atkGoals += gf; }
+      else            { s.defG++; if(won) s.defW++; s.defConceded += ga; }
+      
+      const mate = (id === m.b1) ? m.b2 : m.b1;
+      if(!s.mates[mate]) s.mates[mate]={g:0,w:0};
+      s.mates[mate].g++;
+      if(won) s.mates[mate].w++;
+      
+      const opp1=m.a1, opp2=m.a2;
+      if(!s.opps[opp1]) s.opps[opp1]={g:0,w:0};
+      s.opps[opp1].g++;
+      if(won) s.opps[opp1].w++;
+      if(!s.opps[opp2]) s.opps[opp2]={g:0,w:0};
+      s.opps[opp2].g++;
+      if(won) s.opps[opp2].w++;
+      
+      if(delta > s.best) s.best = delta;
+      if(delta < s.worst) s.worst = delta;
+    }
+  }
+  
+  // Finalisierung der Statistiken (z.B. Winrate, Tordifferenz)
+  activeIds.forEach(id=>{
+    const s = stats[id];
+    s.curStreak = run[id];
+    s.wr = s.games ? s.wins/s.games : 0;
+    s.atkWr = s.atkG ? s.atkW/s.atkG : null;
+    s.defWr = s.defG ? s.defW/s.defG : null;
+    s.gd = s.gf - s.ga;
+  });
+  
+  _cache._allStatsKey=key;
+  _cache._allStatsData=stats;
+  return stats;
+}
+
 
 function bestWorstMate(id, s_param){
   const s= s_param || playerStats(id); // Nutzt übergebene Stats oder berechnet neu (was jetzt gecacht ist)
@@ -67,14 +197,9 @@ function teamStats(){
   const key='allTeamStats_'+matches.length+'_'+_cache.version;
   if(_cache._allTeamStatsKey===key) return _cache._allTeamStatsData;
 
-  const T={};
-  matches.forEach(m=>{
-    [[m.a1,m.a2,m.winner==='A',m.score_a,m.score_b],[m.b1,m.b2,m.winner==='B',m.score_b,m.score_a]]
-    .forEach(([x,y,won,gf,ga])=>{ const k=[x,y].sort().join('|');
-      if(!T[k])T[k]={ids:[x,y].sort(),g:0,w:0,gf:0,ga:0};
-      T[k].g++; if(won)T[k].w++; T[k].gf+=gf; T[k].ga+=ga; });
-  });
-  const result = Object.values(T);
+  // Dieselbe Zählung wie für jeden Ausschnitt (`teamStatsFromMatches`), hier
+  // über alle Partien und gemerkt. Sie stand zweimal Wort für Wort da.
+  const result = teamStatsFromMatches(matches);
   _cache._allTeamStatsKey = key;
   _cache._allTeamStatsData = result;
   return result;
@@ -202,7 +327,7 @@ function teamDetail(p1,p2){
 
   // ═══ KONSISTENTE ELO-BERECHNUNG ═══
   const globalSim=getGlobalSim();
-  const teamKey=[ids[0],ids[1]].sort().join('|');
+  const teamKey=paarKey(ids[0], ids[1]);
   const consistentEloDelta=Math.round(globalSim.teamElo[teamKey]||0);
 
   const games=teamMatches.length;
@@ -300,7 +425,7 @@ function teamDetail(p1,p2){
 // in idsA oder idsB sein.
 function teamAchievements(p1Id, p2Id){
   const R = awardRankings('all');
-  const sortKey = [p1Id, p2Id].sort().join('|');
+  const sortKey = paarKey(p1Id, p2Id);
   const duo = ids => ids.slice().sort().join('|') === sortKey;
   // Platz und Wert aus AW_WERT [§5.3d], wie Kachel, Blatt und Profil. Hier
   // stand die dritte Kopie der Sortier- und Anzeigeregeln (VAL_FNS,

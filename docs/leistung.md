@@ -1,5 +1,8 @@
 # Performance und Cache-Gültigkeit
 
+Wie die App gemessen wird und was die Messungen in vier Runden ergeben
+haben. Die Regeln, die daraus folgen, stehen in [laufzeit.md](laufzeit.md).
+
 Stand: 3. Oktober 2026. Vergleich zum Stand `5445ba8`.
 
 ## Was geändert wurde

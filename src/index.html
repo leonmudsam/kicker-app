@@ -1,35 +1,16 @@
 <!DOCTYPE html>
 <!--
 ╔══════════════════════════════════════════════════════════════════════════════╗
-║  KICKER LIGA · PWA                                                           ║
+║  KICKER LIGA · PWA — Gerüst                                                  ║
 ║  ──────────────────────────────────────────────────────────────────────────  ║
 ║  Stack:   Vanilla JS + Supabase + Web-Crypto                                 ║
 ║  Aufbau:  <head> · <style>(CSS) · <body> · <script>(Logik)                   ║
 ║                                                                              ║
-║  DIESE DATEI IST GEBAUT - NICHT HIER BEARBEITEN                              ║
-║  ──────────────────────────────────────────────                              ║
-║  Die Quelle liegt in src/ : 16 CSS- und 41 JS-Dateien, geschnitten an        ║
-║  den §-Bannern. tools/build.mjs hängt sie in der Reihenfolge ihrer           ║
-║  Nummern-Präfixe wieder aneinander. Näheres in ARCHITEKTUR.md.               ║
-║                                                                              ║
-║      node tools/build.mjs   → dist/index.html                                ║
-║      node tools/check.mjs   → Drift, Syntax, Klammern, doppelte Namen        ║
-║                                                                              ║
-║  NAVIGATION                                                                  ║
-║  ──────────                                                                  ║
-║  In src/ sagt der Dateiname, wo man ist. Die Banner stehen weiterhin         ║
-║  im Code: [§Cn] im CSS, [§N.M] im JS. Direkt nach <script> steht das         ║
-║  vollständige JS-Inhaltsverzeichnis.                                         ║
-║                                                                              ║
-║    [§3.2]    → springt zur Sektion "awardRankings (Award-Engine)"            ║
-║    "// ╔ §"  → listet alle Hauptsektionen                                    ║
-║    "// ─ §"  → listet alle Untersektionen                                    ║
-║                                                                              ║
-║  MAINTENANCE                                                                 ║
-║  ───────────                                                                 ║
-║  Neue Sektionen bekommen eine eigene Datei in src/js bzw. src/css und        ║
-║  einen Eintrag in den Inhaltsverzeichnissen. Stellen, die mehrere            ║
-║  zusammenhängende Updates brauchen, sind mit ⚑ HOTSPOT markiert.             ║
+║  tools/build.mjs setzt an /*@@CSS*/ und /*@@JS*/ die Dateien aus src/css     ║
+║  und src/js in der Reihenfolge ihrer Präfixe ein, ohne Kommentare, und       ║
+║  schreibt dist/index.html. Wo was liegt: CLAUDE.md §3 (Landkarte) und        ║
+║  docs/anker.md (jede Datei mit ihren §-Abschnitten). Warum es so gebaut      ║
+║  ist: docs/architektur.md.                                                   ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 -->
 <html lang="de">

@@ -1,244 +1,4 @@
 // ─── §11.1 — Story-Generator ─────────────────────────────────────────
-// v9.4: All-Time-Ligarekorde für Breaking News (Elo-Höchststand & längste
-// Siegesserie), plus der Zeitpunkt (Match), an dem der aktuelle Rekord
-// aufgestellt wurde. Ein O(N_matches)-Lauf, gecacht per matches.length+version.
-//   • Elo: aus globalSim.history (season-isoliertes eloAfter) — der höchste je
-//     erreichte Wert und das Match, das ihn zuletzt neu setzte.
-//   • Serie: eigener Karriere-Walk (kein Saison-Reset — „jemals").
-function _allTimeRecords(){
-  const key = 'allTimeRec_'+matches.length+'_'+_cache.version;
-  if(_cache._allTimeRecKey === key) return _cache._allTimeRec;
-  const startElo = cfg.start_elo ?? 0;
-  let eloRec = null;    // {val, pid, matchId}
-  let streakRec = null; // {val, pid, matchId}
-  try {
-    const sim = getGlobalSim();
-    let runMax = startElo;
-    for(const h of (sim.history || [])){
-      const after = h.eloAfter;
-      if(!after) continue;
-      for(const pid in after){
-        if(after[pid] > runMax + 1e-6){
-          runMax = after[pid];
-          eloRec = { val: Math.round(after[pid]), pid, matchId: h.matchId };
-        }
-      }
-    }
-  } catch(e){}
-  try {
-    const cur = {};
-    let maxStreak = 0;
-    for(const m of matches){
-      const aWon = m.winner === 'A';
-      const sides = [[m.a1, m.a2, aWon], [m.b1, m.b2, !aWon]];
-      for(const [x, y, won] of sides){
-        for(const id of [x, y]){
-          if(!id) continue;
-          cur[id] = won ? (cur[id] || 0) + 1 : 0;
-          if(cur[id] > maxStreak){ maxStreak = cur[id]; streakRec = { val: cur[id], pid: id, matchId: m.id }; }
-        }
-      }
-    }
-  } catch(e){}
-  // Zeitstempel des Rekord-Matches nachtragen.
-  const mm = {};
-  for(const m of matches) mm[m.id] = m;
-  if(eloRec && mm[eloRec.matchId]) eloRec.when = mm[eloRec.matchId].created_at;
-  if(streakRec && mm[streakRec.matchId]) streakRec.when = mm[streakRec.matchId].created_at;
-  const result = { eloRec, streakRec };
-  _cache._allTimeRecKey = key;
-  _cache._allTimeRec = result;
-  return result;
-}
-
-// ─── §11.0c — Unbegrenzte Meilenstein-Leiter (v9.5) ──────────────────
-// Ersetzt feste Schwellen-Arrays (…, 500, 1000 → ENDE) durch eine Leiter
-// nach dem 1–2.5–5 ×10^k-Muster: 10, 25, 50, 100, 250, 500, 1000, 2500,
-// 5000, 10000, 25000, 50000, … So laufen Meilensteine bei hohen Zahlen
-// sinnvoll weiter, statt an einer Obergrenze zu enden.
-//   `_ladderCrossing(before, after, min)` = die höchste Leiter-Marke, die
-//   zwischen `before` (exkl.) und `after` (inkl.) NEU überschritten wurde,
-//   sonst null. So feuert eine Meilenstein-News genau auf dem Match, das die
-//   Marke reißt — idempotent (ID enthält die Marke) und ohne Verlaufs-Backfill.
-function _ladderCrossing(before, after, min){
-  min = min || 1;
-  if(!Number.isFinite(after) || after < min) return null;
-  let hit = null, p = 1;
-  while(p <= after){
-    for(const r of [1, 2.5, 5]){
-      const v = r * p;
-      if(Number.isInteger(v) && v >= min && v > before && v <= after){
-        if(hit === null || v > hit) hit = v;
-      }
-    }
-    p *= 10;
-  }
-  return hit;
-}
-
-// Ambient-Tag (v9.6): Fun Facts erscheinen TÄGLICH (um 19:00). Früher (v9.5)
-// nur alle 2 Tage über einen geraden Epoch-Tagesindex — jetzt ist jeder Tag ein
-// Ambient-Tag, damit jeden Abend genau 1 Fun Fact kommt. Die Story-ID bleibt
-// tages-deterministisch (`ambient_<datum>_19`) → geräteübergreifend identisch.
-function _isAmbientDay(d){
-  return true;
-}
-
-// ─── §11.0d — Persönliche Elo-Meilensteine (v9.5) ────────────────────
-// Allzeit-Höchst-Elo eines Spielers überschreitet eine runde 100er-Marke
-// (ab Start-Elo + 200, danach unbegrenzt: 1200, 1300, 1400, …). Ein
-// O(N)-Walk über die (saison-isolierte) Elo-Historie, gecacht per
-// matches.length + _cache.version. Liefert pro (Spieler, Marke) das Match,
-// das die Marke erstmals riss — der Generator filtert danach auf „kürzlich".
-function _eloMilestones(){
-  const key = 'eloMile_'+matches.length+'_'+_cache.version;
-  if(_cache._eloMileKey === key) return _cache._eloMile;
-  const startElo = cfg.start_elo ?? 1000;
-  const floor0 = startElo + 200;          // erste Marke
-  const markOf = v => { const m = Math.floor(v/100)*100; return m >= floor0 ? m : null; };
-  const out = [];
-  try {
-    const sim = getGlobalSim();
-    const mm = {};
-    for(const m of matches) mm[m.id] = m;
-    const runMax = {};    // pid → laufendes Allzeit-Peak
-    const firedFor = {};  // pid → höchste bereits erfasste Marke
-    for(const h of (sim.history || [])){
-      const after = h.eloAfter;
-      if(!after) continue;
-      for(const pid in after){
-        const v = after[pid];
-        if(v <= (runMax[pid] ?? startElo)) continue;
-        runMax[pid] = v;
-        const mark = markOf(v);
-        if(mark != null && mark > (firedFor[pid] || 0)){
-          firedFor[pid] = mark;
-          out.push({ pid, mark, matchId: h.matchId, when: mm[h.matchId] ? mm[h.matchId].created_at : null, val: Math.round(v) });
-        }
-      }
-    }
-  } catch(e){}
-  _cache._eloMileKey = key;
-  _cache._eloMile = out;
-  return out;
-}
-
-// Iteriert genau einmal über bestehende Caches. Gibt ein Array von
-// Story-Objekten {id, cat, ic, title, desc, when, prio, dataRef} zurück.
-// Performance: O(N_matches) — dominante Kosten durch top-form-Filterung,
-// die aber auf die letzten 10 Matches pro Spieler eingeschränkt ist.
-// ── Was ist an einem Rekord passiert? ────────────────────────────────
-// Drei Aussagen, und die dritte war richtungsblind: „ausgebaut" feuerte,
-// sobald sich die ANGEZEIGTE Zahl änderte — egal wohin. „Der Fels" ging von
-// 6,9 auf 7,0 Gegentore und „Der Platzhirsch" von 44 auf 42 Prozent, beides
-// eine Verschlechterung, und beides stand als „baut seinen Rekord aus" im
-// Feed. Wer den Rekord weiter hält, ihn aber verschlechtert, ist keine
-// Nachricht: er hat nichts getan, die anderen sind nur nicht vorbeigezogen.
-//
-// `val` ist der Sortierwert der Bestenliste, groß heißt besser — daran
-// entscheidet sich die Richtung. Dass die Zahl SICHTBAR anders sein muss,
-// bleibt: ein Anteil rückt an fast jedem Spieltag um ein Tausendstel weiter,
-// und das ergab neun Karten an einem Morgen, auf denen dieselbe Zahl stand.
-// ── Was ist mit einem Halterfeld passiert? ───────────────────────────
-// Vier Faelle, und sie gelten fuer den Liga-Rekord wie fuer die Monatschronik
-// [§C27]: beide Felder werden im Lauf eines Tages enger und weiter. Der Rekord
-// kannte nur „uebernommen", und damit stand „Leon uebernimmt ‚Der Aufschwung'.
-// Vorher hielt Leon, Jannik und Stefan den Rekord mit +8 %" im Feed — Leon
-// uebernahm von sich selbst, und aus drei Namen wurde ein „hielt". Beim
-// Dazukommen war es noch schiefer: „Martin und Leo uebernehmen ‚Das
-// Sonntagskind'. Vorher hielt Leo den Rekord mit 70 %" — Leo haelt ihn
-// weiterhin, sein Wert ist nur auf 67 % gefallen und Martin gleichgezogen.
-// Gemessen taten das vier Karten der Ligageschichte.
-function _halterFall(alt, neu){
-  const a = (alt || []).filter(Boolean), n = (neu || []).filter(Boolean);
-  if(!a.length) return 'erstmals';
-  const neuLeute = n.filter(id => a.indexOf(id) < 0);
-  if(!neuLeute.length) return 'allein';        // das Feld ist enger geworden
-  return a.every(id => n.indexOf(id) >= 0) ? 'dazu' : 'uebernommen';
-}
-
-function _rekordArt(alt, neu){
-  if(!neu) return '';
-  if(!alt) return 'erstmals';
-  // SORTIERT vergleichen. Die beiden Listen kommen aus zwei getrennten
-  // Durchläufen, und ihre Reihenfolge muss nicht dieselbe sein: „Maxi, Leo
-  // und Julian übernehmen" stand im Feed, und darunter „Vorher gehörte er
-  // Maxi, Julian und Leo" — dieselben drei, nur anders sortiert.
-  const k = a => (a || []).slice().sort().join(',');
-  if(k(alt.pids) !== k(neu.pids)) return 'geholt';
-  if(_chronKurz(alt.ev) === _chronKurz(neu.ev)) return '';
-  return (neu.val > alt.val) ? 'gesteigert' : '';
-}
-
-// Namen als Aufzählung: „Maxi, Julian und Leo". Mit `&` zwischen jedem Paar
-// las sich eine Dreiergruppe wie eine Formel.
-function _namenListe(namen){
-  const a = (namen || []).filter(Boolean);
-  if(a.length <= 1) return a[0] || '';
-  return a.slice(0, -1).join(', ') + ' und ' + a[a.length - 1];
-}
-
-// Zahlwörter bis vier, darüber die Ziffer. Große Tafel-Momente dürfen mehr
-// Zeilen tragen; ab fünf ist die Ziffer im kurzen Fließtext besser lesbar.
-// Der erste Satz eines Textes. Auf einer Sammelkarte gehoert nur er dem
-// Kopf; alles danach ist ein Detail zu einer von vier Meldungen.
-// Abkuerzungen mit Punkt gibt es in diesen Texten nicht, ein Datum wie
-// „29.07." aber schon — deshalb wird nur an einem Punkt getrennt, auf den
-// ein Leerzeichen und ein Grossbuchstabe folgt.
-function _ersterSatz(txt){
-  const s = String(txt || '').trim();
-  const m = s.match(/^([\s\S]*?[.!?])\s+[A-ZÄÖÜ]/);
-  return m ? m[1] : s;
-}
-function _zahlwortDe(n){ return ['', 'ein', 'zwei', 'drei', 'vier'][n] || String(n); }
-
-// Dieselbe Aufzählung, aber für eine Schlagzeile gedeckelt. Über einer Karte,
-// die von drei Leuten handelte, stand „Leon und Martin bewegen die Ewige
-// Tafel": die Überschrift nannte zwei der drei, und der dritte kam nur in der
-// Liste darunter vor. Genannt werden jetzt alle, und ab dem vierten zählt die
-// Zeile den Rest — sonst sprengt eine Sammelkarte mit sechs Beteiligten jede
-// Schlagzeile.
-function _namenKurz(namen, max){
-  const a = (namen || []).filter(Boolean);
-  const m = max || 3;
-  if(a.length <= m) return _namenListe(a);
-  return a.slice(0, m - 1).join(', ') + ' und ' + _zahlwortDe(a.length - (m - 1)) + ' weitere';
-}
-
-// Ein Beleg wie „20 % aller 25 Siege endeten 10:9 · 5" ist für eine Liste
-// gebaut: der Mittelpunkt trennt dort zwei Spalten. Im Fließtext einer
-// Nachricht steht er mitten im Satz und liest sich wie ein Tippfehler.
-// ─── Welche Chronik steht wirklich in der Tafel ────────────────
-// Ein Spieler zeigt je Monat nur EINEN Chronik-Eintrag [§C32]:
-// `seasonTitleOf` liefert den ersten in Katalogreihenfolge, und die ist die
-// Wertigkeit. Wer im selben Monat mehrere holt, sah auf der Karte nicht,
-// welcher davon in der Tafel landet — „Martin holt zwei Monatschroniken"
-// zählte beide auf und ließ offen, welche ihn im Profil beschreibt.
-// Beantwortet wird die Frage nur für einen ALLEIN stehenden Halter: bei
-// mehreren wäre „steht in der Chronik" eine Behauptung über alle [§C33].
-// Und nur, wenn es überhaupt etwas zu unterscheiden gibt — bei einer
-// einzigen Chronik im Monat ist die Antwort offensichtlich.
-// Derselbe Zeitschnitt wie beim Prestige-Satz: die Funktion las den Stand von
-// HEUTE, der Satz darunter den vom letzten Spieltag. Zwei Rechnungen ueber
-// dieselbe Frage nennen irgendwann zwei verschiedene Eintraege, und dann stand
-// „Steht jetzt in der Chronik" neben „In der Chronik bleibt ‚X' staerker" —
-// beides ueber denselben Spieler, denselben Monat, auf einer Karte.
-function _chronikZeigtSich(pids, sid, titleId, bisMs){
-  if(!Array.isArray(pids) || pids.length !== 1) return null;
-  try {
-    const alle = (seasonTitles(sid, bisMs).awarded || []).filter(a => a.pid === pids[0]);
-    if(alle.length < 2) return null;
-    const gezeigt = seasonTitleOf(pids[0], sid, bisMs);
-    if(!gezeigt) return null;
-    return {zeigt: gezeigt.titleId === titleId, welche: gezeigt.name,
-            andere: alle.filter(a => a.titleId !== gezeigt.titleId).map(a => a.name)};
-  } catch(e){ return null; }
-}
-
-function _evSatz(ev){
-  return String(ev || '').replace(/\s*·\s*/g, ', ').trim();
-}
-
 function _buildStories(){
   const stories = [];
   const now = new Date();
@@ -271,7 +31,7 @@ function _buildStories(){
   const _dayMs = 86400000;
   const _startOfToday     = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const _startOfYesterday = _startOfToday - _dayMs;
-  const _weekStartOf = (ts) => { const x = new Date(ts); x.setHours(0,0,0,0); x.setDate(x.getDate() - ((x.getDay()+6)%7)); return x.getTime(); };
+  const _weekStartOf = (ts) => wochenBeginn(ts).getTime();
   const _thisWeekStart = _weekStartOf(now.getTime());
   const _prevWeekStart = _thisWeekStart - 7*_dayMs;
   const _yesterdayKey  = new Date(_startOfYesterday).toISOString().slice(0,10);
@@ -287,7 +47,7 @@ function _buildStories(){
   // Zahl, ihr Gesicht und ihren Weg ins Blatt.
   // Die Grenzen kommen aus _potwLastWeekRange, damit Rückblick, POTW-Karte und
   // Wochenkarte über dasselbe Fenster reden [§C27].
-  const _wr = (typeof _potwLastWeekRange === 'function') ? _potwLastWeekRange() : null;
+  const _wr = _potwLastWeekRange();
   const _wocheStart = _wr ? _wr.start.getTime() : _prevWeekStart;
   const _wocheEnde  = _wr ? (_wr.end.getTime() + 1) : _thisWeekStart;
   const _wocheSlotTs = _wocheEnde - 3600000;          // Sonntag 23:00
@@ -875,7 +635,7 @@ function _buildStories(){
         // Eine WÜRDE ist je Saison neu zu holen und jedes Mal Nachricht;
         // alles andere nur beim ersten Mal und an runden Marken [§11.0c].
         const wuerde = (typeof BADGE_WUERDE !== 'undefined') && BADGE_WUERDE.has(ev.badge.id);
-        const rar = (typeof rarityOf === 'function') ? rarityOf(ev.badge.id) : 'common';
+        const rar = rarityOf(ev.badge.id);
         // Der Takt haengt an der Klasse [§11.0c]: legendaer jedes Mal, selten
         // beim ersten Mal und an den runden Marken. Eine Liste fuer alle war
         // zu grob — sie liess dreizehn legendaere Erfolge zwischen der
@@ -888,7 +648,7 @@ function _buildStories(){
     // weitere seltene Auszeichnungen und negative Ereignisse desselben Spiels.
     const list = whitelisted.sort((a,b) => b.when - a.when);
     list.forEach(ev => {
-      const rar = (typeof rarityOf === 'function') ? rarityOf(ev.badge.id) : 'common';
+      const rar = rarityOf(ev.badge.id);
       // `prio` sortiert den Feed nicht mehr — er steht chronologisch [§C33].
       // Sie entscheidet nur noch zweierlei: wer eine Sammelkarte anführt und
       // wer den Tagesdeckel überlebt. Dort gehört eine seltene Auszeichnung
@@ -910,9 +670,9 @@ function _buildStories(){
         // Der Name der Auszeichnung steht schon in der Schlagzeile; er stand
         // hier ein zweites Mal, gleich darunter.
         _bdesc = `5 Pleiten in Folge gegen ${nameOf(_nemOpp)}.`;
-      } else if(ev.badge.id === 'games250' && typeof countGames === 'function'){
+      } else if(ev.badge.id === 'games250'){
         _bdesc = `300 Partien am Kicker. ${nameOf(ev.playerId)} steht nach dieser Partie bei ${_spEigene(ev.playerId, badgeMatches.get(ev.matchId)).length} Spielen.`;
-      } else if(ev.badge.id === 'wins200' && typeof countWins === 'function'){
+      } else if(ev.badge.id === 'wins200'){
         _bdesc = `300 Siege in der Karriere. ${nameOf(ev.playerId)} hält nach dieser Partie bei ${_spEigene(ev.playerId, badgeMatches.get(ev.matchId)).filter(m => _spGew(m, ev.playerId)).length}.`;
       } else {
         // Die Bedingung aus dem Katalog steht sonst ohne Punkt in der Karte:
@@ -946,7 +706,7 @@ function _buildStories(){
     // neben einem der beteiligten Spiele stehen.
     const _kleine = Object.values(dedupe).filter(ev => {
       if(!pm[ev.playerId]) return false;
-      const rar = (typeof rarityOf === 'function') ? rarityOf(ev.badge.id) : 'common';
+      const rar = rarityOf(ev.badge.id);
       if(rar !== 'common') return false;
       // Die gewhitelisteten Sonderfaelle haben ihre eigene Karte.
       if(NEWS_BADGE_WHITELIST.has(ev.badge.id)) return false;
@@ -1372,10 +1132,6 @@ function _buildStories(){
     }
   } catch(e){}
 
-  // ── Gestrichen: „Vor genau einem Jahr" ───────────────────────────────
-  // Der Typ suchte ein Match von vor 365 Tagen. Die Liga läuft seit 66 Tagen,
-  // die Karte hat also noch nie erscheinen können — und ihr Text lautete nur
-  // „Damals stand es 10:8", ohne Spieler und ohne Grund.
 
   // ── 16. Upset der Woche (Underdog schlägt Top-Spieler) ──
   // Sucht in der vergangenen Woche das Match mit dem größten preRank-Vorteil
@@ -1646,7 +1402,7 @@ function _buildStories(){
       // sieht nur Partien bis zu dieser: der Wortlaut bleibt stehen.
       if(art === 'normal' || art === 'eng'){
         let tx = null;
-        try { tx = typeof _spScoreText === 'function' ? _spScoreText(m) : _spFormText(m); }
+        try { tx = _spScoreText(m); }
         catch(e){ tx = null; }
         if(tx){ title = tx.t; desc = tx.d; }
       }
@@ -1678,7 +1434,7 @@ function _buildStories(){
   try {
     const wk = 14 * 86400000;
     const tsNow = now.getTime();
-    const streakSnaps = (typeof getStreakSnapshots === 'function') ? getStreakSnapshots() : {};
+    const streakSnaps = getStreakSnapshots();
     const kills = [];
     for(let i = 0; i < matches.length; i++){
       const m = matches[i];
@@ -2003,13 +1759,13 @@ function _buildStories(){
   // Persistente News zu Wochenbeginn (Mo früh), analog zum POTW-Recap-Sheet.
   // Deterministische ID pro Woche → kein Doppel, Cross-Device-stabil.
   try {
-    if(typeof _potwLastWeekRange === 'function' && typeof _potwKeyOf === 'function'){
+    {
       const range = _potwLastWeekRange();
       // Derselbe Ausschnitt wie im Rückblick [§C27]: der Filter stand hier
       // ein zweites Mal, Zeile für Zeile dieselbe — und zwei Rechnungen über
       // dieselbe Frage nennen irgendwann zwei verschiedene Beste.
       const wm = _potwMatchesInRange(range.start, range.end);
-      const res = _newsPeriodWinner(wm, 5, 'wr'); // Wochen-Regel = höchste Quote
+      const res = _newsPeriodWinner(wm, 'woche');
       if(res){
         const main = res.main;
         const names = res.winners.map(w => nameOf(w.id));
@@ -2054,7 +1810,7 @@ function _buildStories(){
       if(now.getTime() < rep.getTime()) return;
       // Tages-Regel = meiste Siege (Tiebreak Elo-Delta) — identisch zu
       // showPotdRecap und zum Badge-Zaehler countDayWins.
-      const res = _newsPeriodWinner(dayMatches, 3, 'wins');
+      const res = _newsPeriodWinner(dayMatches, 'tag');
       if(!res) return;
       const main = res.main;
       const names = res.winners.map(w => nameOf(w.id));
@@ -2167,7 +1923,7 @@ function _buildStories(){
     }
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] wochenkarte', e); }
 
-  // ── §11.8 Die Ewige Tafel meldet sich ────────────────────────────────
+  // ── §11.1a Die Ewige Tafel meldet sich ────────────────────────────────
   // Der ganze Awards-Reiter kam im Feed nicht vor. Wer einen Liga-Rekord
   // übernahm, eine Monatschronik holte oder eine Insignium-Stufe erreichte,
   // erfuhr davon nur, wenn er selbst nachsah — und genau das hätte eine
@@ -2573,7 +2329,7 @@ function _buildStories(){
   // Meldungen ist.
   try {
     const _sid = currentSeason().id;
-    if(_tafelTag && typeof seasonTitleHalter === 'function'){
+    if(_tafelTag){
       const _letzteMs2 = _tafelTag.letzte;
       // Dieselbe Regel wie bei den Rekorden: eine Chronik wechselt auch den
       // Halter, weil ein anderer gespielt und seinen Anteil verschlechtert
@@ -2673,7 +2429,7 @@ function _buildStories(){
         // Sortiert verglichen: dieselben Halter in anderer Reihenfolge sind
         // kein Wechsel [§C33].
         if(a && a.pids.join(',') === neuKey) return;
-        const punkte = (typeof chronikPunkte === 'function') ? chronikPunkte(t.id) : 0;
+        const punkte = chronikPunkte(t.id);
         const artikel = t.klasse === 'legendaer' ? 'Eine legendäre' :
                         t.klasse === 'selten' ? 'Eine seltene' : 'Eine besondere';
         // Vier Faelle, vier Verben. „Julian holt ‚Der Nachzuegler'. Vorher
@@ -3018,33 +2774,12 @@ function _buildStories(){
 //   mode 'wr'   (POTW) → Quote ↓, Siege ↓, Elo ↓     (= showPotwRecap / kind 'week')
 // Geteilter Sieg nur bei Gleichstand über ALLE Kriterien des Modus.
 // Liefert {winners:[…], main} oder null. (v8.7, v9.17)
-function _newsPeriodWinner(rangeMatches, minWins, mode){
+// Die Reihenfolge kommt aus `_periodeRangliste`, derselben Regel wie
+// Auszeichnung und Rückblick; hier kommt nur dazu, wer sich den Titel teilt.
+function _newsPeriodWinner(rangeMatches, regel){
   if(!Array.isArray(rangeMatches) || !rangeMatches.length) return null;
-  const byWins = mode !== 'wr'; // Default = Tages-Regel (absolute Siege)
-  const ps = {};
-  for(const m of rangeMatches){
-    const aWon = m.winner === 'A';
-    [m.a1, m.a2, m.b1, m.b2].forEach(id => {
-      if(!ps[id]) ps[id] = {wins:0, losses:0, eloDelta:0};
-      const onA = (m.a1 === id || m.a2 === id);
-      const won = (onA && aWon) || (!onA && !aWon);
-      ps[id].eloDelta += (m.deltas && m.deltas[id]) || 0;
-      if(won) ps[id].wins++; else ps[id].losses++;
-    });
-  }
-  const pm = pmap();
-  const cand = Object.entries(ps)
-    .filter(([id, s]) => s.wins >= minWins && sichtbar(pm[id]))
-    .map(([id, s]) => { const g = s.wins + s.losses; return {id, wins: s.wins, losses: s.losses, eloDelta: s.eloDelta, wr: g ? s.wins/g : 0}; })
-    .sort((a, b) => {
-      if(byWins){
-        if(b.wins !== a.wins) return b.wins - a.wins;
-        return b.eloDelta - a.eloDelta;
-      }
-      if(Math.abs(b.wr - a.wr) > 0.001) return b.wr - a.wr;
-      if(b.wins !== a.wins) return b.wins - a.wins;
-      return b.eloDelta - a.eloDelta;
-    });
+  const byWins = regel === 'tag';
+  const cand = _periodeRangliste(rangeMatches, regel, true);
   if(!cand.length) return null;
   const top = cand[0];
   const tied = byWins

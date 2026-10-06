@@ -1,7 +1,7 @@
 // ╔═══ §3.1 ─── DATENBANK-LAYER ────────────────────────────────────────╗
 //     loadAll() lädt Spieler/Matches/Config/Seasons, persistRecalc()
 //     schreibt Elos/Deltas atomar zurück. Saison-Archivierung am
-//     Monatswechsel via archiveSeasonAndStartNew().
+//     Monatswechsel via autoArchiveSeasons().
 // ╚═════════════════════════════════════════════════════════════════════════╝
 function pmap(){
   const key='pmap_'+players.length+'_'+_cache.version;
@@ -242,7 +242,7 @@ async function autoArchiveSeasons(){
     const teamGames={};
     ms.forEach(m=>{
       [[m.a1,m.a2],[m.b1,m.b2]].forEach(([x,y])=>{
-        const k=[x,y].sort().join('|');
+        const k=paarKey(x, y);
         teamGames[k]=(teamGames[k]||0)+1;
       });
     });
@@ -386,7 +386,7 @@ function showSeasonRecap(season, opts){
       if(aufA){ tg++; if(m.winner==='A')tw++; }
       else if(aufB){ tg++; if(m.winner==='B')tw++; }
     });
-    teamHtml = `<div class="rcp-tos klick" data-team="${esc([a,b].sort().join('|'))}">
+    teamHtml = `<div class="rcp-tos klick" data-team="${esc(paarKey(a, b))}">
       <div class="rcp-tos-pair">${rcpPaarHtml([a,b],40)}</div>
       <div class="rcp-tos-info">
         <div class="rcp-tos-label">Team der Saison</div>
@@ -564,9 +564,7 @@ function showSeasonRecap(season, opts){
 // Helfer: Bereich der zuletzt abgeschlossenen Woche (Mo 00:00 – So 23:59:59.999)
 function _potwLastWeekRange(){
   const now=new Date();
-  const monday=new Date(now); monday.setHours(0,0,0,0);
-  const wd=(monday.getDay()+6)%7;       // 0=Mo
-  monday.setDate(monday.getDate()-wd);  // Montag DIESER Woche
+  const monday=wochenBeginn(now);        // Montag DIESER Woche
   // Eine Woche gilt ab Sonntag 23:00 als abgeschlossen, nicht erst ab Montag
   // 00:00. Der Wochenrückblick stand vorher über den Montag verteilt in sechs
   // Karten und verdeckte damit den Spieltag, um den es gerade ging. Die letzte
@@ -585,7 +583,7 @@ function _potwWocheVon(key){
   const iso = k.match(/^(\d{4})-W(\d{1,2})$/);
   if(iso){
     const jan4 = new Date(+iso[1], 0, 4);
-    start = new Date(+iso[1], 0, 4 - ((jan4.getDay() + 6) % 7) + (+iso[2] - 1) * 7);
+    start = new Date(+iso[1], 0, 4 - wochentagMo(jan4) + (+iso[2] - 1) * 7);
   } else {
     const [y, m, d] = k.split('-').map(Number);
     start = new Date(y, m - 1, d);
@@ -607,3 +605,5 @@ function potwHasData(){
   return _potwMatchesInRange(start,end).length>0;
 }
 
+// Der Verbindungspunkt oben rechts: Text und Farbe des Ladezustands.
+function setConn(t,c){document.getElementById('connText').textContent=t;document.getElementById('connDot').className='dot '+c;}

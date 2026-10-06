@@ -43,7 +43,7 @@ function avatarInnerHtml(player){
 function avHtml(player, extraStyle, opts){
   if(!player) return '';
   let cls = '', style = '', attr = '';
-  if(opts && opts.ring && typeof _avRingAttrs === 'function'){
+  if(opts && opts.ring){
     const r = _avRingAttrs(player.id);
     if(r){ cls = r.cls; style = r.style; attr = r.attr; }
   }
@@ -55,8 +55,8 @@ function avHtml(player, extraStyle, opts){
   // Avatare in Award-Listen und Sheets Sterne und Feuer.
   // `ins` legt zusätzlich das Wappen um den Avatar [§C27]: die Rangliste
   // zeigt damit dieselbe Form wie das Podest der Ewigen Tafel.
-  if(opts && opts.ins && typeof insAvWrap === 'function') return insAvWrap(player.id, inner, opts);
-  if(opts && opts.zn && typeof znWrap === 'function') return znWrap(player.id, inner, opts);
+  if(opts && opts.ins) return insAvWrap(player.id, inner, opts);
+  if(opts && opts.zn) return znWrap(player.id, inner, opts);
   return inner;
 }
 function initials(n){return n.trim().slice(0,2).toUpperCase();}
@@ -82,7 +82,7 @@ function awLiAv(pid, isTiedRow = false, schande = false){
     : `<div class="aw-li-av" style="background:${avColor(p.id)};${sizeStyle}">${esc(initials(p.name))}</div>`;
   // Auf der Schandtafel brennt nichts: dort ist alles rot, und eine
   // orange Flamme wäre in einer Liste der schlechtesten Quoten ein Lob.
-  const f = (!schande && typeof znFeuer === 'function') ? znFeuer(pid) : 0;
+  const f = !schande ? znFeuer(pid) : 0;
   if(!f || typeof znWrap !== 'function') return kreis;
   return znWrap(pid, kreis, {px:px, titel:0, klasse:'aw-li-zn'});
 }
@@ -111,8 +111,9 @@ function awHeroPair(p1,p2){
 
 
 // ╔═══ §4.3 ─── NAVIGATION (Tabs/Filter/History-State) ─────────────────╗
-//     setTab() ist die zentrale Wechsel-Funktion. tab + period + filterPos +
-//     filterPlayer steuern, was render() zeichnet.
+//     tab, period, awView und die übrigen Ansichtsvariablen aus 01-update.js
+//     steuern, was render() zeichnet; ein Reiterwechsel geht durch
+//     _renderNachEingabe (docs/laufzeit.md).
 // ╚═════════════════════════════════════════════════════════════════════════╝
 // Dieselbe Zeichensprache wie der Katalog [§C27]: Linien mit Rand im
 // 24er-Raster, keine gefüllten Kästen. Die Liga war drei Rechtecke, der
@@ -278,14 +279,13 @@ function schlittenFahren(root){
 }
 
 // ╔═══ §4.4 ─── ZEITRÄUME (Saison/Woche/Gesamt) ────────────────────────╗
-//     periodBounds() liefert {from,to} für die aktuelle Periode.
-//     periodMatches() filtert matches[] entsprechend.
+//     periodStart() liefert den Beginn des Zeitraums (Saison, Woche, Tag),
+//     matchesInPeriod() die Partien darin.
 // ╚═════════════════════════════════════════════════════════════════════════╝
 function periodStart(period){
   const now=new Date();
   if(period==='season') return seasonStart();
-  if(period==='week'){ const d=new Date(now); d.setHours(0,0,0,0);
-    const wd=(d.getDay()+6)%7; d.setDate(d.getDate()-wd); return d; }
+  if(period==='week') return wochenBeginn(now);
   if(period==='day'){ const d=new Date(now); d.setHours(0,0,0,0); return d; }
   return null; // all
 }
@@ -366,6 +366,21 @@ function saisonWaehlerHtml(id, gewaehlt, opts){
     }).join('')}</div>`;
 }
 
+// Der Wochentag mit Montag als 0. `getDay()` zählt ab Sonntag; die Liga
+// rechnet Wochen ab Montag, und `(getDay()+6)%7` stand dafür an sieben
+// Stellen ausgeschrieben.
+function wochentagMo(d){ return (d.getDay() + 6) % 7; }
+// Montag 00:00 Ortszeit der Woche, in der `d` liegt. Dieselbe Grenze für
+// den Zeitraum „Woche", den Wochenrückblick und die Wochen des Feeds.
+function wochenBeginn(d){
+  const x = new Date(d); x.setHours(0,0,0,0);
+  x.setDate(x.getDate() - wochentagMo(x));
+  return x;
+}
+// Der Schlüssel eines Paars, ob Duo oder zwei Gegner: sortiert, damit A|B
+// und B|A derselbe sind. Stand 34 Mal ausgeschrieben; alle Töpfe für Duos,
+// Rivalitäten und Teamstatistik hängen an genau dieser Schreibweise.
+function paarKey(a, b){ return [a, b].sort().join('|'); }
 function isoWeek(d){
   const date=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
   const dayNum=(date.getUTCDay()+6)%7; date.setUTCDate(date.getUTCDate()-dayNum+3);

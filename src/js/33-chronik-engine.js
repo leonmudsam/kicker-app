@@ -27,9 +27,13 @@ function _seasonTitleCtx(sid, bisMs){
   _cache._stCtx[ck] = res;
   return res;
 }
-// Der Wochenschluessel, den auch `_periodWinnerMap` bildet. Beide muessen
-// dieselbe Woche meinen, sonst zaehlt „Die Wochenkrone" Titel in Wochen, die
-// es fuer den Sieger-Ermittler gar nicht gibt.
+// Der Wochenschluessel der Liga, an EINER Stelle: `_periodWinnerMap`, die
+// Monatschronik und die Laufbahn-Rekorde muessen dieselbe Woche meinen, sonst
+// zaehlt „Die Wochenkrone" Titel in Wochen, die es fuer den Sieger-Ermittler
+// gar nicht gibt. Er stand viermal ausgeschrieben. Das Jahr ist das
+// Kalenderjahr, nicht das ISO-Jahr: in der ersten Januarwoche weicht das ab,
+// aber der Schluessel steckt in gespeicherten Staenden und bleibt, wie er ist.
+// Nimmt einen Zeitstempel oder ein Date.
 function _wochenKey(iso){
   const d = new Date(iso);
   return d.getFullYear() + '-W' + isoWeek(d);
@@ -84,7 +88,7 @@ function _bannLaufDerLiga(P, ms){
 function _thronDerLiga(P, ms){
   if(!ms.length) return;
   const hist = {};
-  const sim = (typeof getGlobalSim === 'function') ? getGlobalSim() : null;
+  const sim = getGlobalSim();
   ((sim && sim.history) || []).forEach(h => { hist[h.matchId] = h; });
   const stand = {};
   let tag = null;

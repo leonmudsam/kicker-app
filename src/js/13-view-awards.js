@@ -173,8 +173,8 @@ function _awardRankingsUncached(period, sid){
     }
     
     // === TEAM-AGGREGATE ===
-    const tA=[m.a1,m.a2].sort().join('|');
-    const tB=[m.b1,m.b2].sort().join('|');
+    const tA=paarKey(m.a1, m.a2);
+    const tB=paarKey(m.b1, m.b2);
     if(!agg.tElo[tA]) agg.tElo[tA]=0;
     if(!agg.tElo[tB]) agg.tElo[tB]=0;
     if(!agg.tWins[tA]) agg.tWins[tA]=0;
@@ -471,8 +471,8 @@ function _awardRankingsUncached(period, sid){
   const _tStreak = {}; // teamKey → {cur, best, ids}
   for(let i=0;i<_orderedForStreak.length;i++){
     const m=_orderedForStreak[i];
-    const wKey = m.winner==='A' ? [m.a1,m.a2].sort().join('|') : [m.b1,m.b2].sort().join('|');
-    const lKey = m.winner==='A' ? [m.b1,m.b2].sort().join('|') : [m.a1,m.a2].sort().join('|');
+    const wKey = m.winner==='A' ? paarKey(m.a1, m.a2) : paarKey(m.b1, m.b2);
+    const lKey = m.winner==='A' ? paarKey(m.b1, m.b2) : paarKey(m.a1, m.a2);
     if(!_tStreak[wKey]) _tStreak[wKey]={cur:0,best:0,ids:wKey.split('|')};
     if(!_tStreak[lKey]) _tStreak[lKey]={cur:0,best:0,ids:lKey.split('|')};
     _tStreak[wKey].cur++;
@@ -768,8 +768,8 @@ function _computeZirkus(ms){
                         //   den globalen agg nicht)
   for(let i=0; i<ms.length; i++){
     const m=ms[i];
-    const teamA=[m.a1,m.a2].sort().join('|');
-    const teamB=[m.b1,m.b2].sort().join('|');
+    const teamA=paarKey(m.a1, m.a2);
+    const teamB=paarKey(m.b1, m.b2);
     const loserTeam=m.winner==='A'?teamB:teamA;
     tPleiten[loserTeam] = (tPleiten[loserTeam]||0) + 1;
     if(Math.abs(m.score_a-m.score_b)<5) continue;
@@ -791,8 +791,8 @@ function _computeBarstelle(ms){
   const ordered=[...ms].sort((a,b)=>mts(a)-mts(b));
   for(let i=0; i<ordered.length; i++){
     const m=ordered[i];
-    const loserKey=m.winner==='A'?[m.b1,m.b2].sort().join('|'):[m.a1,m.a2].sort().join('|');
-    const winnerKey=m.winner==='A'?[m.a1,m.a2].sort().join('|'):[m.b1,m.b2].sort().join('|');
+    const loserKey=m.winner==='A'?paarKey(m.b1, m.b2):paarKey(m.a1, m.a2);
+    const winnerKey=m.winner==='A'?paarKey(m.a1, m.a2):paarKey(m.b1, m.b2);
     if(!teamLossStreaks[loserKey])teamLossStreaks[loserKey]={cur:0,best:0,ids:loserKey.split('|')};
     teamLossStreaks[loserKey].cur++;
     if(teamLossStreaks[loserKey].cur>teamLossStreaks[loserKey].best)teamLossStreaks[loserKey].best=teamLossStreaks[loserKey].cur;
@@ -817,7 +817,7 @@ function teamStatsFromMatches(ms){
   const T={};
   ms.forEach(m=>{
     [[m.a1,m.a2,m.winner==='A',m.score_a,m.score_b],[m.b1,m.b2,m.winner==='B',m.score_b,m.score_a]]
-    .forEach(([x,y,won,gf,ga])=>{const k=[x,y].sort().join('|');
+    .forEach(([x,y,won,gf,ga])=>{const k=paarKey(x, y);
       if(!T[k])T[k]={ids:[x,y].sort(),g:0,w:0,gf:0,ga:0};
       T[k].g++;if(won)T[k].w++;T[k].gf+=gf;T[k].ga+=ga;});
   });

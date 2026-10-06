@@ -4,13 +4,9 @@
 // ║  Erzeugt redaktionelle "Schlagzeilen" aus bestehenden Liga-Daten.     ║
 // ║  KEINE neuen Berechnungen — nur Interpretation existierender Caches.  ║
 // ║                                                                       ║
-// ║   §11.1  Story-Generator (alle Typen)                                 ║
-// ║   §11.2  Cache (versionsgebunden an matches.length + _cache.version)  ║
-// ║   §11.3  LocalStorage (Read-State, Ring-Buffer max 200)               ║
-// ║   §11.4  Header-Badge-Refresh                                         ║
-// ║   §11.5  Mini-Popup (newsPopover)                                     ║
-// ║   §11.6  Voller Feed mit Filter (newsFeedFull)                        ║
-// ║   §11.7  Story-Detail (newsDetail) — dynamisch je Typ                 ║
+// ║  Die Abschnitte §11.x verteilen sich auf 26- bis 31-…; welcher wo     ║
+// ║  liegt, steht in docs/anker.md (erzeugt, von Wächter 8 geprüft).      ║
+// ║  Die Regeln des Feeds stehen in docs/gesetze/C33-feed.md.             ║
 // ╚═══════════════════════════════════════════════════════════════════════╝
 
 // ─── §11.0 — Konstanten ──────────────────────────────────────────────
@@ -472,7 +468,7 @@ const AMBIENT_PAAR_COOLDOWN_DAYS = 30;
 // Auto-Sync-Intervall, damit neue Slots ohne Reload auftauchen (ms).
 const NEWS_AUTOSYNC_MS = 10 * 60 * 1000;
 
-// ─── §11.0b — Badge-Whitelist (v8.1) ─────────────────────────────────
+// ─── §11.0h — Badge-Whitelist (v8.1) ─────────────────────────────────
 // Nur seltene & besondere Badges erzeugen News. Common-Badges sind in der
 // Liga zu häufig und würden den Feed verstopfen ("Achievement-Spam").
 // Negative: nur die wirklich krassen (perfect_loss, mr_disaster, nemesis),

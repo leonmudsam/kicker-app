@@ -282,7 +282,7 @@ function _ambientShuffle(arr, rng){
 // dataRef?} aus ECHTEN Daten — oder null, wenn die Datenlage nicht reicht.
 // Icons sind bewusst auf die in NEWS_CATEGORIES bekannten beschränkt.
 function _ambientTemplatePool(now, pm, nameOf){
-  const stats = (typeof allPlayerStats === 'function') ? (allPlayerStats() || {}) : {};
+  const stats = allPlayerStats() || {};
   // Ein Fun Fact erzählt von der Liga, wie sie heute antritt [§C40]: ein
   // Ruheständler kommt nicht vor — auch nicht als Paar oder Partner.
   const aktiv = id => ligaAktiv(pm[id]);
@@ -464,7 +464,7 @@ function _ambientTemplatePool(now, pm, nameOf){
 
   // ── Rivalität: meistgespieltes Duell ──
   T.push({ key:'rivalry_most', make: () => {
-    const map = (typeof _ensureH2HMap === 'function') ? _ensureH2HMap() : null;
+    const map = _ensureH2HMap();
     if(!map || !map.size) return null;
     let best = null;
     for(const [k, e] of map){
@@ -484,7 +484,7 @@ function _ambientTemplatePool(now, pm, nameOf){
 
   // ── Rivalität: engste Bilanz (min. 4) ──
   T.push({ key:'rivalry_close', make: () => {
-    const map = (typeof _ensureH2HMap === 'function') ? _ensureH2HMap() : null;
+    const map = _ensureH2HMap();
     if(!map || !map.size) return null;
     let best = null;
     for(const [k, e] of map){
@@ -621,7 +621,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     if(matches.length < 12) return null;
     const wochen = {};
     for(const m of matches){
-      const d = new Date(m.created_at), tag = (d.getDay() + 6) % 7;
+      const d = new Date(m.created_at), tag = wochentagMo(d);
       const mo = new Date(d.getFullYear(), d.getMonth(), d.getDate() - tag);
       const k = tagKey(mo);
       if(!wochen[k]) wochen[k] = {n:0, von:mo};
@@ -662,7 +662,7 @@ function _ambientTemplatePool(now, pm, nameOf){
   }});
 
   // ══ Neue lebendige Fun Facts (v9.1) ══
-  const _gsim = () => (typeof getGlobalSim === 'function') ? (getGlobalSim() || {}) : {};
+  const _gsim = () => getGlobalSim() || {};
 
   // ── Fun Fact: Random Top-1 eines Awards/Rankings ──
   T.push({ key:'fun_award_leader', make: (rng) => {
@@ -1123,7 +1123,7 @@ function _ambientTemplatePool(now, pm, nameOf){
 
   // ── Persönlich: Lieblingsgegner (höchste Siegquote im direkten Duell) ──
   T.push({ key:'personal_favourite_opp', weight:2, make: (rng) => {
-    const map = (typeof _ensureH2HMap === 'function') ? _ensureH2HMap() : null;
+    const map = _ensureH2HMap();
     if(!map || !map.size) return null;
     const cands = [];
     for(const [k, e] of map){
@@ -1446,7 +1446,7 @@ function _ambientTemplatePool(now, pm, nameOf){
   }});
 
 
-  // ── Rückblicke mit festem Termin (§11.1c) ───────────────────────────
+  // ── §11.1c Rückblicke mit festem Termin ─────────────────────────────
   // Woche und Monat hat der Generator schon: der gestaffelte Montags-Block
   // [§11.1] und der season_recap beim Archivieren. Was fehlte, waren die
   // beiden langen Blicke — Monatshalbzeit und Jahreswechsel. Sie hängen

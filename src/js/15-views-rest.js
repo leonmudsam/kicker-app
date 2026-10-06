@@ -27,8 +27,8 @@ function vTeams(nurErgebnis=false){
     // Nach gesamtem Elo-Zuwachs (über alle Saisons hinweg)
     const gSim=getGlobalSim();
     sorted=[...T].sort((a,b)=>{
-      const keyA=[a.ids[0],a.ids[1]].sort().join('|');
-      const keyB=[b.ids[0],b.ids[1]].sort().join('|');
+      const keyA=paarKey(a.ids[0], a.ids[1]);
+      const keyB=paarKey(b.ids[0], b.ids[1]);
       const eloA=gSim.teamElo[keyA]||0;
       const eloB=gSim.teamElo[keyB]||0;
       return eloB-eloA || (b.w/b.g)-(a.w/a.g) || (b.gf-b.ga)-(a.gf-a.ga);
@@ -87,7 +87,7 @@ function vTeams(nurErgebnis=false){
   const zeile=(t,i,ohneRang)=>{
     const wr=Math.round(t.w/t.g*100);
     const gd=t.gf-t.ga;
-    const keyTeam=[t.ids[0],t.ids[1]].sort().join('|');
+    const keyTeam=paarKey(t.ids[0], t.ids[1]);
     
     // ═══ DYNAMISCHE HAUPTMETRIK BASIEREND AUF teamSort ═══
     // Grün und Rot heißen Richtung [§C25]: Tordifferenz und Elo-Zuwachs haben

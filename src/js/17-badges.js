@@ -16,7 +16,7 @@
 // Berechnet clientseitig aus der Match-Historie — kein DB-Umbau nötig.
 // Reihenfolge im Array = Anzeige-Reihenfolge im Badge-Sheet (Grid mit 2 Spalten).
 // Paare unten: jede Zeile hier = eine Zeile im 2-Spalten-Grid (links/rechts).
-// ⚑ HOTSPOT — BADGES-Array. Die vollständige Liste steht in CLAUDE.md §10.1;
+// ⚑ HOTSPOT — BADGES-Array. Die vollständige Liste steht in docs/erweitern.md §10.1;
 //   eine Auszeichnung hängt an mehr als dieser einen Datei:
 //   - Eintrag hier (mit ic/name/desc/count), Icon in §1.1
 //   - Eintrag in BADGE_RARITY (§7.2) — ohne ihn gilt still `common`, die
@@ -26,6 +26,7 @@
 //     Nachricht auslösen soll [§11.0c]
 //   - ggf. fire('badge_id') in getBadgeEarnedCache (§7.4) — sonst kein
 //     Match-Trigger / kein Achievement-Toast / kein Chip im Match-Review
+// ─── §7.1 Der Katalog der Auszeichnungen ─────────────────────────────
 const BADGES=[
   // ══ EINMALIGE BADGES (Karriere-Meilensteine) ══
   // Zeile 1 — Debütant, Stammgast
@@ -229,6 +230,7 @@ const BADGES=[
 // ⚑ Wer eine Klasse ändert, zieht RARITY_META.total nach — die Anzeige
 // „3 / 14" im Blatt zählt aus dieser Zahl, nicht aus dem Bucket.
 // ═════════════════════════════════════════════════════════════════════
+// ─── §7.2 Die Klassen ─────────────────────────────────────────────────
 // ⚑ HOTSPOT — BADGE_RARITY: ordnet jeder Badge-ID eine Rarity-Klasse zu.
 // MUSS alle IDs aus BADGES (§7.1) abdecken — fehlt eine, fliegt die Badge
 // aus der UI (kein Bucket, kein Icon-Wrapper).
@@ -425,7 +427,7 @@ function _seasonTeamOfBerechnet(sid){
     matchesInSeason(sid).forEach(m => {
       [[m.a1,m.a2],[m.b1,m.b2]].forEach(([x,y]) => {
         if(!x || !y) return;
-        const k = [x,y].sort().join('|');
+        const k = paarKey(x, y);
         spiele[k] = (spiele[k] || 0) + 1;
       });
     });
@@ -584,10 +586,40 @@ const _winnerCountsMemo = new WeakMap(); // msArray → { '<kind>_<curKey>': {pi
 // leitet sich daraus ab, und der Avatar-Ring (§13.7) fragt hier gezielt nach
 // dem Sieger EINER Periode — deshalb steht die Sieger-Ermittlung genau einmal
 // im Code und kann zwischen Zählung und Ring nicht auseinanderlaufen.
+// Wer einen Zeitraum gewinnt, an EINER Stelle. Die Regel stand viermal im
+// Code — hier, im Wochen- und im Tagesrückblick und im Feed —, und eine
+// Fassung verglich die Quote ohne die Toleranz der anderen.
+//   'tag'    mindestens 3 Siege; mehr Siege, dann mehr Elo am Tag
+//   'woche'  mindestens 5 Siege; höchste Quote (bis 0,001 gilt gleich),
+//            dann mehr Siege, dann mehr Elo
+//   'monat'  wie die Woche, mindestens 10 Siege
+// Liefert jeden, der die Mindestzahl erreicht, in dieser Reihenfolge, als
+// {id, wins, losses, eloDelta, wr}. Bei Gleichstand in allem bleibt die
+// Reihenfolge der ersten Partie, in der jemand auftaucht. `nurSichtbar`
+// lässt ausgeblendete Spieler weg; der Zähler der Auszeichnung fragt ohne.
+function _periodeRangliste(ms, regel, nurSichtbar){
+  const ps={};
+  ms.forEach(m=>[m.a1,m.a2,m.b1,m.b2].forEach(pid=>{
+    const s=ps[pid]||(ps[pid]={id:pid,wins:0,losses:0,eloDelta:0,wr:0});
+    const onA=(pid===m.a1||pid===m.a2);
+    if((onA&&m.winner==='A')||(!onA&&m.winner==='B')) s.wins++; else s.losses++;
+    s.eloDelta += (m.deltas && m.deltas[pid]) || 0;
+  }));
+  const minW = regel==='tag' ? 3 : regel==='woche' ? 5 : 10;
+  const pm = nurSichtbar ? pmap() : null;
+  return Object.values(ps)
+    .filter(s=>s.wins>=minW && (!pm || sichtbar(pm[s.id])))
+    .map(s=>{ s.wr=s.wins/((s.wins+s.losses)||1); return s; })
+    .sort(regel==='tag'
+      ? (a,b)=> b.wins!==a.wins ? b.wins-a.wins : b.eloDelta-a.eloDelta
+      : (a,b)=> Math.abs(a.wr-b.wr)>0.001 ? b.wr-a.wr
+             : a.wins!==b.wins ? b.wins-a.wins : b.eloDelta-a.eloDelta);
+}
+
 function _periodWinnerMap(allMs, kind){
   const now=new Date();
   let curKey;
-  if(kind==='week')       curKey=now.getFullYear()+'-W'+isoWeek(now);
+  if(kind==='week')       curKey=_wochenKey(now);
   else if(kind==='month') curKey=now.getFullYear()+'-'+now.getMonth();
   else                    curKey=''; // day: kein Ausschluss des laufenden Tages (wie bisher)
   let slot=_winnerCountsMemo.get(allMs);
@@ -601,8 +633,7 @@ function _periodWinnerMap(allMs, kind){
   allMs.forEach(m=>{
     let key;
     if(kind==='week'){
-      const d=new Date(m.created_at);
-      key=d.getFullYear()+'-W'+isoWeek(d);
+      key=_wochenKey(m.created_at);
     } else if(kind==='month'){
       const d=new Date(m.created_at);
       key=d.getFullYear()+'-'+d.getMonth();
@@ -613,45 +644,14 @@ function _periodWinnerMap(allMs, kind){
     buckets[key].push(m);
   });
 
+  // Nur der Erste bekommt die Auszeichnung — derselbe, den der Rückblick
+  // als Haupt-Sieger zeigt (`_periodeRangliste`).
+  const regel={day:'tag', week:'woche', month:'monat'}[kind];
   const winners={};
   Object.entries(buckets).forEach(([key,ms])=>{
     if(kind!=='day' && key===curKey)return; // laufende Woche/Monat noch offen
-    if(ms.length<2)return;                  // min. 2 Spiele im Zeitraum
-    const winsById={}, gamesById={}, eloById={};
-    ms.forEach(m=>[m.a1,m.a2,m.b1,m.b2].forEach(pid=>{
-      if(!winsById[pid])winsById[pid]=0;
-      if(!gamesById[pid])gamesById[pid]=0;
-      if(!eloById[pid])eloById[pid]=0;
-      gamesById[pid]++;
-      const onA=(pid===m.a1||pid===m.a2);
-      if((onA&&m.winner==='A')||(!onA&&m.winner==='B'))winsById[pid]++;
-      eloById[pid] += (m.deltas && m.deltas[pid]) || 0;
-    }));
-    let winner=null;
-    if(kind==='day'){
-      const maxW=Math.max(...Object.values(winsById));
-      if(maxW<3)return;
-      // Tiebreak: bei gleichen max-Siegen gewinnt höchstes eloDelta
-      const candidates=Object.keys(winsById).filter(pid=>winsById[pid]===maxW);
-      candidates.sort((a,b)=>eloById[b]-eloById[a]);
-      winner=candidates[0];
-    } else {
-      const minW=kind==='week'?5:10;
-      // ⚠ Tiebreak-Konsistenz zum Pop-Up (showPotwRecap):
-      // 1. Höchste Siegrate, dann 2. mehr absolute Siege, dann 3. höheres Elo-Delta.
-      // Nur DIESER Spieler bekommt das Badge — analog zum Pop-Up "mainPotwPlayerId".
-      const qual=Object.keys(winsById).filter(pid=>winsById[pid]>=minW);
-      if(!qual.length)return;
-      qual.sort((a,b)=>{
-        const wrA=winsById[a]/(gamesById[a]||1);
-        const wrB=winsById[b]/(gamesById[b]||1);
-        if(Math.abs(wrA-wrB)>0.001) return wrB-wrA;
-        if(winsById[a]!==winsById[b]) return winsById[b]-winsById[a];
-        return eloById[b]-eloById[a];
-      });
-      winner=qual[0];
-    }
-    if(winner!=null) winners[key]=winner;
+    const erster=_periodeRangliste(ms, regel, false)[0];
+    if(erster) winners[key]=erster.id;
   });
   slot[slotKey]=winners;
   return winners;
@@ -890,6 +890,13 @@ function countMrPerfect(id, matchSubset){
 // Karriere-Stat — sobald 5 erreicht, bleibt das Badge dauerhaft erreicht.
 // Counter ist deshalb max. 1 (entweder erreicht oder nicht).
 function countAllwetter(id, matchSubset){
+  return _allwetterTage(id, matchSubset).size >= 5 ? 1 : 0;
+}
+// Die Wochentage, an denen ein Spieler Player of the Day war. Auszeichnung
+// und Fortschritt im Popover lesen beide hier: das Popover zählte den Tag
+// selbst nach und ohne den Tiebreak über die Elo, und bei Gleichstand an
+// Siegen markierte es Wochentage, die die Auszeichnung nicht zählt.
+function _allwetterTage(id, matchSubset){
   const quelle = Array.isArray(matchSubset) ? matchSubset : matches;
   // „Player of the Day" gibt es genau einmal im Code: `_periodWinnerMap`
   // bestimmt den Sieger eines Tages, mit Tiebreak über das Elo-Delta. Hier
@@ -907,7 +914,7 @@ function countAllwetter(id, matchSubset){
     const [y, mo, d] = tag.split('-').map(Number);
     wochentage.add(new Date(y, mo - 1, d).getDay());
   }
-  return wochentage.size >= 5 ? 1 : 0;
+  return wochentage;
 }
 
 // Tag der Götter: 3 aufeinanderfolgende EIGENE Spieltage als POTD gewonnen.
@@ -937,11 +944,11 @@ function countGodlyStreak(id, matchSubset){
   return count;
 }
 
+// Die Länge allein; die Rechnung steht einmal, in longestPlayerStreakInfo.
+// `longestStreaks` im Awards-Tab bleibt eine eigene Rechnung über alle
+// Spieler zugleich, und tests/tafel hält beide aneinander [§C27].
 function longestPlayerStreak(id,ms){
-  const ordered=matchesOfPlayer(id,ms);
-  let cur=0,best=0;
-  ordered.forEach(m=>{if(won(id,m)){cur++;if(cur>best)best=cur;}else cur=0;});
-  return best;
+  return longestPlayerStreakInfo(id,ms).best;
 }
 // Erweiterte Variante: liefert auch das Datum des Match, das die längste
 // Siegesserie abgeschlossen hat (also den Peak-Match). Bei mehreren Serien
@@ -1187,6 +1194,7 @@ function computeBadges(id, matchSubset, bisMs){
   return result;
 }
 
+// ─── §7.4 Wer in welcher Partie was geholt hat ────────────────────────
 // Ermittelt welche Badges durch ein bestimmtes Match NEU freigeschaltet / erneut erreicht wurden
 function getBadgeEarnedCache(){
   const key='badgeEarned_'+matches.length+'_'+_cache.version;

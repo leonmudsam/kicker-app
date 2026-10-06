@@ -6959,7 +6959,7 @@ const _formen = JSON.parse(K.eval(`JSON.stringify((function(){
     // Der Satz wiederholt nicht, was die Zeichnung zeigt: keine Siegchance
     // vor dem Anstoß, kein Elo-Gewinn — außer bei Zwei Welten, deren
     // Zeichnung die Elo VORHER zeigt.
-    const satz = (_spFormText(m) || {}).d || '';
+    const satz = ((x => _spIstFeld(x) ? SP_FORM[_spForm(x).key].text(_spFakten(x), _spForm(x).x) : null)(m) || {}).d || '';
     if(/Siegchance/.test(satz) || (w.key !== 'gefaelle' && /bringt der Sieg/.test(satz))) falsch.push(m.id + ' Satz wiederholt ' + w.key);
     if(w.key === 'mosaik' && !(hoch === 10 && hoch - tief >= 2 && hoch - tief <= 3)) falsch.push(m.id + ' Mosaik ' + hoch + ':' + tief);
     if(w.key === 'tacho' && !(_spChance(m) >= 0.62 && hoch - tief < 6)) falsch.push(m.id + ' Tacho');
@@ -6993,10 +6993,10 @@ const _formen = JSON.parse(K.eval(`JSON.stringify((function(){
   // was danach gespielt wurde, ergibt dieselbe Form und dieselbe Zeile.
   const alle = matches, stich = feld.filter((m, k) => k % Math.max(1, Math.floor(feld.length / 10)) === 3).slice(0, 10);
   const wackelt = [];
-  const voll = stich.map(m => ({id:m.id, k:_spForm(m).key, t:(_spFormText(m) || {}).t}));
+  const voll = stich.map(m => ({id:m.id, k:_spForm(m).key, t:((x => _spIstFeld(x) ? SP_FORM[_spForm(x).key].text(_spFakten(x), _spForm(x).x) : null)(m) || {}).t}));
   stich.forEach((m, k) => {
     matches = alle.filter(y => mts(y) <= mts(m)); invalidateCache();
-    const mm = matches.find(y => y.id === m.id), jetzt = {k:_spForm(mm).key, t:(_spFormText(mm) || {}).t};
+    const mm = matches.find(y => y.id === m.id), jetzt = {k:_spForm(mm).key, t:((x => _spIstFeld(x) ? SP_FORM[_spForm(x).key].text(_spFakten(x), _spForm(x).x) : null)(mm) || {}).t};
     if(jetzt.k !== voll[k].k || jetzt.t !== voll[k].t) wackelt.push(m.id + ' ' + voll[k].k + '→' + jetzt.k);
   });
   matches = alle; invalidateCache();

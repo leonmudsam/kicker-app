@@ -6,7 +6,7 @@
 // bleibt tagelang offen; das ist Mobilfunk und Akku für nichts.
 // Dafür wird beim Zurückkommen SOFORT geholt: wer die App wieder ansieht,
 // will den Stand von jetzt, nicht den in bis zu dreißig Sekunden.
-// Dieselbe Regel befolgt der News-Autosync schon [§9.6].
+// Dieselbe Regel befolgt der News-Autosync schon [§11.9].
 function _tickDaten(){
   if(document.hidden) return;
   // Ein offenes Blatt und der Eingabe-Tab werden nicht unter den Fingern

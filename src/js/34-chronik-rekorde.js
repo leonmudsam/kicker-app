@@ -344,8 +344,7 @@ function _chronicleCtx(bisMs){
     [m.a1, m.a2, m.b1, m.b2].forEach(x => { if(x) runVor[x] = run[x] || 0; });
     // Der Wochenschluessel muss EXAKT der aus `_periodWinnerMap` sein, sonst
     // zaehlen Zaehler (Titel) und Nenner (Wochen) ueber verschiedene Wochen.
-    const _wd = new Date(m.created_at);
-    const wkey = _wd.getFullYear() + '-W' + isoWeek(_wd);
+    const wkey = _wochenKey(m.created_at);
     const sid = (seasonOf(m.created_at) || {}).id;
     if(sid) allSeasons.add(sid);
     const ids = [m.a1, m.a2, m.b1, m.b2];

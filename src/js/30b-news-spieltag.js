@@ -1124,15 +1124,10 @@ function _spForm(m){
   // bekommt sie die schwerste Form, ohne die Kette zu verschieben.
   return FB.wahl.get(m.id) || _spFormKand(m)[0];
 }
-// Schlagzeile und Satz einer gewöhnlichen Partie, oder null.
-function _spFormText(m){
-  if(!_spIstFeld(m)) return null;
-  const w = _spForm(m);
-  return SP_FORM[w.key].text(_spFakten(m), w.x);
-}
-// Neue V2-Karten formulieren die Partie aus derselben Score-Wahl, die sie
-// anschliessend zeichnen. `_spFormText` bleibt fuer historische V1-Snapshots
-// und deren alte Formkette bestehen.
+// Schlagzeile und Satz einer gewöhnlichen Partie, oder null. Neue V2-Karten
+// formulieren die Partie aus derselben Score-Wahl, die sie anschliessend
+// zeichnen. Der Text einer gespeicherten Karte steht in der Karte; die alte
+// Formkette (`_spForm`) zeichnet nur noch das Bild historischer V1-Karten.
 function _spScoreText(m){
   if(!_spIstFeld(m)) return null;
   const w = _spScoreWahl(m);
@@ -1593,7 +1588,7 @@ function _newsRundeStory(r, ende){
   const top = spieler[0];
   const vorn = spieler.filter(x => x.w === top.w).map(x => x.id);
   const n = ms.length;
-  const paarungen = new Set(ms.map(m => [[m.a1, m.a2].sort().join('+'), [m.b1, m.b2].sort().join('+')].sort().join('|'))).size;
+  const paarungen = new Set(ms.map(m => paarKey([m.a1, m.a2].sort().join('+'), [m.b1, m.b2].sort().join('+')))).size;
   // Die Schlagzeile nennt, wer die Runde gewonnen hat. Spielen immer
   // dieselben zwei Teams, ist es ein Duell und kein Turnier: dann gewinnt
   // ein Team oder beide trennen sich. Wechseln die Paarungen und steht

@@ -551,7 +551,7 @@ function ligaPosition(pid){
 
 /* ==INS-GRAFIK-START== */
 
-// ─── §13.9 Das Zeichen ────────────────────────────────────────────────
+// ─── §13.9b Das Zeichen ────────────────────────────────────────────────
 //     SIEBEN STUFEN, SIEBEN GEGENSTÄNDE, je drei Grade — einundzwanzig
 //     Zeichnungen nach der Vorlage (35a-insignium-zeichen.js). Die Stufe wechselt
 //     den Gegenstand, der Grad baut ihn aus [§C30]. Oben trägt jedes Zeichen

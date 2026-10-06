@@ -6,14 +6,20 @@ const path=require('node:path');
 const chromium=require('../tests/browser.js').ladeChromium();
 if(!chromium) throw new Error('Die Messung benötigt den vorhandenen Chromium-Testbrowser.');
 const root=path.resolve(__dirname,'..');
-const html=fs.readFileSync(require('../tests/ziel.js'),'utf8');
-const blocks=[...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)].map(m=>m[1]).sort((a,b)=>b.length-a.length);
-let code=blocks[0].replace(/loadAll\(\);\s*\ncheckForUpdate\(\);/,'/* Messstand ohne Boot-Abfragen */');
-const end=code.lastIndexOf('})();');
-code=code.slice(0,end)+'\nwindow.__perfEval=s=>eval(s);\n'+code.slice(end);
-const head=html.slice(0,html.indexOf('</head>')).replace(/<!--[\s\S]*?-->/g,'');
-const styles=(head.match(/<style[^>]*>[\s\S]*?<\/style>/gi)||[]).join('\n');
-const body=html.slice(html.indexOf('<body'),html.indexOf('<script',html.indexOf('<body')));
+// Die App-Datei zerlegen: der größte Inline-Script-Block ist die IIFE, ohne
+// die Boot-Abfragen und mit einem Einstieg zum Auswerten. tools/golden.mjs
+// zerlegt damit zwei Fassungen nebeneinander, deshalb eine Funktion.
+function zerlegen(html){
+  const blocks=[...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)].map(m=>m[1]).sort((a,b)=>b.length-a.length);
+  let code=blocks[0].replace(/loadAll\(\);\s*\ncheckForUpdate\(\);/,'/* Messstand ohne Boot-Abfragen */');
+  const end=code.lastIndexOf('})();');
+  code=code.slice(0,end)+'\nwindow.__perfEval=s=>eval(s);\n'+code.slice(end);
+  const head=html.slice(0,html.indexOf('</head>')).replace(/<!--[\s\S]*?-->/g,'');
+  const styles=(head.match(/<style[^>]*>[\s\S]*?<\/style>/gi)||[]).join('\n');
+  const body=html.slice(html.indexOf('<body'),html.indexOf('<script',html.indexOf('<body')));
+  return {code,styles,body};
+}
+const {code,styles,body}=zerlegen(fs.readFileSync(require('../tests/ziel.js'),'utf8'));
 const names=['Alex','Anton','Henry','Jane','Jannik','Johannes','Julian','Leo','Leon','Martin','Maxi','Stefan'];
 const ids=names.map((_,i)=>'00000000-0000-4000-8000-'+String(i).padStart(12,'0'));
 const data=fs.readFileSync(path.join(root,'tests/fixtures/matches.txt'),'utf8').trim().split(';').map((row,i)=>{
@@ -23,14 +29,15 @@ const data=fs.readFileSync(path.join(root,'tests/fixtures/matches.txt'),'utf8').
 });
 const players=names.map((name,i)=>({id:ids[i],name,hidden:false,elo:0,atk:.5,avatar_id:null}));
 const seasons=['05','06','07'].map(m=>({id:'2026-'+m,start_date:`2026-${m}-01`,end_date:`2026-${m}-31`}));
-const boot=`(() => {
+const bootFuer=jetzt=>`(() => {
   const stub=()=>new Proxy(function(){},{get(_,p){return p==='then'?undefined:stub()},apply(){return stub()}});
   window.supabase={createClient:()=>({from:()=>stub(),channel:()=>stub(),rpc:()=>stub(),removeChannel(){}})};
   window.fetch=()=>new Promise(()=>{}); window.setInterval=()=>0;
-  const RD=Date;window.__perfJetzt=new RD(2026,7,26,21).getTime();
+  const RD=Date;window.__perfJetzt=${jetzt};
   window.Date=class extends RD{constructor(...a){a.length?super(...a):super(window.__perfJetzt)}static now(){return window.__perfJetzt}};
 })();`;
-const setup=`
+const JETZT=new Date(2026,7,26,21).getTime();
+const setupFuer=(players,data,seasons)=>`
   players=${JSON.stringify(players)}; matches=${JSON.stringify(data)}; seasons=${JSON.stringify(seasons)};
   invalidateCache();
   const delta=new Map(simulateEloWithSliders(matches).history.map(h=>[h.matchId,h.deltas]));
@@ -42,6 +49,7 @@ const setup=`
   });
   invalidateCache();
 `;
+const setup=setupFuer(players,data,seasons);
 const cases=[
   ['Liga',`tab='ranking';period='season';rankMetric='elo';`,'render()'],
   ['Positionen',`tab='positions';rankMetric='atk';`,'render()'],
@@ -52,16 +60,23 @@ const cases=[
   ['News',`_cache._stories=_buildStories();_cache._consolFrom=null;_cache._frischVon=null;`,'openNewsFeed()']
 ];
 const median=values=>values.sort((a,b)=>a-b)[Math.floor(values.length/2)];
-async function createHarness({cpu=1}={}){
+// Ohne Optionen ist das der Messstand von jeher. tools/golden.mjs setzt
+// Datei, Zeitpunkt, Zeitzone, Daten und einen Vorspann (die Attrappe mit
+// Schreibprotokoll), damit zwei Fassungen unter gleichen Bedingungen laufen.
+async function createHarness({cpu=1,html=null,jetzt=JETZT,kontext={},vorApp='',daten=null}={}){
   if(!Number.isFinite(cpu) || cpu<1 || cpu>20) throw new Error('CPU-Faktor muss zwischen 1 und 20 liegen.');
+  const teile=html?zerlegen(html):{code,styles,body};
   const browser=await chromium.launch();
   try{
-    const page=await browser.newPage({viewport:{width:390,height:844}});
+    const ctx=await browser.newContext({viewport:{width:390,height:844},...kontext});
+    const page=await ctx.newPage();
     const errors=[];page.on('pageerror',e=>errors.push(e.message));
-    await page.setContent('<!doctype html><html><head><meta charset="utf-8">'+styles+'</head>'+body+'</html>');
-    await page.addScriptTag({content:boot});await page.addScriptTag({content:code});
+    await page.setContent('<!doctype html><html><head><meta charset="utf-8">'+teile.styles+'</head>'+teile.body+'</html>');
+    await page.addScriptTag({content:bootFuer(jetzt)});
+    if(vorApp) await page.addScriptTag({content:vorApp});
+    await page.addScriptTag({content:teile.code});
     const K=s=>page.evaluate(s=>window.__perfEval(s),s);
-    await K(setup);
+    await K(daten?setupFuer(daten.players,daten.matches,daten.seasons):setup);
     if(cpu!==1){
       const cdp=await page.context().newCDPSession(page);
       await cdp.send('Emulation.setCPUThrottlingRate',{rate:cpu});
@@ -69,7 +84,7 @@ async function createHarness({cpu=1}={}){
     return {browser,page,K,errors};
   }catch(e){await browser.close();throw e;}
 }
-module.exports={createHarness};
+module.exports={createHarness,fixtures:{players,matches:data,seasons,ids,names}};
 if(require.main===module) (async()=>{
   const cpu=Number((process.argv.find(a=>a.startsWith('--cpu='))||'--cpu=1').slice(6));
   const {browser,page,K,errors}=await createHarness({cpu});

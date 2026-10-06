@@ -191,3 +191,27 @@ function allPastSeasons(){
 
 let seasons=[];  // geladene Saison-Ergebnisse aus DB
 let _histPage = 0; // Aktuelle Seite für den Verlaufs-Tab (Lazy Loading)
+
+// Beschriftung und Auswahl der Zeiträume im Awards-Reiter. Sie standen in
+// der Zeichen-Bibliothek, weil sie dort zuerst gebraucht wurden.
+function awPeriodLabel(){
+  if(awPeriod==='season') return seasonLabel(awSeasonId||currentSeason().id);
+  if(awPeriod==='week'){
+    if(awWeekStart){
+      const start=new Date(awWeekStart); start.setHours(0,0,0,0);
+      const end=new Date(start); end.setDate(end.getDate()+6);
+      return 'KW '+isoWeek(start)+' · '+datumFmt(start, 'tm')+'–'+datumFmt(end, 'tm');
+    }
+    return periodLabel('week');
+  }
+  return 'Gesamte Liga';
+}
+// Alle verfügbaren Saisons (vergangene + aktuelle), neueste zuerst
+function availableSeasons(){
+  // .slice() ist Pflicht: allPastSeasons() liefert das gecachte Array; ein
+  // .reverse() darauf hätte den Cache dauerhaft verdreht und damit jede
+  // andere Ansicht, die auf die aufsteigende Reihenfolge baut (Chronik!).
+  const past=allPastSeasons().slice().reverse(); // neueste zuerst
+  const cur=currentSeason().id;
+  return [cur,...past];
+}
