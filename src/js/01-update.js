@@ -1,33 +1,62 @@
 // ╔═══ §0.2 ─── BUILD-VERSION & UPDATE-CHECK ───────────────────────────╗
-//     Bumpe BUILD_VERSION bei jedem Deploy. Banner zeigt sich, wenn ein
-//     remote-gefetchtes index.html eine neuere Version trägt.
+//     Die Version vergibt `tools/build.mjs` als Datum und Hash über den
+//     ausgelieferten Inhalt. Der Hintergrund-Check holt die index.html mit
+//     Cache-Bust und zeigt ein Banner, wenn sie eine andere Version trägt.
 // ╚═════════════════════════════════════════════════════════════════════════╝
-// Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
-// Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
-// Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
 const BUILD_VERSION='2026.08.28.1';
+// Neu laden mit Cache-Bust: der Banner und der Knopf in den Einstellungen
+// brechen damit den Seitencache von iOS-PWA und Browser.
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
   // replace statt assign damit der alte Eintrag nicht in der History bleibt
   location.replace(u.toString());
 }
-// v9.15 PERF: Update-Check per Conditional Request. Vorher wurde alle 5 Min
-// die komplette index.html (~800 KB) heruntergeladen, nur um BUILD_VERSION zu
-// vergleichen (~9,6 MB/h auf Mobilgeräten). Mit If-None-Match antwortet der
-// Server (GitHub Pages sendet ETags) bei unverändertem File mit 304 ohne Body.
-// Ohne ETag-Support degradiert das automatisch zum alten Verhalten (200-Pfad).
-let _updEtag=null;
+// Update-Check per Conditional Request: mit If-None-Match antwortet GitHub
+// Pages bei unveränderter Datei mit 304 ohne Body. Ohne ETag degradiert das
+// zum vollen Abruf.
+//
+// Der ETag lebte nur im Speicher. Jeder Start begann deshalb ohne und lud die
+// ganze Seite (1,7 MB, ohne Kompression gerechnet) erneut herunter — genau in
+// dem Moment, in dem auch die vier Datenabfragen laufen. Er steht jetzt mit
+// der Version, zu der er gehört, im Speicher des Geräts: nur wenn diese
+// Version die laufende ist, gilt er. Sonst hätte ein Gerät, das den Banner
+// gesehen und nicht neu geladen hat, beim nächsten Start ein 304 auf die neue
+// Fassung bekommen und den Banner nie wieder gesehen.
+const UPD_LS = 'kicker_upd_v1';
+let _updEtag=(()=>{
+  try{
+    const s=JSON.parse(localStorage.getItem(UPD_LS)||'null');
+    return s && s.version===BUILD_VERSION && s.etag ? s.etag : null;
+  }catch(e){ return null; }
+})();
+// Der erste Check wartet, bis der erste Datenlauf gezeichnet hat und die
+// Seite ruht: er ist nie eilig, die Rangliste schon.
+let _updErster=true;
 async function checkForUpdate(){
   try{
+    if(_updErster){
+      _updErster=false;
+      try{ if(_loadAllPromise) await _loadAllPromise; }catch(e){}
+      await _leerlauf(3000);
+    }
     const url=location.pathname+'?_cb='+Date.now();
     const r=await fetch(url,{cache:'no-store',headers:_updEtag?{'If-None-Match':_updEtag}:{}});
     if(r.status===304)return; // unverändert — kein Body übertragen
     if(!r.ok)return;
-    _updEtag=r.headers.get('ETag');
+    const etag=r.headers.get('ETag');
     const text=await r.text();
     const m=text.match(/const BUILD_VERSION=['"]([^'"]+)['"]/);
-    if(!m||!m[1]||m[1]===BUILD_VERSION)return;
+    if(!m||!m[1])return;
+    // In dieser Sitzung gilt jeder ETag: auch nach dem Banner soll der
+    // Fünf-Minuten-Takt nicht jedes Mal die ganze Seite holen. Für den
+    // nächsten Start gemerkt wird aber nur der eigene — der einer neuen
+    // Fassung gilt erst, wenn sie läuft.
+    _updEtag=etag;
+    if(m[1]===BUILD_VERSION){
+      try{ if(etag) localStorage.setItem(UPD_LS, JSON.stringify({etag, version:BUILD_VERSION})); }catch(e){}
+      return;
+    }
     if(document.getElementById('updateBanner'))return;
     const b=document.createElement('div');
     b.id='updateBanner';

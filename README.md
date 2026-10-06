@@ -11,7 +11,7 @@ Supabase.
 node tools/build.mjs            # src/ → dist/index.html
 cp dist/index.html index.html   # die ausgelieferte Datei, mitversioniert
 node tools/check.mjs            # acht Wächter
-node tests/run.mjs              # neunzehn Suiten (zwölf brauchen Chromium)
+node tests/run.mjs              # zwanzig Suiten (dreizehn brauchen Chromium)
 ```
 
 `index.html` ist ein Bauergebnis und wird nie von Hand bearbeitet. Der

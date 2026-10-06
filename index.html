@@ -5539,23 +5539,40 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.06.d079db4d';
+const BUILD_VERSION='2026.10.06.ce38b1fe';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
   location.replace(u.toString());
 }
-let _updEtag=null;
+const UPD_LS = 'kicker_upd_v1';
+let _updEtag=(()=>{
+  try{
+    const s=JSON.parse(localStorage.getItem(UPD_LS)||'null');
+    return s && s.version===BUILD_VERSION && s.etag ? s.etag : null;
+  }catch(e){ return null; }
+})();
+let _updErster=true;
 async function checkForUpdate(){
   try{
+    if(_updErster){
+      _updErster=false;
+      try{ if(_loadAllPromise) await _loadAllPromise; }catch(e){}
+      await _leerlauf(3000);
+    }
     const url=location.pathname+'?_cb='+Date.now();
     const r=await fetch(url,{cache:'no-store',headers:_updEtag?{'If-None-Match':_updEtag}:{}});
     if(r.status===304)return;
     if(!r.ok)return;
-    _updEtag=r.headers.get('ETag');
+    const etag=r.headers.get('ETag');
     const text=await r.text();
     const m=text.match(/const BUILD_VERSION=['"]([^'"]+)['"]/);
-    if(!m||!m[1]||m[1]===BUILD_VERSION)return;
+    if(!m||!m[1])return;
+    _updEtag=etag;
+    if(m[1]===BUILD_VERSION){
+      try{ if(etag) localStorage.setItem(UPD_LS, JSON.stringify({etag, version:BUILD_VERSION})); }catch(e){}
+      return;
+    }
     if(document.getElementById('updateBanner'))return;
     const b=document.createElement('div');
     b.id='updateBanner';

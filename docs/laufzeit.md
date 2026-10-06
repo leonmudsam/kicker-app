@@ -250,6 +250,13 @@ Spieler und alle Partien; das im Hintergrund zu tun ist Mobilfunk und Akku
 für nichts, und ein PWA-Symbol bleibt tagelang offen. Der News-Autosync
 (`29-news-cache.js`) befolgt dieselbe Regel seit jeher.
 
+Der Update-Check (`checkForUpdate`, `01-update.js`) fragt mit
+`If-None-Match`; der ETag steht mit der Version, zu der er gehört, im Speicher
+des Geräts (`kicker_upd_v1`) und gilt nur, solange diese Version läuft. Ohne
+ihn lud jeder Start die ganze Seite erneut — neben den vier Datenabfragen.
+Der erste Check des Starts wartet, bis der erste Datenlauf gezeichnet hat und
+die Seite ruht. `tests/start` misst beides am echten Start.
+
 `loadAll` hält höchstens einen Durchlauf offen (`_loadAllPromise`). Weitere
 explizite Anforderungen setzen `_loadAllNochmals` und erhalten dieselbe Promise, die
 erst nach dem frischen Folgedurchlauf erfüllt ist. Nach jedem abgeschlossenen
