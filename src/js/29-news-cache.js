@@ -1625,119 +1625,15 @@ function _consolidateStoriesLegacy(list){
   // der Generator (PER_PLAYER_LIMIT und NEBENROLLEN_LIMIT, §11.1), und die
   // Reihenfolge ist wieder die Zeit. Gemessen steht danach kein Spieler auf
   // mehr als einem Drittel der Karten, und jeder gewertete Spieler kommt vor.
-  // ── Ein Tag trägt so viele Karten, wie man an einem Tag liest ──────
-  // Gemessen trug ein Spieltag neun Karten: zwei Sammelkarten, zwei Serien,
-  // zwei Auszeichnungen, den Spieler des Tages, den Elo-Ausschlag und einen
-  // Serienbrecher. Das ist keine Tafel mehr, das ist ein Protokoll. Der Tag
-  // behält seine stärksten `NEWS_LIMITS.proTag` — gemessen an `prio`, der
-  // Reihenfolge, die der Generator ohnehin vergibt und nach der auch die
-  // Sammelkarte ihren Kopf wählt [§C27].
-  //
-  // Breaking zählt nicht mit: es ist das Seltenste und darf nie an einem
-  // Deckel scheitern. Und die Reihenfolge bleibt die Zeit — gedeckelt wird,
-  // was wegfällt, nicht wo etwas steht.
-  // Was es je Tag, Woche oder Monat genau einmal gibt, fällt nie unter den
-  // Deckel: der Spieler des Tages IST die Schlagzeile seines Spieltags, und
-  // ein Tag ohne seinen Sieger hat keine Zusammenfassung mehr. Gemessen fiel
-  // er an einem Tag mit neun Karten als siebtstärkste heraus, während zwei
-  // Auszeichnungen und eine laufende Serie darüber standen. Dieselbe Menge
-  // ist schon vom Deckel je Sorte ausgenommen — sie steht deshalb weiter oben.
-  const _proTagKey = s => tagKey(s.when);
-  const _tagRang = {};
-  entzerrt.forEach(s => {
-    const k = _proTagKey(s);
-    (_tagRang[k] = _tagRang[k] || []).push(s);
-  });
-  const _istTafelKarte = s => !!s && (s.cat === 'tafel'
-    || (s.dataRef || {}).quelle === 'tafel' || (s.dataRef || {}).quelle === 'form');
-  // ── Die Mischung gehört dem Tag ────────────────────────────────────
-  // Sie war eine Quote über das ganze Fenster: mindestens 40 % Ewige Tafel,
-  // gerechnet über vierzehn Tage und erfüllt, indem SPIELTAGSKARTEN wegfielen.
-  // Gemessen schnitt das den Feed von 42 auf 23 Karten und leerte zwei von
-  // sieben Spieltagen vollständig — der 24.08. hatte vierzehn Meldungen und
-  // im Feed keine einzige Karte. Eine Quote, die man erfüllt, indem man die
-  // andere Hälfte löscht, hebt die Tafel auch nicht: sie blieb bei vier
-  // Karten, nur stand daneben nichts mehr.
-  //
-  // Der Tag ist die Einheit, weil er auch die Gliederung der Tafel ist: unter
-  // jedem Tageskopf stehen `proTag` Plätze, und zwei davon sind reserviert —
-  // einer für die Ewige Tafel, einer für eine Geschichte, deren Partie die
-  // Karte zeigen kann. Gibt es das an diesem Tag nicht, bleibt der Platz beim
-  // Nächststarken. Damit hängt die Auswahl eines Tages nur noch an diesem Tag:
-  // ein neuer Spieltag verschiebt nicht mehr, was vorgestern zu sehen war.
-  const _behalten = new Set();
-  // ── Der Deckel zaehlt nur, was er auch wegnehmen kann ─────────────
-  // „Breaking zaehlt nicht mit" und „was es je Tag genau einmal gibt, faellt
-  // nie darunter" stand als Regel da — umgesetzt war nur die Haelfte davon:
-  // beide waren vor dem VERDRAENGEN geschuetzt, besetzten aber trotzdem
-  // einen Platz, obwohl der Feed sie ohnehin durchlaesst.
-  //
-  // Und eine PARTIE zaehlt gar nicht mehr mit. Sie ist keine Auswahl: sie
-  // wurde gespielt. Gemessen kamen von 52 Partien des Fensters 18 in einer
-  // sichtbaren Karte vor, weil der Deckel die uebrigen wegnahm — wer am Abend
-  // nachliest, erfuhr von zwei Dritteln der Spiele nichts. Eine Karte je
-  // Partie IST der Deckel des Spieltags; gedeckelt wird nur noch, was ueber
-  // den Partien liegt und von gestern schon gelten koennte.
-  // ── Eine Tagessumme steht am Ende des Tages und zaehlt nicht mit ───
-  // „Harter Tag fuer X" ist der Gegenpart zum Sieger des Tages: es gibt sie
-  // je Tag einmal, sie fasst den ganzen Tag zusammen, und sie traegt deshalb
-  // 23:58 — die Uhrzeit, zu der der Tag zu ist, nicht die der Partie, die sie
-  // ausgeloest hat. Seit der Deckel seine Plaetze von vorn vergibt, verliert
-  // eine solche Karte immer: gemessen stand sie nach der vierten Partie des
-  // 26.08. im Feed und fiel nach der fuenften heraus, weil inzwischen vier
-  // Karten mit frueherer Uhrzeit dazugekommen waren. Eine Wiederholung kann
-  // sie nicht sein, also nimmt sie niemandem etwas weg.
-  // Die Runde der Vier steht am Ende ihrer Runde und fasst sie zusammen
-  // [§11.6c]: dieselbe Lage, und sie nimmt dem Tag keinen Platz.
-  const TAG_SUMME = new Set(['elo_swing', 'runde']);
-  const _zaehltGegenDeckel = s => {
-    const t = (s && s.dataRef || {}).type;
-    if(TAG_PFLICHT.has(t) || TAG_SUMME.has(t)) return false;
-    if(_istPartie(s)) return false;
-    try { if(_isBreaking(s)) return false; } catch(e){}
-    return true;
-  };
-  // ── Die Plaetze werden in der Reihenfolge der Zeit vergeben ────────
-  // Vergeben wurden sie nach `prio`, und damit hing die Auswahl eines Tages
-  // an seinem Ende: wer nach der ersten Partie im Feed stand, fiel nach der
-  // vierten heraus, weil inzwischen eine staerkere Karte dazugekommen war.
-  // Gemessen ersetzte der 26.08. so nach fast jeder Partie eine Meldung —
-  // wer mittags gelesen hatte, fand abends etwas anderes vor. Eine Nachricht
-  // gehoert ihrem Zeitpunkt, also bekommt sie ihren Platz in dem Moment, in
-  // dem sie entsteht, und behaelt ihn: entschieden wird nur gegen das, was
-  // VOR ihr dastand.
-  //
-  // Der Platz der Ewigen Tafel ist deshalb kein Tausch mehr, sondern ein
-  // eigener: die erste Tafel-Karte eines Tages zaehlt nicht gegen den Deckel.
-  // Getauscht wurde vorher die schwaechste Karte heraus, und wenn die Tafel
-  // erst am Nachmittag kam, traf das eine Karte, die seit dem Vormittag im
-  // Feed stand. Reserviert und ungenutzt waere der Platz an einem Tag ohne
-  // Tafel dagegen verschenkt — der Tag trug dann drei statt vier Karten.
-  // Die erste ist chronologisch die erste: spaeter kann keine davorrutschen.
-  const _tafelSoll = NEWS_LIMITS.tafelProTagMin || 0;
-  Object.keys(_tagRang).forEach(k => {
-    const rang = _tagRang[k].slice()
-      .sort((a, b) => new Date(a.when) - new Date(b.when));
-    const frei = new Set(rang.filter(_istTafelKarte).slice(0, _tafelSoll).map(s => s.id));
-    frei.forEach(id => _behalten.add(id));
-    let belegt = 0;
-    rang.filter(_zaehltGegenDeckel).forEach(s => {
-      if(frei.has(s.id)) return;
-      if(belegt >= NEWS_LIMITS.proTag) return;
-      belegt++;
-      _behalten.add(s.id);
-    });
-  });
-  // Veröffentlichte Stories werden nie durch ein Tageskontingent entfernt.
-  // Die Menge wird nur noch durch verlustfreie Sammelkarten verdichtet.
-  entzerrt.forEach(s => _behalten.add(s.id));
-  const fertig = entzerrt.filter(s => {
-    if(_behalten.has(s.id)) return true;
-    if(TAG_PFLICHT.has((s.dataRef || {}).type)) return true;
-    if(TAG_SUMME.has((s.dataRef || {}).type)) return true;
-    if(_istPartie(s)) return true;
-    try { return _isBreaking(s); } catch(e){ return false; }
-  });
+  // Ein Tagesdeckel stand hier: vier Karten je Tag, die Ewige Tafel mit
+  // eigenem Platz, Partien, Breaking und Pflichtkarten ausgenommen. Seit
+  // dem Snapshot-Vertrag [§C33] nimmt kein Kontingent eine veröffentlichte
+  // Story mehr weg, und die Rechnung lief ins Leere: sie bestimmte, was
+  // bleibt, und danach blieb alles. Die Gründe für den Deckel stehen in der
+  // Herleitung von docs/gesetze/C33-feed.md. `NEWS_LIMITS.proTag` und
+  // `tafelProTagMin` liest die App seitdem nicht mehr; tests/ambient misst
+  // daran weiter, wie voll ein Spieltag im Feed steht.
+  const fertig = entzerrt;
 
   // Kein Spieltag ohne Karte. Der Deckel je Sorte, der Vergleich der
   // Schlagzeilen und die Sperrfrist raeumen vor dieser Stelle auf, und

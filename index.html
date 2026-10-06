@@ -5539,7 +5539,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.06.d2f26e0d';
+const BUILD_VERSION='2026.10.06.d079db4d';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -21174,45 +21174,7 @@ function _consolidateStoriesLegacy(list){
     : behalten;
   const entzerrt = entdoppelt;
 
-  const _proTagKey = s => tagKey(s.when);
-  const _tagRang = {};
-  entzerrt.forEach(s => {
-    const k = _proTagKey(s);
-    (_tagRang[k] = _tagRang[k] || []).push(s);
-  });
-  const _istTafelKarte = s => !!s && (s.cat === 'tafel'
-    || (s.dataRef || {}).quelle === 'tafel' || (s.dataRef || {}).quelle === 'form');
-  const _behalten = new Set();
-  const TAG_SUMME = new Set(['elo_swing', 'runde']);
-  const _zaehltGegenDeckel = s => {
-    const t = (s && s.dataRef || {}).type;
-    if(TAG_PFLICHT.has(t) || TAG_SUMME.has(t)) return false;
-    if(_istPartie(s)) return false;
-    try { if(_isBreaking(s)) return false; } catch(e){}
-    return true;
-  };
-  const _tafelSoll = NEWS_LIMITS.tafelProTagMin || 0;
-  Object.keys(_tagRang).forEach(k => {
-    const rang = _tagRang[k].slice()
-      .sort((a, b) => new Date(a.when) - new Date(b.when));
-    const frei = new Set(rang.filter(_istTafelKarte).slice(0, _tafelSoll).map(s => s.id));
-    frei.forEach(id => _behalten.add(id));
-    let belegt = 0;
-    rang.filter(_zaehltGegenDeckel).forEach(s => {
-      if(frei.has(s.id)) return;
-      if(belegt >= NEWS_LIMITS.proTag) return;
-      belegt++;
-      _behalten.add(s.id);
-    });
-  });
-  entzerrt.forEach(s => _behalten.add(s.id));
-  const fertig = entzerrt.filter(s => {
-    if(_behalten.has(s.id)) return true;
-    if(TAG_PFLICHT.has((s.dataRef || {}).type)) return true;
-    if(TAG_SUMME.has((s.dataRef || {}).type)) return true;
-    if(_istPartie(s)) return true;
-    try { return _isBreaking(s); } catch(e){ return false; }
-  });
+  const fertig = entzerrt;
 
   let ausbalanciert = fertig;
   {
