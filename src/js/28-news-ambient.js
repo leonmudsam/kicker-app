@@ -283,10 +283,9 @@ function _ambientShuffle(arr, rng){
 // Icons sind bewusst auf die in NEWS_CATEGORIES bekannten beschränkt.
 function _ambientTemplatePool(now, pm, nameOf){
   const stats = (typeof allPlayerStats === 'function') ? (allPlayerStats() || {}) : {};
-  // Ein Fun Fact erzählt von der Liga an seinem Slot [§C40]: wer da schon
-  // aufgehört hatte, kommt nicht mehr vor — auch nicht als Paar oder Partner.
-  const _jetztMs = +now;
-  const aktiv = id => ligaAktiv(pm[id], _jetztMs);
+  // Ein Fun Fact erzählt von der Liga, wie sie heute antritt [§C40]: ein
+  // Ruheständler kommt nicht vor — auch nicht als Paar oder Partner.
+  const aktiv = id => ligaAktiv(pm[id]);
   const activePids = Object.keys(pm).filter(aktiv);
   const withStats = activePids.filter(pid => stats[pid] && stats[pid].games > 0);
   const T = [];

@@ -56,7 +56,8 @@ function showPlayer(id){
   // Wer 0 Saison-Spiele hat, bekommt keinen #-Badge.
   // Sortierung: Saison-Elo (gSim.elo enthält nach Saison-Reset die aktuelle Saison-Elo).
   const gSim=getGlobalSim();
-  const rankedSeason=activePlayers()
+  // Der Monat ist ein Zeitraum [§C40]: derselbe Platz wie in der Liga.
+  const rankedSeason=players.filter(x=>sichtbar(x))
     .filter(x=>(gSim.playedSeason[x.id]||0)>0)
     .sort((a,b)=>(gSim.elo[b.id]??cfg.start_elo)-(gSim.elo[a.id]??cfg.start_elo));
   const rank=rankedSeason.findIndex(x=>x.id===id)+1;
@@ -206,9 +207,8 @@ function showPlayer(id){
     }
   }
 
-  // Awards: NUR Platz 1. Sie gehören dem laufenden Monat, und darin tritt
-  // ein Ruheständler nicht an [§C40].
-  const awards=_ruhe ? [] : playerAwards(id).filter(a=>a.rank===0);
+  // Awards: NUR Platz 1
+  const awards=playerAwards(id).filter(a=>a.rank===0);
   const awardCount=awards.length;
 
   // Jede Auszeichnung gehört zu GENAU EINER von drei Gruppen, und die Gruppe
@@ -832,7 +832,7 @@ const rankProgHtml = rInfo ? `
   const karriere=async(beenden)=>{
     const ja = await bestaetigen(beenden
       ? {ic:'hourglass', ja:'Karriere beenden', nein:'Abbrechen', titel:p.name + ' beendet die Karriere',
-         text:'Abgeschlossene Monate, Auszeichnungen, Titel und Chroniken bleiben. Ewige Tafel, Rekorde und der laufende Monat vergleichen ab jetzt ohne ' + p.name + '. Das Profil bleibt auf dem heutigen Stand stehen.'}
+         text:'Jede Partie bleibt und mit ihr jeder Tag, jede Woche und jeder Monat, in dem ' + p.name + ' gespielt hat, samt Auszeichnungen und Titeln. Ewige Tafel und Rekorde vergleichen ab jetzt ohne ' + p.name + '. Das Profil bleibt stehen, sobald diese Woche und dieser Monat vorbei sind.'}
       : {ic:'hourglass', ja:'Karriere fortsetzen', nein:'Abbrechen', titel:p.name + ' kehrt zurück',
          text:p.name + ' steht danach wieder in Ewiger Tafel, Rekorden und Rangliste.'});
     if(!ja) return;
@@ -845,11 +845,7 @@ const rankProgHtml = rInfo ? `
         : 'Die Verbindung zur Datenbank ist fehlgeschlagen.'});
       return;
     }
-    // Ohne die Spalte des Stands gilt das Karriereende trotzdem; das Profil
-    // wird dann aus den Partien gerechnet und folgt künftigen Fassungen der
-    // App. Das sagt der Hinweis, statt es still hinzunehmen.
-    toast(beenden ? p.name + ' beendet die Karriere' : p.name + ' ist zurück', 'ok',
-      beenden && r.ohneStand ? {sub:'Der Stand des Profils wird erst gespeichert, wenn datenbank/karriereende.sql ausgeführt ist.'} : undefined);
+    toast(beenden ? p.name + ' beendet die Karriere' : p.name + ' ist zurück', 'ok');
     closeSheet(true);
     await loadAll();
     // Wer gerade jemanden verabschiedet hat, sieht den Abschied sofort.
@@ -1002,8 +998,8 @@ function computeSeasonHistory(playerId, limit){
     const startElo = cfg.start_elo;
     const endElo = snapshot[playerId] ?? startElo;
     const eloDelta = Math.round(endElo - startElo);
-    // Ein Monat, der vor dem Karriereende zu war, behält seine Plätze [§C40].
-    const playersInSeason = players.filter(pp=>ligaAktiv(pp, seasonEnd(sid).getTime()));
+    // Ein Monat ist ein Zeitraum [§C40]: wer darin spielte, hat seinen Platz.
+    const playersInSeason = players.filter(pp=>sichtbar(pp));
     const seasonRanking = playersInSeason.map(pp=>({
       id:pp.id, e: (snapshot[pp.id] ?? startElo), g: (seasonPlayedMap[pp.id]||0)
     })).filter(x=>x.g>0).sort((a,b)=>b.e-a.e);

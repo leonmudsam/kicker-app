@@ -152,10 +152,8 @@ function _seasonTitleCtxRechnen(sid, bisMs){
   // Elo-Quelle: abgeschlossene Saison → archivierter End-Stand aus dem Sim,
   // laufende Saison → aktueller Stand. Beides derselbe Sim wie die Rangliste.
   const eloMap = live ? (gSim.elo || {}) : (gSim.seasonEndElos[sid] || {});
-  // Wer in diesem Monat antritt [§C40]: ein Ruheständler, solange der Monat
-  // bei seinem Karriereende schon zu war — sonst nicht. Den Monat, in dem er
-  // aufhört, entscheiden die, die weiterspielen.
-  const monatsEnde = seasonEnd(sid).getTime();
+  // Ein Monat ist ein Zeitraum [§C40]: wer darin spielte, steht in seiner
+  // Chronik, auch wenn er danach aufgehört hat.
   const P = {};
   const daySet = {};        // pid → Set(dayKey)
   const dayCount = {};      // pid → {dayKey: n}
@@ -447,7 +445,7 @@ function _seasonTitleCtxRechnen(sid, bisMs){
   const roh = [];                       // alle, die diese Saison gespielt haben
   Object.keys(P).forEach(id => {
     const p = P[id];
-    if(!ligaAktiv(id, monatsEnde)){ delete P[id]; return; }
+    if(!sichtbar(id)){ delete P[id]; return; }
     p.days = daySet[id] ? daySet[id].size : 0;
     p.elo = Math.round(eloMap[id] !== undefined ? eloMap[id] : cfg.start_elo);
     // Zuwachs nur, wenn die Vorsaison überhaupt gespielt wurde — sonst wäre

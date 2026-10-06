@@ -3573,7 +3573,10 @@ return JSON.stringify(funde,null,1);
     const pruefen = eval('(' + pruefenSrc + ')');
     const K = window.__k.eval.bind(window.__k);
     const M = K("players.find(p => p.name === 'Martin').id");
-    K(`pmap()['${M}'].retired_at = '2026-08-26T19:30:00Z'; invalidateCache(); 'x'`);
+    // Wie der Knopf: der Karriere-Teil wird vor dem Setzen gerechnet [§C40].
+    K(`(() => { const p = pmap()['${M}'], t = Date.parse('2026-08-26T19:30:00Z'), k = _ruheKarriereBauen(p.id);
+      p.retired_at = new Date(t).toISOString(); p.retired_stand = {v:RUHE_STAND_FASSUNG, t, karriere:k, abschluss:null};
+      invalidateCache(); })(); 'x'`);
     const W = document.documentElement.clientWidth, out = {};
     for(const [name, setz, key] of [['gesamt', "tab='ranking';period='all'", 'ruhe_liga'],
         ['positionen', "tab='positions';period='season';rankMetric='atk'", 'ruhe_pos'],
@@ -3614,7 +3617,7 @@ return JSON.stringify(funde,null,1);
       raus: [...kc.querySelectorAll('*')].filter(e => { const r = e.getBoundingClientRect(), k = kc.getBoundingClientRect();
         return r.width && (r.right > k.right + 1 || r.left < k.left - 1); }).length} : null;
     K('closeSheet(true); "x"');
-    K(`pmap()['${M}'].retired_at = null; einblickOffen=''; invalidateCache(); tab='ranking'; period='season'; render(); 'x'`);
+    K(`pmap()['${M}'].retired_at = null; pmap()['${M}'].retired_stand = null; einblickOffen=''; invalidateCache(); tab='ranking'; period='season'; render(); 'x'`);
     return out;
   }, PRUEFEN.toString());
   const _ru = [ruhe.gesamt, ruhe.positionen, ruhe.teams];
@@ -3657,9 +3660,12 @@ return JSON.stringify(funde,null,1);
     };
     const pid = K('players.find(p => matches.some(m => [m.a1,m.a2,m.b1,m.b2].includes(p.id))).id');
     const aktiv = await blick(pid);
-    K(`pmap()['${pid}'].retired_at = new Date(Date.now() - 864e5).toISOString(); invalidateCache(); 'x'`);
+    // Wie der Knopf: der Karriere-Teil wird vor dem Setzen gerechnet [§C40].
+    K(`(() => { const p = pmap()['${pid}'], t = Date.now() - 864e5, k = _ruheKarriereBauen(p.id);
+      p.retired_at = new Date(t).toISOString(); p.retired_stand = {v:RUHE_STAND_FASSUNG, t, karriere:k, abschluss:null};
+      invalidateCache(); })(); 'x'`);
     const ruhend = await blick(pid);
-    K(`closeSheet(true); pmap()['${pid}'].retired_at = null; invalidateCache(); 'x'`);
+    K(`closeSheet(true); pmap()['${pid}'].retired_at = null; pmap()['${pid}'].retired_stand = null; invalidateCache(); 'x'`);
     return {aktiv, ruhend};
   });
   ok(weg.aktiv.weg && !weg.aktiv.loeschen && weg.aktiv.ende && weg.aktiv.aus && weg.aktiv.raus === 0

@@ -116,10 +116,6 @@ function tagKey(when){
 // ist aufsteigend sortiert, also ist die letzte auch die neueste.
 function _schnitt(bisMs){
   if(!bisMs || !matches.length) return undefined;
-  // In der Zeitmaschine des Karriereendes [§C40] bleibt jeder Schnitt: dort
-  // heißt „ohne Schnitt" die Liga von heute, und in der steht der
-  // Ruheständler nicht mehr.
-  if(_ruheStichtag !== Infinity) return bisMs;
   return bisMs >= mts(matches[matches.length - 1]) ? undefined : bisMs;
 }
 
@@ -160,7 +156,7 @@ function matchesInSeason(seasonId){
   // Mit der Version im Schluessel waechst der Topf sonst ueber jede Version mit.
   _topfDeckel(_cache._mseason, 40);
   const start=seasonStart(seasonId),end=seasonEnd(seasonId);
-  const result=zeitraumMerken(matches.filter(m=>{const d=new Date(m.created_at);return d>=start&&d<=end;}), {sid:seasonId});
+  const result=matches.filter(m=>{const d=new Date(m.created_at);return d>=start&&d<=end;});
   _cache._mseason[key]=result;
   return result;
 }

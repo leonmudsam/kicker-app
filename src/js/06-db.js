@@ -175,7 +175,7 @@ async function _loadAllDurchlauf(){
     // Ein Karriereende aus der Zeit vor dem gespeicherten Stand bekommt ihn
     // jetzt [§C40] — nach dem Zeichnen, damit die Rechnung niemanden warten
     // lässt, und je Karriereende einmal.
-    setTimeout(_ruheStandNachtragen, 2500);
+    setTimeout(_ruheAbschliessen, 2500);
     setTimeout(autoShowPotwRecap, 900);
   }catch(e){
     _lastLoadFingerprint=null; _lastLoadDay=null;

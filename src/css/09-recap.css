@@ -198,8 +198,11 @@
   .rcp-zeile-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
   .rcp-zeile-n{font-size:13px;font-weight:700;letter-spacing:-.01em;color:var(--ink);
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  /* Die Unterzeile bricht um, statt mit „…" zu enden [§C33]: „2 von 9
+     Spieltagen ohne Niederlage" endete neben einem Monatsnamen bei 360 px
+     als „2 von 9 Spieltag…" — und der abgeschnittene Teil war die Aussage. */
   .rcp-zeile-s{font-family:'Sometype Mono',monospace;font-size:9.5px;color:var(--muted);
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    line-height:1.35}
   .rcp-zeile-r{flex:0 0 auto;font-family:'Sometype Mono',monospace;font-size:9.5px;
     color:var(--faint);max-width:38%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 

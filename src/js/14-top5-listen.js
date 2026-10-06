@@ -20,7 +20,7 @@ function _teamEloRanking(ms, minGames){
       T[k].elo += ((m.deltas||{})[x]||0) + ((m.deltas||{})[y]||0);
     });
   });
-  return Object.values(T).filter(t=>t.g>=(minGames||1) && t.ids.every(id=>antrittImZeitraum(ms, id))).sort((a,b)=>b.elo-a.elo||b.g-a.g);
+  return Object.values(T).filter(t=>t.g>=(minGames||1)).sort((a,b)=>b.elo-a.elo||b.g-a.g);
 }
 // Team of the Season: Elo-Zuwachs aus der Sim (konsistent zur Tabelle),
 // Spielzahlen aus den Saison-Matches. Absteigend sortiert.
@@ -38,11 +38,11 @@ function _seasonTeamRanking(seasonMs, sid){
   return Object.entries(map).map(([k,elo])=>{
     const c=counts[k];
     return c ? {ids:k.split('|'), elo, g:c.g, w:c.w} : null;
-  }).filter(t=>t && t.g>=2 && t.ids.every(id=>antrittImZeitraum(seasonMs, id))).sort((a,b)=>b.elo-a.elo||b.g-a.g);
+  }).filter(t=>t && t.g>=2).sort((a,b)=>b.elo-a.elo||b.g-a.g);
 }
 // Upsets eines Match-Sets: niedrigste Siegerwartung des Siegers zuerst.
 function _upsetRanking(ms){
-  return ms.filter(m=>(m.winner==='A'?[m.a1,m.a2]:[m.b1,m.b2]).every(id=>antrittImZeitraum(ms, id))).map(m=>{
+  return ms.map(m=>{
     const expA=m.exp_a??0.5;
     const we=m.winner==='A'?expA:(1-expA);
     return {m, winPct:Math.round(we*100), sp:1-we};

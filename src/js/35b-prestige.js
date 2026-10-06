@@ -323,19 +323,23 @@ function prestigeTabelle(bisMs){
     _topfDeckel(_cache._prestigeBis, 20);
   }
 
-  // Wer in der Liga antritt [§C40]: der Rang im Prestige vergleicht die, die
-  // noch spielen. Ein Ruheständler hat seinen eingefrorenen Stand.
+  // Der Rang im Prestige ist ein Laufbahn-Vergleich und vergleicht, wer noch
+  // antritt [§C40]. Ein Ruheständler wird mit derselben Rechnung geführt, aber
+  // daneben (`ruhe`): seine Auszeichnungen und Chroniken wie bei jedem, seine
+  // Rekorde die vom Karriereende (`ruhestandStand`).
   const aktive = (players || []).filter(p => ligaAktiv(p));
+  const ruhe = (players || []).filter(p => sichtbar(p) && imRuhestand(p));
+  const alle = aktive.concat(ruhe);
   const gesamt = aktive.length || 1;
   const quelleMatches = bisMs ? matches.filter(m => mts(m) <= bisMs) : matches;
 
   // 1. Rohdaten je Spieler einsammeln.
   const roh = {};
-  aktive.forEach(p => { roh[p.id] = {badges:[], monat:[], rekord:[]}; });
+  alle.forEach(p => { roh[p.id] = {badges:[], monat:[], rekord:[]}; });
 
   // Auszeichnungen — mit ihrer Anzahl. Jede positive Auszeichnung zählt bei
   // jedem Erreichen; Klasse und Anzahl reichen für die vollständige Rechnung.
-  aktive.forEach(p => {
+  alle.forEach(p => {
     const badges = bisMs ? computeBadges(p.id, quelleMatches, bisMs) : getCachedBadges(p.id);
     (badges || []).forEach(b => {
       roh[p.id].badges.push({id:b.id, name:b.name, n:Math.max(1, b.count || 1)});
@@ -347,14 +351,8 @@ function prestigeTabelle(bisMs){
   // dominanter Monat gewinnt acht Quoten auf einmal, und die sagen alle
   // dasselbe über denselben Monat. Gezählt wird, was in der Matrix steht
   // [§C32] — sonst stünde im Profil eine Zahl, die nirgends nachzuzählen ist.
-  aktive.forEach(p => {
+  alle.forEach(p => {
     (seasonTitleHistory(p.id, bisMs) || []).forEach(r => {
-      // Im eigenen Stand eines Ruheständlers zählt der Monat seines
-      // Karriereendes nicht [§C40]: er lief noch, die Liga vergleicht ihn
-      // ohne ihn, und die Matrix im Profil zeigt seine Chronik nicht.
-      // Gezählt stand sie trotzdem im Prestige, eine Chronik mehr, als das
-      // Profil nennt.
-      if(p.id === _ruheGerechnet && seasonEnd(r.sid).getTime() > _ruheStichtag) return;
       if(r.title) roh[p.id].monat.push(
         {id:r.title.titleId, name:r.title.name, label:r.label, sid:r.sid});
     });
@@ -370,10 +368,19 @@ function prestigeTabelle(bisMs){
     e.pids.forEach(pid => { if(roh[pid]) roh[pid].rekord.push(
       {id:d.id, name:d.name, art:d.art, kind:d.kind, basis:d.basis}); });
   });
+  // Die Rekorde eines Ruheständlers: die er beim Karriereende hielt, geteilt
+  // durch die Halter von damals. Die Liga von heute vergleicht ohne ihn.
+  ruhe.forEach(p => {
+    (ruhestandStand(p.id).rekorde || []).forEach(r => {
+      const d = CHRONICLES.find(x => x.id === r.id) || r;
+      roh[p.id].rekord.push({id:r.id, name:r.name, art:d.art, kind:d.kind, basis:d.basis,
+                             halter:(r.pids || [r.pid]).length});
+    });
+  });
 
   // 2. Punkte.
   const out = {};
-  aktive.forEach(p => {
+  alle.forEach(p => {
     const r = roh[p.id];
 
     // Nur heute gehaltene Rekorde werden gestapelt: Rang 1–2 zählen voll,
@@ -419,10 +426,11 @@ function prestigeTabelle(bisMs){
     const re = [];
     r.rekord.forEach(x => {
       const basis = _rekordBasis(x);
-      const voll = basis / Math.max(1, halterZahl[x.id] || 1);
+      const halter = x.halter || halterZahl[x.id] || 1;
+      const voll = basis / Math.max(1, halter);
       if(voll <= 0) return;
       re.push({q:'rekord', id:x.id, name:x.name, p:voll, art:x.art,
-               kind:x.kind, basis, halter:halterZahl[x.id] || 1});
+               kind:x.kind, basis, halter});
     });
     const pr = _wurzelStapel(re, 3);
 
@@ -442,7 +450,10 @@ function prestigeTabelle(bisMs){
     };
   });
 
-  const res = {byPid:out, gesamt, rang:Object.values(out).sort((a,b) => b.punkte - a.punkte).map(x => x.pid)};
+  const byPid = {}, ruheOut = {};
+  aktive.forEach(p => { byPid[p.id] = out[p.id]; });
+  ruhe.forEach(p => { ruheOut[p.id] = out[p.id]; });
+  const res = {byPid, ruhe:ruheOut, gesamt, rang:Object.values(byPid).sort((a,b) => b.punkte - a.punkte).map(x => x.pid)};
   if(bisMs) _cache._prestigeBis[key] = res;
   else { _cache._prestigeKey = key; _cache._prestige = res; }
   return res;
@@ -465,15 +476,15 @@ function prestigeLeer(von){
 }
 
 function prestigeOf(pid, bisMs){
-  // Ein Ruheständler steht, wie er beim Karriereende stand [§C40]: Punkte,
-  // Stufe, Grad und Quellen. Ein Zeitpunkt davor wird in der Zeitmaschine
-  // gerechnet — in der Liga von heute kommt er nicht mehr vor.
+  // Ein Ruheständler [§C40]: nach seinem Abschluss der gespeicherte Stand,
+  // davor dieselbe Rechnung wie für jeden, mit den Rekorden vom
+  // Karriereende (`prestigeTabelle().ruhe`).
   if(imRuhestand(pid)){
-    if(bisMs == null || bisMs >= ruhestandMs(pid)) return ruhestandStand(pid).prestige || prestigeLeer(0);
-    return _ruheBis(pid, bisMs, () => prestigeOf(pid, bisMs));
+    const a = ruhestandAbschluss(pid);
+    if(a && a.prestige) return a.prestige;
   }
   const T = prestigeTabelle(bisMs);
-  const e = T.byPid[pid];
+  const e = T.byPid[pid] || T.ruhe[pid];
   if(!e) return prestigeLeer(T.gesamt);
   const i = insigniumStufeVon(e.punkte);
   const letzte = i === INSIGNIEN.length - 1;
@@ -490,8 +501,9 @@ function prestigeOf(pid, bisMs){
     zacken: letzte ? ORDENSSTERN_START + Math.floor((e.punkte - INSIGNIEN[i].min) / ORDENSSTERN_SCHRITT) : 0,
     naechsteZacke: letzte
       ? ORDENSSTERN_SCHRITT - ((e.punkte - INSIGNIEN[i].min) % ORDENSSTERN_SCHRITT) : 0,
-    platz: T.rang.indexOf(pid) + 1,
-    von: T.gesamt
+    // Den Platz eines Ruheständlers im Prestige hält sein Karriere-Teil.
+    platz: imRuhestand(pid) ? ruhestandStand(pid).platz : T.rang.indexOf(pid) + 1,
+    von: imRuhestand(pid) ? ruhestandStand(pid).von : T.gesamt
   });
 }
 

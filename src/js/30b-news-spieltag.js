@@ -633,9 +633,9 @@ function _spDuellBild(d){
 function _spMedailleDaten(a){
   const b = (typeof BADGES !== 'undefined' ? BADGES : []).find(x => x.id === a.x.badgeId);
   if(!b) return null;
-  // Wer zur Zeit der Partie antrat [§C40]: ein späteres Karriereende nimmt
-  // der Karte ihre Träger nicht.
-  const ids = players.filter(p => ligaAktiv(p, a.m ? mts(a.m) : undefined)).map(p => p.id);
+  // Wer eine Auszeichnung trägt, ist Geschichte [§C40]: ein späteres
+  // Karriereende nimmt der Karte ihre Träger nicht.
+  const ids = players.filter(p => sichtbar(p)).map(p => p.id);
   // Kein heutiger Badge-Zensus fuer eine vergangene Partie: der kanonische
   // Event-Cache weiss, WANN jemand Traeger wurde und das wievielte Mal es
   // war. Ein Index am vorhandenen Datenstand ersetzt Vollrechnungen je

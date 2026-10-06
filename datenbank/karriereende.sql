@@ -6,17 +6,18 @@
 --
 -- retired_at     Der Zeitpunkt des Karriereendes. „Karriere beenden"
 --                schreibt ihn, „Karriere fortsetzen" setzt ihn auf NULL.
--- retired_stand  Der Stand des Profils in diesem Moment: Prestige mit
---                Insignium, Rekorde, Rang und Auszeichnungen. Damit sieht
---                das Profil eines Ruheständlers in zwei Jahren aus wie am
---                Tag seines Abschieds, auch wenn die App inzwischen neue
---                Rekorde oder Auszeichnungen kennt. Die App schreibt ihn
---                zusammen mit dem Zeitpunkt und leert ihn bei der Rückkehr.
---                Fehlt die Spalte, rechnet die App den Stand aus den Partien.
+-- retired_stand  Der Stand des Profils, in zwei Teilen: beim Klick die
+--                Rekorde, die Rangstufe und der Prestige-Platz, nach dem
+--                Ende seiner letzten Woche und seines letzten Monats die
+--                Auszeichnungen, das Prestige und der Fingerabdruck. Damit
+--                sieht das Profil eines Ruheständlers in zwei Jahren aus wie
+--                an seinem Abschluss, auch wenn die App inzwischen neue
+--                Rekorde oder Auszeichnungen kennt. Die App schreibt ihn und
+--                leert ihn bei der Rückkehr.
 --
--- Ohne retired_at meldet der Knopf, dass die Spalte fehlt, und ändert
--- nichts. Bestehende Daten bleiben unberührt: beide Spalten sind für alle
--- Spieler leer.
+-- Fehlt eine der Spalten, meldet der Knopf das und ändert nichts.
+-- Bestehende Daten bleiben unberührt: beide Spalten sind für alle Spieler
+-- leer.
 
 alter table public.players
   add column if not exists retired_at timestamptz;

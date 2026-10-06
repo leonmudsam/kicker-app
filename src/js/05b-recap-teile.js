@@ -354,10 +354,8 @@ function saisonRang(sid){
       });
     });
   });
-  // Ein Monat, der vor dem Karriereende zu war, behält seine Rangliste; der
-  // laufende vergleicht nur, wer noch spielt [§C40].
-  const bis = seasonEnd(sid).getTime();
-  return Object.keys(gespielt).filter(id => gespielt[id] > 0 && ligaAktiv(id, bis))
+  // Ein Monat ist ein Zeitraum [§C40]: wer darin spielte, steht darin.
+  return Object.keys(gespielt).filter(id => gespielt[id] > 0 && sichtbar(id))
     .map(id => ({id, elo:Math.round(stand[id] ?? cfg.start_elo),
                  wins:sw[id] || 0, losses:sl[id] || 0, diff:(gf[id] || 0) - (ga[id] || 0)}))
     .sort((a, b) => b.elo - a.elo);

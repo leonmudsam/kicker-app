@@ -38,19 +38,17 @@ const AW_MIN = {
 function awardRankings(period, sid){return getCachedAwardRankings(period, sid);}
 function _awardRankingsUncached(period, sid){
   let ms;
-  // Wo der Zeitraum endet, entscheidet, wer darin antritt [§C40]: ein Monat
-  // oder eine Woche, die vor dem Karriereende zu waren, behalten ihre Sieger.
-  let bisMs;
+  // Wer in der Wertung steht [§C40]: über die ganze Laufbahn nur, wer noch
+  // antritt; in einem Monat oder einer Woche jeder, der darin gespielt hat.
+  const dabei = period==='all' ? ligaAktiv : sichtbar;
   if(period==='all') ms = matches;
   else if(period==='season'){
     const s = sid || awSeasonId || currentSeason().id;
     ms = matchesInSeason(s);
-    bisMs = seasonEnd(s).getTime();
   }
   else if(period==='week' && awWeekStart){
     const start=new Date(awWeekStart); start.setHours(0,0,0,0);
     const end=new Date(start); end.setDate(end.getDate()+7);
-    bisMs = end.getTime() - 1;
     ms = matches.filter(m=>{
       const d=new Date(m.created_at);
       return d>=start && d<end;
@@ -432,8 +430,8 @@ function _awardRankingsUncached(period, sid){
   
   // ═══ CARRY, SOLO, FORMTIEF, etc. ═══
   const carryList=_computeCarry(ms, agg.snapMap);
-  const soloList=_computeSolo(ms, agg.snapMap, bisMs);
-  const formtief=_computeFormtief(ms, bisMs);
+  const soloList=_computeSolo(ms, agg.snapMap, dabei);
+  const formtief=_computeFormtief(ms, dabei);
   const worstTeam=[...teamStatsFromMatches(ms)].filter(t=>t.g>=2).sort((a,b)=>(a.w/a.g)-(b.w/b.g));
   const bestDuo=[...teamStatsFromMatches(ms)].sort((a,b)=>b.g-a.g);
   const onFire=currentStreaks(ms,true);
@@ -447,7 +445,7 @@ function _awardRankingsUncached(period, sid){
   // Beide Funktionen schließen den laufenden Zeitraum automatisch aus und sind identisch
   // mit dem Zähler der POTW-/POTD-Badges → konsistent zwischen Award und Badge.
   // Für period='week' bleibt die Liste leer (Zeitraum = 1 Woche, läuft noch).
-  const visiblePlayers = players.filter(p => ligaAktiv(p, bisMs));
+  const visiblePlayers = players.filter(dabei);
   const weekKingList = visiblePlayers
     .map(p=>({id:p.id, v:countPeriodWins(p.id, ms, 'week')}))
     .filter(x=>x.v>0)
@@ -585,13 +583,13 @@ function _awardRankingsUncached(period, sid){
   // ════════════════════════════════════════════════════════════════════
   // FILTER für ALLE Award-Listen (zentral, konsistent)
   // ════════════════════════════════════════════════════════════════════
-  // Wer im Zeitraum nicht antritt (ausgeblendet oder im Ruhestand [§C40]),
-  // fällt aus allen Single- und Team-Listen. Bei Team-Awards fliegt das
+  // Wer nicht in der Wertung steht (ausgeblendet, oder über die ganze
+  // Laufbahn im Ruhestand [§C40]), fällt aus allen Single- und Team-Listen. Bei Team-Awards fliegt das
   // Team raus, sobald EIN Mitglied nicht antritt.
   // Sortierung bleibt erhalten, ranks/medals werden weiter korrekt vergeben.
   // ════════════════════════════════════════════════════════════════════
   const _pm = pmap();
-  const _isHidden = id => !ligaAktiv(_pm[id], bisMs);
+  const _isHidden = id => !dabei(_pm[id]);
   const _fSingle = arr => arr.filter(x => !_isHidden(x.id));
   const _fTeam   = arr => arr.filter(x => !x.ids.some(_isHidden));
 
@@ -656,9 +654,9 @@ function _computeCarry(ms, snapMap){
   return Object.entries(result).filter(([,v])=>v>0).map(([id,v])=>({id,v})).sort((a,b)=>b.v-a.v);
 }
 
-function _computeSolo(ms, snapMap, bisMs){
+function _computeSolo(ms, snapMap, dabei){
   const result={};
-  const allActivePlayers=players.filter(p => ligaAktiv(p, bisMs));
+  const allActivePlayers=players.filter(dabei);
   for(let i=0; i<ms.length; i++){
     const m=ms[i];
     const snap=snapMap[m.id]; if(!snap)continue;
@@ -682,7 +680,7 @@ function _computeSolo(ms, snapMap, bisMs){
     .map(([id,v])=>({id,wr:v.w/v.g,g:v.g,w:v.w})).sort((a,b)=>b.wr-a.wr||b.g-a.g);
 }
 
-function _computeFormtief(ms, bisMs){
+function _computeFormtief(ms, dabei){
   // ════════════════════════════════════════════════════════════════════
   // FORMTIEF — saison-bewusste Peak-zu-Aktuell-Berechnung
   // ════════════════════════════════════════════════════════════════════
@@ -740,7 +738,7 @@ function _computeFormtief(ms, bisMs){
 
   const result = [];
   Object.entries(perPlayer).forEach(([id, data])=>{
-    const p = pm[id]; if(!ligaAktiv(p, bisMs)) return;
+    const p = pm[id]; if(!dabei(p)) return;
     let bestDrop=0, bestPeak=0, bestLast=0;
     Object.values(data.seasons).forEach(s=>{
       const d = s.peak - s.last;
@@ -855,7 +853,7 @@ function longestStreaks(ms){
       else cur[id]=0;
     });
   });
-  return Object.entries(best).map(([id,v])=>({id,v})).filter(x=>x.v>=2 && antrittImZeitraum(ms, x.id)).sort((a,b)=>b.v-a.v);
+  return Object.entries(best).map(([id,v])=>({id,v})).filter(x=>x.v>=2).sort((a,b)=>b.v-a.v);
 }
 
 // Längste Niederlagenserie je Spieler (insgesamt, nicht nur aktuell laufend)
@@ -870,7 +868,7 @@ function longestLossStreaks(ms){
       else cur[id]=0;
     });
   });
-  return Object.entries(best).map(([id,v])=>({id,v})).filter(x=>x.v>=2 && antrittImZeitraum(ms, x.id)).sort((a,b)=>b.v-a.v);
+  return Object.entries(best).map(([id,v])=>({id,v})).filter(x=>x.v>=2).sort((a,b)=>b.v-a.v);
 }
 
 function _vAwardsCore(){

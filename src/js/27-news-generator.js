@@ -388,7 +388,7 @@ function _buildStories(){
       const endElos = sim.elo || {};
       const playedMap = (sim.seasonPlayed && sim.seasonPlayed[sid]) || {};
       const rankList = Object.keys(endElos)
-        .filter(pid => ligaAktiv(pm[pid], seasonEnd(sid).getTime()) && (playedMap[pid]||0) > 0)
+        .filter(pid => sichtbar(pm[pid]) && (playedMap[pid]||0) > 0)
         .map(pid => ({pid, elo: Math.round(endElos[pid])}))
         .sort((a,b)=>b.elo-a.elo);
       const gap = rankList.length >= 2 ? rankList[0].elo - rankList[1].elo : Infinity;
@@ -447,7 +447,7 @@ function _buildStories(){
         if(h && h.eloAfter) Object.keys(h.eloAfter).forEach(pid => { stand[pid] = h.eloAfter[pid]; });
       }
       const rang = Object.keys(stand)
-        .filter(pid => ligaAktiv(pm[pid], seasonEnd(sid).getTime()))
+        .filter(pid => sichtbar(pm[pid]))
         .map(pid => ({pid, elo: Math.round(stand[pid])}))
         .sort((a, b) => b.elo - a.elo);
       if(rang.length >= 2){
@@ -500,7 +500,7 @@ function _buildStories(){
       const sim = getGlobalSim();
       const played = (sim.seasonPlayed && sim.seasonPlayed[sid]) || {};
       const rang = Object.keys(sim.elo || {})
-        .filter(pid => ligaAktiv(pm[pid], seasonEnd(sid).getTime()) && (played[pid] || 0) > 0)
+        .filter(pid => sichtbar(pm[pid]) && (played[pid] || 0) > 0)
         .map(pid => ({pid, elo: Math.round(sim.elo[pid])}))
         .sort((a, b) => b.elo - a.elo);
       const desTages = saison.filter(m => mts(m) >= tg.vonMs && mts(m) <= tg.letzte);
@@ -706,7 +706,9 @@ function _buildStories(){
   try {
     const seit = now.getTime() - NEWS_FENSTER_TAGE * _dayMs;
     const kand = [];
-    activePlayers().forEach(p => {
+    // Aus seinen eigenen Partien: auch nach dem Karriereende eine Nachricht
+    // über das, was er gespielt hat [§C40].
+    players.filter(p => sichtbar(p)).forEach(p => {
       // byPlayer ist asc-sortiert (=aeltestes first).
       const arr = byPlayer[p.id] || [];
       if(arr.length < FORM_FENSTER + FORM_BASIS_MIN) return;
@@ -1054,7 +1056,9 @@ function _buildStories(){
   // → keine Wiederholung in späteren Generator-Läufen (ID enthält Match-ID).
   try {
     const candidates = [];
-    activePlayers().forEach(p => {
+    // Aus seinen eigenen Partien: auch nach dem Karriereende eine Nachricht
+    // über das, was er gespielt hat [§C40].
+    players.filter(p => sichtbar(p)).forEach(p => {
       // byPlayer ist bereits asc-sortiert (matches asc → push behält Reihenfolge).
       // Keine zusätzliche Filterung/Sortierung nötig.
       const arr = byPlayer[p.id] || [];
@@ -1234,7 +1238,9 @@ function _buildStories(){
   // Nutzt byPlayer + bestehendes won(). Trigger nur, wenn das JÜNGSTE Match
   // (ein Sieg) eine Leiter-Marke reißt → stabil & einmalig (ID enthält Marke).
   try {
-    activePlayers().forEach(p => {
+    // Aus seinen eigenen Partien: auch nach dem Karriereende eine Nachricht
+    // über das, was er gespielt hat [§C40].
+    players.filter(p => sichtbar(p)).forEach(p => {
       const arr = byPlayer[p.id] || [];
       if(!arr.length) return;
       let wins = 0;
@@ -1812,7 +1818,9 @@ function _buildStories(){
 
   // ── 20. Tor-Meilensteine (unbegrenzte Leiter ab 500 Karriere-Tore) ──
   try {
-    activePlayers().forEach(p => {
+    // Aus seinen eigenen Partien: auch nach dem Karriereende eine Nachricht
+    // über das, was er gespielt hat [§C40].
+    players.filter(p => sichtbar(p)).forEach(p => {
       const arr = byPlayer[p.id] || [];
       if(!arr.length) return;
       let goals = 0;
@@ -2001,7 +2009,7 @@ function _buildStories(){
       // ein zweites Mal, Zeile für Zeile dieselbe — und zwei Rechnungen über
       // dieselbe Frage nennen irgendwann zwei verschiedene Beste.
       const wm = _potwMatchesInRange(range.start, range.end);
-      const res = _newsPeriodWinner(wm, 5, 'wr', range.end.getTime()); // Wochen-Regel = höchste Quote
+      const res = _newsPeriodWinner(wm, 5, 'wr'); // Wochen-Regel = höchste Quote
       if(res){
         const main = res.main;
         const names = res.winners.map(w => nameOf(w.id));
@@ -2046,7 +2054,7 @@ function _buildStories(){
       if(now.getTime() < rep.getTime()) return;
       // Tages-Regel = meiste Siege (Tiebreak Elo-Delta) — identisch zu
       // showPotdRecap und zum Badge-Zaehler countDayWins.
-      const res = _newsPeriodWinner(dayMatches, 3, 'wins', tagEndeMs(dayKey));
+      const res = _newsPeriodWinner(dayMatches, 3, 'wins');
       if(!res) return;
       const main = res.main;
       const names = res.winners.map(w => nameOf(w.id));
@@ -3010,9 +3018,7 @@ function _buildStories(){
 //   mode 'wr'   (POTW) → Quote ↓, Siege ↓, Elo ↓     (= showPotwRecap / kind 'week')
 // Geteilter Sieg nur bei Gleichstand über ALLE Kriterien des Modus.
 // Liefert {winners:[…], main} oder null. (v8.7, v9.17)
-// `endeMs`: das Ende des Zeitraums. Wer bis dahin aufgehört hat, gewinnt ihn
-// nicht [§C40] — dieselbe Regel wie `_periodWinnerMap` und die Rückblicke.
-function _newsPeriodWinner(rangeMatches, minWins, mode, endeMs){
+function _newsPeriodWinner(rangeMatches, minWins, mode){
   if(!Array.isArray(rangeMatches) || !rangeMatches.length) return null;
   const byWins = mode !== 'wr'; // Default = Tages-Regel (absolute Siege)
   const ps = {};
@@ -3028,7 +3034,7 @@ function _newsPeriodWinner(rangeMatches, minWins, mode, endeMs){
   }
   const pm = pmap();
   const cand = Object.entries(ps)
-    .filter(([id, s]) => s.wins >= minWins && ligaAktiv(pm[id], endeMs))
+    .filter(([id, s]) => s.wins >= minWins && sichtbar(pm[id]))
     .map(([id, s]) => { const g = s.wins + s.losses; return {id, wins: s.wins, losses: s.losses, eloDelta: s.eloDelta, wr: g ? s.wins/g : 0}; })
     .sort((a, b) => {
       if(byWins){

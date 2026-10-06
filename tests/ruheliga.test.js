@@ -8,11 +8,13 @@
 // ein Reiter, ein Wähler oder eine Liste, die es heute noch nicht gibt,
 // wird genauso abgesucht. Gesucht wird der Ruheständler mit Name und ID.
 //
+// Abgesucht wird nach seinem Abschluss [§C40]: jeder Zeitraum, in dem er
+// gespielt hat, ist dann zu, und die anderen haben seitdem weitergespielt.
 // Er darf nur dort stehen, wo eine Ansicht es ausdrücklich erlaubt:
 // innerhalb von `[data-ruhestand]` (die Liste der Ruheständler) und in
-// `[data-bis]`, einem Stück Geschichte, das bis zu diesem Zeitpunkt reicht —
-// dort nur, wenn es vor seinem Karriereende endet. Und in den Reitern, die
-// Geschichte sind (`GESCHICHTE`): der Verlauf zeigt jede Partie, auch seine.
+// `[data-bis]`, einem Stück Geschichte, das spätestens mit seinem Abschluss
+// endet. Und in den Reitern, die Geschichte sind (`GESCHICHTE`): der Verlauf
+// zeigt jede Partie, auch seine.
 const fs = require('fs');
 const chromium = require('./browser.js').ladeChromium();
 if(!chromium){
@@ -40,10 +42,17 @@ const MATCHES = packed.split(';').map((row, i) => {
     score_a:f[8], score_b:f[9], winner:f[10] === 0 ? 'A' : 'B',
     exp_a:f[11]/1000, created_at:new Date(f[12]*1000).toISOString(), deltas:{}};
 });
-// Er hört eine Minute nach der letzten Partie der Liga auf: alles, was er
-// gespielt hat, liegt davor, und der laufende Monat vergleicht ohne ihn.
+// Er hört eine Minute nach der letzten Partie der Liga auf. Danach spielen
+// die anderen drei Wochen lang weiter, nach seinem Abschluss: die laufende
+// Woche und der laufende Monat sind dann ohne ihn gespielt.
 const RUHE = 'Martin', RUHE_ID = IDS[NAMES.indexOf(RUHE)];
-const ENDE = new Date(Math.max(...MATCHES.map(m => Date.parse(m.created_at))) + 60000).toISOString();
+const LETZTE = Math.max(...MATCHES.map(m => Date.parse(m.created_at)));
+const ENDE = new Date(LETZTE + 60000).toISOString();
+const ANDERE = IDS.filter(id => id !== RUHE_ID);
+for(let i = 0; i < 40; i++) MATCHES.push({id:'w' + i,
+  a1:ANDERE[i % 11], a2:ANDERE[(i + 3) % 11], b1:ANDERE[(i + 5) % 11], b2:ANDERE[(i + 8) % 11],
+  a1_pos:'atk', a2_pos:'def', b1_pos:'atk', b2_pos:'def', score_a:10, score_b:i % 9, winner:'A', exp_a:.5,
+  created_at:new Date(LETZTE + 9 * 864e5 + i * 7 * 3600e3).toISOString(), deltas:{}});
 const PLAYERS = NAMES.map((n,i) => ({id:IDS[i], name:n, hidden:false, elo:0, atk:.5,
   avatar_id:null, created_at:'2026-05-01T00:00:00Z', retired_at: n === RUHE ? ENDE : null}));
 const SEASONS = [
@@ -51,7 +60,7 @@ const SEASONS = [
   {id:'2026-06', label:'Juni 2026',   start_date:'2026-05-31', end_date:'2026-06-30'},
   {id:'2026-07', label:'Juli 2026',   start_date:'2026-06-30', end_date:'2026-07-31'},
 ];
-const NOW = Date.parse(ENDE) + 3 * 3600e3;
+const NOW = LETZTE + 9 * 864e5 + 40 * 7 * 3600e3;
 
 const html = fs.readFileSync(require('./ziel.js'), 'utf8');
 const re = /<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi;
@@ -111,7 +120,9 @@ const ZUSTAND = ['period','ligaSeasonId','ligaSicht','awView','awPeriod','awSeas
     globalThis.__start = {${ZUSTAND.map(z => z + ':' + z).join(',')}};
     'bereit'`);
   ok(errors.length === 0, 'Skript lädt ohne Fehler', errors[0]);
-  ok(await K(`imRuhestand('${RUHE_ID}') && !ligaAktiv('${RUHE_ID}')`), RUHE + ' ist im Ruhestand');
+  const ABSCHLUSS = await K(`ruhestandAbschlussMs('${RUHE_ID}')`);
+  ok(await K(`imRuhestand('${RUHE_ID}') && !ligaAktiv('${RUHE_ID}')`) && NOW > ABSCHLUSS && LETZTE + 9 * 864e5 > ABSCHLUSS,
+     RUHE + ' ist im Ruhestand, sein Abschluss liegt hinter ihm, und die anderen spielen danach', new Date(ABSCHLUSS).toISOString());
 
   // Die Reiter kommen aus der Navigation selbst, die Eingabe dazu.
   const reiter = (await K('NAV.map(n => n[0])')).concat(['match']);
@@ -141,7 +152,7 @@ const ZUSTAND = ['period','ligaSeasonId','ligaSicht','awView','awPeriod','awSeas
     const i = t.search(new RegExp('\\b' + name + '\\b'));
     return {id: main.outerHTML.includes(id), name: i >= 0 ? t.slice(Math.max(0, i - 50), i + 30) : '',
             sig: main.innerHTML.length + ':' + main.textContent.length, leer: !main.textContent.trim()};
-  }, [RUHE_ID, RUHE, Date.parse(ENDE)]);
+  }, [RUHE_ID, RUHE, ABSCHLUSS]);
 
   for(const t of reiter){
     console.log('\n═══ REITER ' + t + (GESCHICHTE.includes(t) ? ' — Geschichte, nicht abgesucht' : '') + ' ═══');
@@ -196,10 +207,12 @@ const ZUSTAND = ['period','ligaSeasonId','ligaSicht','awView','awPeriod','awSeas
   // Ohne sie wäre eine Suche, die gar nichts findet, immer grün.
   console.log('\n═══ GEGENPROBE ═══');
   await K(`pmap()['${RUHE_ID}'].retired_at = null; invalidateCache();`);
+  // In „Gesamt“: im laufenden Monat hat er auch ohne Karriereende nicht gespielt.
   await wurzel('ranking');
+  await K(`period = 'all'; render();`); await warte();
   const da = await absuchen();
   await K(`pmap()['${RUHE_ID}'].retired_at = ${JSON.stringify(ENDE)}; invalidateCache();`);
-  ok(da.id && !!da.name, 'ohne Karriereende findet dieselbe Suche ihn in der Liga', da.name);
+  ok(da.id && !!da.name, 'ohne Karriereende findet dieselbe Suche ihn in der Liga unter Gesamt', da.name);
   ok(errors.length === 0, 'kein Fehler beim Durchklicken', errors[0]);
 
   await browser.close();
