@@ -5506,7 +5506,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.06.1d22da03';
+const BUILD_VERSION='2026.10.06.f2d87cad';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -5699,6 +5699,10 @@ const ICONS = {
   posSwap:       `<rect x="3" y="4" width="7" height="7" rx="1"/><rect x="14" y="13" width="7" height="7" rx="1"/><path d="M10 7h7v6"/><polyline points="14 10 17 13 20 10"/>`,
   reboundArrow:  `<path d="M3 21h18"/><path d="M7 4v9l5 7 5-9V6"/><polyline points="14 9 17 6 20 9"/>`,
   doorReturn:    `<path d="M4 3h9v18H4z"/><circle cx="10" cy="12" r="1"/><path d="M21 12h-5"/><polyline points="19 9 16 12 19 15"/>`,
+  partnerWalk:   `<circle cx="12" cy="5.5" r="2.5"/><path d="M12 8v4l-6 5M12 12l6 5"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/>`,
+  pendulum:      `<path d="M8 3h8M12 3l-4 12"/><circle cx="7.2" cy="17.5" r="2.5"/><path d="M5 21a9 9 0 0014 0"/>`,
+  laneSwap:      `<path d="M4 3v18M20 3v18"/><path d="M9 20l6-4-6-4 6-4"/><polyline points="12 4 15 4 15 7"/>`,
+  handStop:      `<path d="M8 12V6a1.5 1.5 0 013 0v5M11 11V4.5a1.5 1.5 0 013 0V11M14 11V5.5a1.5 1.5 0 013 0V13M17 13v-2.5a1.5 1.5 0 013 0V15a6 6 0 01-6 6h-1.5a6 6 0 01-4.8-2.4L4.4 15a1.5 1.5 0 012.3-1.9L8 14.5"/>`,
   x:             `<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>`,
   hourglass:     `<path d="M7 3.5h10M7 20.5h10M8 3.5c0 4.5 4 5.5 4 8.5s-4 4-4 8.5M16 3.5c0 4.5-4 5.5-4 8.5s4 4 4 8.5"/>`,
   alert:         `<path d="M12 4.2l8.6 15a1 1 0 01-.9 1.5H4.3a1 1 0 01-.9-1.5z"/><path d="M12 10v4.5"/><circle cx="12" cy="17.4" r=".6" fill="currentColor"/>`,
@@ -27303,6 +27307,30 @@ const DISZIPLINEN = [
       ev:(p,v) => `${Math.round(v*100)} % der Übergänge mit Rollenwechsel · ${p.swOk} von ${p.swN}`
     }},
 
+  {id:'pendler', name:'Der Pendler', short:'Pendler', ic:'pendulum', tone:'purple', art:'ereignis', zufall:'quote',
+    allzeit:{
+      kammer:'fuegung', basis:75, offen:true,
+      zeitraum:'Ganze Ligageschichte',
+      mind:'30 Partien',
+      wie:'Sturm nach Abwehr oder Abwehr nach Sturm verlängert die Folge, zweimal hintereinander dieselbe Position beginnt sie neu. Gezählt werden Partien, nicht Wechsel, und gewechselt wird erst ab zwei Partien. Tag und Monat unterbrechen sie nicht. Wo jemand steht, entscheidet die Aufstellung.',
+      cond:'Längste Folge von Partien mit jedes Mal der anderen Position als in der Partie davor',
+      unit:'Partien in Folge', min:2, raw:p => p.pdLauf,
+      ev:(p,v) => `${v} Partien in Folge mit Positionswechsel`,
+      zeit:p => p.pdSpan || ''
+    }},
+
+  {id:'wanderpass', name:'Der Wanderpass', short:'Wanderer', ic:'partnerWalk', tone:'purple', art:'ereignis', zufall:'quote',
+    allzeit:{
+      kammer:'fuegung', basis:75, offen:true,
+      zeitraum:'Ganze Ligageschichte',
+      mind:'30 Partien',
+      wie:'Ein anderer Partner als in der Partie davor verlängert die Folge, derselbe Partner zweimal hintereinander beginnt sie neu. Ein früherer Partner darf wiederkommen, nur nicht direkt danach, und ein Wechsel braucht zwei Partien. Wer neben wem steht, entscheidet die Auslosung.',
+      cond:'Längste Folge von Partien mit jedes Mal einem anderen Partner als in der Partie davor',
+      unit:'Partien in Folge', min:2, raw:p => p.wpLauf,
+      ev:(p,v) => `${v} Partien in Folge mit wechselndem Partner`,
+      zeit:p => p.wpSpan || ''
+    }},
+
   {id:'seesaw', name:'Das Wechselbad', short:'Wechsel', ic:'cycle', tone:'purple', art:'ereignis', zufall:'quote',
     allzeit:{
       kammer:'fuegung', basis:75, offen:true,
@@ -27313,6 +27341,18 @@ const DISZIPLINEN = [
       unit:'Partien im Wechsel', min:2, raw:p => p.alt,
       ev:(p,v) => `${v} Partien im ständigen Wechsel`,
       zeit:p => p.altSpan || ''
+    }},
+
+  {id:'spurwechsel', name:'Der Spurwechsel', short:'Spur', ic:'laneSwap', tone:'purple', art:'ereignis', zufall:'quote',
+    allzeit:{
+      kammer:'fuegung', basis:75, offen:true,
+      zeitraum:'Ganze Ligageschichte',
+      mind:'30 Partien',
+      wie:'Favorit heißt über 55 % Siegchance vor dem Anpfiff, Außenseiter unter 45 %. Die Lage dazwischen unterbricht die Folge, dieselbe Lage zweimal hintereinander beginnt sie neu, und ein Wechsel braucht zwei Partien. Wie die Rechnung ein Spiel sieht, entscheidet die Aufstellung, nicht das Ergebnis.',
+      cond:'Längste Folge von Partien, abwechselnd als Favorit und als Außenseiter',
+      unit:'Partien in Folge', min:2, raw:p => p.spLauf,
+      ev:(p,v) => `${v} Partien in Folge abwechselnd Favorit und Außenseiter`,
+      zeit:p => p.spSpan || ''
     }},
 
   {id:'hardnight', name:'Der schwerste Tag', short:'Losglück', ic:'rainCloud', tone:'blue',
@@ -27414,6 +27454,43 @@ const DISZIPLINEN = [
       ev:p => `${Math.round(p.flukeExp*100)} % Siegchance und trotzdem gewonnen`,
       zeit:p => p.flukeLabel || ''
     }},
+
+  {id:'ausbruch', name:'Der Ausbruch', short:'Ausbruch', ic:'lock', tone:'purple', art:'ereignis', zufall:'quote',
+    monat:{
+      beiname:'Der Befreite',
+      art:'fuegung',
+      klasse:'legendaer', aus:2.78,
+      wie:'Gegen manche läuft es über Monate nicht. Gezählt wird die längste Pleitenserie gegen einen Gegner, die in diesem Monat gebrochen wurde.',
+      cond:'Einen Gegner besiegt, gegen den zuvor 17 Duelle in Folge verloren gingen',
+      ...(_stWertung(
+        p=>true,
+        (p,c)=>p.bannLauf,
+        17,
+        (p,v)=>`nach ${v} Pleiten in Folge gegen denselben Gegner wieder gewonnen`))},
+    allzeit:{
+      kammer:'fuegung', basis:75, offen:true,
+      zeitraum:'Ganze Ligageschichte',
+      mind:'Ein Sieg nach einer Niederlage gegen denselben Gegner',
+      wie:'Je Gegner werden die direkten Niederlagen in Folge gezählt; Partien gegen andere Gegner dazwischen unterbrechen die Zählung nicht. Ein Sieg gegen diesen Gegner beendet sie, und erst dann zählt ihr Stand. Gegen wen es lange nicht läuft, entscheidet die Auslosung so sehr wie das eigene Spiel.',
+      cond:'Längste Pleitenserie gegen einen Gegner, die mit einem Sieg gegen diesen Gegner endete',
+      val:p => p.bannMax > 0 ? p.bannMax : null,
+      ev:(p,v) => `${v} Niederlagen in Folge gegen denselben Gegner, dann gewonnen`,
+      zeit:p => p.bannLabel || ''
+    }},
+
+  {id:'serienstopp', name:'Der Serienstopp', short:'Stopp', ic:'handStop', tone:'purple', art:'ereignis', zufall:'quote',
+    allzeit:{
+      kammer:'fuegung', basis:75, offen:true,
+      zeitraum:'Eine einzelne Partie',
+      mind:'Ein Sieg gegen einen Gegner in Serie',
+      wie:'Vor jeder Partie steht für beide Gegner fest, wie viele Siege sie gerade in Folge tragen. Gewinnt das eigene Team, ist die längere der beiden Serien beendet. Gewertet wird die längste so beendete Serie, nicht die Zahl solcher Siege und nicht die Summe beider Gegner.',
+      cond:'Längste Siegesserie eines Gegners, die mit einem eigenen Sieg endete',
+      val:p => p.stoppMax > 0 ? p.stoppMax : null,
+      ev:(p,v) => `${v} Siege in Folge beim Gegner, mit einem eigenen Sieg beendet`,
+      zeit:p => p.stoppLabel || ''
+    }},
+
+
 
   {id:'handwriting', name:'Die Handschrift', short:'Schrift', ic:'penLine', tone:'purple',
     art:'ereignis', zufall:'quote',
@@ -28138,19 +28215,6 @@ const DISZIPLINEN = [
         (p,c)=>p.partien.filter(_stEng).length/p.games-c.L.engAnteil,
         0.35,
         (p,v,c)=>`${pct(p.partien.filter(_stEng).length/p.games)} % enge Partien · Liga ${pct(c.L.engAnteil)} %`))}},
-
-  {id:'ausbruch', name:'Der Ausbruch', short:'Ausbruch', ic:'lock', tone:'purple', art:'ereignis',
-    monat:{
-      beiname:'Der Befreite',
-      art:'fuegung',
-      klasse:'legendaer', aus:2.78,
-      wie:'Gegen manche läuft es über Monate nicht. Gezählt wird die längste Pleitenserie gegen einen Gegner, die in diesem Monat gebrochen wurde.',
-      cond:'Einen Gegner besiegt, gegen den zuvor 17 Duelle in Folge verloren gingen',
-      ...(_stWertung(
-        p=>true,
-        (p,c)=>p.bannLauf,
-        17,
-        (p,v)=>`nach ${v} Pleiten in Folge gegen denselben Gegner wieder gewonnen`))}},
 
   {id:'spezialisiert', name:'Der Spezialist', short:'Spezialist', ic:'pinch', tone:'purple', art:'ereignis',
     monat:{
@@ -29033,7 +29097,12 @@ function _chronicleCtx(bisMs){
     defSd:null, defMit:0,
     favL:0,
     angstQ:null, angstGeg:'', angstN:0, angstW:0,
-    einflussD:null, einflussN:0
+    einflussD:null, einflussN:0,
+    wpLauf:0, wpSpan:'',
+    pdLauf:0, pdSpan:'',
+    spLauf:0, spSpan:'',
+    bannMax:0, bannLabel:'',
+    stoppMax:0, stoppLabel:''
   });
 
   const eloVor = {};
@@ -29068,7 +29137,8 @@ function _chronicleCtx(bisMs){
         ts: mts(m),
         mate: onA ? (id === m.a1 ? m.a2 : m.a1) : (id === m.b1 ? m.b2 : m.b1),
         mEl: (eloVor[m.id] || {})[onA ? (id === m.a1 ? m.a2 : m.a1) : (id === m.b1 ? m.b2 : m.b1)],
-        geg: onA ? [m.b1, m.b2] : [m.a1, m.a2]});
+        geg: onA ? [m.b1, m.b2] : [m.a1, m.a2],
+        gR: Math.max(runVor[onA ? m.b1 : m.a1] || 0, runVor[onA ? m.b2 : m.a2] || 0)});
       if(pos === 'atk'){ p.atkG++; p.atkGoals += gf; if(w) p.atkW++; p.atkPerf += (w?1:0) - exp; }
       else             { p.defG++; p.defConceded += ga; if(w) p.defW++; p.defPerf += (w?1:0) - exp; }
       const kanter = (w && gf===10 && ga===0);
@@ -29338,6 +29408,40 @@ function _chronicleCtx(bisMs){
       });
       p.einflussN = nutz.length;
       p.einflussD = gew ? summe / gew : null;
+    }
+    const _folge = (passt, weiter) => {
+      let n = 0, best = 0, start = '', span = '';
+      r.forEach((x, i) => {
+        if(!passt(x)){ n = 0; return; }
+        if(n > 0 && weiter(r[i - 1], x)) n++; else { n = 1; start = x.day; }
+        if(n > best){
+          best = n;
+          span = start === x.day ? dLabel(x.day) : (dLabel(start) + '–' + dLabel(x.day));
+        }
+      });
+      return {n:best, span};
+    };
+    {
+      const wp = _folge(x => !!x.mate, (a, b) => a.mate !== b.mate);
+      p.wpLauf = wp.n; p.wpSpan = wp.span;
+      const pd = _folge(x => !!x.pos, (a, b) => a.pos !== b.pos);
+      p.pdLauf = pd.n; p.pdSpan = pd.span;
+      const sp = _folge(x => x.exp < CHANCE_OFFEN || _stFavorit(x),
+                        (a, b) => (a.exp < CHANCE_OFFEN) !== (b.exp < CHANCE_OFFEN));
+      p.spLauf = sp.n; p.spSpan = sp.span;
+    }
+    {
+      const bann = {};
+      r.forEach(x => x.geg.forEach(g => {
+        if(!g) return;
+        if(x.w){
+          if((bann[g] || 0) > p.bannMax){ p.bannMax = bann[g]; p.bannLabel = dLabel(x.day); }
+          bann[g] = 0;
+        } else bann[g] = (bann[g] || 0) + 1;
+      }));
+      r.forEach(x => {
+        if(x.w && x.gR > p.stoppMax){ p.stoppMax = x.gR; p.stoppLabel = dLabel(x.day); }
+      });
     }
     const dz = (a) => a.map(x => x.gf - x.ga);
     if(ausg.length >= 2){ p.ausgN = ausg.length; p.ausgSd = _sd(dz(ausg)); p.ausgMit = _mit(dz(ausg)); }

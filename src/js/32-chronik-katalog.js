@@ -1131,6 +1131,37 @@ const DISZIPLINEN = [
       ev:(p,v) => `${Math.round(v*100)} % der Übergänge mit Rollenwechsel · ${p.swOk} von ${p.swN}`
     }},
 
+  // Das Gegenstueck zum Seitenwechsler als Folge: dort zaehlt, WIE OFT
+  // zwischen zwei Partien gewechselt wurde, hier, wie lange es ohne
+  // Unterbrechung so ging. Viele verstreute Wechsel ergeben dieselbe Quote
+  // wie ein langer Lauf — gemessen halten die beiden verschiedene Spieler.
+  {id:'pendler', name:'Der Pendler', short:'Pendler', ic:'pendulum', tone:'purple', art:'ereignis', zufall:'quote',
+    allzeit:{
+      kammer:'fuegung', basis:75, offen:true,
+      zeitraum:'Ganze Ligageschichte',
+      mind:'30 Partien',
+      wie:'Sturm nach Abwehr oder Abwehr nach Sturm verlängert die Folge, zweimal hintereinander dieselbe Position beginnt sie neu. Gezählt werden Partien, nicht Wechsel, und gewechselt wird erst ab zwei Partien. Tag und Monat unterbrechen sie nicht. Wo jemand steht, entscheidet die Aufstellung.',
+      cond:'Längste Folge von Partien mit jedes Mal der anderen Position als in der Partie davor',
+      unit:'Partien in Folge', min:2, raw:p => p.pdLauf,
+      ev:(p,v) => `${v} Partien in Folge mit Positionswechsel`,
+      zeit:p => p.pdSpan || ''
+    }},
+
+  // Der Partner statt der Position. Keine Sammlung: A, B, A, B sind vier
+  // Partien, obwohl nur zwei Partner dabei waren — eine Decke durch die
+  // Groesse der Liga gibt es damit nicht.
+  {id:'wanderpass', name:'Der Wanderpass', short:'Wanderer', ic:'partnerWalk', tone:'purple', art:'ereignis', zufall:'quote',
+    allzeit:{
+      kammer:'fuegung', basis:75, offen:true,
+      zeitraum:'Ganze Ligageschichte',
+      mind:'30 Partien',
+      wie:'Ein anderer Partner als in der Partie davor verlängert die Folge, derselbe Partner zweimal hintereinander beginnt sie neu. Ein früherer Partner darf wiederkommen, nur nicht direkt danach, und ein Wechsel braucht zwei Partien. Wer neben wem steht, entscheidet die Auslosung.',
+      cond:'Längste Folge von Partien mit jedes Mal einem anderen Partner als in der Partie davor',
+      unit:'Partien in Folge', min:2, raw:p => p.wpLauf,
+      ev:(p,v) => `${v} Partien in Folge mit wechselndem Partner`,
+      zeit:p => p.wpSpan || ''
+    }},
+
   {id:'seesaw', name:'Das Wechselbad', short:'Wechsel', ic:'cycle', tone:'purple', art:'ereignis', zufall:'quote',
     allzeit:{
       kammer:'fuegung', basis:75, offen:true,
@@ -1141,6 +1172,21 @@ const DISZIPLINEN = [
       unit:'Partien im Wechsel', min:2, raw:p => p.alt,
       ev:(p,v) => `${v} Partien im ständigen Wechsel`,
       zeit:p => p.altSpan || ''
+    }},
+
+  // Das Wechselbad der Ausgangslage: nicht Sieg und Niederlage wechseln,
+  // sondern Favorit und Aussenseiter. Sechs Niederlagen sind dabei genauso
+  // gueltig wie sechs Siege — das Ergebnis spielt keine Rolle.
+  {id:'spurwechsel', name:'Der Spurwechsel', short:'Spur', ic:'laneSwap', tone:'purple', art:'ereignis', zufall:'quote',
+    allzeit:{
+      kammer:'fuegung', basis:75, offen:true,
+      zeitraum:'Ganze Ligageschichte',
+      mind:'30 Partien',
+      wie:'Favorit heißt über 55 % Siegchance vor dem Anpfiff, Außenseiter unter 45 %. Die Lage dazwischen unterbricht die Folge, dieselbe Lage zweimal hintereinander beginnt sie neu, und ein Wechsel braucht zwei Partien. Wie die Rechnung ein Spiel sieht, entscheidet die Aufstellung, nicht das Ergebnis.',
+      cond:'Längste Folge von Partien, abwechselnd als Favorit und als Außenseiter',
+      unit:'Partien in Folge', min:2, raw:p => p.spLauf,
+      ev:(p,v) => `${v} Partien in Folge abwechselnd Favorit und Außenseiter`,
+      zeit:p => p.spSpan || ''
     }},
 
   {id:'hardnight', name:'Der schwerste Tag', short:'Losglück', ic:'rainCloud', tone:'blue',
@@ -1249,6 +1295,52 @@ const DISZIPLINEN = [
       ev:p => `${Math.round(p.flukeExp*100)} % Siegchance und trotzdem gewonnen`,
       zeit:p => p.flukeLabel || ''
     }},
+
+  {id:'ausbruch', name:'Der Ausbruch', short:'Ausbruch', ic:'lock', tone:'purple', art:'ereignis', zufall:'quote',
+    monat:{
+      beiname:'Der Befreite',
+      art:'fuegung',
+      klasse:'legendaer', aus:2.78,
+      wie:'Gegen manche läuft es über Monate nicht. Gezählt wird die längste Pleitenserie gegen einen Gegner, die in diesem Monat gebrochen wurde.',
+      cond:'Einen Gegner besiegt, gegen den zuvor 17 Duelle in Folge verloren gingen',
+      ...(_stWertung(
+        p=>true,
+        (p,c)=>p.bannLauf,
+        17,
+        (p,v)=>`nach ${v} Pleiten in Folge gegen denselben Gegner wieder gewonnen`))},
+    // Dieselbe Frage ueber die Laufbahn [§13.1]: die 17 der Monatswertung ist
+    // dort eine Schwelle fuer die Chronik, hier gilt der beste Wert, den es
+    // gibt [§C35]. Eine noch laufende Serie zaehlt nicht — erst der Sieg
+    // macht aus ihr einen Ausbruch.
+    allzeit:{
+      kammer:'fuegung', basis:75, offen:true,
+      zeitraum:'Ganze Ligageschichte',
+      mind:'Ein Sieg nach einer Niederlage gegen denselben Gegner',
+      wie:'Je Gegner werden die direkten Niederlagen in Folge gezählt; Partien gegen andere Gegner dazwischen unterbrechen die Zählung nicht. Ein Sieg gegen diesen Gegner beendet sie, und erst dann zählt ihr Stand. Gegen wen es lange nicht läuft, entscheidet die Auslosung so sehr wie das eigene Spiel.',
+      cond:'Längste Pleitenserie gegen einen Gegner, die mit einem Sieg gegen diesen Gegner endete',
+      val:p => p.bannMax > 0 ? p.bannMax : null,
+      ev:(p,v) => `${v} Niederlagen in Folge gegen denselben Gegner, dann gewonnen`,
+      zeit:p => p.bannLabel || ''
+    }},
+
+  // Das Gegenstueck zum Ausbruch von der anderen Seite: nicht die eigene
+  // Pleitenserie endet, sondern die Siegesserie eines Gegners. „Der
+  // Laufstopper" misst die Quote gegen Gegner in Serie und ist Koennen;
+  // hier zaehlt die Laenge der einen beendeten Serie, und die hat der
+  // Gegner gespielt — deshalb eine Fuegung und keine Bestmarke.
+  {id:'serienstopp', name:'Der Serienstopp', short:'Stopp', ic:'handStop', tone:'purple', art:'ereignis', zufall:'quote',
+    allzeit:{
+      kammer:'fuegung', basis:75, offen:true,
+      zeitraum:'Eine einzelne Partie',
+      mind:'Ein Sieg gegen einen Gegner in Serie',
+      wie:'Vor jeder Partie steht für beide Gegner fest, wie viele Siege sie gerade in Folge tragen. Gewinnt das eigene Team, ist die längere der beiden Serien beendet. Gewertet wird die längste so beendete Serie, nicht die Zahl solcher Siege und nicht die Summe beider Gegner.',
+      cond:'Längste Siegesserie eines Gegners, die mit einem eigenen Sieg endete',
+      val:p => p.stoppMax > 0 ? p.stoppMax : null,
+      ev:(p,v) => `${v} Siege in Folge beim Gegner, mit einem eigenen Sieg beendet`,
+      zeit:p => p.stoppLabel || ''
+    }},
+
+
 
   // ── Gleichmaessigkeit: drei Fuegungen, kein Koennen [§C35] ────────
   // Wer die geringste Streuung hat, ist nicht der Beste — er ist der, bei dem
@@ -2046,19 +2138,6 @@ const DISZIPLINEN = [
         (p,c)=>p.partien.filter(_stEng).length/p.games-c.L.engAnteil,
         0.35,
         (p,v,c)=>`${pct(p.partien.filter(_stEng).length/p.games)} % enge Partien · Liga ${pct(c.L.engAnteil)} %`))}},
-
-  {id:'ausbruch', name:'Der Ausbruch', short:'Ausbruch', ic:'lock', tone:'purple', art:'ereignis',
-    monat:{
-      beiname:'Der Befreite',
-      art:'fuegung',
-      klasse:'legendaer', aus:2.78,
-      wie:'Gegen manche läuft es über Monate nicht. Gezählt wird die längste Pleitenserie gegen einen Gegner, die in diesem Monat gebrochen wurde.',
-      cond:'Einen Gegner besiegt, gegen den zuvor 17 Duelle in Folge verloren gingen',
-      ...(_stWertung(
-        p=>true,
-        (p,c)=>p.bannLauf,
-        17,
-        (p,v)=>`nach ${v} Pleiten in Folge gegen denselben Gegner wieder gewonnen`))}},
 
   {id:'spezialisiert', name:'Der Spezialist', short:'Spezialist', ic:'pinch', tone:'purple', art:'ereignis',
     monat:{

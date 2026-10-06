@@ -2776,14 +2776,83 @@ const _rk = JSON.parse(K.eval(`JSON.stringify(CHRONICLES.map(c => ({
   mind:c.mind, zeitraum:c.zeitraum, cond:c.cond, wie:c.wie,
   neg:c.neg, fenster:c.fenster, hatVal:typeof c.val === 'function'
 })))`));
-ok(_rk.length === 71, 'der aktive Katalog enthaelt genau 71 Rekorde', _rk.length + '');
+ok(_rk.length === 76, 'der aktive Katalog enthaelt genau 76 Rekorde', _rk.length + '');
 const _rkZahl = {};
 _rk.forEach(c => { _rkZahl[c.kind] = (_rkZahl[c.kind] || 0) + 1; });
-const _rkSoll = {koennen:30, form:8, mark:10, fuegung:12, shame:11};
+const _rkSoll = {koennen:30, form:8, mark:10, fuegung:17, shame:11};
 Object.keys(_rkSoll).forEach(k => ok(_rkZahl[k] === _rkSoll[k],
   'die Kammer ' + k + ' hat ' + _rkSoll[k] + ' Rekorde', (_rkZahl[k] || 0) + ''));
 ok(Object.keys(_rkZahl).length === 5, 'es gibt genau fuenf Kammern',
    Object.keys(_rkZahl).join(', '));
+
+// Die fuenf Folgen aus `mockup/besonderheiten`, ein zweites Mal aus den
+// rohen Partien gerechnet und nicht aus der Rohsicht der Engine: die Engine
+// zaehlt ueber `roh`, der Test ueber die gepackten Fixtures. Pendler,
+// Wanderpass und Spurwechsel sind laengste Folgen (Partien, nicht
+// Uebergaenge), Ausbruch die laengste BEENDETE Pleitenserie gegen einen
+// Gegner, Serienstopp die laengste Gegner-Siegesserie, die ein eigener Sieg
+// beendet — je Partie die laengere der beiden, nicht ihre Summe.
+const _folgeSoll = (() => {
+  const ms = realMatches.slice().sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  const P = {}, lauf = {};
+  const hin = (x, k, passt, weiter) => {
+    const st = x.st[k] || (x.st[k] = {n:0, best:0, prev:null});
+    if(!passt){ st.n = 0; st.prev = null; return; }
+    st.n = (st.n > 0 && weiter(st.prev)) ? st.n + 1 : 1;
+    st.best = Math.max(st.best, st.n);
+  };
+  ms.forEach(m => {
+    const vor = {}; [m.a1, m.a2, m.b1, m.b2].forEach(id => vor[id] = lauf[id] || 0);
+    [m.a1, m.a2, m.b1, m.b2].forEach(id => {
+      const onA = id === m.a1 || id === m.a2;
+      const w = (m.winner === 'A') === onA;
+      const mate = id === m.a1 ? m.a2 : id === m.a2 ? m.a1 : id === m.b1 ? m.b2 : m.b1;
+      const pos = m[(id === m.a1 ? 'a1' : id === m.a2 ? 'a2' : id === m.b1 ? 'b1' : 'b2') + '_pos'];
+      const geg = onA ? [m.b1, m.b2] : [m.a1, m.a2];
+      const e = onA ? m.exp_a : 1 - m.exp_a;
+      const lage = e < 0.45 ? 'u' : e > 0.55 ? 'f' : '';
+      const x = P[id] || (P[id] = {g:0, st:{}, bann:{}, bannMax:0, stopp:0, last:null});
+      x.g++;
+      const l = x.last;
+      hin(x, 'pd', true, () => l && l.pos !== pos);
+      hin(x, 'wp', true, () => l && l.mate !== mate);
+      hin(x, 'sp', !!lage, () => l && l.lage && l.lage !== lage);
+      geg.forEach(g => { if(w){ x.bannMax = Math.max(x.bannMax, x.bann[g] || 0); x.bann[g] = 0; }
+                         else x.bann[g] = (x.bann[g] || 0) + 1; });
+      if(w) x.stopp = Math.max(x.stopp, vor[geg[0]], vor[geg[1]]);
+      x.last = {pos, mate, lage};
+    });
+    [m.a1, m.a2, m.b1, m.b2].forEach(id => {
+      lauf[id] = ((m.winner === 'A') === (id === m.a1 || id === m.a2)) ? (lauf[id] || 0) + 1 : 0; });
+  });
+  const wert = {pendler:x => x.st.pd.best, wanderpass:x => x.st.wp.best,
+                spurwechsel:x => (x.st.sp || {best:0}).best,
+                ausbruch:x => x.bannMax, serienstopp:x => x.stopp};
+  const out = {};
+  Object.keys(wert).forEach(id => {
+    const feld = Object.keys(P).filter(pid => P[pid].g >= 30).map(pid => ({pid, v:wert[id](P[pid])}));
+    const best = Math.max(...feld.map(f => f.v));
+    out[id] = {best, halter:feld.filter(f => f.v === best).map(f => f.pid).sort()};
+  });
+  return out;
+})();
+const _folgeIst = JSON.parse(K.eval(`JSON.stringify(['pendler','wanderpass','spurwechsel','ausbruch','serienstopp']
+  .reduce((o, id) => { const e = allChronicles().byId[id];
+    o[id] = e ? {best:e.val, halter:e.pids.slice().sort()} : null; return o; }, {}))`));
+Object.keys(_folgeSoll).forEach(id => {
+  const s = _folgeSoll[id], i = _folgeIst[id];
+  ok(i && i.best === s.best && i.halter.join() === s.halter.join(),
+     '„' + id + '" stimmt mit der Nachrechnung aus den rohen Partien',
+     i ? i.best + ' ' + i.halter.map(nm).join('/') + ' statt ' + s.best + ' ' + s.halter.map(nm).join('/')
+       : 'nicht vergeben');
+});
+// Eine Folge ist eine Laenge und keine Summe: der Ausbruch nennt EINEN Gegner,
+// der Serienstopp EINE Serie. Der Beleg beginnt mit dieser Zahl.
+ok(K.eval(`['pendler','wanderpass','spurwechsel','ausbruch','serienstopp'].every(id => {
+  const e = allChronicles().byId[id]; if(!e) return false;
+  const c = CHRONICLE_BY_ID[id];
+  return parseInt(c.ev(_chronicleCtx().P[e.pid], e.val), 10) === e.val && !!c.zeit(_chronicleCtx().P[e.pid]);
+})`), 'jede neue Folge belegt ihren Wert und nennt, wann sie lag');
 
 // Jede ID und jedes Zeichen genau einmal. Zwei Rekorde mit derselben
 // Zeichnung sind in einer Kachel von 34 Pixeln nicht zu unterscheiden.

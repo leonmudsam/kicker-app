@@ -312,7 +312,15 @@ function _chronicleCtx(bisMs){
     // fuer zwei Rekorde: „Der Katalysator" liest es mit Plus, „Der Klotz am
     // Bein" mit Minus. Zwei Rechnungen ueber dieselbe Frage nennen
     // irgendwann zwei verschiedene Beste [§C27].
-    einflussD:null, einflussN:0
+    einflussD:null, einflussN:0,
+    // ── Folgen, die die Auslosung schreibt [§C35]. Drei laengste Laeufe
+    //    und zwei einzelne Partien, alle aus der Rohsicht unten. Gezaehlt
+    //    werden Partien, nicht Uebergaenge: A–B–A ist eine Folge aus drei.
+    wpLauf:0, wpSpan:'',                 // jedes Mal ein anderer Partner
+    pdLauf:0, pdSpan:'',                 // jedes Mal die andere Position
+    spLauf:0, spSpan:'',                 // abwechselnd Favorit und Aussenseiter
+    bannMax:0, bannLabel:'',             // laengste beendete Pleitenserie gegen einen Gegner
+    stoppMax:0, stoppLabel:''            // laengste beendete Siegesserie eines Gegners
   });
 
   // Die Elo VOR jeder Partie, aus der zentralen Simulation. „Der Rueckenwind"
@@ -374,7 +382,11 @@ function _chronicleCtx(bisMs){
         mate: onA ? (id === m.a1 ? m.a2 : m.a1) : (id === m.b1 ? m.b2 : m.b1),
         // Die Elo des Mitspielers, wie sie vor dieser Partie stand.
         mEl: (eloVor[m.id] || {})[onA ? (id === m.a1 ? m.a2 : m.a1) : (id === m.b1 ? m.b2 : m.b1)],
-        geg: onA ? [m.b1, m.b2] : [m.a1, m.a2]});
+        geg: onA ? [m.b1, m.b2] : [m.a1, m.a2],
+        // Die laengere der beiden Gegner-Siegesserien VOR dem Anpfiff.
+        // „Der Serienstopp" fragt, welche Serie ein eigener Sieg beendet hat,
+        // und `run` steht fuer die A-Seite hier schon auf dem neuen Stand.
+        gR: Math.max(runVor[onA ? m.b1 : m.a1] || 0, runVor[onA ? m.b2 : m.a2] || 0)});
       if(pos === 'atk'){ p.atkG++; p.atkGoals += gf; if(w) p.atkW++; p.atkPerf += (w?1:0) - exp; }
       else             { p.defG++; p.defConceded += ga; if(w) p.defW++; p.defPerf += (w?1:0) - exp; }
       const kanter = (w && gf===10 && ga===0);
@@ -786,6 +798,55 @@ function _chronicleCtx(bisMs){
       });
       p.einflussN = nutz.length;
       p.einflussD = gew ? summe / gew : null;
+    }
+    // ── Folgen, die die Auslosung schreibt [§C35] ──────────────────
+    // Die laengste Folge eigener Partien, in der jede die vorige auf eine
+    // bestimmte Weise abloest. Tag und Monat unterbrechen sie nicht: eine
+    // Folge gehoert der Laufbahn, nicht dem Kalender. Eine Laenge allein
+    // (ohne Anteil) haelt nicht automatisch der Vielspieler — gemessen
+    // hielten sie Spieler auf Platz 6, 7 und 10 der Siegquote.
+    const _folge = (passt, weiter) => {
+      let n = 0, best = 0, start = '', span = '';
+      r.forEach((x, i) => {
+        if(!passt(x)){ n = 0; return; }
+        if(n > 0 && weiter(r[i - 1], x)) n++; else { n = 1; start = x.day; }
+        if(n > best){
+          best = n;
+          span = start === x.day ? dLabel(x.day) : (dLabel(start) + '–' + dLabel(x.day));
+        }
+      });
+      return {n:best, span};
+    };
+    {
+      const wp = _folge(x => !!x.mate, (a, b) => a.mate !== b.mate);
+      p.wpLauf = wp.n; p.wpSpan = wp.span;
+      const pd = _folge(x => !!x.pos, (a, b) => a.pos !== b.pos);
+      p.pdLauf = pd.n; p.pdSpan = pd.span;
+      // Die offene Zone zwischen 45 und 55 % unterbricht: dort ist niemand
+      // Favorit und niemand Aussenseiter [§5.2].
+      const sp = _folge(x => x.exp < CHANCE_OFFEN || _stFavorit(x),
+                        (a, b) => (a.exp < CHANCE_OFFEN) !== (b.exp < CHANCE_OFFEN));
+      p.spLauf = sp.n; p.spSpan = sp.span;
+    }
+    // „Der Ausbruch" ueber die Laufbahn: dieselbe Frage wie im Monat
+    // (`_bannLaufDerLiga`), nur ohne Monatsgrenze. Je Gegner laufen die
+    // direkten Niederlagen in Folge; ein Sieg beendet sie, und erst dann
+    // zaehlt der Stand. Eine noch laufende Serie ist kein Ausbruch.
+    // „Der Serienstopp": die laengste Siegesserie eines Gegners, die ein
+    // eigener Sieg beendet hat. Je Partie zaehlt die laengere der beiden,
+    // nicht ihre Summe.
+    {
+      const bann = {};
+      r.forEach(x => x.geg.forEach(g => {
+        if(!g) return;
+        if(x.w){
+          if((bann[g] || 0) > p.bannMax){ p.bannMax = bann[g]; p.bannLabel = dLabel(x.day); }
+          bann[g] = 0;
+        } else bann[g] = (bann[g] || 0) + 1;
+      }));
+      r.forEach(x => {
+        if(x.w && x.gR > p.stoppMax){ p.stoppMax = x.gR; p.stoppLabel = dLabel(x.day); }
+      });
     }
     const dz = (a) => a.map(x => x.gf - x.ga);
     if(ausg.length >= 2){ p.ausgN = ausg.length; p.ausgSd = _sd(dz(ausg)); p.ausgMit = _mit(dz(ausg)); }
