@@ -1758,10 +1758,14 @@ async function syncStoriesViaDb(){
   // derselben Aufgabe: die neue Rangliste stand erst nach dem Generator auf
   // dem Bildschirm, und ein Tippen in dieser Zeit blieb liegen. Gewartet wird
   // auf einen ruhigen Moment, höchstens anderthalb Sekunden.
-  await _leerlauf(1500);
-  let generated = [];
-  try { generated = _buildStories() || []; }
-  catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] generator failed', e); }
+  // Gerechnet wird im Worker [§11.8b]; der Hauptthread nur, wenn der nicht
+  // kann. Der ruhige Moment davor bleibt für diesen Rückfall.
+  let generated = await _storiesImWorker();
+  if(!generated){
+    await _leerlauf(1500);
+    try { generated = _buildStories() || []; }
+    catch(e){ generated = []; if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] generator failed', e); }
+  }
 
   // Versuch 1: DB-Pfad
   try {

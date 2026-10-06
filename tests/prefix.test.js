@@ -75,5 +75,48 @@ if(!failed){
   K(`invalidateCache(['stats']);`);
   ok(K('groups!==getMatchesBySeason(groupSource)'),'Saisongruppen einer alten Teilmengenreferenz folgen der Cache-Version');
 }
+
+// ── Gemeinsame Zeitschnitte an den echten Partien der Liga ──────────────
+// `_partienBis` gibt je Stand EIN Array; es muss dasselbe enthalten wie der
+// Filter, den es ersetzt, und darf von niemandem verändert werden, der es
+// liest — auch nicht von einem ganzen Generatorlauf.
+{
+  const R=require('./runtime.js').createRuntime();
+  const fs=require('node:fs'),path=require('node:path');
+  const NAMEN=['Alex','Anton','Henry','Jane','Jannik','Johannes','Julian','Leo','Leon','Martin','Maxi','Stefan'];
+  const IDS=NAMEN.map((_,i)=>'00000000-0000-4000-8000-'+String(i).padStart(12,'0'));
+  const MS=fs.readFileSync(path.join(__dirname,'fixtures/matches.txt'),'utf8').trim().split(';').map((row,i)=>{
+    const f=row.split(',').map(Number),pos=k=>f[4+k]===0?'atk':'def';
+    return {id:'m'+String(i).padStart(4,'0'),a1:IDS[f[0]],a2:IDS[f[1]],b1:IDS[f[2]],b2:IDS[f[3]],
+      a1_pos:pos(0),a2_pos:pos(1),b1_pos:pos(2),b2_pos:pos(3),score_a:f[8],score_b:f[9],winner:f[10]===0?'A':'B',
+      exp_a:f[11]/1000,created_at:new Date(f[12]*1000).toISOString(),deltas:{}};});
+  R.setNow(new Date(2026,7,26,21).getTime());
+  R.K(`players=${JSON.stringify(NAMEN.map((name,i)=>({id:IDS[i],name,hidden:false,elo:0})))};
+    matches=${JSON.stringify(MS)};seasons=[];invalidateCache();`);
+  const schnitte=R.K(`(()=>{const t=matches.map(mts);return [t[0]-1,t[0],t[50],t[50]+1,t[200],t[333],t[t.length-2],t[t.length-1]-1];})()`);
+  // Zwei Partien mit demselben Zeitstempel: beide gehören zum Schnitt.
+  const gleich=schnitte.every(b=>R.K(`JSON.stringify(_partienBis(${b}).map(m=>m.id))===JSON.stringify(matches.filter(m=>mts(m)<=${b}).map(m=>m.id))`));
+  ok(gleich,'Ein gemeinsamer Zeitschnitt enthält genau die Partien des alten Filters, in derselben Reihenfolge');
+  ok(R.K(`_partienBis(${schnitte[4]})===_partienBis(${schnitte[4]}) && _partienBis(${schnitte[4]})!==matches`),'Derselbe Stand liefert dasselbe Array, nicht die Liga selbst');
+  // Die Historie der Monatstitel liest, wer in welchem Monat gespielt hat,
+  // aus einer Tabelle je Liste; gegen die alte Abfrage über alle Partien.
+  const alt=`(pid,quelle)=>[...new Set(quelle.map(m=>(seasonOf(m.created_at)||{}).id).filter(Boolean))].filter(sid=>quelle.some(m=>(seasonOf(m.created_at)||{}).id===sid&&(m.a1===pid||m.a2===pid||m.b1===pid||m.b2===pid)))`;
+  const titel=R.K(`(()=>{const alt=${alt};let gut=true;
+    for(const b of [${schnitte[2]},${schnitte[4]},${schnitte[5]}]) for(const p of players){
+      const neu=seasonTitleHistory(p.id,b).map(r=>r.sid);
+      if(JSON.stringify(neu)!==JSON.stringify(alt(p.id,_partienBis(b)).sort())) gut=false; }
+    return gut;})()`);
+  ok(titel,'Die Monatstitel-Historie nennt in jedem Schnitt dieselben Monate wie die alte Abfrage');
+  R.K(`prestigeTabelle(${schnitte[4]});prestigeTabelle(${schnitte[5]});_buildStories();`);
+  ok(R.K(`(()=>{const ids=matches.map(m=>m.id);for(const b of ${JSON.stringify(schnitte)}){const a=_partienBis(b);
+    const n=matches.filter(m=>mts(m)<=b).length;if(a.length!==n||a.some((m,i)=>m.id!==ids[i]))return false;}return true;})()`),
+    'Nach Prestige-Schnitten und einem Generatorlauf ist kein geteilter Zeitschnitt verändert');
+  // Eine Liga, die nicht aufsteigend vorliegt, bekommt den alten Filter.
+  R.K('window.__umgedreht=matches.slice().reverse();matches=window.__umgedreht;invalidateCache();');
+  ok(R.K(`JSON.stringify(_partienBis(${schnitte[4]}).map(m=>m.id))===JSON.stringify(matches.filter(m=>mts(m)<=${schnitte[4]}).map(m=>m.id))`),
+    'Eine nicht aufsteigende Liga wird gefiltert statt halbiert');
+  ok(R.K(`_wochenKey(matches[3].created_at)===_wochenKey(matches[3].created_at) && _wochenKey(new Date(matches[3].created_at))===_wochenKey(matches[3].created_at)`),
+    'Der Wochenschlüssel ist für Text und Datum derselbe');
+}
 console.log(failed?`\n${failed} von ${count} CHECKS FEHLGESCHLAGEN`:`\nALLE ${count} CHECKS BESTANDEN`);
 process.exitCode=failed?1:0;

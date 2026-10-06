@@ -187,6 +187,19 @@ Rechnung an der Identität eines Arrays hängt statt an einer Version
 — `matches` wird immer **ersetzt**, nie an Ort und Stelle verändert, und ein
 frisches Array verwirft den Memo von selbst.
 
+**Ein Zeitschnitt ist ein Array je Stand** (`_partienBis`, `04-cache.js`):
+die Partien bis `bisMs`, gefunden per Binärsuche wie in `getSimAt`, gemerkt
+in einer `WeakMap` an `matches` je Zahl der eingeschlossenen Partien
+(höchstens 24, der älteste geht zuerst). `prestigeTabelle(bis)` und
+`seasonTitleHistory(pid, bis)` schnitten sich denselben Stand vorher jeder
+selbst zurecht — zwölf gleiche Kopien der Liga je Schnitt —, und die Memos,
+die an der Identität ihres Arrays hängen, trafen über diese Grenze nie. Das
+Array ist nur zu lesen; `tests/prefix` sieht nach einem Generatorlauf nach,
+dass keines verändert wurde. Liegt die Liga nicht aufsteigend vor, gilt der
+alte Filter. Wer in welchem Monat gespielt hat, steht je Liste einmal in
+`_spielerJeSaison` (`WeakMap`), `_wochenKey` merkt sich Text und Zahl wie
+`mts`, und die Badge-Vergabe sucht ein Badge in einer Map statt in `BADGES`.
+
 **Der Verlauf eines Rekords** (`_rekVerlauf`, Schlüssel Rekord, Partienzahl
 und Version, Deckel 16) wird nach dem Öffnen des Blatts gerechnet, ein
 Monatsende je Takt: ein Zeitschnitt rechnet die Elo-Bahn bis dorthin nach,
@@ -250,6 +263,13 @@ Spieler und alle Partien; das im Hintergrund zu tun ist Mobilfunk und Akku
 für nichts, und ein PWA-Symbol bleibt tagelang offen. Der News-Autosync
 (`29-news-cache.js`) befolgt dieselbe Regel seit jeher.
 
+Der Update-Check (`checkForUpdate`, `01-update.js`) fragt mit
+`If-None-Match`; der ETag steht mit der Version, zu der er gehört, im Speicher
+des Geräts (`kicker_upd_v1`) und gilt nur, solange diese Version läuft. Ohne
+ihn lud jeder Start die ganze Seite erneut — neben den vier Datenabfragen.
+Der erste Check des Starts wartet, bis der erste Datenlauf gezeichnet hat und
+die Seite ruht. `tests/start` misst beides am echten Start.
+
 `loadAll` hält höchstens einen Durchlauf offen (`_loadAllPromise`). Weitere
 explizite Anforderungen setzen `_loadAllNochmals` und erhalten dieselbe Promise, die
 erst nach dem frischen Folgedurchlauf erfüllt ist. Nach jedem abgeschlossenen
@@ -271,12 +291,33 @@ jeden weiteren Tap erneut verworfen. Unveränderte Daten behalten DOM/Caches;
 Abruffehler behalten die letzte Ansicht. Ein sich anschließender expliziter
 Vordergrundaufruf hebt den stillen Modus auf (`_loadAllLeise`).
 
-Kommen neue Daten, zeichnet `loadAll` zuerst und rechnet den News-Generator
-(kalt rund 370 ms) erst in einem ruhigen Moment danach (`_leerlauf` in
-`syncStoriesViaDb`, höchstens anderthalb Sekunden später): beides lief in
-derselben Aufgabe, und die neue Rangliste stand erst nach dem Generator auf
-dem Bildschirm. `tests/ambient` sieht nach, dass er im selben Aufruf nicht
-läuft.
+Kommen neue Daten, zeichnet `loadAll` zuerst und lässt den News-Generator
+danach in einem Worker rechnen (`_storiesImWorker`, `29c-news-worker.js`):
+derselbe ausgelieferte Code, vor ihm eine Attrappe für DOM und Speicher. Kalt
+rechnet er an den Fixtures mit vierfach gedrosselter CPU rund eine Sekunde am
+Stück; auf dem Hauptthread blieb in dieser Sekunde jedes Tippen liegen. Der
+Worker lebt die Sitzung lang und bekommt den Datenstand nur, wenn sich
+`players`, `matches`, `cfg`, `seasons` oder `_cache.version` geändert haben
+(`_storyWorkerStand`), den Story-Bestand jedes Mal — so trifft sein Memo genau
+dann, wenn er auf dem Hauptthread getroffen hätte. Hat sich der Stand während
+der Rechnung geändert, gilt die Antwort nicht. Ohne Worker, ohne Skripttext,
+bei einem Fehler oder nach zwanzig Sekunden ohne Antwort (`STORY_WORKER_MS`)
+rechnet der Hauptthread wie zuvor, in einem ruhigen Moment (`_leerlauf`,
+höchstens anderthalb Sekunden später); nach einem Fehlschlag bleibt der
+Worker für die Sitzung aus. `tests/start` hält Worker und Hauptthread
+aneinander, `tests/ambient` sieht nach, dass der Generator nicht im selben
+Aufruf wie das Zeichnen läuft.
+
+Nach jedem Zeichnen mit neuen Daten rechnet `_vorwaermen` (`04-cache.js`
+§2.1b) die Töpfe der übrigen Reiter vor — Positionen, Awards der laufenden
+Saison, Rekorde, Chronik, Teams, Prestige —, EINEN je ruhigem Moment
+(`_leerlauf`) und mit genau den Aufrufen, die die Ansicht beim Betreten
+macht, sonst träfe der Schlüssel nicht. Seit der Generator im Worker rechnet,
+wärmt er den Hauptthread nicht mehr nebenbei; ohne das Vorwärmen rechneten
+Awards und Teams beim ersten Öffnen kalt. Ein neuer Datenstand (andere
+Version) oder ein neuerer Auftrag bricht den laufenden ab
+(`_vorwaermAuftrag`), eine versteckte Seite wartet. `tests/start` zählt nach
+dem Start beim ersten Öffnen jedes Reiters die kalten Rechnungen: null.
 
 `_tickDaten` lässt außerdem ein offenes Blatt, den Eingabe-Tab und die
 Einstellungen in Ruhe:
