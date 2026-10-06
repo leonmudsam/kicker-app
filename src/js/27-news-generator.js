@@ -108,6 +108,14 @@ function _buildStories(){
     return _cache._buildStoriesResult;
   }
 
+  // Älteste zuerst, einmal für alle Serien unten: dieselbe Sortierung stand
+  // fünfmal ausgeschrieben, jede kopierte und sortierte die ganze Liga neu.
+  // Die Sortierung ist stabil, und jede Stelle liest nur.
+  const chronoMatches = [...matches].sort((a, b) => mts(a) - mts(b));
+  // Eine Partie nach ihrer ID: `matches.find` lief je Serie und je
+  // Spielkarte einmal über die ganze Liga.
+  const matchVonId = new Map(matches.map(m => [m.id, m]));
+
   // ── Helper-Refs einmalig (v8.4) ──
   // getHistoryByMatchId() und getRankSnapshots() sind bereits gecached, aber
   // jeder Aufruf prüft den Cache-Key neu. Einmal pro Generator-Lauf
@@ -359,7 +367,7 @@ function _buildStories(){
     const seit = now.getTime() - NEWS_FENSTER_TAGE * _dayMs;
     const TEAM_STREAK_MS = new Set([5, 7, 10, 15, 20]);
     const lauf = {}, laufStart = {}, kand = [];
-    [...matches].sort((a, b) => mts(a) - mts(b)).forEach(m => {
+    chronoMatches.forEach(m => {
       if(mts(m) > now.getTime()) return;
       [[m.a1, m.a2, m.winner === 'A'], [m.b1, m.b2, m.winner === 'B']].forEach(([x, y, won]) => {
         if(!x || !y) return;
@@ -405,7 +413,7 @@ function _buildStories(){
     const seit = now.getTime() - NEWS_FENSTER_TAGE * _dayMs;
     const TEAM_LOSS_MS = new Set([3, 5, 7, 10]);
     const lauf = {}, laufStart = {}, ersteT = {}, kand = [];
-    [...matches].sort((a, b) => mts(a) - mts(b)).forEach(m => {
+    chronoMatches.forEach(m => {
       if(mts(m) > now.getTime()) return;
       [[m.a1, m.a2, m.winner === 'A'], [m.b1, m.b2, m.winner === 'B']].forEach(([x, y, won]) => {
         if(!x || !y) return;
@@ -528,7 +536,7 @@ function _buildStories(){
     const seit = now.getTime() - NEWS_FENSTER_TAGE * _dayMs;
     const marken = new Set([5, 8, 10]);
     const lauf = {}, laufStart = {}, kand = [];
-    [...matches].sort((a, b) => mts(a) - mts(b)).forEach(m => {
+    chronoMatches.forEach(m => {
       if(mts(m) > now.getTime()) return;
       const aGewinnt = m.winner === 'A';
       [[m.a1, aGewinnt], [m.a2, aGewinnt], [m.b1, !aGewinnt], [m.b2, !aGewinnt]]
@@ -541,7 +549,7 @@ function _buildStories(){
         if(mts(m) < seit) return;
         // Der Zeitpunkt der Partie, mit der die Serie angefangen hat: die
         // Karte nennt ihn im Satz, damit sie nicht zweimal dasselbe sagt.
-        const _st = matches.find(x => x.id === laufStart[pid]);
+        const _st = matchVonId.get(laufStart[pid]);
         kand.push({pid, streak:n, when:new Date(m.created_at), matchId:m.id,
                    lauf:laufStart[pid] || '', seit:_st ? mts(_st) : 0});
       });
@@ -1530,7 +1538,7 @@ function _buildStories(){
     const pairThresholds = [50, 100, 200, 500];
     const pairCnt = {};
     const gekreuzt = [];
-    [...matches].sort((x, y) => mts(x) - mts(y)).forEach(m => {
+    chronoMatches.forEach(m => {
       const A = [m.a1, m.a2], B = [m.b1, m.b2];
       A.forEach(a => B.forEach(b => {
         if(a === b) return;
@@ -1646,7 +1654,7 @@ function _buildStories(){
     // ueber dem, was das Zeichen daneben schon feiert. Danach fuenf, acht,
     // zehn und jede fuenfte: sieben und zehn lagen dicht beieinander, acht
     // ist die Marke, die einen langen Spieltag abschliesst.
-    [...matches].sort((a, b) => mts(a) - mts(b)).forEach(m => {
+    chronoMatches.forEach(m => {
       if(mts(m) > now.getTime()) return;
       const aGewinnt = m.winner === 'A';
       [[m.a1,aGewinnt],[m.a2,aGewinnt],[m.b1,!aGewinnt],[m.b2,!aGewinnt]].forEach(([pid, sieg]) => {
@@ -2727,7 +2735,7 @@ function _buildStories(){
       const l = jeMatch.get(d.matchId) || []; l.push(s); jeMatch.set(d.matchId, l); });
     jeMatch.forEach((l, mid) => {
       const basis = l.find(s => (s.dataRef || {}).type === 'spiel');
-      const m = matches.find(x => x.id === mid);
+      const m = matchVonId.get(mid);
       if(!basis || !m || (basis.dataRef || {}).visual || typeof _spVisualSnapshot !== 'function') return;
       const visual = _spVisualSnapshot(m, l.map(s => s.dataRef || {}));
       basis.dataRef = Object.assign({}, basis.dataRef, {visual,

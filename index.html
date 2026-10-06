@@ -5539,7 +5539,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.06.ad2a6b2f';
+const BUILD_VERSION='2026.10.06.f07c1c6c';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -17511,6 +17511,9 @@ function _buildStories(){
     return _cache._buildStoriesResult;
   }
 
+  const chronoMatches = [...matches].sort((a, b) => mts(a) - mts(b));
+  const matchVonId = new Map(matches.map(m => [m.id, m]));
+
   const histMap = getHistoryByMatchId();
   const snaps   = getRankSnapshots();
 
@@ -17668,7 +17671,7 @@ function _buildStories(){
     const seit = now.getTime() - NEWS_FENSTER_TAGE * _dayMs;
     const TEAM_STREAK_MS = new Set([5, 7, 10, 15, 20]);
     const lauf = {}, laufStart = {}, kand = [];
-    [...matches].sort((a, b) => mts(a) - mts(b)).forEach(m => {
+    chronoMatches.forEach(m => {
       if(mts(m) > now.getTime()) return;
       [[m.a1, m.a2, m.winner === 'A'], [m.b1, m.b2, m.winner === 'B']].forEach(([x, y, won]) => {
         if(!x || !y) return;
@@ -17708,7 +17711,7 @@ function _buildStories(){
     const seit = now.getTime() - NEWS_FENSTER_TAGE * _dayMs;
     const TEAM_LOSS_MS = new Set([3, 5, 7, 10]);
     const lauf = {}, laufStart = {}, ersteT = {}, kand = [];
-    [...matches].sort((a, b) => mts(a) - mts(b)).forEach(m => {
+    chronoMatches.forEach(m => {
       if(mts(m) > now.getTime()) return;
       [[m.a1, m.a2, m.winner === 'A'], [m.b1, m.b2, m.winner === 'B']].forEach(([x, y, won]) => {
         if(!x || !y) return;
@@ -17794,7 +17797,7 @@ function _buildStories(){
     const seit = now.getTime() - NEWS_FENSTER_TAGE * _dayMs;
     const marken = new Set([5, 8, 10]);
     const lauf = {}, laufStart = {}, kand = [];
-    [...matches].sort((a, b) => mts(a) - mts(b)).forEach(m => {
+    chronoMatches.forEach(m => {
       if(mts(m) > now.getTime()) return;
       const aGewinnt = m.winner === 'A';
       [[m.a1, aGewinnt], [m.a2, aGewinnt], [m.b1, !aGewinnt], [m.b2, !aGewinnt]]
@@ -17805,7 +17808,7 @@ function _buildStories(){
         const n = lauf[pid];
         if(!(marken.has(n) || (n > 10 && n % 5 === 0))) return;
         if(mts(m) < seit) return;
-        const _st = matches.find(x => x.id === laufStart[pid]);
+        const _st = matchVonId.get(laufStart[pid]);
         kand.push({pid, streak:n, when:new Date(m.created_at), matchId:m.id,
                    lauf:laufStart[pid] || '', seit:_st ? mts(_st) : 0});
       });
@@ -18532,7 +18535,7 @@ function _buildStories(){
     const pairThresholds = [50, 100, 200, 500];
     const pairCnt = {};
     const gekreuzt = [];
-    [...matches].sort((x, y) => mts(x) - mts(y)).forEach(m => {
+    chronoMatches.forEach(m => {
       const A = [m.a1, m.a2], B = [m.b1, m.b2];
       A.forEach(a => B.forEach(b => {
         if(a === b) return;
@@ -18617,7 +18620,7 @@ function _buildStories(){
   try {
     const seit = now.getTime() - 14 * _dayMs;
     const lauf = {}, laufStart = {}, kandidaten = [];
-    [...matches].sort((a, b) => mts(a) - mts(b)).forEach(m => {
+    chronoMatches.forEach(m => {
       if(mts(m) > now.getTime()) return;
       const aGewinnt = m.winner === 'A';
       [[m.a1,aGewinnt],[m.a2,aGewinnt],[m.b1,!aGewinnt],[m.b2,!aGewinnt]].forEach(([pid, sieg]) => {
@@ -19217,7 +19220,7 @@ function _buildStories(){
       const l = jeMatch.get(d.matchId) || []; l.push(s); jeMatch.set(d.matchId, l); });
     jeMatch.forEach((l, mid) => {
       const basis = l.find(s => (s.dataRef || {}).type === 'spiel');
-      const m = matches.find(x => x.id === mid);
+      const m = matchVonId.get(mid);
       if(!basis || !m || (basis.dataRef || {}).visual || typeof _spVisualSnapshot !== 'function') return;
       const visual = _spVisualSnapshot(m, l.map(s => s.dataRef || {}));
       basis.dataRef = Object.assign({}, basis.dataRef, {visual,
