@@ -232,6 +232,10 @@ function normal(text, blobs){
 }
 
 async function abzug(html){
+  // Die Version ist ein Hash über den Inhalt: jede Fassung trägt eine andere,
+  // und die Einstellungen zeigen sie. Sie ist der eine Unterschied, der sein
+  // MUSS; verglichen wird alles andere.
+  const version = (html.match(/const BUILD_VERSION=['"]([^'"]+)['"]/) || [])[1];
   const dump = {};
   for(const sz of SZENARIEN){
     const daten = sz.daten ? {players:fixtures.players, matches:fixtures.matches, seasons:fixtures.seasons, ...sz.daten} : null;
@@ -267,7 +271,7 @@ async function abzug(html){
       roh[`${sz.id}/schreibzugriffe`] = JSON.stringify(await page.evaluate(() => window.__schreib));
       roh[`${sz.id}/seitenfehler`] = JSON.stringify(errors);
       const blobs = await blobKennungen(page);
-      for(const [k, v] of Object.entries(roh)) dump[k] = normal(String(v), blobs);
+      for(const [k, v] of Object.entries(roh)) dump[k] = normal(version ? String(v).split(version).join('VERSION') : String(v), blobs);
       console.error(`  ${sz.id}: ${Object.keys(roh).length} Einträge`);
     } finally { await browser.close(); }
   }

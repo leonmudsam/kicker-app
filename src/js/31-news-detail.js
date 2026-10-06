@@ -212,7 +212,7 @@ function _newsRangZeile(pid){
   try {
     // Dieselbe Rechnung stand hier ein zweites Mal [§C27].
     const rang = _newsGesamtrang(pid);
-    const P = (typeof prestigeOf === 'function') ? prestigeOf(pid) : null;
+    const P = prestigeOf(pid);
     const teile = [];
     // „Rang 6" stand hier als Text UND daneben als Rangabzeichen — dieselbe
     // Aussage zweimal. Das Abzeichen ist das Bauteil [§C27], die Zeile nennt,
@@ -678,7 +678,6 @@ function _ndWirkungBlock(je, gruende){
   const ids = Object.keys(je || {});
   if(!ids.length) return '';
   const pm = pmap();
-  const hat = typeof INSIGNIEN !== 'undefined' && typeof insigniumStufeVon === 'function';
   const dl = pid => Math.round(Number(je[pid].nach) || 0) - Math.round(Number(je[pid].vor) || 0);
   // Der groesste Zuwachs zuerst: er ist das, was den Tag ausmacht. Wer
   // verloren hat, steht darunter.
@@ -688,15 +687,15 @@ function _ndWirkungBlock(je, gruende){
       const nach = Math.round(Number(w.nach) || 0);
       const vor = Math.round(Number(w.vor) || 0);
       const delta = nach - vor;
-      const sn = hat ? insigniumStufeVon(nach) : null;
-      const sv = hat ? insigniumStufeVon(vor) : null;
+      const sn = insigniumStufeVon(nach);
+      const sv = insigniumStufeVon(vor);
       const ins = sn != null ? INSIGNIEN[sn] : null;
       const next = sn != null ? INSIGNIEN[sn + 1] : null;
       const auf = sn != null && sn > sv;
       const ab = sn != null && sn < sv;
       let zeichen = '';
       try {
-        if(ins && typeof insigniumStufeSvg === 'function')
+        if(ins)
           zeichen = insigniumStufeSvg(ins.key, (getPlayerRank(pid) || {}).label, 0, 0) || '';
       } catch(e){}
       // Die Strecke ist die STUFE, nicht die Laufbahn: „noch 460 bis zum
@@ -1578,7 +1577,7 @@ function _ndMarkenBlatt(s){
   const def = id => (typeof BADGES !== 'undefined') ? BADGES.find(b => b.id === id) : null;
   const kopf = `<div class="nd-buehne nd-bm">${l.map((x, k) => {
     const b = def(x.badgeId) || {};
-    const kl = (typeof rarityOf === 'function') ? rarityOf(x.badgeId) : 'common';
+    const kl = rarityOf(x.badgeId);
     return `<span class="nd-bm-k nf-bd-${esc(kl)}" data-pid="${esc(x.pid)}" style="--k:${k}"><span class="nd-bm-ic">${svgI(b.ic || 'medal')}</span>`
       + `<b class="num">${x.rang}.</b><em>${esc(x.name || b.name || '')}</em>`
       + `<span class="nd-bm-w">${_spChip(x.pid)}<small>${esc(_spName(x.pid))}</small></span></span>`;
@@ -1716,7 +1715,7 @@ function _ndMitteRoh(s){
   // übrigen Sammelkarten.
   { const x = _ndEigenesBlatt(s); if(x && x.mitte != null) return x.mitte; }
   const pm = pmap();
-  const avM = (pid) => (typeof avHtml === 'function' && pm[pid]) ? avHtml(pm[pid]) : '';
+  const avM = (pid) => pm[pid] ? avHtml(pm[pid]) : '';
   const nameOf = (pid) => (pm[pid] && pm[pid].name) || '?';
   // §13.4b: Chronik-Karten haben keinen eigenen `type` — sie hängen an jeder
   // Story, die eine Chronik nennt, und öffnen deren Liga-Ansicht.
@@ -2393,7 +2392,7 @@ function _ndMitteRoh(s){
         if(l.length === 1){
           const b0 = def(l[0].badgeId);
           return _newsMedaillon((b0 && b0.ic) || s.ic || 'medal',
-              (typeof rarityOf === 'function') ? rarityOf(l[0].badgeId) : 'common',
+              rarityOf(l[0].badgeId),
               l[0].name || (b0 && b0.name) || '', b0 ? b0.desc : '', l[0].badgeId)
             + (d.matchId ? `<div class="nd-section">Die Partie</div>`
                 + _newsMatchVsBlock(d.matchId) : '');
@@ -2492,7 +2491,7 @@ function _ndMitteRoh(s){
         const rang = saisonRang(d.sid);
         const te = Array.isArray(d.topElo) ? d.topElo : [];
         const ids = te.map(x => x && x.id).filter(id => id && pm[id]);
-        const monat = typeof seasonLabel === 'function' ? seasonLabel(d.sid) : '';
+        const monat = seasonLabel(d.sid);
         const buehne = rang.length ? `<div class="nd-meister">
             <div class="nd-ms-band">${svgI('crown')}<span>Meister</span><i>${esc(monat)}</i></div>
             <div class="nf-meister gross"><span class="nf-ms-strahl" aria-hidden="true"></span>${
@@ -2547,10 +2546,10 @@ function _ndMitteRoh(s){
               <div class="nd-vs-elo">${pB.elo} Elo</div>
             </div>
           </div>` : '';
-        const z = (typeof rcpZahlenHtml === 'function') ? rcpZahlenHtml([
+        const z = rcpZahlenHtml([
           d.partien ? {v: d.partien, l: d.partien === 1 ? 'Partie' : 'Partien'} : null,
           d.aktive ? {v: d.aktive, l:'Gewertete'} : null
-        ].filter(Boolean)) : '';
+        ].filter(Boolean));
         return (vs ? `<div class="nd-section">Oben in der Tabelle</div>${vs}` : '')
           + (z ? `<div class="nd-section">Die Stichprobe</div>${z}` : '');
       }
@@ -2599,8 +2598,7 @@ function _ndMitteRoh(s){
             + (lauf.bis ? ` und endete am <b>${esc(lauf.bis)}</b>.` : '.') + `</div>` : '';
         // Acht ist eine Zahl, die Reihe zeigt, wie lang acht sind — dasselbe
         // Bauteil, mit dem eine laufende Serie im Feed steht [§C27].
-        const band = (typeof _newsSerienBand === 'function')
-          ? _newsSerienBand(d.streak, false) : '';
+        const band = _newsSerienBand(d.streak, false);
         return `<div class="nd-section">Die Serie von ${esc(nameOf(d.victimPid))}</div>`
           + band + gitter + zeit;
       }
@@ -2677,7 +2675,7 @@ function _newsMatchVsBlock(matchId){
     const m = matches.find(x => x.id === matchId);
     if(!m) return '';
     const pm = pmap();
-    const av = pid => (pm[pid] && typeof avHtml === 'function')
+    const av = pid => pm[pid]
       ? avHtml(pm[pid], '')
       : '<span class="av" style="background:var(--surface)"></span>';
     const nm = pid => (pm[pid] && pm[pid].name) || '?';

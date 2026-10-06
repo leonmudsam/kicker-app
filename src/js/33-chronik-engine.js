@@ -84,7 +84,7 @@ function _bannLaufDerLiga(P, ms){
 function _thronDerLiga(P, ms){
   if(!ms.length) return;
   const hist = {};
-  const sim = (typeof getGlobalSim === 'function') ? getGlobalSim() : null;
+  const sim = getGlobalSim();
   ((sim && sim.history) || []).forEach(h => { hist[h.matchId] = h; });
   const stand = {};
   let tag = null;

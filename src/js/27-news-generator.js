@@ -287,7 +287,7 @@ function _buildStories(){
   // Zahl, ihr Gesicht und ihren Weg ins Blatt.
   // Die Grenzen kommen aus _potwLastWeekRange, damit Rückblick, POTW-Karte und
   // Wochenkarte über dasselbe Fenster reden [§C27].
-  const _wr = (typeof _potwLastWeekRange === 'function') ? _potwLastWeekRange() : null;
+  const _wr = _potwLastWeekRange();
   const _wocheStart = _wr ? _wr.start.getTime() : _prevWeekStart;
   const _wocheEnde  = _wr ? (_wr.end.getTime() + 1) : _thisWeekStart;
   const _wocheSlotTs = _wocheEnde - 3600000;          // Sonntag 23:00
@@ -875,7 +875,7 @@ function _buildStories(){
         // Eine WÜRDE ist je Saison neu zu holen und jedes Mal Nachricht;
         // alles andere nur beim ersten Mal und an runden Marken [§11.0c].
         const wuerde = (typeof BADGE_WUERDE !== 'undefined') && BADGE_WUERDE.has(ev.badge.id);
-        const rar = (typeof rarityOf === 'function') ? rarityOf(ev.badge.id) : 'common';
+        const rar = rarityOf(ev.badge.id);
         // Der Takt haengt an der Klasse [§11.0c]: legendaer jedes Mal, selten
         // beim ersten Mal und an den runden Marken. Eine Liste fuer alle war
         // zu grob — sie liess dreizehn legendaere Erfolge zwischen der
@@ -888,7 +888,7 @@ function _buildStories(){
     // weitere seltene Auszeichnungen und negative Ereignisse desselben Spiels.
     const list = whitelisted.sort((a,b) => b.when - a.when);
     list.forEach(ev => {
-      const rar = (typeof rarityOf === 'function') ? rarityOf(ev.badge.id) : 'common';
+      const rar = rarityOf(ev.badge.id);
       // `prio` sortiert den Feed nicht mehr — er steht chronologisch [§C33].
       // Sie entscheidet nur noch zweierlei: wer eine Sammelkarte anführt und
       // wer den Tagesdeckel überlebt. Dort gehört eine seltene Auszeichnung
@@ -910,9 +910,9 @@ function _buildStories(){
         // Der Name der Auszeichnung steht schon in der Schlagzeile; er stand
         // hier ein zweites Mal, gleich darunter.
         _bdesc = `5 Pleiten in Folge gegen ${nameOf(_nemOpp)}.`;
-      } else if(ev.badge.id === 'games250' && typeof countGames === 'function'){
+      } else if(ev.badge.id === 'games250'){
         _bdesc = `300 Partien am Kicker. ${nameOf(ev.playerId)} steht nach dieser Partie bei ${_spEigene(ev.playerId, badgeMatches.get(ev.matchId)).length} Spielen.`;
-      } else if(ev.badge.id === 'wins200' && typeof countWins === 'function'){
+      } else if(ev.badge.id === 'wins200'){
         _bdesc = `300 Siege in der Karriere. ${nameOf(ev.playerId)} hält nach dieser Partie bei ${_spEigene(ev.playerId, badgeMatches.get(ev.matchId)).filter(m => _spGew(m, ev.playerId)).length}.`;
       } else {
         // Die Bedingung aus dem Katalog steht sonst ohne Punkt in der Karte:
@@ -946,7 +946,7 @@ function _buildStories(){
     // neben einem der beteiligten Spiele stehen.
     const _kleine = Object.values(dedupe).filter(ev => {
       if(!pm[ev.playerId]) return false;
-      const rar = (typeof rarityOf === 'function') ? rarityOf(ev.badge.id) : 'common';
+      const rar = rarityOf(ev.badge.id);
       if(rar !== 'common') return false;
       // Die gewhitelisteten Sonderfaelle haben ihre eigene Karte.
       if(NEWS_BADGE_WHITELIST.has(ev.badge.id)) return false;
@@ -1642,7 +1642,7 @@ function _buildStories(){
       // sieht nur Partien bis zu dieser: der Wortlaut bleibt stehen.
       if(art === 'normal' || art === 'eng'){
         let tx = null;
-        try { tx = typeof _spScoreText === 'function' ? _spScoreText(m) : _spFormText(m); }
+        try { tx = _spScoreText(m); }
         catch(e){ tx = null; }
         if(tx){ title = tx.t; desc = tx.d; }
       }
@@ -1674,7 +1674,7 @@ function _buildStories(){
   try {
     const wk = 14 * 86400000;
     const tsNow = now.getTime();
-    const streakSnaps = (typeof getStreakSnapshots === 'function') ? getStreakSnapshots() : {};
+    const streakSnaps = getStreakSnapshots();
     const kills = [];
     for(let i = 0; i < matches.length; i++){
       const m = matches[i];
@@ -1999,7 +1999,7 @@ function _buildStories(){
   // Persistente News zu Wochenbeginn (Mo früh), analog zum POTW-Recap-Sheet.
   // Deterministische ID pro Woche → kein Doppel, Cross-Device-stabil.
   try {
-    if(typeof _potwLastWeekRange === 'function' && typeof _potwKeyOf === 'function'){
+    {
       const range = _potwLastWeekRange();
       // Derselbe Ausschnitt wie im Rückblick [§C27]: der Filter stand hier
       // ein zweites Mal, Zeile für Zeile dieselbe — und zwei Rechnungen über
@@ -2569,7 +2569,7 @@ function _buildStories(){
   // Meldungen ist.
   try {
     const _sid = currentSeason().id;
-    if(_tafelTag && typeof seasonTitleHalter === 'function'){
+    if(_tafelTag){
       const _letzteMs2 = _tafelTag.letzte;
       // Dieselbe Regel wie bei den Rekorden: eine Chronik wechselt auch den
       // Halter, weil ein anderer gespielt und seinen Anteil verschlechtert
@@ -2669,7 +2669,7 @@ function _buildStories(){
         // Sortiert verglichen: dieselben Halter in anderer Reihenfolge sind
         // kein Wechsel [§C33].
         if(a && a.pids.join(',') === neuKey) return;
-        const punkte = (typeof chronikPunkte === 'function') ? chronikPunkte(t.id) : 0;
+        const punkte = chronikPunkte(t.id);
         const artikel = t.klasse === 'legendaer' ? 'Eine legendäre' :
                         t.klasse === 'selten' ? 'Eine seltene' : 'Eine besondere';
         // Vier Faelle, vier Verben. „Julian holt ‚Der Nachzuegler'. Vorher

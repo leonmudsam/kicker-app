@@ -233,7 +233,7 @@ function _consolidateStories(list){
 function _consolidateStoriesLegacy(list){
   if(!Array.isArray(list)) return [];
   if(_cache._consolFrom === list && Array.isArray(_cache._consolList)) return _cache._consolList;
-  const pm = (typeof pmap === 'function') ? pmap() : {};
+  const pm = pmap();
   const nameOf = pid => (pm[pid] && pm[pid].name) || '?';
   const fmtNames = arr => arr.length <= 1 ? (arr[0] || '') : arr.slice(0, -1).join(', ') + ' & ' + arr[arr.length - 1];
   // ── Was es genau EINMAL gibt ──────────────────────────────────────
@@ -413,9 +413,9 @@ function _consolidateStoriesLegacy(list){
     // die Spitze am 14.09. zweimal und am 15.09. erneut, und von den drei
     // Breaking-Karten blieb genau eine stehen — die Sperrfrist hielt die
     // anderen fuer Wiederholungen derselben Aussage.
-    try { if(typeof _isBreaking === 'function' && _isBreaking(st)) return null; } catch(e){}
+    try { if(_isBreaking(st)) return null; } catch(e){}
     let ids = [];
-    try { ids = (typeof _newsPids === 'function' ? _newsPids(st) : []) || []; } catch(e){}
+    try { ids = _newsPids(st) || []; } catch(e){}
     const sache = d.rekordId || d.badgeId || d.disziplinId || d.titleId || d.titel || '';
     return typ + '|' + ids.slice().sort().join(',') + '|' + sache;
   };
@@ -737,7 +737,7 @@ function _consolidateStoriesLegacy(list){
   // alles" — zwei fremde Spieler, und das Seltenere von beiden im
   // Kleingedruckten.
   const _sammelEinzeln = (st, d) => {
-    try { if(typeof _isBreaking === 'function' && _isBreaking(st)) return true; } catch(e){}
+    try { if(_isBreaking(st)) return true; } catch(e){}
     // Eine LEGENDAERE Monatschronik bleibt aus demselben Grund einzeln wie
     // eine legendaere Auszeichnung: „Auf dem Thron" ist der Grund, warum
     // jemand die App oeffnet, und steht nicht als vierte Zeile unter dem
@@ -1053,7 +1053,7 @@ function _consolidateStoriesLegacy(list){
     const pids = [];
     teile.forEach(t => {
       let ids = [];
-      try { ids = (typeof _newsPids === 'function') ? _newsPids(t) : []; } catch(e){}
+      try { ids = _newsPids(t); } catch(e){}
       ids.forEach(id => { if(pids.indexOf(id) < 0) pids.push(id); });
     });
     // ── Die Schlagzeile der beiden neuen Karten ──────────────────────
@@ -1224,8 +1224,7 @@ function _consolidateStoriesLegacy(list){
       // Spieltag gilt und den Anlass verschweigt [§C33].
       let brkBundle = false;
       try {
-        brkBundle = (typeof _isBreaking === 'function')
-          && teile.some(t => _isBreaking(t));
+        brkBundle = teile.some(t => _isBreaking(t));
       } catch(e){}
       // ── Eine Breaking-Karte sagt, was daran Breaking ist ───────────
       // „Ein Spiel, zwei Geschichten für Maxi und Henry" gilt fuer jeden
@@ -1695,7 +1694,7 @@ function _consolidateStoriesLegacy(list){
     const t = (s && s.dataRef || {}).type;
     if(TAG_PFLICHT.has(t) || TAG_SUMME.has(t)) return false;
     if(_istPartie(s)) return false;
-    try { if(typeof _isBreaking === 'function' && _isBreaking(s)) return false; } catch(e){}
+    try { if(_isBreaking(s)) return false; } catch(e){}
     return true;
   };
   // ── Die Plaetze werden in der Reihenfolge der Zeit vergeben ────────
@@ -1737,7 +1736,7 @@ function _consolidateStoriesLegacy(list){
     if(TAG_PFLICHT.has((s.dataRef || {}).type)) return true;
     if(TAG_SUMME.has((s.dataRef || {}).type)) return true;
     if(_istPartie(s)) return true;
-    try { return (typeof _isBreaking === 'function') && _isBreaking(s); } catch(e){ return false; }
+    try { return _isBreaking(s); } catch(e){ return false; }
   });
 
   // Kein Spieltag ohne Karte. Der Deckel je Sorte, der Vergleich der
@@ -2106,7 +2105,7 @@ window.addEventListener('beforeunload', () => {
 // Offene News-Views konsistent aktualisieren (Badge/Toast + Feed).
 // Story-Detail (#ndBg) wird bewusst NICHT angefasst (User liest gerade etwas).
 function _refreshOpenNewsViews(){
-  try { if(typeof newsBadgeRefresh === 'function') newsBadgeRefresh(); } catch(e){}
+  try { newsBadgeRefresh(); } catch(e){}
   try { if(_isNewsFeedOpen()) _renderNewsFeed(); } catch(e){}
 }
 

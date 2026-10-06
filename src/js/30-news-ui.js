@@ -488,7 +488,7 @@ function _newsGlanz(s, sorte, anlass){
   if(d.type === 'badge_unlocked' && (d.rarity === 'rare' || d.rarity === 'legendary')) return true;
   if((d.type === 'win_streak' || d.type === 'team_streak') && Number(d.streak) >= 5) return true;
   if(anlass === 'serie' || anlass === 'teamserie'){
-    const f = (typeof _newsSpielFakten === 'function' ? _newsSpielFakten(s) : [])
+    const f = _newsSpielFakten(s)
       .find(x => x.type === 'win_streak' || x.type === 'team_streak');
     if(f && Number(f.streak) >= 5) return true;
   }
@@ -1625,7 +1625,7 @@ function _newsMeisterFuss(d){
 // Fällt auf s.desc zurück, wenn die Datenlage nicht reicht.
 function _breakingHeroText(s){
   const d = (s && s.dataRef) || {};
-  const pm = (typeof pmap === 'function') ? pmap() : {};
+  const pm = pmap();
   const nm = id => (pm[id] && pm[id].name) || '?';
   try {
     switch(d.type){
@@ -1639,7 +1639,7 @@ function _breakingHeroText(s){
         const te = Array.isArray(d.topElo) ? d.topElo : [];
         const cid = d.championId || (te[0] && te[0].id);
         const champ = nm(cid);
-        const monat = d.sid && typeof seasonLabel === 'function' ? seasonLabel(d.sid) : 'Die Saison';
+        const monat = d.sid ? seasonLabel(d.sid) : 'Die Saison';
         let lauf = '';
         try {
           const sp = saisonSpitze(d.sid), f = sp.folge;

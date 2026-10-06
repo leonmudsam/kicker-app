@@ -60,7 +60,9 @@ jeden Seitenfehler. `node tools/golden.mjs --basis=<rev>` (Vorgabe `HEAD`),
 `.golden/` und ist nicht versioniert. Ein Unterschied wird nie durch eine
 neue Normalisierung weggeregelt: entweder ändert der Code etwas, oder die
 Stelle bleibt, wie sie war. Nur Blob-Adressen (je Lauf neu vergeben) und
-lange Daten-Adressen (zu groß) werden durch einen Hash ihres Inhalts ersetzt.
+lange Daten-Adressen (zu groß) werden durch einen Hash ihres Inhalts ersetzt,
+und die Version (ein Hash über den Inhalt, also in jeder Fassung anders)
+durch ein Wort.
 Einen Commit, der nur Kommentare oder Doku ändert, prüft schon
 `git diff --exit-code index.html`: der Bau entfernt die Kommentare.
 

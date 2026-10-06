@@ -43,7 +43,7 @@ function avatarInnerHtml(player){
 function avHtml(player, extraStyle, opts){
   if(!player) return '';
   let cls = '', style = '', attr = '';
-  if(opts && opts.ring && typeof _avRingAttrs === 'function'){
+  if(opts && opts.ring){
     const r = _avRingAttrs(player.id);
     if(r){ cls = r.cls; style = r.style; attr = r.attr; }
   }
@@ -55,8 +55,8 @@ function avHtml(player, extraStyle, opts){
   // Avatare in Award-Listen und Sheets Sterne und Feuer.
   // `ins` legt zusätzlich das Wappen um den Avatar [§C27]: die Rangliste
   // zeigt damit dieselbe Form wie das Podest der Ewigen Tafel.
-  if(opts && opts.ins && typeof insAvWrap === 'function') return insAvWrap(player.id, inner, opts);
-  if(opts && opts.zn && typeof znWrap === 'function') return znWrap(player.id, inner, opts);
+  if(opts && opts.ins) return insAvWrap(player.id, inner, opts);
+  if(opts && opts.zn) return znWrap(player.id, inner, opts);
   return inner;
 }
 function initials(n){return n.trim().slice(0,2).toUpperCase();}
@@ -82,7 +82,7 @@ function awLiAv(pid, isTiedRow = false, schande = false){
     : `<div class="aw-li-av" style="background:${avColor(p.id)};${sizeStyle}">${esc(initials(p.name))}</div>`;
   // Auf der Schandtafel brennt nichts: dort ist alles rot, und eine
   // orange Flamme wäre in einer Liste der schlechtesten Quoten ein Lob.
-  const f = (!schande && typeof znFeuer === 'function') ? znFeuer(pid) : 0;
+  const f = !schande ? znFeuer(pid) : 0;
   if(!f || typeof znWrap !== 'function') return kreis;
   return znWrap(pid, kreis, {px:px, titel:0, klasse:'aw-li-zn'});
 }

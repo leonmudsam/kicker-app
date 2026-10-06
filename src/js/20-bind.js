@@ -74,8 +74,8 @@ function bind(){
   // Chronik-Blatt — also brauchen sie auch dessen Verdrahtung.
   if(awView!=='awards'){
     const c=document.getElementById('main');
-    if(c && typeof _bindChronikClicks==='function') _bindChronikClicks(c);
-    if(typeof chronikMatrixScrollen==='function') chronikMatrixScrollen(c);
+    if(c) _bindChronikClicks(c);
+    chronikMatrixScrollen(c);
   }
   // Die Saison-Zeitleiste liefert Knöpfe statt eines <select>. Gebunden wird
   // am Rahmen, nicht am einzelnen Knopf: das sind zwei Zuhörer statt einem
