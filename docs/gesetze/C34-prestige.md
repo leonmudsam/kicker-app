@@ -4,7 +4,7 @@
 
 - Prestige kommt ausschließlich aus Auszeichnungen, Monatschroniken und aktuell gehaltenen Liga-Rekorden. Nur Rekorde können wieder sinken; Auszeichnungen und Chroniken bleiben Teil der Laufbahn.
 - Je Monat zählt der Eintrag, der in der Matrix steht [§C32]; für abgeschlossene Monate aus dem Einfrierer (`_frozenTitlesOf`), nicht aus einer neuen Rechnung.
-- Jede positive Auszeichnung zählt jedes Mal. Standard je Klasse in `PRESTIGE_AUSZEICHNUNG` (Rare 25 / −18 %, Common 3 / −25 %); jede legendäre und POTW/POTD tragen einen eigenen Startwert in `PRESTIGE_AUSZEICHNUNG_SPEZIAL`. Je zwei Verleihungen teilen eine Stufe, danach flacht die harmonische Kurve paarweise ab und endet nie. Schanden geben null.
+- Jede positive Auszeichnung zählt jedes Mal. Standard je Klasse in `PRESTIGE_AUSZEICHNUNG` (Rare 25 / −18 %, Common 3 / −25 %); jede legendäre, POTW/POTD und die acht Meilensteine der Laufbahn tragen einen eigenen Startwert in `PRESTIGE_AUSZEICHNUNG_SPEZIAL` (Siegermaschine 150, Urgestein 100, Abwehrchef und Mittelstürmer 60, Allrounder und Dauerbrenner 50, Stammgast 10, Debütant 5). Je zwei Verleihungen teilen eine Stufe, danach flacht die harmonische Kurve paarweise ab und endet nie. Schanden geben null.
 - Das Regelblatt liest die Startwerte aus der Tabelle (`_prestigeRegelListe`), nicht aus einer festen Liste.
 - Chroniken behalten ihren Wert aus `chronikPunkte`; die Sammlung wird nach Wert gedämpft: Platz 1–2 voll, 3–5 ÷ √2, 6–8 ÷ √3, danach alle drei eine Wurzelstufe weiter.
 - Rekorde beginnen bei `allzeit.basis` (`_rekordBasis`; 150 Können/Form/Bestmarke, 75 Rollenwert/Fügung, 0 Schattenseite), werden durch die Zahl der heutigen Halter geteilt und wie Chroniken gestapelt. Keine Quelle hat einen harten Deckel.
@@ -49,7 +49,16 @@ Tageswertung: 20er Serie und Dynastie **120**, Meister der Saison **100**
 (−5 %), 15er Serie **75**, Dominator, Team der Saison, Award-Sammler und
 Untouchable **70**, Player of the Week **50** (−12 %), Mr. Perfect **50**,
 Absoluter Sieger **40** (−15 %), Player of the Day **10** (−25 %), die
-übrigen mit −10 %. Ein Wert für die ganze Klasse stellte die 20er Serie
+übrigen mit −10 %. **Die Meilensteine der Laufbahn** stehen ebenfalls mit
+eigenem Wert darin: Siegermaschine **150**, Urgestein **100**, Abwehrchef
+und Mittelstürmer **60**, Allrounder und Dauerbrenner **50**, Stammgast
+**10**, Debütant **5**. Sie fallen einmal und zeigen Fortschritt, und der
+soll mehr tragen als Menge: mit dem Wert ihrer Klasse brachten 300 Siege
+25 Prestige, weniger als drei Spieler des Tages. Die Schwellen blieben
+stehen; an den echten Partien stiegen damit die drei an der Spitze vom
+Zierkranz zum Lorbeerreif, erarbeitet und nicht vom Katalog geschoben.
+Die Karten der Klassen im Regelblatt nennen seitdem die Spanne ihrer
+Startwerte, sonst stand „Rare 25 P" über einer Siegermaschine mit 150. Ein Wert für die ganze Klasse stellte die 20er Serie
 neben den 10:0-Sieg und die Dynastie (600 Elo) neben den Dominator (400);
 das sind verschiedene Höhen. Der Standard der Klasse (70) greift nur für
 eine neue legendäre Auszeichnung ohne eigenen Eintrag. Die Tabelle steht

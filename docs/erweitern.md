@@ -94,8 +94,9 @@ der ihn hält — und für sonst niemanden.
 
 1. **Die Seltenheitsklasse bestimmt die Standardregel.**
    `PRESTIGE_AUSZEICHNUNG` gibt Startwert und Abnahme für Rare und Common
-   vor [§C34]. Jede legendäre Auszeichnung und dazu POTW und POTD stehen
-   mit eigenem Startwert in `PRESTIGE_AUSZEICHNUNG_SPEZIAL` — eine neue
+   vor [§C34]. Jede legendäre Auszeichnung, dazu POTW, POTD und die
+   Meilensteine der Laufbahn stehen mit eigenem Startwert in
+   `PRESTIGE_AUSZEICHNUNG_SPEZIAL` — eine neue
    legendäre wird dort nach ihrem Gewicht eingeordnet, das Regelblatt
    zeigt sie dann von selbst an der richtigen Stelle. Eine falsch gewählte
    Klasse verändert weiterhin Optik und Punktfolge.
@@ -106,11 +107,13 @@ der ihn hält — und für sonst niemanden.
    fünfzig Katalogeinträge.
 3. **Die Schwellen in `INSIGNIEN` werden an der echten Liga kalibriert**
    [§C30]. Keine Spanne ist kürzer als 500 und keine kürzer als die vorige:
-   Leon soll Zierkranz III tragen, Martin und Julian dicht dabei im
-   Zierkranz, und der erste Ordensstern bei **5.600 Prestige** soll
+   Leon, Martin und Julian tragen dicht beieinander den Lorbeerreif im
+   ersten Grad, und der erste Ordensstern bei **5.600 Prestige** soll
    langfristig erreichbar sein; danach kommt alle 500 eine Zacke dazu.
    Wer Startwerte anhebt, zieht die Schwellen mit — sonst steigt die Liga
-   über Nacht, ohne gespielt zu haben.
+   über Nacht, ohne gespielt zu haben. Ausnahme ist eine Anhebung, die
+   einen Fortschritt nachträgt, der schon erarbeitet ist: die Meilensteine
+   der Laufbahn hoben drei Spieler zum Lorbeerreif, und das war gewollt.
 
 Nichts davon wird geschätzt. `tests/disziplinen` misst es an den echten
 Partien und fällt, wenn es kippt:
@@ -121,12 +124,12 @@ Partien und fällt, wenn es kippt:
 | Auszeichnungen wiegen schwerer als Rekorde | der Reif zur Rekordanzeige wird |
 | mehr als die halbe Liga hält einen wertenden Rekord | die Einstiegshürden zu hoch sind |
 | mehr als die halbe Liga trägt mindestens den Schildring | die erste Sprosse zu hoch hängt |
-| der Beste trägt noch keinen Lorbeerreif | der Katalog die Spitze nach oben schiebt |
+| der Beste trägt noch keinen Kronenreif | der Katalog die Spitze nach oben schiebt |
 | der Ordensstern ist von niemandem erreicht | dasselbe, eine Stufe höher |
 | nur Kronenreif und Ordensstern sind die obersten Stufen | die Breaking-Grenze beim Einfügen einer Stufe verrutscht [§C33] |
 | Glut und Hof in der Rangfarbe werden mit der Leiter nicht schwächer, die Lichter tragen die Rangfarbe | der Schimmer nicht mehr sagt, wer weiter oben steht [§C30] |
 | keine Spanne ist kürzer als 500, der Ordensstern steigt alle 500 | eine Stufe fast geschenkt ist oder die Zacken aus dem Takt geraten |
-| Leon und Martin tragen den Zierkranz, Leon in Grad III, Julian steht dicht dabei | Schwellen und Grade die heutige Liga falsch abbilden. Gemessen wird der ABSTAND der drei und nicht ihre Reihenfolge: die war festgeschrieben, und damit fiel die Zusicherung bei jedem Rekord, der Punkte verschiebt — kalibriert ist die Leiter und nicht die Tabelle |
+| Leon und Martin tragen den Lorbeerreif im ersten Grad, Julian steht dicht dabei | Schwellen und Grade die heutige Liga falsch abbilden. Gemessen wird der ABSTAND der drei und nicht ihre Reihenfolge: die war festgeschrieben, und damit fiel die Zusicherung bei jedem Rekord, der Punkte verschiebt — kalibriert ist die Leiter und nicht die Tabelle |
 | das Langzeitmodell kann den Ordensstern erreichen | ein weicher Deckel zur harten Obergrenze wird |
 | jede positive Dauerquelle behält einen positiven Zuwachs | spätere Ordensstern-Zacken mathematisch unerreichbar werden |
 | auch die zwanzigste weitere Ordensstern-Zacke wird endlich überschritten | die Laufbahn nur scheinbar ohne Ende weiterläuft |

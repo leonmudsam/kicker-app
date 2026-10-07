@@ -5586,7 +5586,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.07.c17f0ed4';
+const BUILD_VERSION='2026.10.07.38548b42';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -31696,18 +31696,26 @@ const PRESTIGE_AUSZEICHNUNG = {
   negative: {basis:0,  abnahme:1}
 };
 const PRESTIGE_AUSZEICHNUNG_SPEZIAL = {
+  wins200:        {basis:150, abnahme:0.18},
   streak20:       {basis:120, abnahme:0.10},
   dynasty_600:    {basis:120, abnahme:0.10},
   champion:       {basis:100, abnahme:0.05},
+  games250:       {basis:100, abnahme:0.18},
   streak15:       {basis:75,  abnahme:0.10},
   dominator_400:  {basis:70,  abnahme:0.10},
   team_of_season: {basis:70,  abnahme:0.10},
   award_collector:{basis:70,  abnahme:0.10},
   untouchable:    {basis:70,  abnahme:0.10},
+  def50:          {basis:60,  abnahme:0.25},
+  atk50:          {basis:60,  abnahme:0.25},
   potw:           {basis:50,  abnahme:0.12},
   mr_perfect:     {basis:50,  abnahme:0.10},
+  allrounder:     {basis:50,  abnahme:0.18},
+  games150:       {basis:50,  abnahme:0.25},
   perfect_win:    {basis:40,  abnahme:0.15},
   potd:           {basis:10,  abnahme:0.25},
+  games25:        {basis:10,  abnahme:0.25},
+  first_match:    {basis:5,   abnahme:0.25},
 };
 
 const PRESTIGE_REKORD = 75;
@@ -32354,18 +32362,19 @@ function prestigeSchritte(pid, n){
 }
 
 function _prestigeRegelKarten(){
-  const leg = BADGES.filter(b => rarityOf(b.id) === 'legendary')
-    .map(b => _auszeichnungsRegel(b.id).basis);
+  const spanne = klasse => {
+    const w = BADGES.filter(b => rarityOf(b.id) === klasse).map(b => _auszeichnungsRegel(b.id).basis);
+    const min = Math.min(...w), max = Math.max(...w);
+    return !w.length ? PRESTIGE_AUSZEICHNUNG[klasse].basis : min === max ? min : min + '–' + max;
+  };
   const karte = (klasse, titel, start, regel) => `<span class="${klasse}">
       <b>${titel}</b><strong>${start} P Start</strong>
       <em>1. und 2. Mal voll.<br>
       3. und 4. Mal ${Math.round(regel.abnahme * 100)} % weniger; danach paarweise flacher, nie 0.</em></span>`;
   return `<div class="lb-regeln">
-    ${karte('legendary', 'Legendary', leg.length
-      ? Math.min(...leg) + '–' + Math.max(...leg) : PRESTIGE_AUSZEICHNUNG.legendary.basis,
-      PRESTIGE_AUSZEICHNUNG.legendary)}
-    ${karte('rare', 'Rare', PRESTIGE_AUSZEICHNUNG.rare.basis, PRESTIGE_AUSZEICHNUNG.rare)}
-    ${karte('common', 'Common', PRESTIGE_AUSZEICHNUNG.common.basis, PRESTIGE_AUSZEICHNUNG.common)}
+    ${karte('legendary', 'Legendary', spanne('legendary'), PRESTIGE_AUSZEICHNUNG.legendary)}
+    ${karte('rare', 'Rare', spanne('rare'), PRESTIGE_AUSZEICHNUNG.rare)}
+    ${karte('common', 'Common', spanne('common'), PRESTIGE_AUSZEICHNUNG.common)}
   </div>`;
 }
 
