@@ -14,52 +14,40 @@
      im Feed samt ihrem Blatt, der Held der Rückblicke. Nirgends sonst — ein
      Licht auf jeder goldenen Zahl wäre eine Kirmes, und das Farbgesetz
      sagt, dass Gold nur trägt, was selten ist.
-     Ein eigenes Pseudo-Element und nicht der Hintergrund: die Fläche der
-     Karte bleibt dunkel und unberührt. Es liegt genau über der Box und
-     braucht kein `overflow:hidden` — die Schwinge des Ersten ragt aus dem
-     Podest heraus und wäre sonst abgeschnitten. Die Strecke läuft in
-     anderthalb Sekunden, danach ruht sie gut sechs: ein Signal, kein
-     Flackern. Bei reduzierter Bewegung steht nichts still da, es fehlt ganz. */
-  @keyframes glanzLauf{0%,78%{background-position:140% 0}100%{background-position:-40% 0}}
-  .pod-karte.erster.gold::after,
-  .nf-s-held:not(.read)::after,.nf-s-woche:not(.read)::after,
-  .nd-s-held .nd-head::after,.nd-s-woche .nd-head::after,
-  .rcp-held::after{
-    content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
-    background:linear-gradient(105deg,transparent 42%,rgba(247,207,74,.18) 50%,transparent 58%)
-      no-repeat;background-size:250% 100%;background-position:140% 0;
-    animation:glanzLauf 8s ease-in-out infinite}
+     Eine eigene Ebene und nicht der Hintergrund: die Fläche der Karte
+     bleibt dunkel und unberührt. Die Strecke läuft in anderthalb Sekunden, danach ruht sie gut sechs:
+     ein Signal, kein Flackern. Sie fährt per `transform` über eine Ebene,
+     die so breit ist wie das Bild des Verlaufs (250 %): −84 % → 24 % der
+     eigenen Breite ist dieselbe Strecke wie die `background-position`
+     140 % → −40 %, mit der sie vorher wanderte — und die verlangte jedes
+     Bild einen Takt des Hauptthreads (gemessen im offenen Feed rund 60,
+     im Awards-Reiter rund 160 ms je Sekunde bei vierfach gedrosselter CPU).
+     Im Feed schneidet die Karte die Ebene ab; Podest, Rückblick und
+     Blattkopf schneiden nicht ab (das Wappen ragt heraus) und tragen ihre
+     eigene Bahn (`glanzBahn`). Bei reduzierter Bewegung fehlt das Licht. */
+  @keyframes glanzZug{0%,78%{transform:translateX(-84%)}100%{transform:translateX(24%)}}
+  .glanz-bahn{position:absolute;inset:0;border-radius:inherit;overflow:hidden;pointer-events:none}
+  .pod-karte.erster.gold > .glanz-bahn::after,
+  .nf-card.nf-s-held:not(.read)::after,.nf-card.nf-s-woche:not(.read)::after,
+  .nd-s-held .nd-head > .glanz-bahn::after,.nd-s-woche .nd-head > .glanz-bahn::after,
+  .rcp-held > .glanz-bahn::after{
+    content:"";position:absolute;top:0;bottom:0;left:0;width:250%;pointer-events:none;
+    background:linear-gradient(105deg,transparent 42%,rgba(247,207,74,.18) 50%,transparent 58%);
+    transform:translateX(-84%);animation:glanzZug 8s ease-in-out infinite}
   /* Zwei Lichter nebeneinander laufen versetzt: die Wochenkarte beginnt
      später als der Spieler des Tages, der Rückblick später als das Podest. */
-  .nf-s-woche:not(.read)::after,.nd-s-woche .nd-head::after{animation-delay:-3s}
-  .rcp-held::after{animation-delay:-5s}
+  .nf-card.nf-s-woche:not(.read)::after,.nd-s-woche .nd-head > .glanz-bahn::after{animation-delay:-3s}
+  .rcp-held > .glanz-bahn::after{animation-delay:-5s}
   /* Der Schimmer des Seltenen im Feed: dieselbe Bahn, die Farbe der Familie
      und leiser, alle elf Sekunden statt alle acht [§C25]. */
-  .nf-glanz::after{
-    content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
-    background:linear-gradient(105deg,transparent 40%,rgba(var(--story-rgb,185,196,189),.13) 50%,transparent 60%)
-      no-repeat;background-size:250% 100%;background-position:140% 0;
-    animation:glanzLauf 11s ease-in-out infinite;animation-delay:var(--gv,0s)}
+  .nf-card.nf-glanz::after{
+    content:"";position:absolute;top:0;bottom:0;left:0;width:250%;pointer-events:none;
+    background:linear-gradient(105deg,transparent 40%,rgba(var(--story-rgb,185,196,189),.13) 50%,transparent 60%);
+    transform:translateX(-84%);animation:glanzZug 11s ease-in-out infinite;animation-delay:var(--gv,0s)}
   .nd-s-held .nd-head,.nd-s-woche .nd-head{position:relative;border-radius:14px}
-  /* Im Feed fährt dasselbe Licht per `transform`. Als wandernde
-     `background-position` verlangte jedes Bild der Strecke einen Takt des
-     Hauptthreads über den ganzen Feed (gemessen rund 60 ms je Sekunde bei
-     vierfach gedrosselter CPU). Die Ebene ist so breit wie das Bild des
-     Verlaufs (250 %) und fährt die Strecke, die die Position fuhr:
-     `background-position` 140 % → −40 % ist ein Versatz von −2,1 auf +0,6
-     Kartenbreiten, also −84 % → 24 % der eigenen Breite. Die Karte schneidet
-     sie ab (`overflow:hidden`); Podest, Blattkopf und Rückblick tun das
-     nicht — die Schwinge ragt heraus —, dort bleibt die Position. */
-  .nf-card.nf-glanz::after,.nf-card.nf-s-held:not(.read)::after,.nf-card.nf-s-woche:not(.read)::after{
-    inset:0 auto 0 0;width:250%;border-radius:0;background-size:100% 100%;background-position:0 0;
-    transform:translateX(-84%);animation-name:glanzZug}
-  @keyframes glanzZug{0%,78%{transform:translateX(-84%)}100%{transform:translateX(24%)}}
   @media(prefers-reduced-motion:reduce){
-    .nf-glanz::after,
-    .pod-karte.erster.gold::after,
-    .nf-s-held:not(.read)::after,.nf-s-woche:not(.read)::after,
-    .nd-s-held .nd-head::after,.nd-s-woche .nd-head::after,
-    .rcp-held::after{animation:none;background:none}}
+    .nf-card.nf-glanz::after,.nf-card.nf-s-held:not(.read)::after,.nf-card.nf-s-woche:not(.read)::after,
+    .glanz-bahn::after{animation:none!important;background:none!important}}
 
   .mini-label{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);
     margin:0 2px 8px;font-weight:600}

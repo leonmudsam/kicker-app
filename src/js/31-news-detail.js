@@ -103,7 +103,7 @@ function openNewsDetail(sid){
         <div class="nd-title">${esc(s.title)}</div>
         <div class="nd-when">${svgI('clock')}${esc(_newsWhenLabel(s.when))}</div>
       </div>
-      <button class="nd-x" id="ndXBtn" aria-label="Schließen">×</button>
+      <button class="nd-x" id="ndXBtn" aria-label="Schließen">×</button>${sorte === 'held' || sorte === 'woche' ? glanzBahn() : ''}
     </div>
     ${lead ? `<div class="nd-desc">${_newsBetont(lead)}</div>` : ''}
     ${body}

@@ -2059,25 +2059,28 @@ const ok = (c, msg, det) => {
   // und eine gewoehnliche Partie tragen es nicht.
   const glanz = async () => page.evaluate(() => {
     const host = document.createElement('div');
-    host.innerHTML = '<div class="podest"><div class="pod-karte gold erster" id="g1"></div>'
-      + '<div class="pod-karte silber erster" id="g2"></div></div>'
+    // Podest, Rückblick und Blattkopf tragen ihre eigene Bahn (`glanzBahn`),
+    // die Karten im Feed den Lauf selbst.
+    const bahn = window.__k.eval('glanzBahn()');
+    host.innerHTML = '<div class="podest"><div class="pod-karte gold erster" id="g1">' + bahn + '</div>'
+      + '<div class="pod-karte silber erster" id="g2">' + bahn + '</div></div>'
       + '<div class="nf-card nf-s-held" id="g3"></div><div class="nf-card nf-s-held read" id="g4"></div>'
-      + '<div class="nf-card nf-s-spiel" id="g5"></div><div class="rcp-held" id="g6"></div>'
-      + '<div class="nd nd-s-held"><div class="nd-head" id="g7"></div></div>'
+      + '<div class="nf-card nf-s-spiel" id="g5"></div><div class="rcp-held" id="g6">' + bahn + '</div>'
+      + '<div class="nd nd-s-held"><div class="nd-head" id="g7">' + bahn + '</div></div>'
       + '<div class="nf-card nf-s-spiel nf-glanz" id="g8"></div>';
     document.body.appendChild(host);
-    const a = id => getComputedStyle(host.querySelector('#' + id), '::after').animationName;
+    const a = id => { const e = host.querySelector('#' + id);
+      return getComputedStyle(e.querySelector('.glanz-bahn') || e, '::after').animationName; };
     const out = {gold:a('g1'), silber:a('g2'), held:a('g3'), gelesen:a('g4'),
                  spiel:a('g5'), rueckblick:a('g6'), blatt:a('g7'), selten:a('g8')};
     host.remove(); return out;
   });
   const gl = await glanz();
-  // Derselbe Lauf unter zwei Namen: im Feed fährt er per `transform`
-  // (`glanzZug`, die Karte schneidet ab), auf Podest, Blattkopf und Rückblick
-  // per Position (`glanzLauf`, dort ragt die Schwinge heraus).
-  const istGlanz = n => n === 'glanzLauf' || n === 'glanzZug';
-  ok(gl.gold === 'glanzLauf' && gl.held === 'glanzZug' && gl.rueckblick === 'glanzLauf'
-     && gl.blatt === 'glanzLauf',
+  // Der Lauf fährt überall per `transform` (`glanzZug`): im Feed schneidet
+  // die Karte ab, sonst seine eigene Bahn.
+  const istGlanz = n => n === 'glanzZug';
+  ok(gl.gold === 'glanzZug' && gl.held === 'glanzZug' && gl.rueckblick === 'glanzZug'
+     && gl.blatt === 'glanzZug',
      'der Erste in Gold, der Spieler des Tages samt Blatt und der Held tragen den Glanz',
      JSON.stringify(gl));
   ok(!istGlanz(gl.silber) && !istGlanz(gl.gelesen) && !istGlanz(gl.spiel),
@@ -2116,7 +2119,7 @@ const ok = (c, msg, det) => {
   ok(ntRuhig.glanz === 'none' && ntRuhig.ring === 'none', 'und bei Bewegungsruhe steht er still', JSON.stringify(ntRuhig));
   const glRuhig = await glanz();
   await page.emulateMedia({reducedMotion: 'no-preference'});
-  ok(Object.values(glRuhig).every(v => v !== 'glanzLauf'),
+  ok(Object.values(glRuhig).every(v => v !== 'glanzZug'),
      'bei prefers-reduced-motion ruht der Glanz', JSON.stringify(glRuhig));
 
   // Im Verlauf steht der Sieger hell und der Verlierer leise, der Stand

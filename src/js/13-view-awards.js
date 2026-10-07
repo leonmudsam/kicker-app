@@ -971,7 +971,7 @@ function _vAwardsCore(){
         ${_avTrophyHtml(c.id, px)}
         <div class="pod-name">${esc(pname(c.id))}</div>
         <div class="pod-wert num">${c.count}</div>
-        <div class="pod-sub">${c.count===1?'Award':'Awards'}</div>
+        <div class="pod-sub">${c.count===1?'Award':'Awards'}</div>${mitte ? glanzBahn() : ''}
       </div>`;
     };
     html += `<div class="aw-sect gold">
