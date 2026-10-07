@@ -2924,11 +2924,12 @@ const ok = (c, msg, det) => {
   // aus der Karte, und ein Gesicht ohne eigenen Behälter hatte seine
   // Initialen oben links. Hier wird jeder Reiter einmal ganz gezeichnet.
   console.log('\n═══ LICHT, DAS DIE GRAFIKKARTE RECHNET ═══');
-  // Die Effekte der sechsten Aufwertung [§C27]: das Licht an der Kante von
-  // Platz 1 bis 3, die Kacheln beim Hereinscrollen, der Hof unter dem
-  // Reiter, das Blatt, das sich setzt, der Hof im Profilkopf. Jeder bewegt
-  // nur `transform` und `opacity`, keiner bleibt mit einer Verschiebung
-  // stehen, und bei Bewegungsruhe läuft keiner.
+  // Die Effekte [§C27]: ein Lichtband im Metall über Platz 1 bis 3, der
+  // Einlauf der Zeilen und Kacheln, Hof, Stoß und Lichtzug am Reiter, das
+  // Blatt, das sich setzt, Hof und Lichtzug im Profilkopf. Jeder bewegt nur
+  // `transform` und `opacity`, keiner bleibt mit einer Verschiebung stehen,
+  // und bei Bewegungsruhe läuft keiner. Die Striche links an Platz 1 bis 3
+  // sind weg: auf dem Telefon wirkten sie wie ein Fehler.
   const lichtMess = () => page.evaluate(async () => {
     const K = window.__k.eval.bind(window.__k);
     const bild = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
@@ -2936,26 +2937,33 @@ const ok = (c, msg, det) => {
       .filter(k => !['offset', 'computedOffset', 'easing', 'composite'].includes(k)))];
     const out = {};
     K("closeSheet(true);tab='ranking';period='season';render()"); await bild();
-    const kante = document.getAnimations().filter(a => a.animationName === 'kantenLicht');
-    out.kante = kante.length;
-    out.kanteZiel = kante.map(a => a.effect.pseudoElement + '@' + (a.effect.target.className.match(/top\d/) || ['?'])[0]).sort().join(' ');
-    out.kanteProps = [...new Set(kante.flatMap(props))].sort().join('+');
+    const tops = [...document.querySelectorAll('#main .rlist > .rrow.top1, #main .rlist > .rrow.top2, #main .rlist > .rrow.top3')];
+    out.striche = tops.map(r => getComputedStyle(r, '::before').content).filter(c => c && c !== 'none' && c !== 'normal').length;
+    const zug = document.getAnimations().filter(a => a.animationName === 'glanzZug' && a.effect.target.closest && a.effect.target.closest('#main .rrow'));
+    out.zug = zug.length;
+    out.zugZiel = zug.map(a => (a.effect.target.closest('.rrow').className.match(/top\d/) || ['?'])[0]).sort().join(' ');
+    const bahn = tops.length ? tops[0].querySelector(':scope > .glanz-bahn') : null;
+    out.zugUnter = bahn ? getComputedStyle(bahn).zIndex + '/' + getComputedStyle(tops[0]).isolation : 'fehlt';
+    const zeile = document.querySelector('#main .rlist > .rrow');
+    out.ein = zeile ? getComputedStyle(zeile).animationName : 'fehlt';
+    out.einFuell = zeile ? getComputedStyle(zeile).animationFillMode : 'fehlt';
+    const dreizehn = document.querySelector('#main .rlist > .rrow:nth-child(13)');
+    out.einDreizehn = dreizehn ? getComputedStyle(dreizehn).animationName : 'none';
     // Was im ganzen Dokument endlos läuft, bewegt nur transform und opacity.
     out.endlosFremd = [...new Set(document.getAnimations().filter(a => a.effect && a.effect.getTiming().iterations === Infinity)
       .flatMap(a => props(a).filter(k => k !== 'transform' && k !== 'opacity').map(k => a.animationName + ':' + k)))];
-    // Der Druck zeigt einen Rand, ohne Animation.
     const nav = document.querySelector('[data-nav="awards"]');
     nav.click(); await bild();
-    const on = document.querySelector('.botnav button.on .ic svg');
-    out.stoss = on ? getComputedStyle(on).animationName : 'fehlt';
+    const on = document.querySelector('.botnav button.on .ic');
+    out.stoss = on ? getComputedStyle(on.querySelector('svg')).animationName : 'fehlt';
+    out.pille = on ? getComputedStyle(on, '::after').animationName : 'fehlt';
     // Der Hof blendet in 0,3 s über; gemessen wird der Endstand.
     await new Promise(r => setTimeout(r, 400));
-    out.hof = getComputedStyle(document.querySelector('.botnav button.on .ic'), '::before').opacity;
-    out.hofAus = getComputedStyle(document.querySelector('.botnav button:not(.on) .ic'), '::before').opacity;
+    out.hof = getComputedStyle(document.querySelector('.botnav button.on'), '::before').opacity;
+    out.hofAus = getComputedStyle(document.querySelector('.botnav button:not(.on)'), '::before').opacity;
     K("tab='awards';awView='awards';awPeriod='season';render()"); await bild();
     const kachel = document.querySelector('#main .aw-trophy');
     out.kachel = kachel ? getComputedStyle(kachel).animationName : 'fehlt';
-    out.kachelZeit = kachel ? getComputedStyle(kachel).animationTimeline : 'fehlt';
     out.kachelFuell = kachel ? getComputedStyle(kachel).animationFillMode : 'fehlt';
     const zk = document.querySelector('#main .aw-trophy .aw-t-kopf .zk');
     out.glanz = zk ? getComputedStyle(zk, '::after').animationName : 'fehlt';
@@ -2970,36 +2978,43 @@ const ok = (c, msg, det) => {
     out.leiste = getComputedStyle(sheet.querySelector('.sheet-leiste')).animationName;
     const kopf = sheet.querySelector('.pp-header');
     out.kopfHof = kopf ? getComputedStyle(kopf, '::before').animationName : 'fehlt';
-    out.kopfHinten = kopf ? getComputedStyle(kopf, '::before').zIndex + '/' + getComputedStyle(kopf).isolation : 'fehlt';
-    out.unterBlatt = document.getAnimations().filter(a => a.animationName === 'kantenLicht').map(a => a.playState).join(',');
-    await new Promise(r => setTimeout(r, 900));
+    out.kopfZug = kopf ? getComputedStyle(kopf, '::after').animationName : 'fehlt';
+    out.kopfHinten = kopf ? getComputedStyle(kopf, '::before').zIndex + '/' + getComputedStyle(kopf, '::after').zIndex + '/' + getComputedStyle(kopf).isolation : 'fehlt';
+    out.unterBlatt = document.getAnimations().filter(a => a.animationName === 'glanzZug' && a.effect.target.closest && a.effect.target.closest('#main .rrow')).map(a => a.playState).join(',');
+    await new Promise(r => setTimeout(r, 1900));
     out.setzenDanach = kind ? getComputedStyle(kind).transform : 'fehlt';
     K('closeSheet(true)'); await bild();
+    K("tab='ranking';render()"); await new Promise(r => setTimeout(r, 900));
+    out.einDanach = [...document.querySelectorAll('#main .rlist > .rrow')].slice(0, 12).map(r => getComputedStyle(r).transform).filter(t => t !== 'none').length;
     return out;
   });
   const li = await lichtMess();
-  ok(li.kante === 3 && li.kanteZiel === '::after@top1 ::after@top2 ::after@top3',
-     'über die Kante von Platz 1, 2 und 3 läuft je ein Licht', li.kante + ' · ' + li.kanteZiel);
-  ok(li.kanteProps === 'opacity+transform', 'das Licht bewegt nur transform und opacity', li.kanteProps);
+  ok(li.striche === 0, 'Platz 1 bis 3 tragen keinen Strich an der Kante', li.striche + ' Striche');
+  ok(li.zug === 3 && li.zugZiel === 'top1 top2 top3',
+     'über Platz 1, 2 und 3 fährt je ein Lichtband in ihrem Metall', li.zug + ' · ' + li.zugZiel);
+  ok(li.zugUnter === '-1/isolate', 'das Lichtband liegt unter Name und Zahl', li.zugUnter);
   ok(!li.endlosFremd.length, 'was in der App endlos läuft, bewegt nur transform und opacity', li.endlosFremd.join(', '));
   ok(li.unterBlatt === 'paused,paused,paused', 'unter einem offenen Blatt steht das Licht still', li.unterBlatt);
-  ok(li.stoss === 'reiterStoss' && li.hof === '1' && li.hofAus === '0',
-     'der gewählte Reiter bekommt Hof und Stoß, die anderen nicht', JSON.stringify([li.stoss, li.hof, li.hofAus]));
-  ok(li.kachel === 'kachelHeben' && /view/.test(li.kachelZeit) && li.kachelFuell === 'backwards' && li.rek === 'kachelHeben',
-     'Award- und Rekordkacheln heben sich am Scrollen, nicht an der Zeit, und lassen den Druck frei',
-     JSON.stringify([li.kachel, li.kachelZeit, li.kachelFuell, li.rek]));
+  ok(li.ein === 'einlaufen' && li.einFuell === 'backwards' && li.einDreizehn === 'none',
+     'die ersten zwölf Zeilen laufen beim Zeichnen ein, die übrigen stehen', JSON.stringify([li.ein, li.einFuell, li.einDreizehn]));
+  ok(li.einDanach === 0, 'nach dem Einlauf trägt keine Zeile eine Verschiebung', li.einDanach + ' verschoben');
+  ok(li.stoss === 'reiterStoss' && li.pille === 'pilleZug' && li.hof === '1' && li.hofAus === '0',
+     'der gewählte Reiter bekommt Hof, Stoß und Lichtzug, die anderen nicht', JSON.stringify([li.stoss, li.pille, li.hof, li.hofAus]));
+  ok(li.kachel === 'einlaufen' && li.kachelFuell === 'backwards' && li.rek === 'einlaufen',
+     'Award- und Rekordkacheln laufen beim Zeichnen ein und lassen den Druck frei',
+     JSON.stringify([li.kachel, li.kachelFuell, li.rek]));
   ok(li.glanz === 'zeichenGlanz', 'über das Zeichen der Kachel läuft ein Glanz', li.glanz);
   ok(li.setzen === 'blattSetzen' && li.setzenFuell === 'backwards' && li.leiste === 'none',
      'der Inhalt eines Blatts setzt sich, die Leiste mit Griff und Schließen nicht', JSON.stringify([li.setzen, li.setzenFuell, li.leiste]));
   ok(li.setzenDanach === 'none', 'danach trägt kein Abschnitt eine Verschiebung', li.setzenDanach);
-  ok(li.kopfHof === 'hofAuf' && li.kopfHinten === '-1/isolate',
-     'im Profilkopf geht ein Hof auf, hinter Name und Wappen', li.kopfHof + ' · ' + li.kopfHinten);
-  // Gemessen, nicht geschätzt: über einen ganzen Umlauf des Lichts rechnet
-  // der Hauptthread keinen Stil und kein Layout neu.
+  ok(li.kopfHof === 'hofAuf' && li.kopfZug === 'kopfZug' && li.kopfHinten === '-1/-1/isolate',
+     'im Profilkopf gehen Hof und Lichtzug auf, hinter Name und Wappen', li.kopfHof + ' · ' + li.kopfZug + ' · ' + li.kopfHinten);
+  // Gemessen, nicht geschätzt: über einen Umlauf des Lichts rechnet der
+  // Hauptthread keinen Stil und kein Layout neu.
   {
     await K("closeSheet(true);tab='ranking';period='season';render()");
-    // Erst ausklingen lassen, was einmal läuft: das Zuschieben des Blatts
-    // und die Überblendung des Reiters rechnen selbst Stil.
+    // Erst ausklingen lassen, was einmal läuft: das Zuschieben des Blatts,
+    // der Einlauf und die Überblendung des Reiters rechnen selbst Stil.
     await page.waitForTimeout(1500);
     const cdp = await page.context().newCDPSession(page);
     await cdp.send('Performance.enable');
@@ -3012,10 +3027,10 @@ const ok = (c, msg, det) => {
   await page.emulateMedia({reducedMotion: 'reduce'});
   const liRuhig = await lichtMess();
   await page.emulateMedia({reducedMotion: 'no-preference'});
-  ok(liRuhig.kante === 0 && liRuhig.stoss === 'none' && liRuhig.kachel === 'none' && liRuhig.glanz === 'none'
-     && liRuhig.setzen === 'none' && liRuhig.kopfHof === 'none',
+  ok(liRuhig.zug === 0 && liRuhig.ein === 'none' && liRuhig.stoss === 'none' && liRuhig.pille === 'none' && liRuhig.kachel === 'none'
+     && liRuhig.glanz === 'none' && liRuhig.setzen === 'none' && liRuhig.kopfHof === 'none' && liRuhig.kopfZug === 'none',
      'bei prefers-reduced-motion läuft keiner dieser Effekte',
-     JSON.stringify([liRuhig.kante, liRuhig.stoss, liRuhig.kachel, liRuhig.glanz, liRuhig.setzen, liRuhig.kopfHof]));
+     JSON.stringify([liRuhig.zug, liRuhig.ein, liRuhig.stoss, liRuhig.pille, liRuhig.kachel, liRuhig.glanz, liRuhig.setzen, liRuhig.kopfHof, liRuhig.kopfZug]));
 
   console.log('\n═══ JEDER REITER BEI 360 PX ═══');
   await page.setViewportSize({width:360, height:780});

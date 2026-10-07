@@ -16,9 +16,8 @@
   /* ============ [§C5] RANK LIST ============ */
   .rlist{display:flex;flex-direction:column;gap:8px}
   /* overflow bleibt sichtbar, seit das Zeichen [§C26] hinter dem Avatar
-     brennt: die Flamme schlägt über die Zeilenkante hinaus. Die drei
-     Medaillenkanten runden sich deshalb selbst ab, statt sich vom
-     Zeilenrand beschneiden zu lassen. */
+     brennt: die Flamme schlägt über die Zeilenkante hinaus. Das Licht über
+     Platz 1 bis 3 trägt deshalb seine eigene Bahn, die abschneidet. */
   .rrow{display:flex;align-items:center;gap:11px;background:var(--surface);border:1px solid var(--line);
     border-radius:var(--r);padding:10px 14px;cursor:pointer;transition:.16s;position:relative;overflow:visible}
   .rrow:active{transform:scale(.985);background:var(--surface2)}
@@ -32,37 +31,35 @@
   .rrow.top2 .pos{color:var(--silber)}
   .rrow.top3 .pos{color:var(--bronze)}
   .rrow.top1{border-color:rgba(247,207,74,.5);background:linear-gradient(135deg,rgba(247,207,74,.08),var(--surface))}
-  .rrow.top1::before,.rrow.top2::before,.rrow.top3::before{content:"";position:absolute;left:0;top:0;bottom:0;
-    width:3px;border-radius:var(--r) 0 0 var(--r)}
-  /* Gold, Silber, Bronze — drei Metalle, damit Platz 2 und 3 sich trennen. */
-  .rrow.top1::before{background:var(--gold)}
-  .rrow.top2::before{background:var(--silber)}
-  .rrow.top3::before{background:var(--bronze)}
   .rrow.top2{border-color:rgba(194,201,208,.42);
     background:linear-gradient(135deg,rgba(194,201,208,.06),var(--surface))}
   .rrow.top3{border-color:rgba(192,132,87,.34);
     background:linear-gradient(135deg,rgba(192,132,87,.055),var(--surface))}
-  /* Das Licht an der Kante [§C27]. Alle neun Sekunden läuft es über das
-     Metall von Platz 1 bis 3, versetzt um eine Drittelsekunde je Platz.
-     Es bewegt nur `transform` und `opacity` einer eigenen Ebene mit festem
-     Schein — die Grafikkarte rechnet es, der Hauptthread nicht. Liegt ein
-     Blatt darüber, steht es still: die Unschärfe hinter dem Blatt müsste
-     sonst in jedem Bild neu gerechnet werden, für ein Licht, das niemand
-     sieht. Es liegt auf der Kante, nie über Zahl oder Name. */
-  @keyframes kantenLicht{0%{transform:scaleY(0);opacity:0}4%{opacity:1}
-    11%{transform:scaleY(1);opacity:.85}20%,100%{transform:scaleY(1);opacity:0}}
-  @media(prefers-reduced-motion:no-preference){
-    .rrow.top1::after,.rrow.top2::after,.rrow.top3::after{content:"";position:absolute;left:0;top:0;bottom:0;
-      width:3px;border-radius:var(--r) 0 0 var(--r);pointer-events:none;transform-origin:50% 0;opacity:0;
-      background:linear-gradient(180deg,rgba(255,255,255,0),rgba(255,255,255,.95) 45%,rgba(255,255,255,0));
-      box-shadow:0 0 10px 1px var(--kante-schein);
-      animation:kantenLicht 9s cubic-bezier(.3,.6,.3,1) infinite backwards}
-    .rrow.top2::after{animation-delay:.35s}
-    .rrow.top3::after{animation-delay:.7s}
-    body:has(> .sheet-bg.show) .rrow::after{animation-play-state:paused}}
-  .rrow.top1{--kante-schein:rgba(247,207,74,.55)}
-  .rrow.top2{--kante-schein:rgba(194,201,208,.45)}
-  .rrow.top3{--kante-schein:rgba(192,132,87,.45)}
+  /* Licht über die Karte [§C27]. Alle acht Sekunden fährt ein Lichtband in
+     ihrem Metall diagonal über Platz 1, 2 und 3, je Platz versetzt. Vorher
+     trugen die drei links einen 3 px breiten Strich in Gold, Silber und
+     Bronze, und darauf lief das Licht — auf dem Telefon sah man es kaum, und
+     die Striche wirkten wie ein Fehler. Dasselbe Bauteil wie Podest und
+     Titelkarte: `glanzBahn` schneidet ab (die Zeile selbst darf das nicht,
+     das Wappen ragt über ihre Kante), `glanzZug` fährt per `transform`, die
+     Grafikkarte rechnet es. Das Band liegt UNTER Name und Zahl
+     (`isolation` an der Zeile, `z-index:-1`), über der Fläche der Karte.
+     Liegt ein Blatt darüber, steht es still: die Unschärfe hinter dem Blatt
+     müsste sonst jedes Bild neu gerechnet werden, für ein Licht, das
+     niemand sieht. */
+  .rrow.top1,.rrow.top2,.rrow.top3{isolation:isolate}
+  .rrow > .glanz-bahn{z-index:-1}
+  .rrow.top1 > .glanz-bahn::after,.rrow.top2 > .glanz-bahn::after,.rrow.top3 > .glanz-bahn::after{
+    content:"";position:absolute;top:0;bottom:0;left:0;width:250%;pointer-events:none;
+    background:linear-gradient(105deg,transparent 40%,rgba(var(--metall),.10) 46%,rgba(var(--metall),.30) 50%,
+      rgba(var(--metall),.10) 54%,transparent 60%);
+    transform:translateX(-84%);animation:glanzZug 8s ease-in-out infinite backwards}
+  .rrow.top1{--metall:247,207,74}
+  .rrow.top2{--metall:214,220,226}
+  .rrow.top3{--metall:212,150,104}
+  .rrow.top2 > .glanz-bahn::after{animation-delay:.6s}
+  .rrow.top3 > .glanz-bahn::after{animation-delay:1.2s}
+  body:has(> .sheet-bg.show) #main .rrow > .glanz-bahn::after{animation-play-state:paused}
   /* Ein Druck zeigt einen hellen Rand, nicht nur das Schrumpfen: auf dem
      Telefon verdeckt der Finger die Zeile, der Rand ragt unter ihm hervor.
      Ein Schatten nur während des Drucks, keine Animation. */

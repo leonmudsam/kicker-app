@@ -49,6 +49,42 @@
     .nf-card.nf-glanz::after,.nf-card.nf-s-held:not(.read)::after,.nf-card.nf-s-woche:not(.read)::after,
     .glanz-bahn::after{animation:none!important;background:none!important}}
 
+  /* ── Der Einlauf [§C27] ─────────────────────────────────────────────
+     Öffnet sich eine Ansicht, fallen ihre Zeilen und Kacheln nacheinander
+     an ihren Platz (Rangliste, Awards, Rekorde, Chronik), und über das
+     Zeichen jeder Award- und Rekordkachel läuft danach einmal ein Glanz.
+     Vorher hing das am Scrollen (`animation-timeline: view()`): auf dem
+     Telefon sah man davon fast nichts, und ein Safari ohne
+     Scroll-Animationen zeigte gar nichts. Jetzt läuft es einmal je Zeichnen —
+     `render()` behält bei unverändertem Markup die Knoten, also beim Wechsel
+     von Reiter oder Zeitraum, nicht bei jedem stillen Abgleich.
+     Nur die ersten zwölf: was darunter liegt, sieht beim Öffnen niemand, und
+     jede bewegte Zeile ist für die Dauer eine Ebene der Grafikkarte.
+     Bewegt wird nur `translateY` und `opacity` — die Breite bleibt, wie die
+     Prüfungen bei 360 px sie messen. `backwards`: danach gilt wieder der
+     Druck (`:active`), keine Verschiebung bleibt stehen. */
+  @keyframes einlaufen{from{opacity:.15;transform:translateY(14px)}to{opacity:1;transform:none}}
+  @keyframes zeichenGlanz{from{transform:translateX(-120%)}to{transform:translateX(120%)}}
+  @media(prefers-reduced-motion:no-preference){
+    #main :is(.rlist > .rrow,.aw-trophy,.rek,.chron-one):nth-child(-n+12){
+      animation:einlaufen .45s cubic-bezier(.2,.8,.25,1) backwards;animation-delay:var(--ein,0s)}
+    #main :is(.rlist > .rrow,.aw-trophy,.rek,.chron-one):nth-child(2){--ein:.035s}
+    #main :is(.rlist > .rrow,.aw-trophy,.rek,.chron-one):nth-child(3){--ein:.07s}
+    #main :is(.rlist > .rrow,.aw-trophy,.rek,.chron-one):nth-child(4){--ein:.105s}
+    #main :is(.rlist > .rrow,.aw-trophy,.rek,.chron-one):nth-child(5){--ein:.14s}
+    #main :is(.rlist > .rrow,.aw-trophy,.rek,.chron-one):nth-child(6){--ein:.175s}
+    #main :is(.rlist > .rrow,.aw-trophy,.rek,.chron-one):nth-child(7){--ein:.21s}
+    #main :is(.rlist > .rrow,.aw-trophy,.rek,.chron-one):nth-child(8){--ein:.245s}
+    #main :is(.rlist > .rrow,.aw-trophy,.rek,.chron-one):nth-child(9){--ein:.28s}
+    #main :is(.rlist > .rrow,.aw-trophy,.rek,.chron-one):nth-child(10){--ein:.315s}
+    #main :is(.rlist > .rrow,.aw-trophy,.rek,.chron-one):nth-child(n+11){--ein:.35s}
+    .aw-t-kopf .zk,.rek-ic{position:relative;overflow:hidden}
+    #main :is(.aw-trophy,.rek):nth-child(-n+12) :is(.aw-t-kopf .zk,.rek-ic)::after{
+      content:"";position:absolute;inset:-2px;pointer-events:none;
+      background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.55) 50%,transparent 70%);
+      transform:translateX(-120%);
+      animation:zeichenGlanz .8s ease-out backwards;animation-delay:calc(var(--ein,0s) + .35s)}}
+
   .mini-label{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);
     margin:0 2px 8px;font-weight:600}
 
@@ -80,6 +116,7 @@
   .pp-header{position:relative;padding:32px 18px 22px;text-align:center;
     border-radius:24px;border:1px solid rgba(255,255,255,.05);
     background:linear-gradient(90deg,transparent,var(--pp-tier-1),transparent) 50% 0/76% 1px no-repeat,
+      linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent) 50% 100%/100% 1px no-repeat,
       radial-gradient(140% 90% at 50% 0%, var(--pp-tier-bg) 0%, transparent 55%),
       linear-gradient(180deg, rgba(255,255,255,.025) 0%, transparent 60%);
     overflow:hidden;box-shadow:0 8px 24px -8px rgba(0,0,0,.5);isolation:isolate;
@@ -89,18 +126,25 @@
     --pp-tier-bg:rgba(167,139,250,.14);
     --pp-tier-bg2:rgba(167,139,250,.06);
   }
-  .pp-header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;
-    background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent)}
   /* Licht im Rangton fällt von oben ein [§C27]: eine Kante oben (fester
      Hintergrund, s. o.) und ein Hof dahinter, der beim Öffnen einmal aufgeht
      und dann ruhig steht. Der Hof ist eine eigene Ebene hinter dem Inhalt
      (`isolation` am Kopf, `z-index:-1`): auf 0 läge er als später
      erzeugtes Element über Name und Wappen und tönte sie. */
-  .pp-header::before{content:"";position:absolute;left:50%;top:-60px;width:260px;height:150px;margin-left:-130px;
-    border-radius:50%;pointer-events:none;z-index:-1;opacity:.55;
+  .pp-header::before{content:"";position:absolute;left:50%;top:-70px;width:300px;height:180px;margin-left:-150px;
+    border-radius:50%;pointer-events:none;z-index:-1;opacity:.8;
     background:radial-gradient(closest-side,var(--pp-tier-glow),transparent)}
-  @keyframes hofAuf{0%{opacity:0;transform:scale(.6)}45%{opacity:1}100%{opacity:.55;transform:none}}
-  @media(prefers-reduced-motion:no-preference){.pp-header::before{animation:hofAuf 1.4s ease-out backwards}}
+  /* Beim Öffnen fährt einmal ein Lichtzug im Rangton über den Kopf, hinter
+     Name und Wappen. Die Linie am unteren Rand lag vorher auf dieser Ebene
+     und steht jetzt im Hintergrund, damit die Ebene frei ist. */
+  .pp-header::after{content:"";position:absolute;top:0;bottom:0;left:0;width:250%;pointer-events:none;z-index:-1;
+    background:linear-gradient(105deg,transparent 40%,var(--pp-tier-glow) 50%,transparent 60%);
+    transform:translateX(-84%);opacity:0}
+  @keyframes hofAuf{0%{opacity:0;transform:scale(.55)}45%{opacity:1}100%{opacity:.8;transform:none}}
+  @keyframes kopfZug{0%{opacity:1;transform:translateX(-84%)}100%{opacity:1;transform:translateX(24%)}}
+  @media(prefers-reduced-motion:no-preference){
+    .pp-header::before{animation:hofAuf 1.4s ease-out backwards}
+    .pp-header::after{animation:kopfZug 1.3s cubic-bezier(.4,0,.2,1) .35s backwards}}
   .pp-tier-legende{--pp-tier-1:var(--gold);--pp-tier-2:#ffd96b;
     --pp-tier-glow:rgba(247,207,74,.4);--pp-tier-bg:rgba(247,207,74,.14);
     --pp-tier-bg2:rgba(247,207,74,.06);}

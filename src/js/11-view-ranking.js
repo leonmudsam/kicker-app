@@ -239,7 +239,7 @@ function _vRankingCore(){
       // „gerade", und die Punkte folgen darin dem Avatar.
       const dots=formDots(x.id, feuerAn?x.curStreak:0);
       return `<div class="rrow${cls}" data-detail="${x.id}"${kopf?' id="seasonLeaderCard"':''}>
-        <span class="pos num">${i+1}</span>
+        <span class="pos num">${i+1}</span>${i<3?glanzBahn():''}
         ${avHtml(p, '', {ins:true, px:RAV, feuer:feuerAn?undefined:0})}
         <div class="rmid">
           ${kopf?`<div class="held-label">${esc(kopf.label)}</div>`:''}
@@ -502,7 +502,7 @@ function _vRankingCore(){
         const e=Math.round(t.elo);
         return `<div class="rrow duo${i<3?' top'+(i+1):''}${i===0?' held':''}"
           data-team="${esc(t.ids.slice().sort().join('|'))}">
-          <span class="pos num">${i+1}</span>
+          <span class="pos num">${i+1}</span>${i<3?glanzBahn():''}
           <span class="sh-chip-pair">${chipAv(t.ids[0])}${chipAv(t.ids[1])}</span>
           <div class="rmid">
             ${i===0?'<div class="held-label">Team der Saison</div>':''}
@@ -695,7 +695,7 @@ function rrow(p, s, i, metric, globalElo, letzte){
   const neutral = metric!=='elo' && !(metric==='goaldiff'&&s.gd>=0) ? ' neutral':'';
   const pleite = lossStreakInline(s.curStreak);
   return `<div class="rrow ${cls}" data-detail="${p.id}">
-    <span class="pos num">${i+1}</span>
+    <span class="pos num">${i+1}</span>${i<3?glanzBahn():''}
     ${avHtml(p, '', {ins:true, px:52})}
     <div class="rmid">
               <div class="rname">

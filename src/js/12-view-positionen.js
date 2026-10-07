@@ -46,7 +46,7 @@ function positionsBlockHtml(arr, pos, ohneRang){
     // wird; die Ø-Tore bekommen ihre eigene ruhige Spalte in der Meta-Zeile.
     const wert = Math.round(x.score*100);
     return `<div class="rrow ${!ohneRang&&i<3?'top'+(i+1):''}${ohneRang?' ruhe-row':''}" data-detail="${x.p.id}">
-      ${ohneRang ? '' : `<span class="pos num">${i+1}</span>`}
+      ${ohneRang ? '' : `<span class="pos num">${i+1}</span>${i<3?glanzBahn():''}`}
       ${avHtml(x.p, '', {ins:true, px:52})}
       <div class="rmid">
         <div class="rname">${esc(x.p.name)} ${perfChip}</div>

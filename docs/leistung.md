@@ -357,16 +357,20 @@ Telefon, Safari und echte Netze sind nicht gemessen.
 
 ## Sechste Runde: Effekte ohne Kosten
 
-Die leisen Effekte aus `mockup/aufwertung-6/` [§C27] wurden nach den Regeln
-der fünften Runde gebaut und mit `--ruhe` nachgemessen (CPU ×4, ms
-Hauptthread je Sekunde, zwei Läufe):
+Die Effekte aus `mockup/aufwertung-6/` [§C27] wurden nach den Regeln der
+fünften Runde gebaut und mit `--ruhe` nachgemessen (CPU ×4, ms Hauptthread
+je Sekunde). Gemessen ist die deutlichere zweite Fassung: Lichtband über
+Platz 1 bis 3, Einlauf der Zeilen und Kacheln, Lichtzug an Reiter und
+Profilkopf:
 
-| Ansicht | vorher | nachher |
+| Ansicht | ohne Effekte | mit Effekten |
 |---|--:|--:|
-| Liga (Licht an Platz 1–3) | 1,9 | 1,2–2,0 |
-| Awards (Kacheln am Scrollen) | 1,4 | 2,9–3,7 |
-| Profil (Hof im Kopf, Blatt setzt sich) | 1,7 | 1,9 |
-| Feed | 4,3 | 4,2–6,6 |
+| Liga (Lichtband an Platz 1–3) | 1,9 | 1,4 |
+| Positionen | 2,5 | 1,8 |
+| Awards (Einlauf der Kacheln) | 1,4 | 1,6 |
+| Rekorde | 1,6 | 2,9 |
+| Profil (Hof und Lichtzug, Blatt setzt sich) | 1,7 | 1,5 |
+| Feed | 4,3 | 3,5 |
 
 Alle Werte liegen im Rauschen der Messung. Über einen ganzen Umlauf des
 Lichts zählt Chromium null Stilberechnungen und null Layouts; dasselbe
