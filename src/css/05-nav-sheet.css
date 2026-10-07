@@ -63,18 +63,6 @@
 }
 .sheet.show{transform:translateY(0)}
 .sheet.is-dragging{transition:none !important;}
-  /* Der Inhalt setzt sich nach [§C27]: das Blatt fährt herein wie bisher,
-     seine Abschnitte federn kurz nach, einer nach dem anderen. Nur
-     `transform` und `opacity`, einmal je Öffnen. `backwards`: danach trägt
-     kein Abschnitt mehr eine Verschiebung — eine stehengebliebene
-     `transform` machte ihn zum Bezugsrahmen für alles Fixierte darin und
-     hielte eine Ebene der Grafikkarte belegt. */
-  @keyframes blattSetzen{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
-  @media(prefers-reduced-motion:no-preference){
-    .sheet.show > :not(.sheet-leiste){animation:blattSetzen .55s cubic-bezier(.2,1.25,.35,1) backwards}
-    .sheet.show > :nth-child(3){animation-delay:.03s}
-    .sheet.show > :nth-child(4){animation-delay:.06s}
-    .sheet.show > :nth-child(n+5){animation-delay:.09s}}
 
   .sheet-grab{width:38px;height:4px;border-radius:2px;background:var(--line2);margin:6px auto 16px}
   /* Griff und Schließen bleiben beim Scrollen oben; der Verlauf dahinter
@@ -133,27 +121,6 @@
   .botnav button.on{color:var(--acid)}
   .botnav button.on .ic{background:rgba(190,242,100,.12);box-shadow:inset 0 0 0 1px rgba(190,242,100,.25)}
   .botnav button:active{transform:scale(.9)}
-  /* Der gewählte Reiter leuchtet [§C27]: hinter der Pille liegt ein Hof in
-     Acid, beim Wechsel federt das Zeichen und ein Lichtzug fährt einmal
-     über die Pille. Der Hof ist eine feste Ebene, die über ihre Deckkraft
-     kommt und geht; Stoß und Zug bewegen nur `transform` und laufen einmal,
-     wenn der Knopf `.on` bekommt — die Knöpfe bleiben stehen (`renderNav`),
-     also nicht bei jedem Neuzeichnen. Vorher lag der Hof mit einem Viertel
-     Deckkraft in der Pille selbst, und auf dem Telefon sah man ihn nicht. */
-  .botnav button::before{content:"";position:absolute;left:50%;top:0;width:76px;height:42px;margin-left:-38px;
-    border-radius:21px;pointer-events:none;z-index:-1;
-    background:radial-gradient(closest-side,rgba(190,242,100,.40),rgba(190,242,100,0));
-    opacity:0;transition:opacity .3s}
-  .botnav button.on::before{opacity:1}
-  .botnav button .ic{position:relative;overflow:hidden}
-  .botnav button .ic::after{content:"";position:absolute;top:0;bottom:0;left:0;width:100%;pointer-events:none;
-    background:linear-gradient(105deg,transparent 25%,rgba(236,255,200,.55) 50%,transparent 75%);
-    transform:translateX(-110%)}
-  @keyframes reiterStoss{0%{transform:scale(.7)}55%{transform:scale(1.15)}100%{transform:none}}
-  @keyframes pilleZug{from{transform:translateX(-110%)}to{transform:translateX(110%)}}
-  @media(prefers-reduced-motion:no-preference){
-    .botnav button.on .ic svg{animation:reiterStoss .42s cubic-bezier(.2,1.5,.4,1)}
-    .botnav button.on .ic::after{animation:pilleZug .7s ease-out .08s backwards}}
 
   /* ============ [§C13] FAB ============ */
   .fab{position:fixed;z-index:55;right:max(18px,calc(50% - 260px + 18px));

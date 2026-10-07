@@ -354,26 +354,3 @@ node tests/start.test.js
 
 Grenzen wie in den Runden davor: Chromium mit CPU-Drosselung ist kein
 Telefon, Safari und echte Netze sind nicht gemessen.
-
-## Sechste Runde: Effekte ohne Kosten
-
-Die Effekte aus `mockup/aufwertung-6/` [§C27] wurden nach den Regeln der
-fünften Runde gebaut und mit `--ruhe` nachgemessen (CPU ×4, ms Hauptthread
-je Sekunde). Gemessen ist die deutlichere zweite Fassung: Lichtband über
-Platz 1 bis 3, Einlauf der Zeilen und Kacheln, Lichtzug an Reiter und
-Profilkopf:
-
-| Ansicht | ohne Effekte | mit Effekten |
-|---|--:|--:|
-| Liga (Lichtband an Platz 1–3) | 1,9 | 1,4 |
-| Positionen | 2,5 | 1,8 |
-| Awards (Einlauf der Kacheln) | 1,4 | 1,6 |
-| Rekorde | 1,6 | 2,9 |
-| Profil (Hof und Lichtzug, Blatt setzt sich) | 1,7 | 1,5 |
-| Feed | 4,3 | 3,5 |
-
-Alle Werte liegen im Rauschen der Messung. Über einen ganzen Umlauf des
-Lichts zählt Chromium null Stilberechnungen und null Layouts; dasselbe
-Licht mit wechselndem `box-shadow` kam auf 150 Stilberechnungen in
-2,5 Sekunden. `tests/blatt` hält beides fest. Das Hochzählen der Kopfzahlen
-blieb draußen, weil es als einziger Effekt jedes Bild Text schreibt.
