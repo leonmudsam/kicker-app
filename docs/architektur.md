@@ -18,9 +18,9 @@ kein Deployment-Fenster und niemanden, der eine Build-Kette betreut.
 GitHub Pages liefert eine Datei aus, und ein neuer Stand ist ein `git push`.
 
 Der Preis dafür ist, dass die Datei alles enthält: Stile, Logik, Ansichten.
-Sie ist deshalb groß — aber sie wird einmal geladen und danach aus dem
-Cache bedient, und die Alternative wäre eine Werkzeugkette, die niemand
-wartet.
+Sie ist deshalb groß — aber sie wird einmal geladen und danach vom Service
+Worker aus dem Gerät bedient (`sw.js`, ebenso gebaut und mitversioniert), und
+die Alternative wäre eine Werkzeugkette, die niemand wartet.
 
 ## Warum Aneinanderhängen und kein Bundler
 
@@ -41,9 +41,10 @@ prüft Wächter 4 — er ersetzt, was ein Modulsystem geschenkt hätte.
 
 ## Warum die Version ein Fingerabdruck ist
 
-`BUILD_VERSION` steht im ausgelieferten Code, und `checkForUpdate` holt sich
-alle fünf Minuten die veröffentlichte Datei, um die beiden zu vergleichen.
-Ist die entfernte Version neuer, erscheint das Banner.
+`BUILD_VERSION` steht im ausgelieferten Code, und `checkForUpdate` fragt
+alle fünf Minuten die veröffentlichte Datei ab, um die beiden zu vergleichen —
+mit dem ETag der letzten Antwort, sodass eine unveränderte Seite nicht noch
+einmal übertragen wird. Ist die entfernte Version neuer, erscheint das Banner.
 
 Von Hand gepflegt stand diese Nummer sechs Veröffentlichungen lang still.
 Die Folge war nicht sichtbar, sondern das Gegenteil: jedes Gerät, das die
@@ -57,6 +58,20 @@ wenn sich die Auslieferung ändert, und sonst nie — ein Bauen ohne Änderung
 darf kein Update auslösen. Das Datum davor ist nur Lesbarkeit und bleibt
 stehen, solange der Hash steht. Wächter 5 prüft, dass die ausgelieferte
 Datei die Nummer trägt, die zu ihrem Inhalt gehört.
+
+## Warum der Start nicht auf das Netz wartet
+
+Ohne Netz gibt es keine Liga — aber fast immer weiß das Gerät schon, was die
+Datenbank sagen wird. Deshalb zeigt der Start den letzten Stand des Geräts
+(IndexedDB, `06c-stand.js`), während der Abruf läuft, und der Service Worker
+hält Seite, Schriften und Bibliothek bereit [§C42]. Der Stand zeigt nur und
+schreibt nie: was veröffentlicht oder speichert, hängt am Live-Abruf, sonst
+entstünde eine Story aus gestrigen Daten, die für immer gespeichert bliebe.
+
+Aus demselben Grund läuft der Story-Generator in einem Worker
+(`29c-news-worker.js`), und zwar mit dem ausgelieferten Code selbst statt
+einer zweiten Fassung: ein zweiter Generator liefe früher oder später
+auseinander, und die Karten auf zwei Geräten sagten Verschiedenes.
 
 ## Warum die Tests im Browser messen
 
