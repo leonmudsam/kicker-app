@@ -1,0 +1,89 @@
+/* Effekte der sechsten Aufwertung. Gelten nur unter html.v6 (das rechte
+   Fenster der Vergleichsseite); das linke zeigt die App, wie sie heute ist.
+
+   Drei Regeln, damit die Zahlen vorne bleiben:
+   - Bewegt werden nur transform und opacity [§C27]. Ein Leuchten ist eine
+     eigene Ebene mit festem Schatten, die ein- und ausblendet.
+   - Einmal statt endlos: was beim Hereinkommen glänzt, glänzt einmal. Endlos
+     läuft nur das Seltene (Platz 1 bis 3), und auch das mit langer Pause.
+   - Gold nur für Titel [§C25]: der Lichtlauf an Platz 1 ist Gold, an Platz 2
+     und 3 Silber und Bronze, alles andere bleibt in seiner Rolle.
+   Bei Bewegungsruhe (Schalter der Seite oder prefers-reduced-motion) steht
+   alles im Endzustand. */
+
+/* ── E1 Platz 1 bis 3: Licht läuft über die Metallkante ─────────────── */
+@media (prefers-reduced-motion:no-preference){
+  html.v6:not(.ruhe) .rrow.top1::after, html.v6:not(.ruhe) .rrow.top2::after, html.v6:not(.ruhe) .rrow.top3::after{
+    content:"";position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:var(--r) 0 0 var(--r);
+    pointer-events:none;transform-origin:50% 0;
+    background:linear-gradient(180deg,rgba(255,255,255,0),rgba(255,255,255,.95) 45%,rgba(255,255,255,0));
+    box-shadow:0 0 10px 1px var(--v6-metall);
+    animation:v6Kante 9s cubic-bezier(.3,.6,.3,1) infinite both}
+  html.v6 .rrow.top1{--v6-metall:rgba(247,207,74,.55)}
+  html.v6 .rrow.top2{--v6-metall:rgba(194,201,208,.45)}
+  html.v6 .rrow.top3{--v6-metall:rgba(192,132,87,.45)}
+  html.v6:not(.ruhe) .rrow.top2::after{animation-delay:.35s}
+  html.v6:not(.ruhe) .rrow.top3::after{animation-delay:.7s}
+}
+@keyframes v6Kante{
+  0%{transform:scaleY(0);opacity:0}
+  4%{opacity:1}
+  11%{transform:scaleY(1);opacity:.85}
+  20%,100%{transform:scaleY(1);opacity:0}}
+
+/* ── E2 Kopfzahlen zählen einmal hoch (entwurf-app.js) ─────────────── */
+html.v6 .v6-zaehlt{font-variant-numeric:tabular-nums}
+
+/* ── E3 Kacheln kommen herein: heben sich, das Zeichen glänzt einmal ─ */
+@media (prefers-reduced-motion:no-preference){
+  html.v6:not(.ruhe) .v6-warten{opacity:.35;transform:translateY(8px)}
+  html.v6:not(.ruhe) .v6-da{animation:v6Heben .55s cubic-bezier(.2,.8,.25,1) backwards;
+    animation-delay:calc(var(--v6-i, 0) * 60ms)}
+  html.v6 .aw-trophy .zk, html.v6 .rek .rek-ic{position:relative;overflow:hidden}
+  html.v6:not(.ruhe) .v6-da .aw-t-kopf .zk::after, html.v6:not(.ruhe) .v6-da .rek-ic::after{content:"";position:absolute;inset:-2px;pointer-events:none;
+    background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.55) 50%,transparent 70%);
+    transform:translateX(-120%);animation:v6Zeichenglanz .9s ease-out both;
+    animation-delay:calc(var(--v6-i, 0) * 60ms + .25s)}
+}
+@keyframes v6Heben{from{opacity:.35;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes v6Zeichenglanz{to{transform:translateX(120%)}}
+
+/* ── E4 Der gewählte Reiter: ein Hof unter dem Zeichen, ein kurzer Stoß ─ */
+html.v6 .botnav button .ic{position:relative}
+html.v6 .botnav button .ic::before{content:"";position:absolute;inset:-6px -2px;border-radius:20px;pointer-events:none;
+  background:radial-gradient(closest-side,rgba(190,242,100,.28),rgba(190,242,100,0));
+  opacity:0;transition:opacity .3s}
+html.v6 .botnav button.on .ic::before{opacity:1}
+@media (prefers-reduced-motion:no-preference){
+  html.v6:not(.ruhe) .botnav button.on .ic svg{animation:v6Stoss .38s cubic-bezier(.2,1.5,.4,1)}
+}
+@keyframes v6Stoss{0%{transform:scale(.82)}60%{transform:scale(1.08)}100%{transform:none}}
+
+/* ── E5 Das Blatt setzt sich: der Inhalt federt kurz nach ──────────── */
+@media (prefers-reduced-motion:no-preference){
+  html.v6:not(.ruhe) .sheet.show > :not(.sheet-leiste):not(.sheet-grab){animation:v6Setzen .5s cubic-bezier(.2,1.15,.35,1) both}
+  html.v6:not(.ruhe) .sheet.show > :nth-child(3){animation-delay:.03s}
+  html.v6:not(.ruhe) .sheet.show > :nth-child(4){animation-delay:.06s}
+  html.v6:not(.ruhe) .sheet.show > :nth-child(n+5){animation-delay:.09s}
+}
+@keyframes v6Setzen{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+
+/* ── E6 Profilkopf: Licht im Rangton fällt von oben ein ───────────── */
+html.v6 .pp-header::before{content:"";position:absolute;left:12%;right:12%;top:0;height:1px;pointer-events:none;
+  background:linear-gradient(90deg,transparent,var(--pp-tier-1),transparent);opacity:.9}
+html.v6 .pp-header .v6-hof{position:absolute;left:50%;top:-60px;width:260px;height:150px;margin-left:-130px;
+  border-radius:50%;pointer-events:none;background:radial-gradient(closest-side,var(--pp-tier-glow),transparent);
+  opacity:.55;z-index:0}
+@media (prefers-reduced-motion:no-preference){
+  html.v6:not(.ruhe) .pp-header .v6-hof{animation:v6Hof 1.4s ease-out both}
+}
+@keyframes v6Hof{0%{opacity:0;transform:scale(.6)}45%{opacity:1}100%{opacity:.55;transform:none}}
+
+/* ── E7 Druck auf eine Zeile: ein kurzer Lichtrand statt nur Schrumpfen ─ */
+html.v6 .rrow, html.v6 .aw-trophy{-webkit-tap-highlight-color:transparent}
+html.v6 .rrow:active, html.v6 .aw-trophy:active{
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.10),0 0 0 3px rgba(190,242,100,.07)}
+
+/* Schalter „Bewegung reduzieren" der Vergleichsseite: alles im Endzustand. */
+html.ruhe *, html.ruhe *::before, html.ruhe *::after{animation-duration:0s !important;animation-delay:0s !important;
+  transition-duration:0s !important}
