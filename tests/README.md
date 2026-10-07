@@ -43,6 +43,9 @@ Rendern mit den echten 466 Fixture-Partien, lokal ohne Backend. Details und
 Vergleich stehen in `docs/leistung.md`.
 `--cpu=4 --mobil` ergänzt CPU-Drosselung, Bildabstände und Longtasks als
 Annäherung an schwächere Telefone, nicht als Garantie für reale Geräte.
+`--ruhe` misst allein, was eine Ansicht kostet, während sie nur offen steht
+(Arbeit des Hauptthreads je Sekunde) — dort fiel der Feed mit Endlos-Animationen
+auf `box-shadow` auf.
 `node tools/interaktion.cjs --cpu=4` misst ergänzend schnelle Score-Tipps,
 Suchbuchstaben, kalte und schnelle Reiterwechsel sowie den Blattzug. Eingaben
 sind synthetisch gequeued; rAF-Gelegenheiten sind weder Hardware-FPS noch INP.

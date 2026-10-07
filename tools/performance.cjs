@@ -1,5 +1,5 @@
 // Reproduzierbare lokale Messung mit den echten Liga-Fixtures, ohne Backend.
-// node tools/performance.cjs [--ausgabe=<Pfad.json>] [--profil] [--cpu=4] [--mobil]
+// node tools/performance.cjs [--ausgabe=<Pfad.json>] [--profil] [--cpu=4] [--mobil] [--ruhe]
 // Gemessen wird synchrones JavaScript samt erstem Layout, kein Netzwerk.
 const fs=require('node:fs');
 const path=require('node:path');
@@ -101,7 +101,12 @@ if(require.main===module) (async()=>{
       }
     })()`);
     const result={partien:data.length,viewport:390,cpuFaktor:cpu,browser:browser.version(),einheit:'ms · synchrones JS + erstes Layout · Median',messungen:[]};
-    for(const [label,prepare,action] of cases){
+    // `--ruhe` misst allein: die Messungen unten hinterlassen einmalige
+    // Arbeit (etwa den Rekordverlauf, der Monat für Monat nachrechnet), und
+    // die gehört nicht zur Ruhe einer Ansicht — gemessen stand der
+    // Awards-Reiter danach bei 100 statt 2 ms je Sekunde.
+    const nurRuhe=process.argv.includes('--ruhe');
+    for(const [label,prepare,action] of nurRuhe?[]:cases){
       const cold=[],warm=[];let last;
       for(let i=0;i<3;i++){
         await K(`closeSheet(true);players=players.slice();matches=matches.slice();invalidateCache();${prepare}`);
@@ -112,7 +117,7 @@ if(require.main===module) (async()=>{
       result.messungen.push({ansicht:label,kalt:+median(cold).toFixed(2),warm:+median(warm).toFixed(2)});
       console.log(label,JSON.stringify(result.messungen.at(-1)));
     }
-    if(process.argv.includes('--mobil')){
+    if(process.argv.includes('--mobil') && !nurRuhe){
       result.interaktionen=[];
       const actions=[
         ['Tabwechsel',`closeSheet(true);tab='ranking';period='season';render();` ,`document.querySelector('[data-nav="history"]').click()`],
@@ -136,6 +141,33 @@ if(require.main===module) (async()=>{
             longTasks:tasks.length,laengsterTask:+Math.max(0,...tasks).toFixed(2)};
         })()`);
         result.interaktionen.push({ansicht,...r});console.log(ansicht,JSON.stringify(r));
+      }
+    }
+    // Was eine Ansicht kostet, während sie nur offen steht: Arbeit des
+    // Hauptthreads je Sekunde, nachdem alles Einmalige gelaufen ist. Eine
+    // Endlos-Animation, die nicht die Grafikkarte rechnet, verlangt jedes
+    // Bild einen Takt über die ganze Ansicht — gemessen kostete der offene
+    // Feed so 490 ms je Sekunde bei vierfach gedrosselter CPU [§C27].
+    if(nurRuhe){
+      result.ruhe=[];
+      const cdp=await page.context().newCDPSession(page);
+      await cdp.send('Performance.enable');
+      const takt=async()=>(await cdp.send('Performance.getMetrics')).metrics.find(x=>x.name==='TaskDuration').value;
+      const ansichten=[
+        ['Liga',"tab='ranking';period='season';render()"],['Positionen',"tab='positions';render()"],
+        ['Awards',"tab='awards';awView='awards';awPeriod='season';awSeasonId=null;render()"],
+        ['Rekorde',"tab='awards';awView='rekorde';render()"],['Chronik',"tab='awards';awView='chronik';render()"],
+        ['Teams',"tab='teams';render()"],['Verlauf',"tab='history';render()"],
+        ['Profil',`showPlayer('${ids[6]}')`],['Laufbahn',`showLaufbahn('${ids[6]}')`],
+        ['Feed',"_cache._stories=_buildStories();_cache._consolFrom=null;_cache._frischVon=null;openNewsFeed();_newsFeedRest(true)"],
+        ['Wochenrückblick','showPotwRecap()'],['Saisonrückblick','showSeasonRecap(seasons[0])'],
+      ];
+      for(const [ansicht,js] of ansichten){
+        await K('closeSheet(true);'+js);
+        await page.waitForTimeout(4000);
+        const a=await takt();await page.waitForTimeout(3000);const b=await takt();
+        const r={ansicht,msJeSekunde:+((b-a)/3*1000).toFixed(1)};
+        result.ruhe.push(r);console.log('Ruhe',JSON.stringify(r));
       }
     }
     if(profiling) result.profil=await page.evaluate(()=>window.__perfZaehler);

@@ -288,3 +288,69 @@ Die neuen/erweiterten Suiten prüfen 16 Aktualisierungs-, 20 Storydetail-,
 den Änderungen, gleicher Snapshotbühne im Bündel/Detail und Geometrie bei
 288/360 px. Die lokale Vorher-/Nachher-Diagnose mit identischen Stories liegt
 im ignorierten `dist`; sie verändert weder den Backendbestand noch den Code.
+
+## Fünfte Runde: Start, Hintergrund und Ruhe
+
+Vergleich gegen `a4c563b`, dieselben 466 Partien, Chromium, 390 × 844 px,
+vierfach gedrosselte CPU. Die Regeln dazu stehen in [laufzeit.md](laufzeit.md)
+und im Gesetz [§C42](gesetze/C42-start.md); die Bewegungsregel in
+[§C27](gesetze/C27-ein-bauteil.md).
+
+**Der Start wartet nicht mehr auf das Netz.**
+
+- Nach jedem Live-Abruf liegt der Stand der Liga auf dem Gerät (IndexedDB).
+  Der nächste Start zeichnet daraus, während das Netz antwortet, und schreibt
+  dabei nichts. In `tests/start` mit drei Sekunden Netz steht die Liga nach
+  rund 400 ms statt nach dem Netz.
+- Ein Service Worker hält Seite, Schriften und Supabase-Bibliothek. Ohne Netz
+  öffnet die App aus ihm; Update-Check und Neuladen gehen weiter ans Netz.
+- Der Update-Check merkt sich den ETag seiner Fassung. Vorher lud jeder Start
+  die ganze Seite ein zweites Mal herunter, neben den vier Datenabfragen.
+
+**Die Rechnung nach dem Start blockiert nicht mehr.**
+
+- Der Story-Generator rechnet in einem Worker mit demselben Code. Kalt war
+  er auf dem Hauptthread rund eine Sekunde am Stück (`Generator kalt` in
+  `tools/performance.cjs --mobil`, 1038 ms); beim Start rechnet der
+  Hauptthread jetzt keine Story mehr (`tests/start`).
+- Nach dem Zeichnen rechnen die übrigen Reiter im Leerlauf vor. Beim ersten
+  Öffnen von Positionen, Awards, Rekorden, Chronik und Teams nach dem Start
+  rechnet nichts mehr kalt (`tests/start`); vorher Awards drei, Teams eine
+  kalte Rechnung.
+- Gemeinsame Zeitschnitte und Generator-Sortierung sparen Kopien der Liga;
+  ein Zeitgewinn ist in einzelnen Läufen nicht vom Rauschen zu trennen
+  (±20 % zwischen zwei Läufen derselben Fassung).
+
+**Was offen steht, kostet fast nichts mehr.** Hauptthread-Arbeit je Sekunde,
+während die Ansicht nur offen steht (`node tools/performance.cjs --cpu=4
+--ruhe`):
+
+| Ansicht | vorher | nachher |
+|---|--:|--:|
+| Feed | 589 ms | 5 ms |
+| Awards | 238 ms | 2 ms |
+| Saisonrückblick | 157 ms | 4 ms |
+| Wochenrückblick | 45 ms | 5 ms |
+| Liga, Positionen, Rekorde, Chronik, Teams, Verlauf, Profil, Laufbahn | 2–4 ms | 2–5 ms |
+
+Die Ursache waren Endlos-Animationen auf `box-shadow` und
+`background-position`: jedes Bild verlangte einen Takt des Hauptthreads über
+die ganze Ansicht, und ein Wischen in dieser Zeit ruckelte. Dieselben Scheine
+und Lichtläufe laufen jetzt als Ebenen über `opacity` und `transform`.
+`tools/golden.mjs --bilder` vergleicht 180 Bilder in Ruhe und mit Animationen,
+die bei 0, ¼ und ½ angehalten sind: keins über der Schwelle; einzig der
+Hochpunkt des Breaking-Scheins weicht um 0,6 % der Pixel ab (Überblendung
+statt wachsendem Schatten).
+
+Nicht verändert: der Puls des Statusrings im Profilkopf (`avRingPulse`)
+bleibt ein `box-shadow`, weil das Wappen abschneidet, was über seinen Rand
+ragt; er erscheint nur im Kopf eines Profils mit extremer Form.
+
+```
+node tools/performance.cjs --cpu=4 --ruhe
+node tools/golden.mjs --basis=<rev> --bilder
+node tests/start.test.js
+```
+
+Grenzen wie in den Runden davor: Chromium mit CPU-Drosselung ist kein
+Telefon, Safari und echte Netze sind nicht gemessen.
