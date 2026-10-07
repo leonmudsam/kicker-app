@@ -27,12 +27,12 @@ function showH2H(idA, idB){
         <div style="font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:var(--muted);font-weight:700;font-family:'Sometype Mono',monospace">Direkter Vergleich</div>
         <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:14px">
           <div data-detail="${esc(pA.id)}" style="cursor:pointer">${avBig(pA)}</div>
-          <span class="svg-ic" style="color:var(--muted);width:18px;height:18px">${svgI('swords')}</span>
+          <span class="svg-ic" style="color:var(--muted);width:18px;height:18px">${svgI('crossedSwords')}</span>
           <div data-detail="${esc(pB.id)}" style="cursor:pointer">${avBig(pB)}</div>
         </div>
         <div style="font-family:'Archivo Black',sans-serif;font-size:18px;letter-spacing:-.02em;line-height:1.1;margin-top:12px">${esc(pA.name)} <span style="color:var(--muted);font-size:14px">vs</span> ${esc(pB.name)}</div>
       </div>
-      ${emptyState('swords','Noch keine gemeinsamen Matches')}
+      ${emptyState('crossedSwords','Noch keine gemeinsamen Matches')}
     `);
     return;
   }
@@ -87,7 +87,7 @@ function showH2H(idA, idB){
   const oppBlock = d.asOppForA.g ? `
     <div style="background:var(--surface);border:1px solid rgba(167,139,250,.22);border-radius:14px;padding:14px;margin-bottom:12px">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-        <span class="svg-ic" style="color:var(--purple);width:16px;height:16px">${svgI('swords')}</span>
+        <span class="svg-ic" style="color:var(--purple);width:16px;height:16px">${svgI('crossedSwords')}</span>
         <span style="font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:var(--purple);font-weight:700;font-family:'Sometype Mono',monospace">Als Gegner</span>
         <span style="margin-left:auto;font-size:11px;color:var(--muted);font-family:'Sometype Mono',monospace">${d.asOppForA.g} Spiele</span>
       </div>
@@ -149,7 +149,7 @@ function showH2H(idA, idB){
       <div style="font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:var(--muted);font-weight:700;font-family:'Sometype Mono',monospace">Direkter Vergleich</div>
       <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:14px">
         <div data-detail="${esc(pA.id)}" style="cursor:pointer">${avBig(pA)}</div>
-        <span class="svg-ic" style="color:var(--muted);width:18px;height:18px">${svgI('swords')}</span>
+        <span class="svg-ic" style="color:var(--muted);width:18px;height:18px">${svgI('crossedSwords')}</span>
         <div data-detail="${esc(pB.id)}" style="cursor:pointer">${avBig(pB)}</div>
       </div>
       <div style="font-family:'Archivo Black',sans-serif;font-size:18px;letter-spacing:-.02em;line-height:1.1;margin-top:12px">${esc(pA.name)} <span style="color:var(--muted);font-size:14px">vs</span> ${esc(pB.name)}</div>

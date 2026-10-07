@@ -214,20 +214,20 @@ function _spAnlassDaten(m, c){
   return {key:'feld', m, c};
 }
 const SP_ANLASS = {
-  spitze:      {name:'Spitzenwechsel',  kurz:'Spitze',      ic:'crown'},
+  spitze:      {name:'Spitzenwechsel',  kurz:'Spitze',      ic:'spitzenwechsel'},
   riss:        {name:'Serienbruch',     kurz:'Bruch',       ic:'flameBreak'},
   serie:       {name:'Serie',           kurz:'Serie',       ic:'flame'},
-  teamserie:   {name:'Teamserie',       kurz:'Duo-Serie',   ic:'duo'},
+  teamserie:   {name:'Teamserie',       kurz:'Duo-Serie',   ic:'unstoppable'},
   aussenseiter:{name:'Außenseitersieg', kurz:'Außenseiter', ic:'underdog'},
   wende:       {name:'Wende',           kurz:'Wende',       ic:'comeback'},
   duell:       {name:'Rivalität',       kurz:'Rivalität',   ic:'crossedSwords'},
-  medaille:    {name:'Auszeichnung',    kurz:'Marke',       ic:'medal'},
+  medaille:    {name:'Auszeichnung',    kurz:'Marke',       ic:'abzeichen'},
   rang:        {name:'Rangsprung',      kurz:'Sprung',      ic:'stepsUp'},
-  premiere:    {name:'Premiere',        kurz:'Premiere',    ic:'handshake'},
+  premiere:    {name:'Premiere',        kurz:'Premiere',    ic:'premiere'},
   rolle:       {name:'Rollentausch',    kurz:'Rolle',       ic:'posSwap'},
-  krimi:       {name:'Ein-Tor-Krimi',   kurz:'Krimi',       ic:'thriller'},
-  deutlich:    {name:'Klarer Sieg',     kurz:'Klar',        ic:'target'},
-  feld:        {name:'Ergebnis',        kurz:'',            ic:'ball'}
+  krimi:       {name:'Ein-Tor-Krimi',   kurz:'Krimi',       ic:'pinch'},
+  deutlich:    {name:'Klarer Sieg',     kurz:'Klar',        ic:'thumbsUp'},
+  feld:        {name:'Ergebnis',        kurz:'',            ic:'spielfeld'}
 };
 
 // ── Die Ergebniszeile: das Band in einer Zeile ───────────────────────
@@ -918,7 +918,7 @@ const SP_FORM = {
   // Erwartung gegen Ergebnis: das Ergebnis weicht deutlich von der Rechnung
   // ab. Die Liga bis hier als Wolke, die Erwartung als Linie, diese Partie
   // als Punkt.
-  streu:{rang:34, ic:'chartUp',
+  streu:{rang:34, ic:'ausreisser',
     wann:F => F.i >= 50 && F.c != null && ((F.c >= 0.7 && F.diff <= 2) || (F.c < 0.5 && F.diff >= 5)) ? {knapp:F.c >= 0.7} : null,
     daten:(F, x) => {
       const pk = _spFormBasis().punkte.slice(0, F.i).filter(p => p.c != null);

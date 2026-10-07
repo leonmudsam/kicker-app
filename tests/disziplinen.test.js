@@ -1464,6 +1464,26 @@ ok(_prListe.fehlt.length === 0 && _prListe.werte.length > 0
    'das Regelblatt nennt jede legendaere Auszeichnung, nach Startwert geordnet',
    _prListe.werte.join(' ') + (_prListe.fehlt.length ? ' · fehlt ' + _prListe.fehlt.join(', ') : ''));
 
+// Die Meilensteine der Laufbahn wiegen nach ihrem Fortschritt, nicht nach
+// ihrer Klasse: mit dem Wert der Klasse brachten 300 Siege 25 Prestige,
+// weniger als drei Spieler des Tages. Jeder fällt einmal und zählt einmal voll.
+const _prMeilen = JSON.parse(K.eval(`JSON.stringify((function(){
+  const soll = {wins200:150, games250:100, def50:60, atk50:60, allrounder:50, games150:50, games25:10, first_match:5};
+  const ist = {}; Object.keys(soll).forEach(id => { ist[id] = auszeichnungsPunkte(id, 1); });
+  const h = _prestigeRegelListe();
+  const ids = (h.match(/data-id="[a-z0-9_]+"/g) || []).map(x => x.slice(9, -1));
+  const k = _prestigeRegelKarten();
+  return {soll, ist, fehlt:Object.keys(soll).filter(id => ids.indexOf(id) < 0),
+    rare:/Rare<\\/b><strong>10–150 P/.test(k), common:/Common<\\/b><strong>3–60 P/.test(k)};
+})())`));
+ok(Object.keys(_prMeilen.soll).every(id => _prMeilen.ist[id] === _prMeilen.soll[id]),
+   'die Meilensteine der Laufbahn tragen ihren eigenen Wert und zählen einmal voll',
+   JSON.stringify(_prMeilen.ist));
+ok(_prMeilen.fehlt.length === 0, 'das Regelblatt nennt jeden Meilenstein mit seinem Wert',
+   _prMeilen.fehlt.join(', ') || 'alle');
+ok(_prMeilen.rare && _prMeilen.common, 'die Karten von Rare und Common nennen die Spanne ihrer Startwerte',
+   JSON.stringify([_prMeilen.rare, _prMeilen.common]));
+
 const _prTausch = JSON.parse(K.eval(`JSON.stringify({
   sieger:rarityOf('perfect_win'), allwetter:rarityOf('allwetter'),
   siegerP:auszeichnungsPunkte('perfect_win',1),
@@ -1658,6 +1678,7 @@ const _lb = JSON.parse(K.eval(`JSON.stringify((function(){
     // Ändert der Grad die Zeichnung überhaupt? Gefragt ist die Form, nicht
     // die Farbe — deshalb dasselbe Metall, nur ein anderer Grad.
     lorbeerAb: INSIGNIEN.find(x=>x.key==='lorbeer').min,
+    kroneAb: INSIGNIEN.find(x=>x.key==='krone').min,
     // Gefragt wird das Bild selbst ({eigen:true}): ein Verweis auf den Topf
     // ist in jedem Grad gleich. Verglichen wird ein Prüfwert über den ganzen
     // Inhalt — zwei verschiedene Bilder können gleich lang sein.
@@ -1691,12 +1712,13 @@ ok(_spannen.every(s => s >= 500),
    'Spannen ' + _spannen.join(' · '));
 
 const _lbN = Object.fromEntries(_lb.werte.map(x=>[x.name,x]));
-// Die Spitze steht im Zierkranz, der Stufe zwischen Volute und Lorbeer:
-// angekommen, aber mit der oberen Hälfte der Leiter noch vor sich. Leon im
-// dritten Grad, Martin mindestens im zweiten.
-ok(_lbN.Leon && _lbN.Martin && _lbN.Leon.stufe === 3 && _lbN.Leon.grad === 2
-   && _lbN.Martin.stufe === 3 && _lbN.Martin.grad >= 1,
-   'Leon und Martin tragen den Zierkranz, Leon in Ebene III',
+// Die Spitze steht im Lorbeerreif, im ersten Grad: angekommen, als die
+// Meilensteine der Laufbahn (300 Siege, 300 Partien, die Positionen) ihr
+// eigenes Gewicht bekamen und die Schwellen stehen blieben. Vorher stand sie
+// im Zierkranz, weil 300 Siege so viel wogen wie drei Spieler des Tages.
+ok(_lbN.Leon && _lbN.Martin && _lbN.Leon.stufe === 4 && _lbN.Leon.grad === 0
+   && _lbN.Martin.stufe === 4 && _lbN.Martin.grad === 0,
+   'Leon und Martin tragen den Lorbeerreif im ersten Grad',
    ['Leon','Martin'].map(n=>n+' '+JSON.stringify(_lbN[n])).join(' · '));
 // Gemessen wird, dass die drei DICHT BEIEINANDER im Zierkranz stehen, und
 // nicht, wer von ihnen vorn liegt. Die Reihenfolge war festgeschrieben
@@ -1704,9 +1726,9 @@ ok(_lbN.Leon && _lbN.Martin && _lbN.Leon.stufe === 3 && _lbN.Leon.grad === 2
 // jedem neuen Rekord, der Punkte verschiebt: sechs neue Liga-Rekorde [§C35]
 // zogen Julian um neun Punkte an Martin vorbei, ohne dass sich an der Leiter
 // etwas geaendert hat. Kalibriert ist die Leiter und nicht die Tabelle.
-ok(_lbN.Julian && _lbN.Julian.stufe === 3 && _lbN.Julian.grad >= 1
+ok(_lbN.Julian && _lbN.Julian.stufe === 4
    && Math.abs(_lbN.Julian.punkte - _lbN.Leon.punkte) < 300,
-   'Julian steht dicht bei beiden im Zierkranz',
+   'Julian steht dicht bei beiden im Lorbeerreif',
    JSON.stringify(_lbN.Julian));
 
 const _sternMoeglich = K.eval(`BADGES.reduce((sum,b)=>
@@ -1745,13 +1767,14 @@ ok(_endlos.n < 1000 && _endlos.wert >= _endlos.ziel,
    'auch spaetere Ordensstern-Zacken bleiben ohne Obergrenze erreichbar',
    `20. weitere Zacke im skalierenden Katalogmodell bei Lauf ${_endlos.n}`);
 
-// 2. Der Beste der Liga hat die obere Hälfte der Leiter noch vor sich. Ohne
+// 2. Der Beste der Liga hat die beiden obersten Stufen noch vor sich. Ohne
 //    diese Grenze wandert die Spitze nach oben, sobald der Katalog wächst —
-//    und dann trägt jemand den Lorbeerreif, weil neue Rekorde dazukamen und
-//    nicht, weil er besser geworden wäre.
-ok(_lb.hoechste < _lb.lorbeerAb,
-   'der Beste der Liga trägt noch keinen Lorbeerreif',
-   `bester Stand ${_lb.hoechste}, Schwelle ${_lb.lorbeerAb}`);
+//    und dann trägt jemand den Kronenreif, weil neue Rekorde dazukamen und
+//    nicht, weil er besser geworden wäre. Die Grenze lag beim Lorbeerreif;
+//    den haben die Meilensteine der Laufbahn erarbeitet, nicht der Katalog.
+ok(_lb.hoechste < _lb.kroneAb,
+   'der Beste der Liga trägt noch keinen Kronenreif',
+   `bester Stand ${_lb.hoechste}, Schwelle ${_lb.kroneAb}`);
 
 // 3. Die ERSTE Stufe bleibt erreichbar. Sie sagt „du bist dabei", nicht „du
 //    bist gut" — eine Leiter, auf der die halbe Liga nicht einmal die
@@ -3517,6 +3540,81 @@ ok(_sprachFund.length === 0,
 ok(K.eval(`CHRONICLES.every(c => c.stand === undefined)`)
    && K.eval(`typeof REKORD_STAND === 'undefined'`),
    'es gibt keine Statusmarke „Neu" oder „Ueberarbeitet" mehr');
+
+// ═══ Ein Zeichen, eine Bedeutung [§C41] ═══
+// Die Krone stand für Meistertitel, Traummonat, Highlights, Legende,
+// Titelverteidiger und Spitzenwechsel; der Blitz für Stürmer, Sturm-Flex,
+// den kompletten Stürmer und die Eilmeldung; zwei Schlüssel standen doppelt
+// im Katalog und der zweite überschrieb den ersten still. Ein Zeichen mit
+// mehr als einem Träger ist nur erlaubt, wenn alle dieselbe Sache meinen —
+// dann steht es hier mit dieser einen Bedeutung. Wer einem vorhandenen
+// Zeichen einen neuen Träger gibt, trägt ihn hier ein, oder er braucht ein
+// eigenes Zeichen.
+const ZEICHEN_FAMILIEN = {
+  flame:'Die laufende Siegesserie', flameTriple:'Die lange Siegesserie',
+  dropTriple:'Die laufende Pleitenserie', trendCrash:'Die längste Pleitenserie',
+  handshake:'Das beste Duo', unstoppable:'Die Siegesserie eines Duos',
+  weekKing:'Player of the Week', dayKing:'Player of the Day',
+  crossedSwords:'Die Rivalität', comeback:'Die Wende nach der Pleite', flameBreak:'Der Serienbruch',
+  underdog:'Sieg als Außenseiter', surprise:'Der unwahrscheinlichste Sieg',
+  giantSlayer:'Sieg gegen den Favoriten', crownFallen:'Der Favorit verliert',
+  star:'Die beste Siegquote', crown:'Der Erste: Meistertitel, Titelverteidiger, Held des Tages',
+  shieldCheck:'Die wenigsten Gegentore', hole:'Die meisten Gegentore',
+  ball:'Die meisten Tore im Sturm', plusMinus:'Die Tordifferenz je Partie',
+  target:'Stark in engen Partien', thriller:'Viele enge Partien', pinch:'Der Zittersieg 10:9',
+  pille:'Die Pleite 9:10', dizzy:'Die Pleite 0:10', thumbsUp:'Der klare Sieg',
+  duplicate:'Dasselbe Ergebnis immer wieder', sunrise:'Die erste Partie des Tages',
+  weight:'Sieg mit dem Schwächsten als Partner', rainCloud:'Der Pechvogel', ghost:'Der Angstgegner',
+  bothSides:'Auf beiden Positionen', stepsUp:'Plätze gewonnen', abzeichen:'Eine Auszeichnung',
+  posSturm:'Der Stürmer', posAbwehr:'Der Verteidiger', posReinAbwehr:'Der reine Verteidiger',
+  medalTrio:'Einer sammelt mehreres', users:'Mehrere zusammen: Teams und geteilter Erfolg',
+  tafelStein:'Die Ewige Tafel', spielfeld:'Die Partie am Spieltag',
+};
+const _zc = JSON.parse(K.eval(`JSON.stringify((function(){
+  const t = []; const add = (sys, id, ic) => { if(ic) t.push({sys, id, ic}); };
+  Object.entries(AW_IC).forEach(([k, ic]) => add('Award', k, ic));
+  BADGES.forEach(b => add('Badge', b.id, b.ic));
+  DISZIPLINEN.forEach(d => add(d.monat ? 'Monatschronik' : 'Rekord', d.id, d.ic));
+  Object.entries(NEWS_CATEGORIES).forEach(([k, c]) => add('News', k, c.ic));
+  RANKS.forEach(x => add('Rang', x.label, x.icon));
+  Object.entries(AV_RINGS).forEach(([k, x]) => add('Ring', k, x.ic));
+  [0.9, 0.7, 0.57, 0.5, 0.43, 0.3, 0.1].forEach(a => { const p = posClassify(a); add('Position', p.label, p.icon); });
+  Object.entries(SP_ANLASS).forEach(([k, x]) => add('Spieltag', k, x.ic));
+  ['spiel','tafel','ins','held','woche','duell','serie','badge','marke','spieler','erfolg',''].forEach(s =>
+    add('Rubrik', s || 'liga', _newsSorteIcon(s, {dataRef:{type:'x'}})));
+  add('Rubrik', 'serie-pleite', _newsSorteIcon('serie', {dataRef:{type:'loss_streak'}}));
+  const zeichnungen = {};
+  Object.entries(ICONS).forEach(([k, p]) => { (zeichnungen[p] = zeichnungen[p] || []).push(k); });
+  return {traeger:t, keys:Object.keys(ICONS), alt:ZEICHEN_ALT,
+    gleich:Object.values(zeichnungen).filter(l => l.length > 1)};
+})())`));
+{
+  const je = {};
+  _zc.traeger.forEach(x => (je[x.ic] = je[x.ic] || []).push(x.sys + ':' + x.id));
+  const ohne = Object.entries(je).filter(([k, l]) => l.length > 1 && !ZEICHEN_FAMILIEN[k]);
+  ok(ohne.length === 0, 'kein Zeichen trägt zwei Bedeutungen — wer eins teilt, meint dieselbe Sache',
+     ohne.map(([k, l]) => k + ' = ' + l.join(', ')).join(' · '));
+  const leer = Object.keys(ZEICHEN_FAMILIEN).filter(k => !(je[k] && je[k].length > 1));
+  ok(leer.length === 0, 'jede Familie hat mindestens zwei Träger', leer.join(', '));
+  ok(_zc.traeger.every(x => _zc.keys.includes(x.ic)), 'jeder Träger nennt ein Zeichen, das es gibt',
+     _zc.traeger.filter(x => !_zc.keys.includes(x.ic)).map(x => x.sys + ':' + x.id + '/' + x.ic).join(', '));
+  ok(_zc.gleich.length === 0, 'keine zwei Schlüssel tragen dieselbe Zeichnung', _zc.gleich.map(l => l.join('=')).join(', '));
+  const altFalsch = Object.entries(_zc.alt).filter(([a, n]) => _zc.keys.includes(a) || !_zc.keys.includes(n));
+  ok(altFalsch.length === 0, 'jeder alte Name zeigt auf eine bestehende Zeichnung und steht selbst nicht mehr im Katalog',
+     altFalsch.map(x => x.join('→')).join(', '));
+  // Im Quelltext des Katalogs: der zweite gleichnamige Eintrag überschrieb
+  // den ersten still — so hatten `shieldStar` und `ghost` zwei Fassungen.
+  const kat = code.slice(code.indexOf('const ICONS = {'), code.indexOf('\n};', code.indexOf('const ICONS = {')));
+  const schl = [...kat.matchAll(/^\s+([A-Za-z0-9]+)\s*:\s*`/gm)].map(m => m[1]);
+  const doppelt = [...new Set(schl.filter((k, i) => schl.indexOf(k) !== i))];
+  ok(doppelt.length === 0, 'kein Schlüssel steht im Katalog zweimal', doppelt.join(', '));
+  // Jedes Zeichen, das der Code wörtlich setzt, gibt es — unter seinem
+  // heutigen Namen. Alte Namen sind nur für gespeicherte Stories da.
+  const wort = [...code.matchAll(/\b(?:svgI|zkHtml|icPfad|emptyState|blattAbschnittHtml)\(\s*'([A-Za-z0-9]+)'|\bic(?:on)?\s*:\s*'([A-Za-z0-9]+)'/g)]
+    .map(m => m[1] || m[2]);
+  const fehlt = [...new Set(wort.filter(k => !_zc.keys.includes(k)))];
+  ok(fehlt.length === 0, 'jedes wörtlich gesetzte Zeichen steht unter seinem heutigen Namen im Katalog', fehlt.join(', '));
+}
 
 console.log('\n' + (fails ? '✗ ' + fails + ' von ' + checks + ' CHECKS FEHLGESCHLAGEN' : '✓ ALLE ' + checks + ' CHECKS BESTANDEN'));
 process.exit(fails ? 1 : 0);

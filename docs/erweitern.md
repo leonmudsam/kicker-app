@@ -24,7 +24,7 @@ Alles in `17-badges.js`, außer wo anders genannt.
 | `BADGE_WUERDE` | **nur**, wenn jeder neue saisonweise Erfolg eine neue News-Karte auslösen soll | ohne Eintrag meldet der Feed nur die festen Meilensteine; auf Prestige hat die Liste keinen Einfluss |
 | — | nichts weiter für den News-Takt | er hängt an der Klasse (`_badgeTakt`, [§C33]): legendär jedes Mal, selten an `NEWS_BADGE_MARKEN`, gewöhnlich an `NEWS_BADGE_MARKEN_KLEIN` und dort nur in der gemeinsamen Matchkarte |
 | `getBadgeEarnedCache` | `fire('id')` | das Badge erscheint nur im Profil: kein Toast, kein Chip im Match-Review |
-| `src/js/02-icons.js` | das Icon aus `ic` | die Kachel bleibt leer |
+| `src/js/02-icons.js` | das Icon aus `ic`: ein Schlüssel, den keine andere Sache trägt, oder das Zeichen derselben Sache, dann mit ihrer Familie in `ZEICHEN_FAMILIEN` (`tests/disziplinen`) [§C41] | die Kachel bleibt leer, oder ein Zeichen sagt zwei Dinge — die Krone stand für sechs |
 
 Die ersten fünf Zeilen der goldenen Vitrine folgen `BADGE_PROFIL_ORDER`, je
 zwei Einträge pro Zeile: Dynastie/Dominator, 20er/15er Serie,
@@ -40,7 +40,7 @@ damit wertvoller als das einmalige Wochentags-Sammelziel.
 | `32-chronik-katalog.js` `DISZIPLINEN[]` | Eintrag **im richtigen Block**: Leistung, dann Ereignis, dann Schatten | ein Spieler zeigt nur EINEN Monatseintrag, und die Katalogreihenfolge entscheidet welchen [§C32] — falsch einsortiert verdrängt eine Schattenseite seinen Titel |
 | dort `art` | `leistung`, `ereignis` oder `schatten` | steuert bei einem Liga-Rekord den Prestige-Wert und bei jedem Eintrag die Katalogreihenfolge; ohne gültige Angabe fällt der Eintrag auf `ereignis` und wiegt die Hälfte. Den Wert einer Monatschronik trägt dagegen `monat.art` [§C39]. `tests/disziplinen` misst es |
 | dort `short` | ein ganzes Wort, das in 54 px passt | „Umschwung“ ist kürzer als „Nachzügler“ und breiter, also zählt die gerenderte Breite: `tests/blatt` misst sie am Markup, `tests/disziplinen` verbietet die Abkürzung mit Punkt |
-| dort `ic` | ein Icon, das keine andere Disziplin trägt | in einer Zelle von 62 Pixeln ist die Zeichnung das Erste, was man sieht — zwei gleiche sind dort nicht zu unterscheiden. `tests/disziplinen` misst es |
+| dort `ic` | ein Icon, das keine andere Disziplin trägt — und keine andere Sache in einem anderen System, außer es ist dieselbe (Familie in `ZEICHEN_FAMILIEN`) [§C41] | in einer Zelle von 62 Pixeln ist die Zeichnung das Erste, was man sieht — zwei gleiche sind dort nicht zu unterscheiden. `tests/disziplinen` misst es |
 | dort `monat.wie` | ein Satz, was die Zahl im Beleg bedeutet | nur nötig, wenn die Größe nicht selbsterklärend ist. Er steht im Detail-Blatt unter der Bedingung; ohne ihn liest sich „+15 Prozentpunkte" wie Elo oder wie Prestige |
 | dort `monat.beiname` | der Beiname fürs Spielerprofil: **Der/Die/Das + Spielertyp** | im Profilkopf stünde der Katalogname, und „Der Endspurt“ beschreibt kein Spielertyp — „Der Ausdauernde“ schon. `tests/disziplinen` verlangt ihn für jede Chronik, höchstens 20 Zeichen, eindeutig, und prüft ihn gegen dieselbe Sprachregel wie Beleg und Bedingung |
 | dort `monat.art`, `monat.klasse`, `monat.aus` | die drei festen Angaben einer Chronik [§C39] | ohne `art` gibt es kein Prestige, ohne `klasse` keinen Seltenheitsbonus und kein Gewicht in der Zelle, ohne `aus` ist die Chronik null Punkte wert. `aus` muss mindestens 1,5 σ betragen, sonst liegt der Beste kaum weiter draußen als der Schnitt — `tests/disziplinen` misst es |
@@ -94,8 +94,9 @@ der ihn hält — und für sonst niemanden.
 
 1. **Die Seltenheitsklasse bestimmt die Standardregel.**
    `PRESTIGE_AUSZEICHNUNG` gibt Startwert und Abnahme für Rare und Common
-   vor [§C34]. Jede legendäre Auszeichnung und dazu POTW und POTD stehen
-   mit eigenem Startwert in `PRESTIGE_AUSZEICHNUNG_SPEZIAL` — eine neue
+   vor [§C34]. Jede legendäre Auszeichnung, dazu POTW, POTD und die
+   Meilensteine der Laufbahn stehen mit eigenem Startwert in
+   `PRESTIGE_AUSZEICHNUNG_SPEZIAL` — eine neue
    legendäre wird dort nach ihrem Gewicht eingeordnet, das Regelblatt
    zeigt sie dann von selbst an der richtigen Stelle. Eine falsch gewählte
    Klasse verändert weiterhin Optik und Punktfolge.
@@ -106,11 +107,13 @@ der ihn hält — und für sonst niemanden.
    fünfzig Katalogeinträge.
 3. **Die Schwellen in `INSIGNIEN` werden an der echten Liga kalibriert**
    [§C30]. Keine Spanne ist kürzer als 500 und keine kürzer als die vorige:
-   Leon soll Zierkranz III tragen, Martin und Julian dicht dabei im
-   Zierkranz, und der erste Ordensstern bei **5.600 Prestige** soll
+   Leon, Martin und Julian tragen dicht beieinander den Lorbeerreif im
+   ersten Grad, und der erste Ordensstern bei **5.600 Prestige** soll
    langfristig erreichbar sein; danach kommt alle 500 eine Zacke dazu.
    Wer Startwerte anhebt, zieht die Schwellen mit — sonst steigt die Liga
-   über Nacht, ohne gespielt zu haben.
+   über Nacht, ohne gespielt zu haben. Ausnahme ist eine Anhebung, die
+   einen Fortschritt nachträgt, der schon erarbeitet ist: die Meilensteine
+   der Laufbahn hoben drei Spieler zum Lorbeerreif, und das war gewollt.
 
 Nichts davon wird geschätzt. `tests/disziplinen` misst es an den echten
 Partien und fällt, wenn es kippt:
@@ -121,12 +124,12 @@ Partien und fällt, wenn es kippt:
 | Auszeichnungen wiegen schwerer als Rekorde | der Reif zur Rekordanzeige wird |
 | mehr als die halbe Liga hält einen wertenden Rekord | die Einstiegshürden zu hoch sind |
 | mehr als die halbe Liga trägt mindestens den Schildring | die erste Sprosse zu hoch hängt |
-| der Beste trägt noch keinen Lorbeerreif | der Katalog die Spitze nach oben schiebt |
+| der Beste trägt noch keinen Kronenreif | der Katalog die Spitze nach oben schiebt |
 | der Ordensstern ist von niemandem erreicht | dasselbe, eine Stufe höher |
 | nur Kronenreif und Ordensstern sind die obersten Stufen | die Breaking-Grenze beim Einfügen einer Stufe verrutscht [§C33] |
 | Glut und Hof in der Rangfarbe werden mit der Leiter nicht schwächer, die Lichter tragen die Rangfarbe | der Schimmer nicht mehr sagt, wer weiter oben steht [§C30] |
 | keine Spanne ist kürzer als 500, der Ordensstern steigt alle 500 | eine Stufe fast geschenkt ist oder die Zacken aus dem Takt geraten |
-| Leon und Martin tragen den Zierkranz, Leon in Grad III, Julian steht dicht dabei | Schwellen und Grade die heutige Liga falsch abbilden. Gemessen wird der ABSTAND der drei und nicht ihre Reihenfolge: die war festgeschrieben, und damit fiel die Zusicherung bei jedem Rekord, der Punkte verschiebt — kalibriert ist die Leiter und nicht die Tabelle |
+| Leon und Martin tragen den Lorbeerreif im ersten Grad, Julian steht dicht dabei | Schwellen und Grade die heutige Liga falsch abbilden. Gemessen wird der ABSTAND der drei und nicht ihre Reihenfolge: die war festgeschrieben, und damit fiel die Zusicherung bei jedem Rekord, der Punkte verschiebt — kalibriert ist die Leiter und nicht die Tabelle |
 | das Langzeitmodell kann den Ordensstern erreichen | ein weicher Deckel zur harten Obergrenze wird |
 | jede positive Dauerquelle behält einen positiven Zuwachs | spätere Ordensstern-Zacken mathematisch unerreichbar werden |
 | auch die zwanzigste weitere Ordensstern-Zacke wird endlich überschritten | die Laufbahn nur scheinbar ohne Ende weiterläuft |

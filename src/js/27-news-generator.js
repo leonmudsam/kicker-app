@@ -164,7 +164,7 @@ function _buildStories(){
         stories.push({
           id: 'season_endspurt_'+sid,
           cat: 'highlight',
-          ic: 'rocket',
+          ic: 'saisonKal',
           title: `Noch ${daysLeft} ${daysLeft === 1 ? 'Tag' : 'Tage'} um den Monat`,
           desc: `${nameOf(rankList[0].pid)} führt mit ${rankList[0].elo} Elo, `
               + `${nameOf(rankList[1].pid)} liegt ${gap} dahinter.`,
@@ -223,7 +223,7 @@ function _buildStories(){
         stories.push({
           id: 'season_start_' + sid,
           cat: 'season',
-          ic: 'rocket',
+          ic: 'saisonKal',
           title: `${currentSeason().label} hat eine Tabelle`,
           desc: `${nameOf(rang[0].pid)} führt mit ${rang[0].elo} Elo, `
               + `${vor} vor ${nameOf(rang[1].pid)}. `

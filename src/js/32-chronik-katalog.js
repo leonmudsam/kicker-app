@@ -316,7 +316,7 @@ const DISZIPLINEN = [
   // Monatswertung mehr: die Monatsebene ist ein eigener Katalog
   // geworden, mit eigenen Fragen und eigenen Schwellen [§C39].
 
-  {id:'best_record', name:'Der Maßstab', short:'Maßstab', ic:'medal2', tone:'gold', art:'leistung',
+  {id:'best_record', name:'Der Maßstab', short:'Maßstab', ic:'massstab', tone:'gold', art:'leistung',
     allzeit:{
       kammer:'mark', basis:150, offen:true,
       zeitraum:'Ein einzelner Monat',
@@ -378,7 +378,7 @@ const DISZIPLINEN = [
       ev:(p,v) => `${Math.round(v*100)} % aller ${p.bigDays} vollen Spieltage ohne eine einzige Niederlage · ${p.perfDays} Tage`
     }},
 
-  {id:'kopfhoch', name:'Der Tagesabschluss', short:'Tagesende', ic:'thumbsUp', tone:'blue', art:'leistung',
+  {id:'kopfhoch', name:'Der Tagesabschluss', short:'Tagesende', ic:'tagesabschluss', tone:'blue', art:'leistung',
     // Dieselbe Frage wie im Monat, eine Zeitachse hoeher [§13.1]. „Der
     // makellose Tag" daneben verlangt einen Tag OHNE jede Niederlage und
     // zaehlt nur volle Spieltage ab drei Partien; ein Tag mit 2:1 ist dort
@@ -405,7 +405,7 @@ const DISZIPLINEN = [
         1,
         p=>{const t=Object.values(p.tagGrp);return `${t.filter(a=>_stSiege(a)*2>=a.length).length} von ${t.length} Spieltagen nicht negativ`;}))}},
 
-  {id:'catalyst', name:'Der Katalysator', short:'Katalyse', ic:'handshake', tone:'gold', art:'leistung',
+  {id:'catalyst', name:'Der Katalysator', short:'Katalyse', ic:'partnerHebel', tone:'gold', art:'leistung',
     allzeit:{
       kammer:'koennen', basis:150,
       zeitraum:'Ganze Laufbahn, je Partner',
@@ -416,7 +416,7 @@ const DISZIPLINEN = [
       ev:(p,v) => `+${Math.round(v*100)} %-Punkte gewinnen die ${p.einflussN} Partner an dieser Seite häufiger`
     }},
 
-  {id:'ausgleich', name:'Der Ausgleicher', short:'Ausgleich', ic:'duo', tone:'gold', art:'leistung',
+  {id:'ausgleich', name:'Der Ausgleicher', short:'Ausgleich', ic:'jederPartner', tone:'gold', art:'leistung',
     // Die Laufbahn-Achse derselben Frage [§13.1]. „Der Katalysator" darueber
     // misst, wie viel die Partner NEBEN diesem Spieler gewinnen, verglichen
     // mit ohne; hier geht es um die eigene Quote, und der Vergleich laeuft
@@ -447,7 +447,7 @@ const DISZIPLINEN = [
       .map(k=>({k,q:_stQuoteRoh(p.partnerGrp[k])})).sort((a,b)=>a.q-b.q)[0];
       return `selbst neben ${pname(k.k)} noch ${pct(k.q)} % · ${Object.values(p.partnerGrp).filter(a=>a.length>=ST_TEIL).length} Partner`;}))}},
 
-  {id:'clutch', name:'Die ruhige Hand', short:'Nerven', ic:'nerves', tone:'gold', art:'leistung',
+  {id:'clutch', name:'Die ruhige Hand', short:'Nerven', ic:'target', tone:'gold', art:'leistung',
     allzeit:{
       kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, alle engen Partien',
@@ -481,7 +481,7 @@ const DISZIPLINEN = [
       ev:(p,v) => `${pct(v)} % in engen Partien gewonnen · ${p.closeW} von ${p.close}`
     }},
 
-  {id:'gleichauf', name:'Auf Augenhöhe', short:'Auf Höhe', ic:'weightSmall', tone:'gold', art:'leistung',
+  {id:'gleichauf', name:'Auf Augenhöhe', short:'Auf Höhe', ic:'augenhoehe', tone:'gold', art:'leistung',
     // Die Laufbahn-Achse derselben Frage [§13.1]. „Die ruhige Hand" darueber
     // nimmt die ENGEN Partien, also die nach dem Ergebnis knappen: offen ist
     // eine Aussage ueber den Anpfiff, eng eine ueber den Abpfiff. Verglichen
@@ -509,7 +509,7 @@ const DISZIPLINEN = [
         p=>{const d=p.partien.filter(_stAugenhoehe);
       return `${_stSiege(d)} von ${d.length} offenen Partien · sonst ${pct(p.q)} %`;}))}},
 
-  {id:'gegenwind', name:'Gegen den Wind', short:'Gegenwind', ic:'tornado', tone:'acid', art:'leistung',
+  {id:'gegenwind', name:'Gegen den Wind', short:'Gegenwind', ic:'underdog', tone:'acid', art:'leistung',
     allzeit:{
       kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn',
@@ -520,7 +520,7 @@ const DISZIPLINEN = [
       ev:(p,v) => `${pct(v)} % als Außenseiter gewonnen · ${p.unterW} von ${p.unterN}`
     }},
 
-  {id:'destroyer', name:'Der Zerstörer', short:'Zerstörer', ic:'explosion', tone:'orange', art:'leistung',
+  {id:'destroyer', name:'Der Zerstörer', short:'Zerstörer', ic:'abrissbirne', tone:'orange', art:'leistung',
     allzeit:{
       kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, alle Siege',
@@ -531,7 +531,7 @@ const DISZIPLINEN = [
       ev:(p,v) => `${Math.round(v*100)} % aller ${p.wins} Siege waren Kantersiege · ${p.blowW} Kantersiege`
     }},
 
-  {id:'breitenwirkung', name:'Kein Angstgegner', short:'Kein Angst', ic:'target', tone:'gold', art:'leistung',
+  {id:'breitenwirkung', name:'Kein Angstgegner', short:'Kein Angst', ic:'jederGegner', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Standhafte',
       art:'koennen',
@@ -646,7 +646,7 @@ const DISZIPLINEN = [
   // er selten steht. Die Siegchance kommt aus der Partie und wird nicht mit
   // heutigen Reglern nachgerechnet: eine zweite Rechnung ueber dieselbe
   // Frage nennt irgendwann eine andere Zahl [§C27].
-  {id:'rollencoup', name:'Der Rollencoup', short:'Rollencoup', ic:'posSwap', tone:'orange', art:'leistung',
+  {id:'rollencoup', name:'Der Rollencoup', short:'Rollencoup', ic:'rollencoup', tone:'orange', art:'leistung',
     allzeit:{
       kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, je Position',
@@ -657,7 +657,7 @@ const DISZIPLINEN = [
       ev:(p,v) => `${Math.round(v*100)} Punkte über der Erwartung · ${pct(p.rcQ)} % statt ${pct(p.rcExp)} % ${p.rcPos === 'atk' ? 'im Sturm' : 'in der Abwehr'}`
     }},
 
-  {id:'rock', name:'Der Fels', short:'Fels', ic:'brick', tone:'blue', art:'leistung',
+  {id:'rock', name:'Der Fels', short:'Fels', ic:'shieldCheck', tone:'blue', art:'leistung',
     allzeit:{
       kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, alle Abwehrspiele',
@@ -715,7 +715,7 @@ const DISZIPLINEN = [
       ev:(p,v) => `${pct(v)} % nach zwei Niederlagen in Folge gewonnen · ${p.rsW} von ${p.rsN}`
     }},
 
-  {id:'damage_control', name:'Der Widerstand', short:'Widerstand', ic:'blockedShot', tone:'blue', art:'leistung',
+  {id:'damage_control', name:'Der Widerstand', short:'Widerstand', ic:'widerstand', tone:'blue', art:'leistung',
     // Gemessen wird jetzt JEDE Niederlage und nicht mehr nur die deutliche ab
     // sieben Toren. Der Anteil deutlicher Pleiten liess offen, wie die
     // uebrigen ausgingen: wer nie hoch und immer mit fuenf Toren verliert,
@@ -834,7 +834,7 @@ const DISZIPLINEN = [
       ev:(p,v) => `${pct(v)} % als Favorit gewonnen · ${p.favW} von ${p.favN}`
     }},
 
-  {id:'sturmfuehrer', name:'Der Sturmführer', short:'Sturmchef', ic:'stepsUp', tone:'orange', art:'leistung',
+  {id:'sturmfuehrer', name:'Der Sturmführer', short:'Sturmchef', ic:'sturmfuehrer', tone:'orange', art:'leistung',
     allzeit:{
       kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, alle Sturmspiele',
@@ -912,7 +912,7 @@ const DISZIPLINEN = [
         0.15,
         p=>`${pct(p.q)} % gespielt, ${pct(p.expQ)} % erwartet`))}},
 
-  {id:'steigerung', name:'Die Steigerung', short:'Steigerung', ic:'climb', tone:'gold', art:'leistung',
+  {id:'steigerung', name:'Die Steigerung', short:'Steigerung', ic:'steigerung', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Steigende',
       art:'koennen',
@@ -1009,7 +1009,7 @@ const DISZIPLINEN = [
       ev:(p,v) => `+${Math.round(v*100)} Punkte · ${pct(p.sbDrin)} % in ${p.sbN} Schlussspielen, sonst ${pct(p.sbRaus)} %`
     }},
 
-  {id:'unstoppable', name:'Der Unaufhaltsame', short:'Serie', ic:'flame', tone:'orange', art:'ereignis',
+  {id:'unstoppable', name:'Der Unaufhaltsame', short:'Serie', ic:'flameTriple', tone:'orange', art:'ereignis',
     allzeit:{
       kammer:'mark', basis:150, offen:true,
       zeitraum:'Ganze Ligageschichte',
@@ -1066,7 +1066,7 @@ const DISZIPLINEN = [
       zeit:p => p.dayEloLabel || ''
     }},
 
-  {id:'wall', name:'Die Mauer', short:'Mauer', ic:'shieldStar', tone:'blue', art:'ereignis',
+  {id:'wall', name:'Die Mauer', short:'Mauer', ic:'posReinAbwehr', tone:'blue', art:'ereignis',
     allzeit:{
       kammer:'mark', basis:75, offen:true,
       zeitraum:'Ganze Laufbahn',
@@ -1124,7 +1124,7 @@ const DISZIPLINEN = [
       ev:(p,v) => `${Math.round(v*100)} % im Sturm · ${p.r50Atk} von ${p.r50N} Partien`
     }},
 
-  {id:'abwehrmauer', name:'Die Abwehrmauer', short:'Abwehrwand', ic:'concreteWall', tone:'blue', art:'ereignis',
+  {id:'abwehrmauer', name:'Die Abwehrmauer', short:'Abwehrwand', ic:'abwehrFenster', tone:'blue', art:'ereignis',
     allzeit:{
       kammer:'form', basis:75, offen:true, fenster:true,
       zeitraum:'Die letzten 50 Partien',
@@ -1204,7 +1204,7 @@ const DISZIPLINEN = [
       zeit:p => p.spSpan || ''
     }},
 
-  {id:'hardnight', name:'Der schwerste Tag', short:'Losglück', ic:'rainCloud', tone:'blue',
+  {id:'hardnight', name:'Der schwerste Tag', short:'Losglück', ic:'schwererTag', tone:'blue',
     art:'ereignis', zufall:'quote',
     allzeit:{
       kammer:'fuegung', basis:75, offen:true,
@@ -1220,7 +1220,7 @@ const DISZIPLINEN = [
   // `negativ` faerbt und zaehlt, `art` wiegt: die Fuegung bleibt ein Ereignis
   // [§C35], erzaehlt aber von einer Niederlage. Im Profil stand sie in Gold
   // neben den Titeln und wurde als Rekord mitgezaehlt.
-  {id:'bitterloss', name:'Die bitterste Pleite', short:'Bitter', ic:'dramaTear', tone:'purple',
+  {id:'bitterloss', name:'Die bitterste Pleite', short:'Bitter', ic:'crownFallen', tone:'purple',
     art:'ereignis', zufall:'quote', negativ:true,
     allzeit:{
       kammer:'fuegung', basis:75, offen:true,
@@ -1452,7 +1452,7 @@ const DISZIPLINEN = [
       ev:(p,v) => `${Math.round(v)} Elo schwächere Mitspieler · ${Math.round(p.rwNeu)} statt ${Math.round(p.rwAlt)} Elo`
     }},
 
-  {id:'drought', name:'Die Durststrecke', short:'Flaute', ic:'dropTriple', tone:'red', art:'schatten',
+  {id:'drought', name:'Die Durststrecke', short:'Flaute', ic:'trendCrash', tone:'red', art:'schatten',
     monat:{
       beiname:'Der Gestrandete',
       art:'schatten',
@@ -1498,7 +1498,7 @@ const DISZIPLINEN = [
       ev:(p,v) => `${Math.round(v*100)} % aller ${p.losses} Niederlagen endeten 0:10 · ${p.debacle} Stück`
     }},
 
-  {id:'hardluck', name:'Der Pechvogel', short:'Pechvogel', ic:'heartBroken', tone:'red', art:'schatten',
+  {id:'hardluck', name:'Der Pechvogel', short:'Pechvogel', ic:'pille', tone:'red', art:'schatten',
     // Dieselbe Frage auf zwei Zeitachsen gehoert in EINE Disziplin [§13.1].
     monat:{
       beiname:'Der Unglückliche',
@@ -1521,7 +1521,7 @@ const DISZIPLINEN = [
       ev:(p,v) => `${Math.round(v*100)} % aller ${p.losses} Niederlagen endeten 9:10 · ${p.bitter} Stück`
     }},
 
-  {id:'freefall', name:'Der Sturzflug', short:'Sturzflug', ic:'crownFallen', tone:'red', art:'schatten',
+  {id:'freefall', name:'Der Sturzflug', short:'Sturzflug', ic:'sturzflug', tone:'red', art:'schatten',
     allzeit:{
       kammer:'shame', basis:0,
       zeitraum:'Von einem Saisonende zum nächsten',
@@ -1560,7 +1560,7 @@ const DISZIPLINEN = [
       ev:(p,v) => `${komma(v)} Gegentore mehr je Abwehrspiel · ${komma(p.defConceded/p.defG)} statt ${komma(p.ga/p.games)}`
     }},
 
-  {id:'angstgegner', name:'Der Angstgegner', short:'Angst', ic:'devilMask', tone:'red', art:'schatten',
+  {id:'angstgegner', name:'Der Angstgegner', short:'Angst', ic:'ghost', tone:'red', art:'schatten',
     monat:{
       beiname:'Der Geplagte',
       art:'schatten',
@@ -1588,7 +1588,7 @@ const DISZIPLINEN = [
       ev:p => `${Math.round((1-p.angstQ)*100)} % der ${p.angstN} Duelle gegen einen einzelnen Gegner verloren · ${p.angstN - p.angstW} Pleiten`
     }},
 
-  {id:'untersoll', name:'Das Untersoll', short:'Untersoll', ic:'chartDown', tone:'red', art:'schatten',
+  {id:'untersoll', name:'Das Untersoll', short:'Untersoll', ic:'sollMinus', tone:'red', art:'schatten',
     monat:{
       beiname:'Der Gehemmte',
       art:'schatten',
@@ -1699,7 +1699,7 @@ const DISZIPLINEN = [
   // oben bei ihrer Allzeitwertung: dieselbe Frage auf zwei Zeitachsen
   // gehoert in EINE Disziplin [§13.1].
 
-  {id:'tagesregent', name:'Der Tagesregent', short:'Regent', ic:'crownPlus', tone:'gold', art:'leistung',
+  {id:'tagesregent', name:'Der Tagesregent', short:'Regent', ic:'zepter', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Tagesherrscher',
       art:'koennen',
@@ -1712,7 +1712,7 @@ const DISZIPLINEN = [
         0.6,
         (p,v)=>`Player of the Day an ${p.potd} der ${p.days} Spieltage · ${pct(v)} %`))}},
 
-  {id:'thron', name:'Auf dem Thron', short:'Thron', ic:'temple', tone:'gold', art:'leistung',
+  {id:'thron', name:'Auf dem Thron', short:'Thron', ic:'thron', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Unantastbare',
       art:'koennen',
@@ -1725,7 +1725,7 @@ const DISZIPLINEN = [
         -2,
         (p)=>`Nie schlechter als Platz ${p.thronRang} · ${p.tagN} eigene Spieltage`))}},
 
-  {id:'angstfrei', name:'Ohne Angstgegner', short:'Angstfrei', ic:'shieldCheck', tone:'gold', art:'leistung',
+  {id:'angstfrei', name:'Ohne Angstgegner', short:'Angstfrei', ic:'geistBann', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Furchtlose',
       art:'koennen',
@@ -1739,7 +1739,7 @@ const DISZIPLINEN = [
         (p,v)=>{const g=Object.values(p.gegnerGrp).filter(a=>a.length>=4);
       return `${g.length} regelmäßige Gegner, gegen keinen unter ${pct(v)} %`;}))}},
 
-  {id:'wochenkrone', name:'Die Wochenkrone', short:'Wochenkron', ic:'crownFlame', tone:'gold', art:'leistung',
+  {id:'wochenkrone', name:'Die Wochenkrone', short:'Wochenkron', ic:'wochenkrone', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Dauerregent',
       art:'koennen',
@@ -1758,7 +1758,7 @@ const DISZIPLINEN = [
         1,
         (p,v)=>`Player of the Week in ${p.potw} von ${p.potwG} Wochen · ${pct(v)} %`))}},
 
-  {id:'traumquote', name:'Der Traummonat', short:'Traummonat', ic:'crown', tone:'gold', art:'leistung',
+  {id:'traumquote', name:'Der Traummonat', short:'Traummonat', ic:'star', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Überlegene',
       art:'koennen',
@@ -1771,7 +1771,7 @@ const DISZIPLINEN = [
         0.85,
         p=>`${p.wins} von ${p.games} Partien gewonnen · ${pct(p.q)} %`))}},
 
-  {id:'nachzuegler', name:'Der Nachzügler', short:'Nachzügler', ic:'trendUp', tone:'gold', art:'leistung',
+  {id:'nachzuegler', name:'Der Nachzügler', short:'Nachzügler', ic:'spaetStart', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Aufholer',
       art:'koennen',
@@ -1784,7 +1784,7 @@ const DISZIPLINEN = [
         0.6,
         p=>`${_stSiege(p.partien.slice(-5))} von 5 zum Schluss, ${_stSiege(p.partien.slice(0,5))} von 5 zum Auftakt`))}},
 
-  {id:'schattenmann', name:'Der Schattenmann', short:'Zuspieler', ic:'users', tone:'gold', art:'leistung',
+  {id:'schattenmann', name:'Der Schattenmann', short:'Zuspieler', ic:'schattenmann', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Wegbereiter',
       art:'koennen',
@@ -1802,7 +1802,7 @@ const DISZIPLINEN = [
         0.6,
         (p,v)=>`${pname(p._sm.mid)} gewinnt an dieser Seite ${pct(p._sm.q)} %, sonst ${pct(p._sm.q-v)} %`))}},
 
-  {id:'zunull', name:'Die weiße Weste', short:'Weste', ic:'snowflake', tone:'gold', art:'leistung',
+  {id:'zunull', name:'Die weiße Weste', short:'Weste', ic:'weisseWeste', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Saubermann',
       art:'koennen',
@@ -1815,7 +1815,7 @@ const DISZIPLINEN = [
         0.1,
         p=>`${p.partien.filter(s=>s.win&&s.ga<=1).length} von ${p.wins} Siegen mit höchstens einem Gegentor`))}},
 
-  {id:'bollwerk', name:'Das Bollwerk', short:'Bollwerk', ic:'dominator', tone:'gold', art:'leistung',
+  {id:'bollwerk', name:'Das Bollwerk', short:'Bollwerk', ic:'bollwerk', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Unüberwindliche',
       art:'koennen',
@@ -1828,7 +1828,7 @@ const DISZIPLINEN = [
         1.5,
         (p,v,c)=>`${komma(p.ga/p.games)} Gegentore je Partie · Liga ${komma(_stMittel(Object.values(c.P).map(x=>x.ga/x.games)))}`))}},
 
-  {id:'ausreisser2', name:'Der Ausreißer', short:'Ausreißer', ic:'godRay', tone:'gold', art:'leistung',
+  {id:'ausreisser2', name:'Der Ausreißer', short:'Ausreißer', ic:'ausreisser', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Ausreißer',
       art:'koennen',
@@ -1843,7 +1843,7 @@ const DISZIPLINEN = [
         1.5228787452803376,
         (p,v)=>`${_stSiege(p._au.a)} von ${p._au.a.length} an einem Tag · erwartet waren ${komma(p._au.q*100, 1)} %`))}},
 
-  {id:'endspurt', name:'Der Endspurt', short:'Endspurt', ic:'rocket', tone:'gold', art:'leistung',
+  {id:'endspurt', name:'Der Endspurt', short:'Endspurt', ic:'rakete', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Ausdauernde',
       art:'koennen',
@@ -1856,7 +1856,7 @@ const DISZIPLINEN = [
         0.75,
         p=>{const l=Object.values(p.tagGrp).map(a=>a[a.length-1]);return `${_stSiege(l)} von ${l.length} Tagesabschlüssen gewonnen`;}))}},
 
-  {id:'umschwung', name:'Der Umschwung', short:'Wende', ic:'overtake', tone:'gold', art:'leistung',
+  {id:'umschwung', name:'Der Umschwung', short:'Wende', ic:'umschwung', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Verwandelte',
       art:'koennen',
@@ -1913,7 +1913,7 @@ const DISZIPLINEN = [
         (p,v)=>{const u=_stUebergaenge(p).filter(x=>x.wechsel);
       return `${pct(v)} %-Punkte besser gegen die Rechnung neben dem Gegner von eben · ${u.filter(x=>x.bund).length} solche Partien, ${u.filter(x=>!x.bund).length} nach anderen Wechseln`;}))}},
 
-  {id:'aufholjagd', name:'Die Antwort', short:'Antwort', ic:'rematch', tone:'gold', art:'leistung',
+  {id:'aufholjagd', name:'Die Antwort', short:'Antwort', ic:'antwort', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Trotzige',
       art:'koennen',
@@ -1939,7 +1939,7 @@ const DISZIPLINEN = [
         0.4,
         p=>{const d=p.partien.filter(s=>s.exp<=CHANCE_UPSET);return `${_stSiege(d)} von ${d.length} gegen klare Favoriten`;}))}},
 
-  {id:'formgipfel', name:'Der Formgipfel', short:'Formgipfel', ic:'chartUp', tone:'gold', art:'leistung',
+  {id:'formgipfel', name:'Der Formgipfel', short:'Formgipfel', ic:'formGipfel', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Entfesselte',
       art:'koennen',
@@ -2008,7 +2008,7 @@ const DISZIPLINEN = [
         2.3010299956639813,
         p=>`${pct(p.q)} % gespielt, ${pct(p.expQ)} % erwartet`))}},
 
-  {id:'schwaechstertag', name:'Der schwächste Tag', short:'Jeder Tag', ic:'calendar', tone:'blue', art:'leistung',
+  {id:'schwaechstertag', name:'Der schwächste Tag', short:'Jeder Tag', ic:'schwaechsterTag', tone:'blue', art:'leistung',
     monat:{
       beiname:'Der Grundsolide',
       art:'konstanz',
@@ -2046,7 +2046,7 @@ const DISZIPLINEN = [
   // (wie viele verschiedene Ergebnisse) korrelierte mit −0,91 zur
   // Spielzahl — wer zwoelf Partien spielt, hat zwoelf verschiedene
   // Ergebnisse —, „Der Tag gegen die Rechnung" mit +0,56.
-  {id:'wochwunder', name:'Die Woche gegen die Rechnung', short:'Wunder', ic:'underdog', tone:'gold', art:'leistung',
+  {id:'wochwunder', name:'Die Woche gegen die Rechnung', short:'Wunder', ic:'wunderWoche', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Wundertäter',
       art:'koennen',
@@ -2060,7 +2060,7 @@ const DISZIPLINEN = [
         -Math.log10(0.005),
         (p,v)=>`Eine Woche, die mit ${komma(Math.pow(10,-v)*100)} % erwartet war · ${_stWochGross(p).length} Wochen gewertet`))}},
 
-  {id:'gleichmut', name:'Der Gleichmut', short:'Gleichmut', ic:'weight', tone:'blue', art:'leistung',
+  {id:'gleichmut', name:'Der Gleichmut', short:'Gleichmut', ic:'gleichmass', tone:'blue', art:'leistung',
     monat:{
       beiname:'Der Gleichmütige',
       art:'konstanz',
@@ -2073,7 +2073,7 @@ const DISZIPLINEN = [
         -3.0,
         (p,v)=>`${komma(-v)} Tore Streuung um ${p.gd/p.games<0?'−':'+'}${komma(Math.abs(p.gd/p.games))} im Schnitt`))}},
 
-  {id:'zweiteluft', name:'Die zweite Luft', short:'Luft', ic:'flameDouble', tone:'gold', art:'leistung',
+  {id:'zweiteluft', name:'Die zweite Luft', short:'Luft', ic:'zweiteLuft', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Spätzünder',
       art:'koennen',
@@ -2087,7 +2087,7 @@ const DISZIPLINEN = [
         (p)=>{const b=_stTagBlock(p);
           return `${pct(_stQuote(b.spaet))} % ab der vierten Partie, ${pct(_stQuote(b.frueh))} % davor`;}))}},
 
-  {id:'auferstehung', name:'Die Auferstehung', short:'Rückkehr', ic:'trophyCheck', tone:'gold', art:'leistung',
+  {id:'auferstehung', name:'Die Auferstehung', short:'Rückkehr', ic:'aufstehen', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Unbeugsame',
       art:'koennen',
@@ -2101,7 +2101,7 @@ const DISZIPLINEN = [
         (p)=>{const a=_stNachZwei(p);
           return `${_stSiege(a)} von ${a.length} Partien nach zwei Pleiten am Stück`;}))}},
 
-  {id:'nulldiaet', name:'Die Nulldiät', short:'Nulldiät', ic:'egg', tone:'gold', art:'leistung',
+  {id:'nulldiaet', name:'Die Nulldiät', short:'Nulldiät', ic:'nulldiaet', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Zugeknöpfte',
       art:'koennen',
@@ -2127,7 +2127,7 @@ const DISZIPLINEN = [
         0.70,
         (p,v)=>`${p.brechW} von ${p.brechG} gegen eine laufende Serie · ${pct(v)} %`))}},
 
-  {id:'wochenschluss', name:'Der Wochenschluss', short:'Schluss', ic:'medal', tone:'gold', art:'leistung',
+  {id:'wochenschluss', name:'Der Wochenschluss', short:'Schluss', ic:'wochenschluss', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Vollender',
       art:'koennen',
@@ -2141,7 +2141,7 @@ const DISZIPLINEN = [
         (p)=>{const a=_stWochLetzte(p);
           return `${_stSiege(a)} von ${a.length} Wochenabschlüssen gewonnen`;}))}},
 
-  {id:'rollenfest', name:'Favorit wie Außenseiter', short:'Rollen', ic:'swords', tone:'blue', art:'leistung',
+  {id:'rollenfest', name:'Favorit wie Außenseiter', short:'Rollen', ic:'wippe', tone:'blue', art:'leistung',
     monat:{
       beiname:'Der Unbeeindruckte',
       art:'konstanz',
@@ -2155,7 +2155,7 @@ const DISZIPLINEN = [
         (p)=>{const r=_stRollen(p);
           return `${pct(_stQuote(r.fav))} % als Favorit, ${pct(_stQuote(r.aus))} % als Außenseiter`;}))}},
 
-  {id:'aufstieg', name:'Der Aufstieg', short:'Aufstieg', ic:'medalTrio', tone:'gold', art:'leistung',
+  {id:'aufstieg', name:'Der Aufstieg', short:'Aufstieg', ic:'stepsUp', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Aufsteiger',
       art:'koennen',
@@ -2168,7 +2168,7 @@ const DISZIPLINEN = [
         8,
         (p,v)=>`von Platz ${p.platzErst} auf Platz ${p.platzLetzt} · ${v} Plätze`))}},
 
-  {id:'zitterkoenig', name:'Der Zitterkönig', short:'Zittersieg', ic:'brokenHeart', tone:'purple', art:'ereignis',
+  {id:'zitterkoenig', name:'Der Zitterkönig', short:'Zittersieg', ic:'zitterkrone', tone:'purple', art:'ereignis',
     monat:{
       beiname:'Der Zitterkönig',
       art:'fuegung',
@@ -2181,7 +2181,7 @@ const DISZIPLINEN = [
         1,
         p=>`${p.partien.filter(s=>s.win&&s.gf-s.ga<=2).length} von ${p.wins} Siegen waren knapp`))}},
 
-  {id:'nervenkitzel', name:'Der Nervenkitzel', short:'Kitzel', ic:'cone', tone:'purple', art:'ereignis',
+  {id:'nervenkitzel', name:'Der Nervenkitzel', short:'Kitzel', ic:'thriller', tone:'purple', art:'ereignis',
     monat:{
       beiname:'Der Dauerzitterer',
       art:'fuegung',
@@ -2194,7 +2194,7 @@ const DISZIPLINEN = [
         0.35,
         (p,v,c)=>`${pct(p.partien.filter(_stEng).length/p.games)} % enge Partien · Liga ${pct(c.L.engAnteil)} %`))}},
 
-  {id:'spezialisiert', name:'Der Spezialist', short:'Spezialist', ic:'pinch', tone:'purple', art:'ereignis',
+  {id:'spezialisiert', name:'Der Spezialist', short:'Spezialist', ic:'spezialist', tone:'purple', art:'ereignis',
     monat:{
       beiname:'Der Spezialist',
       art:'fuegung',
@@ -2209,7 +2209,7 @@ const DISZIPLINEN = [
         (p,v)=>{const a=p.partien.filter(s=>s.pos==='atk'),d=p.partien.filter(s=>s.pos==='def');
       return `${pct(v)} %-Punkte Unterschied, stärker ${_stQuoteRoh(a)>_stQuoteRoh(d)?'vorne':'hinten'}`;}))}},
 
-  {id:'torhagel', name:'Der Torhagel', short:'Torhagel', ic:'crashDay', tone:'purple', art:'ereignis',
+  {id:'torhagel', name:'Der Torhagel', short:'Torhagel', ic:'torhagel', tone:'purple', art:'ereignis',
     monat:{
       beiname:'Der Spektakuläre',
       art:'fuegung',
@@ -2222,7 +2222,7 @@ const DISZIPLINEN = [
         1,
         (p,v,c)=>`${komma((p.gf+p.ga)/p.games)} Tore je Partie · Liga ${komma(c.L.torSchnitt)}`))}},
 
-  {id:'lieblingszahl', name:'Die Lieblingszahl', short:'Die Zahl', ic:'hundred', tone:'purple', art:'ereignis',
+  {id:'lieblingszahl', name:'Die Lieblingszahl', short:'Die Zahl', ic:'lieblingszahl', tone:'purple', art:'ereignis',
     monat:{
       beiname:'Der Gewohnheitstäter',
       art:'fuegung',
@@ -2236,7 +2236,7 @@ const DISZIPLINEN = [
         0.25,
         (p,v)=>`${p._lz.n}× ${p._lz.k} · ${pct(v)} % aller Partien`))}},
 
-  {id:'wechselhaft', name:'Der Wechselhafte', short:'Wechsel', ic:'weatherMix', tone:'purple', art:'ereignis',
+  {id:'wechselhaft', name:'Der Wechselhafte', short:'Wechsel', ic:'wechselhaft', tone:'purple', art:'ereignis',
     monat:{
       beiname:'Der Wechselhafte',
       art:'fuegung',
@@ -2251,7 +2251,7 @@ const DISZIPLINEN = [
         (p,v)=>{const q=Object.values(p.tagGrp).filter(a=>a.length>=3).map(a=>_stQuoteRoh(a));
       return `${pct(Math.min(...q))} % am schwächsten, ${pct(Math.max(...q))} % am stärksten Tag`;}))}},
 
-  {id:'kontrast', name:'Der Kontrast', short:'Kontrast', ic:'chartBar', tone:'purple', art:'ereignis',
+  {id:'kontrast', name:'Der Kontrast', short:'Kontrast', ic:'kontrast', tone:'purple', art:'ereignis',
     monat:{
       beiname:'Der Kontrastreiche',
       art:'fuegung',
@@ -2306,7 +2306,7 @@ const DISZIPLINEN = [
         (p,v)=>{const t=Object.values(p.tagGrp).filter(a=>a.length>=3);
       return `${pct(v)} %-Punkte über der eigenen Bilanz · ${t.filter(a=>a[0].win!==a[a.length-1].win).length} von ${t.length} Spieltagen endeten anders, als sie begannen`;}))}},
 
-  {id:'kaltblut', name:'Das Kaltblut', short:'Kaltblut', ic:'iceCube', tone:'purple', art:'ereignis',
+  {id:'kaltblut', name:'Das Kaltblut', short:'Kaltblut', ic:'kaltblut', tone:'purple', art:'ereignis',
     monat:{
       beiname:'Der Kaltblütige',
       art:'fuegung',

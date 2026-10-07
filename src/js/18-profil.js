@@ -335,7 +335,7 @@ function showPlayer(id){
     ? ('pp-tier-'+rInfo.label.toLowerCase().replace('ä','a').replace('ö','o').replace('ü','u'))
     : '';
   const _fillPct = _activeIdx >= 0 ? _activeIdx * 25 : 0;
-  const _tierIcon = rInfo && rInfo.icon ? ICONS[rInfo.icon] : ICONS.chartBar;
+  const _tierIcon = icPfad(rInfo && rInfo.icon ? rInfo.icon : 'chartBar');
 
 const rankProgHtml = rInfo ? `
   <div class="pp-rank-card ${_journeyTier}" id="ppRanksBtn" style="cursor:pointer">
@@ -434,7 +434,7 @@ const rankProgHtml = rInfo ? `
 
       <div class="pp-pills">
         ${rInfo?`<span class="pp-pill tier">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[rInfo.icon]||''}</svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${icPfad(rInfo.icon)}</svg>
           ${esc(rInfo.label)}
         </span>`:''}
         <span class="pp-pill">${posIcon}${esc(posLabel)}</span>
@@ -459,12 +459,12 @@ const rankProgHtml = rInfo ? `
             <div class="sub">${_ruhe ? 'Karriere-Elo' : 'Saison'}</div>
           </div>
           <div class="pp-et-col peak">
-            <div class="label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS['peak']||''}</svg> Spitze</div>
+            <div class="label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${icPfad('peak')}</svg> Spitze</div>
             <div class="val">${ps}</div>
             <div class="sub">${_ruhe ? esc(seasonLabel(_profilSid)) : 'diese Saison'}</div>
           </div>
           <div class="pp-et-col alltime">
-            <div class="label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS['star']||''}</svg> Allzeit</div>
+            <div class="label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${icPfad('rekord')}</svg> Allzeit</div>
             <div class="val">${pa}</div>
             <div class="sub">${paSub}</div>
           </div>
@@ -582,7 +582,7 @@ const rankProgHtml = rInfo ? `
       const _visible = _strip.slice(0, _STRIP_MAX);
       const _rest = Math.max(0, _strip.length - _visible.length);
       const _stripHtml = _visible.map(({b,r}) => {
-        const ic = ICONS[b.ic] ? `<svg viewBox="0 0 24 24">${ICONS[b.ic]}</svg>` : '';
+        const ic = icPfad(b.ic) ? `<svg viewBox="0 0 24 24">${icPfad(b.ic)}</svg>` : '';
         return `<div class="pp-bmini ${r}">${ic}</div>`;
       }).join('') + (_rest ? `<span class="pp-bcard-rest">+${_rest}</span>` : '');
       // Bar-Segmente: ein Stück pro Tier-Count, Rest dunkel
@@ -600,7 +600,7 @@ const rankProgHtml = rInfo ? `
       return `
     <div class="pp-sec" style="animation-delay:.425s">
       <div class="pp-sec-title">
-        <div class="l">${svgI('star')}<h4>Auszeichnungen</h4></div>
+        <div class="l">${svgI('abzeichen')}<h4>Auszeichnungen</h4></div>
         <div class="m">${_have} / ${_kat.length}</div>
       </div>
       <div class="pp-bcard" id="ppBadgesBtn">
@@ -659,8 +659,8 @@ const rankProgHtml = rInfo ? `
           // Schlechtester Mate (nur wenn ≠ Bester)
           const worstAttr = worst&&best&&worst.mid!==best.mid?` data-team="${esc(paarKey(id, worst.mid))}"`:'';
           const worstCard = worst&&best&&worst.mid!==best.mid
-            ? card('bad', worstAttr, 'chartDown', 'Schwächster Partner', {id:worst.mid,label:pname(worst.mid)}, worst.wr, Math.round(worst.wr*worst.g), worst.g)
-            : card('bad', '', 'chartDown', 'Schwächster Partner', null);
+            ? card('bad', worstAttr, 'trendDown', 'Schwächster Partner', {id:worst.mid,label:pname(worst.mid)}, worst.wr, Math.round(worst.wr*worst.g), worst.g)
+            : card('bad', '', 'trendDown', 'Schwächster Partner', null);
           // Lieblingsgegner → klickbar zum Gegnerprofil
           const favAttr  = fav?` data-detail="${esc(fav.oid)}"`:'';
           const favCard  = fav
@@ -729,7 +729,7 @@ const rankProgHtml = rInfo ? `
     ${seasonHistory.length?`
     <div class="pp-sec" style="animation-delay:.7s">
       <div class="pp-sec-title">
-        <div class="l">${svgI('calendar')}<h4>Saisonverlauf <span style="color:var(--muted);font-weight:500;letter-spacing:.02em;text-transform:none">(letzte ${seasonHistory.length})</span></h4></div>
+        <div class="l">${svgI('saisonKal')}<h4>Saisonverlauf <span style="color:var(--muted);font-weight:500;letter-spacing:.02em;text-transform:none">(letzte ${seasonHistory.length})</span></h4></div>
         <div class="m">${seasonTrend ? `<span class="trend ${seasonTrend.cls}">${seasonTrend.arrow} ${esc(seasonTrend.text)}</span>` : seasonHistory.length+' Saisons'}</div>
       </div>
       ${seasonRailHtml}
@@ -744,14 +744,14 @@ const rankProgHtml = rInfo ? `
 
     <div class="pp-sec" style="animation-delay:.8s">
       <div class="pp-sec-title">
-        <div class="l">${svgI('target')}<h4>Positions-Profil</h4></div>
+        <div class="l">${svgI('posFlex')}<h4>Positions-Profil</h4></div>
         <div class="m">${posLabel}</div>
       </div>
       <div class="pp-posprof ${atkPct > defPct + 4 ? 'atk-seite' : defPct > atkPct + 4 ? 'def-seite' : 'neutral'}" style="--atk:${atkPct}%;--strahl:${Math.max(atkPct, defPct)}%">
         <div class="pph">
-          <span class="lf">${svgI('bolt')}Sturm</span>
+          <span class="lf">${svgI('posSturm')}Sturm</span>
           <span><span class="pct">${atkPct}%</span> / <span class="pct">${defPct}%</span></span>
-          <span class="rt">Abwehr${svgI('shield')}</span>
+          <span class="rt">Abwehr${svgI('posAbwehr')}</span>
         </div>
         <!-- Der Strahl beginnt an der staerkeren Seite und laeuft zur
              Positionsgrenze. Bei einem Flex-Profil sitzt er als eigener,
@@ -1036,7 +1036,7 @@ function showRangSystem(){
       border-radius:var(--r-sm);padding:10px 12px;margin-bottom:8px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${inRank.length?'8px':'0'}">
         <span style="font-weight:700;color:${r.color};display:inline-flex;align-items:center;gap:6px">
-          <span class="ic svg-ic" style="font-size:14px;color:${r.color}"><svg viewBox="0 0 24 24">${ICONS[r.icon]||''}</svg></span>${r.label}
+          <span class="ic svg-ic" style="font-size:14px;color:${r.color}"><svg viewBox="0 0 24 24">${icPfad(r.icon)}</svg></span>${r.label}
         </span>
         <span style="font-size:11px;color:var(--muted)">${label} der Spieler</span>
       </div>

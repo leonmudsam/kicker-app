@@ -188,7 +188,7 @@ function _chronStripHtml(pid){
       const pct = nx.target ? Math.max(3, Math.min(100, Math.round(nx.have / nx.target * 100))) : 0;
       chronBlock = `
     <div class="pp-sec-title">
-      <div class="l"><span class="ic svg-ic">${svgI('trophyStar')}</span><h4>Liga-Rekord</h4></div>
+      <div class="l"><span class="ic svg-ic">${svgI('rekord')}</span><h4>Liga-Rekord</h4></div>
       <div class="m">noch keiner</div>
     </div>
     <div class="chron-one next" style="--tt:${t.c};--ttr:${t.rgb}" data-chron="${esc(nx.id)}">
@@ -204,7 +204,7 @@ function _chronStripHtml(pid){
     } else {
       chronBlock = `
     <div class="pp-sec-title">
-      <div class="l"><span class="ic svg-ic">${svgI('trophyStar')}</span><h4>Liga-Rekord</h4></div>
+      <div class="l"><span class="ic svg-ic">${svgI('rekord')}</span><h4>Liga-Rekord</h4></div>
     </div>
     <div class="chrows-empty">Noch keiner. Jeder Rekord gehört dem, der ihn
       wirklich hält — und je Spieler steht der wertvollste.</div>`;
@@ -515,7 +515,7 @@ function ligaRekordeHtml(weit){
   if(!recs.length) return '';
   if(!weit) return `
     <div class="pp-sec-title" style="margin-top:20px">
-      <div class="l"><span class="ic svg-ic">${svgI('trophyStar')}</span><h4>Liga-Rekorde</h4></div>
+      <div class="l"><span class="ic svg-ic">${svgI('rekord')}</span><h4>Liga-Rekorde</h4></div>
       <div class="m">${recs.length} von ${CHRONICLES.length}</div>
     </div>
     <div class="chlist">${recs.map(d => {
@@ -936,7 +936,7 @@ const AV_RINGS = {
   potw:  {prio:80, tone:'gold', ic:'weekKing',    label:'Player of the Week'},
   hot:   {prio:74, tone:'acid', ic:'flame',       label:'Siegesserie'},
   cold:  {prio:72, tone:'red',  ic:'drop',        label:'Niederlagenserie'},
-  tots:  {prio:64, tone:'gold', ic:'duo',         label:'Team of the Season'},
+  tots:  {prio:64, tone:'gold', ic:'handshake',         label:'Team of the Season'},
 };
 function avatarRings(){
   const key = matches.length + '_' + _cache.version;

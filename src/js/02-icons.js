@@ -23,12 +23,9 @@ const ICONS = {
   bolt:      `<polygon points="13,2 4,14 11,14 9,22 20,10 13,10"/>`,
   shield:    `<path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6z"/>`,
   // Trends / Stats
-  chartUp:   `<path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/>`,
-  chartDown: `<path d="M3 7l6 6 4-4 8 8"/><path d="M14 17h7v-7"/>`,
   chartBar:  `<path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/>`,
   // Soziale Symbole
   handshake: `<circle cx="6" cy="10" r="3"/><circle cx="18" cy="10" r="3"/><path d="M9 10h6"/><path d="M3 20a4 4 0 014-4h2M21 20a4 4 0 00-4-4h-2"/>`,
-  swords:    `<path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/><path d="M9.5 17.5L21 6V3h-3L6.5 14.5"/><path d="M11 19l-6-6"/><path d="M8 16l-4 4"/><path d="M5 21l-2-2"/>`,
   users:     `<circle cx="9" cy="7" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20v-1a6 6 0 0112 0v1M15 20v-1a5 5 0 015-1"/>`,
   user:      `<circle cx="12" cy="8" r="4"/><path d="M5 21v-1a7 7 0 0114 0v1"/>`,
   // Status
@@ -40,7 +37,6 @@ const ICONS = {
   calendar:  `<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>`,
   search:    `<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>`,
   scroll:    `<path d="M8 3h10a2 2 0 012 2v14a2 2 0 01-2 2H8M8 3a2 2 0 00-2 2v3M8 3v18M6 8H4a1 1 0 00-1 1v8a2 2 0 002 2h11"/>`,
-  rocket:    `<path d="M5 13l4 4M4.5 13.5l-1.4 4.2 4.2-1.4M14 4l6 6-9 9-3 1 1-3 5-5"/>`,
   edit:      `<path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4z"/>`,
   trendUp:   `<polyline points="3,17 9,11 13,15 21,7"/><polyline points="14,7 21,7 21,14"/>`,
   trendDown: `<polyline points="3,7 9,13 13,9 21,17"/><polyline points="14,17 21,17 21,10"/>`,
@@ -67,8 +63,6 @@ const ICONS = {
   explosion:     `<path d="M12 2l2 5 5-1-3 4 4 3-5 1 1 5-4-3-3 4-1-5-5-1 3-4-4-3 5-1z"/>`, // Höchster Sieg
   gamepad:       `<rect x="2" y="7" width="20" height="12" rx="4"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M6 10v2M5 11h2"/>`, // Vielspieler
   // Negativ-Awards (jeder eigen)
-  ghost:         `<path d="M12 2a8 8 0 00-8 8v11l2-2 2 2 2-2 2 2 2-2 2 2 2-2 2 2V10a8 8 0 00-8-8z"/><circle cx="9.5" cy="10" r="1.1"/><circle cx="14.5" cy="10" r="1.1"/>`, // Schlechtester Spieler
-  iceCube:       `<path d="M8 3h8l-1 8-3 10-3-10z"/><path d="M9 8h6M10 13h4"/><circle cx="6" cy="6" r="1"/><circle cx="18" cy="9" r="1"/><circle cx="7" cy="14" r=".8"/>`, // Eiskalt erwischt: Eiszapfen + Kälte-Punkte
   trendCrash:    `<path d="M3 5l5 5 4-4 9 9"/><polyline points="14,15 21,15 21,8"/>`, // Längste Niederlagenserie
   meltDown:      `<circle cx="12" cy="10" r="6"/><path d="M6 16c0 3 2 5 6 5s6-2 6-5M9 9h.01M15 9h.01M9 13s1 1 3 1 3-1 3-1"/>`, // Formtief
   blockedShot:   `<circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/>`, // Zahnloser Stürmer
@@ -80,11 +74,9 @@ const ICONS = {
   stopwatch:     `<circle cx="12" cy="13" r="8"/><path d="M12 8v5l3 2M9 2h6M12 5V2"/>`, // Stammgast (Zeit) — alternativ falls Controller doppelt
   refresh:       `<path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6z"/><polygon points="13,8 9,14 12,14 11,18 15,12 12,12"/>`, // Allrounder: Shield mit Bolt drin
   bolt2:         `<polygon points="13,2 4,14 11,14 9,22 20,10 13,10"/><circle cx="13" cy="14" r="1.5"/>`, // Mittelstürmer (Bolt+Punkt)
-  shieldStar:    `<path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6z"/><polygon points="12,8 13,11 16,11 13.5,13 14.5,16 12,14 9.5,16 10.5,13 8,11 11,11"/>`, // Abwehrchef
   flameDouble:   `<path d="M7 3s3 3 3 6a3 3 0 11-6 0c0-1.2.6-1.8.6-1.8s.3 1.2 1.2 1.2c-.6-1.8 1.2-2.4 1.2-5.4z"/><path d="M17 3s3 3 3 6a3 3 0 11-6 0c0-1.2.6-1.8.6-1.8s.3 1.2 1.2 1.2c-.6-1.8 1.2-2.4 1.2-5.4z"/>`, // 10er Serie
   flameTriple:   `<path d="M5 6s2 2 2 4a2 2 0 11-4 0c0-.8.4-1.2.4-1.2s.2.8.8.8c-.4-1.2.8-1.6.8-3.6z"/><path d="M12 3s3 3 3 6a3 3 0 11-6 0c0-1.2.6-1.8.6-1.8s.3 1.2 1.2 1.2c-.6-1.8 1.2-2.4 1.2-5.4z"/><path d="M19 6s2 2 2 4a2 2 0 11-4 0c0-.8.4-1.2.4-1.2s.2.8.8.8c-.4-1.2.8-1.6.8-3.6z"/>`, // 15er Serie
   crownFlame:    `<path d="M2 8l4 6 6-9 6 9 4-6v8H2z"/><path d="M12 17s2 2 2 4a2 2 0 01-4 0c0-1 .5-1.5.5-1.5"/>`, // 30er Serie (Crown+Flame)
-  weightSmall:   `<path d="M4 10v4M20 10v4M7 7v10M17 7v10M7 12h10"/>`, // Carry Badge
   crownPlus:     `<path d="M2 8l4 6 6-9 6 9 4-6v11H2z"/><path d="M9 16h6M12 13v6"/>`, // Unschlagbar
   weekly:        `<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/><circle cx="12" cy="14" r="2"/>`, // Player of the Week
   trophyDay:     `<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0zM5 9a2 2 0 01-2-2V5h4M19 9a2 2 0 002-2V5h-4"/><path d="M12 11l1 2-2 1 1 2"/>`, // Player of the Day (Trophy mit Blitz)
@@ -134,8 +126,6 @@ const ICONS = {
   // ── NEUE TEAM-AWARDS v4 ──
   // Unaufhaltsam: Loderndes Feuer mit Aufwärts-Pfeil — Team-Siegesserie
   unstoppable:   `<path d="M12 3s5 5 5 10a5 5 0 01-10 0c0-2 1-3 1-3s.5 2 2 2c-1-3 2-4 2-9z"/><polyline points="10,15 12,12 14,15"/>`,
-  // Betonmauer: Massive Backstein-Wand mit Schild-Andeutung — defensiv-stärkstes Team
-  concreteWall:  `<rect x="3" y="3" width="18" height="6" rx="1"/><rect x="3" y="9" width="18" height="6" rx="1"/><rect x="3" y="15" width="18" height="6" rx="1"/><path d="M8 3v6M16 3v6M5 9v6M12 9v6M19 9v6M8 15v6M16 15v6"/>`,
   // Glückspilze: Vierblättriges Kleeblatt — Glück bei knappen Siegen
   clover:        `<path d="M12 12s-3-1-3-4 3-3 3 0c0-3 3-3 3 0s-3 4-3 4z"/><path d="M12 12s-1 3-4 3-3-3 0-3c-3 0-3-3 0-3s4 3 4 3z"/><path d="M12 12s3 1 3 4-3 3-3 0c0 3-3 3-3 0s3-4 3-4z"/><path d="M12 12s1-3 4-3 3 3 0 3c3 0 3 3 0 3s-4-3-4-3z"/><path d="M12 16v5"/>`,
   // Giant Slayer: Schwert kreuzt sich mit Krone — Underdog-Sieg gegen Favoriten als Team
@@ -154,12 +144,9 @@ const ICONS = {
   cheese:        `<circle cx="12" cy="12" r="9"/><circle cx="9" cy="9" r="1.3"/><circle cx="15" cy="11" r="1.7"/><circle cx="10" cy="15" r="1.4"/><circle cx="15.5" cy="15.5" r="0.9"/>`,
   // Favoriten-Versager: gestürzte Krone (Zacken nach unten)
   crownFallen:   `<path d="M2 16l4-6 6 9 6-9 4 6v0a1 1 0 01-1 1H3a1 1 0 01-1-1z"/><line x1="3" y1="20" x2="21" y2="20"/>`,
-  // Schwarzer Tag: dichte Regenwolke mit Strichen (kompakter als rainCloud)
-  blackDay:      `<path d="M6 14a4 4 0 010-8 5 5 0 019 0 4 4 0 010 8z" fill="currentColor" fill-opacity="0.25"/><path d="M6 14a4 4 0 010-8 5 5 0 019 0 4 4 0 010 8z"/><line x1="8" y1="18" x2="7" y2="21"/><line x1="12" y1="18" x2="11" y2="21"/><line x1="16" y1="18" x2="15" y2="21"/>`,
   // Krimi-Versager: Theatermaske mit Träne — Drama mit Pech-Note
   dramaTear:     `<path d="M12 3c4 0 7 3 7 7v3c0 4-3 7-7 7s-7-3-7-7v-3c0-4 3-7 7-7z"/><circle cx="9.5" cy="11" r="0.9"/><circle cx="14.5" cy="11" r="0.9"/><path d="M9 15.5c1 1 2 1.3 3 1.3s2-.3 3-1.3"/><path d="M15 12.5l0.6 2.5"/>`,
   // ── NEUE LEGENDARY-BADGES v7 ──
-  // Untouchable: Schild mit innerem Stern — unangefochten an der Spitze
   shieldStar:    `<path d="M12 2l8 4v6c0 5-4 8-8 10-4-2-8-5-8-10V6z"/><polygon points="12,7.5 13.5,11 17,11.3 14.3,13.6 15.1,17 12,15.1 8.9,17 9.7,13.6 7,11.3 10.5,11"/>`,
   // Mr. Perfect: drei kleine Pokale nebeneinander — dreifach perfekt in einer Saison
   tripleCup:     `<path d="M3 4h4v3a2 2 0 01-4 0zM10 4h4v3a2 2 0 01-4 0zM17 4h4v3a2 2 0 01-4 0z"/><line x1="5" y1="7" x2="5" y2="10"/><line x1="12" y1="7" x2="12" y2="10"/><line x1="19" y1="7" x2="19" y2="10"/><line x1="3" y1="10" x2="7" y2="10"/><line x1="10" y1="10" x2="14" y2="10"/><line x1="17" y1="10" x2="21" y2="10"/><line x1="4" y1="20" x2="20" y2="20"/><path d="M5 14l-1 6M19 14l1 6M12 14v6"/>`,
@@ -170,8 +157,6 @@ const ICONS = {
   // ── NEUE BADGES v4 ──
   // Thronfäller: Krone mit "X" durchgestrichen — Sieg gegen den Top-1 Spieler der Saison
   kingFall:      `<path d="M5 9l3-3 4 2 4-2 3 3v9H5z"/><path d="M8 13l8 4M16 13l-8 4"/>`,
-  // Überholmanöver: Klassisches Swap-Pfeile-Symbol — versetzte horizontale Pfeile in entgegengesetzte Richtung
-  overtake:      `<path d="M3 7h13"/><path d="M12 3l4 4-4 4"/><path d="M21 17H8"/><path d="M12 13l-4 4 4 4"/>`,
   // ── Neue Badge-Icons ──
   // Krimi-Reihe: zackige Achterbahn-Linie (viele knappe, dramatische Spiele)
   thriller:      `<polyline points="3 18 6 8 9 16 12 10 15 17 18 8 21 14"/>`,
@@ -193,8 +178,6 @@ const ICONS = {
   tripleCrash:   `<path d="M3 20h4v-3a2 2 0 00-4 0zM10 20h4v-3a2 2 0 00-4 0zM17 20h4v-3a2 2 0 00-4 0z"/><line x1="5" y1="17" x2="5" y2="14"/><line x1="12" y1="17" x2="12" y2="14"/><line x1="19" y1="17" x2="19" y2="14"/><line x1="4" y1="4" x2="20" y2="4"/><line x1="5" y1="14" x2="4" y2="4"/><line x1="19" y1="14" x2="20" y2="4"/><line x1="12" y1="14" x2="12" y2="4"/>`,
   // Zusammenbruch: invertierte V-Kurve (Höhenflug → Absturz) mit Crash-Punkt unten rechts
   crashDay:      `<polyline points="3 19 12 4 21 19"/><circle cx="21" cy="19" r="1.5"/>`,
-  // Bittere Pille / Tragische Niederlage: zerbrochenes Herz mit Zickzack-Bruch
-  heartBroken:   `<path d="M12 21s-7-4.5-7-11a4 4 0 017-3 4 4 0 017 3c0 6.5-7 11-7 11z"/><polyline points="10 8 12 12 10 15 13 11"/>`,
   // Angstgegner / Nemesis: klassischer Geist (welliger Unterrand, zwei Augen) — bedrohliche Präsenz
   ghost:         `<path d="M5 10a7 7 0 0114 0v10l-2.3-1.7L14 20l-2-1.7L10 20l-2.3-1.7L5 20z"/><circle cx="10" cy="11" r="1.2"/><circle cx="14" cy="11" r="1.2"/>`,
   // ── NEWS / STORY SYSTEM v9 ──
@@ -230,7 +213,7 @@ const ICONS = {
   soloPath:      `<circle cx="8" cy="7" r="3"/><path d="M3 20v-2a4 4 0 014-4h2a4 4 0 014 4v2"/><path d="M17 8v3M17 14v3" stroke-dasharray="2 2"/><circle cx="17" cy="20" r="1.2"/>`,
   // ── FUENF REKORDE MEHR: DER EIGENE SCHNITT UND DAS FENSTER ──
   // Uebersoll: eine gestrichelte Erwartungslinie und eine Bahn, die darueber
-  // laeuft. Bewusst anders als `chartUp` (nur die Bahn) und `chartDown` (das
+  // laeuft. Bewusst anders als `trendUp` (nur die Bahn) und `sollMinus` (das
   // Untersoll, dieselbe Frage andersherum) — hier ist die LINIE die Aussage.
   sollPlus:      `<path d="M3 18h18" stroke-dasharray="3 3"/><path d="M4 15l4-4 4 2 4-7 4 3"/>`,
   // Stammplatz: eine Figur auf einem festen Platz, mit Lehne. Anders als
@@ -342,11 +325,140 @@ const ICONS = {
   hochladen:     `<path d="M4 14v4a2 2 0 002 2h12a2 2 0 002-2v-4"/><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5"/>`,
   // Zwei Kettenglieder: der Faden einer Karte zu der, die sie fortsetzt [§C33].
   faden:         `<path d="M9.5 14.5l5-5"/><path d="M11 6.5l1.4-1.4a4 4 0 015.6 5.6L16.5 12M13 17.5l-1.4 1.4a4 4 0 01-5.6-5.6L7.5 12"/>`,
+  // ═══ Ein Zeichen, eine Bedeutung [§C41] ═══════════════════════════════
+  // Die Zeichen ab hier kamen aus dem Entwurf mockup/aufwertung-6. Vorher
+  // trug ein Zeichen oft mehrere Sachen: die Krone stand für Meistertitel,
+  // Traummonat, Highlights, Legende, Titelverteidiger und Spitzenwechsel,
+  // der Blitz für Stürmer, Sturm-Flex, den kompletten Stürmer und die
+  // Eilmeldung. Jetzt hat jede Bedeutung ihr Zeichen; dieselbe Sache in
+  // mehreren Systemen teilt eins (tests/disziplinen führt die Familien).
+  // ── Ränge: eine Leiter aus Winkeln, damit die fünf Stufen sich als Folge
+  // lesen. Heute waren es Person, Schild, Medaille, Stern und Krone — fünf
+  // Zeichen, die in anderen Systemen schon anderes bedeuten.
+  rang1:  `<path d="M6 15l6-4.5 6 4.5"/>`,
+  rang2:  `<path d="M6 12.5l6-4.5 6 4.5M6 17.5l6-4.5 6 4.5"/>`,
+  rang3:  `<path d="M6 9.5L12 5l6 4.5M6 14l6-4.5 6 4.5M6 18.5l6-4.5 6 4.5"/>`,
+  rang4:  `<path d="M12 2.2l1 2 2.2.3-1.6 1.5.4 2.2-2-1-2 1 .4-2.2-1.6-1.5 2.2-.3z"/><path d="M6 13l6-4 6 4M6 17l6-4 6 4M6 21l6-4 6 4"/>`,
+  rang5:  `<path d="M7 8.2L6.2 3.5l3 2.1L12 2.2l2.8 3.4 3-2.1L17 8.2z"/><path d="M6 13l6-4 6 4M6 17l6-4 6 4M6 21l6-4 6 4"/>`,
+
+  // ── Positionen: der Tisch von oben, halbiert. Der Punkt steht, wo der
+  // Spieler steht; Flex trägt beide Hälften. Heute teilten sich Stürmer,
+  // Sturm-Flex, der komplette Stürmer und die Eilmeldung einen Blitz.
+  posSturm:      `<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M5 12h14"/><circle cx="12" cy="7.5" r="2" fill="currentColor"/>`,
+  posSturmFlex:  `<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M5 12h14"/><circle cx="12" cy="7.5" r="2" fill="currentColor"/><circle cx="12" cy="16.5" r="1.3"/>`,
+  posFlex:       `<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M5 12h14"/><circle cx="12" cy="7.5" r="1.8"/><circle cx="12" cy="16.5" r="1.8"/>`,
+  posAbwehrFlex: `<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M5 12h14"/><circle cx="12" cy="7.5" r="1.3"/><circle cx="12" cy="16.5" r="2" fill="currentColor"/>`,
+  posAbwehr:     `<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M5 12h14"/><circle cx="12" cy="16.5" r="2" fill="currentColor"/>`,
+  posReinSturm:  `<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M5 12V5a2 2 0 012-2h10a2 2 0 012 2v7z" fill="currentColor" fill-opacity=".3"/><path d="M5 12h14"/><circle cx="12" cy="7.5" r="2" fill="currentColor"/>`,
+  posReinAbwehr: `<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7z" fill="currentColor" fill-opacity=".3"/><path d="M5 12h14"/><circle cx="12" cy="16.5" r="2" fill="currentColor"/>`,
+  // Der Spezialist: auf einer Hälfte weit besser als auf der anderen.
+  spezialist:    `<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M5 12h14"/><path d="M9 8l2 1.8 4-3.8"/>`,
+
+  // ── Die Liga und ihre Rubriken
+  tafelStein:    `<path d="M5 21V8.5a7 5.5 0 0114 0V21z"/><path d="M9 11h6M9 14.5h6M9 18h4"/>`,
+  verlauf:       `<path d="M3.5 12a8.5 8.5 0 102.5-6"/><path d="M3.5 3.5V8H8"/><path d="M12 7.5V12l3 2"/>`,
+  saisonKal:     `<rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="M10 19v-6.5h5l-1.3 1.8L15 16h-5"/>`,
+  idee:          `<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 00-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0012 3z"/>`,
+  sirene:        `<path d="M7 17v-5a5 5 0 0110 0v5"/><rect x="5" y="17" width="14" height="3.5" rx="1"/><path d="M12 2.5v2M4.3 5.8l1.4 1.4M19.7 5.8l-1.4 1.4M10 12a2 2 0 012-2"/>`,
+  funkeln:       `<path d="M10 3l1.8 5.2L17 10l-5.2 1.8L10 17l-1.8-5.2L3 10l5.2-1.8z"/><path d="M18 14l.9 2.1 2.1.9-2.1.9L18 20l-.9-2.1L15 17l2.1-.9z"/>`,
+  abzeichen:     `<path d="M12 2.5l8 4.6v9.8l-8 4.6-8-4.6V7.1z"/><path d="M12 8.2l1.2 2.4 2.6.4-1.9 1.8.5 2.6L12 14.2l-2.4 1.2.5-2.6-1.9-1.8 2.6-.4z"/>`,
+  spielfeld:     `<rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M12 5v14"/><circle cx="12" cy="12" r="2.5"/><path d="M3 9.5h1.8v5H3M21 9.5h-1.8v5H21"/>`,
+
+  // ── Partie und Spieltag
+  premiere:      `<circle cx="8" cy="12" r="2.6"/><circle cx="16" cy="12" r="2.6"/><path d="M3.2 21a4.8 4.8 0 019.6 0M11.2 21a4.8 4.8 0 019.6 0"/><path d="M12 2.2l.9 1.8 2 .3-1.45 1.4.35 2-1.8-.95-1.8.95.35-2L9.1 4.3l2-.3z"/>`,
+  spitzenwechsel:`<path d="M10.5 8.5l2-1.5V17"/><path d="M4 9a8.5 8.5 0 0114.5-3.5M20 15a8.5 8.5 0 01-14.5 3.5"/><path d="M18.8 2.5v3.3h-3.3M5.2 21.5v-3.3h3.3"/>`,
+  rollencoup:    `<rect x="4" y="7" width="11" height="14" rx="2"/><path d="M4 14h11"/><path d="M13 3h8v8"/><path d="M21 3l-8 8"/>`,
+
+  // ── Duos und Partner
+  partnerHebel:  `<circle cx="12" cy="9" r="3"/><path d="M7 20a5 5 0 0110 0"/><path d="M4 14V7M2 9l2-2 2 2M20 14V7M18 9l2-2 2 2"/>`,
+  jederPartner:  `<circle cx="12" cy="12" r="2.6"/><circle cx="5" cy="5.5" r="2"/><circle cx="19" cy="5.5" r="2"/><circle cx="12" cy="20" r="2"/><path d="M10.1 10.3L6.5 7M13.9 10.3L17.5 7M12 14.6V18"/>`,
+  augenhoehe:    `<circle cx="7" cy="9" r="2.6"/><circle cx="17" cy="9" r="2.6"/><path d="M2 9h2.4M9.6 9h4.8M19.6 9H22"/><path d="M2.5 20a4.5 4.5 0 019 0M12.5 20a4.5 4.5 0 019 0"/>`,
+  schattenmann:  `<circle cx="9" cy="7.5" r="3.3"/><path d="M3 21v-1a6 6 0 0112 0v1"/><path d="M15.5 4.3a3.3 3.3 0 010 6.4M18 14.6c1.8 1 3 3 3 5.4v1" stroke-dasharray="1.8 2.2"/>`,
+
+  // ── Gegner und Rechnung
+  geistBann:     `<path d="M6 20V10.5a6 6 0 0112 0V20l-2-1.6-2 1.6-2-1.6-2 1.6-2-1.6z"/><path d="M10 11h.01M14 11h.01"/><path d="M3 3l18 18"/>`,
+  jederGegner:   `<circle cx="12" cy="12" r="8"/><path d="M8.6 12.2l2.3 2.2 4.5-4.6"/><path d="M12 1.5v2.5M12 20v2.5M1.5 12H4M20 12h2.5"/>`,
+  bilanzTief:    `<circle cx="12" cy="12" r="9"/><path d="M12 12V3a9 9 0 013.8.84z" fill="currentColor" fill-opacity=".45"/><path d="M12 12V3"/>`,
+  ausreisser:    `<path d="M3.5 3.5v17h17"/><circle cx="7.5" cy="16.5" r="1"/><circle cx="10.5" cy="15" r="1"/><circle cx="8.5" cy="13" r="1"/><circle cx="12" cy="17" r="1"/><circle cx="17.5" cy="7" r="2.2"/>`,
+  wunderWoche:   `<rect x="3" y="5" width="18" height="15" rx="2"/><path d="M3 10h18"/><path d="M12 11.8l1 2 2.2.3-1.6 1.5.4 2.2-2-1-2 1 .4-2.2-1.6-1.5 2.2-.3z"/>`,
+  schwererTag:   `<rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="M10 14a2 2 0 014 0"/><path d="M8.8 14.5h6.4l.9 4H7.9z"/>`,
+
+  // ── Serien, Form und Verlauf
+  sturzflug:     `<circle cx="16" cy="17" r="3.5"/><path d="M13.4 14.6L4.5 5.7M15.2 13.6L10 4.5M12.4 16.4L3.5 11"/>`,
+  zweiteLuft:    `<rect x="2.5" y="7" width="17" height="10" rx="2"/><path d="M21.5 10.5v3"/><path d="M12 8.8L9.3 12.4h3.4L10 15.6"/>`,
+  steigerung:    `<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 010 18z" fill="currentColor" fill-opacity=".35"/><path d="M12 3v18"/>`,
+  umschwung:     `<rect x="3" y="13" width="6" height="7.5" rx="1"/><rect x="15" y="5.5" width="6" height="15" rx="1"/><path d="M6 10c1.5-3.5 4-5 7.5-5"/><path d="M11.5 3l2 2-2 2"/>`,
+  wechselhaft:   `<path d="M2 12h20" stroke-dasharray="1.5 2.5"/><path d="M2 12c2.5-9 5-9 7.5 0s5 9 7.5 0c1.2-4 2.5-6 5-6"/>`,
+  formGipfel:    `<path d="M3 20h18"/><path d="M3 16.5l4.5-3.5 3.5 2 4.5-8.5L21 16"/><circle cx="15.5" cy="6.5" r="1.8" fill="currentColor"/>`,
+  sollMinus:     `<path d="M3 6h18" stroke-dasharray="3 3"/><path d="M4 9l4 4 4-2 4 7 4-3"/>`,
+  schwaechsterTag:`<path d="M3 20.5h18"/><path d="M3 11h18" stroke-dasharray="1.5 2.5"/><path d="M6.5 20.5V8M10.5 20.5V10M14.5 20.5V5.5M18.5 20.5V9"/>`,
+  wochenschluss: `<rect x="2.5" y="8" width="19" height="8" rx="1.5"/><path d="M6.3 8v8M10.1 8v8M13.9 8v8M17.7 8v8"/><path d="M17.7 8h2.3a1.5 1.5 0 011.5 1.5v5a1.5 1.5 0 01-1.5 1.5h-2.3z" fill="currentColor" fill-opacity=".45"/>`,
+  tagesabschluss:`<path d="M19.5 14.5A8 8 0 019.5 4.5a8 8 0 1010 10z"/><path d="M9.5 13l2 2 3.5-4"/>`,
+  thron:         `<path d="M7 21v-3.5M17 21v-3.5"/><path d="M5.5 17.5h13v-4h-13z"/><path d="M8 13.5V5l4-2.5L16 5v8.5"/>`,
+  sturmfuehrer:  `<path d="M5.5 21.5V3"/><path d="M5.5 3.5H18l-3 4.25L18 12H5.5"/>`,
+
+  // ── Tore und Abwehr
+  weisseWeste:   `<path d="M8.5 3L3.5 6l2 4.2L8 9.2V21h8V9.2l2.5 1L20.5 6l-5-3a3.5 3.5 0 01-7 0z"/>`,
+  widerstand:    `<path d="M3 12h9.5M9.5 8.5L13 12l-3.5 3.5"/><path d="M16.5 4v16M20.5 6.5v11"/>`,
+  abrissbirne:   `<path d="M3.5 3h10"/><path d="M8.5 3v6.5"/><circle cx="8.5" cy="15" r="5"/><path d="M16.5 10.5l3.5-1.3M17 15h4M16.5 19.3l3.5 1.4"/>`,
+  torhagel:      `<path d="M7 14.5a4 4 0 01-.4-8A5.5 5.5 0 0117 7a3.7 3.7 0 01.4 7.5z"/><circle cx="8" cy="18.6" r="1.3"/><circle cx="12.4" cy="20.4" r="1.3"/><circle cx="16.6" cy="18" r="1.3"/>`,
+  dreiSaisons:   `<path d="M12 2.5l7.5 3.4v5.6c0 4.7-3.2 8.6-7.5 10-4.3-1.4-7.5-5.3-7.5-10V5.9z"/><path d="M9 9v6M12 9v6M15 9v6"/>`,
+  nulldiaet:     `<circle cx="12.5" cy="12" r="6.5"/><circle cx="12.5" cy="12" r="3.5"/><path d="M2.5 4v4.5a1.5 1.5 0 003 0V4M4 9v11M21.5 4v16M21.5 4c-1.8 1-2.3 4-2.3 6h2.3"/>`,
+
+  // ── Zählstände und Leitern
+  dauerbrenner:  `<path d="M8.5 21h7M10 21V10h4v11"/><path d="M12 10V8.2"/><path d="M12 2.8c1.4 1.5 1.9 2.8 0 4.3-1.9-1.5-1.4-2.8 0-4.3z"/>`,
+  urgestein:     `<path d="M3 20.5h18l-2.5-6.5-3-2.5L13 5.5 9.5 8.5 6 13z"/><path d="M5.3 15.5h13.5M7.6 11.5h8"/>`,
+  siegermaschine:`<path d="M10.3 2.5h3.4l.5 2.4 1.6.7 2.1-1.3 2.4 2.4-1.3 2.1.7 1.6 2.4.5v3.4l-2.4.5-.7 1.6 1.3 2.1-2.4 2.4-2.1-1.3-1.6.7-.5 2.4h-3.4l-.5-2.4-1.6-.7-2.1 1.3-2.4-2.4 1.3-2.1-.7-1.6-2.4-.5v-3.4l2.4-.5.7-1.6-1.3-2.1 2.4-2.4 2.1 1.3 1.6-.7z"/><path d="M9.3 12.2l1.9 1.9 3.5-3.8"/>`,
+  gleichmass:    `<path d="M3 19.5h18"/><path d="M4.5 19.5c3.5 0 4.5-13 7.5-13s4 13 7.5 13"/><path d="M8.5 13h7" stroke-dasharray="1.5 2"/>`,
+  zitterkrone:   `<path d="M6 18l-1-9 4 3 3-5 3 5 4-3-1 9z"/><path d="M2.5 9.5l1 1.5-1 1.5M21.5 9.5l-1 1.5 1 1.5"/>`,
+  kaltblut:      `<path d="M10 4.2a2 2 0 014 0v10.3a4 4 0 11-4 0z"/><path d="M12 15.5V12"/><path d="M17 5h3M17 8.5h2"/>`,
+
+  // ── Neu gezeichnet, weil zwei Zeichnungen Zwillinge waren (der alte
+  //    Name steht in ZEICHEN_ALT und zeigt hierher)
+  pille:         `<path d="M4.7 13.6l8.9-8.9a4 4 0 015.7 5.7l-8.9 8.9a4 4 0 01-5.7-5.7z"/><path d="M9.2 9.1l5.7 5.7"/>`,
+  schwarzerTag:  `<circle cx="12" cy="12" r="4.8" fill="currentColor" fill-opacity=".55"/><path d="M12 2.2v2.6M12 19.2v2.6M2.2 12h2.6M19.2 12h2.6M5.1 5.1l1.8 1.8M17.1 17.1l1.8 1.8M5.1 18.9l1.8-1.8M17.1 6.9l1.8-1.8"/>`,
+  ueberholen:    `<circle cx="12" cy="16" r="2.4"/><path d="M3.5 18c0-6.5 4.2-10 10.5-10h6"/><path d="M17 5l3 3-3 3"/>`,
+  rakete:        `<path d="M12 2.5c3 2 4.5 5.5 4.5 9.5l-2 3h-5l-2-3c0-4 1.5-7.5 4.5-9.5z"/><circle cx="12" cy="9" r="1.6"/><path d="M9.5 15l-2.5 2.5V20l2.5-1.5M14.5 15l2.5 2.5V20l-2.5-1.5M12 17.5V21"/>`,
+  betonmauer:    `<circle cx="8" cy="5" r="2.2"/><circle cx="16" cy="5" r="2.2"/><path d="M4.5 11a3.5 3.5 0 017 0M12.5 11a3.5 3.5 0 017 0"/><rect x="3" y="11" width="18" height="10" rx="1"/><path d="M3 16h18M9 11v5M15 11v5M12 16v5"/>`,
+  // ── Die Bedienung und die letzten Doppelungen
+  rekord:        `<path d="M12 2.5l1.3 2.6 2.9.4-2.1 2 .5 2.9L12 9l-2.6 1.4.5-2.9-2.1-2 2.9-.4z"/><path d="M3.5 21v-5h5v-3h7v5h5v3z"/>`,
+  sichern:       `<path d="M4 14v4a2 2 0 002 2h12a2 2 0 002-2v-4"/><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5"/>`,
+  neuRechnen:    `<path d="M19.5 10.5A7.8 7.8 0 005.6 7L4 8.6"/><path d="M4 3.8v4.8h4.8"/><path d="M4.5 13.5A7.8 7.8 0 0018.4 17l1.6-1.6"/><path d="M20 20.2v-4.8h-4.8"/>`,
+  wippe:         `<path d="M3 14h18"/><path d="M12 14l-3 6.5h6z"/><circle cx="6.5" cy="10.8" r="2.3"/><rect x="15.3" y="8.6" width="4.4" height="4.4" rx=".6"/>`,
+  marke:         `<path d="M5 21.5V3.5"/><path d="M5 4h14v9H5"/><path d="M5 4h4.7v4.5H5zM14.3 4H19v4.5h-4.7zM9.7 8.5h4.6V13H9.7z" fill="currentColor" fill-opacity=".45"/>`,
+  kontrast:      `<path d="M3 20.5h18"/><rect x="5" y="4" width="5" height="16.5" rx="1"/><rect x="14" y="16" width="5" height="4.5" rx="1"/><path d="M16.5 5v7.5M14.8 10.8l1.7 1.7 1.7-1.7"/>`,
+  spaetStart:    `<path d="M3 17.5h9.5c3.2 0 5.3-3.6 6.5-10"/><path d="M16.2 9.3l2.8-2.6 2.3 3"/><path d="M3 21h18" stroke-dasharray="1.5 2.5"/>`,
+  // ── Disziplinen, die nebeneinander in der Chronik stehen: dort braucht
+  //    jede ihr eigenes Bild, auch wo sie mit einem Award dieselbe Sache meint
+  massstab:       `<path d="M3.5 15.5L15.5 3.5l5 5-12 12z"/><path d="M7 12l2 2M9.5 9.5l1.5 1.5M12 7l2 2M14.5 4.5l1.5 1.5"/>`,
+  zepter:         `<path d="M4.5 19.5L14 10"/><circle cx="16.5" cy="7.5" r="3"/><path d="M16.5 2v2M22 7.5h-2.2M19.4 3.6l-.9.9"/><path d="M6.2 15.2l2.6 2.6"/>`,
+  wochenkrone:    `<path d="M6.5 12l-1.2-6 3.4 2.4L12 4.5l3.3 3.9 3.4-2.4-1.2 6z"/><path d="M3 19h.01M6 20.3h.01M9 21h.01M12 21.2h.01M15 21h.01M18 20.3h.01M21 19h.01"/>`,
+  bollwerk:       `<path d="M4 21.5V8h3V5h3v3h4V5h3v3h3v13.5z"/><path d="M10 21.5v-5a2 2 0 014 0v5"/>`,
+  antwort:        `<path d="M4 7h9.5a5.5 5.5 0 010 11H8"/><path d="M11 15l-3 3 3 3"/><circle cx="4" cy="7" r="1.6" fill="currentColor"/>`,
+  aufstehen:      `<path d="M3 21h18"/><circle cx="12" cy="5" r="2.4"/><path d="M12 8.5V16M8.5 12L12 8.5l3.5 3.5"/><path d="M8 21l4-4 4 4"/>`,
+  abwehrFenster:  `<rect x="5" y="3" width="14" height="18" rx="2" stroke-dasharray="2.4 2.2"/><path d="M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7z" fill="currentColor" fill-opacity=".3"/><path d="M5 12h14"/><circle cx="12" cy="16.5" r="2" fill="currentColor"/>`,
+  lieblingszahl:  `<path d="M9.5 3L7.5 21M16.5 3l-2 18M4 8.5h16.5M3.5 15.5h16.5"/>`,
 };
+// Alte Namen, deren Zeichnung ersetzt ist [§C41]. Gespeicherte Stories
+// tragen ihren Zeichenschlüssel (`_storyToRow`), und der Snapshot-Vertrag
+// [§C33] verbietet, sie umzuschreiben: ohne diesen Verweis stünde in einer
+// Karte vom Juni eine Lücke, wo vorher die Hantel oder das gebrochene Herz
+// war. Der alte Name zeigt auf die Zeichnung, die seine Sache jetzt trägt.
+const ZEICHEN_ALT = {
+  weightSmall:'weight', heartBroken:'pille', concreteWall:'betonmauer', blackDay:'schwarzerTag',
+  overtake:'ueberholen', rocket:'rakete', chartUp:'trendUp', chartDown:'trendDown', swords:'crossedSwords',
+  iceCube:'dropTriple',
+};
+// Die Zeichnung zu einem Namen, auch zu einem alten. Jeder Zugriff auf den
+// Katalog geht hierüber — ein direktes `ICONS[name]` sähe die alten Namen
+// nicht.
+function icPfad(name, rueckfall){
+  return ICONS[name] || ICONS[ZEICHEN_ALT[name]] || (rueckfall ? ICONS[rueckfall] || '' : '');
+}
 function svgI(name, opts){
   const o = opts || {};
   const cls = o.cls ? ' '+o.cls : '';
-  const path = ICONS[name] || '';
+  const path = icPfad(name);
   return `<span class="ic svg-ic${cls}"><svg viewBox="0 0 24 24" aria-hidden="true">${path}</svg></span>`;
 }
 // Die Zeichenkachel [§C27]. Ein Zeichen, das eine Fläche braucht, steht in
@@ -359,7 +471,7 @@ function svgI(name, opts){
 const ZK_TON = {gold:1, rot:1, gruen:1, blau:1, viol:1, bronze:1};
 function zkHtml(name, groesse, ton){
   return `<span class="zk${groesse ? ' '+groesse : ''}${ZK_TON[ton] ? ' '+ton : ''}">`
-    + `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[name] || ICONS.trophy}</svg></span>`;
+    + `<svg viewBox="0 0 24 24" aria-hidden="true">${icPfad(name, 'trophy')}</svg></span>`;
 }
 // Medaillen-Badge (1/2/3) statt 🥇🥈🥉
 function medalB(i){

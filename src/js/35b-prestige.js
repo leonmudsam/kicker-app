@@ -92,19 +92,34 @@ const PRESTIGE_AUSZEICHNUNG = {
 // stark von der Zahl der eigenen Spieltage abhängt; POTW bleibt wertvoller.
 // Der makellose 10:0-Sieg bleibt Legendary, verliert bei Wiederholungen aber
 // etwas schneller an Neuigkeitswert.
+//
+// Die Meilensteine der Laufbahn (300 Siege, 300 Partien, je 50 Spiele auf
+// einer Position, 20 Siege auf beiden, 150, 25 und die erste Partie) stehen
+// mit eigenem Wert darin: sie werden einmal erreicht und zeigen Fortschritt,
+// und der soll mehr tragen als Menge. Mit dem Wert ihrer Klasse brachten 300
+// Siege 25 Prestige — weniger als drei Spieler des Tages. Ihre Abnahme ist
+// die der Klasse; sie greift nie, weil jeder Meilenstein einmal fällt.
 const PRESTIGE_AUSZEICHNUNG_SPEZIAL = {
+  wins200:        {basis:150, abnahme:0.18},
   streak20:       {basis:120, abnahme:0.10},
   dynasty_600:    {basis:120, abnahme:0.10},
   champion:       {basis:100, abnahme:0.05},
+  games250:       {basis:100, abnahme:0.18},
   streak15:       {basis:75,  abnahme:0.10},
   dominator_400:  {basis:70,  abnahme:0.10},
   team_of_season: {basis:70,  abnahme:0.10},
   award_collector:{basis:70,  abnahme:0.10},
   untouchable:    {basis:70,  abnahme:0.10},
+  def50:          {basis:60,  abnahme:0.25},
+  atk50:          {basis:60,  abnahme:0.25},
   potw:           {basis:50,  abnahme:0.12},
   mr_perfect:     {basis:50,  abnahme:0.10},
+  allrounder:     {basis:50,  abnahme:0.18},
+  games150:       {basis:50,  abnahme:0.25},
   perfect_win:    {basis:40,  abnahme:0.15},
   potd:           {basis:10,  abnahme:0.25},
+  games25:        {basis:10,  abnahme:0.25},
+  first_match:    {basis:5,   abnahme:0.25},
 };
 
 // Grundwert einer Allzeitwertung, bevor Art und Halterzahl darauf wirken.
@@ -208,6 +223,10 @@ const PRESTIGE_REICHWEITE = 0.5;
 // mit den höheren Startwerten der Auszeichnungen und Rekorde [§C34] stieg
 // das Prestige der Spitze um gut ein Viertel, und ohne neue Schwellen wäre
 // sie über Nacht eine Stufe höher gestanden, ohne etwas dafür getan zu haben.
+// Als die Meilensteine der Laufbahn eigene Werte bekamen, blieben die
+// Schwellen bewusst stehen: wer 300 Siege oder 300 Partien hinter sich hat,
+// hat den Aufstieg erarbeitet — an den echten Partien drei Spieler vom
+// Zierkranz zum Lorbeerreif, der Ordensstern weiter für niemanden.
 //
 // Der Reif beginnt sofort. Der Schildring markiert ab 600 den ersten großen
 // Laufbahnschritt.
@@ -1181,18 +1200,21 @@ function prestigeSchritte(pid, n){
 // jede legendäre Auszeichnung hat ihren eigenen, und ein einzelner Wert in
 // der Karte stimmte für keine davon.
 function _prestigeRegelKarten(){
-  const leg = BADGES.filter(b => rarityOf(b.id) === 'legendary')
-    .map(b => _auszeichnungsRegel(b.id).basis);
+  // Die Spanne jeder Klasse: seit die Meilensteine eigene Werte tragen,
+  // stand über einer Siegermaschine mit 150 Prestige „Rare 25 P Start".
+  const spanne = klasse => {
+    const w = BADGES.filter(b => rarityOf(b.id) === klasse).map(b => _auszeichnungsRegel(b.id).basis);
+    const min = Math.min(...w), max = Math.max(...w);
+    return !w.length ? PRESTIGE_AUSZEICHNUNG[klasse].basis : min === max ? min : min + '–' + max;
+  };
   const karte = (klasse, titel, start, regel) => `<span class="${klasse}">
       <b>${titel}</b><strong>${start} P Start</strong>
       <em>1. und 2. Mal voll.<br>
       3. und 4. Mal ${Math.round(regel.abnahme * 100)} % weniger; danach paarweise flacher, nie 0.</em></span>`;
   return `<div class="lb-regeln">
-    ${karte('legendary', 'Legendary', leg.length
-      ? Math.min(...leg) + '–' + Math.max(...leg) : PRESTIGE_AUSZEICHNUNG.legendary.basis,
-      PRESTIGE_AUSZEICHNUNG.legendary)}
-    ${karte('rare', 'Rare', PRESTIGE_AUSZEICHNUNG.rare.basis, PRESTIGE_AUSZEICHNUNG.rare)}
-    ${karte('common', 'Common', PRESTIGE_AUSZEICHNUNG.common.basis, PRESTIGE_AUSZEICHNUNG.common)}
+    ${karte('legendary', 'Legendary', spanne('legendary'), PRESTIGE_AUSZEICHNUNG.legendary)}
+    ${karte('rare', 'Rare', spanne('rare'), PRESTIGE_AUSZEICHNUNG.rare)}
+    ${karte('common', 'Common', spanne('common'), PRESTIGE_AUSZEICHNUNG.common)}
   </div>`;
 }
 

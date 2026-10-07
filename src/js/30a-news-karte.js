@@ -34,24 +34,24 @@ function _newsRubrik(sorte, s){
 // Ein Zeichen je Sorte. Es steht immer an derselben Stelle und ist damit die
 // zweite Ablesehilfe neben der Bauform.
 function _newsSorteIcon(sorte, s){
-  if(_isBreaking(s)) return 'bolt';
+  if(_isBreaking(s)) return 'sirene';
   switch(sorte){
     // Der Spieltag trug gekreuzte Klingen, das Duell trägt Klingen — als
     // Motiv nebeneinander war das dieselbe Zeichnung in zwei Größen.
-    case 'spiel':  return 'ball';
-    case 'tafel':  return 'trophyStar';
+    case 'spiel':  return 'spielfeld';
+    case 'tafel':  return 'tafelStein';
     case 'ins':    return 'shieldStar';
     case 'held':   return 'crown';
     case 'woche':  return 'calendar';
-    case 'duell':  return 'swords';
+    case 'duell':  return 'crossedSwords';
     case 'serie':  return (s && (s.dataRef||{}).type || '').indexOf('loss') >= 0
-                        ? 'trendDown' : 'flame';
-    case 'badge':  return 'medal';
-    case 'marke':  return 'chartUp';
+                        ? 'dropTriple' : 'flame';
+    case 'badge':  return 'abzeichen';
+    case 'marke':  return 'marke';
     // Drei Pokale fuer den, der mehreres auf einmal holt; zwei Gestalten fuer
     // den Erfolg, den mehrere teilen. Keine der beiden Zeichnungen steht
     // schon an einer anderen Rubrik [§C27].
-    case 'spieler':return 'tripleCup';
+    case 'spieler':return 'medalTrio';
     case 'erfolg': return 'users';
     default:       return 'chartBar';
   }
@@ -1097,9 +1097,9 @@ function _renderNewsFeed(){
   // vorher nur ihr Wort.
   const filters = [
     {k:'all',      label:'Alle',     ic:'newspaper',  test:() => true},
-    {k:'breaking', label:'Breaking', ic:'bolt',       test:_isBreaking},
-    {k:'tafel',    label:'Tafel',    ic:'trophyStar', test:_istTafel},
-    {k:'spieltag', label:'Spieltag', ic:'crossedSwords', test:_istSpieltag},
+    {k:'breaking', label:'Breaking', ic:'sirene',       test:_isBreaking},
+    {k:'tafel',    label:'Tafel',    ic:'tafelStein', test:_istTafel},
+    {k:'spieltag', label:'Spieltag', ic:'spielfeld', test:_istSpieltag},
   ];
   const aktiv = filters.find(f => f.k === _newsFeedFilter) || filters[0];
   const cards = _newsFeedFilter === 'all' ? stories : stories.filter(aktiv.test);
