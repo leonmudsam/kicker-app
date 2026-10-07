@@ -42,6 +42,31 @@
     background:linear-gradient(135deg,rgba(194,201,208,.06),var(--surface))}
   .rrow.top3{border-color:rgba(192,132,87,.34);
     background:linear-gradient(135deg,rgba(192,132,87,.055),var(--surface))}
+  /* Das Licht an der Kante [§C27]. Alle neun Sekunden läuft es über das
+     Metall von Platz 1 bis 3, versetzt um eine Drittelsekunde je Platz.
+     Es bewegt nur `transform` und `opacity` einer eigenen Ebene mit festem
+     Schein — die Grafikkarte rechnet es, der Hauptthread nicht. Liegt ein
+     Blatt darüber, steht es still: die Unschärfe hinter dem Blatt müsste
+     sonst in jedem Bild neu gerechnet werden, für ein Licht, das niemand
+     sieht. Es liegt auf der Kante, nie über Zahl oder Name. */
+  @keyframes kantenLicht{0%{transform:scaleY(0);opacity:0}4%{opacity:1}
+    11%{transform:scaleY(1);opacity:.85}20%,100%{transform:scaleY(1);opacity:0}}
+  @media(prefers-reduced-motion:no-preference){
+    .rrow.top1::after,.rrow.top2::after,.rrow.top3::after{content:"";position:absolute;left:0;top:0;bottom:0;
+      width:3px;border-radius:var(--r) 0 0 var(--r);pointer-events:none;transform-origin:50% 0;opacity:0;
+      background:linear-gradient(180deg,rgba(255,255,255,0),rgba(255,255,255,.95) 45%,rgba(255,255,255,0));
+      box-shadow:0 0 10px 1px var(--kante-schein);
+      animation:kantenLicht 9s cubic-bezier(.3,.6,.3,1) infinite backwards}
+    .rrow.top2::after{animation-delay:.35s}
+    .rrow.top3::after{animation-delay:.7s}
+    body:has(> .sheet-bg.show) .rrow::after{animation-play-state:paused}}
+  .rrow.top1{--kante-schein:rgba(247,207,74,.55)}
+  .rrow.top2{--kante-schein:rgba(194,201,208,.45)}
+  .rrow.top3{--kante-schein:rgba(192,132,87,.45)}
+  /* Ein Druck zeigt einen hellen Rand, nicht nur das Schrumpfen: auf dem
+     Telefon verdeckt der Finger die Zeile, der Rand ragt unter ihm hervor.
+     Ein Schatten nur während des Drucks, keine Animation. */
+  .rrow:active{box-shadow:inset 0 0 0 1px rgba(255,255,255,.10),0 0 0 3px rgba(190,242,100,.07)}
   .medal{position:absolute;left:9px;display:inline-grid;place-items:center}
   .streak-badge{font-size:12px;margin-left:4px;vertical-align:middle}
   .elo-gain-bar{display:flex;gap:6px;font-size:10px;font-family:'Sometype Mono',monospace;margin-top:2px}

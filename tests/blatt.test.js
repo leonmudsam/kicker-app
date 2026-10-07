@@ -2923,6 +2923,100 @@ const ok = (c, msg, det) => {
   // `.btn` und lief 112 px aus den Einstellungen, eine Pille der Rekorde lief
   // aus der Karte, und ein Gesicht ohne eigenen Behälter hatte seine
   // Initialen oben links. Hier wird jeder Reiter einmal ganz gezeichnet.
+  console.log('\n═══ LICHT, DAS DIE GRAFIKKARTE RECHNET ═══');
+  // Die Effekte der sechsten Aufwertung [§C27]: das Licht an der Kante von
+  // Platz 1 bis 3, die Kacheln beim Hereinscrollen, der Hof unter dem
+  // Reiter, das Blatt, das sich setzt, der Hof im Profilkopf. Jeder bewegt
+  // nur `transform` und `opacity`, keiner bleibt mit einer Verschiebung
+  // stehen, und bei Bewegungsruhe läuft keiner.
+  const lichtMess = () => page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const bild = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const props = a => [...new Set(a.effect.getKeyframes().flatMap(k => Object.keys(k))
+      .filter(k => !['offset', 'computedOffset', 'easing', 'composite'].includes(k)))];
+    const out = {};
+    K("closeSheet(true);tab='ranking';period='season';render()"); await bild();
+    const kante = document.getAnimations().filter(a => a.animationName === 'kantenLicht');
+    out.kante = kante.length;
+    out.kanteZiel = kante.map(a => a.effect.pseudoElement + '@' + (a.effect.target.className.match(/top\d/) || ['?'])[0]).sort().join(' ');
+    out.kanteProps = [...new Set(kante.flatMap(props))].sort().join('+');
+    // Was im ganzen Dokument endlos läuft, bewegt nur transform und opacity.
+    out.endlosFremd = [...new Set(document.getAnimations().filter(a => a.effect && a.effect.getTiming().iterations === Infinity)
+      .flatMap(a => props(a).filter(k => k !== 'transform' && k !== 'opacity').map(k => a.animationName + ':' + k)))];
+    // Der Druck zeigt einen Rand, ohne Animation.
+    const nav = document.querySelector('[data-nav="awards"]');
+    nav.click(); await bild();
+    const on = document.querySelector('.botnav button.on .ic svg');
+    out.stoss = on ? getComputedStyle(on).animationName : 'fehlt';
+    // Der Hof blendet in 0,3 s über; gemessen wird der Endstand.
+    await new Promise(r => setTimeout(r, 400));
+    out.hof = getComputedStyle(document.querySelector('.botnav button.on .ic'), '::before').opacity;
+    out.hofAus = getComputedStyle(document.querySelector('.botnav button:not(.on) .ic'), '::before').opacity;
+    K("tab='awards';awView='awards';awPeriod='season';render()"); await bild();
+    const kachel = document.querySelector('#main .aw-trophy');
+    out.kachel = kachel ? getComputedStyle(kachel).animationName : 'fehlt';
+    out.kachelZeit = kachel ? getComputedStyle(kachel).animationTimeline : 'fehlt';
+    out.kachelFuell = kachel ? getComputedStyle(kachel).animationFillMode : 'fehlt';
+    const zk = document.querySelector('#main .aw-trophy .aw-t-kopf .zk');
+    out.glanz = zk ? getComputedStyle(zk, '::after').animationName : 'fehlt';
+    K("awView='rekorde';render()"); await bild();
+    const rek = document.querySelector('#main .rek');
+    out.rek = rek ? getComputedStyle(rek).animationName : 'fehlt';
+    K("tab='ranking';render();showPlayer(players[0].id)"); await bild();
+    const sheet = document.getElementById('sheet');
+    const kind = sheet.querySelector(':scope > :not(.sheet-leiste)');
+    out.setzen = kind ? getComputedStyle(kind).animationName : 'fehlt';
+    out.setzenFuell = kind ? getComputedStyle(kind).animationFillMode : 'fehlt';
+    out.leiste = getComputedStyle(sheet.querySelector('.sheet-leiste')).animationName;
+    const kopf = sheet.querySelector('.pp-header');
+    out.kopfHof = kopf ? getComputedStyle(kopf, '::before').animationName : 'fehlt';
+    out.kopfHinten = kopf ? getComputedStyle(kopf, '::before').zIndex + '/' + getComputedStyle(kopf).isolation : 'fehlt';
+    out.unterBlatt = document.getAnimations().filter(a => a.animationName === 'kantenLicht').map(a => a.playState).join(',');
+    await new Promise(r => setTimeout(r, 900));
+    out.setzenDanach = kind ? getComputedStyle(kind).transform : 'fehlt';
+    K('closeSheet(true)'); await bild();
+    return out;
+  });
+  const li = await lichtMess();
+  ok(li.kante === 3 && li.kanteZiel === '::after@top1 ::after@top2 ::after@top3',
+     'über die Kante von Platz 1, 2 und 3 läuft je ein Licht', li.kante + ' · ' + li.kanteZiel);
+  ok(li.kanteProps === 'opacity+transform', 'das Licht bewegt nur transform und opacity', li.kanteProps);
+  ok(!li.endlosFremd.length, 'was in der App endlos läuft, bewegt nur transform und opacity', li.endlosFremd.join(', '));
+  ok(li.unterBlatt === 'paused,paused,paused', 'unter einem offenen Blatt steht das Licht still', li.unterBlatt);
+  ok(li.stoss === 'reiterStoss' && li.hof === '1' && li.hofAus === '0',
+     'der gewählte Reiter bekommt Hof und Stoß, die anderen nicht', JSON.stringify([li.stoss, li.hof, li.hofAus]));
+  ok(li.kachel === 'kachelHeben' && /view/.test(li.kachelZeit) && li.kachelFuell === 'backwards' && li.rek === 'kachelHeben',
+     'Award- und Rekordkacheln heben sich am Scrollen, nicht an der Zeit, und lassen den Druck frei',
+     JSON.stringify([li.kachel, li.kachelZeit, li.kachelFuell, li.rek]));
+  ok(li.glanz === 'zeichenGlanz', 'über das Zeichen der Kachel läuft ein Glanz', li.glanz);
+  ok(li.setzen === 'blattSetzen' && li.setzenFuell === 'backwards' && li.leiste === 'none',
+     'der Inhalt eines Blatts setzt sich, die Leiste mit Griff und Schließen nicht', JSON.stringify([li.setzen, li.setzenFuell, li.leiste]));
+  ok(li.setzenDanach === 'none', 'danach trägt kein Abschnitt eine Verschiebung', li.setzenDanach);
+  ok(li.kopfHof === 'hofAuf' && li.kopfHinten === '-1/isolate',
+     'im Profilkopf geht ein Hof auf, hinter Name und Wappen', li.kopfHof + ' · ' + li.kopfHinten);
+  // Gemessen, nicht geschätzt: über einen ganzen Umlauf des Lichts rechnet
+  // der Hauptthread keinen Stil und kein Layout neu.
+  {
+    await K("closeSheet(true);tab='ranking';period='season';render()");
+    // Erst ausklingen lassen, was einmal läuft: das Zuschieben des Blatts
+    // und die Überblendung des Reiters rechnen selbst Stil.
+    await page.waitForTimeout(1500);
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send('Performance.enable');
+    const metrik = async () => Object.fromEntries((await cdp.send('Performance.getMetrics')).metrics.map(x => [x.name, x.value]));
+    const a = await metrik(); await page.waitForTimeout(2500); const b = await metrik();
+    const stil = b.RecalcStyleCount - a.RecalcStyleCount, lay = b.LayoutCount - a.LayoutCount;
+    ok(stil === 0 && lay === 0, 'während das Licht läuft, rechnet der Hauptthread weder Stil noch Layout', stil + ' Stil, ' + lay + ' Layout in 2,5 s');
+    await cdp.detach();
+  }
+  await page.emulateMedia({reducedMotion: 'reduce'});
+  const liRuhig = await lichtMess();
+  await page.emulateMedia({reducedMotion: 'no-preference'});
+  ok(liRuhig.kante === 0 && liRuhig.stoss === 'none' && liRuhig.kachel === 'none' && liRuhig.glanz === 'none'
+     && liRuhig.setzen === 'none' && liRuhig.kopfHof === 'none',
+     'bei prefers-reduced-motion läuft keiner dieser Effekte',
+     JSON.stringify([liRuhig.kante, liRuhig.stoss, liRuhig.kachel, liRuhig.glanz, liRuhig.setzen, liRuhig.kopfHof]));
+
   console.log('\n═══ JEDER REITER BEI 360 PX ═══');
   await page.setViewportSize({width:360, height:780});
   // Gemessen bei 360 px, der schmalsten verbreiteten Breite: bei 390 passte

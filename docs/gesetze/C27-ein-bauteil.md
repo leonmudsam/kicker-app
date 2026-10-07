@@ -3,10 +3,11 @@
 ## Regel
 
 - Derselbe Spieler sieht überall gleich aus, und dieselbe Aussage hat ein Bauteil: Wappen `.rav` (`insAvWrap`), Podest `.podest`/`.pod-karte` (`_chronPodestHtml`, Platz aus dem Wert, `_chronPlatz`), Segmentwähler `.ui-switch` (außen, Schlitten) und `.ui-tabs` (innen, Strich), Rangabzeichen `.rangab` (`rankBadgeHtml`), Gesicht `.av`, Zeichenkachel `.zk` (`zkHtml`), Award-Kachel `.aw-trophy` (`awKachelHtml`, `awVitrineHtml`), Beleg (`belegHtml`), Blattkopf und -fuß (`blattKopfHtml`, `blattAbschnittHtml`, `blattFussHtml`), Bühne (`buehneHtml`), Hinweis (`toast`), Bestätigung (`bestaetigen`), Einblick (`einblickHtml`). Wer ein zweites Bauteil für dieselbe Aussage baut, hat einen Fehler gemacht.
-- Bewegung: der Schlitten fährt nur über `transform` (`schlittenFahren`); eine Animation endet an `transitionend` mit Rückfall-Timer und genau einem Abschluss je Element (`_afterTransition`); der Finger besitzt den Zug (Eingabefelder und gescrollte Listen gehören nicht der Schließgeste, ein Bild je Frame); ein Balken wächst in der Höhe, nie in der Breite; was endlos läuft, bewegt nur `transform` und `opacity` — ein Schein, der atmet, ist eine eigene Ebene, die kommt und geht, und ein Lichtlauf fährt per `transform` (`glanzZug`) über eine Fläche, die abschneidet, oder über seine eigene Bahn (`glanzBahn`); alles ruht bei Bewegungsruhe.
+- Bewegung: der Schlitten fährt nur über `transform` (`schlittenFahren`); eine Animation endet an `transitionend` mit Rückfall-Timer und genau einem Abschluss je Element (`_afterTransition`); der Finger besitzt den Zug (Eingabefelder und gescrollte Listen gehören nicht der Schließgeste, ein Bild je Frame); ein Balken wächst in der Höhe, nie in der Breite; was endlos läuft, bewegt nur `transform` und `opacity` — ein Schein, der atmet, ist eine eigene Ebene, die kommt und geht, und ein Lichtlauf fährt per `transform` (`glanzZug`) über eine Fläche, die abschneidet, oder über seine eigene Bahn (`glanzBahn`); was endlos läuft, steht unter einem offenen Blatt still; was ans Scrollen gehört, hängt am Scrollen (`animation-timeline: view()`) statt an einem Beobachter; was einmal läuft, endet mit `backwards` und hinterlässt keine Verschiebung; eine Zahl zählt nicht hoch (das verlangte jedes Bild den Hauptthread); alles ruht bei Bewegungsruhe.
 - Ein Award hat ein Zeichen (`AW_IC`), einen Namen (`AWARD_META.title`) und einen Wert aus EINER Tabelle (`AW_WERT`: Liste, Zahl, Einheit, Stichprobe, `gilt`); die Kachel beantwortet wer, wie viel, woraus (`awFeldHtml`, `awLaufHtml`) und trägt drei Töne (`ton-pos`, `ton-team`, `ton-neg`). Ein Name gehört einer Frage.
 - Feed-Karte: Tageskopf als Marke (`.nf-tag`), Rubrikband (`_newsRubrik`, `_newsSorteIcon`), zwölf Kartenformen (`_newsSorte`) mit je einer Bildzone, Motiv (`_newsMotiv`), keine zwei Rubriken mit demselben Zeichen; die Bildzone macht die Karte nicht höher und nimmt der Schlagzeile nicht den Platz; ein Deckel schneidet ab statt zu schrumpfen; Zahl, Datum, Name fett (`_newsBetont`). Es gibt eine Kartenform, kein Mini-Popup.
 - Licht und Rand: Breaking bricht die Spalte und glimmt; die Karte des Tages schimmert leise golden; der Lichtlauf (`glanzZug`, ohne eigenes Abschneiden auf seiner Bahn `glanzBahn`) nur dort, wo EINER einen goldenen Titel trägt; das Seltene trägt einen leisen Lauf in seiner Familienfarbe (`_newsGlanz`); der Rand (`--kante`, `--rahmen`) sagt das Gewicht; negativ trägt `.nf-neg`.
+- Leise Effekte: über die Kante von Platz 1 bis 3 läuft alle neun Sekunden ein Licht (`kantenLicht`, Gold, Silber, Bronze); Award- und Rekordkacheln heben sich beim Hereinscrollen, über ihr Zeichen läuft ein Glanz (`kachelHeben`, `zeichenGlanz`); unter dem gewählten Reiter liegt ein Hof, sein Zeichen macht einen Stoß (`reiterStoss`); der Inhalt eines Blatts setzt sich (`blattSetzen`); im Profilkopf fällt Licht im Rangton ein (`hofAuf`); ein Druck auf Zeile oder Kachel zeigt einen hellen Rand. Kein Effekt liegt über einer Zahl oder einem Namen.
 - Story-Blatt: derselbe Bau (`_newsBlattKopf`, `_newsDetailMitte`, `_newsBlattFuss`), die Mitte zuerst gebaut, die Partie höchstens einmal, Scroll vor dem Markup auf null; was oben steht, steht unten nicht noch einmal (`_ndNeu`, `_ndOben`); kein Satz erklärt eine Grafik; das Blatt einer Partie zeigt Bühne, Siegchance auf der Skala, Elo-Wirkung, Duelle, Tagesleiste und Verteilung (`_ndBuehne`, `_ndChanceSkala`, `_ndEloWirkung`, `_ndDuelle`, `_ndTagLeiste`, `_ndVerteilung`); der Spieltag als Bahn (`_ndTagesbahn`); jedes Blatt zeigt, wovon seine Story handelt.
 - Zeichen: ein Strich aus EINER Regel (`--strich`); der Strahl des Positionsprofils gehört der überwiegenden Seite, die stärkere Rolle trägt ihre Farbe; das Insignium hat Reif, Kopf und Raute an fester Stelle; das Banner nur, wo ein Spieler allein und groß steht; die Kachel misst am Reif.
 - Eine Form je Sache: Kalendertag `tagKey`, Uhrzeit `datumFmt`, Dezimalkomma `komma`, Stand aus Sicht des Nebenstehenden `standFuer`, Überraschung als Siegchance der Sieger, Namen mit „&" nur in schmalen Zellen (`_chronHolderNames`), im Satz mit „und" (`_chronHalterSatz`, `_namenListe`), Elo-Grenzen in `expected` und `CHANCE_*`, der Platz im Feed aus der Gesamtliga (`_newsGesamtrang`). Zwei Rechnungen über dieselbe Frage, die bleiben müssen, hält ein Test aneinander.
@@ -19,7 +20,7 @@ quer durch `src/js` und `src/css`; die Bauteile selbst in `05b-recap-teile.js`, 
 
 ## Prüfung
 
-`tests/blatt` (Geometrie, Bauteile, Text und Bewegung jedes Reiters und Blatts bei 360 px), `tests/bewegung` (Wischgeste, Abschlüsse), `tests/blatt` (was im Feed endlos läuft, bewegt nur transform und opacity), `tests/tafel` (Strich, Award-Tabelle, Kalendertag, Formatierer), `tests/zeichen`.
+`tests/blatt` (Geometrie, Bauteile, Text und Bewegung jedes Reiters und Blatts bei 360 px), `tests/bewegung` (Wischgeste, Abschlüsse), `tests/blatt` (was im Feed endlos läuft, bewegt nur transform und opacity; die leisen Effekte laufen, wo sie hingehören, ruhen unter dem Blatt und bei Bewegungsruhe, und während das Licht läuft, rechnet der Hauptthread weder Stil noch Layout), `tests/tafel` (Strich, Award-Tabelle, Kalendertag, Formatierer), `tests/zeichen`.
 
 ## Herleitung
 
@@ -666,3 +667,17 @@ je Sekunde) und auf dem Helden der Rückblicke; dort schneidet die Fläche
 nicht ab — das Wappen ragt heraus —, also trägt der Lauf seine eigene Bahn.
 Der Schein von Breaking liegt dafür auf einer Hülle hinter der Karte
 (`.nf-brk-hof`), weil die Karte abschneidet, was über ihren Rand ragt.
+
+Die leisen Effekte kamen aus dem Entwurf `mockup/aufwertung-6/` und wurden
+gleich so gebaut, dass sie nichts kosten. Das Licht an der Kante ist eine
+Ebene mit festem Schein, die skaliert und blendet: gemessen rechnet der
+Hauptthread über einen ganzen Umlauf keinen Stil neu. Dasselbe Licht über
+einen wechselnden `box-shadow` kostete in der Gegenprobe 150
+Stilberechnungen in 2,5 Sekunden. Unter einem offenen Blatt steht es still,
+denn die Unschärfe hinter dem Blatt müsste es sonst in jedem Bild neu
+rechnen. Im Entwurf hoben sich die Kacheln über einen
+`IntersectionObserver`; eingebaut hängt die Bewegung am Scrollen, und der
+Browser rechnet sie ohne Beobachter und ohne Hauptthread. Das Hochzählen der
+Kopfzahlen aus dem Entwurf ist nicht eingebaut: eine Zahl, die sich ändert,
+schreibt in jedem Bild Text und verlangt dafür den Hauptthread — als
+einziger der Effekte.
