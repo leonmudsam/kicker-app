@@ -3910,7 +3910,7 @@ return JSON.stringify(funde,null,1);
     const w = document.createElement('div');
     w.className = 'nf-wrap';
     document.body.appendChild(w);
-    const out = {formen:0, fehler:[]};
+    const out = {formen:0, fehler:[], podeste:0, sockel:[]};
     for(const breite of [288, 360]){
       w.style.cssText = 'position:absolute;left:0;top:0;width:' + breite + 'px;z-index:99999';
       w.innerHTML = html;
@@ -3927,11 +3927,34 @@ return JSON.stringify(funde,null,1);
           if(b.width && (b.right > r.right + .5 || b.left < r.left - .5)) out.fehler.push(k + 'läuft hinaus ' + (e.className.baseVal ?? e.className));
         });
         pruefen(ff).fehler.forEach(f => out.fehler.push(k + f));
+        // Der Sockel trägt seinen Inhalt: Wert und Ziffer liegen in ihm, und
+        // die Stufen fallen von Platz 1 nach 3. Platz 3 war 30 px hoch für
+        // 43 px Inhalt, und seine Ziffer hing unter dem Podium heraus.
+        ff.querySelectorAll('.ff-pd').forEach(pd => {
+          out.podeste++;
+          const hoehe = {};
+          pd.querySelectorAll('.ff-pd-s').forEach(s => {
+            const em = s.querySelector('em'), r = em.getBoundingClientRect();
+            const p = (s.className.match(/\bp(\d)\b/) || [])[1];
+            hoehe[p] = r.height;
+            [...em.children].forEach(e => {
+              const b = e.getBoundingClientRect();
+              if(b.bottom > r.bottom + .5 || b.top < r.top - .5)
+                out.sockel.push(k + 'Platz ' + p + ': ' + e.tagName + ' ragt ' + (b.bottom - r.bottom).toFixed(1) + ' px aus dem Sockel');
+            });
+            if(em.scrollHeight > em.clientHeight) out.sockel.push(k + 'Platz ' + p + ' läuft über: ' + em.scrollHeight + ' > ' + em.clientHeight);
+          });
+          const st = ['1', '2', '3'].filter(x => x in hoehe).map(x => hoehe[x]);
+          if(st.some((h, i) => i && h >= st[i - 1])) out.sockel.push(k + 'die Stufen fallen nicht: ' + st.join(' / '));
+        });
       });
     }
     w.remove();
     return out;
   }, PRUEFEN.toString());
+  ok(fakt.podeste >= 2 && fakt.sockel.length === 0,
+     'im Fun-Fact-Podest trägt jeder Sockel seinen Wert und seine Ziffer, und die Stufen fallen von Platz 1 nach 3',
+     fakt.podeste + ' Podeste · ' + fakt.sockel.slice(0, 4).join(' | '));
   ok(fakt.formen >= 12 && fakt.fehler.length === 0,
      'jedes Fun-Fact-Bild bleibt bei 288 und 360 px in seiner Karte, ohne Text auf Text und ohne Kürzung',
      fakt.formen + ' Bilder · ' + fakt.fehler.slice(0, 4).join(' | '));
