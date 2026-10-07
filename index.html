@@ -243,11 +243,18 @@
   .rrow.top1 .pos{color:var(--gold)}
   .rrow.top2 .pos{color:var(--silber)}
   .rrow.top3 .pos{color:var(--bronze)}
-  .rrow.top1{border-color:rgba(247,207,74,.5);background:linear-gradient(135deg,rgba(247,207,74,.08),var(--surface))}
-  .rrow.top2{border-color:rgba(194,201,208,.42);
-    background:linear-gradient(135deg,rgba(194,201,208,.06),var(--surface))}
-  .rrow.top3{border-color:rgba(192,132,87,.34);
-    background:linear-gradient(135deg,rgba(192,132,87,.055),var(--surface))}
+  .rrow.top1,.rrow.top2,.rrow.top3{border-color:transparent;
+    background:linear-gradient(135deg,rgba(var(--metall),.11),rgba(var(--metall),.02) 45%,var(--surface) 70%) padding-box,
+      linear-gradient(var(--surface),var(--surface)) padding-box,
+      linear-gradient(135deg,rgba(var(--metall-hell),.95),rgba(var(--metall),.30) 30%,rgba(var(--metall),.10) 62%,rgba(var(--metall-hell),.55)) border-box;
+    box-shadow:inset 0 1px 0 rgba(var(--metall-hell),.10),0 12px 28px -20px rgba(var(--metall),.55)}
+  .rrow.top1{--metall:247,207,74;--metall-hell:255,233,166}
+  .rrow.top2{--metall:194,201,208;--metall-hell:236,240,244}
+  .rrow.top3{--metall:192,132,87;--metall-hell:236,184,140}
+  .rrow.top1 .pos,.rrow.top2 .pos,.rrow.top3 .pos{
+    background:linear-gradient(180deg,rgb(var(--metall-hell)) 15%,rgb(var(--metall)) 55%,rgba(var(--metall),.7) 95%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;font-size:17px}
+  .rrow.top1:active,.rrow.top2:active,.rrow.top3:active{filter:brightness(1.08)}
   .medal{position:absolute;left:9px;display:inline-grid;place-items:center}
   .streak-badge{font-size:12px;margin-left:4px;vertical-align:middle}
   .elo-gain-bar{display:flex;gap:6px;font-size:10px;font-family:'Sometype Mono',monospace;margin-top:2px}
@@ -422,9 +429,13 @@
     margin-top:4px;line-height:1.5}
   .pod-leer{visibility:hidden}
 
-  .rrow.held{background:
+  .rrow.held:not(.top1){background:
       radial-gradient(120% 100% at 0% 0%,rgba(247,207,74,.07),transparent 58%),
       var(--surface)}
+  .rrow.held.top1{background:
+      radial-gradient(120% 100% at 0% 0%,rgba(247,207,74,.10),transparent 58%) padding-box,
+      linear-gradient(var(--surface),var(--surface)) padding-box,
+      linear-gradient(135deg,rgba(var(--metall-hell),.95),rgba(var(--metall),.30) 30%,rgba(var(--metall),.10) 62%,rgba(var(--metall-hell),.55)) border-box}
   .rrow.held .held-label{font-family:'Sometype Mono',monospace;font-size:9px;
     font-weight:700;letter-spacing:.18em;text-transform:uppercase;
     color:var(--gold);margin-bottom:2px}
@@ -895,6 +906,9 @@
 }
 .sheet.show{transform:translateY(0)}
 .sheet.is-dragging{transition:none !important;}
+  @keyframes blattEin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  @media(prefers-reduced-motion:no-preference){
+    .sheet.show > :not(.sheet-leiste){animation:blattEin .26s ease-out backwards}}
 
   .sheet-grab{width:38px;height:4px;border-radius:2px;background:var(--line2);margin:6px auto 16px}
   .sheet-leiste{position:sticky;top:-10px;z-index:6;margin-top:-10px;padding-top:10px;
@@ -942,6 +956,10 @@
   .botnav button.on{color:var(--acid)}
   .botnav button.on .ic{background:rgba(190,242,100,.12);box-shadow:inset 0 0 0 1px rgba(190,242,100,.25)}
   .botnav button:active{transform:scale(.9)}
+  .botnav button.on .ic{box-shadow:inset 0 0 0 1px rgba(190,242,100,.32),0 0 16px -2px rgba(190,242,100,.38)}
+  @keyframes reiterStoss{0%{transform:scale(.78)}60%{transform:scale(1.1)}100%{transform:none}}
+  @media(prefers-reduced-motion:no-preference){
+    .botnav button.on .ic svg{animation:reiterStoss .28s cubic-bezier(.2,1.4,.4,1)}}
 
   .fab{position:fixed;z-index:55;right:max(18px,calc(50% - 260px + 18px));
     bottom:calc(86px + var(--safe-bot));width:58px;height:58px;border-radius:19px;
@@ -1078,7 +1096,9 @@
 
   .pp-header{position:relative;padding:32px 18px 22px;text-align:center;
     border-radius:24px;border:1px solid rgba(255,255,255,.05);
-    background:radial-gradient(140% 90% at 50% 0%, var(--pp-tier-bg) 0%, transparent 55%),
+    background:linear-gradient(90deg,transparent,var(--pp-tier-1),transparent) 50% 0/70% 1px no-repeat,
+      radial-gradient(70% 55% at 50% 0%, var(--pp-tier-glow) 0%, transparent 100%),
+      radial-gradient(140% 90% at 50% 0%, var(--pp-tier-bg) 0%, transparent 55%),
       linear-gradient(180deg, rgba(255,255,255,.025) 0%, transparent 60%);
     overflow:hidden;box-shadow:0 8px 24px -8px rgba(0,0,0,.5);
     margin-bottom:18px;animation:ppFadeUp .5s cubic-bezier(.2,.7,.2,1) both;
@@ -5534,7 +5554,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.07.4d0adda4';
+const BUILD_VERSION='2026.10.07.60061400';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());

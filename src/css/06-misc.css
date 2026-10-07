@@ -79,7 +79,9 @@
   /* ════════ PROFIL-REDESIGN ════════ */
   .pp-header{position:relative;padding:32px 18px 22px;text-align:center;
     border-radius:24px;border:1px solid rgba(255,255,255,.05);
-    background:radial-gradient(140% 90% at 50% 0%, var(--pp-tier-bg) 0%, transparent 55%),
+    background:linear-gradient(90deg,transparent,var(--pp-tier-1),transparent) 50% 0/70% 1px no-repeat,
+      radial-gradient(70% 55% at 50% 0%, var(--pp-tier-glow) 0%, transparent 100%),
+      radial-gradient(140% 90% at 50% 0%, var(--pp-tier-bg) 0%, transparent 55%),
       linear-gradient(180deg, rgba(255,255,255,.025) 0%, transparent 60%);
     overflow:hidden;box-shadow:0 8px 24px -8px rgba(0,0,0,.5);
     margin-bottom:18px;animation:ppFadeUp .5s cubic-bezier(.2,.7,.2,1) both;
@@ -88,6 +90,9 @@
     --pp-tier-bg:rgba(167,139,250,.14);
     --pp-tier-bg2:rgba(167,139,250,.06);
   }
+  /* Im Profilkopf fällt Licht im Rangton von oben ein: eine Kante oben und
+     ein Hof darunter, beide fest im Hintergrund — der Rang ist auf einen
+     Blick zu sehen, und nichts bewegt sich dafür [§C27]. */
   .pp-header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;
     background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent)}
   .pp-tier-legende{--pp-tier-1:var(--gold);--pp-tier-2:#ffd96b;
