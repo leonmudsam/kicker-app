@@ -744,7 +744,10 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
     if(String(h || '').trim() !== String(s.desc || '').trim()) brkSub = h;
   }
   const glanz = !negativ && !brk && !gross && _newsGlanz(s, sorte, sorte === 'spiel' && d.matchId ? (_spBild(s).glanz ? 'form' : _spBild(s).key) : '');
-  return `<div class="nf-card nf-s-${sorte} nfc-${dcat}${tafelTon?' nf-tafel-'+tafelTon:''}${faktStil?' nf-fakt-'+faktStil.ton:''}${negativ?' nf-neg':''}${brk?' nf-brk':''}${gross?' nf-gross':''}${glanz?' nf-glanz':''}${isRead?' read':''}${imp}" data-sid="${esc(s.id)}"${glanz ? ` style="--gv:${_newsGlanzVersatz(s.id)}s"` : ''}>
+  // Breaking steht in einer Hülle, die seinen Schein trägt: die Karte
+  // schneidet ab, was über ihren Rand ragt, und ein Schein, der per
+  // `box-shadow` atmete, kostete jedes Bild einen Takt über den ganzen Feed.
+  return (brk ? '<div class="nf-brk-hof">' : '') + `<div class="nf-card nf-s-${sorte} nfc-${dcat}${tafelTon?' nf-tafel-'+tafelTon:''}${faktStil?' nf-fakt-'+faktStil.ton:''}${negativ?' nf-neg':''}${brk?' nf-brk':''}${gross?' nf-gross':''}${glanz?' nf-glanz':''}${isRead?' read':''}${imp}" data-sid="${esc(s.id)}"${glanz ? ` style="--gv:${_newsGlanzVersatz(s.id)}s"` : ''}>
     ${_newsMotiv(sorte, s)}
     ${gross ? '<div class="nf-gross-band">' + svgI('star') + 'DIE KARTE DES TAGES</div>' : ''}
     ${balken}
@@ -763,6 +766,6 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
     ${fuss}
     ${brkSub ? `<div class="nf-brk-sub">${esc(brkSub)}</div>` : ''}
     ${fadenHtml || ''}
-  </div>`;
+  </div>` + (brk ? '</div>' : '');
 }
 

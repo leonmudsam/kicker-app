@@ -632,7 +632,7 @@ function _vRankingCore(){
           ${avWappen}
           <div class="pod-name">${esc(pp.name)}</div>
           <div class="pod-wert num">${entry.e}</div>
-          <div class="pod-sub">${sub}</div>
+          <div class="pod-sub">${sub}</div>${platz===1?glanzBahn():''}
         </div>`;
     };
     // 2, 1, 3 — die Mitte gehört dem Ersten.

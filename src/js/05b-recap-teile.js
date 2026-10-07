@@ -59,6 +59,17 @@ function rcpPaarHtml(ids, px){
 // drei — vorher war es einmal eine Goldkarte und zweimal eine nackte Spalte.
 // `pids` mit mehr als einem Eintrag heißt geteilter Titel: dann das Paar,
 // denn ein geteilter Titel gehört keinem allein.
+
+// ── Die Bahn des Lichtlaufs [§C27] ───────────────────────────────────
+// Der goldene Lauf fährt per `transform` über eine Ebene, die zweieinhalb
+// Karten breit ist — und die braucht etwas, das sie abschneidet. Podest,
+// Rückblick und Blattkopf schneiden selbst nicht ab (das Wappen mit seiner
+// Aura ragt heraus), deshalb trägt der Lauf seine eigene Bahn. Vorher
+// wanderte eine `background-position`: jedes Bild ein Takt des
+// Hauptthreads, gemessen im Awards-Reiter 160 ms je Sekunde bei vierfach
+// gedrosselter CPU, solange das Podest zu sehen war. Ob die Bahn leuchtet,
+// sagt das CSS: nur, wo EINER einen goldenen Titel trägt [§C25].
+function glanzBahn(){ return '<span class="glanz-bahn" aria-hidden="true"></span>'; }
 function rcpHeldHtml(o){
   const ids = o.pids && o.pids.length ? o.pids : [o.pid];
   const ein = ids.length === 1;
@@ -76,7 +87,7 @@ function rcpHeldHtml(o){
     <div class="rcp-held-av${ein && band ? ' band' : ''}">${av}</div>
     <div class="rcp-held-n">${esc(namen)}</div>
     ${abzeichen ? `<div class="rcp-held-rang">${abzeichen}</div>` : ''}
-    ${o.zahlen || ''}
+    ${o.zahlen || ''}${glanzBahn()}
   </div>`;
 }
 
@@ -383,7 +394,7 @@ function saisonPodestHtml(sid, rang, o){
       ${av}
       <div class="pod-name">${esc(p.name)}</div>
       <div class="pod-wert num">${e.elo}</div>
-      <div class="pod-sub num">${esc(sub)}</div>
+      <div class="pod-sub num">${esc(sub)}</div>${platz === 1 ? glanzBahn() : ''}
     </div>`;
   };
   const folge = [rang[1], rang[0], rang[2]], plaetze = [2, 1, 3];

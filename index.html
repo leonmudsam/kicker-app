@@ -130,6 +130,7 @@
   .dot.ok{background:var(--acid);box-shadow:0 0 8px var(--acid)}
   .dot.bad{background:var(--red);box-shadow:0 0 8px var(--red)}
   .dot.load{background:var(--gold);animation:pulse 1s infinite}
+  @media(prefers-reduced-motion:reduce){.dot.load{animation:none}}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
   main{padding:6px 16px 0}
@@ -1033,31 +1034,26 @@
   .blatt-text{font-size:12.5px;color:var(--ink2);line-height:1.55;padding:0 2px}
   [class="empty"]{text-align:center;color:var(--muted);padding:48px 20px;font-size:13px}
   [class="empty"] .ee{font-size:34px;margin-bottom:12px;opacity:.5}
-  @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
-  @keyframes glanzLauf{0%,78%{background-position:140% 0}100%{background-position:-40% 0}}
-  .pod-karte.erster.gold::after,
-  .nf-s-held:not(.read)::after,.nf-s-woche:not(.read)::after,
-  .nd-s-held .nd-head::after,.nd-s-woche .nd-head::after,
-  .rcp-held::after{
-    content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
-    background:linear-gradient(105deg,transparent 42%,rgba(247,207,74,.18) 50%,transparent 58%)
-      no-repeat;background-size:250% 100%;background-position:140% 0;
-    animation:glanzLauf 8s ease-in-out infinite}
-  .nf-s-woche:not(.read)::after,.nd-s-woche .nd-head::after{animation-delay:-3s}
-  .rcp-held::after{animation-delay:-5s}
-  .nf-glanz::after{
-    content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
-    background:linear-gradient(105deg,transparent 40%,rgba(var(--story-rgb,185,196,189),.13) 50%,transparent 60%)
-      no-repeat;background-size:250% 100%;background-position:140% 0;
-    animation:glanzLauf 11s ease-in-out infinite;animation-delay:var(--gv,0s)}
+  @keyframes glanzZug{0%,78%{transform:translateX(-84%)}100%{transform:translateX(24%)}}
+  .glanz-bahn{position:absolute;inset:0;border-radius:inherit;overflow:hidden;pointer-events:none}
+  .pod-karte.erster.gold > .glanz-bahn::after,
+  .nf-card.nf-s-held:not(.read)::after,.nf-card.nf-s-woche:not(.read)::after,
+  .nd-s-held .nd-head > .glanz-bahn::after,.nd-s-woche .nd-head > .glanz-bahn::after,
+  .rcp-held > .glanz-bahn::after{
+    content:"";position:absolute;top:0;bottom:0;left:0;width:250%;pointer-events:none;
+    background:linear-gradient(105deg,transparent 42%,rgba(247,207,74,.18) 50%,transparent 58%);
+    transform:translateX(-84%);animation:glanzZug 8s ease-in-out infinite}
+  .nf-card.nf-s-woche:not(.read)::after,.nd-s-woche .nd-head > .glanz-bahn::after{animation-delay:-3s}
+  .rcp-held > .glanz-bahn::after{animation-delay:-5s}
+  .nf-card.nf-glanz::after{
+    content:"";position:absolute;top:0;bottom:0;left:0;width:250%;pointer-events:none;
+    background:linear-gradient(105deg,transparent 40%,rgba(var(--story-rgb,185,196,189),.13) 50%,transparent 60%);
+    transform:translateX(-84%);animation:glanzZug 11s ease-in-out infinite;animation-delay:var(--gv,0s)}
   .nd-s-held .nd-head,.nd-s-woche .nd-head{position:relative;border-radius:14px}
   @media(prefers-reduced-motion:reduce){
-    .nf-glanz::after,
-    .pod-karte.erster.gold::after,
-    .nf-s-held:not(.read)::after,.nf-s-woche:not(.read)::after,
-    .nd-s-held .nd-head::after,.nd-s-woche .nd-head::after,
-    .rcp-held::after{animation:none;background:none}}
+    .nf-card.nf-glanz::after,.nf-card.nf-s-held:not(.read)::after,.nf-card.nf-s-woche:not(.read)::after,
+    .glanz-bahn::after{animation:none!important;background:none!important}}
 
   .mini-label{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);
     margin:0 2px 8px;font-weight:600}
@@ -1458,11 +1454,12 @@
   @keyframes ppFadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
   @keyframes ppFadeScale{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
   @keyframes ppPulse{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.05)}}
-  @keyframes ppFloat{0%,100%{transform:translateX(-50%) translateY(0) rotate(-2deg)}
-    50%{transform:translateX(-50%) translateY(-3px) rotate(-2deg)}}
   @keyframes ppBarIn{from{width:0 !important}}
   @keyframes ppSlideIn{from{width:0 !important}}
   @keyframes ppSlideThumb{from{left:0 !important}}
+  @media(prefers-reduced-motion:reduce){
+    .pp-header,.pp-av-wrap,.pp-av-ring::before,.pp-name,.pp-form,.pp-sec,
+    .pp-pos-c .bar > i,.pp-slider .pp-fill,.pp-slider .pp-thumb{animation:none}}
 
   .text-in{width:100%;font-family:inherit;font-size:15px;background:var(--bg2);border:1px solid var(--line);
     color:var(--ink);padding:14px;border-radius:13px;outline:none;transition:.18s}
@@ -1968,13 +1965,14 @@
     background:rgba(240,86,106,.16);font-family:'Sometype Mono',monospace;
     font-size:10px;letter-spacing:.22em;color:#ff8a8a;font-weight:700;
     border-bottom:1px solid rgba(240,86,106,.24)}
-  .nf-brk-punkt{width:7px;height:7px;border-radius:50%;background:var(--red);
-    box-shadow:0 0 0 0 rgba(240,86,106,.6);animation:nfPuls 2.4s ease-out infinite}
+  .nf-brk-punkt{width:7px;height:7px;border-radius:50%;background:var(--red);position:relative}
+  .nf-brk-punkt::before{content:"";position:absolute;inset:0;border-radius:50%;
+    background:rgb(240,86,106);opacity:0;animation:nfPuls 2.4s ease-out infinite}
   @keyframes nfPuls{
-    0%{box-shadow:0 0 0 0 rgba(240,86,106,.55)}
-    70%{box-shadow:0 0 0 7px rgba(240,86,106,0)}
-    100%{box-shadow:0 0 0 0 rgba(240,86,106,0)}}
-  @media(prefers-reduced-motion:reduce){.nf-brk-punkt{animation:none}}
+    0%{transform:scale(1);opacity:.55}
+    70%{transform:scale(3);opacity:0}
+    100%{transform:scale(1);opacity:0}}
+  @media(prefers-reduced-motion:reduce){.nf-brk-punkt::before{animation:none}}
   .nf-brk-zeit{margin-left:auto;letter-spacing:.06em;color:rgba(255,138,138,.7)}
   .nf-brk-n{flex:0 0 auto;padding:1px 6px;border-radius:5px;
     background:rgba(240,86,106,.18);border:1px solid rgba(240,86,106,.34);
@@ -2316,11 +2314,13 @@
     background:radial-gradient(circle,currentColor,transparent 68%);opacity:.16}
   .nf-s-held .nf-motiv{opacity:.1}
   .nf-s-fakt .nf-motiv{opacity:.05}
-  .nf-s-tafel:not(.read) .nf-rub i{animation:nfTafelAtmen 5.4s ease-in-out infinite}
-  @keyframes nfTafelAtmen{
-    0%,100%{box-shadow:inset 0 0 0 1px rgba(var(--story-rgb),.17),0 0 0 rgba(var(--story-rgb),0)}
-    50%{box-shadow:inset 0 0 0 1px rgba(var(--story-rgb),.3),0 0 10px -3px rgba(var(--story-rgb),.34)}}
-  @media(prefers-reduced-motion:reduce){.nf-s-tafel .nf-rub i{animation:none}}
+  .nf-s-tafel:not(.read) .nf-rub i{position:relative}
+  .nf-s-tafel:not(.read) .nf-rub i::after{content:"";position:absolute;inset:0;border-radius:inherit;
+    pointer-events:none;opacity:0;
+    box-shadow:inset 0 0 0 1px rgba(var(--story-rgb),.157),0 0 10px -3px rgba(var(--story-rgb),.34);
+    animation:nfTafelAtmen 5.4s ease-in-out infinite}
+  @keyframes nfTafelAtmen{0%,100%{opacity:0}50%{opacity:1}}
+  @media(prefers-reduced-motion:reduce){.nf-s-tafel .nf-rub i::after{animation:none}}
   .nf-card.nf-neg .nf-motiv{opacity:.07}
   .nf-card.read .nf-motiv{opacity:.055}
   .nf-card > *:not(.nf-motiv){position:relative;z-index:1}
@@ -2372,16 +2372,16 @@
   .nd-faeden{display:flex;flex-direction:column;gap:6px;margin:14px 0 4px}
   .nd-faeden .nf-faden{border:1px dashed var(--line2);border-radius:12px;padding:9px 11px}
 
-  .nf-brk{margin:6px -5px;border-width:2px;border-style:solid;
+  .nf-brk{border-width:2px;border-style:solid}
+  .nf-brk-hof{position:relative;z-index:0;margin:6px -5px}
+  .nf-brk-hof::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+    border-radius:4px 14px 14px 4px;opacity:0;
+    box-shadow:0 0 22px -4px rgba(240,86,106,.34),0 14px 34px -18px rgba(240,86,106,.55);
     animation:nfBrkGlut 3.6s ease-in-out infinite}
-  @keyframes nfBrkGlut{
-    0%,100%{box-shadow:inset 0 1px 0 rgba(255,255,255,.045),
-                       0 0 0 0 rgba(240,86,106,0),
-                       0 14px 34px -22px rgba(240,86,106,.5)}
-    50%{box-shadow:inset 0 1px 0 rgba(255,255,255,.045),
-                   0 0 22px -4px rgba(240,86,106,.34),
-                   0 14px 34px -18px rgba(240,86,106,.7)}}
-  @media(prefers-reduced-motion:reduce){.nf-brk{animation:none}}
+  @keyframes nfBrkGlut{0%,100%{opacity:0}50%{opacity:1}}
+  @media(prefers-reduced-motion:no-preference){
+    .nf-brk-hof > .nf-card.nf-brk{box-shadow:inset 0 1px 0 rgba(255,255,255,.045),0 14px 34px -22px rgba(240,86,106,.5)}}
+  @media(prefers-reduced-motion:reduce){.nf-brk-hof::before{animation:none}}
   .nf-brk .nf-motiv{color:var(--red);opacity:.16;width:120px;height:120px;right:12px}
   .nf-brk-band{background:linear-gradient(90deg,rgba(240,86,106,.34),rgba(240,86,106,.08));
     color:#ffdde1;font-size:10.5px;letter-spacing:.26em;position:relative;overflow:hidden}
@@ -5539,7 +5539,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.06.ceb7f44d';
+const BUILD_VERSION='2026.10.07.d4b4e6b2';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -6699,6 +6699,8 @@ function rcpPaarHtml(ids, px){
   }</span>`;
 }
 
+
+function glanzBahn(){ return '<span class="glanz-bahn" aria-hidden="true"></span>'; }
 function rcpHeldHtml(o){
   const ids = o.pids && o.pids.length ? o.pids : [o.pid];
   const ein = ids.length === 1;
@@ -6713,7 +6715,7 @@ function rcpHeldHtml(o){
     <div class="rcp-held-av${ein && band ? ' band' : ''}">${av}</div>
     <div class="rcp-held-n">${esc(namen)}</div>
     ${abzeichen ? `<div class="rcp-held-rang">${abzeichen}</div>` : ''}
-    ${o.zahlen || ''}
+    ${o.zahlen || ''}${glanzBahn()}
   </div>`;
 }
 
@@ -6927,7 +6929,7 @@ function saisonPodestHtml(sid, rang, o){
       ${av}
       <div class="pod-name">${esc(p.name)}</div>
       <div class="pod-wert num">${e.elo}</div>
-      <div class="pod-sub num">${esc(sub)}</div>
+      <div class="pod-sub num">${esc(sub)}</div>${platz === 1 ? glanzBahn() : ''}
     </div>`;
   };
   const folge = [rang[1], rang[0], rang[2]], plaetze = [2, 1, 3];
@@ -10387,7 +10389,7 @@ function _vRankingCore(){
           ${avWappen}
           <div class="pod-name">${esc(pp.name)}</div>
           <div class="pod-wert num">${entry.e}</div>
-          <div class="pod-sub">${sub}</div>
+          <div class="pod-sub">${sub}</div>${platz===1?glanzBahn():''}
         </div>`;
     };
     const folge = [hofTop[1], hofTop[0], hofTop[2]];
@@ -11266,7 +11268,7 @@ function _vAwardsCore(){
         ${_avTrophyHtml(c.id, px)}
         <div class="pod-name">${esc(pname(c.id))}</div>
         <div class="pod-wert num">${c.count}</div>
-        <div class="pod-sub">${c.count===1?'Award':'Awards'}</div>
+        <div class="pod-sub">${c.count===1?'Award':'Awards'}</div>${mitte ? glanzBahn() : ''}
       </div>`;
     };
     html += `<div class="aw-sect gold">
@@ -22207,7 +22209,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
     if(String(h || '').trim() !== String(s.desc || '').trim()) brkSub = h;
   }
   const glanz = !negativ && !brk && !gross && _newsGlanz(s, sorte, sorte === 'spiel' && d.matchId ? (_spBild(s).glanz ? 'form' : _spBild(s).key) : '');
-  return `<div class="nf-card nf-s-${sorte} nfc-${dcat}${tafelTon?' nf-tafel-'+tafelTon:''}${faktStil?' nf-fakt-'+faktStil.ton:''}${negativ?' nf-neg':''}${brk?' nf-brk':''}${gross?' nf-gross':''}${glanz?' nf-glanz':''}${isRead?' read':''}${imp}" data-sid="${esc(s.id)}"${glanz ? ` style="--gv:${_newsGlanzVersatz(s.id)}s"` : ''}>
+  return (brk ? '<div class="nf-brk-hof">' : '') + `<div class="nf-card nf-s-${sorte} nfc-${dcat}${tafelTon?' nf-tafel-'+tafelTon:''}${faktStil?' nf-fakt-'+faktStil.ton:''}${negativ?' nf-neg':''}${brk?' nf-brk':''}${gross?' nf-gross':''}${glanz?' nf-glanz':''}${isRead?' read':''}${imp}" data-sid="${esc(s.id)}"${glanz ? ` style="--gv:${_newsGlanzVersatz(s.id)}s"` : ''}>
     ${_newsMotiv(sorte, s)}
     ${gross ? '<div class="nf-gross-band">' + svgI('star') + 'DIE KARTE DES TAGES</div>' : ''}
     ${balken}
@@ -22226,7 +22228,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
     ${fuss}
     ${brkSub ? `<div class="nf-brk-sub">${esc(brkSub)}</div>` : ''}
     ${fadenHtml || ''}
-  </div>`;
+  </div>` + (brk ? '</div>' : '');
 }
 
 function _newsRubrik(sorte, s){
@@ -24693,7 +24695,7 @@ function openNewsDetail(sid){
         <div class="nd-title">${esc(s.title)}</div>
         <div class="nd-when">${svgI('clock')}${esc(_newsWhenLabel(s.when))}</div>
       </div>
-      <button class="nd-x" id="ndXBtn" aria-label="Schließen">×</button>
+      <button class="nd-x" id="ndXBtn" aria-label="Schließen">×</button>${sorte === 'held' || sorte === 'woche' ? glanzBahn() : ''}
     </div>
     ${lead ? `<div class="nd-desc">${_newsBetont(lead)}</div>` : ''}
     ${body}

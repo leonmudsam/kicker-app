@@ -3,10 +3,10 @@
 ## Regel
 
 - Derselbe Spieler sieht überall gleich aus, und dieselbe Aussage hat ein Bauteil: Wappen `.rav` (`insAvWrap`), Podest `.podest`/`.pod-karte` (`_chronPodestHtml`, Platz aus dem Wert, `_chronPlatz`), Segmentwähler `.ui-switch` (außen, Schlitten) und `.ui-tabs` (innen, Strich), Rangabzeichen `.rangab` (`rankBadgeHtml`), Gesicht `.av`, Zeichenkachel `.zk` (`zkHtml`), Award-Kachel `.aw-trophy` (`awKachelHtml`, `awVitrineHtml`), Beleg (`belegHtml`), Blattkopf und -fuß (`blattKopfHtml`, `blattAbschnittHtml`, `blattFussHtml`), Bühne (`buehneHtml`), Hinweis (`toast`), Bestätigung (`bestaetigen`), Einblick (`einblickHtml`). Wer ein zweites Bauteil für dieselbe Aussage baut, hat einen Fehler gemacht.
-- Bewegung: der Schlitten fährt nur über `transform` (`schlittenFahren`); eine Animation endet an `transitionend` mit Rückfall-Timer und genau einem Abschluss je Element (`_afterTransition`); der Finger besitzt den Zug (Eingabefelder und gescrollte Listen gehören nicht der Schließgeste, ein Bild je Frame); ein Balken wächst in der Höhe, nie in der Breite; alles ruht bei Bewegungsruhe.
+- Bewegung: der Schlitten fährt nur über `transform` (`schlittenFahren`); eine Animation endet an `transitionend` mit Rückfall-Timer und genau einem Abschluss je Element (`_afterTransition`); der Finger besitzt den Zug (Eingabefelder und gescrollte Listen gehören nicht der Schließgeste, ein Bild je Frame); ein Balken wächst in der Höhe, nie in der Breite; was endlos läuft, bewegt nur `transform` und `opacity` — ein Schein, der atmet, ist eine eigene Ebene, die kommt und geht, und ein Lichtlauf fährt per `transform` (`glanzZug`) über eine Fläche, die abschneidet, oder über seine eigene Bahn (`glanzBahn`); alles ruht bei Bewegungsruhe.
 - Ein Award hat ein Zeichen (`AW_IC`), einen Namen (`AWARD_META.title`) und einen Wert aus EINER Tabelle (`AW_WERT`: Liste, Zahl, Einheit, Stichprobe, `gilt`); die Kachel beantwortet wer, wie viel, woraus (`awFeldHtml`, `awLaufHtml`) und trägt drei Töne (`ton-pos`, `ton-team`, `ton-neg`). Ein Name gehört einer Frage.
 - Feed-Karte: Tageskopf als Marke (`.nf-tag`), Rubrikband (`_newsRubrik`, `_newsSorteIcon`), zwölf Kartenformen (`_newsSorte`) mit je einer Bildzone, Motiv (`_newsMotiv`), keine zwei Rubriken mit demselben Zeichen; die Bildzone macht die Karte nicht höher und nimmt der Schlagzeile nicht den Platz; ein Deckel schneidet ab statt zu schrumpfen; Zahl, Datum, Name fett (`_newsBetont`). Es gibt eine Kartenform, kein Mini-Popup.
-- Licht und Rand: Breaking bricht die Spalte und glimmt; die Karte des Tages schimmert leise golden; `glanzLauf` nur dort, wo EINER einen goldenen Titel trägt; das Seltene trägt einen leisen Lauf in seiner Familienfarbe (`_newsGlanz`); der Rand (`--kante`, `--rahmen`) sagt das Gewicht; negativ trägt `.nf-neg`.
+- Licht und Rand: Breaking bricht die Spalte und glimmt; die Karte des Tages schimmert leise golden; der Lichtlauf (`glanzZug`, ohne eigenes Abschneiden auf seiner Bahn `glanzBahn`) nur dort, wo EINER einen goldenen Titel trägt; das Seltene trägt einen leisen Lauf in seiner Familienfarbe (`_newsGlanz`); der Rand (`--kante`, `--rahmen`) sagt das Gewicht; negativ trägt `.nf-neg`.
 - Story-Blatt: derselbe Bau (`_newsBlattKopf`, `_newsDetailMitte`, `_newsBlattFuss`), die Mitte zuerst gebaut, die Partie höchstens einmal, Scroll vor dem Markup auf null; was oben steht, steht unten nicht noch einmal (`_ndNeu`, `_ndOben`); kein Satz erklärt eine Grafik; das Blatt einer Partie zeigt Bühne, Siegchance auf der Skala, Elo-Wirkung, Duelle, Tagesleiste und Verteilung (`_ndBuehne`, `_ndChanceSkala`, `_ndEloWirkung`, `_ndDuelle`, `_ndTagLeiste`, `_ndVerteilung`); der Spieltag als Bahn (`_ndTagesbahn`); jedes Blatt zeigt, wovon seine Story handelt.
 - Zeichen: ein Strich aus EINER Regel (`--strich`); der Strahl des Positionsprofils gehört der überwiegenden Seite, die stärkere Rolle trägt ihre Farbe; das Insignium hat Reif, Kopf und Raute an fester Stelle; das Banner nur, wo ein Spieler allein und groß steht; die Kachel misst am Reif.
 - Eine Form je Sache: Kalendertag `tagKey`, Uhrzeit `datumFmt`, Dezimalkomma `komma`, Stand aus Sicht des Nebenstehenden `standFuer`, Überraschung als Siegchance der Sieger, Namen mit „&" nur in schmalen Zellen (`_chronHolderNames`), im Satz mit „und" (`_chronHalterSatz`, `_namenListe`), Elo-Grenzen in `expected` und `CHANCE_*`, der Platz im Feed aus der Gesamtliga (`_newsGesamtrang`). Zwei Rechnungen über dieselbe Frage, die bleiben müssen, hält ein Test aneinander.
@@ -19,7 +19,7 @@ quer durch `src/js` und `src/css`; die Bauteile selbst in `05b-recap-teile.js`, 
 
 ## Prüfung
 
-`tests/blatt` (Geometrie, Bauteile, Text und Bewegung jedes Reiters und Blatts bei 360 px), `tests/bewegung` (Wischgeste, Abschlüsse), `tests/tafel` (Strich, Award-Tabelle, Kalendertag, Formatierer), `tests/zeichen`.
+`tests/blatt` (Geometrie, Bauteile, Text und Bewegung jedes Reiters und Blatts bei 360 px), `tests/bewegung` (Wischgeste, Abschlüsse), `tests/blatt` (was im Feed endlos läuft, bewegt nur transform und opacity), `tests/tafel` (Strich, Award-Tabelle, Kalendertag, Formatierer), `tests/zeichen`.
 
 ## Herleitung
 
@@ -222,7 +222,7 @@ eine Tafelgeschichte wird durch die Auswahl also nicht vollständig golden.
 Beides ruht bei
 `prefers-reduced-motion`, und `tests/blatt` misst das nach.
 **Dasselbe Licht liegt, wo Gold einen Titel bedeutet und EINER ihn trägt**
-(`glanzLauf`, `06-misc.css`): der Erste in Gold auf jedem Podest, der
+(`glanzZug`, `06-misc.css`): der Erste in Gold auf jedem Podest, der
 Spieler des Tages und der Woche im Feed, solange ungelesen, samt dem Kopf
 ihres Blatts, und der Held der Rückblicke. Nirgends sonst — ein Licht auf
 jeder goldenen Zahl wäre eine Kirmes, und Gold trägt nur, was selten ist
@@ -652,3 +652,17 @@ einem Hin und Her stammt.
 sechs Wörter in 11,5 px eng aneinander, und die letzten lagen hinter dem
 Rand. Die Besitzleiste darüber ist so hoch, dass Zahl, Säule und Gesicht
 in ihrer Karte bleiben; das Gesicht lief unten hinaus.
+
+Was endlos läuft, kostete den Feed fast den ganzen Hauptthread. Der Schein
+von Breaking, das Atmen der Tafel-Rubrik und der Puls des Breaking-Punkts
+wechselten ihren `box-shadow`, der Lichtlauf seine `background-position`:
+jede dieser Bewegungen verlangte in jedem Bild einen Takt des Hauptthreads
+über den ganzen Feed — Stil, Zeichnen, Übergabe. Gemessen mit vierfach
+gedrosselter CPU waren das rund 490 ms je Sekunde, solange der Feed nur
+offen stand; ein Wischen in dieser Zeit ruckelte. Dieselben Bewegungen als
+Ebenen, die kommen und gehen oder fahren, rechnet die Grafikkarte: 3 ms.
+Dasselbe galt für den Lichtlauf auf dem Podest des Awards-Reiters (160 ms
+je Sekunde) und auf dem Helden der Rückblicke; dort schneidet die Fläche
+nicht ab — das Wappen ragt heraus —, also trägt der Lauf seine eigene Bahn.
+Der Schein von Breaking liegt dafür auf einer Hülle hinter der Karte
+(`.nf-brk-hof`), weil die Karte abschneidet, was über ihren Rand ragt.

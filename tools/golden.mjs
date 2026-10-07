@@ -4,6 +4,7 @@
 //   node tools/golden.mjs                       aktueller Bau gegen HEAD
 //   node tools/golden.mjs --basis=b44d78f       gegen einen bestimmten Stand
 //   node tools/golden.mjs --schnell             nur Szenario S1, ohne Story-Blätter
+//   node tools/golden.mjs --bilder              Bildvergleich statt Markup (siehe unten)
 //
 // Wozu: ein Umbau, der „nichts ändern" soll, muss das beweisen. Die Suiten
 // prüfen Zusicherungen, die jemand aufgeschrieben hat; dieser Vergleich prüft
@@ -288,9 +289,137 @@ function unterschied(a, b){
   return `  ab Zeichen ${i}:\n    vorher: ${um(a)}\n    nachher: ${um(b)}`;
 }
 
+// ── Bildvergleich (--bilder) ─────────────────────────────────────────────
+// Ein Umbau am CSS ändert das Markup nicht, aber vielleicht das Bild — und
+// eine Animation, die statt `box-shadow` die Deckkraft einer Ebene bewegt,
+// sieht im Markup ganz anders aus und soll im Bild gleich sein. Fotografiert
+// wird jeder Reiter und die wichtigsten Blätter, zweimal: in Bewegungsruhe,
+// und mit laufenden Animationen, angehalten bei 0, ¼ und ½ ihrer Dauer
+// (`document.getAnimations()`, einschließlich Verzögerung). Verglichen wird im
+// Browser Pixel für Pixel; ein Kanal darf um BILD_TOLERANZ abweichen
+// (Kantenglättung), und ein Bild gilt als gleich, wenn höchstens
+// BILD_ANTEIL seiner Pixel darüber liegen. Die Bilder liegen danach in
+// `.golden/bilder/`.
+const BILDER = process.argv.includes('--bilder');
+// Gemessen schwankt dieselbe Fassung gegen sich selbst um höchstens 0,15 %
+// der Pixel (die Rollen-Landkarte zeichnet ihre Punkte gestaffelt per
+// Skript); die Schwelle liegt knapp darüber. Was darunter bleibt, steht
+// trotzdem in der Liste und liegt als Bild in `.golden/bilder/`.
+const BILD_TOLERANZ = 8, BILD_ANTEIL = 0.002;
+const ZEITPUNKTE = [0, 0.25, 0.5];
+function bildAnsichten(){
+  const v = ansichten(false).filter(x => !x.jede);
+  return v.filter(x => x.name.startsWith('reiter/') ? !/liga-(week|month)-(winrate|goaldiff)/.test(x.name)
+    : /news-feed|liga-chronik|rangsystem|profil\/[0-2]$/.test(x.name));
+}
+async function bildAbzug(html){
+  const sz = SZENARIEN.find(s => s.id === 'S1');
+  const bilder = {};
+  for(const ruhe of [true, false]){
+    const {browser, page, K} = await createHarness({html, jetzt:sz.jetzt, vorApp:VORAPP + SER,
+      kontext:{timezoneId:'Europe/Berlin', locale:'de-DE', reducedMotion:ruhe ? 'reduce' : 'no-preference'}});
+    try{
+      const lies = await page.evaluateHandle(`(${LESEN})`);
+      // Was zwischen zwei Aufnahmen DERSELBEN Fassung schwankt, steht still:
+      // der blinkende Cursor, und Bilder, die noch dekodiert werden.
+      await page.addStyleTag({content:'*{caret-color:transparent!important}'});
+      const ruhig = () => page.evaluate(async () => {
+        await Promise.all([...document.images].map(i => i.decode ? i.decode().catch(() => {}) : null));
+        const bilder = [...document.querySelectorAll('image')].map(i => i.href && i.href.baseVal).filter(Boolean);
+        await Promise.all([...new Set(bilder)].map(u => new Promise(r => { const i = new Image(); i.onload = i.onerror = r; i.src = u; })));
+        // Übergänge (ein Blatt fährt auf) laufen zu Ende; angehalten werden
+        // nur die Animationen selbst.
+        for(let i = 0; i < 40 && document.getAnimations().some(a => typeof CSSTransition !== 'undefined'
+            && a instanceof CSSTransition && a.playState === 'running'); i++) await new Promise(r => setTimeout(r, 50));
+        for(let i = 0; i < 3; i++) await new Promise(r => requestAnimationFrame(() => r()));
+        await new Promise(r => setTimeout(r, 120));
+      });
+      for(const v of bildAnsichten()){
+        try{ await K(v.js); await page.evaluate(([f, s]) => f(s), [lies, v.sel]); await ruhig(); }
+        catch(e){ continue; }
+        for(const t of ruhe ? [null] : ZEITPUNKTE){
+          // Angehalten wird vor JEDER Aufnahme: eine Animation, die erst nach
+          // dem letzten Anhalten anfing, liefe sonst weiter.
+          const frier = () => t === null ? null : page.evaluate(t => {
+            for(const a of document.getAnimations()){
+              if(typeof CSSTransition !== 'undefined' && a instanceof CSSTransition) continue;
+              const z = a.effect && a.effect.getTiming ? a.effect.getTiming() : {};
+              const d = typeof z.duration === 'number' ? z.duration : 0;
+              a.pause(); a.currentTime = (z.delay || 0) + t * d;
+            }
+          }, t);
+          // Ein Bild gilt erst, wenn zwei Aufnahmen nacheinander gleich sind:
+          // sonst stand ein Übergang oder eine Unschärfe noch in Arbeit.
+          await frier();
+          let bild = (await page.screenshot()).toString('base64');
+          for(let n = 0; n < 6; n++){
+            await page.waitForTimeout(120);
+            await frier();
+            const nochmal = (await page.screenshot()).toString('base64');
+            if(nochmal === bild) break;
+            bild = nochmal;
+          }
+          bilder[`${v.name}${t === null ? '' : '@' + t}`] = bild;
+        }
+      }
+    } finally { await browser.close(); }
+  }
+  return bilder;
+}
+async function bildVergleich(a, b){
+  const chromium = require('../tests/browser.js').ladeChromium();
+  const browser = await chromium.launch();
+  try{
+    const page = await browser.newPage();
+    const ergebnis = {};
+    for(const k of [...new Set([...Object.keys(a), ...Object.keys(b)])]){
+      if(!a[k] || !b[k]){ ergebnis[k] = 'fehlt'; continue; }
+      if(a[k] === b[k]) continue;
+      ergebnis[k] = await page.evaluate(async ([x, y, tol]) => {
+        const lade = s => new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = 'data:image/png;base64,' + s; });
+        const [i1, i2] = await Promise.all([lade(x), lade(y)]);
+        if(i1.width !== i2.width || i1.height !== i2.height) return 1;
+        const c = document.createElement('canvas'); c.width = i1.width; c.height = i1.height;
+        const g = c.getContext('2d');
+        g.drawImage(i1, 0, 0); const d1 = g.getImageData(0, 0, c.width, c.height).data;
+        g.clearRect(0, 0, c.width, c.height);
+        g.drawImage(i2, 0, 0); const d2 = g.getImageData(0, 0, c.width, c.height).data;
+        let n = 0;
+        for(let i = 0; i < d1.length; i += 4)
+          if(Math.abs(d1[i]-d2[i]) > tol || Math.abs(d1[i+1]-d2[i+1]) > tol || Math.abs(d1[i+2]-d2[i+2]) > tol) n++;
+        return n / (d1.length / 4);
+      }, [a[k], b[k], BILD_TOLERANZ]);
+    }
+    return ergebnis;
+  } finally { await browser.close(); }
+}
+
 const WERKZEUG = sha1(fs.readFileSync(fileURLToPath(import.meta.url), 'utf8') + fs.readFileSync(path.join(ROOT,'tools/performance.cjs'), 'utf8') + (SCHNELL ? 's' : 'v'));
 const rev = execSync(`git rev-parse ${BASIS}`, {cwd:ROOT}).toString().trim();
 const dir = path.join(ROOT, '.golden'); fs.mkdirSync(dir, {recursive:true});
+if(BILDER){
+  const bd = path.join(dir, 'bilder'); fs.mkdirSync(bd, {recursive:true});
+  const basisBilder = path.join(dir, `${rev.slice(0,10)}-${WERKZEUG}-bilder.json`);
+  let alt;
+  if(fs.existsSync(basisBilder)) alt = JSON.parse(fs.readFileSync(basisBilder, 'utf8'));
+  else { console.error(`Bilder der Basis ${rev.slice(0,10)} …`);
+    alt = await bildAbzug(execSync(`git show ${rev}:index.html`, {cwd:ROOT, maxBuffer:64<<20}).toString());
+    fs.writeFileSync(basisBilder, JSON.stringify(alt)); }
+  console.error(`Bilder der neuen Fassung …`);
+  const jetzt = await bildAbzug(fs.readFileSync(NEU, 'utf8'));
+  const erg = await bildVergleich(alt, jetzt);
+  const name = k => k.replace(/[\/@]/g, '_');
+  const zuViel = Object.entries(erg).filter(([, v]) => v === 'fehlt' || v > BILD_ANTEIL);
+  for(const [k, v] of Object.entries(erg)){
+    if(v === 'fehlt') continue;
+    fs.writeFileSync(path.join(bd, name(k) + '-basis.png'), Buffer.from(alt[k], 'base64'));
+    fs.writeFileSync(path.join(bd, name(k) + '-neu.png'), Buffer.from(jetzt[k], 'base64'));
+  }
+  console.log(`${Object.keys(jetzt).length} Bilder verglichen, ${Object.keys(erg).length} nicht byte-gleich, ${zuViel.length} über ${BILD_ANTEIL * 100} % der Pixel.`);
+  for(const [k, v] of Object.entries(erg).sort((x, y) => (y[1] === 'fehlt' ? 2 : y[1]) - (x[1] === 'fehlt' ? 2 : x[1])).slice(0, 40))
+    console.log(`  ${v === 'fehlt' ? '✗' : v > BILD_ANTEIL ? '✗' : '·'} ${k}: ${v === 'fehlt' ? 'fehlt' : (v * 100).toFixed(3) + ' %'}`);
+  process.exit(zuViel.length ? 1 : 0);
+}
 const basisDatei = path.join(dir, `${rev.slice(0,10)}-${WERKZEUG}.json`);
 let basis;
 if(fs.existsSync(basisDatei)) { basis = JSON.parse(fs.readFileSync(basisDatei, 'utf8')); console.error(`Basis ${rev.slice(0,10)} aus dem Zwischenspeicher.`); }
