@@ -390,13 +390,16 @@ const ok = (c, msg, det) => {
                    bronze: /--bronze:\s*#C08457/i.test(cssText)};
   ok(metalle.gold && metalle.silber && metalle.bronze,
      'alle drei Metalle sind Tokens', JSON.stringify(metalle));
+  // Das Metall steht an der Platzziffer. Ein Strich links an der Kante kam
+  // dazu und wieder weg: auf dem Telefon wirkte er wie ein Fehler.
   const raeder = {
-    top1: /\.rrow\.top1::before\{background:var\(--gold\)\}/.test(cssText),
-    top2: /\.rrow\.top2::before\{background:var\(--silber\)\}/.test(cssText),
-    top3: /\.rrow\.top3::before\{background:var\(--bronze\)\}/.test(cssText)
+    top1: /\.rrow\.top1 \.pos\{color:var\(--gold\)\}/.test(cssText),
+    top2: /\.rrow\.top2 \.pos\{color:var\(--silber\)\}/.test(cssText),
+    top3: /\.rrow\.top3 \.pos\{color:var\(--bronze\)\}/.test(cssText),
+    strich: /\.rrow\.top[123]::before/.test(cssText)
   };
-  ok(raeder.top1 && raeder.top2 && raeder.top3,
-     'Platz 1, 2, 3 tragen Gold, Silber, Bronze', JSON.stringify(raeder));
+  ok(raeder.top1 && raeder.top2 && raeder.top3 && !raeder.strich,
+     'Platz 1, 2, 3 tragen Gold, Silber, Bronze an der Ziffer, ohne Strich an der Kante', JSON.stringify(raeder));
   // Kein Nachzügler: Silber und Bronze dürfen nirgends mehr als Rohwert stehen.
   const alteToene = (cssText.match(/#c8d0cb|#cd7f32|#c0c0c0|#cdd5d0|#d49158/gi) || []);
   ok(alteToene.length === 0, 'keine alten Silber-/Bronzetöne mehr im CSS',

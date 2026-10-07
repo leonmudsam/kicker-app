@@ -139,8 +139,7 @@
     border:1px solid rgba(var(--awc-rgb),.20);border-radius:16px;padding:11px 11px 12px;
     position:relative;cursor:pointer;transition:transform .15s;min-width:0;
     display:flex;flex-direction:column;gap:9px;text-align:left}
-  .aw-trophy:active{transform:translateY(-2px);
-    box-shadow:inset 0 0 0 1px rgba(255,255,255,.10),0 0 0 3px rgba(190,242,100,.07)}
+  .aw-trophy:active{transform:translateY(-2px)}
   /* Die Kante oben nennt die Rolle, dort fängt das Auge an. */
   .aw-trophy::before{content:"";position:absolute;left:14px;right:14px;top:0;height:2px;
     border-radius:0 0 2px 2px;
@@ -350,25 +349,6 @@
     border-color:var(--line2);color:var(--faint)}
   .rek-ic svg{width:17px;height:17px;fill:none;stroke:currentColor;
     stroke-linecap:round;stroke-linejoin:round}
-  /* Die Kacheln kommen herein [§C27]. Beim Scrollen hebt sich jede Award-
-     und Rekordkachel an ihren Platz, und über ihr Zeichen läuft ein Glanz.
-     Die Bewegung hängt am Scrollen (`animation-timeline: view()`), nicht an
-     der Zeit: der Browser rechnet sie auf der Grafikkarte, ohne Beobachter
-     und ohne Hauptthread. Was beim Öffnen schon im Bild steht, steht fertig
-     da. `backwards` statt `both`: nach dem Hereinkommen gilt wieder der
-     Druck (`:active`), sonst hielte die Animation ihn fest. Wo der Browser
-     Scroll-Animationen nicht kennt, steht alles ohne Bewegung. */
-  @keyframes kachelHeben{from{opacity:.35;transform:translateY(10px)}to{opacity:1;transform:none}}
-  @keyframes zeichenGlanz{from{transform:translateX(-120%)}to{transform:translateX(120%)}}
-  @supports (animation-timeline:view()){
-    @media(prefers-reduced-motion:no-preference){
-      .aw-trophy,.rek{view-timeline-name:--kachel;
-        animation:kachelHeben linear backwards;animation-timeline:view();animation-range:entry 0% entry 70%}
-      .aw-t-kopf .zk,.rek-ic{position:relative;overflow:hidden}
-      .aw-t-kopf .zk::after,.rek-ic::after{content:"";position:absolute;inset:-2px;pointer-events:none;
-        background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.5) 50%,transparent 70%);
-        transform:translateX(-120%);
-        animation:zeichenGlanz linear both;animation-timeline:--kachel;animation-range:entry 40% cover 35%}}}
   /* Kein Flex-Container: ein Flex-Kind wird BLOCKIFIZIERT, und damit ist
      `display:-webkit-box` am Beleg wirkungslos — die Klammer auf zwei Zeilen
      griff nie, und ein einzelnes „%" stand auf einer dritten Zeile. */

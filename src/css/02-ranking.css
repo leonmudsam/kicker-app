@@ -16,57 +16,46 @@
   /* ============ [§C5] RANK LIST ============ */
   .rlist{display:flex;flex-direction:column;gap:8px}
   /* overflow bleibt sichtbar, seit das Zeichen [§C26] hinter dem Avatar
-     brennt: die Flamme schlägt über die Zeilenkante hinaus. Die drei
-     Medaillenkanten runden sich deshalb selbst ab, statt sich vom
-     Zeilenrand beschneiden zu lassen. */
+     brennt: die Flamme schlägt über die Zeilenkante hinaus. */
   .rrow{display:flex;align-items:center;gap:11px;background:var(--surface);border:1px solid var(--line);
     border-radius:var(--r);padding:10px 14px;cursor:pointer;transition:.16s;position:relative;overflow:visible}
   .rrow:active{transform:scale(.985);background:var(--surface2)}
   /* Die Platzziffer steht in jeder Zeile an derselben Stelle und in
      derselben Form. Vorher trugen die ersten drei stattdessen eine
      Metallplakette — neben dem Wappen am Avatar [§C27] war das ein zweites
-     Metallstück in derselben Zeile. Jetzt trägt die Ziffer das Metall. */
+     Metallstück in derselben Zeile. Jetzt trägt die Ziffer das Metall,
+     dazu Rand und Fläche der Karte. Ein Strich links an der Kante kam
+     dazu und wieder weg: auf dem Telefon wirkte er wie ein Fehler. */
   .rrow .pos{font-family:'Archivo Black',sans-serif;font-size:15px;width:22px;text-align:center;
     color:var(--faint);flex-shrink:0}
   .rrow.top1 .pos{color:var(--gold)}
   .rrow.top2 .pos{color:var(--silber)}
   .rrow.top3 .pos{color:var(--bronze)}
-  .rrow.top1{border-color:rgba(247,207,74,.5);background:linear-gradient(135deg,rgba(247,207,74,.08),var(--surface))}
-  .rrow.top1::before,.rrow.top2::before,.rrow.top3::before{content:"";position:absolute;left:0;top:0;bottom:0;
-    width:3px;border-radius:var(--r) 0 0 var(--r)}
-  /* Gold, Silber, Bronze — drei Metalle, damit Platz 2 und 3 sich trennen. */
-  .rrow.top1::before{background:var(--gold)}
-  .rrow.top2::before{background:var(--silber)}
-  .rrow.top3::before{background:var(--bronze)}
-  .rrow.top2{border-color:rgba(194,201,208,.42);
-    background:linear-gradient(135deg,rgba(194,201,208,.06),var(--surface))}
-  .rrow.top3{border-color:rgba(192,132,87,.34);
-    background:linear-gradient(135deg,rgba(192,132,87,.055),var(--surface))}
-  /* Das Licht an der Kante [§C27]. Alle neun Sekunden läuft es über das
-     Metall von Platz 1 bis 3, versetzt um eine Drittelsekunde je Platz.
-     Es bewegt nur `transform` und `opacity` einer eigenen Ebene mit festem
-     Schein — die Grafikkarte rechnet es, der Hauptthread nicht. Liegt ein
-     Blatt darüber, steht es still: die Unschärfe hinter dem Blatt müsste
-     sonst in jedem Bild neu gerechnet werden, für ein Licht, das niemand
-     sieht. Es liegt auf der Kante, nie über Zahl oder Name. */
-  @keyframes kantenLicht{0%{transform:scaleY(0);opacity:0}4%{opacity:1}
-    11%{transform:scaleY(1);opacity:.85}20%,100%{transform:scaleY(1);opacity:0}}
-  @media(prefers-reduced-motion:no-preference){
-    .rrow.top1::after,.rrow.top2::after,.rrow.top3::after{content:"";position:absolute;left:0;top:0;bottom:0;
-      width:3px;border-radius:var(--r) 0 0 var(--r);pointer-events:none;transform-origin:50% 0;opacity:0;
-      background:linear-gradient(180deg,rgba(255,255,255,0),rgba(255,255,255,.95) 45%,rgba(255,255,255,0));
-      box-shadow:0 0 10px 1px var(--kante-schein);
-      animation:kantenLicht 9s cubic-bezier(.3,.6,.3,1) infinite backwards}
-    .rrow.top2::after{animation-delay:.35s}
-    .rrow.top3::after{animation-delay:.7s}
-    body:has(> .sheet-bg.show) .rrow::after{animation-play-state:paused}}
-  .rrow.top1{--kante-schein:rgba(247,207,74,.55)}
-  .rrow.top2{--kante-schein:rgba(194,201,208,.45)}
-  .rrow.top3{--kante-schein:rgba(192,132,87,.45)}
-  /* Ein Druck zeigt einen hellen Rand, nicht nur das Schrumpfen: auf dem
-     Telefon verdeckt der Finger die Zeile, der Rand ragt unter ihm hervor.
-     Ein Schatten nur während des Drucks, keine Animation. */
-  .rrow:active{box-shadow:inset 0 0 0 1px rgba(255,255,255,.10),0 0 0 3px rgba(190,242,100,.07)}
+  /* Das Metall der ersten drei ist eine Veredelung, keine Bewegung [§C27]:
+     ein Rahmen im Verlauf des Metalls (hell an der Ecke oben links, wo das
+     Licht einfällt, dunkler in der Mitte, ein Glanz unten rechts), eine
+     Lichtkante oben in der Fläche und ein weicher Schein unter der Karte.
+     Ein Lichtband, das über die Karte fuhr, stand auf dem Telefon beim
+     Scrollen mitten auf der Karte still und sah kaputt aus; ein fester
+     Glanz steht immer richtig und kostet nach dem ersten Zeichnen nichts.
+     Der Rahmen ist der Hintergrund der Rand-Fläche (`border-box`) unter
+     einer Fläche, die nur bis zum Rand reicht (`padding-box`) — so wird
+     ein Verlauf zum Rahmen, ohne eine zweite Ebene. */
+  .rrow.top1,.rrow.top2,.rrow.top3{border-color:transparent;
+    background:linear-gradient(135deg,rgba(var(--metall),.11),rgba(var(--metall),.02) 45%,var(--surface) 70%) padding-box,
+      linear-gradient(var(--surface),var(--surface)) padding-box,
+      linear-gradient(135deg,rgba(var(--metall-hell),.95),rgba(var(--metall),.30) 30%,rgba(var(--metall),.10) 62%,rgba(var(--metall-hell),.55)) border-box;
+    box-shadow:inset 0 1px 0 rgba(var(--metall-hell),.10),0 12px 28px -20px rgba(var(--metall),.55)}
+  .rrow.top1{--metall:247,207,74;--metall-hell:255,233,166}
+  .rrow.top2{--metall:194,201,208;--metall-hell:236,240,244}
+  .rrow.top3{--metall:192,132,87;--metall-hell:236,184,140}
+  /* Die Ziffer ist Metall mit Glanz: hell oben, satt in der Mitte, dunkler
+     unten. Die Farbe darunter bleibt der Rückfall, wo `background-clip:text`
+     fehlt. */
+  .rrow.top1 .pos,.rrow.top2 .pos,.rrow.top3 .pos{
+    background:linear-gradient(180deg,rgb(var(--metall-hell)) 15%,rgb(var(--metall)) 55%,rgba(var(--metall),.7) 95%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;font-size:17px}
+  .rrow.top1:active,.rrow.top2:active,.rrow.top3:active{filter:brightness(1.08)}
   .medal{position:absolute;left:9px;display:inline-grid;place-items:center}
   .streak-badge{font-size:12px;margin-left:4px;vertical-align:middle}
   .elo-gain-bar{display:flex;gap:6px;font-size:10px;font-family:'Sometype Mono',monospace;margin-top:2px}
@@ -322,9 +311,15 @@
      dazwischen lag noch das Team der Saison. Jetzt ist er dieselbe Zeile
      wie alle anderen — Platzziffer links, Avatar, Name, Zahl rechts —
      nur mit einer Aufschrift darüber und wärmer hinterlegt. */
-  .rrow.held{background:
+  .rrow.held:not(.top1){background:
       radial-gradient(120% 100% at 0% 0%,rgba(247,207,74,.07),transparent 58%),
       var(--surface)}
+  /* Der Erste ist zugleich Platz 1: sein warmer Schein liegt in der Fläche
+     des Goldrahmens, sonst überdeckte er den Rahmen. */
+  .rrow.held.top1{background:
+      radial-gradient(120% 100% at 0% 0%,rgba(247,207,74,.10),transparent 58%) padding-box,
+      linear-gradient(var(--surface),var(--surface)) padding-box,
+      linear-gradient(135deg,rgba(var(--metall-hell),.95),rgba(var(--metall),.30) 30%,rgba(var(--metall),.10) 62%,rgba(var(--metall-hell),.55)) border-box}
   .rrow.held .held-label{font-family:'Sometype Mono',monospace;font-size:9px;
     font-weight:700;letter-spacing:.18em;text-transform:uppercase;
     color:var(--gold);margin-bottom:2px}

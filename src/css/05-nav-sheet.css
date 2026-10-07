@@ -63,18 +63,12 @@
 }
 .sheet.show{transform:translateY(0)}
 .sheet.is-dragging{transition:none !important;}
-  /* Der Inhalt setzt sich nach [§C27]: das Blatt fährt herein wie bisher,
-     seine Abschnitte federn kurz nach, einer nach dem anderen. Nur
-     `transform` und `opacity`, einmal je Öffnen. `backwards`: danach trägt
-     kein Abschnitt mehr eine Verschiebung — eine stehengebliebene
-     `transform` machte ihn zum Bezugsrahmen für alles Fixierte darin und
-     hielte eine Ebene der Grafikkarte belegt. */
-  @keyframes blattSetzen{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+  /* Der Inhalt eines Blatts blendet beim Öffnen kurz ein, während das Blatt
+     hereinfährt — eine Viertelsekunde, nur `opacity` und `transform`, und
+     `backwards`, damit danach keine Verschiebung stehen bleibt. */
+  @keyframes blattEin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
   @media(prefers-reduced-motion:no-preference){
-    .sheet.show > :not(.sheet-leiste){animation:blattSetzen .5s cubic-bezier(.2,1.15,.35,1) backwards}
-    .sheet.show > :nth-child(3){animation-delay:.03s}
-    .sheet.show > :nth-child(4){animation-delay:.06s}
-    .sheet.show > :nth-child(n+5){animation-delay:.09s}}
+    .sheet.show > :not(.sheet-leiste){animation:blattEin .26s ease-out backwards}}
 
   .sheet-grab{width:38px;height:4px;border-radius:2px;background:var(--line2);margin:6px auto 16px}
   /* Griff und Schließen bleiben beim Scrollen oben; der Verlauf dahinter
@@ -133,19 +127,14 @@
   .botnav button.on{color:var(--acid)}
   .botnav button.on .ic{background:rgba(190,242,100,.12);box-shadow:inset 0 0 0 1px rgba(190,242,100,.25)}
   .botnav button:active{transform:scale(.9)}
-  /* Unter dem gewählten Reiter liegt ein weicher Hof, und beim Wechsel macht
-     das Zeichen einen kurzen Stoß [§C27]. Der Hof ist eine feste Ebene, die
-     über ihre Deckkraft kommt und geht; der Stoß bewegt nur `transform` und
-     läuft einmal, wenn der Knopf `.on` bekommt — die Knöpfe bleiben stehen
-     (`renderNav`), also nicht bei jedem Neuzeichnen. */
-  .botnav button .ic{position:relative}
-  .botnav button .ic::before{content:"";position:absolute;inset:-6px -2px;border-radius:20px;pointer-events:none;
-    background:radial-gradient(closest-side,rgba(190,242,100,.26),rgba(190,242,100,0));
-    opacity:0;transition:opacity .3s}
-  .botnav button.on .ic::before{opacity:1}
-  @keyframes reiterStoss{0%{transform:scale(.82)}60%{transform:scale(1.08)}100%{transform:none}}
+  /* Der gewählte Reiter leuchtet [§C27]: ein fester Schein in Acid um die
+     Pille, und beim Wechsel federt das Zeichen einmal, in einer Viertel-
+     sekunde. Der Schein ist ein Schatten, der nur beim Wechsel neu gemalt
+     wird — keine Bewegung, die beim Scrollen stehen bleiben könnte. */
+  .botnav button.on .ic{box-shadow:inset 0 0 0 1px rgba(190,242,100,.32),0 0 16px -2px rgba(190,242,100,.38)}
+  @keyframes reiterStoss{0%{transform:scale(.78)}60%{transform:scale(1.1)}100%{transform:none}}
   @media(prefers-reduced-motion:no-preference){
-    .botnav button.on .ic svg{animation:reiterStoss .38s cubic-bezier(.2,1.5,.4,1)}}
+    .botnav button.on .ic svg{animation:reiterStoss .28s cubic-bezier(.2,1.4,.4,1)}}
 
   /* ============ [§C13] FAB ============ */
   .fab{position:fixed;z-index:55;right:max(18px,calc(50% - 260px + 18px));

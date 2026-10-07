@@ -2923,99 +2923,66 @@ const ok = (c, msg, det) => {
   // `.btn` und lief 112 px aus den Einstellungen, eine Pille der Rekorde lief
   // aus der Karte, und ein Gesicht ohne eigenen Behälter hatte seine
   // Initialen oben links. Hier wird jeder Reiter einmal ganz gezeichnet.
-  console.log('\n═══ LICHT, DAS DIE GRAFIKKARTE RECHNET ═══');
-  // Die Effekte der sechsten Aufwertung [§C27]: das Licht an der Kante von
-  // Platz 1 bis 3, die Kacheln beim Hereinscrollen, der Hof unter dem
-  // Reiter, das Blatt, das sich setzt, der Hof im Profilkopf. Jeder bewegt
-  // nur `transform` und `opacity`, keiner bleibt mit einer Verschiebung
-  // stehen, und bei Bewegungsruhe läuft keiner.
-  const lichtMess = () => page.evaluate(async () => {
+  console.log('\n═══ METALL STATT BEWEGUNG ═══');
+  // Platz 1 bis 3 tragen ihr Metall als feste Veredelung [§C27]: ein Rahmen
+  // im Verlauf, ein Schein darunter, die Ziffer mit Glanz — kein Strich an
+  // der Kante und kein Licht, das über die Karte fährt. Ein Lichtband stand
+  // auf dem Telefon beim Scrollen mitten auf der Karte still und sah kaputt
+  // aus. Bewegung gibt es nur auf eine Handlung hin und kurz: der Reiter
+  // federt beim Wechsel, ein Blatt blendet beim Öffnen ein.
+  const metallMess = () => page.evaluate(async () => {
     const K = window.__k.eval.bind(window.__k);
     const bild = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-    const props = a => [...new Set(a.effect.getKeyframes().flatMap(k => Object.keys(k))
-      .filter(k => !['offset', 'computedOffset', 'easing', 'composite'].includes(k)))];
     const out = {};
     K("closeSheet(true);tab='ranking';period='season';render()"); await bild();
-    const kante = document.getAnimations().filter(a => a.animationName === 'kantenLicht');
-    out.kante = kante.length;
-    out.kanteZiel = kante.map(a => a.effect.pseudoElement + '@' + (a.effect.target.className.match(/top\d/) || ['?'])[0]).sort().join(' ');
-    out.kanteProps = [...new Set(kante.flatMap(props))].sort().join('+');
-    // Was im ganzen Dokument endlos läuft, bewegt nur transform und opacity.
-    out.endlosFremd = [...new Set(document.getAnimations().filter(a => a.effect && a.effect.getTiming().iterations === Infinity)
-      .flatMap(a => props(a).filter(k => k !== 'transform' && k !== 'opacity').map(k => a.animationName + ':' + k)))];
-    // Der Druck zeigt einen Rand, ohne Animation.
-    const nav = document.querySelector('[data-nav="awards"]');
-    nav.click(); await bild();
-    const on = document.querySelector('.botnav button.on .ic svg');
-    out.stoss = on ? getComputedStyle(on).animationName : 'fehlt';
-    // Der Hof blendet in 0,3 s über; gemessen wird der Endstand.
-    await new Promise(r => setTimeout(r, 400));
-    out.hof = getComputedStyle(document.querySelector('.botnav button.on .ic'), '::before').opacity;
-    out.hofAus = getComputedStyle(document.querySelector('.botnav button:not(.on) .ic'), '::before').opacity;
-    K("tab='awards';awView='awards';awPeriod='season';render()"); await bild();
-    const kachel = document.querySelector('#main .aw-trophy');
-    out.kachel = kachel ? getComputedStyle(kachel).animationName : 'fehlt';
-    out.kachelZeit = kachel ? getComputedStyle(kachel).animationTimeline : 'fehlt';
-    out.kachelFuell = kachel ? getComputedStyle(kachel).animationFillMode : 'fehlt';
-    const zk = document.querySelector('#main .aw-trophy .aw-t-kopf .zk');
-    out.glanz = zk ? getComputedStyle(zk, '::after').animationName : 'fehlt';
-    K("awView='rekorde';render()"); await bild();
-    const rek = document.querySelector('#main .rek');
-    out.rek = rek ? getComputedStyle(rek).animationName : 'fehlt';
+    const tops = [...document.querySelectorAll('#main .rlist > .rrow.top1, #main .rlist > .rrow.top2, #main .rlist > .rrow.top3')];
+    out.tops = tops.length;
+    out.rahmen = tops.filter(r => /border-box/.test(getComputedStyle(r).backgroundClip) && getComputedStyle(r).borderTopColor === 'rgba(0, 0, 0, 0)').length;
+    out.schein = tops.filter(r => /rgba\(/.test(getComputedStyle(r).boxShadow)).length;
+    out.striche = tops.map(r => getComputedStyle(r, '::before').content).filter(c => c && c !== 'none' && c !== 'normal').length;
+    out.zifferGlanz = tops.filter(r => getComputedStyle(r.querySelector('.pos')).backgroundClip === 'text').length;
+    // In der Liste bewegt sich nichts von selbst.
+    out.bewegtInListe = document.getAnimations().filter(a => a.effect && a.effect.target && a.effect.target.closest
+      && a.effect.target.closest('#main .rlist')).map(a => a.animationName);
+    document.querySelector('[data-nav="awards"]').click(); await bild();
+    const on = document.querySelector('.botnav button.on .ic');
+    out.stoss = getComputedStyle(on.querySelector('svg')).animationName;
+    await new Promise(r => setTimeout(r, 350));
+    out.reiterSchein = /rgba\(190, 242, 100, 0\.38\) 0px 0px 16px/.test(getComputedStyle(on).boxShadow);
     K("tab='ranking';render();showPlayer(players[0].id)"); await bild();
-    const sheet = document.getElementById('sheet');
-    const kind = sheet.querySelector(':scope > :not(.sheet-leiste)');
-    out.setzen = kind ? getComputedStyle(kind).animationName : 'fehlt';
-    out.setzenFuell = kind ? getComputedStyle(kind).animationFillMode : 'fehlt';
-    out.leiste = getComputedStyle(sheet.querySelector('.sheet-leiste')).animationName;
-    const kopf = sheet.querySelector('.pp-header');
-    out.kopfHof = kopf ? getComputedStyle(kopf, '::before').animationName : 'fehlt';
-    out.kopfHinten = kopf ? getComputedStyle(kopf, '::before').zIndex + '/' + getComputedStyle(kopf).isolation : 'fehlt';
-    out.unterBlatt = document.getAnimations().filter(a => a.animationName === 'kantenLicht').map(a => a.playState).join(',');
-    await new Promise(r => setTimeout(r, 900));
-    out.setzenDanach = kind ? getComputedStyle(kind).transform : 'fehlt';
+    const kind = document.querySelector('#sheet > :not(.sheet-leiste)');
+    out.blatt = kind ? getComputedStyle(kind).animationName + '/' + getComputedStyle(kind).animationFillMode : 'fehlt';
+    await new Promise(r => setTimeout(r, 500));
+    out.blattDanach = kind ? getComputedStyle(kind).transform : 'fehlt';
     K('closeSheet(true)'); await bild();
     return out;
   });
-  const li = await lichtMess();
-  ok(li.kante === 3 && li.kanteZiel === '::after@top1 ::after@top2 ::after@top3',
-     'über die Kante von Platz 1, 2 und 3 läuft je ein Licht', li.kante + ' · ' + li.kanteZiel);
-  ok(li.kanteProps === 'opacity+transform', 'das Licht bewegt nur transform und opacity', li.kanteProps);
-  ok(!li.endlosFremd.length, 'was in der App endlos läuft, bewegt nur transform und opacity', li.endlosFremd.join(', '));
-  ok(li.unterBlatt === 'paused,paused,paused', 'unter einem offenen Blatt steht das Licht still', li.unterBlatt);
-  ok(li.stoss === 'reiterStoss' && li.hof === '1' && li.hofAus === '0',
-     'der gewählte Reiter bekommt Hof und Stoß, die anderen nicht', JSON.stringify([li.stoss, li.hof, li.hofAus]));
-  ok(li.kachel === 'kachelHeben' && /view/.test(li.kachelZeit) && li.kachelFuell === 'backwards' && li.rek === 'kachelHeben',
-     'Award- und Rekordkacheln heben sich am Scrollen, nicht an der Zeit, und lassen den Druck frei',
-     JSON.stringify([li.kachel, li.kachelZeit, li.kachelFuell, li.rek]));
-  ok(li.glanz === 'zeichenGlanz', 'über das Zeichen der Kachel läuft ein Glanz', li.glanz);
-  ok(li.setzen === 'blattSetzen' && li.setzenFuell === 'backwards' && li.leiste === 'none',
-     'der Inhalt eines Blatts setzt sich, die Leiste mit Griff und Schließen nicht', JSON.stringify([li.setzen, li.setzenFuell, li.leiste]));
-  ok(li.setzenDanach === 'none', 'danach trägt kein Abschnitt eine Verschiebung', li.setzenDanach);
-  ok(li.kopfHof === 'hofAuf' && li.kopfHinten === '-1/isolate',
-     'im Profilkopf geht ein Hof auf, hinter Name und Wappen', li.kopfHof + ' · ' + li.kopfHinten);
-  // Gemessen, nicht geschätzt: über einen ganzen Umlauf des Lichts rechnet
-  // der Hauptthread keinen Stil und kein Layout neu.
+  const me = await metallMess();
+  ok(me.tops === 3 && me.rahmen === 3 && me.schein === 3,
+     'Platz 1 bis 3 tragen einen Rahmen im Metall und einen Schein darunter', JSON.stringify(me));
+  ok(me.striche === 0, 'Platz 1 bis 3 tragen keinen Strich an der Kante', me.striche + ' Striche');
+  ok(me.zifferGlanz === 3, 'die Platzziffer von 1 bis 3 ist Metall mit Glanz', me.zifferGlanz + ' von 3');
+  ok(me.bewegtInListe.length === 0, 'in der Rangliste bewegt sich nichts von selbst', me.bewegtInListe.join(', '));
+  ok(me.stoss === 'reiterStoss' && me.reiterSchein, 'der gewählte Reiter federt beim Wechsel und leuchtet fest',
+     JSON.stringify([me.stoss, me.reiterSchein]));
+  ok(me.blatt === 'blattEin/backwards' && me.blattDanach === 'none',
+     'ein Blatt blendet beim Öffnen ein und behält danach keine Verschiebung', me.blatt + ' · ' + me.blattDanach);
   {
     await K("closeSheet(true);tab='ranking';period='season';render()");
-    // Erst ausklingen lassen, was einmal läuft: das Zuschieben des Blatts
-    // und die Überblendung des Reiters rechnen selbst Stil.
-    await page.waitForTimeout(1500);
+    await page.waitForTimeout(1200);
     const cdp = await page.context().newCDPSession(page);
     await cdp.send('Performance.enable');
     const metrik = async () => Object.fromEntries((await cdp.send('Performance.getMetrics')).metrics.map(x => [x.name, x.value]));
     const a = await metrik(); await page.waitForTimeout(2500); const b = await metrik();
     const stil = b.RecalcStyleCount - a.RecalcStyleCount, lay = b.LayoutCount - a.LayoutCount;
-    ok(stil === 0 && lay === 0, 'während das Licht läuft, rechnet der Hauptthread weder Stil noch Layout', stil + ' Stil, ' + lay + ' Layout in 2,5 s');
+    ok(stil === 0 && lay === 0, 'die offene Liga rechnet weder Stil noch Layout neu', stil + ' Stil, ' + lay + ' Layout in 2,5 s');
     await cdp.detach();
   }
   await page.emulateMedia({reducedMotion: 'reduce'});
-  const liRuhig = await lichtMess();
+  const meRuhig = await metallMess();
   await page.emulateMedia({reducedMotion: 'no-preference'});
-  ok(liRuhig.kante === 0 && liRuhig.stoss === 'none' && liRuhig.kachel === 'none' && liRuhig.glanz === 'none'
-     && liRuhig.setzen === 'none' && liRuhig.kopfHof === 'none',
-     'bei prefers-reduced-motion läuft keiner dieser Effekte',
-     JSON.stringify([liRuhig.kante, liRuhig.stoss, liRuhig.kachel, liRuhig.glanz, liRuhig.setzen, liRuhig.kopfHof]));
+  ok(meRuhig.stoss === 'none' && meRuhig.blatt === 'none/none' && meRuhig.rahmen === 3,
+     'bei prefers-reduced-motion bewegt sich nichts, das Metall bleibt', JSON.stringify([meRuhig.stoss, meRuhig.blatt, meRuhig.rahmen]));
 
   console.log('\n═══ JEDER REITER BEI 360 PX ═══');
   await page.setViewportSize({width:360, height:780});

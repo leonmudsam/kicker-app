@@ -79,28 +79,22 @@
   /* ════════ PROFIL-REDESIGN ════════ */
   .pp-header{position:relative;padding:32px 18px 22px;text-align:center;
     border-radius:24px;border:1px solid rgba(255,255,255,.05);
-    background:linear-gradient(90deg,transparent,var(--pp-tier-1),transparent) 50% 0/76% 1px no-repeat,
+    background:linear-gradient(90deg,transparent,var(--pp-tier-1),transparent) 50% 0/70% 1px no-repeat,
+      radial-gradient(70% 55% at 50% 0%, var(--pp-tier-glow) 0%, transparent 100%),
       radial-gradient(140% 90% at 50% 0%, var(--pp-tier-bg) 0%, transparent 55%),
       linear-gradient(180deg, rgba(255,255,255,.025) 0%, transparent 60%);
-    overflow:hidden;box-shadow:0 8px 24px -8px rgba(0,0,0,.5);isolation:isolate;
+    overflow:hidden;box-shadow:0 8px 24px -8px rgba(0,0,0,.5);
     margin-bottom:18px;animation:ppFadeUp .5s cubic-bezier(.2,.7,.2,1) both;
     --pp-tier-1:var(--purple); --pp-tier-2:#7c5cff;
     --pp-tier-glow:rgba(167,139,250,.35);
     --pp-tier-bg:rgba(167,139,250,.14);
     --pp-tier-bg2:rgba(167,139,250,.06);
   }
+  /* Im Profilkopf fällt Licht im Rangton von oben ein: eine Kante oben und
+     ein Hof darunter, beide fest im Hintergrund — der Rang ist auf einen
+     Blick zu sehen, und nichts bewegt sich dafür [§C27]. */
   .pp-header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;
     background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent)}
-  /* Licht im Rangton fällt von oben ein [§C27]: eine Kante oben (fester
-     Hintergrund, s. o.) und ein Hof dahinter, der beim Öffnen einmal aufgeht
-     und dann ruhig steht. Der Hof ist eine eigene Ebene hinter dem Inhalt
-     (`isolation` am Kopf, `z-index:-1`): auf 0 läge er als später
-     erzeugtes Element über Name und Wappen und tönte sie. */
-  .pp-header::before{content:"";position:absolute;left:50%;top:-60px;width:260px;height:150px;margin-left:-130px;
-    border-radius:50%;pointer-events:none;z-index:-1;opacity:.55;
-    background:radial-gradient(closest-side,var(--pp-tier-glow),transparent)}
-  @keyframes hofAuf{0%{opacity:0;transform:scale(.6)}45%{opacity:1}100%{opacity:.55;transform:none}}
-  @media(prefers-reduced-motion:no-preference){.pp-header::before{animation:hofAuf 1.4s ease-out backwards}}
   .pp-tier-legende{--pp-tier-1:var(--gold);--pp-tier-2:#ffd96b;
     --pp-tier-glow:rgba(247,207,74,.4);--pp-tier-bg:rgba(247,207,74,.14);
     --pp-tier-bg2:rgba(247,207,74,.06);}
