@@ -5456,9 +5456,9 @@
   .ff-pd-s:not(.p1) .ff-nm{color:var(--muted);font-weight:500}
   .ff-pd-s em{font-style:normal;align-self:stretch;display:flex;flex-direction:column;align-items:center;
     justify-content:flex-start;gap:2px;padding:7px 4px 4px;border-radius:7px 7px 0 0;
-    background:linear-gradient(180deg,var(--surface3),var(--surface2));height:40px}
-  .ff-pd-s.p1 em{height:58px;background:linear-gradient(180deg,rgba(var(--story-rgb),.34),rgba(var(--story-rgb),.08))}
-  .ff-pd-s.p3 em{height:30px}
+    background:linear-gradient(180deg,var(--surface3),var(--surface2));height:58px}
+  .ff-pd-s.p1 em{height:72px;background:linear-gradient(180deg,rgba(var(--story-rgb),.34),rgba(var(--story-rgb),.08))}
+  .ff-pd-s.p3 em{height:44px}
   .ff-pd-s em b{font-family:'Sometype Mono',monospace;font-size:11.5px;color:var(--ink);white-space:nowrap}
   .ff-pd-s em small{font-family:'Archivo Black',sans-serif;font-size:10px;opacity:.6}
   .ff-pd .rav{margin-bottom:-2px}
@@ -5554,7 +5554,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.07.60061400';
+const BUILD_VERSION='2026.10.07.955d2190';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());

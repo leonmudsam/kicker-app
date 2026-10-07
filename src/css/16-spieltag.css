@@ -1190,11 +1190,15 @@
   .ff-pd-s .av{--av:30px}
   .ff-pd-s.p1 .av{--av:36px;box-shadow:0 0 0 2px rgb(var(--story-rgb))}
   .ff-pd-s:not(.p1) .ff-nm{color:var(--muted);font-weight:500}
+  /* Ein Sockel ist mindestens so hoch wie sein Inhalt — Wert, Abstand, Ziffer
+     und Polster brauchen 43 px. Platz 3 war 30 px hoch, und seine Ziffer hing
+     unter dem Podium heraus; Platz 2 lief bei 40 px knapp über. Die Stufen
+     bleiben gleichmäßig (14 px), sodass die Rangfolge lesbar bleibt. */
   .ff-pd-s em{font-style:normal;align-self:stretch;display:flex;flex-direction:column;align-items:center;
     justify-content:flex-start;gap:2px;padding:7px 4px 4px;border-radius:7px 7px 0 0;
-    background:linear-gradient(180deg,var(--surface3),var(--surface2));height:40px}
-  .ff-pd-s.p1 em{height:58px;background:linear-gradient(180deg,rgba(var(--story-rgb),.34),rgba(var(--story-rgb),.08))}
-  .ff-pd-s.p3 em{height:30px}
+    background:linear-gradient(180deg,var(--surface3),var(--surface2));height:58px}
+  .ff-pd-s.p1 em{height:72px;background:linear-gradient(180deg,rgba(var(--story-rgb),.34),rgba(var(--story-rgb),.08))}
+  .ff-pd-s.p3 em{height:44px}
   .ff-pd-s em b{font-family:'Sometype Mono',monospace;font-size:11.5px;color:var(--ink);white-space:nowrap}
   .ff-pd-s em small{font-family:'Archivo Black',sans-serif;font-size:10px;opacity:.6}
   .ff-pd .rav{margin-bottom:-2px}
