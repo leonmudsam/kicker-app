@@ -675,7 +675,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     // 5-Spiele-Filter, und der steht dann auch im Text.
     const cats = [
       { noun:'Meiste Siege',         ic:'trophy',  pool:withStats, val: pid => stats[pid].wins,               fmt: v => v+' Siege' },
-      { noun:'Bestes Torverhältnis', ic:'chartUp', pool:withStats, val: pid => stats[pid].gf - stats[pid].ga, fmt: v => (v>0?'+':'')+v+' Tordifferenz' },
+      { noun:'Bestes Torverhältnis', ic:'plusMinus', pool:withStats, val: pid => stats[pid].gf - stats[pid].ga, fmt: v => (v>0?'+':'')+v+' Tordifferenz' },
       { noun:'Meiste Tore',          ic:'ball',    pool:withStats, val: pid => stats[pid].gf,                 fmt: v => v+' Tore' },
       { noun:'Höchste Karriere-Elo', ic:'crown',   pool:elig,      val: pid => Math.round(career[pid]||0),    fmt: v => v+' Elo', qual:' (ab 5 Spielen)' },
     ];

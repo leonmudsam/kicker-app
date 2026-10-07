@@ -3,11 +3,11 @@
 //     alle absolvierten Saisons.
 // ╚═════════════════════════════════════════════════════════════════════════╝
 const RANKS=[
-  {label:'Legende',   icon:'crown',  color:'var(--gold)',   pct:0.10},
-  {label:'Elite',     icon:'star',   color:'var(--purple)', pct:0.30},
-  {label:'Stark',     icon:'medal',  color:'var(--acid)',   pct:0.60},
-  {label:'Solide',    icon:'shield', color:'var(--blue)',   pct:0.85},
-  {label:'Einsteiger',icon:'user',   color:'var(--orange)', pct:1.00},
+  {label:'Legende',   icon:'rang5',  color:'var(--gold)',   pct:0.10},
+  {label:'Elite',     icon:'rang4',   color:'var(--purple)', pct:0.30},
+  {label:'Stark',     icon:'rang3',  color:'var(--acid)',   pct:0.60},
+  {label:'Solide',    icon:'rang2', color:'var(--blue)',   pct:0.85},
+  {label:'Einsteiger',icon:'rang1',   color:'var(--orange)', pct:1.00},
 ];
 
 // Mit `bisMs` der Stand bis dorthin — für den eingefrorenen Rang eines
@@ -302,13 +302,13 @@ function atkStrength(id){ return atkStrengthFrom(id, matches); }
 // Feingranular: 60/40-Splits sollen NICHT als reines "Flex" durchrutschen.
 function posClassify(autoAtk){
   const a = autoAtk;
-  if(a >= 0.78) return {label:'Reiner Stürmer',     icon:'bolt2',       tone:'atk'};
-  if(a >= 0.60) return {label:'Stürmer',            icon:'bolt',        tone:'atk'};
-  if(a >= 0.54) return {label:'Sturm-Flex',         icon:'bolt',        tone:'atk'};
-  if(a >  0.46) return {label:'Flex',               icon:'cycle',       tone:'flex'};
-  if(a >  0.40) return {label:'Abwehr-Flex',        icon:'shield',      tone:'def'};
-  if(a >  0.22) return {label:'Verteidiger',        icon:'shield',      tone:'def'};
-  return                {label:'Reiner Verteidiger', icon:'shieldCheck', tone:'def'};
+  if(a >= 0.78) return {label:'Reiner Stürmer',     icon:'posReinSturm',       tone:'atk'};
+  if(a >= 0.60) return {label:'Stürmer',            icon:'posSturm',        tone:'atk'};
+  if(a >= 0.54) return {label:'Sturm-Flex',         icon:'posSturmFlex',        tone:'atk'};
+  if(a >  0.46) return {label:'Flex',               icon:'posFlex',       tone:'flex'};
+  if(a >  0.40) return {label:'Abwehr-Flex',        icon:'posAbwehrFlex',      tone:'def'};
+  if(a >  0.22) return {label:'Verteidiger',        icon:'posAbwehr',      tone:'def'};
+  return                {label:'Reiner Verteidiger', icon:'posReinAbwehr', tone:'def'};
 }
 
 

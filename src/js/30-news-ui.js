@@ -749,7 +749,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
   // `box-shadow` atmete, kostete jedes Bild einen Takt über den ganzen Feed.
   return (brk ? '<div class="nf-brk-hof">' : '') + `<div class="nf-card nf-s-${sorte} nfc-${dcat}${tafelTon?' nf-tafel-'+tafelTon:''}${faktStil?' nf-fakt-'+faktStil.ton:''}${negativ?' nf-neg':''}${brk?' nf-brk':''}${gross?' nf-gross':''}${glanz?' nf-glanz':''}${isRead?' read':''}${imp}" data-sid="${esc(s.id)}"${glanz ? ` style="--gv:${_newsGlanzVersatz(s.id)}s"` : ''}>
     ${_newsMotiv(sorte, s)}
-    ${gross ? '<div class="nf-gross-band">' + svgI('star') + 'DIE KARTE DES TAGES</div>' : ''}
+    ${gross ? '<div class="nf-gross-band">' + svgI('funkeln') + 'DIE KARTE DES TAGES</div>' : ''}
     ${balken}
     <div class="nf-top">
       <span class="nf-rub"><i>${svgI(_newsSorteIcon(sorte, s))}</i><b>${esc(_newsRubrik(sorte, s))}</b></span>

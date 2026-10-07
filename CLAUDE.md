@@ -121,7 +121,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **1203**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **1205**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -266,6 +266,7 @@ die drei Abschnitte und die genannte Suite fest.
 | [§C38](docs/gesetze/C38-chronik-mitte.md) | Die Chronik gehört nicht nur den besten Drei |
 | [§C39](docs/gesetze/C39-monatschronik.md) | Die Monatschronik fragt nicht, wer der Beste ist |
 | [§C40](docs/gesetze/C40-karriereende.md) | Das Karriereende: vier Regeln, mehr gibt es nicht |
+| [§C41](docs/gesetze/C41-ein-zeichen.md) | Ein Zeichen, eine Bedeutung |
 | [§C42](docs/gesetze/C42-start.md) | Der Start zeigt den letzten Stand und schreibt nie (Stand des Geräts, Service Worker) |
 
 Dazu die [allgemeinen Regeln](docs/gesetze/allgemein.md) ohne Kürzel: Detail folgt
@@ -428,6 +429,7 @@ Immer im **selben Commit** wie die Änderung, die sie auslöst:
 | Zeitgeber kommt dazu oder ändert seine Bedingung | `docs/laufzeit.md` |
 | Cache-Topf kommt dazu | `docs/laufzeit.md` |
 | Gemeinsames Bauteil kommt dazu (`.rav`, `.podest`, …) | `docs/gesetze/C27-ein-bauteil.md` |
+| Zeichen kommt dazu, bekommt einen neuen Träger oder wird ersetzt | ein im ganzen Katalog freier Schlüssel mit eigener Bedeutung — oder der Träger meint dieselbe Sache und steht in `ZEICHEN_FAMILIEN` (`tests/disziplinen`); ein ersetzter Name kommt nach `ZEICHEN_ALT` [§C41] |
 | Regel für Agenten ändert sich | §9 |
 | Auszeichnung, Disziplin oder Prestige-Konstante ändert sich | `docs/erweitern.md` |
 | Monatschronik kommt dazu oder ändert Art, Klasse oder Ausschlag | `docs/gesetze/C39-monatschronik.md`, `docs/erweitern.md` §10.2 |

@@ -153,8 +153,8 @@ function vTeams(nurErgebnis=false){
       <input type="text" id="teamSearch" placeholder="Spieler oder Team suchen…" value="${esc(teamSearch)}">
     </div>
     <div class="ui-switch">
-      <button data-teamtoggle="best" class="${showBest?'on':''}">${svgI('chartUp')}Beste</button>
-      <button data-teamtoggle="worst" class="${!showBest?'on':''}">${svgI('chartDown')}Schlechteste</button>
+      <button data-teamtoggle="best" class="${showBest?'on':''}">${svgI('trendUp')}Beste</button>
+      <button data-teamtoggle="worst" class="${!showBest?'on':''}">${svgI('trendDown')}Schlechteste</button>
     </div>
     <div class="ui-tabs">
       <button data-teamsort="wr" class="${teamSort==='wr'?'on':''}">Siegquote</button>
@@ -388,7 +388,7 @@ function vSettings(){
         Matches neu berechnen. <b style="color:var(--red)">Achtung:</b> dabei werden alle bisher
         gespeicherten Match-Deltas überschrieben.
       </p>
-      <button class="btn" id="recalcBtn" style="margin-top:14px;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('cycle')} Alle Matches rückwirkend neu berechnen</button>
+      <button class="btn" id="recalcBtn" style="margin-top:14px;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('neuRechnen')} Alle Matches rückwirkend neu berechnen</button>
     </div>
 
     <div class="card" style="margin-top:14px">
@@ -399,7 +399,7 @@ function vSettings(){
       </p>
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
         <button class="btn ghost" id="expXlsxBtn" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('scroll')} Matches als Excel (.xlsx)</button>
-        <button class="btn ghost" id="expSaveBtn" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('shieldCheck')} Sicherung speichern (.json)</button>
+        <button class="btn ghost" id="expSaveBtn" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('sichern')} Sicherung speichern (.json)</button>
         <button class="btn ghost sm" id="expCsvBtn" style="width:100%;font-size:11px">Stattdessen als CSV</button>
       </div>
       <p style="font-size:11px;color:var(--muted);line-height:1.6;margin-top:12px">
@@ -409,7 +409,7 @@ function vSettings(){
         Einstellungen der Elo-Rechnung. Das ist die Datei, mit der sich die Liga im Ernstfall wieder aufbauen lässt.
       </p>
       <div style="height:1px;background:var(--line);margin:14px 0"></div>
-      <button class="btn" id="impBackupBtn" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('refresh')} Datei einspielen</button>
+      <button class="btn" id="impBackupBtn" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('hochladen')} Datei einspielen</button>
       <p style="font-size:11px;color:var(--muted);line-height:1.6;margin-top:10px">
         Nimmt .xlsx, .csv und .json. Vor dem Schreiben erscheint eine Vorschau, was ergänzt würde.
         <b style="color:var(--acid)">Es wird nie etwas gelöscht oder überschrieben</b>, nur fehlende Matches kommen dazu.

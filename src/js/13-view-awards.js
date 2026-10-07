@@ -1077,13 +1077,13 @@ const AW_IC = {
   showmaster:'award',    mvt:'handshake',      bestDuo:'duo',           scorer:'ball',
   wall:'shieldCheck',    ice:'snowflake',      endgegner:'skull',       clutch:'target',
   carryKing:'weight',    solo:'lonewolf',      upset:'surprise',        biggest:'explosion',
-  grinder:'gamepad',     worstWr:'ghost',      coldStreak:'iceCube',    lossStreaks:'trendCrash',
+  grinder:'gamepad',     worstWr:'bilanzTief',      coldStreak:'dropTriple',    lossStreaks:'trendCrash',
   formtief:'meltDown',   worstAtk:'blockedShot',worstDef:'hole',        worstTeam:'brokenHeart',
   zirkus:'circus',       baustelle:'cone',
   weekKing:'weekKing',   dayKing:'dayKing',
   plusMinus:'plusMinus', underdog:'underdog',  pechvogel:'rainCloud',
   // ── NEUE TEAM-AWARDS v4 ──
-  unstoppable:'unstoppable', concreteWall:'concreteWall', luckyCharm:'clover',
+  unstoppable:'unstoppable', concreteWall:'betonmauer', luckyCharm:'clover',
   giantSlayer:'giantSlayer', favoritenschreck:'devilMask', rivalry:'crossedSwords',
   // ── NEUE NEGATIV-AWARDS v6 ──
   cheesePlatter:'cheese', favoriteLoser:'crownFallen'

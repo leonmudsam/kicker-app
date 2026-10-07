@@ -38,9 +38,9 @@ const BADGES=[
   // Nicht „Legende": so heißt die oberste Stufe des Karriere-Rangs, und im
   // Profil standen der Rang und eine Auszeichnung für 150 Partien unter
   // demselben Wort.
-  {id:'games150',ic:'diamond',name:'Dauerbrenner',desc:'150 Matches gespielt',
+  {id:'games150',ic:'dauerbrenner',name:'Dauerbrenner',desc:'150 Matches gespielt',
     multi:true,count:(id,ms)=>countGames(id,ms)>=150?1:0},
-  {id:'allrounder',ic:'refresh',name:'Allrounder',desc:'Mindestens 20 Siege auf jeder Position',
+  {id:'allrounder',ic:'bothSides',name:'Allrounder',desc:'Mindestens 20 Siege auf jeder Position',
     multi:true,count:(id,ms)=>{const s=playerStats(id,ms);return(s.atkW>=20&&s.defW>=20)?1:0;}},
   // Zeile 2b — Urgestein, Siegermaschine (Langzeit-Meilensteine, v9.17)
   // Bewusst goldene Stufen ÜBER „Legende" (150 Matches): Sie belohnen nicht
@@ -50,14 +50,14 @@ const BADGES=[
   // Die IDs nennen noch die alten Schwellen (250/200). Sie bleiben stehen,
   // weil sie in News-, Toast- und Popover-Zuordnungen stecken; maßgeblich ist
   // allein die Zahl in count/desc — seit v9.18 jeweils 300.
-  {id:'games250',ic:'weight',name:'Urgestein',desc:'300 Matches gespielt',
+  {id:'games250',ic:'urgestein',name:'Urgestein',desc:'300 Matches gespielt',
     multi:true,count:(id,ms)=>countGames(id,ms)>=300?1:0},
-  {id:'wins200',ic:'unstoppable',name:'Siegermaschine',desc:'300 Siege gesammelt',
+  {id:'wins200',ic:'siegermaschine',name:'Siegermaschine',desc:'300 Siege gesammelt',
     multi:true,count:(id,ms)=>countWins(id,ms)>=300?1:0},
   // Zeile 3 — Abwehrchef, Mittelstürmer
-  {id:'def50',ic:'shieldStar',name:'Abwehrchef',desc:'50 Spiele als Abwehrspieler',
+  {id:'def50',ic:'posAbwehr',name:'Abwehrchef',desc:'50 Spiele als Abwehrspieler',
     multi:true,count:(id,ms)=>{const s=playerStats(id,ms);return s.defG>=50?1:0;}},
-  {id:'atk50',ic:'bolt2',name:'Mittelstürmer',desc:'50 Spiele als Stürmer',
+  {id:'atk50',ic:'posSturm',name:'Mittelstürmer',desc:'50 Spiele als Stürmer',
     multi:true,count:(id,ms)=>{const s=playerStats(id,ms);return s.atkG>=50?1:0;}},
   // Zeile 4 — Aufsteiger, Dominator
   // v9.18: JEDE SAISON neu erreichbar. Gezählt wird die Anzahl der Saisons, in
@@ -74,7 +74,7 @@ const BADGES=[
 
     // ══ MEHRFACH-BADGES — gruppiert nach Thema ══
 //Reihenfolge überarbeitet / Möglciherweise Abweichung von Namen in //
-  {id:'upset_king',ic:'tornado',name:'Außenseiterkönig',desc:'Als Außenseiter gewonnen (unter 35 % Siegchance)',
+  {id:'upset_king',ic:'underdog',name:'Außenseiterkönig',desc:'Als Außenseiter gewonnen (unter 35 % Siegchance)',
     multi:true,count:(id,ms)=>matchesOfPlayer(id,ms).filter(m=>won(id,m)&&myExp(id,m)<0.35).length},
   // Zeile 6 — Frühschicht, Unschlagbar (Tages-Patterns)
   {id:'early_bird',ic:'sunrise',name:'Frühschicht',desc:'Erstes Match des Tages gewonnen',
@@ -124,7 +124,7 @@ const BADGES=[
     multi:true,count:(id,ms)=>matchesOfPlayer(id,ms).filter(m=>{if(!won(id,m))return false;
       const pos=id===m.a1?m.a1_pos:id===m.a2?m.a2_pos:id===m.b1?m.b1_pos:m.b2_pos;
       return pos==='def'&&goalsAgainst(id,m)<=2;}).length},
-  {id:'carry',ic:'weightSmall',name:'Carry',desc:'Sieg mit dem schwächsten Spieler der Partie als Partner',
+  {id:'carry',ic:'weight',name:'Carry',desc:'Sieg mit dem schwächsten Spieler der Partie als Partner',
     multi:true,count:(id,ms)=>countCarries(id,ms)},
   // Zeile 15 — Meister, Vize-Meister
   // Der Meister hatte bis hierher KEINE Auszeichnung. Der Vize hatte eine.
@@ -143,16 +143,16 @@ const BADGES=[
   {id:'award_collector',ic:'medalTrio',name:'Award-Sammler',desc:'In einer Saison mindestens 5-mal Player of the Day und 2-mal Player of the Week',
     multi:true,count:(id,ms)=>countAwardCollector(id,ms)},
   // Zeile 17 — POTW, POTD (Perioden-Auszeichnungen, ganz am Ende)
-  {id:'potw',ic:'weekly',name:'Player of the Week',desc:'Höchste Siegquote einer Kalenderwoche (ab 5 Siegen)',
+  {id:'potw',ic:'weekKing',name:'Player of the Week',desc:'Höchste Siegquote einer Kalenderwoche (ab 5 Siegen)',
     multi:true,count:(id,ms)=>countPeriodWins(id,ms,'week')},
-  {id:'potd',ic:'trophyDay',name:'Player of the Day',desc:'Die meisten Siege eines Spieltags (ab 3)',
+  {id:'potd',ic:'dayKing',name:'Player of the Day',desc:'Die meisten Siege eines Spieltags (ab 3)',
     multi:true,count:(id,ms)=>countDayWins(id,ms)},
   // ── NEUE BADGES v4 ──
   // Thronfäller: Sieg gegen den Top-1 der laufenden Saison-Rangliste (Stand vor dem Match)
   {id:'kingslayer',ic:'kingFall',name:'Thronfäller',desc:'Sieg gegen den Ersten der Saison-Rangliste, gemessen vor der Partie',
     multi:true,count:(id,ms)=>countKingslayer(id,ms)},
   // Überholmanöver: Sieg gegen einen Spieler, der dadurch in der Saison-Rangliste überholt wurde
-  {id:'overtake',ic:'overtake',name:'Überholmanöver',desc:'Einen Gegner der Partie besiegt und dabei in der Saison-Rangliste überholt',
+  {id:'overtake',ic:'ueberholen',name:'Überholmanöver',desc:'Einen Gegner der Partie besiegt und dabei in der Saison-Rangliste überholt',
     multi:true,count:(id,ms)=>countOvertake(id,ms)},
   // ── NEUE BADGES v5 ──
   // Pflichterfüller: Sieg gegen mindestens einen Gegner aus den Bottom-2 der
@@ -164,14 +164,14 @@ const BADGES=[
     multi:true,count:(id,ms)=>countStreakBreaker(id,ms)},
   // ── NEUE NEGATIV-BADGES v6 ──
   // Schwarzer Tag: ein Tag mit mind. 3 absolvierten Spielen, alle verloren.
-  {id:'black_day',ic:'blackDay',name:'Schwarzer Tag',desc:'Spieltag mit mindestens 3 Partien, alle verloren',
+  {id:'black_day',ic:'schwarzerTag',name:'Schwarzer Tag',desc:'Spieltag mit mindestens 3 Partien, alle verloren',
     multi:true,count:(id,ms)=>countBlackDays(id,ms)},
   // Krimi-Versager: 3 knappe Niederlagen (Tordifferenz ≤ 2) in Folge.
   {id:'krimi_loser',ic:'dramaTear',name:'Krimi-Versager',desc:'3 knappe Niederlagen in Folge, je höchstens 2 Tore Unterschied',
     multi:true,count:(id,ms)=>countCloseLossStreaks(id,ms,3)},
   // ── NEUE LEGENDARY-BADGES v7 ──
   // Untouchable: 3 Saisons in Folge unter den Top-3 abgeschlossen.
-  {id:'untouchable',ic:'shieldStar',name:'Untouchable',desc:'3 Saisons in Folge unter den Top-3 abgeschlossen',
+  {id:'untouchable',ic:'dreiSaisons',name:'Untouchable',desc:'3 Saisons in Folge unter den Top-3 abgeschlossen',
     multi:true,count:(id,ms,bis)=>countUntouchable(id,bis)},
   // Mr. Perfect: 3× 10:0-Sieg in einer einzigen Saison.
   {id:'mr_perfect',ic:'tripleCup',name:'Mr. Perfect',desc:'3× 10:0-Sieg in einer Saison',
@@ -184,7 +184,7 @@ const BADGES=[
     multi:true,count:(id,ms)=>countGodlyStreak(id,ms)},
   // ── NEUE NEGATIV-BADGES v8 ──
   // Bittere Pille: 9:10-Niederlage (Pendant zu nail_biter / 10:9-Sieg).
-  {id:'bitter_loss',ic:'heartBroken',name:'Bittere Pille',desc:'9:10-Niederlage',
+  {id:'bitter_loss',ic:'pille',name:'Bittere Pille',desc:'9:10-Niederlage',
     multi:true,count:(id,ms)=>matchesOfPlayer(id,ms).filter(m=>!won(id,m)&&goalsFor(id,m)===9&&goalsAgainst(id,m)===10).length},
   // Mr. Disaster: 3× 0:10-Niederlage in einer Saison (Pendant zu mr_perfect).
   {id:'mr_disaster',ic:'tripleCrash',name:'Mr. Disaster',desc:'3× 0:10-Niederlage in einer Saison',
@@ -520,8 +520,8 @@ function badgeIc(b, size){
   size = size || 'inherit';
   if(!b) return '';
   const key = b.ic || null;
-  if(key && ICONS[key]) {
-    return `<span class="ic svg-ic" style="font-size:${size}"><svg viewBox="0 0 24 24">${ICONS[key]}</svg></span>`;
+  if(key && icPfad(key)) {
+    return `<span class="ic svg-ic" style="font-size:${size}"><svg viewBox="0 0 24 24">${icPfad(key)}</svg></span>`;
   }
   return '';
 }

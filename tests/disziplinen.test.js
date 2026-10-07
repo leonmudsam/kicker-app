@@ -3541,5 +3541,80 @@ ok(K.eval(`CHRONICLES.every(c => c.stand === undefined)`)
    && K.eval(`typeof REKORD_STAND === 'undefined'`),
    'es gibt keine Statusmarke „Neu" oder „Ueberarbeitet" mehr');
 
+// ═══ Ein Zeichen, eine Bedeutung [§C41] ═══
+// Die Krone stand für Meistertitel, Traummonat, Highlights, Legende,
+// Titelverteidiger und Spitzenwechsel; der Blitz für Stürmer, Sturm-Flex,
+// den kompletten Stürmer und die Eilmeldung; zwei Schlüssel standen doppelt
+// im Katalog und der zweite überschrieb den ersten still. Ein Zeichen mit
+// mehr als einem Träger ist nur erlaubt, wenn alle dieselbe Sache meinen —
+// dann steht es hier mit dieser einen Bedeutung. Wer einem vorhandenen
+// Zeichen einen neuen Träger gibt, trägt ihn hier ein, oder er braucht ein
+// eigenes Zeichen.
+const ZEICHEN_FAMILIEN = {
+  flame:'Die laufende Siegesserie', flameTriple:'Die lange Siegesserie',
+  dropTriple:'Die laufende Pleitenserie', trendCrash:'Die längste Pleitenserie',
+  handshake:'Das beste Duo', unstoppable:'Die Siegesserie eines Duos',
+  weekKing:'Player of the Week', dayKing:'Player of the Day',
+  crossedSwords:'Die Rivalität', comeback:'Die Wende nach der Pleite', flameBreak:'Der Serienbruch',
+  underdog:'Sieg als Außenseiter', surprise:'Der unwahrscheinlichste Sieg',
+  giantSlayer:'Sieg gegen den Favoriten', crownFallen:'Der Favorit verliert',
+  star:'Die beste Siegquote', crown:'Der Erste: Meistertitel, Titelverteidiger, Held des Tages',
+  shieldCheck:'Die wenigsten Gegentore', hole:'Die meisten Gegentore',
+  ball:'Die meisten Tore im Sturm', plusMinus:'Die Tordifferenz je Partie',
+  target:'Stark in engen Partien', thriller:'Viele enge Partien', pinch:'Der Zittersieg 10:9',
+  pille:'Die Pleite 9:10', dizzy:'Die Pleite 0:10', thumbsUp:'Der klare Sieg',
+  duplicate:'Dasselbe Ergebnis immer wieder', sunrise:'Die erste Partie des Tages',
+  weight:'Sieg mit dem Schwächsten als Partner', rainCloud:'Der Pechvogel', ghost:'Der Angstgegner',
+  bothSides:'Auf beiden Positionen', stepsUp:'Plätze gewonnen', abzeichen:'Eine Auszeichnung',
+  posSturm:'Der Stürmer', posAbwehr:'Der Verteidiger', posReinAbwehr:'Der reine Verteidiger',
+  medalTrio:'Einer sammelt mehreres', users:'Mehrere zusammen: Teams und geteilter Erfolg',
+  tafelStein:'Die Ewige Tafel', spielfeld:'Die Partie am Spieltag',
+};
+const _zc = JSON.parse(K.eval(`JSON.stringify((function(){
+  const t = []; const add = (sys, id, ic) => { if(ic) t.push({sys, id, ic}); };
+  Object.entries(AW_IC).forEach(([k, ic]) => add('Award', k, ic));
+  BADGES.forEach(b => add('Badge', b.id, b.ic));
+  DISZIPLINEN.forEach(d => add(d.monat ? 'Monatschronik' : 'Rekord', d.id, d.ic));
+  Object.entries(NEWS_CATEGORIES).forEach(([k, c]) => add('News', k, c.ic));
+  RANKS.forEach(x => add('Rang', x.label, x.icon));
+  Object.entries(AV_RINGS).forEach(([k, x]) => add('Ring', k, x.ic));
+  [0.9, 0.7, 0.57, 0.5, 0.43, 0.3, 0.1].forEach(a => { const p = posClassify(a); add('Position', p.label, p.icon); });
+  Object.entries(SP_ANLASS).forEach(([k, x]) => add('Spieltag', k, x.ic));
+  ['spiel','tafel','ins','held','woche','duell','serie','badge','marke','spieler','erfolg',''].forEach(s =>
+    add('Rubrik', s || 'liga', _newsSorteIcon(s, {dataRef:{type:'x'}})));
+  add('Rubrik', 'serie-pleite', _newsSorteIcon('serie', {dataRef:{type:'loss_streak'}}));
+  const zeichnungen = {};
+  Object.entries(ICONS).forEach(([k, p]) => { (zeichnungen[p] = zeichnungen[p] || []).push(k); });
+  return {traeger:t, keys:Object.keys(ICONS), alt:ZEICHEN_ALT,
+    gleich:Object.values(zeichnungen).filter(l => l.length > 1)};
+})())`));
+{
+  const je = {};
+  _zc.traeger.forEach(x => (je[x.ic] = je[x.ic] || []).push(x.sys + ':' + x.id));
+  const ohne = Object.entries(je).filter(([k, l]) => l.length > 1 && !ZEICHEN_FAMILIEN[k]);
+  ok(ohne.length === 0, 'kein Zeichen trägt zwei Bedeutungen — wer eins teilt, meint dieselbe Sache',
+     ohne.map(([k, l]) => k + ' = ' + l.join(', ')).join(' · '));
+  const leer = Object.keys(ZEICHEN_FAMILIEN).filter(k => !(je[k] && je[k].length > 1));
+  ok(leer.length === 0, 'jede Familie hat mindestens zwei Träger', leer.join(', '));
+  ok(_zc.traeger.every(x => _zc.keys.includes(x.ic)), 'jeder Träger nennt ein Zeichen, das es gibt',
+     _zc.traeger.filter(x => !_zc.keys.includes(x.ic)).map(x => x.sys + ':' + x.id + '/' + x.ic).join(', '));
+  ok(_zc.gleich.length === 0, 'keine zwei Schlüssel tragen dieselbe Zeichnung', _zc.gleich.map(l => l.join('=')).join(', '));
+  const altFalsch = Object.entries(_zc.alt).filter(([a, n]) => _zc.keys.includes(a) || !_zc.keys.includes(n));
+  ok(altFalsch.length === 0, 'jeder alte Name zeigt auf eine bestehende Zeichnung und steht selbst nicht mehr im Katalog',
+     altFalsch.map(x => x.join('→')).join(', '));
+  // Im Quelltext des Katalogs: der zweite gleichnamige Eintrag überschrieb
+  // den ersten still — so hatten `shieldStar` und `ghost` zwei Fassungen.
+  const kat = code.slice(code.indexOf('const ICONS = {'), code.indexOf('\n};', code.indexOf('const ICONS = {')));
+  const schl = [...kat.matchAll(/^\s+([A-Za-z0-9]+)\s*:\s*`/gm)].map(m => m[1]);
+  const doppelt = [...new Set(schl.filter((k, i) => schl.indexOf(k) !== i))];
+  ok(doppelt.length === 0, 'kein Schlüssel steht im Katalog zweimal', doppelt.join(', '));
+  // Jedes Zeichen, das der Code wörtlich setzt, gibt es — unter seinem
+  // heutigen Namen. Alte Namen sind nur für gespeicherte Stories da.
+  const wort = [...code.matchAll(/\b(?:svgI|zkHtml|icPfad|emptyState|blattAbschnittHtml)\(\s*'([A-Za-z0-9]+)'|\bic(?:on)?\s*:\s*'([A-Za-z0-9]+)'/g)]
+    .map(m => m[1] || m[2]);
+  const fehlt = [...new Set(wort.filter(k => !_zc.keys.includes(k)))];
+  ok(fehlt.length === 0, 'jedes wörtlich gesetzte Zeichen steht unter seinem heutigen Namen im Katalog', fehlt.join(', '));
+}
+
 console.log('\n' + (fails ? '✗ ' + fails + ' von ' + checks + ' CHECKS FEHLGESCHLAGEN' : '✓ ALLE ' + checks + ' CHECKS BESTANDEN'));
 process.exit(fails ? 1 : 0);

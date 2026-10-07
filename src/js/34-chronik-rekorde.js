@@ -59,7 +59,7 @@
 const CHRON_KINDS = {
   koennen: {label:'Können',        pl:'Können',         kurz:'Können',   ic:'trophyStar', ord:0,
             satz:'Schnitt und Quote über die ganze Laufbahn'},
-  form:    {label:'Aktuelle Form', pl:'Aktuelle Form',  kurz:'Form',     ic:'chartUp',    ord:1,
+  form:    {label:'Aktuelle Form', pl:'Aktuelle Form',  kurz:'Form',     ic:'trendUp',    ord:1,
             satz:'Gerechnet über die letzten eigenen Partien'},
   mark:    {label:'Bestmarke',     pl:'Bestmarken',     kurz:'Marken',   ic:'target',     ord:2,
             satz:'Einzelne Bestleistungen, jede an einem Tag erreicht'},

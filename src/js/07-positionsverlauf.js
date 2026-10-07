@@ -336,7 +336,7 @@ function showPositionHistory(seasonId){
 
   openSheet(`
     <div style="padding:0 0 8px">
-      ${blattKopfHtml({ic:'chartUp', titel:'Positionsverlauf', unter:'Tabellenplätze während der Saison'})}
+      ${blattKopfHtml({ic:'trendUp', titel:'Positionsverlauf', unter:'Tabellenplätze während der Saison'})}
       <div style="height:12px"></div>
 
       <div class="posv-info-pill">

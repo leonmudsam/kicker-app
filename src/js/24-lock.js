@@ -14,7 +14,7 @@ async function openSettingsLock(){
     <div style="background:var(--surface2);border:1px solid var(--line);border-radius:18px;padding:28px 24px;width:100%;max-width:320px;text-align:center">
       <div style="display:flex;justify-content:center;margin-bottom:16px">
         <span style="width:52px;height:52px;border-radius:14px;background:var(--surface3);display:grid;place-items:center;color:var(--ink2)">
-          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS['lock']}</svg>
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${icPfad('lock')}</svg>
         </span>
       </div>
       <h3 style="margin:0 0 6px;font-size:17px">Feintuning</h3>

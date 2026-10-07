@@ -23,11 +23,11 @@ const NEWS_CATEGORIES = {
   // _isBreaking() promotet die ultra-seltenen, liga-relevanten Ereignisse
   // (neuer Spitzenreiter, Platz-1-Duell, legendäres Badge, Saison-Klimax)
   // display-seitig hierher — wirkt auf bestehende UND neue persistierte Rows.
-  breaking:   {label:'Breaking',    descLabel:'Breaking News',    ic:'bolt'},
-  highlight:  {label:'Highlights',  descLabel:'Highlight',        ic:'crown'},
-  season:     {label:'Saison',      descLabel:'Saison',           ic:'rocket'},
-  badge:      {label:'Awards',      descLabel:'Badge & Awards',   ic:'medalTrio'},
-  fun:        {label:'Fun Facts',   descLabel:'Fun Fact',         ic:'thriller'},
+  breaking:   {label:'Breaking',    descLabel:'Breaking News',    ic:'sirene'},
+  highlight:  {label:'Highlights',  descLabel:'Highlight',        ic:'funkeln'},
+  season:     {label:'Saison',      descLabel:'Saison',           ic:'saisonKal'},
+  badge:      {label:'Awards',      descLabel:'Badge & Awards',   ic:'abzeichen'},
+  fun:        {label:'Fun Facts',   descLabel:'Fun Fact',         ic:'idee'},
   rivalry:    {label:'Rivalität',   descLabel:'Rivalität',        ic:'crossedSwords'},
   team:       {label:'Teams',       descLabel:'Team',             ic:'users'},
   comeback:   {label:'Comebacks',   descLabel:'Comeback',         ic:'comeback'},
@@ -36,14 +36,14 @@ const NEWS_CATEGORIES = {
   // 300 Elo geknackt, eine Bestmarke gesetzt. „Spielerzahl" stand als
   // Kartenaufschrift über „Maxi knackt 300 Elo" und las sich, als ginge es
   // um die Anzahl der Spieler.
-  personal:   {label:'Spieler',     descLabel:'Meilenstein',      ic:'trendUp'},
-  history:    {label:'Historie',    descLabel:'Historie',         ic:'calendar'},
+  personal:   {label:'Spieler',     descLabel:'Meilenstein',      ic:'user'},
+  history:    {label:'Historie',    descLabel:'Historie',         ic:'verlauf'},
   // Alles, was auf der Ewigen Tafel steht: Liga-Rekorde, Fügungen [§C35],
   // Monatschroniken und die Insignium-Stufen. Der ganze Awards-Reiter kam im
   // Feed nicht vor — wer einen Rekord übernahm, erfuhr es nur, wenn er
   // selbst nachsah.
-  tafel:      {label:'Tafel',       descLabel:'Ewige Tafel',      ic:'trophyStar'},
-  misfortune: {label:'Pechvogel',   descLabel:'Pechvogel',        ic:'dramaTear'},
+  tafel:      {label:'Tafel',       descLabel:'Ewige Tafel',      ic:'tafelStein'},
+  misfortune: {label:'Pechvogel',   descLabel:'Pechvogel',        ic:'rainCloud'},
 };
 
 // LocalStorage-Keys (versioniert für künftige Migrations)

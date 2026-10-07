@@ -5586,7 +5586,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.07.38548b42';
+const BUILD_VERSION='2026.10.07.09f6751e';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -5659,11 +5659,8 @@ const ICONS = {
   flame:     `<path d="M12 2s5 5 5 10a5 5 0 01-10 0c0-2 1-3 1-3s.5 2 2 2c-1-3 2-4 2-9z"/>`,
   bolt:      `<polygon points="13,2 4,14 11,14 9,22 20,10 13,10"/>`,
   shield:    `<path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6z"/>`,
-  chartUp:   `<path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/>`,
-  chartDown: `<path d="M3 7l6 6 4-4 8 8"/><path d="M14 17h7v-7"/>`,
   chartBar:  `<path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/>`,
   handshake: `<circle cx="6" cy="10" r="3"/><circle cx="18" cy="10" r="3"/><path d="M9 10h6"/><path d="M3 20a4 4 0 014-4h2M21 20a4 4 0 00-4-4h-2"/>`,
-  swords:    `<path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/><path d="M9.5 17.5L21 6V3h-3L6.5 14.5"/><path d="M11 19l-6-6"/><path d="M8 16l-4 4"/><path d="M5 21l-2-2"/>`,
   users:     `<circle cx="9" cy="7" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20v-1a6 6 0 0112 0v1M15 20v-1a5 5 0 015-1"/>`,
   user:      `<circle cx="12" cy="8" r="4"/><path d="M5 21v-1a7 7 0 0114 0v1"/>`,
   check:     `<polyline points="4,12 10,18 20,6"/>`,
@@ -5672,7 +5669,6 @@ const ICONS = {
   calendar:  `<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>`,
   search:    `<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>`,
   scroll:    `<path d="M8 3h10a2 2 0 012 2v14a2 2 0 01-2 2H8M8 3a2 2 0 00-2 2v3M8 3v18M6 8H4a1 1 0 00-1 1v8a2 2 0 002 2h11"/>`,
-  rocket:    `<path d="M5 13l4 4M4.5 13.5l-1.4 4.2 4.2-1.4M14 4l6 6-9 9-3 1 1-3 5-5"/>`,
   edit:      `<path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4z"/>`,
   trendUp:   `<polyline points="3,17 9,11 13,15 21,7"/><polyline points="14,7 21,7 21,14"/>`,
   trendDown: `<polyline points="3,7 9,13 13,9 21,17"/><polyline points="14,17 21,17 21,10"/>`,
@@ -5695,8 +5691,6 @@ const ICONS = {
   surprise:      `<path d="M12 3l3 6 6 1-4.5 4 1 6L12 17l-5.5 3 1-6L3 10l6-1z"/><circle cx="12" cy="12" r="1.2"/>`,
   explosion:     `<path d="M12 2l2 5 5-1-3 4 4 3-5 1 1 5-4-3-3 4-1-5-5-1 3-4-4-3 5-1z"/>`,
   gamepad:       `<rect x="2" y="7" width="20" height="12" rx="4"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M6 10v2M5 11h2"/>`,
-  ghost:         `<path d="M12 2a8 8 0 00-8 8v11l2-2 2 2 2-2 2 2 2-2 2 2 2-2 2 2V10a8 8 0 00-8-8z"/><circle cx="9.5" cy="10" r="1.1"/><circle cx="14.5" cy="10" r="1.1"/>`,
-  iceCube:       `<path d="M8 3h8l-1 8-3 10-3-10z"/><path d="M9 8h6M10 13h4"/><circle cx="6" cy="6" r="1"/><circle cx="18" cy="9" r="1"/><circle cx="7" cy="14" r=".8"/>`,
   trendCrash:    `<path d="M3 5l5 5 4-4 9 9"/><polyline points="14,15 21,15 21,8"/>`,
   meltDown:      `<circle cx="12" cy="10" r="6"/><path d="M6 16c0 3 2 5 6 5s6-2 6-5M9 9h.01M15 9h.01M9 13s1 1 3 1 3-1 3-1"/>`,
   blockedShot:   `<circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/>`,
@@ -5707,11 +5701,9 @@ const ICONS = {
   stopwatch:     `<circle cx="12" cy="13" r="8"/><path d="M12 8v5l3 2M9 2h6M12 5V2"/>`,
   refresh:       `<path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6z"/><polygon points="13,8 9,14 12,14 11,18 15,12 12,12"/>`,
   bolt2:         `<polygon points="13,2 4,14 11,14 9,22 20,10 13,10"/><circle cx="13" cy="14" r="1.5"/>`,
-  shieldStar:    `<path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6z"/><polygon points="12,8 13,11 16,11 13.5,13 14.5,16 12,14 9.5,16 10.5,13 8,11 11,11"/>`,
   flameDouble:   `<path d="M7 3s3 3 3 6a3 3 0 11-6 0c0-1.2.6-1.8.6-1.8s.3 1.2 1.2 1.2c-.6-1.8 1.2-2.4 1.2-5.4z"/><path d="M17 3s3 3 3 6a3 3 0 11-6 0c0-1.2.6-1.8.6-1.8s.3 1.2 1.2 1.2c-.6-1.8 1.2-2.4 1.2-5.4z"/>`,
   flameTriple:   `<path d="M5 6s2 2 2 4a2 2 0 11-4 0c0-.8.4-1.2.4-1.2s.2.8.8.8c-.4-1.2.8-1.6.8-3.6z"/><path d="M12 3s3 3 3 6a3 3 0 11-6 0c0-1.2.6-1.8.6-1.8s.3 1.2 1.2 1.2c-.6-1.8 1.2-2.4 1.2-5.4z"/><path d="M19 6s2 2 2 4a2 2 0 11-4 0c0-.8.4-1.2.4-1.2s.2.8.8.8c-.4-1.2.8-1.6.8-3.6z"/>`,
   crownFlame:    `<path d="M2 8l4 6 6-9 6 9 4-6v8H2z"/><path d="M12 17s2 2 2 4a2 2 0 01-4 0c0-1 .5-1.5.5-1.5"/>`,
-  weightSmall:   `<path d="M4 10v4M20 10v4M7 7v10M17 7v10M7 12h10"/>`,
   crownPlus:     `<path d="M2 8l4 6 6-9 6 9 4-6v11H2z"/><path d="M9 16h6M12 13v6"/>`,
   weekly:        `<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/><circle cx="12" cy="14" r="2"/>`,
   trophyDay:     `<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0zM5 9a2 2 0 01-2-2V5h4M19 9a2 2 0 002-2V5h-4"/><path d="M12 11l1 2-2 1 1 2"/>`,
@@ -5736,7 +5728,6 @@ const ICONS = {
   sideSwap:      `<path d="M4 8h13l-3-3M20 16H7l3 3"/><path d="M4 8v-3M20 16v3"/>`,
   rainCloud:     `<path d="M6 14a4 4 0 010-8 5 5 0 019 0 4 4 0 010 8z"/><path d="M9 17l-1 3M13 17l-1 3M17 17l-1 3"/>`,
   unstoppable:   `<path d="M12 3s5 5 5 10a5 5 0 01-10 0c0-2 1-3 1-3s.5 2 2 2c-1-3 2-4 2-9z"/><polyline points="10,15 12,12 14,15"/>`,
-  concreteWall:  `<rect x="3" y="3" width="18" height="6" rx="1"/><rect x="3" y="9" width="18" height="6" rx="1"/><rect x="3" y="15" width="18" height="6" rx="1"/><path d="M8 3v6M16 3v6M5 9v6M12 9v6M19 9v6M8 15v6M16 15v6"/>`,
   clover:        `<path d="M12 12s-3-1-3-4 3-3 3 0c0-3 3-3 3 0s-3 4-3 4z"/><path d="M12 12s-1 3-4 3-3-3 0-3c-3 0-3-3 0-3s4 3 4 3z"/><path d="M12 12s3 1 3 4-3 3-3 0c0 3-3 3-3 0s3-4 3-4z"/><path d="M12 12s1-3 4-3 3 3 0 3c3 0 3 3 0 3s-4-3-4-3z"/><path d="M12 16v5"/>`,
   giantSlayer:   `<path d="M5 19l8-8M5 19l3 0M5 19l0-3M13 11l6-6M13 11l3 0M13 11l0-3"/><polygon points="9,4 12,2 15,4 14,7 10,7" fill="none" stroke-linejoin="round"/>`,
   devilMask:     `<path d="M5 8l2-4 3 2M19 8l-2-4-3 2"/><path d="M4 11a8 8 0 0116 0v4a8 8 0 01-16 0z"/><circle cx="9" cy="13" r="1.3"/><circle cx="15" cy="13" r="1.3"/><path d="M9 18c1 .8 2 1 3 1s2-.2 3-1"/>`,
@@ -5745,14 +5736,12 @@ const ICONS = {
   flameBreak:    `<path d="M12 2s5 5 5 10a5 5 0 01-10 0c0-2 1-3 1-3s.5 2 2 2c-1-3 2-4 2-9z"/><line x1="3" y1="13" x2="21" y2="13" stroke-width="2.5" stroke-linecap="round"/>`,
   cheese:        `<circle cx="12" cy="12" r="9"/><circle cx="9" cy="9" r="1.3"/><circle cx="15" cy="11" r="1.7"/><circle cx="10" cy="15" r="1.4"/><circle cx="15.5" cy="15.5" r="0.9"/>`,
   crownFallen:   `<path d="M2 16l4-6 6 9 6-9 4 6v0a1 1 0 01-1 1H3a1 1 0 01-1-1z"/><line x1="3" y1="20" x2="21" y2="20"/>`,
-  blackDay:      `<path d="M6 14a4 4 0 010-8 5 5 0 019 0 4 4 0 010 8z" fill="currentColor" fill-opacity="0.25"/><path d="M6 14a4 4 0 010-8 5 5 0 019 0 4 4 0 010 8z"/><line x1="8" y1="18" x2="7" y2="21"/><line x1="12" y1="18" x2="11" y2="21"/><line x1="16" y1="18" x2="15" y2="21"/>`,
   dramaTear:     `<path d="M12 3c4 0 7 3 7 7v3c0 4-3 7-7 7s-7-3-7-7v-3c0-4 3-7 7-7z"/><circle cx="9.5" cy="11" r="0.9"/><circle cx="14.5" cy="11" r="0.9"/><path d="M9 15.5c1 1 2 1.3 3 1.3s2-.3 3-1.3"/><path d="M15 12.5l0.6 2.5"/>`,
   shieldStar:    `<path d="M12 2l8 4v6c0 5-4 8-8 10-4-2-8-5-8-10V6z"/><polygon points="12,7.5 13.5,11 17,11.3 14.3,13.6 15.1,17 12,15.1 8.9,17 9.7,13.6 7,11.3 10.5,11"/>`,
   tripleCup:     `<path d="M3 4h4v3a2 2 0 01-4 0zM10 4h4v3a2 2 0 01-4 0zM17 4h4v3a2 2 0 01-4 0z"/><line x1="5" y1="7" x2="5" y2="10"/><line x1="12" y1="7" x2="12" y2="10"/><line x1="19" y1="7" x2="19" y2="10"/><line x1="3" y1="10" x2="7" y2="10"/><line x1="10" y1="10" x2="14" y2="10"/><line x1="17" y1="10" x2="21" y2="10"/><line x1="4" y1="20" x2="20" y2="20"/><path d="M5 14l-1 6M19 14l1 6M12 14v6"/>`,
   weatherMix:    `<circle cx="7" cy="7" r="2.5"/><line x1="7" y1="2.5" x2="7" y2="3.5"/><line x1="2.5" y1="7" x2="3.5" y2="7"/><line x1="4" y1="4" x2="4.5" y2="4.5"/><line x1="10" y1="4" x2="9.5" y2="4.5"/><path d="M14 14a3.5 3.5 0 010-7 4.5 4.5 0 014.5 3.5 2.5 2.5 0 010 5h-4.5z"/><line x1="10" y1="18" x2="9" y2="21"/><line x1="14" y1="18" x2="13" y2="21"/><line x1="18" y1="18" x2="17" y2="21"/>`,
   godRay:        `<circle cx="12" cy="13" r="3.5"/><polygon points="12,10.5 12.8,12.5 12,14.5 11.2,12.5" fill="currentColor" fill-opacity="0.6"/><line x1="12" y1="3" x2="12" y2="5.5"/><line x1="21" y1="13" x2="18.5" y2="13"/><line x1="3" y1="13" x2="5.5" y2="13"/><line x1="18.5" y1="6.5" x2="16.7" y2="8.3"/><line x1="5.5" y1="6.5" x2="7.3" y2="8.3"/><line x1="18.5" y1="19.5" x2="16.7" y2="17.7"/><line x1="5.5" y1="19.5" x2="7.3" y2="17.7"/>`,
   kingFall:      `<path d="M5 9l3-3 4 2 4-2 3 3v9H5z"/><path d="M8 13l8 4M16 13l-8 4"/>`,
-  overtake:      `<path d="M3 7h13"/><path d="M12 3l4 4-4 4"/><path d="M21 17H8"/><path d="M12 13l-4 4 4 4"/>`,
   thriller:      `<polyline points="3 18 6 8 9 16 12 10 15 17 18 8 21 14"/>`,
   thumbsUp:      `<rect x="3" y="11" width="4" height="10" rx="1"/><path d="M7 11l3-5c.2-.5.7-.7 1.2-.7 1.1 0 1.8 1 1.5 2L12 10h4.5c1 0 1.7.7 1.5 1.7l-1.3 5c-.2.8-.9 1.3-1.7 1.3H7z"/>`,
   duplicate:     `<rect x="4" y="4" width="13" height="13" rx="2"/><rect x="8" y="8" width="13" height="13" rx="2"/>`,
@@ -5762,7 +5751,6 @@ const ICONS = {
   medalTrio:     `<circle cx="7" cy="15" r="3.5"/><circle cx="12" cy="10" r="3.5"/><circle cx="17" cy="15" r="3.5"/><path d="M6 12l-1-3M11 7l-1-3M16 12l1-3M18 7l-1-3M13 7l-1-3M8 12l-1-3"/>`,
   tripleCrash:   `<path d="M3 20h4v-3a2 2 0 00-4 0zM10 20h4v-3a2 2 0 00-4 0zM17 20h4v-3a2 2 0 00-4 0z"/><line x1="5" y1="17" x2="5" y2="14"/><line x1="12" y1="17" x2="12" y2="14"/><line x1="19" y1="17" x2="19" y2="14"/><line x1="4" y1="4" x2="20" y2="4"/><line x1="5" y1="14" x2="4" y2="4"/><line x1="19" y1="14" x2="20" y2="4"/><line x1="12" y1="14" x2="12" y2="4"/>`,
   crashDay:      `<polyline points="3 19 12 4 21 19"/><circle cx="21" cy="19" r="1.5"/>`,
-  heartBroken:   `<path d="M12 21s-7-4.5-7-11a4 4 0 017-3 4 4 0 017 3c0 6.5-7 11-7 11z"/><polyline points="10 8 12 12 10 15 13 11"/>`,
   ghost:         `<path d="M5 10a7 7 0 0114 0v10l-2.3-1.7L14 20l-2-1.7L10 20l-2.3-1.7L5 20z"/><circle cx="10" cy="11" r="1.2"/><circle cx="14" cy="11" r="1.2"/>`,
   newspaper:     `<rect x="3" y="4" width="15" height="16" rx="2"/><line x1="18" y1="8" x2="21" y2="8"/><path d="M18 8v9a2 2 0 002 2 1 1 0 001-1V8"/><line x1="6" y1="8" x2="14" y2="8"/><line x1="6" y1="11" x2="14" y2="11"/><line x1="6" y1="14" x2="11" y2="14"/>`,
   clock:         `<circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/>`,
@@ -5810,17 +5798,112 @@ const ICONS = {
   trash:         `<path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13"/><path d="M10 11v5.5M14 11v5.5"/>`,
   hochladen:     `<path d="M4 14v4a2 2 0 002 2h12a2 2 0 002-2v-4"/><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5"/>`,
   faden:         `<path d="M9.5 14.5l5-5"/><path d="M11 6.5l1.4-1.4a4 4 0 015.6 5.6L16.5 12M13 17.5l-1.4 1.4a4 4 0 01-5.6-5.6L7.5 12"/>`,
+  rang1:  `<path d="M6 15l6-4.5 6 4.5"/>`,
+  rang2:  `<path d="M6 12.5l6-4.5 6 4.5M6 17.5l6-4.5 6 4.5"/>`,
+  rang3:  `<path d="M6 9.5L12 5l6 4.5M6 14l6-4.5 6 4.5M6 18.5l6-4.5 6 4.5"/>`,
+  rang4:  `<path d="M12 2.2l1 2 2.2.3-1.6 1.5.4 2.2-2-1-2 1 .4-2.2-1.6-1.5 2.2-.3z"/><path d="M6 13l6-4 6 4M6 17l6-4 6 4M6 21l6-4 6 4"/>`,
+  rang5:  `<path d="M7 8.2L6.2 3.5l3 2.1L12 2.2l2.8 3.4 3-2.1L17 8.2z"/><path d="M6 13l6-4 6 4M6 17l6-4 6 4M6 21l6-4 6 4"/>`,
+
+  posSturm:      `<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M5 12h14"/><circle cx="12" cy="7.5" r="2" fill="currentColor"/>`,
+  posSturmFlex:  `<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M5 12h14"/><circle cx="12" cy="7.5" r="2" fill="currentColor"/><circle cx="12" cy="16.5" r="1.3"/>`,
+  posFlex:       `<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M5 12h14"/><circle cx="12" cy="7.5" r="1.8"/><circle cx="12" cy="16.5" r="1.8"/>`,
+  posAbwehrFlex: `<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M5 12h14"/><circle cx="12" cy="7.5" r="1.3"/><circle cx="12" cy="16.5" r="2" fill="currentColor"/>`,
+  posAbwehr:     `<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M5 12h14"/><circle cx="12" cy="16.5" r="2" fill="currentColor"/>`,
+  posReinSturm:  `<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M5 12V5a2 2 0 012-2h10a2 2 0 012 2v7z" fill="currentColor" fill-opacity=".3"/><path d="M5 12h14"/><circle cx="12" cy="7.5" r="2" fill="currentColor"/>`,
+  posReinAbwehr: `<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7z" fill="currentColor" fill-opacity=".3"/><path d="M5 12h14"/><circle cx="12" cy="16.5" r="2" fill="currentColor"/>`,
+  spezialist:    `<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M5 12h14"/><path d="M9 8l2 1.8 4-3.8"/>`,
+
+  tafelStein:    `<path d="M5 21V8.5a7 5.5 0 0114 0V21z"/><path d="M9 11h6M9 14.5h6M9 18h4"/>`,
+  verlauf:       `<path d="M3.5 12a8.5 8.5 0 102.5-6"/><path d="M3.5 3.5V8H8"/><path d="M12 7.5V12l3 2"/>`,
+  saisonKal:     `<rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="M10 19v-6.5h5l-1.3 1.8L15 16h-5"/>`,
+  idee:          `<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 00-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0012 3z"/>`,
+  sirene:        `<path d="M7 17v-5a5 5 0 0110 0v5"/><rect x="5" y="17" width="14" height="3.5" rx="1"/><path d="M12 2.5v2M4.3 5.8l1.4 1.4M19.7 5.8l-1.4 1.4M10 12a2 2 0 012-2"/>`,
+  funkeln:       `<path d="M10 3l1.8 5.2L17 10l-5.2 1.8L10 17l-1.8-5.2L3 10l5.2-1.8z"/><path d="M18 14l.9 2.1 2.1.9-2.1.9L18 20l-.9-2.1L15 17l2.1-.9z"/>`,
+  abzeichen:     `<path d="M12 2.5l8 4.6v9.8l-8 4.6-8-4.6V7.1z"/><path d="M12 8.2l1.2 2.4 2.6.4-1.9 1.8.5 2.6L12 14.2l-2.4 1.2.5-2.6-1.9-1.8 2.6-.4z"/>`,
+  spielfeld:     `<rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M12 5v14"/><circle cx="12" cy="12" r="2.5"/><path d="M3 9.5h1.8v5H3M21 9.5h-1.8v5H21"/>`,
+
+  premiere:      `<circle cx="8" cy="12" r="2.6"/><circle cx="16" cy="12" r="2.6"/><path d="M3.2 21a4.8 4.8 0 019.6 0M11.2 21a4.8 4.8 0 019.6 0"/><path d="M12 2.2l.9 1.8 2 .3-1.45 1.4.35 2-1.8-.95-1.8.95.35-2L9.1 4.3l2-.3z"/>`,
+  spitzenwechsel:`<path d="M10.5 8.5l2-1.5V17"/><path d="M4 9a8.5 8.5 0 0114.5-3.5M20 15a8.5 8.5 0 01-14.5 3.5"/><path d="M18.8 2.5v3.3h-3.3M5.2 21.5v-3.3h3.3"/>`,
+  rollencoup:    `<rect x="4" y="7" width="11" height="14" rx="2"/><path d="M4 14h11"/><path d="M13 3h8v8"/><path d="M21 3l-8 8"/>`,
+
+  partnerHebel:  `<circle cx="12" cy="9" r="3"/><path d="M7 20a5 5 0 0110 0"/><path d="M4 14V7M2 9l2-2 2 2M20 14V7M18 9l2-2 2 2"/>`,
+  jederPartner:  `<circle cx="12" cy="12" r="2.6"/><circle cx="5" cy="5.5" r="2"/><circle cx="19" cy="5.5" r="2"/><circle cx="12" cy="20" r="2"/><path d="M10.1 10.3L6.5 7M13.9 10.3L17.5 7M12 14.6V18"/>`,
+  augenhoehe:    `<circle cx="7" cy="9" r="2.6"/><circle cx="17" cy="9" r="2.6"/><path d="M2 9h2.4M9.6 9h4.8M19.6 9H22"/><path d="M2.5 20a4.5 4.5 0 019 0M12.5 20a4.5 4.5 0 019 0"/>`,
+  schattenmann:  `<circle cx="9" cy="7.5" r="3.3"/><path d="M3 21v-1a6 6 0 0112 0v1"/><path d="M15.5 4.3a3.3 3.3 0 010 6.4M18 14.6c1.8 1 3 3 3 5.4v1" stroke-dasharray="1.8 2.2"/>`,
+
+  geistBann:     `<path d="M6 20V10.5a6 6 0 0112 0V20l-2-1.6-2 1.6-2-1.6-2 1.6-2-1.6z"/><path d="M10 11h.01M14 11h.01"/><path d="M3 3l18 18"/>`,
+  jederGegner:   `<circle cx="12" cy="12" r="8"/><path d="M8.6 12.2l2.3 2.2 4.5-4.6"/><path d="M12 1.5v2.5M12 20v2.5M1.5 12H4M20 12h2.5"/>`,
+  bilanzTief:    `<circle cx="12" cy="12" r="9"/><path d="M12 12V3a9 9 0 013.8.84z" fill="currentColor" fill-opacity=".45"/><path d="M12 12V3"/>`,
+  ausreisser:    `<path d="M3.5 3.5v17h17"/><circle cx="7.5" cy="16.5" r="1"/><circle cx="10.5" cy="15" r="1"/><circle cx="8.5" cy="13" r="1"/><circle cx="12" cy="17" r="1"/><circle cx="17.5" cy="7" r="2.2"/>`,
+  wunderWoche:   `<rect x="3" y="5" width="18" height="15" rx="2"/><path d="M3 10h18"/><path d="M12 11.8l1 2 2.2.3-1.6 1.5.4 2.2-2-1-2 1 .4-2.2-1.6-1.5 2.2-.3z"/>`,
+  schwererTag:   `<rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="M10 14a2 2 0 014 0"/><path d="M8.8 14.5h6.4l.9 4H7.9z"/>`,
+
+  sturzflug:     `<circle cx="16" cy="17" r="3.5"/><path d="M13.4 14.6L4.5 5.7M15.2 13.6L10 4.5M12.4 16.4L3.5 11"/>`,
+  zweiteLuft:    `<rect x="2.5" y="7" width="17" height="10" rx="2"/><path d="M21.5 10.5v3"/><path d="M12 8.8L9.3 12.4h3.4L10 15.6"/>`,
+  steigerung:    `<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 010 18z" fill="currentColor" fill-opacity=".35"/><path d="M12 3v18"/>`,
+  umschwung:     `<rect x="3" y="13" width="6" height="7.5" rx="1"/><rect x="15" y="5.5" width="6" height="15" rx="1"/><path d="M6 10c1.5-3.5 4-5 7.5-5"/><path d="M11.5 3l2 2-2 2"/>`,
+  wechselhaft:   `<path d="M2 12h20" stroke-dasharray="1.5 2.5"/><path d="M2 12c2.5-9 5-9 7.5 0s5 9 7.5 0c1.2-4 2.5-6 5-6"/>`,
+  formGipfel:    `<path d="M3 20h18"/><path d="M3 16.5l4.5-3.5 3.5 2 4.5-8.5L21 16"/><circle cx="15.5" cy="6.5" r="1.8" fill="currentColor"/>`,
+  sollMinus:     `<path d="M3 6h18" stroke-dasharray="3 3"/><path d="M4 9l4 4 4-2 4 7 4-3"/>`,
+  schwaechsterTag:`<path d="M3 20.5h18"/><path d="M3 11h18" stroke-dasharray="1.5 2.5"/><path d="M6.5 20.5V8M10.5 20.5V10M14.5 20.5V5.5M18.5 20.5V9"/>`,
+  wochenschluss: `<rect x="2.5" y="8" width="19" height="8" rx="1.5"/><path d="M6.3 8v8M10.1 8v8M13.9 8v8M17.7 8v8"/><path d="M17.7 8h2.3a1.5 1.5 0 011.5 1.5v5a1.5 1.5 0 01-1.5 1.5h-2.3z" fill="currentColor" fill-opacity=".45"/>`,
+  tagesabschluss:`<path d="M19.5 14.5A8 8 0 019.5 4.5a8 8 0 1010 10z"/><path d="M9.5 13l2 2 3.5-4"/>`,
+  thron:         `<path d="M7 21v-3.5M17 21v-3.5"/><path d="M5.5 17.5h13v-4h-13z"/><path d="M8 13.5V5l4-2.5L16 5v8.5"/>`,
+  sturmfuehrer:  `<path d="M5.5 21.5V3"/><path d="M5.5 3.5H18l-3 4.25L18 12H5.5"/>`,
+
+  weisseWeste:   `<path d="M8.5 3L3.5 6l2 4.2L8 9.2V21h8V9.2l2.5 1L20.5 6l-5-3a3.5 3.5 0 01-7 0z"/>`,
+  widerstand:    `<path d="M3 12h9.5M9.5 8.5L13 12l-3.5 3.5"/><path d="M16.5 4v16M20.5 6.5v11"/>`,
+  abrissbirne:   `<path d="M3.5 3h10"/><path d="M8.5 3v6.5"/><circle cx="8.5" cy="15" r="5"/><path d="M16.5 10.5l3.5-1.3M17 15h4M16.5 19.3l3.5 1.4"/>`,
+  torhagel:      `<path d="M7 14.5a4 4 0 01-.4-8A5.5 5.5 0 0117 7a3.7 3.7 0 01.4 7.5z"/><circle cx="8" cy="18.6" r="1.3"/><circle cx="12.4" cy="20.4" r="1.3"/><circle cx="16.6" cy="18" r="1.3"/>`,
+  dreiSaisons:   `<path d="M12 2.5l7.5 3.4v5.6c0 4.7-3.2 8.6-7.5 10-4.3-1.4-7.5-5.3-7.5-10V5.9z"/><path d="M9 9v6M12 9v6M15 9v6"/>`,
+  nulldiaet:     `<circle cx="12.5" cy="12" r="6.5"/><circle cx="12.5" cy="12" r="3.5"/><path d="M2.5 4v4.5a1.5 1.5 0 003 0V4M4 9v11M21.5 4v16M21.5 4c-1.8 1-2.3 4-2.3 6h2.3"/>`,
+
+  dauerbrenner:  `<path d="M8.5 21h7M10 21V10h4v11"/><path d="M12 10V8.2"/><path d="M12 2.8c1.4 1.5 1.9 2.8 0 4.3-1.9-1.5-1.4-2.8 0-4.3z"/>`,
+  urgestein:     `<path d="M3 20.5h18l-2.5-6.5-3-2.5L13 5.5 9.5 8.5 6 13z"/><path d="M5.3 15.5h13.5M7.6 11.5h8"/>`,
+  siegermaschine:`<path d="M10.3 2.5h3.4l.5 2.4 1.6.7 2.1-1.3 2.4 2.4-1.3 2.1.7 1.6 2.4.5v3.4l-2.4.5-.7 1.6 1.3 2.1-2.4 2.4-2.1-1.3-1.6.7-.5 2.4h-3.4l-.5-2.4-1.6-.7-2.1 1.3-2.4-2.4 1.3-2.1-.7-1.6-2.4-.5v-3.4l2.4-.5.7-1.6-1.3-2.1 2.4-2.4 2.1 1.3 1.6-.7z"/><path d="M9.3 12.2l1.9 1.9 3.5-3.8"/>`,
+  gleichmass:    `<path d="M3 19.5h18"/><path d="M4.5 19.5c3.5 0 4.5-13 7.5-13s4 13 7.5 13"/><path d="M8.5 13h7" stroke-dasharray="1.5 2"/>`,
+  zitterkrone:   `<path d="M6 18l-1-9 4 3 3-5 3 5 4-3-1 9z"/><path d="M2.5 9.5l1 1.5-1 1.5M21.5 9.5l-1 1.5 1 1.5"/>`,
+  kaltblut:      `<path d="M10 4.2a2 2 0 014 0v10.3a4 4 0 11-4 0z"/><path d="M12 15.5V12"/><path d="M17 5h3M17 8.5h2"/>`,
+
+  pille:         `<path d="M4.7 13.6l8.9-8.9a4 4 0 015.7 5.7l-8.9 8.9a4 4 0 01-5.7-5.7z"/><path d="M9.2 9.1l5.7 5.7"/>`,
+  schwarzerTag:  `<circle cx="12" cy="12" r="4.8" fill="currentColor" fill-opacity=".55"/><path d="M12 2.2v2.6M12 19.2v2.6M2.2 12h2.6M19.2 12h2.6M5.1 5.1l1.8 1.8M17.1 17.1l1.8 1.8M5.1 18.9l1.8-1.8M17.1 6.9l1.8-1.8"/>`,
+  ueberholen:    `<circle cx="12" cy="16" r="2.4"/><path d="M3.5 18c0-6.5 4.2-10 10.5-10h6"/><path d="M17 5l3 3-3 3"/>`,
+  rakete:        `<path d="M12 2.5c3 2 4.5 5.5 4.5 9.5l-2 3h-5l-2-3c0-4 1.5-7.5 4.5-9.5z"/><circle cx="12" cy="9" r="1.6"/><path d="M9.5 15l-2.5 2.5V20l2.5-1.5M14.5 15l2.5 2.5V20l-2.5-1.5M12 17.5V21"/>`,
+  betonmauer:    `<circle cx="8" cy="5" r="2.2"/><circle cx="16" cy="5" r="2.2"/><path d="M4.5 11a3.5 3.5 0 017 0M12.5 11a3.5 3.5 0 017 0"/><rect x="3" y="11" width="18" height="10" rx="1"/><path d="M3 16h18M9 11v5M15 11v5M12 16v5"/>`,
+  rekord:        `<path d="M12 2.5l1.3 2.6 2.9.4-2.1 2 .5 2.9L12 9l-2.6 1.4.5-2.9-2.1-2 2.9-.4z"/><path d="M3.5 21v-5h5v-3h7v5h5v3z"/>`,
+  sichern:       `<path d="M4 14v4a2 2 0 002 2h12a2 2 0 002-2v-4"/><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5"/>`,
+  neuRechnen:    `<path d="M19.5 10.5A7.8 7.8 0 005.6 7L4 8.6"/><path d="M4 3.8v4.8h4.8"/><path d="M4.5 13.5A7.8 7.8 0 0018.4 17l1.6-1.6"/><path d="M20 20.2v-4.8h-4.8"/>`,
+  wippe:         `<path d="M3 14h18"/><path d="M12 14l-3 6.5h6z"/><circle cx="6.5" cy="10.8" r="2.3"/><rect x="15.3" y="8.6" width="4.4" height="4.4" rx=".6"/>`,
+  marke:         `<path d="M5 21.5V3.5"/><path d="M5 4h14v9H5"/><path d="M5 4h4.7v4.5H5zM14.3 4H19v4.5h-4.7zM9.7 8.5h4.6V13H9.7z" fill="currentColor" fill-opacity=".45"/>`,
+  kontrast:      `<path d="M3 20.5h18"/><rect x="5" y="4" width="5" height="16.5" rx="1"/><rect x="14" y="16" width="5" height="4.5" rx="1"/><path d="M16.5 5v7.5M14.8 10.8l1.7 1.7 1.7-1.7"/>`,
+  spaetStart:    `<path d="M3 17.5h9.5c3.2 0 5.3-3.6 6.5-10"/><path d="M16.2 9.3l2.8-2.6 2.3 3"/><path d="M3 21h18" stroke-dasharray="1.5 2.5"/>`,
+  massstab:       `<path d="M3.5 15.5L15.5 3.5l5 5-12 12z"/><path d="M7 12l2 2M9.5 9.5l1.5 1.5M12 7l2 2M14.5 4.5l1.5 1.5"/>`,
+  zepter:         `<path d="M4.5 19.5L14 10"/><circle cx="16.5" cy="7.5" r="3"/><path d="M16.5 2v2M22 7.5h-2.2M19.4 3.6l-.9.9"/><path d="M6.2 15.2l2.6 2.6"/>`,
+  wochenkrone:    `<path d="M6.5 12l-1.2-6 3.4 2.4L12 4.5l3.3 3.9 3.4-2.4-1.2 6z"/><path d="M3 19h.01M6 20.3h.01M9 21h.01M12 21.2h.01M15 21h.01M18 20.3h.01M21 19h.01"/>`,
+  bollwerk:       `<path d="M4 21.5V8h3V5h3v3h4V5h3v3h3v13.5z"/><path d="M10 21.5v-5a2 2 0 014 0v5"/>`,
+  antwort:        `<path d="M4 7h9.5a5.5 5.5 0 010 11H8"/><path d="M11 15l-3 3 3 3"/><circle cx="4" cy="7" r="1.6" fill="currentColor"/>`,
+  aufstehen:      `<path d="M3 21h18"/><circle cx="12" cy="5" r="2.4"/><path d="M12 8.5V16M8.5 12L12 8.5l3.5 3.5"/><path d="M8 21l4-4 4 4"/>`,
+  abwehrFenster:  `<rect x="5" y="3" width="14" height="18" rx="2" stroke-dasharray="2.4 2.2"/><path d="M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7z" fill="currentColor" fill-opacity=".3"/><path d="M5 12h14"/><circle cx="12" cy="16.5" r="2" fill="currentColor"/>`,
+  lieblingszahl:  `<path d="M9.5 3L7.5 21M16.5 3l-2 18M4 8.5h16.5M3.5 15.5h16.5"/>`,
 };
+const ZEICHEN_ALT = {
+  weightSmall:'weight', heartBroken:'pille', concreteWall:'betonmauer', blackDay:'schwarzerTag',
+  overtake:'ueberholen', rocket:'rakete', chartUp:'trendUp', chartDown:'trendDown', swords:'crossedSwords',
+  iceCube:'dropTriple',
+};
+function icPfad(name, rueckfall){
+  return ICONS[name] || ICONS[ZEICHEN_ALT[name]] || (rueckfall ? ICONS[rueckfall] || '' : '');
+}
 function svgI(name, opts){
   const o = opts || {};
   const cls = o.cls ? ' '+o.cls : '';
-  const path = ICONS[name] || '';
+  const path = icPfad(name);
   return `<span class="ic svg-ic${cls}"><svg viewBox="0 0 24 24" aria-hidden="true">${path}</svg></span>`;
 }
 const ZK_TON = {gold:1, rot:1, gruen:1, blau:1, viol:1, bronze:1};
 function zkHtml(name, groesse, ton){
   return `<span class="zk${groesse ? ' '+groesse : ''}${ZK_TON[ton] ? ' '+ton : ''}">`
-    + `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[name] || ICONS.trophy}</svg></span>`;
+    + `<svg viewBox="0 0 24 24" aria-hidden="true">${icPfad(name, 'trophy')}</svg></span>`;
 }
 function medalB(i){
   if(i<0||i>2) return '';
@@ -6440,11 +6523,11 @@ function _vorwaermen(){
   _leerlauf(1000).then(weiter);
 }
 const RANKS=[
-  {label:'Legende',   icon:'crown',  color:'var(--gold)',   pct:0.10},
-  {label:'Elite',     icon:'star',   color:'var(--purple)', pct:0.30},
-  {label:'Stark',     icon:'medal',  color:'var(--acid)',   pct:0.60},
-  {label:'Solide',    icon:'shield', color:'var(--blue)',   pct:0.85},
-  {label:'Einsteiger',icon:'user',   color:'var(--orange)', pct:1.00},
+  {label:'Legende',   icon:'rang5',  color:'var(--gold)',   pct:0.10},
+  {label:'Elite',     icon:'rang4',   color:'var(--purple)', pct:0.30},
+  {label:'Stark',     icon:'rang3',  color:'var(--acid)',   pct:0.60},
+  {label:'Solide',    icon:'rang2', color:'var(--blue)',   pct:0.85},
+  {label:'Einsteiger',icon:'rang1',   color:'var(--orange)', pct:1.00},
 ];
 
 function getSeasonAvgElos(bisMs){
@@ -6613,13 +6696,13 @@ function atkStrength(id){ return atkStrengthFrom(id, matches); }
 
 function posClassify(autoAtk){
   const a = autoAtk;
-  if(a >= 0.78) return {label:'Reiner Stürmer',     icon:'bolt2',       tone:'atk'};
-  if(a >= 0.60) return {label:'Stürmer',            icon:'bolt',        tone:'atk'};
-  if(a >= 0.54) return {label:'Sturm-Flex',         icon:'bolt',        tone:'atk'};
-  if(a >  0.46) return {label:'Flex',               icon:'cycle',       tone:'flex'};
-  if(a >  0.40) return {label:'Abwehr-Flex',        icon:'shield',      tone:'def'};
-  if(a >  0.22) return {label:'Verteidiger',        icon:'shield',      tone:'def'};
-  return                {label:'Reiner Verteidiger', icon:'shieldCheck', tone:'def'};
+  if(a >= 0.78) return {label:'Reiner Stürmer',     icon:'posReinSturm',       tone:'atk'};
+  if(a >= 0.60) return {label:'Stürmer',            icon:'posSturm',        tone:'atk'};
+  if(a >= 0.54) return {label:'Sturm-Flex',         icon:'posSturmFlex',        tone:'atk'};
+  if(a >  0.46) return {label:'Flex',               icon:'posFlex',       tone:'flex'};
+  if(a >  0.40) return {label:'Abwehr-Flex',        icon:'posAbwehrFlex',      tone:'def'};
+  if(a >  0.22) return {label:'Verteidiger',        icon:'posAbwehr',      tone:'def'};
+  return                {label:'Reiner Verteidiger', icon:'posReinAbwehr', tone:'def'};
 }
 
 
@@ -6920,7 +7003,7 @@ function belegHtml(o){
     + `<div class="bl-box">${feld}${o.dahinter ? `<div class="bl-satz">${o.dahinter}</div>` : ''}</div>`);
   const lz = a && _belegIstQuote(o.ev, a) ? belegLuftHtml(a, o.zweiter) : '';
   if(lz) teile.push(blattAbschnittHtml('target', 'Wie knapp') + `<div class="bl-box">${lz}</div>`);
-  if(o.verlauf) teile.push(blattAbschnittHtml('chartUp', 'Wie es dazu kam', 'Monatsenden')
+  if(o.verlauf) teile.push(blattAbschnittHtml('trendUp', 'Wie es dazu kam', 'Monatsenden')
     + `<div class="bl-box" data-verlauf="${esc(o.verlauf)}"><div class="bl-lade"></div></div>`);
   return teile.join('');
 }
@@ -8120,7 +8203,7 @@ function showPositionHistory(seasonId){
 
   openSheet(`
     <div style="padding:0 0 8px">
-      ${blattKopfHtml({ic:'chartUp', titel:'Positionsverlauf', unter:'Tabellenplätze während der Saison'})}
+      ${blattKopfHtml({ic:'trendUp', titel:'Positionsverlauf', unter:'Tabellenplätze während der Saison'})}
       <div style="height:12px"></div>
 
       <div class="posv-info-pill">
@@ -8360,7 +8443,7 @@ function showPotwRecap(opts){
        teamOfTheWeek ? teamOfTheWeek.games+' Spiele · '
          +Math.round(teamOfTheWeek.wins/teamOfTheWeek.games*100)+'%' : null,
        `data-potw-award="mvt" data-potw-week="${wkStartMs}"`);
-    hl('chartUp', 'Größter Aufwind',
+    hl('trendUp', 'Größter Aufwind',
        biggestEloGain ? pname(biggestEloGain[0]) : null,
        biggestEloGain ? '+'+Math.round(biggestEloGain[1].eloDelta)+' Elo' : null,
        biggestEloGain ? `data-potw-player="${esc(biggestEloGain[0])}"` : '');
@@ -8595,7 +8678,7 @@ function showPotdRecap(opts){
     tagHl('ball', 'Torjäger', tagScorer ? pname(tagScorer.id) : null,
           tagScorer ? 'Ø '+komma(tagScorer.avg,1)+' Tore' : null,
           tagScorer ? `data-potd-player="${esc(tagScorer.id)}"` : '');
-    tagHl('chartUp', 'Größter Aufwind', tagAufstieg ? pname(tagAufstieg.id) : null,
+    tagHl('trendUp', 'Größter Aufwind', tagAufstieg ? pname(tagAufstieg.id) : null,
           tagAufstieg ? '+'+tagAufstieg.d+' Elo' : null,
           tagAufstieg ? `data-potd-player="${esc(tagAufstieg.id)}"` : '');
     tagHl('bolt', 'Größte Überraschung', upsetSieger ? pname(upsetSieger[0])+' & '+pname(upsetSieger[1]) : null,
@@ -10560,8 +10643,8 @@ function vPositions(){
     <div class="view-head"><h2>Positionen <button class="kopf-info" type="button" data-info="positionen" aria-label="So entsteht der Wert">${svgI('info')}</button></h2><p>Sturm und Abwehr, über alle Partien</p></div>
     ${einblickHtml('rollen')}
     <div class="ui-switch">
-      <button data-postoggle="atk" class="${which==='atk'?'on':''}"><span class="pos-chip atk">${svgI('bolt')}Sturm</span></button>
-      <button data-postoggle="def" class="${which==='def'?'on':''}"><span class="pos-chip def">${svgI('shield')}Abwehr</span></button>
+      <button data-postoggle="atk" class="${which==='atk'?'on':''}"><span class="pos-chip atk">${svgI('posSturm')}Sturm</span></button>
+      <button data-postoggle="def" class="${which==='def'?'on':''}"><span class="pos-chip def">${svgI('posAbwehr')}Abwehr</span></button>
     </div>
     <div class="mini-label">▲ über · ▼ unter der Erwartung, gemessen an Partner und Gegnern</div>
     ${positionsBlockHtml(arr, which)}
@@ -11397,12 +11480,12 @@ const AW_IC = {
   showmaster:'award',    mvt:'handshake',      bestDuo:'duo',           scorer:'ball',
   wall:'shieldCheck',    ice:'snowflake',      endgegner:'skull',       clutch:'target',
   carryKing:'weight',    solo:'lonewolf',      upset:'surprise',        biggest:'explosion',
-  grinder:'gamepad',     worstWr:'ghost',      coldStreak:'iceCube',    lossStreaks:'trendCrash',
+  grinder:'gamepad',     worstWr:'bilanzTief',      coldStreak:'dropTriple',    lossStreaks:'trendCrash',
   formtief:'meltDown',   worstAtk:'blockedShot',worstDef:'hole',        worstTeam:'brokenHeart',
   zirkus:'circus',       baustelle:'cone',
   weekKing:'weekKing',   dayKing:'dayKing',
   plusMinus:'plusMinus', underdog:'underdog',  pechvogel:'rainCloud',
-  unstoppable:'unstoppable', concreteWall:'concreteWall', luckyCharm:'clover',
+  unstoppable:'unstoppable', concreteWall:'betonmauer', luckyCharm:'clover',
   giantSlayer:'giantSlayer', favoritenschreck:'devilMask', rivalry:'crossedSwords',
   cheesePlatter:'cheese', favoriteLoser:'crownFallen'
 };
@@ -12104,8 +12187,8 @@ function vTeams(nurErgebnis=false){
       <input type="text" id="teamSearch" placeholder="Spieler oder Team suchen…" value="${esc(teamSearch)}">
     </div>
     <div class="ui-switch">
-      <button data-teamtoggle="best" class="${showBest?'on':''}">${svgI('chartUp')}Beste</button>
-      <button data-teamtoggle="worst" class="${!showBest?'on':''}">${svgI('chartDown')}Schlechteste</button>
+      <button data-teamtoggle="best" class="${showBest?'on':''}">${svgI('trendUp')}Beste</button>
+      <button data-teamtoggle="worst" class="${!showBest?'on':''}">${svgI('trendDown')}Schlechteste</button>
     </div>
     <div class="ui-tabs">
       <button data-teamsort="wr" class="${teamSort==='wr'?'on':''}">Siegquote</button>
@@ -12317,7 +12400,7 @@ function vSettings(){
         Matches neu berechnen. <b style="color:var(--red)">Achtung:</b> dabei werden alle bisher
         gespeicherten Match-Deltas überschrieben.
       </p>
-      <button class="btn" id="recalcBtn" style="margin-top:14px;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('cycle')} Alle Matches rückwirkend neu berechnen</button>
+      <button class="btn" id="recalcBtn" style="margin-top:14px;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('neuRechnen')} Alle Matches rückwirkend neu berechnen</button>
     </div>
 
     <div class="card" style="margin-top:14px">
@@ -12328,7 +12411,7 @@ function vSettings(){
       </p>
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
         <button class="btn ghost" id="expXlsxBtn" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('scroll')} Matches als Excel (.xlsx)</button>
-        <button class="btn ghost" id="expSaveBtn" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('shieldCheck')} Sicherung speichern (.json)</button>
+        <button class="btn ghost" id="expSaveBtn" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('sichern')} Sicherung speichern (.json)</button>
         <button class="btn ghost sm" id="expCsvBtn" style="width:100%;font-size:11px">Stattdessen als CSV</button>
       </div>
       <p style="font-size:11px;color:var(--muted);line-height:1.6;margin-top:12px">
@@ -12338,7 +12421,7 @@ function vSettings(){
         Einstellungen der Elo-Rechnung. Das ist die Datei, mit der sich die Liga im Ernstfall wieder aufbauen lässt.
       </p>
       <div style="height:1px;background:var(--line);margin:14px 0"></div>
-      <button class="btn" id="impBackupBtn" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('refresh')} Datei einspielen</button>
+      <button class="btn" id="impBackupBtn" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('hochladen')} Datei einspielen</button>
       <p style="font-size:11px;color:var(--muted);line-height:1.6;margin-top:10px">
         Nimmt .xlsx, .csv und .json. Vor dem Schreiben erscheint eine Vorschau, was ergänzt würde.
         <b style="color:var(--acid)">Es wird nie etwas gelöscht oder überschrieben</b>, nur fehlende Matches kommen dazu.
@@ -13042,17 +13125,17 @@ const BADGES=[
     multi:true,count:(id,ms)=>countGames(id,ms)>=1?1:0},
   {id:'games25',ic:'controller',name:'Stammgast',desc:'25 Matches gespielt',
     multi:true,count:(id,ms)=>countGames(id,ms)>=25?1:0},
-  {id:'games150',ic:'diamond',name:'Dauerbrenner',desc:'150 Matches gespielt',
+  {id:'games150',ic:'dauerbrenner',name:'Dauerbrenner',desc:'150 Matches gespielt',
     multi:true,count:(id,ms)=>countGames(id,ms)>=150?1:0},
-  {id:'allrounder',ic:'refresh',name:'Allrounder',desc:'Mindestens 20 Siege auf jeder Position',
+  {id:'allrounder',ic:'bothSides',name:'Allrounder',desc:'Mindestens 20 Siege auf jeder Position',
     multi:true,count:(id,ms)=>{const s=playerStats(id,ms);return(s.atkW>=20&&s.defW>=20)?1:0;}},
-  {id:'games250',ic:'weight',name:'Urgestein',desc:'300 Matches gespielt',
+  {id:'games250',ic:'urgestein',name:'Urgestein',desc:'300 Matches gespielt',
     multi:true,count:(id,ms)=>countGames(id,ms)>=300?1:0},
-  {id:'wins200',ic:'unstoppable',name:'Siegermaschine',desc:'300 Siege gesammelt',
+  {id:'wins200',ic:'siegermaschine',name:'Siegermaschine',desc:'300 Siege gesammelt',
     multi:true,count:(id,ms)=>countWins(id,ms)>=300?1:0},
-  {id:'def50',ic:'shieldStar',name:'Abwehrchef',desc:'50 Spiele als Abwehrspieler',
+  {id:'def50',ic:'posAbwehr',name:'Abwehrchef',desc:'50 Spiele als Abwehrspieler',
     multi:true,count:(id,ms)=>{const s=playerStats(id,ms);return s.defG>=50?1:0;}},
-  {id:'atk50',ic:'bolt2',name:'Mittelstürmer',desc:'50 Spiele als Stürmer',
+  {id:'atk50',ic:'posSturm',name:'Mittelstürmer',desc:'50 Spiele als Stürmer',
     multi:true,count:(id,ms)=>{const s=playerStats(id,ms);return s.atkG>=50?1:0;}},
   {id:'climber_100',ic:'climb',name:'Aufsteiger',desc:'In einer Saison 100 Elo erreicht (je Saison zählbar)',
     multi:true,count:(id,ms)=>countSeasonsAtElo(id,100,ms)},
@@ -13061,7 +13144,7 @@ const BADGES=[
   {id:'dynasty_600',ic:'temple',name:'Dynastie',desc:'In einer Saison 600 Elo erreicht (je Saison zählbar)',
     multi:true,count:(id,ms)=>countSeasonsAtElo(id,600,ms)},
 
-  {id:'upset_king',ic:'tornado',name:'Außenseiterkönig',desc:'Als Außenseiter gewonnen (unter 35 % Siegchance)',
+  {id:'upset_king',ic:'underdog',name:'Außenseiterkönig',desc:'Als Außenseiter gewonnen (unter 35 % Siegchance)',
     multi:true,count:(id,ms)=>matchesOfPlayer(id,ms).filter(m=>won(id,m)&&myExp(id,m)<0.35).length},
   {id:'early_bird',ic:'sunrise',name:'Frühschicht',desc:'Erstes Match des Tages gewonnen',
     multi:true,count:(id,ms)=>countEarlyBirdDays(id,ms)},
@@ -13099,7 +13182,7 @@ const BADGES=[
     multi:true,count:(id,ms)=>matchesOfPlayer(id,ms).filter(m=>{if(!won(id,m))return false;
       const pos=id===m.a1?m.a1_pos:id===m.a2?m.a2_pos:id===m.b1?m.b1_pos:m.b2_pos;
       return pos==='def'&&goalsAgainst(id,m)<=2;}).length},
-  {id:'carry',ic:'weightSmall',name:'Carry',desc:'Sieg mit dem schwächsten Spieler der Partie als Partner',
+  {id:'carry',ic:'weight',name:'Carry',desc:'Sieg mit dem schwächsten Spieler der Partie als Partner',
     multi:true,count:(id,ms)=>countCarries(id,ms)},
   {id:'champion',ic:'crown',name:'Meister der Saison',desc:'Saison auf Platz 1 beendet',
     multi:true,count:(id,ms,bis)=>countChampion(id,bis)},
@@ -13109,23 +13192,23 @@ const BADGES=[
     multi:true,count:(id,ms,bis)=>countTeamOfSeason(id,bis)},
   {id:'award_collector',ic:'medalTrio',name:'Award-Sammler',desc:'In einer Saison mindestens 5-mal Player of the Day und 2-mal Player of the Week',
     multi:true,count:(id,ms)=>countAwardCollector(id,ms)},
-  {id:'potw',ic:'weekly',name:'Player of the Week',desc:'Höchste Siegquote einer Kalenderwoche (ab 5 Siegen)',
+  {id:'potw',ic:'weekKing',name:'Player of the Week',desc:'Höchste Siegquote einer Kalenderwoche (ab 5 Siegen)',
     multi:true,count:(id,ms)=>countPeriodWins(id,ms,'week')},
-  {id:'potd',ic:'trophyDay',name:'Player of the Day',desc:'Die meisten Siege eines Spieltags (ab 3)',
+  {id:'potd',ic:'dayKing',name:'Player of the Day',desc:'Die meisten Siege eines Spieltags (ab 3)',
     multi:true,count:(id,ms)=>countDayWins(id,ms)},
   {id:'kingslayer',ic:'kingFall',name:'Thronfäller',desc:'Sieg gegen den Ersten der Saison-Rangliste, gemessen vor der Partie',
     multi:true,count:(id,ms)=>countKingslayer(id,ms)},
-  {id:'overtake',ic:'overtake',name:'Überholmanöver',desc:'Einen Gegner der Partie besiegt und dabei in der Saison-Rangliste überholt',
+  {id:'overtake',ic:'ueberholen',name:'Überholmanöver',desc:'Einen Gegner der Partie besiegt und dabei in der Saison-Rangliste überholt',
     multi:true,count:(id,ms)=>countOvertake(id,ms)},
   {id:'duty_done',ic:'trophyCheck',name:'Pflichterfüller',desc:'Sieg gegen mindestens einen der beiden Letzten der Saison-Rangliste, gemessen vor der Partie',
     multi:true,count:(id,ms)=>countBottomTwoMatchWins(id,ms)},
   {id:'streak_breaker',ic:'flameBreak',name:'Serienbrecher',desc:'Die Siegesserie eines Gegners (ab 4 in Folge) mit einem Sieg beendet',
     multi:true,count:(id,ms)=>countStreakBreaker(id,ms)},
-  {id:'black_day',ic:'blackDay',name:'Schwarzer Tag',desc:'Spieltag mit mindestens 3 Partien, alle verloren',
+  {id:'black_day',ic:'schwarzerTag',name:'Schwarzer Tag',desc:'Spieltag mit mindestens 3 Partien, alle verloren',
     multi:true,count:(id,ms)=>countBlackDays(id,ms)},
   {id:'krimi_loser',ic:'dramaTear',name:'Krimi-Versager',desc:'3 knappe Niederlagen in Folge, je höchstens 2 Tore Unterschied',
     multi:true,count:(id,ms)=>countCloseLossStreaks(id,ms,3)},
-  {id:'untouchable',ic:'shieldStar',name:'Untouchable',desc:'3 Saisons in Folge unter den Top-3 abgeschlossen',
+  {id:'untouchable',ic:'dreiSaisons',name:'Untouchable',desc:'3 Saisons in Folge unter den Top-3 abgeschlossen',
     multi:true,count:(id,ms,bis)=>countUntouchable(id,bis)},
   {id:'mr_perfect',ic:'tripleCup',name:'Mr. Perfect',desc:'3× 10:0-Sieg in einer Saison',
     multi:true,count:(id,ms)=>countMrPerfect(id,ms)},
@@ -13133,7 +13216,7 @@ const BADGES=[
     multi:true,count:(id,ms)=>countAllwetter(id,ms)},
   {id:'godly_streak',ic:'godRay',name:'Tag der Götter',desc:'An 3 eigenen Spieltagen in Folge Player of the Day geworden',
     multi:true,count:(id,ms)=>countGodlyStreak(id,ms)},
-  {id:'bitter_loss',ic:'heartBroken',name:'Bittere Pille',desc:'9:10-Niederlage',
+  {id:'bitter_loss',ic:'pille',name:'Bittere Pille',desc:'9:10-Niederlage',
     multi:true,count:(id,ms)=>matchesOfPlayer(id,ms).filter(m=>!won(id,m)&&goalsFor(id,m)===9&&goalsAgainst(id,m)===10).length},
   {id:'mr_disaster',ic:'tripleCrash',name:'Mr. Disaster',desc:'3× 0:10-Niederlage in einer Saison',
     multi:true,count:(id,ms)=>countMrDisaster(id,ms)},
@@ -13371,8 +13454,8 @@ function badgeIc(b, size){
   size = size || 'inherit';
   if(!b) return '';
   const key = b.ic || null;
-  if(key && ICONS[key]) {
-    return `<span class="ic svg-ic" style="font-size:${size}"><svg viewBox="0 0 24 24">${ICONS[key]}</svg></span>`;
+  if(key && icPfad(key)) {
+    return `<span class="ic svg-ic" style="font-size:${size}"><svg viewBox="0 0 24 24">${icPfad(key)}</svg></span>`;
   }
   return '';
 }
@@ -14604,7 +14687,7 @@ function showPlayer(id){
     ? ('pp-tier-'+rInfo.label.toLowerCase().replace('ä','a').replace('ö','o').replace('ü','u'))
     : '';
   const _fillPct = _activeIdx >= 0 ? _activeIdx * 25 : 0;
-  const _tierIcon = rInfo && rInfo.icon ? ICONS[rInfo.icon] : ICONS.chartBar;
+  const _tierIcon = icPfad(rInfo && rInfo.icon ? rInfo.icon : 'chartBar');
 
 const rankProgHtml = rInfo ? `
   <div class="pp-rank-card ${_journeyTier}" id="ppRanksBtn" style="cursor:pointer">
@@ -14679,7 +14762,7 @@ const rankProgHtml = rInfo ? `
 
       <div class="pp-pills">
         ${rInfo?`<span class="pp-pill tier">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[rInfo.icon]||''}</svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${icPfad(rInfo.icon)}</svg>
           ${esc(rInfo.label)}
         </span>`:''}
         <span class="pp-pill">${posIcon}${esc(posLabel)}</span>
@@ -14700,12 +14783,12 @@ const rankProgHtml = rInfo ? `
             <div class="sub">${_ruhe ? 'Karriere-Elo' : 'Saison'}</div>
           </div>
           <div class="pp-et-col peak">
-            <div class="label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS['peak']||''}</svg> Spitze</div>
+            <div class="label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${icPfad('peak')}</svg> Spitze</div>
             <div class="val">${ps}</div>
             <div class="sub">${_ruhe ? esc(seasonLabel(_profilSid)) : 'diese Saison'}</div>
           </div>
           <div class="pp-et-col alltime">
-            <div class="label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS['star']||''}</svg> Allzeit</div>
+            <div class="label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${icPfad('rekord')}</svg> Allzeit</div>
             <div class="val">${pa}</div>
             <div class="sub">${paSub}</div>
           </div>
@@ -14806,7 +14889,7 @@ const rankProgHtml = rInfo ? `
       const _visible = _strip.slice(0, _STRIP_MAX);
       const _rest = Math.max(0, _strip.length - _visible.length);
       const _stripHtml = _visible.map(({b,r}) => {
-        const ic = ICONS[b.ic] ? `<svg viewBox="0 0 24 24">${ICONS[b.ic]}</svg>` : '';
+        const ic = icPfad(b.ic) ? `<svg viewBox="0 0 24 24">${icPfad(b.ic)}</svg>` : '';
         return `<div class="pp-bmini ${r}">${ic}</div>`;
       }).join('') + (_rest ? `<span class="pp-bcard-rest">+${_rest}</span>` : '');
       const _seg = (r) => _byRarity[r].length;
@@ -14823,7 +14906,7 @@ const rankProgHtml = rInfo ? `
       return `
     <div class="pp-sec" style="animation-delay:.425s">
       <div class="pp-sec-title">
-        <div class="l">${svgI('star')}<h4>Auszeichnungen</h4></div>
+        <div class="l">${svgI('abzeichen')}<h4>Auszeichnungen</h4></div>
         <div class="m">${_have} / ${_kat.length}</div>
       </div>
       <div class="pp-bcard" id="ppBadgesBtn">
@@ -14878,8 +14961,8 @@ const rankProgHtml = rInfo ? `
             : card('good', '', 'handshake', 'Bester Partner', null);
           const worstAttr = worst&&best&&worst.mid!==best.mid?` data-team="${esc(paarKey(id, worst.mid))}"`:'';
           const worstCard = worst&&best&&worst.mid!==best.mid
-            ? card('bad', worstAttr, 'chartDown', 'Schwächster Partner', {id:worst.mid,label:pname(worst.mid)}, worst.wr, Math.round(worst.wr*worst.g), worst.g)
-            : card('bad', '', 'chartDown', 'Schwächster Partner', null);
+            ? card('bad', worstAttr, 'trendDown', 'Schwächster Partner', {id:worst.mid,label:pname(worst.mid)}, worst.wr, Math.round(worst.wr*worst.g), worst.g)
+            : card('bad', '', 'trendDown', 'Schwächster Partner', null);
           const favAttr  = fav?` data-detail="${esc(fav.oid)}"`:'';
           const favCard  = fav
             ? card('fav', favAttr, 'target', 'Lieblingsgegner', {id:fav.oid,label:pname(fav.oid)}, fav.wr, Math.round(fav.wr*fav.g), fav.g)
@@ -14941,7 +15024,7 @@ const rankProgHtml = rInfo ? `
     ${seasonHistory.length?`
     <div class="pp-sec" style="animation-delay:.7s">
       <div class="pp-sec-title">
-        <div class="l">${svgI('calendar')}<h4>Saisonverlauf <span style="color:var(--muted);font-weight:500;letter-spacing:.02em;text-transform:none">(letzte ${seasonHistory.length})</span></h4></div>
+        <div class="l">${svgI('saisonKal')}<h4>Saisonverlauf <span style="color:var(--muted);font-weight:500;letter-spacing:.02em;text-transform:none">(letzte ${seasonHistory.length})</span></h4></div>
         <div class="m">${seasonTrend ? `<span class="trend ${seasonTrend.cls}">${seasonTrend.arrow} ${esc(seasonTrend.text)}</span>` : seasonHistory.length+' Saisons'}</div>
       </div>
       ${seasonRailHtml}
@@ -14956,14 +15039,14 @@ const rankProgHtml = rInfo ? `
 
     <div class="pp-sec" style="animation-delay:.8s">
       <div class="pp-sec-title">
-        <div class="l">${svgI('target')}<h4>Positions-Profil</h4></div>
+        <div class="l">${svgI('posFlex')}<h4>Positions-Profil</h4></div>
         <div class="m">${posLabel}</div>
       </div>
       <div class="pp-posprof ${atkPct > defPct + 4 ? 'atk-seite' : defPct > atkPct + 4 ? 'def-seite' : 'neutral'}" style="--atk:${atkPct}%;--strahl:${Math.max(atkPct, defPct)}%">
         <div class="pph">
-          <span class="lf">${svgI('bolt')}Sturm</span>
+          <span class="lf">${svgI('posSturm')}Sturm</span>
           <span><span class="pct">${atkPct}%</span> / <span class="pct">${defPct}%</span></span>
-          <span class="rt">Abwehr${svgI('shield')}</span>
+          <span class="rt">Abwehr${svgI('posAbwehr')}</span>
         </div>
         <!-- Der Strahl beginnt an der staerkeren Seite und laeuft zur
              Positionsgrenze. Bei einem Flex-Profil sitzt er als eigener,
@@ -15218,7 +15301,7 @@ function showRangSystem(){
       border-radius:var(--r-sm);padding:10px 12px;margin-bottom:8px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${inRank.length?'8px':'0'}">
         <span style="font-weight:700;color:${r.color};display:inline-flex;align-items:center;gap:6px">
-          <span class="ic svg-ic" style="font-size:14px;color:${r.color}"><svg viewBox="0 0 24 24">${ICONS[r.icon]||''}</svg></span>${r.label}
+          <span class="ic svg-ic" style="font-size:14px;color:${r.color}"><svg viewBox="0 0 24 24">${icPfad(r.icon)}</svg></span>${r.label}
         </span>
         <span style="font-size:11px;color:var(--muted)">${label} der Spieler</span>
       </div>
@@ -15912,7 +15995,7 @@ function showPlayerH2HList(playerId){
     <div style="font-size:10px;color:var(--muted);font-family:'Sometype Mono',monospace;letter-spacing:.04em;margin-top:14px;margin-bottom:10px">
       Siege und Niederlagen <span style="color:var(--blue);font-weight:700">mit</span> und <span style="color:var(--purple);font-weight:700">gegen</span> jeden · Antippen für Einzelheiten
     </div>
-    ${h2hList.length ? `<div class="rlist">${rows}</div>` : emptyState('swords','Noch keine Mitspieler ab 3 Begegnungen')}
+    ${h2hList.length ? `<div class="rlist">${rows}</div>` : emptyState('crossedSwords','Noch keine Mitspieler ab 3 Begegnungen')}
     <button class="btn ghost sm" id="backToPlayerH2H" style="margin-top:16px">← Zurück zum Profil</button>
   `);
 
@@ -16322,12 +16405,12 @@ function showH2H(idA, idB){
         <div style="font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:var(--muted);font-weight:700;font-family:'Sometype Mono',monospace">Direkter Vergleich</div>
         <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:14px">
           <div data-detail="${esc(pA.id)}" style="cursor:pointer">${avBig(pA)}</div>
-          <span class="svg-ic" style="color:var(--muted);width:18px;height:18px">${svgI('swords')}</span>
+          <span class="svg-ic" style="color:var(--muted);width:18px;height:18px">${svgI('crossedSwords')}</span>
           <div data-detail="${esc(pB.id)}" style="cursor:pointer">${avBig(pB)}</div>
         </div>
         <div style="font-family:'Archivo Black',sans-serif;font-size:18px;letter-spacing:-.02em;line-height:1.1;margin-top:12px">${esc(pA.name)} <span style="color:var(--muted);font-size:14px">vs</span> ${esc(pB.name)}</div>
       </div>
-      ${emptyState('swords','Noch keine gemeinsamen Matches')}
+      ${emptyState('crossedSwords','Noch keine gemeinsamen Matches')}
     `);
     return;
   }
@@ -16380,7 +16463,7 @@ function showH2H(idA, idB){
   const oppBlock = d.asOppForA.g ? `
     <div style="background:var(--surface);border:1px solid rgba(167,139,250,.22);border-radius:14px;padding:14px;margin-bottom:12px">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-        <span class="svg-ic" style="color:var(--purple);width:16px;height:16px">${svgI('swords')}</span>
+        <span class="svg-ic" style="color:var(--purple);width:16px;height:16px">${svgI('crossedSwords')}</span>
         <span style="font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:var(--purple);font-weight:700;font-family:'Sometype Mono',monospace">Als Gegner</span>
         <span style="margin-left:auto;font-size:11px;color:var(--muted);font-family:'Sometype Mono',monospace">${d.asOppForA.g} Spiele</span>
       </div>
@@ -16441,7 +16524,7 @@ function showH2H(idA, idB){
       <div style="font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:var(--muted);font-weight:700;font-family:'Sometype Mono',monospace">Direkter Vergleich</div>
       <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:14px">
         <div data-detail="${esc(pA.id)}" style="cursor:pointer">${avBig(pA)}</div>
-        <span class="svg-ic" style="color:var(--muted);width:18px;height:18px">${svgI('swords')}</span>
+        <span class="svg-ic" style="color:var(--muted);width:18px;height:18px">${svgI('crossedSwords')}</span>
         <div data-detail="${esc(pB.id)}" style="cursor:pointer">${avBig(pB)}</div>
       </div>
       <div style="font-family:'Archivo Black',sans-serif;font-size:18px;letter-spacing:-.02em;line-height:1.1;margin-top:12px">${esc(pA.name)} <span style="color:var(--muted);font-size:14px">vs</span> ${esc(pB.name)}</div>
@@ -16609,7 +16692,7 @@ function showTeam(p1Id,p2Id){
   }
 
   const POS_LABEL = {atk:'Sturm', def:'Abwehr'};
-  const POS_ICON  = {atk:svgI('bolt'), def:svgI('shield')};
+  const POS_ICON  = {atk:svgI('posSturm'), def:svgI('posAbwehr')};
   const POS_COLOR = {atk:'var(--orange)', def:'var(--blue)'};
   const pA_pos = d.posStats[pA.id].dom;
   const pB_pos = d.posStats[pB.id].dom;
@@ -17047,7 +17130,7 @@ async function openSettingsLock(){
     <div style="background:var(--surface2);border:1px solid var(--line);border-radius:18px;padding:28px 24px;width:100%;max-width:320px;text-align:center">
       <div style="display:flex;justify-content:center;margin-bottom:16px">
         <span style="width:52px;height:52px;border-radius:14px;background:var(--surface3);display:grid;place-items:center;color:var(--ink2)">
-          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS['lock']}</svg>
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${icPfad('lock')}</svg>
         </span>
       </div>
       <h3 style="margin:0 0 6px;font-size:17px">Feintuning</h3>
@@ -17143,7 +17226,7 @@ function standFuer(m, gewonnen = true){
   return gewonnen ? s[0] + ':' + s[1] : s[1] + ':' + s[0];
 }
 function emptyState(e,t){
-  const inner = ICONS[e] ? `<div class="ee svg-ic">${svgI(e)}</div>` : `<div class="ee">${e}</div>`;
+  const inner = icPfad(e) ? `<div class="ee svg-ic">${svgI(e)}</div>` : `<div class="ee">${e}</div>`;
   return `<div class="empty">${inner}${t}</div>`;
 }
 let tt;
@@ -17224,18 +17307,18 @@ function _processAchToastQueue(){
 const NEWS_DEBUG = false;
 
 const NEWS_CATEGORIES = {
-  breaking:   {label:'Breaking',    descLabel:'Breaking News',    ic:'bolt'},
-  highlight:  {label:'Highlights',  descLabel:'Highlight',        ic:'crown'},
-  season:     {label:'Saison',      descLabel:'Saison',           ic:'rocket'},
-  badge:      {label:'Awards',      descLabel:'Badge & Awards',   ic:'medalTrio'},
-  fun:        {label:'Fun Facts',   descLabel:'Fun Fact',         ic:'thriller'},
+  breaking:   {label:'Breaking',    descLabel:'Breaking News',    ic:'sirene'},
+  highlight:  {label:'Highlights',  descLabel:'Highlight',        ic:'funkeln'},
+  season:     {label:'Saison',      descLabel:'Saison',           ic:'saisonKal'},
+  badge:      {label:'Awards',      descLabel:'Badge & Awards',   ic:'abzeichen'},
+  fun:        {label:'Fun Facts',   descLabel:'Fun Fact',         ic:'idee'},
   rivalry:    {label:'Rivalität',   descLabel:'Rivalität',        ic:'crossedSwords'},
   team:       {label:'Teams',       descLabel:'Team',             ic:'users'},
   comeback:   {label:'Comebacks',   descLabel:'Comeback',         ic:'comeback'},
-  personal:   {label:'Spieler',     descLabel:'Meilenstein',      ic:'trendUp'},
-  history:    {label:'Historie',    descLabel:'Historie',         ic:'calendar'},
-  tafel:      {label:'Tafel',       descLabel:'Ewige Tafel',      ic:'trophyStar'},
-  misfortune: {label:'Pechvogel',   descLabel:'Pechvogel',        ic:'dramaTear'},
+  personal:   {label:'Spieler',     descLabel:'Meilenstein',      ic:'user'},
+  history:    {label:'Historie',    descLabel:'Historie',         ic:'verlauf'},
+  tafel:      {label:'Tafel',       descLabel:'Ewige Tafel',      ic:'tafelStein'},
+  misfortune: {label:'Pechvogel',   descLabel:'Pechvogel',        ic:'rainCloud'},
 };
 
 const NEWS_AMBIENT_STIL = {
@@ -17744,7 +17827,7 @@ function _buildStories(){
         stories.push({
           id: 'season_endspurt_'+sid,
           cat: 'highlight',
-          ic: 'rocket',
+          ic: 'saisonKal',
           title: `Noch ${daysLeft} ${daysLeft === 1 ? 'Tag' : 'Tage'} um den Monat`,
           desc: `${nameOf(rankList[0].pid)} führt mit ${rankList[0].elo} Elo, `
               + `${nameOf(rankList[1].pid)} liegt ${gap} dahinter.`,
@@ -17781,7 +17864,7 @@ function _buildStories(){
         stories.push({
           id: 'season_start_' + sid,
           cat: 'season',
-          ic: 'rocket',
+          ic: 'saisonKal',
           title: `${currentSeason().label} hat eine Tabelle`,
           desc: `${nameOf(rang[0].pid)} führt mit ${rang[0].elo} Elo, `
               + `${vor} vor ${nameOf(rang[1].pid)}. `
@@ -19940,7 +20023,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     if(elig.length < 2) return null;
     const cats = [
       { noun:'Meiste Siege',         ic:'trophy',  pool:withStats, val: pid => stats[pid].wins,               fmt: v => v+' Siege' },
-      { noun:'Bestes Torverhältnis', ic:'chartUp', pool:withStats, val: pid => stats[pid].gf - stats[pid].ga, fmt: v => (v>0?'+':'')+v+' Tordifferenz' },
+      { noun:'Bestes Torverhältnis', ic:'plusMinus', pool:withStats, val: pid => stats[pid].gf - stats[pid].ga, fmt: v => (v>0?'+':'')+v+' Tordifferenz' },
       { noun:'Meiste Tore',          ic:'ball',    pool:withStats, val: pid => stats[pid].gf,                 fmt: v => v+' Tore' },
       { noun:'Höchste Karriere-Elo', ic:'crown',   pool:elig,      val: pid => Math.round(career[pid]||0),    fmt: v => v+' Elo', qual:' (ab 5 Spielen)' },
     ];
@@ -22258,7 +22341,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
   const glanz = !negativ && !brk && !gross && _newsGlanz(s, sorte, sorte === 'spiel' && d.matchId ? (_spBild(s).glanz ? 'form' : _spBild(s).key) : '');
   return (brk ? '<div class="nf-brk-hof">' : '') + `<div class="nf-card nf-s-${sorte} nfc-${dcat}${tafelTon?' nf-tafel-'+tafelTon:''}${faktStil?' nf-fakt-'+faktStil.ton:''}${negativ?' nf-neg':''}${brk?' nf-brk':''}${gross?' nf-gross':''}${glanz?' nf-glanz':''}${isRead?' read':''}${imp}" data-sid="${esc(s.id)}"${glanz ? ` style="--gv:${_newsGlanzVersatz(s.id)}s"` : ''}>
     ${_newsMotiv(sorte, s)}
-    ${gross ? '<div class="nf-gross-band">' + svgI('star') + 'DIE KARTE DES TAGES</div>' : ''}
+    ${gross ? '<div class="nf-gross-band">' + svgI('funkeln') + 'DIE KARTE DES TAGES</div>' : ''}
     ${balken}
     <div class="nf-top">
       <span class="nf-rub"><i>${svgI(_newsSorteIcon(sorte, s))}</i><b>${esc(_newsRubrik(sorte, s))}</b></span>
@@ -22302,19 +22385,19 @@ function _newsRubrik(sorte, s){
 }
 
 function _newsSorteIcon(sorte, s){
-  if(_isBreaking(s)) return 'bolt';
+  if(_isBreaking(s)) return 'sirene';
   switch(sorte){
-    case 'spiel':  return 'ball';
-    case 'tafel':  return 'trophyStar';
+    case 'spiel':  return 'spielfeld';
+    case 'tafel':  return 'tafelStein';
     case 'ins':    return 'shieldStar';
     case 'held':   return 'crown';
     case 'woche':  return 'calendar';
-    case 'duell':  return 'swords';
+    case 'duell':  return 'crossedSwords';
     case 'serie':  return (s && (s.dataRef||{}).type || '').indexOf('loss') >= 0
-                        ? 'trendDown' : 'flame';
-    case 'badge':  return 'medal';
-    case 'marke':  return 'chartUp';
-    case 'spieler':return 'tripleCup';
+                        ? 'dropTriple' : 'flame';
+    case 'badge':  return 'abzeichen';
+    case 'marke':  return 'marke';
+    case 'spieler':return 'medalTrio';
     case 'erfolg': return 'users';
     default:       return 'chartBar';
   }
@@ -22980,9 +23063,9 @@ function _renderNewsFeed(){
   };
   const filters = [
     {k:'all',      label:'Alle',     ic:'newspaper',  test:() => true},
-    {k:'breaking', label:'Breaking', ic:'bolt',       test:_isBreaking},
-    {k:'tafel',    label:'Tafel',    ic:'trophyStar', test:_istTafel},
-    {k:'spieltag', label:'Spieltag', ic:'crossedSwords', test:_istSpieltag},
+    {k:'breaking', label:'Breaking', ic:'sirene',       test:_isBreaking},
+    {k:'tafel',    label:'Tafel',    ic:'tafelStein', test:_istTafel},
+    {k:'spieltag', label:'Spieltag', ic:'spielfeld', test:_istSpieltag},
   ];
   const aktiv = filters.find(f => f.k === _newsFeedFilter) || filters[0];
   const cards = _newsFeedFilter === 'all' ? stories : stories.filter(aktiv.test);
@@ -23247,20 +23330,20 @@ function _spAnlassDaten(m, c){
   return {key:'feld', m, c};
 }
 const SP_ANLASS = {
-  spitze:      {name:'Spitzenwechsel',  kurz:'Spitze',      ic:'crown'},
+  spitze:      {name:'Spitzenwechsel',  kurz:'Spitze',      ic:'spitzenwechsel'},
   riss:        {name:'Serienbruch',     kurz:'Bruch',       ic:'flameBreak'},
   serie:       {name:'Serie',           kurz:'Serie',       ic:'flame'},
-  teamserie:   {name:'Teamserie',       kurz:'Duo-Serie',   ic:'duo'},
+  teamserie:   {name:'Teamserie',       kurz:'Duo-Serie',   ic:'unstoppable'},
   aussenseiter:{name:'Außenseitersieg', kurz:'Außenseiter', ic:'underdog'},
   wende:       {name:'Wende',           kurz:'Wende',       ic:'comeback'},
   duell:       {name:'Rivalität',       kurz:'Rivalität',   ic:'crossedSwords'},
-  medaille:    {name:'Auszeichnung',    kurz:'Marke',       ic:'medal'},
+  medaille:    {name:'Auszeichnung',    kurz:'Marke',       ic:'abzeichen'},
   rang:        {name:'Rangsprung',      kurz:'Sprung',      ic:'stepsUp'},
-  premiere:    {name:'Premiere',        kurz:'Premiere',    ic:'handshake'},
+  premiere:    {name:'Premiere',        kurz:'Premiere',    ic:'premiere'},
   rolle:       {name:'Rollentausch',    kurz:'Rolle',       ic:'posSwap'},
-  krimi:       {name:'Ein-Tor-Krimi',   kurz:'Krimi',       ic:'thriller'},
-  deutlich:    {name:'Klarer Sieg',     kurz:'Klar',        ic:'target'},
-  feld:        {name:'Ergebnis',        kurz:'',            ic:'ball'}
+  krimi:       {name:'Ein-Tor-Krimi',   kurz:'Krimi',       ic:'pinch'},
+  deutlich:    {name:'Klarer Sieg',     kurz:'Klar',        ic:'thumbsUp'},
+  feld:        {name:'Ergebnis',        kurz:'',            ic:'spielfeld'}
 };
 
 function _spZeileDaten(m){
@@ -23790,7 +23873,7 @@ const SP_FORM = {
         d:als.length >= 5 ? `${_spName(w)} gewinnt als Favorit ${Math.round(g / als.length * 100)} % aller Partien.`
           : `${_spName(w)} geht zum ${als.length + 1}. Mal als Favorit in eine Partie.`};
     }},
-  streu:{rang:34, ic:'chartUp',
+  streu:{rang:34, ic:'ausreisser',
     wann:F => F.i >= 50 && F.c != null && ((F.c >= 0.7 && F.diff <= 2) || (F.c < 0.5 && F.diff >= 5)) ? {knapp:F.c >= 0.7} : null,
     daten:(F, x) => {
       const pk = _spFormBasis().punkte.slice(0, F.i).filter(p => p.c != null);
@@ -24736,7 +24819,7 @@ function openNewsDetail(sid){
     ${_newsMotiv(sorte, s)}
     ${brk ? '<div class="nf-brk-band"><span class="nf-brk-punkt"></span>BREAKING</div>' : ''}
     <div class="nd-head">
-      <div class="nd-ic nv-cat-${dcat}">${svgI(ICONS[s.ic] ? s.ic : cat.ic)}</div>
+      <div class="nd-ic nv-cat-${dcat}">${svgI(icPfad(s.ic) ? s.ic : cat.ic)}</div>
       <div class="nd-title-wrap">
         <div class="nd-cat">${esc(_newsRubrik(sorte, s))}</div>
         <div class="nd-title">${esc(s.title)}</div>
@@ -26918,7 +27001,7 @@ function _stLagen(p, c){
 
 const DISZIPLINEN = [
 
-  {id:'best_record', name:'Der Maßstab', short:'Maßstab', ic:'medal2', tone:'gold', art:'leistung',
+  {id:'best_record', name:'Der Maßstab', short:'Maßstab', ic:'massstab', tone:'gold', art:'leistung',
     allzeit:{
       kammer:'mark', basis:150, offen:true,
       zeitraum:'Ein einzelner Monat',
@@ -26976,7 +27059,7 @@ const DISZIPLINEN = [
       ev:(p,v) => `${Math.round(v*100)} % aller ${p.bigDays} vollen Spieltage ohne eine einzige Niederlage · ${p.perfDays} Tage`
     }},
 
-  {id:'kopfhoch', name:'Der Tagesabschluss', short:'Tagesende', ic:'thumbsUp', tone:'blue', art:'leistung',
+  {id:'kopfhoch', name:'Der Tagesabschluss', short:'Tagesende', ic:'tagesabschluss', tone:'blue', art:'leistung',
     allzeit:{
       kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, je Spieltag',
@@ -26998,7 +27081,7 @@ const DISZIPLINEN = [
         1,
         p=>{const t=Object.values(p.tagGrp);return `${t.filter(a=>_stSiege(a)*2>=a.length).length} von ${t.length} Spieltagen nicht negativ`;}))}},
 
-  {id:'catalyst', name:'Der Katalysator', short:'Katalyse', ic:'handshake', tone:'gold', art:'leistung',
+  {id:'catalyst', name:'Der Katalysator', short:'Katalyse', ic:'partnerHebel', tone:'gold', art:'leistung',
     allzeit:{
       kammer:'koennen', basis:150,
       zeitraum:'Ganze Laufbahn, je Partner',
@@ -27009,7 +27092,7 @@ const DISZIPLINEN = [
       ev:(p,v) => `+${Math.round(v*100)} %-Punkte gewinnen die ${p.einflussN} Partner an dieser Seite häufiger`
     }},
 
-  {id:'ausgleich', name:'Der Ausgleicher', short:'Ausgleich', ic:'duo', tone:'gold', art:'leistung',
+  {id:'ausgleich', name:'Der Ausgleicher', short:'Ausgleich', ic:'jederPartner', tone:'gold', art:'leistung',
     allzeit:{
       kammer:'koennen', basis:150,
       zeitraum:'Ganze Laufbahn, je Partner',
@@ -27034,7 +27117,7 @@ const DISZIPLINEN = [
       .map(k=>({k,q:_stQuoteRoh(p.partnerGrp[k])})).sort((a,b)=>a.q-b.q)[0];
       return `selbst neben ${pname(k.k)} noch ${pct(k.q)} % · ${Object.values(p.partnerGrp).filter(a=>a.length>=ST_TEIL).length} Partner`;}))}},
 
-  {id:'clutch', name:'Die ruhige Hand', short:'Nerven', ic:'nerves', tone:'gold', art:'leistung',
+  {id:'clutch', name:'Die ruhige Hand', short:'Nerven', ic:'target', tone:'gold', art:'leistung',
     allzeit:{
       kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, alle engen Partien',
@@ -27062,7 +27145,7 @@ const DISZIPLINEN = [
       ev:(p,v) => `${pct(v)} % in engen Partien gewonnen · ${p.closeW} von ${p.close}`
     }},
 
-  {id:'gleichauf', name:'Auf Augenhöhe', short:'Auf Höhe', ic:'weightSmall', tone:'gold', art:'leistung',
+  {id:'gleichauf', name:'Auf Augenhöhe', short:'Auf Höhe', ic:'augenhoehe', tone:'gold', art:'leistung',
     allzeit:{
       kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, alle offenen Partien',
@@ -27085,7 +27168,7 @@ const DISZIPLINEN = [
         p=>{const d=p.partien.filter(_stAugenhoehe);
       return `${_stSiege(d)} von ${d.length} offenen Partien · sonst ${pct(p.q)} %`;}))}},
 
-  {id:'gegenwind', name:'Gegen den Wind', short:'Gegenwind', ic:'tornado', tone:'acid', art:'leistung',
+  {id:'gegenwind', name:'Gegen den Wind', short:'Gegenwind', ic:'underdog', tone:'acid', art:'leistung',
     allzeit:{
       kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn',
@@ -27096,7 +27179,7 @@ const DISZIPLINEN = [
       ev:(p,v) => `${pct(v)} % als Außenseiter gewonnen · ${p.unterW} von ${p.unterN}`
     }},
 
-  {id:'destroyer', name:'Der Zerstörer', short:'Zerstörer', ic:'explosion', tone:'orange', art:'leistung',
+  {id:'destroyer', name:'Der Zerstörer', short:'Zerstörer', ic:'abrissbirne', tone:'orange', art:'leistung',
     allzeit:{
       kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, alle Siege',
@@ -27107,7 +27190,7 @@ const DISZIPLINEN = [
       ev:(p,v) => `${Math.round(v*100)} % aller ${p.wins} Siege waren Kantersiege · ${p.blowW} Kantersiege`
     }},
 
-  {id:'breitenwirkung', name:'Kein Angstgegner', short:'Kein Angst', ic:'target', tone:'gold', art:'leistung',
+  {id:'breitenwirkung', name:'Kein Angstgegner', short:'Kein Angst', ic:'jederGegner', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Standhafte',
       art:'koennen',
@@ -27188,7 +27271,7 @@ const DISZIPLINEN = [
       ev:(p,v) => `${Math.round(v*100)} Abwehrwert · ${p.defW}:${p.defG-p.defW} in ${p.defG} Abwehrspielen`
     }},
 
-  {id:'rollencoup', name:'Der Rollencoup', short:'Rollencoup', ic:'posSwap', tone:'orange', art:'leistung',
+  {id:'rollencoup', name:'Der Rollencoup', short:'Rollencoup', ic:'rollencoup', tone:'orange', art:'leistung',
     allzeit:{
       kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, je Position',
@@ -27199,7 +27282,7 @@ const DISZIPLINEN = [
       ev:(p,v) => `${Math.round(v*100)} Punkte über der Erwartung · ${pct(p.rcQ)} % statt ${pct(p.rcExp)} % ${p.rcPos === 'atk' ? 'im Sturm' : 'in der Abwehr'}`
     }},
 
-  {id:'rock', name:'Der Fels', short:'Fels', ic:'brick', tone:'blue', art:'leistung',
+  {id:'rock', name:'Der Fels', short:'Fels', ic:'shieldCheck', tone:'blue', art:'leistung',
     allzeit:{
       kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, alle Abwehrspiele',
@@ -27249,7 +27332,7 @@ const DISZIPLINEN = [
       ev:(p,v) => `${pct(v)} % nach zwei Niederlagen in Folge gewonnen · ${p.rsW} von ${p.rsN}`
     }},
 
-  {id:'damage_control', name:'Der Widerstand', short:'Widerstand', ic:'blockedShot', tone:'blue', art:'leistung',
+  {id:'damage_control', name:'Der Widerstand', short:'Widerstand', ic:'widerstand', tone:'blue', art:'leistung',
     allzeit:{
       kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, alle Niederlagen',
@@ -27342,7 +27425,7 @@ const DISZIPLINEN = [
       ev:(p,v) => `${pct(v)} % als Favorit gewonnen · ${p.favW} von ${p.favN}`
     }},
 
-  {id:'sturmfuehrer', name:'Der Sturmführer', short:'Sturmchef', ic:'stepsUp', tone:'orange', art:'leistung',
+  {id:'sturmfuehrer', name:'Der Sturmführer', short:'Sturmchef', ic:'sturmfuehrer', tone:'orange', art:'leistung',
     allzeit:{
       kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, alle Sturmspiele',
@@ -27397,7 +27480,7 @@ const DISZIPLINEN = [
         0.15,
         p=>`${pct(p.q)} % gespielt, ${pct(p.expQ)} % erwartet`))}},
 
-  {id:'steigerung', name:'Die Steigerung', short:'Steigerung', ic:'climb', tone:'gold', art:'leistung',
+  {id:'steigerung', name:'Die Steigerung', short:'Steigerung', ic:'steigerung', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Steigende',
       art:'koennen',
@@ -27488,7 +27571,7 @@ const DISZIPLINEN = [
       ev:(p,v) => `+${Math.round(v*100)} Punkte · ${pct(p.sbDrin)} % in ${p.sbN} Schlussspielen, sonst ${pct(p.sbRaus)} %`
     }},
 
-  {id:'unstoppable', name:'Der Unaufhaltsame', short:'Serie', ic:'flame', tone:'orange', art:'ereignis',
+  {id:'unstoppable', name:'Der Unaufhaltsame', short:'Serie', ic:'flameTriple', tone:'orange', art:'ereignis',
     allzeit:{
       kammer:'mark', basis:150, offen:true,
       zeitraum:'Ganze Ligageschichte',
@@ -27534,7 +27617,7 @@ const DISZIPLINEN = [
       zeit:p => p.dayEloLabel || ''
     }},
 
-  {id:'wall', name:'Die Mauer', short:'Mauer', ic:'shieldStar', tone:'blue', art:'ereignis',
+  {id:'wall', name:'Die Mauer', short:'Mauer', ic:'posReinAbwehr', tone:'blue', art:'ereignis',
     allzeit:{
       kammer:'mark', basis:75, offen:true,
       zeitraum:'Ganze Laufbahn',
@@ -27581,7 +27664,7 @@ const DISZIPLINEN = [
       ev:(p,v) => `${Math.round(v*100)} % im Sturm · ${p.r50Atk} von ${p.r50N} Partien`
     }},
 
-  {id:'abwehrmauer', name:'Die Abwehrmauer', short:'Abwehrwand', ic:'concreteWall', tone:'blue', art:'ereignis',
+  {id:'abwehrmauer', name:'Die Abwehrmauer', short:'Abwehrwand', ic:'abwehrFenster', tone:'blue', art:'ereignis',
     allzeit:{
       kammer:'form', basis:75, offen:true, fenster:true,
       zeitraum:'Die letzten 50 Partien',
@@ -27651,7 +27734,7 @@ const DISZIPLINEN = [
       zeit:p => p.spSpan || ''
     }},
 
-  {id:'hardnight', name:'Der schwerste Tag', short:'Losglück', ic:'rainCloud', tone:'blue',
+  {id:'hardnight', name:'Der schwerste Tag', short:'Losglück', ic:'schwererTag', tone:'blue',
     art:'ereignis', zufall:'quote',
     allzeit:{
       kammer:'fuegung', basis:75, offen:true,
@@ -27664,7 +27747,7 @@ const DISZIPLINEN = [
       zeit:p => p.hartTagLabel || ''
     }},
 
-  {id:'bitterloss', name:'Die bitterste Pleite', short:'Bitter', ic:'dramaTear', tone:'purple',
+  {id:'bitterloss', name:'Die bitterste Pleite', short:'Bitter', ic:'crownFallen', tone:'purple',
     art:'ereignis', zufall:'quote', negativ:true,
     allzeit:{
       kammer:'fuegung', basis:75, offen:true,
@@ -27848,7 +27931,7 @@ const DISZIPLINEN = [
       ev:(p,v) => `${Math.round(v)} Elo schwächere Mitspieler · ${Math.round(p.rwNeu)} statt ${Math.round(p.rwAlt)} Elo`
     }},
 
-  {id:'drought', name:'Die Durststrecke', short:'Flaute', ic:'dropTriple', tone:'red', art:'schatten',
+  {id:'drought', name:'Die Durststrecke', short:'Flaute', ic:'trendCrash', tone:'red', art:'schatten',
     monat:{
       beiname:'Der Gestrandete',
       art:'schatten',
@@ -27893,7 +27976,7 @@ const DISZIPLINEN = [
       ev:(p,v) => `${Math.round(v*100)} % aller ${p.losses} Niederlagen endeten 0:10 · ${p.debacle} Stück`
     }},
 
-  {id:'hardluck', name:'Der Pechvogel', short:'Pechvogel', ic:'heartBroken', tone:'red', art:'schatten',
+  {id:'hardluck', name:'Der Pechvogel', short:'Pechvogel', ic:'pille', tone:'red', art:'schatten',
     monat:{
       beiname:'Der Unglückliche',
       art:'schatten',
@@ -27915,7 +27998,7 @@ const DISZIPLINEN = [
       ev:(p,v) => `${Math.round(v*100)} % aller ${p.losses} Niederlagen endeten 9:10 · ${p.bitter} Stück`
     }},
 
-  {id:'freefall', name:'Der Sturzflug', short:'Sturzflug', ic:'crownFallen', tone:'red', art:'schatten',
+  {id:'freefall', name:'Der Sturzflug', short:'Sturzflug', ic:'sturzflug', tone:'red', art:'schatten',
     allzeit:{
       kammer:'shame', basis:0,
       zeitraum:'Von einem Saisonende zum nächsten',
@@ -27953,7 +28036,7 @@ const DISZIPLINEN = [
       ev:(p,v) => `${komma(v)} Gegentore mehr je Abwehrspiel · ${komma(p.defConceded/p.defG)} statt ${komma(p.ga/p.games)}`
     }},
 
-  {id:'angstgegner', name:'Der Angstgegner', short:'Angst', ic:'devilMask', tone:'red', art:'schatten',
+  {id:'angstgegner', name:'Der Angstgegner', short:'Angst', ic:'ghost', tone:'red', art:'schatten',
     monat:{
       beiname:'Der Geplagte',
       art:'schatten',
@@ -27977,7 +28060,7 @@ const DISZIPLINEN = [
       ev:p => `${Math.round((1-p.angstQ)*100)} % der ${p.angstN} Duelle gegen einen einzelnen Gegner verloren · ${p.angstN - p.angstW} Pleiten`
     }},
 
-  {id:'untersoll', name:'Das Untersoll', short:'Untersoll', ic:'chartDown', tone:'red', art:'schatten',
+  {id:'untersoll', name:'Das Untersoll', short:'Untersoll', ic:'sollMinus', tone:'red', art:'schatten',
     monat:{
       beiname:'Der Gehemmte',
       art:'schatten',
@@ -28070,7 +28153,7 @@ const DISZIPLINEN = [
     }},
 
 
-  {id:'tagesregent', name:'Der Tagesregent', short:'Regent', ic:'crownPlus', tone:'gold', art:'leistung',
+  {id:'tagesregent', name:'Der Tagesregent', short:'Regent', ic:'zepter', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Tagesherrscher',
       art:'koennen',
@@ -28083,7 +28166,7 @@ const DISZIPLINEN = [
         0.6,
         (p,v)=>`Player of the Day an ${p.potd} der ${p.days} Spieltage · ${pct(v)} %`))}},
 
-  {id:'thron', name:'Auf dem Thron', short:'Thron', ic:'temple', tone:'gold', art:'leistung',
+  {id:'thron', name:'Auf dem Thron', short:'Thron', ic:'thron', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Unantastbare',
       art:'koennen',
@@ -28096,7 +28179,7 @@ const DISZIPLINEN = [
         -2,
         (p)=>`Nie schlechter als Platz ${p.thronRang} · ${p.tagN} eigene Spieltage`))}},
 
-  {id:'angstfrei', name:'Ohne Angstgegner', short:'Angstfrei', ic:'shieldCheck', tone:'gold', art:'leistung',
+  {id:'angstfrei', name:'Ohne Angstgegner', short:'Angstfrei', ic:'geistBann', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Furchtlose',
       art:'koennen',
@@ -28110,7 +28193,7 @@ const DISZIPLINEN = [
         (p,v)=>{const g=Object.values(p.gegnerGrp).filter(a=>a.length>=4);
       return `${g.length} regelmäßige Gegner, gegen keinen unter ${pct(v)} %`;}))}},
 
-  {id:'wochenkrone', name:'Die Wochenkrone', short:'Wochenkron', ic:'crownFlame', tone:'gold', art:'leistung',
+  {id:'wochenkrone', name:'Die Wochenkrone', short:'Wochenkron', ic:'wochenkrone', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Dauerregent',
       art:'koennen',
@@ -28123,7 +28206,7 @@ const DISZIPLINEN = [
         1,
         (p,v)=>`Player of the Week in ${p.potw} von ${p.potwG} Wochen · ${pct(v)} %`))}},
 
-  {id:'traumquote', name:'Der Traummonat', short:'Traummonat', ic:'crown', tone:'gold', art:'leistung',
+  {id:'traumquote', name:'Der Traummonat', short:'Traummonat', ic:'star', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Überlegene',
       art:'koennen',
@@ -28136,7 +28219,7 @@ const DISZIPLINEN = [
         0.85,
         p=>`${p.wins} von ${p.games} Partien gewonnen · ${pct(p.q)} %`))}},
 
-  {id:'nachzuegler', name:'Der Nachzügler', short:'Nachzügler', ic:'trendUp', tone:'gold', art:'leistung',
+  {id:'nachzuegler', name:'Der Nachzügler', short:'Nachzügler', ic:'spaetStart', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Aufholer',
       art:'koennen',
@@ -28149,7 +28232,7 @@ const DISZIPLINEN = [
         0.6,
         p=>`${_stSiege(p.partien.slice(-5))} von 5 zum Schluss, ${_stSiege(p.partien.slice(0,5))} von 5 zum Auftakt`))}},
 
-  {id:'schattenmann', name:'Der Schattenmann', short:'Zuspieler', ic:'users', tone:'gold', art:'leistung',
+  {id:'schattenmann', name:'Der Schattenmann', short:'Zuspieler', ic:'schattenmann', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Wegbereiter',
       art:'koennen',
@@ -28167,7 +28250,7 @@ const DISZIPLINEN = [
         0.6,
         (p,v)=>`${pname(p._sm.mid)} gewinnt an dieser Seite ${pct(p._sm.q)} %, sonst ${pct(p._sm.q-v)} %`))}},
 
-  {id:'zunull', name:'Die weiße Weste', short:'Weste', ic:'snowflake', tone:'gold', art:'leistung',
+  {id:'zunull', name:'Die weiße Weste', short:'Weste', ic:'weisseWeste', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Saubermann',
       art:'koennen',
@@ -28180,7 +28263,7 @@ const DISZIPLINEN = [
         0.1,
         p=>`${p.partien.filter(s=>s.win&&s.ga<=1).length} von ${p.wins} Siegen mit höchstens einem Gegentor`))}},
 
-  {id:'bollwerk', name:'Das Bollwerk', short:'Bollwerk', ic:'dominator', tone:'gold', art:'leistung',
+  {id:'bollwerk', name:'Das Bollwerk', short:'Bollwerk', ic:'bollwerk', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Unüberwindliche',
       art:'koennen',
@@ -28193,7 +28276,7 @@ const DISZIPLINEN = [
         1.5,
         (p,v,c)=>`${komma(p.ga/p.games)} Gegentore je Partie · Liga ${komma(_stMittel(Object.values(c.P).map(x=>x.ga/x.games)))}`))}},
 
-  {id:'ausreisser2', name:'Der Ausreißer', short:'Ausreißer', ic:'godRay', tone:'gold', art:'leistung',
+  {id:'ausreisser2', name:'Der Ausreißer', short:'Ausreißer', ic:'ausreisser', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Ausreißer',
       art:'koennen',
@@ -28208,7 +28291,7 @@ const DISZIPLINEN = [
         1.5228787452803376,
         (p,v)=>`${_stSiege(p._au.a)} von ${p._au.a.length} an einem Tag · erwartet waren ${komma(p._au.q*100, 1)} %`))}},
 
-  {id:'endspurt', name:'Der Endspurt', short:'Endspurt', ic:'rocket', tone:'gold', art:'leistung',
+  {id:'endspurt', name:'Der Endspurt', short:'Endspurt', ic:'rakete', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Ausdauernde',
       art:'koennen',
@@ -28221,7 +28304,7 @@ const DISZIPLINEN = [
         0.75,
         p=>{const l=Object.values(p.tagGrp).map(a=>a[a.length-1]);return `${_stSiege(l)} von ${l.length} Tagesabschlüssen gewonnen`;}))}},
 
-  {id:'umschwung', name:'Der Umschwung', short:'Wende', ic:'overtake', tone:'gold', art:'leistung',
+  {id:'umschwung', name:'Der Umschwung', short:'Wende', ic:'umschwung', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Verwandelte',
       art:'koennen',
@@ -28268,7 +28351,7 @@ const DISZIPLINEN = [
         (p,v)=>{const u=_stUebergaenge(p).filter(x=>x.wechsel);
       return `${pct(v)} %-Punkte besser gegen die Rechnung neben dem Gegner von eben · ${u.filter(x=>x.bund).length} solche Partien, ${u.filter(x=>!x.bund).length} nach anderen Wechseln`;}))}},
 
-  {id:'aufholjagd', name:'Die Antwort', short:'Antwort', ic:'rematch', tone:'gold', art:'leistung',
+  {id:'aufholjagd', name:'Die Antwort', short:'Antwort', ic:'antwort', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Trotzige',
       art:'koennen',
@@ -28294,7 +28377,7 @@ const DISZIPLINEN = [
         0.4,
         p=>{const d=p.partien.filter(s=>s.exp<=CHANCE_UPSET);return `${_stSiege(d)} von ${d.length} gegen klare Favoriten`;}))}},
 
-  {id:'formgipfel', name:'Der Formgipfel', short:'Formgipfel', ic:'chartUp', tone:'gold', art:'leistung',
+  {id:'formgipfel', name:'Der Formgipfel', short:'Formgipfel', ic:'formGipfel', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Entfesselte',
       art:'koennen',
@@ -28363,7 +28446,7 @@ const DISZIPLINEN = [
         2.3010299956639813,
         p=>`${pct(p.q)} % gespielt, ${pct(p.expQ)} % erwartet`))}},
 
-  {id:'schwaechstertag', name:'Der schwächste Tag', short:'Jeder Tag', ic:'calendar', tone:'blue', art:'leistung',
+  {id:'schwaechstertag', name:'Der schwächste Tag', short:'Jeder Tag', ic:'schwaechsterTag', tone:'blue', art:'leistung',
     monat:{
       beiname:'Der Grundsolide',
       art:'konstanz',
@@ -28394,7 +28477,7 @@ const DISZIPLINEN = [
         p=>{const a=p.partien.filter(s=>s.pos==='atk'),d=p.partien.filter(s=>s.pos==='def');
       return `${pct(_stQuoteRoh(a))} % vorne, ${pct(_stQuoteRoh(d))} % hinten`;}))}},
 
-  {id:'wochwunder', name:'Die Woche gegen die Rechnung', short:'Wunder', ic:'underdog', tone:'gold', art:'leistung',
+  {id:'wochwunder', name:'Die Woche gegen die Rechnung', short:'Wunder', ic:'wunderWoche', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Wundertäter',
       art:'koennen',
@@ -28408,7 +28491,7 @@ const DISZIPLINEN = [
         -Math.log10(0.005),
         (p,v)=>`Eine Woche, die mit ${komma(Math.pow(10,-v)*100)} % erwartet war · ${_stWochGross(p).length} Wochen gewertet`))}},
 
-  {id:'gleichmut', name:'Der Gleichmut', short:'Gleichmut', ic:'weight', tone:'blue', art:'leistung',
+  {id:'gleichmut', name:'Der Gleichmut', short:'Gleichmut', ic:'gleichmass', tone:'blue', art:'leistung',
     monat:{
       beiname:'Der Gleichmütige',
       art:'konstanz',
@@ -28421,7 +28504,7 @@ const DISZIPLINEN = [
         -3.0,
         (p,v)=>`${komma(-v)} Tore Streuung um ${p.gd/p.games<0?'−':'+'}${komma(Math.abs(p.gd/p.games))} im Schnitt`))}},
 
-  {id:'zweiteluft', name:'Die zweite Luft', short:'Luft', ic:'flameDouble', tone:'gold', art:'leistung',
+  {id:'zweiteluft', name:'Die zweite Luft', short:'Luft', ic:'zweiteLuft', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Spätzünder',
       art:'koennen',
@@ -28435,7 +28518,7 @@ const DISZIPLINEN = [
         (p)=>{const b=_stTagBlock(p);
           return `${pct(_stQuote(b.spaet))} % ab der vierten Partie, ${pct(_stQuote(b.frueh))} % davor`;}))}},
 
-  {id:'auferstehung', name:'Die Auferstehung', short:'Rückkehr', ic:'trophyCheck', tone:'gold', art:'leistung',
+  {id:'auferstehung', name:'Die Auferstehung', short:'Rückkehr', ic:'aufstehen', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Unbeugsame',
       art:'koennen',
@@ -28449,7 +28532,7 @@ const DISZIPLINEN = [
         (p)=>{const a=_stNachZwei(p);
           return `${_stSiege(a)} von ${a.length} Partien nach zwei Pleiten am Stück`;}))}},
 
-  {id:'nulldiaet', name:'Die Nulldiät', short:'Nulldiät', ic:'egg', tone:'gold', art:'leistung',
+  {id:'nulldiaet', name:'Die Nulldiät', short:'Nulldiät', ic:'nulldiaet', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Zugeknöpfte',
       art:'koennen',
@@ -28475,7 +28558,7 @@ const DISZIPLINEN = [
         0.70,
         (p,v)=>`${p.brechW} von ${p.brechG} gegen eine laufende Serie · ${pct(v)} %`))}},
 
-  {id:'wochenschluss', name:'Der Wochenschluss', short:'Schluss', ic:'medal', tone:'gold', art:'leistung',
+  {id:'wochenschluss', name:'Der Wochenschluss', short:'Schluss', ic:'wochenschluss', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Vollender',
       art:'koennen',
@@ -28489,7 +28572,7 @@ const DISZIPLINEN = [
         (p)=>{const a=_stWochLetzte(p);
           return `${_stSiege(a)} von ${a.length} Wochenabschlüssen gewonnen`;}))}},
 
-  {id:'rollenfest', name:'Favorit wie Außenseiter', short:'Rollen', ic:'swords', tone:'blue', art:'leistung',
+  {id:'rollenfest', name:'Favorit wie Außenseiter', short:'Rollen', ic:'wippe', tone:'blue', art:'leistung',
     monat:{
       beiname:'Der Unbeeindruckte',
       art:'konstanz',
@@ -28503,7 +28586,7 @@ const DISZIPLINEN = [
         (p)=>{const r=_stRollen(p);
           return `${pct(_stQuote(r.fav))} % als Favorit, ${pct(_stQuote(r.aus))} % als Außenseiter`;}))}},
 
-  {id:'aufstieg', name:'Der Aufstieg', short:'Aufstieg', ic:'medalTrio', tone:'gold', art:'leistung',
+  {id:'aufstieg', name:'Der Aufstieg', short:'Aufstieg', ic:'stepsUp', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Aufsteiger',
       art:'koennen',
@@ -28516,7 +28599,7 @@ const DISZIPLINEN = [
         8,
         (p,v)=>`von Platz ${p.platzErst} auf Platz ${p.platzLetzt} · ${v} Plätze`))}},
 
-  {id:'zitterkoenig', name:'Der Zitterkönig', short:'Zittersieg', ic:'brokenHeart', tone:'purple', art:'ereignis',
+  {id:'zitterkoenig', name:'Der Zitterkönig', short:'Zittersieg', ic:'zitterkrone', tone:'purple', art:'ereignis',
     monat:{
       beiname:'Der Zitterkönig',
       art:'fuegung',
@@ -28529,7 +28612,7 @@ const DISZIPLINEN = [
         1,
         p=>`${p.partien.filter(s=>s.win&&s.gf-s.ga<=2).length} von ${p.wins} Siegen waren knapp`))}},
 
-  {id:'nervenkitzel', name:'Der Nervenkitzel', short:'Kitzel', ic:'cone', tone:'purple', art:'ereignis',
+  {id:'nervenkitzel', name:'Der Nervenkitzel', short:'Kitzel', ic:'thriller', tone:'purple', art:'ereignis',
     monat:{
       beiname:'Der Dauerzitterer',
       art:'fuegung',
@@ -28542,7 +28625,7 @@ const DISZIPLINEN = [
         0.35,
         (p,v,c)=>`${pct(p.partien.filter(_stEng).length/p.games)} % enge Partien · Liga ${pct(c.L.engAnteil)} %`))}},
 
-  {id:'spezialisiert', name:'Der Spezialist', short:'Spezialist', ic:'pinch', tone:'purple', art:'ereignis',
+  {id:'spezialisiert', name:'Der Spezialist', short:'Spezialist', ic:'spezialist', tone:'purple', art:'ereignis',
     monat:{
       beiname:'Der Spezialist',
       art:'fuegung',
@@ -28557,7 +28640,7 @@ const DISZIPLINEN = [
         (p,v)=>{const a=p.partien.filter(s=>s.pos==='atk'),d=p.partien.filter(s=>s.pos==='def');
       return `${pct(v)} %-Punkte Unterschied, stärker ${_stQuoteRoh(a)>_stQuoteRoh(d)?'vorne':'hinten'}`;}))}},
 
-  {id:'torhagel', name:'Der Torhagel', short:'Torhagel', ic:'crashDay', tone:'purple', art:'ereignis',
+  {id:'torhagel', name:'Der Torhagel', short:'Torhagel', ic:'torhagel', tone:'purple', art:'ereignis',
     monat:{
       beiname:'Der Spektakuläre',
       art:'fuegung',
@@ -28570,7 +28653,7 @@ const DISZIPLINEN = [
         1,
         (p,v,c)=>`${komma((p.gf+p.ga)/p.games)} Tore je Partie · Liga ${komma(c.L.torSchnitt)}`))}},
 
-  {id:'lieblingszahl', name:'Die Lieblingszahl', short:'Die Zahl', ic:'hundred', tone:'purple', art:'ereignis',
+  {id:'lieblingszahl', name:'Die Lieblingszahl', short:'Die Zahl', ic:'lieblingszahl', tone:'purple', art:'ereignis',
     monat:{
       beiname:'Der Gewohnheitstäter',
       art:'fuegung',
@@ -28584,7 +28667,7 @@ const DISZIPLINEN = [
         0.25,
         (p,v)=>`${p._lz.n}× ${p._lz.k} · ${pct(v)} % aller Partien`))}},
 
-  {id:'wechselhaft', name:'Der Wechselhafte', short:'Wechsel', ic:'weatherMix', tone:'purple', art:'ereignis',
+  {id:'wechselhaft', name:'Der Wechselhafte', short:'Wechsel', ic:'wechselhaft', tone:'purple', art:'ereignis',
     monat:{
       beiname:'Der Wechselhafte',
       art:'fuegung',
@@ -28599,7 +28682,7 @@ const DISZIPLINEN = [
         (p,v)=>{const q=Object.values(p.tagGrp).filter(a=>a.length>=3).map(a=>_stQuoteRoh(a));
       return `${pct(Math.min(...q))} % am schwächsten, ${pct(Math.max(...q))} % am stärksten Tag`;}))}},
 
-  {id:'kontrast', name:'Der Kontrast', short:'Kontrast', ic:'chartBar', tone:'purple', art:'ereignis',
+  {id:'kontrast', name:'Der Kontrast', short:'Kontrast', ic:'kontrast', tone:'purple', art:'ereignis',
     monat:{
       beiname:'Der Kontrastreiche',
       art:'fuegung',
@@ -28644,7 +28727,7 @@ const DISZIPLINEN = [
         (p,v)=>{const t=Object.values(p.tagGrp).filter(a=>a.length>=3);
       return `${pct(v)} %-Punkte über der eigenen Bilanz · ${t.filter(a=>a[0].win!==a[a.length-1].win).length} von ${t.length} Spieltagen endeten anders, als sie begannen`;}))}},
 
-  {id:'kaltblut', name:'Das Kaltblut', short:'Kaltblut', ic:'iceCube', tone:'purple', art:'ereignis',
+  {id:'kaltblut', name:'Das Kaltblut', short:'Kaltblut', ic:'kaltblut', tone:'purple', art:'ereignis',
     monat:{
       beiname:'Der Kaltblütige',
       art:'fuegung',
@@ -29354,7 +29437,7 @@ function seasonTitleHistory(pid, bisMs){
 const CHRON_KINDS = {
   koennen: {label:'Können',        pl:'Können',         kurz:'Können',   ic:'trophyStar', ord:0,
             satz:'Schnitt und Quote über die ganze Laufbahn'},
-  form:    {label:'Aktuelle Form', pl:'Aktuelle Form',  kurz:'Form',     ic:'chartUp',    ord:1,
+  form:    {label:'Aktuelle Form', pl:'Aktuelle Form',  kurz:'Form',     ic:'trendUp',    ord:1,
             satz:'Gerechnet über die letzten eigenen Partien'},
   mark:    {label:'Bestmarke',     pl:'Bestmarken',     kurz:'Marken',   ic:'target',     ord:2,
             satz:'Einzelne Bestleistungen, jede an einem Tag erreicht'},
@@ -30318,7 +30401,7 @@ function _chronStripHtml(pid){
       const pct = nx.target ? Math.max(3, Math.min(100, Math.round(nx.have / nx.target * 100))) : 0;
       chronBlock = `
     <div class="pp-sec-title">
-      <div class="l"><span class="ic svg-ic">${svgI('trophyStar')}</span><h4>Liga-Rekord</h4></div>
+      <div class="l"><span class="ic svg-ic">${svgI('rekord')}</span><h4>Liga-Rekord</h4></div>
       <div class="m">noch keiner</div>
     </div>
     <div class="chron-one next" style="--tt:${t.c};--ttr:${t.rgb}" data-chron="${esc(nx.id)}">
@@ -30334,7 +30417,7 @@ function _chronStripHtml(pid){
     } else {
       chronBlock = `
     <div class="pp-sec-title">
-      <div class="l"><span class="ic svg-ic">${svgI('trophyStar')}</span><h4>Liga-Rekord</h4></div>
+      <div class="l"><span class="ic svg-ic">${svgI('rekord')}</span><h4>Liga-Rekord</h4></div>
     </div>
     <div class="chrows-empty">Noch keiner. Jeder Rekord gehört dem, der ihn
       wirklich hält — und je Spieler steht der wertvollste.</div>`;
@@ -30557,7 +30640,7 @@ function ligaRekordeHtml(weit){
   if(!recs.length) return '';
   if(!weit) return `
     <div class="pp-sec-title" style="margin-top:20px">
-      <div class="l"><span class="ic svg-ic">${svgI('trophyStar')}</span><h4>Liga-Rekorde</h4></div>
+      <div class="l"><span class="ic svg-ic">${svgI('rekord')}</span><h4>Liga-Rekorde</h4></div>
       <div class="m">${recs.length} von ${CHRONICLES.length}</div>
     </div>
     <div class="chlist">${recs.map(d => {
@@ -30841,7 +30924,7 @@ const AV_RINGS = {
   potw:  {prio:80, tone:'gold', ic:'weekKing',    label:'Player of the Week'},
   hot:   {prio:74, tone:'acid', ic:'flame',       label:'Siegesserie'},
   cold:  {prio:72, tone:'red',  ic:'drop',        label:'Niederlagenserie'},
-  tots:  {prio:64, tone:'gold', ic:'duo',         label:'Team of the Season'},
+  tots:  {prio:64, tone:'gold', ic:'handshake',         label:'Team of the Season'},
 };
 function avatarRings(){
   const key = matches.length + '_' + _cache.version;

@@ -97,7 +97,7 @@ function openNewsDetail(sid){
     ${_newsMotiv(sorte, s)}
     ${brk ? '<div class="nf-brk-band"><span class="nf-brk-punkt"></span>BREAKING</div>' : ''}
     <div class="nd-head">
-      <div class="nd-ic nv-cat-${dcat}">${svgI(ICONS[s.ic] ? s.ic : cat.ic)}</div>
+      <div class="nd-ic nv-cat-${dcat}">${svgI(icPfad(s.ic) ? s.ic : cat.ic)}</div>
       <div class="nd-title-wrap">
         <div class="nd-cat">${esc(_newsRubrik(sorte, s))}</div>
         <div class="nd-title">${esc(s.title)}</div>

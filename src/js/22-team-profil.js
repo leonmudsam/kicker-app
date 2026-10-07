@@ -149,7 +149,7 @@ function showTeam(p1Id,p2Id){
   // typischen abweicht (in teamDetail.bestLineup gesetzt), zeigen wir beide
   // Karten nebeneinander. Sonst nur die typische wie bisher.
   const POS_LABEL = {atk:'Sturm', def:'Abwehr'};
-  const POS_ICON  = {atk:svgI('bolt'), def:svgI('shield')};
+  const POS_ICON  = {atk:svgI('posSturm'), def:svgI('posAbwehr')};
   const POS_COLOR = {atk:'var(--orange)', def:'var(--blue)'};
   const pA_pos = d.posStats[pA.id].dom;
   const pB_pos = d.posStats[pB.id].dom;
