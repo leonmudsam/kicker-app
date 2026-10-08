@@ -397,13 +397,11 @@
 .sp-rm-z.w{background:var(--acid);opacity:.85}
 .sp-rm-z.l{background:var(--red);opacity:.7}
 
-/* Die Runde als Zusammenfassung [§C33]: eine Kennzeile, die sagt, was die
-   Karte ist, die Tabelle als eine Reihe aus vier Feldern und die Partien als
-   Streifen aus Uhrzeit und Stand. Leiser als eine Partie-Karte: gestrichelte
+/* Die Runde als Zusammenfassung [§C33]: die Tabelle als eine Reihe aus vier
+   Feldern und die Partien als Streifen aus Uhrzeit und Stand, ohne Kleinschrift
+   über der Schlagzeile. Leiser als eine Partie-Karte: gestrichelte
    Kante und kein Schein — sie bündelt, was darunter schon steht. */
 .nf-runde{--tint:0;border-style:dashed;background:var(--surface)}
-.sp-rd-was{padding:0 13px 2px;font:600 9.5px 'Sometype Mono',monospace;letter-spacing:.04em;
-  color:var(--muted);line-height:1.4}
 .sp-rq{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;padding:2px 13px 8px}
 .sp-rq-f{display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 3px 6px;min-width:0;
   border-radius:10px;background:rgba(255,255,255,.025);border:1px solid var(--line)}

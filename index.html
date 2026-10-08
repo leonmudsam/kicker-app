@@ -4726,8 +4726,6 @@
 .sp-rm-z.l{background:var(--red);opacity:.7}
 
 .nf-runde{--tint:0;border-style:dashed;background:var(--surface)}
-.sp-rd-was{padding:0 13px 2px;font:600 9.5px 'Sometype Mono',monospace;letter-spacing:.04em;
-  color:var(--muted);line-height:1.4}
 .sp-rq{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;padding:2px 13px 8px}
 .sp-rq-f{display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 3px 6px;min-width:0;
   border-radius:10px;background:rgba(255,255,255,.025);border:1px solid var(--line)}
@@ -5554,7 +5552,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.07.955d2190';
+const BUILD_VERSION='2026.10.08.c40e685b';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -17317,9 +17315,7 @@ const NEWS_LIMITS = {
   proTag: 4,
   tafelProTagMin: 1,
   sammelZeilen: 4,
-  tagKartePartien: 5,
-  tagKarteStunde: 19,
-  tagKarteMin: 2,
+  tagKartePartien: 3,
   tagKarteSpannung: 620,
   sperreTage: 3,
 };
@@ -22995,15 +22991,9 @@ function _newsTagKarte(items, dayKey){
   if(!Array.isArray(items) || !items.length) return null;
   const tagMs = _newsTagMs(dayKey);
   if(!tagMs.length) return null;
-  if(tagMs.length < NEWS_LIMITS.tagKarteMin) return null;
-  if(tagMs.length >= NEWS_LIMITS.tagKartePartien){
-    const zeiten = tagMs.map(m => mts(m)).sort((a, b) => a - b);
-    if(Date.now() < zeiten[NEWS_LIMITS.tagKartePartien - 1]) return null;
-  } else {
-    const frei = new Date(dayKey + 'T00:00:00');
-    frei.setHours(NEWS_LIMITS.tagKarteStunde, 0, 0, 0);
-    if(Date.now() < frei.getTime()) return null;
-  }
+  if(tagMs.length < NEWS_LIMITS.tagKartePartien) return null;
+  const zeiten = tagMs.map(m => mts(m)).sort((a, b) => a - b);
+  if(Date.now() < zeiten[NEWS_LIMITS.tagKartePartien - 1]) return null;
   const kandidaten = items.filter(_newsTagKarteWuerdig);
   if(!kandidaten.length) return null;
   const beste = kandidaten.slice().sort((a, b) =>
@@ -24490,12 +24480,10 @@ function _spRundeStreifen(ids){
 function _newsRundeHtml(s, isRead, fadenHtml){
   const d = s.dataRef || {};
   const ps = d.matchIds || [];
-  const ids = (d.spieler || []).map(x => x.id);
   return `<div class="nf-card nf-s-spiel nf-runde nfc-${esc(s.cat || 'fun')}${isRead ? ' read' : ''}" data-sid="${esc(s.id)}">
     ${_newsMotiv('spiel', s)}
     <div class="nf-top"><span class="nf-rub"><i>${svgI('users')}</i><b>DIE RUNDE</b></span>
       <span class="nf-when">${svgI('clock')}${esc(_newsUhrzeit(s.when))}${isRead ? '' : '<span class="nf-dot"></span>'}</span></div>
-    <div class="sp-rd-was">Zusammenfassung von ${_spZahl(ps.length)} Partien am Stück, nur ${esc(_namenListe(ids.map(_spName)))}</div>
     <div class="nf-gr"><div class="nf-gr-r"><div class="nf-h">${esc(s.title)}</div><div class="nf-d">${_newsBetont(s.desc || '')}</div></div>
       <span class="nf-chev">${svgI('chevron')}</span></div>
     ${_spRundeKurz(d.spieler || [])}${_spRundeStreifen(ps)}${fadenHtml || ''}</div>`;

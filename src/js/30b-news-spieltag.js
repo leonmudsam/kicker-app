@@ -1660,19 +1660,21 @@ function _spRundeZeile(mid, i, imBlatt){
     + (a && a.kurz ? `<span class="sp-rd-a">${svgI(a.ic)}<span>${esc(a.kurz)}</span></span>` : '<span></span>')
     + `</div>`;
 }
-// Die Karte ist eine ZUSAMMENFASSUNG, und sie sagt es. Sie trug die Tabelle,
-// die Schlagzeile und darunter jede Partie als Zeile mit vier Wappen — und
-// genau diese Partien stehen direkt darunter als eigene Karten: wer scrollte,
-// las jedes Spiel zweimal, und was die Runde ist, stand nirgends. Jetzt nennt
-// eine Kennzeile, was hier zusammengefasst wird, die Tabelle steht als eine
-// Reihe aus vier Feldern, und die Partien nur noch als Streifen aus Uhrzeit und
-// Stand — die Wappen und den Anlass trägt jede Partie auf ihrer eigenen Karte.
+// Die Karte ist eine ZUSAMMENFASSUNG. Sie trug die Tabelle, die Schlagzeile
+// und darunter jede Partie als Zeile mit vier Wappen — und genau diese
+// Partien stehen direkt darunter als eigene Karten: wer scrollte, las jedes
+// Spiel zweimal. Jetzt steht die Tabelle als eine Reihe aus vier Feldern, und
+// die Partien nur noch als Streifen aus Uhrzeit und Stand — die Wappen und den
+// Anlass trägt jede Partie auf ihrer eigenen Karte. Eine Kennzeile in
+// Kleinschrift über der Schlagzeile („Zusammenfassung von 4 Partien am Stück,
+// nur …") ist wieder weg: sie wiederholte, was Rubrik, Satz und die vier
+// Felder schon sagen, und las sich als Fußnote vor der Überschrift.
 // Die Fläche ist leiser und ohne Schein: die Karte erzählt nichts Neues,
 // sie bündelt. Das Motiv bleibt — jede Karte trägt ihres [§C27]. Das Blatt
 // zeigt alles.
 // Die Tabelle der Runde in einer Reihe: vier Felder, der Sieger vorn. Ein
 // Name steht nur, wenn er in ein Viertel der Breite passt [§C33]; sonst
-// nennt die Kennzeile darüber alle vier.
+// tragen die Wappen die Initialen, und das Blatt nennt alle vier.
 function _spRundeKurz(sp){
   if(!sp || sp.length < 2) return '';
   const allein = sp[0].w > sp[1].w;
@@ -1693,12 +1695,10 @@ function _spRundeStreifen(ids){
 function _newsRundeHtml(s, isRead, fadenHtml){
   const d = s.dataRef || {};
   const ps = d.matchIds || [];
-  const ids = (d.spieler || []).map(x => x.id);
   return `<div class="nf-card nf-s-spiel nf-runde nfc-${esc(s.cat || 'fun')}${isRead ? ' read' : ''}" data-sid="${esc(s.id)}">
     ${_newsMotiv('spiel', s)}
     <div class="nf-top"><span class="nf-rub"><i>${svgI('users')}</i><b>DIE RUNDE</b></span>
       <span class="nf-when">${svgI('clock')}${esc(_newsUhrzeit(s.when))}${isRead ? '' : '<span class="nf-dot"></span>'}</span></div>
-    <div class="sp-rd-was">Zusammenfassung von ${_spZahl(ps.length)} Partien am Stück, nur ${esc(_namenListe(ids.map(_spName)))}</div>
     <div class="nf-gr"><div class="nf-gr-r"><div class="nf-h">${esc(s.title)}</div><div class="nf-d">${_newsBetont(s.desc || '')}</div></div>
       <span class="nf-chev">${svgI('chevron')}</span></div>
     ${_spRundeKurz(d.spieler || [])}${_spRundeStreifen(ps)}${fadenHtml || ''}</div>`;

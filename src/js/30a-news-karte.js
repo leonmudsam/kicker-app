@@ -1038,28 +1038,20 @@ function _newsTagKarte(items, dayKey){
   if(!Array.isArray(items) || !items.length) return null;
   const tagMs = _newsTagMs(dayKey);
   if(!tagMs.length) return null;   // an diesem Tag wurde nicht gespielt
-  // Sie steht, sobald der Spieltag entschieden ist — nicht erst um 23:59.
-  // Zwei Bedingungen, eine reicht: die Zahl der Partien (`tagKartePartien`,
-  // gemessen der Median der Liga) oder die Stunde (`tagKarteStunde`), die die
-  // kurzen Tage auffaengt. Vorher wurde die Karte zwanzig Minuten nach dem
-  // ersten Spiel vergeben: der Rekord, der gerade wechselte, war die einzige
-  // Karte des Tages und damit automatisch die staerkste, waehrend der
-  // Spieltag noch lief und der Spieler des Tages noch gar nicht feststand.
-  // Danach stand sie erst um 23:59 und damit einen halben Tag, nachdem die
-  // letzte Partie gelaufen war [§C33].
-  // Ein Spiel ist kein Spieltag: bei genau einer Partie gibt es kein Band.
-  if(tagMs.length < NEWS_LIMITS.tagKarteMin) return null;
-  if(tagMs.length >= NEWS_LIMITS.tagKartePartien){
-    // Nicht ab der Zahl allein, sondern ab dem MOMENT, in dem sie erreicht
-    // ist: sonst stuende das Band am Morgen des naechsten Tages rueckwirkend
-    // auch ueber einer Karte, die vor der fuenften Partie entstanden ist.
-    const zeiten = tagMs.map(m => mts(m)).sort((a, b) => a - b);
-    if(Date.now() < zeiten[NEWS_LIMITS.tagKartePartien - 1]) return null;
-  } else {
-    const frei = new Date(dayKey + 'T00:00:00');
-    frei.setHours(NEWS_LIMITS.tagKarteStunde, 0, 0, 0);
-    if(Date.now() < frei.getTime()) return null;
-  }
+  // Sie steht ab der dritten Partie des Tages (`tagKartePartien`) und
+  // wechselt, solange der Tag laeuft: gewaehlt wird bei jedem Zeichnen unter
+  // allen Karten des Tages, also uebernimmt eine spannendere, die spaeter
+  // kommt, das Band. Einmal wurde die Karte zwanzig Minuten nach dem ersten
+  // Spiel vergeben: der Rekord, der gerade wechselte, war die einzige Karte
+  // des Tages und damit automatisch die staerkste. Danach stand sie erst mit
+  // der fuenften Partie oder um 19 Uhr und kam damit, als der Spieltag
+  // laengst gelaufen war [§C33]. Bei weniger als drei Partien gibt es kein Band.
+  if(tagMs.length < NEWS_LIMITS.tagKartePartien) return null;
+  // Nicht ab der Zahl allein, sondern ab dem MOMENT, in dem sie erreicht ist:
+  // sonst stuende das Band am Morgen des naechsten Tages rueckwirkend auch
+  // ueber dem Stand von vor der dritten Partie.
+  const zeiten = tagMs.map(m => mts(m)).sort((a, b) => a - b);
+  if(Date.now() < zeiten[NEWS_LIMITS.tagKartePartien - 1]) return null;
   const kandidaten = items.filter(_newsTagKarteWuerdig);
   if(!kandidaten.length) return null;
   const beste = kandidaten.slice().sort((a, b) =>

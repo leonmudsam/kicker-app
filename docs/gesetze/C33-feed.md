@@ -12,7 +12,7 @@
 - Die Reihenfolge ist die Zeit; nichts sortiert um. `prio` steht auf EINER Skala (`STORY_PRIO`, `_newsPrio`: Breaking 90+, Spieltag 38–89, Hintergrund 10–37) und wiegt nur Sammelkarte und Karte des Tages.
 - Was der Generator bildet: jede ID aus Fachlichem (Spieler, Sache, Spieltag), nie aus Uhrzeit oder Zufall, sodass derselbe Datenstand dieselben Karten ergibt; was es je Tag genau einmal gibt, fällt dort nicht weg (`GEN_PFLICHT`, `GEN_PARTIE`); Marken einer Serie hängen an ihrer Partie und bleiben stehen; der Spieler des Tages steht an jedem Spieltag des Fensters um 23:59; Auszeichnungen sind nach Klasse Nachricht (`_badgeTakt`, `NEWS_BADGE_MARKEN`), kleine Marken einer Partie stehen zusammen (`badge_marken`); was der Generator nicht mehr bildet, meldet `STORY_ABGEMELDET` ab, was abläuft `STORY_LAEUFT_AB`.
 - Breaking ist das Seltenste und scheitert an keinem Deckel und keiner Sperre: legendäre Auszeichnung, längste Siegesserie aller Zeiten, Tabellenführer eines belastbaren Spieltags, feststehender Meister, Schlusssprint, erster Aufstieg in die obersten Insignium-Stufen, Karriereende. Entschieden nach dem Bündeln (`_isBreaking`); eine gebündelte Breaking-Karte nennt ihren Anlass zuerst (`brk`).
-- Die Karte des Tages (`_newsTagKarte`) steht nur an Spieltagen ab `NEWS_LIMITS.tagKartePartien` Partien oder `tagKarteStunde`, nie auf Breaking, dem Spieler des Tages, einem Rückblick oder einer negativen Karte (`_newsTagKarteWuerdig`, `_newsTagSpannung`).
+- Die Karte des Tages (`_newsTagKarte`) steht nur an Spieltagen ab der dritten Partie (`NEWS_LIMITS.tagKartePartien`) und wechselt, solange eine spannendere Karte des Tages dazukommt; nie auf Breaking, dem Spieler des Tages, einem Rückblick oder einer negativen Karte (`_newsTagKarteWuerdig`, `_newsTagSpannung`).
 - Die Ewige Tafel meldet Rekord-, Chronik- und Insigniumwechsel gegen den Stand vor dem Spieltag (`_storyStand`), in vier Fällen (`_halterFall`) plus Ausbau; ein Ausbau heißt besser geworden (`_rekordArt`), ein Fenster meldet keinen; die Karte trägt ihre ganze Lage im `dataRef` und ihre Wirkung auf die Laufbahn samt Verlusten (`_tafelLaufbahn`, `_newsVerlustBand`, `_ndWirkungBlock`). Wer nicht gespielt hat, bekommt keine Karte; die Schandtafel meldet der Feed nicht.
 - Fun Facts: ein Slot um 15:00 (`ambient_<Tag>_15`), nachgetragen für stille Tage im Fenster, deterministisch gezogen mit Rotation von Vorlage, Rubrik (`ambientRubrik`) und These (`AMBIENT_PAAR_COOLDOWN_DAYS`); jedes Bild aus `dataRef.bild` (`30c-news-fakt.js`).
 - Neu ist, was seit dem Lesestand dazukam (`NEWS_LS_STAND`, `_newsGelesen`); eine Karte, die eine frühere fortsetzt, sagt es mit einem Faden, an den Partien nachgeprüft (`_newsFaeden`).
@@ -377,13 +377,15 @@ kommt — und was einmal dasteht, bleibt stehen: die ID trägt die erste
 Partie, gespeichert wird sie einmal. Die Schlagzeile nennt, wer sie
 gewonnen hat — bei immer denselben Teams ist es ein Duell („gewinnen die
 Runde gegen … 3:1", „trennen sich 1:1") —, der Satz die **Uhrzeiten** der
-ersten und letzten Partie. **Die Karte fasst zusammen und sagt es**: eine
-Kennzeile („Zusammenfassung von 5 Partien am Stück, nur …"), die Tabelle
+ersten und letzten Partie. **Die Karte fasst zusammen**: die Tabelle
 als Reihe aus vier Feldern (Siege, Niederlagen, Elo) und die Partien als
 Streifen aus Uhrzeit und Stand. Sie trug darunter jede Partie als Zeile mit
 vier Wappen und ihrem Anlass — und genau diese Partien stehen direkt
 daneben als eigene Karten: wer scrollte, las jedes Spiel zweimal, und was
-die Runde ist, stand nirgends. Die Fläche ist leiser (gestrichelte Kante,
+die Runde ist, stand nirgends. Eine Kennzeile in Kleinschrift über der
+Schlagzeile („Zusammenfassung von 5 Partien am Stück, nur …") sollte das
+sagen; sie wiederholte Rubrik, Satz und Tabelle und las sich als Fußnote vor
+der Überschrift, und sie ist wieder weg. Die Fläche ist leiser (gestrichelte Kante,
 kein Schein). Das Blatt zeigt die Tabelle, wer mit wem an welcher
 Stange stand (eine Spalte je Partie, in Blöcken zu acht, die Zeilen in der
 Folge der Tabelle — eine Legende darunter erklärte die Zeichnung) und jede Partie;
@@ -1346,18 +1348,15 @@ Umsortierung, die der Feed nicht mehr macht. Es gibt sie **nur an
 Spieltagen**: an einem Tag ohne Partie ist nichts passiert, was ihn von einem
 anderen unterscheidet, und dort standen sonst ein Fun Fact oder eine
 Zufallsstatistik groß im Bild, die gestern genauso dagestanden hätten.
-Und sie steht, **sobald der Spieltag entschieden ist**: mit der
-`NEWS_LIMITS.tagKartePartien`-ten Partie des Tages, also der fünften, und in
-dem Moment, in dem sie gelaufen ist — nicht ab der Zahl allein, sonst stünde
-das Band am Morgen danach rückwirkend über einer Karte von vor der fünften
-Partie. Acht Partien waren einmal die Schwelle, der Median der Liga, und
-damit warteten 36 % der Spieltage bis zum Abend auf ein Band, das längst
-fällig war; an vierzehn der 19 Spieltage vom 28.07. bis 26.08. lagen fünf
-Partien um die Mittagszeit vor. Bei zwei bis vier Partien fängt
-`tagKarteStunde` den Tag auf, 19 Uhr — keine der 466 Partien hat nach 18:31
-angefangen. Und bei **genau einer Partie gibt es kein Band**
-(`tagKarteMin`): ein Spiel ist kein Spieltag, und das Band säße auf der
-einzigen Karte, die es ohnehin gibt.
+Und sie steht **ab der dritten Partie des Tages**
+(`NEWS_LIMITS.tagKartePartien`), in dem Moment, in dem sie gelaufen ist, und
+**wechselt, solange der Tag läuft**: gewählt wird bei jedem Zeichnen unter
+allen Karten des Tages, und eine spannendere, die später kommt, übernimmt
+das Band. Acht Partien waren einmal die Schwelle, der Median der Liga, dann
+fünf oder 19 Uhr — das Band kam damit, als der Spieltag längst gelaufen war,
+und wer mittags nach drei Partien in den Feed sah, fand keins. Bei **einer
+oder zwei Partien gibt es kein Band**: es zeichnet aus, was sich gegen andere
+Karten durchgesetzt hat, und zwei Partien sind kein Feld, aus dem man wählt.
 Welche Story es trägt, entscheidet `_newsTagSpannung` unter denen, die es
 tragen dürfen (`_newsTagKarteWuerdig`): Rekordwechsel, große
 Überraschungen, Spitzenspiele und mehrteilige Ereignisse stehen vor einer
