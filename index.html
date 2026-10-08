@@ -5552,7 +5552,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.08.bb44bb56';
+const BUILD_VERSION='2026.10.08.9d9ee520';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -21287,8 +21287,73 @@ function _consolidateStoriesLegacy(list){
         try { brk = _isBreaking(t); } catch(e){}
         return (brk ? 1000 : 0) + w + (t.prio || 0) / 1000;
       };
-      const leit = teile.slice().sort((a, b) => _leitWert(b) - _leitWert(a))[0];
-      if(leit) neuTitel = _achseZeile(leit);
+      const ETIKETT = {lead_change:'neue Tabellenspitze', streak_record:'Rekordserie',
+        top_clash:'Spitzenduell', giant_slayer:'Favoritensturz', streak_killer:'Serienbruch',
+        win_streak:'Siegesserie', team_streak:'Teamserie', loss_streak:'Durststrecke',
+        team_loss_streak:'gemeinsame Durststrecke', top_form:'Formlauf', jubilee:'Jubiläum',
+        milestone_wins:'Siegmarke', milestone_goals:'Tormarke', milestone_elo:'Elo-Marke',
+        rivalry_milestone:'Rivalitätsmarke', rivalry:'Rivalität'};
+      const MEHRZAHL = {Siegesserie:'Siegesserien', Teamserie:'Teamserien', Durststrecke:'Durststrecken',
+        'gemeinsame Durststrecke':'gemeinsame Durststrecken', Formlauf:'Formläufe', 'Jubiläum':'Jubiläen',
+        Siegmarke:'Siegmarken', Tormarke:'Tormarken', 'Elo-Marke':'Elo-Marken', Serienbruch:'Serienbrüche'};
+      const ERGEBNIS_ORT = {zu_null:'mit einem Sieg ohne Gegentor', upset:'im Favoritensturz',
+        krimi:'im Ein-Tor-Krimi', kanter:'mit einem klaren Sieg', eng:'im engen Spiel'};
+      const _etikett = t => {
+        const dt = (t && t.dataRef) || {};
+        const typ = dt.type === 'group' ? (dt.sub || '') : (dt.type || '');
+        if(typ === 'badge_unlocked' || typ === 'badge_marken'){
+          const mk = typ === 'badge_marken' && (dt.marken || []).length === 1 ? dt.marken[0] : null;
+          const bn = (mk && mk.name) || dt.badgeName || ((typeof BADGES !== 'undefined'
+            && BADGES.find(b => b.id === dt.badgeId)) || {}).name;
+          const art = dt.rarity === 'negative' ? 'Schande'
+            : dt.rarity === 'legendary' ? 'legendäre Auszeichnung'
+            : dt.rarity === 'rare' ? 'seltene Auszeichnung' : 'Auszeichnung';
+          return bn ? `${art} „${bn}“` : art;
+        }
+        return ETIKETT[typ] || null;
+      };
+      const _eigene = t => {
+        const dt = (t && t.dataRef) || {};
+        if(dt.type === 'streak_killer' && dt.victimPid) return {wort:'gegen', pids:[dt.victimPid]};
+        if((dt.type === 'rivalry_milestone' || dt.type === 'rivalry') && dt.a && dt.b) return {wort:'zwischen', pids:[dt.a, dt.b]};
+        if(dt.type === 'top_clash' && dt.p1 && dt.p2) return {wort:'zwischen', pids:[dt.p1, dt.p2]};
+        if(dt.type === 'lead_change' && dt.newLeader) return {wort:'für', pids:[dt.newLeader]};
+        if((dt.type === 'team_streak' || dt.type === 'team_loss_streak') && dt.a && dt.b) return {wort:'für', pids:[dt.a, dt.b]};
+        if(dt.playerId) return {wort:'für', pids:[dt.playerId]};
+        if(dt.pid) return {wort:'für', pids:[dt.pid]};
+        return {wort:'für', pids:(dt.playerIds || t.playerIds || []).filter(Boolean)};
+      };
+      const phrasen = [];
+      teile.slice().sort((a, b) => _leitWert(b) - _leitWert(a)).forEach(t => {
+        const dt = t.dataRef || {};
+        if(dt.type === 'spiel' || dt.type === 'match_result') return;
+        const et = _etikett(t);
+        if(!et) return;
+        const e = _eigene(t);
+        const da = phrasen.find(x => x.et === et && x.wort === e.wort);
+        if(da){ da.n++; e.pids.forEach(id => { if(da.pids.indexOf(id) < 0) da.pids.push(id); }); return; }
+        const pids = [...new Set(e.pids)];
+        phrasen.push({et, wort:e.wort, pids, n:dt.type === 'group' ? Math.max(1, pids.length) : 1});
+      });
+      const _phrase = x => {
+        const et = x.n > 1 && MEHRZAHL[x.et] ? MEHRZAHL[x.et] : x.et;
+        return x.pids.length && x.pids.length <= 3
+          ? `${et} ${x.wort} ${_namenListe(x.pids.map(nameOf))}` : et;
+      };
+      const spT = teile.find(t => ((t.dataRef || {}).type === 'spiel' || (t.dataRef || {}).type === 'match_result'));
+      const spD = (spT && spT.dataRef) || {};
+      const ort = spT && !_ergebnisGedeckt(spD) ? (ERGEBNIS_ORT[spD.resultKind] || '') : '';
+      if(phrasen.length){
+        let bild = '';
+        for(let zahl = Math.min(3, phrasen.length); zahl >= 1 && !bild; zahl--){
+          const kern = _namenListe(phrasen.slice(0, zahl).map(_phrase));
+          if(ort && (kern + ' ' + ort).length <= 96) bild = kern + ' ' + ort;
+          else if(kern.length <= 96 || zahl === 1) bild = kern;
+        }
+        neuTitel = bild.charAt(0).toUpperCase() + bild.slice(1);
+      } else if(spT){
+        neuTitel = String(spT.title || '').trim();
+      }
       const spTeil = teile.find(t => (t.dataRef || {}).type === 'spiel');
       const ds = (spTeil || {}).dataRef || {};
       const nf = Math.max(1, teile.length - (spTeil ? 1 : 0));

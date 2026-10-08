@@ -1669,8 +1669,8 @@ const _grp = JSON.parse(K.eval(`JSON.stringify((function(){
 ok(_grp.zeilen.indexOf('g-ls') >= 0 && _grp.karten.length === 1 && _grp.neg === 1,
    'eine Gruppe von Pleitenserien bleibt als negative Zeile derselben Matchkarte erhalten',
    _grp.zeilen.join(', ') + ' · Karten: ' + _grp.karten.join(', '));
-ok(/Serien gemeinsam/.test(_grp.titel) && !/Durststrecke/.test(_grp.titel),
-   'und die Schlagzeile ist der Satz der Siegesserien, nicht der Pleiten', _grp.titel);
+ok(/^Siegesserien für /.test(_grp.titel),
+   'und die Schlagzeile nennt die Siegesserien zuerst und in der Mehrzahl', _grp.titel);
 
 // Mehrere positive Meilensteine derselben Partie gehoeren an ihr Ergebnis.
 // Sie duerfen weder von der persoenlichen Erfolgsachse vorher herausgezogen
@@ -1757,11 +1757,7 @@ const _spBand = JSON.parse(K.eval(`JSON.stringify((function(){
   sam.forEach(s => {
     const html = _newsCardHtmlM2(s, false, false);
     const i0 = html.indexOf('class="nf-sam"');
-    // Ohne Band ist richtig, wenn ausser der Partie nur die Zeile da ist,
-    // die schon die Schlagzeile ist.
-    const uebrig = (s.dataRef.teile||[]).filter(t => String(t.typ || t.type || '') !== 'spiel'
-      && String(t.titel || '').trim() !== String(s.title || '').trim());
-    if(i0 < 0){ if(uebrig.length) leer.push(s.id); return; }
+    if(i0 < 0){ leer.push(s.id); return; }
     // Ohne Tags: der Titel steht im Band mit den fetten Namen darin
     // (_newsBetont), ein roher Vergleich findet ihn deshalb nie.
     const band = html.slice(i0).replace(/<[^>]*>/g, ' ').replace(/\\s+/g, ' ');
@@ -2856,13 +2852,9 @@ const _sam = JSON.parse(K.eval(`JSON.stringify((function(){
       .map(t => norm(t.replace(/^[^>]*>/,'').replace(/<$/,'')));
     if(!labels.length) leer++;
     const teile = x.dataRef.teile || [];
-    // Die Schlagzeile ist der Satz GENAU EINES Anlasses, und dessen Zeile
-    // steht nicht noch einmal auf der Karte; der Text kopiert keinen.
-    const gleich = teile.filter(t => obenTitel === norm(t.titel));
-    if(gleich.length > 1 || teile.some(t => t.text && obenText === norm(t.text))) kopfKopie++;
-    const karte = _newsCardHtmlM2(x, false, false);
-    const k0 = karte.indexOf('class="nf-sam"');
-    if(gleich.length && k0 >= 0 && norm(karte.slice(k0)).indexOf(obenTitel) >= 0) kopfKopie++;
+    teile.forEach(t => {
+      if(obenTitel === norm(t.titel) || obenText === norm(t.text)) kopfKopie++;
+    });
     // Im Bündel einer Partie ist die Partie die Bühne und keine Zeile.
     const buehne = b.indexOf('nd-buehne') >= 0 ? teile.filter(t => (t.typ || t.type) === 'spiel').length : 0;
     if(labels.length !== teile.length - buehne) unvollstaendig++;
@@ -2874,7 +2866,7 @@ const _sam = JSON.parse(K.eval(`JSON.stringify((function(){
   return {n: sicht.length, kopfKopie, textListe, leer, unvollstaendig, markiert};
 })())`));
 ok(_sam.n > 0, 'es gibt Sammelkarten mit Blatt', _sam.n + '');
-ok(_sam.kopfKopie === 0, 'die Schlagzeile ist der Satz eines Anlasses und steht nicht noch als Zeile darunter',
+ok(_sam.kopfKopie === 0, 'der Sammelkarten-Kopf kopiert kein Einzelereignis',
    _sam.kopfKopie + ' Kopien');
 ok(_sam.textListe === 0, 'der Kartentext ist eine Zusammenfassung, keine Liste',
    _sam.textListe + ' Karten');
@@ -3439,12 +3431,15 @@ ok(_achsen.e.length === 0, 'ein einzelner Erfolg bleibt eine eigene Karte',
 // der beiden Anlaesse etwas. Seit jede Partie ihre Karte hat, ist ein Buendel
 // immer eine Partie samt allem, was aus ihr folgte — und genau das gehoert in
 // die Zeile [§C33].
-// Die Schlagzeile ist der Satz des stärksten Anlasses, der andere steht als
-// Zeile darunter — keine Reihe aus Etiketten [§C33].
-ok(_achsen.g[0] && _achsen.g[0].ti === _achsen.n0 + ' sucht den Ausweg'
-   && _achsen.g[0].band === 1,
-   'verknuepfte Spielstories: der staerkste Satz ist die Schlagzeile, der andere eine Zeile',
-   (_achsen.g[0]||{}).ti + ' · ' + (_achsen.g[0]||{}).band + ' Zeilen');
+// „Ein Spiel, zwei Geschichten" gilt fuer jeden Spieltag und sagt von keinem
+// der beiden Anlaesse etwas. Seit jede Partie ihre Karte hat, ist ein Buendel
+// immer eine Partie samt allem, was aus ihr folgte — und genau das gehoert in
+// die Zeile [§C33].
+ok(_achsen.g[0] && _achsen.g[0].ti
+   === 'Durststrecke für ' + _achsen.n0 + ' und gemeinsame Durststrecke für '
+       + _achsen.n0 + ' und ' + _achsen.n1,
+   'verknuepfte Spielstories nennen ihre Anlaesse in der Schlagzeile',
+   (_achsen.g[0]||{}).ti);
 ok(_achsen.g[0] && /Meldungen hängen daran|Siegchance lag vor dem Anstoß/.test(_achsen.g[0].tx)
    && !/Geschichten wachsen|wachsen \\d/.test(_achsen.g[0].tx),
    'ihr Teaser erzaehlt die Partie statt die Kartenstruktur',
@@ -4269,6 +4264,51 @@ ok(_waisen.mit > 20 && _waisen.ohne.length === 0,
    'keine Meldung einer Partie steht ohne die Karte ihrer Partie',
    _waisen.mit + ' Meldungen mit Partie · ' + (_waisen.ohne.join(' | ') || 'keine allein'));
 
+// ── Die Schlagzeile fasst die Anlässe zusammen, jeden mit seinen Leuten ──
+// „Durststrecke und Teamserie für Leon und Maxi" gab Leos Pleiten den beiden
+// Siegern, „Siegesserie für Maxi und Durststrecke" verlor den Namen, und die
+// Reihe begann mit irgendeinem Anlass. Gestellt an einer echten Partie, dann
+// über alle Bündel der echten Liga.
+const _etik = JSON.parse(K.eval(`JSON.stringify((function(){
+  const m = matches[matches.length - 1], W = _spSieger(m), L = _spVerlierer(m), w = new Date(mts(m));
+  const l = [
+    {id:'spiel_' + m.id, cat:'highlight', ic:'ball', when:w, prio:40, title:'Ein Sieg', desc:'10:6.',
+     dataRef:{type:'spiel', resultKind:'normal', matchId:m.id, playerIds:W, winners:W, losers:L}},
+    {id:'et-ls', cat:'misfortune', ic:'dropDouble', when:w, prio:55, title:pname(L[0]) + ' findet kein Mittel', desc:'5.',
+     dataRef:{type:'loss_streak', pid:L[0], streak:5, matchId:m.id, playerIds:[L[0]]}},
+    {id:'et-ts', cat:'team', ic:'unstoppable', when:w, prio:50, title:'Zusammen alles', desc:'5.',
+     dataRef:{type:'team_streak', a:W[0], b:W[1], streak:5, matchId:m.id, playerIds:W}}
+  ];
+  _cache._consolFrom = null;
+  const sam = _consolidateStories(l).find(x => (x.dataRef||{}).type === 'sammel');
+  const soll = 'Teamserie für ' + _namenListe(W.map(pname)) + ' und Durststrecke für ' + pname(L[0]);
+  const roh = _buildStories();
+  _cache._stories = roh.slice().sort((a,b)=>new Date(b.when)-new Date(a.when));
+  _cache._consolFrom = null; _cache._frischVon = null;
+  const NEG = /^(Durststrecke|Gemeinsame Durststrecke|Schande)/;
+  const falsch = [];
+  let n = 0;
+  getStoriesCache().forEach(x => {
+    const d = x.dataRef || {};
+    if(d.type !== 'sammel' || d.quelle !== 'spiel') return;
+    n++;
+    const t = String(x.title || '');
+    if(t.length > 110) falsch.push(t + ' (zu lang)');
+    const teile = t.split(/,| und (?=[A-ZÄÖÜa-zäöü-]+ (?:für|gegen|zwischen)\b|(?:gemeinsame |seltene |legendäre )?[A-ZÄÖÜ][a-zäöüß-]+(?: „[^“]+“)? (?:für|gegen|zwischen)\b)/);
+    if(teile.length > 3) falsch.push(t + ' (mehr als drei)');
+    if(/^(Durststrecke|Gemeinsame Durststrecke|Schande)/.test(t) && / und (Siegesserie|Teamserie|Serienbruch|Auszeichnung|Spitzenduell)/.test(t))
+      falsch.push(t + ' (Pleite vor Sieg)');
+    if(/(Durststrecke|Siegesserie|Teamserie|Serienbruch)( und| im| mit|$)/.test(t)) falsch.push(t + ' (ohne Namen)');
+  });
+  return {titel: sam ? sam.title : '', soll, n, falsch};
+})())`));
+ok(_etik.titel === _etik.soll,
+   'die Schlagzeile nennt den Sieg zuerst und jede Pleite mit dem Namen dessen, der sie hat',
+   _etik.titel + ' / soll ' + _etik.soll);
+ok(_etik.n > 10 && _etik.falsch.length === 0,
+   'jede Schlagzeile einer Partie nennt höchstens drei Anlässe, jeden mit Namen, und keine Pleite vor einem Sieg',
+   _etik.falsch.slice(0, 3).join(' | ') || _etik.n + ' Bündel');
+
 // ── Der Fuß zeigt, wovon die Schlagzeile spricht, und wechselt ab ──
 // Über „Leon und Maxi treffen zum 188. Mal aufeinander" stand Leos Wende als
 // Fuß, und von 52 Partien in vierzehn Tagen trugen 11 die Wende: der Fuß
@@ -4761,11 +4801,11 @@ const _wem = JSON.parse(K.eval(`JSON.stringify((function(){
   const sam = _consolidateStories(l).filter(x => (x.dataRef||{}).type === 'sammel');
   return {titel: sam.length ? sam[0].title : '', n: [0,1,2,3,4].map(nm)};
 })())`));
-// Seit die Schlagzeile der Satz des stärksten Anlasses ist, gehört sie dem
-// Serienbruch — vor der seltenen Auszeichnung, dem 50. Duell und dem engen
-// Spiel —, und keine Etikettenreihe steht mehr darin.
-ok(_wem.titel === 'Serie gerissen' && !/ und .* und /.test(_wem.titel),
-   'eine Bündel-Schlagzeile ist der Satz des stärksten Anlasses, hier der Serienbruch',
+ok(/Auszeichnung „[^“]+“ für /.test(_wem.titel) && _wem.titel.indexOf('“ für ' + _wem.n[2] + ' ') >= 0
+   && _wem.titel.indexOf('Serienbruch gegen ' + _wem.n[4]) >= 0
+   && / im engen Spiel$/.test(_wem.titel) && _wem.titel.indexOf(_wem.n[3]) < 0
+   && /^Serienbruch /.test(_wem.titel),
+   'eine Bündel-Schlagzeile nennt je Anlass, wem er gehört, die Auszeichnung mit Namen und das Ergebnis als Ort',
    _wem.titel);
 ok(_brk.gleich.sammel === 1 && _brk.gleich.karten === 1,
    'zwei Breaking-Meldungen einer Partie werden EINE Karte',
@@ -4776,8 +4816,8 @@ ok(_brk.gleich.breaking === true,
 ok(_brk.gleich.band === _brk.mid && _brk.gleich.sorte === 'spiel',
    'sie zeigt das Ergebnis der Partie, aus der beides kommt',
    _brk.gleich.sorte + ' / ' + String(_brk.gleich.band));
-ok(_brk.gleich.titel === 'Neuer Spitzenreiter',
-   'ihre Schlagzeile ist der Satz des stärksten Anlasses, der Tabellenspitze',
+ok(/Tabellenspitze/.test(_brk.gleich.titel) && /Auszeichnung/.test(_brk.gleich.titel),
+   'ihre Schlagzeile nennt beide Anlaesse statt „zwei Geschichten"',
    _brk.gleich.titel);
 ok(/\d/.test(_brk.gleich.text) || /[Zz]wei|[Dd]rei|[Vv]ier/.test(_brk.gleich.text),
    'und ihr Text sagt, wie viele Meldungen zusammenkommen',
@@ -4892,8 +4932,8 @@ ok(_brkMit.karten === 1 && _brkMit.sammel === 1 && _brkMit.zeilen === 2,
 ok(_brkMit.brk === true && _brkMit.band === _brkMit.mid,
    'sie bleibt Breaking und zeigt das Band ihrer Partie',
    String(_brkMit.brk) + ' / ' + String(_brkMit.band === _brkMit.mid));
-ok(/Tabellenspitze/.test(_brkMit.titel) && !/Favoriten/.test(_brkMit.titel),
-   'ihre Schlagzeile ist der Satz der Tabellenspitze, der Favoritensturz steht als Zeile',
+ok(/Tabellenspitze/.test(_brkMit.titel) && /Favoritensturz/.test(_brkMit.titel),
+   'ihre Schlagzeile nennt beide Anlaesse, und das Ergebnis mit seiner Sorte',
    _brkMit.titel);
 ok(_brkMit.mitSelten === 1 && _brkMit.seltenEinzeln === 0,
    'eine seltene Auszeichnung derselben Partie steht in derselben Karte',
@@ -4901,8 +4941,8 @@ ok(_brkMit.mitSelten === 1 && _brkMit.seltenEinzeln === 0,
 ok(_brkMit.seltenZeile === 'Selten',
    'und ihre Zeile traegt die Klasse, damit sie nicht untergeht',
    '„' + _brkMit.seltenZeile + '"');
-ok(/Tabellenspitze/.test(_brkMit.seltenTitel),
-   'auch mit einer seltenen Auszeichnung fuehrt die Tabellenspitze',
+ok(/seltene Auszeichnung/.test(_brkMit.seltenTitel),
+   'die Schlagzeile nennt sie als seltene Auszeichnung',
    _brkMit.seltenTitel);
 ok(_brkMit.negKarten === 1 && _brkMit.negEinzeln === 0
    && _brkMit.negTeile === 3 && _brkMit.negZeilen === 1,

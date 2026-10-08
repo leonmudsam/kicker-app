@@ -5,7 +5,7 @@
 - **Snapshot-Vertrag, er geht allem anderen vor:** eine veröffentlichte Zeile in `stories` bleibt in ID, Text, Zeitpunkt, Priorität, Beteiligten und Bild unverändert; weder gleicher Wortlaut noch spätere Stände noch ein Kontingent entfernen sie. Wo die Herleitung von Deckeln, Auffrischen oder Wegfallen erzählt, beschreibt sie, was der Generator VOR dem Veröffentlichen tut, oder einen früheren Stand. `_newsTexteAuffrischen` ist nur noch ein Identitätsweg; `_consolidateStories` verdichtet verlustfrei (`memberIds`, `sourceIds`). Das Fenster (`NEWS_FENSTER_TAGE`, vierzehn Tage) wird vollständig geladen.
 - Einzige veränderliche Veröffentlichung: die heutige Ewige Tafel (`tafel:<Datum>`), eine Karte je Tag, die per Upsert wächst.
 - Jede Story, die einen Spieler nennt, zeigt ihn (`_newsPids`, `_newsGesichtHtml`); die Farbfamilie folgt der Kartenform, nicht der Datenkategorie [§C25].
-- Eine Partie, eine Karte: jede Partie bekommt ihre Karte (`spiel_<Partie>`), und alles mit derselben `matchId` bündelt sich daran, auch Breaking, seltene Auszeichnungen und negative Zeilen (`neg`). Verschiedene Match-IDs werden nie über eine Minute zusammengelegt. Das Ergebnisband steht einmal (`bandFremd`). Keine Meldung einer Partie entsteht ohne die Karte ihrer Partie (`_buildStories`, außer der Ewigen Tafel, die nach Tag bündelt). Die Schlagzeile eines Bündels ist der Satz seines stärksten Anlasses (`_leitWert`), dessen Zeile nicht noch einmal im Sammelband steht; auf der Karte einer Partie ist jede Zeile ein Satz (`_satzZeile`). Der Fuß zeigt den schwersten Anlass mit eigener Zeichnung, gewogen wie in der Schlagzeile (`_spFussFakt`); ohne einen wählt er unter allen zutreffenden Zeichnungen mit Abzug für die Füße der Partien davor (`_spFussSpur`), nie zweimal dieselbe hintereinander.
+- Eine Partie, eine Karte: jede Partie bekommt ihre Karte (`spiel_<Partie>`), und alles mit derselben `matchId` bündelt sich daran, auch Breaking, seltene Auszeichnungen und negative Zeilen (`neg`). Verschiedene Match-IDs werden nie über eine Minute zusammengelegt. Das Ergebnisband steht einmal (`bandFremd`). Keine Meldung einer Partie entsteht ohne die Karte ihrer Partie (`_buildStories`, außer der Ewigen Tafel, die nach Tag bündelt). Die Schlagzeile eines Bündels fasst seine Anlässe als Reihe zusammen: höchstens drei, der stärkste zuerst (`_leitWert`), eine Pleite hinter einem Sieg, jeder mit genau seinen Leuten, dasselbe für mehrere in der Mehrzahl, höchstens 96 Zeichen; das Ergebnis hängt sich als Ort an, wenn Platz ist. Auf der Karte einer Partie ist jede Zeile ein Satz (`_satzZeile`). Der Fuß zeigt den schwersten Anlass mit eigener Zeichnung, gewogen wie in der Schlagzeile (`_spFussFakt`); ohne einen wählt er unter allen zutreffenden Zeichnungen mit Abzug für die Füße der Partien davor (`_spFussSpur`), nie zweimal dieselbe hintereinander.
 - Kopf und Fuß einer Partie folgen dem Anlass in fester Rangfolge (`_spAnlass`, `_spBild`); die gewöhnliche Partie hat Formen mit Regel und Gewicht (`SP_FORM`); neue Karten speichern ihr Bild als `dataRef.visual` Version 2 (`score`, `occasion`, `_spScoreWahl`), alte bleiben über den V1-Pfad lesbar. Jedes Bauteil trennt `…Daten` und `…Bild`; nichts wird gekürzt oder geschrumpft (`_spPasst`, `.sp-lg`).
 - Dieselben Vier am Tisch (mindestens drei Partien ohne Pause über `RUNDE_PAUSE_MS`) bekommen eine zusätzliche Karte, die Runde (`type:'runde'`), dreißig Minuten nach der letzten Partie; sie zählt gegen keinen Deckel.
 - Was im selben Moment passiert, kommt in eine Sammelkarte nach seinem Grund (`causalKey`): die dauerhafte Tafel eines Spieltags (`table:<Tag>`), die kurze Strecke (`form:<Tag>`), die Spieler-Karte (`quelle:'spieler'`) und die Erfolgs-Karte (`quelle:'erfolg'`). Der Schlüssel kommt aus dem Inhalt; die Uhrzeit ist die früheste Zeile, die die Karte zeigt; Titel und Text fassen die Gruppe zusammen; die Karte zeigt höchstens `NEWS_LIMITS.sammelZeilen` Zeilen ohne Ausbauten, das Blatt alle, gegliedert nach Sorte.
@@ -413,28 +413,32 @@ Gedeckelt wird nur noch, was **über** den Partien liegt und von gestern schon
 gelten könnte. Damit ist auch `matchProTagMin` gefallen: ein reservierter
 Platz für „eine Geschichte mit konkreter Partie" ist verschenkt, wenn jede
 Partie ohnehin eine Karte hat.
-**Und ihre Schlagzeile ist der Satz des stärksten Anlasses.** Ein Bündel
-hieß „Ein Spiel, zwei Geschichten für Maxi und Henry", danach reihte es die
-Anlässe als Etiketten aneinander: „Serienbruch gegen Martin und
-Auszeichnung ‚Krimi-Versager‘ für Leo im Ein-Tor-Krimi". Das las sich als
-Inventar und verlor unterwegs Namen: „Siegesserie für Maxi und
-Durststrecke" sagte nicht, wessen Durststrecke, und „Durststrecke und
-Teamserie für Leon und Maxi" gab Leos Pleiten den beiden Siegern. Jeder
-Anlass hat aber schon einen Satz mit Subjekt und Verb („Leon und Maxi
-brechen Martins 8er-Serie"). Die Schlagzeile ist dieser Satz für den
-stärksten Anlass (`_leitWert` in `_consolidateStories`); seine Zeile fällt
-aus dem Sammelband, weil `_newsSammelBand` auslässt, was die Schlagzeile
-sagt, und die übrigen stehen darunter. Breaking führt. Eine negative Zeile
-führt nur, wenn es nichts anderes gibt: über einem Sieg steht der Sieg,
-nicht die Pleite des Gegners [§C25]. Die gewöhnliche Partie führt vor
-kleinen Marken. Etiketten mit Doppelpunkt („Leo: Krimi-Versager", „50.
-Duell: Leo vs Martin", „2 Pechvögel: …") werden auf der Karte einer Partie
-zu Sätzen (`_satzZeile`, aus dem `dataRef`, der gespeicherte Titel bleibt).
-Der Satz unter der Schlagzeile ist der Satz der Partie aus ihrer Form oder
-ihrem Anlass; „Eine Meldung hängt daran" beschrieb den Bau der Karte.
-Ein Ergebnis, das eine Auszeichnung derselben Partie schon erzählt
-(`BADGE_DECKT`), führt nicht: „Absoluter Sieger" IST das 10:0, und die
-Schlagzeile nennt es einmal.
+**Und ihre Schlagzeile fasst zusammen, was in der Partie passiert ist.**
+Ein Bündel hieß „Ein Spiel, zwei Geschichten für Maxi und Henry" — das gilt
+für jeden Spieltag und sagt von keinem Anlass etwas. Es nennt die Anlässe
+als Reihe von Höhepunkten: „Serienbruch gegen Martin und Elo-Marke für
+Maxi im Ein-Tor-Krimi". Die Reihe hatte drei Fehler. Sie verlor Namen:
+„Siegesserie für Maxi und Durststrecke" sagte nicht, wessen, und
+„Durststrecke und Teamserie für Leon und Maxi" gab Leos Pleiten den beiden
+Siegern, weil gleiche Namenslisten zusammengelegt wurden. Jeder Anlass
+trägt jetzt genau seine Leute aus dem `dataRef`, mit dem Wort, das ihre
+Rolle sagt (der Serienbruch GEGEN den, der die Serie trug, die Rivalität
+ZWISCHEN zweien, alles andere FÜR den, dem es zählt); zusammengelegt wird
+nur derselbe Anlass, und dann in der Mehrzahl („Siegesserien für Leon und
+Maxi"). Sie begann mit irgendeinem Anlass: jetzt zuerst der stärkste
+(`_leitWert`), Breaking vorn, eine Pleite hinter jedem Sieg [§C25]. Und sie
+wurde lang: höchstens drei Anlässe und 96 Zeichen, drei Zeilen auf dem
+Telefon; ist es zu lang, fällt zuerst der Ort, dann der schwächste Anlass,
+und der Rest steht im Sammelband. Eine Auszeichnung nennt ihren Namen,
+eine Schande heißt Schande. Das Ergebnis gehört allen vier und hängt sich
+als Ort dahinter („im Ein-Tor-Krimi"), außer eine Auszeichnung derselben
+Partie erzählt es schon (`BADGE_DECKT`): „Absoluter Sieger" IST das 10:0.
+Hat die Partie keinen Anlass außer ihrem Ergebnis, ist dessen eigener
+Satz die Schlagzeile. Etiketten mit Doppelpunkt („Leo: Krimi-Versager",
+„50. Duell: Leo vs Martin") werden in den Zeilen darunter zu Sätzen
+(`_satzZeile`, aus dem `dataRef`; der gespeicherte Titel bleibt). Der Satz
+unter der Schlagzeile ist der Satz der Partie aus ihrer Form oder ihrem
+Anlass; „Eine Meldung hängt daran" beschrieb den Bau der Karte.
 **Eine negative Meldung derselben Partie reist mit.** Das Subjekt ist das
 Spiel, nicht ausschließlich das Siegerteam. Schande und Durststrecke stehen
 als rote Zeilen mit ihren tatsächlichen Betroffenen neben den positiven
@@ -446,7 +450,7 @@ Geprüft wurde nur `type`, also galt die Gruppe als positiv: gemessen stand
 sie als Zeile auf „Teamserie in einer Partie", der Karte über den Sieg der
 beiden anderen.
 **Und eine Gruppe trägt den Anlass ihrer Mitglieder** (`sub`, in
-`_leitWert` und `_satzZeile`). Der Anlass-Katalog kannte „group" nicht, also
+`_leitWert`, `_etikett` und `_satzZeile`), in der Mehrzahl. Der Anlass-Katalog kannte „group" nicht, also
 fiel er weg: gemessen hieß ein Bündel aus fünf Zeilen nur „Teamserie in
 einer Partie", obwohl auch zwei Einzelserien und eine Auszeichnung
 daranhingen.
@@ -1056,7 +1060,7 @@ ein Moment ist eine Karte. Seltene und legendäre Auszeichnungen sowie
 negative Ereignisse mit derselben Match-ID reisen ebenfalls mit. Ihre
 Klassenmarke beziehungsweise rote Zeilenrichtung bleibt sichtbar. Nur fremde
 Partien und nicht matchbezogene Veröffentlichungen bleiben getrennt.
-Ist eine Zeile Breaking, ist ihr Satz die Schlagzeile.
+Ist eine Zeile Breaking, steht ihr Anlass zuerst.
 **Was eine Auszeichnung derselben Partie erzählt, erzählt das Ergebnis
 nicht noch einmal** (`BADGE_DECKT`). „Absoluter Sieger" IST das 10:0, „Upset
 King" IST der Favoritensturz. Die Regel stand nur im Generator und galt

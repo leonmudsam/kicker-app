@@ -1650,11 +1650,8 @@ const ok = (c, msg, det) => {
       doppelt: !!(sub && d && sub.textContent.trim() === d.textContent.trim())};
     host.remove(); return out;
   });
-  // Die Schlagzeile ist der Satz der einen Meldung (der Tabellenspitze), die
-  // andere steht als Zeile darunter [§C33]: beide sind zu lesen, keine zweimal.
-  ok(!brkKarte.fehlt && brkKarte.brk && brkKarte.band === 1 && brkKarte.zeilen === 1
-     && /Spitzenreiter/.test(brkKarte.titel) && /Absoluter Sieger/.test(brkKarte.zeilenText),
-     'der gemeinsame Breaking-Moment zeigt Ergebnis und beide Meldungen, eine als Schlagzeile',
+  ok(!brkKarte.fehlt && brkKarte.brk && brkKarte.band === 1 && brkKarte.zeilen === 2,
+     'der gemeinsame Breaking-Moment zeigt Ergebnis und beide Meldungen',
      JSON.stringify(brkKarte));
   ok(brkKarte.anlassKante && brkKarte.anlassKante !== 'none' && brkKarte.anlassFlaeche,
      'und seine Anlass-Zeile traegt eine eigene Kante und eine eigene Flaeche',
