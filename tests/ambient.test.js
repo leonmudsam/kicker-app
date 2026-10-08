@@ -601,9 +601,15 @@ ok(_sprint.amSpieltag,
 // an diesem Tag schon auf drei Karten stand. Was es je Tag genau einmal
 // gibt, ist nicht das Rauschen, gegen das der Deckel geschrieben ist.
 const _titelrennen = JSON.parse(K.eval(`JSON.stringify((function(){
-  const alle = matches.slice();
+  const alle = matches.slice(), AlteDate = Date;
   const bis = new Date('2026-08-11T23:59:00').getTime();
   try {
+    // Die Uhr steht mit: ohne sie laege der 11.08. ausserhalb des Fensters,
+    // seine Partien haetten keine Karte und alles an ihnen fiele weg.
+    Date = class extends AlteDate {
+      constructor(...a){ if(a.length) super(...a); else super(bis); }
+      static now(){ return bis; }
+    };
     matches = alle.filter(m => mts(m) <= bis);
     invalidateCache();
     _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
@@ -624,7 +630,7 @@ const _titelrennen = JSON.parse(K.eval(`JSON.stringify((function(){
       ereignisse: k.length ? (k[0].dataRef.events || []).length : 0,
       titel: k.length ? k[0].title : ''};
   } finally {
-    matches = alle; invalidateCache();
+    Date = AlteDate; matches = alle; invalidateCache();
     _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
   }
 })())`));
@@ -4238,6 +4244,21 @@ ok(!_tk.breaking && !_tk.potd && !_tk.rueckblick,
 // gehoert dem Titel [§C25]. Gemessen trug „Anton: Die Talfahrt" das Band.
 ok(!_tk.negativ && !_tk.pleite, 'eine Karte mit negativer Richtung traegt das Band nie',
    JSON.stringify({negativ:_tk.negativ, pleite:_tk.pleite}));
+
+// ── Keine Meldung einer Partie ohne ihre Partie ──────────────────────
+// Das 100. Duell zweier Spieler stand allein im Feed: seine Partie lag
+// einen Tag vor dem Fenster, ihre Karte gab es nicht mehr, und die Meldung
+// hing an nichts. Jede Meldung mit Partie steht jetzt nur mit ihrer Karte da.
+const _waisen = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  const karten = new Set(roh.filter(s => (s.dataRef||{}).type === 'spiel').map(s => s.dataRef.matchId));
+  const mit = roh.filter(s => { const d = s.dataRef || {};
+    return d.matchId && d.type !== 'spiel' && !/^(rekord_|chronik_|insignium_)/.test(d.type || ''); });
+  return {mit: mit.length, ohne: mit.filter(s => !karten.has(s.dataRef.matchId)).map(s => s.title)};
+})())`));
+ok(_waisen.mit > 20 && _waisen.ohne.length === 0,
+   'keine Meldung einer Partie steht ohne die Karte ihrer Partie',
+   _waisen.mit + ' Meldungen mit Partie · ' + (_waisen.ohne.join(' | ') || 'keine allein'));
 
 // ── Die Wochenkarte zeigt alle sechs Wertungen ──────────────────────
 // Sie zeigte drei und darunter „und 3 weitere Wertungen": die Ueberraschung,

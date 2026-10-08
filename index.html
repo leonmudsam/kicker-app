@@ -5552,7 +5552,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.08.c40e685b';
+const BUILD_VERSION='2026.10.08.5d3c7d03';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -19459,6 +19459,17 @@ function _buildStories(){
     const amb = _buildAmbientStories(now, pm, nameOf, stories);
     for(const a of amb) stories.push(a);
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] ambient build failed', e); }
+
+  {
+    const mitKarte = new Set();
+    stories.forEach(s => { const d = s.dataRef || {}; if(d.type === 'spiel' && d.matchId) mitKarte.add(d.matchId); });
+    const tafelArt = /^(rekord_|chronik_|insignium_)/;
+    for(let i = stories.length; i--;){
+      const d = stories[i].dataRef || {};
+      if(d.matchId && d.type !== 'spiel' && !tafelArt.test(d.type || '') && !mitKarte.has(d.matchId))
+        stories.splice(i, 1);
+    }
+  }
 
   try {
     const jeMatch = new Map();

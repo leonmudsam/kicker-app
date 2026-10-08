@@ -1782,6 +1782,19 @@ const ok = (c, msg, det) => {
   console.log('\n═══ KEINE LUECKEN IN DER KARTE ═══');
   const luecken = await page.evaluate(() => {
     const sheet = document.getElementById('sheet');
+    // Ein Duell steht im Feed nur noch mit seiner Partie; allein steht es nur
+    // als gespeicherte Karte von früher. Fehlt eine, wird eine gestellt —
+    // sonst prüfte die Zusicherung über das Band nichts.
+    if(!sheet.querySelector('.nf-s-duell')){
+      const html = window.__k.eval(`(function(){
+        const m = matches[matches.length - 1];
+        return _newsCardHtmlM2({id:'probe_duell', title:'100. Duell: ' + pname(m.a1) + ' vs ' + pname(m.b1),
+          desc:'Nach 100 Duellen steht es 52:48.', when:new Date(mts(m)), cat:'rivalry', ic:'crossedSwords', prio:40,
+          dataRef:{type:'rivalry_milestone', a:m.a1, b:m.b1, n:100, matchId:m.id}}, false, false, '');
+      })()`);
+      const ziel = sheet.querySelector('.nf-card');
+      if(ziel) ziel.insertAdjacentHTML('beforebegin', html);
+    }
     const karten = [...sheet.querySelectorAll('.nf-card')];
     let zuHoch = 0, aerger = '';
     karten.forEach(c => {
