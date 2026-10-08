@@ -1070,8 +1070,47 @@ function _consolidateStoriesLegacy(list){
     // (Jubilaeum, Meilenstein), steht er allein: die Liste IST dann die
     // Aufzaehlung, und ab dem vierten Namen ist sie die einzige Stelle, an
     // der alle vorkommen.
+    // ── Auf der Karte einer Partie ist jede Zeile ein Satz ───────────
+    // Einige Meldungen tragen ein Etikett mit Doppelpunkt als Titel („Leo:
+    // Krimi-Versager", „50. Duell: Leo vs Martin", „2 Pechvögel: Anton und
+    // Maxi"). Als eigene Karte stand darunter ihr Satz; als Zeile und erst
+    // recht als Schlagzeile eines Bündels stehen sie allein, und dort gilt,
+    // was für jede Zeile der Liga gilt: kein Etikett mit Doppelpunkt [§C33].
+    // Gebaut aus dem `dataRef`, nicht aus dem gespeicherten Titel — der
+    // bleibt, wie er veröffentlicht wurde.
+    const _satzZeile = t => {
+      const dt = (t && t.dataRef) || {}, ti = String(t.title || '').trim();
+      const nm = id => nameOf(id), und = ids => _namenListe(ids.map(nm));
+      const ids = (dt.playerIds || []).filter(Boolean);
+      const bn = dt.badgeName || ((typeof BADGES !== 'undefined'
+        && BADGES.find(b => b.id === dt.badgeId)) || {}).name;
+      const zahl = x => parseInt(String(x || ''), 10);
+      if(dt.type === 'badge_unlocked' && bn){
+        if(ids.length > 1) return `${und(ids)} ${dt.rarity === 'negative' ? 'bekommen' : 'holen'} „${bn}“`;
+        if(!dt.playerId) return ti;
+        if(dt.rarity === 'negative') return `${nm(dt.playerId)} bekommt „${bn}“`;
+        const klasse = dt.rarity === 'legendary' ? 'die legendäre Auszeichnung '
+          : dt.rarity === 'rare' ? 'die seltene Auszeichnung ' : '';
+        return `${nm(dt.playerId)} holt ${klasse}„${bn}“`;
+      }
+      if((dt.type === 'rivalry_milestone' || dt.type === 'rivalry') && dt.a && dt.b && dt.n)
+        return `${nm(dt.a)} und ${nm(dt.b)} treffen zum ${dt.n}. Mal aufeinander`;
+      if(dt.type === 'milestone_wins' && dt.pid && zahl(dt.milestone)) return `${nm(dt.pid)} feiert den ${zahl(dt.milestone)}. Sieg`;
+      if(dt.type === 'milestone_goals' && dt.pid && zahl(dt.milestone)) return `${nm(dt.pid)} erzielt das ${zahl(dt.milestone)}. Tor`;
+      if(dt.type === 'streak_record' && dt.pid)
+        return `${nm(dt.pid)} stellt ${dt.streak ? 'mit ' + dt.streak + ' Siegen ' : ''}den Serien-Rekord der Liga auf`;
+      if(dt.type === 'group' && ids.length > 1){
+        const verb = {loss_streak:'stecken beide in einer Durststrecke', top_form:'spielen über dem eigenen Schnitt',
+          win_streak:'ziehen ihre Serien gemeinsam weiter', jubilee:'feiern ein Jubiläum',
+          milestone_wins:'erreichen eine Siegmarke', milestone_goals:'erreichen eine Tormarke',
+          milestone_elo:'knacken eine Elo-Marke'}[dt.sub];
+        if(verb) return `${und(ids)} ${ids.length > 2 ? verb.replace('beide ', 'alle ') : verb}`;
+      }
+      return ti;
+    };
     const _achseZeile = t => {
       const ti = String(t.title || '').trim();
+      if(art === 'spiel') return _satzZeile(t);
       if(art !== 'spieler' && art !== 'erfolg') return ti;
       const nm = nameOf(_pidsVon(t)[0]);
       if(art === 'spieler'){
@@ -1156,160 +1195,53 @@ function _consolidateStoriesLegacy(list){
             : `der Spieltag ordnet die Ewige Tafel neu.`);
     } else {
       const namen = pids.map(nameOf);
-      const beteiligte = namen.length ? ` für ${_namenKurz(namen, 3)}` : '';
-      const motivName = {
-        top_clash:'Spitzenduell', giant_slayer:'Favoritensturz',
-        // Ein Ergebnis heisst, was es war. „besonderes Ergebnis" stand als
-        // Anlass neben „neue Tabellenspitze" und sagte von den beiden
-        // Anlaessen genau den nicht, der die Partie ausmacht.
-        match_result:'besonderes Ergebnis',
-        // Die Partie selbst ist eine Zeile der Karte, seit jede Partie eine
-        // Karte hat. Ihr Anlass kommt aus `resultKind`; eine Partie ohne
-        // Muster hat keinen und traegt die Karte nicht.
-        streak_killer:'Serienbruch', win_streak:'Siegesserie',
-        loss_streak:'Durststrecke', top_form:'Formlauf',
-        team_streak:'Teamserie', team_loss_streak:'gemeinsame Durststrecke',
-        badge_unlocked:'Auszeichnung', milestone_wins:'Siegmarke',
-        badge_marken:'Auszeichnung',
-        milestone_goals:'Tormarke', milestone_elo:'Elo-Sprung',
-        jubilee:'Jubiläum', rivalry_milestone:'Rivalitätsmarke',
-        // Ohne Namen hiess ein Bündel aus Partie und Rivalität „Ein Spiel,
-        // zwei Geschichten für Leon, Leo und Maxi" — die Schlagzeile, die
-        // für jeden Spieltag gilt.
-        rivalry:'Rivalität',
-        // Die drei seltenen Wechsel tragen ihren eigenen Namen. Ohne sie
-        // hiess eine Breaking-Karte „Ein Spiel, zwei Geschichten" und
-        // verschwieg genau das, was sie besonders macht.
-        lead_change:'neue Tabellenspitze', elo_record:'Elo-Rekord',
-        streak_record:'Rekordserie'
-      };
-      // Das Ergebnis traegt seine Sorte im `dataRef`, also sagt der Anlass
-      // auch, welches Ergebnis es war.
-      const ERGEBNIS_MOTIV = {zu_null:'Sieg ohne Gegentor', upset:'Favoritensturz',
-                              krimi:'Ein-Tor-Krimi', kanter:'klarer Sieg',
-                              eng:'enges Spiel'};
-      const _motivVon = t => {
-        const dt = (t && t.dataRef) || {};
-        if(dt.type === 'match_result')
-          return ERGEBNIS_MOTIV[dt.resultKind] || motivName.match_result;
-        // Eine Partie ohne Muster ist kein Anlass: „Ein Sieg" neben
-        // „Serienbruch" zaehlt auf, dass gespielt wurde.
-        if(dt.type === 'spiel')
-          return _ergebnisGedeckt(dt) ? null : (ERGEBNIS_MOTIV[dt.resultKind] || null);
-        // Die Klasse gehoert in die Zeile: „Auszeichnung" sagt nicht, dass es
-        // die seltenste Sache des Katalogs war, und genau dafuer stand sie
-        // einmal als eigene Karte da.
-        if(dt.type === 'badge_unlocked'){
-          if(dt.rarity === 'legendary') return 'legendäre Auszeichnung';
-          if(dt.rarity === 'rare') return 'seltene Auszeichnung';
-          return motivName.badge_unlocked;
-        }
-        // ── Eine Gruppe traegt den Anlass ihrer Mitglieder ───────────
-        // Zwei Spieler, die in derselben Partie ihre Serie zuenden, werden
-        // EINE Zeile („2 Serien im Gleichschritt"), und die traegt
-        // `type:'group'` mit dem urspruenglichen Typ in `sub`. Der
-        // Anlass-Katalog kennt „group" nicht, also fiel er weg: gemessen
-        // hiess ein Buendel aus fuenf Zeilen nur „Teamserie in einer
-        // Partie", obwohl auch zwei Einzelserien und eine Auszeichnung
-        // daranhingen [§C33].
-        if(dt.type === 'group') return motivName[dt.sub] || null;
-        return motivName[dt.type];
-      };
-      const motive = [...new Set(teile.map(_motivVon).filter(Boolean))];
       const wer = namen.length ? _namenKurz(namen, 3) : 'die Beteiligten';
       // Ob die Karte Breaking IST, nicht ob zwei ihrer Zeilen es sind: seit
       // die uebrigen Meldungen derselben Partie mitreisen, traegt ein Buendel
-      // oft genau EINE Breaking-Zeile — und stand dann wieder unter „Ein
-      // Spiel, zwei Geschichten", also unter der Schlagzeile, die fuer jeden
-      // Spieltag gilt und den Anlass verschweigt [§C33].
+      // oft genau EINE Breaking-Zeile [§C33].
       let brkBundle = false;
       try {
         brkBundle = teile.some(t => _isBreaking(t));
       } catch(e){}
-      // ── Eine Breaking-Karte sagt, was daran Breaking ist ───────────
-      // „Ein Spiel, zwei Geschichten für Maxi und Henry" gilt fuer jeden
-      // Spieltag und nennt nicht, dass hier eine legendaere Auszeichnung
-      // und die Tabellenspitze zusammenfallen. Die Schlagzeile nennt
-      // deshalb die Anlaesse; welche Partie es war, steht im Band darueber.
-      // ── Die Schlagzeile nennt, was in der Partie passiert ist ──────
-      // „Ein Spiel, zwei Geschichten fuer Maxi und Henry" gilt fuer jeden
-      // Spieltag und sagt von keinem der beiden Anlaesse etwas. Seit jede
-      // Partie ihre Karte hat, ist ein Buendel immer eine Partie samt allem,
-      // was aus ihr folgte — und genau das gehoert in die Zeile. Ab dem
-      // vierten Namen bleibt sie ohne sie: „fuer Martin, Maxi und zwei
-      // weitere" nennt keinen davon vollstaendig, und wer gemeint ist, sagen
-      // Band und Sammelband darunter genauer.
-      // ── Jeder Anlass nennt die, denen er gehört ──────────────────
-      // Die Namen standen einmal hinter allen Anlässen zusammen: „Seltene
-      // Auszeichnung in einer Partie für Julian und Leo", obwohl nur Julian
-      // sie geholt hat, und „Enges Spiel und Rivalitätsmarke in einer Partie
-      // für Martin, Jane und Maxi" — Martin hat gewonnen, Jane und Maxi sind
-      // die Rivalen. Jetzt trägt jeder Anlass seine eigenen Leute samt dem
-      // Wort, das ihre Rolle sagt: die Serie bricht GEGEN den, der sie trug,
-      // die Rivalität steht ZWISCHEN zweien, alles andere gehört dem, FÜR den
-      // es zählt. Das Ergebnis der Partie hängt sich als Ort dahinter („im
-      // Ein-Tor-Krimi"): es gehört allen vier. Zwei Anlässe stehen in der
-      // Zeile, der Rest im Sammelband darunter.
-      const ERGEBNIS_ORT = {zu_null:'mit einem Sieg ohne Gegentor', upset:'im Favoritensturz',
-                            krimi:'im Ein-Tor-Krimi', kanter:'mit einem klaren Sieg', eng:'im engen Spiel'};
-      const _eigene = t => {
+      // ── Die Schlagzeile ist der Satz des stärksten Anlasses ────────
+      // Sie reihte die Anlässe als Etiketten aneinander: „Serienbruch gegen
+      // Martin und Auszeichnung ‚Krimi-Versager‘ für Leo im Ein-Tor-Krimi",
+      // „Spitzenduell zwischen Martin und Leon und Rivalitätsmarke zwischen
+      // Leo und Martin im Ein-Tor-Krimi". Das las sich als Inventar, nicht
+      // als Nachricht, und verlor unterwegs Namen: „Siegesserie für Maxi und
+      // Durststrecke" sagte nicht, wessen Durststrecke, und „Durststrecke
+      // und Teamserie für Leon und Maxi" gab Leos Pleiten den beiden Siegern.
+      // Jeder Anlass hat aber schon einen Satz mit Subjekt und Verb („Leon
+      // und Maxi brechen Martins 8er-Serie"). Die Schlagzeile ist jetzt der
+      // Satz des stärksten, seine Zeile fällt aus dem Sammelband darunter
+      // (`_newsSammelBand` lässt aus, was die Schlagzeile sagt), und die
+      // übrigen stehen dort als Zeilen. Breaking führt; eine negative Zeile
+      // führt nur, wenn es nichts anderes gibt: über einem Sieg steht der
+      // Sieg, nicht die Pleite des Gegners [§C25]. Die gewöhnliche Partie
+      // führt vor kleinen Marken und dem bloßen Stand einer Rivalität.
+      const _leitWert = t => {
         const dt = (t && t.dataRef) || {};
-        if(dt.type === 'streak_killer' && dt.victimPid) return {wort:'gegen', pids:[dt.victimPid]};
-        if((dt.type === 'rivalry_milestone' || dt.type === 'rivalry') && dt.a && dt.b) return {wort:'zwischen', pids:[dt.a, dt.b]};
-        if(dt.type === 'top_clash' && dt.p1 && dt.p2) return {wort:'zwischen', pids:[dt.p1, dt.p2]};
-        if(dt.type === 'lead_change' && dt.newLeader) return {wort:'für', pids:[dt.newLeader]};
-        if(dt.type === 'badge_unlocked' && dt.playerId) return {wort:'für', pids:[dt.playerId]};
-        if(dt.type === 'win_streak' && dt.pid) return {wort:'für', pids:[dt.pid]};
-        if((dt.type === 'team_streak' || dt.type === 'team_loss_streak') && dt.a && dt.b) return {wort:'für', pids:[dt.a, dt.b]};
-        return {wort:'für', pids:(t.playerIds || dt.playerIds || []).filter(Boolean)};
+        const typ = dt.type === 'group' ? (dt.sub || '') : (dt.type || '');
+        let neg = false;
+        try { neg = _newsIstNegativ(t); } catch(e){}
+        if(neg) return -100 + (t.prio || 0) / 100;
+        let w = {lead_change:96, streak_record:95, top_clash:86, giant_slayer:84, streak_killer:80,
+                 milestone_wins:62, milestone_elo:60, milestone_goals:58, jubilee:56,
+                 rivalry_milestone:54, top_form:44, rivalry:34, badge_marken:24}[typ];
+        if(typ === 'win_streak' || typ === 'team_streak') w = 46 + 2 * Math.min(17, Number(dt.streak) || 0);
+        if(typ === 'badge_unlocked') w = dt.rarity === 'legendary' ? 92 : dt.rarity === 'rare' ? 66 : 50;
+        // Was eine Auszeichnung derselben Partie schon erzählt, führt nicht:
+        // „Absoluter Sieger" IST das 10:0, und die Schlagzeile nennt es einmal.
+        if(typ === 'spiel' || typ === 'match_result')
+          w = (_ergebnisGedeckt(dt) ? null : {zu_null:78, upset:74, krimi:58, kanter:52, eng:44}[dt.resultKind]) || 30;
+        if(dt.type === 'group') w = (w || 40) + 10;
+        if(w == null) w = 40;
+        let brk = false;
+        try { brk = _isBreaking(t); } catch(e){}
+        return (brk ? 1000 : 0) + w + (t.prio || 0) / 1000;
       };
-      const phrasen = [], ortTeil = teile.find(t => { const dt = t.dataRef || {};
-        return (dt.type === 'spiel' || dt.type === 'match_result') && _motivVon(t); });
-      teile.forEach(t => {
-        if(t === ortTeil) return;
-        let mv = _motivVon(t);
-        if(!mv) return;
-        // Die Auszeichnung nennt ihren Namen: „Auszeichnung für Johannes"
-        // sagte nicht, welche.
-        const bd = (t.dataRef || {}).type === 'badge_unlocked' && typeof BADGES !== 'undefined'
-          ? BADGES.find(b => b.id === (t.dataRef || {}).badgeId) : null;
-        const mk = (t.dataRef || {}).type === 'badge_marken' && ((t.dataRef || {}).marken || []).length === 1
-          ? t.dataRef.marken[0] : null;
-        if(bd && bd.name) mv += ` „${bd.name}“`;
-        else if(mk && mk.name) mv += ` „${mk.name}“`;
-        const e = _eigene(t), key = e.wort + '|' + [...new Set(e.pids)].sort().join();
-        const da = phrasen.find(x => x.key === key);
-        if(da){ if(da.motive.indexOf(mv) < 0) da.motive.push(mv); return; }
-        if(phrasen.some(x => x.motive.indexOf(mv) >= 0 && x.key !== key)){
-          // Derselbe Anlass für andere Leute: zwei Pleitenserien derselben
-          // Partie sind EIN Anlass mit zwei Namen.
-          const x = phrasen.find(y => y.motive.indexOf(mv) >= 0);
-          x.pids = [...new Set(x.pids.concat(e.pids))];
-          x.key = x.wort + '|' + [...x.pids].sort().join();
-          return;
-        }
-        phrasen.push({key, wort:e.wort, pids:[...new Set(e.pids)], motive:[mv]});
-      });
-      const _phrase = x => {
-        const was = _namenListe(x.motive);
-        return x.pids.length && x.pids.length <= 3 ? `${was} ${x.wort} ${_namenListe(x.pids.map(nameOf))}` : was;
-      };
-      if(phrasen.length || ortTeil){
-        const ort = ortTeil ? (ERGEBNIS_ORT[(ortTeil.dataRef || {}).resultKind] || '') : '';
-        let bild;
-        if(phrasen.length){
-          // Ohne Ergebnis als Ort steht der Anlass allein: „in einer Partie"
-          // sagte nichts, was das Band darüber nicht zeigt.
-          bild = phrasen.slice(0, 2).map(_phrase).join(' und ') + (ort ? ` ${ort}` : '');
-        } else {
-          // Nur das Ergebnis: es gehört den Siegern.
-          const w = ((ortTeil.dataRef || {}).winners || ortTeil.playerIds || []).map(nameOf);
-          bild = _motivVon(ortTeil) + (w.length && w.length <= 3 ? ` für ${_namenListe(w)}` : '');
-        }
-        neuTitel = bild.charAt(0).toUpperCase() + bild.slice(1);
-      } else {
-        neuTitel = `Ein Spiel, ${_zahlwortDe(teile.length)} Geschichten${beteiligte}`;
-      }
+      const leit = teile.slice().sort((a, b) => _leitWert(b) - _leitWert(a))[0];
+      if(leit) neuTitel = _achseZeile(leit);
       // ── Der Text erzaehlt die Partie, nicht die Kartenstruktur ─────
       // „Aus einer Partie wachsen zwei Geschichten" beschreibt den Bau des
       // Feeds und nennt keine Zahl aus dem Spiel. Der Stand steht im Band

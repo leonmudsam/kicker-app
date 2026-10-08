@@ -1636,6 +1636,8 @@ const ok = (c, msg, det) => {
       // Das Ergebnis steht im Kopf der Partie, der ihrem Anlass folgt [§11.6c].
       band: karte ? karte.querySelectorAll('.nf-erg, .sp-zeile, .sp-feld, .sp-at, .sp-wp, .sp-band').length : 0,
       zeilen: zl.length,
+      titel: karte ? (karte.querySelector('.nf-h') || {}).textContent || '' : '',
+      zeilenText: zl.map(x => x.textContent.trim()).join(' | '),
       anlassKante: anl ? getComputedStyle(anl).boxShadow : '',
       // Eine eigene Flaeche heisst: nicht durchsichtig. Ein Vergleich mit der
       // Nachbarzeile taugt nicht — in diesem Buendel ist jede Zeile Breaking,
@@ -1648,8 +1650,11 @@ const ok = (c, msg, det) => {
       doppelt: !!(sub && d && sub.textContent.trim() === d.textContent.trim())};
     host.remove(); return out;
   });
-  ok(!brkKarte.fehlt && brkKarte.brk && brkKarte.band === 1 && brkKarte.zeilen === 2,
-     'der gemeinsame Breaking-Moment zeigt Ergebnis und beide Meldungen',
+  // Die Schlagzeile ist der Satz der einen Meldung (der Tabellenspitze), die
+  // andere steht als Zeile darunter [§C33]: beide sind zu lesen, keine zweimal.
+  ok(!brkKarte.fehlt && brkKarte.brk && brkKarte.band === 1 && brkKarte.zeilen === 1
+     && /Spitzenreiter/.test(brkKarte.titel) && /Absoluter Sieger/.test(brkKarte.zeilenText),
+     'der gemeinsame Breaking-Moment zeigt Ergebnis und beide Meldungen, eine als Schlagzeile',
      JSON.stringify(brkKarte));
   ok(brkKarte.anlassKante && brkKarte.anlassKante !== 'none' && brkKarte.anlassFlaeche,
      'und seine Anlass-Zeile traegt eine eigene Kante und eine eigene Flaeche',
