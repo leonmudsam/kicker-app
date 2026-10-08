@@ -2726,6 +2726,25 @@ function _buildStories(){
     for(const a of amb) stories.push(a);
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] ambient build failed', e); }
 
+  // ── Keine Meldung einer Partie ohne ihre Partie ──
+  // Was an einer Partie hängt, steht auf ihrer Karte [§C33]. Ein paar Typen
+  // tragen aber kein eigenes Fenster: der Rivalitäts-Meilenstein meldete das
+  // 100. Duell einer Partie, deren Karte schon aus dem Fenster gefallen war,
+  // und stand allein im Feed — eine Meldung zu einem Spiel, das nirgends
+  // mehr zu sehen ist. Hier und nicht je Typ, damit es kein neuer Typ
+  // vergessen kann. Die Ewige Tafel bündelt nach Tag, nicht nach Partie, und
+  // braucht die Partie-Karte nicht.
+  {
+    const mitKarte = new Set();
+    stories.forEach(s => { const d = s.dataRef || {}; if(d.type === 'spiel' && d.matchId) mitKarte.add(d.matchId); });
+    const tafelArt = /^(rekord_|chronik_|insignium_)/;
+    for(let i = stories.length; i--;){
+      const d = stories[i].dataRef || {};
+      if(d.matchId && d.type !== 'spiel' && !tafelArt.test(d.type || '') && !mitKarte.has(d.matchId))
+        stories.splice(i, 1);
+    }
+  }
+
   // Das visuelle Layout wird beim Publizieren eingefroren. Ergebnisgrafik
   // und Anlassgrafik sind zwei unabhängige Ebenen; eine spätere Partie kann
   // weder die Auswahl noch deren vorberechnete Daten verändern.
@@ -2733,7 +2752,10 @@ function _buildStories(){
     const jeMatch = new Map();
     stories.forEach(s => { const d = s.dataRef || {}; if(!d.matchId) return;
       const l = jeMatch.get(d.matchId) || []; l.push(s); jeMatch.set(d.matchId, l); });
-    jeMatch.forEach((l, mid) => {
+    // In zeitlicher Folge: der Fuß einer Partie richtet sich nach den Füßen
+    // davor (`_spFussSpur`), und die müssen dann schon gewählt sein.
+    [...jeMatch.entries()].sort((p, q) => mts(matchVonId.get(p[0]) || {}) - mts(matchVonId.get(q[0]) || {}))
+      .forEach(([mid, l]) => {
       const basis = l.find(s => (s.dataRef || {}).type === 'spiel');
       const m = matchVonId.get(mid);
       if(!basis || !m || (basis.dataRef || {}).visual || typeof _spVisualSnapshot !== 'function') return;

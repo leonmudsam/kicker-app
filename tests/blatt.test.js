@@ -1636,6 +1636,8 @@ const ok = (c, msg, det) => {
       // Das Ergebnis steht im Kopf der Partie, der ihrem Anlass folgt [§11.6c].
       band: karte ? karte.querySelectorAll('.nf-erg, .sp-zeile, .sp-feld, .sp-at, .sp-wp, .sp-band').length : 0,
       zeilen: zl.length,
+      titel: karte ? (karte.querySelector('.nf-h') || {}).textContent || '' : '',
+      zeilenText: zl.map(x => x.textContent.trim()).join(' | '),
       anlassKante: anl ? getComputedStyle(anl).boxShadow : '',
       // Eine eigene Flaeche heisst: nicht durchsichtig. Ein Vergleich mit der
       // Nachbarzeile taugt nicht — in diesem Buendel ist jede Zeile Breaking,
@@ -1782,6 +1784,19 @@ const ok = (c, msg, det) => {
   console.log('\n═══ KEINE LUECKEN IN DER KARTE ═══');
   const luecken = await page.evaluate(() => {
     const sheet = document.getElementById('sheet');
+    // Ein Duell steht im Feed nur noch mit seiner Partie; allein steht es nur
+    // als gespeicherte Karte von früher. Fehlt eine, wird eine gestellt —
+    // sonst prüfte die Zusicherung über das Band nichts.
+    if(!sheet.querySelector('.nf-s-duell')){
+      const html = window.__k.eval(`(function(){
+        const m = matches[matches.length - 1];
+        return _newsCardHtmlM2({id:'probe_duell', title:'100. Duell: ' + pname(m.a1) + ' vs ' + pname(m.b1),
+          desc:'Nach 100 Duellen steht es 52:48.', when:new Date(mts(m)), cat:'rivalry', ic:'crossedSwords', prio:40,
+          dataRef:{type:'rivalry_milestone', a:m.a1, b:m.b1, n:100, matchId:m.id}}, false, false, '');
+      })()`);
+      const ziel = sheet.querySelector('.nf-card');
+      if(ziel) ziel.insertAdjacentHTML('beforebegin', html);
+    }
     const karten = [...sheet.querySelectorAll('.nf-card')];
     let zuHoch = 0, aerger = '';
     karten.forEach(c => {
@@ -2309,7 +2324,16 @@ const ok = (c, msg, det) => {
           _spGefaelleBild({W:[a, b], L:[c, e], hoch:10, tief:9, elo:{[a]:12345, [b]:-12345, [c]:999, [e]:-999}}),
           _spTagesringBild({id:a, mit:b, L:[c, e], hoch:10, tief:9, folge:Array.from({length:24}, (_, i) => i % 5 > 0)}),
           _spZaehlwerkBild({wer:a, wert:45000, sieg:true, W:[a, b], L:[c, e], hoch:10, tief:9})
-            + _spZaehlwerkBild({wer:null, wert:45400, sieg:false, W:[a, b], L:[c, e], hoch:10, tief:0})
+            + _spZaehlwerkBild({wer:null, wert:45400, sieg:false, W:[a, b], L:[c, e], hoch:10, tief:0}),
+          // Die sechs Formen neuer Karten, jede mit ihren Grenzwerten.
+          _spTauziehenBild({A:[a, b], B:[c, e], aw:true, W:[a, b], L:[c, e], hoch:10, tief:5,
+            delta:{[a]:12345, [b]:999, [c]:-12345, [e]:-999}})
+            + _spTauziehenBild({A:[a, b], B:[c, e], aw:false, W:[c, e], L:[a, b], hoch:10, tief:8, delta:{[a]:-1, [b]:-1, [c]:1, [e]:1}}),
+          _spMuenzeBild({W:[a, b], L:[c, e], hoch:10, tief:9, pct:53}),
+          _spWesteBild({W:[a, b], L:[c, e], hoch:10, tief:0, n:45495, zuletzt:d0}),
+          _spUhrBild({n:99, W:[a, b], L:[c, e], hoch:10, tief:9, zeiten:Array.from({length:99}, (_, i) => 300 + i * 9)}),
+          _spUeberholtBild({w:a, l:c, wPre:118, wPost:1, lPre:2, lPost:126, W:[a, b], L:[c, e], hoch:10, tief:9}),
+          _spDuoserieBild({W:[a, b], L:[c, e], k:999, n:45495, s:12345, hoch:10, tief:9, folge:Array.from({length:16}, (_, i) => i > 2)})
         ].map(h => '<div class="nf-card nf-s-spiel">' + h + '</div>');
         const runde = {id:'probe', when:new Date(d0).toISOString(), cat:'highlight',
           title:'Jean-Baptiste von Hohenstein gewinnt die Runde mit 12 von 23 Partien',
