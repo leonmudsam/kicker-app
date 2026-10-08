@@ -1354,7 +1354,7 @@ function _spScoreWahl(m){
       if(d.type === 'spiel' && d.matchId && d.visual && d.visual.version === 2
          && d.visual.score && d.visual.score.key) FB.scorePublished.set(d.matchId, d.visual);
     });
-    FB.scoreWahl = new Map(); FB.scoreSpur = []; FB.scoreBis = -1;
+    FB.scoreWahl = new Map(); FB.scoreSpur = []; FB.scoreBis = -1; FB.fussWahl = new Map();
   }
   let w = FB.scoreWahl && FB.scoreWahl.get(m.id);
   if(w) return w;
@@ -1421,64 +1421,106 @@ function _spScoreSnapshot(m){
   const F = _spFakten(m);
   return {key:w.key, data:SP_FORM[w.key].daten(F, w.x)};
 }
-function _spAnlassSnapshot(m, fakten, scoreKey){
-  const f = t => fakten.find(x => x.type === t), c = _spChance(m);
-  let a = null, x;
-  if((x = f('lead_change')) && x.newLeader) a = {key:'spitze', m, x};
-  else if((x = fakten.find(y => y.type === 'badge_unlocked'
+// ── Der Fuß zeigt, wovon die Schlagzeile spricht ────────────────────
+// Er hatte eine eigene Rangfolge, und die kannte die Rivalität nicht: über
+// „Leon und Maxi treffen zum 188. Mal aufeinander" stand als Fuß Leos Wende,
+// zehn Pleiten und dann ein Sieg — eine andere Geschichte als die der
+// Schlagzeile. Ein Anlass mit eigener Zeichnung wiegt jetzt, was er in der
+// Schlagzeile wiegt (`_leitWert` in `_consolidateStories`), und der
+// schwerste zeichnet den Fuß.
+// Gibt es keinen, kam der Fuß aus einer festen Reihe, und die erste
+// zutreffende gewann immer: gemessen trugen 11 von 52 Partien in vierzehn
+// Tagen die Wende. Jetzt stehen alle zutreffenden Zeichnungen zur Wahl, und
+// was in den Partien davor schon stand, wiegt weniger — wie beim Kopf.
+function _spFussFakt(m, fakten){
+  const f = t => fakten.find(x => x.type === t), out = [];
+  let x;
+  if((x = f('lead_change')) && x.newLeader) out.push({w:96, a:{key:'spitze', m, x}});
+  if((x = fakten.find(y => y.type === 'badge_unlocked'
       && (y.rarity === 'rare' || y.rarity === 'legendary')
       && (!SP_ERGEBNIS_BADGE.has(y.badgeId) || (y.rang > 1 && _badgeTakt('rare', y.rang))))) && x.badgeId)
-    a = {key:'medaille', m, x:{pid:x.playerId, badgeId:x.badgeId, rang:x.rang}};
-  else if((x = f('streak_killer')) && x.victimPid) a = {key:'riss', m, x};
-  else if((x = f('jubilee')) && x.pid && x.total)
-    a = {key:'zaehlwerk', m, x:{wer:x.pid, wert:Number(x.total), label:'Partie'}};
-  else if((x = f('milestone_wins')) && x.pid)
-    a = {key:'zaehlwerk', m, x:{wer:x.pid, wert:parseInt(x.milestone, 10), label:'Sieg'}};
-  else if((x = f('milestone_goals')) && x.pid)
-    a = {key:'zaehlwerk', m, x:{wer:x.pid, wert:parseInt(x.milestone, 10), label:'Tor'}};
-  else if((x = f('milestone_elo')) && x.pid)
-    a = {key:'zaehlwerk', m, x:{wer:x.pid, wert:Number(x.mark) || parseInt(x.milestone, 10), label:'Elo'}};
-  else if((x = f('win_streak')) && x.streak) a = {key:'serie', m, x};
-  else if((x = f('team_streak')) && x.streak && x.a && x.b) a = {key:'teamserie', m, x};
-  else if((x = f('rivalry_milestone')) && x.a && x.b) a = {key:'duell', m, x};
-  if(!a){
-    const d = _spAnlassDaten(m, c);
-    if(['premiere','wende','rang','rolle'].includes(d.key)) a = d;
+    out.push({w:x.rarity === 'legendary' ? 92 : 66, a:{key:'medaille', m, x:{pid:x.playerId, badgeId:x.badgeId, rang:x.rang}}});
+  if((x = f('streak_killer')) && x.victimPid) out.push({w:80, a:{key:'riss', m, x}});
+  if((x = f('milestone_wins')) && x.pid)
+    out.push({w:62, a:{key:'zaehlwerk', m, x:{wer:x.pid, wert:parseInt(x.milestone, 10), label:'Sieg'}}});
+  if((x = f('milestone_elo')) && x.pid)
+    out.push({w:60, a:{key:'zaehlwerk', m, x:{wer:x.pid, wert:Number(x.mark) || parseInt(x.milestone, 10), label:'Elo'}}});
+  if((x = f('milestone_goals')) && x.pid)
+    out.push({w:58, a:{key:'zaehlwerk', m, x:{wer:x.pid, wert:parseInt(x.milestone, 10), label:'Tor'}}});
+  if((x = f('jubilee')) && x.pid && x.total)
+    out.push({w:56, a:{key:'zaehlwerk', m, x:{wer:x.pid, wert:Number(x.total), label:'Partie'}}});
+  if((x = f('win_streak')) && x.streak) out.push({w:46 + 2 * Math.min(17, x.streak), a:{key:'serie', m, x}});
+  if((x = f('team_streak')) && x.streak && x.a && x.b) out.push({w:46 + 2 * Math.min(17, x.streak), a:{key:'teamserie', m, x}});
+  if((x = f('rivalry_milestone')) && x.a && x.b) out.push({w:54, a:{key:'duell', m, x}});
+  else if((x = f('rivalry')) && x.a && x.b) out.push({w:34, a:{key:'duell', m, x}});
+  out.sort((p, q) => q.w - p.w);
+  return out.length ? out[0].a : null;
+}
+// Die Füße der Partien davor, die jüngste zuletzt: veröffentlicht oder in
+// diesem Lauf gewählt. Der Generator friert die Partien deshalb in ihrer
+// zeitlichen Folge ein.
+function _spFussSpur(m, n){
+  const FB = _spFormBasis(), B = _spBasis(), bis = B.idx.get(m.id);
+  const spur = [];
+  for(let j = (bis == null ? -1 : bis - 1); j >= 0 && spur.length < n && bis - j <= 3 * n; j--){
+    const id = B.chrono[j].id;
+    const pub = FB.scorePublished && FB.scorePublished.get(id);
+    const k = pub ? (pub.occasion && pub.occasion.key) : (FB.fussWahl && FB.fussWahl.get(id));
+    if(k) spur.unshift(k);
   }
+  return spur;
+}
+function _spAnlassSnapshot(m, fakten, scoreKey){
+  const c = _spChance(m);
+  const FB = _spFormBasis();
+  if(!FB.fussWahl) FB.fussWahl = new Map();
+  const merke = v => { if(v && v.key) FB.fussWahl.set(m.id, v.key); return v; };
+  const a = _spFussFakt(m, fakten);
   if(a){
     if(a.key === 'zaehlwerk'){
       const F = _spFakten(m);
-      return {key:a.key, data:{wer:a.x.wer, wert:a.x.wert, label:a.x.label,
-        W:F.W, L:F.L, hoch:F.hoch, tief:F.tief}};
+      return merke({key:a.key, data:{wer:a.x.wer, wert:a.x.wert, label:a.x.label,
+        W:F.W, L:F.L, hoch:F.hoch, tief:F.tief}});
     }
     const daten = {
-      spitze:() => _spTabelleDaten(a, true), rang:() => _spTabelleDaten(a, false),
-      serie:() => _spSerieDaten(a), wende:() => _spKurveDaten(a),
+      spitze:() => _spTabelleDaten(a, true), serie:() => _spSerieDaten(a),
       duell:() => _spDuellDaten(a), riss:() => _spRissDaten(a),
-      teamserie:() => _spDuoDaten(a), medaille:() => _spMedailleDaten(a),
-      premiere:() => a.x, rolle:() => a.x
+      teamserie:() => _spDuoDaten(a), medaille:() => _spMedailleDaten(a)
     };
-    if(daten[a.key]) return {key:a.key, data:daten[a.key]()};
+    if(daten[a.key]) return merke({key:a.key, data:daten[a.key]()});
   }
 
-  // Hat ein wiederholter Sonderfall oben absichtlich eine neutrale Form,
-  // bleibt sein eigentlicher Anlass hier sichtbar.
-  const diff = Math.abs(m.score_a - m.score_b);
-  if(c != null && c < CHANCE_UPSET && scoreKey !== 'aussenseiter')
-    return {key:'aussenseiter', data:_spWippeDaten({m, c})};
-  if(diff === 1 && scoreKey !== 'krimi')
-    return {key:'nerven', data:_spNervenDaten({m, c})};
-  if(diff >= 6 && scoreKey !== 'deutlich')
-    return {key:'verteilung', data:_spVerteilungDaten({m})};
-
-  const F = _spFakten(m);
-  const form = _spFormKand(m).find(k => SP_ANLASS_FORMEN.has(k.key));
-  if(form) return {key:form.key, data:SP_FORM[form.key].daten(F, form.x)};
-  // Knappheit und Klarheit besitzen jeweils eine zweite, vom Score getrennte
-  // Erklärgrafik. Sie wird nur ergänzt, wenn kein stärkerer Anlass vorliegt.
-  if(scoreKey === 'krimi') return {key:'nerven', data:_spNervenDaten({m, c})};
-  if(scoreKey === 'deutlich') return {key:'verteilung', data:_spVerteilungDaten({m})};
-  return null;
+  // Alle Zeichnungen, die aus der Partie selbst zutreffen, mit ihrem Gewicht.
+  const diff = Math.abs(m.score_a - m.score_b), F = _spFakten(m), kand = [];
+  const plus = (key, rang, data) => { if(key !== scoreKey) kand.push({key, rang, data}); };
+  let x;
+  if((x = _spPremiereDaten(m))) plus('premiere', 36, () => x);
+  const wende = _spSieger(m).map(pid => ({pid, n:_newsPleitenVor(pid, m)}))
+    .filter(w => w.n >= 3).sort((p, q) => q.n - p.n)[0];
+  if(wende) plus('wende', 30, () => _spKurveDaten({key:'wende', m, x:wende}));
+  let frei = false;
+  try { frei = _storyRangFrei(seasonOf(m.created_at).id, mts(m)).frei; } catch(e){}
+  const sprung = frei ? _spSieger(m).map(pid => ({pid, r:_newsRankChange(pid, m.id)}))
+    .filter(w => w.r && w.r.pre - w.r.post >= 2) : [];
+  if(sprung.length) plus('rang', 34, () => _spTabelleDaten({key:'rang', m, x:sprung}, false));
+  const rolle = _spRolleDaten(m);
+  if(rolle) plus('rolle', 30, () => rolle);
+  // Ein besonderer Ausgang, den der Kopf nicht zeigt, bleibt als Fuß sichtbar.
+  if(c != null && c < CHANCE_UPSET && scoreKey !== 'aussenseiter') plus('aussenseiter', 40, () => _spWippeDaten({m, c}));
+  if(diff === 1) plus('nerven', scoreKey === 'krimi' ? 14 : 24, () => _spNervenDaten({m, c}));
+  if(diff >= 6) plus('verteilung', scoreKey === 'deutlich' ? 14 : 24, () => _spVerteilungDaten({m}));
+  _spFormKand(m).filter(k => SP_ANLASS_FORMEN.has(k.key))
+    .forEach(k => plus(k.key, k.rang, () => SP_FORM[k.key].daten(F, k.x)));
+  if(!kand.length) return null;
+  const spur = _spFussSpur(m, 8), zuletzt = spur[spur.length - 1];
+  const gewertet = kand.map(k => Object.assign({}, k, {eff:k.rang
+      - 8 * spur.slice(-2).filter(y => y === k.key).length
+      - 3 * spur.filter(y => y === k.key).length,
+    los:_spVisualHash(m.id + '|fuss|' + k.key)}))
+    .sort((p, q) => q.eff - p.eff || q.rang - p.rang || p.los - q.los);
+  let w = gewertet[0];
+  if(w.key === zuletzt){ const anders = gewertet.find(k => k.key !== zuletzt); if(anders) w = anders; }
+  return merke({key:w.key, data:w.data()});
 }
 function _spVisualSnapshot(m, fakten){
   const score = _spScoreSnapshot(m);

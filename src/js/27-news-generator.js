@@ -2752,7 +2752,10 @@ function _buildStories(){
     const jeMatch = new Map();
     stories.forEach(s => { const d = s.dataRef || {}; if(!d.matchId) return;
       const l = jeMatch.get(d.matchId) || []; l.push(s); jeMatch.set(d.matchId, l); });
-    jeMatch.forEach((l, mid) => {
+    // In zeitlicher Folge: der Fuß einer Partie richtet sich nach den Füßen
+    // davor (`_spFussSpur`), und die müssen dann schon gewählt sein.
+    [...jeMatch.entries()].sort((p, q) => mts(matchVonId.get(p[0]) || {}) - mts(matchVonId.get(q[0]) || {}))
+      .forEach(([mid, l]) => {
       const basis = l.find(s => (s.dataRef || {}).type === 'spiel');
       const m = matchVonId.get(mid);
       if(!basis || !m || (basis.dataRef || {}).visual || typeof _spVisualSnapshot !== 'function') return;
