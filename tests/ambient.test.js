@@ -6688,7 +6688,8 @@ const _bogen = JSON.parse(K.eval(`JSON.stringify((function(){
     premiere:'sp-pm', rolle:'sp-ro'};
   // Die gewöhnliche Partie trägt eine der Formen [§C33]: die Klasse folgt der Wahl.
   const FORMKL = {mosaik:'sp-mo', tacho:'sp-ta', streu:'sp-sd', transfer:'sp-et', chemie:'sp-ch', gegner:'sp-gg',
-    revanche:'sp-rv', gipfel:'sp-gp', rueckkehr:'sp-zu', gefaelle:'sp-gf', tagesring:'sp-tr', zaehlwerk:'sp-zw', feld:'sp-feld'};
+    revanche:'sp-rv', gipfel:'sp-gp', rueckkehr:'sp-zu', gefaelle:'sp-gf', tagesring:'sp-tr', zaehlwerk:'sp-zw', feld:'sp-feld',
+    tauziehen:'sp-tz', muenze:'sp-mz', weste:'sp-ws', uhr:'sp-uh', ueberholt:'sp-uo', duoserie:'sp-ds'};
   karten.forEach(s => {
     const d = s.dataRef, m = matches.find(x => x.id === d.matchId);
     if(!m) return;
@@ -7062,7 +7063,8 @@ const _formen = JSON.parse(K.eval(`JSON.stringify((function(){
     zahl[w.key] = (zahl[w.key] || 0) + 1;
     // Zweimal hintereinander darf nur das Spielfeld stehen, und nur, wenn
     // sonst keine Form auf die Partie passt.
-    if(spur.length && spur[spur.length - 1] === w.key && _spFormKand(m).length > 1) folgeGleich++;
+    // Die alte Kette kennt nur die dreizehn alten Formen (ohne v2).
+    if(spur.length && spur[spur.length - 1] === w.key && _spFormKand(m).filter(c => !SP_FORM[c.key].v2).length > 1) folgeGleich++;
     spur.push(w.key);
     const html = _spFormBild(m).html;
     // Das Spielfeld zeigt den Stand in Spielrichtung, den Sieger hell (_spStand).

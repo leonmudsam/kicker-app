@@ -2324,7 +2324,16 @@ const ok = (c, msg, det) => {
           _spGefaelleBild({W:[a, b], L:[c, e], hoch:10, tief:9, elo:{[a]:12345, [b]:-12345, [c]:999, [e]:-999}}),
           _spTagesringBild({id:a, mit:b, L:[c, e], hoch:10, tief:9, folge:Array.from({length:24}, (_, i) => i % 5 > 0)}),
           _spZaehlwerkBild({wer:a, wert:45000, sieg:true, W:[a, b], L:[c, e], hoch:10, tief:9})
-            + _spZaehlwerkBild({wer:null, wert:45400, sieg:false, W:[a, b], L:[c, e], hoch:10, tief:0})
+            + _spZaehlwerkBild({wer:null, wert:45400, sieg:false, W:[a, b], L:[c, e], hoch:10, tief:0}),
+          // Die sechs Formen neuer Karten, jede mit ihren Grenzwerten.
+          _spTauziehenBild({A:[a, b], B:[c, e], aw:true, W:[a, b], L:[c, e], hoch:10, tief:5,
+            delta:{[a]:12345, [b]:999, [c]:-12345, [e]:-999}})
+            + _spTauziehenBild({A:[a, b], B:[c, e], aw:false, W:[c, e], L:[a, b], hoch:10, tief:8, delta:{[a]:-1, [b]:-1, [c]:1, [e]:1}}),
+          _spMuenzeBild({W:[a, b], L:[c, e], hoch:10, tief:9, pct:53}),
+          _spWesteBild({W:[a, b], L:[c, e], hoch:10, tief:0, n:45495, zuletzt:d0}),
+          _spUhrBild({n:99, W:[a, b], L:[c, e], hoch:10, tief:9, zeiten:Array.from({length:99}, (_, i) => 300 + i * 9)}),
+          _spUeberholtBild({w:a, l:c, wPre:118, wPost:1, lPre:2, lPost:126, W:[a, b], L:[c, e], hoch:10, tief:9}),
+          _spDuoserieBild({W:[a, b], L:[c, e], k:999, n:45495, s:12345, hoch:10, tief:9, folge:Array.from({length:16}, (_, i) => i > 2)})
         ].map(h => '<div class="nf-card nf-s-spiel">' + h + '</div>');
         const runde = {id:'probe', when:new Date(d0).toISOString(), cat:'highlight',
           title:'Jean-Baptiste von Hohenstein gewinnt die Runde mit 12 von 23 Partien',
