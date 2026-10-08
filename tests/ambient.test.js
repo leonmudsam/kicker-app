@@ -7170,11 +7170,11 @@ const _runde = JSON.parse(K.eval(`JSON.stringify((function(){
     // Jede Partie der Runde behält ihre eigene Karte.
     x.ms.forEach(m => { if(!feed.some(s => (s.dataRef||{}).matchId === m.id)) falsch.push(m.id + ' ohne eigene Karte'); });
     const html = _newsCardHtmlM2(feed.find(s => s.id === st.id) || st, false, false);
-    // Die Karte fasst zusammen und sagt es: eine Kennzeile, je Partie ein
-    // Feld aus Uhrzeit und Stand, und keine Partie mit ihren Wappen — die
-    // steht direkt darunter auf ihrer eigenen Karte.
+    // Die Karte fasst zusammen: je Partie ein Feld aus Uhrzeit und Stand,
+    // keine Partie mit ihren Wappen — die steht direkt darunter auf ihrer
+    // eigenen Karte — und keine Kleinschrift über der Schlagzeile.
     if((html.match(/class="sp-rs-z"/g) || []).length !== x.ms.length) falsch.push(st.id + ' Streifen');
-    if(html.indexOf('class="sp-rd-was"') < 0) falsch.push(st.id + ' ohne Kennzeile');
+    if(/Zusammenfassung von|class="sp-rd-was"/.test(html)) falsch.push(st.id + ' mit Kennzeile');
     if(/class="sp-rd-p[ "]/.test(html)) falsch.push(st.id + ' wiederholt die Partien');
     if((_newsRundeBlatt(st).match(/data-mid="/g) || []).length !== x.ms.length) falsch.push(st.id + ' Blatt');
   });

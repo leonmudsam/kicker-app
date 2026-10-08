@@ -377,13 +377,15 @@ kommt — und was einmal dasteht, bleibt stehen: die ID trägt die erste
 Partie, gespeichert wird sie einmal. Die Schlagzeile nennt, wer sie
 gewonnen hat — bei immer denselben Teams ist es ein Duell („gewinnen die
 Runde gegen … 3:1", „trennen sich 1:1") —, der Satz die **Uhrzeiten** der
-ersten und letzten Partie. **Die Karte fasst zusammen und sagt es**: eine
-Kennzeile („Zusammenfassung von 5 Partien am Stück, nur …"), die Tabelle
+ersten und letzten Partie. **Die Karte fasst zusammen**: die Tabelle
 als Reihe aus vier Feldern (Siege, Niederlagen, Elo) und die Partien als
 Streifen aus Uhrzeit und Stand. Sie trug darunter jede Partie als Zeile mit
 vier Wappen und ihrem Anlass — und genau diese Partien stehen direkt
 daneben als eigene Karten: wer scrollte, las jedes Spiel zweimal, und was
-die Runde ist, stand nirgends. Die Fläche ist leiser (gestrichelte Kante,
+die Runde ist, stand nirgends. Eine Kennzeile in Kleinschrift über der
+Schlagzeile („Zusammenfassung von 5 Partien am Stück, nur …") sollte das
+sagen; sie wiederholte Rubrik, Satz und Tabelle und las sich als Fußnote vor
+der Überschrift, und sie ist wieder weg. Die Fläche ist leiser (gestrichelte Kante,
 kein Schein). Das Blatt zeigt die Tabelle, wer mit wem an welcher
 Stange stand (eine Spalte je Partie, in Blöcken zu acht, die Zeilen in der
 Folge der Tabelle — eine Legende darunter erklärte die Zeichnung) und jede Partie;
