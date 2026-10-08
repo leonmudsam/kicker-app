@@ -5625,7 +5625,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.08.be2c5e3c';
+const BUILD_VERSION='2026.10.08.f1117b8d';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -21231,8 +21231,10 @@ function _consolidateStoriesLegacy(list){
     const _nachPrio = g.teile.slice().sort((a, b) => (b.prio||0) - (a.prio||0));
     const _prioOrd = _nachPrio.filter(_brkT).concat(_nachPrio.filter(t => !_brkT(t)));
     const kopf = _prioOrd[0];
+    const _negT = t => { try { return g.key.indexOf('spiel|') === 0 && _newsIstNegativ(t) ? 1 : 0; } catch(e){ return 0; } };
     const teile = _prioOrd.slice().sort((a, b) =>
       ((_brkT(b) ? 1 : 0) - (_brkT(a) ? 1 : 0))
+      || (_negT(a) - _negT(b))
       || (_wirkung(a) - _wirkung(b))
       || ((b.prio||0) - (a.prio||0)));
     const art = g.art || (g.key.indexOf('tafel|') === 0 ? 'tafel' : 'spiel');

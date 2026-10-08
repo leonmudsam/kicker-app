@@ -1040,8 +1040,14 @@ function _consolidateStoriesLegacy(list){
     const _nachPrio = g.teile.slice().sort((a, b) => (b.prio||0) - (a.prio||0));
     const _prioOrd = _nachPrio.filter(_brkT).concat(_nachPrio.filter(t => !_brkT(t)));
     const kopf = _prioOrd[0];
+    // Auf der Karte einer Partie steht eine Pleite unter den Siegen, wie in
+    // der Schlagzeile: gemessen stand „Leo findet gerade kein Mittel" über
+    // „Leon und Maxi gewinnen zusammen alles", während die Schlagzeile mit der
+    // Teamserie begann [§C25].
+    const _negT = t => { try { return g.key.indexOf('spiel|') === 0 && _newsIstNegativ(t) ? 1 : 0; } catch(e){ return 0; } };
     const teile = _prioOrd.slice().sort((a, b) =>
       ((_brkT(b) ? 1 : 0) - (_brkT(a) ? 1 : 0))
+      || (_negT(a) - _negT(b))
       || (_wirkung(a) - _wirkung(b))
       || ((b.prio||0) - (a.prio||0)));
     const art = g.art || (g.key.indexOf('tafel|') === 0 ? 'tafel' : 'spiel');

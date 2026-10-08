@@ -4299,6 +4299,9 @@ const _etik = JSON.parse(K.eval(`JSON.stringify((function(){
     if(/^(Durststrecke|Gemeinsame Durststrecke|Schande)/.test(t) && / und (Siegesserie|Teamserie|Serienbruch|Auszeichnung|Spitzenduell)/.test(t))
       falsch.push(t + ' (Pleite vor Sieg)');
     if(/(Durststrecke|Siegesserie|Teamserie|Serienbruch)( und| im| mit|$)/.test(t)) falsch.push(t + ' (ohne Namen)');
+    // Und die Zeilen darunter folgen derselben Richtung: keine rote vor einer positiven.
+    const z = (d.teile || []).filter(u => (u.typ || u.type) !== 'spiel' && !u.brk);
+    if(z.some((u, k) => u.neg && z.slice(k + 1).some(v => !v.neg))) falsch.push(t + ' (rote Zeile vor einer positiven)');
   });
   return {titel: sam ? sam.title : '', soll, n, falsch};
 })())`));
@@ -4306,7 +4309,7 @@ ok(_etik.titel === _etik.soll,
    'die Schlagzeile nennt den Sieg zuerst und jede Pleite mit dem Namen dessen, der sie hat',
    _etik.titel + ' / soll ' + _etik.soll);
 ok(_etik.n > 10 && _etik.falsch.length === 0,
-   'jede Schlagzeile einer Partie nennt höchstens drei Anlässe, jeden mit Namen, und keine Pleite vor einem Sieg',
+   'jede Schlagzeile einer Partie nennt höchstens drei Anlässe, jeden mit Namen, und keine Pleite vor einem Sieg, auch nicht in den Zeilen',
    _etik.falsch.slice(0, 3).join(' | ') || _etik.n + ' Bündel');
 
 // ── Der Fuß zeigt, wovon die Schlagzeile spricht, und wechselt ab ──
