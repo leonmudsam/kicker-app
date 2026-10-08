@@ -130,20 +130,15 @@ const NEWS_LIMITS = {
   // Karte — zuerst, was Wirkung hat [§C33] —, die Zahl dahinter fuehrt ins
   // Blatt, und dort steht weiterhin jede Zeile.
   sammelZeilen: 4,
-  // Ab wann die Karte des Tages steht [§C33]. Acht Partien war der Median
-  // der Liga und damit eine Behauptung ueber den TAG: erreicht an 64 % der
-  // Spieltage, und die anderen 36 % warteten bis 19 Uhr auf ein Band, das
-  // laengst faellig war. Gemessen an den 19 Spieltagen vom 28.07. bis 26.08.
-  // hatten fuenf Partien schon vierzehn von ihnen um die Mittagszeit
-  // zusammen. Nach der fuenften Partie ist ein Spieltag entschieden genug
-  // fuer ein Band; die kuerzeren Tage faengt weiter die Stunde auf, keine
-  // der 466 Partien hat nach 18:31 angefangen.
-  tagKartePartien: 5,
-  tagKarteStunde: 19,
-  // Bei genau einer Partie gar keine: ein Spiel ist kein Spieltag. Das Band
-  // saesse dort auf der einzigen Karte, die es ohnehin gibt, und sagte damit
-  // nichts — es zeichnet aus, was sich gegen andere Karten durchgesetzt hat.
-  tagKarteMin: 2,
+  // Ab wann die Karte des Tages steht [§C33]: mit der dritten Partie. Sie
+  // stand erst mit der fuenften, kuerzere Tage bekamen sie um 19 Uhr — das
+  // Band kam damit, wenn der Spieltag laengst vorbei war, und wer mittags
+  // nach drei Partien in den Feed sah, fand keins. Die Wahl bleibt offen,
+  // bis der Tag endet: was spaeter am Tag passiert und spannender ist,
+  // uebernimmt das Band. Bei ein oder zwei Partien keins — es zeichnet aus,
+  // was sich gegen andere Karten durchgesetzt hat, und zwei Partien sind
+  // kein Feld, aus dem man waehlt.
+  tagKartePartien: 3,
   // ── Und nur fuer eine Geschichte, die etwas hergibt ──────────────
   // Das Band ging an die staerkste Karte des Tages, auch wenn die staerkste
   // der schwaechste Bau des Generators war: gemessen trug ein Spieltag es auf

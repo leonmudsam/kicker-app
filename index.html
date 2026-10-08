@@ -5552,7 +5552,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.08.21b1838f';
+const BUILD_VERSION='2026.10.08.c40e685b';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -17315,9 +17315,7 @@ const NEWS_LIMITS = {
   proTag: 4,
   tafelProTagMin: 1,
   sammelZeilen: 4,
-  tagKartePartien: 5,
-  tagKarteStunde: 19,
-  tagKarteMin: 2,
+  tagKartePartien: 3,
   tagKarteSpannung: 620,
   sperreTage: 3,
 };
@@ -22993,15 +22991,9 @@ function _newsTagKarte(items, dayKey){
   if(!Array.isArray(items) || !items.length) return null;
   const tagMs = _newsTagMs(dayKey);
   if(!tagMs.length) return null;
-  if(tagMs.length < NEWS_LIMITS.tagKarteMin) return null;
-  if(tagMs.length >= NEWS_LIMITS.tagKartePartien){
-    const zeiten = tagMs.map(m => mts(m)).sort((a, b) => a - b);
-    if(Date.now() < zeiten[NEWS_LIMITS.tagKartePartien - 1]) return null;
-  } else {
-    const frei = new Date(dayKey + 'T00:00:00');
-    frei.setHours(NEWS_LIMITS.tagKarteStunde, 0, 0, 0);
-    if(Date.now() < frei.getTime()) return null;
-  }
+  if(tagMs.length < NEWS_LIMITS.tagKartePartien) return null;
+  const zeiten = tagMs.map(m => mts(m)).sort((a, b) => a - b);
+  if(Date.now() < zeiten[NEWS_LIMITS.tagKartePartien - 1]) return null;
   const kandidaten = items.filter(_newsTagKarteWuerdig);
   if(!kandidaten.length) return null;
   const beste = kandidaten.slice().sort((a, b) =>
