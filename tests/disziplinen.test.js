@@ -178,21 +178,22 @@ Object.keys(_nrSicht).forEach(id => {
     for(let i = 1; i < r.length; i++)
       (r[i].ts - r[i-1].ts >= 72 * 3600 * 1000 ? drin : raus).push(r[i]);
     const d = drin.length && raus.length ? _nrQ(drin) - _nrQ(raus) : null;
-    o.wieder = (d != null && drin.length >= 8 && d > 0) ? d : null;
-    o.rost = (d != null && drin.length >= 8 && d < 0) ? -d : null;
+    // Was auf null Prozentpunkte rundet, ist keine Richtung.
+    o.wieder = (d != null && drin.length >= 8 && Math.round(d * 100) > 0) ? d : null;
+    o.rost = (d != null && drin.length >= 8 && Math.round(d * 100) < 0) ? -d : null;
   }
   // Der Umsteiger — die erste Partie nach einem Positionswechsel
   {
     const drin = [], raus = [];
     for(let i = 1; i < r.length; i++) (r[i].pos !== r[i-1].pos ? drin : raus).push(r[i]);
     const d = drin.length && raus.length ? _nrQ(drin) - _nrQ(raus) : null;
-    o.umsteiger = (d != null && drin.length >= 15 && d > 0) ? d : null;
+    o.umsteiger = (d != null && drin.length >= 15 && Math.round(d * 100) > 0) ? d : null;
   }
   // Aufschwung und Abschwung — die letzten 25 gegen alles davor
   {
     const d = r.length >= 50 ? _nrQ(r.slice(-25)) - _nrQ(r.slice(0, -25)) : null;
-    o.aufschwung = (d != null && d > 0) ? d : null;
-    o.abschwung = (d != null && d < 0) ? -d : null;
+    o.aufschwung = (d != null && Math.round(d * 100) > 0) ? d : null;
+    o.abschwung = (d != null && Math.round(d * 100) < 0) ? -d : null;
   }
   // Der Glanztag — der beste Spieltag ab fuenf Partien gegen die eigene Quote
   {
@@ -200,7 +201,7 @@ Object.keys(_nrSicht).forEach(id => {
     r.forEach(x => (tage[x.day] = tage[x.day] || []).push(x));
     const l = Object.values(tage).filter(t => t.length >= 5).map(t => _nrQ(t) - _nrQ(r));
     const d = l.length ? Math.max.apply(null, l) : null;
-    o.glanztag = (d != null && d > 0) ? d : null;
+    o.glanztag = (d != null && Math.round(d * 100) > 0) ? d : null;
   }
   // Der Rollencoup — der Vorsprung auf die Erwartung als Aussenseiter, je Position
   {
@@ -248,6 +249,18 @@ const _sqFremd = _sq.filter(x => x.r >= 0.75 && NIVEAU.indexOf(x.id) < 0);
 ok(_sq.length >= 12 && _sqFremd.length === 0,
    'nur die Rekorde des Niveaus folgen der Siegquote',
    _sqFremd.map(x => x.id + ' r=' + x.r.toFixed(2)).join(' · ') || _sq.length + ' Rekorde gemessen');
+// „Der Allrounder" verlangte, auf BEIDEN Positionen ueber der Rechnung zu
+// liegen. Das ist eine Latte bei null und keine Stichprobe: gehalten hatte
+// ihn ein einziger Spieler, und mit dessen Karriereende stand der Rekord
+// leer. Im Rennen steht jetzt jeder mit zwanzig Spielen je Position.
+const _allround = JSON.parse(K.eval(`JSON.stringify((function(){
+  const C = _chronicleCtx();
+  return {soll:Object.keys(C.P).filter(id => C.P[id].atkG >= 20 && C.P[id].defG >= 20).length,
+          ist:(chronicleRang('allrounder') || []).length};
+})())`));
+ok(_allround.soll >= 3 && _allround.ist === _allround.soll,
+   'im Rennen des Allrounders steht jeder mit zwanzig Spielen je Position',
+   _allround.ist + ' von ' + _allround.soll);
 ok(NIVEAU.every(id => K.eval(`!!CHRONICLE_BY_ID['${id}']`)),
    'und jeder Rekord des Niveaus steht im Katalog', NIVEAU.join(', '));
 
@@ -2880,6 +2893,14 @@ const _ppKurz = JSON.parse(K.eval(`JSON.stringify((function(){
   }));
   return out;
 })())`));
+// Und kein Abstand steht als null mit Vorzeichen da: „−0 %-Punkte" stand in
+// der Liste des Abschwungs, weil ein Rueckgang von 0,4 Punkten als Richtung
+// zaehlte. Was auf null rundet, ist keine.
+const _nullRichtung = JSON.parse(K.eval(`JSON.stringify(CHRONICLES.flatMap(c =>
+  (chronicleRang(c.id) || []).filter(r => /^[+\\u2212-]0( |$)/.test(String(r.ev || '').replace(/\\s?%(-Punkte)?/, ' ')))
+    .map(r => c.id + ': ' + r.ev.split(' · ')[0])))`));
+ok(_nullRichtung.length === 0, 'kein Abstand steht als null mit Vorzeichen in einem Rennen',
+   _nullRichtung.slice(0, 3).join(' · ') || 'keiner');
 ok(_ppKurz.n >= 10 && _ppKurz.falsch.length === 0,
    'ein Abstand in Prozentpunkten behaelt gekuerzt seine Einheit',
    _ppKurz.falsch.slice(0, 3).join(' · ') || _ppKurz.n + ' Belege');

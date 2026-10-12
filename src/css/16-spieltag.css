@@ -1043,6 +1043,10 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   background:linear-gradient(135deg,color-mix(in srgb,var(--purple) 14%,transparent),transparent 72%);
   border:1px solid color-mix(in srgb,var(--purple) 26%,transparent);cursor:pointer}
 .ni-alt{flex:0 0 34px;opacity:.5}
+/* Auf schmalen Telefonen fällt das alte Zeichen samt Pfeil weg: bei 288 px
+   blieben neben zwei Zeichen 35 px für „Lorbeerreif II", und die Bühne lief
+   waagrecht aus der Karte. Woher es kam, sagt dort das Wort darüber. */
+@media (max-width:340px){ .ni-alt,.ni-pf{display:none} }
 .ni-alt svg{width:34px;height:34px;display:block}
 .ni-pf{flex:0 0 22px;width:22px;height:10px}
 .ni-pf path{fill:none;stroke:var(--purple);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -1062,7 +1066,10 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   background:var(--surface2);color:var(--muted)}
 .ni-gr i.da{color:var(--ink2)}
 .ni-gr i.jetzt{background:var(--purple);color:var(--ink)}
-.ni-zs{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+/* Die Zeilen stehen auf der Flucht des Bühnen-Inhalts und nicht am
+   Kartenrand: ohne Innenabstand berührte das „P" der Prestige-Zahl die
+   Kante der Karte. */
+.ni-zs{display:flex;flex-direction:column;gap:6px;margin-top:8px;padding:0 10px}
 .ni-z{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink2);cursor:pointer}
 .ni-z-t{flex:1;min-width:0}
 .ni-z-t b{color:var(--ink)}

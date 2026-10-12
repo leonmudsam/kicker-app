@@ -5,7 +5,7 @@
 - Sechzig Liga-Rekorde in fünf Kammern (17 Können, 7 Aktuelle Form, 7 Bestmarken, 16 Fügungen, 13 Schattenseiten). Die Kammer steht am Eintrag (`allzeit.kammer`), nicht aus `art` erraten.
 - Die Siegquote zählt einmal. Nach dem Niveau fragen nur der beste Monat, der höchste Gipfel, die längste Siegesserie, die Form von jetzt und die beiden Positionen (`NIVEAU` in `tests/disziplinen`); jeder andere Rekord mit Grundwert 150 fragt nach dem Abstand zum Eigenen [§C38], nach einer Teilmenge oder nach einer Folge und folgt der Siegquote gemessen mit r unter 0,75.
 - Die Karte nennt Zeitraum, Grundwert und Mindestbasis (`zeitraum`, `basis`, `mind`) und zeigt, wie weit der Halter vorn liegt (`_rekFeldHtml`, aus `chronicleRang`); der Kopf jeder Kammer sagt in einem Satz, was sie misst (`CHRON_KINDS.satz`). Kein Text beschreibt die App oder eine frühere Rechnung.
-- Ein Rekord hat keine Wertlatte, nur eine Stichprobe (Partien, Spieltage, Wochen, Niederlagen). Was ein Wert von sich aus braucht (erstes Glied, zwei Partien, eine Richtung), bleibt; eine Teilmenge, die beschreibt, welche Partien zählen, ist keine Latte.
+- Ein Rekord hat keine Wertlatte, nur eine Stichprobe (Partien, Spieltage, Wochen, Niederlagen). Was ein Wert von sich aus braucht (erstes Glied, zwei Partien, eine Richtung, die sein Name verspricht: Sprung, Vorsprung, Aufschwung), bleibt; eine Teilmenge, die beschreibt, welche Partien zählen, ist keine Latte. Ein Abstand, der auf null rundet, ist keine Richtung.
 - Aktuelle Form ist ein festes Endfenster der letzten 10, 20, 25 oder 50 eigenen Partien, nie der beste Abschnitt. Ein gleitendes Fenster (`fenster`) meldet kein „ausgebaut" und nennt nicht den Wert seines Vorgängers.
 - Gemessen wird der Anteil, nicht die Anzahl; der Beleg (`ev`) beginnt mit dem Sortierwert. Ein Anteil an den eigenen Gelegenheiten kennt die Spielzahl nicht.
 - `offen`: erfüllbar mit fünfzig Partien in der Laufbahn — im Rennen steht jemand mit unter hundert Partien, der Rekord ist vergeben und gehört nicht nur den drei Besten.
@@ -158,7 +158,15 @@ gezeigt zu haben. Eine Teilmenge, die beschreibt, welche Partien zählen
 `tests/disziplinen` liest Bedingung, Mindestbasis und Wertfunktion jedes
 Rekords, dazu `min` und die Wertfunktion auf Elo-Latten. Seitdem sind
 „Der Unaufhaltsame", „Der höchste Gipfel" und „Der Maßstab" mit fünfzig
-Partien erreichbar und tragen `offen`.
+Partien erreichbar und tragen `offen`. Eine Latte bei null ist auch eine:
+„Der Allrounder" verlangte, auf BEIDEN Positionen über der Rechnung zu
+liegen, das schaffte ein einziger Spieler, und mit seinem Karriereende stand
+der Rekord leer. Sein Name verspricht keine Richtung, nur Ausgewogenheit;
+im Rennen steht jetzt jeder mit zwanzig Spielen je Position, und vorn, wer
+auf der schwächeren am nächsten an der Rechnung liegt. Wo der Name eine
+Richtung verspricht („Der Aufschwung", „Der Wiedereinstieg"), bleibt sie —
+aber erst ab einem sichtbaren Prozentpunkt: „−0 %-Punkte" stand sonst als
+Rückgang in der Liste.
 **Eine Kammer, die die Auslosung misst, wiegt 75.** Rollenwerte und
 Fügungen dürfen von einer Laufbahn aus lauter Niederlagen gehalten werden:
 „Das Fundament" fragt nach der gleichmäßigsten Tordifferenz, und wer immer
