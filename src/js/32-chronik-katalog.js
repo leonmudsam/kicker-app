@@ -156,6 +156,9 @@ const CHRONIK_MIN_TAGE = 5;
 const ST_TEIL = 5;
 
 const pct = v => Math.round(v * 100);
+// Ein Abstand in Prozentpunkten mit Vorzeichen; was auf null rundet, steht
+// ohne eins da.
+const _ppZeichen = v => { const d = Math.round(v * 100); return d > 0 ? '+' + d : d < 0 ? '−' + (-d) : '0'; };
 const _stMittel = a => a.reduce((x, y) => x + y, 0) / a.length;
 // Eng heisst hoechstens zwei Tore Unterschied, in beide Richtungen.
 const _stEng = s => Math.abs(s.gf - s.ga) <= 2;
@@ -328,8 +331,6 @@ const DISZIPLINEN = [
       zeit:p => p.bestMonth ? seasonLabel(p.bestMonth.sid) : ''
     }},
 
-
-
   {id:'spotless', name:'Der makellose Tag', short:'Makellos', ic:'trophyDay', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Makellose',
@@ -411,7 +412,6 @@ const DISZIPLINEN = [
       ev:(p,v) => `+${Math.round(v*100)} %-Punkte in engen Spielen · ${pct(p.closeW/p.close)} statt ${pct((p.wins-p.closeW)/(p.games-p.close))} % sonst`
     }},
 
-
   {id:'gleichauf', name:'Auf Augenhöhe', short:'Auf Höhe', ic:'augenhoehe', tone:'gold', art:'leistung',
     // Die Laufbahn-Achse derselben Frage [§13.1]. „Die ruhige Hand" darueber
     // nimmt die ENGEN Partien, also die nach dem Ergebnis knappen: offen ist
@@ -440,7 +440,6 @@ const DISZIPLINEN = [
         p=>{const d=p.partien.filter(_stAugenhoehe);
       return `${_stSiege(d)} von ${d.length} offenen Partien · sonst ${pct(p.q)} %`;}))}},
 
-
   {id:'destroyer', name:'Der Zerstörer', short:'Zerstörer', ic:'abrissbirne', tone:'orange', art:'leistung',
     allzeit:{
       kammer:'koennen', basis:150, offen:true,
@@ -466,7 +465,6 @@ const DISZIPLINEN = [
         1,
         p=>{const r=Object.values(p.gegnerGrp).filter(d=>d.length>=3);
       return `gegen ${r.filter(d=>_stSiege(d)*2>d.length).length} von ${r.length} regelmäßigen Gegnern im Plus`;}))}},
-
 
   {id:'deutlich', name:'Der Deutliche', short:'Deutlich', ic:'plusMinus', tone:'gold', art:'leistung',
     monat:{
@@ -533,10 +531,8 @@ const DISZIPLINEN = [
       wie:'Sturm und Abwehr werden getrennt gerechnet. Je Position zählen nur die Partien, in denen die Elo-Rechnung dem eigenen Team unter 45 Prozent Siegchance gab. Vom Anteil der gewonnenen Partien wird die mittlere Siegchance dieser Partien abgezogen; der bessere der beiden Positionswerte gilt. Die Zahl der Partien geht nicht in den Wert ein.',
       cond:'Größter Vorsprung auf die Erwartung als Außenseiter auf einer Position, ab 20 solchen Partien',
       val:p => (p.rcDelta != null && p.rcDelta > 0) ? p.rcDelta : null,
-      ev:(p,v) => `${Math.round(v*100)} Punkte über der Erwartung · ${pct(p.rcQ)} % statt ${pct(p.rcExp)} % ${p.rcPos === 'atk' ? 'im Sturm' : 'in der Abwehr'}`
+      ev:(p,v) => `+${Math.round(v*100)} %-Punkte über der Erwartung · ${pct(p.rcQ)} % statt ${pct(p.rcExp)} % ${p.rcPos === 'atk' ? 'im Sturm' : 'in der Abwehr'}`
     }},
-
-
 
   {id:'comeback_king', name:'Der Stehaufmann', short:'Comeback', ic:'comeback', tone:'acid', art:'leistung',
     allzeit:{
@@ -554,7 +550,6 @@ const DISZIPLINEN = [
       },
       ev:(p,v) => `+${Math.round(v*100)} %-Punkte nach einer Pleite · ${pct(p.afterLoss/p.afterLossOpp)} statt ${pct((p.wins - p.afterLoss)/(p.games - p.afterLossOpp))} % sonst`
     }},
-
 
   {id:'damage_control', name:'Der Widerstand', short:'Widerstand', ic:'widerstand', tone:'blue', art:'leistung',
     // Gemessen wird jetzt JEDE Niederlage und nicht mehr nur die deutliche ab
@@ -606,23 +601,20 @@ const DISZIPLINEN = [
       ev:(p,v) => `${Math.round(v*100)} % aus den letzten 20 Partien · ${p.l20W} Siege`
     }},
 
-
-
   {id:'allrounder', name:'Der Allrounder', short:'Allround', ic:'bothSides', tone:'gold', art:'leistung',
     allzeit:{
       kammer:'koennen', basis:150,
       zeitraum:'Ganze Laufbahn, beide Positionen',
       mind:'20 Sturmspiele und 20 Abwehrspiele',
-      wie:'Der Erwartungsabstand wird getrennt für Sturm und Abwehr gerechnet, mit derselben Rechnung wie beim Sturmführer und beim Abwehrchef. Gewertet wird die schwächere der beiden Zahlen. Wer nur auf einer Position über der Rechnung liegt, steht damit nicht vorne.',
-      cond:'Größter positiver Abstand zur Erwartung auf beiden Positionen, ab 20 Spielen je Position',
-      val:p => {
-        if(p.atkG < 20 || p.defG < 20) return null;
-        const m = Math.min(p.atkPerf / p.atkG, p.defPerf / p.defG);
-        return m > 0 ? m : null;
-      },
-      ev:(p,v) => `+${Math.round(v*100)} Punkte auf beiden Positionen · +${Math.round(p.atkPerf/p.atkG*100)} vorne, +${Math.round(p.defPerf/p.defG*100)} hinten`
+      wie:'Der Erwartungsabstand wird getrennt für Sturm und Abwehr gerechnet, mit derselben Rechnung wie beim Sturmführer und beim Abwehrchef. Gewertet wird die schwächere der beiden Zahlen. Wer nur auf einer Position über der Rechnung liegt, steht damit nicht vorne; liegt niemand auf beiden darüber, hält den Rekord, wer auf der schwächeren Position am nächsten dran ist.',
+      cond:'Größter Abstand zur Erwartung auf der schwächeren Position, ab 20 Spielen je Position',
+      // Ohne Latte bei null: „über der Rechnung auf beiden" liess den Rekord
+      // leer, sobald sein einziger Halter aufgehört hatte. Ein Rekord ist der
+      // beste Wert, den es gibt [§C35]; verlangt wird nur die Stichprobe.
+      val:p => (p.atkG < 20 || p.defG < 20) ? null
+        : Math.min(p.atkPerf / p.atkG, p.defPerf / p.defG),
+      ev:(p,v) => `${_ppZeichen(v)} %-Punkte auf der schwächeren Position · ${_ppZeichen(p.atkPerf/p.atkG)} vorne, ${_ppZeichen(p.defPerf/p.defG)} hinten`
     }},
-
 
   {id:'sturmfuehrer', name:'Der Sturmführer', short:'Sturmchef', ic:'sturmfuehrer', tone:'orange', art:'leistung',
     allzeit:{
@@ -632,7 +624,9 @@ const DISZIPLINEN = [
       wie:'Die Elo-Rechnung gibt jeder Partie vor dem Anpfiff eine Siegchance. Über alle Sturmspiele gemittelt ergibt das die dort erwartete Siegquote. Gewertet wird, wie weit die tatsächliche darüber liegt, in Prozentpunkten.',
       cond:'Größter Vorsprung der Sturmquote auf die dort erwartete Siegquote, ab 20 Sturmspielen',
       val:p => p.atkG >= 20 ? p.atkPerf / p.atkG : null,
-      ev:(p,v) => `${v < 0 ? '−' : '+'}${Math.abs(Math.round(v*100))} Punkte über der Rechnung · ${pct(p.atkW/p.atkG)} statt ${pct(p.atkW/p.atkG - v)} % in ${p.atkG} Sturmspielen`
+      // Prozentpunkte mit ihrer Einheit, und null ohne Vorzeichen: „Punkte"
+      // allein las sich wie Prestige, und „+0" stand im Rennen [§C35].
+      ev:(p,v) => `${_ppZeichen(v)} %-Punkte · ${pct(p.atkW/p.atkG)} statt ${pct(p.atkW/p.atkG - v)} % erwartet in ${p.atkG} Sturmspielen`
     }},
 
   // ── DIE ANSPRUCHSVOLLE KAMMER [§C35] ──────────────────────────────
@@ -648,9 +642,8 @@ const DISZIPLINEN = [
       wie:'Dieselbe Rechnung wie beim Sturmführer, gespiegelt: die Elo-Erwartung über alle Abwehrspiele gegen die tatsächliche Siegquote dort, in Prozentpunkten.',
       cond:'Größter Vorsprung der Abwehrquote auf die dort erwartete Siegquote, ab 20 Abwehrspielen',
       val:p => p.defG >= 20 ? p.defPerf / p.defG : null,
-      ev:(p,v) => `${v < 0 ? '−' : '+'}${Math.abs(Math.round(v*100))} Punkte über der Rechnung · ${pct(p.defW/p.defG)} statt ${pct(p.defW/p.defG - v)} % in ${p.defG} Abwehrspielen`
+      ev:(p,v) => `${_ppZeichen(v)} %-Punkte · ${pct(p.defW/p.defG)} statt ${pct(p.defW/p.defG - v)} % erwartet in ${p.defG} Abwehrspielen`
     }},
-
 
   // Zwei Disziplinen, die nicht das NIVEAU messen, sondern den Abstand zum
   // EIGENEN [§C38]. Wer eine Quote gewinnt, gewinnt fast jede — ein Eintrag
@@ -696,7 +689,6 @@ const DISZIPLINEN = [
         0.25,
         p=>{const h=_stHaelften(p);return `${pct(h.q2)} % in der zweiten Hälfte, ${pct(h.q1)} % in der ersten`;}))}},
 
-
   {id:'hochform', name:'Der Höhenflug', short:'Höhenflug', ic:'hochSpitze', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Aufgeblühte',
@@ -728,7 +720,9 @@ const DISZIPLINEN = [
       mind:'50 Partien',
       wie:'Die Siegquote der letzten 25 eigenen Partien gegen die Siegquote aller Partien davor. Der Wert ist der Abstand in Prozentpunkten. Vorn steht, wer heute dauerhaft besser spielt als früher.',
       cond:'Größte Verbesserung der letzten 25 Partien gegenüber der Laufbahn davor, ab 50 Partien',
-      val:p => (p.asDelta != null && p.asDelta > 0) ? p.asDelta : null,
+      // Eine Richtung braucht einen sichtbaren Abstand: was auf null Punkte
+      // rundet, stand als „−0 %-Punkte" in der Liste [§C35].
+      val:p => (p.asDelta != null && pct(p.asDelta) > 0) ? p.asDelta : null,
       ev:(p,v) => `+${Math.round(v*100)} %-Punkte · ${pct(p.asNeu)} % in den letzten 25 statt ${pct(p.asAlt)} % davor`
     }},
 
@@ -767,7 +761,7 @@ const DISZIPLINEN = [
       mind:'8 Rückkehrspiele',
       wie:'Ein Rückkehrspiel ist die erste eigene Partie nach 72 vollständigen Stunden ohne eigenes Match. Die Siegquote dieser Rückkehrspiele wird gegen die Siegquote aller übrigen eigenen Partien gestellt. Der Wert ist der Abstand in Prozentpunkten. Gerechnet wird mit dem Abstand der Zeitpunkte und nicht mit Kalendertagen; die allererste Partie einer Laufbahn zählt nicht mit.',
       cond:'Größter Vorsprung in der ersten Partie nach 72 Stunden Pause gegenüber den übrigen Partien, ab 8 Rückkehrspielen',
-      val:p => (p.weDelta != null && p.weN >= 8 && p.weDelta > 0) ? p.weDelta : null,
+      val:p => (p.weDelta != null && p.weN >= 8 && pct(p.weDelta) > 0) ? p.weDelta : null,
       ev:(p,v) => `+${Math.round(v*100)} %-Punkte · ${pct(p.weW / p.weN)} % in ${p.weN} Rückkehrspielen, sonst ${pct(p.weRaus)} %`
     }},
   // Wer den Wechsel zwischen Sturm und Abwehr besser verkraftet als sein
@@ -780,7 +774,7 @@ const DISZIPLINEN = [
       mind:'15 Partien nach einem Wechsel',
       wie:'Gezählt wird die erste eigene Partie nach einem Wechsel von Sturm zu Abwehr oder umgekehrt. Die Siegquote dieser Partien wird gegen die Siegquote aller Partien gestellt, in denen die Position dieselbe blieb. Der Wert ist der Abstand in Prozentpunkten.',
       cond:'Größter Vorsprung in der ersten Partie nach einem Positionswechsel gegenüber den übrigen Partien, ab 15 solchen Partien',
-      val:p => (p.umDelta != null && p.umN >= 15 && p.umDelta > 0) ? p.umDelta : null,
+      val:p => (p.umDelta != null && p.umN >= 15 && pct(p.umDelta) > 0) ? p.umDelta : null,
       ev:(p,v) => `+${Math.round(v*100)} %-Punkte · ${pct(p.umW / p.umN)} % in ${p.umN} Partien nach einem Wechsel, sonst ${pct(p.umRaus)} %`
     }},
 
@@ -818,7 +812,6 @@ const DISZIPLINEN = [
       zeit:p => p.winSpan || ''
     }},
 
-
   // Ein Abend, an dem alles saß. Braucht weder eine Laufbahn noch eine
   // Quote — nur einen guten Tag, und den kann jeder haben. Deshalb steht
   // er unter EREIGNIS und nicht unter LEISTUNG.
@@ -841,11 +834,10 @@ const DISZIPLINEN = [
       mind:'5 Partien an diesem Tag',
       wie:'Für jeden eigenen Spieltag mit mindestens fünf Partien wird die Siegquote dieses Tages gegen die eigene Siegquote der ganzen Laufbahn gestellt. Gehalten wird der Tag mit dem größten Abstand.',
       cond:'Größter Vorsprung eines Spieltags auf die eigene Siegquote, ab 5 Partien an diesem Tag',
-      val:p => (p.gtDelta != null && p.gtDelta > 0) ? p.gtDelta : null,
+      val:p => (p.gtDelta != null && pct(p.gtDelta) > 0) ? p.gtDelta : null,
       ev:(p,v) => `+${Math.round(v*100)} %-Punkte · ${p.gtW} von ${p.gtN} gewonnen, sonst ${pct(p.gtQ)} %`,
       zeit:p => p.gtLabel || ''
     }},
-
 
   {id:'wall', name:'Die Mauer', short:'Mauer', ic:'posReinAbwehr', tone:'blue', art:'ereignis',
     allzeit:{
@@ -998,7 +990,6 @@ const DISZIPLINEN = [
       zeit:p => p.hartTagLabel || ''
     }},
 
-
   {id:'mirrorday', name:'Der Wiedergänger', short:'Déjà-vu', ic:'duplicate', tone:'blue',
     art:'ereignis', zufall:'quote',
     allzeit:{
@@ -1119,8 +1110,6 @@ const DISZIPLINEN = [
       ev:(p,v) => `${v} Siege in Folge beim Gegner, mit einem eigenen Sieg beendet`,
       zeit:p => p.stoppLabel || ''
     }},
-
-
 
   // ── Gleichmaessigkeit: drei Fuegungen, kein Koennen [§C35] ────────
   // Wer die geringste Streuung hat, ist nicht der Beste — er ist der, bei dem
@@ -1376,7 +1365,7 @@ const DISZIPLINEN = [
         const d = (p.expSum/p.games) - (p.wins/p.games);
         return d > 0 ? d : null;
       },
-      ev:(p,v) => `${Math.round(v*100)} Punkte unter der Rechnung · ${pct(p.wins/p.games)} statt ${pct(p.expSum/p.games)} % in ${p.games} Partien`
+      ev:(p,v) => `${Math.round(v*100)} %-Punkte unter der Rechnung · ${pct(p.wins/p.games)} statt ${pct(p.expSum/p.games)} % in ${p.games} Partien`
     }},
 
   // ── Vier neue Schanden [§C35] ────────────────────────────────────
@@ -1468,7 +1457,7 @@ const DISZIPLINEN = [
       mind:'8 Rückkehrspiele',
       wie:'Ein Rückkehrspiel ist die erste eigene Partie nach 72 vollständigen Stunden ohne eigenes Match. Die Siegquote dieser Rückkehrspiele wird gegen die Siegquote aller übrigen eigenen Partien gestellt. Der Wert ist der Rückstand in Prozentpunkten.',
       cond:'Größter Rückstand in der ersten Partie nach 72 Stunden Pause gegenüber den übrigen Partien, ab 8 Rückkehrspielen',
-      val:p => (p.weDelta != null && p.weN >= 8 && p.weDelta < 0) ? -p.weDelta : null,
+      val:p => (p.weDelta != null && p.weN >= 8 && pct(p.weDelta) < 0) ? -p.weDelta : null,
       ev:(p,v) => `−${Math.round(v*100)} %-Punkte · ${pct(p.weW / p.weN)} % in ${p.weN} Rückkehrspielen, sonst ${pct(p.weRaus)} %`
     }},
   {id:'abschwung', name:'Der Abschwung', short:'Abschwung', ic:'abschwung', tone:'red', art:'schatten',
@@ -1478,7 +1467,7 @@ const DISZIPLINEN = [
       mind:'50 Partien',
       wie:'Die Siegquote der letzten 25 eigenen Partien gegen die Siegquote aller Partien davor. Der Wert ist der Rückstand in Prozentpunkten. Vorn steht, wer heute dauerhaft schwächer spielt als früher.',
       cond:'Größter Rückgang der letzten 25 Partien gegenüber der Laufbahn davor, ab 50 Partien',
-      val:p => (p.asDelta != null && p.asDelta < 0) ? -p.asDelta : null,
+      val:p => (p.asDelta != null && pct(p.asDelta) < 0) ? -p.asDelta : null,
       ev:(p,v) => `−${Math.round(v*100)} %-Punkte · ${pct(p.asNeu)} % in den letzten 25 statt ${pct(p.asAlt)} % davor`
     }},
 

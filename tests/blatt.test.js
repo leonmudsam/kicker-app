@@ -1047,6 +1047,44 @@ const ok = (c, msg, det) => {
      JSON.stringify(achse));
   ok(achse.keinGold, 'die Karte der Leiter trägt kein Gold, das gehört den Titeln',
      String(achse.keinGold));
+  // Gemessen mit der längsten Stufe bei 288 und 360 px: die Bühne läuft nicht
+  // waagrecht aus der Karte, und die Zeilen halten Abstand zum Rand. Beides
+  // ist am Live-Stand passiert — bei 288 px blieben neben zwei Zeichen 35 px
+  // für „Lorbeerreif II", und das „P" der Prestige-Zahl stand auf der Kante.
+  const insBreite = {};
+  for(const w of [288, 360]){
+    await page.setViewportSize({width:w, height:844});
+    insBreite[w] = await page.evaluate(() => {
+      const K = window.__k.eval.bind(window.__k);
+      const markup = K(`(function(){
+        const ids=players.slice(0,4).map(p=>p.id), when=matches[matches.length-1].created_at;
+        const teile=ids.map((pid,i)=>({id:'ui-insb-'+i,cat:'tafel',ic:'award',
+          title:pname(pid)+' traegt den Lorbeerreif',desc:(3600+i)+' Prestige zusammen.',
+          when,prio:76,dataRef:{type:'insignium_stufe',pid,stufe:4,
+            stufeName:'Lorbeerreif',punkte:3600+i,oben:false}}));
+        _cache._consolFrom=null;
+        const s=_consolidateStories(teile).find(x=>(x.dataRef||{}).type==='insignium_tag');
+        return s ? _newsCardHtmlM2(s,false,false) : '';
+      })()`);
+      const host = document.createElement('div'); host.className = 'nf-wrap';
+      // So breit wie eine Karte im Feed: Bildschirm minus Zeitleiste und
+      // Ränder, ohne den Innenabstand von `.nf-wrap`.
+      host.style.cssText = 'position:absolute;left:0;top:0;padding:0;width:' + (innerWidth - 74) + 'px';
+      host.innerHTML = markup; document.body.appendChild(host);
+      const karte = host.querySelector('.nf-card'), b = host.querySelector('.ni-b');
+      if(!karte || !b){ host.remove(); return {fehlt:true}; }
+      const kr = karte.getBoundingClientRect();
+      const rand = Math.min(...[...host.querySelectorAll('.ni-z em, .ni-z-z, .ni-z-t')]
+        .map(e => kr.right - e.getBoundingClientRect().right));
+      const out = {ueber:b.scrollWidth - b.clientWidth, rand:Math.round(rand)};
+      host.remove(); return out;
+    });
+  }
+  await page.setViewportSize({width:390, height:844});
+  ok(!insBreite[288].fehlt && insBreite[288].ueber <= 0 && insBreite[360].ueber <= 0,
+     'die Bühne der Insignium-Karte läuft bei 288 und 360 px nicht über', JSON.stringify(insBreite));
+  ok(!insBreite[288].fehlt && insBreite[288].rand >= 6 && insBreite[360].rand >= 6,
+     'und ihre Zeilen halten Abstand zum Kartenrand', JSON.stringify(insBreite));
 
   // ── Das Blatt der Ewigen Tafel zeigt, was ausschlaggebend war ────
   //    Die Punktewirkung stand als Zeile „1205 → 1240 Prestige": zwei Zahlen,
@@ -1366,13 +1404,17 @@ const ok = (c, msg, det) => {
       const out = [];
       // Ein Rekord mit positivem Sortierwert traegt den Balken, einer mit
       // negativem nicht: „weniger Gegentore ist besser" hat keinen Anteil.
+      // Ebenso keiner, unter dessen gezeigten Verfolgern ein Wert unter null
+      // steht — „Der Allrounder" misst den Abstand zur Rechnung, und ein
+      // negativer Anteil am Bestwert waere ein Balken, der nach links waechst.
       const byId = (allChronicles() || {}).byId || {};
       Object.keys(byId).forEach(id => {
         const r = byId[id];
         if(!r || !r.pids || !r.pids.length) return;
         const rang = chronicleRang(id) || [];
         if(rang.length < 3) return;
-        out.push({id, wert:r.val, html:_newsVerfolger(id, r.pids, r.val)});
+        const dahinter = rang.filter(x => r.pids.indexOf(x.pid) < 0 && x.wert <= r.val + 1e-9).slice(0, 3);
+        out.push({id, wert:r.val, alle:dahinter.every(x => x.wert >= 0), html:_newsVerfolger(id, r.pids, r.val)});
       });
       return out.slice(0, 40);
     })())`);
@@ -1386,7 +1428,7 @@ const ok = (c, msg, det) => {
       const zeilen = [...host.querySelectorAll('.nd-vf-z')];
       const balken = [...host.querySelectorAll('.nd-vf-b')];
       if(!zeilen.length) return;
-      if(x.wert > 0){
+      if(x.wert > 0 && x.alle){
         if(balken.length === zeilen.length) mitBalken++; else ohneBalken++;
         // Der Balken bleibt in seiner Bahn, und weiter hinten ist er kuerzer.
         let vor = Infinity;
