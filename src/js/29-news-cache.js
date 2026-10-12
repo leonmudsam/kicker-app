@@ -1131,6 +1131,27 @@ function _consolidateStoriesLegacy(list){
           : dt.rarity === 'rare' ? 'die seltene Auszeichnung ' : '';
         return `${nm(dt.playerId)} holt ${klasse}„${bn}“`;
       }
+      // ── Die Zeile sagt, was genau passiert ist ──────────────────────
+      // „Stefan erreicht runde Marken", „Leo findet gerade kein Mittel",
+      // „Leon und Maxi gewinnen zusammen alles": jeder Satz verlangte das
+      // Blatt, um zu erfahren, welche Marken, wie viele Pleiten, wie lange
+      // die Serie. Die Zeile nennt es jetzt kurz, das Blatt erklärt es.
+      if(dt.type === 'badge_marken' && (dt.marken || []).length > 1){
+        const l = dt.marken, eins = [...new Set(l.map(x => x.pid))].length === 1;
+        const q = x => `„${x.name}“`;
+        if(eins && l.length <= 3){
+          const gleich = l.every(x => x.rang === l[0].rang);
+          return gleich
+            ? `${nm(l[0].pid)} holt ${_namenListe(l.map(q))}, ${l.length === 2 ? 'beide' : 'alle'} zum ${l[0].rang}. Mal`
+            : `${nm(l[0].pid)} holt ${_namenListe(l.map(x => `${q(x)} zum ${x.rang}. Mal`))}`;
+        }
+        if(l.length === 2) return `${nm(l[0].pid)} holt ${q(l[0])} zum ${l[0].rang}. Mal, ${nm(l[1].pid)} ${q(l[1])} zum ${l[1].rang}. Mal`;
+        return ti;
+      }
+      if(dt.type === 'loss_streak' && dt.pid && dt.streak) return `${nm(dt.pid)} verliert zum ${dt.streak}. Mal in Folge`;
+      if(dt.type === 'team_streak' && dt.a && dt.b && dt.streak) return `${und([dt.a, dt.b])} gewinnen zusammen zum ${dt.streak}. Mal in Folge`;
+      if(dt.type === 'team_loss_streak' && dt.a && dt.b && dt.streak) return `${und([dt.a, dt.b])} verlieren zusammen zum ${dt.streak}. Mal in Folge`;
+      if(dt.type === 'top_form' && dt.pid && dt.wins != null) return `${nm(dt.pid)} gewinnt ${dt.wins} der letzten ${FORM_FENSTER} Partien`;
       if((dt.type === 'rivalry_milestone' || dt.type === 'rivalry') && dt.a && dt.b && dt.n)
         return `${nm(dt.a)} und ${nm(dt.b)} treffen zum ${dt.n}. Mal aufeinander`;
       if(dt.type === 'milestone_wins' && dt.pid && zahl(dt.milestone)) return `${nm(dt.pid)} feiert den ${zahl(dt.milestone)}. Sieg`;
@@ -1301,7 +1322,13 @@ function _consolidateStoriesLegacy(list){
         // Mehrere kleine Marken einer Partie sind keine „Auszeichnung für
         // Maxi und Leon": das war Einzahl ohne Namen für zwei verschiedene
         // Marken. Sie heißen wie in ihrer eigenen Zeile.
-        if(typ === 'badge_marken' && (dt.marken || []).length > 1) return 'runde Marken';
+        if(typ === 'badge_marken' && (dt.marken || []).length > 1){
+          const l = dt.marken;
+          // Zwei Marken eines Spielers nennt die Schlagzeile beim Namen:
+          // „Auszeichnung für Stefan" verschwieg, welche.
+          return l.length === 2 && l[0].pid === l[1].pid && l[0].name && l[1].name
+            ? `Marken „${l[0].name}“ und „${l[1].name}“` : 'runde Marken';
+        }
         if(typ === 'badge_unlocked' || typ === 'badge_marken'){
           const mk = typ === 'badge_marken' && (dt.marken || []).length === 1 ? dt.marken[0] : null;
           const bn = (mk && mk.name) || dt.badgeName || ((typeof BADGES !== 'undefined'

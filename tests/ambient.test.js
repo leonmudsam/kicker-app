@@ -4313,11 +4313,33 @@ const _etik = JSON.parse(K.eval(`JSON.stringify((function(){
     const z = (d.teile || []).filter(u => (u.typ || u.type) !== 'spiel' && !u.brk);
     if(z.some((u, k) => u.neg && z.slice(k + 1).some(v => !v.neg))) falsch.push(t + ' (rote Zeile vor einer positiven)');
   });
-  return {titel: sam ? sam.title : '', soll, n, falsch, marken: zwei ? zwei.title : ''};
+  // Zwei Marken EINES Spielers: Schlagzeile und Zeile nennen beide.
+  _cache._consolFrom = null;
+  const einer = _consolidateStories([l[0], {id:'et-bm1', cat:'badge', ic:'medal', when:w, prio:20,
+    title:pname(W[0]) + ' erreicht runde Marken', desc:'2.',
+    dataRef:{type:'badge_marken', matchId:m.id, playerIds:[W[0]],
+      marken:[{pid:W[0], badgeId:'a', name:'Zittersieg', rang:5}, {pid:W[0], badgeId:'b', name:'Frühschicht', rang:5}]}}])
+    .find(x => (x.dataRef||{}).type === 'sammel');
+  // Und jede Zeile einer Serie oder Form nennt ihre Zahl.
+  const ohneZahl = [];
+  getStoriesCache().forEach(x => { const d = x.dataRef || {};
+    if(d.type !== 'sammel' || d.quelle !== 'spiel') return;
+    (d.teile || []).forEach(t => { if(/^(loss_streak|team_streak|team_loss_streak|top_form|badge_marken)$/.test(t.typ || '')
+      && !/[0-9]/.test(t.titel || '')) ohneZahl.push(t.titel); }); });
+  return {titel: sam ? sam.title : '', soll, n, falsch, marken: zwei ? zwei.title : '',
+    einer: einer ? einer.title : '', einerZeile: einer ? (einer.dataRef.teile.find(t => t.typ === 'badge_marken') || {}).titel : '',
+    ohneZahl};
 })())`));
 ok(_etik.titel === _etik.soll,
    'die Schlagzeile nennt den Sieg zuerst und jede Pleite mit dem Namen dessen, der sie hat',
    _etik.titel + ' / soll ' + _etik.soll);
+ok(/Zittersieg/.test(_etik.einer) && /Frühschicht/.test(_etik.einer)
+   && /Zittersieg/.test(_etik.einerZeile) && /Frühschicht/.test(_etik.einerZeile) && /5\. Mal/.test(_etik.einerZeile),
+   'zwei Marken eines Spielers stehen mit Namen in Schlagzeile und Zeile, die Zeile mit ihrer Zahl',
+   _etik.einer + ' / ' + _etik.einerZeile);
+ok(_etik.ohneZahl.length === 0,
+   'jede Zeile einer Serie, einer Form oder einer Marke nennt ihre Zahl',
+   _etik.ohneZahl.slice(0, 3).join(' | ') || 'alle mit Zahl');
 ok(_etik.marken.indexOf('Runde Marken für ') === 0,
    'zwei kleine Marken zweier Spieler heißen runde Marken, nicht Auszeichnung ohne Namen',
    _etik.marken);
