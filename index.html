@@ -2185,11 +2185,13 @@
   .nf-wl-z b{margin-left:auto;font-family:'Sometype Mono',monospace;color:var(--gold);flex:0 0 auto}
 
   .nf-sam{border-top:1px solid var(--line);display:flex;flex-direction:column}
-  .nf-verlust{display:flex;align-items:center;gap:8px;padding:6px 13px 7px;min-width:0;
-    border-top:1px solid rgba(240,86,106,.18)}
-  .nf-verlust-l{flex:0 0 auto;display:inline-flex;align-items:center;gap:4px;
+  .nf-verlust{display:flex;flex-direction:column;gap:4px;padding:6px 13px 7px;min-width:0;
+    border-top:1px solid var(--line)}
+  .nf-pb-z{display:flex;align-items:center;gap:8px;min-width:0}
+  .nf-pb-z + .nf-pb-z .nf-verlust-l{color:var(--red)}
+  .nf-verlust-l{flex:0 0 52px;display:inline-flex;align-items:center;gap:4px;
     font-family:'Sometype Mono',monospace;font-size:9px;letter-spacing:.1em;
-    text-transform:uppercase;color:var(--red)}
+    text-transform:uppercase;color:var(--muted)}
   .nf-verlust-l svg{width:12px;height:12px}
   .nf-verlust-w{display:flex;flex-wrap:wrap;gap:4px;min-width:0}
   .nf-vl{display:inline-flex;align-items:center;gap:5px;min-width:0;max-width:100%;
@@ -2200,6 +2202,8 @@
   .nf-vl .rcp-av{flex:0 0 auto}
   .nf-vl i{font-style:normal}
   .nf-vl em{font-style:normal;color:var(--red);font-weight:700}
+  .nf-vl.plus{background:rgba(247,207,74,.07);border-color:rgba(247,207,74,.2)}
+  .nf-vl.plus em{color:var(--gold)}
   .nf-vl u{text-decoration:none;color:var(--muted);font-weight:500;font-size:10px}
   .nf-sam-z{display:flex;align-items:center;gap:9px;padding:7px 13px;
     border-bottom:1px solid var(--line);font-size:11px;color:var(--ink2);
@@ -5637,7 +5641,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.12.412424f1';
+const BUILD_VERSION='2026.10.12.0faf9139';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -22502,7 +22506,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
       <span class="nf-chev">${svgI('chevron')}</span>
     </div>
     ${sammelBand}
-    ${sorte === 'tafel' ? _newsVerlustBand(s) : ''}
+    ${sorte === 'tafel' ? _newsPrestigeBand(s) : ''}
     ${fuss}
     ${brkSub ? `<div class="nf-brk-sub">${esc(brkSub)}</div>` : ''}
     ${fadenHtml || ''}
@@ -22633,24 +22637,27 @@ function _newsSammelBand(teile, kopfTitel, vollstaendig){
     + `</div>`;
 }
 
-function _newsVerlustBand(s){
+function _newsPrestigeBand(s){
   const d = (s && s.dataRef) || {};
   const je = {};
   const nimm = lb => { if(lb) Object.keys(lb).forEach(pid => { if(!je[pid]) je[pid] = lb[pid]; }); };
   if(d.type === 'sammel') (d.teile || []).forEach(t => nimm(t.lb));
   else nimm(d.laufbahn);
   const pm = pmap();
-  const weg = Object.keys(je).filter(pid => pm[pid]).map(pid => {
+  const alle = Object.keys(je).filter(pid => pm[pid]).map(pid => {
     const vor = Math.round(Number(je[pid].vor) || 0), nach = Math.round(Number(je[pid].nach) || 0);
-    return {pid, d: nach - vor, ab: insigniumStufeVon(nach) < insigniumStufeVon(vor)
-      ? INSIGNIEN[insigniumStufeVon(nach)].name : ''};
-  }).filter(x => x.d < 0).sort((a, b) => a.d - b.d);
-  if(!weg.length) return '';
-  return `<div class="nf-verlust"><span class="nf-verlust-l">${svgI('trendDown')}Prestige</span>`
-    + `<span class="nf-verlust-w">${weg.slice(0, 3).map(x =>
-      `<b class="nf-vl">${rcpAvHtml(x.pid, 18, {})}<i>${esc(pm[x.pid].name)}</i>`
-      + `<em class="num">−${-x.d} P</em>${x.ab ? `<u>↓ ${esc(x.ab)}</u>` : ''}</b>`).join('')}${weg.length > 3
-      ? `<b class="nf-vl mehr">+${weg.length - 3}</b>` : ''}</span></div>`;
+    const sv = insigniumStufeVon(vor), sn = insigniumStufeVon(nach);
+    return {pid, d: nach - vor, stufe: sn !== sv && INSIGNIEN[sn] ? INSIGNIEN[sn].name : '', auf: sn > sv};
+  }).filter(x => x.d);
+  const plus = alle.filter(x => x.d > 0).sort((a, b) => b.d - a.d);
+  const minus = alle.filter(x => x.d < 0).sort((a, b) => a.d - b.d);
+  if(!plus.length && !minus.length) return '';
+  const chip = x => `<b class="nf-vl ${x.d > 0 ? 'plus' : 'minus'}">${rcpAvHtml(x.pid, 18, {})}<i>${esc(pm[x.pid].name)}</i>`
+    + `<em class="num">${x.d > 0 ? '+' + x.d : '−' + -x.d} P</em>${x.stufe && !x.auf ? `<u>↓ ${esc(x.stufe)}</u>` : ''}</b>`;
+  const zeile = (wort, l) => !l.length ? '' : `<div class="nf-pb-z"><span class="nf-verlust-l">${wort}</span>`
+    + `<span class="nf-verlust-w">${l.slice(0, 2).map(chip).join('')}`
+    + `${l.length > 2 ? `<b class="nf-vl mehr">+${l.length - 2}</b>` : ''}</span></div>`;
+  return `<div class="nf-verlust">${zeile('Gewinnt', plus)}${zeile('Verliert', minus)}</div>`;
 }
 
 function _newsSpielZahlen(s, anlass){

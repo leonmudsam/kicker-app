@@ -767,7 +767,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
       <span class="nf-chev">${svgI('chevron')}</span>
     </div>
     ${sammelBand}
-    ${sorte === 'tafel' ? _newsVerlustBand(s) : ''}
+    ${sorte === 'tafel' ? _newsPrestigeBand(s) : ''}
     ${fuss}
     ${brkSub ? `<div class="nf-brk-sub">${esc(brkSub)}</div>` : ''}
     ${fadenHtml || ''}

@@ -2174,7 +2174,7 @@ function _buildStories(){
         // beide Staende gehoeren ihm [§11.0e] —, und faellt das Zeichen unter
         // eine Schwelle, steht auch das da. Die Zeile im Buendel bleibt ohne
         // diesen Satz: dort steht der Verlust einmal in der eigenen Zeile der
-        // Karte und nicht in jeder Meldung (`_newsVerlustBand`).
+        // Karte und nicht in jeder Meldung (`_newsPrestigeBand`).
         const _verlierer = (fall === 'dazu'
             ? altPids.filter(id => n.pids.indexOf(id) >= 0)
             : fall === 'uebernommen' ? altPids.filter(id => n.pids.indexOf(id) < 0) : [])

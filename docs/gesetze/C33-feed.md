@@ -13,7 +13,7 @@
 - Was der Generator bildet: jede ID aus Fachlichem (Spieler, Sache, Spieltag), nie aus Uhrzeit oder Zufall, sodass derselbe Datenstand dieselben Karten ergibt; was es je Tag genau einmal gibt, fällt dort nicht weg (`GEN_PFLICHT`, `GEN_PARTIE`); Marken einer Serie hängen an ihrer Partie und bleiben stehen; was zählt, meldet Stufen und nicht jeden Schritt dazwischen: die Rivalität jedes zehnte Duell an der Partie, in der es gespielt wurde (ID mit Zahl), Chemie, Tagesring, Uhr des Tages und Duo gegen Duo nur an runden Zahlen (`SP_TAG_STUFEN`); der Spieler des Tages steht an jedem Spieltag des Fensters um 23:59; der härteste Tag (`elo_swing`) desselben Tages steht als Gegenstück auf dessen Karte und in dessen Blatt (`gegenstueck`, `memberIds`), nicht als eigene Karte daneben; Auszeichnungen sind nach Klasse Nachricht (`_badgeTakt`, `NEWS_BADGE_MARKEN`), kleine Marken einer Partie stehen zusammen (`badge_marken`); was der Generator nicht mehr bildet, meldet `STORY_ABGEMELDET` ab, was abläuft `STORY_LAEUFT_AB`.
 - Breaking ist das Seltenste und scheitert an keinem Deckel und keiner Sperre: legendäre Auszeichnung, längste Siegesserie aller Zeiten, Tabellenführer eines belastbaren Spieltags, feststehender Meister, Schlusssprint, erster Aufstieg in die obersten Insignium-Stufen, Karriereende. Entschieden nach dem Bündeln (`_isBreaking`); eine gebündelte Breaking-Karte nennt ihren Anlass zuerst (`brk`).
 - Die Karte des Tages (`_newsTagKarte`) steht nur an Spieltagen ab der dritten Partie (`NEWS_LIMITS.tagKartePartien`) und wechselt, solange eine spannendere Karte des Tages dazukommt; nie auf Breaking, dem Spieler des Tages, einem Rückblick oder einer negativen Karte (`_newsTagKarteWuerdig`, `_newsTagSpannung`).
-- Die Ewige Tafel meldet Rekord-, Chronik- und Insigniumwechsel gegen den Stand vor dem Spieltag (`_storyStand`), in vier Fällen (`_halterFall`) plus Ausbau; ein Ausbau heißt besser geworden (`_rekordArt`), ein Fenster meldet keinen; die Karte trägt ihre ganze Lage im `dataRef` und ihre Wirkung auf die Laufbahn samt Verlusten (`_tafelLaufbahn`, `_newsVerlustBand`, `_ndWirkungBlock`). Wer nicht gespielt hat, bekommt keine Karte; die Schandtafel meldet der Feed nicht.
+- Die Ewige Tafel meldet Rekord-, Chronik- und Insigniumwechsel gegen den Stand vor dem Spieltag (`_storyStand`), in vier Fällen (`_halterFall`) plus Ausbau; ein Ausbau heißt besser geworden (`_rekordArt`), ein Fenster meldet keinen; die Karte trägt ihre ganze Lage im `dataRef` und ihre Wirkung auf die Laufbahn samt Verlusten (`_tafelLaufbahn`, `_newsPrestigeBand`, `_ndWirkungBlock`). Wer nicht gespielt hat, bekommt keine Karte; die Schandtafel meldet der Feed nicht.
 - Fun Facts: ein Slot um 15:00 (`ambient_<Tag>_15`), nachgetragen für stille Tage im Fenster, deterministisch gezogen mit Rotation von Vorlage, Rubrik (`ambientRubrik`) und These (`AMBIENT_PAAR_COOLDOWN_DAYS`); jedes Bild aus `dataRef.bild` (`30c-news-fakt.js`).
 - Neu ist, was seit dem Lesestand dazukam (`NEWS_LS_STAND`, `_newsGelesen`); eine Karte, die eine frühere fortsetzt, sagt es mit einem Faden, an den Partien nachgeprüft (`_newsFaeden`).
 - So spricht die Liga: jede Zahl mit Komma, Ergebnis aus Sicht des Siegers, der Elo-Gewinn gehört einem (`eloPid`), kein Gedankenstrich, kein Etikett mit Doppelpunkt, kein Satzfragment, keine englische Aufschrift, der Text wiederholt nicht die Schlagzeile und nicht, was die Zeichnung zeigt (`_ndNeu`, `_ndLead`); kein Blatt erklärt die App.
@@ -815,14 +815,16 @@ allein halten (`_mitVorgaengern`), und die Zeile im Bündel ihre Halter vor
 und nach dem Tag. Die Zahlenreihe nennt das Verlorene als eigene Zelle
 neben dem Gewonnenen und nicht darin: ein Minus in derselben Summe hieße,
 der Tag hätte weniger gebracht. `tests/blatt` misst das Stück im Balken.
-**Und schon auf der Karte** (`_newsVerlustBand`): unter dem Sammelband
-einer Tafel-Karte steht eine leise Zeile „Prestige" und je Verlierer ein
-**Chip** aus Gesicht, Name und Betrag, und nur wenn die Stufe fällt, dahinter
-„↓" und die Stufe. Vorher stand „Verliert" vor einer Reihe aus Text, und
-bei drei Namen brach sie um: Betrag und Stufe standen dann in der zweiten
-Zeile neben dem falschen Namen. Der Chip hält zusammen, was zusammengehört. Die Schlagzeile feiert die Neuen, und wer seinen Anteil abgeben
-musste, erfuhr es sonst erst im Blatt. Sie steht unter dem Band und nicht
-im Kopf: die Karte bleibt die der Gewinner. Der Satz einer Rekordkarte nennt den
+**Und schon auf der Karte** (`_newsPrestigeBand`): unter dem Sammelband
+einer Tafel-Karte steht die Bilanz des Tages in zwei leisen Zeilen,
+„Gewinnt" (Gold) und „Verliert" (Rot), je höchstens zwei Chips und der Rest
+als Zahl; gemischt in einer Reihe brachen sie auf drei Reihen um. Je Spieler ein **Chip** aus Gesicht, Name und Betrag,
+und nur wenn eine Stufe unterschritten wird, dahinter „↓" und die Stufe; ein
+Aufstieg steht als eigene Zeile im Bündel. Vorher standen dort nur die Verlierer, und die andere
+Hälfte der Wirkung stand erst im Blatt; davor stand „Verliert" vor einer
+Reihe aus Text, die bei drei Namen umbrach, sodass Betrag und Stufe in der
+zweiten Zeile neben dem falschen Namen standen. Der Chip hält zusammen, was
+zusammengehört. Die Zeile steht unter dem Band und nicht im Kopf. Der Satz einer Rekordkarte nennt den
 Verlust ebenfalls („Für Leon heißt der Spieltag 77 Prestige weniger", und
 wenn das Zeichen fällt, auf welche Stufe); die Zeile im Bündel bleibt ohne
 ihn, dort steht er einmal in der Verlust-Zeile der Karte.

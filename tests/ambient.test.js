@@ -6196,18 +6196,21 @@ const _vband = JSON.parse(K.eval(`JSON.stringify((function(){
   const lo = INSIGNIEN[3].min;
   lb[a] = {vor:lo + 50, nach:lo - 30};
   lb[b] = {vor:400, nach:460};
-  const h = _newsVerlustBand({dataRef:{type:'rekord_geholt', laufbahn:lb}});
-  const ohne = _newsVerlustBand({dataRef:{type:'rekord_geholt', laufbahn:{[b]:lb[b]}}});
+  const h = _newsPrestigeBand({dataRef:{type:'rekord_geholt', laufbahn:lb}});
+  const ohne = _newsPrestigeBand({dataRef:{type:'rekord_geholt', laufbahn:{[b]:lb[b]}}});
   return {h, ohne, a:pmap()[a].name, b:pmap()[b].name, stufe:INSIGNIEN[2].name};
 })())`));
+// Und wer gewinnt, steht auch darin: die Zeile zeigte nur die Verlierer,
+// und die Hälfte der Wirkung stand erst im Blatt. Gewinner zuerst.
 ok(_vband.h.indexOf(_vband.a) >= 0 && _vband.h.indexOf('−80') >= 0
-   && _vband.h.indexOf(_vband.stufe) >= 0 && _vband.h.indexOf(_vband.b) < 0 && _vband.ohne === '',
-   'die Tafel-Karte nennt, wer Prestige verliert, und nur den',
+   && _vband.h.indexOf(_vband.stufe) >= 0 && _vband.h.indexOf(_vband.b) >= 0 && _vband.h.indexOf('+60') >= 0
+   && _vband.h.indexOf(_vband.b) < _vband.h.indexOf(_vband.a) && _vband.ohne.indexOf('+60') >= 0,
+   'die Tafel-Karte nennt, wer Prestige gewinnt und wer verliert, die Gewinner zuerst',
    _vband.h.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
 // Und Name, Betrag und Stufe stehen in EINEM Chip. Als Reihe aus Text
 // brachen sie bei drei Namen um, und der Betrag stand in der zweiten Zeile
 // neben dem falschen Namen.
-const _vchips = (_vband.h.match(/<b class="nf-vl">[\s\S]*?<\/b>/g) || []);
+const _vchips = (_vband.h.match(/<b class="nf-vl minus">[\s\S]*?<\/b>/g) || []);
 ok(_vchips.length === 1 && _vchips[0].indexOf(_vband.a) >= 0 && _vchips[0].indexOf('−80') >= 0
    && _vchips[0].indexOf(_vband.stufe) >= 0 && /class="(rcp-av|av)/.test(_vchips[0]),
    'je Verlierer ein Chip mit Gesicht, Name, Betrag und Stufe',

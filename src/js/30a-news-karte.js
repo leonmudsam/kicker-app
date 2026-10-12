@@ -216,40 +216,44 @@ function _newsSammelBand(teile, kopfTitel, vollstaendig){
     + `</div>`;
 }
 
-// ── Wer verliert, steht auf der Karte ─────────────────────────────────
+// ── Die Bilanz des Prestiges steht auf der Karte ────────────────────
 // Ein Rekord, den jemand übernimmt oder mit einem anderen teilt, kostet den
-// bisherigen Halter Prestige, und davon stand auf der Karte nichts: die
-// Schlagzeile feiert die Neuen, und wer seinen Anteil abgeben musste, erfuhr
-// es erst im Blatt — oder gar nicht, solange es dort „±0" hieß. Die Zeile
-// nennt je Verlierer den Verlust und, wenn er eine Schwelle unterschreitet,
-// die Stufe, auf die er fällt. Rot ist die Richtung [§C25]; die Karte bleibt
-// die der Gewinner, deshalb steht der Verlust unter dem Band und nicht im
-// Kopf. Gelesen wird die gespeicherte Wirkung der Karte, wie im Blatt.
-//
-// Je Verlierer ein Chip: Gesicht, Name, Betrag — und nur, wenn die Stufe
-// fällt, ein Pfeil mit ihr. Vorher stand „VERLIERT" als Wort vor einer
-// Reihe aus „Leon −77 auf Volutenkranz", und bei drei Namen brach das in
-// eine zweite Zeile, in der Betrag und Stufe nicht mehr zu ihrem Namen
-// gehörten. Der Chip hält zusammen, was zusammengehört, und das Wort davor
-// sagt, wovon der Betrag abgeht: Prestige.
-function _newsVerlustBand(s){
+// bisherigen Halter Prestige; davon stand auf der Karte zuerst nichts. Dann
+// stand dort eine Zeile nur mit den Verlierern: Johannes −176, Julian −50,
+// und wer an diesem Tag gewonnen hatte, sah man erst im Blatt — die Karte
+// zeigte von der Wirkung nur die eine Hälfte. Jetzt steht die Bilanz in EINER
+// Zeile: zuerst, wer gewinnt (Gold, wie die Zahl im Blatt), dann, wer
+// verliert (Rot ist die Richtung [§C25]), je höchstens zwei, der Rest als
+// Zahl: mit dreien je Seite brach die Zeile auf drei Reihen um und machte die
+// Karte höher als ihr Inhalt; das Blatt nennt jeden. Je Spieler ein Chip aus
+// Gesicht, Name und Betrag, und nur wenn er eine Stufe unterschreitet,
+// dahinter die Stufe: ein Aufstieg steht als eigene Zeile im Bündel, und im
+// Chip brach er die Zeile um. Gelesen wird die gespeicherte Wirkung der
+// Karte, wie im Blatt.
+function _newsPrestigeBand(s){
   const d = (s && s.dataRef) || {};
   const je = {};
   const nimm = lb => { if(lb) Object.keys(lb).forEach(pid => { if(!je[pid]) je[pid] = lb[pid]; }); };
   if(d.type === 'sammel') (d.teile || []).forEach(t => nimm(t.lb));
   else nimm(d.laufbahn);
   const pm = pmap();
-  const weg = Object.keys(je).filter(pid => pm[pid]).map(pid => {
+  const alle = Object.keys(je).filter(pid => pm[pid]).map(pid => {
     const vor = Math.round(Number(je[pid].vor) || 0), nach = Math.round(Number(je[pid].nach) || 0);
-    return {pid, d: nach - vor, ab: insigniumStufeVon(nach) < insigniumStufeVon(vor)
-      ? INSIGNIEN[insigniumStufeVon(nach)].name : ''};
-  }).filter(x => x.d < 0).sort((a, b) => a.d - b.d);
-  if(!weg.length) return '';
-  return `<div class="nf-verlust"><span class="nf-verlust-l">${svgI('trendDown')}Prestige</span>`
-    + `<span class="nf-verlust-w">${weg.slice(0, 3).map(x =>
-      `<b class="nf-vl">${rcpAvHtml(x.pid, 18, {})}<i>${esc(pm[x.pid].name)}</i>`
-      + `<em class="num">−${-x.d} P</em>${x.ab ? `<u>↓ ${esc(x.ab)}</u>` : ''}</b>`).join('')}${weg.length > 3
-      ? `<b class="nf-vl mehr">+${weg.length - 3}</b>` : ''}</span></div>`;
+    const sv = insigniumStufeVon(vor), sn = insigniumStufeVon(nach);
+    return {pid, d: nach - vor, stufe: sn !== sv && INSIGNIEN[sn] ? INSIGNIEN[sn].name : '', auf: sn > sv};
+  }).filter(x => x.d);
+  const plus = alle.filter(x => x.d > 0).sort((a, b) => b.d - a.d);
+  const minus = alle.filter(x => x.d < 0).sort((a, b) => a.d - b.d);
+  if(!plus.length && !minus.length) return '';
+  const chip = x => `<b class="nf-vl ${x.d > 0 ? 'plus' : 'minus'}">${rcpAvHtml(x.pid, 18, {})}<i>${esc(pm[x.pid].name)}</i>`
+    + `<em class="num">${x.d > 0 ? '+' + x.d : '−' + -x.d} P</em>${x.stufe && !x.auf ? `<u>↓ ${esc(x.stufe)}</u>` : ''}</b>`;
+  // Zwei Zeilen mit festem Etikett davor: in EINER gemischten Reihe brachen
+  // Gewinner und Verlierer auf drei Reihen um, und wo eine Seite endete,
+  // war nur noch an der Farbe zu erkennen.
+  const zeile = (wort, l) => !l.length ? '' : `<div class="nf-pb-z"><span class="nf-verlust-l">${wort}</span>`
+    + `<span class="nf-verlust-w">${l.slice(0, 2).map(chip).join('')}`
+    + `${l.length > 2 ? `<b class="nf-vl mehr">+${l.length - 2}</b>` : ''}</span></div>`;
+  return `<div class="nf-verlust">${zeile('Gewinnt', plus)}${zeile('Verliert', minus)}</div>`;
 }
 
 // Die Zahlen einer Spieltags-Karte. Sie stehen im Fuß, damit der Satz sie
