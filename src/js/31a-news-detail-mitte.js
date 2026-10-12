@@ -438,7 +438,7 @@ function _ndMitteRoh(s){
           const ids = Object.keys(je);
           if(!ids.length) return '';
           return `<div class="nd-section">Wirkung auf die Laufbahn</div>`
-            + _ndWirkungBlock(je, _ndWirkungsGruende(teile));
+            + _ndWirkungBlock(je, _ndWirkungsGruende(teile), new Date(s.when).getTime());
         })();
         // ── Das Bündel einer Partie ──────────────────────────────────
         // Es trägt die Zeichnung seiner Karte als Bühne [§C33], darunter, was

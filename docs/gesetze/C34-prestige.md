@@ -8,7 +8,7 @@
 - Das Regelblatt liest die Startwerte aus der Tabelle (`_prestigeRegelListe`), nicht aus einer festen Liste.
 - Chroniken behalten ihren Wert aus `chronikPunkte`; die Sammlung wird nach Wert gedämpft: Platz 1–2 voll, 3–5 ÷ √2, 6–8 ÷ √3, danach alle drei eine Wurzelstufe weiter.
 - Rekorde beginnen bei `allzeit.basis` (`_rekordBasis`; 150 Können/Form/Bestmarke, 75 Rollenwert/Fügung, 0 Schattenseite), werden durch die Zahl der heutigen Halter geteilt und wie Chroniken gestapelt. Keine Quelle hat einen harten Deckel.
-- Das Blatt einer Rekord- oder Tafel-Karte zeigt die Wirkung aus den beiden gespeicherten Ständen (`laufbahn`, `_ndWirkungBlock`), keinen Rechentext; die Rechnung steht im Laufbahnblatt (`_prestigeQuellSatz`). Alle drei Rekordfälle teilen dieses Blatt.
+- Das Blatt einer Rekord- oder Tafel-Karte zeigt die Wirkung aus den beiden gespeicherten Ständen (`laufbahn`, `_ndWirkungBlock`), keinen Rechentext; die Rechnung steht im Laufbahnblatt (`_prestigeQuellSatz`). Alle drei Rekordfälle teilen dieses Blatt. Die Zahl ist die Bewegung des ganzen Spieltags; darunter steht sie nach Quellen aufgeteilt (Rekorde, Monatschroniken, Auszeichnungen, `_ndWirkungQuellen`), die zusammen die Zahl ergeben, und bis zu zwei Posten in ihrer Richtung, die die Karte sonst nicht nennt. Neue Karten speichern die Quellen (`rek`, `mon`), ältere werden an den Ständen des Tages nachgerechnet und nur gezeigt, wenn sie die gespeicherte Zahl treffen.
 - Die Blätter der Ewigen Tafel tragen eine Bühne (`_ndWechselBuehne`, `_ndChronikBlatt`, `_ndMonatBlatt`, `_ndErstlingBlatt`, `_ndInsigniumBlatt`, `_ndTafelMomentBlatt`, `_ndHeldBuehne`, `_ndFaktBlatt`); eine Zeile führt zu ihrem Eintrag (`_ndTafelZiel`); keine Überschrift ohne Inhalt (`_ndOhneLeere`).
 - Die Seltenheitsklasse (`BADGE_RARITY`) sagt, wie schwer eine Auszeichnung zu holen ist; Gold gehört nicht der Anwesenheit. Wer eine Klasse verschiebt, zieht `RARITY_META.total` mit.
 
@@ -206,3 +206,13 @@ sind „Mauer" und „Player of the Day" selten und nicht gewöhnlich: sie
 belohnen den Vielspieler, aber sie sind besonderer als jedes Common. Wer
 eine Klasse verschiebt, verschiebt Prestige — und zieht `RARITY_META.total`
 mit [§10.1].
+
+**Die Zahl der Laufbahn sagt, woher sie kommt.** Im Blatt eines
+Tafel-Moments stand „übernimmt ‚Der Einzelkämpfer'" neben −33 und „verliert
+‚Der Lauf'" neben +34. Beides war richtig: die Zahl ist die Bewegung des
+ganzen Spieltags über alle drei Quellen, die Chips nennen nur die Wechsel der
+Karte. Wer einen Rekord übernimmt und gleichzeitig andere teilen muss, steht
+im Minus; wer zwei Rekorde verliert und am selben Tag eine Monatschronik
+holt, im Plus. Ohne Aufschlüsselung las sich das als Rechenfehler. Darunter
+steht deshalb je Quelle ihr Anteil, und was die Karte nicht nennt, mit
+seinem Namen.

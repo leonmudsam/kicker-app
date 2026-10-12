@@ -4312,6 +4312,38 @@ ok(_etik.n > 10 && _etik.falsch.length === 0,
    'jede Schlagzeile einer Partie nennt höchstens drei Anlässe, jeden mit Namen, und keine Pleite vor einem Sieg, auch nicht in den Zeilen',
    _etik.falsch.slice(0, 3).join(' | ') || _etik.n + ' Bündel');
 
+// ── Woher die Zahl der Laufbahn kommt ─────────────────────────────────
+// Die Zahl neben einem Spieler ist die Bewegung des ganzen Spieltags über
+// alle drei Quellen, die Chips nennen nur die Wechsel der Karte. Gemeldet
+// stand „übernimmt ‚Der Einzelkämpfer'" neben −33 und „verliert ‚Der Lauf'"
+// neben +34, ohne dass zu sehen war, warum. Jede Zeile mit Bewegung trägt
+// jetzt ihre Quellen, und die ergeben zusammen die Zahl daneben.
+const _quell = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  _cache._stories = roh.slice().sort((a,b)=>new Date(b.when)-new Date(a.when));
+  _cache._consolFrom = null; _cache._frischVon = null;
+  const zahl = t => +String(t).replace('−', '-').replace('+', '');
+  let n = 0; const falsch = [];
+  getStoriesCache().filter(x => (x.dataRef||{}).type === 'sammel' && x.dataRef.quelle === 'tafel').forEach(x => {
+    const b = _newsDetailBody(x);
+    b.split('<div class="nd-wk').slice(1).filter(z => z.indexOf('data-pid') >= 0 && z.indexOf('data-pid') < 40).forEach(z => {
+      const d0 = z.indexOf('nd-wk-d');
+      const d = d0 < 0 ? 0 : zahl(z.slice(z.indexOf('>', d0) + 1, z.indexOf('<', d0)));
+      if(!d) return;
+      n++;
+      const q0 = z.indexOf('class="nd-wk-q">');
+      const q = q0 < 0 ? '' : z.slice(q0).split('<span class="nd-wk-gs')[0].split('nd-wk-p')[0];
+      const summe = q.split('<b class="').slice(1)
+        .reduce((s, t) => s + zahl(t.slice(t.indexOf('>') + 1, t.indexOf('<'))), 0);
+      if(!q || summe !== d) falsch.push(x.id + ': ' + d + ' gegen ' + summe);
+    });
+  });
+  return {n, falsch};
+})())`));
+ok(_quell.n > 3 && _quell.falsch.length === 0,
+   'jede Zahl der Laufbahn im Blatt trägt ihre Quellen, und die ergeben zusammen die Zahl',
+   _quell.falsch.slice(0, 3).join(' | ') || _quell.n + ' Zeilen');
+
 // ── Der Fuß zeigt, wovon die Schlagzeile spricht, und wechselt ab ──
 // Über „Leon und Maxi treffen zum 188. Mal aufeinander" stand Leos Wende als
 // Fuß, und von 52 Partien in vierzehn Tagen trugen 11 die Wende: der Fuß

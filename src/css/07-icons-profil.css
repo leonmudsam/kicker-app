@@ -1640,6 +1640,13 @@
   .nd-wk-ab{background:var(--red);color:#fff}
   .nd-wk-auf{background:var(--gold);color:#1a1405}
   .nd-wk-ab svg, .nd-wk-auf svg{width:11px;height:11px;--strich:2}
+  /* Woher die Zahl kommt: je Quelle ihr Anteil am Tag [§C34]. Zuwachs in
+     Gold wie die Zahl daneben, Verlust in Rot. */
+  .nd-wk-q{display:flex;flex-wrap:wrap;gap:2px 10px;margin-top:4px;
+    font-family:'Sometype Mono',monospace;font-size:9.5px;color:var(--muted);letter-spacing:.02em}
+  .nd-wk-q b{font-weight:700}
+  .nd-wk-q b.g{color:var(--gold)}.nd-wk-q b.r{color:var(--red)}
+  .nd-wk-p{margin-top:2px;color:var(--faint)}
   /* Warum: welcher Rekord geholt, geteilt oder verloren wurde. */
   .nd-wk-gs{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
   .nd-wk-g{display:inline-flex;align-items:baseline;gap:4px;max-width:100%;

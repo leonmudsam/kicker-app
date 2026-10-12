@@ -674,7 +674,51 @@ function _ndTagesbahn(pid, liste, nurBahn){
 //
 // Die Stufe kommt aus den Punkten und nicht aus der gespeicherten Zahl
 // (`insigniumStufeVon`): die gespeicherte gehörte einer älteren Leiter.
-function _ndWirkungBlock(je, gruende){
+// ── Woher die Zahl kommt ─────────────────────────────────────────────
+// Die Zahl rechts ist die Bewegung des ganzen Spieltags über alle drei
+// Quellen [§C34]; die Zeilen darunter nennen nur, was diese Karte erzählt.
+// Ohne Aufschlüsselung stand „übernimmt ‚Der Einzelkämpfer'" neben −33 und
+// „verliert ‚Der Lauf'" neben +34: beim einen verloren die übrigen Rekorde
+// im selben Moment an Wert, der andere gewann an anderer Stelle mehr, als
+// die beiden Rekorde kosteten. Neue Karten tragen die Quellen (`rek`, `mon`); für ältere
+// wird nachgerechnet, an den Ständen vor und nach dem Spieltag — und nur
+// gezeigt, wenn die Summe die gespeicherte Zahl trifft, sonst erzählte die
+// Aufschlüsselung von einem anderen Stand als die Zahl daneben.
+function _ndWirkungQuellen(pid, w, tagMs){
+  const delta = Math.round(Number(w.nach) || 0) - Math.round(Number(w.vor) || 0);
+  let rek = w.rek, mon = w.mon, posten = [];
+  if(tagMs){
+    try {
+      const memo = _ndWirkungQuellen.memo || (_ndWirkungQuellen.memo = new Map());
+      const k = tagKey(tagMs) + '|' + (matches || []).length;
+      let paar = memo.get(k);
+      if(!paar){
+        const tg = _storyTagGrenzen(tagMs);
+        paar = tg ? {vor:_storyStand(tg.vorMs), nach:_storyStand(tg.nachMs)} : null;
+        if(memo.size > 8) memo.clear();
+        memo.set(k, paar);
+      }
+      const x = paar && _prestigeWirkung(pid, paar.vor, paar.nach);
+      if(x && x.vor === Math.round(Number(w.vor) || 0) && x.nach === Math.round(Number(w.nach) || 0)){
+        rek = x.rekordDelta; mon = x.monatDelta;
+        // Die Posten, die sich bewegt haben: ein Rekord, der geteilt wurde
+        // oder im Stapel an Wert verlor, steht auf keiner Zeile der Karte und
+        // erklärt trotzdem ein Minus neben „übernimmt".
+        const je = st => { const o = {};
+          (((st.prestige(pid) || {}).quellen) || []).forEach(q => {
+            if(q.q === 'rekord' || q.q === 'monat') o[q.q + ':' + q.id] = {name:q.name || '', p:q.p || 0}; });
+          return o; };
+        const a = je(paar.vor), b = je(paar.nach);
+        posten = [...new Set(Object.keys(a).concat(Object.keys(b)))]
+          .map(k => ({name:(b[k] || a[k]).name, d:Math.round((b[k] ? b[k].p : 0) - (a[k] ? a[k].p : 0))}))
+          .filter(x => x.name && x.d).sort((p, q) => Math.abs(q.d) - Math.abs(p.d));
+      }
+    } catch(e){}
+  }
+  if(rek == null || mon == null) return null;
+  return {rek, mon, aus:delta - rek - mon, posten};
+}
+function _ndWirkungBlock(je, gruende, tagMs){
   const ids = Object.keys(je || {});
   if(!ids.length) return '';
   const pm = pmap();
@@ -731,6 +775,16 @@ function _ndWirkungBlock(je, gruende){
         esc(g.verb)} <b>${esc(g.name)}</b></span>`).join('')
         + (gr.length > 3 ? `<span class="nd-wk-g">+${gr.length - 3}</span>` : '');
       const dz = delta > 0 ? '+' + delta : delta < 0 ? '−' + Math.abs(delta) : '±0';
+      const q = delta ? _ndWirkungQuellen(pid, w, tagMs) : null;
+      const vz = v => (v > 0 ? '+' : '−') + Math.abs(v);
+      const quellen = q ? [['Rekorde', q.rek], ['Monatschroniken', q.mon], ['Auszeichnungen', q.aus]]
+        .filter(x => x[1]).map(x => `<span>${x[0]} <b class="${x[1] > 0 ? 'g' : 'r'}">${vz(x[1])}</b></span>`).join('') : '';
+      // Was die Chips nicht schon nennen, mit seinem Anteil: höchstens zwei,
+      // und nur in der Richtung der Zahl daneben. Neben −123 erklärten zwei
+      // Pluszeilen nichts, sie lasen sich als Widerspruch.
+      const genannt = new Set(((gruende && gruende[pid]) || []).map(g => g.name));
+      const posten = q ? (q.posten || []).filter(x => !genannt.has(x.name) && (x.d > 0) === (delta > 0)).slice(0, 2)
+        .map(x => `<span>„${esc(x.name)}“ <b class="${x.d > 0 ? 'g' : 'r'}">${vz(x.d)}</b></span>`).join('') : '';
       return `<div class="nd-wk${delta < 0 ? ' neg' : ''}${ab ? ' fall' : ''}" data-pid="${esc(pid)}" style="cursor:pointer">
         ${zeichen ? `<span class="nd-wk-z">${zeichen}${ab
           ? `<i class="nd-wk-ab">${svgI('trendDown')}</i>` : auf
@@ -739,6 +793,8 @@ function _ndWirkungBlock(je, gruende){
           <span class="nd-wk-n"><b>${esc((pm[pid] && pm[pid].name) || '?')}</b>${marke}</span>
           ${balken}
           <span class="nd-wk-r">${rest}</span>
+          ${quellen ? `<span class="nd-wk-q">${quellen}</span>` : ''}
+          ${posten ? `<span class="nd-wk-q nd-wk-p">${posten}</span>` : ''}
           ${chips ? `<span class="nd-wk-gs">${chips}</span>` : ''}
         </span>
         <span class="nd-wk-d ${delta > 0 ? 'g' : delta < 0 ? 'r' : ''}">${dz}</span>
@@ -1006,7 +1062,8 @@ function _ndRekordBlatt(s){
   Object.keys(lb).forEach(id => { if(pm[id] && lb[id] && lb[id].vor != null && lb[id].nach != null) je[id] = lb[id]; });
   let wirkung = '';
   if(Object.keys(je).length){
-    wirkung = _ndWirkungBlock(je, _ndWirkungsGruende([{halter:neu, vorher:vorRoh, rname:d.rekordName || (def && def.name) || ''}]));
+    wirkung = _ndWirkungBlock(je, _ndWirkungsGruende([{halter:neu, vorher:vorRoh, rname:d.rekordName || (def && def.name) || ''}]),
+      new Date(s.when).getTime());
   } else {
     wirkung = neu.map(id => { let q = null;
       try { q = ((prestigeTabelle().byPid[id] || {}).quellen || []).find(x => x.q === 'rekord' && x.id === d.rekordId) || null; } catch(e){}
@@ -1173,7 +1230,7 @@ function _ndChronikBlatt(s){
   const lb = d.laufbahn || {}, je = {};
   Object.keys(lb).forEach(id => { if(pm[id] && lb[id] && lb[id].vor != null && lb[id].nach != null) je[id] = lb[id]; });
   const wirkung = Object.keys(je).length
-    ? _ndWirkungBlock(je, _ndWirkungsGruende([{halter:neu, vorher:vor, rname:name}])) : '';
+    ? _ndWirkungBlock(je, _ndWirkungsGruende([{halter:neu, vorher:vor, rname:name}]), new Date(s.when).getTime()) : '';
   const beitragIds = (Array.isArray(d.playerIds) ? d.playerIds : []).filter(id => pm[id]);
   const laufbahn = _newsChronikPrestige(d);
   const ebenen = beitragIds.length
