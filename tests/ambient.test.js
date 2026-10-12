@@ -4137,8 +4137,8 @@ ok(_keineSchande.treffer.length === 0, 'keine Schande steht im Feed',
 const _bmk = JSON.parse(K.eval(`JSON.stringify((function(){
   const pm = pmap();
   const nameOf = pid => (pm[pid] && pm[pid].name) || '?';
-  const paare = { personal_scorer:'sniper', award_potd_leader:'daylord',
-                  award_potw_leader:'weeklord' };
+  const paare = { personal_glanztag:'glanztag', personal_umsteiger:'umsteiger',
+                  personal_aufschwung:'aufschwung' };
   const T = _ambientTemplatePool(new Date(), pm, nameOf);
   const out = [];
   Object.keys(paare).forEach(key => {
@@ -5818,15 +5818,15 @@ const _rekFelder = JSON.parse(K.eval(`JSON.stringify((function(){
     const c = CHRONICLE_BY_ID[d.rekordId];
     if(c && d.basis !== c.basis) basisFalsch.push(d.rekordId);
   });
-  // Und die sechs neuen Liga-Rekorde [§C35] kommen im Feed ueberhaupt vor.
+  // Und die neuen Liga-Rekorde [§C35] kommen im Feed ueberhaupt vor.
   // Ein neuer Eintrag kann still durchrutschen: er steht im Katalog, im
   // Rekorde-Reiter und in der Rangliste, und der Generator bildet trotzdem
-  // keine Karte fuer ihn, weil ein Feld fehlt. Gezaehlt wird, wie viele der
-  // acht in diesem Lauf eine Karte haben — nicht alle acht, denn der Lauf
-  // sieht jeden vierten Spieltag, und ein Rekord, der nur an einem anderen
-  // Tag gewechselt hat, kommt darin nicht vor.
-  const NEU = ['entscheider','breitenwirkung','damage_control','retourkutsche',
-               'unbeugsam','rueckschlag','wiedereinstieg','rollencoup'];
+  // keine Karte fuer ihn, weil ein Feld fehlt. Gezaehlt wird, wie viele
+  // davon in diesem Lauf eine Karte haben. Der Lauf sieht nur jeden vierten
+  // Spieltag; ein Rekord, der nur an einem anderen Tag wechselt, fiele
+  // heraus, und dann gehoert er nicht in diese Liste.
+  const NEU = ['damage_control','wiedereinstieg','rollencoup',
+               'umsteiger','aufschwung','glanztag'];
   const neuGesehen = NEU.filter(id => karten.some(s => s.dataRef.rekordId === id));
   return {n:karten.length, fehlt:fehlt.slice(0, 6), falscherFall:falscherFall.slice(0, 3),
           ohneZeit:ohneZeit.slice(0, 3), basisFalsch:basisFalsch.slice(0, 3),
@@ -5845,11 +5845,10 @@ ok(_rekFelder.ohneZeit.length === 0, 'jede Rekordkarte traegt ihren Zeitpunkt',
 ok(_rekFelder.basisFalsch.length === 0,
    'der weitergegebene Grundwert ist der des Katalogs',
    _rekFelder.basisFalsch.join(', ') || 'alle');
-// Sieben der acht sind der gemessene Stand: „Die Retourkutsche" hat ihren
-// Halter sechsmal gewechselt, aber an keinem der gewalkten Tage. Die Schwelle
-// steht auf dem gemessenen Wert und nicht darunter — jeder Rekord, der still
-// uebersprungen wird, kostet genau einen.
-ok(_rekFelder.neuGesehen.length >= 7,
+// Alle sechs sind der gemessene Stand. Die Schwelle steht auf dem gemessenen
+// Wert und nicht darunter — jeder Rekord, der still uebersprungen wird,
+// kostet genau einen.
+ok(_rekFelder.neuGesehen.length === _rekFelder.neuN,
    'auch die neuen Liga-Rekorde bekommen ihre Karte',
    _rekFelder.neuGesehen.length + ' von ' + _rekFelder.neuN + ': '
    + _rekFelder.neuGesehen.join(', '));

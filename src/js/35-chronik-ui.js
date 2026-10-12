@@ -475,9 +475,12 @@ function _rekordMeta(d, h){
 // Der Beleg als Zahl: auf dem Podest ist neben einem 44-px-Wappen kein Platz
 // für „27 von 49 Spielen um den letzten Ball · 55 %". Genommen wird das erste
 // Zahlwort — dieselbe Zahl, die auch die Karte in der Liste groß zeigt.
+// Ein Abstand zwischen zwei Quoten heißt „%-Punkte" und bleibt so stehen:
+// gekürzt auf „+12 %" las er sich als zwölf Prozent mehr, und „Vorher waren
+// es +58 %" stand unter einem Rekord, der Prozentpunkte zählt.
 function _chronKurz(ev){
   const s = String(ev || '').trim();
-  const m = s.match(/^([+\u2212-]?\d[^\s]*(?:\s?%)?)/);
+  const m = s.match(/^([+\u2212-]?\d[^\s]*(?:\s?%(?:-Punkte)?)?)/);
   return m ? m[1] : s;
 }
 

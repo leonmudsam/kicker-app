@@ -205,8 +205,7 @@ function _chronicleCtx(bisMs){
   const run = {}, runL = {};              // laufende Sieg-/Niederlagenserie
   const runStart = {}, runLStart = {};
   const altRun = {}, altStart = {};      // laufende Wechselserie Sieg/Pleite
-  const daySet = {}, dayCount = {}, dayWins = {}, weekSet = {};
-  const dayElo = {};                      // pid → {Tages-Key: Elo-Summe des Tages}
+  const daySet = {}, dayCount = {}, dayWins = {};
   // Was ein Abend an FÜGUNGEN hergibt [§C35]: Siegchance, Torkonto,
   // Ergebnis-Häufigkeiten und die beiden Höchstmaße. Eine Karte je Spieler
   // und Abend — die Alternative wären vier weitere Parallel-Karten.
@@ -241,9 +240,8 @@ function _chronicleCtx(bisMs){
     wdSum:0,
     perfDays:0, bigDays:0,           // volle Spieltage / davon ohne Niederlage
     seasons:0, firstDay:'', firstLabel:'', lastDay:'',
-    peak:0, potw:0, potd:0, weeks:0, founder:false,
+    peak:0, founder:false,
     afterLoss:0, afterLossOpp:0,     // Antwort auf die eigene letzte Niederlage
-    dayElo:null, dayEloLabel:'',     // bester Elo-Tag der Laufbahn
     alt:0, altSpan:'',               // laengste Serie aus abwechselnd Sieg und Pleite
     flukeExp:null, flukeLabel:'',    // der unwahrscheinlichste Sieg der Laufbahn
     bestMonth:null,                  // {q, g, sid} — der beste Monat seines Lebens
@@ -252,52 +250,39 @@ function _chronicleCtx(bisMs){
     //    Alle sechs fallen in den Durchläufen ab, die es ohnehin gibt —
     //    der Tagesdurchlauf unten läuft schon für die vollen Spieltage.
     hartTag:null, hartTagLabel:'',   // schwerster Abend: niedrigste mittlere Siegchance
-    pechExp:null, pechLabel:'',      // höchste Siegchance, die trotzdem verloren ging
     gleichTag:0, gleichTore:0, gleichLabel:'',  // Abend mit exakt aufgehendem Torkonto
     wiederTag:0, wiederErg:'', wiederLabel:'',  // dasselbe Ergebnis an einem Abend
     beidesTag:0, beidesLabel:'',     // 10:0 und 0:10 am selben Abend
-    // ── Die zwei Kammern [§C35]: zehn Rekorde auf einem gleitenden
-    //    Fenster, auf einer Rolle und auf dem Gegnerkreis. Sie brauchen die
+    // ── Rekorde auf einem gleitenden Fenster und auf einer Rolle [§C35].
+    //    Sie brauchen die
     //    REIHENFOLGE der Partien und damit die Rohsicht, die
     //    `_seasonTitleCtx` fuer den Monat schon hat. Gebaut wird sie unten
     //    in `roh` und nach der Auswertung verworfen: am gecachten `P` haengen
     //    nur diese Skalare, sonst truege jeder der 24 Zeitschnitte 4×N
     //    Partien-Objekte mit sich.
-    l30N:0, l30Ga:0, l30Gf:0,            // die letzten 30 Partien
     l20N:0, l20W:0,                      // die letzten 20 Partien
     r50N:0, r50Atk:0,                    // Sturmpartien unter den letzten 50
     // ── Der Abstand zum EIGENEN [§C38]. Wer eine Quote gewinnt, gewinnt
     //    fast jede; ein Eintrag auf das Niveau gehoert damit immer denselben
-    //    drei Spielern. Diese vier fragen stattdessen, wie weit jemand von
-    //    seinem eigenen Schnitt abweicht — und sind damit fuer jede
-    //    Koennensklasse erreichbar.
+    //    drei Spielern. Diese Felder fragen stattdessen, wie weit ein
+    //    Ausschnitt der eigenen Partien vom eigenen Rest abweicht — und sind
+    //    damit fuer jede Koennensklasse erreichbar.
     hfDelta:null, hfNeu:0, hfAlt:0,              // letzte 10 gegen die 10 davor
     sbDelta:null, sbDrin:0, sbRaus:0, sbN:0,     // Schlussspiel eines Tages
     ksDelta:null, ksDrin:0, ksRaus:0, ksN:0,     // erstes Spiel eines Tages
     rwDelta:null, rwNeu:0, rwAlt:0,              // Mitspieler-Elo im Fenster
-    // ── Der Anteil an den eigenen GELEGENHEITEN [§C35]. „Der Platzhirsch"
-    //    und „Der Wochenherr" waren die einzigen zwei Rekorde dieser
-    //    Bauart: sie zaehlen nicht, wie oft etwas gelang, sondern wie oft
-    //    von wie vielen Gelegenheiten. Ein solcher Anteil kennt die
-    //    Spielzahl nicht — wer an zwanzig Tagen dabei war, wird an zwanzig
-    //    gemessen —, und genau deshalb erreicht er den, der weniger spielt.
-    //    Alle vier fallen im Durchlauf ueber die Rohsicht ab, den es fuer
+    ahN:0, ahQ:0, ahRest:0, ahDelta:null,        // offene Partien gegen die uebrigen
+    weN:0, weW:0, weDelta:null, weRaus:0,        // die erste Partie nach einer Pause
+    umN:0, umW:0, umDelta:null, umRaus:0,        // die erste Partie nach einem Positionswechsel
+    asDelta:null, asNeu:0, asAlt:0,              // die letzten 25 gegen die Laufbahn davor
+    gtDelta:null, gtW:0, gtN:0, gtQ:0, gtLabel:'',  // der beste Spieltag gegen die eigene Quote
+    // ── Teilmengen der Rohsicht. Sie fallen im Durchlauf ab, den es fuer
     //    die Fenster ohnehin gibt, und bleiben Skalare [§3].
-    taN:0, taOk:0,                       // eigene Spieltage, davon nicht negativ
-    agQ:null, agN:0,                     // der schwaechste regelmaessige Partner
-    mtN:0, mtAvg:0, mtMad:null,          // Hoehe und Gleichmaessigkeit der Tagesquoten
-    ahN:0, ahQ:0, ahRest:0, ahDelta:null,  // offene Partien gegen die uebrigen
-    unterN:0, unterW:0,                  // als Aussenseiter
-    favN:0, favKlar:0,                   // als Favorit
-    gjN:0, gjMin:null,                   // regelmaessige Gegner, schwaechste Bilanz
-    rkN:0, rkW:0,                        // Wiedersehen nach einer Pleite gegen dasselbe Duo
-    rsN:0, rsW:0,                        // Antwort auf eine laufende eigene Pleitenserie
-    weN:0, weW:0,                        // die erste Partie nach einer Pause
+    favN:0,                              // als Favorit
     // Der Ausschlag ueber der Erwartung, je Position getrennt. Gehalten wird
     // die BESSERE der beiden qualifizierten Positionen; welche das ist, sagt
     // `rcPos`, damit der Beleg sie nennen kann.
     rcDelta:null, rcPos:'', rcQ:0, rcExp:0, rcW:0, rcN:0,
-    lsN:0, lsW:0,                        // gegen einen Gegner in Siegesserie
     swN:0, swOk:0,                       // Rollenwechsel zwischen zwei Partien
     ausgN:0, ausgSd:null, ausgMit:0,     // Gleichmass in ausgeglichen angesetzten Partien
     atkSd:null, atkMit:0,                // Gleichmaessigkeit im Sturm
@@ -336,15 +321,11 @@ function _chronicleCtx(bisMs){
     const day = mdayKey(m);
     allDays.add(day);
     // Der Serienstand VOR dieser Partie, fuer alle vier auf einmal. „Der
-    // Laufstopper" fragt, ob ein Gegner mit einer laufenden Serie angetreten
-    // ist, und die vier Staende unten werden in derselben Schleife
-    // fortgeschrieben: gelesen nach dem ersten Spieler waere es der Stand
-    // NACH dieser Partie [Regel 3].
+    // Serienstopp" fragt, welche Serie ein Gegner mitbrachte, und die vier
+    // Staende unten werden in derselben Schleife fortgeschrieben: gelesen
+    // nach dem ersten Spieler waere es der Stand NACH dieser Partie [Regel 3].
     const runVor = {};
     [m.a1, m.a2, m.b1, m.b2].forEach(x => { if(x) runVor[x] = run[x] || 0; });
-    // Der Wochenschluessel muss EXAKT der aus `_periodWinnerMap` sein, sonst
-    // zaehlen Zaehler (Titel) und Nenner (Wochen) ueber verschiedene Wochen.
-    const wkey = _wochenKey(m.created_at);
     const sid = (seasonOf(m.created_at) || {}).id;
     if(sid) allSeasons.add(sid);
     const ids = [m.a1, m.a2, m.b1, m.b2];
@@ -396,19 +377,7 @@ function _chronicleCtx(bisMs){
       if(w && diff >= 7) p.blowW++;
       if(!w) p.wdSum += ga - gf;
       if(w && exp < CHANCE_UPSET) p.upsets++;
-      // Der Laufstopper: mindestens ein Gegner kam mit drei eigenen Siegen in
-      // Folge. Gezaehlt wird die GELEGENHEIT und darunter der Sieg, damit der
-      // Wert ein Anteil bleibt und nicht mit der Spielzahl waechst [§C35].
-      if((onA ? [m.b1, m.b2] : [m.a1, m.a2]).some(g => g && (runVor[g] || 0) >= 3)){
-        p.lsN++; if(w) p.lsW++;
-      }
       // ── Fügungen [§C35] ───────────────────────────────────────────
-      // Die bitterste Niederlage: die höchste Siegchance, die trotzdem
-      // verloren ging. Eine einzige Partie, kein Durchschnitt — deshalb
-      // kann sie jeden treffen, den Besten zuerst.
-      if(!w && (p.pechExp == null || exp > p.pechExp)){
-        p.pechExp = exp; p.pechLabel = dLabel(day);
-      }
       if(!dayZufall[id]) dayZufall[id] = {};
       const dz = dayZufall[id][day]
         || (dayZufall[id][day] = {e:0, gf:0, ga:0, n10:0, n01:0, erg:{}});
@@ -421,15 +390,11 @@ function _chronicleCtx(bisMs){
       p.lastDay = day;
       if(!daySet[id]) daySet[id] = new Set();
       daySet[id].add(day);
-      if(!weekSet[id]) weekSet[id] = new Set();
-      weekSet[id].add(wkey);
       if(!dayCount[id]) dayCount[id] = {};
       dayCount[id][day] = (dayCount[id][day] || 0) + 1;
       if(dayCount[id][day] > p.maxDay){ p.maxDay = dayCount[id][day]; p.maxDayLabel = dLabel(day); }
       if(!dayWins[id]) dayWins[id] = {};
       if(w) dayWins[id][day] = (dayWins[id][day] || 0) + 1;
-      if(!dayElo[id]) dayElo[id] = {};
-      dayElo[id][day] = (dayElo[id][day] || 0) + ((m.deltas && m.deltas[id]) || 0);
       if(sid){
         if(!seasonAgg[id]) seasonAgg[id] = {};
         if(!seasonAgg[id][sid]) seasonAgg[id][sid] = {g:0, w:0};
@@ -509,7 +474,7 @@ function _chronicleCtx(bisMs){
   // ── Die zwei Kammern [§C35]: ein Durchlauf ueber die Rohsicht ──────
   // Zehn Rekorde fragen nach einem gleitenden Fenster, nach einer Rolle oder
   // nach dem Gegnerkreis. Sie stehen hier und nicht als zehn Zaehler im
-  // Match-Durchlauf oben: „die letzten 30 Partien" und „die 25 davor" haengen
+  // Match-Durchlauf oben: „die letzten 20 Partien" und „die 25 davor" haengen
   // an der Reihenfolge, und die kennt erst die fertige Liste.
   const _sd = (a) => {
     if(a.length < 2) return 0;
@@ -522,15 +487,9 @@ function _chronicleCtx(bisMs){
     // Das feste Endfenster. Es MUSS mitwandern: „in den ersten 25 Partien"
     // waere nach 25 Partien fertig und koennte den Halter nie mehr wechseln.
     // Und es ist das ENDE der Laufbahn und nicht der beste Abschnitt darin:
-    // wer dreihundert Partien hat, hat 271 Dreissigerbloecke und wer dreissig
+    // wer dreihundert Partien hat, hat 281 Zwanzigerbloecke und wer zwanzig
     // hat, hat einen — das Maximum aus vielen Ziehungen ist groesser, und
     // damit gehoerte jeder Formrekord dem Vielspieler [Regel 20].
-    if(r.length >= 30){
-      const l30 = r.slice(-30);
-      p.l30N = 30;
-      p.l30Ga = l30.reduce((n, x) => n + x.ga, 0);
-      p.l30Gf = l30.reduce((n, x) => n + x.gf, 0);
-    }
     // Die letzten zwanzig: „Der Lauf" fragt nach der Siegquote von jetzt.
     if(r.length >= 20){
       const l20 = r.slice(-20);
@@ -588,26 +547,6 @@ function _chronicleCtx(bisMs){
         }
       }
     }
-    // Der Anteil der eigenen Spieltage, an denen die Bilanz nicht negativ
-    // war. Der Nenner sind die eigenen Spieltage und nicht die Partien:
-    // „Der Tagesabschluss" fragt, wie viele Tage nicht im Minus endeten,
-    // und ein Tag zaehlt dafuer genau einmal.
-    p.taN = _tagListe.length;
-    p.taOk = _tagListe.filter(t =>
-      _tage[t].filter(x => x.w).length * 2 >= _tage[t].length).length;
-    // Die eigenen Tagesquoten: ihr Mittel UND ihre mittlere Abweichung.
-    // Nur die Streuung gemessen gewann, wer jeden Tag gleich schlecht war —
-    // eine Reihe aus lauter Nullen streut gar nicht. Der Wert ist deshalb die
-    // Hoehe minus die halbe Abweichung: gleichmaessig UND gut.
-    {
-      const voll = _tagListe.filter(t => _tage[t].length >= 3);
-      if(voll.length >= 2){
-        const q = voll.map(t => _tage[t].filter(x => x.w).length / _tage[t].length);
-        p.mtN = voll.length;
-        p.mtAvg = _mit(q);
-        p.mtMad = _mit(q.map(x => Math.abs(x - p.mtAvg)));
-      }
-    }
     // Die Staerke der Mitspieler: die letzten 25 Partien gegen die 25 davor.
     // Gemessen wird die Elo des Mitspielers VOR der jeweiligen Partie, also
     // der Stand von damals [Regel 5] — die heutige Quote eines Partners
@@ -646,22 +585,15 @@ function _chronicleCtx(bisMs){
     // Aussenseiter heisst unter 45 % Siegchance vor dem Anpfiff, Favorit
     // ueber 55 % — dieselben Linien, die die Elo-Rechnung zieht [§5.2].
     // „Der Unaufgeregte" nimmt die weite Mitte dazwischen: 35 bis 65 %.
-    const unter = [], fav = [], ausg = [], atk = [], def = [];
+    const fav = [], ausg = [], atk = [], def = [];
     r.forEach(x => {
-      if(x.exp < CHANCE_OFFEN) unter.push(x);
       if(_stFavorit(x)) fav.push(x);
       if(x.exp >= CHANCE_UPSET && x.exp <= 1 - CHANCE_UPSET) ausg.push(x);
       (x.pos === 'atk' ? atk : def).push(x);
     });
-    p.unterN = unter.length;
-    p.unterW = unter.filter(x => x.w).length;
     p.favN = fav.length;
-    p.favKlar = fav.filter(x => x.w && x.gf - x.ga >= 5).length;
-    // Siege UND Pleiten als Favorit. „Der Souveraen" liest die eine Haelfte,
-    // „Der Wackelkandidat" die andere — ein Gegenpaar auf derselben Teilmenge
-    // [§C35]. Aus `favN - favL` gerechnet stimmte es nur, solange es kein
-    // Unentschieden gibt; gezaehlt wird deshalb, was gezaehlt werden soll.
-    p.favW = fav.filter(x => x.w).length;
+    // Die Pleiten als Favorit, gezaehlt und nicht aus `favN` minus Siegen
+    // gerechnet: das stimmte nur, solange es kein Unentschieden gibt.
     p.favL = fav.filter(x => !x.w).length;
     // Der Rollenwechsel zwischen zwei aufeinanderfolgenden eigenen Partien.
     // Der Nenner sind die Uebergaenge und nicht die Partien: bei zwanzig
@@ -675,66 +607,65 @@ function _chronicleCtx(bisMs){
     // gegen GENAU diesen Gegner und nicht gegen alle Partien [§C37].
     const geg = {};
     r.forEach(x => x.geg.forEach(g => { if(g) (geg[g] = geg[g] || []).push(x); }));
-    // „Kein Angstgegner": die SCHWAECHSTE Bilanz gegen einen regelmaessigen
-    // Gegner. Sechs Duelle machen einen Gegner regelmaessig, vier solche
-    // Gegner machen einen Kreis; gewertet wird das Minimum, also entscheidet
-    // der eine Gegner, gegen den es am wenigsten laeuft. Der Anteil an den
-    // Gegnern mit positiver Bilanz stand hier vorher — der beantwortete eine
-    // andere Frage: wer gegen neun von zehn gut und gegen einen furchtbar
-    // steht, kam dort auf 90 % und hatte trotzdem einen Angstgegner. Der
-    // Nenner ist jeweils die Zahl der Duelle gegen GENAU diesen Gegner und
-    // nicht die Zahl aller Partien [§C37].
-    {
-      const reg = Object.keys(geg).filter(g => geg[g].length >= 6);
-      p.gjN = reg.length;
-      if(reg.length >= 4){
-        p.gjMin = Math.min.apply(null, reg.map(g =>
-          geg[g].filter(x => x.w).length / geg[g].length));
-      }
-    }
-    // „Die Retourkutsche": das naechste Wiedersehen mit genau dem Gegnerduo,
-    // gegen das das vorige Duell verloren ging. Der eigene Partner darf
-    // wechseln — gefragt ist die Antwort auf DIESE zwei, nicht auf eine
-    // Aufstellung. Gezaehlt wird die Gelegenheit und darunter der Sieg, damit
-    // der Wert ein Anteil bleibt und nicht mit der Spielzahl waechst [§C35].
-    // Der Schluessel ist sortiert: dasselbe Duo in anderer Reihenfolge ist
-    // dasselbe Duo.
-    {
-      const offen = {};
-      let n = 0, w = 0;
-      r.forEach(x => {
-        const k = x.geg.filter(Boolean).slice().sort().join('|');
-        if(!k) return;
-        if(offen[k]){ n++; if(x.w) w++; }
-        offen[k] = !x.w;
-      });
-      p.rkN = n; p.rkW = w;
-    }
-    // „Der Rueckschlag": jede Partie, vor der schon zwei eigene Niederlagen
-    // in Folge standen. Nach der dritten und jeder weiteren entsteht die
-    // Gelegenheit erneut — eine Serie, die nicht reisst, stellt die Frage
-    // jedes Mal neu. Gezaehlt wird der Stand VOR der Partie, sonst waere jede
-    // Gelegenheit ihr eigener Beweis.
-    {
-      let lauf = 0, n = 0, w = 0;
-      r.forEach(x => {
-        if(lauf >= 2){ n++; if(x.w) w++; }
-        if(x.w) lauf = 0; else lauf++;
-      });
-      p.rsN = n; p.rsW = w;
-    }
     // „Der Wiedereinstieg": die erste eigene Partie nach 72 vollstaendigen
     // Stunden ohne eigenes Match. Gemessen wird der Abstand der Zeitpunkte
     // und nicht die Differenz der Kalendertage — Freitagabend und
     // Sonntagmorgen sind zwei Kalendertage und keine drei Tage Pause. Die
     // allererste Partie einer Laufbahn zaehlt nicht mit: vor ihr gibt es
     // keine Pause, nur keine Liga.
+    //
+    // Gemessen wird gegen die EIGENE Quote in allen uebrigen Partien [§C38].
+    // Gefragt war die Siegquote der Rueckkehrspiele, und die ordnete die Liga
+    // genau wie die Siegquote der Laufbahn (gemessen r = 0,82): wer ohnehin
+    // gewinnt, gewinnt auch nach der Pause. Gegen das Eigene haelt ihn, wer
+    // nach einer Pause BESSER spielt als sonst — gemessen stehen vorn
+    // Spieler aus allen Teilen der Tabelle.
     {
-      let n = 0, w = 0;
+      let n = 0, w = 0, rn = 0, rw = 0;
       for(let i = 1; i < r.length; i++){
         if(r[i].ts - r[i - 1].ts >= REKORD_PAUSE_MS){ n++; if(r[i].w) w++; }
+        else { rn++; if(r[i].w) rw++; }
       }
       p.weN = n; p.weW = w;
+      if(n && rn){ p.weRaus = rw / rn; p.weDelta = w / n - p.weRaus; }
+    }
+    // „Der Umsteiger": die erste Partie nach einem Wechsel von Sturm zu
+    // Abwehr oder umgekehrt, gegen alle Partien auf derselben Position wie
+    // davor. Eine Siegquote nach dem Wechsel ordnete die Liga wieder wie die
+    // Siegquote (0,93); gegen das Eigene steht vorn, wer den Wechsel besser
+    // verkraftet als der eigene Schnitt — gemessen der Letzte der Siegquote
+    // vor dem Ersten.
+    {
+      let n = 0, w = 0, rn = 0, rw = 0;
+      for(let i = 1; i < r.length; i++){
+        if(r[i].pos !== r[i - 1].pos){ n++; if(r[i].w) w++; }
+        else { rn++; if(r[i].w) rw++; }
+      }
+      p.umN = n; p.umW = w;
+      if(n && rn){ p.umRaus = rw / rn; p.umDelta = w / n - p.umRaus; }
+    }
+    // „Der Aufschwung": die letzten 25 Partien gegen die ganze Laufbahn
+    // davor. „Der Höhenflug" vergleicht zehn mit zehn und misst einen
+    // Ausschlag; dieser misst, ob jemand dauerhaft besser geworden ist.
+    if(r.length >= 50){
+      const neu = r.slice(-25), alt = r.slice(0, -25);
+      p.asNeu = neu.filter(x => x.w).length / neu.length;
+      p.asAlt = alt.filter(x => x.w).length / alt.length;
+      p.asDelta = p.asNeu - p.asAlt;
+    }
+    // „Der Glanztag": der Spieltag mit dem groessten Vorsprung auf die eigene
+    // Quote der Laufbahn, ab fuenf Partien an diesem Tag. Ein einzelner Tag
+    // kann jeden treffen; gemessen an der eigenen Quote haelt ihn nicht der,
+    // der ohnehin jeden Tag gewinnt.
+    {
+      const tage = {};
+      r.forEach(x => { const t = tage[x.day] || (tage[x.day] = {n:0, w:0}); t.n++; if(x.w) t.w++; });
+      const q = p.games ? p.wins / p.games : 0;
+      Object.keys(tage).sort().forEach(k => { const t = tage[k];
+        if(t.n < 5) return;
+        const d = t.w / t.n - q;
+        if(p.gtDelta == null || d > p.gtDelta){ p.gtDelta = d; p.gtW = t.w; p.gtN = t.n; p.gtQ = q; p.gtLabel = dLabel(k); }
+      });
     }
     // „Der Rollencoup": Sturm und Abwehr getrennt, und je Position nur die
     // Partien, in denen die Elo-Rechnung dem eigenen Team unter 45 Prozent
@@ -771,21 +702,11 @@ function _chronicleCtx(bisMs){
     // Spieler ein Dutzend Durchlaeufe.
     const mates = {};
     r.forEach(x => { if(x.mate) (mates[x.mate] = mates[x.mate] || []).push(x); });
-    // Der schwaechste regelmaessige Partner. Nicht der beste: „Der
-    // Ausgleicher" fragt, mit wem auch immer zu bestehen, und ein einziges
-    // schlechtes Paar kostet den Rekord. Fuenfzehn gemeinsame Partien, damit
-    // eine Bilanz ueberhaupt eine ist — dieselbe Karte, die „Der Klotz am
-    // Bein" darunter schon gebaut hat.
+    // Der Kreis der regelmaessigen Partner: fuenfzehn gemeinsame Partien,
+    // damit eine Bilanz ueberhaupt eine ist, und drei solche Partner.
+    // Gewichtet wird nach den gemeinsamen Partien — ein Partner, mit dem
+    // vierzig Partien zusammenkommen, sagt mehr als einer mit fuenfzehn.
     const _agM = Object.keys(mates).filter(m => mates[m].length >= 15);
-    if(_agM.length >= 3){
-      p.agN = _agM.length;
-      p.agQ = Math.min.apply(null, _agM.map(m =>
-        mates[m].filter(x => x.w).length / mates[m].length));
-    }
-    // Derselbe Kreis wie beim Ausgleicher darueber: drei Partner mit je
-    // fuenfzehn gemeinsamen Partien. Gewichtet wird nach den gemeinsamen
-    // Partien — ein Partner, mit dem vierzig Partien zusammenkommen, sagt
-    // mehr als einer mit fuenfzehn.
     const nutz = _agM.filter(m => roh[m]);
     if(nutz.length >= 3){
       let summe = 0, gew = 0;
@@ -853,26 +774,14 @@ function _chronicleCtx(bisMs){
     if(def.length  >= 2){ p.defSd  = _sd(dz(def));  p.defMit  = _mit(dz(def));  }
   });
 
-  // Im Zeitschnitt wird ueber die Scheibe gezaehlt, sonst ueber `matches`
-  // selbst: `_winnerCountsOf` merkt sich sein Ergebnis an der IDENTITAET des
-  // Arrays, und `ms` ist auch ohne Schnitt eine frische Kopie — der Memo, den
-  // sich Badges und Chronik teilen, haette nie mehr getroffen. Ueber
-  // `matches` gezaehlt stand im Schnitt dagegen die Titelzahl von HEUTE ueber
-  // den Wochen von damals, und der Anteil konnte ueber 100 % steigen.
-  const winSrc = bisMs ? ms : matches;
-  const potwCounts = _winnerCountsOf(winSrc, 'week');
-  const potdCounts = _winnerCountsOf(winSrc, 'day');
-
   Object.keys(P).forEach(id => {
     const p = P[id];
     p.days = daySet[id] ? daySet[id].size : 0;
     p.seasons = seasonSet[id] ? seasonSet[id].size : 0;
     // Volle Spieltage (4+ Partien) und die makellosen darunter.
     const dc = dayCount[id] || {}, dw = dayWins[id] || {};
-    const de = dayElo[id] || {};
     const dzAll = dayZufall[id] || {};
     Object.keys(dc).forEach(day => {
-      if(p.dayElo == null || de[day] > p.dayElo){ p.dayElo = de[day]; p.dayEloLabel = dLabel(day); }
       // ── Fügungen, die einen ganzen Abend brauchen [§C35] ───────────
       const dz = dzAll[day];
       if(dz){
@@ -909,9 +818,6 @@ function _chronicleCtx(bisMs){
       if(!p.bestMonth || q > p.bestMonth.q) p.bestMonth = {q, g:r.g, w:r.w, sid:sd};
     });
     p.peak = Math.round(gSim.peakElo[id] || cfg.start_elo);
-    p.potw = potwCounts[id] || 0;
-    p.potd = potdCounts[id] || 0;
-    p.weeks = weekSet[id] ? weekSet[id].size : 0;
     p.founder = !!(firstDayKey && p.firstDay === firstDayKey);
 
     // Elo-Sprünge zwischen zwei gespielten Saisons
@@ -1062,8 +968,11 @@ function saisonRekorde(sid){
 // wertvollster zuerst. `chronicleOf` liefert davon nur den ersten; das Profil
 // zeigt den Rest hinter „Mehr anzeigen".
 function chroniclesOfPlayer(pid, bisMs){
-  // Ein Ruheständler hält, was er beim Karriereende hielt [§C40].
-  if(bisMs == null && imRuhestand(pid)) return ruhestandStand(pid).rekorde || [];
+  // Ein Ruheständler hält, was er beim Karriereende hielt [§C40] — soweit es
+  // den Rekord noch gibt. Ein gestrichener stand sonst in seinem Profil und
+  // im Abschied als einziger Ort der App, sein Blatt öffnete nicht, und das
+  // Prestige zählte ihn mit einem Ersatzwert weiter [§C35].
+  if(bisMs == null && imRuhestand(pid)) return (ruhestandStand(pid).rekorde || []).filter(r => CHRONICLE_BY_ID[r.id]);
   let all;
   try { all = allChronicles(bisMs); } catch(e){ return []; }
   const out = [];
@@ -1135,7 +1044,7 @@ function nextRecordFor(pid){
 
 // Die eine Chronik eines Spielers — oder null.
 function chronicleOf(pid){
-  if(imRuhestand(pid)) return (ruhestandStand(pid).rekorde || [])[0] || null;
+  if(imRuhestand(pid)) return chroniclesOfPlayer(pid)[0] || null;
   try { return allChronicles().byPid[pid] || null; } catch(e){ return null; }
 }
 

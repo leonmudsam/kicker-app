@@ -388,10 +388,13 @@ function prestigeTabelle(bisMs){
       {id:d.id, name:d.name, art:d.art, kind:d.kind, basis:d.basis}); });
   });
   // Die Rekorde eines Ruheständlers: die er beim Karriereende hielt, geteilt
-  // durch die Halter von damals. Die Liga von heute vergleicht ohne ihn.
+  // durch die Halter von damals. Die Liga von heute vergleicht ohne ihn. Ein
+  // gestrichener Rekord zählt für ihn so wenig wie für alle anderen
+  // (`chroniclesOfPlayer` lässt ihn weg): er bekam sonst einen Ersatzwert,
+  // der zu keiner Kammer gehörte.
   ruhe.forEach(p => {
-    (ruhestandStand(p.id).rekorde || []).forEach(r => {
-      const d = CHRONICLES.find(x => x.id === r.id) || r;
+    chroniclesOfPlayer(p.id).forEach(r => {
+      const d = CHRONICLE_BY_ID[r.id];
       roh[p.id].rekord.push({id:r.id, name:r.name, art:d.art, kind:d.kind, basis:d.basis,
                              halter:(r.pids || [r.pid]).length});
     });

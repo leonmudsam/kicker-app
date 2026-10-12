@@ -376,6 +376,22 @@ console.log('\n=== DER GESPEICHERTE STAND ===');
      'der Knopf schreibt Zeitpunkt und Karriere-Teil in EINEM Schreiben', JSON.stringify({ok:r.ok, rekorde:st && st.karriere.rekorde.length}));
   K.eval(`pmap()['${MARTIN}'].retired_at = ${JSON.stringify(zeile.retired_at)};
           pmap()['${MARTIN}'].retired_stand = ${JSON.stringify(JSON.stringify(st))}; invalidateCache();`);
+  // Ein Rekord, den der Katalog nicht mehr führt, zeigt sich nicht mehr und
+  // zählt kein Prestige [§C35]: er stand sonst im Profil als einziger Ort der
+  // App, sein Blatt öffnete nicht, und das Prestige gab ihm einen Ersatzwert.
+  {
+    const mitAlt = JSON.parse(JSON.stringify(st));
+    mitAlt.karriere.rekorde.push({id:'sniper', name:'Der Torjäger', kind:'koennen', ic:'ball', tone:'orange',
+      ev:'9,1 Tore je Sturmspiel', pid:MARTIN, pids:[MARTIN], shared:false});
+    const vorher = J(`prestigeOf('${MARTIN}').punkte`);
+    K.eval(`pmap()['${MARTIN}'].retired_stand = ${JSON.stringify(JSON.stringify(mitAlt))}; invalidateCache(); _ruheGespeichertMemo.clear();`);
+    const ids = J(`chroniclesOfPlayer('${MARTIN}').map(r => r.id)`);
+    const nachher = J(`prestigeOf('${MARTIN}').punkte`);
+    K.eval(`pmap()['${MARTIN}'].retired_stand = ${JSON.stringify(JSON.stringify(st))}; invalidateCache(); _ruheGespeichertMemo.clear();`);
+    ok(ids.indexOf('sniper') < 0 && ids.length === st.karriere.rekorde.length && nachher === vorher,
+       'ein gestrichener Rekord im gespeicherten Stand zeigt sich nicht und zählt nichts',
+       ids.length + ' Rekorde, Prestige ' + vorher + ' → ' + nachher);
+  }
   // Vor dem Abschluss läuft seine letzte Woche noch: geschrieben wird nichts.
   const vorAb = schreibe().length;
   K.eval('_ruheAbschliessen();');

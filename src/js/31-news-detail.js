@@ -1075,7 +1075,7 @@ function _ndRekordBlatt(s){
     // Alle Halter, nicht `playerIds`: die nennen höchstens drei, und der
     // vierte stand dann als Verfolger unter seinem eigenen Rekord.
     + _newsVerfolger(d.rekordId, neu, d.wert)
-    + belegHtml({ev:d.ev})
+    + belegHtml({ev:d.ev, kurz:true})
     + ab('Wirkung auf die Laufbahn', wirkung)
     + (def ? `<button class="btn ghost sm" data-chron="${esc(def.id)}" style="margin-top:12px;width:100%">Rekord öffnen</button>` : '')};
 }

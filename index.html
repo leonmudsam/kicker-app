@@ -5362,6 +5362,15 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 .nd-is-p b{color:var(--ink);font-size:13px}
 .nd-is-wd{font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
   padding:3px 8px;border-radius:99px;box-shadow:inset 0 0 0 1px var(--line2)}
+.nd-is-viele{flex-direction:row;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:12px 10px}
+.nd-is-sp{display:flex;flex-direction:column;align-items:center;gap:2px;width:96px;cursor:pointer}
+.nd-is-viele .nd-is-neu{width:84px;height:84px}
+.nd-is-viele .nd-is-z svg{width:84px;height:84px}
+.nd-is-viele .nd-is-av .av{--av:30px;width:30px;height:30px;font-size:11px}
+.nd-is-sp b{font-size:13px;font-weight:700;color:var(--ink);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nd-is-sp small{font-size:11px;color:var(--ink2);line-height:1.2}
+.nd-is-sp em{font:600 8px 'Sometype Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--purple);font-style:normal}
+.nd-is-sp.ab em{color:var(--red)}
 .nd-is-q{margin-bottom:8px}
 .nd-is-qb{display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--surface2);gap:2px}
 .nd-is-qb i{display:block;height:100%}
@@ -5691,7 +5700,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.12.fd38eda4';
+const BUILD_VERSION='2026.10.12.bab25925';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -5868,27 +5877,25 @@ const ICONS = {
   soloPath:      `<circle cx="8" cy="7" r="3"/><path d="M3 20v-2a4 4 0 014-4h2a4 4 0 014 4v2"/><path d="M17 8v3M17 14v3" stroke-dasharray="2 2"/><circle cx="17" cy="20" r="1.2"/>`,
   sollPlus:      `<path d="M3 18h18" stroke-dasharray="3 3"/><path d="M4 15l4-4 4 2 4-7 4 3"/>`,
   roleFix:       `<circle cx="12" cy="6" r="2.6"/><path d="M7 20v-5a3 3 0 013-3h4a3 3 0 013 3v5"/><path d="M4 20h16"/>`,
-  goalRush:      `<circle cx="16" cy="12" r="5"/><path d="M2 8h7M1 12h6M2 16h7"/>`,
   bothSides:     `<path d="M12 3v18"/><path d="M4 7h5M4 12h5M4 17h5"/><path d="M15 7h5M15 12h5M15 17h5"/>`,
-  gateShut:      `<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 5v14M12 5v14M17 5v14M3 12h18"/>`,
   shieldRank:    `<path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6z"/><path d="M9 10l3-2 3 2M9 14l3-2 3 2"/>`,
-  streakStop:    `<path d="M9 20c-3 0-5-2-5-5 0-4 4-5 4-10 3 2 4 5 4 7 1-1 1-2 1-3 2 2 3 4 3 6"/><path d="M3 4l18 16"/>`,
   stepsUp:       `<path d="M3 20h5v-5h5v-5h5V5"/><path d="M16 8l3-3 3 3"/>`,
   strikeBoot:    `<path d="M4 8h7l3 4h4a2 2 0 012 2v3H6a2 2 0 01-2-2z"/><path d="M4 20h16"/><circle cx="8" cy="5" r="2"/>`,
   penLine:       `<path d="M3 17c4-9 7-13 9-13s1 4-1 8-4 6-2 6 4-3 6-6"/><path d="M3 21h18"/>`,
   baseLine:      `<path d="M3 21h18"/><rect x="5" y="13" width="14" height="5" rx="1"/><rect x="8" y="7" width="8" height="5" rx="1"/>`,
-  crownWide:     `<path d="M2 9l3.5 4L12 6l6.5 7L22 9v8H2z"/><path d="M5 20h14"/>`,
   flatWave:      `<path d="M3 12h3l2-2 2 4 2-3 2 2 2-2h3"/><path d="M3 6v12M21 6v12"/>`,
   misfireBall:   `<circle cx="9" cy="14" r="4"/><path d="M16 5v14"/><path d="M4 21h16"/><path d="M13 9l6 6M19 9l-6 6"/>`,
   mutedReply:    `<path d="M4 5h16v10H12l-5 4v-4H4z"/><path d="M8 3l12 14"/>`,
   wobbleStep:    `<path d="M3 8h7v5h7v5h4"/><path d="M6 18l3 3M10 18l3 3"/>`,
   dragWeight:    `<path d="M12 3v6"/><path d="M9 9h6l2 12H7z"/><path d="M10 6h4"/>`,
-  coinFlip:      `<circle cx="12" cy="16" r="5"/><path d="M12 13v6"/><path d="M4 9a9 9 0 0116-1"/><polyline points="17 4 20 8 16 9"/>`,
   boomerang:     `<path d="M4 4c1 6 5 12 11 15l2-4c-4-2-7-6-8-11z"/>`,
-  anvil:         `<path d="M4 8h10l4 2-4 2H4z"/><path d="M8 12l-1 4h8l-1-4"/><path d="M5 19h12"/>`,
   posSwap:       `<rect x="3" y="4" width="7" height="7" rx="1"/><rect x="14" y="13" width="7" height="7" rx="1"/><path d="M10 7h7v6"/><polyline points="14 10 17 13 20 10"/>`,
-  reboundArrow:  `<path d="M3 21h18"/><path d="M7 4v9l5 7 5-9V6"/><polyline points="14 9 17 6 20 9"/>`,
   doorReturn:    `<path d="M4 3h9v18H4z"/><circle cx="10" cy="12" r="1"/><path d="M21 12h-5"/><polyline points="19 9 16 12 19 15"/>`,
+  umstieg:       `<path d="M7 20V5M4 8l3-3 3 3M17 4v15M14 16l3 3 3-3M10 12h4"/>`,
+  aufschwung:    `<path d="M3 21h18"/><path d="M3 17c4 0 6-1 9-5s5-6 9-7"/><polyline points="16 5 21 5 20 10"/>`,
+  glanztag:      `<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/><path d="M12 12.4l1.1 2.2 2.4.3-1.8 1.7.5 2.4-2.2-1.2-2.2 1.2.5-2.4-1.8-1.7 2.4-.3z"/>`,
+  abschwung:     `<path d="M3 21h18"/><path d="M3 5c4 0 6 1 9 5s5 6 9 7"/><polyline points="16 17 21 17 20 12"/>`,
+  rost:          `<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/><path d="M19.5 3.5h.01M21 6h.01M18 2h.01"/>`,
   partnerWalk:   `<circle cx="12" cy="5.5" r="2.5"/><path d="M12 8v4l-6 5M12 12l6 5"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/>`,
   pendulum:      `<path d="M8 3h8M12 3l-4 12"/><circle cx="7.2" cy="17.5" r="2.5"/><path d="M5 21a9 9 0 0014 0"/>`,
   laneSwap:      `<path d="M4 3v18M20 3v18"/><path d="M9 20l6-4-6-4 6-4"/><polyline points="12 4 15 4 15 7"/>`,
@@ -7020,14 +7027,14 @@ function _belegIstQuote(text, a){
   const m = String(text || '').match(/([\d,]+)\s?%/);
   return !!(m && a && Math.abs(parseFloat(m[1].replace(',', '.')) - a.k / a.n * 100) <= 1);
 }
-function belegZellenHtml(a){
+function belegZellenHtml(a, kurz){
   if(!a) return '';
   const je = Math.max(1, Math.ceil(a.n / 100));
   const z = Math.ceil(a.n / je), voll = Math.round(a.k / je);
   let zellen = '';
   for(let i = 0; i < z; i++) zellen += i < voll ? '<i class="j"></i>' : '<i></i>';
   return `<div class="bl-zellen">${zellen}</div>
-    <div class="bl-satz">${esc(a.satz)}${je > 1 ? ` · eine Zelle für je ${je}` : ''}</div>`;
+    <div class="bl-satz">${esc(kurz ? a.k + ' von ' + a.n : a.satz)}${je > 1 ? ` · eine Zelle für je ${je}` : ''}</div>`;
 }
 function belegFeldHtml(eintraege, mitSkala){
   const e = (eintraege || []).filter(x => x && x.v != null && isFinite(x.v));
@@ -7102,7 +7109,7 @@ function belegHtml(o){
   const a = belegAnteil(o.ev);
   const teile = [];
   if(a) teile.push(blattAbschnittHtml('chartBar', 'Woraus', a.n + ' insgesamt')
-    + `<div class="bl-box">${belegZellenHtml(a)}</div>`);
+    + `<div class="bl-box">${belegZellenHtml(a, o.kurz)}</div>`);
   const feld = belegFeldHtml(o.feld, true);
   if(feld) teile.push(blattAbschnittHtml('users', 'Wo im Feld', o.feld.length + ' im Rennen')
     + `<div class="bl-box">${feld}${o.dahinter ? `<div class="bl-satz">${o.dahinter}</div>` : ''}</div>`);
@@ -17551,10 +17558,10 @@ const AMBIENT_SLOTS = [15];
 const AMBIENT_SLOT_ROLLE = {
   form_best_wr:'stand', form_striker:'stand', form_defender:'stand',
   form_clutch:'stand', form_close_wins:'stand', form_most_active:'stand',
-  award_potd_leader:'stand', award_potw_leader:'stand', award_gold_leader:'stand',
+  award_gold_leader:'stand', personal_umsteiger:'stand', personal_aufschwung:'stand',
   award_total_leader:'stand', fun_award_leader:'stand', fun_leader:'stand',
   fun_top_scorer:'stand', season_title_race:'stand',
-  personal_wr:'stand', personal_streak:'stand', personal_scorer:'stand',
+  personal_wr:'stand', personal_streak:'stand',
   prestige_fuehrung:'stand', prestige_schwelle:'stand', prestige_schritt:'stand',
 
   history_age:'geschichte', fun_biggest_win:'geschichte', fun_busiest_day:'geschichte',
@@ -17562,7 +17569,8 @@ const AMBIENT_SLOT_ROLLE = {
   rivalry_close:'geschichte', chronicle_spotlight:'geschichte',
   award_latest_gold:'geschichte', personal_favourite_opp:'geschichte',
   personal_best_mate:'geschichte', personal_position:'geschichte',
-  personal_grinder:'geschichte', insignium_stand:'geschichte', titelband_stand:'geschichte',
+  personal_grinder:'geschichte', personal_glanztag:'geschichte',
+  insignium_stand:'geschichte', titelband_stand:'geschichte',
 };
 function _ambientRolleVon(key){ return AMBIENT_SLOT_ROLLE[key] || null; }
 function _ambientRolleFuerSlot(){ return 'mix'; }
@@ -19825,6 +19833,16 @@ function _buildAmbientStories(now, pm, nameOf, tagesStories){
   const known = (Array.isArray(_cache._stories) ? _cache._stories : [])
     .filter(s => s && typeof s.id === 'string' && s.id.indexOf('ambient_') === 0);
   const knownById = new Map(known.map(s => [s.id, s]));
+  const feedPidsZwischen = (vonMs, bisMs) => {
+    const set = new Set();
+    if(typeof _newsPids !== 'function') return set;
+    generation.forEach(s => {
+      const t = new Date(s.when).getTime(), d = s.dataRef || {};
+      if(!(t >= vonMs && t <= bisMs) || d.type === 'spiel' || d.type === 'ambient') return;
+      try { (_newsPids(s) || []).forEach(p => set.add(p)); } catch(e){}
+    });
+    return set;
+  };
 
   const cooldownDaysOf = {};
   for(const t of templates) cooldownDaysOf[t.key] = t.cooldown || AMBIENT_COOLDOWN_DAYS;
@@ -19879,6 +19897,11 @@ function _buildAmbientStories(now, pm, nameOf, tagesStories){
       }
     }
 
+    let letzte = null;
+    for(const h of history){ if(h.ts < refMs && h.rubrik && (!letzte || h.ts > letzte.ts)) letzte = h; }
+    if(letzte) recentRubriken.add(letzte.rubrik);
+    const feedPids = feedPidsZwischen(refMs - 3 * _dayMs, slot.when.getTime());
+
     const rng = _ambientRng(_ambientHash(slot.dateKey + '_' + slot.slotHour));
     const bag = [];
     templates.forEach((t, i) => { const w = Math.max(1, t.weight || 1); for(let k = 0; k < w; k++) bag.push(i); });
@@ -19896,11 +19919,11 @@ function _buildAmbientStories(now, pm, nameOf, tagesStories){
     }
 
     const rolle = _ambientRolleFuerSlot(slot.slotHour);
-    for(let pass = 0; pass < 4 && !chosen; pass++){
+    for(let pass = -1; pass < 4 && !chosen; pass++){
       for(const idx of order){
         const t = templates[idx];
         if(usedToday.has(t.key)) continue;
-        if(pass === 0 && cooldownKeys.has(t.key)) continue;
+        if(pass <= 0 && cooldownKeys.has(t.key)) continue;
         if(pass < 2 && (usedRubriken.has(rubrikVon(t.key)) || recentRubriken.has(rubrikVon(t.key)))) continue;
         if(pass < 2){
           const r = _ambientRolleVon(t.key);
@@ -19913,6 +19936,7 @@ function _buildAmbientStories(now, pm, nameOf, tagesStories){
         if(pass < 2){
           if(pids.length && pids.some(p => usedPids.has(p) || recentPids.has(p))) continue;
         }
+        if(pass < 0 && (!pids.length || pids.some(p => feedPids.has(p)))) continue;
         if(pass < 3 && (pids.length
             ? pids.some(p => recentPaare.has(t.key + '|' + p))
             : recentPaare.has(t.key + '|'))) continue;
@@ -20081,26 +20105,6 @@ function _ambientTemplatePool(now, pm, nameOf){
       desc:`${cs} Siege in Folge. Aktuell die heißeste Serie der Liga.`,
       vv: cs+'×', vl:'in Folge',
       dataRef:{ ambientPid: pid, bild:{f:'lauf', p:pid, n:cs} } };
-  }});
-
-  T.push({ key:'personal_scorer', make: () => {
-    const rank = _rekRang('sniper');
-    if(!rank.length) return null;
-    const lead = _rekSpitze(rank), top = rank[0], nxt = rank[lead.length];
-    if(lead.length > 1){
-      return { cat:'personal', ic:'ball', prio:3,
-        title:`Gleichstand im Torrausch`,
-        desc:`${_namesOf(lead)} treffen je ${komma(top.wert)} mal je Sturmspiel. Näher kommt niemand.`,
-        vv: komma(top.wert), vl:'Ø Tore',
-        dataRef:{ ambientPids: lead.slice(0,2).map(x=>x.pid), pairKind:'duel', bild:_bRennen(rank.map(x => ({p:x.pid, v:x.wert, t:komma(x.wert)}))) } };
-    }
-    return { cat:'personal', ic:'ball', prio:3,
-      title:`${nameOf(top.pid)} trifft am laufenden Band`,
-      desc: nxt
-        ? `${_evSatz(top.ev)}. Bestwert der Liga, ${nameOf(nxt.pid)} folgt mit ${komma(nxt.wert)}.`
-        : `${_evSatz(top.ev)}. Bestwert der Liga.`,
-      vv: komma(top.wert), vl:'Ø Tore',
-      dataRef:{ ambientPid: top.pid, bild:_bRennen(rank.map(x => ({p:x.pid, v:x.wert, t:komma(x.wert)}))) } };
   }});
 
   T.push({ key:'rivalry_most', make: () => {
@@ -20472,26 +20476,32 @@ function _ambientTemplatePool(now, pm, nameOf){
     return Object.keys(n).sort((x, y) => n[y] - n[x] || (x < y ? -1 : 1)).slice(0, 3).map(pid => [pid, n[pid]]);
   };
 
-  T.push({ key:'award_potd_leader', weight:2, make: () => {
-    const rank = _rekRang('daylord');
-    if(!rank.length) return null;
+  const _bestmarke = (key, cid, titel, satz) => T.push({ key, weight:2, make: () => {
+    const def = CHRONICLE_BY_ID[cid], rank = _rekRang(cid);
+    if(!def || !rank.length) return null;
     const lead = _rekSpitze(rank), top = rank[0], nxt = rank[lead.length];
-    const pct = x => Math.round(x.wert * 100) + ' %';
-    if(lead.length > 1){
-      return { cat:'badge', ic:'trophyDay', prio:5,
-        title:`Kopf-an-Kopf um die Spieltage`,
-        desc:`${_namesOf(lead)} beherrschen je ${pct(top)} der eigenen Spieltage.`,
-        vv: pct(top), vl:'Spieltage',
-        dataRef:{ ambientPids: lead.slice(0,2).map(x=>x.pid), pairKind:'duel', bild:_bRennen(rank.map(x => ({p:x.pid, v:x.wert, t:pct(x)})), false, 'podest') } };
-    }
-    return { cat:'badge', ic:'trophyDay', prio:5,
-      title:`${nameOf(top.pid)} ist der Tageskönig`,
-      desc: nxt
-        ? `${_evSatz(top.ev)}. Bestwert der Liga, ${nameOf(nxt.pid)} folgt mit ${pct(nxt)}.`
-        : `${_evSatz(top.ev)}. Bisher hat das sonst niemand geschafft.`,
-      vv: pct(top), vl:'Spieltage',
-      dataRef:{ ambientPid: top.pid, bild:_bRennen(rank.map(x => ({p:x.pid, v:x.wert, t:pct(x)})), false, 'podest') } };
+    const p = (_chronicleCtx().P || {})[top.pid];
+    if(!p) return null;
+    const pkt = x => '+' + Math.round(x.wert * 100);
+    const bild = _bRennen(rank.map(x => ({p:x.pid, v:x.wert, t:pkt(x)})));
+    if(lead.length > 1) return { cat:'personal', ic:def.ic, prio:4,
+      title:`Gleichstand beim ${def.name.replace(/^Der /, '')}`,
+      desc:`${_namesOf(lead)} liegen gleichauf, je ${pkt(top)} Prozentpunkte über der eigenen Quote.`,
+      vv:pkt(top), vl:'%-Punkte',
+      dataRef:{ ambientPids: lead.slice(0, 2).map(x => x.pid), pairKind:'duel', bild } };
+    return { cat:'personal', ic:def.ic, prio:4,
+      title:titel(nameOf(top.pid)),
+      desc:`${satz(p, nameOf(top.pid))}. Bestwert der Liga`
+        + (nxt ? `, ${nameOf(nxt.pid)} folgt mit ${pkt(nxt)} Prozentpunkten.` : '.'),
+      vv:pkt(top), vl:'%-Punkte',
+      dataRef:{ ambientPid: top.pid, bild } };
   }});
+  _bestmarke('personal_glanztag', 'glanztag', n => `Der Glanztag gehört ${n}`,
+    (p, n) => `Am ${p.gtLabel} gewann ${n} ${p.gtW} von ${p.gtN} Partien, sonst sind es ${pct(p.gtQ)} %`);
+  _bestmarke('personal_umsteiger', 'umsteiger', n => `${n} gewinnt nach dem Wechsel`,
+    (p, n) => `Nach einem Wechsel zwischen Sturm und Abwehr gewinnt ${n} ${pct(p.umW / p.umN)} % der Partien, sonst ${pct(p.umRaus)} %`);
+  _bestmarke('personal_aufschwung', 'aufschwung', n => `${n} im Aufschwung`,
+    (p, n) => `${n} gewinnt ${pct(p.asNeu)} % der letzten 25 Partien, davor waren es ${pct(p.asAlt)} %`);
 
   T.push({ key:'award_potd_zahl', weight:1, make: () => {
     if(typeof countDayWins !== 'function') return null;
@@ -20514,33 +20524,18 @@ function _ambientTemplatePool(now, pm, nameOf){
       dataRef:{ ambientPid: top.pid, bild:_bRennen(rank.map(x => ({p:x.pid, v:x.v, n:x.v, t:x.v + '×'})), false, 'sammlung') } };
   }});
 
-  T.push({ key:'award_potw_leader', weight:2, make: () => {
-    const rank = _rekRang('weeklord');
-    if(!rank.length) return null;
-    const lead = _rekSpitze(rank), top = rank[0], nxt = rank[lead.length];
-    const pct = x => Math.round(x.wert * 100) + ' %';
-    if(lead.length > 1){
-      return { cat:'badge', ic:'weekKing', prio:5,
-        title:`Geteilte Macht über die Wochen`,
-        desc:`${_namesOf(lead)} liegen gleichauf: je ${pct(top)} der eigenen Wochen gewonnen.`,
-        vv: pct(top), vl:'Wochen',
-        dataRef:{ ambientPids: lead.slice(0,2).map(x=>x.pid), pairKind:'duel', bild:_bRennen(rank.map(x => ({p:x.pid, v:x.wert, t:pct(x)})), false, 'podest') } };
-    }
-    return { cat:'badge', ic:'weekKing', prio:5,
-      title:`${nameOf(top.pid)} beherrscht die Wochen`,
-      desc: nxt
-        ? `${_evSatz(top.ev)}. Bestwert der Liga, ${nameOf(nxt.pid)} folgt mit ${pct(nxt)}.`
-        : `${_evSatz(top.ev)}. Bisher hat das sonst niemand geschafft.`,
-      vv: pct(top), vl:'Wochen',
-      dataRef:{ ambientPid: top.pid, bild:_bRennen(rank.map(x => ({p:x.pid, v:x.wert, t:pct(x)})), false, 'podest') } };
-  }});
-
   T.push({ key:'award_potw_zahl', weight:1, make: () => {
     if(typeof countPeriodWins !== 'function') return null;
     const rank = _awardRank(activePids, pid => countPeriodWins(pid, matches, 'week'));
     if(!rank.length) return null;
     const lead = _awardLeaders(rank), top = rank[0], nxt = rank[lead.length];
-    if(lead.length > 1) return null;
+    if(lead.length > 1){
+      return { cat:'badge', ic:'weekKing', prio:4,
+        title:`Kopf-an-Kopf um die Wochensiege`,
+        desc:`${_namesOf(lead)} stehen gleichauf bei je ${top.v}× Spieler der Woche.`,
+        vv: top.v + '×', vl:'Wochensiege',
+        dataRef:{ ambientPids: lead.slice(0,2).map(x=>x.pid), pairKind:'duel', bild:_bRennen(rank.map(x => ({p:x.pid, v:x.v, n:x.v, t:x.v + '×'})), false, 'sammlung') } };
+    }
     return { cat:'badge', ic:'weekKing', prio:4,
       title:`${nameOf(top.pid)} sammelt Wochensiege`,
       desc: nxt
@@ -20921,6 +20916,11 @@ const STORY_ABGEMELDET = [
   'rek_giant_slayer_', 'rek_thriller_', 'rek_unbowed_', 'rek_homefield_',
   'rek_sundaychild_', 'rek_strongphase_', 'rek_steigerung_', 'rek_upswing_',
   'rek_coldshower_', 'rek_torbilanz_', 'rek_striker_u_',
+  'rek_daylord_', 'rek_weeklord_', 'rek_unbeugsam_', 'rek_eloday_', 'rek_kopfhoch_',
+  'rek_breitenwirkung_', 'rek_retourkutsche_', 'rek_rueckschlag_', 'rek_metronom_',
+  'rek_gegenwind_', 'rek_entscheider_', 'rek_laufstopper_', 'rek_sovereign_', 'rek_rock_',
+  'rek_sniper_', 'rek_densephase_', 'rek_torrausch_', 'rek_bitterloss_', 'rek_uebersoll_',
+  'rek_deutlich_', 'rek_ausgleich_',
   'match_result_'
 ];
 function _storyWiderrufen(s){
@@ -25404,7 +25404,15 @@ function _newsInsTagZeilen(s){
 function _ndInsTagBlatt(s){
   const d = (s && s.dataRef) || {}, l = d.zuege || [], pm = pmap(), z = l[0];
   if(!z || !pm[z.pid]) return null;
-  const kopf = `<div class="nd-buehne nd-is">`
+  const da = l.filter(x => pm[x.pid]);
+  const kopf = da.length > 1
+    ? `<div class="nd-buehne nd-is nd-is-viele">` + da.map(x =>
+        `<span class="nd-is-sp${x.art === 'ab' ? ' ab' : ''}" data-pid="${esc(x.pid)}">`
+        + `<span class="nd-is-neu"><span class="nd-is-z">${_insZeichen(x.pid, x.nach)}</span>`
+        + `<span class="nd-is-av">${avHtml(pm[x.pid], '', {px:30})}</span></span>`
+        + `<b>${esc(_spName(x.pid))}</b><small>${esc(_insLageName(x.nach))}</small>`
+        + `<em>${esc(_insArtWort(x))}</em></span>`).join('') + `</div>`
+    : `<div class="nd-buehne nd-is">`
     + `<div class="nd-is-w"><span class="nd-is-alt">${_insZeichen(z.pid, z.vor, true)}<small>${esc(_insLageName(z.vor))}</small></span>`
     + `<svg class="nd-rk-pf${z.art === 'ab' ? ' ab' : ''}" viewBox="0 0 40 16" aria-hidden="true"><path d="M2 8H34"/><path d="M28 3L35 8L28 13"/></svg>`
     + `<span class="nd-is-neu" data-pid="${esc(z.pid)}"><span class="nd-is-z">${_insZeichen(z.pid, z.nach)}</span>`
@@ -26231,7 +26239,7 @@ function _ndRekordBlatt(s){
   const ab = (t, html) => html ? `<div class="nd-section">${esc(t)}</div>${html}` : '';
   return {kopf, mitte:(_ndNeu(d.cond) ? `<div class="tnote nd-rk-c">${esc(d.cond)}</div>` : '')
     + _newsVerfolger(d.rekordId, neu, d.wert)
-    + belegHtml({ev:d.ev})
+    + belegHtml({ev:d.ev, kurz:true})
     + ab('Wirkung auf die Laufbahn', wirkung)
     + (def ? `<button class="btn ghost sm" data-chron="${esc(def.id)}" style="margin-top:12px;width:100%">Rekord öffnen</button>` : '')};
 }
@@ -26852,7 +26860,7 @@ function _ndMitteRoh(s){
             <div class="nd-stat-val">${esc(_namenListe(vor.map(nameOf)))} ›</div></div>` : ''}
           ${_newsVerfolger(d.rekordId, d.playerIds, d.wert)}
           ${
- belegHtml({ev:d.ev})}
+ belegHtml({ev:d.ev, kurz:true})}
           ${rekordLaufbahn(d.rekordId)}
           ${def ? `<button class="btn ghost sm" data-chron="${esc(def.id)}" style="margin-top:12px;width:100%">Rekord öffnen</button>` : ''}`;
       }
@@ -27811,27 +27819,7 @@ const DISZIPLINEN = [
       zeit:p => p.bestMonth ? seasonLabel(p.bestMonth.sid) : ''
     }},
 
-  {id:'daylord', name:'Der Platzhirsch', short:'Revier', ic:'dayKing', tone:'gold', art:'leistung',
-    allzeit:{
-      kammer:'mark', basis:150, offen:true,
-      zeitraum:'Ganze Laufbahn, je Spieltag',
-      mind:'12 eigene Spieltage',
-      wie:'Player of the Day ist, wer an einem Spieltag die beste Siegquote hat; bei Gleichstand entscheidet der Elo-Gewinn des Tages. Der Nenner sind die Spieltage, an denen der Spieler selbst angetreten ist, und nicht alle Spieltage der Liga.',
-      cond:'Höchster Anteil eigener Spieltage als Player of the Day, ab 12 Spieltagen',
-      val:p => p.days >= 12 ? p.potd/p.days : null,
-      ev:(p,v) => `${Math.round(v*100)} % aller ${p.days} Spieltage beherrscht · ${p.potd}× Player of the Day`
-    }},
 
-  {id:'weeklord', name:'Der Wochenherr', short:'Wochenherr', ic:'weekKing', tone:'gold', art:'leistung',
-    allzeit:{
-      kammer:'mark', basis:150,
-      zeitraum:'Ganze Laufbahn, je Woche',
-      mind:'10 eigene Wochen',
-      wie:'Player of the Week ist, wer eine Woche mit der besten Bilanz abschließt. Der Nenner sind die abgeschlossenen Wochen, in denen der Spieler selbst angetreten ist.',
-      cond:'Höchster Anteil eigener Wochen als Player of the Week, ab 10 Wochen',
-      val:p => p.weeks >= 10 ? p.potw/p.weeks : null,
-      ev:(p,v) => `${Math.round(v*100)} % aller ${p.weeks} Wochen gewonnen · ${p.potw}× Player of the Week`
-    }},
 
   {id:'spotless', name:'Der makellose Tag', short:'Makellos', ic:'trophyDay', tone:'gold', art:'leistung',
     monat:{
@@ -27858,15 +27846,6 @@ const DISZIPLINEN = [
     }},
 
   {id:'kopfhoch', name:'Der Tagesabschluss', short:'Tagesende', ic:'tagesabschluss', tone:'blue', art:'leistung',
-    allzeit:{
-      kammer:'koennen', basis:150, offen:true,
-      zeitraum:'Ganze Laufbahn, je Spieltag',
-      mind:'15 eigene Spieltage',
-      wie:'Ein Tag zählt, wenn am Ende mindestens so viele Siege wie Niederlagen stehen. Der Nenner sind alle eigenen Spieltage, nicht die Partien und nicht der Kalender.',
-      cond:'Höchster Anteil eigener Spieltage ohne negative Bilanz, ab 15 eigenen Spieltagen',
-      val:p => p.taN >= 15 ? p.taOk / p.taN : null,
-      ev:(p,v) => `${Math.round(v*100)} % der Spieltage nicht im Minus · ${p.taOk} von ${p.taN}`
-    },
     monat:{
       beiname:'Der Gefestigte',
       art:'konstanz',
@@ -27891,15 +27870,6 @@ const DISZIPLINEN = [
     }},
 
   {id:'ausgleich', name:'Der Ausgleicher', short:'Ausgleich', ic:'jederPartner', tone:'gold', art:'leistung',
-    allzeit:{
-      kammer:'koennen', basis:150,
-      zeitraum:'Ganze Laufbahn, je Partner',
-      mind:'3 Partner mit je 15 gemeinsamen Partien',
-      wie:'Für jeden Partner mit mindestens fünfzehn gemeinsamen Partien wird die gemeinsame Siegquote gerechnet. Gewertet wird die niedrigste davon. Nicht der beste Partner zählt, sondern der schwierigste.',
-      cond:'Beste Siegquote neben dem eigenen schwierigsten Partner, ab 3 Partnern mit je 15 gemeinsamen Partien',
-      val:p => (p.agQ != null && p.agN >= 3) ? p.agQ : null,
-      ev:(p,v) => `${Math.round(v*100)} % neben dem schwierigsten Partner · ${p.agN} Partner ab 15 Partien`
-    },
     monat:{
       beiname:'Der Verlässliche',
       art:'koennen',
@@ -27932,16 +27902,6 @@ const DISZIPLINEN = [
       ev:(p,v) => `+${Math.round(v*100)} %-Punkte in engen Spielen · ${pct(p.closeW/p.close)} statt ${pct((p.wins-p.closeW)/(p.games-p.close))} % sonst`
     }},
 
-  {id:'entscheider', name:'Der Entscheider', short:'Entscheid', ic:'coinFlip', tone:'gold', art:'leistung',
-    allzeit:{
-      kammer:'koennen', basis:150, offen:true,
-      zeitraum:'Ganze Laufbahn, alle engen Partien',
-      mind:'15 enge Partien',
-      wie:'Eng ist eine Partie mit höchstens zwei Toren Unterschied. Der Nenner sind genau diese Partien und nicht alle: wie viele enge Partien jemand hatte, ändert den Wert nicht.',
-      cond:'Höchste Siegquote in engen Partien, ab 15 engen Partien',
-      val:p => p.close >= 15 ? p.closeW / p.close : null,
-      ev:(p,v) => `${pct(v)} % in engen Partien gewonnen · ${p.closeW} von ${p.close}`
-    }},
 
   {id:'gleichauf', name:'Auf Augenhöhe', short:'Auf Höhe', ic:'augenhoehe', tone:'gold', art:'leistung',
     allzeit:{
@@ -27966,16 +27926,6 @@ const DISZIPLINEN = [
         p=>{const d=p.partien.filter(_stAugenhoehe);
       return `${_stSiege(d)} von ${d.length} offenen Partien · sonst ${pct(p.q)} %`;}))}},
 
-  {id:'gegenwind', name:'Gegen den Wind', short:'Gegenwind', ic:'underdog', tone:'acid', art:'leistung',
-    allzeit:{
-      kammer:'koennen', basis:150, offen:true,
-      zeitraum:'Ganze Laufbahn',
-      mind:'20 Partien als Außenseiter',
-      wie:'Außenseiter heißt: die Elo-Rechnung gab dem eigenen Team vor dem Anpfiff weniger als 45 Prozent Siegchance. Der Nenner sind genau diese Partien und nicht die ganze Laufbahn.',
-      cond:'Beste Siegquote als Außenseiter, ab 20 Partien als Außenseiter',
-      val:p => p.unterN >= 20 ? p.unterW / p.unterN : null,
-      ev:(p,v) => `${pct(v)} % als Außenseiter gewonnen · ${p.unterW} von ${p.unterN}`
-    }},
 
   {id:'destroyer', name:'Der Zerstörer', short:'Zerstörer', ic:'abrissbirne', tone:'orange', art:'leistung',
     allzeit:{
@@ -28001,27 +27951,8 @@ const DISZIPLINEN = [
       return r.filter(d=>_stSiege(d)*2>d.length).length/r.length;},
         1,
         p=>{const r=Object.values(p.gegnerGrp).filter(d=>d.length>=3);
-      return `gegen ${r.filter(d=>_stSiege(d)*2>d.length).length} von ${r.length} regelmäßigen Gegnern im Plus`;}))},
-    allzeit:{
-      kammer:'koennen', basis:150, offen:true,
-      zeitraum:'Ganze Laufbahn',
-      mind:'4 Gegner mit je 6 Duellen',
-      wie:'Ein Gegner zählt ab sechs gemeinsamen Duellen. Für jeden dieser Gegner steht eine eigene Siegquote, und gewertet wird die niedrigste davon. Der Nenner ist jeweils die Zahl der Duelle gegen genau diesen Gegner und nicht die Zahl aller Partien.',
-      cond:'Höchste Siegquote gegen den schwächsten eigenen Gegner, ab 4 Gegnern mit je 6 Duellen',
-      val:p => p.gjMin,
-      ev:(p,v) => `${pct(v)} % gegen jeden der ${p.gjN} regelmäßigen Gegner`
-    }},
+      return `gegen ${r.filter(d=>_stSiege(d)*2>d.length).length} von ${r.length} regelmäßigen Gegnern im Plus`;}))}},
 
-  {id:'retourkutsche', name:'Die Retourkutsche', short:'Retour', ic:'boomerang', tone:'gold', art:'leistung',
-    allzeit:{
-      kammer:'koennen', basis:150, offen:true,
-      zeitraum:'Ganze Laufbahn, jedes Wiedersehen',
-      mind:'10 Wiedersehen',
-      wie:'Ein Wiedersehen ist die nächste eigene Partie gegen genau dasselbe Gegnerduo, nachdem das vorige Duell gegen dieses Duo verloren ging. Der eigene Partner darf wechseln. Der Nenner sind diese Wiedersehen und nicht alle Partien.',
-      cond:'Höchste Siegquote beim nächsten Wiedersehen nach einer Pleite, ab 10 Wiedersehen',
-      val:p => p.rkN >= 10 ? p.rkW / p.rkN : null,
-      ev:(p,v) => `${pct(v)} % beim nächsten Wiedersehen gewonnen · ${p.rkW} von ${p.rkN}`
-    }},
 
   {id:'deutlich', name:'Der Deutliche', short:'Deutlich', ic:'plusMinus', tone:'gold', art:'leistung',
     monat:{
@@ -28034,16 +27965,7 @@ const DISZIPLINEN = [
         p=>p.games>=8,
         p=>(p.gf-p.ga)/p.games,
         2,
-        (p,v)=>`${v<0?'−':'+'}${komma(Math.abs(v))} Tore je Partie · ${p.gf}:${p.ga}`))},
-    allzeit:{
-      kammer:'koennen', basis:150, offen:true,
-      zeitraum:'Ganze Laufbahn',
-      mind:'30 Partien',
-      wie:'Eigene Tore minus Gegentore, geteilt durch alle eigenen Partien. Gewertet wird der Schnitt, nicht die Summe.',
-      cond:'Beste durchschnittliche Tordifferenz je Partie, ab 30 Partien',
-      val:p => p.games >= 30 ? p.gd / p.games : null,
-      ev:(p,v) => `${v >= 0 ? '+' : '−'}${komma(Math.abs(v))} Tore je Partie · ${p.gf}:${p.ga} in ${p.games} Partien`
-    }},
+        (p,v)=>`${v<0?'−':'+'}${komma(Math.abs(v))} Tore je Partie · ${p.gf}:${p.ga}`))}},
 
   {id:'atk_ace', name:'Der komplette Stürmer', short:'Sturm', ic:'bolt', tone:'orange', art:'leistung',
     allzeit:{
@@ -28080,27 +28002,7 @@ const DISZIPLINEN = [
       ev:(p,v) => `${Math.round(v*100)} Punkte über der Erwartung · ${pct(p.rcQ)} % statt ${pct(p.rcExp)} % ${p.rcPos === 'atk' ? 'im Sturm' : 'in der Abwehr'}`
     }},
 
-  {id:'rock', name:'Der Fels', short:'Fels', ic:'shieldCheck', tone:'blue', art:'leistung',
-    allzeit:{
-      kammer:'koennen', basis:150, offen:true,
-      zeitraum:'Ganze Laufbahn, alle Abwehrspiele',
-      mind:'20 Abwehrspiele',
-      wie:'Das Gegenstück zum Torjäger: die Tore, die das eigene Team in den Partien kassiert hat, in denen dieser Spieler hinten stand, geteilt durch die Zahl dieser Partien.',
-      cond:'Wenigste Gegentore je Abwehrspiel, ab 20 Abwehrspielen',
-      val:p => (p.defG >= 20) ? -(p.defConceded/p.defG) : null,
-      ev:(p,v) => `${komma(-v)} Gegentore je Abwehrspiel im Schnitt · ${p.defG} Spiele`
-    }},
 
-  {id:'sniper', name:'Der Torjäger', short:'Torjäger', ic:'ball', tone:'orange', art:'leistung',
-    allzeit:{
-      kammer:'koennen', basis:150, offen:true,
-      zeitraum:'Ganze Laufbahn, alle Sturmspiele',
-      mind:'20 Sturmspiele',
-      wie:'Gezählt werden die Tore, die das eigene Team in den Partien erzielt hat, in denen dieser Spieler vorne stand, geteilt durch die Zahl dieser Partien. Gezählt werden die Tore des ganzen Teams: erfasst wird nur der Endstand, nicht wer getroffen hat.',
-      cond:'Meiste eigene Tore je Sturmspiel, ab 20 Sturmspielen',
-      val:p => (p.atkG >= 20) ? p.atkGoals/p.atkG : null,
-      ev:(p,v) => `${komma(v)} Tore je Sturmspiel im Schnitt · ${p.atkG} Spiele`
-    }},
 
   {id:'comeback_king', name:'Der Stehaufmann', short:'Comeback', ic:'comeback', tone:'acid', art:'leistung',
     allzeit:{
@@ -28119,16 +28021,6 @@ const DISZIPLINEN = [
       ev:(p,v) => `+${Math.round(v*100)} %-Punkte nach einer Pleite · ${pct(p.afterLoss/p.afterLossOpp)} statt ${pct((p.wins - p.afterLoss)/(p.games - p.afterLossOpp))} % sonst`
     }},
 
-  {id:'rueckschlag', name:'Der Rückschlag', short:'Rückschlag', ic:'reboundArrow', tone:'acid', art:'leistung',
-    allzeit:{
-      kammer:'koennen', basis:150, offen:true,
-      zeitraum:'Ganze Laufbahn',
-      mind:'10 Gelegenheiten',
-      wie:'Eine Gelegenheit ist jede Partie, vor der in Spielreihenfolge mindestens zwei eigene Niederlagen in Folge standen. Nach der dritten und jeder weiteren Niederlage entsteht für die nächste Partie erneut eine Gelegenheit. Der Nenner sind diese Gelegenheiten und nicht alle Partien.',
-      cond:'Höchste Siegquote nach zwei Niederlagen in Folge, ab 10 Gelegenheiten',
-      val:p => p.rsN >= 10 ? p.rsW / p.rsN : null,
-      ev:(p,v) => `${pct(v)} % nach zwei Niederlagen in Folge gewonnen · ${p.rsW} von ${p.rsN}`
-    }},
 
   {id:'damage_control', name:'Der Widerstand', short:'Widerstand', ic:'widerstand', tone:'blue', art:'leistung',
     allzeit:{
@@ -28142,15 +28034,6 @@ const DISZIPLINEN = [
     }},
 
   {id:'metronom', name:'Das Metronom', short:'Metronom', ic:'clock', tone:'blue', art:'leistung',
-    allzeit:{
-      kammer:'koennen', basis:150, offen:true,
-      zeitraum:'Ganze Laufbahn, je Spieltag',
-      mind:'12 Spieltage mit je 3 Partien',
-      wie:'Für jeden eigenen Spieltag mit mindestens drei Partien steht eine Tagesquote. Gewertet wird die mittlere Tagesquote minus die Hälfte der mittleren Abweichung dieser Quoten. Hohe Tagesquoten zählen, gleichmäßig schwache nicht.',
-      cond:'Beste Verbindung aus hoher und gleichmäßiger Tagesleistung, ab 12 Spieltagen mit je 3 Partien',
-      val:p => (p.mtMad != null && p.mtN >= 12) ? p.mtAvg - 0.5 * p.mtMad : null,
-      ev:(p,v) => `${pct(v)} Tageswert · ${pct(p.mtAvg)} % im Schnitt, ${pct(p.mtMad)} Streuung`
-    },
     monat:{
       beiname:'Der Taktgeber',
       art:'konstanz',
@@ -28175,27 +28058,7 @@ const DISZIPLINEN = [
       ev:(p,v) => `${Math.round(v*100)} % aus den letzten 20 Partien · ${p.l20W} Siege`
     }},
 
-  {id:'densephase', name:'Die dichte Phase', short:'Dichte', ic:'gateShut', tone:'blue', art:'leistung',
-    allzeit:{
-      kammer:'form', basis:150, offen:true, fenster:true,
-      zeitraum:'Die letzten 30 Partien',
-      mind:'30 Partien',
-      wie:'Dasselbe Fenster wie beim Torrausch, von der anderen Seite: die Gegentore der letzten dreißig Partien, geteilt durch diese dreißig. Wenig ist besser.',
-      cond:'Wenigste Gegentore je Partie in den letzten 30 Partien, ab 30 Partien',
-      val:p => p.l30N >= 30 ? -(p.l30Ga / p.l30N) : null,
-      ev:p => `${komma(p.l30Ga/p.l30N)} Gegentore je Partie · ${p.l30Ga} in den letzten 30 Partien`
-    }},
 
-  {id:'torrausch', name:'Der Torrausch', short:'Torrausch', ic:'goalRush', tone:'orange', art:'leistung',
-    allzeit:{
-      kammer:'form', basis:150, offen:true, fenster:true,
-      zeitraum:'Die letzten 30 Partien',
-      mind:'30 Partien',
-      wie:'Die Tore des eigenen Teams in den letzten dreißig Partien, geteilt durch diese dreißig. Gewertet wird der Schnitt, nicht die Summe.',
-      cond:'Meiste eigene Tore je Partie in den letzten 30 Partien, ab 30 Partien',
-      val:p => p.l30N >= 30 ? p.l30Gf / p.l30N : null,
-      ev:(p,v) => `${komma(v)} eigene Tore je Partie · ${p.l30Gf} Tore in den letzten 30 Partien`
-    }},
 
   {id:'allrounder', name:'Der Allrounder', short:'Allround', ic:'bothSides', tone:'gold', art:'leistung',
     allzeit:{
@@ -28212,16 +28075,6 @@ const DISZIPLINEN = [
       ev:(p,v) => `+${Math.round(v*100)} Punkte auf beiden Positionen · +${Math.round(p.atkPerf/p.atkG*100)} vorne, +${Math.round(p.defPerf/p.defG*100)} hinten`
     }},
 
-  {id:'sovereign', name:'Der Souverän', short:'Souverän', ic:'crownWide', tone:'gold', art:'leistung',
-    allzeit:{
-      kammer:'koennen', basis:150, offen:true,
-      zeitraum:'Ganze Laufbahn, alle Favoritenspiele',
-      mind:'20 Partien als Favorit',
-      wie:'Favorit heißt: die Elo-Rechnung gab dem eigenen Team vor dem Anpfiff mehr als 55 Prozent Siegchance. Der Nenner sind genau diese Partien.',
-      cond:'Höchste Siegquote als Favorit, ab 20 Partien als Favorit',
-      val:p => p.favN >= 20 ? p.favW / p.favN : null,
-      ev:(p,v) => `${pct(v)} % als Favorit gewonnen · ${p.favW} von ${p.favN}`
-    }},
 
   {id:'sturmfuehrer', name:'Der Sturmführer', short:'Sturmchef', ic:'sturmfuehrer', tone:'orange', art:'leistung',
     allzeit:{
@@ -28245,32 +28098,13 @@ const DISZIPLINEN = [
       ev:(p,v) => `${v < 0 ? '−' : '+'}${Math.abs(Math.round(v*100))} Punkte über der Rechnung · ${pct(p.defW/p.defG)} statt ${pct(p.defW/p.defG - v)} % in ${p.defG} Abwehrspielen`
     }},
 
-  {id:'laufstopper', name:'Der Laufstopper', short:'Laufstopp', ic:'streakStop', tone:'gold', art:'leistung',
-    allzeit:{
-      kammer:'koennen', basis:150, offen:true,
-      zeitraum:'Ganze Laufbahn',
-      mind:'10 Gelegenheiten',
-      wie:'Eine Gelegenheit zählt, wenn mindestens ein Gegner unmittelbar vor dem Anpfiff drei oder mehr eigene Siege in Folge hatte. Gezählt wird der Serienstand von damals und nicht die Serie, die daraus später wurde. Der Nenner sind alle eigenen Gelegenheiten.',
-      cond:'Höchste Siegquote gegen Gegner in laufender Siegesserie, ab 10 Gelegenheiten',
-      val:p => p.lsN >= 10 ? p.lsW / p.lsN : null,
-      ev:(p,v) => `${pct(v)} % gegen eine laufende Serie gewonnen · ${p.lsW} von ${p.lsN}`
-    }},
 
   {id:'uebersoll', name:'Das Übersoll', short:'Übersoll', ic:'sollPlus', tone:'gold', art:'leistung',
-    allzeit:{
-      kammer:'koennen', basis:150, offen:true,
-      zeitraum:'Ganze Laufbahn',
-      mind:'40 Partien',
-      wie:'Die Elo-Rechnung gibt jeder Partie vor dem Anpfiff eine Siegchance. Über die Laufbahn gemittelt ergibt das die erwartete Quote; gewertet wird, wie weit die tatsächliche darüber liegt, in Prozentpunkten. Die Erwartung wächst mit jedem Sieg mit, der Abstand ist also kein Niveau.',
-      cond:'Größter Vorsprung der Siegquote auf die eigene Elo-Erwartung, ab 40 Partien',
-      val:p => p.games >= 40 ? (p.wins / p.games) - (p.expSum / p.games) : null,
-      ev:(p,v) => `${Math.round(v*100)} Punkte über der Rechnung · ${pct(p.wins/p.games)} % statt ${pct(p.expSum/p.games)} % in ${p.games} Partien`
-    },
     monat:{
       beiname:'Der Überbieter',
       art:'koennen',
       klasse:'selten', aus:1.57,
-      wie:'Dieselbe Rechnung wie beim Untersoll, nur andersherum.',
+      wie:'Vor jeder Partie gibt die Elo-Rechnung dem eigenen Team eine Siegchance. Ihr Mittel über den Monat ist die erwartete Siegquote. Gewertet wird, wie weit die tatsächliche Quote darüber liegt.',
       cond:'Mindestens 15 Prozentpunkte über der eigenen Elo-Erwartung',
       ...(_stWertung(
         p=>p.games>=8,
@@ -28313,6 +28147,16 @@ const DISZIPLINEN = [
       val:p => (p.hfDelta != null && p.hfDelta > 0) ? p.hfDelta : null,
       ev:(p,v) => `+${Math.round(v*100)} %-Punkte · ${pct(p.hfNeu)} % in den letzten 10 statt ${pct(p.hfAlt)} % in den 10 davor`
     }},
+  {id:'aufschwung', name:'Der Aufschwung', short:'Aufschwung', ic:'aufschwung', tone:'gold', art:'leistung',
+    allzeit:{
+      kammer:'form', basis:150, offen:true, fenster:true,
+      zeitraum:'Die letzten 25 gegen die Laufbahn davor',
+      mind:'50 Partien',
+      wie:'Die Siegquote der letzten 25 eigenen Partien gegen die Siegquote aller Partien davor. Der Wert ist der Abstand in Prozentpunkten. Vorn steht, wer heute dauerhaft besser spielt als früher.',
+      cond:'Größte Verbesserung der letzten 25 Partien gegenüber der Laufbahn davor, ab 50 Partien',
+      val:p => (p.asDelta != null && p.asDelta > 0) ? p.asDelta : null,
+      ev:(p,v) => `+${Math.round(v*100)} %-Punkte · ${pct(p.asNeu)} % in den letzten 25 statt ${pct(p.asAlt)} % davor`
+    }},
 
   {id:'kaltstart', name:'Der Kaltstart', short:'Kaltstart', ic:'sunrise', tone:'gold', art:'leistung',
     monat:{
@@ -28333,7 +28177,7 @@ const DISZIPLINEN = [
       wie:'Für jeden eigenen Spieltag mit mindestens drei Partien wird die zeitlich erste Partie gegen alle übrigen dieses Tages gestellt. Der Vergleich läuft innerhalb desselben Tages. Das Gegenstück zum letzten Ball, mit demselben Fenster und derselben Mindestbasis.',
       cond:'Größter Vorsprung im ersten Spiel eines Spieltags, ab 10 Spieltagen mit je 3 Partien',
       val:p => (p.ksDelta != null && p.ksN >= 10 && p.ksDelta > 0) ? p.ksDelta : null,
-      ev:(p,v) => `+${Math.round(v*100)} Punkte · ${pct(p.ksDrin)} % in ${p.ksN} Startspielen, sonst ${pct(p.ksRaus)} %`
+      ev:(p,v) => `+${Math.round(v*100)} %-Punkte · ${pct(p.ksDrin)} % in ${p.ksN} Startspielen, sonst ${pct(p.ksRaus)} %`
     }},
 
   {id:'wiedereinstieg', name:'Der Wiedereinstieg', short:'Rückkehr', ic:'doorReturn', tone:'gold', art:'leistung',
@@ -28341,10 +28185,20 @@ const DISZIPLINEN = [
       kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, jede Rückkehr',
       mind:'8 Rückkehrspiele',
-      wie:'Ein Rückkehrspiel ist die erste eigene Partie nach 72 vollständigen Stunden ohne eigenes Match. Gerechnet wird mit dem Abstand der Zeitpunkte und nicht mit der Differenz der Kalendertage. Die allererste Partie einer Laufbahn zählt nicht mit. Der Nenner sind diese Rückkehrspiele und nicht alle Partien.',
-      cond:'Höchste Siegquote in der ersten Partie nach 72 Stunden Pause, ab 8 Rückkehrspielen',
-      val:p => p.weN >= 8 ? p.weW / p.weN : null,
-      ev:(p,v) => `${pct(v)} % nach einer Pause gewonnen · ${p.weW} von ${p.weN}`
+      wie:'Ein Rückkehrspiel ist die erste eigene Partie nach 72 vollständigen Stunden ohne eigenes Match. Die Siegquote dieser Rückkehrspiele wird gegen die Siegquote aller übrigen eigenen Partien gestellt. Der Wert ist der Abstand in Prozentpunkten. Gerechnet wird mit dem Abstand der Zeitpunkte und nicht mit Kalendertagen; die allererste Partie einer Laufbahn zählt nicht mit.',
+      cond:'Größter Vorsprung in der ersten Partie nach 72 Stunden Pause gegenüber den übrigen Partien, ab 8 Rückkehrspielen',
+      val:p => (p.weDelta != null && p.weN >= 8 && p.weDelta > 0) ? p.weDelta : null,
+      ev:(p,v) => `+${Math.round(v*100)} %-Punkte · ${pct(p.weW / p.weN)} % in ${p.weN} Rückkehrspielen, sonst ${pct(p.weRaus)} %`
+    }},
+  {id:'umsteiger', name:'Der Umsteiger', short:'Umsteiger', ic:'umstieg', tone:'gold', art:'leistung',
+    allzeit:{
+      kammer:'koennen', basis:150, offen:true,
+      zeitraum:'Ganze Laufbahn, jeder Positionswechsel',
+      mind:'15 Partien nach einem Wechsel',
+      wie:'Gezählt wird die erste eigene Partie nach einem Wechsel von Sturm zu Abwehr oder umgekehrt. Die Siegquote dieser Partien wird gegen die Siegquote aller Partien gestellt, in denen die Position dieselbe blieb. Der Wert ist der Abstand in Prozentpunkten.',
+      cond:'Größter Vorsprung in der ersten Partie nach einem Positionswechsel gegenüber den übrigen Partien, ab 15 solchen Partien',
+      val:p => (p.umDelta != null && p.umN >= 15 && p.umDelta > 0) ? p.umDelta : null,
+      ev:(p,v) => `+${Math.round(v*100)} %-Punkte · ${pct(p.umW / p.umN)} % in ${p.umN} Partien nach einem Wechsel, sonst ${pct(p.umRaus)} %`
     }},
 
   {id:'schlussball', name:'Der letzte Ball', short:'Schluss', ic:'whistle', tone:'gold', art:'leistung',
@@ -28366,7 +28220,7 @@ const DISZIPLINEN = [
       wie:'Für jeden eigenen Spieltag mit mindestens drei Partien wird die zeitlich letzte Partie gegen alle übrigen dieses Tages gestellt. Der Vergleich läuft innerhalb desselben Tages.',
       cond:'Größter Vorsprung im letzten Spiel eines Spieltags, ab 10 Spieltagen mit je 3 Partien',
       val:p => (p.sbDelta != null && p.sbN >= 10 && p.sbDelta > 0) ? p.sbDelta : null,
-      ev:(p,v) => `+${Math.round(v*100)} Punkte · ${pct(p.sbDrin)} % in ${p.sbN} Schlussspielen, sonst ${pct(p.sbRaus)} %`
+      ev:(p,v) => `+${Math.round(v*100)} %-Punkte · ${pct(p.sbDrin)} % in ${p.sbN} Schlussspielen, sonst ${pct(p.sbRaus)} %`
     }},
 
   {id:'unstoppable', name:'Der Unaufhaltsame', short:'Serie', ic:'flameTriple', tone:'orange', art:'ereignis',
@@ -28381,16 +28235,6 @@ const DISZIPLINEN = [
       zeit:p => p.winSpan || ''
     }},
 
-  {id:'unbeugsam', name:'Der Unbeugsame', short:'Unbeugsam', ic:'anvil', tone:'gold', art:'ereignis',
-    allzeit:{
-      kammer:'mark', basis:150, offen:true,
-      zeitraum:'Ganze Laufbahn',
-      mind:'50 Partien',
-      wie:'Gezählt werden Niederlagen, die ohne Sieg dazwischen aufeinanderfolgen, über Spieltage und Saisons hinweg. Von jedem Spieler steht die längste dieser Serien, und gewertet wird die niedrigste dieser Höchstmarken.',
-      cond:'Kürzeste längste Niederlagenserie einer Laufbahn, ab 50 Partien',
-      val:p => p.games >= 50 ? -p.lossStreak : null,
-      ev:p => `${p.lossStreak} Niederlagen in Folge als längste Serie · ${p.games} Partien`
-    }},
 
   {id:'peak', name:'Der höchste Gipfel', short:'Gipfel', ic:'peak', tone:'gold', art:'ereignis',
     allzeit:{
@@ -28402,18 +28246,18 @@ const DISZIPLINEN = [
       unit:'Elo', raw:p => p.peak,
       ev:(p,v) => `${Math.round(v)} Elo, nie stand jemand höher`
     }},
-
-  {id:'eloday', name:'Der große Sprung', short:'Sprung', ic:'bolt2', tone:'acid', art:'ereignis',
+  {id:'glanztag', name:'Der Glanztag', short:'Glanztag', ic:'glanztag', tone:'gold', art:'ereignis',
     allzeit:{
       kammer:'mark', basis:150, offen:true,
       zeitraum:'Ein einzelner Spieltag',
-      mind:'Ein Spieltag mit Elo-Gewinn',
-      wie:'Addiert werden alle Elo-Veränderungen der eigenen Partien dieses Tages, Gewinne und Verluste. Gewertet wird der beste einzelne Tag einer Laufbahn.',
-      cond:'Größter Elo-Gewinn an einem einzigen Spieltag',
-      unit:'Elo an einem Tag', min:1, raw:p => p.dayElo == null ? null : Math.round(p.dayElo),
-      ev:(p,v) => `+${v} Elo an einem Tag`,
-      zeit:p => p.dayEloLabel || ''
+      mind:'5 Partien an diesem Tag',
+      wie:'Für jeden eigenen Spieltag mit mindestens fünf Partien wird die Siegquote dieses Tages gegen die eigene Siegquote der ganzen Laufbahn gestellt. Gehalten wird der Tag mit dem größten Abstand.',
+      cond:'Größter Vorsprung eines Spieltags auf die eigene Siegquote, ab 5 Partien an diesem Tag',
+      val:p => (p.gtDelta != null && p.gtDelta > 0) ? p.gtDelta : null,
+      ev:(p,v) => `+${Math.round(v*100)} %-Punkte · ${p.gtW} von ${p.gtN} gewonnen, sonst ${pct(p.gtQ)} %`,
+      zeit:p => p.gtLabel || ''
     }},
+
 
   {id:'wall', name:'Die Mauer', short:'Mauer', ic:'posReinAbwehr', tone:'blue', art:'ereignis',
     allzeit:{
@@ -28545,18 +28389,6 @@ const DISZIPLINEN = [
       zeit:p => p.hartTagLabel || ''
     }},
 
-  {id:'bitterloss', name:'Die bitterste Pleite', short:'Bitter', ic:'crownFallen', tone:'purple',
-    art:'ereignis', zufall:'quote', negativ:true,
-    allzeit:{
-      kammer:'fuegung', basis:75, offen:true,
-      zeitraum:'Eine einzelne Partie',
-      mind:'Eine verlorene Partie',
-      wie:'Das Gegenstück zum Sonntagsschuss mit derselben Rechnung: die verlorene Partie mit der höchsten Siegchance vor dem Anpfiff. Eine einzige Partie, kein Durchschnitt.',
-      cond:'Verlorene Partie mit der höchsten vorherigen Siegchance',
-      val:p => p.pechExp != null ? p.pechExp : null,
-      ev:p => `${Math.round(p.pechExp*100)} % Siegchance und trotzdem verloren`,
-      zeit:p => p.pechLabel || ''
-    }},
 
   {id:'mirrorday', name:'Der Wiedergänger', short:'Déjà-vu', ic:'duplicate', tone:'blue',
     art:'ereignis', zufall:'quote',
@@ -28863,7 +28695,7 @@ const DISZIPLINEN = [
       beiname:'Der Gehemmte',
       art:'schatten',
       klasse:'besonders', aus:1.81,
-      wie:'Dieselbe Rechnung wie beim Übersoll, nur andersherum.',
+      wie:'Vor jeder Partie gibt die Elo-Rechnung dem eigenen Team eine Siegchance. Ihr Mittel über den Monat ist die erwartete Siegquote. Gewertet wird, wie weit die tatsächliche Quote darunter liegt.',
       cond:'Mindestens 20 Prozentpunkte unter der eigenen Elo-Erwartung',
       ...(_stWertung(
         p=>p.games>=8,
@@ -28874,7 +28706,7 @@ const DISZIPLINEN = [
       kammer:'shame', basis:0,
       zeitraum:'Ganze Laufbahn',
       mind:'40 Partien',
-      wie:'Dieselbe Rechnung wie beim Übersoll, in die andere Richtung: die mittlere Siegchance vor den eigenen Partien gegen die tatsächliche Siegquote. Gewertet wird der Rückstand.',
+      wie:'Vor jeder Partie gibt die Elo-Rechnung dem eigenen Team eine Siegchance. Ihr Mittel über die Laufbahn ist die erwartete Siegquote. Gewertet wird, wie weit die tatsächliche Quote darunter liegt.',
       cond:'Größter Rückstand der Siegquote auf die eigene Elo-Erwartung, ab 40 Partien',
       val:p => {
         if(p.games < 40) return null;
@@ -28933,7 +28765,7 @@ const DISZIPLINEN = [
       kammer:'shame', basis:0,
       zeitraum:'Ganze Laufbahn, alle Favoritenspiele',
       mind:'20 Partien als Favorit',
-      wie:'Favorit heißt: die Elo-Rechnung gab dem eigenen Team vor dem Anpfiff mehr als 55 Prozent Siegchance. Gewertet wird der Niederlagenanteil in genau diesen Partien, also dieselbe Teilmenge wie beim Souverän.',
+      wie:'Favorit heißt: die Elo-Rechnung gab dem eigenen Team vor dem Anpfiff mehr als 55 Prozent Siegchance. Gewertet wird der Niederlagenanteil in genau diesen Partien.',
       cond:'Höchster Niederlagenanteil als Favorit, ab 20 Partien als Favorit',
       val:p => p.favN >= 20 ? p.favL/p.favN : null,
       ev:(p,v) => `${Math.round(v*100)} % der ${p.favN} Favoritenspiele verloren · ${p.favL} Niederlagen`
@@ -28948,6 +28780,26 @@ const DISZIPLINEN = [
       cond:'Größter negativer Einfluss auf die eigenen Partner, ab 3 Partnern mit je 15 gemeinsamen Partien',
       val:p => (p.einflussN >= 3 && p.einflussD != null && p.einflussD < 0) ? -p.einflussD : null,
       ev:(p,v) => `${Math.round(v*100)} %-Punkte verlieren die ${p.einflussN} Partner an dieser Seite häufiger`
+    }},
+  {id:'rost', name:'Der Rost', short:'Rost', ic:'rost', tone:'red', art:'schatten',
+    allzeit:{
+      kammer:'shame', basis:0, offen:true,
+      zeitraum:'Ganze Laufbahn, jede Rückkehr',
+      mind:'8 Rückkehrspiele',
+      wie:'Ein Rückkehrspiel ist die erste eigene Partie nach 72 vollständigen Stunden ohne eigenes Match. Die Siegquote dieser Rückkehrspiele wird gegen die Siegquote aller übrigen eigenen Partien gestellt. Der Wert ist der Rückstand in Prozentpunkten.',
+      cond:'Größter Rückstand in der ersten Partie nach 72 Stunden Pause gegenüber den übrigen Partien, ab 8 Rückkehrspielen',
+      val:p => (p.weDelta != null && p.weN >= 8 && p.weDelta < 0) ? -p.weDelta : null,
+      ev:(p,v) => `−${Math.round(v*100)} %-Punkte · ${pct(p.weW / p.weN)} % in ${p.weN} Rückkehrspielen, sonst ${pct(p.weRaus)} %`
+    }},
+  {id:'abschwung', name:'Der Abschwung', short:'Abschwung', ic:'abschwung', tone:'red', art:'schatten',
+    allzeit:{
+      kammer:'shame', basis:0, offen:true, fenster:true,
+      zeitraum:'Die letzten 25 gegen die Laufbahn davor',
+      mind:'50 Partien',
+      wie:'Die Siegquote der letzten 25 eigenen Partien gegen die Siegquote aller Partien davor. Der Wert ist der Rückstand in Prozentpunkten. Vorn steht, wer heute dauerhaft schwächer spielt als früher.',
+      cond:'Größter Rückgang der letzten 25 Partien gegenüber der Laufbahn davor, ab 50 Partien',
+      val:p => (p.asDelta != null && p.asDelta < 0) ? -p.asDelta : null,
+      ev:(p,v) => `−${Math.round(v*100)} %-Punkte · ${pct(p.asNeu)} % in den letzten 25 statt ${pct(p.asAlt)} % davor`
     }},
 
 
@@ -30299,8 +30151,7 @@ function _chronicleCtx(bisMs){
   const run = {}, runL = {};
   const runStart = {}, runLStart = {};
   const altRun = {}, altStart = {};
-  const daySet = {}, dayCount = {}, dayWins = {}, weekSet = {};
-  const dayElo = {};
+  const daySet = {}, dayCount = {}, dayWins = {};
   const dayZufall = {};
   const seasonAgg = {};
   const lastRes = {};
@@ -30321,37 +30172,29 @@ function _chronicleCtx(bisMs){
     wdSum:0,
     perfDays:0, bigDays:0,
     seasons:0, firstDay:'', firstLabel:'', lastDay:'',
-    peak:0, potw:0, potd:0, weeks:0, founder:false,
+    peak:0, founder:false,
     afterLoss:0, afterLossOpp:0,
-    dayElo:null, dayEloLabel:'',
     alt:0, altSpan:'',
     flukeExp:null, flukeLabel:'',
     bestMonth:null,
     fall:null,
     hartTag:null, hartTagLabel:'',
-    pechExp:null, pechLabel:'',
     gleichTag:0, gleichTore:0, gleichLabel:'',
     wiederTag:0, wiederErg:'', wiederLabel:'',
     beidesTag:0, beidesLabel:'',
-    l30N:0, l30Ga:0, l30Gf:0,
     l20N:0, l20W:0,
     r50N:0, r50Atk:0,
     hfDelta:null, hfNeu:0, hfAlt:0,
     sbDelta:null, sbDrin:0, sbRaus:0, sbN:0,
     ksDelta:null, ksDrin:0, ksRaus:0, ksN:0,
     rwDelta:null, rwNeu:0, rwAlt:0,
-    taN:0, taOk:0,
-    agQ:null, agN:0,
-    mtN:0, mtAvg:0, mtMad:null,
     ahN:0, ahQ:0, ahRest:0, ahDelta:null,
-    unterN:0, unterW:0,
-    favN:0, favKlar:0,
-    gjN:0, gjMin:null,
-    rkN:0, rkW:0,
-    rsN:0, rsW:0,
-    weN:0, weW:0,
+    weN:0, weW:0, weDelta:null, weRaus:0,
+    umN:0, umW:0, umDelta:null, umRaus:0,
+    asDelta:null, asNeu:0, asAlt:0,
+    gtDelta:null, gtW:0, gtN:0, gtQ:0, gtLabel:'',
+    favN:0,
     rcDelta:null, rcPos:'', rcQ:0, rcExp:0, rcW:0, rcN:0,
-    lsN:0, lsW:0,
     swN:0, swOk:0,
     ausgN:0, ausgSd:null, ausgMit:0,
     atkSd:null, atkMit:0,
@@ -30374,7 +30217,6 @@ function _chronicleCtx(bisMs){
     allDays.add(day);
     const runVor = {};
     [m.a1, m.a2, m.b1, m.b2].forEach(x => { if(x) runVor[x] = run[x] || 0; });
-    const wkey = _wochenKey(m.created_at);
     const sid = (seasonOf(m.created_at) || {}).id;
     if(sid) allSeasons.add(sid);
     const ids = [m.a1, m.a2, m.b1, m.b2];
@@ -30409,12 +30251,6 @@ function _chronicleCtx(bisMs){
       if(w && diff >= 7) p.blowW++;
       if(!w) p.wdSum += ga - gf;
       if(w && exp < CHANCE_UPSET) p.upsets++;
-      if((onA ? [m.b1, m.b2] : [m.a1, m.a2]).some(g => g && (runVor[g] || 0) >= 3)){
-        p.lsN++; if(w) p.lsW++;
-      }
-      if(!w && (p.pechExp == null || exp > p.pechExp)){
-        p.pechExp = exp; p.pechLabel = dLabel(day);
-      }
       if(!dayZufall[id]) dayZufall[id] = {};
       const dz = dayZufall[id][day]
         || (dayZufall[id][day] = {e:0, gf:0, ga:0, n10:0, n01:0, erg:{}});
@@ -30427,15 +30263,11 @@ function _chronicleCtx(bisMs){
       p.lastDay = day;
       if(!daySet[id]) daySet[id] = new Set();
       daySet[id].add(day);
-      if(!weekSet[id]) weekSet[id] = new Set();
-      weekSet[id].add(wkey);
       if(!dayCount[id]) dayCount[id] = {};
       dayCount[id][day] = (dayCount[id][day] || 0) + 1;
       if(dayCount[id][day] > p.maxDay){ p.maxDay = dayCount[id][day]; p.maxDayLabel = dLabel(day); }
       if(!dayWins[id]) dayWins[id] = {};
       if(w) dayWins[id][day] = (dayWins[id][day] || 0) + 1;
-      if(!dayElo[id]) dayElo[id] = {};
-      dayElo[id][day] = (dayElo[id][day] || 0) + ((m.deltas && m.deltas[id]) || 0);
       if(sid){
         if(!seasonAgg[id]) seasonAgg[id] = {};
         if(!seasonAgg[id][sid]) seasonAgg[id][sid] = {g:0, w:0};
@@ -30501,12 +30333,6 @@ function _chronicleCtx(bisMs){
   const _mit = (a) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
   Object.keys(P).forEach(id => {
     const p = P[id], r = roh[id] || [];
-    if(r.length >= 30){
-      const l30 = r.slice(-30);
-      p.l30N = 30;
-      p.l30Ga = l30.reduce((n, x) => n + x.ga, 0);
-      p.l30Gf = l30.reduce((n, x) => n + x.gf, 0);
-    }
     if(r.length >= 20){
       const l20 = r.slice(-20);
       p.l20N = 20;
@@ -30547,18 +30373,6 @@ function _chronicleCtx(bisMs){
         }
       }
     }
-    p.taN = _tagListe.length;
-    p.taOk = _tagListe.filter(t =>
-      _tage[t].filter(x => x.w).length * 2 >= _tage[t].length).length;
-    {
-      const voll = _tagListe.filter(t => _tage[t].length >= 3);
-      if(voll.length >= 2){
-        const q = voll.map(t => _tage[t].filter(x => x.w).length / _tage[t].length);
-        p.mtN = voll.length;
-        p.mtAvg = _mit(q);
-        p.mtMad = _mit(q.map(x => Math.abs(x - p.mtAvg)));
-      }
-    }
     if(r.length >= 50){
       const el = a => { const w = a.map(x => x.mEl).filter(x => x != null && isFinite(x));
         return w.length ? _mit(w) : null; };
@@ -30577,18 +30391,13 @@ function _chronicleCtx(bisMs){
         p.ahDelta = p.ahQ - p.ahRest;
       }
     }
-    const unter = [], fav = [], ausg = [], atk = [], def = [];
+    const fav = [], ausg = [], atk = [], def = [];
     r.forEach(x => {
-      if(x.exp < CHANCE_OFFEN) unter.push(x);
       if(_stFavorit(x)) fav.push(x);
       if(x.exp >= CHANCE_UPSET && x.exp <= 1 - CHANCE_UPSET) ausg.push(x);
       (x.pos === 'atk' ? atk : def).push(x);
     });
-    p.unterN = unter.length;
-    p.unterW = unter.filter(x => x.w).length;
     p.favN = fav.length;
-    p.favKlar = fav.filter(x => x.w && x.gf - x.ga >= 5).length;
-    p.favW = fav.filter(x => x.w).length;
     p.favL = fav.filter(x => !x.w).length;
     if(r.length >= 2){
       p.swN = r.length - 1;
@@ -30597,38 +30406,38 @@ function _chronicleCtx(bisMs){
     const geg = {};
     r.forEach(x => x.geg.forEach(g => { if(g) (geg[g] = geg[g] || []).push(x); }));
     {
-      const reg = Object.keys(geg).filter(g => geg[g].length >= 6);
-      p.gjN = reg.length;
-      if(reg.length >= 4){
-        p.gjMin = Math.min.apply(null, reg.map(g =>
-          geg[g].filter(x => x.w).length / geg[g].length));
-      }
-    }
-    {
-      const offen = {};
-      let n = 0, w = 0;
-      r.forEach(x => {
-        const k = x.geg.filter(Boolean).slice().sort().join('|');
-        if(!k) return;
-        if(offen[k]){ n++; if(x.w) w++; }
-        offen[k] = !x.w;
-      });
-      p.rkN = n; p.rkW = w;
-    }
-    {
-      let lauf = 0, n = 0, w = 0;
-      r.forEach(x => {
-        if(lauf >= 2){ n++; if(x.w) w++; }
-        if(x.w) lauf = 0; else lauf++;
-      });
-      p.rsN = n; p.rsW = w;
-    }
-    {
-      let n = 0, w = 0;
+      let n = 0, w = 0, rn = 0, rw = 0;
       for(let i = 1; i < r.length; i++){
         if(r[i].ts - r[i - 1].ts >= REKORD_PAUSE_MS){ n++; if(r[i].w) w++; }
+        else { rn++; if(r[i].w) rw++; }
       }
       p.weN = n; p.weW = w;
+      if(n && rn){ p.weRaus = rw / rn; p.weDelta = w / n - p.weRaus; }
+    }
+    {
+      let n = 0, w = 0, rn = 0, rw = 0;
+      for(let i = 1; i < r.length; i++){
+        if(r[i].pos !== r[i - 1].pos){ n++; if(r[i].w) w++; }
+        else { rn++; if(r[i].w) rw++; }
+      }
+      p.umN = n; p.umW = w;
+      if(n && rn){ p.umRaus = rw / rn; p.umDelta = w / n - p.umRaus; }
+    }
+    if(r.length >= 50){
+      const neu = r.slice(-25), alt = r.slice(0, -25);
+      p.asNeu = neu.filter(x => x.w).length / neu.length;
+      p.asAlt = alt.filter(x => x.w).length / alt.length;
+      p.asDelta = p.asNeu - p.asAlt;
+    }
+    {
+      const tage = {};
+      r.forEach(x => { const t = tage[x.day] || (tage[x.day] = {n:0, w:0}); t.n++; if(x.w) t.w++; });
+      const q = p.games ? p.wins / p.games : 0;
+      Object.keys(tage).sort().forEach(k => { const t = tage[k];
+        if(t.n < 5) return;
+        const d = t.w / t.n - q;
+        if(p.gtDelta == null || d > p.gtDelta){ p.gtDelta = d; p.gtW = t.w; p.gtN = t.n; p.gtQ = q; p.gtLabel = dLabel(k); }
+      });
     }
     ['atk', 'def'].forEach(pos => {
       const s = r.filter(x => x.pos === pos && x.exp < CHANCE_OFFEN);
@@ -30652,11 +30461,6 @@ function _chronicleCtx(bisMs){
     const mates = {};
     r.forEach(x => { if(x.mate) (mates[x.mate] = mates[x.mate] || []).push(x); });
     const _agM = Object.keys(mates).filter(m => mates[m].length >= 15);
-    if(_agM.length >= 3){
-      p.agN = _agM.length;
-      p.agQ = Math.min.apply(null, _agM.map(m =>
-        mates[m].filter(x => x.w).length / mates[m].length));
-    }
     const nutz = _agM.filter(m => roh[m]);
     if(nutz.length >= 3){
       let summe = 0, gew = 0;
@@ -30709,19 +30513,13 @@ function _chronicleCtx(bisMs){
     if(def.length  >= 2){ p.defSd  = _sd(dz(def));  p.defMit  = _mit(dz(def));  }
   });
 
-  const winSrc = bisMs ? ms : matches;
-  const potwCounts = _winnerCountsOf(winSrc, 'week');
-  const potdCounts = _winnerCountsOf(winSrc, 'day');
-
   Object.keys(P).forEach(id => {
     const p = P[id];
     p.days = daySet[id] ? daySet[id].size : 0;
     p.seasons = seasonSet[id] ? seasonSet[id].size : 0;
     const dc = dayCount[id] || {}, dw = dayWins[id] || {};
-    const de = dayElo[id] || {};
     const dzAll = dayZufall[id] || {};
     Object.keys(dc).forEach(day => {
-      if(p.dayElo == null || de[day] > p.dayElo){ p.dayElo = de[day]; p.dayEloLabel = dLabel(day); }
       const dz = dzAll[day];
       if(dz){
         if(dc[day] >= 4){
@@ -30748,9 +30546,6 @@ function _chronicleCtx(bisMs){
       if(!p.bestMonth || q > p.bestMonth.q) p.bestMonth = {q, g:r.g, w:r.w, sid:sd};
     });
     p.peak = Math.round(gSim.peakElo[id] || cfg.start_elo);
-    p.potw = potwCounts[id] || 0;
-    p.potd = potdCounts[id] || 0;
-    p.weeks = weekSet[id] ? weekSet[id].size : 0;
     p.founder = !!(firstDayKey && p.firstDay === firstDayKey);
 
     const played = [];
@@ -30853,7 +30648,7 @@ function saisonRekorde(sid){
 }
 
 function chroniclesOfPlayer(pid, bisMs){
-  if(bisMs == null && imRuhestand(pid)) return ruhestandStand(pid).rekorde || [];
+  if(bisMs == null && imRuhestand(pid)) return (ruhestandStand(pid).rekorde || []).filter(r => CHRONICLE_BY_ID[r.id]);
   let all;
   try { all = allChronicles(bisMs); } catch(e){ return []; }
   const out = [];
@@ -30912,7 +30707,7 @@ function nextRecordFor(pid){
 }
 
 function chronicleOf(pid){
-  if(imRuhestand(pid)) return (ruhestandStand(pid).rekorde || [])[0] || null;
+  if(imRuhestand(pid)) return chroniclesOfPlayer(pid)[0] || null;
   try { return allChronicles().byPid[pid] || null; } catch(e){ return null; }
 }
 
@@ -31414,7 +31209,7 @@ function _rekordMeta(d, h){
 
 function _chronKurz(ev){
   const s = String(ev || '').trim();
-  const m = s.match(/^([+\u2212-]?\d[^\s]*(?:\s?%)?)/);
+  const m = s.match(/^([+\u2212-]?\d[^\s]*(?:\s?%(?:-Punkte)?)?)/);
   return m ? m[1] : s;
 }
 
@@ -32749,8 +32544,8 @@ function prestigeTabelle(bisMs){
       {id:d.id, name:d.name, art:d.art, kind:d.kind, basis:d.basis}); });
   });
   ruhe.forEach(p => {
-    (ruhestandStand(p.id).rekorde || []).forEach(r => {
-      const d = CHRONICLES.find(x => x.id === r.id) || r;
+    chroniclesOfPlayer(p.id).forEach(r => {
+      const d = CHRONICLE_BY_ID[r.id];
       roh[p.id].rekord.push({id:r.id, name:r.name, art:d.art, kind:d.kind, basis:d.basis,
                              halter:(r.pids || [r.pid]).length});
     });

@@ -93,6 +93,17 @@ const STORY_ABGEMELDET = [
   'rek_giant_slayer_', 'rek_thriller_', 'rek_unbowed_', 'rek_homefield_',
   'rek_sundaychild_', 'rek_strongphase_', 'rek_steigerung_', 'rek_upswing_',
   'rek_coldshower_', 'rek_torbilanz_', 'rek_striker_u_',
+  // Einundzwanzig weitere fielen, weil sie dieselbe Antwort gaben wie die
+  // Siegquote, nur anders verpackt: gemessen ordneten sie die Liga mit einer
+  // Korrelation von 0,76 bis 0,99 genau wie die Siegquote der Laufbahn, und
+  // die zwei Besten hielten zusammen 31 Einträge [§C35]. Der Platzhirsch
+  // und der Wochenherr zählten dazu noch einmal, was POTD und POTW schon als
+  // Auszeichnung bringen [§C34].
+  'rek_daylord_', 'rek_weeklord_', 'rek_unbeugsam_', 'rek_eloday_', 'rek_kopfhoch_',
+  'rek_breitenwirkung_', 'rek_retourkutsche_', 'rek_rueckschlag_', 'rek_metronom_',
+  'rek_gegenwind_', 'rek_entscheider_', 'rek_laufstopper_', 'rek_sovereign_', 'rek_rock_',
+  'rek_sniper_', 'rek_densephase_', 'rek_torrausch_', 'rek_bitterloss_', 'rek_uebersoll_',
+  'rek_deutlich_', 'rek_ausgleich_',
   // ── Das Ergebnis hiess einmal anders ─────────────────────────────
   // Eine Ergebnis-Karte entstand nur fuer ein auffaelliges Muster und
   // hoechstens zweimal je Tag (`match_result_<Partie>`). Heute bekommt jede

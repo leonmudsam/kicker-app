@@ -123,7 +123,19 @@ function _newsInsTagZeilen(s){
 function _ndInsTagBlatt(s){
   const d = (s && s.dataRef) || {}, l = d.zuege || [], pm = pmap(), z = l[0];
   if(!z || !pm[z.pid]) return null;
-  const kopf = `<div class="nd-buehne nd-is">`
+  // Mehrere Bewegungen an einem Tag: jede steht im Kopf mit Zeichen, Gesicht
+  // und neuer Lage, nebeneinander. Der Kopf zeigte nur die erste, und die
+  // Schlagzeile darüber nannte drei Namen — zwei davon tauchten erst in der
+  // Liste weiter unten auf [§C33].
+  const da = l.filter(x => pm[x.pid]);
+  const kopf = da.length > 1
+    ? `<div class="nd-buehne nd-is nd-is-viele">` + da.map(x =>
+        `<span class="nd-is-sp${x.art === 'ab' ? ' ab' : ''}" data-pid="${esc(x.pid)}">`
+        + `<span class="nd-is-neu"><span class="nd-is-z">${_insZeichen(x.pid, x.nach)}</span>`
+        + `<span class="nd-is-av">${avHtml(pm[x.pid], '', {px:30})}</span></span>`
+        + `<b>${esc(_spName(x.pid))}</b><small>${esc(_insLageName(x.nach))}</small>`
+        + `<em>${esc(_insArtWort(x))}</em></span>`).join('') + `</div>`
+    : `<div class="nd-buehne nd-is">`
     + `<div class="nd-is-w"><span class="nd-is-alt">${_insZeichen(z.pid, z.vor, true)}<small>${esc(_insLageName(z.vor))}</small></span>`
     + `<svg class="nd-rk-pf${z.art === 'ab' ? ' ab' : ''}" viewBox="0 0 40 16" aria-hidden="true"><path d="M2 8H34"/><path d="M28 3L35 8L28 13"/></svg>`
     + `<span class="nd-is-neu" data-pid="${esc(z.pid)}"><span class="nd-is-z">${_insZeichen(z.pid, z.nach)}</span>`

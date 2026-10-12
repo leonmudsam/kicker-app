@@ -3,6 +3,7 @@
 ## Regel
 
 - Ein Monatseintrag für die Mitte des Feldes misst den Abstand zum eigenen Niveau, nicht das Niveau: „Auf Augenhöhe", „Die Steigerung", „Der Sonntagsschuss", „Der Staffellauf", „Das Seitenbündnis" (beide über `_stUebergaenge`), „Der Quertreiber", „Die Tagesumkehr" (gegen den Erwartungswert 2·S·N durch n·(n−1)).
+- Dasselbe gilt für die Liga-Rekorde außerhalb des Niveaus [§C35]: „Der Wiedereinstieg" (Rückkehrspiele), „Der Umsteiger" (die Partie nach einem Positionswechsel), „Der Aufschwung" (die letzten 25 gegen die Laufbahn davor), „Der Glanztag" (der beste Spieltag) und ihre Kehrseiten „Der Rost" und „Der Abschwung" stellen einen Ausschnitt der eigenen Partien gegen den eigenen Rest.
 - Nicht eingebaut wird, was einen zweiten Monat zur Eichung braucht, nur mit einer Zufallsreferenz zu rechnen ist, Statistiksprache braucht, die 1,5 σ nicht erreicht oder an der Spielzahl hängt.
 
 ## Stellen
@@ -11,7 +12,7 @@
 
 ## Prüfung
 
-`tests/disziplinen` fällt, wenn ein solcher Eintrag wieder an die Spitze der Siegquote geht, und rechnet die vier neuen Chroniken aus den rohen Partien nach.
+`tests/disziplinen` fällt, wenn ein solcher Eintrag wieder an die Spitze der Siegquote geht, rechnet die vier neuen Chroniken und die Liga-Rekorde gegen das Eigene aus den rohen Partien nach und misst jeden Rekord mit Grundwert 150 gegen die Siegquote.
 
 ## Herleitung
 
@@ -22,7 +23,7 @@ gewinnt, gewinnt fast jede: gemessen gingen sechzig Prozent der
 Monatseinträge an die besten Drei der Siegquote, und der Monatserste allein
 hielt ein Drittel der Tafel. Ein Eintrag für die Mitte des Feldes misst
 deshalb nicht das Niveau, sondern den **Abstand zum eigenen** — so wie „Das
-Übersoll", das jeder erreichen kann. „Auf Augenhöhe" vergleicht die Quote in
+Übersoll" im Monat, das jeder erreichen kann. „Auf Augenhöhe" vergleicht die Quote in
 den Partien, die die Elo-Rechnung offen sah, mit der eigenen Gesamtquote;
 „Die Steigerung" die zweite Hälfte der Spieltage mit der ersten; „Der
 Sonntagsschuss" ist eine einzige Partie, in der die Rechnung dagegen stand.
