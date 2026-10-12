@@ -226,10 +226,10 @@ function _newsSammelBand(teile, kopfTitel, vollstaendig){
 // verliert (Rot ist die Richtung [§C25]), je höchstens zwei, der Rest als
 // Zahl: mit dreien je Seite brach die Zeile auf drei Reihen um und machte die
 // Karte höher als ihr Inhalt; das Blatt nennt jeden. Je Spieler ein Chip aus
-// Gesicht, Name und Betrag, und nur wenn er eine Stufe unterschreitet,
-// dahinter die Stufe: ein Aufstieg steht als eigene Zeile im Bündel, und im
-// Chip brach er die Zeile um. Gelesen wird die gespeicherte Wirkung der
-// Karte, wie im Blatt.
+// Gesicht, Name und Betrag. Was der Betrag am Zeichen ändert — eine neue
+// Stufe, ein Rückfall —, zeigt die Insignium-Karte desselben Tages; hier
+// stand ein Rückfall als „↓ Zierkranz" im Chip ein zweites Mal [§C33].
+// Gelesen wird die gespeicherte Wirkung der Karte, wie im Blatt.
 function _newsPrestigeBand(s){
   const d = (s && s.dataRef) || {};
   const je = {};
@@ -239,14 +239,13 @@ function _newsPrestigeBand(s){
   const pm = pmap();
   const alle = Object.keys(je).filter(pid => pm[pid]).map(pid => {
     const vor = Math.round(Number(je[pid].vor) || 0), nach = Math.round(Number(je[pid].nach) || 0);
-    const sv = insigniumStufeVon(vor), sn = insigniumStufeVon(nach);
-    return {pid, d: nach - vor, stufe: sn !== sv && INSIGNIEN[sn] ? INSIGNIEN[sn].name : '', auf: sn > sv};
+    return {pid, d: nach - vor};
   }).filter(x => x.d);
   const plus = alle.filter(x => x.d > 0).sort((a, b) => b.d - a.d);
   const minus = alle.filter(x => x.d < 0).sort((a, b) => a.d - b.d);
   if(!plus.length && !minus.length) return '';
   const chip = x => `<b class="nf-vl ${x.d > 0 ? 'plus' : 'minus'}">${rcpAvHtml(x.pid, 18, {})}<i>${esc(pm[x.pid].name)}</i>`
-    + `<em class="num">${x.d > 0 ? '+' + x.d : '−' + -x.d} P</em>${x.stufe && !x.auf ? `<u>↓ ${esc(x.stufe)}</u>` : ''}</b>`;
+    + `<em class="num">${x.d > 0 ? '+' + x.d : '−' + -x.d} P</em></b>`;
   // Zwei Zeilen mit festem Etikett davor: in EINER gemischten Reihe brachen
   // Gewinner und Verlierer auf drei Reihen um, und wo eine Seite endete,
   // war nur noch an der Farbe zu erkennen.
@@ -672,6 +671,7 @@ function _newsSorte(s){
   if(t === 'woche') return 'woche';                       // Zeilen der Wertungen
   if(t === 'runde') return 'spiel';                       // die Runde der Vier [§11.6c]
   if(t === 'insignium_stufe') return 'ins';               // die Leiter
+  if(t === 'insignium_tag') return 'ins';                 // die Leiter des Tages
   if(t === 'ambient') return 'fakt';                      // leise, eine Zahl
   if(t === 'potd' || t === 'potw') return 'held';         // Wappen groß, Zahlenband
   // Der Meister ist der Held schlechthin. Ohne diese Zeile fiel er auf
@@ -996,6 +996,13 @@ function _newsTagSpannung(s){
     wert += Math.round((1 - Math.max(0, Math.min(1, d.chance))) * 100);
   if(t === 'badge_unlocked') wert += d.rarity === 'legendary' ? 130 : d.rarity === 'rare' ? 55 : 0;
   if(t === 'insignium_stufe') wert += Math.max(0, Number(d.stufe) || 0) * 25;
+  // Die Leiter des Tages ist nur mit einem Aufstieg ein Kandidat, der nicht
+  // nachweislich ein „wieder" ist; ein Grad oder ein Rückfall stellt sich
+  // nicht vor die Partien des Tages.
+  if(t === 'insignium_tag'){
+    const z = (d.zuege || [])[0] || {};
+    wert = z.art === 'auf' && !z.wieder ? 840 + (((z.nach || {}).stufe | 0) * 25) : 520;
+  }
   if(t === 'chronik_geholt') wert += Math.min(80, Math.max(0, Number(d.punkte) || 0) / 2);
   if(t === 'sammel'){
     const teile = Array.isArray(d.teile) ? d.teile : [];

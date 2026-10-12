@@ -1009,8 +1009,8 @@ const ok = (c, msg, det) => {
   ok(zeichen.doppelt.length === 0,
      'keine zwei Rubriken tragen dasselbe Zeichen', zeichen.doppelt.join(', '));
 
-  // Mehrere Tafel-Aenderungen desselben Zeitpunkts ergeben eine gemeinsame
-  // Karte. Das
+  // Dieselbe Stufe für vier Spieler ist EINE Insignium-Karte: die erste
+  // Bewegung als Bühne, die drei übrigen als Zeilen, jede mit Gesicht. Das
   // Markup wird aus vier synthetischen, ansonsten echten Story-Objekten
   // gebaut, damit der Test nicht an einer zufaelligen heutigen Schwelle haengt.
   const achse = await page.evaluate(() => {
@@ -1018,38 +1018,35 @@ const ok = (c, msg, det) => {
     const markup = K(`(function(){
       const ids=players.slice(0,4).map(p=>p.id), when=matches[matches.length-1].created_at;
       const teile=ids.map((pid,i)=>({id:'ui-ins-'+i,cat:'tafel',ic:'award',
-        title:pname(pid)+' traegt den Schildring',desc:(300+i)+' Prestige zusammen.',
+        title:pname(pid)+' traegt den Schildring',desc:(640+i)+' Prestige zusammen.',
         when,prio:76,dataRef:{type:'insignium_stufe',pid,stufe:1,
-          stufeName:'Schildring',punkte:300+i,oben:false}}));
+          stufeName:'Schildring',punkte:640+i,oben:false}}));
       _cache._consolFrom=null;
-      const s=_consolidateStories(teile).find(x=>(x.dataRef||{}).quelle==='tafel');
+      const s=_consolidateStories(teile).find(x=>(x.dataRef||{}).type==='insignium_tag');
       return s ? _newsCardHtmlM2(s,false,false) : '';
     })()`);
     const host = document.createElement('div'); host.innerHTML = markup;
     document.body.appendChild(host);
-    const karte = host.querySelector('.nf-card.nf-s-tafel');
+    const karte = host.querySelector('.nf-card.nf-s-ins');
     if(!karte) return {fehlt:true};
     const rub = karte.querySelector('.nf-rub b');
     const farbe = rub ? getComputedStyle(rub).color : '';
     const out = {fehlt:false, rubrik: rub ? rub.textContent.trim() : '',
-      // Der Erfolg ist das Subjekt, also stehen die Gesichter als Chips
-      // nebeneinander — keins ist wichtiger als das andere [§C33].
-      chips: karte.querySelectorAll('.nf-face-paar .av').length,
-      zeilen: karte.querySelectorAll('.nf-sam-z').length,
-      zeilenGetoent: karte.querySelectorAll('.nf-sam-z.nf-sam-insignium').length,
-      rest: karte.querySelectorAll('.nf-sam-m').length,
-      tafelMetall: farbe !== 'rgb(247, 207, 74)' && farbe !== 'rgb(167, 139, 250)'};
+      buehne: !!karte.querySelector('.ni-b .ni-av .av'),
+      gesichter: new Set([...karte.querySelectorAll('[data-pid]')].map(x => x.getAttribute('data-pid'))).size,
+      zeilen: karte.querySelectorAll('.ni-z:not(.mehr)').length,
+      rest: karte.querySelectorAll('.ni-z.mehr').length,
+      keinGold: farbe !== 'rgb(247, 207, 74)'};
     host.remove(); return out;
   });
-  ok(!achse.fehlt, 'die Karte fuer den gemeinsamen Erfolg steht im Feed',
+  ok(!achse.fehlt, 'dieselbe Stufe für vier Spieler steht als EINE Insignium-Karte im Feed',
      JSON.stringify(achse));
-  ok(achse.rubrik === 'EWIGE TAFEL', 'sie traegt die gemeinsame Tafel-Rubrik', achse.rubrik);
-  ok(achse.chips >= 2, 'und die Gesichter aller Beteiligten', achse.chips + ' Chips');
-  ok(achse.zeilen >= 2 && achse.zeilenGetoent === achse.zeilen && achse.rest === 0,
-     'jede Tafel-Zeile bleibt sichtbar und trägt den Ton ihres Inhalts',
-     achse.zeilen + ' Zeilen, ' + achse.zeilenGetoent + ' getönt, ' + achse.rest + ' verschwiegen');
-  ok(achse.tafelMetall, 'der gemeinsame Tafel-Moment traegt kuehles Metall statt Gold',
-     String(achse.tafelMetall));
+  ok(achse.rubrik === 'DAS ZEICHEN', 'sie traegt die Rubrik des Zeichens', achse.rubrik);
+  ok(achse.buehne && achse.gesichter === 4 && achse.zeilen === 3 && achse.rest === 0,
+     'die erste Bewegung als Bühne mit Gesicht, die drei übrigen als Zeilen, jede mit ihrem',
+     JSON.stringify(achse));
+  ok(achse.keinGold, 'die Karte der Leiter trägt kein Gold, das gehört den Titeln',
+     String(achse.keinGold));
 
   // ── Das Blatt der Ewigen Tafel zeigt, was ausschlaggebend war ────
   //    Die Punktewirkung stand als Zeile „1205 → 1240 Prestige": zwei Zahlen,
@@ -1221,7 +1218,9 @@ const ok = (c, msg, det) => {
                   'sp-zeile','sp-feld','sp-at','sp-wp','sp-band','sp-rd-tafel','sp-tg','sp-rq',
                   // V2 waehlt auch Mosaik, Tacho, Streuung und Gefaelle. Ihr
                   // gemeinsamer Bildrahmen ist kein fehlender Textkarten-Kopf.
-                  'sp-fk'];
+                  'sp-fk',
+                  // Die Insignium-Karte des Tages: die Verwandlung als Bühne.
+                  'ni-b'];
     arr.forEach(x => {
       host.innerHTML = x.html;
       const karte = host.querySelector('.nf-card');
@@ -2466,7 +2465,7 @@ const ok = (c, msg, det) => {
       // Zeichen Inhalt: ausgerechnet die Story, die von der Stufe handelt,
       // zeigte sie nicht.
       if(!m.trim()){ leer++; leerName = leerName || k; }
-      const brauchtZeichen = d.type === 'insignium_stufe' || (d.type === 'ambient' && d.prestige);
+      const brauchtZeichen = d.type === 'insignium_stufe' || d.type === 'insignium_tag' || (d.type === 'ambient' && d.prestige);
       if(brauchtZeichen){
         insBlaetter++;
         // Die Stufe steht seit ihrem eigenen Blatt groß auf der Bühne, also

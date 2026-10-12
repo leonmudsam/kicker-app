@@ -5309,6 +5309,44 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 .nd-er-r > span.da > i{color:var(--gold)}
 .nd-er-r small{font-size:8.5px;color:var(--muted)}
 
+.ni-b{display:flex;align-items:center;gap:8px;margin:2px 0 10px;padding:8px 10px;border-radius:14px;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--purple) 14%,transparent),transparent 72%);
+  border:1px solid color-mix(in srgb,var(--purple) 26%,transparent);cursor:pointer}
+.ni-alt{flex:0 0 34px;opacity:.5}
+.ni-alt svg{width:34px;height:34px;display:block}
+.ni-pf{flex:0 0 22px;width:22px;height:10px}
+.ni-pf path{fill:none;stroke:var(--purple);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ni-ab .ni-pf path{stroke:var(--red)}
+.ni-neu{position:relative;flex:0 0 72px;width:72px;height:72px}
+.ni-neu>svg{width:72px;height:72px;display:block}
+.ni-av{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}
+.ni-av .av{--av:30px;width:30px;height:30px;font-size:11px}
+.ni-t{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0;margin-left:4px}
+.ni-t em{font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--purple);font-style:normal}
+.ni-ab .ni-t em{color:var(--red)}
+.ni-t>b{font-size:15px;font-weight:700;color:var(--ink);line-height:1.15}
+.ni-t small{font-size:11px;color:var(--muted)}
+.ni-t small b{color:var(--ink)}
+.ni-gr{display:flex;gap:3px}
+.ni-gr i{font:600 8px 'Sometype Mono',monospace;font-style:normal;padding:1px 5px;border-radius:6px;
+  background:var(--surface2);color:var(--muted)}
+.ni-gr i.da{color:var(--ink2)}
+.ni-gr i.jetzt{background:var(--purple);color:var(--ink)}
+.ni-zs{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.ni-z{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink2);cursor:pointer}
+.ni-z-t{flex:1;min-width:0}
+.ni-z-t b{color:var(--ink)}
+.ni-z-z{flex:0 0 22px}
+.ni-z-z svg{width:22px;height:22px;display:block}
+.ni-z em{font-style:normal;font-size:11px;white-space:nowrap}
+.ni-z em.g{color:var(--gold)}
+.ni-z em.r{color:var(--red)}
+.ni-z.mehr{color:var(--muted);font-size:11px;cursor:default}
+.ni-bw{display:flex;align-items:center;gap:8px;margin:12px 0 2px;font-size:12px}
+.ni-bw b{color:var(--ink)}
+.ni-bw span{color:var(--muted)}
+.nd-rk-pf.ab path{stroke:var(--red)}
+.nd-is-gm.alt{opacity:.35}
 .nd-is{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
 .nd-is .nd-rk-pf path{stroke:var(--purple)}
 .nd-is-w{display:flex;align-items:center;justify-content:center;gap:8px}
@@ -5653,7 +5691,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.12.a0decd3d';
+const BUILD_VERSION='2026.10.12.fd38eda4';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -17482,6 +17520,7 @@ const STORY_PRIO = {
   chronik_geholt:    62,
   team_streak:       60,
   insignium_stufe:   58,
+  insignium_tag:     58,
   badge_unlocked:    54,
   team_loss_streak:  52,
   milestone_wins:    48,
@@ -17614,6 +17653,23 @@ function _prestigeWirkung(pid, vorStand, nachStand){
     rekordZahl: zahl('rekord'), monatZahl: zahl('monat'),
     quellen
   };
+}
+
+function _insBestVor(vonMs, bestand){
+  const tag = tagKey(vonMs);
+  const aktiv = new Set((players || []).filter(p => ligaAktiv(p)).map(p => p.id));
+  const best = {};
+  const merk = (pid, pos) => { if(aktiv.has(pid) && isFinite(pos) && (best[pid] == null || pos > best[pid])) best[pid] = pos; };
+  const l = Array.isArray(bestand) ? bestand : [];
+  const alt = l.filter(x => { const d = (x && x.dataRef) || {}; return d.type === 'insignium_tag' && d.best && String(d.tag) < tag; })
+    .sort((a, b) => String(b.dataRef.tag).localeCompare(String(a.dataRef.tag)))[0];
+  if(alt) Object.keys(alt.dataRef.best).forEach(pid => merk(pid, Number(alt.dataRef.best[pid])));
+  l.forEach(x => {
+    const d = (x && x.dataRef) || {};
+    if(d.type !== 'insignium_stufe' || !d.pid || tagKey(x.when) >= tag) return;
+    merk(d.pid, (Number(d.punkte) ? insigniumStufeVon(Number(d.punkte)) : (d.stufe | 0)) * INSIGNIUM_GRADE);
+  });
+  return best;
 }
 
 const STORY_RANG_MIN_PARTIEN = 15;
@@ -19621,59 +19677,60 @@ function _buildStories(){
 
   try {
     if(_tafelTag){
-      const _insLetzte = _tafelTag.letzte;
-      const _insVorMs = _tafelTag.vorMs;
-      const _insTagMatches = matches.filter(m => mts(m) > _insVorMs && mts(m) <= _insLetzte)
-        .slice().sort((a,b) => mts(a)-mts(b));
-      const _insBestand = (Array.isArray(_cache._stories) ? _cache._stories : [])
-        .map(x => String((x && x.id) || '')).filter(id => id.indexOf('ins_') === 0);
-      const _insFrueher = (pid, key, tag) => {
-        const pre = 'ins_' + pid + '_' + key + '_';
-        return _insBestand.filter(id => id.indexOf(pre) === 0)
-          .map(id => id.slice(pre.length)).filter(t => t < tag).sort().pop() || '';
-      };
-      (players || []).filter(p => ligaAktiv(p)).forEach(p => {
-        const w = _tafelWirkung(p.id);
-        if(w.stufeNach <= w.stufeVor) return;
-        for(let stufe = w.stufeVor + 1; stufe <= w.stufeNach; stufe++){
-          let lo = 0, hi = _insTagMatches.length - 1, treffer = _insLetzte;
-          while(lo <= hi){
-            const mid = Math.floor((lo + hi) / 2);
-            const ts = mts(_insTagMatches[mid]);
-            if(prestigeOf(p.id, ts).stufe >= stufe){ treffer = ts; hi = mid - 1; }
-            else lo = mid + 1;
-          }
-          const stand = prestigeOf(p.id, treffer);
-          const ausloeser = _insTagMatches.find(m => mts(m) === treffer
-            && (m.a1 === p.id || m.a2 === p.id || m.b1 === p.id || m.b2 === p.id));
-          const oben = stufe >= INSIGNIUM_OBEN;
-          const _frueher = _insFrueher(p.id, INSIGNIEN[stufe].key, tagKey(_insLetzte));
-          stories.push({
-            id: 'ins_' + p.id + '_' + INSIGNIEN[stufe].key
-                + '_' + tagKey(_insLetzte),
-            cat: 'tafel',
-            ic: 'award',
-            title: `${p.name} trägt den ${INSIGNIEN[stufe].name}`
-                 + (_frueher ? ' wieder' : ''),
-            desc: (_frueher ? `Zuletzt stand die Stufe am ${datumFmt(_frueher + 'T12:00:00', 'tm')}. ` : '')
-                + `${stand.punkte} Prestige zusammen: ${stand.teile.auszeichnung} aus Auszeichnungen, `
-                + `${stand.teile.monat} aus Monatschroniken und ${stand.teile.rekord} aus Rekorden.`
-                + (stand.naechste ? ` Bis zum ${stand.naechste.name} fehlen ${stand.fehlt}.` : ''),
-            when: treffer,
-            prio: STORY_PRIO.insignium_stufe + (oben ? 34 : 0),
-            dataRef: {type:'insignium_stufe', pid:p.id,
-                      matchId:ausloeser ? ausloeser.id : null, stufe,
-                      causalKey:_storyGruppeKey('table', _tafelTag.tag),
-                      laufbahn:_tafelLaufbahn([p.id]),
-                      zeileText: `${stand.punkte} Prestige zusammen.`
-                        + (stand.naechste
-                           ? ` Bis zum ${stand.naechste.name} fehlen ${stand.fehlt}.` : ''),
-                      stufeName:INSIGNIEN[stufe].name, punkte:stand.punkte, oben,
-                      teile:Object.assign({}, stand.teile),
-                      wieder:_frueher || ''}
-          });
+      const tagMs = matches.filter(m => mts(m) > _tafelTag.vorMs && mts(m) <= _tafelTag.letzte)
+        .slice().sort((a, b) => mts(a) - mts(b));
+      const aktiv = (players || []).filter(p => ligaAktiv(p));
+      const best = _insBestVor(_tafelTag.vonMs, _cache._stories);
+      const zuege = [], bestNeu = {};
+      const wann = (pid, erreicht) => {
+        let lo = 0, hi = tagMs.length - 1, t = _tafelTag.letzte;
+        while(lo <= hi){
+          const mid = (lo + hi) >> 1, ts = mts(tagMs[mid]);
+          let P = null; try { P = prestigeOf(pid, ts); } catch(e){}
+          if(P && erreicht(insigniumPos(P))){ t = ts; hi = mid - 1; } else lo = mid + 1;
         }
+        return t;
+      };
+      const lage = P => ({stufe:P.stufe | 0, grad:P.grad | 0, zacken:P.zacken | 0, punkte:Math.round(P.punkte || 0)});
+      aktiv.forEach(p => {
+        const a = _tafelVor.prestige(p.id), b = _tafelNach.prestige(p.id);
+        if(!a || !b) return;
+        const pa = insigniumPos(a), pb = insigniumPos(b);
+        const bp = best[p.id] != null ? best[p.id] : pa;
+        bestNeu[p.id] = Math.max(bp, pa, pb);
+        let art = '';
+        if(b.stufe > a.stufe) art = 'auf';
+        else if(b.stufe < a.stufe) art = 'ab';
+        else if(pb > pa && pb > bp) art = 'grad';
+        if(!art) return;
+        const ms = wann(p.id, art === 'ab' ? (x => x <= pb) : (x => x >= pb));
+        const m = tagMs.find(x => mts(x) === ms && [x.a1, x.a2, x.b1, x.b2].includes(p.id));
+        zuege.push({pid:p.id, art, vor:lage(a), nach:lage(b), ms, matchId:m ? m.id : null,
+          wieder:art === 'auf' && best[p.id] != null && best[p.id] >= b.stufe * INSIGNIUM_GRADE,
+          traeger:aktiv.filter(q => { const x = _tafelNach.prestige(q.id); return x && x.stufe >= b.stufe; }).length,
+          von:aktiv.length});
       });
+      if(zuege.length){
+        const RANG = {auf:0, grad:1, ab:2};
+        zuege.sort((x, y) => RANG[x.art] - RANG[y.art] || (x.wieder - y.wieder)
+          || y.nach.stufe - x.nach.stufe || y.nach.punkte - x.nach.punkte);
+        const pids = zuege.map(z => z.pid);
+        const t = _insTagTexte(zuege);
+        const oben = zuege.some(z => z.art === 'auf' && !z.wieder && z.nach.stufe >= INSIGNIUM_OBEN);
+        stories.push({
+          id:'instag_' + _tafelTag.tag, cat:'tafel', ic:'award',
+          title:t.title, desc:t.desc,
+          when:new Date(Math.max(...zuege.map(z => z.ms))),
+          prio:STORY_PRIO.insignium_tag + (oben ? 34 : 0),
+          dataRef:{type:'insignium_tag', tag:_tafelTag.tag, zuege, playerIds:pids,
+            laufbahn:pids.reduce((o, pid) => { const w = _tafelWirkung(pid);
+              o[pid] = {vor:w.vor, nach:w.nach, delta:w.delta, stufeVor:w.stufeVor, stufeNach:w.stufeNach,
+                rek:w.rekordDelta, mon:w.monatDelta}; return o; }, {}),
+            leiter:INSIGNIEN.map((_, i) => aktiv.filter(q => { const x = _tafelNach.prestige(q.id);
+              return x && x.stufe === i; }).length),
+            best:bestNeu}
+        });
+      }
     }
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] insignium', e); }
 
@@ -20887,7 +20944,7 @@ function _consolidateStories(list){
     return _cache._snapshotConsolList;
 
   const tafelTypen = new Set(['rekord_erstmals','rekord_geholt','rekord_gesteigert',
-    'insignium_stufe','chronik_erstling','chronik_geholt']);
+    'chronik_erstling','chronik_geholt']);
   const matchById = new Map((matches || []).map(m => [m.id, m]));
   const duellMoment = new Map(), duellAnzahl = new Map();
   _spBasis().chrono.forEach(m => [m.a1,m.a2].forEach(a => [m.b1,m.b2].forEach(b => {
@@ -20898,7 +20955,7 @@ function _consolidateStories(list){
     if(!l){ l = new Map(); duellMoment.set(key, l); }
     l.set(n, m);
   })));
-  const quelle = ohneStoriesNachAbschied(list).filter(s => !_storyAbgemeldet(s && s.id) && !_storyWiderrufen(s));
+  const quelle = _insAltZuTag(ohneStoriesNachAbschied(list).filter(s => !_storyAbgemeldet(s && s.id) && !_storyWiderrufen(s)));
   const marken = new Map(), normal = [];
   quelle.forEach(s => {
     const d = s.dataRef || {}, l = d.marken || [];
@@ -21156,7 +21213,7 @@ function _consolidateStoriesLegacy(list){
     'lead_change','streak_record',
     'fluch','duo_jubilaeum','revanche','tagesmarathon','elo_hoch','tabellensprung']);
   const SAMMEL_TAFEL = new Set(['rekord_erstmals','rekord_geholt','rekord_gesteigert',
-    'insignium_stufe','chronik_erstling','chronik_geholt']);
+    'chronik_erstling','chronik_geholt']);
   const _minKey = w => { const d = new Date(w); return tagKey(w)+'-'+d.getHours()+'-'+d.getMinutes(); };
   const ERFOLG_ART = {
     rekord_erstmals:  'rekord',   rekord_geholt:    'rekord',
@@ -21506,11 +21563,9 @@ function _consolidateStoriesLegacy(list){
         && (t.dataRef || {}).type !== 'rekord_gesteigert').length;
       const na = teile.filter(t => (t.dataRef || {}).type === 'rekord_gesteigert').length;
       const nc = teile.filter(t => ((t.dataRef || {}).type || '').indexOf('chronik_') === 0).length;
-      const ni = teile.filter(t => (t.dataRef || {}).type === 'insignium_stufe').length;
       if(nr) bilder.push(nr === 1 ? 'eine Bestmarke' : `${_zahlwortDe(nr)} Bestmarken`);
       if(na) bilder.push(na === 1 ? 'ein Ausbau' : `${_zahlwortDe(na)} Ausbauten`);
       if(nc) bilder.push(nc === 1 ? 'eine Monatschronik' : `${_zahlwortDe(nc)} Monatschroniken`);
-      if(ni) bilder.push(ni === 1 ? 'ein neues Insignium' : `${_zahlwortDe(ni)} neue Insignien`);
       const bild = _namenListe(bilder.length ? bilder : ['mehrere Laufbahnen']);
       const plusTafel = (function(){
         let p = 0; const gez = {};
@@ -21825,7 +21880,7 @@ function _leerlauf(ms){
 }
 
 const STORY_TAFEL_UPDATE = new Set(['rekord_erstmals','rekord_geholt','rekord_gesteigert',
-  'insignium_stufe','chronik_erstling','chronik_geholt']);
+  'insignium_stufe','insignium_tag','chronik_erstling','chronik_geholt']);
 function _storyIstTafelUpdate(s, jetzt){
   if(!s) return false;
   const d = s.dataRef || s.data_ref || {};
@@ -22418,6 +22473,9 @@ function _isBreaking(s){
       return d.rarity === 'legendary';
     case 'insignium_stufe':
       return !!d.oben && !d.wieder;
+    case 'insignium_tag':
+      return (d.zuege || []).some(z => z && z.art === 'auf' && !z.wieder
+        && ((z.nach || {}).stufe | 0) >= INSIGNIUM_OBEN);
     default:
       return false;
   }
@@ -22461,6 +22519,7 @@ function _newsUhrzeit(when){
 function _newsIstNegativ(s){
   const d = (s && s.dataRef) || {};
   const typ = (d.type === 'group' ? (d.sub || '') : (d.type || ''));
+  if(typ === 'insignium_tag') return (d.zuege || []).length > 0 && d.zuege.every(z => z && z.art === 'ab');
   return /loss|dry_spell/.test(typ) || d.rarity === 'negative';
 }
 
@@ -22545,6 +22604,9 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
   } else if(sorte === 'tafel'){
     const w = _newsTafelWert(s);
     gesicht = `<div class="nf-gr-l">${w ? _newsWertBlock(w.v, w.l, 'ton') : ''}${_newsGesichtHtml(s)}</div>`;
+  } else if(sorte === 'ins' && d.type === 'insignium_tag'){
+    kopf = _newsInsTagKopf(s);
+    fuss = _newsInsTagZeilen(s);
   } else if(sorte === 'ins'){
     gesicht = `<div class="nf-gr-l">${av(d.pid, 48)}</div>`;
     fuss = _newsLeiter(d.pid);
@@ -22629,7 +22691,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
     kopf = _newsErgebnisBand(d.matchId) || kopf;
   }
   if(!gesicht && !faktBild && sorte !== 'spiel' && sorte !== 'woche' && sorte !== 'duell'
-     && d.type !== 'season_recap' && d.type !== 'karriereende'){
+     && d.type !== 'season_recap' && d.type !== 'karriereende' && d.type !== 'insignium_tag'){
     const g = _newsGesichtHtml(s);
     if(g) gesicht = `<div class="nf-gr-l">${g}</div>`;
   }
@@ -22796,14 +22858,13 @@ function _newsPrestigeBand(s){
   const pm = pmap();
   const alle = Object.keys(je).filter(pid => pm[pid]).map(pid => {
     const vor = Math.round(Number(je[pid].vor) || 0), nach = Math.round(Number(je[pid].nach) || 0);
-    const sv = insigniumStufeVon(vor), sn = insigniumStufeVon(nach);
-    return {pid, d: nach - vor, stufe: sn !== sv && INSIGNIEN[sn] ? INSIGNIEN[sn].name : '', auf: sn > sv};
+    return {pid, d: nach - vor};
   }).filter(x => x.d);
   const plus = alle.filter(x => x.d > 0).sort((a, b) => b.d - a.d);
   const minus = alle.filter(x => x.d < 0).sort((a, b) => a.d - b.d);
   if(!plus.length && !minus.length) return '';
   const chip = x => `<b class="nf-vl ${x.d > 0 ? 'plus' : 'minus'}">${rcpAvHtml(x.pid, 18, {})}<i>${esc(pm[x.pid].name)}</i>`
-    + `<em class="num">${x.d > 0 ? '+' + x.d : '−' + -x.d} P</em>${x.stufe && !x.auf ? `<u>↓ ${esc(x.stufe)}</u>` : ''}</b>`;
+    + `<em class="num">${x.d > 0 ? '+' + x.d : '−' + -x.d} P</em></b>`;
   const zeile = (wort, l) => !l.length ? '' : `<div class="nf-pb-z"><span class="nf-verlust-l">${wort}</span>`
     + `<span class="nf-verlust-w">${l.slice(0, 2).map(chip).join('')}`
     + `${l.length > 2 ? `<b class="nf-vl mehr">+${l.length - 2}</b>` : ''}</span></div>`;
@@ -23088,6 +23149,7 @@ function _newsSorte(s){
   if(t === 'woche') return 'woche';
   if(t === 'runde') return 'spiel';
   if(t === 'insignium_stufe') return 'ins';
+  if(t === 'insignium_tag') return 'ins';
   if(t === 'ambient') return 'fakt';
   if(t === 'potd' || t === 'potw') return 'held';
   if(t === 'season_recap') return 'held';
@@ -23311,6 +23373,10 @@ function _newsTagSpannung(s){
     wert += Math.round((1 - Math.max(0, Math.min(1, d.chance))) * 100);
   if(t === 'badge_unlocked') wert += d.rarity === 'legendary' ? 130 : d.rarity === 'rare' ? 55 : 0;
   if(t === 'insignium_stufe') wert += Math.max(0, Number(d.stufe) || 0) * 25;
+  if(t === 'insignium_tag'){
+    const z = (d.zuege || [])[0] || {};
+    wert = z.art === 'auf' && !z.wieder ? 840 + (((z.nach || {}).stufe | 0) * 25) : 520;
+  }
   if(t === 'chronik_geholt') wert += Math.min(80, Math.max(0, Number(d.punkte) || 0) / 2);
   if(t === 'sammel'){
     const teile = Array.isArray(d.teile) ? d.teile : [];
@@ -25245,6 +25311,160 @@ const _FF_FORM = {
   stufe:_ffStufe, ziel:_ffZiel, rolle:_ffRolle, verteilung:_ffVerteilung, saeulen:_ffSaeulen,
   platz:_ffPlatz, tafel:_ffTafel, zaehler:_ffZaehler, lauf:_ffLauf
 };
+
+const INS_ORDNUNG = ['erste', 'zweite', 'dritte', 'vierte', 'fünfte', 'sechste', 'siebte'];
+
+function _insLageName(l){
+  const ins = INSIGNIEN[(l && l.stufe) | 0];
+  if(!ins) return '';
+  return ins.key === 'stern' ? `${ins.name} mit ${(l.zacken | 0) || ORDENSSTERN_START} Zacken`
+    : `${ins.name} ${INSIGNIUM_GRAD_NAME[(l.grad | 0)] || 'I'}`;
+}
+
+function _insTagTexte(zuege){
+  const pm = pmap(), nm = pid => (pm[pid] && pm[pid].name) || '?';
+  const l = (zuege || []).filter(z => z && INSIGNIEN[(z.nach || {}).stufe | 0]);
+  if(!l.length) return {title:'', desc:''};
+  const satz = z => {
+    const n = nm(z.pid), S = INSIGNIEN[z.nach.stufe], vorS = INSIGNIEN[z.vor.stufe];
+    const next = INSIGNIEN[z.nach.stufe + 1];
+    if(z.art === 'auf') return {
+      title: z.wieder ? `${n} trägt wieder den ${S.name}` : `${n} erreicht den ${S.name}`,
+      desc: (`Der ${S.name} ist die ${INS_ORDNUNG[z.nach.stufe] || ''} Stufe der Leiter und beginnt bei ${S.min} Prestige. `
+        + (z.traeger == null ? '' : (z.traeger | 0) <= 1 ? 'Niemand sonst in der Liga steht so hoch.'
+          : `Diese Stufe oder eine höhere tragen jetzt ${z.traeger} von ${z.von} Spielern.`)).trim()};
+    if(z.art === 'grad') return {
+      title: S.key === 'stern' ? `${n} erreicht die ${z.nach.zacken}. Zacke am Ordensstern`
+        : `${n} steigt auf ${_insLageName(z.nach)}`,
+      desc: `Mit ${z.nach.punkte} Prestige stand ${n} noch nie so weit oben.`
+        + (S.key === 'stern' ? ` Die nächste Zacke kommt bei ${S.min + (z.nach.zacken - ORDENSSTERN_START + 1) * ORDENSSTERN_SCHRITT}.`
+          : next ? ` Bis zum ${next.name} fehlen ${Math.max(0, next.min - z.nach.punkte)}.` : '')};
+    return {
+      title: `${n} fällt auf den ${S.name} zurück`,
+      desc: `Nach ${Math.max(0, z.vor.punkte - z.nach.punkte)} Prestige weniger an diesem Tag fehlen bis zum `
+        + `${vorS.name} wieder ${Math.max(0, vorS.min - z.nach.punkte)}.`};
+  };
+  if(l.length === 1) return satz(l[0]);
+  const etikett = z => z.art === 'ab' ? 'Rückfall'
+    : z.art === 'grad' ? (INSIGNIEN[z.nach.stufe].key === 'stern' ? `${z.nach.zacken}. Zacke` : _insLageName(z.nach))
+    : INSIGNIEN[z.nach.stufe].name;
+  const reihe = [];
+  l.forEach(z => { const e = etikett(z), da = reihe.find(x => x.e === e);
+    if(da) da.n.push(nm(z.pid)); else reihe.push({e, n:[nm(z.pid)]}); });
+  const teile = reihe.map(x => `${x.e} für ${_namenListe(x.n)}`);
+  const weitere = n => n === 1 ? 'eine weitere Bewegung' : `${_zahlwortDe(n)} weitere`;
+  let title = teile.length <= 3 ? _namenListe(teile) : `${teile.slice(0, 2).join(', ')} und ${weitere(teile.length - 2)}`;
+  if(title.length > 96) title = `${teile[0]} und ${weitere(teile.length - 1)}`;
+  return {title:title.charAt(0).toUpperCase() + title.slice(1), desc:satz(l[0]).desc};
+}
+
+function _insZeichen(pid, l, bild){
+  const ins = INSIGNIEN[(l && l.stufe) | 0];
+  if(!ins) return '';
+  try { return insigniumStufeSvg(ins.key, (getPlayerRank(pid) || {}).label, l.zacken | 0, l.grad | 0,
+    bild ? {bild:true} : undefined) || ''; } catch(e){ return ''; }
+}
+function _insArtWort(z){
+  return z.art === 'ab' ? 'Rückfall' : z.art === 'grad' ? 'Neuer Grad'
+    : z.wieder ? 'Wieder erreicht' : 'Neue Stufe';
+}
+function _newsInsTagKopf(s){
+  const d = (s && s.dataRef) || {}, z = (d.zuege || [])[0], pm = pmap();
+  if(!z || !pm[z.pid]) return '';
+  const S = INSIGNIEN[z.nach.stufe];
+  const pfeil = `<svg class="ni-pf" viewBox="0 0 40 16" aria-hidden="true"><path d="M2 8H34"/><path d="M28 3L35 8L28 13"/></svg>`;
+  const grade = S.key === 'stern' ? '' : `<span class="ni-gr">${INSIGNIUM_GRAD_NAME.map((g, i) =>
+    `<i class="${i < z.nach.grad ? 'da' : i === z.nach.grad ? 'jetzt' : ''}">${g}</i>`).join('')}</span>`;
+  return `<div class="ni-b ni-${esc(z.art)}" data-pid="${esc(z.pid)}">`
+    + `<span class="ni-alt">${_insZeichen(z.pid, z.vor, true)}</span>${pfeil}`
+    + `<span class="ni-neu">${_insZeichen(z.pid, z.nach)}<span class="ni-av">${avHtml(pm[z.pid], '', {px:30})}</span></span>`
+    + `<span class="ni-t"><em>${esc(_insArtWort(z))}</em><b>${esc(_insLageName(z.nach))}</b>${grade}`
+    + `<small><b class="num">${z.nach.punkte}</b> Prestige</small></span></div>`;
+}
+function _newsInsTagZeilen(s){
+  const d = (s && s.dataRef) || {}, l = (d.zuege || []).slice(1), pm = pmap();
+  if(!l.length) return '';
+  const lb = d.laufbahn || {};
+  const text = z => z.art === 'ab' ? `fällt auf den ${INSIGNIEN[z.nach.stufe].name} zurück`
+    : z.art === 'grad' ? (INSIGNIEN[z.nach.stufe].key === 'stern' ? `erreicht die ${z.nach.zacken}. Zacke`
+      : `steigt auf ${_insLageName(z.nach)}`)
+    : z.wieder ? `trägt wieder den ${INSIGNIEN[z.nach.stufe].name}` : `erreicht den ${INSIGNIEN[z.nach.stufe].name}`;
+  const zeile = z => {
+    if(!pm[z.pid]) return '';
+    const w = lb[z.pid], dl = w ? Math.round(Number(w.nach) || 0) - Math.round(Number(w.vor) || 0) : 0;
+    return `<div class="ni-z${z.art === 'ab' ? ' ab' : ''}" data-pid="${esc(z.pid)}">${rcpAvHtml(z.pid, 20, {})}`
+      + `<span class="ni-z-t"><b>${esc(pm[z.pid].name)}</b> ${esc(text(z))}</span>`
+      + `<span class="ni-z-z">${_insZeichen(z.pid, z.nach, true)}</span>`
+      + (dl ? `<em class="num ${dl > 0 ? 'g' : 'r'}">${dl > 0 ? '+' : '−'}${Math.abs(dl)} P</em>` : '') + `</div>`;
+  };
+  return `<div class="ni-zs">${l.slice(0, 3).map(zeile).join('')}`
+    + (l.length > 3 ? `<div class="ni-z mehr">+${l.length - 3} weitere</div>` : '') + `</div>`;
+}
+
+function _ndInsTagBlatt(s){
+  const d = (s && s.dataRef) || {}, l = d.zuege || [], pm = pmap(), z = l[0];
+  if(!z || !pm[z.pid]) return null;
+  const kopf = `<div class="nd-buehne nd-is">`
+    + `<div class="nd-is-w"><span class="nd-is-alt">${_insZeichen(z.pid, z.vor, true)}<small>${esc(_insLageName(z.vor))}</small></span>`
+    + `<svg class="nd-rk-pf${z.art === 'ab' ? ' ab' : ''}" viewBox="0 0 40 16" aria-hidden="true"><path d="M2 8H34"/><path d="M28 3L35 8L28 13"/></svg>`
+    + `<span class="nd-is-neu" data-pid="${esc(z.pid)}"><span class="nd-is-z">${_insZeichen(z.pid, z.nach)}</span>`
+    + `<span class="nd-is-av">${avHtml(pm[z.pid], '', {px:58})}</span></span></div>`
+    + `<b class="nd-is-n">${esc(_insLageName(z.nach))}</b>`
+    + `<span class="nd-is-p"><b class="num">${z.nach.punkte}</b> Prestige · ${esc(_spName(z.pid))}</span>`
+    + `<span class="nd-is-wd">${esc(_insArtWort(z))}</span></div>`;
+  const je = {};
+  l.forEach(x => { if(pm[x.pid] && d.laufbahn && d.laufbahn[x.pid]) je[x.pid] = d.laufbahn[x.pid]; });
+  const ab = (t, html) => html ? `<div class="nd-section">${esc(t)}</div>${html}` : '';
+  const weg = l.filter(x => pm[x.pid]).map(x => `<div class="ni-bw">${rcpAvHtml(x.pid, 20, {})}`
+    + `<b>${esc(pm[x.pid].name)}</b><span>${esc(_insLageName(x.vor))} → ${esc(_insLageName(x.nach))}</span></div>`
+    + _insWegHtml(x.pid, x.nach.punkte, x.vor.punkte)).join('');
+  const leiter = Array.isArray(d.leiter) ? _newsLigaLeiter({je:d.leiter}) : '';
+  return {kopf, mitte: ab(l.length > 1 ? 'Die Bewegungen' : 'Der Weg durch die Stufe', weg)
+    + ab('Woher das Prestige kommt', _ndWirkungBlock(je, null, new Date(s.when).getTime()))
+    + ab('Die Leiter der Liga an diesem Tag', leiter)};
+}
+
+function _insAltZuTag(list){
+  if(!Array.isArray(list) || !list.some(s => ((s && s.dataRef) || {}).type === 'insignium_stufe')) return list;
+  const neu = new Map(), alt = new Map(), rest = [];
+  list.forEach(s => {
+    const d = (s && s.dataRef) || {};
+    if(d.type === 'insignium_tag') neu.set(d.tag || tagKey(s.when), s);
+    if(d.type === 'insignium_stufe'){ const k = tagKey(s.when); (alt.get(k) || alt.set(k, []).get(k)).push(s); }
+    else rest.push(s);
+  });
+  const ersetzt = new Map();
+  alt.forEach((zeilen, tag) => {
+    const da = neu.get(tag);
+    if(da){
+      const dd = da.dataRef || {};
+      ersetzt.set(da.id, Object.assign({}, da, {dataRef:Object.assign({}, dd,
+        {memberIds:[...new Set((dd.memberIds || [da.id]).concat(zeilen.map(x => x.id)))]})}));
+      return;
+    }
+    const zuege = zeilen.map(x => {
+      const d = x.dataRef || {}, lb = (d.laufbahn || {})[d.pid] || {};
+      const lage = p => { const i = insigniumStufeVon(p), gs = insigniumGradSchwellen(i);
+        return {stufe:i, grad:gs.reduce((g, sw, k) => p >= sw ? k : g, 0),
+          zacken:INSIGNIEN[i].key === 'stern' ? ORDENSSTERN_START + Math.floor((p - INSIGNIEN[i].min) / ORDENSSTERN_SCHRITT) : 0,
+          punkte:Math.round(p)}; };
+      const nach = Number(d.punkte) || Number(lb.nach) || INSIGNIEN[d.stufe | 0].min;
+      const vor = Number(lb.vor) || Math.max(0, INSIGNIEN[d.stufe | 0].min - 1);
+      return {pid:d.pid, art:'auf', vor:lage(vor), nach:lage(nach), ms:new Date(x.when).getTime(),
+        matchId:d.matchId || null, wieder:!!d.wieder};
+    }).filter(z => z.pid);
+    if(!zuege.length) return;
+    const t = zeilen.length === 1 ? {title:zeilen[0].title, desc:zeilen[0].desc} : _insTagTexte(zuege);
+    const lb = {};
+    zeilen.forEach(x => Object.assign(lb, (x.dataRef || {}).laufbahn || {}));
+    rest.push({id:'instag_' + tag, cat:'tafel', ic:'award', title:t.title, desc:t.desc,
+      when:new Date(Math.max(...zeilen.map(x => new Date(x.when).getTime()))),
+      prio:Math.max(...zeilen.map(x => x.prio | 0)),
+      dataRef:{type:'insignium_tag', tag, zuege, playerIds:zuege.map(z => z.pid), laufbahn:lb,
+        memberIds:zeilen.map(x => x.id)}});
+  });
+  return rest.map(s => ersetzt.get(s.id) || s);
+}
 function _ndLead(desc, body){
   const lead = String(desc || '');
   if(String(body || '').indexOf('rcp-z') < 0 || !/^[^:]+:\s+\S/.test(lead)) return lead;
@@ -26256,20 +26476,29 @@ function _ndInsigniumBlatt(s){
     if(sum > 0) quellen = `<div class="nd-is-q"><span class="nd-is-qb">${q.map(x => x.v ? `<i class="${x.k}" style="width:${(x.v / sum * 100).toFixed(1)}%"></i>` : '').join('')}</span>`
       + `<span class="nd-is-ql">${q.map(x => `<span class="${x.k}"><b class="num">${x.v}</b>${x.l}</span>`).join('')}</span></div>`;
   }
-  let weg = '';
-  if(next){
-    const spanne = Math.max(1, next.min - ins.min);
-    const lage = x => Math.max(0, Math.min(100, (x - ins.min) / spanne * 100));
-    const grenzen = gs.concat([next.min]);
-    weg = `<div class="nd-is-g"><div class="nd-is-gs">${gs.map((x, g) => `<span class="nd-is-gf${g <= grad ? ' da' : ''}${g === grad ? ' jetzt' : ''}" style="flex:${(lage(grenzen[g + 1]) - lage(x)).toFixed(1)} 1 0">`
-      + `<span class="nd-is-gz">${zeichen(ins.key, 0, g, true)}</span><i></i><small class="num">${x}</small></span>`).join('')}`
-      + `<em class="nd-is-gm" style="left:${lage(punkte).toFixed(1)}%"></em></div>`
-      + `<span class="nd-is-ge"><span class="nd-is-gz">${zeichen(next.key, 0, 0, true)}</span><small class="num">${next.min}</small></span></div>`;
-  }
+  const weg = next ? _insWegHtml(pid, punkte) : '';
   const leiter = `<div class="nf-leiter nd-is-l">${INSIGNIEN.map((x, k) => `<span class="nf-lt-p${k <= i ? ' hat' : ''}${k === i ? ' jetzt' : ''}">`
     + `${zeichen(x.key, k === i ? zacken : 0, k === i ? grad : 0, true)}</span>`).join('')}</div>`;
   const ab = (x, html) => html ? `<div class="nd-section">${esc(x)}</div>${html}` : '';
   return {kopf, mitte:ab('Woraus die Punkte kommen', quellen) + ab('Der Weg durch die Stufe', weg) + ab('Die Leiter', leiter)};
+}
+
+function _insWegHtml(pid, punkte, vorher){
+  const i = insigniumStufeVon(punkte), ins = INSIGNIEN[i], next = INSIGNIEN[i + 1];
+  if(!next) return '';
+  const rl = (getPlayerRank(pid) || {}).label;
+  const gs = insigniumGradSchwellen(i);
+  let grad = 0; gs.forEach((x, g) => { if(punkte >= x) grad = g; });
+  const zeichen = (key, g) => { try { return insigniumStufeSvg(key, rl, 0, g, {bild:true}) || ''; } catch(e){ return ''; } };
+  const spanne = Math.max(1, next.min - ins.min);
+  const lage = x => Math.max(0, Math.min(100, (x - ins.min) / spanne * 100));
+  const grenzen = gs.concat([next.min]);
+  const alt = vorher != null && insigniumStufeVon(vorher) === i && Math.round(vorher) !== Math.round(punkte)
+    ? `<em class="nd-is-gm alt" style="left:${lage(vorher).toFixed(1)}%"></em>` : '';
+  return `<div class="nd-is-g"><div class="nd-is-gs">${gs.map((x, g) => `<span class="nd-is-gf${g <= grad ? ' da' : ''}${g === grad ? ' jetzt' : ''}" style="flex:${(lage(grenzen[g + 1]) - lage(x)).toFixed(1)} 1 0">`
+    + `<span class="nd-is-gz">${zeichen(ins.key, g)}</span><i></i><small class="num">${x}</small></span>`).join('')}`
+    + `${alt}<em class="nd-is-gm" style="left:${lage(punkte).toFixed(1)}%"></em></div>`
+    + `<span class="nd-is-ge"><span class="nd-is-gz">${zeichen(next.key, 0)}</span><small class="num">${next.min}</small></span></div>`;
 }
 
 function _ndTafelArt(t){
@@ -26507,7 +26736,7 @@ const _ND_BLATT = {win_streak:_ndSerieBlatt, loss_streak:_ndSerieBlatt, team_str
   rekord_erstmals:_ndRekordBlatt, rekord_gesteigert:_ndRekordBlatt, rekord_geholt:_ndRekordBlatt,
   potd:_ndPotdBlatt, season_endgame:_ndEndspurtBlatt, chronik_geholt:_ndChronikBlatt,
   chronik_frei:_ndMonatBlatt, chronik_monat:_ndMonatBlatt, chronik_erstling:_ndErstlingBlatt,
-  insignium_stufe:_ndInsigniumBlatt, sammel:_ndTafelMomentBlatt,
+  insignium_stufe:_ndInsigniumBlatt, insignium_tag:_ndInsTagBlatt, sammel:_ndTafelMomentBlatt,
   jubilee:_ndMeilensteinBlatt, milestone_wins:_ndMeilensteinBlatt, milestone_goals:_ndMeilensteinBlatt,
   milestone_elo:_ndMeilensteinBlatt, top_form:_ndFormBlatt, elo_swing:_ndAusschlagBlatt,
   top_clash:_ndSpitzenspielBlatt, badge_marken:_ndMarkenBlatt, dry_spell:_ndFaktBlatt, ambient:_ndFaktBlatt,
@@ -26835,7 +27064,6 @@ function _ndMitteRoh(s){
             {t:'Bestmarken', f:x => typ(x).indexOf('rekord_') === 0
                                  && typ(x) !== 'rekord_gesteigert'},
             {t:'Monatschroniken', f:x => typ(x).indexOf('chronik_') === 0},
-            {t:'Neue Insignien', f:x => typ(x) === 'insignium_stufe'},
             {t:'Ausbauten', f:x => typ(x) === 'rekord_gesteigert'}
           ];
           const rest = teile.slice();
@@ -26877,7 +27105,6 @@ function _ndMitteRoh(s){
             && typ(t) !== 'rekord_gesteigert').length;
           const aus = teile.filter(t => typ(t) === 'rekord_gesteigert').length;
           const chr = teile.filter(t => typ(t).indexOf('chronik_') === 0).length;
-          const insz = teile.filter(t => typ(t) === 'insignium_stufe').length;
           let plus = 0, minus = 0;
           const gez = {};
           teile.forEach(t => { const lb = t.lb; if(!lb) return;
@@ -26888,7 +27115,6 @@ function _ndMitteRoh(s){
             wech ? {v: wech, l: wech === 1 ? 'Bestmarke' : 'Bestmarken', ton:'gold'} : null,
             aus ? {v: aus, l: aus === 1 ? 'Ausbau' : 'Ausbauten'} : null,
             chr ? {v: chr, l: chr === 1 ? 'Chronik' : 'Chroniken'} : null,
-            insz ? {v: insz, l: insz === 1 ? 'Insignium' : 'Insignien'} : null,
             plus ? {v: '+' + plus, l:'Prestige', ton:'gold'} : null,
             minus ? {v: '−' + minus, l:'verloren', ton:'rot'} : null
           ].filter(Boolean);
@@ -32625,6 +32851,14 @@ function prestigeOf(pid, bisMs){
     platz: imRuhestand(pid) ? ruhestandStand(pid).platz : T.rang.indexOf(pid) + 1,
     von: imRuhestand(pid) ? ruhestandStand(pid).von : T.gesamt
   });
+}
+
+function insigniumPos(P){
+  if(!P) return 0;
+  const letzte = INSIGNIEN.length - 1;
+  return (P.stufe | 0) === letzte
+    ? letzte * INSIGNIUM_GRADE + Math.max(0, (P.zacken || ORDENSSTERN_START) - ORDENSSTERN_START)
+    : (P.stufe | 0) * INSIGNIUM_GRADE + (P.grad | 0);
 }
 
 

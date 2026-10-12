@@ -358,6 +358,7 @@ const STORY_PRIO = {
   chronik_geholt:    62,
   team_streak:       60,
   insignium_stufe:   58,
+  insignium_tag:     58,
   badge_unlocked:    54,
   team_loss_streak:  52,
   milestone_wins:    48,

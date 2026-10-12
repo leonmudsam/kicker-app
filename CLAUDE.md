@@ -70,7 +70,7 @@ mit rotem Wächter oder roter Suite.
 src/index.html        Gerüst mit den Platzhaltern /*@@CSS*/ und /*@@JS*/
 src/sw.js             der Service Worker; build.mjs setzt seine Fassung [§C42]
 src/css/              17 Dateien
-src/js/               59 Dateien
+src/js/               60 Dateien
 tools/build.mjs       hängt src/css/* und src/js/* ALPHABETISCH aneinander,
                       ohne Kommentare
 tools/check.mjs       acht Wächter
@@ -121,7 +121,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **1218**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **1230**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -143,7 +143,7 @@ Datei, deren Aufgabe niemand aufgeschrieben hat.
 | Blätter (Sheets) | `14-top5-listen` · `16-sheet-infra` (Öffnen, Stapel, Wischgeste) · `19-bilanzen` · `21-head-to-head` |
 | Rückblicke | `05b-recap-teile` (Baukasten) · `07-positionsverlauf` (Positionsverlauf) · `07b-rueckblick` (Woche, Tag) · `18b-abschied` (der Abschied eines Ruheständlers, Bühne für Blatt und Story) |
 | Zeichen und Wappen | `02-icons` (SVG-Katalog, `lossStreakInline`) · `09c-zeichen` (Feuer, Sterne, `avHtml`) · `17-badges` · `17b-fingerabdruck` · `35a-insignium-zeichen` (die 21 Zeichnungen der Leiter, `insBild`) · `35b-prestige` (Insignium, Laufbahn) · `35c-titel-aura` (die Aura der Meistertitel, `auraHref`) |
-| News | `26-news-konstanten` (Kategorien, Limits) · `26b-story-fakten` (ein Stand der Liga, der Spieltag als Paar aus Vorher und Nachher, die Punktewirkung, das Tor vor der Rangliste) · `26c-news-bausteine` (Rekorde aller Zeiten, Meilensteinleitern, Aufzählungen) · `27-news-generator` (Ereignisse, Ewige Tafel) · `28-news-ambient` · `29-news-cache` (Konsolidierung, Entzerrung) · `29b-news-sync` (Realtime, Autosync) · `29c-news-worker` (der Generator im Worker, mit demselben Code) · `30-news-ui` (Feed, `_isBreaking`) · `30a-news-karte` (die Bausteine einer Karte) · `30b-news-spieltag` (Kopf und Fuß einer Partie nach ihrem Anlass, die Runde der Vier) · `30c-news-fakt` (das Bild eines Fun Facts nach seinem Anlass) · `31-news-detail` (Kopf und Fuß eines Story-Blatts) · `31a-news-detail-mitte` (die Mitte je Typ) · `31b-news-detail-helfer` |
+| News | `26-news-konstanten` (Kategorien, Limits) · `26b-story-fakten` (ein Stand der Liga, der Spieltag als Paar aus Vorher und Nachher, die Punktewirkung, das Tor vor der Rangliste) · `26c-news-bausteine` (Rekorde aller Zeiten, Meilensteinleitern, Aufzählungen) · `27-news-generator` (Ereignisse, Ewige Tafel) · `28-news-ambient` · `29-news-cache` (Konsolidierung, Entzerrung) · `29b-news-sync` (Realtime, Autosync) · `29c-news-worker` (der Generator im Worker, mit demselben Code) · `30-news-ui` (Feed, `_isBreaking`) · `30a-news-karte` (die Bausteine einer Karte) · `30b-news-spieltag` (Kopf und Fuß einer Partie nach ihrem Anlass, die Runde der Vier) · `30c-news-fakt` (das Bild eines Fun Facts nach seinem Anlass) · `30d-news-insignium` (die Insignium-Karte des Tages: Sätze, Bühne, Blatt) · `31-news-detail` (Kopf und Fuß eines Story-Blatts) · `31a-news-detail-mitte` (die Mitte je Typ) · `31b-news-detail-helfer` |
 | Chronik | `32-chronik-katalog` (`DISZIPLINEN`) · `33-chronik-engine` (Monat) · `34-chronik-rekorde` (Allzeit, `CHRON_KINDS`, `chronicleRang`, `rekordZaehlung`) · `35-chronik-ui` |
 | Bedienung | `09-ui-infra` · `20-bind` · `23-match-edit` · `24-lock` · `25-helpers` · `36-backup` |
 
@@ -321,6 +321,16 @@ Kürzel wie `§5.2` Abschnitte im Code; beide stehen in
    was schon einmal falsch war.
 4. `node tools/check.mjs` einmal laufen lassen, bevor du etwas änderst —
    dann weißt du, ob ein rotes Ergebnis von dir kommt.
+5. **Für alles Neue das Karriereende entscheiden [§C40]**, bevor die erste
+   Zeile steht: Story, Wertung, Rekord, Liste, Ansicht, Zähler. Entsteht
+   es aus den eigenen Partien oder einem Zeitraum (Tag, Woche, Monat),
+   fragt es `sichtbar`; vergleicht es über die Laufbahn mit der Liga von
+   heute (Tafel, Prestige, Insignium, Rangstufe, Gesamt, Fun Fact), fragt
+   es `ligaAktiv`. Eine rohe `.hidden`-Abfrage gibt es nicht, und nach dem
+   Abschied nennt ihn keine Story außer der seines Karriereendes. Der Grund:
+   jedes Mal, wenn diese Frage vergessen wurde, stand ein Ruheständler in
+   einem Vergleich, den er nicht mehr spielt, oder verlor einen Monat, den
+   er gespielt hatte.
 
 ---
 

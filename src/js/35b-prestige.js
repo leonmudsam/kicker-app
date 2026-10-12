@@ -526,6 +526,18 @@ function prestigeOf(pid, bisMs){
   });
 }
 
+// Die Lage auf der Leiter als EINE Zahl: Stufe mal drei plus Grad, am
+// Ordensstern jede weitere Zacke eine mehr. Ob jemand so hoch steht wie nie
+// zuvor, ist damit ein Vergleich zweier Zahlen und keiner aus Stufe, Grad
+// und Zacken [§C30].
+function insigniumPos(P){
+  if(!P) return 0;
+  const letzte = INSIGNIEN.length - 1;
+  return (P.stufe | 0) === letzte
+    ? letzte * INSIGNIUM_GRADE + Math.max(0, (P.zacken || ORDENSSTERN_START) - ORDENSSTERN_START)
+    : (P.stufe | 0) * INSIGNIUM_GRADE + (P.grad | 0);
+}
+
 // ─── §13.9 Das Zeichen: Insignium und Titelband ──────────────────────
 //     Drei Achsen, drei Aussagen, keine doppelt:
 //

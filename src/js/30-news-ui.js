@@ -355,6 +355,10 @@ function _isBreaking(s){
     // bricht. Ob es das erste Mal ist, sagt `wieder` [§C33].
     case 'insignium_stufe':  // nur Kronenreif und Ordensstern [§C30]
       return !!d.oben && !d.wieder;
+    // Die Karte des Tages trägt dieselbe Regel für jede ihrer Bewegungen.
+    case 'insignium_tag':
+      return (d.zuege || []).some(z => z && z.art === 'auf' && !z.wieder
+        && ((z.nach || {}).stufe | 0) >= INSIGNIUM_OBEN);
     // ── Ein erstmals vergebener Liga-Rekord ist kein Breaking ───────
     // Er stand auf der Liste, und in der Füllphase der Ewigen Tafel wird
     // JEDER Rekord zum ersten Mal vergeben: gemessen über die 18 Spieltage
@@ -438,6 +442,9 @@ function _newsIstNegativ(s){
   // Johannes und Martins Sieg feiert — Rot ist die Richtung, und eine Karte
   // hat eine [§C25].
   const typ = (d.type === 'group' ? (d.sub || '') : (d.type || ''));
+  // Eine Insignium-Karte, die nur Rückfälle meldet, hat die Richtung nach
+  // unten — sie wird nie Karte des Tages und trägt kein Gold [§C25].
+  if(typ === 'insignium_tag') return (d.zuege || []).length > 0 && d.zuege.every(z => z && z.art === 'ab');
   return /loss|dry_spell/.test(typ) || d.rarity === 'negative';
 }
 
@@ -582,6 +589,11 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
     // Spieler bildlich verschwinden. Die kompakte Chipgruppe bleibt neben
     // dem Wert und macht keinen einzelnen Halter zum Hauptdarsteller.
     gesicht = `<div class="nf-gr-l">${w ? _newsWertBlock(w.v, w.l, 'ton') : ''}${_newsGesichtHtml(s)}</div>`;
+  } else if(sorte === 'ins' && d.type === 'insignium_tag'){
+    // Die Leiter des Tages [§C30]: die Verwandlung als Bühne, die übrigen
+    // Bewegungen als Zeilen darunter (30d-news-insignium.js).
+    kopf = _newsInsTagKopf(s);
+    fuss = _newsInsTagZeilen(s);
   } else if(sorte === 'ins'){
     gesicht = `<div class="nf-gr-l">${av(d.pid, 48)}</div>`;
     fuss = _newsLeiter(d.pid);
@@ -723,9 +735,10 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
     kopf = _newsErgebnisBand(d.matchId) || kopf;
   }
   // Das Duell traegt seine Wappen im Band ueber dem Text; die Ersatzgesichter
-  // haetten sie ein zweites Mal daneben gestellt.
+  // haetten sie ein zweites Mal daneben gestellt. Die Insignium-Karte zeigt
+  // jedes Gesicht in Bühne und Zeilen.
   if(!gesicht && !faktBild && sorte !== 'spiel' && sorte !== 'woche' && sorte !== 'duell'
-     && d.type !== 'season_recap' && d.type !== 'karriereende'){
+     && d.type !== 'season_recap' && d.type !== 'karriereende' && d.type !== 'insignium_tag'){
     const g = _newsGesichtHtml(s);
     if(g) gesicht = `<div class="nf-gr-l">${g}</div>`;
   }
