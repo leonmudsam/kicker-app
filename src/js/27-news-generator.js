@@ -1,4 +1,20 @@
 // ─── §11.1 — Story-Generator ─────────────────────────────────────────
+// ── Ein Höchststand, der der Gipfel der Liga ist, steht in der Tafel ──
+// Wer mit seinem Höchststand zugleich „Der höchste Gipfel" holt, stand
+// zweimal mit derselben Zahl im Feed: in der Ewigen Tafel als Rekord und in
+// der Karte der Partie als Höchststand. Die Tafel sagt das Größere; der
+// Höchststand fällt weg, an Ort und Stelle.
+function _ohneDoppeltenGipfel(stories){
+  const gipfel = new Set();
+  stories.forEach(s => { const d = s.dataRef || {};
+    if(/^rekord_/.test(d.type || '') && d.rekordId === 'peak')
+      (d.playerIds || []).forEach(pid => gipfel.add(pid + '|' + tagKey(s.when))); });
+  for(let i = stories.length; i--;){
+    const d = stories[i].dataRef || {};
+    if(d.type === 'elo_hoch' && gipfel.has(d.pid + '|' + tagKey(stories[i].when))) stories.splice(i, 1);
+  }
+  return stories;
+}
 function _buildStories(){
   const stories = [];
   const now = new Date();
@@ -878,6 +894,139 @@ function _buildStories(){
       });
     });
   } catch(e){}
+
+  // ── 8b. Was in einer Partie sonst noch passiert ──
+  // Eine Partie trug nur, was die Liga im Ganzen bewegt (Serien, Marken,
+  // Rekorde), und an den meisten Partien hing deshalb gar nichts: gemessen
+  // standen 36 von 52 Partien in vierzehn Tagen ohne ein einziges Ereignis
+  // da. Sechs Dinge passieren aber in einer einzelnen Partie und sind für die
+  // Beteiligten eine Nachricht: ein Fluch gegen einen Gegner reißt, ein Duo
+  // spielt zum fünfzigsten Mal zusammen, eine Niederlage vom selben Tag wird
+  // revanchiert, jemand bestreitet seine zehnte Partie des Tages, erreicht
+  // nach langer Zeit wieder seinen Höchststand oder springt in der Tabelle
+  // um drei Plätze. Jedes trägt seine Partie und hängt damit an ihrer Karte
+  // [§C33]; keins steht als eigene Karte im Feed. Wo etwas zählt, meldet es
+  // Stufen und nicht jeden Schritt.
+  try {
+    const seit = now.getTime() - NEWS_FENSTER_TAGE * _dayMs;
+    const DUO_STUFEN = new Set([25, 50, 75, 100, 150, 200, 250, 300, 400, 500]);
+    const TAG_STUFEN = new Set([10, 15, 20, 25, 30, 40]);
+    const sieger = m => m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2];
+    const verlierer = m => m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2];
+    const duo = ids => ids.slice().sort().join('|');
+    const gegen = {}, zusammen = {}, tagN = {}, duelle = {}, hoch = {};
+    const freiMemo = new Map();
+    const frei = m => {
+      const k = tagKey(m.created_at);
+      if(!freiMemo.has(k)){ let f = false;
+        try { f = _storyRangFrei(seasonOf(m.created_at).id, mts(m)).frei; } catch(e){}
+        freiMemo.set(k, f); }
+      return freiMemo.get(k);
+    };
+    const neuSt = [];
+    // Alles hier entsteht aus den eigenen Partien und fragt deshalb
+    // `sichtbar` [§C40 Regel 1]; nach dem Abschied hält ihn das Tor des
+    // Generators ohnehin heraus.
+    const zeig = id => sichtbar(pm[id]);
+    chronoMatches.forEach(m => {
+      const t = mts(m), W = sieger(m), L = verlierer(m), neu = t >= seit;
+      if(!W[0] || !L[0]) return;
+      const zeit = new Date(t);
+      // (1) Der Fluch: der erste Sieg gegen einen Gegner nach mindestens
+      // fünf Niederlagen in Folge gegen ihn, und der letzte Sieg liegt zwei
+      // Wochen zurück oder es gab keinen. Fünf Pleiten fallen in einer Runde
+      // an einem Vormittag; gemessen hätte das sechsmal in vierzehn Tagen
+      // gemeldet, „wieder gegen Maxi" nach einem Sieg vom Vortag.
+      let fluch = null;
+      W.forEach(w => L.forEach(l => {
+        const g = gegen[w + '>' + l] || (gegen[w + '>' + l] = {pleiten:0, sieg:0});
+        if(neu && zeig(w) && zeig(l) && g.pleiten >= 5 && (!g.sieg || t - g.sieg >= 14 * _dayMs) && (!fluch || g.pleiten > fluch.n))
+          fluch = {w, l, n:g.pleiten, sieg:g.sieg};
+        g.pleiten = 0; g.sieg = t;
+        const h = gegen[l + '>' + w] || (gegen[l + '>' + w] = {pleiten:0, sieg:0});
+        h.pleiten++;
+      }));
+      if(fluch) neuSt.push({id:'fluch_' + fluch.w + '_' + fluch.l + '_' + m.id, cat:'rivalry', ic:'ghost',
+        title:`${nameOf(fluch.w)} gewinnt nach ${fluch.n} Niederlagen in Folge wieder gegen ${nameOf(fluch.l)}`,
+        desc: fluch.sieg ? `Der letzte Sieg gegen ${nameOf(fluch.l)} war am ${datumFmt(fluch.sieg, 'tm')}`
+                         : `Es ist der erste Sieg gegen ${nameOf(fluch.l)} überhaupt.`,
+        when:zeit, prio:STORY_PRIO.fluch,
+        dataRef:{type:'fluch', pid:fluch.w, gegen:fluch.l, n:fluch.n, matchId:m.id, playerIds:[fluch.w, fluch.l]}});
+      // (2) Das Duo-Jubiläum: dieselben zwei auf derselben Seite.
+      [[W, true], [L, false]].forEach(([ids, sieg]) => {
+        const k = duo(ids), z = zusammen[k] || (zusammen[k] = {n:0, s:0});
+        z.n++; if(sieg) z.s++;
+        if(neu && DUO_STUFEN.has(z.n) && ids.every(zeig)) neuSt.push({id:'duojub_' + k.replace('|', '_') + '_' + z.n, cat:'team', ic:'users',
+          title:`${nameOf(ids[0])} und ${nameOf(ids[1])} spielen zum ${z.n}. Mal zusammen`,
+          desc:`${z.s} von ${z.n} Partien gewonnen, Siegquote ${Math.round(100 * z.s / z.n)} %.`,
+          when:zeit, prio:STORY_PRIO.duo_jubilaeum,
+          dataRef:{type:'duo_jubilaeum', a:ids[0], b:ids[1], n:z.n, s:z.s, sieg, matchId:m.id, playerIds:ids.slice()}});
+      });
+      // (3) Die Revanche: dieselben zwei Duos am selben Tag, und die Sieger
+      // haben das Duell davor klar verloren (drei Tore oder mehr). Ohne den
+      // Abstand war in jeder Runde jede zweite Partie eine Revanche.
+      const dk = [duo(W), duo(L)].sort().join('#'), vor = duelle[dk];
+      if(neu && vor && W.concat(L).every(zeig) && tagKey(vor.created_at) === tagKey(m.created_at)
+         && duo(verlierer(vor)) === duo(W) && Math.abs(vor.score_a - vor.score_b) >= 3){
+        const vh = Math.max(vor.score_a, vor.score_b), vt = Math.min(vor.score_a, vor.score_b);
+        neuSt.push({id:'revanche_' + m.id, cat:'comeback', ic:'rematch',
+          title:`${nameOf(W[0])} und ${nameOf(W[1])} revanchieren sich gegen ${nameOf(L[0])} und ${nameOf(L[1])}`,
+          desc:`Um ${datumFmt(mts(vor), 'uhr')} Uhr hatten sie noch ${vt}:${vh} verloren.`,
+          when:zeit, prio:STORY_PRIO.revanche,
+          dataRef:{type:'revanche', W:W.slice(), L:L.slice(), vorherId:vor.id, matchId:m.id, playerIds:W.concat(L)}});
+      }
+      duelle[dk] = m;
+      // (4) Der lange Tag: die zehnte, fünfzehnte … Partie eines Spielers an
+      // einem Tag.
+      W.concat(L).forEach(id => {
+        const k = id + '|' + tagKey(m.created_at), z = tagN[k] || (tagN[k] = {n:0, s:0});
+        z.n++; if(W.includes(id)) z.s++;
+        if(neu && TAG_STUFEN.has(z.n) && zeig(id)) neuSt.push({id:'marathon_' + id + '_' + tagKey(m.created_at) + '_' + z.n, cat:'personal', ic:'hourglass',
+          title:`${nameOf(id)} bestreitet die ${z.n}. Partie des Tages`,
+          desc:`${z.s} davon gewonnen.`,
+          when:zeit, prio:STORY_PRIO.tagesmarathon,
+          dataRef:{type:'tagesmarathon', pid:id, n:z.n, s:z.s, matchId:m.id, playerIds:[id]}});
+      });
+      // (5) Der Höchststand: ein Sieger übertrifft seine beste Elo, und
+      // die lag mindestens zwanzig eigene Partien zurück. Die Elo beginnt
+      // jeden Monat neu; verglichen wird wie im Profil („Allzeit") mit dem
+      // höchsten Stand, den er je in einem Monat erreicht hatte. Der Satz
+      // nennt deshalb den Monat der alten Marke, wenn sie nicht aus diesem
+      // stammt — sonst fragte man sich, wie 303 Elo „so viel wie nie" sein
+      // können, wenn die Elo im Juli doch neu begonnen hat.
+      const h = histMap.get(m.id) || {};
+      W.concat(L).forEach(id => {
+        const e = (h.eloAfter || {})[id];
+        const r = hoch[id] || (hoch[id] = {max:-Infinity, seit:0, wann:0});
+        if(e == null){ r.seit++; return; }
+        if(e > r.max){
+          if(neu && W.includes(id) && zeig(id) && r.max > -Infinity && r.seit >= 20){
+            const anders = seasonOf(new Date(r.wann)).id !== seasonOf(m.created_at).id;
+            neuSt.push({id:'hoch_' + id + '_' + m.id, cat:'personal', ic:'peak',
+              title:`${nameOf(id)} erreicht ${Math.round(e)} Elo, so viel wie nie zuvor`,
+              desc:`Der bisherige Höchststand lag bei ${Math.round(r.max)} Elo, ${r.seit} Partien zuvor`
+                + (anders ? ` im ${seasonLabel(seasonOf(new Date(r.wann)).id)}.` : '.'),
+              when:zeit, prio:STORY_PRIO.elo_hoch,
+              dataRef:{type:'elo_hoch', pid:id, elo:Math.round(e), vorher:Math.round(r.max), seit:r.seit,
+                vorherSid:seasonOf(new Date(r.wann)).id, matchId:m.id, playerIds:[id]}});
+          }
+          r.max = e; r.seit = 0; r.wann = t;
+        } else r.seit++;
+      });
+      // (6) Der Tabellensprung: ein Sieger gewinnt drei Plätze oder mehr,
+      // sobald die Tabelle belastbar ist.
+      if(neu && frei(m)) W.filter(zeig).forEach(id => {
+        const r = _newsRankChange(id, m.id);
+        if(r && r.pre && r.post && r.pre - r.post >= 3)
+          neuSt.push({id:'sprung_' + id + '_' + m.id, cat:'personal', ic:'stepsUp',
+            title:`${nameOf(id)} springt von Platz ${r.pre} auf Platz ${r.post}`,
+            desc:`${r.pre - r.post} Plätze mit einem Sieg.`,
+            when:zeit, prio:STORY_PRIO.tabellensprung,
+            dataRef:{type:'tabellensprung', pid:id, pre:r.pre, post:r.post, matchId:m.id, playerIds:[id]}});
+      });
+    });
+    neuSt.forEach(x => stories.push(x));
+  } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] partie', e); }
 
   // ── 9. Stille Woche (Aktivitäts-Fun-Fact) ──
   // Vergleicht Spielzahl letzte 7 Tage mit Schnitt der vorangegangenen 4 Wochen.
@@ -2744,6 +2893,8 @@ function _buildStories(){
     const amb = _buildAmbientStories(now, pm, nameOf, stories);
     for(const a of amb) stories.push(a);
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] ambient build failed', e); }
+
+  _ohneDoppeltenGipfel(stories);
 
   // ── Keine Meldung einer Partie ohne ihre Partie ──
   // Was an einer Partie hängt, steht auf ihrer Karte [§C33]. Ein paar Typen
