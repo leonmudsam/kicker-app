@@ -1401,11 +1401,42 @@ function _spDuoserieBild(d){
     + `<span class="sp-ds-c re">${_spChips(d.L)}</span></div>`
     + (d.nurAnlass ? '' : _spNz(d.W, d.L));
 }
+// Der Elo-Höchststand: die Kurve des laufenden Monats, die alte Bestmarke
+// als gestrichelte Linie und der neue Punkt darüber. Eine Zahl allein sagte
+// nicht, wie lange die alte Marke stand. Alte Marke und Abstand kommen aus
+// dem Ereignis: aus den letzten vierzig Partien gerechnet, lag die alte Marke
+// bei 82 Partien Abstand außerhalb, und der Fuß nannte „vorher 291, seit 1
+// Partien“, während das Blatt 299 und 82 sagte. Die Kurve bleibt im Monat,
+// weil die Elo jeden Monat neu beginnt: über die Grenze gezeichnet, sah der
+// Neubeginn wie ein Absturz aus.
+function _spHochDaten(pid, m, x){
+  const seit = x && x.seit > 0 ? x.seit : 0, sid = seasonOf(m.created_at).id;
+  const eig = _spEigene(pid, m).filter(y => seasonOf(y.created_at).id === sid)
+    .slice(-Math.min(80, Math.max(12, seit + 2)));
+  const H = getHistoryByMatchId();
+  const kurve = eig.map(y => Math.round(((H.get(y.id) || {}).eloAfter || {})[pid] || 0));
+  if(kurve.length < 2) return null;
+  const elo = x && x.elo != null ? x.elo : kurve[kurve.length - 1];
+  const alt = x && x.vorher != null ? x.vorher : Math.max(...kurve.slice(0, -1));
+  const monat = x && x.vorherSid && x.vorherSid !== sid ? seasonLabel(x.vorherSid) : '';
+  return {pid, kurve, elo, alt, seit, monat};
+}
+function _spHochBild(d){
+  const lo = Math.min(d.alt, ...d.kurve), hi = Math.max(d.alt, ...d.kurve), n = d.kurve.length;
+  const X = i => 4 + i * (192 / Math.max(1, n - 1)), Y = v => 6 + (hi - v) / Math.max(1, hi - lo) * 40;
+  const pfad = d.kurve.map((v, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)} ${Y(v).toFixed(1)}`).join('');
+  return `<div class="sp-fk sp-ho"><div class="sp-ho-g"><svg viewBox="0 0 200 52" aria-hidden="true">`
+    + `<line class="sp-ho-alt" x1="4" x2="196" y1="${Y(d.alt).toFixed(1)}" y2="${Y(d.alt).toFixed(1)}"/>`
+    + `<path class="sp-ho-l" d="${pfad}"/><circle class="sp-ho-p" cx="${X(n - 1).toFixed(1)}" cy="${Y(d.elo).toFixed(1)}" r="3.4"/></svg></div>`
+    + `<div class="sp-ho-t"><em>Höchststand</em><span class="sp-ho-z">${_spChip(d.pid)}<b class="num">${_spZahl(d.elo)}</b> Elo</span>`
+    + `<span class="sp-ho-u">bisher <b class="num">${_spZahl(d.alt)}</b>${d.monat ? ` im ${esc(d.monat)}` : ''}${d.seit
+      ? `, vor ${d.seit === 1 ? 'einer Partie' : `<b class="num">${_spZahl(d.seit)}</b> Partien`}` : ''}</span></div></div>`;
+}
 const SP_FORM_BILD = {mosaik:_spMosaikBild, tacho:_spTachoBild, streu:_spStreuBild, transfer:_spTransferBild,
   chemie:_spChemieBild, gegner:_spGegnerBild, revanche:_spRevancheBild, gipfel:_spGipfelBild,
   rueckkehr:_spRueckkehrBild, gefaelle:_spGefaelleBild, tagesring:_spTagesringBild, zaehlwerk:_spZaehlwerkBild,
   tauziehen:_spTauziehenBild, muenze:_spMuenzeBild, weste:_spWesteBild,
-  uhr:_spUhrBild, ueberholt:_spUeberholtBild, duoserie:_spDuoserieBild,
+  uhr:_spUhrBild, ueberholt:_spUeberholtBild, duoserie:_spDuoserieBild, hoch:_spHochBild,
   feld:_spFeldBild};
 
 // ── Kopf und Fuß je Anlass ───────────────────────────────────────────
@@ -1591,6 +1622,14 @@ function _spFussFakt(m, fakten){
     out.push({w:56, a:{key:'zaehlwerk', m, x:{wer:x.pid, wert:Number(x.total), label:'Partie'}}});
   if((x = f('win_streak')) && x.streak) out.push({w:46 + 2 * Math.min(17, x.streak), a:{key:'serie', m, x}});
   if((x = f('team_streak')) && x.streak && x.a && x.b) out.push({w:46 + 2 * Math.min(17, x.streak), a:{key:'teamserie', m, x}});
+  // Was in der einzelnen Partie passiert, mit der Zeichnung, die es zeigt.
+  if((x = f('fluch')) && x.pid && x.gegen) out.push({w:64, a:{key:'gegner', m, x}});
+  if((x = f('elo_hoch')) && x.pid) out.push({w:60, a:{key:'hoch', m, x}});
+  if((x = f('tabellensprung')) && x.pid && x.pre && x.post)
+    out.push({w:59, a:{key:'rang', m, x:[{pid:x.pid, r:{pre:x.pre, post:x.post}}]}});
+  if((x = f('revanche'))) out.push({w:52, a:{key:'revanche', m, x}});
+  if((x = f('duo_jubilaeum')) && x.sieg) out.push({w:50, a:{key:'chemie', m, x}});
+  if((x = f('tagesmarathon')) && x.pid) out.push({w:40, a:{key:'tagesring', m, x}});
   if((x = f('rivalry_milestone')) && x.a && x.b) out.push({w:54, a:{key:'duell', m, x}});
   else if((x = f('rivalry')) && x.a && x.b) out.push({w:34, a:{key:'duell', m, x}});
   out.sort((p, q) => q.w - p.w);
@@ -1622,12 +1661,21 @@ function _spAnlassSnapshot(m, fakten, scoreKey){
       return merke({key:a.key, data:{wer:a.x.wer, wert:a.x.wert, label:a.x.label,
         W:F.W, L:F.L, hoch:F.hoch, tief:F.tief}});
     }
+    const F = _spFakten(m);
     const daten = {
       spitze:() => _spTabelleDaten(a, true), serie:() => _spSerieDaten(a),
       duell:() => _spDuellDaten(a), riss:() => _spRissDaten(a),
-      teamserie:() => _spDuoDaten(a), medaille:() => _spMedailleDaten(a)
+      teamserie:() => _spDuoDaten(a), medaille:() => _spMedailleDaten(a),
+      rang:() => _spTabelleDaten(a, false),
+      gegner:() => { const g = F.gegner.find(y => y.w === a.x.pid && y.l === a.x.gegen);
+        return g ? SP_FORM.gegner.daten(F, {g, fluch:true}) : null; },
+      hoch:() => _spHochDaten(a.x.pid, m, a.x),
+      revanche:() => F.revanche ? SP_FORM.revanche.daten(F, {}) : null,
+      chemie:() => SP_FORM.chemie.daten(F, {rund:true}),
+      tagesring:() => SP_FORM.tagesring.daten(F, {id:a.x.pid,
+        ms:F.tag.filter(y => [y.a1, y.a2, y.b1, y.b2].includes(a.x.pid))})
     };
-    if(daten[a.key]) return merke({key:a.key, data:daten[a.key]()});
+    if(daten[a.key]){ const dd = daten[a.key](); if(dd) return merke({key:a.key, data:dd}); }
   }
 
   // Alle Zeichnungen, die aus der Partie selbst zutreffen, mit ihrem Gewicht.

@@ -921,6 +921,54 @@ function _ndMitteRoh(s){
           </div>
           ${d.matchId ? `<div class="nd-section">Das Jubiläumsduell</div>${_newsMatchVsBlock(d.matchId)}` : ''}`;
       }
+      // ── Was in einer Partie sonst noch passiert [§C33] ─────────────
+      // Die sechs Ereignisse hängen an ihrer Partie-Karte und öffnen sich dort
+      // als Zeile. Einzeln geöffnet (ein Link, ein älterer Stand des Feeds)
+      // zeigte ihr Blatt nur Kopf und Satz — NULL Zeichen Mitte. Jedes trägt
+      // die eine Zahl, um die es geht, groß, und daneben, wogegen sie misst.
+      case 'fluch': {
+        const h2h = _newsH2HRecord(d.pid, d.gegen);
+        return `<div class="nd-section">Die Niederlagen davor</div>
+          ${_newsSerienBand(d.n, true)}
+          <div class="nd-section">Die Bilanz gegeneinander</div>
+          ${_newsBilanzBalken(d.pid, d.gegen, h2h.aWins, h2h.bWins)}`;
+      }
+      case 'duo_jubilaeum': {
+        const q = d.n ? Math.round(100 * d.s / d.n) : 0;
+        return `<div class="nd-gitter">
+            <div><b class="g">${d.n}</b><span>Partien zusammen</span></div>
+            <div><b>${d.s}</b><span>davon gewonnen</span></div>
+            <div><b class="${q * 2 >= 100 ? 'g' : ''}">${q} %</b><span>Siegquote als Duo</span></div>
+          </div>`;
+      }
+      case 'revanche': {
+        return d.vorherId && d.vorherId !== _ndKopfMatch
+          ? `<div class="nd-section">Das Duell davor</div>${_newsMatchVsBlock(d.vorherId)}`
+          : `<div class="nd-section">Die Revanche</div>`;
+      }
+      case 'tagesmarathon': {
+        return `<div class="nd-gitter">
+            <div><b class="g">${d.n}</b><span>Partien an diesem Tag</span></div>
+            <div><b>${d.s}</b><span>davon gewonnen</span></div>
+            <div><b>${d.n - d.s}</b><span>verloren</span></div>
+          </div>`;
+      }
+      case 'elo_hoch': {
+        // Die Elo beginnt jeden Monat neu: der Monat der alten Marke steht
+        // dabei, sonst liest sich „299 Elo" wie ein Stand aus diesem Monat.
+        const monat = d.vorherSid && d.matchId && _spMatch(d.matchId)
+          && d.vorherSid !== seasonOf(_spMatch(d.matchId).created_at).id ? seasonLabel(d.vorherSid) : '';
+        return `<div class="nd-gwert gold"><b>${esc(String(d.elo))}</b><span>Elo, so viel wie nie</span></div>
+          <div class="nd-stat-row"><div class="nd-stat-label">Bisheriger Höchststand${monat ? `<small>${esc(monat)}</small>` : ''}</div>
+            <div class="nd-stat-val">${esc(String(d.vorher))} Elo</div></div>
+          <div class="nd-stat-row"><div class="nd-stat-label">Partien dazwischen</div>
+            <div class="nd-stat-val">${esc(String(d.seit))}</div></div>`;
+      }
+      case 'tabellensprung': {
+        return `<div class="nd-gwert"><b>${esc(String(d.pre))} → ${esc(String(d.post))}</b><span>Platz in der Tabelle</span></div>
+          <div class="nd-stat-row"><div class="nd-stat-label">Gewonnene Plätze</div>
+            <div class="nd-stat-val acid">${d.pre - d.post}</div></div>`;
+      }
       case 'win_streak': {
         // „Aktuelle Serie" stand über einer Marke, die an ihrer Partie hängt
         // und nach dem Riss stehen bleibt [§C33]; darunter dieselbe Zahl als

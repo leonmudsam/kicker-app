@@ -689,6 +689,19 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 .sp-ds-r i.w{background:rgba(190,242,100,.65)}
 .sp-ds-r i.jetzt{background:var(--acid);box-shadow:0 0 0 1.5px var(--surface2),0 0 0 2.5px var(--acid)}
 
+/* Der Elo-Höchststand: die Kurve, die alte Marke gestrichelt, der neue Punkt. */
+.sp-ho{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px}
+.sp-ho-g svg{display:block;width:100%;overflow:visible}
+.sp-ho-alt{stroke:var(--faint);stroke-width:1;stroke-dasharray:3 3}
+.sp-ho-l{fill:none;stroke:rgba(194,201,208,.6);stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round}
+.sp-ho-p{fill:var(--acid);stroke:var(--surface2);stroke-width:1.5}
+.sp-ho-t{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0}
+.sp-ho-t > em{font:600 8.5px 'Sometype Mono',monospace;font-style:normal;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.sp-ho-z{display:flex;align-items:center;gap:6px;font:600 10px 'Sometype Mono',monospace;color:var(--muted)}
+.sp-ho-z b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:20px;color:var(--acid)}
+.sp-ho-u{font:600 9px 'Sometype Mono',monospace;color:var(--muted);max-width:150px}
+.sp-ho-u b{color:var(--ink)}
+
 /* Bewegung: jede erklärt etwas, und nur transform und Deckkraft. */
 @media (prefers-reduced-motion:no-preference){
   .sp-mo-k,.sp-gp-z,.sp-gg-r i,.sp-zu-k i,.sp-ch-r circle,.sp-tr-r circle,.sp-uh-s line,.sp-ds-r i{animation:spDa .35s ease-out both;animation-delay:calc(var(--i,0) * 40ms)}

@@ -1312,9 +1312,13 @@ const _feed = JSON.parse(K.eval(`JSON.stringify((function(){
         // Die Köpfe der gewöhnlichen Partie (.sp-fk) zeigen nicht immer vier
         // Gesichter, die Namen stehen dann darunter (oben geprüft). Der Stand
         // gehört aber in JEDE Grafik, als Paar aus Sieger- und Verlierertoren.
-        if(html.indexOf('class="sp-fk ') >= 0){
+        // Gefragt wird der KOPF: auch der Fuß zeichnet in Formen (.sp-fk), aber
+        // ohne Stand, und eine Ergebniszeile mit Fuß „Überholt" galt sonst als
+        // Kopf ohne Tore.
+        const kopf = _spBild(s).kopf;
+        if(kopf.indexOf('class="sp-fk ') >= 0){
           const hoch = Math.max(m.score_a, m.score_b), tief = Math.min(m.score_a, m.score_b);
-          return html.indexOf('<em>' + hoch + '</em>:' + tief + '</b>') < 0;
+          return kopf.indexOf('<em>' + hoch + '</em>:' + tief + '</b>') < 0;
         }
         const gesichter = (html.match(/class="(rav zn|av)[ "]/g)||[]).length;
         const stand = html.indexOf('>' + m.score_a + '</em>') >= 0 && html.indexOf('>' + m.score_b + '</em>') >= 0
@@ -4307,12 +4311,25 @@ const _etik = JSON.parse(K.eval(`JSON.stringify((function(){
     if(teile.length > 3) falsch.push(t + ' (mehr als drei)');
     if(/^(Durststrecke|Gemeinsame Durststrecke|Schande)/.test(t) && / und (Siegesserie|Teamserie|Serienbruch|Auszeichnung|Spitzenduell)/.test(t))
       falsch.push(t + ' (Pleite vor Sieg)');
-    if(/(Durststrecke|Siegesserie|Teamserie|Serienbruch)( und| im| mit|$)/.test(t)) falsch.push(t + ' (ohne Namen)');
+    // Ein Etikett ohne eigenen Namen: nur dann richtig, wenn es mit dem
+    // nächsten unter DENSELBEN Namen steht („Siegesserie und Elo-Marke für Maxi").
+    { const re = /(Durststrecke|Siegesserie|Teamserie|Serienbruch)( und | im| mit|$)/g; let mm;
+      while((mm = re.exec(t))){ const rest = t.slice(mm.index + mm[0].length).split(',')[0];
+        if(mm[2] !== ' und ' || !/ (für|gegen|zwischen) /.test(rest + ' ')) { falsch.push(t + ' (ohne Namen)'); break; } } }
     if(/Auszeichnung (für|und|im|mit)|Auszeichnung$/.test(t)) falsch.push(t + ' (Auszeichnung ohne ihren Namen)');
     // Und die Zeilen darunter folgen derselben Richtung: keine rote vor einer positiven.
     const z = (d.teile || []).filter(u => (u.typ || u.type) !== 'spiel' && !u.brk);
     if(z.some((u, k) => u.neg && z.slice(k + 1).some(v => !v.neg))) falsch.push(t + ' (rote Zeile vor einer positiven)');
   });
+  // Zwei Anlässe DESSELBEN Spielers stehen unter einem Namen.
+  _cache._consolFrom = null;
+  const gleich = _consolidateStories([l[0],
+    {id:'et-eh', cat:'personal', ic:'peak', when:w, prio:55, title:pname(W[0]) + ' erreicht einen Höchststand', desc:'1.',
+     dataRef:{type:'elo_hoch', pid:W[0], elo:900, vorher:880, seit:30, matchId:m.id, playerIds:[W[0]]}},
+    {id:'et-me', cat:'milestone', ic:'chart', when:w, prio:50, title:pname(W[0]) + ' knackt 900 Elo', desc:'1.',
+     dataRef:{type:'milestone_elo', pid:W[0], milestone:'900 Elo', mark:900, matchId:m.id, playerIds:[W[0]]}},
+    l[1]]).find(x => (x.dataRef||{}).type === 'sammel');
+  const gleichSoll = 'Elo-Höchststand und Elo-Marke für ' + pname(W[0]) + ', Durststrecke für ' + pname(L[0]);
   // Zwei Marken EINES Spielers: Schlagzeile und Zeile nennen beide.
   _cache._consolFrom = null;
   const einer = _consolidateStories([l[0], {id:'et-bm1', cat:'badge', ic:'medal', when:w, prio:20,
@@ -4327,6 +4344,7 @@ const _etik = JSON.parse(K.eval(`JSON.stringify((function(){
     (d.teile || []).forEach(t => { if(/^(loss_streak|team_streak|team_loss_streak|top_form|badge_marken)$/.test(t.typ || '')
       && !/[0-9]/.test(t.titel || '')) ohneZahl.push(t.titel); }); });
   return {titel: sam ? sam.title : '', soll, n, falsch, marken: zwei ? zwei.title : '',
+    gleich: gleich ? gleich.title : '', gleichSoll,
     einer: einer ? einer.title : '', einerZeile: einer ? (einer.dataRef.teile.find(t => t.typ === 'badge_marken') || {}).titel : '',
     ohneZahl};
 })())`));
@@ -4337,6 +4355,9 @@ ok(/Zittersieg/.test(_etik.einer) && /Frühschicht/.test(_etik.einer)
    && /Zittersieg/.test(_etik.einerZeile) && /Frühschicht/.test(_etik.einerZeile) && /5\. Mal/.test(_etik.einerZeile),
    'zwei Marken eines Spielers stehen mit Namen in Schlagzeile und Zeile, die Zeile mit ihrer Zahl',
    _etik.einer + ' / ' + _etik.einerZeile);
+ok(_etik.gleich === _etik.gleichSoll,
+   'zwei Anlässe desselben Spielers nennen seinen Namen einmal',
+   _etik.gleich + ' / soll ' + _etik.gleichSoll);
 ok(_etik.ohneZahl.length === 0,
    'jede Zeile einer Serie, einer Form oder einer Marke nennt ihre Zahl',
    _etik.ohneZahl.slice(0, 3).join(' | ') || 'alle mit Zahl');
@@ -4369,6 +4390,76 @@ const _stufen = JSON.parse(K.eval(`JSON.stringify((function(){
 ok(_stufen.falsch.length === 0,
    'eine Rivalität steht auf jedem zehnten Duell, Uhr, Tagesring und Duo gegen Duo nur auf ihren Stufen',
    _stufen.falsch.slice(0, 4).join(' | ') || 'Rivalität ' + _stufen.riv.join(', '));
+
+// ── Was in einer Partie sonst noch passiert ───────────────────────────
+// 36 von 52 Partien in vierzehn Tagen trugen kein einziges Ereignis. Sechs
+// Dinge einer einzelnen Partie sind jetzt eine Zeile ihrer Karte: der Bann
+// gegen einen Gegner reißt, ein Duo feiert ein Jubiläum, eine Revanche am
+// selben Tag, der lange Tag, der Höchststand, der Tabellensprung. Keins
+// steht allein, jedes meldet nur seine Stufen, und ist es das stärkste der
+// Partie, zeichnet der Fuß es.
+const _partie = JSON.parse(K.eval(`JSON.stringify((function(){
+  const T = ['fluch', 'duo_jubilaeum', 'revanche', 'tagesmarathon', 'elo_hoch', 'tabellensprung'];
+  const FUSS = {fluch:'gegner', elo_hoch:'hoch', tabellensprung:'rang', revanche:'revanche',
+    duo_jubilaeum:'chemie', tagesmarathon:'tagesring'};
+  const roh = _buildStories();
+  _cache._stories = roh.slice().sort((a,b)=>new Date(b.when)-new Date(a.when));
+  _cache._consolFrom = null; _cache._frischVon = null;
+  const st = getStoriesCache();
+  const neu = roh.filter(s => T.includes((s.dataRef||{}).type));
+  const allein = st.filter(s => T.includes((s.dataRef||{}).type)).map(s => s.title);
+  const inKarte = neu.filter(s => st.some(k => { const d = k.dataRef || {};
+    return d.type === 'sammel' && d.quelle === 'spiel'
+      && ((d.teile || []).some(t => t.id === s.id) || (d.memberIds || []).includes(s.id)); })).length;
+  const stufe = neu.filter(s => { const d = s.dataRef;
+    return d.type === 'duo_jubilaeum' && ![25, 50, 75, 100, 150, 200, 250, 300, 400, 500].includes(d.n)
+      || d.type === 'tagesmarathon' && ![10, 15, 20, 25, 30, 40].includes(d.n)
+      || d.type === 'fluch' && d.n < 5
+      || d.type === 'elo_hoch' && d.seit < 20
+      || d.type === 'tabellensprung' && d.pre - d.post < 3; }).map(s => s.title);
+  let folgt = 0; const fremd = [];
+  roh.filter(s => (s.dataRef||{}).type === 'spiel').forEach(s => {
+    const m = matches.find(x => x.id === s.dataRef.matchId); if(!m) return;
+    const refs = roh.filter(x => (x.dataRef||{}).matchId === m.id && x.dataRef.type !== 'spiel').map(x => x.dataRef);
+    const a = _spFussFakt(m, refs);
+    if(!a || !refs.some(r => FUSS[r.type] === a.key)) return;
+    const o = (s.dataRef.visual || {}).occasion;
+    if(o && o.key === a.key) folgt++; else fremd.push(s.title + ': ' + (o ? o.key : '-') + ' statt ' + a.key);
+  });
+  // Und der Fuß des Höchststands nennt die Zahlen des Ereignisses: aus den
+  // letzten vierzig Partien gerechnet stand dort „vorher 291, seit 1 Partien“
+  // über einem Blatt mit 299 und 82.
+  const hoch = neu.filter(s => s.dataRef.type === 'elo_hoch').map(s => {
+    const d = s.dataRef, m = matches.find(x => x.id === d.matchId);
+    const v = _spAnlassSnapshot(m, [d], null) || {}, x = v.data || {};
+    return v.key === 'hoch' && x.alt === d.vorher && x.seit === d.seit && x.elo === d.elo
+      ? '' : s.title + ': ' + v.key + ' ' + x.alt + '/' + x.seit;
+  });
+  // Holt der Höchststand zugleich „Der höchste Gipfel", meldet ihn nur die Tafel.
+  const w = new Date(2026, 7, 20, 18), w2 = new Date(2026, 7, 21, 18);
+  const gipfel = _ohneDoppeltenGipfel([
+    {id:'g-rek', when:w, dataRef:{type:'rekord_geholt', rekordId:'peak', playerIds:['p1']}},
+    {id:'g-hoch', when:w, dataRef:{type:'elo_hoch', pid:'p1'}},
+    {id:'g-ander', when:w, dataRef:{type:'elo_hoch', pid:'p2'}},
+    {id:'g-tag', when:w2, dataRef:{type:'elo_hoch', pid:'p1'}}]).map(s => s.id).join(',');
+  return {n:neu.length, typen:[...new Set(neu.map(s => s.dataRef.type))], allein, inKarte, stufe, folgt, fremd, gipfel,
+    hoch:hoch.length, hochFalsch:hoch.filter(Boolean)};
+})())`));
+ok(_partie.typen.length >= 4 && _partie.allein.length === 0 && _partie.inKarte === _partie.n,
+   'was in einer Partie sonst noch passiert, steht als Zeile in ihrer Karte und nie allein',
+   _partie.n + ' Ereignisse (' + _partie.typen.join(', ') + '), ' + _partie.inKarte + ' in ihrer Karte'
+   + (_partie.allein.length ? ' · allein: ' + _partie.allein.slice(0, 2).join(' | ') : ''));
+ok(_partie.stufe.length === 0, 'jedes dieser Ereignisse meldet nur seine Stufen und Schwellen',
+   _partie.stufe.slice(0, 3).join(' | ') || 'alle auf Stufen');
+ok(_partie.hoch > 0 && _partie.hochFalsch.length === 0,
+   'der Fuß des Höchststands nennt die alte Marke und den Abstand des Ereignisses',
+   _partie.hochFalsch.slice(0, 2).join(' | ') || _partie.hoch + ' Höchststände');
+ok(_partie.gipfel === 'g-rek,g-ander,g-tag',
+   'holt ein Höchststand zugleich den Gipfel der Liga, meldet ihn nur die Tafel',
+   _partie.gipfel);
+ok(_partie.folgt > 0 && _partie.fremd.length === 0,
+   'ist eins davon das stärkste der Partie, zeichnet der Fuß es',
+   _partie.folgt + ' Füße' + (_partie.fremd.length ? ' · ' + _partie.fremd.slice(0, 3).join(' | ') : ''));
 
 // ── Der härteste Tag gehört zum Spieler des Tages ──────────────────────
 // „Harter Tag für Leo" stand als eigene rote Karte eine Minute unter dem
@@ -6808,7 +6899,7 @@ const _bogen = JSON.parse(K.eval(`JSON.stringify((function(){
   // Die gewöhnliche Partie trägt eine der Formen [§C33]: die Klasse folgt der Wahl.
   const FORMKL = {mosaik:'sp-mo', tacho:'sp-ta', streu:'sp-sd', transfer:'sp-et', chemie:'sp-ch', gegner:'sp-gg',
     revanche:'sp-rv', gipfel:'sp-gp', rueckkehr:'sp-zu', gefaelle:'sp-gf', tagesring:'sp-tr', zaehlwerk:'sp-zw', feld:'sp-feld',
-    tauziehen:'sp-tz', muenze:'sp-mz', weste:'sp-ws', uhr:'sp-uh', ueberholt:'sp-uo', duoserie:'sp-ds'};
+    tauziehen:'sp-tz', muenze:'sp-mz', weste:'sp-ws', uhr:'sp-uh', ueberholt:'sp-uo', duoserie:'sp-ds', hoch:'sp-ho'};
   karten.forEach(s => {
     const d = s.dataRef, m = matches.find(x => x.id === d.matchId);
     if(!m) return;

@@ -627,7 +627,10 @@ function _consolidateStoriesLegacy(list){
     // gehoeren damit zu ihr: „Neuer Spitzenreiter" stand mit dem Band 10:0 im
     // Feed und „Absoluter Sieger" fuer genau dieses 10:0 als zweite Karte
     // daneben — dasselbe Spiel, dieselben Wappen, derselbe Stand [§C33].
-    'lead_change','streak_record']);
+    'lead_change','streak_record',
+    // Was in einer einzelnen Partie passiert, gehört an ihre Karte und
+    // nirgends sonst hin.
+    'fluch','duo_jubilaeum','revanche','tagesmarathon','elo_hoch','tabellensprung']);
   const SAMMEL_TAFEL = new Set(['rekord_erstmals','rekord_geholt','rekord_gesteigert',
     'insignium_stufe','chronik_erstling','chronik_geholt']);
   const _minKey = w => { const d = new Date(w); return tagKey(w)+'-'+d.getHours()+'-'+d.getMinutes(); };
@@ -1292,7 +1295,8 @@ function _consolidateStoriesLegacy(list){
         if(neg) return -100 + (t.prio || 0) / 100;
         let w = {lead_change:96, streak_record:95, top_clash:86, giant_slayer:84, streak_killer:80,
                  milestone_wins:62, milestone_elo:60, milestone_goals:58, jubilee:56,
-                 rivalry_milestone:54, top_form:44, rivalry:34, badge_marken:24}[typ];
+                 rivalry_milestone:54, top_form:44, rivalry:34, badge_marken:24,
+                 fluch:64, elo_hoch:60, tabellensprung:59, revanche:52, duo_jubilaeum:50, tagesmarathon:40}[typ];
         if(typ === 'win_streak' || typ === 'team_streak') w = 46 + 2 * Math.min(17, Number(dt.streak) || 0);
         if(typ === 'badge_unlocked') w = dt.rarity === 'legendary' ? 92 : dt.rarity === 'rare' ? 66 : 50;
         // Was eine Auszeichnung derselben Partie schon erzählt, führt nicht:
@@ -1310,7 +1314,9 @@ function _consolidateStoriesLegacy(list){
         win_streak:'Siegesserie', team_streak:'Teamserie', loss_streak:'Durststrecke',
         team_loss_streak:'gemeinsame Durststrecke', top_form:'Formlauf', jubilee:'Jubiläum',
         milestone_wins:'Siegmarke', milestone_goals:'Tormarke', milestone_elo:'Elo-Marke',
-        rivalry_milestone:'Rivalitätsmarke', rivalry:'Rivalität'};
+        rivalry_milestone:'Rivalitätsmarke', rivalry:'Rivalität',
+        fluch:'gebrochener Fluch', duo_jubilaeum:'Duo-Jubiläum', revanche:'Revanche',
+        tagesmarathon:'langer Tag', elo_hoch:'Elo-Höchststand', tabellensprung:'Tabellensprung'};
       const MEHRZAHL = {Siegesserie:'Siegesserien', Teamserie:'Teamserien', Durststrecke:'Durststrecken',
         'gemeinsame Durststrecke':'gemeinsame Durststrecken', Formlauf:'Formläufe', 'Jubiläum':'Jubiläen',
         Siegmarke:'Siegmarken', Tormarke:'Tormarken', 'Elo-Marke':'Elo-Marken', Serienbruch:'Serienbrüche'};
@@ -1345,6 +1351,8 @@ function _consolidateStoriesLegacy(list){
         if(dt.type === 'streak_killer' && dt.victimPid) return {wort:'gegen', pids:[dt.victimPid]};
         if((dt.type === 'rivalry_milestone' || dt.type === 'rivalry') && dt.a && dt.b) return {wort:'zwischen', pids:[dt.a, dt.b]};
         if(dt.type === 'top_clash' && dt.p1 && dt.p2) return {wort:'zwischen', pids:[dt.p1, dt.p2]};
+        if(dt.type === 'duo_jubilaeum' && dt.a && dt.b) return {wort:'für', pids:[dt.a, dt.b]};
+        if(dt.type === 'revanche' && Array.isArray(dt.W)) return {wort:'für', pids:dt.W.slice()};
         if(dt.type === 'lead_change' && dt.newLeader) return {wort:'für', pids:[dt.newLeader]};
         if((dt.type === 'team_streak' || dt.type === 'team_loss_streak') && dt.a && dt.b) return {wort:'für', pids:[dt.a, dt.b]};
         if(dt.playerId) return {wort:'für', pids:[dt.playerId]};
@@ -1362,13 +1370,33 @@ function _consolidateStoriesLegacy(list){
         if(da){ da.n++; e.pids.forEach(id => { if(da.pids.indexOf(id) < 0) da.pids.push(id); }); return; }
         // Eine Gruppe ist schon mehrere: zwei Serien im Gleichschritt.
         const pids = [...new Set(e.pids)];
-        phrasen.push({et, wort:e.wort, pids, n:dt.type === 'group' ? Math.max(1, pids.length) : 1});
+        phrasen.push({et, wort:e.wort, pids, n:dt.type === 'group' ? Math.max(1, pids.length) : 1,
+          neg:_leitWert(t) < 0});
       });
-      const _phrase = x => {
-        const et = x.n > 1 && MEHRZAHL[x.et] ? MEHRZAHL[x.et] : x.et;
-        return x.pids.length && x.pids.length <= 3
-          ? `${et} ${x.wort} ${_namenListe(x.pids.map(nameOf))}` : et;
+      // Zwei Anlässe derselben Leute stehen unter EINEM Namen: „Elo-Höchststand
+      // für Maxi und Elo-Marke für Maxi" nannte ihn zweimal hintereinander.
+      // Gebündelt wird nur in derselben Richtung (die Pleite steht nie vor dem
+      // Sieg) und nur zwei Etiketten, die selbst kein „und" tragen; die Reihe
+      // trennt dann mit Komma, sonst stünden zwei „und" hintereinander.
+      const _gruppen = l => {
+        const out = [];
+        l.forEach(x => {
+          const et = x.n > 1 && MEHRZAHL[x.et] ? MEHRZAHL[x.et] : x.et;
+          const k = x.wort + '|' + x.pids.slice().sort().join(',');
+          const da = x.pids.length && x.pids.length <= 3 && !/ und /.test(et)
+            && out.find(g => g.k === k && g.neg === x.neg && g.ets.length === 1 && !/ und /.test(g.ets[0]));
+          if(da) da.ets.push(et);
+          else out.push({k, ets:[et], wort:x.wort, pids:x.pids, neg:x.neg});
+        });
+        return out;
       };
+      const _phrase = g => {
+        const et = g.ets.join(' und ');
+        return g.pids.length && g.pids.length <= 3
+          ? `${et} ${g.wort} ${_namenListe(g.pids.map(nameOf))}` : et;
+      };
+      const _reihe = l => { const g = _gruppen(l), t = g.map(_phrase);
+        return g.some(x => x.ets.length > 1) ? t.join(', ') : _namenListe(t); };
       const spT = teile.find(t => ((t.dataRef || {}).type === 'spiel' || (t.dataRef || {}).type === 'match_result'));
       const spD = (spT && spT.dataRef) || {};
       const ort = spT && !_ergebnisGedeckt(spD) ? (ERGEBNIS_ORT[spD.resultKind] || '') : '';
@@ -1376,7 +1404,7 @@ function _consolidateStoriesLegacy(list){
         // Ein Anlass wiegt mehr als der Ort: zu lang, fällt zuerst der Ort.
         let bild = '';
         for(let zahl = Math.min(3, phrasen.length); zahl >= 1 && !bild; zahl--){
-          const kern = _namenListe(phrasen.slice(0, zahl).map(_phrase));
+          const kern = _reihe(phrasen.slice(0, zahl));
           if(ort && (kern + ' ' + ort).length <= 96) bild = kern + ' ' + ort;
           else if(kern.length <= 96 || zahl === 1) bild = kern;
         }

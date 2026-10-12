@@ -365,6 +365,14 @@ const STORY_PRIO = {
   milestone_goals:   46,
   jubilee:           44,
   rivalry_milestone: 42,
+  // Was in einer einzelnen Partie passiert [§C33]: es hängt an ihrer Karte,
+  // also wiegt es dort, wo es die Schlagzeile mitbestimmt.
+  fluch:             56,
+  elo_hoch:          55,
+  tabellensprung:    53,
+  revanche:          51,
+  duo_jubilaeum:     45,
+  tagesmarathon:     43,
   // Die gesammelten kleinen Marken eines Tages: eine Karte, und die
   // schwaechste des Spieltagsbandes. Sie sollen vorkommen, aber keinen
   // Platz von einer Geschichte nehmen, die von diesem Tag erzaehlt.

@@ -4995,6 +4995,18 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 .sp-ds-r i.w{background:rgba(190,242,100,.65)}
 .sp-ds-r i.jetzt{background:var(--acid);box-shadow:0 0 0 1.5px var(--surface2),0 0 0 2.5px var(--acid)}
 
+.sp-ho{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px}
+.sp-ho-g svg{display:block;width:100%;overflow:visible}
+.sp-ho-alt{stroke:var(--faint);stroke-width:1;stroke-dasharray:3 3}
+.sp-ho-l{fill:none;stroke:rgba(194,201,208,.6);stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round}
+.sp-ho-p{fill:var(--acid);stroke:var(--surface2);stroke-width:1.5}
+.sp-ho-t{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0}
+.sp-ho-t > em{font:600 8.5px 'Sometype Mono',monospace;font-style:normal;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.sp-ho-z{display:flex;align-items:center;gap:6px;font:600 10px 'Sometype Mono',monospace;color:var(--muted)}
+.sp-ho-z b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:20px;color:var(--acid)}
+.sp-ho-u{font:600 9px 'Sometype Mono',monospace;color:var(--muted);max-width:150px}
+.sp-ho-u b{color:var(--ink)}
+
 @media (prefers-reduced-motion:no-preference){
   .sp-mo-k,.sp-gp-z,.sp-gg-r i,.sp-zu-k i,.sp-ch-r circle,.sp-tr-r circle,.sp-uh-s line,.sp-ds-r i{animation:spDa .35s ease-out both;animation-delay:calc(var(--i,0) * 40ms)}
   .sp-tz-k{animation:spZug .7s cubic-bezier(.3,1.4,.5,1) .15s both}
@@ -5641,7 +5653,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.12.0faf9139';
+const BUILD_VERSION='2026.10.12.a0decd3d';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -17477,6 +17489,12 @@ const STORY_PRIO = {
   milestone_goals:   46,
   jubilee:           44,
   rivalry_milestone: 42,
+  fluch:             56,
+  elo_hoch:          55,
+  tabellensprung:    53,
+  revanche:          51,
+  duo_jubilaeum:     45,
+  tagesmarathon:     43,
   badge_marken:      39,
   rekord_gesteigert: 40,
   elo_swing:         38,
@@ -17795,6 +17813,17 @@ function _evSatz(ev){
   return String(ev || '').replace(/\s*·\s*/g, ', ').trim();
 }
 
+function _ohneDoppeltenGipfel(stories){
+  const gipfel = new Set();
+  stories.forEach(s => { const d = s.dataRef || {};
+    if(/^rekord_/.test(d.type || '') && d.rekordId === 'peak')
+      (d.playerIds || []).forEach(pid => gipfel.add(pid + '|' + tagKey(s.when))); });
+  for(let i = stories.length; i--;){
+    const d = stories[i].dataRef || {};
+    if(d.type === 'elo_hoch' && gipfel.has(d.pid + '|' + tagKey(stories[i].when))) stories.splice(i, 1);
+  }
+  return stories;
+}
 function _buildStories(){
   const stories = [];
   const now = new Date();
@@ -18370,6 +18399,104 @@ function _buildStories(){
       });
     });
   } catch(e){}
+
+  try {
+    const seit = now.getTime() - NEWS_FENSTER_TAGE * _dayMs;
+    const DUO_STUFEN = new Set([25, 50, 75, 100, 150, 200, 250, 300, 400, 500]);
+    const TAG_STUFEN = new Set([10, 15, 20, 25, 30, 40]);
+    const sieger = m => m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2];
+    const verlierer = m => m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2];
+    const duo = ids => ids.slice().sort().join('|');
+    const gegen = {}, zusammen = {}, tagN = {}, duelle = {}, hoch = {};
+    const freiMemo = new Map();
+    const frei = m => {
+      const k = tagKey(m.created_at);
+      if(!freiMemo.has(k)){ let f = false;
+        try { f = _storyRangFrei(seasonOf(m.created_at).id, mts(m)).frei; } catch(e){}
+        freiMemo.set(k, f); }
+      return freiMemo.get(k);
+    };
+    const neuSt = [];
+    const zeig = id => sichtbar(pm[id]);
+    chronoMatches.forEach(m => {
+      const t = mts(m), W = sieger(m), L = verlierer(m), neu = t >= seit;
+      if(!W[0] || !L[0]) return;
+      const zeit = new Date(t);
+      let fluch = null;
+      W.forEach(w => L.forEach(l => {
+        const g = gegen[w + '>' + l] || (gegen[w + '>' + l] = {pleiten:0, sieg:0});
+        if(neu && zeig(w) && zeig(l) && g.pleiten >= 5 && (!g.sieg || t - g.sieg >= 14 * _dayMs) && (!fluch || g.pleiten > fluch.n))
+          fluch = {w, l, n:g.pleiten, sieg:g.sieg};
+        g.pleiten = 0; g.sieg = t;
+        const h = gegen[l + '>' + w] || (gegen[l + '>' + w] = {pleiten:0, sieg:0});
+        h.pleiten++;
+      }));
+      if(fluch) neuSt.push({id:'fluch_' + fluch.w + '_' + fluch.l + '_' + m.id, cat:'rivalry', ic:'ghost',
+        title:`${nameOf(fluch.w)} gewinnt nach ${fluch.n} Niederlagen in Folge wieder gegen ${nameOf(fluch.l)}`,
+        desc: fluch.sieg ? `Der letzte Sieg gegen ${nameOf(fluch.l)} war am ${datumFmt(fluch.sieg, 'tm')}`
+                         : `Es ist der erste Sieg gegen ${nameOf(fluch.l)} überhaupt.`,
+        when:zeit, prio:STORY_PRIO.fluch,
+        dataRef:{type:'fluch', pid:fluch.w, gegen:fluch.l, n:fluch.n, matchId:m.id, playerIds:[fluch.w, fluch.l]}});
+      [[W, true], [L, false]].forEach(([ids, sieg]) => {
+        const k = duo(ids), z = zusammen[k] || (zusammen[k] = {n:0, s:0});
+        z.n++; if(sieg) z.s++;
+        if(neu && DUO_STUFEN.has(z.n) && ids.every(zeig)) neuSt.push({id:'duojub_' + k.replace('|', '_') + '_' + z.n, cat:'team', ic:'users',
+          title:`${nameOf(ids[0])} und ${nameOf(ids[1])} spielen zum ${z.n}. Mal zusammen`,
+          desc:`${z.s} von ${z.n} Partien gewonnen, Siegquote ${Math.round(100 * z.s / z.n)} %.`,
+          when:zeit, prio:STORY_PRIO.duo_jubilaeum,
+          dataRef:{type:'duo_jubilaeum', a:ids[0], b:ids[1], n:z.n, s:z.s, sieg, matchId:m.id, playerIds:ids.slice()}});
+      });
+      const dk = [duo(W), duo(L)].sort().join('#'), vor = duelle[dk];
+      if(neu && vor && W.concat(L).every(zeig) && tagKey(vor.created_at) === tagKey(m.created_at)
+         && duo(verlierer(vor)) === duo(W) && Math.abs(vor.score_a - vor.score_b) >= 3){
+        const vh = Math.max(vor.score_a, vor.score_b), vt = Math.min(vor.score_a, vor.score_b);
+        neuSt.push({id:'revanche_' + m.id, cat:'comeback', ic:'rematch',
+          title:`${nameOf(W[0])} und ${nameOf(W[1])} revanchieren sich gegen ${nameOf(L[0])} und ${nameOf(L[1])}`,
+          desc:`Um ${datumFmt(mts(vor), 'uhr')} Uhr hatten sie noch ${vt}:${vh} verloren.`,
+          when:zeit, prio:STORY_PRIO.revanche,
+          dataRef:{type:'revanche', W:W.slice(), L:L.slice(), vorherId:vor.id, matchId:m.id, playerIds:W.concat(L)}});
+      }
+      duelle[dk] = m;
+      W.concat(L).forEach(id => {
+        const k = id + '|' + tagKey(m.created_at), z = tagN[k] || (tagN[k] = {n:0, s:0});
+        z.n++; if(W.includes(id)) z.s++;
+        if(neu && TAG_STUFEN.has(z.n) && zeig(id)) neuSt.push({id:'marathon_' + id + '_' + tagKey(m.created_at) + '_' + z.n, cat:'personal', ic:'hourglass',
+          title:`${nameOf(id)} bestreitet die ${z.n}. Partie des Tages`,
+          desc:`${z.s} davon gewonnen.`,
+          when:zeit, prio:STORY_PRIO.tagesmarathon,
+          dataRef:{type:'tagesmarathon', pid:id, n:z.n, s:z.s, matchId:m.id, playerIds:[id]}});
+      });
+      const h = histMap.get(m.id) || {};
+      W.concat(L).forEach(id => {
+        const e = (h.eloAfter || {})[id];
+        const r = hoch[id] || (hoch[id] = {max:-Infinity, seit:0, wann:0});
+        if(e == null){ r.seit++; return; }
+        if(e > r.max){
+          if(neu && W.includes(id) && zeig(id) && r.max > -Infinity && r.seit >= 20){
+            const anders = seasonOf(new Date(r.wann)).id !== seasonOf(m.created_at).id;
+            neuSt.push({id:'hoch_' + id + '_' + m.id, cat:'personal', ic:'peak',
+              title:`${nameOf(id)} erreicht ${Math.round(e)} Elo, so viel wie nie zuvor`,
+              desc:`Der bisherige Höchststand lag bei ${Math.round(r.max)} Elo, ${r.seit} Partien zuvor`
+                + (anders ? ` im ${seasonLabel(seasonOf(new Date(r.wann)).id)}.` : '.'),
+              when:zeit, prio:STORY_PRIO.elo_hoch,
+              dataRef:{type:'elo_hoch', pid:id, elo:Math.round(e), vorher:Math.round(r.max), seit:r.seit,
+                vorherSid:seasonOf(new Date(r.wann)).id, matchId:m.id, playerIds:[id]}});
+          }
+          r.max = e; r.seit = 0; r.wann = t;
+        } else r.seit++;
+      });
+      if(neu && frei(m)) W.filter(zeig).forEach(id => {
+        const r = _newsRankChange(id, m.id);
+        if(r && r.pre && r.post && r.pre - r.post >= 3)
+          neuSt.push({id:'sprung_' + id + '_' + m.id, cat:'personal', ic:'stepsUp',
+            title:`${nameOf(id)} springt von Platz ${r.pre} auf Platz ${r.post}`,
+            desc:`${r.pre - r.post} Plätze mit einem Sieg.`,
+            when:zeit, prio:STORY_PRIO.tabellensprung,
+            dataRef:{type:'tabellensprung', pid:id, pre:r.pre, post:r.post, matchId:m.id, playerIds:[id]}});
+      });
+    });
+    neuSt.forEach(x => stories.push(x));
+  } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] partie', e); }
 
   try {
     const wk = 7 * 86400000;
@@ -19554,6 +19681,8 @@ function _buildStories(){
     const amb = _buildAmbientStories(now, pm, nameOf, stories);
     for(const a of amb) stories.push(a);
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] ambient build failed', e); }
+
+  _ohneDoppeltenGipfel(stories);
 
   {
     const mitKarte = new Set();
@@ -21024,7 +21153,8 @@ function _consolidateStoriesLegacy(list){
     'top_clash','milestone_wins','milestone_goals','milestone_elo','jubilee',
     'loss_streak','win_streak','top_form','team_streak','team_loss_streak',
     'rivalry','rivalry_milestone','spiel',
-    'lead_change','streak_record']);
+    'lead_change','streak_record',
+    'fluch','duo_jubilaeum','revanche','tagesmarathon','elo_hoch','tabellensprung']);
   const SAMMEL_TAFEL = new Set(['rekord_erstmals','rekord_geholt','rekord_gesteigert',
     'insignium_stufe','chronik_erstling','chronik_geholt']);
   const _minKey = w => { const d = new Date(w); return tagKey(w)+'-'+d.getHours()+'-'+d.getMinutes(); };
@@ -21413,7 +21543,8 @@ function _consolidateStoriesLegacy(list){
         if(neg) return -100 + (t.prio || 0) / 100;
         let w = {lead_change:96, streak_record:95, top_clash:86, giant_slayer:84, streak_killer:80,
                  milestone_wins:62, milestone_elo:60, milestone_goals:58, jubilee:56,
-                 rivalry_milestone:54, top_form:44, rivalry:34, badge_marken:24}[typ];
+                 rivalry_milestone:54, top_form:44, rivalry:34, badge_marken:24,
+                 fluch:64, elo_hoch:60, tabellensprung:59, revanche:52, duo_jubilaeum:50, tagesmarathon:40}[typ];
         if(typ === 'win_streak' || typ === 'team_streak') w = 46 + 2 * Math.min(17, Number(dt.streak) || 0);
         if(typ === 'badge_unlocked') w = dt.rarity === 'legendary' ? 92 : dt.rarity === 'rare' ? 66 : 50;
         if(typ === 'spiel' || typ === 'match_result')
@@ -21429,7 +21560,9 @@ function _consolidateStoriesLegacy(list){
         win_streak:'Siegesserie', team_streak:'Teamserie', loss_streak:'Durststrecke',
         team_loss_streak:'gemeinsame Durststrecke', top_form:'Formlauf', jubilee:'Jubiläum',
         milestone_wins:'Siegmarke', milestone_goals:'Tormarke', milestone_elo:'Elo-Marke',
-        rivalry_milestone:'Rivalitätsmarke', rivalry:'Rivalität'};
+        rivalry_milestone:'Rivalitätsmarke', rivalry:'Rivalität',
+        fluch:'gebrochener Fluch', duo_jubilaeum:'Duo-Jubiläum', revanche:'Revanche',
+        tagesmarathon:'langer Tag', elo_hoch:'Elo-Höchststand', tabellensprung:'Tabellensprung'};
       const MEHRZAHL = {Siegesserie:'Siegesserien', Teamserie:'Teamserien', Durststrecke:'Durststrecken',
         'gemeinsame Durststrecke':'gemeinsame Durststrecken', Formlauf:'Formläufe', 'Jubiläum':'Jubiläen',
         Siegmarke:'Siegmarken', Tormarke:'Tormarken', 'Elo-Marke':'Elo-Marken', Serienbruch:'Serienbrüche'};
@@ -21459,6 +21592,8 @@ function _consolidateStoriesLegacy(list){
         if(dt.type === 'streak_killer' && dt.victimPid) return {wort:'gegen', pids:[dt.victimPid]};
         if((dt.type === 'rivalry_milestone' || dt.type === 'rivalry') && dt.a && dt.b) return {wort:'zwischen', pids:[dt.a, dt.b]};
         if(dt.type === 'top_clash' && dt.p1 && dt.p2) return {wort:'zwischen', pids:[dt.p1, dt.p2]};
+        if(dt.type === 'duo_jubilaeum' && dt.a && dt.b) return {wort:'für', pids:[dt.a, dt.b]};
+        if(dt.type === 'revanche' && Array.isArray(dt.W)) return {wort:'für', pids:dt.W.slice()};
         if(dt.type === 'lead_change' && dt.newLeader) return {wort:'für', pids:[dt.newLeader]};
         if((dt.type === 'team_streak' || dt.type === 'team_loss_streak') && dt.a && dt.b) return {wort:'für', pids:[dt.a, dt.b]};
         if(dt.playerId) return {wort:'für', pids:[dt.playerId]};
@@ -21475,20 +21610,35 @@ function _consolidateStoriesLegacy(list){
         const da = phrasen.find(x => x.et === et && x.wort === e.wort);
         if(da){ da.n++; e.pids.forEach(id => { if(da.pids.indexOf(id) < 0) da.pids.push(id); }); return; }
         const pids = [...new Set(e.pids)];
-        phrasen.push({et, wort:e.wort, pids, n:dt.type === 'group' ? Math.max(1, pids.length) : 1});
+        phrasen.push({et, wort:e.wort, pids, n:dt.type === 'group' ? Math.max(1, pids.length) : 1,
+          neg:_leitWert(t) < 0});
       });
-      const _phrase = x => {
-        const et = x.n > 1 && MEHRZAHL[x.et] ? MEHRZAHL[x.et] : x.et;
-        return x.pids.length && x.pids.length <= 3
-          ? `${et} ${x.wort} ${_namenListe(x.pids.map(nameOf))}` : et;
+      const _gruppen = l => {
+        const out = [];
+        l.forEach(x => {
+          const et = x.n > 1 && MEHRZAHL[x.et] ? MEHRZAHL[x.et] : x.et;
+          const k = x.wort + '|' + x.pids.slice().sort().join(',');
+          const da = x.pids.length && x.pids.length <= 3 && !/ und /.test(et)
+            && out.find(g => g.k === k && g.neg === x.neg && g.ets.length === 1 && !/ und /.test(g.ets[0]));
+          if(da) da.ets.push(et);
+          else out.push({k, ets:[et], wort:x.wort, pids:x.pids, neg:x.neg});
+        });
+        return out;
       };
+      const _phrase = g => {
+        const et = g.ets.join(' und ');
+        return g.pids.length && g.pids.length <= 3
+          ? `${et} ${g.wort} ${_namenListe(g.pids.map(nameOf))}` : et;
+      };
+      const _reihe = l => { const g = _gruppen(l), t = g.map(_phrase);
+        return g.some(x => x.ets.length > 1) ? t.join(', ') : _namenListe(t); };
       const spT = teile.find(t => ((t.dataRef || {}).type === 'spiel' || (t.dataRef || {}).type === 'match_result'));
       const spD = (spT && spT.dataRef) || {};
       const ort = spT && !_ergebnisGedeckt(spD) ? (ERGEBNIS_ORT[spD.resultKind] || '') : '';
       if(phrasen.length){
         let bild = '';
         for(let zahl = Math.min(3, phrasen.length); zahl >= 1 && !bild; zahl--){
-          const kern = _namenListe(phrasen.slice(0, zahl).map(_phrase));
+          const kern = _reihe(phrasen.slice(0, zahl));
           if(ort && (kern + ' ' + ort).length <= 96) bild = kern + ' ' + ort;
           else if(kern.length <= 96 || zahl === 1) bild = kern;
         }
@@ -24439,11 +24589,34 @@ function _spDuoserieBild(d){
     + `<span class="sp-ds-c re">${_spChips(d.L)}</span></div>`
     + (d.nurAnlass ? '' : _spNz(d.W, d.L));
 }
+function _spHochDaten(pid, m, x){
+  const seit = x && x.seit > 0 ? x.seit : 0, sid = seasonOf(m.created_at).id;
+  const eig = _spEigene(pid, m).filter(y => seasonOf(y.created_at).id === sid)
+    .slice(-Math.min(80, Math.max(12, seit + 2)));
+  const H = getHistoryByMatchId();
+  const kurve = eig.map(y => Math.round(((H.get(y.id) || {}).eloAfter || {})[pid] || 0));
+  if(kurve.length < 2) return null;
+  const elo = x && x.elo != null ? x.elo : kurve[kurve.length - 1];
+  const alt = x && x.vorher != null ? x.vorher : Math.max(...kurve.slice(0, -1));
+  const monat = x && x.vorherSid && x.vorherSid !== sid ? seasonLabel(x.vorherSid) : '';
+  return {pid, kurve, elo, alt, seit, monat};
+}
+function _spHochBild(d){
+  const lo = Math.min(d.alt, ...d.kurve), hi = Math.max(d.alt, ...d.kurve), n = d.kurve.length;
+  const X = i => 4 + i * (192 / Math.max(1, n - 1)), Y = v => 6 + (hi - v) / Math.max(1, hi - lo) * 40;
+  const pfad = d.kurve.map((v, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)} ${Y(v).toFixed(1)}`).join('');
+  return `<div class="sp-fk sp-ho"><div class="sp-ho-g"><svg viewBox="0 0 200 52" aria-hidden="true">`
+    + `<line class="sp-ho-alt" x1="4" x2="196" y1="${Y(d.alt).toFixed(1)}" y2="${Y(d.alt).toFixed(1)}"/>`
+    + `<path class="sp-ho-l" d="${pfad}"/><circle class="sp-ho-p" cx="${X(n - 1).toFixed(1)}" cy="${Y(d.elo).toFixed(1)}" r="3.4"/></svg></div>`
+    + `<div class="sp-ho-t"><em>Höchststand</em><span class="sp-ho-z">${_spChip(d.pid)}<b class="num">${_spZahl(d.elo)}</b> Elo</span>`
+    + `<span class="sp-ho-u">bisher <b class="num">${_spZahl(d.alt)}</b>${d.monat ? ` im ${esc(d.monat)}` : ''}${d.seit
+      ? `, vor ${d.seit === 1 ? 'einer Partie' : `<b class="num">${_spZahl(d.seit)}</b> Partien`}` : ''}</span></div></div>`;
+}
 const SP_FORM_BILD = {mosaik:_spMosaikBild, tacho:_spTachoBild, streu:_spStreuBild, transfer:_spTransferBild,
   chemie:_spChemieBild, gegner:_spGegnerBild, revanche:_spRevancheBild, gipfel:_spGipfelBild,
   rueckkehr:_spRueckkehrBild, gefaelle:_spGefaelleBild, tagesring:_spTagesringBild, zaehlwerk:_spZaehlwerkBild,
   tauziehen:_spTauziehenBild, muenze:_spMuenzeBild, weste:_spWesteBild,
-  uhr:_spUhrBild, ueberholt:_spUeberholtBild, duoserie:_spDuoserieBild,
+  uhr:_spUhrBild, ueberholt:_spUeberholtBild, duoserie:_spDuoserieBild, hoch:_spHochBild,
   feld:_spFeldBild};
 
 const _spZeile = a => _spZeileBild(_spZeileDaten(a.m));
@@ -24589,6 +24762,13 @@ function _spFussFakt(m, fakten){
     out.push({w:56, a:{key:'zaehlwerk', m, x:{wer:x.pid, wert:Number(x.total), label:'Partie'}}});
   if((x = f('win_streak')) && x.streak) out.push({w:46 + 2 * Math.min(17, x.streak), a:{key:'serie', m, x}});
   if((x = f('team_streak')) && x.streak && x.a && x.b) out.push({w:46 + 2 * Math.min(17, x.streak), a:{key:'teamserie', m, x}});
+  if((x = f('fluch')) && x.pid && x.gegen) out.push({w:64, a:{key:'gegner', m, x}});
+  if((x = f('elo_hoch')) && x.pid) out.push({w:60, a:{key:'hoch', m, x}});
+  if((x = f('tabellensprung')) && x.pid && x.pre && x.post)
+    out.push({w:59, a:{key:'rang', m, x:[{pid:x.pid, r:{pre:x.pre, post:x.post}}]}});
+  if((x = f('revanche'))) out.push({w:52, a:{key:'revanche', m, x}});
+  if((x = f('duo_jubilaeum')) && x.sieg) out.push({w:50, a:{key:'chemie', m, x}});
+  if((x = f('tagesmarathon')) && x.pid) out.push({w:40, a:{key:'tagesring', m, x}});
   if((x = f('rivalry_milestone')) && x.a && x.b) out.push({w:54, a:{key:'duell', m, x}});
   else if((x = f('rivalry')) && x.a && x.b) out.push({w:34, a:{key:'duell', m, x}});
   out.sort((p, q) => q.w - p.w);
@@ -24617,12 +24797,21 @@ function _spAnlassSnapshot(m, fakten, scoreKey){
       return merke({key:a.key, data:{wer:a.x.wer, wert:a.x.wert, label:a.x.label,
         W:F.W, L:F.L, hoch:F.hoch, tief:F.tief}});
     }
+    const F = _spFakten(m);
     const daten = {
       spitze:() => _spTabelleDaten(a, true), serie:() => _spSerieDaten(a),
       duell:() => _spDuellDaten(a), riss:() => _spRissDaten(a),
-      teamserie:() => _spDuoDaten(a), medaille:() => _spMedailleDaten(a)
+      teamserie:() => _spDuoDaten(a), medaille:() => _spMedailleDaten(a),
+      rang:() => _spTabelleDaten(a, false),
+      gegner:() => { const g = F.gegner.find(y => y.w === a.x.pid && y.l === a.x.gegen);
+        return g ? SP_FORM.gegner.daten(F, {g, fluch:true}) : null; },
+      hoch:() => _spHochDaten(a.x.pid, m, a.x),
+      revanche:() => F.revanche ? SP_FORM.revanche.daten(F, {}) : null,
+      chemie:() => SP_FORM.chemie.daten(F, {rund:true}),
+      tagesring:() => SP_FORM.tagesring.daten(F, {id:a.x.pid,
+        ms:F.tag.filter(y => [y.a1, y.a2, y.b1, y.b2].includes(a.x.pid))})
     };
-    if(daten[a.key]) return merke({key:a.key, data:daten[a.key]()});
+    if(daten[a.key]){ const dd = daten[a.key](); if(dd) return merke({key:a.key, data:dd}); }
   }
 
   const diff = Math.abs(m.score_a - m.score_b), F = _spFakten(m), kand = [];
@@ -27035,6 +27224,47 @@ function _ndMitteRoh(s){
             </div>
           </div>
           ${d.matchId ? `<div class="nd-section">Das Jubiläumsduell</div>${_newsMatchVsBlock(d.matchId)}` : ''}`;
+      }
+      case 'fluch': {
+        const h2h = _newsH2HRecord(d.pid, d.gegen);
+        return `<div class="nd-section">Die Niederlagen davor</div>
+          ${_newsSerienBand(d.n, true)}
+          <div class="nd-section">Die Bilanz gegeneinander</div>
+          ${_newsBilanzBalken(d.pid, d.gegen, h2h.aWins, h2h.bWins)}`;
+      }
+      case 'duo_jubilaeum': {
+        const q = d.n ? Math.round(100 * d.s / d.n) : 0;
+        return `<div class="nd-gitter">
+            <div><b class="g">${d.n}</b><span>Partien zusammen</span></div>
+            <div><b>${d.s}</b><span>davon gewonnen</span></div>
+            <div><b class="${q * 2 >= 100 ? 'g' : ''}">${q} %</b><span>Siegquote als Duo</span></div>
+          </div>`;
+      }
+      case 'revanche': {
+        return d.vorherId && d.vorherId !== _ndKopfMatch
+          ? `<div class="nd-section">Das Duell davor</div>${_newsMatchVsBlock(d.vorherId)}`
+          : `<div class="nd-section">Die Revanche</div>`;
+      }
+      case 'tagesmarathon': {
+        return `<div class="nd-gitter">
+            <div><b class="g">${d.n}</b><span>Partien an diesem Tag</span></div>
+            <div><b>${d.s}</b><span>davon gewonnen</span></div>
+            <div><b>${d.n - d.s}</b><span>verloren</span></div>
+          </div>`;
+      }
+      case 'elo_hoch': {
+        const monat = d.vorherSid && d.matchId && _spMatch(d.matchId)
+          && d.vorherSid !== seasonOf(_spMatch(d.matchId).created_at).id ? seasonLabel(d.vorherSid) : '';
+        return `<div class="nd-gwert gold"><b>${esc(String(d.elo))}</b><span>Elo, so viel wie nie</span></div>
+          <div class="nd-stat-row"><div class="nd-stat-label">Bisheriger Höchststand${monat ? `<small>${esc(monat)}</small>` : ''}</div>
+            <div class="nd-stat-val">${esc(String(d.vorher))} Elo</div></div>
+          <div class="nd-stat-row"><div class="nd-stat-label">Partien dazwischen</div>
+            <div class="nd-stat-val">${esc(String(d.seit))}</div></div>`;
+      }
+      case 'tabellensprung': {
+        return `<div class="nd-gwert"><b>${esc(String(d.pre))} → ${esc(String(d.post))}</b><span>Platz in der Tabelle</span></div>
+          <div class="nd-stat-row"><div class="nd-stat-label">Gewonnene Plätze</div>
+            <div class="nd-stat-val acid">${d.pre - d.post}</div></div>`;
       }
       case 'win_streak': {
         return `<div class="nd-section">Die Serie</div>
