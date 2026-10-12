@@ -4282,6 +4282,13 @@ const _etik = JSON.parse(K.eval(`JSON.stringify((function(){
   _cache._consolFrom = null;
   const sam = _consolidateStories(l).find(x => (x.dataRef||{}).type === 'sammel');
   const soll = 'Teamserie für ' + _namenListe(W.map(pname)) + ' und Durststrecke für ' + pname(L[0]);
+  // Zwei kleine Marken zweier Spieler in derselben Partie.
+  _cache._consolFrom = null;
+  const zwei = _consolidateStories([l[0], {id:'et-bm', cat:'badge', ic:'medal', when:w, prio:20,
+    title:pname(W[0]) + ' und ' + pname(W[1]) + ' erreichen runde Marken', desc:'2.',
+    dataRef:{type:'badge_marken', matchId:m.id, playerIds:W,
+      marken:[{pid:W[0], badgeId:'a', name:'Erste'}, {pid:W[1], badgeId:'b', name:'Zweite'}]}}])
+    .find(x => (x.dataRef||{}).type === 'sammel');
   const roh = _buildStories();
   _cache._stories = roh.slice().sort((a,b)=>new Date(b.when)-new Date(a.when));
   _cache._consolFrom = null; _cache._frischVon = null;
@@ -4299,18 +4306,54 @@ const _etik = JSON.parse(K.eval(`JSON.stringify((function(){
     if(/^(Durststrecke|Gemeinsame Durststrecke|Schande)/.test(t) && / und (Siegesserie|Teamserie|Serienbruch|Auszeichnung|Spitzenduell)/.test(t))
       falsch.push(t + ' (Pleite vor Sieg)');
     if(/(Durststrecke|Siegesserie|Teamserie|Serienbruch)( und| im| mit|$)/.test(t)) falsch.push(t + ' (ohne Namen)');
+    if(/Auszeichnung (für|und|im|mit)|Auszeichnung$/.test(t)) falsch.push(t + ' (Auszeichnung ohne ihren Namen)');
     // Und die Zeilen darunter folgen derselben Richtung: keine rote vor einer positiven.
     const z = (d.teile || []).filter(u => (u.typ || u.type) !== 'spiel' && !u.brk);
     if(z.some((u, k) => u.neg && z.slice(k + 1).some(v => !v.neg))) falsch.push(t + ' (rote Zeile vor einer positiven)');
   });
-  return {titel: sam ? sam.title : '', soll, n, falsch};
+  return {titel: sam ? sam.title : '', soll, n, falsch, marken: zwei ? zwei.title : ''};
 })())`));
 ok(_etik.titel === _etik.soll,
    'die Schlagzeile nennt den Sieg zuerst und jede Pleite mit dem Namen dessen, der sie hat',
    _etik.titel + ' / soll ' + _etik.soll);
+ok(_etik.marken.indexOf('Runde Marken für ') === 0,
+   'zwei kleine Marken zweier Spieler heißen runde Marken, nicht Auszeichnung ohne Namen',
+   _etik.marken);
 ok(_etik.n > 10 && _etik.falsch.length === 0,
    'jede Schlagzeile einer Partie nennt höchstens drei Anlässe, jeden mit Namen, und keine Pleite vor einem Sieg, auch nicht in den Zeilen',
    _etik.falsch.slice(0, 3).join(' | ') || _etik.n + ' Bündel');
+
+// ── Woher die Zahl der Laufbahn kommt ─────────────────────────────────
+// Die Zahl neben einem Spieler ist die Bewegung des ganzen Spieltags über
+// alle drei Quellen, die Chips nennen nur die Wechsel der Karte. Gemeldet
+// stand „übernimmt ‚Der Einzelkämpfer'" neben −33 und „verliert ‚Der Lauf'"
+// neben +34, ohne dass zu sehen war, warum. Jede Zeile mit Bewegung trägt
+// jetzt ihre Quellen, und die ergeben zusammen die Zahl daneben.
+const _quell = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  _cache._stories = roh.slice().sort((a,b)=>new Date(b.when)-new Date(a.when));
+  _cache._consolFrom = null; _cache._frischVon = null;
+  const zahl = t => +String(t).replace('−', '-').replace('+', '');
+  let n = 0; const falsch = [];
+  getStoriesCache().filter(x => (x.dataRef||{}).type === 'sammel' && x.dataRef.quelle === 'tafel').forEach(x => {
+    const b = _newsDetailBody(x);
+    b.split('<div class="nd-wk').slice(1).filter(z => z.indexOf('data-pid') >= 0 && z.indexOf('data-pid') < 40).forEach(z => {
+      const d0 = z.indexOf('nd-wk-d');
+      const d = d0 < 0 ? 0 : zahl(z.slice(z.indexOf('>', d0) + 1, z.indexOf('<', d0)));
+      if(!d) return;
+      n++;
+      const q0 = z.indexOf('class="nd-wk-q">');
+      const q = q0 < 0 ? '' : z.slice(q0).split('<span class="nd-wk-gs')[0].split('nd-wk-p')[0];
+      const summe = q.split('<b class="').slice(1)
+        .reduce((s, t) => s + zahl(t.slice(t.indexOf('>') + 1, t.indexOf('<'))), 0);
+      if(!q || summe !== d) falsch.push(x.id + ': ' + d + ' gegen ' + summe);
+    });
+  });
+  return {n, falsch};
+})())`));
+ok(_quell.n > 3 && _quell.falsch.length === 0,
+   'jede Zahl der Laufbahn im Blatt trägt ihre Quellen, und die ergeben zusammen die Zahl',
+   _quell.falsch.slice(0, 3).join(' | ') || _quell.n + ' Zeilen');
 
 // ── Der Fuß zeigt, wovon die Schlagzeile spricht, und wechselt ab ──
 // Über „Leon und Maxi treffen zum 188. Mal aufeinander" stand Leos Wende als

@@ -1979,8 +1979,13 @@ function _buildStories(){
     const o = {};
     (pids || []).slice(0, 4).forEach(pid => {
       const w = _tafelWirkung(pid);
+      // Die Quellen reisen mit: die Zahl ist die Bewegung des ganzen Tages
+      // über alle drei Quellen, die Zeilen der Karte nennen nur Rekord- und
+      // Chronikwechsel. Ohne Aufschlüsselung stand „übernimmt ‚Der
+      // Einzelkämpfer'" neben −33, und niemand konnte sagen, warum [§C34].
       o[pid] = {vor:w.vor, nach:w.nach, delta:w.delta,
-                stufeVor:w.stufeVor, stufeNach:w.stufeNach};
+                stufeVor:w.stufeVor, stufeNach:w.stufeNach,
+                rek:w.rekordDelta, mon:w.monatDelta};
     });
     return o;
   };
@@ -1990,6 +1995,7 @@ function _buildStories(){
       const w = _tafelWirkung(pid);
       const q = w.quellen['rekord:' + rid] || null;
       o[pid] = {vor:w.vor, nach:w.nach, delta:w.delta,
+                rek:w.rekordDelta, mon:w.monatDelta,
                 anteilVor:w.rekordVor, anteilNach:w.rekordNach,
                 zahl:w.rekordZahl,
                 // Die Stufe gehoert dazu: im Blatt eines Tafel-Moments steht
