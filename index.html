@@ -5630,7 +5630,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.12.9b896a1b';
+const BUILD_VERSION='2026.10.12.6d677815';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -21383,6 +21383,7 @@ function _consolidateStoriesLegacy(list){
       const _etikett = t => {
         const dt = (t && t.dataRef) || {};
         const typ = dt.type === 'group' ? (dt.sub || '') : (dt.type || '');
+        if(typ === 'badge_marken' && (dt.marken || []).length > 1) return 'runde Marken';
         if(typ === 'badge_unlocked' || typ === 'badge_marken'){
           const mk = typ === 'badge_marken' && (dt.marken || []).length === 1 ? dt.marken[0] : null;
           const bn = (mk && mk.name) || dt.badgeName || ((typeof BADGES !== 'undefined'

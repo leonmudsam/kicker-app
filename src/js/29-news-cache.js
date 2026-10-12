@@ -1266,6 +1266,10 @@ function _consolidateStoriesLegacy(list){
       const _etikett = t => {
         const dt = (t && t.dataRef) || {};
         const typ = dt.type === 'group' ? (dt.sub || '') : (dt.type || '');
+        // Mehrere kleine Marken einer Partie sind keine „Auszeichnung für
+        // Maxi und Leon": das war Einzahl ohne Namen für zwei verschiedene
+        // Marken. Sie heißen wie in ihrer eigenen Zeile.
+        if(typ === 'badge_marken' && (dt.marken || []).length > 1) return 'runde Marken';
         if(typ === 'badge_unlocked' || typ === 'badge_marken'){
           const mk = typ === 'badge_marken' && (dt.marken || []).length === 1 ? dt.marken[0] : null;
           const bn = (mk && mk.name) || dt.badgeName || ((typeof BADGES !== 'undefined'
