@@ -211,6 +211,38 @@ function _consolidateStories(list){
   });
   let aus = _consolidateStoriesLegacy(vorbereitet);
 
+  // ── Der härteste Tag gehört zum Spieler des Tages ─────────────────
+  // „Harter Tag für Leo" stand als eigene rote Karte eine Minute unter dem
+  // Spieler des Tages: dieselbe Frage, wer den Tag geprägt hat, einmal von
+  // oben und einmal von unten, auf zwei Karten. Gibt es an dem Tag einen
+  // Spieler des Tages, steht der härteste Tag als Gegenstück auf dessen Karte
+  // und in dessen Blatt; die Meldung reist mit (`memberIds`), verloren geht
+  // nichts [§C33]. Ohne Spieler des Tages bleibt sie, wie sie war.
+  {
+    const potdJeTag = new Map();
+    aus.forEach(s => { const d = s.dataRef || {};
+      if(d.type === 'potd') potdJeTag.set(d.dayKey || tagKey(s.when), s); });
+    const weg = new Set(), dazu = new Map();
+    aus.forEach(s => {
+      const d = s.dataRef || {};
+      if(d.type !== 'elo_swing' || !d.pid) return;
+      const p = potdJeTag.get(tagKey(s.when));
+      if(!p) return;
+      const pd = p.dataRef || {};
+      // Ist der Verlierer selbst der Spieler des Tages, ist es kein Gegenstück.
+      if(pd.playerId === d.pid || (pd.playerIds || []).includes(d.pid)) return;
+      weg.add(s.id);
+      dazu.set(p.id, {id:s.id, pid:d.pid, delta:d.delta, title:s.title, desc:s.desc});
+    });
+    if(weg.size) aus = aus.filter(s => !weg.has(s.id)).map(s => {
+      const g = dazu.get(s.id);
+      if(!g) return s;
+      const d = s.dataRef || {};
+      return Object.assign({}, s, {dataRef:Object.assign({}, d, {gegenstueck:g,
+        memberIds:[...new Set((d.memberIds || [s.id]).concat([g.id]))]})});
+    });
+  }
+
   // Der sichtbare Tages-Tafel-Eintrag sitzt immer beim neuesten enthaltenen
   // Wechsel. So ersetzt eine Aktualisierung die heutige Karte an der richtigen
   // Stelle im Feed; historische Tage bleiben unangetastet.
@@ -1099,6 +1131,27 @@ function _consolidateStoriesLegacy(list){
           : dt.rarity === 'rare' ? 'die seltene Auszeichnung ' : '';
         return `${nm(dt.playerId)} holt ${klasse}„${bn}“`;
       }
+      // ── Die Zeile sagt, was genau passiert ist ──────────────────────
+      // „Stefan erreicht runde Marken", „Leo findet gerade kein Mittel",
+      // „Leon und Maxi gewinnen zusammen alles": jeder Satz verlangte das
+      // Blatt, um zu erfahren, welche Marken, wie viele Pleiten, wie lange
+      // die Serie. Die Zeile nennt es jetzt kurz, das Blatt erklärt es.
+      if(dt.type === 'badge_marken' && (dt.marken || []).length > 1){
+        const l = dt.marken, eins = [...new Set(l.map(x => x.pid))].length === 1;
+        const q = x => `„${x.name}“`;
+        if(eins && l.length <= 3){
+          const gleich = l.every(x => x.rang === l[0].rang);
+          return gleich
+            ? `${nm(l[0].pid)} holt ${_namenListe(l.map(q))}, ${l.length === 2 ? 'beide' : 'alle'} zum ${l[0].rang}. Mal`
+            : `${nm(l[0].pid)} holt ${_namenListe(l.map(x => `${q(x)} zum ${x.rang}. Mal`))}`;
+        }
+        if(l.length === 2) return `${nm(l[0].pid)} holt ${q(l[0])} zum ${l[0].rang}. Mal, ${nm(l[1].pid)} ${q(l[1])} zum ${l[1].rang}. Mal`;
+        return ti;
+      }
+      if(dt.type === 'loss_streak' && dt.pid && dt.streak) return `${nm(dt.pid)} verliert zum ${dt.streak}. Mal in Folge`;
+      if(dt.type === 'team_streak' && dt.a && dt.b && dt.streak) return `${und([dt.a, dt.b])} gewinnen zusammen zum ${dt.streak}. Mal in Folge`;
+      if(dt.type === 'team_loss_streak' && dt.a && dt.b && dt.streak) return `${und([dt.a, dt.b])} verlieren zusammen zum ${dt.streak}. Mal in Folge`;
+      if(dt.type === 'top_form' && dt.pid && dt.wins != null) return `${nm(dt.pid)} gewinnt ${dt.wins} der letzten ${FORM_FENSTER} Partien`;
       if((dt.type === 'rivalry_milestone' || dt.type === 'rivalry') && dt.a && dt.b && dt.n)
         return `${nm(dt.a)} und ${nm(dt.b)} treffen zum ${dt.n}. Mal aufeinander`;
       if(dt.type === 'milestone_wins' && dt.pid && zahl(dt.milestone)) return `${nm(dt.pid)} feiert den ${zahl(dt.milestone)}. Sieg`;
@@ -1269,7 +1322,13 @@ function _consolidateStoriesLegacy(list){
         // Mehrere kleine Marken einer Partie sind keine „Auszeichnung für
         // Maxi und Leon": das war Einzahl ohne Namen für zwei verschiedene
         // Marken. Sie heißen wie in ihrer eigenen Zeile.
-        if(typ === 'badge_marken' && (dt.marken || []).length > 1) return 'runde Marken';
+        if(typ === 'badge_marken' && (dt.marken || []).length > 1){
+          const l = dt.marken;
+          // Zwei Marken eines Spielers nennt die Schlagzeile beim Namen:
+          // „Auszeichnung für Stefan" verschwieg, welche.
+          return l.length === 2 && l[0].pid === l[1].pid && l[0].name && l[1].name
+            ? `Marken „${l[0].name}“ und „${l[1].name}“` : 'runde Marken';
+        }
         if(typ === 'badge_unlocked' || typ === 'badge_marken'){
           const mk = typ === 'badge_marken' && (dt.marken || []).length === 1 ? dt.marken[0] : null;
           const bn = (mk && mk.name) || dt.badgeName || ((typeof BADGES !== 'undefined'

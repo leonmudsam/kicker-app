@@ -285,6 +285,15 @@
 .sp-tg-b i.w{background:var(--acid)}.sp-tg-b i.l{background:var(--red);opacity:.8}
 .sp-tg-z{display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 12px;font-size:10.5px;color:var(--muted)}
 .sp-tg-z b{font-family:'Sometype Mono',monospace;color:var(--ink)}
+/* Das Gegenstück des Spielers des Tages [§C33]: wer an diesem Tag am meisten
+   verloren hat, als rote Zeile unter der Bahn statt als eigene Karte. */
+.nf-gegen,.nd-gegen{display:flex;align-items:center;gap:8px;margin:8px 13px 10px;padding:7px 10px;border-radius:10px;
+  font-size:11px;color:var(--muted);background:rgba(240,86,106,.06);box-shadow:inset 3px 0 0 rgba(240,86,106,.55)}
+.nd-gegen{margin:0 0 8px;cursor:pointer}
+.nf-gegen > span:not(.av),.nd-gegen > span:not(.av){flex:1 1 auto;min-width:0}
+.nf-gegen b,.nd-gegen b{color:var(--ink)}
+.nf-gegen b.r,.nd-gegen b.r{font-family:'Sometype Mono',monospace;color:var(--red);white-space:nowrap}
+.nf-gegen .av,.nd-gegen .av{--av:20px;width:20px;height:20px;font-size:8px;flex:0 0 auto}
 .sp-tg-z b.g{color:var(--acid)}.sp-tg-z b.r{color:var(--red)}
 
 /* ── Die Elo-Kurve ── */

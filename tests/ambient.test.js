@@ -1461,10 +1461,12 @@ const _stabil = JSON.parse(K.eval(`JSON.stringify((function(){
       _cache._consolFrom = null; _cache._frischVon = null;
       const sicht = getStoriesCache().filter(s => tagKey(s.when) === ziel);
       // Vertreten ist eine Karte, wenn sie selbst dasteht — oder als Zeile
-      // einer Sammelkarte desselben Tages.
+      // einer Sammelkarte desselben Tages, oder als Mitglied einer Karte,
+      // die sie trägt (der härteste Tag auf dem Spieler des Tages).
       const drin = new Set();
       sicht.forEach(s => { drin.add(s.id);
-        ((s.dataRef||{}).teile||[]).forEach(t => { if(t.id) drin.add(t.id); }); });
+        ((s.dataRef||{}).teile||[]).forEach(t => { if(t.id) drin.add(t.id); });
+        ((s.dataRef||{}).memberIds||[]).forEach(id => drin.add(id)); });
       // Die Aussage einer Karte: was fuer ein Ereignis und worum es geht. Die
       // Beteiligten stehen NICHT darin — wechselt der groesste Ausschlag des
       // Tages von einem Spieler zum naechsten, ist das dieselbe Aussage mit
@@ -4311,17 +4313,85 @@ const _etik = JSON.parse(K.eval(`JSON.stringify((function(){
     const z = (d.teile || []).filter(u => (u.typ || u.type) !== 'spiel' && !u.brk);
     if(z.some((u, k) => u.neg && z.slice(k + 1).some(v => !v.neg))) falsch.push(t + ' (rote Zeile vor einer positiven)');
   });
-  return {titel: sam ? sam.title : '', soll, n, falsch, marken: zwei ? zwei.title : ''};
+  // Zwei Marken EINES Spielers: Schlagzeile und Zeile nennen beide.
+  _cache._consolFrom = null;
+  const einer = _consolidateStories([l[0], {id:'et-bm1', cat:'badge', ic:'medal', when:w, prio:20,
+    title:pname(W[0]) + ' erreicht runde Marken', desc:'2.',
+    dataRef:{type:'badge_marken', matchId:m.id, playerIds:[W[0]],
+      marken:[{pid:W[0], badgeId:'a', name:'Zittersieg', rang:5}, {pid:W[0], badgeId:'b', name:'Frühschicht', rang:5}]}}])
+    .find(x => (x.dataRef||{}).type === 'sammel');
+  // Und jede Zeile einer Serie oder Form nennt ihre Zahl.
+  const ohneZahl = [];
+  getStoriesCache().forEach(x => { const d = x.dataRef || {};
+    if(d.type !== 'sammel' || d.quelle !== 'spiel') return;
+    (d.teile || []).forEach(t => { if(/^(loss_streak|team_streak|team_loss_streak|top_form|badge_marken)$/.test(t.typ || '')
+      && !/[0-9]/.test(t.titel || '')) ohneZahl.push(t.titel); }); });
+  return {titel: sam ? sam.title : '', soll, n, falsch, marken: zwei ? zwei.title : '',
+    einer: einer ? einer.title : '', einerZeile: einer ? (einer.dataRef.teile.find(t => t.typ === 'badge_marken') || {}).titel : '',
+    ohneZahl};
 })())`));
 ok(_etik.titel === _etik.soll,
    'die Schlagzeile nennt den Sieg zuerst und jede Pleite mit dem Namen dessen, der sie hat',
    _etik.titel + ' / soll ' + _etik.soll);
+ok(/Zittersieg/.test(_etik.einer) && /Frühschicht/.test(_etik.einer)
+   && /Zittersieg/.test(_etik.einerZeile) && /Frühschicht/.test(_etik.einerZeile) && /5\. Mal/.test(_etik.einerZeile),
+   'zwei Marken eines Spielers stehen mit Namen in Schlagzeile und Zeile, die Zeile mit ihrer Zahl',
+   _etik.einer + ' / ' + _etik.einerZeile);
+ok(_etik.ohneZahl.length === 0,
+   'jede Zeile einer Serie, einer Form oder einer Marke nennt ihre Zahl',
+   _etik.ohneZahl.slice(0, 3).join(' | ') || 'alle mit Zahl');
 ok(_etik.marken.indexOf('Runde Marken für ') === 0,
    'zwei kleine Marken zweier Spieler heißen runde Marken, nicht Auszeichnung ohne Namen',
    _etik.marken);
 ok(_etik.n > 10 && _etik.falsch.length === 0,
    'jede Schlagzeile einer Partie nennt höchstens drei Anlässe, jeden mit Namen, und keine Pleite vor einem Sieg, auch nicht in den Zeilen',
    _etik.falsch.slice(0, 3).join(' | ') || _etik.n + ' Bündel');
+
+// ── Was zählt, meldet Stufen, nicht jeden Schritt ─────────────────────
+// „Leon und Maxi treffen zum 207. Mal aufeinander" stand an jedem Spieltag
+// der beiden, und Bilder wie die Uhr des Tages trafen ab ihrer Schwelle auf
+// jede weitere Partie zu. Gemeldet wird jedes zehnte Duell, gezeichnet nur an
+// Stufen.
+const _stufen = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  const falsch = [];
+  roh.filter(s => (s.dataRef||{}).type === 'rivalry').forEach(s => {
+    if(s.dataRef.n % 10 !== 0) falsch.push(s.title); });
+  roh.forEach(s => { const d = s.dataRef || {}, o = d.visual && d.visual.occasion;
+    if(!o) return;
+    const x = o.data || {};
+    if(o.key === 'uhr' && !SP_TAG_STUFEN.has(x.n)) falsch.push('Uhr bei ' + x.n);
+    if(o.key === 'duoserie' && !(x.k === 3 || x.k === 5 || x.k === 7 || x.k % 5 === 0)) falsch.push('Duo gegen Duo bei ' + x.k);
+    if(o.key === 'tagesring' && !SP_TAG_STUFEN.has((x.folge || []).filter(Boolean).length)) falsch.push('Tagesring bei ' + (x.folge || []).filter(Boolean).length);
+  });
+  return {riv: roh.filter(s => (s.dataRef||{}).type === 'rivalry').map(s => s.dataRef.n), falsch};
+})())`));
+ok(_stufen.falsch.length === 0,
+   'eine Rivalität steht auf jedem zehnten Duell, Uhr, Tagesring und Duo gegen Duo nur auf ihren Stufen',
+   _stufen.falsch.slice(0, 4).join(' | ') || 'Rivalität ' + _stufen.riv.join(', '));
+
+// ── Der härteste Tag gehört zum Spieler des Tages ──────────────────────
+// „Harter Tag für Leo" stand als eigene rote Karte eine Minute unter dem
+// Spieler des Tages: dieselbe Frage, wer den Tag geprägt hat, auf zwei
+// Karten. Er steht jetzt als Gegenstück auf dessen Karte; die Meldung reist
+// mit und geht nicht verloren.
+const _gegen = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  _cache._stories = roh.slice().sort((a,b)=>new Date(b.when)-new Date(a.when));
+  _cache._consolFrom = null; _cache._frischVon = null;
+  const st = getStoriesCache();
+  const swing = roh.filter(s => (s.dataRef||{}).type === 'elo_swing');
+  const potdTage = new Set(st.filter(s => (s.dataRef||{}).type === 'potd').map(s => tagKey(s.when)));
+  const allein = st.filter(s => (s.dataRef||{}).type === 'elo_swing' && potdTage.has(tagKey(s.when))).map(s => s.title);
+  const mit = st.filter(s => (s.dataRef||{}).gegenstueck);
+  const verloren = swing.filter(w => !st.some(s => s.id === w.id || ((s.dataRef||{}).memberIds || []).includes(w.id))).map(w => w.id);
+  const zeile = mit.every(s => _newsCardHtmlM2(s, false, false).indexOf('class="nf-gegen"') >= 0
+    && (_newsDetailBody(s) || '').indexOf('nd-gegen') >= 0);
+  return {swing:swing.length, mit:mit.length, allein, verloren, zeile};
+})())`));
+ok(_gegen.swing > 0 && _gegen.mit === _gegen.swing && !_gegen.allein.length && !_gegen.verloren.length && _gegen.zeile,
+   'der härteste Tag steht auf der Karte und im Blatt des Spielers des Tages, nicht daneben, und geht nicht verloren',
+   JSON.stringify(_gegen));
 
 // ── Woher die Zahl der Laufbahn kommt ─────────────────────────────────
 // Die Zahl neben einem Spieler ist die Bewegung des ganzen Spieltags über
@@ -6126,18 +6196,21 @@ const _vband = JSON.parse(K.eval(`JSON.stringify((function(){
   const lo = INSIGNIEN[3].min;
   lb[a] = {vor:lo + 50, nach:lo - 30};
   lb[b] = {vor:400, nach:460};
-  const h = _newsVerlustBand({dataRef:{type:'rekord_geholt', laufbahn:lb}});
-  const ohne = _newsVerlustBand({dataRef:{type:'rekord_geholt', laufbahn:{[b]:lb[b]}}});
+  const h = _newsPrestigeBand({dataRef:{type:'rekord_geholt', laufbahn:lb}});
+  const ohne = _newsPrestigeBand({dataRef:{type:'rekord_geholt', laufbahn:{[b]:lb[b]}}});
   return {h, ohne, a:pmap()[a].name, b:pmap()[b].name, stufe:INSIGNIEN[2].name};
 })())`));
+// Und wer gewinnt, steht auch darin: die Zeile zeigte nur die Verlierer,
+// und die Hälfte der Wirkung stand erst im Blatt. Gewinner zuerst.
 ok(_vband.h.indexOf(_vband.a) >= 0 && _vband.h.indexOf('−80') >= 0
-   && _vband.h.indexOf(_vband.stufe) >= 0 && _vband.h.indexOf(_vband.b) < 0 && _vband.ohne === '',
-   'die Tafel-Karte nennt, wer Prestige verliert, und nur den',
+   && _vband.h.indexOf(_vband.stufe) >= 0 && _vband.h.indexOf(_vband.b) >= 0 && _vband.h.indexOf('+60') >= 0
+   && _vband.h.indexOf(_vband.b) < _vband.h.indexOf(_vband.a) && _vband.ohne.indexOf('+60') >= 0,
+   'die Tafel-Karte nennt, wer Prestige gewinnt und wer verliert, die Gewinner zuerst',
    _vband.h.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
 // Und Name, Betrag und Stufe stehen in EINEM Chip. Als Reihe aus Text
 // brachen sie bei drei Namen um, und der Betrag stand in der zweiten Zeile
 // neben dem falschen Namen.
-const _vchips = (_vband.h.match(/<b class="nf-vl">[\s\S]*?<\/b>/g) || []);
+const _vchips = (_vband.h.match(/<b class="nf-vl minus">[\s\S]*?<\/b>/g) || []);
 ok(_vchips.length === 1 && _vchips[0].indexOf(_vband.a) >= 0 && _vchips[0].indexOf('−80') >= 0
    && _vchips[0].indexOf(_vband.stufe) >= 0 && /class="(rcp-av|av)/.test(_vchips[0]),
    'je Verlierer ein Chip mit Gesicht, Name, Betrag und Stufe',
@@ -7078,13 +7151,19 @@ const _duellGleicheSekunde = JSON.parse(K.eval(`JSON.stringify((function(){
     matches=alle.concat(next); invalidateCache(); _cache._stories=[alt];
     const angezeigt=_consolidateStories([alt])[0];
     const neu=_buildStories().find(s=>s.id===r.id);
+    // Das nächste Duell ist kein zehntes: es bekommt keine Rivalität, und die
+    // gemeldete bleibt bei ihrem Duell. Vorher wanderte dieselbe ID mit der
+    // Zahl plus eins weiter, und „zum 207. Mal" stand an jedem Spieltag.
+    const weiter=_buildStories().filter(s=>(s.dataRef||{}).type==='rivalry'
+      && s.dataRef.a===r.dataRef.a && s.dataRef.b===r.dataRef.b);
     return {fehlt:false,alt:angezeigt.dataRef.matchId===basis.id,
-      neu:neu.dataRef.matchId===next.id,n:neu.dataRef.n===r.dataRef.n+1};
+      neu:!neu || neu.dataRef.matchId===basis.id,
+      n:weiter.every(s => s.dataRef.n % 10 === 0 && s.dataRef.matchId!==next.id)};
   } finally {matches=alle;invalidateCache();_cache._stories=bestand;}
 })())`));
 ok(!_duellGleicheSekunde.fehlt && _duellGleicheSekunde.alt
    && _duellGleicheSekunde.neu && _duellGleicheSekunde.n,
-   'zwei Duelle mit gleicher Sekunde bleiben anhand des historischen Duellstands getrennt',
+   'eine Rivalitaet gehoert ihrem zehnten Duell und wandert nicht zum naechsten',
    JSON.stringify(_duellGleicheSekunde));
 // ── Die Formen der gewöhnlichen Partie über die ganze Liga [§C33] ────
 // Eine Partie ohne Anlass bekam immer dasselbe Spielfeld oder dieselbe

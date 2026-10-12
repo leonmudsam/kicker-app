@@ -609,6 +609,11 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
     // dass er mit zwei Pleiten anfing und mit fünf Siegen endete, sagten
     // drei Zahlen nicht [§11.6c].
     if(d.type === 'potd') fuss = _spTagBild(_spTagDaten(s));
+    // Das Gegenstück: wer an diesem Tag am meisten verloren hat. Eine rote
+    // Zeile unter der Bahn, statt einer eigenen Karte darunter.
+    const g = d.type === 'potd' && d.gegenstueck;
+    if(g && pmap()[g.pid]) fuss += `<div class="nf-gegen">${_spChip(g.pid)}<span><b>${esc(_spName(g.pid))}</b> gibt am meisten ab</span>`
+      + `<b class="num r">${_spVz(Number(g.delta) || 0)} Elo</b></div>`;
     if(!fuss) fuss = _newsZahlband([
       {v: d.wr != null ? Math.round(d.wr * 100) + ' %' : null, l:'Siegquote', f:'g'},
       {v: (d.wins != null && d.games != null) ? d.wins + ' : ' + (d.games - d.wins) : null,
@@ -762,7 +767,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
       <span class="nf-chev">${svgI('chevron')}</span>
     </div>
     ${sammelBand}
-    ${sorte === 'tafel' ? _newsVerlustBand(s) : ''}
+    ${sorte === 'tafel' ? _newsPrestigeBand(s) : ''}
     ${fuss}
     ${brkSub ? `<div class="nf-brk-sub">${esc(brkSub)}</div>` : ''}
     ${fadenHtml || ''}

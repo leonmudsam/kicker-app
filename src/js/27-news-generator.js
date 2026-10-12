@@ -771,35 +771,48 @@ function _buildStories(){
       A.forEach(a => B.forEach(b => {
         if(a === b) return;
         const k = a < b ? a+'|'+b : b+'|'+a;
-        if(!pairCnt[k]) pairCnt[k] = {n:0, last:m.created_at, t:mts(m), mid:m.id, aw:0};
+        if(!pairCnt[k]) pairCnt[k] = {n:0, last:m.created_at, t:mts(m), mid:m.id, aw:0, zehn:null};
         pairCnt[k].n++;
         // Wer führt? Ohne diese Zahl sagte die Karte nur, dass es die
         // Paarung gibt. `aw` zählt aus Sicht des kleineren Ids.
         const ersterAufA = (a < b ? a : b) === a;
         const aGewinnt = ersterAufA ? m.winner === 'A' : m.winner === 'B';
         if(aGewinnt) pairCnt[k].aw++;
+        // Der Stand beim letzten zehnten Duell: nur der wird gemeldet.
+        if(pairCnt[k].n % 10 === 0)
+          pairCnt[k].zehn = {n:pairCnt[k].n, aw:pairCnt[k].aw, t:mts(m), when:m.created_at, mid:m.id};
         if(mts(m) >= pairCnt[k].t){
           pairCnt[k].last = m.created_at; pairCnt[k].t = mts(m); pairCnt[k].mid = m.id;
         }
       }));
     });
+    // ── Nur jedes zehnte Duell ist eine Nachricht ──────────────────
+    // Die Karte hing an der LETZTEN Partie des Paares und trug deren Zahl.
+    // Ihre ID kannte keine Zahl: lag die gespeicherte aus dem Fenster, baute
+    // der Generator sie an jedem neuen Duell neu, und „Leon und Maxi treffen
+    // zum 207. Mal aufeinander" stand an jedem Spieltag der beiden. Gemeldet
+    // wird jetzt das zehnte, zwanzigste … Duell, an der Partie, in der es
+    // gespielt wurde, mit dem Stand von damals und der Zahl in der ID. Die
+    // Schwellen des Meilensteins (50, 100, 200, 500) meldet der Meilenstein.
+    const _seit = now.getTime() - NEWS_FENSTER_TAGE * _dayMs;
     const ranked = Object.entries(pairCnt)
-      .filter(([k,v]) => v.n >= 50)
+      .filter(([k,v]) => v.n >= 50 && v.zehn && v.zehn.n >= 50 && v.zehn.t >= _seit
+        && ![50, 100, 200, 500].includes(v.zehn.n))
       .map(([k,v]) => {
         const [a,b] = k.split('|');
-        return {a, b, n: v.n, aw: v.aw, when: new Date(v.last), matchId:v.mid};
+        return {a, b, n: v.zehn.n, aw: v.zehn.aw, when: new Date(v.zehn.when), matchId:v.zehn.mid, gesamt:v.n};
       })
-      .sort((a,b) => b.n - a.n)
+      .sort((a,b) => b.gesamt - a.gesamt)
       .slice(0, NEWS_LIMITS.rivalry);
     ranked.forEach(r => {
       const tier = r.n >= 200 ? 'legendäre' : r.n >= 100 ? 'große' : 'wachsende';
       stories.push({
-        id: 'rivalry_'+r.a+'_'+r.b,
+        id: 'rivalry_'+r.a+'_'+r.b+'_'+r.n,
         cat: 'rivalry',
         ic: 'crossedSwords',
         // Die Schlagzeile war ein Satzfragment und nannte niemanden:
         // „188 Duelle. Eine große Rivalität". Jetzt stehen die beiden drin.
-        title: `${nameOf(r.a)} gegen ${nameOf(r.b)}: ${r.n} Duelle`,
+        title: `${nameOf(r.a)} und ${nameOf(r.b)} treffen zum ${r.n}. Mal aufeinander`,
         // „Eine große Rivalität — die Liga liebt's" stand wortgleich unter
         // zwei Karten untereinander und nannte keine einzige Zahl.
         desc: (() => { const va = r.aw, vb = r.n - r.aw;
@@ -2161,7 +2174,7 @@ function _buildStories(){
         // beide Staende gehoeren ihm [§11.0e] —, und faellt das Zeichen unter
         // eine Schwelle, steht auch das da. Die Zeile im Buendel bleibt ohne
         // diesen Satz: dort steht der Verlust einmal in der eigenen Zeile der
-        // Karte und nicht in jeder Meldung (`_newsVerlustBand`).
+        // Karte und nicht in jeder Meldung (`_newsPrestigeBand`).
         const _verlierer = (fall === 'dazu'
             ? altPids.filter(id => n.pids.indexOf(id) >= 0)
             : fall === 'uebernommen' ? altPids.filter(id => n.pids.indexOf(id) < 0) : [])

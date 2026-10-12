@@ -1106,7 +1106,15 @@ function _ndPotdBlatt(s){
   const liste = _newsTagPartien(d.dayKey, pids);
   const bahn = _ndTagesbahn(pids, liste);
   const ab = (t, html) => html ? `<div class="nd-section">${esc(t)}</div>${html}` : '';
-  return {kopf, mitte:ab('Das Feld des Tages', balken) + ab(pids.length > 1 ? 'Der Tag der Tagessieger' : 'Der Tag in Partien', bahn)};
+  // Das Gegenstück des Tages, das als eigene Karte unter dieser stand
+  // (`gegenstueck`, aus der Verdichtung): sein Satz und seine Partien.
+  const g = d.gegenstueck;
+  const gegen = g && pm[g.pid] ? `<div class="nd-gegen" data-pid="${esc(g.pid)}">${_spChip(g.pid)}`
+      + `<span><b>${esc(_spName(g.pid))}</b> gibt an diesem Tag mehr Elo ab als jeder andere</span>`
+      + `<b class="num r">${_spVz(Number(g.delta) || 0)} Elo</b></div>`
+      + _ndTagesbahn([g.pid], _newsTagPartien(d.dayKey, [g.pid])) : '';
+  return {kopf, mitte:ab('Das Feld des Tages', balken) + ab(pids.length > 1 ? 'Der Tag der Tagessieger' : 'Der Tag in Partien', bahn)
+    + ab('Der härteste Tag', gegen)};
 }
 
 // ── Der Endspurt der Saison [§C33] ──────────────────────────────────

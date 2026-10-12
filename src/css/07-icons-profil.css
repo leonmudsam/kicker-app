@@ -943,15 +943,18 @@
      zweiten Meldung nichts [§C33]. Leiser als die Schlagzeile, aber mit
      Zeichen — sonst waeren es drei graue Zeilen. */
   .nf-sam{border-top:1px solid var(--line);display:flex;flex-direction:column}
-  /* Wer an diesem Moment Prestige verliert: eine leise Zeile unter dem
-     Band, je Verlierer ein Chip aus Gesicht, Name und Betrag. Rot ist die
-     Richtung [§C25] und sitzt nur am Betrag und am Wort; die Fläche bleibt
-     dunkel, damit die Karte die der Gewinner bleibt. */
-  .nf-verlust{display:flex;align-items:center;gap:8px;padding:6px 13px 7px;min-width:0;
-    border-top:1px solid rgba(240,86,106,.18)}
-  .nf-verlust-l{flex:0 0 auto;display:inline-flex;align-items:center;gap:4px;
+  /* Die Bilanz des Prestiges in einer leisen Zeile unter dem Band: je
+     Spieler ein Chip aus Gesicht, Name und Betrag, erst wer gewinnt (Gold,
+     wie die Zahl im Blatt), dann wer verliert (Rot ist die Richtung [§C25]).
+     Die Farbe sitzt am Betrag und am Rand des Chips; die Fläche bleibt
+     dunkel, damit die Zeile die Karte nicht überstrahlt. */
+  .nf-verlust{display:flex;flex-direction:column;gap:4px;padding:6px 13px 7px;min-width:0;
+    border-top:1px solid var(--line)}
+  .nf-pb-z{display:flex;align-items:center;gap:8px;min-width:0}
+  .nf-pb-z + .nf-pb-z .nf-verlust-l{color:var(--red)}
+  .nf-verlust-l{flex:0 0 52px;display:inline-flex;align-items:center;gap:4px;
     font-family:'Sometype Mono',monospace;font-size:9px;letter-spacing:.1em;
-    text-transform:uppercase;color:var(--red)}
+    text-transform:uppercase;color:var(--muted)}
   .nf-verlust-l svg{width:12px;height:12px}
   .nf-verlust-w{display:flex;flex-wrap:wrap;gap:4px;min-width:0}
   .nf-vl{display:inline-flex;align-items:center;gap:5px;min-width:0;max-width:100%;
@@ -962,6 +965,8 @@
   .nf-vl .rcp-av{flex:0 0 auto}
   .nf-vl i{font-style:normal}
   .nf-vl em{font-style:normal;color:var(--red);font-weight:700}
+  .nf-vl.plus{background:rgba(247,207,74,.07);border-color:rgba(247,207,74,.2)}
+  .nf-vl.plus em{color:var(--gold)}
   .nf-vl u{text-decoration:none;color:var(--muted);font-weight:500;font-size:10px}
   .nf-sam-z{display:flex;align-items:center;gap:9px;padding:7px 13px;
     border-bottom:1px solid var(--line);font-size:11px;color:var(--ink2);
