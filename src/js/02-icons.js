@@ -211,7 +211,7 @@ const ICONS = {
   // Einzelkämpfer: eine Figur, neben der zwei leere Plätze gestrichelt
   // stehen — die Seite, auf der niemand mitträgt.
   soloPath:      `<circle cx="8" cy="7" r="3"/><path d="M3 20v-2a4 4 0 014-4h2a4 4 0 014 4v2"/><path d="M17 8v3M17 14v3" stroke-dasharray="2 2"/><circle cx="17" cy="20" r="1.2"/>`,
-  // ── FUENF REKORDE MEHR: DER EIGENE SCHNITT UND DAS FENSTER ──
+  // ── DER EIGENE SCHNITT UND DAS FENSTER ──
   // Uebersoll: eine gestrichelte Erwartungslinie und eine Bahn, die darueber
   // laeuft. Bewusst anders als `trendUp` (nur die Bahn) und `sollMinus` (das
   // Untersoll, dieselbe Frage andersherum) — hier ist die LINIE die Aussage.
@@ -220,21 +220,12 @@ const ICONS = {
   // `soloPath` (Figur mit leeren Plaetzen daneben) und `refresh` (der
   // Wandler, der die Rolle tauscht): hier bewegt sich nichts.
   roleFix:       `<circle cx="12" cy="6" r="2.6"/><path d="M7 20v-5a3 3 0 013-3h4a3 3 0 013 3v5"/><path d="M4 20h16"/>`,
-  // Torrausch: ein Ball mit Fahrtlinien dahinter — Tore in Folge, nicht ein
-  // einzelner Treffer. `ball` ist der ruhende Ball, `strikeBoot` der Schuss.
-  goalRush:      `<circle cx="16" cy="12" r="5"/><path d="M2 8h7M1 12h6M2 16h7"/>`,
   // Allrounder: zwei Haelften, beide gefuellt — vorne wie hinten ueber der
   // Erwartung. `switcher` fragt nach dem Gleichmass der Aufstellung, dieses
   // Zeichen nach der Leistung auf beiden Seiten.
   bothSides:     `<path d="M12 3v18"/><path d="M4 7h5M4 12h5M4 17h5"/><path d="M15 7h5M15 12h5M15 17h5"/>`,
-  // Dichtes Tor: ein geschlossenes Gitter im Rahmen — nichts geht durch.
-  gateShut:      `<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 5v14M12 5v14M17 5v14M3 12h18"/>`,
   // Abwehrchef: Schild mit Rangwinkeln darin — die Ansage in der Abwehr.
   shieldRank:    `<path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6z"/><path d="M9 10l3-2 3 2M9 14l3-2 3 2"/>`,
-  // Laufstopper: eine Flamme hinter einer Sperre — die Serie des Gegners
-  // endet hier. `flameBreak` gehoert dem Serienbrecher des Monats; dieses
-  // Zeichen steht fuer den Anteil der Gelegenheiten, nicht fuer den Bruch.
-  streakStop:    `<path d="M9 20c-3 0-5-2-5-5 0-4 4-5 4-10 3 2 4 5 4 7 1-1 1-2 1-3 2 2 3 4 3 6"/><path d="M3 4l18 16"/>`,
   // Auftrieb: eine Treppe mit Pfeil — zwei Abschnitte, der zweite höher.
   stepsUp:       `<path d="M3 20h5v-5h5v-5h5V5"/><path d="M16 8l3-3 3 3"/>`,
   // Angreifer: ein Schuh am Ball — die eigenen Tore, nicht das Ergebnis.
@@ -245,9 +236,6 @@ const ICONS = {
   // Fundament: zwei Lagen auf einer Grundlinie — das Gegenstück zur
   // Handschrift, und es liegt unten.
   baseLine:      `<path d="M3 21h18"/><rect x="5" y="13" width="14" height="5" rx="1"/><rect x="8" y="7" width="8" height="5" rx="1"/>`,
-  // Souverän: eine breite Krone auf einer Grundlinie — der Favorit, der auch
-  // klar gewinnt. Kein Häkchen: das trägt schon `trophyCheck`.
-  crownWide:     `<path d="M2 9l3.5 4L12 6l6.5 7L22 9v8H2z"/><path d="M5 20h14"/>`,
   // Unaufgeregt: eine Linie, die kaum ausschlägt, zwischen zwei Marken —
   // Gleichmäßigkeit als Bild, nicht als Zahl.
   flatWave:      `<path d="M3 12h3l2-2 2 4 2-3 2 2 2-2h3"/><path d="M3 6v12M21 6v12"/>`,
@@ -265,33 +253,34 @@ const ICONS = {
   // Klotz am Bein: ein Gewicht an einer Kette — was die Mitspieler
   // mitziehen.
   dragWeight:    `<path d="M12 3v6"/><path d="M9 9h6l2 12H7z"/><path d="M10 6h4"/>`,
-  // ── Sechs Zeichen fuer sechs neue Liga-Rekorde [§C35] ──────────────
+  // ── Zeichen der Liga-Rekorde [§C35] ────────────────────────────────
   // Jedes muss sich von jedem anderen unterscheiden: in einer Zelle von 62
   // Pixeln ist die Zeichnung das Erste, was man sieht, und zwei gleiche sind
   // dort nicht auseinanderzuhalten.
   //
-  // Entscheider: eine Muenze auf der Kante, darueber der Bogen des Wurfs.
-  // Die knappe Partie ist der Wurf, den er gewinnt.
-  coinFlip:      `<circle cx="12" cy="16" r="5"/><path d="M12 13v6"/><path d="M4 9a9 9 0 0116-1"/><polyline points="17 4 20 8 16 9"/>`,
-  // Retourkutsche: ein Bumerang als geschlossene Klinge — zwei gebogene
+  // Elo-Transfer: ein Bumerang als geschlossene Klinge — zwei gebogene
   // Kanten, die sich an den Enden treffen. Zwei einzelne Striche im Winkel
   // waren bei 62 px nicht von einem Knick zu unterscheiden, und die Kontur
   // allein sah aus wie ein Telefonhoerer.
   boomerang:     `<path d="M4 4c1 6 5 12 11 15l2-4c-4-2-7-6-8-11z"/>`,
-  // Unbeugsame: ein Amboss. Platte mit Horn, schmale Taille, breiter Fuss —
-  // was nicht nachgibt.
-  anvil:         `<path d="M4 8h10l4 2-4 2H4z"/><path d="M8 12l-1 4h8l-1-4"/><path d="M5 19h12"/>`,
   // Rollencoup: zwei Felder und ein Pfeil, der von einem ins andere fuehrt —
   // Sturm und Abwehr, und die Seite, auf der es geklappt hat.
   posSwap:       `<rect x="3" y="4" width="7" height="7" rx="1"/><rect x="14" y="13" width="7" height="7" rx="1"/><path d="M10 7h7v6"/><polyline points="14 10 17 13 20 10"/>`,
-  // Rueckschlag: ein Zug nach unten auf den Boden und von dort ein Pfeil nach
-  // oben — der Absprung nach zwei Niederlagen. Zwei getrennte Pfeile ueber
-  // und unter einer Linie kreuzten sich bei 62 px zu einem Knaeuel; die
-  // Linie liegt jetzt am Fuss, und beide Arme stehen darueber.
-  reboundArrow:  `<path d="M3 21h18"/><path d="M7 4v9l5 7 5-9V6"/><polyline points="14 9 17 6 20 9"/>`,
   // Wiedereinstieg: eine Tuer und ein Pfeil hinein — die erste Partie nach
   // der Pause.
   doorReturn:    `<path d="M4 3h9v18H4z"/><circle cx="10" cy="12" r="1"/><path d="M21 12h-5"/><polyline points="19 9 16 12 19 15"/>`,
+  // Umsteiger: die Position wechselt, hinauf in den Sturm, hinunter in die
+  // Abwehr.
+  umstieg:       `<path d="M7 20V5M4 8l3-3 3 3M17 4v15M14 16l3 3 3-3M10 12h4"/>`,
+  // Aufschwung: die Kurve steigt aus der Grundlinie und bleibt oben.
+  aufschwung:    `<path d="M3 21h18"/><path d="M3 17c4 0 6-1 9-5s5-6 9-7"/><polyline points="16 5 21 5 20 10"/>`,
+  // Glanztag: ein Tag im Kalender mit einem Stern.
+  glanztag:      `<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/><path d="M12 12.4l1.1 2.2 2.4.3-1.8 1.7.5 2.4-2.2-1.2-2.2 1.2.5-2.4-1.8-1.7 2.4-.3z"/>`,
+  // Abschwung: die Kurve fällt aus der Höhe und bleibt unten, das
+  // Gegenstück zum Aufschwung.
+  abschwung:     `<path d="M3 21h18"/><path d="M3 5c4 0 6 1 9 5s5 6 9 7"/><polyline points="16 17 21 17 20 12"/>`,
+  // Rost: ein Zahnrad, an dem Flocken haften — nach der Pause nicht in Gang.
+  rost:          `<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/><path d="M19.5 3.5h.01M21 6h.01M18 2h.01"/>`,
   // Wanderpass: ein Gesicht oben, und der Weg gabelt sich zu zwei
   // verschiedenen Partnern — nie zweimal derselbe hintereinander.
   partnerWalk:   `<circle cx="12" cy="5.5" r="2.5"/><path d="M12 8v4l-6 5M12 12l6 5"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/>`,
@@ -301,7 +290,7 @@ const ICONS = {
   // Spurwechsel: zwei Fahrbahnraender und eine Linie, die von einer Spur in
   // die andere springt — Favorit, Aussenseiter, Favorit.
   laneSwap:      `<path d="M4 3v18M20 3v18"/><path d="M9 20l6-4-6-4 6-4"/><polyline points="12 4 15 4 15 7"/>`,
-  // Serienstopp: eine erhobene Hand. Ein Feuer wie beim Laufstopper waere
+  // Serienstopp: eine erhobene Hand. Ein Feuer wie bei `flameBreak` waere
   // bei 62 px dieselbe Zeichnung gewesen.
   handStop:      `<path d="M8 12V6a1.5 1.5 0 013 0v5M11 11V4.5a1.5 1.5 0 013 0V11M14 11V5.5a1.5 1.5 0 013 0V13M17 13v-2.5a1.5 1.5 0 013 0V15a6 6 0 01-6 6h-1.5a6 6 0 01-4.8-2.4L4.4 15a1.5 1.5 0 012.3-1.9L8 14.5"/>`,
   // Quertreiber: zwei Pfeile, die sich kreuzen — der eine steigt, wo der

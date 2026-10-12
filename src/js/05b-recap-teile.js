@@ -204,14 +204,16 @@ function _belegIstQuote(text, a){
 }
 // Woraus: eine Zelle je Gelegenheit. Ab hundert fasst eine Zelle mehrere —
 // hundert Zellen sind auf dem Telefon vier Reihen, mehr wäre eine Fläche.
-function belegZellenHtml(a){
+// `kurz` steht im Blatt einer Story: dort sagt die Karte darüber schon den
+// ganzen Satz, und unter den Zellen stand er Wort für Wort ein zweites Mal.
+function belegZellenHtml(a, kurz){
   if(!a) return '';
   const je = Math.max(1, Math.ceil(a.n / 100));
   const z = Math.ceil(a.n / je), voll = Math.round(a.k / je);
   let zellen = '';
   for(let i = 0; i < z; i++) zellen += i < voll ? '<i class="j"></i>' : '<i></i>';
   return `<div class="bl-zellen">${zellen}</div>
-    <div class="bl-satz">${esc(a.satz)}${je > 1 ? ` · eine Zelle für je ${je}` : ''}</div>`;
+    <div class="bl-satz">${esc(kurz ? a.k + ' von ' + a.n : a.satz)}${je > 1 ? ` · eine Zelle für je ${je}` : ''}</div>`;
 }
 // Wo im Feld: `eintraege` sind {v, t, er} — Sortierwert, sein Text, und ob
 // er zu den Haltern gehört. Links steht der kleinste Wert, rechts der
@@ -310,7 +312,7 @@ function belegHtml(o){
   const a = belegAnteil(o.ev);
   const teile = [];
   if(a) teile.push(blattAbschnittHtml('chartBar', 'Woraus', a.n + ' insgesamt')
-    + `<div class="bl-box">${belegZellenHtml(a)}</div>`);
+    + `<div class="bl-box">${belegZellenHtml(a, o.kurz)}</div>`);
   const feld = belegFeldHtml(o.feld, true);
   if(feld) teile.push(blattAbschnittHtml('users', 'Wo im Feld', o.feld.length + ' im Rennen')
     + `<div class="bl-box">${feld}${o.dahinter ? `<div class="bl-satz">${o.dahinter}</div>` : ''}</div>`);

@@ -388,10 +388,13 @@ function prestigeTabelle(bisMs){
       {id:d.id, name:d.name, art:d.art, kind:d.kind, basis:d.basis}); });
   });
   // Die Rekorde eines Ruheständlers: die er beim Karriereende hielt, geteilt
-  // durch die Halter von damals. Die Liga von heute vergleicht ohne ihn.
+  // durch die Halter von damals. Die Liga von heute vergleicht ohne ihn. Ein
+  // gestrichener Rekord zählt für ihn so wenig wie für alle anderen
+  // (`chroniclesOfPlayer` lässt ihn weg): er bekam sonst einen Ersatzwert,
+  // der zu keiner Kammer gehörte.
   ruhe.forEach(p => {
-    (ruhestandStand(p.id).rekorde || []).forEach(r => {
-      const d = CHRONICLES.find(x => x.id === r.id) || r;
+    chroniclesOfPlayer(p.id).forEach(r => {
+      const d = CHRONICLE_BY_ID[r.id];
       roh[p.id].rekord.push({id:r.id, name:r.name, art:d.art, kind:d.kind, basis:d.basis,
                              halter:(r.pids || [r.pid]).length});
     });
@@ -524,6 +527,18 @@ function prestigeOf(pid, bisMs){
     platz: imRuhestand(pid) ? ruhestandStand(pid).platz : T.rang.indexOf(pid) + 1,
     von: imRuhestand(pid) ? ruhestandStand(pid).von : T.gesamt
   });
+}
+
+// Die Lage auf der Leiter als EINE Zahl: Stufe mal drei plus Grad, am
+// Ordensstern jede weitere Zacke eine mehr. Ob jemand so hoch steht wie nie
+// zuvor, ist damit ein Vergleich zweier Zahlen und keiner aus Stufe, Grad
+// und Zacken [§C30].
+function insigniumPos(P){
+  if(!P) return 0;
+  const letzte = INSIGNIEN.length - 1;
+  return (P.stufe | 0) === letzte
+    ? letzte * INSIGNIUM_GRADE + Math.max(0, (P.zacken || ORDENSSTERN_START) - ORDENSSTERN_START)
+    : (P.stufe | 0) * INSIGNIUM_GRADE + (P.grad | 0);
 }
 
 // ─── §13.9 Das Zeichen: Insignium und Titelband ──────────────────────

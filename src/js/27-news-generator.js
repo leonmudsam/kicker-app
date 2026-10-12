@@ -2788,101 +2788,92 @@ function _buildStories(){
     }
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] chronget', e); }
 
-  // ── Eine neue Stufe am Insignium ─────────────────────────────────────
-  // Eine Stufe ist ein Uebergang, kein Naehefenster. Verglichen wird der
-  // Stand vor dem letzten Spieltag mit heute. Dadurch verschwindet eine
-  // Meldung weder bei einem grossen Sprung noch nach einer spaeteren
-  // Neuberechnung. Die ID traegt Spieler, Stufe und Spieltag; Persistenz und
-  // ON-CONFLICT machen den Lauf ueber Geraete hinweg idempotent.
+  // ── Die Insignium-Karte des Tages [§C30, §C33] ───────────────────────
+  // Eine Stufe stand als Zeile in der Ewigen Tafel, ein Grad gar nicht und
+  // ein Rückfall auch nicht: wer den Volutenkranz wieder verlor, erfuhr es
+  // nur aus dem Profil. Die Leiter bekommt deshalb EINE eigene Karte je
+  // Spieltag, die wie die Tafel mitläuft: Stand vor dem Spieltag gegen den
+  // von jetzt, bei jedem Lauf neu, abends eingefroren [§C33]. Eine Bewegung,
+  // die sich im Lauf des Tages wieder aufhebt, steht damit gar nicht erst da.
+  //
+  // Gemeldet wird, was sich am Zeichen ablesen lässt, ohne Spam: jede neue
+  // Stufe (neu oder, mit Beleg, wieder), jeder Rückfall auf eine tiefere Stufe und
+  // ein Grad nur, wenn der Spieler über seinem höchsten bekannten Platz steht
+  // (`_insBestVor`, aus dem Bestand).
+  // Ein Grad, der innerhalb derselben Stufe zurückkommt oder wieder geht, ist
+  // das Hin und Her geteilter Rekorde; das Prestige dazu zeigt die Tafel.
   try {
     if(_tafelTag){
-      const _insLetzte = _tafelTag.letzte;
-      const _insVorMs = _tafelTag.vorMs;
-      const _insTagMatches = matches.filter(m => mts(m) > _insVorMs && mts(m) <= _insLetzte)
-        .slice().sort((a,b) => mts(a)-mts(b));
-      // ── Erstmals erreicht oder wieder getragen ──────────────────────
-      // Prestige aus Liga-Rekorden wird unter den Haltern geteilt und faellt
-      // mit einem verlorenen Bestwert wieder [§C34]: dieselbe Stufe kann
-      // zweimal erreicht werden, und beide Male stand „X traegt den
-      // Volutenkranz" da, als waere es das erste Mal. Ob es das war, sagt
-      // der eigene Bestand: die ID einer Insignium-Karte traegt Spieler,
-      // Stufe und Spieltag, also ist eine aeltere Zeile mit demselben
-      // Spieler und derselben Stufe der Beleg. Aus dem Prestige selbst ist
-      // es nicht zu beantworten — dafuer muesste jeder Spieltag der
-      // Ligageschichte einzeln nachgerechnet werden.
-      const _insBestand = (Array.isArray(_cache._stories) ? _cache._stories : [])
-        .map(x => String((x && x.id) || '')).filter(id => id.indexOf('ins_') === 0);
-      const _insFrueher = (pid, key, tag) => {
-        const pre = 'ins_' + pid + '_' + key + '_';
-        return _insBestand.filter(id => id.indexOf(pre) === 0)
-          .map(id => id.slice(pre.length)).filter(t => t < tag).sort().pop() || '';
-      };
-      (players || []).filter(p => ligaAktiv(p)).forEach(p => {
-        // Derselbe Vergleich wie bei Rekord und Chronik und aus denselben
-        // zwei Staenden [§11.0e]: eine Stufe ist ein Uebergang, kein
-        // Naehefenster. Vorher fragte dieser Block `prestigeOf` selbst und
-        // mit einer eigenen Tagesgrenze.
-        const w = _tafelWirkung(p.id);
-        if(w.stufeNach <= w.stufeVor) return;
-        for(let stufe = w.stufeVor + 1; stufe <= w.stufeNach; stufe++){
-          let lo = 0, hi = _insTagMatches.length - 1, treffer = _insLetzte;
-          while(lo <= hi){
-            const mid = Math.floor((lo + hi) / 2);
-            const ts = mts(_insTagMatches[mid]);
-            if(prestigeOf(p.id, ts).stufe >= stufe){ treffer = ts; hi = mid - 1; }
-            else lo = mid + 1;
-          }
-          const stand = prestigeOf(p.id, treffer);
-          // Die Partie, an der die Stufe stand — aber nur, wenn er darin
-          // auch mitgespielt hat. Prestige aus Rekorden wird unter den
-          // Haltern geteilt [§C34]: eine Schwelle kann fallen, weil ANDERE
-          // gespielt haben, und dann stand unter seinem Namen ein
-          // Ergebnisband mit vier fremden Wappen [§C33].
-          const ausloeser = _insTagMatches.find(m => mts(m) === treffer
-            && (m.a1 === p.id || m.a2 === p.id || m.b1 === p.id || m.b2 === p.id));
-          const oben = stufe >= INSIGNIUM_OBEN;
-          const _frueher = _insFrueher(p.id, INSIGNIEN[stufe].key, tagKey(_insLetzte));
-          stories.push({
-            // Auch hier der Spieltag: das Prestige aus Liga-Rekorden wird
-            // geteilt [§C34], eine Stufe kann also wieder fallen und erneut
-            // erreicht werden. Dieselbe ID fuer zwei Momente laesst die
-            // aeltere Karte auf die neuere Partie zeigen [§C33].
-            id: 'ins_' + p.id + '_' + INSIGNIEN[stufe].key
-                + '_' + tagKey(_insLetzte),
-            cat: 'tafel',
-            ic: 'award',
-            title: `${p.name} trägt den ${INSIGNIEN[stufe].name}`
-                 + (_frueher ? ' wieder' : ''),
-            desc: (_frueher ? `Zuletzt stand die Stufe am ${datumFmt(_frueher + 'T12:00:00', 'tm')}. ` : '')
-                + `${stand.punkte} Prestige zusammen: ${stand.teile.auszeichnung} aus Auszeichnungen, `
-                + `${stand.teile.monat} aus Monatschroniken und ${stand.teile.rekord} aus Rekorden.`
-                + (stand.naechste ? ` Bis zum ${stand.naechste.name} fehlen ${stand.fehlt}.` : ''),
-            when: treffer,
-            prio: STORY_PRIO.insignium_stufe + (oben ? 34 : 0),
-            dataRef: {type:'insignium_stufe', pid:p.id,
-                      matchId:ausloeser ? ausloeser.id : null, stufe,
-                      causalKey:_storyGruppeKey('table', _tafelTag.tag),
-                      laufbahn:_tafelLaufbahn([p.id]),
-                      // In einer Sammelkarte steht die Herkunft des Prestiges
-                      // nicht: drei Quellen mit drei Zahlen und dazu der
-                      // Abstand zur naechsten Stufe waren gemessen 124 Zeichen
-                      // in einer Zeile, neben acht anderen. Der Stand und der
-                      // Weg weiter bleiben, die Aufteilung gehoert der
-                      // einzelnen Karte [§C33].
-                      zeileText: `${stand.punkte} Prestige zusammen.`
-                        + (stand.naechste
-                           ? ` Bis zum ${stand.naechste.name} fehlen ${stand.fehlt}.` : ''),
-                      stufeName:INSIGNIEN[stufe].name, punkte:stand.punkte, oben,
-                      // Die Aufteilung als Zahlen: das Blatt zeichnet sie als Balken
-                      // und las sie sonst aus dem Satz der Karte.
-                      teile:Object.assign({}, stand.teile),
-                      // Eine wiedererreichte Stufe ist kein erstmaliger
-                      // Aufstieg: das Blatt soll den Unterschied nennen
-                      // koennen, ohne ihn aus dem Titel zu lesen.
-                      wieder:_frueher || ''}
-          });
+      const tagMs = matches.filter(m => mts(m) > _tafelTag.vorMs && mts(m) <= _tafelTag.letzte)
+        .slice().sort((a, b) => mts(a) - mts(b));
+      const aktiv = (players || []).filter(p => ligaAktiv(p));
+      const best = _insBestVor(_tafelTag.vonMs, _cache._stories);
+      const zuege = [], bestNeu = {};
+      // Der erste Augenblick des Tages, an dem die neue Lage stand. Geprüft
+      // an den Partien des Tages, halbiert wie bisher.
+      const wann = (pid, erreicht) => {
+        let lo = 0, hi = tagMs.length - 1, t = _tafelTag.letzte;
+        while(lo <= hi){
+          const mid = (lo + hi) >> 1, ts = mts(tagMs[mid]);
+          let P = null; try { P = prestigeOf(pid, ts); } catch(e){}
+          if(P && erreicht(insigniumPos(P))){ t = ts; hi = mid - 1; } else lo = mid + 1;
         }
+        return t;
+      };
+      const lage = P => ({stufe:P.stufe | 0, grad:P.grad | 0, zacken:P.zacken | 0, punkte:Math.round(P.punkte || 0)});
+      aktiv.forEach(p => {
+        const a = _tafelVor.prestige(p.id), b = _tafelNach.prestige(p.id);
+        if(!a || !b) return;
+        const pa = insigniumPos(a), pb = insigniumPos(b);
+        const bp = best[p.id] != null ? best[p.id] : pa;
+        bestNeu[p.id] = Math.max(bp, pa, pb);
+        let art = '';
+        if(b.stufe > a.stufe) art = 'auf';
+        else if(b.stufe < a.stufe) art = 'ab';
+        else if(pb > pa && pb > bp) art = 'grad';
+        if(!art) return;
+        const ms = wann(p.id, art === 'ab' ? (x => x <= pb) : (x => x >= pb));
+        // Die Partie nur, wenn er darin mitgespielt hat: eine Stufe kann
+        // fallen, weil ANDERE gespielt haben [§C34].
+        const m = tagMs.find(x => mts(x) === ms && [x.a1, x.a2, x.b1, x.b2].includes(p.id));
+        // „wieder" nur mit Beleg: der höchste bekannte Platz lag schon in
+        // dieser Stufe. Ohne Beleg heißt es „erreicht", nie „zum ersten Mal".
+        zuege.push({pid:p.id, art, vor:lage(a), nach:lage(b), ms, matchId:m ? m.id : null,
+          wieder:art === 'auf' && best[p.id] != null && best[p.id] >= b.stufe * INSIGNIUM_GRADE,
+          // Wie viele jetzt so hoch oder höher stehen: das sagt, was die
+          // Stufe in dieser Liga bedeutet.
+          traeger:aktiv.filter(q => { const x = _tafelNach.prestige(q.id); return x && x.stufe >= b.stufe; }).length,
+          von:aktiv.length});
       });
+      if(zuege.length){
+        const RANG = {auf:0, grad:1, ab:2};
+        zuege.sort((x, y) => RANG[x.art] - RANG[y.art] || (x.wieder - y.wieder)
+          || y.nach.stufe - x.nach.stufe || y.nach.punkte - x.nach.punkte);
+        const pids = zuege.map(z => z.pid);
+        const t = _insTagTexte(zuege);
+        const oben = zuege.some(z => z.art === 'auf' && !z.wieder && z.nach.stufe >= INSIGNIUM_OBEN);
+        stories.push({
+          id:'instag_' + _tafelTag.tag, cat:'tafel', ic:'award',
+          title:t.title, desc:t.desc,
+          // Die Karte steht beim jüngsten Wechsel, wie die Tafel [§C33].
+          when:new Date(Math.max(...zuege.map(z => z.ms))),
+          prio:STORY_PRIO.insignium_tag + (oben ? 34 : 0),
+          // Ohne `matchId` oben: die Karte handelt von der Leiter, nicht von
+          // einer Partie, und bekäme sonst deren Ergebnisband und Bündel.
+          dataRef:{type:'insignium_tag', tag:_tafelTag.tag, zuege, playerIds:pids,
+            // Die Wirkung des Tages je Beteiligtem, für das Blatt [§C34] —
+            // für alle, nicht nur vier wie in der Tafel.
+            laufbahn:pids.reduce((o, pid) => { const w = _tafelWirkung(pid);
+              o[pid] = {vor:w.vor, nach:w.nach, delta:w.delta, stufeVor:w.stufeVor, stufeNach:w.stufeNach,
+                rek:w.rekordDelta, mon:w.monatDelta}; return o; }, {}),
+            // Die Leiter der Liga an diesem Tag: wie viele je Stufe stehen.
+            leiter:INSIGNIEN.map((_, i) => aktiv.filter(q => { const x = _tafelNach.prestige(q.id);
+              return x && x.stufe === i; }).length),
+            // Der höchste Platz bis heute Abend: die Karte des nächsten
+            // Spieltags liest ihn hier, statt die Geschichte nachzurechnen.
+            best:bestNeu}
+        });
+      }
     }
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] insignium', e); }
 

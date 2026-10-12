@@ -93,6 +93,17 @@ const STORY_ABGEMELDET = [
   'rek_giant_slayer_', 'rek_thriller_', 'rek_unbowed_', 'rek_homefield_',
   'rek_sundaychild_', 'rek_strongphase_', 'rek_steigerung_', 'rek_upswing_',
   'rek_coldshower_', 'rek_torbilanz_', 'rek_striker_u_',
+  // Einundzwanzig weitere fielen, weil sie dieselbe Antwort gaben wie die
+  // Siegquote, nur anders verpackt: gemessen ordneten sie die Liga mit einer
+  // Korrelation von 0,76 bis 0,99 genau wie die Siegquote der Laufbahn, und
+  // die zwei Besten hielten zusammen 31 Einträge [§C35]. Der Platzhirsch
+  // und der Wochenherr zählten dazu noch einmal, was POTD und POTW schon als
+  // Auszeichnung bringen [§C34].
+  'rek_daylord_', 'rek_weeklord_', 'rek_unbeugsam_', 'rek_eloday_', 'rek_kopfhoch_',
+  'rek_breitenwirkung_', 'rek_retourkutsche_', 'rek_rueckschlag_', 'rek_metronom_',
+  'rek_gegenwind_', 'rek_entscheider_', 'rek_laufstopper_', 'rek_sovereign_', 'rek_rock_',
+  'rek_sniper_', 'rek_densephase_', 'rek_torrausch_', 'rek_bitterloss_', 'rek_uebersoll_',
+  'rek_deutlich_', 'rek_ausgleich_',
   // ── Das Ergebnis hiess einmal anders ─────────────────────────────
   // Eine Ergebnis-Karte entstand nur fuer ein auffaelliges Muster und
   // hoechstens zweimal je Tag (`match_result_<Partie>`). Heute bekommt jede
@@ -138,12 +149,14 @@ function _consolidateStories(list){
      && _cache._snapshotConsolMatches === matches && Array.isArray(_cache._snapshotConsolList))
     return _cache._snapshotConsolList;
 
-  // Die Ewige Tafel ist die einzige rollende Tageskarte. Alle zugehörigen
+  // Die Ewige Tafel ist eine rollende Tageskarte. Alle zugehörigen
   // Rohmeldungen desselben Kalendertags teilen deshalb bewusst eine Achse.
   // Andere Stories behalten ihren bei der Veröffentlichung gespeicherten
-  // Anlass und werden durch diesen Schritt nicht verändert.
+  // Anlass und werden durch diesen Schritt nicht verändert. Die Stufen des
+  // Insigniums stehen nicht mehr darin: sie haben ihre eigene Karte je Tag
+  // (`insignium_tag`), und alte Einzelzeilen werden zu ihr (`_insAltZuTag`).
   const tafelTypen = new Set(['rekord_erstmals','rekord_geholt','rekord_gesteigert',
-    'insignium_stufe','chronik_erstling','chronik_geholt']);
+    'chronik_erstling','chronik_geholt']);
   const matchById = new Map((matches || []).map(m => [m.id, m]));
   const duellMoment = new Map(), duellAnzahl = new Map();
   _spBasis().chrono.forEach(m => [m.a1,m.a2].forEach(a => [m.b1,m.b2].forEach(b => {
@@ -154,7 +167,7 @@ function _consolidateStories(list){
     if(!l){ l = new Map(); duellMoment.set(key, l); }
     l.set(n, m);
   })));
-  const quelle = ohneStoriesNachAbschied(list).filter(s => !_storyAbgemeldet(s && s.id) && !_storyWiderrufen(s));
+  const quelle = _insAltZuTag(ohneStoriesNachAbschied(list).filter(s => !_storyAbgemeldet(s && s.id) && !_storyWiderrufen(s)));
   const marken = new Map(), normal = [];
   // Alte kleine Marken wurden je Tag gespeichert, neue je Partie. Die alten
   // Snapshots bleiben erhalten: nur ihre Anzeige wird an den gespeicherten
@@ -632,7 +645,7 @@ function _consolidateStoriesLegacy(list){
     // nirgends sonst hin.
     'fluch','duo_jubilaeum','revanche','tagesmarathon','elo_hoch','tabellensprung']);
   const SAMMEL_TAFEL = new Set(['rekord_erstmals','rekord_geholt','rekord_gesteigert',
-    'insignium_stufe','chronik_erstling','chronik_geholt']);
+    'chronik_erstling','chronik_geholt']);
   const _minKey = w => { const d = new Date(w); return tagKey(w)+'-'+d.getHours()+'-'+d.getMinutes(); };
   // ── Was ein Spieler holen kann ─────────────────────────────────────
   // Die Bündelung nach Moment und Subjekt kannte den INHALT nicht: sie legte
@@ -1217,13 +1230,11 @@ function _consolidateStoriesLegacy(list){
         && (t.dataRef || {}).type !== 'rekord_gesteigert').length;
       const na = teile.filter(t => (t.dataRef || {}).type === 'rekord_gesteigert').length;
       const nc = teile.filter(t => ((t.dataRef || {}).type || '').indexOf('chronik_') === 0).length;
-      const ni = teile.filter(t => (t.dataRef || {}).type === 'insignium_stufe').length;
-      // Zahlwort, nicht Ziffer: „Eine Bestmarke, 2 Monatschroniken und ein
-      // neues Insignium" mischte beides in einem Satz.
+      // Zahlwort, nicht Ziffer: „Eine Bestmarke und 2 Monatschroniken"
+      // mischte beides in einem Satz.
       if(nr) bilder.push(nr === 1 ? 'eine Bestmarke' : `${_zahlwortDe(nr)} Bestmarken`);
       if(na) bilder.push(na === 1 ? 'ein Ausbau' : `${_zahlwortDe(na)} Ausbauten`);
       if(nc) bilder.push(nc === 1 ? 'eine Monatschronik' : `${_zahlwortDe(nc)} Monatschroniken`);
-      if(ni) bilder.push(ni === 1 ? 'ein neues Insignium' : `${_zahlwortDe(ni)} neue Insignien`);
       const bild = _namenListe(bilder.length ? bilder : ['mehrere Laufbahnen']);
       // ── Der Satz zaehlt nicht dreimal und behauptet keinen Moment ──
       // Er hiess „Ein Moment, 8 Spuren: 5 Ausbauten und drei Monatschroniken
@@ -1820,7 +1831,7 @@ function _leerlauf(ms){
 // bilden zusammen die eine rollende Karte "Ewige Tafel". Alle anderen IDs
 // sind unveränderliche Publikations-Snapshots.
 const STORY_TAFEL_UPDATE = new Set(['rekord_erstmals','rekord_geholt','rekord_gesteigert',
-  'insignium_stufe','chronik_erstling','chronik_geholt']);
+  'insignium_stufe','insignium_tag','chronik_erstling','chronik_geholt']);
 function _storyIstTafelUpdate(s, jetzt){
   if(!s) return false;
   const d = s.dataRef || s.data_ref || {};
@@ -1922,7 +1933,8 @@ function _rowToStory(r){
 }
 
 // Normale Stories werden mit ON CONFLICT DO NOTHING publiziert. Nur heutige
-// Rohereignisse der Ewigen Tafel duerfen per Upsert wachsen.
+// Rohereignisse der Ewigen Tafel und die heutige Insignium-Karte duerfen per
+// Upsert wachsen.
 function _storyStableJson(v){
   if(Array.isArray(v)) return '[' + v.map(_storyStableJson).join(',') + ']';
   if(v && typeof v === 'object'){

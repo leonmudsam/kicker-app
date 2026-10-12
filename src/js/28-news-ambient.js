@@ -75,6 +75,23 @@ function _buildAmbientStories(now, pm, nameOf, tagesStories){
   const known = (Array.isArray(_cache._stories) ? _cache._stories : [])
     .filter(s => s && typeof s.id === 'string' && s.id.indexOf('ambient_') === 0);
   const knownById = new Map(known.map(s => [s.id, s]));
+  // Wer in den drei Tagen vor einem Slot keine eigene Karte hatte — Spieler
+  // des Tages, Woche, Runde, Tafel —, wird im ersten Durchgang bevorzugt.
+  // Die Sperren darunter kennen nur die Fun Facts; gemessen standen damit
+  // sieben von elf Spielern auf den ausgewählten Karten einer Woche und die
+  // übrigen nur auf ihren Partien [§C33]. Eine Partie-Karte zählt nicht: wer
+  // oft spielt, steht oft darauf, und das ist der Spielplan. Eine Karte ohne
+  // Person bevorzugt niemanden und kommt erst im nächsten Durchgang.
+  const feedPidsZwischen = (vonMs, bisMs) => {
+    const set = new Set();
+    if(typeof _newsPids !== 'function') return set;
+    generation.forEach(s => {
+      const t = new Date(s.when).getTime(), d = s.dataRef || {};
+      if(!(t >= vonMs && t <= bisMs) || d.type === 'spiel' || d.type === 'ambient') return;
+      try { (_newsPids(s) || []).forEach(p => set.add(p)); } catch(e){}
+    });
+    return set;
+  };
 
   // v9.11: Cooldown ist PRO Typ. Standard = AMBIENT_COOLDOWN_DAYS; ein Template
   // darf ihn via `cooldown` verkürzen (z.B. fun_random_stat, dessen Inhalt bei
@@ -154,6 +171,15 @@ function _buildAmbientStories(now, pm, nameOf, tagesStories){
       }
     }
 
+    // Die Rubrik des Fun Facts davor ist immer gesperrt, egal wie lange er
+    // her ist. Zwischen zwei stillen Tagen liegen oft Spieltage ohne Slot,
+    // und die Sperre ueber zwei Tage liess nach vier Tagen „Auszeichnung"
+    // unter „Auszeichnung" stehen — im Feed direkt untereinander.
+    let letzte = null;
+    for(const h of history){ if(h.ts < refMs && h.rubrik && (!letzte || h.ts > letzte.ts)) letzte = h; }
+    if(letzte) recentRubriken.add(letzte.rubrik);
+    const feedPids = feedPidsZwischen(refMs - 3 * _dayMs, slot.when.getTime());
+
     const rng = _ambientRng(_ambientHash(slot.dateKey + '_' + slot.slotHour));
     // Templates in geseedeter Reihenfolge prüfen; erstes passende mit Ergebnis
     // gewinnt → variiert pro Slot/Tag, bleibt aber deterministisch.
@@ -191,11 +217,13 @@ function _buildAmbientStories(now, pm, nameOf, tagesStories){
     // laesst sie fallen, damit ein Slot nie leer bleibt. Vorher galt sie nur in
     // den ersten beiden, und der Notnagel-Durchgang schrieb genau die
     // Wiederholung, die sie verhindern soll.
-    for(let pass = 0; pass < 4 && !chosen; pass++){
+    // Durchgang −1 ist Durchgang 0 mit einer Bedingung mehr: die Karte zeigt
+    // jemanden, der in den drei Tagen davor keine eigene Karte hatte.
+    for(let pass = -1; pass < 4 && !chosen; pass++){
       for(const idx of order){
         const t = templates[idx];
         if(usedToday.has(t.key)) continue;
-        if(pass === 0 && cooldownKeys.has(t.key)) continue;
+        if(pass <= 0 && cooldownKeys.has(t.key)) continue;
         if(pass < 2 && (usedRubriken.has(rubrikVon(t.key)) || recentRubriken.has(rubrikVon(t.key)))) continue;
         if(pass < 2){
           const r = _ambientRolleVon(t.key);
@@ -210,6 +238,7 @@ function _buildAmbientStories(now, pm, nameOf, tagesStories){
           // AMBIENT_PLAYER_COOLDOWN_DAYS Tagen gefeierte (recentPids) Köpfe meiden.
           if(pids.length && pids.some(p => usedPids.has(p) || recentPids.has(p))) continue;
         }
+        if(pass < 0 && (!pids.length || pids.some(p => feedPids.has(p)))) continue;
         // Derselbe Fakt über dieselbe Person nicht zweimal im Monat. Diese
         // Sperre haelt bis in den dritten Durchgang.
         if(pass < 3 && (pids.length
@@ -433,33 +462,6 @@ function _ambientTemplatePool(now, pm, nameOf){
       desc:`${cs} Siege in Folge. Aktuell die heißeste Serie der Liga.`,
       vv: cs+'×', vl:'in Folge',
       dataRef:{ ambientPid: pid, bild:{f:'lauf', p:pid, n:cs} } };
-  }});
-
-  // ── Persönlich: die meisten eigenen Tore je Partie ──
-  //    „Ø 8,7 Tore pro Spiel. Bestwert der Liga" stand hier, und drei Spieler
-  //    lagen gemessen bei 8,7 — die Karte kürte stillschweigend den ersten der
-  //    Sortierung. „Der Torjäger" gehört daneben Leon und misst die Tore je
-  //    STURMSPIEL: zwei Bestwerte für fast dieselbe Frage, mit zwei Antworten.
-  //    Gerechnet wird deshalb über den Rekord [§C27], und bei Gleichstand
-  //    stehen alle Halter da.
-  T.push({ key:'personal_scorer', make: () => {
-    const rank = _rekRang('sniper');
-    if(!rank.length) return null;
-    const lead = _rekSpitze(rank), top = rank[0], nxt = rank[lead.length];
-    if(lead.length > 1){
-      return { cat:'personal', ic:'ball', prio:3,
-        title:`Gleichstand im Torrausch`,
-        desc:`${_namesOf(lead)} treffen je ${komma(top.wert)} mal je Sturmspiel. Näher kommt niemand.`,
-        vv: komma(top.wert), vl:'Ø Tore',
-        dataRef:{ ambientPids: lead.slice(0,2).map(x=>x.pid), pairKind:'duel', bild:_bRennen(rank.map(x => ({p:x.pid, v:x.wert, t:komma(x.wert)}))) } };
-    }
-    return { cat:'personal', ic:'ball', prio:3,
-      title:`${nameOf(top.pid)} trifft am laufenden Band`,
-      desc: nxt
-        ? `${_evSatz(top.ev)}. Bestwert der Liga, ${nameOf(nxt.pid)} folgt mit ${komma(nxt.wert)}.`
-        : `${_evSatz(top.ev)}. Bestwert der Liga.`,
-      vv: komma(top.wert), vl:'Ø Tore',
-      dataRef:{ ambientPid: top.pid, bild:_bRennen(rank.map(x => ({p:x.pid, v:x.wert, t:komma(x.wert)}))) } };
   }});
 
   // ── Rivalität: meistgespieltes Duell ──
@@ -928,11 +930,10 @@ function _ambientTemplatePool(now, pm, nameOf){
 
   // ── Eine Führung ist die des REKORDS, nicht die der Anzahl [§C35] ──
   // „Leon ist der Tageskönig · 17× Spieler des Tages. Mehr als alle anderen"
-  // stand im Feed, während „Der Platzhirsch" Julian gehört: Leon hat 17 von
-  // 54 eigenen Spieltagen gewonnen (31 %), Julian 12 von 23 (52 %). Die Karte
-  // kürte damit den, der am meisten dabei war, und widersprach dem
-  // Rekorde-Reiter derselben App. Gemessen wird überall der Anteil und nicht
-  // die Anzahl, sonst hält den Rekord, wer am meisten spielt.
+  // stand im Feed, während der Rekord auf denselben Anteil Julian gehörte:
+  // Leon hatte 17 von 54 eigenen Spieltagen gewonnen (31 %), Julian 12 von 23
+  // (52 %). Die Karte kürte damit den, der am meisten dabei war, und
+  // widersprach dem Rekorde-Reiter derselben App.
   // Gerechnet wird deshalb nicht neu: `chronicleRang` ist die Reihenfolge,
   // die auch das Rekord-Blatt zeigt [§C27]. Zwei Rechnungen über dieselbe
   // Frage nennen irgendwann zwei verschiedene Beste.
@@ -950,31 +951,42 @@ function _ambientTemplatePool(now, pm, nameOf){
     return Object.keys(n).sort((x, y) => n[y] - n[x] || (x < y ? -1 : 1)).slice(0, 3).map(pid => [pid, n[pid]]);
   };
 
-  // ── Award: der höchste Anteil gewonnener eigener Spieltage ──
-  //    Dasselbe Maß wie „Der Platzhirsch" [§C35], aus derselben Reihenfolge.
-  T.push({ key:'award_potd_leader', weight:2, make: () => {
-    const rank = _rekRang('daylord');
-    if(!rank.length) return null;
+  // ── Bestmarken gegen das Eigene [§C38] ──
+  //    Drei Fun Facts nennen den Halter eines Liga-Rekords, der gegen die
+  //    eigene Quote misst: der beste Spieltag, die Partie nach dem
+  //    Positionswechsel, die letzten 25 Partien. Hier standen vorher die
+  //    Anteile gewonnener Spieltage und Wochen und die Tore je Sturmspiel —
+  //    alle drei zählten die Siegquote noch einmal und zeigten fast immer
+  //    dieselben zwei Spieler. Diese drei gehören nicht automatisch dem, der
+  //    am meisten gewinnt.
+  //    Der Satz kommt aus den Feldern des Halters und nicht aus dem Beleg:
+  //    der Beleg ist eine Aufzählung für die Tafel, im Feed steht ein Satz.
+  const _bestmarke = (key, cid, titel, satz) => T.push({ key, weight:2, make: () => {
+    const def = CHRONICLE_BY_ID[cid], rank = _rekRang(cid);
+    if(!def || !rank.length) return null;
     const lead = _rekSpitze(rank), top = rank[0], nxt = rank[lead.length];
-    const pct = x => Math.round(x.wert * 100) + ' %';
-    if(lead.length > 1){
-      return { cat:'badge', ic:'trophyDay', prio:5,
-        title:`Kopf-an-Kopf um die Spieltage`,
-        desc:`${_namesOf(lead)} beherrschen je ${pct(top)} der eigenen Spieltage.`,
-        vv: pct(top), vl:'Spieltage',
-        dataRef:{ ambientPids: lead.slice(0,2).map(x=>x.pid), pairKind:'duel', bild:_bRennen(rank.map(x => ({p:x.pid, v:x.wert, t:pct(x)})), false, 'podest') } };
-    }
-    return { cat:'badge', ic:'trophyDay', prio:5,
-      title:`${nameOf(top.pid)} ist der Tageskönig`,
-      // Der Beleg des Rekords nennt Anteil UND Anzahl, und er steht an einer
-      // Stelle. Vorher stand hier nur die Anzahl, und die gehört dem, der am
-      // meisten dabei war.
-      desc: nxt
-        ? `${_evSatz(top.ev)}. Bestwert der Liga, ${nameOf(nxt.pid)} folgt mit ${pct(nxt)}.`
-        : `${_evSatz(top.ev)}. Bisher hat das sonst niemand geschafft.`,
-      vv: pct(top), vl:'Spieltage',
-      dataRef:{ ambientPid: top.pid, bild:_bRennen(rank.map(x => ({p:x.pid, v:x.wert, t:pct(x)})), false, 'podest') } };
+    const p = (_chronicleCtx().P || {})[top.pid];
+    if(!p) return null;
+    const pkt = x => '+' + Math.round(x.wert * 100);
+    const bild = _bRennen(rank.map(x => ({p:x.pid, v:x.wert, t:pkt(x)})));
+    if(lead.length > 1) return { cat:'personal', ic:def.ic, prio:4,
+      title:`Gleichstand beim ${def.name.replace(/^Der /, '')}`,
+      desc:`${_namesOf(lead)} liegen gleichauf, je ${pkt(top)} Prozentpunkte über der eigenen Quote.`,
+      vv:pkt(top), vl:'%-Punkte',
+      dataRef:{ ambientPids: lead.slice(0, 2).map(x => x.pid), pairKind:'duel', bild } };
+    return { cat:'personal', ic:def.ic, prio:4,
+      title:titel(nameOf(top.pid)),
+      desc:`${satz(p, nameOf(top.pid))}. Bestwert der Liga`
+        + (nxt ? `, ${nameOf(nxt.pid)} folgt mit ${pkt(nxt)} Prozentpunkten.` : '.'),
+      vv:pkt(top), vl:'%-Punkte',
+      dataRef:{ ambientPid: top.pid, bild } };
   }});
+  _bestmarke('personal_glanztag', 'glanztag', n => `Der Glanztag gehört ${n}`,
+    (p, n) => `Am ${p.gtLabel} gewann ${n} ${p.gtW} von ${p.gtN} Partien, sonst sind es ${pct(p.gtQ)} %`);
+  _bestmarke('personal_umsteiger', 'umsteiger', n => `${n} gewinnt nach dem Wechsel`,
+    (p, n) => `Nach einem Wechsel zwischen Sturm und Abwehr gewinnt ${n} ${pct(p.umW / p.umN)} % der Partien, sonst ${pct(p.umRaus)} %`);
+  _bestmarke('personal_aufschwung', 'aufschwung', n => `${n} im Aufschwung`,
+    (p, n) => `${n} gewinnt ${pct(p.asNeu)} % der letzten 25 Partien, davor waren es ${pct(p.asAlt)} %`);
 
   // ── Der alte Zähler-Weg, nur noch für die Auszeichnungs-Vitrine ──
   T.push({ key:'award_potd_zahl', weight:1, make: () => {
@@ -990,7 +1002,7 @@ function _ambientTemplatePool(now, pm, nameOf){
         dataRef:{ ambientPids: lead.slice(0,2).map(x=>x.pid), pairKind:'duel', bild:_bRennen(rank.map(x => ({p:x.pid, v:x.v, n:x.v, t:x.v + '×'})), false, 'sammlung') } };
     }
     // Hier steht bewusst KEIN „Bestwert der Liga": die Anzahl ist eine
-    // Sammlung und keine Bestmarke, und der Rekord darauf misst den Anteil.
+    // Sammlung und keine Bestmarke, sie wächst mit jedem Spieltag.
     return { cat:'badge', ic:'trophyDay', prio:4,
       title:`${nameOf(top.pid)} sammelt Tagessiege`,
       desc: nxt
@@ -1000,40 +1012,19 @@ function _ambientTemplatePool(now, pm, nameOf){
       dataRef:{ ambientPid: top.pid, bild:_bRennen(rank.map(x => ({p:x.pid, v:x.v, n:x.v, t:x.v + '×'})), false, 'sammlung') } };
   }});
 
-  // ── Award: der höchste Anteil gewonnener eigener Wochen ──
-  //    Dasselbe Maß wie „Der Wochenherr" [§C35], aus derselben Reihenfolge.
-  //    „Leon beherrscht die Wochen · 6× Spieler der Woche. Bestwert der Liga"
-  //    stand im Feed, und der Rekord gehörte Julian: Leon hat 4 von 15 eigenen
-  //    Wochen gewonnen, Julian 4 von 13. Die Anzahl gehört dem, der öfter
-  //    dabei war.
-  T.push({ key:'award_potw_leader', weight:2, make: () => {
-    const rank = _rekRang('weeklord');
-    if(!rank.length) return null;
-    const lead = _rekSpitze(rank), top = rank[0], nxt = rank[lead.length];
-    const pct = x => Math.round(x.wert * 100) + ' %';
-    if(lead.length > 1){
-      return { cat:'badge', ic:'weekKing', prio:5,
-        title:`Geteilte Macht über die Wochen`,
-        desc:`${_namesOf(lead)} liegen gleichauf: je ${pct(top)} der eigenen Wochen gewonnen.`,
-        vv: pct(top), vl:'Wochen',
-        dataRef:{ ambientPids: lead.slice(0,2).map(x=>x.pid), pairKind:'duel', bild:_bRennen(rank.map(x => ({p:x.pid, v:x.wert, t:pct(x)})), false, 'podest') } };
-    }
-    return { cat:'badge', ic:'weekKing', prio:5,
-      title:`${nameOf(top.pid)} beherrscht die Wochen`,
-      desc: nxt
-        ? `${_evSatz(top.ev)}. Bestwert der Liga, ${nameOf(nxt.pid)} folgt mit ${pct(nxt)}.`
-        : `${_evSatz(top.ev)}. Bisher hat das sonst niemand geschafft.`,
-      vv: pct(top), vl:'Wochen',
-      dataRef:{ ambientPid: top.pid, bild:_bRennen(rank.map(x => ({p:x.pid, v:x.wert, t:pct(x)})), false, 'podest') } };
-  }});
-
   // ── Der Zähler daneben: eine Sammlung, keine Bestmarke ──
   T.push({ key:'award_potw_zahl', weight:1, make: () => {
     if(typeof countPeriodWins !== 'function') return null;
     const rank = _awardRank(activePids, pid => countPeriodWins(pid, matches, 'week'));
     if(!rank.length) return null;
     const lead = _awardLeaders(rank), top = rank[0], nxt = rank[lead.length];
-    if(lead.length > 1) return null;   // Gleichstand → das sagt die Anteilskarte
+    if(lead.length > 1){
+      return { cat:'badge', ic:'weekKing', prio:4,
+        title:`Kopf-an-Kopf um die Wochensiege`,
+        desc:`${_namesOf(lead)} stehen gleichauf bei je ${top.v}× Spieler der Woche.`,
+        vv: top.v + '×', vl:'Wochensiege',
+        dataRef:{ ambientPids: lead.slice(0,2).map(x=>x.pid), pairKind:'duel', bild:_bRennen(rank.map(x => ({p:x.pid, v:x.v, n:x.v, t:x.v + '×'})), false, 'sammlung') } };
+    }
     return { cat:'badge', ic:'weekKing', prio:4,
       title:`${nameOf(top.pid)} sammelt Wochensiege`,
       desc: nxt

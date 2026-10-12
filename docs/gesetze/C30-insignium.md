@@ -11,11 +11,12 @@
 - Die Raute am Fuß trägt die Ligaposition (`_insFuss`); die Sterne stehen darüber auf Radius `INS_STERN_R`; dahinter die Aura [§C36].
 - Verläufe und Zeichnungen stehen je einmal im Topf `<svg id="insDefs">` außerhalb von `#app` und des Blatts (`insigniumRef`, Gruppe in `<defs>`, kein `<symbol>`); `{eigen:true}` liefert das volle Markup.
 - Leistung des Feeds und der Blätter: `content-visibility:auto` an `.nf-card` (außer Breaking und Karte des Tages), zuerst die sichtbaren Karten (`NEWS_FEED_SOFORT`, `_newsFeedRest`), ein geschlossenes Blatt ist leer (`_sheetForceClose`), der Zug-Lauscher nur, wenn die Geste schließen kann, kein `backdrop-filter` an stillstehenden Leisten, `will-change:transform` am Blatt.
+- Die Lage auf der Leiter ist eine Zahl (`insigniumPos`: Stufe mal drei plus Grad, am Ordensstern die Zacken); damit vergleicht die Insignium-Karte des Tages, ob jemand so hoch noch nie stand [§C33].
 - Die kleine Leiter (`_newsLeiter`) und die Laufbahn (Vitrine `.lb-karus`, ganze Leiter `#lbAlle`) zeigen die echten Zeichen; die Liga erfährt den Stand als Fun Fact (`insignium_stand`, gespeichert in `dataRef.leiter`).
 
 ## Stellen
 
-`35a-insignium-zeichen.js`, `35b-prestige.js`, `src/css/12-insignium.css`, für den Feed `30-news-ui.js` und `16-sheet-infra.js`.
+`35a-insignium-zeichen.js`, `35b-prestige.js`, `src/css/12-insignium.css`, für den Feed `30-news-ui.js`, `30d-news-insignium.js` und `16-sheet-infra.js`.
 
 ## Prüfung
 

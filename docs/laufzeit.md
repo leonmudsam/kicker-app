@@ -241,6 +241,13 @@ Die Daten des Abschieds (`abschiedDaten`, `_cache._abschied`, Deckel 8)
 tragen Version und Partienzahl im Schlüssel und werden erst beim Öffnen
 gerechnet.
 
+**Der höchste Platz auf der Leiter** (`_insBestVor`) kommt nur aus dem
+Bestand: aus dem `best` der letzten Insignium-Karte und aus alten
+Stufen-Zeilen. Die Stände jedes Spieltags davor nachzurechnen kostete rund
+anderthalb Sekunden und verdrängte, was das Vorwärmen für die Awards
+bereitgelegt hatte (`tests/start` war rot). Ein Ruheständler fällt beim
+Lesen heraus [§C40].
+
 **Die Rohsicht landet nicht im Cache.** Fünfundzwanzig Liga-Rekorde [§C35]
 fragen nach einem gleitenden Fenster, nach einer Rolle, nach dem Gegnerkreis,
 nach dem Partnerkreis oder nach den eigenen Spieltagen und brauchen dafür die Partien je Spieler in

@@ -1035,6 +1035,48 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 /* ── Die neue Stufe [§C30] ────────────────────────────────────────── */
 /* Die Verwandlung: die Stufe davor klein, ein Pfeil, die neue groß um das
    Gesicht. Die Zeichnung steht als Vektor [§C30], ohne Filter darüber. */
+/* Die Insignium-Karte des Tages [§C30, §C33]: die Verwandlung als Bühne in
+   Violett, der Farbe der Stufe [§C25], und die übrigen Bewegungen als Zeilen.
+   Ein Rückfall trägt Rot an Pfeil und Wort, nicht an der Fläche: die Karte
+   soll neben den Partien des Tages ruhig bleiben. */
+.ni-b{display:flex;align-items:center;gap:8px;margin:2px 0 10px;padding:8px 10px;border-radius:14px;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--purple) 14%,transparent),transparent 72%);
+  border:1px solid color-mix(in srgb,var(--purple) 26%,transparent);cursor:pointer}
+.ni-alt{flex:0 0 34px;opacity:.5}
+.ni-alt svg{width:34px;height:34px;display:block}
+.ni-pf{flex:0 0 22px;width:22px;height:10px}
+.ni-pf path{fill:none;stroke:var(--purple);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ni-ab .ni-pf path{stroke:var(--red)}
+.ni-neu{position:relative;flex:0 0 72px;width:72px;height:72px}
+.ni-neu>svg{width:72px;height:72px;display:block}
+.ni-av{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}
+.ni-av .av{--av:30px;width:30px;height:30px;font-size:11px}
+.ni-t{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0;margin-left:4px}
+.ni-t em{font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--purple);font-style:normal}
+.ni-ab .ni-t em{color:var(--red)}
+.ni-t>b{font-size:15px;font-weight:700;color:var(--ink);line-height:1.15}
+.ni-t small{font-size:11px;color:var(--muted)}
+.ni-t small b{color:var(--ink)}
+.ni-gr{display:flex;gap:3px}
+.ni-gr i{font:600 8px 'Sometype Mono',monospace;font-style:normal;padding:1px 5px;border-radius:6px;
+  background:var(--surface2);color:var(--muted)}
+.ni-gr i.da{color:var(--ink2)}
+.ni-gr i.jetzt{background:var(--purple);color:var(--ink)}
+.ni-zs{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.ni-z{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink2);cursor:pointer}
+.ni-z-t{flex:1;min-width:0}
+.ni-z-t b{color:var(--ink)}
+.ni-z-z{flex:0 0 22px}
+.ni-z-z svg{width:22px;height:22px;display:block}
+.ni-z em{font-style:normal;font-size:11px;white-space:nowrap}
+.ni-z em.g{color:var(--gold)}
+.ni-z em.r{color:var(--red)}
+.ni-z.mehr{color:var(--muted);font-size:11px;cursor:default}
+.ni-bw{display:flex;align-items:center;gap:8px;margin:12px 0 2px;font-size:12px}
+.ni-bw b{color:var(--ink)}
+.ni-bw span{color:var(--muted)}
+.nd-rk-pf.ab path{stroke:var(--red)}
+.nd-is-gm.alt{opacity:.35}
 .nd-is{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
 .nd-is .nd-rk-pf path{stroke:var(--purple)}
 .nd-is-w{display:flex;align-items:center;justify-content:center;gap:8px}
@@ -1050,6 +1092,17 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 .nd-is-p b{color:var(--ink);font-size:13px}
 .nd-is-wd{font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
   padding:3px 8px;border-radius:99px;box-shadow:inset 0 0 0 1px var(--line2)}
+/* Mehrere Bewegungen eines Tages stehen nebeneinander, jede mit Zeichen,
+   Gesicht und Lage; bei 360 px passen drei in eine Reihe, mehr brechen um. */
+.nd-is-viele{flex-direction:row;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:12px 10px}
+.nd-is-sp{display:flex;flex-direction:column;align-items:center;gap:2px;width:96px;cursor:pointer}
+.nd-is-viele .nd-is-neu{width:84px;height:84px}
+.nd-is-viele .nd-is-z svg{width:84px;height:84px}
+.nd-is-viele .nd-is-av .av{--av:30px;width:30px;height:30px;font-size:11px}
+.nd-is-sp b{font-size:13px;font-weight:700;color:var(--ink);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nd-is-sp small{font-size:11px;color:var(--ink2);line-height:1.2}
+.nd-is-sp em{font:600 8px 'Sometype Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--purple);font-style:normal}
+.nd-is-sp.ab em{color:var(--red)}
 .nd-is-q{margin-bottom:8px}
 .nd-is-qb{display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--surface2);gap:2px}
 .nd-is-qb i{display:block;height:100%}

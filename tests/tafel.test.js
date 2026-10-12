@@ -1524,7 +1524,11 @@ const _beleg = JSON.parse(K.eval(`JSON.stringify((function(){
   } finally { globalThis.setTimeout = st; }
   return {f, zellen, felder, spannen, verlaeufe};
 })())`));
-ok(_beleg.f.length === 0 && _beleg.zellen > 5 && _beleg.felder > 30 && _beleg.spannen > 3 && _beleg.verlaeufe > 30,
+// Die Zahlen dahinter sagen nur, dass die Pruefung ueberhaupt greift. Seit
+// die Anteile gewonnener Spieltage, Wochen und Partien als Rekorde
+// gestrichen sind [§C35], tragen vier Rekorde einen Anteil als Beleg und
+// drei davon einen Zweiten, gegen den ein Vorsprung zaehlt.
+ok(_beleg.f.length === 0 && _beleg.zellen >= 4 && _beleg.felder > 30 && _beleg.spannen >= 3 && _beleg.verlaeufe > 30,
    'der Beleg zählt seine Stichprobe, zeigt die Halter im Feld, zählt den Vorsprung und endet beim Bestwert',
    _beleg.f.slice(0, 5).join(' · ') || _beleg.zellen + ' Zellenreihen · ' + _beleg.felder + ' Felder · '
      + _beleg.spannen + ' Vorsprünge · ' + _beleg.verlaeufe + ' Verläufe');

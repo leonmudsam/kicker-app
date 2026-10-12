@@ -1075,7 +1075,7 @@ function _ndRekordBlatt(s){
     // Alle Halter, nicht `playerIds`: die nennen höchstens drei, und der
     // vierte stand dann als Verfolger unter seinem eigenen Rekord.
     + _newsVerfolger(d.rekordId, neu, d.wert)
-    + belegHtml({ev:d.ev})
+    + belegHtml({ev:d.ev, kurz:true})
     + ab('Wirkung auf die Laufbahn', wirkung)
     + (def ? `<button class="btn ghost sm" data-chron="${esc(def.id)}" style="margin-top:12px;width:100%">Rekord öffnen</button>` : '')};
 }
@@ -1382,23 +1382,35 @@ function _ndInsigniumBlatt(s){
     if(sum > 0) quellen = `<div class="nd-is-q"><span class="nd-is-qb">${q.map(x => x.v ? `<i class="${x.k}" style="width:${(x.v / sum * 100).toFixed(1)}%"></i>` : '').join('')}</span>`
       + `<span class="nd-is-ql">${q.map(x => `<span class="${x.k}"><b class="num">${x.v}</b>${x.l}</span>`).join('')}</span></div>`;
   }
-  // Der Weg durch die Stufe: drei Grade als Strecken, je mit ihrem Bild,
-  // der Stand als Marke, und am Ende die nächste Stufe mit ihrer Schwelle.
-  // Was fehlt, steht im Satz der Karte; hier zeigt es die Strecke.
-  let weg = '';
-  if(next){
-    const spanne = Math.max(1, next.min - ins.min);
-    const lage = x => Math.max(0, Math.min(100, (x - ins.min) / spanne * 100));
-    const grenzen = gs.concat([next.min]);
-    weg = `<div class="nd-is-g"><div class="nd-is-gs">${gs.map((x, g) => `<span class="nd-is-gf${g <= grad ? ' da' : ''}${g === grad ? ' jetzt' : ''}" style="flex:${(lage(grenzen[g + 1]) - lage(x)).toFixed(1)} 1 0">`
-      + `<span class="nd-is-gz">${zeichen(ins.key, 0, g, true)}</span><i></i><small class="num">${x}</small></span>`).join('')}`
-      + `<em class="nd-is-gm" style="left:${lage(punkte).toFixed(1)}%"></em></div>`
-      + `<span class="nd-is-ge"><span class="nd-is-gz">${zeichen(next.key, 0, 0, true)}</span><small class="num">${next.min}</small></span></div>`;
-  }
+  const weg = next ? _insWegHtml(pid, punkte) : '';
   const leiter = `<div class="nf-leiter nd-is-l">${INSIGNIEN.map((x, k) => `<span class="nf-lt-p${k <= i ? ' hat' : ''}${k === i ? ' jetzt' : ''}">`
     + `${zeichen(x.key, k === i ? zacken : 0, k === i ? grad : 0, true)}</span>`).join('')}</div>`;
   const ab = (x, html) => html ? `<div class="nd-section">${esc(x)}</div>${html}` : '';
   return {kopf, mitte:ab('Woraus die Punkte kommen', quellen) + ab('Der Weg durch die Stufe', weg) + ab('Die Leiter', leiter)};
+}
+
+// Der Weg durch eine Stufe: drei Grade als Strecken, je mit ihrem Bild,
+// der Stand als Marke, und am Ende die nächste Stufe mit ihrer Schwelle.
+// Was fehlt, steht im Satz der Karte; hier zeigt es die Strecke. Mit dem
+// Stand davor (`vorher`) steht auch er als leise Marke darauf, wenn er in
+// derselben Stufe lag: so sieht man einen neuen Grad als Weg. Die
+// Insignium-Karte des Tages und das Blatt einer Stufe teilen es [§C27].
+function _insWegHtml(pid, punkte, vorher){
+  const i = insigniumStufeVon(punkte), ins = INSIGNIEN[i], next = INSIGNIEN[i + 1];
+  if(!next) return '';
+  const rl = (getPlayerRank(pid) || {}).label;
+  const gs = insigniumGradSchwellen(i);
+  let grad = 0; gs.forEach((x, g) => { if(punkte >= x) grad = g; });
+  const zeichen = (key, g) => { try { return insigniumStufeSvg(key, rl, 0, g, {bild:true}) || ''; } catch(e){ return ''; } };
+  const spanne = Math.max(1, next.min - ins.min);
+  const lage = x => Math.max(0, Math.min(100, (x - ins.min) / spanne * 100));
+  const grenzen = gs.concat([next.min]);
+  const alt = vorher != null && insigniumStufeVon(vorher) === i && Math.round(vorher) !== Math.round(punkte)
+    ? `<em class="nd-is-gm alt" style="left:${lage(vorher).toFixed(1)}%"></em>` : '';
+  return `<div class="nd-is-g"><div class="nd-is-gs">${gs.map((x, g) => `<span class="nd-is-gf${g <= grad ? ' da' : ''}${g === grad ? ' jetzt' : ''}" style="flex:${(lage(grenzen[g + 1]) - lage(x)).toFixed(1)} 1 0">`
+    + `<span class="nd-is-gz">${zeichen(ins.key, g)}</span><i></i><small class="num">${x}</small></span>`).join('')}`
+    + `${alt}<em class="nd-is-gm" style="left:${lage(punkte).toFixed(1)}%"></em></div>`
+    + `<span class="nd-is-ge"><span class="nd-is-gz">${zeichen(next.key, 0)}</span><small class="num">${next.min}</small></span></div>`;
 }
 
 // ── Der Tafel-Moment als Zeitleiste [§C33] ──────────────────────────
@@ -1703,7 +1715,7 @@ const _ND_BLATT = {win_streak:_ndSerieBlatt, loss_streak:_ndSerieBlatt, team_str
   rekord_erstmals:_ndRekordBlatt, rekord_gesteigert:_ndRekordBlatt, rekord_geholt:_ndRekordBlatt,
   potd:_ndPotdBlatt, season_endgame:_ndEndspurtBlatt, chronik_geholt:_ndChronikBlatt,
   chronik_frei:_ndMonatBlatt, chronik_monat:_ndMonatBlatt, chronik_erstling:_ndErstlingBlatt,
-  insignium_stufe:_ndInsigniumBlatt, sammel:_ndTafelMomentBlatt,
+  insignium_stufe:_ndInsigniumBlatt, insignium_tag:_ndInsTagBlatt, sammel:_ndTafelMomentBlatt,
   jubilee:_ndMeilensteinBlatt, milestone_wins:_ndMeilensteinBlatt, milestone_goals:_ndMeilensteinBlatt,
   milestone_elo:_ndMeilensteinBlatt, top_form:_ndFormBlatt, elo_swing:_ndAusschlagBlatt,
   top_clash:_ndSpitzenspielBlatt, badge_marken:_ndMarkenBlatt, dry_spell:_ndFaktBlatt, ambient:_ndFaktBlatt,

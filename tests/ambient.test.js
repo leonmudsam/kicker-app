@@ -927,8 +927,11 @@ const _tafel = JSON.parse(K.eval(`JSON.stringify((function(){
   const letzte = matches.length ? mts(matches[matches.length-1]) : 0;
   const tag0 = new Date(letzte); tag0.setHours(0,0,0,0);
   const vor = tag0.getTime() - 1;
-  const insErwartet = players.filter(p => p && !p.hidden).reduce((n,p) =>
-    n + Math.max(0, prestigeOf(p.id).stufe - prestigeOf(p.id, vor).stufe), 0);
+  // Jede Stufe, die sich am letzten Spieltag bewegt hat, nach oben wie nach
+  // unten, steht als Bewegung auf der Insignium-Karte dieses Tages.
+  const insErwartet = players.filter(p => ligaAktiv(p))
+    .filter(p => prestigeOf(p.id).stufe !== prestigeOf(p.id, vor).stufe).length;
+  const insKarte = typ('insignium_tag')[0] || null;
   return {
     rekorde: rek.length,
     ausbau: typ('rekord_gesteigert').length,
@@ -940,8 +943,9 @@ const _tafel = JSON.parse(K.eval(`JSON.stringify((function(){
     kammer: rek.every(s => (s.dataRef||{}).kammer !== 'shame'),
     kat: rek.every(s => s.cat === 'tafel'),
     gesichter: rek.every(s => _newsPids(s).length > 0),
-    insignium: typ('insignium_stufe').length, insErwartet,
-    insGesicht: typ('insignium_stufe').every(s => _newsPids(s).length > 0),
+    insignium: insKarte ? insKarte.dataRef.zuege.filter(z => z.art !== 'grad').length : 0, insErwartet,
+    insGesicht: typ('insignium_tag').every(s => _newsPids(s).length > 0),
+    insEine: typ('insignium_tag').length <= 1 && typ('insignium_stufe').length === 0,
     chronik: typ('chronik_monat').length + typ('chronik_erstling').length,
     // Jede neue Karte nennt eine Zahl und bleibt ohne Platzhalter.
     sauber: roh.filter(s => s.cat === 'tafel').every(s => {
@@ -1106,6 +1110,7 @@ ok(_tafel.insignium === _tafel.insErwartet,
    'genau jeder echte Insignium-Uebergang wird gemeldet',
    _tafel.insignium + ' von ' + _tafel.insErwartet);
 ok(_tafel.insGesicht, 'die Insignium-Karte zeigt den Traeger');
+ok(_tafel.insEine, 'die Leiter hat eine Karte je Spieltag und keine Einzelzeilen mehr');
 ok(_tafel.chronik > 0, 'die Monatschronik wird gemeldet', _tafel.chronik + '');
 ok(_tafel.sauber, 'jede Tafel-Karte nennt eine Zahl und traegt keinen Platzhalter');
 
@@ -1128,18 +1133,19 @@ const _insHistorisch = JSON.parse(K.eval(`JSON.stringify((function(){
     prestigeOf = (id, bisMs) => id !== pid ? original(id, bisMs)
       : stand((bisMs != null && bisMs < kreuz) ? 0 : 2);
     _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
-    const a = _buildStories().filter(s => (s.dataRef||{}).type === 'insignium_stufe' && s.dataRef.pid === pid);
-    _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
-    const b = _buildStories().filter(s => (s.dataRef||{}).type === 'insignium_stufe' && s.dataRef.pid === pid);
-    return {n:a.length, stufen:a.map(s=>s.dataRef.stufe), ids:a.map(s=>s.id),
-      zeiten:a.map(s=>new Date(s.when).getTime()), gleich:JSON.stringify(a.map(s=>[s.id,+new Date(s.when)]))
-        === JSON.stringify(b.map(s=>[s.id,+new Date(s.when)])), kreuz};
+    const lauf = () => { _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+      return _buildStories().filter(s => (s.dataRef||{}).type === 'insignium_tag'); };
+    const a = lauf(), b = lauf();
+    const z = a.length ? (a[0].dataRef.zuege || []).find(x => x.pid === pid) : null;
+    return {n:a.length, art:z && z.art, von:z && z.vor.stufe, nach:z && z.nach.stufe, zeit:z && z.ms,
+      ids:a.map(s => s.id), gleich:JSON.stringify(a.map(s => [s.id, +new Date(s.when), s.title]))
+        === JSON.stringify(b.map(s => [s.id, +new Date(s.when), s.title])), kreuz};
   } finally { prestigeOf = original; _cache._buildStoriesKey = null; _cache._buildStoriesResult = null; }
 })())`));
-ok(_insHistorisch.n === 2 && _insHistorisch.stufen.join(',') === '1,2',
-   'ein Sprung meldet jede neu erreichte Insignium-Stufe', JSON.stringify(_insHistorisch));
-ok(_insHistorisch.zeiten.every(t => t === _insHistorisch.kreuz),
-   'Insignium-Stories tragen den fachlichen Ereigniszeitpunkt');
+ok(_insHistorisch.n === 1 && _insHistorisch.art === 'auf' && _insHistorisch.von === 0 && _insHistorisch.nach === 2,
+   'ein Sprung über zwei Stufen ist EINE Bewegung von der alten zur neuen Stufe', JSON.stringify(_insHistorisch));
+ok(_insHistorisch.zeit === _insHistorisch.kreuz,
+   'die Bewegung trägt die Partie, an der die neue Stufe zuerst stand');
 ok(_insHistorisch.gleich && new Set(_insHistorisch.ids).size === _insHistorisch.ids.length,
    'erneute Generatorlaeufe bleiben idempotent', _insHistorisch.ids.join(', '));
 
@@ -1147,48 +1153,106 @@ ok(_insHistorisch.gleich && new Set(_insHistorisch.ids).size === _insHistorisch.
 // Prestige aus Liga-Rekorden wird unter den Haltern geteilt und faellt mit
 // einem verlorenen Bestwert wieder [§C34]: dieselbe Stufe kann zweimal
 // erreicht werden, und beide Male stand „X traegt den Volutenkranz" da, als
-// waere es das erste Mal. Der Beleg ist der eigene Bestand — die ID einer
-// Insignium-Karte traegt Spieler, Stufe und Spieltag.
-const _insWieder = JSON.parse(K.eval(`JSON.stringify((function(){
+// waere es das erste Mal. Der Beleg ist der hoechste Platz davor aus dem
+// Bestand (das best der letzten Insignium-Karte); ohne Beleg heisst es
+// „erreicht", nie „zum ersten Mal".
+//
+// Dazu die Regel gegen das Hin und Her: ein Grad steht nur da, wenn er so
+// hoch noch nie stand. Gemessen pendelte ein Spieler drei Spieltage in Folge
+// zwischen Zierkranz III und Lorbeerreif I, und an fast jedem Spieltag
+// gingen zwei bis sechs Grade hin und her.
+const _insLeiter = JSON.parse(K.eval(`JSON.stringify((function(){
   const original = prestigeOf, bestand = _cache._stories;
   const pid = players[0].id;
   const letzte = mts(matches[matches.length-1]);
   const t0 = new Date(letzte); t0.setHours(0,0,0,0);
   const tag = matches.filter(m => mts(m) >= t0.getTime()).sort((a,b)=>mts(a)-mts(b));
   const kreuz = mts(tag[Math.min(1, tag.length-1)] || matches[matches.length-1]);
-  const stand = stufe => ({pid, punkte:stufe >= 2 ? 760 : stufe ? 260 : 100, stufe,
-    insignie:INSIGNIEN[stufe], naechste:INSIGNIEN[stufe+1] || null,
-    fehlt:stufe >= 2 ? 920 : stufe ? 460 : 140,
-    teile:{auszeichnung:80, monat:40, rekord:20},
-    zahlen:{auszeichnung:1, monat:1, rekord:1}, quellen:[], platz:1, von:players.length});
-  try {
-    prestigeOf = (id, bisMs) => id !== pid ? original(id, bisMs)
-      : stand((bisMs != null && bisMs < kreuz) ? 0 : 2);
-    // Nur fuer die zweite Stufe liegt eine aeltere Zeile im Bestand.
-    _cache._stories = [{id:'ins_' + pid + '_' + INSIGNIEN[2].key + '_2026-08-12'}];
+  const stand = (stufe, grad) => ({pid, punkte:insigniumGradSchwellen(stufe)[grad || 0] + 10, stufe, grad:grad || 0, zacken:0,
+    insignie:INSIGNIEN[stufe], naechste:INSIGNIEN[stufe+1] || null, fehlt:100,
+    teile:{auszeichnung:80, monat:40, rekord:20}, zahlen:{auszeichnung:1, monat:1, rekord:1},
+    quellen:[], platz:1, von:players.length});
+  const reihe = (vor, nach) => (id, bisMs) => id !== pid ? original(id, bisMs)
+    : (bisMs != null && bisMs < kreuz) ? stand(vor[0], vor[1]) : stand(nach[0], nach[1]);
+  const alt = best => { const b = {}; b[pid] = best;
+    return [{id:'instag_2026-08-12', when:new Date(2026, 7, 12, 20),
+      dataRef:{type:'insignium_tag', tag:'2026-08-12', best:b, zuege:[]}}]; };
+  const lauf = (f, bst) => {
+    prestigeOf = f; _cache._stories = bst;
     _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
-    const k = _buildStories().filter(s => (s.dataRef||{}).type === 'insignium_stufe'
-      && s.dataRef.pid === pid);
-    const je = {}; k.forEach(s => { je[s.dataRef.stufe] = s; });
+    const k = _buildStories().find(s => (s.dataRef||{}).type === 'insignium_tag');
+    return (k && (k.dataRef.zuege || []).find(z => z.pid === pid)) || null;
+  };
+  try {
+    const erst = lauf(reihe([0, 0], [2, 0]), []);
+    const wieder = lauf(reihe([0, 0], [2, 0]), alt(2 * INSIGNIUM_GRADE + 1));
+    // Derselbe Grad, schon einmal erreicht: keine Bewegung. Ein neuer: eine.
+    const gradAlt = lauf(reihe([1, 0], [1, 2]), alt(1 * INSIGNIUM_GRADE + 2));
+    const gradNeu = lauf(reihe([1, 0], [1, 2]), alt(1 * INSIGNIUM_GRADE + 1));
+    // Ein Grad nach unten in derselben Stufe ist das Hin und Her; eine Stufe
+    // nach unten ist ein Rückfall und steht da.
+    const gradAb = lauf(reihe([1, 2], [1, 0]), alt(1 * INSIGNIUM_GRADE + 2));
+    const ab = lauf(reihe([2, 0], [1, 2]), alt(2 * INSIGNIUM_GRADE));
     return {
-      stufen: k.map(s => s.dataRef.stufe),
-      erstmals: !!je[1] && je[1].title.indexOf(' wieder') < 0 && je[1].dataRef.wieder === '',
-      wiederTitel: !!je[2] && je[2].title.slice(-7) === ' wieder',
-      wiederDatum: !!je[2] && je[2].desc.indexOf('Zuletzt stand die Stufe am 12.08.') === 0,
-      wiederRef: !!je[2] && je[2].dataRef.wieder === '2026-08-12'
+      erst: !!erst && erst.art === 'auf' && !erst.wieder,
+      erstTitel: erst ? _insTagTexte([erst]).title : '',
+      wieder: !!wieder && wieder.wieder,
+      wiederTitel: wieder ? _insTagTexte([wieder]).title : '',
+      gradAlt: gradAlt ? gradAlt.art : null, gradNeu: gradNeu ? gradNeu.art : null,
+      gradNeuTitel: gradNeu ? _insTagTexte([gradNeu]).title : '',
+      gradAb: gradAb ? gradAb.art : null,
+      ab: ab ? ab.art : null, abTitel: ab ? _insTagTexte([ab]).title : '',
+      abNeg: _newsIstNegativ({dataRef:{type:'insignium_tag', zuege:[{art:'ab'}]}}),
+      mischNeg: _newsIstNegativ({dataRef:{type:'insignium_tag', zuege:[{art:'auf'}, {art:'ab'}]}})
     };
   } finally {
     prestigeOf = original; _cache._stories = bestand;
     _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
   }
 })())`));
-ok(_insWieder.stufen.join(',') === '1,2', 'der Lauf trifft beide Stufen',
-   _insWieder.stufen.join(',') || 'keine');
-ok(_insWieder.erstmals, 'eine Stufe ohne aeltere Zeile im Bestand ist erstmals erreicht');
-ok(_insWieder.wiederTitel && _insWieder.wiederRef,
-   'eine Stufe, die schon einmal dastand, wird wieder getragen',
-   JSON.stringify(_insWieder));
-ok(_insWieder.wiederDatum, 'und die Karte nennt den Tag, an dem sie zuletzt stand');
+ok(_insLeiter.erst && / erreicht den Volutenkranz$/.test(_insLeiter.erstTitel),
+   'ohne Beleg für einen früheren Platz so hoch heißt es „erreicht", ohne „wieder" und ohne „zum ersten Mal"', _insLeiter.erstTitel);
+ok(_insLeiter.wieder && / trägt wieder den Volutenkranz$/.test(_insLeiter.wiederTitel),
+   'stand der Spieler schon einmal so hoch, trägt er die Stufe wieder', _insLeiter.wiederTitel);
+ok(_insLeiter.gradAlt === null && _insLeiter.gradNeu === 'grad'
+   && / steigt auf Schildring III$/.test(_insLeiter.gradNeuTitel),
+   'ein Grad steht nur da, wenn der Spieler so hoch noch nie stand',
+   JSON.stringify({alt:_insLeiter.gradAlt, neu:_insLeiter.gradNeu, titel:_insLeiter.gradNeuTitel}));
+ok(_insLeiter.gradAb === null && _insLeiter.ab === 'ab'
+   && / fällt auf den Schildring zurück$/.test(_insLeiter.abTitel),
+   'ein Grad nach unten bleibt still, eine verlorene Stufe steht als Rückfall da',
+   JSON.stringify({gradAb:_insLeiter.gradAb, ab:_insLeiter.ab, titel:_insLeiter.abTitel}));
+ok(_insLeiter.abNeg && !_insLeiter.mischNeg,
+   'eine Karte nur aus Rückfällen hat die Richtung nach unten, eine gemischte nicht');
+
+// ── Ein Ruheständler steht nicht auf der Leiter des Tages [§C40] ────────
+// Die Leiter ist ein Laufbahn-Vergleich (`ligaAktiv`). Und auch nicht im
+// gespeicherten höchsten Platz: stuende er dort, naehme das Tor nach dem
+// Abschied jede spaetere Insignium-Karte aus dem Feed, weil sie seinen
+// Namen traegt.
+const _insRuhe = JSON.parse(K.eval(`JSON.stringify((function(){
+  const p = players[1], vorher = p.retired_at;
+  try {
+    p.retired_at = new Date(mts(matches[0]) - 1000).toISOString();
+    invalidateCache();
+    _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+    const k = _buildStories().find(s => (s.dataRef||{}).type === 'insignium_tag');
+    const text = k ? JSON.stringify(k.dataRef) : '';
+    // Auch nicht aus einer älteren Karte, die ihn noch trug.
+    const alt = {}; alt[p.id] = 5; alt[players[0].id] = 4;
+    const kette = _insBestVor(Date.now(), [{id:'instag_2000-01-01', when:new Date(2000, 0, 1),
+      dataRef:{type:'insignium_tag', tag:'2000-01-01', best:alt, zuege:[]}}]);
+    return {karte:!!k, drin:text.indexOf(p.id) >= 0,
+      best:_insBestVor(Date.now(), []).hasOwnProperty(p.id) || kette.hasOwnProperty(p.id),
+      andere:kette[players[0].id] === 4};
+  } finally {
+    p.retired_at = vorher; invalidateCache();
+    _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+  }
+})())`));
+ok(!_insRuhe.drin && !_insRuhe.best && _insRuhe.andere,
+   'ein Ruheständler steht weder als Bewegung noch im höchsten Platz auf der Insignium-Karte',
+   JSON.stringify(_insRuhe));
 
 console.log('\n=== 9c. STORY-BLAETTER BLEIBEN BEI IHRER GESCHICHTE ===');
 // Story-Blätter zeigen ihren gesamten Beleg direkt. Zusätzliche Wege in
@@ -3361,10 +3425,20 @@ const _achsen = JSON.parse(K.eval(`JSON.stringify((function(){
     {rekordId:rid, playerIds:[pid], vorher:[]}, prio || 84,
     nm(pid) + ' übernimmt „' + rid + '"', '11 Siege in Folge. Vorher waren es 10.');
   const ins = (id, pid) => st(id, 'insignium_stufe',
-    {pid, stufe:1, stufeName:'Schildring', punkte:300 + id.charCodeAt(1), oben:false}, 76,
+    {pid, stufe:1, stufeName:'Schildring', punkte:640 + id.charCodeAt(1), oben:false}, 76,
     nm(pid) + ' traegt den Schildring',
     '385 Prestige zusammen. Bis zum Volutenkranz fehlen 335.');
+  // Alte Stufen-Zeilen werden zur Insignium-Karte ihres Tages (_insAltZuTag).
+  const leiter = liste => { _cache._consolFrom = null;
+    return _consolidateStories(liste.slice()).filter(x => (x.dataRef||{}).type === 'insignium_tag')
+      .map(x => { const h = String(_newsCardHtmlM2(x, false, false));
+        return {ti:x.title, tx:x.desc, n:(x.dataRef.zuege||[]).length, mit:(x.dataRef.memberIds||[]).length,
+          buehne:h.indexOf('class="ni-b ') >= 0, zeilen:(h.match(/class="ni-z[ "]/g) || []).length,
+          mehr:(h.match(/ni-z mehr">.([0-9]+)/) || [])[1] || ''}; }); };
   return {
+    ic: leiter([ins('i1',ids[0]), ins('i2',ids[1]), ins('i3',ids[2])]),
+    if: leiter([ins('i1',ids[0]), ins('i2',ids[1]), ins('i3',ids[2]), ins('i4',ids[3]), ins('i5',ids[4])]),
+    id: leiter([ins('i1',ids[0]), ins('i2',ids[1]), ins('i3',ids[2]), rek('r9','switcher',ids[2])]),
     // (a) ein Spieler, zwei Rekorde
     a: zeig(lauf([rek('r1','unstoppable',ids[0]), rek('r2','eloday',ids[0])])),
     // (b) drei Sorten in einem Moment: das Verb steht nur, wo es wechselt
@@ -3373,8 +3447,10 @@ const _achsen = JSON.parse(K.eval(`JSON.stringify((function(){
          nm(ids[0]) + ': Mauer','Sieg mit maximal 2 Gegentoren.'),
       st('jb','jubilee',{pid:ids[0],total:100},6,nm(ids[0]) + ' feiert 100. Spiel',
          '100 Partien stehen jetzt in der Bilanz.')])),
-    // (c) drei Spieler, dieselbe Stufe
+    // (c) drei Spieler, dieselbe Stufe: keine Tafel mehr
     c: zeig(lauf([ins('i1',ids[0]), ins('i2',ids[1]), ins('i3',ids[2])])),
+    // (t) drei Spieler, drei Rekorde: der Tafel-Moment
+    t: zeig(lauf([rek('r1','unstoppable',ids[0]), rek('r2','eloday',ids[1]), rek('r3','switcher',ids[2])])),
     f: zeig(lauf([ins('i1',ids[0]), ins('i2',ids[1]), ins('i3',ids[2]),
                   ins('i4',ids[3]), ins('i5',ids[4])])),
     // (d) Der Erfolg gewinnt: wer die Stufe teilt UND einen Rekord holt,
@@ -3408,29 +3484,24 @@ ok(_achsen.b[0] && _achsen.b[0].ti
 ok(_achsen.b[0] && _achsen.b[0].band === 3,
    'auch die dritte Zeile steht auf der Karte, nicht als „und 1 weitere"',
    (_achsen.b[0]||{}).band + ' Zeilen');
-ok(_achsen.c.length === 1 && _achsen.c[0].q === 'tafel',
-   'dieselbe Tafel-Stufe fuer drei Spieler wird EINE Karte', _achsen.c.length + ' Karten');
-ok(_achsen.c[0] && _achsen.c[0].ti
-   === _achsen.n0 + ', ' + _achsen.n1 + ' und ' + _achsen.n2 + ' bewegen die Ewige Tafel',
-   'die Schlagzeile nennt alle drei und verbindet den Tafel-Moment', (_achsen.c[0]||{}).ti);
-// Der Satz nennt, was passiert ist — und zaehlt es nicht dreimal. Er hiess
-// „Ein Moment, 8 Spuren: 5 Ausbauten und drei Monatschroniken ordnen die
-// Ewige Tafel neu": „Ein Moment" ueber einen ganzen Spieltag, „8 Spuren" als
-// Floskel ueber derselben Aufzaehlung, und eine Ziffer neben einem Zahlwort
-// im selben Satz [§C27]. Gemessen wird die Aufzaehlung und das Fehlen
-// beider Fehler, nicht der Wortlaut.
-ok(_achsen.c[0] && /^Drei neue Insignien: /.test(_achsen.c[0].tx)
-   && !/Moment|Spur/.test(_achsen.c[0].tx)
-   && !/\d/.test(_achsen.c[0].tx),
-   'ihr Satz zaehlt die Tafel-Spuren einmal und ohne Floskel', (_achsen.c[0]||{}).tx);
-ok(_achsen.f.length === 1 && _achsen.f[0].n === 5 && _achsen.f[0].band === 4
-   && _achsen.f[0].pids === 5 && _achsen.f[0].mehr === '3',
-   'ein grosses Buendel fuehrt alle Ereignisse und zaehlt alle Gesichter korrekt',
-   (_achsen.f[0]||{}).band + ' Zeilen, ' + (_achsen.f[0]||{}).pids
-     + ' Spieler, +' + (_achsen.f[0]||{}).mehr);
-ok(_achsen.d.length === 1 && _achsen.d[0].q === 'tafel' && _achsen.d[0].n === 4,
-   'derselbe Tafel-Moment fuehrt Stufen und Rekord vollstaendig zusammen',
-   _achsen.d.map(x => x.q + ':' + x.n).join(', '));
+// Die Stufen stehen nicht mehr in der Ewigen Tafel: dieselbe Stufe für drei
+// Spieler ist EINE Insignium-Karte, mit allen dreien als Bewegung.
+ok(_achsen.ic.length === 1 && _achsen.ic[0].n === 3 && _achsen.ic[0].mit === 3 && _achsen.c.length === 0,
+   'dieselbe Stufe fuer drei Spieler wird EINE Insignium-Karte, nicht die Tafel',
+   JSON.stringify(_achsen.ic) + ' · Tafel ' + _achsen.c.length);
+ok(_achsen.ic[0] && _achsen.ic[0].ti === 'Schildring für ' + _achsen.n0 + ', ' + _achsen.n1 + ' und ' + _achsen.n2,
+   'die Schlagzeile nennt die Stufe einmal und alle drei', (_achsen.ic[0]||{}).ti);
+// Der Satz erklärt die Stufe und behauptet nichts, was eine alte Zeile nicht
+// weiß: wie viele sie tragen, steht nur in neuen Karten.
+ok(_achsen.ic[0] && /^Der Schildring ist die zweite Stufe der Leiter und beginnt bei 600 Prestige\.$/.test(_achsen.ic[0].tx),
+   'ihr Satz erklärt die Stufe ohne Floskel', (_achsen.ic[0]||{}).tx);
+ok(_achsen.if.length === 1 && _achsen.if[0].n === 5 && _achsen.if[0].buehne
+   && _achsen.if[0].zeilen === 4 && _achsen.if[0].mehr === '1',
+   'eine große Karte trägt die erste Bewegung als Bühne, drei als Zeilen und zählt den Rest',
+   JSON.stringify(_achsen.if[0] || {}));
+ok(_achsen.id.length === 1 && _achsen.id[0].n === 3 && _achsen.d.length === 0,
+   'Stufen und Rekord desselben Tages stehen auf ihren eigenen Karten',
+   JSON.stringify({ins:_achsen.id.map(x => x.n), tafel:_achsen.d.map(x => x.q + ':' + x.n)}));
 ok(_achsen.e.length === 0, 'ein einzelner Erfolg bleibt eine eigene Karte',
    _achsen.e.length + ' Sammelkarten');
 // „Ein Spiel, zwei Geschichten" gilt fuer jeden Spieltag und sagt von keinem
@@ -3450,13 +3521,13 @@ ok(_achsen.g[0] && /Meldungen hängen daran|Siegchance lag vor dem Anstoß/.test
    && !/Geschichten wachsen|wachsen \\d/.test(_achsen.g[0].tx),
    'ihr Teaser erzaehlt die Partie statt die Kartenstruktur',
    (_achsen.g[0]||{}).tx);
-ok(_achsen.b[0] && _achsen.b[0].sorte === 'spieler' && _achsen.c[0].sorte === 'tafel'
-   && _achsen.b[0].rub !== _achsen.c[0].rub,
+ok(_achsen.b[0] && _achsen.t[0] && _achsen.b[0].sorte === 'spieler' && _achsen.t[0].sorte === 'tafel'
+   && _achsen.b[0].rub !== _achsen.t[0].rub,
    'Spieler-Moment und Tafel-Moment tragen eigene Form und Rubrik',
-   (_achsen.b[0]||{}).rub + ' / ' + (_achsen.c[0]||{}).rub);
-ok(_achsen.b[0] && _achsen.b[0].pids === 1 && _achsen.c[0].pids === 3,
+   (_achsen.b[0]||{}).rub + ' / ' + (_achsen.t[0]||{}).rub);
+ok(_achsen.b[0] && _achsen.t[0] && _achsen.b[0].pids === 1 && _achsen.t[0].pids === 3,
    'die Spieler-Karte zeigt ein Gesicht, die Tafel-Karte alle',
-   (_achsen.b[0]||{}).pids + ' / ' + (_achsen.c[0]||{}).pids);
+   (_achsen.b[0]||{}).pids + ' / ' + (_achsen.t[0]||{}).pids);
 ok(_achsen.b[0] && _achsen.b[0].fuss === '3',
    'die Zahl der Erfolge steht im Fuss der Spieler-Karte, nicht im Satz',
    '„' + (_achsen.b[0]||{}).fuss + '"');
@@ -3464,10 +3535,10 @@ ok(_achsen.b[0] && _achsen.b[0].fuss === '3',
 ok(_achsen.b[0] && _achsen.b[0].zeilen.every(z => z.indexOf(_achsen.n0) !== 0),
    'auf der Spieler-Karte faellt der Name vor jeder Zeile weg',
    (_achsen.b[0]||{}).zeilen.join(' | '));
-ok(_achsen.c[0] && new Set(_achsen.c[0].zeilen).size === 3
-   && [_achsen.n0,_achsen.n1,_achsen.n2].every(n=>_achsen.c[0].zeilen.some(z=>z.indexOf(n)===0)),
+ok(_achsen.t[0] && new Set(_achsen.t[0].zeilen).size === 3
+   && [_achsen.n0,_achsen.n1,_achsen.n2].every(n=>_achsen.t[0].zeilen.some(z=>z.indexOf(n)===0)),
    'auf der Tafel-Karte bleibt jeder beteiligte Traeger als eigene Zeile lesbar',
-   (_achsen.c[0]||{}).zeilen.join(' | '));
+   (_achsen.t[0]||{}).zeilen.join(' | '));
 
 // ── Nur die wichtigsten ────────────────────────────────────────────
 // Gemessen trug ein Spieltag neun Karten und der Feed zweiundzwanzig, davon
@@ -4066,8 +4137,8 @@ ok(_keineSchande.treffer.length === 0, 'keine Schande steht im Feed',
 const _bmk = JSON.parse(K.eval(`JSON.stringify((function(){
   const pm = pmap();
   const nameOf = pid => (pm[pid] && pm[pid].name) || '?';
-  const paare = { personal_scorer:'sniper', award_potd_leader:'daylord',
-                  award_potw_leader:'weeklord' };
+  const paare = { personal_glanztag:'glanztag', personal_umsteiger:'umsteiger',
+                  personal_aufschwung:'aufschwung' };
   const T = _ambientTemplatePool(new Date(), pm, nameOf);
   const out = [];
   Object.keys(paare).forEach(key => {
@@ -5178,7 +5249,10 @@ const _tafelOrd = JSON.parse(K.eval(`JSON.stringify((function(){
             {zeigt:false, titleId:'tn'}),
       basis('r-neu', 'rekord_geholt', 76, 'Eine Bestmarke wechselt',
             {rekordId:'rn', kammer:'koennen'}),
-      basis('i-stufe', 'insignium_stufe', 58, 'Eine neue Stufe', {stufe:1})
+      // Eine Stufe stand hier als vierter Wechsel; sie hat seit der
+      // Insignium-Karte des Tages ihren eigenen Platz.
+      basis('r-neu2', 'rekord_geholt', 58, 'Eine zweite Bestmarke wechselt',
+            {rekordId:'rm', kammer:'koennen'})
     ];
     for(let i = 0; i < 4; i++)
       l.push(basis('r-aus' + i, 'rekord_gesteigert', 40,
@@ -5214,7 +5288,7 @@ ok(_tafelOrd.vier && _tafelOrd.vier.reihe[0] === 'chronik_geholt'
    _tafelOrd.vier ? (_tafelOrd.vier.reihe[0] + ' / ' + _tafelOrd.vier.marke) : '');
 ok(_tafelOrd.vier
    && _tafelOrd.vier.reihe.slice(0, 4).join(',')
-      === 'chronik_geholt,rekord_geholt,chronik_geholt,insignium_stufe'
+      === 'chronik_geholt,rekord_geholt,chronik_geholt,rekord_geholt'
    && _tafelOrd.vier.reihe.slice(4).every(x => x === 'rekord_gesteigert'),
    'dann jeder Halterwechsel, und das Ausbauen zuletzt',
    _tafelOrd.vier ? _tafelOrd.vier.reihe.join(' ') : '');
@@ -5225,7 +5299,7 @@ ok(_tafelOrd.vier && _tafelOrd.vier.wertV === '4'
    && _tafelOrd.vier.wertL === 'Wechsel',
    'der grosse Wert zaehlt die Wechsel und nicht die Ausbauten',
    _tafelOrd.vier ? (_tafelOrd.vier.wertV + ' ' + _tafelOrd.vier.wertL) : '');
-ok(_tafelOrd.vier && /[Ee]ine Bestmarke/.test(_tafelOrd.vier.text)
+ok(_tafelOrd.vier && /[Zz]wei Bestmarken/.test(_tafelOrd.vier.text)
    && /vier Ausbauten/.test(_tafelOrd.vier.text),
    'und der Satz nennt Wechsel und Ausbauten getrennt',
    _tafelOrd.vier ? _tafelOrd.vier.text : '');
@@ -5744,15 +5818,15 @@ const _rekFelder = JSON.parse(K.eval(`JSON.stringify((function(){
     const c = CHRONICLE_BY_ID[d.rekordId];
     if(c && d.basis !== c.basis) basisFalsch.push(d.rekordId);
   });
-  // Und die sechs neuen Liga-Rekorde [§C35] kommen im Feed ueberhaupt vor.
+  // Und die neuen Liga-Rekorde [§C35] kommen im Feed ueberhaupt vor.
   // Ein neuer Eintrag kann still durchrutschen: er steht im Katalog, im
   // Rekorde-Reiter und in der Rangliste, und der Generator bildet trotzdem
-  // keine Karte fuer ihn, weil ein Feld fehlt. Gezaehlt wird, wie viele der
-  // acht in diesem Lauf eine Karte haben — nicht alle acht, denn der Lauf
-  // sieht jeden vierten Spieltag, und ein Rekord, der nur an einem anderen
-  // Tag gewechselt hat, kommt darin nicht vor.
-  const NEU = ['entscheider','breitenwirkung','damage_control','retourkutsche',
-               'unbeugsam','rueckschlag','wiedereinstieg','rollencoup'];
+  // keine Karte fuer ihn, weil ein Feld fehlt. Gezaehlt wird, wie viele
+  // davon in diesem Lauf eine Karte haben. Der Lauf sieht nur jeden vierten
+  // Spieltag; ein Rekord, der nur an einem anderen Tag wechselt, fiele
+  // heraus, und dann gehoert er nicht in diese Liste.
+  const NEU = ['damage_control','wiedereinstieg','rollencoup',
+               'umsteiger','aufschwung','glanztag'];
   const neuGesehen = NEU.filter(id => karten.some(s => s.dataRef.rekordId === id));
   return {n:karten.length, fehlt:fehlt.slice(0, 6), falscherFall:falscherFall.slice(0, 3),
           ohneZeit:ohneZeit.slice(0, 3), basisFalsch:basisFalsch.slice(0, 3),
@@ -5771,11 +5845,10 @@ ok(_rekFelder.ohneZeit.length === 0, 'jede Rekordkarte traegt ihren Zeitpunkt',
 ok(_rekFelder.basisFalsch.length === 0,
    'der weitergegebene Grundwert ist der des Katalogs',
    _rekFelder.basisFalsch.join(', ') || 'alle');
-// Sieben der acht sind der gemessene Stand: „Die Retourkutsche" hat ihren
-// Halter sechsmal gewechselt, aber an keinem der gewalkten Tage. Die Schwelle
-// steht auf dem gemessenen Wert und nicht darunter — jeder Rekord, der still
-// uebersprungen wird, kostet genau einen.
-ok(_rekFelder.neuGesehen.length >= 7,
+// Alle sechs sind der gemessene Stand. Die Schwelle steht auf dem gemessenen
+// Wert und nicht darunter — jeder Rekord, der still uebersprungen wird,
+// kostet genau einen.
+ok(_rekFelder.neuGesehen.length === _rekFelder.neuN,
    'auch die neuen Liga-Rekorde bekommen ihre Karte',
    _rekFelder.neuGesehen.length + ' von ' + _rekFelder.neuN + ': '
    + _rekFelder.neuGesehen.join(', '));
@@ -6294,17 +6367,18 @@ const _vband = JSON.parse(K.eval(`JSON.stringify((function(){
 // Und wer gewinnt, steht auch darin: die Zeile zeigte nur die Verlierer,
 // und die Hälfte der Wirkung stand erst im Blatt. Gewinner zuerst.
 ok(_vband.h.indexOf(_vband.a) >= 0 && _vband.h.indexOf('−80') >= 0
-   && _vband.h.indexOf(_vband.stufe) >= 0 && _vband.h.indexOf(_vband.b) >= 0 && _vband.h.indexOf('+60') >= 0
+   && _vband.h.indexOf(_vband.b) >= 0 && _vband.h.indexOf('+60') >= 0
    && _vband.h.indexOf(_vband.b) < _vband.h.indexOf(_vband.a) && _vband.ohne.indexOf('+60') >= 0,
    'die Tafel-Karte nennt, wer Prestige gewinnt und wer verliert, die Gewinner zuerst',
    _vband.h.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
-// Und Name, Betrag und Stufe stehen in EINEM Chip. Als Reihe aus Text
-// brachen sie bei drei Namen um, und der Betrag stand in der zweiten Zeile
-// neben dem falschen Namen.
+// Und Name und Betrag stehen in EINEM Chip. Als Reihe aus Text brachen sie
+// bei drei Namen um, und der Betrag stand in der zweiten Zeile neben dem
+// falschen Namen. Die Stufe, auf die jemand fällt, steht nicht darin: sie
+// gehört der Insignium-Karte desselben Tages und stand sonst zweimal da.
 const _vchips = (_vband.h.match(/<b class="nf-vl minus">[\s\S]*?<\/b>/g) || []);
 ok(_vchips.length === 1 && _vchips[0].indexOf(_vband.a) >= 0 && _vchips[0].indexOf('−80') >= 0
-   && _vchips[0].indexOf(_vband.stufe) >= 0 && /class="(rcp-av|av)/.test(_vchips[0]),
-   'je Verlierer ein Chip mit Gesicht, Name, Betrag und Stufe',
+   && _vchips[0].indexOf(_vband.stufe) < 0 && _vchips[0].indexOf('↓') < 0 && /class="(rcp-av|av)/.test(_vchips[0]),
+   'je Verlierer ein Chip mit Gesicht, Name und Betrag, ohne die Stufe der Insignium-Karte',
    _vchips.length + ' Chips');
 
 // Und der Satz der Rekordkarte nennt, wer dabei verliert: die Karte erzaehlte
@@ -6578,30 +6652,23 @@ console.log('=== DER ANLASS STEHT ZUERST ===');
 // ganz: `_breakingHeroText` kannte sieben Typen und die Sammelkarte nicht,
 // fiel damit auf `desc` zurueck, und der Aufrufer unterdrueckt ihn genau
 // dann, wenn er `desc` ist.
-// Gemessen wird an einem gestellten Buendel, nicht an den Fixtures: die
-// echte Liga erreicht den Lorbeerreif nicht (§10.3 sichert gerade zu, dass
-// niemand dort ankommt), und damit gibt es in ihr keine gebuendelte
-// Breaking-Karte. Der Anlass traegt hier ausdruecklich die NIEDRIGSTE `prio`
-// der drei Zeilen — nach `prio` allein stuende er hinten.
+// Gemessen wird an einem gestellten Buendel. Die Tafel traegt seit der
+// Insignium-Karte keine Breaking-Zeile mehr; eine Partie-Karte schon: eine
+// legendaere Auszeichnung mit der NIEDRIGSTEN prio der drei Zeilen — nach
+// prio allein stuende sie hinten.
 const _anlass = JSON.parse(K.eval(`JSON.stringify((function(){
-  const p = players.map(x => x.id);
-  const t0 = new Date('2026-08-26T17:19:00Z').getTime();
-  const zeile = (id, ic, prio, ms, titel, text, ref) => ({id, cat:'tafel', ic, prio,
-    title:titel, desc:text, when:new Date(t0 + ms).toISOString(),
-    dataRef:Object.assign({playerIds:[ref.pid], causalKey:'table:2026-08-26',
-                           zeileText:text}, ref)});
+  const m = matches[matches.length - 1], W = _spSieger(m), L = _spVerlierer(m), w = new Date(mts(m));
+  const leg = BADGES.find(b => rarityOf(b.id) === 'legendary') || {id:'x', name:'X'};
   const roh = [
-    zeile('t_rek', 'medal2', 80, 0, 'Leon uebernimmt „Der Massstab"',
-          '72 % aus 50 Spielen.',
-          {type:'rekord_geholt', rekordId:'best_record', kammer:'mark',
-           kammerLabel:'Bestmarke', pid:p[8]}),
-    zeile('t_chr', 'crown', 62, 60000, 'Maxi holt „Der Traummonat"',
-          'Ein starker Monat.',
-          {type:'chronik_geholt', titleId:'traumquote', sid:'2026-08', pid:p[10]}),
-    zeile('t_ins', 'insignium', 55, 120000, 'Martin traegt den Lorbeerreif',
-          'Die vierte Stufe der Laufbahn steht zum ersten Mal.',
-          {type:'insignium_stufe', stufe:3, oben:true, wieder:false, pid:p[9]})
+    {id:'spiel_' + m.id, cat:'highlight', ic:'ball', when:w, prio:40, title:'Ein Sieg', desc:'10:6.',
+     dataRef:{type:'spiel', resultKind:'normal', matchId:m.id, playerIds:W, winners:W, losers:L}},
+    {id:'an-ms', cat:'milestone', ic:'chart', when:w, prio:70, title:pname(W[0]) + ' feiert den 100. Sieg',
+     desc:'100 Siege.', dataRef:{type:'milestone_wins', pid:W[0], milestone:'100 Siege', matchId:m.id, playerIds:[W[0]]}},
+    {id:'an-lg', cat:'badge', ic:'trophyStar', when:w, prio:30, title:pname(W[1]) + ' holt „' + leg.name + '"',
+     desc:'Eine legendäre Auszeichnung.', dataRef:{type:'badge_unlocked', badgeId:leg.id, playerId:W[1],
+       rarity:'legendary', matchId:m.id, playerIds:[W[1]]}}
   ];
+  _cache._consolFrom = null;
   const fertig = _consolidateStories(roh.slice());
   const sam = fertig.find(s => (s.dataRef || {}).type === 'sammel');
   if(!sam) return {sam:false, typen:fertig.map(s => (s.dataRef || {}).type)};
@@ -6620,7 +6687,7 @@ const _anlass = JSON.parse(K.eval(`JSON.stringify((function(){
     subImHtml:html.indexOf('nf-brk-sub') >= 0};
 })())`));
 ok(_anlass.sam && _anlass.breaking && _anlass.n === 3,
-   'drei Tafel-Zeilen eines Spieltags werden eine Breaking-Sammelkarte',
+   'drei Meldungen einer Partie mit einer legendären Auszeichnung werden eine Breaking-Karte',
    'Buendel ' + _anlass.sam + ', Breaking ' + _anlass.breaking + ', ' + _anlass.n + ' Zeilen');
 ok(_anlass.ersteBrk && _anlass.nurEine === 1,
    'der Anlass des Breaking steht als erste Zeile',
@@ -6631,6 +6698,18 @@ ok(_anlass.zahlImBalken,
 ok(_anlass.subImHtml && _anlass.subFremd,
    'die Karte nennt im Nachsatz, wofuer sie Breaking ist',
    _anlass.sub.slice(0, 60));
+// Ein Aufstieg in die beiden obersten Stufen ist Breaking, jetzt auf der
+// Insignium-Karte des Tages; ein belegtes „wieder" nicht, eine tiefere Stufe nie.
+const _insBrk = JSON.parse(K.eval(`JSON.stringify((function(){
+  const k = z => _isBreaking({dataRef:{type:'insignium_tag', zuege:[z]}});
+  return {erst:k({art:'auf', wieder:false, nach:{stufe:INSIGNIUM_OBEN}}),
+    wieder:k({art:'auf', wieder:true, nach:{stufe:INSIGNIUM_OBEN}}),
+    tief:k({art:'auf', wieder:false, nach:{stufe:INSIGNIUM_OBEN - 1}}),
+    grad:k({art:'grad', nach:{stufe:INSIGNIUM_OBEN + 1}})};
+})())`));
+ok(_insBrk.erst && !_insBrk.wieder && !_insBrk.tief && !_insBrk.grad,
+   'nur ein Aufstieg in die obersten Stufen, der kein belegtes wieder ist, macht die Insignium-Karte zu Breaking',
+   JSON.stringify(_insBrk));
 
 console.log('=== ZWEIMAL LAUFEN ERGIBT DASSELBE ===');
 // Eine Story wird persistiert, damit alle Geraete dieselbe Karte zur selben
@@ -7551,14 +7630,16 @@ const _tafelBl = JSON.parse(K.eval(`JSON.stringify((function(){
   const blatt = s => { _ndBlattJetzt = null; return {k:_newsBlattKopf(s) || '', m:_newsDetailMitte(s) || ''}; };
   const zahl = (re, h) => (h.match(re) || []).length;
   const r = {};
-  const ins = typ('insignium_stufe')[0];
+  // Die Insignium-Karte des Tages: die Bewegung der Schlagzeile als Bühne,
+  // jede Bewegung mit den drei Graden ihrer Stufe, ihre Wirkung aus den drei
+  // Quellen und die Leiter der Liga.
+  const ins = typ('insignium_tag')[0];
   if(ins){
-    const b = blatt(ins), d = ins.dataRef;
-    const ql = (b.m.match(/<span class="(auszeichnung|monat|rekord)"><b class="num">(\\d+)<\\/b>/g) || [])
-      .map(x => +x.replace(/\\D+(\\d+)<.*/, '$1'));
+    const b = blatt(ins), d = ins.dataRef, z = d.zuege[0];
     r.ins = {buehne:/class="nd-is-z"/.test(b.k), grade:zahl(/class="nd-is-gf/g, b.m),
-      quellen:ql.length, summe:ql.reduce((a, x) => a + x, 0), punkte:d.punkte,
-      stufe:b.k.indexOf('>' + INSIGNIEN[insigniumStufeVon(d.punkte)].name + '<') >= 0};
+      soll:d.zuege.filter(x => INSIGNIEN[x.nach.stufe + 1]).length * 3,
+      wirkung:zahl(/<div class="nd-wk[ "]/g, b.m), personen:d.zuege.length,
+      leiter:/nf-ll/.test(b.m), stufe:b.k.indexOf('>' + _insLageName(z.nach) + '<') >= 0};
   }
   const mo = typ('chronik_monat')[0];
   if(mo){
@@ -7629,9 +7710,9 @@ ok(_tb.moment && _tb.moment.punkte === _tb.moment.teile && _tb.moment.striche ==
    && _tb.moment.profil === 0 && _tb.moment.bilder === _tb.moment.mitHalter && _tb.moment.saetze === 0,
    'das Blatt eines Tafel-Moments zeigt den Spieltag als Achse mit jeder Partie und jeder Bewegung ohne Namen, und jede Zeile führt zu ihrem Eintrag statt ins Profil',
    JSON.stringify(_tb.moment));
-ok(_tb.ins && _tb.ins.buehne && _tb.ins.grade === 3 && _tb.ins.quellen === 3
-   && _tb.ins.summe === _tb.ins.punkte && _tb.ins.stufe,
-   'das Blatt einer Insignium-Stufe zeigt die Verwandlung, drei Quellen, die zusammen die Punkte der Karte ergeben, und die drei Grade',
+ok(_tb.ins && _tb.ins.buehne && _tb.ins.grade === _tb.ins.soll && _tb.ins.wirkung === _tb.ins.personen
+   && _tb.ins.leiter && _tb.ins.stufe,
+   'das Blatt der Insignium-Karte zeigt die Verwandlung, je Bewegung die drei Grade und die Wirkung, und die Leiter der Liga',
    JSON.stringify(_tb.ins));
 ok(_tb.monat && _tb.monat.zellen === _tb.monat.soll && _tb.monat.balken === _tb.monat.traeger
    && _tb.monat.erste === _tb.monat.max,

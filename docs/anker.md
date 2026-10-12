@@ -135,6 +135,8 @@ Wächter 8 vergleicht. Ein Kürzel `§n.m` ist ein Abschnitt des Codes,
 - **30b-news-spieltag.js**
   - §11.6c — Die Karten „Am Spieltag" [§C33]
 - **30c-news-fakt.js** — ohne Banner
+- **30d-news-insignium.js**
+  - §11.6e — Die Insignium-Karte des Tages [§C30, §C33]
 - **31-news-detail.js**
   - §11.7 — Story-Detail (dynamisch je Typ)
 - **31a-news-detail-mitte.js**

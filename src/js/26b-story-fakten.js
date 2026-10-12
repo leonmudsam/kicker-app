@@ -135,6 +135,41 @@ function _prestigeWirkung(pid, vorStand, nachStand){
   };
 }
 
+// ─── Der höchste Platz auf der Leiter vor einem Tag ──────────────────
+// Die Leiter schwankt: Rekord-Prestige wird unter den Haltern geteilt und
+// fällt mit einem verlorenen Rekord [§C34]. Gemessen pendelte ein Spieler
+// drei Spieltage in Folge zwischen Zierkranz III und Lorbeerreif I, und an
+// fast jedem Spieltag gingen zwei bis sechs Grade hin und her. Ob ein Grad
+// eine Nachricht ist und ob eine Stufe „wieder" erreicht wird, sagt deshalb
+// der höchste Platz davor (`insigniumPos`).
+//
+// Er kommt nur aus dem Bestand: aus dem `best` der letzten Insignium-Karte
+// und aus alten Stufen-Zeilen (`insignium_stufe`). Die Stände jedes
+// Spieltags davor nachzurechnen kostete rund anderthalb Sekunden und
+// verdrängte die Rechnungen, die das Vorwärmen für die Awards bereitgelegt
+// hatte. Ohne Beleg weiß die Karte nichts über früher und behauptet nichts:
+// sie schreibt „erreicht", nie „zum ersten Mal".
+//
+// Nur wer in der Liga antritt [§C40 Regel 2]: ein Ruheständler in `best`
+// hielte jede spätere Karte an seinem Namen fest, und das Tor nach dem
+// Abschied nähme sie aus dem Feed.
+function _insBestVor(vonMs, bestand){
+  const tag = tagKey(vonMs);
+  const aktiv = new Set((players || []).filter(p => ligaAktiv(p)).map(p => p.id));
+  const best = {};
+  const merk = (pid, pos) => { if(aktiv.has(pid) && isFinite(pos) && (best[pid] == null || pos > best[pid])) best[pid] = pos; };
+  const l = Array.isArray(bestand) ? bestand : [];
+  const alt = l.filter(x => { const d = (x && x.dataRef) || {}; return d.type === 'insignium_tag' && d.best && String(d.tag) < tag; })
+    .sort((a, b) => String(b.dataRef.tag).localeCompare(String(a.dataRef.tag)))[0];
+  if(alt) Object.keys(alt.dataRef.best).forEach(pid => merk(pid, Number(alt.dataRef.best[pid])));
+  l.forEach(x => {
+    const d = (x && x.dataRef) || {};
+    if(d.type !== 'insignium_stufe' || !d.pid || tagKey(x.when) >= tag) return;
+    merk(d.pid, (Number(d.punkte) ? insigniumStufeVon(Number(d.punkte)) : (d.stufe | 0)) * INSIGNIUM_GRADE);
+  });
+  return best;
+}
+
 // ─── Ist die Rangliste belastbar? ────────────────────────────────────
 // Am ersten Tag einer Saison steht jeder bei null, und die erste Partie
 // macht ihren Sieger zum Tabellenführer. Gemessen ergab das nach jedem

@@ -110,7 +110,7 @@ function _ndMitteRoh(s){
             <div class="nd-stat-val">${esc(_namenListe(vor.map(nameOf)))} ›</div></div>` : ''}
           ${_newsVerfolger(d.rekordId, d.playerIds, d.wert)}
           ${/* Woraus der Wert der KARTE besteht — ihr gespeicherter Beleg,
-                nicht der von heute [§C33 „Und niemand davor"]. */ belegHtml({ev:d.ev})}
+                nicht der von heute [§C33 „Und niemand davor"]. */ belegHtml({ev:d.ev, kurz:true})}
           ${rekordLaufbahn(d.rekordId)}
           ${def ? `<button class="btn ghost sm" data-chron="${esc(def.id)}" style="margin-top:12px;width:100%">Rekord öffnen</button>` : ''}`;
       }
@@ -409,7 +409,6 @@ function _ndMitteRoh(s){
             {t:'Bestmarken', f:x => typ(x).indexOf('rekord_') === 0
                                  && typ(x) !== 'rekord_gesteigert'},
             {t:'Monatschroniken', f:x => typ(x).indexOf('chronik_') === 0},
-            {t:'Neue Insignien', f:x => typ(x) === 'insignium_stufe'},
             {t:'Ausbauten', f:x => typ(x) === 'rekord_gesteigert'}
           ];
           const rest = teile.slice();
@@ -475,7 +474,6 @@ function _ndMitteRoh(s){
             && typ(t) !== 'rekord_gesteigert').length;
           const aus = teile.filter(t => typ(t) === 'rekord_gesteigert').length;
           const chr = teile.filter(t => typ(t).indexOf('chronik_') === 0).length;
-          const insz = teile.filter(t => typ(t) === 'insignium_stufe').length;
           let plus = 0, minus = 0;
           const gez = {};
           teile.forEach(t => { const lb = t.lb; if(!lb) return;
@@ -486,7 +484,6 @@ function _ndMitteRoh(s){
             wech ? {v: wech, l: wech === 1 ? 'Bestmarke' : 'Bestmarken', ton:'gold'} : null,
             aus ? {v: aus, l: aus === 1 ? 'Ausbau' : 'Ausbauten'} : null,
             chr ? {v: chr, l: chr === 1 ? 'Chronik' : 'Chroniken'} : null,
-            insz ? {v: insz, l: insz === 1 ? 'Insignium' : 'Insignien'} : null,
             plus ? {v: '+' + plus, l:'Prestige', ton:'gold'} : null,
             // Was andere dabei verloren haben, steht daneben und nicht darin:
             // ein Minus in derselben Summe hiesse, der Tag haette weniger
