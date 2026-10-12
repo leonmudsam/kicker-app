@@ -4325,6 +4325,29 @@ ok(_etik.n > 10 && _etik.falsch.length === 0,
    'jede Schlagzeile einer Partie nennt höchstens drei Anlässe, jeden mit Namen, und keine Pleite vor einem Sieg, auch nicht in den Zeilen',
    _etik.falsch.slice(0, 3).join(' | ') || _etik.n + ' Bündel');
 
+// ── Was zählt, meldet Stufen, nicht jeden Schritt ─────────────────────
+// „Leon und Maxi treffen zum 207. Mal aufeinander" stand an jedem Spieltag
+// der beiden, und Bilder wie die Uhr des Tages trafen ab ihrer Schwelle auf
+// jede weitere Partie zu. Gemeldet wird jedes zehnte Duell, gezeichnet nur an
+// Stufen.
+const _stufen = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  const falsch = [];
+  roh.filter(s => (s.dataRef||{}).type === 'rivalry').forEach(s => {
+    if(s.dataRef.n % 10 !== 0) falsch.push(s.title); });
+  roh.forEach(s => { const d = s.dataRef || {}, o = d.visual && d.visual.occasion;
+    if(!o) return;
+    const x = o.data || {};
+    if(o.key === 'uhr' && !SP_TAG_STUFEN.has(x.n)) falsch.push('Uhr bei ' + x.n);
+    if(o.key === 'duoserie' && !(x.k === 3 || x.k === 5 || x.k === 7 || x.k % 5 === 0)) falsch.push('Duo gegen Duo bei ' + x.k);
+    if(o.key === 'tagesring' && !SP_TAG_STUFEN.has((x.folge || []).filter(Boolean).length)) falsch.push('Tagesring bei ' + (x.folge || []).filter(Boolean).length);
+  });
+  return {riv: roh.filter(s => (s.dataRef||{}).type === 'rivalry').map(s => s.dataRef.n), falsch};
+})())`));
+ok(_stufen.falsch.length === 0,
+   'eine Rivalität steht auf jedem zehnten Duell, Uhr, Tagesring und Duo gegen Duo nur auf ihren Stufen',
+   _stufen.falsch.slice(0, 4).join(' | ') || 'Rivalität ' + _stufen.riv.join(', '));
+
 // ── Der härteste Tag gehört zum Spieler des Tages ──────────────────────
 // „Harter Tag für Leo" stand als eigene rote Karte eine Minute unter dem
 // Spieler des Tages: dieselbe Frage, wer den Tag geprägt hat, auf zwei
@@ -7103,13 +7126,19 @@ const _duellGleicheSekunde = JSON.parse(K.eval(`JSON.stringify((function(){
     matches=alle.concat(next); invalidateCache(); _cache._stories=[alt];
     const angezeigt=_consolidateStories([alt])[0];
     const neu=_buildStories().find(s=>s.id===r.id);
+    // Das nächste Duell ist kein zehntes: es bekommt keine Rivalität, und die
+    // gemeldete bleibt bei ihrem Duell. Vorher wanderte dieselbe ID mit der
+    // Zahl plus eins weiter, und „zum 207. Mal" stand an jedem Spieltag.
+    const weiter=_buildStories().filter(s=>(s.dataRef||{}).type==='rivalry'
+      && s.dataRef.a===r.dataRef.a && s.dataRef.b===r.dataRef.b);
     return {fehlt:false,alt:angezeigt.dataRef.matchId===basis.id,
-      neu:neu.dataRef.matchId===next.id,n:neu.dataRef.n===r.dataRef.n+1};
+      neu:!neu || neu.dataRef.matchId===basis.id,
+      n:weiter.every(s => s.dataRef.n % 10 === 0 && s.dataRef.matchId!==next.id)};
   } finally {matches=alle;invalidateCache();_cache._stories=bestand;}
 })())`));
 ok(!_duellGleicheSekunde.fehlt && _duellGleicheSekunde.alt
    && _duellGleicheSekunde.neu && _duellGleicheSekunde.n,
-   'zwei Duelle mit gleicher Sekunde bleiben anhand des historischen Duellstands getrennt',
+   'eine Rivalitaet gehoert ihrem zehnten Duell und wandert nicht zum naechsten',
    JSON.stringify(_duellGleicheSekunde));
 // ── Die Formen der gewöhnlichen Partie über die ganze Liga [§C33] ────
 // Eine Partie ohne Anlass bekam immer dasselbe Spielfeld oder dieselbe

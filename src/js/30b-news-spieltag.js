@@ -849,6 +849,10 @@ function _spFakten(m){
 }
 
 const SP_RUND = new Set([5, 10, 15, 20, 25, 30, 40, 50, 60, 75, 100, 150, 200]);
+// Stufen innerhalb eines Tages (Siege, Partien): ein Bild, das ab einer
+// Schwelle bei JEDER weiteren Partie zutraf, stand an einem langen Tag auf
+// Karte um Karte. Es zählt die Stufe, nicht jeder Schritt dazwischen.
+const SP_TAG_STUFEN = new Set([4, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50]);
 const _spMarke = n => n >= 50 && n % 50 === 0;
 const _spNl = ids => _namenListe(ids.map(_spName));
 
@@ -960,7 +964,9 @@ const SP_FORM = {
   // Eingespielt: ein Duo, das zusammen fast immer gewinnt, oder eine runde
   // Zahl gemeinsamer Siege.
   chemie:{rang:26, ic:'handshake',
-    wann:F => (F.duo.p >= 12 && F.duo.s / F.duo.p >= 0.75) || (SP_RUND.has(F.duo.s) && F.duo.p >= 5) ? {rund:SP_RUND.has(F.duo.s)} : null,
+    // Nur an runden Zahlen: „eingespielt" ab zwölf Partien galt für jeden
+    // weiteren Sieg desselben Duos, und das Bild stand Partie für Partie da.
+    wann:F => (F.duo.p >= 12 && F.duo.s / F.duo.p >= 0.75 && F.duo.s % 5 === 0) || (SP_RUND.has(F.duo.s) && F.duo.p >= 5) ? {rund:SP_RUND.has(F.duo.s)} : null,
     gewicht:x => x.rund ? 38 : 0,
     daten:F => ({A:F.W[0], B:F.W[1], L:F.L, hoch:F.hoch, tief:F.tief, s:F.duo.s, p:F.duo.p, folge:F.duo.folge.slice(-30)}),
     text:(F, x) => {
@@ -1038,7 +1044,7 @@ const SP_FORM = {
     wann:F => {
       const t = F.W.map(id => ({id, ms:F.tag.filter(x => [x.a1, x.a2, x.b1, x.b2].includes(id))}))
         .map(t => Object.assign(t, {s:t.ms.filter(x => _spGew(x, t.id)).length}))
-        .filter(t => t.ms.length >= 4 && t.s / t.ms.length >= 0.75).sort((a, b) => b.s - a.s)[0];
+        .filter(t => t.ms.length >= 4 && t.s / t.ms.length >= 0.75 && SP_TAG_STUFEN.has(t.s)).sort((a, b) => b.s - a.s)[0];
       return t || null;
     },
     daten:(F, x) => ({id:x.id, mit:F.W.find(o => o !== x.id), L:F.L, hoch:F.hoch, tief:F.tief, folge:x.ms.slice(-24).map(y => _spGew(y, x.id))}),
@@ -1091,7 +1097,7 @@ const SP_FORM = {
   // Die Uhr des Tages: ab der sechsten Partie eines Tages, jede als Strich
   // auf dem Zifferblatt, diese hell.
   uhr:{rang:24, ic:'clock', v2:true,
-    wann:F => F.tag.length >= 6 ? {n:F.tag.length} : null,
+    wann:F => SP_TAG_STUFEN.has(F.tag.length) && F.tag.length >= 6 ? {n:F.tag.length} : null,
     daten:(F, x) => ({n:x.n, W:F.W, L:F.L, hoch:F.hoch, tief:F.tief,
       zeiten:F.tag.map(y => { const t = new Date(mts(y)); return t.getHours() * 60 + t.getMinutes(); })}),
     text:(F, x) => ({t:`Die ${_spZahl(x.n)}. Partie des Tages`, d:`${_spNl(F.W)} gewinnen gegen ${_spNl(F.L)}.`})},
@@ -1114,7 +1120,8 @@ const SP_FORM = {
       const folge = F.treffen.map(y => _spGew(y, F.W[0]));
       let k = 0;
       for(let j = folge.length - 1; j >= 0 && folge[j]; j--) k++;
-      return k >= 3 ? {k, n:folge.length, s:folge.filter(Boolean).length, folge:folge.slice(-16)} : null;
+      return (k === 3 || k === 5 || k === 7 || k === 10 || (k > 10 && k % 5 === 0))
+        ? {k, n:folge.length, s:folge.filter(Boolean).length, folge:folge.slice(-16)} : null;
     },
     gewicht:x => 28 + Math.min(10, x.k),
     daten:(F, x) => Object.assign({W:F.W, L:F.L, hoch:F.hoch, tief:F.tief}, x),
