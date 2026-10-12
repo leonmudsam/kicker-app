@@ -211,6 +211,38 @@ function _consolidateStories(list){
   });
   let aus = _consolidateStoriesLegacy(vorbereitet);
 
+  // ── Der härteste Tag gehört zum Spieler des Tages ─────────────────
+  // „Harter Tag für Leo" stand als eigene rote Karte eine Minute unter dem
+  // Spieler des Tages: dieselbe Frage, wer den Tag geprägt hat, einmal von
+  // oben und einmal von unten, auf zwei Karten. Gibt es an dem Tag einen
+  // Spieler des Tages, steht der härteste Tag als Gegenstück auf dessen Karte
+  // und in dessen Blatt; die Meldung reist mit (`memberIds`), verloren geht
+  // nichts [§C33]. Ohne Spieler des Tages bleibt sie, wie sie war.
+  {
+    const potdJeTag = new Map();
+    aus.forEach(s => { const d = s.dataRef || {};
+      if(d.type === 'potd') potdJeTag.set(d.dayKey || tagKey(s.when), s); });
+    const weg = new Set(), dazu = new Map();
+    aus.forEach(s => {
+      const d = s.dataRef || {};
+      if(d.type !== 'elo_swing' || !d.pid) return;
+      const p = potdJeTag.get(tagKey(s.when));
+      if(!p) return;
+      const pd = p.dataRef || {};
+      // Ist der Verlierer selbst der Spieler des Tages, ist es kein Gegenstück.
+      if(pd.playerId === d.pid || (pd.playerIds || []).includes(d.pid)) return;
+      weg.add(s.id);
+      dazu.set(p.id, {id:s.id, pid:d.pid, delta:d.delta, title:s.title, desc:s.desc});
+    });
+    if(weg.size) aus = aus.filter(s => !weg.has(s.id)).map(s => {
+      const g = dazu.get(s.id);
+      if(!g) return s;
+      const d = s.dataRef || {};
+      return Object.assign({}, s, {dataRef:Object.assign({}, d, {gegenstueck:g,
+        memberIds:[...new Set((d.memberIds || [s.id]).concat([g.id]))]})});
+    });
+  }
+
   // Der sichtbare Tages-Tafel-Eintrag sitzt immer beim neuesten enthaltenen
   // Wechsel. So ersetzt eine Aktualisierung die heutige Karte an der richtigen
   // Stelle im Feed; historische Tage bleiben unangetastet.

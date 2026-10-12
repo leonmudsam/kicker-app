@@ -4628,6 +4628,13 @@
 .sp-tg-b i.w{background:var(--acid)}.sp-tg-b i.l{background:var(--red);opacity:.8}
 .sp-tg-z{display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 12px;font-size:10.5px;color:var(--muted)}
 .sp-tg-z b{font-family:'Sometype Mono',monospace;color:var(--ink)}
+.nf-gegen,.nd-gegen{display:flex;align-items:center;gap:8px;margin:8px 13px 10px;padding:7px 10px;border-radius:10px;
+  font-size:11px;color:var(--muted);background:rgba(240,86,106,.06);box-shadow:inset 3px 0 0 rgba(240,86,106,.55)}
+.nd-gegen{margin:0 0 8px;cursor:pointer}
+.nf-gegen > span:not(.av),.nd-gegen > span:not(.av){flex:1 1 auto;min-width:0}
+.nf-gegen b,.nd-gegen b{color:var(--ink)}
+.nf-gegen b.r,.nd-gegen b.r{font-family:'Sometype Mono',monospace;color:var(--red);white-space:nowrap}
+.nf-gegen .av,.nd-gegen .av{--av:20px;width:20px;height:20px;font-size:8px;flex:0 0 auto}
 .sp-tg-z b.g{color:var(--acid)}.sp-tg-z b.r{color:var(--red)}
 
 .sp-ku{padding:9px 13px 9px;border-top:1px solid var(--line)}
@@ -5630,7 +5637,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.12.6d677815';
+const BUILD_VERSION='2026.10.12.0a8babd0';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -20801,6 +20808,30 @@ function _consolidateStories(list){
   });
   let aus = _consolidateStoriesLegacy(vorbereitet);
 
+  {
+    const potdJeTag = new Map();
+    aus.forEach(s => { const d = s.dataRef || {};
+      if(d.type === 'potd') potdJeTag.set(d.dayKey || tagKey(s.when), s); });
+    const weg = new Set(), dazu = new Map();
+    aus.forEach(s => {
+      const d = s.dataRef || {};
+      if(d.type !== 'elo_swing' || !d.pid) return;
+      const p = potdJeTag.get(tagKey(s.when));
+      if(!p) return;
+      const pd = p.dataRef || {};
+      if(pd.playerId === d.pid || (pd.playerIds || []).includes(d.pid)) return;
+      weg.add(s.id);
+      dazu.set(p.id, {id:s.id, pid:d.pid, delta:d.delta, title:s.title, desc:s.desc});
+    });
+    if(weg.size) aus = aus.filter(s => !weg.has(s.id)).map(s => {
+      const g = dazu.get(s.id);
+      if(!g) return s;
+      const d = s.dataRef || {};
+      return Object.assign({}, s, {dataRef:Object.assign({}, d, {gegenstueck:g,
+        memberIds:[...new Set((d.memberIds || [s.id]).concat([g.id]))]})});
+    });
+  }
+
   aus = aus.map(s => {
     const d = (s && s.dataRef) || {};
     if(d.type !== 'sammel' || d.quelle !== 'tafel' || !Array.isArray(d.teile)) return s;
@@ -22353,6 +22384,9 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
     const pid = d.playerId || (Array.isArray(d.playerIds) ? d.playerIds[0] : null);
     gesicht = `<div class="nf-gr-l">${av(pid, 52)}</div>`;
     if(d.type === 'potd') fuss = _spTagBild(_spTagDaten(s));
+    const g = d.type === 'potd' && d.gegenstueck;
+    if(g && pmap()[g.pid]) fuss += `<div class="nf-gegen">${_spChip(g.pid)}<span><b>${esc(_spName(g.pid))}</b> gibt am meisten ab</span>`
+      + `<b class="num r">${_spVz(Number(g.delta) || 0)} Elo</b></div>`;
     if(!fuss) fuss = _newsZahlband([
       {v: d.wr != null ? Math.round(d.wr * 100) + ' %' : null, l:'Siegquote', f:'g'},
       {v: (d.wins != null && d.games != null) ? d.wins + ' : ' + (d.games - d.wins) : null,
@@ -25781,7 +25815,13 @@ function _ndPotdBlatt(s){
   const liste = _newsTagPartien(d.dayKey, pids);
   const bahn = _ndTagesbahn(pids, liste);
   const ab = (t, html) => html ? `<div class="nd-section">${esc(t)}</div>${html}` : '';
-  return {kopf, mitte:ab('Das Feld des Tages', balken) + ab(pids.length > 1 ? 'Der Tag der Tagessieger' : 'Der Tag in Partien', bahn)};
+  const g = d.gegenstueck;
+  const gegen = g && pm[g.pid] ? `<div class="nd-gegen" data-pid="${esc(g.pid)}">${_spChip(g.pid)}`
+      + `<span><b>${esc(_spName(g.pid))}</b> gibt an diesem Tag mehr Elo ab als jeder andere</span>`
+      + `<b class="num r">${_spVz(Number(g.delta) || 0)} Elo</b></div>`
+      + _ndTagesbahn([g.pid], _newsTagPartien(d.dayKey, [g.pid])) : '';
+  return {kopf, mitte:ab('Das Feld des Tages', balken) + ab(pids.length > 1 ? 'Der Tag der Tagessieger' : 'Der Tag in Partien', bahn)
+    + ab('Der härteste Tag', gegen)};
 }
 
 function _ndEndspurtBlatt(s){

@@ -1461,10 +1461,12 @@ const _stabil = JSON.parse(K.eval(`JSON.stringify((function(){
       _cache._consolFrom = null; _cache._frischVon = null;
       const sicht = getStoriesCache().filter(s => tagKey(s.when) === ziel);
       // Vertreten ist eine Karte, wenn sie selbst dasteht — oder als Zeile
-      // einer Sammelkarte desselben Tages.
+      // einer Sammelkarte desselben Tages, oder als Mitglied einer Karte,
+      // die sie trägt (der härteste Tag auf dem Spieler des Tages).
       const drin = new Set();
       sicht.forEach(s => { drin.add(s.id);
-        ((s.dataRef||{}).teile||[]).forEach(t => { if(t.id) drin.add(t.id); }); });
+        ((s.dataRef||{}).teile||[]).forEach(t => { if(t.id) drin.add(t.id); });
+        ((s.dataRef||{}).memberIds||[]).forEach(id => drin.add(id)); });
       // Die Aussage einer Karte: was fuer ein Ereignis und worum es geht. Die
       // Beteiligten stehen NICHT darin — wechselt der groesste Ausschlag des
       // Tages von einem Spieler zum naechsten, ist das dieselbe Aussage mit
@@ -4322,6 +4324,29 @@ ok(_etik.marken.indexOf('Runde Marken für ') === 0,
 ok(_etik.n > 10 && _etik.falsch.length === 0,
    'jede Schlagzeile einer Partie nennt höchstens drei Anlässe, jeden mit Namen, und keine Pleite vor einem Sieg, auch nicht in den Zeilen',
    _etik.falsch.slice(0, 3).join(' | ') || _etik.n + ' Bündel');
+
+// ── Der härteste Tag gehört zum Spieler des Tages ──────────────────────
+// „Harter Tag für Leo" stand als eigene rote Karte eine Minute unter dem
+// Spieler des Tages: dieselbe Frage, wer den Tag geprägt hat, auf zwei
+// Karten. Er steht jetzt als Gegenstück auf dessen Karte; die Meldung reist
+// mit und geht nicht verloren.
+const _gegen = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  _cache._stories = roh.slice().sort((a,b)=>new Date(b.when)-new Date(a.when));
+  _cache._consolFrom = null; _cache._frischVon = null;
+  const st = getStoriesCache();
+  const swing = roh.filter(s => (s.dataRef||{}).type === 'elo_swing');
+  const potdTage = new Set(st.filter(s => (s.dataRef||{}).type === 'potd').map(s => tagKey(s.when)));
+  const allein = st.filter(s => (s.dataRef||{}).type === 'elo_swing' && potdTage.has(tagKey(s.when))).map(s => s.title);
+  const mit = st.filter(s => (s.dataRef||{}).gegenstueck);
+  const verloren = swing.filter(w => !st.some(s => s.id === w.id || ((s.dataRef||{}).memberIds || []).includes(w.id))).map(w => w.id);
+  const zeile = mit.every(s => _newsCardHtmlM2(s, false, false).indexOf('class="nf-gegen"') >= 0
+    && (_newsDetailBody(s) || '').indexOf('nd-gegen') >= 0);
+  return {swing:swing.length, mit:mit.length, allein, verloren, zeile};
+})())`));
+ok(_gegen.swing > 0 && _gegen.mit === _gegen.swing && !_gegen.allein.length && !_gegen.verloren.length && _gegen.zeile,
+   'der härteste Tag steht auf der Karte und im Blatt des Spielers des Tages, nicht daneben, und geht nicht verloren',
+   JSON.stringify(_gegen));
 
 // ── Woher die Zahl der Laufbahn kommt ─────────────────────────────────
 // Die Zahl neben einem Spieler ist die Bewegung des ganzen Spieltags über
