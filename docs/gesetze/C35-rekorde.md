@@ -116,7 +116,11 @@ mit fünf Toren verliert, stand bei null Prozent und damit an der Spitze. Er
 heißt jetzt **„Der Widerstand"** und misst den mittleren Rückstand JEDER
 Niederlage. „Der Wiedereinstieg" maß die Quote im ersten Spiel nach einer
 Pause und hielt damit, wer ohnehin gewinnt; er misst jetzt den Abstand
-dieser Rückkehrspiele zu den übrigen eigenen Partien.
+dieser Rückkehrspiele zu den übrigen eigenen Partien. Eine Pause sind sechs
+volle Tage (`REKORD_PAUSE_STUNDEN`, eine Zahl für Rechnung, Bedingung und
+Erklärung): bei drei Tagen war fast jede Woche eine Rückkehr. Nach sechs
+Tagen kommen nur zwei Spieler auf acht Rückkehrspiele, also verlangen
+Wiedereinstieg und Rost vier.
 **Aktuelle Form ist ein festes Endfenster und nie der beste Abschnitt.**
 Sieben Rekorde stehen auf den letzten 10, 20, 25 oder 50 eigenen
 Partien. Der beste Zwanzigerblock IRGENDWO in einer Laufbahn gehörte immer
@@ -141,7 +145,7 @@ abgefragt, der Text steht in der Zeile.
 **Zwölf Gegenpaare messen dieselbe Frage von zwei Seiten** und tragen
 dieselbe Mindestbasis: sonst wäre eine Hälfte leichter zu halten als die
 andere. Keines ist mehr je Seite geeicht: Unaufhaltsamer und
-Durststrecke verlangen ihr erstes Glied, Wiedereinstieg und Rost acht
+Durststrecke verlangen ihr erstes Glied, Wiedereinstieg und Rost vier
 Rückkehrspiele, Aufschwung und Abschwung fünfzig Partien.
 **Ein Rekord hat keine Wertlatte, nur eine Stichprobe.** Der Rekord ist
 der beste Wert, den es gibt, und nicht der beste über einer Latte. Siebzehn Rekorde trugen eine solche Latte — in Prozent („mindestens

@@ -156,6 +156,11 @@ const CHRONIK_MIN_TAGE = 5;
 const ST_TEIL = 5;
 
 const pct = v => Math.round(v * 100);
+// Was „eine Pause" heisst: sechs volle Tage ohne eigenes Match. Bei drei
+// Tagen war fast jede Woche eine Rueckkehr, und gefragt ist die nach einer
+// echten Pause. Die Zahl steht EINMAL: Bedingung, Erklaerung und Rechnung
+// lesen sie, sonst nennen zwei Stellen irgendwann zwei Schwellen [§C27].
+const REKORD_PAUSE_STUNDEN = 144;
 // Ein Abstand in Prozentpunkten mit Vorzeichen; was auf null rundet, steht
 // ohne eins da.
 const _ppZeichen = v => { const d = Math.round(v * 100); return d > 0 ? '+' + d : d < 0 ? '−' + (-d) : '0'; };
@@ -758,10 +763,12 @@ const DISZIPLINEN = [
     allzeit:{
       kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, jede Rückkehr',
-      mind:'8 Rückkehrspiele',
-      wie:'Ein Rückkehrspiel ist die erste eigene Partie nach 72 vollständigen Stunden ohne eigenes Match. Die Siegquote dieser Rückkehrspiele wird gegen die Siegquote aller übrigen eigenen Partien gestellt. Der Wert ist der Abstand in Prozentpunkten. Gerechnet wird mit dem Abstand der Zeitpunkte und nicht mit Kalendertagen; die allererste Partie einer Laufbahn zählt nicht mit.',
-      cond:'Größter Vorsprung in der ersten Partie nach 72 Stunden Pause gegenüber den übrigen Partien, ab 8 Rückkehrspielen',
-      val:p => (p.weDelta != null && p.weN >= 8 && pct(p.weDelta) > 0) ? p.weDelta : null,
+      // Vier Rückkehrspiele und nicht acht: nach sechs Tagen Pause kamen an
+      // den echten Partien nur zwei Spieler auf acht, und der Rost blieb leer.
+      mind:'4 Rückkehrspiele',
+      wie:`Ein Rückkehrspiel ist die erste eigene Partie nach ${REKORD_PAUSE_STUNDEN} vollständigen Stunden, also ${REKORD_PAUSE_STUNDEN / 24} Tagen, ohne eigenes Match. Die Siegquote dieser Rückkehrspiele wird gegen die Siegquote aller übrigen eigenen Partien gestellt. Der Wert ist der Abstand in Prozentpunkten. Gerechnet wird mit dem Abstand der Zeitpunkte und nicht mit Kalendertagen; die allererste Partie einer Laufbahn zählt nicht mit.`,
+      cond:`Größter Vorsprung in der ersten Partie nach ${REKORD_PAUSE_STUNDEN / 24} Tagen Pause gegenüber den übrigen Partien, ab 4 Rückkehrspielen`,
+      val:p => (p.weDelta != null && p.weN >= 4 && pct(p.weDelta) > 0) ? p.weDelta : null,
       ev:(p,v) => `+${Math.round(v*100)} %-Punkte · ${pct(p.weW / p.weN)} % in ${p.weN} Rückkehrspielen, sonst ${pct(p.weRaus)} %`
     }},
   // Wer den Wechsel zwischen Sturm und Abwehr besser verkraftet als sein
@@ -1454,10 +1461,10 @@ const DISZIPLINEN = [
     allzeit:{
       kammer:'shame', basis:0, offen:true,
       zeitraum:'Ganze Laufbahn, jede Rückkehr',
-      mind:'8 Rückkehrspiele',
-      wie:'Ein Rückkehrspiel ist die erste eigene Partie nach 72 vollständigen Stunden ohne eigenes Match. Die Siegquote dieser Rückkehrspiele wird gegen die Siegquote aller übrigen eigenen Partien gestellt. Der Wert ist der Rückstand in Prozentpunkten.',
-      cond:'Größter Rückstand in der ersten Partie nach 72 Stunden Pause gegenüber den übrigen Partien, ab 8 Rückkehrspielen',
-      val:p => (p.weDelta != null && p.weN >= 8 && pct(p.weDelta) < 0) ? -p.weDelta : null,
+      mind:'4 Rückkehrspiele',
+      wie:`Ein Rückkehrspiel ist die erste eigene Partie nach ${REKORD_PAUSE_STUNDEN} vollständigen Stunden, also ${REKORD_PAUSE_STUNDEN / 24} Tagen, ohne eigenes Match. Die Siegquote dieser Rückkehrspiele wird gegen die Siegquote aller übrigen eigenen Partien gestellt. Der Wert ist der Rückstand in Prozentpunkten.`,
+      cond:`Größter Rückstand in der ersten Partie nach ${REKORD_PAUSE_STUNDEN / 24} Tagen Pause gegenüber den übrigen Partien, ab 4 Rückkehrspielen`,
+      val:p => (p.weDelta != null && p.weN >= 4 && pct(p.weDelta) < 0) ? -p.weDelta : null,
       ev:(p,v) => `−${Math.round(v*100)} %-Punkte · ${pct(p.weW / p.weN)} % in ${p.weN} Rückkehrspielen, sonst ${pct(p.weRaus)} %`
     }},
   {id:'abschwung', name:'Der Abschwung', short:'Abschwung', ic:'abschwung', tone:'red', art:'schatten',

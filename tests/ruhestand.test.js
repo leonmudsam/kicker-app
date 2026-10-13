@@ -141,7 +141,8 @@ console.log('=== KEINE ROHE HIDDEN-ABFRAGE ===');
 
 const stand = () => ({
   rang: J(`getPlayerRank('${MARTIN}')`),
-  prestige: J(`(p=>({punkte:p.punkte,stufe:p.stufe,grad:p.grad,platz:p.platz,von:p.von,teile:p.teile}))(prestigeOf('${MARTIN}'))`),
+  prestige: J(`(p=>({punkte:p.punkte,stufe:p.stufe,grad:p.grad,platz:p.platz,von:p.von,teile:p.teile,
+    az:(p.quellen||[]).filter(q=>q.q==='auszeichnung').reduce((a,q)=>a+q.p,0)}))(prestigeOf('${MARTIN}'))`),
   rekorde: J(`chroniclesOfPlayer('${MARTIN}').map(r=>r.id)`),
   juli: J("seasonTitles('2026-07')"),
   juliRang: J("saisonRang('2026-07')"),
@@ -356,7 +357,10 @@ ok(J('Object.keys(getAllPlayerRanks())').includes(MARTIN), 'zurück in der Ewige
   ok(weg.length > 0 && gleich(Z.rekorde.slice().sort(), live.slice().sort()),
      'nach der Rückkehr hält er die Rekorde, die ihm heute gehören, nicht die vom Abschied',
      'weg: ' + weg.join(', ') + ' · neu: ' + Z.rekorde.filter(x => !VOR.rekorde.includes(x)).join(', '));
-  ok(Z.prestige.teile.auszeichnung === VOR.prestige.teile.auszeichnung && Z.prestige.teile.rekord !== VOR.prestige.teile.rekord
+  // Verglichen wird die ungerundete Summe: die drei angezeigten Teile werden
+  // mit Restverteilung gerundet, damit sie zusammen die Gesamtzahl ergeben,
+  // und ein halber Punkt wandert dabei mit den Rekorden zwischen den Teilen.
+  ok(Math.abs(Z.prestige.az - VOR.prestige.az) < 1e-6 && Z.prestige.az > 0 && Z.prestige.teile.rekord !== VOR.prestige.teile.rekord
      && Z.prestige.punkte === Z.prestige.teile.auszeichnung + Z.prestige.teile.monat + Z.prestige.teile.rekord,
      'sein Prestige rechnet die Rekorde neu, Auszeichnungen bleiben', VOR.prestige.punkte + ' beim Abschied, ' + Z.prestige.punkte + ' zurück');
 }

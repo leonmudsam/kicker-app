@@ -99,15 +99,23 @@ const PRESTIGE_AUSZEICHNUNG = {
 // und der soll mehr tragen als Menge. Mit dem Wert ihrer Klasse brachten 300
 // Siege 25 Prestige — weniger als drei Spieler des Tages. Ihre Abnahme ist
 // die der Klasse; sie greift nie, weil jeder Meilenstein einmal fällt.
+//
+// Der Meister der Saison steht ganz oben, gleichauf mit 300 Siegen: er ist
+// die höchste Auszeichnung, die eine Saison vergibt, und lag mit 100 unter
+// der 20er Serie und der Dynastie. Das Team der Saison steht neben der 15er
+// Serie. Die Siegesserien bilden eine Treppe — 15, 40, 75, 120 für fünf,
+// zehn, fünfzehn und zwanzig Siege —; mit dem Wert ihrer Klasse brachte die
+// 10er Serie 25 und die 5er 3, und die Stufen dazwischen sagten nichts.
+// Ihre Abnahme bleibt die ihrer Klasse.
 const PRESTIGE_AUSZEICHNUNG_SPEZIAL = {
+  champion:       {basis:150, abnahme:0.05},
   wins200:        {basis:150, abnahme:0.18},
   streak20:       {basis:120, abnahme:0.10},
   dynasty_600:    {basis:120, abnahme:0.10},
-  champion:       {basis:100, abnahme:0.05},
   games250:       {basis:100, abnahme:0.18},
   streak15:       {basis:75,  abnahme:0.10},
+  team_of_season: {basis:75,  abnahme:0.10},
   dominator_400:  {basis:70,  abnahme:0.10},
-  team_of_season: {basis:70,  abnahme:0.10},
   award_collector:{basis:70,  abnahme:0.10},
   untouchable:    {basis:70,  abnahme:0.10},
   def50:          {basis:60,  abnahme:0.25},
@@ -116,7 +124,9 @@ const PRESTIGE_AUSZEICHNUNG_SPEZIAL = {
   mr_perfect:     {basis:50,  abnahme:0.10},
   allrounder:     {basis:50,  abnahme:0.18},
   games150:       {basis:50,  abnahme:0.25},
+  streak10:       {basis:40,  abnahme:0.18},
   perfect_win:    {basis:40,  abnahme:0.15},
+  streak5:        {basis:15,  abnahme:0.25},
   potd:           {basis:10,  abnahme:0.25},
   games25:        {basis:10,  abnahme:0.25},
   first_match:    {basis:5,   abnahme:0.25},

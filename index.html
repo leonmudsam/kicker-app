@@ -5701,7 +5701,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.12.3f8f06b8';
+const BUILD_VERSION='2026.10.13.a5bdd027';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -27709,6 +27709,7 @@ const CHRONIK_MIN_TAGE = 5;
 const ST_TEIL = 5;
 
 const pct = v => Math.round(v * 100);
+const REKORD_PAUSE_STUNDEN = 144;
 const _ppZeichen = v => { const d = Math.round(v * 100); return d > 0 ? '+' + d : d < 0 ? '−' + (-d) : '0'; };
 const _stMittel = a => a.reduce((x, y) => x + y, 0) / a.length;
 const _stEng = s => Math.abs(s.gf - s.ga) <= 2;
@@ -28170,10 +28171,10 @@ const DISZIPLINEN = [
     allzeit:{
       kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, jede Rückkehr',
-      mind:'8 Rückkehrspiele',
-      wie:'Ein Rückkehrspiel ist die erste eigene Partie nach 72 vollständigen Stunden ohne eigenes Match. Die Siegquote dieser Rückkehrspiele wird gegen die Siegquote aller übrigen eigenen Partien gestellt. Der Wert ist der Abstand in Prozentpunkten. Gerechnet wird mit dem Abstand der Zeitpunkte und nicht mit Kalendertagen; die allererste Partie einer Laufbahn zählt nicht mit.',
-      cond:'Größter Vorsprung in der ersten Partie nach 72 Stunden Pause gegenüber den übrigen Partien, ab 8 Rückkehrspielen',
-      val:p => (p.weDelta != null && p.weN >= 8 && pct(p.weDelta) > 0) ? p.weDelta : null,
+      mind:'4 Rückkehrspiele',
+      wie:`Ein Rückkehrspiel ist die erste eigene Partie nach ${REKORD_PAUSE_STUNDEN} vollständigen Stunden, also ${REKORD_PAUSE_STUNDEN / 24} Tagen, ohne eigenes Match. Die Siegquote dieser Rückkehrspiele wird gegen die Siegquote aller übrigen eigenen Partien gestellt. Der Wert ist der Abstand in Prozentpunkten. Gerechnet wird mit dem Abstand der Zeitpunkte und nicht mit Kalendertagen; die allererste Partie einer Laufbahn zählt nicht mit.`,
+      cond:`Größter Vorsprung in der ersten Partie nach ${REKORD_PAUSE_STUNDEN / 24} Tagen Pause gegenüber den übrigen Partien, ab 4 Rückkehrspielen`,
+      val:p => (p.weDelta != null && p.weN >= 4 && pct(p.weDelta) > 0) ? p.weDelta : null,
       ev:(p,v) => `+${Math.round(v*100)} %-Punkte · ${pct(p.weW / p.weN)} % in ${p.weN} Rückkehrspielen, sonst ${pct(p.weRaus)} %`
     }},
   {id:'umsteiger', name:'Der Umsteiger', short:'Umsteiger', ic:'umstieg', tone:'gold', art:'leistung',
@@ -28766,10 +28767,10 @@ const DISZIPLINEN = [
     allzeit:{
       kammer:'shame', basis:0, offen:true,
       zeitraum:'Ganze Laufbahn, jede Rückkehr',
-      mind:'8 Rückkehrspiele',
-      wie:'Ein Rückkehrspiel ist die erste eigene Partie nach 72 vollständigen Stunden ohne eigenes Match. Die Siegquote dieser Rückkehrspiele wird gegen die Siegquote aller übrigen eigenen Partien gestellt. Der Wert ist der Rückstand in Prozentpunkten.',
-      cond:'Größter Rückstand in der ersten Partie nach 72 Stunden Pause gegenüber den übrigen Partien, ab 8 Rückkehrspielen',
-      val:p => (p.weDelta != null && p.weN >= 8 && pct(p.weDelta) < 0) ? -p.weDelta : null,
+      mind:'4 Rückkehrspiele',
+      wie:`Ein Rückkehrspiel ist die erste eigene Partie nach ${REKORD_PAUSE_STUNDEN} vollständigen Stunden, also ${REKORD_PAUSE_STUNDEN / 24} Tagen, ohne eigenes Match. Die Siegquote dieser Rückkehrspiele wird gegen die Siegquote aller übrigen eigenen Partien gestellt. Der Wert ist der Rückstand in Prozentpunkten.`,
+      cond:`Größter Rückstand in der ersten Partie nach ${REKORD_PAUSE_STUNDEN / 24} Tagen Pause gegenüber den übrigen Partien, ab 4 Rückkehrspielen`,
+      val:p => (p.weDelta != null && p.weN >= 4 && pct(p.weDelta) < 0) ? -p.weDelta : null,
       ev:(p,v) => `−${Math.round(v*100)} %-Punkte · ${pct(p.weW / p.weN)} % in ${p.weN} Rückkehrspielen, sonst ${pct(p.weRaus)} %`
     }},
   {id:'abschwung', name:'Der Abschwung', short:'Abschwung', ic:'abschwung', tone:'red', art:'schatten',
@@ -30078,7 +30079,6 @@ const CHRON_KINDS = {
             satz:'Die Kehrseite. Sie bringt kein Prestige'},
 };
 const CHRON_MIN_GAMES = 30;
-const REKORD_PAUSE_STUNDEN = 72;
 const REKORD_PAUSE_MS = REKORD_PAUSE_STUNDEN * 3600 * 1000;
 
 const _chronRoh = DISZIPLINEN.filter(d => d.allzeit).map(d => ({
@@ -32353,14 +32353,14 @@ const PRESTIGE_AUSZEICHNUNG = {
   negative: {basis:0,  abnahme:1}
 };
 const PRESTIGE_AUSZEICHNUNG_SPEZIAL = {
+  champion:       {basis:150, abnahme:0.05},
   wins200:        {basis:150, abnahme:0.18},
   streak20:       {basis:120, abnahme:0.10},
   dynasty_600:    {basis:120, abnahme:0.10},
-  champion:       {basis:100, abnahme:0.05},
   games250:       {basis:100, abnahme:0.18},
   streak15:       {basis:75,  abnahme:0.10},
+  team_of_season: {basis:75,  abnahme:0.10},
   dominator_400:  {basis:70,  abnahme:0.10},
-  team_of_season: {basis:70,  abnahme:0.10},
   award_collector:{basis:70,  abnahme:0.10},
   untouchable:    {basis:70,  abnahme:0.10},
   def50:          {basis:60,  abnahme:0.25},
@@ -32369,7 +32369,9 @@ const PRESTIGE_AUSZEICHNUNG_SPEZIAL = {
   mr_perfect:     {basis:50,  abnahme:0.10},
   allrounder:     {basis:50,  abnahme:0.18},
   games150:       {basis:50,  abnahme:0.25},
+  streak10:       {basis:40,  abnahme:0.18},
   perfect_win:    {basis:40,  abnahme:0.15},
+  streak5:        {basis:15,  abnahme:0.25},
   potd:           {basis:10,  abnahme:0.25},
   games25:        {basis:10,  abnahme:0.25},
   first_match:    {basis:5,   abnahme:0.25},

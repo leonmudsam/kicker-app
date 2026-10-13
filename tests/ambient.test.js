@@ -5825,8 +5825,9 @@ const _rekFelder = JSON.parse(K.eval(`JSON.stringify((function(){
   // davon in diesem Lauf eine Karte haben. Der Lauf sieht nur jeden vierten
   // Spieltag; ein Rekord, der nur an einem anderen Tag wechselt, fiele
   // heraus, und dann gehoert er nicht in diese Liste.
-  const NEU = ['damage_control','wiedereinstieg','rollencoup',
-               'umsteiger','aufschwung','glanztag'];
+  // Der Wiedereinstieg fehlt: seit eine Pause sechs Tage dauert, wechselt er
+  // an den echten Partien nur an Tagen, die dieser Lauf nicht sieht.
+  const NEU = ['damage_control','rollencoup','umsteiger','aufschwung','glanztag'];
   const neuGesehen = NEU.filter(id => karten.some(s => s.dataRef.rekordId === id));
   return {n:karten.length, fehlt:fehlt.slice(0, 6), falscherFall:falscherFall.slice(0, 3),
           ohneZeit:ohneZeit.slice(0, 3), basisFalsch:basisFalsch.slice(0, 3),
