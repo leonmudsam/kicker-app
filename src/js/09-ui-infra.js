@@ -214,6 +214,8 @@ function _renderNachEingabe(){
     });
   }
   root.setAttribute('aria-busy','true');
+  // Ein Reiter, der über die Leiste betreten wird, baut sich auf [§C43].
+  if(root._renderTab && root._renderTab!==tab) _reiterBetreten=tab;
   // Nur beim Wechsel des Reiters: die alte Ergebnisliste darf kein Profil
   // oder Match mehr öffnen. Filter derselben Ansicht bleiben bedienbar,
   // damit ein zweiter schneller Tap seine erste Wahl ersetzen kann.
@@ -240,11 +242,14 @@ function render(){
   const geruest=!warTab && root.firstElementChild && root.firstElementChild.classList.contains('geruest')
     ? root.firstElementChild : null;
   if(!behalten){
+    // Das Licht an den Kanten läuft über neue Daten hinweg weiter [§C43].
+    const licht=warTab===tab?_lichtMerken(root):null;
     root.innerHTML=html;
     bind();
     root._renderHtml=html;
     root._renderVersion=_cache.version;
     root._renderNode=root.firstElementChild;
+    if(licht&&licht.length)_lichtZurueck(root,licht);
   }
   root._renderTab=tab;
   schlittenFahren(root);

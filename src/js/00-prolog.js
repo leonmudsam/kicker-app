@@ -28,9 +28,9 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 (function(){
 "use strict";
 if(SUPABASE_URL.startsWith("HIER")||SUPABASE_KEY.startsWith("HIER")){
-  // Ohne Zugangsdaten startet nichts, was das Startbild ablösen könnte
-  // [§C43]; es läge sonst acht Sekunden über dem Hinweis.
-  const sb=document.getElementById('startBild'); if(sb) sb.remove();
+  // Die Oberfläche steht schon im ersten Bild [§C43]; ohne Zugangsdaten
+  // gibt es keine Liga darin, nur den Hinweis.
+  document.getElementById('app').style.display='none';
   document.getElementById('setupGate').style.display='block'; return;
 }
 document.getElementById('app').style.display='block';

@@ -273,13 +273,20 @@ async function neueSeite(ctx){
     await q.page.addInitScript(() => {
       window.__langsam = 3000;
       window.__vorStart = K => { window.__K = K; };
+      // Verglichen wird das Markup der Liga, nicht ihr Ankommen: das Licht
+      // und der Aufbau [§C43] laufen über die Zeit und gehen von selbst.
+      window.__ohneVorfuehrung = el => { const c = el.cloneNode(true);
+        c.querySelectorAll('.kl, .kl-schein, .glanz-einmal').forEach(e => e.remove());
+        c.querySelectorAll('.bau').forEach(e => { e.classList.remove('bau'); e.style.animationDelay = '';
+          if(e.getAttribute('style') === '') e.removeAttribute('style'); });
+        return c.innerHTML; };
     });
     const t0 = Date.now();
     await q.page.goto(BASIS);
     await q.page.waitForFunction(() => document.querySelector('#main .rlist'), null, {timeout:10000});
     const schnell = Date.now() - t0;
     const vorLive = await q.page.evaluate(() => ({
-      schreib:window.__K('window.__schreib.length'), html:document.getElementById('main').innerHTML,
+      schreib:window.__K('window.__schreib.length'), html:window.__ohneVorfuehrung(document.getElementById('main')),
       conn:(document.getElementById('connText')||{}).textContent || '', knoten:!!(window.__knoten = document.getElementById('main').firstElementChild),
       stories:window.__K('Array.isArray(_cache._stories) ? _cache._stories.length : 0')}));
     ok(schnell < 2500, `Die Liga steht aus dem Stand, bevor das Netz antwortet (${schnell} ms bei 3000 ms Netz)`);
@@ -287,7 +294,7 @@ async function neueSeite(ctx){
     ok(vorLive.conn === 'verbinde…', 'Bis der Live-Abruf da ist, steht „verbinde…“');
     ok(vorLive.stories > 20, 'Der Feed hat seine Stories schon aus dem Stand');
     await q.page.waitForFunction(() => window.__K('_lastLoadFingerprint !== null && window.__schreib.some(x => x.startsWith("stories."))'), null, {timeout:60000});
-    const nachLive = await q.page.evaluate(() => ({html:document.getElementById('main').innerHTML,
+    const nachLive = await q.page.evaluate(() => ({html:window.__ohneVorfuehrung(document.getElementById('main')),
       gleicherKnoten:document.getElementById('main').firstElementChild === window.__knoten}));
     ok(nachLive.html === vorLive.html, 'Der Live-Abruf mit denselben Daten zeigt dasselbe Markup wie der Stand');
     ok(nachLive.gleicherKnoten, 'Derselbe Stand wird nicht ein zweites Mal gezeichnet');
@@ -325,9 +332,8 @@ async function neueSeite(ctx){
     ok(await r.page.evaluate(() => window.__haupt >= 1), 'Ohne Worker rechnet der Hauptthread wie bisher');
     await r.page.close();
 
-    // ── Das Startbild [§C43] ──────────────────────────────────────────
-    // Ein eigener Kontext ohne Stand und ohne „zuletzt offen": die Starts
-    // oben haben beides hinterlassen.
+    // ── Das Öffnen [§C43] ─────────────────────────────────────────────
+    // Ein eigener Kontext ohne Stand: die Starts oben haben einen hinterlassen.
     const bctx = await browser.newContext({viewport:{width:390, height:844}, serviceWorkers:'block'});
     await bctx.addInitScript(({daten, jetzt}) => {
       window.__startDaten = daten;
@@ -338,66 +344,67 @@ async function neueSeite(ctx){
     }, {daten:DATEN, jetzt:JETZT});
     anfragen.length = 0;
     // Erster Start: die Bibliothek kommt erst nach 1,2 s, und so lange wird
-    // kein Skript der App übersetzt. Das Startbild steht trotzdem, mit
-    // seinem Zeichen, ohne eigene Anfrage.
+    // kein Skript der App übersetzt. Die Kopfleiste steht trotzdem, mit dem
+    // Zeichen, ohne eigene Anfrage — und kein Bild davor in der Mitte.
     const e1 = await neueSeite(bctx);
     await e1.page.route('**/attrappe.js', async r => { await new Promise(f => setTimeout(f, 1200)); await r.continue(); });
     await e1.page.addInitScript(() => { window.__langsam = 1500; });
     await e1.page.goto(BASIS, {waitUntil:'commit'});
     await e1.page.waitForTimeout(500);
     const vorSkript = await e1.page.evaluate(() => {
-      const sb = document.getElementById('startBild'), z = sb && sb.querySelector('.sb-zeichen');
-      const r = sb ? sb.getBoundingClientRect() : {width:0, height:0};
-      return {skript:!!window.__K, da:!!sb, deckt:r.width >= innerWidth && r.height >= innerHeight,
-        deckkraft:sb ? getComputedStyle(sb).opacity : '', bild:z ? getComputedStyle(z).backgroundImage.slice(0, 27) : ''};
+      const leiste = document.querySelector('.appbar'), z = document.querySelector('.logo-mark');
+      const r = leiste ? leiste.getBoundingClientRect() : {height:0};
+      const mitte = document.elementFromPoint(innerWidth / 2, innerHeight / 2);
+      return {skript:!!window.__K, leiste:r.height > 40 && getComputedStyle(document.getElementById('app')).display !== 'none',
+        bild:z ? getComputedStyle(z).backgroundImage.slice(0, 27) : '',
+        mitte:mitte ? (mitte.closest('#app') || mitte === document.body || mitte === document.documentElement ? 'frei' : mitte.className) : 'frei'};
     });
-    ok(!vorSkript.skript && vorSkript.da && vorSkript.deckt && vorSkript.deckkraft === '1' && vorSkript.bild === 'url("data:image/webp;base64',
-      'Das Startbild steht mit seinem Zeichen, bevor ein Skript der App läuft' + (vorSkript.skript ? ' (Skript lief schon)' : ''), JSON.stringify(vorSkript));
-    // Ohne Stand geht es ins Gerüst über, bis die Datenbank antwortet.
+    ok(!vorSkript.skript && vorSkript.leiste && vorSkript.bild === 'url("data:image/webp;base64' && vorSkript.mitte === 'frei',
+      'Die Kopfleiste steht mit dem Zeichen, bevor ein Skript der App läuft, ohne ein Bild davor ' + JSON.stringify(vorSkript));
+    // Ohne Stand steht das Gerüst, bis die Datenbank antwortet.
     await e1.page.waitForFunction(() => !!window.__K, null, {timeout:10000});
     await e1.page.waitForTimeout(400);
-    const geruest = await e1.page.evaluate(() => ({startbild:!!document.getElementById('startBild'),
-      geruest:!!document.querySelector('#main .geruest'), liga:!!document.querySelector('#main .rlist')}));
-    ok(!geruest.startbild && geruest.geruest && !geruest.liga, 'Ohne Stand auf dem Gerät steht das Gerüst der Liga, bis die Datenbank antwortet', JSON.stringify(geruest));
+    const geruest = await e1.page.evaluate(() => ({geruest:!!document.querySelector('#main .geruest'), liga:!!document.querySelector('#main .rlist')}));
+    ok(geruest.geruest && !geruest.liga, 'Ohne Stand auf dem Gerät steht das Gerüst der Liga, bis die Datenbank antwortet ' + JSON.stringify(geruest));
     await e1.page.waitForSelector('#main .rlist', {timeout:20000});
     await e1.page.waitForTimeout(600);
     ok(await e1.page.evaluate(() => !document.querySelector('.geruest')), 'Kommt die Liga, ist das Gerüst fort');
     for(let i = 0; i < 150 && !(await e1.page.evaluate(() => window.__K('_standLesen()').then(r => !!r))); i++) await e1.page.waitForTimeout(200);
-    ok(e1.fehler.length === 0, 'Erster Start mit Startbild ohne Seitenfehler' + (e1.fehler.length ? ': ' + e1.fehler[0] : ''));
+    ok(e1.fehler.length === 0, 'Erster Start ohne Seitenfehler' + (e1.fehler.length ? ': ' + e1.fehler[0] : ''));
     await e1.page.close();
-    // Mit Stand fliegt das Zeichen in die Kopfleiste; gelandet, fährt einmal
-    // Licht um seine Kante, und nach seiner Zeit ist nichts davon übrig.
+    // Mit Stand baut sich die Liga auf: Teile nacheinander, Licht im Metall
+    // um Platz 1 bis 3, um das Zeichen und um „Match eintragen". Nach ihrer
+    // Zeit ist nichts davon übrig, auch nicht im Markup.
+    const aufbauJetzt = p => p.evaluate(() => ({aufbau:document.documentElement.classList.contains('aufbau'),
+      teile:document.querySelectorAll('#main .bau').length,
+      metall:[...document.querySelectorAll('#main .rlist > .rrow > .kl')].map(k => (k.className.match(/kl-(gold|silber|bronze)/) || [, '?'])[1]).join(' '),
+      zeichen:document.querySelectorAll('.logo-mark > .kl').length, knopf:document.querySelectorAll('#fab > .kl').length}));
     const e2 = await neueSeite(bctx);
-    await e2.page.addInitScript(() => { window.__langsam = 1500; localStorage.removeItem('kicker_zuletzt_v1'); });
+    await e2.page.addInitScript(() => { window.__langsam = 1500; });
     await e2.page.goto(BASIS);
     await e2.page.waitForSelector('#main .rlist', {timeout:20000});
-    const fliegt = await e2.page.evaluate(() => ({startbild:!!document.getElementById('startBild'),
-      kopf:document.querySelector('.logo-mark').style.opacity}));
-    await e2.page.waitForTimeout(1000);
-    const gelandet = await e2.page.evaluate(() => ({startbild:!!document.getElementById('startBild'),
-      kopf:document.querySelector('.logo-mark').style.opacity, licht:document.querySelectorAll('.logo-mark > .kl.kl-zeichnen').length}));
-    ok(fliegt.startbild && fliegt.kopf === '0' && !gelandet.startbild && gelandet.kopf === '' && gelandet.licht === 1,
-      'Mit Stand fliegt das Zeichen in die Kopfleiste und wird dort mit Licht empfangen', JSON.stringify([fliegt, gelandet]));
-    await e2.page.waitForTimeout(5000);
-    ok(await e2.page.evaluate(() => document.querySelectorAll('.kl, .kl-schein').length === 0), 'Das Licht ist nach seiner Zeit wieder fort');
+    const a1 = await aufbauJetzt(e2.page);
+    ok(a1.aufbau && a1.teile >= 8 && a1.metall === 'gold silber bronze' && a1.zeichen === 1 && a1.knopf === 1,
+      'Beim Öffnen baut sich die Liga auf, mit Licht im Metall um Platz 1 bis 3 ' + JSON.stringify(a1));
+    await e2.page.waitForTimeout(6200);
+    const rest = await e2.page.evaluate(() => ({aufbau:document.documentElement.classList.contains('aufbau'),
+      reste:document.querySelectorAll('.bau, .kl, .kl-schein, .glanz-einmal, [style=""]').length}));
+    ok(!rest.aufbau && rest.reste === 0, 'Nach seiner Zeit ist vom Aufbau und vom Licht nichts übrig ' + JSON.stringify(rest));
     await e2.page.close();
-    // Wer gerade erst in der App war, bekommt kein Vorführen, nur ein Überblenden.
+    // Direkt wieder geöffnet: dieselbe Vorführung, jedes Mal.
     const e3 = await neueSeite(bctx);
-    await e3.page.addInitScript(() => { localStorage.setItem('kicker_zuletzt_v1', String(Date.now() - 60000)); });
     await e3.page.goto(BASIS);
     await e3.page.waitForSelector('#main .rlist', {timeout:20000});
-    await e3.page.waitForTimeout(600);
-    ok(await e3.page.evaluate(() => !document.getElementById('startBild') && !document.querySelector('.logo-mark .kl')),
-      'Eine Minute nach dem letzten Öffnen blendet das Startbild nur über');
+    const a3 = await aufbauJetzt(e3.page);
+    ok(a3.aufbau && a3.teile >= 8 && a3.metall === 'gold silber bronze', 'Auch direkt nach dem Schließen baut sich die Liga beim Öffnen wieder auf ' + JSON.stringify(a3));
     await e3.page.close();
-    // Bei Bewegungsruhe geht es mit dem ersten Bild, ohne Flug und ohne Licht.
+    // Bei Bewegungsruhe steht alles sofort, ohne Licht.
     const e4 = await neueSeite(bctx);
     await e4.page.emulateMedia({reducedMotion:'reduce'});
-    await e4.page.addInitScript(() => { localStorage.removeItem('kicker_zuletzt_v1'); });
     await e4.page.goto(BASIS);
     await e4.page.waitForSelector('#main .rlist', {timeout:20000});
-    ok(await e4.page.evaluate(() => !document.getElementById('startBild') && !document.querySelector('.kl:not(.kl-kreis), .kl-schein')),
-      'Bei Bewegungsruhe ist das Startbild mit dem ersten Bild fort, ohne Flug und ohne Licht');
+    const a4 = await aufbauJetzt(e4.page);
+    ok(!a4.aufbau && a4.teile === 0 && !a4.metall && !a4.zeichen, 'Bei Bewegungsruhe steht die Liga sofort, ohne Aufbau und ohne Licht ' + JSON.stringify(a4));
     await e4.page.close();
     ok(!anfragen.some(x => x.pfad === '/icon.png'), 'Der Start lädt das große Symbol nicht: das Zeichen steht in der Seite');
     await bctx.close();

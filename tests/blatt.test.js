@@ -3179,6 +3179,54 @@ const ok = (c, msg, det) => {
      JSON.stringify([me.stoss, me.reiterSchein]));
   ok(me.blatt === 'blattEin/backwards' && me.blattDanach === 'none',
      'ein Blatt blendet beim Öffnen ein und behält danach keine Verschiebung', me.blatt + ' · ' + me.blattDanach);
+  // Betritt man einen Reiter über die Leiste, baut er sich auf, und um
+  // Platz 1 bis 3 fährt Licht in ihrem Metall [§C43] — einmal je Reiter
+  // und Sitzung, nur über transform und opacity. Neue Daten im selben
+  // Reiter nehmen das Licht nicht mit: es läuft an derselben Stelle weiter.
+  // Nach seiner Zeit ist nichts davon übrig.
+  const betreten = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const bild = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const warte = ms => new Promise(r => setTimeout(r, ms));
+    const metall = () => [...document.querySelectorAll('#main .rlist > .rrow > .kl')]
+      .map(k => (k.className.match(/kl-(gold|silber|bronze)/) || [, '?'])[1]).join(' ');
+    const out = {};
+    K("closeSheet(true);tab='ranking';period='season';render()"); await bild();
+    document.querySelector('[data-nav="positions"]').click(); await warte(80); await bild();
+    out.teile = document.querySelectorAll('#main .bau').length;
+    out.metall = metall();
+    // Der Kegel jedes Lichts reicht über die ganze Kante seiner Karte.
+    out.gedeckt = [...document.querySelectorAll('#main .kl')].every(k =>
+      parseFloat(k.style.getPropertyValue('--kd')) >= Math.hypot(k.parentElement.offsetWidth, k.parentElement.offsetHeight));
+    const fremd = new Set();
+    document.getAnimations().forEach(a => {
+      const t = a.effect && a.effect.target;
+      if(!t || !t.closest || !t.closest('.bau, .kl, .kl-schein, .glanz-einmal')) return;
+      a.effect.getKeyframes().flatMap(k => Object.keys(k))
+        .filter(k => !['offset', 'computedOffset', 'easing', 'composite', 'transform', 'opacity'].includes(k))
+        .forEach(k => fremd.add((a.animationName || '?') + ':' + k));
+    });
+    out.fremd = [...fremd];
+    await warte(700);
+    // Wie ein Datenabruf: dieselben Töpfe, eine neue Version.
+    K('invalidateCache(LADEN_TOEPFE); render()');
+    out.nachNeuzeichnen = metall();
+    out.weiter = [...document.querySelectorAll('#main .rlist > .rrow > .kl')].every(k => parseFloat(k.style.getPropertyValue('--kv')) < 0);
+    await warte(5200);
+    out.rest = document.querySelectorAll('#main .bau, #main .kl, #main .kl-schein, #main .glanz-einmal').length;
+    document.querySelector('[data-nav="history"]').click(); await warte(80); await bild();
+    document.querySelector('[data-nav="positions"]').click(); await warte(80); await bild();
+    out.zweitesMal = metall();
+    K("tab='ranking';render()"); await bild();
+    return out;
+  });
+  ok(betreten.teile >= 5 && betreten.metall === 'gold silber bronze' && betreten.gedeckt,
+     'wer einen Reiter über die Leiste betritt, sieht ihn sich aufbauen und Licht im Metall um Platz 1 bis 3', JSON.stringify(betreten));
+  ok(betreten.fremd.length === 0, 'Aufbau und Licht bewegen nur transform und opacity', betreten.fremd.join(', '));
+  ok(betreten.nachNeuzeichnen === 'gold silber bronze' && betreten.weiter,
+     'neue Daten im selben Reiter nehmen das Licht nicht mit, es läuft an seiner Stelle weiter', JSON.stringify(betreten));
+  ok(betreten.rest === 0 && betreten.zweitesMal === '', 'nach seiner Zeit ist nichts übrig, und ein Reiter glänzt einmal je Sitzung',
+     JSON.stringify([betreten.rest, betreten.zweitesMal]));
   {
     await K("closeSheet(true);tab='ranking';period='season';render()");
     await page.waitForTimeout(1200);

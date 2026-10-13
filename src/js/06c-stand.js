@@ -85,7 +85,7 @@ async function _standSchreiben(roh, fp){
 async function _standZeigen(abrufFertig){
   const rec = await _standLesen();
   // Kein Stand: bis die Datenbank antwortet, steht das Gerüst [§C43].
-  if(!rec && !abrufFertig() && !_lastLoadFingerprint) _startbildGeruest();
+  if(!rec && !abrufFertig() && !_lastLoadFingerprint) _startGeruest();
   if(!rec || abrufFertig() || _lastLoadFingerprint) return false;
   _datenEinbauen(rec.roh);
   invalidateCache(LADEN_TOEPFE);

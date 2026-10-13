@@ -2,54 +2,65 @@
 
 ## Regel
 
-- **Das Startbild steht im ersten Bild.** Es ist festes Markup ganz oben in `src/index.html` (`#startBild`), kein Skript baut es; sein Zeichen ist dasselbe kleine Bild wie in der Kopfleiste (252 px WebP in der Seite, `01-shell.css`), ohne eigene Anfrage und ohne Einblenden. Bleibt das Skript aus, geht es nach acht Sekunden von selbst.
-- **Es wartet auf nichts.** Ist die Liga gezeichnet (`_bewegungNachRender` beim ersten Bild), fliegt das Zeichen an seinen Platz in der Kopfleiste und wird dort mit dem Kantenlicht empfangen. Hat das Gerät keinen Stand [§C42], geht es ins Gerüst der Liga über (`_startbildGeruest`), das ausblendet, sobald sie kommt; kommt nach 2,5 s kein Bild, ebenso.
-- **Zurückkommen ist kein Öffnen.** Liegt der letzte Gang in den Hintergrund weniger als fünf Minuten zurück (`kicker_zuletzt_v1`), blendet das Startbild nur über — kein Flug, kein Licht.
-- **Das Kantenlicht hat drei Bedeutungen und keine vierte** (`kantenlicht`, `.kl`) [§C41]: *zeichnen* — einmal herum, dann steht der Rahmen einige Sekunden: eine Karte, die zählt, ist angekommen; *hinweis* — zweimal herum, ohne Rahmen: hier ist etwas neu; *kreis* — ohne Ende, solange es lädt. Zeichnen und Hinweis enden von selbst (4,6 und 4,2 s): das Licht läuft nach der Runde langsamer weiter, ein Schein liegt um die Karte, dann verlischt beides; danach ist nichts davon im Dokument.
-- **Nur Drehung und Deckkraft.** Bewegt werden `transform` und `opacity`; der Kegel des Lichts ist so groß wie die Diagonale seiner Karte (`d`), nicht größer.
-- **Bei Bewegungsruhe** (`prefers-reduced-motion`) geht das Startbild mit dem ersten Bild, und es gibt kein Licht.
+- **Die Oberfläche steht im ersten Bild.** Kopfleiste und Zeichen sind festes Markup in `src/index.html` und nicht bis zum ersten Skriptbefehl versteckt; das Zeichen ist ein Bild von 252 px in der Seite (`01-shell.css`), ohne eigene Anfrage. Kein Bild steht davor.
+- **Bei jedem Öffnen baut sich die Liga auf** — dem ersten Bild, das der Start zeichnet, während `loadAll` läuft (`_bewegungNachRender`), nicht einem `render` von anderswo: die untere Leiste steigt herauf, der Inhalt kommt in Teilen (`.bau`, höchstens vierzehn, die Verzögerung am Teil selbst), Licht fährt um das Zeichen, um Platz 1 bis 3 und um „Match eintragen". Eine Sperre nach kurzer Pause gibt es nicht.
+- **Ohne Stand auf dem Gerät** [§C42] steht bis zur Antwort der Datenbank das Gerüst der Liga (`_startGeruest`), das danach über ihr ausblendet; kommt nach 2,5 s kein Bild, ebenso.
+- **Ein Reiter, über die Leiste betreten** (`_reiterBetreten`), baut sich auf: Überschrift, Wähler und Suche stehen sofort, Karten und Zeilen kommen nacheinander. Ein Zeitraum oder neue Daten im selben Reiter bauen nichts auf.
+- **Das Podest glänzt einmal je Reiter und Sitzung** (`_podestLicht`, `_podestDa`): Licht im Metall um Platz 1 bis 3 [§C25] in Liga, Positionen und bei den Duos, um das Podest der Awards, um die letzte Partie im Verlauf; über Gold zieht das Band (`.glanz-bahn.glanz-einmal`).
+- **Das Kantenlicht hat zwei Bedeutungen und keine dritte** (`kantenlicht`, `.kl`) [§C41]: *zeichnen* — einmal herum, dann steht der Rahmen einige Sekunden: eine Karte, die zählt, ist angekommen; *hinweis* — zweimal herum, ohne Rahmen: hier ist etwas neu. Beide enden von selbst (4,6 und 4,2 s): das Licht läuft nach der Runde langsamer weiter, ein Schein liegt um die Karte, dann verlischt beides, und nichts davon bleibt im Dokument. Das Licht im Profilkopf ist dieselbe Zeichnung mit eigener Bedeutung: es läuft, solange der Monat läuft.
+- **Neue Daten nehmen das Licht nicht mit:** zeichnet die App denselben Reiter neu, wechselt es an dieselbe Stelle der neuen Ansicht und läuft weiter (`_lichtMerken`, `_lichtZurueck`).
+- **Abbrechbar:** jede Berührung, jedes Scrollen beendet den Aufbau (`_vorfuehrungEnde`); alles steht sofort, wo es hingehört. Das Licht läuft zu Ende — es verdeckt nichts.
+- **Nur Drehung, Verschiebung und Deckkraft** (`transform`, `opacity`); der Kegel des Lichts ist so groß wie die Diagonale seiner Karte, nicht größer.
+- **Bei Bewegungsruhe** (`prefers-reduced-motion`) steht alles sofort, ohne Licht.
 
 ## Stellen
 
-`src/index.html` (Startbild), `09d-bewegung.js` (`_startbildBereit`, `_startbildEnde`, `_startbildGeruest`, `kantenlicht`, `_bewegungNachRender`), `09-ui-infra.js` (`render` ruft `_bewegungNachRender`), `06c-stand.js` (kein Stand → Gerüst), `37-boot.js` (`_startbildBereit`), `00-prolog.js` (ohne Zugangsdaten geht das Startbild), `01-shell.css` (das Zeichen), `17-bewegung.css`.
+`src/index.html` (Oberfläche im ersten Bild), `09d-bewegung.js` (`_startBereit`, `_startGeruest`, `kantenlicht`, `_aufbauen`, `_podestLicht`, `_glanzEinmal`, `_lichtMerken`, `_lichtZurueck`, `_bewegungNachRender`, `_vorfuehrungEnde`), `09-ui-infra.js` (`render`, `_renderNachEingabe`), `06c-stand.js` (kein Stand → Gerüst), `37-boot.js` (`_startBereit`), `00-prolog.js`, `01-shell.css` (das Zeichen), `17-bewegung.css`.
 
 ## Prüfung
 
-`tests/start` (das Startbild steht mit seinem Zeichen, bevor ein Skript der App läuft; ohne Stand steht das Gerüst, bis die Datenbank antwortet, und ist danach fort; mit Stand fliegt das Zeichen in die Kopfleiste und wird mit Licht empfangen; das Licht ist nach seiner Zeit fort; eine Minute nach dem letzten Öffnen nur Überblenden; bei Bewegungsruhe ohne Flug und Licht; der Start lädt das große Symbol nicht).
+`tests/start` (die Kopfleiste steht mit dem Zeichen, bevor ein Skript läuft, ohne Bild davor; ohne Stand das Gerüst, bis die Datenbank antwortet; beim Öffnen baut sich die Liga auf, mit Licht im Metall um Platz 1 bis 3, um das Zeichen und den Knopf; auch direkt nach dem Schließen wieder; nach seiner Zeit nichts übrig, auch kein leeres style-Attribut; bei Bewegungsruhe nichts davon; der Start lädt das große Symbol nicht), `tests/blatt` (ein über die Leiste betretener Reiter baut sich auf, mit Licht im Metall; nur transform und opacity; neue Daten nehmen das Licht nicht mit; nach seiner Zeit nichts übrig, einmal je Reiter und Sitzung).
 
 ## Herleitung
 
 Wie es dazu kam und was vorher falsch war — der Grund jeder Regel oben.
 
 Beim Öffnen war bis zum ersten Skriptbefehl nur der dunkle Grund zu sehen:
-`#app` ist bis dahin versteckt, und auf einem Mittelklasse-Telefon dauert das
+`#app` war bis dahin versteckt, und auf einem Mittelklasse-Telefon dauert das
 Übersetzen des Skripts rund eine halbe Sekunde. Danach stand die Liga mit
 einem Schlag da. Gemessen (Chromium, CPU vierfach gedrosselt) malt die Seite
 ihr erstes Bild bei 160 bis 290 ms, der erste Skriptbefehl läuft bei 400 bis
-550 ms: festes Markup steht also, bevor das Skript übersetzt ist — ein
-Startbild aus dem Skript käme erst, wenn es schon gehen sollte.
+550 ms: was festes Markup ist, steht also, bevor das Skript übersetzt ist.
 
-Im ersten Entwurf (`mockup/start/`) kam das Zeichen trotzdem spät: es war
-`icon.png` mit 1254 px und 1,2 MB — eine eigene Anfrage und eine volle
-Dekodierung für ein Bild von 38 px —, und es blendete noch eine halbe Sekunde
-ein. Jetzt steht ein Bild von 7 kB in der Seite selbst, das Kopfleiste und
-Startbild teilen, und das Startbild steht mit dem ersten Bild ganz da.
+Der Entwurf (`mockup/start/`) überbrückte diese Zeit mit einem Startbild —
+dem Zeichen der Liga in der Mitte, das danach in die Kopfleiste flog. Im
+Einbau stand es zwischen dem Öffnen und der Liga; gewünscht war, dass die
+Oberfläche sofort da ist. Es ist entfernt, und die Kopfleiste selbst steht
+im ersten Bild. Ihr Zeichen war `icon.png` mit 1254 px und 1,2 MB — eine
+eigene Anfrage und eine volle Dekodierung für ein Bild von 38 px — und kam
+sichtbar später als alles andere; jetzt steht ein Bild von 7 kB in der Seite.
 
-Das Startbild wartet nie auf sich selbst: die Liga ist im selben Augenblick
-bedienbar wie vorher, der Flug läuft darüber. Ohne Stand auf dem Gerät gäbe
-es nichts, wohin das Zeichen fliegen könnte; ein Startbild, das auf das Netz
-wartet, wäre ein Ladebildschirm. Das Gerüst zeigt stattdessen die Form der
-Liga in denselben Maßen, damit beim Tausch nichts springt.
+Eine Sperre zeigte nach einem Öffnen in den letzten fünf Minuten keine
+Vorführung. Wer die App schloss und gleich wieder öffnete, sah nichts und
+hielt die Effekte für kaputt. Sie läuft jetzt bei jedem Öffnen; das Podest
+glänzt einmal je Reiter und Sitzung, sonst sähe man es bei jedem Wechsel.
 
-Wer die App dreimal am Abend öffnet, will nicht dreimal die Vorführung. Ein
-Zurückkommen wird am Zeitpunkt erkannt, zu dem die App zuletzt in den
-Hintergrund ging — die einzige Spur, die ein Telefon zwischen zwei Starts
-zuverlässig hinterlässt.
+Die Vorführung gehört echten Anlässen: dem ersten Bild eines Starts und dem
+Betreten eines Reiters über die Leiste. Ein `render` von anderswo — ein
+Zeitraum, neue Daten, die Prüfumgebungen der Tests, die die Ansicht direkt
+zeichnen — baut nichts auf. Das Verblassen der ganzen Liste bei jedem
+Filter wirkte schon einmal wie ein Neustart (01-shell.css).
 
-Das Kantenlicht war zuerst nur im Profilkopf, ein Licht, das seine Kante
-abfährt, solange der Monat läuft. Als Bauteil [§C27] trägt es überall
-dieselben drei Bedeutungen; eine vierte machte jede unklar. Nach gut einer
+Das Kantenlicht war zuerst nur im Profilkopf. Als Bauteil [§C27] trägt es
+überall dieselben Bedeutungen; eine weitere machte jede unklar. Nach gut einer
 Sekunde war es im Entwurf vorbei, bevor man die Karte angesehen hatte — es
-bleibt deshalb einige Sekunden stehen und blendet dann langsam aus. Ein
-Kegel so groß wie im Profilkopf (1400 px) kostete bei dreifacher Pixeldichte
-ein Vielfaches an Speicher; er ist so groß wie die Diagonale seiner Karte.
+steht deshalb einige Sekunden und blendet dann langsam aus. Kam in dieser
+Zeit die Antwort der Datenbank, zeichnete die App die Liste neu, und das
+Licht verschwand mitten im Leuchten mit den alten Zeilen; es wechselt jetzt
+an dieselbe Stelle der neuen Liste. Ein Kegel so groß wie im Profilkopf
+(1400 px) kostete bei dreifacher Pixeldichte ein Vielfaches an Speicher.
+
+Gemessen wird beim Aufbau nichts: welche Teile im Bild stehen, sagt die
+Reihenfolge. Eine vererbte Variable als Verzögerung ließ im Entwurf jeden
+Knoten darunter seinen Stil neu rechnen, und ein Messen des Layouts im
+ersten Bild kostete gemessen bis zu 1,3 s Hauptthread.

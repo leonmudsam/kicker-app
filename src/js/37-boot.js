@@ -19,9 +19,9 @@ function _tickDaten(){
 }
 function _tickVersion(){ if(!document.hidden) checkForUpdate(); }
 
-// Das Startbild steht schon (src/index.html); ab hier wartet es auf das
-// erste Bild der Liga [§C43].
-_startbildBereit();
+// Die Oberfläche steht schon (src/index.html); ab hier wartet sie auf das
+// erste Bild der Liga, höchstens 2,5 s, dann steht das Gerüst [§C43].
+_startBereit();
 loadAll();
 checkForUpdate();
 // Der Service Worker hält Seite, Schriften und Supabase-Bibliothek auf dem
