@@ -45,11 +45,16 @@ rückwirkend das Prestige jeder Laufbahn. `tests/disziplinen` und
 den Standard (`PRESTIGE_AUSZEICHNUNG`): Rare **25 / −18 %**, Common
 **3 / −25 %**. **Jede legendäre Auszeichnung trägt ihren eigenen
 Startwert** in `PRESTIGE_AUSZEICHNUNG_SPEZIAL`, dazu die Wochen- und
-Tageswertung: 20er Serie und Dynastie **120**, Meister der Saison **100**
-(−5 %), 15er Serie **75**, Dominator, Team der Saison, Award-Sammler und
-Untouchable **70**, Player of the Week **50** (−12 %), Mr. Perfect **50**,
-Absoluter Sieger **40** (−15 %), Player of the Day **10** (−25 %), die
-übrigen mit −10 %. **Die Meilensteine der Laufbahn** stehen ebenfalls mit
+Tageswertung: Meister der Saison **150** (−5 %), 20er Serie und Dynastie
+**120**, 15er Serie und Team der Saison **75**, Dominator, Award-Sammler
+und Untouchable **70**, Player of the Week **50** (−12 %), Mr. Perfect
+**50**, Absoluter Sieger **40** (−15 %), Player of the Day **10** (−25 %),
+die übrigen mit −10 %. Der Meister ist die höchste Auszeichnung einer
+Saison und lag mit 100 unter der 20er Serie und der Dynastie. **Die
+Siegesserien sind eine Treppe**: 5er **15**, 10er **40**, 15er **75**,
+20er **120**; mit dem Wert ihrer Klasse brachte die 10er Serie 25 und die
+5er 3, und die Stufen dazwischen sagten nichts. Ihre Abnahme bleibt die
+ihrer Klasse. **Die Meilensteine der Laufbahn** stehen ebenfalls mit
 eigenem Wert darin: Siegermaschine **150**, Urgestein **100**, Abwehrchef
 und Mittelstürmer **60**, Allrounder und Dauerbrenner **50**, Stammgast
 **10**, Debütant **5**. Sie fallen einmal und zeigen Fortschritt, und der

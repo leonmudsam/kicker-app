@@ -4152,9 +4152,14 @@ const _bmk = JSON.parse(K.eval(`JSON.stringify((function(){
       if(!k) continue;
       const d = k.dataRef || {};
       const pids = d.ambientPids || (d.ambientPid ? [d.ambientPid] : []);
+      // Die beiden Quoten des Satzes: ein Anteil in Prozent oder „x von n".
+      const q = [...String(k.desc || '').matchAll(/([0-9]+) von ([0-9]+) Partien|([0-9]+) %/g)]
+        .map(x => x[3] != null ? +x[3] : Math.round(+x[1] / +x[2] * 100));
       out.push({ key, rek:paare[key], n:pids.length,
         fremd: pids.filter(x => halter.indexOf(x) < 0).map(nameOf),
-        halter: halter.map(nameOf) });
+        halter: halter.map(nameOf),
+        rechnung: q.length >= 2 && Math.abs(parseInt(k.vv, 10)) === Math.abs(q[0] - q[1]),
+        satz: k.vv + ' · ' + k.desc });
     }
   });
   return out;
@@ -4169,6 +4174,13 @@ const _bmkFremd = _bmk.filter(x => x.fremd && x.fremd.length);
 ok(_bmkFremd.length === 0, 'jede Bestmarken-Karte nennt nur Halter des Rekords',
    _bmkFremd.length ? _bmkFremd[0].key + ': ' + _bmkFremd[0].fremd.join(', ')
      + ' statt ' + _bmkFremd[0].halter.join(', ') : 'keine Abweichung');
+// Der grosse Wert ist der Abstand der beiden Quoten im Satz darunter, so wie
+// sie dastehen: „+13 %-Punkte … 32 % der Partien, sonst 20 %" stand da, weil
+// der Wert ungerundet gerundet wurde und die Quoten einzeln.
+const _bmkRechnung = _bmk.filter(x => !x.fehlt && x.n && !x.rechnung);
+ok(_bmk.some(x => x.rechnung) && _bmkRechnung.length === 0,
+   'der Wert einer Bestmarken-Karte ist die Differenz der Quoten im Satz',
+   _bmkRechnung.length ? _bmkRechnung[0].satz : 'stimmt');
 
 // ── Kein Listentrenner im Fliesstext ────────────────────────────────
 // Ein Beleg wie „20 % aller 25 Siege endeten 10:9 · 5" ist fuer eine Zelle
@@ -5825,8 +5837,9 @@ const _rekFelder = JSON.parse(K.eval(`JSON.stringify((function(){
   // davon in diesem Lauf eine Karte haben. Der Lauf sieht nur jeden vierten
   // Spieltag; ein Rekord, der nur an einem anderen Tag wechselt, fiele
   // heraus, und dann gehoert er nicht in diese Liste.
-  const NEU = ['damage_control','wiedereinstieg','rollencoup',
-               'umsteiger','aufschwung','glanztag'];
+  // Der Wiedereinstieg fehlt: seit eine Pause sechs Tage dauert, wechselt er
+  // an den echten Partien nur an Tagen, die dieser Lauf nicht sieht.
+  const NEU = ['damage_control','rollencoup','umsteiger','aufschwung','glanztag'];
   const neuGesehen = NEU.filter(id => karten.some(s => s.dataRef.rekordId === id));
   return {n:karten.length, fehlt:fehlt.slice(0, 6), falscherFall:falscherFall.slice(0, 3),
           ohneZeit:ohneZeit.slice(0, 3), basisFalsch:basisFalsch.slice(0, 3),

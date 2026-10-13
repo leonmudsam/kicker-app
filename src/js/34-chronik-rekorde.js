@@ -71,11 +71,9 @@ const CHRON_KINDS = {
 // Unter dieser Spielzahl bekommt niemand eine Chronik. Eine Laufbahn braucht
 // eine Laufbahn — sonst trägt ein Gast nach zwölf Spielen einen Liga-Rekord.
 const CHRON_MIN_GAMES = 30;
-// Was „eine Pause" heisst: 72 vollstaendige Stunden ohne eigenes Match. Die
-// Zahl steht hier und nicht in der Rechnung, weil der Bedingungssatz des
-// Rekords sie nennt und zwei Stellen mit derselben Schwelle irgendwann zwei
-// verschiedene Zahlen sagen [§C27].
-const REKORD_PAUSE_STUNDEN = 72;
+// Was „eine Pause" heisst, steht als `REKORD_PAUSE_STUNDEN` im Katalog:
+// Bedingung und Erklaerung nennen die Zahl, und sie werden vor dieser Datei
+// geladen.
 const REKORD_PAUSE_MS = REKORD_PAUSE_STUNDEN * 3600 * 1000;
 
 // Die Allzeit-Wertung jeder Disziplin [§13.1]. Es gibt keinen zweiten
@@ -607,10 +605,11 @@ function _chronicleCtx(bisMs){
     // gegen GENAU diesen Gegner und nicht gegen alle Partien [§C37].
     const geg = {};
     r.forEach(x => x.geg.forEach(g => { if(g) (geg[g] = geg[g] || []).push(x); }));
-    // „Der Wiedereinstieg": die erste eigene Partie nach 72 vollstaendigen
-    // Stunden ohne eigenes Match. Gemessen wird der Abstand der Zeitpunkte
-    // und nicht die Differenz der Kalendertage — Freitagabend und
-    // Sonntagmorgen sind zwei Kalendertage und keine drei Tage Pause. Die
+    // „Der Wiedereinstieg": die erste eigene Partie nach sechs vollstaendigen
+    // Tagen ohne eigenes Match. Gemessen wird der Abstand der Zeitpunkte
+    // und nicht die Differenz der Kalendertage — Montagabend und der
+    // Sonntagmorgen danach sind sechs Kalendertage und keine sechs Tage
+    // Pause. Die
     // allererste Partie einer Laufbahn zaehlt nicht mit: vor ihr gibt es
     // keine Pause, nur keine Liga.
     //

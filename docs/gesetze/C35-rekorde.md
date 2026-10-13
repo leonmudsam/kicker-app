@@ -7,7 +7,7 @@
 - Die Karte nennt Zeitraum, Grundwert und Mindestbasis (`zeitraum`, `basis`, `mind`) und zeigt, wie weit der Halter vorn liegt (`_rekFeldHtml`, aus `chronicleRang`); der Kopf jeder Kammer sagt in einem Satz, was sie misst (`CHRON_KINDS.satz`). Kein Text beschreibt die App oder eine frühere Rechnung.
 - Ein Rekord hat keine Wertlatte, nur eine Stichprobe (Partien, Spieltage, Wochen, Niederlagen). Was ein Wert von sich aus braucht (erstes Glied, zwei Partien, eine Richtung, die sein Name verspricht: Sprung, Vorsprung, Aufschwung), bleibt; eine Teilmenge, die beschreibt, welche Partien zählen, ist keine Latte. Ein Abstand, der auf null rundet, ist keine Richtung.
 - Aktuelle Form ist ein festes Endfenster der letzten 10, 20, 25 oder 50 eigenen Partien, nie der beste Abschnitt. Ein gleitendes Fenster (`fenster`) meldet kein „ausgebaut" und nennt nicht den Wert seines Vorgängers.
-- Gemessen wird der Anteil, nicht die Anzahl; der Beleg (`ev`) beginnt mit dem Sortierwert. Ein Anteil an den eigenen Gelegenheiten kennt die Spielzahl nicht.
+- Gemessen wird der Anteil, nicht die Anzahl; der Beleg (`ev`) beginnt mit dem Sortierwert. Ein Anteil an den eigenen Gelegenheiten kennt die Spielzahl nicht. Stehen neben einem Abstand seine beiden Quoten, ist er ihre Differenz, so wie sie dastehen: die Vergleichsquote folgt aus der eigenen Quote und dem Abstand (`_ppGegen`), der Wandler zeigt die Anteile des Profils.
 - `offen`: erfüllbar mit fünfzig Partien in der Laufbahn — im Rennen steht jemand mit unter hundert Partien, der Rekord ist vergeben und gehört nicht nur den drei Besten.
 - Zwölf Gegenpaare tragen dieselbe Mindestbasis; ein `paar` (zwei Enden eines Werts mit Vorzeichen) zeigt zurück, und die Rennen schneiden sich nicht.
 - Fügungen tragen `zufall` (`quote`: erreichbar, mindestens die halbe Liga im Rennen; `fund`: darf selten und unbesetzt sein, höchstens die Hälfte leer) und wiegen 75 statt 150. Eine Laufbahn aus lauter Niederlagen erreicht keinen Rekord mit Grundwert 150.
@@ -116,7 +116,11 @@ mit fünf Toren verliert, stand bei null Prozent und damit an der Spitze. Er
 heißt jetzt **„Der Widerstand"** und misst den mittleren Rückstand JEDER
 Niederlage. „Der Wiedereinstieg" maß die Quote im ersten Spiel nach einer
 Pause und hielt damit, wer ohnehin gewinnt; er misst jetzt den Abstand
-dieser Rückkehrspiele zu den übrigen eigenen Partien.
+dieser Rückkehrspiele zu den übrigen eigenen Partien. Eine Pause sind sechs
+volle Tage (`REKORD_PAUSE_STUNDEN`, eine Zahl für Rechnung, Bedingung und
+Erklärung): bei drei Tagen war fast jede Woche eine Rückkehr. Nach sechs
+Tagen kommen nur zwei Spieler auf acht Rückkehrspiele, also verlangen
+Wiedereinstieg und Rost vier.
 **Aktuelle Form ist ein festes Endfenster und nie der beste Abschnitt.**
 Sieben Rekorde stehen auf den letzten 10, 20, 25 oder 50 eigenen
 Partien. Der beste Zwanzigerblock IRGENDWO in einer Laufbahn gehörte immer
@@ -141,7 +145,7 @@ abgefragt, der Text steht in der Zeile.
 **Zwölf Gegenpaare messen dieselbe Frage von zwei Seiten** und tragen
 dieselbe Mindestbasis: sonst wäre eine Hälfte leichter zu halten als die
 andere. Keines ist mehr je Seite geeicht: Unaufhaltsamer und
-Durststrecke verlangen ihr erstes Glied, Wiedereinstieg und Rost acht
+Durststrecke verlangen ihr erstes Glied, Wiedereinstieg und Rost vier
 Rückkehrspiele, Aufschwung und Abschwung fünfzig Partien.
 **Ein Rekord hat keine Wertlatte, nur eine Stichprobe.** Der Rekord ist
 der beste Wert, den es gibt, und nicht der beste über einer Latte. Siebzehn Rekorde trugen eine solche Latte — in Prozent („mindestens

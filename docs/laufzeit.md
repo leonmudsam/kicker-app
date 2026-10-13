@@ -354,6 +354,13 @@ Awards und Teams beim ersten Öffnen kalt. Ein neuer Datenstand (andere
 Version) oder ein neuerer Auftrag bricht den laufenden ab
 (`_vorwaermAuftrag`), eine versteckte Seite wartet. `tests/start` zählt nach
 dem Start beim ersten Öffnen jedes Reiters die kalten Rechnungen: null.
+Der letzte Schritt zeichnet die Zeichen der Laufbahn vor (`_insVorwaermen`,
+Plan in `_insWarmPlan`, an die Datenversion gebunden): je Rangfarbe und
+Stufe ein ruhiger Moment, denn ein Schritt, der `false` zurückgibt, kommt
+wieder. Die Zeichnungen tragen die Rangfarbe, und das erste Laufbahn-Blatt
+eines Rangs kostete sonst 110 bis 135 ms Skript. `tests/start` zählt danach,
+wie viele Zeichen das Öffnen jeder Laufbahn noch zeichnet: höchstens eines,
+das der eigenen Stufe mitten im Grad.
 
 `_tickDaten` lässt außerdem ein offenes Blatt, den Eingabe-Tab und die
 Einstellungen in Ruhe:

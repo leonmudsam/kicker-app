@@ -171,16 +171,16 @@ Object.keys(_nrSicht).forEach(id => {
   const pl = r.filter(x => !x.w);
   o.widerstand = pl.length >= 20
     ? -(pl.reduce((a, x) => a + (x.ga - x.gf), 0) / pl.length) : null;
-  // Wiedereinstieg und Rost — die erste Partie nach 72 vollstaendigen
+  // Wiedereinstieg und Rost — die erste Partie nach 144 vollstaendigen
   // Stunden gegen alle uebrigen (ohne die allererste)
   {
     const drin = [], raus = [];
     for(let i = 1; i < r.length; i++)
-      (r[i].ts - r[i-1].ts >= 72 * 3600 * 1000 ? drin : raus).push(r[i]);
+      (r[i].ts - r[i-1].ts >= 144 * 3600 * 1000 ? drin : raus).push(r[i]);
     const d = drin.length && raus.length ? _nrQ(drin) - _nrQ(raus) : null;
     // Was auf null Prozentpunkte rundet, ist keine Richtung.
-    o.wieder = (d != null && drin.length >= 8 && Math.round(d * 100) > 0) ? d : null;
-    o.rost = (d != null && drin.length >= 8 && Math.round(d * 100) < 0) ? -d : null;
+    o.wieder = (d != null && drin.length >= 4 && Math.round(d * 100) > 0) ? d : null;
+    o.rost = (d != null && drin.length >= 4 && Math.round(d * 100) < 0) ? -d : null;
   }
   // Der Umsteiger — die erste Partie nach einem Positionswechsel
   {
@@ -1432,6 +1432,7 @@ const _prModell = JSON.parse(K.eval(`JSON.stringify((function(){
   const dom=[1,2,3].map(n=>auszeichnungsPunkte('dominator_400',n));
   const meister=[1,2,3].map(n=>auszeichnungsPunkte('champion',n));
   const team=[1,2,3].map(n=>auszeichnungsPunkte('team_of_season',n));
+  const serien=[5,10,15,20].map(k=>auszeichnungsPunkte('streak'+k,1));
   const potw=[1,2,3].map(n=>auszeichnungsPunkte('potw',n));
   const potd=[1,2,3].map(n=>auszeichnungsPunkte('potd',n));
   const carry=[1,2,3,24].map(n=>auszeichnungsPunkte('carry',n));
@@ -1441,7 +1442,7 @@ const _prModell = JSON.parse(K.eval(`JSON.stringify((function(){
     id:b.id, a:auszeichnungsPunkte(b.id,99), b:auszeichnungsPunkte(b.id,100),
     teile:[1,2,3,4].map(n=>auszeichnungsTeilwert(b.id,n))
   }));
-  return {dom,meister,team,potw,potd,carry,klassen,paare:positiv,
+  return {dom,meister,team,serien,potw,potd,carry,klassen,paare:positiv,
     steht:positiv.filter(x=>!(x.b>x.a)),
     negativ:BADGES.filter(b=>rarityOf(b.id)==='negative')
       .filter(b=>auszeichnungsPunkte(b.id,10)!==0).map(b=>b.id)};
@@ -1449,13 +1450,19 @@ const _prModell = JSON.parse(K.eval(`JSON.stringify((function(){
 ok(_prModell.dom[0] === 70 && _prModell.dom[1] === 140
    && Math.abs(_prModell.dom[2] - 203) < 1e-9,
    'Dominator wächst paarweise mit 70 + 70 + 63', _prModell.dom.join(' / '));
-// Dominator und Team der Saison starten gleich hoch: beide sind die
-// Saisonspitze hinter dem Meister, einer allein, einer zu zweit.
-ok(_prModell.meister[0] === 100 && _prModell.meister[1] === 200
-   && _prModell.meister[2] > _prModell.dom[2]
-   && _prModell.dom.every((v,i) => v === _prModell.team[i]),
-   'der Meister vor Dominator und Team der Saison, die gleichauf liegen',
-   [_prModell.meister[2],_prModell.dom[2],_prModell.team[2]].join(' / '));
+// Der Meister ist die höchste Auszeichnung einer Saison und startet bei
+// 150; mit 100 lag er unter der 20er Serie und der Dynastie. Das Team der
+// Saison steht mit 75 knapp vor dem Dominator: beide sind die Saisonspitze
+// hinter dem Meister, das Team die seltenere.
+ok(_prModell.meister[0] === 150 && _prModell.meister[1] === 300
+   && _prModell.team[0] === 75 && _prModell.dom[0] === 70
+   && _prModell.meister[2] > _prModell.team[2] && _prModell.team[2] > _prModell.dom[2],
+   'der Meister vor dem Team der Saison, das Team knapp vor dem Dominator',
+   [_prModell.meister[2],_prModell.team[2],_prModell.dom[2]].join(' / '));
+// Die Siegesserien sind eine Treppe. Mit dem Wert ihrer Klasse brachte die
+// 10er Serie 25 und die 5er 3 Prestige.
+ok(_prModell.serien.join(',') === '15,40,75,120',
+   'die Siegesserien steigen 15, 40, 75, 120', _prModell.serien.join(' / '));
 ok(_prModell.potw[0] === 50 && _prModell.potw.every((v,i)=>v>_prModell.potd[i]),
    'Player of the Week ist bei jeder gleichen Anzahl mehr wert als Player of the Day',
    _prModell.potw.join(' / ') + ' > ' + _prModell.potd.join(' / '));
@@ -2570,6 +2577,9 @@ const _formeln = {
   '-v %':       v => Math.round(-v * 100),
   '|v| %':      v => Math.round(Math.abs(v) * 100),
   '1-v %':      v => Math.round((1 - v) * 100),
+  // Der Abstand zweier Anteile, die zusammen hundert ergeben: zweimal der
+  // gerundete Abstand zur Mitte, also immer gerade (der Wandler).
+  '1-v % gerade': v => 2 * Math.round((1 - v) * 50),
   'v auf 1':    v => +v.toFixed(1),
   '-v auf 1':   v => +(-v).toFixed(1)
 };
@@ -2901,6 +2911,27 @@ const _nullRichtung = JSON.parse(K.eval(`JSON.stringify(CHRONICLES.flatMap(c =>
     .map(r => c.id + ': ' + r.ev.split(' · ')[0])))`));
 ok(_nullRichtung.length === 0, 'kein Abstand steht als null mit Vorzeichen in einem Rennen',
    _nullRichtung.slice(0, 3).join(' · ') || 'keiner');
+// Ein Abstand, neben dem seine beiden Quoten stehen, ist ihre Differenz, so
+// wie sie dastehen: „+13 %-Punkte · 67 statt 55 % erwartet" stand beim
+// Sturmführer, weil der Abstand ungerundet gerundet wurde und die Quoten
+// einzeln. Wer nachrechnete, kam auf 12. Geprueft wird jeder Spieler im
+// Rennen, nicht nur der Halter.
+const _ppRechnung = JSON.parse(K.eval(`JSON.stringify((function(){
+  const out = {n:0, falsch:[]};
+  CHRONICLES.forEach(c => (chronicleRang(c.id) || []).forEach(r => {
+    const ev = String(r.ev || '');
+    const m = ev.match(/^([+\\u2212-]?)([0-9]+) %-Punkte[^·]*· (.*)$/);
+    if(!m) return;
+    const q = [...m[3].matchAll(/([0-9]+(?:,[0-9]+)?)(?= %| statt| gegen)/g)].map(x => +x[1].replace(',', '.'));
+    if(q.length !== 2) return;
+    out.n++;
+    if(Math.abs(+m[2] - Math.abs(q[0] - q[1])) > 1e-9) out.falsch.push(c.id + ': ' + ev);
+  }));
+  return out;
+})())`));
+ok(_ppRechnung.n >= 40 && _ppRechnung.falsch.length === 0,
+   'ein Abstand in Prozentpunkten ist die Differenz der Quoten daneben',
+   _ppRechnung.falsch.slice(0, 3).join(' · ') || _ppRechnung.n + ' Belege');
 ok(_ppKurz.n >= 10 && _ppKurz.falsch.length === 0,
    'ein Abstand in Prozentpunkten behaelt gekuerzt seine Einheit',
    _ppKurz.falsch.slice(0, 3).join(' · ') || _ppKurz.n + ' Belege');

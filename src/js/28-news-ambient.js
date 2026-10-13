@@ -961,6 +961,9 @@ function _ambientTemplatePool(now, pm, nameOf){
   //    am meisten gewinnt.
   //    Der Satz kommt aus den Feldern des Halters und nicht aus dem Beleg:
   //    der Beleg ist eine Aufzählung für die Tafel, im Feed steht ein Satz.
+  //    Die Vergleichsquote im Satz folgt aus der eigenen Quote und dem
+  //    großen Wert daneben (`_ppGegen`), sonst ergab die Rechnung auf der
+  //    Karte einen Punkt mehr oder weniger als die Zahl über ihr.
   const _bestmarke = (key, cid, titel, satz) => T.push({ key, weight:2, make: () => {
     const def = CHRONICLE_BY_ID[cid], rank = _rekRang(cid);
     if(!def || !rank.length) return null;
@@ -976,17 +979,17 @@ function _ambientTemplatePool(now, pm, nameOf){
       dataRef:{ ambientPids: lead.slice(0, 2).map(x => x.pid), pairKind:'duel', bild } };
     return { cat:'personal', ic:def.ic, prio:4,
       title:titel(nameOf(top.pid)),
-      desc:`${satz(p, nameOf(top.pid))}. Bestwert der Liga`
+      desc:`${satz(p, nameOf(top.pid), top.wert)}. Bestwert der Liga`
         + (nxt ? `, ${nameOf(nxt.pid)} folgt mit ${pkt(nxt)} Prozentpunkten.` : '.'),
       vv:pkt(top), vl:'%-Punkte',
       dataRef:{ ambientPid: top.pid, bild } };
   }});
   _bestmarke('personal_glanztag', 'glanztag', n => `Der Glanztag gehört ${n}`,
-    (p, n) => `Am ${p.gtLabel} gewann ${n} ${p.gtW} von ${p.gtN} Partien, sonst sind es ${pct(p.gtQ)} %`);
+    (p, n, v) => `Am ${p.gtLabel} gewann ${n} ${p.gtW} von ${p.gtN} Partien, sonst sind es ${_ppGegen(p.gtW / p.gtN, v)} %`);
   _bestmarke('personal_umsteiger', 'umsteiger', n => `${n} gewinnt nach dem Wechsel`,
-    (p, n) => `Nach einem Wechsel zwischen Sturm und Abwehr gewinnt ${n} ${pct(p.umW / p.umN)} % der Partien, sonst ${pct(p.umRaus)} %`);
+    (p, n, v) => `Nach einem Wechsel zwischen Sturm und Abwehr gewinnt ${n} ${pct(p.umW / p.umN)} % der Partien, sonst ${_ppGegen(p.umW / p.umN, v)} %`);
   _bestmarke('personal_aufschwung', 'aufschwung', n => `${n} im Aufschwung`,
-    (p, n) => `${n} gewinnt ${pct(p.asNeu)} % der letzten 25 Partien, davor waren es ${pct(p.asAlt)} %`);
+    (p, n, v) => `${n} gewinnt ${pct(p.asNeu)} % der letzten 25 Partien, davor waren es ${_ppGegen(p.asNeu, v)} %`);
 
   // ── Der alte Zähler-Weg, nur noch für die Auszeichnungs-Vitrine ──
   T.push({ key:'award_potd_zahl', weight:1, make: () => {
