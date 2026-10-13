@@ -5722,7 +5722,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.13.73e6470e';
+const BUILD_VERSION='2026.10.13.d6aa02a0';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -19727,9 +19727,7 @@ function _buildStories(){
           von:aktiv.length});
       });
       if(zuege.length){
-        const RANG = {auf:0, grad:1, ab:2};
-        zuege.sort((x, y) => RANG[x.art] - RANG[y.art] || (x.wieder - y.wieder)
-          || y.nach.stufe - x.nach.stufe || y.nach.punkte - x.nach.punkte);
+        zuege.sort(_insZugVor);
         const pids = zuege.map(z => z.pid);
         const t = _insTagTexte(zuege);
         const oben = zuege.some(z => z.art === 'auf' && !z.wieder && z.nach.stufe >= INSIGNIUM_OBEN);
@@ -22514,9 +22512,10 @@ function _newsGesichtHtml(s){
     const p = pmap()[ids[0]];
     return `<div class="nf-face">${avHtml(p, '', {ins:true, px:48, feuer:0})}</div>`;
   }
+  const zeige = ids.length <= 3 ? ids.length : 2;
   return `<div class="nf-face nf-face-paar">${
-    ids.slice(0,2).map(id => avHtml(pmap()[id], '', {})).join('')}${
-    ids.length > 2 ? `<span class="av nf-face-mehr">+${ids.length-2}</span>` : ''}</div>`;
+    ids.slice(0, zeige).map(id => avHtml(pmap()[id], '', {})).join('')}${
+    ids.length > zeige ? `<span class="av nf-face-mehr">+${ids.length - zeige}</span>` : ''}</div>`;
 }
 
 
@@ -23383,8 +23382,8 @@ function _newsTagSpannung(s){
   if(t === 'badge_unlocked') wert += d.rarity === 'legendary' ? 130 : d.rarity === 'rare' ? 55 : 0;
   if(t === 'insignium_stufe') wert += Math.max(0, Number(d.stufe) || 0) * 25;
   if(t === 'insignium_tag'){
-    const z = (d.zuege || [])[0] || {};
-    wert = z.art === 'auf' && !z.wieder ? 840 + (((z.nach || {}).stufe | 0) * 25) : 520;
+    const neu = (d.zuege || []).filter(z => z && z.art === 'auf' && !z.wieder);
+    wert = neu.length ? 840 + Math.max(...neu.map(z => (z.nach || {}).stufe | 0)) * 25 : 520;
   }
   if(t === 'chronik_geholt') wert += Math.min(80, Math.max(0, Number(d.punkte) || 0) / 2);
   if(t === 'sammel'){
@@ -25331,7 +25330,7 @@ function _insLageName(l){
 
 function _insTagTexte(zuege){
   const pm = pmap(), nm = pid => (pm[pid] && pm[pid].name) || '?';
-  const l = (zuege || []).filter(z => z && INSIGNIEN[(z.nach || {}).stufe | 0]);
+  const l = (zuege || []).filter(z => z && INSIGNIEN[(z.nach || {}).stufe | 0]).sort(_insZugVor);
   if(!l.length) return {title:'', desc:''};
   const satz = z => {
     const n = nm(z.pid), S = INSIGNIEN[z.nach.stufe], vorS = INSIGNIEN[z.vor.stufe];
@@ -25374,6 +25373,14 @@ function _insArtWort(z){
   return z.art === 'ab' ? 'Rückfall' : z.art === 'grad' ? 'Neuer Grad'
     : z.wieder ? 'Wieder erreicht' : 'Neue Stufe';
 }
+function _insZugVor(x, y){
+  const art = z => ({auf:0, grad:1, ab:2})[z.art] ?? 3, l = z => z.nach || {};
+  return art(x) - art(y) || (l(y).stufe | 0) - (l(x).stufe | 0) || (l(y).grad | 0) - (l(x).grad | 0)
+    || !!x.wieder - !!y.wieder || (l(y).punkte | 0) - (l(x).punkte | 0);
+}
+function _insZuege(d){
+  return ((d && d.zuege) || []).filter(z => z && z.nach).sort(_insZugVor);
+}
 function _insSpur(z){
   const a = insigniumPos(z.vor), b = insigniumPos(z.nach), ab = z.art === 'ab';
   const rang = (getPlayerRank(z.pid) || {}).label;
@@ -25404,7 +25411,7 @@ function _insVerwandlung(z){
             : `<div class="ni-sz">${alt}${pfeil}${neu}</div>`;
 }
 function _newsInsTagKopf(s){
-  const d = (s && s.dataRef) || {}, pm = pmap(), z = (d.zuege || [])[0];
+  const d = (s && s.dataRef) || {}, pm = pmap(), z = _insZuege(d)[0];
   if(!z || !pm[z.pid] || !INSIGNIEN[(z.nach || {}).stufe | 0]) return '';
   return `<div class="ni-b ni-${esc(z.art)}" data-pid="${esc(z.pid)}">`
     + `<span class="ni-t"><em>${esc(_insArtWort(z))}</em><b>${esc(_insLageName(z.nach))}</b></span>`
@@ -25412,7 +25419,7 @@ function _newsInsTagKopf(s){
 }
 function _newsInsTagZeilen(s){
   const d = (s && s.dataRef) || {}, pm = pmap();
-  const l = (d.zuege || []).slice(1).filter(z => z && pm[z.pid] && INSIGNIEN[(z.nach || {}).stufe | 0]);
+  const l = _insZuege(d).slice(1).filter(z => pm[z.pid] && INSIGNIEN[z.nach.stufe | 0]);
   if(!l.length) return '';
   const text = z => z.art === 'ab' ? `fällt auf den ${INSIGNIEN[z.nach.stufe].name} zurück`
     : z.art === 'grad' ? `steigt auf ${_insLageName(z.nach)}`
@@ -25431,7 +25438,7 @@ function _newsInsTagZeilen(s){
 }
 
 function _ndInsTagBlatt(s){
-  const d = (s && s.dataRef) || {}, l = d.zuege || [], pm = pmap(), z = l[0];
+  const d = (s && s.dataRef) || {}, l = _insZuege(d), pm = pmap(), z = l[0];
   if(!z || !pm[z.pid]) return null;
   const da = l.filter(x => pm[x.pid]);
   const kopf = da.length > 1
@@ -25466,7 +25473,19 @@ function _ndInsTagBlatt(s){
 }
 
 function _insAltZuTag(list){
-  if(!Array.isArray(list) || !list.some(s => ((s && s.dataRef) || {}).type === 'insignium_stufe')) return list;
+  if(!Array.isArray(list)) return list;
+  const pm = pmap();
+  list = list.map(s => {
+    const d = (s && s.dataRef) || {};
+    if(d.type !== 'insignium_tag' || !Array.isArray(d.zuege) || d.zuege.length < 2) return s;
+    const zuege = _insZuege(d);
+    if(zuege.length !== d.zuege.length || zuege.every((z, i) => z === d.zuege[i])
+       || !zuege.every(z => pm[z.pid])) return s;
+    const t = _insTagTexte(zuege);
+    return Object.assign({}, s, {title:t.title || s.title, desc:t.desc || s.desc,
+      dataRef:Object.assign({}, d, {zuege})});
+  });
+  if(!list.some(s => ((s && s.dataRef) || {}).type === 'insignium_stufe')) return list;
   const neu = new Map(), alt = new Map(), rest = [];
   list.forEach(s => {
     const d = (s && s.dataRef) || {};

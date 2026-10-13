@@ -397,8 +397,9 @@ function _newsPids(s){
   ['playerId','ambientPid','pid','championId','a','b','playerIds','ambientPids',
    'breakerIds','victimPid'].forEach(k => { if(d[k] != null) dazu(d[k]); });
   // Nicht hier kürzen: Große Tafel-Bundles brauchen die vollständige Zahl,
-  // damit „+3" auch wirklich drei weitere Beteiligte meint. Die Darstellung
-  // selbst zeigt weiterhin höchstens zwei Wappen und fasst den Rest zusammen.
+  // damit „+3" auch wirklich drei weitere Beteiligte meint. Wie viele
+  // Gesichter stehen und wie viele zusammengefasst werden, entscheidet
+  // `_newsGesichtHtml`.
   return raus;
 }
 
@@ -415,9 +416,13 @@ function _newsGesichtHtml(s){
     // Kein Feuer: eine Meldung von vorgestern hat keine laufende Serie [§C26].
     return `<div class="nf-face">${avHtml(p, '', {ins:true, px:48, feuer:0})}</div>`;
   }
+  // Bis drei stehen alle Gesichter, ab vier zwei und die Zahl der übrigen.
+  // Bei drei stand „+1" an der Stelle eines Gesichts: genauso breit wie das
+  // Gesicht, das gefehlt hat, und ohne zu sagen, wer es ist.
+  const zeige = ids.length <= 3 ? ids.length : 2;
   return `<div class="nf-face nf-face-paar">${
-    ids.slice(0,2).map(id => avHtml(pmap()[id], '', {})).join('')}${
-    ids.length > 2 ? `<span class="av nf-face-mehr">+${ids.length-2}</span>` : ''}</div>`;
+    ids.slice(0, zeige).map(id => avHtml(pmap()[id], '', {})).join('')}${
+    ids.length > zeige ? `<span class="av nf-face-mehr">+${ids.length - zeige}</span>` : ''}</div>`;
 }
 
 // Das Mini-Visual rechts auf der Karte ist entfallen. Es zeigte je Typ ein

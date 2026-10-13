@@ -2846,9 +2846,7 @@ function _buildStories(){
           von:aktiv.length});
       });
       if(zuege.length){
-        const RANG = {auf:0, grad:1, ab:2};
-        zuege.sort((x, y) => RANG[x.art] - RANG[y.art] || (x.wieder - y.wieder)
-          || y.nach.stufe - x.nach.stufe || y.nach.punkte - x.nach.punkte);
+        zuege.sort(_insZugVor);
         const pids = zuege.map(z => z.pid);
         const t = _insTagTexte(zuege);
         const oben = zuege.some(z => z.art === 'auf' && !z.wieder && z.nach.stufe >= INSIGNIUM_OBEN);

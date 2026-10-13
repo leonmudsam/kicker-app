@@ -2225,6 +2225,43 @@ ok(_feed.ohneGesicht === 0,
 ok(_feed.wappen > 0,
    'die Einzelspieler-Karten tragen das Wappen wie ueberall sonst',
    _feed.wappen + ' von ' + _feed.mitSpieler);
+// Bis drei Beteiligte stehen alle Gesichter, ab vier zwei und die Zahl der
+// übrigen. Bei dreien stand „+1" an der Stelle des dritten Gesichts: so
+// breit wie das Gesicht und ohne zu sagen, wer es ist.
+const _gesichter = JSON.parse(K.eval(`JSON.stringify([2, 3, 4, 6].map(n => {
+  const h = _newsGesichtHtml({id:'g' + n, cat:'tafel', dataRef:{type:'tafel_moment',
+    playerIds:players.slice(0, n).map(p => p.id)}});
+  return n + ':' + ((h.match(/class="av[ "]/g) || []).length - (h.match(/nf-face-mehr/g) || []).length)
+    + '/' + ((h.match(/nf-face-mehr">\\+(\\d+)/) || [])[1] || '-'); }))`));
+ok(_gesichter.join(' ') === '2:2/- 3:3/- 4:2/2 6:2/4',
+   'bis drei Beteiligte stehen alle Gesichter, ab vier zwei und die Zahl der übrigen',
+   _gesichter.join(' · '));
+// Mehrere Bewegungen auf der Insignium-Karte: eine neue Stufe vor einem
+// neuen Grad, und darunter die wertvollere Stufe zuerst, auch wenn sie
+// jemand wieder trägt. Vorher ging „zum ersten Mal" vor: zwei Volutenkränze
+// trugen die Bühne, der Lorbeerreif stand klein darunter. Eine gespeicherte
+// Karte in alter Reihenfolge wird beim Anzeigen ebenso geordnet.
+const _insOrdnung = JSON.parse(K.eval(`JSON.stringify((function(){
+  const p = players.slice(0, 4).map(x => x.id);
+  const L = (stufe, grad, punkte) => ({stufe, grad, punkte});
+  const zuege = [{pid:p[0], art:'auf', vor:L(1,2,1150), nach:L(2,0,1220)},
+                 {pid:p[3], art:'grad', vor:L(5,0,4400), nach:L(5,1,4750)},
+                 {pid:p[1], art:'auf', vor:L(1,2,1180), nach:L(2,0,1210)},
+                 {pid:p[2], art:'auf', vor:L(3,2,3050), nach:L(4,0,3150), wieder:true}];
+  const s = {id:'instag_ordnung', cat:'tafel', ic:'award', when:new Date(), prio:60, title:'alt', desc:'alt',
+    dataRef:{type:'insignium_tag', tag:'2026-10-12', zuege, playerIds:p}};
+  const neu = _insAltZuTag([s])[0];
+  const h = String(_newsCardHtmlM2(neu, false, false));
+  const kopf = (h.match(/class="ni-b [^"]*" data-pid="([^"]+)"/) || [])[1];
+  const zeilen = (h.match(/class="ni-z ni-[a-z]+" data-pid="[^"]+"/g) || [])
+    .map(x => p.indexOf(x.match(/data-pid="([^"]+)"/)[1]));
+  return {kopf:p.indexOf(kopf), zeilen:zeilen.join(','), titel:neu.title,
+    titelVorn:neu.title.indexOf('Lorbeerreif für ' + pmap()[p[2]].name) === 0,
+    gespeichert:s.dataRef.zuege[0].pid === p[0] && s.title === 'alt'};
+})())`));
+ok(_insOrdnung.kopf === 2 && _insOrdnung.zeilen === '0,1,3' && _insOrdnung.titelVorn && _insOrdnung.gespeichert,
+   'auf der Insignium-Karte steht die wertvollste neue Stufe vorn, eine Stufe vor einem Grad',
+   JSON.stringify(_insOrdnung));
 ok(_feed.rufe.length === 0,
    'keine Ausrufezeichen in Schlagzeile oder Text',
    _feed.rufe.join(' | ') || 'keine');
@@ -3489,7 +3526,11 @@ ok(_achsen.b[0] && _achsen.b[0].band === 3,
 ok(_achsen.ic.length === 1 && _achsen.ic[0].n === 3 && _achsen.ic[0].mit === 3 && _achsen.c.length === 0,
    'dieselbe Stufe fuer drei Spieler wird EINE Insignium-Karte, nicht die Tafel',
    JSON.stringify(_achsen.ic) + ' · Tafel ' + _achsen.c.length);
-ok(_achsen.ic[0] && _achsen.ic[0].ti === 'Schildring für ' + _achsen.n0 + ', ' + _achsen.n1 + ' und ' + _achsen.n2,
+// Die Reihenfolge der drei folgt dem Prestige (`_insZugVor`), gefragt ist
+// hier nur: die Stufe einmal, jeder Name einmal.
+ok(_achsen.ic[0] && /^Schildring für [^,]+, [^,]+ und [^,]+$/.test(_achsen.ic[0].ti)
+   && _achsen.ic[0].ti.split('Schildring').length === 2
+   && [_achsen.n0, _achsen.n1, _achsen.n2].every(n => _achsen.ic[0].ti.split(n).length === 2),
    'die Schlagzeile nennt die Stufe einmal und alle drei', (_achsen.ic[0]||{}).ti);
 // Der Satz erklärt die Stufe und behauptet nichts, was eine alte Zeile nicht
 // weiß: wie viele sie tragen, steht nur in neuen Karten.

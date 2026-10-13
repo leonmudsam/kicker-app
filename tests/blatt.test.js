@@ -1204,8 +1204,8 @@ const ok = (c, msg, det) => {
   // Mehrere Bewegungen: die besonderste groß, jede übrige als Zeile mit
   // ihrem Namen und den beiden Zeichen — beim Rückfall „neu ← alt".
   ok(insKarte.kopfVon === insKarte.erster && insKarte.kopfSpuren === 1 && insKarte.zeilen === 2
-     && insKarte.reihen === 'neu <- alt | alt -> neu' && insKarte.namen,
-     'die besonderste Bewegung trägt die Bühne, jede übrige steht als Zeile, der Rückfall als neu ← alt',
+     && insKarte.reihen === 'alt -> neu | neu <- alt' && insKarte.namen,
+     'die besonderste Bewegung trägt die Bühne, jede übrige steht als Zeile, der Grad vor dem Rückfall, dieser als neu ← alt',
      JSON.stringify({kopf:insKarte.kopfVon === insKarte.erster, spuren:insKarte.kopfSpuren, zeilen:insKarte.zeilen, reihen:insKarte.reihen}));
 
 
