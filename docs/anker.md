@@ -50,7 +50,7 @@ Wächter 8 vergleicht. Ein Kürzel `§n.m` ist ein Abschnitt des Codes,
 - **09c-zeichen.js**
   - §4.1b DAS ZEICHEN
 - **09d-bewegung.js**
-  - §4.5 BEWEGUNG (Startbild, Gerüst, Kantenlicht)
+  - §4.5 BEWEGUNG (Öffnen, Gerüst, Kantenlicht, Aufbau)
 - **10-elo-engine.js**
   - §3.5 ZENTRALE ELO-ENGINE (simulateElo)
   - §3.5a DB-First Aggregation (default simulateElo)

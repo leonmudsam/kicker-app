@@ -1,38 +1,14 @@
   /* ============ [§C43] BEWEGUNG ============ */
   /* Wie die App sich öffnet, Reiter betritt und Karten hervorhebt. Jede
      Bewegung hier bewegt nur transform und opacity, endet von selbst (außer
-     Startbild und Gerüst, solange sie stehen) und entfällt bei
+     dem Gerüst, solange es steht) und entfällt bei
      Bewegungsruhe. Material und Farben sind die der App: Acid fürs
      Bedienen, das Metall der Plätze für die Plätze, Gold für den Titel
      [§C25]. Die Regeln stehen in docs/gesetze/C43-bewegung.md. */
 
-  /* ── Das Startbild ──────────────────────────────────────────────────
-     Das Zeichen der Liga auf dem Grund, darunter Name und eine Spur, in der
-     ein Licht läuft. Festes Markup oben in <body> (src/index.html): es
-     steht mit dem ersten Bild ganz da, ohne Einblenden — blendete es ein,
-     kam das Zeichen gefühlt zu spät. Bleibt das Skript aus, geht es nach
-     acht Sekunden von selbst: es soll nie eine laufende App verdecken. */
-  .start-bild{position:fixed;inset:0;z-index:300;display:grid;place-items:center;pointer-events:none;
-    animation:startbildNot .3s ease-out 8s forwards}
-  .sb-grund{position:absolute;inset:0;background:var(--bg);
-    background-image:radial-gradient(56% 34% at 50% 45%,rgba(190,242,100,.075),transparent 72%)}
-  .sb-mitte{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:-6vh}
-  .sb-zeichen{position:relative;width:84px;height:84px;border-radius:24px;overflow:hidden;will-change:transform;
-    box-shadow:0 22px 44px -18px rgba(0,0,0,.95),0 0 0 1px rgba(255,255,255,.06)}
-  .sb-name{margin-top:12px;font-family:'Archivo Black',sans-serif;font-weight:400;font-size:17px;
-    letter-spacing:.08em;text-transform:uppercase;color:var(--ink)}
-  .sb-unter{font-family:'Sometype Mono',monospace;font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
-  .sb-spur{position:relative;width:76px;height:2px;margin-top:16px;border-radius:2px;overflow:hidden;background:rgba(255,255,255,.08)}
-  .sb-spur i{position:absolute;top:0;bottom:0;left:0;width:40%;transform:translateX(-100%);
-    background:linear-gradient(90deg,transparent,var(--acid),transparent)}
-  @keyframes startbildNot{to{opacity:0;visibility:hidden}}
-  @keyframes sbSpur{to{transform:translateX(260%)}}
-  @media(prefers-reduced-motion:no-preference){
-    .sb-spur i{animation:sbSpur 1.1s cubic-bezier(.45,0,.55,1) infinite}
-  }
-
   /* ── Das Gerüst ─────────────────────────────────────────────────────
-     Ohne Stand auf dem Gerät (erster Start, neue Fassung) steht die Form
+     Ohne Stand auf dem Gerät (erster Start, neue Fassung) steht unter der
+     Kopfleiste die Form
      der Liga da, bis die Datenbank antwortet: Kopf, Zeitraum, Tage,
      Saisons, Spieler und Teams, dann die Zeilen — in denselben Maßen, damit
      beim Tausch nichts springt. Jedes Kästchen trägt `gk`: eine Regel mit
@@ -78,11 +54,10 @@
   /* ── Das Kantenlicht [§C27] ─────────────────────────────────────────
      Ein Ring aus einer Maske (nur der Rand bleibt sichtbar), darin ein
      Kegel aus Licht mit langem Schweif, der sich dreht: die Linie fährt die
-     Kante ab. Drei Arten und keine vierte [§C41]:
+     Kante ab. Zwei Arten und keine dritte [§C41]:
        kl-zeichnen  einmal herum, dann leuchtet der Rahmen auf und steht
                     einige Sekunden: eine Karte, die zählt, ist angekommen;
        kl-hinweis   zweimal herum, ohne Rahmen: hier ist etwas neu;
-       kl-kreis     ohne Ende, solange es dauert: es lädt.
      Zeichnen und Hinweis ziehen sich: nach der Runde läuft das Licht
      langsamer weiter, ein Schein liegt um die Karte (.kl-schein, neben dem
      Ring — in ihm schnitte die Maske ihn weg), und nach 4,6 bzw. 4,2 s
@@ -125,7 +100,6 @@
     40%{transform:rotate(610deg);opacity:1;animation-timing-function:cubic-bezier(.3,.6,.6,1)}
     70%{opacity:.7}
     100%{transform:rotate(1150deg);opacity:0}}
-  @keyframes klKreis{from{transform:rotate(0)}to{transform:rotate(360deg)}}
   @keyframes klRahmen{0%,19%{opacity:0}25%{opacity:1}36%{opacity:.78}74%{opacity:.7}100%{opacity:0}}
   @keyframes klSchein{0%,17%{opacity:0}27%{opacity:1}40%{opacity:.85}74%{opacity:.75}100%{opacity:0}}
   @keyframes klScheinHinweis{0%,6%{opacity:0}22%{opacity:.75}40%{opacity:.5}60%{opacity:.7}78%{opacity:.5}100%{opacity:0}}
@@ -135,5 +109,46 @@
     .kl-schein.kl-zeichnen{animation:klSchein 4.6s ease var(--kv,0ms) both}
     .kl-hinweis i{animation:klHinweis 4.2s linear var(--kv,0ms) both}
     .kl-schein.kl-hinweis{animation:klScheinHinweis 4.2s ease var(--kv,0ms) both}
-    .kl-kreis i{opacity:1;animation:klKreis 1.4s linear infinite}
+  }
+
+  /* ── Der Aufbau ─────────────────────────────────────────────────────
+     Bei jedem Öffnen (`.aufbau` am Wurzelknoten, 1,7 s): die untere Leiste
+     steigt herauf, ihre Zeichen springen nacheinander auf; zuletzt dreht
+     sich „Match eintragen" herein, und vom heutigen Tag in der Leiste der
+     Tage geht ein Ring aus. Die Kopfleiste steht schon im ersten Bild und
+     bleibt stehen — sie noch einmal einzublenden, ließe sie flackern. Der
+     Inhalt kommt in Teilen (`.bau`), beim Öffnen und beim Betreten eines
+     Reiters; die Verzögerung steht an jedem Teil selbst (09d-bewegung.js).
+     Bis ihre Knöpfe da sind, ist die untere Leiste unsichtbar: leer stand
+     sie als Balken da, bevor sie heraufstieg. */
+  .botnav:empty{visibility:hidden}
+  .lauf-z i.h{position:relative}
+  .lauf-z i.h::after{content:"";position:absolute;inset:-1px;border-radius:3px;border:1.5px solid var(--acid);opacity:0;pointer-events:none}
+  /* Die letzte Partie im Verlauf trägt das Kantenlicht. */
+  .mrow{position:relative}
+  @keyframes aufbauVonUnten{from{transform:translateY(100%)}}
+  @keyframes aufbauPop{0%{opacity:0;transform:scale(.5)}60%{opacity:1;transform:scale(1.12)}100%{transform:none}}
+  @keyframes aufbauFab{0%{opacity:0;transform:scale(.3) rotate(-90deg)}70%{opacity:1;transform:scale(1.08) rotate(6deg)}100%{transform:none}}
+  @keyframes aufbauPing{0%{transform:scale(1);opacity:.9}100%{transform:scale(3.2);opacity:0}}
+  @keyframes bauTeil{from{opacity:0;transform:translateY(16px) scale(.985)}}
+  @keyframes bauPodest{from{opacity:0;transform:translateY(26px) scale(.94)}}
+  /* Das Band über Gold beim Ankommen: dieselbe Bahn wie über einem Titel
+     (06-misc.css), einmal. */
+  .glanz-einmal::after{content:"";position:absolute;top:0;bottom:0;left:0;width:250%;pointer-events:none;
+    background:linear-gradient(105deg,transparent 42%,rgba(247,207,74,.3) 50%,transparent 58%);
+    transform:translateX(-84%)}
+  @keyframes glanzEinmal{from{transform:translateX(-84%)}to{transform:translateX(24%)}}
+  @media(prefers-reduced-motion:no-preference){
+    .aufbau .botnav{animation:aufbauVonUnten .5s cubic-bezier(.2,.8,.2,1) .05s both}
+    .aufbau .botnav button .ic{animation:aufbauPop .42s cubic-bezier(.3,1.4,.5,1) both}
+    .aufbau .botnav button:nth-child(1) .ic{animation-delay:.22s}
+    .aufbau .botnav button:nth-child(2) .ic{animation-delay:.26s}
+    .aufbau .botnav button:nth-child(3) .ic{animation-delay:.3s}
+    .aufbau .botnav button:nth-child(4) .ic{animation-delay:.34s}
+    .aufbau .botnav button:nth-child(5) .ic{animation-delay:.38s}
+    .aufbau .fab{animation:aufbauFab .55s cubic-bezier(.3,1.3,.5,1) .7s both}
+    .aufbau .lauf-z i.h::after{animation:aufbauPing .8s ease-out .6s 2 both}
+    .bau{animation:bauTeil .42s cubic-bezier(.2,.8,.2,1) both}
+    .pod-karte.bau{animation-name:bauPodest;animation-duration:.5s}
+    .glanz-einmal::after{animation:glanzEinmal 1.3s cubic-bezier(.45,0,.25,1) var(--gv,0ms) both}
   }

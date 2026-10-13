@@ -39,12 +39,12 @@ Der Schnellstart [§C42] hält zwei Werte in `06c-stand.js`: `_standOffen`
 `_standGezeigt` (sein Fingerabdruck, bis der Live-Abruf ihn bestätigt oder
 ersetzt; ein Fehler leert ihn).
 
-Das Öffnen [§C43] hält zwei Werte in `09d-bewegung.js`: `_startKurz`
-(beim Start gesetzt: die App ging vor weniger als fünf Minuten in den
-Hintergrund, laut `kicker_zuletzt_v1` im Speicher des Geräts, geschrieben bei
-jedem Gang in den Hintergrund) und `_startbildAuftrag` (der Rückfall, der
-nach 2,5 s ohne Bild das Gerüst zeigt; das erste Bild oder ein fehlender
-Stand räumen ihn).
+Die Bewegung [§C43] hält in `09d-bewegung.js`: `_podestDa` (die Reiter,
+deren Podest in dieser Sitzung schon geglänzt hat; erst ein neues Öffnen
+leert ihn), `_reiterBetreten` (der Reiter, der gerade über die Leiste
+betreten wird; `_renderNachEingabe` setzt ihn, das nächste `render` des
+Reiters verbraucht ihn) und `_aufbauTeile` (die Teile, die gerade
+aufbauen; ihr Ende, eine Berührung oder der nächste Aufbau räumt sie).
 
 Zeitweilige Arbeitsaufträge sind keine Ansichtsauswahl: `_ligaRefreshAuftrag`
 lebt im Navigations-Layer und wird nach Ende des gemeinsamen Datenabrufs
@@ -369,11 +369,13 @@ eines Rangs kostete sonst 110 bis 135 ms Skript. `tests/start` zählt danach,
 wie viele Zeichen das Öffnen jeder Laufbahn noch zeichnet: höchstens eines,
 das der eigenen Stufe mitten im Grad.
 
-Beim Start wartet das Startbild höchstens 2,5 s auf das erste Bild
-(`_startbildAuftrag`), dann steht das Gerüst [§C43]. Jedes Kantenlicht
-(`kantenlicht`) räumt sich nach seiner Dauer selbst ab (`KANTE_MS`, 4,6 s
-zeichnen, 4,2 s Hinweis); `tests/start` sieht nach, dass danach nichts davon
-im Dokument steht.
+Beim Start wartet die Oberfläche höchstens 2,5 s auf das erste Bild
+(`_startAuftrag`), dann steht das Gerüst [§C43]. Der Aufbau räumt sich nach
+seiner Zeit ab (`_aufbauAuftrag`), die Klasse `.aufbau` am Wurzelknoten nach
+1,7 s (`_vorfuehrungAuftrag`), jedes Kantenlicht nach seiner Dauer
+(`KANTE_MS`, 4,6 s zeichnen, 4,2 s Hinweis) und das Band über Gold nach
+seiner Bahn; `tests/start` sieht nach, dass danach nichts davon im Dokument
+steht.
 
 `_tickDaten` lässt außerdem ein offenes Blatt, den Eingabe-Tab und die
 Einstellungen in Ruhe:
