@@ -136,10 +136,12 @@ function _insVerwandlung(z, gross){
     + `<span class="ni-av">${avHtml(pm[z.pid], '', {px:gross ? 36 : 24})}</span>${runter}</span></div>`;
 }
 // Eine Bewegung füllt die Bühne mit der Spur samt Zeichen. Mehrere stehen
-// als Kacheln nebeneinander, jede mit ihrer Verwandlung, ihrer Spur und dem
-// Namen — alle, nicht die erste als Bild und die übrigen als Text. Wort und
-// Lage stehen nicht darüber: das sagt die Schlagzeile, und neben zwei
-// Zeichen lief „Volutenkranz I" aus der Karte.
+// als lange Zeilen untereinander, jede mit ihrer Verwandlung links und Name
+// und Spur rechts — alle, nicht die erste als Bild und die übrigen als Text.
+// Als Kacheln zu zweit nebeneinander war die Spur halb so lang und die
+// Karte ein Raster aus Kästen statt einer Liste. Wort und Lage stehen nicht
+// darüber: das sagt die Schlagzeile, und neben zwei Zeichen lief
+// „Volutenkranz I" aus der Karte.
 function _newsInsTagKopf(s){
   const d = (s && s.dataRef) || {}, pm = pmap();
   const l = (d.zuege || []).filter(z => z && pm[z.pid] && INSIGNIEN[(z.nach || {}).stufe | 0]);
@@ -149,8 +151,8 @@ function _newsInsTagKopf(s){
     return `<div class="ni-b ni-${esc(z.art)}" data-pid="${esc(z.pid)}">${_insVerwandlung(z, true)}${_insSpur(z, true)}</div>`;
   }
   return `<div class="ni-b ni-viele">${l.map(z =>
-    `<div class="ni-k ni-${esc(z.art)}" data-pid="${esc(z.pid)}">${_insVerwandlung(z, false)}${_insSpur(z, false)}`
-    + `<b class="ni-k-n">${esc(_spName(z.pid))}</b></div>`).join('')}</div>`;
+    `<div class="ni-k ni-${esc(z.art)}" data-pid="${esc(z.pid)}">${_insVerwandlung(z, false)}`
+    + `<div class="ni-k-r"><b class="ni-k-n">${esc(_spName(z.pid))}</b>${_insSpur(z, false)}</div></div>`).join('')}</div>`;
 }
 
 // ── Das Blatt ───────────────────────────────────────────────────────

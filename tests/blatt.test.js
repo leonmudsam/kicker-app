@@ -1077,8 +1077,15 @@ const ok = (c, msg, det) => {
       const kr = karte.getBoundingClientRect();
       const k = [...host.querySelectorAll('.ni-k')];
       const rand = Math.min(...k.map(e => kr.right - e.getBoundingClientRect().right));
+      // Jede Bewegung eine lange Zeile über die ganze Breite, alle
+      // untereinander: als Kacheln zu zweit nebeneinander war die Spur halb
+      // so lang und die Karte ein Raster aus Kästen.
+      const vr = (host.querySelector('.ni-viele') || b).getBoundingClientRect();
       const out = {ueber:Math.max(b.scrollWidth - b.clientWidth, ...k.map(e => e.scrollWidth - e.clientWidth)),
-        rand:Math.round(rand), kacheln:k.length};
+        rand:Math.round(rand), kacheln:k.length,
+        zeilen:k.every((e, i) => !i || e.getBoundingClientRect().top >= k[i - 1].getBoundingClientRect().bottom - 0.5)
+          // Breite gegen die Innenfläche der Bühne, ohne ihren Rand.
+          && k.every(e => e.getBoundingClientRect().width >= vr.width - 24)};
       host.remove(); return out;
     });
   }
@@ -1086,7 +1093,9 @@ const ok = (c, msg, det) => {
   ok(!insBreite[288].fehlt && insBreite[288].ueber <= 0 && insBreite[360].ueber <= 0,
      'die Bühne der Insignium-Karte läuft bei 288 und 360 px nicht über', JSON.stringify(insBreite));
   ok(!insBreite[288].fehlt && insBreite[288].kacheln === 4 && insBreite[288].rand >= 6 && insBreite[360].rand >= 6,
-     'und ihre Kacheln halten Abstand zum Kartenrand', JSON.stringify(insBreite));
+     'und ihre Bewegungen halten Abstand zum Kartenrand', JSON.stringify(insBreite));
+  ok(insBreite[288].zeilen && insBreite[360].zeilen,
+     'jede Bewegung steht als Zeile über die ganze Breite, alle untereinander', JSON.stringify(insBreite));
 
   // ── Die Karte zeigt das Zeichen, das Prestige steht im Blatt ──────
   // Gewinn und Verlust standen als „+285 P" auf der Insignium-Karte und auf

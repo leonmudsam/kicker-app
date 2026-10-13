@@ -5317,21 +5317,24 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--red) 55%,transparent)}
 .ni-ru svg{width:13px;height:13px;display:block}
 .ni-ru path{fill:none;stroke:currentColor;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
-.ni-viele{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px}
-.ni-k{display:flex;flex-direction:column;align-items:stretch;gap:6px;min-width:0;padding:8px 6px 7px;
+.ni-viele{display:flex;flex-direction:column;gap:6px}
+.ni-k{display:flex;align-items:center;gap:10px;min-width:0;padding:6px 10px 6px 6px;
   border-radius:11px;background:color-mix(in srgb,var(--bg) 40%,transparent);
   box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--purple) 16%,transparent)}
+.ni-k > .ni-sz{flex:0 0 auto}
+.ni-k-r{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:6px}
 .ni-k.ni-ab{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--red) 28%,transparent)}
 .ni-k .ni-sz{gap:5px;padding:0}
-.ni-k .ni-alt{flex:0 1 28px;min-width:20px}
-.ni-k .ni-pf{flex:0 1 18px;min-width:14px;height:12px}
-.ni-k .ni-neu{flex:0 0 60px;width:60px;height:60px}
-.ni-k .ni-neu>svg{width:60px;height:60px}
+.ni-k .ni-alt{flex:0 0 26px;width:26px;min-width:0}
+.ni-k .ni-pf{flex:0 0 16px;width:16px;min-width:0;height:12px}
+.ni-k .ni-neu{flex:0 0 52px;width:52px;height:52px}
+.ni-k .ni-neu>svg{width:52px;height:52px}
+@media (max-width:340px){ .ni-k .ni-alt,.ni-k .ni-pf{display:none} }
 .ni-k .ni-neu::before{inset:-5px}
-.ni-k .ni-av .av{--av:23px;width:23px;height:23px;font-size:9px}
+.ni-k .ni-av .av{--av:21px;width:21px;height:21px;font-size:8.5px}
 .ni-k .ni-ru{width:18px;height:18px;right:-4px;top:-3px}
 .ni-k .ni-ru svg{width:11px;height:11px}
-.ni-k-n{font-size:11.5px;font-weight:700;color:var(--ink);text-align:center;
+.ni-k-n{font-size:12px;font-weight:700;color:var(--ink);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ni-spur{display:flex;gap:4px;min-width:0}
 .ni-spur.knapp{gap:2px}
@@ -5713,7 +5716,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.13.98522534';
+const BUILD_VERSION='2026.10.13.67e60045';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -25409,8 +25412,8 @@ function _newsInsTagKopf(s){
     return `<div class="ni-b ni-${esc(z.art)}" data-pid="${esc(z.pid)}">${_insVerwandlung(z, true)}${_insSpur(z, true)}</div>`;
   }
   return `<div class="ni-b ni-viele">${l.map(z =>
-    `<div class="ni-k ni-${esc(z.art)}" data-pid="${esc(z.pid)}">${_insVerwandlung(z, false)}${_insSpur(z, false)}`
-    + `<b class="ni-k-n">${esc(_spName(z.pid))}</b></div>`).join('')}</div>`;
+    `<div class="ni-k ni-${esc(z.art)}" data-pid="${esc(z.pid)}">${_insVerwandlung(z, false)}`
+    + `<div class="ni-k-r"><b class="ni-k-n">${esc(_spName(z.pid))}</b>${_insSpur(z, false)}</div></div>`).join('')}</div>`;
 }
 
 function _ndInsTagBlatt(s){
