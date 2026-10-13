@@ -114,34 +114,36 @@ function _insSpur(z, mitZeichen){
   }).join('') + `</div>`;
 }
 // ── Eine Verwandlung ────────────────────────────────────────────────
-// Altes Zeichen, Pfeil, neues Zeichen mit Gesicht. Beim Aufstieg laufen zwei
-// Ringe einmal nach außen, UNTER der Zeichnung — über ihr darf nichts
-// skalieren [§C30]. Ein Rückfall ist kein Anlass für Bewegung: keine Ringe,
-// der Pfeil rot, und am neuen Zeichen ein roter Pfeil nach unten. Ohne ihn
-// las sich ein Rückfall vom Zierkranz auf den Volutenkranz wie ein Aufstieg,
-// denn das Bild zeigt nur zwei Zeichen hintereinander.
+// Altes Zeichen, Pfeil, neues Zeichen mit Gesicht — in dieser Reihenfolge,
+// auch beim Rückfall: jede Zeile liest sich von früher nach jetzt. Beim
+// Aufstieg zeigt der Pfeil nach vorn, und zwei Ringe laufen einmal nach
+// außen, UNTER der Zeichnung — über ihr darf nichts skalieren [§C30]. Beim
+// Rückfall zeigt der Pfeil zurück, rot, ohne Ringe: zwei Zeichen mit einem
+// Pfeil nach vorn lasen sich als Aufstieg, und ein zusätzlicher Abwärtspfeil
+// am Zeichen war ein zweites Zeichen für dieselbe Sache.
 function _insVerwandlung(z, gross){
   const pm = pmap(), ab = z.art === 'ab';
-  // Gross zieht der Pfeil eine Spur aus drei Strichen hinter sich her: die
+  // Gross zieht der Pfeil eine Spur aus zwei Strichen hinter sich her: die
   // Bewegung von einem Zeichen zum anderen, nicht nur ein Verweis.
   const pfeil = gross
-    ? `<svg class="ni-pf" viewBox="0 0 48 16" aria-hidden="true"><path class="sp" d="M2 8H8M12 8H18"/><path d="M22 8H42"/><path d="M36 3L43 8L36 13"/></svg>`
-    : `<svg class="ni-pf" viewBox="0 0 24 16" aria-hidden="true"><path d="M2 8H19"/><path d="M14 3L20 8L14 13"/></svg>`;
+    ? (ab ? `<svg class="ni-pf zurueck" viewBox="0 0 48 16" aria-hidden="true"><path class="sp" d="M46 8H40M36 8H30"/><path d="M26 8H6"/><path d="M12 3L5 8L12 13"/></svg>`
+          : `<svg class="ni-pf" viewBox="0 0 48 16" aria-hidden="true"><path class="sp" d="M2 8H8M12 8H18"/><path d="M22 8H42"/><path d="M36 3L43 8L36 13"/></svg>`)
+    : (ab ? `<svg class="ni-pf zurueck" viewBox="0 0 24 16" aria-hidden="true"><path d="M22 8H5"/><path d="M10 3L4 8L10 13"/></svg>`
+          : `<svg class="ni-pf" viewBox="0 0 24 16" aria-hidden="true"><path d="M2 8H19"/><path d="M14 3L20 8L14 13"/></svg>`);
   const wellen = ab ? '' : `<span class="ni-wl" aria-hidden="true"><i></i><i></i></span>`;
-  const runter = ab ? `<span class="ni-ru" role="img" aria-label="Rückfall"><svg viewBox="0 0 16 16" aria-hidden="true">`
-    + `<path d="M8 3v9.5M3.5 8L8 12.5L12.5 8"/></svg></span>` : '';
   // Klein ist das neue Zeichen ein Bild, gross ein Vektor [§C30].
-  return `<div class="ni-sz"><span class="ni-alt">${_insZeichen(z.pid, z.vor, true)}</span>${pfeil}`
+  return `<div class="ni-sz"${ab ? ' role="img" aria-label="Rückfall"' : ''}><span class="ni-alt">${_insZeichen(z.pid, z.vor, true)}</span>${pfeil}`
     + `<span class="ni-neu">${wellen}${_insZeichen(z.pid, z.nach, !gross)}`
-    + `<span class="ni-av">${avHtml(pm[z.pid], '', {px:gross ? 36 : 24})}</span>${runter}</span></div>`;
+    + `<span class="ni-av">${avHtml(pm[z.pid], '', {px:gross ? 30 : 18})}</span></span></div>`;
 }
 // Eine Bewegung füllt die Bühne mit der Spur samt Zeichen. Mehrere stehen
-// als lange Zeilen untereinander, jede mit ihrer Verwandlung links und Name
-// und Spur rechts — alle, nicht die erste als Bild und die übrigen als Text.
-// Als Kacheln zu zweit nebeneinander war die Spur halb so lang und die
-// Karte ein Raster aus Kästen statt einer Liste. Wort und Lage stehen nicht
-// darüber: das sagt die Schlagzeile, und neben zwei Zeichen lief
-// „Volutenkranz I" aus der Karte.
+// als lange Zeilen untereinander in EINEM Block, nur durch Linien getrennt,
+// jede mit ihrer Verwandlung links und Name und Spur rechts — alle, nicht die
+// erste als Bild und die übrigen als Text. Als Kacheln zu zweit nebeneinander
+// war die Spur halb so lang, und als Kästen untereinander las sich die Karte
+// wie drei Karten in einer und war mit drei Bewegungen 354 px hoch. Wort
+// und Lage stehen nicht darüber: das sagt die Schlagzeile, und neben zwei
+// Zeichen lief „Volutenkranz I" aus der Karte.
 function _newsInsTagKopf(s){
   const d = (s && s.dataRef) || {}, pm = pmap();
   const l = (d.zuege || []).filter(z => z && pm[z.pid] && INSIGNIEN[(z.nach || {}).stufe | 0]);

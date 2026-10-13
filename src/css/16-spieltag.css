@@ -1039,26 +1039,27 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
    Violett, der Farbe der Stufe [§C25], und die übrigen Bewegungen als Zeilen.
    Ein Rückfall trägt Rot an Pfeil und Wort, nicht an der Fläche: die Karte
    soll neben den Partien des Tages ruhig bleiben. */
-.ni-b{display:flex;flex-direction:column;gap:9px;margin:2px 0 10px;padding:10px 10px 9px;border-radius:14px;
+.ni-b{display:flex;flex-direction:column;gap:7px;margin:2px 0 8px;padding:8px 10px;border-radius:14px;
   background:linear-gradient(135deg,color-mix(in srgb,var(--purple) 14%,transparent),transparent 72%);
   border:1px solid color-mix(in srgb,var(--purple) 26%,transparent);cursor:pointer;min-width:0}
-.ni-sz{display:flex;align-items:center;justify-content:center;gap:10px;min-width:0;padding:2px 0}
+.ni-sz{display:flex;align-items:center;justify-content:center;gap:10px;min-width:0}
 /* Altes Zeichen und Pfeil geben auf schmalen Telefonen nach, das neue nie:
    bei 288 px fehlten der Bühne sonst 12 px, und sie lief aus der Karte. */
-.ni-alt{flex:0 1 44px;min-width:26px;opacity:.45}
+.ni-alt{flex:0 1 38px;min-width:24px;opacity:.45}
 .ni-alt svg{width:100%;height:auto;display:block}
-.ni-pf{flex:0 1 44px;min-width:22px;height:14px}
+.ni-pf{flex:0 1 40px;min-width:22px;height:14px}
 .ni-pf path{fill:none;stroke:var(--purple);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .ni-pf path.sp{opacity:.45}
 .ni-ab .ni-pf path{stroke:var(--red)}
 /* Das neue Zeichen steht auf einem violetten Hof, der Farbe der Leiter
    [§C25] und nicht dem Gold der Titel [§C36]; nach einem Rückfall auf einem
-   roten, der Richtung. */
-.ni-neu{position:relative;flex:0 0 96px;width:96px;height:96px}
+   roten, der Richtung. 76 px: mit 96 war die Bühne allein so hoch wie eine
+   ganze Karte im Feed. */
+.ni-neu{position:relative;flex:0 0 76px;width:76px;height:76px}
 .ni-neu::before{content:"";position:absolute;inset:-8px;border-radius:50%;
   background:radial-gradient(closest-side,color-mix(in srgb,var(--purple) 30%,transparent),transparent)}
 .ni-ab .ni-neu::before{background:radial-gradient(closest-side,color-mix(in srgb,var(--red) 22%,transparent),transparent)}
-.ni-neu>svg{position:relative;width:96px;height:96px;display:block}
+.ni-neu>svg{position:relative;width:76px;height:76px;display:block}
 /* Zwei Ringe laufen einmal vom Zeichen nach außen und bleiben dann weg: die
    Verwandlung als Bewegung, ohne dass die Karte im Feed weiter blinkt. Nur
    `transform` und Deckkraft; bei Bewegungsruhe stehen sie nicht da. */
@@ -1069,39 +1070,28 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 @keyframes niWelle{0%{transform:scale(.72);opacity:.9}100%{transform:scale(1.42);opacity:0}}
 @media (prefers-reduced-motion:reduce){ .ni-wl{display:none} }
 .ni-av{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}
-.ni-av .av{--av:36px;width:36px;height:36px;font-size:13px}
-/* Der Rückfall trägt am neuen Zeichen einen roten Pfeil nach unten, wie die
-   Bilanz der Tafel-Karte [§C25]: zwei Zeichen hintereinander lesen sich
-   sonst wie ein Aufstieg. */
-.ni-ru{position:absolute;right:-2px;top:-2px;width:22px;height:22px;border-radius:50%;display:flex;
-  align-items:center;justify-content:center;color:var(--red);background:var(--surface);
-  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--red) 55%,transparent)}
-.ni-ru svg{width:13px;height:13px;display:block}
-.ni-ru path{fill:none;stroke:currentColor;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
-/* Mehrere Bewegungen: je eine lange Zeile, alle untereinander. Links die
-   Verwandlung kleiner, rechts Name und Spur über die ganze übrige Breite.
-   Als Kacheln zu zweit nebeneinander war die Spur halb so lang. */
-.ni-viele{display:flex;flex-direction:column;gap:6px}
-.ni-k{display:flex;align-items:center;gap:10px;min-width:0;padding:6px 10px 6px 6px;
-  border-radius:11px;background:color-mix(in srgb,var(--bg) 40%,transparent);
-  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--purple) 16%,transparent)}
+.ni-av .av{--av:30px;width:30px;height:30px;font-size:11px}
+/* Mehrere Bewegungen: je eine lange Zeile, alle untereinander in einem
+   Block, getrennt nur durch eine Linie. Links die Verwandlung klein, rechts
+   Name und Spur über die ganze übrige Breite. Als Kästen untereinander las
+   sich die Karte wie mehrere Karten in einer. */
+.ni-viele{gap:0;padding:2px 10px}
+.ni-k{display:flex;align-items:center;gap:10px;min-width:0;padding:5px 0}
+.ni-k + .ni-k{border-top:1px solid color-mix(in srgb,var(--purple) 16%,transparent)}
 .ni-k > .ni-sz{flex:0 0 auto}
-.ni-k-r{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:6px}
-.ni-k.ni-ab{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--red) 28%,transparent)}
-.ni-k .ni-sz{gap:5px;padding:0}
-.ni-k .ni-alt{flex:0 0 26px;width:26px;min-width:0}
-.ni-k .ni-pf{flex:0 0 16px;width:16px;min-width:0;height:12px}
-.ni-k .ni-neu{flex:0 0 52px;width:52px;height:52px}
-.ni-k .ni-neu>svg{width:52px;height:52px}
+.ni-k-r{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:5px}
+.ni-k .ni-sz{gap:4px;padding:0}
+.ni-k .ni-alt{flex:0 0 22px;width:22px;min-width:0}
+.ni-k .ni-pf{flex:0 0 14px;width:14px;min-width:0;height:10px}
+.ni-k .ni-neu{flex:0 0 40px;width:40px;height:40px}
+.ni-k .ni-neu>svg{width:40px;height:40px}
 /* Auf schmalen Telefonen bleibt in der Zeile nur das neue Zeichen: neben
    altem Zeichen und Pfeil blieben der Spur bei 288 px sechzig Pixel. Woher
    es kam, zeigt die Spur selbst, der Ring am alten Feld. */
 @media (max-width:340px){ .ni-k .ni-alt,.ni-k .ni-pf{display:none} }
-.ni-k .ni-neu::before{inset:-5px}
-.ni-k .ni-av .av{--av:21px;width:21px;height:21px;font-size:8.5px}
-.ni-k .ni-ru{width:18px;height:18px;right:-4px;top:-3px}
-.ni-k .ni-ru svg{width:11px;height:11px}
-.ni-k-n{font-size:12px;font-weight:700;color:var(--ink);
+.ni-k .ni-neu::before{inset:-4px}
+.ni-k .ni-av .av{--av:17px;width:17px;height:17px;font-size:7px}
+.ni-k-n{font-size:12px;font-weight:700;color:var(--ink);line-height:1.1;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* Die Spur [§C30]: sieben Stufen zu je drei Feldern, bei einer Bewegung
    darunter die Zeichen. Gefüllt, was schon da war; Violett, was der Tag

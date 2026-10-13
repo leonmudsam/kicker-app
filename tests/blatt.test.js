@@ -1083,6 +1083,8 @@ const ok = (c, msg, det) => {
       const vr = (host.querySelector('.ni-viele') || b).getBoundingClientRect();
       const out = {ueber:Math.max(b.scrollWidth - b.clientWidth, ...k.map(e => e.scrollWidth - e.clientWidth)),
         rand:Math.round(rand), kacheln:k.length,
+        hoch:Math.round(Math.max(...k.map(e => e.getBoundingClientRect().height))),
+        kasten:k.some(e => getComputedStyle(e).boxShadow !== 'none' || getComputedStyle(e).backgroundColor !== 'rgba(0, 0, 0, 0)'),
         zeilen:k.every((e, i) => !i || e.getBoundingClientRect().top >= k[i - 1].getBoundingClientRect().bottom - 0.5)
           // Breite gegen die Innenfläche der Bühne, ohne ihren Rand.
           && k.every(e => e.getBoundingClientRect().width >= vr.width - 24)};
@@ -1096,6 +1098,10 @@ const ok = (c, msg, det) => {
      'und ihre Bewegungen halten Abstand zum Kartenrand', JSON.stringify(insBreite));
   ok(insBreite[288].zeilen && insBreite[360].zeilen,
      'jede Bewegung steht als Zeile über die ganze Breite, alle untereinander', JSON.stringify(insBreite));
+  // Ein Block, keine Kästen: als umrandete Kästen untereinander las sich die
+  // Karte wie mehrere Karten in einer, und jede Zeile war 64 px hoch.
+  ok(!insBreite[288].kasten && !insBreite[360].kasten && insBreite[360].hoch <= 52 && insBreite[288].hoch <= 52,
+     'die Bewegungen stehen in einem Block ohne eigene Kästen, je Zeile höchstens 52 px', JSON.stringify(insBreite));
 
   // ── Die Karte zeigt das Zeichen, das Prestige steht im Blatt ──────
   // Gewinn und Verlust standen als „+285 P" auf der Insignium-Karte und auf
@@ -1103,8 +1109,9 @@ const ok = (c, msg, det) => {
   // über Schwelle und Träger der Stufe, und nur die erste Bewegung war ein
   // Bild. Jetzt ist jede Bewegung eine Verwandlung mit ihrer Spur: gefüllt,
   // was schon da war, Violett, was der Tag dazubringt, rot gestreift, was ein
-  // Rückfall kostet — und ein Rückfall trägt einen roten Pfeil nach unten,
-  // sonst lesen sich zwei Zeichen hintereinander wie ein Aufstieg.
+  // Rückfall kostet — und beim Rückfall zeigt der Pfeil zurück, bei
+  // derselben Reihenfolge alt vor neu; mit einem Pfeil nach vorn lasen sich
+  // zwei Zeichen hintereinander wie ein Aufstieg.
   const insKarte = await page.evaluate(() => {
     const K = window.__k.eval.bind(window.__k);
     const m = JSON.parse(K(`(function(){
@@ -1138,10 +1145,13 @@ const ok = (c, msg, det) => {
       weg: zahl(felder(k2), 'weg'), daAb: wo(felder(k2), 'da'),
       wellen: !!w, wellenAb: !!k2.querySelector('.ni-wl'),
       unter: !!(w && w.nextElementSibling && w.nextElementSibling.tagName.toLowerCase() === 'svg'),
-      runter: !!k2.querySelector('.ni-neu .ni-ru'), runterAuf: !!k1.querySelector('.ni-ru'),
+      runter: !!k2.querySelector('.ni-pf.zurueck') && !k2.querySelector('.ni-ru')
+        && (k2.querySelector('.ni-sz') || {}).firstElementChild === k2.querySelector('.ni-alt'),
+      runterAuf: !!k1.querySelector('.ni-pf.zurueck'),
+      buehne: Math.round(k1.querySelector('.ni-b').getBoundingClientRect().height),
       kacheln: kach.length, zeilen: kv.querySelectorAll('.ni-z').length,
       kachelFelder: kach.map(e => felder(e).length).join(','),
-      kachelAb: kach.map(e => (e.querySelector('.ni-ru') ? 'r' : '') + (e.querySelector('.ni-wl') ? 'w' : '')
+      kachelAb: kach.map(e => (e.querySelector('.ni-pf.zurueck') ? 'r' : '') + (e.querySelector('.ni-wl') ? 'w' : '')
         + zahl(felder(e), 'weg')).join(','),
       namen: kach.every(e => (e.querySelector('.ni-k-n') || {}).textContent)
     };
@@ -1157,11 +1167,15 @@ const ok = (c, msg, det) => {
      'die Spur zeigt, was der Tag dazubringt, und was ein Rückfall kostet',
      JSON.stringify({alt:insKarte.alt, neu:insKarte.neu, da:insKarte.da, weg:insKarte.weg, daAb:insKarte.daAb}));
   ok(insKarte.wellen && insKarte.unter && !insKarte.wellenAb && insKarte.runter && !insKarte.runterAuf,
-     'Ringe nur beim Aufstieg und unter der Zeichnung, der Rückfall mit Pfeil nach unten',
+     'Ringe nur beim Aufstieg und unter der Zeichnung, beim Rückfall zeigt der Pfeil zurück, alt bleibt vor neu',
      JSON.stringify({wellen:insKarte.wellen, unter:insKarte.unter, ab:insKarte.wellenAb, runter:insKarte.runter}));
+  // Die Bühne einer einzelnen Bewegung bleibt so hoch wie ein Kopf im Feed:
+  // mit dem 96-px-Zeichen war sie allein 190 px hoch.
+  ok(insKarte.buehne > 0 && insKarte.buehne <= 150,
+     'die Bühne einer Bewegung ist nicht höher als ein Kartenkopf', insKarte.buehne + ' px');
   ok(insKarte.kacheln === 3 && insKarte.zeilen === 0 && insKarte.kachelFelder === '21,21,21'
      && insKarte.kachelAb === 'w0,r1,w0' && insKarte.namen,
-     'mehrere Bewegungen stehen je als Bild mit Spur und Namen, der Rückfall mit seinem Pfeil',
+     'mehrere Bewegungen stehen je als Bild mit Spur und Namen, der Rückfall mit Pfeil zurück',
      JSON.stringify({kacheln:insKarte.kacheln, zeilen:insKarte.zeilen, felder:insKarte.kachelFelder, ab:insKarte.kachelAb}));
 
 
