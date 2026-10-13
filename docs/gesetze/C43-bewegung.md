@@ -6,6 +6,7 @@
 - **Bei jedem Öffnen baut sich die Liga auf** — dem ersten Bild, das der Start zeichnet, während `loadAll` läuft (`_bewegungNachRender`), nicht einem `render` von anderswo: die untere Leiste steigt herauf, der Inhalt kommt in Teilen (`.bau`, höchstens vierzehn, die Verzögerung am Teil selbst), Licht fährt um das Zeichen, um Platz 1 bis 3 und um „Match eintragen". Eine Sperre nach kurzer Pause gibt es nicht.
 - **Ohne Stand auf dem Gerät** [§C42] steht bis zur Antwort der Datenbank das Gerüst der Liga (`_startGeruest`), das danach über ihr ausblendet; kommt nach 2,5 s kein Bild, ebenso.
 - **Ein Reiter, über die Leiste betreten** (`_reiterBetreten`), baut sich auf: Überschrift, Wähler und Suche stehen sofort, Karten und Zeilen kommen nacheinander. Ein Zeitraum oder neue Daten im selben Reiter bauen nichts auf.
+- **Die Leiste antwortet sofort:** die Pille des gewählten Reiters ist EIN Schlitten, der gleitet (`_navSchlitten`, `.nav-schlitten`), nur per `transform` in Pixeln aus der Fensterbreite — er fährt, bevor der neue Reiter gerechnet ist. Rechnet der Reiter länger als 90 ms, dunkelt ein Schleier den alten ab (`_reiterBeginnt`, `.reiter-schleier`); nach 120 ms läuft unter der Kopfleiste die Ladelinie (`_ladeStart`, `.lade-linie`), ebenso solange Daten kommen; beides endet, wenn der Reiter steht und die Daten da sind (`_reiterSteht`, `_connBewegung`), die Linie spätestens nach 15 s. Steht die Verbindung zum ersten Mal, geht vom Punkt oben links ein Ring aus.
 - **Das Podest glänzt einmal je Reiter und Sitzung** (`_podestLicht`, `_podestDa`): Licht im Metall um Platz 1 bis 3 [§C25] in Liga, Positionen und bei den Duos, um das Podest der Awards, um die letzte Partie im Verlauf; über Gold zieht das Band (`.glanz-bahn.glanz-einmal`).
 - **Das Kantenlicht hat zwei Bedeutungen und keine dritte** (`kantenlicht`, `.kl`) [§C41]: *zeichnen* — einmal herum, dann steht der Rahmen einige Sekunden: eine Karte, die zählt, ist angekommen; *hinweis* — zweimal herum, ohne Rahmen: hier ist etwas neu. Beide enden von selbst (4,6 und 4,2 s): das Licht läuft nach der Runde langsamer weiter, ein Schein liegt um die Karte, dann verlischt beides, und nichts davon bleibt im Dokument. Das Licht im Profilkopf ist dieselbe Zeichnung mit eigener Bedeutung: es läuft, solange der Monat läuft.
 - **Neue Daten nehmen das Licht nicht mit:** zeichnet die App denselben Reiter neu, wechselt es an dieselbe Stelle der neuen Ansicht und läuft weiter (`_lichtMerken`, `_lichtZurueck`).
@@ -15,11 +16,11 @@
 
 ## Stellen
 
-`src/index.html` (Oberfläche im ersten Bild), `09d-bewegung.js` (`_startBereit`, `_startGeruest`, `kantenlicht`, `_aufbauen`, `_podestLicht`, `_glanzEinmal`, `_lichtMerken`, `_lichtZurueck`, `_bewegungNachRender`, `_vorfuehrungEnde`), `09-ui-infra.js` (`render`, `_renderNachEingabe`), `06c-stand.js` (kein Stand → Gerüst), `37-boot.js` (`_startBereit`), `00-prolog.js`, `01-shell.css` (das Zeichen), `17-bewegung.css`.
+`src/index.html` (Oberfläche im ersten Bild), `09d-bewegung.js` (`_startBereit`, `_startGeruest`, `kantenlicht`, `_aufbauen`, `_podestLicht`, `_glanzEinmal`, `_lichtMerken`, `_lichtZurueck`, `_bewegungNachRender`, `_vorfuehrungEnde`, `_navSchlitten`, `_ladeStart`, `_ladeEnde`, `_reiterBeginnt`, `_reiterSteht`, `_connBewegung`), `09-ui-infra.js` (`render`, `renderNav`, `_renderNachEingabe`), `06-db.js` (`setConn`), `05-nav-sheet.css` (der Schlitten), `06c-stand.js` (kein Stand → Gerüst), `37-boot.js` (`_startBereit`), `00-prolog.js`, `01-shell.css` (das Zeichen), `17-bewegung.css`.
 
 ## Prüfung
 
-`tests/start` (die Kopfleiste steht mit dem Zeichen, bevor ein Skript läuft, ohne Bild davor; ohne Stand das Gerüst, bis die Datenbank antwortet; beim Öffnen baut sich die Liga auf, mit Licht im Metall um Platz 1 bis 3, um das Zeichen und den Knopf; auch direkt nach dem Schließen wieder; nach seiner Zeit nichts übrig, auch kein leeres style-Attribut; bei Bewegungsruhe nichts davon; der Start lädt das große Symbol nicht), `tests/blatt` (ein über die Leiste betretener Reiter baut sich auf, mit Licht im Metall; nur transform und opacity; neue Daten nehmen das Licht nicht mit; nach seiner Zeit nichts übrig, einmal je Reiter und Sitzung).
+`tests/start` (die Kopfleiste steht mit dem Zeichen, bevor ein Skript läuft, ohne Bild davor; ohne Stand das Gerüst, bis die Datenbank antwortet; beim Öffnen baut sich die Liga auf, mit Licht im Metall um Platz 1 bis 3, um das Zeichen und den Knopf; auch direkt nach dem Schließen wieder; nach seiner Zeit nichts übrig, auch kein leeres style-Attribut; der Punkt oben links beim ersten „verbunden"; bei Bewegungsruhe nichts davon; der Start lädt das große Symbol nicht), `tests/blatt` (ein über die Leiste betretener Reiter baut sich auf, mit Licht im Metall, dessen Kegel die Karte deckt; nur transform und opacity; neue Daten nehmen das Licht nicht mit; nach seiner Zeit nichts übrig, einmal je Reiter und Sitzung; der leuchtende Schlitten steht unter dem gewählten Knopf; rechnet ein Reiter lange, fährt der Schlitten sofort und Schleier und Ladelinie überbrücken, und steht er, sind beide fort).
 
 ## Herleitung
 
@@ -59,6 +60,14 @@ Zeit die Antwort der Datenbank, zeichnete die App die Liste neu, und das
 Licht verschwand mitten im Leuchten mit den alten Zeilen; es wechselt jetzt
 an dieselbe Stelle der neuen Liste. Ein Kegel so groß wie im Profilkopf
 (1400 px) kostete bei dreifacher Pixeldichte ein Vielfaches an Speicher.
+
+Beim Reiterwechsel blieb auf einem langsamen Telefon die alte Pille
+gemessen 640 ms stehen: jeder Knopf trug seine eigene, und ihr Umfärben
+wartete wie alles andere auf das Ende der Rechnung. Ein Schlitten, der nur
+verschoben wird, fährt auf dem Compositor, ohne den Hauptthread. Gemessen
+(vierfach gedrosselt, warme Reiter, Median aus 30) bleibt der Wechsel gleich
+schnell: 57 ms bis zur neuen Ansicht, 136 ms bis zum gemalten Bild (vorher
+141 ms).
 
 Gemessen wird beim Aufbau nichts: welche Teile im Bild stehen, sagt die
 Reihenfolge. Eine vererbte Variable als Verzögerung ließ im Entwurf jeden

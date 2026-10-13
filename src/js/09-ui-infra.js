@@ -146,7 +146,7 @@ function renderNav(){
     tab=b.dataset.nav;teamSearch='';ligaSeasonId=null;ligaSicht='spieler';
     awPeriod='season';awSeasonId=null;awWeekStart=null;rekKammer='';einblickOffen='';
     window.scrollTo(0,0);_renderNachEingabe();
-    if(tab==='ranking') _ligaAktualisieren();});
+    if(tab==='ranking'){ _ladeStart('daten'); _ligaAktualisieren(); }});
   nav._navKnoop=nav.firstElementChild;
   }
   document.querySelectorAll('[data-nav]').forEach(b=>{
@@ -157,6 +157,7 @@ function renderNav(){
   // FAB nur außerhalb des Match-Tabs sinnvoll: dort führt er auf die Seite,
   // auf der man schon ist, und lag über dem Knopf „Mischen".
   document.getElementById('fab').style.display = tab==='match' ? 'none' : 'grid';
+  _navSchlitten();
 }
 
 let _ligaRefreshAuftrag=null;
@@ -214,8 +215,9 @@ function _renderNachEingabe(){
     });
   }
   root.setAttribute('aria-busy','true');
-  // Ein Reiter, der über die Leiste betreten wird, baut sich auf [§C43].
-  if(root._renderTab && root._renderTab!==tab) _reiterBetreten=tab;
+  // Ein Reiter, der über die Leiste betreten wird, baut sich auf; rechnet er
+  // länger, überbrücken Schleier und Ladelinie [§C43].
+  if(root._renderTab && root._renderTab!==tab){ _reiterBetreten=tab; _reiterBeginnt(); }
   // Nur beim Wechsel des Reiters: die alte Ergebnisliste darf kein Profil
   // oder Match mehr öffnen. Filter derselben Ansicht bleiben bedienbar,
   // damit ein zweiter schneller Tap seine erste Wahl ersetzen kann.

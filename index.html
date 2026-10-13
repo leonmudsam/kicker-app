@@ -933,14 +933,15 @@
     display:flex;gap:2px;border-top:1px solid var(--line)}
   .botnav button{flex:1;background:none;border:none;cursor:pointer;padding:7px 2px;border-radius:13px;
     display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--muted);transition:.18s;position:relative}
-  .botnav button .ic{width:52px;height:28px;border-radius:14px;display:grid;place-items:center;
-    transition:background .2s,box-shadow .2s}
+  .botnav button .ic{width:52px;height:28px;border-radius:14px;display:grid;place-items:center}
   .botnav button .ic svg{width:21px;height:21px;--strich:1.75}
   .botnav button .lb{font-size:9.5px;font-weight:600;letter-spacing:.01em}
   .botnav button.on{color:var(--acid)}
-  .botnav button.on .ic{background:rgba(190,242,100,.12);box-shadow:inset 0 0 0 1px rgba(190,242,100,.25)}
   .botnav button:active{transform:scale(.9)}
-  .botnav button.on .ic{box-shadow:inset 0 0 0 1px rgba(190,242,100,.32),0 0 16px -2px rgba(190,242,100,.38)}
+  .nav-schlitten{position:absolute;z-index:-1;top:15px;left:10px;height:28px;width:calc((100% - 28px) / 5);
+    pointer-events:none;will-change:transform;transition:opacity .2s}
+  .nav-schlitten::before{content:"";position:absolute;left:50%;top:0;width:52px;height:28px;margin-left:-26px;border-radius:14px;
+    background:rgba(190,242,100,.12);box-shadow:inset 0 0 0 1px rgba(190,242,100,.32),0 0 16px -2px rgba(190,242,100,.38)}
   @keyframes reiterStoss{0%{transform:scale(.78)}60%{transform:scale(1.1)}100%{transform:none}}
   @media(prefers-reduced-motion:no-preference){
     .botnav button.on .ic svg{animation:reiterStoss .28s cubic-bezier(.2,1.4,.4,1)}}
@@ -5816,6 +5817,19 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
     .pod-karte.bau{animation-name:bauPodest;animation-duration:.5s}
     .glanz-einmal::after{animation:glanzEinmal 1.3s cubic-bezier(.45,0,.25,1) var(--gv,0ms) both}
   }
+
+  @keyframes aufbauSchlitten{from{opacity:0;transform:scaleX(.3)}}
+  .reiter-schleier{position:fixed;left:0;right:0;top:0;bottom:0;z-index:30;max-width:520px;margin:0 auto;pointer-events:none;
+    background:var(--bg);opacity:0;will-change:opacity}
+  .lade-linie{position:absolute;left:0;right:0;bottom:0;height:2px;pointer-events:none;transform-origin:0 50%;
+    will-change:transform,opacity;transform:scaleX(0);opacity:0;border-radius:2px;
+    background:linear-gradient(90deg,rgba(190,242,100,0),var(--acid) 40%,var(--acid));box-shadow:0 0 10px rgba(190,242,100,.5)}
+  .dot{position:relative}
+  .dot.ping::after{content:"";position:absolute;inset:-1px;border-radius:50%;border:1.5px solid var(--acid);opacity:0}
+  @media(prefers-reduced-motion:no-preference){
+    .aufbau .nav-schlitten::before{animation:aufbauSchlitten .4s cubic-bezier(.3,1.3,.5,1) .42s both}
+    .dot.ping::after{animation:aufbauPing .9s ease-out 2}
+  }
 </style>
 </head>
 <body>
@@ -5888,7 +5902,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.13.9d6c49b6';
+const BUILD_VERSION='2026.10.13.6262024e';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -7983,7 +7997,8 @@ function potwHasData(){
   return _potwMatchesInRange(start,end).length>0;
 }
 
-function setConn(t,c){document.getElementById('connText').textContent=t;document.getElementById('connDot').className='dot '+c;}
+function setConn(t,c){document.getElementById('connText').textContent=t;document.getElementById('connDot').className='dot '+c;
+  _connBewegung(c);}
 
 function _spielerVon(x){ return typeof x === 'string' ? pmap()[x] : x; }
 
@@ -9593,7 +9608,7 @@ function renderNav(){
     tab=b.dataset.nav;teamSearch='';ligaSeasonId=null;ligaSicht='spieler';
     awPeriod='season';awSeasonId=null;awWeekStart=null;rekKammer='';einblickOffen='';
     window.scrollTo(0,0);_renderNachEingabe();
-    if(tab==='ranking') _ligaAktualisieren();});
+    if(tab==='ranking'){ _ladeStart('daten'); _ligaAktualisieren(); }});
   nav._navKnoop=nav.firstElementChild;
   }
   document.querySelectorAll('[data-nav]').forEach(b=>{
@@ -9602,6 +9617,7 @@ function renderNav(){
     if(aktiv)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');
   });
   document.getElementById('fab').style.display = tab==='match' ? 'none' : 'grid';
+  _navSchlitten();
 }
 
 let _ligaRefreshAuftrag=null;
@@ -9650,7 +9666,7 @@ function _renderNachEingabe(){
     });
   }
   root.setAttribute('aria-busy','true');
-  if(root._renderTab && root._renderTab!==tab) _reiterBetreten=tab;
+  if(root._renderTab && root._renderTab!==tab){ _reiterBetreten=tab; _reiterBeginnt(); }
   root.inert=root._renderTab!==tab || a.inert;
 }
 
@@ -10107,6 +10123,7 @@ function _bewegungNachRender(root, warTab, geruest){
     _podestLicht(view, tab, 640);
     return;
   }
+  if(warTab !== tab) _reiterSteht();
   if(warTab !== tab && _reiterBetreten === tab){
     _reiterBetreten = '';
     _aufbauen(view, 0, 30, 8, true);
@@ -10119,6 +10136,92 @@ function _vorfuehrungEnde(){
 }
 ['pointerdown', 'wheel', 'touchstart', 'keydown'].forEach(ev =>
   document.addEventListener(ev, _vorfuehrungEnde, {passive:true, capture:true}));
+
+let _schlitten = null;
+function _navSchlitten(sofort){
+  const nav = document.getElementById('botnav');
+  if(!nav || !nav.firstElementChild || !nav.appendChild) return;
+  if(!_schlitten){
+    _schlitten = document.createElement('i');
+    _schlitten.className = 'nav-schlitten'; _schlitten.setAttribute('aria-hidden', 'true');
+  }
+  if(_schlitten.parentNode !== nav) nav.appendChild(_schlitten);
+  const i = NAV.findIndex(n => n[0] === tab);
+  _schlitten.style.opacity = i < 0 ? '0' : '';
+  if(i < 0) return;
+  const ziel = 'translateX(' + (i * ((Math.min(innerWidth, 520) - 28) / 5 + 2)).toFixed(1) + 'px)';
+  const alt = _schlitten.style.transform;
+  if(alt === ziel) return;
+  _schlitten.style.transform = ziel;
+  if(alt && !sofort && !_bewegungRuhig() && _schlitten.animate)
+    _schlitten.animate([{transform:alt}, {transform:ziel}], {duration:360, easing:'cubic-bezier(.3,1.25,.5,1)'});
+}
+if(typeof addEventListener === 'function') addEventListener('resize', () => _navSchlitten(true));
+
+let _ladeLinie = null, _ladeLauf = null, _ladeNot = 0;
+const _ladeGruende = new Set();
+function _ladeStart(grund){
+  if(!_bewegungDa()) return;
+  _ladeGruende.add(grund);
+  if(_ladeLauf || _bewegungRuhig()) return;
+  const leiste = document.querySelector('.appbar');
+  if(!leiste) return;
+  if(!_ladeLinie){
+    _ladeLinie = document.createElement('i');
+    _ladeLinie.className = 'lade-linie'; _ladeLinie.setAttribute('aria-hidden', 'true');
+  }
+  if(_ladeLinie.parentNode !== leiste) leiste.appendChild(_ladeLinie);
+  _ladeLauf = _ladeLinie.animate([{transform:'scaleX(0)', opacity:1}, {transform:'scaleX(.88)', opacity:1}],
+    {duration:2400, delay:120, easing:'cubic-bezier(.08,.7,.2,1)', fill:'both'});
+  clearTimeout(_ladeNot);
+  _ladeNot = setTimeout(() => { _ladeGruende.clear(); _ladeEnde(''); }, 15000);
+}
+function _ladeEnde(grund){
+  _ladeGruende.delete(grund);
+  if(!_ladeLauf || _ladeGruende.size) return;
+  clearTimeout(_ladeNot); _ladeNot = 0;
+  const lauf = _ladeLauf; _ladeLauf = null;
+  const sichtbar = (lauf.currentTime || 0) > 120;
+  lauf.cancel();
+  if(sichtbar && !_bewegungRuhig())
+    _ladeLinie.animate([{transform:'scaleX(.88)', opacity:1}, {transform:'scaleX(1)', opacity:1, offset:.5},
+      {transform:'scaleX(1)', opacity:0}], {duration:320, easing:'ease-out'});
+}
+
+let _schleier = null, _schleierLauf = null;
+function _reiterBeginnt(){
+  if(!_bewegungDa()) return;
+  _ladeStart('reiter');
+  if(_schleierLauf || _bewegungRuhig()) return;
+  const app = document.getElementById('app');
+  if(!app) return;
+  if(!_schleier){
+    _schleier = document.createElement('i');
+    _schleier.className = 'reiter-schleier'; _schleier.setAttribute('aria-hidden', 'true');
+  }
+  if(_schleier.parentNode !== app) app.appendChild(_schleier);
+  _schleierLauf = _schleier.animate([{opacity:0}, {opacity:.6}], {duration:180, delay:90, easing:'ease', fill:'forwards'});
+}
+function _reiterSteht(){
+  _ladeEnde('reiter');
+  if(!_schleierLauf) return;
+  const von = .6 * (_schleierLauf.effect.getComputedTiming().progress || 0);
+  _schleierLauf.cancel(); _schleierLauf = null;
+  if(von > .04) _schleier.animate([{opacity:von}, {opacity:0}], {duration:200, easing:'ease-out'});
+}
+
+let _verbunden = false;
+function _connBewegung(c){
+  if(!_bewegungDa()) return;
+  if(c === 'load') return _ladeStart('daten');
+  _ladeEnde('daten');
+  if(c !== 'ok' || _verbunden) return;
+  _verbunden = true;
+  const punkt = document.getElementById('connDot');
+  if(!punkt || _bewegungRuhig()) return;
+  punkt.classList.add('ping');
+  setTimeout(() => punkt.classList.remove('ping'), 2000);
+}
 
 function simulateElo(matchSubset, opts={}){
   const startElo=opts.startElo ?? cfg.start_elo;

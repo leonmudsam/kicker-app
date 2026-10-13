@@ -45,6 +45,10 @@ leert ihn), `_reiterBetreten` (der Reiter, der gerade über die Leiste
 betreten wird; `_renderNachEingabe` setzt ihn, das nächste `render` des
 Reiters verbraucht ihn) und `_aufbauTeile` (die Teile, die gerade
 aufbauen; ihr Ende, eine Berührung oder der nächste Aufbau räumt sie).
+Beim Reiterwechsel: `_ladeGruende` (warum die Ladelinie läuft: `reiter`,
+`daten`; sie endet, wenn keiner mehr gilt), `_ladeLauf` und `_schleierLauf`
+(die laufenden Animationen) und `_verbunden` (ob der Punkt schon einmal
+„verbunden" gezeigt hat; er wird nicht zurückgesetzt).
 
 Zeitweilige Arbeitsaufträge sind keine Ansichtsauswahl: `_ligaRefreshAuftrag`
 lebt im Navigations-Layer und wird nach Ende des gemeinsamen Datenabrufs
@@ -375,7 +379,8 @@ seiner Zeit ab (`_aufbauAuftrag`), die Klasse `.aufbau` am Wurzelknoten nach
 1,7 s (`_vorfuehrungAuftrag`), jedes Kantenlicht nach seiner Dauer
 (`KANTE_MS`, 4,6 s zeichnen, 4,2 s Hinweis) und das Band über Gold nach
 seiner Bahn; `tests/start` sieht nach, dass danach nichts davon im Dokument
-steht.
+steht. Die Ladelinie endet spätestens 15 s nach ihrem Beginn (`_ladeNot`),
+auch wenn ein Grund noch gilt.
 
 `_tickDaten` lässt außerdem ein offenes Blatt, den Eingabe-Tab und die
 Einstellungen in Ruhe:

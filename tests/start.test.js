@@ -386,6 +386,10 @@ async function neueSeite(ctx){
     const a1 = await aufbauJetzt(e2.page);
     ok(a1.aufbau && a1.teile >= 8 && a1.metall === 'gold silber bronze' && a1.zeichen === 1 && a1.knopf === 1,
       'Beim Öffnen baut sich die Liga auf, mit Licht im Metall um Platz 1 bis 3 ' + JSON.stringify(a1));
+    // Steht die Verbindung zum ersten Mal, geht vom Punkt ein Ring aus.
+    await e2.page.waitForFunction(() => document.getElementById('connDot').classList.contains('ok'), null, {timeout:20000});
+    ok(await e2.page.evaluate(() => document.getElementById('connDot').classList.contains('ping')),
+      'Steht die Verbindung zum ersten Mal, geht vom Punkt oben links ein Ring aus');
     await e2.page.waitForTimeout(6200);
     const rest = await e2.page.evaluate(() => ({aufbau:document.documentElement.classList.contains('aufbau'),
       reste:document.querySelectorAll('.bau, .kl, .kl-schein, .glanz-einmal, [style=""]').length}));
