@@ -36,13 +36,12 @@ const SEASONS = [
 const NOW = new Date(2026, 7, 26, 21, 0, 0).getTime();
 const VORABEND = new Date(2026, 7, 24, 22, 0, 0).getTime();
 
-// ── Stände derselben Liga ──────────────────────────────────────────────
-// Der Stand des Geräts endet am Abend des 24.; der Live-Abruf bringt den
-// 25., an dem Julian und Jane auf Platz 4 und 5 tauschen — im Bild, ohne zu
-// scrollen. Das Zurückkommen bringt die Partien des 26. „Vor fünf Minuten
-// offen" kennt schon alles bis auf die letzten vier Partien des 25.
-const bis = (t, d) => MATCHES.filter(m => new Date(m.created_at).getTime() < new Date(2026, 7, d).getTime()).length;
-const nStand = bis(0, 25), nLive = bis(0, 26), nKurz = nLive - 4, nZurueck = MATCHES.length;
+// ── Die Liga bis zum Abend des 25. ──────────────────────────────────────
+// Stand des Geräts und Datenbank kennen dieselben Partien: der Entwurf
+// handelt vom Öffnen, nicht davon, was seitdem gespielt wurde. Gelesen hat
+// das Gerät zuletzt am Abend des 24. — die Stories des 25. sind ungelesen.
+const bis = d => MATCHES.filter(m => new Date(m.created_at).getTime() < new Date(2026, 7, d).getTime()).length;
+const nGelesen = bis(25), nLive = bis(26);
 
 const rt = require(path.join(WURZEL, 'tests', 'runtime.js')).createRuntime();
 const K = rt.K;
@@ -61,12 +60,12 @@ const SAISONS = JSON.parse(K(`JSON.stringify((() => { const g = getGlobalSim(); 
 // Die Stories, die das Gerät am Vorabend kannte — mit dem Code der App
 // gerechnet, nicht nachgebaut.
 rt.setNow(VORABEND);
-K(`matches = matches.slice(0, ${nStand}); invalidateCache(); 0`);
+K(`matches = matches.slice(0, ${nGelesen}); invalidateCache(); 0`);
 const STORY_ZEILEN = JSON.parse(K(`JSON.stringify((_buildStories() || []).map(_storyToRow))`));
 const STAND_NEUESTE = STORY_ZEILEN.reduce((mx, r) => Math.max(mx, new Date(r.event_at).getTime() || 0), 0);
-console.log('Partien', nStand, '/', nKurz, '→', nLive, '→', nZurueck, '· Stories am Vorabend', STORY_ZEILEN.length);
+console.log('Partien', nLive, '· Stories bis zum 24.', STORY_ZEILEN.length);
 
-const DATEN = {players:PLAYERS, matches:MIT_DELTAS, seasons:SAISONS, nStand, nKurz, nLive, nZurueck,
+const DATEN = {players:PLAYERS, matches:MIT_DELTAS.slice(0, nLive), seasons:SAISONS,
   storyZeilen:STORY_ZEILEN, standNeueste:STAND_NEUESTE, now:NOW};
 
 // ── Die App, wie sie ausgeliefert wird ─────────────────────────────────
@@ -128,20 +127,18 @@ ${fonts}
 ${styles}
 <style>${lies('seite.css')}</style></head><body><main>
 <h1>Öffnen, Reiter, Blätter im Entwurf</h1>
-<p class="pf-unter">Die App, wie sie jetzt startet, und der Entwurf — beide mit dem echten Startablauf: erst der Stand, den das Telefon vom letzten Öffnen kennt, dann die Datenbank mit dem, was seitdem gespielt wurde. Der Entwurf baut die Liga einmal kurz auf, lässt die Zeilen an ihren neuen Platz gleiten und zeigt danach, was neu ist. Wer sofort tippt, bekommt keine Vorführung: jede Berührung beendet sie.</p>
+<p class="pf-unter">Die App, wie sie jetzt startet, und der Entwurf — beide mit dem echten Startablauf: das Telefon übersetzt das Skript, zeichnet den Stand vom letzten Öffnen und fragt dann die Datenbank. Im Entwurf überbrückt ein Startbild die Ladezeit; das Zeichen fliegt an seinen Platz, und die App baut sich auf: untere Leiste, Kopf, Wähler, Karten. Über Platz 1, 2 und 3 zieht ein Licht in ihrem Metall, ungelesene Stories werden hervorgehoben, und jeder Reiter baut sich beim Betreten auf. Wer sofort tippt, bekommt keine Vorführung: jede Berührung beendet sie.</p>
 <div class="pf-steuer">
-  <label>Fall <select id="sFall">
-    <option value="neu">Zwei Tage nicht geöffnet</option>
-    <option value="kurz">Vor fünf Minuten schon offen</option>
-    <option value="gleich">Nichts Neues</option>
-    <option value="erst">Erster Start, kein Stand</option></select></label>
+  <label>Start <select id="sFall">
+    <option value="pause">Nach einer Pause</option>
+    <option value="kurz">Gerade erst offen gewesen</option>
+    <option value="erst">Erster Start, nichts gespeichert</option></select></label>
   <label>Netz <select id="sNetz"><option value="400">schnell</option><option value="1400" selected>normal</option><option value="3500">langsam</option></select></label>
-  <label><input type="checkbox" id="sLangsam"> Telefon langsam</label>
+  <label><input type="checkbox" id="sLangsam"> Älteres Telefon</label>
   <label><input type="checkbox" id="sRuhe"> Bewegung aus</label>
   <button type="button" id="sStart" class="pf-k an">Neu öffnen</button>
-  <button type="button" id="sZurueck" class="pf-k">Zurückkommen mit neuen Partien</button>
 </div>
-<p class="pf-hinweis">„Telefon langsam“ lässt jeden Reiterwechsel 350 ms rechnen, in beiden Fassungen gleich — so lange wie ein kalter Reiter auf einem älteren Telefon.</p>
+<p class="pf-hinweis">Beide Fassungen warten zuerst so lange, wie ein Telefon das Skript übersetzt: 450 ms, mit „Älteres Telefon“ 900 ms — dazu rechnet dann jeder Reiterwechsel 350 ms. Zum Ansehen der Reiter unten in der Leiste wechseln, zum Feed oben auf „News“ tippen.</p>
 <div class="pf-seg" role="tablist"><button type="button" class="an" data-zeige="heute">Heute</button><button type="button" data-zeige="neu">Entwurf</button></div>
 <div class="pf-tel">
   <figure class="heute zeigt"><figcaption>Heute</figcaption><iframe id="fHeute" title="Heute"></iframe></figure>

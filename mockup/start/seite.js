@@ -1,5 +1,5 @@
 // Die Vergleichsseite: beide Rahmen mit denselben Einstellungen laden,
-// „Zurückkommen" an beide schicken, auf dem Telefon einen zeigen.
+// auf dem Telefon einen zeigen.
 (function(){
   var $ = function(id){ return document.getElementById(id); };
   function einstellung(art){
@@ -24,9 +24,6 @@
     [$('fHeute'), $('fNeu')].forEach(function(f){ f.contentWindow.postMessage({ruhe:$('sRuhe').checked}, '*'); });
   });
   $('sStart').addEventListener('click', oeffnen);
-  $('sZurueck').addEventListener('click', function(){
-    [$('fHeute'), $('fNeu')].forEach(function(f){ f.contentWindow.postMessage({zurueck:true}, '*'); });
-  });
   document.querySelectorAll('.pf-seg button').forEach(function(b){
     b.addEventListener('click', function(){
       document.querySelectorAll('.pf-seg button').forEach(function(x){ x.classList.toggle('an', x === b); });

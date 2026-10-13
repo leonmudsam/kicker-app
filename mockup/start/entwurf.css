@@ -1,9 +1,9 @@
 /* ═══ Öffnen, Reiter, Blätter im Entwurf ═══════════════════════════════
-   Gilt nur unter html.neu (app.html#neu&…). Jede Bewegung hier bewegt nur
-   transform und opacity, endet von selbst (außer dem Schimmer des Gerüsts,
-   solange es steht) und entfällt bei Bewegungsruhe. Material und Farben
-   sind die der App: Acid für das Bedienen und die Richtung nach oben, Rot
-   für die nach unten, Gold nur für den, der den Titel hält [§C25]. */
+   Gilt nur unter html.neu (app.html#neu&…). Jede Bewegung bewegt nur
+   transform und opacity, endet von selbst (außer Startbild und Gerüst,
+   solange sie stehen) und entfällt bei Bewegungsruhe. Material und Farben
+   sind die der App: Acid für das Bedienen, das Metall der Plätze für die
+   Plätze, Gold für den Titel [§C25]. */
 
 /* ── 1 · Das Gerüst ─────────────────────────────────────────────────── */
 /* Dieselben Maße wie die Liga: Kopf, Zeitraum, Tage, Saisons, Spieler und
@@ -45,63 +45,98 @@ html.neu .geruest::after{content:"";position:absolute;inset:0;pointer-events:non
   html.neu:not(.ruhe) .geruest::after{animation:neuSchimmer 1.5s cubic-bezier(.4,0,.2,1) infinite}
 }
 
-/* ── 2 · Der Aufbau ──────────────────────────────────────────────────── */
+/* ── 2 · Das Startbild ─────────────────────────────────────────────── */
+/* Das Zeichen der Liga auf dem Grund, darunter Name und eine Spur, in der
+   ein Licht läuft. Beim Einbau festes Markup in index.html, sichtbar,
+   bevor das Skript übersetzt ist. */
+html.neu .neu-start{position:fixed;inset:0;z-index:300;display:grid;place-items:center;pointer-events:none}
+html.neu .ns-grund{position:absolute;inset:0;background:var(--bg);
+  background-image:radial-gradient(56% 34% at 50% 45%,rgba(190,242,100,.075),transparent 72%)}
+html.neu .ns-mitte{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:-6vh}
+html.neu .ns-logo{position:relative;width:84px;height:84px;border-radius:24px;overflow:hidden;will-change:transform;
+  box-shadow:0 22px 44px -18px rgba(0,0,0,.95),0 0 0 1px rgba(255,255,255,.06)}
+html.neu .ns-logo img{display:block;width:100%;height:100%;object-fit:contain}
+html.neu .ns-glanz{position:absolute;inset:0;transform:translateX(-120%);
+  background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.42) 50%,transparent 65%)}
+html.neu .ns-name{margin-top:12px;font-family:'Archivo Black',sans-serif;font-weight:400;font-size:17px;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--ink)}
+html.neu .ns-unter{font-family:'Sometype Mono',monospace;font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
+html.neu .ns-spur{position:relative;width:76px;height:2px;margin-top:16px;border-radius:2px;overflow:hidden;background:rgba(255,255,255,.08)}
+html.neu .ns-spur i{position:absolute;top:0;bottom:0;left:0;width:40%;transform:translateX(-100%);
+  background:linear-gradient(90deg,transparent,var(--acid),transparent)}
+/* Solange das Startbild steht, fehlt das Zeichen in der Kopfleiste: das
+   Zeichen des Startbilds fliegt dorthin und wird es. */
+html.neu.startbild .logo-mark{opacity:0}
+@keyframes neuStartEin{from{opacity:0;transform:scale(.9)}}
+@keyframes neuStartGlanz{0%,30%{transform:translateX(-120%)}75%,100%{transform:translateX(120%)}}
+@keyframes neuSpur{to{transform:translateX(260%)}}
+@media(prefers-reduced-motion:no-preference){
+  html.neu:not(.ruhe) .ns-mitte{animation:neuStartEin .45s cubic-bezier(.2,.8,.2,1) both}
+  html.neu:not(.ruhe) .ns-glanz{animation:neuStartGlanz 1.8s ease-in-out .3s infinite}
+  html.neu:not(.ruhe) .ns-spur i{animation:neuSpur 1.1s cubic-bezier(.45,0,.55,1) infinite}
+}
+
+/* ── 3 · Die App baut sich auf ──────────────────────────────────────── */
+/* Beim Öffnen, einmal: die untere Leiste steigt herauf, ihre Zeichen
+   springen nacheinander auf, der Schlitten zieht sich auf; oben kommen
+   Name und Knöpfe, sobald das Zeichen gelandet ist; zuletzt der Knopf
+   „Match eintragen". Der Inhalt baut sich in Teilen auf (.bau), beim
+   Öffnen und beim Betreten eines Reiters. */
 html.neu .logo-mark{position:relative}
 html.neu .logo-mark::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;
   background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.55) 50%,transparent 70%);transform:translateX(-110%)}
-html.neu .neu-licht{position:absolute;inset:-1px;border-radius:inherit;overflow:hidden;pointer-events:none;z-index:1}
-html.neu .neu-licht-b{position:absolute;inset:0;transform:translateX(-120%);
-  background:linear-gradient(105deg,transparent 30%,rgba(255,226,138,.26) 48%,rgba(255,240,200,.36) 50%,transparent 68%)}
 @keyframes neuAuf{from{opacity:0;transform:translateY(10px)}}
-@keyframes neuZeile{from{opacity:0;transform:translateY(18px) scale(.98)}}
-@keyframes neuStreifen{from{opacity:0;transform:scaleX(.4)}}
-@keyframes neuLicht{from{transform:translateX(-120%)}to{transform:translateX(120%)}}
+@keyframes neuVonLinks{from{opacity:0;transform:translateX(-10px)}}
+@keyframes neuVonUnten{from{transform:translateY(100%)}}
+@keyframes neuPop{0%{opacity:0;transform:scale(.5)}60%{opacity:1;transform:scale(1.12)}100%{transform:none}}
+@keyframes neuSchlittenAuf{from{opacity:0;transform:scaleX(.3)}}
+@keyframes neuFab{0%{opacity:0;transform:scale(.3) rotate(-90deg)}70%{opacity:1;transform:scale(1.08) rotate(6deg)}100%{transform:none}}
 @keyframes neuLogo{0%{opacity:1;transform:translateX(-110%)}100%{opacity:1;transform:translateX(110%)}}
+@keyframes neuBau{from{opacity:0;transform:translateY(16px) scale(.985)}}
+@keyframes neuPodest{from{opacity:0;transform:translateY(26px) scale(.94)}}
 @media(prefers-reduced-motion:no-preference){
-  html.neu.aufbau:not(.ruhe) .logo-mark::after{animation:neuLogo .6s ease-in-out both}
-  html.neu.aufbau:not(.ruhe) .view > .view-head{animation:neuAuf .3s cubic-bezier(.2,.8,.2,1) both}
-  html.neu.aufbau:not(.ruhe) .view > .ui-switch{animation:neuAuf .3s cubic-bezier(.2,.8,.2,1) .05s both}
-  html.neu.aufbau:not(.ruhe) .lauf-t{animation:neuAuf .28s cubic-bezier(.2,.8,.2,1) .07s both}
-  /* Die Tage des Monats kommen als ein Streifen von links. */
-  html.neu.aufbau:not(.ruhe) .lauf-z{transform-origin:0 50%;animation:neuStreifen .4s cubic-bezier(.2,.8,.2,1) .06s both}
-  html.neu.aufbau:not(.ruhe) .view > .saisonwahl{animation:neuAuf .28s cubic-bezier(.2,.8,.2,1) .09s both}
-  html.neu.aufbau:not(.ruhe) .view > .ui-tabs{animation:neuAuf .28s cubic-bezier(.2,.8,.2,1) .11s both}
-  /* Die Zeilen im Bild, 40 ms auseinander. Darunter nichts — das steht
-     schon, wenn man hinscrollt. */
-  html.neu.aufbau:not(.ruhe) .rrow.auf-z{animation:neuZeile .36s cubic-bezier(.2,.8,.2,1) both}
-  /* Zuletzt zieht einmal Gold über den, der den Titel hält. */
-  html.neu.aufbau:not(.ruhe) .neu-licht-b{animation:neuLicht .8s ease-in-out .5s both}
+  html.neu.aufbau:not(.ruhe) .botnav{animation:neuVonUnten .5s cubic-bezier(.2,.8,.2,1) .05s both}
+  html.neu.aufbau:not(.ruhe) .botnav button .ic{animation:neuPop .42s cubic-bezier(.3,1.4,.5,1) both}
+  html.neu.aufbau:not(.ruhe) .botnav button:nth-child(1) .ic{animation-delay:.22s}
+  html.neu.aufbau:not(.ruhe) .botnav button:nth-child(2) .ic{animation-delay:.26s}
+  html.neu.aufbau:not(.ruhe) .botnav button:nth-child(3) .ic{animation-delay:.30s}
+  html.neu.aufbau:not(.ruhe) .botnav button:nth-child(4) .ic{animation-delay:.34s}
+  html.neu.aufbau:not(.ruhe) .botnav button:nth-child(5) .ic{animation-delay:.38s}
+  html.neu.aufbau:not(.ruhe) .neu-schlitten::before{animation:neuSchlittenAuf .4s cubic-bezier(.3,1.3,.5,1) .42s both}
+  html.neu.aufbau:not(.ruhe) .logo-txt{animation:neuVonLinks .38s cubic-bezier(.2,.8,.2,1) .44s both}
+  html.neu.aufbau:not(.ruhe) .logo-mark::after{animation:neuLogo .6s ease-in-out .56s both}
+  html.neu.aufbau:not(.ruhe) #settingsBtn{animation:neuPop .4s cubic-bezier(.3,1.4,.5,1) .5s both}
+  html.neu.aufbau:not(.ruhe) .conn-pill{animation:neuAuf .36s ease-out .5s both}
+  html.neu.aufbau:not(.ruhe) .fab{animation:neuFab .55s cubic-bezier(.3,1.3,.5,1) .7s both}
+  /* Die Verzögerung jedes Teils steht an ihm selbst (style), nicht hier. */
+  html.neu:not(.ruhe) .bau{animation:neuBau .42s cubic-bezier(.2,.8,.2,1) both}
+  html.neu:not(.ruhe) .pod-karte.bau{animation-name:neuPodest;animation-duration:.5s}
 }
 
-/* ── 3 · Was sich bewegt hat ─────────────────────────────────────────── */
-html.neu .rrow .pos{position:relative}
-html.neu .neu-platz{position:absolute;left:50%;top:100%;margin-top:4px;transform:translateX(-50%);
-  font-size:9.5px;line-height:1;white-space:nowrap;letter-spacing:-.02em}
-html.neu .rval{position:relative}
-html.neu .neu-delta{position:absolute;right:0;bottom:100%;margin-bottom:3px;font-family:'Sometype Mono',monospace;
-  font-size:10px;font-weight:700;line-height:1;white-space:nowrap}
-html.neu .neu-delta.auf{color:var(--acid)}
-html.neu .neu-delta.ab{color:var(--red)}
-/* Der Schein der Richtung liegt über der Zeile und verblasst: Acid für
-   den, der steigt, Rot für den, der fällt [§C25]. */
-html.neu .neu-schein{position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;opacity:0;
-  box-shadow:inset 0 0 0 1.5px var(--neu-s);background:color-mix(in srgb,var(--neu-s) 9%,transparent)}
-html.neu .neu-schein.auf{--neu-s:var(--acid)}
-html.neu .neu-schein.ab{--neu-s:var(--red)}
-html.neu .conn-pill .neu-plus{margin-left:4px;padding:1px 6px;border-radius:6px;font-size:10px;font-weight:700;
-  color:var(--acid);background:rgba(190,242,100,.1);border:1px solid rgba(190,242,100,.28)}
-@keyframes neuSchein{0%{opacity:0}18%{opacity:1}100%{opacity:0}}
-@keyframes neuMarke{from{opacity:0;transform:translateX(-50%) translateY(4px) scale(.6)}}
-@keyframes neuDelta{from{opacity:0;transform:translateY(4px)}}
-@keyframes neuPlus{from{opacity:0;transform:translateX(-6px)}}
+/* ── 4 · Das Licht über Platz 1, 2 und 3 ─────────────────────────────── */
+/* Ein Lichtband in ihrem Metall, einmal je Reiter und Sitzung. Es liegt in
+   einer eigenen Hülle, die die Zeile zuschneidet — die Zeile selbst lässt
+   ihr Feuer über den Rand schlagen und darf nicht abschneiden. */
+html.neu .neu-glanz{position:absolute;inset:-1px;border-radius:inherit;overflow:hidden;pointer-events:none;z-index:2}
+html.neu .neu-glanz i{position:absolute;inset:0;transform:translateX(-130%);
+  background:linear-gradient(105deg,transparent 28%,var(--ng1) 46%,var(--ng2) 50%,var(--ng1) 54%,transparent 72%)}
+html.neu .neu-glanz.gold{--ng1:rgba(247,207,74,.16);--ng2:rgba(255,236,170,.42)}
+html.neu .neu-glanz.silber{--ng1:rgba(200,210,220,.13);--ng2:rgba(240,246,252,.36)}
+html.neu .neu-glanz.bronze{--ng1:rgba(208,140,90,.15);--ng2:rgba(240,196,150,.36)}
+html.neu .neu-glanz.acid{--ng1:rgba(190,242,100,.14);--ng2:rgba(232,255,196,.4)}
+/* Über einer ungelesenen Story: das Licht in ihrer Farbe und dazu einmal
+   ihre Kante. */
+html.neu .neu-glanz.story{--ng1:rgba(var(--story-rgb,190,242,100),.14);--ng2:rgba(255,255,255,.22)}
+html.neu .neu-glanz.story::after{content:"";position:absolute;inset:0;border-radius:inherit;opacity:0;
+  box-shadow:inset 0 0 0 1.5px rgba(var(--story-rgb,190,242,100),.6)}
+@keyframes neuGlanz{from{transform:translateX(-130%)}to{transform:translateX(130%)}}
+@keyframes neuKante{0%,100%{opacity:0}30%{opacity:1}}
 @media(prefers-reduced-motion:no-preference){
-  html.neu:not(.ruhe) .neu-schein{animation:neuSchein 1.8s ease-out .1s both}
-  html.neu:not(.ruhe) .neu-platz:not(.fest){animation:neuMarke .4s cubic-bezier(.3,1.5,.5,1) .5s both}
-  html.neu:not(.ruhe) .neu-delta:not(.fest){animation:neuDelta .35s ease-out .6s both}
-  html.neu:not(.ruhe) .conn-pill .neu-plus{animation:neuPlus .4s cubic-bezier(.3,1.4,.5,1) .3s both}
+  html.neu:not(.ruhe) .neu-glanz i{animation:neuGlanz .95s cubic-bezier(.45,0,.25,1) both}
+  html.neu:not(.ruhe) .neu-glanz.story::after{animation:neuKante 1.6s ease-out .2s both}
 }
 
-/* ── 4 · Reiter ─────────────────────────────────────────────────────── */
+/* ── 5 · Reiter ─────────────────────────────────────────────────────── */
 /* Eine Pille für alle fünf Reiter, die gleitet. Die Pille je Knopf
    entfällt; das Zeichen federt wie heute. */
 html.neu .botnav button.on .ic{background:none;box-shadow:none}
@@ -119,18 +154,17 @@ html.neu .neu-ladelinie{position:absolute;left:0;right:0;bottom:0;height:2px;poi
   transform:scaleX(0);opacity:0;border-radius:2px;
   background:linear-gradient(90deg,rgba(190,242,100,0),var(--acid) 40%,var(--acid));box-shadow:0 0 10px rgba(190,242,100,.5)}
 
-/* ── 5 · Neuigkeiten ───────────────────────────────────────────────── */
+/* ── 6 · Neuigkeiten ───────────────────────────────────────────────── */
 html.neu #newsBtn{position:relative}
 html.neu #newsBtn::after{content:"";position:absolute;inset:-2px;border-radius:inherit;pointer-events:none;
   border:2px solid var(--acid);opacity:0}
 @keyframes neuRuf{0%{opacity:.85;transform:scale(1)}100%{opacity:0;transform:scale(1.45)}}
-@keyframes neuPop{0%{transform:scale(.4)}60%{transform:scale(1.25)}100%{transform:none}}
 @media(prefers-reduced-motion:no-preference){
   html.neu:not(.ruhe) #newsBtn.neu-ruf::after{animation:neuRuf 1s cubic-bezier(.2,.8,.2,1) 2}
   html.neu:not(.ruhe) .news-btn-badge.neu-pop{animation:neuPop .5s cubic-bezier(.3,1.6,.5,1)}
 }
 
-/* ── 6 · Blätter ───────────────────────────────────────────────────── */
+/* ── 7 · Blätter ───────────────────────────────────────────────────── */
 /* Gestaffelt: die ersten acht Teile 45 ms auseinander. Der Rahmen, der
    sie trägt, blendet nicht mehr zusätzlich ein. */
 html.neu .sheet.show > .neu-staffel{animation:none}
