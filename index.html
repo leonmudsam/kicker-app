@@ -1689,7 +1689,7 @@
     padding:13px 14px;cursor:pointer;transition:.15s}
   .pp-bcard:active{transform:scale(.985)}
   .pp-bcard-row{display:flex;align-items:center;gap:10px}
-  .pp-bcard-strip{flex:1;min-width:0;display:flex;gap:6px;align-items:center}
+  .pp-bcard-strip{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
   .pp-bmini{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;
     border:1px solid var(--line2);background:var(--bg2);flex-shrink:0;color:var(--ink2)}
   .pp-bmini svg{width:15px;height:15px;stroke:currentColor;fill:none;
@@ -1698,8 +1698,6 @@
   .pp-bmini.rare{color:var(--purple);border-color:rgba(167,139,250,.38)}
   .pp-bmini.common{color:var(--acid);border-color:rgba(190,242,100,.25)}
   .pp-bmini.negative{color:var(--red);border-color:rgba(240,86,106,.38)}
-  .pp-bcard-rest{font-size:10px;color:var(--muted);font-family:'Sometype Mono',monospace;
-    font-weight:700;margin-left:3px}
   .pp-bcard-chev{color:var(--muted);flex-shrink:0;display:grid;place-items:center}
   .pp-bcard-chev svg{width:14px;height:14px;stroke:currentColor;fill:none;
     stroke-linecap:round}
@@ -1814,8 +1812,6 @@
   .bp-match-date{font-family:'Sometype Mono',monospace;font-size:9.5px;color:var(--muted);flex-shrink:0;width:62px}
   .bp-match-score{font-family:'Archivo Black',sans-serif;font-size:13px;flex:1}
   .bp-match-arr{color:var(--muted);font-size:11px;flex-shrink:0}
-  .bp-more{font-size:10px;color:var(--muted);text-align:center;margin-top:6px;
-    font-family:'Sometype Mono',monospace}
   .bp-prog{margin-bottom:8px}
   .bp-prog-bar{height:8px;background:var(--surface3);border-radius:4px;overflow:hidden}
   .bp-prog-fill{height:100%;border-radius:4px;transition:.3s}
@@ -2152,13 +2148,12 @@
   .nd-ll-f{position:relative;flex:1 1 0;min-width:0;max-width:52px;aspect-ratio:1}
   .nd-ll-f > svg.ins{display:block;width:100%;height:100%;opacity:.38}
   .nd-ll-f.da > svg.ins{opacity:1}
-  .nd-ll-g{position:absolute;left:50%;bottom:-3px;transform:translateX(-50%);display:flex}
+  .nd-ll-g{position:absolute;left:0;right:0;bottom:-3px;display:flex;flex-wrap:wrap-reverse;
+    justify-content:center;row-gap:2px;padding-left:5px}
   .nd-ll-av{margin-left:-5px;border-radius:50%;box-shadow:0 0 0 1.5px var(--bg);cursor:pointer}
   .nd-ll-av:first-child{margin-left:0}
   .nd-ll-av .av{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;
     font-size:7px;line-height:1;overflow:hidden}
-  .nd-ll-mehr{margin-left:2px;font-size:9px;font-weight:700;color:var(--ink2);
-    align-self:center;background:var(--surface2);border-radius:7px;padding:1px 4px}
 
 
   .nf-zb{display:flex;border-top:1px solid var(--line)}
@@ -2442,8 +2437,9 @@
   .nd-held-duo{cursor:default}
   .nd-held-av{display:flex;align-items:center}
   .nd-held-av > *:nth-child(n+2){margin-left:-12px}
-  .nd-held-mehr{width:48px;height:48px;border-radius:50%;display:grid;
-    place-items:center;font-size:13px;border:2px solid var(--surface)}
+  .nd-held-duo.viele{flex-direction:column;align-items:flex-start;gap:8px}
+  .nd-held-duo.viele .nd-held-av{flex-wrap:wrap;row-gap:4px;padding-left:12px}
+  .nd-held-duo.viele .nd-held-av > *{margin-left:-12px}
   .nd-erg{border:1px solid var(--line);border-radius:12px;background:var(--bg2);
     padding:9px 12px 11px;margin-bottom:13px}
   .nd-erg-z{font-family:'Sometype Mono',monospace;font-size:9.5px;color:var(--muted);
@@ -3072,7 +3068,7 @@
   .rcp-av > .av{width:100%;height:100%;border-radius:50%;display:grid;place-items:center;
     font-family:'Archivo Black',sans-serif;font-size:calc(var(--rav) * .34);color:#0a0c0b}
   .rcp-av > .av .em{font-size:calc(var(--rav) * .54);line-height:1}
-  .rcp-av.leer,.rcp-av.mehr{border-radius:50%;background:var(--surface3);color:var(--muted);
+  .rcp-av.leer{border-radius:50%;background:var(--surface3);color:var(--muted);
     font-family:'Sometype Mono',monospace;font-size:calc(var(--rav) * .3);font-weight:700}
   .rcp-paar{display:inline-flex;align-items:center}
   .rcp-paar > *+*{margin-left:calc(var(--rav) * -.22)}
@@ -3742,18 +3738,7 @@
     font-family:'Sometype Mono',monospace;font-size:8.5px;font-weight:700;
     letter-spacing:.04em;text-transform:uppercase;vertical-align:1px;
     color:var(--tt);background:rgba(var(--ttr),.14);border:1px solid rgba(var(--ttr),.3)}
-  .chron-rest{display:none}
-  .chron-rest.open{display:block}
-  .chron-rest .chron-one{margin-top:8px}
-  .chron-rest.tplates.open{display:flex}
-  .chron-more{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;
-    margin-top:8px;padding:9px 12px;border:1px dashed var(--line);border-radius:12px;
-    background:transparent;color:var(--muted);cursor:pointer;
-    font-family:'Sometype Mono',monospace;font-size:10.5px;font-weight:700;
-    letter-spacing:.06em;text-transform:uppercase}
-  .chron-more:active{transform:scale(.99);background:var(--surface)}
-  .chron-more svg{width:14px;height:14px;transition:transform .18s ease}
-  .chron-more.open svg{transform:rotate(180deg)}
+  .chron-alle{display:flex;flex-direction:column;gap:8px}
   .chron-honors{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 10px}
   .chron-honor{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;
     padding:4px 11px;border-radius:20px;color:var(--tt);
@@ -4160,8 +4145,6 @@
     line-height:1.4;white-space:normal;overflow:visible}
   .lb-q .p{flex:0 0 auto;font-size:13px;font-weight:700;color:var(--ink2)}
 
-  .lb-buch .chron-more{border:0;border-top:1px solid var(--line);border-radius:0;
-    padding:8px;font-size:11px}
   .lb-summe{display:flex;justify-content:space-between;align-items:baseline;
     padding:11px 13px;border-top:1px solid var(--line2);
     background:var(--surface2);font-size:12px;color:var(--ink2)}
@@ -5144,10 +5127,9 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 
 .nd-rk{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
 .nd-rk-w{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
-.nd-rk-alt,.nd-rk-neu{display:flex;align-items:center;gap:2px;position:relative;padding-bottom:13px}
+.nd-rk-alt,.nd-rk-neu{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:2px;position:relative;padding-bottom:13px}
 .nd-rk-alt > span{opacity:.45;filter:none}
 .nd-rk-alt small,.nd-rk-neu small{position:absolute;left:0;right:0;bottom:0;font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
-.nd-rk-neu .nf-face-mehr{--av:30px;width:30px;height:30px;font-size:10px}
 .nd-rk-pf{width:34px;height:14px;flex:0 0 auto;margin-bottom:13px}
 .nd-rk-pf path{fill:none;stroke:var(--gold);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .nd-rk.metall .nd-rk-pf path{stroke:var(--ink2)}
@@ -5263,7 +5245,7 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 .nw-tz-t .nw-label{flex:0 1 auto}
 .nw-tz-t small{flex:1 0 100%;font-size:10.5px;color:var(--muted);line-height:1.35}
 .nw-tz-r{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
-.nd-tz-w{display:flex;align-items:center}
+.nd-tz-w{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;row-gap:3px;max-width:150px}
 .nd-tz-f > .av{--av:22px;width:22px;height:22px;font-size:8.5px;box-shadow:0 0 0 2px var(--bg2)}
 .nd-tz-f + .nd-tz-f{margin-left:-6px}
 .nd-tz-f.aus{opacity:.45}
@@ -5271,7 +5253,6 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 .nd-tz-pf path{fill:none;stroke:var(--gold);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .nd-tz-z{width:26px;height:26px;margin-left:2px}
 .nd-tz-z svg{width:26px;height:26px;display:block}
-.nd-tz-mehr{font-size:9.5px;color:var(--muted);margin-left:3px}
 .nd-tz-v{font-family:'Sometype Mono',monospace;font-size:11px;font-weight:600;color:var(--gold);white-space:nowrap}
 .nd-tz-v s{color:var(--muted);font-weight:400}
 
@@ -5282,7 +5263,6 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 .nd-mo.offen .nd-mo-k > b{color:var(--ink)}
 .nd-mo-k > span{font:600 9px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink2);align-self:end}
 .nd-mo-k > small{font-size:10.5px;color:var(--muted);margin-top:3px;align-self:start}
-.nd-mo-r{font-size:10.5px;color:var(--muted);text-align:right}
 .nd-mo .nd-bk{margin:0}
 .nd-mo-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px;margin-bottom:6px}
 .nd-mo-z{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:6px;padding:7px 8px;border-radius:10px;
@@ -5437,7 +5417,7 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 @keyframes ndVerwandeln{from{opacity:0;transform:translateY(12px)}}
 
 .nd-pt{display:flex;flex-direction:column;align-items:center;gap:6px}
-.nd-pt-k{position:relative;display:flex;justify-content:center;gap:6px;padding-top:12px}
+.nd-pt-k{position:relative;display:flex;flex-wrap:wrap;justify-content:center;gap:6px;padding-top:12px}
 .nd-pt-kr{position:absolute;top:-4px;left:50%;transform:translateX(-50%);color:var(--gold)}
 .nd-pt-kr svg{width:20px;height:20px}
 .nd-pt-n{font-size:15px;font-weight:600;color:var(--ink)}
@@ -5733,7 +5713,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.13.3121cdf1';
+const BUILD_VERSION='2026.10.13.98522534';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -6971,9 +6951,7 @@ function rcpAvHtml(pid, px, o){
 
 function rcpPaarHtml(ids, px){
   return `<span class="rcp-paar" style="--rav:${px}px">${
-    ids.slice(0, 3).map(id => rcpAvHtml(id, px, {})).join('')}${
-    ids.length > 3 ? `<span class="rcp-av mehr" style="--rav:${px}px">+${ids.length - 3}</span>` : ''
-  }</span>`;
+    ids.map(id => rcpAvHtml(id, px, {})).join('')}</span>`;
 }
 
 
@@ -7715,11 +7693,10 @@ function showSeasonRecap(season, opts){
     const T = seasonTitles(sid);
     if(T.awarded.length){
       chronikHtml = rcpAbschnitt('Chronik der Saison', T.awarded.length) + `<div class="rcp-liste">${
-        T.awarded.slice(0,5).map(a=>rcpZeileHtml({pid:a.pid, px:38,
+        T.awarded.map(a=>rcpZeileHtml({pid:a.pid, px:38,
           ic:a.ic, ton:a.tone, name:a.name, sub:pname(a.pid),
           attr:`data-tplayer="${esc(a.pid)}"`})).join('')}</div>`
-        + `<div class="rcp-mehr klick" data-stafel="${esc(sid)}">${
-            T.awarded.length>5 ? 'Alle '+T.awarded.length+' Einträge' : 'Die ganze Tafel'}</div>`;
+        + `<div class="rcp-mehr klick" data-stafel="${esc(sid)}">Die ganze Tafel</div>`;
     }
   } catch(err){}
 
@@ -7729,10 +7706,9 @@ function showSeasonRecap(season, opts){
     if(REK.length){
       const wort = {neu:'zum ersten Mal', geholt:'übernommen', gesteigert:'verbessert'};
       rekordHtml = rcpAbschnitt('Rekorde dieser Saison', REK.length) + `<div class="rcp-liste">${
-        REK.slice(0,5).map(r=>rcpZeileHtml({pid:r.pid, px:38,
+        REK.map(r=>rcpZeileHtml({pid:r.pid, px:38,
           ic:r.ic, ton:r.tone, name:r.name, sub:pname(r.pid)+' · '+wort[r.art],
-          rechts:r.zeit || '', attr:`data-chron="${esc(r.id)}"`})).join('')}</div>`
-        + (REK.length>5 ? `<div class="rcp-mehr klick" data-ligarek="1">und ${REK.length-5} weitere</div>` : '');
+          rechts:r.zeit || '', attr:`data-chron="${esc(r.id)}"`})).join('')}</div>`;
     }
   } catch(err){}
 
@@ -7794,7 +7770,6 @@ function showSeasonRecap(season, opts){
   binden('[data-poshist]', el => sheetNav(()=>showPositionHistory(el.dataset.poshist)));
   binden('[data-stafel]', el => sheetNav(()=>showSeasonTable(el.dataset.stafel)));
   binden('[data-chron]', el => sheetNav(()=>showChronicle(el.dataset.chron)));
-  binden('[data-ligarek]', () => sheetNav(()=>showLigaChronik()));
 }
 
 function _potwLastWeekRange(){
@@ -15027,18 +15002,15 @@ const rankProgHtml = rInfo ? `
     </div>
 
     ${badgeTotal?(()=>{
-      const _STRIP_MAX = 8;
       const _byRarity = {legendary:[], rare:[], common:[], negative:[]};
       const _kat = badgeKatalog(id), _rOf = new Map(_kat.map(x => [x.b.id, x.r]));
       badges.forEach(b => { const r = _rOf.get(b.id) || rarityOf(b.id); if(_byRarity[r]) _byRarity[r].push(b); });
       const _strip = [];
       RARITY_ORDER.forEach(r => _byRarity[r].forEach(b => _strip.push({b, r})));
-      const _visible = _strip.slice(0, _STRIP_MAX);
-      const _rest = Math.max(0, _strip.length - _visible.length);
-      const _stripHtml = _visible.map(({b,r}) => {
+      const _stripHtml = _strip.map(({b,r}) => {
         const ic = icPfad(b.ic) ? `<svg viewBox="0 0 24 24">${icPfad(b.ic)}</svg>` : '';
         return `<div class="pp-bmini ${r}">${ic}</div>`;
-      }).join('') + (_rest ? `<span class="pp-bcard-rest">+${_rest}</span>` : '');
+      }).join('');
       const _seg = (r) => _byRarity[r].length;
       const _have = _seg('legendary')+_seg('rare')+_seg('common')+_seg('negative');
       const _missing = _kat.length - _have;
@@ -15127,21 +15099,17 @@ const rankProgHtml = rInfo ? `
       const h2hList = playerH2HList(id, 3);
       if(h2hList.length < 2) return '';
       const pmL = pmap();
-      const STRIP_MAX = 5;
-      const stripItems = h2hList.slice(0, STRIP_MAX).map(x=>{
+      const stripItems = h2hList.map(x=>{
         const pp = pmL[x.oid]; if(!pp) return '';
         const em = pp.avatar_id ? avatarEmoji(pp.avatar_id) : null;
         if(em) return `<div style="width:26px;height:26px;border-radius:50%;background:var(--surface3);display:grid;place-items:center;font-size:14px;border:1.5px solid var(--surface);flex-shrink:0">${em}</div>`;
         return `<div style="width:26px;height:26px;border-radius:50%;background:${avColor(pp.id)};display:grid;place-items:center;font-size:9px;font-family:'Archivo Black',sans-serif;color:#0a0c0b;border:1.5px solid var(--surface);flex-shrink:0">${esc(initials(pp.name))}</div>`;
       }).join('');
-      const overflow = h2hList.length > STRIP_MAX
-        ? `<div style="height:26px;display:grid;place-items:center;padding:0 8px;border-radius:13px;background:var(--surface3);font-size:10px;font-weight:700;color:var(--ink2);font-family:'Sometype Mono',monospace;flex-shrink:0">+${h2hList.length-STRIP_MAX}</div>`
-        : '';
       return `
     <div class="pp-sec" style="animation-delay:.5s">
       <div class="pp-badges-card" id="ppH2HBtn">
         <div class="pp-badges-strip" style="align-items:center">
-          ${stripItems}${overflow}
+          ${stripItems}
         </div>
         <span class="chev">
           <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
@@ -15809,9 +15777,7 @@ function showBadgePopover(badgeId, playerId){
   if(unlocked){
     const hits = _badgeFireMatches(playerId, badgeId);
     if(hits.length){
-      const maxShow = 8;
-      const shown = hits.slice(0, maxShow);
-      const rowsHtml = shown.map(m => {
+      const rowsHtml = hits.map(m => {
         const date = new Date(m.created_at);
         const dateStr = datumFmt(date, 'tmj');
         const onA = (playerId===m.a1||playerId===m.a2);
@@ -15825,11 +15791,9 @@ function showBadgePopover(badgeId, playerId){
           <div class="bp-match-arr">›</div>
         </div>`;
       }).join('');
-      const moreHint = hits.length > maxShow
-        ? `<div class="bp-more">+ ${hits.length - maxShow} weitere</div>` : '';
       bodyHtml = `
         <div class="bp-section">Ausgelöst in ${hits.length} ${hits.length===1?'Match':'Matches'}</div>
-        ${rowsHtml}${moreHint}`;
+        ${rowsHtml}`;
     } else {
       bodyHtml = `
         <div class="bp-section">Status</div>
@@ -25718,12 +25682,9 @@ function _newsBlattKopf(s){
   const erg = d.matchId ? _newsBlattErgebnis(d.matchId) : '';
   if(!ids.length) return erg;
   if(ids.length > 1){
-    const zeig = ids.slice(0, 3);
-    const rest = ids.length - zeig.length;
-    return erg + `<div class="nd-held nd-held-duo">
-      <div class="nd-held-av">${zeig.map(id => avHtml(pm[id], '', {ins:true, px:48, feuer:0})).join('')}${
-        rest > 0 ? `<span class="av nf-face-mehr nd-held-mehr">+${rest}</span>` : ''}</div>
-      <div><div class="nd-held-nm">${esc(_namenKurz(ids.map(nm)))}</div>
+    return erg + `<div class="nd-held nd-held-duo${ids.length > 3 ? ' viele' : ''}">
+      <div class="nd-held-av">${ids.map(id => avHtml(pm[id], '', {ins:true, px:48, feuer:0})).join('')}</div>
+      <div><div class="nd-held-nm">${esc(_namenListe(ids.map(nm)))}</div>
       <div class="nd-held-un">${esc(_ndBeziehung(s, ids.length))}</div></div></div>`;
   }
   const pid = ids[0];
@@ -25811,8 +25772,7 @@ function _newsVerfolger(rekordId, halter, wert){
     const davor = grenze == null ? [] : rang.filter(r =>
       oben.indexOf(r.pid || r.id) < 0 && r.wert > grenze);
     const dahinter = rang.filter(r => oben.indexOf(r.pid || r.id) < 0
-                                   && (grenze == null || r.wert <= grenze))
-      .slice(0, 3);
+                                   && (grenze == null || r.wert <= grenze));
     const basis = (wert != null && isFinite(wert) && wert > 0
                    && dahinter.every(r => isFinite(r.wert) && r.wert >= 0)) ? wert : null;
     const zeilen = dahinter.map((r, i) => {
@@ -25872,9 +25832,8 @@ function _ndLigaLeiter(L){
         let z = '';
         try { z = insigniumStufeSvg(ins.key, INS_BILD_RANG,
                 ins.key === 'stern' ? ORDENSSTERN_START + g : 0, g) || ''; } catch(e){ z = ''; }
-        const gesichter = da.slice(0, 3).map(pid =>
-          `<span class="nd-ll-av" data-pid="${esc(pid)}">${avHtml(pm[pid], '', {px:18})}</span>`).join('')
-          + (da.length > 3 ? `<span class="nd-ll-mehr num">+${da.length - 3}</span>` : '');
+        const gesichter = da.map(pid =>
+          `<span class="nd-ll-av" data-pid="${esc(pid)}">${avHtml(pm[pid], '', {px:18})}</span>`).join('');
         return `<span class="nd-ll-f${da.length ? ' da' : ''}">${z}`
           + (gesichter ? `<span class="nd-ll-g">${gesichter}</span>` : '') + `</span>`;
       }).join('');
@@ -26048,16 +26007,15 @@ function _ndWirkungBlock(je, gruende, tagMs){
         : ab ? `<em class="r">${esc('fällt auf ' + ins.name)}</em>`
         : `<em>${esc(ins.name)}</em>`;
       const gr = ((gruende && gruende[pid]) || []);
-      const chips = gr.slice(0, 3).map(g => `<span class="nd-wk-g ${g.neg ? 'r' : 'g'}">${
-        esc(g.verb)} <b>${esc(g.name)}</b></span>`).join('')
-        + (gr.length > 3 ? `<span class="nd-wk-g">+${gr.length - 3}</span>` : '');
+      const chips = gr.map(g => `<span class="nd-wk-g ${g.neg ? 'r' : 'g'}">${
+        esc(g.verb)} <b>${esc(g.name)}</b></span>`).join('');
       const dz = delta > 0 ? '+' + delta : delta < 0 ? '−' + Math.abs(delta) : '±0';
       const q = delta ? _ndWirkungQuellen(pid, w, tagMs) : null;
       const vz = v => (v > 0 ? '+' : '−') + Math.abs(v);
       const quellen = q ? [['Rekorde', q.rek], ['Monatschroniken', q.mon], ['Auszeichnungen', q.aus]]
         .filter(x => x[1]).map(x => `<span>${x[0]} <b class="${x[1] > 0 ? 'g' : 'r'}">${vz(x[1])}</b></span>`).join('') : '';
       const genannt = new Set(((gruende && gruende[pid]) || []).map(g => g.name));
-      const posten = q ? (q.posten || []).filter(x => !genannt.has(x.name) && (x.d > 0) === (delta > 0)).slice(0, 2)
+      const posten = q ? (q.posten || []).filter(x => !genannt.has(x.name) && (x.d > 0) === (delta > 0))
         .map(x => `<span>„${esc(x.name)}“ <b class="${x.d > 0 ? 'g' : 'r'}">${vz(x.d)}</b></span>`).join('') : '';
       return `<div class="nd-wk${delta < 0 ? ' neg' : ''}${ab ? ' fall' : ''}" data-pid="${esc(pid)}" style="cursor:pointer">
         ${zeichen ? `<span class="nd-wk-z">${zeichen}${ab
@@ -26245,7 +26203,7 @@ function _ndBadgeBlatt(s){
   const bdef = (typeof BADGES !== 'undefined') ? BADGES.find(b => b.id === d.badgeId) : null;
   const medaille = _newsMedaillon(s.ic || (bdef && bdef.ic) || 'medal', d.rarity,
     d.badgeName || (bdef && bdef.name) || '', bdef ? bdef.desc : '', null);
-  const kopf = `<div class="nd-buehne nd-bd">${medaille}<div class="nd-bd-w">${pids.slice(0, 4).map(id =>
+  const kopf = `<div class="nd-buehne nd-bd">${medaille}<div class="nd-bd-w">${pids.map(id =>
     `<span data-pid="${esc(id)}">${avHtml(pm[id], '', {ins:true, px:52, feuer:0})}<b>${esc(_spName(id))}</b></span>`).join('')}</div></div>`;
   const m = d.matchId ? (matches || []).find(x => x.id === d.matchId) : null;
   const alle = Object.keys(pm).filter(id => sichtbar(pm[id]));
@@ -26300,7 +26258,7 @@ function _ndPotdBlatt(s){
   let kurve = '';
   try { kurve = _spTagBild(_spTagDaten(Object.assign({}, s, {dataRef:Object.assign({}, d, {playerId:pid})}))); } catch(e){}
   const kopf = `<div class="nd-buehne nd-pt"><div class="nd-pt-k"><span class="nd-pt-kr">${svgI('crown')}</span>`
-    + pids.slice(0, 3).map(id => `<span data-pid="${esc(id)}">${avHtml(pm[id], '', {ins:true, px:72, feuer:0})}</span>`).join('')
+    + pids.map(id => `<span data-pid="${esc(id)}">${avHtml(pm[id], '', {ins:true, px:pids.length > 3 ? 56 : 72, feuer:0})}</span>`).join('')
     + `</div><b class="nd-pt-n">${esc(_namenListe(pids.map(_spName)))}</b>${kurve}</div>`;
   const tag = (_spFormBasis().tage.get(d.dayKey) || []);
   const feld = {};
@@ -26352,13 +26310,13 @@ function _ndWechselBuehne(o){
   const pm = pmap();
   const wap = (id, px) => `<span data-pid="${esc(id)}">${avHtml(pm[id], '', {ins:true, px, feuer:0})}</span>`;
   const neu = o.neu || [], weg = o.weg || [];
-  const zeig = neu.slice(0, 4), rest = neu.length - zeig.length;
+  const viele = neu.length + weg.length > 5;
   return `<div class="nd-buehne nd-rk${o.metall ? ' metall' : ''}">`
     + (o.ic ? `<span class="nd-rk-ic">${zkHtml(o.ic, 'g', o.metall ? '' : 'gold')}</span>` : '')
     + `<div class="nd-rk-w">`
-    + (weg.length ? `<div class="nd-rk-alt">${weg.slice(0, 3).map(id => wap(id, 48)).join('')}<small>vorher</small></div>`
+    + (weg.length ? `<div class="nd-rk-alt">${weg.map(id => wap(id, viele ? 38 : 48)).join('')}<small>vorher</small></div>`
       + `<svg class="nd-rk-pf" viewBox="0 0 40 16" aria-hidden="true"><path d="M2 8H34"/><path d="M28 3L35 8L28 13"/></svg>` : '')
-    + `<div class="nd-rk-neu">${zeig.map(id => wap(id, weg.length ? 52 : neu.length > 1 ? 60 : 76)).join('')}${rest > 0 ? `<span class="av nf-face-mehr">+${rest}</span>` : ''}`
+    + `<div class="nd-rk-neu">${neu.map(id => wap(id, viele ? 44 : weg.length ? 52 : neu.length > 1 ? 60 : 76)).join('')}`
     + `<small>${weg.length ? 'jetzt' : (neu.length > 1 ? 'halten ihn' : 'hält ihn')}</small></div></div>`
     + `<em class="nd-rk-h">${esc(_namenListe(neu.map(_spName)))}</em>`
     + (o.wert ? `<div class="nd-rk-v">${o.alt ? `<s class="num">${esc(o.alt)}</s>` : ''}<b class="num">${esc(o.wert)}</b><span>${esc(o.label || '')}</span></div>` : '')
@@ -26446,11 +26404,10 @@ function _ndMonatBlatt(s){
   aw.forEach(a => { je[a.pid] = (je[a.pid] || 0) + 1; });
   const ids = Object.keys(je).sort((a, b) => je[b] - je[a] || _spName(a).localeCompare(_spName(b)));
   const max = Math.max(...ids.map(id => je[id]));
-  const balken = ids.slice(0, 6).map((id, k) => `<div class="nd-bk-z${k === 0 ? ' hell' : ''}" data-pid="${esc(id)}" style="--k:${k}">`
+  const balken = ids.map((id, k) => `<div class="nd-bk-z${k === 0 ? ' hell' : ''}" data-pid="${esc(id)}" style="--k:${k}">`
     + `${_spChip(id)}<span class="nd-bk-n">${esc(_spName(id))}</span>`
     + `<span class="nd-bk-b"><i style="width:${Math.round(je[id] / max * 100)}%"><u style="width:100%"></u></i></span>`
-    + `<b class="num">${je[id]}</b></div>`).join('')
-    + (ids.length > 6 ? `<div class="nd-mo-r num">und ${ids.length - 6} weitere</div>` : '');
+    + `<b class="num">${je[id]}</b></div>`).join('');
   const kopf = `<div class="nd-buehne nd-mo${offen ? ' offen' : ''}"><div class="nd-mo-k"><b class="num">${aw.length}</b>`
     + `<span>${aw.length === 1 ? 'Eintrag' : 'Einträge'} · ${esc(seasonLabel(d.sid) || '')}</span>`
     + `<small>${ids.length === 1 ? 'ein Spieler' : ids.length + ' Spieler'}${offen ? ' · bis Monatsende offen' : ''}</small></div>`
@@ -26579,17 +26536,14 @@ function _ndTafelMomentBlatt(s){
     if(letzte && x - letzte.x0 < 6) letzte.arten.push(_ndTafelArt(t));
     else saeulen.push({x0:x, arten:[_ndTafelArt(t)], ms:t.ms});
   });
-  const HOCH = 6;
   const saeulenHtml = saeulen.map((z, k) => {
     const arten = z.arten.sort((a, b) => ORDNUNG[a] - ORDNUNG[b]);
-    const zeig = arten.length > HOCH ? arten.slice(0, HOCH - 1) : arten;
     return `<span class="nd-ta-s" style="left:${z.x0.toFixed(1)}%;--k:${k}">`
-      + zeig.map(a => `<i class="ta-${a}"></i>`).join('')
-      + (arten.length > zeig.length ? `<b class="num">+${arten.length - zeig.length}</b>` : '') + `</span>`;
+      + arten.map(a => `<i class="ta-${a}"></i>`).join('') + `</span>`;
   }).join('');
   const bewegt = new Set(ms);
   const striche = partien.map(x => `<i class="nd-ta-p${bewegt.has(x) ? ' an' : ''}" style="left:${lage(x).toFixed(1)}%"></i>`).join('');
-  const hoehe = Math.max(...saeulen.map(z => Math.min(HOCH, z.arten.length)));
+  const hoehe = Math.max(...saeulen.map(z => z.arten.length));
   const NAME = {rek:'Bestmarke', chr:'Monatschronik', ins:'Insignium', aus:'Ausbau'};
   const da = Object.keys(NAME).filter(a => teile.some(t => _ndTafelArt(t) === a));
   const uhr = x => esc(_newsUhrzeit(x));
@@ -26643,9 +26597,8 @@ function _ndTafelZeileBild(t){
   const wert = ref.ev ? _chronKurz(ref.ev) : '';
   const alt = typ === 'rekord_gesteigert' && ref.evVorher ? _chronKurz(ref.evVorher) : '';
   const pf = `<svg class="nd-tz-pf" viewBox="0 0 16 10" aria-hidden="true"><path d="M1 5H13"/><path d="M10 2L14 5L10 8"/></svg>`;
-  return {label:t.rname, verb:_namenKurz(wer.map(_spName)) + ' ' + verb, rechts:`<span class="nd-tz-w">${weg.slice(0, 2).map(id => chip(id, true)).join('')}`
-    + (weg.length ? pf : '') + neu.slice(0, 3).map(id => chip(id)).join('')
-    + (neu.length > 3 ? `<span class="nd-tz-mehr num">+${neu.length - 3}</span>` : '') + `</span>`
+  return {label:t.rname, verb:_namenListe(wer.map(_spName)) + ' ' + verb, rechts:`<span class="nd-tz-w">${weg.map(id => chip(id, true)).join('')}`
+    + (weg.length ? pf : '') + neu.map(id => chip(id)).join('') + `</span>`
     + (wert ? `<b class="nd-tz-v num">${alt ? `<s>${esc(alt)}</s> ` : ''}${esc(wert)}</b>` : '')};
 }
 
@@ -26964,7 +26917,7 @@ function _ndMitteRoh(s){
         return `<div class="nd-gwert gold"><b>${esc(String(d.eintraege != null ? d.eintraege : ids.length))}</b>
             <span>Einträge im ${esc(seasonLabel(d.sid) || '')}</span></div>
           ${ids.length ? `<div class="nd-section">Wer eingetragen ist</div>
-          <div class="nd-vf">${ids.slice(0, 5).map(pid => `<div class="nd-vf-z" data-pid="${esc(pid)}">
+          <div class="nd-vf">${ids.map(pid => `<div class="nd-vf-z" data-pid="${esc(pid)}">
             ${avHtml(pm[pid], '', {ins:true, px:30, feuer:0})}
             <span class="nd-vf-nm">${esc(nameOf(pid))}</span>
             <b class="nd-vf-t">${esc(titelVon(pid))}</b></div>`).join('')}</div>` : ''}
@@ -27067,7 +27020,7 @@ function _ndMitteRoh(s){
             <div class="nd-stat-label">Partien in dieser Woche</div>
             <div class="nd-stat-val acid">${esc(kopfWert)}</div></div>`;
         const zeilen = teile.map(t => {
-          const ids = (Array.isArray(t.pids) ? t.pids : []).filter(pid => pm[pid]).slice(0, 2);
+          const ids = (Array.isArray(t.pids) ? t.pids : []).filter(pid => pm[pid]);
           return `<div class="nd-wo-z${t.held ? ' gold' : ''}"${ids[0] ? ` data-pid="${esc(ids[0])}"` : ''}>
               <span class="sp-chips">${ids.map(_spChip).join('')}</span>
               <span class="nd-wo-t"><b>${esc(_namenListe(ids.map(nameOf)))}</b><small>${esc(t.label || '')}</small></span>
@@ -30951,13 +30904,7 @@ function showSeasonTable(sid){
         <span class="tx"><span class="n">${esc(pname(ch.pid))} ${T.live ? 'führt die Saison an' : 'ist Meister'}</span>
           <span class="e num">${ch.elo} Elo · ${ch.wins} Siege aus ${ch.games} Spielen</span></span>
       </div><div style="height:14px"></div>` : ''}
-    <div class="tplates">${sichtbar.map(a => _titlePlateHtml(a, {sid})).join('')}</div>
-    ${weitere.length ? `<div class="tplates chron-rest">${weitere.map(a => _titlePlateHtml(a, {sid})).join('')}</div>
-    <button class="chron-more" type="button" data-chron-more>
-      <span class="tx">Alle anzeigen · ${weitere.length} weitere${weitere.length === 1 ? 'r' : ''}</span>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-        stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
-    </button>` : ''}
+    <div class="tplates">${sichtbar.concat(weitere).map(a => _titlePlateHtml(a, {sid})).join('')}</div>
     ${emptyNames.length ? `<div class="pp-sec-title" style="margin-top:16px"><div class="l"><h4>Ohne Eintrag</h4></div></div>
       <div class="tempty">${esc(emptyNames.join(', '))}<span>Keine Bedingung erfüllt, die Saison zählt trotzdem.</span></div>` : ''}
     ${unawarded.length ? `<div class="pp-sec-title" style="margin-top:16px"><div class="l"><h4>Nicht vergeben</h4></div><div class="m">${unawarded.length}</div></div>
@@ -31003,7 +30950,6 @@ function _chronStripHtml(pid){
         stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></span>
     </div>`;
     };
-    const rest = mine.slice(1);
     chronBlock = `
     <div class="pp-sec-title">
       <div class="l"><span class="ic svg-ic">${svgI(nurNeg ? 'ghost' : 'trophyStar')}</span>
@@ -31012,13 +30958,7 @@ function _chronStripHtml(pid){
       ${(nurNeg ? alle.length : zaehlt) > 1
         ? `<div class="m num">${nurNeg ? alle.length : zaehlt}</div>` : ''}
     </div>
-    ${card(mine[0] || c)}
-    ${rest.length ? `<div class="chron-rest">${rest.map(card).join('')}</div>
-    <button class="chron-more" type="button" data-chron-more>
-      <span class="tx">Mehr anzeigen · ${rest.length} weitere${rest.length === 1 ? 'r' : ''}</span>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-        stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
-    </button>` : ''}`;
+    <div class="chron-alle">${(mine.length ? mine : [c]).map(card).join('')}</div>`;
   } else {
     const nx = nextRecordFor(pid);
     if(nx){
@@ -31495,19 +31435,6 @@ function _bindChronikClicks(root){
   root.querySelectorAll('[data-prestige]').forEach(el => {
     el.style.cursor = 'pointer';
     el.onclick = (e) => { e.stopPropagation(); sheetNav(()=>showLaufbahn(el.dataset.prestige)); };
-  });
-  root.querySelectorAll('[data-chron-more]').forEach(el => {
-    el.onclick = (e) => {
-      e.stopPropagation();
-      const rest = el.previousElementSibling;
-      if(!rest) return;
-      const open = rest.classList.toggle('open');
-      el.classList.toggle('open', open);
-      const n = rest.children.length;
-      const tx = el.querySelector('.tx');
-      if(tx) tx.textContent = open ? 'Weniger anzeigen'
-                                   : ('Mehr anzeigen · ' + n + ' weitere' + (n === 1 ? 'r' : ''));
-    };
   });
 }
 
@@ -33276,25 +33203,17 @@ function showLaufbahn(pid){
       <span class="p num">${zahl(w)}</span>
     </div>`;
 
-  const SICHTBAR = 4;
   const regeln = `<button class="lb-regel-auf" type="button" data-prestige-regeln>
     <span><b>Wie die Punkte entstehen</b><em>Klassen, Startwerte und Kurven</em></span>
     ${svgI('chevron')}
   </button>`;
   const block = (g, gi) => {
     const qs = posten[gi], w = werte[gi];
-    const rest = qs.slice(SICHTBAR).map((q, i) => zeile(q, w[SICHTBAR + i]));
     return `<div class="lb-grp">
       <div class="lb-grp-k"><span>${esc(g.kopf)}</span><span class="num">${zahl(summen[gi])}</span></div>
       ${g.q === 'auszeichnung' ? regeln : ''}
-      ${qs.length ? qs.slice(0, SICHTBAR).map((q, i) => zeile(q, w[i])).join('')
+      ${qs.length ? qs.map((q, i) => zeile(q, w[i])).join('')
                   : `<div class="lb-q leer">${g.leer}</div>`}
-      ${rest.length ? `<div class="chron-rest">${rest.join('')}</div>
-        <button class="chron-more" type="button" data-chron-more>
-          <span class="tx">Mehr anzeigen · ${rest.length} weitere${rest.length === 1 ? 'r' : ''}</span>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-            stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
-        </button>` : ''}
     </div>`;
   };
 
@@ -34194,7 +34113,7 @@ function _showImportPreview(filename){
   } else {
     const a = p.analyse;
     canApply = a.neu.length > 0 || p.neueSpieler.length > 0;
-    const fehlerListe = a.fehler.slice(0, 8).map(f =>
+    const fehlerListe = a.fehler.map(f =>
       `<div style="font-size:11px;color:var(--ink2);padding:6px 0;border-bottom:1px solid var(--line)">
          <b style="color:var(--red)">Zeile ${f.zeile}</b> — ${esc(f.grund)}</div>`).join('');
     body = `
@@ -34205,10 +34124,9 @@ function _showImportPreview(filename){
       ${line('Übersprungen', a.fehler.length, a.fehler.length ? 'var(--red)' : '')}
       ${a.fehlendeSpieler.length ? `<div class="nd-section">Unbekannte Spieler</div>
         <p style="font-size:11.5px;color:var(--ink2);line-height:1.6">
-          ${esc(a.fehlendeSpieler.slice(0,10).join(', '))}${a.fehlendeSpieler.length>10?' …':''}<br>
+          ${esc(a.fehlendeSpieler.join(', '))}<br>
           Lege sie zuerst an oder nimm ein Backup mit Spieler-Blatt.</p>` : ''}
-      ${a.fehler.length ? `<div class="nd-section">Warum übersprungen</div>${fehlerListe}
-        ${a.fehler.length > 8 ? `<div style="font-size:11px;color:var(--muted);padding-top:6px">+ ${a.fehler.length - 8} weitere</div>` : ''}` : ''}`;
+      ${a.fehler.length ? `<div class="nd-section">Warum übersprungen</div>${fehlerListe}` : ''}`;
   }
 
   openSheet(`

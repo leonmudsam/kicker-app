@@ -850,10 +850,10 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 /* ── Das Blatt eines Liga-Rekords ──────────────────────────────────── */
 .nd-rk{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
 .nd-rk-w{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
-.nd-rk-alt,.nd-rk-neu{display:flex;align-items:center;gap:2px;position:relative;padding-bottom:13px}
+/* Vorher und jetzt brechen um: jeder Halter steht da, auch acht. */
+.nd-rk-alt,.nd-rk-neu{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:2px;position:relative;padding-bottom:13px}
 .nd-rk-alt > span{opacity:.45;filter:none}
 .nd-rk-alt small,.nd-rk-neu small{position:absolute;left:0;right:0;bottom:0;font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
-.nd-rk-neu .nf-face-mehr{--av:30px;width:30px;height:30px;font-size:10px}
 .nd-rk-pf{width:34px;height:14px;flex:0 0 auto;margin-bottom:13px}
 .nd-rk-pf path{fill:none;stroke:var(--gold);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .nd-rk.metall .nd-rk-pf path{stroke:var(--ink2)}
@@ -982,7 +982,9 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 .nw-tz-t .nw-label{flex:0 1 auto}
 .nw-tz-t small{flex:1 0 100%;font-size:10.5px;color:var(--muted);line-height:1.35}
 .nw-tz-r{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
-.nd-tz-w{display:flex;align-items:center}
+/* Jeder Halter vorher und nachher; bei vielen bricht der Wechsel um, statt
+   die Spalte mit dem Eintrag zusammenzudrücken. */
+.nd-tz-w{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;row-gap:3px;max-width:150px}
 .nd-tz-f > .av{--av:22px;width:22px;height:22px;font-size:8.5px;box-shadow:0 0 0 2px var(--bg2)}
 .nd-tz-f + .nd-tz-f{margin-left:-6px}
 .nd-tz-f.aus{opacity:.45}
@@ -990,7 +992,6 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 .nd-tz-pf path{fill:none;stroke:var(--gold);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .nd-tz-z{width:26px;height:26px;margin-left:2px}
 .nd-tz-z svg{width:26px;height:26px;display:block}
-.nd-tz-mehr{font-size:9.5px;color:var(--muted);margin-left:3px}
 .nd-tz-v{font-family:'Sometype Mono',monospace;font-size:11px;font-weight:600;color:var(--gold);white-space:nowrap}
 .nd-tz-v s{color:var(--muted);font-weight:400}
 
@@ -1004,7 +1005,6 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 .nd-mo.offen .nd-mo-k > b{color:var(--ink)}
 .nd-mo-k > span{font:600 9px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink2);align-self:end}
 .nd-mo-k > small{font-size:10.5px;color:var(--muted);margin-top:3px;align-self:start}
-.nd-mo-r{font-size:10.5px;color:var(--muted);text-align:right}
 .nd-mo .nd-bk{margin:0}
 .nd-mo-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px;margin-bottom:6px}
 .nd-mo-z{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:6px;padding:7px 8px;border-radius:10px;
@@ -1190,7 +1190,7 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 
 /* ── Spieler des Tages ─────────────────────────────────────────────── */
 .nd-pt{display:flex;flex-direction:column;align-items:center;gap:6px}
-.nd-pt-k{position:relative;display:flex;justify-content:center;gap:6px;padding-top:12px}
+.nd-pt-k{position:relative;display:flex;flex-wrap:wrap;justify-content:center;gap:6px;padding-top:12px}
 .nd-pt-kr{position:absolute;top:-4px;left:50%;transform:translateX(-50%);color:var(--gold)}
 .nd-pt-kr svg{width:20px;height:20px}
 .nd-pt-n{font-size:15px;font-weight:600;color:var(--ink)}

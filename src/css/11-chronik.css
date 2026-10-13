@@ -103,21 +103,9 @@
     font-family:'Sometype Mono',monospace;font-size:8.5px;font-weight:700;
     letter-spacing:.04em;text-transform:uppercase;vertical-align:1px;
     color:var(--tt);background:rgba(var(--ttr),.14);border:1px solid rgba(var(--ttr),.3)}
-  .chron-rest{display:none}
-  .chron-rest.open{display:block}
-  .chron-rest .chron-one{margin-top:8px}
-  /* Der Rest der Monatstafel benutzt dasselbe Raster wie der sichtbare Teil.
-     `.chron-rest` steht weiter unten als `.tplates` und gewinnt damit im
-     geschlossenen Zustand; offen braucht es die höhere Spezifität. */
-  .chron-rest.tplates.open{display:flex}
-  .chron-more{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;
-    margin-top:8px;padding:9px 12px;border:1px dashed var(--line);border-radius:12px;
-    background:transparent;color:var(--muted);cursor:pointer;
-    font-family:'Sometype Mono',monospace;font-size:10.5px;font-weight:700;
-    letter-spacing:.06em;text-transform:uppercase}
-  .chron-more:active{transform:scale(.99);background:var(--surface)}
-  .chron-more svg{width:14px;height:14px;transition:transform .18s ease}
-  .chron-more.open svg{transform:rotate(180deg)}
+  /* Alle Rekorde eines Spielers untereinander, mit dem Abstand, den vorher
+     nur der aufgeklappte Rest trug. */
+  .chron-alle{display:flex;flex-direction:column;gap:8px}
   .chron-honors{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 10px}
   .chron-honor{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;
     padding:4px 11px;border-radius:20px;color:var(--tt);

@@ -7690,7 +7690,8 @@ const _tafelBl = JSON.parse(K.eval(`JSON.stringify((function(){
     const max = Math.max(...Object.values(je));
     const erste = (b.k.match(/class="nd-bk-z hell"[\\s\\S]*?<b class="num">(\\d+)<\\/b>/) || [])[1];
     r.monat = {zellen:zahl(/class="nd-mo-z"/g, b.m), soll:aw.length,
-      balken:zahl(/class="nd-bk-z/g, b.k), traeger:Math.min(6, Object.keys(je).length),
+      // Jeder Träger ein Balken: es waren sechs und „und 3 weitere".
+      balken:zahl(/class="nd-bk-z/g, b.k), traeger:Object.keys(je).length,
       erste:+erste, max};
   }
   const ch = typ('chronik_geholt')[0];
@@ -7758,7 +7759,7 @@ ok(_tb.ins && _tb.ins.buehne && _tb.ins.grade === _tb.ins.soll && _tb.ins.wirkun
    JSON.stringify(_tb.ins));
 ok(_tb.monat && _tb.monat.zellen === _tb.monat.soll && _tb.monat.balken === _tb.monat.traeger
    && _tb.monat.erste === _tb.monat.max,
-   'das Blatt der Monatschronik zeigt jeden Eintrag der Tafel als Zelle und die Träger als Balken',
+   'das Blatt der Monatschronik zeigt jeden Eintrag der Tafel als Zelle und jeden Träger als Balken',
    JSON.stringify(_tb.monat));
 ok(_tb.chronik && _tb.chronik.buehne && _tb.chronik.namen && _tb.chronik.vorher && _tb.chronik.name && _tb.chronik.tafel,
    'das Blatt eines Chronik-Wechsels zeigt dieselbe Bühne wie ein Rekord, mit allen Haltern und nur echten Vorgängern',

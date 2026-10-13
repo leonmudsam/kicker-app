@@ -285,9 +285,10 @@ function showBadgePopover(badgeId, playerId){
     // Match-Liste (für fire-basierte Badges)
     const hits = _badgeFireMatches(playerId, badgeId);
     if(hits.length){
-      const maxShow = 8;
-      const shown = hits.slice(0, maxShow);
-      const rowsHtml = shown.map(m => {
+      // Jede Partie, in der sie ausgelöst wurde. Nach acht stand „+ 12
+      // weitere", und gerade die häufigen Auszeichnungen zeigten damit fast
+      // nichts von dem, was die Zahl darüber zählt.
+      const rowsHtml = hits.map(m => {
         const date = new Date(m.created_at);
         const dateStr = datumFmt(date, 'tmj');
         const onA = (playerId===m.a1||playerId===m.a2);
@@ -301,11 +302,9 @@ function showBadgePopover(badgeId, playerId){
           <div class="bp-match-arr">›</div>
         </div>`;
       }).join('');
-      const moreHint = hits.length > maxShow
-        ? `<div class="bp-more">+ ${hits.length - maxShow} weitere</div>` : '';
       bodyHtml = `
         <div class="bp-section">Ausgelöst in ${hits.length} ${hits.length===1?'Match':'Matches'}</div>
-        ${rowsHtml}${moreHint}`;
+        ${rowsHtml}`;
     } else {
       // Saison-/Karriere-aggregierte Badges ohne fire-Trigger.
       // Wir zeigen einen kurzen Hinweis statt einer Liste.

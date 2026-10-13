@@ -1155,6 +1155,7 @@ const ok = (c, msg, det) => {
      'mehrere Bewegungen stehen je als Bild mit Spur und Namen, der Rückfall mit seinem Pfeil',
      JSON.stringify({kacheln:insKarte.kacheln, zeilen:insKarte.zeilen, felder:insKarte.kachelFelder, ab:insKarte.kachelAb}));
 
+
   // ── Das Blatt der Ewigen Tafel zeigt, was ausschlaggebend war ────
   //    Die Punktewirkung stand als Zeile „1205 → 1240 Prestige": zwei Zahlen,
   //    die man erst lesen und dann verrechnen muss, und bei neun Zeilen
@@ -1482,7 +1483,8 @@ const ok = (c, msg, det) => {
         if(!r || !r.pids || !r.pids.length) return;
         const rang = chronicleRang(id) || [];
         if(rang.length < 3) return;
-        const dahinter = rang.filter(x => r.pids.indexOf(x.pid) < 0 && x.wert <= r.val + 1e-9).slice(0, 3);
+        // Das ganze Feld dahinter, wie im Blatt: es waren die ersten drei.
+        const dahinter = rang.filter(x => r.pids.indexOf(x.pid) < 0 && x.wert <= r.val + 1e-9);
         out.push({id, wert:r.val, alle:dahinter.every(x => x.wert >= 0), html:_newsVerfolger(id, r.pids, r.val)});
       });
       return out.slice(0, 40);
@@ -1505,7 +1507,9 @@ const ok = (c, msg, det) => {
           const i = b.querySelector('i');
           if(!i) { raus++; return; }
           const ir = i.getBoundingClientRect(), br = b.getBoundingClientRect();
-          if(ir.right > br.right + 0.5 || ir.width <= 0) raus++;
+          // Ein Wert von null hat einen leeren Balken; gezählt wird, was
+          // über die Bahn hinausläuft oder nach links wächst.
+          if(ir.right > br.right + 0.5 || ir.width < 0) raus++;
           if(ir.width > vor + 0.5) falschRum++;
           vor = ir.width;
         });
@@ -4260,6 +4264,69 @@ return JSON.stringify(funde,null,1);
   ok(moment && moment.wege.some(w => w.art === 'chron') && moment.wege.every(w => w.auf && !w.profil),
      'eine Zeile des Tafel-Moments öffnet das Blatt ihres Rekords, ihrer Chronik oder die Laufbahn statt des Profils',
      JSON.stringify(moment && moment.wege));
+
+  // ── Ein Blatt zeigt alles ─────────────────────────────────────────
+  // Die Blätter schnitten an zwölf Stellen ab: die Gründe der Wirkung nach
+  // drei („+1"), die Halter eines Rekords nach vier, die Gesichter eines
+  // Felds der Leiter nach drei, die Wappen im Kopf nach drei, die Partien
+  // einer Auszeichnung nach acht, und Profil und Laufbahn hielten den Rest
+  // hinter „Mehr anzeigen". Das Blatt ist die Stelle, an der man nachsieht.
+  // Steht am Ende des Laufs: Profil, Laufbahn und Popover werden geöffnet und
+  // geschlossen, und weiter vorn schloss das den Feed, den spätere Prüfungen
+  // noch lesen.
+  const alles = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    return JSON.parse(K(`JSON.stringify((function(){
+      const ids = players.filter(p => sichtbar(p)).map(p => p.id);
+      const pm = pmap(), nm = id => pm[id].name;
+      const tmp = h => { const e = document.createElement('div'); e.innerHTML = h; return e; };
+      const je = {}; je[ids[0]] = {vor:3000, nach:3285};
+      const gr = {}; gr[ids[0]] = ['Der Lauf', 'Der Höhenflug', 'Der Einzelkämpfer', 'Die Wand', 'Der Krimi']
+        .map(n => ({verb:'übernimmt', name:n, neg:false}));
+      const wk = tmp(_ndWirkungBlock(je, gr, Date.now()));
+      const wb = tmp(_ndWechselBuehne({neu:ids.slice(0, 6), weg:ids.slice(6, 10), name:'Der Lauf', wert:'12'}));
+      const ll = tmp(_ndLigaLeiter({felder:ids.slice(0, 6).map(id => [id, 0, 0])}));
+      const kopf = tmp(_newsBlattKopf({id:'ui-alle', cat:'tafel', title:'x', desc:'y', when:new Date(),
+        dataRef:{type:'rivalry', playerIds:ids.slice(0, 5)}}));
+      // Wer die meisten Auszeichnungen hat, und welche am häufigsten fiel.
+      const bpid = ids.slice().sort((a, b) => (getCachedBadges(b) || []).length - (getCachedBadges(a) || []).length)[0];
+      showPlayer(bpid);
+      const prof = document.querySelector('.sheet') || document.body;
+      const minis = prof.querySelectorAll('.pp-bcard-strip .pp-bmini').length;
+      const mehrProfil = prof.querySelectorAll('[data-chron-more], .chron-more').length;
+      closeSheet(true);
+      showLaufbahn(bpid);
+      const lb = document.querySelector('.sheet') || document.body;
+      const lbZeilen = lb.querySelectorAll('.lb-q:not(.leer)').length;
+      const P = prestigeOf(bpid), posten = (P.quellen || []).length;
+      const mehrLb = lb.querySelectorAll('[data-chron-more], .chron-more').length;
+      closeSheet(true);
+      let bp = {id:'', n:0, zeilen:0};
+      (getCachedBadges(bpid) || []).forEach(b => { const n = _badgeFireMatches(bpid, b.id).length; if(n > bp.n) bp = {id:b.id, n}; });
+      if(bp.id){ showBadgePopover(bp.id, bpid); bp.zeilen = document.querySelectorAll('.bp-match').length; closeBadgePopover(); closeSheet(true); }
+      return {
+        gruende: wk.querySelectorAll('.nd-wk-g').length, plus: [...wk.querySelectorAll('.nd-wk-g')].some(e => /^\\+[0-9]+$/.test(e.textContent.trim())),
+        wechsel: wb.querySelectorAll('.nd-rk-neu [data-pid]').length + '+' + wb.querySelectorAll('.nd-rk-alt [data-pid]').length,
+        leiter: ll.querySelectorAll('.nd-ll-av').length,
+        kopf: kopf.querySelectorAll('.nd-held-av .av').length,
+        kopfNamen: ids.slice(0, 5).every(id => kopf.textContent.indexOf(nm(id)) >= 0) && !/weitere/.test(kopf.textContent),
+        minis, badges:(getCachedBadges(bpid) || []).length, mehr: mehrProfil + mehrLb,
+        lbZeilen, posten, bp
+      };
+    })())`));
+  });
+  ok(alles.gruende === 5 && !alles.plus, 'die Wirkung nennt jeden Grund, ohne „+1"', alles.gruende + ' Gründe');
+  ok(alles.wechsel === '6+4' && alles.leiter === 6,
+     'die Bühne eines Wechsels zeigt jeden Halter vorher und jetzt, die Leiter jedes Gesicht eines Felds',
+     'Wechsel ' + alles.wechsel + ', Leiter ' + alles.leiter);
+  ok(alles.kopf === 5 && alles.kopfNamen, 'der Kopf eines Blatts zeigt jedes Wappen und jeden Namen',
+     alles.kopf + ' Wappen');
+  ok(alles.minis === alles.badges && alles.badges > 8 && alles.mehr === 0
+     && alles.lbZeilen === alles.posten && alles.posten > 4,
+     'Profil und Laufbahn zeigen jede Auszeichnung und jeden Posten, nichts hinter „Mehr anzeigen"',
+     JSON.stringify({minis:alles.minis, badges:alles.badges, mehr:alles.mehr, zeilen:alles.lbZeilen, posten:alles.posten}));
+  ok(alles.bp.n > 8 && alles.bp.zeilen === alles.bp.n,
+     'das Blatt einer Auszeichnung zeigt jede Partie, in der sie fiel', JSON.stringify(alles.bp));
 
   await page.setViewportSize({width:430, height:932});
 

@@ -218,7 +218,7 @@
     padding:13px 14px;cursor:pointer;transition:.15s}
   .pp-bcard:active{transform:scale(.985)}
   .pp-bcard-row{display:flex;align-items:center;gap:10px}
-  .pp-bcard-strip{flex:1;min-width:0;display:flex;gap:6px;align-items:center}
+  .pp-bcard-strip{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
   .pp-bmini{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;
     border:1px solid var(--line2);background:var(--bg2);flex-shrink:0;color:var(--ink2)}
   .pp-bmini svg{width:15px;height:15px;stroke:currentColor;fill:none;
@@ -227,8 +227,6 @@
   .pp-bmini.rare{color:var(--purple);border-color:rgba(167,139,250,.38)}
   .pp-bmini.common{color:var(--acid);border-color:rgba(190,242,100,.25)}
   .pp-bmini.negative{color:var(--red);border-color:rgba(240,86,106,.38)}
-  .pp-bcard-rest{font-size:10px;color:var(--muted);font-family:'Sometype Mono',monospace;
-    font-weight:700;margin-left:3px}
   .pp-bcard-chev{color:var(--muted);flex-shrink:0;display:grid;place-items:center}
   .pp-bcard-chev svg{width:14px;height:14px;stroke:currentColor;fill:none;
     stroke-linecap:round}
@@ -354,8 +352,6 @@
   .bp-match-date{font-family:'Sometype Mono',monospace;font-size:9.5px;color:var(--muted);flex-shrink:0;width:62px}
   .bp-match-score{font-family:'Archivo Black',sans-serif;font-size:13px;flex:1}
   .bp-match-arr{color:var(--muted);font-size:11px;flex-shrink:0}
-  .bp-more{font-size:10px;color:var(--muted);text-align:center;margin-top:6px;
-    font-family:'Sometype Mono',monospace}
   /* Fortschritts-Balken (locked) */
   .bp-prog{margin-bottom:8px}
   .bp-prog-bar{height:8px;background:var(--surface3);border-radius:4px;overflow:hidden}
@@ -896,15 +892,16 @@
   .nd-ll-f{position:relative;flex:1 1 0;min-width:0;max-width:52px;aspect-ratio:1}
   .nd-ll-f > svg.ins{display:block;width:100%;height:100%;opacity:.38}
   .nd-ll-f.da > svg.ins{opacity:1}
-  .nd-ll-g{position:absolute;left:50%;bottom:-3px;transform:translateX(-50%);display:flex}
+  /* Jedes Gesicht eines Felds; was nicht in eine Reihe passt, bricht nach
+     oben um, statt neben das Nachbarfeld zu laufen. */
+  .nd-ll-g{position:absolute;left:0;right:0;bottom:-3px;display:flex;flex-wrap:wrap-reverse;
+    justify-content:center;row-gap:2px;padding-left:5px}
   .nd-ll-av{margin-left:-5px;border-radius:50%;box-shadow:0 0 0 1.5px var(--bg);cursor:pointer}
   .nd-ll-av:first-child{margin-left:0}
   /* Das Gesicht misst hier selbst: ohne Behälter mit Größe stand es als
      Rechteck aus Initialen auf dem Zeichen [§C27]. */
   .nd-ll-av .av{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;
     font-size:7px;line-height:1;overflow:hidden}
-  .nd-ll-mehr{margin-left:2px;font-size:9px;font-weight:700;color:var(--ink2);
-    align-self:center;background:var(--surface2);border-radius:7px;padding:1px 4px}
 
   /* Sorte 4 Held: Wappen gross, drei Zahlen im Fuss. */
 
@@ -1342,12 +1339,14 @@
   .nd-held{display:flex;align-items:center;gap:13px;padding:2px 0 4px;cursor:pointer}
   .nd-held-duo{cursor:default}
   .nd-held-av{display:flex;align-items:center}
-  /* Der Kopf zeigt so viele Wappen, wie die Zeile daneben Namen nennt — bis
-     zu drei, danach einen Chip mit dem Rest. `nth-child(2)` ueberlappte nur
-     das zweite, das dritte stand damit mit einer Luecke daneben. */
+  /* Der Kopf zeigt so viele Wappen, wie die Zeile daneben Namen nennt, und
+     alle. `nth-child(2)` ueberlappte nur das zweite, das dritte stand damit
+     mit einer Luecke daneben. Ab vier stehen die Wappen ueber den Namen und
+     brechen um: nebeneinander liefen sie bei 288 px aus dem Blatt. */
   .nd-held-av > *:nth-child(n+2){margin-left:-12px}
-  .nd-held-mehr{width:48px;height:48px;border-radius:50%;display:grid;
-    place-items:center;font-size:13px;border:2px solid var(--surface)}
+  .nd-held-duo.viele{flex-direction:column;align-items:flex-start;gap:8px}
+  .nd-held-duo.viele .nd-held-av{flex-wrap:wrap;row-gap:4px;padding-left:12px}
+  .nd-held-duo.viele .nd-held-av > *{margin-left:-12px}
   /* Das Ergebnis der Partie ueber dem Kopf. Vorher stand es je nach Typ mal
      als Block, mal gar nicht. */
   .nd-erg{border:1px solid var(--line);border-radius:12px;background:var(--bg2);

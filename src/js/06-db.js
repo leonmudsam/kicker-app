@@ -499,34 +499,34 @@ function showSeasonRecap(season, opts){
 
   // ─── Chronik der Saison ────────────────────────────────────────────
   // Als Zeilen, nicht als Plaketten: sechs Plaketten waren allein 547 px
-  // und sechs verschiedene Farbtöne. Die volle Tafel ist einen Tipp weit
-  // weg, und dort gehören die Plaketten hin.
+  // und sechs verschiedene Farbtöne. Jeder Eintrag steht da — es waren fünf
+  // und ein Knopf „Alle 17 Einträge"; die Plaketten der Tafel sind einen
+  // Tipp weit weg.
   let chronikHtml='';
   try {
     const T = seasonTitles(sid);
     if(T.awarded.length){
       chronikHtml = rcpAbschnitt('Chronik der Saison', T.awarded.length) + `<div class="rcp-liste">${
-        T.awarded.slice(0,5).map(a=>rcpZeileHtml({pid:a.pid, px:38,
+        T.awarded.map(a=>rcpZeileHtml({pid:a.pid, px:38,
           ic:a.ic, ton:a.tone, name:a.name, sub:pname(a.pid),
           attr:`data-tplayer="${esc(a.pid)}"`})).join('')}</div>`
-        + `<div class="rcp-mehr klick" data-stafel="${esc(sid)}">${
-            T.awarded.length>5 ? 'Alle '+T.awarded.length+' Einträge' : 'Die ganze Tafel'}</div>`;
+        + `<div class="rcp-mehr klick" data-stafel="${esc(sid)}">Die ganze Tafel</div>`;
     }
   } catch(err){}
 
   // ─── Rekorde, die in diesem Monat gefallen sind ────────────────────
   // Nicht die Rekordliste von heute, sondern der Unterschied zwischen dem
   // Stand am Monatsende und dem am Ende des Vormonats — siehe saisonRekorde.
+  // Jeder davon; nach fünf stand „und 3 weitere".
   let rekordHtml='';
   try {
     const REK = saisonRekorde(sid);
     if(REK.length){
       const wort = {neu:'zum ersten Mal', geholt:'übernommen', gesteigert:'verbessert'};
       rekordHtml = rcpAbschnitt('Rekorde dieser Saison', REK.length) + `<div class="rcp-liste">${
-        REK.slice(0,5).map(r=>rcpZeileHtml({pid:r.pid, px:38,
+        REK.map(r=>rcpZeileHtml({pid:r.pid, px:38,
           ic:r.ic, ton:r.tone, name:r.name, sub:pname(r.pid)+' · '+wort[r.art],
-          rechts:r.zeit || '', attr:`data-chron="${esc(r.id)}"`})).join('')}</div>`
-        + (REK.length>5 ? `<div class="rcp-mehr klick" data-ligarek="1">und ${REK.length-5} weitere</div>` : '');
+          rechts:r.zeit || '', attr:`data-chron="${esc(r.id)}"`})).join('')}</div>`;
     }
   } catch(err){}
 
@@ -603,7 +603,6 @@ function showSeasonRecap(season, opts){
   binden('[data-poshist]', el => sheetNav(()=>showPositionHistory(el.dataset.poshist)));
   binden('[data-stafel]', el => sheetNav(()=>showSeasonTable(el.dataset.stafel)));
   binden('[data-chron]', el => sheetNav(()=>showChronicle(el.dataset.chron)));
-  binden('[data-ligarek]', () => sheetNav(()=>showLigaChronik()));
 }
 
 // Player-of-the-Day Recap: zeigt einmal pro Tag pro Gerät den Sieger des letzten Spieltags.

@@ -273,7 +273,7 @@ Dazu die [allgemeinen Regeln](docs/gesetze/allgemein.md) ohne Kürzel: Detail fo
 der Größe, ein Duo hat keinen Rang, nichts sagt zweimal dasselbe, keine
 persönliche Ansprache, eine Schrift hat einen Rückfall, dieselbe Sache hat
 einen Namen, keine Possessivpronomen über einen Spieler, kein „Abend", ein
-leeres Feld liest sich als Fehler.
+leeres Feld liest sich als Fehler, ein Blatt zeigt alles.
 
 Kürzel `§C0` bis `§C24` sind Abschnitte des CSS (CSS-Landkarte in §3),
 Kürzel wie `§5.2` Abschnitte im Code; beide stehen in

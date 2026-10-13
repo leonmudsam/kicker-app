@@ -71,12 +71,11 @@ function showSeasonTable(sid){
   // Der Meister steht als eigene Zeile über der Chronik, nicht IN ihr: Platz 1
   // der Elo ist eine Tabellen-Aussage, kein Chronik-Eintrag — und er würde dem
   // Ersten sonst seinen einen Chronik-Platz wegnehmen.
-  // Zuerst nur das, was die Chronik-Matrix auch zeigt: je Spieler der erste
+  // Zuerst das, was die Chronik-Matrix auch zeigt: je Spieler der erste
   // Eintrag in Katalogreihenfolge, denn die Reihenfolge IST die Wertigkeit
-  // [§C32]. Alles Weitere steht dahinter. Vorher listete das Blatt jeden
-  // Eintrag jedes Spielers — in einem starken Monat waren das über zwanzig
-  // Karten, von denen sieben demselben Namen gehörten, und der Reiter
-  // dahinter zeigte etwas ganz anderes.
+  // [§C32]. Alles Weitere steht dahinter, offen: es stand hinter „Alle
+  // anzeigen · 9 weitere", und im Blatt einer Monatstafel fehlte damit die
+  // halbe Tafel.
   const gesehen = new Set();
   const sichtbar = [], weitere = [];
   T.awarded.forEach(a => {
@@ -94,13 +93,7 @@ function showSeasonTable(sid){
         <span class="tx"><span class="n">${esc(pname(ch.pid))} ${T.live ? 'führt die Saison an' : 'ist Meister'}</span>
           <span class="e num">${ch.elo} Elo · ${ch.wins} Siege aus ${ch.games} Spielen</span></span>
       </div><div style="height:14px"></div>` : ''}
-    <div class="tplates">${sichtbar.map(a => _titlePlateHtml(a, {sid})).join('')}</div>
-    ${weitere.length ? `<div class="tplates chron-rest">${weitere.map(a => _titlePlateHtml(a, {sid})).join('')}</div>
-    <button class="chron-more" type="button" data-chron-more>
-      <span class="tx">Alle anzeigen · ${weitere.length} weitere${weitere.length === 1 ? 'r' : ''}</span>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-        stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
-    </button>` : ''}
+    <div class="tplates">${sichtbar.concat(weitere).map(a => _titlePlateHtml(a, {sid})).join('')}</div>
     ${emptyNames.length ? `<div class="pp-sec-title" style="margin-top:16px"><div class="l"><h4>Ohne Eintrag</h4></div></div>
       <div class="tempty">${esc(emptyNames.join(', '))}<span>Keine Bedingung erfüllt, die Saison zählt trotzdem.</span></div>` : ''}
     ${unawarded.length ? `<div class="pp-sec-title" style="margin-top:16px"><div class="l"><h4>Nicht vergeben</h4></div><div class="m">${unawarded.length}</div></div>
@@ -163,7 +156,8 @@ function _chronStripHtml(pid){
         stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></span>
     </div>`;
     };
-    const rest = mine.slice(1);
+    // Jeder Rekord steht offen da; nach dem ersten stand „Mehr anzeigen ·
+    // 4 weitere", und das Profil verschwieg damit die meisten.
     chronBlock = `
     <div class="pp-sec-title">
       <div class="l"><span class="ic svg-ic">${svgI(nurNeg ? 'ghost' : 'trophyStar')}</span>
@@ -172,13 +166,7 @@ function _chronStripHtml(pid){
       ${(nurNeg ? alle.length : zaehlt) > 1
         ? `<div class="m num">${nurNeg ? alle.length : zaehlt}</div>` : ''}
     </div>
-    ${card(mine[0] || c)}
-    ${rest.length ? `<div class="chron-rest">${rest.map(card).join('')}</div>
-    <button class="chron-more" type="button" data-chron-more>
-      <span class="tx">Mehr anzeigen · ${rest.length} weitere${rest.length === 1 ? 'r' : ''}</span>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-        stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
-    </button>` : ''}`;
+    <div class="chron-alle">${(mine.length ? mine : [c]).map(card).join('')}</div>`;
   } else {
     // Kein Rekord? Dann zeigt die Karte, welcher am nächsten liegt und was
     // dafür noch fehlt. Eine leere Zeile motiviert niemanden, eine Zahl schon.
@@ -843,19 +831,6 @@ function _bindChronikClicks(root){
   root.querySelectorAll('[data-prestige]').forEach(el => {
     el.style.cursor = 'pointer';
     el.onclick = (e) => { e.stopPropagation(); sheetNav(()=>showLaufbahn(el.dataset.prestige)); };
-  });
-  root.querySelectorAll('[data-chron-more]').forEach(el => {
-    el.onclick = (e) => {
-      e.stopPropagation();
-      const rest = el.previousElementSibling;
-      if(!rest) return;
-      const open = rest.classList.toggle('open');
-      el.classList.toggle('open', open);
-      const n = rest.children.length;
-      const tx = el.querySelector('.tx');
-      if(tx) tx.textContent = open ? 'Weniger anzeigen'
-                                   : ('Mehr anzeigen · ' + n + ' weitere' + (n === 1 ? 'r' : ''));
-    };
   });
 }
 
