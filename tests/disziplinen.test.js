@@ -2577,6 +2577,9 @@ const _formeln = {
   '-v %':       v => Math.round(-v * 100),
   '|v| %':      v => Math.round(Math.abs(v) * 100),
   '1-v %':      v => Math.round((1 - v) * 100),
+  // Der Abstand zweier Anteile, die zusammen hundert ergeben: zweimal der
+  // gerundete Abstand zur Mitte, also immer gerade (der Wandler).
+  '1-v % gerade': v => 2 * Math.round((1 - v) * 50),
   'v auf 1':    v => +v.toFixed(1),
   '-v auf 1':   v => +(-v).toFixed(1)
 };
@@ -2908,6 +2911,27 @@ const _nullRichtung = JSON.parse(K.eval(`JSON.stringify(CHRONICLES.flatMap(c =>
     .map(r => c.id + ': ' + r.ev.split(' · ')[0])))`));
 ok(_nullRichtung.length === 0, 'kein Abstand steht als null mit Vorzeichen in einem Rennen',
    _nullRichtung.slice(0, 3).join(' · ') || 'keiner');
+// Ein Abstand, neben dem seine beiden Quoten stehen, ist ihre Differenz, so
+// wie sie dastehen: „+13 %-Punkte · 67 statt 55 % erwartet" stand beim
+// Sturmführer, weil der Abstand ungerundet gerundet wurde und die Quoten
+// einzeln. Wer nachrechnete, kam auf 12. Geprueft wird jeder Spieler im
+// Rennen, nicht nur der Halter.
+const _ppRechnung = JSON.parse(K.eval(`JSON.stringify((function(){
+  const out = {n:0, falsch:[]};
+  CHRONICLES.forEach(c => (chronicleRang(c.id) || []).forEach(r => {
+    const ev = String(r.ev || '');
+    const m = ev.match(/^([+\\u2212-]?)([0-9]+) %-Punkte[^·]*· (.*)$/);
+    if(!m) return;
+    const q = [...m[3].matchAll(/([0-9]+(?:,[0-9]+)?)(?= %| statt| gegen)/g)].map(x => +x[1].replace(',', '.'));
+    if(q.length !== 2) return;
+    out.n++;
+    if(Math.abs(+m[2] - Math.abs(q[0] - q[1])) > 1e-9) out.falsch.push(c.id + ': ' + ev);
+  }));
+  return out;
+})())`));
+ok(_ppRechnung.n >= 40 && _ppRechnung.falsch.length === 0,
+   'ein Abstand in Prozentpunkten ist die Differenz der Quoten daneben',
+   _ppRechnung.falsch.slice(0, 3).join(' · ') || _ppRechnung.n + ' Belege');
 ok(_ppKurz.n >= 10 && _ppKurz.falsch.length === 0,
    'ein Abstand in Prozentpunkten behaelt gekuerzt seine Einheit',
    _ppKurz.falsch.slice(0, 3).join(' · ') || _ppKurz.n + ' Belege');
