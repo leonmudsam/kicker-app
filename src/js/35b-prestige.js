@@ -1057,6 +1057,33 @@ let _insEigenLauf = 0;
 const _insStufeSym = new Map();      // Rang|Stufe|Bild → id der Gruppe
 const _insStufeDrin = new Set();
 let _insStufeTopf = null;
+// Die Zeichnungen der Laufbahn vorab, je Rangfarbe und Stufe ein Schritt im
+// Leerlauf [§2.1b]. Die Vitrine zeigt achtundzwanzig Zeichnungen, und jede
+// trägt die Rangfarbe: das erste Laufbahn-Blatt eines Rangs kostete gemessen
+// 110 bis 135 ms Skript auf dem Rechner, auf dem Telefon das Mehrfache, das
+// nächste desselben Rangs 4 ms. Vorab gezeichnet werden die einundzwanzig
+// kleinen Felder und je Stufe das erste und das letzte große Zeichen — so
+// zeigt die Vitrine eine offene und eine durchlaufene Stufe. Es bleibt das
+// eine Zeichen der eigenen Stufe, wenn sie mitten im Grad steht.
+let _insWarmPlan = null;
+function _insVorwaermen(){
+  if(!_insWarmPlan || _insWarmPlan.v !== _cache.version){
+    const raenge = [...new Set((players || []).filter(p => sichtbar(p))
+      .map(p => (getPlayerRank(p.id) || {}).label).filter(Boolean))];
+    _insWarmPlan = [];
+    _insWarmPlan.v = _cache.version;
+    raenge.forEach(r => INSIGNIEN.forEach((_, i) => _insWarmPlan.push([r, i])));
+  }
+  const s = _insWarmPlan.shift();
+  if(!s){ _insWarmPlan = null; return true; }
+  const [rang, i] = s, L = INSIGNIEN.length - 1, key = INSIGNIEN[i].key;
+  const n = i === L ? INS_ZEICHEN.stern.length : INSIGNIUM_GRADE;
+  const z = g => i === L ? ORDENSSTERN_START + g : 0;
+  for(let g = 0; g < n; g++) insigniumStufeSvg(key, rang, z(g), g, {bild:true});
+  insigniumStufeSvg(key, rang, z(0), 0);
+  insigniumStufeSvg(key, rang, z(n - 1), n - 1);
+  return false;
+}
 function insigniumStufeSvg(key, rangLabel, zacken, grad, opt){
   const c = _insSatzCache(rangLabel);
   const topf = (opt && opt.eigen) ? null : _insTopfHolen();

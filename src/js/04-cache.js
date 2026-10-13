@@ -586,7 +586,9 @@ async function syncSeasonEloToDB(){
 // Gerechnet wird genau das, was die Ansicht beim Betreten fragt — dieselben
 // Funktionen mit denselben Argumenten, sonst träfe der Schlüssel nicht.
 // Abgebrochen wird bei neuen Daten (eine andere Version), bei einem neueren
-// Auftrag und solange die Seite versteckt ist.
+// Auftrag und solange die Seite versteckt ist. Ein Schritt, der `false`
+// zurückgibt, ist noch nicht fertig und kommt im nächsten ruhigen Moment
+// wieder: so verteilt er seine Arbeit, statt einen langen Task zu bauen.
 let _vorwaermAuftrag = null;
 const VORWAERMEN = [
   () => { allPlayerStats(); positionsListe('atk'); positionsListe('def'); },   // Positionen
@@ -595,6 +597,7 @@ const VORWAERMEN = [
   () => allSeasonTitles(),                                                     // Chronik
   () => teamStats(),                                                           // Teams
   () => prestigeTabelle(),                                                     // Prestige, Profil
+  () => _insVorwaermen(),                                                      // Zeichen der Laufbahn
 ];
 function _vorwaermen(){
   const auftrag = {version:_cache.version, schritt:0};
@@ -603,8 +606,9 @@ function _vorwaermen(){
     if(_vorwaermAuftrag !== auftrag || _cache.version !== auftrag.version) return;
     if(auftrag.schritt >= VORWAERMEN.length){ _vorwaermAuftrag = null; return; }
     if(document.hidden){ _leerlauf(1000).then(weiter); return; }
-    try { VORWAERMEN[auftrag.schritt](); } catch(e){}
-    auftrag.schritt++;
+    let fertig = true;
+    try { fertig = VORWAERMEN[auftrag.schritt]() !== false; } catch(e){}
+    if(fertig) auftrag.schritt++;
     _leerlauf(1000).then(weiter);
   };
   _leerlauf(1000).then(weiter);

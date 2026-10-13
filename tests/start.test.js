@@ -239,6 +239,22 @@ async function neueSeite(ctx){
       return je;
     });
     for(const [z, n] of Object.entries(kalt)) ok(n === 0, 'Nach dem Vorwärmen rechnet der erste Aufruf nichts kalt: ' + z + (n ? ' (' + n + ' kalte Rechnungen)' : ''));
+    // Die Zeichen der Laufbahn tragen die Rangfarbe; vorgezeichnet sind die
+    // Felder und je Stufe das erste und das letzte große Zeichen. Beim
+    // Öffnen bleibt höchstens das eine der eigenen Stufe mitten im Grad.
+    const lbNeu = await w.page.evaluate(() => window.__K(`(function(){
+      const neu = [];
+      players.filter(p => sichtbar(p)).forEach(p => {
+        const vor = _insStufeDrin.size;
+        try { closeSheet(true); } catch(e){}
+        showLaufbahn(p.id);
+        neu.push(_insStufeDrin.size - vor);
+      });
+      try { closeSheet(true); } catch(e){}
+      return neu;
+    })()`));
+    ok(lbNeu.length > 3 && lbNeu.every(n => n <= 1),
+       'Nach dem Vorwärmen zeichnet keine Laufbahn ihre Vitrine neu (' + lbNeu.join(' ') + ')');
     // Neue Daten brechen einen laufenden Auftrag ab; er rechnet nicht für
     // einen Stand weiter, den es nicht mehr gibt.
     ok(await w.page.evaluate(async () => {

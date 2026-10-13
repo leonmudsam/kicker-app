@@ -5701,7 +5701,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.13.a5bdd027';
+const BUILD_VERSION='2026.10.13.bec43d1b';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -6621,6 +6621,7 @@ const VORWAERMEN = [
   () => allSeasonTitles(),
   () => teamStats(),
   () => prestigeTabelle(),
+  () => _insVorwaermen(),
 ];
 function _vorwaermen(){
   const auftrag = {version:_cache.version, schritt:0};
@@ -6629,8 +6630,9 @@ function _vorwaermen(){
     if(_vorwaermAuftrag !== auftrag || _cache.version !== auftrag.version) return;
     if(auftrag.schritt >= VORWAERMEN.length){ _vorwaermAuftrag = null; return; }
     if(document.hidden){ _leerlauf(1000).then(weiter); return; }
-    try { VORWAERMEN[auftrag.schritt](); } catch(e){}
-    auftrag.schritt++;
+    let fertig = true;
+    try { fertig = VORWAERMEN[auftrag.schritt]() !== false; } catch(e){}
+    if(fertig) auftrag.schritt++;
     _leerlauf(1000).then(weiter);
   };
   _leerlauf(1000).then(weiter);
@@ -32915,6 +32917,25 @@ let _insEigenLauf = 0;
 const _insStufeSym = new Map();
 const _insStufeDrin = new Set();
 let _insStufeTopf = null;
+let _insWarmPlan = null;
+function _insVorwaermen(){
+  if(!_insWarmPlan || _insWarmPlan.v !== _cache.version){
+    const raenge = [...new Set((players || []).filter(p => sichtbar(p))
+      .map(p => (getPlayerRank(p.id) || {}).label).filter(Boolean))];
+    _insWarmPlan = [];
+    _insWarmPlan.v = _cache.version;
+    raenge.forEach(r => INSIGNIEN.forEach((_, i) => _insWarmPlan.push([r, i])));
+  }
+  const s = _insWarmPlan.shift();
+  if(!s){ _insWarmPlan = null; return true; }
+  const [rang, i] = s, L = INSIGNIEN.length - 1, key = INSIGNIEN[i].key;
+  const n = i === L ? INS_ZEICHEN.stern.length : INSIGNIUM_GRADE;
+  const z = g => i === L ? ORDENSSTERN_START + g : 0;
+  for(let g = 0; g < n; g++) insigniumStufeSvg(key, rang, z(g), g, {bild:true});
+  insigniumStufeSvg(key, rang, z(0), 0);
+  insigniumStufeSvg(key, rang, z(n - 1), n - 1);
+  return false;
+}
 function insigniumStufeSvg(key, rangLabel, zacken, grad, opt){
   const c = _insSatzCache(rangLabel);
   const topf = (opt && opt.eigen) ? null : _insTopfHolen();
