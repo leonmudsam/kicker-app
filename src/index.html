@@ -35,6 +35,22 @@
 </head>
 <body>
 
+<!-- Das Startbild [§C43]: festes Markup, damit es im ersten Bild steht,
+     bevor das Skript übersetzt ist — gemessen malt das Telefon dieses Bild
+     rund 250 ms vor dem ersten Skriptbefehl, und vorher war dort nur der
+     dunkle Grund. Das Zeichen ist dasselbe kleine Bild wie in der
+     Kopfleiste (01-shell.css), ohne eigene Anfrage. 09d-bewegung.js lässt
+     es in die Kopfleiste fliegen oder ins Gerüst übergehen; bleibt das
+     Skript aus, blendet es nach acht Sekunden von selbst aus. -->
+<div class="start-bild" id="startBild" aria-hidden="true">
+  <i class="sb-grund"></i>
+  <div class="sb-mitte">
+    <span class="sb-zeichen"><span class="kl kl-kreis kl-acid kl-innen" style="--kd:130px"><i></i></span></span>
+    <b class="sb-name">Kicker Liga</b><span class="sb-unter">Elo · 2v2</span>
+    <span class="sb-spur"><i></i></span>
+  </div>
+</div>
+
 <div class="setup" id="setupGate" style="display:none">
   <div class="card">
     <h2 class="display" style="font-size:24px;margin-bottom:12px">Fast fertig</h2>
@@ -48,7 +64,7 @@
   <div class="appbar">
     <div class="appbar-row">
       <div class="logo" id="logoHome" style="cursor:pointer">
-       <div class="logo-mark"><img src="icon.png" alt="Kicker Liga Logo"></div>
+       <div class="logo-mark" role="img" aria-label="Kicker Liga Logo"></div>
         <div class="logo-txt">
           <h1>Kicker Liga</h1>
           <div class="sub">Elo · 2v2</div>

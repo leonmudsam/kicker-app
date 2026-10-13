@@ -69,8 +69,8 @@ mit rotem Wächter oder roter Suite.
 ```
 src/index.html        Gerüst mit den Platzhaltern /*@@CSS*/ und /*@@JS*/
 src/sw.js             der Service Worker; build.mjs setzt seine Fassung [§C42]
-src/css/              17 Dateien
-src/js/               60 Dateien
+src/css/              18 Dateien
+src/js/               61 Dateien
 tools/build.mjs       hängt src/css/* und src/js/* ALPHABETISCH aneinander,
                       ohne Kommentare
 tools/check.mjs       acht Wächter
@@ -121,7 +121,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **1237**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **1255**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -145,7 +145,7 @@ Datei, deren Aufgabe niemand aufgeschrieben hat.
 | Zeichen und Wappen | `02-icons` (SVG-Katalog, `lossStreakInline`) · `09c-zeichen` (Feuer, Sterne, `avHtml`) · `17-badges` · `17b-fingerabdruck` · `35a-insignium-zeichen` (die 21 Zeichnungen der Leiter, `insBild`) · `35b-prestige` (Insignium, Laufbahn) · `35c-titel-aura` (die Aura der Meistertitel, `auraHref`) |
 | News | `26-news-konstanten` (Kategorien, Limits) · `26b-story-fakten` (ein Stand der Liga, der Spieltag als Paar aus Vorher und Nachher, die Punktewirkung, das Tor vor der Rangliste) · `26c-news-bausteine` (Rekorde aller Zeiten, Meilensteinleitern, Aufzählungen) · `27-news-generator` (Ereignisse, Ewige Tafel) · `28-news-ambient` · `29-news-cache` (Konsolidierung, Entzerrung) · `29b-news-sync` (Realtime, Autosync) · `29c-news-worker` (der Generator im Worker, mit demselben Code) · `30-news-ui` (Feed, `_isBreaking`) · `30a-news-karte` (die Bausteine einer Karte) · `30b-news-spieltag` (Kopf und Fuß einer Partie nach ihrem Anlass, die Runde der Vier) · `30c-news-fakt` (das Bild eines Fun Facts nach seinem Anlass) · `30d-news-insignium` (die Insignium-Karte des Tages: Sätze, Bühne, Blatt) · `31-news-detail` (Kopf und Fuß eines Story-Blatts) · `31a-news-detail-mitte` (die Mitte je Typ) · `31b-news-detail-helfer` |
 | Chronik | `32-chronik-katalog` (`DISZIPLINEN`) · `33-chronik-engine` (Monat) · `34-chronik-rekorde` (Allzeit, `CHRON_KINDS`, `chronicleRang`, `rekordZaehlung`) · `35-chronik-ui` |
-| Bedienung | `09-ui-infra` · `20-bind` · `23-match-edit` · `24-lock` · `25-helpers` · `36-backup` |
+| Bedienung | `09-ui-infra` · `09d-bewegung` (Startbild, Gerüst, Kantenlicht [§C43]) · `20-bind` · `23-match-edit` · `24-lock` · `25-helpers` · `36-backup` |
 
 Bewusst **keine** Zeilenzahlen hier: die veralten bei jeder Änderung.
 `wc -l src/js/* src/css/*` beantwortet das in einer Sekunde.
@@ -175,6 +175,7 @@ und Wächter 7 liest sie hier.
 | `14-farbgesetz.css` | §C25 | Eine Seite, eine Farbe |
 | `15-zeichen.css` | §C26 | Sterne unten, Feuer hinten |
 | `16-spieltag.css` | §C33 | Karten „Am Spieltag" und die Runde der Vier |
+| `17-bewegung.css` | §C43 | Startbild, Gerüst, Kantenlicht |
 
 ### Zustand, Caching und Takt
 
@@ -268,6 +269,7 @@ die drei Abschnitte und die genannte Suite fest.
 | [§C40](docs/gesetze/C40-karriereende.md) | Das Karriereende: vier Regeln, mehr gibt es nicht |
 | [§C41](docs/gesetze/C41-ein-zeichen.md) | Ein Zeichen, eine Bedeutung |
 | [§C42](docs/gesetze/C42-start.md) | Der Start zeigt den letzten Stand und schreibt nie (Stand des Geräts, Service Worker) |
+| [§C43](docs/gesetze/C43-bewegung.md) | Bewegung: nie warten, von selbst enden, nur, was man sieht (Startbild, Kantenlicht) |
 
 Dazu die [allgemeinen Regeln](docs/gesetze/allgemein.md) ohne Kürzel: Detail folgt
 der Größe, ein Duo hat keinen Rang, nichts sagt zweimal dasselbe, keine

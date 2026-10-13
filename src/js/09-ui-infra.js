@@ -235,6 +235,10 @@ function render(){
   const behalten=tab!=='match' && tab!=='settings'
     && root._renderVersion===_cache.version && root._renderHtml===html
     && root._renderNode===root.firstElementChild && !!root.firstElementChild;
+  const warTab=root._renderTab;
+  // Das Gerüst des ersten Starts blendet über der Liga aus [§C43].
+  const geruest=!warTab && root.firstElementChild && root.firstElementChild.classList.contains('geruest')
+    ? root.firstElementChild : null;
   if(!behalten){
     root.innerHTML=html;
     bind();
@@ -244,6 +248,7 @@ function render(){
   }
   root._renderTab=tab;
   schlittenFahren(root);
+  _bewegungNachRender(root, warTab, geruest);
 }
 
 // ── Der Schlitten fährt [§C27] ──────────────────────────────────────
