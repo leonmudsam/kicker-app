@@ -3433,8 +3433,8 @@ const _achsen = JSON.parse(K.eval(`JSON.stringify((function(){
     return _consolidateStories(liste.slice()).filter(x => (x.dataRef||{}).type === 'insignium_tag')
       .map(x => { const h = String(_newsCardHtmlM2(x, false, false));
         return {ti:x.title, tx:x.desc, n:(x.dataRef.zuege||[]).length, mit:(x.dataRef.memberIds||[]).length,
-          buehne:h.indexOf('class="ni-b ') >= 0, zeilen:(h.match(/class="ni-z[ "]/g) || []).length,
-          mehr:(h.match(/ni-z mehr">.([0-9]+)/) || [])[1] || ''}; }); };
+          buehne:h.indexOf('class="ni-b ') >= 0, kacheln:(h.match(/class="ni-k /g) || []).length,
+          zeilen:(h.match(/class="ni-z[ "]/g) || []).length, mehr:/weitere</.test(h)}; }); };
   return {
     ic: leiter([ins('i1',ids[0]), ins('i2',ids[1]), ins('i3',ids[2])]),
     if: leiter([ins('i1',ids[0]), ins('i2',ids[1]), ins('i3',ids[2]), ins('i4',ids[3]), ins('i5',ids[4])]),
@@ -3495,9 +3495,11 @@ ok(_achsen.ic[0] && _achsen.ic[0].ti === 'Schildring für ' + _achsen.n0 + ', ' 
 // weiß: wie viele sie tragen, steht nur in neuen Karten.
 ok(_achsen.ic[0] && /^Der Schildring ist die zweite Stufe der Leiter und beginnt bei 600 Prestige\.$/.test(_achsen.ic[0].tx),
    'ihr Satz erklärt die Stufe ohne Floskel', (_achsen.ic[0]||{}).tx);
+// Und jede Bewegung steht als Bild darauf: die erste war eine Bühne, die
+// übrigen standen als Text darunter, höchstens drei und der Rest als Zahl.
 ok(_achsen.if.length === 1 && _achsen.if[0].n === 5 && _achsen.if[0].buehne
-   && _achsen.if[0].zeilen === 4 && _achsen.if[0].mehr === '1',
-   'eine große Karte trägt die erste Bewegung als Bühne, drei als Zeilen und zählt den Rest',
+   && _achsen.if[0].kacheln === 5 && _achsen.if[0].zeilen === 0 && !_achsen.if[0].mehr,
+   'eine große Karte zeigt jede ihrer fünf Bewegungen als Bild, ohne Zeilen und ohne Rest',
    JSON.stringify(_achsen.if[0] || {}));
 ok(_achsen.id.length === 1 && _achsen.id[0].n === 3 && _achsen.d.length === 0,
    'Stufen und Rekord desselben Tages stehen auf ihren eigenen Karten',
@@ -6393,6 +6395,33 @@ ok(_vchips.length === 1 && _vchips[0].indexOf(_vband.a) >= 0 && _vchips[0].index
    && _vchips[0].indexOf(_vband.stufe) < 0 && _vchips[0].indexOf('↓') < 0 && /class="(rcp-av|av)/.test(_vchips[0]),
    'je Verlierer ein Chip mit Gesicht, Name und Betrag, ohne die Stufe der Insignium-Karte',
    _vchips.length + ' Chips');
+// Und jeder steht da, nicht zwei je Seite und „+2": eine Bilanz mit
+// unbekannten Posten ist keine. Je Seite nach dem Betrag geordnet, und vor
+// jeder Seite ein Pfeil statt der Woerter „Gewinnt" und „Verliert".
+const _vall = JSON.parse(K.eval(`JSON.stringify((function(){
+  const lb = {}, d = [120, 35, 285, 35, 76, -50, -176, -9];
+  d.forEach((x, i) => { lb[players[i].id] = {vor:1000, nach:1000 + x}; });
+  const h = _newsPrestigeBand({dataRef:{type:'rekord_geholt', laufbahn:lb}});
+  const zeilen = h.split('class="nf-pb-z"').slice(1);
+  const betr = z => (z.match(/<em class="num">([^<]+) P<\\/em>/g) || [])
+    .map(x => +x.replace(/<[^>]+>/g, '').replace(' P', '').replace('\\u2212', '-'));
+  const nm = z => (z.match(/<i>([^<]+)<\\/i>/g) || []).map(x => x.replace(/<[^>]+>/g, ''));
+  return {chips:(h.match(/class="nf-vl /g) || []).length, mehr:/nf-vl mehr|\\+[0-9]+<\\/b>/.test(h),
+    woerter:/Gewinnt|Verliert/.test(h.replace(/aria-label="[^"]*"/g, '')),
+    pfeile:(h.match(/class="nf-pb-r (auf|ab)"/g) || []).map(x => x.indexOf('auf') >= 0 ? 'auf' : 'ab'),
+    oben:betr(zeilen[0] || ''), unten:betr(zeilen[1] || ''), obenN:nm(zeilen[0] || ''),
+    gleich:[players[1].name, players[3].name].sort((a, b) => a.localeCompare(b, 'de'))};
+})())`));
+ok(_vall.chips === 8 && !_vall.mehr,
+   'die Tafel-Karte nennt jeden, der Prestige gewinnt oder verliert, ohne Rest als Zahl',
+   _vall.chips + ' Chips' + (_vall.mehr ? ', mit Rest' : ''));
+ok(_vall.oben.join(' ') === '285 120 76 35 35' && _vall.unten.join(' ') === '-176 -50 -9'
+   && _vall.obenN.slice(3).join(',') === _vall.gleich.join(','),
+   'jede Seite steht nach dem Betrag geordnet, gleiche Betraege nach dem Namen',
+   _vall.oben.join(' ') + ' | ' + _vall.unten.join(' '));
+ok(_vall.pfeile.join(',') === 'auf,ab' && !_vall.woerter,
+   'vor Gewinnern und Verlierern steht ein Pfeil, kein Wort',
+   _vall.pfeile.join(',') + (_vall.woerter ? ', mit Wort' : ''));
 
 // Und der Satz der Rekordkarte nennt, wer dabei verliert: die Karte erzaehlte
 // nur von Jane, und dass Leon den Rekord jetzt teilt und Prestige verliert,
@@ -7661,7 +7690,8 @@ const _tafelBl = JSON.parse(K.eval(`JSON.stringify((function(){
     const max = Math.max(...Object.values(je));
     const erste = (b.k.match(/class="nd-bk-z hell"[\\s\\S]*?<b class="num">(\\d+)<\\/b>/) || [])[1];
     r.monat = {zellen:zahl(/class="nd-mo-z"/g, b.m), soll:aw.length,
-      balken:zahl(/class="nd-bk-z/g, b.k), traeger:Math.min(6, Object.keys(je).length),
+      // Jeder Träger ein Balken: es waren sechs und „und 3 weitere".
+      balken:zahl(/class="nd-bk-z/g, b.k), traeger:Object.keys(je).length,
       erste:+erste, max};
   }
   const ch = typ('chronik_geholt')[0];
@@ -7729,7 +7759,7 @@ ok(_tb.ins && _tb.ins.buehne && _tb.ins.grade === _tb.ins.soll && _tb.ins.wirkun
    JSON.stringify(_tb.ins));
 ok(_tb.monat && _tb.monat.zellen === _tb.monat.soll && _tb.monat.balken === _tb.monat.traeger
    && _tb.monat.erste === _tb.monat.max,
-   'das Blatt der Monatschronik zeigt jeden Eintrag der Tafel als Zelle und die Träger als Balken',
+   'das Blatt der Monatschronik zeigt jeden Eintrag der Tafel als Zelle und jeden Träger als Balken',
    JSON.stringify(_tb.monat));
 ok(_tb.chronik && _tb.chronik.buehne && _tb.chronik.namen && _tb.chronik.vorher && _tb.chronik.name && _tb.chronik.tafel,
    'das Blatt eines Chronik-Wechsels zeigt dieselbe Bühne wie ein Rekord, mit allen Haltern und nur echten Vorgängern',

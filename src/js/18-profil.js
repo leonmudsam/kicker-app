@@ -569,22 +569,21 @@ const rankProgHtml = rInfo ? `
     </div>
 
     ${badgeTotal?(()=>{
-      // ─── Auszeichnungen-Card (Variante 4): Strip seltenster Achievements + Tier-Bar ───
-      // Strip: max 8 freigeschaltete Badges, sortiert nach Rarität (Legendary→Common),
-      // innerhalb jeder Gruppe in BADGES-Reihenfolge. Mini-Icons bekommen Tier-Border.
-      // Dünne Bar darunter zeigt segmentiert den Gesamt-Fortschritt nach Tier.
-      const _STRIP_MAX = 8;
+      // ─── Auszeichnungen-Card (Variante 4): Strip aller Achievements + Tier-Bar ───
+      // Strip: jede freigeschaltete Auszeichnung, sortiert nach Rarität
+      // (Legendary→Common), innerhalb jeder Gruppe in BADGES-Reihenfolge; die
+      // Reihe bricht um. Nach acht stand „+14", und welche das waren, sah man
+      // erst ein Blatt weiter. Dünne Bar darunter zeigt segmentiert den
+      // Gesamt-Fortschritt nach Tier.
       const _byRarity = {legendary:[], rare:[], common:[], negative:[]};
       const _kat = badgeKatalog(id), _rOf = new Map(_kat.map(x => [x.b.id, x.r]));
       badges.forEach(b => { const r = _rOf.get(b.id) || rarityOf(b.id); if(_byRarity[r]) _byRarity[r].push(b); });
       const _strip = [];
       RARITY_ORDER.forEach(r => _byRarity[r].forEach(b => _strip.push({b, r})));
-      const _visible = _strip.slice(0, _STRIP_MAX);
-      const _rest = Math.max(0, _strip.length - _visible.length);
-      const _stripHtml = _visible.map(({b,r}) => {
+      const _stripHtml = _strip.map(({b,r}) => {
         const ic = icPfad(b.ic) ? `<svg viewBox="0 0 24 24">${icPfad(b.ic)}</svg>` : '';
         return `<div class="pp-bmini ${r}">${ic}</div>`;
-      }).join('') + (_rest ? `<span class="pp-bcard-rest">+${_rest}</span>` : '');
+      }).join('');
       // Bar-Segmente: ein Stück pro Tier-Count, Rest dunkel
       const _seg = (r) => _byRarity[r].length;
       const _have = _seg('legendary')+_seg('rare')+_seg('common')+_seg('negative');
@@ -679,27 +678,23 @@ const rankProgHtml = rInfo ? `
     ${(()=>{
       // ─── BILANZEN-CARD (kompakt): Strip aus Mitspieler-Avataren + Chevron ───
       // Komplette Card ist klickbar (id=ppH2HBtn → showPlayerH2HList). Die
-      // Mini-Avatare zeigen die TOP-Mitspieler nach gemeinsamer Häufigkeit;
+      // Mini-Avatare zeigen jeden Mitspieler nach gemeinsamer Häufigkeit;
       // im Sheet erscheint die volle, scrollbare Liste mit T/G-Bilanz pro Zeile.
       const h2hList = playerH2HList(id, 3);
       if(h2hList.length < 2) return '';
       const pmL = pmap();
-      // 5 Mini-Avatare im Strip; bei mehr Mitspielern zusätzlich "+N" Chip.
-      const STRIP_MAX = 5;
-      const stripItems = h2hList.slice(0, STRIP_MAX).map(x=>{
+      // Jeder Mitspieler als Mini-Avatar; nach fünf stand ein Chip „+N".
+      const stripItems = h2hList.map(x=>{
         const pp = pmL[x.oid]; if(!pp) return '';
         const em = pp.avatar_id ? avatarEmoji(pp.avatar_id) : null;
         if(em) return `<div style="width:26px;height:26px;border-radius:50%;background:var(--surface3);display:grid;place-items:center;font-size:14px;border:1.5px solid var(--surface);flex-shrink:0">${em}</div>`;
         return `<div style="width:26px;height:26px;border-radius:50%;background:${avColor(pp.id)};display:grid;place-items:center;font-size:9px;font-family:'Archivo Black',sans-serif;color:#0a0c0b;border:1.5px solid var(--surface);flex-shrink:0">${esc(initials(pp.name))}</div>`;
       }).join('');
-      const overflow = h2hList.length > STRIP_MAX
-        ? `<div style="height:26px;display:grid;place-items:center;padding:0 8px;border-radius:13px;background:var(--surface3);font-size:10px;font-weight:700;color:var(--ink2);font-family:'Sometype Mono',monospace;flex-shrink:0">+${h2hList.length-STRIP_MAX}</div>`
-        : '';
       return `
     <div class="pp-sec" style="animation-delay:.5s">
       <div class="pp-badges-card" id="ppH2HBtn">
         <div class="pp-badges-strip" style="align-items:center">
-          ${stripItems}${overflow}
+          ${stripItems}
         </div>
         <span class="chev">
           <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>

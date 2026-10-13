@@ -1516,25 +1516,19 @@ function showLaufbahn(pid){
       <span class="p num">${zahl(w)}</span>
     </div>`;
 
-  const SICHTBAR = 4;
   const regeln = `<button class="lb-regel-auf" type="button" data-prestige-regeln>
     <span><b>Wie die Punkte entstehen</b><em>Klassen, Startwerte und Kurven</em></span>
     ${svgI('chevron')}
   </button>`;
+  // Jeder Posten steht offen da. Nach vier stand „Mehr anzeigen · 11
+  // weitere", und die Summe darüber ließ sich nicht nachzählen.
   const block = (g, gi) => {
     const qs = posten[gi], w = werte[gi];
-    const rest = qs.slice(SICHTBAR).map((q, i) => zeile(q, w[SICHTBAR + i]));
     return `<div class="lb-grp">
       <div class="lb-grp-k"><span>${esc(g.kopf)}</span><span class="num">${zahl(summen[gi])}</span></div>
       ${g.q === 'auszeichnung' ? regeln : ''}
-      ${qs.length ? qs.slice(0, SICHTBAR).map((q, i) => zeile(q, w[i])).join('')
+      ${qs.length ? qs.map((q, i) => zeile(q, w[i])).join('')
                   : `<div class="lb-q leer">${g.leer}</div>`}
-      ${rest.length ? `<div class="chron-rest">${rest.join('')}</div>
-        <button class="chron-more" type="button" data-chron-more>
-          <span class="tx">Mehr anzeigen · ${rest.length} weitere${rest.length === 1 ? 'r' : ''}</span>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-            stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
-        </button>` : ''}
     </div>`;
   };
 

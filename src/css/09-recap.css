@@ -147,7 +147,7 @@
   .rcp-av > .av{width:100%;height:100%;border-radius:50%;display:grid;place-items:center;
     font-family:'Archivo Black',sans-serif;font-size:calc(var(--rav) * .34);color:#0a0c0b}
   .rcp-av > .av .em{font-size:calc(var(--rav) * .54);line-height:1}
-  .rcp-av.leer,.rcp-av.mehr{border-radius:50%;background:var(--surface3);color:var(--muted);
+  .rcp-av.leer{border-radius:50%;background:var(--surface3);color:var(--muted);
     font-family:'Sometype Mono',monospace;font-size:calc(var(--rav) * .3);font-weight:700}
   .rcp-paar{display:inline-flex;align-items:center}
   .rcp-paar > *+*{margin-left:calc(var(--rav) * -.22)}

@@ -219,16 +219,18 @@ function _newsSammelBand(teile, kopfTitel, vollstaendig){
 // ── Die Bilanz des Prestiges steht auf der Karte ────────────────────
 // Ein Rekord, den jemand übernimmt oder mit einem anderen teilt, kostet den
 // bisherigen Halter Prestige; davon stand auf der Karte zuerst nichts. Dann
-// stand dort eine Zeile nur mit den Verlierern: Johannes −176, Julian −50,
-// und wer an diesem Tag gewonnen hatte, sah man erst im Blatt — die Karte
-// zeigte von der Wirkung nur die eine Hälfte. Jetzt steht die Bilanz in EINER
-// Zeile: zuerst, wer gewinnt (Gold, wie die Zahl im Blatt), dann, wer
-// verliert (Rot ist die Richtung [§C25]), je höchstens zwei, der Rest als
-// Zahl: mit dreien je Seite brach die Zeile auf drei Reihen um und machte die
-// Karte höher als ihr Inhalt; das Blatt nennt jeden. Je Spieler ein Chip aus
-// Gesicht, Name und Betrag. Was der Betrag am Zeichen ändert — eine neue
-// Stufe, ein Rückfall —, zeigt die Insignium-Karte desselben Tages; hier
-// stand ein Rückfall als „↓ Zierkranz" im Chip ein zweites Mal [§C33].
+// stand dort eine Zeile nur mit den Verlierern, und wer an diesem Tag
+// gewonnen hatte, sah man erst im Blatt. Jetzt stehen beide Seiten da: oben,
+// wer gewinnt (Gold, wie die Zahl im Blatt), darunter, wer verliert (Rot ist
+// die Richtung [§C25]), jede Seite nach dem Betrag geordnet.
+// Und JEDER steht da. Je Seite zwei Chips und der Rest als „+2" liessen
+// offen, wer die übrigen waren — die Karte ist die Bilanz des Tages, und
+// eine Bilanz mit unbekannten Posten ist keine. Die Chips brechen dafür um.
+// Vor jeder Seite steht ein Pfeil statt der Wörter „Gewinnt" und „Verliert":
+// die Richtung liest man an Form und Farbe vor dem ersten Wort, und die
+// Wörter nahmen der Zeile 52 Pixel. Was der Betrag am Zeichen ändert, zeigt
+// die Insignium-Karte desselben Tages; hier stand ein Rückfall als
+// „↓ Zierkranz" im Chip ein zweites Mal [§C33].
 // Gelesen wird die gespeicherte Wirkung der Karte, wie im Blatt.
 function _newsPrestigeBand(s){
   const d = (s && s.dataRef) || {};
@@ -239,20 +241,20 @@ function _newsPrestigeBand(s){
   const pm = pmap();
   const alle = Object.keys(je).filter(pid => pm[pid]).map(pid => {
     const vor = Math.round(Number(je[pid].vor) || 0), nach = Math.round(Number(je[pid].nach) || 0);
-    return {pid, d: nach - vor};
+    return {pid, d: nach - vor, n: pm[pid].name || ''};
   }).filter(x => x.d);
-  const plus = alle.filter(x => x.d > 0).sort((a, b) => b.d - a.d);
-  const minus = alle.filter(x => x.d < 0).sort((a, b) => a.d - b.d);
+  // Bei gleichem Betrag nach dem Namen: sonst entschied die Reihenfolge der
+  // gespeicherten Wirkung, und dieselbe Karte ordnete auf zwei Geräten anders.
+  const plus = alle.filter(x => x.d > 0).sort((a, b) => b.d - a.d || a.n.localeCompare(b.n, 'de'));
+  const minus = alle.filter(x => x.d < 0).sort((a, b) => a.d - b.d || a.n.localeCompare(b.n, 'de'));
   if(!plus.length && !minus.length) return '';
-  const chip = x => `<b class="nf-vl ${x.d > 0 ? 'plus' : 'minus'}">${rcpAvHtml(x.pid, 18, {})}<i>${esc(pm[x.pid].name)}</i>`
+  const chip = x => `<b class="nf-vl ${x.d > 0 ? 'plus' : 'minus'}">${rcpAvHtml(x.pid, 18, {})}<i>${esc(x.n)}</i>`
     + `<em class="num">${x.d > 0 ? '+' + x.d : '−' + -x.d} P</em></b>`;
-  // Zwei Zeilen mit festem Etikett davor: in EINER gemischten Reihe brachen
-  // Gewinner und Verlierer auf drei Reihen um, und wo eine Seite endete,
-  // war nur noch an der Farbe zu erkennen.
-  const zeile = (wort, l) => !l.length ? '' : `<div class="nf-pb-z"><span class="nf-verlust-l">${wort}</span>`
-    + `<span class="nf-verlust-w">${l.slice(0, 2).map(chip).join('')}`
-    + `${l.length > 2 ? `<b class="nf-vl mehr">+${l.length - 2}</b>` : ''}</span></div>`;
-  return `<div class="nf-verlust">${zeile('Gewinnt', plus)}${zeile('Verliert', minus)}</div>`;
+  const pfeil = auf => `<span class="nf-pb-r ${auf ? 'auf' : 'ab'}" role="img" aria-label="${auf ? 'gewinnt' : 'verliert'}">`
+    + `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="${auf ? 'M8 13V3.5M3.5 8L8 3.5L12.5 8' : 'M8 3v9.5M3.5 8L8 12.5L12.5 8'}"/></svg></span>`;
+  const zeile = (auf, l) => !l.length ? '' : `<div class="nf-pb-z">${pfeil(auf)}`
+    + `<span class="nf-verlust-w">${l.map(chip).join('')}</span></div>`;
+  return `<div class="nf-verlust">${zeile(true, plus)}${zeile(false, minus)}</div>`;
 }
 
 // Die Zahlen einer Spieltags-Karte. Sie stehen im Fuß, damit der Satz sie

@@ -300,19 +300,15 @@ function _newsBlattKopf(s){
   // Ein Duo hat keinen Rang [§C27] — zwei Wappen, zwei Namen, keine Zeile
   // darunter, die es fuer beide gaebe.
   //
-  // ── So viele Wappen wie Namen ────────────────────────────────────
-  // Gezeigt wurden immer die ersten ZWEI, waehrend die Zeile daneben bis zu
-  // drei Namen nennt: gemessen stand „Johannes, Leo und Leon bewegen die
-  // Ewige Tafel" ueber zwei Gesichtern, und welcher der drei fehlt, sagte
-  // nichts. Der Deckel ist deshalb derselbe wie der von `_namenKurz` — drei,
-  // und ab dem vierten zaehlt ein Chip den Rest, wie auf der Karte [§C27].
+  // ── So viele Wappen wie Namen, und alle ──────────────────────────
+  // Gezeigt wurden erst die ersten ZWEI, waehrend die Zeile daneben drei
+  // Namen nannte, dann drei und ein Chip „+2" mit „und zwei weitere" daneben.
+  // Das Blatt ist die Stelle, an der man nachsieht, wer dabei war: hier steht
+  // jeder, mit Wappen und Namen. Ab vier rücken die Wappen enger.
   if(ids.length > 1){
-    const zeig = ids.slice(0, 3);
-    const rest = ids.length - zeig.length;
-    return erg + `<div class="nd-held nd-held-duo">
-      <div class="nd-held-av">${zeig.map(id => avHtml(pm[id], '', {ins:true, px:48, feuer:0})).join('')}${
-        rest > 0 ? `<span class="av nf-face-mehr nd-held-mehr">+${rest}</span>` : ''}</div>
-      <div><div class="nd-held-nm">${esc(_namenKurz(ids.map(nm)))}</div>
+    return erg + `<div class="nd-held nd-held-duo${ids.length > 3 ? ' viele' : ''}">
+      <div class="nd-held-av">${ids.map(id => avHtml(pm[id], '', {ins:true, px:48, feuer:0})).join('')}</div>
+      <div><div class="nd-held-nm">${esc(_namenListe(ids.map(nm)))}</div>
       <div class="nd-held-un">${esc(_ndBeziehung(s, ids.length))}</div></div></div>`;
   }
   const pid = ids[0];
@@ -411,8 +407,9 @@ function _newsMedaillon(ic, rarity, name, bedingung, badgeId){
 }
 
 // ── Die Verfolger ────────────────────────────────────────────────────
-// Ein Rekord ohne Verfolger ist eine Zahl ohne Maßstab. Die drei Besten
-// stehen deshalb im Blatt. Gelesen wird dieselbe Rangfolge, aus der auch der
+// Ein Rekord ohne Verfolger ist eine Zahl ohne Maßstab. Das ganze Feld
+// dahinter steht deshalb im Blatt — es waren die drei Besten, und die
+// Überschrift „Wer dahinter liegt" sagte nicht, dass es nur drei waren. Gelesen wird dieselbe Rangfolge, aus der auch der
 // Rekorde-Reiter zeichnet [§C27].
 //
 // Wer den Rekord HÄLT, steht hier nicht: bei einem Rekord, den sich drei
@@ -437,8 +434,7 @@ function _newsVerfolger(rekordId, halter, wert){
     const davor = grenze == null ? [] : rang.filter(r =>
       oben.indexOf(r.pid || r.id) < 0 && r.wert > grenze);
     const dahinter = rang.filter(r => oben.indexOf(r.pid || r.id) < 0
-                                   && (grenze == null || r.wert <= grenze))
-      .slice(0, 3);
+                                   && (grenze == null || r.wert <= grenze));
     // ── Wie weit dahinter, sieht man ──────────────────────────────────
     // Die Liste nannte Rang, Name und Wert. Ob der Zweite knapp dran ist oder
     // weit weg, muss man daraus ausrechnen — und bei „84 %" gegen „81 %"
@@ -515,8 +511,8 @@ function _ndNeu(txt){
 
 // ── Die Leiter der Liga im Blatt ─────────────────────────────────────
 // Jede Stufe eine Zeile, jedes Feld mit seinem Bild und darauf die Gesichter
-// derer, die es an diesem Tag trugen — höchstens drei, danach die Zahl. Die
-// Zeichen stehen im Violett der Vorlage: das Blatt gehört keinem Rang.
+// derer, die es an diesem Tag trugen — alle; vorher standen drei und „+2".
+// Die Zeichen stehen im Violett der Vorlage: das Blatt gehört keinem Rang.
 function _ndLigaLeiter(L){
   try {
     const pm = pmap(), felder = Array.isArray(L && L.felder) ? L.felder : [];
@@ -527,9 +523,8 @@ function _ndLigaLeiter(L){
         let z = '';
         try { z = insigniumStufeSvg(ins.key, INS_BILD_RANG,
                 ins.key === 'stern' ? ORDENSSTERN_START + g : 0, g) || ''; } catch(e){ z = ''; }
-        const gesichter = da.slice(0, 3).map(pid =>
-          `<span class="nd-ll-av" data-pid="${esc(pid)}">${avHtml(pm[pid], '', {px:18})}</span>`).join('')
-          + (da.length > 3 ? `<span class="nd-ll-mehr num">+${da.length - 3}</span>` : '');
+        const gesichter = da.map(pid =>
+          `<span class="nd-ll-av" data-pid="${esc(pid)}">${avHtml(pm[pid], '', {px:18})}</span>`).join('');
         return `<span class="nd-ll-f${da.length ? ' da' : ''}">${z}`
           + (gesichter ? `<span class="nd-ll-g">${gesichter}</span>` : '') + `</span>`;
       }).join('');
@@ -770,20 +765,21 @@ function _ndWirkungBlock(je, gruende, tagMs){
         : auf ? `<em>${esc('neu: ' + ins.name)}</em>`
         : ab ? `<em class="r">${esc('fällt auf ' + ins.name)}</em>`
         : `<em>${esc(ins.name)}</em>`;
+      // Jeder Grund als Chip. Ab dem vierten stand „+1", und welcher Rekord
+      // fehlte, sah man nirgends — das Blatt ist die Stelle, die alles nennt.
       const gr = ((gruende && gruende[pid]) || []);
-      const chips = gr.slice(0, 3).map(g => `<span class="nd-wk-g ${g.neg ? 'r' : 'g'}">${
-        esc(g.verb)} <b>${esc(g.name)}</b></span>`).join('')
-        + (gr.length > 3 ? `<span class="nd-wk-g">+${gr.length - 3}</span>` : '');
+      const chips = gr.map(g => `<span class="nd-wk-g ${g.neg ? 'r' : 'g'}">${
+        esc(g.verb)} <b>${esc(g.name)}</b></span>`).join('');
       const dz = delta > 0 ? '+' + delta : delta < 0 ? '−' + Math.abs(delta) : '±0';
       const q = delta ? _ndWirkungQuellen(pid, w, tagMs) : null;
       const vz = v => (v > 0 ? '+' : '−') + Math.abs(v);
       const quellen = q ? [['Rekorde', q.rek], ['Monatschroniken', q.mon], ['Auszeichnungen', q.aus]]
         .filter(x => x[1]).map(x => `<span>${x[0]} <b class="${x[1] > 0 ? 'g' : 'r'}">${vz(x[1])}</b></span>`).join('') : '';
-      // Was die Chips nicht schon nennen, mit seinem Anteil: höchstens zwei,
-      // und nur in der Richtung der Zahl daneben. Neben −123 erklärten zwei
+      // Was die Chips nicht schon nennen, mit seinem Anteil: jeder Posten,
+      // aber nur in der Richtung der Zahl daneben. Neben −123 erklärten zwei
       // Pluszeilen nichts, sie lasen sich als Widerspruch.
       const genannt = new Set(((gruende && gruende[pid]) || []).map(g => g.name));
-      const posten = q ? (q.posten || []).filter(x => !genannt.has(x.name) && (x.d > 0) === (delta > 0)).slice(0, 2)
+      const posten = q ? (q.posten || []).filter(x => !genannt.has(x.name) && (x.d > 0) === (delta > 0))
         .map(x => `<span>„${esc(x.name)}“ <b class="${x.d > 0 ? 'g' : 'r'}">${vz(x.d)}</b></span>`).join('') : '';
       return `<div class="nd-wk${delta < 0 ? ' neg' : ''}${ab ? ' fall' : ''}" data-pid="${esc(pid)}" style="cursor:pointer">
         ${zeichen ? `<span class="nd-wk-z">${zeichen}${ab
@@ -1018,7 +1014,8 @@ function _ndBadgeBlatt(s){
   const bdef = (typeof BADGES !== 'undefined') ? BADGES.find(b => b.id === d.badgeId) : null;
   const medaille = _newsMedaillon(s.ic || (bdef && bdef.ic) || 'medal', d.rarity,
     d.badgeName || (bdef && bdef.name) || '', bdef ? bdef.desc : '', null);
-  const kopf = `<div class="nd-buehne nd-bd">${medaille}<div class="nd-bd-w">${pids.slice(0, 4).map(id =>
+  // Jeder, der sie an diesem Tag geholt hat; der fünfte fiel vorher still weg.
+  const kopf = `<div class="nd-buehne nd-bd">${medaille}<div class="nd-bd-w">${pids.map(id =>
     `<span data-pid="${esc(id)}">${avHtml(pm[id], '', {ins:true, px:52, feuer:0})}<b>${esc(_spName(id))}</b></span>`).join('')}</div></div>`;
   const m = d.matchId ? (matches || []).find(x => x.id === d.matchId) : null;
   const alle = Object.keys(pm).filter(id => sichtbar(pm[id]));
@@ -1093,7 +1090,8 @@ function _ndPotdBlatt(s){
   let kurve = '';
   try { kurve = _spTagBild(_spTagDaten(Object.assign({}, s, {dataRef:Object.assign({}, d, {playerId:pid})}))); } catch(e){}
   const kopf = `<div class="nd-buehne nd-pt"><div class="nd-pt-k"><span class="nd-pt-kr">${svgI('crown')}</span>`
-    + pids.slice(0, 3).map(id => `<span data-pid="${esc(id)}">${avHtml(pm[id], '', {ins:true, px:72, feuer:0})}</span>`).join('')
+    // Bei Gleichstand jeder, der den Tag teilt, nicht die ersten drei.
+    + pids.map(id => `<span data-pid="${esc(id)}">${avHtml(pm[id], '', {ins:true, px:pids.length > 3 ? 56 : 72, feuer:0})}</span>`).join('')
     + `</div><b class="nd-pt-n">${esc(_namenListe(pids.map(_spName)))}</b>${kurve}</div>`;
   const tag = (_spFormBasis().tage.get(d.dayKey) || []);
   const feld = {};
@@ -1156,14 +1154,17 @@ function _ndEndspurtBlatt(s){
 function _ndWechselBuehne(o){
   const pm = pmap();
   const wap = (id, px) => `<span data-pid="${esc(id)}">${avHtml(pm[id], '', {ins:true, px, feuer:0})}</span>`;
+  // Jeder, der vorher hielt, und jeder, der jetzt hält: es waren höchstens
+  // drei und vier, der Rest stand als „+2". Bei vielen werden die Wappen
+  // kleiner und die Reihe bricht um.
   const neu = o.neu || [], weg = o.weg || [];
-  const zeig = neu.slice(0, 4), rest = neu.length - zeig.length;
+  const viele = neu.length + weg.length > 5;
   return `<div class="nd-buehne nd-rk${o.metall ? ' metall' : ''}">`
     + (o.ic ? `<span class="nd-rk-ic">${zkHtml(o.ic, 'g', o.metall ? '' : 'gold')}</span>` : '')
     + `<div class="nd-rk-w">`
-    + (weg.length ? `<div class="nd-rk-alt">${weg.slice(0, 3).map(id => wap(id, 48)).join('')}<small>vorher</small></div>`
+    + (weg.length ? `<div class="nd-rk-alt">${weg.map(id => wap(id, viele ? 38 : 48)).join('')}<small>vorher</small></div>`
       + `<svg class="nd-rk-pf" viewBox="0 0 40 16" aria-hidden="true"><path d="M2 8H34"/><path d="M28 3L35 8L28 13"/></svg>` : '')
-    + `<div class="nd-rk-neu">${zeig.map(id => wap(id, weg.length ? 52 : neu.length > 1 ? 60 : 76)).join('')}${rest > 0 ? `<span class="av nf-face-mehr">+${rest}</span>` : ''}`
+    + `<div class="nd-rk-neu">${neu.map(id => wap(id, viele ? 44 : weg.length ? 52 : neu.length > 1 ? 60 : 76)).join('')}`
     + `<small>${weg.length ? 'jetzt' : (neu.length > 1 ? 'halten ihn' : 'hält ihn')}</small></div></div>`
     + `<em class="nd-rk-h">${esc(_namenListe(neu.map(_spName)))}</em>`
     + (o.wert ? `<div class="nd-rk-v">${o.alt ? `<s class="num">${esc(o.alt)}</s>` : ''}<b class="num">${esc(o.wert)}</b><span>${esc(o.label || '')}</span></div>` : '')
@@ -1277,11 +1278,11 @@ function _ndMonatBlatt(s){
   const max = Math.max(...ids.map(id => je[id]));
   // Je Träger ein Balken so lang wie seine Einträge, mit Gesicht und Name:
   // dasselbe Bauteil wie das Feld des Spielers des Tages [§C27].
-  const balken = ids.slice(0, 6).map((id, k) => `<div class="nd-bk-z${k === 0 ? ' hell' : ''}" data-pid="${esc(id)}" style="--k:${k}">`
+  // Jeder Träger, nicht sechs und „und 2 weitere".
+  const balken = ids.map((id, k) => `<div class="nd-bk-z${k === 0 ? ' hell' : ''}" data-pid="${esc(id)}" style="--k:${k}">`
     + `${_spChip(id)}<span class="nd-bk-n">${esc(_spName(id))}</span>`
     + `<span class="nd-bk-b"><i style="width:${Math.round(je[id] / max * 100)}%"><u style="width:100%"></u></i></span>`
-    + `<b class="num">${je[id]}</b></div>`).join('')
-    + (ids.length > 6 ? `<div class="nd-mo-r num">und ${ids.length - 6} weitere</div>` : '');
+    + `<b class="num">${je[id]}</b></div>`).join('');
   const kopf = `<div class="nd-buehne nd-mo${offen ? ' offen' : ''}"><div class="nd-mo-k"><b class="num">${aw.length}</b>`
     + `<span>${aw.length === 1 ? 'Eintrag' : 'Einträge'} · ${esc(seasonLabel(d.sid) || '')}</span>`
     + `<small>${ids.length === 1 ? 'ein Spieler' : ids.length + ' Spieler'}${offen ? ' · bis Monatsende offen' : ''}</small></div>`
@@ -1457,13 +1458,12 @@ function _ndTafelMomentBlatt(s){
     if(letzte && x - letzte.x0 < 6) letzte.arten.push(_ndTafelArt(t));
     else saeulen.push({x0:x, arten:[_ndTafelArt(t)], ms:t.ms});
   });
-  const HOCH = 6;
+  // Jede Bewegung ein Punkt: eine Säule mit mehr als sechs trug oben „+3",
+  // und die Säule sagte damit eine andere Zahl als die Liste darunter.
   const saeulenHtml = saeulen.map((z, k) => {
     const arten = z.arten.sort((a, b) => ORDNUNG[a] - ORDNUNG[b]);
-    const zeig = arten.length > HOCH ? arten.slice(0, HOCH - 1) : arten;
     return `<span class="nd-ta-s" style="left:${z.x0.toFixed(1)}%;--k:${k}">`
-      + zeig.map(a => `<i class="ta-${a}"></i>`).join('')
-      + (arten.length > zeig.length ? `<b class="num">+${arten.length - zeig.length}</b>` : '') + `</span>`;
+      + arten.map(a => `<i class="ta-${a}"></i>`).join('') + `</span>`;
   }).join('');
   // Die Partie, nach der sich etwas bewegt hat, ist hell; die übrigen
   // bleiben leise Striche auf der Achse.
@@ -1471,7 +1471,7 @@ function _ndTafelMomentBlatt(s){
   const striche = partien.map(x => `<i class="nd-ta-p${bewegt.has(x) ? ' an' : ''}" style="left:${lage(x).toFixed(1)}%"></i>`).join('');
   // So hoch wie die höchste Säule: fest bemessen stand über zwei Punkten
   // eine leere Fläche, so groß wie die Liste darunter.
-  const hoehe = Math.max(...saeulen.map(z => Math.min(HOCH, z.arten.length)));
+  const hoehe = Math.max(...saeulen.map(z => z.arten.length));
   const NAME = {rek:'Bestmarke', chr:'Monatschronik', ins:'Insignium', aus:'Ausbau'};
   const da = Object.keys(NAME).filter(a => teile.some(t => _ndTafelArt(t) === a));
   const uhr = x => esc(_newsUhrzeit(x));
@@ -1535,9 +1535,10 @@ function _ndTafelZeileBild(t){
   const wert = ref.ev ? _chronKurz(ref.ev) : '';
   const alt = typ === 'rekord_gesteigert' && ref.evVorher ? _chronKurz(ref.evVorher) : '';
   const pf = `<svg class="nd-tz-pf" viewBox="0 0 16 10" aria-hidden="true"><path d="M1 5H13"/><path d="M10 2L14 5L10 8"/></svg>`;
-  return {label:t.rname, verb:_namenKurz(wer.map(_spName)) + ' ' + verb, rechts:`<span class="nd-tz-w">${weg.slice(0, 2).map(id => chip(id, true)).join('')}`
-    + (weg.length ? pf : '') + neu.slice(0, 3).map(id => chip(id)).join('')
-    + (neu.length > 3 ? `<span class="nd-tz-mehr num">+${neu.length - 3}</span>` : '') + `</span>`
+  // Jeder Name und jedes Gesicht, vorher und nachher: es standen zwei und
+  // drei da, der Rest als „+1" und „und zwei weitere".
+  return {label:t.rname, verb:_namenListe(wer.map(_spName)) + ' ' + verb, rechts:`<span class="nd-tz-w">${weg.map(id => chip(id, true)).join('')}`
+    + (weg.length ? pf : '') + neu.map(id => chip(id)).join('') + `</span>`
     + (wert ? `<b class="nd-tz-v num">${alt ? `<s>${esc(alt)}</s> ` : ''}${esc(wert)}</b>` : '')};
 }
 

@@ -462,11 +462,12 @@ console.log('  → ' + rowsMarked + ' von ' + NAMES.length + ' Zeilen markiert, 
 
 console.log('\n=== 8. HTML RENDERT ===');
 const h1 = K.eval(`_chronStripHtml(${JSON.stringify(IDS[8])})`);
-ok(h1.includes('chron-one'), 'Profil zeigt genau eine Rekord-Karte');
-// Sichtbar ist genau eine Karte; alles Weitere steckt eingeklappt in
-// .chron-rest und kommt erst auf „Mehr anzeigen" (v9.22).
-ok(((h1.split('class="chron-rest"')[0]).match(/chron-one/g)||[]).length === 1,
-   'genau EINE Rekord-Karte offen im Profil');
+ok(h1.includes('chron-one'), 'Profil zeigt seine Rekord-Karten');
+// Jede Karte steht offen da: nach der ersten steckte der Rest eingeklappt
+// hinter „Mehr anzeigen", und das Profil verschwieg damit die meisten.
+ok((h1.match(/chron-one/g)||[]).length === Math.max(1, K.eval(`chroniclesOfPlayer(${JSON.stringify(IDS[8])}).length`))
+   && h1.indexOf('chron-rest') < 0 && h1.indexOf('data-chron-more') < 0,
+   'jede Rekord-Karte offen im Profil, nichts eingeklappt');
 ok(h1.includes('chron-strip'), 'Profil zeigt weiter den Saison-Streifen');
 ok(!/undefined|NaN/.test(h1), 'Profil-Chronik ohne undefined');
 let sheetOk = true;
@@ -1320,7 +1321,7 @@ ok(K.eval(`(function(){
   return bad.join(',');
 })()`) === '', 'der erste Rekord der Liste ist der im Profil gezeigte');
 
-// „Mehr anzeigen" erscheint genau dann, wenn es mehr als einen Rekord gibt.
+// Kein „Mehr anzeigen" im Profil, und der Fortschritt steht nur ohne Rekord.
 ok(K.eval(`(function(){
   const bad=[];
   Object.keys(pmap()).forEach(pid=>{
@@ -1328,20 +1329,20 @@ ok(K.eval(`(function(){
     const h=_chronStripHtml(pid);
     const more=h.indexOf('data-chron-more')>=0;
     const next=h.indexOf('chron-one next')>=0;
-    if(more !== (n>1)) bad.push((pmap()[pid]||{}).name+':more');
+    if(more) bad.push((pmap()[pid]||{}).name+':more');
     if(n>0 && next) bad.push((pmap()[pid]||{}).name+':nextTrotzRekord');
   });
   return bad.join(',');
-})()`) === '', 'Mehr-anzeigen nur bei mehreren Rekorden, Fortschritt nur ohne Rekord');
+})()`) === '', 'kein Mehr-anzeigen im Profil, Fortschritt nur ohne Rekord');
 ok(K.eval(`(function(){
-  // Wer mehrere haelt, hat auch alle Karten im HTML — nur eingeklappt.
+  // Wer mehrere haelt, hat alle Karten offen im HTML.
   const pid=Object.keys(pmap()).find(id=>chroniclesOfPlayer(id).length>2);
   if(!pid) return 'kein Spieler mit 3+ Rekorden';
   const h=_chronStripHtml(pid);
   const n=chroniclesOfPlayer(pid).length;
   // Schattenseiten tragen zusaetzlich die Klasse "schatten" — mitzaehlen.
   const cards=(h.match(/class="chron-one[^"]*"/g)||[]).length;
-  return cards===n && h.indexOf('class="chron-rest"')>=0 ? 'ok' : 'FALSCH ' + cards + '/' + n;
+  return cards===n && h.indexOf('chron-rest')<0 ? 'ok' : 'FALSCH ' + cards + '/' + n;
 })()`).indexOf('FALSCH') < 0, 'alle Rekorde stecken im Profil-HTML');
 
 // ══════════════════════════════════════════════════════════════════════

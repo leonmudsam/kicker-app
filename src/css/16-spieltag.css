@@ -850,10 +850,10 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 /* ── Das Blatt eines Liga-Rekords ──────────────────────────────────── */
 .nd-rk{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
 .nd-rk-w{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
-.nd-rk-alt,.nd-rk-neu{display:flex;align-items:center;gap:2px;position:relative;padding-bottom:13px}
+/* Vorher und jetzt brechen um: jeder Halter steht da, auch acht. */
+.nd-rk-alt,.nd-rk-neu{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:2px;position:relative;padding-bottom:13px}
 .nd-rk-alt > span{opacity:.45;filter:none}
 .nd-rk-alt small,.nd-rk-neu small{position:absolute;left:0;right:0;bottom:0;font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
-.nd-rk-neu .nf-face-mehr{--av:30px;width:30px;height:30px;font-size:10px}
 .nd-rk-pf{width:34px;height:14px;flex:0 0 auto;margin-bottom:13px}
 .nd-rk-pf path{fill:none;stroke:var(--gold);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .nd-rk.metall .nd-rk-pf path{stroke:var(--ink2)}
@@ -982,7 +982,9 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 .nw-tz-t .nw-label{flex:0 1 auto}
 .nw-tz-t small{flex:1 0 100%;font-size:10.5px;color:var(--muted);line-height:1.35}
 .nw-tz-r{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
-.nd-tz-w{display:flex;align-items:center}
+/* Jeder Halter vorher und nachher; bei vielen bricht der Wechsel um, statt
+   die Spalte mit dem Eintrag zusammenzudrücken. */
+.nd-tz-w{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;row-gap:3px;max-width:150px}
 .nd-tz-f > .av{--av:22px;width:22px;height:22px;font-size:8.5px;box-shadow:0 0 0 2px var(--bg2)}
 .nd-tz-f + .nd-tz-f{margin-left:-6px}
 .nd-tz-f.aus{opacity:.45}
@@ -990,7 +992,6 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 .nd-tz-pf path{fill:none;stroke:var(--gold);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .nd-tz-z{width:26px;height:26px;margin-left:2px}
 .nd-tz-z svg{width:26px;height:26px;display:block}
-.nd-tz-mehr{font-size:9.5px;color:var(--muted);margin-left:3px}
 .nd-tz-v{font-family:'Sometype Mono',monospace;font-size:11px;font-weight:600;color:var(--gold);white-space:nowrap}
 .nd-tz-v s{color:var(--muted);font-weight:400}
 
@@ -1004,7 +1005,6 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 .nd-mo.offen .nd-mo-k > b{color:var(--ink)}
 .nd-mo-k > span{font:600 9px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink2);align-self:end}
 .nd-mo-k > small{font-size:10.5px;color:var(--muted);margin-top:3px;align-self:start}
-.nd-mo-r{font-size:10.5px;color:var(--muted);text-align:right}
 .nd-mo .nd-bk{margin:0}
 .nd-mo-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px;margin-bottom:6px}
 .nd-mo-z{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:6px;padding:7px 8px;border-radius:10px;
@@ -1039,46 +1039,98 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
    Violett, der Farbe der Stufe [§C25], und die übrigen Bewegungen als Zeilen.
    Ein Rückfall trägt Rot an Pfeil und Wort, nicht an der Fläche: die Karte
    soll neben den Partien des Tages ruhig bleiben. */
-.ni-b{display:flex;align-items:center;gap:8px;margin:2px 0 10px;padding:8px 10px;border-radius:14px;
+.ni-b{display:flex;flex-direction:column;gap:9px;margin:2px 0 10px;padding:10px 10px 9px;border-radius:14px;
   background:linear-gradient(135deg,color-mix(in srgb,var(--purple) 14%,transparent),transparent 72%);
-  border:1px solid color-mix(in srgb,var(--purple) 26%,transparent);cursor:pointer}
-.ni-alt{flex:0 0 34px;opacity:.5}
-/* Auf schmalen Telefonen fällt das alte Zeichen samt Pfeil weg: bei 288 px
-   blieben neben zwei Zeichen 35 px für „Lorbeerreif II", und die Bühne lief
-   waagrecht aus der Karte. Woher es kam, sagt dort das Wort darüber. */
-@media (max-width:340px){ .ni-alt,.ni-pf{display:none} }
-.ni-alt svg{width:34px;height:34px;display:block}
-.ni-pf{flex:0 0 22px;width:22px;height:10px}
+  border:1px solid color-mix(in srgb,var(--purple) 26%,transparent);cursor:pointer;min-width:0}
+.ni-sz{display:flex;align-items:center;justify-content:center;gap:10px;min-width:0;padding:2px 0}
+/* Altes Zeichen und Pfeil geben auf schmalen Telefonen nach, das neue nie:
+   bei 288 px fehlten der Bühne sonst 12 px, und sie lief aus der Karte. */
+.ni-alt{flex:0 1 44px;min-width:26px;opacity:.45}
+.ni-alt svg{width:100%;height:auto;display:block}
+.ni-pf{flex:0 1 44px;min-width:22px;height:14px}
 .ni-pf path{fill:none;stroke:var(--purple);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ni-pf path.sp{opacity:.45}
 .ni-ab .ni-pf path{stroke:var(--red)}
-.ni-neu{position:relative;flex:0 0 72px;width:72px;height:72px}
-.ni-neu>svg{width:72px;height:72px;display:block}
+/* Das neue Zeichen steht auf einem violetten Hof, der Farbe der Leiter
+   [§C25] und nicht dem Gold der Titel [§C36]; nach einem Rückfall auf einem
+   roten, der Richtung. */
+.ni-neu{position:relative;flex:0 0 96px;width:96px;height:96px}
+.ni-neu::before{content:"";position:absolute;inset:-8px;border-radius:50%;
+  background:radial-gradient(closest-side,color-mix(in srgb,var(--purple) 30%,transparent),transparent)}
+.ni-ab .ni-neu::before{background:radial-gradient(closest-side,color-mix(in srgb,var(--red) 22%,transparent),transparent)}
+.ni-neu>svg{position:relative;width:96px;height:96px;display:block}
+/* Zwei Ringe laufen einmal vom Zeichen nach außen und bleiben dann weg: die
+   Verwandlung als Bewegung, ohne dass die Karte im Feed weiter blinkt. Nur
+   `transform` und Deckkraft; bei Bewegungsruhe stehen sie nicht da. */
+.ni-wl{position:absolute;inset:0;pointer-events:none}
+.ni-wl i{position:absolute;inset:4px;border-radius:50%;border:1.5px solid color-mix(in srgb,var(--purple) 70%,transparent);
+  opacity:0;animation:niWelle 2.4s cubic-bezier(.2,.7,.3,1) .3s 2 both}
+.ni-wl i+i{animation-delay:1.1s}
+@keyframes niWelle{0%{transform:scale(.72);opacity:.9}100%{transform:scale(1.42);opacity:0}}
+@media (prefers-reduced-motion:reduce){ .ni-wl{display:none} }
 .ni-av{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}
-.ni-av .av{--av:30px;width:30px;height:30px;font-size:11px}
-.ni-t{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0;margin-left:4px}
-.ni-t em{font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--purple);font-style:normal}
-.ni-ab .ni-t em{color:var(--red)}
-.ni-t>b{font-size:15px;font-weight:700;color:var(--ink);line-height:1.15}
-.ni-t small{font-size:11px;color:var(--muted)}
-.ni-t small b{color:var(--ink)}
-.ni-gr{display:flex;gap:3px}
-.ni-gr i{font:600 8px 'Sometype Mono',monospace;font-style:normal;padding:1px 5px;border-radius:6px;
-  background:var(--surface2);color:var(--muted)}
-.ni-gr i.da{color:var(--ink2)}
-.ni-gr i.jetzt{background:var(--purple);color:var(--ink)}
-/* Die Zeilen stehen auf der Flucht des Bühnen-Inhalts und nicht am
-   Kartenrand: ohne Innenabstand berührte das „P" der Prestige-Zahl die
-   Kante der Karte. */
-.ni-zs{display:flex;flex-direction:column;gap:6px;margin-top:8px;padding:0 10px}
-.ni-z{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink2);cursor:pointer}
-.ni-z-t{flex:1;min-width:0}
-.ni-z-t b{color:var(--ink)}
-.ni-z-z{flex:0 0 22px}
-.ni-z-z svg{width:22px;height:22px;display:block}
-.ni-z em{font-style:normal;font-size:11px;white-space:nowrap}
-.ni-z em.g{color:var(--gold)}
-.ni-z em.r{color:var(--red)}
-.ni-z.mehr{color:var(--muted);font-size:11px;cursor:default}
+.ni-av .av{--av:36px;width:36px;height:36px;font-size:13px}
+/* Der Rückfall trägt am neuen Zeichen einen roten Pfeil nach unten, wie die
+   Bilanz der Tafel-Karte [§C25]: zwei Zeichen hintereinander lesen sich
+   sonst wie ein Aufstieg. */
+.ni-ru{position:absolute;right:-2px;top:-2px;width:22px;height:22px;border-radius:50%;display:flex;
+  align-items:center;justify-content:center;color:var(--red);background:var(--surface);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--red) 55%,transparent)}
+.ni-ru svg{width:13px;height:13px;display:block}
+.ni-ru path{fill:none;stroke:currentColor;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
+/* Mehrere Bewegungen: je eine lange Zeile, alle untereinander. Links die
+   Verwandlung kleiner, rechts Name und Spur über die ganze übrige Breite.
+   Als Kacheln zu zweit nebeneinander war die Spur halb so lang. */
+.ni-viele{display:flex;flex-direction:column;gap:6px}
+.ni-k{display:flex;align-items:center;gap:10px;min-width:0;padding:6px 10px 6px 6px;
+  border-radius:11px;background:color-mix(in srgb,var(--bg) 40%,transparent);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--purple) 16%,transparent)}
+.ni-k > .ni-sz{flex:0 0 auto}
+.ni-k-r{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:6px}
+.ni-k.ni-ab{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--red) 28%,transparent)}
+.ni-k .ni-sz{gap:5px;padding:0}
+.ni-k .ni-alt{flex:0 0 26px;width:26px;min-width:0}
+.ni-k .ni-pf{flex:0 0 16px;width:16px;min-width:0;height:12px}
+.ni-k .ni-neu{flex:0 0 52px;width:52px;height:52px}
+.ni-k .ni-neu>svg{width:52px;height:52px}
+/* Auf schmalen Telefonen bleibt in der Zeile nur das neue Zeichen: neben
+   altem Zeichen und Pfeil blieben der Spur bei 288 px sechzig Pixel. Woher
+   es kam, zeigt die Spur selbst, der Ring am alten Feld. */
+@media (max-width:340px){ .ni-k .ni-alt,.ni-k .ni-pf{display:none} }
+.ni-k .ni-neu::before{inset:-5px}
+.ni-k .ni-av .av{--av:21px;width:21px;height:21px;font-size:8.5px}
+.ni-k .ni-ru{width:18px;height:18px;right:-4px;top:-3px}
+.ni-k .ni-ru svg{width:11px;height:11px}
+.ni-k-n{font-size:12px;font-weight:700;color:var(--ink);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Die Spur [§C30]: sieben Stufen zu je drei Feldern, bei einer Bewegung
+   darunter die Zeichen. Gefüllt, was schon da war; Violett, was der Tag
+   dazubringt; rot gestreift, was ein Rückfall kostet. Das erreichte Feld
+   trägt einen Punkt, das alte einen Ring. */
+.ni-spur{display:flex;gap:4px;min-width:0}
+.ni-spur.knapp{gap:2px}
+.ni-sp-s{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px}
+.ni-sp-f{display:flex;gap:1.5px;width:100%}
+.ni-spur.knapp .ni-sp-f{gap:1px}
+/* Ein leeres Feld ist hell genug, um auf der dunklen Kachel als Feld zu
+   stehen: in `--surface2` verschwand es dort, und die Spur sah halb aus. */
+.ni-sp-f i{position:relative;flex:1 1 0;height:8px;border-radius:2px;background:color-mix(in srgb,var(--ink2) 13%,transparent)}
+.ni-spur.knapp .ni-sp-f i{height:6px;border-radius:1.5px}
+.ni-sp-f i.hat{background:color-mix(in srgb,var(--ink2) 42%,var(--surface2))}
+.ni-sp-f i.neu,.ni-sp-f i.da{background:linear-gradient(90deg,color-mix(in srgb,var(--purple) 70%,transparent),var(--purple))}
+.ni-sp-f i.da{box-shadow:0 0 8px color-mix(in srgb,var(--purple) 70%,transparent)}
+.ni-sp-f i.da::after{content:"";position:absolute;left:50%;top:50%;width:5px;height:5px;margin:-2.5px 0 0 -2.5px;
+  border-radius:50%;background:var(--ink)}
+.ni-spur.knapp .ni-sp-f i.da::after,.ni-spur.knapp .ni-sp-f i.alt::after{width:3px;height:3px;margin:-1.5px 0 0 -1.5px}
+.ni-sp-f i.weg{background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--red) 65%,transparent) 0 2px,transparent 2px 4px);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--red) 45%,transparent)}
+.ni-spur.ab .ni-sp-f i.da{background:color-mix(in srgb,var(--ink2) 50%,var(--surface2));box-shadow:none}
+.ni-sp-f i.alt::after{content:"";position:absolute;left:50%;top:50%;width:5px;height:5px;margin:-2.5px 0 0 -2.5px;
+  border-radius:50%;box-shadow:inset 0 0 0 1.2px var(--ink2)}
+.ni-sp-z{width:24px;max-width:100%;opacity:.28}
+.ni-sp-z svg{width:100%;height:auto;display:block}
+.ni-sp-s.hat .ni-sp-z,.ni-sp-s.vorher .ni-sp-z{opacity:.55}
+.ni-sp-s.jetzt .ni-sp-z{opacity:1}
 .ni-bw{display:flex;align-items:center;gap:8px;margin:12px 0 2px;font-size:12px}
 .ni-bw b{color:var(--ink)}
 .ni-bw span{color:var(--muted)}
@@ -1144,7 +1196,7 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 
 /* ── Spieler des Tages ─────────────────────────────────────────────── */
 .nd-pt{display:flex;flex-direction:column;align-items:center;gap:6px}
-.nd-pt-k{position:relative;display:flex;justify-content:center;gap:6px;padding-top:12px}
+.nd-pt-k{position:relative;display:flex;flex-wrap:wrap;justify-content:center;gap:6px;padding-top:12px}
 .nd-pt-kr{position:absolute;top:-4px;left:50%;transform:translateX(-50%);color:var(--gold)}
 .nd-pt-kr svg{width:20px;height:20px}
 .nd-pt-n{font-size:15px;font-weight:600;color:var(--ink)}

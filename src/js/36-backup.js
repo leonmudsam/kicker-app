@@ -790,7 +790,10 @@ function _showImportPreview(filename){
   } else {
     const a = p.analyse;
     canApply = a.neu.length > 0 || p.neueSpieler.length > 0;
-    const fehlerListe = a.fehler.slice(0, 8).map(f =>
+    // Jede übersprungene Zeile und jeder unbekannte Spieler: nach acht und
+    // zehn stand „+ 12 weitere" und „…", und welche Zeile man korrigieren
+    // muss, stand dann nirgends.
+    const fehlerListe = a.fehler.map(f =>
       `<div style="font-size:11px;color:var(--ink2);padding:6px 0;border-bottom:1px solid var(--line)">
          <b style="color:var(--red)">Zeile ${f.zeile}</b> — ${esc(f.grund)}</div>`).join('');
     body = `
@@ -801,10 +804,9 @@ function _showImportPreview(filename){
       ${line('Übersprungen', a.fehler.length, a.fehler.length ? 'var(--red)' : '')}
       ${a.fehlendeSpieler.length ? `<div class="nd-section">Unbekannte Spieler</div>
         <p style="font-size:11.5px;color:var(--ink2);line-height:1.6">
-          ${esc(a.fehlendeSpieler.slice(0,10).join(', '))}${a.fehlendeSpieler.length>10?' …':''}<br>
+          ${esc(a.fehlendeSpieler.join(', '))}<br>
           Lege sie zuerst an oder nimm ein Backup mit Spieler-Blatt.</p>` : ''}
-      ${a.fehler.length ? `<div class="nd-section">Warum übersprungen</div>${fehlerListe}
-        ${a.fehler.length > 8 ? `<div style="font-size:11px;color:var(--muted);padding-top:6px">+ ${a.fehler.length - 8} weitere</div>` : ''}` : ''}`;
+      ${a.fehler.length ? `<div class="nd-section">Warum übersprungen</div>${fehlerListe}` : ''}`;
   }
 
   openSheet(`

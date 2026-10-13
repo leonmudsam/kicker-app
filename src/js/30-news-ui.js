@@ -590,10 +590,12 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
     // dem Wert und macht keinen einzelnen Halter zum Hauptdarsteller.
     gesicht = `<div class="nf-gr-l">${w ? _newsWertBlock(w.v, w.l, 'ton') : ''}${_newsGesichtHtml(s)}</div>`;
   } else if(sorte === 'ins' && d.type === 'insignium_tag'){
-    // Die Leiter des Tages [§C30]: die Verwandlung als Bühne, die übrigen
-    // Bewegungen als Zeilen darunter (30d-news-insignium.js).
+    // Die Leiter des Tages [§C30]: jede Bewegung als Verwandlung mit ihrer
+    // Spur (30d-news-insignium.js), keine Zeilen darunter.
     kopf = _newsInsTagKopf(s);
-    fuss = _newsInsTagZeilen(s);
+    // Nur die Schlagzeile: der Satz erklärte Schwelle und Träger der Stufe,
+    // und das zeigt die Spur in der Bühne. Er steht weiter im Blatt.
+    satz = '';
   } else if(sorte === 'ins'){
     gesicht = `<div class="nf-gr-l">${av(d.pid, 48)}</div>`;
     fuss = _newsLeiter(d.pid);

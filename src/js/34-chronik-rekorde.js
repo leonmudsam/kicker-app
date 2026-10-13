@@ -965,7 +965,7 @@ function saisonRekorde(sid){
 // Namen aller Halter eines Rekords, fertig für die Anzeige („Leon & Martin").
 // Alle Liga-Rekorde, die ein Spieler haelt — in Katalog-Reihenfolge, also
 // wertvollster zuerst. `chronicleOf` liefert davon nur den ersten; das Profil
-// zeigt den Rest hinter „Mehr anzeigen".
+// zeigt alle.
 function chroniclesOfPlayer(pid, bisMs){
   // Ein Ruheständler hält, was er beim Karriereende hielt [§C40] — soweit es
   // den Rekord noch gibt. Ein gestrichener stand sonst in seinem Profil und

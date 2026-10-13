@@ -182,7 +182,7 @@ function _ndMitteRoh(s){
         return `<div class="nd-gwert gold"><b>${esc(String(d.eintraege != null ? d.eintraege : ids.length))}</b>
             <span>Einträge im ${esc(seasonLabel(d.sid) || '')}</span></div>
           ${ids.length ? `<div class="nd-section">Wer eingetragen ist</div>
-          <div class="nd-vf">${ids.slice(0, 5).map(pid => `<div class="nd-vf-z" data-pid="${esc(pid)}">
+          <div class="nd-vf">${ids.map(pid => `<div class="nd-vf-z" data-pid="${esc(pid)}">
             ${avHtml(pm[pid], '', {ins:true, px:30, feuer:0})}
             <span class="nd-vf-nm">${esc(nameOf(pid))}</span>
             <b class="nd-vf-t">${esc(titelVon(pid))}</b></div>`).join('')}</div>` : ''}
@@ -325,12 +325,13 @@ function _ndMitteRoh(s){
         const kopf = nennt ? '' : `<div class="nd-stat-row">
             <div class="nd-stat-label">Partien in dieser Woche</div>
             <div class="nd-stat-val acid">${esc(kopfWert)}</div></div>`;
-        // Jede Wertung als Zeile: Gesicht, Name, Wertung und Zahl. Darunter
+        // Jede Wertung als Zeile: Gesicht, Name, Wertung und Zahl — bei einem
+        // geteilten Platz jeder, nicht die ersten zwei. Darunter
         // stand je ein Satz („Julian hat in dieser Woche 101 Elo gutgemacht.
         // Das ist der größte Anstieg der Liga."), der Zahl und Wertung daneben
         // ein zweites Mal sagte, und die Namen standen als Pillen ohne Gesicht.
         const zeilen = teile.map(t => {
-          const ids = (Array.isArray(t.pids) ? t.pids : []).filter(pid => pm[pid]).slice(0, 2);
+          const ids = (Array.isArray(t.pids) ? t.pids : []).filter(pid => pm[pid]);
           return `<div class="nd-wo-z${t.held ? ' gold' : ''}"${ids[0] ? ` data-pid="${esc(ids[0])}"` : ''}>
               <span class="sp-chips">${ids.map(_spChip).join('')}</span>
               <span class="nd-wo-t"><b>${esc(_namenListe(ids.map(nameOf)))}</b><small>${esc(t.label || '')}</small></span>

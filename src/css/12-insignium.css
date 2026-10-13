@@ -362,8 +362,6 @@
     line-height:1.4;white-space:normal;overflow:visible}
   .lb-q .p{flex:0 0 auto;font-size:13px;font-weight:700;color:var(--ink2)}
 
-  .lb-buch .chron-more{border:0;border-top:1px solid var(--line);border-radius:0;
-    padding:8px;font-size:11px}
   .lb-summe{display:flex;justify-content:space-between;align-items:baseline;
     padding:11px 13px;border-top:1px solid var(--line2);
     background:var(--surface2);font-size:12px;color:var(--ink2)}

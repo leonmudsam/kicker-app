@@ -47,12 +47,11 @@ function rcpAvHtml(pid, px, o){
 }
 
 // Zwei Avatare als Paar. Ein Duo hat keinen Rang, also auch kein Wappen —
-// zwei überlappende Chips, wie in jeder Duo-Tabelle.
+// zwei überlappende Chips, wie in jeder Duo-Tabelle. Teilen sich mehr einen
+// Titel, steht jeder da: ab dem vierten stand ein Chip „+1".
 function rcpPaarHtml(ids, px){
   return `<span class="rcp-paar" style="--rav:${px}px">${
-    ids.slice(0, 3).map(id => rcpAvHtml(id, px, {})).join('')}${
-    ids.length > 3 ? `<span class="rcp-av mehr" style="--rav:${px}px">+${ids.length - 3}</span>` : ''
-  }</span>`;
+    ids.map(id => rcpAvHtml(id, px, {})).join('')}</span>`;
 }
 
 // Der Held: die eine Person, um die der Rückblick geht. Eine Karte für alle

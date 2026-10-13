@@ -9,6 +9,7 @@
 - Jede `font-family` endet auf einer Familie (`sans-serif`, `monospace`).
 - Dieselbe Sache hat einen Namen (Siegquote, Partner, Torbilanz, Größte Überraschung, Direkter Vergleich); kein Befehl in Du-Form, kein englisches Wort außer den Namen der Wertungen, kein Kürzel, Einzahl wo eins steht.
 - Ein leeres Feld liest sich als Fehler: nicht vergebene Auszeichnungen gestrichelt, eine ungerade Kachel nimmt die ganze Reihe.
+- Ein Blatt zeigt alles: kein „+1", kein „und 3 weitere", kein „Mehr anzeigen". Jeder Name, jedes Wappen, jeder Grund, jeder Posten steht da; was nicht in eine Reihe passt, bricht um.
 
 ## Stellen
 
@@ -16,7 +17,7 @@ quer durch `src/`.
 
 ## Prüfung
 
-`tests/blatt` liest Reiter und Blätter auf Namen und Sprache, `tests/disziplinen` prüft Belege und Bedingungen auf Pronomen, `tests/tafel` die Schriftangaben.
+`tests/blatt` liest Reiter und Blätter auf Namen und Sprache und zählt in Blatt, Profil, Laufbahn und Auszeichnung nach, dass nichts abgeschnitten ist, `tests/disziplinen` prüft Belege und Bedingungen auf Pronomen, `tests/tafel` die Schriftangaben.
 
 ## Herleitung
 
@@ -77,3 +78,16 @@ Wortlaut zitiert, nicht mit einer Nummer.
 - **Ein leeres Feld liest sich als Fehler.** Nicht vergebene Auszeichnungen
   werden gestrichelt gezeigt, nicht halbdurchsichtig; eine ungerade Kachel
   nimmt die ganze Reihe statt ein Loch zu lassen.
+- **Ein Blatt zeigt alles.** Die Blätter schnitten an zwölf Stellen ab und
+  zählten den Rest: die Gründe der Wirkung nach drei („+1"), die Halter eines
+  Rekords nach vier, die Gesichter eines Felds der Leiter nach drei, die
+  Wappen im Kopf nach drei mit „und zwei weitere" daneben, die Partien einer
+  Auszeichnung nach acht, die Einträge eines Monats nach sechs; Profil und
+  Laufbahn hielten den Rest hinter „Mehr anzeigen", und der Rückblick einer
+  Saison zeigte fünf Chronik-Einträge und fünf Rekorde. Gerade das Blatt ist
+  die Stelle, an der man nachsieht, wer dabei war — ein Chip „+1" beantwortet
+  die Frage nicht, sondern stellt sie. Was nicht in eine Reihe passt, bricht
+  um; bei vielen Wappen werden sie kleiner. Ein Ausschnitt, der seine Grenze
+  im Namen trägt (die drei Besten eines Podests), ist keine Kürzung; die
+  Verfolger eines Rekords standen unter „Wer dahinter liegt" zu dritt, ohne
+  es zu sagen, und stehen jetzt vollzählig da.
