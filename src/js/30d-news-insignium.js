@@ -114,13 +114,15 @@ function _insSpur(z, mitZeichen){
   }).join('') + `</div>`;
 }
 // ── Eine Verwandlung ────────────────────────────────────────────────
-// Altes Zeichen, Pfeil, neues Zeichen mit Gesicht — in dieser Reihenfolge,
-// auch beim Rückfall: jede Zeile liest sich von früher nach jetzt. Beim
-// Aufstieg zeigt der Pfeil nach vorn, und zwei Ringe laufen einmal nach
-// außen, UNTER der Zeichnung — über ihr darf nichts skalieren [§C30]. Beim
-// Rückfall zeigt der Pfeil zurück, rot, ohne Ringe: zwei Zeichen mit einem
-// Pfeil nach vorn lasen sich als Aufstieg, und ein zusätzlicher Abwärtspfeil
-// am Zeichen war ein zweites Zeichen für dieselbe Sache.
+// Zwei Zeichen und ein Pfeil, gelesen wie die Leiter: links die tiefere
+// Stufe, rechts die höhere. Das Gesicht sitzt immer auf dem Zeichen, das der
+// Spieler jetzt trägt, und der Pfeil zeigt vom alten zum neuen. Beim
+// Aufstieg also „Zierkranz → Lorbeerreif (Gesicht)", mit zwei Ringen, die
+// einmal nach außen laufen, UNTER der Zeichnung — über ihr darf nichts
+// skalieren [§C30]. Beim Rückfall „Zierkranz (Gesicht) ← Lorbeerreif", rot
+// und ohne Ringe. Stand das alte Zeichen beim Rückfall links und zeigte der
+// Pfeil zurück auf es, stand das Gesicht neben einem Pfeil, der vom ihm
+// wegzeigte; mit dem Pfeil nach vorn las sich ein Abstieg als Aufstieg.
 function _insVerwandlung(z, gross){
   const pm = pmap(), ab = z.art === 'ab';
   // Gross zieht der Pfeil eine Spur aus zwei Strichen hinter sich her: die
@@ -131,10 +133,12 @@ function _insVerwandlung(z, gross){
     : (ab ? `<svg class="ni-pf zurueck" viewBox="0 0 24 16" aria-hidden="true"><path d="M22 8H5"/><path d="M10 3L4 8L10 13"/></svg>`
           : `<svg class="ni-pf" viewBox="0 0 24 16" aria-hidden="true"><path d="M2 8H19"/><path d="M14 3L20 8L14 13"/></svg>`);
   const wellen = ab ? '' : `<span class="ni-wl" aria-hidden="true"><i></i><i></i></span>`;
+  const alt = `<span class="ni-alt">${_insZeichen(z.pid, z.vor, true)}</span>`;
   // Klein ist das neue Zeichen ein Bild, gross ein Vektor [§C30].
-  return `<div class="ni-sz"${ab ? ' role="img" aria-label="Rückfall"' : ''}><span class="ni-alt">${_insZeichen(z.pid, z.vor, true)}</span>${pfeil}`
-    + `<span class="ni-neu">${wellen}${_insZeichen(z.pid, z.nach, !gross)}`
-    + `<span class="ni-av">${avHtml(pm[z.pid], '', {px:gross ? 30 : 18})}</span></span></div>`;
+  const neu = `<span class="ni-neu">${wellen}${_insZeichen(z.pid, z.nach, !gross)}`
+    + `<span class="ni-av">${avHtml(pm[z.pid], '', {px:gross ? 30 : 18})}</span></span>`;
+  return ab ? `<div class="ni-sz" role="img" aria-label="Rückfall">${neu}${pfeil}${alt}</div>`
+            : `<div class="ni-sz">${alt}${pfeil}${neu}</div>`;
 }
 // Eine Bewegung füllt die Bühne mit der Spur samt Zeichen. Mehrere stehen
 // als lange Zeilen untereinander in EINEM Block, nur durch Linien getrennt,
@@ -178,10 +182,16 @@ function _ndInsTagBlatt(s){
         + `<b>${esc(_spName(x.pid))}</b><small>${esc(_insLageName(x.nach))}</small>`
         + `<em>${esc(_insArtWort(x))}</em></span>`).join('') + `</div>`
     : `<div class="nd-buehne nd-is">`
-    + `<div class="nd-is-w"><span class="nd-is-alt">${_insZeichen(z.pid, z.vor, true)}<small>${esc(_insLageName(z.vor))}</small></span>`
-    + `<svg class="nd-rk-pf${z.art === 'ab' ? ' ab' : ''}" viewBox="0 0 40 16" aria-hidden="true"><path d="M2 8H34"/><path d="M28 3L35 8L28 13"/></svg>`
-    + `<span class="nd-is-neu" data-pid="${esc(z.pid)}"><span class="nd-is-z">${_insZeichen(z.pid, z.nach)}</span>`
-    + `<span class="nd-is-av">${avHtml(pm[z.pid], '', {px:58})}</span></span></div>`
+    // Wie auf der Karte: links die tiefere Stufe, das Gesicht auf der von
+    // jetzt, der Pfeil vom alten zum neuen Zeichen — beim Rückfall zurück.
+    + `<div class="nd-is-w">${(() => {
+        const alt = `<span class="nd-is-alt">${_insZeichen(z.pid, z.vor, true)}<small>${esc(_insLageName(z.vor))}</small></span>`;
+        const neu = `<span class="nd-is-neu" data-pid="${esc(z.pid)}"><span class="nd-is-z">${_insZeichen(z.pid, z.nach)}</span>`
+          + `<span class="nd-is-av">${avHtml(pm[z.pid], '', {px:58})}</span></span>`;
+        return z.art === 'ab'
+          ? neu + `<svg class="nd-rk-pf ab zurueck" viewBox="0 0 40 16" aria-hidden="true"><path d="M38 8H6"/><path d="M12 3L5 8L12 13"/></svg>` + alt
+          : alt + `<svg class="nd-rk-pf" viewBox="0 0 40 16" aria-hidden="true"><path d="M2 8H34"/><path d="M28 3L35 8L28 13"/></svg>` + neu;
+      })()}</div>`
     + `<b class="nd-is-n">${esc(_insLageName(z.nach))}</b>`
     + `<span class="nd-is-p"><b class="num">${z.nach.punkte}</b> Prestige · ${esc(_spName(z.pid))}</span>`
     + `<span class="nd-is-wd">${esc(_insArtWort(z))}</span></div>`;

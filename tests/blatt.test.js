@@ -1109,9 +1109,9 @@ const ok = (c, msg, det) => {
   // über Schwelle und Träger der Stufe, und nur die erste Bewegung war ein
   // Bild. Jetzt ist jede Bewegung eine Verwandlung mit ihrer Spur: gefüllt,
   // was schon da war, Violett, was der Tag dazubringt, rot gestreift, was ein
-  // Rückfall kostet — und beim Rückfall zeigt der Pfeil zurück, bei
-  // derselben Reihenfolge alt vor neu; mit einem Pfeil nach vorn lasen sich
-  // zwei Zeichen hintereinander wie ein Aufstieg.
+  // Rückfall kostet. Die Verwandlung liest sich wie die Leiter: links die
+  // tiefere Stufe, das Gesicht auf der von jetzt, der Pfeil vom alten zum
+  // neuen Zeichen — beim Rückfall also „neu (Gesicht) ← alt".
   const insKarte = await page.evaluate(() => {
     const K = window.__k.eval.bind(window.__k);
     const m = JSON.parse(K(`(function(){
@@ -1127,7 +1127,8 @@ const ok = (c, msg, det) => {
         dataRef:{type:'insignium_tag', tag:'2026-10-12', zuege:z, playerIds:z.map(x => x.pid), laufbahn:lb}});
       return JSON.stringify({auf:_newsCardHtmlM2(story('ui-ins1', [zuege[0]]), false, false),
         viele:_newsCardHtmlM2(story('ui-insk', zuege), false, false),
-        ab:_newsCardHtmlM2(story('ui-insab', [zuege[1]]), false, false), desc:t.desc});
+        ab:_newsCardHtmlM2(story('ui-insab', [zuege[1]]), false, false), desc:t.desc,
+        blattAb:(_ndInsTagBlatt(story('ui-insab', [zuege[1]])) || {}).kopf || ''});
     })()`));
     const host = document.createElement('div'); host.innerHTML = m.auf + m.viele + m.ab; document.body.appendChild(host);
     const [k1, kv, k2] = host.querySelectorAll('.nf-card');
@@ -1146,8 +1147,14 @@ const ok = (c, msg, det) => {
       wellen: !!w, wellenAb: !!k2.querySelector('.ni-wl'),
       unter: !!(w && w.nextElementSibling && w.nextElementSibling.tagName.toLowerCase() === 'svg'),
       runter: !!k2.querySelector('.ni-pf.zurueck') && !k2.querySelector('.ni-ru')
-        && (k2.querySelector('.ni-sz') || {}).firstElementChild === k2.querySelector('.ni-alt'),
-      runterAuf: !!k1.querySelector('.ni-pf.zurueck'),
+        && (k2.querySelector('.ni-sz') || {}).firstElementChild === k2.querySelector('.ni-neu')
+        && (k2.querySelector('.ni-sz') || {}).lastElementChild === k2.querySelector('.ni-alt'),
+      blattAb: (() => { const e = document.createElement('div'); e.innerHTML = m.blattAb;
+        const w = e.querySelector('.nd-is-w');
+        return !!(w && w.firstElementChild && w.firstElementChild.classList.contains('nd-is-neu')
+          && w.lastElementChild.classList.contains('nd-is-alt') && w.querySelector('.nd-rk-pf.zurueck')); })(),
+      runterAuf: !!k1.querySelector('.ni-pf.zurueck')
+        || (k1.querySelector('.ni-sz') || {}).lastElementChild !== k1.querySelector('.ni-neu'),
       buehne: Math.round(k1.querySelector('.ni-b').getBoundingClientRect().height),
       kacheln: kach.length, zeilen: kv.querySelectorAll('.ni-z').length,
       kachelFelder: kach.map(e => felder(e).length).join(','),
@@ -1166,9 +1173,9 @@ const ok = (c, msg, det) => {
   ok(insKarte.alt === 4 && insKarte.neu === 4 && insKarte.da === 9 && insKarte.weg === 1 && insKarte.daAb === 2,
      'die Spur zeigt, was der Tag dazubringt, und was ein Rückfall kostet',
      JSON.stringify({alt:insKarte.alt, neu:insKarte.neu, da:insKarte.da, weg:insKarte.weg, daAb:insKarte.daAb}));
-  ok(insKarte.wellen && insKarte.unter && !insKarte.wellenAb && insKarte.runter && !insKarte.runterAuf,
-     'Ringe nur beim Aufstieg und unter der Zeichnung, beim Rückfall zeigt der Pfeil zurück, alt bleibt vor neu',
-     JSON.stringify({wellen:insKarte.wellen, unter:insKarte.unter, ab:insKarte.wellenAb, runter:insKarte.runter}));
+  ok(insKarte.wellen && insKarte.unter && !insKarte.wellenAb && insKarte.runter && !insKarte.runterAuf && insKarte.blattAb,
+     'Ringe nur beim Aufstieg, die tiefere Stufe links, das Gesicht auf der von jetzt, beim Rückfall der Pfeil zurück',
+     JSON.stringify({wellen:insKarte.wellen, unter:insKarte.unter, ab:insKarte.wellenAb, runter:insKarte.runter, blatt:insKarte.blattAb}));
   // Die Bühne einer einzelnen Bewegung bleibt so hoch wie ein Kopf im Feed:
   // mit dem 96-px-Zeichen war sie allein 190 px hoch.
   ok(insKarte.buehne > 0 && insKarte.buehne <= 150,
