@@ -32,7 +32,8 @@
     var sb = document.createElement('div');
     sb.className = 'neu-start'; sb.id = 'neuStart'; sb.setAttribute('aria-hidden', 'true');
     sb.innerHTML = '<i class="ns-grund"></i><div class="ns-mitte">'
-      + '<span class="ns-logo"><img src="' + (img ? img.getAttribute('src') : '') + '" alt=""><i class="ns-glanz"></i></span>'
+      + '<span class="ns-logo"><img src="' + (img ? img.getAttribute('src') : '') + '" alt="">'
+      + '<span class="neu-kante kreis acid innen" style="--kd:130px"><i></i></span></span>'
       + '<b class="ns-name">Kicker Liga</b><span class="ns-unter">Elo · 2v2</span>'
       + '<span class="ns-spur"><i></i></span></div>';
     document.body.appendChild(sb);
@@ -84,7 +85,11 @@
       var a = logo.getBoundingClientRect(), b = ziel.getBoundingClientRect();
       var dx = (b.left + b.width / 2) - (a.left + a.width / 2), dy = (b.top + b.height / 2) - (a.top + a.height / 2);
       logo.animate([{transform:'none'}, {transform:'translate(' + dx.toFixed(1) + 'px,' + dy.toFixed(1) + 'px) scale(' + (b.width / a.width).toFixed(3) + ')'}],
-        {duration:480, easing:'cubic-bezier(.65,0,.25,1)', fill:'forwards'}).finished.then(weg, weg);
+        {duration:480, easing:'cubic-bezier(.65,0,.25,1)', fill:'forwards'}).finished
+        .then(function(){ weg(); kante(ziel, 'acid innen', 'zeichnen', 0, 60); }, weg);
+      // „Match eintragen" dreht sich zuletzt herein; dann läuft einmal
+      // Licht um ihn: bereit.
+      kante(document.getElementById('fab'), 'weiss', 'zeichnen', 1150, 90);
       sb.querySelectorAll('.ns-name, .ns-unter, .ns-spur').forEach(function(e){
         e.animate([{opacity:1}, {opacity:0, transform:'translateY(6px)'}], {duration:150, easing:'ease-in', fill:'forwards'});
       });
@@ -141,15 +146,48 @@
       ziel.appendChild(s);
       setTimeout(function(){ s.remove(); }, verzug + 1300);
     }
+    // ── Das Kantenlicht [§C27] ──────────────────────────────────────
+    // Dasselbe Bauteil wie das Licht am Rand des Profilkopfs: ein Ring aus
+    // einer Maske, darin ein Kegel aus Licht, der sich dreht — die Linie
+    // fährt die Kante ab. Es hat drei Bedeutungen und keine vierte [§C41]:
+    //   zeichnen  einmal herum, dann leuchtet der Rahmen kurz auf: eine
+    //             Karte, die zählt, ist angekommen;
+    //   hinweis   zweimal herum: hier ist etwas neu;
+    //   kreis     solange es dauert: es lädt (im Profilkopf: es läuft).
+    // Der Kegel ist so groß wie die Diagonale der Karte (--kd), nicht wie im
+    // Profil 1400 px: eine gedrehte Ebene dieser Größe kostet bei dreifacher
+    // Pixeldichte ein Vielfaches an Speicher. Die Größe gibt der Aufrufer
+    // mit, gemessen wird nichts.
+    var KANTE_MS = {zeichnen:1250, hinweis:1900};
+    function kante(ziel, ton, art, verzug, d){
+      if(!ziel || still()) return;
+      var k = document.createElement('span');
+      k.className = 'neu-kante ' + art + ' ' + ton; k.setAttribute('aria-hidden', 'true');
+      k.style.cssText = '--kd:' + d + 'px;--kv:' + verzug + 'ms';
+      k.innerHTML = '<i></i>';
+      ziel.appendChild(k);
+      setTimeout(function(){ k.remove(); }, verzug + (KANTE_MS[art] || 1300) + 120);
+    }
     function podest(view, reiter, start){
-      if(!view || still() || glanzDa[reiter] || !GLANZ[reiter]) return;
+      if(!view || still() || glanzDa[reiter]) return;
+      // Im Verlauf ist es die letzte Partie, die ankommt — kein Podest.
+      if(reiter === 'history'){
+        glanzDa[reiter] = true;
+        kante(view.querySelector('.mlist > .mrow'), 'acid', 'zeichnen', start, 420);
+        return;
+      }
+      if(!GLANZ[reiter]) return;
       glanzDa[reiter] = true;
       // Das Metall sagt die Klasse (top1, gold …); die Duos tragen nur
       // „tm-top", dort sagt es die Reihenfolge.
       [].slice.call(view.querySelectorAll(GLANZ[reiter]), 0, 3).forEach(function(z, i){
         var ton = /top1|gold/.test(z.className) ? 'gold' : /top2|silber/.test(z.className) ? 'silber'
           : /top3|bronze/.test(z.className) ? 'bronze' : METALL[i];
-        licht(z, ton, start + ({gold:0, silber:140, bronze:280})[ton]);
+        var v = start + ({gold:0, silber:140, bronze:280})[ton];
+        // Erst fährt das Licht die Kante ab und schließt den Rahmen; über
+        // Gold zieht danach noch das Band — der Titel [§C25].
+        kante(z, ton, 'zeichnen', v, reiter === 'awards' ? 250 : 400);
+        if(ton === 'gold') licht(z, 'gold', v + 820);
       });
     }
 
@@ -160,7 +198,7 @@
       if(sb){ sb.getAnimations({subtree:true}).forEach(function(a){ a.finish(); }); sb.remove(); html.classList.remove('startbild'); }
       html.classList.remove('aufbau');
       main.querySelectorAll('.bau').forEach(function(t){ t.classList.remove('bau'); });
-      document.querySelectorAll('.neu-glanz').forEach(function(s){ s.remove(); });
+      document.querySelectorAll('.neu-glanz, .neu-kante').forEach(function(s){ s.remove(); });
     }
     ['pointerdown', 'wheel', 'touchstart', 'keydown'].forEach(function(ev){
       addEventListener(ev, vorfuehrungEnde, {passive:true, capture:true});
@@ -292,11 +330,12 @@
       btnDa = true;
       if(still()) return;
       btn.animate([{opacity:0, transform:'translateX(14px)'}, {opacity:1, transform:'none'}], {duration:380, easing:'cubic-bezier(.2,.8,.2,1)'});
-      if(badge.style.display !== 'none') licht(btn, 'acid', 260);
+      if(badge.style.display !== 'none') kante(btn, 'acid', 'hinweis', 200, 120);
     }).observe(btn, {attributes:true, attributeFilter:['style']});
     new MutationObserver(function(){
       if(!toast.classList.contains('show')) return;
       btn.classList.remove('neu-ruf'); void btn.offsetWidth; btn.classList.add('neu-ruf');
+      kante(toast, 'acid', 'zeichnen', 80, 240);
       badge.classList.add('neu-pop');
       setTimeout(function(){ btn.classList.remove('neu-ruf'); badge.classList.remove('neu-pop'); }, 2400);
     }).observe(toast, {attributes:true, attributeFilter:['class']});
@@ -363,7 +402,7 @@
       } else if(kinder.length === 1) return;
       kinder.slice(0, 8).forEach(function(k, i){ k.classList.add('neu-k'); k.style.animationDelay = (i * 45) + 'ms'; });
       [].slice.call(sheet.querySelectorAll('.nf-card'), 0, 6).filter(function(c){ return !c.classList.contains('read'); })
-        .forEach(function(c, i){ licht(c, 'story', 320 + i * 150); });
+        .forEach(function(c, i){ kante(c, 'story', 'zeichnen', 320 + i * 150, 560); });
     }
     var offen = false, planTimer = 0;
     new MutationObserver(function(){
@@ -379,6 +418,28 @@
       clearTimeout(planTimer);
       planTimer = setTimeout(blattRuhe, 0);
     }).observe(sheet, {childList:true});
+
+    // Öffnet eine Story oder eine Auszeichnung, fährt das Licht einmal ihre
+    // Kante ab — in der Farbe der Story.
+    [['ndBg', 'nd', 'story', 760], ['bpBg', 'bp', 'weiss', 700]].forEach(function(p){
+      var bg = document.getElementById(p[0]), inh = document.getElementById(p[1]), war = false;
+      new MutationObserver(function(){
+        var jetzt = bg.classList.contains('show');
+        if(jetzt && !war) kante(inh, p[2], 'zeichnen', 120, p[3]);
+        war = jetzt;
+      }).observe(bg, {attributes:true, attributeFilter:['class']});
+    });
+    // Steht die Verbindung zum ersten Mal, geht vom Punkt oben links zweimal
+    // ein Ring aus: jetzt ist es der Stand von jetzt.
+    var verbunden = false, punkt = document.getElementById('connDot');
+    var conn0 = window.__entwurfConn;
+    window.__entwurfConn = function(c){
+      conn0(c);
+      if(c !== 'ok' || verbunden || still()) return;
+      verbunden = true;
+      punkt.classList.add('neu-ping');
+      setTimeout(function(){ punkt.classList.remove('neu-ping'); }, 2000);
+    };
 
     // Story und Auszeichnung schließen nur ihren Vorhang; der Inhalt blieb
     // bisher unsichtbar stehen, mit allem, was darin läuft. Nach dem

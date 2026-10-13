@@ -127,7 +127,7 @@ ${fonts}
 ${styles}
 <style>${lies('seite.css')}</style></head><body><main>
 <h1>Öffnen, Reiter, Blätter im Entwurf</h1>
-<p class="pf-unter">Die App, wie sie jetzt startet, und der Entwurf — beide mit dem echten Startablauf: das Telefon übersetzt das Skript, zeichnet den Stand vom letzten Öffnen und fragt dann die Datenbank. Im Entwurf überbrückt ein Startbild die Ladezeit; das Zeichen fliegt an seinen Platz, und die App baut sich auf: untere Leiste, Kopf, Wähler, Karten. Über Platz 1, 2 und 3 zieht ein Licht in ihrem Metall, ungelesene Stories werden hervorgehoben, und jeder Reiter baut sich beim Betreten auf. Wer sofort tippt, bekommt keine Vorführung: jede Berührung beendet sie.</p>
+<p class="pf-unter">Die App, wie sie jetzt startet, und der Entwurf — beide mit dem echten Startablauf: das Telefon übersetzt das Skript, zeichnet den Stand vom letzten Öffnen und fragt dann die Datenbank. Im Entwurf überbrückt ein Startbild die Ladezeit; das Zeichen fliegt an seinen Platz, und die App baut sich auf: untere Leiste, Kopf, Wähler, Karten. Um Platz 1, 2 und 3 fährt eine Linie in ihrem Metall die Kante ab, ungelesene Stories werden hervorgehoben, und jeder Reiter baut sich beim Betreten auf. Wer sofort tippt, bekommt keine Vorführung: jede Berührung beendet sie.</p>
 <div class="pf-steuer">
   <label>Start <select id="sFall">
     <option value="pause">Nach einer Pause</option>

@@ -5779,8 +5779,6 @@ html.neu .ns-mitte{position:relative;display:flex;flex-direction:column;align-it
 html.neu .ns-logo{position:relative;width:84px;height:84px;border-radius:24px;overflow:hidden;will-change:transform;
   box-shadow:0 22px 44px -18px rgba(0,0,0,.95),0 0 0 1px rgba(255,255,255,.06)}
 html.neu .ns-logo img{display:block;width:100%;height:100%;object-fit:contain}
-html.neu .ns-glanz{position:absolute;inset:0;transform:translateX(-120%);
-  background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.42) 50%,transparent 65%)}
 html.neu .ns-name{margin-top:12px;font-family:'Archivo Black',sans-serif;font-weight:400;font-size:17px;
   letter-spacing:.08em;text-transform:uppercase;color:var(--ink)}
 html.neu .ns-unter{font-family:'Sometype Mono',monospace;font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
@@ -5791,11 +5789,9 @@ html.neu .ns-spur i{position:absolute;top:0;bottom:0;left:0;width:40%;transform:
    Zeichen des Startbilds fliegt dorthin und wird es. */
 html.neu.startbild .logo-mark{opacity:0}
 @keyframes neuStartEin{from{opacity:0;transform:scale(.9)}}
-@keyframes neuStartGlanz{0%,30%{transform:translateX(-120%)}75%,100%{transform:translateX(120%)}}
 @keyframes neuSpur{to{transform:translateX(260%)}}
 @media(prefers-reduced-motion:no-preference){
   html.neu:not(.ruhe) .ns-mitte{animation:neuStartEin .45s cubic-bezier(.2,.8,.2,1) both}
-  html.neu:not(.ruhe) .ns-glanz{animation:neuStartGlanz 1.8s ease-in-out .3s infinite}
   html.neu:not(.ruhe) .ns-spur i{animation:neuSpur 1.1s cubic-bezier(.45,0,.55,1) infinite}
 }
 
@@ -5805,16 +5801,13 @@ html.neu.startbild .logo-mark{opacity:0}
    Name und Knöpfe, sobald das Zeichen gelandet ist; zuletzt der Knopf
    „Match eintragen". Der Inhalt baut sich in Teilen auf (.bau), beim
    Öffnen und beim Betreten eines Reiters. */
-html.neu .logo-mark{position:relative}
-html.neu .logo-mark::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;
-  background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.55) 50%,transparent 70%);transform:translateX(-110%)}
+html.neu .logo-mark,html.neu .mrow{position:relative}
 @keyframes neuAuf{from{opacity:0;transform:translateY(10px)}}
 @keyframes neuVonLinks{from{opacity:0;transform:translateX(-10px)}}
 @keyframes neuVonUnten{from{transform:translateY(100%)}}
 @keyframes neuPop{0%{opacity:0;transform:scale(.5)}60%{opacity:1;transform:scale(1.12)}100%{transform:none}}
 @keyframes neuSchlittenAuf{from{opacity:0;transform:scaleX(.3)}}
 @keyframes neuFab{0%{opacity:0;transform:scale(.3) rotate(-90deg)}70%{opacity:1;transform:scale(1.08) rotate(6deg)}100%{transform:none}}
-@keyframes neuLogo{0%{opacity:1;transform:translateX(-110%)}100%{opacity:1;transform:translateX(110%)}}
 @keyframes neuBau{from{opacity:0;transform:translateY(16px) scale(.985)}}
 @keyframes neuPodest{from{opacity:0;transform:translateY(26px) scale(.94)}}
 @media(prefers-reduced-motion:no-preference){
@@ -5827,10 +5820,12 @@ html.neu .logo-mark::after{content:"";position:absolute;inset:0;border-radius:in
   html.neu.aufbau:not(.ruhe) .botnav button:nth-child(5) .ic{animation-delay:.38s}
   html.neu.aufbau:not(.ruhe) .neu-schlitten::before{animation:neuSchlittenAuf .4s cubic-bezier(.3,1.3,.5,1) .42s both}
   html.neu.aufbau:not(.ruhe) .logo-txt{animation:neuVonLinks .38s cubic-bezier(.2,.8,.2,1) .44s both}
-  html.neu.aufbau:not(.ruhe) .logo-mark::after{animation:neuLogo .6s ease-in-out .56s both}
   html.neu.aufbau:not(.ruhe) #settingsBtn{animation:neuPop .4s cubic-bezier(.3,1.4,.5,1) .5s both}
   html.neu.aufbau:not(.ruhe) .conn-pill{animation:neuAuf .36s ease-out .5s both}
   html.neu.aufbau:not(.ruhe) .fab{animation:neuFab .55s cubic-bezier(.3,1.3,.5,1) .7s both}
+  /* Der heutige Tag in der Leiste der Tage: einmal geht ein Ring von ihm
+     aus — hier steht die Saison gerade. */
+  html.neu.aufbau:not(.ruhe) .lauf-z i.h::after{animation:neuPing .8s ease-out .6s 2 both}
   /* Die Verzögerung jedes Teils steht an ihm selbst (style), nicht hier. */
   html.neu:not(.ruhe) .bau{animation:neuBau .42s cubic-bezier(.2,.8,.2,1) both}
   html.neu:not(.ruhe) .pod-karte.bau{animation-name:neuPodest;animation-duration:.5s}
@@ -5857,6 +5852,44 @@ html.neu .neu-glanz.story::after{content:"";position:absolute;inset:0;border-rad
 @media(prefers-reduced-motion:no-preference){
   html.neu:not(.ruhe) .neu-glanz i{animation:neuGlanz .95s cubic-bezier(.45,0,.25,1) both}
   html.neu:not(.ruhe) .neu-glanz.story::after{animation:neuKante 1.6s ease-out .2s both}
+}
+
+/* ── 4b · Das Kantenlicht [§C27] ────────────────────────────────────── */
+/* Ein Ring aus einer Maske (nur der Rand bleibt sichtbar), darin ein
+   Kegel aus Licht mit langem Schweif, der sich dreht: die Linie fährt die
+   Kante ab. Dasselbe Bauteil wie .pp-rand im Profilkopf. Drei Arten:
+   „zeichnen" einmal herum und der Rahmen leuchtet kurz auf, „hinweis"
+   zweimal herum, „kreis" ohne Ende, solange etwas lädt. Die Farbe kommt
+   aus dem Ton: Metall für Plätze, Acid fürs Bedienen, die Farbe der Story. */
+html.neu .neu-kante{position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;z-index:3;padding:2px;overflow:hidden;
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+html.neu .neu-kante.innen{inset:0}
+html.neu .neu-kante i{position:absolute;left:50%;top:50%;width:var(--kd);height:var(--kd);
+  margin:calc(var(--kd) / -2) 0 0 calc(var(--kd) / -2);opacity:0;will-change:transform;
+  background:conic-gradient(from 0deg,transparent 0deg 180deg,rgba(var(--kr),.22) 250deg,rgba(var(--kr),.7) 318deg,
+    rgba(var(--kr),1) 348deg,#fff 355deg,transparent 360deg)}
+/* Der Rahmen, wenn die Linie ihn geschlossen hat: einmal ganz, dann weg. */
+html.neu .neu-kante.zeichnen::after{content:"";position:absolute;inset:0;background:rgba(var(--kr),.7);opacity:0}
+html.neu .neu-kante.gold{--kr:247,207,74}
+html.neu .neu-kante.silber{--kr:214,222,230}
+html.neu .neu-kante.bronze{--kr:222,160,108}
+html.neu .neu-kante.acid{--kr:190,242,100}
+html.neu .neu-kante.weiss{--kr:255,255,255}
+html.neu .neu-kante.story{--kr:var(--story-rgb,190,242,100)}
+@keyframes neuKanteZeichnen{0%{transform:rotate(-110deg);opacity:0}10%{opacity:1}82%{opacity:1}100%{transform:rotate(250deg);opacity:0}}
+@keyframes neuKanteHinweis{0%{transform:rotate(-110deg);opacity:0}6%{opacity:1}90%{opacity:1}100%{transform:rotate(610deg);opacity:0}}
+@keyframes neuKanteKreis{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes neuRahmen{0%,100%{opacity:0}35%{opacity:1}}
+@keyframes neuPing{0%{transform:scale(1);opacity:.9}100%{transform:scale(3.2);opacity:0}}
+html.neu .dot,html.neu .lauf-z i.h{position:relative}
+html.neu .lauf-z i.h::after{content:"";position:absolute;inset:-1px;border-radius:3px;border:1.5px solid var(--acid);opacity:0;pointer-events:none}
+html.neu .dot.neu-ping::after{content:"";position:absolute;inset:-1px;border-radius:50%;border:1.5px solid var(--acid);opacity:0}
+@media(prefers-reduced-motion:no-preference){
+  html.neu:not(.ruhe) .neu-kante.zeichnen i{animation:neuKanteZeichnen .95s cubic-bezier(.45,.05,.4,1) var(--kv,0ms) both}
+  html.neu:not(.ruhe) .neu-kante.zeichnen::after{animation:neuRahmen .55s ease-out calc(var(--kv,0ms) + .72s) both}
+  html.neu:not(.ruhe) .neu-kante.hinweis i{animation:neuKanteHinweis 1.8s cubic-bezier(.45,.05,.4,1) var(--kv,0ms) both}
+  html.neu:not(.ruhe) .neu-kante.kreis i{opacity:1;animation:neuKanteKreis 1.4s linear infinite}
+  html.neu:not(.ruhe) .dot.neu-ping::after{animation:neuPing .9s ease-out 2}
 }
 
 /* ── 5 · Reiter ─────────────────────────────────────────────────────── */
@@ -34702,7 +34735,8 @@ window.__k = {eval: c => eval(c)};
     var sb = document.createElement('div');
     sb.className = 'neu-start'; sb.id = 'neuStart'; sb.setAttribute('aria-hidden', 'true');
     sb.innerHTML = '<i class="ns-grund"></i><div class="ns-mitte">'
-      + '<span class="ns-logo"><img src="' + (img ? img.getAttribute('src') : '') + '" alt=""><i class="ns-glanz"></i></span>'
+      + '<span class="ns-logo"><img src="' + (img ? img.getAttribute('src') : '') + '" alt="">'
+      + '<span class="neu-kante kreis acid innen" style="--kd:130px"><i></i></span></span>'
       + '<b class="ns-name">Kicker Liga</b><span class="ns-unter">Elo · 2v2</span>'
       + '<span class="ns-spur"><i></i></span></div>';
     document.body.appendChild(sb);
@@ -34754,7 +34788,11 @@ window.__k = {eval: c => eval(c)};
       var a = logo.getBoundingClientRect(), b = ziel.getBoundingClientRect();
       var dx = (b.left + b.width / 2) - (a.left + a.width / 2), dy = (b.top + b.height / 2) - (a.top + a.height / 2);
       logo.animate([{transform:'none'}, {transform:'translate(' + dx.toFixed(1) + 'px,' + dy.toFixed(1) + 'px) scale(' + (b.width / a.width).toFixed(3) + ')'}],
-        {duration:480, easing:'cubic-bezier(.65,0,.25,1)', fill:'forwards'}).finished.then(weg, weg);
+        {duration:480, easing:'cubic-bezier(.65,0,.25,1)', fill:'forwards'}).finished
+        .then(function(){ weg(); kante(ziel, 'acid innen', 'zeichnen', 0, 60); }, weg);
+      // „Match eintragen" dreht sich zuletzt herein; dann läuft einmal
+      // Licht um ihn: bereit.
+      kante(document.getElementById('fab'), 'weiss', 'zeichnen', 1150, 90);
       sb.querySelectorAll('.ns-name, .ns-unter, .ns-spur').forEach(function(e){
         e.animate([{opacity:1}, {opacity:0, transform:'translateY(6px)'}], {duration:150, easing:'ease-in', fill:'forwards'});
       });
@@ -34811,15 +34849,48 @@ window.__k = {eval: c => eval(c)};
       ziel.appendChild(s);
       setTimeout(function(){ s.remove(); }, verzug + 1300);
     }
+    // ── Das Kantenlicht [§C27] ──────────────────────────────────────
+    // Dasselbe Bauteil wie das Licht am Rand des Profilkopfs: ein Ring aus
+    // einer Maske, darin ein Kegel aus Licht, der sich dreht — die Linie
+    // fährt die Kante ab. Es hat drei Bedeutungen und keine vierte [§C41]:
+    //   zeichnen  einmal herum, dann leuchtet der Rahmen kurz auf: eine
+    //             Karte, die zählt, ist angekommen;
+    //   hinweis   zweimal herum: hier ist etwas neu;
+    //   kreis     solange es dauert: es lädt (im Profilkopf: es läuft).
+    // Der Kegel ist so groß wie die Diagonale der Karte (--kd), nicht wie im
+    // Profil 1400 px: eine gedrehte Ebene dieser Größe kostet bei dreifacher
+    // Pixeldichte ein Vielfaches an Speicher. Die Größe gibt der Aufrufer
+    // mit, gemessen wird nichts.
+    var KANTE_MS = {zeichnen:1250, hinweis:1900};
+    function kante(ziel, ton, art, verzug, d){
+      if(!ziel || still()) return;
+      var k = document.createElement('span');
+      k.className = 'neu-kante ' + art + ' ' + ton; k.setAttribute('aria-hidden', 'true');
+      k.style.cssText = '--kd:' + d + 'px;--kv:' + verzug + 'ms';
+      k.innerHTML = '<i></i>';
+      ziel.appendChild(k);
+      setTimeout(function(){ k.remove(); }, verzug + (KANTE_MS[art] || 1300) + 120);
+    }
     function podest(view, reiter, start){
-      if(!view || still() || glanzDa[reiter] || !GLANZ[reiter]) return;
+      if(!view || still() || glanzDa[reiter]) return;
+      // Im Verlauf ist es die letzte Partie, die ankommt — kein Podest.
+      if(reiter === 'history'){
+        glanzDa[reiter] = true;
+        kante(view.querySelector('.mlist > .mrow'), 'acid', 'zeichnen', start, 420);
+        return;
+      }
+      if(!GLANZ[reiter]) return;
       glanzDa[reiter] = true;
       // Das Metall sagt die Klasse (top1, gold …); die Duos tragen nur
       // „tm-top", dort sagt es die Reihenfolge.
       [].slice.call(view.querySelectorAll(GLANZ[reiter]), 0, 3).forEach(function(z, i){
         var ton = /top1|gold/.test(z.className) ? 'gold' : /top2|silber/.test(z.className) ? 'silber'
           : /top3|bronze/.test(z.className) ? 'bronze' : METALL[i];
-        licht(z, ton, start + ({gold:0, silber:140, bronze:280})[ton]);
+        var v = start + ({gold:0, silber:140, bronze:280})[ton];
+        // Erst fährt das Licht die Kante ab und schließt den Rahmen; über
+        // Gold zieht danach noch das Band — der Titel [§C25].
+        kante(z, ton, 'zeichnen', v, reiter === 'awards' ? 250 : 400);
+        if(ton === 'gold') licht(z, 'gold', v + 820);
       });
     }
 
@@ -34830,7 +34901,7 @@ window.__k = {eval: c => eval(c)};
       if(sb){ sb.getAnimations({subtree:true}).forEach(function(a){ a.finish(); }); sb.remove(); html.classList.remove('startbild'); }
       html.classList.remove('aufbau');
       main.querySelectorAll('.bau').forEach(function(t){ t.classList.remove('bau'); });
-      document.querySelectorAll('.neu-glanz').forEach(function(s){ s.remove(); });
+      document.querySelectorAll('.neu-glanz, .neu-kante').forEach(function(s){ s.remove(); });
     }
     ['pointerdown', 'wheel', 'touchstart', 'keydown'].forEach(function(ev){
       addEventListener(ev, vorfuehrungEnde, {passive:true, capture:true});
@@ -34962,11 +35033,12 @@ window.__k = {eval: c => eval(c)};
       btnDa = true;
       if(still()) return;
       btn.animate([{opacity:0, transform:'translateX(14px)'}, {opacity:1, transform:'none'}], {duration:380, easing:'cubic-bezier(.2,.8,.2,1)'});
-      if(badge.style.display !== 'none') licht(btn, 'acid', 260);
+      if(badge.style.display !== 'none') kante(btn, 'acid', 'hinweis', 200, 120);
     }).observe(btn, {attributes:true, attributeFilter:['style']});
     new MutationObserver(function(){
       if(!toast.classList.contains('show')) return;
       btn.classList.remove('neu-ruf'); void btn.offsetWidth; btn.classList.add('neu-ruf');
+      kante(toast, 'acid', 'zeichnen', 80, 240);
       badge.classList.add('neu-pop');
       setTimeout(function(){ btn.classList.remove('neu-ruf'); badge.classList.remove('neu-pop'); }, 2400);
     }).observe(toast, {attributes:true, attributeFilter:['class']});
@@ -35033,7 +35105,7 @@ window.__k = {eval: c => eval(c)};
       } else if(kinder.length === 1) return;
       kinder.slice(0, 8).forEach(function(k, i){ k.classList.add('neu-k'); k.style.animationDelay = (i * 45) + 'ms'; });
       [].slice.call(sheet.querySelectorAll('.nf-card'), 0, 6).filter(function(c){ return !c.classList.contains('read'); })
-        .forEach(function(c, i){ licht(c, 'story', 320 + i * 150); });
+        .forEach(function(c, i){ kante(c, 'story', 'zeichnen', 320 + i * 150, 560); });
     }
     var offen = false, planTimer = 0;
     new MutationObserver(function(){
@@ -35049,6 +35121,28 @@ window.__k = {eval: c => eval(c)};
       clearTimeout(planTimer);
       planTimer = setTimeout(blattRuhe, 0);
     }).observe(sheet, {childList:true});
+
+    // Öffnet eine Story oder eine Auszeichnung, fährt das Licht einmal ihre
+    // Kante ab — in der Farbe der Story.
+    [['ndBg', 'nd', 'story', 760], ['bpBg', 'bp', 'weiss', 700]].forEach(function(p){
+      var bg = document.getElementById(p[0]), inh = document.getElementById(p[1]), war = false;
+      new MutationObserver(function(){
+        var jetzt = bg.classList.contains('show');
+        if(jetzt && !war) kante(inh, p[2], 'zeichnen', 120, p[3]);
+        war = jetzt;
+      }).observe(bg, {attributes:true, attributeFilter:['class']});
+    });
+    // Steht die Verbindung zum ersten Mal, geht vom Punkt oben links zweimal
+    // ein Ring aus: jetzt ist es der Stand von jetzt.
+    var verbunden = false, punkt = document.getElementById('connDot');
+    var conn0 = window.__entwurfConn;
+    window.__entwurfConn = function(c){
+      conn0(c);
+      if(c !== 'ok' || verbunden || still()) return;
+      verbunden = true;
+      punkt.classList.add('neu-ping');
+      setTimeout(function(){ punkt.classList.remove('neu-ping'); }, 2000);
+    };
 
     // Story und Auszeichnung schließen nur ihren Vorhang; der Inhalt blieb
     // bisher unsichtbar stehen, mit allem, was darin läuft. Nach dem
