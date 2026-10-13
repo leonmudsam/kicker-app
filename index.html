@@ -1059,6 +1059,15 @@
     transform:translateX(-84%);animation:glanzZug 8s ease-in-out infinite}
   .nf-card.nf-s-woche:not(.read)::after,.nd-s-woche .nd-head > .glanz-bahn::after{animation-delay:-3s}
   .rcp-held > .glanz-bahn::after{animation-delay:-5s}
+  .pp-root .pp-tr > .glanz-bahn::after,.pp-root .chron-one > .glanz-bahn::after,
+  .pp-root .pp-sn.gold > .glanz-bahn::after,.pp-root .pp-bmini.legendary > .glanz-bahn::after{
+    content:"";position:absolute;top:0;bottom:0;left:0;width:250%;pointer-events:none;
+    background:linear-gradient(105deg,transparent 42%,rgba(247,207,74,.22) 50%,transparent 58%);
+    transform:translateX(-84%);animation:glanzZug 8s ease-in-out infinite;animation-delay:var(--gd,0s)}
+  .pp-root .pp-tr.team > .glanz-bahn::after{
+    background:linear-gradient(105deg,transparent 42%,rgba(86,180,232,.22) 50%,transparent 58%)}
+  .pp-root .pp-bmini.legendary > .glanz-bahn::after{animation-duration:9s;
+    background:linear-gradient(105deg,transparent 38%,rgba(255,236,170,.55) 50%,transparent 62%)}
   .nf-card.nf-glanz::after{
     content:"";position:absolute;top:0;bottom:0;left:0;width:250%;pointer-events:none;
     background:linear-gradient(105deg,transparent 40%,rgba(var(--story-rgb,185,196,189),.13) 50%,transparent 60%);
@@ -2867,6 +2876,65 @@
   .pp-weg-n{margin:2px 2px 0;font-size:11.5px;color:var(--muted);line-height:1.45}
 
 
+  .pp-root .pp-header{border-color:rgba(var(--ak-rgb),.16)}
+  .pp-rand{position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:3;
+    padding:1.5px;overflow:hidden;
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;mask-composite:exclude}
+  .pp-rand i{position:absolute;left:50%;top:50%;width:1400px;height:1400px;margin:-700px 0 0 -700px;
+    background:conic-gradient(from 0deg,transparent 0deg 292deg,rgba(var(--ak-rgb),.25) 318deg,
+      rgba(var(--ak-rgb),.95) 346deg,#fff 353deg,transparent 360deg);
+    opacity:0}
+
+  .pp-spark .pp-ping{fill:none;stroke:var(--ak);stroke-width:1.4;opacity:0;
+    transform-box:fill-box;transform-origin:center}
+
+  .pp-root .chron-cell.live::before{content:"";position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;
+    box-shadow:0 0 0 1px rgba(var(--ak-rgb),.7),0 0 18px 1px rgba(var(--ak-rgb),.55);opacity:0}
+
+  .pp-root .pp-k.f{position:relative;overflow:hidden}
+  .pp-root .pp-k.f::after{content:"";position:absolute;left:14px;right:14px;bottom:9px;height:3px;border-radius:2px;
+    background:linear-gradient(90deg,var(--ak) calc(var(--q,0) * 100%),var(--surface3) 0)}
+  .pp-root .pp-k.f .l{margin-bottom:6px}
+  .pp-root .pp-r-rich{position:relative;padding-bottom:16px}
+  .pp-root .pp-r-rich::after{content:"";position:absolute;left:12px;right:12px;bottom:8px;height:3px;border-radius:2px;
+    background:linear-gradient(90deg,var(--bez) calc(var(--q,0) * 100%),var(--surface3) 0)}
+  .pp-root .pp-r-rich.good,.pp-root .pp-r-rich.fav{--bez:var(--acid)}
+  .pp-root .pp-r-rich.bad,.pp-root .pp-r-rich.nem{--bez:var(--red)}
+  .pp-root .pp-st.lauf-sieg{border-left:2px solid var(--acid)}
+  .pp-root .pp-st.lauf-pleite{border-left:2px solid var(--red)}
+
+  .pp-root .pp-tr,.pp-root .pp-sn.gold,.pp-root .pp-bmini.legendary{position:relative;overflow:hidden}
+
+  .pp-root .pp-rj-tier.active .pp-rj-dot::after{content:"";position:absolute;inset:-2px;border-radius:50%;
+    border:1.5px solid var(--ak);opacity:0;pointer-events:none}
+
+  @keyframes ppRandLauf{0%{transform:rotate(-30deg);opacity:0}3%{opacity:1}22%{opacity:1}26%,100%{transform:rotate(330deg);opacity:0}}
+  @keyframes ppKurve{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+  @keyframes ppDa{from{opacity:0}}
+  @keyframes ppPing{0%{transform:scale(1);opacity:.9}100%{transform:scale(3.4);opacity:0}}
+  @keyframes ppAuf{from{transform:scale(.2);opacity:0}}
+  @keyframes ppAtem{0%,100%{opacity:.15}50%{opacity:1}}
+  @keyframes ppRangRing{0%{transform:scale(1);opacity:.85}70%,100%{transform:scale(2.6);opacity:0}}
+  @media(prefers-reduced-motion:no-preference){
+    .pp-rand i{animation:ppRandLauf 10s cubic-bezier(.45,.05,.4,1) .35s infinite}
+    .pp-spark path[stroke]{stroke-dasharray:1;animation:ppKurve 1.3s cubic-bezier(.4,0,.2,1) .25s both}
+    .pp-spark path[fill^="url"]{animation:ppDa .8s ease-out 1.1s both}
+    .pp-spark circle:not(.pp-ping){transform-box:fill-box;transform-origin:center;
+      animation:ppAuf .4s cubic-bezier(.3,1.6,.5,1) 1.45s both}
+    .pp-spark .pp-ping{animation:ppPing 1.4s ease-out 1.6s 2}
+    .pp-form .pd{animation:ppAuf .45s cubic-bezier(.3,1.6,.5,1) both}
+    .pp-form .pd:nth-child(1){animation-delay:.55s}
+    .pp-form .pd:nth-child(2){animation-delay:.63s}
+    .pp-form .pd:nth-child(3){animation-delay:.71s}
+    .pp-form .pd:nth-child(4){animation-delay:.79s}
+    .pp-form .pd:nth-child(5){animation-delay:.87s}
+    .pp-root .chron-cell.live::before{animation:ppAtem 3.2s ease-in-out infinite}
+    .pp-root .pp-rj-tier.active .pp-rj-dot::after{animation:ppRangRing 2.8s ease-out 1s infinite}
+  }
+  @media(prefers-reduced-motion:reduce){.pp-rand{display:none}}
+
+
   .wk-highlights{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
     gap:7px;margin-bottom:14px}
   .wk-hl{background:var(--surface);border:1px solid var(--line);border-radius:14px;
@@ -3885,6 +3953,9 @@
   .chron-one .tx .n{font-family:'Archivo Black',sans-serif;font-size:14px;
     letter-spacing:-.01em;color:var(--tt);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chron-one .tx .n:has(.shared){white-space:normal;display:flex;flex-wrap:wrap;
+    align-items:center;gap:3px 7px}
+  .chron-one .tx .n:has(.shared) .shared{margin-left:0;white-space:nowrap}
   .chron-one .tx .e{font-size:11px;color:var(--ink2);line-height:1.35}
   .chron-one .go{flex:0 0 auto;color:var(--muted);display:grid;place-items:center;opacity:.7}
   .chron-one .go svg{width:15px;height:15px}
@@ -5727,7 +5798,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.13.bc8c1345';
+const BUILD_VERSION='2026.10.13.0dd4263e';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -6969,7 +7040,10 @@ function rcpPaarHtml(ids, px){
 }
 
 
-function glanzBahn(){ return '<span class="glanz-bahn" aria-hidden="true"></span>'; }
+function glanzBahn(verzug){
+  return '<span class="glanz-bahn" aria-hidden="true"'
+    + (verzug != null ? ` style="--gd:${(+verzug).toFixed(2)}s"` : '') + '></span>';
+}
 function rcpHeldHtml(o){
   const ids = o.pids && o.pids.length ? o.pids : [o.pid];
   const ein = ids.length === 1;
@@ -14669,8 +14743,9 @@ function showPlayer(id){
               </linearGradient>
             </defs>
             <path d="${fillPath}" fill="url(#${esc(gradId)})"/>
-            <path d="${linePath}" fill="none" stroke="${lineCol}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="${linePath}" fill="none" stroke="${lineCol}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" pathLength="1"/>
             <circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="2.5" fill="${lineCol}"/>
+            <circle class="pp-ping" cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="2.5"/>
           </svg>
         </div>
         <div class="pp-spark-foot">
@@ -14783,26 +14858,26 @@ function showPlayer(id){
   trophies.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   const trophyHtml = `
     <div class="pp-trophies">
-      ${trophies.map(t=>{
+      ${trophies.map((t, ti)=>{
         if(t.type==='player') return `
         <div class="pp-tr">
           <span class="ic svg-ic">${svgI('trophy')}</span>
           <div class="ti">Player of<br>the Season</div>
-          <div class="su">${esc(t.label)}</div>
+          <div class="su">${esc(t.label)}</div>${glanzBahn(.4 + ti * .6)}
         </div>`;
         const teamAttr = t.mate ? ` data-team="${esc(paarKey(id, t.mate))}"` : '';
         return `
         <div class="pp-tr team"${teamAttr}>
           <span class="ic svg-ic">${svgI('handshake')}</span>
           <div class="ti">Team of<br>the Season</div>
-          <div class="su">${esc(t.label)}</div>
+          <div class="su">${esc(t.label)}</div>${glanzBahn(.4 + ti * .6)}
         </div>`;
       }).join('')}
     </div>`;
 
   const seasonRailHtml = seasonHistory.length ? `
     <div class="pp-seasons" id="ppSeasonsRail">
-      ${seasonHistory.map(sn=>{
+      ${seasonHistory.map((sn, si)=>{
         const cls = sn.place===1?'gold':sn.place===2?'silver':sn.place===3?'bronze':'';
         const medal = sn.place>=1&&sn.place<=3 ? medalB(sn.place-1) : '';
         const eloCls = sn.eloDelta>=0?'pos':'neg';
@@ -14811,7 +14886,7 @@ function showPlayer(id){
           <div class="mo">${esc(sn.label)}</div>
           <div class="pl"><span class="n big">${sn.place?sn.place+'.':'–'}</span></div>
           <div class="el ${eloCls}">${eloTxt}</div>
-          <div class="rc">${sn.wins}–${sn.losses}</div>
+          <div class="rc">${sn.wins}–${sn.losses}</div>${sn.place === 1 ? glanzBahn(3 + si * .5) : ''}
         </div>`;
       }).join('')}
     </div>` : '';
@@ -14935,6 +15010,7 @@ const rankProgHtml = rInfo ? `
         ${sparkHtml}
         ${formHtml?`<div class="pp-form">${formHtml}</div>`:''}
       </div>` : ''}
+      <span class="pp-rand" aria-hidden="true"><i></i></span>
     </header>
 
     ${(()=>{
@@ -14992,7 +15068,7 @@ const rankProgHtml = rInfo ? `
       </div>
       <div class="pp-kpi">
         <div class="pp-k"><div class="v">${s.wins}</div><div class="l">Siege</div></div>
-        <div class="pp-k f"><div class="v">${wr}%</div><div class="l">Siegquote</div></div>
+        <div class="pp-k f" style="--q:${(wr / 100).toFixed(2)}"><div class="v">${wr}%</div><div class="l">Siegquote</div></div>
         <div class="pp-k ${s.gd>=0?'pos':'neg'}"><div class="v">${s.gd>=0?'+':''}${s.gd}</div><div class="l">Torbilanz</div></div>
       </div>
     </div>
@@ -15002,7 +15078,7 @@ const rankProgHtml = rInfo ? `
         <div class="l"><span class="ic svg-ic">${svgI('flame')}</span><h4>Siegesserien</h4></div>
       </div>
       <div class="pp-streaks">
-        <div class="pp-st">
+        <div class="pp-st${streak > 0 ? ' lauf-sieg' : streak < 0 ? ' lauf-pleite' : ''}">
           <div class="l">Aktuelle Serie</div>
           <div class="v ${streak===0?'empty':''}">${streak===1?'1 Sieg':streak>0?streak+' Siege':streak===-1?'1 Niederlage':streak<0?(-streak)+' Niederlagen':'–'}</div>
           ${_last15.length?`<div class="dots mixed">${last15DotsHtml}</div>`:''}
@@ -15021,9 +15097,10 @@ const rankProgHtml = rInfo ? `
       badges.forEach(b => { const r = _rOf.get(b.id) || rarityOf(b.id); if(_byRarity[r]) _byRarity[r].push(b); });
       const _strip = [];
       RARITY_ORDER.forEach(r => _byRarity[r].forEach(b => _strip.push({b, r})));
+      let _leg = 0;
       const _stripHtml = _strip.map(({b,r}) => {
         const ic = icPfad(b.ic) ? `<svg viewBox="0 0 24 24">${icPfad(b.ic)}</svg>` : '';
-        return `<div class="pp-bmini ${r}">${ic}</div>`;
+        return `<div class="pp-bmini ${r}">${ic}${r === 'legendary' ? glanzBahn(1 + (_leg++) * .12) : ''}</div>`;
       }).join('');
       const _seg = (r) => _byRarity[r].length;
       const _have = _seg('legendary')+_seg('rare')+_seg('common')+_seg('negative');
@@ -15084,7 +15161,7 @@ const rankProgHtml = rInfo ? `
           };
           const card=(cls, attr, icKey, label, name, wr, w, g)=>{
             const empty = !name;
-            return `<div class="pp-r-rich ${cls}"${attr}>
+            return `<div class="pp-r-rich ${cls}"${attr}${empty ? '' : ` style="--q:${(+wr).toFixed(2)}"`}>
               ${empty?`<div class="av empty">–</div>`:relAv(name.id)}
               <div class="info">
                 <div class="l">${svgI(icKey)}${label}</div>
@@ -30987,6 +31064,7 @@ function _chronStripHtml(pid, teil){
     const mine = alle.filter(x => !x.neg).concat(alle.filter(x => x.neg));
     const zaehlt = alle.filter(x => !x.neg).length;
     const nurNeg = zaehlt === 0;
+    let lauf = 0;
     const card = (x) => {
       const tt = titleTone(x.tone);
       return `<div class="chron-one${x.neg ? ' schatten' : ''}" style="--tt:${tt.c};--ttr:${tt.rgb}" data-chron="${esc(x.id)}">
@@ -30997,7 +31075,7 @@ function _chronStripHtml(pid, teil){
         <span class="e num">${esc(x.ev)}</span>
       </span>
       <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-        stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></span>
+        stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></span>${x.neg ? '' : glanzBahn(2.2 + (lauf++) * .45)}
     </div>`;
     };
     const liste = mine.length ? mine : [c];

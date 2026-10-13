@@ -4494,6 +4494,99 @@ return JSON.stringify(funde,null,1);
      'die Mitspieler unter den Beziehungen stehen bei 288, 360 und 430 px in einer Zeile, der Rest als „+N weitere"',
      leisten.map(x => x.b + ': ' + x.gesichter + (x.rest ? ' +' + x.rest : '') + ' in ' + x.zeilen + ' Zeile(n), über ' + x.ueber).join(' · '));
 
+  // ── Das Profil lebt [§C27] ────────────────────────────────────────
+  //    Bewegt wird nur, was gewonnen ist oder gerade läuft: das Licht am Rand
+  //    des Kopfs, die Elo-Kurve, die sich zeichnet, der laufende Monat und der
+  //    eigene Rang, die atmen, und das Lauflicht des Goldes über jedem Titel,
+  //    jedem gehaltenen Rekord, Platz 1 einer Saison und den legendären
+  //    Auszeichnungen. Vorher stand das Profil ganz still. Endlos läuft nur
+  //    transform und opacity, bei Bewegungsruhe gar nichts.
+  await page.setViewportSize({width:360, height:900});
+  const lebt = async () => page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    return JSON.parse(K(`JSON.stringify((function(){
+      // Jedes Profil der Liga: nicht jeder hält einen Titel, eine legendäre
+      // Auszeichnung oder einen geteilten Rekord.
+      const ids = players.filter(p => sichtbar(p)).map(p => p.id);
+      const sammeln = {};
+      const dazu = o => Object.keys(o).forEach(k => {
+        if(Array.isArray(o[k])) sammeln[k] = (sammeln[k] || []).concat(o[k]);
+        else if(typeof o[k] === 'number') sammeln[k] = (sammeln[k] || 0) + o[k];
+        else if(typeof o[k] === 'boolean') sammeln[k] = (sammeln[k] === undefined ? true : sammeln[k]) && o[k];
+        else if(sammeln[k] === undefined || o[k] !== 'fehlt') sammeln[k] = o[k]; });
+      ids.forEach(pid => {
+      showPlayer(pid);
+      const sh = document.querySelector('#sheet');
+      const anim = (e, pseudo) => e ? getComputedStyle(e, pseudo).animationName : 'fehlt';
+      const bahn = e => { const b = e.querySelector(':scope > .glanz-bahn'); return b ? anim(b, '::after') : 'ohne'; };
+      const alle = sel => [...sh.querySelectorAll(sel)];
+      const endlosFremd = [];
+      document.getAnimations().forEach(a => {
+        const t = a.effect && a.effect.getTiming ? a.effect.getTiming() : {};
+        if(t.iterations !== Infinity || !a.effect.target || !a.effect.target.closest('#sheet')) return;
+        const props = new Set(a.effect.getKeyframes().flatMap(k => Object.keys(k))
+          .filter(k => !['offset', 'computedOffset', 'easing', 'composite'].includes(k)));
+        [...props].filter(k => k !== 'transform' && k !== 'opacity').forEach(k => endlosFremd.push((a.animationName || '?') + ':' + k));
+      });
+      const quote = sh.querySelector('.pp-k.f'), quoteV = quote ? parseFloat(quote.textContent) / 100 : -1;
+      const rel = alle('.pp-r-rich').filter(r => r.querySelector('.stat .v'));
+      const geteilt = alle('.chron-one .shared');
+      const out = {
+        rand:anim(sh.querySelector('.pp-header .pp-rand i')),
+        randDa:getComputedStyle(sh.querySelector('.pp-header .pp-rand') || document.body).display,
+        kurve:anim(sh.querySelector('.pp-spark path[stroke]')),
+        laenge:(sh.querySelector('.pp-spark path[stroke]') || {getAttribute:()=>''}).getAttribute('pathLength'),
+        ping:anim(sh.querySelector('.pp-spark .pp-ping')),
+        form:alle('.pp-form .pd').map(e => anim(e)).filter(n => n === 'ppAuf').length + '/' + alle('.pp-form .pd').length,
+        monat:anim(sh.querySelector('.chron-cell.live'), '::before'),
+        rang:anim(sh.querySelector('.pp-rj-tier.active .pp-rj-dot'), '::after'),
+        titel:alle('.pp-tr').map(bahn), rekorde:alle('.chron-one:not(.schatten):not(.next)').map(bahn),
+        schatten:alle('.chron-one.schatten').map(bahn), platz1:alle('.pp-sn.gold').map(bahn),
+        andereSaison:alle('.pp-sn:not(.gold)').map(bahn).filter(n => n !== 'ohne').length,
+        legendaer:alle('.pp-bmini.legendary').map(bahn),
+        andereAuszeichnung:alle('.pp-bmini:not(.legendary)').map(bahn).filter(n => n !== 'ohne').length,
+        quote:quote ? Math.abs(parseFloat(quote.style.getPropertyValue('--q')) - quoteV) : 0,
+        beziehungen:rel.length && rel.every(r => { const v = parseFloat(r.querySelector('.stat .v').textContent) / 100;
+          return Math.abs(parseFloat(r.style.getPropertyValue('--q')) - v) < .006; }),
+        geteilt:geteilt.length, geteiltGanz:geteilt.every(e => e.scrollWidth <= e.clientWidth + 1
+          && e.closest('.n').scrollWidth <= e.closest('.n').clientWidth + 1),
+        endlosFremd:[...new Set(endlosFremd)],
+        imBlatt:document.getAnimations().filter(a => a.effect && a.effect.target && a.effect.target.closest
+          && a.effect.target.closest('#sheet .pp-root') && a.playState === 'running').length
+      };
+      // Eine Beziehung ohne Quote und ein Monat ohne laufenden Eintrag
+      // sind kein Befund; gezählt wird, was da ist.
+      if(!rel.length) delete out.beziehungen;
+      if(out.monat === 'fehlt') delete out.monat;
+      if(out.ping === 'fehlt') { delete out.ping; delete out.kurve; delete out.laenge; }
+      closeSheet(true);
+      dazu(out);
+      });
+      return sammeln;
+    })())`));
+  });
+  const pl = await lebt();
+  ok(pl.rand === 'ppRandLauf' && pl.kurve === 'ppKurve' && pl.laenge === '1' && pl.ping === 'ppPing'
+     && /^(\d+)\/\1$/.test(pl.form) && pl.monat === 'ppAtem' && pl.rang === 'ppRangRing',
+     'im Profil läuft das Licht am Rand, die Kurve zeichnet sich, die Form springt auf, Monat und Rang atmen',
+     JSON.stringify({rand:pl.rand, kurve:pl.kurve, laenge:pl.laenge, ping:pl.ping, form:pl.form, monat:pl.monat, rang:pl.rang}));
+  ok(pl.titel.length > 0 && pl.titel.every(n => n === 'glanzZug') && pl.rekorde.length > 0 && pl.rekorde.every(n => n === 'glanzZug')
+     && pl.schatten.every(n => n === 'ohne') && pl.platz1.every(n => n === 'glanzZug') && pl.andereSaison === 0
+     && pl.legendaer.length > 0 && pl.legendaer.every(n => n === 'glanzZug') && pl.andereAuszeichnung === 0,
+     'das Lauflicht liegt über jedem Titel, gehaltenen Rekord, Platz 1 und jeder legendären Auszeichnung, sonst nirgends',
+     JSON.stringify({titel:pl.titel.length, rekorde:pl.rekorde.length, schatten:pl.schatten, platz1:pl.platz1.length,
+       andere:pl.andereSaison + pl.andereAuszeichnung, legendaer:pl.legendaer.length}));
+  ok(pl.quote < .006 && pl.beziehungen,
+     'die Siegquote und jede Beziehung tragen ihre Quote als Balken', JSON.stringify({quote:pl.quote, bez:pl.beziehungen}));
+  ok(pl.geteilt > 0 && pl.geteiltGanz,
+     '„zu zweit gehalten" steht ganz da und schneidet den Namen des Rekords nicht ab', pl.geteilt + ' Marken');
+  ok(!pl.endlosFremd.length, 'was im Profil endlos läuft, bewegt nur transform und opacity', pl.endlosFremd.join(', '));
+  await page.emulateMedia({reducedMotion: 'reduce'});
+  const plRuhig = await lebt();
+  await page.emulateMedia({reducedMotion: 'no-preference'});
+  ok(plRuhig.imBlatt === 0 && plRuhig.randDa === 'none' && plRuhig.titel.every(n => n === 'none'),
+     'bei Bewegungsruhe steht im Profil alles still', JSON.stringify({laufen:plRuhig.imBlatt, rand:plRuhig.randDa}));
+
   await page.setViewportSize({width:430, height:932});
 
   console.log('\n' + '═'.repeat(60));

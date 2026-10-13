@@ -6,8 +6,8 @@
 - Bewegung: der Schlitten fährt nur über `transform` (`schlittenFahren`); eine Animation endet an `transitionend` mit Rückfall-Timer und genau einem Abschluss je Element (`_afterTransition`); der Finger besitzt den Zug (Eingabefelder und gescrollte Listen gehören nicht der Schließgeste, ein Bild je Frame); ein Balken wächst in der Höhe, nie in der Breite; was endlos läuft, bewegt nur `transform` und `opacity` — ein Schein, der atmet, ist eine eigene Ebene, die kommt und geht, und ein Lichtlauf fährt per `transform` (`glanzZug`) über eine Fläche, die abschneidet, oder über seine eigene Bahn (`glanzBahn`); alles ruht bei Bewegungsruhe.
 - Ein Award hat ein Zeichen (`AW_IC`), einen Namen (`AWARD_META.title`) und einen Wert aus EINER Tabelle (`AW_WERT`: Liste, Zahl, Einheit, Stichprobe, `gilt`); die Kachel beantwortet wer, wie viel, woraus (`awFeldHtml`, `awLaufHtml`) und trägt drei Töne (`ton-pos`, `ton-team`, `ton-neg`). Ein Name gehört einer Frage.
 - Feed-Karte: Tageskopf als Marke (`.nf-tag`), Rubrikband (`_newsRubrik`, `_newsSorteIcon`), zwölf Kartenformen (`_newsSorte`) mit je einer Bildzone, Motiv (`_newsMotiv`), keine zwei Rubriken mit demselben Zeichen; die Bildzone macht die Karte nicht höher und nimmt der Schlagzeile nicht den Platz; ein Deckel schneidet ab statt zu schrumpfen; Zahl, Datum, Name fett (`_newsBetont`). Es gibt eine Kartenform, kein Mini-Popup.
-- Licht und Rand: Breaking bricht die Spalte und glimmt; die Karte des Tages schimmert leise golden; der Lichtlauf (`glanzZug`, ohne eigenes Abschneiden auf seiner Bahn `glanzBahn`) nur dort, wo EINER einen goldenen Titel trägt; das Seltene trägt einen leisen Lauf in seiner Familienfarbe (`_newsGlanz`); der Rand (`--kante`, `--rahmen`) sagt das Gewicht; negativ trägt `.nf-neg`.
-- Metall statt Bewegung: Platz 1 bis 3 tragen ihr Metall als feste Veredelung — ein Rahmen im Verlauf von Gold, Silber oder Bronze (`border-box` unter `padding-box`), eine Lichtkante oben, ein Schein darunter, die Platzziffer mit Glanz; kein Strich an der Kante, nichts in einer Liste bewegt sich von selbst. Bewegung nur auf eine Handlung hin und kurz: der gewählte Reiter federt (`reiterStoss`) und leuchtet fest, ein Blatt blendet beim Öffnen ein (`blattEin`). Der Profilkopf trägt Kante und Hof im Rangton fest im Hintergrund.
+- Licht und Rand: Breaking bricht die Spalte und glimmt; die Karte des Tages schimmert leise golden; der Lichtlauf (`glanzZug`, ohne eigenes Abschneiden auf seiner Bahn `glanzBahn`) nur dort, wo EINER einen goldenen Titel trägt, und im Profil über allem Gewonnenen — jedem Liga-Titel, jedem gehaltenen Rekord, Platz 1 einer Saison, als Welle über den legendären Auszeichnungen —, versetzt (`glanzBahn(verzug)`), sodass er durch eine Reihe wandert; das Seltene trägt einen leisen Lauf in seiner Familienfarbe (`_newsGlanz`); der Rand (`--kante`, `--rahmen`) sagt das Gewicht; negativ trägt `.nf-neg`.
+- Metall statt Bewegung: Platz 1 bis 3 tragen ihr Metall als feste Veredelung — ein Rahmen im Verlauf von Gold, Silber oder Bronze (`border-box` unter `padding-box`), eine Lichtkante oben, ein Schein darunter, die Platzziffer mit Glanz; kein Strich an der Kante, nichts in einer Liste bewegt sich von selbst. Bewegung nur auf eine Handlung hin und kurz: der gewählte Reiter federt (`reiterStoss`) und leuchtet fest, ein Blatt blendet beim Öffnen ein (`blattEin`). Der Profilkopf trägt Kante und Hof im Rangton fest im Hintergrund und lebt sonst von Aura und Insignium; um seinen Rand läuft beim Öffnen und dann alle zehn Sekunden ein Licht in Rangfarbe (`.pp-rand`). Im Profil bewegt sich außerdem, was gewonnen ist oder gerade läuft: die Elo-Kurve zeichnet sich einmal, die Form springt auf, der laufende Monat und der eigene Rang atmen.
 - Story-Blatt: derselbe Bau (`_newsBlattKopf`, `_newsDetailMitte`, `_newsBlattFuss`), die Mitte zuerst gebaut, die Partie höchstens einmal, Scroll vor dem Markup auf null; was oben steht, steht unten nicht noch einmal (`_ndNeu`, `_ndOben`); kein Satz erklärt eine Grafik; das Blatt einer Partie zeigt Bühne, Siegchance auf der Skala, Elo-Wirkung, Duelle, Tagesleiste und Verteilung (`_ndBuehne`, `_ndChanceSkala`, `_ndEloWirkung`, `_ndDuelle`, `_ndTagLeiste`, `_ndVerteilung`); der Spieltag als Bahn (`_ndTagesbahn`); jedes Blatt zeigt, wovon seine Story handelt.
 - Zeichen: ein Strich aus EINER Regel (`--strich`); der Strahl des Positionsprofils gehört der überwiegenden Seite, die stärkere Rolle trägt ihre Farbe; das Insignium hat Reif, Kopf und Raute an fester Stelle; das Banner nur, wo ein Spieler allein und groß steht; die Kachel misst am Reif.
 - Eine Form je Sache: Kalendertag `tagKey`, Uhrzeit `datumFmt`, Dezimalkomma `komma`, Stand aus Sicht des Nebenstehenden `standFuer`, Überraschung als Siegchance der Sieger, Namen mit „&" nur in schmalen Zellen (`_chronHolderNames`), im Satz mit „und" (`_chronHalterSatz`, `_namenListe`), Elo-Grenzen in `expected` und `CHANCE_*`, der Platz im Feed aus der Gesamtliga (`_newsGesamtrang`). Zwei Rechnungen über dieselbe Frage, die bleiben müssen, hält ein Test aneinander.
@@ -20,7 +20,7 @@ quer durch `src/js` und `src/css`; die Bauteile selbst in `05b-recap-teile.js`, 
 
 ## Prüfung
 
-`tests/blatt` (Geometrie, Bauteile, Text und Bewegung jedes Reiters und Blatts bei 360 px), `tests/bewegung` (Wischgeste, Abschlüsse), `tests/blatt` (was im Feed endlos läuft, bewegt nur transform und opacity; Platz 1 bis 3 mit Rahmen, Schein und glänzender Ziffer, ohne Strich, nichts in der Rangliste bewegt sich, die offene Liga rechnet weder Stil noch Layout), `tests/tafel` (Strich, Award-Tabelle, Kalendertag, Formatierer), `tests/zeichen`.
+`tests/blatt` (Geometrie, Bauteile, Text und Bewegung jedes Reiters und Blatts bei 360 px), `tests/bewegung` (Wischgeste, Abschlüsse), `tests/blatt` (was im Feed endlos läuft, bewegt nur transform und opacity; Platz 1 bis 3 mit Rahmen, Schein und glänzender Ziffer, ohne Strich, nichts in der Rangliste bewegt sich, die offene Liga rechnet weder Stil noch Layout; das Profil lebt, wo etwas gewonnen ist oder läuft, endlos nur mit transform und opacity, bei Bewegungsruhe still), `tests/tafel` (Strich, Award-Tabelle, Kalendertag, Formatierer), `tests/zeichen`.
 
 ## Herleitung
 
@@ -231,6 +231,18 @@ jeder goldenen Zahl wäre eine Kirmes, und Gold trägt nur, was selten ist
 die Aura des Ersten leuchtet über das Podest hinaus und wäre sonst abgeschnitten.
 Anderthalb Sekunden Lauf, gut sechs Ruhe; bei Bewegungsruhe fehlt es ganz.
 `tests/blatt` misst, wer es trägt, wer nicht, und dass es ruht.
+**Im Profil lebt, was gewonnen ist oder gerade läuft.** Das Profil stand
+ganz still: ein Meistertitel, ein gehaltener Rekord und ein laufender Monat
+sahen aus wie jede andere Karte. Ein erster Entwurf gab jeder Fläche
+Metall, Verläufe und einen Strahlenfächer hinter dem Insignium — das war
+moderner als der Rest der App und gab dem Kopf einen Schimmer, den jeder
+hat (`mockup/profil`). Jetzt bleiben Material und Schrift, und bewegt wird
+nur mit dem, was die App schon kennt: der Lichtlauf des Goldes über Titeln,
+Rekorden, Platz 1 und legendären Auszeichnungen, versetzt Karte für Karte;
+ein Licht um den Rand des Kopfs, der sonst von Aura und Insignium lebt; die
+Elo-Kurve, die sich einmal zeichnet; Form-Punkte, die aufspringen; der
+laufende Monat und der eigene Rang, die atmen. Endlos läuft nur transform
+und opacity, nichts hängt am Scrollen, und bei Bewegungsruhe steht alles.
 **Das Seltene im Feed trägt einen leiseren Lauf in der Farbe seiner
 Familie** (`_newsGlanz`, `.nf-glanz`): Spitzenwechsel, übernommener Rekord,
 Insignium-Stufe, erster Chronik-Eintrag, seltene und legendäre

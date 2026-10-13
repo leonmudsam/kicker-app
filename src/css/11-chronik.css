@@ -298,6 +298,12 @@
   .chron-one .tx .n{font-family:'Archivo Black',sans-serif;font-size:14px;
     letter-spacing:-.01em;color:var(--tt);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* Mit der Marke „zu zweit gehalten" bricht die Zeile um: in einer Zeile
+     stand bei 360 px „ZU ZWEIT GEHALT…", und ein halbes Wort liest sich als
+     Fehler. Die Marke selbst bleibt ganz. */
+  .chron-one .tx .n:has(.shared){white-space:normal;display:flex;flex-wrap:wrap;
+    align-items:center;gap:3px 7px}
+  .chron-one .tx .n:has(.shared) .shared{margin-left:0;white-space:nowrap}
   .chron-one .tx .e{font-size:11px;color:var(--ink2);line-height:1.35}
   .chron-one .go{flex:0 0 auto;color:var(--muted);display:grid;place-items:center;opacity:.7}
   .chron-one .go svg{width:15px;height:15px}

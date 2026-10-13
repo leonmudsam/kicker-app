@@ -67,8 +67,14 @@ function rcpPaarHtml(ids, px){
 // wanderte eine `background-position`: jedes Bild ein Takt des
 // Hauptthreads, gemessen im Awards-Reiter 160 ms je Sekunde bei vierfach
 // gedrosselter CPU, solange das Podest zu sehen war. Ob die Bahn leuchtet,
-// sagt das CSS: nur, wo EINER einen goldenen Titel trägt [§C25].
-function glanzBahn(){ return '<span class="glanz-bahn" aria-hidden="true"></span>'; }
+// sagt das CSS: wo EINER einen goldenen Titel trägt [§C25], und im Profil
+// über allem, was dort gewonnen ist [§C27]. `verzug` (Sekunden) versetzt
+// das Licht: in einer Reihe wandert es von Karte zu Karte, statt überall
+// zugleich aufzublitzen.
+function glanzBahn(verzug){
+  return '<span class="glanz-bahn" aria-hidden="true"'
+    + (verzug != null ? ` style="--gd:${(+verzug).toFixed(2)}s"` : '') + '></span>';
+}
 function rcpHeldHtml(o){
   const ids = o.pids && o.pids.length ? o.pids : [o.pid];
   const ein = ids.length === 1;
