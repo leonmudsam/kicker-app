@@ -1049,6 +1049,15 @@
     transform:translateX(-84%);animation:glanzZug 8s ease-in-out infinite}
   .nf-card.nf-s-woche:not(.read)::after,.nd-s-woche .nd-head > .glanz-bahn::after{animation-delay:-3s}
   .rcp-held > .glanz-bahn::after{animation-delay:-5s}
+  .pp-root .pp-tr > .glanz-bahn::after,.pp-root .chron-one > .glanz-bahn::after,
+  .pp-root .pp-sn.gold > .glanz-bahn::after,.pp-root .pp-bmini.legendary > .glanz-bahn::after{
+    content:"";position:absolute;top:0;bottom:0;left:0;width:250%;pointer-events:none;
+    background:linear-gradient(105deg,transparent 42%,rgba(247,207,74,.22) 50%,transparent 58%);
+    transform:translateX(-84%);animation:glanzZug 8s ease-in-out infinite;animation-delay:var(--gd,0s)}
+  .pp-root .pp-tr.team > .glanz-bahn::after{
+    background:linear-gradient(105deg,transparent 42%,rgba(86,180,232,.22) 50%,transparent 58%)}
+  .pp-root .pp-bmini.legendary > .glanz-bahn::after{animation-duration:9s;
+    background:linear-gradient(105deg,transparent 38%,rgba(255,236,170,.55) 50%,transparent 62%)}
   .nf-card.nf-glanz::after{
     content:"";position:absolute;top:0;bottom:0;left:0;width:250%;pointer-events:none;
     background:linear-gradient(105deg,transparent 40%,rgba(var(--story-rgb,185,196,189),.13) 50%,transparent 60%);
@@ -2857,6 +2866,65 @@
   .pp-weg-n{margin:2px 2px 0;font-size:11.5px;color:var(--muted);line-height:1.45}
 
 
+  .pp-root .pp-header{border-color:rgba(var(--ak-rgb),.16)}
+  .pp-rand{position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:3;
+    padding:1.5px;overflow:hidden;
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;mask-composite:exclude}
+  .pp-rand i{position:absolute;left:50%;top:50%;width:1400px;height:1400px;margin:-700px 0 0 -700px;
+    background:conic-gradient(from 0deg,transparent 0deg 292deg,rgba(var(--ak-rgb),.25) 318deg,
+      rgba(var(--ak-rgb),.95) 346deg,#fff 353deg,transparent 360deg);
+    opacity:0}
+
+  .pp-spark .pp-ping{fill:none;stroke:var(--ak);stroke-width:1.4;opacity:0;
+    transform-box:fill-box;transform-origin:center}
+
+  .pp-root .chron-cell.live::before{content:"";position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;
+    box-shadow:0 0 0 1px rgba(var(--ak-rgb),.7),0 0 18px 1px rgba(var(--ak-rgb),.55);opacity:0}
+
+  .pp-root .pp-k.f{position:relative;overflow:hidden}
+  .pp-root .pp-k.f::after{content:"";position:absolute;left:14px;right:14px;bottom:9px;height:3px;border-radius:2px;
+    background:linear-gradient(90deg,var(--ak) calc(var(--q,0) * 100%),var(--surface3) 0)}
+  .pp-root .pp-k.f .l{margin-bottom:6px}
+  .pp-root .pp-r-rich{position:relative;padding-bottom:16px}
+  .pp-root .pp-r-rich::after{content:"";position:absolute;left:12px;right:12px;bottom:8px;height:3px;border-radius:2px;
+    background:linear-gradient(90deg,var(--bez) calc(var(--q,0) * 100%),var(--surface3) 0)}
+  .pp-root .pp-r-rich.good,.pp-root .pp-r-rich.fav{--bez:var(--acid)}
+  .pp-root .pp-r-rich.bad,.pp-root .pp-r-rich.nem{--bez:var(--red)}
+  .pp-root .pp-st.lauf-sieg{border-left:2px solid var(--acid)}
+  .pp-root .pp-st.lauf-pleite{border-left:2px solid var(--red)}
+
+  .pp-root .pp-tr,.pp-root .pp-sn.gold,.pp-root .pp-bmini.legendary{position:relative;overflow:hidden}
+
+  .pp-root .pp-rj-tier.active .pp-rj-dot::after{content:"";position:absolute;inset:-2px;border-radius:50%;
+    border:1.5px solid var(--ak);opacity:0;pointer-events:none}
+
+  @keyframes ppRandLauf{0%{transform:rotate(-30deg);opacity:0}3%{opacity:1}22%{opacity:1}26%,100%{transform:rotate(330deg);opacity:0}}
+  @keyframes ppKurve{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+  @keyframes ppDa{from{opacity:0}}
+  @keyframes ppPing{0%{transform:scale(1);opacity:.9}100%{transform:scale(3.4);opacity:0}}
+  @keyframes ppAuf{from{transform:scale(.2);opacity:0}}
+  @keyframes ppAtem{0%,100%{opacity:.15}50%{opacity:1}}
+  @keyframes ppRangRing{0%{transform:scale(1);opacity:.85}70%,100%{transform:scale(2.6);opacity:0}}
+  @media(prefers-reduced-motion:no-preference){
+    .pp-rand i{animation:ppRandLauf 10s cubic-bezier(.45,.05,.4,1) .35s infinite}
+    .pp-spark path[stroke]{stroke-dasharray:1;animation:ppKurve 1.3s cubic-bezier(.4,0,.2,1) .25s both}
+    .pp-spark path[fill^="url"]{animation:ppDa .8s ease-out 1.1s both}
+    .pp-spark circle:not(.pp-ping){transform-box:fill-box;transform-origin:center;
+      animation:ppAuf .4s cubic-bezier(.3,1.6,.5,1) 1.45s both}
+    .pp-spark .pp-ping{animation:ppPing 1.4s ease-out 1.6s 2}
+    .pp-form .pd{animation:ppAuf .45s cubic-bezier(.3,1.6,.5,1) both}
+    .pp-form .pd:nth-child(1){animation-delay:.55s}
+    .pp-form .pd:nth-child(2){animation-delay:.63s}
+    .pp-form .pd:nth-child(3){animation-delay:.71s}
+    .pp-form .pd:nth-child(4){animation-delay:.79s}
+    .pp-form .pd:nth-child(5){animation-delay:.87s}
+    .pp-root .chron-cell.live::before{animation:ppAtem 3.2s ease-in-out infinite}
+    .pp-root .pp-rj-tier.active .pp-rj-dot::after{animation:ppRangRing 2.8s ease-out 1s infinite}
+  }
+  @media(prefers-reduced-motion:reduce){.pp-rand{display:none}}
+
+
   .wk-highlights{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
     gap:7px;margin-bottom:14px}
   .wk-hl{background:var(--surface);border:1px solid var(--line);border-radius:14px;
@@ -3875,6 +3943,9 @@
   .chron-one .tx .n{font-family:'Archivo Black',sans-serif;font-size:14px;
     letter-spacing:-.01em;color:var(--tt);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chron-one .tx .n:has(.shared){white-space:normal;display:flex;flex-wrap:wrap;
+    align-items:center;gap:3px 7px}
+  .chron-one .tx .n:has(.shared) .shared{margin-left:0;white-space:nowrap}
   .chron-one .tx .e{font-size:11px;color:var(--ink2);line-height:1.35}
   .chron-one .go{flex:0 0 auto;color:var(--muted);display:grid;place-items:center;opacity:.7}
   .chron-one .go svg{width:15px;height:15px}
@@ -5647,125 +5718,110 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   .nd-ff .ff{margin:0}
   .ff-zw-m small b{color:var(--ink);font-weight:600}
 </style>
-<style>/* ═══ Das Spielerprofil im Entwurf ═══════════════════════════════════
-   Gilt nur unter html.neu (app.html#neu:<id>). Dieselben Bauteile, dieselbe
-   Reihenfolge, dasselbe Material wie heute: dunkle Karten, Archivo Black
-   für Zahlen und Namen, Sometype Mono für Beschriftungen, die gestrichelte
-   Kante unter jeder Überschrift. Ein erster Entwurf gab jeder Fläche Metall,
-   Verläufe und einen Strahlenfächer hinter dem Insignium; das sah moderner
-   aus als der Rest der App, und im Kopf schimmerte etwas, das jeder hat.
+<style>/* ═══ Das Spielerprofil im Entwurf, dritte Fassung ════════════════════
+   Gilt nur unter html.neu (app.html#neu:<id>). „Heute" ist die App mit dem
+   eingebauten zweiten Entwurf: das Lauflicht über dem Gewonnenen, das Licht
+   am Rand des Kopfs, die Kurve, die sich zeichnet [§C27].
 
-   Leben bekommt das Profil jetzt nur dort, wo etwas gewonnen ist oder
-   gerade läuft — und zwar mit den Effekten, die die App schon kennt:
-   - das Lauflicht (`glanz-bahn`, `glanzZug`), das in der App dort liegt, wo
-     Gold einen Titel bedeutet [§C25]: hier über den Liga-Titeln, den
-     gehaltenen Rekorden, dem ersten Platz einer Saison und als Welle über
-     den legendären Auszeichnungen;
-   - der Rand des Kopfs, um den einmal beim Öffnen und dann alle zehn
-     Sekunden ein Licht in Rangfarbe läuft — der Kopf selbst lebt von Aura
-     und Insignium;
-   - die Elo-Kurve, die sich beim Öffnen zeichnet, und die Form, deren
-     Punkte nacheinander aufspringen;
-   - der laufende Monat und der eigene Rang, die atmen.
-   Bewegt werden nur transform und opacity (eine Ausnahme: die Kurve zeichnet
-   sich einmal). Nichts hängt am Scrollen, und mit „Bewegung reduzieren"
-   steht alles still. */
+   Das Motiv dieser Fassung: was verliehen ist, hängt als Band oder Wimpel.
+   Das Ordensband unter dem Namen gefiel im ersten Entwurf; daraus wird eine
+   Familie — der Beiname als Ordensband mit Enden, die Liga-Titel als Wimpel
+   an einer Stange, Platz 1 bis 3 einer Saison mit ihrem Medaillenband, der
+   Rang als Band in seiner Farbe. Material und Schrift bleiben die der App:
+   Gold für Titel [§C25], Rangfarbe für den Rang, Archivo Black für Namen.
+   Bewegt wird einmal beim Öffnen: das Ordensband entrollt sich. */
 
-/* ── 1 · Der Rand des Kopfs ─────────────────────────────────────────── */
-/* Ein Licht in Rangfarbe läuft einmal um den Rahmen. Die Bahn ist ein Ring
-   aus der Maske (Inhalt minus Rand), darin dreht sich ein Kegel — gedreht
-   wird per transform, die Maske steht. */
-html.neu .pp-root .pp-header .neu-rand{position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:3;
-  padding:1.5px;overflow:hidden;
-  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
-  -webkit-mask-composite:xor;mask-composite:exclude}
-html.neu .pp-root .pp-header .neu-rand i{position:absolute;left:50%;top:50%;width:1400px;height:1400px;margin:-700px 0 0 -700px;
-  background:conic-gradient(from 0deg,transparent 0deg 292deg,rgba(var(--ak-rgb),.25) 318deg,
-    rgba(var(--ak-rgb),.95) 346deg,#fff 353deg,transparent 360deg);
-  opacity:0}
-/* Daneben bleibt, was der Kopf heute trägt: die Kante oben in Rangfarbe. */
-html.neu .pp-root .pp-header{border-color:rgba(var(--ak-rgb),.16)}
+/* ── 1 · Der Beiname als Ordensband ─────────────────────────────────── */
+/* Ein Band mit zwei Enden dahinter, die etwas tiefer hängen und eingekerbt
+   sind. Läuft der Monat noch, sind die Kanten gestrichelt wie heute die
+   Pille („läuft"). */
+html.neu .pp-root .neu-band{position:relative;display:inline-block;z-index:0}
+html.neu .pp-root .neu-band::before,html.neu .pp-root .neu-band::after{content:"";position:absolute;top:6px;bottom:-6px;width:22px;z-index:-1;
+  background:linear-gradient(180deg,#8a6a14,#5a4209)}
+html.neu .pp-root .neu-band::before{left:-14px;clip-path:polygon(0 0,100% 0,100% 100%,0 100%,9px 50%)}
+html.neu .pp-root .neu-band::after{right:-14px;clip-path:polygon(0 0,100% 0,calc(100% - 9px) 50%,100% 100%,0 100%)}
+html.neu .pp-root .neu-band .pp-title-pill{border:0;border-radius:2px;padding:7px 18px;
+  color:#ffe28a;text-shadow:0 1px 0 rgba(0,0,0,.45);
+  background:linear-gradient(rgba(255,236,170,.75),rgba(255,236,170,.75)) 0 3px/100% 1px no-repeat,
+    linear-gradient(rgba(255,236,170,.55),rgba(255,236,170,.55)) 0 calc(100% - 3px)/100% 1px no-repeat,
+    linear-gradient(180deg,#b8901f 0%,#8f6c12 55%,#73560c 100%);
+  box-shadow:0 6px 14px -6px rgba(0,0,0,.8)}
+html.neu .pp-root .neu-band .pp-title-pill.live{
+  background:repeating-linear-gradient(90deg,rgba(255,236,170,.8) 0 6px,transparent 6px 10px) 0 3px/100% 1px no-repeat,
+    repeating-linear-gradient(90deg,rgba(255,236,170,.6) 0 6px,transparent 6px 10px) 0 calc(100% - 3px)/100% 1px no-repeat,
+    linear-gradient(180deg,#b8901f 0%,#8f6c12 55%,#73560c 100%)}
+html.neu .pp-root .neu-band .pp-title-pill .i{color:#ffe28a}
+html.neu .pp-root .pp-title-row{margin-top:12px;gap:9px}
 
-/* ── 2 · Elo-Kurve und Form ─────────────────────────────────────────── */
-/* Der Endpunkt bekommt einen Ring, der beim Öffnen zweimal aufgeht. */
-html.neu .pp-root .pp-spark .neu-ping{fill:none;stroke:var(--ak);stroke-width:1.4;opacity:0;
-  transform-box:fill-box;transform-origin:center}
+/* ── 2 · Die Liga-Titel als Wimpel an einer Stange ──────────────────── */
+html.neu .pp-root .pp-trophies{padding-top:10px;gap:10px;
+  background:linear-gradient(180deg,#d8c27a,#8d7428) 0 4px/100% 3px no-repeat;background-attachment:local}
+html.neu .pp-root .pp-tr{border:0;border-radius:3px 3px 0 0;padding:16px 10px 30px;width:122px;
+  clip-path:polygon(0 0,100% 0,100% 100%,50% calc(100% - 18px),0 100%);
+  background:linear-gradient(180deg,rgba(255,255,255,.10),transparent 30%),
+    linear-gradient(180deg,#5a4510 0%,#3b2d0a 100%);
+  box-shadow:inset 0 2px 0 rgba(255,226,138,.55)}
+html.neu .pp-root .pp-tr.team{
+  background:linear-gradient(180deg,rgba(255,255,255,.10),transparent 30%),
+    linear-gradient(180deg,#143e58 0%,#0c2638 100%);
+  box-shadow:inset 0 2px 0 rgba(150,210,245,.55)}
+/* Zwei Ösen, an denen der Wimpel an der Stange hängt. */
+html.neu .pp-root .pp-tr::before{content:"";position:absolute;inset:auto;left:14px;right:14px;top:-1px;height:6px;
+  background:radial-gradient(circle at 3px 3px,#e9d68e 2.2px,transparent 2.6px) 0 0/calc(100% - 6px) 6px repeat-x;opacity:1}
+html.neu .pp-root .pp-tr .ic.svg-ic{width:34px;height:34px;border-radius:50%;margin-bottom:9px;color:#2a1e00;
+  background:radial-gradient(circle at 35% 30%,#ffeeb0,#f7cf4a 55%,#b88a1a)}
+html.neu .pp-root .pp-tr.team .ic.svg-ic{color:#04263c;background:radial-gradient(circle at 35% 30%,#d9f1ff,#56b4e8 55%,#2479aa)}
+html.neu .pp-root .pp-tr .ti{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:11.5px;text-align:center;color:#fff3cf}
+html.neu .pp-root .pp-tr.team .ti{color:#e2f4ff}
+html.neu .pp-root .pp-tr .su{text-align:center;color:rgba(255,236,190,.7)}
+html.neu .pp-root .pp-tr.team .su{color:rgba(205,236,255,.7)}
 
-/* ── 3 · Chronik: der laufende Monat atmet ──────────────────────────── */
-html.neu .pp-root .chron-cell.live::before{content:"";position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;
-  box-shadow:0 0 0 1px rgba(var(--ak-rgb),.7),0 0 18px 1px rgba(var(--ak-rgb),.55);opacity:0}
+/* ── 3 · Platz 1 bis 3 einer Saison mit Medaillenband ───────────────── */
+html.neu .pp-root .pp-sn.gold,html.neu .pp-root .pp-sn.silver,html.neu .pp-root .pp-sn.bronze{padding-top:22px;position:relative}
+html.neu .pp-root .pp-sn.gold::before{display:none}
+html.neu .pp-root .pp-sn.gold::after,html.neu .pp-root .pp-sn.silver::after,html.neu .pp-root .pp-sn.bronze::after{
+  content:"";position:absolute;left:50%;top:0;width:24px;height:16px;margin-left:-12px;
+  clip-path:polygon(0 0,100% 0,100% 100%,50% 68%,0 100%)}
+html.neu .pp-root .pp-sn.gold::after{background:linear-gradient(90deg,#f7cf4a 0 33%,#b88a1a 33% 66%,#f7cf4a 66%)}
+html.neu .pp-root .pp-sn.silver::after{background:linear-gradient(90deg,#d6dce2 0 33%,#7d858d 33% 66%,#d6dce2 66%)}
+html.neu .pp-root .pp-sn.bronze::after{background:linear-gradient(90deg,#d79a68 0 33%,#7a4a24 33% 66%,#d79a68 66%)}
+html.neu .pp-root .pp-sn.silver .pl{color:#d6dce2}
+html.neu .pp-root .pp-sn.bronze .pl{color:#d79a68}
 
-/* ── 4 · Gesamtbilanz, Serien, Beziehungen ──────────────────────────── */
-/* Die Siegquote bekommt einen Balken bis zur Quote, jede Beziehung einen bis
-   zu ihrer: man sieht, wie gut, ohne zu lesen. Flach, wie die Balken der
-   App sonst. */
-html.neu .pp-root .pp-k.neu-quote{position:relative;overflow:hidden}
-html.neu .pp-root .pp-k.neu-quote::after{content:"";position:absolute;left:14px;right:14px;bottom:9px;height:3px;border-radius:2px;
-  background:linear-gradient(90deg,var(--ak) calc(var(--q,0)*100%),var(--surface3) 0)}
-html.neu .pp-root .pp-k.neu-quote .l{margin-bottom:6px}
-html.neu .pp-root .pp-r-rich{position:relative;padding-bottom:16px}
-html.neu .pp-root .pp-r-rich::after{content:"";position:absolute;left:12px;right:12px;bottom:8px;height:3px;border-radius:2px;
-  background:linear-gradient(90deg,var(--bez) calc(var(--q,0)*100%),var(--surface3) 0)}
-html.neu .pp-root .pp-r-rich.good,html.neu .pp-root .pp-r-rich.fav{--bez:var(--acid)}
-html.neu .pp-root .pp-r-rich.bad,html.neu .pp-root .pp-r-rich.nem{--bez:var(--red)}
-/* Die laufende Serie trägt die Kante ihrer Richtung, wie die Beziehungen. */
-html.neu .pp-root .pp-st.neu-gruen{border-left:2px solid var(--acid)}
-html.neu .pp-root .pp-st.neu-rot{border-left:2px solid var(--red)}
+/* ── 4 · Der Rang als Band in seiner Farbe ──────────────────────────── */
+html.neu .pp-root .pp-rank-label{display:inline-block;padding:4px 14px 5px 12px;margin-bottom:5px;
+  color:#0a0c0b;text-shadow:none;font-size:15px;
+  background:linear-gradient(180deg,var(--pp-tier-2,var(--ak)),var(--pp-tier-1,var(--ak)));
+  clip-path:polygon(0 0,100% 0,calc(100% - 8px) 50%,100% 100%,0 100%)}
 
-/* ── 5 · Das Lauflicht über dem Gewonnenen ──────────────────────────── */
-/* Dasselbe Bauteil wie Podest, Spieler des Tages und Rückblick [§C27]:
-   eine Ebene über der Karte, per transform gezogen. Je Karte versetzt
-   (--gd), sodass das Licht durch eine Reihe wandert, statt überall
-   zugleich zu blitzen. */
-html.neu .pp-root .pp-tr,html.neu .pp-root .pp-sn.gold,html.neu .pp-root .pp-bmini.legendary{position:relative;overflow:hidden}
-html.neu .pp-root .chron-one{overflow:hidden}
-html.neu .pp-root .neu-gl::after{content:"";position:absolute;top:0;bottom:0;left:0;width:250%;pointer-events:none;
-  background:linear-gradient(105deg,transparent 42%,rgba(247,207,74,.22) 50%,transparent 58%);
-  transform:translateX(-84%)}
-html.neu .pp-root .pp-tr.team .neu-gl::after{background:linear-gradient(105deg,transparent 42%,rgba(86,180,232,.22) 50%,transparent 58%)}
-html.neu .pp-root .pp-bmini .neu-gl::after{background:linear-gradient(105deg,transparent 38%,rgba(255,236,170,.55) 50%,transparent 62%)}
+/* ── 5 · Beziehungen, Serien, Marken ───────────────────────────────── */
+/* Das Gesicht trägt den Ring seiner Richtung, wie der Balken darunter. */
+html.neu .pp-root .pp-r-rich .av:not(.empty){border:0;box-shadow:0 0 0 2px var(--bg2),0 0 0 3.5px var(--bez)}
+/* Ab drei Siegen in Folge steht das Feuer neben der laufenden Serie. */
+html.neu .pp-root .neu-feuer{display:inline-grid;place-items:center;width:18px;height:18px;margin-left:6px;vertical-align:2px;color:var(--orange)}
+html.neu .pp-root .neu-feuer svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+/* Die Zahl rechts neben jeder Überschrift als Marke. */
+html.neu .pp-root .pp-sec-title .m{padding:3px 9px;border-radius:99px;background:var(--surface2);border:1px solid var(--line)}
+html.neu .pp-root .pp-sec-title .m:empty{display:none}
 
-/* „zu zweit gehalten" bricht um, statt mit „…" abgeschnitten zu werden. */
-html.neu .pp-root .chron-one .n{white-space:normal;display:flex;flex-wrap:wrap;align-items:center;gap:3px 6px}
-html.neu .pp-root .chron-one .shared{white-space:nowrap;overflow:visible;text-overflow:clip;max-width:none}
+/* ── 7 · Gehaltene Rekorde auf einer Rosette ────────────────────────── */
+/* Das Zeichen eines gehaltenen Rekords sitzt auf einer Rosette, der Form
+   einer Ehrenschleife — dasselbe Motiv wie Band und Wimpel. Schattenseiten
+   bleiben eckig: sie sind nichts, was man verliehen bekommt. */
+html.neu .pp-root .chron-one:not(.schatten):not(.next) .ic{width:40px;height:40px;border-radius:0;
+  clip-path:polygon(50.0% 0.0%,61.1% 8.5%,75.0% 6.7%,80.4% 19.6%,93.3% 25.0%,91.5% 38.9%,100.0% 50.0%,91.5% 61.1%,93.3% 75.0%,80.4% 80.4%,75.0% 93.3%,61.1% 91.5%,50.0% 100.0%,38.9% 91.5%,25.0% 93.3%,19.6% 80.4%,6.7% 75.0%,8.5% 61.1%,0.0% 50.0%,8.5% 38.9%,6.7% 25.0%,19.6% 19.6%,25.0% 6.7%,38.9% 8.5%);
+  background:radial-gradient(circle at 50% 50%,#3a2d08 0 52%,transparent 53%),
+    conic-gradient(from 0deg,#f7cf4a,#b88a1a,#f7cf4a,#b88a1a,#f7cf4a,#b88a1a,#f7cf4a);
+  box-shadow:none;color:#ffe28a}
 
-/* ── 6 · Der eigene Rang atmet ──────────────────────────────────────── */
-html.neu .pp-root .pp-rj-tier.active .pp-rj-dot{position:relative}
-html.neu .pp-root .pp-rj-tier.active .pp-rj-dot::after{content:"";position:absolute;inset:-2px;border-radius:50%;
-  border:1.5px solid var(--ak);opacity:0;pointer-events:none}
-
-/* Bei 320 px wurde „diese Saison" zu „diese Sai…" — heute wie im Entwurf.
-   Schmaler gesetzt passt es in die Spalte. */
-@media(max-width:340px){html.neu .pp-root .pp-et-col .sub{letter-spacing:0;font-size:8.5px}}
-
-/* ── 7 · Bewegung ───────────────────────────────────────────────────── */
-@keyframes neuRand{0%{transform:rotate(-30deg);opacity:0}3%{opacity:1}22%{opacity:1}26%,100%{transform:rotate(330deg);opacity:0}}
-@keyframes neuZieh{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
-@keyframes neuDa{from{opacity:0}}
-@keyframes neuPing{0%{transform:scale(1);opacity:.9}100%{transform:scale(3.4);opacity:0}}
-@keyframes neuPop{from{transform:scale(.2);opacity:0}}
-@keyframes neuAtem{0%,100%{opacity:.15}50%{opacity:1}}
-@keyframes neuPuls{0%{transform:scale(1);opacity:.85}70%,100%{transform:scale(2.6);opacity:0}}
+/* ── 6 · Bewegung: das Band entrollt sich beim Öffnen ──────────────── */
+@keyframes neuEntrollen{from{transform:scaleX(.25);opacity:0}60%{opacity:1}to{transform:none;opacity:1}}
+@keyframes neuEnden{from{transform:translateY(-6px);opacity:0}to{transform:none;opacity:1}}
 @media(prefers-reduced-motion:no-preference){
-  html.neu:not(.ruhe) .pp-root .pp-header .neu-rand i{animation:neuRand 10s cubic-bezier(.45,.05,.4,1) .35s infinite}
-  html.neu:not(.ruhe) .pp-root .pp-spark path[stroke]{stroke-dasharray:1;animation:neuZieh 1.3s cubic-bezier(.4,0,.2,1) .25s both}
-  html.neu:not(.ruhe) .pp-root .pp-spark path[fill^="url"]{animation:neuDa .8s ease-out 1.1s both}
-  html.neu:not(.ruhe) .pp-root .pp-spark circle:not(.neu-ping){animation:neuPop .4s cubic-bezier(.3,1.6,.5,1) 1.45s both;
-    transform-box:fill-box;transform-origin:center}
-  html.neu:not(.ruhe) .pp-root .pp-spark .neu-ping{animation:neuPing 1.4s ease-out 1.6s 2}
-  html.neu:not(.ruhe) .pp-root .pp-form .pd{animation:neuPop .45s cubic-bezier(.3,1.6,.5,1) both}
-  html.neu:not(.ruhe) .pp-root .pp-form .pd:nth-child(1){animation-delay:.55s}
-  html.neu:not(.ruhe) .pp-root .pp-form .pd:nth-child(2){animation-delay:.63s}
-  html.neu:not(.ruhe) .pp-root .pp-form .pd:nth-child(3){animation-delay:.71s}
-  html.neu:not(.ruhe) .pp-root .pp-form .pd:nth-child(4){animation-delay:.79s}
-  html.neu:not(.ruhe) .pp-root .pp-form .pd:nth-child(5){animation-delay:.87s}
-  html.neu:not(.ruhe) .pp-root .chron-cell.live::before{animation:neuAtem 3.2s ease-in-out infinite}
-  html.neu:not(.ruhe) .pp-root .neu-gl::after{animation:glanzZug var(--gz,8s) ease-in-out infinite;animation-delay:var(--gd,0s)}
-  html.neu:not(.ruhe) .pp-root .pp-rj-tier.active .pp-rj-dot::after{animation:neuPuls 2.8s ease-out 1s infinite}
+  html.neu:not(.ruhe) .pp-root .neu-band .pp-title-pill{animation:neuEntrollen .55s cubic-bezier(.2,.8,.2,1) .35s both}
+  html.neu:not(.ruhe) .pp-root .neu-band::before,html.neu:not(.ruhe) .pp-root .neu-band::after{animation:neuEnden .35s ease-out .8s both}
 }
 html.neu.ruhe .pp-root *,html.neu.ruhe .pp-root *::before,html.neu.ruhe .pp-root *::after{animation:none!important;transition:none!important}
-html.neu.ruhe .pp-root .neu-gl::after,html.neu.ruhe .pp-root .neu-rand{display:none}
-@media(prefers-reduced-motion:reduce){html.neu .pp-root .neu-gl::after,html.neu .pp-root .neu-rand{display:none}}
 </style>
 </head><body>
 
@@ -5843,7 +5899,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.13.bc8c1345';
+const BUILD_VERSION='2026.10.13.0dd4263e';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -7085,7 +7141,10 @@ function rcpPaarHtml(ids, px){
 }
 
 
-function glanzBahn(){ return '<span class="glanz-bahn" aria-hidden="true"></span>'; }
+function glanzBahn(verzug){
+  return '<span class="glanz-bahn" aria-hidden="true"'
+    + (verzug != null ? ` style="--gd:${(+verzug).toFixed(2)}s"` : '') + '></span>';
+}
 function rcpHeldHtml(o){
   const ids = o.pids && o.pids.length ? o.pids : [o.pid];
   const ein = ids.length === 1;
@@ -14785,8 +14844,9 @@ function showPlayer(id){
               </linearGradient>
             </defs>
             <path d="${fillPath}" fill="url(#${esc(gradId)})"/>
-            <path d="${linePath}" fill="none" stroke="${lineCol}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="${linePath}" fill="none" stroke="${lineCol}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" pathLength="1"/>
             <circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="2.5" fill="${lineCol}"/>
+            <circle class="pp-ping" cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="2.5"/>
           </svg>
         </div>
         <div class="pp-spark-foot">
@@ -14899,26 +14959,26 @@ function showPlayer(id){
   trophies.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   const trophyHtml = `
     <div class="pp-trophies">
-      ${trophies.map(t=>{
+      ${trophies.map((t, ti)=>{
         if(t.type==='player') return `
         <div class="pp-tr">
           <span class="ic svg-ic">${svgI('trophy')}</span>
           <div class="ti">Player of<br>the Season</div>
-          <div class="su">${esc(t.label)}</div>
+          <div class="su">${esc(t.label)}</div>${glanzBahn(.4 + ti * .6)}
         </div>`;
         const teamAttr = t.mate ? ` data-team="${esc(paarKey(id, t.mate))}"` : '';
         return `
         <div class="pp-tr team"${teamAttr}>
           <span class="ic svg-ic">${svgI('handshake')}</span>
           <div class="ti">Team of<br>the Season</div>
-          <div class="su">${esc(t.label)}</div>
+          <div class="su">${esc(t.label)}</div>${glanzBahn(.4 + ti * .6)}
         </div>`;
       }).join('')}
     </div>`;
 
   const seasonRailHtml = seasonHistory.length ? `
     <div class="pp-seasons" id="ppSeasonsRail">
-      ${seasonHistory.map(sn=>{
+      ${seasonHistory.map((sn, si)=>{
         const cls = sn.place===1?'gold':sn.place===2?'silver':sn.place===3?'bronze':'';
         const medal = sn.place>=1&&sn.place<=3 ? medalB(sn.place-1) : '';
         const eloCls = sn.eloDelta>=0?'pos':'neg';
@@ -14927,7 +14987,7 @@ function showPlayer(id){
           <div class="mo">${esc(sn.label)}</div>
           <div class="pl"><span class="n big">${sn.place?sn.place+'.':'–'}</span></div>
           <div class="el ${eloCls}">${eloTxt}</div>
-          <div class="rc">${sn.wins}–${sn.losses}</div>
+          <div class="rc">${sn.wins}–${sn.losses}</div>${sn.place === 1 ? glanzBahn(3 + si * .5) : ''}
         </div>`;
       }).join('')}
     </div>` : '';
@@ -15051,6 +15111,7 @@ const rankProgHtml = rInfo ? `
         ${sparkHtml}
         ${formHtml?`<div class="pp-form">${formHtml}</div>`:''}
       </div>` : ''}
+      <span class="pp-rand" aria-hidden="true"><i></i></span>
     </header>
 
     ${(()=>{
@@ -15108,7 +15169,7 @@ const rankProgHtml = rInfo ? `
       </div>
       <div class="pp-kpi">
         <div class="pp-k"><div class="v">${s.wins}</div><div class="l">Siege</div></div>
-        <div class="pp-k f"><div class="v">${wr}%</div><div class="l">Siegquote</div></div>
+        <div class="pp-k f" style="--q:${(wr / 100).toFixed(2)}"><div class="v">${wr}%</div><div class="l">Siegquote</div></div>
         <div class="pp-k ${s.gd>=0?'pos':'neg'}"><div class="v">${s.gd>=0?'+':''}${s.gd}</div><div class="l">Torbilanz</div></div>
       </div>
     </div>
@@ -15118,7 +15179,7 @@ const rankProgHtml = rInfo ? `
         <div class="l"><span class="ic svg-ic">${svgI('flame')}</span><h4>Siegesserien</h4></div>
       </div>
       <div class="pp-streaks">
-        <div class="pp-st">
+        <div class="pp-st${streak > 0 ? ' lauf-sieg' : streak < 0 ? ' lauf-pleite' : ''}">
           <div class="l">Aktuelle Serie</div>
           <div class="v ${streak===0?'empty':''}">${streak===1?'1 Sieg':streak>0?streak+' Siege':streak===-1?'1 Niederlage':streak<0?(-streak)+' Niederlagen':'–'}</div>
           ${_last15.length?`<div class="dots mixed">${last15DotsHtml}</div>`:''}
@@ -15137,9 +15198,10 @@ const rankProgHtml = rInfo ? `
       badges.forEach(b => { const r = _rOf.get(b.id) || rarityOf(b.id); if(_byRarity[r]) _byRarity[r].push(b); });
       const _strip = [];
       RARITY_ORDER.forEach(r => _byRarity[r].forEach(b => _strip.push({b, r})));
+      let _leg = 0;
       const _stripHtml = _strip.map(({b,r}) => {
         const ic = icPfad(b.ic) ? `<svg viewBox="0 0 24 24">${icPfad(b.ic)}</svg>` : '';
-        return `<div class="pp-bmini ${r}">${ic}</div>`;
+        return `<div class="pp-bmini ${r}">${ic}${r === 'legendary' ? glanzBahn(1 + (_leg++) * .12) : ''}</div>`;
       }).join('');
       const _seg = (r) => _byRarity[r].length;
       const _have = _seg('legendary')+_seg('rare')+_seg('common')+_seg('negative');
@@ -15200,7 +15262,7 @@ const rankProgHtml = rInfo ? `
           };
           const card=(cls, attr, icKey, label, name, wr, w, g)=>{
             const empty = !name;
-            return `<div class="pp-r-rich ${cls}"${attr}>
+            return `<div class="pp-r-rich ${cls}"${attr}${empty ? '' : ` style="--q:${(+wr).toFixed(2)}"`}>
               ${empty?`<div class="av empty">–</div>`:relAv(name.id)}
               <div class="info">
                 <div class="l">${svgI(icKey)}${label}</div>
@@ -31103,6 +31165,7 @@ function _chronStripHtml(pid, teil){
     const mine = alle.filter(x => !x.neg).concat(alle.filter(x => x.neg));
     const zaehlt = alle.filter(x => !x.neg).length;
     const nurNeg = zaehlt === 0;
+    let lauf = 0;
     const card = (x) => {
       const tt = titleTone(x.tone);
       return `<div class="chron-one${x.neg ? ' schatten' : ''}" style="--tt:${tt.c};--ttr:${tt.rgb}" data-chron="${esc(x.id)}">
@@ -31113,7 +31176,7 @@ function _chronStripHtml(pid, teil){
         <span class="e num">${esc(x.ev)}</span>
       </span>
       <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-        stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></span>
+        stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></span>${x.neg ? '' : glanzBahn(2.2 + (lauf++) * .45)}
     </div>`;
     };
     const liste = mine.length ? mine : [c];
@@ -34410,11 +34473,9 @@ window.__k = {eval: c => eval(c)};
 <script>// Läuft in app.html nach dem Code der App. Öffnet das Profil, das die
 // Adresse nennt (#heute:<id> oder #neu:<id>), und hört auf die
 // Vergleichsseite (postMessage): anderer Spieler, Bewegung aus.
-// Im Entwurf (#neu) ergänzt es das Markup um das, was beim Einbau
-// 18-profil.js schriebe: die Bahn für das Licht am Rand des Kopfs, die
-// Lauflicht-Ebene (`glanz-bahn`, dasselbe Bauteil wie Podest und Spieler
-// des Tages) über dem Gewonnenen, den Ring am Endpunkt der Elo-Kurve und
-// die Quoten als Variable statt nur als Text.
+// Im Entwurf (#neu) ergänzt es, was beim Einbau 18-profil.js schriebe: die
+// Hülle des Ordensbands um den Beinamen und das Feuer an einer laufenden
+// Siegesserie ab drei. Lauflicht, Randlicht und Kurve trägt die App selbst.
 (function(){
   var K = window.__k.eval;
   var teile = (location.hash || '#heute').slice(1).split(':');
@@ -34422,52 +34483,18 @@ window.__k = {eval: c => eval(c)};
   if(neu) document.documentElement.classList.add('neu');
   if(teile[2] === 'ruhe') document.documentElement.classList.add('ruhe');
 
-  function anteil(t){ var m = String(t || '').match(/(-?\d+(?:[.,]\d+)?)\s*%/); return m ? Math.max(0, Math.min(1, parseFloat(m[1].replace(',', '.')) / 100)) : null; }
-  function bahn(el, verzug, takt){
-    if(!el || el.querySelector(':scope > .neu-gl')) return;
-    var s = document.createElement('span');
-    s.className = 'glanz-bahn neu-gl'; s.setAttribute('aria-hidden', 'true');
-    s.style.setProperty('--gd', verzug.toFixed(2) + 's');
-    if(takt) s.style.setProperty('--gz', takt + 's');
-    el.appendChild(s);
-  }
-
   function schmuecken(root){
     if(!neu || !root) return;
-    var kopf = root.querySelector('.pp-header');
-    if(kopf && !kopf.querySelector('.neu-rand')){
-      var r = document.createElement('span'); r.className = 'neu-rand'; r.setAttribute('aria-hidden', 'true');
-      r.appendChild(document.createElement('i')); kopf.appendChild(r);
+    root.querySelectorAll('.pp-title-pill').forEach(function(p){
+      if(p.parentNode.classList.contains('neu-band')) return;
+      var b = document.createElement('span'); b.className = 'neu-band';
+      p.parentNode.insertBefore(b, p); b.appendChild(p);
+    });
+    var lauf = root.querySelector('.pp-st.lauf-sieg .v');
+    if(lauf && !lauf.querySelector('.neu-feuer') && (parseInt(lauf.textContent, 10) || 0) >= 3){
+      var f = document.createElement('span'); f.className = 'neu-feuer';
+      f.innerHTML = K('svgI("flame")'); lauf.appendChild(f);
     }
-    // Die Kurve zeichnet sich: Länge 1, damit die Strichlänge nicht von der
-    // Form der Kurve abhängt.
-    var spark = root.querySelector('.pp-spark svg');
-    if(spark && !spark.querySelector('.neu-ping')){
-      var linie = spark.querySelector('path[stroke]'), punkt = spark.querySelector('circle');
-      if(linie) linie.setAttribute('pathLength', '1');
-      if(punkt){ var ring = punkt.cloneNode(); ring.setAttribute('class', 'neu-ping'); spark.appendChild(ring); }
-    }
-    root.querySelectorAll('.pp-k').forEach(function(k){
-      if(!/Siegquote/i.test(k.textContent)) return;
-      var q = anteil(k.textContent);
-      if(q !== null){ k.style.setProperty('--q', q); k.classList.add('neu-quote'); }
-    });
-    root.querySelectorAll('.pp-r-rich').forEach(function(r){
-      var v = r.querySelector('.stat .v'), q = v && anteil(v.textContent);
-      if(q !== null && q !== undefined) r.style.setProperty('--q', q);
-    });
-    root.querySelectorAll('.pp-st').forEach(function(s){
-      var t = s.textContent;
-      if(!/Aktuelle/i.test(t)) return;
-      if(/Niederlage/.test(t)) s.classList.add('neu-rot');
-      else if(/Sieg/.test(t)) s.classList.add('neu-gruen');
-    });
-    // Das Licht wandert durch jede Reihe: Titel, gehaltene Rekorde, der
-    // erste Platz einer Saison, die legendären Auszeichnungen als Welle.
-    root.querySelectorAll('.pp-tr').forEach(function(el, i){ bahn(el, .4 + i * .6, 8); });
-    root.querySelectorAll('.chron-one:not(.schatten):not(.next)').forEach(function(el, i){ bahn(el, 2.2 + i * .45, 8); });
-    root.querySelectorAll('.pp-sn.gold').forEach(function(el, i){ bahn(el, 3 + i * .5, 8); });
-    root.querySelectorAll('.pp-bmini.legendary').forEach(function(el, i){ bahn(el, 1 + i * .12, 9); });
   }
 
   function oeffnen(pid){
@@ -34480,8 +34507,6 @@ window.__k = {eval: c => eval(c)};
   }
 
   window.__nachSetup = function(){
-    // Wer im Profil weitertippt (Laufbahn, Rekord, zurück), bekommt das
-    // neue Markup ebenso.
     var sh = document.getElementById('sheet');
     if(sh && window.MutationObserver){
       new MutationObserver(function(){ schmuecken(sh); }).observe(sh, {childList:true});

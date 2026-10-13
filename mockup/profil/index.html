@@ -1047,6 +1047,15 @@
     transform:translateX(-84%);animation:glanzZug 8s ease-in-out infinite}
   .nf-card.nf-s-woche:not(.read)::after,.nd-s-woche .nd-head > .glanz-bahn::after{animation-delay:-3s}
   .rcp-held > .glanz-bahn::after{animation-delay:-5s}
+  .pp-root .pp-tr > .glanz-bahn::after,.pp-root .chron-one > .glanz-bahn::after,
+  .pp-root .pp-sn.gold > .glanz-bahn::after,.pp-root .pp-bmini.legendary > .glanz-bahn::after{
+    content:"";position:absolute;top:0;bottom:0;left:0;width:250%;pointer-events:none;
+    background:linear-gradient(105deg,transparent 42%,rgba(247,207,74,.22) 50%,transparent 58%);
+    transform:translateX(-84%);animation:glanzZug 8s ease-in-out infinite;animation-delay:var(--gd,0s)}
+  .pp-root .pp-tr.team > .glanz-bahn::after{
+    background:linear-gradient(105deg,transparent 42%,rgba(86,180,232,.22) 50%,transparent 58%)}
+  .pp-root .pp-bmini.legendary > .glanz-bahn::after{animation-duration:9s;
+    background:linear-gradient(105deg,transparent 38%,rgba(255,236,170,.55) 50%,transparent 62%)}
   .nf-card.nf-glanz::after{
     content:"";position:absolute;top:0;bottom:0;left:0;width:250%;pointer-events:none;
     background:linear-gradient(105deg,transparent 40%,rgba(var(--story-rgb,185,196,189),.13) 50%,transparent 60%);
@@ -2855,6 +2864,65 @@
   .pp-weg-n{margin:2px 2px 0;font-size:11.5px;color:var(--muted);line-height:1.45}
 
 
+  .pp-root .pp-header{border-color:rgba(var(--ak-rgb),.16)}
+  .pp-rand{position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:3;
+    padding:1.5px;overflow:hidden;
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;mask-composite:exclude}
+  .pp-rand i{position:absolute;left:50%;top:50%;width:1400px;height:1400px;margin:-700px 0 0 -700px;
+    background:conic-gradient(from 0deg,transparent 0deg 292deg,rgba(var(--ak-rgb),.25) 318deg,
+      rgba(var(--ak-rgb),.95) 346deg,#fff 353deg,transparent 360deg);
+    opacity:0}
+
+  .pp-spark .pp-ping{fill:none;stroke:var(--ak);stroke-width:1.4;opacity:0;
+    transform-box:fill-box;transform-origin:center}
+
+  .pp-root .chron-cell.live::before{content:"";position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;
+    box-shadow:0 0 0 1px rgba(var(--ak-rgb),.7),0 0 18px 1px rgba(var(--ak-rgb),.55);opacity:0}
+
+  .pp-root .pp-k.f{position:relative;overflow:hidden}
+  .pp-root .pp-k.f::after{content:"";position:absolute;left:14px;right:14px;bottom:9px;height:3px;border-radius:2px;
+    background:linear-gradient(90deg,var(--ak) calc(var(--q,0) * 100%),var(--surface3) 0)}
+  .pp-root .pp-k.f .l{margin-bottom:6px}
+  .pp-root .pp-r-rich{position:relative;padding-bottom:16px}
+  .pp-root .pp-r-rich::after{content:"";position:absolute;left:12px;right:12px;bottom:8px;height:3px;border-radius:2px;
+    background:linear-gradient(90deg,var(--bez) calc(var(--q,0) * 100%),var(--surface3) 0)}
+  .pp-root .pp-r-rich.good,.pp-root .pp-r-rich.fav{--bez:var(--acid)}
+  .pp-root .pp-r-rich.bad,.pp-root .pp-r-rich.nem{--bez:var(--red)}
+  .pp-root .pp-st.lauf-sieg{border-left:2px solid var(--acid)}
+  .pp-root .pp-st.lauf-pleite{border-left:2px solid var(--red)}
+
+  .pp-root .pp-tr,.pp-root .pp-sn.gold,.pp-root .pp-bmini.legendary{position:relative;overflow:hidden}
+
+  .pp-root .pp-rj-tier.active .pp-rj-dot::after{content:"";position:absolute;inset:-2px;border-radius:50%;
+    border:1.5px solid var(--ak);opacity:0;pointer-events:none}
+
+  @keyframes ppRandLauf{0%{transform:rotate(-30deg);opacity:0}3%{opacity:1}22%{opacity:1}26%,100%{transform:rotate(330deg);opacity:0}}
+  @keyframes ppKurve{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+  @keyframes ppDa{from{opacity:0}}
+  @keyframes ppPing{0%{transform:scale(1);opacity:.9}100%{transform:scale(3.4);opacity:0}}
+  @keyframes ppAuf{from{transform:scale(.2);opacity:0}}
+  @keyframes ppAtem{0%,100%{opacity:.15}50%{opacity:1}}
+  @keyframes ppRangRing{0%{transform:scale(1);opacity:.85}70%,100%{transform:scale(2.6);opacity:0}}
+  @media(prefers-reduced-motion:no-preference){
+    .pp-rand i{animation:ppRandLauf 10s cubic-bezier(.45,.05,.4,1) .35s infinite}
+    .pp-spark path[stroke]{stroke-dasharray:1;animation:ppKurve 1.3s cubic-bezier(.4,0,.2,1) .25s both}
+    .pp-spark path[fill^="url"]{animation:ppDa .8s ease-out 1.1s both}
+    .pp-spark circle:not(.pp-ping){transform-box:fill-box;transform-origin:center;
+      animation:ppAuf .4s cubic-bezier(.3,1.6,.5,1) 1.45s both}
+    .pp-spark .pp-ping{animation:ppPing 1.4s ease-out 1.6s 2}
+    .pp-form .pd{animation:ppAuf .45s cubic-bezier(.3,1.6,.5,1) both}
+    .pp-form .pd:nth-child(1){animation-delay:.55s}
+    .pp-form .pd:nth-child(2){animation-delay:.63s}
+    .pp-form .pd:nth-child(3){animation-delay:.71s}
+    .pp-form .pd:nth-child(4){animation-delay:.79s}
+    .pp-form .pd:nth-child(5){animation-delay:.87s}
+    .pp-root .chron-cell.live::before{animation:ppAtem 3.2s ease-in-out infinite}
+    .pp-root .pp-rj-tier.active .pp-rj-dot::after{animation:ppRangRing 2.8s ease-out 1s infinite}
+  }
+  @media(prefers-reduced-motion:reduce){.pp-rand{display:none}}
+
+
   .wk-highlights{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
     gap:7px;margin-bottom:14px}
   .wk-hl{background:var(--surface);border:1px solid var(--line);border-radius:14px;
@@ -3873,6 +3941,9 @@
   .chron-one .tx .n{font-family:'Archivo Black',sans-serif;font-size:14px;
     letter-spacing:-.01em;color:var(--tt);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chron-one .tx .n:has(.shared){white-space:normal;display:flex;flex-wrap:wrap;
+    align-items:center;gap:3px 7px}
+  .chron-one .tx .n:has(.shared) .shared{margin-left:0;white-space:nowrap}
   .chron-one .tx .e{font-size:11px;color:var(--ink2);line-height:1.35}
   .chron-one .go{flex:0 0 auto;color:var(--muted);display:grid;place-items:center;opacity:.7}
   .chron-one .go svg{width:15px;height:15px}
@@ -5688,7 +5759,7 @@ h2{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:22px;margin:
 }
 </style></head><body><main>
 <h1>Das Spielerprofil im Entwurf</h1>
-<p class="pf-unter">Dieselbe Reihenfolge, dieselben Zahlen, dasselbe Material und dieselbe Schrift — neu ist, dass das Profil lebt: ein Licht um den Rand des Kopfs, die Elo-Kurve, die sich zeichnet, der laufende Monat und der eigene Rang, die atmen, und das Lauflicht des Goldes über Titeln, Rekorden und legendären Auszeichnungen. Der Kopf selbst lebt von Aura und Insignium. Links die App heute, rechts der Entwurf, beide mit den echten Partien und bedienbar.</p>
+<p class="pf-unter">Links die App, wie sie jetzt ist — mit dem Lauflicht über dem Gewonnenen und dem Licht am Rand des Kopfs. Rechts der nächste Schritt: was verliehen ist, hängt als Band oder Wimpel. Der Beiname als Ordensband, die Liga-Titel als Wimpel an einer Stange, Platz 1 bis 3 einer Saison an ihrem Medaillenband, der Rang auf einem Band in seiner Farbe. Beide mit den echten Partien und bedienbar.</p>
 <div class="pf-wahl"><button type="button" class="pf-r an" data-id="00000000-0000-4000-8000-000000000008" style="--t:var(--gold)"><i></i><b>Legende</b><span>Leon · Lorbeerreif</span></button><button type="button" class="pf-r" data-id="00000000-0000-4000-8000-000000000006" style="--t:var(--purple)"><i></i><b>Elite</b><span>Julian · Zierkranz</span></button><button type="button" class="pf-r" data-id="00000000-0000-4000-8000-000000000003" style="--t:var(--acid)"><i></i><b>Stark</b><span>Jane · Volutenkranz</span></button><button type="button" class="pf-r" data-id="00000000-0000-4000-8000-000000000001" style="--t:var(--blue)"><i></i><b>Solide</b><span>Anton · Reif</span></button><button type="button" class="pf-r" data-id="00000000-0000-4000-8000-000000000000" style="--t:var(--orange)"><i></i><b>Einsteiger</b><span>Alex · Reif</span></button></div>
 <div class="pf-opt"><label><input type="checkbox" id="pfRuhe"> Bewegung aus</label><span>Die Profile lassen sich scrollen und antippen wie in der App.</span></div>
 <div class="pf-seg"><button type="button" class="an" data-seite="neu">Entwurf</button><button type="button" data-seite="heute">Heute</button></div>
@@ -5698,32 +5769,32 @@ h2{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:22px;margin:
 </div>
 <h2>Was sich ändert</h2>
 <div class="pf-liste"><article class="pf-a"><h3>Grundsatz</h3>
-  <div class="pf-a-z"><span>Heute</span><p>Das Profil steht still: dieselben Karten, dieselbe Schrift, das Licht im Kopf.</p></div>
-  <div class="pf-a-z neu"><span>Entwurf</span><p>Material und Schrift bleiben, wie sie sind. Leben bekommt das Profil nur dort, wo etwas gewonnen ist oder gerade läuft, und zwar mit den Effekten, die die App schon kennt: dem Lauflicht des Goldes, Ringen, die aufgehen, Linien, die sich zeichnen.</p></div>
-  <div class="pf-a-z tel"><span>Telefon</span><p>Bewegt werden nur transform und opacity; nichts hängt am Scrollen. Mit „Bewegung reduzieren“ steht alles still.</p></div></article><article class="pf-a"><h3>Profilkopf</h3>
-  <div class="pf-a-z"><span>Heute</span><p>Licht im Rangton von oben, eine Kante oben in Rangfarbe.</p></div>
-  <div class="pf-a-z neu"><span>Entwurf</span><p>Der Kopf lebt von Aura und Insignium und bekommt keinen eigenen Schimmer. Neu ist nur der Rand: um ihn läuft beim Öffnen einmal ein Licht in Rangfarbe, danach alle zehn Sekunden wieder.</p></div>
-  <div class="pf-a-z tel"><span>Telefon</span><p>Ein Kegel dreht sich hinter einer festen Maske, per transform.</p></div></article><article class="pf-a"><h3>Elo-Verlauf</h3>
-  <div class="pf-a-z"><span>Heute</span><p>Die Kurve steht fertig da.</p></div>
-  <div class="pf-a-z neu"><span>Entwurf</span><p>Sie zeichnet sich beim Öffnen von links nach rechts, die Fläche folgt, und am Endpunkt geht zweimal ein Ring auf: heute steht dort.</p></div>
-  <div class="pf-a-z tel"><span>Telefon</span><p>Einmal beim Öffnen, 1,3 s.</p></div></article><article class="pf-a"><h3>Form</h3>
-  <div class="pf-a-z"><span>Heute</span><p>Fünf Punkte.</p></div>
-  <div class="pf-a-z neu"><span>Entwurf</span><p>Die Punkte springen nacheinander auf, wie die Partien gefallen sind.</p></div>
-  <div class="pf-a-z tel"><span>Telefon</span><p>Einmal beim Öffnen.</p></div></article><article class="pf-a"><h3>Chronik</h3>
-  <div class="pf-a-z"><span>Heute</span><p>Der laufende Monat trägt einen Rahmen in Rangfarbe.</p></div>
-  <div class="pf-a-z neu"><span>Entwurf</span><p>Er atmet: ein Schein um den Rahmen geht langsam auf und ab — dieser Monat ist noch nicht entschieden.</p></div>
-  <div class="pf-a-z tel"><span>Telefon</span><p>Nur die Deckkraft einer Ebene ändert sich.</p></div></article><article class="pf-a"><h3>Siegquote und Beziehungen</h3>
-  <div class="pf-a-z"><span>Heute</span><p>Die Quote steht als Zahl.</p></div>
-  <div class="pf-a-z neu"><span>Entwurf</span><p>Unter der Siegquote und unter jeder Beziehung liegt ein flacher Balken bis zur Quote; die laufende Serie trägt die Kante ihrer Richtung, Grün oder Rot.</p></div>
-  </article><article class="pf-a"><h3>Auszeichnungen</h3>
-  <div class="pf-a-z"><span>Heute</span><p>Umrandete Zeichen in Klassenfarbe.</p></div>
-  <div class="pf-a-z neu"><span>Entwurf</span><p>Über die legendären läuft alle neun Sekunden eine Welle aus Licht, Zeichen für Zeichen.</p></div>
-  <div class="pf-a-z tel"><span>Telefon</span><p>Dieselbe Lauflicht-Ebene wie überall, versetzt je Zeichen.</p></div></article><article class="pf-a"><h3>Liga Titel und Liga-Rekorde</h3>
-  <div class="pf-a-z"><span>Heute</span><p>Goldene Karten, die stillstehen.</p></div>
-  <div class="pf-a-z neu"><span>Entwurf</span><p>Sie tragen das Lauflicht, das die App dem Gold vorbehält [§C25]: Titel, gehaltene Rekorde und der erste Platz einer Saison. Das Licht wandert durch die Reihe, Karte für Karte, statt überall zugleich zu blitzen. „Zu zweit gehalten“ bricht um, statt abgeschnitten zu werden.</p></div>
-  <div class="pf-a-z tel"><span>Telefon</span><p>Das Bauteil `glanz-bahn` von Podest und Spieler des Tages, alle acht Sekunden.</p></div></article><article class="pf-a"><h3>Karriere-Rang</h3>
-  <div class="pf-a-z"><span>Heute</span><p>Ein Punkt markiert den eigenen Rang.</p></div>
-  <div class="pf-a-z neu"><span>Entwurf</span><p>Um ihn geht in Ruhe ein Ring auf: hier steht er gerade.</p></div>
+  <div class="pf-a-z"><span>Heute</span><p>Das Profil lebt, wo etwas gewonnen ist: Lauflicht über Titeln und Rekorden, Licht am Rand des Kopfs, die Kurve, die sich zeichnet.</p></div>
+  <div class="pf-a-z neu"><span>Entwurf</span><p>Das bleibt. Dazu ein Motiv für alles Verliehene: was jemand bekommen hat, hängt als Band oder Wimpel — Beiname, Liga-Titel, Platz 1 bis 3 einer Saison, der Rang.</p></div>
+  <div class="pf-a-z tel"><span>Telefon</span><p>Bänder und Wimpel sind Formen aus clip-path und Verläufen, einmal gemalt.</p></div></article><article class="pf-a"><h3>Beiname</h3>
+  <div class="pf-a-z"><span>Heute</span><p>Eine goldene Pille unter dem Namen, gestrichelt, solange der Monat läuft.</p></div>
+  <div class="pf-a-z neu"><span>Entwurf</span><p>Ein Ordensband mit zwei eingekerbten Enden, die etwas tiefer hängen. Läuft der Monat noch, sind seine Kanten gestrichelt. Beim Öffnen entrollt es sich einmal.</p></div>
+  <div class="pf-a-z tel"><span>Telefon</span><p>Einmal beim Öffnen, 0,55 s, nur transform und opacity. Kein Schimmer: der Kopf lebt von Aura und Insignium.</p></div></article><article class="pf-a"><h3>Liga Titel</h3>
+  <div class="pf-a-z"><span>Heute</span><p>Kacheln mit goldenem oder blauem Rand.</p></div>
+  <div class="pf-a-z neu"><span>Entwurf</span><p>Wimpel an einer Stange: oben zwei Ösen, unten ein Schwalbenschwanz, das Zeichen als Medaillon. Gold für Spieler der Saison, Blau für das Team. Das Lauflicht läuft weiter darüber.</p></div>
+  </article><article class="pf-a"><h3>Saisonverlauf</h3>
+  <div class="pf-a-z"><span>Heute</span><p>Platz 1 trägt Gold und einen Punkt oben, 2 und 3 einen Rand.</p></div>
+  <div class="pf-a-z neu"><span>Entwurf</span><p>Platz 1 bis 3 hängen an ihrem Medaillenband in Gold, Silber oder Bronze, die Platzzahl im selben Ton.</p></div>
+  </article><article class="pf-a"><h3>Karriere-Rang</h3>
+  <div class="pf-a-z"><span>Heute</span><p>Der Rangname in Rangfarbe.</p></div>
+  <div class="pf-a-z neu"><span>Entwurf</span><p>Der Rangname steht auf einem Band in seiner Farbe — dasselbe Motiv wie das Ordensband, aber in der Farbe, die „ich“ heißt [§C25].</p></div>
+  </article><article class="pf-a"><h3>Liga-Rekorde</h3>
+  <div class="pf-a-z"><span>Heute</span><p>Das Zeichen in einem Kästchen.</p></div>
+  <div class="pf-a-z neu"><span>Entwurf</span><p>Das Zeichen eines gehaltenen Rekords sitzt auf einer goldenen Rosette, der Form einer Ehrenschleife. Schattenseiten bleiben eckig: sie sind nichts, was man verliehen bekommt.</p></div>
+  </article><article class="pf-a"><h3>Beziehungen</h3>
+  <div class="pf-a-z"><span>Heute</span><p>Gesicht, Name, Quote, Balken.</p></div>
+  <div class="pf-a-z neu"><span>Entwurf</span><p>Das Gesicht trägt den Ring seiner Richtung, Grün oder Rot, wie der Balken darunter.</p></div>
+  </article><article class="pf-a"><h3>Siegesserien</h3>
+  <div class="pf-a-z"><span>Heute</span><p>Die laufende Serie mit Kante in ihrer Richtung.</p></div>
+  <div class="pf-a-z neu"><span>Entwurf</span><p>Ab drei Siegen in Folge steht das Feuer neben der Zahl.</p></div>
+  </article><article class="pf-a"><h3>Überschriften</h3>
+  <div class="pf-a-z"><span>Heute</span><p>Die Zahl rechts als Text.</p></div>
+  <div class="pf-a-z neu"><span>Entwurf</span><p>Die Zahl als kleine Marke, wie die Zähler in den Reitern.</p></div>
   </article></div>
 </main>
 <script>

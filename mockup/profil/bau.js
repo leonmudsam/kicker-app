@@ -108,32 +108,32 @@ console.log('Ränge', RAENGE.map(r => r.rang + ' ' + r.name).join(' · '));
 // ── Was sich ändert ───────────────────────────────────────────────────
 // [Bauteil, heute, im Entwurf, auf dem Telefon]
 const AENDERUNGEN = [
-  ['Grundsatz', 'Das Profil steht still: dieselben Karten, dieselbe Schrift, das Licht im Kopf.',
-   'Material und Schrift bleiben, wie sie sind. Leben bekommt das Profil nur dort, wo etwas gewonnen ist oder gerade läuft, und zwar mit den Effekten, die die App schon kennt: dem Lauflicht des Goldes, Ringen, die aufgehen, Linien, die sich zeichnen.',
-   'Bewegt werden nur transform und opacity; nichts hängt am Scrollen. Mit „Bewegung reduzieren“ steht alles still.'],
-  ['Profilkopf', 'Licht im Rangton von oben, eine Kante oben in Rangfarbe.',
-   'Der Kopf lebt von Aura und Insignium und bekommt keinen eigenen Schimmer. Neu ist nur der Rand: um ihn läuft beim Öffnen einmal ein Licht in Rangfarbe, danach alle zehn Sekunden wieder.',
-   'Ein Kegel dreht sich hinter einer festen Maske, per transform.'],
-  ['Elo-Verlauf', 'Die Kurve steht fertig da.',
-   'Sie zeichnet sich beim Öffnen von links nach rechts, die Fläche folgt, und am Endpunkt geht zweimal ein Ring auf: heute steht dort.',
-   'Einmal beim Öffnen, 1,3 s.'],
-  ['Form', 'Fünf Punkte.',
-   'Die Punkte springen nacheinander auf, wie die Partien gefallen sind.',
-   'Einmal beim Öffnen.'],
-  ['Chronik', 'Der laufende Monat trägt einen Rahmen in Rangfarbe.',
-   'Er atmet: ein Schein um den Rahmen geht langsam auf und ab — dieser Monat ist noch nicht entschieden.',
-   'Nur die Deckkraft einer Ebene ändert sich.'],
-  ['Siegquote und Beziehungen', 'Die Quote steht als Zahl.',
-   'Unter der Siegquote und unter jeder Beziehung liegt ein flacher Balken bis zur Quote; die laufende Serie trägt die Kante ihrer Richtung, Grün oder Rot.',
+  ['Grundsatz', 'Das Profil lebt, wo etwas gewonnen ist: Lauflicht über Titeln und Rekorden, Licht am Rand des Kopfs, die Kurve, die sich zeichnet.',
+   'Das bleibt. Dazu ein Motiv für alles Verliehene: was jemand bekommen hat, hängt als Band oder Wimpel — Beiname, Liga-Titel, Platz 1 bis 3 einer Saison, der Rang.',
+   'Bänder und Wimpel sind Formen aus clip-path und Verläufen, einmal gemalt.'],
+  ['Beiname', 'Eine goldene Pille unter dem Namen, gestrichelt, solange der Monat läuft.',
+   'Ein Ordensband mit zwei eingekerbten Enden, die etwas tiefer hängen. Läuft der Monat noch, sind seine Kanten gestrichelt. Beim Öffnen entrollt es sich einmal.',
+   'Einmal beim Öffnen, 0,55 s, nur transform und opacity. Kein Schimmer: der Kopf lebt von Aura und Insignium.'],
+  ['Liga Titel', 'Kacheln mit goldenem oder blauem Rand.',
+   'Wimpel an einer Stange: oben zwei Ösen, unten ein Schwalbenschwanz, das Zeichen als Medaillon. Gold für Spieler der Saison, Blau für das Team. Das Lauflicht läuft weiter darüber.',
    '—'],
-  ['Auszeichnungen', 'Umrandete Zeichen in Klassenfarbe.',
-   'Über die legendären läuft alle neun Sekunden eine Welle aus Licht, Zeichen für Zeichen.',
-   'Dieselbe Lauflicht-Ebene wie überall, versetzt je Zeichen.'],
-  ['Liga Titel und Liga-Rekorde', 'Goldene Karten, die stillstehen.',
-   'Sie tragen das Lauflicht, das die App dem Gold vorbehält [§C25]: Titel, gehaltene Rekorde und der erste Platz einer Saison. Das Licht wandert durch die Reihe, Karte für Karte, statt überall zugleich zu blitzen. „Zu zweit gehalten“ bricht um, statt abgeschnitten zu werden.',
-   'Das Bauteil `glanz-bahn` von Podest und Spieler des Tages, alle acht Sekunden.'],
-  ['Karriere-Rang', 'Ein Punkt markiert den eigenen Rang.',
-   'Um ihn geht in Ruhe ein Ring auf: hier steht er gerade.',
+  ['Saisonverlauf', 'Platz 1 trägt Gold und einen Punkt oben, 2 und 3 einen Rand.',
+   'Platz 1 bis 3 hängen an ihrem Medaillenband in Gold, Silber oder Bronze, die Platzzahl im selben Ton.',
+   '—'],
+  ['Karriere-Rang', 'Der Rangname in Rangfarbe.',
+   'Der Rangname steht auf einem Band in seiner Farbe — dasselbe Motiv wie das Ordensband, aber in der Farbe, die „ich“ heißt [§C25].',
+   '—'],
+  ['Liga-Rekorde', 'Das Zeichen in einem Kästchen.',
+   'Das Zeichen eines gehaltenen Rekords sitzt auf einer goldenen Rosette, der Form einer Ehrenschleife. Schattenseiten bleiben eckig: sie sind nichts, was man verliehen bekommt.',
+   '—'],
+  ['Beziehungen', 'Gesicht, Name, Quote, Balken.',
+   'Das Gesicht trägt den Ring seiner Richtung, Grün oder Rot, wie der Balken darunter.',
+   '—'],
+  ['Siegesserien', 'Die laufende Serie mit Kante in ihrer Richtung.',
+   'Ab drei Siegen in Folge steht das Feuer neben der Zahl.',
+   '—'],
+  ['Überschriften', 'Die Zahl rechts als Text.',
+   'Die Zahl als kleine Marke, wie die Zähler in den Reitern.',
    '—'],
 ];
 
@@ -195,7 +195,7 @@ h2{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:22px;margin:
 }
 </style></head><body><main>
 <h1>Das Spielerprofil im Entwurf</h1>
-<p class="pf-unter">Dieselbe Reihenfolge, dieselben Zahlen, dasselbe Material und dieselbe Schrift — neu ist, dass das Profil lebt: ein Licht um den Rand des Kopfs, die Elo-Kurve, die sich zeichnet, der laufende Monat und der eigene Rang, die atmen, und das Lauflicht des Goldes über Titeln, Rekorden und legendären Auszeichnungen. Der Kopf selbst lebt von Aura und Insignium. Links die App heute, rechts der Entwurf, beide mit den echten Partien und bedienbar.</p>
+<p class="pf-unter">Links die App, wie sie jetzt ist — mit dem Lauflicht über dem Gewonnenen und dem Licht am Rand des Kopfs. Rechts der nächste Schritt: was verliehen ist, hängt als Band oder Wimpel. Der Beiname als Ordensband, die Liga-Titel als Wimpel an einer Stange, Platz 1 bis 3 einer Saison an ihrem Medaillenband, der Rang auf einem Band in seiner Farbe. Beide mit den echten Partien und bedienbar.</p>
 <div class="pf-wahl">${knoepfe}</div>
 <div class="pf-opt"><label><input type="checkbox" id="pfRuhe"> Bewegung aus</label><span>Die Profile lassen sich scrollen und antippen wie in der App.</span></div>
 <div class="pf-seg"><button type="button" class="an" data-seite="neu">Entwurf</button><button type="button" data-seite="heute">Heute</button></div>
