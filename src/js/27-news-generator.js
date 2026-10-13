@@ -2820,7 +2820,7 @@ function _buildStories(){
         }
         return t;
       };
-      const lage = P => ({stufe:P.stufe | 0, grad:P.grad | 0, zacken:P.zacken | 0, punkte:Math.round(P.punkte || 0)});
+      const lage = P => ({stufe:P.stufe | 0, grad:P.grad | 0, punkte:Math.round(P.punkte || 0)});
       aktiv.forEach(p => {
         const a = _tafelVor.prestige(p.id), b = _tafelNach.prestige(p.id);
         if(!a || !b) return;

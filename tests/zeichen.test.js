@@ -675,7 +675,7 @@ const ok = (c, msg, det) => {
       + "'<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 1000 1000\">' + (t => t.defs + t.bild)(_izTeile(k, g, INS_RANGFARBE[INS_BILD_RANG])) + '</svg>')))");
     const svgBild = (k, g, rang) => 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(
       K('insigniumStufeSvg(' + JSON.stringify(k) + ', ' + JSON.stringify(rang || 'Elite') + ', '
-        + (k === 'stern' ? 'ORDENSSTERN_START + ' + g : 0) + ', ' + g + ', {eigen:true})')
+        + g + ', {eigen:true})')
       .replace(/<circle data-schein[^>]*\/>/g, '')
       .replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="144" height="144" '))));
     const G = 160, out = [], urls = new Set();
@@ -884,7 +884,7 @@ const ok = (c, msg, det) => {
     const treffer = [], leer = [];
     for(const k of stufen) for(const g of [0,1,2]){
       const z = await raster(
-        K('_insStufe("' + k + '", __c, ' + (8 + g) + ', "' + id + '", ' + g + ', true)')
+        K('_insStufe("' + k + '", __c, "' + id + '", ' + g + ', true)')
             .replace(/<circle data-schein[^>]*\/>/g, '')
         + K('_insFuss(3)'));
       for(const t of [1, 3, 5, 8, 12, 20]){

@@ -760,7 +760,7 @@ function _newsErfolgZeichen(s){
   const pid = (Array.isArray(d.playerIds) ? d.playerIds[0] : null);
   let z = '';
   try {
-    z = insigniumStufeSvg(stufe.key, (getPlayerRank(pid) || {}).label, 0, 0) || '';
+    z = insigniumStufeSvg(stufe.key, (getPlayerRank(pid) || {}).label, 0) || '';
   } catch(e){ z = ''; }
   return z ? `<span class="nf-erf-z">${z}</span>` : '';
 }
@@ -782,7 +782,6 @@ function _newsLeiter(pid){
     const punkte = INSIGNIEN.map((ins, i) => {
       let z = '';
       try { z = insigniumStufeSvg(ins.key, rangLabel,
-                  i === stufe ? (P.zacken || 0) : 0,
                   i === stufe ? (P.grad || 0) : 0) || ''; } catch(e){ z = ''; }
       return `<span class="nf-lt-p${i <= stufe ? ' hat' : ''}${i === stufe ? ' jetzt' : ''}">${z}</span>`;
     }).join('');
@@ -801,7 +800,7 @@ function _newsLigaLeiter(L){
     const f = INSIGNIEN.map((ins, i) => {
       const n = je[i] | 0;
       let z = '';
-      try { z = insigniumStufeSvg(ins.key, INS_BILD_RANG, 0, 0) || ''; } catch(e){ z = ''; }
+      try { z = insigniumStufeSvg(ins.key, INS_BILD_RANG, 0) || ''; } catch(e){ z = ''; }
       return `<span class="nf-ll-f"><span class="nf-lt-p${n ? ' hat' : ''}">${z}</span>`
         + `<span class="nf-ll-n num${n ? '' : ' leer'}">${n || '–'}</span></span>`;
     }).join('');

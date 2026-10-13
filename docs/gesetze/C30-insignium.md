@@ -4,14 +4,14 @@
 
 - Sieben Stufen (`INSIGNIEN`): Reif ab 0, Schildring ab 600, Volutenkranz ab 1200, Zierkranz ab 2100, Lorbeerreif ab 3100, Kronenreif ab 4300, Ordensstern ab 5600 Prestige. Keine Spanne ist kürzer als die vorige.
 - Die Stufe ist eine Ableitung aus den Punkten (`insigniumStufeVon`), nie eine gespeicherte Zahl.
-- Zwischen zwei Schwellen liegen drei Grade (`INSIGNIUM_GRADE`, `insigniumGradSchwellen`: Drittel, abgerundet auf Hundert). Der Ordensstern zählt Zacken, alle `ORDENSSTERN_SCHRITT` (500) eine. Die beiden obersten Stufen stehen als `INSIGNIUM_OBEN`.
+- Zwischen zwei Schwellen liegen drei Grade (`INSIGNIUM_GRADE`, `insigniumGradSchwellen`: Drittel, abgerundet auf Hundert). Der Ordensstern hat dieselben drei Grade, je `ORDENSSTERN_GRAD` (500) auseinander: I ab 5600, II ab 6100, III ab 6600; darüber zählt er nicht weiter. Die beiden obersten Stufen stehen als `INSIGNIUM_OBEN`.
 - Jede Stufe ist ein eigener Gegenstand, gezeichnet als Vektor nach der Vorlage (`INS_ZEICHEN`, je Stufe drei Zeichnungen); die Leiter steigt, kein Grad trägt mehr als der erste der nächsten Stufe.
 - Der Bau ist Silber (ab Schildring III Platin), Gold ist Akzent ab dem Lorbeerreif, in der Fläche erst am Ordensstern. Der Rang ist ein Schimmer in den Tönen der Rangfarbe (`INS_RANGFARBE`, `_izStein`), dazu Glut und Hof (`data-schein`).
 - Groß Vektor, klein Bild (`_insZeichnung`, `insBild`, `INS_VEKTOR_PX`); das Bild unter einer kurzen Blob-Adresse (`insBildHref`). Keine Zeichnung trägt einen Filter, keine Ebene darüber einen Filter oder eine Skalierung.
 - Die Raute am Fuß trägt die Ligaposition (`_insFuss`); die Sterne stehen darüber auf Radius `INS_STERN_R`; dahinter die Aura [§C36].
 - Verläufe und Zeichnungen stehen je einmal im Topf `<svg id="insDefs">` außerhalb von `#app` und des Blatts (`insigniumRef`, Gruppe in `<defs>`, kein `<symbol>`); `{eigen:true}` liefert das volle Markup.
 - Leistung des Feeds und der Blätter: `content-visibility:auto` an `.nf-card` (außer Breaking und Karte des Tages), zuerst die sichtbaren Karten (`NEWS_FEED_SOFORT`, `_newsFeedRest`), ein geschlossenes Blatt ist leer (`_sheetForceClose`), der Zug-Lauscher nur, wenn die Geste schließen kann, kein `backdrop-filter` an stillstehenden Leisten, `will-change:transform` am Blatt.
-- Die Lage auf der Leiter ist eine Zahl (`insigniumPos`: Stufe mal drei plus Grad, am Ordensstern die Zacken); damit vergleicht die Insignium-Karte des Tages, ob jemand so hoch noch nie stand [§C33].
+- Die Lage auf der Leiter ist eine Zahl (`insigniumPos`: Stufe mal drei plus Grad, auf jeder Stufe gleich, Ordensstern III ist 20); damit vergleicht die Insignium-Karte des Tages, ob jemand so hoch noch nie stand [§C33].
 - Die kleine Leiter (`_newsLeiter`), die Spur der Insignium-Karte (`_insSpur`) und die Laufbahn (Vitrine `.lb-karus`, ganze Leiter `#lbAlle`) zeigen die echten Zeichen; die Liga erfährt den Stand als Fun Fact (`insignium_stand`, gespeichert in `dataRef.leiter`).
 
 ## Stellen
@@ -20,7 +20,7 @@
 
 ## Prüfung
 
-`tests/zeichen` rastert alle 21 Zeichnungen (mittig, spiegelgleich, Loch, Reif bei 22–25 %, Rangfarbe im Stein); `tests/disziplinen` (Schwellen, Grade, Steine und Gold an jedem Übergang); `tests/blatt` (kein Filter, Vektor gegen Bild, Topf, Leiter, Vitrine).
+`tests/zeichen` rastert alle 21 Zeichnungen (mittig, spiegelgleich, Loch, Reif bei 22–25 %, Rangfarbe im Stein); `tests/disziplinen` (Schwellen, Grade auch am Ordensstern, Steine und Gold an jedem Übergang); `tests/blatt` (kein Filter, Vektor gegen Bild, Topf, Leiter, Vitrine, die Grade des Ordenssterns in Laufbahn und Karte).
 
 ## Herleitung
 
@@ -133,9 +133,14 @@ Bild. Sie teilen die Spanne in Drittel, abgerundet auf volle Hundert
 2400 und Grad III ab 2700. Sie lagen bei 16 und 40 % der Spanne, und Grad
 III war damit länger als die beiden davor zusammen. Der Grad baut den
 Gegenstand aus, die Stufe wechselt ihn: Leon, Julian und Martin tragen in
-den Referenzdaten Zierkranz III. Der **Ordensstern** hat keine Grade, er
-zählt Zacken und hört nicht auf: ab 5600 alle `ORDENSSTERN_SCHRITT` (500) eine Zacke mehr, und
-die drei Zeichnungen gehören der achten, neunten und ab der zehnten Zacke.
+den Referenzdaten Zierkranz III. Der **Ordensstern** hat keine nächste
+Stufe, deren Spanne man dritteln könnte; seine Grade liegen je
+`ORDENSSTERN_GRAD` (500) auseinander: I ab 5600, II ab 6100, III ab 6600.
+Er zählte vorher Zacken, acht beim Erreichen und alle 500 eine mehr, ohne
+Ende: in der Laufbahn stand „8 9 10" neben dem „I II III" jeder anderen
+Stufe, auf der Karte „erreicht die 9. Zacke" neben „steigt auf Zierkranz
+III". Jetzt heißt jede Lage gleich, und über Grad III gibt es nichts mehr
+zu zählen.
 Die beiden obersten Stufen stehen als `INSIGNIUM_OBEN` an einer Stelle:
 ihr erster Aufstieg ist Breaking [§C33], und als Zahl im Generator wäre
 die Grenze beim Einfügen einer Stufe still eine Stufe tiefer gelandet.

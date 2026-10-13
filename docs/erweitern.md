@@ -121,7 +121,7 @@ der ihn hält — und für sonst niemanden.
    [§C30]. Keine Spanne ist kürzer als 500 und keine kürzer als die vorige:
    die Spitze trägt den Lorbeerreif im ersten Grad, die beiden dahinter den
    Zierkranz, und der erste Ordensstern bei **5.600 Prestige** soll
-   langfristig erreichbar sein; danach kommt alle 500 eine Zacke dazu.
+   langfristig erreichbar sein; seine Grade II und III folgen je 500 darüber.
    Wer Startwerte anhebt, zieht die Schwellen mit — sonst steigt die Liga
    über Nacht, ohne gespielt zu haben. Ausnahme ist eine Anhebung, die
    einen Fortschritt nachträgt, der schon erarbeitet ist: die Meilensteine
@@ -140,12 +140,13 @@ Partien und fällt, wenn es kippt:
 | der Ordensstern ist von niemandem erreicht | dasselbe, eine Stufe höher |
 | nur Kronenreif und Ordensstern sind die obersten Stufen | die Breaking-Grenze beim Einfügen einer Stufe verrutscht [§C33] |
 | Glut und Hof in der Rangfarbe werden mit der Leiter nicht schwächer, die Lichter tragen die Rangfarbe | der Schimmer nicht mehr sagt, wer weiter oben steht [§C30] |
-| keine Spanne ist kürzer als 500, der Ordensstern steigt alle 500 | eine Stufe fast geschenkt ist oder die Zacken aus dem Takt geraten |
+| keine Spanne ist kürzer als 500 | eine Stufe fast geschenkt ist |
+| der Ordensstern hat drei Grade, I ab 5600, II ab 6100, III ab 6600, und Ordensstern III ist das oberste Feld | er wieder anders zählt als jede andere Stufe [§C30] |
 | die Spitze trägt den Lorbeerreif im ersten Grad, die beiden dahinter den Zierkranz | Schwellen und Grade die heutige Liga falsch abbilden. Gemessen wird ohne Namen und ohne Reihenfolge: die war festgeschrieben, und damit fiel die Zusicherung bei jedem Rekord, der Punkte verschiebt — kalibriert ist die Leiter und nicht die Tabelle |
 | nur die Rekorde des Niveaus folgen der Siegquote | ein Rekord die Siegquote anders verpackt noch einmal zählt und damit dem Besten Prestige schenkt, das er schon hat [§C35] |
 | das Langzeitmodell kann den Ordensstern erreichen | ein weicher Deckel zur harten Obergrenze wird |
-| jede positive Dauerquelle behält einen positiven Zuwachs | spätere Ordensstern-Zacken mathematisch unerreichbar werden |
-| auch die zwanzigste weitere Ordensstern-Zacke wird endlich überschritten | die Laufbahn nur scheinbar ohne Ende weiterläuft |
+| jede positive Dauerquelle behält einen positiven Zuwachs | das Prestige stehen bleibt, obwohl weiter gewonnen wird |
+| auch der dritte Grad des Ordenssterns wird endlich überschritten | das oberste Feld der Leiter nur scheinbar erreichbar ist |
 | wenige sehr starke Partien schlagen viele durchschnittliche | Anwesenheit wieder als Können zählt |
 | Prestige aus Auszeichnungen und Monaten fällt nie | ein Wert wieder am heutigen Zensus hängt [§C34] |
 | je Spieler und Monat zählt genau eine Chronik, und zwar die des Profils | die Laufbahn einen Monat mehrfach zählt oder eine andere Wertung als die Matrix [§C32] |

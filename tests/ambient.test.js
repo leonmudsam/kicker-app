@@ -452,7 +452,7 @@ const _leiter = JSON.parse(K.eval(`(function(){
   if(!L) return JSON.stringify({fehlt:true});
   const falsch = L.felder.filter(([pid, si, nr]) => {
     const P = prestigeOf(pid);
-    return P.stufe !== si || _insBildNr(P.insignie.key, P.zacken, P.grad) !== nr;
+    return P.stufe !== si || _insBildNr(P.insignie.key, P.grad) !== nr;
   }).length;
   return JSON.stringify({je:L.je, felder:L.felder.length, falsch, n:+r.vv, title:r.title});
 })()`));
@@ -1168,7 +1168,7 @@ const _insLeiter = JSON.parse(K.eval(`JSON.stringify((function(){
   const t0 = new Date(letzte); t0.setHours(0,0,0,0);
   const tag = matches.filter(m => mts(m) >= t0.getTime()).sort((a,b)=>mts(a)-mts(b));
   const kreuz = mts(tag[Math.min(1, tag.length-1)] || matches[matches.length-1]);
-  const stand = (stufe, grad) => ({pid, punkte:insigniumGradSchwellen(stufe)[grad || 0] + 10, stufe, grad:grad || 0, zacken:0,
+  const stand = (stufe, grad) => ({pid, punkte:insigniumGradSchwellen(stufe)[grad || 0] + 10, stufe, grad:grad || 0,
     insignie:INSIGNIEN[stufe], naechste:INSIGNIEN[stufe+1] || null, fehlt:100,
     teile:{auszeichnung:80, monat:40, rekord:20}, zahlen:{auszeichnung:1, monat:1, rekord:1},
     quellen:[], platz:1, von:players.length});

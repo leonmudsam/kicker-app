@@ -1726,11 +1726,11 @@ const _lb = JSON.parse(K.eval(`JSON.stringify((function(){
     // Inhalt — zwei verschiedene Bilder können gleich lang sein.
     formen: INSIGNIEN.map(x=>({key:x.key, n:INS_ZEICHEN[x.key].length,
       bilder: INS_ZEICHEN[x.key].map((b, g) => {
-        const s = insigniumStufeSvg(x.key, m, x.key==='stern' ? ORDENSSTERN_START+g : 0, g, {eigen:true})
+        const s = insigniumStufeSvg(x.key, m, g, {eigen:true})
           .replace(/(ize|e)[0-9]+_/g, '');
         let h = 0; for(let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
         return h; })})),
-    schritt: ORDENSSTERN_SCHRITT
+    sternGrade: insigniumGradSchwellen(INSIGNIEN.length - 1)
   };
 })())`));
 console.log('  Schwellen: ' + _lb.min.join(' · '));
@@ -1739,13 +1739,33 @@ console.log('  Bester Stand: ' + _lb.hoechste);
 console.log('  Spitze: ' + _lb.werte.slice(0,3).map(x=>x.name+' '+x.punkte+' / '+x.stufe+'.'+x.grad).join(' · '));
 
 // Die Schwellen sind vorgegeben, nicht kalibriert [§C30]: 0, 600, 1200,
-// 2100, 3100, 4300, 5600, danach alle 500 Prestige eine Zacke.
+// 2100, 3100, 4300, 5600.
 ok(_lb.min.join(',') === '0,600,1200,2100,3100,4300,5600',
    'die sieben Insignien beginnen an den festgelegten Schwellen',
    _lb.min.join(' · '));
 const _sternI = _lb.min.length - 1;
-ok(_lb.schritt === 500, 'der Ordensstern bekommt alle 500 Prestige eine Zacke',
-   String(_lb.schritt));
+// Der Ordensstern zählt wie jede Stufe drei Grade, nicht Zacken. Er stand
+// als einzige Stufe mit „8 9 10“ in der Laufbahn und „erreicht die 9.
+// Zacke“ auf der Karte. Seine Grade liegen je 500 auseinander, und über dem
+// dritten zählt er nicht weiter: Ordensstern III ist das oberste Feld.
+ok(_lb.sternGrade.join(',') === '5600,6100,6600',
+   'der Ordensstern hat drei Grade wie jede Stufe: I ab 5600, II ab 6100, III ab 6600',
+   _lb.sternGrade.join(' · '));
+const _sternLagen = JSON.parse(K.eval(`JSON.stringify((function(){
+  const alt = prestigeTabelle;
+  const lage = p => {
+    prestigeTabelle = () => ({byPid:{x:{punkte:p}}, ruhe:{}, rang:['x'], gesamt:1});
+    try { const P = prestigeOf('x');
+      return {p, name:_insLageName(P), pos:insigniumPos(P), zacken:'zacken' in P}; }
+    finally { prestigeTabelle = alt; } };
+  return [5599, 5600, 6099, 6100, 6600, 99999].map(lage);
+})())`));
+ok(_sternLagen.map(x => x.name).join('|')
+     === 'Kronenreif III|Ordensstern I|Ordensstern I|Ordensstern II|Ordensstern III|Ordensstern III'
+   && _sternLagen.map(x => x.pos).join(',') === '17,18,18,19,20,20'
+   && !_sternLagen.some(x => x.zacken),
+   'der Stand am Ordensstern heißt I, II, III und endet im einundzwanzigsten Feld',
+   _sternLagen.map(x => x.p + ' ' + x.name + ' (' + x.pos + ')').join(' · '));
 // Keine Spanne ist leer oder rückwärts: eine Stufe, die man mit derselben
 // Punktzahl erreicht wie die vorige, wäre keine.
 const _spannen = _lb.min.slice(1).map((v,i)=>v - _lb.min[i]);
@@ -1782,12 +1802,12 @@ ok(_sternMoeglich >= _lb.min[_sternI] && _lb.min[_sternI] - _lb.hoechste >= 1500
    `Langzeitmodell ${Math.round(_sternMoeglich)}, Schwelle ${_lb.min[_sternI]}`);
 
 // Eine rein geometrische Folge haette eine endliche Summe. Dann waeren zwar
-// die ersten fuenf Insignien erreichbar, spaetere Zacken des Ordenssterns
+// die ersten fuenf Insignien erreichbar, die Grade des Ordenssterns
 // irgendwann aber nicht mehr. Die harmonisch abflachende Auszeichnungsfolge
 // macht die Laufbahn wirklich offen: jeder endliche Zielwert wird nach
 // endlich vielen weiteren Erfolgen ueberschritten.
 const _endlos = JSON.parse(K.eval(`JSON.stringify((function(){
-  const ziel=INSIGNIEN[INSIGNIEN.length-1].min+20*ORDENSSTERN_SCHRITT;
+  const ziel=insigniumGradSchwellen(INSIGNIEN.length-1).slice(-1)[0];
   let n=1;
   const karriere=k=>BADGES.reduce((sum,b)=>sum+auszeichnungsPunkte(b.id,k),0);
   while(n<1000 && karriere(n)<ziel) n++;
@@ -1808,8 +1828,8 @@ ok(_endlos.klassen.every(x=>x.delta>0)
      + ' · Chronik +' + _endlos.chronikDelta.toFixed(4)
      + ' · Rekord +' + _endlos.rekordDelta.toFixed(4));
 ok(_endlos.n < 1000 && _endlos.wert >= _endlos.ziel,
-   'auch spaetere Ordensstern-Zacken bleiben ohne Obergrenze erreichbar',
-   `20. weitere Zacke im skalierenden Katalogmodell bei Lauf ${_endlos.n}`);
+   'auch der dritte Grad des Ordenssterns ist erreichbar',
+   `Ordensstern III (${_endlos.ziel}) im skalierenden Katalogmodell bei Lauf ${_endlos.n}`);
 
 // 2. Der Beste der Liga hat die beiden obersten Stufen noch vor sich. Ohne
 //    diese Grenze wandert die Spitze nach oben, sobald der Katalog wächst —
@@ -1829,8 +1849,7 @@ ok(_lb.erstStufe > _lb.spieler / 2,
 
 // 4. Der Grad muss man SEHEN. Zwischen zwei Schwellen liegen hunderte
 //    Punkte; täte sich am Zeichen nichts, wäre die halbe Laufbahn ein
-//    Stillstand. Jeder Grad hat sein eigenes Bild, der Ordensstern drei —
-//    eines je Zacke, bis die größte erreicht ist.
+//    Stillstand. Jeder Grad hat sein eigenes Bild, auf jeder Stufe drei.
 const _stumm = _lb.formen.filter(f => new Set(f.bilder).size !== f.bilder.length
   || f.n !== 3);
 ok(_stumm.length === 0,
@@ -1861,13 +1880,13 @@ const _schein = JSON.parse(K.eval(`JSON.stringify((function(){
     return m ? +m[1] : 0; };
   const glut = [], hof = [];
   INSIGNIEN.forEach(x => [0,1,2].forEach(g => {
-    const s = insigniumStufeSvg(x.key, 'Elite', 0, g, {eigen:true});
+    const s = insigniumStufeSvg(x.key, 'Elite', g, {eigen:true});
     glut.push(op(s, 'glut')); if(g === 0) hof.push(op(s, 'hof')); }));
   // Die Zeichnung trägt die Rangfarbe selbst: der Stein, die Lilie und die
   // Kristalle sind in den Tönen der Rangfarbe gezeichnet, ohne Filter über
   // dem Bild. Geprüft wird die Mitte des Steinsatzes im Bild jedes Rangs.
   const naeher = Object.keys(INS_RANGFARBE).map(r => {
-    const s = insigniumStufeSvg('reif', r, 0, 0, {eigen:true});
+    const s = insigniumStufeSvg('reif', r, 0, {eigen:true});
     // Die Zeichnung steht als Vektor im Markup [§C30]; ein Filter darin
     // oder darüber wäre auf dem Telefon unscharf.
     const bildGefiltert = /filter=/.test(s);

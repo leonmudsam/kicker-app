@@ -3995,9 +3995,9 @@
   .lb-k.jetzt .lb-k-ins svg.ins{filter:none;opacity:.85}
   .lb-k.fokus .lb-k-ins svg.ins{width:130px;height:130px;opacity:1;filter:none}
   .lb-k.fokus.offen .lb-k-ins svg.ins{filter:none;opacity:.72}
-  .lb-k-n,.lb-k-p,.lb-k-grad,.lb-k-z{opacity:0;transition:opacity .18s}
+  .lb-k-n,.lb-k-p,.lb-k-grad{opacity:0;transition:opacity .18s}
   .lb-k.fokus .lb-k-n,.lb-k.fokus .lb-k-p,
-  .lb-k.fokus .lb-k-grad,.lb-k.fokus .lb-k-z{opacity:1}
+  .lb-k.fokus .lb-k-grad{opacity:1}
   .lb-k-n{font-size:14px;font-weight:700;line-height:1.15;text-align:center;
     color:var(--ink2);height:17px}
   .lb-k.jetzt .lb-k-n{color:var(--ak)}
@@ -4016,9 +4016,6 @@
   .lb-k-grad button.zeigt{border-color:var(--ak);color:var(--ink)}
   .lb-k-grad button.hier::after{content:"";position:absolute;right:-3px;top:-3px;
     width:6px;height:6px;border-radius:50%;background:var(--ak)}
-  .lb-k-z{font-family:'Sometype Mono',monospace;font-size:8.5px;color:var(--faint);
-    margin-top:5px;letter-spacing:.04em}
-  .lb-k.jetzt .lb-k-z{color:var(--ak)}
 
   .lb-alle{display:grid;gap:4px;margin-top:8px}
   .lb-alle-z{display:grid;grid-template-columns:minmax(0,96px) minmax(0,1fr);
@@ -5725,7 +5722,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.13.d5961178';
+const BUILD_VERSION='2026.10.13.73e6470e';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -19710,7 +19707,7 @@ function _buildStories(){
         }
         return t;
       };
-      const lage = P => ({stufe:P.stufe | 0, grad:P.grad | 0, zacken:P.zacken | 0, punkte:Math.round(P.punkte || 0)});
+      const lage = P => ({stufe:P.stufe | 0, grad:P.grad | 0, punkte:Math.round(P.punkte || 0)});
       aktiv.forEach(p => {
         const a = _tafelVor.prestige(p.id), b = _tafelNach.prestige(p.id);
         if(!a || !b) return;
@@ -20803,7 +20800,7 @@ function _ambientTemplatePool(now, pm, nameOf){
       if(!pm[pid]) return;
       const S = prestigeOf(pid);
       zahl[S.stufe]++; n++;
-      felder.push([pid, S.stufe, _insBildNr(S.insignie.key, S.zacken, S.grad)]);
+      felder.push([pid, S.stufe, _insBildNr(S.insignie.key, S.grad)]);
       if(!spitze || S.punkte > spitze.punkte) spitze = S;
     });
     if(!n || !spitze) return null;
@@ -20819,7 +20816,7 @@ function _ambientTemplatePool(now, pm, nameOf){
             ? `, bis zum ${spitze.naechste.name} fehlen ${spitze.fehlt} Prestige.`
               + (spitze.insignie.key !== letzte.key && spitze.naechste.key !== letzte.key
                   ? ` Der ${letzte.name} beginnt bei ${letzte.min}.` : '')
-            : ` mit ${spitze.zacken} Zacken.`),
+            : ` ${INSIGNIUM_GRAD_NAME[spitze.grad] || 'I'}.`),
       vv:String(n), vl:'Spieler',
       dataRef:{ ambientPids:[], leiter:{je:zahl, felder} } };
   }});
@@ -23220,7 +23217,7 @@ function _newsErfolgZeichen(s){
   const pid = (Array.isArray(d.playerIds) ? d.playerIds[0] : null);
   let z = '';
   try {
-    z = insigniumStufeSvg(stufe.key, (getPlayerRank(pid) || {}).label, 0, 0) || '';
+    z = insigniumStufeSvg(stufe.key, (getPlayerRank(pid) || {}).label, 0) || '';
   } catch(e){ z = ''; }
   return z ? `<span class="nf-erf-z">${z}</span>` : '';
 }
@@ -23234,7 +23231,6 @@ function _newsLeiter(pid){
     const punkte = INSIGNIEN.map((ins, i) => {
       let z = '';
       try { z = insigniumStufeSvg(ins.key, rangLabel,
-                  i === stufe ? (P.zacken || 0) : 0,
                   i === stufe ? (P.grad || 0) : 0) || ''; } catch(e){ z = ''; }
       return `<span class="nf-lt-p${i <= stufe ? ' hat' : ''}${i === stufe ? ' jetzt' : ''}">${z}</span>`;
     }).join('');
@@ -23249,7 +23245,7 @@ function _newsLigaLeiter(L){
     const f = INSIGNIEN.map((ins, i) => {
       const n = je[i] | 0;
       let z = '';
-      try { z = insigniumStufeSvg(ins.key, INS_BILD_RANG, 0, 0) || ''; } catch(e){ z = ''; }
+      try { z = insigniumStufeSvg(ins.key, INS_BILD_RANG, 0) || ''; } catch(e){ z = ''; }
       return `<span class="nf-ll-f"><span class="nf-lt-p${n ? ' hat' : ''}">${z}</span>`
         + `<span class="nf-ll-n num${n ? '' : ' leer'}">${n || '–'}</span></span>`;
     }).join('');
@@ -25243,7 +25239,7 @@ function _ffStufe(b){
   const pm = pmap();
   if(!pm[b.p]) return '';
   const rang = (getPlayerRank(b.p) || {}).label;
-  const z = k => { try { return insigniumStufeSvg(k, rang, 0, 0, {bild:true}) || ''; } catch(e){ return ''; } };
+  const z = k => { try { return insigniumStufeSvg(k, rang, 0, {bild:true}) || ''; } catch(e){ return ''; } };
   const sp = Math.max(1, (b.nachMin | 0) - (b.vonMin | 0));
   const anteil = Math.max(0, Math.min(1, ((b.punkte | 0) - (b.vonMin | 0)) / sp));
   const name = k => ((INSIGNIEN.find(x => x.key === k) || {}).name || '');
@@ -25330,8 +25326,7 @@ const INS_ORDNUNG = ['erste', 'zweite', 'dritte', 'vierte', 'fünfte', 'sechste'
 function _insLageName(l){
   const ins = INSIGNIEN[(l && l.stufe) | 0];
   if(!ins) return '';
-  return ins.key === 'stern' ? `${ins.name} mit ${(l.zacken | 0) || ORDENSSTERN_START} Zacken`
-    : `${ins.name} ${INSIGNIUM_GRAD_NAME[(l.grad | 0)] || 'I'}`;
+  return `${ins.name} ${INSIGNIUM_GRAD_NAME[(l.grad | 0)] || 'I'}`;
 }
 
 function _insTagTexte(zuege){
@@ -25347,11 +25342,9 @@ function _insTagTexte(zuege){
         + (z.traeger == null ? '' : (z.traeger | 0) <= 1 ? 'Niemand sonst in der Liga steht so hoch.'
           : `Diese Stufe oder eine höhere tragen jetzt ${z.traeger} von ${z.von} Spielern.`)).trim()};
     if(z.art === 'grad') return {
-      title: S.key === 'stern' ? `${n} erreicht die ${z.nach.zacken}. Zacke am Ordensstern`
-        : `${n} steigt auf ${_insLageName(z.nach)}`,
+      title: `${n} steigt auf ${_insLageName(z.nach)}`,
       desc: `Mit ${z.nach.punkte} Prestige stand ${n} noch nie so weit oben.`
-        + (S.key === 'stern' ? ` Die nächste Zacke kommt bei ${S.min + (z.nach.zacken - ORDENSSTERN_START + 1) * ORDENSSTERN_SCHRITT}.`
-          : next ? ` Bis zum ${next.name} fehlen ${Math.max(0, next.min - z.nach.punkte)}.` : '')};
+        + (next ? ` Bis zum ${next.name} fehlen ${Math.max(0, next.min - z.nach.punkte)}.` : '')};
     return {
       title: `${n} fällt auf den ${S.name} zurück`,
       desc: `Nach ${Math.max(0, z.vor.punkte - z.nach.punkte)} Prestige weniger an diesem Tag fehlen bis zum `
@@ -25359,7 +25352,7 @@ function _insTagTexte(zuege){
   };
   if(l.length === 1) return satz(l[0]);
   const etikett = z => z.art === 'ab' ? 'Rückfall'
-    : z.art === 'grad' ? (INSIGNIEN[z.nach.stufe].key === 'stern' ? `${z.nach.zacken}. Zacke` : _insLageName(z.nach))
+    : z.art === 'grad' ? _insLageName(z.nach)
     : INSIGNIEN[z.nach.stufe].name;
   const reihe = [];
   l.forEach(z => { const e = etikett(z), da = reihe.find(x => x.e === e);
@@ -25374,18 +25367,15 @@ function _insTagTexte(zuege){
 function _insZeichen(pid, l, bild){
   const ins = INSIGNIEN[(l && l.stufe) | 0];
   if(!ins) return '';
-  try { return insigniumStufeSvg(ins.key, (getPlayerRank(pid) || {}).label, l.zacken | 0, l.grad | 0,
+  try { return insigniumStufeSvg(ins.key, (getPlayerRank(pid) || {}).label, l.grad | 0,
     bild ? {bild:true} : undefined) || ''; } catch(e){ return ''; }
 }
 function _insArtWort(z){
   return z.art === 'ab' ? 'Rückfall' : z.art === 'grad' ? 'Neuer Grad'
     : z.wieder ? 'Wieder erreicht' : 'Neue Stufe';
 }
-function _insSpurPos(l){
-  return Math.min(INSIGNIEN.length * INSIGNIUM_GRADE - 1, insigniumPos(l));
-}
 function _insSpur(z){
-  const a = _insSpurPos(z.vor), b = _insSpurPos(z.nach), ab = z.art === 'ab';
+  const a = insigniumPos(z.vor), b = insigniumPos(z.nach), ab = z.art === 'ab';
   const rang = (getPlayerRank(z.pid) || {}).label;
   const feld = i => {
     const k = i === b ? 'da' : ab ? (i < b ? 'hat' : i <= a ? 'weg' : '')
@@ -25394,7 +25384,7 @@ function _insSpur(z){
   };
   return `<div class="ni-spur${ab ? ' ab' : ''}" aria-hidden="true">` + INSIGNIEN.map((ins, s) => {
     let bild = '';
-    try { bild = insigniumStufeSvg(ins.key, rang, 0, 0, {bild:true}) || ''; } catch(e){ bild = ''; }
+    try { bild = insigniumStufeSvg(ins.key, rang, 0, {bild:true}) || ''; } catch(e){ bild = ''; }
     const lage = s === z.nach.stufe ? ' jetzt' : s === z.vor.stufe ? ' vorher' : s < z.nach.stufe ? ' hat' : '';
     return `<span class="ni-sp-s${lage}"><span class="ni-sp-f">`
       + [0, 1, 2].map(g => feld(s * INSIGNIUM_GRADE + g)).join('')
@@ -25425,8 +25415,7 @@ function _newsInsTagZeilen(s){
   const l = (d.zuege || []).slice(1).filter(z => z && pm[z.pid] && INSIGNIEN[(z.nach || {}).stufe | 0]);
   if(!l.length) return '';
   const text = z => z.art === 'ab' ? `fällt auf den ${INSIGNIEN[z.nach.stufe].name} zurück`
-    : z.art === 'grad' ? (INSIGNIEN[z.nach.stufe].key === 'stern' ? `erreicht die ${z.nach.zacken}. Zacke`
-      : `steigt auf ${_insLageName(z.nach)}`)
+    : z.art === 'grad' ? `steigt auf ${_insLageName(z.nach)}`
     : z.wieder ? `trägt wieder den ${INSIGNIEN[z.nach.stufe].name}` : `erreicht den ${INSIGNIEN[z.nach.stufe].name}`;
   const zeile = z => {
     const ab = z.art === 'ab';
@@ -25497,9 +25486,7 @@ function _insAltZuTag(list){
     const zuege = zeilen.map(x => {
       const d = x.dataRef || {}, lb = (d.laufbahn || {})[d.pid] || {};
       const lage = p => { const i = insigniumStufeVon(p), gs = insigniumGradSchwellen(i);
-        return {stufe:i, grad:gs.reduce((g, sw, k) => p >= sw ? k : g, 0),
-          zacken:INSIGNIEN[i].key === 'stern' ? ORDENSSTERN_START + Math.floor((p - INSIGNIEN[i].min) / ORDENSSTERN_SCHRITT) : 0,
-          punkte:Math.round(p)}; };
+        return {stufe:i, grad:gs.reduce((g, sw, k) => p >= sw ? k : g, 0), punkte:Math.round(p)}; };
       const nach = Number(d.punkte) || Number(lb.nach) || INSIGNIEN[d.stufe | 0].min;
       const vor = Number(lb.vor) || Math.max(0, INSIGNIEN[d.stufe | 0].min - 1);
       return {pid:d.pid, art:'auf', vor:lage(vor), nach:lage(nach), ms:new Date(x.when).getTime(),
@@ -25858,12 +25845,10 @@ function _ndLigaLeiter(L){
   try {
     const pm = pmap(), felder = Array.isArray(L && L.felder) ? L.felder : [];
     const zeilen = INSIGNIEN.map((ins, i) => {
-      const n = (INS_ZEICHEN[ins.key] || []).length || INSIGNIUM_GRADE;
-      const f = Array.from({length:n}, (_, g) => {
+      const f = Array.from({length:INSIGNIUM_GRADE}, (_, g) => {
         const da = felder.filter(x => x[1] === i && x[2] === g && pm[x[0]]).map(x => x[0]);
         let z = '';
-        try { z = insigniumStufeSvg(ins.key, INS_BILD_RANG,
-                ins.key === 'stern' ? ORDENSSTERN_START + g : 0, g) || ''; } catch(e){ z = ''; }
+        try { z = insigniumStufeSvg(ins.key, INS_BILD_RANG, g) || ''; } catch(e){ z = ''; }
         const gesichter = da.map(pid =>
           `<span class="nd-ll-av" data-pid="${esc(pid)}">${avHtml(pm[pid], '', {px:18})}</span>`).join('');
         return `<span class="nd-ll-f${da.length ? ' da' : ''}">${z}`
@@ -25885,10 +25870,11 @@ function _newsInsigniumBlock(pid, stufeIdx){
     const ins = INSIGNIEN[stufe] || INSIGNIEN[0];
     const rangLabel = (getPlayerRank(pid) || {}).label;
     let zeichen = '';
-    try { zeichen = insigniumStufeSvg(ins.key, rangLabel, P.zacken, P.grad) || ''; } catch(e){}
+    try { zeichen = insigniumStufeSvg(ins.key, rangLabel, P.grad) || ''; } catch(e){}
     const n = P.naechste;
     const anteil = n ? Math.max(0, Math.min(100,
       Math.round((P.punkte - ins.min) / Math.max(1, n.min - ins.min) * 100))) : 100;
+    const gradZiel = n ? null : insigniumGradSchwellen(stufe).find(x => x > P.punkte);
     return `<div class="nd-ins">
       <div class="nd-ins-z">${zeichen}</div>
       <div class="nd-ins-t">
@@ -25896,8 +25882,8 @@ function _newsInsigniumBlock(pid, stufeIdx){
         <div class="nd-ins-p"><b>${P.punkte}</b> Prestige${P.platz ? ` · Platz ${P.platz} von ${P.von}` : ''}</div>
         ${n ? `<div class="nd-ins-b"><i style="width:${anteil}%"></i></div>
           <div class="nd-ins-r">Noch <b>${P.fehlt}</b> bis zum ${esc(n.name)} · ${anteil} %</div>`
-            : `<div class="nd-ins-r">Die letzte Stufe. Der Stern zählt weiter: noch
-               <b>${P.naechsteZacke}</b> bis zur nächsten Zacke.</div>`}
+            : `<div class="nd-ins-r">${gradZiel ? `Noch <b>${gradZiel - P.punkte}</b> bis ${esc(ins.name + ' ' + INSIGNIUM_GRAD_NAME[P.grad + 1])}`
+                : 'Die höchste Stufe der Leiter'}</div>`}
       </div>
     </div>${_newsLeiter(pid)}`;
   } catch(e){ return ''; }
@@ -26012,7 +25998,7 @@ function _ndWirkungBlock(je, gruende, tagMs){
       let zeichen = '';
       try {
         if(ins)
-          zeichen = insigniumStufeSvg(ins.key, (getPlayerRank(pid) || {}).label, 0, 0) || '';
+          zeichen = insigniumStufeSvg(ins.key, (getPlayerRank(pid) || {}).label, 0) || '';
       } catch(e){}
       let balken = '', rest = '';
       if(ins && next){
@@ -26497,13 +26483,12 @@ function _ndInsigniumBlatt(s){
   const rl = (getPlayerRank(pid) || {}).label;
   const gs = insigniumGradSchwellen(i);
   let grad = 0; gs.forEach((x, g) => { if(punkte >= x) grad = g; });
-  const zacken = ins.key === 'stern' ? ORDENSSTERN_START + Math.floor(Math.max(0, punkte - ins.min) / ORDENSSTERN_SCHRITT) : 0;
-  const zeichen = (key, z, g, bild) => { try { return insigniumStufeSvg(key, rl, z, g, bild ? {bild:true} : undefined) || ''; } catch(e){ return ''; } };
+  const zeichen = (key, g, bild) => { try { return insigniumStufeSvg(key, rl, g, bild ? {bild:true} : undefined) || ''; } catch(e){ return ''; } };
   const vorher = i > 0 ? INSIGNIEN[i - 1] : null;
   const kopf = `<div class="nd-buehne nd-is">`
-    + `<div class="nd-is-w">${vorher ? `<span class="nd-is-alt">${zeichen(vorher.key, 0, 2, true)}<small>${esc(vorher.name)}</small></span>`
+    + `<div class="nd-is-w">${vorher ? `<span class="nd-is-alt">${zeichen(vorher.key, 2, true)}<small>${esc(vorher.name)}</small></span>`
       + `<svg class="nd-rk-pf" viewBox="0 0 40 16" aria-hidden="true"><path d="M2 8H34"/><path d="M28 3L35 8L28 13"/></svg>` : ''}`
-    + `<span class="nd-is-neu" data-pid="${esc(pid)}"><span class="nd-is-z">${zeichen(ins.key, zacken, grad)}</span>`
+    + `<span class="nd-is-neu" data-pid="${esc(pid)}"><span class="nd-is-z">${zeichen(ins.key, grad)}</span>`
     + `<span class="nd-is-av">${avHtml(pm[pid], '', {px:58})}</span></span></div>`
     + `<b class="nd-is-n">${esc(ins.name)}</b><span class="nd-is-p"><b class="num">${punkte}</b> Prestige · ${esc(_spName(pid))}</span>`
     + (d.wieder ? `<span class="nd-is-wd">wieder getragen${typeof d.wieder === 'string'
@@ -26523,7 +26508,7 @@ function _ndInsigniumBlatt(s){
   }
   const weg = next ? _insWegHtml(pid, punkte) : '';
   const leiter = `<div class="nf-leiter nd-is-l">${INSIGNIEN.map((x, k) => `<span class="nf-lt-p${k <= i ? ' hat' : ''}${k === i ? ' jetzt' : ''}">`
-    + `${zeichen(x.key, k === i ? zacken : 0, k === i ? grad : 0, true)}</span>`).join('')}</div>`;
+    + `${zeichen(x.key, k === i ? grad : 0, true)}</span>`).join('')}</div>`;
   const ab = (x, html) => html ? `<div class="nd-section">${esc(x)}</div>${html}` : '';
   return {kopf, mitte:ab('Woraus die Punkte kommen', quellen) + ab('Der Weg durch die Stufe', weg) + ab('Die Leiter', leiter)};
 }
@@ -26534,7 +26519,7 @@ function _insWegHtml(pid, punkte, vorher){
   const rl = (getPlayerRank(pid) || {}).label;
   const gs = insigniumGradSchwellen(i);
   let grad = 0; gs.forEach((x, g) => { if(punkte >= x) grad = g; });
-  const zeichen = (key, g) => { try { return insigniumStufeSvg(key, rl, 0, g, {bild:true}) || ''; } catch(e){ return ''; } };
+  const zeichen = (key, g) => { try { return insigniumStufeSvg(key, rl, g, {bild:true}) || ''; } catch(e){ return ''; } };
   const spanne = Math.max(1, next.min - ins.min);
   const lage = x => Math.max(0, Math.min(100, (x - ins.min) / spanne * 100));
   const grenzen = gs.concat([next.min]);
@@ -26611,7 +26596,7 @@ function _ndTafelZeileBild(t){
     const p = Number(ref.punkte) || 0;
     const i = p ? insigniumStufeVon(p) : (ref.stufe | 0);
     let z = '';
-    try { z = insigniumStufeSvg(INSIGNIEN[i].key, (getPlayerRank(ref.pid) || {}).label, 0, 0, {bild:true}) || ''; } catch(e){}
+    try { z = insigniumStufeSvg(INSIGNIEN[i].key, (getPlayerRank(ref.pid) || {}).label, 0, {bild:true}) || ''; } catch(e){}
     return {label:INSIGNIEN[i].name, verb:_spName(ref.pid) + ' erreicht', rechts:`<span class="nd-tz-w">${chip(ref.pid)}<span class="nd-tz-z">${z}</span></span>`
       + (p ? `<b class="nd-tz-v num">${p} P</b>` : '')};
   }
@@ -32466,16 +32451,15 @@ function insigniumStufeVon(punkte){
   while(i + 1 < INSIGNIEN.length && punkte >= INSIGNIEN[i + 1].min) i++;
   return i;
 }
+const ORDENSSTERN_GRAD = 500;
 function insigniumGradSchwellen(i){
   const st = INSIGNIEN[i], nx = INSIGNIEN[i + 1];
-  if(!st || !nx) return [st ? st.min : 0];
+  if(!st) return [0];
+  if(!nx) return Array.from({length:INSIGNIUM_GRADE}, (_, g) => st.min + g * ORDENSSTERN_GRAD);
   const drittel = (nx.min - st.min) / 3;
   return [st.min, st.min + Math.floor(drittel / 100) * 100,
           st.min + Math.floor(2 * drittel / 100) * 100];
 }
-const ORDENSSTERN_START = 8;
-const ORDENSSTERN_SCHRITT = 500;
-
 function _chronikMonat(titleId){
   const d = DISZIPLINEN.find(x => x.id === titleId);
   return (d && d.monat) || null;
@@ -32611,7 +32595,7 @@ function rekordQuelleVon(pid, cid){
 
 function prestigeLeer(von){
   return {punkte:0, stufe:0, insignie:INSIGNIEN[0], naechste:INSIGNIEN[1],
-          fehlt:INSIGNIEN[1].min, zacken:0, grad:0,
+          fehlt:INSIGNIEN[1].min, grad:0,
           teile:{auszeichnung:0,monat:0,rekord:0},
           zahlen:{auszeichnung:0,monat:0,rekord:0}, quellen:[], platz:0, von:von || 0};
 }
@@ -32632,10 +32616,7 @@ function prestigeOf(pid, bisMs){
     insignie:INSIGNIEN[i],
     naechste: letzte ? null : INSIGNIEN[i + 1],
     fehlt: letzte ? 0 : INSIGNIEN[i + 1].min - e.punkte,
-    grad: letzte ? 0 : gs.reduce((g, schwelle, gi) => e.punkte >= schwelle ? gi : g, 0),
-    zacken: letzte ? ORDENSSTERN_START + Math.floor((e.punkte - INSIGNIEN[i].min) / ORDENSSTERN_SCHRITT) : 0,
-    naechsteZacke: letzte
-      ? ORDENSSTERN_SCHRITT - ((e.punkte - INSIGNIEN[i].min) % ORDENSSTERN_SCHRITT) : 0,
+    grad: gs.reduce((g, schwelle, gi) => e.punkte >= schwelle ? gi : g, 0),
     platz: imRuhestand(pid) ? ruhestandStand(pid).platz : T.rang.indexOf(pid) + 1,
     von: imRuhestand(pid) ? ruhestandStand(pid).von : T.gesamt
   });
@@ -32643,10 +32624,7 @@ function prestigeOf(pid, bisMs){
 
 function insigniumPos(P){
   if(!P) return 0;
-  const letzte = INSIGNIEN.length - 1;
-  return (P.stufe | 0) === letzte
-    ? letzte * INSIGNIUM_GRADE + Math.max(0, (P.zacken || ORDENSSTERN_START) - ORDENSSTERN_START)
-    : (P.stufe | 0) * INSIGNIUM_GRADE + (P.grad | 0);
+  return (P.stufe | 0) * INSIGNIUM_GRADE + (P.grad | 0);
 }
 
 
@@ -32772,14 +32750,13 @@ function _insDefs(id, c, glanzGold){
 const INS_BILD_KANTE = (INS_R - INS_BREIT / 2) / (IZ_RI / 1000);
 const INS_RAUTE_Y = 50 + (IZ_RAUTE - 500) / 1000 * INS_BILD_KANTE;
 
-function _insBildNr(key, zacken, grad){
+function _insBildNr(key, grad){
   const n = (INS_ZEICHEN[key] || INS_ZEICHEN.reif).length;
-  const i = key === 'stern' ? (zacken || ORDENSSTERN_START) - ORDENSSTERN_START : (grad || 0);
-  return Math.max(0, Math.min(n - 1, i));
+  return Math.max(0, Math.min(n - 1, grad || 0));
 }
 
-function _insStufe(key, c, zacken, id, grad, eigen, bild){
-  const nr = _insBildNr(key, zacken, grad);
+function _insStufe(key, c, id, grad, eigen, bild){
+  const nr = _insBildNr(key, grad);
   const k = INS_BILD_KANTE, o = 50 - k / 2;
   const si = Math.max(0, INSIGNIEN.findIndex(x => x.key === key));
   const hof = si >= 3 ? `<circle data-schein="1" cx="50" cy="50" r="68" fill="url(#${id}hof)"
@@ -32880,7 +32857,7 @@ function insigniumSvg(pid, opt){
   const pos = band ? (opt.pos !== undefined ? opt.pos : ligaPosition(pid)) : 0;
   const glanz = aura ? 1 : .3;
   const bild = opt.px != null && opt.px < INS_VEKTOR_PX;
-  const schl = [rangLabel, P.insignie.key, P.grad, P.zacken, band ? 1 : 0,
+  const schl = [rangLabel, P.insignie.key, P.grad, band ? 1 : 0,
                 titel, pos, bild ? 1 : 0, auraHier ? 1 : 0].join('|');
   const fertig = _INS_MEMO.get(schl);
   if(fertig !== undefined) return fertig;
@@ -32893,7 +32870,7 @@ function insigniumSvg(pid, opt){
   s += `<circle cx="50" cy="50" r="${_n(INS_RA + .4)}" fill="url(#${id}pl)"/>`
     + `<circle cx="50" cy="50" r="${_n(INS_R - INS_BREIT/2 - 1.6)}" fill="none"
        stroke="#000000" stroke-width="2.4" opacity=".38"/>`
-    + _insStufe(P.insignie.key, c, P.zacken, id, P.grad, ref.inline, bild)
+    + _insStufe(P.insignie.key, c, id, P.grad, ref.inline, bild)
     + (band ? _insFuss(pos) : '')
     + (band ? _insSterne(titel, id) : '')
     + `</svg>`;
@@ -32936,28 +32913,26 @@ function _insVorwaermen(){
   }
   const s = _insWarmPlan.shift();
   if(!s){ _insWarmPlan = null; return true; }
-  const [rang, i] = s, L = INSIGNIEN.length - 1, key = INSIGNIEN[i].key;
-  const n = i === L ? INS_ZEICHEN.stern.length : INSIGNIUM_GRADE;
-  const z = g => i === L ? ORDENSSTERN_START + g : 0;
-  for(let g = 0; g < n; g++) insigniumStufeSvg(key, rang, z(g), g, {bild:true});
-  insigniumStufeSvg(key, rang, z(0), 0);
-  insigniumStufeSvg(key, rang, z(n - 1), n - 1);
+  const [rang, i] = s, key = INSIGNIEN[i].key, n = INSIGNIUM_GRADE;
+  for(let g = 0; g < n; g++) insigniumStufeSvg(key, rang, g, {bild:true});
+  insigniumStufeSvg(key, rang, 0);
+  insigniumStufeSvg(key, rang, n - 1);
   return false;
 }
-function insigniumStufeSvg(key, rangLabel, zacken, grad, opt){
+function insigniumStufeSvg(key, rangLabel, grad, opt){
   const c = _insSatzCache(rangLabel);
   const topf = (opt && opt.eigen) ? null : _insTopfHolen();
   if(topf){
     if(topf !== _insStufeTopf){ _insStufeTopf = topf; _insStufeDrin.clear(); }
     const bild = !!(opt && opt.bild);
-    const schl = c.rang + '|' + key + '|' + _insBildNr(key, zacken, grad) + (bild ? '|b' : '');
+    const schl = c.rang + '|' + key + '|' + _insBildNr(key, grad) + (bild ? '|b' : '');
     let sid = _insStufeSym.get(schl);
     if(!sid){ sid = 'inst' + _insStufeSym.size; _insStufeSym.set(schl, sid); }
     if(!_insStufeDrin.has(sid)){
       const ref = _insDefsRef(rangLabel, .3);
       topf.insertAdjacentHTML('beforeend', `<defs><g id="${sid}">`
         + `<circle cx="50" cy="50" r="${_n(INS_RA + .4)}" fill="url(#${ref.id}pl)"/>`
-        + _insStufe(key, c, zacken || 0, ref.id, grad || 0, false, bild) + `</g></defs>`);
+        + _insStufe(key, c, ref.id, grad || 0, false, bild) + `</g></defs>`);
       _insStufeDrin.add(sid);
     }
     return `<svg viewBox="${INS_BOX}" class="ins" aria-hidden="true"><use href="#${sid}"/></svg>`;
@@ -32966,7 +32941,7 @@ function insigniumStufeSvg(key, rangLabel, zacken, grad, opt){
   return `<svg viewBox="${INS_BOX}" class="ins" aria-hidden="true">`
     + _insDefs(id, c)
     + `<circle cx="50" cy="50" r="${_n(INS_RA + .4)}" fill="url(#${id}pl)"/>`
-    + _insStufe(key, c, zacken || 0, id, grad || 0, true)
+    + _insStufe(key, c, id, grad || 0, true)
     + `</svg>`;
 }
 
@@ -33144,54 +33119,48 @@ function showLaufbahn(pid){
   _sheetSetReopen(() => showLaufbahn(pid));
   const P = prestigeOf(pid);
   const t = rangTon(pid);
-  const spanne = P.naechste ? P.naechste.min - P.insignie.min : ORDENSSTERN_SCHRITT;
-  const drin = P.naechste ? P.punkte - P.insignie.min
-                          : (P.punkte - P.insignie.min) % ORDENSSTERN_SCHRITT;
+  const _gs = insigniumGradSchwellen(P.stufe);
+  const spanne = P.naechste ? P.naechste.min - P.insignie.min : _gs[_gs.length - 1] - P.insignie.min;
+  const drin = P.punkte - P.insignie.min;
+  const _naechsterGrad = P.naechste ? null : _gs.find(x => x > P.punkte);
   const anteil = Math.max(0, Math.min(1, drin / Math.max(1, spanne)));
 
   const _rangL = (getPlayerRank(pid) || {}).label;
-  const _letzteI = INSIGNIEN.length - 1;
-  const _felder = i => i === _letzteI ? INS_ZEICHEN.stern.length : INSIGNIUM_GRADE;
-  const _eigen = P.stufe === _letzteI ? _insBildNr('stern', P.zacken, 0) : P.grad;
+  const _eigen = P.grad;
   const _da = (i, g) => i < P.stufe || (i === P.stufe && _eigen >= g);
-  const _feldName = (i, g) => i === _letzteI ? (ORDENSSTERN_START + g) + ' Zacken'
-                                             : INSIGNIUM_GRAD_NAME[g];
   const _zeichen = (i, g, klein) => insigniumStufeSvg(INSIGNIEN[i].key, _rangL,
-    i === _letzteI ? ORDENSSTERN_START + g : 0, g, klein ? {bild:true} : undefined);
+    g, klein ? {bild:true} : undefined);
   const karten = INSIGNIEN.map((ins, i) => {
     const zustand = i < P.stufe ? 'erreicht' : i === P.stufe ? 'jetzt' : 'offen';
-    const zeigt = i < P.stufe ? _felder(i) - 1 : i === P.stufe ? _eigen : 0;
-    const marken = Array.from({length:_felder(i)}, (_, g) =>
-      `<button type="button" data-lbgrad="${g}" aria-label="${esc(ins.name + ' ' + _feldName(i, g))}"`
+    const zeigt = i < P.stufe ? INSIGNIUM_GRADE - 1 : i === P.stufe ? _eigen : 0;
+    const marken = Array.from({length:INSIGNIUM_GRADE}, (_, g) =>
+      `<button type="button" data-lbgrad="${g}" aria-label="${esc(ins.name + ' ' + INSIGNIUM_GRAD_NAME[g])}"`
       + ` class="${_da(i, g) ? 'an' : ''}${g === zeigt ? ' zeigt' : ''}${i === P.stufe && g === _eigen ? ' hier' : ''}">`
-      + `${i === _letzteI ? ORDENSSTERN_START + g : INSIGNIUM_GRAD_NAME[g]}</button>`).join('');
-    const unten = `<span class="lb-k-grad">${marken}</span>`
-      + (i === _letzteI ? `<span class="lb-k-z num">${i === P.stufe
-            ? P.zacken + ' Zacken'
-            : 'je ' + ORDENSSTERN_SCHRITT + ' eine Zacke'}</span>` : '');
+      + `${INSIGNIUM_GRAD_NAME[g]}</button>`).join('');
+    const unten = `<span class="lb-k-grad">${marken}</span>`;
     return `<div class="lb-k ${zustand}" data-lbstufe="${i}" data-lbg="${zeigt}"${i === P.stufe ? ' data-vek="1"' : ''}>
       <span class="lb-k-ins">${_zeichen(i, zeigt, i !== P.stufe)}</span>
       <span class="lb-k-n">${esc(ins.name)}</span>
       <span class="lb-k-p num">${i === 0 ? 'Start' : 'ab ' + ins.min}${
-        i < _letzteI ? '<br>' + insigniumGradSchwellen(i).slice(1)
-          .map((x, g) => INSIGNIUM_GRAD_NAME[g + 1] + ' ' + x).join(' · ') : ''}</span>
+        '<br>' + insigniumGradSchwellen(i).slice(1)
+          .map((x, g) => INSIGNIUM_GRAD_NAME[g + 1] + ' ' + x).join(' · ')}</span>
       ${unten}
     </div>`;
   }).join('');
 
   const _alle = INSIGNIEN.map((ins, i) => `<div class="lb-alle-z">
       <div class="lb-alle-n"><b>${esc(ins.name)}</b><span class="num">${i === 0 ? 'Start' : 'ab ' + ins.min}</span></div>
-      <div class="lb-alle-f">${Array.from({length:_felder(i)}, (_, g) =>
+      <div class="lb-alle-f">${Array.from({length:INSIGNIUM_GRADE}, (_, g) =>
         `<button type="button" class="lb-feld${_da(i, g) ? ' da' : ''}${i === P.stufe && g === _eigen ? ' jetzt' : ''}"`
-        + ` data-lbfeld="${i},${g}" aria-label="${esc(ins.name + ' ' + _feldName(i, g))}">${_zeichen(i, g, true)}</button>`).join('')}</div>
+        + ` data-lbfeld="${i},${g}" aria-label="${esc(ins.name + ' ' + INSIGNIUM_GRAD_NAME[g])}">${_zeichen(i, g, true)}</button>`).join('')}</div>
     </div>`).join('');
   let _alleN = 0, _alleDa = 0;
-  INSIGNIEN.forEach((ins, i) => { for(let g = 0; g < _felder(i); g++){ _alleN++; if(_da(i, g)) _alleDa++; } });
+  INSIGNIEN.forEach((ins, i) => { for(let g = 0; g < INSIGNIUM_GRADE; g++){ _alleN++; if(_da(i, g)) _alleDa++; } });
 
   const _titel = meisterTitel(pid);
   const _auraJetzt = auraStufe(_titel);
   const _eigenBild = insBildHref(P.insignie.key,
-    _insBildNr(P.insignie.key, P.zacken, P.grad), _insSatzCache(_rangL).rang);
+    _insBildNr(P.insignie.key, P.grad), _insSatzCache(_rangL).rang);
   const auren = AURA_STUFEN.map((name, i) => {
     const st = i + 1;
     const zustand = st < _auraJetzt ? 'erreicht' : st === _auraJetzt ? 'jetzt' : 'offen';
@@ -33262,7 +33231,9 @@ function showLaufbahn(pid){
       <span class="lb-st-l">Prestige</span>
       <span class="lb-st-n num">${P.naechste
         ? 'noch ' + P.fehlt + ' bis ' + esc(P.naechste.name)
-        : P.zacken + ' Zacken · noch ' + P.naechsteZacke + ' bis zur nächsten'}</span>
+        : _naechsterGrad
+          ? 'noch ' + (_naechsterGrad - P.punkte) + ' bis ' + esc(P.insignie.name + ' ' + INSIGNIUM_GRAD_NAME[P.grad + 1])
+          : 'die höchste Stufe der Leiter'}</span>
     </div>
     <div class="lb-spur"><i style="width:${Math.round(anteil * 100)}%"></i></div>
 

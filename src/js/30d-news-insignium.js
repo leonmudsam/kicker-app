@@ -7,12 +7,11 @@
 const INS_ORDNUNG = ['erste', 'zweite', 'dritte', 'vierte', 'fünfte', 'sechste', 'siebte'];
 
 // Der Name einer Lage auf der Leiter, wie ihn das Laufbahnblatt schreibt:
-// „Zierkranz III", am Ordensstern die Zacken.
+// „Zierkranz III", „Ordensstern II".
 function _insLageName(l){
   const ins = INSIGNIEN[(l && l.stufe) | 0];
   if(!ins) return '';
-  return ins.key === 'stern' ? `${ins.name} mit ${(l.zacken | 0) || ORDENSSTERN_START} Zacken`
-    : `${ins.name} ${INSIGNIUM_GRAD_NAME[(l.grad | 0)] || 'I'}`;
+  return `${ins.name} ${INSIGNIUM_GRAD_NAME[(l.grad | 0)] || 'I'}`;
 }
 
 // ── Die Sätze der Karte ─────────────────────────────────────────────
@@ -38,11 +37,9 @@ function _insTagTexte(zuege){
         + (z.traeger == null ? '' : (z.traeger | 0) <= 1 ? 'Niemand sonst in der Liga steht so hoch.'
           : `Diese Stufe oder eine höhere tragen jetzt ${z.traeger} von ${z.von} Spielern.`)).trim()};
     if(z.art === 'grad') return {
-      title: S.key === 'stern' ? `${n} erreicht die ${z.nach.zacken}. Zacke am Ordensstern`
-        : `${n} steigt auf ${_insLageName(z.nach)}`,
+      title: `${n} steigt auf ${_insLageName(z.nach)}`,
       desc: `Mit ${z.nach.punkte} Prestige stand ${n} noch nie so weit oben.`
-        + (S.key === 'stern' ? ` Die nächste Zacke kommt bei ${S.min + (z.nach.zacken - ORDENSSTERN_START + 1) * ORDENSSTERN_SCHRITT}.`
-          : next ? ` Bis zum ${next.name} fehlen ${Math.max(0, next.min - z.nach.punkte)}.` : '')};
+        + (next ? ` Bis zum ${next.name} fehlen ${Math.max(0, next.min - z.nach.punkte)}.` : '')};
     return {
       title: `${n} fällt auf den ${S.name} zurück`,
       desc: `Nach ${Math.max(0, z.vor.punkte - z.nach.punkte)} Prestige weniger an diesem Tag fehlen bis zum `
@@ -51,7 +48,7 @@ function _insTagTexte(zuege){
   if(l.length === 1) return satz(l[0]);
   // Mehrere: Etiketten mit ihren Leuten, dasselbe Etikett für mehrere einmal.
   const etikett = z => z.art === 'ab' ? 'Rückfall'
-    : z.art === 'grad' ? (INSIGNIEN[z.nach.stufe].key === 'stern' ? `${z.nach.zacken}. Zacke` : _insLageName(z.nach))
+    : z.art === 'grad' ? _insLageName(z.nach)
     : INSIGNIEN[z.nach.stufe].name;
   const reihe = [];
   l.forEach(z => { const e = etikett(z), da = reihe.find(x => x.e === e);
@@ -77,18 +74,12 @@ function _insTagTexte(zuege){
 function _insZeichen(pid, l, bild){
   const ins = INSIGNIEN[(l && l.stufe) | 0];
   if(!ins) return '';
-  try { return insigniumStufeSvg(ins.key, (getPlayerRank(pid) || {}).label, l.zacken | 0, l.grad | 0,
+  try { return insigniumStufeSvg(ins.key, (getPlayerRank(pid) || {}).label, l.grad | 0,
     bild ? {bild:true} : undefined) || ''; } catch(e){ return ''; }
 }
 function _insArtWort(z){
   return z.art === 'ab' ? 'Rückfall' : z.art === 'grad' ? 'Neuer Grad'
     : z.wieder ? 'Wieder erreicht' : 'Neue Stufe';
-}
-// Ein Feld der Spur je Grad, drei je Stufe. Der Ordensstern zählt danach
-// Zacken; auf der Spur steht er in seinem letzten Feld, die Zahl der Zacken
-// nennt die Schlagzeile.
-function _insSpurPos(l){
-  return Math.min(INSIGNIEN.length * INSIGNIUM_GRADE - 1, insigniumPos(l));
 }
 // ── Die Spur: die ganze Leiter, und wie weit der Tag darauf trägt ────
 // Einundzwanzig Felder, drei je Stufe, darunter die sieben Zeichen. Was
@@ -98,7 +89,7 @@ function _insSpurPos(l){
 // Leiter das liegt. Das Zeichen der Stufe von jetzt steht größer und hell,
 // das der Stufe davor halb: die übrigen sind nur die Leiter dahinter.
 function _insSpur(z){
-  const a = _insSpurPos(z.vor), b = _insSpurPos(z.nach), ab = z.art === 'ab';
+  const a = insigniumPos(z.vor), b = insigniumPos(z.nach), ab = z.art === 'ab';
   const rang = (getPlayerRank(z.pid) || {}).label;
   const feld = i => {
     const k = i === b ? 'da' : ab ? (i < b ? 'hat' : i <= a ? 'weg' : '')
@@ -107,7 +98,7 @@ function _insSpur(z){
   };
   return `<div class="ni-spur${ab ? ' ab' : ''}" aria-hidden="true">` + INSIGNIEN.map((ins, s) => {
     let bild = '';
-    try { bild = insigniumStufeSvg(ins.key, rang, 0, 0, {bild:true}) || ''; } catch(e){ bild = ''; }
+    try { bild = insigniumStufeSvg(ins.key, rang, 0, {bild:true}) || ''; } catch(e){ bild = ''; }
     const lage = s === z.nach.stufe ? ' jetzt' : s === z.vor.stufe ? ' vorher' : s < z.nach.stufe ? ' hat' : '';
     return `<span class="ni-sp-s${lage}"><span class="ni-sp-f">`
       + [0, 1, 2].map(g => feld(s * INSIGNIUM_GRADE + g)).join('')
@@ -164,8 +155,7 @@ function _newsInsTagZeilen(s){
   const l = (d.zuege || []).slice(1).filter(z => z && pm[z.pid] && INSIGNIEN[(z.nach || {}).stufe | 0]);
   if(!l.length) return '';
   const text = z => z.art === 'ab' ? `fällt auf den ${INSIGNIEN[z.nach.stufe].name} zurück`
-    : z.art === 'grad' ? (INSIGNIEN[z.nach.stufe].key === 'stern' ? `erreicht die ${z.nach.zacken}. Zacke`
-      : `steigt auf ${_insLageName(z.nach)}`)
+    : z.art === 'grad' ? `steigt auf ${_insLageName(z.nach)}`
     : z.wieder ? `trägt wieder den ${INSIGNIEN[z.nach.stufe].name}` : `erreicht den ${INSIGNIEN[z.nach.stufe].name}`;
   const zeile = z => {
     const ab = z.art === 'ab';
@@ -254,9 +244,7 @@ function _insAltZuTag(list){
     const zuege = zeilen.map(x => {
       const d = x.dataRef || {}, lb = (d.laufbahn || {})[d.pid] || {};
       const lage = p => { const i = insigniumStufeVon(p), gs = insigniumGradSchwellen(i);
-        return {stufe:i, grad:gs.reduce((g, sw, k) => p >= sw ? k : g, 0),
-          zacken:INSIGNIEN[i].key === 'stern' ? ORDENSSTERN_START + Math.floor((p - INSIGNIEN[i].min) / ORDENSSTERN_SCHRITT) : 0,
-          punkte:Math.round(p)}; };
+        return {stufe:i, grad:gs.reduce((g, sw, k) => p >= sw ? k : g, 0), punkte:Math.round(p)}; };
       const nach = Number(d.punkte) || Number(lb.nach) || INSIGNIEN[d.stufe | 0].min;
       const vor = Number(lb.vor) || Math.max(0, INSIGNIEN[d.stufe | 0].min - 1);
       return {pid:d.pid, art:'auf', vor:lage(vor), nach:lage(nach), ms:new Date(x.when).getTime(),
