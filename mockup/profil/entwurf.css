@@ -1,0 +1,278 @@
+/* ═══ Das Spielerprofil im Entwurf ═══════════════════════════════════
+   Gilt nur unter html.neu (app.html#neu:<id>). Dieselben Bauteile und
+   dieselbe Reihenfolge wie heute; neu ist das Material.
+
+   Drei Regeln, die überall gelten:
+   1. EINE PLATTE. Jede Karte ist dieselbe Fläche: Lichtkante oben, ein
+      Hauch Rangfarbe, der nach unten ausläuft, weicher Schatten.
+   2. DIE RANGFARBE IN STUFEN. --ak bleibt die eine Farbe [§C25]; daraus
+      entstehen hell (Zahlen, die „ich" heißen), Fläche (gedämpft) und Kante.
+      Gold bleibt Titeln und Rekorden, Grün und Rot der Richtung.
+   3. NICHTS HÄNGT AM SCROLLEN. Verläufe, Schatten und Formen werden einmal
+      gemalt; bewegt wird nur beim Öffnen, nur transform und opacity bzw.
+      ein Glanz über den Namen, und mit „Bewegung reduzieren" gar nichts.
+      Die Effekte der sechsten Aufwertung wurden genau daran wieder
+      entfernt: auf dem Telefon sahen sie beim Scrollen nicht gut aus. */
+
+html.neu .pp-root{
+  --ak-hell:color-mix(in srgb,var(--ak) 58%,#fff);
+  --ak-tief:color-mix(in srgb,var(--ak) 40%,#05070a);
+  --pl-rand:rgba(255,255,255,.065);
+  --pl-licht:inset 0 1px 0 rgba(255,255,255,.07),inset 0 0 0 1px rgba(var(--ak-rgb),.07);
+  --pl-schatten:0 14px 26px -20px rgba(0,0,0,.95);
+  --platte:linear-gradient(180deg,rgba(var(--ak-rgb),.055) 0%,rgba(255,255,255,.012) 34%,rgba(0,0,0,.14) 100%),var(--surface);
+  --gold-rgb:247,207,74;
+}
+
+/* ── 1 · Die Platte ─────────────────────────────────────────────────── */
+html.neu .pp-root .pp-k,
+html.neu .pp-root .pp-st,
+html.neu .pp-root .pp-pos-combined,
+html.neu .pp-root .pp-bcard,
+html.neu .pp-root .pp-badges-card,
+html.neu .pp-root .pp-aw,
+html.neu .pp-root .pp-sn,
+html.neu .pp-root .pp-r-rich,
+html.neu .pp-root .pp-posprof,
+html.neu .pp-root .pp-spark-row{
+  background:var(--platte);border:1px solid var(--pl-rand);border-radius:16px;
+  box-shadow:var(--pl-licht),var(--pl-schatten)}
+
+/* ── 2 · Der Kopf: eine Bühne ───────────────────────────────────────── */
+html.neu .pp-root .pp-header{
+  border-radius:26px;border:1px solid rgba(var(--ak-rgb),.26);padding-top:36px;
+  background:
+    linear-gradient(90deg,transparent,rgba(var(--ak-rgb),.95),transparent) 50% 0/76% 1px no-repeat,
+    radial-gradient(62% 42% at 50% 27%,rgba(var(--ak-rgb),.30) 0%,rgba(var(--ak-rgb),.08) 55%,transparent 75%),
+    radial-gradient(120% 60% at 50% 104%,rgba(var(--ak-rgb),.16) 0%,transparent 60%),
+    repeating-linear-gradient(135deg,rgba(255,255,255,.016) 0 1px,transparent 1px 7px),
+    linear-gradient(180deg,#14181d 0%,#0d1014 58%,#0b0d10 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 26px 50px -34px rgba(var(--ak-rgb),.55),0 18px 36px -24px rgba(0,0,0,.9);
+  isolation:isolate}
+/* Der Strahlenfächer hinter dem Insignium: fester Verlauf, zum Rand hin
+   ausgeblendet. Er sitzt hinter allem (z-index -1 in einem eigenen
+   Stapel, `isolation`), ohne die Lage der Kinder anzufassen — Aura und
+   Wasserzeichen stehen absolut und sprangen, als sie relativ wurden. */
+html.neu .pp-root .pp-header::before{content:"";position:absolute;left:50%;top:-40px;width:560px;height:560px;
+  margin-left:-280px;pointer-events:none;z-index:-1;border-radius:50%;
+  background:repeating-conic-gradient(from 0deg,rgba(var(--ak-rgb),.13) 0deg 2.2deg,transparent 2.2deg 11.25deg);
+  -webkit-mask:radial-gradient(circle at 50% 50%,#000 0%,rgba(0,0,0,.55) 26%,transparent 52%);
+          mask:radial-gradient(circle at 50% 50%,#000 0%,rgba(0,0,0,.55) 26%,transparent 52%);
+  transform-origin:50% 50%}
+/* Der Horizont: eine Lichtlinie am Fuß des Kopfs. */
+html.neu .pp-root .pp-header::after{height:2px;
+  background:linear-gradient(90deg,transparent 8%,rgba(var(--ak-rgb),.55) 50%,transparent 92%);
+  box-shadow:0 0 18px 1px rgba(var(--ak-rgb),.35)}
+
+/* Der Name: Metall von Weiß in die Rangfarbe, beim Öffnen läuft einmal ein
+   Glanz darüber. */
+html.neu .pp-root .pp-name{font-size:34px;letter-spacing:-.025em;
+  background:linear-gradient(100deg,transparent 0 38%,rgba(255,255,255,.95) 50%,transparent 62% 100%) 160% 0/250% 100% no-repeat,
+    linear-gradient(180deg,#ffffff 0%,#f2f4f2 46%,var(--ak-hell) 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 2px 10px rgba(var(--ak-rgb),.30))}
+
+/* Der Beiname: ein Ordensband in Gold, die Enden eingekerbt [§C25]. */
+html.neu .pp-root .pp-title-pill{border:0;border-radius:0;padding:7px 22px 7px;
+  background:linear-gradient(rgba(var(--gold-rgb),.75),rgba(var(--gold-rgb),.75)) 0 0/100% 1px no-repeat,
+    linear-gradient(rgba(var(--gold-rgb),.75),rgba(var(--gold-rgb),.75)) 0 100%/100% 1px no-repeat,
+    linear-gradient(180deg,rgba(var(--gold-rgb),.26),rgba(var(--gold-rgb),.08));
+  clip-path:polygon(0 0,100% 0,calc(100% - 10px) 50%,100% 100%,0 100%,10px 50%);
+  text-shadow:0 0 12px rgba(var(--gold-rgb),.35)}
+html.neu .pp-root .pp-title-sub{letter-spacing:.16em}
+
+/* Rang als Plakette in seiner Farbe, Rolle in Metall. */
+html.neu .pp-root .pp-pill{border-radius:10px;padding:6px 11px;
+  background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.015));border:1px solid rgba(255,255,255,.10);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+html.neu .pp-root .pp-pill.tier{color:var(--ak-hell);border-color:rgba(var(--ak-rgb),.6);
+  background:linear-gradient(180deg,rgba(var(--ak-rgb),.30),rgba(var(--ak-rgb),.08));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 0 16px -4px rgba(var(--ak-rgb),.6)}
+
+/* Die Elo-Tafel: ein vertiefter Rahmen, Haarlinien, „Aktuell" groß. */
+html.neu .pp-root .pp-elo-trinity{border-radius:18px;gap:0;overflow:hidden;
+  background:linear-gradient(180deg,rgba(0,0,0,.34),rgba(0,0,0,.18));border:1px solid rgba(var(--ak-rgb),.22);
+  box-shadow:inset 0 2px 10px rgba(0,0,0,.55),inset 0 -1px 0 rgba(255,255,255,.05)}
+html.neu .pp-root .pp-et-col{background:transparent}
+html.neu .pp-root .pp-et-col + .pp-et-col{box-shadow:inset 1px 0 0 rgba(var(--ak-rgb),.16)}
+html.neu .pp-root .pp-et-col.now{background:radial-gradient(90% 70% at 50% 100%,rgba(var(--ak-rgb),.22),transparent 70%)}
+html.neu .pp-root .pp-et-col.now .val{font-size:30px;
+  background:linear-gradient(180deg,var(--ak-hell),var(--ak) 80%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 12px rgba(var(--ak-rgb),.45))}
+html.neu .pp-root .pp-et-col.now::after{content:"";position:absolute;left:26%;right:26%;bottom:0;height:2px;border-radius:2px;
+  background:linear-gradient(90deg,transparent,var(--ak),transparent);box-shadow:0 0 10px rgba(var(--ak-rgb),.8)}
+html.neu .pp-root .pp-et-col .label{letter-spacing:.14em}
+/* Bei 320 px wurde „diese Saison" zu „diese Sai…" — heute wie im Entwurf.
+   Schmaler gesetzt passt es in die Spalte. */
+@media(max-width:340px){html.neu .pp-root .pp-et-col .sub{letter-spacing:0;font-size:8.5px}}
+
+/* Verlauf und Form. */
+html.neu .pp-root .pp-spark-row{padding:12px 14px 12px}
+html.neu .pp-root .pp-spark{background:
+  linear-gradient(rgba(255,255,255,.05),rgba(255,255,255,.05)) 0 0/100% 1px no-repeat,
+  linear-gradient(rgba(255,255,255,.035),rgba(255,255,255,.035)) 0 50%/100% 1px no-repeat,
+  linear-gradient(rgba(255,255,255,.05),rgba(255,255,255,.05)) 0 100%/100% 1px no-repeat}
+html.neu .pp-root .pp-spark svg path[stroke]{stroke-width:2;filter:drop-shadow(0 0 4px rgba(var(--ak-rgb),.6))}
+html.neu .pp-root .pp-spark svg circle{r:3.2;stroke:#0b0d10;stroke-width:1.5;
+  filter:drop-shadow(0 0 5px rgba(var(--ak-rgb),.95))}
+html.neu .pp-root .pp-form{gap:5px}
+html.neu .pp-root .pp-form .pd,
+html.neu .pp-root .pp-st .dots i{width:13px;height:6px;border-radius:3px}
+html.neu .pp-root .pp-form .pd.w,html.neu .pp-root .pp-st .dots i.w{box-shadow:0 0 7px rgba(190,242,100,.55)}
+html.neu .pp-root .pp-form .pd.l,html.neu .pp-root .pp-st .dots i.l{box-shadow:0 0 7px rgba(240,86,106,.45)}
+
+/* ── 3 · Überschriften ──────────────────────────────────────────────── */
+html.neu .pp-root .pp-sec-title .l .ic.svg-ic,
+html.neu .pp-root .pp-sec-title .l > svg{width:24px;height:24px;box-sizing:border-box;padding:5px;border-radius:8px;
+  background:linear-gradient(180deg,rgba(var(--ak-rgb),.26),rgba(var(--ak-rgb),.08));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 0 0 1px rgba(var(--ak-rgb),.35);color:var(--ak-hell);stroke:var(--ak-hell)}
+html.neu .pp-root .pp-sec-title .l .ic.svg-ic .ic.svg-ic{width:auto;height:auto;padding:0;background:none;box-shadow:none}
+html.neu .pp-root .pp-sec-title .l .ic.svg-ic svg{width:14px;height:14px}
+html.neu .pp-root .pp-sec-title h4{letter-spacing:.2em;color:var(--ink)}
+html.neu .pp-root .pp-sec-title .m{padding:3px 9px;border-radius:99px;background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.08);font-size:10px;color:var(--ink2)}
+
+/* ── 4 · Chronik: Medaillen ─────────────────────────────────────────── */
+html.neu .pp-root .chron-cell{border-radius:15px;
+  background:radial-gradient(120% 70% at 50% 0%,rgba(var(--ttr),.20),transparent 62%),
+    linear-gradient(180deg,rgba(255,255,255,.03),rgba(0,0,0,.12)),var(--surface);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 10px 18px -14px rgba(0,0,0,.9)}
+html.neu .pp-root .chron-cell .i{filter:drop-shadow(0 2px 6px rgba(var(--ttr),.35))}
+html.neu .pp-root .chron-cell.live{border-color:rgba(var(--ak-rgb),.95);
+  background:radial-gradient(120% 75% at 50% 0%,rgba(var(--ak-rgb),.34),transparent 64%),
+    linear-gradient(180deg,rgba(255,255,255,.04),rgba(0,0,0,.12)),var(--surface);
+  box-shadow:0 0 0 4px rgba(var(--ak-rgb),.12),0 12px 24px -12px rgba(var(--ak-rgb),.65),inset 0 1px 0 rgba(255,255,255,.12)}
+
+/* ── 5 · Sturm und Abwehr ───────────────────────────────────────────── */
+html.neu .pp-root .pp-pos-combined{padding:14px}
+html.neu .pp-root .pp-rd{background:rgba(0,0,0,.18);border-color:rgba(255,255,255,.06);border-radius:14px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+html.neu .pp-root .pp-rd-ring{width:84px;height:84px;
+  box-shadow:0 0 0 1px rgba(255,255,255,.07),inset 0 0 0 1px rgba(0,0,0,.6),0 6px 16px -8px rgba(0,0,0,.9)}
+html.neu .pp-root .pp-rd.stark .pp-rd-ring{box-shadow:0 0 0 1px rgba(var(--ak-rgb),.45),0 0 22px -4px rgba(var(--ak-rgb),.55)}
+html.neu .pp-root .pp-rd-ring::after{inset:9px;
+  background:radial-gradient(circle at 50% 30%,#1a1f25,#0c0f12 70%);box-shadow:inset 0 2px 6px rgba(0,0,0,.7)}
+html.neu .pp-root .pp-rd-wr{font-size:24px}
+
+/* ── 6 · Gesamtbilanz und Serien ────────────────────────────────────── */
+html.neu .pp-root .pp-k{padding:16px 8px 15px;position:relative;overflow:hidden}
+html.neu .pp-root .pp-k .v{font-size:27px;letter-spacing:-.03em}
+html.neu .pp-root .pp-k.neu-quote{border-color:rgba(var(--ak-rgb),.5);
+  background:radial-gradient(90% 80% at 50% 0%,rgba(var(--ak-rgb),.22),transparent 70%),var(--platte)}
+html.neu .pp-root .pp-k.neu-quote .v{color:var(--ak-hell);text-shadow:0 0 18px rgba(var(--ak-rgb),.45)}
+html.neu .pp-root .pp-k.neu-quote::after{content:"";position:absolute;left:12px;right:12px;bottom:8px;height:3px;border-radius:2px;
+  background:linear-gradient(90deg,var(--ak) calc(var(--q,0)*100%),rgba(255,255,255,.07) 0)}
+html.neu .pp-root .pp-st{position:relative;overflow:hidden}
+html.neu .pp-root .pp-st.neu-gruen{border-color:rgba(190,242,100,.32);
+  background:linear-gradient(90deg,rgba(190,242,100,.10),transparent 55%),var(--platte)}
+html.neu .pp-root .pp-st.neu-rot{border-color:rgba(240,86,106,.32);
+  background:linear-gradient(90deg,rgba(240,86,106,.10),transparent 55%),var(--platte)}
+html.neu .pp-root .pp-st .dots{gap:4px}
+
+/* ── 7 · Auszeichnungen: Emaille ────────────────────────────────────── */
+html.neu .pp-root .pp-bmini{border-radius:9px;width:29px;height:29px;
+  background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(0,0,0,.15));box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+html.neu .pp-root .pp-bmini.legendary{border-color:rgba(var(--gold-rgb),.65);
+  background:linear-gradient(160deg,rgba(var(--gold-rgb),.34),rgba(var(--gold-rgb),.08) 60%,rgba(0,0,0,.2));
+  box-shadow:inset 0 1px 0 rgba(255,240,190,.45),0 0 10px -3px rgba(var(--gold-rgb),.7)}
+html.neu .pp-root .pp-bmini.rare{border-color:rgba(167,139,250,.6);
+  background:linear-gradient(160deg,rgba(167,139,250,.30),rgba(167,139,250,.07) 60%,rgba(0,0,0,.2));
+  box-shadow:inset 0 1px 0 rgba(225,215,255,.35),0 0 10px -3px rgba(167,139,250,.6)}
+html.neu .pp-root .pp-bmini.negative{background:linear-gradient(160deg,rgba(240,86,106,.20),rgba(0,0,0,.2))}
+html.neu .pp-root .pp-bcard-bar{height:5px;gap:3px;background:transparent;margin-top:14px}
+html.neu .pp-root .pp-bcard-bar .seg{border-radius:3px}
+html.neu .pp-root .pp-bcard-bar .seg.legendary{box-shadow:0 0 8px rgba(var(--gold-rgb),.6)}
+html.neu .pp-root .pp-bcard-bar .seg.rare{box-shadow:0 0 8px rgba(167,139,250,.5)}
+
+/* ── 8 · Liga Titel: Plaketten ──────────────────────────────────────── */
+html.neu .pp-root .pp-tr{position:relative;overflow:hidden;border-radius:16px;padding:16px 12px 14px;
+  border:1px solid rgba(var(--gold-rgb),.5);
+  background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.09) 42%,transparent 54%),
+    repeating-linear-gradient(90deg,rgba(255,255,255,.018) 0 1px,transparent 1px 3px),
+    linear-gradient(165deg,rgba(var(--gold-rgb),.30),rgba(var(--gold-rgb),.07) 55%,rgba(0,0,0,.25)),var(--surface);
+  box-shadow:inset 0 1px 0 rgba(255,240,190,.35),0 16px 28px -20px rgba(var(--gold-rgb),.6)}
+html.neu .pp-root .pp-tr.team{border-color:rgba(86,180,232,.5);
+  background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.08) 42%,transparent 54%),
+    repeating-linear-gradient(90deg,rgba(255,255,255,.018) 0 1px,transparent 1px 3px),
+    linear-gradient(165deg,rgba(86,180,232,.28),rgba(86,180,232,.06) 55%,rgba(0,0,0,.25)),var(--surface);
+  box-shadow:inset 0 1px 0 rgba(200,235,255,.3),0 16px 28px -20px rgba(86,180,232,.55)}
+html.neu .pp-root .pp-tr .ic.svg-ic{width:40px;height:40px;border-radius:50%;margin:0 auto 9px;color:#2a1c00;
+  background:radial-gradient(circle at 35% 30%,#fff3c4,#f7cf4a 45%,#a8780f 100%);
+  box-shadow:0 0 0 2px rgba(0,0,0,.35),0 0 0 3px rgba(var(--gold-rgb),.55),0 6px 14px -4px rgba(var(--gold-rgb),.7)}
+html.neu .pp-root .pp-tr.team .ic.svg-ic{color:#06223a;
+  background:radial-gradient(circle at 35% 30%,#e6f6ff,#56b4e8 45%,#1f6a97 100%);
+  box-shadow:0 0 0 2px rgba(0,0,0,.35),0 0 0 3px rgba(86,180,232,.55),0 6px 14px -4px rgba(86,180,232,.6)}
+html.neu .pp-root .pp-tr .ic.svg-ic svg{width:19px;height:19px;stroke-width:2.2}
+html.neu .pp-root .pp-tr .ti{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:11.5px;letter-spacing:.01em;text-align:center}
+html.neu .pp-root .pp-tr .su{text-align:center;letter-spacing:.1em;text-transform:uppercase;font-size:9px}
+
+/* ── 9 · Liga-Rekorde ───────────────────────────────────────────────── */
+html.neu .pp-root .chron-one{border-radius:16px;
+  background:linear-gradient(100deg,rgba(var(--ttr),.20),rgba(var(--ttr),.05) 55%,rgba(0,0,0,.12)),var(--surface);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 14px 26px -20px rgba(var(--ttr),.6)}
+html.neu .pp-root .chron-one .ic{border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,rgba(var(--ttr),.45),rgba(var(--ttr),.12) 70%);
+  box-shadow:0 0 0 1px rgba(var(--ttr),.7),0 0 0 4px rgba(var(--ttr),.10),0 4px 12px -4px rgba(var(--ttr),.7)}
+html.neu .pp-root .chron-one .n{font-family:'Archivo Black',sans-serif;font-weight:400;letter-spacing:-.005em;
+  white-space:normal;display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px}
+html.neu .pp-root .chron-one .shared{white-space:nowrap;overflow:visible;text-overflow:clip;max-width:none}
+html.neu .pp-root .chron-more{border-radius:99px;border-style:solid;border-color:rgba(var(--ak-rgb),.3);color:var(--ak-hell);
+  background:linear-gradient(180deg,rgba(var(--ak-rgb),.10),transparent)}
+
+/* ── 10 · Beziehungen ───────────────────────────────────────────────── */
+html.neu .pp-root .pp-r-rich{position:relative;overflow:hidden;border-left-width:1px;padding-bottom:15px}
+html.neu .pp-root .pp-r-rich .av{width:38px;height:38px;border:0;
+  box-shadow:0 0 0 2px #0b0d10,0 0 0 3.5px var(--bez,rgba(255,255,255,.2)),0 0 14px -2px var(--bez,transparent)}
+html.neu .pp-root .pp-r-rich.good,html.neu .pp-root .pp-r-rich.fav{--bez:rgba(190,242,100,.75)}
+html.neu .pp-root .pp-r-rich.bad,html.neu .pp-root .pp-r-rich.nem{--bez:rgba(240,86,106,.75)}
+html.neu .pp-root .pp-r-rich::after{content:"";position:absolute;left:12px;right:12px;bottom:7px;height:3px;border-radius:2px;
+  background:linear-gradient(90deg,var(--bez) calc(var(--q,0)*100%),rgba(255,255,255,.06) 0)}
+html.neu .pp-root .pp-r-rich .name{font-size:13.5px}
+html.neu .pp-root .pp-mit > div{box-shadow:0 0 0 1.5px rgba(var(--ak-rgb),.35)}
+
+/* ── 11 · Awards und Saisonverlauf ──────────────────────────────────── */
+html.neu .pp-root .pp-aw .num{font-size:26px;text-shadow:0 0 14px rgba(190,242,100,.35)}
+html.neu .pp-root .pp-aw.empty{opacity:.55}
+html.neu .pp-root .pp-sn{border-radius:15px;position:relative;overflow:hidden}
+html.neu .pp-root .pp-sn.gold,html.neu .pp-root .pp-sn.silver,html.neu .pp-root .pp-sn.bronze{padding-top:16px}
+html.neu .pp-root .pp-sn::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;opacity:0}
+html.neu .pp-root .pp-sn.gold::before{opacity:1;width:auto;transform:none;border-radius:0;
+  background:linear-gradient(90deg,#a8780f,#fff0b0,#f7cf4a,#a8780f)}
+html.neu .pp-root .pp-sn.silver::before{opacity:1;background:linear-gradient(90deg,#6d757d,#f2f5f7,#c2c9d0,#6d757d)}
+html.neu .pp-root .pp-sn.bronze::before{opacity:1;background:linear-gradient(90deg,#6b3f1c,#f0c39a,#c08457,#6b3f1c)}
+html.neu .pp-root .pp-sn.gold{border-color:rgba(var(--gold-rgb),.45);
+  background:linear-gradient(180deg,rgba(var(--gold-rgb),.16),transparent 60%),var(--platte)}
+html.neu .pp-root .pp-sn.silver{background:linear-gradient(180deg,rgba(194,201,208,.12),transparent 60%),var(--platte)}
+html.neu .pp-root .pp-sn.bronze{background:linear-gradient(180deg,rgba(192,132,87,.14),transparent 60%),var(--platte)}
+html.neu .pp-root .pp-sn .pl .n{font-size:28px}
+html.neu .pp-root .pp-sn.gold .pl .n{background:linear-gradient(180deg,#fff3c4,#f7cf4a 55%,#b9871a);-webkit-background-clip:text;background-clip:text;color:transparent}
+html.neu .pp-root .pp-sn.silver .pl .n{background:linear-gradient(180deg,#ffffff,#c2c9d0 60%,#7d858d);-webkit-background-clip:text;background-clip:text;color:transparent}
+html.neu .pp-root .pp-sn.bronze .pl .n{background:linear-gradient(180deg,#f6d2b0,#c08457 60%,#7a4a24);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* ── 12 · Karriere-Rang: der Abschluss ──────────────────────────────── */
+html.neu .pp-root .pp-rank-card{border-radius:20px;border:1px solid rgba(var(--ak-rgb),.35);position:relative;overflow:hidden;
+  background:radial-gradient(80% 90% at 0% 0%,rgba(var(--ak-rgb),.26),transparent 60%),
+    repeating-linear-gradient(135deg,rgba(255,255,255,.014) 0 1px,transparent 1px 7px),
+    linear-gradient(180deg,#14181d,#0c0f12);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 22px 40px -28px rgba(var(--ak-rgb),.6)}
+html.neu .pp-root .pp-rank-icon{border-radius:16px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 0 0 1px rgba(var(--ak-rgb),.7),0 0 26px -2px rgba(var(--ak-rgb),.7)}
+html.neu .pp-root .pp-rank-elo{font-size:36px}
+html.neu .pp-root .pp-rj-fill{height:4px;box-shadow:0 0 12px rgba(var(--ak-rgb),.8)}
+html.neu .pp-root .pp-rj-tier.active .pp-rj-dot{box-shadow:0 0 0 4px rgba(var(--ak-rgb),.18),0 0 16px rgba(var(--ak-rgb),.9)}
+
+/* ── 13 · Positions-Profil ──────────────────────────────────────────── */
+html.neu .pp-root .pp-slider{height:8px;border-radius:5px;background:rgba(0,0,0,.35);box-shadow:inset 0 1px 3px rgba(0,0,0,.6)}
+html.neu .pp-root .pp-fill{border-radius:5px;background:linear-gradient(90deg,var(--ak-tief),var(--ak));box-shadow:0 0 10px rgba(var(--ak-rgb),.5)}
+html.neu .pp-root .pp-thumb{box-shadow:0 0 0 3px #0b0d10,0 0 0 4.5px var(--ak),0 0 14px rgba(var(--ak-rgb),.9)}
+
+/* ── 14 · Bewegung: nur beim Öffnen ─────────────────────────────────── */
+@keyframes neuHof{from{opacity:0;transform:scale(.86) rotate(-8deg)}to{opacity:1;transform:none}}
+@keyframes neuGlanz{from{background-position:160% 0,0 0}to{background-position:-60% 0,0 0}}
+@keyframes neuStreif{from{opacity:0;transform:scaleX(.2)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:no-preference){
+  html.neu:not(.ruhe) .pp-root .pp-header::before{animation:neuHof 1.1s cubic-bezier(.2,.7,.2,1) .05s both}
+  html.neu:not(.ruhe) .pp-root .pp-name{animation:neuGlanz 1.4s cubic-bezier(.4,0,.2,1) .45s both}
+  html.neu:not(.ruhe) .pp-root .pp-et-col.now::after{animation:neuStreif .7s cubic-bezier(.2,.7,.2,1) .6s both}
+}
+html.neu.ruhe .pp-root *,html.neu.ruhe .pp-root *::before,html.neu.ruhe .pp-root *::after{animation:none!important;transition:none!important}
