@@ -4054,10 +4054,12 @@
     transform:translate(-50%,-50%) translateY(-3.548%)}
   .pp-av-wrap .pp-av-ring{z-index:1}
 
-  .lb-karus{overflow-x:auto;scrollbar-width:none;margin-top:10px;
+  .lb-karus{overflow-x:auto;scrollbar-width:none;margin-top:10px;container-type:inline-size;
     scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
   .lb-karus::-webkit-scrollbar{display:none}
-  .lb-k-band{display:flex;width:max-content;padding:4px calc((100% - 156px) / 2) 2px}
+  .lb-k-band{display:flex;width:max-content;padding:4px 0 2px}
+  .lb-k-band::before,.lb-k-band::after{content:"";
+    flex:0 0 calc((min(100vw, 520px) - 196px) / 2);flex:0 0 calc((100cqw - 156px) / 2)}
   .lb-k{flex:0 0 156px;scroll-snap-align:center;cursor:pointer;
     display:flex;flex-direction:column;align-items:center;gap:4px}
   .lb-k-ins{height:132px;display:grid;place-items:center}
@@ -5822,14 +5824,23 @@ h2{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:22px;margin:
 // „Zurückkommen" an beide schicken, auf dem Telefon einen zeigen.
 (function(){
   var $ = function(id){ return document.getElementById(id); };
-  function adresse(art){
-    return 'app.html#' + art + '&fall=' + $('sFall').value + '&netz=' + $('sNetz').value
-      + '&langsam=' + ($('sLangsam').checked ? 1 : 0) + '&ruhe=' + ($('sRuhe').checked ? 1 : 0) + '&t=' + Date.now();
+  function einstellung(art){
+    return art + '&fall=' + $('sFall').value + '&netz=' + $('sNetz').value
+      + '&langsam=' + ($('sLangsam').checked ? 1 : 0) + '&ruhe=' + ($('sRuhe').checked ? 1 : 0);
   }
-  function oeffnen(){
-    $('fHeute').src = adresse('heute');
-    $('fNeu').src = adresse('neu');
+  // Jedes Öffnen setzt einen neuen Rahmen ein. Nur die Adresse hinter #
+  // zu ändern lud die Seite nicht neu — der Browser sprang innerhalb
+  // derselben Seite, und „Neu öffnen" begann den Start gar nicht von vorn.
+  // Die Einstellungen reisen im Namen des Rahmens (window.name), nicht
+  // hinter #: eine veröffentlichte Seite reicht # nicht immer durch.
+  function rahmen(art){
+    var alt = $(art === 'neu' ? 'fNeu' : 'fHeute'), f = document.createElement('iframe');
+    f.id = alt.id; f.title = alt.title;
+    f.name = einstellung(art);
+    f.src = 'app.html#' + einstellung(art);
+    alt.parentNode.replaceChild(f, alt);
   }
+  function oeffnen(){ rahmen('heute'); rahmen('neu'); }
   ['sFall', 'sNetz', 'sLangsam'].forEach(function(id){ $(id).addEventListener('change', oeffnen); });
   $('sRuhe').addEventListener('change', function(){
     [$('fHeute'), $('fNeu')].forEach(function(f){ f.contentWindow.postMessage({ruhe:$('sRuhe').checked}, '*'); });
@@ -5844,8 +5855,7 @@ h2{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:22px;margin:
       document.querySelectorAll('.pf-tel figure').forEach(function(f){ f.classList.toggle('zeigt', f.classList.contains(b.dataset.zeige)); });
       // Auf dem Telefon steht nur ein Rahmen; der versteckte hätte seinen
       // Start schon hinter sich. Er beginnt deshalb neu, wenn man ihn zeigt.
-      var f = b.dataset.zeige === 'neu' ? $('fNeu') : $('fHeute');
-      f.src = adresse(b.dataset.zeige);
+      rahmen(b.dataset.zeige);
     });
   });
   oeffnen();

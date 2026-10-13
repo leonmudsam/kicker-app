@@ -5,7 +5,10 @@
 // `loadAll` — derselbe Ablauf wie in 37-boot.js.
 (function(){
   var D = window.__DATEN;
-  var teile = (location.hash || '#heute').slice(1).split('&');
+  // Die Vergleichsseite gibt die Einstellungen im Namen des Rahmens mit;
+  // wer app.html direkt öffnet, schreibt sie hinter #.
+  var quelle = /^(heute|neu)(&|$)/.test(window.name || '') ? window.name : (location.hash || '#heute').slice(1);
+  var teile = quelle.split('&');
   var q = {};
   teile.slice(1).forEach(function(t){ var kv = t.split('='); q[kv[0]] = decodeURIComponent(kv[1] || ''); });
   var S = window.__SIM = {
@@ -115,7 +118,11 @@
     if(d.ruhe !== undefined) document.documentElement.classList.toggle('ruhe', !!d.ruhe);
     if(d.zurueck){
       S.stufe = 1;
-      document.dispatchEvent(new Event('visibilitychange'));
+      // Läuft der erste Abruf noch, schlösse sich der Takt nur an ihn an
+      // (`nachladen:false`) und brächte die neuen Partien nicht. Gewartet
+      // wird deshalb, bis er fertig ist.
+      var laeuft = window.__k && window.__k.eval('_loadAllPromise');
+      Promise.resolve(laeuft).then(function(){ document.dispatchEvent(new Event('visibilitychange')); });
     }
   });
 })();
