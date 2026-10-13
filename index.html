@@ -5322,7 +5322,7 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 .ni-neu{position:relative;flex:0 0 96px;width:96px;height:96px}
 .ni-neu::before{content:"";position:absolute;inset:-8px;border-radius:50%;
   background:radial-gradient(closest-side,color-mix(in srgb,var(--purple) 30%,transparent),transparent)}
-.ni-ab .ni-neu::before{background:radial-gradient(closest-side,color-mix(in srgb,var(--red) 16%,transparent),transparent)}
+.ni-ab .ni-neu::before{background:radial-gradient(closest-side,color-mix(in srgb,var(--red) 22%,transparent),transparent)}
 .ni-neu>svg{position:relative;width:96px;height:96px;display:block}
 .ni-wl{position:absolute;inset:0;pointer-events:none}
 .ni-wl i{position:absolute;inset:4px;border-radius:50%;border:1.5px solid color-mix(in srgb,var(--purple) 70%,transparent);
@@ -5332,19 +5332,40 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 @media (prefers-reduced-motion:reduce){ .ni-wl{display:none} }
 .ni-av{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}
 .ni-av .av{--av:36px;width:36px;height:36px;font-size:13px}
-.ni-t{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0}
-.ni-t em{font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--purple);font-style:normal}
-.ni-ab .ni-t em{color:var(--red)}
-.ni-t>b{font-size:16px;font-weight:700;color:var(--ink);line-height:1.15}
+.ni-ru{position:absolute;right:-2px;top:-2px;width:22px;height:22px;border-radius:50%;display:flex;
+  align-items:center;justify-content:center;color:var(--red);background:var(--surface);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--red) 55%,transparent)}
+.ni-ru svg{width:13px;height:13px;display:block}
+.ni-ru path{fill:none;stroke:currentColor;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
+.ni-viele{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px}
+.ni-k{display:flex;flex-direction:column;align-items:stretch;gap:6px;min-width:0;padding:8px 6px 7px;
+  border-radius:11px;background:color-mix(in srgb,var(--bg) 40%,transparent);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--purple) 16%,transparent)}
+.ni-k.ni-ab{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--red) 28%,transparent)}
+.ni-k .ni-sz{gap:5px;padding:0}
+.ni-k .ni-alt{flex:0 1 28px;min-width:20px}
+.ni-k .ni-pf{flex:0 1 18px;min-width:14px;height:12px}
+.ni-k .ni-neu{flex:0 0 60px;width:60px;height:60px}
+.ni-k .ni-neu>svg{width:60px;height:60px}
+.ni-k .ni-neu::before{inset:-5px}
+.ni-k .ni-av .av{--av:23px;width:23px;height:23px;font-size:9px}
+.ni-k .ni-ru{width:18px;height:18px;right:-4px;top:-3px}
+.ni-k .ni-ru svg{width:11px;height:11px}
+.ni-k-n{font-size:11.5px;font-weight:700;color:var(--ink);text-align:center;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ni-spur{display:flex;gap:4px;min-width:0}
+.ni-spur.knapp{gap:2px}
 .ni-sp-s{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px}
 .ni-sp-f{display:flex;gap:1.5px;width:100%}
-.ni-sp-f i{position:relative;flex:1 1 0;height:8px;border-radius:2px;background:var(--surface2)}
-.ni-sp-f i.hat{background:color-mix(in srgb,var(--ink2) 34%,var(--surface2))}
+.ni-spur.knapp .ni-sp-f{gap:1px}
+.ni-sp-f i{position:relative;flex:1 1 0;height:8px;border-radius:2px;background:color-mix(in srgb,var(--ink2) 13%,transparent)}
+.ni-spur.knapp .ni-sp-f i{height:6px;border-radius:1.5px}
+.ni-sp-f i.hat{background:color-mix(in srgb,var(--ink2) 42%,var(--surface2))}
 .ni-sp-f i.neu,.ni-sp-f i.da{background:linear-gradient(90deg,color-mix(in srgb,var(--purple) 70%,transparent),var(--purple))}
 .ni-sp-f i.da{box-shadow:0 0 8px color-mix(in srgb,var(--purple) 70%,transparent)}
 .ni-sp-f i.da::after{content:"";position:absolute;left:50%;top:50%;width:5px;height:5px;margin:-2.5px 0 0 -2.5px;
   border-radius:50%;background:var(--ink)}
+.ni-spur.knapp .ni-sp-f i.da::after,.ni-spur.knapp .ni-sp-f i.alt::after{width:3px;height:3px;margin:-1.5px 0 0 -1.5px}
 .ni-sp-f i.weg{background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--red) 65%,transparent) 0 2px,transparent 2px 4px);
   box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--red) 45%,transparent)}
 .ni-spur.ab .ni-sp-f i.da{background:color-mix(in srgb,var(--ink2) 50%,var(--surface2));box-shadow:none}
@@ -5354,18 +5375,6 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 .ni-sp-z svg{width:100%;height:auto;display:block}
 .ni-sp-s.hat .ni-sp-z,.ni-sp-s.vorher .ni-sp-z{opacity:.55}
 .ni-sp-s.jetzt .ni-sp-z{opacity:1}
-.ni-zs{display:flex;flex-direction:column;gap:6px;margin-top:8px;padding:0 10px}
-.ni-z{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink2);cursor:pointer}
-.ni-z-t{flex:1;min-width:0}
-.ni-z-t b{color:var(--ink)}
-.ni-z-w{flex:0 0 auto;display:flex;align-items:center;gap:3px}
-.ni-z-z{flex:0 0 22px}
-.ni-z-z.alt{opacity:.45}
-.ni-z-z svg{width:22px;height:22px;display:block}
-.ni-z-pf{width:10px;height:9px}
-.ni-z-pf path{fill:none;stroke:var(--purple);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-.ni-z.ab .ni-z-pf path{stroke:var(--red)}
-.ni-z.mehr{color:var(--muted);font-size:11px;cursor:default}
 .ni-bw{display:flex;align-items:center;gap:8px;margin:12px 0 2px;font-size:12px}
 .ni-bw b{color:var(--ink)}
 .ni-bw span{color:var(--muted)}
@@ -5724,7 +5733,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.13.808f2acc';
+const BUILD_VERSION='2026.10.13.3121cdf1';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -22632,7 +22641,6 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
     gesicht = `<div class="nf-gr-l">${w ? _newsWertBlock(w.v, w.l, 'ton') : ''}${_newsGesichtHtml(s)}</div>`;
   } else if(sorte === 'ins' && d.type === 'insignium_tag'){
     kopf = _newsInsTagKopf(s);
-    fuss = _newsInsTagZeilen(s);
     satz = '';
   } else if(sorte === 'ins'){
     gesicht = `<div class="nf-gr-l">${av(d.pid, 48)}</div>`;
@@ -25399,7 +25407,7 @@ function _insArtWort(z){
 function _insSpurPos(l){
   return Math.min(INSIGNIEN.length * INSIGNIUM_GRADE - 1, insigniumPos(l));
 }
-function _insSpur(z){
+function _insSpur(z, mitZeichen){
   const a = _insSpurPos(z.vor), b = _insSpurPos(z.nach), ab = z.art === 'ab';
   const rang = (getPlayerRank(z.pid) || {}).label;
   const feld = i => {
@@ -25407,43 +25415,38 @@ function _insSpur(z){
       : (i <= a ? 'hat' : i < b ? 'neu' : '');
     return `<i class="${k}${i === a && a !== b ? ' alt' : ''}"></i>`;
   };
-  return `<div class="ni-spur${ab ? ' ab' : ''}" aria-hidden="true">` + INSIGNIEN.map((ins, s) => {
+  return `<div class="ni-spur${ab ? ' ab' : ''}${mitZeichen ? '' : ' knapp'}" aria-hidden="true">` + INSIGNIEN.map((ins, s) => {
     let bild = '';
-    try { bild = insigniumStufeSvg(ins.key, rang, 0, 0, {bild:true}) || ''; } catch(e){ bild = ''; }
+    if(mitZeichen) try { bild = insigniumStufeSvg(ins.key, rang, 0, 0, {bild:true}) || ''; } catch(e){ bild = ''; }
     const lage = s === z.nach.stufe ? ' jetzt' : s === z.vor.stufe ? ' vorher' : s < z.nach.stufe ? ' hat' : '';
     return `<span class="ni-sp-s${lage}"><span class="ni-sp-f">`
       + [0, 1, 2].map(g => feld(s * INSIGNIUM_GRADE + g)).join('')
-      + `</span><span class="ni-sp-z">${bild}</span></span>`;
+      + `</span>${mitZeichen ? `<span class="ni-sp-z">${bild}</span>` : ''}</span>`;
   }).join('') + `</div>`;
 }
-function _newsInsTagKopf(s){
-  const d = (s && s.dataRef) || {}, z = (d.zuege || [])[0], pm = pmap();
-  if(!z || !pm[z.pid]) return '';
-  const pfeil = `<svg class="ni-pf" viewBox="0 0 48 16" aria-hidden="true"><path class="sp" d="M2 8H8M12 8H18"/><path d="M22 8H42"/><path d="M36 3L43 8L36 13"/></svg>`;
-  const wellen = z.art === 'ab' ? '' : `<span class="ni-wl" aria-hidden="true"><i></i><i></i></span>`;
-  return `<div class="ni-b ni-${esc(z.art)}" data-pid="${esc(z.pid)}">`
-    + `<span class="ni-t"><em>${esc(_insArtWort(z))}</em><b>${esc(_insLageName(z.nach))}</b></span>`
-    + `<div class="ni-sz"><span class="ni-alt">${_insZeichen(z.pid, z.vor, true)}</span>${pfeil}`
-    + `<span class="ni-neu">${wellen}${_insZeichen(z.pid, z.nach)}<span class="ni-av">${avHtml(pm[z.pid], '', {px:36})}</span></span></div>`
-    + _insSpur(z) + `</div>`;
+function _insVerwandlung(z, gross){
+  const pm = pmap(), ab = z.art === 'ab';
+  const pfeil = gross
+    ? `<svg class="ni-pf" viewBox="0 0 48 16" aria-hidden="true"><path class="sp" d="M2 8H8M12 8H18"/><path d="M22 8H42"/><path d="M36 3L43 8L36 13"/></svg>`
+    : `<svg class="ni-pf" viewBox="0 0 24 16" aria-hidden="true"><path d="M2 8H19"/><path d="M14 3L20 8L14 13"/></svg>`;
+  const wellen = ab ? '' : `<span class="ni-wl" aria-hidden="true"><i></i><i></i></span>`;
+  const runter = ab ? `<span class="ni-ru" role="img" aria-label="Rückfall"><svg viewBox="0 0 16 16" aria-hidden="true">`
+    + `<path d="M8 3v9.5M3.5 8L8 12.5L12.5 8"/></svg></span>` : '';
+  return `<div class="ni-sz"><span class="ni-alt">${_insZeichen(z.pid, z.vor, true)}</span>${pfeil}`
+    + `<span class="ni-neu">${wellen}${_insZeichen(z.pid, z.nach, !gross)}`
+    + `<span class="ni-av">${avHtml(pm[z.pid], '', {px:gross ? 36 : 24})}</span>${runter}</span></div>`;
 }
-function _newsInsTagZeilen(s){
-  const d = (s && s.dataRef) || {}, l = (d.zuege || []).slice(1), pm = pmap();
+function _newsInsTagKopf(s){
+  const d = (s && s.dataRef) || {}, pm = pmap();
+  const l = (d.zuege || []).filter(z => z && pm[z.pid] && INSIGNIEN[(z.nach || {}).stufe | 0]);
   if(!l.length) return '';
-  const text = z => z.art === 'ab' ? `fällt auf den ${INSIGNIEN[z.nach.stufe].name} zurück`
-    : z.art === 'grad' ? (INSIGNIEN[z.nach.stufe].key === 'stern' ? `erreicht die ${z.nach.zacken}. Zacke`
-      : `steigt auf ${_insLageName(z.nach)}`)
-    : z.wieder ? `trägt wieder den ${INSIGNIEN[z.nach.stufe].name}` : `erreicht den ${INSIGNIEN[z.nach.stufe].name}`;
-  const pf = `<svg class="ni-z-pf" viewBox="0 0 12 10" aria-hidden="true"><path d="M1 5H10M7 2L10.5 5L7 8"/></svg>`;
-  const zeile = z => {
-    if(!pm[z.pid]) return '';
-    return `<div class="ni-z${z.art === 'ab' ? ' ab' : ''}" data-pid="${esc(z.pid)}">${rcpAvHtml(z.pid, 20, {})}`
-      + `<span class="ni-z-t"><b>${esc(pm[z.pid].name)}</b> ${esc(text(z))}</span>`
-      + `<span class="ni-z-w"><span class="ni-z-z alt">${_insZeichen(z.pid, z.vor, true)}</span>${pf}`
-      + `<span class="ni-z-z">${_insZeichen(z.pid, z.nach, true)}</span></span></div>`;
-  };
-  return `<div class="ni-zs">${l.slice(0, 3).map(zeile).join('')}`
-    + (l.length > 3 ? `<div class="ni-z mehr">+${l.length - 3} weitere</div>` : '') + `</div>`;
+  if(l.length === 1){
+    const z = l[0];
+    return `<div class="ni-b ni-${esc(z.art)}" data-pid="${esc(z.pid)}">${_insVerwandlung(z, true)}${_insSpur(z, true)}</div>`;
+  }
+  return `<div class="ni-b ni-viele">${l.map(z =>
+    `<div class="ni-k ni-${esc(z.art)}" data-pid="${esc(z.pid)}">${_insVerwandlung(z, false)}${_insSpur(z, false)}`
+    + `<b class="ni-k-n">${esc(_spName(z.pid))}</b></div>`).join('')}</div>`;
 }
 
 function _ndInsTagBlatt(s){

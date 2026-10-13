@@ -3433,8 +3433,8 @@ const _achsen = JSON.parse(K.eval(`JSON.stringify((function(){
     return _consolidateStories(liste.slice()).filter(x => (x.dataRef||{}).type === 'insignium_tag')
       .map(x => { const h = String(_newsCardHtmlM2(x, false, false));
         return {ti:x.title, tx:x.desc, n:(x.dataRef.zuege||[]).length, mit:(x.dataRef.memberIds||[]).length,
-          buehne:h.indexOf('class="ni-b ') >= 0, zeilen:(h.match(/class="ni-z[ "]/g) || []).length,
-          mehr:(h.match(/ni-z mehr">.([0-9]+)/) || [])[1] || ''}; }); };
+          buehne:h.indexOf('class="ni-b ') >= 0, kacheln:(h.match(/class="ni-k /g) || []).length,
+          zeilen:(h.match(/class="ni-z[ "]/g) || []).length, mehr:/weitere</.test(h)}; }); };
   return {
     ic: leiter([ins('i1',ids[0]), ins('i2',ids[1]), ins('i3',ids[2])]),
     if: leiter([ins('i1',ids[0]), ins('i2',ids[1]), ins('i3',ids[2]), ins('i4',ids[3]), ins('i5',ids[4])]),
@@ -3495,9 +3495,11 @@ ok(_achsen.ic[0] && _achsen.ic[0].ti === 'Schildring für ' + _achsen.n0 + ', ' 
 // weiß: wie viele sie tragen, steht nur in neuen Karten.
 ok(_achsen.ic[0] && /^Der Schildring ist die zweite Stufe der Leiter und beginnt bei 600 Prestige\.$/.test(_achsen.ic[0].tx),
    'ihr Satz erklärt die Stufe ohne Floskel', (_achsen.ic[0]||{}).tx);
+// Und jede Bewegung steht als Bild darauf: die erste war eine Bühne, die
+// übrigen standen als Text darunter, höchstens drei und der Rest als Zahl.
 ok(_achsen.if.length === 1 && _achsen.if[0].n === 5 && _achsen.if[0].buehne
-   && _achsen.if[0].zeilen === 4 && _achsen.if[0].mehr === '1',
-   'eine große Karte trägt die erste Bewegung als Bühne, drei als Zeilen und zählt den Rest',
+   && _achsen.if[0].kacheln === 5 && _achsen.if[0].zeilen === 0 && !_achsen.if[0].mehr,
+   'eine große Karte zeigt jede ihrer fünf Bewegungen als Bild, ohne Zeilen und ohne Rest',
    JSON.stringify(_achsen.if[0] || {}));
 ok(_achsen.id.length === 1 && _achsen.id[0].n === 3 && _achsen.d.length === 0,
    'Stufen und Rekord desselben Tages stehen auf ihren eigenen Karten',

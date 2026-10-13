@@ -64,14 +64,16 @@ function _insTagTexte(zuege){
 }
 
 // ── Die Bühne der Karte ─────────────────────────────────────────────
-// Die Bewegung, die die Schlagzeile trägt: das Zeichen davor klein und leise,
-// der Pfeil, das Zeichen danach groß mit dem Gesicht. Jeder Grad hat seine
-// eigene Zeichnung [§C30], also zeigt die Bühne auch einen neuen Grad als
-// Verwandlung. Ein Rückfall zeigt dieselbe Bühne mit dem Pfeil nach unten.
-// Die Karte trägt keine Prestige-Zahl und keinen Satz unter der Schlagzeile:
-// Gewinn und Verlust standen auf der Tafel-Karte desselben Tages und hier ein
-// zweites Mal, und der Satz erklärte, was die Spur darunter zeigt. Die Zahl
-// steht im Blatt [§C33].
+// Jede Bewegung des Tages als Bild: das Zeichen davor klein und leise, der
+// Pfeil, das Zeichen danach groß mit dem Gesicht, darunter die Spur der
+// Leiter. Jeder Grad hat seine eigene Zeichnung [§C30], also zeigt die Bühne
+// auch einen neuen Grad als Verwandlung.
+// Die Karte trägt keine Prestige-Zahl, keinen Satz unter der Schlagzeile und
+// keine Zeilen. Gewinn und Verlust standen auf der Tafel-Karte desselben
+// Tages und hier ein zweites Mal; der Satz erklärte, was die Spur zeigt; und
+// nur die erste Bewegung war ein Bild, die übrigen standen als Text darunter,
+// höchstens drei und der Rest als „+1 weitere" [§C33]. Zahl und Satz stehen
+// im Blatt.
 function _insZeichen(pid, l, bild){
   const ins = INSIGNIEN[(l && l.stufe) | 0];
   if(!ins) return '';
@@ -89,12 +91,12 @@ function _insSpurPos(l){
   return Math.min(INSIGNIEN.length * INSIGNIUM_GRADE - 1, insigniumPos(l));
 }
 // ── Die Spur: die ganze Leiter, und wie weit der Tag darauf trägt ────
-// Einundzwanzig Felder, drei je Stufe, darunter die sieben Zeichen. Was
-// schon vorher erreicht war, steht gefüllt, was der Tag dazubringt, leuchtet
-// Violett [§C25], was ein Rückfall kostet, steht rot gestreift. So sieht
-// man ohne einen Satz, ob ein Grad oder drei Stufen dazukamen und wo auf der
-// Leiter das liegt — dafür stand vorher ein Absatz unter der Schlagzeile.
-function _insSpur(z){
+// Einundzwanzig Felder, drei je Stufe, bei einer einzelnen Bewegung darunter
+// die sieben Zeichen. Was schon vorher erreicht war, steht gefüllt, was der
+// Tag dazubringt, leuchtet Violett [§C25], was ein Rückfall kostet, steht rot
+// gestreift. So sieht man ohne einen Satz, ob ein Grad oder drei Stufen
+// dazukamen und wo auf der Leiter das liegt.
+function _insSpur(z, mitZeichen){
   const a = _insSpurPos(z.vor), b = _insSpurPos(z.nach), ab = z.art === 'ab';
   const rang = (getPlayerRank(z.pid) || {}).label;
   const feld = i => {
@@ -102,53 +104,53 @@ function _insSpur(z){
       : (i <= a ? 'hat' : i < b ? 'neu' : '');
     return `<i class="${k}${i === a && a !== b ? ' alt' : ''}"></i>`;
   };
-  return `<div class="ni-spur${ab ? ' ab' : ''}" aria-hidden="true">` + INSIGNIEN.map((ins, s) => {
+  return `<div class="ni-spur${ab ? ' ab' : ''}${mitZeichen ? '' : ' knapp'}" aria-hidden="true">` + INSIGNIEN.map((ins, s) => {
     let bild = '';
-    try { bild = insigniumStufeSvg(ins.key, rang, 0, 0, {bild:true}) || ''; } catch(e){ bild = ''; }
+    if(mitZeichen) try { bild = insigniumStufeSvg(ins.key, rang, 0, 0, {bild:true}) || ''; } catch(e){ bild = ''; }
     const lage = s === z.nach.stufe ? ' jetzt' : s === z.vor.stufe ? ' vorher' : s < z.nach.stufe ? ' hat' : '';
     return `<span class="ni-sp-s${lage}"><span class="ni-sp-f">`
       + [0, 1, 2].map(g => feld(s * INSIGNIUM_GRADE + g)).join('')
-      + `</span><span class="ni-sp-z">${bild}</span></span>`;
+      + `</span>${mitZeichen ? `<span class="ni-sp-z">${bild}</span>` : ''}</span>`;
   }).join('') + `</div>`;
 }
-function _newsInsTagKopf(s){
-  const d = (s && s.dataRef) || {}, z = (d.zuege || [])[0], pm = pmap();
-  if(!z || !pm[z.pid]) return '';
-  // Der Pfeil zieht eine Spur aus drei Strichen hinter sich her: die
+// ── Eine Verwandlung ────────────────────────────────────────────────
+// Altes Zeichen, Pfeil, neues Zeichen mit Gesicht. Beim Aufstieg laufen zwei
+// Ringe einmal nach außen, UNTER der Zeichnung — über ihr darf nichts
+// skalieren [§C30]. Ein Rückfall ist kein Anlass für Bewegung: keine Ringe,
+// der Pfeil rot, und am neuen Zeichen ein roter Pfeil nach unten. Ohne ihn
+// las sich ein Rückfall vom Zierkranz auf den Volutenkranz wie ein Aufstieg,
+// denn das Bild zeigt nur zwei Zeichen hintereinander.
+function _insVerwandlung(z, gross){
+  const pm = pmap(), ab = z.art === 'ab';
+  // Gross zieht der Pfeil eine Spur aus drei Strichen hinter sich her: die
   // Bewegung von einem Zeichen zum anderen, nicht nur ein Verweis.
-  const pfeil = `<svg class="ni-pf" viewBox="0 0 48 16" aria-hidden="true"><path class="sp" d="M2 8H8M12 8H18"/><path d="M22 8H42"/><path d="M36 3L43 8L36 13"/></svg>`;
-  // Hinter dem neuen Zeichen laufen zwei Ringe einmal nach außen, nur beim
-  // Aufstieg: ein Rückfall ist kein Anlass für Bewegung. Sie liegen UNTER
-  // der Zeichnung — über ihr darf nichts skalieren [§C30].
-  const wellen = z.art === 'ab' ? '' : `<span class="ni-wl" aria-hidden="true"><i></i><i></i></span>`;
-  // Wort und Name stehen über der Bühne, nicht daneben: neben zwei Zeichen
-  // blieben für „Volutenkranz I" 94 px, und der Name lief aus der Karte.
-  return `<div class="ni-b ni-${esc(z.art)}" data-pid="${esc(z.pid)}">`
-    + `<span class="ni-t"><em>${esc(_insArtWort(z))}</em><b>${esc(_insLageName(z.nach))}</b></span>`
-    + `<div class="ni-sz"><span class="ni-alt">${_insZeichen(z.pid, z.vor, true)}</span>${pfeil}`
-    + `<span class="ni-neu">${wellen}${_insZeichen(z.pid, z.nach)}<span class="ni-av">${avHtml(pm[z.pid], '', {px:36})}</span></span></div>`
-    + _insSpur(z) + `</div>`;
+  const pfeil = gross
+    ? `<svg class="ni-pf" viewBox="0 0 48 16" aria-hidden="true"><path class="sp" d="M2 8H8M12 8H18"/><path d="M22 8H42"/><path d="M36 3L43 8L36 13"/></svg>`
+    : `<svg class="ni-pf" viewBox="0 0 24 16" aria-hidden="true"><path d="M2 8H19"/><path d="M14 3L20 8L14 13"/></svg>`;
+  const wellen = ab ? '' : `<span class="ni-wl" aria-hidden="true"><i></i><i></i></span>`;
+  const runter = ab ? `<span class="ni-ru" role="img" aria-label="Rückfall"><svg viewBox="0 0 16 16" aria-hidden="true">`
+    + `<path d="M8 3v9.5M3.5 8L8 12.5L12.5 8"/></svg></span>` : '';
+  // Klein ist das neue Zeichen ein Bild, gross ein Vektor [§C30].
+  return `<div class="ni-sz"><span class="ni-alt">${_insZeichen(z.pid, z.vor, true)}</span>${pfeil}`
+    + `<span class="ni-neu">${wellen}${_insZeichen(z.pid, z.nach, !gross)}`
+    + `<span class="ni-av">${avHtml(pm[z.pid], '', {px:gross ? 36 : 24})}</span>${runter}</span></div>`;
 }
-// Die übrigen Bewegungen des Tages als Zeilen, je mit Gesicht, Satz und dem
-// Weg von einem Zeichen zum anderen. Höchstens drei; das Blatt zeigt alle,
-// und dort steht auch das Prestige des Tages.
-function _newsInsTagZeilen(s){
-  const d = (s && s.dataRef) || {}, l = (d.zuege || []).slice(1), pm = pmap();
+// Eine Bewegung füllt die Bühne mit der Spur samt Zeichen. Mehrere stehen
+// als Kacheln nebeneinander, jede mit ihrer Verwandlung, ihrer Spur und dem
+// Namen — alle, nicht die erste als Bild und die übrigen als Text. Wort und
+// Lage stehen nicht darüber: das sagt die Schlagzeile, und neben zwei
+// Zeichen lief „Volutenkranz I" aus der Karte.
+function _newsInsTagKopf(s){
+  const d = (s && s.dataRef) || {}, pm = pmap();
+  const l = (d.zuege || []).filter(z => z && pm[z.pid] && INSIGNIEN[(z.nach || {}).stufe | 0]);
   if(!l.length) return '';
-  const text = z => z.art === 'ab' ? `fällt auf den ${INSIGNIEN[z.nach.stufe].name} zurück`
-    : z.art === 'grad' ? (INSIGNIEN[z.nach.stufe].key === 'stern' ? `erreicht die ${z.nach.zacken}. Zacke`
-      : `steigt auf ${_insLageName(z.nach)}`)
-    : z.wieder ? `trägt wieder den ${INSIGNIEN[z.nach.stufe].name}` : `erreicht den ${INSIGNIEN[z.nach.stufe].name}`;
-  const pf = `<svg class="ni-z-pf" viewBox="0 0 12 10" aria-hidden="true"><path d="M1 5H10M7 2L10.5 5L7 8"/></svg>`;
-  const zeile = z => {
-    if(!pm[z.pid]) return '';
-    return `<div class="ni-z${z.art === 'ab' ? ' ab' : ''}" data-pid="${esc(z.pid)}">${rcpAvHtml(z.pid, 20, {})}`
-      + `<span class="ni-z-t"><b>${esc(pm[z.pid].name)}</b> ${esc(text(z))}</span>`
-      + `<span class="ni-z-w"><span class="ni-z-z alt">${_insZeichen(z.pid, z.vor, true)}</span>${pf}`
-      + `<span class="ni-z-z">${_insZeichen(z.pid, z.nach, true)}</span></span></div>`;
-  };
-  return `<div class="ni-zs">${l.slice(0, 3).map(zeile).join('')}`
-    + (l.length > 3 ? `<div class="ni-z mehr">+${l.length - 3} weitere</div>` : '') + `</div>`;
+  if(l.length === 1){
+    const z = l[0];
+    return `<div class="ni-b ni-${esc(z.art)}" data-pid="${esc(z.pid)}">${_insVerwandlung(z, true)}${_insSpur(z, true)}</div>`;
+  }
+  return `<div class="ni-b ni-viele">${l.map(z =>
+    `<div class="ni-k ni-${esc(z.art)}" data-pid="${esc(z.pid)}">${_insVerwandlung(z, false)}${_insSpur(z, false)}`
+    + `<b class="ni-k-n">${esc(_spName(z.pid))}</b></div>`).join('')}</div>`;
 }
 
 // ── Das Blatt ───────────────────────────────────────────────────────

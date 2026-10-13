@@ -1034,23 +1034,24 @@ const ok = (c, msg, det) => {
     const out = {fehlt:false, rubrik: rub ? rub.textContent.trim() : '',
       buehne: !!karte.querySelector('.ni-b .ni-av .av'),
       gesichter: new Set([...karte.querySelectorAll('[data-pid]')].map(x => x.getAttribute('data-pid'))).size,
-      zeilen: karte.querySelectorAll('.ni-z:not(.mehr)').length,
-      rest: karte.querySelectorAll('.ni-z.mehr').length,
+      kacheln: karte.querySelectorAll('.ni-k .ni-neu .ni-av .av').length,
+      zeilen: karte.querySelectorAll('.ni-z').length,
       keinGold: farbe !== 'rgb(247, 207, 74)'};
     host.remove(); return out;
   });
   ok(!achse.fehlt, 'dieselbe Stufe für vier Spieler steht als EINE Insignium-Karte im Feed',
      JSON.stringify(achse));
   ok(achse.rubrik === 'DAS ZEICHEN', 'sie traegt die Rubrik des Zeichens', achse.rubrik);
-  ok(achse.buehne && achse.gesichter === 4 && achse.zeilen === 3 && achse.rest === 0,
-     'die erste Bewegung als Bühne mit Gesicht, die drei übrigen als Zeilen, jede mit ihrem',
+  ok(achse.buehne && achse.gesichter === 4 && achse.kacheln === 4 && achse.zeilen === 0,
+     'jede der vier Bewegungen als Bild mit ihrem Gesicht im neuen Zeichen, keine Zeilen',
      JSON.stringify(achse));
   ok(achse.keinGold, 'die Karte der Leiter trägt kein Gold, das gehört den Titeln',
      String(achse.keinGold));
-  // Gemessen mit der längsten Stufe bei 288 und 360 px: die Bühne läuft nicht
-  // waagrecht aus der Karte, und die Zeilen halten Abstand zum Rand. Beides
-  // ist am Live-Stand passiert — bei 288 px blieben neben zwei Zeichen 35 px
-  // für „Lorbeerreif II", und das „P" der Prestige-Zahl stand auf der Kante.
+  // Gemessen mit der längsten Stufe bei 288 und 360 px: weder die Bühne noch
+  // eine Kachel läuft waagrecht aus der Karte, und die Kacheln halten Abstand
+  // zum Rand. Beides ist am Live-Stand passiert — bei 288 px blieben neben
+  // zwei Zeichen 35 px für „Lorbeerreif II", und das „P" der Prestige-Zahl
+  // stand auf der Kante.
   const insBreite = {};
   for(const w of [288, 360]){
     await page.setViewportSize({width:w, height:844});
@@ -1074,24 +1075,27 @@ const ok = (c, msg, det) => {
       const karte = host.querySelector('.nf-card'), b = host.querySelector('.ni-b');
       if(!karte || !b){ host.remove(); return {fehlt:true}; }
       const kr = karte.getBoundingClientRect();
-      const rand = Math.min(...[...host.querySelectorAll('.ni-z em, .ni-z-z, .ni-z-t')]
-        .map(e => kr.right - e.getBoundingClientRect().right));
-      const out = {ueber:b.scrollWidth - b.clientWidth, rand:Math.round(rand)};
+      const k = [...host.querySelectorAll('.ni-k')];
+      const rand = Math.min(...k.map(e => kr.right - e.getBoundingClientRect().right));
+      const out = {ueber:Math.max(b.scrollWidth - b.clientWidth, ...k.map(e => e.scrollWidth - e.clientWidth)),
+        rand:Math.round(rand), kacheln:k.length};
       host.remove(); return out;
     });
   }
   await page.setViewportSize({width:390, height:844});
   ok(!insBreite[288].fehlt && insBreite[288].ueber <= 0 && insBreite[360].ueber <= 0,
      'die Bühne der Insignium-Karte läuft bei 288 und 360 px nicht über', JSON.stringify(insBreite));
-  ok(!insBreite[288].fehlt && insBreite[288].rand >= 6 && insBreite[360].rand >= 6,
-     'und ihre Zeilen halten Abstand zum Kartenrand', JSON.stringify(insBreite));
+  ok(!insBreite[288].fehlt && insBreite[288].kacheln === 4 && insBreite[288].rand >= 6 && insBreite[360].rand >= 6,
+     'und ihre Kacheln halten Abstand zum Kartenrand', JSON.stringify(insBreite));
 
   // ── Die Karte zeigt das Zeichen, das Prestige steht im Blatt ──────
   // Gewinn und Verlust standen als „+285 P" auf der Insignium-Karte und auf
-  // der Tafel-Karte desselben Tages, und unter der Schlagzeile stand ein
-  // Absatz über Schwelle und Träger der Stufe. Jetzt zeigt die Bühne die
-  // ganze Leiter als Spur: gefüllt, was schon da war, Violett, was der Tag
-  // dazubringt, rot gestreift, was ein Rückfall kostet.
+  // der Tafel-Karte desselben Tages, unter der Schlagzeile stand ein Absatz
+  // über Schwelle und Träger der Stufe, und nur die erste Bewegung war ein
+  // Bild. Jetzt ist jede Bewegung eine Verwandlung mit ihrer Spur: gefüllt,
+  // was schon da war, Violett, was der Tag dazubringt, rot gestreift, was ein
+  // Rückfall kostet — und ein Rückfall trägt einen roten Pfeil nach unten,
+  // sonst lesen sich zwei Zeichen hintereinander wie ein Aufstieg.
   const insKarte = await page.evaluate(() => {
     const K = window.__k.eval.bind(window.__k);
     const m = JSON.parse(K(`(function(){
@@ -1105,24 +1109,32 @@ const ok = (c, msg, det) => {
       const story = (id, z) => ({id, cat:'tafel', ic:'award', when:new Date(), prio:60,
         title:_insTagTexte(z).title, desc:_insTagTexte(z).desc,
         dataRef:{type:'insignium_tag', tag:'2026-10-12', zuege:z, playerIds:z.map(x => x.pid), laufbahn:lb}});
-      return JSON.stringify({auf:_newsCardHtmlM2(story('ui-insk', zuege), false, false),
+      return JSON.stringify({auf:_newsCardHtmlM2(story('ui-ins1', [zuege[0]]), false, false),
+        viele:_newsCardHtmlM2(story('ui-insk', zuege), false, false),
         ab:_newsCardHtmlM2(story('ui-insab', [zuege[1]]), false, false), desc:t.desc});
     })()`));
-    const host = document.createElement('div'); host.innerHTML = m.auf + m.ab; document.body.appendChild(host);
-    const [k1, k2] = host.querySelectorAll('.nf-card');
+    const host = document.createElement('div'); host.innerHTML = m.auf + m.viele + m.ab; document.body.appendChild(host);
+    const [k1, kv, k2] = host.querySelectorAll('.nf-card');
     const text = k => k.textContent.replace(/\s+/g, ' ');
-    const spur = k => [...k.querySelectorAll('.ni-spur .ni-sp-f i')].map(i => ' ' + i.className + ' ');
+    const felder = e => [...e.querySelectorAll('.ni-spur .ni-sp-f i')].map(i => ' ' + i.className + ' ');
+    const zahl = (l, w) => l.filter(c => c.indexOf(' ' + w + ' ') >= 0).length;
+    const wo = (l, w) => l.findIndex(c => c.indexOf(' ' + w + ' ') >= 0);
     const w = k1.querySelector('.ni-wl');
+    const kach = [...kv.querySelectorAll('.ni-k')];
     const out = {
-      prestige: /Prestige|[0-9]+ P\b/.test(text(k1) + ' ' + text(k2)),
-      satz: !!k1.querySelector('.nf-d') || !!k2.querySelector('.nf-d') || text(k1).indexOf(m.desc.slice(0, 24)) >= 0,
-      felder: spur(k1).length, zeichen: k1.querySelectorAll('.ni-spur .ni-sp-z svg').length,
-      neu: spur(k1).filter(c => c.indexOf(' neu ') >= 0).length,
-      da: spur(k1).findIndex(c => c.indexOf(' da ') >= 0), alt: spur(k1).findIndex(c => c.indexOf(' alt ') >= 0),
-      weg: spur(k2).filter(c => c.indexOf(' weg ') >= 0).length, daAb: spur(k2).findIndex(c => c.indexOf(' da ') >= 0),
+      prestige: /Prestige|[0-9]+ P\b/.test(text(k1) + ' ' + text(kv) + ' ' + text(k2)),
+      satz: [k1, kv, k2].some(k => !!k.querySelector('.nf-d')) || text(kv).indexOf(m.desc.slice(0, 24)) >= 0,
+      felder: felder(k1).length, zeichen: k1.querySelectorAll('.ni-spur .ni-sp-z svg').length,
+      neu: zahl(felder(k1), 'neu'), da: wo(felder(k1), 'da'), alt: wo(felder(k1), 'alt'),
+      weg: zahl(felder(k2), 'weg'), daAb: wo(felder(k2), 'da'),
       wellen: !!w, wellenAb: !!k2.querySelector('.ni-wl'),
       unter: !!(w && w.nextElementSibling && w.nextElementSibling.tagName.toLowerCase() === 'svg'),
-      zeilen: k1.querySelectorAll('.ni-z:not(.mehr) .ni-z-w .ni-z-z svg').length
+      runter: !!k2.querySelector('.ni-neu .ni-ru'), runterAuf: !!k1.querySelector('.ni-ru'),
+      kacheln: kach.length, zeilen: kv.querySelectorAll('.ni-z').length,
+      kachelFelder: kach.map(e => felder(e).length).join(','),
+      kachelAb: kach.map(e => (e.querySelector('.ni-ru') ? 'r' : '') + (e.querySelector('.ni-wl') ? 'w' : '')
+        + zahl(felder(e), 'weg')).join(','),
+      namen: kach.every(e => (e.querySelector('.ni-k-n') || {}).textContent)
     };
     host.remove(); return out;
   });
@@ -1135,9 +1147,13 @@ const ok = (c, msg, det) => {
   ok(insKarte.alt === 4 && insKarte.neu === 4 && insKarte.da === 9 && insKarte.weg === 1 && insKarte.daAb === 2,
      'die Spur zeigt, was der Tag dazubringt, und was ein Rückfall kostet',
      JSON.stringify({alt:insKarte.alt, neu:insKarte.neu, da:insKarte.da, weg:insKarte.weg, daAb:insKarte.daAb}));
-  ok(insKarte.wellen && insKarte.unter && !insKarte.wellenAb && insKarte.zeilen === 4,
-     'Ringe nur beim Aufstieg und unter der Zeichnung, jede Zeile mit dem Weg von Zeichen zu Zeichen',
-     JSON.stringify({wellen:insKarte.wellen, unter:insKarte.unter, ab:insKarte.wellenAb, zeilen:insKarte.zeilen}));
+  ok(insKarte.wellen && insKarte.unter && !insKarte.wellenAb && insKarte.runter && !insKarte.runterAuf,
+     'Ringe nur beim Aufstieg und unter der Zeichnung, der Rückfall mit Pfeil nach unten',
+     JSON.stringify({wellen:insKarte.wellen, unter:insKarte.unter, ab:insKarte.wellenAb, runter:insKarte.runter}));
+  ok(insKarte.kacheln === 3 && insKarte.zeilen === 0 && insKarte.kachelFelder === '21,21,21'
+     && insKarte.kachelAb === 'w0,r1,w0' && insKarte.namen,
+     'mehrere Bewegungen stehen je als Bild mit Spur und Namen, der Rückfall mit seinem Pfeil',
+     JSON.stringify({kacheln:insKarte.kacheln, zeilen:insKarte.zeilen, felder:insKarte.kachelFelder, ab:insKarte.kachelAb}));
 
   // ── Das Blatt der Ewigen Tafel zeigt, was ausschlaggebend war ────
   //    Die Punktewirkung stand als Zeile „1205 → 1240 Prestige": zwei Zahlen,
