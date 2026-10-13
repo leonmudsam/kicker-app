@@ -12,7 +12,7 @@
 - Verläufe und Zeichnungen stehen je einmal im Topf `<svg id="insDefs">` außerhalb von `#app` und des Blatts (`insigniumRef`, Gruppe in `<defs>`, kein `<symbol>`); `{eigen:true}` liefert das volle Markup.
 - Leistung des Feeds und der Blätter: `content-visibility:auto` an `.nf-card` (außer Breaking und Karte des Tages), zuerst die sichtbaren Karten (`NEWS_FEED_SOFORT`, `_newsFeedRest`), ein geschlossenes Blatt ist leer (`_sheetForceClose`), der Zug-Lauscher nur, wenn die Geste schließen kann, kein `backdrop-filter` an stillstehenden Leisten, `will-change:transform` am Blatt.
 - Die Lage auf der Leiter ist eine Zahl (`insigniumPos`: Stufe mal drei plus Grad, am Ordensstern die Zacken); damit vergleicht die Insignium-Karte des Tages, ob jemand so hoch noch nie stand [§C33].
-- Die kleine Leiter (`_newsLeiter`) und die Laufbahn (Vitrine `.lb-karus`, ganze Leiter `#lbAlle`) zeigen die echten Zeichen; die Liga erfährt den Stand als Fun Fact (`insignium_stand`, gespeichert in `dataRef.leiter`).
+- Die kleine Leiter (`_newsLeiter`), die Spur der Insignium-Karte (`_insSpur`) und die Laufbahn (Vitrine `.lb-karus`, ganze Leiter `#lbAlle`) zeigen die echten Zeichen; die Liga erfährt den Stand als Fun Fact (`insignium_stand`, gespeichert in `dataRef.leiter`).
 
 ## Stellen
 

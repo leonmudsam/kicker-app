@@ -5309,39 +5309,62 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 .nd-er-r > span.da > i{color:var(--gold)}
 .nd-er-r small{font-size:8.5px;color:var(--muted)}
 
-.ni-b{display:flex;align-items:center;gap:8px;margin:2px 0 10px;padding:8px 10px;border-radius:14px;
+.ni-b{display:flex;flex-direction:column;gap:9px;margin:2px 0 10px;padding:10px 10px 9px;border-radius:14px;
   background:linear-gradient(135deg,color-mix(in srgb,var(--purple) 14%,transparent),transparent 72%);
-  border:1px solid color-mix(in srgb,var(--purple) 26%,transparent);cursor:pointer}
-.ni-alt{flex:0 0 34px;opacity:.5}
-@media (max-width:340px){ .ni-alt,.ni-pf{display:none} }
-.ni-alt svg{width:34px;height:34px;display:block}
-.ni-pf{flex:0 0 22px;width:22px;height:10px}
+  border:1px solid color-mix(in srgb,var(--purple) 26%,transparent);cursor:pointer;min-width:0}
+.ni-sz{display:flex;align-items:center;justify-content:center;gap:10px;min-width:0;padding:2px 0}
+.ni-alt{flex:0 1 44px;min-width:26px;opacity:.45}
+.ni-alt svg{width:100%;height:auto;display:block}
+.ni-pf{flex:0 1 44px;min-width:22px;height:14px}
 .ni-pf path{fill:none;stroke:var(--purple);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ni-pf path.sp{opacity:.45}
 .ni-ab .ni-pf path{stroke:var(--red)}
-.ni-neu{position:relative;flex:0 0 72px;width:72px;height:72px}
-.ni-neu>svg{width:72px;height:72px;display:block}
+.ni-neu{position:relative;flex:0 0 96px;width:96px;height:96px}
+.ni-neu::before{content:"";position:absolute;inset:-8px;border-radius:50%;
+  background:radial-gradient(closest-side,color-mix(in srgb,var(--purple) 30%,transparent),transparent)}
+.ni-ab .ni-neu::before{background:radial-gradient(closest-side,color-mix(in srgb,var(--red) 16%,transparent),transparent)}
+.ni-neu>svg{position:relative;width:96px;height:96px;display:block}
+.ni-wl{position:absolute;inset:0;pointer-events:none}
+.ni-wl i{position:absolute;inset:4px;border-radius:50%;border:1.5px solid color-mix(in srgb,var(--purple) 70%,transparent);
+  opacity:0;animation:niWelle 2.4s cubic-bezier(.2,.7,.3,1) .3s 2 both}
+.ni-wl i+i{animation-delay:1.1s}
+@keyframes niWelle{0%{transform:scale(.72);opacity:.9}100%{transform:scale(1.42);opacity:0}}
+@media (prefers-reduced-motion:reduce){ .ni-wl{display:none} }
 .ni-av{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}
-.ni-av .av{--av:30px;width:30px;height:30px;font-size:11px}
-.ni-t{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0;margin-left:4px}
+.ni-av .av{--av:36px;width:36px;height:36px;font-size:13px}
+.ni-t{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0}
 .ni-t em{font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--purple);font-style:normal}
 .ni-ab .ni-t em{color:var(--red)}
-.ni-t>b{font-size:15px;font-weight:700;color:var(--ink);line-height:1.15}
-.ni-t small{font-size:11px;color:var(--muted)}
-.ni-t small b{color:var(--ink)}
-.ni-gr{display:flex;gap:3px}
-.ni-gr i{font:600 8px 'Sometype Mono',monospace;font-style:normal;padding:1px 5px;border-radius:6px;
-  background:var(--surface2);color:var(--muted)}
-.ni-gr i.da{color:var(--ink2)}
-.ni-gr i.jetzt{background:var(--purple);color:var(--ink)}
+.ni-t>b{font-size:16px;font-weight:700;color:var(--ink);line-height:1.15}
+.ni-spur{display:flex;gap:4px;min-width:0}
+.ni-sp-s{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px}
+.ni-sp-f{display:flex;gap:1.5px;width:100%}
+.ni-sp-f i{position:relative;flex:1 1 0;height:8px;border-radius:2px;background:var(--surface2)}
+.ni-sp-f i.hat{background:color-mix(in srgb,var(--ink2) 34%,var(--surface2))}
+.ni-sp-f i.neu,.ni-sp-f i.da{background:linear-gradient(90deg,color-mix(in srgb,var(--purple) 70%,transparent),var(--purple))}
+.ni-sp-f i.da{box-shadow:0 0 8px color-mix(in srgb,var(--purple) 70%,transparent)}
+.ni-sp-f i.da::after{content:"";position:absolute;left:50%;top:50%;width:5px;height:5px;margin:-2.5px 0 0 -2.5px;
+  border-radius:50%;background:var(--ink)}
+.ni-sp-f i.weg{background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--red) 65%,transparent) 0 2px,transparent 2px 4px);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--red) 45%,transparent)}
+.ni-spur.ab .ni-sp-f i.da{background:color-mix(in srgb,var(--ink2) 50%,var(--surface2));box-shadow:none}
+.ni-sp-f i.alt::after{content:"";position:absolute;left:50%;top:50%;width:5px;height:5px;margin:-2.5px 0 0 -2.5px;
+  border-radius:50%;box-shadow:inset 0 0 0 1.2px var(--ink2)}
+.ni-sp-z{width:24px;max-width:100%;opacity:.28}
+.ni-sp-z svg{width:100%;height:auto;display:block}
+.ni-sp-s.hat .ni-sp-z,.ni-sp-s.vorher .ni-sp-z{opacity:.55}
+.ni-sp-s.jetzt .ni-sp-z{opacity:1}
 .ni-zs{display:flex;flex-direction:column;gap:6px;margin-top:8px;padding:0 10px}
 .ni-z{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink2);cursor:pointer}
 .ni-z-t{flex:1;min-width:0}
 .ni-z-t b{color:var(--ink)}
+.ni-z-w{flex:0 0 auto;display:flex;align-items:center;gap:3px}
 .ni-z-z{flex:0 0 22px}
+.ni-z-z.alt{opacity:.45}
 .ni-z-z svg{width:22px;height:22px;display:block}
-.ni-z em{font-style:normal;font-size:11px;white-space:nowrap}
-.ni-z em.g{color:var(--gold)}
-.ni-z em.r{color:var(--red)}
+.ni-z-pf{width:10px;height:9px}
+.ni-z-pf path{fill:none;stroke:var(--purple);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.ni-z.ab .ni-z-pf path{stroke:var(--red)}
 .ni-z.mehr{color:var(--muted);font-size:11px;cursor:default}
 .ni-bw{display:flex;align-items:center;gap:8px;margin:12px 0 2px;font-size:12px}
 .ni-bw b{color:var(--ink)}
@@ -5701,7 +5724,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.13.3232af7f';
+const BUILD_VERSION='2026.10.13.808f2acc';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -22610,6 +22633,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
   } else if(sorte === 'ins' && d.type === 'insignium_tag'){
     kopf = _newsInsTagKopf(s);
     fuss = _newsInsTagZeilen(s);
+    satz = '';
   } else if(sorte === 'ins'){
     gesicht = `<div class="nf-gr-l">${av(d.pid, 48)}</div>`;
     fuss = _newsLeiter(d.pid);
@@ -25372,34 +25396,51 @@ function _insArtWort(z){
   return z.art === 'ab' ? 'Rückfall' : z.art === 'grad' ? 'Neuer Grad'
     : z.wieder ? 'Wieder erreicht' : 'Neue Stufe';
 }
+function _insSpurPos(l){
+  return Math.min(INSIGNIEN.length * INSIGNIUM_GRADE - 1, insigniumPos(l));
+}
+function _insSpur(z){
+  const a = _insSpurPos(z.vor), b = _insSpurPos(z.nach), ab = z.art === 'ab';
+  const rang = (getPlayerRank(z.pid) || {}).label;
+  const feld = i => {
+    const k = i === b ? 'da' : ab ? (i < b ? 'hat' : i <= a ? 'weg' : '')
+      : (i <= a ? 'hat' : i < b ? 'neu' : '');
+    return `<i class="${k}${i === a && a !== b ? ' alt' : ''}"></i>`;
+  };
+  return `<div class="ni-spur${ab ? ' ab' : ''}" aria-hidden="true">` + INSIGNIEN.map((ins, s) => {
+    let bild = '';
+    try { bild = insigniumStufeSvg(ins.key, rang, 0, 0, {bild:true}) || ''; } catch(e){ bild = ''; }
+    const lage = s === z.nach.stufe ? ' jetzt' : s === z.vor.stufe ? ' vorher' : s < z.nach.stufe ? ' hat' : '';
+    return `<span class="ni-sp-s${lage}"><span class="ni-sp-f">`
+      + [0, 1, 2].map(g => feld(s * INSIGNIUM_GRADE + g)).join('')
+      + `</span><span class="ni-sp-z">${bild}</span></span>`;
+  }).join('') + `</div>`;
+}
 function _newsInsTagKopf(s){
   const d = (s && s.dataRef) || {}, z = (d.zuege || [])[0], pm = pmap();
   if(!z || !pm[z.pid]) return '';
-  const S = INSIGNIEN[z.nach.stufe];
-  const pfeil = `<svg class="ni-pf" viewBox="0 0 40 16" aria-hidden="true"><path d="M2 8H34"/><path d="M28 3L35 8L28 13"/></svg>`;
-  const grade = S.key === 'stern' ? '' : `<span class="ni-gr">${INSIGNIUM_GRAD_NAME.map((g, i) =>
-    `<i class="${i < z.nach.grad ? 'da' : i === z.nach.grad ? 'jetzt' : ''}">${g}</i>`).join('')}</span>`;
+  const pfeil = `<svg class="ni-pf" viewBox="0 0 48 16" aria-hidden="true"><path class="sp" d="M2 8H8M12 8H18"/><path d="M22 8H42"/><path d="M36 3L43 8L36 13"/></svg>`;
+  const wellen = z.art === 'ab' ? '' : `<span class="ni-wl" aria-hidden="true"><i></i><i></i></span>`;
   return `<div class="ni-b ni-${esc(z.art)}" data-pid="${esc(z.pid)}">`
-    + `<span class="ni-alt">${_insZeichen(z.pid, z.vor, true)}</span>${pfeil}`
-    + `<span class="ni-neu">${_insZeichen(z.pid, z.nach)}<span class="ni-av">${avHtml(pm[z.pid], '', {px:30})}</span></span>`
-    + `<span class="ni-t"><em>${esc(_insArtWort(z))}</em><b>${esc(_insLageName(z.nach))}</b>${grade}`
-    + `<small><b class="num">${z.nach.punkte}</b> Prestige</small></span></div>`;
+    + `<span class="ni-t"><em>${esc(_insArtWort(z))}</em><b>${esc(_insLageName(z.nach))}</b></span>`
+    + `<div class="ni-sz"><span class="ni-alt">${_insZeichen(z.pid, z.vor, true)}</span>${pfeil}`
+    + `<span class="ni-neu">${wellen}${_insZeichen(z.pid, z.nach)}<span class="ni-av">${avHtml(pm[z.pid], '', {px:36})}</span></span></div>`
+    + _insSpur(z) + `</div>`;
 }
 function _newsInsTagZeilen(s){
   const d = (s && s.dataRef) || {}, l = (d.zuege || []).slice(1), pm = pmap();
   if(!l.length) return '';
-  const lb = d.laufbahn || {};
   const text = z => z.art === 'ab' ? `fällt auf den ${INSIGNIEN[z.nach.stufe].name} zurück`
     : z.art === 'grad' ? (INSIGNIEN[z.nach.stufe].key === 'stern' ? `erreicht die ${z.nach.zacken}. Zacke`
       : `steigt auf ${_insLageName(z.nach)}`)
     : z.wieder ? `trägt wieder den ${INSIGNIEN[z.nach.stufe].name}` : `erreicht den ${INSIGNIEN[z.nach.stufe].name}`;
+  const pf = `<svg class="ni-z-pf" viewBox="0 0 12 10" aria-hidden="true"><path d="M1 5H10M7 2L10.5 5L7 8"/></svg>`;
   const zeile = z => {
     if(!pm[z.pid]) return '';
-    const w = lb[z.pid], dl = w ? Math.round(Number(w.nach) || 0) - Math.round(Number(w.vor) || 0) : 0;
     return `<div class="ni-z${z.art === 'ab' ? ' ab' : ''}" data-pid="${esc(z.pid)}">${rcpAvHtml(z.pid, 20, {})}`
       + `<span class="ni-z-t"><b>${esc(pm[z.pid].name)}</b> ${esc(text(z))}</span>`
-      + `<span class="ni-z-z">${_insZeichen(z.pid, z.nach, true)}</span>`
-      + (dl ? `<em class="num ${dl > 0 ? 'g' : 'r'}">${dl > 0 ? '+' : '−'}${Math.abs(dl)} P</em>` : '') + `</div>`;
+      + `<span class="ni-z-w"><span class="ni-z-z alt">${_insZeichen(z.pid, z.vor, true)}</span>${pf}`
+      + `<span class="ni-z-z">${_insZeichen(z.pid, z.nach, true)}</span></span></div>`;
   };
   return `<div class="ni-zs">${l.slice(0, 3).map(zeile).join('')}`
     + (l.length > 3 ? `<div class="ni-z mehr">+${l.length - 3} weitere</div>` : '') + `</div>`;

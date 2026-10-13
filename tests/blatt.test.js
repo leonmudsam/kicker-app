@@ -1086,6 +1086,59 @@ const ok = (c, msg, det) => {
   ok(!insBreite[288].fehlt && insBreite[288].rand >= 6 && insBreite[360].rand >= 6,
      'und ihre Zeilen halten Abstand zum Kartenrand', JSON.stringify(insBreite));
 
+  // ── Die Karte zeigt das Zeichen, das Prestige steht im Blatt ──────
+  // Gewinn und Verlust standen als „+285 P" auf der Insignium-Karte und auf
+  // der Tafel-Karte desselben Tages, und unter der Schlagzeile stand ein
+  // Absatz über Schwelle und Träger der Stufe. Jetzt zeigt die Bühne die
+  // ganze Leiter als Spur: gefüllt, was schon da war, Violett, was der Tag
+  // dazubringt, rot gestreift, was ein Rückfall kostet.
+  const insKarte = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const m = JSON.parse(K(`(function(){
+      const p = players.slice(0, 3).map(x => x.id);
+      const L = (stufe, grad, punkte) => ({stufe, grad, punkte, zacken:0});
+      const lb = {}; lb[p[0]] = {vor:820, nach:2120}; lb[p[1]] = {vor:620, nach:560}; lb[p[2]] = {vor:3150, nach:3500};
+      const zuege = [{pid:p[0], art:'auf', vor:L(1,1,820), nach:L(3,0,2120)},
+                     {pid:p[1], art:'ab', vor:L(1,0,620), nach:L(0,2,560)},
+                     {pid:p[2], art:'grad', vor:L(4,0,3150), nach:L(4,1,3500)}];
+      const t = _insTagTexte(zuege);
+      const story = (id, z) => ({id, cat:'tafel', ic:'award', when:new Date(), prio:60,
+        title:_insTagTexte(z).title, desc:_insTagTexte(z).desc,
+        dataRef:{type:'insignium_tag', tag:'2026-10-12', zuege:z, playerIds:z.map(x => x.pid), laufbahn:lb}});
+      return JSON.stringify({auf:_newsCardHtmlM2(story('ui-insk', zuege), false, false),
+        ab:_newsCardHtmlM2(story('ui-insab', [zuege[1]]), false, false), desc:t.desc});
+    })()`));
+    const host = document.createElement('div'); host.innerHTML = m.auf + m.ab; document.body.appendChild(host);
+    const [k1, k2] = host.querySelectorAll('.nf-card');
+    const text = k => k.textContent.replace(/\s+/g, ' ');
+    const spur = k => [...k.querySelectorAll('.ni-spur .ni-sp-f i')].map(i => ' ' + i.className + ' ');
+    const w = k1.querySelector('.ni-wl');
+    const out = {
+      prestige: /Prestige|[0-9]+ P\b/.test(text(k1) + ' ' + text(k2)),
+      satz: !!k1.querySelector('.nf-d') || !!k2.querySelector('.nf-d') || text(k1).indexOf(m.desc.slice(0, 24)) >= 0,
+      felder: spur(k1).length, zeichen: k1.querySelectorAll('.ni-spur .ni-sp-z svg').length,
+      neu: spur(k1).filter(c => c.indexOf(' neu ') >= 0).length,
+      da: spur(k1).findIndex(c => c.indexOf(' da ') >= 0), alt: spur(k1).findIndex(c => c.indexOf(' alt ') >= 0),
+      weg: spur(k2).filter(c => c.indexOf(' weg ') >= 0).length, daAb: spur(k2).findIndex(c => c.indexOf(' da ') >= 0),
+      wellen: !!w, wellenAb: !!k2.querySelector('.ni-wl'),
+      unter: !!(w && w.nextElementSibling && w.nextElementSibling.tagName.toLowerCase() === 'svg'),
+      zeilen: k1.querySelectorAll('.ni-z:not(.mehr) .ni-z-w .ni-z-z svg').length
+    };
+    host.remove(); return out;
+  });
+  ok(!insKarte.prestige && !insKarte.satz,
+     'die Insignium-Karte trägt keine Prestige-Zahl und keinen Satz unter der Schlagzeile',
+     JSON.stringify({prestige:insKarte.prestige, satz:insKarte.satz}));
+  ok(insKarte.felder === 21 && insKarte.zeichen === 7,
+     'ihre Spur zeigt die ganze Leiter: drei Felder je Stufe, darunter die sieben Zeichen',
+     insKarte.felder + ' Felder, ' + insKarte.zeichen + ' Zeichen');
+  ok(insKarte.alt === 4 && insKarte.neu === 4 && insKarte.da === 9 && insKarte.weg === 1 && insKarte.daAb === 2,
+     'die Spur zeigt, was der Tag dazubringt, und was ein Rückfall kostet',
+     JSON.stringify({alt:insKarte.alt, neu:insKarte.neu, da:insKarte.da, weg:insKarte.weg, daAb:insKarte.daAb}));
+  ok(insKarte.wellen && insKarte.unter && !insKarte.wellenAb && insKarte.zeilen === 4,
+     'Ringe nur beim Aufstieg und unter der Zeichnung, jede Zeile mit dem Weg von Zeichen zu Zeichen',
+     JSON.stringify({wellen:insKarte.wellen, unter:insKarte.unter, ab:insKarte.wellenAb, zeilen:insKarte.zeilen}));
+
   // ── Das Blatt der Ewigen Tafel zeigt, was ausschlaggebend war ────
   //    Die Punktewirkung stand als Zeile „1205 → 1240 Prestige": zwei Zahlen,
   //    die man erst lesen und dann verrechnen muss, und bei neun Zeilen

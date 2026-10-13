@@ -594,6 +594,9 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
     // Bewegungen als Zeilen darunter (30d-news-insignium.js).
     kopf = _newsInsTagKopf(s);
     fuss = _newsInsTagZeilen(s);
+    // Nur die Schlagzeile: der Satz erklärte Schwelle und Träger der Stufe,
+    // und das zeigt die Spur in der Bühne. Er steht weiter im Blatt.
+    satz = '';
   } else if(sorte === 'ins'){
     gesicht = `<div class="nf-gr-l">${av(d.pid, 48)}</div>`;
     fuss = _newsLeiter(d.pid);
