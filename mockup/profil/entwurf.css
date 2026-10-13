@@ -1,0 +1,104 @@
+/* ═══ Das Spielerprofil im Entwurf, dritte Fassung ════════════════════
+   Gilt nur unter html.neu (app.html#neu:<id>). „Heute" ist die App mit dem
+   eingebauten zweiten Entwurf: das Lauflicht über dem Gewonnenen, das Licht
+   am Rand des Kopfs, die Kurve, die sich zeichnet [§C27].
+
+   Das Motiv dieser Fassung: was verliehen ist, hängt als Band oder Wimpel.
+   Das Ordensband unter dem Namen gefiel im ersten Entwurf; daraus wird eine
+   Familie — der Beiname als Ordensband mit Enden, die Liga-Titel als Wimpel
+   an einer Stange, Platz 1 bis 3 einer Saison mit ihrem Medaillenband, der
+   Rang als Band in seiner Farbe. Material und Schrift bleiben die der App:
+   Gold für Titel [§C25], Rangfarbe für den Rang, Archivo Black für Namen.
+   Bewegt wird einmal beim Öffnen: das Ordensband entrollt sich. */
+
+/* ── 1 · Der Beiname als Ordensband ─────────────────────────────────── */
+/* Ein Band mit zwei Enden dahinter, die etwas tiefer hängen und eingekerbt
+   sind. Läuft der Monat noch, sind die Kanten gestrichelt wie heute die
+   Pille („läuft"). */
+html.neu .pp-root .neu-band{position:relative;display:inline-block;z-index:0}
+html.neu .pp-root .neu-band::before,html.neu .pp-root .neu-band::after{content:"";position:absolute;top:6px;bottom:-6px;width:22px;z-index:-1;
+  background:linear-gradient(180deg,#8a6a14,#5a4209)}
+html.neu .pp-root .neu-band::before{left:-14px;clip-path:polygon(0 0,100% 0,100% 100%,0 100%,9px 50%)}
+html.neu .pp-root .neu-band::after{right:-14px;clip-path:polygon(0 0,100% 0,calc(100% - 9px) 50%,100% 100%,0 100%)}
+html.neu .pp-root .neu-band .pp-title-pill{border:0;border-radius:2px;padding:7px 18px;
+  color:#ffe28a;text-shadow:0 1px 0 rgba(0,0,0,.45);
+  background:linear-gradient(rgba(255,236,170,.75),rgba(255,236,170,.75)) 0 3px/100% 1px no-repeat,
+    linear-gradient(rgba(255,236,170,.55),rgba(255,236,170,.55)) 0 calc(100% - 3px)/100% 1px no-repeat,
+    linear-gradient(180deg,#b8901f 0%,#8f6c12 55%,#73560c 100%);
+  box-shadow:0 6px 14px -6px rgba(0,0,0,.8)}
+html.neu .pp-root .neu-band .pp-title-pill.live{
+  background:repeating-linear-gradient(90deg,rgba(255,236,170,.8) 0 6px,transparent 6px 10px) 0 3px/100% 1px no-repeat,
+    repeating-linear-gradient(90deg,rgba(255,236,170,.6) 0 6px,transparent 6px 10px) 0 calc(100% - 3px)/100% 1px no-repeat,
+    linear-gradient(180deg,#b8901f 0%,#8f6c12 55%,#73560c 100%)}
+html.neu .pp-root .neu-band .pp-title-pill .i{color:#ffe28a}
+html.neu .pp-root .pp-title-row{margin-top:12px;gap:9px}
+
+/* ── 2 · Die Liga-Titel als Wimpel an einer Stange ──────────────────── */
+html.neu .pp-root .pp-trophies{padding-top:10px;gap:10px;
+  background:linear-gradient(180deg,#d8c27a,#8d7428) 0 4px/100% 3px no-repeat;background-attachment:local}
+html.neu .pp-root .pp-tr{border:0;border-radius:3px 3px 0 0;padding:16px 10px 30px;width:122px;
+  clip-path:polygon(0 0,100% 0,100% 100%,50% calc(100% - 18px),0 100%);
+  background:linear-gradient(180deg,rgba(255,255,255,.10),transparent 30%),
+    linear-gradient(180deg,#5a4510 0%,#3b2d0a 100%);
+  box-shadow:inset 0 2px 0 rgba(255,226,138,.55)}
+html.neu .pp-root .pp-tr.team{
+  background:linear-gradient(180deg,rgba(255,255,255,.10),transparent 30%),
+    linear-gradient(180deg,#143e58 0%,#0c2638 100%);
+  box-shadow:inset 0 2px 0 rgba(150,210,245,.55)}
+/* Zwei Ösen, an denen der Wimpel an der Stange hängt. */
+html.neu .pp-root .pp-tr::before{content:"";position:absolute;inset:auto;left:14px;right:14px;top:-1px;height:6px;
+  background:radial-gradient(circle at 3px 3px,#e9d68e 2.2px,transparent 2.6px) 0 0/calc(100% - 6px) 6px repeat-x;opacity:1}
+html.neu .pp-root .pp-tr .ic.svg-ic{width:34px;height:34px;border-radius:50%;margin-bottom:9px;color:#2a1e00;
+  background:radial-gradient(circle at 35% 30%,#ffeeb0,#f7cf4a 55%,#b88a1a)}
+html.neu .pp-root .pp-tr.team .ic.svg-ic{color:#04263c;background:radial-gradient(circle at 35% 30%,#d9f1ff,#56b4e8 55%,#2479aa)}
+html.neu .pp-root .pp-tr .ti{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:11.5px;text-align:center;color:#fff3cf}
+html.neu .pp-root .pp-tr.team .ti{color:#e2f4ff}
+html.neu .pp-root .pp-tr .su{text-align:center;color:rgba(255,236,190,.7)}
+html.neu .pp-root .pp-tr.team .su{color:rgba(205,236,255,.7)}
+
+/* ── 3 · Platz 1 bis 3 einer Saison mit Medaillenband ───────────────── */
+html.neu .pp-root .pp-sn.gold,html.neu .pp-root .pp-sn.silver,html.neu .pp-root .pp-sn.bronze{padding-top:22px;position:relative}
+html.neu .pp-root .pp-sn.gold::before{display:none}
+html.neu .pp-root .pp-sn.gold::after,html.neu .pp-root .pp-sn.silver::after,html.neu .pp-root .pp-sn.bronze::after{
+  content:"";position:absolute;left:50%;top:0;width:24px;height:16px;margin-left:-12px;
+  clip-path:polygon(0 0,100% 0,100% 100%,50% 68%,0 100%)}
+html.neu .pp-root .pp-sn.gold::after{background:linear-gradient(90deg,#f7cf4a 0 33%,#b88a1a 33% 66%,#f7cf4a 66%)}
+html.neu .pp-root .pp-sn.silver::after{background:linear-gradient(90deg,#d6dce2 0 33%,#7d858d 33% 66%,#d6dce2 66%)}
+html.neu .pp-root .pp-sn.bronze::after{background:linear-gradient(90deg,#d79a68 0 33%,#7a4a24 33% 66%,#d79a68 66%)}
+html.neu .pp-root .pp-sn.silver .pl{color:#d6dce2}
+html.neu .pp-root .pp-sn.bronze .pl{color:#d79a68}
+
+/* ── 4 · Der Rang als Band in seiner Farbe ──────────────────────────── */
+html.neu .pp-root .pp-rank-label{display:inline-block;padding:4px 14px 5px 12px;margin-bottom:5px;
+  color:#0a0c0b;text-shadow:none;font-size:15px;
+  background:linear-gradient(180deg,var(--pp-tier-2,var(--ak)),var(--pp-tier-1,var(--ak)));
+  clip-path:polygon(0 0,100% 0,calc(100% - 8px) 50%,100% 100%,0 100%)}
+
+/* ── 5 · Beziehungen, Serien, Marken ───────────────────────────────── */
+/* Das Gesicht trägt den Ring seiner Richtung, wie der Balken darunter. */
+html.neu .pp-root .pp-r-rich .av:not(.empty){border:0;box-shadow:0 0 0 2px var(--bg2),0 0 0 3.5px var(--bez)}
+/* Ab drei Siegen in Folge steht das Feuer neben der laufenden Serie. */
+html.neu .pp-root .neu-feuer{display:inline-grid;place-items:center;width:18px;height:18px;margin-left:6px;vertical-align:2px;color:var(--orange)}
+html.neu .pp-root .neu-feuer svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+/* Die Zahl rechts neben jeder Überschrift als Marke. */
+html.neu .pp-root .pp-sec-title .m{padding:3px 9px;border-radius:99px;background:var(--surface2);border:1px solid var(--line)}
+html.neu .pp-root .pp-sec-title .m:empty{display:none}
+
+/* ── 7 · Gehaltene Rekorde auf einer Rosette ────────────────────────── */
+/* Das Zeichen eines gehaltenen Rekords sitzt auf einer Rosette, der Form
+   einer Ehrenschleife — dasselbe Motiv wie Band und Wimpel. Schattenseiten
+   bleiben eckig: sie sind nichts, was man verliehen bekommt. */
+html.neu .pp-root .chron-one:not(.schatten):not(.next) .ic{width:40px;height:40px;border-radius:0;
+  clip-path:polygon(50.0% 0.0%,61.1% 8.5%,75.0% 6.7%,80.4% 19.6%,93.3% 25.0%,91.5% 38.9%,100.0% 50.0%,91.5% 61.1%,93.3% 75.0%,80.4% 80.4%,75.0% 93.3%,61.1% 91.5%,50.0% 100.0%,38.9% 91.5%,25.0% 93.3%,19.6% 80.4%,6.7% 75.0%,8.5% 61.1%,0.0% 50.0%,8.5% 38.9%,6.7% 25.0%,19.6% 19.6%,25.0% 6.7%,38.9% 8.5%);
+  background:radial-gradient(circle at 50% 50%,#3a2d08 0 52%,transparent 53%),
+    conic-gradient(from 0deg,#f7cf4a,#b88a1a,#f7cf4a,#b88a1a,#f7cf4a,#b88a1a,#f7cf4a);
+  box-shadow:none;color:#ffe28a}
+
+/* ── 6 · Bewegung: das Band entrollt sich beim Öffnen ──────────────── */
+@keyframes neuEntrollen{from{transform:scaleX(.25);opacity:0}60%{opacity:1}to{transform:none;opacity:1}}
+@keyframes neuEnden{from{transform:translateY(-6px);opacity:0}to{transform:none;opacity:1}}
+@media(prefers-reduced-motion:no-preference){
+  html.neu:not(.ruhe) .pp-root .neu-band .pp-title-pill{animation:neuEntrollen .55s cubic-bezier(.2,.8,.2,1) .35s both}
+  html.neu:not(.ruhe) .pp-root .neu-band::before,html.neu:not(.ruhe) .pp-root .neu-band::after{animation:neuEnden .35s ease-out .8s both}
+}
+html.neu.ruhe .pp-root *,html.neu.ruhe .pp-root *::before,html.neu.ruhe .pp-root *::after{animation:none!important;transition:none!important}

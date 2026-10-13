@@ -136,14 +136,22 @@
      bei 42 px war von einem Lorbeerkranz nur noch ein Kringel übrig,
      obwohl genau diese Form der Grund ist, warum jemand sammelt.
 
-     Die seitliche Polsterung ist die halbe Restbreite: nur so kann die
-     erste und die letzte Karte in der MITTE einrasten statt am Rand.
-     Prozente im padding rechnen gegen die Breite des Scrollbereichs, auch
-     wenn das Band selbst breiter ist — genau das wird hier gebraucht. */
-  .lb-karus{overflow-x:auto;scrollbar-width:none;margin-top:10px;
+     Vor der ersten und hinter der letzten Karte steht je die halbe
+     Restbreite: nur so kann die erste und die letzte Karte in der MITTE
+     einrasten statt am Rand. Das waren zuerst Prozente im padding des
+     Bands. Das Band ist aber so breit wie sein Inhalt (max-content), und
+     Safari rechnet Prozente darin beim Bemessen als null: das Band blieb
+     um die Polsterung zu schmal, die Karten liefen rechts hinaus, und am
+     Telefon ließ sich der Ordensstern nie in die Mitte schieben — Chromium
+     rechnet anders, der Test war grün. Jetzt sind es zwei leere Glieder
+     des Bands, deren Breite gegen den Scrollbereich rechnet (cqw), nicht
+     gegen das Band; davor ein Rückfall über die Breite des Fensters. */
+  .lb-karus{overflow-x:auto;scrollbar-width:none;margin-top:10px;container-type:inline-size;
     scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
   .lb-karus::-webkit-scrollbar{display:none}
-  .lb-k-band{display:flex;width:max-content;padding:4px calc((100% - 156px) / 2) 2px}
+  .lb-k-band{display:flex;width:max-content;padding:4px 0 2px}
+  .lb-k-band::before,.lb-k-band::after{content:"";
+    flex:0 0 calc((min(100vw, 520px) - 196px) / 2);flex:0 0 calc((100cqw - 156px) / 2)}
   /* Antippbar, nicht nur schiebbar — deshalb der Zeigefinger und nicht die
      Greifhand: die Karte ist ein Ziel. */
   .lb-k{flex:0 0 156px;scroll-snap-align:center;cursor:pointer;

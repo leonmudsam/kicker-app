@@ -11,9 +11,10 @@
      Breaking glimmt und die Karte des Tages trägt ein Lauflicht. Dasselbe
      Licht liegt jetzt dort, wo Gold einen Titel bedeutet und EINER ihn
      trägt: der Erste auf jedem Podest, der Spieler des Tages und der Woche
-     im Feed samt ihrem Blatt, der Held der Rückblicke. Nirgends sonst — ein
-     Licht auf jeder goldenen Zahl wäre eine Kirmes, und das Farbgesetz
-     sagt, dass Gold nur trägt, was selten ist.
+     im Feed samt ihrem Blatt, der Held der Rückblicke, und im Profil alles,
+     was dort gewonnen ist (unten). Sonst nirgends — ein Licht auf jeder
+     goldenen Zahl wäre eine Kirmes, und das Farbgesetz sagt, dass Gold nur
+     trägt, was selten ist.
      Eine eigene Ebene und nicht der Hintergrund: die Fläche der Karte
      bleibt dunkel und unberührt. Die Strecke läuft in anderthalb Sekunden, danach ruht sie gut sechs:
      ein Signal, kein Flackern. Sie fährt per `transform` über eine Ebene,
@@ -38,6 +39,20 @@
      später als der Spieler des Tages, der Rückblick später als das Podest. */
   .nf-card.nf-s-woche:not(.read)::after,.nd-s-woche .nd-head > .glanz-bahn::after{animation-delay:-3s}
   .rcp-held > .glanz-bahn::after{animation-delay:-5s}
+  /* Im Profil liegt dasselbe Licht über allem, was dort gewonnen ist [§C27]:
+     jedem Liga-Titel, jedem gehaltenen Rekord, Platz 1 einer Saison und als
+     Welle über den legendären Auszeichnungen. Jede Bahn trägt ihren Versatz
+     (--gd), sodass das Licht durch eine Reihe wandert, statt überall
+     zugleich aufzublitzen. */
+  .pp-root .pp-tr > .glanz-bahn::after,.pp-root .chron-one > .glanz-bahn::after,
+  .pp-root .pp-sn.gold > .glanz-bahn::after,.pp-root .pp-bmini.legendary > .glanz-bahn::after{
+    content:"";position:absolute;top:0;bottom:0;left:0;width:250%;pointer-events:none;
+    background:linear-gradient(105deg,transparent 42%,rgba(247,207,74,.22) 50%,transparent 58%);
+    transform:translateX(-84%);animation:glanzZug 8s ease-in-out infinite;animation-delay:var(--gd,0s)}
+  .pp-root .pp-tr.team > .glanz-bahn::after{
+    background:linear-gradient(105deg,transparent 42%,rgba(86,180,232,.22) 50%,transparent 58%)}
+  .pp-root .pp-bmini.legendary > .glanz-bahn::after{animation-duration:9s;
+    background:linear-gradient(105deg,transparent 38%,rgba(255,236,170,.55) 50%,transparent 62%)}
   /* Der Schimmer des Seltenen im Feed: dieselbe Bahn, die Farbe der Familie
      und leiser, alle elf Sekunden statt alle acht [§C25]. */
   .nf-card.nf-glanz::after{

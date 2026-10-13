@@ -143,6 +143,9 @@ function _chronStripHtml(pid, teil){
     // Wer NUR eine Schattenseite hält, bekommt keine Überschrift „Liga-Rekord"
     // darüber: „Das Scheunentor" ist keiner, und die Zahl daneben wäre null.
     const nurNeg = zaehlt === 0;
+    // Ein gehaltener Rekord ist Gold und trägt das Lauflicht [§C25, §C27];
+    // es wandert von Karte zu Karte. Eine Schattenseite trägt keins.
+    let lauf = 0;
     const card = (x) => {
       const tt = titleTone(x.tone);
       return `<div class="chron-one${x.neg ? ' schatten' : ''}" style="--tt:${tt.c};--ttr:${tt.rgb}" data-chron="${esc(x.id)}">
@@ -153,7 +156,7 @@ function _chronStripHtml(pid, teil){
         <span class="e num">${esc(x.ev)}</span>
       </span>
       <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-        stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></span>
+        stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></span>${x.neg ? '' : glanzBahn(2.2 + (lauf++) * .45)}
     </div>`;
     };
     // Zwei Rekorde stehen offen, der Rest klappt an Ort und Stelle auf, und

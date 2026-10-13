@@ -154,8 +154,9 @@ function showPlayer(id){
               </linearGradient>
             </defs>
             <path d="${fillPath}" fill="url(#${esc(gradId)})"/>
-            <path d="${linePath}" fill="none" stroke="${lineCol}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="${linePath}" fill="none" stroke="${lineCol}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" pathLength="1"/>
             <circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="2.5" fill="${lineCol}"/>
+            <circle class="pp-ping" cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="2.5"/>
           </svg>
         </div>
         <div class="pp-spark-foot">
@@ -294,28 +295,30 @@ function showPlayer(id){
   });
   // Sortierung: neueste zuerst (Saison-ID ist 'YYYY-MM', String-Sort = chronologisch)
   trophies.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  // Jeder Titel trägt das Lauflicht des Goldes [§C27]; es wandert von Titel
+  // zu Titel durch die Reihe.
   const trophyHtml = `
     <div class="pp-trophies">
-      ${trophies.map(t=>{
+      ${trophies.map((t, ti)=>{
         if(t.type==='player') return `
         <div class="pp-tr">
           <span class="ic svg-ic">${svgI('trophy')}</span>
           <div class="ti">Player of<br>the Season</div>
-          <div class="su">${esc(t.label)}</div>
+          <div class="su">${esc(t.label)}</div>${glanzBahn(.4 + ti * .6)}
         </div>`;
         const teamAttr = t.mate ? ` data-team="${esc(paarKey(id, t.mate))}"` : '';
         return `
         <div class="pp-tr team"${teamAttr}>
           <span class="ic svg-ic">${svgI('handshake')}</span>
           <div class="ti">Team of<br>the Season</div>
-          <div class="su">${esc(t.label)}</div>
+          <div class="su">${esc(t.label)}</div>${glanzBahn(.4 + ti * .6)}
         </div>`;
       }).join('')}
     </div>`;
 
   const seasonRailHtml = seasonHistory.length ? `
     <div class="pp-seasons" id="ppSeasonsRail">
-      ${seasonHistory.map(sn=>{
+      ${seasonHistory.map((sn, si)=>{
         const cls = sn.place===1?'gold':sn.place===2?'silver':sn.place===3?'bronze':'';
         const medal = sn.place>=1&&sn.place<=3 ? medalB(sn.place-1) : '';
         const eloCls = sn.eloDelta>=0?'pos':'neg';
@@ -324,7 +327,7 @@ function showPlayer(id){
           <div class="mo">${esc(sn.label)}</div>
           <div class="pl"><span class="n big">${sn.place?sn.place+'.':'–'}</span></div>
           <div class="el ${eloCls}">${eloTxt}</div>
-          <div class="rc">${sn.wins}–${sn.losses}</div>
+          <div class="rc">${sn.wins}–${sn.losses}</div>${sn.place === 1 ? glanzBahn(3 + si * .5) : ''}
         </div>`;
       }).join('')}
     </div>` : '';
@@ -479,6 +482,7 @@ const rankProgHtml = rInfo ? `
         ${sparkHtml}
         ${formHtml?`<div class="pp-form">${formHtml}</div>`:''}
       </div>` : ''}
+      <span class="pp-rand" aria-hidden="true"><i></i></span>
     </header>
 
     ${(()=>{
@@ -549,7 +553,7 @@ const rankProgHtml = rInfo ? `
       </div>
       <div class="pp-kpi">
         <div class="pp-k"><div class="v">${s.wins}</div><div class="l">Siege</div></div>
-        <div class="pp-k f"><div class="v">${wr}%</div><div class="l">Siegquote</div></div>
+        <div class="pp-k f" style="--q:${(wr / 100).toFixed(2)}"><div class="v">${wr}%</div><div class="l">Siegquote</div></div>
         <div class="pp-k ${s.gd>=0?'pos':'neg'}"><div class="v">${s.gd>=0?'+':''}${s.gd}</div><div class="l">Torbilanz</div></div>
       </div>
     </div>
@@ -559,7 +563,7 @@ const rankProgHtml = rInfo ? `
         <div class="l"><span class="ic svg-ic">${svgI('flame')}</span><h4>Siegesserien</h4></div>
       </div>
       <div class="pp-streaks">
-        <div class="pp-st">
+        <div class="pp-st${streak > 0 ? ' lauf-sieg' : streak < 0 ? ' lauf-pleite' : ''}">
           <div class="l">Aktuelle Serie</div>
           <div class="v ${streak===0?'empty':''}">${streak===1?'1 Sieg':streak>0?streak+' Siege':streak===-1?'1 Niederlage':streak<0?(-streak)+' Niederlagen':'–'}</div>
           ${_last15.length?`<div class="dots mixed">${last15DotsHtml}</div>`:''}
@@ -584,9 +588,12 @@ const rankProgHtml = rInfo ? `
       badges.forEach(b => { const r = _rOf.get(b.id) || rarityOf(b.id); if(_byRarity[r]) _byRarity[r].push(b); });
       const _strip = [];
       RARITY_ORDER.forEach(r => _byRarity[r].forEach(b => _strip.push({b, r})));
+      // Über die legendären läuft eine Welle aus Licht, Zeichen für Zeichen:
+      // das Seltene trägt einen leisen Lauf [§C27].
+      let _leg = 0;
       const _stripHtml = _strip.map(({b,r}) => {
         const ic = icPfad(b.ic) ? `<svg viewBox="0 0 24 24">${icPfad(b.ic)}</svg>` : '';
-        return `<div class="pp-bmini ${r}">${ic}</div>`;
+        return `<div class="pp-bmini ${r}">${ic}${r === 'legendary' ? glanzBahn(1 + (_leg++) * .12) : ''}</div>`;
       }).join('');
       // Bar-Segmente: ein Stück pro Tier-Count, Rest dunkel
       const _seg = (r) => _byRarity[r].length;
@@ -652,7 +659,8 @@ const rankProgHtml = rInfo ? `
           // Eine Karte mit Avatar links + Info rechts
           const card=(cls, attr, icKey, label, name, wr, w, g)=>{
             const empty = !name;
-            return `<div class="pp-r-rich ${cls}"${attr}>
+            // Die Quote steht auch als Balken unter der Karte (--q).
+            return `<div class="pp-r-rich ${cls}"${attr}${empty ? '' : ` style="--q:${(+wr).toFixed(2)}"`}>
               ${empty?`<div class="av empty">–</div>`:relAv(name.id)}
               <div class="info">
                 <div class="l">${svgI(icKey)}${label}</div>
