@@ -19,6 +19,9 @@ function _tickDaten(){
 }
 function _tickVersion(){ if(!document.hidden) checkForUpdate(); }
 
+// Das Startbild steht schon (src/index.html); ab hier wartet es auf das
+// erste Bild der Liga [§C43].
+_startbildBereit();
 loadAll();
 checkForUpdate();
 // Der Service Worker hält Seite, Schriften und Supabase-Bibliothek auf dem

@@ -325,6 +325,83 @@ async function neueSeite(ctx){
     ok(await r.page.evaluate(() => window.__haupt >= 1), 'Ohne Worker rechnet der Hauptthread wie bisher');
     await r.page.close();
 
+    // ── Das Startbild [§C43] ──────────────────────────────────────────
+    // Ein eigener Kontext ohne Stand und ohne „zuletzt offen": die Starts
+    // oben haben beides hinterlassen.
+    const bctx = await browser.newContext({viewport:{width:390, height:844}, serviceWorkers:'block'});
+    await bctx.addInitScript(({daten, jetzt}) => {
+      window.__startDaten = daten;
+      const RD = Date;
+      window.Date = class extends RD{ constructor(...a){ a.length ? super(...a) : super(jetzt); } static now(){ return jetzt; } };
+      window.setInterval = () => 0;
+      window.__vorStart = K => { window.__K = K; };
+    }, {daten:DATEN, jetzt:JETZT});
+    anfragen.length = 0;
+    // Erster Start: die Bibliothek kommt erst nach 1,2 s, und so lange wird
+    // kein Skript der App übersetzt. Das Startbild steht trotzdem, mit
+    // seinem Zeichen, ohne eigene Anfrage.
+    const e1 = await neueSeite(bctx);
+    await e1.page.route('**/attrappe.js', async r => { await new Promise(f => setTimeout(f, 1200)); await r.continue(); });
+    await e1.page.addInitScript(() => { window.__langsam = 1500; });
+    await e1.page.goto(BASIS, {waitUntil:'commit'});
+    await e1.page.waitForTimeout(500);
+    const vorSkript = await e1.page.evaluate(() => {
+      const sb = document.getElementById('startBild'), z = sb && sb.querySelector('.sb-zeichen');
+      const r = sb ? sb.getBoundingClientRect() : {width:0, height:0};
+      return {skript:!!window.__K, da:!!sb, deckt:r.width >= innerWidth && r.height >= innerHeight,
+        deckkraft:sb ? getComputedStyle(sb).opacity : '', bild:z ? getComputedStyle(z).backgroundImage.slice(0, 27) : ''};
+    });
+    ok(!vorSkript.skript && vorSkript.da && vorSkript.deckt && vorSkript.deckkraft === '1' && vorSkript.bild === 'url("data:image/webp;base64',
+      'Das Startbild steht mit seinem Zeichen, bevor ein Skript der App läuft' + (vorSkript.skript ? ' (Skript lief schon)' : ''), JSON.stringify(vorSkript));
+    // Ohne Stand geht es ins Gerüst über, bis die Datenbank antwortet.
+    await e1.page.waitForFunction(() => !!window.__K, null, {timeout:10000});
+    await e1.page.waitForTimeout(400);
+    const geruest = await e1.page.evaluate(() => ({startbild:!!document.getElementById('startBild'),
+      geruest:!!document.querySelector('#main .geruest'), liga:!!document.querySelector('#main .rlist')}));
+    ok(!geruest.startbild && geruest.geruest && !geruest.liga, 'Ohne Stand auf dem Gerät steht das Gerüst der Liga, bis die Datenbank antwortet', JSON.stringify(geruest));
+    await e1.page.waitForSelector('#main .rlist', {timeout:20000});
+    await e1.page.waitForTimeout(600);
+    ok(await e1.page.evaluate(() => !document.querySelector('.geruest')), 'Kommt die Liga, ist das Gerüst fort');
+    for(let i = 0; i < 150 && !(await e1.page.evaluate(() => window.__K('_standLesen()').then(r => !!r))); i++) await e1.page.waitForTimeout(200);
+    ok(e1.fehler.length === 0, 'Erster Start mit Startbild ohne Seitenfehler' + (e1.fehler.length ? ': ' + e1.fehler[0] : ''));
+    await e1.page.close();
+    // Mit Stand fliegt das Zeichen in die Kopfleiste; gelandet, fährt einmal
+    // Licht um seine Kante, und nach seiner Zeit ist nichts davon übrig.
+    const e2 = await neueSeite(bctx);
+    await e2.page.addInitScript(() => { window.__langsam = 1500; localStorage.removeItem('kicker_zuletzt_v1'); });
+    await e2.page.goto(BASIS);
+    await e2.page.waitForSelector('#main .rlist', {timeout:20000});
+    const fliegt = await e2.page.evaluate(() => ({startbild:!!document.getElementById('startBild'),
+      kopf:document.querySelector('.logo-mark').style.opacity}));
+    await e2.page.waitForTimeout(1000);
+    const gelandet = await e2.page.evaluate(() => ({startbild:!!document.getElementById('startBild'),
+      kopf:document.querySelector('.logo-mark').style.opacity, licht:document.querySelectorAll('.logo-mark > .kl.kl-zeichnen').length}));
+    ok(fliegt.startbild && fliegt.kopf === '0' && !gelandet.startbild && gelandet.kopf === '' && gelandet.licht === 1,
+      'Mit Stand fliegt das Zeichen in die Kopfleiste und wird dort mit Licht empfangen', JSON.stringify([fliegt, gelandet]));
+    await e2.page.waitForTimeout(5000);
+    ok(await e2.page.evaluate(() => document.querySelectorAll('.kl, .kl-schein').length === 0), 'Das Licht ist nach seiner Zeit wieder fort');
+    await e2.page.close();
+    // Wer gerade erst in der App war, bekommt kein Vorführen, nur ein Überblenden.
+    const e3 = await neueSeite(bctx);
+    await e3.page.addInitScript(() => { localStorage.setItem('kicker_zuletzt_v1', String(Date.now() - 60000)); });
+    await e3.page.goto(BASIS);
+    await e3.page.waitForSelector('#main .rlist', {timeout:20000});
+    await e3.page.waitForTimeout(600);
+    ok(await e3.page.evaluate(() => !document.getElementById('startBild') && !document.querySelector('.logo-mark .kl')),
+      'Eine Minute nach dem letzten Öffnen blendet das Startbild nur über');
+    await e3.page.close();
+    // Bei Bewegungsruhe geht es mit dem ersten Bild, ohne Flug und ohne Licht.
+    const e4 = await neueSeite(bctx);
+    await e4.page.emulateMedia({reducedMotion:'reduce'});
+    await e4.page.addInitScript(() => { localStorage.removeItem('kicker_zuletzt_v1'); });
+    await e4.page.goto(BASIS);
+    await e4.page.waitForSelector('#main .rlist', {timeout:20000});
+    ok(await e4.page.evaluate(() => !document.getElementById('startBild') && !document.querySelector('.kl:not(.kl-kreis), .kl-schein')),
+      'Bei Bewegungsruhe ist das Startbild mit dem ersten Bild fort, ohne Flug und ohne Licht');
+    await e4.page.close();
+    ok(!anfragen.some(x => x.pfad === '/icon.png'), 'Der Start lädt das große Symbol nicht: das Zeichen steht in der Seite');
+    await bctx.close();
+
     // ── Der Service Worker ────────────────────────────────────────────
     const swCtx = await browser.newContext({viewport:{width:390, height:844}});
     await swCtx.addInitScript(({daten, jetzt}) => {

@@ -28,6 +28,9 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 (function(){
 "use strict";
 if(SUPABASE_URL.startsWith("HIER")||SUPABASE_KEY.startsWith("HIER")){
+  // Ohne Zugangsdaten startet nichts, was das Startbild ablösen könnte
+  // [§C43]; es läge sonst acht Sekunden über dem Hinweis.
+  const sb=document.getElementById('startBild'); if(sb) sb.remove();
   document.getElementById('setupGate').style.display='block'; return;
 }
 document.getElementById('app').style.display='block';
