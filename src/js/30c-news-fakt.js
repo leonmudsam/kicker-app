@@ -172,7 +172,7 @@ function _ffStufe(b){
   const pm = pmap();
   if(!pm[b.p]) return '';
   const rang = (getPlayerRank(b.p) || {}).label;
-  const z = k => { try { return insigniumStufeSvg(k, rang, 0, 0, {bild:true}) || ''; } catch(e){ return ''; } };
+  const z = k => { try { return insigniumStufeSvg(k, rang, 0, {bild:true}) || ''; } catch(e){ return ''; } };
   const sp = Math.max(1, (b.nachMin | 0) - (b.vonMin | 0));
   const anteil = Math.max(0, Math.min(1, ((b.punkte | 0) - (b.vonMin | 0)) / sp));
   const name = k => ((INSIGNIEN.find(x => x.key === k) || {}).name || '');

@@ -1306,7 +1306,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     if(typeof prestigeTabelle !== 'function') return null;
     let P = null; try { P = prestigeTabelle(); } catch(e){ return null; }
     // Wer ist der nächsten Stufe am nächsten? Wer schon auf der letzten
-    // steht, zählt hier nicht — für ihn gibt es die Zacken-Karte nicht.
+    // steht, zählt hier nicht: für ihn gibt es keine nächste Stufe.
     let best = null;
     Object.keys(P.byPid).forEach(pid => {
       if(!pm[pid]) return;
@@ -1392,7 +1392,7 @@ function _ambientTemplatePool(now, pm, nameOf){
       if(!pm[pid]) return;
       const S = prestigeOf(pid);
       zahl[S.stufe]++; n++;
-      felder.push([pid, S.stufe, _insBildNr(S.insignie.key, S.zacken, S.grad)]);
+      felder.push([pid, S.stufe, _insBildNr(S.insignie.key, S.grad)]);
       if(!spitze || S.punkte > spitze.punkte) spitze = S;
     });
     if(!n || !spitze) return null;
@@ -1411,7 +1411,7 @@ function _ambientTemplatePool(now, pm, nameOf){
             ? `, bis zum ${spitze.naechste.name} fehlen ${spitze.fehlt} Prestige.`
               + (spitze.insignie.key !== letzte.key && spitze.naechste.key !== letzte.key
                   ? ` Der ${letzte.name} beginnt bei ${letzte.min}.` : '')
-            : ` mit ${spitze.zacken} Zacken.`),
+            : ` ${INSIGNIUM_GRAD_NAME[spitze.grad] || 'I'}.`),
       // „12 gewertet" sagte nicht, WAS gewertet ist. Die Zahl zaehlt Spieler.
       vv:String(n), vl:'Spieler',
       dataRef:{ ambientPids:[], leiter:{je:zahl, felder} } };

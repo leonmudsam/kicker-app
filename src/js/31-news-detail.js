@@ -517,12 +517,10 @@ function _ndLigaLeiter(L){
   try {
     const pm = pmap(), felder = Array.isArray(L && L.felder) ? L.felder : [];
     const zeilen = INSIGNIEN.map((ins, i) => {
-      const n = (INS_ZEICHEN[ins.key] || []).length || INSIGNIUM_GRADE;
-      const f = Array.from({length:n}, (_, g) => {
+      const f = Array.from({length:INSIGNIUM_GRADE}, (_, g) => {
         const da = felder.filter(x => x[1] === i && x[2] === g && pm[x[0]]).map(x => x[0]);
         let z = '';
-        try { z = insigniumStufeSvg(ins.key, INS_BILD_RANG,
-                ins.key === 'stern' ? ORDENSSTERN_START + g : 0, g) || ''; } catch(e){ z = ''; }
+        try { z = insigniumStufeSvg(ins.key, INS_BILD_RANG, g) || ''; } catch(e){ z = ''; }
         const gesichter = da.map(pid =>
           `<span class="nd-ll-av" data-pid="${esc(pid)}">${avHtml(pm[pid], '', {px:18})}</span>`).join('');
         return `<span class="nd-ll-f${da.length ? ' da' : ''}">${z}`
@@ -550,12 +548,15 @@ function _newsInsigniumBlock(pid, stufeIdx){
     const ins = INSIGNIEN[stufe] || INSIGNIEN[0];
     const rangLabel = (getPlayerRank(pid) || {}).label;
     let zeichen = '';
-    try { zeichen = insigniumStufeSvg(ins.key, rangLabel, P.zacken, P.grad) || ''; } catch(e){}
+    try { zeichen = insigniumStufeSvg(ins.key, rangLabel, P.grad) || ''; } catch(e){}
     const n = P.naechste;
     // Der Anteil misst die STUFE, nicht die Laufbahn: „62 % geschafft" heißt,
     // wie weit es von dieser Schwelle zur nächsten ist.
     const anteil = n ? Math.max(0, Math.min(100,
       Math.round((P.punkte - ins.min) / Math.max(1, n.min - ins.min) * 100))) : 100;
+    // Am Ordensstern gibt es keine nächste Stufe, aber bis Grad III einen
+    // nächsten Grad.
+    const gradZiel = n ? null : insigniumGradSchwellen(stufe).find(x => x > P.punkte);
     return `<div class="nd-ins">
       <div class="nd-ins-z">${zeichen}</div>
       <div class="nd-ins-t">
@@ -563,8 +564,8 @@ function _newsInsigniumBlock(pid, stufeIdx){
         <div class="nd-ins-p"><b>${P.punkte}</b> Prestige${P.platz ? ` · Platz ${P.platz} von ${P.von}` : ''}</div>
         ${n ? `<div class="nd-ins-b"><i style="width:${anteil}%"></i></div>
           <div class="nd-ins-r">Noch <b>${P.fehlt}</b> bis zum ${esc(n.name)} · ${anteil} %</div>`
-            : `<div class="nd-ins-r">Die letzte Stufe. Der Stern zählt weiter: noch
-               <b>${P.naechsteZacke}</b> bis zur nächsten Zacke.</div>`}
+            : `<div class="nd-ins-r">${gradZiel ? `Noch <b>${gradZiel - P.punkte}</b> bis ${esc(ins.name + ' ' + INSIGNIUM_GRAD_NAME[P.grad + 1])}`
+                : 'Die höchste Stufe der Leiter'}</div>`}
       </div>
     </div>${_newsLeiter(pid)}`;
   } catch(e){ return ''; }
@@ -735,7 +736,7 @@ function _ndWirkungBlock(je, gruende, tagMs){
       let zeichen = '';
       try {
         if(ins)
-          zeichen = insigniumStufeSvg(ins.key, (getPlayerRank(pid) || {}).label, 0, 0) || '';
+          zeichen = insigniumStufeSvg(ins.key, (getPlayerRank(pid) || {}).label, 0) || '';
       } catch(e){}
       // Die Strecke ist die STUFE, nicht die Laufbahn: „noch 460 bis zum
       // Lorbeerreif" ist die Frage, die ein Traeger hat [§C30].
@@ -1357,13 +1358,12 @@ function _ndInsigniumBlatt(s){
   const rl = (getPlayerRank(pid) || {}).label;
   const gs = insigniumGradSchwellen(i);
   let grad = 0; gs.forEach((x, g) => { if(punkte >= x) grad = g; });
-  const zacken = ins.key === 'stern' ? ORDENSSTERN_START + Math.floor(Math.max(0, punkte - ins.min) / ORDENSSTERN_SCHRITT) : 0;
-  const zeichen = (key, z, g, bild) => { try { return insigniumStufeSvg(key, rl, z, g, bild ? {bild:true} : undefined) || ''; } catch(e){ return ''; } };
+  const zeichen = (key, g, bild) => { try { return insigniumStufeSvg(key, rl, g, bild ? {bild:true} : undefined) || ''; } catch(e){ return ''; } };
   const vorher = i > 0 ? INSIGNIEN[i - 1] : null;
   const kopf = `<div class="nd-buehne nd-is">`
-    + `<div class="nd-is-w">${vorher ? `<span class="nd-is-alt">${zeichen(vorher.key, 0, 2, true)}<small>${esc(vorher.name)}</small></span>`
+    + `<div class="nd-is-w">${vorher ? `<span class="nd-is-alt">${zeichen(vorher.key, 2, true)}<small>${esc(vorher.name)}</small></span>`
       + `<svg class="nd-rk-pf" viewBox="0 0 40 16" aria-hidden="true"><path d="M2 8H34"/><path d="M28 3L35 8L28 13"/></svg>` : ''}`
-    + `<span class="nd-is-neu" data-pid="${esc(pid)}"><span class="nd-is-z">${zeichen(ins.key, zacken, grad)}</span>`
+    + `<span class="nd-is-neu" data-pid="${esc(pid)}"><span class="nd-is-z">${zeichen(ins.key, grad)}</span>`
     + `<span class="nd-is-av">${avHtml(pm[pid], '', {px:58})}</span></span></div>`
     + `<b class="nd-is-n">${esc(ins.name)}</b><span class="nd-is-p"><b class="num">${punkte}</b> Prestige · ${esc(_spName(pid))}</span>`
     + (d.wieder ? `<span class="nd-is-wd">wieder getragen${typeof d.wieder === 'string'
@@ -1385,7 +1385,7 @@ function _ndInsigniumBlatt(s){
   }
   const weg = next ? _insWegHtml(pid, punkte) : '';
   const leiter = `<div class="nf-leiter nd-is-l">${INSIGNIEN.map((x, k) => `<span class="nf-lt-p${k <= i ? ' hat' : ''}${k === i ? ' jetzt' : ''}">`
-    + `${zeichen(x.key, k === i ? zacken : 0, k === i ? grad : 0, true)}</span>`).join('')}</div>`;
+    + `${zeichen(x.key, k === i ? grad : 0, true)}</span>`).join('')}</div>`;
   const ab = (x, html) => html ? `<div class="nd-section">${esc(x)}</div>${html}` : '';
   return {kopf, mitte:ab('Woraus die Punkte kommen', quellen) + ab('Der Weg durch die Stufe', weg) + ab('Die Leiter', leiter)};
 }
@@ -1402,7 +1402,7 @@ function _insWegHtml(pid, punkte, vorher){
   const rl = (getPlayerRank(pid) || {}).label;
   const gs = insigniumGradSchwellen(i);
   let grad = 0; gs.forEach((x, g) => { if(punkte >= x) grad = g; });
-  const zeichen = (key, g) => { try { return insigniumStufeSvg(key, rl, 0, g, {bild:true}) || ''; } catch(e){ return ''; } };
+  const zeichen = (key, g) => { try { return insigniumStufeSvg(key, rl, g, {bild:true}) || ''; } catch(e){ return ''; } };
   const spanne = Math.max(1, next.min - ins.min);
   const lage = x => Math.max(0, Math.min(100, (x - ins.min) / spanne * 100));
   const grenzen = gs.concat([next.min]);
@@ -1516,7 +1516,7 @@ function _ndTafelZeileBild(t){
     const p = Number(ref.punkte) || 0;
     const i = p ? insigniumStufeVon(p) : (ref.stufe | 0);
     let z = '';
-    try { z = insigniumStufeSvg(INSIGNIEN[i].key, (getPlayerRank(ref.pid) || {}).label, 0, 0, {bild:true}) || ''; } catch(e){}
+    try { z = insigniumStufeSvg(INSIGNIEN[i].key, (getPlayerRank(ref.pid) || {}).label, 0, {bild:true}) || ''; } catch(e){}
     return {label:INSIGNIEN[i].name, verb:_spName(ref.pid) + ' erreicht', rechts:`<span class="nd-tz-w">${chip(ref.pid)}<span class="nd-tz-z">${z}</span></span>`
       + (p ? `<b class="nd-tz-v num">${p} P</b>` : '')};
   }

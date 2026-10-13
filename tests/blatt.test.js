@@ -312,6 +312,11 @@ const ok = (c, msg, det) => {
     const jetzt = [...document.querySelectorAll('#lbAlle .lb-feld.jetzt')].map(b => b.getAttribute('data-lbfeld'));
     const bildVon = i => (k[i].querySelector('.lb-k-ins use') || {getAttribute:()=>''}).getAttribute('href');
     const out = {felder:felder.length, jetzt, schritte:[]};
+    // Der Ordensstern zählt wie jede Stufe: drei Knöpfe I, II, III und
+    // ihre Schwellen. Er stand mit „8 9 10“ und „je 500 eine Zacke“ da.
+    out.sternKnoepfe = [...k[6].querySelectorAll('[data-lbgrad]')].map(b => b.textContent.trim()).join(' ');
+    out.sternSchwellen = (k[6].querySelector('.lb-k-p') || {}).textContent || '';
+    out.zacke = /Zacke/.test(document.querySelector('.lb-root').textContent);
     for(const f of ['5,2', '1,0', '3,1']){
       const [i, g] = f.split(',').map(Number);
       const vorher = bildVon(i);
@@ -320,8 +325,7 @@ const ok = (c, msg, det) => {
       const zeigt = k[i].querySelector('[data-lbgrad].zeigt');
       out.schritte.push({f, fokus: k.findIndex(x => x.classList.contains('fokus')),
         zeigt: zeigt ? +zeigt.getAttribute('data-lbgrad') : null,
-        bild: bildVon(i), soll: K('insigniumStufeSvg(INSIGNIEN[' + i + '].key, "Elite", '
-          + (i === 6 ? 'ORDENSSTERN_START + ' + g : 0) + ', ' + g + ')').match(/href="([^"]+)"/)[1],
+        bild: bildVon(i), soll: K('insigniumStufeSvg(INSIGNIEN[' + i + '].key, "Elite", ' + g + ')').match(/href="([^"]+)"/)[1],
         vorher});
     }
     return out;
@@ -329,6 +333,9 @@ const ok = (c, msg, det) => {
   ok(!alle.fehlt && alle.felder === 21, 'die Laufbahn zeigt alle einundzwanzig Felder',
      JSON.stringify({felder: alle.felder}));
   ok(!alle.fehlt && alle.jetzt.length === 1, 'genau ein Feld ist das eigene', JSON.stringify(alle.jetzt));
+  ok(!alle.fehlt && alle.sternKnoepfe === 'I II III' && /II 6100 · III 6600/.test(alle.sternSchwellen) && !alle.zacke,
+     'der Ordensstern steht in der Laufbahn mit den Graden I, II, III und ihren Schwellen',
+     JSON.stringify({knoepfe:alle.sternKnoepfe, schwellen:alle.sternSchwellen, zacke:alle.zacke}));
   if(!alle.fehlt){
     const falsch = alle.schritte.filter(s => s.fokus !== +s.f[0] || s.zeigt !== +s.f[2]);
     ok(falsch.length === 0, 'ein angetipptes Feld liegt mit seinem Grad in der Vitrine',
@@ -1115,11 +1122,12 @@ const ok = (c, msg, det) => {
     const K = window.__k.eval.bind(window.__k);
     const m = JSON.parse(K(`(function(){
       const p = players.slice(0, 3).map(x => x.id);
-      const L = (stufe, grad, punkte) => ({stufe, grad, punkte, zacken:0});
+      const L = (stufe, grad, punkte) => ({stufe, grad, punkte});
       const lb = {}; lb[p[0]] = {vor:820, nach:2120}; lb[p[1]] = {vor:620, nach:560}; lb[p[2]] = {vor:3150, nach:3500};
       const zuege = [{pid:p[0], art:'auf', vor:L(1,1,820), nach:L(3,0,2120)},
                      {pid:p[1], art:'ab', vor:L(1,0,620), nach:L(0,2,560)},
                      {pid:p[2], art:'grad', vor:L(4,0,3150), nach:L(4,1,3500)}];
+      const zs = {pid:p[2], art:'grad', vor:L(6,0,5900), nach:L(6,1,6150)};
       const t = _insTagTexte(zuege);
       const story = (id, z) => ({id, cat:'tafel', ic:'award', when:new Date(), prio:60,
         title:_insTagTexte(z).title, desc:_insTagTexte(z).desc,
@@ -1127,10 +1135,12 @@ const ok = (c, msg, det) => {
       return JSON.stringify({erster:zuege[0].pid, auf:_newsCardHtmlM2(story('ui-ins1', [zuege[0]]), false, false),
         viele:_newsCardHtmlM2(story('ui-insk', zuege), false, false),
         ab:_newsCardHtmlM2(story('ui-insab', [zuege[1]]), false, false), desc:t.desc,
+        stern:_newsCardHtmlM2(story('ui-insst', [zs]), false, false), sternTitel:_insTagTexte([zs]).title,
+        sternName:(players.find(x => x.id === p[2]) || {}).name,
         blattAb:(_ndInsTagBlatt(story('ui-insab', [zuege[1]])) || {}).kopf || ''});
     })()`));
-    const host = document.createElement('div'); host.innerHTML = m.auf + m.viele + m.ab; document.body.appendChild(host);
-    const [k1, kv, k2] = host.querySelectorAll('.nf-card');
+    const host = document.createElement('div'); host.innerHTML = m.auf + m.viele + m.ab + m.stern; document.body.appendChild(host);
+    const [k1, kv, k2, ks] = host.querySelectorAll('.nf-card');
     const text = k => k.textContent.replace(/\s+/g, ' ');
     const felder = e => [...e.querySelectorAll('.ni-spur .ni-sp-f i')].map(i => ' ' + i.className + ' ');
     const zahl = (l, w) => l.filter(c => c.indexOf(' ' + w + ' ') >= 0).length;
@@ -1163,7 +1173,10 @@ const ok = (c, msg, det) => {
       kopfVon: (kv.querySelector('.ni-b') || {}).getAttribute ? kv.querySelector('.ni-b').getAttribute('data-pid') : '',
       erster: m.erster, zeilen: zl.length, reihen: zl.map(reihe).join(' | '),
       kopfSpuren: kv.querySelectorAll('.ni-spur').length,
-      namen: zl.every(e => (e.querySelector('.ni-z-t b') || {}).textContent)
+      namen: zl.every(e => (e.querySelector('.ni-z-t b') || {}).textContent),
+      sternTitel: m.sternTitel === m.sternName + ' steigt auf Ordensstern II',
+      sternKopf: ((ks && ks.querySelector('.ni-t')) || {textContent:''}).textContent.replace(/\s+/g, ' ').trim(),
+      sternDa: ks ? wo(felder(ks), 'da') : -1, sternZacke: !!ks && /Zacke/.test(text(ks))
     };
     host.remove(); return out;
   });
@@ -1179,6 +1192,11 @@ const ok = (c, msg, det) => {
   ok(insKarte.wellen && insKarte.unter && !insKarte.wellenAb && insKarte.runter && !insKarte.runterAuf && insKarte.blattAb,
      'Ringe nur beim Aufstieg, die tiefere Stufe links, das Gesicht auf der von jetzt, beim Rückfall der Pfeil zurück',
      JSON.stringify({wellen:insKarte.wellen, unter:insKarte.unter, ab:insKarte.wellenAb, runter:insKarte.runter, blatt:insKarte.blattAb}));
+  // Ein Grad am Ordensstern heißt wie jeder andere: „steigt auf Ordensstern
+  // II“, nicht „erreicht die 9. Zacke“, und auf der Spur das zwanzigste Feld.
+  ok(insKarte.sternTitel && insKarte.sternKopf === 'Neuer GradOrdensstern II' && insKarte.sternDa === 19 && !insKarte.sternZacke,
+     'ein Grad am Ordensstern heißt Ordensstern II und steht im zwanzigsten Feld der Spur',
+     JSON.stringify({titel:insKarte.sternTitel, kopf:insKarte.sternKopf, da:insKarte.sternDa, zacke:insKarte.sternZacke}));
   // Die Bühne bleibt im Maß eines Kartenkopfs: mit dem 96-px-Zeichen und
   // allen Abständen war sie 190 px hoch.
   ok(insKarte.buehne > 0 && insKarte.buehne <= 186,

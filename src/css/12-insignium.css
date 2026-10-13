@@ -170,9 +170,9 @@
      halb ins Bild — mit Text hieß das ein abgeschnittenes „erbring" am Rand,
      und ein halbes Wort liest sich als Fehler, nicht als Andeutung. Der Platz
      bleibt trotzdem stehen, sonst springt beim Schieben die Höhe. */
-  .lb-k-n,.lb-k-p,.lb-k-grad,.lb-k-z{opacity:0;transition:opacity .18s}
+  .lb-k-n,.lb-k-p,.lb-k-grad{opacity:0;transition:opacity .18s}
   .lb-k.fokus .lb-k-n,.lb-k.fokus .lb-k-p,
-  .lb-k.fokus .lb-k-grad,.lb-k.fokus .lb-k-z{opacity:1}
+  .lb-k.fokus .lb-k-grad{opacity:1}
   .lb-k-n{font-size:14px;font-weight:700;line-height:1.15;text-align:center;
     color:var(--ink2);height:17px}
   /* Nur die getragene Stufe steht in der Rangfarbe [§C25]. */
@@ -196,9 +196,6 @@
   .lb-k-grad button.zeigt{border-color:var(--ak);color:var(--ink)}
   .lb-k-grad button.hier::after{content:"";position:absolute;right:-3px;top:-3px;
     width:6px;height:6px;border-radius:50%;background:var(--ak)}
-  .lb-k-z{font-family:'Sometype Mono',monospace;font-size:8.5px;color:var(--faint);
-    margin-top:5px;letter-spacing:.04em}
-  .lb-k.jetzt .lb-k-z{color:var(--ak)}
 
   /* ── Alle Stufen [§C30] ────────────────────────────────────────────
      Jede Stufe eine Zeile, jedes Feld ein Knopf mit seinem Bild. Erreicht

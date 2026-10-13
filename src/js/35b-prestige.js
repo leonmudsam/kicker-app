@@ -50,9 +50,6 @@
 //     DIE SCHWELLEN sind an den echten 466 Partien kalibriert [§13.9]:
 //     nach vier Monaten Liga trägt niemand den Ordensstern; seine Schwelle
 //     liegt noch mehr als ein heutiges Spitzen-Lebenswerk entfernt.
-//     Danach hört es nicht auf: der Stern bekommt je ORDENSSTERN_SCHRITT
-//     weiterer Punkte eine Zacke mehr. Es gibt immer einen nächsten
-//     Schritt, ohne dass es eine sechste Stufe braucht.
 // ╚═════════════════════════════════════════════════════════════════════════╝
 
 // Die Art bleibt für Chroniken und Rekorde relevant. Bei Auszeichnungen gibt
@@ -228,8 +225,8 @@ const PRESTIGE_REICHWEITE = 0.5;
 //
 // 0, 600, 1200, 2100, 3100, 4300, 5600 — vorgegeben, nicht gerechnet. Jede
 // Spanne ist mindestens so teuer wie die vorige (600, 600, 900, 1000, 1200,
-// 1300), und die letzte führt zum Ordensstern, der danach alle 500 Prestige
-// eine Zacke dazubekommt und damit nie aufhört. Sie lagen bei 500 bis 4500;
+// 1300), und die letzte führt zum Ordensstern, dessen Grade je 500 Prestige
+// auseinanderliegen (ORDENSSTERN_GRAD). Sie lagen bei 500 bis 4500;
 // mit den höheren Startwerten der Auszeichnungen und Rekorde [§C34] stieg
 // das Prestige der Spitze um gut ein Viertel, und ohne neue Schwellen wäre
 // sie über Nacht eine Stufe höher gestanden, ohne etwas dafür getan zu haben.
@@ -276,19 +273,21 @@ function insigniumStufeVon(punkte){
   while(i + 1 < INSIGNIEN.length && punkte >= INSIGNIEN[i + 1].min) i++;
   return i;
 }
+// Der Ordensstern hat keine nächste Stufe, deren Spanne man dritteln
+// könnte; seine Grade liegen deshalb je ORDENSSTERN_GRAD auseinander: I ab
+// 5600, II ab 6100, III ab 6600. Er zählte vorher Zacken, acht beim
+// Erreichen und alle 500 eine mehr, und war damit die einzige Stufe, die
+// anders zählte: in der Laufbahn stand „8 9 10“ neben „I II III“, auf der
+// Karte „erreicht die 9. Zacke“ neben „steigt auf Zierkranz III“.
+const ORDENSSTERN_GRAD = 500;
 function insigniumGradSchwellen(i){
   const st = INSIGNIEN[i], nx = INSIGNIEN[i + 1];
-  if(!st || !nx) return [st ? st.min : 0];
+  if(!st) return [0];
+  if(!nx) return Array.from({length:INSIGNIUM_GRADE}, (_, g) => st.min + g * ORDENSSTERN_GRAD);
   const drittel = (nx.min - st.min) / 3;
   return [st.min, st.min + Math.floor(drittel / 100) * 100,
           st.min + Math.floor(2 * drittel / 100) * 100];
 }
-// Der Ordensstern hat keine Grade, er zählt Zacken: acht beim Erreichen,
-// dann alle 500 Prestige eine mehr. Die ersten drei haben je ein eigenes
-// Bild, danach bleibt das größte und die Zahl wächst weiter.
-const ORDENSSTERN_START = 8;
-const ORDENSSTERN_SCHRITT = 500;
-
 // Die drei festen Angaben einer Monatschronik [§C39]. Eingefrorene Monate
 // können IDs tragen, die es im heutigen Katalog nicht mehr gibt; dann ist
 // hier nichts zu holen, und der Eintrag zählt null statt rückwirkend eine
@@ -502,7 +501,7 @@ function rekordQuelleVon(pid, cid){
 // der eines Neulings.
 function prestigeLeer(von){
   return {punkte:0, stufe:0, insignie:INSIGNIEN[0], naechste:INSIGNIEN[1],
-          fehlt:INSIGNIEN[1].min, zacken:0, grad:0,
+          fehlt:INSIGNIEN[1].min, grad:0,
           teile:{auszeichnung:0,monat:0,rekord:0},
           zahlen:{auszeichnung:0,monat:0,rekord:0}, quellen:[], platz:0, von:von || 0};
 }
@@ -520,35 +519,26 @@ function prestigeOf(pid, bisMs){
   if(!e) return prestigeLeer(T.gesamt);
   const i = insigniumStufeVon(e.punkte);
   const letzte = i === INSIGNIEN.length - 1;
-  // Der Grad folgt den Schwellen oben. Die letzte Stufe hat kein Ende;
-  // dort zaehlen statt Graden die Zacken.
+  // Der Grad folgt den Schwellen oben, auf jeder Stufe gleich.
   const gs = insigniumGradSchwellen(i);
   return Object.assign({}, e, {
     stufe:i,
     insignie:INSIGNIEN[i],
     naechste: letzte ? null : INSIGNIEN[i + 1],
     fehlt: letzte ? 0 : INSIGNIEN[i + 1].min - e.punkte,
-    grad: letzte ? 0 : gs.reduce((g, schwelle, gi) => e.punkte >= schwelle ? gi : g, 0),
-    // Auf der letzten Stufe wächst der Stern weiter, statt stehenzubleiben.
-    zacken: letzte ? ORDENSSTERN_START + Math.floor((e.punkte - INSIGNIEN[i].min) / ORDENSSTERN_SCHRITT) : 0,
-    naechsteZacke: letzte
-      ? ORDENSSTERN_SCHRITT - ((e.punkte - INSIGNIEN[i].min) % ORDENSSTERN_SCHRITT) : 0,
+    grad: gs.reduce((g, schwelle, gi) => e.punkte >= schwelle ? gi : g, 0),
     // Den Platz eines Ruheständlers im Prestige hält sein Karriere-Teil.
     platz: imRuhestand(pid) ? ruhestandStand(pid).platz : T.rang.indexOf(pid) + 1,
     von: imRuhestand(pid) ? ruhestandStand(pid).von : T.gesamt
   });
 }
 
-// Die Lage auf der Leiter als EINE Zahl: Stufe mal drei plus Grad, am
-// Ordensstern jede weitere Zacke eine mehr. Ob jemand so hoch steht wie nie
-// zuvor, ist damit ein Vergleich zweier Zahlen und keiner aus Stufe, Grad
-// und Zacken [§C30].
+// Die Lage auf der Leiter als EINE Zahl: Stufe mal drei plus Grad. Ob jemand
+// so hoch steht wie nie zuvor, ist damit ein Vergleich zweier Zahlen und
+// keiner aus Stufe und Grad [§C30].
 function insigniumPos(P){
   if(!P) return 0;
-  const letzte = INSIGNIEN.length - 1;
-  return (P.stufe | 0) === letzte
-    ? letzte * INSIGNIUM_GRADE + Math.max(0, (P.zacken || ORDENSSTERN_START) - ORDENSSTERN_START)
-    : (P.stufe | 0) * INSIGNIUM_GRADE + (P.grad | 0);
+  return (P.stufe | 0) * INSIGNIUM_GRADE + (P.grad | 0);
 }
 
 // ─── §13.9 Das Zeichen: Insignium und Titelband ──────────────────────
@@ -749,7 +739,7 @@ function _insDefs(id, c, glanzGold){
      Stufe 6  Kronenreif    Eichenlaub in zwei Lagen, Eicheln als Steine, ein
                             Band unter dem Stein und die Krone.
      Stufe 7  Ordensstern   Eine Glorie aus Haarstrichen, große Spitzen, die
-                            Krone mit Kristall; drei Zeichnungen, eine je Zacke.
+                            Krone mit Kristall; drei Zeichnungen, eine je Grad.
 
    Die Zeichen sind der Vorlage nachgezeichnet, als Vektor in
    35a-insignium-zeichen.js. Ausgeschnitten aus der gemalten Vorlage waren
@@ -765,19 +755,16 @@ const INS_BILD_KANTE = (INS_R - INS_BREIT / 2) / (IZ_RI / 1000);
 // Die Mitte des Steins in der Raute am Fuß, 28 % der Kante unter der Mitte.
 const INS_RAUTE_Y = 50 + (IZ_RAUTE - 500) / 1000 * INS_BILD_KANTE;
 
-// Welches Bild eine Stufe zeigt: der Grad, beim Ordensstern die Zacke. Er
-// hat drei Bilder und zählt danach weiter, ohne sich noch zu ändern — die
-// Zahl steht dann in der Laufbahn, das Bild ist das größte.
-function _insBildNr(key, zacken, grad){
+// Welches Bild eine Stufe zeigt: das ihres Grades, auf jeder Stufe eines je
+// Grad.
+function _insBildNr(key, grad){
   const n = (INS_ZEICHEN[key] || INS_ZEICHEN.reif).length;
-  const i = key === 'stern' ? (zacken || ORDENSSTERN_START) - ORDENSSTERN_START : (grad || 0);
-  return Math.max(0, Math.min(n - 1, i));
+  return Math.max(0, Math.min(n - 1, grad || 0));
 }
 
-// Das Zeichen einer Stufe: das Bild, darunter die Lichter. `zacken` zählt
-// nur beim Ordensstern, `grad` bei allen anderen.
-function _insStufe(key, c, zacken, id, grad, eigen, bild){
-  const nr = _insBildNr(key, zacken, grad);
+// Das Zeichen einer Stufe: das Bild ihres Grades, darunter die Lichter.
+function _insStufe(key, c, id, grad, eigen, bild){
+  const nr = _insBildNr(key, grad);
   const k = INS_BILD_KANTE, o = 50 - k / 2;
   // Der Hof in der Rangfarbe, ab dem Zierkranz und mit jeder Stufe kräftiger:
   // höheres Prestige leuchtet mehr, ohne dass eine neue Form dazukommt
@@ -969,7 +956,7 @@ function insigniumSvg(pid, opt){
   // Der Schlüssel nennt alles, was die Zeichnung bestimmt, und sonst nichts.
   // Ohne Größe ist das Zeichen groß (Profilkopf) und wird Vektor.
   const bild = opt.px != null && opt.px < INS_VEKTOR_PX;
-  const schl = [rangLabel, P.insignie.key, P.grad, P.zacken, band ? 1 : 0,
+  const schl = [rangLabel, P.insignie.key, P.grad, band ? 1 : 0,
                 titel, pos, bild ? 1 : 0, auraHier ? 1 : 0].join('|');
   const fertig = _INS_MEMO.get(schl);
   if(fertig !== undefined) return fertig;
@@ -987,7 +974,7 @@ function insigniumSvg(pid, opt){
   s += `<circle cx="50" cy="50" r="${_n(INS_RA + .4)}" fill="url(#${id}pl)"/>`
     + `<circle cx="50" cy="50" r="${_n(INS_R - INS_BREIT/2 - 1.6)}" fill="none"
        stroke="#000000" stroke-width="2.4" opacity=".38"/>`
-    + _insStufe(P.insignie.key, c, P.zacken, id, P.grad, ref.inline, bild)
+    + _insStufe(P.insignie.key, c, id, P.grad, ref.inline, bild)
     + (band ? _insFuss(pos) : '')
     + (band ? _insSterne(titel, id) : '')
     + `</svg>`;
@@ -1076,15 +1063,13 @@ function _insVorwaermen(){
   }
   const s = _insWarmPlan.shift();
   if(!s){ _insWarmPlan = null; return true; }
-  const [rang, i] = s, L = INSIGNIEN.length - 1, key = INSIGNIEN[i].key;
-  const n = i === L ? INS_ZEICHEN.stern.length : INSIGNIUM_GRADE;
-  const z = g => i === L ? ORDENSSTERN_START + g : 0;
-  for(let g = 0; g < n; g++) insigniumStufeSvg(key, rang, z(g), g, {bild:true});
-  insigniumStufeSvg(key, rang, z(0), 0);
-  insigniumStufeSvg(key, rang, z(n - 1), n - 1);
+  const [rang, i] = s, key = INSIGNIEN[i].key, n = INSIGNIUM_GRADE;
+  for(let g = 0; g < n; g++) insigniumStufeSvg(key, rang, g, {bild:true});
+  insigniumStufeSvg(key, rang, 0);
+  insigniumStufeSvg(key, rang, n - 1);
   return false;
 }
-function insigniumStufeSvg(key, rangLabel, zacken, grad, opt){
+function insigniumStufeSvg(key, rangLabel, grad, opt){
   const c = _insSatzCache(rangLabel);
   const topf = (opt && opt.eigen) ? null : _insTopfHolen();
   if(topf){
@@ -1096,14 +1081,14 @@ function insigniumStufeSvg(key, rangLabel, zacken, grad, opt){
     // Topf trug danach 1,7 Megabyte und 7400 Knoten, und das Öffnen der
     // Laufbahn kostete gemessen auch warm 92 ms Skript und 185 ms dahinter.
     const bild = !!(opt && opt.bild);
-    const schl = c.rang + '|' + key + '|' + _insBildNr(key, zacken, grad) + (bild ? '|b' : '');
+    const schl = c.rang + '|' + key + '|' + _insBildNr(key, grad) + (bild ? '|b' : '');
     let sid = _insStufeSym.get(schl);
     if(!sid){ sid = 'inst' + _insStufeSym.size; _insStufeSym.set(schl, sid); }
     if(!_insStufeDrin.has(sid)){
       const ref = _insDefsRef(rangLabel, .3);
       topf.insertAdjacentHTML('beforeend', `<defs><g id="${sid}">`
         + `<circle cx="50" cy="50" r="${_n(INS_RA + .4)}" fill="url(#${ref.id}pl)"/>`
-        + _insStufe(key, c, zacken || 0, ref.id, grad || 0, false, bild) + `</g></defs>`);
+        + _insStufe(key, c, ref.id, grad || 0, false, bild) + `</g></defs>`);
       _insStufeDrin.add(sid);
     }
     return `<svg viewBox="${INS_BOX}" class="ins" aria-hidden="true"><use href="#${sid}"/></svg>`;
@@ -1112,7 +1097,7 @@ function insigniumStufeSvg(key, rangLabel, zacken, grad, opt){
   return `<svg viewBox="${INS_BOX}" class="ins" aria-hidden="true">`
     + _insDefs(id, c)
     + `<circle cx="50" cy="50" r="${_n(INS_RA + .4)}" fill="url(#${id}pl)"/>`
-    + _insStufe(key, c, zacken || 0, id, grad || 0, true)
+    + _insStufe(key, c, id, grad || 0, true)
     + `</svg>`;
 }
 
@@ -1370,9 +1355,11 @@ function showLaufbahn(pid){
   // Fingerabdrucks waren das zwei Aussagen in einem Sheet. Die Stufe
   // steht ohnehin im Zeichen und in der Abschnittskante.
   const t = rangTon(pid);
-  const spanne = P.naechste ? P.naechste.min - P.insignie.min : ORDENSSTERN_SCHRITT;
-  const drin = P.naechste ? P.punkte - P.insignie.min
-                          : (P.punkte - P.insignie.min) % ORDENSSTERN_SCHRITT;
+  // Der Ordensstern hat keine nächste Stufe; seine Spur reicht bis Grad III.
+  const _gs = insigniumGradSchwellen(P.stufe);
+  const spanne = P.naechste ? P.naechste.min - P.insignie.min : _gs[_gs.length - 1] - P.insignie.min;
+  const drin = P.punkte - P.insignie.min;
+  const _naechsterGrad = P.naechste ? null : _gs.find(x => x > P.punkte);
   const anteil = Math.max(0, Math.min(1, drin / Math.max(1, spanne)));
 
   // ── Die Vitrine [§13.10] ───────────────────────────────────────────
@@ -1384,36 +1371,27 @@ function showLaufbahn(pid){
   //     anderen heran. Die eigene steht beim Öffnen da; nach rechts kommt,
   //     was noch aussteht, nach links, was man hinter sich hat.
   const _rangL = (getPlayerRank(pid) || {}).label;
-  const _letzteI = INSIGNIEN.length - 1;
-  // Jede Stufe hat ihre Felder: drei Grade, der Ordensstern drei Zacken mit
-  // eigenem Bild. Ein Feld ist erreicht, wenn die Stufe hinter einem liegt
-  // oder der eigene Grad (die eigene Zacke) mindestens so weit ist.
-  const _felder = i => i === _letzteI ? INS_ZEICHEN.stern.length : INSIGNIUM_GRADE;
-  const _eigen = P.stufe === _letzteI ? _insBildNr('stern', P.zacken, 0) : P.grad;
+  // Jede Stufe hat drei Felder, eines je Grad, der Ordensstern ebenso. Ein
+  // Feld ist erreicht, wenn die Stufe hinter einem liegt oder der eigene
+  // Grad mindestens so weit ist.
+  const _eigen = P.grad;
   const _da = (i, g) => i < P.stufe || (i === P.stufe && _eigen >= g);
-  const _feldName = (i, g) => i === _letzteI ? (ORDENSSTERN_START + g) + ' Zacken'
-                                             : INSIGNIUM_GRAD_NAME[g];
   const _zeichen = (i, g, klein) => insigniumStufeSvg(INSIGNIEN[i].key, _rangL,
-    i === _letzteI ? ORDENSSTERN_START + g : 0, g, klein ? {bild:true} : undefined);
+    g, klein ? {bild:true} : undefined);
   const karten = INSIGNIEN.map((ins, i) => {
     const zustand = i < P.stufe ? 'erreicht' : i === P.stufe ? 'jetzt' : 'offen';
     // Eine durchlaufene Stufe hat man ganz durchlaufen — sie steht im
     // höchsten Grad. Eine offene zeigt ihren ersten: so sieht man beim
     // Weiterschieben, wie das Zeichen ANFÄNGT, nicht wie es endet.
-    const zeigt = i < P.stufe ? _felder(i) - 1 : i === P.stufe ? _eigen : 0;
+    const zeigt = i < P.stufe ? INSIGNIUM_GRADE - 1 : i === P.stufe ? _eigen : 0;
     // Die Grade sind Knöpfe: jeder hat sein eigenes Bild, und die Laufbahn
     // ist der Ort, an dem man sie alle ansieht [§C30]. Als Marken sagten sie
     // nur, DASS es sie gibt.
-    const marken = Array.from({length:_felder(i)}, (_, g) =>
-      `<button type="button" data-lbgrad="${g}" aria-label="${esc(ins.name + ' ' + _feldName(i, g))}"`
+    const marken = Array.from({length:INSIGNIUM_GRADE}, (_, g) =>
+      `<button type="button" data-lbgrad="${g}" aria-label="${esc(ins.name + ' ' + INSIGNIUM_GRAD_NAME[g])}"`
       + ` class="${_da(i, g) ? 'an' : ''}${g === zeigt ? ' zeigt' : ''}${i === P.stufe && g === _eigen ? ' hier' : ''}">`
-      + `${i === _letzteI ? ORDENSSTERN_START + g : INSIGNIUM_GRAD_NAME[g]}</button>`).join('');
-    // Der Ordensstern zählt nach der fünften Zacke weiter, ohne dass sich das
-    // Bild noch ändert — die Zahl steht deshalb dabei.
-    const unten = `<span class="lb-k-grad">${marken}</span>`
-      + (i === _letzteI ? `<span class="lb-k-z num">${i === P.stufe
-            ? P.zacken + ' Zacken'
-            : 'je ' + ORDENSSTERN_SCHRITT + ' eine Zacke'}</span>` : '');
+      + `${INSIGNIUM_GRAD_NAME[g]}</button>`).join('');
+    const unten = `<span class="lb-k-grad">${marken}</span>`;
     // Groß und scharf muss nur die Karte in der Mitte sein. Jede Vektorzeichnung
     // klont über `<use>` ihren ganzen Baum, und sieben davon kosteten beim
     // Öffnen gemessen 60 ms Stilberechnung von 122 — für Karten, die am Rand
@@ -1425,8 +1403,8 @@ function showLaufbahn(pid){
       <span class="lb-k-p num">${i === 0 ? 'Start' : 'ab ' + ins.min}${
         // Wo ein Grad anfängt, steht neben ihm: die Grade sind runde
         // Schwellen [§C30], und man soll sie nachprüfen können.
-        i < _letzteI ? '<br>' + insigniumGradSchwellen(i).slice(1)
-          .map((x, g) => INSIGNIUM_GRAD_NAME[g + 1] + ' ' + x).join(' · ') : ''}</span>
+        '<br>' + insigniumGradSchwellen(i).slice(1)
+          .map((x, g) => INSIGNIUM_GRAD_NAME[g + 1] + ' ' + x).join(' · ')}</span>
       ${unten}
     </div>`;
   }).join('');
@@ -1439,12 +1417,12 @@ function showLaufbahn(pid){
   //     man sieht, worauf man zuläuft. Antippen legt es oben in die Vitrine.
   const _alle = INSIGNIEN.map((ins, i) => `<div class="lb-alle-z">
       <div class="lb-alle-n"><b>${esc(ins.name)}</b><span class="num">${i === 0 ? 'Start' : 'ab ' + ins.min}</span></div>
-      <div class="lb-alle-f">${Array.from({length:_felder(i)}, (_, g) =>
+      <div class="lb-alle-f">${Array.from({length:INSIGNIUM_GRADE}, (_, g) =>
         `<button type="button" class="lb-feld${_da(i, g) ? ' da' : ''}${i === P.stufe && g === _eigen ? ' jetzt' : ''}"`
-        + ` data-lbfeld="${i},${g}" aria-label="${esc(ins.name + ' ' + _feldName(i, g))}">${_zeichen(i, g, true)}</button>`).join('')}</div>
+        + ` data-lbfeld="${i},${g}" aria-label="${esc(ins.name + ' ' + INSIGNIUM_GRAD_NAME[g])}">${_zeichen(i, g, true)}</button>`).join('')}</div>
     </div>`).join('');
   let _alleN = 0, _alleDa = 0;
-  INSIGNIEN.forEach((ins, i) => { for(let g = 0; g < _felder(i); g++){ _alleN++; if(_da(i, g)) _alleDa++; } });
+  INSIGNIEN.forEach((ins, i) => { for(let g = 0; g < INSIGNIUM_GRADE; g++){ _alleN++; if(_da(i, g)) _alleDa++; } });
 
   // ── Die zweite Leiter: die Aura [§C36] ───────────────────────────
   //     Zehn Stufen in zwei Reihen, klein und ohne Karussell. Sie gehört
@@ -1456,7 +1434,7 @@ function showLaufbahn(pid){
   const _titel = meisterTitel(pid);
   const _auraJetzt = auraStufe(_titel);
   const _eigenBild = insBildHref(P.insignie.key,
-    _insBildNr(P.insignie.key, P.zacken, P.grad), _insSatzCache(_rangL).rang);
+    _insBildNr(P.insignie.key, P.grad), _insSatzCache(_rangL).rang);
   const auren = AURA_STUFEN.map((name, i) => {
     const st = i + 1;
     const zustand = st < _auraJetzt ? 'erreicht' : st === _auraJetzt ? 'jetzt' : 'offen';
@@ -1545,7 +1523,9 @@ function showLaufbahn(pid){
       <span class="lb-st-l">Prestige</span>
       <span class="lb-st-n num">${P.naechste
         ? 'noch ' + P.fehlt + ' bis ' + esc(P.naechste.name)
-        : P.zacken + ' Zacken · noch ' + P.naechsteZacke + ' bis zur nächsten'}</span>
+        : _naechsterGrad
+          ? 'noch ' + (_naechsterGrad - P.punkte) + ' bis ' + esc(P.insignie.name + ' ' + INSIGNIUM_GRAD_NAME[P.grad + 1])
+          : 'die höchste Stufe der Leiter'}</span>
     </div>
     <div class="lb-spur"><i style="width:${Math.round(anteil * 100)}%"></i></div>
 
