@@ -71,7 +71,7 @@ Spalten aus `datenbank/karriereende.sql`); alles andere folgt aus den Regeln.
    Die Stufe gilt über ihren Schlüssel (`insignie.key`), nicht über ihre
    Zahl, damit eine neue Stufe in der Leiter nicht auf den Nachbarn zeigt.
    „Diese Saison" heißt im Profil die Saison seines Karriereendes, und der
-   Saisonverlauf kürzt nach seinen eigenen Saisons. `prestigeOf`,
+   Saisonverlauf zeigt jede seiner eigenen Saisons. `prestigeOf`,
    `chroniclesOfPlayer`, `chronicleOf`, `getPlayerRank`, `getCachedBadges`
    und `fingerabdruck` lesen für ihn aus dem Stand. Gültig ist ein Stand nur
    mit seiner Fassung (`RUHE_STAND_FASSUNG`) und für genau dieses

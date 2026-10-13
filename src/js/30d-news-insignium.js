@@ -22,7 +22,7 @@ function _insLageName(l){
 // eines vergangenen Tages behält ihren.
 function _insTagTexte(zuege){
   const pm = pmap(), nm = pid => (pm[pid] && pm[pid].name) || '?';
-  const l = (zuege || []).filter(z => z && INSIGNIEN[(z.nach || {}).stufe | 0]);
+  const l = (zuege || []).filter(z => z && INSIGNIEN[(z.nach || {}).stufe | 0]).sort(_insZugVor);
   if(!l.length) return {title:'', desc:''};
   const satz = z => {
     const n = nm(z.pid), S = INSIGNIEN[z.nach.stufe], vorS = INSIGNIEN[z.vor.stufe];
@@ -80,6 +80,21 @@ function _insZeichen(pid, l, bild){
 function _insArtWort(z){
   return z.art === 'ab' ? 'Rückfall' : z.art === 'grad' ? 'Neuer Grad'
     : z.wieder ? 'Wieder erreicht' : 'Neue Stufe';
+}
+// ── Welche Bewegung vorne steht ─────────────────────────────────────
+// Eine neue Stufe vor einem neuen Grad vor einem Rückfall, und darin die
+// wertvollere Stufe zuerst — auch wenn sie jemand wieder trägt. Vorher ging
+// „zum ersten Mal" vor der Stufe: an einem Tag mit zwei Volutenkränzen und
+// einem Lorbeerreif trug der Volutenkranz die Bühne, und der Lorbeerreif
+// stand klein darunter. Generator, gespeicherte Karten und Anzeige lesen
+// dieselbe Reihenfolge.
+function _insZugVor(x, y){
+  const art = z => ({auf:0, grad:1, ab:2})[z.art] ?? 3, l = z => z.nach || {};
+  return art(x) - art(y) || (l(y).stufe | 0) - (l(x).stufe | 0) || (l(y).grad | 0) - (l(x).grad | 0)
+    || !!x.wieder - !!y.wieder || (l(y).punkte | 0) - (l(x).punkte | 0);
+}
+function _insZuege(d){
+  return ((d && d.zuege) || []).filter(z => z && z.nach).sort(_insZugVor);
 }
 // ── Die Spur: die ganze Leiter, und wie weit der Tag darauf trägt ────
 // Einundzwanzig Felder, drei je Stufe, darunter die sieben Zeichen. Was
@@ -139,7 +154,7 @@ function _insVerwandlung(z){
 // eigener Spur, ließ keinen Anlass hervortreten und machte die Karte zu
 // einer Liste.
 function _newsInsTagKopf(s){
-  const d = (s && s.dataRef) || {}, pm = pmap(), z = (d.zuege || [])[0];
+  const d = (s && s.dataRef) || {}, pm = pmap(), z = _insZuege(d)[0];
   if(!z || !pm[z.pid] || !INSIGNIEN[(z.nach || {}).stufe | 0]) return '';
   return `<div class="ni-b ni-${esc(z.art)}" data-pid="${esc(z.pid)}">`
     + `<span class="ni-t"><em>${esc(_insArtWort(z))}</em><b>${esc(_insLageName(z.nach))}</b></span>`
@@ -152,7 +167,7 @@ function _newsInsTagKopf(s){
 // Blatt [§C33].
 function _newsInsTagZeilen(s){
   const d = (s && s.dataRef) || {}, pm = pmap();
-  const l = (d.zuege || []).slice(1).filter(z => z && pm[z.pid] && INSIGNIEN[(z.nach || {}).stufe | 0]);
+  const l = _insZuege(d).slice(1).filter(z => pm[z.pid] && INSIGNIEN[z.nach.stufe | 0]);
   if(!l.length) return '';
   const text = z => z.art === 'ab' ? `fällt auf den ${INSIGNIEN[z.nach.stufe].name} zurück`
     : z.art === 'grad' ? `steigt auf ${_insLageName(z.nach)}`
@@ -176,7 +191,7 @@ function _newsInsTagZeilen(s){
 // (`_ndWirkungBlock`, dasselbe Bauteil wie in der Tafel [§C27]) und am Ende
 // die Leiter der Liga, wie sie an diesem Abend stand.
 function _ndInsTagBlatt(s){
-  const d = (s && s.dataRef) || {}, l = d.zuege || [], pm = pmap(), z = l[0];
+  const d = (s && s.dataRef) || {}, l = _insZuege(d), pm = pmap(), z = l[0];
   if(!z || !pm[z.pid]) return null;
   // Mehrere Bewegungen an einem Tag: jede steht im Kopf mit Zeichen, Gesicht
   // und neuer Lage, nebeneinander. Der Kopf zeigte nur die erste, und die
@@ -224,7 +239,22 @@ function _ndInsTagBlatt(s){
 // für den Tag schon eine neue Karte, nimmt sie die alte Zeile nur als
 // Mitglied auf (`memberIds`), verloren geht nichts.
 function _insAltZuTag(list){
-  if(!Array.isArray(list) || !list.some(s => ((s && s.dataRef) || {}).type === 'insignium_stufe')) return list;
+  if(!Array.isArray(list)) return list;
+  // Eine gespeicherte Karte trägt die Reihenfolge, nach der sie gebaut wurde;
+  // Schlagzeile und Bewegungen folgen hier der von heute (`_insZugVor`),
+  // sonst nannte die Schlagzeile zuerst, was die Bühne erst als Zeile zeigt.
+  const pm = pmap();
+  list = list.map(s => {
+    const d = (s && s.dataRef) || {};
+    if(d.type !== 'insignium_tag' || !Array.isArray(d.zuege) || d.zuege.length < 2) return s;
+    const zuege = _insZuege(d);
+    if(zuege.length !== d.zuege.length || zuege.every((z, i) => z === d.zuege[i])
+       || !zuege.every(z => pm[z.pid])) return s;
+    const t = _insTagTexte(zuege);
+    return Object.assign({}, s, {title:t.title || s.title, desc:t.desc || s.desc,
+      dataRef:Object.assign({}, d, {zuege})});
+  });
+  if(!list.some(s => ((s && s.dataRef) || {}).type === 'insignium_stufe')) return list;
   const neu = new Map(), alt = new Map(), rest = [];
   list.forEach(s => {
     const d = (s && s.dataRef) || {};

@@ -123,5 +123,20 @@ const prestige=K(`(() => {
     cache:t===prestigeTabelle()};
 })()`);
 for(const [key,value]of Object.entries(prestige))ok(value,'Eine Prestige-Aufteilung für Engine, Story und Laufbahn: '+key);
+// Der Saisonverlauf rechnet jede Saison, in der gespielt wurde, die neueste
+// zuerst; die echten Partien reichen über weniger Monate, deshalb hier
+// sieben mit je einer Partie am Monatsersten. Dass das Profil sie alle zeigt
+// und nicht die letzten fünf, prüft tests/blatt.
+const verlauf=K(`(() => {
+  players=Array.from({length:4},(_,i)=>({id:'s'+i,name:'Saison '+i,hidden:false,elo:0,atk:.5}));
+  const jetzt=new Date();
+  matches=Array.from({length:7},(_,k)=>({...window.__partie,id:'v'+k,a1:'s0',a2:'s1',b1:'s2',b2:'s3',
+    created_at:new Date(jetzt.getFullYear(),jetzt.getMonth()-6+k,1,0,30).toISOString(),
+    deltas:{s0:20,s1:20,s2:-20,s3:-20}}));
+  seasons=[];cfg={...window.__cfgBasis};invalidateCache();
+  const h=computeSeasonHistory('s0');
+  return {n:h.length,absteigend:h.every((x,i)=>!i||h[i-1].id>x.id),neueste:!!h[0]&&h[0].id===currentSeason().id};
+})()`);
+ok(verlauf.n===7&&verlauf.absteigend&&verlauf.neueste,'Der Saisonverlauf zeigt jede Saison mit Partien, die neueste zuerst: '+JSON.stringify(verlauf));
 console.log(fails?`${fails} von ${checks} CHECKS FEHLGESCHLAGEN`:`ALLE ${checks} CHECKS BESTANDEN`);
 process.exitCode=fails?1:0;

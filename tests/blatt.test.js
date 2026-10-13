@@ -1204,8 +1204,8 @@ const ok = (c, msg, det) => {
   // Mehrere Bewegungen: die besonderste groß, jede übrige als Zeile mit
   // ihrem Namen und den beiden Zeichen — beim Rückfall „neu ← alt".
   ok(insKarte.kopfVon === insKarte.erster && insKarte.kopfSpuren === 1 && insKarte.zeilen === 2
-     && insKarte.reihen === 'neu <- alt | alt -> neu' && insKarte.namen,
-     'die besonderste Bewegung trägt die Bühne, jede übrige steht als Zeile, der Rückfall als neu ← alt',
+     && insKarte.reihen === 'alt -> neu | neu <- alt' && insKarte.namen,
+     'die besonderste Bewegung trägt die Bühne, jede übrige steht als Zeile, der Grad vor dem Rückfall, dieser als neu ← alt',
      JSON.stringify({kopf:insKarte.kopfVon === insKarte.erster, spuren:insKarte.kopfSpuren, zeilen:insKarte.zeilen, reihen:insKarte.reihen}));
 
 
@@ -4363,7 +4363,7 @@ return JSON.stringify(funde,null,1);
         leiter: ll.querySelectorAll('.nd-ll-av').length,
         kopf: kopf.querySelectorAll('.nd-held-av .av').length,
         kopfNamen: ids.slice(0, 5).every(id => kopf.textContent.indexOf(nm(id)) >= 0) && !/weitere/.test(kopf.textContent),
-        minis, badges:(getCachedBadges(bpid) || []).length, mehr: mehrProfil + mehrLb,
+        minis, badges:(getCachedBadges(bpid) || []).length, mehr: mehrLb,
         lbZeilen, posten, bp
       };
     })())`));
@@ -4376,10 +4376,123 @@ return JSON.stringify(funde,null,1);
      alles.kopf + ' Wappen');
   ok(alles.minis === alles.badges && alles.badges > 8 && alles.mehr === 0
      && alles.lbZeilen === alles.posten && alles.posten > 4,
-     'Profil und Laufbahn zeigen jede Auszeichnung und jeden Posten, nichts hinter „Mehr anzeigen"',
+     'Profil und Laufbahn zeigen jede Auszeichnung und jeden Posten, die Laufbahn nichts hinter „Mehr anzeigen"',
      JSON.stringify({minis:alles.minis, badges:alles.badges, mehr:alles.mehr, zeilen:alles.lbZeilen, posten:alles.posten}));
   ok(alles.bp.n > 8 && alles.bp.zeilen === alles.bp.n,
      'das Blatt einer Auszeichnung zeigt jede Partie, in der sie fiel', JSON.stringify(alles.bp));
+
+  // ── Das Profil: Rekorde, Farben, Kanten, Verlauf, Mitspieler ──────
+  //    Die Liga-Rekorde standen alle offen direkt unter der Chronik und
+  //    schoben zehn Karten vor Statistik und Titel; jetzt stehen zwei offen,
+  //    der Rest klappt mit seiner Zahl auf, und der Block steht vor den
+  //    Beziehungen. „Selten" stand in der Rangfarbe und war bei goldenem Rang
+  //    nicht von „legendär" zu trennen. Die Abschnittskante hing an Schlüsseln
+  //    einer alten Leiter und fehlte an vier Stufen. Der Saisonverlauf zeigte
+  //    die letzten fünf, die Mitspieler brachen in eine zweite Zeile um.
+  const profil = {};
+  for(const breite of [288, 360, 430]){
+    await page.setViewportSize({width:breite, height:900});
+    profil[breite] = await page.evaluate(() => {
+      const K = window.__k.eval.bind(window.__k);
+      return JSON.parse(K(`JSON.stringify((function(){
+        const ids = players.filter(p => sichtbar(p)).map(p => p.id);
+        const rpid = ids.slice().sort((a, b) => chroniclesOfPlayer(b).length - chroniclesOfPlayer(a).length)[0];
+        const nRek = chroniclesOfPlayer(rpid).length;
+        showPlayer(rpid);
+        const sh = document.querySelector('.sheet');
+        const zuSehen = e => !!(e && e.offsetParent !== null);
+        const karten = [...sh.querySelectorAll('.chron-alle .chron-one')];
+        const knopf = sh.querySelector('.chron-more');
+        const vorher = karten.filter(zuSehen).length, textVor = knopf ? knopf.textContent.trim() : '';
+        if(knopf) knopf.click();
+        const nachher = karten.filter(zuSehen).length, textNach = knopf ? knopf.textContent.trim() : '';
+        const titel = [...sh.querySelectorAll('.pp-sec-title h4')].map(h => h.textContent.trim());
+        const wo = re => titel.findIndex(x => re.test(x));
+        // Die Farben je Klasse am Bauteil selbst: nicht jeder Spieler hält
+        // eine Auszeichnung jeder Klasse.
+        const farbe = {};
+        const fr = document.createElement('div'); fr.className = 'pp-root';
+        fr.innerHTML = '<div class="pp-bcard-strip">' + ['legendary', 'rare', 'common', 'negative']
+          .map(k => '<div class="pp-bmini ' + k + '"></div>').join('') + '</div>';
+        document.body.appendChild(fr);
+        fr.querySelectorAll('.pp-bmini').forEach(b => { farbe[b.classList[1]] = getComputedStyle(b).color; });
+        fr.remove();
+        const kanten = [...sh.querySelectorAll('.pp-sec-title')].filter(e => { const c = getComputedStyle(e, '::after');
+          return !/repeating-linear-gradient/.test(c.backgroundImage) || parseFloat(c.height) < 2; })
+          .map(e => e.textContent.trim().replace(/\\s+/g, ' ').slice(0, 24));
+        const stufen = INSIGNIEN.map(x => { const r = document.createElement('div');
+          r.className = 'pp-root st-' + x.key; r.style.cssText = '--ak:#fff;--ak-rgb:255,255,255';
+          r.innerHTML = '<div class="pp-sec-title"><div class="l"><h4>x</h4></div></div>';
+          document.body.appendChild(r);
+          const c = getComputedStyle(r.firstChild, '::after');
+          const ok = /repeating-linear-gradient/.test(c.backgroundImage) && parseFloat(c.height) >= 2;
+          r.remove(); return ok ? '' : x.key; }).filter(Boolean);
+        const leiste = sh.querySelector('#ppH2HBtn .pp-mit');
+        const kinder = leiste ? [...leiste.children] : [];
+        const mehr = leiste && leiste.querySelector('.pp-mit-mehr');
+        const rest = mehr ? +(mehr.textContent.match(/\\+(\\d+)/) || [])[1] : 0;
+        const pm = pmap(), mit = playerH2HList(rpid, 3).filter(x => pm[x.oid]).length;
+        const out = {nRek, vorher, nachher, alle:karten.length, textVor, textNach,
+          rek:wo(/^Liga-Rekord/), titel:wo(/^Liga Titel/), ausz:wo(/^Auszeichnungen/),
+          bez:wo(/^Beziehungen/), chronik:wo(/^Chronik/), farbe, kanten, stufen,
+          // Eine Zeile: jedes Kind beginnt, bevor das höchste endet. Die
+          // Oberkanten allein unterscheiden sich schon, weil die Aufschrift
+          // niedriger ist als ein Gesicht und mittig steht.
+          zeilen:kinder.length && Math.max(...kinder.map(e => e.getBoundingClientRect().top))
+            < Math.min(...kinder.map(e => e.getBoundingClientRect().bottom)) ? 1 : 2,
+          ueber:leiste ? leiste.scrollWidth - leiste.clientWidth : -1,
+          gesichter:kinder.length - (mehr ? 1 : 0), rest, mit};
+        closeSheet(true);
+        return out;
+      })())`));
+    });
+  }
+  const p3 = profil[360];
+  ok(p3.nRek > 2 && p3.alle === p3.nRek && p3.vorher === 2 && p3.nachher === p3.nRek
+     && p3.textVor === (p3.nRek - 2 === 1 ? '1 weiteren anzeigen' : (p3.nRek - 2) + ' weitere anzeigen')
+     && p3.textNach === 'Weniger anzeigen',
+     'im Profil stehen zwei Liga-Rekorde offen, der Rest klappt mit seiner Zahl auf',
+     JSON.stringify({n:p3.nRek, vorher:p3.vorher, nachher:p3.nachher, knopf:p3.textVor}));
+  ok(p3.rek > Math.max(p3.titel, p3.ausz) && p3.rek < p3.bez && p3.chronik >= 0 && p3.chronik < p3.ausz,
+     'die Liga-Rekorde stehen nach Auszeichnungen und Titeln vor den Beziehungen, die Chronik bleibt oben',
+     JSON.stringify({chronik:p3.chronik, ausz:p3.ausz, titel:p3.titel, rek:p3.rek, bez:p3.bez}));
+  ok(p3.farbe.legendary === 'rgb(247, 207, 74)' && p3.farbe.rare === 'rgb(167, 139, 250)'
+     && p3.farbe.common === 'rgb(154, 162, 170)' && p3.farbe.negative === 'rgb(240, 86, 106)',
+     'die Auszeichnungen im Profil stehen in Gold, Lila, Grau und Rot nach ihrer Klasse',
+     JSON.stringify(p3.farbe));
+  ok(p3.kanten.length === 0 && p3.stufen.length === 0,
+     'unter jeder Überschrift des Profils liegt die gestrichelte Kante, auf jeder Stufe',
+     JSON.stringify({ohne:p3.kanten, stufen:p3.stufen}));
+  // Die echten Partien reichen über weniger als sechs Monate; drei Monate
+  // davor stehen deshalb je eine Kopie einer Partie des Spielers, nur für
+  // diese Prüfung, danach ist der Bestand wieder der alte.
+  const verlauf = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    return JSON.parse(K(`JSON.stringify((function(){
+      const pid = players.filter(p => sichtbar(p))[0].id;
+      const seine = matches.find(m => [m.a1, m.a2, m.b1, m.b2].includes(pid));
+      const erste = new Date(matches[0].created_at);
+      const vorn = [3, 2, 1].map(k => Object.assign({}, seine, {id:'vorlauf' + k,
+        created_at:new Date(erste.getFullYear(), erste.getMonth() - k, 15, 18).toISOString()}));
+      const bestand = matches;
+      matches = vorn.concat(bestand); invalidateCache();
+      try {
+        showPlayer(pid);
+        const rail = document.querySelectorAll('#ppSeasonsRail .pp-sn').length;
+        const saisons = [...new Set([...allPastSeasons(), currentSeason().id])]
+          .filter(sid => matchesInSeason(sid).some(m => [m.a1, m.a2, m.b1, m.b2].includes(pid))).length;
+        closeSheet(true);
+        return {rail, saisons};
+      } finally { matches = bestand; invalidateCache(); }
+    })())`));
+  });
+  ok(verlauf.saisons > 5 && verlauf.rail === verlauf.saisons,
+     'der Saisonverlauf zeigt jede Saison, in der gespielt wurde, auch mehr als fünf',
+     verlauf.rail + ' von ' + verlauf.saisons);
+  const leisten = [288, 360, 430].map(b => Object.assign({b}, profil[b]));
+  ok(leisten.every(x => x.zeilen === 1 && x.ueber <= 0 && x.gesichter + x.rest === x.mit && (x.rest === 0 || x.rest >= 3)),
+     'die Mitspieler unter den Beziehungen stehen bei 288, 360 und 430 px in einer Zeile, der Rest als „+N weitere"',
+     leisten.map(x => x.b + ': ' + x.gesichter + (x.rest ? ' +' + x.rest : '') + ' in ' + x.zeilen + ' Zeile(n), über ' + x.ueber).join(' · '));
 
   await page.setViewportSize({width:430, height:932});
 

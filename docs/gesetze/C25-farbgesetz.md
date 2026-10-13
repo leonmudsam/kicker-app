@@ -8,6 +8,8 @@
 - Im Rekorde-Reiter tragen Können, Aktuelle Form und Bestmarke Gold, die Fügung Metall, die Schattenseite Rot: fünf Kammern, drei Töne.
 - Was negativ ist (`neg`, aus `art:'schatten'` oder `negativ:true`), trägt Rot, steht hinten und zählt nirgends als Rekord (`rekordZaehlung`); `nextRecordFor` schlägt es nicht vor. Das gilt auch für die Beinamen-Pille im Profilkopf.
 - Die Kammer steht als `data-kammer` an der Karte, nicht als Farbklasse: eine Fügung kann rot sein und bleibt eine Fügung.
+- Die Klassen der Auszeichnungen tragen ihren Namen als Farbe: Gold legendär, Lila selten, Rot negativ; „gewöhnlich" steht im Profil in Metall statt Grün, weil es die größte Gruppe ist und das Profil sonst bunt würde.
+- Im Profil und in der Laufbahn liegt unter jeder Überschrift eine gestrichelte Kante in der Rangfarbe; die Insignium-Stufe (`st-<Stufe>`) ändert nur Höhe und Kraft, der Ordensstern trägt sie facettiert.
 
 ## Stellen
 
@@ -15,7 +17,7 @@
 
 ## Prüfung
 
-`tests/blatt` hält Besitzleiste und Podest je Spieler aneinander und misst Farbfamilien und Kanten im Feed.
+`tests/blatt` hält Besitzleiste und Podest je Spieler aneinander, misst Farbfamilien und Kanten im Feed und im Profil die Klassenfarben der Auszeichnungen und die Kante unter jeder Überschrift auf jeder Stufe.
 
 ## Herleitung
 
@@ -63,3 +65,17 @@ stimmt auch dann, wenn zwei Spieler ihre Zahlen tauschen. Die **Kammer**
 bleibt davon unberührt — sie steht als `data-kammer` an der Karte, nicht
 als Farbklasse, weil eine Fügung rot sein kann und trotzdem eine Fügung
 bleibt — und `art` auch, sonst verschöbe sich das Prestige [§C34].
+
+**Die Klassen der Auszeichnungen sind Namen, keine Wertung des Profils.**
+Das Profil färbte „selten" in der Rangfarbe: bei goldenem Rang stand eine
+seltene Auszeichnung in demselben Gold wie eine legendäre, und die Leiste
+darunter sagte nicht mehr, welche Klasse wie viel ausmacht. Sie trägt jetzt
+Lila wie im Blatt der Auszeichnungen und im Popover. „Gewöhnlich" bleibt im
+Profil Metall: es ist die größte Gruppe, und in Grün wäre das Profil bunt,
+ohne mehr zu sagen.
+**Die Kante unter den Überschriften hing an einer alten Leiter.** Ihre
+Regeln trugen die Schlüssel `kerben` und `strahl`, die es seit Schildring,
+Volutenkranz, Zierkranz und Kronenreif nicht mehr gibt: unter deren
+Überschriften stand keine Kante, am Reif ein Hauch, gestrichelt war sie nur
+am Lorbeerreif — und weil den nur die Spitze trug, sah es aus, als gehöre
+die Kante zum Rang Legende. Die Grundregel trägt jetzt selbst die Striche.

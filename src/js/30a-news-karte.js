@@ -999,10 +999,11 @@ function _newsTagSpannung(s){
   if(t === 'insignium_stufe') wert += Math.max(0, Number(d.stufe) || 0) * 25;
   // Die Leiter des Tages ist nur mit einem Aufstieg ein Kandidat, der nicht
   // nachweislich ein „wieder" ist; ein Grad oder ein Rückfall stellt sich
-  // nicht vor die Partien des Tages.
+  // nicht vor die Partien des Tages. Gesucht wird unter allen Aufstiegen:
+  // vorne steht die höchste Stufe, und die kann eine wieder getragene sein.
   if(t === 'insignium_tag'){
-    const z = (d.zuege || [])[0] || {};
-    wert = z.art === 'auf' && !z.wieder ? 840 + (((z.nach || {}).stufe | 0) * 25) : 520;
+    const neu = (d.zuege || []).filter(z => z && z.art === 'auf' && !z.wieder);
+    wert = neu.length ? 840 + Math.max(...neu.map(z => (z.nach || {}).stufe | 0)) * 25 : 520;
   }
   if(t === 'chronik_geholt') wert += Math.min(80, Math.max(0, Number(d.punkte) || 0) / 2);
   if(t === 'sammel'){
