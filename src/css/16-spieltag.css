@@ -1039,25 +1039,47 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
    Violett, der Farbe der Stufe [§C25], und die übrigen Bewegungen als Zeilen.
    Ein Rückfall trägt Rot an Pfeil und Wort, nicht an der Fläche: die Karte
    soll neben den Partien des Tages ruhig bleiben. */
-.ni-b{display:flex;flex-direction:column;gap:7px;margin:2px 0 8px;padding:8px 10px;border-radius:14px;
-  background:linear-gradient(135deg,color-mix(in srgb,var(--purple) 14%,transparent),transparent 72%);
-  border:1px solid color-mix(in srgb,var(--purple) 26%,transparent);cursor:pointer;min-width:0}
-.ni-sz{display:flex;align-items:center;justify-content:center;gap:10px;min-width:0}
+.ni-b{position:relative;display:flex;flex-direction:column;gap:7px;margin:2px 0 8px;padding:8px 10px 7px;border-radius:14px;
+  background:radial-gradient(120% 90% at 78% 38%,color-mix(in srgb,var(--purple) 16%,transparent),transparent 62%),
+    linear-gradient(135deg,color-mix(in srgb,var(--purple) 10%,transparent),transparent 72%);
+  border:1px solid color-mix(in srgb,var(--purple) 26%,transparent);cursor:pointer;min-width:0;overflow:hidden}
+.ni-b.ni-ab{background:radial-gradient(120% 90% at 22% 38%,color-mix(in srgb,var(--red) 12%,transparent),transparent 62%);
+  border-color:color-mix(in srgb,var(--red) 26%,transparent)}
+/* Wort und Lage über der Bühne: das Wort als kleine Marke in der Farbe der
+   Richtung, die Lage groß. Neben den Zeichen blieben für „Volutenkranz I"
+   94 px, und der Name lief aus der Karte. */
+.ni-t{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0}
+.ni-t em{font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;font-style:normal;
+  color:var(--purple);padding:2px 7px;border-radius:999px;background:color-mix(in srgb,var(--purple) 14%,transparent);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--purple) 34%,transparent)}
+.ni-ab .ni-t em{color:var(--red);background:color-mix(in srgb,var(--red) 12%,transparent);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--red) 34%,transparent)}
+.ni-t>b{font-size:17px;font-weight:700;color:var(--ink);line-height:1.1}
+/* Die Verwandlung liegt auf einer Lichtbahn, die altes und neues Zeichen
+   verbindet. */
+.ni-sz{position:relative;display:flex;align-items:center;justify-content:center;gap:10px;min-width:0}
+.ni-sz::before{content:"";position:absolute;left:12%;right:12%;top:50%;height:22px;margin-top:-11px;border-radius:11px;
+  background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--purple) 18%,transparent) 45%,transparent)}
+.ni-ab .ni-sz::before{background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--red) 14%,transparent) 55%,transparent)}
 /* Altes Zeichen und Pfeil geben auf schmalen Telefonen nach, das neue nie:
    bei 288 px fehlten der Bühne sonst 12 px, und sie lief aus der Karte. */
-.ni-alt{flex:0 1 38px;min-width:24px;opacity:.45}
+.ni-alt{position:relative;flex:0 1 40px;min-width:24px;opacity:.5}
 .ni-alt svg{width:100%;height:auto;display:block}
-.ni-pf{flex:0 1 40px;min-width:22px;height:14px}
+.ni-pf{position:relative;flex:0 1 40px;min-width:22px;height:14px}
 .ni-pf path{fill:none;stroke:var(--purple);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .ni-pf path.sp{opacity:.45}
 .ni-ab .ni-pf path{stroke:var(--red)}
+@media (prefers-reduced-motion:no-preference){
+  .ni-pf path.sp{animation:niSpur 1.4s ease-in-out .4s 2 both}
+}
+@keyframes niSpur{0%,100%{opacity:.15}50%{opacity:.7}}
 /* Das neue Zeichen steht auf einem violetten Hof, der Farbe der Leiter
    [§C25] und nicht dem Gold der Titel [§C36]; nach einem Rückfall auf einem
    roten, der Richtung. 76 px: mit 96 war die Bühne allein so hoch wie eine
    ganze Karte im Feed. */
 .ni-neu{position:relative;flex:0 0 76px;width:76px;height:76px}
-.ni-neu::before{content:"";position:absolute;inset:-8px;border-radius:50%;
-  background:radial-gradient(closest-side,color-mix(in srgb,var(--purple) 30%,transparent),transparent)}
+.ni-neu::before{content:"";position:absolute;inset:-9px;border-radius:50%;
+  background:radial-gradient(closest-side,color-mix(in srgb,var(--purple) 34%,transparent),transparent)}
 .ni-ab .ni-neu::before{background:radial-gradient(closest-side,color-mix(in srgb,var(--red) 22%,transparent),transparent)}
 .ni-neu>svg{position:relative;width:76px;height:76px;display:block}
 /* Zwei Ringe laufen einmal vom Zeichen nach außen und bleiben dann weg: die
@@ -1071,56 +1093,55 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 @media (prefers-reduced-motion:reduce){ .ni-wl{display:none} }
 .ni-av{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}
 .ni-av .av{--av:30px;width:30px;height:30px;font-size:11px}
-/* Mehrere Bewegungen: je eine lange Zeile, alle untereinander in einem
-   Block, getrennt nur durch eine Linie. Links die Verwandlung klein, rechts
-   Name und Spur über die ganze übrige Breite. Als Kästen untereinander las
-   sich die Karte wie mehrere Karten in einer. */
-.ni-viele{gap:0;padding:2px 10px}
-.ni-k{display:flex;align-items:center;gap:10px;min-width:0;padding:5px 0}
-.ni-k + .ni-k{border-top:1px solid color-mix(in srgb,var(--purple) 16%,transparent)}
-.ni-k > .ni-sz{flex:0 0 auto}
-.ni-k-r{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:5px}
-.ni-k .ni-sz{gap:4px;padding:0}
-.ni-k .ni-alt{flex:0 0 22px;width:22px;min-width:0}
-.ni-k .ni-pf{flex:0 0 14px;width:14px;min-width:0;height:10px}
-.ni-k .ni-neu{flex:0 0 40px;width:40px;height:40px}
-.ni-k .ni-neu>svg{width:40px;height:40px}
-/* Auf schmalen Telefonen bleibt in der Zeile nur das neue Zeichen: neben
-   altem Zeichen und Pfeil blieben der Spur bei 288 px sechzig Pixel. Woher
-   es kam, zeigt die Spur selbst, der Ring am alten Feld. */
-@media (max-width:340px){ .ni-k .ni-alt,.ni-k .ni-pf{display:none} }
-.ni-k .ni-neu::before{inset:-4px}
-.ni-k .ni-av .av{--av:17px;width:17px;height:17px;font-size:7px}
-.ni-k-n{font-size:12px;font-weight:700;color:var(--ink);line-height:1.1;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-/* Die Spur [§C30]: sieben Stufen zu je drei Feldern, bei einer Bewegung
-   darunter die Zeichen. Gefüllt, was schon da war; Violett, was der Tag
-   dazubringt; rot gestreift, was ein Rückfall kostet. Das erreichte Feld
-   trägt einen Punkt, das alte einen Ring. */
-.ni-spur{display:flex;gap:4px;min-width:0}
-.ni-spur.knapp{gap:2px}
+/* Die Spur [§C30]: sieben Stufen zu je drei Feldern, darunter die Zeichen.
+   Gefüllt, was schon da war; Violett, was der Tag dazubringt, und es läuft
+   einmal von links herein; rot gestreift, was ein Rückfall kostet. Das
+   erreichte Feld trägt einen Punkt, das alte einen Ring. Das Zeichen der
+   Stufe von jetzt steht größer und hell, darunter ein Strich. */
+.ni-spur{display:flex;gap:4px;min-width:0;align-items:flex-start}
 .ni-sp-s{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px}
 .ni-sp-f{display:flex;gap:1.5px;width:100%}
-.ni-spur.knapp .ni-sp-f{gap:1px}
-/* Ein leeres Feld ist hell genug, um auf der dunklen Kachel als Feld zu
-   stehen: in `--surface2` verschwand es dort, und die Spur sah halb aus. */
+/* Ein leeres Feld ist hell genug, um auf der dunklen Fläche als Feld zu
+   stehen: in `--surface2` verschwand es, und die Spur sah halb aus. */
 .ni-sp-f i{position:relative;flex:1 1 0;height:8px;border-radius:2px;background:color-mix(in srgb,var(--ink2) 13%,transparent)}
-.ni-spur.knapp .ni-sp-f i{height:6px;border-radius:1.5px}
 .ni-sp-f i.hat{background:color-mix(in srgb,var(--ink2) 42%,var(--surface2))}
 .ni-sp-f i.neu,.ni-sp-f i.da{background:linear-gradient(90deg,color-mix(in srgb,var(--purple) 70%,transparent),var(--purple))}
 .ni-sp-f i.da{box-shadow:0 0 8px color-mix(in srgb,var(--purple) 70%,transparent)}
 .ni-sp-f i.da::after{content:"";position:absolute;left:50%;top:50%;width:5px;height:5px;margin:-2.5px 0 0 -2.5px;
   border-radius:50%;background:var(--ink)}
-.ni-spur.knapp .ni-sp-f i.da::after,.ni-spur.knapp .ni-sp-f i.alt::after{width:3px;height:3px;margin:-1.5px 0 0 -1.5px}
 .ni-sp-f i.weg{background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--red) 65%,transparent) 0 2px,transparent 2px 4px);
   box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--red) 45%,transparent)}
 .ni-spur.ab .ni-sp-f i.da{background:color-mix(in srgb,var(--ink2) 50%,var(--surface2));box-shadow:none}
 .ni-sp-f i.alt::after{content:"";position:absolute;left:50%;top:50%;width:5px;height:5px;margin:-2.5px 0 0 -2.5px;
   border-radius:50%;box-shadow:inset 0 0 0 1.2px var(--ink2)}
-.ni-sp-z{width:24px;max-width:100%;opacity:.28}
+@media (prefers-reduced-motion:no-preference){
+  .ni-sp-f i.neu,.ni-sp-f i.da{animation:niFeld .35s ease-out both;animation-delay:calc(.35s + var(--f,0) * 45ms)}
+}
+@keyframes niFeld{from{opacity:.15}to{opacity:1}}
+.ni-sp-z{position:relative;width:22px;max-width:100%;opacity:.25}
 .ni-sp-z svg{width:100%;height:auto;display:block}
 .ni-sp-s.hat .ni-sp-z,.ni-sp-s.vorher .ni-sp-z{opacity:.55}
-.ni-sp-s.jetzt .ni-sp-z{opacity:1}
+.ni-sp-s.jetzt .ni-sp-z{width:26px;opacity:1}
+.ni-sp-s.jetzt .ni-sp-z::after{content:"";position:absolute;left:20%;right:20%;bottom:-4px;height:2px;border-radius:1px;background:var(--purple)}
+.ni-spur.ab .ni-sp-s.jetzt .ni-sp-z::after{background:var(--red)}
+/* Die übrigen Bewegungen unter der Schlagzeile, je eine Zeile: Gesicht,
+   was passiert ist, die beiden Zeichen klein — tiefer links, höher rechts,
+   der Pfeil vom alten zum neuen. Zwischen den Zeilen eine Linie, kein
+   Kasten: es ist eine Karte, keine Liste von Karten. */
+.ni-zs{display:flex;flex-direction:column;margin-top:4px;padding:0 13px 2px}
+.ni-z{display:flex;align-items:center;gap:9px;padding:6px 0;font-size:12px;color:var(--ink2);cursor:pointer;min-width:0}
+.ni-z + .ni-z{border-top:1px solid var(--line)}
+.ni-z-t{flex:1;min-width:0;line-height:1.3}
+.ni-z-t b{color:var(--ink)}
+.ni-z.ni-ab .ni-z-t{color:color-mix(in srgb,var(--red) 35%,var(--ink2))}
+.ni-z-w{flex:0 0 auto;display:flex;align-items:center;gap:3px}
+.ni-z-z{flex:0 0 26px;width:26px}
+.ni-z-z svg{width:26px;height:26px;display:block}
+.ni-z-z.alt{flex-basis:20px;width:20px;opacity:.5}
+.ni-z-z.alt svg{width:20px;height:20px}
+.ni-z-pf{width:11px;height:9px}
+.ni-z-pf path{fill:none;stroke:var(--purple);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.ni-z-pf.zurueck path{stroke:var(--red)}
 .ni-bw{display:flex;align-items:center;gap:8px;margin:12px 0 2px;font-size:12px}
 .ni-bw b{color:var(--ink)}
 .ni-bw span{color:var(--muted)}

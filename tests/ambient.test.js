@@ -3433,7 +3433,7 @@ const _achsen = JSON.parse(K.eval(`JSON.stringify((function(){
     return _consolidateStories(liste.slice()).filter(x => (x.dataRef||{}).type === 'insignium_tag')
       .map(x => { const h = String(_newsCardHtmlM2(x, false, false));
         return {ti:x.title, tx:x.desc, n:(x.dataRef.zuege||[]).length, mit:(x.dataRef.memberIds||[]).length,
-          buehne:h.indexOf('class="ni-b ') >= 0, kacheln:(h.match(/class="ni-k /g) || []).length,
+          buehne:h.indexOf('class="ni-b ') >= 0,
           zeilen:(h.match(/class="ni-z[ "]/g) || []).length, mehr:/weitere</.test(h)}; }); };
   return {
     ic: leiter([ins('i1',ids[0]), ins('i2',ids[1]), ins('i3',ids[2])]),
@@ -3495,11 +3495,11 @@ ok(_achsen.ic[0] && _achsen.ic[0].ti === 'Schildring für ' + _achsen.n0 + ', ' 
 // weiß: wie viele sie tragen, steht nur in neuen Karten.
 ok(_achsen.ic[0] && /^Der Schildring ist die zweite Stufe der Leiter und beginnt bei 600 Prestige\.$/.test(_achsen.ic[0].tx),
    'ihr Satz erklärt die Stufe ohne Floskel', (_achsen.ic[0]||{}).tx);
-// Und jede Bewegung steht als Bild darauf: die erste war eine Bühne, die
-// übrigen standen als Text darunter, höchstens drei und der Rest als Zahl.
+// Und jede Bewegung steht darauf: die besonderste als Bühne, jede übrige als
+// Zeile — es standen höchstens drei Zeilen und der Rest als Zahl.
 ok(_achsen.if.length === 1 && _achsen.if[0].n === 5 && _achsen.if[0].buehne
-   && _achsen.if[0].kacheln === 5 && _achsen.if[0].zeilen === 0 && !_achsen.if[0].mehr,
-   'eine große Karte zeigt jede ihrer fünf Bewegungen als Bild, ohne Zeilen und ohne Rest',
+   && _achsen.if[0].zeilen === 4 && !_achsen.if[0].mehr,
+   'eine große Karte zeigt die besonderste Bewegung als Bühne und jede übrige als Zeile, ohne Rest',
    JSON.stringify(_achsen.if[0] || {}));
 ok(_achsen.id.length === 1 && _achsen.id[0].n === 3 && _achsen.d.length === 0,
    'Stufen und Rekord desselben Tages stehen auf ihren eigenen Karten',
