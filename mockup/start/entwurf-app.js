@@ -331,25 +331,19 @@
     }).observe(btn, {attributes:true, attributeFilter:['style']});
 
     // ── 7b · Der Hinweis „x neue Stories" ───────────────────────────
-    // Heute eine Zeile: Zeichen, Zahl, „neue Stories" — und nach vier
-    // Sekunden weg, ohne dass man erfuhr, worum es geht. Jetzt sagt er drei
-    // Dinge, von grob nach fein: wie viele (die Zahl groß, daneben seit
-    // wann), welcher Art (ein Strich je Story in der Farbe ihrer Karte,
-    // gleiche Farben beisammen) und was das Wichtigste ist (die erste Story
-    // mit ihrer Rubrik, ihrem Gesicht und ihrer Schlagzeile, geformt wie
-    // ihre Karte im Feed [§C27]). Die Wichtigste wählt dieselbe Ordnung wie
-    // der Feed: Breaking, dann wichtig, dann Priorität, dann die neueste —
-    // kein Name, keine feste Story. Ersetzt wird nur `_newsToastFuellen`;
-    // wann er kommt, wohin er zeigt und dass ein Tippen den Feed öffnet,
-    // bleibt der App.
-    var A = K('({getStoriesCache, _newsLoadSeen, _newsLesestand, _newsGelesen, _isBreaking, _isImportant, _newsSorte, _newsRubrik,'
-      + ' _newsSorteIcon, _newsTafelTon, _newsIstNegativ, _newsPids, pmap, avHtml, esc, datumFmt, svgI, NEWS_AMBIENT_STIL})');
-    // Er trägt jetzt eine Schlagzeile; vier Sekunden reichten für eine Zahl,
-    // nicht zum Lesen. Wie lange er noch steht, zeigt eine Linie am Fuß.
-    var HINWEIS_MS = 6500;
+    // Zwei Zeilen: die Zahl auf einer Marke in Acid und „neue Stories",
+    // darunter leise die Schlagzeile der wichtigsten, mit einem Punkt in der
+    // Farbe ihrer Karte. Mehr nicht — ein Entwurf mit Strich je Story,
+    // Gesichtern, Rubrik und ablaufender Linie war zu voll für vier
+    // Sekunden. Die wichtigste wählt die Ordnung des Feeds: Breaking, dann
+    // wichtig, dann Priorität, dann die neueste — kein Name. Ersetzt wird nur
+    // `_newsToastFuellen`; wann er kommt, wie lange er steht und dass ein
+    // Tippen den Feed öffnet, bleibt der App.
+    var A = K('({getStoriesCache, _newsLoadSeen, _newsLesestand, _newsGelesen, _isBreaking, _isImportant, _newsSorte,'
+      + ' _newsTafelTon, _newsIstNegativ, esc, NEWS_AMBIENT_STIL})');
     // Die Farbe einer Story ist die ihrer Karte: dieselben Klassen wie das
-    // Story-Blatt (nd-s-…, nd-tafel-…, nd-fakt-…), die nur `--story-rgb`
-    // setzen; Breaking und die negative Richtung sind rot [§C25].
+    // Story-Blatt, die nur `--story-rgb` setzen; Breaking und die negative
+    // Richtung sind rot [§C25].
     function hinweisTon(s){
       if(A._isBreaking(s) || A._newsIstNegativ(s)) return 'nh-rot';
       var d = s.dataRef || {}, sorte = A._newsSorte(s), c = 'nd-s-' + sorte;
@@ -362,66 +356,35 @@
       var neu = A.getStoriesCache().filter(function(s){ return !A._newsGelesen(s, seen, stand); });
       var gewicht = function(s){ return (A._isBreaking(s) ? 4 : 0) + (A._isImportant(s) ? 2 : 0); };
       neu.sort(function(a, b){ return gewicht(b) - gewicht(a) || (b.prio | 0) - (a.prio | 0) || new Date(b.when) - new Date(a.when); });
-      // Seit wann: der Lesestand, heute als Uhrzeit, sonst als Tag.
-      var seit = '';
-      if(stand){
-        var sd = new Date(stand);
-        seit = 'seit ' + (sd.toDateString() === new Date().toDateString() ? A.datumFmt(sd, 'uhr') : A.datumFmt(sd, 'tm'));
-      }
-      var zahl = n > 99 ? '99+' : String(n);
-      var h = '<span class="nh"><span class="nh-kopf"><span class="nh-zahl' + (zahl.length > 2 ? ' lang' : '') + '"><b>' + zahl + '</b></span>'
-        + '<span class="nh-zus"><span class="nh-wort">' + (n === 1 ? 'neue Story' : 'neue Stories') + (seit ? '<em>' + seit + '</em>' : '') + '</span>';
-      // Ein Strich je Story, gleiche Farben beisammen, die Farbe der
-      // wichtigsten zuerst. Erst ab zwei: ein einzelner Strich sagt nichts.
-      if(neu.length > 1){
-        var gruppen = [], wo = {};
-        neu.forEach(function(s){ var t = hinweisTon(s); if(!(t in wo)){ wo[t] = gruppen.length; gruppen.push({t:t, n:0}); } gruppen[wo[t]].n++; });
-        var striche = [], takt = Math.min(26, 420 / neu.length);
-        gruppen.forEach(function(g){
-          for(var k = 0; k < g.n && striche.length < 80; k++)
-            striche.push('<i class="' + g.t + '" style="animation-delay:' + Math.round(220 + striche.length * takt) + 'ms"></i>');
-        });
-        h += '<span class="nh-band" style="gap:' + (neu.length > 30 ? 1 : 2) + 'px">' + striche.join('') + '</span>';
-      }
-      h += '</span><span class="nh-pfeil">' + A.svgI('chevron') + '</span></span>';
       var top = neu[0];
-      if(top){
-        // Bis drei Gesichter stehen alle, ab vier zwei und die Zahl der
-        // übrigen — wie auf der Karte [§C33].
-        var ids = A._newsPids(top), zeige = ids.length <= 3 ? ids.length : 2;
-        var gesichter = ids.length ? '<span class="nh-gesichter">' + ids.slice(0, zeige).map(function(id){ return A.avHtml(A.pmap()[id], '', {}); }).join('')
-          + (ids.length > zeige ? '<span class="av nf-face-mehr">+' + (ids.length - zeige) + '</span>' : '') + '</span>' : '';
-        var sorte = A._newsSorte(top);
-        h += '<span class="nh-story ' + hinweisTon(top) + '">' + gesichter + '<span class="nh-text">'
-          + '<span class="nh-rub">' + A.svgI(A._newsSorteIcon(sorte, top)) + A.esc(A._newsRubrik(sorte, top)) + '</span>'
-          + '<b class="nh-titel">' + A.esc(top.title || '') + '</b></span></span>';
-      }
-      return h + '<span class="nh-zeit"><i style="animation-duration:' + HINWEIS_MS + 'ms"></i></span></span>';
+      return '<span class="nh"><b class="nh-zahl">' + (n > 99 ? '99+' : n) + '</b><span class="nh-text">'
+        + '<b class="nh-wort">' + (n === 1 ? 'neue Story' : 'neue Stories') + '</b>'
+        + (top ? '<span class="nh-zeile ' + hinweisTon(top) + '"><i></i><span>' + A.esc(top.title || '') + '</span></span>' : '')
+        + '</span></span>';
     }
     window.__entwurfToast = function(txt, n){ txt.innerHTML = hinweisHtml(n); };
     K('_newsToastFuellen = function(txt, n){ window.__entwurfToast(txt, n); }; 0');
-    // Er ist breiter als die alte Zeile und lief bei 360 px links aus dem
-    // Bild: die App hält nur rechts 8 px Abstand. Links gilt jetzt dasselbe,
-    // und der Pfeil wandert mit, damit er weiter auf die Pille zeigt. Beim
-    // Einbau zwei Zeilen in `_positionNewsToast`.
+    // Breiter als die alte Zeile: links hält er jetzt denselben Abstand zum
+    // Rand wie rechts (bei 360 px lief er sonst aus dem Bild), und der Pfeil
+    // wandert mit, damit er weiter auf die Pille zeigt. Beim Einbau zwei
+    // Zeilen in `_positionNewsToast`.
     K('_positionNewsToast = ' + function(){
       const toast = document.getElementById('newsToast'), btn = document.getElementById('newsBtn');
       const leiste = btn && btn.closest('.appbar');
       if(!toast || !leiste) return;
       const pr = leiste.getBoundingClientRect(), br = btn.getBoundingClientRect();
       if(!br.width) return;
-      const mitte = pr.right - (br.left + br.width / 2), breite = Math.min(296, innerWidth - 24);
+      const mitte = pr.right - (br.left + br.width / 2), breite = Math.min(264, innerWidth - 24);
       const rechts = Math.max(8, Math.min(mitte - 23, pr.width - breite - 12));
       toast.style.right = rechts + 'px';
       toast.style.setProperty('--nt-arrow', Math.max(14, mitte - rechts - 5) + 'px');
     }.toString() + '; 0');
-    // Er fällt aus der Pille heraus und fährt zweimal Licht um seine Kante:
+    // Er fällt aus der Pille heraus, und zweimal fährt Licht um seine Kante:
     // hier ist etwas neu [§C41]. Der Lichtlauf ohne Ende von heute entfällt.
     new MutationObserver(function(){
       if(!toast.classList.contains('show')) return;
-      K('clearTimeout(_newsToastHideTimer); _newsToastHideTimer = setTimeout(() => _hideNewsToast(), ' + HINWEIS_MS + '); 0');
       btn.classList.remove('neu-ruf'); void btn.offsetWidth; btn.classList.add('neu-ruf');
-      kante(toast, 'acid', 'hinweis', 140, 360);
+      kante(toast, 'acid', 'hinweis', 120, 300);
       badge.classList.add('neu-pop');
       setTimeout(function(){ btn.classList.remove('neu-ruf'); badge.classList.remove('neu-pop'); }, 2400);
     }).observe(toast, {attributes:true, attributeFilter:['class']});
