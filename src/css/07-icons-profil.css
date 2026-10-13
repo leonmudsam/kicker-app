@@ -947,27 +947,30 @@
      Spieler ein Chip aus Gesicht, Name und Betrag, erst wer gewinnt (Gold,
      wie die Zahl im Blatt), dann wer verliert (Rot ist die Richtung [§C25]).
      Die Farbe sitzt am Betrag und am Rand des Chips; die Fläche bleibt
-     dunkel, damit die Zeile die Karte nicht überstrahlt. */
-  .nf-verlust{display:flex;flex-direction:column;gap:4px;padding:6px 13px 7px;min-width:0;
+     dunkel, damit die Zeile die Karte nicht überstrahlt. Vor jeder Seite ein
+     Pfeil in der Farbe seiner Richtung, Grün hinauf, Rot hinab [§C25]; er
+     steht oben an seiner Seite, auch wenn die Chips in mehrere Reihen
+     umbrechen. */
+  .nf-verlust{display:flex;flex-direction:column;gap:5px;padding:7px 13px 8px;min-width:0;
     border-top:1px solid var(--line)}
-  .nf-pb-z{display:flex;align-items:center;gap:8px;min-width:0}
-  .nf-pb-z + .nf-pb-z .nf-verlust-l{color:var(--red)}
-  .nf-verlust-l{flex:0 0 52px;display:inline-flex;align-items:center;gap:4px;
-    font-family:'Sometype Mono',monospace;font-size:9px;letter-spacing:.1em;
-    text-transform:uppercase;color:var(--muted)}
-  .nf-verlust-l svg{width:12px;height:12px}
+  .nf-pb-z{display:flex;align-items:flex-start;gap:8px;min-width:0}
+  .nf-pb-r{flex:0 0 22px;width:22px;height:22px;margin-top:1px;border-radius:50%;display:flex;align-items:center;
+    justify-content:center;background:color-mix(in srgb,var(--acid) 12%,transparent);
+    box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--acid) 34%,transparent);color:var(--acid)}
+  .nf-pb-r.ab{background:color-mix(in srgb,var(--red) 12%,transparent);
+    box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--red) 34%,transparent);color:var(--red)}
+  .nf-pb-r svg{width:13px;height:13px;display:block}
+  .nf-pb-r path{fill:none;stroke:currentColor;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
   .nf-verlust-w{display:flex;flex-wrap:wrap;gap:4px;min-width:0}
   .nf-vl{display:inline-flex;align-items:center;gap:5px;min-width:0;max-width:100%;
     padding:2px 8px 2px 2px;border-radius:999px;background:rgba(240,86,106,.08);
     border:1px solid rgba(240,86,106,.16);font-size:11px;font-weight:600;
     color:var(--ink2);white-space:nowrap}
-  .nf-vl.mehr{padding:2px 8px;color:var(--muted)}
   .nf-vl .rcp-av{flex:0 0 auto}
   .nf-vl i{font-style:normal}
   .nf-vl em{font-style:normal;color:var(--red);font-weight:700}
   .nf-vl.plus{background:rgba(247,207,74,.07);border-color:rgba(247,207,74,.2)}
   .nf-vl.plus em{color:var(--gold)}
-  .nf-vl u{text-decoration:none;color:var(--muted);font-weight:500;font-size:10px}
   .nf-sam-z{display:flex;align-items:center;gap:9px;padding:7px 13px;
     border-bottom:1px solid var(--line);font-size:11px;color:var(--ink2);
     min-width:0}

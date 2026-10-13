@@ -6393,6 +6393,33 @@ ok(_vchips.length === 1 && _vchips[0].indexOf(_vband.a) >= 0 && _vchips[0].index
    && _vchips[0].indexOf(_vband.stufe) < 0 && _vchips[0].indexOf('↓') < 0 && /class="(rcp-av|av)/.test(_vchips[0]),
    'je Verlierer ein Chip mit Gesicht, Name und Betrag, ohne die Stufe der Insignium-Karte',
    _vchips.length + ' Chips');
+// Und jeder steht da, nicht zwei je Seite und „+2": eine Bilanz mit
+// unbekannten Posten ist keine. Je Seite nach dem Betrag geordnet, und vor
+// jeder Seite ein Pfeil statt der Woerter „Gewinnt" und „Verliert".
+const _vall = JSON.parse(K.eval(`JSON.stringify((function(){
+  const lb = {}, d = [120, 35, 285, 35, 76, -50, -176, -9];
+  d.forEach((x, i) => { lb[players[i].id] = {vor:1000, nach:1000 + x}; });
+  const h = _newsPrestigeBand({dataRef:{type:'rekord_geholt', laufbahn:lb}});
+  const zeilen = h.split('class="nf-pb-z"').slice(1);
+  const betr = z => (z.match(/<em class="num">([^<]+) P<\\/em>/g) || [])
+    .map(x => +x.replace(/<[^>]+>/g, '').replace(' P', '').replace('\\u2212', '-'));
+  const nm = z => (z.match(/<i>([^<]+)<\\/i>/g) || []).map(x => x.replace(/<[^>]+>/g, ''));
+  return {chips:(h.match(/class="nf-vl /g) || []).length, mehr:/nf-vl mehr|\\+[0-9]+<\\/b>/.test(h),
+    woerter:/Gewinnt|Verliert/.test(h.replace(/aria-label="[^"]*"/g, '')),
+    pfeile:(h.match(/class="nf-pb-r (auf|ab)"/g) || []).map(x => x.indexOf('auf') >= 0 ? 'auf' : 'ab'),
+    oben:betr(zeilen[0] || ''), unten:betr(zeilen[1] || ''), obenN:nm(zeilen[0] || ''),
+    gleich:[players[1].name, players[3].name].sort((a, b) => a.localeCompare(b, 'de'))};
+})())`));
+ok(_vall.chips === 8 && !_vall.mehr,
+   'die Tafel-Karte nennt jeden, der Prestige gewinnt oder verliert, ohne Rest als Zahl',
+   _vall.chips + ' Chips' + (_vall.mehr ? ', mit Rest' : ''));
+ok(_vall.oben.join(' ') === '285 120 76 35 35' && _vall.unten.join(' ') === '-176 -50 -9'
+   && _vall.obenN.slice(3).join(',') === _vall.gleich.join(','),
+   'jede Seite steht nach dem Betrag geordnet, gleiche Betraege nach dem Namen',
+   _vall.oben.join(' ') + ' | ' + _vall.unten.join(' '));
+ok(_vall.pfeile.join(',') === 'auf,ab' && !_vall.woerter,
+   'vor Gewinnern und Verlierern steht ein Pfeil, kein Wort',
+   _vall.pfeile.join(',') + (_vall.woerter ? ', mit Wort' : ''));
 
 // Und der Satz der Rekordkarte nennt, wer dabei verliert: die Karte erzaehlte
 // nur von Jane, und dass Leon den Rekord jetzt teilt und Prestige verliert,
