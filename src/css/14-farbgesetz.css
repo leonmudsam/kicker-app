@@ -34,27 +34,27 @@
   .pp-root .pp-tr,.pp-root .pp-r{box-shadow:inset 0 1px 0 rgba(var(--ak-rgb),.14)}
 
   /* ── Die Stufe schreibt die Abschnittskante ───────────────────────
-     Dasselbe Muster, das der Reif außen trägt, liegt unter jeder
-     Überschrift: glatt, geriffelt, gestrahlt, geschuppt, facettiert.
-     Man sieht die Stufe, ohne sie zu lesen. */
+     Unter jeder Überschrift liegt eine gestrichelte Kante in der
+     Rangfarbe, und mit der Stufe wird sie höher und kräftiger; der
+     Ordensstern trägt sie facettiert. Die Regeln hingen an den Schlüsseln
+     einer früheren Leiter (`kerben`, `strahl`): seit Schildring,
+     Volutenkranz, Zierkranz und Kronenreif eigene tragen, stand unter
+     ihren Überschriften keine Kante, am Reif nur ein Hauch, und gestrichelt
+     war sie allein am Lorbeerreif. Die Grundregel trägt deshalb selbst
+     die Striche; eine Stufe ändert nur Höhe und Kraft. */
   .pp-root .pp-sec-title{position:relative;padding-bottom:9px;margin-bottom:13px}
   .pp-root .pp-sec-title::after{content:"";position:absolute;left:0;right:0;bottom:0;
-    height:3px;border-radius:2px}
+    height:var(--sk-h,3px);border-radius:2px;
+    background:repeating-linear-gradient(118deg,
+      rgba(var(--ak-rgb),var(--sk-a,.7)) 0 5px,rgba(var(--ak-rgb),.12) 5px 7px)}
   .pp-root .pp-sec-title .l .ic.svg-ic{color:var(--ak)}
   .pp-root .pp-sec-title .l > svg{stroke:var(--ak)}
-  .st-reif    .pp-sec-title::after{height:1px;
-    background:linear-gradient(90deg,rgba(var(--ak-rgb),.45),rgba(var(--ak-rgb),.04))}
-  .st-kerben  .pp-sec-title::after{
-    background:repeating-linear-gradient(90deg,
-      rgba(var(--ak-rgb),.75) 0 2px,rgba(var(--ak-rgb),.10) 2px 3px,
-      rgba(var(--ak-rgb),.30) 3px 5px,rgba(var(--ak-rgb),.10) 5px 6px)}
-  .st-strahl  .pp-sec-title::after{
-    background:repeating-linear-gradient(90deg,
-      rgba(var(--ak-rgb),.85) 0 1px,transparent 1px 9px),
-      linear-gradient(90deg,rgba(var(--ak-rgb),.30),transparent)}
-  .st-lorbeer .pp-sec-title::after{height:4px;
-    background:repeating-linear-gradient(118deg,
-      rgba(var(--ak-rgb),.80) 0 5px,rgba(var(--ak-rgb),.14) 5px 7px)}
+  .st-reif    .pp-sec-title{--sk-h:2px;--sk-a:.5}
+  .st-schild  .pp-sec-title{--sk-h:2px;--sk-a:.6}
+  .st-volute  .pp-sec-title{--sk-h:3px;--sk-a:.65}
+  .st-zier    .pp-sec-title{--sk-h:3px;--sk-a:.72}
+  .st-lorbeer .pp-sec-title{--sk-h:4px;--sk-a:.8}
+  .st-krone   .pp-sec-title{--sk-h:4px;--sk-a:.85}
   .st-stern   .pp-sec-title::after{height:5px;
     background:repeating-linear-gradient(45deg,
       rgba(var(--ak-rgb),.85) 0 4px,rgba(var(--ak-rgb),.12) 4px 8px)}
@@ -77,7 +77,6 @@
   .pp-root .pp-title-pill.schatten{--tt:#f0566a!important;--ttr:240,86,106!important}
   .pp-root .chron-one.schatten{--tt:#f0566a!important;--ttr:240,86,106!important}
   .pp-root .tmark.schatten{--tt:#f0566a!important;--ttr:240,86,106!important}
-  .pp-root .pp-bmini.legendary{color:var(--gold);border-color:rgba(247,207,74,.45)}
 
   /* ── 1 · Die Rangfarbe trägt, was „ich" heißt ─────────────────── */
   /* Die eigene Elo ist die Kennzahl, die „ich" heißt — sie trägt die
@@ -86,8 +85,6 @@
      und einmal „Rang", und Regel 3 wäre nur noch ein Vorsatz. */
   .pp-root .pp-et-col.now .val{color:var(--ak)}
   .pp-root .chron-cell.live{--tt:var(--ak)!important;--ttr:var(--ak-rgb)!important}
-  .pp-root .pp-bmini.rare{color:var(--ak);border-color:rgba(var(--ak-rgb),.42)}
-  .pp-root .pp-bcard-bar .seg.rare{background:var(--ak)}
   .pp-root .pp-rd.atk{--orange:var(--ak)}
   .pp-root .pp-posprof{--orange:var(--ak)}
 
@@ -98,8 +95,6 @@
   /* Ein Rekord, den jemand ANSTREBT, ist keiner, den er hält — er trägt
      deshalb kein Gold, sondern Metall wie alles Unerledigte. */
   .pp-root .chron-one.next{--tt:#8f9a93!important;--ttr:143,154,147!important}
-  .pp-root .pp-bmini.common{color:#9AA2AA;border-color:rgba(154,162,170,.28)}
-  .pp-root .pp-bcard-bar .seg.common{background:#7D858D;opacity:.9}
   /* Auch Abwehrdominanz ist eine Staerke und behaelt deshalb die Rangfarbe.
      Metallgrau gehoert nur der schwacheren Rolle, nicht der Positionsart. */
   .pp-root .pp-rd.def{--blue:var(--ak)}
@@ -107,10 +102,17 @@
 
   /* ── 3 · Grün und Rot bleiben, wo sie Richtung bedeuten ───────────
      Sie brauchen keine Regel: `--acid` und `--red` behalten hier ihre
-     Bedeutung, weil das Gesetz sie nicht anfasst. Nur die Seltenheit
-     „negativ" wird festgeschrieben, damit sie nicht als Kategorie
-     durchgeht. */
-  .pp-root .pp-bmini.negative{color:var(--red);border-color:rgba(240,86,106,.30)}
+     Bedeutung, weil das Gesetz sie nicht anfasst. */
+
+  /* Die Auszeichnungen im Profil stehen in ihrer Klasse: Gold legendär,
+     Lila selten, Rot negativ, wie im Blatt der Auszeichnungen und im
+     Popover (07-icons-profil). „Selten" stand hier in der Rangfarbe und war
+     bei jedem goldenen Rang nicht von „legendär" zu unterscheiden; die
+     Leiste darunter sagte damit nicht mehr, welche Klasse wie viel ausmacht.
+     Nur „gewöhnlich" bleibt im Profil Metall statt Grün: es ist die größte
+     Gruppe, und in Grün wäre das Profil bunt, ohne mehr zu sagen. */
+  .pp-root .pp-bmini.common{color:#9AA2AA;border-color:rgba(154,162,170,.28)}
+  .pp-root .pp-bcard-bar .seg.common{background:#7D858D;opacity:.9}
 
   /* Die vier Beziehungskarten sind ZWEI Paare — bester und schlechtester
      Mitspieler, Lieblings- und Angstgegner. Sie trugen vier Farben, also

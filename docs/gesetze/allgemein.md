@@ -9,7 +9,7 @@
 - Jede `font-family` endet auf einer Familie (`sans-serif`, `monospace`).
 - Dieselbe Sache hat einen Namen (Siegquote, Partner, Torbilanz, Größte Überraschung, Direkter Vergleich); kein Befehl in Du-Form, kein englisches Wort außer den Namen der Wertungen, kein Kürzel, Einzahl wo eins steht.
 - Ein leeres Feld liest sich als Fehler: nicht vergebene Auszeichnungen gestrichelt, eine ungerade Kachel nimmt die ganze Reihe.
-- Ein Blatt zeigt alles: kein „+1", kein „und 3 weitere", kein „Mehr anzeigen". Jeder Name, jedes Wappen, jeder Grund, jeder Posten steht da; was nicht in eine Reihe passt, bricht um.
+- Ein Blatt zeigt alles: kein „+1", kein „und 3 weitere", kein „Mehr anzeigen". Jeder Name, jedes Wappen, jeder Grund, jeder Posten steht da; was nicht in eine Reihe passt, bricht um. Zwei Ausnahmen im Profil, beide mit genauer Zahl: die Liga-Rekorde zeigen zwei und klappen den Rest an Ort und Stelle auf („8 weitere anzeigen"), die Mitspieler unter den Beziehungen stehen in einer Zeile mit „+N weitere" (N mindestens drei), und ihre ganze Liste ist ein Tippen weiter.
 
 ## Stellen
 
@@ -90,4 +90,9 @@ Wortlaut zitiert, nicht mit einer Nummer.
   um; bei vielen Wappen werden sie kleiner. Ein Ausschnitt, der seine Grenze
   im Namen trägt (die drei Besten eines Podests), ist keine Kürzung; die
   Verfolger eines Rekords standen unter „Wer dahinter liegt" zu dritt, ohne
-  es zu sagen, und stehen jetzt vollzählig da.
+  es zu sagen, und stehen jetzt vollzählig da. Im Profil standen danach
+  zehn Rekordkarten offen untereinander, bevor Statistik und Titel kamen,
+  und die Mitspieler brachen in eine zweite Zeile um: dort ist das Profil
+  die Übersicht und nicht die Stelle, an der man nachsieht. Die Rekorde
+  zeigen deshalb zwei und klappen den Rest mit seiner Zahl auf, die
+  Mitspieler stehen in einer Zeile, und ihr Blatt zeigt alle.

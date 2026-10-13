@@ -232,11 +232,15 @@ function showPlayer(id){
   const badgeTotal=badges.reduce((sum,b)=>sum+b.count,0);
 
   const sa = playerSeasonAwards(id);
-  const seasonHistory = computeSeasonHistory(id, 5);
-  // Saison-Trend: vergleicht jüngste mit älteren Platzierungen
+  // Jede Saison, in der gespielt wurde. Es waren die letzten fünf, und wer
+  // länger dabei ist, fand seine ersten Monate nirgends im Profil.
+  const seasonHistory = computeSeasonHistory(id);
+  // Saison-Trend: vergleicht jüngste mit älteren Platzierungen, über die
+  // letzten fünf. Über die ganze Laufbahn verglichen hieße „Form" das erste
+  // halbe Jahr gegen das zweite.
   const seasonTrend = (() => {
     if(!seasonHistory || seasonHistory.length < 2) return null;
-    const places = seasonHistory.map(h => h.place).filter(p => p > 0);
+    const places = seasonHistory.slice(0, 5).map(h => h.place).filter(p => p > 0);
     if(places.length < 2) return null;
     const half = Math.ceil(places.length / 2);
     const recent = places.slice(0, half);
@@ -480,7 +484,7 @@ const rankProgHtml = rInfo ? `
     ${(()=>{
       // Chronik (§13): Saisontitel als Streifen, direkt unter dem Kopf — sie
       // beschreibt, WER jemand ist, und gehört damit vor die Detail-Statistik.
-      const strip = _chronStripHtml(id);
+      const strip = _chronStripHtml(id, 'chronik');
       return strip ? `<div class="pp-sec" style="animation-delay:.28s">${strip}</div>` : '';
     })()}
 
@@ -623,6 +627,13 @@ const rankProgHtml = rInfo ? `
       ${trophyHtml}
     </div>`:''}
     
+    ${(()=>{
+      // Die Liga-Rekorde stehen bei Auszeichnungen und Titeln, vor den
+      // Beziehungen: auch sie sind, was jemand geholt hat.
+      const rek = _chronStripHtml(id, 'rekorde');
+      return rek ? `<div class="pp-sec" style="animation-delay:.44s">${rek}</div>` : '';
+    })()}
+
     <div class="pp-sec" style="animation-delay:.45s">
       <div class="pp-sec-title">
         <div class="l"><span class="ic svg-ic">${svgI('users')}</span><h4>Beziehungen</h4></div>
@@ -683,17 +694,29 @@ const rankProgHtml = rInfo ? `
       const h2hList = playerH2HList(id, 3);
       if(h2hList.length < 2) return '';
       const pmL = pmap();
-      // Jeder Mitspieler als Mini-Avatar; nach fünf stand ein Chip „+N".
-      const stripItems = h2hList.map(x=>{
-        const pp = pmL[x.oid]; if(!pp) return '';
+      const mit = h2hList.filter(x => pmL[x.oid]);
+      // Eine Zeile: so viele Gesichter, wie in die Breite passen, der Rest als
+      // „+N weitere"; die ganze Liste steht ein Tippen weiter im Blatt. In
+      // zwei Zeilen war die Karte so hoch wie zwei Beziehungen, für eine
+      // Vorschau. Die Breite kommt aus dem Fenster und den festen Maßen von
+      // Blatt und Karte (`.sheet`, `.pp-badges-card`: 98 px Rand, Knopf und
+      // Abstand), nicht aus einer Messung, die das Profil beim Öffnen ein
+      // zweites Mal hätte setzen lassen. Ein Gesicht braucht 33 px mit
+      // Abstand, die Aufschrift 77; mit „2 Gesichtern" gerechnet lief sie bei
+      // 360 px 3 px über den Rand. Wer ganz hineinpasst, steht ganz da.
+      const breite = Math.min(window.innerWidth || 390, 520) - 98;
+      const zeige = mit.length <= Math.floor((breite + 7) / 33) ? mit.length
+        : Math.max(1, Math.floor((breite - 70) / 33));
+      const stripItems = mit.slice(0, zeige).map(x=>{
+        const pp = pmL[x.oid];
         const em = pp.avatar_id ? avatarEmoji(pp.avatar_id) : null;
         if(em) return `<div style="width:26px;height:26px;border-radius:50%;background:var(--surface3);display:grid;place-items:center;font-size:14px;border:1.5px solid var(--surface);flex-shrink:0">${em}</div>`;
         return `<div style="width:26px;height:26px;border-radius:50%;background:${avColor(pp.id)};display:grid;place-items:center;font-size:9px;font-family:'Archivo Black',sans-serif;color:#0a0c0b;border:1.5px solid var(--surface);flex-shrink:0">${esc(initials(pp.name))}</div>`;
-      }).join('');
+      }).join('') + (mit.length > zeige ? `<span class="pp-mit-mehr num">+${mit.length - zeige} weitere</span>` : '');
       return `
     <div class="pp-sec" style="animation-delay:.5s">
       <div class="pp-badges-card" id="ppH2HBtn">
-        <div class="pp-badges-strip" style="align-items:center">
+        <div class="pp-badges-strip pp-mit" style="align-items:center">
           ${stripItems}
         </div>
         <span class="chev">
@@ -724,7 +747,7 @@ const rankProgHtml = rInfo ? `
     ${seasonHistory.length?`
     <div class="pp-sec" style="animation-delay:.7s">
       <div class="pp-sec-title">
-        <div class="l">${svgI('saisonKal')}<h4>Saisonverlauf <span style="color:var(--muted);font-weight:500;letter-spacing:.02em;text-transform:none">(letzte ${seasonHistory.length})</span></h4></div>
+        <div class="l">${svgI('saisonKal')}<h4>Saisonverlauf <span style="color:var(--muted);font-weight:500;letter-spacing:.02em;text-transform:none">(${seasonHistory.length})</span></h4></div>
         <div class="m">${seasonTrend ? `<span class="trend ${seasonTrend.cls}">${seasonTrend.arrow} ${esc(seasonTrend.text)}</span>` : seasonHistory.length+' Saisons'}</div>
       </div>
       ${seasonRailHtml}
@@ -968,22 +991,21 @@ function showEditPlayer(id){
   };
 }
 
-// ─── Saison-Verlauf berechnen (letzte N) ───
-function computeSeasonHistory(playerId, limit){
-  // v9.16: Reihenfolge EXPLIZIT statt implizit. Vorher wurde auf die
-  // aufsteigende Reihenfolge von allPastSeasons() vertraut, per slice(-limit)
-  // gekürzt und am Ende reverse()'t — kam die ID-Liste je Gerät/Cache-Zustand
-  // in anderer Reihenfolge, stand im Rail plötzlich Juli, Mai, Juni. Jetzt wird
-  // absteigend nach Saison-ID (YYYY-MM, lexikografisch = chronologisch)
-  // sortiert und danach gekürzt → links immer die neueste, rechts die älteste.
-  // Gekürzt wird nach den EIGENEN Saisons. Gekürzt nach denen der Liga
-  // verlor ein Ruheständler mit jedem Monat, in dem die anderen spielten,
-  // eine Saison aus seinem Verlauf — und wer eine Pause machte, ebenso.
+// ─── Saison-Verlauf berechnen ───
+function computeSeasonHistory(playerId){
+  // Reihenfolge EXPLIZIT statt implizit. Vorher wurde auf die aufsteigende
+  // Reihenfolge von allPastSeasons() vertraut und am Ende reverse()'t — kam
+  // die ID-Liste je Gerät/Cache-Zustand in anderer Reihenfolge, stand im
+  // Rail plötzlich Juli, Mai, Juni. Jetzt wird absteigend nach Saison-ID
+  // (YYYY-MM, lexikografisch = chronologisch) sortiert → links immer die
+  // neueste, rechts die älteste. Es zählen die EIGENEN Saisons, alle, in
+  // denen gespielt wurde: wer eine Pause machte oder aufgehört hat, verliert
+  // keinen Monat, weil die anderen weiterspielten.
   const allSeasonIds = [...new Set([...allPastSeasons(), currentSeason().id])]
     .sort((a,b)=> a<b?1:a>b?-1:0);
   const eigene = allSeasonIds.map(sid => ({sid,
     sMatches: matchesInSeason(sid).filter(m=>[m.a1,m.a2,m.b1,m.b2].includes(playerId))}))
-    .filter(x => x.sMatches.length).slice(0, limit);
+    .filter(x => x.sMatches.length);
   return eigene.map(({sid, sMatches})=>{
     let w=0, l=0;
     sMatches.forEach(m=>{

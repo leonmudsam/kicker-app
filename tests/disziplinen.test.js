@@ -463,11 +463,13 @@ console.log('  → ' + rowsMarked + ' von ' + NAMES.length + ' Zeilen markiert, 
 console.log('\n=== 8. HTML RENDERT ===');
 const h1 = K.eval(`_chronStripHtml(${JSON.stringify(IDS[8])})`);
 ok(h1.includes('chron-one'), 'Profil zeigt seine Rekord-Karten');
-// Jede Karte steht offen da: nach der ersten steckte der Rest eingeklappt
-// hinter „Mehr anzeigen", und das Profil verschwieg damit die meisten.
-ok((h1.match(/chron-one/g)||[]).length === Math.max(1, K.eval(`chroniclesOfPlayer(${JSON.stringify(IDS[8])}).length`))
-   && h1.indexOf('chron-rest') < 0 && h1.indexOf('data-chron-more') < 0,
-   'jede Rekord-Karte offen im Profil, nichts eingeklappt');
+// Jede Karte steht im Profil, zwei offen, der Rest klappt mit seiner Zahl
+// auf. Nach der ersten steckte er hinter „Mehr anzeigen", und das Profil
+// verschwieg die meisten; alle offen schoben zehn Karten vor alles andere.
+const _n8 = K.eval(`chroniclesOfPlayer(${JSON.stringify(IDS[8])}).length`);
+ok((h1.match(/chron-one/g)||[]).length === Math.max(1, _n8)
+   && (_n8 > 2) === (h1.indexOf('chron-rest') >= 0 && h1.indexOf('data-chron-more') >= 0),
+   'jede Rekord-Karte im Profil, ab drei zwei offen und der Rest zum Aufklappen');
 ok(h1.includes('chron-strip'), 'Profil zeigt weiter den Saison-Streifen');
 ok(!/undefined|NaN/.test(h1), 'Profil-Chronik ohne undefined');
 let sheetOk = true;
@@ -1321,7 +1323,8 @@ ok(K.eval(`(function(){
   return bad.join(',');
 })()`) === '', 'der erste Rekord der Liste ist der im Profil gezeigte');
 
-// Kein „Mehr anzeigen" im Profil, und der Fortschritt steht nur ohne Rekord.
+// Aufklappen gibt es im Profil erst ab drei Rekorden, mit der genauen Zahl,
+// und der Fortschritt steht nur ohne Rekord.
 ok(K.eval(`(function(){
   const bad=[];
   Object.keys(pmap()).forEach(pid=>{
@@ -1329,11 +1332,13 @@ ok(K.eval(`(function(){
     const h=_chronStripHtml(pid);
     const more=h.indexOf('data-chron-more')>=0;
     const next=h.indexOf('chron-one next')>=0;
-    if(more) bad.push((pmap()[pid]||{}).name+':more');
+    if(more !== n > 2) bad.push((pmap()[pid]||{}).name+':more');
+    if(more && h.indexOf((n - 2 === 1 ? '1 weiteren' : (n - 2) + ' weitere') + ' anzeigen') < 0)
+      bad.push((pmap()[pid]||{}).name+':zahl');
     if(n>0 && next) bad.push((pmap()[pid]||{}).name+':nextTrotzRekord');
   });
   return bad.join(',');
-})()`) === '', 'kein Mehr-anzeigen im Profil, Fortschritt nur ohne Rekord');
+})()`) === '', 'Aufklappen im Profil erst ab drei Rekorden und mit Zahl, Fortschritt nur ohne Rekord');
 ok(K.eval(`(function(){
   // Wer mehrere haelt, hat alle Karten offen im HTML.
   const pid=Object.keys(pmap()).find(id=>chroniclesOfPlayer(id).length>2);
@@ -1342,7 +1347,7 @@ ok(K.eval(`(function(){
   const n=chroniclesOfPlayer(pid).length;
   // Schattenseiten tragen zusaetzlich die Klasse "schatten" — mitzaehlen.
   const cards=(h.match(/class="chron-one[^"]*"/g)||[]).length;
-  return cards===n && h.indexOf('chron-rest')<0 ? 'ok' : 'FALSCH ' + cards + '/' + n;
+  return cards===n && h.indexOf('chron-rest')>=0 ? 'ok' : 'FALSCH ' + cards + '/' + n;
 })()`).indexOf('FALSCH') < 0, 'alle Rekorde stecken im Profil-HTML');
 
 // ══════════════════════════════════════════════════════════════════════

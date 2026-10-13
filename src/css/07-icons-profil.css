@@ -205,6 +205,11 @@
     padding:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer}
   .pp-badges-card:active{transform:scale(.985)}
   .pp-badges-strip{display:flex;gap:7px;flex-wrap:wrap;color:var(--ink2);flex:1;min-width:0}
+  /* Die Mitspieler unter den Beziehungen stehen in einer Zeile; wie viele,
+     rechnet das Profil aus der Fensterbreite, der Rest steht als Zahl. */
+  .pp-badges-strip.pp-mit{flex-wrap:nowrap;overflow:hidden}
+  .pp-mit-mehr{flex-shrink:0;white-space:nowrap;font-family:'Sometype Mono',monospace;
+    font-size:10.5px;letter-spacing:.04em;color:var(--muted)}
   .pp-badges-strip svg{width:20px;height:20px;stroke:currentColor;fill:none;
     --strich:1.75;stroke-linecap:round;stroke-linejoin:round}
   .pp-badges-card .chev{color:var(--muted);flex-shrink:0;display:grid;place-items:center}

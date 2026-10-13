@@ -123,7 +123,7 @@ function _zuMehreren(n){
 // Chronik fürs Profil: EINE Karte. Nicht mehr eine Liste — genau die eine
 // Auszeichnung, die diesen Spieler von allen anderen unterscheidet. Darunter
 // der Saison-Streifen: was er Monat für Monat geholt hat.
-function _chronStripHtml(pid){
+function _chronStripHtml(pid, teil){
   const rows = seasonTitleHistory(pid);
   const c = chronicleOf(pid);
   if(!rows.length && !c) return '';
@@ -156,8 +156,14 @@ function _chronStripHtml(pid){
         stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></span>
     </div>`;
     };
-    // Jeder Rekord steht offen da; nach dem ersten stand „Mehr anzeigen ·
-    // 4 weitere", und das Profil verschwieg damit die meisten.
+    // Zwei Rekorde stehen offen, der Rest klappt an Ort und Stelle auf, und
+    // der Knopf nennt die genaue Zahl. Alle offen untereinander waren bei
+    // zehn Rekorden zehn Karten, bevor im Profil irgendetwas anderes kam;
+    // hinter „Mehr anzeigen · 4 weitere" nach dem ersten verschwieg es
+    // dagegen die meisten.
+    const liste = mine.length ? mine : [c];
+    const rest = liste.slice(2);
+    const zu = rest.length === 1 ? '1 weiteren anzeigen' : rest.length + ' weitere anzeigen';
     chronBlock = `
     <div class="pp-sec-title">
       <div class="l"><span class="ic svg-ic">${svgI(nurNeg ? 'ghost' : 'trophyStar')}</span>
@@ -166,7 +172,13 @@ function _chronStripHtml(pid){
       ${(nurNeg ? alle.length : zaehlt) > 1
         ? `<div class="m num">${nurNeg ? alle.length : zaehlt}</div>` : ''}
     </div>
-    <div class="chron-alle">${(mine.length ? mine : [c]).map(card).join('')}</div>`;
+    <div class="chron-alle">${liste.slice(0, 2).map(card).join('')}</div>${rest.length ? `
+    <div class="chron-alle chron-rest">${rest.map(card).join('')}</div>
+    <button class="chron-more" type="button" data-chron-more="${esc(zu)}" aria-expanded="false">
+      <span class="tx">${esc(zu)}</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+        stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+    </button>` : ''}`;
   } else {
     // Kein Rekord? Dann zeigt die Karte, welcher am nächsten liegt und was
     // dafür noch fehlt. Eine leere Zeile motiviert niemanden, eine Zahl schon.
@@ -228,8 +240,12 @@ function _chronStripHtml(pid){
       : `<div class="chrows-empty">Noch kein Monat mit Eintrag. Jede Saison
           fängt bei null an — die Chronik auch.</div>`}` : '';
 
-  // Reihenfolge: erst die Chronik (jeden Monat neu erreichbar, das ist das
-  // Spannende), dann der eine Liga-Rekord der ganzen Laufbahn.
+  // Im Profil stehen beide Teile an verschiedenen Stellen: die Chronik
+  // unter dem Kopf (jeden Monat neu erreichbar, das ist das Spannende), die
+  // Liga-Rekorde bei den Titeln. Direkt unter der Chronik schoben zehn
+  // Rekordkarten Statistik, Auszeichnungen und Titel aus dem Bild.
+  if(teil === 'chronik') return stripBlock;
+  if(teil === 'rekorde') return chronBlock;
   return stripBlock + (stripBlock ? '<div style="height:18px"></div>' : '') + chronBlock;
 }
 
@@ -826,6 +842,20 @@ function _bindChronikClicks(root){
   });
   root.querySelectorAll('[data-chron]').forEach(el => {
     el.onclick = (e) => { e.stopPropagation(); sheetNav(()=>showChronicle(el.dataset.chron)); };
+  });
+  // Der Rest der Liga-Rekorde im Profil klappt dort auf, wo er steht; der
+  // Knopf trägt im Datensatz seine Aufschrift für den geschlossenen Zustand.
+  root.querySelectorAll('[data-chron-more]').forEach(el => {
+    el.onclick = (e) => {
+      e.stopPropagation();
+      const rest = el.previousElementSibling;
+      if(!rest) return;
+      const auf = rest.classList.toggle('open');
+      el.classList.toggle('open', auf);
+      el.setAttribute('aria-expanded', String(auf));
+      const tx = el.querySelector('.tx');
+      if(tx) tx.textContent = auf ? 'Weniger anzeigen' : el.dataset.chronMore;
+    };
   });
   // Das Insignium im Profilkopf ist selbst der Knopf zur Laufbahn [§13.10].
   root.querySelectorAll('[data-prestige]').forEach(el => {
