@@ -297,6 +297,26 @@ const ok = (c, msg, det) => {
     ok(schief.length === 0, 'und liegt danach in der Mitte',
        schief.map(s => s.i + ': ' + s.ab + ' px daneben').join(' '));
   }
+  // Der Abstand vor der ersten und hinter der letzten Karte kam aus
+  // Prozenten im padding eines Bands, das so breit ist wie sein Inhalt.
+  // Safari rechnet sie dabei als null: am Telefon ließ sich der Ordensstern
+  // nie in die Mitte schieben, und hier in Chromium war alles grün. Geprüft
+  // wird deshalb die Ursache: kein padding, sondern zwei Glieder des Bands
+  // mit der halben Restbreite — und Platz genug, die letzte Karte zu mitteln.
+  const band = await page.evaluate(() => {
+    const d = document.getElementById('lbLeiter'), b = d && d.querySelector('.lb-k-band');
+    if(!b) return {fehlt:true};
+    const cs = getComputedStyle(b), k = [...d.querySelectorAll('.lb-k')], letzte = k[k.length - 1];
+    return {padL:cs.paddingLeft, padR:cs.paddingRight,
+      vor:Math.round(parseFloat(getComputedStyle(b, '::before').width)),
+      nach:Math.round(parseFloat(getComputedStyle(b, '::after').width)),
+      soll:Math.round((d.clientWidth - 156) / 2),
+      reicht:Math.round(d.scrollWidth - d.clientWidth - (letzte.offsetLeft + letzte.offsetWidth / 2 - d.clientWidth / 2))};
+  });
+  ok(!band.fehlt && band.padL === '0px' && band.padR === '0px'
+     && Math.abs(band.vor - band.soll) <= 1 && Math.abs(band.nach - band.soll) <= 1 && band.reicht >= -1,
+     'die Vitrine hält vor der ersten und hinter der letzten Karte die halbe Breite frei, ohne Prozente im padding',
+     JSON.stringify(band));
 
   // ── Alle Stufen [§C30] ──────────────────────────────────────────────
   //    Jedes Feld der Leiter steht im Blatt, das eigene ist markiert, und ein

@@ -4066,10 +4066,12 @@
     transform:translate(-50%,-50%) translateY(-3.548%)}
   .pp-av-wrap .pp-av-ring{z-index:1}
 
-  .lb-karus{overflow-x:auto;scrollbar-width:none;margin-top:10px;
+  .lb-karus{overflow-x:auto;scrollbar-width:none;margin-top:10px;container-type:inline-size;
     scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
   .lb-karus::-webkit-scrollbar{display:none}
-  .lb-k-band{display:flex;width:max-content;padding:4px calc((100% - 156px) / 2) 2px}
+  .lb-k-band{display:flex;width:max-content;padding:4px 0 2px}
+  .lb-k-band::before,.lb-k-band::after{content:"";
+    flex:0 0 calc((min(100vw, 520px) - 196px) / 2);flex:0 0 calc((100cqw - 156px) / 2)}
   .lb-k{flex:0 0 156px;scroll-snap-align:center;cursor:pointer;
     display:flex;flex-direction:column;align-items:center;gap:4px}
   .lb-k-ins{height:132px;display:grid;place-items:center}
@@ -5798,7 +5800,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.13.0dd4263e';
+const BUILD_VERSION='2026.10.13.6dc52b31';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
