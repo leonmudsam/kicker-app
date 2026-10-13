@@ -140,30 +140,81 @@
       var s = document.createElement('span');
       s.className = 'neu-glanz ' + ton; s.setAttribute('aria-hidden', 'true');
       s.innerHTML = '<i style="animation-delay:' + verzug + 'ms"></i>';
+      s.dataset.t0 = performance.now(); s.dataset.kv = verzug;
       ziel.appendChild(s);
-      setTimeout(function(){ s.remove(); }, verzug + 1300);
+      setTimeout(function(){ s.remove(); }, verzug + 1600);
     }
     // ── Das Kantenlicht [§C27] ──────────────────────────────────────
     // Dasselbe Bauteil wie das Licht am Rand des Profilkopfs: ein Ring aus
     // einer Maske, darin ein Kegel aus Licht, der sich dreht — die Linie
     // fährt die Kante ab. Es hat drei Bedeutungen und keine vierte [§C41]:
-    //   zeichnen  einmal herum, dann leuchtet der Rahmen kurz auf: eine
-    //             Karte, die zählt, ist angekommen;
-    //   hinweis   zweimal herum: hier ist etwas neu;
+    //   zeichnen  einmal herum, dann leuchtet der Rahmen auf und steht
+    //             einige Sekunden: eine Karte, die zählt, ist angekommen;
+    //   hinweis   zweimal herum, ohne Rahmen: hier ist etwas neu;
     //   kreis     solange es dauert: es lädt (im Profilkopf: es läuft).
+    // Zeichnen und Hinweis enden nicht mit der Runde: das Licht läuft
+    // langsamer weiter, ein Schein liegt um die Karte, und nach gut vier
+    // Sekunden verlischt beides. Nach gut einer Sekunde war es vorbei, bevor
+    // man die Karte angesehen hatte — die Kante soll man bemerken.
     // Der Kegel ist so groß wie die Diagonale der Karte (--kd), nicht wie im
     // Profil 1400 px: eine gedrehte Ebene dieser Größe kostet bei dreifacher
     // Pixeldichte ein Vielfaches an Speicher. Die Größe gibt der Aufrufer
-    // mit, gemessen wird nichts.
-    var KANTE_MS = {zeichnen:1250, hinweis:1900};
+    // mit, gemessen wird nichts. Der Schein ist ein eigenes Element neben
+    // dem Ring: im Ring schneidet die Maske alles außer der Kante weg.
+    var KANTE_MS = {zeichnen:4600, hinweis:4200};
     function kante(ziel, ton, art, verzug, d){
       if(!ziel || still()) return;
+      var teile = [];
+      if(art !== 'kreis'){
+        var sch = document.createElement('span');
+        sch.className = 'neu-schein ' + art + ' ' + ton; sch.setAttribute('aria-hidden', 'true');
+        sch.style.setProperty('--kv', verzug + 'ms');
+        teile.push(sch);
+      }
       var k = document.createElement('span');
       k.className = 'neu-kante ' + art + ' ' + ton; k.setAttribute('aria-hidden', 'true');
       k.style.cssText = '--kd:' + d + 'px;--kv:' + verzug + 'ms';
       k.innerHTML = '<i></i>';
-      ziel.appendChild(k);
-      setTimeout(function(){ k.remove(); }, verzug + (KANTE_MS[art] || 1300) + 120);
+      teile.push(k);
+      var t0 = performance.now();
+      teile.forEach(function(t){ t.dataset.t0 = t0; t.dataset.kv = verzug; ziel.appendChild(t); });
+      setTimeout(function(){ teile.forEach(function(t){ t.remove(); }); }, verzug + (KANTE_MS[art] || 1300) + 120);
+    }
+    // Öffnet sich ein Blatt über der Liga, verlischt das Licht unter ihm in
+    // einer Viertelsekunde: hinter dem Vorhang mit Unschärfe rechnete jedes
+    // Bild der Bewegung die Unschärfe neu, und sehen würde man es nicht.
+    function lichtAus(){
+      document.querySelectorAll('.neu-kante, .neu-schein, .neu-glanz').forEach(function(e){
+        if(e.closest('#sheet, #nd, #bp, .neu-start')) return;
+        e.animate([{opacity:1}, {opacity:0}], {duration:250, easing:'ease-out', fill:'forwards'})
+          .finished.then(function(){ e.remove(); }, function(){ e.remove(); });
+      });
+    }
+    // Kommen neue Daten, zeichnet die App den Reiter neu, und mit den alten
+    // Zeilen verschwand ihr Licht — nach gut einer Sekunde, mitten im
+    // Leuchten, weil die Datenbank eben dann antwortet. Das Licht wechselt
+    // deshalb an dieselbe Stelle der neuen Ansicht (Platz 1 bleibt Platz 1)
+    // und läuft dort weiter, wo es war: die Verzögerung wird um die
+    // vergangene Zeit kleiner, auch kleiner als null.
+    function lichtMerken(){
+      var jetzt = performance.now();
+      return [].map.call(main.querySelectorAll('.neu-kante, .neu-schein, .neu-glanz'), function(e){
+        var pfad = [], n = e.parentNode;
+        while(n && n !== main && n.parentNode){ pfad.unshift([].indexOf.call(n.parentNode.children, n)); n = n.parentNode; }
+        return {e:e, pfad:pfad, v:(+e.dataset.kv || 0) - (jetzt - (+e.dataset.t0 || jetzt))};
+      });
+    }
+    function lichtZurueck(liste){
+      var jetzt = performance.now();
+      liste.forEach(function(x){
+        var n = main;
+        for(var i = 0; i < x.pfad.length && n; i++) n = n.children[x.pfad[i]];
+        if(!n) return;
+        x.e.dataset.t0 = jetzt; x.e.dataset.kv = x.v;
+        if(x.e.classList.contains('neu-glanz')) x.e.firstChild.style.animationDelay = x.v + 'ms';
+        else x.e.style.setProperty('--kv', x.v + 'ms');
+        n.appendChild(x.e);
+      });
     }
     function podest(view, reiter, start){
       if(!view || still() || glanzDa[reiter]) return;
@@ -180,22 +231,24 @@
       [].slice.call(view.querySelectorAll(GLANZ[reiter]), 0, 3).forEach(function(z, i){
         var ton = /top1|gold/.test(z.className) ? 'gold' : /top2|silber/.test(z.className) ? 'silber'
           : /top3|bronze/.test(z.className) ? 'bronze' : METALL[i];
-        var v = start + ({gold:0, silber:140, bronze:280})[ton];
+        var v = start + ({gold:0, silber:220, bronze:440})[ton];
         // Erst fährt das Licht die Kante ab und schließt den Rahmen; über
         // Gold zieht danach noch das Band — der Titel [§C25].
         kante(z, ton, 'zeichnen', v, reiter === 'awards' ? 250 : 400);
-        if(ton === 'gold') licht(z, 'gold', v + 820);
+        if(ton === 'gold') licht(z, 'gold', v + 1150);
       });
     }
 
-    // Wer tippt, wischt oder scrollt, will etwas Bestimmtes: die Vorführung
-    // endet sofort, und alles steht, wo es hingehört.
+    // Wer tippt, wischt oder scrollt, will etwas Bestimmtes: der Aufbau
+    // endet sofort, und alles steht, wo es hingehört. Das Licht an den
+    // Kanten läuft zu Ende — es verdeckt nichts und hält nichts auf; wer
+    // gleich weiterscrollte, sah es sonst nie. Es verlischt mit seiner Karte
+    // (ein anderer Reiter) oder unter einem Blatt (`lichtAus`).
     function vorfuehrungEnde(){
       var sb = document.getElementById('neuStart');
       if(sb){ sb.getAnimations({subtree:true}).forEach(function(a){ a.finish(); }); sb.remove(); html.classList.remove('startbild'); }
       html.classList.remove('aufbau');
       main.querySelectorAll('.bau').forEach(function(t){ t.classList.remove('bau'); });
-      document.querySelectorAll('.neu-glanz, .neu-kante').forEach(function(s){ s.remove(); });
     }
     ['pointerdown', 'wheel', 'touchstart', 'keydown'].forEach(function(ev){
       addEventListener(ev, vorfuehrungEnde, {passive:true, capture:true});
@@ -281,7 +334,9 @@
     window.__entwurfRender = function(vorAufruf, nachTab){
       var warTab = main._renderTab, warKnoten = main.firstElementChild;
       var tabWechsel = !!warTab && warTab !== nachTab, erstesBild = !warTab;
+      var licht = !tabWechsel && !erstesBild ? lichtMerken() : null;
       vorAufruf();
+      if(licht) lichtZurueck(licht.filter(function(x){ return !x.e.isConnected; }));
       var von = 0;
       // Wie dunkel er schon ist, sagt die Animation selbst; getComputedStyle
       // erzwänge hier, direkt nach dem Zeichnen, eine Stilberechnung.
@@ -398,6 +453,7 @@
     // die Unschärfe neu. Pausiert wird über die Animationen selbst.
     function verdecken(an){
       if(an){
+        lichtAus();
         unterBlatt = document.getAnimations().filter(function(a){
           var t = a.effect && a.effect.target;
           return t && a.playState === 'running' && endlos(a) && (main.contains(t) || t.closest('.appbar, .botnav'));
@@ -451,7 +507,7 @@
       } else if(kinder.length === 1) return;
       kinder.slice(0, 8).forEach(function(k, i){ k.classList.add('neu-k'); k.style.animationDelay = (i * 45) + 'ms'; });
       [].slice.call(sheet.querySelectorAll('.nf-card'), 0, 6).filter(function(c){ return !c.classList.contains('read'); })
-        .forEach(function(c, i){ kante(c, 'story', 'zeichnen', 320 + i * 150, 560); });
+        .forEach(function(c, i){ kante(c, 'story', 'zeichnen', 320 + i * 200, 560); });
     }
     var offen = false, planTimer = 0;
     new MutationObserver(function(){

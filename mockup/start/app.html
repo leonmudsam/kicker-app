@@ -5851,7 +5851,7 @@ html.neu .neu-glanz.story::after{content:"";position:absolute;inset:0;border-rad
 @keyframes neuGlanz{from{transform:translateX(-130%)}to{transform:translateX(130%)}}
 @keyframes neuKante{0%,100%{opacity:0}30%{opacity:1}}
 @media(prefers-reduced-motion:no-preference){
-  html.neu:not(.ruhe) .neu-glanz i{animation:neuGlanz .95s cubic-bezier(.45,0,.25,1) both}
+  html.neu:not(.ruhe) .neu-glanz i{animation:neuGlanz 1.3s cubic-bezier(.45,0,.25,1) both}
   html.neu:not(.ruhe) .neu-glanz.story::after{animation:neuKante 1.6s ease-out .2s both}
 }
 
@@ -5859,36 +5859,63 @@ html.neu .neu-glanz.story::after{content:"";position:absolute;inset:0;border-rad
 /* Ein Ring aus einer Maske (nur der Rand bleibt sichtbar), darin ein
    Kegel aus Licht mit langem Schweif, der sich dreht: die Linie fährt die
    Kante ab. Dasselbe Bauteil wie .pp-rand im Profilkopf. Drei Arten:
-   „zeichnen" einmal herum und der Rahmen leuchtet kurz auf, „hinweis"
-   zweimal herum, „kreis" ohne Ende, solange etwas lädt. Die Farbe kommt
-   aus dem Ton: Metall für Plätze, Acid fürs Bedienen, die Farbe der Story. */
+   „zeichnen" einmal herum, dann leuchtet der Rahmen auf und steht;
+   „hinweis" zweimal herum, ohne Rahmen; „kreis" ohne Ende, solange etwas
+   lädt. Zeichnen und Hinweis ziehen sich: nach der Runde läuft das Licht
+   langsamer weiter, ein Schein liegt um die Karte (.neu-schein, neben dem
+   Ring — in ihm schnitte die Maske ihn weg), und nach 4,6 bzw. 4,2 s
+   verlischt alles, langsam. Nach gut einer Sekunde war es vorbei, bevor
+   man die Karte angesehen hatte. Die Farbe kommt aus dem Ton: Metall für
+   Plätze, Acid fürs Bedienen, die Farbe der Story. Bewegt werden nur
+   Drehung und Deckkraft. */
 html.neu .neu-kante{position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;z-index:3;padding:2px;overflow:hidden;
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
-html.neu .neu-kante.innen{inset:0}
+html.neu .neu-kante.innen,html.neu .neu-schein.innen{inset:0}
 html.neu .neu-kante i{position:absolute;left:50%;top:50%;width:var(--kd);height:var(--kd);
   margin:calc(var(--kd) / -2) 0 0 calc(var(--kd) / -2);opacity:0;will-change:transform;
   background:conic-gradient(from 0deg,transparent 0deg 180deg,rgba(var(--kr),.22) 250deg,rgba(var(--kr),.7) 318deg,
     rgba(var(--kr),1) 348deg,#fff 355deg,transparent 360deg)}
-/* Der Rahmen, wenn die Linie ihn geschlossen hat: einmal ganz, dann weg. */
-html.neu .neu-kante.zeichnen::after{content:"";position:absolute;inset:0;background:rgba(var(--kr),.7);opacity:0}
-html.neu .neu-kante.gold{--kr:247,207,74}
-html.neu .neu-kante.silber{--kr:214,222,230}
-html.neu .neu-kante.bronze{--kr:222,160,108}
-html.neu .neu-kante.acid{--kr:190,242,100}
-html.neu .neu-kante.weiss{--kr:255,255,255}
-html.neu .neu-kante.story{--kr:var(--story-rgb,190,242,100)}
-@keyframes neuKanteZeichnen{0%{transform:rotate(-110deg);opacity:0}10%{opacity:1}82%{opacity:1}100%{transform:rotate(250deg);opacity:0}}
-@keyframes neuKanteHinweis{0%{transform:rotate(-110deg);opacity:0}6%{opacity:1}90%{opacity:1}100%{transform:rotate(610deg);opacity:0}}
+/* Der Rahmen, wenn die Linie ihn geschlossen hat: ganz hell, dann steht er
+   halb, dann verlischt er. */
+html.neu .neu-kante.zeichnen::after{content:"";position:absolute;inset:0;background:rgba(var(--kr),.75);opacity:0}
+/* Der Schein: Licht, das von der Kante nach außen und ein wenig nach innen
+   fällt. Eine feste Schattenform, bewegt wird nur ihre Deckkraft. */
+html.neu .neu-schein{position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;z-index:2;opacity:0;
+  box-shadow:0 0 0 1px rgba(var(--kr),.35),0 0 20px -3px rgba(var(--kr),.55),inset 0 0 18px -7px rgba(var(--kr),.4)}
+html.neu :is(.neu-kante,.neu-schein).gold{--kr:247,207,74}
+html.neu :is(.neu-kante,.neu-schein).silber{--kr:214,222,230}
+html.neu :is(.neu-kante,.neu-schein).bronze{--kr:222,160,108}
+html.neu :is(.neu-kante,.neu-schein).acid{--kr:190,242,100}
+html.neu :is(.neu-kante,.neu-schein).weiss{--kr:255,255,255}
+html.neu :is(.neu-kante,.neu-schein).story{--kr:var(--story-rgb,190,242,100)}
+/* Die erste Runde beschleunigt und kommt in Fahrt an; danach läuft das
+   Licht weiter und wird langsamer, bis es steht, während es verlischt. */
+@keyframes neuKanteZeichnen{
+  0%{transform:rotate(-110deg);opacity:0;animation-timing-function:cubic-bezier(.4,0,.7,.6)}
+  4%{opacity:1}
+  22%{transform:rotate(250deg);opacity:1;animation-timing-function:cubic-bezier(.3,.6,.6,1)}
+  70%{opacity:.9}
+  100%{transform:rotate(790deg);opacity:0}}
+@keyframes neuKanteHinweis{
+  0%{transform:rotate(-110deg);opacity:0;animation-timing-function:cubic-bezier(.4,0,.7,.6)}
+  5%{opacity:1}
+  40%{transform:rotate(610deg);opacity:1;animation-timing-function:cubic-bezier(.3,.6,.6,1)}
+  70%{opacity:.7}
+  100%{transform:rotate(1150deg);opacity:0}}
 @keyframes neuKanteKreis{from{transform:rotate(0)}to{transform:rotate(360deg)}}
-@keyframes neuRahmen{0%,100%{opacity:0}35%{opacity:1}}
+@keyframes neuRahmen{0%,19%{opacity:0}25%{opacity:1}36%{opacity:.78}74%{opacity:.7}100%{opacity:0}}
+@keyframes neuSchein{0%,17%{opacity:0}27%{opacity:1}40%{opacity:.85}74%{opacity:.75}100%{opacity:0}}
+@keyframes neuScheinHinweis{0%,6%{opacity:0}22%{opacity:.75}40%{opacity:.5}60%{opacity:.7}78%{opacity:.5}100%{opacity:0}}
 @keyframes neuPing{0%{transform:scale(1);opacity:.9}100%{transform:scale(3.2);opacity:0}}
 html.neu .dot,html.neu .lauf-z i.h{position:relative}
 html.neu .lauf-z i.h::after{content:"";position:absolute;inset:-1px;border-radius:3px;border:1.5px solid var(--acid);opacity:0;pointer-events:none}
 html.neu .dot.neu-ping::after{content:"";position:absolute;inset:-1px;border-radius:50%;border:1.5px solid var(--acid);opacity:0}
 @media(prefers-reduced-motion:no-preference){
-  html.neu:not(.ruhe) .neu-kante.zeichnen i{animation:neuKanteZeichnen .95s cubic-bezier(.45,.05,.4,1) var(--kv,0ms) both}
-  html.neu:not(.ruhe) .neu-kante.zeichnen::after{animation:neuRahmen .55s ease-out calc(var(--kv,0ms) + .72s) both}
-  html.neu:not(.ruhe) .neu-kante.hinweis i{animation:neuKanteHinweis 1.8s cubic-bezier(.45,.05,.4,1) var(--kv,0ms) both}
+  html.neu:not(.ruhe) .neu-kante.zeichnen i{animation:neuKanteZeichnen 4.6s linear var(--kv,0ms) both}
+  html.neu:not(.ruhe) .neu-kante.zeichnen::after{animation:neuRahmen 4.6s ease var(--kv,0ms) both}
+  html.neu:not(.ruhe) .neu-schein.zeichnen{animation:neuSchein 4.6s ease var(--kv,0ms) both}
+  html.neu:not(.ruhe) .neu-kante.hinweis i{animation:neuKanteHinweis 4.2s linear var(--kv,0ms) both}
+  html.neu:not(.ruhe) .neu-schein.hinweis{animation:neuScheinHinweis 4.2s ease var(--kv,0ms) both}
   html.neu:not(.ruhe) .neu-kante.kreis i{opacity:1;animation:neuKanteKreis 1.4s linear infinite}
   html.neu:not(.ruhe) .dot.neu-ping::after{animation:neuPing .9s ease-out 2}
 }
@@ -34885,30 +34912,81 @@ window.__k = {eval: c => eval(c)};
       var s = document.createElement('span');
       s.className = 'neu-glanz ' + ton; s.setAttribute('aria-hidden', 'true');
       s.innerHTML = '<i style="animation-delay:' + verzug + 'ms"></i>';
+      s.dataset.t0 = performance.now(); s.dataset.kv = verzug;
       ziel.appendChild(s);
-      setTimeout(function(){ s.remove(); }, verzug + 1300);
+      setTimeout(function(){ s.remove(); }, verzug + 1600);
     }
     // ── Das Kantenlicht [§C27] ──────────────────────────────────────
     // Dasselbe Bauteil wie das Licht am Rand des Profilkopfs: ein Ring aus
     // einer Maske, darin ein Kegel aus Licht, der sich dreht — die Linie
     // fährt die Kante ab. Es hat drei Bedeutungen und keine vierte [§C41]:
-    //   zeichnen  einmal herum, dann leuchtet der Rahmen kurz auf: eine
-    //             Karte, die zählt, ist angekommen;
-    //   hinweis   zweimal herum: hier ist etwas neu;
+    //   zeichnen  einmal herum, dann leuchtet der Rahmen auf und steht
+    //             einige Sekunden: eine Karte, die zählt, ist angekommen;
+    //   hinweis   zweimal herum, ohne Rahmen: hier ist etwas neu;
     //   kreis     solange es dauert: es lädt (im Profilkopf: es läuft).
+    // Zeichnen und Hinweis enden nicht mit der Runde: das Licht läuft
+    // langsamer weiter, ein Schein liegt um die Karte, und nach gut vier
+    // Sekunden verlischt beides. Nach gut einer Sekunde war es vorbei, bevor
+    // man die Karte angesehen hatte — die Kante soll man bemerken.
     // Der Kegel ist so groß wie die Diagonale der Karte (--kd), nicht wie im
     // Profil 1400 px: eine gedrehte Ebene dieser Größe kostet bei dreifacher
     // Pixeldichte ein Vielfaches an Speicher. Die Größe gibt der Aufrufer
-    // mit, gemessen wird nichts.
-    var KANTE_MS = {zeichnen:1250, hinweis:1900};
+    // mit, gemessen wird nichts. Der Schein ist ein eigenes Element neben
+    // dem Ring: im Ring schneidet die Maske alles außer der Kante weg.
+    var KANTE_MS = {zeichnen:4600, hinweis:4200};
     function kante(ziel, ton, art, verzug, d){
       if(!ziel || still()) return;
+      var teile = [];
+      if(art !== 'kreis'){
+        var sch = document.createElement('span');
+        sch.className = 'neu-schein ' + art + ' ' + ton; sch.setAttribute('aria-hidden', 'true');
+        sch.style.setProperty('--kv', verzug + 'ms');
+        teile.push(sch);
+      }
       var k = document.createElement('span');
       k.className = 'neu-kante ' + art + ' ' + ton; k.setAttribute('aria-hidden', 'true');
       k.style.cssText = '--kd:' + d + 'px;--kv:' + verzug + 'ms';
       k.innerHTML = '<i></i>';
-      ziel.appendChild(k);
-      setTimeout(function(){ k.remove(); }, verzug + (KANTE_MS[art] || 1300) + 120);
+      teile.push(k);
+      var t0 = performance.now();
+      teile.forEach(function(t){ t.dataset.t0 = t0; t.dataset.kv = verzug; ziel.appendChild(t); });
+      setTimeout(function(){ teile.forEach(function(t){ t.remove(); }); }, verzug + (KANTE_MS[art] || 1300) + 120);
+    }
+    // Öffnet sich ein Blatt über der Liga, verlischt das Licht unter ihm in
+    // einer Viertelsekunde: hinter dem Vorhang mit Unschärfe rechnete jedes
+    // Bild der Bewegung die Unschärfe neu, und sehen würde man es nicht.
+    function lichtAus(){
+      document.querySelectorAll('.neu-kante, .neu-schein, .neu-glanz').forEach(function(e){
+        if(e.closest('#sheet, #nd, #bp, .neu-start')) return;
+        e.animate([{opacity:1}, {opacity:0}], {duration:250, easing:'ease-out', fill:'forwards'})
+          .finished.then(function(){ e.remove(); }, function(){ e.remove(); });
+      });
+    }
+    // Kommen neue Daten, zeichnet die App den Reiter neu, und mit den alten
+    // Zeilen verschwand ihr Licht — nach gut einer Sekunde, mitten im
+    // Leuchten, weil die Datenbank eben dann antwortet. Das Licht wechselt
+    // deshalb an dieselbe Stelle der neuen Ansicht (Platz 1 bleibt Platz 1)
+    // und läuft dort weiter, wo es war: die Verzögerung wird um die
+    // vergangene Zeit kleiner, auch kleiner als null.
+    function lichtMerken(){
+      var jetzt = performance.now();
+      return [].map.call(main.querySelectorAll('.neu-kante, .neu-schein, .neu-glanz'), function(e){
+        var pfad = [], n = e.parentNode;
+        while(n && n !== main && n.parentNode){ pfad.unshift([].indexOf.call(n.parentNode.children, n)); n = n.parentNode; }
+        return {e:e, pfad:pfad, v:(+e.dataset.kv || 0) - (jetzt - (+e.dataset.t0 || jetzt))};
+      });
+    }
+    function lichtZurueck(liste){
+      var jetzt = performance.now();
+      liste.forEach(function(x){
+        var n = main;
+        for(var i = 0; i < x.pfad.length && n; i++) n = n.children[x.pfad[i]];
+        if(!n) return;
+        x.e.dataset.t0 = jetzt; x.e.dataset.kv = x.v;
+        if(x.e.classList.contains('neu-glanz')) x.e.firstChild.style.animationDelay = x.v + 'ms';
+        else x.e.style.setProperty('--kv', x.v + 'ms');
+        n.appendChild(x.e);
+      });
     }
     function podest(view, reiter, start){
       if(!view || still() || glanzDa[reiter]) return;
@@ -34925,22 +35003,24 @@ window.__k = {eval: c => eval(c)};
       [].slice.call(view.querySelectorAll(GLANZ[reiter]), 0, 3).forEach(function(z, i){
         var ton = /top1|gold/.test(z.className) ? 'gold' : /top2|silber/.test(z.className) ? 'silber'
           : /top3|bronze/.test(z.className) ? 'bronze' : METALL[i];
-        var v = start + ({gold:0, silber:140, bronze:280})[ton];
+        var v = start + ({gold:0, silber:220, bronze:440})[ton];
         // Erst fährt das Licht die Kante ab und schließt den Rahmen; über
         // Gold zieht danach noch das Band — der Titel [§C25].
         kante(z, ton, 'zeichnen', v, reiter === 'awards' ? 250 : 400);
-        if(ton === 'gold') licht(z, 'gold', v + 820);
+        if(ton === 'gold') licht(z, 'gold', v + 1150);
       });
     }
 
-    // Wer tippt, wischt oder scrollt, will etwas Bestimmtes: die Vorführung
-    // endet sofort, und alles steht, wo es hingehört.
+    // Wer tippt, wischt oder scrollt, will etwas Bestimmtes: der Aufbau
+    // endet sofort, und alles steht, wo es hingehört. Das Licht an den
+    // Kanten läuft zu Ende — es verdeckt nichts und hält nichts auf; wer
+    // gleich weiterscrollte, sah es sonst nie. Es verlischt mit seiner Karte
+    // (ein anderer Reiter) oder unter einem Blatt (`lichtAus`).
     function vorfuehrungEnde(){
       var sb = document.getElementById('neuStart');
       if(sb){ sb.getAnimations({subtree:true}).forEach(function(a){ a.finish(); }); sb.remove(); html.classList.remove('startbild'); }
       html.classList.remove('aufbau');
       main.querySelectorAll('.bau').forEach(function(t){ t.classList.remove('bau'); });
-      document.querySelectorAll('.neu-glanz, .neu-kante').forEach(function(s){ s.remove(); });
     }
     ['pointerdown', 'wheel', 'touchstart', 'keydown'].forEach(function(ev){
       addEventListener(ev, vorfuehrungEnde, {passive:true, capture:true});
@@ -35026,7 +35106,9 @@ window.__k = {eval: c => eval(c)};
     window.__entwurfRender = function(vorAufruf, nachTab){
       var warTab = main._renderTab, warKnoten = main.firstElementChild;
       var tabWechsel = !!warTab && warTab !== nachTab, erstesBild = !warTab;
+      var licht = !tabWechsel && !erstesBild ? lichtMerken() : null;
       vorAufruf();
+      if(licht) lichtZurueck(licht.filter(function(x){ return !x.e.isConnected; }));
       var von = 0;
       // Wie dunkel er schon ist, sagt die Animation selbst; getComputedStyle
       // erzwänge hier, direkt nach dem Zeichnen, eine Stilberechnung.
@@ -35143,6 +35225,7 @@ window.__k = {eval: c => eval(c)};
     // die Unschärfe neu. Pausiert wird über die Animationen selbst.
     function verdecken(an){
       if(an){
+        lichtAus();
         unterBlatt = document.getAnimations().filter(function(a){
           var t = a.effect && a.effect.target;
           return t && a.playState === 'running' && endlos(a) && (main.contains(t) || t.closest('.appbar, .botnav'));
@@ -35196,7 +35279,7 @@ window.__k = {eval: c => eval(c)};
       } else if(kinder.length === 1) return;
       kinder.slice(0, 8).forEach(function(k, i){ k.classList.add('neu-k'); k.style.animationDelay = (i * 45) + 'ms'; });
       [].slice.call(sheet.querySelectorAll('.nf-card'), 0, 6).filter(function(c){ return !c.classList.contains('read'); })
-        .forEach(function(c, i){ kante(c, 'story', 'zeichnen', 320 + i * 150, 560); });
+        .forEach(function(c, i){ kante(c, 'story', 'zeichnen', 320 + i * 200, 560); });
     }
     var offen = false, planTimer = 0;
     new MutationObserver(function(){
