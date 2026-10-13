@@ -47,8 +47,11 @@ html.neu .geruest::after{content:"";position:absolute;inset:0;pointer-events:non
 
 /* ── 2 · Das Startbild ─────────────────────────────────────────────── */
 /* Das Zeichen der Liga auf dem Grund, darunter Name und eine Spur, in der
-   ein Licht läuft. Beim Einbau festes Markup in index.html, sichtbar,
-   bevor das Skript übersetzt ist. */
+   ein Licht läuft. Festes Markup oben in <body>, sichtbar, bevor das
+   Skript übersetzt ist; unter „heute" verborgen. Es steht mit dem ersten
+   Bild ganz da: blendete es ein, kam das Zeichen gefühlt zu spät — es ist
+   das Erste, was man sieht, und es soll nicht warten. */
+.neu-start{display:none}
 html.neu .neu-start{position:fixed;inset:0;z-index:300;display:grid;place-items:center;pointer-events:none}
 html.neu .ns-grund{position:absolute;inset:0;background:var(--bg);
   background-image:radial-gradient(56% 34% at 50% 45%,rgba(190,242,100,.075),transparent 72%)}
@@ -65,10 +68,8 @@ html.neu .ns-spur i{position:absolute;top:0;bottom:0;left:0;width:40%;transform:
 /* Solange das Startbild steht, fehlt das Zeichen in der Kopfleiste: das
    Zeichen des Startbilds fliegt dorthin und wird es. */
 html.neu.startbild .logo-mark{opacity:0}
-@keyframes neuStartEin{from{opacity:0;transform:scale(.9)}}
 @keyframes neuSpur{to{transform:translateX(260%)}}
 @media(prefers-reduced-motion:no-preference){
-  html.neu:not(.ruhe) .ns-mitte{animation:neuStartEin .45s cubic-bezier(.2,.8,.2,1) both}
   html.neu:not(.ruhe) .ns-spur i{animation:neuSpur 1.1s cubic-bezier(.45,0,.55,1) infinite}
 }
 
@@ -195,6 +196,79 @@ html.neu #newsBtn::after{content:"";position:absolute;inset:-2px;border-radius:i
 @media(prefers-reduced-motion:no-preference){
   html.neu:not(.ruhe) #newsBtn.neu-ruf::after{animation:neuRuf 1s cubic-bezier(.2,.8,.2,1) 2}
   html.neu:not(.ruhe) .news-btn-badge.neu-pop{animation:neuPop .5s cubic-bezier(.3,1.6,.5,1)}
+}
+
+/* ── 6b · Der Hinweis „x neue Stories" ──────────────────────────────── */
+/* Oben die Zahl und seit wann, darunter ein Strich je Story in der Farbe
+   ihrer Karte; unten die wichtigste Story, geformt wie ihre Karte im Feed:
+   die Kante links in ihrer Farbe, Gesicht, Rubrik, Schlagzeile [§C27].
+   Er wächst aus der Pille, auf die sein Pfeil zeigt, und schrumpft dorthin
+   zurück. Der Lichtlauf ohne Ende von heute entfällt; stattdessen fährt
+   beim Erscheinen zweimal Licht um die Kante (entwurf-app.js). */
+html.neu .news-toast{white-space:normal;width:min(296px,calc(100vw - 24px));padding:11px 12px 9px 11px;border-radius:16px;
+  background:radial-gradient(140px 90px at 30px 26px,rgba(190,242,100,.13),transparent 70%),linear-gradient(165deg,#1c2615,#10150c);
+  border:1px solid rgba(190,242,100,.42);
+  box-shadow:0 18px 40px -10px rgba(0,0,0,.75),0 0 0 3px rgba(190,242,100,.06),0 0 26px -4px rgba(190,242,100,.26);
+  transform-origin:calc(100% - var(--nt-arrow,18px) - 5px) -6px;transform:translateY(-4px) scale(.7);
+  transition:opacity .18s ease-in,transform .26s cubic-bezier(.5,0,.75,0)}
+html.neu .news-toast.show{transform:none;transition:opacity .2s ease-out,transform .5s cubic-bezier(.3,1.32,.5,1)}
+html.neu .news-toast:active{transform:scale(.97)}
+html.neu .news-toast::before{background:#1c2615;border-color:rgba(190,242,100,.42)}
+html.neu .news-toast.show::after{display:none}
+html.neu #newsToastTxt{display:block;overflow:visible;border-radius:0}
+html.neu .nh{display:block}
+html.neu .nh-kopf{display:flex;align-items:center;gap:11px}
+/* Die Zahl auf einer Marke in Acid: das, was man zuerst lesen soll. */
+html.neu .nh-zahl{flex:0 0 auto;display:grid;place-items:center;min-width:42px;height:42px;padding:0 7px;border-radius:13px;color:#0f1409;
+  background:linear-gradient(150deg,#dcfb93,var(--acid) 46%,#93cf33);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 -2px 0 rgba(0,0,0,.16),0 6px 16px -6px rgba(190,242,100,.75)}
+html.neu .nh-zahl b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:20px;line-height:1;letter-spacing:-.03em}
+html.neu .nh-zahl.lang b{font-size:15px}
+html.neu .nh-zus{flex:1;min-width:0}
+html.neu .nh-wort{display:flex;align-items:baseline;flex-wrap:wrap;column-gap:8px;
+  font-family:'Archivo Black',sans-serif;font-size:13.5px;line-height:1.15;letter-spacing:-.005em;color:var(--ink)}
+html.neu .nh-wort em{font-style:normal;font-family:'Sometype Mono',monospace;font-size:9.5px;letter-spacing:.06em;color:var(--muted)}
+/* Ein Strich je Story; bei vielen werden sie schmaler, nie weniger. */
+html.neu .nh-band{display:flex;height:5px;margin-top:8px}
+html.neu .nh-band i{flex:1 1 0;min-width:1px;border-radius:2px;background:rgb(var(--story-rgb,185,196,189));
+  box-shadow:0 0 6px -1px rgba(var(--story-rgb,185,196,189),.6);transform-origin:50% 100%}
+html.neu .nh-pfeil{flex:0 0 auto;display:grid;place-items:center;width:22px;height:22px;border-radius:50%;
+  color:var(--acid);background:rgba(190,242,100,.1)}
+html.neu .nh-pfeil svg{width:13px;height:13px}
+html.neu .nh-rot{--story-rgb:240,86,106}
+html.neu .nh-story{display:flex;align-items:center;gap:10px;margin-top:10px;padding:8px 10px 9px;border-radius:4px 11px 11px 4px;
+  background:linear-gradient(90deg,rgba(var(--story-rgb,185,196,189),.11),rgba(var(--story-rgb,185,196,189),.03));
+  box-shadow:inset 2px 0 0 rgb(var(--story-rgb,185,196,189))}
+html.neu .nh-gesichter{flex:0 0 auto;display:flex;align-items:center;--av:28px}
+html.neu .nh-gesichter > .av{box-shadow:0 0 0 2px #161f11}
+html.neu .nh-gesichter > .av + .av{margin-left:-9px}
+html.neu .nh-gesichter > .nf-face-mehr{font-size:9.5px}
+html.neu .nh-text{min-width:0;display:flex;flex-direction:column;gap:3px}
+html.neu .nh-rub{display:flex;align-items:center;gap:5px;font-family:'Sometype Mono',monospace;font-size:8.5px;font-weight:600;
+  letter-spacing:.14em;text-transform:uppercase;color:rgb(var(--story-rgb,185,196,189))}
+html.neu .nh-rub svg{width:11px;height:11px;flex:0 0 auto}
+html.neu .nh-titel{font-family:'Space Grotesk',system-ui,sans-serif;font-weight:600;font-size:12.5px;line-height:1.28;color:var(--ink)}
+/* Wie lange er noch steht: eine Linie, die abläuft — nur, wo sich etwas
+   bewegen darf; stillstehend sagte sie nichts. */
+html.neu .nh-zeit{display:none;height:2px;margin:9px 2px 0;border-radius:1px;background:rgba(255,255,255,.06);overflow:hidden}
+html.neu .nh-zeit i{display:block;height:100%;background:rgba(190,242,100,.55);transform-origin:0 50%;transform:scaleX(0)}
+@keyframes nhPop{0%{opacity:0;transform:scale(.4) rotate(-14deg)}60%{opacity:1;transform:scale(1.1) rotate(3deg)}100%{transform:none}}
+@keyframes nhEin{from{opacity:0;transform:translateX(-8px)}}
+@keyframes nhAuf{from{opacity:0;transform:translateY(8px)}}
+@keyframes nhStrich{from{opacity:0;transform:scaleY(0)}}
+@keyframes nhGesicht{0%{opacity:0;transform:scale(.3)}70%{opacity:1;transform:scale(1.12)}100%{transform:none}}
+@keyframes nhZeit{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+@media(prefers-reduced-motion:no-preference){
+  html.neu:not(.ruhe) .news-toast.show .nh-zahl{animation:nhPop .55s cubic-bezier(.3,1.4,.5,1) .06s both}
+  html.neu:not(.ruhe) .news-toast.show .nh-wort{animation:nhEin .34s cubic-bezier(.2,.8,.2,1) .14s both}
+  html.neu:not(.ruhe) .news-toast.show .nh-band i{animation:nhStrich .32s cubic-bezier(.3,1.5,.5,1) both}
+  html.neu:not(.ruhe) .news-toast.show .nh-pfeil{animation:nhEin .3s ease-out .4s both}
+  html.neu:not(.ruhe) .news-toast.show .nh-story{animation:nhAuf .4s cubic-bezier(.2,.8,.2,1) .3s both}
+  html.neu:not(.ruhe) .news-toast.show .nh-gesichter > *{animation:nhGesicht .4s cubic-bezier(.3,1.4,.5,1) .42s both}
+  html.neu:not(.ruhe) .news-toast.show .nh-gesichter > :nth-child(2){animation-delay:.5s}
+  html.neu:not(.ruhe) .news-toast.show .nh-gesichter > :nth-child(3){animation-delay:.58s}
+  html.neu:not(.ruhe) .nh-zeit{display:block}
+  html.neu:not(.ruhe) .news-toast.show .nh-zeit i{animation:nhZeit linear both}
 }
 
 /* ── 7 · Blätter ───────────────────────────────────────────────────── */

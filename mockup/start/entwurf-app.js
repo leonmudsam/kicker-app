@@ -1,8 +1,9 @@
 // Der Entwurf für Öffnen, Reiter und Blätter. Läuft nur unter #neu, nach
-// dem Code der App: `__entwurfStartbild` setzt das Startbild, solange das
-// Telefon das Skript übersetzt, `__entwurf` hängt sich danach an fünf
-// Stellen der App — render, renderNav, _renderNachEingabe, setConn,
-// _ligaAktualisieren — und an die Klassen von Blatt, Story und Popover. Beim
+// dem Code der App: das Startbild steht da schon (festes Markup, bau.js),
+// `__entwurfStartbild` gibt der Kopfleiste sein Zeichen, `__entwurf` hängt
+// sich danach an die Stellen der App — render, renderNav,
+// _renderNachEingabe, setConn, _ligaAktualisieren, _newsToastFuellen,
+// _positionNewsToast — und an die Klassen von Blatt, Story und Popover. Beim
 // Einbau stünde jeder Teil in der Datei, die diese Stelle besitzt; hier
 // steht er beisammen, damit man ihn sieht.
 //
@@ -21,22 +22,18 @@
   var still = function(){ return html.classList.contains('ruhe') || matchMedia('(prefers-reduced-motion: reduce)').matches; };
 
   // ── 1 · Das Startbild ───────────────────────────────────────────────
-  // Beim Einbau festes Markup in src/index.html: es steht im ersten Bild,
-  // bevor das Skript übersetzt ist. Heute ist dort nur der Grund zu sehen —
-  // auf einem Mittelklasse-Telefon rund eine halbe Sekunde lang. Das Zeichen
-  // der Liga, ihr Name und eine Spur, in der ein Licht läuft: es lädt.
+  // Festes Markup oben in <body> (bau.js): es steht im ersten Bild, bevor
+  // das Skript übersetzt ist. Heute ist dort nur der Grund zu sehen — auf
+  // einem Mittelklasse-Telefon rund eine halbe Sekunde lang. Das Zeichen
+  // der Liga steht sofort, ohne Einblenden; um seine Kante kreist ein Licht,
+  // und in der Spur darunter läuft eins: es lädt. Das Zeichen in der
+  // Kopfleiste bekommt dasselbe kleine Bild, damit der Flug auf einem
+  // gleichen Bild landet und nicht auf den 1,2 MB von icon.png wartet.
   window.__entwurfStartbild = function(){
-    if(S.art !== 'neu') return;
-    html.classList.add('neu', 'startbild');
-    var img = document.querySelector('.logo-mark img');
-    var sb = document.createElement('div');
-    sb.className = 'neu-start'; sb.id = 'neuStart'; sb.setAttribute('aria-hidden', 'true');
-    sb.innerHTML = '<i class="ns-grund"></i><div class="ns-mitte">'
-      + '<span class="ns-logo"><img src="' + (img ? img.getAttribute('src') : '') + '" alt="">'
-      + '<span class="neu-kante kreis acid innen" style="--kd:130px"><i></i></span></span>'
-      + '<b class="ns-name">Kicker Liga</b><span class="ns-unter">Elo · 2v2</span>'
-      + '<span class="ns-spur"><i></i></span></div>';
-    document.body.appendChild(sb);
+    var sb = document.getElementById('neuStart');
+    if(S.art !== 'neu'){ if(sb) sb.remove(); return; }
+    var img = document.querySelector('.logo-mark img'), klein = sb && sb.querySelector('.ns-logo img');
+    if(img && klein) img.src = klein.src;
   };
 
   window.__entwurf = function(){
@@ -320,9 +317,9 @@
 
     // ── 7 · Neuigkeiten ──────────────────────────────────────────────
     // Die Pille „News" erscheint heute unvermittelt, sobald der Feed geladen
-    // ist. Hier gleitet sie herein; gibt es Ungelesenes, zieht ein Licht
-    // über sie. Kommt der Hinweis „x neue Stories", geht von ihr zweimal ein
-    // Ring aus, und die Zahl springt auf. Danach ist sie still.
+    // ist. Hier gleitet sie herein; gibt es Ungelesenes, fährt zweimal Licht
+    // um ihre Kante. Kommt der Hinweis, geht von ihr zweimal ein Ring aus,
+    // und ihre Zahl springt auf. Danach ist sie still.
     var btn = document.getElementById('newsBtn'), badge = document.getElementById('newsBtnBadge'), toast = document.getElementById('newsToast');
     var btnDa = false;
     new MutationObserver(function(){
@@ -332,10 +329,99 @@
       btn.animate([{opacity:0, transform:'translateX(14px)'}, {opacity:1, transform:'none'}], {duration:380, easing:'cubic-bezier(.2,.8,.2,1)'});
       if(badge.style.display !== 'none') kante(btn, 'acid', 'hinweis', 200, 120);
     }).observe(btn, {attributes:true, attributeFilter:['style']});
+
+    // ── 7b · Der Hinweis „x neue Stories" ───────────────────────────
+    // Heute eine Zeile: Zeichen, Zahl, „neue Stories" — und nach vier
+    // Sekunden weg, ohne dass man erfuhr, worum es geht. Jetzt sagt er drei
+    // Dinge, von grob nach fein: wie viele (die Zahl groß, daneben seit
+    // wann), welcher Art (ein Strich je Story in der Farbe ihrer Karte,
+    // gleiche Farben beisammen) und was das Wichtigste ist (die erste Story
+    // mit ihrer Rubrik, ihrem Gesicht und ihrer Schlagzeile, geformt wie
+    // ihre Karte im Feed [§C27]). Die Wichtigste wählt dieselbe Ordnung wie
+    // der Feed: Breaking, dann wichtig, dann Priorität, dann die neueste —
+    // kein Name, keine feste Story. Ersetzt wird nur `_newsToastFuellen`;
+    // wann er kommt, wohin er zeigt und dass ein Tippen den Feed öffnet,
+    // bleibt der App.
+    var A = K('({getStoriesCache, _newsLoadSeen, _newsLesestand, _newsGelesen, _isBreaking, _isImportant, _newsSorte, _newsRubrik,'
+      + ' _newsSorteIcon, _newsTafelTon, _newsIstNegativ, _newsPids, pmap, avHtml, esc, datumFmt, svgI, NEWS_AMBIENT_STIL})');
+    // Er trägt jetzt eine Schlagzeile; vier Sekunden reichten für eine Zahl,
+    // nicht zum Lesen. Wie lange er noch steht, zeigt eine Linie am Fuß.
+    var HINWEIS_MS = 6500;
+    // Die Farbe einer Story ist die ihrer Karte: dieselben Klassen wie das
+    // Story-Blatt (nd-s-…, nd-tafel-…, nd-fakt-…), die nur `--story-rgb`
+    // setzen; Breaking und die negative Richtung sind rot [§C25].
+    function hinweisTon(s){
+      if(A._isBreaking(s) || A._newsIstNegativ(s)) return 'nh-rot';
+      var d = s.dataRef || {}, sorte = A._newsSorte(s), c = 'nd-s-' + sorte;
+      if(sorte === 'tafel') c += ' nd-tafel-' + A._newsTafelTon(s);
+      if(sorte === 'fakt' && d.type === 'ambient') c += ' nd-fakt-' + (A.NEWS_AMBIENT_STIL[d.ambientRubrik] || A.NEWS_AMBIENT_STIL.liga).ton;
+      return c;
+    }
+    function hinweisHtml(n){
+      var seen = A._newsLoadSeen(), stand = A._newsLesestand();
+      var neu = A.getStoriesCache().filter(function(s){ return !A._newsGelesen(s, seen, stand); });
+      var gewicht = function(s){ return (A._isBreaking(s) ? 4 : 0) + (A._isImportant(s) ? 2 : 0); };
+      neu.sort(function(a, b){ return gewicht(b) - gewicht(a) || (b.prio | 0) - (a.prio | 0) || new Date(b.when) - new Date(a.when); });
+      // Seit wann: der Lesestand, heute als Uhrzeit, sonst als Tag.
+      var seit = '';
+      if(stand){
+        var sd = new Date(stand);
+        seit = 'seit ' + (sd.toDateString() === new Date().toDateString() ? A.datumFmt(sd, 'uhr') : A.datumFmt(sd, 'tm'));
+      }
+      var zahl = n > 99 ? '99+' : String(n);
+      var h = '<span class="nh"><span class="nh-kopf"><span class="nh-zahl' + (zahl.length > 2 ? ' lang' : '') + '"><b>' + zahl + '</b></span>'
+        + '<span class="nh-zus"><span class="nh-wort">' + (n === 1 ? 'neue Story' : 'neue Stories') + (seit ? '<em>' + seit + '</em>' : '') + '</span>';
+      // Ein Strich je Story, gleiche Farben beisammen, die Farbe der
+      // wichtigsten zuerst. Erst ab zwei: ein einzelner Strich sagt nichts.
+      if(neu.length > 1){
+        var gruppen = [], wo = {};
+        neu.forEach(function(s){ var t = hinweisTon(s); if(!(t in wo)){ wo[t] = gruppen.length; gruppen.push({t:t, n:0}); } gruppen[wo[t]].n++; });
+        var striche = [], takt = Math.min(26, 420 / neu.length);
+        gruppen.forEach(function(g){
+          for(var k = 0; k < g.n && striche.length < 80; k++)
+            striche.push('<i class="' + g.t + '" style="animation-delay:' + Math.round(220 + striche.length * takt) + 'ms"></i>');
+        });
+        h += '<span class="nh-band" style="gap:' + (neu.length > 30 ? 1 : 2) + 'px">' + striche.join('') + '</span>';
+      }
+      h += '</span><span class="nh-pfeil">' + A.svgI('chevron') + '</span></span>';
+      var top = neu[0];
+      if(top){
+        // Bis drei Gesichter stehen alle, ab vier zwei und die Zahl der
+        // übrigen — wie auf der Karte [§C33].
+        var ids = A._newsPids(top), zeige = ids.length <= 3 ? ids.length : 2;
+        var gesichter = ids.length ? '<span class="nh-gesichter">' + ids.slice(0, zeige).map(function(id){ return A.avHtml(A.pmap()[id], '', {}); }).join('')
+          + (ids.length > zeige ? '<span class="av nf-face-mehr">+' + (ids.length - zeige) + '</span>' : '') + '</span>' : '';
+        var sorte = A._newsSorte(top);
+        h += '<span class="nh-story ' + hinweisTon(top) + '">' + gesichter + '<span class="nh-text">'
+          + '<span class="nh-rub">' + A.svgI(A._newsSorteIcon(sorte, top)) + A.esc(A._newsRubrik(sorte, top)) + '</span>'
+          + '<b class="nh-titel">' + A.esc(top.title || '') + '</b></span></span>';
+      }
+      return h + '<span class="nh-zeit"><i style="animation-duration:' + HINWEIS_MS + 'ms"></i></span></span>';
+    }
+    window.__entwurfToast = function(txt, n){ txt.innerHTML = hinweisHtml(n); };
+    K('_newsToastFuellen = function(txt, n){ window.__entwurfToast(txt, n); }; 0');
+    // Er ist breiter als die alte Zeile und lief bei 360 px links aus dem
+    // Bild: die App hält nur rechts 8 px Abstand. Links gilt jetzt dasselbe,
+    // und der Pfeil wandert mit, damit er weiter auf die Pille zeigt. Beim
+    // Einbau zwei Zeilen in `_positionNewsToast`.
+    K('_positionNewsToast = ' + function(){
+      const toast = document.getElementById('newsToast'), btn = document.getElementById('newsBtn');
+      const leiste = btn && btn.closest('.appbar');
+      if(!toast || !leiste) return;
+      const pr = leiste.getBoundingClientRect(), br = btn.getBoundingClientRect();
+      if(!br.width) return;
+      const mitte = pr.right - (br.left + br.width / 2), breite = Math.min(296, innerWidth - 24);
+      const rechts = Math.max(8, Math.min(mitte - 23, pr.width - breite - 12));
+      toast.style.right = rechts + 'px';
+      toast.style.setProperty('--nt-arrow', Math.max(14, mitte - rechts - 5) + 'px');
+    }.toString() + '; 0');
+    // Er fällt aus der Pille heraus und fährt zweimal Licht um seine Kante:
+    // hier ist etwas neu [§C41]. Der Lichtlauf ohne Ende von heute entfällt.
     new MutationObserver(function(){
       if(!toast.classList.contains('show')) return;
+      K('clearTimeout(_newsToastHideTimer); _newsToastHideTimer = setTimeout(() => _hideNewsToast(), ' + HINWEIS_MS + '); 0');
       btn.classList.remove('neu-ruf'); void btn.offsetWidth; btn.classList.add('neu-ruf');
-      kante(toast, 'acid', 'zeichnen', 80, 240);
+      kante(toast, 'acid', 'hinweis', 140, 360);
       badge.classList.add('neu-pop');
       setTimeout(function(){ btn.classList.remove('neu-ruf'); badge.classList.remove('neu-pop'); }, 2400);
     }).observe(toast, {attributes:true, attributeFilter:['class']});

@@ -88,6 +88,33 @@ const bodyStart = html.indexOf('<body', html.indexOf('</head>'));
 const bodyHtml = html.slice(html.indexOf('>', bodyStart) + 1, html.indexOf('<script', bodyStart))
   .replace(/src="icon\.png"/g, 'src="../../icon.png"');
 const lies = n => fs.readFileSync(path.join(HIER, n), 'utf8');
+// Das Zeichen der Liga für Startbild und Kopfleiste des Entwurfs: 168 px,
+// 5 kB, in die Seite geschrieben. Die App lädt dafür icon.png mit 1254 px
+// und 1,2 MB — auf dem Telefon kam das Zeichen sichtbar später als alles
+// andere, im Rahmen der Vergleichsseite erst nach dem Netz.
+const LOGO = 'data:image/webp;base64,' + fs.readFileSync(path.join(HIER, 'logo-klein.webp')).toString('base64');
+// Das Startbild ist festes Markup ganz oben in <body>: es steht im ersten
+// Bild, bevor ein Skript übersetzt ist. Erst als Skript gebaut, kam es
+// erst nach dem Übersetzen des ganzen App-Codes. Welche Fassung läuft,
+// entscheidet ein Einzeiler im Kopf; unter „heute" bleibt es verborgen.
+const STARTBILD = `<div class="neu-start" id="neuStart" aria-hidden="true"><i class="ns-grund"></i><div class="ns-mitte">
+<span class="ns-logo"><img src="${LOGO}" alt="" width="84" height="84" decoding="sync"><span class="neu-kante kreis acid innen" style="--kd:130px"><i></i></span></span>
+<b class="ns-name">Kicker Liga</b><span class="ns-unter">Elo · 2v2</span><span class="ns-spur"><i></i></span></div></div>`;
+// Erst malen, dann übersetzen. Die Skripte dieser Seite (gut 2 MB samt
+// Partien) übersetzt der Browser in einem Zug, und gemessen malte er das
+// erste Bild erst danach — das Startbild stand also erst, als es schon
+// gehen sollte. Sie laufen deshalb nach dem ersten Bild, in derselben
+// Reihenfolge und wie gewöhnliche Skripte (`document.currentScript` bleibt
+// das Skript, aus dem der Worker der News seinen Code nimmt). Ein Rahmen,
+// den man nicht sieht, malt nie; dann starten sie nach 200 ms.
+const SPAETER = `(function(){ var los = false;
+  function lauf(){ if(los) return; los = true;
+    document.querySelectorAll('script.spaeter').forEach(function(alt){
+      var s = document.createElement('script'); s.textContent = alt.textContent; alt.replaceWith(s); }); }
+  requestAnimationFrame(function(){ setTimeout(lauf, 0); }); setTimeout(lauf, 200); })();`;
+const FASSUNG = `(function(){ var q = /^(heute|neu)(&|$)/.test(window.name || '') ? window.name : location.hash.slice(1);
+  if(/^neu(&|$)/.test(q)) document.documentElement.classList.add('neu', 'startbild');
+  if(/(^|&)ruhe=1(&|$)/.test(q)) document.documentElement.classList.add('ruhe'); })();`;
 
 const appHtml = `<!doctype html>
 <html lang="de"><head><meta charset="utf-8">
@@ -99,12 +126,14 @@ const appHtml = `<!doctype html>
 ${fonts}
 ${styles}
 <style>${lies('entwurf.css')}</style>
-</head><body>${bodyHtml}
-<script>window.__DATEN = ${JSON.stringify(DATEN)};</script>
-<script>${lies('sim.js')}</script>
-<script>${code}</script>
-<script>${lies('entwurf-app.js')}</script>
-<script>window.__start();</script>
+<script>${FASSUNG}</script>
+</head><body>${STARTBILD}${bodyHtml}
+<script type="text/plain" class="spaeter">window.__DATEN = ${JSON.stringify(DATEN)};</script>
+<script type="text/plain" class="spaeter">${lies('sim.js')}</script>
+<script type="text/plain" class="spaeter">${code}</script>
+<script type="text/plain" class="spaeter">${lies('entwurf-app.js')}</script>
+<script type="text/plain" class="spaeter">window.__start();</script>
+<script>${SPAETER}</script>
 </body></html>`;
 fs.writeFileSync(path.join(HIER, 'app.html'), appHtml);
 console.log('app.html', Math.round(appHtml.length / 1024), 'KB');

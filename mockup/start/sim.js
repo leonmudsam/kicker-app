@@ -107,7 +107,7 @@
     0`);
     // Was das Telefon zeigt, solange es das Skript übersetzt: heute nichts
     // als den Grund (#app ist bis zum ersten Skript versteckt), im Entwurf
-    // das Startbild, das beim Einbau festes Markup in index.html wäre.
+    // das Startbild — festes Markup, das schon vor dem Übersetzen steht.
     if(window.__entwurfStartbild) window.__entwurfStartbild();
     var teile = ['app', 'botnav', 'fab'].map(function(id){ return document.getElementById(id); });
     var sichtbar = teile.map(function(e){ return e.style.display; });
