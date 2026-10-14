@@ -3185,10 +3185,10 @@ const ok = (c, msg, det) => {
   ok(me.blatt === 'blattEin/backwards' && me.blattDanach === 'none',
      'ein Blatt blendet beim Öffnen ein und behält danach keine Verschiebung', me.blatt + ' · ' + me.blattDanach);
   // Betritt man einen Reiter über die Leiste, baut er sich auf, und um
-  // Platz 1 bis 3 fährt Licht in ihrem Metall [§C43] — einmal je Reiter
-  // und Sitzung, nur über transform und opacity. Neue Daten im selben
-  // Reiter nehmen das Licht nicht mit: es läuft an derselben Stelle weiter.
-  // Nach seiner Zeit ist nichts davon übrig.
+  // Platz 1 bis 3 fährt Licht in ihrem Metall [§C43] — nur über transform
+  // und opacity; dieselbe Ansicht glänzt erst nach einer Pause wieder.
+  // Neue Daten im selben Reiter nehmen das Licht nicht mit: es läuft an
+  // derselben Stelle weiter. Nach seiner Zeit ist nichts davon übrig.
   const betreten = await page.evaluate(async () => {
     const K = window.__k.eval.bind(window.__k);
     const bild = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
@@ -3230,7 +3230,7 @@ const ok = (c, msg, det) => {
   ok(betreten.fremd.length === 0, 'Aufbau und Licht bewegen nur transform und opacity', betreten.fremd.join(', '));
   ok(betreten.nachNeuzeichnen === 'gold silber bronze' && betreten.weiter,
      'neue Daten im selben Reiter nehmen das Licht nicht mit, es läuft an seiner Stelle weiter', JSON.stringify(betreten));
-  ok(betreten.rest === 0 && betreten.zweitesMal === '', 'nach seiner Zeit ist nichts übrig, und ein Reiter glänzt einmal je Sitzung',
+  ok(betreten.rest === 0 && betreten.zweitesMal === '', 'nach seiner Zeit ist nichts übrig, und gleich zurück glänzt der Reiter nicht noch einmal',
      JSON.stringify([betreten.rest, betreten.zweitesMal]));
   // Rechnet ein Reiter lange, antwortet die Leiste trotzdem sofort: der
   // Schlitten fährt, bevor gerechnet ist; nach 90 ms dunkelt der Schleier
@@ -3259,6 +3259,92 @@ const ok = (c, msg, det) => {
      'rechnet ein Reiter lange, fährt der Schlitten sofort, und Schleier und Ladelinie überbrücken', JSON.stringify(bruecke.sofort));
   ok(bruecke.danach.neu === 'teams' && bruecke.danach.schleier === '0' && bruecke.danach.linie === 0,
      'steht der neue Reiter, sind Schleier und Ladelinie fort', JSON.stringify(bruecke.danach));
+  // Der Schlitten des Wählers fährt los, bevor gerechnet ist; nach dem
+  // Neuzeichnen fährt der neue dort weiter, wo der alte war — nicht von
+  // vorn und nicht gleich am Ziel.
+  const weiter = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const warte = ms => new Promise(r => setTimeout(r, ms));
+    K("closeSheet(true);tab='ranking';period='season';ligaSeasonId=null;render()"); await warte(400);
+    K("window.__r0 = render; render = function(){ const t = performance.now(); while(performance.now() - t < 100){} const r = window.__r0.apply(this, arguments);"
+      + " window.__fahrt = document.querySelector('#main .ui-switch').getAnimations({subtree:true}).filter(a => a.transitionProperty === 'transform').map(a => Math.round(a.currentTime)); return r; }; 0");
+    const t0 = performance.now();
+    document.querySelector('#main [data-period="all"]').click();
+    await warte(400);
+    K('render = window.__r0; 0');
+    const fahrt = window.__fahrt || [];
+    K("period='season';render()");
+    return {fahrt, bis:Math.round(performance.now() - t0)};
+  });
+  // Ein Wechsel im Reiter — Zeitraum, Saison, Spieler oder Duos, Awards,
+  // Rekorde oder Chronik — antwortet wie die Leiste [§C43]: der getippte
+  // Knopf ist gewählt, bevor gerechnet ist, und der Schleier beginnt unter
+  // dem Wähler. Überschrift und Wähler stehen, was darunter neu ist, baut
+  // sich auf — auch in einer vergangenen Saison, deren Rahmen keinen Kasten
+  // hat, und in den Rekorden Karte für Karte. Licht im Metall der neuen
+  // Liste, eines je Platz: das alte wandert nicht mit. Dieselbe Wahl noch
+  // einmal und neue Daten bauen nichts auf; dieselbe Ansicht glänzt erst
+  // nach der Pause wieder.
+  const innen = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const bild = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const warte = ms => new Promise(r => setTimeout(r, ms));
+    const tippe = async sel => { const b = document.querySelector('#main ' + sel); b.click(); await warte(80); await bild(); return b; };
+    const bau = () => document.querySelectorAll('#main .bau').length;
+    const wahlBau = () => document.querySelectorAll('#main :is(.view-head, .ui-switch, .ui-tabs, .saisonwahl):is(.bau, .bau *)').length;
+    const metall = () => [...document.querySelectorAll('#main .rlist > .rrow > .kl')]
+      .map(k => (k.className.match(/kl-(gold|silber|bronze)/) || [, '?'])[1]).join(' ');
+    const out = {};
+    K("closeSheet(true);tab='ranking';period='week';ligaSicht='spieler';ligaSeasonId=null;render();_podestZuletzt.clear()");
+    await bild(); await warte(300);
+    // Die Saison leuchtet noch, wenn die Woche kommt.
+    await tippe('[data-period="season"]'); await warte(500);
+    const woche = document.querySelector('#main [data-period="week"]'), unten = woche.parentElement.getBoundingClientRect().bottom;
+    woche.click();
+    out.sofort = woche.isConnected && woche.classList.contains('on')
+      && woche.parentElement.querySelectorAll(':scope > .on').length === 1;
+    out.schleier = parseFloat((document.querySelector('.reiter-schleier') || {style:{}}).style.top) - unten;
+    await warte(80); await bild();
+    out.woche = {teile:bau(), wahl:wahlBau(), metall:metall(),
+      je:[...document.querySelectorAll('#main .rlist > .rrow')].slice(0, 3).map(z => z.querySelectorAll(':scope > .kl').length).join(),
+      alle:document.querySelectorAll('#main .kl').length};
+    await warte(1700);
+    await tippe('[data-period="week"]');
+    out.nochmal = bau();
+    K('invalidateCache(LADEN_TOEPFE); render()');
+    out.daten = bau();
+    await tippe('[data-period="season"]'); await warte(1700);
+    await tippe('#ligaSeasonPicker [data-saisonwahl]:not(.on)');
+    out.geschichte = {teile:document.querySelectorAll('#main .geschichte > .bau, #main .geschichte .rlist > .bau').length, wahl:wahlBau()};
+    await warte(1700);
+    K("tab='awards';awView='awards';rekKammer='';render()"); await bild();
+    await tippe('[data-awview="rekorde"]');
+    out.rekorde = document.querySelectorAll('#main .rek-liste > .bau').length;
+    await warte(1700);
+    K("tab='ranking';period='season';ligaSeasonId=null;render()"); await bild();
+    await tippe('[data-period="week"]');
+    out.gleich = metall();
+    await warte(1700);
+    K('for(const [k, t] of _podestZuletzt) _podestZuletzt.set(k, t - 60000)');
+    await tippe('[data-period="season"]'); await warte(300);
+    await tippe('[data-period="week"]');
+    out.spaeter = metall();
+    await warte(5800);
+    out.rest = document.querySelectorAll('#main .bau, #main .kl, #main .kl-schein, #main .glanz-einmal').length;
+    K("period='season';render()"); await bild();
+    return out;
+  });
+  ok(weiter.fahrt.length > 0 && weiter.fahrt.every(t => t >= 80 && t < 300),
+     'der Schlitten fährt über das Neuzeichnen hinweg weiter, statt neu anzufangen oder zu springen', JSON.stringify(weiter));
+  ok(innen.sofort && innen.schleier >= 0 && innen.schleier < 12,
+     'ein Wechsel im Reiter wählt den Knopf, bevor gerechnet ist, und der Schleier beginnt unter dem Wähler', JSON.stringify([innen.sofort, innen.schleier]));
+  ok(innen.woche.teile >= 5 && innen.woche.wahl === 0 && innen.woche.metall === 'gold silber bronze' && innen.woche.je === '1,1,1' && innen.woche.alle === 3,
+     'die neue Liste baut sich unter dem stehenden Wähler auf, mit einem Licht je Platz im Metall', JSON.stringify(innen.woche));
+  ok(innen.geschichte.teile >= 5 && innen.geschichte.wahl === 0 && innen.rekorde >= 3,
+     'auch eine vergangene Saison und die Rekorde bauen sich Teil für Teil auf', JSON.stringify([innen.geschichte, innen.rekorde]));
+  ok(innen.nochmal === 0 && innen.daten === 0, 'dieselbe Wahl noch einmal und neue Daten bauen nichts auf', JSON.stringify([innen.nochmal, innen.daten]));
+  ok(innen.gleich === '' && innen.spaeter === 'gold silber bronze' && innen.rest === 0,
+     'dieselbe Ansicht glänzt erst nach der Pause wieder, und danach ist nichts übrig', JSON.stringify([innen.gleich, innen.spaeter, innen.rest]));
   {
     await K("closeSheet(true);tab='ranking';period='season';render()");
     await page.waitForTimeout(1200);

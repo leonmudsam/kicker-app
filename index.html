@@ -5813,8 +5813,8 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
     .aufbau .botnav button:nth-child(5) .ic{animation-delay:.38s}
     .aufbau .fab{animation:aufbauFab .55s cubic-bezier(.3,1.3,.5,1) .7s both}
     .aufbau .lauf-z i.h::after{animation:aufbauPing .8s ease-out .6s 2 both}
-    .bau{animation:bauTeil .42s cubic-bezier(.2,.8,.2,1) both}
-    .pod-karte.bau{animation-name:bauPodest;animation-duration:.5s}
+    .bau{animation:bauTeil .56s cubic-bezier(.2,.8,.2,1) both}
+    .pod-karte.bau{animation-name:bauPodest;animation-duration:.62s}
     .glanz-einmal::after{animation:glanzEinmal 1.3s cubic-bezier(.45,0,.25,1) var(--gv,0ms) both}
   }
 
@@ -5902,7 +5902,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.13.6262024e';
+const BUILD_VERSION='2026.10.14.6b60b4e5';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -9666,7 +9666,7 @@ function _renderNachEingabe(){
     });
   }
   root.setAttribute('aria-busy','true');
-  if(root._renderTab && root._renderTab!==tab){ _reiterBetreten=tab; _reiterBeginnt(); }
+  if(root._renderTab) _wechselBeginnt(root._renderTab!==tab);
   root.inert=root._renderTab!==tab || a.inert;
 }
 
@@ -9683,7 +9683,7 @@ function render(){
   const geruest=!warTab && root.firstElementChild && root.firstElementChild.classList.contains('geruest')
     ? root.firstElementChild : null;
   if(!behalten){
-    const licht=warTab===tab?_lichtMerken(root):null;
+    const licht=warTab===tab&&_wechselZiel!==tab?_lichtMerken(root):null;
     root.innerHTML=html;
     bind();
     root._renderHtml=html;
@@ -9693,7 +9693,7 @@ function render(){
   }
   root._renderTab=tab;
   schlittenFahren(root);
-  _bewegungNachRender(root, warTab, geruest);
+  _bewegungNachRender(root, warTab, geruest, behalten);
 }
 
 let _schlittenVorher = null;
@@ -9709,6 +9709,7 @@ document.addEventListener('pointerdown', e => {
 function schlittenFahren(root){
   const v = _schlittenVorher; _schlittenVorher = null;
   if(!v || !root) return;
+  const vergangen = v.t0 ? performance.now() - v.t0 : null;
   root.querySelectorAll('.ui-switch:not(.roll), .ui-tabs:not(.roll)').forEach(w => {
     if(_schlittenSig(w) !== v.sig) return;
     const neu = _schlittenLage(w);
@@ -9716,6 +9717,9 @@ function schlittenFahren(root){
     w.style.setProperty('--i', v.alt);
     void w.offsetWidth;
     w.style.removeProperty('--i');
+    if(vergangen != null && w.getAnimations) w.getAnimations({subtree:true}).forEach(a => {
+      if(a.transitionProperty === 'transform') a.currentTime = vergangen;
+    });
   });
 }
 
@@ -10009,15 +10013,17 @@ function kantenlicht(ziel, ton, art, verzug, d, innen){
   return ring;
 }
 
-const AUFBAU_LISTE = '.rlist, .mlist, .podest, .aw-vitrine';
+const AUFBAU_LISTE = '.rlist, .mlist, .podest, .aw-vitrine, .rek-liste';
 const AUFBAU_KOPF = '.view-head, .ui-switch, .ui-tabs, .saisonwahl, .lauf, .search, .einblick, .mini-label';
+const AUFBAU_RAHMEN = '.geschichte';
 let _aufbauTeile = [];
 let _aufbauAuftrag = 0;
 function _aufbauen(view, start, schritt, hoechstens, ohneKopf){
   if(!view || _bewegungRuhig()) return;
   _aufbauFertig();
   const teile = [];
-  for(const kind of view.children){
+  const kinder = [...view.children].flatMap(k => k.matches(AUFBAU_RAHMEN) ? [...k.children] : [k]);
+  for(const kind of kinder){
     if(teile.length >= hoechstens) break;
     if(ohneKopf && kind.matches(AUFBAU_KOPF)) continue;
     const liste = kind.matches(AUFBAU_LISTE) ? kind
@@ -10027,7 +10033,7 @@ function _aufbauen(view, start, schritt, hoechstens, ohneKopf){
   }
   _aufbauTeile = teile.slice(0, hoechstens);
   _aufbauTeile.forEach((t, i) => { t.classList.add('bau'); t.style.animationDelay = (start + i * schritt) + 'ms'; });
-  _aufbauAuftrag = setTimeout(_aufbauFertig, start + _aufbauTeile.length * schritt + 560);
+  _aufbauAuftrag = setTimeout(_aufbauFertig, start + _aufbauTeile.length * schritt + 700);
 }
 function _aufbauFertig(){
   clearTimeout(_aufbauAuftrag); _aufbauAuftrag = 0;
@@ -10043,24 +10049,32 @@ const PODEST_KARTEN = {
   awards:'.podest > .pod-karte'
 };
 const PODEST_VERSATZ = {gold:0, silber:220, bronze:440};
-const _podestDa = new Set();
+const PODEST_PAUSE_MS = 45000;
+const _podestZuletzt = new Map();
+function _ansichtSchluessel(reiter){
+  const wahl = {ranking:[period, ligaSicht, ligaSeasonId], positions:[rankMetric, posSort],
+    awards:[awView, awPeriod, awSeasonId, awWeekStart, rekKammer], teams:[teamView, teamSort], history:[histFilter, _histPage]}[reiter];
+  return reiter + '|' + (wahl || []).join('|');
+}
 function _diagonale(art){
   const b = Math.min(innerWidth, 520) - 32;
   return art === 'podest' ? Math.hypot(b / 3 + 12, 215) + 8
     : art === 'partie' ? Math.hypot(b, 210) + 8 : Math.hypot(b, 112) + 8;
 }
 function _podestLicht(view, reiter, start){
-  if(!view || _bewegungRuhig() || _podestDa.has(reiter)) return;
+  if(!view || _bewegungRuhig()) return;
+  const schluessel = _ansichtSchluessel(reiter), jetzt = performance.now();
+  if(jetzt - (_podestZuletzt.get(schluessel) ?? -Infinity) < PODEST_PAUSE_MS) return;
   if(reiter === 'history'){
     const z = view.querySelector('.mlist > .mrow');
     if(!z) return;
-    _podestDa.add(reiter);
+    _podestZuletzt.set(schluessel, jetzt);
     kantenlicht(z, 'acid', 'zeichnen', start, _diagonale('partie'));
     return;
   }
   const karten = PODEST_KARTEN[reiter] ? [...view.querySelectorAll(PODEST_KARTEN[reiter])].slice(0, 3) : [];
   if(!karten.length) return;
-  _podestDa.add(reiter);
+  _podestZuletzt.set(schluessel, jetzt);
   karten.forEach((z, i) => {
     const k = ' ' + z.className + ' ';
     const ton = /\s(top1|gold)\s/.test(k) ? 'gold' : /\s(top2|silber)\s/.test(k) ? 'silber'
@@ -10101,9 +10115,9 @@ function _lichtZurueck(root, liste){
   });
 }
 
-let _reiterBetreten = '';
+let _wechselZiel = '';
 let _vorfuehrungAuftrag = 0;
-function _bewegungNachRender(root, warTab, geruest){
+function _bewegungNachRender(root, warTab, geruest, behalten){
   if(!_bewegungDa()) return;
   const view = root.firstElementChild;
   if(!warTab){
@@ -10119,16 +10133,16 @@ function _bewegungNachRender(root, warTab, geruest){
     kantenlicht(document.querySelector('.logo-mark'), 'acid', 'zeichnen', 120, 60, true);
     const fab = document.getElementById('fab');
     if(fab && fab.style.display !== 'none') kantenlicht(fab, 'weiss', 'zeichnen', 1150, 90);
-    _aufbauen(view, 40, 40, 14);
-    _podestLicht(view, tab, 640);
+    _aufbauen(view, 40, 55, 14);
+    _podestLicht(view, tab, 700);
     return;
   }
-  if(warTab !== tab) _reiterSteht();
-  if(warTab !== tab && _reiterBetreten === tab){
-    _reiterBetreten = '';
-    _aufbauen(view, 0, 30, 8, true);
-    _podestLicht(view, tab, 360);
-  }
+  _wechselSteht();
+  if(_wechselZiel !== tab) return;
+  _wechselZiel = '';
+  if(behalten && warTab === tab) return;
+  _aufbauen(view, 0, 45, 10, true);
+  _podestLicht(view, tab, 380);
 }
 function _vorfuehrungEnde(){
   if(_vorfuehrungAuftrag){ clearTimeout(_vorfuehrungAuftrag); _vorfuehrungAuftrag = 0; document.documentElement.classList.remove('aufbau'); }
@@ -10189,9 +10203,11 @@ function _ladeEnde(grund){
 }
 
 let _schleier = null, _schleierLauf = null;
-function _reiterBeginnt(){
+function _wechselBeginnt(neuerReiter){
   if(!_bewegungDa()) return;
-  _ladeStart('reiter');
+  _wechselZiel = tab;
+  const knopf = neuerReiter ? null : _wahlSofort();
+  _ladeStart('wechsel');
   if(_schleierLauf || _bewegungRuhig()) return;
   const app = document.getElementById('app');
   if(!app) return;
@@ -10200,10 +10216,31 @@ function _reiterBeginnt(){
     _schleier.className = 'reiter-schleier'; _schleier.setAttribute('aria-hidden', 'true');
   }
   if(_schleier.parentNode !== app) app.appendChild(_schleier);
+  const wahl = knopf && knopf.parentElement;
+  _schleier.style.top = wahl ? Math.max(0, Math.round(wahl.getBoundingClientRect().bottom + 4)) + 'px' : '';
   _schleierLauf = _schleier.animate([{opacity:0}, {opacity:.6}], {duration:180, delay:90, easing:'ease', fill:'forwards'});
 }
-function _reiterSteht(){
-  _ladeEnde('reiter');
+let _wahlKnopf = null;
+document.addEventListener('click', e => {
+  const b = e.target && e.target.closest && e.target.closest('.ui-switch > button, .ui-tabs > button, .saisonwahl > button');
+  _wahlKnopf = b && b.closest('#main') ? b : null;
+}, {passive:true, capture:true});
+function _wahlSofort(){
+  const b = _wahlKnopf; _wahlKnopf = null;
+  if(!b || !b.isConnected) return null;
+  const w = b.parentElement;
+  if(!b.classList.contains('on')){
+    const alt = _schlittenLage(w);
+    [...w.children].forEach(k => k.classList.toggle('on', k === b));
+    if(alt >= 0 && w.matches('.ui-switch:not(.roll), .ui-tabs:not(.roll)')){
+      const v = _schlittenVorher = {sig:_schlittenSig(w), alt, t0:performance.now()};
+      requestAnimationFrame(t => { v.t0 = t; });
+    }
+  }
+  return b;
+}
+function _wechselSteht(){
+  _ladeEnde('wechsel');
   if(!_schleierLauf) return;
   const von = .6 * (_schleierLauf.effect.getComputedTiming().progress || 0);
   _schleierLauf.cancel(); _schleierLauf = null;

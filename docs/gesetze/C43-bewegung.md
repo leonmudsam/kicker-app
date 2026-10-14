@@ -5,22 +5,22 @@
 - **Die Oberfläche steht im ersten Bild.** Kopfleiste und Zeichen sind festes Markup in `src/index.html` und nicht bis zum ersten Skriptbefehl versteckt; das Zeichen ist ein Bild von 252 px in der Seite (`01-shell.css`), ohne eigene Anfrage. Kein Bild steht davor.
 - **Bei jedem Öffnen baut sich die Liga auf** — dem ersten Bild, das der Start zeichnet, während `loadAll` läuft (`_bewegungNachRender`), nicht einem `render` von anderswo: die untere Leiste steigt herauf, der Inhalt kommt in Teilen (`.bau`, höchstens vierzehn, die Verzögerung am Teil selbst), Licht fährt um das Zeichen, um Platz 1 bis 3 und um „Match eintragen". Eine Sperre nach kurzer Pause gibt es nicht.
 - **Ohne Stand auf dem Gerät** [§C42] steht bis zur Antwort der Datenbank das Gerüst der Liga (`_startGeruest`), das danach über ihr ausblendet; kommt nach 2,5 s kein Bild, ebenso.
-- **Ein Reiter, über die Leiste betreten** (`_reiterBetreten`), baut sich auf: Überschrift, Wähler und Suche stehen sofort, Karten und Zeilen kommen nacheinander. Ein Zeitraum oder neue Daten im selben Reiter bauen nichts auf.
-- **Die Leiste antwortet sofort:** die Pille des gewählten Reiters ist EIN Schlitten, der gleitet (`_navSchlitten`, `.nav-schlitten`), nur per `transform` in Pixeln aus der Fensterbreite — er fährt, bevor der neue Reiter gerechnet ist. Rechnet der Reiter länger als 90 ms, dunkelt ein Schleier den alten ab (`_reiterBeginnt`, `.reiter-schleier`); nach 120 ms läuft unter der Kopfleiste die Ladelinie (`_ladeStart`, `.lade-linie`), ebenso solange Daten kommen; beides endet, wenn der Reiter steht und die Daten da sind (`_reiterSteht`, `_connBewegung`), die Linie spätestens nach 15 s. Steht die Verbindung zum ersten Mal, geht vom Punkt oben links ein Ring aus.
-- **Das Podest glänzt einmal je Reiter und Sitzung** (`_podestLicht`, `_podestDa`): Licht im Metall um Platz 1 bis 3 [§C25] in Liga, Positionen und bei den Duos, um das Podest der Awards, um die letzte Partie im Verlauf; über Gold zieht das Band (`.glanz-bahn.glanz-einmal`).
+- **Jeder Wechsel, den ein Tippen wählt, baut sich auf** (`_wechselBeginnt`, `_wechselZiel`): ein Reiter über die Leiste ebenso wie eine Ansicht darin — Zeitraum, Saison, Spieler oder Duos, Awards, Rekorde oder Chronik, Sortierung, Seite des Verlaufs. Überschrift, Wähler und Suche stehen, Karten und Zeilen kommen nacheinander (höchstens zehn, 45 ms auseinander, je 0,56 s), auch aus dem kastenlosen Rahmen einer vergangenen Saison (`.geschichte`) und Karte für Karte aus den Rekorden. Dieselbe Wahl noch einmal und neue Daten (`render` aus `loadAll`) bauen nichts auf.
+- **Ein Wähler antwortet sofort:** die Pille des gewählten Reiters ist EIN Schlitten, der gleitet (`_navSchlitten`, `.nav-schlitten`), nur per `transform` in Pixeln aus der Fensterbreite — er fährt, bevor der neue Reiter gerechnet ist. Im Reiter ist der getippte Knopf gewählt, bevor gerechnet ist (`_wahlSofort`, der Knopf aus dem Klick selbst), sein Schlitten fährt los und nach dem Neuzeichnen an derselben Stelle weiter (`schlittenFahren`). Rechnet die Ansicht länger als 90 ms, dunkelt ein Schleier die alte ab (`.reiter-schleier`), bei einem Wechsel im Reiter erst unter dem Wähler; nach 120 ms läuft unter der Kopfleiste die Ladelinie (`_ladeStart`, `.lade-linie`), ebenso solange Daten kommen; beides endet, wenn die Ansicht steht und die Daten da sind (`_wechselSteht`, `_connBewegung`), die Linie spätestens nach 15 s. Steht die Verbindung zum ersten Mal, geht vom Punkt oben links ein Ring aus.
+- **Das Podest glänzt, wenn eine Ansicht ankommt, und dieselbe Ansicht erst nach 45 s wieder** (`_podestLicht`, `_podestZuletzt`, `_ansichtSchluessel`: Reiter mit seiner Wahl): Licht im Metall um Platz 1 bis 3 [§C25] in Liga, Positionen und bei den Duos, um das Podest der Awards, um die letzte Partie im Verlauf; über Gold zieht das Band (`.glanz-bahn.glanz-einmal`).
 - **Das Kantenlicht hat zwei Bedeutungen und keine dritte** (`kantenlicht`, `.kl`) [§C41]: *zeichnen* — einmal herum, dann steht der Rahmen einige Sekunden: eine Karte, die zählt, ist angekommen; *hinweis* — zweimal herum, ohne Rahmen: hier ist etwas neu. Beide enden von selbst (4,6 und 4,2 s): das Licht läuft nach der Runde langsamer weiter, ein Schein liegt um die Karte, dann verlischt beides, und nichts davon bleibt im Dokument. Das Licht im Profilkopf ist dieselbe Zeichnung mit eigener Bedeutung: es läuft, solange der Monat läuft.
-- **Neue Daten nehmen das Licht nicht mit:** zeichnet die App denselben Reiter neu, wechselt es an dieselbe Stelle der neuen Ansicht und läuft weiter (`_lichtMerken`, `_lichtZurueck`).
+- **Neue Daten nehmen das Licht nicht mit:** zeichnet die App denselben Reiter neu, wechselt es an dieselbe Stelle der neuen Ansicht und läuft weiter (`_lichtMerken`, `_lichtZurueck`). Ein Wechsel nimmt es nicht mit: die neue Ansicht hat ihr eigenes.
 - **Abbrechbar:** jede Berührung, jedes Scrollen beendet den Aufbau (`_vorfuehrungEnde`); alles steht sofort, wo es hingehört. Das Licht läuft zu Ende — es verdeckt nichts.
 - **Nur Drehung, Verschiebung und Deckkraft** (`transform`, `opacity`); der Kegel des Lichts ist so groß wie die Diagonale seiner Karte, nicht größer.
 - **Bei Bewegungsruhe** (`prefers-reduced-motion`) steht alles sofort, ohne Licht.
 
 ## Stellen
 
-`src/index.html` (Oberfläche im ersten Bild), `09d-bewegung.js` (`_startBereit`, `_startGeruest`, `kantenlicht`, `_aufbauen`, `_podestLicht`, `_glanzEinmal`, `_lichtMerken`, `_lichtZurueck`, `_bewegungNachRender`, `_vorfuehrungEnde`, `_navSchlitten`, `_ladeStart`, `_ladeEnde`, `_reiterBeginnt`, `_reiterSteht`, `_connBewegung`), `09-ui-infra.js` (`render`, `renderNav`, `_renderNachEingabe`), `06-db.js` (`setConn`), `05-nav-sheet.css` (der Schlitten), `06c-stand.js` (kein Stand → Gerüst), `37-boot.js` (`_startBereit`), `00-prolog.js`, `01-shell.css` (das Zeichen), `17-bewegung.css`.
+`src/index.html` (Oberfläche im ersten Bild), `09d-bewegung.js` (`_startBereit`, `_startGeruest`, `kantenlicht`, `_aufbauen`, `_podestLicht`, `_glanzEinmal`, `_lichtMerken`, `_lichtZurueck`, `_bewegungNachRender`, `_vorfuehrungEnde`, `_navSchlitten`, `_ladeStart`, `_ladeEnde`, `_wechselBeginnt`, `_wahlSofort`, `_wechselSteht`, `_connBewegung`), `09-ui-infra.js` (`render`, `renderNav`, `_renderNachEingabe`, `schlittenFahren`), `06-db.js` (`setConn`), `05-nav-sheet.css` (der Schlitten), `06c-stand.js` (kein Stand → Gerüst), `37-boot.js` (`_startBereit`), `00-prolog.js`, `01-shell.css` (das Zeichen), `17-bewegung.css`.
 
 ## Prüfung
 
-`tests/start` (die Kopfleiste steht mit dem Zeichen, bevor ein Skript läuft, ohne Bild davor; ohne Stand das Gerüst, bis die Datenbank antwortet; beim Öffnen baut sich die Liga auf, mit Licht im Metall um Platz 1 bis 3, um das Zeichen und den Knopf; auch direkt nach dem Schließen wieder; nach seiner Zeit nichts übrig, auch kein leeres style-Attribut; der Punkt oben links beim ersten „verbunden"; bei Bewegungsruhe nichts davon; der Start lädt das große Symbol nicht), `tests/blatt` (ein über die Leiste betretener Reiter baut sich auf, mit Licht im Metall, dessen Kegel die Karte deckt; nur transform und opacity; neue Daten nehmen das Licht nicht mit; nach seiner Zeit nichts übrig, einmal je Reiter und Sitzung; der leuchtende Schlitten steht unter dem gewählten Knopf; rechnet ein Reiter lange, fährt der Schlitten sofort und Schleier und Ladelinie überbrücken, und steht er, sind beide fort).
+`tests/start` (die Kopfleiste steht mit dem Zeichen, bevor ein Skript läuft, ohne Bild davor; ohne Stand das Gerüst, bis die Datenbank antwortet; beim Öffnen baut sich die Liga auf, mit Licht im Metall um Platz 1 bis 3, um das Zeichen und den Knopf; auch direkt nach dem Schließen wieder; nach seiner Zeit nichts übrig, auch kein leeres style-Attribut; der Punkt oben links beim ersten „verbunden"; bei Bewegungsruhe nichts davon; der Start lädt das große Symbol nicht), `tests/blatt` (ein über die Leiste betretener Reiter baut sich auf, mit Licht im Metall, dessen Kegel die Karte deckt; nur transform und opacity; neue Daten nehmen das Licht nicht mit; nach seiner Zeit nichts übrig, gleich zurück kein zweites Mal; der leuchtende Schlitten steht unter dem gewählten Knopf; rechnet ein Reiter lange, fährt der Schlitten sofort und Schleier und Ladelinie überbrücken, und steht er, sind beide fort; ein Wechsel im Reiter wählt den Knopf vor der Rechnung, der Schleier beginnt unter dem Wähler, der Schlitten fährt über das Neuzeichnen hinweg weiter; die neue Liste baut sich unter dem stehenden Wähler auf, mit einem Licht je Platz und keinem alten; ebenso eine vergangene Saison und die Rekorde; dieselbe Wahl und neue Daten bauen nichts auf; dieselbe Ansicht glänzt erst nach der Pause wieder).
 
 ## Herleitung
 
@@ -43,14 +43,43 @@ sichtbar später als alles andere; jetzt steht ein Bild von 7 kB in der Seite.
 
 Eine Sperre zeigte nach einem Öffnen in den letzten fünf Minuten keine
 Vorführung. Wer die App schloss und gleich wieder öffnete, sah nichts und
-hielt die Effekte für kaputt. Sie läuft jetzt bei jedem Öffnen; das Podest
-glänzt einmal je Reiter und Sitzung, sonst sähe man es bei jedem Wechsel.
+hielt die Effekte für kaputt. Sie läuft jetzt bei jedem Öffnen. Das Podest
+glänzte zuerst einmal je Reiter und Sitzung: wer später zur Woche oder
+zurück zur Saison kam, sah nie wieder Licht. Je Ansicht mit 45 s Pause
+sieht es, wer ankommt, und nicht, wer zwischen zwei Ansichten hin- und
+herschaltet.
 
-Die Vorführung gehört echten Anlässen: dem ersten Bild eines Starts und dem
-Betreten eines Reiters über die Leiste. Ein `render` von anderswo — ein
-Zeitraum, neue Daten, die Prüfumgebungen der Tests, die die Ansicht direkt
-zeichnen — baut nichts auf. Das Verblassen der ganzen Liste bei jedem
-Filter wirkte schon einmal wie ein Neustart (01-shell.css).
+Die Vorführung gehört echten Anlässen: dem ersten Bild eines Starts und
+jedem Wechsel, den ein Tippen wählt. Zuerst baute sich nur ein über die
+Leiste betretener Reiter auf; Zeitraum, Saison, Spieler und Duos, Awards,
+Rekorde und Chronik wechselten ohne jede Bewegung, und auf einem langsamen
+Telefon stand nach dem Tippen auf „Gesamt" alles still, bis gerechnet war —
+auch der gedrückte Knopf. Ein `render` von anderswo — neue Daten, die
+Prüfumgebungen der Tests, die die Ansicht direkt zeichnen — baut weiter
+nichts auf. Das Verblassen der ganzen Liste bei jedem Filter wirkte schon
+einmal wie ein Neustart (01-shell.css); deshalb stehen Überschrift und
+Wähler, und nur was darunter neu ist, kommt.
+
+Beim ersten Einbau der inneren Wechsel wanderte das Licht der alten Ansicht
+mit in die neue: dieselbe Stelle im Baum ist in der Woche ein anderes
+Element als in der Saison, und Platz 1 der Woche trug sein Licht und das
+der Saison. Eine vergangene Saison steht in einem Rahmen ohne Kasten
+(`display:contents`); als ein Teil bewegte er nichts sichtbar und nahm die
+Wähler mit. Die Rekorde kamen als drei große Blöcke statt Karte für Karte.
+
+Der Schlitten eines Wählers fuhr vorher erst nach der Rechnung los. Fährt er
+sofort, zeichnet das Neuzeichnen einen neuen Wähler mitten in der Fahrt; er
+sprang dann ans Ziel. Er fährt jetzt dort weiter, wo der alte war: seine
+Transition beginnt um die vergangene Zeit später, gezählt ab dem Bild, mit
+dem der Compositor die Fahrt übernahm. An der alten Transition ist der
+Stand nicht abzulesen — solange der Hauptthread rechnet, steht sie für ihn
+noch am Start, während sie im Bild längst fährt.
+
+Gemessen (vierfach gedrosselt, verschachtelt, Median aus 16) kostet die
+Bewegung eines inneren Wechsels 20 bis 30 ms bis zum ersten Bild, innerhalb
+der Streuung: Awards 230 statt 201 ms, Rekorde 192 statt 170 ms. Der Aufbau
+läuft etwas ruhiger als beim ersten Einbau (45 statt 30 ms Abstand, 0,56
+statt 0,42 s je Teil); schneller wirkte er auf dem Telefon hektisch.
 
 Das Kantenlicht war zuerst nur im Profilkopf. Als Bauteil [§C27] trägt es
 überall dieselben Bedeutungen; eine weitere machte jede unklar. Nach gut einer

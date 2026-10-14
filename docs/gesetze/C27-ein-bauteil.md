@@ -43,7 +43,8 @@ unter der der Strich wandert), das Rangabzeichen ist `.rangab`
 Zahl und Lage der Knöpfe (`:has`, `--n`, `--i`); weil jeder Wechsel die
 Ansicht neu zeichnet, merkt sich der Druck auf einen Knopf die alte Lage,
 und `schlittenFahren` (aus `render` und `openSheet`) lässt ihn von dort
-anfahren — sonst spränge er. Die Box behält ihre feste Lage und Breite;
+anfahren — sonst spränge er. Im Inhalt fährt er schon vor der Rechnung los
+(`_wahlSofort` [§C43]) und nach dem Neuzeichnen an derselben Stelle weiter. Die Box behält ihre feste Lage und Breite;
 ausschließlich `transform` verschiebt sie. Animiertes `left`/`width`
 löste sonst in jedem Bild ein neues Layout aus. Der Test misst die echte
 Lage einschließlich Transformationsmatrix, nicht nur den CSS-Startpunkt.
