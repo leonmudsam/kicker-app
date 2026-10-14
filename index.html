@@ -5807,10 +5807,8 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   @keyframes aufbauVonUnten{from{transform:translateY(100%)}}
   .sheet.show > .staffel{animation:none}
   .steht,.steht::before,.steht::after{animation-play-state:paused!important}
-  .news-pill.wartet{background:var(--surface2);border-color:var(--line);pointer-events:none;overflow:hidden}
+  .news-pill.wartet{background:var(--surface2);border-color:var(--line);pointer-events:none}
   .news-pill.wartet > *{opacity:0}
-  .news-pill.wartet::before{content:"";position:absolute;inset:0;pointer-events:none;
-    background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.07) 50%,transparent 70%);transform:translateX(-100%)}
   @keyframes pilleInhalt{from{opacity:0;transform:translateX(8px)}}
   #newsBtn::after{content:"";position:absolute;inset:-2px;border-radius:inherit;pointer-events:none;
     border:2px solid var(--acid);opacity:0}
@@ -5839,7 +5837,6 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
     .glanz-einmal::after{animation:glanzEinmal 1.3s cubic-bezier(.45,0,.25,1) var(--gv,0ms) both}
     .sheet.show .staffel-k{animation:blattEin .34s cubic-bezier(.2,.8,.2,1) backwards}
     #newsBtn.ruf::after{animation:hinweisRuf 1s cubic-bezier(.2,.8,.2,1) 2}
-    .news-pill.wartet::before{animation:geruestLicht 1.5s cubic-bezier(.4,0,.2,1) 8}
     .news-pill{transition:background-color .5s ease,border-color .5s ease}
     .news-pill.kommt > svg{animation:pilleInhalt .45s cubic-bezier(.2,.8,.2,1) .05s both}
     .news-pill.kommt > .news-pill-lbl{animation:pilleInhalt .45s cubic-bezier(.2,.8,.2,1) .13s both}
@@ -5931,7 +5928,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.14.257c8c03';
+const BUILD_VERSION='2026.10.14.990f6204';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -6851,7 +6848,6 @@ const VORWAERMEN = [
   () => allSeasonTitles(),
   () => teamStats(),
   () => prestigeTabelle(),
-  () => _insVorwaermen(),
 ];
 function _vorwaermen(){
   const auftrag = {version:_cache.version, schritt:0};
@@ -6860,9 +6856,8 @@ function _vorwaermen(){
     if(_vorwaermAuftrag !== auftrag || _cache.version !== auftrag.version) return;
     if(auftrag.schritt >= VORWAERMEN.length){ _vorwaermAuftrag = null; return; }
     if(document.hidden){ _leerlauf(1000).then(weiter); return; }
-    let fertig = true;
-    try { fertig = VORWAERMEN[auftrag.schritt]() !== false; } catch(e){}
-    if(fertig) auftrag.schritt++;
+    try { VORWAERMEN[auftrag.schritt](); } catch(e){}
+    auftrag.schritt++;
     _leerlauf(1000).then(weiter);
   };
   _leerlauf(1000).then(weiter);
@@ -10040,13 +10035,19 @@ function kantenlicht(ziel, ton, art, verzug, d, innen, leise){
   ring.innerHTML = '<i></i>';
   teile.push(ring);
   teile.forEach(t => { t.setAttribute('aria-hidden', 'true'); t.dataset.t0 = t0; t.dataset.kv = verzug; ziel.appendChild(t); });
-  setTimeout(() => teile.forEach(t => t.remove()), verzug + (leise ? KANTE_LEISE_MS : KANTE_MS[art]) + 120);
+  _lichtBeobachten(ziel);
+  setTimeout(() => {
+    const wo = new Set(teile.map(t => t.parentElement));
+    teile.forEach(t => t.remove());
+    wo.forEach(_lichtLoesen);
+  }, verzug + (leise ? KANTE_LEISE_MS : KANTE_MS[art]) + 120);
   return ring;
 }
 
 const AUFBAU_LISTE = '.rlist, .mlist, .podest, .aw-vitrine, .rek-liste';
 const AUFBAU_KOPF = '.view-head, .ui-switch, .ui-tabs, .saisonwahl, .lauf, .search, .einblick, .mini-label';
 const AUFBAU_RAHMEN = '.geschichte';
+const RUHIGE_REITER = new Set(['history']);
 let _aufbauTeile = [];
 let _aufbauAuftrag = 0;
 function _aufbauen(view, start, schritt, hoechstens, ohneKopf){
@@ -10084,25 +10085,17 @@ const PODEST_PAUSE_MS = 45000;
 const _podestZuletzt = new Map();
 function _ansichtSchluessel(reiter){
   const wahl = {ranking:[period, ligaSicht, ligaSeasonId], positions:[rankMetric, posSort],
-    awards:[awView, awPeriod, awSeasonId, awWeekStart, rekKammer], teams:[teamView, teamSort], history:[histFilter, _histPage]}[reiter];
+    awards:[awView, awPeriod, awSeasonId, awWeekStart, rekKammer], teams:[teamView, teamSort]}[reiter];
   return reiter + '|' + (wahl || []).join('|');
 }
 function _diagonale(art){
   const b = Math.min(innerWidth, 520) - 32;
-  return art === 'podest' ? Math.hypot(b / 3 + 12, 215) + 8
-    : art === 'partie' ? Math.hypot(b, 210) + 8 : Math.hypot(b, 112) + 8;
+  return art === 'podest' ? Math.hypot(b / 3 + 12, 215) + 8 : Math.hypot(b, 112) + 8;
 }
 function _podestLicht(view, reiter, start){
   if(!view || _bewegungRuhig()) return;
   const schluessel = _ansichtSchluessel(reiter), jetzt = performance.now();
   if(jetzt - (_podestZuletzt.get(schluessel) ?? -Infinity) < PODEST_PAUSE_MS) return;
-  if(reiter === 'history'){
-    const z = view.querySelector('.mlist > .mrow');
-    if(!z) return;
-    _podestZuletzt.set(schluessel, jetzt);
-    kantenlicht(z, 'acid', 'zeichnen', start, _diagonale('partie'));
-    return;
-  }
   const karten = PODEST_KARTEN[reiter] ? [...view.querySelectorAll(PODEST_KARTEN[reiter])].slice(0, 3) : [];
   if(!karten.length) return;
   _podestZuletzt.set(schluessel, jetzt);
@@ -10146,6 +10139,7 @@ function _lichtZurueck(root, liste){
     x.e.dataset.t0 = jetzt; x.e.dataset.kv = x.v;
     x.e.style.setProperty(x.e.classList.contains('glanz-einmal') ? '--gv' : '--kv', x.v + 'ms');
     n.appendChild(x.e);
+    _lichtBeobachten(n);
   });
 }
 
@@ -10167,15 +10161,14 @@ function _bewegungNachRender(root, warTab, geruest, behalten){
     kantenlicht(document.querySelector('.logo-mark'), 'acid', 'zeichnen', 120, 60, true);
     const fab = document.getElementById('fab');
     if(fab && fab.style.display !== 'none') kantenlicht(fab, 'weiss', 'zeichnen', 1150, 90);
-    _aufbauen(view, 40, 55, 14);
-    _podestLicht(view, tab, 700);
+    if(!RUHIGE_REITER.has(tab)){ _aufbauen(view, 40, 55, 14); _podestLicht(view, tab, 700); }
     _leisePlanen();
     return;
   }
   _wechselSteht();
   if(_wechselZiel !== tab) return;
   _wechselZiel = '';
-  if(behalten && warTab === tab) return;
+  if((behalten && warTab === tab) || RUHIGE_REITER.has(tab)) return;
   _aufbauen(view, 0, 45, 10, true);
   _podestLicht(view, tab, 380);
 }
@@ -10284,15 +10277,23 @@ function _wechselSteht(){
 }
 
 const LEISE_MS = [7000, 12000];
+const LEISE_NOCHMAL_MS = 2000;
 const LEISE_FOLGE = ['karte', 'karte', 'news', 'karte', 'knopf', 'karte', 'zeichen'];
-let _leiseAuftrag = 0, _letzteBedienung = 0, _leiseSchritt = 0, _leiseKarte = 0, _leiseZuletzt = null;
-function _leisePlanen(){
+const LEISE_KARTEN = {
+  ranking:{sel:'.rlist > .rrow.top1, .rlist > .rrow.top2, .rlist > .rrow.top3', metall:true},
+  positions:{sel:'.rlist > .rrow.top1, .rlist > .rrow.top2, .rlist > .rrow.top3', metall:true},
+  teams:{sel:'.rlist > .rrow.tm-top', metall:true},
+  'awards:awards':{sel:'.podest > .pod-karte', metall:true},
+  'awards:rekorde':{sel:'.rek-besitz, .rek'},
+};
+let _leiseAuftrag = 0, _leiseSchritt = 0, _leiseKarte = 0, _leiseZuletzt = null;
+function _leisePlanen(kurz){
   clearTimeout(_leiseAuftrag);
-  _leiseAuftrag = setTimeout(() => { _leisesLicht(); _leisePlanen(); },
-    LEISE_MS[0] + Math.random() * (LEISE_MS[1] - LEISE_MS[0]));
+  _leiseAuftrag = setTimeout(() => _leisePlanen(!_leisesLicht()),
+    kurz ? LEISE_NOCHMAL_MS : LEISE_MS[0] + Math.random() * (LEISE_MS[1] - LEISE_MS[0]));
 }
 function _leisesLicht(){
-  if(_bewegungRuhig() || document.hidden || performance.now() - _letzteBedienung < 4000 || _aufbauTeile.length) return null;
+  if(_bewegungRuhig() || document.hidden || _aufbauTeile.length || RUHIGE_REITER.has(tab)) return null;
   if(document.querySelector('.sheet.show, .nd-bg.show, .bp-bg.show, #main .kl, .appbar .kl, #fab .kl')) return null;
   for(let n = 0; n < LEISE_FOLGE.length; n++){
     const z = _leiseZiel(LEISE_FOLGE[_leiseSchritt++ % LEISE_FOLGE.length]);
@@ -10305,14 +10306,14 @@ function _leisesLicht(){
 function _leiseZiel(was){
   if(was === 'karte'){
     const view = document.querySelector('#main > .view');
-    const sel = tab === 'history' ? '.mlist > .mrow' : PODEST_KARTEN[tab];
-    if(!view || !sel) return null;
-    const alle = [...view.querySelectorAll(sel)].slice(0, tab === 'history' ? 1 : 3), unten = innerHeight - 90;
+    const art = LEISE_KARTEN[tab === 'awards' ? 'awards:' + awView : tab];
+    if(!view || !art) return null;
+    const alle = [...view.querySelectorAll(art.sel)].slice(0, art.n || 3), unten = innerHeight - 90;
     for(let i = 0; i < alle.length; i++){
       const k = (_leiseKarte + i) % alle.length, z = alle[k], r = z.getBoundingClientRect();
       if(z === _leiseZuletzt || r.top < 0 || r.bottom > unten) continue;
       _leiseKarte = k + 1;
-      return {el:z, ton:tab === 'history' ? 'acid' : _metallTon(z, k), art:'zeichnen', d:Math.hypot(r.width, r.height) + 8};
+      return {el:z, ton:art.metall ? _metallTon(z, k) : 'acid', art:'zeichnen', d:Math.hypot(r.width, r.height) + 8};
     }
     return null;
   }
@@ -10330,8 +10331,6 @@ function _leiseZiel(was){
   const l = document.querySelector('.logo-mark');
   return l && l !== _leiseZuletzt ? {el:l, ton:'acid', art:'zeichnen', d:60, innen:true} : null;
 }
-['pointerdown', 'wheel', 'touchstart', 'keydown', 'scroll'].forEach(ev =>
-  document.addEventListener(ev, () => { _letzteBedienung = performance.now(); }, {passive:true, capture:true}));
 
 function _pilleKommt(btn, ungelesen){
   if(_bewegungRuhig()) return;
@@ -10420,6 +10419,57 @@ function _fensterZu(bg, el, wer){
   _verdecken(wer, false);
   if(!bg || !el) return;
   setTimeout(() => { if(!bg.classList.contains('show')) el.innerHTML = ''; }, 260);
+}
+
+let _bewegSicht = null;
+const _sichtZiele = new Set();
+function _sichtLoesen(el){
+  _bewegSicht.unobserve(el); _sichtZiele.delete(el);
+  if(!el._ausSicht) return;
+  el._ausSicht = false;
+  el._steht = Math.max(0, (el._steht || 0) - 1);
+  if(!el._steht) el.classList.remove('steht');
+}
+function _bewegungBeobachten(el){
+  if(!_bewegSicht) _bewegSicht = new IntersectionObserver(eintraege => eintraege.forEach(e => {
+    const el = e.target;
+    if(!el.isConnected) return _sichtLoesen(el);
+    const aus = !e.isIntersecting;
+    if(aus === !!el._ausSicht) return;
+    el._ausSicht = aus;
+    el._steht = Math.max(0, (el._steht || 0) + (aus ? 1 : -1));
+    el.classList.toggle('steht', el._steht > 0);
+  }), {rootMargin:'80px'});
+  _sichtZiele.forEach(z => { if(!z.isConnected) _sichtLoesen(z); });
+  _sichtZiele.add(el);
+  _bewegSicht.observe(el);
+}
+if(_bewegungDa() && typeof IntersectionObserver === 'function')
+  document.addEventListener('animationstart', e => {
+    const el = e.target;
+    if(!(el instanceof Element) || _sichtZiele.has(el)) return;
+    const cs = getComputedStyle(el, e.pseudoElement || null);
+    const namen = cs.animationName.split(', '), zahl = cs.animationIterationCount.split(', ');
+    const i = namen.indexOf(e.animationName);
+    if(i >= 0 && zahl[i % zahl.length] === 'infinite') _bewegungBeobachten(el);
+  }, true);
+let _lichtSicht = null;
+const LICHT_TEILE = ':scope > .kl, :scope > .kl-schein, :scope > .glanz-einmal';
+function _lichtLoesen(el){
+  if(_lichtSicht && el && !el.querySelector(LICHT_TEILE)) _lichtSicht.unobserve(el);
+}
+function _lichtBeobachten(ziel){
+  if(typeof IntersectionObserver !== 'function') return;
+  if(!_lichtSicht) _lichtSicht = new IntersectionObserver(eintraege => eintraege.forEach(e => {
+    const el = e.target, teile = el.isConnected ? [...el.querySelectorAll(LICHT_TEILE)] : [];
+    if(!teile.length) return _lichtSicht.unobserve(el);
+    if(e.isIntersecting) return;
+    const jung = performance.now() - Math.max(...teile.map(t => +t.dataset.t0 || 0)) < 500;
+    if(jung && el.closest('.sheet, .nd, .bp, #newsToast')) return;
+    teile.forEach(t => t.remove());
+    _lichtSicht.unobserve(el);
+  }));
+  _lichtSicht.observe(ziel);
 }
 
 let _verbunden = false;
@@ -15921,6 +15971,7 @@ const rankProgHtml = rInfo ? `
     };
   });
   _bindChronikClicks(document.getElementById('sheet'));
+  _insRangWaermen(id);
 
   const rp=document.getElementById('ruhePlayer');
   const karriere=async(beenden)=>{
@@ -26337,6 +26388,7 @@ function openNewsDetail(sid){
     };
   });
   nd.querySelectorAll('[data-laufbahn]').forEach(el => {
+    _insRangWaermen(el.dataset.laufbahn);
     el.onclick = () => {
       const pid = el.dataset.laufbahn;
       closeNewsDetail();
@@ -33641,21 +33693,27 @@ const _insStufeSym = new Map();
 const _insStufeDrin = new Set();
 let _insStufeTopf = null;
 let _insWarmPlan = null;
-function _insVorwaermen(){
-  if(!_insWarmPlan || _insWarmPlan.v !== _cache.version){
-    const raenge = [...new Set((players || []).filter(p => sichtbar(p))
-      .map(p => (getPlayerRank(p.id) || {}).label).filter(Boolean))];
-    _insWarmPlan = [];
-    _insWarmPlan.v = _cache.version;
-    raenge.forEach(r => INSIGNIEN.forEach((_, i) => _insWarmPlan.push([r, i])));
-  }
-  const s = _insWarmPlan.shift();
-  if(!s){ _insWarmPlan = null; return true; }
-  const [rang, i] = s, key = INSIGNIEN[i].key, n = INSIGNIUM_GRADE;
-  for(let g = 0; g < n; g++) insigniumStufeSvg(key, rang, g, {bild:true});
-  insigniumStufeSvg(key, rang, 0);
-  insigniumStufeSvg(key, rang, n - 1);
-  return false;
+function _insRangWaermen(pid){
+  const rang = (getPlayerRank(pid) || {}).label;
+  if(!rang || typeof document === 'undefined') return;
+  const alt = _insWarmPlan;
+  if(alt && alt.rang === rang && alt.v === _cache.version) return;
+  const n = INSIGNIUM_GRADE, plan = [];
+  INSIGNIEN.forEach(ins => {
+    for(let g = 0; g < n; g++) plan.push([ins.key, g, {bild:true}]);
+    plan.push([ins.key, 0], [ins.key, n - 1]);
+  });
+  const auftrag = _insWarmPlan = {rang, v:_cache.version, plan};
+  const weiter = () => {
+    if(_insWarmPlan !== auftrag || _cache.version !== auftrag.v || !plan.length) return;
+    if(!document.querySelector('.sheet.show, .nd-bg.show')){ _insWarmPlan = null; return; }
+    if(!document.hidden){
+      const [key, g, opt] = plan.shift();
+      try { insigniumStufeSvg(key, rang, g, opt); } catch(e){}
+    }
+    _leerlauf(1000).then(weiter);
+  };
+  _leerlauf(1000).then(weiter);
 }
 function insigniumStufeSvg(key, rangLabel, grad, opt){
   const c = _insSatzCache(rangLabel);

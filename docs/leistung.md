@@ -405,3 +405,50 @@ node tools/performance.cjs --cpu=4 --ruhe
 node tools/interaktion.cjs --cpu=4 --runden=3
 ```
 
+## Siebte Runde: Nur, was man sieht
+
+Vergleich gegen den Stand davor, dieselben 466 Partien, Chromium,
+390 × 844 px, vierfach gedrosselte CPU, App vom echten Server mit dem Stand
+des Geräts.
+
+**Der Start rechnet nichts mehr für Unsichtbares.** Er zeichnete die Zeichen
+der Laufbahn für jeden Rang der Liga vor, in Blöcken im Leerlauf. Jetzt
+zeichnet sie das Profil, aus dem die Laufbahn kommt, für seinen Rang
+(`_insRangWaermen`, beschrieben in [laufzeit.md](laufzeit.md)).
+
+| Lange Aufgaben nach den ersten 2,5 s (ohne Bedienung, 40 s) | vorher | nachher |
+|---|--:|--:|
+| Anzahl | 49 | 2 |
+| zusammen | 5577 ms | 172 ms |
+| längste | 298 ms | 122 ms |
+| letzte | nach 14,2 s | nach 3,6 s |
+
+Wer in den ersten Sekunden tippte, wartete vorher bis zu 300 ms auf eine
+Zeichnung, die er nicht sah. Kalt kostet das erste Laufbahn-Blatt eines
+Rangs 600 bis 900 ms Skript, warm 65 bis 140 ms; aus dem Profil ist es warm.
+
+**Was endlos läuft, steht außerhalb des Bilds** [§C43]. In Ruhe kostet es
+wenig — der Compositor dreht es —, aber jedes Bild beim Scrollen rechnete
+alles auf dem Hauptthread mit. 40 Schritte durch den Feed, je Fassung zwei
+Läufe:
+
+| Feed scrollen | vorher | nachher |
+|---|--:|--:|
+| Hauptthread je Sekunde | 1037–1094 ms | 616–628 ms |
+| Bilder über 34 ms | 88–93 | 34–42 |
+| längstes Bild | 517–700 ms | 117–200 ms |
+
+Karten mit `content-visibility:auto` rechnet der Browser außerhalb des Bilds
+ohnehin nicht; angehalten wird, was er zeichnet: die großen Karten, die
+Eilmeldung, Glanz und Atmen der Karten im Bild und am Rand, im Profil der
+Kopf.
+
+**Ein leises Licht** kostet, solange es läuft, den Grundpreis jeder Animation
+(8 ms je Sekunde, ohne Licht unter 1 ms); verlässt seine Karte das Bild,
+endet es.
+
+```
+node tests/start.test.js
+node tests/blatt.test.js
+```
+

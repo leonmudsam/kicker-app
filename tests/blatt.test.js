@@ -3279,6 +3279,31 @@ const ok = (c, msg, det) => {
      'neue Daten im selben Reiter nehmen das Licht nicht mit, es läuft an seiner Stelle weiter', JSON.stringify(betreten));
   ok(betreten.rest === 0 && betreten.zweitesMal === '', 'nach seiner Zeit ist nichts übrig, und gleich zurück glänzt der Reiter nicht noch einmal',
      JSON.stringify([betreten.rest, betreten.zweitesMal]));
+  // Der Verlauf bleibt ruhig [§C43]: über die Leiste betreten und beim
+  // Wählen eines Spielers baut sich nichts auf, und kein Licht fährt. Die
+  // Liga danach baut sich wie immer auf — so zählt die Prüfung überhaupt.
+  const verlaufRuhig = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const bild = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const warte = ms => new Promise(r => setTimeout(r, ms));
+    const zaehl = () => document.querySelectorAll('#main .bau, #main .kl, #main .kl-schein, #main .glanz-einmal').length;
+    K("closeSheet(true);tab='ranking';period='season';histFilter='all';_histPage=0;render()"); await bild(); await warte(300);
+    K('_podestZuletzt.clear()');
+    document.querySelector('[data-nav="history"]').click(); await warte(80); await bild();
+    const out = {tab:K('tab'), betreten:zaehl(), zeilen:document.querySelectorAll('#main .mlist > .mrow').length};
+    const wahl = document.getElementById('histSel');
+    if(wahl){ wahl.value = wahl.options[1].value; wahl.dispatchEvent(new Event('change')); await warte(80); await bild(); }
+    out.gewaehlt = !!wahl && K('histFilter') !== 'all' && document.getElementById('main')._renderTab === 'history';
+    out.filter = zaehl();
+    K("histFilter='all';_histPage=0"); K('_podestZuletzt.clear()');
+    document.querySelector('[data-nav="ranking"]').click(); await warte(80); await bild();
+    out.liga = zaehl();
+    await warte(5200);
+    return out;
+  });
+  ok(verlaufRuhig.tab === 'history' && verlaufRuhig.zeilen > 0 && verlaufRuhig.betreten === 0 && verlaufRuhig.gewaehlt
+     && verlaufRuhig.filter === 0 && verlaufRuhig.liga > 0,
+     'der Verlauf baut sich nicht auf und trägt kein Licht, auch nicht beim Wählen eines Spielers', JSON.stringify(verlaufRuhig));
   // Rechnet ein Reiter lange, antwortet die Leiste trotzdem sofort: der
   // Schlitten fährt, bevor gerechnet ist; nach 90 ms dunkelt der Schleier
   // den alten Reiter ab, nach 120 ms läuft die Ladelinie. Steht der neue,
@@ -3476,11 +3501,11 @@ const ok = (c, msg, det) => {
      'Story und Auszeichnung öffnen mit Licht genau an ihrer Kante, das beim Scrollen endet, und sind geschlossen leer', JSON.stringify([fenster.story, fenster.bp]));
   // Im laufenden Betrieb zieht alle 7 bis 12 s eine leise, langsame Linie
   // um etwas, das zählt [§C43]: eine Runde in 6,5 s, ohne Rahmen, reihum
-  // Platz 1 bis 3, die Pille „News“ (nur mit Ungelesenem), „Match
-  // eintragen“ und das Zeichen der Liga — nie zweimal dasselbe
-  // hintereinander, eine Karte nur ganz im Bild, nicht, solange anderes
-  // Licht läuft, nicht in den 4 s nach einer Bedienung, nicht unter einem
-  // Blatt, nicht bei Bewegungsruhe.
+  // die Karten des offenen Reiters, die Pille „News“ (nur mit Ungelesenem),
+  // „Match eintragen“ und das Zeichen der Liga — nie zweimal dasselbe
+  // hintereinander, eine Karte nur ganz im Bild, und verlässt sie es, endet
+  // ihr Licht. Auch gleich nach einer Berührung; nicht, solange anderes
+  // Licht läuft, nicht unter einem Blatt, nicht bei Bewegungsruhe.
   const leiseLauf = async () => page.evaluate(async () => {
     const K = window.__k.eval.bind(window.__k);
     const bild = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
@@ -3488,11 +3513,11 @@ const ok = (c, msg, det) => {
     const KARTEN = '.rlist > .rrow.top1, .rlist > .rrow.top2, .rlist > .rrow.top3';
     const name = el => el.matches(KARTEN) ? 'top' + (el.matches('.top1') ? 1 : el.matches('.top2') ? 2 : 3)
       : el.id === 'newsBtn' ? 'news' : el.id === 'fab' ? 'knopf' : el.matches('.logo-mark') ? 'zeichen' : el.className;
-    K("closeSheet(true); tab='ranking'; period='season'; ligaSeasonId=null; render(); _aufbauFertig()"); await bild();
+    K("closeSheet(true); tab='ranking'; ligaSicht='spieler'; period='season'; ligaSeasonId=null; render(); _aufbauFertig()"); await bild();
     const btn = document.getElementById('newsBtn'), zahl = document.getElementById('newsBtnBadge'), fab = document.getElementById('fab');
     const vorher = [btn.className, zahl.getAttribute('style'), fab.getAttribute('style')];
     btn.classList.remove('wartet'); zahl.style.display = ''; fab.style.display = '';
-    weg(); K('_letzteBedienung = 0; _leiseSchritt = 0; _leiseKarte = 0; _leiseZuletzt = null');
+    weg(); K('_leiseSchritt = 0; _leiseKarte = 0; _leiseZuletzt = null');
     const st = window.setTimeout, ende = [];
     window.setTimeout = (f, ms) => { ende.push(ms); return st(f, ms); };
     const ring = K('_leisesLicht()'), out = {};
@@ -3506,9 +3531,16 @@ const ok = (c, msg, det) => {
     }
     out.licht = !!ring;
     out.zweites = !!K('_leisesLicht()');
+    // Verlässt die Karte das Bild, endet ihr Licht.
+    if(ring){
+      const karte = ring.parentElement;
+      window.scrollTo(0, scrollY + karte.getBoundingClientRect().bottom + 40); await bild(); await bild();
+      out.ausDemBild = karte.getBoundingClientRect().bottom < 0 && !karte.querySelector(':scope > .kl, :scope > .kl-schein');
+      window.scrollTo(0, 0); await bild();
+    }
     // Reihum: jedes Ziel kommt vor, keines zweimal hintereinander.
-    const folge = n => { const f = []; for(let i = 0; i < n; i++){ weg(); K('_letzteBedienung = 0'); const k = K('_leisesLicht()'); f.push(k ? name(k.parentElement) : null); } return f; };
-    out.folge = [out.ziel, ...folge(13)];
+    const folge = n => { const f = []; for(let i = 0; i < n; i++){ weg(); const k = K('_leisesLicht()'); f.push(k ? name(k.parentElement) : null); } return f; };
+    out.folge = folge(14);
     zahl.style.display = 'none';
     out.ohneNeues = folge(14);
     zahl.style.display = '';
@@ -3517,20 +3549,35 @@ const ok = (c, msg, det) => {
     window.scrollTo(0, scrollY + eins.getBoundingClientRect().top + 20); await bild();
     out.angeschnitten = [];
     for(let i = 0; i < 14; i++){
-      weg(); K('_letzteBedienung = 0'); const k = K('_leisesLicht()');
+      weg(); const k = K('_leisesLicht()');
       if(k && k.parentElement.matches(KARTEN)){ const r = k.parentElement.getBoundingClientRect(); out.angeschnitten.push(r.top >= 0 && r.bottom <= innerHeight - 90); }
     }
     window.scrollTo(0, 0); await bild();
-    weg(); K('_letzteBedienung = performance.now()');
+    // Gleich nach einer Berührung und beim Scrollen: es wartet nicht.
+    weg();
+    document.dispatchEvent(new Event('pointerdown')); document.dispatchEvent(new Event('scroll'));
     out.bedient = !!K('_leisesLicht()');
-    K("_letzteBedienung = 0; showPlayer(players[0].id)"); await bild();
+    // Die Karte kommt aus dem offenen Reiter und seiner Ansicht.
+    out.ansichten = {};
+    for(const [n, code] of [['duos', "tab='ranking'; ligaSicht='duos'"], ['positionen', "ligaSicht='spieler'; tab='positions'"],
+        ['teams', "tab='teams'"], ['awards', "tab='awards'; awView='awards'"], ['rekorde', "tab='awards'; awView='rekorde'"],
+        ['chronik', "tab='awards'; awView='chronik'"], ['verlauf', "tab='history'"]]){
+      K(code + '; render(); _aufbauFertig()'); await bild();
+      weg(); K('_leiseSchritt = 0; _leiseKarte = 0; _leiseZuletzt = null');
+      const k = K('_leisesLicht()'), z = k && k.parentElement;
+      out.ansichten[n] = !z ? null : z.closest('#main > .view') ? z.className.split(' ').slice(0, 3).join('.') : name(z);
+    }
+    K("tab='awards'; awView='awards'; tab='ranking'; render(); _aufbauFertig()"); await bild();
+    weg();
+    K("showPlayer(players[0].id)"); await bild();
     out.blatt = !!K('_leisesLicht()');
     K('closeSheet(true)'); await bild();
     const zeiten = [];
     window.setTimeout = (f, ms) => { zeiten.push(ms); return 0; };
     for(let i = 0; i < 20; i++) K('_leisePlanen()');
+    K('_leisePlanen(true)');
     window.setTimeout = st;
-    out.plan = [Math.min(...zeiten), Math.max(...zeiten)];
+    out.plan = [Math.min(...zeiten.slice(0, 20)), Math.max(...zeiten.slice(0, 20)), zeiten[20]];
     weg();
     btn.className = vorher[0];
     [[zahl, vorher[1]], [fab, vorher[2]]].forEach(([el, v]) => v === null ? el.removeAttribute('style') : el.setAttribute('style', v));
@@ -3540,13 +3587,71 @@ const ok = (c, msg, det) => {
   const nachbar = f => f.every((x, i) => !i || x !== f[i - 1]);
   ok(leise.licht && /^top[123]$/.test(leise.ziel) && leise.imBild && leise.leise,
      'im laufenden Betrieb zieht eine leise, langsame Linie um eine Karte, die zählt und ganz im Bild steht', JSON.stringify(leise));
+  ok(leise.ausDemBild, 'verlässt die Karte das Bild, endet ihr Licht', JSON.stringify(leise));
   ok(leise.folge.every(Boolean) && ['top1', 'top2', 'top3', 'news', 'knopf', 'zeichen'].every(z => leise.folge.includes(z)) && nachbar(leise.folge)
      && leise.ohneNeues.every(Boolean) && !leise.ohneNeues.includes('news') && nachbar(leise.ohneNeues),
      'die Linie wechselt reihum zwischen den Plätzen, der Pille mit Neuem, dem Knopf und dem Zeichen, nie zweimal dasselbe hintereinander', JSON.stringify([leise.folge, leise.ohneNeues]));
   ok(leise.angeschnitten.length >= 4 && leise.angeschnitten.every(Boolean),
      'eine Karte, die angeschnitten ist, bekommt kein leises Licht', JSON.stringify(leise.angeschnitten));
-  ok(!leise.zweites && !leise.bedient && !leise.blatt && leise.plan[0] >= 7000 && leise.plan[1] <= 12000,
-     'nicht neben anderem Licht, nicht gleich nach einer Bedienung, nicht unter einem Blatt, und alle 7 bis 12 s', JSON.stringify(leise));
+  const an = leise.ansichten || {};
+  ok(/^rrow\.duo\.top1$/.test(an.duos) && /^rrow\.top1/.test(an.positionen) && /tm-top/.test(an.teams) && /^pod-karte/.test(an.awards)
+     && /^rek(-besitz)?\b/.test(an.rekorde) && ['news', 'knopf', 'zeichen'].includes(an.chronik) && an.verlauf === null,
+     'die Karte des leisen Lichts kommt aus dem offenen Reiter und seiner Ansicht', JSON.stringify(an));
+  ok(!leise.zweites && leise.bedient && !leise.blatt && leise.plan[0] >= 7000 && leise.plan[1] <= 12000 && leise.plan[2] === 2000,
+     'auch gleich nach einer Berührung, nicht neben anderem Licht, nicht unter einem Blatt, alle 7 bis 12 s und nach einem ausgesetzten Versuch nach 2 s', JSON.stringify(leise));
+  // Was endlos läuft und nicht im Bild steht, hält an [§C43], und läuft
+  // weiter, wenn es hereinkommt: im Feed ganz unten stehen die Bewegungen
+  // der Karten oben, wieder oben laufen sie; im Profil ebenso der Kopf.
+  // Geschlossen bleibt nichts angehalten zurück.
+  const sicht = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const warte = ms => new Promise(r => setTimeout(r, ms));
+    const bild = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const lage = sh => {
+      const sc = [sh, ...sh.querySelectorAll('*')].find(e => e.scrollHeight > e.clientHeight + 50 && /(auto|scroll)/.test(getComputedStyle(e).overflowY));
+      const q = sc.getBoundingClientRect(), oben = Math.max(0, q.top), unten = Math.min(innerHeight, q.bottom);
+      const liste = document.getAnimations().filter(a => a.effect && a.effect.target && a.effect.getTiming().iterations === Infinity && sh.contains(a.effect.target))
+        .map(a => { const t = a.effect.target, r = t.getBoundingClientRect();
+          // Was in einer Karte mit `content-visibility:auto` außerhalb des
+          // Bilds liegt, rechnet der Browser selbst nicht, und was noch in
+          // seiner Verzögerung steht, bewegt noch nichts: beides steht.
+          const lauf = a.playState === 'running' && (!t.checkVisibility({contentVisibilityAuto:true})
+            || a.effect.getComputedTiming().progress === null) ? 'paused' : a.playState;
+          return {im:r.bottom > oben && r.top < unten && a.effect.getComputedTiming().progress !== null,
+            weit:r.bottom < oben - 100 || r.top > unten + 100, lauf, name:a.animationName}; });
+      return {sc, liste, im:liste.filter(x => x.im).map(x => x.lauf), weit:liste.filter(x => x.weit).map(x => x.lauf)};
+    };
+    // Der Beobachter meldet nach dem nächsten Bild, unter Last später:
+    // gewartet wird, bis seine Meldungen da sind, höchstens 2 s.
+    const rollen = async (sc, wo, sh) => {
+      sc.scrollTop = wo === 'unten' ? sc.scrollHeight : 0; await warte(500); sc.scrollTop = wo === 'unten' ? sc.scrollHeight : 0;
+      for(let i = 0; i < 20; i++){ await bild(); await warte(100); const l = lage(sh); if(l.weit.every(x => x === 'paused') && l.im.every(x => x === 'running')) break; }
+    };
+    const out = {};
+    K("closeSheet(true); tab='ranking'; render(); _aufbauFertig(); openNewsFeed()"); await warte(900);
+    let sh = document.querySelector('.sheet.show'), l = lage(sh);
+    await rollen(l.sc, 'unten', sh); l = lage(sh);
+    out.feedUnten = {im:l.im, weit:l.weit};
+    await rollen(l.sc, 'oben', sh); l = lage(sh);
+    out.feedOben = {im:l.im, weit:l.weit};
+    K('closeSheet(true)'); await warte(500);
+    out.feedZu = [...document.querySelectorAll('.steht')].filter(e => e.isConnected).length;
+    K('showPlayer(players[0].id)'); await warte(700);
+    sh = document.querySelector('.sheet.show'); l = lage(sh);
+    await rollen(l.sc, 'unten', sh); l = lage(sh);
+    out.profilUnten = {im:l.im, weit:l.weit, namen:l.liste.filter(x => x.weit).map(x => x.name)};
+    await rollen(l.sc, 'oben', sh); l = lage(sh);
+    out.profilOben = {im:l.im, weit:l.weit};
+    K('closeSheet(true)'); await warte(500);
+    out.profilZu = [...document.querySelectorAll('.steht')].filter(e => e.isConnected).length;
+    return out;
+  });
+  const nurSo = (x, w) => x.length > 0 && x.every(y => y === w);
+  ok(nurSo(sicht.feedUnten.weit, 'paused') && sicht.feedUnten.weit.length >= 3 && sicht.feedUnten.im.every(y => y === 'running')
+     && nurSo(sicht.feedOben.im, 'running') && sicht.feedOben.weit.every(y => y === 'paused') && sicht.feedZu === 0,
+     'im Feed steht, was endlos läuft und nicht im Bild ist, und läuft wieder, wenn es hereinkommt', JSON.stringify(sicht));
+  ok(nurSo(sicht.profilUnten.weit, 'paused') && nurSo(sicht.profilOben.im, 'running') && sicht.profilZu === 0,
+     'im Profil ebenso: der Kopf steht, wenn er aus dem Bild ist', JSON.stringify(sicht));
   await page.emulateMedia({reducedMotion: 'reduce'});
   const leiseRuhig = await leiseLauf();
   await page.emulateMedia({reducedMotion: 'no-preference'});

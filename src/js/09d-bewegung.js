@@ -80,7 +80,12 @@ function kantenlicht(ziel, ton, art, verzug, d, innen, leise){
   ring.innerHTML = '<i></i>';
   teile.push(ring);
   teile.forEach(t => { t.setAttribute('aria-hidden', 'true'); t.dataset.t0 = t0; t.dataset.kv = verzug; ziel.appendChild(t); });
-  setTimeout(() => teile.forEach(t => t.remove()), verzug + (leise ? KANTE_LEISE_MS : KANTE_MS[art]) + 120);
+  _lichtBeobachten(ziel);
+  setTimeout(() => {
+    const wo = new Set(teile.map(t => t.parentElement));
+    teile.forEach(t => t.remove());
+    wo.forEach(_lichtLoesen);
+  }, verzug + (leise ? KANTE_LEISE_MS : KANTE_MS[art]) + 120);
   return ring;
 }
 
@@ -103,6 +108,12 @@ const AUFBAU_KOPF = '.view-head, .ui-switch, .ui-tabs, .saisonwahl, .lauf, .sear
 // ein Rahmen ohne eigenen Kasten. Als Teil bewegte er nichts, und die
 // Wähler darin kamen mit — es zählen seine Kinder.
 const AUFBAU_RAHMEN = '.geschichte';
+// Der Verlauf ist ein ruhiger Blick auf vergangene Partien, zum
+// Nachschlagen: dort baut sich nichts auf, und kein Licht fährt — weder beim
+// Ankommen noch leise im laufenden Betrieb. Er trug zuerst Aufbau und Licht
+// um die letzte Partie wie die Rangliste; für eine Liste, die man durchsieht,
+// war das Unruhe ohne Aussage.
+const RUHIGE_REITER = new Set(['history']);
 let _aufbauTeile = [];
 let _aufbauAuftrag = 0;
 function _aufbauen(view, start, schritt, hoechstens, ohneKopf){
@@ -135,8 +146,8 @@ function _aufbauFertig(){
 // Kommt eine Ansicht an, fährt das Kantenlicht in ihrem Metall um Platz 1, 2
 // und 3, nacheinander [§C25]: in Liga und Positionen um die ersten drei
 // Zeilen, bei den Duos ebenso, bei den Awards um das Podest; über Gold zieht
-// danach das Band, das den Titel trägt. Im Verlauf ist es die letzte Partie,
-// die ankommt. Je Ansicht (Reiter mit seiner Wahl: Zeitraum, Saison, Sicht)
+// danach das Band, das den Titel trägt; der Verlauf bleibt ruhig
+// (`RUHIGE_REITER`). Je Ansicht (Reiter mit seiner Wahl: Zeitraum, Saison, Sicht)
 // höchstens einmal in 45 s: wer zwischen zwei Ansichten hin- und herwechselt,
 // sieht es nicht jedes Mal, wer später zurückkommt, wieder.
 const PODEST_KARTEN = {
@@ -150,7 +161,7 @@ const PODEST_PAUSE_MS = 45000;
 const _podestZuletzt = new Map();
 function _ansichtSchluessel(reiter){
   const wahl = {ranking:[period, ligaSicht, ligaSeasonId], positions:[rankMetric, posSort],
-    awards:[awView, awPeriod, awSeasonId, awWeekStart, rekKammer], teams:[teamView, teamSort], history:[histFilter, _histPage]}[reiter];
+    awards:[awView, awPeriod, awSeasonId, awWeekStart, rekKammer], teams:[teamView, teamSort]}[reiter];
   return reiter + '|' + (wahl || []).join('|');
 }
 // Die Diagonale einer Karte, für den Kegel — geschätzt aus der Breite des
@@ -160,20 +171,12 @@ function _ansichtSchluessel(reiter){
 // ersten Bild, und genau das kostete im Entwurf Zeit.
 function _diagonale(art){
   const b = Math.min(innerWidth, 520) - 32;
-  return art === 'podest' ? Math.hypot(b / 3 + 12, 215) + 8
-    : art === 'partie' ? Math.hypot(b, 210) + 8 : Math.hypot(b, 112) + 8;
+  return art === 'podest' ? Math.hypot(b / 3 + 12, 215) + 8 : Math.hypot(b, 112) + 8;
 }
 function _podestLicht(view, reiter, start){
   if(!view || _bewegungRuhig()) return;
   const schluessel = _ansichtSchluessel(reiter), jetzt = performance.now();
   if(jetzt - (_podestZuletzt.get(schluessel) ?? -Infinity) < PODEST_PAUSE_MS) return;
-  if(reiter === 'history'){
-    const z = view.querySelector('.mlist > .mrow');
-    if(!z) return;
-    _podestZuletzt.set(schluessel, jetzt);
-    kantenlicht(z, 'acid', 'zeichnen', start, _diagonale('partie'));
-    return;
-  }
   const karten = PODEST_KARTEN[reiter] ? [...view.querySelectorAll(PODEST_KARTEN[reiter])].slice(0, 3) : [];
   if(!karten.length) return;
   _podestZuletzt.set(schluessel, jetzt);
@@ -229,6 +232,7 @@ function _lichtZurueck(root, liste){
     x.e.dataset.t0 = jetzt; x.e.dataset.kv = x.v;
     x.e.style.setProperty(x.e.classList.contains('glanz-einmal') ? '--gv' : '--kv', x.v + 'ms');
     n.appendChild(x.e);
+    _lichtBeobachten(n);
   });
 }
 
@@ -263,8 +267,7 @@ function _bewegungNachRender(root, warTab, geruest, behalten){
     kantenlicht(document.querySelector('.logo-mark'), 'acid', 'zeichnen', 120, 60, true);
     const fab = document.getElementById('fab');
     if(fab && fab.style.display !== 'none') kantenlicht(fab, 'weiss', 'zeichnen', 1150, 90);
-    _aufbauen(view, 40, 55, 14);
-    _podestLicht(view, tab, 700);
+    if(!RUHIGE_REITER.has(tab)){ _aufbauen(view, 40, 55, 14); _podestLicht(view, tab, 700); }
     _leisePlanen();
     return;
   }
@@ -272,7 +275,7 @@ function _bewegungNachRender(root, warTab, geruest, behalten){
   if(_wechselZiel !== tab) return;
   _wechselZiel = '';
   // Hat sich nichts geändert (dieselbe Wahl noch einmal), baut sich nichts auf.
-  if(behalten && warTab === tab) return;
+  if((behalten && warTab === tab) || RUHIGE_REITER.has(tab)) return;
   // Überschrift, Wähler und Suche stehen; nur was darunter neu ist, kommt.
   _aufbauen(view, 0, 45, 10, true);
   _podestLicht(view, tab, 380);
@@ -436,26 +439,44 @@ function _wechselSteht(){
 // Steht die App offen, zieht alle 7 bis 12 s eine einzelne, langsame Linie
 // einmal um etwas, das zählt — dieselben Bedeutungen wie beim Ankommen
 // [§C41], nur leiser: eine Runde in 6,5 s, halb so hell, ohne Rahmen
-// (`.kl-leise`). Die Ziele wechseln reihum (`LEISE_FOLGE`): Platz 1, Platz
-// 2, die Pille „News", wenn etwas ungelesen ist, Platz 3, „Match
-// eintragen", das Zeichen der Liga — nie zweimal dasselbe hintereinander,
-// nie zwei Lichter zugleich. Ausgesetzt wird während einer Bedienung und in
-// den 4 s danach, unter einem Blatt oder Fenster, auf einer versteckten
-// Seite und solange eine Ansicht sich aufbaut; eine Karte nur, wenn sie
-// ganz im Bild und nicht hinter der unteren Leiste steht. Zuerst kam alle
-// 30 bis 55 s ein Licht wie beim Ankommen, nur halb so hell: zu selten, um
-// die Liga lebendig wirken zu lassen, und zu schnell, um ruhig zu sein.
-// Geplant vom ersten Bild des Öffnens an.
+// (`.kl-leise`). Die Ziele wechseln reihum (`LEISE_FOLGE`) und kommen aus
+// dem offenen Reiter und seiner Ansicht (`LEISE_KARTEN`): Platz 1 bis 3, die
+// Duos oben, das Podest der Awards, die Rekorde oben;
+// dazwischen die Pille „News", wenn etwas ungelesen ist, „Match eintragen"
+// und das Zeichen der Liga — nie zweimal dasselbe hintereinander, nie zwei
+// Lichter zugleich, eine Karte nur, wenn sie ganz im Bild und nicht hinter
+// der unteren Leiste steht, und verlässt sie das Bild, endet ihr Licht
+// (`_lichtBeobachten`). Es beginnt auch, während man scrollt oder sich
+// umsieht; zuerst wartete es 4 s nach jeder Berührung, und wer sich durch
+// die App bewegte, sah es nie. Ausgesetzt wird unter einem Blatt oder
+// Fenster — dort ist es nicht zu sehen —, im Verlauf, auf einer versteckten
+// Seite und solange eine Ansicht sich aufbaut; dann kommt der nächste Versuch nach
+// 2 s statt nach der vollen Pause. Zuerst kam alle 30 bis 55 s ein Licht
+// wie beim Ankommen, nur halb so hell: zu selten, um die Liga lebendig
+// wirken zu lassen, und zu schnell, um ruhig zu sein. Geplant vom ersten
+// Bild des Öffnens an.
 const LEISE_MS = [7000, 12000];
+const LEISE_NOCHMAL_MS = 2000;
 const LEISE_FOLGE = ['karte', 'karte', 'news', 'karte', 'knopf', 'karte', 'zeichen'];
-let _leiseAuftrag = 0, _letzteBedienung = 0, _leiseSchritt = 0, _leiseKarte = 0, _leiseZuletzt = null;
-function _leisePlanen(){
+// Je Ansicht, was dort zählt, und in welcher Farbe: das Metall der Plätze,
+// Acid, wo es keine Plätze gibt. Chronik, Eingabe und Einstellungen haben
+// keine Karte dieser Art; dort wechseln Pille, Knopf und Zeichen. Im Verlauf
+// ruht es ganz (`RUHIGE_REITER`).
+const LEISE_KARTEN = {
+  ranking:{sel:'.rlist > .rrow.top1, .rlist > .rrow.top2, .rlist > .rrow.top3', metall:true},
+  positions:{sel:'.rlist > .rrow.top1, .rlist > .rrow.top2, .rlist > .rrow.top3', metall:true},
+  teams:{sel:'.rlist > .rrow.tm-top', metall:true},
+  'awards:awards':{sel:'.podest > .pod-karte', metall:true},
+  'awards:rekorde':{sel:'.rek-besitz, .rek'},
+};
+let _leiseAuftrag = 0, _leiseSchritt = 0, _leiseKarte = 0, _leiseZuletzt = null;
+function _leisePlanen(kurz){
   clearTimeout(_leiseAuftrag);
-  _leiseAuftrag = setTimeout(() => { _leisesLicht(); _leisePlanen(); },
-    LEISE_MS[0] + Math.random() * (LEISE_MS[1] - LEISE_MS[0]));
+  _leiseAuftrag = setTimeout(() => _leisePlanen(!_leisesLicht()),
+    kurz ? LEISE_NOCHMAL_MS : LEISE_MS[0] + Math.random() * (LEISE_MS[1] - LEISE_MS[0]));
 }
 function _leisesLicht(){
-  if(_bewegungRuhig() || document.hidden || performance.now() - _letzteBedienung < 4000 || _aufbauTeile.length) return null;
+  if(_bewegungRuhig() || document.hidden || _aufbauTeile.length || RUHIGE_REITER.has(tab)) return null;
   if(document.querySelector('.sheet.show, .nd-bg.show, .bp-bg.show, #main .kl, .appbar .kl, #fab .kl')) return null;
   for(let n = 0; n < LEISE_FOLGE.length; n++){
     const z = _leiseZiel(LEISE_FOLGE[_leiseSchritt++ % LEISE_FOLGE.length]);
@@ -468,14 +489,14 @@ function _leisesLicht(){
 function _leiseZiel(was){
   if(was === 'karte'){
     const view = document.querySelector('#main > .view');
-    const sel = tab === 'history' ? '.mlist > .mrow' : PODEST_KARTEN[tab];
-    if(!view || !sel) return null;
-    const alle = [...view.querySelectorAll(sel)].slice(0, tab === 'history' ? 1 : 3), unten = innerHeight - 90;
+    const art = LEISE_KARTEN[tab === 'awards' ? 'awards:' + awView : tab];
+    if(!view || !art) return null;
+    const alle = [...view.querySelectorAll(art.sel)].slice(0, art.n || 3), unten = innerHeight - 90;
     for(let i = 0; i < alle.length; i++){
       const k = (_leiseKarte + i) % alle.length, z = alle[k], r = z.getBoundingClientRect();
       if(z === _leiseZuletzt || r.top < 0 || r.bottom > unten) continue;
       _leiseKarte = k + 1;
-      return {el:z, ton:tab === 'history' ? 'acid' : _metallTon(z, k), art:'zeichnen', d:Math.hypot(r.width, r.height) + 8};
+      return {el:z, ton:art.metall ? _metallTon(z, k) : 'acid', art:'zeichnen', d:Math.hypot(r.width, r.height) + 8};
     }
     return null;
   }
@@ -493,8 +514,6 @@ function _leiseZiel(was){
   const l = document.querySelector('.logo-mark');
   return l && l !== _leiseZuletzt ? {el:l, ton:'acid', art:'zeichnen', d:60, innen:true} : null;
 }
-['pointerdown', 'wheel', 'touchstart', 'keydown', 'scroll'].forEach(ev =>
-  document.addEventListener(ev, () => { _letzteBedienung = performance.now(); }, {passive:true, capture:true}));
 
 // ── Neuigkeiten ────────────────────────────────────────────────────────
 // Die Pille „News" steht vom ersten Bild an als Gerüst an ihrem Platz
@@ -632,6 +651,74 @@ function _fensterZu(bg, el, wer){
   _verdecken(wer, false);
   if(!bg || !el) return;
   setTimeout(() => { if(!bg.classList.contains('show')) el.innerHTML = ''; }, 260);
+}
+
+// ── Nur, was man sieht, bewegt sich ────────────────────────────────────
+// Was endlos läuft, hält an, solange es nicht im Bild steht, und läuft
+// weiter, wenn es hineinkommt — dieselbe Klasse `.steht`, gezählt wie beim
+// Verdecken. Im Feed liefen 24 bis 27 endlose Bewegungen — Glanz, Atmen,
+// Puls der Karten —, die meisten auf Karten weit außerhalb des Bilds, und
+// kosteten den Hauptthread gemessen 220 ms je Sekunde (vierfach gedrosselt),
+// auch ganz unten gescrollt, wo keine davon zu sehen war: Chrome hält
+// Bewegung außerhalb des Bilds nicht von selbst an. Bemerkt wird jede
+// endlose Bewegung an ihrem Beginn (`animationstart`), wo immer sie
+// entsteht, auch auf Karten, die der Feed erst beim Scrollen anlegt; ob sie
+// im Bild steht, sagt ein IntersectionObserver, ohne Layout zu erzwingen —
+// 80 px vor dem Rand, damit sie schon läuft, wenn sie hereinkommt.
+let _bewegSicht = null;
+const _sichtZiele = new Set();
+function _sichtLoesen(el){
+  _bewegSicht.unobserve(el); _sichtZiele.delete(el);
+  if(!el._ausSicht) return;
+  el._ausSicht = false;
+  el._steht = Math.max(0, (el._steht || 0) - 1);
+  if(!el._steht) el.classList.remove('steht');
+}
+function _bewegungBeobachten(el){
+  if(!_bewegSicht) _bewegSicht = new IntersectionObserver(eintraege => eintraege.forEach(e => {
+    const el = e.target;
+    if(!el.isConnected) return _sichtLoesen(el);
+    const aus = !e.isIntersecting;
+    if(aus === !!el._ausSicht) return;
+    el._ausSicht = aus;
+    el._steht = Math.max(0, (el._steht || 0) + (aus ? 1 : -1));
+    el.classList.toggle('steht', el._steht > 0);
+  }), {rootMargin:'80px'});
+  // Was nicht mehr im Dokument steht, wird nicht weiter beobachtet.
+  _sichtZiele.forEach(z => { if(!z.isConnected) _sichtLoesen(z); });
+  _sichtZiele.add(el);
+  _bewegSicht.observe(el);
+}
+if(_bewegungDa() && typeof IntersectionObserver === 'function')
+  document.addEventListener('animationstart', e => {
+    const el = e.target;
+    if(!(el instanceof Element) || _sichtZiele.has(el)) return;
+    const cs = getComputedStyle(el, e.pseudoElement || null);
+    const namen = cs.animationName.split(', '), zahl = cs.animationIterationCount.split(', ');
+    const i = namen.indexOf(e.animationName);
+    if(i >= 0 && zahl[i % zahl.length] === 'infinite') _bewegungBeobachten(el);
+  }, true);
+// Ein Licht endet, wenn seine Karte das Bild verlässt — etwa weil das leise
+// Licht beim Scrollen begann. Was in einem Blatt, einem Fenster oder dem
+// Hinweis eben erst hereinfährt, steht in seiner ersten halben Sekunde noch
+// außerhalb und behält sein Licht.
+let _lichtSicht = null;
+const LICHT_TEILE = ':scope > .kl, :scope > .kl-schein, :scope > .glanz-einmal';
+function _lichtLoesen(el){
+  if(_lichtSicht && el && !el.querySelector(LICHT_TEILE)) _lichtSicht.unobserve(el);
+}
+function _lichtBeobachten(ziel){
+  if(typeof IntersectionObserver !== 'function') return;
+  if(!_lichtSicht) _lichtSicht = new IntersectionObserver(eintraege => eintraege.forEach(e => {
+    const el = e.target, teile = el.isConnected ? [...el.querySelectorAll(LICHT_TEILE)] : [];
+    if(!teile.length) return _lichtSicht.unobserve(el);
+    if(e.isIntersecting) return;
+    const jung = performance.now() - Math.max(...teile.map(t => +t.dataset.t0 || 0)) < 500;
+    if(jung && el.closest('.sheet, .nd, .bp, #newsToast')) return;
+    teile.forEach(t => t.remove());
+    _lichtSicht.unobserve(el);
+  }));
+  _lichtSicht.observe(ziel);
 }
 
 // Der Punkt oben links: ist die Verbindung zum ersten Mal da, geht zweimal

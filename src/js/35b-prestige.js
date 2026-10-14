@@ -1044,30 +1044,43 @@ let _insEigenLauf = 0;
 const _insStufeSym = new Map();      // Rang|Stufe|Bild → id der Gruppe
 const _insStufeDrin = new Set();
 let _insStufeTopf = null;
-// Die Zeichnungen der Laufbahn vorab, je Rangfarbe und Stufe ein Schritt im
-// Leerlauf [§2.1b]. Die Vitrine zeigt achtundzwanzig Zeichnungen, und jede
-// trägt die Rangfarbe: das erste Laufbahn-Blatt eines Rangs kostete gemessen
-// 110 bis 135 ms Skript auf dem Rechner, auf dem Telefon das Mehrfache, das
-// nächste desselben Rangs 4 ms. Vorab gezeichnet werden die einundzwanzig
-// kleinen Felder und je Stufe das erste und das letzte große Zeichen — so
-// zeigt die Vitrine eine offene und eine durchlaufene Stufe. Es bleibt das
-// eine Zeichen der eigenen Stufe, wenn sie mitten im Grad steht.
+// Die Zeichnungen der Laufbahn eines Rangs vorab, sobald sie einen Tipp
+// entfernt ist: im Profil, dessen Insignium sie öffnet, und in einer Story,
+// die zu ihr führt [§2.1b]. Die Vitrine zeigt achtundzwanzig Zeichnungen, und
+// jede trägt die Rangfarbe: kalt kostete das erste Laufbahn-Blatt eines Rangs
+// gemessen 600 bis 900 ms Skript (vierfach gedrosselt), warm 65 bis 140 ms.
+// Vorab gezeichnet werden die einundzwanzig kleinen Felder und je Stufe das
+// erste und das letzte große Zeichen — so zeigt die Vitrine eine offene und
+// eine durchlaufene Stufe; es bleibt das eine Zeichen der eigenen Stufe, wenn
+// sie mitten im Grad steht. Eine Zeichnung je ruhigem Moment, und nur,
+// solange Blatt oder Fenster offen sind. Zuerst zeichnete der Start die
+// Zeichen jedes Rangs, der in der Liga vorkommt: elf Sekunden lang Blöcke bis
+// 336 ms, 3,8 s zusammen, für ein Blatt, das man an diesem Tag vielleicht nie
+// öffnet — und wer in dieser Zeit tippte, wartete.
 let _insWarmPlan = null;
-function _insVorwaermen(){
-  if(!_insWarmPlan || _insWarmPlan.v !== _cache.version){
-    const raenge = [...new Set((players || []).filter(p => sichtbar(p))
-      .map(p => (getPlayerRank(p.id) || {}).label).filter(Boolean))];
-    _insWarmPlan = [];
-    _insWarmPlan.v = _cache.version;
-    raenge.forEach(r => INSIGNIEN.forEach((_, i) => _insWarmPlan.push([r, i])));
-  }
-  const s = _insWarmPlan.shift();
-  if(!s){ _insWarmPlan = null; return true; }
-  const [rang, i] = s, key = INSIGNIEN[i].key, n = INSIGNIUM_GRADE;
-  for(let g = 0; g < n; g++) insigniumStufeSvg(key, rang, g, {bild:true});
-  insigniumStufeSvg(key, rang, 0);
-  insigniumStufeSvg(key, rang, n - 1);
-  return false;
+function _insRangWaermen(pid){
+  const rang = (getPlayerRank(pid) || {}).label;
+  if(!rang || typeof document === 'undefined') return;
+  const alt = _insWarmPlan;
+  if(alt && alt.rang === rang && alt.v === _cache.version) return;
+  const n = INSIGNIUM_GRADE, plan = [];
+  INSIGNIEN.forEach(ins => {
+    for(let g = 0; g < n; g++) plan.push([ins.key, g, {bild:true}]);
+    plan.push([ins.key, 0], [ins.key, n - 1]);
+  });
+  const auftrag = _insWarmPlan = {rang, v:_cache.version, plan};
+  const weiter = () => {
+    if(_insWarmPlan !== auftrag || _cache.version !== auftrag.v || !plan.length) return;
+    // Geschlossen ist die Laufbahn wieder weiter weg: der Rest wartet auf
+    // das nächste Profil desselben Rangs.
+    if(!document.querySelector('.sheet.show, .nd-bg.show')){ _insWarmPlan = null; return; }
+    if(!document.hidden){
+      const [key, g, opt] = plan.shift();
+      try { insigniumStufeSvg(key, rang, g, opt); } catch(e){}
+    }
+    _leerlauf(1000).then(weiter);
+  };
+  _leerlauf(1000).then(weiter);
 }
 function insigniumStufeSvg(key, rangLabel, grad, opt){
   const c = _insSatzCache(rangLabel);
