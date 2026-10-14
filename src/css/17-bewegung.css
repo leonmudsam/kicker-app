@@ -88,6 +88,10 @@
   :is(.nd, .nf-card) > .kl{position:absolute;z-index:3}
   :is(.nd, .nf-card) > .kl-schein{position:absolute;z-index:2}
   .kl-schein.kl-innen{inset:0}
+  /* Im laufenden Betrieb leiser als beim Ankommen (`_leisesLicht`). Der
+     Schein bewegt seine Deckkraft selbst; er wird über den Schatten leiser. */
+  .kl.kl-leise{opacity:.5}
+  .kl-schein.kl-leise{box-shadow:0 0 0 1px rgba(var(--kr),.16),0 0 14px -4px rgba(var(--kr),.28),inset 0 0 12px -7px rgba(var(--kr),.2)}
   .kl-gold{--kr:247,207,74}
   .kl-silber{--kr:214,222,230}
   .kl-bronze{--kr:222,160,108}

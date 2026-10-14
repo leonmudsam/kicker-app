@@ -56,6 +56,8 @@ schon einmal „verbunden" gezeigt hat; er wird nicht zurückgesetzt).
 das Schließen gibt sie frei) und an jedem dieser Elemente `_steht` (wie oft
 es angehalten ist; bei null verliert es `.steht`), an Story und Auszeichnung
 `_auf` (das jüngste Öffnen; ein älteres Licht kommt nicht mehr).
+`_letzteBedienung` (wann zuletzt getippt, gescrollt oder eine Taste
+gedrückt wurde; das leise Licht wartet 4 s danach).
 `_schlittenVorher` (`09-ui-infra.js`) trägt zusätzlich `t0`, das Bild, mit
 dem der Schlitten eines Wählers losfuhr; `schlittenFahren` verbraucht ihn.
 
@@ -395,7 +397,10 @@ aus, wenn er der erste nach dem Öffnen ist (`_newsToastSchonDa`), sonst nach
 2,4 s (`_rufAuftrag`). Das Licht im Feed sucht 300 ms nach dem Öffnen seine
 Karten, das an Story und Auszeichnung kommt nach 120 ms; was ein Blatt
 verdeckt, hält nach 300 ms an, wenn es eingefahren ist; geschlossene Fenster
-werden nach 260 ms geleert, wenn sie nicht wieder offen sind.
+werden nach 260 ms geleert, wenn sie nicht wieder offen sind. Vom Öffnen
+an plant `_leiseAuftrag` alle 30 bis 55 s ein leises Licht; es läuft weiter,
+solange die Seite offen ist, und tut nichts, wenn die Seite versteckt ist,
+ein Blatt offen steht oder eben bedient wurde.
 
 `_tickDaten` lässt außerdem ein offenes Blatt, den Eingabe-Tab und die
 Einstellungen in Ruhe:

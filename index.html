@@ -5764,6 +5764,8 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   :is(.nd, .nf-card) > .kl{position:absolute;z-index:3}
   :is(.nd, .nf-card) > .kl-schein{position:absolute;z-index:2}
   .kl-schein.kl-innen{inset:0}
+  .kl.kl-leise{opacity:.5}
+  .kl-schein.kl-leise{box-shadow:0 0 0 1px rgba(var(--kr),.16),0 0 14px -4px rgba(var(--kr),.28),inset 0 0 12px -7px rgba(var(--kr),.2)}
   .kl-gold{--kr:247,207,74}
   .kl-silber{--kr:214,222,230}
   .kl-bronze{--kr:222,160,108}
@@ -5914,7 +5916,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.14.7855b95c';
+const BUILD_VERSION='2026.10.14.490133d2';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -10007,10 +10009,10 @@ function _geruestHtml(){
 const KANTE_MS = {zeichnen:4600, hinweis:4200};
 const KANTE_TON = {gold:'kl-gold', silber:'kl-silber', bronze:'kl-bronze', acid:'kl-acid', weiss:'kl-weiss', story:'kl-story'};
 const KANTE_ART = {zeichnen:'kl-zeichnen', hinweis:'kl-hinweis'};
-function kantenlicht(ziel, ton, art, verzug, d, innen){
+function kantenlicht(ziel, ton, art, verzug, d, innen, leise){
   if(!ziel || _bewegungRuhig() || !KANTE_TON[ton] || !KANTE_ART[art]) return null;
   const teile = [], t0 = performance.now();
-  const klassen = ' ' + KANTE_ART[art] + ' ' + KANTE_TON[ton] + (innen ? ' kl-innen' : '');
+  const klassen = ' ' + KANTE_ART[art] + ' ' + KANTE_TON[ton] + (innen ? ' kl-innen' : '') + (leise ? ' kl-leise' : '');
   const schein = document.createElement('span');
   schein.className = 'kl-schein' + klassen;
   schein.style.setProperty('--kv', verzug + 'ms');
@@ -10088,13 +10090,16 @@ function _podestLicht(view, reiter, start){
   if(!karten.length) return;
   _podestZuletzt.set(schluessel, jetzt);
   karten.forEach((z, i) => {
-    const k = ' ' + z.className + ' ';
-    const ton = /\s(top1|gold)\s/.test(k) ? 'gold' : /\s(top2|silber)\s/.test(k) ? 'silber'
-      : /\s(top3|bronze)\s/.test(k) ? 'bronze' : ['gold', 'silber', 'bronze'][i];
+    const ton = _metallTon(z, i);
     const v = start + PODEST_VERSATZ[ton];
     kantenlicht(z, ton, 'zeichnen', v, _diagonale(reiter === 'awards' ? 'podest' : 'zeile'));
     if(ton === 'gold' && !z.querySelector(':scope > .glanz-bahn')) _glanzEinmal(z, v + 1150);
   });
+}
+function _metallTon(z, i){
+  const k = ' ' + z.className + ' ';
+  return /\s(top1|gold)\s/.test(k) ? 'gold' : /\s(top2|silber)\s/.test(k) ? 'silber'
+    : /\s(top3|bronze)\s/.test(k) ? 'bronze' : ['gold', 'silber', 'bronze'][i] || 'gold';
 }
 function _glanzEinmal(ziel, verzug){
   const b = document.createElement('span');
@@ -10147,6 +10152,7 @@ function _bewegungNachRender(root, warTab, geruest, behalten){
     if(fab && fab.style.display !== 'none') kantenlicht(fab, 'weiss', 'zeichnen', 1150, 90);
     _aufbauen(view, 40, 55, 14);
     _podestLicht(view, tab, 700);
+    _leisePlanen();
     return;
   }
   _wechselSteht();
@@ -10258,6 +10264,30 @@ function _wechselSteht(){
   _schleierLauf.cancel(); _schleierLauf = null;
   if(von > .04) _schleier.animate([{opacity:von}, {opacity:0}], {duration:200, easing:'ease-out'});
 }
+
+const LEISE_MS = [30000, 55000];
+let _leiseAuftrag = 0, _letzteBedienung = 0;
+function _leisePlanen(){
+  clearTimeout(_leiseAuftrag);
+  _leiseAuftrag = setTimeout(() => { _leisesLicht(); _leisePlanen(); },
+    LEISE_MS[0] + Math.random() * (LEISE_MS[1] - LEISE_MS[0]));
+}
+function _leisesLicht(){
+  if(_bewegungRuhig() || document.hidden || performance.now() - _letzteBedienung < 4000 || _aufbauTeile.length) return null;
+  if(document.querySelector('.sheet.show, .nd-bg.show, .bp-bg.show')) return null;
+  const view = document.querySelector('#main > .view');
+  const sel = tab === 'history' ? '.mlist > .mrow' : PODEST_KARTEN[tab];
+  if(!view || !sel || view.querySelector('.kl')) return null;
+  const alle = [...view.querySelectorAll(sel)].slice(0, tab === 'history' ? 1 : 3);
+  const unten = innerHeight - 90;
+  const im = alle.filter(k => { const r = k.getBoundingClientRect(); return r.top >= 0 && r.bottom <= unten; });
+  if(!im.length) return null;
+  const z = im[Math.floor(Math.random() * im.length)];
+  return kantenlicht(z, tab === 'history' ? 'acid' : _metallTon(z, alle.indexOf(z)), 'zeichnen', 0,
+    Math.hypot(z.offsetWidth, z.offsetHeight) + 8, false, true);
+}
+['pointerdown', 'wheel', 'touchstart', 'keydown', 'scroll'].forEach(ev =>
+  document.addEventListener(ev, () => { _letzteBedienung = performance.now(); }, {passive:true, capture:true}));
 
 function _pilleKommt(btn, ungelesen){
   if(_bewegungRuhig()) return;

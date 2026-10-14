@@ -3464,6 +3464,57 @@ const ok = (c, msg, det) => {
   ok(fenster.story.licht && fenster.story.deckt && fenster.story.scroll && fenster.story.feedLicht === 0 && fenster.story.nachScroll === 0
      && fenster.story.leer && fenster.bp.licht && fenster.bp.leer,
      'Story und Auszeichnung öffnen mit Licht genau an ihrer Kante, das beim Scrollen endet, und sind geschlossen leer', JSON.stringify([fenster.story, fenster.bp]));
+  // Im laufenden Betrieb fährt hin und wieder leises Licht um eine Karte,
+  // die zählt [§C43]: dieselbe Zeichnung, halb so hell, nur um eine Karte
+  // ganz im Bild, alle 30 bis 55 s höchstens einmal — nicht, solange anderes
+  // Licht läuft, nicht in den 4 s nach einer Bedienung, nicht unter einem
+  // Blatt, nicht bei Bewegungsruhe.
+  const leiseLauf = async () => page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const bild = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const weg = () => document.querySelectorAll('#main .kl, #main .kl-schein, #main .glanz-einmal').forEach(e => e.remove());
+    K("closeSheet(true); tab='ranking'; period='season'; ligaSeasonId=null; render(); _aufbauFertig()"); await bild();
+    weg(); K('_letzteBedienung = 0');
+    const ring = K('_leisesLicht()'), out = {};
+    if(ring){
+      const r = ring.parentElement.getBoundingClientRect();
+      out.ziel = ring.parentElement.matches('.rlist > .rrow.top1, .rlist > .rrow.top2, .rlist > .rrow.top3');
+      out.imBild = r.top >= 0 && r.bottom <= innerHeight - 90;
+      out.leise = ring.matches('.kl-zeichnen.kl-leise') && getComputedStyle(ring).opacity === '0.5';
+    }
+    out.licht = !!ring;
+    out.zweites = !!K('_leisesLicht()');
+    // Ist Platz 1 oben angeschnitten, nimmt es ihn nie.
+    const eins = document.querySelector('#main .rlist > .rrow.top1');
+    window.scrollTo(0, scrollY + eins.getBoundingClientRect().top + 20); await bild();
+    out.angeschnitten = [];
+    for(let i = 0; i < 10; i++){
+      weg(); K('_letzteBedienung = 0'); const k = K('_leisesLicht()');
+      if(k){ const r = k.parentElement.getBoundingClientRect(); out.angeschnitten.push(r.top >= 0 && r.bottom <= innerHeight - 90); }
+    }
+    window.scrollTo(0, 0); await bild();
+    weg(); K('_letzteBedienung = performance.now()');
+    out.bedient = !!K('_leisesLicht()');
+    K("_letzteBedienung = 0; showPlayer(players[0].id)"); await bild();
+    out.blatt = !!K('_leisesLicht()');
+    K('closeSheet(true)'); await bild();
+    const st = window.setTimeout, zeiten = [];
+    window.setTimeout = (f, ms) => { zeiten.push(ms); return 0; };
+    for(let i = 0; i < 20; i++) K('_leisePlanen()');
+    window.setTimeout = st;
+    out.plan = [Math.min(...zeiten), Math.max(...zeiten)];
+    weg();
+    return out;
+  });
+  const leise = await leiseLauf();
+  ok(leise.licht && leise.ziel && leise.imBild && leise.leise && leise.angeschnitten.length === 10 && leise.angeschnitten.every(Boolean),
+     'im laufenden Betrieb fährt leises Licht um eine Karte, die zählt und ganz im Bild steht', JSON.stringify(leise));
+  ok(!leise.zweites && !leise.bedient && !leise.blatt && leise.plan[0] >= 30000 && leise.plan[1] <= 55000,
+     'nicht neben anderem Licht, nicht gleich nach einer Bedienung, nicht unter einem Blatt, und höchstens alle 30 bis 55 s', JSON.stringify(leise));
+  await page.emulateMedia({reducedMotion: 'reduce'});
+  const leiseRuhig = await leiseLauf();
+  await page.emulateMedia({reducedMotion: 'no-preference'});
+  ok(!leiseRuhig.licht, 'bei Bewegungsruhe kein leises Licht', JSON.stringify(leiseRuhig));
   {
     await K("closeSheet(true);tab='ranking';period='season';render()");
     await page.waitForTimeout(1200);

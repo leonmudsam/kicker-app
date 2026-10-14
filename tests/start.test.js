@@ -394,6 +394,8 @@ async function neueSeite(ctx){
     const rest = await e2.page.evaluate(() => ({aufbau:document.documentElement.classList.contains('aufbau'),
       reste:document.querySelectorAll('.bau, .kl, .kl-schein, .glanz-einmal, [style=""]').length}));
     ok(!rest.aufbau && rest.reste === 0, 'Nach seiner Zeit ist vom Aufbau und vom Licht nichts übrig ' + JSON.stringify(rest));
+    // Ab dem Öffnen ist das leise Licht im laufenden Betrieb geplant [§C43].
+    ok(await e2.page.evaluate(() => window.__K('!!_leiseAuftrag')), 'Das Öffnen plant das leise Licht im laufenden Betrieb');
     await e2.page.close();
     // Direkt wieder geöffnet: dieselbe Vorführung, jedes Mal.
     const e3 = await neueSeite(bctx);
@@ -408,7 +410,8 @@ async function neueSeite(ctx){
     await e4.page.goto(BASIS);
     await e4.page.waitForSelector('#main .rlist', {timeout:20000});
     const a4 = await aufbauJetzt(e4.page);
-    ok(!a4.aufbau && a4.teile === 0 && !a4.metall && !a4.zeichen, 'Bei Bewegungsruhe steht die Liga sofort, ohne Aufbau und ohne Licht ' + JSON.stringify(a4));
+    ok(!a4.aufbau && a4.teile === 0 && !a4.metall && !a4.zeichen && !(await e4.page.evaluate(() => window.__K('!!_leiseAuftrag'))),
+      'Bei Bewegungsruhe steht die Liga sofort, ohne Aufbau, ohne Licht und ohne leises Licht später ' + JSON.stringify(a4));
     await e4.page.close();
     ok(!anfragen.some(x => x.pfad === '/icon.png'), 'Der Start lädt das große Symbol nicht: das Zeichen steht in der Seite');
     await bctx.close();

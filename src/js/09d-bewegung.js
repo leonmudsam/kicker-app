@@ -63,10 +63,10 @@ const KANTE_MS = {zeichnen:4600, hinweis:4200};
 // statt als farbloses Licht.
 const KANTE_TON = {gold:'kl-gold', silber:'kl-silber', bronze:'kl-bronze', acid:'kl-acid', weiss:'kl-weiss', story:'kl-story'};
 const KANTE_ART = {zeichnen:'kl-zeichnen', hinweis:'kl-hinweis'};
-function kantenlicht(ziel, ton, art, verzug, d, innen){
+function kantenlicht(ziel, ton, art, verzug, d, innen, leise){
   if(!ziel || _bewegungRuhig() || !KANTE_TON[ton] || !KANTE_ART[art]) return null;
   const teile = [], t0 = performance.now();
-  const klassen = ' ' + KANTE_ART[art] + ' ' + KANTE_TON[ton] + (innen ? ' kl-innen' : '');
+  const klassen = ' ' + KANTE_ART[art] + ' ' + KANTE_TON[ton] + (innen ? ' kl-innen' : '') + (leise ? ' kl-leise' : '');
   const schein = document.createElement('span');
   schein.className = 'kl-schein' + klassen;
   schein.style.setProperty('--kv', verzug + 'ms');
@@ -174,17 +174,20 @@ function _podestLicht(view, reiter, start){
   const karten = PODEST_KARTEN[reiter] ? [...view.querySelectorAll(PODEST_KARTEN[reiter])].slice(0, 3) : [];
   if(!karten.length) return;
   _podestZuletzt.set(schluessel, jetzt);
-  // Das Metall sagt die Klasse (top1, gold …); die Duos tragen nur
-  // „tm-top", dort sagt es die Reihenfolge.
   karten.forEach((z, i) => {
-    const k = ' ' + z.className + ' ';
-    const ton = /\s(top1|gold)\s/.test(k) ? 'gold' : /\s(top2|silber)\s/.test(k) ? 'silber'
-      : /\s(top3|bronze)\s/.test(k) ? 'bronze' : ['gold', 'silber', 'bronze'][i];
+    const ton = _metallTon(z, i);
     const v = start + PODEST_VERSATZ[ton];
     kantenlicht(z, ton, 'zeichnen', v, _diagonale(reiter === 'awards' ? 'podest' : 'zeile'));
     // Gold mit eigener Lichtbahn (das Podest der Awards) braucht keine zweite.
     if(ton === 'gold' && !z.querySelector(':scope > .glanz-bahn')) _glanzEinmal(z, v + 1150);
   });
+}
+// Das Metall sagt die Klasse (top1, gold …); die Duos tragen nur „tm-top",
+// dort sagt es die Reihenfolge.
+function _metallTon(z, i){
+  const k = ' ' + z.className + ' ';
+  return /\s(top1|gold)\s/.test(k) ? 'gold' : /\s(top2|silber)\s/.test(k) ? 'silber'
+    : /\s(top3|bronze)\s/.test(k) ? 'bronze' : ['gold', 'silber', 'bronze'][i] || 'gold';
 }
 // Das Band über Gold: dieselbe Bahn wie das Licht über einem Titel
 // (`.glanz-bahn`, 06-misc.css) [§C27], einmal statt im Takt.
@@ -259,6 +262,7 @@ function _bewegungNachRender(root, warTab, geruest, behalten){
     if(fab && fab.style.display !== 'none') kantenlicht(fab, 'weiss', 'zeichnen', 1150, 90);
     _aufbauen(view, 40, 55, 14);
     _podestLicht(view, tab, 700);
+    _leisePlanen();
     return;
   }
   _wechselSteht();
@@ -421,6 +425,40 @@ function _wechselSteht(){
   _schleierLauf.cancel(); _schleierLauf = null;
   if(von > .04) _schleier.animate([{opacity:von}, {opacity:0}], {duration:200, easing:'ease-out'});
 }
+
+// ── Leises Licht im laufenden Betrieb ──────────────────────────────────
+// Steht die App offen, fährt hin und wieder Licht um eine einzelne Karte,
+// die zählt — Platz 1 bis 3, das Podest, die letzte Partie —, dieselbe
+// Zeichnung wie beim Ankommen und mit derselben Bedeutung [§C41], nur
+// leiser. Selten genug, um nicht zu stören: alle 30 bis 55 s höchstens
+// einmal, nie während einer Bedienung oder in den 4 s danach, nie unter
+// einem Blatt oder Fenster, nie auf einer versteckten Seite, nie, solange
+// eine Ansicht sich aufbaut oder anderes Licht läuft, und nur um eine
+// Karte, die ganz im Bild steht und nicht hinter der unteren Leiste. Geplant
+// vom ersten Bild des Öffnens an.
+const LEISE_MS = [30000, 55000];
+let _leiseAuftrag = 0, _letzteBedienung = 0;
+function _leisePlanen(){
+  clearTimeout(_leiseAuftrag);
+  _leiseAuftrag = setTimeout(() => { _leisesLicht(); _leisePlanen(); },
+    LEISE_MS[0] + Math.random() * (LEISE_MS[1] - LEISE_MS[0]));
+}
+function _leisesLicht(){
+  if(_bewegungRuhig() || document.hidden || performance.now() - _letzteBedienung < 4000 || _aufbauTeile.length) return null;
+  if(document.querySelector('.sheet.show, .nd-bg.show, .bp-bg.show')) return null;
+  const view = document.querySelector('#main > .view');
+  const sel = tab === 'history' ? '.mlist > .mrow' : PODEST_KARTEN[tab];
+  if(!view || !sel || view.querySelector('.kl')) return null;
+  const alle = [...view.querySelectorAll(sel)].slice(0, tab === 'history' ? 1 : 3);
+  const unten = innerHeight - 90;
+  const im = alle.filter(k => { const r = k.getBoundingClientRect(); return r.top >= 0 && r.bottom <= unten; });
+  if(!im.length) return null;
+  const z = im[Math.floor(Math.random() * im.length)];
+  return kantenlicht(z, tab === 'history' ? 'acid' : _metallTon(z, alle.indexOf(z)), 'zeichnen', 0,
+    Math.hypot(z.offsetWidth, z.offsetHeight) + 8, false, true);
+}
+['pointerdown', 'wheel', 'touchstart', 'keydown', 'scroll'].forEach(ev =>
+  document.addEventListener(ev, () => { _letzteBedienung = performance.now(); }, {passive:true, capture:true}));
 
 // ── Neuigkeiten ────────────────────────────────────────────────────────
 // Die Pille „News" erschien unvermittelt, sobald der Feed geladen war. Sie
