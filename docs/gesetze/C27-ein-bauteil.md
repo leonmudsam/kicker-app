@@ -607,7 +607,10 @@ mitten im Wort („Unaufhaltsa|m", „Showmaste|r"), ohne Trennstrich, weil
 nicht jedes Telefon Deutsch trennt. Ab zehn Zeichen steht er in 10 px, ab
 vierzehn in 9. Dazu trug die nicht vergebene Kachel das Polster des leeren
 Zustands einer ganzen Ansicht: die Regel hieß `.empty` und traf jeden
-Baustein mit dem Zusatz „leer". Sie heißt jetzt `[class="empty"]`.
+Baustein mit dem Zusatz „leer". Sie heißt jetzt `.leerstand`, ein Name,
+den kein anderer Baustein trägt. Dazwischen hieß sie `[class="empty"]` und
+galt nur ohne weitere Klasse: setzte der Aufbau `bau` dazu, stand „Keine
+Matches in diesem Zeitraum" eine halbe Sekunde groß, weiß und links da.
 **Eine Partie im Verlauf zeigt, wer gewonnen hat** (`vHistory`): Gesichter
 vor den Namen, der Sieger hell, der Verlierer leise, im Stand die Zahl des
 Siegers in Acid, und die Partien eines Tages unter einem Tageskopf mit

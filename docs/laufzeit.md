@@ -56,10 +56,11 @@ schon einmal „verbunden" gezeigt hat; er wird nicht zurückgesetzt).
 das Schließen gibt sie frei) und an jedem dieser Elemente `_steht` (wie oft
 es angehalten ist; bei null verliert es `.steht`), an Story und Auszeichnung
 `_auf` (das jüngste Öffnen; ein älteres Licht kommt nicht mehr).
-`_sichtZiele` (die Elemente mit endloser Bewegung, die der
-IntersectionObserver `_bewegSicht` beobachtet; was nicht mehr im Dokument
-steht, fällt beim nächsten Beginn heraus) und an jedem davon `_ausSicht`
-(ob es gerade außerhalb des Bilds steht und dafür `_steht` mitzählt).
+`_sichtGruppen` (je HTML-Element, das der IntersectionObserver
+`_bewegSicht` beobachtet, die Elemente mit endloser Bewegung darin; was nicht
+mehr im Dokument steht, fällt beim nächsten Beginn heraus), an jedem dieser
+Elemente `_sicht` (seine Gruppe) und `_ausSicht` (ob es gerade außerhalb des
+Bilds steht und dafür `_steht` mitzählt).
 `_lichtSicht` beobachtet die Karte jedes Kantenlichts, bis es endet.
 `_leiseSchritt` (die
 Stelle in `LEISE_FOLGE`), `_leiseKarte` (welcher der drei Plätze als

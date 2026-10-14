@@ -356,7 +356,7 @@ async function neueSeite(ctx){
     await o.page.addInitScript(() => { window.__fehler = true; window.__langsam = 300; window.__vorStart = K => { window.__K = K; }; });
     await o.page.goto(BASIS);
     await o.page.waitForFunction(() => window.__K && window.__K('_loadAllPromise === null'), null, {timeout:20000});
-    ok(await o.page.evaluate(() => !!document.querySelector('#main .rlist') && !document.querySelector('#main .empty')),
+    ok(await o.page.evaluate(() => !!document.querySelector('#main .rlist') && !document.querySelector('#main .leerstand')),
       'Ohne Netz bleibt der letzte Stand stehen, statt einer Fehlerkarte');
     // Ein Stand einer anderen Fassung der App gilt nicht.
     await o.page.evaluate(() => new Promise(ja => { const r = indexedDB.open('kicker-stand', 1);

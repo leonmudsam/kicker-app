@@ -1031,8 +1031,8 @@
   .buehne-stand i{font-style:normal;color:var(--faint);margin:0 1px}
   .buehne-zeile{grid-column:1 / -1;text-align:center;font-size:10.5px;color:var(--muted);margin-top:4px}
   .blatt-text{font-size:12.5px;color:var(--ink2);line-height:1.55;padding:0 2px}
-  [class="empty"]{text-align:center;color:var(--muted);padding:48px 20px;font-size:13px}
-  [class="empty"] .ee{font-size:34px;margin-bottom:12px;opacity:.5}
+  .leerstand{text-align:center;color:var(--muted);padding:48px 20px;font-size:13px}
+  .leerstand .ee{font-size:34px;margin-bottom:12px;opacity:.5}
 
   @keyframes glanzZug{0%,78%{transform:translateX(-84%)}100%{transform:translateX(24%)}}
   .glanz-bahn{position:absolute;inset:0;border-radius:inherit;overflow:hidden;pointer-events:none}
@@ -5928,7 +5928,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.14.fd060701';
+const BUILD_VERSION='2026.10.14.884dbcce';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -7703,7 +7703,7 @@ async function _loadAllDurchlauf(){
     _lastLoadFingerprint=null; _lastLoadDay=null; _standGezeigt=null;
     console.error(e); setConn('Verbindung fehlgeschlagen','bad');
     if(_loadAllLeise || ausStand || _eingabeOffen()) toast('Konnte nicht laden.',true);
-    else document.getElementById('main').innerHTML=`<div class="card"><div class="empty" style="color:var(--red)">
+    else document.getElementById('main').innerHTML=`<div class="card"><div class="leerstand" style="color:var(--red)">
       <div class="ee"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="13"/><circle cx="12" cy="16.5" r=".6" fill="currentColor"/></svg></div>Konnte nicht laden.<br><span class="num" style="font-size:11px">${esc(e.message||e)}</span></div></div>`;
   }
 }
@@ -10440,32 +10440,39 @@ function _fensterZu(bg, el, wer){
 }
 
 let _bewegSicht = null;
-const _sichtZiele = new Set();
-function _sichtLoesen(el){
-  _bewegSicht.unobserve(el); _sichtZiele.delete(el);
-  if(!el._ausSicht) return;
-  el._ausSicht = false;
-  el._steht = Math.max(0, (el._steht || 0) - 1);
-  if(!el._steht) el.classList.remove('steht');
+const _sichtGruppen = new Map();
+function _sichtSetzen(el, aus){
+  if(aus === !!el._ausSicht) return;
+  el._ausSicht = aus;
+  el._steht = Math.max(0, (el._steht || 0) + (aus ? 1 : -1));
+  el.classList.toggle('steht', el._steht > 0);
+}
+function _sichtLoesen(wache){
+  _bewegSicht.unobserve(wache);
+  (_sichtGruppen.get(wache) || []).forEach(el => { el._sicht = null; _sichtSetzen(el, false); });
+  _sichtGruppen.delete(wache);
 }
 function _bewegungBeobachten(el){
+  let wache = el;
+  while(wache && typeof SVGElement === 'function' && wache instanceof SVGElement) wache = wache.parentElement;
+  if(!wache) return;
   if(!_bewegSicht) _bewegSicht = new IntersectionObserver(eintraege => eintraege.forEach(e => {
-    const el = e.target;
-    if(!el.isConnected) return _sichtLoesen(el);
-    const aus = !e.isIntersecting;
-    if(aus === !!el._ausSicht) return;
-    el._ausSicht = aus;
-    el._steht = Math.max(0, (el._steht || 0) + (aus ? 1 : -1));
-    el.classList.toggle('steht', el._steht > 0);
+    const gruppe = _sichtGruppen.get(e.target);
+    if(!gruppe) return;
+    if(!e.target.isConnected) return _sichtLoesen(e.target);
+    gruppe.forEach(x => x.isConnected ? _sichtSetzen(x, !e.isIntersecting) : gruppe.delete(x));
   }), {rootMargin:'80px'});
-  _sichtZiele.forEach(z => { if(!z.isConnected) _sichtLoesen(z); });
-  _sichtZiele.add(el);
-  _bewegSicht.observe(el);
+  _sichtGruppen.forEach((g, w) => { if(!w.isConnected) _sichtLoesen(w); });
+  el._sicht = wache;
+  const gruppe = _sichtGruppen.get(wache);
+  if(gruppe){ gruppe.add(el); _bewegSicht.unobserve(wache); }
+  else _sichtGruppen.set(wache, new Set([el]));
+  _bewegSicht.observe(wache);
 }
 if(_bewegungDa() && typeof IntersectionObserver === 'function')
   document.addEventListener('animationstart', e => {
     const el = e.target;
-    if(!(el instanceof Element) || _sichtZiele.has(el)) return;
+    if(!(el instanceof Element) || (el._sicht && el._sicht.isConnected)) return;
     const cs = getComputedStyle(el, e.pseudoElement || null);
     const namen = cs.animationName.split(', '), zahl = cs.animationIterationCount.split(', ');
     const i = namen.indexOf(e.animationName);
@@ -12610,7 +12617,7 @@ function showTopList(c){
       titel:c.title || '', unter:c.sub || ''})}
     ${items?`${blattAbschnittHtml('medal', c.listLabel || ('Top ' + rows.length))}
       <div class="aw-list">${items}</div>`
-     :`<div class="empty" style="margin-top:24px">Noch keine Daten</div>`}
+     :`<div class="leerstand" style="margin-top:24px">Noch keine Daten</div>`}
     ${c.why?`${blattAbschnittHtml('info', 'So wird gewertet')}<div class="blatt-text">${esc(c.why)}</div>`:''}`);
   document.querySelectorAll('.aw-li[data-li-player]').forEach(el=>{
     el.onclick=()=>{ sheetNav(()=>showPlayer(el.dataset.liPlayer)); };
@@ -12685,7 +12692,7 @@ function showAward(key){
         {label:'Zur Partie', ic:'clock', prim:true, attr:`data-li-match="${esc(m.id)}"`},
         {label:'Zum Duo', ic:'users', attr:`data-li-team="${esc(_awSieger(top).slice().sort().join('|'))}"`}]);
     } else {
-      bodyHtml = `<div class="empty" style="margin-top:24px">Keine Daten</div>`;
+      bodyHtml = `<div class="leerstand" style="margin-top:24px">Keine Daten</div>`;
     }
   } else if(FAVS_AWARDS.has(key)){
     const arr = R.favoritenschreckList;
@@ -12710,7 +12717,7 @@ function showAward(key){
         bodyHtml += `${blattAbschnittHtml('medal', 'Weitere Coups')}<div class="aw-list">${items}</div>`;
       }
     } else {
-      bodyHtml = `<div class="empty" style="margin-top:24px">Keine Daten</div>`;
+      bodyHtml = `<div class="leerstand" style="margin-top:24px">Keine Daten</div>`;
     }
   } else if(RIVALRY_AWARDS.has(key)){
     const arr = R.rivalryList;
@@ -12741,7 +12748,7 @@ function showAward(key){
         bodyHtml += `${blattAbschnittHtml('medal', 'Weitere Rivalitäten')}<div class="aw-list">${items}</div>`;
       }
     } else {
-      bodyHtml = `<div class="empty" style="margin-top:24px">Keine Daten</div>`;
+      bodyHtml = `<div class="leerstand" style="margin-top:24px">Keine Daten</div>`;
     }
   } else {
     const arr = awListe(key, R).map(x => {
@@ -12751,7 +12758,7 @@ function showAward(key){
     });
 
     if(!arr.length){
-      bodyHtml = `<div class="empty" style="margin-top:24px">Keine Daten</div>`;
+      bodyHtml = `<div class="leerstand" style="margin-top:24px">Keine Daten</div>`;
     } else {
       const isTeamAward = arr[0].ids.length === 2;
       const isNeg = awNeg(key);
@@ -16206,7 +16213,7 @@ function showPlayerAwards(playerId, awards){
 
   const body = awards.length
     ? `<div style="margin-top:16px">${awVitrineHtml(awards.map(trophy))}</div>`
-    : `<div class="empty" style="margin-top:24px;text-align:center;color:var(--muted)">
+    : `<div class="leerstand" style="margin-top:24px;text-align:center;color:var(--muted)">
         <div class="ee svg-ic" style="color:var(--faint);margin-bottom:6px">${svgI('trophy')}</div>
         Noch kein Award auf Platz 1
        </div>`;
@@ -18099,7 +18106,7 @@ function standFuer(m, gewonnen = true){
 }
 function emptyState(e,t){
   const inner = icPfad(e) ? `<div class="ee svg-ic">${svgI(e)}</div>` : `<div class="ee">${e}</div>`;
-  return `<div class="empty">${inner}${t}</div>`;
+  return `<div class="leerstand">${inner}${t}</div>`;
 }
 let tt;
 const TOAST_ROLLE = {ok:['check','gruen'], err:['x','rot'], info:['info',''], lauf:['hourglass','']};

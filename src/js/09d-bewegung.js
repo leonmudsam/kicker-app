@@ -665,34 +665,48 @@ function _fensterZu(bg, el, wer){
 // entsteht, auch auf Karten, die der Feed erst beim Scrollen anlegt; ob sie
 // im Bild steht, sagt ein IntersectionObserver, ohne Layout zu erzwingen —
 // 80 px vor dem Rand, damit sie schon läuft, wenn sie hereinkommt.
+// Beobachtet wird das nächste HTML-Element, nie ein Pfad oder eine Gruppe in
+// einem SVG, und sein Befund gilt für alles, was darin läuft: Safari meldet
+// SVG-Inhalt dem Beobachter nie als sichtbar, und die Bilder des Feuers —
+// Pfade im SVG des Avatars — standen dort im Profil wie in der Rangliste
+// still.
 let _bewegSicht = null;
-const _sichtZiele = new Set();
-function _sichtLoesen(el){
-  _bewegSicht.unobserve(el); _sichtZiele.delete(el);
-  if(!el._ausSicht) return;
-  el._ausSicht = false;
-  el._steht = Math.max(0, (el._steht || 0) - 1);
-  if(!el._steht) el.classList.remove('steht');
+const _sichtGruppen = new Map();   // beobachtetes Element → was darin endlos läuft
+function _sichtSetzen(el, aus){
+  if(aus === !!el._ausSicht) return;
+  el._ausSicht = aus;
+  el._steht = Math.max(0, (el._steht || 0) + (aus ? 1 : -1));
+  el.classList.toggle('steht', el._steht > 0);
+}
+function _sichtLoesen(wache){
+  _bewegSicht.unobserve(wache);
+  (_sichtGruppen.get(wache) || []).forEach(el => { el._sicht = null; _sichtSetzen(el, false); });
+  _sichtGruppen.delete(wache);
 }
 function _bewegungBeobachten(el){
+  let wache = el;
+  while(wache && typeof SVGElement === 'function' && wache instanceof SVGElement) wache = wache.parentElement;
+  if(!wache) return;
   if(!_bewegSicht) _bewegSicht = new IntersectionObserver(eintraege => eintraege.forEach(e => {
-    const el = e.target;
-    if(!el.isConnected) return _sichtLoesen(el);
-    const aus = !e.isIntersecting;
-    if(aus === !!el._ausSicht) return;
-    el._ausSicht = aus;
-    el._steht = Math.max(0, (el._steht || 0) + (aus ? 1 : -1));
-    el.classList.toggle('steht', el._steht > 0);
+    const gruppe = _sichtGruppen.get(e.target);
+    if(!gruppe) return;
+    if(!e.target.isConnected) return _sichtLoesen(e.target);
+    gruppe.forEach(x => x.isConnected ? _sichtSetzen(x, !e.isIntersecting) : gruppe.delete(x));
   }), {rootMargin:'80px'});
   // Was nicht mehr im Dokument steht, wird nicht weiter beobachtet.
-  _sichtZiele.forEach(z => { if(!z.isConnected) _sichtLoesen(z); });
-  _sichtZiele.add(el);
-  _bewegSicht.observe(el);
+  _sichtGruppen.forEach((g, w) => { if(!w.isConnected) _sichtLoesen(w); });
+  el._sicht = wache;
+  const gruppe = _sichtGruppen.get(wache);
+  if(gruppe){ gruppe.add(el); _bewegSicht.unobserve(wache); }
+  else _sichtGruppen.set(wache, new Set([el]));
+  // Neu beobachtet meldet der Beobachter die Lage sofort — auch für das
+  // neue Mitglied einer Gruppe, die schon außerhalb steht.
+  _bewegSicht.observe(wache);
 }
 if(_bewegungDa() && typeof IntersectionObserver === 'function')
   document.addEventListener('animationstart', e => {
     const el = e.target;
-    if(!(el instanceof Element) || _sichtZiele.has(el)) return;
+    if(!(el instanceof Element) || (el._sicht && el._sicht.isConnected)) return;
     const cs = getComputedStyle(el, e.pseudoElement || null);
     const namen = cs.animationName.split(', '), zahl = cs.animationIterationCount.split(', ');
     const i = namen.indexOf(e.animationName);

@@ -46,7 +46,7 @@ function standFuer(m, gewonnen = true){
 function emptyState(e,t){
   // Wenn 'e' ein Icon-Name aus ICONS ist → SVG rendern; sonst als Text/Emoji belassen
   const inner = icPfad(e) ? `<div class="ee svg-ic">${svgI(e)}</div>` : `<div class="ee">${e}</div>`;
-  return `<div class="empty">${inner}${t}</div>`;
+  return `<div class="leerstand">${inner}${t}</div>`;
 }
 // ── Der Hinweis [§C27] ───────────────────────────────────────────────
 // Ein Balken in voller Farbe mit einem Satz: grün hieß „gespeichert", rot
