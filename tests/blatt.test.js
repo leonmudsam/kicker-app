@@ -3358,6 +3358,13 @@ const ok = (c, msg, det) => {
     out.nochmal = bau();
     K('invalidateCache(LADEN_TOEPFE); render()');
     out.daten = bau();
+    // Ein Klick auf einen Wählerknopf gilt nur für diesen Klick: ein späterer
+    // Wechsel ohne Klick schaltet ihn nicht um.
+    const tag = document.querySelector('#main [data-period="day"]'), h = tag.onclick;
+    tag.onclick = null; tag.click(); tag.onclick = h; await warte(10);
+    K('_renderNachEingabe()');
+    out.alterKnopf = tag.classList.contains('on');
+    await warte(80); await bild(); await warte(1700);
     await tippe('[data-period="season"]'); await warte(1700);
     await tippe('#ligaSeasonPicker [data-saisonwahl]:not(.on)');
     out.geschichte = {teile:document.querySelectorAll('#main .geschichte > .bau, #main .geschichte .rlist > .bau').length, wahl:wahlBau()};
@@ -3388,6 +3395,7 @@ const ok = (c, msg, det) => {
   ok(innen.geschichte.teile >= 5 && innen.geschichte.wahl === 0 && innen.rekorde >= 3,
      'auch eine vergangene Saison und die Rekorde bauen sich Teil für Teil auf', JSON.stringify([innen.geschichte, innen.rekorde]));
   ok(innen.nochmal === 0 && innen.daten === 0, 'dieselbe Wahl noch einmal und neue Daten bauen nichts auf', JSON.stringify([innen.nochmal, innen.daten]));
+  ok(innen.alterKnopf === false, 'ein Wechsel ohne Klick schaltet keinen früher geklickten Knopf um', String(innen.alterKnopf));
   ok(innen.gleich === '' && innen.spaeter === 'gold silber bronze' && innen.rest === 0,
      'dieselbe Ansicht glänzt erst nach der Pause wieder, und danach ist nichts übrig', JSON.stringify([innen.gleich, innen.spaeter, innen.rest]));
   // Blätter und Fenster [§C43]: ein Blatt kommt gestaffelt; im Feed fährt

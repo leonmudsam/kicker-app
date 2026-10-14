@@ -45,8 +45,8 @@ zuletzt geglänzt hat; nach 45 s glänzt es wieder, ein neues Öffnen leert
 ihn), `_wechselZiel` (der Reiter, in dem ein Tippen gerade einen Wechsel
 gewählt hat; `_renderNachEingabe` setzt ihn, das nächste `render` des
 Reiters verbraucht ihn und nimmt dann kein Licht mit), `_wahlKnopf` (der
-Knopf eines Wählers, den der laufende Klick getroffen hat; jeder Klick
-überschreibt ihn, `_wahlSofort` verbraucht ihn) und `_aufbauTeile` (die
+Knopf eines Wählers, den der laufende Klick getroffen hat; er gilt nur für
+diesen Klick, `_wahlSofort` verbraucht ihn) und `_aufbauTeile` (die
 Teile, die gerade aufbauen; ihr Ende, eine Berührung oder der nächste
 Aufbau räumt sie). Beim Wechsel: `_ladeGruende` (warum die Ladelinie läuft:
 `wechsel`, `daten`; sie endet, wenn keiner mehr gilt), `_ladeLauf` und
@@ -394,8 +394,8 @@ steht. Die Ladelinie endet spätestens 15 s nach ihrem Beginn (`_ladeNot`),
 auch wenn ein Grund noch gilt. Der Hinweis „x neue Stories" blendet nach 7 s
 aus, wenn er der erste nach dem Öffnen ist (`_newsToastSchonDa`), sonst nach
 4 s (`_newsToastHideTimer`); der Ring an der Pille räumt seine Klasse nach
-2,4 s (`_rufAuftrag`). Das Licht im Feed sucht 300 ms nach dem Öffnen seine
-Karten, das an Story und Auszeichnung kommt nach 120 ms; was ein Blatt
+2,4 s (`_rufAuftrag`). Das Licht im Feed beobachtet 280 ms nach dem Öffnen, wenn
+das Blatt eingefahren ist, welche Karten im Bild stehen, das an Story und Auszeichnung kommt nach 120 ms; was ein Blatt
 verdeckt, hält nach 300 ms an, wenn es eingefahren ist; geschlossene Fenster
 werden nach 260 ms geleert, wenn sie nicht wieder offen sind. Vom Öffnen
 an plant `_leiseAuftrag` alle 30 bis 55 s ein leises Licht; es läuft weiter,

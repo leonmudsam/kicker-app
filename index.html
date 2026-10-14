@@ -5916,7 +5916,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.14.490133d2';
+const BUILD_VERSION='2026.10.14.b9a2ef22';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -10242,6 +10242,7 @@ let _wahlKnopf = null;
 document.addEventListener('click', e => {
   const b = e.target && e.target.closest && e.target.closest('.ui-switch > button, .ui-tabs > button, .saisonwahl > button');
   _wahlKnopf = b && b.closest('#main') ? b : null;
+  if(_wahlKnopf) setTimeout(() => { _wahlKnopf = null; }, 0);
 }, {passive:true, capture:true});
 function _wahlSofort(){
   const b = _wahlKnopf; _wahlKnopf = null;
@@ -10320,14 +10321,20 @@ function _blattStaffeln(sheet){
   teile.slice(0, BLATT_TEILE).forEach((k, i) => { k.classList.add('staffel-k'); k.style.animationDelay = i * 45 + 'ms'; });
 }
 function _feedLicht(sheet){
-  if(!sheet || _bewegungRuhig()) return;
+  if(!sheet || _bewegungRuhig() || typeof IntersectionObserver !== 'function') return;
   const auf = sheet._auf;
   setTimeout(() => {
     if(sheet._auf !== auf || !sheet.classList.contains('show')) return;
-    [...sheet.querySelectorAll('.nf-card:not(.read)')].slice(0, 12)
-      .filter(k => { const r = k.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; }).slice(0, 6)
-      .forEach((k, i) => kantenlicht(k, 'story', 'zeichnen', i * 200, Math.hypot(k.offsetWidth, k.offsetHeight) + 8, true));
-  }, 300);
+    const karten = [...sheet.querySelectorAll('.nf-card:not(.read)')].slice(0, 12);
+    if(!karten.length) return;
+    const io = new IntersectionObserver(eintraege => {
+      io.disconnect();
+      if(sheet._auf !== auf || !sheet.classList.contains('show')) return;
+      eintraege.filter(e => e.isIntersecting).slice(0, 6).forEach((e, i) =>
+        kantenlicht(e.target, 'story', 'zeichnen', i * 200, Math.hypot(e.boundingClientRect.width, e.boundingClientRect.height) + 8, true));
+    });
+    karten.forEach(k => io.observe(k));
+  }, 280);
 }
 function _fensterLicht(el, ton){
   if(!el || _bewegungRuhig()) return;

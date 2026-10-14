@@ -389,11 +389,14 @@ function _wechselBeginnt(neuerReiter){
 // einem langsamen Telefon eine spürbare Pause, in der nichts geschah.
 // Welcher Knopf es war, sagt der Klick selbst, im Einfangen vor dem Knopf:
 // ein Drücken ohne Klick (der Finger scrollte weg) hinterließe einen Knopf,
-// den niemand gewählt hat, und Enter auf der Tastatur drückt nicht.
+// den niemand gewählt hat, und Enter auf der Tastatur drückt nicht. Er gilt
+// nur für diesen Klick: zeichnete sein Knopf direkt mit `render`, schaltete
+// sonst ein späterer Wechsel ohne Klick — die Auswahl im Verlauf — ihn um.
 let _wahlKnopf = null;
 document.addEventListener('click', e => {
   const b = e.target && e.target.closest && e.target.closest('.ui-switch > button, .ui-tabs > button, .saisonwahl > button');
   _wahlKnopf = b && b.closest('#main') ? b : null;
+  if(_wahlKnopf) setTimeout(() => { _wahlKnopf = null; }, 0);
 }, {passive:true, capture:true});
 function _wahlSofort(){
   const b = _wahlKnopf; _wahlKnopf = null;
@@ -506,18 +509,27 @@ function _blattStaffeln(sheet){
 }
 // Im Feed fährt um jede ungelesene Story im Bild ein Licht in ihrer Farbe,
 // eine nach der anderen: das kam seit dem letzten Öffnen dazu. Höchstens
-// sechs. Gesucht und gemessen wird erst, wenn das Blatt steht — dann ist
-// das Layout fertig, und das Messen kostet nichts. Die Karte schneidet ab,
-// was über ihren Rand ragt: das Licht liegt innen. Aus `openNewsFeed`.
+// sechs. Welche im Bild stehen und wie groß sie sind, sagt ein Beobachter
+// mit dem nächsten Bild, sobald das Blatt eingefahren ist — vorher stünden
+// alle Karten noch unter dem Bildrand. Gemessen mit `getBoundingClientRect`,
+// erzwang das mitten im Nachreichen des Feeds ein Layout aller Karten, und
+// das Öffnen kostete gemessen 200 ms Hauptthread mehr. Die Karte schneidet
+// ab, was über ihren Rand ragt: das Licht liegt innen. Aus `openNewsFeed`.
 function _feedLicht(sheet){
-  if(!sheet || _bewegungRuhig()) return;
+  if(!sheet || _bewegungRuhig() || typeof IntersectionObserver !== 'function') return;
   const auf = sheet._auf;
   setTimeout(() => {
     if(sheet._auf !== auf || !sheet.classList.contains('show')) return;
-    [...sheet.querySelectorAll('.nf-card:not(.read)')].slice(0, 12)
-      .filter(k => { const r = k.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; }).slice(0, 6)
-      .forEach((k, i) => kantenlicht(k, 'story', 'zeichnen', i * 200, Math.hypot(k.offsetWidth, k.offsetHeight) + 8, true));
-  }, 300);
+    const karten = [...sheet.querySelectorAll('.nf-card:not(.read)')].slice(0, 12);
+    if(!karten.length) return;
+    const io = new IntersectionObserver(eintraege => {
+      io.disconnect();
+      if(sheet._auf !== auf || !sheet.classList.contains('show')) return;
+      eintraege.filter(e => e.isIntersecting).slice(0, 6).forEach((e, i) =>
+        kantenlicht(e.target, 'story', 'zeichnen', i * 200, Math.hypot(e.boundingClientRect.width, e.boundingClientRect.height) + 8, true));
+    });
+    karten.forEach(k => io.observe(k));
+  }, 280);
 }
 // Öffnet eine Story oder eine Auszeichnung, fährt das Licht einmal ihre
 // Kante ab, in der Farbe der Story, Weiß für die Auszeichnung. Beide Fenster
