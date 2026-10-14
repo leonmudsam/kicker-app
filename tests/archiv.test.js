@@ -1,5 +1,8 @@
 // Prüft das neue Chronik-System (§13.4b) und den Avatar-Ring (§13.7)
 // gegen die echten 466 Matches der Liga.
+// Archiviert wird nur mit der Uhr der Liga [§C42]: die Suite rechnet als
+// Gerät der Liga, mit Berliner Zeit, gleich wo sie läuft.
+process.env.TZ = 'Europe/Berlin';
 const fs = require('fs');
 const DIR = __dirname;
 const NAMES = ['Alex','Anton','Henry','Jane','Jannik','Johannes','Julian','Leo','Leon','Martin','Maxi','Stefan'];

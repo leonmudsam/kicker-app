@@ -4,6 +4,7 @@
 
 - Nach jedem Live-Abruf liegt der Stand auf dem Gerät (`_standSchreiben`, IndexedDB `kicker-stand`): die vier Antworten der Datenbank, wie sie kamen, der Story-Bestand und ein Fingerabdruck (`_standHash`). Er gilt nur für dieselbe Fassung der App (`BUILD_VERSION`).
 - Der erste Durchlauf von `loadAll` startet den Abruf und zeichnet währenddessen aus dem Stand (`_standZeigen`). Ist der Abruf schon da, entfällt der Stand.
+- **Abgeleitetes schreibt nur ein Gerät mit der Uhr der Liga** (`ligaSchreibtAbgeleitet`, `LIGA_ZEITZONE`): Stories und Saison-Archiv rechnet jedes Gerät in Tagen und Monaten seiner eigenen Uhr. Veröffentlichen, aufräumen und archivieren darf nur ein Gerät, dessen Uhr dieselbe Wanduhr zeigt wie Europe/Berlin — jetzt und ein halbes Jahr davor und danach, also mit derselben Sommerzeit — und das kein automatisierter Browser ist (`navigator.webdriver`). Jedes andere rechnet und zeigt seine Stories nur sich selbst. Was ein Spieler selbst einträgt, gilt immer.
 - **Aus dem Stand wird nur gezeichnet, nie geschrieben.** Kein Archiv, keine Story, kein Karriereende, kein Rückblick, der von selbst aufgeht, keine Migration der Einstellungen: was veröffentlicht oder speichert, hängt am Live-Abruf. Bis er da ist, steht „verbinde…“.
 - Der Live-Abruf mit demselben Fingerabdruck lässt Daten, Töpfe und DOM stehen (`_standGezeigt`); ein anderer ersetzt alles wie ohne Stand.
 - Scheitert der Live-Abruf, bleibt der Stand stehen und ein Hinweis sagt es; die Fehlerkarte kommt nur ohne Stand.
@@ -13,11 +14,11 @@
 
 ## Stellen
 
-`06c-stand.js`, `06-db.js` (`_loadAllDurchlauf`, `_datenEinbauen`, `_overridesNachziehen`), `src/sw.js`, `37-boot.js` (Registrierung), `tools/build.mjs` und Wächter 1 und 5 in `tools/check.mjs`.
+`06c-stand.js`, `06-db.js` (`_loadAllDurchlauf`, `_datenEinbauen`, `_overridesNachziehen`, `ligaSchreibtAbgeleitet`, `autoArchiveSeasons`), `29-news-cache.js` (`syncStoriesViaDb`), `src/sw.js`, `37-boot.js` (Registrierung), `tools/build.mjs` und Wächter 1 und 5 in `tools/check.mjs`.
 
 ## Prüfung
 
-`tests/start` (die Liga steht aus dem Stand, bevor das Netz antwortet; kein Schreibzugriff bis dahin; dasselbe Markup und derselbe Knoten nach dem Live-Abruf mit denselben Daten; ohne Netz bleibt der Stand; ein Stand einer anderen Fassung gilt nicht; der Service Worker hält die Seite unter ihrer Fassung, ohne Netz öffnet die App aus ihm, Update-Check und Neu laden gehen ans Netz, eine neue Fassung räumt den Topf der alten, keine Anfrage geht an eine fremde Adresse).
+`tests/start` (ein Telefon der Liga mit Berliner Uhr veröffentlicht; ein Gerät mit Tokioter oder Londoner Uhr und ein automatisierter Browser zeigen die Stories, schreiben aber weder Stories noch Archiv; die Liga steht aus dem Stand, bevor das Netz antwortet; kein Schreibzugriff bis dahin; dasselbe Markup und derselbe Knoten nach dem Live-Abruf mit denselben Daten; ohne Netz bleibt der Stand; ein Stand einer anderen Fassung gilt nicht; der Service Worker hält die Seite unter ihrer Fassung, ohne Netz öffnet die App aus ihm, Update-Check und Neu laden gehen ans Netz, eine neue Fassung räumt den Topf der alten, keine Anfrage geht an eine fremde Adresse).
 
 ## Herleitung
 
@@ -60,3 +61,18 @@ selbst — genau der Fehler, den die Version aus dem Fingerabdruck einmal
 behoben hat. Im Test geht keine Anfrage an eine fremde Adresse: ein Service
 Worker holt fremde Quellen selbst, an jeder Umleitung des Browsers vorbei,
 und mit der echten Bibliothek spräche der Test mit der echten Datenbank.
+
+Am 13.10. stand im Feed „Harter Tag für Maxi", 33 Elo verloren, datiert auf
+Dienstag 16:58 — einen Tag ohne Spiel. Geschrieben hatte die Karte ein
+automatisierter Browser, der die Liga kurz vor Mitternacht mit Tokioter Uhr
+öffnete. Für ihn war schon Mittwoch, sein „gestern" reichte von Montag
+17 Uhr bis Dienstag 17 Uhr deutscher Zeit und enthielt die beiden letzten
+Partien des Montags (−20 und −13 für Maxi); 23:58 seines Dienstags ist 16:58
+bei uns. Im selben Lauf archivierte er vier Saisons mit Monatsgrenzen sieben
+Stunden neben denen der Liga; ein Telefon der Liga archivierte sie eine halbe
+Stunde später zurück. Jedes Gerät rechnet Tage und Monate mit seiner eigenen
+Uhr, und die Datenbank nimmt, was zuerst kommt: ein Mitspieler im Urlaub
+hätte dasselbe angerichtet. Deshalb schreibt nur, wer mit der Uhr der Liga
+rechnet, und kein automatisierter Browser — auch kein Test, der versehentlich
+an der echten Datenbank hängt.
+

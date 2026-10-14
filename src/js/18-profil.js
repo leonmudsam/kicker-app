@@ -1100,7 +1100,7 @@ function showPlayerAwards(playerId, awards){
 
   const body = awards.length
     ? `<div style="margin-top:16px">${awVitrineHtml(awards.map(trophy))}</div>`
-    : `<div class="empty" style="margin-top:24px;text-align:center;color:var(--muted)">
+    : `<div class="leerstand" style="margin-top:24px;text-align:center;color:var(--muted)">
         <div class="ee svg-ic" style="color:var(--faint);margin-bottom:6px">${svgI('trophy')}</div>
         Noch kein Award auf Platz 1
        </div>`;

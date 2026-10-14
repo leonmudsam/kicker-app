@@ -1881,10 +1881,14 @@ async function syncStoriesViaDb(){
     catch(e){ generated = []; if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] generator failed', e); }
   }
 
-  // Versuch 1: DB-Pfad
+  // Versuch 1: DB-Pfad. Veröffentlicht und aufgeräumt wird nur von einem
+  // Gerät mit der Uhr der Liga [§C42]; jedes andere zeigt seine Stories nur
+  // sich selbst.
   try {
-    await _cleanupExpiredStoriesInDb();        // 1× pro Sync, idempotent
-    await _uploadNewStoriesToDb(generated, dbBestand);
+    if(ligaSchreibtAbgeleitet()){
+      await _cleanupExpiredStoriesInDb();      // 1× pro Sync, idempotent
+      await _uploadNewStoriesToDb(generated, dbBestand);
+    }
     if(!Array.isArray(dbBestand)) dbBestand = await _loadStoriesFromDb();
     if(Array.isArray(dbBestand)){
       _cache._stories = _mergeStorySnapshots(dbBestand, generated, new Date());

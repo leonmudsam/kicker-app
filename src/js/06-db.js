@@ -228,14 +228,47 @@ async function _loadAllDurchlauf(){
     _lastLoadFingerprint=null; _lastLoadDay=null; _standGezeigt=null;
     console.error(e); setConn('Verbindung fehlgeschlagen','bad');
     if(_loadAllLeise || ausStand || _eingabeOffen()) toast('Konnte nicht laden.',true);
-    else document.getElementById('main').innerHTML=`<div class="card"><div class="empty" style="color:var(--red)">
+    else document.getElementById('main').innerHTML=`<div class="card"><div class="leerstand" style="color:var(--red)">
       <div class="ee"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="13"/><circle cx="12" cy="16.5" r=".6" fill="currentColor"/></svg></div>Konnte nicht laden.<br><span class="num" style="font-size:11px">${esc(e.message||e)}</span></div></div>`;
+  }
+}
+
+// ── Wer abgeleitete Daten in die Liga schreibt [§C42] ─────────────────
+// Saison-Archiv und Stories rechnet jedes Gerät selbst und schreibt sie in
+// die gemeinsame Datenbank — in Tagen und Monaten seiner eigenen Uhr. Am
+// 13.10. öffnete ein automatisierter Browser mit Tokioter Uhr die Liga: für
+// ihn war schon Mittwoch, sein „gestern" reichte von Montag 17 Uhr bis
+// Dienstag 17 Uhr deutscher Zeit, und aus den beiden letzten Partien des
+// Montags schrieb er „Harter Tag für Maxi" in die Liga, datiert auf Dienstag
+// 16:58, einen Tag ohne Spiel. Dazu archivierte er vier Saisons mit
+// Monatsgrenzen sieben Stunden neben denen der Liga. Schreiben darf deshalb
+// nur ein Gerät, dessen Uhr dieselbe Wanduhr zeigt wie die Liga — jetzt und
+// ein halbes Jahr davor und danach, also auch mit derselben Sommerzeit —, und
+// kein automatisierter Browser. Lesen, rechnen und anzeigen darf jedes; was
+// ein Spieler selbst einträgt, gilt immer.
+const LIGA_ZEITZONE = 'Europe/Berlin';
+function ligaSchreibtAbgeleitet(){
+  if(typeof navigator !== 'undefined' && navigator.webdriver === true) return false;
+  const jetzt = Date.now(), halb = 183 * 86400000;
+  try {
+    const f = new Intl.DateTimeFormat('en-GB', {timeZone:LIGA_ZEITZONE, year:'numeric', month:'numeric',
+      day:'numeric', hour:'numeric', minute:'numeric', hourCycle:'h23'});
+    return [jetzt - halb, jetzt, jetzt + halb].every(t => {
+      const p = {}, d = new Date(t);
+      f.formatToParts(d).forEach(x => { p[x.type] = Number(x.value); });
+      return p.year === d.getFullYear() && p.month === d.getMonth() + 1 && p.day === d.getDate()
+        && p.hour === d.getHours() && p.minute === d.getMinutes();
+    });
+  } catch(e){
+    // Ohne Zeitzonen im Browser bleibt der Abstand zur Weltzeit: MEZ oder MESZ.
+    return [-60, -120].includes(new Date(jetzt).getTimezoneOffset());
   }
 }
 
 // Automatischer Saison-Abschluss: archiviert vergangene Monate
 async function autoArchiveSeasons(){
-  const past=allPastSeasons(); // alle vergangenen Saison-IDs
+  // Archiviert wird nur mit der Uhr der Liga; der Rückblick unten gilt jedem.
+  const past=ligaSchreibtAbgeleitet()?allPastSeasons():[]; // alle vergangenen Saison-IDs
   // gSim einmal pro Aufruf für isStale + Archive nutzen → konsistent
   const gSim=getGlobalSim();
   // Erkennt veraltete Archive in drei Fällen:

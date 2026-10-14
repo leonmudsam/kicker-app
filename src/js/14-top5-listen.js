@@ -71,7 +71,7 @@ function showTopList(c){
       titel:c.title || '', unter:c.sub || ''})}
     ${items?`${blattAbschnittHtml('medal', c.listLabel || ('Top ' + rows.length))}
       <div class="aw-list">${items}</div>`
-     :`<div class="empty" style="margin-top:24px">Noch keine Daten</div>`}
+     :`<div class="leerstand" style="margin-top:24px">Noch keine Daten</div>`}
     ${c.why?`${blattAbschnittHtml('info', 'So wird gewertet')}<div class="blatt-text">${esc(c.why)}</div>`:''}`);
   // Zeilen weiterverlinken — gleiche Ziele wie vorher die Karte selbst.
   document.querySelectorAll('.aw-li[data-li-player]').forEach(el=>{
@@ -158,7 +158,7 @@ function showAward(key){
         {label:'Zur Partie', ic:'clock', prim:true, attr:`data-li-match="${esc(m.id)}"`},
         {label:'Zum Duo', ic:'users', attr:`data-li-team="${esc(_awSieger(top).slice().sort().join('|'))}"`}]);
     } else {
-      bodyHtml = `<div class="empty" style="margin-top:24px">Keine Daten</div>`;
+      bodyHtml = `<div class="leerstand" style="margin-top:24px">Keine Daten</div>`;
     }
   } else if(FAVS_AWARDS.has(key)){
     // Favoritenschreck: Match-Detail aus dem Top-Eintrag der Liste rendern.
@@ -187,7 +187,7 @@ function showAward(key){
         bodyHtml += `${blattAbschnittHtml('medal', 'Weitere Coups')}<div class="aw-list">${items}</div>`;
       }
     } else {
-      bodyHtml = `<div class="empty" style="margin-top:24px">Keine Daten</div>`;
+      bodyHtml = `<div class="leerstand" style="margin-top:24px">Keine Daten</div>`;
     }
   } else if(RIVALRY_AWARDS.has(key)){
     // Erzfeinde: Team-Paar mit zwei Bilanz-Boxen (Team A | Team B) + Torverhältnis.
@@ -225,7 +225,7 @@ function showAward(key){
         bodyHtml += `${blattAbschnittHtml('medal', 'Weitere Rivalitäten')}<div class="aw-list">${items}</div>`;
       }
     } else {
-      bodyHtml = `<div class="empty" style="margin-top:24px">Keine Daten</div>`;
+      bodyHtml = `<div class="leerstand" style="margin-top:24px">Keine Daten</div>`;
     }
   } else {
     // Liste, Sortierung, Zahl, Einheit und Stichprobe kommen aus AW_WERT
@@ -240,7 +240,7 @@ function showAward(key){
 
     // Hero (#1) + Liste der weiteren Plätze
     if(!arr.length){
-      bodyHtml = `<div class="empty" style="margin-top:24px">Keine Daten</div>`;
+      bodyHtml = `<div class="leerstand" style="margin-top:24px">Keine Daten</div>`;
     } else {
       const isTeamAward = arr[0].ids.length === 2;
       const isNeg = awNeg(key);

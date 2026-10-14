@@ -56,10 +56,11 @@ schon einmal „verbunden" gezeigt hat; er wird nicht zurückgesetzt).
 das Schließen gibt sie frei) und an jedem dieser Elemente `_steht` (wie oft
 es angehalten ist; bei null verliert es `.steht`), an Story und Auszeichnung
 `_auf` (das jüngste Öffnen; ein älteres Licht kommt nicht mehr).
-`_sichtZiele` (die Elemente mit endloser Bewegung, die der
-IntersectionObserver `_bewegSicht` beobachtet; was nicht mehr im Dokument
-steht, fällt beim nächsten Beginn heraus) und an jedem davon `_ausSicht`
-(ob es gerade außerhalb des Bilds steht und dafür `_steht` mitzählt).
+`_sichtGruppen` (je HTML-Element, das der IntersectionObserver
+`_bewegSicht` beobachtet, die Elemente mit endloser Bewegung darin; was nicht
+mehr im Dokument steht, fällt beim nächsten Beginn heraus), an jedem dieser
+Elemente `_sicht` (seine Gruppe) und `_ausSicht` (ob es gerade außerhalb des
+Bilds steht und dafür `_steht` mitzählt).
 `_lichtSicht` beobachtet die Karte jedes Kantenlichts, bis es endet.
 `_leiseSchritt` (die
 Stelle in `LEISE_FOLGE`), `_leiseKarte` (welcher der drei Plätze als
@@ -356,6 +357,11 @@ Mit neuen Daten zeichnet `loadAll` vor `autoArchiveSeasons`: das Archiv
 wartet je abgeschlossenem Monat auf einen Upsert, und am ersten Tag eines
 Monats stand die Rangliste so lange leer; ändert das Archiv die Version,
 wird noch einmal gezeichnet.
+
+Stories veröffentlichen, abgelaufene löschen und Monate archivieren darf nur
+ein Gerät mit der Uhr der Liga, kein automatisierter Browser
+(`ligaSchreibtAbgeleitet`, [§C42](gesetze/C42-start.md)); jedes andere
+rechnet dasselbe und zeigt es nur sich selbst.
 
 Kommen neue Daten, zeichnet `loadAll` zuerst und lässt den News-Generator
 danach in einem Worker rechnen (`_storiesImWorker`, `29c-news-worker.js`):

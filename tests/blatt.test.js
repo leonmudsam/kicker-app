@@ -3279,6 +3279,25 @@ const ok = (c, msg, det) => {
      'neue Daten im selben Reiter nehmen das Licht nicht mit, es läuft an seiner Stelle weiter', JSON.stringify(betreten));
   ok(betreten.rest === 0 && betreten.zweitesMal === '', 'nach seiner Zeit ist nichts übrig, und gleich zurück glänzt der Reiter nicht noch einmal',
      JSON.stringify([betreten.rest, betreten.zweitesMal]));
+  // Der leere Zustand einer Ansicht behält seine Form, während sie sich
+  // aufbaut: als `[class="empty"]` galt die Regel nur ohne weitere Klasse,
+  // und mit `bau` stand „Keine Matches in diesem Zeitraum" eine halbe
+  // Sekunde groß, weiß und links da [§C43].
+  const leerAufbau = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const v = document.createElement('section');
+    v.className = 'view active';
+    v.innerHTML = K("emptyState('calendar', 'Keine Matches in diesem Zeitraum')");
+    document.getElementById('main').appendChild(v);
+    const form = el => { const c = getComputedStyle(el); return [c.textAlign, c.fontSize, c.paddingTop].join(' '); };
+    const leer = v.firstElementChild, ruhig = form(leer);
+    K('_aufbauen')(v, 0, 45, 10, true);
+    const imAufbau = {bau:leer.classList.contains('bau'), form:form(leer)};
+    K('_aufbauFertig()'); v.remove();
+    return {ruhig, imAufbau};
+  });
+  ok(leerAufbau.imAufbau.bau && leerAufbau.ruhig === 'center 13px 48px' && leerAufbau.imAufbau.form === leerAufbau.ruhig,
+     'der leere Zustand einer Ansicht steht auch während des Aufbaus mittig und in seiner Größe', JSON.stringify(leerAufbau));
   // Der Verlauf bleibt ruhig [§C43]: über die Leiste betreten und beim
   // Wählen eines Spielers baut sich nichts auf, und kein Licht fährt. Die
   // Liga danach baut sich wie immer auf — so zählt die Prüfung überhaupt.
@@ -3652,6 +3671,42 @@ const ok = (c, msg, det) => {
      'im Feed steht, was endlos läuft und nicht im Bild ist, und läuft wieder, wenn es hereinkommt', JSON.stringify(sicht));
   ok(nurSo(sicht.profilUnten.weit, 'paused') && nurSo(sicht.profilOben.im, 'running') && sicht.profilZu === 0,
      'im Profil ebenso: der Kopf steht, wenn er aus dem Bild ist', JSON.stringify(sicht));
+  // Safari meldet SVG-Inhalt dem IntersectionObserver nie als sichtbar. Ein
+  // Beobachter an den Pfaden des Feuers hielt es dort für immer an, im
+  // Profilkopf wie in der Rangliste [§C43]. Nachgestellt in einer zweiten
+  // Seite, deren Beobachter sich so verhält: das Feuer läuft trotzdem, und
+  // beobachtet wird nie ein Element in einem SVG.
+  {
+    const safari = await browser.newPage({viewport: {width: 390, height: 844}});
+    await safari.setContent('<!doctype html><html><head><meta charset="utf-8">' + styles + '</head>' + bodyHtml + '</body></html>');
+    await safari.addScriptTag({content: BOOT});
+    await safari.addScriptTag({content: `(() => {
+      const IO = window.IntersectionObserver;
+      window.IntersectionObserver = class extends IO {
+        constructor(cb, o){ super((es, ob) => cb(es.map(e => e.target instanceof SVGElement && e.target.ownerSVGElement
+          ? {target:e.target, isIntersecting:false, intersectionRatio:0, boundingClientRect:e.boundingClientRect, time:e.time} : e), ob), o); }
+      };
+    })();`});
+    await safari.addScriptTag({content: code});
+    const feuer = await safari.evaluate(async ([P, M]) => {
+      const K = window.__k.eval.bind(window.__k), warte = ms => new Promise(r => setTimeout(r, ms));
+      K('players = ' + JSON.stringify(P) + '; matches = ' + JSON.stringify(M) + '; invalidateCache();'
+        + 'const L = players[8], a = players.filter(p => p !== L).slice(0, 3), t0 = Date.now() - 3600e3;'
+        + 'for(let i = 0; i < 8; i++) matches.push({id:"sx" + i, a1:L.id, a2:a[0].id, b1:a[1].id, b2:a[2].id,'
+        + ' a1_pos:"atk", a2_pos:"def", b1_pos:"atk", b2_pos:"def", score_a:10, score_b:3, winner:"A", exp_a:.5,'
+        + ' created_at:new Date(t0 + i * 60e3).toISOString(), deltas:{}});'
+        + 'invalidateCache(); tab = "ranking"; render(); showPlayer(L.id); 0');
+      await warte(1500);
+      const sh = document.querySelector('.sheet.show');
+      const bilder = sh ? [...sh.querySelectorAll('.zn-fx .zf')] : [];
+      return {serie:K('playerStats(players[8].id).curStreak'), bilder:bilder.length,
+        laufen:bilder.map(b => b.getAnimations().map(x => x.playState).join()),
+        svgBeobachtet:[...K('_sichtGruppen').keys()].filter(w => w instanceof SVGElement).length};
+    }, [PLAYERS, MATCHES]);
+    ok(feuer.serie >= 3 && feuer.bilder >= 2 && feuer.laufen.every(x => x === 'running') && feuer.svgBeobachtet === 0,
+       'auch mit dem Beobachter von Safari läuft das Feuer im Profilkopf, und kein SVG-Inhalt wird beobachtet', JSON.stringify(feuer));
+    await safari.close();
+  }
   await page.emulateMedia({reducedMotion: 'reduce'});
   const leiseRuhig = await leiseLauf();
   await page.emulateMedia({reducedMotion: 'no-preference'});
