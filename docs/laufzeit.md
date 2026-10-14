@@ -57,7 +57,11 @@ das Schließen gibt sie frei) und an jedem dieser Elemente `_steht` (wie oft
 es angehalten ist; bei null verliert es `.steht`), an Story und Auszeichnung
 `_auf` (das jüngste Öffnen; ein älteres Licht kommt nicht mehr).
 `_letzteBedienung` (wann zuletzt getippt, gescrollt oder eine Taste
-gedrückt wurde; das leise Licht wartet 4 s danach).
+gedrückt wurde; das leise Licht wartet 4 s danach). `_leiseSchritt` (die
+Stelle in `LEISE_FOLGE`), `_leiseKarte` (welcher der drei Plätze als
+nächster dran ist) und `_leiseZuletzt` (das Element des letzten leisen
+Lichts, damit es nicht zweimal hintereinander leuchtet); sie werden nicht
+zurückgesetzt, ein neu gezeichnetes Element ist ein anderes.
 `_schlittenVorher` (`09-ui-infra.js`) trägt zusätzlich `t0`, das Bild, mit
 dem der Schlitten eines Wählers losfuhr; `schlittenFahren` verbraucht ihn.
 
@@ -399,7 +403,7 @@ Gerüst schimmert höchstens zwölf Sekunden. Das Licht im Feed beobachtet 280 m
 das Blatt eingefahren ist, welche Karten im Bild stehen, das an Story und Auszeichnung kommt nach 120 ms; was ein Blatt
 verdeckt, hält nach 300 ms an, wenn es eingefahren ist; geschlossene Fenster
 werden nach 260 ms geleert, wenn sie nicht wieder offen sind. Vom Öffnen
-an plant `_leiseAuftrag` alle 30 bis 55 s ein leises Licht; es läuft weiter,
+an plant `_leiseAuftrag` alle 7 bis 12 s ein leises Licht von 6,5 s; es läuft weiter,
 solange die Seite offen ist, und tut nichts, wenn die Seite versteckt ist,
 ein Blatt offen steht oder eben bedient wurde.
 

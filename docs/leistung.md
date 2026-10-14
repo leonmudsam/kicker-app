@@ -362,8 +362,12 @@ Vergleich gegen `e55e91a^`, den Stand vor der Bewegung [§C43] — Aufbau beim
 Ladelinie, der schlichte Hinweis, gestaffelte Blätter, das leise Licht.
 Dieselben 466 Partien, Chromium, 390 × 844 px, vierfach gedrosselte CPU.
 
-**Was offen steht, kostet nichts dazu.** In Ruhe laufen keine zusätzlichen
-Animationen; der Schlitten unten und die Ladelinie sind zwei Ebenen mehr,
+**Was offen steht, kostet fast nichts dazu.** In Ruhe läuft nur das leise
+Licht, rund zwei Drittel der Zeit eine Runde: gemessen im eingeschwungenen
+Zustand 8 ms Hauptthread je Sekunde, solange es läuft, ohne Licht unter
+1 ms — der Grundpreis jeder laufenden Animation, gleich ob Ring, Schein
+oder beides, und gleich um welches Ziel; Stil, Layout und Malen bleiben bei
+null. Der Schlitten unten und die Ladelinie sind zwei Ebenen mehr,
 zusammen unter 1 % der Fläche. Das Kantenlicht dreht und blendet auf dem
 Compositor: Liga mit drei Lichtern 23,7 ms Hauptthread je Sekunde, ohne
 24,6 ms.

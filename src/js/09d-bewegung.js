@@ -57,6 +57,9 @@ function _geruestHtml(){
 // größer — eine gedrehte Ebene kostet bei dreifacher Pixeldichte Speicher im
 // Quadrat ihrer Kante. Gemessen wird nichts; die Größe kennt der Aufrufer.
 const KANTE_MS = {zeichnen:4600, hinweis:4200};
+// Das leise Licht (`_leisesLicht`) dauert länger als jede Art: nach deren
+// Zeit entfernt, risse es mitten in seiner Runde ab.
+const KANTE_LEISE_MS = 6500;
 // Die Farben des Lichts: das Metall der Plätze, Acid fürs Bedienen, Weiß
 // für den Knopf „Match eintragen", die Farbe einer Story [§C25]. Eine feste
 // Tabelle statt `'kl-' + ton`: ein Ton, den es nicht gibt, fällt so auf,
@@ -77,7 +80,7 @@ function kantenlicht(ziel, ton, art, verzug, d, innen, leise){
   ring.innerHTML = '<i></i>';
   teile.push(ring);
   teile.forEach(t => { t.setAttribute('aria-hidden', 'true'); t.dataset.t0 = t0; t.dataset.kv = verzug; ziel.appendChild(t); });
-  setTimeout(() => teile.forEach(t => t.remove()), verzug + KANTE_MS[art] + 120);
+  setTimeout(() => teile.forEach(t => t.remove()), verzug + (leise ? KANTE_LEISE_MS : KANTE_MS[art]) + 120);
   return ring;
 }
 
@@ -430,17 +433,22 @@ function _wechselSteht(){
 }
 
 // ── Leises Licht im laufenden Betrieb ──────────────────────────────────
-// Steht die App offen, fährt hin und wieder Licht um eine einzelne Karte,
-// die zählt — Platz 1 bis 3, das Podest, die letzte Partie —, dieselbe
-// Zeichnung wie beim Ankommen und mit derselben Bedeutung [§C41], nur
-// leiser. Selten genug, um nicht zu stören: alle 30 bis 55 s höchstens
-// einmal, nie während einer Bedienung oder in den 4 s danach, nie unter
-// einem Blatt oder Fenster, nie auf einer versteckten Seite, nie, solange
-// eine Ansicht sich aufbaut oder anderes Licht läuft, und nur um eine
-// Karte, die ganz im Bild steht und nicht hinter der unteren Leiste. Geplant
-// vom ersten Bild des Öffnens an.
-const LEISE_MS = [30000, 55000];
-let _leiseAuftrag = 0, _letzteBedienung = 0;
+// Steht die App offen, zieht alle 7 bis 12 s eine einzelne, langsame Linie
+// einmal um etwas, das zählt — dieselben Bedeutungen wie beim Ankommen
+// [§C41], nur leiser: eine Runde in 6,5 s, halb so hell, ohne Rahmen
+// (`.kl-leise`). Die Ziele wechseln reihum (`LEISE_FOLGE`): Platz 1, Platz
+// 2, die Pille „News", wenn etwas ungelesen ist, Platz 3, „Match
+// eintragen", das Zeichen der Liga — nie zweimal dasselbe hintereinander,
+// nie zwei Lichter zugleich. Ausgesetzt wird während einer Bedienung und in
+// den 4 s danach, unter einem Blatt oder Fenster, auf einer versteckten
+// Seite und solange eine Ansicht sich aufbaut; eine Karte nur, wenn sie
+// ganz im Bild und nicht hinter der unteren Leiste steht. Zuerst kam alle
+// 30 bis 55 s ein Licht wie beim Ankommen, nur halb so hell: zu selten, um
+// die Liga lebendig wirken zu lassen, und zu schnell, um ruhig zu sein.
+// Geplant vom ersten Bild des Öffnens an.
+const LEISE_MS = [7000, 12000];
+const LEISE_FOLGE = ['karte', 'karte', 'news', 'karte', 'knopf', 'karte', 'zeichen'];
+let _leiseAuftrag = 0, _letzteBedienung = 0, _leiseSchritt = 0, _leiseKarte = 0, _leiseZuletzt = null;
 function _leisePlanen(){
   clearTimeout(_leiseAuftrag);
   _leiseAuftrag = setTimeout(() => { _leisesLicht(); _leisePlanen(); },
@@ -448,17 +456,42 @@ function _leisePlanen(){
 }
 function _leisesLicht(){
   if(_bewegungRuhig() || document.hidden || performance.now() - _letzteBedienung < 4000 || _aufbauTeile.length) return null;
-  if(document.querySelector('.sheet.show, .nd-bg.show, .bp-bg.show')) return null;
-  const view = document.querySelector('#main > .view');
-  const sel = tab === 'history' ? '.mlist > .mrow' : PODEST_KARTEN[tab];
-  if(!view || !sel || view.querySelector('.kl')) return null;
-  const alle = [...view.querySelectorAll(sel)].slice(0, tab === 'history' ? 1 : 3);
-  const unten = innerHeight - 90;
-  const im = alle.filter(k => { const r = k.getBoundingClientRect(); return r.top >= 0 && r.bottom <= unten; });
-  if(!im.length) return null;
-  const z = im[Math.floor(Math.random() * im.length)];
-  return kantenlicht(z, tab === 'history' ? 'acid' : _metallTon(z, alle.indexOf(z)), 'zeichnen', 0,
-    Math.hypot(z.offsetWidth, z.offsetHeight) + 8, false, true);
+  if(document.querySelector('.sheet.show, .nd-bg.show, .bp-bg.show, #main .kl, .appbar .kl, #fab .kl')) return null;
+  for(let n = 0; n < LEISE_FOLGE.length; n++){
+    const z = _leiseZiel(LEISE_FOLGE[_leiseSchritt++ % LEISE_FOLGE.length]);
+    if(!z) continue;
+    _leiseZuletzt = z.el;
+    return kantenlicht(z.el, z.ton, z.art, 0, z.d, z.innen, true);
+  }
+  return null;
+}
+function _leiseZiel(was){
+  if(was === 'karte'){
+    const view = document.querySelector('#main > .view');
+    const sel = tab === 'history' ? '.mlist > .mrow' : PODEST_KARTEN[tab];
+    if(!view || !sel) return null;
+    const alle = [...view.querySelectorAll(sel)].slice(0, tab === 'history' ? 1 : 3), unten = innerHeight - 90;
+    for(let i = 0; i < alle.length; i++){
+      const k = (_leiseKarte + i) % alle.length, z = alle[k], r = z.getBoundingClientRect();
+      if(z === _leiseZuletzt || r.top < 0 || r.bottom > unten) continue;
+      _leiseKarte = k + 1;
+      return {el:z, ton:tab === 'history' ? 'acid' : _metallTon(z, k), art:'zeichnen', d:Math.hypot(r.width, r.height) + 8};
+    }
+    return null;
+  }
+  if(was === 'news'){
+    const b = document.getElementById('newsBtn'), zahl = document.getElementById('newsBtnBadge'), t = document.getElementById('newsToast');
+    if(!b || b === _leiseZuletzt || b.classList.contains('wartet') || !zahl || zahl.style.display === 'none'
+      || (t && t.classList.contains('show'))) return null;
+    return {el:b, ton:'acid', art:'hinweis', d:120};
+  }
+  if(was === 'knopf'){
+    const f = document.getElementById('fab');
+    if(!f || f === _leiseZuletzt || f.style.display === 'none' || !f.offsetWidth) return null;
+    return {el:f, ton:'weiss', art:'zeichnen', d:90};
+  }
+  const l = document.querySelector('.logo-mark');
+  return l && l !== _leiseZuletzt ? {el:l, ton:'acid', art:'zeichnen', d:60, innen:true} : null;
 }
 ['pointerdown', 'wheel', 'touchstart', 'keydown', 'scroll'].forEach(ev =>
   document.addEventListener(ev, () => { _letzteBedienung = performance.now(); }, {passive:true, capture:true}));

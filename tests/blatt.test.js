@@ -3474,33 +3474,51 @@ const ok = (c, msg, det) => {
   ok(fenster.story.licht && fenster.story.deckt && fenster.story.scroll && fenster.story.feedLicht === 0 && fenster.story.nachScroll === 0
      && fenster.story.leer && fenster.bp.licht && fenster.bp.leer,
      'Story und Auszeichnung öffnen mit Licht genau an ihrer Kante, das beim Scrollen endet, und sind geschlossen leer', JSON.stringify([fenster.story, fenster.bp]));
-  // Im laufenden Betrieb fährt hin und wieder leises Licht um eine Karte,
-  // die zählt [§C43]: dieselbe Zeichnung, halb so hell, nur um eine Karte
-  // ganz im Bild, alle 30 bis 55 s höchstens einmal — nicht, solange anderes
+  // Im laufenden Betrieb zieht alle 7 bis 12 s eine leise, langsame Linie
+  // um etwas, das zählt [§C43]: eine Runde in 6,5 s, ohne Rahmen, reihum
+  // Platz 1 bis 3, die Pille „News“ (nur mit Ungelesenem), „Match
+  // eintragen“ und das Zeichen der Liga — nie zweimal dasselbe
+  // hintereinander, eine Karte nur ganz im Bild, nicht, solange anderes
   // Licht läuft, nicht in den 4 s nach einer Bedienung, nicht unter einem
   // Blatt, nicht bei Bewegungsruhe.
   const leiseLauf = async () => page.evaluate(async () => {
     const K = window.__k.eval.bind(window.__k);
     const bild = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-    const weg = () => document.querySelectorAll('#main .kl, #main .kl-schein, #main .glanz-einmal').forEach(e => e.remove());
+    const weg = () => document.querySelectorAll('.kl, .kl-schein, .glanz-einmal').forEach(e => e.remove());
+    const KARTEN = '.rlist > .rrow.top1, .rlist > .rrow.top2, .rlist > .rrow.top3';
+    const name = el => el.matches(KARTEN) ? 'top' + (el.matches('.top1') ? 1 : el.matches('.top2') ? 2 : 3)
+      : el.id === 'newsBtn' ? 'news' : el.id === 'fab' ? 'knopf' : el.matches('.logo-mark') ? 'zeichen' : el.className;
     K("closeSheet(true); tab='ranking'; period='season'; ligaSeasonId=null; render(); _aufbauFertig()"); await bild();
-    weg(); K('_letzteBedienung = 0');
+    const btn = document.getElementById('newsBtn'), zahl = document.getElementById('newsBtnBadge'), fab = document.getElementById('fab');
+    const vorher = [btn.className, zahl.getAttribute('style'), fab.getAttribute('style')];
+    btn.classList.remove('wartet'); zahl.style.display = ''; fab.style.display = '';
+    weg(); K('_letzteBedienung = 0; _leiseSchritt = 0; _leiseKarte = 0; _leiseZuletzt = null');
+    const st = window.setTimeout, ende = [];
+    window.setTimeout = (f, ms) => { ende.push(ms); return st(f, ms); };
     const ring = K('_leisesLicht()'), out = {};
+    window.setTimeout = st;
     if(ring){
-      const r = ring.parentElement.getBoundingClientRect();
-      out.ziel = ring.parentElement.matches('.rlist > .rrow.top1, .rlist > .rrow.top2, .rlist > .rrow.top3');
+      const r = ring.parentElement.getBoundingClientRect(), i = getComputedStyle(ring.querySelector('i'));
+      out.ziel = name(ring.parentElement);
       out.imBild = r.top >= 0 && r.bottom <= innerHeight - 90;
-      out.leise = ring.matches('.kl-zeichnen.kl-leise') && getComputedStyle(ring).opacity === '0.5';
+      out.leise = ring.matches('.kl-leise') && i.animationName === 'klLeise' && i.animationDuration === '6.5s'
+        && getComputedStyle(ring, '::after').animationName === 'none' && ende.includes(6620);
     }
     out.licht = !!ring;
     out.zweites = !!K('_leisesLicht()');
+    // Reihum: jedes Ziel kommt vor, keines zweimal hintereinander.
+    const folge = n => { const f = []; for(let i = 0; i < n; i++){ weg(); K('_letzteBedienung = 0'); const k = K('_leisesLicht()'); f.push(k ? name(k.parentElement) : null); } return f; };
+    out.folge = [out.ziel, ...folge(13)];
+    zahl.style.display = 'none';
+    out.ohneNeues = folge(14);
+    zahl.style.display = '';
     // Ist Platz 1 oben angeschnitten, nimmt es ihn nie.
     const eins = document.querySelector('#main .rlist > .rrow.top1');
     window.scrollTo(0, scrollY + eins.getBoundingClientRect().top + 20); await bild();
     out.angeschnitten = [];
-    for(let i = 0; i < 10; i++){
+    for(let i = 0; i < 14; i++){
       weg(); K('_letzteBedienung = 0'); const k = K('_leisesLicht()');
-      if(k){ const r = k.parentElement.getBoundingClientRect(); out.angeschnitten.push(r.top >= 0 && r.bottom <= innerHeight - 90); }
+      if(k && k.parentElement.matches(KARTEN)){ const r = k.parentElement.getBoundingClientRect(); out.angeschnitten.push(r.top >= 0 && r.bottom <= innerHeight - 90); }
     }
     window.scrollTo(0, 0); await bild();
     weg(); K('_letzteBedienung = performance.now()');
@@ -3508,19 +3526,27 @@ const ok = (c, msg, det) => {
     K("_letzteBedienung = 0; showPlayer(players[0].id)"); await bild();
     out.blatt = !!K('_leisesLicht()');
     K('closeSheet(true)'); await bild();
-    const st = window.setTimeout, zeiten = [];
+    const zeiten = [];
     window.setTimeout = (f, ms) => { zeiten.push(ms); return 0; };
     for(let i = 0; i < 20; i++) K('_leisePlanen()');
     window.setTimeout = st;
     out.plan = [Math.min(...zeiten), Math.max(...zeiten)];
     weg();
+    btn.className = vorher[0];
+    [[zahl, vorher[1]], [fab, vorher[2]]].forEach(([el, v]) => v === null ? el.removeAttribute('style') : el.setAttribute('style', v));
     return out;
   });
   const leise = await leiseLauf();
-  ok(leise.licht && leise.ziel && leise.imBild && leise.leise && leise.angeschnitten.length === 10 && leise.angeschnitten.every(Boolean),
-     'im laufenden Betrieb fährt leises Licht um eine Karte, die zählt und ganz im Bild steht', JSON.stringify(leise));
-  ok(!leise.zweites && !leise.bedient && !leise.blatt && leise.plan[0] >= 30000 && leise.plan[1] <= 55000,
-     'nicht neben anderem Licht, nicht gleich nach einer Bedienung, nicht unter einem Blatt, und höchstens alle 30 bis 55 s', JSON.stringify(leise));
+  const nachbar = f => f.every((x, i) => !i || x !== f[i - 1]);
+  ok(leise.licht && /^top[123]$/.test(leise.ziel) && leise.imBild && leise.leise,
+     'im laufenden Betrieb zieht eine leise, langsame Linie um eine Karte, die zählt und ganz im Bild steht', JSON.stringify(leise));
+  ok(leise.folge.every(Boolean) && ['top1', 'top2', 'top3', 'news', 'knopf', 'zeichen'].every(z => leise.folge.includes(z)) && nachbar(leise.folge)
+     && leise.ohneNeues.every(Boolean) && !leise.ohneNeues.includes('news') && nachbar(leise.ohneNeues),
+     'die Linie wechselt reihum zwischen den Plätzen, der Pille mit Neuem, dem Knopf und dem Zeichen, nie zweimal dasselbe hintereinander', JSON.stringify([leise.folge, leise.ohneNeues]));
+  ok(leise.angeschnitten.length >= 4 && leise.angeschnitten.every(Boolean),
+     'eine Karte, die angeschnitten ist, bekommt kein leises Licht', JSON.stringify(leise.angeschnitten));
+  ok(!leise.zweites && !leise.bedient && !leise.blatt && leise.plan[0] >= 7000 && leise.plan[1] <= 12000,
+     'nicht neben anderem Licht, nicht gleich nach einer Bedienung, nicht unter einem Blatt, und alle 7 bis 12 s', JSON.stringify(leise));
   await page.emulateMedia({reducedMotion: 'reduce'});
   const leiseRuhig = await leiseLauf();
   await page.emulateMedia({reducedMotion: 'no-preference'});
