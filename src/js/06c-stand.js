@@ -92,6 +92,10 @@ async function _standZeigen(abrufFertig){
   if(Array.isArray(rec.stories)) _cache._stories = rec.stories;
   _standGezeigt = rec.fp;
   if(!_eingabeOffen()) render();
+  // Die Pille „News" steht mit der Liga, nicht erst nach dem Abgleich mit
+  // der Datenbank: ihre Stories hat der Stand schon [§C43]. Geschrieben wird
+  // dabei nichts; der Hinweis wartet ohnehin die Schonfrist ab.
+  if(Array.isArray(rec.stories) && window.newsBadgeRefresh) window.newsBadgeRefresh();
   _vorwaermen();
   return true;
 }

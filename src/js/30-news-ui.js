@@ -85,15 +85,16 @@ function newsUnreadCount(){
 
 // ─── §11.4 — Header-Badge-Refresh ────────────────────────────────────
 // Wird nach loadAll() und nach gezielten UI-Aktionen aufgerufen.
-// Stellt das News-Button-Sichtbarkeit und die Unread-Pille korrekt ein.
+// Stellt die News-Pille und ihre Zahl der ungelesenen Stories ein.
 // Zusätzlich (v8.1): zeigt einmalig den "X neue Stories"-Toast, wenn neue
 // Stories vorliegen und der Cooldown abgelaufen ist.
 function newsBadgeRefresh(){
   const btn = document.getElementById('newsBtn');
   const badge = document.getElementById('newsBtnBadge');
   if(!btn || !badge) return;
-  const pilleNeu = btn.style.visibility !== 'visible';
-  btn.style.visibility = 'visible';
+  // Bis hierher stand die Pille als Gerüst da [§C43]; jetzt kommt ihr Inhalt.
+  const pilleNeu = btn.classList.contains('wartet');
+  btn.classList.remove('wartet');
   // v8.2: erste Aufruf nach Page-Load → Boot-Grace setzen, damit der
   // Toast den Auto-Recaps Vorrang gibt.
   if(!_newsBootGuardSet){
@@ -106,7 +107,9 @@ function newsBadgeRefresh(){
   try { n = newsUnreadCount(); } catch(e){ n = 0; }
   if(pilleNeu) _pilleKommt(btn, n > 0);
   if(n > 0){
+    // Ohne leeres style-Attribut: das Markup bleibt dasselbe wie ohne Zahl.
     badge.style.display = '';
+    if(badge.getAttribute('style') === '') badge.removeAttribute('style');
     badge.textContent = n > 9 ? '9+' : String(n);
     // Toast nur bei "echten" Neuigkeiten (nicht bei jedem Refresh)
     _maybeShowNewsToast(n);

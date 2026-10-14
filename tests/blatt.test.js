@@ -2348,9 +2348,11 @@ const ok = (c, msg, det) => {
     out.lichtDann = t.querySelectorAll(':scope > .kl').length;
     window.setTimeout = st;
     K('_hideNewsToast()');
-    btn.style.visibility = 'hidden'; K('newsBadgeRefresh(); _hideNewsToast()');
-    out.pille = btn.getAnimations().some(a => a.effect.getKeyframes().some(k => /translateX/.test(k.transform || '')));
-    btn.getAnimations().forEach(a => a.finish());
+    // Aus dem Gerüst kommt die Pille: Zeichen und Wort gleiten herein.
+    btn.classList.add('wartet'); K('newsBadgeRefresh(); _hideNewsToast()');
+    out.pille = !btn.classList.contains('wartet') && btn.classList.contains('kommt')
+      && getComputedStyle(btn.querySelector('.news-pill-lbl')).animationName === 'pilleInhalt';
+    btn.classList.remove('kommt');
     return out;
   });
   const ntLebt = await toastLauf();
@@ -2358,7 +2360,7 @@ const ok = (c, msg, det) => {
      'der Hinweis auf neue Stories zeigt die Zahl und darunter die wichtigste ungelesene Story mit dem Punkt in ihrer Farbe', JSON.stringify(ntLebt));
   ok(ntLebt.rand[0] >= 12 && ntLebt.rand[1] >= 8, 'der Hinweis hält bei 320 px Abstand zu beiden Rändern', JSON.stringify(ntLebt.rand));
   ok(ntLebt.licht === 1 && ntLebt.lichtDann === 1 && ntLebt.ruf === 'hinweisRuf' && ntLebt.zahl === 'nhPop' && ntLebt.endlos === 0 && ntLebt.pille,
-     'beim Erscheinen fährt Licht um den Hinweis und ein Ring von der Pille, nichts läuft endlos, und die Pille gleitet herein', JSON.stringify(ntLebt));
+     'beim Erscheinen fährt Licht um den Hinweis und ein Ring von der Pille, nichts läuft endlos, und aus dem Gerüst der Pille gleitet ihr Inhalt herein', JSON.stringify(ntLebt));
   ok(ntLebt.zeitStart && ntLebt.zeitDann, 'der erste Hinweis nach dem Öffnen steht länger als die folgenden', JSON.stringify([ntLebt.zeitStart, ntLebt.zeitDann]));
   await page.emulateMedia({reducedMotion: 'reduce'});
   const ntRuhig = await toastLauf();

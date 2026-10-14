@@ -147,6 +147,16 @@
      Unschärfe des Vorhangs rechnet sonst jedes Bild einer Bewegung darunter
      neu. */
   .steht,.steht::before,.steht::after{animation-play-state:paused!important}
+  /* Die Pille „News" steht vom ersten Bild an als Gerüst da, mit demselben
+     Schimmer wie das Gerüst der Liga, und nimmt keinen Tipp an; kommen ihre
+     Stories, färbt sie sich ein, und ihr Inhalt gleitet herein
+     (`_pilleKommt`). Der Schimmer endet nach zwölf Sekunden auch ohne
+     Stories. */
+  .news-pill.wartet{background:var(--surface2);border-color:var(--line);pointer-events:none;overflow:hidden}
+  .news-pill.wartet > *{opacity:0}
+  .news-pill.wartet::before{content:"";position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.07) 50%,transparent 70%);transform:translateX(-100%)}
+  @keyframes pilleInhalt{from{opacity:0;transform:translateX(8px)}}
   /* Die Pille ruft: kommt der Hinweis „x neue Stories", geht zweimal ein
      Ring von ihr aus, und ihre Zahl springt auf (`_hinweisBewegung`). */
   #newsBtn::after{content:"";position:absolute;inset:-2px;border-radius:inherit;pointer-events:none;
@@ -178,6 +188,11 @@
     .glanz-einmal::after{animation:glanzEinmal 1.3s cubic-bezier(.45,0,.25,1) var(--gv,0ms) both}
     .sheet.show .staffel-k{animation:blattEin .34s cubic-bezier(.2,.8,.2,1) backwards}
     #newsBtn.ruf::after{animation:hinweisRuf 1s cubic-bezier(.2,.8,.2,1) 2}
+    .news-pill.wartet::before{animation:geruestLicht 1.5s cubic-bezier(.4,0,.2,1) 8}
+    .news-pill{transition:background-color .5s ease,border-color .5s ease}
+    .news-pill.kommt > svg{animation:pilleInhalt .45s cubic-bezier(.2,.8,.2,1) .05s both}
+    .news-pill.kommt > .news-pill-lbl{animation:pilleInhalt .45s cubic-bezier(.2,.8,.2,1) .13s both}
+    .news-pill.kommt > .news-btn-badge{animation:aufbauPop .5s cubic-bezier(.3,1.6,.5,1) .32s both}
     .news-btn-badge.ruf{animation:aufbauPop .5s cubic-bezier(.3,1.6,.5,1)}
   }
 

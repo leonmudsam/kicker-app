@@ -464,14 +464,18 @@ function _leisesLicht(){
   document.addEventListener(ev, () => { _letzteBedienung = performance.now(); }, {passive:true, capture:true}));
 
 // ── Neuigkeiten ────────────────────────────────────────────────────────
-// Die Pille „News" erschien unvermittelt, sobald der Feed geladen war. Sie
-// gleitet jetzt herein; gibt es Ungelesenes, fährt zweimal Licht um ihre
-// Kante — hier ist etwas neu [§C41]. Aus `newsBadgeRefresh`, einmal.
+// Die Pille „News" steht vom ersten Bild an als Gerüst an ihrem Platz
+// (`.wartet`, festes Markup); ihre Stories kommen nach der Liga — aus dem
+// Stand des Geräts oder nach dem Abgleich mit der Datenbank. Vorher war dort
+// nichts, und sie stand plötzlich da, sichtbar später als alles andere. Sind
+// die Stories da, färbt sie sich ein, Zeichen und Wort gleiten herein, die
+// Zahl springt auf (`.kommt`); gibt es Ungelesenes, fährt zweimal Licht um
+// sie — hier ist etwas neu [§C41]. Aus `newsBadgeRefresh`, einmal.
 function _pilleKommt(btn, ungelesen){
   if(_bewegungRuhig()) return;
-  btn.animate([{opacity:0, transform:'translateX(14px)'}, {opacity:1, transform:'none'}],
-    {duration:380, easing:'cubic-bezier(.2,.8,.2,1)'});
-  if(ungelesen) kantenlicht(btn, 'acid', 'hinweis', 200, 120);
+  btn.classList.add('kommt');
+  setTimeout(() => btn.classList.remove('kommt'), 1100);
+  if(ungelesen) kantenlicht(btn, 'acid', 'hinweis', 350, 120);
 }
 // Kommt der Hinweis „x neue Stories" (`_newsToastZeigen`), fährt zweimal
 // Licht um seine Kante, von der Pille geht zweimal ein Ring aus, und ihre

@@ -5802,6 +5802,11 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   @keyframes aufbauVonUnten{from{transform:translateY(100%)}}
   .sheet.show > .staffel{animation:none}
   .steht,.steht::before,.steht::after{animation-play-state:paused!important}
+  .news-pill.wartet{background:var(--surface2);border-color:var(--line);pointer-events:none;overflow:hidden}
+  .news-pill.wartet > *{opacity:0}
+  .news-pill.wartet::before{content:"";position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.07) 50%,transparent 70%);transform:translateX(-100%)}
+  @keyframes pilleInhalt{from{opacity:0;transform:translateX(8px)}}
   #newsBtn::after{content:"";position:absolute;inset:-2px;border-radius:inherit;pointer-events:none;
     border:2px solid var(--acid);opacity:0}
   @keyframes hinweisRuf{0%{opacity:.85;transform:scale(1)}100%{opacity:0;transform:scale(1.45)}}
@@ -5829,6 +5834,11 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
     .glanz-einmal::after{animation:glanzEinmal 1.3s cubic-bezier(.45,0,.25,1) var(--gv,0ms) both}
     .sheet.show .staffel-k{animation:blattEin .34s cubic-bezier(.2,.8,.2,1) backwards}
     #newsBtn.ruf::after{animation:hinweisRuf 1s cubic-bezier(.2,.8,.2,1) 2}
+    .news-pill.wartet::before{animation:geruestLicht 1.5s cubic-bezier(.4,0,.2,1) 8}
+    .news-pill{transition:background-color .5s ease,border-color .5s ease}
+    .news-pill.kommt > svg{animation:pilleInhalt .45s cubic-bezier(.2,.8,.2,1) .05s both}
+    .news-pill.kommt > .news-pill-lbl{animation:pilleInhalt .45s cubic-bezier(.2,.8,.2,1) .13s both}
+    .news-pill.kommt > .news-btn-badge{animation:aufbauPop .5s cubic-bezier(.3,1.6,.5,1) .32s both}
     .news-btn-badge.ruf{animation:aufbauPop .5s cubic-bezier(.3,1.6,.5,1)}
   }
 
@@ -5868,7 +5878,7 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
         </div>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
-        <button class="lock-btn news-btn news-pill" id="newsBtn" title="Liga News" style="visibility:hidden">
+        <button class="lock-btn news-btn news-pill wartet" id="newsBtn" title="Liga News">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="15" height="16" rx="2"/><line x1="18" y1="8" x2="21" y2="8"/><path d="M18 8v9a2 2 0 002 2 1 1 0 001-1V8"/><line x1="6" y1="8" x2="14" y2="8"/><line x1="6" y1="11" x2="14" y2="11"/><line x1="6" y1="14" x2="11" y2="14"/></svg>
           <span class="news-pill-lbl">News</span>
           <span class="news-btn-badge" id="newsBtnBadge" style="display:none">0</span>
@@ -5916,7 +5926,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.14.b9a2ef22';
+const BUILD_VERSION='2026.10.14.1608601c';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -8247,6 +8257,7 @@ async function _standZeigen(abrufFertig){
   if(Array.isArray(rec.stories)) _cache._stories = rec.stories;
   _standGezeigt = rec.fp;
   if(!_eingabeOffen()) render();
+  if(Array.isArray(rec.stories) && window.newsBadgeRefresh) window.newsBadgeRefresh();
   _vorwaermen();
   return true;
 }
@@ -10292,9 +10303,9 @@ function _leisesLicht(){
 
 function _pilleKommt(btn, ungelesen){
   if(_bewegungRuhig()) return;
-  btn.animate([{opacity:0, transform:'translateX(14px)'}, {opacity:1, transform:'none'}],
-    {duration:380, easing:'cubic-bezier(.2,.8,.2,1)'});
-  if(ungelesen) kantenlicht(btn, 'acid', 'hinweis', 200, 120);
+  btn.classList.add('kommt');
+  setTimeout(() => btn.classList.remove('kommt'), 1100);
+  if(ungelesen) kantenlicht(btn, 'acid', 'hinweis', 350, 120);
 }
 let _rufAuftrag = 0;
 function _hinweisBewegung(toast){
@@ -22951,8 +22962,8 @@ function newsBadgeRefresh(){
   const btn = document.getElementById('newsBtn');
   const badge = document.getElementById('newsBtnBadge');
   if(!btn || !badge) return;
-  const pilleNeu = btn.style.visibility !== 'visible';
-  btn.style.visibility = 'visible';
+  const pilleNeu = btn.classList.contains('wartet');
+  btn.classList.remove('wartet');
   if(!_newsBootGuardSet){
     _newsBootGuardSet = true;
     _newsBootGuardUntil = Date.now() + NEWS_BOOT_GRACE_MS;
@@ -22963,6 +22974,7 @@ function newsBadgeRefresh(){
   if(pilleNeu) _pilleKommt(btn, n > 0);
   if(n > 0){
     badge.style.display = '';
+    if(badge.getAttribute('style') === '') badge.removeAttribute('style');
     badge.textContent = n > 9 ? '9+' : String(n);
     _maybeShowNewsToast(n);
   } else {
