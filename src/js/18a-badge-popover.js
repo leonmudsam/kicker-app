@@ -372,6 +372,8 @@ function showBadgePopover(badgeId, playerId){
   `;
   bpBg.classList.add('show');
   bp.scrollTop = 0;
+  _fensterLicht(bp, 'weiss');
+  _verdecken('bp', true);
   // Match-Click: schließt POPOVER und SHEET, öffnet Match-Detail
   bp.querySelectorAll('.bp-match[data-mid]').forEach(el => {
     el.onclick = () => {
@@ -386,5 +388,6 @@ function showBadgePopover(badgeId, playerId){
 function closeBadgePopover(){
   const bpBg = document.getElementById('bpBg');
   if(bpBg) bpBg.classList.remove('show');
+  _fensterZu(bpBg, document.getElementById('bp'), 'bp');
 }
 

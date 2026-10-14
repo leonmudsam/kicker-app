@@ -3390,6 +3390,80 @@ const ok = (c, msg, det) => {
   ok(innen.nochmal === 0 && innen.daten === 0, 'dieselbe Wahl noch einmal und neue Daten bauen nichts auf', JSON.stringify([innen.nochmal, innen.daten]));
   ok(innen.gleich === '' && innen.spaeter === 'gold silber bronze' && innen.rest === 0,
      'dieselbe Ansicht glänzt erst nach der Pause wieder, und danach ist nichts übrig', JSON.stringify([innen.gleich, innen.spaeter, innen.rest]));
+  // Blätter und Fenster [§C43]: ein Blatt kommt gestaffelt; im Feed fährt
+  // beim Öffnen Licht um die ungelesenen Stories im Bild — innen, ohne die
+  // Karte höher zu machen —, beim Filtern nicht noch einmal. Was ein Blatt
+  // verdeckt, steht still und läuft danach weiter. Story und Auszeichnung
+  // öffnen mit Licht an ihrer Kante, das genau auf ihr liegt, ihnen nichts
+  // zu scrollen gibt und beim Scrollen endet; geschlossen sind sie leer.
+  const fenster = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const bild = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const warte = ms => new Promise(r => setTimeout(r, ms));
+    const endlos = sel => document.getAnimations().filter(a => { const t = a.effect && a.effect.target;
+      return t && t.closest && t.closest(sel) && a.effect.getTiming().iterations === Infinity; }).map(a => a.playState);
+    const out = {};
+    K("closeSheet(true); tab='awards'; awView='awards'; render()");
+    await bild(); await warte(200);
+    out.vorher = endlos('#main');
+    K('openNewsFeed()'); await bild();
+    out.staffel = [...document.querySelectorAll('#sheet .staffel-k')].map(e => e.style.animationDelay).join();
+    await warte(450);
+    out.verdeckt = endlos('#main');
+    const karten = [...document.querySelectorAll('#sheet .nf-card')].filter(k => k.querySelector(':scope > .kl'));
+    out.feed = {licht:karten.length, story:karten.every(k => k.querySelector(':scope > .kl').matches('.kl-story.kl-innen') && !k.matches('.read')),
+      imBild:karten.every(k => { const r = k.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; }),
+      hoehe:karten.every(k => { const h = k.offsetHeight, w = [...k.querySelectorAll(':scope > .kl, :scope > .kl-schein')];
+        w.forEach(e => e.remove()); const ohne = k.offsetHeight; w.forEach(e => k.appendChild(e)); return h === ohne; })};
+    const chip = document.querySelector('#sheet .nf-chips button[data-f]:not(.on)');
+    if(chip){ chip.click(); await warte(450); }
+    out.filter = document.querySelectorAll('#sheet .kl').length;
+    K("_newsFeedFilter = 'all'");
+    const sid = (document.querySelector('#sheet [data-sid]') || {dataset:{}}).dataset.sid;
+    K(`openNewsDetail(${JSON.stringify(sid)})`); await warte(300);
+    const nd = document.getElementById('nd'), ring = nd.querySelector(':scope > .kl');
+    const r = nd.getBoundingClientRect(), kr = ring ? ring.getBoundingClientRect() : {left:0, top:0, width:0, height:0};
+    out.story = {licht:!!ring && ring.matches('.kl-story.kl-innen'), deckt:Math.abs(kr.left - r.left) <= 1.5 && Math.abs(kr.width - r.width) <= 3
+      && Math.abs(kr.height - r.height) <= 3,
+      scroll:(() => { const mit = nd.scrollHeight, w = [...nd.querySelectorAll(':scope > .kl, :scope > .kl-schein')];
+        w.forEach(e => e.remove()); const ohne = nd.scrollHeight; w.forEach(e => nd.appendChild(e)); return mit === ohne; })(),
+      feedLicht:document.querySelectorAll('#sheet .kl').length};
+    nd.dispatchEvent(new Event('scroll'));
+    out.story.nachScroll = nd.querySelectorAll(':scope > .kl').length;
+    K('closeNewsDetail()'); await warte(320);
+    out.story.leer = nd.innerHTML === '';
+    K('closeSheet(true)'); await bild();
+    out.nachher = endlos('#main');
+    // Wechselt unter dem Blatt eine Klasse, läuft danach die neue Bewegung,
+    // nicht die alte daneben.
+    const puls = () => document.getAnimations().filter(a => a.effect.target.id === 'connDot' && a.animationName === 'pulse').map(a => a.playState);
+    const punkt = document.getElementById('connDot'), klasse = punkt.className;
+    punkt.className = 'dot load'; K('showPlayer(players[0].id)'); await warte(350);
+    punkt.className = 'dot ok'; await bild(); punkt.className = 'dot load'; await bild();
+    K('closeSheet(true)'); await bild();
+    out.puls = puls();
+    punkt.className = 'dot ok'; await bild();
+    out.pulsOk = puls();
+    punkt.className = klasse;
+    const bid = K('BADGES[0].id');
+    K(`showBadgePopover(${JSON.stringify(bid)}, players[0].id)`); await warte(300);
+    const bp = document.getElementById('bp');
+    out.bp = {licht:!!bp.querySelector(':scope > .kl.kl-weiss.kl-innen')};
+    K('closeBadgePopover()'); await warte(320);
+    out.bp.leer = bp.innerHTML === '';
+    K("tab='ranking'; render()"); await bild();
+    return out;
+  });
+  ok(fenster.staffel === '0ms,45ms' && fenster.feed.licht >= 1 && fenster.feed.licht <= 6 && fenster.feed.story && fenster.feed.imBild && fenster.feed.hoehe,
+     'der Feed kommt gestaffelt, mit Licht in ihrer Farbe um die ungelesenen Stories im Bild, ohne eine Karte höher zu machen', JSON.stringify(fenster));
+  ok(fenster.filter === 0, 'beim Filtern im offenen Feed fährt kein Licht noch einmal', String(fenster.filter));
+  ok(fenster.vorher.includes('running') && fenster.verdeckt.length && fenster.verdeckt.every(x => x === 'paused') && fenster.nachher.every(x => x === 'running'),
+     'was das Blatt verdeckt, steht still, und danach läuft es weiter', JSON.stringify([fenster.vorher, fenster.verdeckt, fenster.nachher]));
+  ok(fenster.puls.join() === 'running' && fenster.pulsOk.length === 0,
+     'wechselt darunter eine Klasse, läuft danach die neue Bewegung allein, und ohne ihre Regel keine', JSON.stringify([fenster.puls, fenster.pulsOk]));
+  ok(fenster.story.licht && fenster.story.deckt && fenster.story.scroll && fenster.story.feedLicht === 0 && fenster.story.nachScroll === 0
+     && fenster.story.leer && fenster.bp.licht && fenster.bp.leer,
+     'Story und Auszeichnung öffnen mit Licht genau an ihrer Kante, das beim Scrollen endet, und sind geschlossen leer', JSON.stringify([fenster.story, fenster.bp]));
   {
     await K("closeSheet(true);tab='ranking';period='season';render()");
     await page.waitForTimeout(1200);

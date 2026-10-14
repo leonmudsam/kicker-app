@@ -106,6 +106,8 @@ function openNewsDetail(sid){
     ${_newsRueckblickKnopf(s)}
     <button class="nd-close" id="ndCloseBtn">Schließen</button>`;
   bg.classList.add('show');
+  _fensterLicht(nd, 'story');
+  _verdecken('nd', true);
   document.getElementById('ndCloseBtn').onclick = closeNewsDetail;
   document.getElementById('ndXBtn').onclick = closeNewsDetail;
   nd.querySelectorAll('.nf-faden[data-ziel]').forEach(el => {
@@ -192,6 +194,7 @@ function _newsRueckblickKnopf(s){
 function closeNewsDetail(){
   const bg = document.getElementById('ndBg');
   if(bg) bg.classList.remove('show');
+  _fensterZu(bg, document.getElementById('nd'), 'nd');
 }
 
 // Detail-Body-HTML — schaltet nach dataRef.type. Für unbekannte Typen

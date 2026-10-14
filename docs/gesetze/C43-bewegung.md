@@ -10,6 +10,8 @@
 - **Das Podest glänzt, wenn eine Ansicht ankommt, und dieselbe Ansicht erst nach 45 s wieder** (`_podestLicht`, `_podestZuletzt`, `_ansichtSchluessel`: Reiter mit seiner Wahl): Licht im Metall um Platz 1 bis 3 [§C25] in Liga, Positionen und bei den Duos, um das Podest der Awards, um die letzte Partie im Verlauf; über Gold zieht das Band (`.glanz-bahn.glanz-einmal`).
 - **Das Kantenlicht hat zwei Bedeutungen und keine dritte** (`kantenlicht`, `.kl`) [§C41]: *zeichnen* — einmal herum, dann steht der Rahmen einige Sekunden: eine Karte, die zählt, ist angekommen; *hinweis* — zweimal herum, ohne Rahmen: hier ist etwas neu. Beide enden von selbst (4,6 und 4,2 s): das Licht läuft nach der Runde langsamer weiter, ein Schein liegt um die Karte, dann verlischt beides, und nichts davon bleibt im Dokument. Das Licht im Profilkopf ist dieselbe Zeichnung mit eigener Bedeutung: es läuft, solange der Monat läuft.
 - **Neues kündigt sich mit dem Hinweislicht an:** die Pille „News" gleitet herein, und gibt es Ungelesenes, fährt zweimal Licht um sie (`_pilleKommt`); kommt der Hinweis „x neue Stories" [§C27], fährt es um ihn, und von der Pille geht zweimal ein Ring aus (`_hinweisBewegung`). Nichts davon läuft endlos.
+- **Ein Blatt kommt gestaffelt** (`_blattStaffeln`, `.staffel-k`): die ersten acht Teile 45 ms auseinander; trägt ein Rahmen den ganzen Inhalt, zählen seine Kinder; das Profil behält seine eigene Folge. Im Feed fährt beim Öffnen Licht in ihrer Farbe um die ungelesenen Stories im Bild, höchstens sechs, 200 ms nacheinander (`_feedLicht`), beim Filtern nicht noch einmal. Story und Auszeichnung öffnen mit Licht an ihrer Kante (`_fensterLicht`), innen, weil sie selbst scrollen; wer scrollt, beendet es. Geschlossen werden sie geleert (`_fensterZu`).
+- **Was ein Blatt oder Fenster verdeckt, steht still** (`_verdecken`, `.steht`): was dort endlos läuft, hält das CSS über `animation-play-state` an, nie `pause()`, und nur diese Elemente, nicht den ganzen Bereich; das Licht darunter verlischt. Beim Schließen läuft es weiter.
 - **Neue Daten nehmen das Licht nicht mit:** zeichnet die App denselben Reiter neu, wechselt es an dieselbe Stelle der neuen Ansicht und läuft weiter (`_lichtMerken`, `_lichtZurueck`). Ein Wechsel nimmt es nicht mit: die neue Ansicht hat ihr eigenes.
 - **Abbrechbar:** jede Berührung, jedes Scrollen beendet den Aufbau (`_vorfuehrungEnde`); alles steht sofort, wo es hingehört. Das Licht läuft zu Ende — es verdeckt nichts.
 - **Nur Drehung, Verschiebung und Deckkraft** (`transform`, `opacity`); der Kegel des Lichts ist so groß wie die Diagonale seiner Karte, nicht größer.
@@ -17,11 +19,11 @@
 
 ## Stellen
 
-`src/index.html` (Oberfläche im ersten Bild), `09d-bewegung.js` (`_startBereit`, `_startGeruest`, `kantenlicht`, `_aufbauen`, `_podestLicht`, `_glanzEinmal`, `_lichtMerken`, `_lichtZurueck`, `_bewegungNachRender`, `_vorfuehrungEnde`, `_navSchlitten`, `_ladeStart`, `_ladeEnde`, `_wechselBeginnt`, `_wahlSofort`, `_wechselSteht`, `_connBewegung`, `_pilleKommt`, `_hinweisBewegung`), `30-news-ui.js` (`newsBadgeRefresh`, `_newsToastZeigen`), `09-ui-infra.js` (`render`, `renderNav`, `_renderNachEingabe`, `schlittenFahren`), `06-db.js` (`setConn`), `05-nav-sheet.css` (der Schlitten), `06c-stand.js` (kein Stand → Gerüst), `37-boot.js` (`_startBereit`), `00-prolog.js`, `01-shell.css` (das Zeichen), `17-bewegung.css`.
+`src/index.html` (Oberfläche im ersten Bild), `09d-bewegung.js` (`_startBereit`, `_startGeruest`, `kantenlicht`, `_aufbauen`, `_podestLicht`, `_glanzEinmal`, `_lichtMerken`, `_lichtZurueck`, `_bewegungNachRender`, `_vorfuehrungEnde`, `_navSchlitten`, `_ladeStart`, `_ladeEnde`, `_wechselBeginnt`, `_wahlSofort`, `_wechselSteht`, `_connBewegung`, `_pilleKommt`, `_hinweisBewegung`, `_blattStaffeln`, `_feedLicht`, `_fensterLicht`, `_verdecken`, `_fensterZu`), `30-news-ui.js` (`newsBadgeRefresh`, `_newsToastZeigen`), `30a-news-karte.js` (`_renderNewsFeed`), `16-sheet-infra.js` (`openSheet`, `_sheetForceClose`), `31-news-detail.js`, `18a-badge-popover.js`, `09-ui-infra.js` (`render`, `renderNav`, `_renderNachEingabe`, `schlittenFahren`), `06-db.js` (`setConn`), `05-nav-sheet.css` (der Schlitten), `06c-stand.js` (kein Stand → Gerüst), `37-boot.js` (`_startBereit`), `00-prolog.js`, `01-shell.css` (das Zeichen), `17-bewegung.css`.
 
 ## Prüfung
 
-`tests/start` (die Kopfleiste steht mit dem Zeichen, bevor ein Skript läuft, ohne Bild davor; ohne Stand das Gerüst, bis die Datenbank antwortet; beim Öffnen baut sich die Liga auf, mit Licht im Metall um Platz 1 bis 3, um das Zeichen und den Knopf; auch direkt nach dem Schließen wieder; nach seiner Zeit nichts übrig, auch kein leeres style-Attribut; der Punkt oben links beim ersten „verbunden"; bei Bewegungsruhe nichts davon; der Start lädt das große Symbol nicht), `tests/blatt` (ein über die Leiste betretener Reiter baut sich auf, mit Licht im Metall, dessen Kegel die Karte deckt; nur transform und opacity; neue Daten nehmen das Licht nicht mit; nach seiner Zeit nichts übrig, gleich zurück kein zweites Mal; der leuchtende Schlitten steht unter dem gewählten Knopf; rechnet ein Reiter lange, fährt der Schlitten sofort und Schleier und Ladelinie überbrücken, und steht er, sind beide fort; ein Wechsel im Reiter wählt den Knopf vor der Rechnung, der Schleier beginnt unter dem Wähler, der Schlitten fährt über das Neuzeichnen hinweg weiter; die neue Liste baut sich unter dem stehenden Wähler auf, mit einem Licht je Platz und keinem alten; ebenso eine vergangene Saison und die Rekorde; dieselbe Wahl und neue Daten bauen nichts auf; dieselbe Ansicht glänzt erst nach der Pause wieder; um den Hinweis auf neue Stories fährt Licht, von der Pille ein Ring, nichts läuft endlos, die Pille gleitet herein, bei Bewegungsruhe nichts davon).
+`tests/start` (die Kopfleiste steht mit dem Zeichen, bevor ein Skript läuft, ohne Bild davor; ohne Stand das Gerüst, bis die Datenbank antwortet; beim Öffnen baut sich die Liga auf, mit Licht im Metall um Platz 1 bis 3, um das Zeichen und den Knopf; auch direkt nach dem Schließen wieder; nach seiner Zeit nichts übrig, auch kein leeres style-Attribut; der Punkt oben links beim ersten „verbunden"; bei Bewegungsruhe nichts davon; der Start lädt das große Symbol nicht), `tests/blatt` (ein über die Leiste betretener Reiter baut sich auf, mit Licht im Metall, dessen Kegel die Karte deckt; nur transform und opacity; neue Daten nehmen das Licht nicht mit; nach seiner Zeit nichts übrig, gleich zurück kein zweites Mal; der leuchtende Schlitten steht unter dem gewählten Knopf; rechnet ein Reiter lange, fährt der Schlitten sofort und Schleier und Ladelinie überbrücken, und steht er, sind beide fort; ein Wechsel im Reiter wählt den Knopf vor der Rechnung, der Schleier beginnt unter dem Wähler, der Schlitten fährt über das Neuzeichnen hinweg weiter; die neue Liste baut sich unter dem stehenden Wähler auf, mit einem Licht je Platz und keinem alten; ebenso eine vergangene Saison und die Rekorde; dieselbe Wahl und neue Daten bauen nichts auf; dieselbe Ansicht glänzt erst nach der Pause wieder; um den Hinweis auf neue Stories fährt Licht, von der Pille ein Ring, nichts läuft endlos, die Pille gleitet herein, bei Bewegungsruhe nichts davon; der Feed kommt gestaffelt, mit Licht um die ungelesenen Stories im Bild, ohne eine Karte höher zu machen, beim Filtern nicht noch einmal; was das Blatt verdeckt, steht still und läuft danach weiter, und wechselt darunter eine Klasse, läuft danach nur die neue Bewegung; Story und Auszeichnung öffnen mit Licht genau an ihrer Kante, das ihnen nichts zu scrollen gibt und beim Scrollen endet, und sind geschlossen leer).
 
 ## Herleitung
 
@@ -98,6 +100,24 @@ verschoben wird, fährt auf dem Compositor, ohne den Hauptthread. Gemessen
 (vierfach gedrosselt, warme Reiter, Median aus 30) bleibt der Wechsel gleich
 schnell: 57 ms bis zur neuen Ansicht, 136 ms bis zum gemalten Bild (vorher
 141 ms).
+
+Blätter und die beiden Fenster liegen hinter einem Vorhang mit Unschärfe,
+und jedes Bild einer Bewegung darunter rechnete sie neu — die Lichter über
+Titeln in den Awards, der Puls des Punkts oben links. Angehalten wurde
+zuerst mit `pause()` und `play()`: danach pulsierte der Punkt auch nach
+„verbunden" weiter, und wechselte seine Klasse unter dem Blatt, liefen zwei
+Pulse nebeneinander, die der Hauptthread in jedem Bild rechnete. Chrome
+löst eine CSS-Animation, die einmal über die Schnittstelle gesteuert wurde,
+von ihrer Regel. Jetzt hält das CSS an, und zwar nur, was läuft: eine
+Klasse am ganzen verdeckten Bereich rechnete den Stil jedes Knotens neu,
+in den Awards gemessen 65 ms beim Anhalten und 45 ms beim Fortsetzen
+(vierfach gedrosselt) — das Fortsetzen mitten im Zuschieben des Blatts. An
+den laufenden Elementen allein sind es 6 und 1 ms. Geschlossen behielten Story und
+Auszeichnung ihren Inhalt, unsichtbar und mit allem, was darin endlos lief.
+Ihr Licht lag im ersten Einbau im Fluss: der Inhalt einer Story steht über
+ihrem Motiv (`.nd > *`, relative), und der Ring wurde ein vier Pixel
+breiter Block am Ende, der dem Fenster Höhe zum Scrollen gab; in den Karten
+des Feeds machte dieselbe Regel die Karte höher.
 
 Gemessen wird beim Aufbau nichts: welche Teile im Bild stehen, sagt die
 Reihenfolge. Eine vererbte Variable als Verzögerung ließ im Entwurf jeden

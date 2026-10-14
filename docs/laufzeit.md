@@ -52,6 +52,10 @@ Aufbau räumt sie). Beim Wechsel: `_ladeGruende` (warum die Ladelinie läuft:
 `wechsel`, `daten`; sie endet, wenn keiner mehr gilt), `_ladeLauf` und
 `_schleierLauf` (die laufenden Animationen) und `_verbunden` (ob der Punkt
 schon einmal „verbunden" gezeigt hat; er wird nicht zurückgesetzt).
+`_verdeckt` (je Blatt oder Fenster die Elemente, die es angehalten hat;
+das Schließen gibt sie frei) und an jedem dieser Elemente `_steht` (wie oft
+es angehalten ist; bei null verliert es `.steht`), an Story und Auszeichnung
+`_auf` (das jüngste Öffnen; ein älteres Licht kommt nicht mehr).
 `_schlittenVorher` (`09-ui-infra.js`) trägt zusätzlich `t0`, das Bild, mit
 dem der Schlitten eines Wählers losfuhr; `schlittenFahren` verbraucht ihn.
 
@@ -388,7 +392,10 @@ steht. Die Ladelinie endet spätestens 15 s nach ihrem Beginn (`_ladeNot`),
 auch wenn ein Grund noch gilt. Der Hinweis „x neue Stories" blendet nach 7 s
 aus, wenn er der erste nach dem Öffnen ist (`_newsToastSchonDa`), sonst nach
 4 s (`_newsToastHideTimer`); der Ring an der Pille räumt seine Klasse nach
-2,4 s (`_rufAuftrag`).
+2,4 s (`_rufAuftrag`). Das Licht im Feed sucht 300 ms nach dem Öffnen seine
+Karten, das an Story und Auszeichnung kommt nach 120 ms; was ein Blatt
+verdeckt, hält nach 300 ms an, wenn es eingefahren ist; geschlossene Fenster
+werden nach 260 ms geleert, wenn sie nicht wieder offen sind.
 
 `_tickDaten` lässt außerdem ein offenes Blatt, den Eingabe-Tab und die
 Einstellungen in Ruhe:

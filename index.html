@@ -5761,6 +5761,9 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   .kl.kl-zeichnen::after{content:"";position:absolute;inset:0;background:rgba(var(--kr),.75);opacity:0}
   .kl-schein{position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;z-index:2;opacity:0;
     box-shadow:0 0 0 1px rgba(var(--kr),.35),0 0 20px -3px rgba(var(--kr),.55),inset 0 0 18px -7px rgba(var(--kr),.4)}
+  :is(.nd, .nf-card) > .kl{position:absolute;z-index:3}
+  :is(.nd, .nf-card) > .kl-schein{position:absolute;z-index:2}
+  .kl-schein.kl-innen{inset:0}
   .kl-gold{--kr:247,207,74}
   .kl-silber{--kr:214,222,230}
   .kl-bronze{--kr:222,160,108}
@@ -5795,6 +5798,8 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   .lauf-z i.h::after{content:"";position:absolute;inset:-1px;border-radius:3px;border:1.5px solid var(--acid);opacity:0;pointer-events:none}
   .mrow{position:relative}
   @keyframes aufbauVonUnten{from{transform:translateY(100%)}}
+  .sheet.show > .staffel{animation:none}
+  .steht,.steht::before,.steht::after{animation-play-state:paused!important}
   #newsBtn::after{content:"";position:absolute;inset:-2px;border-radius:inherit;pointer-events:none;
     border:2px solid var(--acid);opacity:0}
   @keyframes hinweisRuf{0%{opacity:.85;transform:scale(1)}100%{opacity:0;transform:scale(1.45)}}
@@ -5820,6 +5825,7 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
     .bau{animation:bauTeil .56s cubic-bezier(.2,.8,.2,1) both}
     .pod-karte.bau{animation-name:bauPodest;animation-duration:.62s}
     .glanz-einmal::after{animation:glanzEinmal 1.3s cubic-bezier(.45,0,.25,1) var(--gv,0ms) both}
+    .sheet.show .staffel-k{animation:blattEin .34s cubic-bezier(.2,.8,.2,1) backwards}
     #newsBtn.ruf::after{animation:hinweisRuf 1s cubic-bezier(.2,.8,.2,1) 2}
     .news-btn-badge.ruf{animation:aufbauPop .5s cubic-bezier(.3,1.6,.5,1)}
   }
@@ -5908,7 +5914,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.14.ace742fe';
+const BUILD_VERSION='2026.10.14.7855b95c';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -10272,6 +10278,70 @@ function _hinweisBewegung(toast){
   _rufAuftrag = setTimeout(() => teile.forEach(e => e.classList.remove('ruf')), 2400);
 }
 
+const BLATT_TEILE = 8;
+function _blattStaffeln(sheet){
+  if(!sheet || _bewegungRuhig()) return;
+  let teile = [...sheet.children].filter(k => !k.classList.contains('sheet-leiste'));
+  if(teile.length === 1){
+    if(teile[0].classList.contains('pp-root')) return;
+    teile[0].classList.add('staffel');
+    teile = [...teile[0].children];
+  }
+  teile.slice(0, BLATT_TEILE).forEach((k, i) => { k.classList.add('staffel-k'); k.style.animationDelay = i * 45 + 'ms'; });
+}
+function _feedLicht(sheet){
+  if(!sheet || _bewegungRuhig()) return;
+  const auf = sheet._auf;
+  setTimeout(() => {
+    if(sheet._auf !== auf || !sheet.classList.contains('show')) return;
+    [...sheet.querySelectorAll('.nf-card:not(.read)')].slice(0, 12)
+      .filter(k => { const r = k.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; }).slice(0, 6)
+      .forEach((k, i) => kantenlicht(k, 'story', 'zeichnen', i * 200, Math.hypot(k.offsetWidth, k.offsetHeight) + 8, true));
+  }, 300);
+}
+function _fensterLicht(el, ton){
+  if(!el || _bewegungRuhig()) return;
+  const auf = el._auf = (el._auf || 0) + 1;
+  const weg = () => el.querySelectorAll(':scope > .kl, :scope > .kl-schein').forEach(e => e.remove());
+  setTimeout(() => {
+    if(el._auf !== auf || !el.parentElement.classList.contains('show')) return;
+    weg();
+    kantenlicht(el, ton, 'zeichnen', 0, Math.hypot(el.offsetWidth, el.offsetHeight) + 8, true);
+    el.addEventListener('scroll', weg, {once:true, passive:true});
+  }, 120);
+}
+const VERDECKT = {blatt:'#main, .appbar, #botnav, #fab', nd:'#sheet, #bp, #main, .appbar, #botnav, #fab',
+  bp:'#sheet, #main, .appbar, #botnav, #fab'};
+const _verdeckt = {};
+function _verdecken(wer, an){
+  if(!_bewegungDa()) return;
+  const war = _verdeckt[wer];
+  if(!an){
+    _verdeckt[wer] = null;
+    if(Array.isArray(war)) war.forEach(e => { e._steht = Math.max(0, (e._steht || 0) - 1); if(!e._steht) e.classList.remove('steht'); });
+    return;
+  }
+  if(war) return;
+  _verdeckt[wer] = 'bald';
+  setTimeout(() => {
+    if(_verdeckt[wer] !== 'bald') return;
+    const bereich = VERDECKT[wer], ziele = new Set();
+    document.querySelectorAll(bereich.split(', ').map(b => b + ' :is(.kl, .kl-schein, .glanz-einmal)').join(', '))
+      .forEach(e => e.remove());
+    document.getAnimations().forEach(a => {
+      const t = a.effect && a.effect.target;
+      if(t && t.closest && a.playState === 'running' && a.effect.getTiming().iterations === Infinity && t.closest(bereich)) ziele.add(t);
+    });
+    ziele.forEach(e => { e._steht = (e._steht || 0) + 1; e.classList.add('steht'); });
+    _verdeckt[wer] = [...ziele];
+  }, 300);
+}
+function _fensterZu(bg, el, wer){
+  _verdecken(wer, false);
+  if(!bg || !el) return;
+  setTimeout(() => { if(!bg.classList.contains('show')) el.innerHTML = ''; }, 260);
+}
+
 let _verbunden = false;
 function _connBewegung(c){
   if(!_bewegungDa()) return;
@@ -13500,6 +13570,8 @@ function openSheet(html, opts){
   schlittenFahren(sheet);
   bg.classList.add('show');
   sheet.classList.add('show');
+  _blattStaffeln(sheet);
+  _verdecken('blatt', true);
   if(opts.protectMs && opts.protectMs > 0){
     sheet._protectedUntil = Date.now() + opts.protectMs;
   } else {
@@ -13530,7 +13602,8 @@ function closeSheet(force){
 function _sheetForceClose(sheet,bg,schonUnten){
   _sheetStack.length = 0; _sheetReopen = null;
   const bpBg = document.getElementById('bpBg');
-  if(bpBg && bpBg.classList.contains('show')) bpBg.classList.remove('show');
+  if(bpBg && bpBg.classList.contains('show')) closeBadgePopover();
+  _verdecken('blatt', false);
   const warOffen = sheet.classList.contains('show');
   if(warOffen || bg.classList.contains('show')){
     sheet._auf = (sheet._auf || 0) + 1;
@@ -16389,6 +16462,8 @@ function showBadgePopover(badgeId, playerId){
   `;
   bpBg.classList.add('show');
   bp.scrollTop = 0;
+  _fensterLicht(bp, 'weiss');
+  _verdecken('bp', true);
   bp.querySelectorAll('.bp-match[data-mid]').forEach(el => {
     el.onclick = () => {
       const mid = el.dataset.mid;
@@ -16402,6 +16477,7 @@ function showBadgePopover(badgeId, playerId){
 function closeBadgePopover(){
   const bpBg = document.getElementById('bpBg');
   if(bpBg) bpBg.classList.remove('show');
+  _fensterZu(bpBg, document.getElementById('bp'), 'bp');
 }
 
 
@@ -24044,6 +24120,7 @@ function _renderNewsFeed(){
   const gelesenKnopf = offen
     ? `<button class="nf-gelesen" id="nvMarkAllBtn" type="button">ALLES GELESEN <b>${offen}</b></button>`
     : '';
+  const schonOffen = _isNewsFeedOpen();
   openSheet(`
     <div class="nf-wrap">
       <div class="nf-kopf nf-kopf-tafel">
@@ -24056,6 +24133,7 @@ function _renderNewsFeed(){
     <div class="nf-wrap nf-liste" style="padding-top:0">${listHtml}</div>
   `);
   const sheetEl = document.getElementById('sheet');
+  if(!schonOffen) _feedLicht(sheetEl);
   const liste = sheetEl.querySelector('.nf-liste');
   _newsFeedOffen = nachreichen.length && liste
     ? {liste, jobs:nachreichen, index:0, version:_cache.version} : null;
@@ -26128,6 +26206,8 @@ function openNewsDetail(sid){
     ${_newsRueckblickKnopf(s)}
     <button class="nd-close" id="ndCloseBtn">Schließen</button>`;
   bg.classList.add('show');
+  _fensterLicht(nd, 'story');
+  _verdecken('nd', true);
   document.getElementById('ndCloseBtn').onclick = closeNewsDetail;
   document.getElementById('ndXBtn').onclick = closeNewsDetail;
   nd.querySelectorAll('.nf-faden[data-ziel]').forEach(el => {
@@ -26203,6 +26283,7 @@ function _newsRueckblickKnopf(s){
 function closeNewsDetail(){
   const bg = document.getElementById('ndBg');
   if(bg) bg.classList.remove('show');
+  _fensterZu(bg, document.getElementById('nd'), 'nd');
 }
 
 function _newsRangZeile(pid){

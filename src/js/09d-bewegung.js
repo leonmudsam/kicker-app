@@ -450,6 +450,103 @@ function _hinweisBewegung(toast){
   _rufAuftrag = setTimeout(() => teile.forEach(e => e.classList.remove('ruf')), 2400);
 }
 
+// ── Blätter und Fenster ────────────────────────────────────────────────
+// Ein Blatt kommt gestaffelt: die ersten acht Teile 45 ms auseinander, wie
+// eine Ansicht. Trägt ein Rahmen den ganzen Inhalt, zählen seine Kinder; das
+// Profil hat seine eigene Folge. Vorher blendete der Inhalt als ein Block
+// ein. Aus `openSheet`.
+const BLATT_TEILE = 8;
+function _blattStaffeln(sheet){
+  if(!sheet || _bewegungRuhig()) return;
+  let teile = [...sheet.children].filter(k => !k.classList.contains('sheet-leiste'));
+  if(teile.length === 1){
+    if(teile[0].classList.contains('pp-root')) return;
+    teile[0].classList.add('staffel');
+    teile = [...teile[0].children];
+  }
+  teile.slice(0, BLATT_TEILE).forEach((k, i) => { k.classList.add('staffel-k'); k.style.animationDelay = i * 45 + 'ms'; });
+}
+// Im Feed fährt um jede ungelesene Story im Bild ein Licht in ihrer Farbe,
+// eine nach der anderen: das kam seit dem letzten Öffnen dazu. Höchstens
+// sechs. Gesucht und gemessen wird erst, wenn das Blatt steht — dann ist
+// das Layout fertig, und das Messen kostet nichts. Die Karte schneidet ab,
+// was über ihren Rand ragt: das Licht liegt innen. Aus `openNewsFeed`.
+function _feedLicht(sheet){
+  if(!sheet || _bewegungRuhig()) return;
+  const auf = sheet._auf;
+  setTimeout(() => {
+    if(sheet._auf !== auf || !sheet.classList.contains('show')) return;
+    [...sheet.querySelectorAll('.nf-card:not(.read)')].slice(0, 12)
+      .filter(k => { const r = k.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; }).slice(0, 6)
+      .forEach((k, i) => kantenlicht(k, 'story', 'zeichnen', i * 200, Math.hypot(k.offsetWidth, k.offsetHeight) + 8, true));
+  }, 300);
+}
+// Öffnet eine Story oder eine Auszeichnung, fährt das Licht einmal ihre
+// Kante ab, in der Farbe der Story, Weiß für die Auszeichnung. Beide Fenster
+// scrollen selbst: das Licht liegt innen — sein Rand gäbe sonst einen Pixel
+// zu scrollen —, und wer scrollt, beendet es; es liefe sonst mit dem Inhalt
+// davon. Gemessen wird nach dem Öffnen, wenn das Layout steht.
+function _fensterLicht(el, ton){
+  if(!el || _bewegungRuhig()) return;
+  const auf = el._auf = (el._auf || 0) + 1;
+  const weg = () => el.querySelectorAll(':scope > .kl, :scope > .kl-schein').forEach(e => e.remove());
+  setTimeout(() => {
+    if(el._auf !== auf || !el.parentElement.classList.contains('show')) return;
+    weg();
+    kantenlicht(el, ton, 'zeichnen', 0, Math.hypot(el.offsetWidth, el.offsetHeight) + 8, true);
+    el.addEventListener('scroll', weg, {once:true, passive:true});
+  }, 120);
+}
+// Was ein Blatt oder Fenster verdeckt, steht still: der Vorhang davor trägt
+// eine Unschärfe, und jedes Bild einer Bewegung darunter rechnet sie neu.
+// Was dort endlos läuft, trägt `.steht`, und das CSS hält es an; das Licht
+// darunter verlischt — es endet ohnehin bald. Angehalten wird über CSS,
+// nicht mit `pause()`: eine CSS-Animation, die einmal über die Schnittstelle
+// angehalten und fortgesetzt wurde, löst Chrome von ihrer Regel. Der Punkt
+// oben links pulsierte danach auch nach „verbunden" weiter, und wechselte
+// unter dem Blatt seine Klasse, lief der alte Puls neben dem neuen. Und nur,
+// was läuft: eine Klasse am ganzen Bereich rechnete den Stil jedes Knotens
+// neu, in den Awards gemessen 65 ms beim Anhalten und 45 ms beim Fortsetzen
+// (vierfach gedrosselt) — mitten im Zuschieben des Blatts. Fenster liegen
+// über Blättern: jedes Element zählt, wie oft es angehalten ist.
+const VERDECKT = {blatt:'#main, .appbar, #botnav, #fab', nd:'#sheet, #bp, #main, .appbar, #botnav, #fab',
+  bp:'#sheet, #main, .appbar, #botnav, #fab'};
+const _verdeckt = {};
+function _verdecken(wer, an){
+  if(!_bewegungDa()) return;
+  const war = _verdeckt[wer];
+  if(!an){
+    _verdeckt[wer] = null;
+    if(Array.isArray(war)) war.forEach(e => { e._steht = Math.max(0, (e._steht || 0) - 1); if(!e._steht) e.classList.remove('steht'); });
+    return;
+  }
+  if(war) return;
+  // Erst, wenn das Blatt eingefahren ist: dann ist der Stil gerechnet, und
+  // die Bilder des Hereinfahrens gehören dem Blatt. Ein Zeitgeber, kein
+  // Bildauftrag — die Bilder des Blatts zählen seine Prüfungen einzeln.
+  _verdeckt[wer] = 'bald';
+  setTimeout(() => {
+    if(_verdeckt[wer] !== 'bald') return;
+    const bereich = VERDECKT[wer], ziele = new Set();
+    document.querySelectorAll(bereich.split(', ').map(b => b + ' :is(.kl, .kl-schein, .glanz-einmal)').join(', '))
+      .forEach(e => e.remove());
+    document.getAnimations().forEach(a => {
+      const t = a.effect && a.effect.target;
+      if(t && t.closest && a.playState === 'running' && a.effect.getTiming().iterations === Infinity && t.closest(bereich)) ziele.add(t);
+    });
+    ziele.forEach(e => { e._steht = (e._steht || 0) + 1; e.classList.add('steht'); });
+    _verdeckt[wer] = [...ziele];
+  }, 300);
+}
+// Ein geschlossenes Fenster behielt seinen Inhalt — unsichtbar, mit allem,
+// was darin endlos läuft. Nach dem Ausblenden (0,2 s) wird es geleert, wie
+// das Blatt es schon tut, außer es ist inzwischen wieder offen.
+function _fensterZu(bg, el, wer){
+  _verdecken(wer, false);
+  if(!bg || !el) return;
+  setTimeout(() => { if(!bg.classList.contains('show')) el.innerHTML = ''; }, 260);
+}
+
 // Der Punkt oben links: ist die Verbindung zum ersten Mal da, geht zweimal
 // ein Ring von ihm aus — jetzt ist es der Stand von jetzt. Aus `setConn`.
 let _verbunden = false;

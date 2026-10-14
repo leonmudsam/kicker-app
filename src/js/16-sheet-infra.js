@@ -209,6 +209,9 @@ function openSheet(html, opts){
   schlittenFahren(sheet);
   bg.classList.add('show');
   sheet.classList.add('show');
+  // Der Inhalt kommt gestaffelt, und was das Blatt verdeckt, steht still [§C43].
+  _blattStaffeln(sheet);
+  _verdecken('blatt', true);
   // ⚠ Schutz-Phase: für auto-getriggerte Pop-Ups (Saison-/POTW-/POTD-Recap)
   // wird der Backdrop-Click für protectMs ms unterdrückt — verhindert
   // versehentliches Schließen bei direkt-nach-App-Start-Scroll-Aktionen.
@@ -252,7 +255,8 @@ function _sheetForceClose(sheet,bg,schonUnten){
   // Das Popover kann auch allein über der Hauptansicht stehen. Home soll
   // es weiterhin schließen, selbst wenn für das Blatt nichts mehr zu tun ist.
   const bpBg = document.getElementById('bpBg');
-  if(bpBg && bpBg.classList.contains('show')) bpBg.classList.remove('show');
+  if(bpBg && bpBg.classList.contains('show')) closeBadgePopover();
+  _verdecken('blatt', false);
   // Ein zweiter Schließknopf während des Zuschiebens darf dessen einzigen
   // Abschluss nicht ersetzen und den Inhalt mitten in der Bewegung leeren.
   const warOffen = sheet.classList.contains('show');

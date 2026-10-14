@@ -80,6 +80,14 @@
      innen fällt. Eine feste Schattenform, bewegt wird nur ihre Deckkraft. */
   .kl-schein{position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;z-index:2;opacity:0;
     box-shadow:0 0 0 1px rgba(var(--kr),.35),0 0 20px -3px rgba(var(--kr),.55),inset 0 0 18px -7px rgba(var(--kr),.4)}
+  /* Der Inhalt einer Story und einer Karte im Feed steht über ihrem Motiv
+     (`.nd > *`, `.nf-card > *`, relative): der Ring darin bliebe sonst im
+     Fluss stehen, vier Pixel breit, und machte Fenster und Karte höher.
+     Innen liegt auch der Schein innen — einen Pixel darüber hinaus gab
+     einem Fenster, das selbst scrollt, einen Pixel zu scrollen. */
+  :is(.nd, .nf-card) > .kl{position:absolute;z-index:3}
+  :is(.nd, .nf-card) > .kl-schein{position:absolute;z-index:2}
+  .kl-schein.kl-innen{inset:0}
   .kl-gold{--kr:247,207,74}
   .kl-silber{--kr:214,222,230}
   .kl-bronze{--kr:222,160,108}
@@ -127,6 +135,14 @@
   /* Die letzte Partie im Verlauf trägt das Kantenlicht. */
   .mrow{position:relative}
   @keyframes aufbauVonUnten{from{transform:translateY(100%)}}
+  /* Ein Blatt kommt gestaffelt (`_blattStaffeln`): die ersten acht Teile
+     45 ms auseinander. Der Rahmen, der sie trägt, blendet nicht noch
+     einmal als Ganzes ein. */
+  .sheet.show > .staffel{animation:none}
+  /* Was ein Blatt oder Fenster verdeckt, steht still (`_verdecken`): die
+     Unschärfe des Vorhangs rechnet sonst jedes Bild einer Bewegung darunter
+     neu. */
+  .steht,.steht::before,.steht::after{animation-play-state:paused!important}
   /* Die Pille ruft: kommt der Hinweis „x neue Stories", geht zweimal ein
      Ring von ihr aus, und ihre Zahl springt auf (`_hinweisBewegung`). */
   #newsBtn::after{content:"";position:absolute;inset:-2px;border-radius:inherit;pointer-events:none;
@@ -156,6 +172,7 @@
     .bau{animation:bauTeil .56s cubic-bezier(.2,.8,.2,1) both}
     .pod-karte.bau{animation-name:bauPodest;animation-duration:.62s}
     .glanz-einmal::after{animation:glanzEinmal 1.3s cubic-bezier(.45,0,.25,1) var(--gv,0ms) both}
+    .sheet.show .staffel-k{animation:blattEin .34s cubic-bezier(.2,.8,.2,1) backwards}
     #newsBtn.ruf::after{animation:hinweisRuf 1s cubic-bezier(.2,.8,.2,1) 2}
     .news-btn-badge.ruf{animation:aufbauPop .5s cubic-bezier(.3,1.6,.5,1)}
   }
