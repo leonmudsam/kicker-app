@@ -80,6 +80,22 @@
      innen fällt. Eine feste Schattenform, bewegt wird nur ihre Deckkraft. */
   .kl-schein{position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;z-index:2;opacity:0;
     box-shadow:0 0 0 1px rgba(var(--kr),.35),0 0 20px -3px rgba(var(--kr),.55),inset 0 0 18px -7px rgba(var(--kr),.4)}
+  /* Der Inhalt einer Story und einer Karte im Feed steht über ihrem Motiv
+     (`.nd > *`, `.nf-card > *`, relative): der Ring darin bliebe sonst im
+     Fluss stehen, vier Pixel breit, und machte Fenster und Karte höher.
+     Innen liegt auch der Schein innen — einen Pixel darüber hinaus gab
+     einem Fenster, das selbst scrollt, einen Pixel zu scrollen. */
+  :is(.nd, .nf-card) > .kl{position:absolute;z-index:3}
+  :is(.nd, .nf-card) > .kl-schein{position:absolute;z-index:2}
+  .kl-schein.kl-innen{inset:0}
+  /* Im laufenden Betrieb leiser und langsamer als beim Ankommen
+     (`_leisesLicht`): eine einzige Runde in 6,5 s, sanft an- und auslaufend,
+     die Linie schmaler und gut halb so hell, kein Rahmen, der aufleuchtet,
+     ein Schein, den man eher ahnt. */
+  .kl.kl-leise{padding:1.5px}
+  .kl-schein.kl-leise{box-shadow:0 0 0 1px rgba(var(--kr),.16),0 0 14px -4px rgba(var(--kr),.28),inset 0 0 12px -7px rgba(var(--kr),.2)}
+  @keyframes klLeise{0%{transform:rotate(-120deg);opacity:0}16%{opacity:.6}84%{opacity:.6}100%{transform:rotate(240deg);opacity:0}}
+  @keyframes klScheinLeise{0%,100%{opacity:0}45%,60%{opacity:.55}}
   .kl-gold{--kr:247,207,74}
   .kl-silber{--kr:214,222,230}
   .kl-bronze{--kr:222,160,108}
@@ -109,6 +125,9 @@
     .kl-schein.kl-zeichnen{animation:klSchein 4.6s ease var(--kv,0ms) both}
     .kl-hinweis i{animation:klHinweis 4.2s linear var(--kv,0ms) both}
     .kl-schein.kl-hinweis{animation:klScheinHinweis 4.2s ease var(--kv,0ms) both}
+    .kl-leise i{animation:klLeise 6.5s cubic-bezier(.45,.05,.55,.95) var(--kv,0ms) both}
+    .kl.kl-leise::after{animation:none}
+    .kl-schein.kl-leise{animation:klScheinLeise 6.5s ease var(--kv,0ms) both}
   }
 
   /* ── Der Aufbau ─────────────────────────────────────────────────────
@@ -127,6 +146,29 @@
   /* Die letzte Partie im Verlauf trägt das Kantenlicht. */
   .mrow{position:relative}
   @keyframes aufbauVonUnten{from{transform:translateY(100%)}}
+  /* Ein Blatt kommt gestaffelt (`_blattStaffeln`): die ersten acht Teile
+     45 ms auseinander. Der Rahmen, der sie trägt, blendet nicht noch
+     einmal als Ganzes ein. */
+  .sheet.show > .staffel{animation:none}
+  /* Was ein Blatt oder Fenster verdeckt, steht still (`_verdecken`): die
+     Unschärfe des Vorhangs rechnet sonst jedes Bild einer Bewegung darunter
+     neu. */
+  .steht,.steht::before,.steht::after{animation-play-state:paused!important}
+  /* Die Pille „News" steht vom ersten Bild an als Gerüst da, mit demselben
+     Schimmer wie das Gerüst der Liga, und nimmt keinen Tipp an; kommen ihre
+     Stories, färbt sie sich ein, und ihr Inhalt gleitet herein
+     (`_pilleKommt`). Der Schimmer endet nach zwölf Sekunden auch ohne
+     Stories. */
+  .news-pill.wartet{background:var(--surface2);border-color:var(--line);pointer-events:none;overflow:hidden}
+  .news-pill.wartet > *{opacity:0}
+  .news-pill.wartet::before{content:"";position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.07) 50%,transparent 70%);transform:translateX(-100%)}
+  @keyframes pilleInhalt{from{opacity:0;transform:translateX(8px)}}
+  /* Die Pille ruft: kommt der Hinweis „x neue Stories", geht zweimal ein
+     Ring von ihr aus, und ihre Zahl springt auf (`_hinweisBewegung`). */
+  #newsBtn::after{content:"";position:absolute;inset:-2px;border-radius:inherit;pointer-events:none;
+    border:2px solid var(--acid);opacity:0}
+  @keyframes hinweisRuf{0%{opacity:.85;transform:scale(1)}100%{opacity:0;transform:scale(1.45)}}
   @keyframes aufbauPop{0%{opacity:0;transform:scale(.5)}60%{opacity:1;transform:scale(1.12)}100%{transform:none}}
   @keyframes aufbauFab{0%{opacity:0;transform:scale(.3) rotate(-90deg)}70%{opacity:1;transform:scale(1.08) rotate(6deg)}100%{transform:none}}
   @keyframes aufbauPing{0%{transform:scale(1);opacity:.9}100%{transform:scale(3.2);opacity:0}}
@@ -148,9 +190,17 @@
     .aufbau .botnav button:nth-child(5) .ic{animation-delay:.38s}
     .aufbau .fab{animation:aufbauFab .55s cubic-bezier(.3,1.3,.5,1) .7s both}
     .aufbau .lauf-z i.h::after{animation:aufbauPing .8s ease-out .6s 2 both}
-    .bau{animation:bauTeil .42s cubic-bezier(.2,.8,.2,1) both}
-    .pod-karte.bau{animation-name:bauPodest;animation-duration:.5s}
+    .bau{animation:bauTeil .56s cubic-bezier(.2,.8,.2,1) both}
+    .pod-karte.bau{animation-name:bauPodest;animation-duration:.62s}
     .glanz-einmal::after{animation:glanzEinmal 1.3s cubic-bezier(.45,0,.25,1) var(--gv,0ms) both}
+    .sheet.show .staffel-k{animation:blattEin .34s cubic-bezier(.2,.8,.2,1) backwards}
+    #newsBtn.ruf::after{animation:hinweisRuf 1s cubic-bezier(.2,.8,.2,1) 2}
+    .news-pill.wartet::before{animation:geruestLicht 1.5s cubic-bezier(.4,0,.2,1) 8}
+    .news-pill{transition:background-color .5s ease,border-color .5s ease}
+    .news-pill.kommt > svg{animation:pilleInhalt .45s cubic-bezier(.2,.8,.2,1) .05s both}
+    .news-pill.kommt > .news-pill-lbl{animation:pilleInhalt .45s cubic-bezier(.2,.8,.2,1) .13s both}
+    .news-pill.kommt > .news-btn-badge{animation:aufbauPop .5s cubic-bezier(.3,1.6,.5,1) .32s both}
+    .news-btn-badge.ruf{animation:aufbauPop .5s cubic-bezier(.3,1.6,.5,1)}
   }
 
   /* ── Reiter wechseln ────────────────────────────────────────────────

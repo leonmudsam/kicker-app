@@ -1199,6 +1199,9 @@ function _renderNewsFeed(){
   const gelesenKnopf = offen
     ? `<button class="nf-gelesen" id="nvMarkAllBtn" type="button">ALLES GELESEN <b>${offen}</b></button>`
     : '';
+  // Licht um die ungelesenen Stories nur beim Öffnen, nicht bei jedem
+  // Filter im offenen Feed [§C43].
+  const schonOffen = _isNewsFeedOpen();
   openSheet(`
     <div class="nf-wrap">
       <div class="nf-kopf nf-kopf-tafel">
@@ -1211,6 +1214,7 @@ function _renderNewsFeed(){
     <div class="nf-wrap nf-liste" style="padding-top:0">${listHtml}</div>
   `);
   const sheetEl = document.getElementById('sheet');
+  if(!schonOffen) _feedLicht(sheetEl);
   const liste = sheetEl.querySelector('.nf-liste');
   _newsFeedOffen = nachreichen.length && liste
     ? {liste, jobs:nachreichen, index:0, version:_cache.version} : null;

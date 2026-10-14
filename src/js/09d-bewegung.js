@@ -57,16 +57,19 @@ function _geruestHtml(){
 // größer — eine gedrehte Ebene kostet bei dreifacher Pixeldichte Speicher im
 // Quadrat ihrer Kante. Gemessen wird nichts; die Größe kennt der Aufrufer.
 const KANTE_MS = {zeichnen:4600, hinweis:4200};
+// Das leise Licht (`_leisesLicht`) dauert länger als jede Art: nach deren
+// Zeit entfernt, risse es mitten in seiner Runde ab.
+const KANTE_LEISE_MS = 6500;
 // Die Farben des Lichts: das Metall der Plätze, Acid fürs Bedienen, Weiß
 // für den Knopf „Match eintragen", die Farbe einer Story [§C25]. Eine feste
 // Tabelle statt `'kl-' + ton`: ein Ton, den es nicht gibt, fällt so auf,
 // statt als farbloses Licht.
 const KANTE_TON = {gold:'kl-gold', silber:'kl-silber', bronze:'kl-bronze', acid:'kl-acid', weiss:'kl-weiss', story:'kl-story'};
 const KANTE_ART = {zeichnen:'kl-zeichnen', hinweis:'kl-hinweis'};
-function kantenlicht(ziel, ton, art, verzug, d, innen){
+function kantenlicht(ziel, ton, art, verzug, d, innen, leise){
   if(!ziel || _bewegungRuhig() || !KANTE_TON[ton] || !KANTE_ART[art]) return null;
   const teile = [], t0 = performance.now();
-  const klassen = ' ' + KANTE_ART[art] + ' ' + KANTE_TON[ton] + (innen ? ' kl-innen' : '');
+  const klassen = ' ' + KANTE_ART[art] + ' ' + KANTE_TON[ton] + (innen ? ' kl-innen' : '') + (leise ? ' kl-leise' : '');
   const schein = document.createElement('span');
   schein.className = 'kl-schein' + klassen;
   schein.style.setProperty('--kv', verzug + 'ms');
@@ -77,28 +80,37 @@ function kantenlicht(ziel, ton, art, verzug, d, innen){
   ring.innerHTML = '<i></i>';
   teile.push(ring);
   teile.forEach(t => { t.setAttribute('aria-hidden', 'true'); t.dataset.t0 = t0; t.dataset.kv = verzug; ziel.appendChild(t); });
-  setTimeout(() => teile.forEach(t => t.remove()), verzug + KANTE_MS[art] + 120);
+  setTimeout(() => teile.forEach(t => t.remove()), verzug + (leise ? KANTE_LEISE_MS : KANTE_MS[art]) + 120);
   return ring;
 }
 
 // ── Der Aufbau ─────────────────────────────────────────────────────────
 // Eine Ansicht kommt in Teilen: Überschrift, Wähler, dann Karten und Zeilen,
-// 30 bis 40 ms auseinander. Höchstens vierzehn Teile, und die Verzögerung
-// steht an jedem Teil selbst — eine vererbte Variable ließe jeden Knoten
-// darunter seinen Stil neu rechnen, samt Wappen. Gemessen wird nichts: welche
-// Teile im Bild stehen, sagt die Reihenfolge. Beim Betreten eines Reiters
-// stehen Überschrift, Wähler und Suche sofort da; kamen auch sie aus dem
-// Nichts, stand zwischen altem und neuem Reiter ein leeres Bild. Danach
-// trägt kein Teil mehr eine Spur davon: Klasse und Verzögerung gehen wieder.
-const AUFBAU_LISTE = '.rlist, .mlist, .podest, .aw-vitrine';
+// 45 bis 55 ms auseinander, jedes über eine gute halbe Sekunde. Schneller
+// (30 ms, 0,42 s) wirkte es auf dem Telefon hektisch, als ruckelte die Liste;
+// langsamer sähe es nach Warten aus — der erste Teil beginnt sofort.
+// Höchstens vierzehn Teile, und die Verzögerung steht an jedem Teil selbst —
+// eine vererbte Variable ließe jeden Knoten darunter seinen Stil neu
+// rechnen, samt Wappen. Gemessen wird nichts: welche Teile im Bild stehen,
+// sagt die Reihenfolge. Bei einem Wechsel stehen Überschrift, Wähler und
+// Suche sofort da; kamen auch sie aus dem Nichts, stand zwischen alter und
+// neuer Ansicht ein leeres Bild, und der Wähler, auf den man eben getippt
+// hatte, verschwand unter dem Finger. Danach trägt kein Teil mehr eine Spur
+// davon: Klasse und Verzögerung gehen wieder.
+const AUFBAU_LISTE = '.rlist, .mlist, .podest, .aw-vitrine, .rek-liste';
 const AUFBAU_KOPF = '.view-head, .ui-switch, .ui-tabs, .saisonwahl, .lauf, .search, .einblick, .mini-label';
+// Eine vergangene Saison steht in `.geschichte` (display:contents, 06b):
+// ein Rahmen ohne eigenen Kasten. Als Teil bewegte er nichts, und die
+// Wähler darin kamen mit — es zählen seine Kinder.
+const AUFBAU_RAHMEN = '.geschichte';
 let _aufbauTeile = [];
 let _aufbauAuftrag = 0;
 function _aufbauen(view, start, schritt, hoechstens, ohneKopf){
   if(!view || _bewegungRuhig()) return;
   _aufbauFertig();
   const teile = [];
-  for(const kind of view.children){
+  const kinder = [...view.children].flatMap(k => k.matches(AUFBAU_RAHMEN) ? [...k.children] : [k]);
+  for(const kind of kinder){
     if(teile.length >= hoechstens) break;
     if(ohneKopf && kind.matches(AUFBAU_KOPF)) continue;
     const liste = kind.matches(AUFBAU_LISTE) ? kind
@@ -108,7 +120,7 @@ function _aufbauen(view, start, schritt, hoechstens, ohneKopf){
   }
   _aufbauTeile = teile.slice(0, hoechstens);
   _aufbauTeile.forEach((t, i) => { t.classList.add('bau'); t.style.animationDelay = (start + i * schritt) + 'ms'; });
-  _aufbauAuftrag = setTimeout(_aufbauFertig, start + _aufbauTeile.length * schritt + 560);
+  _aufbauAuftrag = setTimeout(_aufbauFertig, start + _aufbauTeile.length * schritt + 700);
 }
 function _aufbauFertig(){
   clearTimeout(_aufbauAuftrag); _aufbauAuftrag = 0;
@@ -120,12 +132,13 @@ function _aufbauFertig(){
 }
 
 // ── Das Podest glänzt ──────────────────────────────────────────────────
-// Beim ersten Betreten eines Reiters in der Sitzung fährt das Kantenlicht in
-// ihrem Metall um Platz 1, 2 und 3, nacheinander [§C25]: in Liga und
-// Positionen um die ersten drei Zeilen, bei den Duos ebenso, bei den Awards
-// um das Podest; über Gold zieht danach das Band, das den Titel trägt. Im
-// Verlauf ist es die letzte Partie, die ankommt. Einmal: wer zwischen zwei
-// Reitern hin- und herwechselt, sieht es nicht jedes Mal.
+// Kommt eine Ansicht an, fährt das Kantenlicht in ihrem Metall um Platz 1, 2
+// und 3, nacheinander [§C25]: in Liga und Positionen um die ersten drei
+// Zeilen, bei den Duos ebenso, bei den Awards um das Podest; über Gold zieht
+// danach das Band, das den Titel trägt. Im Verlauf ist es die letzte Partie,
+// die ankommt. Je Ansicht (Reiter mit seiner Wahl: Zeitraum, Saison, Sicht)
+// höchstens einmal in 45 s: wer zwischen zwei Ansichten hin- und herwechselt,
+// sieht es nicht jedes Mal, wer später zurückkommt, wieder.
 const PODEST_KARTEN = {
   ranking:'.rlist > .rrow.top1, .rlist > .rrow.top2, .rlist > .rrow.top3',
   positions:'.rlist > .rrow.top1, .rlist > .rrow.top2, .rlist > .rrow.top3',
@@ -133,7 +146,13 @@ const PODEST_KARTEN = {
   awards:'.podest > .pod-karte'
 };
 const PODEST_VERSATZ = {gold:0, silber:220, bronze:440};
-const _podestDa = new Set();
+const PODEST_PAUSE_MS = 45000;
+const _podestZuletzt = new Map();
+function _ansichtSchluessel(reiter){
+  const wahl = {ranking:[period, ligaSicht, ligaSeasonId], positions:[rankMetric, posSort],
+    awards:[awView, awPeriod, awSeasonId, awWeekStart, rekKammer], teams:[teamView, teamSort], history:[histFilter, _histPage]}[reiter];
+  return reiter + '|' + (wahl || []).join('|');
+}
 // Die Diagonale einer Karte, für den Kegel — geschätzt aus der Breite des
 // Fensters (die Spalte ist höchstens 520 px breit, 16 px Rand) und einer
 // Höhe, die die Karte nie überschreitet. Gemessen wird nicht: ein
@@ -145,28 +164,33 @@ function _diagonale(art){
     : art === 'partie' ? Math.hypot(b, 210) + 8 : Math.hypot(b, 112) + 8;
 }
 function _podestLicht(view, reiter, start){
-  if(!view || _bewegungRuhig() || _podestDa.has(reiter)) return;
+  if(!view || _bewegungRuhig()) return;
+  const schluessel = _ansichtSchluessel(reiter), jetzt = performance.now();
+  if(jetzt - (_podestZuletzt.get(schluessel) ?? -Infinity) < PODEST_PAUSE_MS) return;
   if(reiter === 'history'){
     const z = view.querySelector('.mlist > .mrow');
     if(!z) return;
-    _podestDa.add(reiter);
+    _podestZuletzt.set(schluessel, jetzt);
     kantenlicht(z, 'acid', 'zeichnen', start, _diagonale('partie'));
     return;
   }
   const karten = PODEST_KARTEN[reiter] ? [...view.querySelectorAll(PODEST_KARTEN[reiter])].slice(0, 3) : [];
   if(!karten.length) return;
-  _podestDa.add(reiter);
-  // Das Metall sagt die Klasse (top1, gold …); die Duos tragen nur
-  // „tm-top", dort sagt es die Reihenfolge.
+  _podestZuletzt.set(schluessel, jetzt);
   karten.forEach((z, i) => {
-    const k = ' ' + z.className + ' ';
-    const ton = /\s(top1|gold)\s/.test(k) ? 'gold' : /\s(top2|silber)\s/.test(k) ? 'silber'
-      : /\s(top3|bronze)\s/.test(k) ? 'bronze' : ['gold', 'silber', 'bronze'][i];
+    const ton = _metallTon(z, i);
     const v = start + PODEST_VERSATZ[ton];
     kantenlicht(z, ton, 'zeichnen', v, _diagonale(reiter === 'awards' ? 'podest' : 'zeile'));
     // Gold mit eigener Lichtbahn (das Podest der Awards) braucht keine zweite.
     if(ton === 'gold' && !z.querySelector(':scope > .glanz-bahn')) _glanzEinmal(z, v + 1150);
   });
+}
+// Das Metall sagt die Klasse (top1, gold …); die Duos tragen nur „tm-top",
+// dort sagt es die Reihenfolge.
+function _metallTon(z, i){
+  const k = ' ' + z.className + ' ';
+  return /\s(top1|gold)\s/.test(k) ? 'gold' : /\s(top2|silber)\s/.test(k) ? 'silber'
+    : /\s(top3|bronze)\s/.test(k) ? 'bronze' : ['gold', 'silber', 'bronze'][i] || 'gold';
 }
 // Das Band über Gold: dieselbe Bahn wie das Licht über einem Titel
 // (`.glanz-bahn`, 06-misc.css) [§C27], einmal statt im Takt.
@@ -208,15 +232,17 @@ function _lichtZurueck(root, liste){
   });
 }
 
-// ── Die Vorführung beim Öffnen ─────────────────────────────────────────
-// Sie gehört dem Öffnen — jedem: dem ersten Bild, das der Start zeichnet,
-// während `loadAll` läuft, nicht einem `render` von anderswo — und dem Betreten
-// eines Reiters über die untere Leiste (`_reiterBetreten`, aus
-// `_renderNachEingabe`). Ein Zeitraum oder neue Daten im selben Reiter bauen
-// nichts neu auf: das sah schon einmal wie ein Neustart aus (01-shell.css).
-let _reiterBetreten = '';
+// ── Die Vorführung ─────────────────────────────────────────────────────
+// Sie gehört dem, was ein Mensch wählt: dem Öffnen — jedem, dem ersten Bild,
+// das der Start zeichnet, während `loadAll` läuft — und jedem Wechsel, den
+// ein Tippen auslöst (`_wechselZiel`, aus `_renderNachEingabe`): einem
+// Reiter, einem Zeitraum, einer Saison, Spieler oder Teams, Awards, Rekorde
+// oder Chronik. Neue Daten im selben Reiter (`render` aus `loadAll`) bauen
+// nichts auf: das Verblassen der ganzen Liste bei jedem Abruf wirkte schon
+// einmal wie ein Neustart (01-shell.css).
+let _wechselZiel = '';
 let _vorfuehrungAuftrag = 0;
-function _bewegungNachRender(root, warTab, geruest){
+function _bewegungNachRender(root, warTab, geruest, behalten){
   if(!_bewegungDa()) return;
   const view = root.firstElementChild;
   if(!warTab){
@@ -237,16 +263,19 @@ function _bewegungNachRender(root, warTab, geruest){
     kantenlicht(document.querySelector('.logo-mark'), 'acid', 'zeichnen', 120, 60, true);
     const fab = document.getElementById('fab');
     if(fab && fab.style.display !== 'none') kantenlicht(fab, 'weiss', 'zeichnen', 1150, 90);
-    _aufbauen(view, 40, 40, 14);
-    _podestLicht(view, tab, 640);
+    _aufbauen(view, 40, 55, 14);
+    _podestLicht(view, tab, 700);
+    _leisePlanen();
     return;
   }
-  if(warTab !== tab) _reiterSteht();
-  if(warTab !== tab && _reiterBetreten === tab){
-    _reiterBetreten = '';
-    _aufbauen(view, 0, 30, 8, true);
-    _podestLicht(view, tab, 360);
-  }
+  _wechselSteht();
+  if(_wechselZiel !== tab) return;
+  _wechselZiel = '';
+  // Hat sich nichts geändert (dieselbe Wahl noch einmal), baut sich nichts auf.
+  if(behalten && warTab === tab) return;
+  // Überschrift, Wähler und Suche stehen; nur was darunter neu ist, kommt.
+  _aufbauen(view, 0, 45, 10, true);
+  _podestLicht(view, tab, 380);
 }
 // Wer tippt, wischt oder scrollt, will etwas Bestimmtes: der Aufbau endet
 // sofort, und alles steht, wo es hingehört. Das Licht an den Kanten läuft
@@ -330,14 +359,19 @@ function _ladeEnde(grund){
 }
 
 // Der Schleier: eine feste, einfarbige Fläche über dem Inhalt, die immer
-// da ist und unsichtbar wartet. Rechnet ein Reiter länger als 90 ms,
-// dunkelt er den alten ab; der neue baut sich darunter auf, und er hebt
-// sich. Eine einfarbige Ebene muss der Browser nicht rastern.
+// da ist und unsichtbar wartet. Rechnet eine Ansicht länger als 90 ms,
+// dunkelt er die alte ab; die neue baut sich darunter auf, und er hebt
+// sich. Eine einfarbige Ebene muss der Browser nicht rastern. Bei einem
+// Wechsel im Reiter beginnt er unter dem Wähler: der Wähler hat schon
+// geantwortet und soll nicht mit abdunkeln.
 let _schleier = null, _schleierLauf = null;
-// Aus `_renderNachEingabe`, wenn ein anderer Reiter gewählt ist.
-function _reiterBeginnt(){
+// Aus `_renderNachEingabe`: ein Tippen hat einen Reiter oder eine Ansicht
+// darin gewählt.
+function _wechselBeginnt(neuerReiter){
   if(!_bewegungDa()) return;
-  _ladeStart('reiter');
+  _wechselZiel = tab;
+  const knopf = neuerReiter ? null : _wahlSofort();
+  _ladeStart('wechsel');
   if(_schleierLauf || _bewegungRuhig()) return;
   const app = document.getElementById('app');
   if(!app) return;
@@ -346,17 +380,258 @@ function _reiterBeginnt(){
     _schleier.className = 'reiter-schleier'; _schleier.setAttribute('aria-hidden', 'true');
   }
   if(_schleier.parentNode !== app) app.appendChild(_schleier);
+  // Die Lage des Wählers ist eine Messung im ruhenden Layout, vor jeder
+  // Änderung: sie kostet nichts.
+  const wahl = knopf && knopf.parentElement;
+  _schleier.style.top = wahl ? Math.max(0, Math.round(wahl.getBoundingClientRect().bottom + 4)) + 'px' : '';
   _schleierLauf = _schleier.animate([{opacity:0}, {opacity:.6}], {duration:180, delay:90, easing:'ease', fill:'forwards'});
 }
-// Aus `_bewegungNachRender`: der neue Reiter steht. Wie dunkel der Schleier
+// Ein Wähler antwortet sofort: der gedrückte Knopf ist gewählt, und der
+// Schlitten fährt (CSS), bevor die neue Ansicht gerechnet ist. Vorher wartete
+// auch das auf das Ende der Rechnung — bei „Gesamt" oder der Chronik auf
+// einem langsamen Telefon eine spürbare Pause, in der nichts geschah.
+// Welcher Knopf es war, sagt der Klick selbst, im Einfangen vor dem Knopf:
+// ein Drücken ohne Klick (der Finger scrollte weg) hinterließe einen Knopf,
+// den niemand gewählt hat, und Enter auf der Tastatur drückt nicht. Er gilt
+// nur für diesen Klick: zeichnete sein Knopf direkt mit `render`, schaltete
+// sonst ein späterer Wechsel ohne Klick — die Auswahl im Verlauf — ihn um.
+let _wahlKnopf = null;
+document.addEventListener('click', e => {
+  const b = e.target && e.target.closest && e.target.closest('.ui-switch > button, .ui-tabs > button, .saisonwahl > button');
+  _wahlKnopf = b && b.closest('#main') ? b : null;
+  if(_wahlKnopf) setTimeout(() => { _wahlKnopf = null; }, 0);
+}, {passive:true, capture:true});
+function _wahlSofort(){
+  const b = _wahlKnopf; _wahlKnopf = null;
+  if(!b || !b.isConnected) return null;
+  const w = b.parentElement;
+  if(!b.classList.contains('on')){
+    const alt = _schlittenLage(w);
+    [...w.children].forEach(k => k.classList.toggle('on', k === b));
+    // Nach dem Neuzeichnen fährt der Schlitten an derselben Stelle weiter
+    // (`schlittenFahren`) — auch nach einem Enter, das kein Drücken kennt.
+    // Die Fahrt beginnt mit dem nächsten Bild, auf dem Compositor; dessen
+    // Zeit ist ihr Anfang. An der Transition selbst ist das nicht abzulesen:
+    // rechnet der Hauptthread, steht sie für ihn noch am Start, während sie
+    // längst fährt.
+    if(alt >= 0 && w.matches('.ui-switch:not(.roll), .ui-tabs:not(.roll)')){
+      const v = _schlittenVorher = {sig:_schlittenSig(w), alt, t0:performance.now()};
+      requestAnimationFrame(t => { v.t0 = t; });
+    }
+  }
+  return b;
+}
+// Aus `_bewegungNachRender`: die neue Ansicht steht. Wie dunkel der Schleier
 // schon ist, sagt die Animation selbst — getComputedStyle erzwänge hier,
 // direkt nach dem Zeichnen, eine Stilberechnung.
-function _reiterSteht(){
-  _ladeEnde('reiter');
+function _wechselSteht(){
+  _ladeEnde('wechsel');
   if(!_schleierLauf) return;
   const von = .6 * (_schleierLauf.effect.getComputedTiming().progress || 0);
   _schleierLauf.cancel(); _schleierLauf = null;
   if(von > .04) _schleier.animate([{opacity:von}, {opacity:0}], {duration:200, easing:'ease-out'});
+}
+
+// ── Leises Licht im laufenden Betrieb ──────────────────────────────────
+// Steht die App offen, zieht alle 7 bis 12 s eine einzelne, langsame Linie
+// einmal um etwas, das zählt — dieselben Bedeutungen wie beim Ankommen
+// [§C41], nur leiser: eine Runde in 6,5 s, halb so hell, ohne Rahmen
+// (`.kl-leise`). Die Ziele wechseln reihum (`LEISE_FOLGE`): Platz 1, Platz
+// 2, die Pille „News", wenn etwas ungelesen ist, Platz 3, „Match
+// eintragen", das Zeichen der Liga — nie zweimal dasselbe hintereinander,
+// nie zwei Lichter zugleich. Ausgesetzt wird während einer Bedienung und in
+// den 4 s danach, unter einem Blatt oder Fenster, auf einer versteckten
+// Seite und solange eine Ansicht sich aufbaut; eine Karte nur, wenn sie
+// ganz im Bild und nicht hinter der unteren Leiste steht. Zuerst kam alle
+// 30 bis 55 s ein Licht wie beim Ankommen, nur halb so hell: zu selten, um
+// die Liga lebendig wirken zu lassen, und zu schnell, um ruhig zu sein.
+// Geplant vom ersten Bild des Öffnens an.
+const LEISE_MS = [7000, 12000];
+const LEISE_FOLGE = ['karte', 'karte', 'news', 'karte', 'knopf', 'karte', 'zeichen'];
+let _leiseAuftrag = 0, _letzteBedienung = 0, _leiseSchritt = 0, _leiseKarte = 0, _leiseZuletzt = null;
+function _leisePlanen(){
+  clearTimeout(_leiseAuftrag);
+  _leiseAuftrag = setTimeout(() => { _leisesLicht(); _leisePlanen(); },
+    LEISE_MS[0] + Math.random() * (LEISE_MS[1] - LEISE_MS[0]));
+}
+function _leisesLicht(){
+  if(_bewegungRuhig() || document.hidden || performance.now() - _letzteBedienung < 4000 || _aufbauTeile.length) return null;
+  if(document.querySelector('.sheet.show, .nd-bg.show, .bp-bg.show, #main .kl, .appbar .kl, #fab .kl')) return null;
+  for(let n = 0; n < LEISE_FOLGE.length; n++){
+    const z = _leiseZiel(LEISE_FOLGE[_leiseSchritt++ % LEISE_FOLGE.length]);
+    if(!z) continue;
+    _leiseZuletzt = z.el;
+    return kantenlicht(z.el, z.ton, z.art, 0, z.d, z.innen, true);
+  }
+  return null;
+}
+function _leiseZiel(was){
+  if(was === 'karte'){
+    const view = document.querySelector('#main > .view');
+    const sel = tab === 'history' ? '.mlist > .mrow' : PODEST_KARTEN[tab];
+    if(!view || !sel) return null;
+    const alle = [...view.querySelectorAll(sel)].slice(0, tab === 'history' ? 1 : 3), unten = innerHeight - 90;
+    for(let i = 0; i < alle.length; i++){
+      const k = (_leiseKarte + i) % alle.length, z = alle[k], r = z.getBoundingClientRect();
+      if(z === _leiseZuletzt || r.top < 0 || r.bottom > unten) continue;
+      _leiseKarte = k + 1;
+      return {el:z, ton:tab === 'history' ? 'acid' : _metallTon(z, k), art:'zeichnen', d:Math.hypot(r.width, r.height) + 8};
+    }
+    return null;
+  }
+  if(was === 'news'){
+    const b = document.getElementById('newsBtn'), zahl = document.getElementById('newsBtnBadge'), t = document.getElementById('newsToast');
+    if(!b || b === _leiseZuletzt || b.classList.contains('wartet') || !zahl || zahl.style.display === 'none'
+      || (t && t.classList.contains('show'))) return null;
+    return {el:b, ton:'acid', art:'hinweis', d:120};
+  }
+  if(was === 'knopf'){
+    const f = document.getElementById('fab');
+    if(!f || f === _leiseZuletzt || f.style.display === 'none' || !f.offsetWidth) return null;
+    return {el:f, ton:'weiss', art:'zeichnen', d:90};
+  }
+  const l = document.querySelector('.logo-mark');
+  return l && l !== _leiseZuletzt ? {el:l, ton:'acid', art:'zeichnen', d:60, innen:true} : null;
+}
+['pointerdown', 'wheel', 'touchstart', 'keydown', 'scroll'].forEach(ev =>
+  document.addEventListener(ev, () => { _letzteBedienung = performance.now(); }, {passive:true, capture:true}));
+
+// ── Neuigkeiten ────────────────────────────────────────────────────────
+// Die Pille „News" steht vom ersten Bild an als Gerüst an ihrem Platz
+// (`.wartet`, festes Markup); ihre Stories kommen nach der Liga — aus dem
+// Stand des Geräts oder nach dem Abgleich mit der Datenbank. Vorher war dort
+// nichts, und sie stand plötzlich da, sichtbar später als alles andere. Sind
+// die Stories da, färbt sie sich ein, Zeichen und Wort gleiten herein, die
+// Zahl springt auf (`.kommt`); gibt es Ungelesenes, fährt zweimal Licht um
+// sie — hier ist etwas neu [§C41]. Aus `newsBadgeRefresh`, einmal.
+function _pilleKommt(btn, ungelesen){
+  if(_bewegungRuhig()) return;
+  btn.classList.add('kommt');
+  setTimeout(() => btn.classList.remove('kommt'), 1100);
+  if(ungelesen) kantenlicht(btn, 'acid', 'hinweis', 350, 120);
+}
+// Kommt der Hinweis „x neue Stories" (`_newsToastZeigen`), fährt zweimal
+// Licht um seine Kante, von der Pille geht zweimal ein Ring aus, und ihre
+// Zahl springt auf. Danach steht alles still: der Lichtlauf, der vorher
+// alle vier Sekunden über den Hinweis zog, entfällt.
+let _rufAuftrag = 0;
+function _hinweisBewegung(toast){
+  if(_bewegungRuhig()) return;
+  toast.querySelectorAll(':scope > .kl, :scope > .kl-schein').forEach(e => e.remove());
+  kantenlicht(toast, 'acid', 'hinweis', 120, 300);
+  const teile = [document.getElementById('newsBtn'), document.getElementById('newsBtnBadge')].filter(Boolean);
+  clearTimeout(_rufAuftrag);
+  // Ein Hinweis kurz nach dem letzten startet den Ring neu.
+  teile.forEach(e => e.classList.remove('ruf'));
+  if(teile[0]) void teile[0].offsetWidth;
+  teile.forEach(e => e.classList.add('ruf'));
+  _rufAuftrag = setTimeout(() => teile.forEach(e => e.classList.remove('ruf')), 2400);
+}
+
+// ── Blätter und Fenster ────────────────────────────────────────────────
+// Ein Blatt kommt gestaffelt: die ersten acht Teile 45 ms auseinander, wie
+// eine Ansicht. Trägt ein Rahmen den ganzen Inhalt, zählen seine Kinder; das
+// Profil hat seine eigene Folge. Vorher blendete der Inhalt als ein Block
+// ein. Aus `openSheet`.
+const BLATT_TEILE = 8;
+function _blattStaffeln(sheet){
+  if(!sheet || _bewegungRuhig()) return;
+  let teile = [...sheet.children].filter(k => !k.classList.contains('sheet-leiste'));
+  if(teile.length === 1){
+    if(teile[0].classList.contains('pp-root')) return;
+    teile[0].classList.add('staffel');
+    teile = [...teile[0].children];
+  }
+  teile.slice(0, BLATT_TEILE).forEach((k, i) => { k.classList.add('staffel-k'); k.style.animationDelay = i * 45 + 'ms'; });
+}
+// Im Feed fährt um jede ungelesene Story im Bild ein Licht in ihrer Farbe,
+// eine nach der anderen: das kam seit dem letzten Öffnen dazu. Höchstens
+// sechs. Welche im Bild stehen und wie groß sie sind, sagt ein Beobachter
+// mit dem nächsten Bild, sobald das Blatt eingefahren ist — vorher stünden
+// alle Karten noch unter dem Bildrand. Gemessen mit `getBoundingClientRect`,
+// erzwang das mitten im Nachreichen des Feeds ein Layout aller Karten, und
+// das Öffnen kostete gemessen 200 ms Hauptthread mehr. Die Karte schneidet
+// ab, was über ihren Rand ragt: das Licht liegt innen. Aus `openNewsFeed`.
+function _feedLicht(sheet){
+  if(!sheet || _bewegungRuhig() || typeof IntersectionObserver !== 'function') return;
+  const auf = sheet._auf;
+  setTimeout(() => {
+    if(sheet._auf !== auf || !sheet.classList.contains('show')) return;
+    const karten = [...sheet.querySelectorAll('.nf-card:not(.read)')].slice(0, 12);
+    if(!karten.length) return;
+    const io = new IntersectionObserver(eintraege => {
+      io.disconnect();
+      if(sheet._auf !== auf || !sheet.classList.contains('show')) return;
+      eintraege.filter(e => e.isIntersecting).slice(0, 6).forEach((e, i) =>
+        kantenlicht(e.target, 'story', 'zeichnen', i * 200, Math.hypot(e.boundingClientRect.width, e.boundingClientRect.height) + 8, true));
+    });
+    karten.forEach(k => io.observe(k));
+  }, 280);
+}
+// Öffnet eine Story oder eine Auszeichnung, fährt das Licht einmal ihre
+// Kante ab, in der Farbe der Story, Weiß für die Auszeichnung. Beide Fenster
+// scrollen selbst: das Licht liegt innen — sein Rand gäbe sonst einen Pixel
+// zu scrollen —, und wer scrollt, beendet es; es liefe sonst mit dem Inhalt
+// davon. Gemessen wird nach dem Öffnen, wenn das Layout steht.
+function _fensterLicht(el, ton){
+  if(!el || _bewegungRuhig()) return;
+  const auf = el._auf = (el._auf || 0) + 1;
+  const weg = () => el.querySelectorAll(':scope > .kl, :scope > .kl-schein').forEach(e => e.remove());
+  setTimeout(() => {
+    if(el._auf !== auf || !el.parentElement.classList.contains('show')) return;
+    weg();
+    kantenlicht(el, ton, 'zeichnen', 0, Math.hypot(el.offsetWidth, el.offsetHeight) + 8, true);
+    el.addEventListener('scroll', weg, {once:true, passive:true});
+  }, 120);
+}
+// Was ein Blatt oder Fenster verdeckt, steht still: der Vorhang davor trägt
+// eine Unschärfe, und jedes Bild einer Bewegung darunter rechnet sie neu.
+// Was dort endlos läuft, trägt `.steht`, und das CSS hält es an; das Licht
+// darunter verlischt — es endet ohnehin bald. Angehalten wird über CSS,
+// nicht mit `pause()`: eine CSS-Animation, die einmal über die Schnittstelle
+// angehalten und fortgesetzt wurde, löst Chrome von ihrer Regel. Der Punkt
+// oben links pulsierte danach auch nach „verbunden" weiter, und wechselte
+// unter dem Blatt seine Klasse, lief der alte Puls neben dem neuen. Und nur,
+// was läuft: eine Klasse am ganzen Bereich rechnete den Stil jedes Knotens
+// neu, in den Awards gemessen 65 ms beim Anhalten und 45 ms beim Fortsetzen
+// (vierfach gedrosselt) — mitten im Zuschieben des Blatts. Fenster liegen
+// über Blättern: jedes Element zählt, wie oft es angehalten ist.
+const VERDECKT = {blatt:'#main, .appbar, #botnav, #fab', nd:'#sheet, #bp, #main, .appbar, #botnav, #fab',
+  bp:'#sheet, #main, .appbar, #botnav, #fab'};
+const _verdeckt = {};
+function _verdecken(wer, an){
+  if(!_bewegungDa()) return;
+  const war = _verdeckt[wer];
+  if(!an){
+    _verdeckt[wer] = null;
+    if(Array.isArray(war)) war.forEach(e => { e._steht = Math.max(0, (e._steht || 0) - 1); if(!e._steht) e.classList.remove('steht'); });
+    return;
+  }
+  if(war) return;
+  // Erst, wenn das Blatt eingefahren ist: dann ist der Stil gerechnet, und
+  // die Bilder des Hereinfahrens gehören dem Blatt. Ein Zeitgeber, kein
+  // Bildauftrag — die Bilder des Blatts zählen seine Prüfungen einzeln.
+  _verdeckt[wer] = 'bald';
+  setTimeout(() => {
+    if(_verdeckt[wer] !== 'bald') return;
+    const bereich = VERDECKT[wer], ziele = new Set();
+    document.querySelectorAll(bereich.split(', ').map(b => b + ' :is(.kl, .kl-schein, .glanz-einmal)').join(', '))
+      .forEach(e => e.remove());
+    document.getAnimations().forEach(a => {
+      const t = a.effect && a.effect.target;
+      if(t && t.closest && a.playState === 'running' && a.effect.getTiming().iterations === Infinity && t.closest(bereich)) ziele.add(t);
+    });
+    ziele.forEach(e => { e._steht = (e._steht || 0) + 1; e.classList.add('steht'); });
+    _verdeckt[wer] = [...ziele];
+  }, 300);
+}
+// Ein geschlossenes Fenster behielt seinen Inhalt — unsichtbar, mit allem,
+// was darin endlos läuft. Nach dem Ausblenden (0,2 s) wird es geleert, wie
+// das Blatt es schon tut, außer es ist inzwischen wieder offen.
+function _fensterZu(bg, el, wer){
+  _verdecken(wer, false);
+  if(!bg || !el) return;
+  setTimeout(() => { if(!bg.classList.contains('show')) el.innerHTML = ''; }, 260);
 }
 
 // Der Punkt oben links: ist die Verbindung zum ersten Mal da, geht zweimal

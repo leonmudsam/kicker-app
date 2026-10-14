@@ -2301,24 +2301,71 @@ const ok = (c, msg, det) => {
   ok(gl.selten === 'glanzZug' && glFeed.n >= 3 && glFeed.n <= glFeed.alle / 3 && !glFeed.falsch.length,
      'das Seltene im Feed traegt einen Lichtlauf in seiner Familienfarbe, nicht in Gold und nicht auf einer negativen Karte',
      glFeed.n + ' von ' + glFeed.alle + ' Karten, falsch: ' + glFeed.falsch.slice(0, 3));
-  // Der Hinweis „x neue Stories" ist ein Ereignis: die Zahl groß neben
-  // einem Zeichen, ein Lichtlauf und ein Ring beim Erscheinen — und bei
-  // Bewegungsruhe nichts davon.
+  // Der Hinweis „x neue Stories" hat zwei Zeilen [§C33]: die Zahl auf einer
+  // Marke und „neue Stories", darunter die Schlagzeile der wichtigsten
+  // ungelesenen Story — Breaking, wichtig, Priorität, die neueste — mit
+  // einem Punkt in der Farbe ihrer Karte. Er hält auch bei 320 px links wie
+  // rechts Abstand zum Rand. Beim Erscheinen fährt zweimal Licht um seine
+  // Kante, und von der Pille geht ein Ring aus; nichts läuft endlos [§C43].
+  // Der erste nach dem Öffnen steht länger. Kommt die Pille, gleitet sie
+  // herein. Bei Bewegungsruhe nichts davon.
+  await page.setViewportSize({width:320, height:780});
   const toastLauf = async () => page.evaluate(() => {
-    const t = document.getElementById('newsToast'), x = document.getElementById('newsToastTxt');
-    window.__k.eval('_newsToastFuellen')(x, 59);
-    t.classList.add('visible', 'show');
-    const out = {n:(x.querySelector('.nt-n') || {}).textContent, ic:!!x.querySelector('.nt-ic svg'),
-      glanz:getComputedStyle(t, '::after').animationName, ring:getComputedStyle(x.querySelector('.nt-ic')).animationName};
-    t.classList.remove('visible', 'show');
+    const K = window.__k.eval.bind(window.__k);
+    const t = document.getElementById('newsToast'), x = document.getElementById('newsToastTxt'), btn = document.getElementById('newsBtn');
+    const st = window.setTimeout, zeiten = [];
+    window.setTimeout = (f, ms, ...a) => { zeiten.push(ms); return st(f, ms, ...a); };
+    t.querySelectorAll('.kl, .kl-schein').forEach(e => e.remove());
+    K('_newsToastSchonDa = false; _newsToastZeigen(59)');
+    const zeile = x.querySelector('.nh-zeile'), top = K('_newsHinweisStory()');
+    const erwartet = K(`(() => { const seen = _newsLoadSeen(), stand = _newsLesestand();
+      const g = s => (_isBreaking(s) ? 4 : 0) + (_isImportant(s) ? 2 : 0);
+      return getStoriesCache().filter(s => !_newsGelesen(s, seen, stand))
+        .sort((a, b) => g(b) - g(a) || (b.prio | 0) - (a.prio | 0) || new Date(b.when) - new Date(a.when))[0]; })()`);
+    const ton = top ? (K('_isBreaking')(top) || K('_newsIstNegativ')(top) ? 'nh-rot' : K('_newsTonKlassen')(top, 'nd')) : '';
+    // Die Reihenfolge des Bestands entscheidet nichts.
+    K('window.__bestand = _cache._stories; _cache._stories = _cache._stories.slice().reverse()');
+    const umgekehrt = K('_newsHinweisStory()');
+    K('_cache._stories = window.__bestand');
+    // Die längste Schlagzeile macht ihn so breit, wie er werden darf.
+    // Gemessen wird die Box, nicht das Bild: er wächst gerade noch heraus.
+    if(zeile) zeile.querySelector('span').textContent += ' — und noch ein Anlass und noch einer, der die Zeile füllt';
+    K('_positionNewsToast()');
+    const links = t.offsetLeft + t.offsetParent.getBoundingClientRect().left;
+    const out = {n:(x.querySelector('.nh-zahl') || {}).textContent, wort:(x.querySelector('.nh-wort') || {}).textContent,
+      zeile:zeile ? zeile.querySelector('span').textContent.startsWith(top.title || '') : false,
+      wichtigste:!!top && !!erwartet && top.id === erwartet.id && !!umgekehrt && umgekehrt.id === erwartet.id,
+      ton:!!zeile && ton.split(' ').every(c => zeile.classList.contains(c)),
+      punkt:zeile ? getComputedStyle(zeile.querySelector('i')).backgroundColor.replace(/\s/g, '') === 'rgb(' + getComputedStyle(zeile).getPropertyValue('--story-rgb').replace(/\s/g, '') + ')' : false,
+      rand:[Math.round(links), Math.round(innerWidth - links - t.offsetWidth)],
+      licht:t.querySelectorAll(':scope > .kl.kl-hinweis').length, ruf:getComputedStyle(btn, '::after').animationName,
+      zahl:getComputedStyle(x.querySelector('.nh-zahl')).animationName,
+      endlos:t.getAnimations({subtree:true}).filter(a => a.effect.getTiming().iterations === Infinity).length,
+      zeitStart:zeiten.includes(K('NEWS_TOAST_START_MS'))};
+    zeiten.length = 0;
+    K('_newsToastZeigen(60)');
+    out.zeitDann = zeiten.includes(K('NEWS_TOAST_MS')) && !zeiten.includes(K('NEWS_TOAST_START_MS'));
+    out.lichtDann = t.querySelectorAll(':scope > .kl').length;
+    window.setTimeout = st;
+    K('_hideNewsToast()');
+    // Aus dem Gerüst kommt die Pille: Zeichen und Wort gleiten herein.
+    btn.classList.add('wartet'); K('newsBadgeRefresh(); _hideNewsToast()');
+    out.pille = !btn.classList.contains('wartet') && btn.classList.contains('kommt')
+      && getComputedStyle(btn.querySelector('.news-pill-lbl')).animationName === 'pilleInhalt';
+    btn.classList.remove('kommt');
     return out;
   });
   const ntLebt = await toastLauf();
-  ok(ntLebt.n === '59' && ntLebt.ic && ntLebt.glanz === 'ntGlanz' && /ntRing/.test(ntLebt.ring),
-     'der Hinweis auf neue Stories zeigt die Zahl gross mit Zeichen, Lichtlauf und Ring', JSON.stringify(ntLebt));
+  ok(ntLebt.n === '59' && ntLebt.wort === 'neue Stories' && ntLebt.zeile && ntLebt.wichtigste && ntLebt.ton && ntLebt.punkt,
+     'der Hinweis auf neue Stories zeigt die Zahl und darunter die wichtigste ungelesene Story mit dem Punkt in ihrer Farbe', JSON.stringify(ntLebt));
+  ok(ntLebt.rand[0] >= 12 && ntLebt.rand[1] >= 8, 'der Hinweis hält bei 320 px Abstand zu beiden Rändern', JSON.stringify(ntLebt.rand));
+  ok(ntLebt.licht === 1 && ntLebt.lichtDann === 1 && ntLebt.ruf === 'hinweisRuf' && ntLebt.zahl === 'nhPop' && ntLebt.endlos === 0 && ntLebt.pille,
+     'beim Erscheinen fährt Licht um den Hinweis und ein Ring von der Pille, nichts läuft endlos, und aus dem Gerüst der Pille gleitet ihr Inhalt herein', JSON.stringify(ntLebt));
+  ok(ntLebt.zeitStart && ntLebt.zeitDann, 'der erste Hinweis nach dem Öffnen steht länger als die folgenden', JSON.stringify([ntLebt.zeitStart, ntLebt.zeitDann]));
   await page.emulateMedia({reducedMotion: 'reduce'});
   const ntRuhig = await toastLauf();
-  ok(ntRuhig.glanz === 'none' && ntRuhig.ring === 'none', 'und bei Bewegungsruhe steht er still', JSON.stringify(ntRuhig));
+  ok(ntRuhig.licht === 0 && ntRuhig.ruf === 'none' && ntRuhig.zahl === 'none' && !ntRuhig.pille, 'und bei Bewegungsruhe steht er still', JSON.stringify(ntRuhig));
+  await page.setViewportSize({width:390, height:844});
   const glRuhig = await glanz();
   await page.emulateMedia({reducedMotion: 'no-preference'});
   ok(Object.values(glRuhig).every(v => v !== 'glanzZug'),
@@ -3185,10 +3232,10 @@ const ok = (c, msg, det) => {
   ok(me.blatt === 'blattEin/backwards' && me.blattDanach === 'none',
      'ein Blatt blendet beim Öffnen ein und behält danach keine Verschiebung', me.blatt + ' · ' + me.blattDanach);
   // Betritt man einen Reiter über die Leiste, baut er sich auf, und um
-  // Platz 1 bis 3 fährt Licht in ihrem Metall [§C43] — einmal je Reiter
-  // und Sitzung, nur über transform und opacity. Neue Daten im selben
-  // Reiter nehmen das Licht nicht mit: es läuft an derselben Stelle weiter.
-  // Nach seiner Zeit ist nichts davon übrig.
+  // Platz 1 bis 3 fährt Licht in ihrem Metall [§C43] — nur über transform
+  // und opacity; dieselbe Ansicht glänzt erst nach einer Pause wieder.
+  // Neue Daten im selben Reiter nehmen das Licht nicht mit: es läuft an
+  // derselben Stelle weiter. Nach seiner Zeit ist nichts davon übrig.
   const betreten = await page.evaluate(async () => {
     const K = window.__k.eval.bind(window.__k);
     const bild = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
@@ -3230,7 +3277,7 @@ const ok = (c, msg, det) => {
   ok(betreten.fremd.length === 0, 'Aufbau und Licht bewegen nur transform und opacity', betreten.fremd.join(', '));
   ok(betreten.nachNeuzeichnen === 'gold silber bronze' && betreten.weiter,
      'neue Daten im selben Reiter nehmen das Licht nicht mit, es läuft an seiner Stelle weiter', JSON.stringify(betreten));
-  ok(betreten.rest === 0 && betreten.zweitesMal === '', 'nach seiner Zeit ist nichts übrig, und ein Reiter glänzt einmal je Sitzung',
+  ok(betreten.rest === 0 && betreten.zweitesMal === '', 'nach seiner Zeit ist nichts übrig, und gleich zurück glänzt der Reiter nicht noch einmal',
      JSON.stringify([betreten.rest, betreten.zweitesMal]));
   // Rechnet ein Reiter lange, antwortet die Leiste trotzdem sofort: der
   // Schlitten fährt, bevor gerechnet ist; nach 90 ms dunkelt der Schleier
@@ -3259,6 +3306,251 @@ const ok = (c, msg, det) => {
      'rechnet ein Reiter lange, fährt der Schlitten sofort, und Schleier und Ladelinie überbrücken', JSON.stringify(bruecke.sofort));
   ok(bruecke.danach.neu === 'teams' && bruecke.danach.schleier === '0' && bruecke.danach.linie === 0,
      'steht der neue Reiter, sind Schleier und Ladelinie fort', JSON.stringify(bruecke.danach));
+  // Der Schlitten des Wählers fährt los, bevor gerechnet ist; nach dem
+  // Neuzeichnen fährt der neue dort weiter, wo der alte war — nicht von
+  // vorn und nicht gleich am Ziel.
+  const weiter = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const warte = ms => new Promise(r => setTimeout(r, ms));
+    K("closeSheet(true);tab='ranking';period='season';ligaSeasonId=null;render()"); await warte(400);
+    K("window.__r0 = render; render = function(){ const t = performance.now(); while(performance.now() - t < 100){} const r = window.__r0.apply(this, arguments);"
+      + " window.__fahrt = document.querySelector('#main .ui-switch').getAnimations({subtree:true}).filter(a => a.transitionProperty === 'transform').map(a => Math.round(a.currentTime)); return r; }; 0");
+    const t0 = performance.now();
+    document.querySelector('#main [data-period="all"]').click();
+    await warte(400);
+    K('render = window.__r0; 0');
+    const fahrt = window.__fahrt || [];
+    K("period='season';render()");
+    return {fahrt, bis:Math.round(performance.now() - t0)};
+  });
+  // Ein Wechsel im Reiter — Zeitraum, Saison, Spieler oder Duos, Awards,
+  // Rekorde oder Chronik — antwortet wie die Leiste [§C43]: der getippte
+  // Knopf ist gewählt, bevor gerechnet ist, und der Schleier beginnt unter
+  // dem Wähler. Überschrift und Wähler stehen, was darunter neu ist, baut
+  // sich auf — auch in einer vergangenen Saison, deren Rahmen keinen Kasten
+  // hat, und in den Rekorden Karte für Karte. Licht im Metall der neuen
+  // Liste, eines je Platz: das alte wandert nicht mit. Dieselbe Wahl noch
+  // einmal und neue Daten bauen nichts auf; dieselbe Ansicht glänzt erst
+  // nach der Pause wieder.
+  const innen = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const bild = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const warte = ms => new Promise(r => setTimeout(r, ms));
+    const tippe = async sel => { const b = document.querySelector('#main ' + sel); b.click(); await warte(80); await bild(); return b; };
+    const bau = () => document.querySelectorAll('#main .bau').length;
+    const wahlBau = () => document.querySelectorAll('#main :is(.view-head, .ui-switch, .ui-tabs, .saisonwahl):is(.bau, .bau *)').length;
+    const metall = () => [...document.querySelectorAll('#main .rlist > .rrow > .kl')]
+      .map(k => (k.className.match(/kl-(gold|silber|bronze)/) || [, '?'])[1]).join(' ');
+    const out = {};
+    K("closeSheet(true);tab='ranking';period='week';ligaSicht='spieler';ligaSeasonId=null;render();_podestZuletzt.clear()");
+    await bild(); await warte(300);
+    // Die Saison leuchtet noch, wenn die Woche kommt.
+    await tippe('[data-period="season"]'); await warte(500);
+    const woche = document.querySelector('#main [data-period="week"]'), unten = woche.parentElement.getBoundingClientRect().bottom;
+    woche.click();
+    out.sofort = woche.isConnected && woche.classList.contains('on')
+      && woche.parentElement.querySelectorAll(':scope > .on').length === 1;
+    out.schleier = parseFloat((document.querySelector('.reiter-schleier') || {style:{}}).style.top) - unten;
+    await warte(80); await bild();
+    out.woche = {teile:bau(), wahl:wahlBau(), metall:metall(),
+      je:[...document.querySelectorAll('#main .rlist > .rrow')].slice(0, 3).map(z => z.querySelectorAll(':scope > .kl').length).join(),
+      alle:document.querySelectorAll('#main .kl').length};
+    await warte(1700);
+    await tippe('[data-period="week"]');
+    out.nochmal = bau();
+    K('invalidateCache(LADEN_TOEPFE); render()');
+    out.daten = bau();
+    // Ein Klick auf einen Wählerknopf gilt nur für diesen Klick: ein späterer
+    // Wechsel ohne Klick schaltet ihn nicht um.
+    const tag = document.querySelector('#main [data-period="day"]'), h = tag.onclick;
+    tag.onclick = null; tag.click(); tag.onclick = h; await warte(10);
+    K('_renderNachEingabe()');
+    out.alterKnopf = tag.classList.contains('on');
+    await warte(80); await bild(); await warte(1700);
+    await tippe('[data-period="season"]'); await warte(1700);
+    await tippe('#ligaSeasonPicker [data-saisonwahl]:not(.on)');
+    out.geschichte = {teile:document.querySelectorAll('#main .geschichte > .bau, #main .geschichte .rlist > .bau').length, wahl:wahlBau()};
+    await warte(1700);
+    K("tab='awards';awView='awards';rekKammer='';render()"); await bild();
+    await tippe('[data-awview="rekorde"]');
+    out.rekorde = document.querySelectorAll('#main .rek-liste > .bau').length;
+    await warte(1700);
+    K("tab='ranking';period='season';ligaSeasonId=null;render()"); await bild();
+    await tippe('[data-period="week"]');
+    out.gleich = metall();
+    await warte(1700);
+    K('for(const [k, t] of _podestZuletzt) _podestZuletzt.set(k, t - 60000)');
+    await tippe('[data-period="season"]'); await warte(300);
+    await tippe('[data-period="week"]');
+    out.spaeter = metall();
+    await warte(5800);
+    out.rest = document.querySelectorAll('#main .bau, #main .kl, #main .kl-schein, #main .glanz-einmal').length;
+    K("period='season';render()"); await bild();
+    return out;
+  });
+  ok(weiter.fahrt.length > 0 && weiter.fahrt.every(t => t >= 80 && t < 300),
+     'der Schlitten fährt über das Neuzeichnen hinweg weiter, statt neu anzufangen oder zu springen', JSON.stringify(weiter));
+  ok(innen.sofort && innen.schleier >= 0 && innen.schleier < 12,
+     'ein Wechsel im Reiter wählt den Knopf, bevor gerechnet ist, und der Schleier beginnt unter dem Wähler', JSON.stringify([innen.sofort, innen.schleier]));
+  ok(innen.woche.teile >= 5 && innen.woche.wahl === 0 && innen.woche.metall === 'gold silber bronze' && innen.woche.je === '1,1,1' && innen.woche.alle === 3,
+     'die neue Liste baut sich unter dem stehenden Wähler auf, mit einem Licht je Platz im Metall', JSON.stringify(innen.woche));
+  ok(innen.geschichte.teile >= 5 && innen.geschichte.wahl === 0 && innen.rekorde >= 3,
+     'auch eine vergangene Saison und die Rekorde bauen sich Teil für Teil auf', JSON.stringify([innen.geschichte, innen.rekorde]));
+  ok(innen.nochmal === 0 && innen.daten === 0, 'dieselbe Wahl noch einmal und neue Daten bauen nichts auf', JSON.stringify([innen.nochmal, innen.daten]));
+  ok(innen.alterKnopf === false, 'ein Wechsel ohne Klick schaltet keinen früher geklickten Knopf um', String(innen.alterKnopf));
+  ok(innen.gleich === '' && innen.spaeter === 'gold silber bronze' && innen.rest === 0,
+     'dieselbe Ansicht glänzt erst nach der Pause wieder, und danach ist nichts übrig', JSON.stringify([innen.gleich, innen.spaeter, innen.rest]));
+  // Blätter und Fenster [§C43]: ein Blatt kommt gestaffelt; im Feed fährt
+  // beim Öffnen Licht um die ungelesenen Stories im Bild — innen, ohne die
+  // Karte höher zu machen —, beim Filtern nicht noch einmal. Was ein Blatt
+  // verdeckt, steht still und läuft danach weiter. Story und Auszeichnung
+  // öffnen mit Licht an ihrer Kante, das genau auf ihr liegt, ihnen nichts
+  // zu scrollen gibt und beim Scrollen endet; geschlossen sind sie leer.
+  const fenster = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const bild = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const warte = ms => new Promise(r => setTimeout(r, ms));
+    const endlos = sel => document.getAnimations().filter(a => { const t = a.effect && a.effect.target;
+      return t && t.closest && t.closest(sel) && a.effect.getTiming().iterations === Infinity; }).map(a => a.playState);
+    const out = {};
+    K("closeSheet(true); tab='awards'; awView='awards'; render()");
+    await bild(); await warte(200);
+    out.vorher = endlos('#main');
+    K('openNewsFeed()'); await bild();
+    out.staffel = [...document.querySelectorAll('#sheet .staffel-k')].map(e => e.style.animationDelay).join();
+    await warte(450);
+    out.verdeckt = endlos('#main');
+    const karten = [...document.querySelectorAll('#sheet .nf-card')].filter(k => k.querySelector(':scope > .kl'));
+    out.feed = {licht:karten.length, story:karten.every(k => k.querySelector(':scope > .kl').matches('.kl-story.kl-innen') && !k.matches('.read')),
+      imBild:karten.every(k => { const r = k.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; }),
+      hoehe:karten.every(k => { const h = k.offsetHeight, w = [...k.querySelectorAll(':scope > .kl, :scope > .kl-schein')];
+        w.forEach(e => e.remove()); const ohne = k.offsetHeight; w.forEach(e => k.appendChild(e)); return h === ohne; })};
+    const chip = document.querySelector('#sheet .nf-chips button[data-f]:not(.on)');
+    if(chip){ chip.click(); await warte(450); }
+    out.filter = document.querySelectorAll('#sheet .kl').length;
+    K("_newsFeedFilter = 'all'");
+    const sid = (document.querySelector('#sheet [data-sid]') || {dataset:{}}).dataset.sid;
+    K(`openNewsDetail(${JSON.stringify(sid)})`); await warte(300);
+    const nd = document.getElementById('nd'), ring = nd.querySelector(':scope > .kl');
+    const r = nd.getBoundingClientRect(), kr = ring ? ring.getBoundingClientRect() : {left:0, top:0, width:0, height:0};
+    out.story = {licht:!!ring && ring.matches('.kl-story.kl-innen'), deckt:Math.abs(kr.left - r.left) <= 1.5 && Math.abs(kr.width - r.width) <= 3
+      && Math.abs(kr.height - r.height) <= 3,
+      scroll:(() => { const mit = nd.scrollHeight, w = [...nd.querySelectorAll(':scope > .kl, :scope > .kl-schein')];
+        w.forEach(e => e.remove()); const ohne = nd.scrollHeight; w.forEach(e => nd.appendChild(e)); return mit === ohne; })(),
+      feedLicht:document.querySelectorAll('#sheet .kl').length};
+    nd.dispatchEvent(new Event('scroll'));
+    out.story.nachScroll = nd.querySelectorAll(':scope > .kl').length;
+    K('closeNewsDetail()'); await warte(320);
+    out.story.leer = nd.innerHTML === '';
+    K('closeSheet(true)'); await bild();
+    out.nachher = endlos('#main');
+    // Wechselt unter dem Blatt eine Klasse, läuft danach die neue Bewegung,
+    // nicht die alte daneben.
+    const puls = () => document.getAnimations().filter(a => a.effect.target.id === 'connDot' && a.animationName === 'pulse').map(a => a.playState);
+    const punkt = document.getElementById('connDot'), klasse = punkt.className;
+    punkt.className = 'dot load'; K('showPlayer(players[0].id)'); await warte(350);
+    punkt.className = 'dot ok'; await bild(); punkt.className = 'dot load'; await bild();
+    K('closeSheet(true)'); await bild();
+    out.puls = puls();
+    punkt.className = 'dot ok'; await bild();
+    out.pulsOk = puls();
+    punkt.className = klasse;
+    const bid = K('BADGES[0].id');
+    K(`showBadgePopover(${JSON.stringify(bid)}, players[0].id)`); await warte(300);
+    const bp = document.getElementById('bp');
+    out.bp = {licht:!!bp.querySelector(':scope > .kl.kl-weiss.kl-innen')};
+    K('closeBadgePopover()'); await warte(320);
+    out.bp.leer = bp.innerHTML === '';
+    K("tab='ranking'; render()"); await bild();
+    return out;
+  });
+  ok(fenster.staffel === '0ms,45ms' && fenster.feed.licht >= 1 && fenster.feed.licht <= 6 && fenster.feed.story && fenster.feed.imBild && fenster.feed.hoehe,
+     'der Feed kommt gestaffelt, mit Licht in ihrer Farbe um die ungelesenen Stories im Bild, ohne eine Karte höher zu machen', JSON.stringify(fenster));
+  ok(fenster.filter === 0, 'beim Filtern im offenen Feed fährt kein Licht noch einmal', String(fenster.filter));
+  ok(fenster.vorher.includes('running') && fenster.verdeckt.length && fenster.verdeckt.every(x => x === 'paused') && fenster.nachher.every(x => x === 'running'),
+     'was das Blatt verdeckt, steht still, und danach läuft es weiter', JSON.stringify([fenster.vorher, fenster.verdeckt, fenster.nachher]));
+  ok(fenster.puls.join() === 'running' && fenster.pulsOk.length === 0,
+     'wechselt darunter eine Klasse, läuft danach die neue Bewegung allein, und ohne ihre Regel keine', JSON.stringify([fenster.puls, fenster.pulsOk]));
+  ok(fenster.story.licht && fenster.story.deckt && fenster.story.scroll && fenster.story.feedLicht === 0 && fenster.story.nachScroll === 0
+     && fenster.story.leer && fenster.bp.licht && fenster.bp.leer,
+     'Story und Auszeichnung öffnen mit Licht genau an ihrer Kante, das beim Scrollen endet, und sind geschlossen leer', JSON.stringify([fenster.story, fenster.bp]));
+  // Im laufenden Betrieb zieht alle 7 bis 12 s eine leise, langsame Linie
+  // um etwas, das zählt [§C43]: eine Runde in 6,5 s, ohne Rahmen, reihum
+  // Platz 1 bis 3, die Pille „News“ (nur mit Ungelesenem), „Match
+  // eintragen“ und das Zeichen der Liga — nie zweimal dasselbe
+  // hintereinander, eine Karte nur ganz im Bild, nicht, solange anderes
+  // Licht läuft, nicht in den 4 s nach einer Bedienung, nicht unter einem
+  // Blatt, nicht bei Bewegungsruhe.
+  const leiseLauf = async () => page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const bild = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const weg = () => document.querySelectorAll('.kl, .kl-schein, .glanz-einmal').forEach(e => e.remove());
+    const KARTEN = '.rlist > .rrow.top1, .rlist > .rrow.top2, .rlist > .rrow.top3';
+    const name = el => el.matches(KARTEN) ? 'top' + (el.matches('.top1') ? 1 : el.matches('.top2') ? 2 : 3)
+      : el.id === 'newsBtn' ? 'news' : el.id === 'fab' ? 'knopf' : el.matches('.logo-mark') ? 'zeichen' : el.className;
+    K("closeSheet(true); tab='ranking'; period='season'; ligaSeasonId=null; render(); _aufbauFertig()"); await bild();
+    const btn = document.getElementById('newsBtn'), zahl = document.getElementById('newsBtnBadge'), fab = document.getElementById('fab');
+    const vorher = [btn.className, zahl.getAttribute('style'), fab.getAttribute('style')];
+    btn.classList.remove('wartet'); zahl.style.display = ''; fab.style.display = '';
+    weg(); K('_letzteBedienung = 0; _leiseSchritt = 0; _leiseKarte = 0; _leiseZuletzt = null');
+    const st = window.setTimeout, ende = [];
+    window.setTimeout = (f, ms) => { ende.push(ms); return st(f, ms); };
+    const ring = K('_leisesLicht()'), out = {};
+    window.setTimeout = st;
+    if(ring){
+      const r = ring.parentElement.getBoundingClientRect(), i = getComputedStyle(ring.querySelector('i'));
+      out.ziel = name(ring.parentElement);
+      out.imBild = r.top >= 0 && r.bottom <= innerHeight - 90;
+      out.leise = ring.matches('.kl-leise') && i.animationName === 'klLeise' && i.animationDuration === '6.5s'
+        && getComputedStyle(ring, '::after').animationName === 'none' && ende.includes(6620);
+    }
+    out.licht = !!ring;
+    out.zweites = !!K('_leisesLicht()');
+    // Reihum: jedes Ziel kommt vor, keines zweimal hintereinander.
+    const folge = n => { const f = []; for(let i = 0; i < n; i++){ weg(); K('_letzteBedienung = 0'); const k = K('_leisesLicht()'); f.push(k ? name(k.parentElement) : null); } return f; };
+    out.folge = [out.ziel, ...folge(13)];
+    zahl.style.display = 'none';
+    out.ohneNeues = folge(14);
+    zahl.style.display = '';
+    // Ist Platz 1 oben angeschnitten, nimmt es ihn nie.
+    const eins = document.querySelector('#main .rlist > .rrow.top1');
+    window.scrollTo(0, scrollY + eins.getBoundingClientRect().top + 20); await bild();
+    out.angeschnitten = [];
+    for(let i = 0; i < 14; i++){
+      weg(); K('_letzteBedienung = 0'); const k = K('_leisesLicht()');
+      if(k && k.parentElement.matches(KARTEN)){ const r = k.parentElement.getBoundingClientRect(); out.angeschnitten.push(r.top >= 0 && r.bottom <= innerHeight - 90); }
+    }
+    window.scrollTo(0, 0); await bild();
+    weg(); K('_letzteBedienung = performance.now()');
+    out.bedient = !!K('_leisesLicht()');
+    K("_letzteBedienung = 0; showPlayer(players[0].id)"); await bild();
+    out.blatt = !!K('_leisesLicht()');
+    K('closeSheet(true)'); await bild();
+    const zeiten = [];
+    window.setTimeout = (f, ms) => { zeiten.push(ms); return 0; };
+    for(let i = 0; i < 20; i++) K('_leisePlanen()');
+    window.setTimeout = st;
+    out.plan = [Math.min(...zeiten), Math.max(...zeiten)];
+    weg();
+    btn.className = vorher[0];
+    [[zahl, vorher[1]], [fab, vorher[2]]].forEach(([el, v]) => v === null ? el.removeAttribute('style') : el.setAttribute('style', v));
+    return out;
+  });
+  const leise = await leiseLauf();
+  const nachbar = f => f.every((x, i) => !i || x !== f[i - 1]);
+  ok(leise.licht && /^top[123]$/.test(leise.ziel) && leise.imBild && leise.leise,
+     'im laufenden Betrieb zieht eine leise, langsame Linie um eine Karte, die zählt und ganz im Bild steht', JSON.stringify(leise));
+  ok(leise.folge.every(Boolean) && ['top1', 'top2', 'top3', 'news', 'knopf', 'zeichen'].every(z => leise.folge.includes(z)) && nachbar(leise.folge)
+     && leise.ohneNeues.every(Boolean) && !leise.ohneNeues.includes('news') && nachbar(leise.ohneNeues),
+     'die Linie wechselt reihum zwischen den Plätzen, der Pille mit Neuem, dem Knopf und dem Zeichen, nie zweimal dasselbe hintereinander', JSON.stringify([leise.folge, leise.ohneNeues]));
+  ok(leise.angeschnitten.length >= 4 && leise.angeschnitten.every(Boolean),
+     'eine Karte, die angeschnitten ist, bekommt kein leises Licht', JSON.stringify(leise.angeschnitten));
+  ok(!leise.zweites && !leise.bedient && !leise.blatt && leise.plan[0] >= 7000 && leise.plan[1] <= 12000,
+     'nicht neben anderem Licht, nicht gleich nach einer Bedienung, nicht unter einem Blatt, und alle 7 bis 12 s', JSON.stringify(leise));
+  await page.emulateMedia({reducedMotion: 'reduce'});
+  const leiseRuhig = await leiseLauf();
+  await page.emulateMedia({reducedMotion: 'no-preference'});
+  ok(!leiseRuhig.licht, 'bei Bewegungsruhe kein leises Licht', JSON.stringify(leiseRuhig));
   {
     await K("closeSheet(true);tab='ranking';period='season';render()");
     await page.waitForTimeout(1200);

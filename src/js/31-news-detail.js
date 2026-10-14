@@ -82,12 +82,7 @@ function openNewsDetail(sid){
   const sorte = _newsSorte(s);
   const brk = _isBreaking(s);
   const negativ = _newsIstNegativ(s);
-  const tafelTon = sorte === 'tafel' ? _newsTafelTon(s) : '';
-  const faktStil = sorte === 'fakt' && (s.dataRef || {}).type === 'ambient'
-    ? (NEWS_AMBIENT_STIL[(s.dataRef || {}).ambientRubrik] || NEWS_AMBIENT_STIL.liga) : null;
-  nd.className = 'nd nd-s-' + sorte + (tafelTon ? ' nd-tafel-' + tafelTon : '')
-    + (faktStil ? ' nd-fakt-' + faktStil.ton : '')
-    + (negativ ? ' nd-neg' : '') + (brk ? ' nd-brk' : '');
+  nd.className = 'nd ' + _newsTonKlassen(s, 'nd') + (negativ ? ' nd-neg' : '') + (brk ? ' nd-brk' : '');
   // #nd ist der Scrollbehälter, nicht der Feed darunter. Eine Öffnung ist
   // immer ein neuer Lesestart, auch bei derselben Story oder einem Faden
   // aus dem offenen Blatt. Vor dem Markup zurücksetzen: kein Zwischenlayout
@@ -111,6 +106,8 @@ function openNewsDetail(sid){
     ${_newsRueckblickKnopf(s)}
     <button class="nd-close" id="ndCloseBtn">Schließen</button>`;
   bg.classList.add('show');
+  _fensterLicht(nd, 'story');
+  _verdecken('nd', true);
   document.getElementById('ndCloseBtn').onclick = closeNewsDetail;
   document.getElementById('ndXBtn').onclick = closeNewsDetail;
   nd.querySelectorAll('.nf-faden[data-ziel]').forEach(el => {
@@ -197,6 +194,7 @@ function _newsRueckblickKnopf(s){
 function closeNewsDetail(){
   const bg = document.getElementById('ndBg');
   if(bg) bg.classList.remove('show');
+  _fensterZu(bg, document.getElementById('nd'), 'nd');
 }
 
 // Detail-Body-HTML — schaltet nach dataRef.type. Für unbekannte Typen

@@ -354,3 +354,54 @@ node tests/start.test.js
 
 Grenzen wie in den Runden davor: Chromium mit CPU-Drosselung ist kein
 Telefon, Safari und echte Netze sind nicht gemessen.
+
+## Sechste Runde: Bewegung
+
+Vergleich gegen `e55e91a^`, den Stand vor der Bewegung [§C43] — Aufbau beim
+Öffnen und bei jedem Wechsel, Kantenlicht, Schlitten, Schleier und
+Ladelinie, der schlichte Hinweis, gestaffelte Blätter, das leise Licht.
+Dieselben 466 Partien, Chromium, 390 × 844 px, vierfach gedrosselte CPU.
+
+**Was offen steht, kostet fast nichts dazu.** In Ruhe läuft nur das leise
+Licht, rund zwei Drittel der Zeit eine Runde: gemessen im eingeschwungenen
+Zustand 8 ms Hauptthread je Sekunde, solange es läuft, ohne Licht unter
+1 ms — der Grundpreis jeder laufenden Animation, gleich ob Ring, Schein
+oder beides, und gleich um welches Ziel; Stil, Layout und Malen bleiben bei
+null. Der Schlitten unten und die Ladelinie sind zwei Ebenen mehr,
+zusammen unter 1 % der Fläche. Das Kantenlicht dreht und blendet auf dem
+Compositor: Liga mit drei Lichtern 23,7 ms Hauptthread je Sekunde, ohne
+24,6 ms.
+
+**Die Bedienung bleibt gleich schnell.**
+
+| Fall | vorher | nachher |
+|---|--:|--:|
+| Reiterwechsel, warm, bis zum Bild | 141 ms | 136 ms |
+| Kalter Wechsel zu Positionen, bis zum Bild (Median aus 5) | 385 ms | 389 ms |
+| Profil öffnen: Stil, Layout, Aufgaben je Öffnen | 57 / 22 / 176 ms | 56–59 / 21–23 / 166–181 ms |
+| Öffnen der App: Bilder in den ersten 2,5 s | 47–51 | 47–51 |
+
+Ein Wechsel im Reiter kostet bis zum ersten Bild 20 bis 30 ms mehr
+(Aufbau und Licht, verschachtelt gemessen, Median aus 16); der Schlitten
+fährt dafür sofort, statt auf die Rechnung zu warten. Was ein Blatt
+verdeckt, hält an: 6 ms beim Anhalten, 1 ms beim Fortsetzen in den Awards.
+
+**Der Feed** braucht beim Öffnen mit dem Licht um die ungelesenen Stories
+rund 110 ms mehr Hauptthread über die ersten 6 s (3267 gegen 3155 ms,
+Median aus 6) und im Mittel ein langes Bild mehr, während er noch Karten
+nachreicht. Die Lage der Karten liefert ein `IntersectionObserver`; mit
+`getBoundingClientRect` waren es 200 ms mehr. Die große Karte des Tages
+kostet im Bild mit und ohne Licht gleich viel (rund 430 ms je Sekunde,
+ihre eigenen SVG-Bewegungen) — das ist älter als diese Runde.
+
+Einzelmessungen streuen stark: der Profil-Kaltstart desselben Stands lag
+zwischen 249 und 720 ms. Verglichen wurde deshalb über Wiederholungen, im
+Wechsel der Fassungen und mit Stil-, Layout- und Aufgabenzeit statt
+einzelner Zeitstempel.
+
+```
+node tools/performance.cjs --cpu=4 --mobil
+node tools/performance.cjs --cpu=4 --ruhe
+node tools/interaktion.cjs --cpu=4 --runden=3
+```
+

@@ -288,11 +288,13 @@ async function neueSeite(ctx){
     const vorLive = await q.page.evaluate(() => ({
       schreib:window.__K('window.__schreib.length'), html:window.__ohneVorfuehrung(document.getElementById('main')),
       conn:(document.getElementById('connText')||{}).textContent || '', knoten:!!(window.__knoten = document.getElementById('main').firstElementChild),
-      stories:window.__K('Array.isArray(_cache._stories) ? _cache._stories.length : 0')}));
+      stories:window.__K('Array.isArray(_cache._stories) ? _cache._stories.length : 0'),
+      pille:!document.getElementById('newsBtn').classList.contains('wartet')}));
     ok(schnell < 2500, `Die Liga steht aus dem Stand, bevor das Netz antwortet (${schnell} ms bei 3000 ms Netz)`);
     ok(vorLive.schreib === 0, 'Der Schnellstart schreibt nichts in die Datenbank');
     ok(vorLive.conn === 'verbinde…', 'Bis der Live-Abruf da ist, steht „verbinde…“');
     ok(vorLive.stories > 20, 'Der Feed hat seine Stories schon aus dem Stand');
+    ok(vorLive.pille, 'Die Pille „News“ steht mit dem Stand, bevor das Netz antwortet');
     await q.page.waitForFunction(() => window.__K('_lastLoadFingerprint !== null && window.__schreib.some(x => x.startsWith("stories."))'), null, {timeout:60000});
     const nachLive = await q.page.evaluate(() => ({html:window.__ohneVorfuehrung(document.getElementById('main')),
       gleicherKnoten:document.getElementById('main').firstElementChild === window.__knoten}));
@@ -355,12 +357,16 @@ async function neueSeite(ctx){
       const leiste = document.querySelector('.appbar'), z = document.querySelector('.logo-mark');
       const r = leiste ? leiste.getBoundingClientRect() : {height:0};
       const mitte = document.elementFromPoint(innerWidth / 2, innerHeight / 2);
+      const pille = document.getElementById('newsBtn');
       return {skript:!!window.__K, leiste:r.height > 40 && getComputedStyle(document.getElementById('app')).display !== 'none',
+        pille:pille.classList.contains('wartet') && getComputedStyle(pille).visibility === 'visible' && pille.getBoundingClientRect().width > 40
+          && getComputedStyle(pille).pointerEvents === 'none',
         bild:z ? getComputedStyle(z).backgroundImage.slice(0, 27) : '',
         mitte:mitte ? (mitte.closest('#app') || mitte === document.body || mitte === document.documentElement ? 'frei' : mitte.className) : 'frei'};
     });
     ok(!vorSkript.skript && vorSkript.leiste && vorSkript.bild === 'url("data:image/webp;base64' && vorSkript.mitte === 'frei',
       'Die Kopfleiste steht mit dem Zeichen, bevor ein Skript der App läuft, ohne ein Bild davor ' + JSON.stringify(vorSkript));
+    ok(vorSkript.pille, 'Die Pille „News“ steht dort schon an ihrem Platz, als Gerüst, das keinen Tipp annimmt [§C43]');
     // Ohne Stand steht das Gerüst, bis die Datenbank antwortet.
     await e1.page.waitForFunction(() => !!window.__K, null, {timeout:10000});
     await e1.page.waitForTimeout(400);
@@ -394,6 +400,8 @@ async function neueSeite(ctx){
     const rest = await e2.page.evaluate(() => ({aufbau:document.documentElement.classList.contains('aufbau'),
       reste:document.querySelectorAll('.bau, .kl, .kl-schein, .glanz-einmal, [style=""]').length}));
     ok(!rest.aufbau && rest.reste === 0, 'Nach seiner Zeit ist vom Aufbau und vom Licht nichts übrig ' + JSON.stringify(rest));
+    // Ab dem Öffnen ist das leise Licht im laufenden Betrieb geplant [§C43].
+    ok(await e2.page.evaluate(() => window.__K('!!_leiseAuftrag')), 'Das Öffnen plant das leise Licht im laufenden Betrieb');
     await e2.page.close();
     // Direkt wieder geöffnet: dieselbe Vorführung, jedes Mal.
     const e3 = await neueSeite(bctx);
@@ -408,7 +416,8 @@ async function neueSeite(ctx){
     await e4.page.goto(BASIS);
     await e4.page.waitForSelector('#main .rlist', {timeout:20000});
     const a4 = await aufbauJetzt(e4.page);
-    ok(!a4.aufbau && a4.teile === 0 && !a4.metall && !a4.zeichen, 'Bei Bewegungsruhe steht die Liga sofort, ohne Aufbau und ohne Licht ' + JSON.stringify(a4));
+    ok(!a4.aufbau && a4.teile === 0 && !a4.metall && !a4.zeichen && !(await e4.page.evaluate(() => window.__K('!!_leiseAuftrag'))),
+      'Bei Bewegungsruhe steht die Liga sofort, ohne Aufbau, ohne Licht und ohne leises Licht später ' + JSON.stringify(a4));
     await e4.page.close();
     ok(!anfragen.some(x => x.pfad === '/icon.png'), 'Der Start lädt das große Symbol nicht: das Zeichen steht in der Seite');
     await bctx.close();

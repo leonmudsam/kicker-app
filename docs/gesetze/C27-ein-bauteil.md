@@ -43,7 +43,8 @@ unter der der Strich wandert), das Rangabzeichen ist `.rangab`
 Zahl und Lage der Knöpfe (`:has`, `--n`, `--i`); weil jeder Wechsel die
 Ansicht neu zeichnet, merkt sich der Druck auf einen Knopf die alte Lage,
 und `schlittenFahren` (aus `render` und `openSheet`) lässt ihn von dort
-anfahren — sonst spränge er. Die Box behält ihre feste Lage und Breite;
+anfahren — sonst spränge er. Im Inhalt fährt er schon vor der Rechnung los
+(`_wahlSofort` [§C43]) und nach dem Neuzeichnen an derselben Stelle weiter. Die Box behält ihre feste Lage und Breite;
 ausschließlich `transform` verschiebt sie. Animiertes `left`/`width`
 löste sonst in jedem Bild ein neues Layout aus. Der Test misst die echte
 Lage einschließlich Transformationsmatrix, nicht nur den CSS-Startpunkt.
@@ -254,12 +255,22 @@ Gold — Gold gehört dem Titel —, nicht auf einer negativen Karte und nicht
 doppelt auf Breaking oder der Karte des Tages; alle elf Sekunden, versetzt
 nach der ID, damit nicht alle Lichter im selben Takt laufen. Gemessen
 tragen ihn zehn von 77 Karten des Fensters.
-**Der Hinweis „x neue Stories" ist ein Ereignis** (`_newsToastFuellen`):
-eine dunkle Pille mit Kante in Acid, die Zahl groß neben dem Zeichen der
-Nachrichten, ein Lichtlauf und ein Ring, der beim Erscheinen aufgeht. Er
-war eine flache grüne Pille in der Schrift jedes Knopfs, und in seinen vier
-Sekunden bemerkte ihn nicht, wer gerade woanders hinsah. Bei Bewegungsruhe
-steht er still.
+**Der Hinweis „x neue Stories" hat zwei Zeilen** (`_newsToastFuellen`,
+`_newsToastZeigen`): die Zahl auf einer Marke in Acid und „neue Stories",
+darunter leise die Schlagzeile der wichtigsten ungelesenen Story —
+Breaking, wichtig, Priorität, die neueste, nie ein Name — mit einem Punkt
+in der Farbe ihrer Karte (`_newsTonKlassen`, dieselben Klassen wie Karte
+und Blatt), höchstens zwei Zeilen. Er hält links wie rechts mindestens
+12 px Abstand zum Rand. Beim Erscheinen fährt zweimal Licht um seine Kante,
+von der Pille geht ein Ring aus, ihre Zahl springt auf [§C43]; dann steht
+er still. Der erste nach dem Öffnen steht 7 s, jeder weitere 4 s
+(`NEWS_TOAST_START_MS`, `NEWS_TOAST_MS`). Er war zuerst eine flache grüne
+Pille in der Schrift jedes Knopfs, die niemand bemerkte; danach eine
+leuchtende mit Lichtlauf alle vier Sekunden, und ein Entwurf trug noch
+einen Strich je Story, Gesichter, Rubrik und eine ablaufende Linie — zu
+viel für wenige Sekunden. Beim Öffnen sieht man zuerst der Liga beim
+Aufbauen zu; in vier Sekunden war der Hinweis oft fort, bevor der Blick
+nach oben ging. Bei Bewegungsruhe steht er still.
 **Der Rand sagt, wie schwer eine Karte wiegt** (`--kante`, `--rahmen`): Nur
 Tages- und Wochensieger tragen die starke Goldkante; die Karte des Tages
 bekommt unabhängig von ihrer Sorte einen feineren Goldrahmen samt äußerem

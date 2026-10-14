@@ -215,9 +215,9 @@ function _renderNachEingabe(){
     });
   }
   root.setAttribute('aria-busy','true');
-  // Ein Reiter, der über die Leiste betreten wird, baut sich auf; rechnet er
-  // länger, überbrücken Schleier und Ladelinie [§C43].
-  if(root._renderTab && root._renderTab!==tab){ _reiterBetreten=tab; _reiterBeginnt(); }
+  // Ein Reiter oder eine Ansicht darin, gewählt durch ein Tippen, baut sich
+  // auf; rechnet sie länger, überbrücken Schleier und Ladelinie [§C43].
+  if(root._renderTab) _wechselBeginnt(root._renderTab!==tab);
   // Nur beim Wechsel des Reiters: die alte Ergebnisliste darf kein Profil
   // oder Match mehr öffnen. Filter derselben Ansicht bleiben bedienbar,
   // damit ein zweiter schneller Tap seine erste Wahl ersetzen kann.
@@ -244,8 +244,10 @@ function render(){
   const geruest=!warTab && root.firstElementChild && root.firstElementChild.classList.contains('geruest')
     ? root.firstElementChild : null;
   if(!behalten){
-    // Das Licht an den Kanten läuft über neue Daten hinweg weiter [§C43].
-    const licht=warTab===tab?_lichtMerken(root):null;
+    // Das Licht an den Kanten läuft über neue Daten hinweg weiter [§C43] —
+    // nicht über einen Wechsel: die Woche ist eine andere Liste als die
+    // Saison, und ihr Platz 1 bekam sonst zum eigenen Licht das alte dazu.
+    const licht=warTab===tab&&_wechselZiel!==tab?_lichtMerken(root):null;
     root.innerHTML=html;
     bind();
     root._renderHtml=html;
@@ -255,7 +257,7 @@ function render(){
   }
   root._renderTab=tab;
   schlittenFahren(root);
-  _bewegungNachRender(root, warTab, geruest);
+  _bewegungNachRender(root, warTab, geruest, behalten);
 }
 
 // ── Der Schlitten fährt [§C27] ──────────────────────────────────────
@@ -277,9 +279,14 @@ document.addEventListener('pointerdown', e => {
   const w = b.parentElement, alt = _schlittenLage(w);
   if(alt >= 0) _schlittenVorher = {sig:_schlittenSig(w), alt};
 }, true);
+// Fuhr der Schlitten schon vor dem Neuzeichnen los (`_wahlSofort`, seit
+// `t0`), fährt der neue dort weiter, wo der alte gerade war: die Transition
+// beginnt um die vergangene Zeit später. Sonst sprang er mitten in der
+// Fahrt ans Ziel, sobald die neue Ansicht stand.
 function schlittenFahren(root){
   const v = _schlittenVorher; _schlittenVorher = null;
   if(!v || !root) return;
+  const vergangen = v.t0 ? performance.now() - v.t0 : null;
   root.querySelectorAll('.ui-switch:not(.roll), .ui-tabs:not(.roll)').forEach(w => {
     if(_schlittenSig(w) !== v.sig) return;
     const neu = _schlittenLage(w);
@@ -287,6 +294,9 @@ function schlittenFahren(root){
     w.style.setProperty('--i', v.alt);
     void w.offsetWidth;
     w.style.removeProperty('--i');
+    if(vergangen != null && w.getAnimations) w.getAnimations({subtree:true}).forEach(a => {
+      if(a.transitionProperty === 'transform') a.currentTime = vergangen;
+    });
   });
 }
 

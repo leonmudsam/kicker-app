@@ -39,16 +39,31 @@ Der Schnellstart [§C42] hält zwei Werte in `06c-stand.js`: `_standOffen`
 `_standGezeigt` (sein Fingerabdruck, bis der Live-Abruf ihn bestätigt oder
 ersetzt; ein Fehler leert ihn).
 
-Die Bewegung [§C43] hält in `09d-bewegung.js`: `_podestDa` (die Reiter,
-deren Podest in dieser Sitzung schon geglänzt hat; erst ein neues Öffnen
-leert ihn), `_reiterBetreten` (der Reiter, der gerade über die Leiste
-betreten wird; `_renderNachEingabe` setzt ihn, das nächste `render` des
-Reiters verbraucht ihn) und `_aufbauTeile` (die Teile, die gerade
-aufbauen; ihr Ende, eine Berührung oder der nächste Aufbau räumt sie).
-Beim Reiterwechsel: `_ladeGruende` (warum die Ladelinie läuft: `reiter`,
-`daten`; sie endet, wenn keiner mehr gilt), `_ladeLauf` und `_schleierLauf`
-(die laufenden Animationen) und `_verbunden` (ob der Punkt schon einmal
-„verbunden" gezeigt hat; er wird nicht zurückgesetzt).
+Die Bewegung [§C43] hält in `09d-bewegung.js`: `_podestZuletzt` (je
+Ansicht — Reiter mit seiner Wahl, `_ansichtSchluessel` —, wann ihr Podest
+zuletzt geglänzt hat; nach 45 s glänzt es wieder, ein neues Öffnen leert
+ihn), `_wechselZiel` (der Reiter, in dem ein Tippen gerade einen Wechsel
+gewählt hat; `_renderNachEingabe` setzt ihn, das nächste `render` des
+Reiters verbraucht ihn und nimmt dann kein Licht mit), `_wahlKnopf` (der
+Knopf eines Wählers, den der laufende Klick getroffen hat; er gilt nur für
+diesen Klick, `_wahlSofort` verbraucht ihn) und `_aufbauTeile` (die
+Teile, die gerade aufbauen; ihr Ende, eine Berührung oder der nächste
+Aufbau räumt sie). Beim Wechsel: `_ladeGruende` (warum die Ladelinie läuft:
+`wechsel`, `daten`; sie endet, wenn keiner mehr gilt), `_ladeLauf` und
+`_schleierLauf` (die laufenden Animationen) und `_verbunden` (ob der Punkt
+schon einmal „verbunden" gezeigt hat; er wird nicht zurückgesetzt).
+`_verdeckt` (je Blatt oder Fenster die Elemente, die es angehalten hat;
+das Schließen gibt sie frei) und an jedem dieser Elemente `_steht` (wie oft
+es angehalten ist; bei null verliert es `.steht`), an Story und Auszeichnung
+`_auf` (das jüngste Öffnen; ein älteres Licht kommt nicht mehr).
+`_letzteBedienung` (wann zuletzt getippt, gescrollt oder eine Taste
+gedrückt wurde; das leise Licht wartet 4 s danach). `_leiseSchritt` (die
+Stelle in `LEISE_FOLGE`), `_leiseKarte` (welcher der drei Plätze als
+nächster dran ist) und `_leiseZuletzt` (das Element des letzten leisen
+Lichts, damit es nicht zweimal hintereinander leuchtet); sie werden nicht
+zurückgesetzt, ein neu gezeichnetes Element ist ein anderes.
+`_schlittenVorher` (`09-ui-infra.js`) trägt zusätzlich `t0`, das Bild, mit
+dem der Schlitten eines Wählers losfuhr; `schlittenFahren` verbraucht ihn.
 
 Zeitweilige Arbeitsaufträge sind keine Ansichtsauswahl: `_ligaRefreshAuftrag`
 lebt im Navigations-Layer und wird nach Ende des gemeinsamen Datenabrufs
@@ -380,7 +395,17 @@ seiner Zeit ab (`_aufbauAuftrag`), die Klasse `.aufbau` am Wurzelknoten nach
 (`KANTE_MS`, 4,6 s zeichnen, 4,2 s Hinweis) und das Band über Gold nach
 seiner Bahn; `tests/start` sieht nach, dass danach nichts davon im Dokument
 steht. Die Ladelinie endet spätestens 15 s nach ihrem Beginn (`_ladeNot`),
-auch wenn ein Grund noch gilt.
+auch wenn ein Grund noch gilt. Der Hinweis „x neue Stories" blendet nach 7 s
+aus, wenn er der erste nach dem Öffnen ist (`_newsToastSchonDa`), sonst nach
+4 s (`_newsToastHideTimer`); der Ring an der Pille räumt seine Klasse nach
+2,4 s (`_rufAuftrag`); die Pille „News" trägt `.kommt` 1,1 s lang, ihr
+Gerüst schimmert höchstens zwölf Sekunden. Das Licht im Feed beobachtet 280 ms nach dem Öffnen, wenn
+das Blatt eingefahren ist, welche Karten im Bild stehen, das an Story und Auszeichnung kommt nach 120 ms; was ein Blatt
+verdeckt, hält nach 300 ms an, wenn es eingefahren ist; geschlossene Fenster
+werden nach 260 ms geleert, wenn sie nicht wieder offen sind. Vom Öffnen
+an plant `_leiseAuftrag` alle 7 bis 12 s ein leises Licht von 6,5 s; es läuft weiter,
+solange die Seite offen ist, und tut nichts, wenn die Seite versteckt ist,
+ein Blatt offen steht oder eben bedient wurde.
 
 `_tickDaten` lässt außerdem ein offenes Blatt, den Eingabe-Tab und die
 Einstellungen in Ruhe:
