@@ -124,6 +124,7 @@ const DATEN = (() => {
   return {players:fixtures.players, matches:K('matches'), seasons:fixtures.seasons};
 })();
 const JETZT = new Date(2026, 7, 26, 21).getTime();
+const LIGA_GERAET = {timezoneId:'Europe/Berlin'};
 
 async function neueSeite(ctx){
   const page = await ctx.newPage();
@@ -142,8 +143,11 @@ async function neueSeite(ctx){
   try{
     // Der Service Worker bekommt einen eigenen Kontext (unten): hier stünde
     // er zwischen der Seite und jeder Zusicherung über den Start ohne ihn.
-    const ctx = await browser.newContext({viewport:{width:390, height:844}, serviceWorkers:'block'});
+    // Ein Telefon der Liga: Berliner Uhr und kein automatisierter Browser —
+    // nur ein solches Gerät schreibt Stories und Archiv [§C42].
+    const ctx = await browser.newContext({viewport:{width:390, height:844}, serviceWorkers:'block', ...LIGA_GERAET});
     await ctx.addInitScript(({daten, jetzt}) => {
+      Object.defineProperty(Navigator.prototype, 'webdriver', {get:() => false});
       window.__startDaten = daten;
       const RD = Date;
       window.Date = class extends RD{ constructor(...a){ a.length ? super(...a) : super(jetzt); } static now(){ return jetzt; } };
@@ -218,6 +222,38 @@ async function neueSeite(ctx){
     // Ein zweiter Lauf ohne neue Daten schickt den Stand nicht noch einmal.
     ok(await w.page.evaluate(async () => { const K = window.__K; const v = K('_storyWorkerStand');
       await K('_storiesImWorker()'); return K('_storyWorkerStand') === v; }), 'Unveränderter Stand wird nicht erneut übertragen');
+    // ── Nur die Uhr der Liga schreibt [§C42] ──────────────────────────
+    // Stories und Archiv rechnet jedes Gerät in Tagen seiner eigenen Uhr. Am
+    // 13.10. schrieb ein automatisierter Browser mit Tokioter Uhr eine
+    // Tagesbilanz für einen Tag ohne Spiel in die Liga. Ein Gerät mit fremder
+    // Uhr oder ein automatisierter Browser rechnet und zeigt wie jedes andere,
+    // schreibt aber weder Stories noch Archiv; das Telefon der Liga schreibt.
+    const ligaSchreib = await w.page.evaluate(() => ({darf:window.__K('ligaSchreibtAbgeleitet()'),
+      schreib:[...new Set(window.__schreib.filter(x => /^(stories|seasons)\./.test(x)))]}));
+    ok(ligaSchreib.darf && ligaSchreib.schreib.includes('stories.upsert'),
+      'Ein Telefon der Liga (Berliner Uhr) veröffentlicht ' + JSON.stringify(ligaSchreib));
+    for(const [name, opt, automat] of [['Gerät mit Tokioter Uhr', {timezoneId:'Asia/Tokyo'}, false],
+                                       ['automatisierter Browser', LIGA_GERAET, true],
+                                       ['Gerät mit Londoner Uhr', {timezoneId:'Europe/London'}, false]]){
+      const fc = await browser.newContext({viewport:{width:390, height:844}, serviceWorkers:'block', ...opt});
+      await fc.addInitScript(({daten, jetzt, automat}) => {
+        if(!automat) Object.defineProperty(Navigator.prototype, 'webdriver', {get:() => false});
+        window.__startDaten = daten;
+        const RD = Date;
+        window.Date = class extends RD{ constructor(...a){ a.length ? super(...a) : super(jetzt); } static now(){ return jetzt; } };
+        window.setInterval = () => 0;
+        window.__vorStart = K => { window.__K = K; };
+      }, {daten:DATEN, jetzt:JETZT, automat});
+      const f = await neueSeite(fc);
+      await f.page.goto(BASIS);
+      await f.page.waitForFunction(() => window.__K && window.__K('Array.isArray(_cache._stories) && _cache._stories.length > 20'), null, {timeout:60000});
+      await f.page.waitForTimeout(500);
+      const r = await f.page.evaluate(() => ({darf:window.__K('ligaSchreibtAbgeleitet()'),
+        schreib:window.__schreib.filter(x => /^(stories|seasons)\./.test(x)), stories:window.__K('_cache._stories.length')}));
+      ok(!r.darf && r.schreib.length === 0 && r.stories > 20,
+        'Ein ' + name + ' zeigt die Stories, schreibt aber weder Stories noch Archiv ' + JSON.stringify(r));
+      await fc.close();
+    }
     // ── Vorwärmen im Leerlauf ─────────────────────────────────────────
     // Nach dem Start rechnet niemand mehr kalt, wenn ein Reiter aufgeht.
     await w.page.waitForFunction(() => window.__K('_vorwaermAuftrag === null'), null, {timeout:60000});

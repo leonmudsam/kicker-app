@@ -357,6 +357,11 @@ wartet je abgeschlossenem Monat auf einen Upsert, und am ersten Tag eines
 Monats stand die Rangliste so lange leer; ändert das Archiv die Version,
 wird noch einmal gezeichnet.
 
+Stories veröffentlichen, abgelaufene löschen und Monate archivieren darf nur
+ein Gerät mit der Uhr der Liga, kein automatisierter Browser
+(`ligaSchreibtAbgeleitet`, [§C42](gesetze/C42-start.md)); jedes andere
+rechnet dasselbe und zeigt es nur sich selbst.
+
 Kommen neue Daten, zeichnet `loadAll` zuerst und lässt den News-Generator
 danach in einem Worker rechnen (`_storiesImWorker`, `29c-news-worker.js`):
 derselbe ausgelieferte Code, vor ihm eine Attrappe für DOM und Speicher. Kalt

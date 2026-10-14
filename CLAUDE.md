@@ -121,7 +121,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **1318**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **1320**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -268,7 +268,7 @@ die drei Abschnitte und die genannte Suite fest.
 | [§C39](docs/gesetze/C39-monatschronik.md) | Die Monatschronik fragt nicht, wer der Beste ist |
 | [§C40](docs/gesetze/C40-karriereende.md) | Das Karriereende: vier Regeln, mehr gibt es nicht |
 | [§C41](docs/gesetze/C41-ein-zeichen.md) | Ein Zeichen, eine Bedeutung |
-| [§C42](docs/gesetze/C42-start.md) | Der Start zeigt den letzten Stand und schreibt nie (Stand des Geräts, Service Worker) |
+| [§C42](docs/gesetze/C42-start.md) | Der Start zeigt den letzten Stand und schreibt nie (Stand des Geräts, Service Worker, nur die Uhr der Liga schreibt) |
 | [§C43](docs/gesetze/C43-bewegung.md) | Bewegung: nie warten, von selbst enden, nur, was man sieht (Öffnen, Wechsel, Aufbau, Kantenlicht) |
 
 Dazu die [allgemeinen Regeln](docs/gesetze/allgemein.md) ohne Kürzel: Detail folgt

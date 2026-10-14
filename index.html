@@ -5928,7 +5928,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.14.990f6204';
+const BUILD_VERSION='2026.10.14.fd060701';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -7708,8 +7708,26 @@ async function _loadAllDurchlauf(){
   }
 }
 
+const LIGA_ZEITZONE = 'Europe/Berlin';
+function ligaSchreibtAbgeleitet(){
+  if(typeof navigator !== 'undefined' && navigator.webdriver === true) return false;
+  const jetzt = Date.now(), halb = 183 * 86400000;
+  try {
+    const f = new Intl.DateTimeFormat('en-GB', {timeZone:LIGA_ZEITZONE, year:'numeric', month:'numeric',
+      day:'numeric', hour:'numeric', minute:'numeric', hourCycle:'h23'});
+    return [jetzt - halb, jetzt, jetzt + halb].every(t => {
+      const p = {}, d = new Date(t);
+      f.formatToParts(d).forEach(x => { p[x.type] = Number(x.value); });
+      return p.year === d.getFullYear() && p.month === d.getMonth() + 1 && p.day === d.getDate()
+        && p.hour === d.getHours() && p.minute === d.getMinutes();
+    });
+  } catch(e){
+    return [-60, -120].includes(new Date(jetzt).getTimezoneOffset());
+  }
+}
+
 async function autoArchiveSeasons(){
-  const past=allPastSeasons();
+  const past=ligaSchreibtAbgeleitet()?allPastSeasons():[];
   const gSim=getGlobalSim();
   const isStale=(s)=>{
     try{
@@ -22654,8 +22672,10 @@ async function syncStoriesViaDb(){
   }
 
   try {
-    await _cleanupExpiredStoriesInDb();
-    await _uploadNewStoriesToDb(generated, dbBestand);
+    if(ligaSchreibtAbgeleitet()){
+      await _cleanupExpiredStoriesInDb();
+      await _uploadNewStoriesToDb(generated, dbBestand);
+    }
     if(!Array.isArray(dbBestand)) dbBestand = await _loadStoriesFromDb();
     if(Array.isArray(dbBestand)){
       _cache._stories = _mergeStorySnapshots(dbBestand, generated, new Date());
