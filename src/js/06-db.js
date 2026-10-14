@@ -652,4 +652,6 @@ function potwHasData(){
 }
 
 // Der Verbindungspunkt oben rechts: Text und Farbe des Ladezustands.
-function setConn(t,c){document.getElementById('connText').textContent=t;document.getElementById('connDot').className='dot '+c;}
+function setConn(t,c){document.getElementById('connText').textContent=t;document.getElementById('connDot').className='dot '+c;
+  // Ladelinie und der Ring beim ersten „verbunden" [§C43].
+  _connBewegung(c);}

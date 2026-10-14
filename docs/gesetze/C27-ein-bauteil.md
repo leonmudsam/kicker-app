@@ -55,7 +55,7 @@ Metrik stand. Der Monat steht darunter als Reihe aus Zellen, eine je
 Tag: gespielt hell, ohne Partie leise, heute gerahmt — der Balken zeigte
 nur, wie viel Kalender vergangen ist. Gezählt wird nach Kalendertag
 (`tagKey`), über Millisekunden verrutscht ein Tag an der Zeitumstellung.
-Die untere Leiste trägt den gewählten Reiter in einer Pille, und die
+Die untere Leiste trägt den gewählten Reiter in einer Pille, die als Schlitten von Reiter zu Reiter gleitet [§C43], und die
 Titelmarke der Ranglistenzeile steht in ihrer Kachel.
 **Ein Gesicht hat eine Grundform** (`.av`). Es gab nur Regeln je Behälter
 — Ranglistenzeile, Duo-Chips, Rückblick —, und wo ein Avatar ohne eigenen

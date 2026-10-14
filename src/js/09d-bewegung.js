@@ -241,6 +241,7 @@ function _bewegungNachRender(root, warTab, geruest){
     _podestLicht(view, tab, 640);
     return;
   }
+  if(warTab !== tab) _reiterSteht();
   if(warTab !== tab && _reiterBetreten === tab){
     _reiterBetreten = '';
     _aufbauen(view, 0, 30, 8, true);
@@ -257,3 +258,118 @@ function _vorfuehrungEnde(){
 }
 ['pointerdown', 'wheel', 'touchstart', 'keydown'].forEach(ev =>
   document.addEventListener(ev, _vorfuehrungEnde, {passive:true, capture:true}));
+
+// ── Der Reiterwechsel ──────────────────────────────────────────────────
+// Die Pille in der unteren Leiste fährt zum gewählten Reiter, wie der
+// Schlitten im Segmentwähler [§C27], und antwortet damit sofort — auch
+// während der neue Reiter noch rechnet: sie wird nur verschoben, das kann
+// der Compositor ohne den Hauptthread. Vorher trug jeder Knopf seine eigene
+// Pille, und auf einem langsamen Telefon blieb die alte gemessen 640 ms
+// stehen, weil auch ihr Umfärben auf das Ende der Rechnung wartete.
+// Die Lage steht in Pixeln am Schlitten selbst, gerechnet aus der Breite
+// des Fensters (die Leiste ist höchstens 520 px breit, 10 px Rand, fünf
+// Knöpfe, 2 px Abstand). Eine vererbte Variable an der Leiste, `offsetLeft`,
+// `clientWidth` und Prozente kosteten im Entwurf gemessen bei jedem Wechsel.
+let _schlitten = null;
+function _navSchlitten(sofort){
+  const nav = document.getElementById('botnav');
+  if(!nav || !nav.firstElementChild || !nav.appendChild) return;
+  if(!_schlitten){
+    _schlitten = document.createElement('i');
+    _schlitten.className = 'nav-schlitten'; _schlitten.setAttribute('aria-hidden', 'true');
+  }
+  if(_schlitten.parentNode !== nav) nav.appendChild(_schlitten);
+  const i = NAV.findIndex(n => n[0] === tab);
+  _schlitten.style.opacity = i < 0 ? '0' : '';
+  if(i < 0) return;
+  const ziel = 'translateX(' + (i * ((Math.min(innerWidth, 520) - 28) / 5 + 2)).toFixed(1) + 'px)';
+  const alt = _schlitten.style.transform;
+  if(alt === ziel) return;
+  _schlitten.style.transform = ziel;
+  if(alt && !sofort && !_bewegungRuhig() && _schlitten.animate)
+    _schlitten.animate([{transform:alt}, {transform:ziel}], {duration:360, easing:'cubic-bezier(.3,1.25,.5,1)'});
+}
+// Dreht sich das Telefon, ändert sich der Schritt; der Schlitten springt an
+// seine neue Stelle, ohne zu fahren.
+if(typeof addEventListener === 'function') addEventListener('resize', () => _navSchlitten(true));
+
+// Die Ladelinie unter der Kopfleiste: solange Daten kommen oder ein Reiter
+// rechnet, erst nach 120 ms — was schneller ist, braucht keine Linie —, auf
+// dem Compositor. Sie endet, wenn kein Grund mehr gilt; das Ende der Daten
+// meldet `setConn`. Gilt ein Grund nach 15 s noch, endet sie trotzdem: eine
+// Linie, die nie ankommt, sagt nur, dass etwas hängt.
+let _ladeLinie = null, _ladeLauf = null, _ladeNot = 0;
+const _ladeGruende = new Set();
+function _ladeStart(grund){
+  if(!_bewegungDa()) return;
+  _ladeGruende.add(grund);
+  if(_ladeLauf || _bewegungRuhig()) return;
+  const leiste = document.querySelector('.appbar');
+  if(!leiste) return;
+  if(!_ladeLinie){
+    _ladeLinie = document.createElement('i');
+    _ladeLinie.className = 'lade-linie'; _ladeLinie.setAttribute('aria-hidden', 'true');
+  }
+  if(_ladeLinie.parentNode !== leiste) leiste.appendChild(_ladeLinie);
+  _ladeLauf = _ladeLinie.animate([{transform:'scaleX(0)', opacity:1}, {transform:'scaleX(.88)', opacity:1}],
+    {duration:2400, delay:120, easing:'cubic-bezier(.08,.7,.2,1)', fill:'both'});
+  clearTimeout(_ladeNot);
+  _ladeNot = setTimeout(() => { _ladeGruende.clear(); _ladeEnde(''); }, 15000);
+}
+function _ladeEnde(grund){
+  _ladeGruende.delete(grund);
+  if(!_ladeLauf || _ladeGruende.size) return;
+  clearTimeout(_ladeNot); _ladeNot = 0;
+  const lauf = _ladeLauf; _ladeLauf = null;
+  const sichtbar = (lauf.currentTime || 0) > 120;
+  lauf.cancel();
+  // Nur wenn sie zu sehen war, läuft sie zu Ende und verlischt.
+  if(sichtbar && !_bewegungRuhig())
+    _ladeLinie.animate([{transform:'scaleX(.88)', opacity:1}, {transform:'scaleX(1)', opacity:1, offset:.5},
+      {transform:'scaleX(1)', opacity:0}], {duration:320, easing:'ease-out'});
+}
+
+// Der Schleier: eine feste, einfarbige Fläche über dem Inhalt, die immer
+// da ist und unsichtbar wartet. Rechnet ein Reiter länger als 90 ms,
+// dunkelt er den alten ab; der neue baut sich darunter auf, und er hebt
+// sich. Eine einfarbige Ebene muss der Browser nicht rastern.
+let _schleier = null, _schleierLauf = null;
+// Aus `_renderNachEingabe`, wenn ein anderer Reiter gewählt ist.
+function _reiterBeginnt(){
+  if(!_bewegungDa()) return;
+  _ladeStart('reiter');
+  if(_schleierLauf || _bewegungRuhig()) return;
+  const app = document.getElementById('app');
+  if(!app) return;
+  if(!_schleier){
+    _schleier = document.createElement('i');
+    _schleier.className = 'reiter-schleier'; _schleier.setAttribute('aria-hidden', 'true');
+  }
+  if(_schleier.parentNode !== app) app.appendChild(_schleier);
+  _schleierLauf = _schleier.animate([{opacity:0}, {opacity:.6}], {duration:180, delay:90, easing:'ease', fill:'forwards'});
+}
+// Aus `_bewegungNachRender`: der neue Reiter steht. Wie dunkel der Schleier
+// schon ist, sagt die Animation selbst — getComputedStyle erzwänge hier,
+// direkt nach dem Zeichnen, eine Stilberechnung.
+function _reiterSteht(){
+  _ladeEnde('reiter');
+  if(!_schleierLauf) return;
+  const von = .6 * (_schleierLauf.effect.getComputedTiming().progress || 0);
+  _schleierLauf.cancel(); _schleierLauf = null;
+  if(von > .04) _schleier.animate([{opacity:von}, {opacity:0}], {duration:200, easing:'ease-out'});
+}
+
+// Der Punkt oben links: ist die Verbindung zum ersten Mal da, geht zweimal
+// ein Ring von ihm aus — jetzt ist es der Stand von jetzt. Aus `setConn`.
+let _verbunden = false;
+function _connBewegung(c){
+  if(!_bewegungDa()) return;
+  if(c === 'load') return _ladeStart('daten');
+  _ladeEnde('daten');
+  if(c !== 'ok' || _verbunden) return;
+  _verbunden = true;
+  const punkt = document.getElementById('connDot');
+  if(!punkt || _bewegungRuhig()) return;
+  punkt.classList.add('ping');
+  setTimeout(() => punkt.classList.remove('ping'), 2000);
+}

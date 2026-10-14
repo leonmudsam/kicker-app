@@ -3159,8 +3159,13 @@ const ok = (c, msg, det) => {
     document.querySelector('[data-nav="awards"]').click(); await bild();
     const on = document.querySelector('.botnav button.on .ic');
     out.stoss = getComputedStyle(on.querySelector('svg')).animationName;
-    await new Promise(r => setTimeout(r, 350));
-    out.reiterSchein = /rgba\(190, 242, 100, 0\.38\) 0px 0px 16px/.test(getComputedStyle(on).boxShadow);
+    await new Promise(r => setTimeout(r, 450));
+    // Die Pille ist EIN Schlitten, der unter den gewählten Knopf gleitet
+    // [§C43]; er leuchtet fest in Acid.
+    const sl = document.querySelector('.botnav .nav-schlitten');
+    const mitte = e => { const r = e.getBoundingClientRect(); return r.left + r.width / 2; };
+    out.reiterSchein = !!sl && /rgba\(190, 242, 100, 0\.38\) 0px 0px 16px/.test(getComputedStyle(sl, '::before').boxShadow)
+      && Math.abs(mitte(sl) - mitte(on)) < 1.5;
     K("tab='ranking';render();showPlayer(players[0].id)"); await bild();
     const kind = document.querySelector('#sheet > :not(.sheet-leiste)');
     out.blatt = kind ? getComputedStyle(kind).animationName + '/' + getComputedStyle(kind).animationFillMode : 'fehlt';
@@ -3175,7 +3180,7 @@ const ok = (c, msg, det) => {
   ok(me.striche === 0, 'Platz 1 bis 3 tragen keinen Strich an der Kante', me.striche + ' Striche');
   ok(me.zifferGlanz === 3, 'die Platzziffer von 1 bis 3 ist Metall mit Glanz', me.zifferGlanz + ' von 3');
   ok(me.bewegtInListe.length === 0, 'in der Rangliste bewegt sich nichts von selbst', me.bewegtInListe.join(', '));
-  ok(me.stoss === 'reiterStoss' && me.reiterSchein, 'der gewählte Reiter federt beim Wechsel und leuchtet fest',
+  ok(me.stoss === 'reiterStoss' && me.reiterSchein, 'der gewählte Reiter federt beim Wechsel, und der leuchtende Schlitten steht unter ihm',
      JSON.stringify([me.stoss, me.reiterSchein]));
   ok(me.blatt === 'blattEin/backwards' && me.blattDanach === 'none',
      'ein Blatt blendet beim Öffnen ein und behält danach keine Verschiebung', me.blatt + ' · ' + me.blattDanach);
@@ -3227,6 +3232,33 @@ const ok = (c, msg, det) => {
      'neue Daten im selben Reiter nehmen das Licht nicht mit, es läuft an seiner Stelle weiter', JSON.stringify(betreten));
   ok(betreten.rest === 0 && betreten.zweitesMal === '', 'nach seiner Zeit ist nichts übrig, und ein Reiter glänzt einmal je Sitzung',
      JSON.stringify([betreten.rest, betreten.zweitesMal]));
+  // Rechnet ein Reiter lange, antwortet die Leiste trotzdem sofort: der
+  // Schlitten fährt, bevor gerechnet ist; nach 90 ms dunkelt der Schleier
+  // den alten Reiter ab, nach 120 ms läuft die Ladelinie. Steht der neue,
+  // ist von beidem nichts mehr zu sehen [§C43].
+  const bruecke = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const bild = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const warte = ms => new Promise(r => setTimeout(r, ms));
+    K("closeSheet(true);tab='ranking';period='season';render()"); await bild(); await warte(400);
+    K("window.__r0 = render; render = function(){ const t = performance.now(); while(performance.now() - t < 300){} return window.__r0.apply(this, arguments); }; 0");
+    const sl = document.querySelector('.botnav .nav-schlitten') || document.createElement('i'), vor = sl.style.transform;
+    document.querySelector('[data-nav="teams"]').click();
+    const verzug = sel => { const e = document.querySelector(sel); return e ? e.getAnimations().map(a => a.effect.getTiming().delay) : []; };
+    const sofort = {schlitten:sl.style.transform !== vor && sl.getAnimations().length > 0,
+      schleier:verzug('.reiter-schleier'), linie:verzug('.lade-linie'), alt:document.getElementById('main')._renderTab};
+    await warte(800); await bild();
+    const danach = {neu:document.getElementById('main')._renderTab,
+      schleier:(e => e ? getComputedStyle(e).opacity : 'fehlt')(document.querySelector('.reiter-schleier')),
+      linie:(e => e ? e.getAnimations().length : -1)(document.querySelector('.lade-linie'))};
+    K('render = window.__r0; 0');
+    K("tab='ranking';render()"); await bild();
+    return {sofort, danach};
+  });
+  ok(bruecke.sofort.schlitten && bruecke.sofort.alt === 'ranking' && bruecke.sofort.schleier.join() === '90' && bruecke.sofort.linie.join() === '120',
+     'rechnet ein Reiter lange, fährt der Schlitten sofort, und Schleier und Ladelinie überbrücken', JSON.stringify(bruecke.sofort));
+  ok(bruecke.danach.neu === 'teams' && bruecke.danach.schleier === '0' && bruecke.danach.linie === 0,
+     'steht der neue Reiter, sind Schleier und Ladelinie fort', JSON.stringify(bruecke.danach));
   {
     await K("closeSheet(true);tab='ranking';period='season';render()");
     await page.waitForTimeout(1200);
