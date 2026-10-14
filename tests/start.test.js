@@ -374,12 +374,16 @@ async function neueSeite(ctx){
       return {skript:!!window.__K, leiste:r.height > 40 && getComputedStyle(document.getElementById('app')).display !== 'none',
         pille:pille.classList.contains('wartet') && getComputedStyle(pille).visibility === 'visible' && pille.getBoundingClientRect().width > 40
           && getComputedStyle(pille).pointerEvents === 'none',
+        // Im Gerüst läuft nichts: ein Schimmer begann links neben der Pille,
+        // und Safari auf dem iPhone schnitt ihn am runden Rand nicht ab.
+        pilleStill:getComputedStyle(pille, '::before').content === 'none' && pille.getAnimations({subtree:true}).length === 0,
         bild:z ? getComputedStyle(z).backgroundImage.slice(0, 27) : '',
         mitte:mitte ? (mitte.closest('#app') || mitte === document.body || mitte === document.documentElement ? 'frei' : mitte.className) : 'frei'};
     });
     ok(!vorSkript.skript && vorSkript.leiste && vorSkript.bild === 'url("data:image/webp;base64' && vorSkript.mitte === 'frei',
       'Die Kopfleiste steht mit dem Zeichen, bevor ein Skript der App läuft, ohne ein Bild davor ' + JSON.stringify(vorSkript));
     ok(vorSkript.pille, 'Die Pille „News“ steht dort schon an ihrem Platz, als Gerüst, das keinen Tipp annimmt [§C43]');
+    ok(vorSkript.pilleStill, 'Ihr Gerüst steht still, ohne Ebene neben sich, die ein Rand abschneiden müsste');
     // Ohne Stand steht das Gerüst, bis die Datenbank antwortet.
     await e1.page.waitForFunction(() => !!window.__K, null, {timeout:10000});
     await e1.page.waitForTimeout(400);

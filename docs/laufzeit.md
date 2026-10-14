@@ -406,8 +406,7 @@ steht. Die Ladelinie endet spätestens 15 s nach ihrem Beginn (`_ladeNot`),
 auch wenn ein Grund noch gilt. Der Hinweis „x neue Stories" blendet nach 7 s
 aus, wenn er der erste nach dem Öffnen ist (`_newsToastSchonDa`), sonst nach
 4 s (`_newsToastHideTimer`); der Ring an der Pille räumt seine Klasse nach
-2,4 s (`_rufAuftrag`); die Pille „News" trägt `.kommt` 1,1 s lang, ihr
-Gerüst schimmert höchstens zwölf Sekunden. Das Licht im Feed beobachtet 280 ms nach dem Öffnen, wenn
+2,4 s (`_rufAuftrag`); die Pille „News" trägt `.kommt` 1,1 s lang. Das Licht im Feed beobachtet 280 ms nach dem Öffnen, wenn
 das Blatt eingefahren ist, welche Karten im Bild stehen, das an Story und Auszeichnung kommt nach 120 ms; was ein Blatt
 verdeckt, hält nach 300 ms an, wenn es eingefahren ist; geschlossene Fenster
 werden nach 260 ms geleert, wenn sie nicht wieder offen sind. Vom Öffnen
