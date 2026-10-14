@@ -92,6 +92,7 @@ function newsBadgeRefresh(){
   const btn = document.getElementById('newsBtn');
   const badge = document.getElementById('newsBtnBadge');
   if(!btn || !badge) return;
+  const pilleNeu = btn.style.visibility !== 'visible';
   btn.style.visibility = 'visible';
   // v8.2: erste Aufruf nach Page-Load → Boot-Grace setzen, damit der
   // Toast den Auto-Recaps Vorrang gibt.
@@ -103,6 +104,7 @@ function newsBadgeRefresh(){
   }
   let n = 0;
   try { n = newsUnreadCount(); } catch(e){ n = 0; }
+  if(pilleNeu) _pilleKommt(btn, n > 0);
   if(n > 0){
     badge.style.display = '';
     badge.textContent = n > 9 ? '9+' : String(n);
@@ -171,16 +173,55 @@ function _isSheetActive(){
   } catch(e){}
   return false;
 }
-// ── Der Hinweis ist ein Ereignis ──────────────────────────────────────
-// Er war eine flache grüne Pille mit „59 neue Stories" in einer Zeile: dieselbe
-// Schrift und Fläche wie jeder Knopf, und wer gerade woanders hinsah, bemerkte
-// ihn in seinen vier Sekunden nicht. Jetzt steht die Zahl groß neben einem
-// Zeichen, ein Lichtlauf zieht beim Erscheinen darüber, und ein Ring geht auf
-// wie ein Signal. Alles nur über transform und Deckkraft, und bei
-// Bewegungsruhe steht er still da.
+// ── Der Hinweis „x neue Stories" [§C33] ─────────────────────────────
+// Zwei Zeilen: die Zahl auf einer Marke in Acid und „neue Stories",
+// darunter leise die Schlagzeile der wichtigsten ungelesenen Story mit einem
+// Punkt in der Farbe ihrer Karte. Vorher stand er in einer Zeile mit
+// Zeichen und Lichtlauf alle vier Sekunden; ein Entwurf danach trug einen
+// Strich je Story, Gesichter, Rubrik und eine ablaufende Linie — zu viel für
+// wenige Sekunden. Die wichtigste wählt die Ordnung des Feeds: Breaking,
+// dann wichtig, dann Priorität, dann die neueste — nie ein Name. Breaking
+// und die negative Richtung sind rot [§C25].
+function _newsHinweisStory(){
+  const seen = _newsLoadSeen(), stand = _newsLesestand();
+  const gewicht = s => (_isBreaking(s) ? 4 : 0) + (_isImportant(s) ? 2 : 0);
+  const vor = (a, b) => gewicht(a) - gewicht(b) || (a.prio | 0) - (b.prio | 0) || new Date(a.when) - new Date(b.when);
+  let top = null;
+  for(const s of getStoriesCache()) if(!_newsGelesen(s, seen, stand) && (!top || vor(s, top) > 0)) top = s;
+  return top;
+}
 function _newsToastFuellen(txt, n){
-  txt.innerHTML = `<i class="nt-ic">${svgI('newspaper')}</i><b class="nt-n num">${n}</b>`
-    + `<span class="nt-w">${n === 1 ? 'neue Story' : 'neue Stories'}</span>`;
+  const top = _newsHinweisStory();
+  const ton = top ? (_isBreaking(top) || _newsIstNegativ(top) ? 'nh-rot' : _newsTonKlassen(top, 'nd')) : '';
+  txt.innerHTML = `<span class="nh"><b class="nh-zahl num">${n > 99 ? '99+' : n}</b><span class="nh-text">`
+    + `<b class="nh-wort">${n === 1 ? 'neue Story' : 'neue Stories'}</b>`
+    + (top ? `<span class="nh-zeile ${ton}"><i></i><span>${esc(top.title || '')}</span></span>` : '')
+    + '</span></span>';
+}
+// Zeigen, von wo auch immer: aus `_maybeShowNewsToast` oder nachgeholt nach
+// einem Blatt. Der erste Hinweis nach dem Öffnen steht länger.
+let _newsToastSchonDa = false;
+function _newsToastZeigen(n){
+  const toast = document.getElementById('newsToast');
+  const txt = document.getElementById('newsToastTxt');
+  if(!toast || !txt) return;
+  _newsToastFuellen(txt, n);
+  _positionNewsToast();
+  toast.classList.add('visible');
+  // Reflow erzwingen, damit die Transition anläuft.
+  void toast.offsetWidth;
+  toast.classList.add('show');
+  _newsSaveToastState({lastCount: n, lastTs: Date.now()});
+  _newsToastDeferredCount = 0;
+  if(_newsToastHideTimer) clearTimeout(_newsToastHideTimer);
+  _newsToastHideTimer = setTimeout(() => _hideNewsToast(), _newsToastSchonDa ? NEWS_TOAST_MS : NEWS_TOAST_START_MS);
+  _newsToastSchonDa = true;
+  // Tippen → volles Blatt, wie die Pille.
+  toast.onclick = () => {
+    _hideNewsToast();
+    try { openNewsFeed(); } catch(e){}
+  };
+  _hinweisBewegung(toast);
 }
 function _maybeShowNewsToast(unreadCount){
   const toast = document.getElementById('newsToast');
@@ -196,23 +237,7 @@ function _maybeShowNewsToast(unreadCount){
     _newsToastDeferredCount = unreadCount;
     return;
   }
-  // Anzeigen
-  _newsToastFuellen(txt, unreadCount);
-  _positionNewsToast();
-  toast.classList.add('visible');
-  // Reflow erzwingen für CSS-Animation
-  void toast.offsetWidth;
-  toast.classList.add('show');
-  _newsSaveToastState({lastCount: unreadCount, lastTs: now});
-  _newsToastDeferredCount = 0;
-  // Auto-hide nach 4s
-  if(_newsToastHideTimer) clearTimeout(_newsToastHideTimer);
-  _newsToastHideTimer = setTimeout(() => _hideNewsToast(), 4000);
-  // Click → volles Sheet (v8.9, konsistent mit dem News-Button), Toast aus
-  toast.onclick = () => {
-    _hideNewsToast();
-    try { openNewsFeed(); } catch(e){}
-  };
+  _newsToastZeigen(unreadCount);
 }
 function _hideNewsToast(){
   const toast = document.getElementById('newsToast');
@@ -221,26 +246,21 @@ function _hideNewsToast(){
   toast.classList.remove('show');
   setTimeout(() => toast.classList.remove('visible'), 300);
 }
-// v9: Toast dynamisch unter der News-Pille ausrichten (Pfeil zeigt auf die
-// Button-Mitte). Nötig, weil die Pille (Idee E) breiter/variabler ist als das
-// frühere Icon — der feste right:60px würde daneben zeigen. Wird nur beim
-// Anzeigen aufgerufen (billig: zwei getBoundingClientRect).
+// Der Hinweis steht unter der Pille, sein Pfeil zeigt auf ihre Mitte. Er ist
+// höchstens 264 px breit und hält links wie rechts mindestens 12 px Abstand
+// zum Rand: bei 360 px lief er sonst links aus dem Bild. Nur beim Anzeigen
+// gerechnet (zwei getBoundingClientRect).
 function _positionNewsToast(){
   const toast = document.getElementById('newsToast');
   const btn = document.getElementById('newsBtn');
-  if(!toast || !btn) return;
-  const parent = btn.closest('.appbar');
-  if(!parent) return;
-  const pr = parent.getBoundingClientRect();
-  const br = btn.getBoundingClientRect();
-  if(!br.width) return; // Button (noch) unsichtbar
-  const centerFromRight = pr.right - (br.left + br.width / 2);
-  const ARROW = 18, HALF = 5, MINR = 8;
-  let toastRight = centerFromRight - ARROW - HALF;
-  let arrow = ARROW;
-  if(toastRight < MINR){ toastRight = MINR; arrow = Math.max(ARROW, centerFromRight - toastRight - HALF); }
-  toast.style.right = toastRight + 'px';
-  toast.style.setProperty('--nt-arrow', arrow + 'px');
+  const leiste = btn && btn.closest('.appbar');
+  if(!toast || !leiste) return;
+  const pr = leiste.getBoundingClientRect(), br = btn.getBoundingClientRect();
+  if(!br.width) return; // Pille (noch) unsichtbar
+  const mitte = pr.right - (br.left + br.width / 2), breite = Math.min(264, innerWidth - 24);
+  const rechts = Math.max(8, Math.min(mitte - 23, pr.width - breite - 12));
+  toast.style.right = rechts + 'px';
+  toast.style.setProperty('--nt-arrow', Math.max(14, mitte - rechts - 5) + 'px');
 }
 // Wird in closeSheet() aufgerufen — versucht gequeuten Toast nach
 // kurzem Delay (User soll Sheet-Close-Animation sehen, bevor der nächste
@@ -262,21 +282,7 @@ function _processDeferredNewsToast(){
     if(n <= 0) return;
     // Direkt anzeigen — Cooldown-Check schon im _maybeShowNewsToast wurde
     // bereits beim ersten Aufruf erfüllt; hier zwingen wir die Anzeige.
-    const toast = document.getElementById('newsToast');
-    const txt = document.getElementById('newsToastTxt');
-    if(!toast || !txt) return;
-    _newsToastFuellen(txt, n);
-    _positionNewsToast();
-    toast.classList.add('visible');
-    void toast.offsetWidth;
-    toast.classList.add('show');
-    _newsSaveToastState({lastCount: n, lastTs: Date.now()});
-    if(_newsToastHideTimer) clearTimeout(_newsToastHideTimer);
-    _newsToastHideTimer = setTimeout(() => _hideNewsToast(), 4000);
-    toast.onclick = () => {
-      _hideNewsToast();
-      try { openNewsFeed(); } catch(e){}
-    };
+    _newsToastZeigen(n);
   }, 500);
 }
 window._processDeferredNewsToast = _processDeferredNewsToast;
@@ -453,6 +459,20 @@ function _newsIstNegativ(s){
   return /loss|dry_spell/.test(typ) || d.rarity === 'negative';
 }
 
+// Die Farbe einer Story ist die ihrer Karte [§C25]: Sorte, Ton der Tafel,
+// Stil eines Fun Facts. Karte (`nf`), Blatt und Hinweis (`nd`) setzen
+// dieselben Klassen [§C27] — der Punkt im Hinweis stand im Entwurf sonst in
+// einer eigenen, nachgebauten Farbe. Die Präfixe stehen ausgeschrieben da:
+// aus Teilen zusammengesetzt, fände niemand die Klasse im Code, und
+// `tests/tafel` hielte ihre Regeln für tot.
+function _newsTonKlassen(s, wo){
+  const sorte = _newsSorte(s), d = s.dataRef || {};
+  const tafel = sorte === 'tafel' ? _newsTafelTon(s) : '';
+  const fakt = sorte === 'fakt' && d.type === 'ambient' ? (NEWS_AMBIENT_STIL[d.ambientRubrik] || NEWS_AMBIENT_STIL.liga).ton : '';
+  return wo === 'nf'
+    ? `nf-s-${sorte}${tafel ? ' nf-tafel-' + tafel : ''}${fakt ? ' nf-fakt-' + fakt : ''}`
+    : `nd-s-${sorte}${tafel ? ' nd-tafel-' + tafel : ''}${fakt ? ' nd-fakt-' + fakt : ''}`;
+}
 // Die Ewige Tafel hat mehrere Kammern. Ein einziger silberner Ton machte
 // Rekorde, Monatschroniken und Fügungen beim Scrollen ununterscheidbar. Die
 // Familie wird ausschließlich aus den bereits gespeicherten Fachdaten
@@ -517,9 +537,6 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
   const meta = NEWS_CATEGORIES[dcat] || NEWS_CATEGORIES.fun;
   const d = s.dataRef || {};
   const sorte = _newsSorte(s);
-  const tafelTon = sorte === 'tafel' ? _newsTafelTon(s) : '';
-  const faktStil = sorte === 'fakt' && d.type === 'ambient'
-    ? (NEWS_AMBIENT_STIL[d.ambientRubrik] || NEWS_AMBIENT_STIL.liga) : null;
   const brk = _isBreaking(s);
   const imp = (_isImportant(s) && !isRead) ? ' important' : '';
   // Die Karte des Tages steht groß, mit einem Streifen darüber. Vorher stand
@@ -773,7 +790,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
   // Breaking steht in einer Hülle, die seinen Schein trägt: die Karte
   // schneidet ab, was über ihren Rand ragt, und ein Schein, der per
   // `box-shadow` atmete, kostete jedes Bild einen Takt über den ganzen Feed.
-  return (brk ? '<div class="nf-brk-hof">' : '') + `<div class="nf-card nf-s-${sorte} nfc-${dcat}${tafelTon?' nf-tafel-'+tafelTon:''}${faktStil?' nf-fakt-'+faktStil.ton:''}${negativ?' nf-neg':''}${brk?' nf-brk':''}${gross?' nf-gross':''}${glanz?' nf-glanz':''}${isRead?' read':''}${imp}" data-sid="${esc(s.id)}"${glanz ? ` style="--gv:${_newsGlanzVersatz(s.id)}s"` : ''}>
+  return (brk ? '<div class="nf-brk-hof">' : '') + `<div class="nf-card ${_newsTonKlassen(s, 'nf')} nfc-${dcat}${negativ?' nf-neg':''}${brk?' nf-brk':''}${gross?' nf-gross':''}${glanz?' nf-glanz':''}${isRead?' read':''}${imp}" data-sid="${esc(s.id)}"${glanz ? ` style="--gv:${_newsGlanzVersatz(s.id)}s"` : ''}>
     ${_newsMotiv(sorte, s)}
     ${gross ? '<div class="nf-gross-band">' + svgI('funkeln') + 'DIE KARTE DES TAGES</div>' : ''}
     ${balken}

@@ -82,12 +82,7 @@ function openNewsDetail(sid){
   const sorte = _newsSorte(s);
   const brk = _isBreaking(s);
   const negativ = _newsIstNegativ(s);
-  const tafelTon = sorte === 'tafel' ? _newsTafelTon(s) : '';
-  const faktStil = sorte === 'fakt' && (s.dataRef || {}).type === 'ambient'
-    ? (NEWS_AMBIENT_STIL[(s.dataRef || {}).ambientRubrik] || NEWS_AMBIENT_STIL.liga) : null;
-  nd.className = 'nd nd-s-' + sorte + (tafelTon ? ' nd-tafel-' + tafelTon : '')
-    + (faktStil ? ' nd-fakt-' + faktStil.ton : '')
-    + (negativ ? ' nd-neg' : '') + (brk ? ' nd-brk' : '');
+  nd.className = 'nd ' + _newsTonKlassen(s, 'nd') + (negativ ? ' nd-neg' : '') + (brk ? ' nd-brk' : '');
   // #nd ist der Scrollbehälter, nicht der Feed darunter. Eine Öffnung ist
   // immer ein neuer Lesestart, auch bei derselben Story oder einem Faden
   // aus dem offenen Blatt. Vor dem Markup zurücksetzen: kein Zwischenlayout

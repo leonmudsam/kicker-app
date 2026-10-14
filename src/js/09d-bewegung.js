@@ -422,6 +422,34 @@ function _wechselSteht(){
   if(von > .04) _schleier.animate([{opacity:von}, {opacity:0}], {duration:200, easing:'ease-out'});
 }
 
+// ── Neuigkeiten ────────────────────────────────────────────────────────
+// Die Pille „News" erschien unvermittelt, sobald der Feed geladen war. Sie
+// gleitet jetzt herein; gibt es Ungelesenes, fährt zweimal Licht um ihre
+// Kante — hier ist etwas neu [§C41]. Aus `newsBadgeRefresh`, einmal.
+function _pilleKommt(btn, ungelesen){
+  if(_bewegungRuhig()) return;
+  btn.animate([{opacity:0, transform:'translateX(14px)'}, {opacity:1, transform:'none'}],
+    {duration:380, easing:'cubic-bezier(.2,.8,.2,1)'});
+  if(ungelesen) kantenlicht(btn, 'acid', 'hinweis', 200, 120);
+}
+// Kommt der Hinweis „x neue Stories" (`_newsToastZeigen`), fährt zweimal
+// Licht um seine Kante, von der Pille geht zweimal ein Ring aus, und ihre
+// Zahl springt auf. Danach steht alles still: der Lichtlauf, der vorher
+// alle vier Sekunden über den Hinweis zog, entfällt.
+let _rufAuftrag = 0;
+function _hinweisBewegung(toast){
+  if(_bewegungRuhig()) return;
+  toast.querySelectorAll(':scope > .kl, :scope > .kl-schein').forEach(e => e.remove());
+  kantenlicht(toast, 'acid', 'hinweis', 120, 300);
+  const teile = [document.getElementById('newsBtn'), document.getElementById('newsBtnBadge')].filter(Boolean);
+  clearTimeout(_rufAuftrag);
+  // Ein Hinweis kurz nach dem letzten startet den Ring neu.
+  teile.forEach(e => e.classList.remove('ruf'));
+  if(teile[0]) void teile[0].offsetWidth;
+  teile.forEach(e => e.classList.add('ruf'));
+  _rufAuftrag = setTimeout(() => teile.forEach(e => e.classList.remove('ruf')), 2400);
+}
+
 // Der Punkt oben links: ist die Verbindung zum ersten Mal da, geht zweimal
 // ein Ring von ihm aus — jetzt ist es der Stand von jetzt. Aus `setConn`.
 let _verbunden = false;

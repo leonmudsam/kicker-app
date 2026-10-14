@@ -12,43 +12,48 @@
        einem Mittelklasse-Telefon der teuerste Teil des Scrollens. Sie war
        ohnehin kaum zu sehen, die Fläche ist bis auf ihren Saum deckend. */
   }
-  /* Der Hinweis „x neue Stories" [§C33]: eine dunkle Pille mit Kante in Acid,
-     die Zahl groß, ein Lichtlauf beim Erscheinen und ein Ring, der aufgeht.
-     display:none als Grundstand → JS schaltet .visible und .show in zwei
-     Stufen, damit die Transition anläuft. */
-  .news-toast{position:absolute;right:60px;top:calc(var(--safe-top) + 56px);
-    z-index:45;color:var(--ink);padding:6px 13px 6px 7px;border-radius:14px;
-    background:linear-gradient(180deg,#22301a,#141a10);
-    border:1px solid rgba(190,242,100,.55);
-    box-shadow:0 10px 28px rgba(0,0,0,.5),0 0 0 3px rgba(190,242,100,.08),0 0 22px rgba(190,242,100,.28);
-    opacity:0;transform:translateY(-10px) scale(.86);pointer-events:none;
-    transition:opacity .25s ease, transform .45s cubic-bezier(.3,1.5,.5,1);
-    white-space:nowrap;display:none;cursor:pointer;user-select:none;overflow:visible}
+  /* Der Hinweis „x neue Stories" [§C33]: zwei Zeilen auf ruhigem Grund —
+     die Zahl auf einer Marke in Acid und „neue Stories", darunter leise die
+     Schlagzeile der wichtigsten Story mit einem Punkt in der Farbe ihrer
+     Karte, höchstens zwei Zeilen; ganz steht sie im Feed. Vorher leuchtete
+     er rundum, und ein Lichtlauf zog alle vier Sekunden über ihn. Beim
+     Erscheinen fährt jetzt zweimal Licht um die Kante (`_hinweisBewegung`)
+     [§C43], dann steht er still. Er wächst aus der Pille, auf die sein Pfeil
+     zeigt, und schrumpft dorthin zurück. display:none als Grundstand → JS
+     schaltet .visible und .show in zwei Stufen, damit die Transition
+     anläuft. */
+  .news-toast{position:absolute;right:60px;top:calc(var(--safe-top) + 56px);z-index:45;
+    display:none;cursor:pointer;user-select:none;color:var(--ink);white-space:normal;
+    max-width:min(264px,calc(100vw - 24px));padding:8px 14px 8px 8px;border-radius:14px;
+    background:#141a10;border:1px solid rgba(190,242,100,.26);box-shadow:0 14px 32px -10px rgba(0,0,0,.8);
+    opacity:0;pointer-events:none;
+    transform-origin:calc(100% - var(--nt-arrow,18px) - 5px) -6px;transform:translateY(-4px) scale(.82);
+    transition:opacity .16s ease-in,transform .22s cubic-bezier(.5,0,.75,0)}
   .news-toast.visible{display:block}
-  .news-toast.show{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+  .news-toast.show{opacity:1;transform:none;pointer-events:auto;
+    transition:opacity .18s ease-out,transform .42s cubic-bezier(.3,1.25,.5,1)}
   .news-toast::before{content:'';position:absolute;top:-6px;right:var(--nt-arrow,18px);
-    width:10px;height:10px;background:#22301a;border:1px solid rgba(190,242,100,.55);
+    width:10px;height:10px;background:#141a10;border:1px solid rgba(190,242,100,.26);
     border-right:0;border-bottom:0;transform:rotate(45deg);border-radius:2px 0 0 0}
-  .news-toast:active{transform:translateY(0) scale(.97)}
-  #newsToastTxt{position:relative;display:flex;align-items:center;gap:7px;border-radius:inherit;overflow:hidden}
-  .nt-ic{display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:8px;
-    background:var(--acid);color:#10140c;flex:0 0 auto}
-  .nt-ic svg{width:14px;height:14px}
-  .nt-n{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:17px;line-height:1;color:var(--acid);
-    text-shadow:0 0 12px rgba(190,242,100,.45)}
-  .nt-w{font-family:'Archivo Black',sans-serif;font-size:11px;letter-spacing:-.005em;color:var(--ink)}
+  .news-toast:active{transform:scale(.97)}
+  #newsToastTxt{display:block}
+  .nh{display:flex;align-items:center;gap:10px}
+  .nh-zahl{flex:0 0 auto;display:grid;place-items:center;min-width:32px;height:32px;padding:0 6px;border-radius:10px;
+    background:var(--acid);color:#0f1409;font-family:'Archivo Black',sans-serif;font-weight:400;font-size:15px;
+    line-height:1;letter-spacing:-.02em}
+  .nh-text{min-width:0;display:flex;flex-direction:column;gap:2px}
+  .nh-wort{font-family:'Space Grotesk',system-ui,sans-serif;font-weight:600;font-size:13px;line-height:1.2;color:var(--ink)}
+  .nh-zeile{display:flex;align-items:flex-start;gap:6px;min-width:0;font-family:'Space Grotesk',system-ui,sans-serif;
+    font-weight:500;font-size:11.5px;line-height:1.3;color:var(--muted)}
+  .nh-zeile i{flex:0 0 auto;width:6px;height:6px;margin-top:4.5px;border-radius:50%;background:rgb(var(--story-rgb,185,196,189))}
+  .nh-zeile span{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+  .nh-zeile.nh-rot{--story-rgb:240,86,106}
   @media(prefers-reduced-motion:no-preference){
-    /* Der Lichtlauf: einmal beim Erscheinen, dann alle vier Sekunden. */
-    .news-toast.show::after{content:'';position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;
-      background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.28) 50%,transparent 65%) no-repeat;
-      background-size:250% 100%;animation:ntGlanz 2.2s .15s ease-out infinite}
-    /* Der Ring geht einmal auf, wie ein Signal. */
-    .news-toast.show .nt-ic{animation:ntPop .55s .1s cubic-bezier(.3,1.6,.5,1) both,ntRing 1.6s .25s ease-out 2}
-    .news-toast.show .nt-n{animation:ntPop .5s .2s cubic-bezier(.3,1.6,.5,1) both}
+    .news-toast.show .nh-zahl{animation:nhPop .45s cubic-bezier(.3,1.4,.5,1) .06s both}
+    .news-toast.show .nh-text{animation:nhEin .32s cubic-bezier(.2,.8,.2,1) .12s both}
   }
-  @keyframes ntGlanz{0%{background-position:140% 0}55%,100%{background-position:-40% 0}}
-  @keyframes ntPop{from{transform:scale(.3);opacity:0}}
-  @keyframes ntRing{0%{box-shadow:0 0 0 0 rgba(190,242,100,.6)}100%{box-shadow:0 0 0 12px rgba(190,242,100,0)}}
+  @keyframes nhPop{0%{opacity:0;transform:scale(.5)}65%{opacity:1;transform:scale(1.08)}100%{transform:none}}
+  @keyframes nhEin{from{opacity:0;transform:translateX(-6px)}}
   .appbar-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
   .logo{display:flex;align-items:center;gap:10px;min-width:0}
   /* Das Zeichen der Liga [§C43]: 252 px als WebP, 7 kB, in der Seite selbst,

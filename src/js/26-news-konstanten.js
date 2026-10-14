@@ -78,6 +78,11 @@ const NEWS_LS_STAND = 'eso_news_stand_v1';
 const NEWS_LS_TOAST = 'eso_news_toast_v1';  // v8.1: zeitstempel + count des letzten Toasts
 const NEWS_LS_MAX_SEEN = 600; // Ring-Buffer-Limit (deckt das ganze Fenster)
 const NEWS_TOAST_COOLDOWN_MS = 6 * 60 * 60 * 1000; // 6h zwischen identischen Toast-Counts
+// Wie lange der Hinweis „x neue Stories" steht. Beim Start länger: wer die
+// App öffnet, sieht zuerst der Liga beim Aufbauen zu, und in vier Sekunden
+// war der Hinweis oft schon fort, bevor der Blick nach oben ging.
+const NEWS_TOAST_MS = 4000;
+const NEWS_TOAST_START_MS = 7000;
 
 // Generator-Limits — Schutz gegen zu viele Stories pro Typ
 const NEWS_LIMITS = {

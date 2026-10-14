@@ -127,6 +127,11 @@
   /* Die letzte Partie im Verlauf trägt das Kantenlicht. */
   .mrow{position:relative}
   @keyframes aufbauVonUnten{from{transform:translateY(100%)}}
+  /* Die Pille ruft: kommt der Hinweis „x neue Stories", geht zweimal ein
+     Ring von ihr aus, und ihre Zahl springt auf (`_hinweisBewegung`). */
+  #newsBtn::after{content:"";position:absolute;inset:-2px;border-radius:inherit;pointer-events:none;
+    border:2px solid var(--acid);opacity:0}
+  @keyframes hinweisRuf{0%{opacity:.85;transform:scale(1)}100%{opacity:0;transform:scale(1.45)}}
   @keyframes aufbauPop{0%{opacity:0;transform:scale(.5)}60%{opacity:1;transform:scale(1.12)}100%{transform:none}}
   @keyframes aufbauFab{0%{opacity:0;transform:scale(.3) rotate(-90deg)}70%{opacity:1;transform:scale(1.08) rotate(6deg)}100%{transform:none}}
   @keyframes aufbauPing{0%{transform:scale(1);opacity:.9}100%{transform:scale(3.2);opacity:0}}
@@ -151,6 +156,8 @@
     .bau{animation:bauTeil .56s cubic-bezier(.2,.8,.2,1) both}
     .pod-karte.bau{animation-name:bauPodest;animation-duration:.62s}
     .glanz-einmal::after{animation:glanzEinmal 1.3s cubic-bezier(.45,0,.25,1) var(--gv,0ms) both}
+    #newsBtn.ruf::after{animation:hinweisRuf 1s cubic-bezier(.2,.8,.2,1) 2}
+    .news-btn-badge.ruf{animation:aufbauPop .5s cubic-bezier(.3,1.6,.5,1)}
   }
 
   /* ── Reiter wechseln ────────────────────────────────────────────────

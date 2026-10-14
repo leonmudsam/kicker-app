@@ -2301,24 +2301,69 @@ const ok = (c, msg, det) => {
   ok(gl.selten === 'glanzZug' && glFeed.n >= 3 && glFeed.n <= glFeed.alle / 3 && !glFeed.falsch.length,
      'das Seltene im Feed traegt einen Lichtlauf in seiner Familienfarbe, nicht in Gold und nicht auf einer negativen Karte',
      glFeed.n + ' von ' + glFeed.alle + ' Karten, falsch: ' + glFeed.falsch.slice(0, 3));
-  // Der Hinweis „x neue Stories" ist ein Ereignis: die Zahl groß neben
-  // einem Zeichen, ein Lichtlauf und ein Ring beim Erscheinen — und bei
-  // Bewegungsruhe nichts davon.
+  // Der Hinweis „x neue Stories" hat zwei Zeilen [§C33]: die Zahl auf einer
+  // Marke und „neue Stories", darunter die Schlagzeile der wichtigsten
+  // ungelesenen Story — Breaking, wichtig, Priorität, die neueste — mit
+  // einem Punkt in der Farbe ihrer Karte. Er hält auch bei 320 px links wie
+  // rechts Abstand zum Rand. Beim Erscheinen fährt zweimal Licht um seine
+  // Kante, und von der Pille geht ein Ring aus; nichts läuft endlos [§C43].
+  // Der erste nach dem Öffnen steht länger. Kommt die Pille, gleitet sie
+  // herein. Bei Bewegungsruhe nichts davon.
+  await page.setViewportSize({width:320, height:780});
   const toastLauf = async () => page.evaluate(() => {
-    const t = document.getElementById('newsToast'), x = document.getElementById('newsToastTxt');
-    window.__k.eval('_newsToastFuellen')(x, 59);
-    t.classList.add('visible', 'show');
-    const out = {n:(x.querySelector('.nt-n') || {}).textContent, ic:!!x.querySelector('.nt-ic svg'),
-      glanz:getComputedStyle(t, '::after').animationName, ring:getComputedStyle(x.querySelector('.nt-ic')).animationName};
-    t.classList.remove('visible', 'show');
+    const K = window.__k.eval.bind(window.__k);
+    const t = document.getElementById('newsToast'), x = document.getElementById('newsToastTxt'), btn = document.getElementById('newsBtn');
+    const st = window.setTimeout, zeiten = [];
+    window.setTimeout = (f, ms, ...a) => { zeiten.push(ms); return st(f, ms, ...a); };
+    t.querySelectorAll('.kl, .kl-schein').forEach(e => e.remove());
+    K('_newsToastSchonDa = false; _newsToastZeigen(59)');
+    const zeile = x.querySelector('.nh-zeile'), top = K('_newsHinweisStory()');
+    const erwartet = K(`(() => { const seen = _newsLoadSeen(), stand = _newsLesestand();
+      const g = s => (_isBreaking(s) ? 4 : 0) + (_isImportant(s) ? 2 : 0);
+      return getStoriesCache().filter(s => !_newsGelesen(s, seen, stand))
+        .sort((a, b) => g(b) - g(a) || (b.prio | 0) - (a.prio | 0) || new Date(b.when) - new Date(a.when))[0]; })()`);
+    const ton = top ? (K('_isBreaking')(top) || K('_newsIstNegativ')(top) ? 'nh-rot' : K('_newsTonKlassen')(top, 'nd')) : '';
+    // Die Reihenfolge des Bestands entscheidet nichts.
+    K('window.__bestand = _cache._stories; _cache._stories = _cache._stories.slice().reverse()');
+    const umgekehrt = K('_newsHinweisStory()');
+    K('_cache._stories = window.__bestand');
+    // Die längste Schlagzeile macht ihn so breit, wie er werden darf.
+    // Gemessen wird die Box, nicht das Bild: er wächst gerade noch heraus.
+    if(zeile) zeile.querySelector('span').textContent += ' — und noch ein Anlass und noch einer, der die Zeile füllt';
+    K('_positionNewsToast()');
+    const links = t.offsetLeft + t.offsetParent.getBoundingClientRect().left;
+    const out = {n:(x.querySelector('.nh-zahl') || {}).textContent, wort:(x.querySelector('.nh-wort') || {}).textContent,
+      zeile:zeile ? zeile.querySelector('span').textContent.startsWith(top.title || '') : false,
+      wichtigste:!!top && !!erwartet && top.id === erwartet.id && !!umgekehrt && umgekehrt.id === erwartet.id,
+      ton:!!zeile && ton.split(' ').every(c => zeile.classList.contains(c)),
+      punkt:zeile ? getComputedStyle(zeile.querySelector('i')).backgroundColor.replace(/\s/g, '') === 'rgb(' + getComputedStyle(zeile).getPropertyValue('--story-rgb').replace(/\s/g, '') + ')' : false,
+      rand:[Math.round(links), Math.round(innerWidth - links - t.offsetWidth)],
+      licht:t.querySelectorAll(':scope > .kl.kl-hinweis').length, ruf:getComputedStyle(btn, '::after').animationName,
+      zahl:getComputedStyle(x.querySelector('.nh-zahl')).animationName,
+      endlos:t.getAnimations({subtree:true}).filter(a => a.effect.getTiming().iterations === Infinity).length,
+      zeitStart:zeiten.includes(K('NEWS_TOAST_START_MS'))};
+    zeiten.length = 0;
+    K('_newsToastZeigen(60)');
+    out.zeitDann = zeiten.includes(K('NEWS_TOAST_MS')) && !zeiten.includes(K('NEWS_TOAST_START_MS'));
+    out.lichtDann = t.querySelectorAll(':scope > .kl').length;
+    window.setTimeout = st;
+    K('_hideNewsToast()');
+    btn.style.visibility = 'hidden'; K('newsBadgeRefresh(); _hideNewsToast()');
+    out.pille = btn.getAnimations().some(a => a.effect.getKeyframes().some(k => /translateX/.test(k.transform || '')));
+    btn.getAnimations().forEach(a => a.finish());
     return out;
   });
   const ntLebt = await toastLauf();
-  ok(ntLebt.n === '59' && ntLebt.ic && ntLebt.glanz === 'ntGlanz' && /ntRing/.test(ntLebt.ring),
-     'der Hinweis auf neue Stories zeigt die Zahl gross mit Zeichen, Lichtlauf und Ring', JSON.stringify(ntLebt));
+  ok(ntLebt.n === '59' && ntLebt.wort === 'neue Stories' && ntLebt.zeile && ntLebt.wichtigste && ntLebt.ton && ntLebt.punkt,
+     'der Hinweis auf neue Stories zeigt die Zahl und darunter die wichtigste ungelesene Story mit dem Punkt in ihrer Farbe', JSON.stringify(ntLebt));
+  ok(ntLebt.rand[0] >= 12 && ntLebt.rand[1] >= 8, 'der Hinweis hält bei 320 px Abstand zu beiden Rändern', JSON.stringify(ntLebt.rand));
+  ok(ntLebt.licht === 1 && ntLebt.lichtDann === 1 && ntLebt.ruf === 'hinweisRuf' && ntLebt.zahl === 'nhPop' && ntLebt.endlos === 0 && ntLebt.pille,
+     'beim Erscheinen fährt Licht um den Hinweis und ein Ring von der Pille, nichts läuft endlos, und die Pille gleitet herein', JSON.stringify(ntLebt));
+  ok(ntLebt.zeitStart && ntLebt.zeitDann, 'der erste Hinweis nach dem Öffnen steht länger als die folgenden', JSON.stringify([ntLebt.zeitStart, ntLebt.zeitDann]));
   await page.emulateMedia({reducedMotion: 'reduce'});
   const ntRuhig = await toastLauf();
-  ok(ntRuhig.glanz === 'none' && ntRuhig.ring === 'none', 'und bei Bewegungsruhe steht er still', JSON.stringify(ntRuhig));
+  ok(ntRuhig.licht === 0 && ntRuhig.ruf === 'none' && ntRuhig.zahl === 'none' && !ntRuhig.pille, 'und bei Bewegungsruhe steht er still', JSON.stringify(ntRuhig));
+  await page.setViewportSize({width:390, height:844});
   const glRuhig = await glanz();
   await page.emulateMedia({reducedMotion: 'no-preference'});
   ok(Object.values(glRuhig).every(v => v !== 'glanzZug'),
