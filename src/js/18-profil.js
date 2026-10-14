@@ -854,6 +854,9 @@ const rankProgHtml = rInfo ? `
   });
   // Chronik-Zellen öffnen die Saison-Tafel (§13)
   _bindChronikClicks(document.getElementById('sheet'));
+  // Das Insignium im Kopf öffnet die Laufbahn: ihre Zeichen jetzt, im
+  // Leerlauf, statt beim Start für jeden Rang [§2.1b].
+  _insRangWaermen(id);
 
   // Karriere beenden und fortsetzen [§C40]. Gespeichert wird nur der
   // Zeitpunkt; was er bewirkt, rechnet die App aus den Partien.

@@ -585,10 +585,11 @@ async function syncSeasonEloToDB(){
 // ruhigem Moment, in der Reihenfolge, in der man sie am ehesten öffnet.
 // Gerechnet wird genau das, was die Ansicht beim Betreten fragt — dieselben
 // Funktionen mit denselben Argumenten, sonst träfe der Schlüssel nicht.
+// Die Zeichen der Laufbahn gehören nicht dazu: sie kosteten zehnmal so viel
+// wie alle Töpfe zusammen und werden gezeichnet, wenn ihr Blatt einen Tipp
+// entfernt ist (`_insRangWaermen`).
 // Abgebrochen wird bei neuen Daten (eine andere Version), bei einem neueren
-// Auftrag und solange die Seite versteckt ist. Ein Schritt, der `false`
-// zurückgibt, ist noch nicht fertig und kommt im nächsten ruhigen Moment
-// wieder: so verteilt er seine Arbeit, statt einen langen Task zu bauen.
+// Auftrag und solange die Seite versteckt ist.
 let _vorwaermAuftrag = null;
 const VORWAERMEN = [
   () => { allPlayerStats(); positionsListe('atk'); positionsListe('def'); },   // Positionen
@@ -597,7 +598,6 @@ const VORWAERMEN = [
   () => allSeasonTitles(),                                                     // Chronik
   () => teamStats(),                                                           // Teams
   () => prestigeTabelle(),                                                     // Prestige, Profil
-  () => _insVorwaermen(),                                                      // Zeichen der Laufbahn
 ];
 function _vorwaermen(){
   const auftrag = {version:_cache.version, schritt:0};
@@ -606,9 +606,8 @@ function _vorwaermen(){
     if(_vorwaermAuftrag !== auftrag || _cache.version !== auftrag.version) return;
     if(auftrag.schritt >= VORWAERMEN.length){ _vorwaermAuftrag = null; return; }
     if(document.hidden){ _leerlauf(1000).then(weiter); return; }
-    let fertig = true;
-    try { fertig = VORWAERMEN[auftrag.schritt]() !== false; } catch(e){}
-    if(fertig) auftrag.schritt++;
+    try { VORWAERMEN[auftrag.schritt](); } catch(e){}
+    auftrag.schritt++;
     _leerlauf(1000).then(weiter);
   };
   _leerlauf(1000).then(weiter);

@@ -161,6 +161,7 @@ function openNewsDetail(sid){
     };
   });
   nd.querySelectorAll('[data-laufbahn]').forEach(el => {
+    _insRangWaermen(el.dataset.laufbahn);
     el.onclick = () => {
       const pid = el.dataset.laufbahn;
       closeNewsDetail();

@@ -221,6 +221,7 @@ async function neueSeite(ctx){
     // ── Vorwärmen im Leerlauf ─────────────────────────────────────────
     // Nach dem Start rechnet niemand mehr kalt, wenn ein Reiter aufgeht.
     await w.page.waitForFunction(() => window.__K('_vorwaermAuftrag === null'), null, {timeout:60000});
+    const lbStart = await w.page.evaluate(() => window.__K('_insStufeDrin.size'));
     const kalt = await w.page.evaluate(() => {
       const K = window.__K;
       K(`window.__kalt = 0;
@@ -239,22 +240,34 @@ async function neueSeite(ctx){
       return je;
     });
     for(const [z, n] of Object.entries(kalt)) ok(n === 0, 'Nach dem Vorwärmen rechnet der erste Aufruf nichts kalt: ' + z + (n ? ' (' + n + ' kalte Rechnungen)' : ''));
-    // Die Zeichen der Laufbahn tragen die Rangfarbe; vorgezeichnet sind die
-    // Felder und je Stufe das erste und das letzte große Zeichen. Beim
-    // Öffnen bleibt höchstens das eine der eigenen Stufe mitten im Grad.
-    const lbNeu = await w.page.evaluate(() => window.__K(`(function(){
-      const neu = [];
-      players.filter(p => sichtbar(p)).forEach(p => {
-        const vor = _insStufeDrin.size;
-        try { closeSheet(true); } catch(e){}
-        showLaufbahn(p.id);
-        neu.push(_insStufeDrin.size - vor);
-      });
-      try { closeSheet(true); } catch(e){}
-      return neu;
-    })()`));
-    ok(lbNeu.length > 3 && lbNeu.every(n => n <= 1),
-       'Nach dem Vorwärmen zeichnet keine Laufbahn ihre Vitrine neu (' + lbNeu.join(' ') + ')');
+    // Die Zeichen der Laufbahn tragen die Rangfarbe. Der Start zeichnet
+    // keines davon vor — die Laufbahn ist dort weit weg —, das Profil eines
+    // Spielers die seines Rangs, im Leerlauf, solange es offen steht. Danach
+    // bleibt beim Öffnen der Laufbahn höchstens das eine der eigenen Stufe
+    // mitten im Grad.
+    const lb = await w.page.evaluate(async () => {
+      const K = window.__K, ruhig = () => new Promise(r => setTimeout(r, 50));
+      const out = {neu:[], zu:null};
+      for(const p of K('players.filter(p => sichtbar(p))')){
+        K('closeSheet(true)'); K(`showPlayer(${JSON.stringify(p.id)})`);
+        for(let i = 0; i < 400 && K('!!(_insWarmPlan && _insWarmPlan.plan.length)'); i++) await ruhig();
+        const vor = K('_insStufeDrin.size');
+        K(`showLaufbahn(${JSON.stringify(p.id)})`);
+        out.neu.push(K('_insStufeDrin.size') - vor);
+      }
+      // Geschlossen zeichnet es nicht weiter.
+      K('closeSheet(true); _insWarmPlan = null; _insStufeDrin.clear()');
+      const p = K('players.filter(p => sichtbar(p))')[0];
+      K(`showPlayer(${JSON.stringify(p.id)})`); await ruhig(); K('closeSheet(true)');
+      await new Promise(r => setTimeout(r, 1500));
+      const n = K('_insStufeDrin.size'); await new Promise(r => setTimeout(r, 1500));
+      out.zu = [n, K('_insStufeDrin.size'), K('_insWarmPlan')];
+      return out;
+    });
+    ok(lbStart === 0, 'Der Start zeichnet keine Zeichen der Laufbahn vor (' + lbStart + ')');
+    ok(lb.neu.length > 3 && lb.neu.every(n => n <= 1),
+       'Aus dem Profil zeichnet keine Laufbahn ihre Vitrine neu (' + lb.neu.join(' ') + ')');
+    ok(lb.zu[0] === lb.zu[1] && lb.zu[2] === null, 'Ist das Profil zu, zeichnet niemand weiter ' + JSON.stringify(lb.zu));
     // Neue Daten brechen einen laufenden Auftrag ab; er rechnet nicht für
     // einen Stand weiter, den es nicht mehr gibt.
     ok(await w.page.evaluate(async () => {

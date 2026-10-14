@@ -56,8 +56,12 @@ schon einmal „verbunden" gezeigt hat; er wird nicht zurückgesetzt).
 das Schließen gibt sie frei) und an jedem dieser Elemente `_steht` (wie oft
 es angehalten ist; bei null verliert es `.steht`), an Story und Auszeichnung
 `_auf` (das jüngste Öffnen; ein älteres Licht kommt nicht mehr).
-`_letzteBedienung` (wann zuletzt getippt, gescrollt oder eine Taste
-gedrückt wurde; das leise Licht wartet 4 s danach). `_leiseSchritt` (die
+`_sichtZiele` (die Elemente mit endloser Bewegung, die der
+IntersectionObserver `_bewegSicht` beobachtet; was nicht mehr im Dokument
+steht, fällt beim nächsten Beginn heraus) und an jedem davon `_ausSicht`
+(ob es gerade außerhalb des Bilds steht und dafür `_steht` mitzählt).
+`_lichtSicht` beobachtet die Karte jedes Kantenlichts, bis es endet.
+`_leiseSchritt` (die
 Stelle in `LEISE_FOLGE`), `_leiseKarte` (welcher der drei Plätze als
 nächster dran ist) und `_leiseZuletzt` (das Element des letzten leisen
 Lichts, damit es nicht zweimal hintereinander leuchtet); sie werden nicht
@@ -380,13 +384,17 @@ Awards und Teams beim ersten Öffnen kalt. Ein neuer Datenstand (andere
 Version) oder ein neuerer Auftrag bricht den laufenden ab
 (`_vorwaermAuftrag`), eine versteckte Seite wartet. `tests/start` zählt nach
 dem Start beim ersten Öffnen jedes Reiters die kalten Rechnungen: null.
-Der letzte Schritt zeichnet die Zeichen der Laufbahn vor (`_insVorwaermen`,
-Plan in `_insWarmPlan`, an die Datenversion gebunden): je Rangfarbe und
-Stufe ein ruhiger Moment, denn ein Schritt, der `false` zurückgibt, kommt
-wieder. Die Zeichnungen tragen die Rangfarbe, und das erste Laufbahn-Blatt
-eines Rangs kostete sonst 110 bis 135 ms Skript. `tests/start` zählt danach,
-wie viele Zeichen das Öffnen jeder Laufbahn noch zeichnet: höchstens eines,
-das der eigenen Stufe mitten im Grad.
+Die Zeichen der Laufbahn gehören nicht dazu: sie tragen die Rangfarbe, und
+der Start zeichnete sie für jeden Rang der Liga — gemessen elf Sekunden lang
+Blöcke bis 336 ms (vierfach gedrosselt), für ein Blatt, das nur das Profil
+öffnet. Jetzt zeichnet `_insRangWaermen` (Plan in `_insWarmPlan`, an Rang
+und Datenversion gebunden) die eines Rangs, wenn sein Profil oder eine
+Story mit dem Weg zur Laufbahn offen steht, eine Zeichnung je ruhigem
+Moment; ist kein Blatt und kein Fenster mehr offen, hört es auf. Kalt
+kostete das erste Laufbahn-Blatt eines Rangs 600 bis 900 ms Skript, warm 65
+bis 140 ms. `tests/start` sieht nach, dass der Start keines zeichnet und
+das Öffnen der Laufbahn aus dem Profil höchstens eines, das der eigenen
+Stufe mitten im Grad.
 
 Beim Start wartet die Oberfläche höchstens 2,5 s auf das erste Bild
 (`_startAuftrag`), dann steht das Gerüst [§C43]. Der Aufbau räumt sich nach
@@ -404,8 +412,9 @@ das Blatt eingefahren ist, welche Karten im Bild stehen, das an Story und Auszei
 verdeckt, hält nach 300 ms an, wenn es eingefahren ist; geschlossene Fenster
 werden nach 260 ms geleert, wenn sie nicht wieder offen sind. Vom Öffnen
 an plant `_leiseAuftrag` alle 7 bis 12 s ein leises Licht von 6,5 s; es läuft weiter,
-solange die Seite offen ist, und tut nichts, wenn die Seite versteckt ist,
-ein Blatt offen steht oder eben bedient wurde.
+solange die Seite offen ist. Ist die Seite versteckt, steht ein Blatt offen,
+ist der Verlauf offen oder baut sich eine Ansicht auf, setzt es aus und
+versucht es nach 2 s wieder (`LEISE_NOCHMAL_MS`).
 
 `_tickDaten` lässt außerdem ein offenes Blatt, den Eingabe-Tab und die
 Einstellungen in Ruhe:
