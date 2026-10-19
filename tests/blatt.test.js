@@ -3867,12 +3867,14 @@ const ok = (c, msg, det) => {
     const K = window.__k.eval.bind(window.__k);
     const sichten = [
       ['Liga', "tab='ranking';period='season'"], ['Liga gesamt', "period='all'"],
-      ['Liga Woche', "period='week'"], ['Liga Tag', "period='day'"],
+      ['Liga gesamt Torbilanz', "rankMetric='goaldiff'"], ['Liga gesamt Siegquote', "rankMetric='winrate'"],
+      ['Liga Woche', "rankMetric='elo';period='week'"], ['Liga Tag', "period='day'"],
       ['Positionen Sturm', "period='season';tab='positions';rankMetric='atk'"],
       ['Positionen Abwehr', "rankMetric='def'"],
       ['Awards', "tab='awards';awView='awards';awPeriod='season'"], ['Awards Woche', "awPeriod='week'"],
       ['Rekorde', "awPeriod='season';awView='rekorde'"], ['Chronik', "awView='chronik'"],
-      ['Teams', "awView='awards';tab='teams'"], ['Verlauf', "tab='history'"],
+      ['Teams', "awView='awards';tab='teams'"], ['Teams Torbilanz', "teamSort='gd'"],
+      ['Verlauf', "teamSort='wr';tab='history'"],
       ['Match', "tab='match'"], ['Einstellungen', "tab='settings'"]];
     const W = document.documentElement.clientWidth, out = [];
     for(const [name, setz] of sichten){
@@ -3935,7 +3937,20 @@ const ok = (c, msg, det) => {
       // Und die Nebenwertungen der Liga: „Längste Siege…", „4× Player of t…".
       [...document.querySelectorAll('#main .wk-hl-label, #main .wk-hl-detail')]
         .filter(e => e.scrollWidth > e.clientWidth + 1).forEach(e => bruch.push('Nebenwertung ' + e.textContent.trim()));
-      out.push({name, bruch:bruch.slice(0,3), punkt:punkt.slice(0,3), raus:[...new Set(raus)].slice(0,4), schief:schief.slice(0,4),
+      // Die Zahl rechts einer Ranglistenzeile liegt neben der Zeile, nicht
+      // über ihr: „Torbilanz je Partie" lag bei 360 px über der Siegquote.
+      const deckt = [];
+      document.querySelectorAll('#main .rrow').forEach(z => {
+        const wert = z.querySelector('.rval, .tm-wert'), mitte = z.querySelector('.rmid, .tm-mitte');
+        if(!wert || !mitte) return;
+        const w = wert.getBoundingClientRect();
+        [...mitte.querySelectorAll('*')].forEach(e => {
+          const r = e.getBoundingClientRect();
+          if(r.width && r.height && r.right > w.left + .5 && r.bottom > w.top && r.top < w.bottom)
+            deckt.push((z.querySelector('.rname, .tm-name') || {}).textContent.trim() + ': ' + e.textContent.trim().slice(0, 12));
+        });
+      });
+      out.push({name, bruch:bruch.slice(0,3), punkt:punkt.slice(0,3), raus:[...new Set(raus)].slice(0,4), schief:schief.slice(0,4), deckt:deckt.slice(0,3),
         fab: fab ? getComputedStyle(fab).display : ''});
     }
     K("tab='ranking';period='season';rankMetric='elo';awView='awards';render()");
@@ -3948,6 +3963,10 @@ const ok = (c, msg, det) => {
   const reiterSchief = reiter.filter(r => r.schief.length);
   ok(reiterSchief.length === 0, 'jedes Gesicht trägt seine Initialen in der Mitte',
      reiterSchief.map(r => r.name + ': ' + r.schief.join(', ')).join(' | ') || 'alle mittig');
+  const reiterDeckt = reiter.filter(r => r.deckt.length);
+  ok(reiterDeckt.length === 0 && reiter.some(r => r.name === 'Liga gesamt Torbilanz'),
+     'in keiner Ranglistenzeile liegt die Zahl rechts über der Zeile, auch nicht unter Torbilanz und Siegquote',
+     reiterDeckt.map(r => r.name + ': ' + r.deckt.join(', ')).join(' | ') || reiter.length + ' Reiter');
   const reiterBruch = reiter.filter(r => r.bruch.length);
   ok(reiterBruch.length === 0 && reiter.some(r => r.name === 'Positionen Sturm'),
      'Bilanz, Torzeile, Reiter und Kachelnamen stehen ungekürzt auf einer Zeile',

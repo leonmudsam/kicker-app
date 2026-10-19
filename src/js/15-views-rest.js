@@ -21,8 +21,9 @@ function vTeams(nurErgebnis=false){
     // Standard: nach Siegquote
     sorted=[...T].sort((a,b)=>(b.w/b.g)-(a.w/a.g)||(b.gf-b.ga)-(a.gf-a.ga)||b.g-a.g);
   } else if(teamSort==='gd'){
-    // Nach Tordifferenz
-    sorted=[...T].sort((a,b)=>(b.gf-b.ga)-(a.gf-a.ga)||(b.w/b.g)-(a.w/a.g)||b.g-a.g);
+    // Nach Torbilanz je Partie, wie in Gesamt: als Summe stand vorn, wer
+    // am häufigsten zusammen gespielt hatte.
+    sorted=[...T].sort((a,b)=>(b.gf-b.ga)/b.g-(a.gf-a.ga)/a.g||(b.w/b.g)-(a.w/a.g)||b.g-a.g);
   } else if(teamSort==='elo'){
     // Nach gesamtem Elo-Zuwachs (über alle Saisons hinweg)
     const gSim=getGlobalSim();
@@ -98,7 +99,8 @@ function vTeams(nurErgebnis=false){
       mainValue=wr+'%';
       mainColor='var(--ink)';
     } else if(teamSort==='gd'){
-      mainValue=(gd>=0?'+':'')+gd;
+      // Der Schnitt steht rechts, die Summe bleibt in der Zeile darunter.
+      mainValue=AW_WERT.plusMinus.z({v:gd/t.g});
       mainColor=gd>=0?'var(--acid)':'var(--red)';
     } else if(teamSort==='elo'){
       const eloGainTotal=Math.round(gSim.teamElo[keyTeam]||0);
