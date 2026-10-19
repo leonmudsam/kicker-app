@@ -80,10 +80,10 @@ const BADGES=[
   {id:'early_bird',ic:'sunrise',name:'Frühschicht',desc:'Erstes Match des Tages gewonnen',
     multi:true,count:(id,ms)=>countEarlyBirdDays(id,ms)},
   {id:'unbeatable',ic:'crownPlus',name:'Unschlagbar',desc:'Ganzer Tag ohne Niederlage (ab 3 Partien)',
-    multi:true,count:(id,ms)=>countUnbeatableDays(id,ms)},
+    multi:true,count:(id,ms,bis)=>countUnbeatableDays(id,ms,bis)},
   // Zeile 7 — Comeback-Tag, Revanchist (Wiedergutmachung)
   {id:'comeback_day',ic:'comeback',name:'Comeback-Tag',desc:'Tag mit einer Niederlage begonnen und mit einem Sieg beendet (ab 3 Partien an dem Tag)',
-    multi:true,count:(id,ms)=>countComebackDays(id,ms)},
+    multi:true,count:(id,ms,bis)=>countComebackDays(id,ms,bis)},
   {id:'revanchist',ic:'rematch',name:'Revanchist',desc:'Nach Niederlage gegen ein Team direkt im nächsten Match wieder auf dasselbe Team getroffen und gewonnen',
     multi:true,count:(id,ms)=>countRevenge(id,ms)},
   // Zeile 8 — Klares Ding, Krimi-Reihe (Tordifferenz-Pattern)
@@ -165,7 +165,7 @@ const BADGES=[
   // ── NEUE NEGATIV-BADGES v6 ──
   // Schwarzer Tag: ein Tag mit mind. 3 absolvierten Spielen, alle verloren.
   {id:'black_day',ic:'schwarzerTag',name:'Schwarzer Tag',desc:'Spieltag mit mindestens 3 Partien, alle verloren',
-    multi:true,count:(id,ms)=>countBlackDays(id,ms)},
+    multi:true,count:(id,ms,bis)=>countBlackDays(id,ms,bis)},
   // Krimi-Versager: 3 knappe Niederlagen (Tordifferenz ≤ 2) in Folge.
   {id:'krimi_loser',ic:'dramaTear',name:'Krimi-Versager',desc:'3 knappe Niederlagen in Folge, je höchstens 2 Tore Unterschied',
     multi:true,count:(id,ms)=>countCloseLossStreaks(id,ms,3)},
@@ -191,7 +191,7 @@ const BADGES=[
     multi:true,count:(id,ms)=>countMrDisaster(id,ms)},
   // Zusammenbruch: Tag mit Sieg gestartet, mit Niederlage beendet, min. 3 Matches (Pendant zu comeback_day).
   {id:'crash_day',ic:'crashDay',name:'Zusammenbruch',desc:'Tag mit einem Sieg begonnen und mit einer Niederlage beendet (ab 3 Partien an dem Tag)',
-    multi:true,count:(id,ms)=>countCrashDays(id,ms)},
+    multi:true,count:(id,ms,bis)=>countCrashDays(id,ms,bis)},
   // Angstgegner: 5× in Folge gegen denselben Gegner-Spieler verloren (egal in welcher Konstellation).
   {id:'nemesis',ic:'ghost',name:'Angstgegner',desc:'5× in Folge gegen denselben Gegner verloren',
     multi:true,count:(id,ms)=>countNemesis(id,ms)},
@@ -621,7 +621,10 @@ function _periodWinnerMap(allMs, kind){
   let curKey;
   if(kind==='week')       curKey=_wochenKey(now);
   else if(kind==='month') curKey=now.getFullYear()+'-'+now.getMonth();
-  else                    curKey=''; // day: kein Ausschluss des laufenden Tages (wie bisher)
+  // Der laufende Tag ist offen, bis er zu ist (`_tagZu`): der Spieler des
+  // Tages zählte um 14 Uhr schon im Profil und im Prestige, während seine
+  // Karte erst um 23:59 erscheint und am Abend ein anderer vorbeiziehen kann.
+  else { const heute=now.toISOString().slice(0,10); curKey=_tagZu(heute) ? '' : heute; }
   let slot=_winnerCountsMemo.get(allMs);
   if(!slot){ slot={}; _winnerCountsMemo.set(allMs, slot); }
   const slotKey='win_'+kind+'_'+curKey;
@@ -649,7 +652,7 @@ function _periodWinnerMap(allMs, kind){
   const regel={day:'tag', week:'woche', month:'monat'}[kind];
   const winners={};
   Object.entries(buckets).forEach(([key,ms])=>{
-    if(kind!=='day' && key===curKey)return; // laufende Woche/Monat noch offen
+    if(key===curKey)return; // laufender Tag, laufende Woche, laufender Monat: noch offen
     const erster=_periodeRangliste(ms, regel, false)[0];
     if(erster) winners[key]=erster.id;
   });
@@ -723,7 +726,8 @@ function countRepeatScoreStreaks(id,ms){
 }
 
 // ─── Comeback-Tag: Tag mit Niederlage gestartet, mit Sieg beendet, min. 3 Matches ───
-function countComebackDays(id,ms){
+// Beendet ist ein Tag erst, wenn er zu ist (`_tagZu`).
+function countComebackDays(id,ms,bis){
   const mine=matchesOfPlayer(id,ms);
   const byDay={};
   mine.forEach(m=>{
@@ -732,8 +736,8 @@ function countComebackDays(id,ms){
     byDay[d].push(m);
   });
   let count=0;
-  Object.values(byDay).forEach(dayMs=>{
-    if(dayMs.length<3) return;
+  Object.entries(byDay).forEach(([k,dayMs])=>{
+    if(dayMs.length<3 || !_tagZu(k,bis)) return;
     const first=dayMs[0], last=dayMs[dayMs.length-1];
     if(!won(id,first) && won(id,last)) count++;
   });
@@ -999,13 +1003,23 @@ function countCarries(id,ms){
     return mate===weakest;
   }).length;
 }
+// Ein Tag ist zu, wenn seine Uhr 23:59 zeigt — derselbe Augenblick, zu dem
+// der Spieler des Tages erscheint [§C33]; bis dahin kann noch eine Partie
+// kommen. `jetzt` ist der Stand, für den gezählt wird, sonst die Uhr.
+function _tagZu(dk, jetzt){
+  const ende = new Date(dk + 'T00:00:00'); ende.setHours(23, 59, 0, 0);
+  return (Number.isFinite(jetzt) ? jetzt : Date.now()) >= ende.getTime();
+}
 // Zählt Tage an denen der Spieler min. 3 Spiele hatte und keines verloren hat
-function countUnbeatableDays(id,ms){
+// — nur Tage, die zu sind (`_tagZu`): „Ganzer Tag ohne Niederlage" stand nach
+// dem dritten Sieg schon im Profil, und eine Niederlage am Abend nahm sie
+// wieder weg.
+function countUnbeatableDays(id,ms,bis){
   const mine=matchesOfPlayer(id,ms);
   const byDay={};
   mine.forEach(m=>{const d=mdayKey(m);
     if(!byDay[d])byDay[d]={games:0,losses:0}; byDay[d].games++; if(!won(id,m))byDay[d].losses++;});
-  return Object.values(byDay).filter(d=>d.games>=3&&d.losses===0).length;
+  return Object.entries(byDay).filter(([k,d])=>d.games>=3&&d.losses===0&&_tagZu(k,bis)).length;
 }
 // ─── Pflichterfüller: Sieg gegen mind. 1 Gegner aus Bottom-2 der ─────
 // ─── Saison-Rangliste zum Zeitpunkt des Matches ──────────────────────
@@ -1059,7 +1073,7 @@ function countStreakBreaker(id,ms){
 // ─── Schwarzer Tag: Tag mit mind. 3 Spielen, alle verloren ───────────
 // Gruppiert die Matches eines Spielers nach Datum (YYYY-MM-DD) und zählt,
 // an wie vielen Tagen mind. 3 Matches stattfanden, die ALLE verloren wurden.
-function countBlackDays(id,ms){
+function countBlackDays(id,ms,bis){
   const byDay={}; // day → {g, l}
   const meine=matchesOfPlayer(id,ms);
   for(let i=0; i<meine.length; i++){
@@ -1072,7 +1086,7 @@ function countBlackDays(id,ms){
   let count=0;
   for(const day in byDay){
     const d=byDay[day];
-    if(d.g >= 3 && d.l === d.g) count++;
+    if(d.g >= 3 && d.l === d.g && _tagZu(day, bis)) count++;
   }
   return count;
 }
@@ -1119,7 +1133,7 @@ function countMrDisaster(id, matchSubset){
 // ─── min. 3 Matches ──────────────────────────────────────────────────
 // Spiegel zu countComebackDays. Strikt: erstes Match Sieg, letztes Niederlage,
 // ≥3 Matches an dem Tag. Pro Tag max. 1 Eintrag (siehe Match-Trigger).
-function countCrashDays(id,ms){
+function countCrashDays(id,ms,bis){
   const mine=matchesOfPlayer(id,ms);
   const byDay={};
   mine.forEach(m=>{
@@ -1128,8 +1142,8 @@ function countCrashDays(id,ms){
     byDay[d].push(m);
   });
   let count=0;
-  Object.values(byDay).forEach(dayMs=>{
-    if(dayMs.length<3) return;
+  Object.entries(byDay).forEach(([k,dayMs])=>{
+    if(dayMs.length<3 || !_tagZu(k,bis)) return;
     const first=dayMs[0], last=dayMs[dayMs.length-1];
     if(won(id,first) && !won(id,last)) count++;
   });
@@ -1196,12 +1210,26 @@ function computeBadges(id, matchSubset, bisMs){
 
 // ─── §7.4 Wer in welcher Partie was geholt hat ────────────────────────
 // Ermittelt welche Badges durch ein bestimmtes Match NEU freigeschaltet / erneut erreicht wurden
+//
+// Was einen ganzen Tag beschreibt — Unschlagbar, Comeback-Tag,
+// Zusammenbruch, Schwarzer Tag —, wird erst vergeben, wenn der Tag zu ist
+// (`_tagZu`), an der letzten Partie des Spielers an diesem Tag und mit
+// `tagEnde` als Kennzeichen. „Unschlagbar" kam nach dem dritten Sieg um
+// 14:26, mit Karte und Hinweis, obwohl am Abend noch eine Niederlage kommen
+// konnte; Comeback-Tag und Zusammenbruch fragten nach dem „letzten" Spiel,
+// bevor es das letzte war. Ein Tag geht auch ohne neue Partie zu; dann
+// leert `loadAll` die Töpfe (`_tagZu` im Tagesschlüssel).
 function getBadgeEarnedCache(){
   const key='badgeEarned_'+matches.length+'_'+_cache.version;
   if(_cache._badgeEarnedKey===key) return _cache._badgeEarnedMap;
 
   const map={};
   const ordered=[...matches].sort((a,b)=>mts(a)-mts(b));
+  // Die letzte Partie jedes Spielers an jedem Tag: an ihr hängt, was den Tag
+  // beschreibt.
+  const letzteDesTages={};
+  ordered.forEach(m=>{ const dk=mdayKey(m);
+    [m.a1,m.a2,m.b1,m.b2].forEach(pid=>{ if(pid) letzteDesTages[pid+'|'+dk]=m.id; }); });
   // `fire` suchte das Badge bei jeder Vergabe mit `BADGES.find` — bei
   // fünfzig Badges und jeder Partie der Liga die meiste Zeit dieser Schleife
   // im Suchen. Die erste Fundstelle gewinnt wie bei `find`.
@@ -1247,8 +1275,6 @@ function getBadgeEarnedCache(){
       // ── NEUE NEGATIV-BADGES v6 ──
       // Krimi-Versager: aufeinanderfolgende knappe Niederlagen (Diff ≤ 2)
       krimiLossCur: 0, krimiLossFired: false,
-      // Schwarzer Tag: pro Tag merken, ob schon gefeuert wurde
-      blackDayFired: {},   // "YYYY-MM-DD" → true (schon gefeuert für diesen Tag)
       // ── NEUE LEGENDARY-BADGES v7 ──
       // Mr. Perfect: pro Saison 10:0-Siege zählen + bei ≥3 einmalig feuern
       mrPerfectPerSeason: {}, // sid → Anzahl 10:0-Siege in dieser Saison
@@ -1258,8 +1284,6 @@ function getBadgeEarnedCache(){
       // (Spiegel zu mrPerfect — Saison-Reset implizit durch sid-Wechsel)
       mrDisasterPerSeason: {},
       mrDisasterFired: {},
-      // Zusammenbruch: pro Tag merken, ob schon gefeuert wurde
-      crashFired: {},         // "YYYY-MM-DD" → true
       // Angstgegner: pro Gegner-Spieler aktueller Niederlagen-Streak + Fired-Flag
       // Reset des Counters bei Sieg gegen denselben Gegner; Fired-Flag wird
       // ebenfalls zurückgesetzt, sobald wieder ein Sieg gegen X gelingt.
@@ -1267,12 +1291,8 @@ function getBadgeEarnedCache(){
       nemesisFired: {},       // oppId → schon gefeuert (wartet auf Reset)
       // Wiederholungstäter: letzter Sieg-Score und aktueller Counter
       lastWinScore: null, wtCur: 0,
-      // Comeback-Tag: erstes Match-Ergebnis pro Tag + Trigger-Flag
+      // Comeback-Tag und Zusammenbruch: erstes Ergebnis pro Tag
       firstResOfDay: {},   // "YYYY-MM-DD" → 'W' | 'L'
-      comebackFired: {},   // "YYYY-MM-DD" → true (schon gefeuert)
-      // ⚠ Unbeatable-Tracking: Match-ID pro Tag, an dem unbeatable gefeuert wurde
-      // — wird bei einer Niederlage am selben Tag rückwirkend gelöscht (Bug-Fix).
-      unbeatableMatchIdByDay: {},
       // Revanchist: letztes verlorenes Gegner-Team (sortierter String "p1|p2")
       lastLossOpp: null,
     };
@@ -1321,23 +1341,8 @@ function getBadgeEarnedCache(){
 
       if(!s.days[day]) s.days[day]={g:0,l:0};
       s.days[day].g++;
-      if(!w){
-        s.days[day].l++;
-        // ⚠ Bug-Fix: wenn heute schon unbeatable gefeuert wurde (3 saubere Siege),
-        // ist es durch diese Niederlage hinfällig — Eintrag aus dem map des
-        // ursprünglichen Match-Buckets entfernen, damit das Match-Review es
-        // nicht mehr anzeigt. Toast war bereits geflogen (irreversibel), aber
-        // visuell verschwindet das Badge konsistent.
-        const ubMid = s.unbeatableMatchIdByDay[day];
-        if(ubMid){
-          const arr = map[ubMid];
-          if(arr){
-            const idx = arr.findIndex(e => e.playerId === id && e.badge.id === 'unbeatable');
-            if(idx >= 0) arr.splice(idx, 1);
-          }
-          s.unbeatableMatchIdByDay[day] = null;
-        }
-      }
+      if(!w) s.days[day].l++;
+      if(s.days[day].g===1) s.firstResOfDay[day] = w ? 'W' : 'L';
 
       // ── Helper ──
       const fire=(bid, meta)=>{
@@ -1412,14 +1417,16 @@ function getBadgeEarnedCache(){
         }
       }
 
-      // ── Unbeatable Day ──
-      // Feuert genau wenn der 3. saubere Sieg an einem Tag erreicht wird.
-      // Match-ID wird gemerkt — bei späterer Niederlage am selben Tag
-      // wird das Badge oben revoked (siehe Day-Tracking).
+      // ── Was den ganzen Tag beschreibt, an seiner letzten Partie ──
+      // Nur wenn der Tag zu ist; davor kann jede dieser vier Aussagen noch
+      // kippen (siehe oben).
       const d=s.days[day];
-      if(d.g===3 && d.l===0){
-        fire('unbeatable');
-        s.unbeatableMatchIdByDay[day] = m.id;
+      if(letzteDesTages[id+'|'+day]===m.id && d.g>=3 && _tagZu(day)){
+        const ende={tagEnde:day};
+        if(d.l===0)                                   fire('unbeatable', ende);
+        if(d.l===d.g)                                 fire('black_day', ende);
+        if(s.firstResOfDay[day]==='L' && w)           fire('comeback_day', ende);
+        if(s.firstResOfDay[day]==='W' && !w)          fire('crash_day', ende);
       }
 
       // ── Frühschicht: Sieg im chronologisch ersten Match des Tages ──
@@ -1489,17 +1496,6 @@ function getBadgeEarnedCache(){
         s.krimiLossFired=false;
       }
 
-      // ── Schwarzer Tag: Tag mit mind. 3 Spielen, alle verloren ──
-      // s.days[day] wurde bereits oben aktualisiert (g/l). Wir prüfen nach dem
-      // Update: g>=3 und l===g → alle verloren. Pro Tag nur EIN Toast — über
-      // blackDayFired-Tag-Set. Trigger nur bei Niederlage (sonst kann's eh nicht
-      // sein) — und feuert beim Übergang von 2 auf 3 Niederlagen (oder höher,
-      // falls vorher schon entgangen).
-      if(!w && s.days[day] && s.days[day].g >= 3 && s.days[day].l === s.days[day].g
-         && !s.blackDayFired[day]){
-        fire('black_day');
-        s.blackDayFired[day] = true;
-      }
 
       // ── Wiederholungstäter: 3 Siege in Folge mit identischem Endstand ──
       // Niederlagen oder Siege mit anderem Score brechen die Serie.
@@ -1515,25 +1511,6 @@ function getBadgeEarnedCache(){
         s.wtCur=0; s.lastWinScore=null;
       }
 
-      // ── Comeback-Tag: Tag mit Niederlage gestartet, mit Sieg beendet, min. 3 Matches ──
-      // Erstes Match des Tages für diesen Spieler? → Ergebnis als Tag-Start merken.
-      if(s.days[day].g===1){
-        s.firstResOfDay[day] = w ? 'W' : 'L';
-      }
-      // Aktueller Sieg + Tag startete mit Niederlage + min. 3 Matches + noch nicht gefeuert
-      if(w && s.days[day].g>=3 && s.firstResOfDay[day]==='L' && !s.comebackFired[day]){
-        s.comebackFired[day]=true;
-        fire('comeback_day');
-      }
-
-      // ── Zusammenbruch: Tag mit Sieg gestartet, mit Niederlage beendet, min. 3 Matches ──
-      // Spiegel zu comeback_day. firstResOfDay wird oben bereits gesetzt (erstes
-      // Match-Ergebnis pro Tag). Triggert beim Übergang ≥3 Matches, wenn der
-      // aktuelle (letzte) Trigger eine Niederlage ist.
-      if(!w && s.days[day].g>=3 && s.firstResOfDay[day]==='W' && !s.crashFired[day]){
-        s.crashFired[day]=true;
-        fire('crash_day');
-      }
 
       // ── Angstgegner: 5× in Folge gegen denselben Gegner-SPIELER verloren ──
       // Pro Gegner-Spieler aus diesem Match: bei Niederlage Counter +1, bei

@@ -1506,11 +1506,14 @@ const DISZIPLINEN = [
       klasse:'legendaer', aus:2.6,
       wie:'Player of the Day ist, wer an einem Spieltag die beste Bilanz hat. Gezählt wird der Anteil an den eigenen Spieltagen.',
       cond:'An mindestens 60 % der eigenen Spieltage Player of the Day, ab 4 Spieltagen',
+      // Die Spieltage, die zu sind (`tagN`), nicht alle: der Spieler des
+      // Tages steht erst um 23:59 fest, und gegen alle Tage geteilt fiel die
+      // Quote jeden Nachmittag, an dem gespielt wurde.
       ...(_stWertung(
-        p=>p.days>=4,
-        p=>p.potd/p.days,
+        p=>p.tagN>=4,
+        p=>p.potd/p.tagN,
         0.6,
-        (p,v)=>`Player of the Day an ${p.potd} der ${p.days} Spieltage · ${pct(v)} %`))}},
+        (p,v)=>`Player of the Day an ${p.potd} der ${p.tagN} Spieltage · ${pct(v)} %`))}},
 
   {id:'thron', name:'Auf dem Thron', short:'Thron', ic:'thron', tone:'gold', art:'leistung',
     monat:{

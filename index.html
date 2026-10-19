@@ -5942,7 +5942,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.19.647409bd';
+const BUILD_VERSION='2026.10.19.6582f785';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -7678,7 +7678,7 @@ async function _loadAllDurchlauf(){
     _partienGeholt = abrufBeginn;
     const [p,m,c,se]=antworten.map(a=>a.value);
     const _fp = JSON.stringify([p.data, m.data, c.data, se.data]);
-    const _today = new Date().toDateString();
+    const _today = new Date().toDateString() + (_tagZu(tagKey(Date.now())) ? '|zu' : '');
     if(_fp === _lastLoadFingerprint && _today === _lastLoadDay){
       setConn(activePlayers().length+' Spieler · '+matches.length+' Matches','ok');
       return;
@@ -14057,9 +14057,9 @@ const BADGES=[
   {id:'early_bird',ic:'sunrise',name:'Frühschicht',desc:'Erstes Match des Tages gewonnen',
     multi:true,count:(id,ms)=>countEarlyBirdDays(id,ms)},
   {id:'unbeatable',ic:'crownPlus',name:'Unschlagbar',desc:'Ganzer Tag ohne Niederlage (ab 3 Partien)',
-    multi:true,count:(id,ms)=>countUnbeatableDays(id,ms)},
+    multi:true,count:(id,ms,bis)=>countUnbeatableDays(id,ms,bis)},
   {id:'comeback_day',ic:'comeback',name:'Comeback-Tag',desc:'Tag mit einer Niederlage begonnen und mit einem Sieg beendet (ab 3 Partien an dem Tag)',
-    multi:true,count:(id,ms)=>countComebackDays(id,ms)},
+    multi:true,count:(id,ms,bis)=>countComebackDays(id,ms,bis)},
   {id:'revanchist',ic:'rematch',name:'Revanchist',desc:'Nach Niederlage gegen ein Team direkt im nächsten Match wieder auf dasselbe Team getroffen und gewonnen',
     multi:true,count:(id,ms)=>countRevenge(id,ms)},
   {id:'clear_win',ic:'thumbsUp',name:'Klares Ding',desc:'Sieg mit mindestens 7 Toren Vorsprung',
@@ -14113,7 +14113,7 @@ const BADGES=[
   {id:'streak_breaker',ic:'flameBreak',name:'Serienbrecher',desc:'Die Siegesserie eines Gegners (ab 4 in Folge) mit einem Sieg beendet',
     multi:true,count:(id,ms)=>countStreakBreaker(id,ms)},
   {id:'black_day',ic:'schwarzerTag',name:'Schwarzer Tag',desc:'Spieltag mit mindestens 3 Partien, alle verloren',
-    multi:true,count:(id,ms)=>countBlackDays(id,ms)},
+    multi:true,count:(id,ms,bis)=>countBlackDays(id,ms,bis)},
   {id:'krimi_loser',ic:'dramaTear',name:'Krimi-Versager',desc:'3 knappe Niederlagen in Folge, je höchstens 2 Tore Unterschied',
     multi:true,count:(id,ms)=>countCloseLossStreaks(id,ms,3)},
   {id:'untouchable',ic:'dreiSaisons',name:'Untouchable',desc:'3 Saisons in Folge unter den Top-3 abgeschlossen',
@@ -14129,7 +14129,7 @@ const BADGES=[
   {id:'mr_disaster',ic:'tripleCrash',name:'Mr. Disaster',desc:'3× 0:10-Niederlage in einer Saison',
     multi:true,count:(id,ms)=>countMrDisaster(id,ms)},
   {id:'crash_day',ic:'crashDay',name:'Zusammenbruch',desc:'Tag mit einem Sieg begonnen und mit einer Niederlage beendet (ab 3 Partien an dem Tag)',
-    multi:true,count:(id,ms)=>countCrashDays(id,ms)},
+    multi:true,count:(id,ms,bis)=>countCrashDays(id,ms,bis)},
   {id:'nemesis',ic:'ghost',name:'Angstgegner',desc:'5× in Folge gegen denselben Gegner verloren',
     multi:true,count:(id,ms)=>countNemesis(id,ms)},
 ];
@@ -14425,7 +14425,7 @@ function _periodWinnerMap(allMs, kind){
   let curKey;
   if(kind==='week')       curKey=_wochenKey(now);
   else if(kind==='month') curKey=now.getFullYear()+'-'+now.getMonth();
-  else                    curKey='';
+  else { const heute=now.toISOString().slice(0,10); curKey=_tagZu(heute) ? '' : heute; }
   let slot=_winnerCountsMemo.get(allMs);
   if(!slot){ slot={}; _winnerCountsMemo.set(allMs, slot); }
   const slotKey='win_'+kind+'_'+curKey;
@@ -14449,7 +14449,7 @@ function _periodWinnerMap(allMs, kind){
   const regel={day:'tag', week:'woche', month:'monat'}[kind];
   const winners={};
   Object.entries(buckets).forEach(([key,ms])=>{
-    if(kind!=='day' && key===curKey)return;
+    if(key===curKey)return;
     const erster=_periodeRangliste(ms, regel, false)[0];
     if(erster) winners[key]=erster.id;
   });
@@ -14510,7 +14510,7 @@ function countRepeatScoreStreaks(id,ms){
   return count;
 }
 
-function countComebackDays(id,ms){
+function countComebackDays(id,ms,bis){
   const mine=matchesOfPlayer(id,ms);
   const byDay={};
   mine.forEach(m=>{
@@ -14519,8 +14519,8 @@ function countComebackDays(id,ms){
     byDay[d].push(m);
   });
   let count=0;
-  Object.values(byDay).forEach(dayMs=>{
-    if(dayMs.length<3) return;
+  Object.entries(byDay).forEach(([k,dayMs])=>{
+    if(dayMs.length<3 || !_tagZu(k,bis)) return;
     const first=dayMs[0], last=dayMs[dayMs.length-1];
     if(!won(id,first) && won(id,last)) count++;
   });
@@ -14709,12 +14709,16 @@ function countCarries(id,ms){
     return mate===weakest;
   }).length;
 }
-function countUnbeatableDays(id,ms){
+function _tagZu(dk, jetzt){
+  const ende = new Date(dk + 'T00:00:00'); ende.setHours(23, 59, 0, 0);
+  return (Number.isFinite(jetzt) ? jetzt : Date.now()) >= ende.getTime();
+}
+function countUnbeatableDays(id,ms,bis){
   const mine=matchesOfPlayer(id,ms);
   const byDay={};
   mine.forEach(m=>{const d=mdayKey(m);
     if(!byDay[d])byDay[d]={games:0,losses:0}; byDay[d].games++; if(!won(id,m))byDay[d].losses++;});
-  return Object.values(byDay).filter(d=>d.games>=3&&d.losses===0).length;
+  return Object.entries(byDay).filter(([k,d])=>d.games>=3&&d.losses===0&&_tagZu(k,bis)).length;
 }
 function countBottomTwoMatchWins(id,ms){
   const snaps = getRankSnapshots();
@@ -14750,7 +14754,7 @@ function countStreakBreaker(id,ms){
   return count;
 }
 
-function countBlackDays(id,ms){
+function countBlackDays(id,ms,bis){
   const byDay={};
   const meine=matchesOfPlayer(id,ms);
   for(let i=0; i<meine.length; i++){
@@ -14763,7 +14767,7 @@ function countBlackDays(id,ms){
   let count=0;
   for(const day in byDay){
     const d=byDay[day];
-    if(d.g >= 3 && d.l === d.g) count++;
+    if(d.g >= 3 && d.l === d.g && _tagZu(day, bis)) count++;
   }
   return count;
 }
@@ -14800,7 +14804,7 @@ function countMrDisaster(id, matchSubset){
   return count;
 }
 
-function countCrashDays(id,ms){
+function countCrashDays(id,ms,bis){
   const mine=matchesOfPlayer(id,ms);
   const byDay={};
   mine.forEach(m=>{
@@ -14809,8 +14813,8 @@ function countCrashDays(id,ms){
     byDay[d].push(m);
   });
   let count=0;
-  Object.values(byDay).forEach(dayMs=>{
-    if(dayMs.length<3) return;
+  Object.entries(byDay).forEach(([k,dayMs])=>{
+    if(dayMs.length<3 || !_tagZu(k,bis)) return;
     const first=dayMs[0], last=dayMs[dayMs.length-1];
     if(won(id,first) && !won(id,last)) count++;
   });
@@ -14870,6 +14874,9 @@ function getBadgeEarnedCache(){
 
   const map={};
   const ordered=[...matches].sort((a,b)=>mts(a)-mts(b));
+  const letzteDesTages={};
+  ordered.forEach(m=>{ const dk=mdayKey(m);
+    [m.a1,m.a2,m.b1,m.b2].forEach(pid=>{ if(pid) letzteDesTages[pid+'|'+dk]=m.id; }); });
   const badgeVonId=new Map();
   BADGES.forEach(b=>{ if(!badgeVonId.has(b.id)) badgeVonId.set(b.id,b); });
 
@@ -14894,18 +14901,14 @@ function getBadgeEarnedCache(){
       nailStreak: 0,
       krimiCur: 0,
       krimiLossCur: 0, krimiLossFired: false,
-      blackDayFired: {},
       mrPerfectPerSeason: {},
       mrPerfectFired: {},
       mrDisasterPerSeason: {},
       mrDisasterFired: {},
-      crashFired: {},
       nemesisVs: {},
       nemesisFired: {},
       lastWinScore: null, wtCur: 0,
       firstResOfDay: {},
-      comebackFired: {},
-      unbeatableMatchIdByDay: {},
       lastLossOpp: null,
     };
   });
@@ -14949,18 +14952,8 @@ function getBadgeEarnedCache(){
 
       if(!s.days[day]) s.days[day]={g:0,l:0};
       s.days[day].g++;
-      if(!w){
-        s.days[day].l++;
-        const ubMid = s.unbeatableMatchIdByDay[day];
-        if(ubMid){
-          const arr = map[ubMid];
-          if(arr){
-            const idx = arr.findIndex(e => e.playerId === id && e.badge.id === 'unbeatable');
-            if(idx >= 0) arr.splice(idx, 1);
-          }
-          s.unbeatableMatchIdByDay[day] = null;
-        }
-      }
+      if(!w) s.days[day].l++;
+      if(s.days[day].g===1) s.firstResOfDay[day] = w ? 'W' : 'L';
 
       const fire=(bid, meta)=>{
         const b=badgeVonId.get(bid);
@@ -15020,9 +15013,12 @@ function getBadgeEarnedCache(){
       }
 
       const d=s.days[day];
-      if(d.g===3 && d.l===0){
-        fire('unbeatable');
-        s.unbeatableMatchIdByDay[day] = m.id;
+      if(letzteDesTages[id+'|'+day]===m.id && d.g>=3 && _tagZu(day)){
+        const ende={tagEnde:day};
+        if(d.l===0)                                   fire('unbeatable', ende);
+        if(d.l===d.g)                                 fire('black_day', ende);
+        if(s.firstResOfDay[day]==='L' && w)           fire('comeback_day', ende);
+        if(s.firstResOfDay[day]==='W' && !w)          fire('crash_day', ende);
       }
 
       if(isFirstOfDay && w) fire('early_bird');
@@ -15071,11 +15067,6 @@ function getBadgeEarnedCache(){
         s.krimiLossFired=false;
       }
 
-      if(!w && s.days[day] && s.days[day].g >= 3 && s.days[day].l === s.days[day].g
-         && !s.blackDayFired[day]){
-        fire('black_day');
-        s.blackDayFired[day] = true;
-      }
 
       if(w){
         const score=gf+':'+ga;
@@ -15089,18 +15080,6 @@ function getBadgeEarnedCache(){
         s.wtCur=0; s.lastWinScore=null;
       }
 
-      if(s.days[day].g===1){
-        s.firstResOfDay[day] = w ? 'W' : 'L';
-      }
-      if(w && s.days[day].g>=3 && s.firstResOfDay[day]==='L' && !s.comebackFired[day]){
-        s.comebackFired[day]=true;
-        fire('comeback_day');
-      }
-
-      if(!w && s.days[day].g>=3 && s.firstResOfDay[day]==='W' && !s.crashFired[day]){
-        s.crashFired[day]=true;
-        fire('crash_day');
-      }
 
       const oppPair = onA?[m.b1,m.b2]:[m.a1,m.a2];
       if(w){
@@ -18435,7 +18414,7 @@ function _storyTagGrenzen(ms){
   const juengste = matches.length ? mts(matches[matches.length - 1]) : 0;
   return {tag: tagKey(von), vonMs: von, erste, letzte, partien: n,
           vorMs: von - 1,
-          nachMs: letzte >= juengste ? 0 : letzte,
+          nachMs: letzte >= juengste ? 0 : bis,
           istHeute: letzte >= juengste};
 }
 
@@ -19084,7 +19063,12 @@ function _buildStories(){
       if(!matchObj) continue;
       const t = mts(matchObj);
       if(t < cutoff) continue;
-      arr.forEach(e => events.push({...e, when: new Date(matchObj.created_at), matchId: mid}));
+      arr.forEach(e => {
+        const te = e.meta && e.meta.tagEnde;
+        let when = new Date(matchObj.created_at);
+        if(te){ when = new Date(te + 'T00:00:00'); when.setHours(23, 57, 0, 0); }
+        events.push({...e, when, matchId: mid, tagEnde: te || null});
+      });
     }
     const dedupe = {};
     events.forEach(ev => {
@@ -19142,7 +19126,7 @@ function _buildStories(){
         desc: _bdesc,
         when: ev.when,
         prio: rarPrio,
-        dataRef: {type:'badge_unlocked', playerId: ev.playerId, badgeId: ev.badge.id, badgeName: ev.badge.name, matchId: ev.matchId, rarity: rar, rang:_bRang(ev), nemesisOppId: _nemOpp || undefined}
+        dataRef: {type:'badge_unlocked', playerId: ev.playerId, badgeId: ev.badge.id, badgeName: ev.badge.name, matchId: ev.tagEnde ? undefined : ev.matchId, tag: ev.tagEnde || undefined, rarity: rar, rang:_bRang(ev), nemesisOppId: _nemOpp || undefined}
       });
     });
     const _kleine = Object.values(dedupe).filter(ev => {
@@ -19154,14 +19138,14 @@ function _buildStories(){
     });
     const _markenPartie = {};
     _kleine.forEach(ev => {
-      const k = ev.matchId ? 'm:' + ev.matchId : 't:' + tagKey(ev.when.getTime());
+      const k = ev.matchId && !ev.tagEnde ? 'm:' + ev.matchId : 't:' + tagKey(ev.when.getTime());
       (_markenPartie[k] = _markenPartie[k] || []).push(ev);
     });
     Object.keys(_markenPartie).forEach(key => {
       const l = _markenPartie[key].slice().sort((a, b) => a.when - b.when);
       const tag = tagKey(l[l.length - 1].when.getTime());
       const namen = [...new Set(l.map(ev => nameOf(ev.playerId)))];
-      const matchIds = [...new Set(l.map(ev => ev.matchId).filter(Boolean))];
+      const matchIds = [...new Set(l.map(ev => ev.tagEnde ? null : ev.matchId).filter(Boolean))];
       const gemeinsamesMatch = matchIds.length === 1
         && l.every(ev => ev.matchId === matchIds[0]) ? matchIds[0] : null;
       const zeile = ev => `${nameOf(ev.playerId)} holt „${ev.badge.name}" zum ${_bRang(ev)}. Mal`;
@@ -19174,7 +19158,8 @@ function _buildStories(){
           : `${_namenKurz(namen)} ${namen.length > 1 ? 'erreichen' : 'erreicht'} runde Marken`,
         desc: l.length === 1
           ? String(l[0].badge.desc || '').trim().replace(/([^.!?])$/, '$1.')
-          : `${l.length} Auszeichnungen in dieser Partie. ` + l.map(zeile).join(', ') + '.',
+          : `${l.length} Auszeichnungen ${gemeinsamesMatch ? 'in dieser Partie' : 'an diesem Tag'}. `
+            + l.map(zeile).join(', ') + '.',
         when: l[l.length - 1].when,
         prio: STORY_PRIO.badge_marken,
         dataRef: {type:'badge_marken', tag,
@@ -19185,7 +19170,7 @@ function _buildStories(){
                   matchId: gemeinsamesMatch,
                   marken: l.map(ev => ({pid:ev.playerId, badgeId:ev.badge.id,
                                         name:ev.badge.name, rang:_bRang(ev),
-                                        matchId:ev.matchId || null}))}
+                                        matchId:ev.tagEnde ? null : (ev.matchId || null)}))}
       });
     });
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] badges', e); }
@@ -29677,10 +29662,10 @@ const DISZIPLINEN = [
       wie:'Player of the Day ist, wer an einem Spieltag die beste Bilanz hat. Gezählt wird der Anteil an den eigenen Spieltagen.',
       cond:'An mindestens 60 % der eigenen Spieltage Player of the Day, ab 4 Spieltagen',
       ...(_stWertung(
-        p=>p.days>=4,
-        p=>p.potd/p.days,
+        p=>p.tagN>=4,
+        p=>p.potd/p.tagN,
         0.6,
-        (p,v)=>`Player of the Day an ${p.potd} der ${p.days} Spieltage · ${pct(v)} %`))}},
+        (p,v)=>`Player of the Day an ${p.potd} der ${p.tagN} Spieltage · ${pct(v)} %`))}},
 
   {id:'thron', name:'Auf dem Thron', short:'Thron', ic:'thron', tone:'gold', art:'leistung',
     monat:{
@@ -30387,7 +30372,7 @@ function _bannLaufDerLiga(P, ms){
   });
 }
 
-function _thronDerLiga(P, ms){
+function _thronDerLiga(P, ms, offen){
   if(!ms.length) return;
   const hist = {};
   const sim = getGlobalSim();
@@ -30395,7 +30380,7 @@ function _thronDerLiga(P, ms){
   const stand = {};
   let tag = null;
   const auswerten = () => {
-    if(!tag) return;
+    if(!tag || offen.tag(tag)) return;
     const rang = Object.keys(stand).sort((a, b) => stand[b] - stand[a]);
     rang.forEach((id, i) => {
       const p = P[id];
@@ -30414,14 +30399,14 @@ function _thronDerLiga(P, ms){
   auswerten();
 }
 
-function _rohGruppen(pid, p, wochenSieger){
+function _rohGruppen(pid, p, wochenSieger, offen){
   const grp = (feld) => {
     const o = {};
     p.partien.forEach(s => { const k = feld(s); if(k) (o[k] = o[k] || []).push(s); });
     return o;
   };
   p.pid        = pid;
-  p.tagGrp     = grp(s => s.tag);
+  p.tagGrp     = grp(s => offen.tag(s.tag) ? null : s.tag);
   p.partnerGrp = grp(s => s.mate);
   p.wochGrp    = grp(s => s.wk);
   p.gegnerGrp  = (() => {
@@ -30446,6 +30431,8 @@ function _seasonTitleCtxRechnen(sid, bisMs){
   const ms = matchesInSeason(sid).slice().sort((a,b)=>mts(a)-mts(b))
     .filter(m => !bisMs || mts(m) <= bisMs);
   const gSim = getGlobalSim();
+  const stand = bisMs || Date.now();
+  const offen = {tag: t => !_tagZu(t, stand)};
   const eloMap = live ? (gSim.elo || {}) : (gSim.seasonEndElos[sid] || {});
   const P = {};
   const daySet = {};
@@ -30524,7 +30511,7 @@ function _seasonTitleCtxRechnen(sid, bisMs){
     allDays.add(day);
     const isFirstOfDay = !daySeen[day];
     daySeen[day] = true;
-    const isLastOfDay = (lastOfDay[day] === m.id);
+    const isLastOfDay = (lastOfDay[day] === m.id) && !offen.tag(day);
     const hEntry = histById ? histById.get(m.id) : null;
     const eloAfter = (hEntry && hEntry.eloAfter) || null;
     const hour = new Date(m.created_at).getHours();
@@ -30664,10 +30651,10 @@ function _seasonTitleCtxRechnen(sid, bisMs){
     }
     roh.push({id, elo:p.elo, games:p.games, wins:p.wins, losses:p.losses});
     if(p.games < TITLE_MIN_GAMES){ delete P[id]; return; }
-    _rohGruppen(id, p, wochenSieger);
+    _rohGruppen(id, p, wochenSieger, offen);
   });
   _bannLaufDerLiga(P, ms);
-  _thronDerLiga(P, ms);
+  _thronDerLiga(P, ms, offen);
 
   const potdOfSeason = _winnerCountsOf(ms, 'day');
   Object.keys(P).forEach(id => {
@@ -30675,6 +30662,7 @@ function _seasonTitleCtxRechnen(sid, bisMs){
     let big = 0, perf = 0, pos = 0, bestPerfTag = 0;
     const quoten = [];
     Object.keys(dc).forEach(day => {
+      if(offen.tag(day)) return;
       const w = dw[day] || 0;
       if(w > dc[day] - w) pos++;
       if(w === dc[day] && dc[day] > bestPerfTag) bestPerfTag = dc[day];
@@ -31011,6 +30999,7 @@ function _chronicleCtx(bisMs){
   const ms = (bisMs ? matches.filter(m => mts(m) <= bisMs) : matches.slice())
     .sort((a,b)=>mts(a)-mts(b));
   const gSim = bisMs ? getSimAt(bisMs) : getGlobalSim();
+  const tagZu = day => _tagZu(day, bisMs || Date.now());
   const pm = pmap();
   const P = {};
   const run = {}, runL = {};
@@ -31218,7 +31207,7 @@ function _chronicleCtx(bisMs){
     r.forEach(x => { (_tage[x.day] || (_tage[x.day] = [])).push(x); });
     const _tagListe = Object.keys(_tage).sort();
     {
-      const voll = _tagListe.filter(t => _tage[t].length >= 3);
+      const voll = _tagListe.filter(t => _tage[t].length >= 3 && tagZu(t));
       if(voll.length){
         const letzte = [], vorher = [], erste = [], danach = [];
         voll.forEach(t => { const a = _tage[t];
@@ -31299,7 +31288,7 @@ function _chronicleCtx(bisMs){
       r.forEach(x => { const t = tage[x.day] || (tage[x.day] = {n:0, w:0}); t.n++; if(x.w) t.w++; });
       const q = p.games ? p.wins / p.games : 0;
       Object.keys(tage).sort().forEach(k => { const t = tage[k];
-        if(t.n < 5) return;
+        if(t.n < 5 || !tagZu(k)) return;
         const d = t.w / t.n - q;
         if(p.gtDelta == null || d > p.gtDelta){ p.gtDelta = d; p.gtW = t.w; p.gtN = t.n; p.gtQ = q; p.gtLabel = dLabel(k); }
       });
@@ -31385,6 +31374,7 @@ function _chronicleCtx(bisMs){
     const dc = dayCount[id] || {}, dw = dayWins[id] || {};
     const dzAll = dayZufall[id] || {};
     Object.keys(dc).forEach(day => {
+      if(!tagZu(day)) return;
       const dz = dzAll[day];
       if(dz){
         if(dc[day] >= 4){

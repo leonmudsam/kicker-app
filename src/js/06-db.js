@@ -25,8 +25,9 @@ function gamesPlayed(id){return matches.filter(m=>[m.a1,m.a2,m.b1,m.b2].includes
 // komplette View per innerHTML ersetzt — auch wenn sich in der DB nichts
 // geändert hatte (99% der Ticks). Das kostete nicht nur Rechenzeit, sondern
 // zerstörte alle 30s Scroll-Position/Fokus. Jetzt: unveränderte Daten →
-// Early-Return, Globals/Caches/DOM bleiben unangetastet. Ein Tages-Rollover
-// erzwingt trotzdem einen vollen Durchlauf (Saison-/POTD-/Recap-Logik).
+// Early-Return, Globals/Caches/DOM bleiben unangetastet. Der Tagesschluss
+// um 23:59 und Mitternacht erzwingen trotzdem einen vollen Durchlauf
+// (Saison-/POTD-/Recap-Logik, was den ganzen Tag beschreibt).
 let _lastLoadFingerprint = null;
 let _lastLoadDay = null;
 let _loadAllPromise = null;
@@ -159,7 +160,10 @@ async function _loadAllDurchlauf(){
     _partienGeholt = abrufBeginn;
     const [p,m,c,se]=antworten.map(a=>a.value);
     const _fp = JSON.stringify([p.data, m.data, c.data, se.data]);
-    const _today = new Date().toDateString();
+    // Zweimal am Tag ändert sich etwas ohne neue Partie: um 23:59 geht der
+    // Tag zu (`_tagZu`), um Mitternacht beginnt der nächste. Nur mit
+    // Mitternacht stand „Unschlagbar" erst am nächsten Morgen im Profil.
+    const _today = new Date().toDateString() + (_tagZu(tagKey(Date.now())) ? '|zu' : '');
     if(_fp === _lastLoadFingerprint && _today === _lastLoadDay){
       // Nichts geändert seit dem letzten Tick → UI in Ruhe lassen.
       setConn(activePlayers().length+' Spieler · '+matches.length+' Matches','ok');

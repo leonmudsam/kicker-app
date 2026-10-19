@@ -69,8 +69,10 @@ function _storyStand(bisMs){
 //
 // `nachMs` ist 0, solange der Tag der jüngste der Datenbank ist: dann ist
 // „nachher" gleich „jetzt", und alle zentralen Funktionen treffen ihren
-// heißen Cache. Für einen älteren Tag steht dort der Zeitstempel seiner
-// letzten Partie, damit sich ein Monat Partie für Partie nachspielen lässt.
+// heißen Cache. Für einen älteren Tag steht dort sein Ende, damit sich ein
+// Monat Tag für Tag nachspielen lässt — nicht seine letzte Partie: zu deren
+// Zeit war der Tag noch offen, und was ihn als Ganzes beschreibt (`_tagZu`),
+// fiele zwischen ihn und den nächsten und stünde in keiner Karte.
 function _storyTagGrenzen(ms){
   if(!ms) return null;
   const d = new Date(ms); d.setHours(0, 0, 0, 0);
@@ -87,7 +89,7 @@ function _storyTagGrenzen(ms){
   const juengste = matches.length ? mts(matches[matches.length - 1]) : 0;
   return {tag: tagKey(von), vonMs: von, erste, letzte, partien: n,
           vorMs: von - 1,
-          nachMs: letzte >= juengste ? 0 : letzte,
+          nachMs: letzte >= juengste ? 0 : bis,
           istHeute: letzte >= juengste};
 }
 

@@ -616,7 +616,18 @@ function _buildStories(){
       if(!matchObj) continue;
       const t = mts(matchObj);
       if(t < cutoff) continue;
-      arr.forEach(e => events.push({...e, when: new Date(matchObj.created_at), matchId: mid}));
+      // Was einen ganzen Tag beschreibt, steht am Ende dieses Tages und
+      // nicht in der Karte seiner letzten Partie: es entsteht erst, wenn der
+      // Tag zu ist, und jene Karte stand da schon (`tagEnde`,
+      // `getBadgeEarnedCache`). 23:57, unter dem Spieler des Tages (23:59)
+      // und dem härtesten Tag (23:58): in derselben Minute wie sie stand
+      // „Julian holt ‚Comeback-Tag'" als zweite Karte über denselben Spieler.
+      arr.forEach(e => {
+        const te = e.meta && e.meta.tagEnde;
+        let when = new Date(matchObj.created_at);
+        if(te){ when = new Date(te + 'T00:00:00'); when.setHours(23, 57, 0, 0); }
+        events.push({...e, when, matchId: mid, tagEnde: te || null});
+      });
     }
     // Die Partie ist die Identitaet einer Verleihung. Nur echte Doubletten
     // desselben Events werden entfernt; eine spaetere Auszeichnung darf die
@@ -714,7 +725,7 @@ function _buildStories(){
         prio: rarPrio,
         // Der Rang dieser Verleihung gehoert ihrem Match, nicht dem spaeteren
         // Profilstand. Die Anlassgrafik speichert ihn im visuellen Snapshot.
-        dataRef: {type:'badge_unlocked', playerId: ev.playerId, badgeId: ev.badge.id, badgeName: ev.badge.name, matchId: ev.matchId, rarity: rar, rang:_bRang(ev), nemesisOppId: _nemOpp || undefined}
+        dataRef: {type:'badge_unlocked', playerId: ev.playerId, badgeId: ev.badge.id, badgeName: ev.badge.name, matchId: ev.tagEnde ? undefined : ev.matchId, tag: ev.tagEnde || undefined, rarity: rar, rang:_bRang(ev), nemesisOppId: _nemOpp || undefined}
       });
     });
     // ── Die kleinen Marken einer Partie stehen zusammen ────────────
@@ -738,14 +749,14 @@ function _buildStories(){
     });
     const _markenPartie = {};
     _kleine.forEach(ev => {
-      const k = ev.matchId ? 'm:' + ev.matchId : 't:' + tagKey(ev.when.getTime());
+      const k = ev.matchId && !ev.tagEnde ? 'm:' + ev.matchId : 't:' + tagKey(ev.when.getTime());
       (_markenPartie[k] = _markenPartie[k] || []).push(ev);
     });
     Object.keys(_markenPartie).forEach(key => {
       const l = _markenPartie[key].slice().sort((a, b) => a.when - b.when);
       const tag = tagKey(l[l.length - 1].when.getTime());
       const namen = [...new Set(l.map(ev => nameOf(ev.playerId)))];
-      const matchIds = [...new Set(l.map(ev => ev.matchId).filter(Boolean))];
+      const matchIds = [...new Set(l.map(ev => ev.tagEnde ? null : ev.matchId).filter(Boolean))];
       const gemeinsamesMatch = matchIds.length === 1
         && l.every(ev => ev.matchId === matchIds[0]) ? matchIds[0] : null;
       const zeile = ev => `${nameOf(ev.playerId)} holt „${ev.badge.name}" zum ${_bRang(ev)}. Mal`;
@@ -761,7 +772,8 @@ function _buildStories(){
         // fuer jede Auszeichnung gilt [§C33].
         desc: l.length === 1
           ? String(l[0].badge.desc || '').trim().replace(/([^.!?])$/, '$1.')
-          : `${l.length} Auszeichnungen in dieser Partie. ` + l.map(zeile).join(', ') + '.',
+          : `${l.length} Auszeichnungen ${gemeinsamesMatch ? 'in dieser Partie' : 'an diesem Tag'}. `
+            + l.map(zeile).join(', ') + '.',
         when: l[l.length - 1].when,
         prio: STORY_PRIO.badge_marken,
         dataRef: {type:'badge_marken', tag,
@@ -772,7 +784,7 @@ function _buildStories(){
                   matchId: gemeinsamesMatch,
                   marken: l.map(ev => ({pid:ev.playerId, badgeId:ev.badge.id,
                                         name:ev.badge.name, rang:_bRang(ev),
-                                        matchId:ev.matchId || null}))}
+                                        matchId:ev.tagEnde ? null : (ev.matchId || null)}))}
       });
     });
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] badges', e); }

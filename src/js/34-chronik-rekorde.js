@@ -198,6 +198,12 @@ function _chronicleCtx(bisMs){
   const ms = (bisMs ? matches.filter(m => mts(m) <= bisMs) : matches.slice())
     .sort((a,b)=>mts(a)-mts(b));
   const gSim = bisMs ? getSimAt(bisMs) : getGlobalSim();
+  // Was einen ganzen Spieltag beschreibt, fragt nur Tage, die zu sind
+  // (`_tagZu`): „Der makellose Tag" stand nach vier Siegen am Nachmittag in
+  // der Ewigen Tafel, und eine Niederlage am Abend nahm ihn wieder weg;
+  // „Der Tagesabschluss" wertete die jüngste Partie als die letzte des Tages.
+  // Zu ist ein Tag für den Stand, nach dem gefragt wird, nicht für die Uhr.
+  const tagZu = day => _tagZu(day, bisMs || Date.now());
   const pm = pmap();
   const P = {};
   const run = {}, runL = {};              // laufende Sieg-/Niederlagenserie
@@ -525,7 +531,7 @@ function _chronicleCtx(bisMs){
     // Fenster, derselben Mindestbasis und derselben Rechnung — sonst waeren
     // es zwei verschiedene Fragen mit zwei verschiedenen Haltern.
     {
-      const voll = _tagListe.filter(t => _tage[t].length >= 3);
+      const voll = _tagListe.filter(t => _tage[t].length >= 3 && tagZu(t));
       if(voll.length){
         const letzte = [], vorher = [], erste = [], danach = [];
         voll.forEach(t => { const a = _tage[t];
@@ -661,7 +667,7 @@ function _chronicleCtx(bisMs){
       r.forEach(x => { const t = tage[x.day] || (tage[x.day] = {n:0, w:0}); t.n++; if(x.w) t.w++; });
       const q = p.games ? p.wins / p.games : 0;
       Object.keys(tage).sort().forEach(k => { const t = tage[k];
-        if(t.n < 5) return;
+        if(t.n < 5 || !tagZu(k)) return;
         const d = t.w / t.n - q;
         if(p.gtDelta == null || d > p.gtDelta){ p.gtDelta = d; p.gtW = t.w; p.gtN = t.n; p.gtQ = q; p.gtLabel = dLabel(k); }
       });
@@ -781,6 +787,7 @@ function _chronicleCtx(bisMs){
     const dc = dayCount[id] || {}, dw = dayWins[id] || {};
     const dzAll = dayZufall[id] || {};
     Object.keys(dc).forEach(day => {
+      if(!tagZu(day)) return;
       // ── Fügungen, die einen ganzen Abend brauchen [§C35] ───────────
       const dz = dzAll[day];
       if(dz){
