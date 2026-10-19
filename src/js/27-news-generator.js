@@ -2182,6 +2182,42 @@ function _buildStories(){
     });
     return o;
   };
+  // ── Wann ein Wechsel geschah ─────────────────────────────────────
+  // Jede Zeile der Tafel trug die Uhrzeit der letzten Partie des Tages:
+  // „Leon holt ‚Die Steigerung'" stand im Blatt unter 17:17, obwohl es seit
+  // der Partie um 13:54 so war und so blieb. Gesucht wird die Partie, nach
+  // der der Stand des Abends erreicht war und nicht mehr wechselte — von
+  // hinten, Partie für Partie. Jeder Stand wird einmal geschnitten und von
+  // allen Zeilen geteilt.
+  const _tafelPartien = _tafelTag ? matches.filter(m => mts(m) > _tafelTag.vorMs
+    && mts(m) <= _tafelTag.letzte).sort((a, b) => mts(a) - mts(b)) : [];
+  const _tafelSchritte = new Map();
+  const _tafelSchritt = i => {
+    let s = _tafelSchritte.get(i);
+    if(!s){
+      const st = i >= _tafelPartien.length - 1 ? _tafelNach : _storyStand(mts(_tafelPartien[i]));
+      const memo = {};
+      s = {rekorde:() => memo.r || (memo.r = st.rekorde()),
+           chronik:sid => memo.c !== undefined ? memo.c : (memo.c = st.chronik(sid))};
+      _tafelSchritte.set(i, s);
+    }
+    return s;
+  };
+  // `gilt(schritt)` sagt, ob ein Stand den des Abends schon trägt. Zurück
+  // kommt die Partie des Wechsels, wenn einer der Genannten darin spielte,
+  // sonst ihre erste danach — nach ihr galt es schon, und die Zeile steht
+  // bei einer eigenen Partie [§C33]. Erst wenn danach keine mehr kam, ihre
+  // letzte davor.
+  const _tafelWechsel = (gilt, wer) => {
+    if(!_tafelPartien.length) return null;
+    let k = _tafelPartien.length - 1;
+    while(k > 0 && gilt(_tafelSchritt(k - 1))) k--;
+    const dabei = m => (wer || []).some(p => p === m.a1 || p === m.a2 || p === m.b1 || p === m.b2);
+    for(let i = k; i < _tafelPartien.length; i++) if(dabei(_tafelPartien[i])) return _tafelPartien[i];
+    for(let i = k - 1; i >= 0; i--) if(dabei(_tafelPartien[i])) return _tafelPartien[i];
+    return null;
+  };
+  const _gleicheHalter = (x, y) => (x || []).slice().sort().join(',') === (y || []).slice().sort().join(',');
   try {
     if(_tafelTag){
       const _letzteMs = _tafelTag.letzte;
@@ -2252,7 +2288,9 @@ function _buildStories(){
         // er "übernimmt" den Rekord aber nicht von sich selbst.
         if(!wer.length) return;
         if(!wer.some(p => _amTag.has(p))) return;
-        const _mid = _partieVon(wer);
+        const _wechsel = _tafelWechsel(st => { const x = st.rekorde()[def.id];
+          return !!x && _gleicheHalter(x.pids, n.pids) && (art !== 'gesteigert' || x.val === n.val); }, wer);
+        const _mid = _wechsel ? _wechsel.id : _partieVon(wer);
         const neuN = wer.map(nameOf);
         const namen = _namenListe(neuN);
         // Drei Halter „uebernimmt" nicht, sie uebernehmen.
@@ -2377,7 +2415,7 @@ function _buildStories(){
           cat: 'tafel',
           ic: def.ic,
           title, desc,
-          when: _letzteMs,
+          when: _wechsel ? mts(_wechsel) : _letzteMs,
           prio: art === 'erstmals' ? STORY_PRIO.rekord_erstmals
               : art === 'geholt'   ? STORY_PRIO.rekord_geholt
                                    : STORY_PRIO.rekord_gesteigert,
@@ -2631,6 +2669,17 @@ function _buildStories(){
         // sind das die Neuen, sonst alle Halter.
         const wer = art === 'dazu' ? neuLeute : n.pids;
         if(!wer.some(p => _amTag2.has(p))) return;
+        const wechsel = _tafelWechsel(st => { const h = st.chronik(_sid);
+          return !!(h && h[t.id]) && _gleicheHalter(h[t.id].pids, n.pids); }, wer);
+        // Wem dieser Wechsel Prestige gibt oder nimmt: im Monat zählt je
+        // Spieler EIN Eintrag, der wertvollste [§C32]. Holt jemand zehn
+        // Chroniken und behält seine stärkere, bewegen die zehn nichts — und
+        // standen trotzdem alle als „holt" in der Wirkung auf die Laufbahn.
+        const zaehlt = [...new Set(alt.concat(n.pids))].filter(pid => {
+          const v = _tafelVor.profil(pid, _sid), w = _tafelNach.profil(pid, _sid);
+          const vt = v ? v.titleId : '', wt = w ? w.titleId : '';
+          return vt !== wt && (vt === t.id || wt === t.id);
+        });
         const namen = _namenKurz(wer.map(nameOf));
         const mz = wer.length > 1;
         const titel = art === 'erstmals'  ? `${namen} ${mz ? 'holen' : 'holt'} „${t.name}"`
@@ -2732,7 +2781,7 @@ function _buildStories(){
                  : `. ${_namenListe(mitPlus.map(pid => `${nameOf(pid)} +${prestigeDelta[pid]}`))}`
                    + ' Prestige aus diesem Eintrag.')
              : '.');
-        _meldungen.push({t, n, a, punkte, art, zeigt: _zeigt, wer,
+        _meldungen.push({t, n, a, punkte, art, zeigt: _zeigt, wer, wechsel, zaehlt,
           prestigeDelta, titelJeSpieler, zeileText,
           title: titel,
           // Ohne die Punkte: die Karte zeigt sie als grossen Wert, und zweimal
@@ -2760,12 +2809,13 @@ function _buildStories(){
           ic: m.t.ic,
           title: m.title,
           desc: m.desc,
-          when: _letzteMs2,
+          when: m.wechsel ? mts(m.wechsel) : _letzteMs2,
           // Ueber der Insignium-Stufe, unter dem uebernommenen Liga-Rekord:
           // sie ueberlebt damit den Tagesdeckel, ohne die Ewige Tafel zu
           // ueberstimmen [§C33].
           prio: STORY_PRIO.chronik_geholt,
-          dataRef: {type:'chronik_geholt', titleId:m.t.id, sid:_sid, matchId:_partieVon2(m.wer),
+          dataRef: {type:'chronik_geholt', titleId:m.t.id, sid:_sid,
+                    matchId:m.wechsel ? m.wechsel.id : _partieVon2(m.wer), zaehlt:m.zaehlt,
                     // Dieselbe dauerhafte Tafel, derselbe Spieltag, dieselbe
                     // Karte [§11.0e].
                     causalKey:_storyGruppeKey('table', _tafelTag.tag),

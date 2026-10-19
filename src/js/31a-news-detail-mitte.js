@@ -451,11 +451,16 @@ function _ndMitteRoh(s){
           // zeichnen, sonst würde ihre komplette, verworfene Liste gebaut.
           if(teile.length < 4) return '';
           const typ = t => String((t && (t.typ || t.type)) || '');
+          // Unter zwei Gruppen ein Satz, was sie fürs Prestige heißen: die
+          // Wirkung darunter nennt nur, was Prestige bewegt, und ohne den
+          // Satz sah eine Chronik ohne Chip dort wie vergessen aus.
           const gr = [
             {t:'Bestmarken', f:x => typ(x).indexOf('rekord_') === 0
                                  && typ(x) !== 'rekord_gesteigert'},
-            {t:'Monatschroniken', f:x => typ(x).indexOf('chronik_') === 0},
-            {t:'Ausbauten', f:x => typ(x) === 'rekord_gesteigert'}
+            {t:'Monatschroniken', f:x => typ(x).indexOf('chronik_') === 0,
+             h:'Fürs Prestige zählt je Spieler und Monat eine Chronik, die wertvollste.'},
+            {t:'Ausbauten', f:x => typ(x) === 'rekord_gesteigert',
+             h:'Ein besserer Wert beim selben Halter ändert das Prestige nicht.'}
           ];
           // ── Die Partie steht einmal, über ihren Zeilen ────────────────
           // Jede Zeile trug „· 17:17 · 10:4", und zehn Monatschroniken aus
@@ -482,7 +487,8 @@ function _ndMitteRoh(s){
             l.forEach(x => rest.splice(rest.indexOf(x), 1));
             // Die Zahl steht in der Reihe darüber; nur ohne sie zählt die
             // Überschrift selbst.
-            if(l.length) aus.push(rcpAbschnitt(g.t, uebersicht ? 0 : l.length) + liste(l));
+            if(l.length) aus.push(rcpAbschnitt(g.t, uebersicht ? 0 : l.length)
+              + (g.h ? `<div class="nw-hinweis">${esc(g.h)}</div>` : '') + liste(l));
           });
           if(rest.length) aus.push(liste(rest));
           return aus.join('');

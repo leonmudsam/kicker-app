@@ -2639,13 +2639,11 @@
   .nd-wk-z{flex:0 0 48px;width:48px;height:48px;display:block}
   .nd-wk-z svg{width:100%;height:100%;display:block}
   .nd-wk-t{flex:1 1 auto;min-width:0;display:block}
-  .nd-wk-n{display:flex;align-items:baseline;gap:6px;min-width:0;
+  .nd-wk-n{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 6px;min-width:0;
     font-family:'Archivo Black',sans-serif;font-size:12.5px;color:var(--ink)}
-  .nd-wk-n b{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;
-    white-space:nowrap;font-weight:inherit;font-family:inherit}
-  .nd-wk-n em{flex:1 1 auto;min-width:0;font-family:'Sometype Mono',monospace;
-    font-size:9px;font-style:normal;color:var(--muted);letter-spacing:.06em;
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .nd-wk-n b{flex:0 0 auto;max-width:100%;overflow-wrap:anywhere;font-weight:inherit;font-family:inherit}
+  .nd-wk-n em{flex:0 1 auto;min-width:0;font-family:'Sometype Mono',monospace;
+    font-size:9px;font-style:normal;color:var(--muted);letter-spacing:.06em}
   .nd-wk-b{display:flex;height:7px;border-radius:999px;overflow:hidden;
     background:var(--surface3);border:1px solid var(--line);margin:6px 0 4px}
   .nd-wk-b i{display:block;height:100%;background:var(--silber);opacity:.5}
@@ -2674,11 +2672,10 @@
   .nd-wk-q b.g{color:var(--gold)}.nd-wk-q b.r{color:var(--red)}
   .nd-wk-p{margin-top:2px;color:var(--faint)}
   .nd-wk-gs{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
-  .nd-wk-g{display:inline-flex;align-items:baseline;gap:4px;max-width:100%;
-    padding:2px 7px;border-radius:999px;font-size:10px;line-height:1.4;
-    color:var(--ink2);background:var(--surface2);border:1px solid var(--line);
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .nd-wk-g b{font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis}
+  .nd-wk-g{display:inline-block;max-width:100%;
+    padding:2px 7px;border-radius:9px;font-size:10px;line-height:1.4;
+    color:var(--ink2);background:var(--surface2);border:1px solid var(--line)}
+  .nd-wk-g b{font-weight:600;color:var(--ink)}
   .nd-wk-g.r{color:var(--red);border-color:rgba(240,86,106,.3);background:rgba(240,86,106,.07)}
   .nd-wk-g.g{border-color:rgba(247,207,74,.28)}
   .nd-chance{background:var(--surface);border:1px solid var(--line);
@@ -5325,6 +5322,8 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   font-size:10px;letter-spacing:.04em;color:var(--muted)}
 .nw-liste + .rcp-section{margin-top:16px}
 .rcp-section + .nw-liste{margin-top:0}
+.nw-hinweis{margin:-4px 2px 9px;font-size:11.5px;line-height:1.45;color:var(--muted)}
+.nw-hinweis + .nw-liste{margin-top:0}
 .nd-sec-z{display:flex;align-items:baseline;gap:8px}
 .nd-sec-r{margin-left:auto;letter-spacing:.06em;color:var(--muted)}
 .nd-sec-r b{color:var(--red);font-weight:700}
@@ -5942,7 +5941,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.19.9839ff4b';
+const BUILD_VERSION='2026.10.19.2342defc';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -20171,6 +20170,30 @@ function _buildStories(){
     });
     return o;
   };
+  const _tafelPartien = _tafelTag ? matches.filter(m => mts(m) > _tafelTag.vorMs
+    && mts(m) <= _tafelTag.letzte).sort((a, b) => mts(a) - mts(b)) : [];
+  const _tafelSchritte = new Map();
+  const _tafelSchritt = i => {
+    let s = _tafelSchritte.get(i);
+    if(!s){
+      const st = i >= _tafelPartien.length - 1 ? _tafelNach : _storyStand(mts(_tafelPartien[i]));
+      const memo = {};
+      s = {rekorde:() => memo.r || (memo.r = st.rekorde()),
+           chronik:sid => memo.c !== undefined ? memo.c : (memo.c = st.chronik(sid))};
+      _tafelSchritte.set(i, s);
+    }
+    return s;
+  };
+  const _tafelWechsel = (gilt, wer) => {
+    if(!_tafelPartien.length) return null;
+    let k = _tafelPartien.length - 1;
+    while(k > 0 && gilt(_tafelSchritt(k - 1))) k--;
+    const dabei = m => (wer || []).some(p => p === m.a1 || p === m.a2 || p === m.b1 || p === m.b2);
+    for(let i = k; i < _tafelPartien.length; i++) if(dabei(_tafelPartien[i])) return _tafelPartien[i];
+    for(let i = k - 1; i >= 0; i--) if(dabei(_tafelPartien[i])) return _tafelPartien[i];
+    return null;
+  };
+  const _gleicheHalter = (x, y) => (x || []).slice().sort().join(',') === (y || []).slice().sort().join(',');
   try {
     if(_tafelTag){
       const _letzteMs = _tafelTag.letzte;
@@ -20204,7 +20227,9 @@ function _buildStories(){
           ? n.pids.filter(id => altPids.indexOf(id) < 0) : n.pids;
         if(!wer.length) return;
         if(!wer.some(p => _amTag.has(p))) return;
-        const _mid = _partieVon(wer);
+        const _wechsel = _tafelWechsel(st => { const x = st.rekorde()[def.id];
+          return !!x && _gleicheHalter(x.pids, n.pids) && (art !== 'gesteigert' || x.val === n.val); }, wer);
+        const _mid = _wechsel ? _wechsel.id : _partieVon(wer);
         const neuN = wer.map(nameOf);
         const namen = _namenListe(neuN);
         const verb = neuN.length > 1 ? 'übernehmen' : 'übernimmt';
@@ -20255,7 +20280,7 @@ function _buildStories(){
           cat: 'tafel',
           ic: def.ic,
           title, desc,
-          when: _letzteMs,
+          when: _wechsel ? mts(_wechsel) : _letzteMs,
           prio: art === 'erstmals' ? STORY_PRIO.rekord_erstmals
               : art === 'geholt'   ? STORY_PRIO.rekord_geholt
                                    : STORY_PRIO.rekord_gesteigert,
@@ -20389,6 +20414,13 @@ function _buildStories(){
         const art = _halterFall(alt, n.pids);
         const wer = art === 'dazu' ? neuLeute : n.pids;
         if(!wer.some(p => _amTag2.has(p))) return;
+        const wechsel = _tafelWechsel(st => { const h = st.chronik(_sid);
+          return !!(h && h[t.id]) && _gleicheHalter(h[t.id].pids, n.pids); }, wer);
+        const zaehlt = [...new Set(alt.concat(n.pids))].filter(pid => {
+          const v = _tafelVor.profil(pid, _sid), w = _tafelNach.profil(pid, _sid);
+          const vt = v ? v.titleId : '', wt = w ? w.titleId : '';
+          return vt !== wt && (vt === t.id || wt === t.id);
+        });
         const namen = _namenKurz(wer.map(nameOf));
         const mz = wer.length > 1;
         const titel = art === 'erstmals'  ? `${namen} ${mz ? 'holen' : 'holt'} „${t.name}"`
@@ -20442,7 +20474,7 @@ function _buildStories(){
                  : `. ${_namenListe(mitPlus.map(pid => `${nameOf(pid)} +${prestigeDelta[pid]}`))}`
                    + ' Prestige aus diesem Eintrag.')
              : '.');
-        _meldungen.push({t, n, a, punkte, art, zeigt: _zeigt, wer,
+        _meldungen.push({t, n, a, punkte, art, zeigt: _zeigt, wer, wechsel, zaehlt,
           prestigeDelta, titelJeSpieler, zeileText,
           title: titel,
           desc: (n.ev ? _evSatz(n.ev) + '. ' : '')
@@ -20457,9 +20489,10 @@ function _buildStories(){
           ic: m.t.ic,
           title: m.title,
           desc: m.desc,
-          when: _letzteMs2,
+          when: m.wechsel ? mts(m.wechsel) : _letzteMs2,
           prio: STORY_PRIO.chronik_geholt,
-          dataRef: {type:'chronik_geholt', titleId:m.t.id, sid:_sid, matchId:_partieVon2(m.wer),
+          dataRef: {type:'chronik_geholt', titleId:m.t.id, sid:_sid,
+                    matchId:m.wechsel ? m.wechsel.id : _partieVon2(m.wer), zaehlt:m.zaehlt,
                     causalKey:_storyGruppeKey('table', _tafelTag.tag),
                     playerIds:m.wer.slice(), vorher:(m.a && m.a.pids) || [],
                     alle:m.n.pids.slice(), chronName:m.t.name,
@@ -22564,6 +22597,8 @@ function _consolidateStoriesLegacy(list){
                                         halter: Array.isArray((t.dataRef||{}).halter)
                                                 ? t.dataRef.halter : ((t.dataRef||{}).alle || []),
                                         vorher: (t.dataRef||{}).vorher || [],
+                                        zaehlt: Array.isArray((t.dataRef||{}).zaehlt)
+                                                ? t.dataRef.zaehlt : null,
                                         rname: (t.dataRef||{}).rekordName
                                                || (t.dataRef||{}).chronName || '',
                                         marke: (t.dataRef||{}).zeigt === true
@@ -26901,11 +26936,12 @@ function _ndWirkungBlock(je, gruende, tagMs){
 
 function _ndWirkungsGruende(teile){
   const out = {};
-  const dazu = (pid, g) => { (out[pid] = out[pid] || []).push(g); };
   (teile || []).forEach(t => {
     const nach = t.halter || [], vor = t.vorher || [];
     const name = t.rname || '';
     if(!name || (!nach.length && !vor.length)) return;
+    const nur = Array.isArray(t.zaehlt) ? t.zaehlt : null;
+    const dazu = (pid, g) => { if(!nur || nur.indexOf(pid) >= 0) (out[pid] = out[pid] || []).push(g); };
     nach.forEach(pid => {
       if(vor.indexOf(pid) < 0) dazu(pid, {verb: vor.length ? 'übernimmt' : 'holt', name, neg:false});
       else if(nach.length < vor.length) dazu(pid, {verb:'hält allein', name, neg:false});
@@ -27241,7 +27277,7 @@ function _ndChronikBlatt(s){
   const lb = d.laufbahn || {}, je = {};
   Object.keys(lb).forEach(id => { if(pm[id] && lb[id] && lb[id].vor != null && lb[id].nach != null) je[id] = lb[id]; });
   const wirkung = Object.keys(je).length
-    ? _ndWirkungBlock(je, _ndWirkungsGruende([{halter:neu, vorher:vor, rname:name}]), new Date(s.when).getTime()) : '';
+    ? _ndWirkungBlock(je, _ndWirkungsGruende([{halter:neu, vorher:vor, rname:name, zaehlt:d.zaehlt}]), new Date(s.when).getTime()) : '';
   const beitragIds = (Array.isArray(d.playerIds) ? d.playerIds : []).filter(id => pm[id]);
   const laufbahn = _newsChronikPrestige(d);
   const ebenen = beitragIds.length
@@ -27972,8 +28008,10 @@ function _ndMitteRoh(s){
           const gr = [
             {t:'Bestmarken', f:x => typ(x).indexOf('rekord_') === 0
                                  && typ(x) !== 'rekord_gesteigert'},
-            {t:'Monatschroniken', f:x => typ(x).indexOf('chronik_') === 0},
-            {t:'Ausbauten', f:x => typ(x) === 'rekord_gesteigert'}
+            {t:'Monatschroniken', f:x => typ(x).indexOf('chronik_') === 0,
+             h:'Fürs Prestige zählt je Spieler und Monat eine Chronik, die wertvollste.'},
+            {t:'Ausbauten', f:x => typ(x) === 'rekord_gesteigert',
+             h:'Ein besserer Wert beim selben Halter ändert das Prestige nicht.'}
           ];
           const liste = l => {
             const gruppen = [];
@@ -27994,7 +28032,8 @@ function _ndMitteRoh(s){
           gr.forEach(g => {
             const l = rest.filter(g.f);
             l.forEach(x => rest.splice(rest.indexOf(x), 1));
-            if(l.length) aus.push(rcpAbschnitt(g.t, uebersicht ? 0 : l.length) + liste(l));
+            if(l.length) aus.push(rcpAbschnitt(g.t, uebersicht ? 0 : l.length)
+              + (g.h ? `<div class="nw-hinweis">${esc(g.h)}</div>` : '') + liste(l));
           });
           if(rest.length) aus.push(liste(rest));
           return aus.join('');

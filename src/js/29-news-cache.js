@@ -1597,6 +1597,11 @@ function _consolidateStoriesLegacy(list){
                                         halter: Array.isArray((t.dataRef||{}).halter)
                                                 ? t.dataRef.halter : ((t.dataRef||{}).alle || []),
                                         vorher: (t.dataRef||{}).vorher || [],
+                                         // Wem eine Chronik wirklich Prestige
+                                         // gibt oder nimmt [§C32]; fehlt es,
+                                         // stammt die Zeile von vorher.
+                                        zaehlt: Array.isArray((t.dataRef||{}).zaehlt)
+                                                ? t.dataRef.zaehlt : null,
                                         rname: (t.dataRef||{}).rekordName
                                                || (t.dataRef||{}).chronName || '',
                                          // Ein Spieler zeigt je Monat nur EINE
