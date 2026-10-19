@@ -5942,7 +5942,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.19.6582f785';
+const BUILD_VERSION='2026.10.19.9839ff4b';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -18455,7 +18455,7 @@ function _insBestVor(vonMs, bestand){
   const aktiv = new Set((players || []).filter(p => ligaAktiv(p)).map(p => p.id));
   const best = {};
   const merk = (pid, pos) => { if(aktiv.has(pid) && isFinite(pos) && (best[pid] == null || pos > best[pid])) best[pid] = pos; };
-  const l = Array.isArray(bestand) ? bestand : [];
+  const l = Array.isArray(bestand) ? _tafelFassungen(bestand) : [];
   const alt = l.filter(x => { const d = (x && x.dataRef) || {}; return d.type === 'insignium_tag' && d.best && String(d.tag) < tag; })
     .sort((a, b) => String(b.dataRef.tag).localeCompare(String(a.dataRef.tag)))[0];
   if(alt) Object.keys(alt.dataRef.best).forEach(pid => merk(pid, Number(alt.dataRef.best[pid])));
@@ -20567,6 +20567,16 @@ function _buildStories(){
     });
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] visual snapshot failed', e); }
 
+  if(_tafelTag){
+    const fassung = _tafelFassung(_tafelTag.tag, _tafelTag.letzte);
+    stories.forEach(s => {
+      const d = s.dataRef || {};
+      if(!STORY_TAFEL_UPDATE.has(d.type) || tagKey(s.when) !== _tafelTag.tag) return;
+      s.id += '~' + fassung;
+      s.dataRef = Object.assign({}, d, {fassung});
+    });
+  }
+
   stories.sort((a,b) => {
     const dt = b.when - a.when;
     if(dt !== 0) return dt;
@@ -21746,7 +21756,7 @@ function _consolidateStories(list){
     if(!l){ l = new Map(); duellMoment.set(key, l); }
     l.set(n, m);
   })));
-  const quelle = _insAltZuTag(ohneStoriesNachAbschied(list).filter(s => !_storyAbgemeldet(s && s.id) && !_storyWiderrufen(s)));
+  const quelle = _insAltZuTag(_tafelFassungen(ohneStoriesNachAbschied(list).filter(s => !_storyAbgemeldet(s && s.id) && !_storyWiderrufen(s))));
   const marken = new Map(), normal = [];
   quelle.forEach(s => {
     const d = s.dataRef || {}, l = d.marken || [];
@@ -22679,6 +22689,37 @@ function _storyIstTafelUpdate(s, jetzt){
   if(!STORY_TAFEL_UPDATE.has(d.type) || !w) return false;
   return tagKey(w) === tagKey(jetzt || new Date());
 }
+function _tafelFassung(tag, letzteMs){
+  return String(letzteMs) + (_tagZu(tag) ? 'z' : '');
+}
+function _tafelFassungen(list){
+  if(!Array.isArray(list)) return list;
+  const art = d => !STORY_TAFEL_UPDATE.has(d.type) ? '' : /^insignium_/.test(d.type) ? 'ins' : 'tafel';
+  const gruppen = new Map();
+  list.forEach(s => {
+    const d = (s && s.dataRef) || {}, a = art(d);
+    if(!a) return;
+    const k = a + '|' + tagKey(s.when);
+    const g = gruppen.get(k) || {max:'', alle:new Set()};
+    const f = String(d.fassung || '');
+    g.alle.add(f);
+    if(f > g.max) g.max = f;
+    gruppen.set(k, g);
+  });
+  if(!gruppen.size) return list;
+  const letzte = new Map();
+  (matches || []).forEach(m => { const t = mts(m), k = tagKey(t); if(t > (letzte.get(k) || 0)) letzte.set(k, t); });
+  const gilt = new Map();
+  gruppen.forEach((g, k) => {
+    const tag = k.slice(k.indexOf('|') + 1);
+    const soll = letzte.has(tag) ? _tafelFassung(tag, letzte.get(tag)) : '';
+    gilt.set(k, g.alle.has(soll) ? soll : g.max);
+  });
+  return list.filter(s => {
+    const d = (s && s.dataRef) || {}, a = art(d);
+    return !a || String(d.fassung || '') === gilt.get(a + '|' + tagKey(s.when));
+  });
+}
 function _mergeStorySnapshots(bestand, neu, jetzt){
   const byId = new Map();
   (Array.isArray(bestand) ? bestand : []).forEach(s => { if(s && s.id) byId.set(s.id, s); });
@@ -22693,7 +22734,7 @@ async function syncStoriesViaDb(){
   let dbBestand = null;
   try {
     dbBestand = await _loadStoriesFromDb();
-    if(Array.isArray(dbBestand)) _cache._stories = dbBestand;
+    if(Array.isArray(dbBestand)) _cache._stories = _mergeStorySnapshots(dbBestand, _cache._stories, new Date());
   } catch(e){}
   let generated = await _storiesImWorker();
   if(!generated){
@@ -22756,31 +22797,17 @@ function _storyStableJson(v){
   }
   return JSON.stringify(v);
 }
-function _storyPersistenzSignatur(s){
-  if(!s) return '';
-  return _storyStableJson({cat:s.cat, ic:s.ic || null, title:s.title, desc:s.desc,
-    dataRef:s.dataRef || {}, prio:s.prio | 0,
-    when:(s.when instanceof Date ? s.when : new Date(s.when)).toISOString()});
-}
 async function _uploadNewStoriesToDb(stories, bestand){
   if(!stories || !stories.length) return;
-  const jetzt = new Date();
-  const bekannt = new Map((Array.isArray(bestand) ? bestand : []).map(s => [s.id, s]));
-  const normal = stories.filter(s => !_storyIstTafelUpdate(s, jetzt) && !bekannt.has(s.id)).map(_storyToRow);
-  const tafel = stories.filter(s => {
-    if(!_storyIstTafelUpdate(s, jetzt)) return false;
-    const alt = bekannt.get(s.id);
-    return !alt || _storyPersistenzSignatur(alt) !== _storyPersistenzSignatur(s);
-  }).map(_storyToRow);
+  const bekannt = new Set((Array.isArray(bestand) ? bestand : []).map(s => s.id));
+  const neu = stories.filter(s => !bekannt.has(s.id)).map(_storyToRow);
   const BATCH_SIZE = 200;
-  for(const [rows, ignoreDuplicates] of [[normal, true], [tafel, false]]){
-    for(let i = 0; i < rows.length; i += BATCH_SIZE){
-      const chunk = rows.slice(i, i + BATCH_SIZE);
-      const { error } = await sb.from('stories').upsert(chunk, {
-        onConflict: 'id', ignoreDuplicates,
-      });
-      if(error) throw error;
-    }
+  for(let i = 0; i < neu.length; i += BATCH_SIZE){
+    const chunk = neu.slice(i, i + BATCH_SIZE);
+    const { error } = await sb.from('stories').upsert(chunk, {
+      onConflict: 'id', ignoreDuplicates: true,
+    });
+    if(error) throw error;
   }
 }
 

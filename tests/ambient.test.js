@@ -1568,7 +1568,13 @@ const _stabil = JSON.parse(K.eval(`JSON.stringify((function(){
         const p = schritte[i].aus[id].lastIndexOf('@');
         spaeter.add(schritte[i].aus[id].slice(0, p) + '|' + schritte[i].aus[id].slice(p + 1));
       });
+      // Eine Fassung der Tafel weicht der jüngeren desselben Tages: sie ist
+      // der ganze Stand nach der späteren Partie [§C33].
+      const fassungJetzt = [...jetzt].reduce((mx, x) => {
+        const f = String(x).split('~')[1] || ''; return f > mx ? f : mx; }, '');
       const ersetzt = id => {
+        const f = String(id).split('~')[1];
+        if(f && fassungJetzt > f) return true;
         const v = schritte[i-1].aus[id]; if(!v) return false;
         const p = v.lastIndexOf('@');
         const sache = v.slice(0, p), ms = Number(v.slice(p + 1));
@@ -1601,10 +1607,12 @@ const _stabil = JSON.parse(K.eval(`JSON.stringify((function(){
       const k = String(d.type || '').indexOf('rekord_') === 0 ? 'rek|' + d.rekordId
               : d.type === 'chronik_geholt' ? 'chr|' + d.titleId : null;
       if(!k) return;
-      (jeSache[k] = jeSache[k] || []).push(s.id);
+      // Gezählt wird die Karte, nicht ihre Fassung: jede Partie des Tages
+      // schreibt eine neue Fassung derselben Zeile (mit ~).
+      (jeSache[k] = jeSache[k] || new Set()).add(String(s.id).split('~')[0]);
     });
-    const mehrfach = Object.keys(jeSache).filter(k => jeSache[k].length > 1)
-      .map(k => k + ' \u00d7' + jeSache[k].length);
+    const mehrfach = Object.keys(jeSache).filter(k => jeSache[k].size > 1)
+      .map(k => k + ' \u00d7' + jeSache[k].size);
     return {tag: ziel, partien: tage[ziel].length, weg, gewandert, mehrfach,
             sachen: Object.keys(jeSache).length,
             karten: schritte[schritte.length-1].zeit.length};
@@ -1625,6 +1633,61 @@ ok(_stabil.gewandert.length > 0
 ok(_stabil.sachen > 0 && _stabil.mehrfach.length === 0,
    'ein Rekord und eine Chronik tragen je Spieltag genau eine Karte',
    _stabil.mehrfach.join(' | ') || _stabil.sachen + ' Eintraege');
+
+// ── Jede Fassung der Tafel ist eine eigene Zeile ────────────────────
+// Die Datenbank erlaubt nur Einfügen. Am 19.10. stand dort die Tafel von
+// 13:54, und jeder Versuch, sie nach der Partie um 17:17 zu ändern,
+// scheiterte: der Feed zeigte bis zum Ende des Generators die alte Karte und
+// danach die neue, die Zeichen-Karte ebenso. Nachgestellt wird ein Bestand
+// mit der frühen Fassung und ein Gerät mit der späten — in beiden
+// Reihenfolgen muss genau die späte gelten.
+const _fassung = JSON.parse(K.eval(`JSON.stringify((function(){
+  const alle = matches;
+  try {
+    const tage = {};
+    alle.forEach(m => { (tage[tagKey(mts(m))] = tage[tagKey(mts(m))] || []).push(m); });
+    const ziel = Object.keys(tage).sort().pop();
+    const bis = alle.length - tage[ziel].length;
+    const lauf = n => { matches = alle.slice(0, bis + n); invalidateCache();
+      _cache._stories = null; _cache._consolFrom = null; _cache._frischVon = null;
+      return _buildStories().slice(); };
+    const frueh = lauf(2), vorletzt = lauf(tage[ziel].length - 1), spaet = lauf(tage[ziel].length);
+    const wachsend = l => l.filter(s => STORY_TAFEL_UPDATE.has((s.dataRef||{}).type) && tagKey(s.when) === ziel);
+    const fs = (wachsend(spaet)[0] || {dataRef:{}}).dataRef.fassung || '';
+    const sicht = (bestand, neu) => {
+      _cache._stories = _mergeStorySnapshots(bestand, neu, new Date());
+      _cache._consolFrom = null; _cache._snapshotConsolFrom = null;
+      const l = _consolidateStories(_cache._stories).filter(s => tagKey(s.when) === ziel);
+      const ids = [];
+      l.forEach(s => { const d = s.dataRef || {};
+        if(d.quelle === 'tafel') (d.teile || []).forEach(t => ids.push(String(t.id || '')));
+        else if(STORY_TAFEL_UPDATE.has(d.type)) ids.push(String(s.id)); });
+      return {tafel:l.filter(s => (s.dataRef||{}).quelle === 'tafel').length,
+              zeichen:l.filter(s => (s.dataRef||{}).type === 'insignium_tag').length, ids};
+    };
+    const a = sicht(frueh, spaet), b = sicht(spaet, frueh);
+    // Hochgeladen wird nur eingefügt: ein Upsert, der eine Zeile ändern
+    // müsste, scheitert an der Datenbank und nahm die neuen Zeilen mit.
+    // Dafür darf eine spätere Fassung keine ID einer früheren tragen.
+    const idsVor = new Set(wachsend(vorletzt).map(x => x.id));
+    const gleicheIds = wachsend(spaet).filter(x => idsVor.has(x.id)).map(x => x.id);
+    return {vorN:wachsend(vorletzt).length, fruehN:wachsend(frueh).length, spaetN:wachsend(spaet).length, fs,
+            verschieden:fs !== ((wachsend(frueh)[0] || {dataRef:{}}).dataRef.fassung || ''),
+            a, b, gleicheIds};
+  } finally {
+    matches = alle; invalidateCache();
+    _cache._stories = null; _cache._consolFrom = null; _cache._frischVon = null;
+  }
+})())`));
+ok(_fassung.fruehN > 0 && _fassung.spaetN > 0 && _fassung.verschieden,
+   'die Tafel eines Spieltags hat nach der zweiten und nach der letzten Partie je eine eigene Fassung',
+   _fassung.fruehN + ' / ' + _fassung.spaetN + ' Zeilen, ' + _fassung.fs);
+ok([_fassung.a, _fassung.b].every(x => x.tafel === 1 && x.zeichen <= 1 && x.ids.length > 0
+     && x.ids.every(id => id.endsWith('~' + _fassung.fs))),
+   'aus früher und später Fassung zeigt der Feed genau eine Tafel, die späte, in jeder Reihenfolge',
+   JSON.stringify([_fassung.a, _fassung.b]).slice(0, 300));
+ok(_fassung.vorN > 0 && _fassung.gleicheIds.length === 0,
+   'eine spätere Fassung trägt nur neue IDs, hochgeladen wird nur eingefügt', _fassung.gleicheIds.slice(0, 4).join(', ') || 'keine gleiche');
 
 // ── Der Tafel-Moment sagt ueberall dieselbe Zahl ─────────────────────
 // Im Blatt stand „+2 PRESTIGE" in der Zahlenreihe und drei Zeilen darunter

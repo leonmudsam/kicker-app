@@ -2937,6 +2937,25 @@ function _buildStories(){
     });
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] visual snapshot failed', e); }
 
+  // ── Jede Fassung der Tafel ist eine eigene Zeile ──
+  // Die Ewige Tafel und die Insignium-Karte wachsen mit jeder Partie des
+  // Tages. Gespeichert wurden sie unter derselben ID per Upsert, aber die
+  // Datenbank erlaubt nur Einfügen: jede spätere Fassung scheiterte, und am
+  // 19.10. stand dort die Tafel von 13:54, während die Partie um 17:17 sie
+  // längst verändert hatte. Bis der Generator lief, zeigte der Feed die alte
+  // Karte, danach die neue — und nach Mitternacht für immer die alte. Jede
+  // Fassung trägt deshalb den Stand, aus dem sie gerechnet ist, in ID und
+  // `fassung`; gezeigt wird je Tag nur die jüngste (`_tafelFassungen`).
+  if(_tafelTag){
+    const fassung = _tafelFassung(_tafelTag.tag, _tafelTag.letzte);
+    stories.forEach(s => {
+      const d = s.dataRef || {};
+      if(!STORY_TAFEL_UPDATE.has(d.type) || tagKey(s.when) !== _tafelTag.tag) return;
+      s.id += '~' + fassung;
+      s.dataRef = Object.assign({}, d, {fassung});
+    });
+  }
+
   // ── Final-Sort ──
   // v8.2: PURE Chronologie (User-Wunsch). Neueste Story zuerst, älteste
   // zuletzt — in ALLEN Views (Mini-Popup, Feed, Filter) konsistent.

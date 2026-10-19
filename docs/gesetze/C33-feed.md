@@ -3,7 +3,7 @@
 ## Regel
 
 - **Snapshot-Vertrag, er geht allem anderen vor:** eine veröffentlichte Zeile in `stories` bleibt in ID, Text, Zeitpunkt, Priorität, Beteiligten und Bild unverändert; weder gleicher Wortlaut noch spätere Stände noch ein Kontingent entfernen sie. Wo die Herleitung von Deckeln, Auffrischen oder Wegfallen erzählt, beschreibt sie, was der Generator VOR dem Veröffentlichen tut, oder einen früheren Stand. `_newsTexteAuffrischen` ist nur noch ein Identitätsweg; `_consolidateStories` verdichtet verlustfrei (`memberIds`, `sourceIds`). Das Fenster (`NEWS_FENSTER_TAGE`, vierzehn Tage) wird vollständig geladen.
-- Veränderlich sind nur zwei Karten des heutigen Tages, beide eine je Tag und per Upsert gewachsen: die Ewige Tafel (`tafel:<Datum>`) und die Insignium-Karte (`instag_<Datum>`). Vergangene Tage bleiben Snapshots.
+- Zwei Karten wachsen mit dem Spieltag: die Ewige Tafel (`tafel:<Datum>`) und die Insignium-Karte (`instag_<Datum>`). Sie wachsen in Fassungen, nie durch Ändern einer Zeile: jede Fassung ist der ganze Stand des Tages, eingefügt unter `<ID>~<Fassung>` (`_tafelFassung`: die letzte Partie des Tages, dahinter `z`, wenn der Tag zu ist), und gezeigt wird je Tag nur eine (`_tafelFassungen`): die zu den vorhandenen Partien passende, sonst die jüngste. Hochgeladen wird nur eingefügt; die Datenbank erlaubt kein Ändern.
 - Jede Story, die einen Spieler nennt, zeigt ihn (`_newsPids`, `_newsGesichtHtml`): bis drei Beteiligte alle Gesichter, ab vier zwei und die Zahl der übrigen („+2“), nie „+1“. Die Farbfamilie folgt der Kartenform, nicht der Datenkategorie [§C25].
 - Eine Partie, eine Karte: jede Partie bekommt ihre Karte (`spiel_<Partie>`), und alles mit derselben `matchId` bündelt sich daran, auch Breaking, seltene Auszeichnungen und negative Zeilen (`neg`). Verschiedene Match-IDs werden nie über eine Minute zusammengelegt. Das Ergebnisband steht einmal (`bandFremd`). Keine Meldung einer Partie entsteht ohne die Karte ihrer Partie (`_buildStories`, außer der Ewigen Tafel, die nach Tag bündelt). Die Schlagzeile eines Bündels fasst seine Anlässe als Reihe zusammen: höchstens drei, der stärkste zuerst (`_leitWert`), eine Pleite hinter einem Sieg, jeder mit genau seinen Leuten, zwei Anlässe derselben Leute unter einem Namen („Elo-Höchststand und Elo-Marke für Maxi“, `_gruppen`), dasselbe für mehrere in der Mehrzahl, höchstens 96 Zeichen; das Ergebnis hängt sich als Ort an, wenn Platz ist. Auf der Karte einer Partie ist jede Zeile ein Satz (`_satzZeile`), der sagt, was genau passiert ist: welche Marken, wie viele Siege oder Pleiten in Folge, wie viele der letzten Partien; das Blatt erklärt es. Der Fuß zeigt den schwersten Anlass mit eigener Zeichnung, gewogen wie in der Schlagzeile (`_spFussFakt`); ohne einen wählt er unter allen zutreffenden Zeichnungen mit Abzug für die Füße der Partien davor (`_spFussSpur`), nie zweimal dieselbe hintereinander.
 - Kopf und Fuß einer Partie folgen dem Anlass in fester Rangfolge (`_spAnlass`, `_spBild`); die gewöhnliche Partie hat Formen mit Regel und Gewicht (`SP_FORM`); sechs davon (`v2`: Tauziehen, Münzwurf, weiße Weste als Kopf, Uhr des Tages, Überholt, Duo gegen Duo als Fuß) gibt es nur für neue Karten, die alte Formkette kennt sie nicht; neue Karten speichern ihr Bild als `dataRef.visual` Version 2 (`score`, `occasion`, `_spScoreWahl`), alte bleiben über den V1-Pfad lesbar. Jedes Bauteil trennt `…Daten` und `…Bild`; nichts wird gekürzt oder geschrumpft (`_spPasst`, `.sp-lg`).
@@ -85,9 +85,17 @@ Wechsel. Die Leiter ist EINE Zeile je Tag (`instag_<Datum>`), bei jedem Lauf
 neu gegen den Stand vor dem Spieltag gerechnet. Vorher stand jede neue Stufe
 als eigene Zeile in der Tafel, ein Grad gar nicht und ein Rückfall auch
 nicht, und eine Stufe, die am Mittag erreicht und am Abend wieder verloren
-war, blieb als „trägt den Volutenkranz" stehen. Nur diese heutigen Zeilen
-dürfen per Upsert und Realtime-`UPDATE` wachsen; Karten früherer Tage und
-alle anderen Stories bleiben Snapshots.
+war, blieb als „trägt den Volutenkranz" stehen.
+
+Gewachsen sind beide zuerst per Upsert unter derselben ID. Die Tabelle
+`stories` erlaubt aber nur Einfügen, kein Ändern: jede spätere Fassung
+scheiterte, und der ganze Stapel des Uploads mit ihr. Am 19.10. stand in der
+Datenbank die Tafel und die Insignium-Karte von 13:54, obwohl die Partien
+um 14:04 und 17:17 beide verändert hatten. Bis der Generator fertig war,
+zeigte der Feed die alte Karte, danach die neue, und nach Mitternacht für
+immer die alte; das Blatt rechnete neu und zeigte die richtige. Seither ist
+jede Fassung eine eigene Zeile, und die Auswahl der geltenden geschieht
+beim Lesen.
 
 Neue Matchstories speichern die Darstellung als `dataRef.visual` Version 2:
 `score` enthält eine immer sichtbare Scoregrafik, `occasion` höchstens eine
