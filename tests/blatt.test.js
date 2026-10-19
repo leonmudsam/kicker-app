@@ -3279,6 +3279,36 @@ const ok = (c, msg, det) => {
      'neue Daten im selben Reiter nehmen das Licht nicht mit, es läuft an seiner Stelle weiter', JSON.stringify(betreten));
   ok(betreten.rest === 0 && betreten.zweitesMal === '', 'nach seiner Zeit ist nichts übrig, und gleich zurück glänzt der Reiter nicht noch einmal',
      JSON.stringify([betreten.rest, betreten.zweitesMal]));
+  // Platz 1 kommt mit Platz 2 [§C43]. Licht und Band lagen vom ersten Bild an
+  // in ihrer Karte und warteten über `animation-delay`; wartend waren sie für
+  // Safari schon eigene Ebenen, und Gold trug mit dem Band eine mehr als
+  // Silber und Bronze — auf dem iPhone kam Platz 1 sichtbar nach Platz 2. Im
+  // ersten Bild trägt jetzt jede Karte nur ihr eigenes Einblenden, Licht und
+  // Band warten ohne Kasten und laufen zu ihrer Zeit.
+  const erstesBild = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const bild = () => new Promise(r => requestAnimationFrame(r));
+    const out = {};
+    for(const [ziel, sel] of [['ranking', '.rlist > .rrow'], ['positions', '.rlist > .rrow'], ['teams', '.rlist > .rrow'], ['awards', '.podest > .pod-karte']]){
+      K("closeSheet(true); tab='history'; render(); _aufbauFertig(); _podestZuletzt.clear()");
+      await new Promise(r => setTimeout(r, 150));
+      document.querySelector(`[data-nav="${ziel}"]`).click();
+      for(let i = 0; i < 60 && !document.querySelector('#main ' + sel + '.bau'); i++) await bild();
+      await bild();
+      const karten = [...document.querySelectorAll('#main ' + sel)].slice(0, 3);
+      const darin = k => document.getAnimations().filter(a => { const t = a.effect && a.effect.target; return t && t !== k && k.contains(t); })
+        .map(a => a.animationName);
+      const licht = k => [...k.querySelectorAll(':scope > .kl, :scope > .kl-schein, :scope > .glanz-einmal')];
+      out[ziel] = {darin:karten.map(darin), wartet:karten.map(k => licht(k).length > 0 && licht(k).every(e => getComputedStyle(e).display === 'none'))};
+      await new Promise(r => setTimeout(r, 1700));
+      out[ziel].danach = karten.map(k => licht(k).filter(e => getComputedStyle(e).display !== 'none').length);
+    }
+    K("tab='ranking'; render()");
+    return out;
+  });
+  ok(Object.values(erstesBild).every(r => r.darin.every(d => d.length === 0) && r.wartet.every(Boolean) && r.danach.every(n => n >= 2)),
+     'im ersten Bild trägt jede der ersten drei Karten nur ihr eigenes Einblenden; Licht und Band warten ohne Kasten und laufen danach — in Liga, Positionen, Duos und Awards',
+     JSON.stringify(erstesBild));
   // Der leere Zustand einer Ansicht behält seine Form, während sie sich
   // aufbaut: als `[class="empty"]` galt die Regel nur ohne weitere Klasse,
   // und mit `bau` stand „Keine Matches in diesem Zeitraum" eine halbe
@@ -3319,10 +3349,15 @@ const ok = (c, msg, det) => {
       const p = el.parentElement;
       return !!(p && c.zIndex !== 'auto' && /flex|grid/.test(getComputedStyle(p).display)); };
     const name = el => el.tagName.toLowerCase() + (el.classList.length ? '.' + [...el.classList].slice(0, 2).join('.') : '');
-    const funde = new Map();
+    const funde = new Map(), schein = new Map();
     const suche = (wo, wurzel) => {
       for(const el of document.querySelectorAll(wurzel + ' *')){
         const c = getComputedStyle(el);
+        // Ein Schein über `filter` auf einem Teil, das nicht in einer
+        // Zeichnung liegt: Symbole der goldenen Auszeichnungen fehlten auf
+        // dem iPhone oder kamen spät, die Sterne unter jedem Wappen ebenso.
+        if(!(el instanceof SVGElement && el.ownerSVGElement) && /drop-shadow/.test(c.filter)){
+          const k = name(el); schein.set(k, (schein.get(k) || []).concat(wo)); }
         if(c.display === 'none' || c.position === 'fixed') continue;
         const art = c.position !== 'static' && c.zIndex !== 'auto' && c.zIndex !== '0' ? 'z-index ' + c.zIndex
           : c.filter !== 'none' ? 'filter' : '';
@@ -3384,11 +3419,15 @@ const ok = (c, msg, det) => {
     pl.forEach((p, i) => { p.avatar_id = vorher[i]; });
     K("invalidateCache(); [_cache._stories, _cache._consolFrom, _cache._frischVon] = window.__stories; delete window.__stories;"
       + " tab='ranking'; awView='awards'; render()");
-    return {zahl, stories:ids.length, funde:[...funde].map(([k, w]) => k + ' (' + w.length + '×, ' + w.slice(0, 2).join(', ') + ')')};
+    return {zahl, stories:ids.length, funde:[...funde].map(([k, w]) => k + ' (' + w.length + '×, ' + w.slice(0, 2).join(', ') + ')'),
+      schein:[...schein].map(([k, w]) => k + ' (' + w.slice(0, 2).join(', ') + ')')};
   });
   ok(ebenen.funde.length === 0 && ebenen.zahl.emoji > 300 && ebenen.stories >= 12,
      'kein Teil mit z-index oder Filter liegt in einem runden Ausschnitt ohne eigenen Stapel — in jedem Reiter, im Feed, in Stories jeder Art und den Blättern, mit Emoji als Gesichtern',
      JSON.stringify(ebenen.zahl) + ' ' + ebenen.stories + ' Stories | ' + ebenen.funde.slice(0, 6).join(' | '));
+  ok(ebenen.schein.length === 0 && ebenen.zahl.ansichten > 30,
+     'kein Symbol, Emoji oder Zeichen trägt seinen Schein über filter — ein Lichthof, ein Text- oder Kastenschatten statt dessen',
+     ebenen.schein.slice(0, 6).join(' | '));
   // Der Verlauf bleibt ruhig [§C43]: über die Leiste betreten und beim
   // Wählen eines Spielers baut sich nichts auf, und kein Licht fährt. Die
   // Liga danach baut sich wie immer auf — so zählt die Prüfung überhaupt.

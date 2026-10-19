@@ -254,9 +254,12 @@
   .chron-entry .ce-marks .mk svg{width:16px;height:16px}
 
   /* Titel-Marke neben dem Namen (Rangliste) */
+  /* Ihr Schein ist ein Lichthof dahinter, kein `filter`: die Marke steht in
+     jeder Zeile der Rangliste, und ein `filter` machte jede zu einer eigenen
+     Ebene, die Safari spät oder gar nicht zeichnete [§C43]. */
   .tmark{display:inline-flex;align-items:center;gap:1px;margin-left:6px;
     vertical-align:-2px;color:var(--tt);pointer-events:none;flex:0 0 auto;
-    filter:drop-shadow(0 0 5px rgba(var(--ttr),.4))}
+    background:radial-gradient(closest-side,rgba(var(--ttr),.3),transparent)}
   .tmark svg{width:14px;height:14px;display:block;fill:none;stroke:currentColor;
     stroke-linecap:round;stroke-linejoin:round}
   .tmark i{font-family:'Sometype Mono',monospace;font-size:9px;font-style:normal;
@@ -265,7 +268,7 @@
   .tmark.lg svg{width:16px;height:16px}
   .tmark.lg i{font-size:10px}
   /* Mehrfach-Meister: derselbe Stil, nur ein Hauch heller. */
-  .tmark.honor{filter:drop-shadow(0 0 7px rgba(var(--ttr),.75))}
+  .tmark.honor{background:radial-gradient(closest-side,rgba(var(--ttr),.5),transparent)}
   /* Laufende Saison: gestrichelter Ring — dieser Eintrag kann noch kippen. */
   .tmark.live{border:1px dashed rgba(var(--ttr),.42);border-radius:50%;
     padding:1.5px;margin-left:5px;filter:none;opacity:.72}

@@ -414,7 +414,9 @@ seiner Zeit ab (`_aufbauAuftrag`), die Klasse `.aufbau` am Wurzelknoten nach
 1,7 s (`_vorfuehrungAuftrag`), jedes Kantenlicht nach seiner Dauer
 (`KANTE_MS`, 4,6 s zeichnen, 4,2 s Hinweis) und das Band über Gold nach
 seiner Bahn; `tests/start` sieht nach, dass danach nichts davon im Dokument
-steht. Die Ladelinie endet spätestens 15 s nach ihrem Beginn (`_ladeNot`),
+steht. Ein Licht oder Band mit Verzögerung steht bis zu seinem Einsatz ohne
+Kasten in seiner Karte, und ein Zeitgeber je Licht gibt es dann frei
+(`_lichtWartet`, `.kl-wartet`); beim Neuzeichnen wandert es mit. Die Ladelinie endet spätestens 15 s nach ihrem Beginn (`_ladeNot`),
 auch wenn ein Grund noch gilt. Der Hinweis „x neue Stories" blendet nach 7 s
 aus, wenn er der erste nach dem Öffnen ist (`_newsToastSchonDa`), sonst nach
 4 s (`_newsToastHideTimer`); der Ring an der Pille räumt seine Klasse nach

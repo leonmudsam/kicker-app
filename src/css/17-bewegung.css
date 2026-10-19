@@ -69,6 +69,10 @@
   .kl{position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;z-index:3;padding:2px;overflow:hidden;
     -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
   .kl-innen{inset:0}
+  /* Bis zu seinem Einsatz steht ein Licht ohne Kasten in seiner Karte und
+     trägt keine Bewegung (`_lichtWartet`): wartend war es für Safari schon
+     eine eigene Ebene, und Platz 1 kam mit ihnen später als Platz 2. */
+  .kl-wartet{display:none}
   .kl i{position:absolute;left:50%;top:50%;width:var(--kd);height:var(--kd);
     margin:calc(var(--kd) / -2) 0 0 calc(var(--kd) / -2);opacity:0;
     background:conic-gradient(from 0deg,transparent 0deg 180deg,rgba(var(--kr),.22) 250deg,rgba(var(--kr),.7) 318deg,
@@ -193,6 +197,10 @@
     .aufbau .lauf-z i.h::after{animation:aufbauPing .8s ease-out .6s 2 both}
     .bau{animation:bauTeil .56s cubic-bezier(.2,.8,.2,1) both}
     .pod-karte.bau{animation-name:bauPodest;animation-duration:.62s}
+    /* Das Band über dem Ersten des Podests läuft erst, wenn die Karte steht:
+       während des Aufbaus war es die eine Ebene, die Platz 2 und 3 nicht
+       tragen, und Platz 1 kam auf dem iPhone nach ihnen. */
+    .pod-karte.erster.gold.bau > .glanz-bahn::after{animation:none}
     .glanz-einmal::after{animation:glanzEinmal 1.3s cubic-bezier(.45,0,.25,1) var(--gv,0ms) both}
     .sheet.show .staffel-k{animation:blattEin .34s cubic-bezier(.2,.8,.2,1) backwards}
     #newsBtn.ruf::after{animation:hinweisRuf 1s cubic-bezier(.2,.8,.2,1) 2}
