@@ -160,7 +160,9 @@ function _insBestVor(vonMs, bestand){
   const aktiv = new Set((players || []).filter(p => ligaAktiv(p)).map(p => p.id));
   const best = {};
   const merk = (pid, pos) => { if(aktiv.has(pid) && isFinite(pos) && (best[pid] == null || pos > best[pid])) best[pid] = pos; };
-  const l = Array.isArray(bestand) ? bestand : [];
+  // Von einem Tag nur seine jüngste Fassung: der höchste Platz wächst über
+  // den Tag, und eine ältere kennt den Abend noch nicht.
+  const l = Array.isArray(bestand) ? _tafelFassungen(bestand) : [];
   const alt = l.filter(x => { const d = (x && x.dataRef) || {}; return d.type === 'insignium_tag' && d.best && String(d.tag) < tag; })
     .sort((a, b) => String(b.dataRef.tag).localeCompare(String(a.dataRef.tag)))[0];
   if(alt) Object.keys(alt.dataRef.best).forEach(pid => merk(pid, Number(alt.dataRef.best[pid])));

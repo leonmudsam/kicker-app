@@ -167,7 +167,7 @@ function _consolidateStories(list){
     if(!l){ l = new Map(); duellMoment.set(key, l); }
     l.set(n, m);
   })));
-  const quelle = _insAltZuTag(ohneStoriesNachAbschied(list).filter(s => !_storyAbgemeldet(s && s.id) && !_storyWiderrufen(s)));
+  const quelle = _insAltZuTag(_tafelFassungen(ohneStoriesNachAbschied(list).filter(s => !_storyAbgemeldet(s && s.id) && !_storyWiderrufen(s))));
   const marken = new Map(), normal = [];
   // Alte kleine Marken wurden je Tag gespeichert, neue je Partie. Die alten
   // Snapshots bleiben erhalten: nur ihre Anzeige wird an den gespeicherten
@@ -1839,6 +1839,47 @@ function _storyIstTafelUpdate(s, jetzt){
   if(!STORY_TAFEL_UPDATE.has(d.type) || !w) return false;
   return tagKey(w) === tagKey(jetzt || new Date());
 }
+// Der Stand, aus dem eine Fassung der Tafel gerechnet ist: die letzte
+// Partie ihres Tages und, ob der Tag zu ist (`_tagZu`) — um 23:59 ändert
+// sich die Tafel auch ohne Partie [§C35]. Als Zeichenkette sortierbar.
+function _tafelFassung(tag, letzteMs){
+  return String(letzteMs) + (_tagZu(tag) ? 'z' : '');
+}
+// Von jeder wachsenden Tageskarte gilt eine Fassung, die jüngste [§C33].
+// Eine Fassung ist der ganze Stand des Tages: was in einer älteren stand und
+// in der jüngsten fehlt, ist am selben Tag zurückgedreht worden. Gilt eine
+// Fassung zu den Partien, die da sind, gewinnt sie auch gegen eine spätere —
+// nach dem Löschen der letzten Partie eines Tages wäre die spätere falsch.
+// Zeilen ohne `fassung` stammen aus der Zeit vor den Fassungen und gelten nur,
+// wenn es für ihren Tag keine andere gibt.
+function _tafelFassungen(list){
+  if(!Array.isArray(list)) return list;
+  const art = d => !STORY_TAFEL_UPDATE.has(d.type) ? '' : /^insignium_/.test(d.type) ? 'ins' : 'tafel';
+  const gruppen = new Map();
+  list.forEach(s => {
+    const d = (s && s.dataRef) || {}, a = art(d);
+    if(!a) return;
+    const k = a + '|' + tagKey(s.when);
+    const g = gruppen.get(k) || {max:'', alle:new Set()};
+    const f = String(d.fassung || '');
+    g.alle.add(f);
+    if(f > g.max) g.max = f;
+    gruppen.set(k, g);
+  });
+  if(!gruppen.size) return list;
+  const letzte = new Map();
+  (matches || []).forEach(m => { const t = mts(m), k = tagKey(t); if(t > (letzte.get(k) || 0)) letzte.set(k, t); });
+  const gilt = new Map();
+  gruppen.forEach((g, k) => {
+    const tag = k.slice(k.indexOf('|') + 1);
+    const soll = letzte.has(tag) ? _tafelFassung(tag, letzte.get(tag)) : '';
+    gilt.set(k, g.alle.has(soll) ? soll : g.max);
+  });
+  return list.filter(s => {
+    const d = (s && s.dataRef) || {}, a = art(d);
+    return !a || String(d.fassung || '') === gilt.get(a + '|' + tagKey(s.when));
+  });
+}
 function _mergeStorySnapshots(bestand, neu, jetzt){
   const byId = new Map();
   (Array.isArray(bestand) ? bestand : []).forEach(s => { if(s && s.id) byId.set(s.id, s); });
@@ -1861,10 +1902,13 @@ async function syncStoriesViaDb(){
   //
   // Der Vorlauf ist zugleich der eine reguläre SELECT dieses Syncs. Dadurch
   // kennt der Upload neue IDs und vermeidet periodische Komplett-Upserts.
+  // Was dieses Gerät schon gerechnet hat, bleibt dabei stehen: der Bestand
+  // der Datenbank kann eine ältere Fassung der Tafel tragen, und bis der
+  // Generator fertig war, sprang der Feed auf sie zurück.
   let dbBestand = null;
   try {
     dbBestand = await _loadStoriesFromDb();
-    if(Array.isArray(dbBestand)) _cache._stories = dbBestand;
+    if(Array.isArray(dbBestand)) _cache._stories = _mergeStorySnapshots(dbBestand, _cache._stories, new Date());
   } catch(e){}
   // ── Erst zeichnen, dann rechnen ───────────────────────────────────
   // Der Generator kostet kalt rund 370 ms am Stück. `loadAll` ruft diese
@@ -1936,9 +1980,9 @@ function _rowToStory(r){
   };
 }
 
-// Normale Stories werden mit ON CONFLICT DO NOTHING publiziert. Nur heutige
-// Rohereignisse der Ewigen Tafel und die heutige Insignium-Karte duerfen per
-// Upsert wachsen.
+// Stories werden nur eingefügt (ON CONFLICT DO NOTHING): die Datenbank
+// erlaubt kein Ändern einer Zeile, und eine veröffentlichte bleibt, wie sie
+// ist [§C33]. Was wächst, wächst als neue Fassung (`_tafelFassung`).
 function _storyStableJson(v){
   if(Array.isArray(v)) return '[' + v.map(_storyStableJson).join(',') + ']';
   if(v && typeof v === 'object'){
@@ -1947,34 +1991,20 @@ function _storyStableJson(v){
   }
   return JSON.stringify(v);
 }
-function _storyPersistenzSignatur(s){
-  if(!s) return '';
-  return _storyStableJson({cat:s.cat, ic:s.ic || null, title:s.title, desc:s.desc,
-    dataRef:s.dataRef || {}, prio:s.prio | 0,
-    when:(s.when instanceof Date ? s.when : new Date(s.when)).toISOString()});
-}
 async function _uploadNewStoriesToDb(stories, bestand){
   if(!stories || !stories.length) return;
-  const jetzt = new Date();
-  const bekannt = new Map((Array.isArray(bestand) ? bestand : []).map(s => [s.id, s]));
-  const normal = stories.filter(s => !_storyIstTafelUpdate(s, jetzt) && !bekannt.has(s.id)).map(_storyToRow);
-  const tafel = stories.filter(s => {
-    if(!_storyIstTafelUpdate(s, jetzt)) return false;
-    const alt = bekannt.get(s.id);
-    return !alt || _storyPersistenzSignatur(alt) !== _storyPersistenzSignatur(s);
-  }).map(_storyToRow);
+  const bekannt = new Set((Array.isArray(bestand) ? bestand : []).map(s => s.id));
+  const neu = stories.filter(s => !bekannt.has(s.id)).map(_storyToRow);
   // In Batches → schützt vor Payload-Limits bei großen Datensätzen. (v8.4)
   // Realistisch sind ~30 Stories pro Sync → ein einziger Batch. 200 deckt auch
   // den Erststart nach langer Pause ab (Postgres erlaubt 1000+ Rows/INSERT).
   const BATCH_SIZE = 200;
-  for(const [rows, ignoreDuplicates] of [[normal, true], [tafel, false]]){
-    for(let i = 0; i < rows.length; i += BATCH_SIZE){
-      const chunk = rows.slice(i, i + BATCH_SIZE);
-      const { error } = await sb.from('stories').upsert(chunk, {
-        onConflict: 'id', ignoreDuplicates,
-      });
-      if(error) throw error;
-    }
+  for(let i = 0; i < neu.length; i += BATCH_SIZE){
+    const chunk = neu.slice(i, i + BATCH_SIZE);
+    const { error } = await sb.from('stories').upsert(chunk, {
+      onConflict: 'id', ignoreDuplicates: true,
+    });
+    if(error) throw error;
   }
 }
 
