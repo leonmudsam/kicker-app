@@ -1451,8 +1451,18 @@ const ok = (c, msg, det) => {
       return out;
     })())`);
     const arr = JSON.parse(roh);
+    // Gemessen wird im Blatt selbst (`.nd`), nicht in einem nackten Kasten:
+    // dort gilt `.nd .num{white-space:nowrap}`, und genau diese Regel hielt
+    // „Maxi gewinnt an dieser Seite 100 %, sonst 31 %" in einer Zeile fest
+    // und schnitt „176 Elo dazwischen" am Rand der Bühne ab. Im nackten
+    // Kasten brach beides um, und die Prüfung sah nichts.
+    // So breit wie das Blatt auf einem 360-px-Telefon: es steht mit Rand im
+    // Bildschirm, gemessen 310 px. Bei 360 passte „176 Elo dazwischen"
+    // gerade noch, auf dem Telefon nicht.
     const host = document.createElement('div');
-    host.style.width = '360px';
+    host.className = 'nd';
+    host.style.width = '310px';
+    host.style.maxHeight = 'none';
     host.style.overflow = 'hidden';
     document.body.appendChild(host);
     const raus = [], abgeschnitten = [];
@@ -1465,6 +1475,32 @@ const ok = (c, msg, det) => {
         if(r.width > 0 && r.right > hr.right + 0.5)
           raus.push(x.typ + ' ' + el.className);
       });
+      // Und laeuft ein Text aus dem Kasten, der ihn abschneidet, ohne dass
+      // er mit „…" endet? Gemessen wird die Schrift, nicht der Kasten: ein
+      // Text, der nicht umbricht, ist breiter als sein Element.
+      const tw = document.createTreeWalker(host, NodeFilter.SHOW_TEXT);
+      let tn;
+      while((tn = tw.nextNode())){
+        const el = tn.parentElement;
+        if(!tn.textContent.trim() || !el || el.closest('svg')) continue;
+        let kappe = null, ell = false, rollt = false;
+        for(let p = el; p && p !== host.parentElement; p = p.parentElement){
+          const cs = getComputedStyle(p);
+          if(/(auto|scroll)/.test(cs.overflowX) && p !== host){ rollt = true; break; }
+          if(cs.textOverflow === 'ellipsis') ell = true;
+          if(/(hidden|clip)/.test(cs.overflowX)){ kappe = p; break; }
+        }
+        if(rollt || ell || !kappe) continue;
+        const rg = document.createRange(); rg.selectNodeContents(tn);
+        const rs = [...rg.getClientRects()].filter(r => r.width > 0.5);
+        if(!rs.length) continue;
+        // Breiter als sein eigenes Feld heißt: er reicht in das daneben
+        // oder bis an den Rand, der ihn abschneidet.
+        const eb = el.getBoundingClientRect();
+        if(Math.max(...rs.map(r => r.right)) > kappe.getBoundingClientRect().right + 1
+           || Math.max(...rs.map(r => r.right)) - Math.min(...rs.map(r => r.left)) > eb.width + 1)
+          abgeschnitten.push(x.typ + ' „' + tn.textContent.trim().slice(0, 28) + '"');
+      }
       // Und ist ein Text abgeschnitten, obwohl er nicht kuerzen darf? Die
       // Aufschriften der Zahlenreihe und die Zeile der Wirkung sind die
       // gemessenen Faelle; eine Schlagzeile DARF kuerzen.
@@ -1480,7 +1516,7 @@ const ok = (c, msg, det) => {
   ok(mobil.n >= 15, 'jeder Story-Typ baut ein Blatt', mobil.n + ' Typen');
   ok(mobil.raus.length === 0, 'und keines laeuft bei 360 px aus seinem Rand',
      mobil.raus.slice(0, 4).join(' | ') || 'keines');
-  ok(mobil.ab.length === 0, 'keine Aufschrift ist abgeschnitten',
+  ok(mobil.ab.length === 0, 'keine Aufschrift und kein Text ist abgeschnitten, gemessen im Blatt selbst',
      mobil.ab.slice(0, 4).join(' | ') || 'keine');
 
   // ── Der Spieltag als Bahn ────────────────────────────────────────
@@ -4045,6 +4081,28 @@ const ok = (c, msg, det) => {
           q = q.parentElement; }
         if(!scroller && r.right > sr.right + 1) rand.push(name + ': ' + String(el.className).split(' ')[0] + ' +' + Math.round(r.right - sr.right));
       });
+      // Und keine Schrift ist breiter als ihr Feld, wo ein Kasten sie
+      // abschneidet: ein Wort bricht nicht um, und „Wiederholungstäter"
+      // endete in seiner Karte als „Wiederholungstäte". Wer kürzen darf,
+      // trägt „…".
+      const tw = document.createTreeWalker(sh, NodeFilter.SHOW_TEXT);
+      let tn;
+      while((tn = tw.nextNode())){
+        const el = tn.parentElement;
+        if(!tn.textContent.trim() || !el || el.closest('svg')) continue;
+        let kappe = null, frei = false;
+        for(let q = el; q && q !== sh; q = q.parentElement){
+          const cs = getComputedStyle(q);
+          if(cs.textOverflow === 'ellipsis' || (/(auto|scroll)/.test(cs.overflowX) && q.scrollWidth > q.clientWidth + 1)){ frei = true; break; }
+          if(/(hidden|clip)/.test(cs.overflowX)){ kappe = q; break; }
+        }
+        if(frei || !kappe) continue;
+        const rg = document.createRange(); rg.selectNodeContents(tn);
+        const rs = [...rg.getClientRects()].filter(r => r.width > 0.5);
+        if(!rs.length) continue;
+        const re = Math.max(...rs.map(r => r.right)), kr = kappe.getBoundingClientRect();
+        if(re > kr.right + 1) rand.push(name + ': „' + tn.textContent.trim().slice(0, 24) + '" abgeschnitten');
+      }
     }
     K('closeSheet(true)');
     for(const [name, setz] of [['Liga', "tab='ranking'"], ['Teams', "tab='teams'"],
@@ -5018,6 +5076,84 @@ return JSON.stringify(funde,null,1);
   ok(moment && moment.wege.some(w => w.art === 'chron') && moment.wege.every(w => w.auf && !w.profil),
      'eine Zeile des Tafel-Moments öffnet das Blatt ihres Rekords, ihrer Chronik oder die Laufbahn statt des Profils',
      JSON.stringify(moment && moment.wege));
+
+  // ── Der Tafel-Moment eines vollen Spieltags ──────────────────────────
+  //    Am 19.10. trug er neunzehn Bewegungen aus zwei Partien, siebzehn
+  //    davon nach der letzten. Die Säule war 230 px hoch über einer leeren
+  //    Fläche; „Maxi gewinnt an dieser Seite 100 %, sonst 31 %" stand rechts
+  //    in einer Zeile und drückte Eintrag und Satz links Wort für Wort
+  //    untereinander („Der / Schattenmann", „Leon / holt"), bis die Zeile
+  //    über den Rand lief; jede der zehn Chroniken trug „· 17:17 · 10:4";
+  //    der Satz oben nannte den Zuwachs, den die Zahlenreihe darunter
+  //    ebenfalls nannte, und „verloren" stand als fünfte Zelle allein in
+  //    einer zweiten Reihe. Nachgestellt aus dem Moment der Test-Partien.
+  const voll = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const id = K(`(function(){
+      _cache._stories=_buildStories().sort((a,b)=>new Date(b.when)-new Date(a.when));_cache._consolFrom=null;_cache._frischVon=null;
+      const s = getStoriesCache().filter(s => (s.dataRef||{}).type === 'sammel' && s.dataRef.quelle === 'tafel')
+        .sort((a, b) => b.dataRef.teile.length - a.dataRef.teile.length)[0];
+      if(!s) return '';
+      const t0 = s.dataRef.teile, ms = t0.map(t => t.ms).filter(Number.isFinite);
+      const spaet = Math.max(...ms), frueh = spaet - 3 * 3600e3;
+      const lang = ['Maxi gewinnt an dieser Seite 100 %, sonst 31 %', 'gegen 7 von 7 regelmäßigen Gegnern im Plus'];
+      const teile = [];
+      for(let i = 0; i < 19; i++){
+        const t = JSON.parse(JSON.stringify(t0[i % t0.length]));
+        t.ms = i < 2 ? frueh : spaet;
+        if(i === 5 || i === 9) t.ref = Object.assign({}, t.ref, {ev: lang[i === 5 ? 0 : 1]});
+        teile.push(t);
+      }
+      const k = Object.assign({}, s, {id: s.id + '-voll', dataRef: Object.assign({}, s.dataRef, {teile})});
+      const orig = getStoriesCache;
+      globalThis.__vollZurueck = () => { getStoriesCache = orig; };
+      getStoriesCache = function(){ const l = orig.apply(this, arguments); return l.some(x => x.id === k.id) ? l : l.concat([k]); };
+      return k.id;
+    })()`);
+    if(!id) return null;
+    K(`closeSheet(true); openNewsFeed(); openNewsDetail(${JSON.stringify(id)}); 'x'`);
+    const nd = document.getElementById('nd');
+    const zeilen = [...nd.querySelectorAll('.nw-tz')];
+    const wortweise = [], raus = [];
+    zeilen.forEach(z => {
+      const zr = z.getBoundingClientRect();
+      z.querySelectorAll('.nw-label, .nw-tz-t small').forEach(e => {
+        const rg = document.createRange(); rg.selectNodeContents(e);
+        const zl = new Set([...rg.getClientRects()].filter(r => r.width > .5).map(r => Math.round(r.top))).size;
+        const w = e.textContent.trim().split(/\s+/).length;
+        if(w >= 2 && zl >= w) wortweise.push(e.textContent.trim());
+      });
+      const tw = document.createTreeWalker(z, NodeFilter.SHOW_TEXT);
+      let tn;
+      while((tn = tw.nextNode())){
+        if(!tn.textContent.trim()) continue;
+        const rg = document.createRange(); rg.selectNodeContents(tn);
+        if([...rg.getClientRects()].some(r => r.right > zr.right + .5)) raus.push(tn.textContent.trim().slice(0, 30));
+      }
+    });
+    const f = nd.querySelector('.nd-ta-f');
+    const zellen = [...nd.querySelectorAll('.rcp-z-s')];
+    const reihen = new Set(zellen.map(c => Math.round(c.getBoundingClientRect().top))).size;
+    const out = {zeilen:zeilen.length, wortweise, raus,
+      achse: f ? Math.round(f.getBoundingClientRect().height) : 0,
+      uhrInZeile: zeilen.filter(z => /\d\d:\d\d/.test((z.querySelector('.nw-tz-t small') || {}).textContent || '')).length,
+      partien: nd.querySelectorAll('.nw-zk').length,
+      satz: !!nd.querySelector('.nd-desc') && /Laufbahn bleiben/.test(nd.querySelector('.nd-desc').textContent),
+      zellen: zellen.map(c => c.textContent.trim()), reihen,
+      verloren: (nd.querySelector('.nd-sec-r') || {}).textContent || ''};
+    K(`__vollZurueck(); closeNewsDetail(); closeSheet(true); 'x'`);
+    return out;
+  });
+  ok(voll && voll.zeilen === 19 && !voll.wortweise.length && !voll.raus.length,
+     'ein voller Tafel-Moment: kein Wert drückt Eintrag oder Satz Wort für Wort zusammen, und kein Text läuft aus seiner Zeile',
+     JSON.stringify(voll && {wortweise: voll.wortweise.slice(0, 3), raus: voll.raus.slice(0, 3)}));
+  ok(voll && voll.achse > 0 && voll.achse <= 100 && voll.uhrInZeile === 0 && voll.partien >= 2,
+     'die Säule über einer Partie bleibt flach, und Uhrzeit und Stand stehen einmal über ihren Zeilen statt in jeder',
+     JSON.stringify(voll && {achse: voll.achse, uhrInZeile: voll.uhrInZeile, partien: voll.partien}));
+  ok(voll && !voll.satz && voll.zellen.length === 4 && voll.reihen === 2 && !voll.zellen.some(z => /verloren/.test(z))
+     && /verloren/.test(voll.verloren),
+     'der Zuwachs steht einmal, die vier Zahlen zwei mal zwei, und was verloren ging, über der Wirkung',
+     JSON.stringify(voll && {satz: voll.satz, zellen: voll.zellen, reihen: voll.reihen, verloren: voll.verloren}));
 
   // ── Ein Blatt zeigt alles ─────────────────────────────────────────
   // Die Blätter schnitten an zwölf Stellen ab: die Gründe der Wirkung nach

@@ -584,6 +584,10 @@
 .sp-gf-s > i{display:block;width:16px;border-radius:4px 4px 1px 1px;background:var(--silber);opacity:.7;transform-origin:bottom}
 .sp-gf-t.w .sp-gf-s > i{background:var(--acid);opacity:1}
 .sp-gf-t > small{font:600 8px 'Sometype Mono',monospace;color:var(--faint);text-align:center;border-top:1px solid var(--line2);padding-top:2px;width:100%}
+/* „176 Elo dazwischen" ist breiter als zwei Säulen bei 360 px und wurde am
+   Rand der Bühne abgeschnitten („dazwischer"): es bricht um, auch gegen das
+   `nowrap` jeder Zahl im Blatt. */
+.sp-gf-t > small.num{white-space:normal}
 
 /* Der Tagesring: der Tag um das Wappen, rechts der Stand dieser Partie. */
 .sp-tr{display:grid;grid-template-columns:88px minmax(0,1fr);gap:12px;align-items:center}
@@ -956,8 +960,14 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   background:linear-gradient(90deg,rgba(194,201,208,.08),rgba(194,201,208,.35) 12%,rgba(194,201,208,.35) 88%,rgba(194,201,208,.08))}
 .nd-ta-p{position:absolute;bottom:6px;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:var(--surface);box-shadow:inset 0 0 0 1.5px rgba(194,201,208,.4)}
 .nd-ta-p.an{background:var(--silber);box-shadow:0 0 6px rgba(194,201,208,.5)}
-.nd-ta-s{position:absolute;bottom:18px;display:flex;flex-direction:column-reverse;align-items:center;gap:3px;transform:translateX(-50%)}
-.nd-ta-s::after{content:"";position:absolute;bottom:-6px;left:50%;width:1px;height:5px;margin-left:-.5px;background:rgba(194,201,208,.5)}
+/* Eine Säule ist höchstens fünf Punkte hoch und wird danach breiter; die
+   erste Spalte steht über ihrer Partie, die weiteren wachsen zur Mitte hin
+   (`.l` nach links). */
+.nd-ta-s{position:absolute;bottom:18px;display:flex;flex-direction:row;align-items:flex-end;gap:3px;transform:translateX(-4.5px)}
+.nd-ta-s.l{flex-direction:row-reverse;transform:translateX(calc(4.5px - 100%))}
+.nd-ta-c{display:flex;flex-direction:column-reverse;gap:3px}
+.nd-ta-s::after{content:"";position:absolute;bottom:-6px;left:4px;width:1px;height:5px;background:rgba(194,201,208,.5)}
+.nd-ta-s.l::after{left:auto;right:4px}
 .nd-ta-s i{display:block;width:9px;height:9px;border-radius:3px;background:var(--gold);box-shadow:0 0 8px rgba(247,207,74,.45)}
 .nd-ta-s i.ta-chr{background:transparent;box-shadow:inset 0 0 0 2px var(--gold),0 0 6px rgba(247,207,74,.3)}
 .nd-ta-s i.ta-aus{background:var(--silber);box-shadow:none;opacity:.75}
@@ -993,7 +1003,24 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 .nd-tz-z{width:26px;height:26px;margin-left:2px}
 .nd-tz-z svg{width:26px;height:26px;display:block}
 .nd-tz-v{font-family:'Sometype Mono',monospace;font-size:11px;font-weight:600;color:var(--gold);white-space:nowrap}
-.nd-tz-v s{color:var(--muted);font-weight:400}
+.nd-tz-v s, .nw-tz-lang s{color:var(--muted);font-weight:400}
+/* Ein langer Wert („Maxi gewinnt an dieser Seite 100 %, sonst 31 %") steht
+   als eigene Zeile unter Satz und Gesichtern, über die ganze Breite, und
+   bricht dort um. Er trägt kein `.num`: `.nd .num` bricht nie um, und genau
+   das hielt den Satz rechts in einer Zeile fest. */
+.nw-tz-lang{grid-column:2 / -1;margin-top:-3px;font-family:'Sometype Mono',monospace;font-size:10.5px;
+  font-weight:600;color:var(--gold);line-height:1.4;white-space:normal;overflow-wrap:anywhere}
+/* Die Partie über ihren Zeilen: Uhrzeit und Stand einmal statt in jeder. */
+.nw-zk{background:var(--surface);padding:5px 13px;font-family:'Sometype Mono',monospace;
+  font-size:10px;letter-spacing:.04em;color:var(--muted)}
+/* Eine Überschrift gehört zu der Liste unter ihr: sie stand 4 px unter der
+   vorigen Liste und 20 px über ihrer eigenen. */
+.nw-liste + .rcp-section{margin-top:16px}
+.rcp-section + .nw-liste{margin-top:0}
+/* Die Überschrift der Wirkung trägt rechts, was die roten Zeilen verlieren. */
+.nd-sec-z{display:flex;align-items:baseline;gap:8px}
+.nd-sec-r{margin-left:auto;letter-spacing:.06em;color:var(--muted)}
+.nd-sec-r b{color:var(--red);font-weight:700}
 
 /* ── Die Monatstafel [§C33] ───────────────────────────────────────── */
 /* Die Zahl der Einträge, daneben je Träger eine Säule so hoch wie seine

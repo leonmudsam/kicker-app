@@ -105,9 +105,15 @@ function rcpHeldHtml(o){
 // in zwei Stufen, damit „legendaer" und „2,39 σ" gross bleiben. Gezaehlt
 // wird die Zeichenzahl und nicht die gerenderte Breite: hier steht kein
 // Fliesstext, sondern eine Handvoll fester Woerter aus dem Katalog.
+//
+// Vier Zellen passen bei 360 px nicht in eine Reihe (je 78 px Mindestbreite,
+// „BESTMARKEN" braucht 75), und drei plus eine allein darunter las sich wie
+// eine Zahl, die nicht dazugehört. Vier stehen deshalb zwei mal zwei, wo die
+// Reihe zu schmal ist (`vier`).
 function rcpZahlenHtml(zellen){
   const lang = t => t.length > 11 ? ' sehrlang' : t.length > 8 ? ' lang' : '';
-  return `<div class="rcp-z">${zellen.filter(Boolean).map(z => {
+  const n = zellen.filter(Boolean).length;
+  return `<div class="rcp-z${n === 4 ? ' vier' : ''}">${zellen.filter(Boolean).map(z => {
     const t = String(z.v);
     return `<div class="rcp-z-s"><div class="rcp-z-v${z.ton ? ' ' + z.ton : ''}${
       lang(t)} num">${esc(t)}</div><div class="rcp-z-l">${esc(z.l)}</div></div>`;

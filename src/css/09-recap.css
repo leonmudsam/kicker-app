@@ -127,6 +127,10 @@
   .rcp-z-s{flex:1 1 78px;min-width:78px;text-align:center;background:var(--surface);
     border:1px solid var(--line);border-radius:12px;padding:10px 6px}
   .rcp-held .rcp-z-s{background:none;border:none;padding:0}
+  /* Vier Zellen: in einer Reihe, wo sie passen (ab 336 px), sonst zwei mal
+     zwei — der Wert in der Mitte ist negativ, sobald die Reihe breit genug
+     ist, und riesig, sobald nicht. */
+  .rcp-z.vier > .rcp-z-s{flex-basis:clamp(calc(25% - 6px), calc((336px - 100%) * 999), calc(50% - 4px))}
   .rcp-z-v{font-family:'Archivo Black',sans-serif;font-size:18px;line-height:1;
     color:var(--ink);letter-spacing:-.02em}
   .rcp-held .rcp-z-v{font-size:19px}

@@ -1735,6 +1735,7 @@
   .bsh-card-ic svg{width:30px;height:30px;stroke:currentColor;fill:none;--strich:1.75;
     stroke-linecap:round;stroke-linejoin:round}
   .bsh-card-name{font-weight:700;font-size:13px;margin-bottom:4px;letter-spacing:-.005em}
+  .bsh-card-name.lang{font-size:11px;letter-spacing:-.02em}
   .bsh-card-desc{font-size:10.5px;color:var(--muted);line-height:1.4;margin-bottom:8px}
   .bsh-card-count{font-family:'Archivo Black',sans-serif;font-size:16px}
   .bsh-card-once{font-size:9.5px;font-weight:700;text-transform:uppercase;
@@ -2632,7 +2633,7 @@
   .nd-tm.w .nd-tm-s{color:var(--acid)}
   .nd-tm.l .nd-tm-s{color:var(--red)}
   .nd-tm-g{flex:1 1 auto;min-width:0;font-size:11px;line-height:1.35;color:var(--ink2)}
-  .nd-wk{display:flex;align-items:center;gap:10px;padding:10px 12px;
+  .nd-wk{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;
     background:var(--surface);border:1px solid var(--line);
     border-radius:10px;margin-bottom:6px}
   .nd-wk-z{flex:0 0 48px;width:48px;height:48px;display:block}
@@ -3106,6 +3107,7 @@
   .rcp-z-s{flex:1 1 78px;min-width:78px;text-align:center;background:var(--surface);
     border:1px solid var(--line);border-radius:12px;padding:10px 6px}
   .rcp-held .rcp-z-s{background:none;border:none;padding:0}
+  .rcp-z.vier > .rcp-z-s{flex-basis:clamp(calc(25% - 6px), calc((336px - 100%) * 999), calc(50% - 4px))}
   .rcp-z-v{font-family:'Archivo Black',sans-serif;font-size:18px;line-height:1;
     color:var(--ink);letter-spacing:-.02em}
   .rcp-held .rcp-z-v{font-size:19px}
@@ -3968,8 +3970,8 @@
     stroke-linecap:round;stroke-linejoin:round}
   .chline .n{flex:1;min-width:0;font-size:12px;font-weight:600;color:var(--ink);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .chline .hd{flex:0 0 auto;font-family:'Sometype Mono',monospace;font-size:10.5px;
-    color:var(--tt);max-width:88px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chline .hd{flex:0 1 auto;font-family:'Sometype Mono',monospace;font-size:10.5px;
+    color:var(--tt);max-width:46%;text-align:right;line-height:1.3}
 
   .chron-hero{display:flex;align-items:center;gap:12px;margin:14px 0;
     background:linear-gradient(120deg,rgba(var(--ttr),.13),transparent 70%),var(--surface);
@@ -4940,6 +4942,7 @@
 .sp-gf-s > i{display:block;width:16px;border-radius:4px 4px 1px 1px;background:var(--silber);opacity:.7;transform-origin:bottom}
 .sp-gf-t.w .sp-gf-s > i{background:var(--acid);opacity:1}
 .sp-gf-t > small{font:600 8px 'Sometype Mono',monospace;color:var(--faint);text-align:center;border-top:1px solid var(--line2);padding-top:2px;width:100%}
+.sp-gf-t > small.num{white-space:normal}
 
 .sp-tr{display:grid;grid-template-columns:88px minmax(0,1fr);gap:12px;align-items:center}
 .sp-tr-r{position:relative;width:88px;height:88px}
@@ -5279,8 +5282,11 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   background:linear-gradient(90deg,rgba(194,201,208,.08),rgba(194,201,208,.35) 12%,rgba(194,201,208,.35) 88%,rgba(194,201,208,.08))}
 .nd-ta-p{position:absolute;bottom:6px;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:var(--surface);box-shadow:inset 0 0 0 1.5px rgba(194,201,208,.4)}
 .nd-ta-p.an{background:var(--silber);box-shadow:0 0 6px rgba(194,201,208,.5)}
-.nd-ta-s{position:absolute;bottom:18px;display:flex;flex-direction:column-reverse;align-items:center;gap:3px;transform:translateX(-50%)}
-.nd-ta-s::after{content:"";position:absolute;bottom:-6px;left:50%;width:1px;height:5px;margin-left:-.5px;background:rgba(194,201,208,.5)}
+.nd-ta-s{position:absolute;bottom:18px;display:flex;flex-direction:row;align-items:flex-end;gap:3px;transform:translateX(-4.5px)}
+.nd-ta-s.l{flex-direction:row-reverse;transform:translateX(calc(4.5px - 100%))}
+.nd-ta-c{display:flex;flex-direction:column-reverse;gap:3px}
+.nd-ta-s::after{content:"";position:absolute;bottom:-6px;left:4px;width:1px;height:5px;background:rgba(194,201,208,.5)}
+.nd-ta-s.l::after{left:auto;right:4px}
 .nd-ta-s i{display:block;width:9px;height:9px;border-radius:3px;background:var(--gold);box-shadow:0 0 8px rgba(247,207,74,.45)}
 .nd-ta-s i.ta-chr{background:transparent;box-shadow:inset 0 0 0 2px var(--gold),0 0 6px rgba(247,207,74,.3)}
 .nd-ta-s i.ta-aus{background:var(--silber);box-shadow:none;opacity:.75}
@@ -5312,7 +5318,16 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 .nd-tz-z{width:26px;height:26px;margin-left:2px}
 .nd-tz-z svg{width:26px;height:26px;display:block}
 .nd-tz-v{font-family:'Sometype Mono',monospace;font-size:11px;font-weight:600;color:var(--gold);white-space:nowrap}
-.nd-tz-v s{color:var(--muted);font-weight:400}
+.nd-tz-v s, .nw-tz-lang s{color:var(--muted);font-weight:400}
+.nw-tz-lang{grid-column:2 / -1;margin-top:-3px;font-family:'Sometype Mono',monospace;font-size:10.5px;
+  font-weight:600;color:var(--gold);line-height:1.4;white-space:normal;overflow-wrap:anywhere}
+.nw-zk{background:var(--surface);padding:5px 13px;font-family:'Sometype Mono',monospace;
+  font-size:10px;letter-spacing:.04em;color:var(--muted)}
+.nw-liste + .rcp-section{margin-top:16px}
+.rcp-section + .nw-liste{margin-top:0}
+.nd-sec-z{display:flex;align-items:baseline;gap:8px}
+.nd-sec-r{margin-left:auto;letter-spacing:.06em;color:var(--muted)}
+.nd-sec-r b{color:var(--red);font-weight:700}
 
 .nd-mo{display:flex;flex-direction:column;gap:12px}
 .nd-mo-k{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:12px;align-items:center}
@@ -5927,7 +5942,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.19.3b8c5f21';
+const BUILD_VERSION='2026.10.19.647409bd';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -7191,7 +7206,8 @@ function rcpHeldHtml(o){
 
 function rcpZahlenHtml(zellen){
   const lang = t => t.length > 11 ? ' sehrlang' : t.length > 8 ? ' lang' : '';
-  return `<div class="rcp-z">${zellen.filter(Boolean).map(z => {
+  const n = zellen.filter(Boolean).length;
+  return `<div class="rcp-z${n === 4 ? ' vier' : ''}">${zellen.filter(Boolean).map(z => {
     const t = String(z.v);
     return `<div class="rcp-z-s"><div class="rcp-z-v${z.ton ? ' ' + z.ton : ''}${
       lang(t)} num">${esc(t)}</div><div class="rcp-z-l">${esc(z.l)}</div></div>`;
@@ -16286,6 +16302,7 @@ function showPlayerBadges(playerId){
       ${pill('negative')}
     </div>`;
 
+  const nameKl = n => Math.max(...String(n).split(/\s+/).map(w => w.length)) > 14 ? ' lang' : '';
   const renderCard = (b, r) => {
     const cnt = earnedIds.get(b.id) || 0;
     const unlocked = cnt > 0;
@@ -16294,7 +16311,7 @@ function showPlayerBadges(playerId){
       return `<div class="bsh-card locked ${r}" data-bid="${esc(b.id)}">
         <span class="tier-dot"></span>
         <div class="bsh-card-ic">${svgI('lock')}</div>
-        <div class="bsh-card-name">${esc(b.name)}</div>
+        <div class="bsh-card-name${nameKl(b.name)}">${esc(b.name)}</div>
         <div class="bsh-card-desc">${esc(b.desc)}</div>
       </div>`;
     }
@@ -16303,7 +16320,7 @@ function showPlayerBadges(playerId){
       : `<div class="bsh-card-once">Freigeschaltet</div>`;
     return `<div class="bsh-card unlocked ${r}" data-bid="${esc(b.id)}">
       <div class="bsh-card-ic">${badgeIc(b,'30px')}</div>
-      <div class="bsh-card-name">${esc(b.name)}</div>
+      <div class="bsh-card-name${nameKl(b.name)}">${esc(b.name)}</div>
       <div class="bsh-card-desc">${esc(b.desc)}</div>
       ${meta}
     </div>`;
@@ -26326,6 +26343,7 @@ function _ndLead(desc, body){
   const lead = String(desc || '');
   if(String(body || '').indexOf('rcp-z') < 0 || !/^[^:]+:\s+\S/.test(lead)) return lead;
   const rest = lead.replace(/^[^:]+:\s+/, '');
+  if(/^für die Laufbahn bleiben \d+ Prestige\.$/i.test(rest) && /rcp-z-l">Prestige</.test(body)) return '';
   return rest ? rest.charAt(0).toUpperCase() + rest.slice(1) : lead;
 }
 
@@ -27370,14 +27388,18 @@ function _ndTafelMomentBlatt(s){
     if(letzte && x - letzte.x0 < 6) letzte.arten.push(_ndTafelArt(t));
     else saeulen.push({x0:x, arten:[_ndTafelArt(t)], ms:t.ms});
   });
+  const STAPEL = 5;
   const saeulenHtml = saeulen.map((z, k) => {
     const arten = z.arten.sort((a, b) => ORDNUNG[a] - ORDNUNG[b]);
-    return `<span class="nd-ta-s" style="left:${z.x0.toFixed(1)}%;--k:${k}">`
-      + arten.map(a => `<i class="ta-${a}"></i>`).join('') + `</span>`;
+    const spalten = [];
+    for(let i = 0; i < arten.length; i += STAPEL) spalten.push(arten.slice(i, i + STAPEL));
+    return `<span class="nd-ta-s${z.x0 > 50 ? ' l' : ''}" style="left:${z.x0.toFixed(1)}%;--k:${k}">`
+      + spalten.map(sp => `<span class="nd-ta-c">${sp.map(a => `<i class="ta-${a}"></i>`).join('')}</span>`).join('')
+      + `</span>`;
   }).join('');
   const bewegt = new Set(ms);
   const striche = partien.map(x => `<i class="nd-ta-p${bewegt.has(x) ? ' an' : ''}" style="left:${lage(x).toFixed(1)}%"></i>`).join('');
-  const hoehe = Math.max(...saeulen.map(z => z.arten.length));
+  const hoehe = Math.min(STAPEL, Math.max(...saeulen.map(z => z.arten.length)));
   const NAME = {rek:'Bestmarke', chr:'Monatschronik', ins:'Insignium', aus:'Ausbau'};
   const da = Object.keys(NAME).filter(a => teile.some(t => _ndTafelArt(t) === a));
   const uhr = x => esc(_newsUhrzeit(x));
@@ -27414,8 +27436,8 @@ function _ndTafelZeileBild(t){
     const i = p ? insigniumStufeVon(p) : (ref.stufe | 0);
     let z = '';
     try { z = insigniumStufeSvg(INSIGNIEN[i].key, (getPlayerRank(ref.pid) || {}).label, 0, {bild:true}) || ''; } catch(e){}
-    return {label:INSIGNIEN[i].name, verb:_spName(ref.pid) + ' erreicht', rechts:`<span class="nd-tz-w">${chip(ref.pid)}<span class="nd-tz-z">${z}</span></span>`
-      + (p ? `<b class="nd-tz-v num">${p} P</b>` : '')};
+    return {label:INSIGNIEN[i].name, verb:_spName(ref.pid) + ' erreicht', rechts:`<span class="nd-tz-w">${chip(ref.pid)}<span class="nd-tz-z">${z}</span></span>`,
+      wert:p ? `${p} P` : '', wertText:p ? `${p} P` : ''};
   }
   const neu = (Array.isArray(t.halter) ? t.halter : []).filter(id => pm[id]);
   const vor = (Array.isArray(t.vorher) ? t.vorher : []).filter(id => pm[id]);
@@ -27429,11 +27451,15 @@ function _ndTafelZeileBild(t){
     : neu.length < vor.length ? (mehr ? 'halten allein' : 'hält allein')
     : neu.length > vor.length ? (mehr ? 'ziehen gleich' : 'zieht gleich') : (mehr ? 'halten' : 'hält');
   const wert = ref.ev ? _chronKurz(ref.ev) : '';
-  const alt = typ === 'rekord_gesteigert' && ref.evVorher ? _chronKurz(ref.evVorher) : '';
+  let alt = typ === 'rekord_gesteigert' && ref.evVorher ? _chronKurz(ref.evVorher) : '';
+  const zahl = /^([+−-]?\d[\d.,]*)(.*)$/;
+  const za = alt.match(zahl), zw = wert.match(zahl);
+  if(za && zw && za[2] && za[2] === zw[2]) alt = za[1];
   const pf = `<svg class="nd-tz-pf" viewBox="0 0 16 10" aria-hidden="true"><path d="M1 5H13"/><path d="M10 2L14 5L10 8"/></svg>`;
   return {label:t.rname, verb:_namenListe(wer.map(_spName)) + ' ' + verb, rechts:`<span class="nd-tz-w">${weg.map(id => chip(id, true)).join('')}`
-    + (weg.length ? pf : '') + neu.map(id => chip(id)).join('') + `</span>`
-    + (wert ? `<b class="nd-tz-v num">${alt ? `<s>${esc(alt)}</s> ` : ''}${esc(wert)}</b>` : '')};
+    + (weg.length ? pf : '') + neu.map(id => chip(id)).join('') + `</span>`,
+    wert:wert ? (alt ? `<s>${esc(alt)}</s> ` : '') + esc(wert) : '',
+    wertText:wert ? (alt ? alt + ' ' : '') + wert : ''};
 }
 
 function _ndHeldBuehne(pid, wert, label, neg, extra){
@@ -27873,18 +27899,20 @@ function _ndMitteRoh(s){
           return standFuer(m);
         };
         const tafelBild = d.quelle === 'tafel' || d.quelle === 'form';
-        const _zeile = t => {
-          const uhr = t.ms ? _newsUhrzeit(t.ms) : '';
-          const stand = zeileStand(t);
+        const _zeile = (t, ohneZeit) => {
+          const uhr = !ohneZeit && t.ms ? _newsUhrzeit(t.ms) : '';
+          const stand = ohneZeit ? '' : zeileStand(t);
           const zeit = [uhr, stand].filter(Boolean).join(' · ');
           const bild = tafelBild ? _ndTafelZeileBild(t) : null;
           const ziel = tafelBild ? _ndTafelZiel(t) : '';
+          const kurz = bild && bild.wert && bild.wertText.length <= 16;
           if(bild) return `<div class="nw-zeile nw-tz${t.neg ? ' neg' : ''}"${ziel}${ziel ? ' style="cursor:pointer"' : ''}>
               ${t.ic ? `<i class="nw-ic">${svgI(t.ic)}</i>` : ''}
               <span class="nw-tz-t"><span class="nw-label">${esc(bild.label)}</span>${
                 t.klasse ? `<b class="nw-kl">${esc(t.klasse)}</b>` : ''}${t.marke ? `<b class="nw-mk">${esc(t.marke)}</b>` : ''}
                 <small>${esc([bild.verb, zeit].filter(Boolean).join(' · '))}</small></span>
-              <span class="nw-tz-r">${bild.rechts}</span></div>`;
+              <span class="nw-tz-r">${bild.rechts}${kurz ? `<b class="nd-tz-v num">${bild.wert}</b>` : ''}</span>${
+              bild.wert && !kurz ? `<b class="nw-tz-lang">${bild.wert}</b>` : ''}</div>`;
           return `<div class="nw-zeile${t.neg ? ' neg' : ''}"${ziel ? ziel + ' style="cursor:pointer"'
               : (t.pids && t.pids[0]) ? ` data-pid="${esc(t.pids[0])}" style="cursor:pointer"` : ''}>
               <div class="nw-zeile-kopf">${t.ic
@@ -27898,6 +27926,32 @@ function _ndMitteRoh(s){
               ${_ndNeu(t.text) ? `<div class="nw-satz">${esc(t.text)}</div>` : ''}
             </div>`;
         };
+        const prestigeSumme = (function(){
+          let plus = 0, minus = 0;
+          const gez = {};
+          teile.forEach(t => { const lb = t.lb; if(!lb) return;
+            Object.keys(lb).forEach(pid => { if(gez[pid]) return; gez[pid] = 1;
+              const dd = Math.round(Number(lb[pid].nach) || 0) - Math.round(Number(lb[pid].vor) || 0);
+              if(dd > 0) plus += dd; else minus -= dd; }); });
+          return {plus, minus};
+        })();
+        const uebersicht = (function(){
+          if(d.quelle !== 'tafel' && d.quelle !== 'form') return '';
+          if(typeof rcpZahlenHtml !== 'function') return '';
+          const typ = t => String((t && (t.typ || t.type)) || '');
+          const wech = teile.filter(t => typ(t).indexOf('rekord_') === 0
+            && typ(t) !== 'rekord_gesteigert').length;
+          const aus = teile.filter(t => typ(t) === 'rekord_gesteigert').length;
+          const chr = teile.filter(t => typ(t).indexOf('chronik_') === 0).length;
+          const plus = prestigeSumme.plus;
+          const z = [
+            wech ? {v: wech, l: wech === 1 ? 'Bestmarke' : 'Bestmarken', ton:'gold'} : null,
+            aus ? {v: aus, l: aus === 1 ? 'Ausbau' : 'Ausbauten'} : null,
+            chr ? {v: chr, l: chr === 1 ? 'Chronik' : 'Chroniken'} : null,
+            plus ? {v: '+' + plus, l:'Prestige', ton:'gold'} : null
+          ].filter(Boolean);
+          return z.length > 1 ? rcpZahlenHtml(z) : '';
+        })();
         const gruppiert = (function(){
           if(d.quelle !== 'tafel' && d.quelle !== 'form') return '';
           if(typeof rcpAbschnitt !== 'function') return '';
@@ -27909,15 +27963,28 @@ function _ndMitteRoh(s){
             {t:'Monatschroniken', f:x => typ(x).indexOf('chronik_') === 0},
             {t:'Ausbauten', f:x => typ(x) === 'rekord_gesteigert'}
           ];
+          const liste = l => {
+            const gruppen = [];
+            l.slice().sort((a, b) => (a.ms || 0) - (b.ms || 0)).forEach(t => {
+              const k = (t.matchId || '') + '|' + (t.ms || '');
+              const g = gruppen[gruppen.length - 1];
+              if(g && g.k === k) g.l.push(t); else gruppen.push({k, l:[t]});
+            });
+            return `<div class="nw-liste">${gruppen.map(g => {
+              const t = g.l[0];
+              const kopf = [t.ms ? _newsUhrzeit(t.ms) : '', zeileStand(t)].filter(Boolean).join(' · ');
+              return (kopf ? `<div class="nw-zk num">${esc(kopf)}</div>` : '')
+                + g.l.map(x => _zeile(x, !!kopf)).join('');
+            }).join('')}</div>`;
+          };
           const rest = teile.slice();
           const aus = [];
           gr.forEach(g => {
             const l = rest.filter(g.f);
             l.forEach(x => rest.splice(rest.indexOf(x), 1));
-            if(l.length) aus.push(rcpAbschnitt(g.t, l.length)
-              + `<div class="nw-liste">${l.map(_zeile).join('')}</div>`);
+            if(l.length) aus.push(rcpAbschnitt(g.t, uebersicht ? 0 : l.length) + liste(l));
           });
-          if(rest.length) aus.push(`<div class="nw-liste">${rest.map(_zeile).join('')}</div>`);
+          if(rest.length) aus.push(liste(rest));
           return aus.join('');
         })();
         const wirkung = (function(){
@@ -27929,7 +27996,9 @@ function _ndMitteRoh(s){
           });
           const ids = Object.keys(je);
           if(!ids.length) return '';
-          return `<div class="nd-section">Wirkung auf die Laufbahn</div>`
+          const verloren = uebersicht && prestigeSumme.minus
+            ? `<span class="nd-sec-r"><b class="num">−${prestigeSumme.minus}</b> verloren</span>` : '';
+          return `<div class="nd-section${verloren ? ' nd-sec-z' : ''}">Wirkung auf die Laufbahn${verloren}</div>`
             + _ndWirkungBlock(je, _ndWirkungsGruende(teile), new Date(s.when).getTime());
         })();
         if(d.matchId && _newsSorte(s) === 'spiel'){
@@ -27940,29 +28009,6 @@ function _ndMitteRoh(s){
         }
         const zeilen = gruppiert ? '' : teile.map(_zeile).join('');
         const mv = d.matchId ? _newsMatchVsBlock(d.matchId) : '';
-        const uebersicht = (function(){
-          if(d.quelle !== 'tafel' && d.quelle !== 'form') return '';
-          if(typeof rcpZahlenHtml !== 'function') return '';
-          const typ = t => String((t && (t.typ || t.type)) || '');
-          const wech = teile.filter(t => typ(t).indexOf('rekord_') === 0
-            && typ(t) !== 'rekord_gesteigert').length;
-          const aus = teile.filter(t => typ(t) === 'rekord_gesteigert').length;
-          const chr = teile.filter(t => typ(t).indexOf('chronik_') === 0).length;
-          let plus = 0, minus = 0;
-          const gez = {};
-          teile.forEach(t => { const lb = t.lb; if(!lb) return;
-            Object.keys(lb).forEach(pid => { if(gez[pid]) return; gez[pid] = 1;
-              const dd = Math.round(Number(lb[pid].nach) || 0) - Math.round(Number(lb[pid].vor) || 0);
-              if(dd > 0) plus += dd; else minus -= dd; }); });
-          const z = [
-            wech ? {v: wech, l: wech === 1 ? 'Bestmarke' : 'Bestmarken', ton:'gold'} : null,
-            aus ? {v: aus, l: aus === 1 ? 'Ausbau' : 'Ausbauten'} : null,
-            chr ? {v: chr, l: chr === 1 ? 'Chronik' : 'Chroniken'} : null,
-            plus ? {v: '+' + plus, l:'Prestige', ton:'gold'} : null,
-            minus ? {v: '−' + minus, l:'verloren', ton:'rot'} : null
-          ].filter(Boolean);
-          return z.length > 1 ? rcpZahlenHtml(z) : '';
-        })();
         const kopfzeile = d.quelle === 'tafel' ? 'An der Ewigen Tafel'
           : d.quelle === 'form' ? 'Auf kurzer Strecke'
           : d.quelle === 'spieler' ? 'Alles in diesem Moment'
