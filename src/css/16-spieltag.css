@@ -1017,6 +1017,9 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
    vorigen Liste und 20 px über ihrer eigenen. */
 .nw-liste + .rcp-section{margin-top:16px}
 .rcp-section + .nw-liste{margin-top:0}
+/* Ein Satz unter der Überschrift, was die Gruppe fürs Prestige heißt. */
+.nw-hinweis{margin:-4px 2px 9px;font-size:11.5px;line-height:1.45;color:var(--muted)}
+.nw-hinweis + .nw-liste{margin-top:0}
 /* Die Überschrift der Wirkung trägt rechts, was die roten Zeilen verlieren. */
 .nd-sec-z{display:flex;align-items:baseline;gap:8px}
 .nd-sec-r{margin-left:auto;letter-spacing:.06em;color:var(--muted)}

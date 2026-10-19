@@ -1629,13 +1629,13 @@
   .nd-wk-z{flex:0 0 48px;width:48px;height:48px;display:block}
   .nd-wk-z svg{width:100%;height:100%;display:block}
   .nd-wk-t{flex:1 1 auto;min-width:0;display:block}
-  .nd-wk-n{display:flex;align-items:baseline;gap:6px;min-width:0;
+  /* Ein Blatt zeigt alles: bei 360 px stand „Johan…" neben „neu:
+     Schildri…". Der Name bleibt ganz, die Marke rückt bei Bedarf darunter. */
+  .nd-wk-n{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 6px;min-width:0;
     font-family:'Archivo Black',sans-serif;font-size:12.5px;color:var(--ink)}
-  .nd-wk-n b{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;
-    white-space:nowrap;font-weight:inherit;font-family:inherit}
-  .nd-wk-n em{flex:1 1 auto;min-width:0;font-family:'Sometype Mono',monospace;
-    font-size:9px;font-style:normal;color:var(--muted);letter-spacing:.06em;
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .nd-wk-n b{flex:0 0 auto;max-width:100%;overflow-wrap:anywhere;font-weight:inherit;font-family:inherit}
+  .nd-wk-n em{flex:0 1 auto;min-width:0;font-family:'Sometype Mono',monospace;
+    font-size:9px;font-style:normal;color:var(--muted);letter-spacing:.06em}
   .nd-wk-b{display:flex;height:7px;border-radius:999px;overflow:hidden;
     background:var(--surface3);border:1px solid var(--line);margin:6px 0 4px}
   /* Der Teil, der schon da war, und der von heute. Der erste war
@@ -1678,11 +1678,12 @@
   .nd-wk-p{margin-top:2px;color:var(--faint)}
   /* Warum: welcher Rekord geholt, geteilt oder verloren wurde. */
   .nd-wk-gs{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
-  .nd-wk-g{display:inline-flex;align-items:baseline;gap:4px;max-width:100%;
-    padding:2px 7px;border-radius:999px;font-size:10px;line-height:1.4;
-    color:var(--ink2);background:var(--surface2);border:1px solid var(--line);
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .nd-wk-g b{font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis}
+  /* Ein Grund bricht um, statt abzuschneiden: „übernimmt Der Höhe…" nannte
+     den Rekord nicht. Der Bogen bleibt rund, solange er eine Zeile ist. */
+  .nd-wk-g{display:inline-block;max-width:100%;
+    padding:2px 7px;border-radius:9px;font-size:10px;line-height:1.4;
+    color:var(--ink2);background:var(--surface2);border:1px solid var(--line)}
+  .nd-wk-g b{font-weight:600;color:var(--ink)}
   .nd-wk-g.r{color:var(--red);border-color:rgba(240,86,106,.3);background:rgba(240,86,106,.07)}
   .nd-wk-g.g{border-color:rgba(247,207,74,.28)}
   /* ── Die Siegchance als Skala ───────────────────────────────────────

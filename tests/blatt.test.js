@@ -2788,7 +2788,10 @@ const ok = (c, msg, det) => {
       // Und die BESCHRIFTUNG einer Zeichnung ist keine Wiederholung: der Name
       // des Zeichens steht neben dem Zeichen, weil er dazugehoert — genau wie
       // der Name einer Auszeichnung neben ihrem Medaillon [§C27].
-      box.querySelectorAll('.nd-med-n, .nd-ins-n').forEach(e => e.remove());
+      // Ebenso die Namen unter den Wappen der Rekord-Bühne (`.nd-rk-h`): bei
+      // vier neuen Haltern ist die Aufzählung länger als ein Wort und stand
+      // als Satz der Schlagzeile da, sie beschriftet aber nur die Wappen.
+      box.querySelectorAll('.nd-med-n, .nd-ins-n, .nd-rk-h').forEach(e => e.remove());
       const oben = norm((s.title || '') + ' ' + (s.desc || ''));
       // Ein SATZ, nicht ein Wort: der Name eines Zeichens neben seiner
       // Zeichnung ist eine Beschriftung, keine Wiederholung.
@@ -5140,7 +5143,14 @@ return JSON.stringify(funde,null,1);
       partien: nd.querySelectorAll('.nw-zk').length,
       satz: !!nd.querySelector('.nd-desc') && /Laufbahn bleiben/.test(nd.querySelector('.nd-desc').textContent),
       zellen: zellen.map(c => c.textContent.trim()), reihen,
-      verloren: (nd.querySelector('.nd-sec-r') || {}).textContent || ''};
+      verloren: (nd.querySelector('.nd-sec-r') || {}).textContent || '',
+      // Ein Blatt zeigt alles: bei 360 px stand „Johan…" und „übernimmt Der
+      // Höhe…" in der Wirkung auf die Laufbahn.
+      gekappt: [...nd.querySelectorAll('.nd-wk-n b, .nd-wk-n em, .nd-wk-g, .nd-wk-g b')]
+        .filter(e => e.scrollWidth > e.clientWidth + 1 || getComputedStyle(e).textOverflow === 'ellipsis')
+        .map(e => e.textContent.trim().slice(0, 30)),
+      wirkungen: nd.querySelectorAll('.nd-wk').length,
+      hinweise: [...nd.querySelectorAll('.nw-hinweis')].map(e => e.textContent.trim())};
     K(`__vollZurueck(); closeNewsDetail(); closeSheet(true); 'x'`);
     return out;
   });
@@ -5154,6 +5164,9 @@ return JSON.stringify(funde,null,1);
      && /verloren/.test(voll.verloren),
      'der Zuwachs steht einmal, die vier Zahlen zwei mal zwei, und was verloren ging, über der Wirkung',
      JSON.stringify(voll && {satz: voll.satz, zellen: voll.zellen, reihen: voll.reihen, verloren: voll.verloren}));
+  ok(voll && voll.wirkungen > 0 && !voll.gekappt.length && voll.hinweise.some(h => /Prestige/.test(h)),
+     'in der Wirkung steht jeder Name und jeder Grund ganz, und die Gruppen sagen in einem Satz, was sie fürs Prestige heißen',
+     JSON.stringify(voll && {gekappt: voll.gekappt.slice(0, 3), hinweise: voll.hinweise}));
 
   // ── Ein Blatt zeigt alles ─────────────────────────────────────────
   // Die Blätter schnitten an zwölf Stellen ab: die Gründe der Wirkung nach

@@ -1689,6 +1689,61 @@ ok([_fassung.a, _fassung.b].every(x => x.tafel === 1 && x.zeichen <= 1 && x.ids.
 ok(_fassung.vorN > 0 && _fassung.gleicheIds.length === 0,
    'eine spätere Fassung trägt nur neue IDs, hochgeladen wird nur eingefügt', _fassung.gleicheIds.slice(0, 4).join(', ') || 'keine gleiche');
 
+// ── Jede Zeile der Tafel steht bei der Partie, ab der sie galt ───────
+// Alle Zeilen trugen die Uhrzeit der letzten Partie des Tages: „Leon holt
+// ‚Die Steigerung'" stand unter 17:17, obwohl es seit 13:54 so war. Geprüft
+// wird am letzten Spieltag der Liga, dass der Stand zur Uhrzeit jeder Zeile
+// schon der des Abends ist, und dass nicht alle bei der letzten stehen.
+const _moment = JSON.parse(K.eval(`JSON.stringify((function(){
+  const alle = matches;
+  try {
+    const tage = {};
+    alle.forEach(m => { (tage[tagKey(mts(m))] = tage[tagKey(mts(m))] || []).push(m); });
+    const ziel = Object.keys(tage).sort().pop();
+    const letzte = Math.max(...tage[ziel].map(mts));
+    invalidateCache(); _cache._stories = null; _cache._consolFrom = null; _cache._frischVon = null;
+    const l = _buildStories().filter(s => tagKey(s.when) === ziel
+      && /^(rekord_|chronik_geholt$)/.test((s.dataRef || {}).type || ''));
+    const gleich = (x, y) => (x || []).slice().sort().join(',') === (y || []).slice().sort().join(',');
+    const schon = s => {
+      const d = s.dataRef, t = new Date(s.when).getTime();
+      const st = _storyStand(t >= letzte ? 0 : t);
+      if(d.type === 'chronik_geholt'){
+        const h = st.chronik(d.sid) || {};
+        return !!h[d.titleId] && gleich(h[d.titleId].pids, d.alle);
+      }
+      const x = st.rekorde()[d.rekordId];
+      return !!x && gleich(x.pids, d.halter) && (d.type !== 'rekord_gesteigert' || x.val === d.wert);
+    };
+    // Und die Wirkung nennt eine Chronik nur bei dem, dem sie etwas gibt
+    // oder nimmt: im Monat zählt je Spieler eine.
+    const chr = l.filter(s => s.dataRef.type === 'chronik_geholt');
+    const ohne = chr.filter(s => Array.isArray(s.dataRef.zaehlt)
+      && s.dataRef.alle.some(p => s.dataRef.zaehlt.indexOf(p) < 0)).length;
+    const leer = _ndWirkungsGruende([{halter:['a'], vorher:['b'], rname:'X', zaehlt:[]}]);
+    const eins = _ndWirkungsGruende([{halter:['a'], vorher:['b'], rname:'X', zaehlt:['a']}]);
+    // Was erst mit dem Ende des Tages gilt — eine Chronik über den ganzen
+    // Spieltag —, steht bei der letzten eigenen Partie der Genannten.
+    const eigeneLetzte = pids => Math.max(0, ...tage[ziel]
+      .filter(m => (pids || []).some(p => [m.a1, m.a2, m.b1, m.b2].indexOf(p) >= 0)).map(mts));
+    const falsch = l.filter(s => !schon(s)
+      && new Date(s.when).getTime() !== eigeneLetzte(s.dataRef.playerIds));
+    return {n:l.length, frueher:l.filter(s => new Date(s.when).getTime() < letzte).length,
+            falsch:falsch.map(s => s.title + ' @ ' + new Date(s.when).toISOString().slice(11, 16)),
+            chr:chr.length, mitZaehlt:chr.filter(s => Array.isArray(s.dataRef.zaehlt)).length, ohne,
+            filter:Object.keys(leer).length === 0 && Object.keys(eins).join() === 'a'};
+  } finally {
+    matches = alle; invalidateCache();
+    _cache._stories = null; _cache._consolFrom = null; _cache._frischVon = null;
+  }
+})())`));
+ok(_moment.n > 0 && _moment.frueher > 0 && _moment.falsch.length === 0,
+   'jede Zeile der Tafel steht bei der Partie, ab der ihr Stand galt, nicht alle bei der letzten',
+   _moment.frueher + ' von ' + _moment.n + ' früher' + (_moment.falsch.length ? ', falsch: ' + _moment.falsch.slice(0, 3).join(' | ') : ''));
+ok(_moment.chr > 0 && _moment.mitZaehlt === _moment.chr && _moment.filter,
+   'jede Chronik-Zeile sagt, wem sie Prestige gibt oder nimmt, und die Wirkung nennt nur diese',
+   _moment.mitZaehlt + ' von ' + _moment.chr + ', ' + _moment.ohne + ' mit Haltern ohne Wirkung');
+
 // ── Der Tafel-Moment sagt ueberall dieselbe Zahl ─────────────────────
 // Im Blatt stand „+2 PRESTIGE" in der Zahlenreihe und drei Zeilen darunter
 // „Johannes +9 Prestige fuer die Laufbahn" — eines von beidem liest sich als

@@ -806,13 +806,20 @@ function _ndWirkungBlock(je, gruende, tagMs){
 // Zeilen eines Tafel-Moments: wer einen Rekord oder eine Chronik geholt,
 // geteilt oder verloren hat. Die Zeilen tragen dafür die Halter vor und nach
 // dem Tag; ohne sie (ältere Läufe) bleibt die Liste leer.
+//
+// Genannt wird nur, was Prestige bewegt. Eine Monatschronik zählt je Spieler
+// und Monat einmal, die wertvollste [§C32]: bei Leon standen dreizehn Chips,
+// „holt ‚Die Steigerung'", „holt ‚Der Höhenflug'" und so weiter, neben
+// „Monatschroniken −20" — keiner davon hatte etwas bewegt. `zaehlt` nennt,
+// wem eine Chronik wirklich etwas gibt oder nimmt.
 function _ndWirkungsGruende(teile){
   const out = {};
-  const dazu = (pid, g) => { (out[pid] = out[pid] || []).push(g); };
   (teile || []).forEach(t => {
     const nach = t.halter || [], vor = t.vorher || [];
     const name = t.rname || '';
     if(!name || (!nach.length && !vor.length)) return;
+    const nur = Array.isArray(t.zaehlt) ? t.zaehlt : null;
+    const dazu = (pid, g) => { if(!nur || nur.indexOf(pid) >= 0) (out[pid] = out[pid] || []).push(g); };
     nach.forEach(pid => {
       if(vor.indexOf(pid) < 0) dazu(pid, {verb: vor.length ? 'übernimmt' : 'holt', name, neg:false});
       else if(nach.length < vor.length) dazu(pid, {verb:'hält allein', name, neg:false});
@@ -1243,7 +1250,7 @@ function _ndChronikBlatt(s){
   const lb = d.laufbahn || {}, je = {};
   Object.keys(lb).forEach(id => { if(pm[id] && lb[id] && lb[id].vor != null && lb[id].nach != null) je[id] = lb[id]; });
   const wirkung = Object.keys(je).length
-    ? _ndWirkungBlock(je, _ndWirkungsGruende([{halter:neu, vorher:vor, rname:name}]), new Date(s.when).getTime()) : '';
+    ? _ndWirkungBlock(je, _ndWirkungsGruende([{halter:neu, vorher:vor, rname:name, zaehlt:d.zaehlt}]), new Date(s.when).getTime()) : '';
   const beitragIds = (Array.isArray(d.playerIds) ? d.playerIds : []).filter(id => pm[id]);
   const laufbahn = _newsChronikPrestige(d);
   const ebenen = beitragIds.length
