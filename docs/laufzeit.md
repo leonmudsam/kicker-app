@@ -319,7 +319,10 @@ Sekunden, `_tickVersion` alle fünf Minuten. Beide **ruhen, solange die Seite
 versteckt ist**, und holen beim Zurückkommen sofort nach. `loadAll` lädt alle
 Spieler und alle Partien; das im Hintergrund zu tun ist Mobilfunk und Akku
 für nichts, und ein PWA-Symbol bleibt tagelang offen. Der News-Autosync
-(`29-news-cache.js`) befolgt dieselbe Regel seit jeher.
+(`_newsAutoSyncTick`, `29b-news-sync.js`, alle zehn Minuten und beim
+Zurückkommen) befolgt dieselbe Regel und rechnet nur mit den Partien von eben
+[§C42]: beim Zurückkommen wartet er auf den Abruf, den `_tickDaten` gestartet
+hat; läuft keiner, weil ein Blatt offen ist, setzt er aus.
 
 Der Update-Check (`checkForUpdate`, `01-update.js`) fragt mit
 `If-None-Match`; der ETag steht mit der Version, zu der er gehört, im Speicher
@@ -361,7 +364,10 @@ wird noch einmal gezeichnet.
 Stories veröffentlichen, abgelaufene löschen und Monate archivieren darf nur
 ein Gerät mit der Uhr der Liga, kein automatisierter Browser
 (`ligaSchreibtAbgeleitet`, [§C42](gesetze/C42-start.md)); jedes andere
-rechnet dasselbe und zeigt es nur sich selbst.
+rechnet dasselbe und zeigt es nur sich selbst. Stories veröffentlicht es nur
+aus Partien, deren Abruf höchstens eine Minute vor dem Rechnen abgeschickt
+wurde (`_partienGeholt`, `_datenFrisch`); jede vollständige Antwort setzt
+diesen Zeitpunkt, auch eine unveränderte.
 
 Kommen neue Daten, zeichnet `loadAll` zuerst und lässt den News-Generator
 danach in einem Worker rechnen (`_storiesImWorker`, `29c-news-worker.js`):

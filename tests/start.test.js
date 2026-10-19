@@ -70,7 +70,7 @@ const server = http.createServer((req, res) => {
 // Schreibende Methoden landen in `window.__schreib`.
 const ATTRAPPE = `(() => {
   const D = window.__startDaten;
-  window.__schreib = []; window.__lesen = [];
+  window.__schreib = []; window.__lesen = []; window.__storyIds = [];
   const antwort = (t, ops) => {
     if(ops.some(o => ['insert','update','upsert','delete'].includes(o))) return {data:null, error:null};
     // Archivierte Monate bleiben wie in der echten Datenbank liegen:
@@ -91,13 +91,18 @@ const ATTRAPPE = `(() => {
         // __fehler lässt sie scheitern (kein Netz).
         const r = (window.__fehler && !ops.some(o => ['insert','update','upsert','delete'].includes(o)))
           ? {data:null, error:{message:'kein Netz'}} : antwort(t, ops);
-        return (ja) => new Promise(f => setTimeout(() => f(r), window.__langsam || 0)).then(ja);
+        // __langsamTab hält eine einzelne Tabelle zurück: die Partien sind
+        // die größte Antwort und kommen auf dem Telefon zuletzt.
+        const ms = (window.__langsamTab && window.__langsamTab[t]) || window.__langsam || 0;
+        return (ja) => new Promise(f => setTimeout(() => f(r), ms)).then(ja);
       }
       return kette(t, ops.concat(String(p)));
     },
     apply(_, __, args){
       const o = ops[ops.length-1];
       if(['insert','update','upsert','delete'].includes(o)) window.__schreib.push(t + '.' + o);
+      if(t === 'stories' && o === 'upsert' && args[0])
+        (Array.isArray(args[0]) ? args[0] : [args[0]]).forEach(z => window.__storyIds.push(z && z.id));
       if(t === 'seasons' && o === 'upsert' && args[0]) try {
         const archiv = JSON.parse(localStorage.getItem('attrappe_seasons') || '{}');
         archiv[args[0].id] = args[0]; localStorage.setItem('attrappe_seasons', JSON.stringify(archiv));
@@ -253,6 +258,63 @@ async function neueSeite(ctx){
       ok(!r.darf && r.schreib.length === 0 && r.stories > 20,
         'Ein ' + name + ' zeigt die Stories, schreibt aber weder Stories noch Archiv ' + JSON.stringify(r));
       await fc.close();
+    }
+    // ── Stories nur aus den Partien von eben [§C42] ───────────────────
+    // Am 19.10. schrieb ein Telefon, das seit dem Mittag im Hintergrund lag,
+    // um 17:39 den Fun Fact von 15 Uhr in die Liga, obwohl ab 13:54 gespielt
+    // worden war: beim Zurückkommen rechnete der Takt der News sofort, mit
+    // den Partien von vorher. Hier lädt ein Telefon der Liga am 27.08. um
+    // 12 Uhr und geht in den Hintergrund; um 13:30 und 13:45 wird gespielt;
+    // um 17:30 kommt es zurück — mit offenem Feed (dann holt `loadAll`
+    // nichts) und ohne, bei langsamem Netz. Und an einem Tag ohne Partie kommt
+    // der Fun Fact nach dem Zurückkommen weiterhin.
+    for(const [name, feedOffen, spielen] of [['mit offenem Feed', true, true], ['bei langsamem Netz', false, true],
+                                             ['an einem Tag ohne Partie', false, false]]){
+      const hc = await browser.newContext({viewport:{width:390, height:844}, serviceWorkers:'block', ...LIGA_GERAET});
+      await hc.addInitScript(({daten, mittag}) => {
+        Object.defineProperty(Navigator.prototype, 'webdriver', {get:() => false});
+        window.__startDaten = daten;
+        window.__uhr = mittag;
+        const RD = Date;
+        window.Date = class extends RD{ constructor(...a){ a.length ? super(...a) : super(window.__uhr); } static now(){ return window.__uhr; } };
+        window.setInterval = () => 0;
+        Object.defineProperty(document, 'hidden', {configurable:true, get:() => !!window.__versteckt});
+        Object.defineProperty(document, 'visibilityState', {configurable:true, get:() => window.__versteckt ? 'hidden' : 'visible'});
+        window.__vorStart = K => { window.__K = K; };
+      }, {daten:DATEN, mittag:new Date(2026, 7, 27, 12).getTime()});
+      const h = await neueSeite(hc);
+      await h.page.goto(BASIS);
+      // `typeof`: im Stand vor der Regel gibt es `_datenFrisch` nicht, und die
+      // Gegenprobe soll an der Zusicherung scheitern, nicht am Warten.
+      await h.page.waitForFunction(() => window.__K && window.__K('Array.isArray(_cache._stories) && _cache._stories.length > 20'
+        + ' && (typeof _datenFrisch !== "function" || _datenFrisch())'), null, {timeout:60000});
+      await h.page.waitForTimeout(400);
+      const r = await h.page.evaluate(async ({feedOffen, spielen}) => {
+        const K = window.__K, warte = ms => new Promise(f => setTimeout(f, ms));
+        const vorher = window.__storyIds.includes('ambient_2026-08-27_15');
+        if(feedOffen){ K('openNewsFeed()'); await warte(300); }
+        window.__versteckt = true; document.dispatchEvent(new Event('visibilitychange'));
+        const neu = [];
+        if(spielen){
+          const d = window.__startDaten.matches, letzte = d[d.length - 1];
+          for(const [id, min] of [['heute-1', 30], ['heute-2', 45]]){
+            const m = Object.assign({}, letzte, {id, created_at:new Date(2026, 7, 27, 13, min).toISOString(), deltas:{}});
+            d.push(m); neu.push(id);
+          }
+        }
+        window.__uhr = new Date(2026, 7, 27, 17, 30).getTime();
+        window.__langsamTab = {matches:1500};
+        window.__versteckt = false; document.dispatchEvent(new Event('visibilitychange'));
+        await warte(4000);
+        return {vorher, funFact:window.__storyIds.includes('ambient_2026-08-27_15'),
+          partien:K('matches.filter(m => m.id.startsWith("heute-")).length'),
+          spielStory:neu.length ? neu.some(id => window.__storyIds.includes('spiel_' + id)) : null};
+      }, {feedOffen, spielen});
+      if(spielen) ok(!r.vorher && !r.funFact && (feedOffen || (r.partien === 2 && r.spielStory)),
+        'Zurück aus dem Hintergrund ' + name + ': kein Fun Fact für einen Tag, an dem vor 15 Uhr gespielt wurde'
+          + (feedOffen ? '' : ', die Partien des Tages sind da und ihre Stories veröffentlicht') + ' ' + JSON.stringify(r));
+      else ok(!r.vorher && r.funFact, 'Zurück aus dem Hintergrund ' + name + ': der Fun Fact von 15 Uhr wird veröffentlicht ' + JSON.stringify(r));
+      await hc.close();
     }
     // ── Vorwärmen im Leerlauf ─────────────────────────────────────────
     // Nach dem Start rechnet niemand mehr kalt, wenn ein Reiter aufgeht.

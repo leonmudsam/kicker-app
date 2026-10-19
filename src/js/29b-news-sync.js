@@ -117,7 +117,8 @@ function _refreshOpenNewsViews(){
 // ─── §11.9 — Periodischer News-Auto-Sync (v8.5) ──────────────────────
 // Lässt ambiente Fun-Fact-Stories (§11.1b) OHNE Reload erscheinen: alle paar
 // Minuten neu synchronisieren. Pausiert bei verstecktem Tab (spart Requests)
-// und holt beim Wieder-Sichtbarwerden sofort nach (verpasster 15-Uhr-Slot).
+// und holt beim Wieder-Sichtbarwerden nach (verpasster 15-Uhr-Slot), sobald
+// die Partien von jetzt da sind.
 // Spamfrei: IDs sind tages-deterministisch und normale Inserts unveraenderlich.
 let _newsAutoSyncTimer = null;
 let _newsAutoSyncRunning = false;
@@ -127,6 +128,13 @@ async function _newsAutoSyncTick(){
   if(typeof syncStoriesViaDb !== 'function') return;
   _newsAutoSyncRunning = true;
   try {
+    // Nur aus den Partien von eben [§C42]: wer aus dem Hintergrund kommt,
+    // hält noch die von vorher, und ein Fun Fact daraus kennt die Partien des
+    // Tages nicht. Gewartet wird auf den Abruf, den das Zurückkommen schon
+    // gestartet hat; läuft keiner — ein Blatt ist offen —, rechnet der Takt
+    // nicht.
+    if(!_datenFrisch() && _loadAllPromise) await _loadAllPromise;
+    if(!_datenFrisch()) return;
     await syncStoriesViaDb();   // Generator (memo) → ggf. neuer Slot → Upload → Reload
     _refreshOpenNewsViews();
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] auto-sync failed', e); }

@@ -1882,10 +1882,10 @@ async function syncStoriesViaDb(){
   }
 
   // Versuch 1: DB-Pfad. Veröffentlicht und aufgeräumt wird nur von einem
-  // Gerät mit der Uhr der Liga [§C42]; jedes andere zeigt seine Stories nur
-  // sich selbst.
+  // Gerät mit der Uhr der Liga und nur aus den Partien von eben [§C42]; jedes
+  // andere zeigt seine Stories nur sich selbst.
   try {
-    if(ligaSchreibtAbgeleitet()){
+    if(ligaSchreibtAbgeleitet() && _datenFrisch()){
       await _cleanupExpiredStoriesInDb();      // 1× pro Sync, idempotent
       await _uploadNewStoriesToDb(generated, dbBestand);
     }

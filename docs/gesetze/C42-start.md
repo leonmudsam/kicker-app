@@ -5,6 +5,7 @@
 - Nach jedem Live-Abruf liegt der Stand auf dem Gerät (`_standSchreiben`, IndexedDB `kicker-stand`): die vier Antworten der Datenbank, wie sie kamen, der Story-Bestand und ein Fingerabdruck (`_standHash`). Er gilt nur für dieselbe Fassung der App (`BUILD_VERSION`).
 - Der erste Durchlauf von `loadAll` startet den Abruf und zeichnet währenddessen aus dem Stand (`_standZeigen`). Ist der Abruf schon da, entfällt der Stand.
 - **Abgeleitetes schreibt nur ein Gerät mit der Uhr der Liga** (`ligaSchreibtAbgeleitet`, `LIGA_ZEITZONE`): Stories und Saison-Archiv rechnet jedes Gerät in Tagen und Monaten seiner eigenen Uhr. Veröffentlichen, aufräumen und archivieren darf nur ein Gerät, dessen Uhr dieselbe Wanduhr zeigt wie Europe/Berlin — jetzt und ein halbes Jahr davor und danach, also mit derselben Sommerzeit — und das kein automatisierter Browser ist (`navigator.webdriver`). Jedes andere rechnet und zeigt seine Stories nur sich selbst. Was ein Spieler selbst einträgt, gilt immer.
+- **Stories nur aus den Partien von eben** (`_datenFrisch`, `_partienGeholt`, `DATEN_FRISCH_MS`): veröffentlicht werden Stories nur, wenn der letzte vollständige Abruf der Partien höchstens eine Minute zurückliegt — gezählt ab seinem Absenden. Der Takt der News (`_newsAutoSyncTick`) rechnet gar nicht mit einem älteren Stand: beim Zurückkommen aus dem Hintergrund wartet er auf den Abruf, den das Zurückkommen gestartet hat, und läuft keiner, weil ein Blatt offen ist, setzt er aus.
 - **Aus dem Stand wird nur gezeichnet, nie geschrieben.** Kein Archiv, keine Story, kein Karriereende, kein Rückblick, der von selbst aufgeht, keine Migration der Einstellungen: was veröffentlicht oder speichert, hängt am Live-Abruf. Bis er da ist, steht „verbinde…“.
 - Der Live-Abruf mit demselben Fingerabdruck lässt Daten, Töpfe und DOM stehen (`_standGezeigt`); ein anderer ersetzt alles wie ohne Stand.
 - Scheitert der Live-Abruf, bleibt der Stand stehen und ein Hinweis sagt es; die Fehlerkarte kommt nur ohne Stand.
@@ -14,11 +15,11 @@
 
 ## Stellen
 
-`06c-stand.js`, `06-db.js` (`_loadAllDurchlauf`, `_datenEinbauen`, `_overridesNachziehen`, `ligaSchreibtAbgeleitet`, `autoArchiveSeasons`), `29-news-cache.js` (`syncStoriesViaDb`), `src/sw.js`, `37-boot.js` (Registrierung), `tools/build.mjs` und Wächter 1 und 5 in `tools/check.mjs`.
+`06c-stand.js`, `06-db.js` (`_loadAllDurchlauf`, `_datenEinbauen`, `_overridesNachziehen`, `ligaSchreibtAbgeleitet`, `_datenFrisch`, `autoArchiveSeasons`), `29-news-cache.js` (`syncStoriesViaDb`), `29b-news-sync.js` (`_newsAutoSyncTick`), `src/sw.js`, `37-boot.js` (Registrierung), `tools/build.mjs` und Wächter 1 und 5 in `tools/check.mjs`.
 
 ## Prüfung
 
-`tests/start` (ein Telefon der Liga mit Berliner Uhr veröffentlicht; ein Gerät mit Tokioter oder Londoner Uhr und ein automatisierter Browser zeigen die Stories, schreiben aber weder Stories noch Archiv; die Liga steht aus dem Stand, bevor das Netz antwortet; kein Schreibzugriff bis dahin; dasselbe Markup und derselbe Knoten nach dem Live-Abruf mit denselben Daten; ohne Netz bleibt der Stand; ein Stand einer anderen Fassung gilt nicht; der Service Worker hält die Seite unter ihrer Fassung, ohne Netz öffnet die App aus ihm, Update-Check und Neu laden gehen ans Netz, eine neue Fassung räumt den Topf der alten, keine Anfrage geht an eine fremde Adresse).
+`tests/start` (ein Telefon der Liga mit Berliner Uhr veröffentlicht; ein Gerät mit Tokioter oder Londoner Uhr und ein automatisierter Browser zeigen die Stories, schreiben aber weder Stories noch Archiv; ein Telefon, das mittags im Hintergrund verschwindet und nach Partien vor 15 Uhr zurückkommt, schreibt keinen Fun Fact für diesen Tag — mit offenem Feed und bei langsamem Netz, dann mit den Partien des Tages und ihren Stories —, und an einem Tag ohne Partie kommt der Fun Fact nach dem Zurückkommen; die Liga steht aus dem Stand, bevor das Netz antwortet; kein Schreibzugriff bis dahin; dasselbe Markup und derselbe Knoten nach dem Live-Abruf mit denselben Daten; ohne Netz bleibt der Stand; ein Stand einer anderen Fassung gilt nicht; der Service Worker hält die Seite unter ihrer Fassung, ohne Netz öffnet die App aus ihm, Update-Check und Neu laden gehen ans Netz, eine neue Fassung räumt den Topf der alten, keine Anfrage geht an eine fremde Adresse).
 
 ## Herleitung
 
@@ -76,3 +77,14 @@ hätte dasselbe angerichtet. Deshalb schreibt nur, wer mit der Uhr der Liga
 rechnet, und kein automatisierter Browser — auch kein Test, der versehentlich
 an der echten Datenbank hängt.
 
+Am 19.10. stand im Feed um 15 Uhr „Liga in Zahlen", obwohl an diesem Tag ab
+13:54 vier Partien gespielt worden waren — und ein Tag mit Partien vor
+15 Uhr bekommt keinen Fun Fact. Angelegt hatte ihn um 17:39 ein Telefon mit
+der Uhr der Liga, das seit dem Mittag im Hintergrund lag. Beim
+Zurückkommen startete die App zweierlei: den Abruf der Daten (`_tickDaten`)
+und den Takt der News, der sofort rechnete — mit den Partien, die noch im
+Speicher lagen. Der Abruf kam erst danach an, und war ein Blatt offen, etwa
+der Feed, fand er gar nicht statt. Für dieses Telefon war der Tag bis
+15 Uhr ohne Spiel, und es schrieb den Fun Fact in die Liga, wo er für alle
+stand. Die Regel über die Uhr hielt das nicht auf: die Uhr stimmte, der
+Stand nicht.

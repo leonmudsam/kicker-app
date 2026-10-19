@@ -5925,7 +5925,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.19.562e13d6';
+const BUILD_VERSION='2026.10.19.01dee61d';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -7643,6 +7643,7 @@ async function _loadAllDurchlauf(){
   let ausStand = false;
   try{
     let abrufFertig = false;
+    const abrufBeginn = Date.now();
     const abruf=Promise.allSettled([
       sb.from('players').select('*').order('elo',{ascending:false}),
       sb.from('matches').select('*').order('created_at',{ascending:true}),
@@ -7656,6 +7657,7 @@ async function _loadAllDurchlauf(){
       if(a.status === 'rejected') throw a.reason;
       if(a.value.error) throw a.value.error;
     }
+    _partienGeholt = abrufBeginn;
     const [p,m,c,se]=antworten.map(a=>a.value);
     const _fp = JSON.stringify([p.data, m.data, c.data, se.data]);
     const _today = new Date().toDateString();
@@ -7722,6 +7724,10 @@ function ligaSchreibtAbgeleitet(){
     return [-60, -120].includes(new Date(jetzt).getTimezoneOffset());
   }
 }
+
+const DATEN_FRISCH_MS = 60 * 1000;
+let _partienGeholt = 0;
+function _datenFrisch(){ return _partienGeholt > 0 && Date.now() - _partienGeholt <= DATEN_FRISCH_MS; }
 
 async function autoArchiveSeasons(){
   const past=ligaSchreibtAbgeleitet()?allPastSeasons():[];
@@ -22676,7 +22682,7 @@ async function syncStoriesViaDb(){
   }
 
   try {
-    if(ligaSchreibtAbgeleitet()){
+    if(ligaSchreibtAbgeleitet() && _datenFrisch()){
       await _cleanupExpiredStoriesInDb();
       await _uploadNewStoriesToDb(generated, dbBestand);
     }
@@ -22870,6 +22876,8 @@ async function _newsAutoSyncTick(){
   if(typeof syncStoriesViaDb !== 'function') return;
   _newsAutoSyncRunning = true;
   try {
+    if(!_datenFrisch() && _loadAllPromise) await _loadAllPromise;
+    if(!_datenFrisch()) return;
     await syncStoriesViaDb();
     _refreshOpenNewsViews();
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] auto-sync failed', e); }
