@@ -82,18 +82,28 @@
     font-size:calc(var(--av) * .36)}
   .rrow .av{width:40px;height:40px;border-radius:12px;flex-shrink:0;display:grid;place-items:center;
     font-family:'Archivo Black',sans-serif;font-size:15px;color:var(--bg);text-transform:uppercase}
-  /* Emoji-Avatar Variante (grauer Hintergrund mit Emoji) */
-  .av.av-emoji{background:linear-gradient(155deg,#3a4540,#212824)!important;
-    position:relative;overflow:hidden;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
-  .av.av-emoji::after{content:"";position:absolute;inset:0;
-    background:linear-gradient(160deg,rgba(255,255,255,.10) 0%,transparent 50%);
-    border-radius:inherit;pointer-events:none;z-index:1}
-  .av.av-emoji .em{position:absolute;inset:0;display:grid;place-items:center;
-    font-size:1.5em;line-height:1;z-index:2;
-    color:#fff;
+  /* Emoji-Avatar: grauer Grund mit Glanz, darauf das Emoji. Glanz und Grund
+     sind zwei Hintergründe desselben Kreises, das Emoji ein gewöhnliches
+     Kind ohne eigene Ebene, sein Schatten ein Textschatten. Der Glanz lag als
+     `::after` (z-index 1) und das Emoji (z-index 2, mit `filter`) je als
+     eigene Ebene über dem Kreis, und der Kreis war kein eigener Stapel: beide
+     gehörten dem Stapel der Karte oder des Fensters. Lief dort irgendeine
+     Bewegung, legte Safari jedes Emoji auf eine eigene Grafikebene, die der
+     runde Ausschnitt des Kreises von außen schneiden muss — und zeichnete sie
+     manchmal gar nicht. Auf dem iPhone standen die Gesichter im Feed, in
+     Stories und Blättern als leere graue Kreise da; in der Monatstabelle, wo
+     jedes Gesicht in einem verschobenen und damit eigenen Stapel liegt, nie.
+     Kein Teil mit eigener Ebene in einem runden Ausschnitt ohne eigenen
+     Stapel [§C43]. */
+  .av.av-emoji{background:linear-gradient(160deg,rgba(255,255,255,.10) 0%,transparent 50%),
+      linear-gradient(155deg,#3a4540,#212824)!important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
+    /* Mittig auch, wo das Emoji größer ist als sein Kreis: dann ragt es
+       nach allen Seiten gleich hinaus, nicht nur nach rechts unten. */
+    place-content:center}
+  .av.av-emoji .em{font-size:1.5em;line-height:1;color:#fff;
     font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji','Twemoji Mozilla',sans-serif;
-    filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))}
+    text-shadow:0 1px 2px rgba(0,0,0,.4)}
   .rmid{flex:1;min-width:0}
   .rname{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .rmeta{font-size:11px;color:var(--muted);margin-top:2px;font-family:'Sometype Mono',monospace;

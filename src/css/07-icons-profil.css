@@ -271,7 +271,10 @@
   .bsh-neg-divider-label .dot{width:5px;height:5px;border-radius:50%;background:var(--red)}
 
   .bsh-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;
-    padding:14px;padding-top:18px;text-align:center;position:relative;overflow:hidden;transition:.15s}
+    padding:14px;padding-top:18px;text-align:center;position:relative;overflow:hidden;transition:.15s;
+    /* Das Zeichen darin trägt einen Schein (`filter`): ein runder Ausschnitt
+       mit Ebenen darin ist sein eigener Stapel [§C43]. */
+    isolation:isolate}
   .bsh-card-ic{font-size:30px;margin-bottom:10px;display:flex;justify-content:center;
     align-items:center;min-height:32px}
   .bsh-card-ic svg{width:30px;height:30px;stroke:currentColor;fill:none;--strich:1.75;
@@ -715,7 +718,12 @@
      Violett der Laufbahn, Grün der positiven Dynamik, Bronze dem direkten
      Duell und Rot der negativen Richtung. Das sind Familien statt zwölf
      Einzelfarben — genug Trennung, aber kein Regenbogen [§C25]. */
-  .nf-card{padding:0;overflow:hidden;border-radius:4px 14px 14px 4px}
+  /* Jede Karte ist ihr eigener Stapel [§C43]: ihre Teile tragen z-index 1
+     und das Licht an ihrer Kante 2 und 3. Die Karten im Feed sind es durch
+     `content-visibility` ohnehin, Breaking und die großen Karten nicht — dort
+     gehörten diese Ebenen dem Feed, und Safari musste jede, die es auf eine
+     eigene Grafikebene legt, von außen am runden Rand der Karte schneiden. */
+  .nf-card{padding:0;overflow:hidden;border-radius:4px 14px 14px 4px;isolation:isolate}
   /* Dieselbe Variable steuert Kante, Rubrik, Zeichen und Schimmer auf Karte
      UND Blatt. Damit kann kein Teil einer Story versehentlich wieder Gold
      tragen, während der Rest schon seiner Familie folgt [§C27]. */
@@ -1674,7 +1682,7 @@
      die Linien der Elo-Rechnung [§5.2]. */
   .nd-chance{background:var(--surface);border:1px solid var(--line);
     border-radius:10px;padding:11px 13px 12px;margin-bottom:6px}
-  .nd-chance-b{position:relative;height:8px;border-radius:999px;overflow:hidden;
+  .nd-chance-b{position:relative;height:8px;border-radius:999px;overflow:hidden;isolation:isolate;
     background:var(--surface3);border:1px solid var(--line)}
   .nd-chance-b i{display:block;height:100%;border-radius:999px;
     background:linear-gradient(90deg,rgba(194,201,208,.35),var(--silber))}

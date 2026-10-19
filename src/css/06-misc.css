@@ -147,12 +147,15 @@
   .pp-av-ring::before{content:"";position:absolute;inset:-8px;border-radius:50%;
     background:radial-gradient(circle, var(--pp-tier-glow) 0%, transparent 60%);
     z-index:-1;animation:ppPulse 3.5s ease-in-out infinite}
+  /* Ein eigener Stapel, wie jeder runde Ausschnitt mit Ebenen darin
+     [§C43]: sonst gehören Glanz und Emoji dem Stapel des Blatts, und Safari
+     zeichnet eine davon, die es auf eine eigene Ebene legt, manchmal nicht. */
   .pp-av-inner{width:100%;height:100%;border-radius:50%;
     display:grid;place-items:center;font-family:'Archivo Black',sans-serif;
     font-size:42px;color:rgba(255,255,255,.95);letter-spacing:-.02em;
-    position:relative;overflow:hidden}
+    position:relative;overflow:hidden;isolation:isolate}
   .pp-av-inner.icon-av{background:linear-gradient(155deg,#3a4540,#212824)}
-  .pp-av-inner.icon-av .em{font-size:52px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.4));
+  .pp-av-inner.icon-av .em{font-size:52px;text-shadow:0 2px 6px rgba(0,0,0,.4);
     font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji','Twemoji Mozilla',sans-serif;
     line-height:1}
   .pp-av-inner::after{content:"";position:absolute;inset:0;
@@ -242,7 +245,7 @@
   .pp-posprof .pph .pct{font-family:'Sometype Mono',monospace;font-size:12px;font-weight:600;color:var(--ink2);margin:0 4px}
   .pp-slider{position:relative;height:10px;border-radius:5px;
     background:linear-gradient(90deg,rgba(86,180,232,.15) 0%,rgba(86,180,232,.15) 100%);
-    overflow:hidden}
+    overflow:hidden;isolation:isolate}
   .pp-slider::before{content:"";position:absolute;inset:0;
     background:linear-gradient(90deg,rgba(255,120,73,.18),rgba(255,120,73,.18) var(--atk,50%),transparent var(--atk,50%));
     transition:background 1s cubic-bezier(.2,.8,.2,1)}
@@ -337,8 +340,10 @@
   .pp-tier-einsteiger .pp-badge-inline{background:rgba(255,120,73,.12);border-color:rgba(255,120,73,.3);color:var(--orange)}
 
   /* Combined Position Card (Sturm + Abwehr in einer Karte) */
+  /* `isolation` hier und an den Karten darunter: jeder runde Ausschnitt mit
+     Ebenen darin ist sein eigener Stapel [§C43]. */
   .pp-pos-combined{position:relative;background:var(--surface);border:1px solid var(--line);
-    border-radius:14px;padding:14px;overflow:hidden}
+    border-radius:14px;padding:14px;overflow:hidden;isolation:isolate}
   .pp-pos-combined .head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:11px}
   .pp-pos-combined .head .t{font-size:9.5px;text-transform:uppercase;letter-spacing:.13em;color:var(--muted);font-weight:700;font-family:'Sometype Mono',monospace}
   .pp-pos-combined .head .vol{font-family:'Sometype Mono',monospace;font-size:10.5px;color:var(--muted)}
@@ -358,7 +363,7 @@
   .pp-roles-donuts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .pp-rd{background:var(--bg2);border:1px solid var(--line2);border-radius:12px;
     padding:14px 8px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;
-    position:relative;overflow:hidden}
+    position:relative;overflow:hidden;isolation:isolate}
   .pp-rd::before{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;
     background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent)}
   .pp-rd-ring{width:78px;height:78px;border-radius:50%;
@@ -410,7 +415,7 @@
 
   /* Karriere-Rang Hero-Card: prominenter Tier-Name + Ø Saison-Elo + Journey-Bar */
   .pp-rank-card{background:linear-gradient(180deg,var(--surface),var(--bg2));
-    border:1px solid var(--line);border-radius:14px;overflow:hidden;position:relative}
+    border:1px solid var(--line);border-radius:14px;overflow:hidden;position:relative;isolation:isolate}
   .pp-rank-card::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;
     background:linear-gradient(90deg,transparent,var(--pp-tier-1,var(--acid)),transparent);opacity:.65}
   .pp-rank-hero{display:flex;justify-content:space-between;align-items:center;gap:12px;
@@ -472,11 +477,11 @@
   .av-picker{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:12px}
   .av-opt{aspect-ratio:1;border-radius:50%;background:linear-gradient(155deg,#3a4540,#212824);
     border:2px solid transparent;display:grid;place-items:center;cursor:pointer;
-    transition:transform .15s, border-color .2s;position:relative;overflow:hidden;
+    transition:transform .15s, border-color .2s;position:relative;overflow:hidden;isolation:isolate;
     box-shadow:0 2px 6px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.05)}
   .av-opt::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
     background:linear-gradient(160deg,rgba(255,255,255,.12) 0%,transparent 50%)}
-  .av-opt .em{font-size:26px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4));position:relative;z-index:1;
+  .av-opt .em{font-size:26px;text-shadow:0 2px 4px rgba(0,0,0,.4);position:relative;z-index:1;
     font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji','Twemoji Mozilla',sans-serif;
     line-height:1;color:#fff}
   .av-opt:active{transform:scale(.92)}
