@@ -399,6 +399,36 @@ const _aktive = K.eval(`activePlayers().length`);
   ok(zeilen === _aktive,
      `Ewige Tafel nach ${m}: alle ${_aktive} Spieler stehen in der Tabelle`, 'gezählt: ' + zeilen);
 });
+// Die Torbilanz ist ein Schnitt je Partie, wie Plus-Minus. Als Summe stand
+// vorn, wer am meisten gespielt hatte — in Gesamt und unter den Teams.
+{
+  const MIN = K.eval(`AW_MIN.spielerSaldo`);
+  const ziffer = v => { const r = Math.round(v * 10) / 10; return 'Ø ' + (r >= 0 ? '+' : '') + (r === 0 ? 0 : r).toFixed(1).replace('.', ','); };
+  const h = K.eval(`period='all'; rankMetric='goaldiff'; vRanking()`);
+  const tafel = h.slice(h.indexOf('class="rlist"'));
+  const ids = [...tafel.matchAll(/class="rrow[^"]*" data-detail="([^"]+)"/g)].map(m => m[1]);
+  const werte = [...tafel.matchAll(/<div class="big[^"]*">([^<]*)<\/div>/g)].map(m => m[1].trim());
+  const st = JSON.parse(K.eval(`JSON.stringify(activePlayers().map(p => { const s = allPlayerStats()[p.id] || playerStats(p.id); return {id:p.id, gd:s.gd, g:s.games}; }))`));
+  const je = x => x.g ? x.gd / x.g : 0;
+  const soll = st.slice().sort((a, b) => (b.g >= MIN) - (a.g >= MIN) || je(b) - je(a) || b.g - a.g);
+  const summe = st.slice().sort((a, b) => b.gd - a.gd);
+  ok(ids.length === st.length && ids.join() === soll.map(x => x.id).join() && soll.map(x => x.id).join() !== summe.map(x => x.id).join(),
+     'Ewige Tafel nach Torbilanz: geordnet nach dem Schnitt je Partie, nicht nach der Summe',
+     'Erster ' + K.eval(`pname(${JSON.stringify(ids[0])})`) + ' mit ' + (werte[0] || '?') + ', nach Summe wäre es ' + K.eval(`pname(${JSON.stringify(summe[0].id)})`));
+  ok(werte.length === ids.length && werte.every((w, i) => w === ziffer(je(soll[i]))),
+     'jede Zeile zeigt den Schnitt wie Plus-Minus („Ø +1,4")', werte.slice(0, 3).join(' · '));
+  const t = K.eval(`teamSort='gd'; teamView='best'; vTeams()`);
+  const duos = [...t.matchAll(/data-team="([^"]+)"/g)].map(m => m[1]);
+  const tw = [...t.matchAll(/<div class="tm-wert"[^>]*>([^<]*)<\/div>/g)].map(m => m[1].trim());
+  const ts = JSON.parse(K.eval(`JSON.stringify(teamStats().filter(t => t.g >= 4 && t.ids.every(id => ligaAktiv(id))).map(t => ({k:t.ids.join('|'), gd:t.gf - t.ga, g:t.g, q:t.w / t.g})))`));
+  const tsoll = ts.slice().sort((a, b) => b.gd / b.g - a.gd / a.g || b.q - a.q || b.g - a.g);
+  const tsumme = ts.slice().sort((a, b) => b.gd - a.gd);
+  ok(duos.length === ts.length && duos.join() === tsoll.map(x => x.k).join() && tsoll.map(x => x.k).join() !== tsumme.map(x => x.k).join(),
+     'Teams nach Torbilanz: geordnet nach dem Schnitt je Partie, nicht nach der Summe', 'erste Zeile ' + (tw[0] || '?'));
+  ok(tw.length === duos.length && tw.every((w, i) => w === ziffer(tsoll[i].gd / tsoll[i].g)),
+     'jede Duo-Zeile zeigt den Schnitt wie Plus-Minus', tw.slice(0, 3).join(' · '));
+  K.eval(`teamSort='wr'`);
+}
 K.eval(`period='season'; rankMetric='elo'`);
 render('Awards-Tab', `awView='awards'; vAwards()`);
 render('Rekorde-Reiter', `awView='rekorde'; vAwards()`);

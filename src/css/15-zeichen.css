@@ -88,9 +88,10 @@
   /* ── Das Titelband ────────────────────────────────────────────────
      Unterhalb des Avatars, mittig, mit dunkler Kontur, damit die Sterne
      sich vom Untergrund lösen — egal worauf sie liegen. */
+  /* Die Kontur trägt `.zs-k`, kein `filter` an der Leiste: der machte sie zu
+     einer eigenen Ebene unter jedem Wappen [§C43]. */
   .zn-ti{position:absolute;left:50%;bottom:-5px;transform:translateX(-50%);
-    z-index:2;line-height:0;pointer-events:none;
-    filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.85))}
+    z-index:2;line-height:0;pointer-events:none}
   .zn-ti .zs-k{fill:none;stroke:var(--bg);stroke-width:3.2;stroke-linejoin:round}
   .zn-ti .zs{fill:var(--gold)}
   .zn-ti .zn-ti-n{fill:var(--gold);font-family:'Sometype Mono',monospace;

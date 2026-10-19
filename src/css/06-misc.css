@@ -274,9 +274,10 @@
     border-color:rgba(86,180,232,.18)}
   .pp-tr::before{content:"";position:absolute;inset:0;
     background:radial-gradient(circle at 50% 0%,rgba(255,255,255,.06) 0%,transparent 40%);pointer-events:none}
+  /* Der Schein ist ein Textschatten, kein `filter`. */
   .pp-tr .ic{font-size:34px;line-height:1;margin-bottom:7px;display:block;
-    filter:drop-shadow(0 4px 9px rgba(247,207,74,.4))}
-  .pp-tr.team .ic{filter:drop-shadow(0 4px 9px rgba(86,180,232,.35))}
+    text-shadow:0 4px 9px rgba(247,207,74,.4)}
+  .pp-tr.team .ic{text-shadow:0 4px 9px rgba(86,180,232,.35)}
   .pp-tr .ct{position:absolute;top:7px;right:7px;background:var(--gold);color:#000;
     font-family:'Archivo Black',sans-serif;font-size:10px;padding:2px 6px;border-radius:7px;
     box-shadow:0 2px 5px rgba(247,207,74,.4)}

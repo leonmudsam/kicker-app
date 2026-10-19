@@ -560,10 +560,18 @@ function _vRankingCore(){
 
   // prestigeTabelle() rechnet die ganze Liga in einem Zug und liegt danach
   // im Cache — prestigeOf je Zeile kostet deshalb nichts.
+  // Die Torbilanz ist ein Schnitt je Partie, wie Plus-Minus in den Awards.
+  // Als Summe stand vorn, wer am meisten gespielt hatte: bei gleichem Saldo
+  // je Partie lag ein Vielspieler mit doppelt so vielen Partien doppelt so
+  // weit vorn. Unter der Schwelle von Plus-Minus (`AW_MIN.spielerSaldo`)
+  // entscheidet ein einziges 10:0 den Schnitt — wer sie nicht erreicht,
+  // steht dahinter.
+  const torJe = s => s.games ? s.gd / s.games : 0;
+  const saldoZaehlt = s => s.games >= AW_MIN.spielerSaldo;
   const sortFn = {
     elo:      (a,b) => b.globalElo - a.globalElo,
     winrate:  (a,b) => b.s.wr - a.s.wr || b.s.games - a.s.games,
-    goaldiff: (a,b) => b.s.gd - a.s.gd,
+    goaldiff: (a,b) => saldoZaehlt(b.s) - saldoZaehlt(a.s) || torJe(b.s) - torJe(a.s) || b.s.games - a.s.games,
     prestige: (a,b) => prestigeOf(b.p.id).punkte - prestigeOf(a.p.id).punkte,
     games:    (a,b) => b.s.games - a.s.games
   }[metrik];
@@ -682,7 +690,15 @@ function rrow(p, s, i, metric, globalElo, letzte){
   }
 
   else if(metric==='winrate'){big=Math.round(s.wr*100)+'%'; small=s.wins+'–'+s.losses;}
-  else if(metric==='goaldiff'){big=(s.gd>=0?'+':'')+s.gd; small='Torbilanz';}
+  else if(metric==='goaldiff'){
+    // Geschrieben wie Plus-Minus, mit derselben Regel [§C27]: „Ø +1,4" und
+    // darunter „je Partie" — „Torbilanz" steht schon im gewählten Reiter,
+    // und als „Torbilanz je Partie" lag die Aufschrift bei 360 px über der
+    // Bilanz der Zeile. Wer noch unter der Schwelle liegt, erfährt, warum
+    // er hinten steht.
+    big = AW_WERT.plusMinus.z({v: s.games ? s.gd / s.games : 0});
+    small = s.games >= AW_MIN.spielerSaldo ? 'je Partie' : 'ab ' + AW_MIN.spielerSaldo + ' Partien';
+  }
   else if(metric==='prestige'){
     // Die Zahl groß, die Stufe klein. Das Zeichen trägt der Avatar links
     // schon — aber in 52 px erkennt man den Schildring nicht vom

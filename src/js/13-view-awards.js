@@ -1184,7 +1184,7 @@ const AW_WERT = {
   scorer:      {l:R=>R.scorer, s:x=>Math.round(x.avg*10), z:x=>'Ø '+komma(x.avg,1), e:()=>'Tore je Partie', b:x=>'aus '+x.g+' Sturmpartien', f:x=>x.avg},
   wall:        {l:R=>R.wall, s:x=>-Math.round(x.v/x.g*10), z:x=>'Ø '+komma(x.v/x.g,1), e:()=>'Gegentore je Partie', b:x=>'aus '+x.g+' Abwehrpartien', f:x=>x.v/x.g},
   ice:         {l:R=>R.iceList, s:x=>x.v, z:x=>x.v, e:x=>_awN(x.v,'Sieg zu null','Siege zu null'), b:()=>'in der Abwehr', gilt:x=>x.v>=1},
-  plusMinus:   {l:R=>R.plusMinusList, s:x=>Math.round(x.v*10), z:x=>'Ø '+(x.v>=0?'+':'')+komma(x.v,1), e:()=>'Torbilanz je Partie', b:x=>x.gf+':'+x.ga+' aus '+x.g+' Partien', f:x=>x.v},
+  plusMinus:   {l:R=>R.plusMinusList, s:x=>Math.round(x.v*10), z:x=>{ const v=Math.round(x.v*10)/10; return 'Ø '+(v>=0?'+':'')+komma(v,1); }, e:()=>'Torbilanz je Partie', b:x=>x.gf+':'+x.ga+' aus '+x.g+' Partien', f:x=>x.v},
   endgegner:   {l:R=>R.endgegner, gegner:true, s:x=>Math.round(x.pct*1000), z:x=>_awPz(x.pct), e:()=>'als Gegner', b:x=>x.g+' Begegnungen', f:x=>x.pct},
   clutch:      {l:R=>R.clutchList, s:x=>Math.round(x.wr*100), z:x=>_awPz(x.wr), e:()=>'Siegquote in engen Partien', b:x=>x.w+' von '+x.g+' engen Partien gewonnen', f:x=>x.wr},
   carryKing:   {l:R=>R.carryList, s:x=>x.v, z:x=>x.v, e:x=>_awN(x.v,'Sieg mit dem Schwächsten','Siege mit dem Schwächsten'), gilt:x=>x.v>=1},

@@ -132,6 +132,8 @@ async function _loadAllDurchlauf(){
   let ausStand = false;
   try{
     let abrufFertig = false;
+    // Der Stand, den die Antwort zeigt, ist der beim Absenden.
+    const abrufBeginn = Date.now();
     const abruf=Promise.allSettled([
       sb.from('players').select('*').order('elo',{ascending:false}),
       sb.from('matches').select('*').order('created_at',{ascending:true}),
@@ -152,6 +154,9 @@ async function _loadAllDurchlauf(){
       if(a.status === 'rejected') throw a.reason;
       if(a.value.error) throw a.value.error;
     }
+    // Auch eine unveränderte Antwort sagt: die Partien im Speicher sind die
+    // von jetzt [§C42].
+    _partienGeholt = abrufBeginn;
     const [p,m,c,se]=antworten.map(a=>a.value);
     const _fp = JSON.stringify([p.data, m.data, c.data, se.data]);
     const _today = new Date().toDateString();
@@ -264,6 +269,20 @@ function ligaSchreibtAbgeleitet(){
     return [-60, -120].includes(new Date(jetzt).getTimezoneOffset());
   }
 }
+
+// ── Stories nur aus den Partien von eben [§C42] ──────────────────────
+// Am 19.10. stand um 15 Uhr ein Fun Fact im Feed, obwohl ab 13:54 vier
+// Partien gespielt waren. Angelegt hatte ihn um 17:39 ein Telefon, das seit
+// dem Mittag im Hintergrund lag: beim Zurückkommen rechnete der Takt der News
+// sofort, mit den Partien, die noch im Speicher lagen — `loadAll` holte
+// nichts, weil ein Blatt offen war, oder kam erst danach an. Für dieses
+// Telefon war der Tag bis 15 Uhr ohne Spiel, und es schrieb den Fun Fact in
+// die Liga. Stories rechnet und veröffentlicht der Takt deshalb nur aus
+// Partien, die höchstens eine Minute vorher geholt wurden — zwei Takte von
+// `_tickDaten`. Wer aus dem Hintergrund kommt, hat einen älteren Stand.
+const DATEN_FRISCH_MS = 60 * 1000;
+let _partienGeholt = 0;   // Beginn des letzten vollständigen Abrufs
+function _datenFrisch(){ return _partienGeholt > 0 && Date.now() - _partienGeholt <= DATEN_FRISCH_MS; }
 
 // Automatischer Saison-Abschluss: archiviert vergangene Monate
 async function autoArchiveSeasons(){

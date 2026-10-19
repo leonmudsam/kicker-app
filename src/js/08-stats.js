@@ -177,17 +177,23 @@ function allPlayerStats(){
 }
 
 
-function bestWorstMate(id, s_param){
+// Bester und schwächster Partner, Lieblings- und Angstgegner sind ein
+// Vergleich über die Laufbahn [§C40]: `wer` sagt, wer darin mitzählt. Im
+// Profil eines Aktiven ist das die Liga von heute (`ligaAktiv`) — dort stand
+// sonst ein Ruheständler als bester Partner, mit dem niemand mehr spielt,
+// und verdrängte den besten, mit dem man noch spielt. Die Bilanz mit jedem
+// steht weiter in „alle Beziehungen" (`playerH2HList`), die fragt nicht.
+function bestWorstMate(id, s_param, wer){
   const s= s_param || playerStats(id); // Nutzt übergebene Stats oder berechnet neu (was jetzt gecacht ist)
   let best=null,worst=null;
-  Object.entries(s.mates).forEach(([mid,v])=>{ if(v.g<2)return; const wr=v.w/v.g;
+  Object.entries(s.mates).forEach(([mid,v])=>{ if(v.g<2)return; if(wer&&!wer(mid))return; const wr=v.w/v.g;
     if(!best||wr>best.wr)best={mid,wr,g:v.g}; if(!worst||wr<worst.wr)worst={mid,wr,g:v.g}; });
   return {best,worst};
 }
-function nemesis(id, s_param){
+function nemesis(id, s_param, wer){
   const s= s_param || playerStats(id); // Nutzt übergebene Stats oder berechnet neu (was jetzt gecacht ist)
   let n=null,f=null;
-  Object.entries(s.opps).forEach(([oid,v])=>{ if(v.g<2)return; const wr=v.w/v.g;
+  Object.entries(s.opps).forEach(([oid,v])=>{ if(v.g<2)return; if(wer&&!wer(oid))return; const wr=v.w/v.g;
     if(!n||wr<n.wr)n={oid,wr,g:v.g}; if(!f||wr>f.wr)f={oid,wr,g:v.g}; });
   return {nemesis:n,favorite:f};
 }
@@ -289,10 +295,14 @@ function teamDetail(p1,p2){
     }
   }
 
-  // Erz-/Lieblingsgegner: einzelne Spieler, min. 2 Begegnungen
+  // Erz-/Lieblingsgegner: einzelne Spieler, min. 2 Begegnungen. Spielen
+  // beide noch, ist es ein Vergleich mit der Liga von heute [§C40] und nennt
+  // keinen Ruheständler; ein Duo mit einem Ruheständler ist Geschichte und
+  // behält seine Gegner, wie sie waren.
+  const gegnerZaehlt = imRuhestand(p1) || imRuhestand(p2) ? sichtbar : ligaAktiv;
   let nemesis=null, favorite=null;
   Object.entries(oppStats).forEach(([oid,s])=>{
-    if(s.g<2) return;
+    if(s.g<2 || !gegnerZaehlt(oid)) return;
     const wr=s.w/s.g;
     if(!nemesis || wr<nemesis.wr || (wr===nemesis.wr && s.g>nemesis.g)) nemesis={oid,wr,g:s.g,w:s.w};
     if(!favorite || wr>favorite.wr || (wr===favorite.wr && s.g>favorite.g)) favorite={oid,wr,g:s.g,w:s.w};

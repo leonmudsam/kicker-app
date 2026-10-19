@@ -203,6 +203,63 @@ const ZUSTAND = ['period','ligaSeasonId','ligaSicht','awView','awPeriod','awSeas
   ok(felder >= 4 && !angeboten.length, 'kein Feld der Eingabe bietet ' + RUHE + ' an',
      angeboten.length ? 'Feld ' + angeboten.join(', ') : felder + ' Felder');
 
+  // Die Profile der Aktiven sind Blätter und liegen außerhalb von `#main`.
+  // Ein Bestwert darin ist ein Vergleich über die Laufbahn [§C40]: bester
+  // und schwächster Partner, Lieblings- und Angstgegner, die Gegner eines
+  // Duos, der Platz im Feld des Fingerabdrucks, die Reihe gegen denselben
+  // Gegner. Die Bilanz mit jedem („alle Beziehungen") nennt ihn weiter.
+  console.log('\n═══ DIE PROFILE DER AKTIVEN ═══');
+  const aktive = await K(`players.filter(p => ligaAktiv(p)).map(p => p.id)`);
+  const beziehungen = async () => {
+    const out = [];
+    for(const id of aktive){
+      await K(`showPlayer('${id}')`);
+      const t = await page.evaluate(() => (document.querySelector('#sheet .pp-rel-grid') || {}).textContent || '');
+      if(t) out.push({id, t});
+    }
+    return out;
+  };
+  const bez = await beziehungen();
+  const mitIhm = bez.filter(b => new RegExp('\\b' + RUHE + '\\b').test(b.t)).map(b => NAMES[IDS.indexOf(b.id)]);
+  ok(bez.length === aktive.length && !mitIhm.length,
+     'in keinem Profil der Aktiven ist ' + RUHE + ' bester oder schwächster Partner, Lieblings- oder Angstgegner',
+     mitIhm.length ? mitIhm.join(', ') : bez.length + ' Profile');
+  const bilanzen = [];
+  for(const id of aktive){
+    await K(`showPlayerH2HList('${id}')`);
+    if(await page.evaluate(n => new RegExp('\\b' + n + '\\b').test(document.getElementById('sheet').textContent), RUHE)) bilanzen.push(id);
+  }
+  ok(bilanzen.length >= aktive.length - 2, 'in „alle Beziehungen" steht er weiter, mit seiner Bilanz',
+     bilanzen.length + ' von ' + aktive.length + ' Profilen');
+  const duoGegner = await K(`(() => { const ids = ${JSON.stringify(aktive)}, f = []; let n = 0;
+    ids.forEach((a, i) => ids.slice(i + 1).forEach(b => { const d = teamDetail(a, b); if(!d.games) return; n++;
+      [d.nemesis, d.favorite].forEach(x => { if(x && x.oid === '${RUHE_ID}') f.push(pname(a) + ' & ' + pname(b)); }); }));
+    return {n, f}; })()`);
+  ok(duoGegner.n > 20 && !duoGegner.f.length, 'kein Duo zweier Aktiver hat ihn als Erz- oder Lieblingsgegner',
+     duoGegner.f.length ? duoGegner.f.slice(0, 3).join(', ') : duoGegner.n + ' Duos');
+  // Das Feld des Fingerabdrucks ist die aktive Liga; ein Ruheständler steht
+  // nur für seinen eigenen Abdruck darin.
+  const feld = await K(`(() => { const n = players.filter(p => ligaAktiv(p) && playerStats(p.id).games >= FINGER_MIN_SPIELE).length;
+    const von = players.filter(p => ligaAktiv(p)).map(p => fingerabdruck(p.id)).filter(Boolean).map(A => A[0].von);
+    const er = fingerabdruck('${RUHE_ID}');
+    return {n, von, er: er ? er[0].von : 0}; })()`);
+  ok(feld.von.length >= 8 && feld.von.every(v => v === feld.n),
+     'der Fingerabdruck eines Aktiven misst ihn nur an der aktiven Liga', 'Feld ' + feld.n + ', gemessen: ' + [...new Set(feld.von)].join('/'));
+  ok(feld.er === feld.n + 1, 'sein eigener Abdruck misst ihn an der aktiven Liga und an ihm selbst', feld.er + ' im Feld');
+  // Die Reihe gegen denselben Gegner (Auszeichnung „Angstgegner"): gegen
+  // einen Ruheständler läuft sie nie weiter und reißt nie.
+  const reihe = await K(`players.filter(p => ligaAktiv(p)).map(p => {
+    const vs = {};
+    matches.filter(m => matchOf(p.id, m)).sort((a, b) => mts(a) - mts(b)).forEach(m => {
+      const onA = m.a1 === p.id || m.a2 === p.id, w = (m.winner === 'A') === onA;
+      (onA ? [m.b1, m.b2] : [m.a1, m.a2]).filter(o => ligaAktiv(o)).forEach(o => { vs[o] = w ? 0 : (vs[o] || 0) + 1; });
+    });
+    return [p.name, Math.max(0, ...Object.values(vs)), (_badgeStreakState('nemesis', p.id) || {}).cur];
+  }).filter(r => r[1] !== r[2])`);
+  ok(!reihe.length, 'die laufende Reihe gegen denselben Gegner zählt nur Gegner, die noch spielen',
+     reihe.length ? reihe.map(r => r[0] + ' ' + r[2] + ' statt ' + r[1]).join(', ') : aktive.length + ' Spieler');
+  await K(`closeSheet(true)`);
+
   // Gegenprobe: ohne Karriereende steht er in derselben Suche überall da.
   // Ohne sie wäre eine Suche, die gar nichts findet, immer grün.
   console.log('\n═══ GEGENPROBE ═══');
@@ -211,8 +268,11 @@ const ZUSTAND = ['period','ligaSeasonId','ligaSicht','awView','awPeriod','awSeas
   await wurzel('ranking');
   await K(`period = 'all'; render();`); await warte();
   const da = await absuchen();
+  const bezDa = (await beziehungen()).filter(b => new RegExp('\\b' + RUHE + '\\b').test(b.t)).length;
+  await K(`closeSheet(true)`);
   await K(`pmap()['${RUHE_ID}'].retired_at = ${JSON.stringify(ENDE)}; invalidateCache();`);
   ok(da.id && !!da.name, 'ohne Karriereende findet dieselbe Suche ihn in der Liga unter Gesamt', da.name);
+  ok(bezDa >= 3, 'ohne Karriereende steht er in den Beziehungen der Aktiven', bezDa + ' Profile');
   ok(errors.length === 0, 'kein Fehler beim Durchklicken', errors[0]);
 
   await browser.close();

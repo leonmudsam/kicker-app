@@ -3279,6 +3279,36 @@ const ok = (c, msg, det) => {
      'neue Daten im selben Reiter nehmen das Licht nicht mit, es läuft an seiner Stelle weiter', JSON.stringify(betreten));
   ok(betreten.rest === 0 && betreten.zweitesMal === '', 'nach seiner Zeit ist nichts übrig, und gleich zurück glänzt der Reiter nicht noch einmal',
      JSON.stringify([betreten.rest, betreten.zweitesMal]));
+  // Platz 1 kommt mit Platz 2 [§C43]. Licht und Band lagen vom ersten Bild an
+  // in ihrer Karte und warteten über `animation-delay`; wartend waren sie für
+  // Safari schon eigene Ebenen, und Gold trug mit dem Band eine mehr als
+  // Silber und Bronze — auf dem iPhone kam Platz 1 sichtbar nach Platz 2. Im
+  // ersten Bild trägt jetzt jede Karte nur ihr eigenes Einblenden, Licht und
+  // Band warten ohne Kasten und laufen zu ihrer Zeit.
+  const erstesBild = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const bild = () => new Promise(r => requestAnimationFrame(r));
+    const out = {};
+    for(const [ziel, sel] of [['ranking', '.rlist > .rrow'], ['positions', '.rlist > .rrow'], ['teams', '.rlist > .rrow'], ['awards', '.podest > .pod-karte']]){
+      K("closeSheet(true); tab='history'; render(); _aufbauFertig(); _podestZuletzt.clear()");
+      await new Promise(r => setTimeout(r, 150));
+      document.querySelector(`[data-nav="${ziel}"]`).click();
+      for(let i = 0; i < 60 && !document.querySelector('#main ' + sel + '.bau'); i++) await bild();
+      await bild();
+      const karten = [...document.querySelectorAll('#main ' + sel)].slice(0, 3);
+      const darin = k => document.getAnimations().filter(a => { const t = a.effect && a.effect.target; return t && t !== k && k.contains(t); })
+        .map(a => a.animationName);
+      const licht = k => [...k.querySelectorAll(':scope > .kl, :scope > .kl-schein, :scope > .glanz-einmal')];
+      out[ziel] = {darin:karten.map(darin), wartet:karten.map(k => licht(k).length > 0 && licht(k).every(e => getComputedStyle(e).display === 'none'))};
+      await new Promise(r => setTimeout(r, 1700));
+      out[ziel].danach = karten.map(k => licht(k).filter(e => getComputedStyle(e).display !== 'none').length);
+    }
+    K("tab='ranking'; render()");
+    return out;
+  });
+  ok(Object.values(erstesBild).every(r => r.darin.every(d => d.length === 0) && r.wartet.every(Boolean) && r.danach.every(n => n >= 2)),
+     'im ersten Bild trägt jede der ersten drei Karten nur ihr eigenes Einblenden; Licht und Band warten ohne Kasten und laufen danach — in Liga, Positionen, Duos und Awards',
+     JSON.stringify(erstesBild));
   // Der leere Zustand einer Ansicht behält seine Form, während sie sich
   // aufbaut: als `[class="empty"]` galt die Regel nur ohne weitere Klasse,
   // und mit `bau` stand „Keine Matches in diesem Zeitraum" eine halbe
@@ -3319,10 +3349,15 @@ const ok = (c, msg, det) => {
       const p = el.parentElement;
       return !!(p && c.zIndex !== 'auto' && /flex|grid/.test(getComputedStyle(p).display)); };
     const name = el => el.tagName.toLowerCase() + (el.classList.length ? '.' + [...el.classList].slice(0, 2).join('.') : '');
-    const funde = new Map();
+    const funde = new Map(), schein = new Map();
     const suche = (wo, wurzel) => {
       for(const el of document.querySelectorAll(wurzel + ' *')){
         const c = getComputedStyle(el);
+        // Ein Schein über `filter` auf einem Teil, das nicht in einer
+        // Zeichnung liegt: Symbole der goldenen Auszeichnungen fehlten auf
+        // dem iPhone oder kamen spät, die Sterne unter jedem Wappen ebenso.
+        if(!(el instanceof SVGElement && el.ownerSVGElement) && /drop-shadow/.test(c.filter)){
+          const k = name(el); schein.set(k, (schein.get(k) || []).concat(wo)); }
         if(c.display === 'none' || c.position === 'fixed') continue;
         const art = c.position !== 'static' && c.zIndex !== 'auto' && c.zIndex !== '0' ? 'z-index ' + c.zIndex
           : c.filter !== 'none' ? 'filter' : '';
@@ -3384,11 +3419,15 @@ const ok = (c, msg, det) => {
     pl.forEach((p, i) => { p.avatar_id = vorher[i]; });
     K("invalidateCache(); [_cache._stories, _cache._consolFrom, _cache._frischVon] = window.__stories; delete window.__stories;"
       + " tab='ranking'; awView='awards'; render()");
-    return {zahl, stories:ids.length, funde:[...funde].map(([k, w]) => k + ' (' + w.length + '×, ' + w.slice(0, 2).join(', ') + ')')};
+    return {zahl, stories:ids.length, funde:[...funde].map(([k, w]) => k + ' (' + w.length + '×, ' + w.slice(0, 2).join(', ') + ')'),
+      schein:[...schein].map(([k, w]) => k + ' (' + w.slice(0, 2).join(', ') + ')')};
   });
   ok(ebenen.funde.length === 0 && ebenen.zahl.emoji > 300 && ebenen.stories >= 12,
      'kein Teil mit z-index oder Filter liegt in einem runden Ausschnitt ohne eigenen Stapel — in jedem Reiter, im Feed, in Stories jeder Art und den Blättern, mit Emoji als Gesichtern',
      JSON.stringify(ebenen.zahl) + ' ' + ebenen.stories + ' Stories | ' + ebenen.funde.slice(0, 6).join(' | '));
+  ok(ebenen.schein.length === 0 && ebenen.zahl.ansichten > 30,
+     'kein Symbol, Emoji oder Zeichen trägt seinen Schein über filter — ein Lichthof, ein Text- oder Kastenschatten statt dessen',
+     ebenen.schein.slice(0, 6).join(' | '));
   // Der Verlauf bleibt ruhig [§C43]: über die Leiste betreten und beim
   // Wählen eines Spielers baut sich nichts auf, und kein Licht fährt. Die
   // Liga danach baut sich wie immer auf — so zählt die Prüfung überhaupt.
@@ -3828,12 +3867,14 @@ const ok = (c, msg, det) => {
     const K = window.__k.eval.bind(window.__k);
     const sichten = [
       ['Liga', "tab='ranking';period='season'"], ['Liga gesamt', "period='all'"],
-      ['Liga Woche', "period='week'"], ['Liga Tag', "period='day'"],
+      ['Liga gesamt Torbilanz', "rankMetric='goaldiff'"], ['Liga gesamt Siegquote', "rankMetric='winrate'"],
+      ['Liga Woche', "rankMetric='elo';period='week'"], ['Liga Tag', "period='day'"],
       ['Positionen Sturm', "period='season';tab='positions';rankMetric='atk'"],
       ['Positionen Abwehr', "rankMetric='def'"],
       ['Awards', "tab='awards';awView='awards';awPeriod='season'"], ['Awards Woche', "awPeriod='week'"],
       ['Rekorde', "awPeriod='season';awView='rekorde'"], ['Chronik', "awView='chronik'"],
-      ['Teams', "awView='awards';tab='teams'"], ['Verlauf', "tab='history'"],
+      ['Teams', "awView='awards';tab='teams'"], ['Teams Torbilanz', "teamSort='gd'"],
+      ['Verlauf', "teamSort='wr';tab='history'"],
       ['Match', "tab='match'"], ['Einstellungen', "tab='settings'"]];
     const W = document.documentElement.clientWidth, out = [];
     for(const [name, setz] of sichten){
@@ -3896,7 +3937,20 @@ const ok = (c, msg, det) => {
       // Und die Nebenwertungen der Liga: „Längste Siege…", „4× Player of t…".
       [...document.querySelectorAll('#main .wk-hl-label, #main .wk-hl-detail')]
         .filter(e => e.scrollWidth > e.clientWidth + 1).forEach(e => bruch.push('Nebenwertung ' + e.textContent.trim()));
-      out.push({name, bruch:bruch.slice(0,3), punkt:punkt.slice(0,3), raus:[...new Set(raus)].slice(0,4), schief:schief.slice(0,4),
+      // Die Zahl rechts einer Ranglistenzeile liegt neben der Zeile, nicht
+      // über ihr: „Torbilanz je Partie" lag bei 360 px über der Siegquote.
+      const deckt = [];
+      document.querySelectorAll('#main .rrow').forEach(z => {
+        const wert = z.querySelector('.rval, .tm-wert'), mitte = z.querySelector('.rmid, .tm-mitte');
+        if(!wert || !mitte) return;
+        const w = wert.getBoundingClientRect();
+        [...mitte.querySelectorAll('*')].forEach(e => {
+          const r = e.getBoundingClientRect();
+          if(r.width && r.height && r.right > w.left + .5 && r.bottom > w.top && r.top < w.bottom)
+            deckt.push((z.querySelector('.rname, .tm-name') || {}).textContent.trim() + ': ' + e.textContent.trim().slice(0, 12));
+        });
+      });
+      out.push({name, bruch:bruch.slice(0,3), punkt:punkt.slice(0,3), raus:[...new Set(raus)].slice(0,4), schief:schief.slice(0,4), deckt:deckt.slice(0,3),
         fab: fab ? getComputedStyle(fab).display : ''});
     }
     K("tab='ranking';period='season';rankMetric='elo';awView='awards';render()");
@@ -3909,6 +3963,10 @@ const ok = (c, msg, det) => {
   const reiterSchief = reiter.filter(r => r.schief.length);
   ok(reiterSchief.length === 0, 'jedes Gesicht trägt seine Initialen in der Mitte',
      reiterSchief.map(r => r.name + ': ' + r.schief.join(', ')).join(' | ') || 'alle mittig');
+  const reiterDeckt = reiter.filter(r => r.deckt.length);
+  ok(reiterDeckt.length === 0 && reiter.some(r => r.name === 'Liga gesamt Torbilanz'),
+     'in keiner Ranglistenzeile liegt die Zahl rechts über der Zeile, auch nicht unter Torbilanz und Siegquote',
+     reiterDeckt.map(r => r.name + ': ' + r.deckt.join(', ')).join(' | ') || reiter.length + ' Reiter');
   const reiterBruch = reiter.filter(r => r.bruch.length);
   ok(reiterBruch.length === 0 && reiter.some(r => r.name === 'Positionen Sturm'),
      'Bilanz, Torzeile, Reiter und Kachelnamen stehen ungekürzt auf einer Zeile',

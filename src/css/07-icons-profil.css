@@ -76,9 +76,10 @@
     --strich:1.75;stroke-linecap:round;stroke-linejoin:round}
 
   /* Trophäen-Karten im Profil – kleinere SVGs statt 34px Emoji */
+  /* Der Schein ist ein Lichthof hinter dem Zeichen, kein `filter`. */
   .pp-tr .ic.svg-ic{display:grid;place-items:center;width:38px;height:38px;margin:0 auto 7px;
-    color:var(--gold);filter:drop-shadow(0 4px 9px rgba(247,207,74,.35))}
-  .pp-tr.team .ic.svg-ic{color:var(--blue);filter:drop-shadow(0 4px 9px rgba(86,180,232,.35))}
+    color:var(--gold);background:radial-gradient(circle 19px at 50% 62%,rgba(247,207,74,.26),transparent)}
+  .pp-tr.team .ic.svg-ic{color:var(--blue);background:radial-gradient(circle 19px at 50% 62%,rgba(86,180,232,.24),transparent)}
   .pp-tr .ic.svg-ic svg{width:30px;height:30px;stroke:currentColor;fill:none;
     --strich:1.75;stroke-linecap:round;stroke-linejoin:round}
 
@@ -312,14 +313,17 @@
     background:radial-gradient(circle at 50% 0%,rgba(247,207,74,.16),var(--surface) 65%);
     box-shadow:0 0 20px rgba(247,207,74,.14)}
   .bsh-card.unlocked.legendary::before{height:3px;box-shadow:0 0 12px var(--gold);opacity:1}
-  .bsh-card.unlocked.legendary .bsh-card-ic{filter:drop-shadow(0 0 6px rgba(247,207,74,.4))}
+  /* Der Schein des Zeichens ist ein Lichthof dahinter, kein `filter`: ein
+     Zeichen mit `filter` ist für Safari eine eigene Ebene, und auf dem
+     iPhone fehlte das Zeichen der goldenen Karten oder kam spät [§C43]. */
+  .bsh-card.unlocked.legendary .bsh-card-ic{background:radial-gradient(circle 17px,rgba(247,207,74,.3),transparent)}
   .bsh-card.unlocked.rare{border-color:rgba(167,139,250,.4)}
-  .bsh-card.unlocked.rare .bsh-card-ic{filter:drop-shadow(0 0 4px rgba(167,139,250,.25))}
+  .bsh-card.unlocked.rare .bsh-card-ic{background:radial-gradient(circle 17px,rgba(167,139,250,.22),transparent)}
   .bsh-card.unlocked.common{border-color:rgba(190,242,100,.28)}
   .bsh-card.unlocked.common::before{opacity:.35}
   .bsh-card.unlocked.negative{border-color:rgba(240,86,106,.4);
     background:radial-gradient(circle at 50% 0%,rgba(240,86,106,.08),var(--surface) 75%)}
-  .bsh-card.unlocked.negative .bsh-card-ic{filter:drop-shadow(0 0 4px rgba(240,86,106,.25))}
+  .bsh-card.unlocked.negative .bsh-card-ic{background:radial-gradient(circle 17px,rgba(240,86,106,.22),transparent)}
   /* Badges klickbar machen */
   .bsh-card{cursor:pointer}
   .bsh-card:active{transform:scale(.985)}
@@ -668,7 +672,8 @@
     .nf-gross-band svg{animation:none;opacity:1}}
   .nf-gross-band svg{width:12px;height:12px;fill:none;stroke:currentColor;
     stroke-linecap:round;stroke-linejoin:round;color:var(--gold);
-    filter:drop-shadow(0 0 5px rgba(247,207,74,.38))}
+    /* Lichthof statt `filter`. */
+    border-radius:50%;background:radial-gradient(closest-side,rgba(247,207,74,.32),transparent)}
   .nf-gross .nf-h{font-size:19px;line-height:1.1;-webkit-line-clamp:5}
   .nf-gross .nf-d{font-size:12.5px;-webkit-line-clamp:6}
   .nf-gross .nf-erg-sc{font-size:28px}

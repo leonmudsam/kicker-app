@@ -80,6 +80,7 @@ function kantenlicht(ziel, ton, art, verzug, d, innen, leise){
   ring.innerHTML = '<i></i>';
   teile.push(ring);
   teile.forEach(t => { t.setAttribute('aria-hidden', 'true'); t.dataset.t0 = t0; t.dataset.kv = verzug; ziel.appendChild(t); });
+  _lichtWartet(teile, verzug, '--kv');
   _lichtBeobachten(ziel);
   setTimeout(() => {
     const wo = new Set(teile.map(t => t.parentElement));
@@ -203,7 +204,24 @@ function _glanzEinmal(ziel, verzug){
   b.style.setProperty('--gv', verzug + 'ms');
   b.dataset.t0 = performance.now(); b.dataset.kv = verzug;
   ziel.appendChild(b);
+  _lichtWartet([b], verzug, '--gv');
   setTimeout(() => b.remove(), verzug + 1500);
+}
+// Was noch nicht leuchtet, trägt keine Bewegung. Licht und Band kamen beim
+// Ankommen sofort in ihre Karte und warteten über `animation-delay` auf
+// ihren Einsatz — eine wartende Animation ist für Safari schon eine laufende,
+// und es legte jedes Teil vom ersten Bild an auf eine eigene, rund
+// geschnittene Grafikebene: den Kegel, den Schein, den Rahmen und über Gold
+// das Band, zweieinhalb Karten breit. Platz 1 trug damit eine Ebene mehr als
+// Platz 2 und 3, in Liga, Positionen, Duos und Awards, und kam auf dem iPhone
+// sichtbar nach ihnen. Bis zu seinem Einsatz steht ein Teil jetzt mit
+// `display:none` (`.kl-wartet`) in seiner Karte und beginnt dann ohne
+// Verzögerung. Es bleibt dasselbe Element: `_lichtZurueck` nimmt es beim
+// Neuzeichnen mit, und dieser Zeitgeber findet es dort.
+function _lichtWartet(teile, verzug, wert){
+  if(!(verzug > 0)) return;
+  teile.forEach(t => t.classList.add('kl-wartet'));
+  setTimeout(() => teile.forEach(t => { t.style.setProperty(wert, '0ms'); t.classList.remove('kl-wartet'); }), verzug);
 }
 
 // ── Licht über das Neuzeichnen hinweg ──────────────────────────────────
