@@ -3298,6 +3298,97 @@ const ok = (c, msg, det) => {
   });
   ok(leerAufbau.imAufbau.bau && leerAufbau.ruhig === 'center 13px 48px' && leerAufbau.imAufbau.form === leerAufbau.ruhig,
      'der leere Zustand einer Ansicht steht auch während des Aufbaus mittig und in seiner Größe', JSON.stringify(leerAufbau));
+  // Kein Teil mit eigener Ebene in einem runden Ausschnitt ohne eigenen
+  // Stapel [§C43]. Das Emoji eines Gesichts lag mit z-index 2 und `filter`
+  // im Kreis, der Kreis war kein eigener Stapel: lief irgendwo in Karte oder
+  // Fenster eine Bewegung, legte Safari das Emoji auf eine eigene Ebene, die
+  // der runde Rand von außen schneiden muss, und zeichnete sie manchmal gar
+  // nicht — auf dem iPhone standen Gesichter als leere graue Kreise da.
+  // Gesucht wird jedes Teil mit z-index oder `filter`, dessen nächster
+  // runder Ausschnitt kein eigener Stapel ist, in jedem Reiter, im Feed, in
+  // Stories jeder Art und den Blättern, mit Emoji als Gesichtern — die
+  // Spieler hier tragen sonst Initialen.
+  const ebenen = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const bild = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const stapel = el => { const c = getComputedStyle(el);
+      if(c.position === 'fixed' || c.position === 'sticky' || (c.position !== 'static' && c.zIndex !== 'auto')) return true;
+      if(parseFloat(c.opacity) < 1 || c.transform !== 'none' || c.filter !== 'none' || c.isolation === 'isolate'
+        || c.mixBlendMode !== 'normal' || c.clipPath !== 'none' || (c.webkitMaskImage && c.webkitMaskImage !== 'none')
+        || /paint|strict|content/.test(c.contain) || /transform|opacity|filter/.test(c.willChange)) return true;
+      const p = el.parentElement;
+      return !!(p && c.zIndex !== 'auto' && /flex|grid/.test(getComputedStyle(p).display)); };
+    const name = el => el.tagName.toLowerCase() + (el.classList.length ? '.' + [...el.classList].slice(0, 2).join('.') : '');
+    const funde = new Map();
+    const suche = (wo, wurzel) => {
+      for(const el of document.querySelectorAll(wurzel + ' *')){
+        const c = getComputedStyle(el);
+        if(c.display === 'none' || c.position === 'fixed') continue;
+        const art = c.position !== 'static' && c.zIndex !== 'auto' && c.zIndex !== '0' ? 'z-index ' + c.zIndex
+          : c.filter !== 'none' ? 'filter' : '';
+        if(!art) continue;
+        // Ein absolut gesetztes Teil schneidet erst sein umgebender Block.
+        let block = c.position !== 'absolute', a = el.parentElement;
+        while(a && a !== document.body){
+          const ac = getComputedStyle(a);
+          const hier = !block && (ac.position !== 'static' || ac.transform !== 'none');
+          if(hier) block = true;
+          const rund = ['TopLeft', 'TopRight', 'BottomLeft', 'BottomRight'].some(k => parseFloat(ac['border' + k + 'Radius']) > 0);
+          if(block && (ac.overflowX !== 'visible' || ac.overflowY !== 'visible') && rund){
+            if(!stapel(a)){ const k = art + ' ' + name(el) + ' in ' + name(a); funde.set(k, (funde.get(k) || []).concat(wo)); }
+            break;
+          }
+          if(stapel(a)) break;
+          a = a.parentElement;
+        }
+      }
+    };
+    // `invalidateCache` leert auch die Stories, und hier legt sie niemand neu
+    // an: ohne sie stünde der Feed für die Prüfungen weiter unten leer.
+    K('window.__stories = [_cache._stories, _cache._consolFrom, _cache._frischVon]');
+    const pl = K('players'), vorher = pl.map(p => p.avatar_id);
+    const EM = ['twoface', 'sloth', 'shark', 'unicorn', 'eagle', 'beer', 'eggplant', 'hedgehog', 'moai', 'wolf', 'wizard', 'panda'];
+    pl.forEach((p, i) => { p.avatar_id = EM[i % EM.length]; });
+    K('invalidateCache()');
+    const zahl = {emoji:0, ansichten:0};
+    const zaehle = w => { zahl.emoji += document.querySelectorAll(w + ' .av-emoji .em').length; zahl.ansichten++; };
+    for(const [t, sub] of [['ranking'], ['positions'], ['awards', 'awards'], ['awards', 'rekorde'], ['awards', 'chronik'], ['teams'], ['history']]){
+      K(`closeSheet(true); tab=${JSON.stringify(t)}; ${sub ? `awView=${JSON.stringify(sub)};` : ''} render()`); await bild();
+      suche('Reiter ' + t + (sub ? ' ' + sub : ''), '#main'); zaehle('#main');
+    }
+    K(`_cache._stories=_buildStories().sort((a,b)=>new Date(b.when)-new Date(a.when));_cache._consolFrom=null;_cache._frischVon=null;'x'`);
+    K('closeSheet(true); openNewsFeed(); _newsFeedRest()'); await bild();
+    suche('Feed', '#sheet'); zaehle('#sheet');
+    const je = {};
+    const ids = JSON.parse(K(`JSON.stringify(getStoriesCache().map(s=>[s.id,(s.dataRef||{}).type]))`))
+      .filter(([, typ]) => (je[typ] = (je[typ] || 0) + 1) <= 2).map(([id]) => id);
+    for(const id of ids){
+      K(`closeSheet(true); openNewsFeed(); openNewsDetail(${JSON.stringify(id)})`); await bild();
+      suche('Story ' + id, '#nd'); zaehle('#nd');
+      K('closeNewsDetail()');
+    }
+    await new Promise(r => setTimeout(r, 320));
+    const P = n => JSON.stringify(pl.find(p => p.name === n).id);
+    for(const [wo, auf] of [['Profil', 'showPlayer(' + P('Leon') + ')'], ['Duo', 'showTeam(' + P('Leon') + ',' + P('Maxi') + ')'],
+        ['Partie', 'showMatchDetail(matches[matches.length-1].id)'], ['Vergleich', 'showH2H(' + P('Leon') + ',' + P('Martin') + ')'],
+        ['Torjäger', "showAward('scorer')"], ['Woche', 'showPotwRecap({force:true})'], ['Saison', 'showSeasonRecap(seasons[2])'],
+        ['Laufbahn', 'showLaufbahn(' + P('Maxi') + ')'], ['Positionsverlauf', 'showPositionHistory(seasons[3].id)'],
+        ['Liga-Chronik', 'showLigaChronik()'], ['Rangsystem', 'showRangSystem()'], ['Bilanzen', 'showPlayerH2HList(' + P('Leon') + ')'],
+        ['Auszeichnungen', 'showPlayerBadges(' + P('Jane') + ')'], ['Monatstafel', "showSeasonTable('2026-08')"],
+        ['Rekord', 'showChronicle(CHRONICLES[0].id)'], ['Tag', 'showPotdRecap({force:true})'],
+        ['Spieler bearbeiten', 'showEditPlayer(' + P('Leon') + ')']]){
+      K('closeSheet(true); ' + auf); await bild();
+      suche('Blatt ' + wo, '#sheet'); zaehle('#sheet');
+    }
+    K('closeSheet(true)');
+    pl.forEach((p, i) => { p.avatar_id = vorher[i]; });
+    K("invalidateCache(); [_cache._stories, _cache._consolFrom, _cache._frischVon] = window.__stories; delete window.__stories;"
+      + " tab='ranking'; awView='awards'; render()");
+    return {zahl, stories:ids.length, funde:[...funde].map(([k, w]) => k + ' (' + w.length + '×, ' + w.slice(0, 2).join(', ') + ')')};
+  });
+  ok(ebenen.funde.length === 0 && ebenen.zahl.emoji > 300 && ebenen.stories >= 12,
+     'kein Teil mit z-index oder Filter liegt in einem runden Ausschnitt ohne eigenen Stapel — in jedem Reiter, im Feed, in Stories jeder Art und den Blättern, mit Emoji als Gesichtern',
+     JSON.stringify(ebenen.zahl) + ' ' + ebenen.stories + ' Stories | ' + ebenen.funde.slice(0, 6).join(' | '));
   // Der Verlauf bleibt ruhig [§C43]: über die Leiste betreten und beim
   // Wählen eines Spielers baut sich nichts auf, und kein Licht fährt. Die
   // Liga danach baut sich wie immer auf — so zählt die Prüfung überhaupt.

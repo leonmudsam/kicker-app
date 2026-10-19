@@ -130,8 +130,10 @@
   /* Die Matrix steht in einer Karte: frei auf dem Grund stand sie wie eine
      Liste ohne Rand, und die stehende Namensspalte hatte keinen Hintergrund,
      von dem sie sich abhob. */
+  /* Ihr eigener Stapel [§C43]: die stehende Namensspalte (z-index 2) gehörte
+     sonst dem Stapel des Reiters und läge außerhalb des runden Rands. */
   .lchron-wrap{overflow-x:auto;margin-top:12px;-webkit-overflow-scrolling:touch;
-    background:var(--surface);border:1px solid var(--line);border-radius:16px}
+    background:var(--surface);border:1px solid var(--line);border-radius:16px;isolation:isolate}
   /* table-layout:fixed — sonst ignoriert der Browser die Spaltenbreiten und
      die Namensspalte frisst so viel Platz, dass die erste Saison abgeschnitten
      wird. Mit fester Aufteilung passen vier Saisons ohne Scrollen aufs Handy. */
