@@ -364,21 +364,28 @@ function _ndMitteRoh(s){
           return standFuer(m);
         };
         const tafelBild = d.quelle === 'tafel' || d.quelle === 'form';
-        const _zeile = t => {
-          const uhr = t.ms ? _newsUhrzeit(t.ms) : '';
-          const stand = zeileStand(t);
+        // `ohneZeit`: die Zeile steht unter der Partie, aus der sie kommt
+        // (`_partieGruppen`), und nennt Uhrzeit und Stand nicht noch einmal.
+        const _zeile = (t, ohneZeit) => {
+          const uhr = !ohneZeit && t.ms ? _newsUhrzeit(t.ms) : '';
+          const stand = ohneZeit ? '' : zeileStand(t);
           const zeit = [uhr, stand].filter(Boolean).join(' · ');
           // Eine Zeile der Tafel ist ein Bild aus Gesichtern und Wert; ihr
           // Satz stand darunter und wiederholte beides [§C33].
           const bild = tafelBild ? _ndTafelZeileBild(t) : null;
           // Die Zeile führt zu ihrem Eintrag, nicht zum Profil.
           const ziel = tafelBild ? _ndTafelZiel(t) : '';
+          // Ein kurzer Wert steht rechts unter den Gesichtern, ein langer als
+          // eigene Zeile unter dem Satz — rechts machte er die Spalte so
+          // breit, dass links ein Wort je Zeile übrig blieb.
+          const kurz = bild && bild.wert && bild.wertText.length <= 16;
           if(bild) return `<div class="nw-zeile nw-tz${t.neg ? ' neg' : ''}"${ziel}${ziel ? ' style="cursor:pointer"' : ''}>
               ${t.ic ? `<i class="nw-ic">${svgI(t.ic)}</i>` : ''}
               <span class="nw-tz-t"><span class="nw-label">${esc(bild.label)}</span>${
                 t.klasse ? `<b class="nw-kl">${esc(t.klasse)}</b>` : ''}${t.marke ? `<b class="nw-mk">${esc(t.marke)}</b>` : ''}
                 <small>${esc([bild.verb, zeit].filter(Boolean).join(' · '))}</small></span>
-              <span class="nw-tz-r">${bild.rechts}</span></div>`;
+              <span class="nw-tz-r">${bild.rechts}${kurz ? `<b class="nd-tz-v num">${bild.wert}</b>` : ''}</span>${
+              bild.wert && !kurz ? `<b class="nw-tz-lang">${bild.wert}</b>` : ''}</div>`;
           return `<div class="nw-zeile${t.neg ? ' neg' : ''}"${ziel ? ziel + ' style="cursor:pointer"'
               : (t.pids && t.pids[0]) ? ` data-pid="${esc(t.pids[0])}" style="cursor:pointer"` : ''}>
               <div class="nw-zeile-kopf">${t.ic
@@ -392,6 +399,44 @@ function _ndMitteRoh(s){
               ${_ndNeu(t.text) ? `<div class="nw-satz">${esc(t.text)}</div>` : ''}
             </div>`;
         };
+        // ── Was hier relevant ist, steht in Zahlen davor ────────────
+        // Neun Zeilen untereinander sagen nicht, wovon der Tag handelt: wie
+        // viele Rekorde wirklich den Halter gewechselt haben, wie viele nur
+        // ausgebaut wurden, wie viele Chroniken dazukamen und was am Ende an
+        // Prestige haengenblieb. Die Zahlenreihe ist das Bauteil, das die
+        // Rueckblicke dafuer schon haben [§C31].
+        // Gewonnen und verloren über alle Spieler, je Spieler einmal.
+        const prestigeSumme = (function(){
+          let plus = 0, minus = 0;
+          const gez = {};
+          teile.forEach(t => { const lb = t.lb; if(!lb) return;
+            Object.keys(lb).forEach(pid => { if(gez[pid]) return; gez[pid] = 1;
+              const dd = Math.round(Number(lb[pid].nach) || 0) - Math.round(Number(lb[pid].vor) || 0);
+              if(dd > 0) plus += dd; else minus -= dd; }); });
+          return {plus, minus};
+        })();
+        const uebersicht = (function(){
+          if(d.quelle !== 'tafel' && d.quelle !== 'form') return '';
+          if(typeof rcpZahlenHtml !== 'function') return '';
+          const typ = t => String((t && (t.typ || t.type)) || '');
+          const wech = teile.filter(t => typ(t).indexOf('rekord_') === 0
+            && typ(t) !== 'rekord_gesteigert').length;
+          const aus = teile.filter(t => typ(t) === 'rekord_gesteigert').length;
+          const chr = teile.filter(t => typ(t).indexOf('chronik_') === 0).length;
+          const plus = prestigeSumme.plus;
+          // Was andere dabei verloren haben, steht nicht in derselben Summe:
+          // sie hiesse, der Tag haette weniger gebracht, und er hat zwei
+          // Dinge getan [§C25]. Es steht über der Wirkung, deren rote Zeilen
+          // es zusammenzählt — als fünfte Zelle brach es die Reihe in zwei,
+          // und „−413 verloren" stand allein auf einer Zeile.
+          const z = [
+            wech ? {v: wech, l: wech === 1 ? 'Bestmarke' : 'Bestmarken', ton:'gold'} : null,
+            aus ? {v: aus, l: aus === 1 ? 'Ausbau' : 'Ausbauten'} : null,
+            chr ? {v: chr, l: chr === 1 ? 'Chronik' : 'Chroniken'} : null,
+            plus ? {v: '+' + plus, l:'Prestige', ton:'gold'} : null
+          ].filter(Boolean);
+          return z.length > 1 ? rcpZahlenHtml(z) : '';
+        })();
         // ── Zweiundzwanzig Zeilen sind keine Liste, sie sind eine Wand ──
         // Gemessen trug ein Tafel-Moment 22 Zeilen — sechs Bestmarken, neun
         // Ausbauten, fuenf Chroniken und zwei Insignien — und sie standen als
@@ -412,15 +457,34 @@ function _ndMitteRoh(s){
             {t:'Monatschroniken', f:x => typ(x).indexOf('chronik_') === 0},
             {t:'Ausbauten', f:x => typ(x) === 'rekord_gesteigert'}
           ];
+          // ── Die Partie steht einmal, über ihren Zeilen ────────────────
+          // Jede Zeile trug „· 17:17 · 10:4", und zehn Monatschroniken aus
+          // derselben Partie sagten es zehnmal untereinander. Die Zeilen
+          // stehen jetzt unter der Partie, aus der sie kommen.
+          const liste = l => {
+            const gruppen = [];
+            l.slice().sort((a, b) => (a.ms || 0) - (b.ms || 0)).forEach(t => {
+              const k = (t.matchId || '') + '|' + (t.ms || '');
+              const g = gruppen[gruppen.length - 1];
+              if(g && g.k === k) g.l.push(t); else gruppen.push({k, l:[t]});
+            });
+            return `<div class="nw-liste">${gruppen.map(g => {
+              const t = g.l[0];
+              const kopf = [t.ms ? _newsUhrzeit(t.ms) : '', zeileStand(t)].filter(Boolean).join(' · ');
+              return (kopf ? `<div class="nw-zk num">${esc(kopf)}</div>` : '')
+                + g.l.map(x => _zeile(x, !!kopf)).join('');
+            }).join('')}</div>`;
+          };
           const rest = teile.slice();
           const aus = [];
           gr.forEach(g => {
             const l = rest.filter(g.f);
             l.forEach(x => rest.splice(rest.indexOf(x), 1));
-            if(l.length) aus.push(rcpAbschnitt(g.t, l.length)
-              + `<div class="nw-liste">${l.map(_zeile).join('')}</div>`);
+            // Die Zahl steht in der Reihe darüber; nur ohne sie zählt die
+            // Überschrift selbst.
+            if(l.length) aus.push(rcpAbschnitt(g.t, uebersicht ? 0 : l.length) + liste(l));
           });
-          if(rest.length) aus.push(`<div class="nw-liste">${rest.map(_zeile).join('')}</div>`);
+          if(rest.length) aus.push(liste(rest));
           return aus.join('');
         })();
         // ── Ein Bereich für die Wirkung, nicht einer je Zeile ───────────
@@ -437,7 +501,11 @@ function _ndMitteRoh(s){
           });
           const ids = Object.keys(je);
           if(!ids.length) return '';
-          return `<div class="nd-section">Wirkung auf die Laufbahn</div>`
+          // Was die roten Zeilen zusammen verlieren, steht über ihnen; der
+          // Zuwachs steht in der Zahlenreihe oben.
+          const verloren = uebersicht && prestigeSumme.minus
+            ? `<span class="nd-sec-r"><b class="num">−${prestigeSumme.minus}</b> verloren</span>` : '';
+          return `<div class="nd-section${verloren ? ' nd-sec-z' : ''}">Wirkung auf die Laufbahn${verloren}</div>`
             + _ndWirkungBlock(je, _ndWirkungsGruende(teile), new Date(s.when).getTime());
         })();
         // ── Das Bündel einer Partie ──────────────────────────────────
@@ -461,38 +529,6 @@ function _ndMitteRoh(s){
         // auch ueber der Karte, auf der drei Spieler dieselbe Stufe
         // erreichen — und die entsteht am Ende eines Spieltags, nicht in
         // einer Partie.
-        // ── Was hier relevant ist, steht in Zahlen davor ────────────
-        // Neun Zeilen untereinander sagen nicht, wovon der Tag handelt: wie
-        // viele Rekorde wirklich den Halter gewechselt haben, wie viele nur
-        // ausgebaut wurden, wie viele Chroniken dazukamen und was am Ende an
-        // Prestige haengenblieb. Die Zahlenreihe ist das Bauteil, das die
-        // Rueckblicke dafuer schon haben [§C31].
-        const uebersicht = (function(){
-          if(d.quelle !== 'tafel' && d.quelle !== 'form') return '';
-          if(typeof rcpZahlenHtml !== 'function') return '';
-          const typ = t => String((t && (t.typ || t.type)) || '');
-          const wech = teile.filter(t => typ(t).indexOf('rekord_') === 0
-            && typ(t) !== 'rekord_gesteigert').length;
-          const aus = teile.filter(t => typ(t) === 'rekord_gesteigert').length;
-          const chr = teile.filter(t => typ(t).indexOf('chronik_') === 0).length;
-          let plus = 0, minus = 0;
-          const gez = {};
-          teile.forEach(t => { const lb = t.lb; if(!lb) return;
-            Object.keys(lb).forEach(pid => { if(gez[pid]) return; gez[pid] = 1;
-              const dd = Math.round(Number(lb[pid].nach) || 0) - Math.round(Number(lb[pid].vor) || 0);
-              if(dd > 0) plus += dd; else minus -= dd; }); });
-          const z = [
-            wech ? {v: wech, l: wech === 1 ? 'Bestmarke' : 'Bestmarken', ton:'gold'} : null,
-            aus ? {v: aus, l: aus === 1 ? 'Ausbau' : 'Ausbauten'} : null,
-            chr ? {v: chr, l: chr === 1 ? 'Chronik' : 'Chroniken'} : null,
-            plus ? {v: '+' + plus, l:'Prestige', ton:'gold'} : null,
-            // Was andere dabei verloren haben, steht daneben und nicht darin:
-            // ein Minus in derselben Summe hiesse, der Tag haette weniger
-            // gebracht, und er hat zwei Dinge getan [§C25].
-            minus ? {v: '−' + minus, l:'verloren', ton:'rot'} : null
-          ].filter(Boolean);
-          return z.length > 1 ? rcpZahlenHtml(z) : '';
-        })();
         const kopfzeile = d.quelle === 'tafel' ? 'An der Ewigen Tafel'
           : d.quelle === 'form' ? 'Auf kurzer Strecke'
           : d.quelle === 'spieler' ? 'Alles in diesem Moment'

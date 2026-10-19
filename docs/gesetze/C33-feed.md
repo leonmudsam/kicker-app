@@ -776,12 +776,14 @@ dann, wenn er `desc` ist — die gebündelte Breaking-Karte hatte also gar
 keinen. Er trägt jetzt den langen Satz des Anlasses. Gemessen wird das an
 einem gestellten Bündel: die echte Liga erreicht den Lorbeerreif nicht
 [§10.3], es gibt in ihr also keine gebündelte Breaking-Karte.
-**Jede Zeile nennt ihre eigene Uhrzeit, die Wirkung steht einmal.** Ein
-Tafel-Moment umfasst mehrere Partien, und im Blatt stand eine Liste ohne
-jeden Zeitbezug; das Ergebnis der eigenen Partie kommt dazu, wo es ein
-anderes ist als das Band über der Liste — als Stand und nicht als zweites
-Band, denn neun Bänder mit je vier Wappen sind genau das, wovor „Detail
-folgt der Größe" warnt. Die Punktewirkung dagegen ist je Spieler EINE Zahl,
+**Jede Partie steht einmal über ihren Zeilen, die Wirkung steht einmal.**
+Ein Tafel-Moment umfasst mehrere Partien, und im Blatt stand eine Liste ohne
+jeden Zeitbezug; danach trug jede Zeile Uhrzeit und Stand („· 17:17 ·
+10:4"), und zehn Chroniken aus derselben Partie sagten es zehnmal
+untereinander. Jetzt steht in jeder Gruppe über ihren Zeilen eine leise
+Zeile mit Uhrzeit und Stand der Partie (`.nw-zk`), als Stand und nicht als
+zweites Band, denn neun Bänder mit je vier Wappen sind genau das, wovor
+„Detail folgt der Größe" warnt. Die Punktewirkung dagegen ist je Spieler EINE Zahl,
 egal aus welcher Zeile sie kommt: beide Stände gehören dem Spieltag
 [§11.0e]. Sie steht deshalb in einem Abschnitt „Wirkung auf die Laufbahn"
 unter der Liste, einmal je Spieler — je Zeile gezeigt stünde dieselbe
@@ -822,9 +824,11 @@ unter eine Schwelle rutscht —, und darunter der Grund als Marke
 übernommen, geteilt oder verloren wurde. Dafür trägt die Wirkung einer
 Rekord- und Chronik-Karte auch die **bisherigen Halter**, die nicht mehr
 allein halten (`_mitVorgaengern`), und die Zeile im Bündel ihre Halter vor
-und nach dem Tag. Die Zahlenreihe nennt das Verlorene als eigene Zelle
-neben dem Gewonnenen und nicht darin: ein Minus in derselben Summe hieße,
-der Tag hätte weniger gebracht. `tests/blatt` misst das Stück im Balken.
+und nach dem Tag. Das Verlorene steht nicht in derselben Summe wie
+das Gewonnene — sie hieße, der Tag hätte weniger gebracht —, sondern über
+der Wirkung, deren rote Zeilen es zusammenzählt (`.nd-sec-r`). Als fünfte
+Zelle der Zahlenreihe brach es die Reihe in zwei, und „−413 verloren" stand
+allein auf einer Zeile. `tests/blatt` misst das Stück im Balken.
 **Und schon auf der Karte** (`_newsPrestigeBand`): unter dem Sammelband
 einer Tafel-Karte steht die Bilanz des Tages in zwei leisen Zeilen, vor der
 einen ein grüner Pfeil hinauf, vor der anderen ein roter hinab [§C25], und
@@ -851,8 +855,18 @@ Zweiundzwanzig Zeilen sind keine Liste, sie sind eine Wand: gemessen trug ein
 Tafel-Moment sechs Bestmarken, neun Ausbauten, fünf Chroniken und zwei
 Insignien, und alle standen als EIN Stapel untereinander — wer ihn öffnete,
 konnte nicht sehen, was ein Wechsel und was nur ein besserer Wert war. Jede
-Gruppe trägt jetzt ihre Überschrift mit der Zahl dahinter, und jede Zeile ihr
-**Zeichen**: in einer langen Liste ist es das Erste, was man sieht. Unter vier
+Gruppe trägt jetzt ihre Überschrift — mit der Zahl dahinter nur ohne
+Zahlenreihe darüber, sonst stünde sie zweimal —, und jede Zeile ihr
+**Zeichen**: in einer langen Liste ist es das Erste, was man sieht.
+**Ein Wert steht rechts nur, wenn er kurz ist.** Rechts unter den Gesichtern
+stand jeder Beleg, und er brach nicht um: „Maxi gewinnt an dieser Seite
+100 %, sonst 31 %" machte die Spalte so breit, dass Eintrag und Satz links
+Wort für Wort untereinander standen („Der / Schattenmann", „Leon / holt")
+und die Zeile über den Rand lief. Bis sechzehn Zeichen steht er rechts,
+länger als eigene Zeile über die ganze Breite (`.nw-tz-lang`); beim Ausbau
+steht die Einheit einmal („+58 +59 %-Punkte"). Die Säule über einer Partie
+wird höchstens fünf Punkte hoch und danach breiter: neunzehn Bewegungen
+nach einer Partie waren ein Turm von 230 px über einer leeren Fläche. Unter vier
 Zeilen bleibt die Gliederung weg, dort sagt sie nichts.
 **Und über Überschriften steht keine weitere.** „An der Ewigen Tafel" stand
 als Sammelüberschrift direkt über „Bestmarken 1" und „Monatschroniken 2" —
@@ -880,8 +894,9 @@ Satz der Tafel-Karte zählt auf, was passiert ist („Eine Bestmarke, ein
 Ausbau, zwei Monatschroniken und ein neues Insignium: …") — im Feed ist das
 die ganze Aussage. Im Blatt steht direkt darunter die Zahlenreihe mit
 denselben vier Angaben, und damit dieselbe Information zweimal in sechs
-Zeilen [§C27]. Der Kopf lässt die Aufzählung dort weg; was danach kommt —
-der Zuwachs für die Laufbahn — bleibt, denn das zählt die Reihe nicht auf.
+Zeilen [§C27]. Der Kopf lässt die Aufzählung dort weg, und ebenso den
+Zuwachs für die Laufbahn: „Für die Laufbahn bleiben 279 Prestige." stand
+über der Reihe, deren vierte Zelle „+279 Prestige" ist.
 Eine eigene Funktion, weil die Regel sonst nur im Zeichnen des Blatts
 stünde und damit nur mit einem Dokument zu messen wäre.
 **Der Blattkopf zeigt so viele Wappen, wie seine Zeile Namen nennt.**
@@ -918,10 +933,14 @@ unterdrückt der Aufrufer: `desc` steht eine Zeile höher.
 Aufschrift ab. Daneben endete „noch 1615 bis zum Ordensstern" als „noch 1615
 bis zum Ord…" und nannte die Stufe nicht, und das Zeichen der Stufe stand bei
 34 px als dunkler Fleck da, obwohl unter 48 px vom Wappen nichts übrig bleibt
-[§6]. Die Reihe bricht deshalb um, die Aufschrift darf zwei Zeilen nehmen, die
-Zeile der Wirkung auch, und das Zeichen misst 48 px. `tests/blatt` misst das
-bei 360 px für JEDEN Story-Typ: läuft etwas aus dem Rand, oder ist eine
-Aufschrift abgeschnitten, die nicht kürzen darf?
+[§6]. Die Reihe bricht deshalb um — vier Zellen zwei mal zwei, wo sie
+nicht in eine Reihe passen (`vier`) —, die Aufschrift darf zwei Zeilen
+nehmen, die Zeile der Wirkung auch, und das Zeichen misst 48 px.
+`tests/blatt` misst das für JEDEN Story-Typ im Blatt selbst (`.nd`, 310 px
+wie auf einem 360-px-Telefon): läuft etwas aus dem Rand, oder ist eine
+Schrift breiter als ihr Feld, ohne mit „…" zu enden? Im nackten Kasten galt
+`.nd .num{white-space:nowrap}` nicht, und die Prüfung sah den Beleg nicht,
+der rechts in einer Zeile festhing.
 
   **Aber sie bedeckt nicht den ganzen Bildschirm** (`NEWS_LIMITS.sammelZeilen`).
 Die Regel war für zwei bis vier Teile geschrieben. Gemessen trug ein

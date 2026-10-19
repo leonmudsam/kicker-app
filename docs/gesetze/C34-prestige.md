@@ -166,14 +166,15 @@ Strecke** (`_ndTafelMomentBlatt`) zeigen oben den **Spieltag als Achse**:
 jede Partie des Tages ein Punkt darauf, hell, wenn sich nach ihr etwas
 bewegt hat, und darüber jede Bewegung als Punkt in der Farbe ihrer Art —
 Gold Bestmarke und Chronik (die Chronik hohl), Silber der Ausbau, Violett
-die Stufe —, so hoch wie die höchste Säule. Davor stand je Beteiligtem eine
+die Stufe —, so hoch wie die höchste Säule, und die höchstens fünf Punkte
+hoch: danach wird sie breiter. Davor stand je Beteiligtem eine
 Zeile mit Gesicht, Name und einem Zeichen je Bewegung, und das sagte die
 Liste darunter ein zweites Mal; eine Zeitachse mit gestapelten ZEICHEN und
 losen Namenschips davor ließ nicht erkennen, wem welches gehörte. Namen
 stehen deshalb nur unten. Ihre
 Zeilen (`_ndTafelZeileBild`) zeigen den Eintrag, wer was tat und rechts
-den Wechsel aus Gesichtern mit dem Wert, und keinen Satz mehr, der beides
-wiederholt. **Eine Zeile führt zu ihrem Eintrag** (`_ndTafelZiel`): ein
+den Wechsel aus Gesichtern mit dem Wert — ein langer Wert als eigene Zeile
+darunter [§C33] —, und keinen Satz mehr, der beides wiederholt. **Eine Zeile führt zu ihrem Eintrag** (`_ndTafelZiel`): ein
 Rekord öffnet sein Blatt, eine Monatschronik ihre Wertung im Monat der
 Karte, ein Insignium die Laufbahn — sie führte ins Profil des ersten
 Genannten, und wer auf „Der Zerstörer" tippte, landete bei einem Menschen.

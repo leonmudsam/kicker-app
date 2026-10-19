@@ -12,10 +12,14 @@
 //
 // Eine eigene Funktion, weil die Regel sonst nur im Zeichnen des Blatts
 // stuende und damit nur mit einem Dokument zu messen waere.
+//
+// Dasselbe gilt für den Zuwachs: „Für die Laufbahn bleiben 279 Prestige."
+// stand über der Reihe, deren vierte Zelle „+279 Prestige" ist.
 function _ndLead(desc, body){
   const lead = String(desc || '');
   if(String(body || '').indexOf('rcp-z') < 0 || !/^[^:]+:\s+\S/.test(lead)) return lead;
   const rest = lead.replace(/^[^:]+:\s+/, '');
+  if(/^für die Laufbahn bleiben \d+ Prestige\.$/i.test(rest) && /rcp-z-l">Prestige</.test(body)) return '';
   return rest ? rest.charAt(0).toUpperCase() + rest.slice(1) : lead;
 }
 
@@ -1459,10 +1463,19 @@ function _ndTafelMomentBlatt(s){
   });
   // Jede Bewegung ein Punkt: eine Säule mit mehr als sechs trug oben „+3",
   // und die Säule sagte damit eine andere Zahl als die Liste darunter.
+  // Höher als fünf Punkte wird eine Säule nicht, sie wird breiter: neunzehn
+  // Bewegungen nach einer Partie standen als ein Turm von 230 px über einer
+  // leeren Fläche, und die Liste begann erst unter dem halben Bildschirm.
+  // Die weiteren Spalten wachsen zur Mitte hin, damit keine über den Rand
+  // läuft (`l`: nach links).
+  const STAPEL = 5;
   const saeulenHtml = saeulen.map((z, k) => {
     const arten = z.arten.sort((a, b) => ORDNUNG[a] - ORDNUNG[b]);
-    return `<span class="nd-ta-s" style="left:${z.x0.toFixed(1)}%;--k:${k}">`
-      + arten.map(a => `<i class="ta-${a}"></i>`).join('') + `</span>`;
+    const spalten = [];
+    for(let i = 0; i < arten.length; i += STAPEL) spalten.push(arten.slice(i, i + STAPEL));
+    return `<span class="nd-ta-s${z.x0 > 50 ? ' l' : ''}" style="left:${z.x0.toFixed(1)}%;--k:${k}">`
+      + spalten.map(sp => `<span class="nd-ta-c">${sp.map(a => `<i class="ta-${a}"></i>`).join('')}</span>`).join('')
+      + `</span>`;
   }).join('');
   // Die Partie, nach der sich etwas bewegt hat, ist hell; die übrigen
   // bleiben leise Striche auf der Achse.
@@ -1470,7 +1483,7 @@ function _ndTafelMomentBlatt(s){
   const striche = partien.map(x => `<i class="nd-ta-p${bewegt.has(x) ? ' an' : ''}" style="left:${lage(x).toFixed(1)}%"></i>`).join('');
   // So hoch wie die höchste Säule: fest bemessen stand über zwei Punkten
   // eine leere Fläche, so groß wie die Liste darunter.
-  const hoehe = Math.max(...saeulen.map(z => z.arten.length));
+  const hoehe = Math.min(STAPEL, Math.max(...saeulen.map(z => z.arten.length)));
   const NAME = {rek:'Bestmarke', chr:'Monatschronik', ins:'Insignium', aus:'Ausbau'};
   const da = Object.keys(NAME).filter(a => teile.some(t => _ndTafelArt(t) === a));
   const uhr = x => esc(_newsUhrzeit(x));
@@ -1504,8 +1517,13 @@ function _ndTafelZiel(t){
 }
 
 // Eine Zeile der Tafel als Bild statt als Satz: der Name des Eintrags, was
-// geschah, und rechts der Wechsel aus Gesichtern mit dem Wert darunter. Ohne
-// Halter (ältere Läufe) bleibt die Zeile, wie sie war.
+// geschah, und rechts der Wechsel aus Gesichtern. Ohne Halter (ältere Läufe)
+// bleibt die Zeile, wie sie war.
+// Der Wert kommt getrennt (`wert`, `wertText`): wohin er gehört, entscheidet
+// die Zeile an seiner Länge. Er stand immer rechts unter den Gesichtern und
+// brach nicht um — „Maxi gewinnt an dieser Seite 100 %, sonst 31 %" machte
+// die rechte Spalte so breit, dass Eintrag und Satz links Wort für Wort
+// untereinander standen und die Zeile über den Rand lief.
 function _ndTafelZeileBild(t){
   const pm = pmap();
   const typ = String(t.typ || t.type || '');
@@ -1516,8 +1534,8 @@ function _ndTafelZeileBild(t){
     const i = p ? insigniumStufeVon(p) : (ref.stufe | 0);
     let z = '';
     try { z = insigniumStufeSvg(INSIGNIEN[i].key, (getPlayerRank(ref.pid) || {}).label, 0, {bild:true}) || ''; } catch(e){}
-    return {label:INSIGNIEN[i].name, verb:_spName(ref.pid) + ' erreicht', rechts:`<span class="nd-tz-w">${chip(ref.pid)}<span class="nd-tz-z">${z}</span></span>`
-      + (p ? `<b class="nd-tz-v num">${p} P</b>` : '')};
+    return {label:INSIGNIEN[i].name, verb:_spName(ref.pid) + ' erreicht', rechts:`<span class="nd-tz-w">${chip(ref.pid)}<span class="nd-tz-z">${z}</span></span>`,
+      wert:p ? `${p} P` : '', wertText:p ? `${p} P` : ''};
   }
   const neu = (Array.isArray(t.halter) ? t.halter : []).filter(id => pm[id]);
   const vor = (Array.isArray(t.vorher) ? t.vorher : []).filter(id => pm[id]);
@@ -1532,13 +1550,19 @@ function _ndTafelZeileBild(t){
     : neu.length < vor.length ? (mehr ? 'halten allein' : 'hält allein')
     : neu.length > vor.length ? (mehr ? 'ziehen gleich' : 'zieht gleich') : (mehr ? 'halten' : 'hält');
   const wert = ref.ev ? _chronKurz(ref.ev) : '';
-  const alt = typ === 'rekord_gesteigert' && ref.evVorher ? _chronKurz(ref.evVorher) : '';
+  let alt = typ === 'rekord_gesteigert' && ref.evVorher ? _chronKurz(ref.evVorher) : '';
+  // Beim Ausbau steht die Einheit einmal: „+58 %-Punkte +59 %-Punkte" war
+  // die Hälfte doppelt und schob den Satz links in drei Zeilen.
+  const zahl = /^([+−-]?\d[\d.,]*)(.*)$/;
+  const za = alt.match(zahl), zw = wert.match(zahl);
+  if(za && zw && za[2] && za[2] === zw[2]) alt = za[1];
   const pf = `<svg class="nd-tz-pf" viewBox="0 0 16 10" aria-hidden="true"><path d="M1 5H13"/><path d="M10 2L14 5L10 8"/></svg>`;
   // Jeder Name und jedes Gesicht, vorher und nachher: es standen zwei und
   // drei da, der Rest als „+1" und „und zwei weitere".
   return {label:t.rname, verb:_namenListe(wer.map(_spName)) + ' ' + verb, rechts:`<span class="nd-tz-w">${weg.map(id => chip(id, true)).join('')}`
-    + (weg.length ? pf : '') + neu.map(id => chip(id)).join('') + `</span>`
-    + (wert ? `<b class="nd-tz-v num">${alt ? `<s>${esc(alt)}</s> ` : ''}${esc(wert)}</b>` : '')};
+    + (weg.length ? pf : '') + neu.map(id => chip(id)).join('') + `</span>`,
+    wert:wert ? (alt ? `<s>${esc(alt)}</s> ` : '') + esc(wert) : '',
+    wertText:wert ? (alt ? alt + ' ' : '') + wert : ''};
 }
 
 // ── Ein Wappen und eine Zahl [§C33] ─────────────────────────────────

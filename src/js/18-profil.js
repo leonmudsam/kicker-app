@@ -1170,6 +1170,11 @@ function showPlayerBadges(playerId){
     </div>`;
 
   // ─── Card-Renderer (eine Badge → eine Card) ───
+  // Ein Wort lässt sich nicht umbrechen, also wird ein langes kleiner:
+  // „Wiederholungstäter" ist bei 360 px 146 px breit, die Karte innen 124 —
+  // es endete als „Wiederholungstäte" am Rand. Gezählt wird das längste
+  // Wort, wie in der Zahlenreihe der Rückblicke.
+  const nameKl = n => Math.max(...String(n).split(/\s+/).map(w => w.length)) > 14 ? ' lang' : '';
   const renderCard = (b, r) => {
     const cnt = earnedIds.get(b.id) || 0;
     const unlocked = cnt > 0;
@@ -1179,7 +1184,7 @@ function showPlayerBadges(playerId){
       return `<div class="bsh-card locked ${r}" data-bid="${esc(b.id)}">
         <span class="tier-dot"></span>
         <div class="bsh-card-ic">${svgI('lock')}</div>
-        <div class="bsh-card-name">${esc(b.name)}</div>
+        <div class="bsh-card-name${nameKl(b.name)}">${esc(b.name)}</div>
         <div class="bsh-card-desc">${esc(b.desc)}</div>
       </div>`;
     }
@@ -1189,7 +1194,7 @@ function showPlayerBadges(playerId){
       : `<div class="bsh-card-once">Freigeschaltet</div>`;
     return `<div class="bsh-card unlocked ${r}" data-bid="${esc(b.id)}">
       <div class="bsh-card-ic">${badgeIc(b,'30px')}</div>
-      <div class="bsh-card-name">${esc(b.name)}</div>
+      <div class="bsh-card-name${nameKl(b.name)}">${esc(b.name)}</div>
       <div class="bsh-card-desc">${esc(b.desc)}</div>
       ${meta}
     </div>`;
