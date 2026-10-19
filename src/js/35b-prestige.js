@@ -1511,15 +1511,22 @@ function showLaufbahn(pid){
     <span><b>Wie die Punkte entstehen</b><em>Klassen, Startwerte und Kurven</em></span>
     ${svgI('chevron')}
   </button>`;
-  // Jeder Posten steht offen da. Nach vier stand „Mehr anzeigen · 11
-  // weitere", und die Summe darüber ließ sich nicht nachzählen.
+  // Fünf Posten je Gruppe stehen offen, die wertvollsten; der Rest klappt
+  // in seiner Gruppe auf, und der Knopf nennt, wie viele es sind. Alle offen
+  // waren bei einer langen Laufbahn über fünfzig Zeilen, bevor die Summe
+  // kam; hinter „Mehr anzeigen · 11 weitere" auf einem anderen Blatt ließ
+  // sie sich nicht nachzählen. Aufgeklappt steht jeder Posten da.
+  const OFFEN = 5;
   const block = (g, gi) => {
     const qs = posten[gi], w = werte[gi];
+    const rest = qs.length > OFFEN ? qs.slice(OFFEN) : [];
     return `<div class="lb-grp">
       <div class="lb-grp-k"><span>${esc(g.kopf)}</span><span class="num">${zahl(summen[gi])}</span></div>
       ${g.q === 'auszeichnung' ? regeln : ''}
-      ${qs.length ? qs.map((q, i) => zeile(q, w[i])).join('')
+      ${qs.length ? qs.slice(0, OFFEN).map((q, i) => zeile(q, w[i])).join('')
                   : `<div class="lb-q leer">${g.leer}</div>`}
+      ${rest.length ? `<div class="lb-rest chron-rest">${rest.map((q, i) => zeile(q, w[OFFEN + i])).join('')}</div>
+      ${_chronMehrKnopf(rest.length)}` : ''}
     </div>`;
   };
 

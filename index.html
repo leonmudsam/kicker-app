@@ -4155,6 +4155,10 @@
     text-transform:uppercase;color:var(--muted)}
   .lb-grp-k .num{font-family:'Archivo Black',sans-serif;font-size:13px;
     letter-spacing:0;text-transform:none;color:var(--ink2)}
+  .lb-rest{margin-top:0}
+  .lb-rest.open{display:block}
+  .lb-grp .chron-more{margin:0;border:0;border-top:1px solid var(--line);border-radius:0;
+    padding:9px 13px}
 
   .lb-regel-auf{width:100%;border:0;border-top:1px solid var(--line);
     border-radius:0;padding:11px 13px;background:var(--bg);color:var(--ink);
@@ -5941,7 +5945,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.19.3f3517e7';
+const BUILD_VERSION='2026.10.19.5caa5ecc';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -34174,13 +34178,17 @@ function showLaufbahn(pid){
     <span><b>Wie die Punkte entstehen</b><em>Klassen, Startwerte und Kurven</em></span>
     ${svgI('chevron')}
   </button>`;
+  const OFFEN = 5;
   const block = (g, gi) => {
     const qs = posten[gi], w = werte[gi];
+    const rest = qs.length > OFFEN ? qs.slice(OFFEN) : [];
     return `<div class="lb-grp">
       <div class="lb-grp-k"><span>${esc(g.kopf)}</span><span class="num">${zahl(summen[gi])}</span></div>
       ${g.q === 'auszeichnung' ? regeln : ''}
-      ${qs.length ? qs.map((q, i) => zeile(q, w[i])).join('')
+      ${qs.length ? qs.slice(0, OFFEN).map((q, i) => zeile(q, w[i])).join('')
                   : `<div class="lb-q leer">${g.leer}</div>`}
+      ${rest.length ? `<div class="lb-rest chron-rest">${rest.map((q, i) => zeile(q, w[OFFEN + i])).join('')}</div>
+      ${_chronMehrKnopf(rest.length)}` : ''}
     </div>`;
   };
 

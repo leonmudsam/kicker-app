@@ -303,6 +303,12 @@
     text-transform:uppercase;color:var(--muted)}
   .lb-grp-k .num{font-family:'Archivo Black',sans-serif;font-size:13px;
     letter-spacing:0;text-transform:none;color:var(--ink2)}
+  /* Der Rest einer Gruppe klappt unter ihren fünf Posten auf; der Knopf
+     steht als letzte Zeile im Buch, nicht als zweiter Kasten darin. */
+  .lb-rest{margin-top:0}
+  .lb-rest.open{display:block}
+  .lb-grp .chron-more{margin:0;border:0;border-top:1px solid var(--line);border-radius:0;
+    padding:9px 13px}
 
   /* Die Rechnung öffnet sich aus dem Buch in ein eigenes Blatt. Im Buch
      bleibt nur ein ruhiger, gut treffbarer Verweis; im Blatt stehen die drei

@@ -5239,6 +5239,11 @@ return JSON.stringify(funde,null,1);
       const lbZeilen = lb.querySelectorAll('.lb-q:not(.leer)').length;
       const P = prestigeOf(bpid), posten = (P.quellen || []).length;
       const mehrLb = lb.querySelectorAll('[data-chron-more], .chron-more').length;
+      // Je Gruppe fünf offen, der Rest klappt in seiner Gruppe auf.
+      const lbGruppen = [...lb.querySelectorAll('.lb-grp')].map(g => ({
+        offen: g.querySelectorAll(':scope > .lb-q:not(.leer)').length,
+        rest: g.querySelectorAll('.lb-rest .lb-q').length,
+        knopf: g.querySelectorAll(':scope > .chron-more').length}));
       closeSheet(true);
       let bp = {id:'', n:0, zeilen:0};
       (getCachedBadges(bpid) || []).forEach(b => { const n = _badgeFireMatches(bpid, b.id).length; if(n > bp.n) bp = {id:b.id, n}; });
@@ -5250,7 +5255,7 @@ return JSON.stringify(funde,null,1);
         kopf: kopf.querySelectorAll('.nd-held-av .av').length,
         kopfNamen: ids.slice(0, 5).every(id => kopf.textContent.indexOf(nm(id)) >= 0) && !/weitere/.test(kopf.textContent),
         minis, badges:(getCachedBadges(bpid) || []).length, mehr: mehrLb,
-        lbZeilen, posten, bp
+        lbZeilen, posten, bp, lbGruppen
       };
     })())`));
   });
@@ -5260,10 +5265,15 @@ return JSON.stringify(funde,null,1);
      'Wechsel ' + alles.wechsel + ', Leiter ' + alles.leiter);
   ok(alles.kopf === 5 && alles.kopfNamen, 'der Kopf eines Blatts zeigt jedes Wappen und jeden Namen',
      alles.kopf + ' Wappen');
-  ok(alles.minis === alles.badges && alles.badges > 8 && alles.mehr === 0
-     && alles.lbZeilen === alles.posten && alles.posten > 4,
-     'Profil und Laufbahn zeigen jede Auszeichnung und jeden Posten, die Laufbahn nichts hinter „Mehr anzeigen"',
-     JSON.stringify({minis:alles.minis, badges:alles.badges, mehr:alles.mehr, zeilen:alles.lbZeilen, posten:alles.posten}));
+  // Die Laufbahn zeigt je Gruppe fünf Posten offen; der Rest steht im Blatt
+  // und klappt in seiner Gruppe auf, der Knopf nennt die Zahl.
+  ok(alles.minis === alles.badges && alles.badges > 8
+     && alles.lbZeilen === alles.posten && alles.posten > 4
+     && alles.lbGruppen.every(g => g.offen <= 5 && (g.rest ? g.offen === 5 && g.knopf === 1 : g.knopf === 0))
+     && alles.lbGruppen.some(g => g.rest > 0)
+     && alles.mehr === alles.lbGruppen.filter(g => g.rest > 0).length,
+     'Profil zeigt jede Auszeichnung, die Laufbahn je Gruppe fünf Posten offen und jeden weiteren aufklappbar in ihrer Gruppe',
+     JSON.stringify({minis:alles.minis, badges:alles.badges, mehr:alles.mehr, zeilen:alles.lbZeilen, posten:alles.posten, gruppen:alles.lbGruppen}));
   ok(alles.bp.n > 8 && alles.bp.zeilen === alles.bp.n,
      'das Blatt einer Auszeichnung zeigt jede Partie, in der sie fiel', JSON.stringify(alles.bp));
 
