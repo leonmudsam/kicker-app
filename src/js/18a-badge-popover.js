@@ -201,11 +201,14 @@ function _badgeStreakState(badgeId, playerId){
     }
     case 'nemesis': {
       // Aktueller Niederlagen-Streak gegen denselben Gegner (max. über alle Gegner).
-      const vs = {};
+      // Eine Reihe gegen einen Ruheständler läuft nie weiter und reißt nie
+      // [§C40]: für einen Aktiven zählen nur Gegner, die noch spielen, sonst
+      // stand dort für immer „3 von 5".
+      const vs = {}, zaehlt = imRuhestand(playerId) ? sichtbar : ligaAktiv;
       ordered.forEach(m => {
         const onA = (playerId===m.a1||playerId===m.a2);
         const w = (onA && m.winner==='A') || (!onA && m.winner==='B');
-        const opps = onA ? [m.b1,m.b2] : [m.a1,m.a2];
+        const opps = (onA ? [m.b1,m.b2] : [m.a1,m.a2]).filter(o => zaehlt(o));
         if(w) opps.forEach(o => { vs[o] = 0; });
         else  opps.forEach(o => { vs[o] = (vs[o]||0) + 1; });
       });

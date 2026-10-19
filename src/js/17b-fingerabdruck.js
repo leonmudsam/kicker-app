@@ -41,18 +41,29 @@ const FINGER_ACHSEN = [
    zeig: v => Math.round(v * 100) + '%'},
 ];
 
-// Das ganze Feld einmal rechnen und an der Cache-Version hängen: für die
+// Die Laufbahnen einmal rechnen und an der Cache-Version hängen: für die
 // Perzentile braucht jede Achse alle Spieler, und `longestPlayerStreakInfo`
 // läuft je Spieler einmal durch alle Partien.
-function fingerFeld(){
+//
+// Das Feld ist die Liga von heute [§C40]: ein Platz im Feld ist ein
+// Vergleich über die Laufbahn. Mit den Ruheständlern darin rückte ein
+// Aktiver auf einer Achse nach hinten, weil jemand besser war, der nicht
+// mehr spielt, und der Streifen darunter zeigte ihn als Punkt im Feld. Ein
+// Ruheständler steht für seinen eigenen Abdruck mit im Feld (`pid`) — bis
+// zu seinem Abschluss und in dem Abdruck, den der Abschluss speichert —,
+// für keinen anderen.
+function fingerFeld(pid){
   const key = 'f_' + matches.length + '_' + _cache.version;
-  if(_cache._fingerKey === key) return _cache._finger;
-
-  // Das Feld ist die Laufbahn aller, auch der Ruheständler [§C40]: ihr
-  // Profil zeigt den Fingerabdruck weiter, und eine Laufbahn ist Geschichte.
-  const feld = players.filter(p => sichtbar(p))
-    .map(p => ({id:p.id, st:playerStats(p.id), serie:longestPlayerStreakInfo(p.id, matches).best}))
-    .filter(d => d.st.games >= FINGER_MIN_SPIELE);
+  if(_cache._fingerKey !== key){
+    _cache._fingerKey = key;
+    _cache._finger = {laufbahnen: players.filter(p => sichtbar(p))
+      .map(p => ({id:p.id, st:playerStats(p.id), serie:longestPlayerStreakInfo(p.id, matches).best}))
+      .filter(d => d.st.games >= FINGER_MIN_SPIELE), felder:{}};
+  }
+  const mit = pid && imRuhestand(pid) ? pid : '';
+  const F = _cache._finger;
+  if(F.felder[mit]) return F.felder[mit];
+  const feld = F.laufbahnen.filter(d => ligaAktiv(d.id) || d.id === mit);
 
   const achsen = FINGER_ACHSEN.map(a => {
     const werte = {};
@@ -67,9 +78,7 @@ function fingerFeld(){
     return {def:a, werte, sortiert, median};
   });
 
-  _cache._fingerKey = key;
-  _cache._finger = {ids:feld.map(d => d.id), achsen};
-  return _cache._finger;
+  return (F.felder[mit] = {ids:feld.map(d => d.id), achsen});
 }
 
 // Die sechs Achsen eines Spielers — oder null, wenn seine Laufbahn dafür
@@ -79,7 +88,7 @@ function fingerabdruck(pid){
   // [§C40]: das Feld spielt weiter, und sein Platz darin verschöbe sich.
   const a = imRuhestand(pid) ? ruhestandAbschluss(pid) : null;
   if(a && Array.isArray(a.finger)) return a.finger;
-  const F = fingerFeld();
+  const F = fingerFeld(pid);
   if(F.ids.indexOf(pid) < 0) return null;
   return F.achsen.map(a => {
     const v = a.werte[pid], n = a.sortiert.length;

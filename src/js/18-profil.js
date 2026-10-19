@@ -51,8 +51,12 @@ function showPlayer(id){
   _sheetSetReopen(()=>showPlayer(id));
   const allStats = allPlayerStats(); // Hole den globalen Cache einmal
   const s = allStats[id] || playerStats(id); // Nutze Cache, Fallback für versteckte Spieler
-  const {best,worst}=bestWorstMate(id, s); // Übergebe 's'
-  const {nemesis:nem,favorite:fav}=nemesis(id, s); // Übergebe 's'
+  // Die Bestwerte der Beziehungen nennen im Profil eines Aktiven nur, wer
+  // noch spielt [§C40]; das Profil eines Ruheständlers zeigt seine Laufbahn,
+  // wie sie war.
+  const _bezWer = imRuhestand(id) ? sichtbar : ligaAktiv;
+  const {best,worst}=bestWorstMate(id, s, _bezWer);
+  const {nemesis:nem,favorite:fav}=nemesis(id, s, _bezWer);
   const wr=Math.round(s.wr*100);
   const atkWr=s.atkWr!==null?Math.round(s.atkWr*100):null;
   const defWr=s.defWr!==null?Math.round(s.defWr*100):null;

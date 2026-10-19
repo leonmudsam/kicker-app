@@ -5927,7 +5927,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.19.b3d3abe3';
+const BUILD_VERSION='2026.10.19.38c9f9ea';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -9250,17 +9250,17 @@ function allPlayerStats(){
 }
 
 
-function bestWorstMate(id, s_param){
+function bestWorstMate(id, s_param, wer){
   const s= s_param || playerStats(id);
   let best=null,worst=null;
-  Object.entries(s.mates).forEach(([mid,v])=>{ if(v.g<2)return; const wr=v.w/v.g;
+  Object.entries(s.mates).forEach(([mid,v])=>{ if(v.g<2)return; if(wer&&!wer(mid))return; const wr=v.w/v.g;
     if(!best||wr>best.wr)best={mid,wr,g:v.g}; if(!worst||wr<worst.wr)worst={mid,wr,g:v.g}; });
   return {best,worst};
 }
-function nemesis(id, s_param){
+function nemesis(id, s_param, wer){
   const s= s_param || playerStats(id);
   let n=null,f=null;
-  Object.entries(s.opps).forEach(([oid,v])=>{ if(v.g<2)return; const wr=v.w/v.g;
+  Object.entries(s.opps).forEach(([oid,v])=>{ if(v.g<2)return; if(wer&&!wer(oid))return; const wr=v.w/v.g;
     if(!n||wr<n.wr)n={oid,wr,g:v.g}; if(!f||wr>f.wr)f={oid,wr,g:v.g}; });
   return {nemesis:n,favorite:f};
 }
@@ -9344,9 +9344,10 @@ function teamDetail(p1,p2){
     }
   }
 
+  const gegnerZaehlt = imRuhestand(p1) || imRuhestand(p2) ? sichtbar : ligaAktiv;
   let nemesis=null, favorite=null;
   Object.entries(oppStats).forEach(([oid,s])=>{
-    if(s.g<2) return;
+    if(s.g<2 || !gegnerZaehlt(oid)) return;
     const wr=s.w/s.g;
     if(!nemesis || wr<nemesis.wr || (wr===nemesis.wr && s.g>nemesis.g)) nemesis={oid,wr,g:s.g,w:s.w};
     if(!favorite || wr>favorite.wr || (wr===favorite.wr && s.g>favorite.g)) favorite={oid,wr,g:s.g,w:s.w};
@@ -15184,13 +15185,18 @@ const FINGER_ACHSEN = [
    zeig: v => Math.round(v * 100) + '%'},
 ];
 
-function fingerFeld(){
+function fingerFeld(pid){
   const key = 'f_' + matches.length + '_' + _cache.version;
-  if(_cache._fingerKey === key) return _cache._finger;
-
-  const feld = players.filter(p => sichtbar(p))
-    .map(p => ({id:p.id, st:playerStats(p.id), serie:longestPlayerStreakInfo(p.id, matches).best}))
-    .filter(d => d.st.games >= FINGER_MIN_SPIELE);
+  if(_cache._fingerKey !== key){
+    _cache._fingerKey = key;
+    _cache._finger = {laufbahnen: players.filter(p => sichtbar(p))
+      .map(p => ({id:p.id, st:playerStats(p.id), serie:longestPlayerStreakInfo(p.id, matches).best}))
+      .filter(d => d.st.games >= FINGER_MIN_SPIELE), felder:{}};
+  }
+  const mit = pid && imRuhestand(pid) ? pid : '';
+  const F = _cache._finger;
+  if(F.felder[mit]) return F.felder[mit];
+  const feld = F.laufbahnen.filter(d => ligaAktiv(d.id) || d.id === mit);
 
   const achsen = FINGER_ACHSEN.map(a => {
     const werte = {};
@@ -15202,15 +15208,13 @@ function fingerFeld(){
     return {def:a, werte, sortiert, median};
   });
 
-  _cache._fingerKey = key;
-  _cache._finger = {ids:feld.map(d => d.id), achsen};
-  return _cache._finger;
+  return (F.felder[mit] = {ids:feld.map(d => d.id), achsen});
 }
 
 function fingerabdruck(pid){
   const a = imRuhestand(pid) ? ruhestandAbschluss(pid) : null;
   if(a && Array.isArray(a.finger)) return a.finger;
-  const F = fingerFeld();
+  const F = fingerFeld(pid);
   if(F.ids.indexOf(pid) < 0) return null;
   return F.achsen.map(a => {
     const v = a.werte[pid], n = a.sortiert.length;
@@ -15342,8 +15346,9 @@ function showPlayer(id){
   _sheetSetReopen(()=>showPlayer(id));
   const allStats = allPlayerStats();
   const s = allStats[id] || playerStats(id);
-  const {best,worst}=bestWorstMate(id, s);
-  const {nemesis:nem,favorite:fav}=nemesis(id, s);
+  const _bezWer = imRuhestand(id) ? sichtbar : ligaAktiv;
+  const {best,worst}=bestWorstMate(id, s, _bezWer);
+  const {nemesis:nem,favorite:fav}=nemesis(id, s, _bezWer);
   const wr=Math.round(s.wr*100);
   const atkWr=s.atkWr!==null?Math.round(s.atkWr*100):null;
   const defWr=s.defWr!==null?Math.round(s.defWr*100):null;
@@ -16476,11 +16481,11 @@ function _badgeStreakState(badgeId, playerId){
       return {cur, tgt:tgts[badgeId], label:'Siege in Folge', hint:'Setzt bei einer Niederlage zurück'};
     }
     case 'nemesis': {
-      const vs = {};
+      const vs = {}, zaehlt = imRuhestand(playerId) ? sichtbar : ligaAktiv;
       ordered.forEach(m => {
         const onA = (playerId===m.a1||playerId===m.a2);
         const w = (onA && m.winner==='A') || (!onA && m.winner==='B');
-        const opps = onA ? [m.b1,m.b2] : [m.a1,m.a2];
+        const opps = (onA ? [m.b1,m.b2] : [m.a1,m.a2]).filter(o => zaehlt(o));
         if(w) opps.forEach(o => { vs[o] = 0; });
         else  opps.forEach(o => { vs[o] = (vs[o]||0) + 1; });
       });

@@ -5,6 +5,7 @@
 - Gespeichert werden nur der Zeitpunkt (`players.retired_at`) und der Stand des Profils (`players.retired_stand`); alles andere folgt aus vier Regeln.
 - 1. Ein Zeitraum (Tag, Woche, Monat) fragt `sichtbar`: wer darin gespielt hat, steht darin und kann ihn gewinnen, auch nach dem Karriereende. Eine Monatschronik bleibt dem, der sie geholt hat.
 - 2. Ein Laufbahn-Vergleich (Ewige Tafel, Gesamt, Rangstufen, Liga-Rekorde, Prestige-Rang, Teams- und Positionslisten, Wertungen über die Laufbahn, Spielerwahl, Fun Facts, Insignium-Meldungen) fragt `ligaAktiv` ohne Zeitpunkt, auch in einem Zeitschnitt. Die Abfrage steht in den Engines, ein neuer Eintrag erbt sie.
+- Dazu gehören die Bestwerte im Profil eines Aktiven: bester und schwächster Partner, Lieblings- und Angstgegner (`bestWorstMate`, `nemesis` mit `wer`), Erz- und Lieblingsgegner eines Duos aus zwei Aktiven (`teamDetail`), die laufende Reihe gegen denselben Gegner (`_badgeStreakState`) und das Feld des Fingerabdrucks (`fingerFeld`). Die Bilanz mit jedem („alle Beziehungen", `playerH2HList`) fragt nicht. Das Profil eines Ruheständlers und ein Duo mit ihm fragen `sichtbar`; in seinem eigenen Fingerabdruck steht er mit im Feld.
 - 3. Das Profil steht im gespeicherten Stand: der Karriere-Teil beim Klick (`_ruheKarriereBauen`, `karriereSetzen`), der Abschluss-Teil nach `ruhestandAbschlussMs` einmal geschrieben (`_ruheAbschliessen`). Danach rechnet für ihn nichts mehr; gültig nur mit `RUHE_STAND_FASSUNG` und genau diesem Karriereende. Ein Rekord, den der Katalog nicht mehr führt, fällt auch aus seinem Stand und zählt kein Prestige (`chroniclesOfPlayer`) [§C35].
 - 4. Nach dem Abschluss nennt ihn keine Story mehr außer der seines Karriereendes (`ohneStoriesNachAbschied`, ein Tor im Generator und in `_consolidateStories`).
 - Eine Partie nach dem Karriereende gibt es nicht (`imRuhestandAm`). Gelöscht wird nur, wer nie gespielt hat (`spielerLoeschen`, gefragt bei der Datenbank). Kehrt er zurück, gilt wieder die Liga von heute.
@@ -17,7 +18,7 @@
 
 ## Prüfung
 
-`tests/ruhestand` (die vier Regeln an den echten Partien, Profil zwei Monate und eine Fassung später Wort für Wort gleich), `tests/ruheliga` (kein Ruheständler auf dem Bildschirm außerhalb von `[data-ruhestand]` und `[data-bis]`), `tests/blatt` (Abschied bei 360 px).
+`tests/ruhestand` (die vier Regeln an den echten Partien, Profil zwei Monate und eine Fassung später Wort für Wort gleich), `tests/ruheliga` (kein Ruheständler auf dem Bildschirm außerhalb von `[data-ruhestand]` und `[data-bis]`, kein Bestwert mit ihm im Profil eines Aktiven), `tests/blatt` (Abschied bei 360 px).
 
 ## Herleitung
 
@@ -51,6 +52,18 @@ Spalten aus `datenbank/karriereende.sql`); alles andere folgt aus den Regeln.
    Abfrage steht in den Engines (`_chronicleCtx`, `_rangTabelle`,
    `prestigeTabelle`, die Award-Rangliste); ein neuer Rekord, eine neue
    Chronik, ein neuer Award läuft durch sie und erbt die Regel.
+   **Auch ein Bestwert im Profil eines Aktiven ist ein solcher Vergleich.**
+   Bester und schwächster Partner, Lieblings- und Angstgegner, Erz- und
+   Lieblingsgegner eines Duos, die laufende Reihe gegen denselben Gegner und
+   der Platz im Feld des Fingerabdrucks rechneten mit allen, die je gespielt
+   hatten: im Profil eines Aktiven stand ein Ruheständler als bester
+   Partner, mit dem niemand mehr spielt, eine Reihe gegen ihn lief nie
+   weiter und riss nie, und im Fingerabdruck stand er als Punkt im Feld und
+   schob die anderen um einen Platz nach hinten.
+   Die Bilanz mit jedem steht weiter in „alle Beziehungen" — dort ist er
+   Geschichte, kein Bestwert. Sein eigenes Profil und ein Duo mit ihm
+   zeigen die Laufbahn, wie sie war (`sichtbar`); seinen eigenen
+   Fingerabdruck misst die aktive Liga und er selbst.
 3. **Sein Profil steht im gespeicherten Stand, in zwei Teilen.**
    - *Karriere*, beim Klick (`_ruheKarriereBauen`, mit dem Zeitpunkt in
      EINEM Schreiben, `karriereSetzen`): was ein Vergleich mit der Liga war —
