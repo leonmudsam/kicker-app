@@ -71,11 +71,12 @@ function showSeasonTable(sid){
   // Der Meister steht als eigene Zeile über der Chronik, nicht IN ihr: Platz 1
   // der Elo ist eine Tabellen-Aussage, kein Chronik-Eintrag — und er würde dem
   // Ersten sonst seinen einen Chronik-Platz wegnehmen.
-  // Zuerst das, was die Chronik-Matrix auch zeigt: je Spieler der erste
-  // Eintrag in Katalogreihenfolge, denn die Reihenfolge IST die Wertigkeit
-  // [§C32]. Alles Weitere steht dahinter, offen: es stand hinter „Alle
-  // anzeigen · 9 weitere", und im Blatt einer Monatstafel fehlte damit die
-  // halbe Tafel.
+  // Offen steht, was zählt: je Spieler der erste Eintrag in
+  // Katalogreihenfolge, denn die Reihenfolge IST die Wertigkeit [§C32] — es
+  // ist der Eintrag, den Matrix, Profil und Prestige zeigen. Die übrigen
+  // klappen darunter auf. Alle offen untereinander waren bei Leon zwölf
+  // Plaketten, von denen elf nichts zählten; ganz weg, hinter „Alle
+  // anzeigen · 9 weitere" auf einem anderen Blatt, fehlte die halbe Tafel.
   const gesehen = new Set();
   const sichtbar = [], weitere = [];
   T.awarded.forEach(a => {
@@ -93,7 +94,9 @@ function showSeasonTable(sid){
         <span class="tx"><span class="n">${esc(pname(ch.pid))} ${T.live ? 'führt die Saison an' : 'ist Meister'}</span>
           <span class="e num">${ch.elo} Elo · ${ch.wins} Siege aus ${ch.games} Spielen</span></span>
       </div><div style="height:14px"></div>` : ''}
-    <div class="tplates">${sichtbar.concat(weitere).map(a => _titlePlateHtml(a, {sid})).join('')}</div>
+    <div class="tplates">${sichtbar.map(a => _titlePlateHtml(a, {sid})).join('')}</div>
+    ${weitere.length ? `<div class="tplates chron-rest">${weitere.map(a => _titlePlateHtml(a, {sid})).join('')}</div>
+    ${_chronMehrKnopf(weitere.length)}` : ''}
     ${emptyNames.length ? `<div class="pp-sec-title" style="margin-top:16px"><div class="l"><h4>Ohne Eintrag</h4></div></div>
       <div class="tempty">${esc(emptyNames.join(', '))}<span>Keine Bedingung erfüllt, die Saison zählt trotzdem.</span></div>` : ''}
     ${unawarded.length ? `<div class="pp-sec-title" style="margin-top:16px"><div class="l"><h4>Nicht vergeben</h4></div><div class="m">${unawarded.length}</div></div>
@@ -166,7 +169,6 @@ function _chronStripHtml(pid, teil){
     // dagegen die meisten.
     const liste = mine.length ? mine : [c];
     const rest = liste.slice(2);
-    const zu = rest.length === 1 ? '1 weiteren anzeigen' : rest.length + ' weitere anzeigen';
     chronBlock = `
     <div class="pp-sec-title">
       <div class="l"><span class="ic svg-ic">${svgI(nurNeg ? 'ghost' : 'trophyStar')}</span>
@@ -177,11 +179,7 @@ function _chronStripHtml(pid, teil){
     </div>
     <div class="chron-alle">${liste.slice(0, 2).map(card).join('')}</div>${rest.length ? `
     <div class="chron-alle chron-rest">${rest.map(card).join('')}</div>
-    <button class="chron-more" type="button" data-chron-more="${esc(zu)}" aria-expanded="false">
-      <span class="tx">${esc(zu)}</span>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-        stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
-    </button>` : ''}`;
+    ${_chronMehrKnopf(rest.length)}` : ''}`;
   } else {
     // Kein Rekord? Dann zeigt die Karte, welcher am nächsten liegt und was
     // dafür noch fehlt. Eine leere Zeile motiviert niemanden, eine Zahl schon.
@@ -846,8 +844,18 @@ function _bindChronikClicks(root){
   root.querySelectorAll('[data-chron]').forEach(el => {
     el.onclick = (e) => { e.stopPropagation(); sheetNav(()=>showChronicle(el.dataset.chron)); };
   });
-  // Der Rest der Liga-Rekorde im Profil klappt dort auf, wo er steht; der
-  // Knopf trägt im Datensatz seine Aufschrift für den geschlossenen Zustand.
+  _chronMehrBinden(root);
+  // Das Insignium im Profilkopf ist selbst der Knopf zur Laufbahn [§13.10].
+  root.querySelectorAll('[data-prestige]').forEach(el => {
+    el.style.cursor = 'pointer';
+    el.onclick = (e) => { e.stopPropagation(); sheetNav(()=>showLaufbahn(el.dataset.prestige)); };
+  });
+}
+
+// Was hinter „N weitere anzeigen" steht, klappt dort auf, wo es steht: die
+// Liga-Rekorde im Profil, die Einträge einer Monatstafel, die nicht zählen.
+// Der Knopf trägt im Datensatz seine Aufschrift für den geschlossenen Zustand.
+function _chronMehrBinden(root){
   root.querySelectorAll('[data-chron-more]').forEach(el => {
     el.onclick = (e) => {
       e.stopPropagation();
@@ -860,11 +868,15 @@ function _bindChronikClicks(root){
       if(tx) tx.textContent = auf ? 'Weniger anzeigen' : el.dataset.chronMore;
     };
   });
-  // Das Insignium im Profilkopf ist selbst der Knopf zur Laufbahn [§13.10].
-  root.querySelectorAll('[data-prestige]').forEach(el => {
-    el.style.cursor = 'pointer';
-    el.onclick = (e) => { e.stopPropagation(); sheetNav(()=>showLaufbahn(el.dataset.prestige)); };
-  });
+}
+// Der Knopf dazu. `n` ist die Zahl dessen, was er aufklappt.
+function _chronMehrKnopf(n){
+  const zu = n === 1 ? '1 weiteren anzeigen' : n + ' weitere anzeigen';
+  return `<button class="chron-more" type="button" data-chron-more="${esc(zu)}" aria-expanded="false">
+      <span class="tx">${esc(zu)}</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+        stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+    </button>`;
 }
 
 // ─── §13.6 Marken neben dem Namen (Rangliste) ────────────────────────

@@ -5164,6 +5164,42 @@ return JSON.stringify(funde,null,1);
      && /verloren/.test(voll.verloren),
      'der Zuwachs steht einmal, die vier Zahlen zwei mal zwei, und was verloren ging, über der Wirkung',
      JSON.stringify(voll && {satz: voll.satz, zellen: voll.zellen, reihen: voll.reihen, verloren: voll.verloren}));
+  // ── Offen steht, was zählt ───────────────────────────────────────
+  // In der Chronik der Saison standen alle Einträge untereinander, bei einem
+  // Spieler zwölf, von denen elf nichts zählten. Offen steht je Spieler der
+  // eine Eintrag des Monats [§C32]; die übrigen klappen darunter auf — im
+  // Blatt der Monatstafel und im Saison-Rückblick.
+  const zaehltOffen = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const zahl = sid => { const T = K("seasonTitles('" + sid + "')");
+      return {gesamt:T.awarded.length, spieler:new Set(T.awarded.map(a => a.pid)).size}; };
+    const sh = document.getElementById('sheet');
+    const pruefe = (offen, rest, alle) => {
+      const knopf = rest && rest.nextElementSibling && rest.nextElementSibling.matches('[data-chron-more]')
+        ? rest.nextElementSibling : null;
+      const zu = !rest || getComputedStyle(rest).display === 'none';
+      if(knopf) knopf.click();
+      return {offen, zu, auf: !!rest && getComputedStyle(rest).display !== 'none', knopf: !!knopf, alle: alle()};
+    };
+    K("closeSheet(true); showSeasonTable('2026-08')");
+    const tafel = Object.assign(zahl('2026-08'), pruefe(sh.querySelectorAll('.tplates:not(.chron-rest) .tplate').length,
+      sh.querySelector('.tplates.chron-rest'), () => sh.querySelectorAll('.tplate').length));
+    K("closeSheet(true); showSeasonRecap(seasons.find(s => s.id === '2026-07'))");
+    const kopf = [...sh.querySelectorAll('.rcp-section')].find(e => /Chronik der Saison/.test(e.textContent));
+    const liste = kopf && kopf.nextElementSibling;
+    const rest = liste && liste.nextElementSibling && liste.nextElementSibling.classList.contains('chron-rest')
+      ? liste.nextElementSibling : null;
+    const rueck = Object.assign(zahl('2026-07'), pruefe(liste ? liste.querySelectorAll('[data-tplayer]').length : 0,
+      rest, () => (liste ? liste.querySelectorAll('[data-tplayer]').length : 0) + (rest ? rest.querySelectorAll('[data-tplayer]').length : 0)));
+    K('closeSheet(true)');
+    return {tafel, rueck};
+  });
+  const _offenRecht = x => x && x.offen === x.spieler && x.alle === x.gesamt
+    && (x.gesamt === x.spieler || (x.knopf && x.zu && x.auf));
+  ok(_offenRecht(zaehltOffen.tafel) && _offenRecht(zaehltOffen.rueck)
+     && (zaehltOffen.tafel.gesamt > zaehltOffen.tafel.spieler || zaehltOffen.rueck.gesamt > zaehltOffen.rueck.spieler),
+     'Chronik der Saison: offen steht je Spieler der eine Eintrag, der zählt, die übrigen klappen darunter auf',
+     JSON.stringify(zaehltOffen));
   ok(voll && voll.wirkungen > 0 && !voll.gekappt.length && voll.hinweise.some(h => /Prestige/.test(h)),
      'in der Wirkung steht jeder Name und jeder Grund ganz, und die Gruppen sagen in einem Satz, was sie fürs Prestige heißen',
      JSON.stringify(voll && {gekappt: voll.gekappt.slice(0, 3), hinweise: voll.hinweise}));

@@ -555,17 +555,24 @@ function showSeasonRecap(season, opts){
 
   // ─── Chronik der Saison ────────────────────────────────────────────
   // Als Zeilen, nicht als Plaketten: sechs Plaketten waren allein 547 px
-  // und sechs verschiedene Farbtöne. Jeder Eintrag steht da — es waren fünf
-  // und ein Knopf „Alle 17 Einträge"; die Plaketten der Tafel sind einen
-  // Tipp weit weg.
+  // und sechs verschiedene Farbtöne. Offen steht, was zählt — je Spieler
+  // der eine Eintrag des Monats [§C32] —, die übrigen klappen darunter auf.
+  // Alle offen waren siebzehn Zeilen, von denen zwölf nichts zählten.
   let chronikHtml='';
   try {
     const T = seasonTitles(sid);
     if(T.awarded.length){
-      chronikHtml = rcpAbschnitt('Chronik der Saison', T.awarded.length) + `<div class="rcp-liste">${
-        T.awarded.map(a=>rcpZeileHtml({pid:a.pid, px:38,
+      const zeile = a => rcpZeileHtml({pid:a.pid, px:38,
           ic:a.ic, ton:a.tone, name:a.name, sub:pname(a.pid),
-          attr:`data-tplayer="${esc(a.pid)}"`})).join('')}</div>`
+          attr:`data-tplayer="${esc(a.pid)}"`});
+      const gesehen = new Set(), zaehlt = [], weitere = [];
+      T.awarded.forEach(a => {
+        if(gesehen.has(a.pid)) weitere.push(a); else { gesehen.add(a.pid); zaehlt.push(a); }
+      });
+      chronikHtml = rcpAbschnitt('Chronik der Saison', zaehlt.length)
+        + `<div class="rcp-liste">${zaehlt.map(zeile).join('')}</div>`
+        + (weitere.length ? `<div class="rcp-liste chron-rest">${weitere.map(zeile).join('')}</div>`
+            + _chronMehrKnopf(weitere.length) : '')
         + `<div class="rcp-mehr klick" data-stafel="${esc(sid)}">Die ganze Tafel</div>`;
     }
   } catch(err){}
@@ -659,6 +666,7 @@ function showSeasonRecap(season, opts){
   binden('[data-poshist]', el => sheetNav(()=>showPositionHistory(el.dataset.poshist)));
   binden('[data-stafel]', el => sheetNav(()=>showSeasonTable(el.dataset.stafel)));
   binden('[data-chron]', el => sheetNav(()=>showChronicle(el.dataset.chron)));
+  _chronMehrBinden(wurzel);
 }
 
 // Player-of-the-Day Recap: zeigt einmal pro Tag pro Gerät den Sieger des letzten Spieltags.

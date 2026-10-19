@@ -5941,7 +5941,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.19.2342defc';
+const BUILD_VERSION='2026.10.19.3f3517e7';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -7946,10 +7946,17 @@ function showSeasonRecap(season, opts){
   try {
     const T = seasonTitles(sid);
     if(T.awarded.length){
-      chronikHtml = rcpAbschnitt('Chronik der Saison', T.awarded.length) + `<div class="rcp-liste">${
-        T.awarded.map(a=>rcpZeileHtml({pid:a.pid, px:38,
+      const zeile = a => rcpZeileHtml({pid:a.pid, px:38,
           ic:a.ic, ton:a.tone, name:a.name, sub:pname(a.pid),
-          attr:`data-tplayer="${esc(a.pid)}"`})).join('')}</div>`
+          attr:`data-tplayer="${esc(a.pid)}"`});
+      const gesehen = new Set(), zaehlt = [], weitere = [];
+      T.awarded.forEach(a => {
+        if(gesehen.has(a.pid)) weitere.push(a); else { gesehen.add(a.pid); zaehlt.push(a); }
+      });
+      chronikHtml = rcpAbschnitt('Chronik der Saison', zaehlt.length)
+        + `<div class="rcp-liste">${zaehlt.map(zeile).join('')}</div>`
+        + (weitere.length ? `<div class="rcp-liste chron-rest">${weitere.map(zeile).join('')}</div>`
+            + _chronMehrKnopf(weitere.length) : '')
         + `<div class="rcp-mehr klick" data-stafel="${esc(sid)}">Die ganze Tafel</div>`;
     }
   } catch(err){}
@@ -8024,6 +8031,7 @@ function showSeasonRecap(season, opts){
   binden('[data-poshist]', el => sheetNav(()=>showPositionHistory(el.dataset.poshist)));
   binden('[data-stafel]', el => sheetNav(()=>showSeasonTable(el.dataset.stafel)));
   binden('[data-chron]', el => sheetNav(()=>showChronicle(el.dataset.chron)));
+  _chronMehrBinden(wurzel);
 }
 
 function _potwLastWeekRange(){
@@ -31840,7 +31848,9 @@ function showSeasonTable(sid){
         <span class="tx"><span class="n">${esc(pname(ch.pid))} ${T.live ? 'führt die Saison an' : 'ist Meister'}</span>
           <span class="e num">${ch.elo} Elo · ${ch.wins} Siege aus ${ch.games} Spielen</span></span>
       </div><div style="height:14px"></div>` : ''}
-    <div class="tplates">${sichtbar.concat(weitere).map(a => _titlePlateHtml(a, {sid})).join('')}</div>
+    <div class="tplates">${sichtbar.map(a => _titlePlateHtml(a, {sid})).join('')}</div>
+    ${weitere.length ? `<div class="tplates chron-rest">${weitere.map(a => _titlePlateHtml(a, {sid})).join('')}</div>
+    ${_chronMehrKnopf(weitere.length)}` : ''}
     ${emptyNames.length ? `<div class="pp-sec-title" style="margin-top:16px"><div class="l"><h4>Ohne Eintrag</h4></div></div>
       <div class="tempty">${esc(emptyNames.join(', '))}<span>Keine Bedingung erfüllt, die Saison zählt trotzdem.</span></div>` : ''}
     ${unawarded.length ? `<div class="pp-sec-title" style="margin-top:16px"><div class="l"><h4>Nicht vergeben</h4></div><div class="m">${unawarded.length}</div></div>
@@ -31889,7 +31899,6 @@ function _chronStripHtml(pid, teil){
     };
     const liste = mine.length ? mine : [c];
     const rest = liste.slice(2);
-    const zu = rest.length === 1 ? '1 weiteren anzeigen' : rest.length + ' weitere anzeigen';
     chronBlock = `
     <div class="pp-sec-title">
       <div class="l"><span class="ic svg-ic">${svgI(nurNeg ? 'ghost' : 'trophyStar')}</span>
@@ -31900,11 +31909,7 @@ function _chronStripHtml(pid, teil){
     </div>
     <div class="chron-alle">${liste.slice(0, 2).map(card).join('')}</div>${rest.length ? `
     <div class="chron-alle chron-rest">${rest.map(card).join('')}</div>
-    <button class="chron-more" type="button" data-chron-more="${esc(zu)}" aria-expanded="false">
-      <span class="tx">${esc(zu)}</span>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-        stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
-    </button>` : ''}`;
+    ${_chronMehrKnopf(rest.length)}` : ''}`;
   } else {
     const nx = nextRecordFor(pid);
     if(nx){
@@ -32380,6 +32385,14 @@ function _bindChronikClicks(root){
   root.querySelectorAll('[data-chron]').forEach(el => {
     el.onclick = (e) => { e.stopPropagation(); sheetNav(()=>showChronicle(el.dataset.chron)); };
   });
+  _chronMehrBinden(root);
+  root.querySelectorAll('[data-prestige]').forEach(el => {
+    el.style.cursor = 'pointer';
+    el.onclick = (e) => { e.stopPropagation(); sheetNav(()=>showLaufbahn(el.dataset.prestige)); };
+  });
+}
+
+function _chronMehrBinden(root){
   root.querySelectorAll('[data-chron-more]').forEach(el => {
     el.onclick = (e) => {
       e.stopPropagation();
@@ -32392,10 +32405,14 @@ function _bindChronikClicks(root){
       if(tx) tx.textContent = auf ? 'Weniger anzeigen' : el.dataset.chronMore;
     };
   });
-  root.querySelectorAll('[data-prestige]').forEach(el => {
-    el.style.cursor = 'pointer';
-    el.onclick = (e) => { e.stopPropagation(); sheetNav(()=>showLaufbahn(el.dataset.prestige)); };
-  });
+}
+function _chronMehrKnopf(n){
+  const zu = n === 1 ? '1 weiteren anzeigen' : n + ' weitere anzeigen';
+  return `<button class="chron-more" type="button" data-chron-more="${esc(zu)}" aria-expanded="false">
+      <span class="tx">${esc(zu)}</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+        stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+    </button>`;
 }
 
 function _playerRankMarks(pid){
