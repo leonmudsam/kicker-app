@@ -138,5 +138,64 @@ const verlauf=K(`(() => {
   return {n:h.length,absteigend:h.every((x,i)=>!i||h[i-1].id>x.id),neueste:!!h[0]&&h[0].id===currentSeason().id};
 })()`);
 ok(verlauf.n===7&&verlauf.absteigend&&verlauf.neueste,'Der Saisonverlauf zeigt jede Saison mit Partien, die neueste zuerst: '+JSON.stringify(verlauf));
+// Was einen ganzen Tag beschreibt, gilt erst, wenn der Tag zu ist. Am 19.10.
+// stand „Unschlagbar" für Leon um 14:26 nach dem dritten Sieg im Feed, mit
+// Karte und Hinweis, obwohl der Tag noch lief; Comeback-Tag, Zusammenbruch,
+// Schwarzer Tag und der Spieler des Tages zählten ebenso vor dem Abend.
+// Gespielt wird drei Siege bis 13 Uhr und — im zweiten Fall — eine
+// Niederlage um 17 Uhr.
+const tag=(uhr,jetzt,mitPleite)=>{
+  setNow(Date.UTC(2026,9,19,uhr[0],uhr[1]));
+  return K(`(() => {
+    players=Array.from({length:4},(_,i)=>({id:'t'+i,name:'Tag '+i,hidden:false,elo:0,atk:.5}));
+    const p=(id,h,m,a)=>({...window.__partie,id,a1:'t0',a2:'t1',b1:'t2',b2:'t3',
+      created_at:new Date(Date.UTC(2026,9,19,h,m)).toISOString(),winner:a?'A':'B',
+      score_a:a?10:4,score_b:a?4:10,deltas:{t0:a?20:-20,t1:a?20:-20,t2:a?-20:20,t3:a?-20:20}});
+    matches=[p('t1',12,0,1),p('t2',12,30,1),p('t3',13,0,1)].concat(${mitPleite} ? [p('t4',17,0,0)] : []);
+    seasons=[];cfg={...window.__cfgBasis};invalidateCache();
+    const ev=Object.entries(getBadgeEarnedCache()).flatMap(([mid,l])=>l.map(e=>({mid,pid:e.playerId,b:e.badge.id,ende:e.meta&&e.meta.tagEnde})));
+    const n=(pid,b)=>(computeBadges(pid).find(x=>x.id===b)||{}).count||0;
+    let karte='';
+    try { const s=_buildStories().find(x=>(x.dataRef||{}).badgeId==='unbeatable');
+      if(s) karte=new Date(s.when).toISOString().slice(11,16)+(s.dataRef.matchId?' an der Partie':' eigene Karte'); } catch(e){ karte='Fehler '+e.message; }
+    return {karte,unschlagbar:n('t0','unbeatable'),schwarz:n('t2','black_day'),zusammenbruch:n('t0','crash_day'),
+      comeback:n('t2','comeback_day'),potd:n('t0','potd'),
+      ev:ev.filter(e=>['unbeatable','black_day','crash_day','comeback_day'].includes(e.b)).map(e=>e.pid+':'+e.b+'@'+e.mid+(e.ende?'/'+e.ende:'')).sort().join(' ')};
+  })()`);
+};
+const mittag=tag([14,26],0,false), abend=tag([23,59],0,false), pleite=tag([23,59],0,true), pleiteMittag=tag([17,30],0,true);
+ok(mittag.unschlagbar===0&&mittag.schwarz===0&&mittag.potd===0&&mittag.ev==='',
+  'Um 14:26 ist kein Tag zu: weder Unschlagbar noch Schwarzer Tag noch Spieler des Tages, und keine Vergabe: '+JSON.stringify(mittag));
+ok(abend.unschlagbar===1&&abend.schwarz===1&&abend.potd===1&&abend.karte==='23:57 eigene Karte'
+  &&abend.ev==='t0:unbeatable@t3/2026-10-19 t1:unbeatable@t3/2026-10-19 t2:black_day@t3/2026-10-19 t3:black_day@t3/2026-10-19',
+  'Um 23:59 gilt der Tag, an der letzten Partie, und seine Karte steht am Tagesende für sich statt in der Karte einer Partie: '+JSON.stringify(abend));
+ok(pleiteMittag.zusammenbruch===0&&pleiteMittag.comeback===0&&pleiteMittag.ev==='',
+  'Nach einer Niederlage um 17 Uhr ist der Tag noch nicht „mit einer Niederlage beendet": '+JSON.stringify(pleiteMittag));
+ok(pleite.unschlagbar===0&&pleite.schwarz===0&&pleite.zusammenbruch===1&&pleite.comeback===1
+  &&pleite.ev==='t0:crash_day@t4/2026-10-19 t1:crash_day@t4/2026-10-19 t2:comeback_day@t4/2026-10-19 t3:comeback_day@t4/2026-10-19',
+  'Mit der Niederlage am Abend ist der Tag nicht unschlagbar, sondern ein Zusammenbruch, und für die Gegner ein Comeback-Tag: '+JSON.stringify(pleite));
+// Dieselbe Regel in Liga-Rekorden und Monatschronik: „Der makellose Tag",
+// „Der Tagesabschluss", „Der Schlussstrich" und die Tagesquoten fragen nach
+// dem ganzen Tag. Ein Vortag mit 22 Partien im Wechsel (die Rekorde zählen
+// ab dreißig), dann acht Siege bis 13:30, gefragt um 14:26 und um 23:59.
+const tagesRekord=(uhr)=>{
+  setNow(Date.UTC(2026,9,19,uhr[0],uhr[1]));
+  return K(`(() => {
+    players=Array.from({length:4},(_,i)=>({id:'t'+i,name:'Tag '+i,hidden:false,elo:0,atk:.5}));
+    const p=(id,tag,min,a)=>({...window.__partie,id,a1:'t0',a2:'t1',b1:'t2',b2:'t3',
+      created_at:new Date(Date.UTC(2026,9,tag,10,min)).toISOString(),winner:a?'A':'B',
+      score_a:a?10:4,score_b:a?4:10,deltas:{t0:a?20:-20,t1:a?20:-20,t2:a?-20:20,t3:a?-20:20}});
+    matches=Array.from({length:22},(_,i)=>p('v'+i,18,i*20,i%2===0))
+      .concat(Array.from({length:8},(_,i)=>p('r'+i,19,i*30,true)));
+    seasons=[];cfg={...window.__cfgBasis};invalidateCache();
+    const r=_chronicleCtx().P.t0||{}, m=_seasonTitleCtx('2026-10').P.t0||{};
+    return {makellos:r.perfDays||0, abschluss:r.sbN||0, schluss:m.lastG||0, besterTag:m.bestPerfTag||0, tage:m.tagN||0};
+  })()`);
+};
+const rekMittag=tagesRekord([14,26]), rekAbend=tagesRekord([23,59]);
+ok(rekMittag.makellos===0&&rekMittag.abschluss===1&&rekMittag.schluss===1&&rekMittag.besterTag===0&&rekMittag.tage===1,
+  'Um 14:26 zählt nur der Vortag in Rekorden und Chroniken, die nach dem ganzen Tag fragen: '+JSON.stringify(rekMittag));
+ok(rekAbend.makellos===1&&rekAbend.abschluss===2&&rekAbend.schluss===2&&rekAbend.besterTag===8&&rekAbend.tage===2,
+  'Um 23:59 zählt der Tag überall mit: '+JSON.stringify(rekAbend));
 console.log(fails?`${fails} von ${checks} CHECKS FEHLGESCHLAGEN`:`ALLE ${checks} CHECKS BESTANDEN`);
 process.exitCode=fails?1:0;

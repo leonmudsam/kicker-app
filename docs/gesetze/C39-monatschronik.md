@@ -14,6 +14,7 @@
 - Die Matrix ordnet nach Prestige, dann Zahl der Einträge, dann Name; sie steht in einer Karte (`_lchronTabelle`), Ruheständler in einer eigenen Karte (`ruhe_chronik`). Strich heißt gewertet ohne Eintrag, leer heißt nicht gewertet.
 - Ein Kürzel (`short`) ist ein ganzes Wort und passt gerendert in 54 px.
 - Die Rohsicht liegt in der Engine (`_seasonTitleCtx`: `partien`, `tagGrp`, `wochGrp`, `partnerGrp`, `gegnerGrp`).
+- Spieltage zählen erst, wenn sie zu sind (`_tagZu`): `tagGrp`, die letzte Partie eines Tages, die Tagesquoten und das Tagesende von „Auf dem Thron"; „Der Tagesregent" teilt durch diese Tage (`tagN`). Wochen bleiben offen gezählt — eine Woche geht Tage nach ihrer letzten Partie zu, und ihr Ende stünde in der Tafel eines anderen Tages.
 
 ## Stellen
 
@@ -21,7 +22,7 @@
 
 ## Prüfung
 
-`tests/disziplinen` hält jede Chronik an 1,5 σ, an der Spielzahl-Korrelation und am Halterdeckel; `tests/blatt` misst die Kürzel in der Zelle.
+`tests/rechnen` zählt den laufenden Tag erst um 23:59; `tests/disziplinen` hält jede Chronik an 1,5 σ, an der Spielzahl-Korrelation und am Halterdeckel; `tests/blatt` misst die Kürzel in der Zelle.
 
 ## Herleitung
 

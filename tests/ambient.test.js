@@ -817,7 +817,10 @@ const _takt = JSON.parse(K.eval(`JSON.stringify((function(){
       && !NEWS_BADGE_WHITELIST.has(s.dataRef.badgeId)).length,
     sammelKarten: sam.length,
     proMatchHoechstens1: Object.keys(jeMatch).every(k => jeMatch[k] === 1),
-    alleMitMatch: sam.every(s => !!s.dataRef.matchId),
+    // Ohne Partie nur am Tagesende und nur, was den Tag beschreibt.
+    alleMitMatch: sam.every(s => !!s.dataRef.matchId
+      || ((s.dataRef.causalKey||'').indexOf('awards') === 0
+          && (s.dataRef.marken||[]).every(m => ['unbeatable','black_day','comeback_day','crash_day'].includes(m.badgeId)))),
     markenAufMarke: marken.every(m => NEWS_BADGE_MARKEN_KLEIN.indexOf(m.rang) >= 0),
     markenGewoehnlich: marken.every(m => rarityOf(m.badgeId) === 'common'),
     gruende: [...new Set(sam.map(s => (s.dataRef.causalKey||'').split(':')[0]))]
@@ -845,7 +848,10 @@ const _taktLauf = JSON.parse(K.eval(`JSON.stringify((function(){
       const m = s.dataRef.marken || [];
       if(m.length > 1) mehrere++;
       const soll = [...new Set(m.map(x => x.pid))].sort().join(',');
-      if(!mid || m.some(x => x.matchId !== mid)
+      // Ohne Partie nur, was den ganzen Tag beschreibt: es entsteht, wenn
+      // der Tag zu ist, nicht in einer Partie.
+      const tagesMarke = x => ['unbeatable','black_day','comeback_day','crash_day'].includes(x.badgeId);
+      if((mid ? m.some(x => x.matchId !== mid) : !m.every(x => tagesMarke(x) && !x.matchId))
          || (s.dataRef.playerIds||[]).slice().sort().join(',') !== soll) falsch++;
     });
     mehrfachMatch += Object.keys(jeMatch).filter(k => jeMatch[k] > 1).length;
@@ -868,8 +874,9 @@ ok(_takt.einzelGewoehnlich === 0,
    _takt.einzelGewoehnlich + ' eigene Karten');
 ok(_takt.sammelKarten > 0, 'die kleinen Marken eines Tages werden ueberhaupt gemeldet',
    _takt.sammelKarten + ' Karten');
-ok(_takt.proMatchHoechstens1 && _takt.alleMitMatch && _takt.gruende.join(',') === 'match',
-   'je Partie hoechstens EINE kleine Markenmeldung, fest an dieses Match gebunden',
+ok(_takt.proMatchHoechstens1 && _takt.alleMitMatch
+   && _takt.gruende.every(g => g === 'match' || g === 'awards') && _takt.gruende.indexOf('match') >= 0,
+   'je Partie hoechstens EINE kleine Markenmeldung, fest an dieses Match gebunden — was den Tag beschreibt, an den Tag',
    JSON.stringify(_takt.gruende));
 ok(_takt.markenAufMarke && _takt.markenGewoehnlich,
    'darin steht nur eine gewoehnliche Auszeichnung auf einer runden Marke');
@@ -5796,14 +5803,17 @@ const _worte = JSON.parse(K.eval(`JSON.stringify((function(){
     const i = txt.indexOf('Vorher');
     if(i < 0) return;
     const satz = txt.slice(i);
+    // Gefragt wird nur der Satz über den Vorgänger: der nächste nennt die
+    // Wirkung auf die Laufbahn, und dort steht der neue Halter zu Recht.
+    const vorSatz = satz.split(/\.\s/)[0];
     (d.playerIds || []).forEach(pid => {
       const nm = pname(pid);
       // Auf Wortgrenzen geprueft: „Leo" steckt in „Leon", und ein reines
       // indexOf meldete damit Leo als seinen eigenen Vorgaenger, obwohl im
       // Satz Leon stand. Die Liga hat beide Namen.
       if(nm && new RegExp('(^|[^A-Za-zÄÖÜäöüß])' + nm
-          + '($|[^A-Za-zÄÖÜäöüß])').test(satz))
-        selbstVorgaenger.push(s.title + ' || ' + satz);
+          + '($|[^A-Za-zÄÖÜäöüß])').test(vorSatz))
+        selbstVorgaenger.push(s.title + ' || ' + vorSatz);
     });
     // Und das Verb zaehlt die Genannten: ein Name „hielt", mehrere „hielten".
     // Erst den ganzen Satz nehmen, dann die bekannten Enden abstreifen: mit

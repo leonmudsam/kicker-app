@@ -30,6 +30,16 @@ const ok=(c,s)=>{checks++;if(!c)fails++;console.log((c?'  ok  ':'  ✗   ')+s);}
     await K('window.__ligaNode=document.getElementById("main").firstElementChild;window.__beenden();0;');
     await schritt();
     ok(await K('_cache.version===window.__version && document.getElementById("main").firstElementChild===window.__ligaNode && window.__syncs===0'),'Unveränderte Antwort behält DOM, Cache und Story-Sync in Ruhe');
+    // Um 23:59 geht der Tag zu, auch ohne neue Partie: dieselbe Antwort
+    // rechnet dann neu. Nur mit Mitternacht stand „Unschlagbar" erst am
+    // nächsten Morgen im Profil.
+    await K(`window.__tagZu=_tagZu;_tagZu=()=>true;window.__vZu=_cache.version;
+      document.querySelector('[data-nav="ranking"]').click();0;`);
+    await schritt();
+    await K('window.__beenden();0;');
+    await schritt();
+    ok(await K('_cache.version>window.__vZu && !_loadAllPromise'),'Um 23:59 rechnet dieselbe Antwort neu, weil der Tag zu ist');
+    await K('_tagZu=window.__tagZu;_lastLoadDay=new Date().toDateString();window.__syncs=0;window.__version=_cache.version;0;');
 
     await K(`for(let i=0;i<5;i++)document.querySelector('[data-nav="ranking"]').click();0;`);
     await schritt();

@@ -339,7 +339,10 @@ eine schon vorher gestartete Antwort erhalten. Alle vier Leseabfragen enden,
 auch bei einer Ablehnung; überholte Antworten leeren keine Caches und
 publizieren keine Stories. Fehlerhafte Teilantworten werden nicht eingebaut,
 und ein Fehler verwirft den Fingerprint, damit ein erneuter Versuch möglich
-bleibt. Unveränderte erfolgreiche Antworten behalten weiterhin den Cache.
+bleibt. Unveränderte erfolgreiche Antworten behalten weiterhin den Cache —
+außer der Tag ist seit dem letzten Durchlauf zugegangen (23:59, `_tagZu`)
+oder Mitternacht war: dann rechnet dieselbe Antwort neu, weil Auszeichnungen,
+Rekorde und Chroniken, die einen ganzen Tag beschreiben, erst jetzt gelten.
 Reine Hintergrundticks verwenden `loadAll({nachladen:false})` und schließen
 sich nur an einen laufenden Abruf an. Sonst würde ein langsamer Abruf, der
 länger als dreißig Sekunden dauert, durch jeden Tick erneut verworfen.

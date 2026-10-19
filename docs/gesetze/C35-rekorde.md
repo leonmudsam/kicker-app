@@ -6,6 +6,7 @@
 - Die Siegquote zählt einmal. Nach dem Niveau fragen nur der beste Monat, der höchste Gipfel, die längste Siegesserie, die Form von jetzt und die beiden Positionen (`NIVEAU` in `tests/disziplinen`); jeder andere Rekord mit Grundwert 150 fragt nach dem Abstand zum Eigenen [§C38], nach einer Teilmenge oder nach einer Folge und folgt der Siegquote gemessen mit r unter 0,75.
 - Die Karte nennt Zeitraum, Grundwert und Mindestbasis (`zeitraum`, `basis`, `mind`) und zeigt, wie weit der Halter vorn liegt (`_rekFeldHtml`, aus `chronicleRang`); der Kopf jeder Kammer sagt in einem Satz, was sie misst (`CHRON_KINDS.satz`). Kein Text beschreibt die App oder eine frühere Rechnung.
 - Ein Rekord hat keine Wertlatte, nur eine Stichprobe (Partien, Spieltage, Wochen, Niederlagen). Was ein Wert von sich aus braucht (erstes Glied, zwei Partien, eine Richtung, die sein Name verspricht: Sprung, Vorsprung, Aufschwung), bleibt; eine Teilmenge, die beschreibt, welche Partien zählen, ist keine Latte. Ein Abstand, der auf null rundet, ist keine Richtung.
+- Was einen ganzen Spieltag beschreibt (der makellose Tag, Kaltstart und Tagesabschluss, der Glanztag, die Fügungen eines Abends), zählt nur Tage, die für den gefragten Stand zu sind (`_tagZu`); ein laufender Tag hat noch keine letzte Partie und keine Tagesquote.
 - Aktuelle Form ist ein festes Endfenster der letzten 10, 20, 25 oder 50 eigenen Partien, nie der beste Abschnitt. Ein gleitendes Fenster (`fenster`) meldet kein „ausgebaut" und nennt nicht den Wert seines Vorgängers.
 - Gemessen wird der Anteil, nicht die Anzahl; der Beleg (`ev`) beginnt mit dem Sortierwert. Ein Anteil an den eigenen Gelegenheiten kennt die Spielzahl nicht. Stehen neben einem Abstand seine beiden Quoten, ist er ihre Differenz, so wie sie dastehen: die Vergleichsquote folgt aus der eigenen Quote und dem Abstand (`_ppGegen`), der Wandler zeigt die Anteile des Profils.
 - `offen`: erfüllbar mit fünfzig Partien in der Laufbahn — im Rennen steht jemand mit unter hundert Partien, der Rekord ist vergeben und gehört nicht nur den drei Besten.
@@ -21,7 +22,7 @@
 
 ## Prüfung
 
-`tests/disziplinen` (Katalog, Kammern und ihre Zahlen, die Siegquote, die nur das Niveau trägt, Schwellen im Text, offene Rennen, Paare, Fenster, Halterdeckel, Schandtafel, sichtbarer Text), `tests/ambient` (jede Rekord-Karte gegen den ganzen Katalog), `tests/blatt` (Kammerfelder und Besitzleiste).
+`tests/rechnen` (der laufende Tag zählt erst um 23:59), `tests/disziplinen` (Katalog, Kammern und ihre Zahlen, die Siegquote, die nur das Niveau trägt, Schwellen im Text, offene Rennen, Paare, Fenster, Halterdeckel, Schandtafel, sichtbarer Text), `tests/ambient` (jede Rekord-Karte gegen den ganzen Katalog), `tests/blatt` (Kammerfelder und Besitzleiste).
 
 ## Herleitung
 

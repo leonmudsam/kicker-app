@@ -95,7 +95,7 @@ function _bannLaufDerLiga(P, ms){
 // Vor der ersten eigenen Partie des Monats steht niemand in der Monatstabelle;
 // solche Tage zaehlen deshalb nicht mit. Sonst haette jeder, der spaeter im
 // Monat einsteigt, von vornherein den schlechtesten Platz.
-function _thronDerLiga(P, ms){
+function _thronDerLiga(P, ms, offen){
   if(!ms.length) return;
   const hist = {};
   const sim = getGlobalSim();
@@ -103,7 +103,8 @@ function _thronDerLiga(P, ms){
   const stand = {};
   let tag = null;
   const auswerten = () => {
-    if(!tag) return;
+    // Das Ende eines Spieltags, der noch läuft, ist kein Tagesende.
+    if(!tag || offen.tag(tag)) return;
     const rang = Object.keys(stand).sort((a, b) => stand[b] - stand[a]);
     rang.forEach((id, i) => {
       const p = P[id];
@@ -129,14 +130,19 @@ function _thronDerLiga(P, ms){
 // Kalenderwochen, Partner, Gegner. Einmal gebaut, von jeder Wertung gelesen.
 // Der Montag ist der Wochenanfang, damit „Woche" heisst, was im Kalender
 // steht — dieselbe Rechnung wie in `isoWeek`, nur als Datum statt als Zahl.
-function _rohGruppen(pid, p, wochenSieger){
+function _rohGruppen(pid, p, wochenSieger, offen){
   const grp = (feld) => {
     const o = {};
     p.partien.forEach(s => { const k = feld(s); if(k) (o[k] = o[k] || []).push(s); });
     return o;
   };
   p.pid        = pid;
-  p.tagGrp     = grp(s => s.tag);
+  // Spieltage nur, wenn sie zu sind: was nach ihnen fragt, fragt nach dem
+  // GANZEN Tag — der letzten Partie, der Tagesquote, dem schwächsten
+  // Abend —, und die stehen vorher nicht fest. Wochen bleiben, wie sie sind:
+  // eine Woche geht erst Tage nach ihrer letzten Partie zu, und ihr Ende
+  // stünde dann in der Tafel eines Tages, an dem sie gar nicht endete.
+  p.tagGrp     = grp(s => offen.tag(s.tag) ? null : s.tag);
   p.partnerGrp = grp(s => s.mate);
   p.wochGrp    = grp(s => s.wk);
   p.gegnerGrp  = (() => {
@@ -163,6 +169,13 @@ function _seasonTitleCtxRechnen(sid, bisMs){
   const ms = matchesInSeason(sid).slice().sort((a,b)=>mts(a)-mts(b))
     .filter(m => !bisMs || mts(m) <= bisMs);
   const gSim = getGlobalSim();
+  // Was einen ganzen Spieltag beschreibt, fragt nur Tage, die zu sind
+  // (`_tagZu`): „Der Schlussstrich" wertete die jüngste Partie als die
+  // letzte des Tages, und ein makelloser Nachmittag stand als makelloser Tag
+  // in der Tafel, bis die Niederlage am Abend kam. Zu ist ein Tag für den
+  // Stand, nach dem gefragt wird, nicht für die Uhr.
+  const stand = bisMs || Date.now();
+  const offen = {tag: t => !_tagZu(t, stand)};
   // Elo-Quelle: abgeschlossene Saison → archivierter End-Stand aus dem Sim,
   // laufende Saison → aktueller Stand. Beides derselbe Sim wie die Rangliste.
   const eloMap = live ? (gSim.elo || {}) : (gSim.seasonEndElos[sid] || {});
@@ -276,7 +289,7 @@ function _seasonTitleCtxRechnen(sid, bisMs){
     allDays.add(day);
     const isFirstOfDay = !daySeen[day];
     daySeen[day] = true;
-    const isLastOfDay = (lastOfDay[day] === m.id);
+    const isLastOfDay = (lastOfDay[day] === m.id) && !offen.tag(day);
     const hEntry = histById ? histById.get(m.id) : null;
     const eloAfter = (hEntry && hEntry.eloAfter) || null;
     // Uhrzeit einmal pro Match, nicht pro Spieler.
@@ -469,10 +482,10 @@ function _seasonTitleCtxRechnen(sid, bisMs){
     }
     roh.push({id, elo:p.elo, games:p.games, wins:p.wins, losses:p.losses});
     if(p.games < TITLE_MIN_GAMES){ delete P[id]; return; }
-    _rohGruppen(id, p, wochenSieger);
+    _rohGruppen(id, p, wochenSieger, offen);
   });
   _bannLaufDerLiga(P, ms);
-  _thronDerLiga(P, ms);
+  _thronDerLiga(P, ms, offen);
 
   // Spieltage mit vollem Programm (4+ Partien) und die makellosen darunter.
   // Ein Tag mit zwei Spielen kann kein „makelloser Tag" sein — sonst hätte ihn
@@ -487,6 +500,7 @@ function _seasonTitleCtxRechnen(sid, bisMs){
     let big = 0, perf = 0, pos = 0, bestPerfTag = 0;
     const quoten = [];
     Object.keys(dc).forEach(day => {
+      if(offen.tag(day)) return;
       const w = dw[day] || 0;
       if(w > dc[day] - w) pos++;
       // Ein Abend, an dem nichts schiefging — die Zahl der Partien ist das
