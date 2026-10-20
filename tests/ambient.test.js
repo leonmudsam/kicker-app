@@ -6681,10 +6681,15 @@ const _eh = JSON.parse(K.eval(`JSON.stringify((function(){
     // Der Schimmer des Seltenen nur mit einer legendären Auszeichnung.
     const leg = sp.some(x => x.posten.some(q => q.klasse === 'legendary'));
     if(leg !== /nf-glanz/.test(h.slice(0, 200))) falsch.push(s.id + ': Schimmer ' + !leg);
-    // Im Fuß jede Klasse, die vorkommt, und zusammen alle Auszeichnungen.
-    const fuss = (h.match(/<span class="eh-k \\w+"><i><\\/i><b class="num">\\d+<\\/b>/g) || []).map(x => +x.replace(/<[^>]+>/g, ''));
-    if(fuss.reduce((a, b) => a + b, 0) !== d.zahl) falsch.push(s.id + ': Fuß ' + fuss.join('+') + ' statt ' + d.zahl);
-    // Der Satz nennt die wertvollste Auszeichnung, nie die Summe — die steht im Fuß.
+    // Auf der Karte nur Bild und Schlagzeile: kein Satz und kein Fuß mit
+    // den Klassen darunter. Beides steht im Blatt.
+    if(/class="nf-d"|class="eh-fuss"|class="eh-k /.test(h)) falsch.push(s.id + ': Zusatztext auf der Karte');
+    // Im Blatt jede Klasse, die vorkommt, und zusammen alle Auszeichnungen.
+    const anteil = _ndEhrungBlatt(s).mitte;
+    const fuss = (anteil.match(/<span class="eh-k \\w+"><i><\\/i><b class="num">\\d+<\\/b>/g) || []).map(x => +x.replace(/<[^>]+>/g, ''));
+    if(fuss.reduce((a, b) => a + b, 0) !== d.zahl) falsch.push(s.id + ': Klassen ' + fuss.join('+') + ' statt ' + d.zahl);
+    // Der Satz im Blatt nennt die wertvollste Auszeichnung, nie die Summe —
+    // die steht bei den Klassen.
     const top = sp.flatMap(x => x.posten.map(q => ({x, q}))).sort((a, b) => ORD[a.q.klasse] - ORD[b.q.klasse] || b.q.p - a.q.p)[0];
     if(s.desc.indexOf('„' + top.q.name + '“') < 0 || /Zusammen|Prestige/.test(s.desc)) falsch.push(s.id + ': ' + s.desc);
     if(top.q.klasse === 'legendary') legendaer++;
@@ -6720,7 +6725,7 @@ const _eh = JSON.parse(K.eval(`JSON.stringify((function(){
   return {n:alle.length, falsch, legendaer, umbruch, kacheln, zeilen, breite, soll:r(probe), voll:r(erst)};
 })())`));
 ok(_eh.n >= 40 && _eh.legendaer > 0 && _eh.umbruch > 0 && _eh.kacheln > 0 && _eh.zeilen > 0 && !_eh.falsch.length,
-   'die Ehrung trägt je Geehrtem eine Säule auf seinem Wappen mit der Zeichenkachel der seltensten Auszeichnung, höchstens fünf je Reihe, im Fuß jede Klasse, im Satz die wertvollste, im Blatt jede genau einmal in ihrem Kasten',
+   'die Ehrung trägt je Geehrtem eine Säule auf seinem Wappen mit der Zeichenkachel der seltensten Auszeichnung, höchstens fünf je Reihe, auf der Karte nur Bild und Schlagzeile, im Blatt jede Klasse, im Satz die wertvollste und jede Auszeichnung genau einmal in ihrem Kasten',
    _eh.falsch.slice(0, 4).join(' | ') || _eh.n + ' Ehrungen, ' + _eh.legendaer + ' legendär, ' + _eh.umbruch + ' auf zwei Reihen, ' + _eh.zeilen + ' Zeilen, ' + _eh.kacheln + ' Kacheln');
 ok(Math.round(_eh.breite) === _eh.soll && _eh.soll < 100 && _eh.voll === 100,
    'der Strich unter einer Auszeichnung zeigt, wie viel vom vollen Wert sie beim wievielten Mal bringt',

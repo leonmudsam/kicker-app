@@ -223,10 +223,16 @@ const PRESTIGE_REICHWEITE = 0.5;
 
 // Die sieben Stufen. `min` ist die Schwelle, ab der die Stufe getragen wird.
 //
-// 0, 600, 1200, 2100, 3100, 4300, 5600 — vorgegeben, nicht gerechnet. Jede
-// Spanne ist mindestens so teuer wie die vorige (600, 600, 900, 1000, 1200,
-// 1300), und die letzte führt zum Ordensstern, dessen Grade je 500 Prestige
-// auseinanderliegen (ORDENSSTERN_GRAD). Sie lagen bei 500 bis 4500;
+// 0, 600, 1200, 2100, 3100, 4500, 6000 — vorgegeben, nicht gerechnet. Jede
+// Spanne ist mindestens so teuer wie die vorige (600, 600, 900, 1000, 1400,
+// 1500), und die letzte führt zum Ordensstern, dessen Grade je 500 Prestige
+// auseinanderliegen (ORDENSSTERN_GRAD). Kronenreif und Ordensstern lagen bei
+// 4300 und 5600: die Spitze der Liga stand mit 4208 Prestige 92 vor dem
+// Kronenreif, und die beiden obersten Stufen — deren erster Aufstieg
+// Breaking ist [§C33] — wären nach wenigen Spieltagen gefallen. Mit 1400
+// und 1500 bleiben sie, was sie sein sollen; die Grade des Kronenreifs
+// liegen jetzt wie die des Ordenssterns je 500 auseinander (4500, 5000,
+// 5500). Davor lagen alle Schwellen bei 500 bis 4500;
 // mit den höheren Startwerten der Auszeichnungen und Rekorde [§C34] stieg
 // das Prestige der Spitze um gut ein Viertel, und ohne neue Schwellen wäre
 // sie über Nacht eine Stufe höher gestanden, ohne etwas dafür getan zu haben.
@@ -243,8 +249,8 @@ const INSIGNIEN = [
   {key:'volute',  name:'Volutenkranz',  min:1200},
   {key:'zier',    name:'Zierkranz',     min:2100},
   {key:'lorbeer', name:'Lorbeerreif',   min:3100},
-  {key:'krone',   name:'Kronenreif',    min:4300},
-  {key:'stern',   name:'Ordensstern',   min:5600},
+  {key:'krone',   name:'Kronenreif',    min:4500},
+  {key:'stern',   name:'Ordensstern',   min:6000},
 ];
 // Die beiden obersten Stufen. Ihr ERSTER Aufstieg ist Breaking [§C33] —
 // als Zahl im Generator („stufe >= 3") wäre die Grenze beim Einfügen einer
@@ -275,7 +281,7 @@ function insigniumStufeVon(punkte){
 }
 // Der Ordensstern hat keine nächste Stufe, deren Spanne man dritteln
 // könnte; seine Grade liegen deshalb je ORDENSSTERN_GRAD auseinander: I ab
-// 5600, II ab 6100, III ab 6600. Er zählte vorher Zacken, acht beim
+// 6000, II ab 6500, III ab 7000. Er zählte vorher Zacken, acht beim
 // Erreichen und alle 500 eine mehr, und war damit die einzige Stufe, die
 // anders zählte: in der Laufbahn stand „8 9 10“ neben „I II III“, auf der
 // Karte „erreicht die 9. Zacke“ neben „steigt auf Zierkranz III“.

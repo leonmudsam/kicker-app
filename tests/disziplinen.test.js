@@ -1771,7 +1771,8 @@ const _lb = JSON.parse(K.eval(`JSON.stringify((function(){
           .replace(/(ize|e)[0-9]+_/g, '');
         let h = 0; for(let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
         return h; })})),
-    sternGrade: insigniumGradSchwellen(INSIGNIEN.length - 1)
+    sternGrade: insigniumGradSchwellen(INSIGNIEN.length - 1),
+    kroneGrade: insigniumGradSchwellen(INSIGNIEN.length - 2)
   };
 })())`));
 console.log('  Schwellen: ' + _lb.min.join(' · '));
@@ -1780,8 +1781,9 @@ console.log('  Bester Stand: ' + _lb.hoechste);
 console.log('  Spitze: ' + _lb.werte.slice(0,3).map(x=>x.name+' '+x.punkte+' / '+x.stufe+'.'+x.grad).join(' · '));
 
 // Die Schwellen sind vorgegeben, nicht kalibriert [§C30]: 0, 600, 1200,
-// 2100, 3100, 4300, 5600.
-ok(_lb.min.join(',') === '0,600,1200,2100,3100,4300,5600',
+// 2100, 3100, 4500, 6000. Kronenreif und Ordensstern lagen bei 4300 und
+// 5600, und die Spitze der Liga stand 92 Prestige vor dem Kronenreif.
+ok(_lb.min.join(',') === '0,600,1200,2100,3100,4500,6000',
    'die sieben Insignien beginnen an den festgelegten Schwellen',
    _lb.min.join(' · '));
 const _sternI = _lb.min.length - 1;
@@ -1789,8 +1791,8 @@ const _sternI = _lb.min.length - 1;
 // als einzige Stufe mit „8 9 10“ in der Laufbahn und „erreicht die 9.
 // Zacke“ auf der Karte. Seine Grade liegen je 500 auseinander, und über dem
 // dritten zählt er nicht weiter: Ordensstern III ist das oberste Feld.
-ok(_lb.sternGrade.join(',') === '5600,6100,6600',
-   'der Ordensstern hat drei Grade wie jede Stufe: I ab 5600, II ab 6100, III ab 6600',
+ok(_lb.sternGrade.join(',') === '6000,6500,7000' && _lb.kroneGrade.join(',') === '4500,5000,5500',
+   'der Ordensstern hat drei Grade wie jede Stufe: I ab 6000, II ab 6500, III ab 7000; der Kronenreif 4500, 5000, 5500',
    _lb.sternGrade.join(' · '));
 const _sternLagen = JSON.parse(K.eval(`JSON.stringify((function(){
   const alt = prestigeTabelle;
@@ -1799,7 +1801,7 @@ const _sternLagen = JSON.parse(K.eval(`JSON.stringify((function(){
     try { const P = prestigeOf('x');
       return {p, name:_insLageName(P), pos:insigniumPos(P), zacken:'zacken' in P}; }
     finally { prestigeTabelle = alt; } };
-  return [5599, 5600, 6099, 6100, 6600, 99999].map(lage);
+  return [5999, 6000, 6499, 6500, 7000, 99999].map(lage);
 })())`));
 ok(_sternLagen.map(x => x.name).join('|')
      === 'Kronenreif III|Ordensstern I|Ordensstern I|Ordensstern II|Ordensstern III|Ordensstern III'

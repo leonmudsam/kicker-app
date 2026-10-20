@@ -599,8 +599,8 @@ function showSeasonRecap(season, opts){
     rcpKopfHtml({ic:'trophy', marke:'Saison beendet', titel:season.label,
       extra:saisonWaehlerHtml('rcpSaisonwahl', sid, {liste:vergangene, attr:'rcpsaison'})})
     // Gleich unter dem Kopf das Podest auf der Bühne der Meister-Story
-    // [§C27]: wer gewonnen hat, ist die erste Frage. Die drei steigen in der
-    // Reihenfolge auf, in der man sie ausruft — Platz 3, Platz 2, der Meister.
+    // [§C27]: wer gewonnen hat, ist die erste Frage. Der Meister steigt
+    // zuerst auf, dann Platz 2 und 3, und sein Kranz kommt, wenn er steht.
     // Vorher standen die Eckdaten darüber und schoben den Meister unter den
     // Rand des ersten Bildschirms.
     + (podestHtml ? `<div class="nf-meister rcp-buehne"><span class="nf-ms-strahl" aria-hidden="true"></span>${podestHtml}</div>` : '')

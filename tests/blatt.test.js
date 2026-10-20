@@ -353,7 +353,7 @@ const ok = (c, msg, det) => {
   ok(!alle.fehlt && alle.felder === 21, 'die Laufbahn zeigt alle einundzwanzig Felder',
      JSON.stringify({felder: alle.felder}));
   ok(!alle.fehlt && alle.jetzt.length === 1, 'genau ein Feld ist das eigene', JSON.stringify(alle.jetzt));
-  ok(!alle.fehlt && alle.sternKnoepfe === 'I II III' && /II 6100 · III 6600/.test(alle.sternSchwellen) && !alle.zacke,
+  ok(!alle.fehlt && alle.sternKnoepfe === 'I II III' && /II 6500 · III 7000/.test(alle.sternSchwellen) && !alle.zacke,
      'der Ordensstern steht in der Laufbahn mit den Graden I, II, III und ihren Schwellen',
      JSON.stringify({knoepfe:alle.sternKnoepfe, schwellen:alle.sternSchwellen, zacke:alle.zacke}));
   if(!alle.fehlt){
@@ -5170,6 +5170,19 @@ return JSON.stringify(funde,null,1);
     out.saisonVgl = {d:zelle0 ? zelle0.textContent.trim() : '', soll:(vgl.ms > 0 ? '+' : vgl.ms < 0 ? '−' : '±') + Math.abs(vgl.ms),
       auf:markiert('auf'), aufSoll:vgl.auf.sort(), ab:markiert('ab'), abSoll:vgl.ab.sort(),
       buehne:!!sh.querySelector('.nf-meister.rcp-buehne > .nf-ms-strahl + .podest'),
+      // Der Meister steigt zuerst auf, dann Platz 2 und 3, und der Kranz
+      // hinter ihm blendet erst ein, wenn er steht — vorher kam der Meister
+      // als Letzter, und der Kranz drehte sich schon über der leeren Mitte.
+      folge:(() => {
+        const zeit = el => { if(!el) return []; const cs = getComputedStyle(el);
+          const d = cs.animationDelay.split(',').map(x => parseFloat(x));
+          return cs.animationName.split(',').map((n, i) => ({n:n.trim(), d:d[i] != null ? d[i] : d[0]})); };
+        const k = m => (zeit(sh.querySelector('.rcp-buehne .pod-karte.' + m))[0] || {}).d;
+        const kranz = zeit(sh.querySelector('.rcp-buehne > .nf-ms-strahl'));
+        const ein = kranz.find(a => a.n !== 'msDreh' && a.n !== 'none');
+        return {gold:k('gold'), silber:k('silber'), bronze:k('bronze'), kranz:ein ? ein.d : null,
+          dreht:kranz.some(a => a.n === 'msDreh')};
+      })(),
       // Wer gewonnen hat, ist die erste Frage: das Podest steht vor jeder Überschrift.
       zuerst:!!(sektion && sh.querySelector('.rcp-buehne') && (sh.querySelector('.rcp-buehne').compareDocumentPosition(sektion) & Node.DOCUMENT_POSITION_FOLLOWING)),
       awards:sh.querySelectorAll('[data-award]').length};
@@ -5220,6 +5233,10 @@ return JSON.stringify(funde,null,1);
        && rueck.saisonVgl.buehne && rueck.saisonVgl.zuerst && rueck.saisonVgl.awards >= 10,
      'der Saison-Rückblick beginnt mit dem Podest auf der Bühne, nennt den Unterschied zum Vormonat und hebt den größten Sprung und den tiefsten Fall in der Tabelle hervor',
      JSON.stringify(rueck.saisonVgl));
+  ok(rueck.saisonVgl.folge.gold < rueck.saisonVgl.folge.silber && rueck.saisonVgl.folge.silber < rueck.saisonVgl.folge.bronze
+       && rueck.saisonVgl.folge.kranz != null && rueck.saisonVgl.folge.kranz >= rueck.saisonVgl.folge.gold + 0.3 && rueck.saisonVgl.folge.dreht,
+     'auf der Bühne des Saison-Rückblicks steigt der Meister zuerst auf, und sein Kranz blendet erst ein, wenn er steht',
+     JSON.stringify(rueck.saisonVgl.folge));
   ok(rueck.saison.rang >= 0 && rueck.saison.rennen > rueck.saison.rang && rueck.saison.spitze > rueck.saison.rennen
      && rueck.saison.meister > rueck.saison.spitze && rueck.saison.fehler.length === 0,
      'der Saison-Rückblick zeigt die Tabelle vor Titelrennen, Tagen an der Spitze und der Saison des Meisters',
