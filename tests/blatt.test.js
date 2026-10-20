@@ -353,7 +353,7 @@ const ok = (c, msg, det) => {
   ok(!alle.fehlt && alle.felder === 21, 'die Laufbahn zeigt alle einundzwanzig Felder',
      JSON.stringify({felder: alle.felder}));
   ok(!alle.fehlt && alle.jetzt.length === 1, 'genau ein Feld ist das eigene', JSON.stringify(alle.jetzt));
-  ok(!alle.fehlt && alle.sternKnoepfe === 'I II III' && /II 6100 · III 6600/.test(alle.sternSchwellen) && !alle.zacke,
+  ok(!alle.fehlt && alle.sternKnoepfe === 'I II III' && /II 6500 · III 7000/.test(alle.sternSchwellen) && !alle.zacke,
      'der Ordensstern steht in der Laufbahn mit den Graden I, II, III und ihren Schwellen',
      JSON.stringify({knoepfe:alle.sternKnoepfe, schwellen:alle.sternSchwellen, zacke:alle.zacke}));
   if(!alle.fehlt){
