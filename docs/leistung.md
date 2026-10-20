@@ -438,10 +438,10 @@ Läufe:
 | Bilder über 34 ms | 88–93 | 34–42 |
 | längstes Bild | 517–700 ms | 117–200 ms |
 
-Karten mit `content-visibility:auto` rechnet der Browser außerhalb des Bilds
-ohnehin nicht; angehalten wird, was er zeichnet: die großen Karten, die
+Angehalten wird, was der Browser zeichnet: die großen Karten, die
 Eilmeldung, Glanz und Atmen der Karten im Bild und am Rand, im Profil der
-Kopf.
+Kopf. Die Karten mit `content-visibility:auto` stehen außerhalb des Bilds von
+Anfang an still (achte Runde).
 
 **Ein leises Licht** kostet, solange es läuft, den Grundpreis jeder Animation
 (8 ms je Sekunde, ohne Licht unter 1 ms); verlässt seine Karte das Bild,
@@ -452,3 +452,40 @@ node tests/start.test.js
 node tests/blatt.test.js
 ```
 
+## Achte Runde: Ring, Rückblicke, Chroniken
+
+Vergleich gegen `974346e`, den Stand vor dem Ring mit allen Zeichen,
+dieselben 466 Partien, Chromium, 390 × 844 px, vierfach gedrosselte CPU.
+
+**Ein offenes Profil kostet wieder, was es vorher kostete.** Die Zeichen am
+Ring kommen nacheinander und atmen danach; beides lag als zwei Bewegungen auf
+`transform` an einem Element, und das rechnet Chromium jedes Bild im
+Hauptthread — auch wenn die erste längst steht und nur ihren Endwert hält.
+Gemessen 110 ms je Sekunde bei offenem Profil, ohne die Zeichen 10. Jetzt
+liegen Kommen und Atmen auf zwei Elementen: 14 ms (vorher 12).
+
+**Der Feed nach einem anderen Blatt.** Öffnete der Feed, während das Blatt
+schon oben stand, legte Chromium die Bewegungen auch der Karten weit unter
+dem Bildrand an, bevor `content-visibility` sie übersprang. Danach erreichte
+sie kein `.steht` mehr, und ein einziger Glanz 3000 px tiefer verlangte jedes
+Bild einen Takt des Hauptthreads über den ganzen Feed. Jetzt steht in einer
+Karte alles still, bis sie im Bild ist (`.im-bild`) [§C43].
+
+| Feed offen, direkt nach der Laufbahn | vorher | nachher |
+|---|--:|--:|
+| nach 4 s, das Licht um die Ungelesenen läuft noch | 120–160 ms/s | 40–50 ms/s |
+| nach 10 s | 20–23 ms/s | 6–8 ms/s |
+
+**Die Rückblicke** stehen in Ruhe bei 5 ms je Sekunde (vorher 2 bis 3):
+Strahlenkranz und Bühne drehen auf der Grafikkarte.
+
+**Der Generator** rechnet kalt im Hauptthread 960 bis 1140 ms gegen 1090
+bis 1345 ms vorher (drei Läufe je Fassung, `Generator kalt`): die neuen
+Chroniken und der Stand der Tafel je Partie kosten nichts Messbares. In der
+App rechnet er im Worker.
+
+```
+node tools/performance.cjs --cpu=4 --ruhe
+node tools/performance.cjs --cpu=4 --mobil
+node tests/blatt.test.js
+```

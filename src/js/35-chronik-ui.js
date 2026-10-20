@@ -1080,7 +1080,7 @@ function _avRingMarkenHtml(pid){
     const t = _avRingTon(r), w = AV_RING_PLAETZE[i] * Math.PI / 180;
     const x = Math.round(Math.sin(w) * 58), y = Math.round(-Math.cos(w) * 58);
     return `<span class="pp-av-mark" style="--tt:${t.c};--ttr:${t.rgb};--i:${i};`
-      + `left:calc(50% + ${x}px);top:calc(50% + ${y}px)" title="${esc(r.label + ' · ' + r.sub)}">${svgI(r.ic)}</span>`;
+      + `left:calc(50% + ${x}px);top:calc(50% + ${y}px)" title="${esc(r.label + ' · ' + r.sub)}"><span class="d">${svgI(r.ic)}</span></span>`;
   }).join('');
 }
 

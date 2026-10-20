@@ -158,6 +158,16 @@
      Unschärfe des Vorhangs rechnet sonst jedes Bild einer Bewegung darunter
      neu. */
   .steht,.steht::before,.steht::after{animation-play-state:paused!important}
+  /* Eine Karte im Feed bewegt sich nur im Bild (`_feedKartenSicht`): bis
+     der Beobachter sie hereinmeldet, steht alles in ihr still, auch was sie
+     beim Ankommen aufbaut. Dieselbe Auswahl wie `content-visibility` in
+     `07-icons-profil.css` — was dort übersprungen werden kann, bewegte sich
+     sonst unerreichbar im Hauptthread weiter. */
+  .nf-liste.sicht .nf-card:not(.nf-brk):not(.nf-gross):not(.im-bild)::before,
+  .nf-liste.sicht .nf-card:not(.nf-brk):not(.nf-gross):not(.im-bild)::after,
+  .nf-liste.sicht .nf-card:not(.nf-brk):not(.nf-gross):not(.im-bild) *,
+  .nf-liste.sicht .nf-card:not(.nf-brk):not(.nf-gross):not(.im-bild) *::before,
+  .nf-liste.sicht .nf-card:not(.nf-brk):not(.nf-gross):not(.im-bild) *::after{animation-play-state:paused!important}
   /* Die Pille „News" steht vom ersten Bild an als Gerüst da, still, und
      nimmt keinen Tipp an; kommen ihre Stories, färbt sie sich ein, und ihr
      Inhalt gleitet herein (`_pilleKommt`). Zuerst lief darin derselbe

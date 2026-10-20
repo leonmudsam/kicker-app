@@ -2719,6 +2719,37 @@ const ok = (c, msg, det) => {
   });
   ok(!endlos.length, 'was im Feed endlos läuft, bewegt nur transform und opacity', endlos.join(', '));
 
+  // Eine Karte im Feed bewegt sich nur im Bild [§C43]. Erzwang das Öffnen
+  // das Layout — direkt nach einem anderen Blatt —, legte Chromium die
+  // Bewegungen auch der Karten weit unter dem Bildrand an, bevor
+  // `content-visibility` sie übersprang; danach erreichte sie kein `.steht`
+  // mehr, und ein einziger Glanz 3000 px tiefer rechnete jedes Bild im
+  // Hauptthread — gemessen 130 statt 7 ms je Sekunde. Geprüft wird genau
+  // dieser Augenblick: im selben Takt wie das Öffnen, Layout erzwungen, noch
+  // vor jeder Antwort eines Beobachters.
+  const fern = await page.evaluate(async () => {
+    const warte = ms => new Promise(r => setTimeout(r, ms));
+    const karten = () => [...document.querySelectorAll('#sheet .nf-liste .nf-card:not(.nf-brk):not(.nf-gross)')];
+    const endlos = c => c.getAnimations({subtree:true}).filter(a => a.effect.getComputedTiming().iterations === Infinity);
+    window.__k.eval('closeSheet(true); _cache._consolFrom = null; openNewsFeed(); _newsFeedRest(true)');
+    const hoch = innerHeight, laufend = [];
+    let unten = 0;
+    karten().forEach(c => {
+      const r = c.getBoundingClientRect();
+      if(r.top < hoch + 80) return;
+      unten += endlos(c).length;
+      endlos(c).forEach(a => { if(a.playState === 'running') laufend.push(a.animationName + ' ' + Math.round(r.top) + ' px'); });
+    });
+    await warte(1200);
+    const imBild = karten().filter(c => { const r = c.getBoundingClientRect(); return r.bottom > -80 && r.top < hoch + 80; })
+      .map(c => c.classList.contains('im-bild'));
+    window.__k.eval('closeSheet(true)');
+    return {laufend, unten, imBild};
+  });
+  ok(fern.unten > 0 && !fern.laufend.length && fern.imBild.length > 0 && fern.imBild.every(Boolean),
+     'im Feed läuft endlos nur, was im Bild steht, auch wenn das Öffnen das Layout erzwingt',
+     fern.laufend.length ? fern.laufend.slice(0, 4).join(', ') : fern.unten + ' Bewegungen unter dem Bildrand, ' + fern.imBild.length + ' Karten im Bild');
+
   console.log('\n═══ JEDES BLATT ZEIGT SEINE STORY ═══');
   const inhalt = await page.evaluate(() => {
     const roh = window.__k.eval('_buildStories()');
@@ -5573,7 +5604,19 @@ return JSON.stringify(funde,null,1);
       if(knopf) knopf.click();
       await warte(500);
       const nach = zeilen(), cs = getComputedStyle(w.querySelector('.pp-av-ring'), '::after');
-      out.push({n:faelle[f].length, marken:m.length, ringR:rb.width / 2,
+      // Zwei Animationen auf \`transform\` an einem Element rechnet Chromium
+      // jedes Bild im Hauptthread, auch wenn eine davon längst steht und nur
+      // ihren Endwert hält: Kommen und Atmen der Zeichen kosteten so 110
+      // statt 10 ms je Sekunde, solange das Profil offen war.
+      const proZiel = new Map();
+      document.getAnimations().filter(a => a.effect && a.effect.target && a.effect.target.closest
+          && a.effect.target.closest('#sheet .pp-root') && a.effect.getKeyframes().some(k => 'transform' in k))
+        .forEach(a => { const z = a.effect.target, ps = a.effect.pseudoElement || '';
+          if(!proZiel.has(z)) proZiel.set(z, {});
+          const e = proZiel.get(z); (e[ps] = e[ps] || []).push(a.animationName); });
+      const doppelt = [];
+      proZiel.forEach((e, z) => Object.entries(e).forEach(([ps, l]) => { if(l.length > 1) doppelt.push(z.className + ps + ':' + l.join('+')); }));
+      out.push({n:faelle[f].length, marken:m.length, ringR:rb.width / 2, doppelt,
         aufRing:m.every(x => Math.abs(x.r - rb.width / 2) <= 6),
         frei:m.every(x => Math.abs(x.w) >= 25 && 180 - Math.abs(x.w) >= 25), ueber,
         plus:knopf ? knopf.querySelector('.pp-ring-mehr').textContent.trim() : '', vor, nach,
@@ -5589,6 +5632,9 @@ return JSON.stringify(funde,null,1);
   ok(ringFaelle.every(f => f.plus === '+' + (f.n - 1) && f.vor === 0 && f.nach === f.n - 1 && f.offen === 'true'),
      'die Zeile unter dem Namen nennt einen Zustand und klappt zu allen auf',
      JSON.stringify(ringFaelle.map(f => ({plus:f.plus, vor:f.vor, nach:f.nach, offen:f.offen}))));
+  ok(ringFaelle.every(f => !f.doppelt.length),
+     'kein Element im Profil trägt zwei Animationen auf transform zugleich',
+     JSON.stringify([...new Set(ringFaelle.flatMap(f => f.doppelt))]));
   ok(ringFaelle[0].zwei && ringFaelle[0].wechsel === 'ppRingWechsel' && ringFaelle.slice(1).every(f => !f.zwei),
      'Lob und Niederlagenserie zugleich: der Ring wechselt zwischen beiden Farben, sonst nicht',
      JSON.stringify(ringFaelle.map(f => ({zwei:f.zwei, wechsel:f.wechsel}))));

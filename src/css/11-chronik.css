@@ -396,14 +396,18 @@
      Sie kommen nacheinander, dann läuft hin und wieder ein Licht reihum —
      einmal um den Ring, danach Ruhe. Ein Puls an jedem Zeichen zugleich
      hätte den Kopf flackern lassen. Der Schein ist ein Lichthof im
-     Hintergrund, kein Filter [§C43]. */
-  .pp-av-mark{position:absolute;width:28px;height:28px;margin:-14px 0 0 -14px;
-    border-radius:50%;display:grid;place-items:center;z-index:3;
+     Hintergrund, kein Filter [§C43].
+     Kommen und Atmen liegen auf zwei Elementen: zwei Animationen auf
+     `transform` an demselben Element rechnet Chromium nicht mehr auf der
+     Grafikkarte, sondern jedes Bild im Hauptthread — gemessen kostete das
+     offene Profil so 110 statt 10 ms je Sekunde. */
+  .pp-av-mark{position:absolute;width:28px;height:28px;margin:-14px 0 0 -14px;z-index:3;
+    animation:ppMarkKommt .42s cubic-bezier(.2,.9,.3,1.25) calc(.45s + var(--i,0) * .09s) both}
+  .pp-av-mark > .d{position:absolute;inset:0;border-radius:50%;display:grid;place-items:center;
     background:var(--bg);color:var(--tt);
     box-shadow:0 0 0 2px rgba(var(--ttr),.55),0 0 14px rgba(var(--ttr),.5);
-    animation:ppMarkKommt .42s cubic-bezier(.2,.9,.3,1.25) calc(.45s + var(--i,0) * .09s) both,
-      ppMarkAtem 7s ease-in-out calc(1.6s + var(--i,0) * .32s) infinite}
-  .pp-av-mark::before{content:"";position:absolute;inset:-8px;border-radius:50%;z-index:-1;
+    animation:ppMarkAtem 7s ease-in-out calc(1.6s + var(--i,0) * .32s) infinite}
+  .pp-av-mark > .d::before{content:"";position:absolute;inset:-8px;border-radius:50%;z-index:-1;
     background:radial-gradient(circle,rgba(var(--ttr),.55),transparent 68%);opacity:0;
     animation:ppMarkHof 7s ease-in-out calc(1.6s + var(--i,0) * .32s) infinite}
   @keyframes ppMarkKommt{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:none}}
@@ -412,7 +416,7 @@
   .pp-av-mark svg{width:15px;height:15px;fill:none;stroke:currentColor;
     stroke-linecap:round;stroke-linejoin:round}
   @media (prefers-reduced-motion:reduce){
-    .pp-av-mark,.pp-av-mark::before,.pp-ring-rest .pp-ring-chip{animation:none!important}
+    .pp-av-mark,.pp-av-mark > .d,.pp-av-mark > .d::before,.pp-ring-rest .pp-ring-chip{animation:none!important}
     .pp-av-wrap.ring-zwei .pp-av-ring::after{animation:none}}
   .pp-ring-chip{display:inline-flex;align-items:center;gap:7px;margin:8px auto 0;
     padding:5px 11px 5px 8px;border-radius:999px;

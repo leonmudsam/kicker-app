@@ -1213,11 +1213,12 @@ function _renderNewsFeed(){
       </div>
       ${filterBar}
     </div>
-    <div class="nf-wrap nf-liste" style="padding-top:0">${listHtml}</div>
+    <div class="nf-wrap nf-liste${FEED_SICHT ? ' sicht' : ''}" style="padding-top:0">${listHtml}</div>
   `);
   const sheetEl = document.getElementById('sheet');
   if(!schonOffen) _feedLicht(sheetEl);
   const liste = sheetEl.querySelector('.nf-liste');
+  _feedKartenSicht(liste);
   _newsFeedOffen = nachreichen.length && liste
     ? {liste, jobs:nachreichen, index:0, version:_cache.version} : null;
   if(_newsFeedOffen) _newsFeedPlan(_newsFeedOffen);
@@ -1279,6 +1280,7 @@ function _newsFeedRest(alles = true){
     ziel.insertAdjacentHTML('beforeend', job.erster
       ? job.kopf + `<div class="nf-feed" data-feed-tag="${esc(job.tag)}">${html}</div>` : html);
   } while(alles && o.index < o.jobs.length);
+  _feedKartenSicht(o.liste);
   if(o.index >= o.jobs.length) _newsFeedOffen = null;
 }
 function _newsFeedPlan(o){

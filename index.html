@@ -4043,13 +4043,13 @@
     box-shadow:0 0 0 3px var(--bg),0 0 0 5.5px var(--tt2),0 0 30px rgba(var(--ttr2),.5);
     animation:ppRingWechsel 8s ease-in-out 1.2s infinite}
   @keyframes ppRingWechsel{0%,30%,100%{opacity:0}45%,85%{opacity:1}}
-  .pp-av-mark{position:absolute;width:28px;height:28px;margin:-14px 0 0 -14px;
-    border-radius:50%;display:grid;place-items:center;z-index:3;
+  .pp-av-mark{position:absolute;width:28px;height:28px;margin:-14px 0 0 -14px;z-index:3;
+    animation:ppMarkKommt .42s cubic-bezier(.2,.9,.3,1.25) calc(.45s + var(--i,0) * .09s) both}
+  .pp-av-mark > .d{position:absolute;inset:0;border-radius:50%;display:grid;place-items:center;
     background:var(--bg);color:var(--tt);
     box-shadow:0 0 0 2px rgba(var(--ttr),.55),0 0 14px rgba(var(--ttr),.5);
-    animation:ppMarkKommt .42s cubic-bezier(.2,.9,.3,1.25) calc(.45s + var(--i,0) * .09s) both,
-      ppMarkAtem 7s ease-in-out calc(1.6s + var(--i,0) * .32s) infinite}
-  .pp-av-mark::before{content:"";position:absolute;inset:-8px;border-radius:50%;z-index:-1;
+    animation:ppMarkAtem 7s ease-in-out calc(1.6s + var(--i,0) * .32s) infinite}
+  .pp-av-mark > .d::before{content:"";position:absolute;inset:-8px;border-radius:50%;z-index:-1;
     background:radial-gradient(circle,rgba(var(--ttr),.55),transparent 68%);opacity:0;
     animation:ppMarkHof 7s ease-in-out calc(1.6s + var(--i,0) * .32s) infinite}
   @keyframes ppMarkKommt{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:none}}
@@ -4058,7 +4058,7 @@
   .pp-av-mark svg{width:15px;height:15px;fill:none;stroke:currentColor;
     stroke-linecap:round;stroke-linejoin:round}
   @media (prefers-reduced-motion:reduce){
-    .pp-av-mark,.pp-av-mark::before,.pp-ring-rest .pp-ring-chip{animation:none!important}
+    .pp-av-mark,.pp-av-mark > .d,.pp-av-mark > .d::before,.pp-ring-rest .pp-ring-chip{animation:none!important}
     .pp-av-wrap.ring-zwei .pp-av-ring::after{animation:none}}
   .pp-ring-chip{display:inline-flex;align-items:center;gap:7px;margin:8px auto 0;
     padding:5px 11px 5px 8px;border-radius:999px;
@@ -5921,6 +5921,11 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   @keyframes aufbauVonUnten{from{transform:translateY(100%)}}
   .sheet.show > .staffel{animation:none}
   .steht,.steht::before,.steht::after{animation-play-state:paused!important}
+  .nf-liste.sicht .nf-card:not(.nf-brk):not(.nf-gross):not(.im-bild)::before,
+  .nf-liste.sicht .nf-card:not(.nf-brk):not(.nf-gross):not(.im-bild)::after,
+  .nf-liste.sicht .nf-card:not(.nf-brk):not(.nf-gross):not(.im-bild) *,
+  .nf-liste.sicht .nf-card:not(.nf-brk):not(.nf-gross):not(.im-bild) *::before,
+  .nf-liste.sicht .nf-card:not(.nf-brk):not(.nf-gross):not(.im-bild) *::after{animation-play-state:paused!important}
   .news-pill.wartet{background:var(--surface2);border-color:var(--line);pointer-events:none}
   .news-pill.wartet > *{opacity:0}
   @keyframes pilleInhalt{from{opacity:0;transform:translateX(8px)}}
@@ -6043,7 +6048,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.20.5ed8356a';
+const BUILD_VERSION='2026.10.20.dfbec06a';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -10544,6 +10549,21 @@ if(_bewegungDa() && typeof IntersectionObserver === 'function')
     const i = namen.indexOf(e.animationName);
     if(i >= 0 && zahl[i % zahl.length] === 'infinite') _bewegungBeobachten(el);
   }, true);
+let _kartenSicht = null;
+const _kartenBeobachtet = new Set();
+const FEED_SICHT = typeof IntersectionObserver === 'function';
+function _feedKartenSicht(liste){
+  if(!FEED_SICHT || !liste) return;
+  if(!_kartenSicht) _kartenSicht = new IntersectionObserver(eintraege => eintraege.forEach(e => {
+    if(!e.target.isConnected){ _kartenSicht.unobserve(e.target); _kartenBeobachtet.delete(e.target); return; }
+    e.target.classList.toggle('im-bild', e.isIntersecting);
+  }), {rootMargin:'80px'});
+  _kartenBeobachtet.forEach(k => { if(!k.isConnected){ _kartenSicht.unobserve(k); _kartenBeobachtet.delete(k); } });
+  liste.querySelectorAll('.nf-card:not(.nf-brk):not(.nf-gross)').forEach(k => {
+    if(_kartenBeobachtet.has(k)) return;
+    _kartenBeobachtet.add(k); _kartenSicht.observe(k);
+  });
+}
 let _lichtSicht = null;
 const LICHT_TEILE = ':scope > .kl, :scope > .kl-schein, :scope > .glanz-einmal';
 function _lichtLoesen(el){
@@ -24443,11 +24463,12 @@ function _renderNewsFeed(){
       </div>
       ${filterBar}
     </div>
-    <div class="nf-wrap nf-liste" style="padding-top:0">${listHtml}</div>
+    <div class="nf-wrap nf-liste${FEED_SICHT ? ' sicht' : ''}" style="padding-top:0">${listHtml}</div>
   `);
   const sheetEl = document.getElementById('sheet');
   if(!schonOffen) _feedLicht(sheetEl);
   const liste = sheetEl.querySelector('.nf-liste');
+  _feedKartenSicht(liste);
   _newsFeedOffen = nachreichen.length && liste
     ? {liste, jobs:nachreichen, index:0, version:_cache.version} : null;
   if(_newsFeedOffen) _newsFeedPlan(_newsFeedOffen);
@@ -24496,6 +24517,7 @@ function _newsFeedRest(alles = true){
     ziel.insertAdjacentHTML('beforeend', job.erster
       ? job.kopf + `<div class="nf-feed" data-feed-tag="${esc(job.tag)}">${html}</div>` : html);
   } while(alles && o.index < o.jobs.length);
+  _feedKartenSicht(o.liste);
   if(o.index >= o.jobs.length) _newsFeedOffen = null;
 }
 function _newsFeedPlan(o){
@@ -32787,7 +32809,7 @@ function _avRingMarkenHtml(pid){
     const t = _avRingTon(r), w = AV_RING_PLAETZE[i] * Math.PI / 180;
     const x = Math.round(Math.sin(w) * 58), y = Math.round(-Math.cos(w) * 58);
     return `<span class="pp-av-mark" style="--tt:${t.c};--ttr:${t.rgb};--i:${i};`
-      + `left:calc(50% + ${x}px);top:calc(50% + ${y}px)" title="${esc(r.label + ' · ' + r.sub)}">${svgI(r.ic)}</span>`;
+      + `left:calc(50% + ${x}px);top:calc(50% + ${y}px)" title="${esc(r.label + ' · ' + r.sub)}"><span class="d">${svgI(r.ic)}</span></span>`;
   }).join('');
 }
 

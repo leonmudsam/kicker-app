@@ -730,6 +730,35 @@ if(_bewegungDa() && typeof IntersectionObserver === 'function')
     const i = namen.indexOf(e.animationName);
     if(i >= 0 && zahl[i % zahl.length] === 'infinite') _bewegungBeobachten(el);
   }, true);
+// Eine Karte im Feed bewegt sich nur, solange sie im Bild steht
+// (`.im-bild`); bis der Beobachter das sagt, steht alles in ihr still. Die
+// Karten tragen `content-visibility`, und Chromium legt die Bewegungen einer
+// Karte schon an, wenn das Öffnen des Blatts das Layout erzwingt — bevor es
+// die Karte zum Überspringen vorsieht. Danach erreicht sie weder
+// `animationstart` noch `.steht`: Stil rechnet Chromium im Übersprungenen
+// nicht mehr, die Bewegung aber lief weiter, ohne sichtbare Wirkung und
+// deshalb nicht auf der Grafikkarte, sondern jedes Bild im Hauptthread über
+// den ganzen Feed. Gemessen kostete ein einziger Glanz 3000 px unter dem
+// Bildrand so 130 statt 7 ms je Sekunde. Angehalten von Anfang an, braucht
+// es keine Stiländerung im Übersprungenen: die Karte läuft an, wenn sie
+// hereinkommt — dann wird sie gezeichnet —, und hält an, wenn sie das Bild
+// verlässt, 80 px vor dem Rand und damit früher, als Chromium sie
+// überspringt. Aus `_renderNewsFeed` und `_newsFeedRest`.
+let _kartenSicht = null;
+const _kartenBeobachtet = new Set();
+const FEED_SICHT = typeof IntersectionObserver === 'function';
+function _feedKartenSicht(liste){
+  if(!FEED_SICHT || !liste) return;
+  if(!_kartenSicht) _kartenSicht = new IntersectionObserver(eintraege => eintraege.forEach(e => {
+    if(!e.target.isConnected){ _kartenSicht.unobserve(e.target); _kartenBeobachtet.delete(e.target); return; }
+    e.target.classList.toggle('im-bild', e.isIntersecting);
+  }), {rootMargin:'80px'});
+  _kartenBeobachtet.forEach(k => { if(!k.isConnected){ _kartenSicht.unobserve(k); _kartenBeobachtet.delete(k); } });
+  liste.querySelectorAll('.nf-card:not(.nf-brk):not(.nf-gross)').forEach(k => {
+    if(_kartenBeobachtet.has(k)) return;
+    _kartenBeobachtet.add(k); _kartenSicht.observe(k);
+  });
+}
 // Ein Licht endet, wenn seine Karte das Bild verlässt — etwa weil das leise
 // Licht beim Scrollen begann. Was in einem Blatt, einem Fenster oder dem
 // Hinweis eben erst hereinfährt, steht in seiner ersten halben Sekunde noch
