@@ -3,6 +3,7 @@
 ## Regel
 
 - Die Monatschronik fragt nach Abweichung von der Erwartung, Konstanz, dem Verhältnis zum Ligamittel desselben Monats, zu einem bestimmten anderen Spieler oder einem seltenen Einzelereignis, nicht nach dem Können.
+- Eine Können-Chronik misst gegen die Elo-Erwartung (`_stSoll`, `_stTorSteigung`), gegen den eigenen Rest (`_stErsterBall`, `_stSchlussBall`) oder gegen den eigenen Vormonat (`_stVormonat`, `_stVormonatPlatz`), nicht gegen eine feste Latte, die nur der Stärkste erreicht. In den Fixture-Monaten gehören höchstens 38 % der Einträge den ersten drei der Monatstabelle.
 - Das Stichproben-Tor ist niedrig und für alle gleich: acht Partien im Monat, fünf in einer Teilmenge (`ST_TEIL`), drei Spieltage. Die Besonderheit steckt in der Schwelle.
 - Jede `monat`-Wertung trägt `art` (koennen, konstanz, fuegung, schatten), `klasse` (legendaer, selten, besonders) und `aus` (Ausschlag der Schwelle in σ), einmal an den Daten geprüft und dann festgeschrieben.
 - Die Klasse zählt keine Halter. Gedeckelt ist die Rate: höchstens ein Halter je gewerteten Monat.
@@ -18,11 +19,11 @@
 
 ## Stellen
 
-`32-chronik-katalog.js` (`DISZIPLINEN`, `_stWertung`), `33-chronik-engine.js` (`_seasonTitleCtx`), `35-chronik-ui.js`, `35b-prestige.js` (`chronikPunkte`).
+`32-chronik-katalog.js` (`DISZIPLINEN`, `_stWertung`, `_stSoll`, `_stTorSteigung`, `_stErsterBall`, `_stVormonat`, `_stVormonatPlatz`), `33-chronik-engine.js` (`_seasonTitleCtx`), `35-chronik-ui.js`, `35b-prestige.js` (`chronikPunkte`).
 
 ## Prüfung
 
-`tests/rechnen` zählt den laufenden Tag erst um 23:59; `tests/disziplinen` hält jede Chronik an 1,5 σ, an der Spielzahl-Korrelation und am Halterdeckel; `tests/blatt` misst die Kürzel in der Zelle und das Banner im Profilkopf.
+`tests/rechnen` zählt den laufenden Tag erst um 23:59; `tests/disziplinen` hält jede Chronik an 1,5 σ, an der Spielzahl-Korrelation und am Halterdeckel, zählt den Anteil der ersten drei und rechnet „Der Sprung" und „Die Kletterpartie" aus den rohen Partien beider Monate nach; `tests/blatt` misst die Kürzel in der Zelle und das Banner im Profilkopf.
 
 ## Herleitung
 
@@ -30,7 +31,7 @@ Wie es dazu kam und was vorher falsch war — der Grund jeder Regel oben.
 
 Der alte
 Monatskatalog maß fast überall das Können, und wer eine Quote gewinnt,
-gewinnt fast jede. Er ist vollständig ersetzt: vierundsechzig Chroniken, die
+gewinnt fast jede. Er ist vollständig ersetzt: sechsundsechzig Chroniken, die
 nach der **Abweichung von der Erwartung** fragen, nach **Konstanz**, nach
 dem **Verhältnis zum Ligamittel** desselben Monats, zu einem **bestimmten
 anderen Spieler** oder nach einem **seltenen Einzelereignis**. Die
@@ -177,3 +178,29 @@ um ein Viertel Pixel heraus.
 dem schwächsten Spieltag, der schwächsten Woche, dem unangenehmsten Gegner;
 solche Fragen lassen sich nicht in vierzig Zähler auflösen, ohne für jede
 neue Frage einen neuen Zähler zu erfinden.
+
+**Eine feste Latte erreicht nur der Stärkste.** Fünf Können-Chroniken
+fragten trotz der Regel oben nach dem Niveau: zwei Tore Differenz je Partie
+(„Der Deutliche"), gegen jeden regelmäßigen Gegner mehr Siege als
+Niederlagen („Kein Angstgegner"), 85 % der ersten und 75 % der letzten
+Partien eines Spieltags („Der Kaltstart", „Der Endspurt"), jeder Spieltag
+nicht negativ („Der Tagesabschluss"). Gemessen gingen damit 42 % aller
+Einträge der Fixture-Monate an die ersten drei der Monatstabelle, bei
+zwölf Spielern wären es nach ihrem Anteil 25 %, und „Kein Angstgegner"
+korrelierte mit 0,42 mit der Spielzahl. Jetzt messen sie gegen die
+Elo-Erwartung — die erwarteten Siege je Gegner und je Spieltag, die
+Tordifferenz, die die Siegchance erwarten ließ (die Steigung aus den
+Partien des Monats selbst) — oder gegen den eigenen Rest: die erste Partie
+eines Spieltags gegen die übrigen, wie ihr Gegenstück „Der letzte Ball".
+„Der Deutliche" ging damit an Johannes auf Platz elf und Leon auf Platz
+sechs, und der Anteil der ersten drei sank auf 35 %. Schwellen und
+Ausschlag sind über alle fünf Monate der Liga gemessen.
+
+**Der Vormonat ist ein Maßstab.** „Der Sprung" verlangt eine Siegquote
+25 Prozentpunkte über der des Vormonats, „Die Kletterpartie" vier Plätze
+weiter vorn in der Monatstabelle, beide ab acht Partien in beiden
+Monaten. Wer im Vormonat schwach war, hat mehr Raum nach oben, und wer
+ganz oben steht, kann kaum noch steigen: beide belohnen die Verbesserung
+und nicht das Niveau. Als Erster hielt beide Johannes, im Juli auf Platz
+sieben der Tabelle.
+

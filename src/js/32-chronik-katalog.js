@@ -305,6 +305,52 @@ function _stSchlussBall(p, mindTage){
           raus: _stQuote(rest), n: letzte.length};
 }
 
+// Das Gegenstück zum letzten Ball: die erste Partie jedes Spieltags gegen
+// die übrigen desselben Tages. Die Monatschronik „Der Kaltstart" zählte die
+// ersten Partien absolut (85 % gewonnen), und das erreicht nur, wer ohnehin
+// fast alles gewinnt — gemessen hielten sie nur die ersten drei der Tabelle.
+// Gegen den eigenen Rest gestellt fragt sie, was ihr Name sagt [§C39].
+function _stErsterBall(p, mindTage){
+  const tage = Object.keys(p.tagGrp).filter(t => p.tagGrp[t].length >= 3);
+  if(tage.length < mindTage) return null;
+  const erste = [], rest = [];
+  tage.forEach(t => { const a = p.tagGrp[t];
+    erste.push(a[0]); rest.push(...a.slice(1)); });
+  if(!rest.length) return null;
+  return {d: _stQuote(erste) - _stQuote(rest), drin: _stQuote(erste),
+          raus: _stQuote(rest), n: erste.length};
+}
+// Die Summe der Siegchancen: wie viele Siege die Elo-Rechnung vor den
+// Partien erwartet hat. Mehrere Chroniken stellen das Ist dagegen statt
+// gegen eine feste Quote — eine feste Quote erreicht nur der Stärkste.
+function _stSoll(a){ return a.reduce((s, x) => s + x.exp, 0); }
+// Wie viele Tore Unterschied eine Siegchance erwarten lässt, aus den
+// Partien des Monats selbst: die Steigung der Tordifferenz über die Chance.
+// Ein fester Wert wäre eine Behauptung über diese Liga; die Steigung misst
+// sie und wandert mit ihr.
+function _stTorSteigung(C){
+  if(C._torSteigung != null) return C._torSteigung;
+  let a = 0, b = 0;
+  C.ms.forEach(m => { const x = (m.exp_a == null ? .5 : m.exp_a) - .5;
+    a += x * ((m.score_a || 0) - (m.score_b || 0)); b += x * x; });
+  return (C._torSteigung = b ? a / b : 0);
+}
+// Der eigene Vormonat: die Monatschroniken des Vergleichs stellen einen
+// Spieler gegen sich selbst, einen Monat früher. Gewertet wird nur, wer in
+// beiden Monaten acht Partien hat — darunter ist eine Quote ein Zufall.
+function _stVormonat(p, C){
+  const v = _prevSeasonId(C.sid);
+  if(!v) return null;
+  const q = _seasonTitleCtx(v).P[p.pid];
+  return q && q.games >= 8 ? q : null;
+}
+function _stVormonatPlatz(p, C){
+  const v = _prevSeasonId(C.sid);
+  const a = v ? _seasonTitleCtx(v).rankAll.findIndex(r => r.id === p.pid) : -1;
+  const b = C.rankAll.findIndex(r => r.id === p.pid);
+  return a >= 0 && b >= 0 ? {vor:a + 1, jetzt:b + 1} : null;
+}
+
 // Fuenf Lagen desselben Monats. „Ohne Schwachstelle" wertet die schwaechste
 // davon: ein einziger Einbruch kostet die Chronik, und deshalb kann sie nur
 // holen, wer keinen hatte [§C39].
@@ -372,14 +418,14 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Gefestigte',
       art:'konstanz',
-      klasse:'besonders', aus:1.64,
-      wie:'Ein Tag zählt, wenn am Ende mindestens so viele Siege wie Niederlagen stehen.',
-      cond:'An jedem eigenen Spieltag eine ausgeglichene oder positive Bilanz, ab 3 Spieltagen',
+      klasse:'selten', aus:2.31,
+      wie:'Ein Tag zählt, wenn am Ende mindestens so viele Siege stehen, wie die Siegchancen vor den Partien dieses Tages zusammen erwarten ließen.',
+      cond:'An jedem eigenen Spieltag mindestens so viele Siege, wie die Elo-Rechnung erwartet hat, ab 3 Spieltagen',
       ...(_stWertung(
         p=>p.tagN>=3,
-        p=>{const t=Object.values(p.tagGrp);return t.filter(a=>_stSiege(a)*2>=a.length).length/t.length;},
+        p=>{const t=Object.values(p.tagGrp);return t.filter(a=>_stSiege(a)>=_stSoll(a)-1e-9).length/t.length;},
         1,
-        p=>{const t=Object.values(p.tagGrp);return `${t.filter(a=>_stSiege(a)*2>=a.length).length} von ${t.length} Spieltagen nicht negativ`;}))}},
+        p=>{const t=Object.values(p.tagGrp);return `${t.filter(a=>_stSiege(a)>=_stSoll(a)-1e-9).length} von ${t.length} Spieltagen mindestens im Soll`;}))}},
 
   {id:'catalyst', name:'Der Katalysator', short:'Katalyse', ic:'partnerHebel', tone:'gold', art:'leistung',
     allzeit:{
@@ -468,29 +514,29 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Standhafte',
       art:'koennen',
-      klasse:'besonders', aus:1.73,
-      wie:'Regelmäßig heißt mindestens drei Duelle im Monat. Gemessen wird der Anteil, nicht die Anzahl.',
-      cond:'Gegen JEDEN regelmäßigen Gegner mehr Siege als Niederlagen, ab 4 solchen Gegnern',
+      klasse:'besonders', aus:1.82,
+      wie:'Regelmäßig heißt mindestens drei Duelle im Monat. Gegen jeden davon zählt, ob es mindestens so viele Siege wurden, wie die Siegchancen vor den Partien zusammen erwarten ließen. Gegen einen starken Gegner reichen weniger als gegen einen schwachen.',
+      cond:'Gegen JEDEN regelmäßigen Gegner mindestens so viele Siege, wie die Elo-Rechnung erwartet hat, ab 4 solchen Gegnern',
       ...(_stWertung(
         p=>Object.values(p.gegnerGrp).filter(d=>d.length>=3).length>=4,
         p=>{const r=Object.values(p.gegnerGrp).filter(d=>d.length>=3);
-      return r.filter(d=>_stSiege(d)*2>d.length).length/r.length;},
+      return r.filter(d=>_stSiege(d)>=_stSoll(d)-1e-9).length/r.length;},
         1,
         p=>{const r=Object.values(p.gegnerGrp).filter(d=>d.length>=3);
-      return `gegen ${r.filter(d=>_stSiege(d)*2>d.length).length} von ${r.length} regelmäßigen Gegnern im Plus`;}))}},
+      return `gegen ${r.filter(d=>_stSiege(d)>=_stSoll(d)-1e-9).length} von ${r.length} regelmäßigen Gegnern mindestens die erwarteten Siege`;}))}},
 
   {id:'deutlich', name:'Der Deutliche', short:'Deutlich', ic:'plusMinus', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Deutliche',
       art:'koennen',
-      klasse:'selten', aus:1.54,
-      wie:'Die eigene Tordifferenz je Partie. Sie sagt mehr als die Siegquote, weil auch die Höhe zählt.',
-      cond:'Mindestens 2 Tore Differenz je Partie',
+      klasse:'selten', aus:1.64,
+      wie:'Aus der Siegchance vor jeder Partie folgt, wie viele Tore Unterschied zu erwarten sind, gerechnet über alle Partien des Monats. Gewertet wird, wie weit die eigene Tordifferenz je Partie darüber liegt.',
+      cond:'Je Partie mindestens 1,8 Tore mehr Differenz, als die Stärke der Teams erwarten ließ',
       ...(_stWertung(
         p=>p.games>=8,
-        p=>(p.gf-p.ga)/p.games,
-        2,
-        (p,v)=>`${v<0?'−':'+'}${komma(Math.abs(v))} Tore je Partie · ${p.gf}:${p.ga}`))}},
+        (p,C)=>{const S=_stTorSteigung(C);return p.partien.reduce((s,x)=>s+(x.gf-x.ga)-S*(x.exp-.5),0)/p.games;},
+        1.8,
+        (p,v)=>`${v<0?'−':'+'}${komma(Math.abs(v))} Tore je Partie über der Erwartung · ${p.gf}:${p.ga}`))}},
 
   // Die beiden Positionen als GANZES, nicht als Einzelmaß. Gegentore allein
   // oder eigene Tore allein sagen nichts darüber, ob jemand seine Spiele
@@ -742,15 +788,15 @@ const DISZIPLINEN = [
   {id:'kaltstart', name:'Der Kaltstart', short:'Kaltstart', ic:'sunrise', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Frühstarter',
-      art:'koennen',
-      klasse:'selten', aus:1.73,
-      wie:'Die jeweils erste Partie jedes eigenen Spieltags. Ohne Aufwärmen.',
-      cond:'Mindestens 85 % der ersten Partien eines Spieltags gewonnen, ab 5 Spieltagen',
+      art:'konstanz',
+      klasse:'selten', aus:1.74,
+      wie:'Gewertet wird die zeitlich erste Partie jedes eigenen Spieltags gegen alle anderen dieses Tages. Drei Partien je Tag, damit „die erste" überhaupt eine Auswahl ist. Das Gegenstück zum letzten Ball.',
+      cond:'In der ersten Partie eines Spieltags mindestens 35 Prozentpunkte stärker als in den übrigen, ab 3 Spieltagen mit je 3 Partien',
       ...(_stWertung(
-        p=>p.tagN>=ST_TEIL,
-        p=>{const l=Object.values(p.tagGrp).map(a=>a[0]);return _stQuoteRoh(l);},
-        0.85,
-        p=>{const l=Object.values(p.tagGrp).map(a=>a[0]);return `${_stSiege(l)} von ${l.length} Auftaktpartien gewonnen`;}))},
+        p=>_stErsterBall(p,3)!=null,
+        p=>{const s=_stErsterBall(p,3);return s?s.d:null;},
+        0.35,
+        p=>{const s=_stErsterBall(p,3);return `${pct(s.drin)} % in ${s.n} Startspielen, ${pct(s.raus)} % danach`;}))},
     allzeit:{
       kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, je Spieltag',
@@ -1650,14 +1696,14 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Ausdauernde',
       art:'koennen',
-      klasse:'selten', aus:1.79,
-      wie:'Die jeweils letzte Partie jedes eigenen Spieltags. Wer sie gewinnt, geht im Plus nach Hause.',
-      cond:'Mindestens 75 % der letzten Partien eines Spieltags gewonnen, ab 5 Spieltagen',
+      klasse:'selten', aus:1.64,
+      wie:'Die jeweils letzte Partie jedes eigenen Spieltags, verglichen mit der Siegchance, die die Elo-Rechnung vor genau diesen Partien gab.',
+      cond:'Die letzten Partien der Spieltage mindestens 22 Prozentpunkte häufiger gewonnen, als die Elo-Rechnung erwartet hat, ab 5 Spieltagen',
       ...(_stWertung(
         p=>p.tagN>=ST_TEIL,
-        p=>{const l=Object.values(p.tagGrp).map(a=>a[a.length-1]);return _stQuoteRoh(l);},
-        0.75,
-        p=>{const l=Object.values(p.tagGrp).map(a=>a[a.length-1]);return `${_stSiege(l)} von ${l.length} Tagesabschlüssen gewonnen`;}))}},
+        p=>{const l=Object.values(p.tagGrp).map(a=>a[a.length-1]);return _stQuoteRoh(l)-_stSoll(l)/l.length;},
+        0.22,
+        p=>{const l=Object.values(p.tagGrp).map(a=>a[a.length-1]);return `${_stSiege(l)} von ${l.length} Tagesabschlüssen gewonnen · erwartet ${pct(_stSoll(l)/l.length)} %`;}))}},
 
   {id:'umschwung', name:'Der Umschwung', short:'Wende', ic:'umschwung', tone:'gold', art:'leistung',
     monat:{
@@ -1970,6 +2016,37 @@ const DISZIPLINEN = [
         p=>p.platzErst-p.platzLetzt,
         8,
         (p,v)=>`von Platz ${p.platzErst} auf Platz ${p.platzLetzt} · ${v} Plätze`))}},
+
+  // ── Gegen den eigenen Vormonat [§C39] ─────────────────────────────────
+  // Die beiden Chroniken stellen einen Spieler gegen sich selbst, einen
+  // Monat früher. Wer im Vormonat schwach war, hat mehr Raum nach oben,
+  // und wer ganz oben steht, kann kaum noch steigen: so belohnen sie die
+  // Verbesserung und nicht das Niveau.
+  {id:'sprung', name:'Der Sprung', short:'Sprung', ic:'vormonatSprung', tone:'gold', art:'leistung',
+    monat:{
+      beiname:'Der Durchstarter',
+      art:'koennen',
+      klasse:'selten', aus:2.18,
+      wie:'Verglichen wird die eigene Siegquote dieses Monats mit der des Vormonats, in Prozentpunkten. Beide Monate brauchen acht eigene Partien.',
+      cond:'Siegquote mindestens 25 Prozentpunkte über der des Vormonats, ab 8 Partien in beiden Monaten',
+      ...(_stWertung(
+        (p,C)=>p.games>=8 && _stVormonat(p,C)!=null,
+        (p,C)=>p.q-_stVormonat(p,C).q,
+        0.25,
+        (p,v,C)=>`${pct(p.q)} % statt ${pct(_stVormonat(p,C).q)} % im Vormonat`))}},
+
+  {id:'kletterer', name:'Die Kletterpartie', short:'Klettern', ic:'leiterAuf', tone:'gold', art:'leistung',
+    monat:{
+      beiname:'Der Kletterer',
+      art:'koennen',
+      klasse:'besonders', aus:1.59,
+      wie:'Verglichen wird der Platz in der Monatstabelle mit dem am Ende des Vormonats. Beide Monate brauchen acht eigene Partien.',
+      cond:'Mindestens 4 Plätze weiter vorn als am Ende des Vormonats, ab 8 Partien in beiden Monaten',
+      ...(_stWertung(
+        (p,C)=>p.games>=8 && _stVormonat(p,C)!=null && _stVormonatPlatz(p,C)!=null,
+        (p,C)=>{const x=_stVormonatPlatz(p,C);return x.vor-x.jetzt;},
+        4,
+        (p,v,C)=>{const x=_stVormonatPlatz(p,C);return `von Platz ${x.vor} auf Platz ${x.jetzt} · ${v} Plätze`;}))}},
 
   {id:'zitterkoenig', name:'Der Zitterkönig', short:'Zittersieg', ic:'zitterkrone', tone:'purple', art:'ereignis',
     monat:{

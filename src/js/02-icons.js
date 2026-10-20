@@ -228,6 +228,10 @@ const ICONS = {
   shieldRank:    `<path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6z"/><path d="M9 10l3-2 3 2M9 14l3-2 3 2"/>`,
   // Auftrieb: eine Treppe mit Pfeil — zwei Abschnitte, der zweite höher.
   stepsUp:       `<path d="M3 20h5v-5h5v-5h5V5"/><path d="M16 8l3-3 3 3"/>`,
+  // Zwei Monate als Säulen, der Bogen springt von der kurzen zur hohen.
+  vormonatSprung:`<path d="M3 21h18M7 21v-4M17 21V10"/><path d="M6 13c2-6 8-8 11-6"/><path d="M14.5 4.5L17 7l-2.5 2.5"/>`,
+  // Eine Leiter, daneben der Pfeil nach oben: Plätze gegenüber dem Vormonat.
+  leiterAuf:     `<path d="M6 21V3M13 21V3M6 7h7M6 12h7M6 17h7"/><path d="M19 13V5M16.5 7.5L19 5l2.5 2.5"/>`,
   // Angreifer: ein Schuh am Ball — die eigenen Tore, nicht das Ergebnis.
   strikeBoot:    `<path d="M4 8h7l3 4h4a2 2 0 012 2v3H6a2 2 0 01-2-2z"/><path d="M4 20h16"/><circle cx="8" cy="5" r="2"/>`,
   // Handschrift: ein Federstrich, der in einer Schlaufe ausläuft — dieselbe

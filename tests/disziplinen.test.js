@@ -3711,5 +3711,54 @@ const _zc = JSON.parse(K.eval(`JSON.stringify((function(){
   ok(fehlt.length === 0, 'jedes wörtlich gesetzte Zeichen steht unter seinem heutigen Namen im Katalog', fehlt.join(', '));
 }
 
+// ══════════════════════════════════════════════════════════════════════
+console.log('\n═══ MONATSCHRONIKEN GEGEN DIE ERWARTUNG UND DEN VORMONAT ═══');
+// Die Monatschronik fragt nicht, wer der Beste ist [§C39]. Fünf Wertungen
+// fragten es trotzdem, mit festen Latten: zwei Tore Differenz je Partie,
+// gegen jeden Gegner im Plus, 85 % der ersten und 75 % der letzten Partien
+// eines Spieltags, jeder Spieltag nicht negativ. Gemessen gingen damit 42 %
+// aller Einträge der Fixture-Monate an die ersten drei der Monatstabelle —
+// bei zwölf Spielern wären es nach ihrem Anteil 25 %. Gegen die
+// Elo-Erwartung und den eigenen Rest gestellt, sind es 35 %.
+const _spitze = JSON.parse(K.eval(`JSON.stringify((function(){
+  let alle = 0, oben = 0;
+  ['2026-06','2026-07','2026-08'].forEach(sid => {
+    const drei = saisonRang(sid).slice(0, 3).map(e => e.id);
+    seasonTitles(sid).awarded.forEach(a => { alle++; if(drei.includes(a.pid)) oben++; });
+  });
+  return {alle, oben};
+})())`));
+console.log('  Einträge der ersten drei: ' + _spitze.oben + ' von ' + _spitze.alle);
+ok(_spitze.alle > 40 && _spitze.oben / _spitze.alle <= 0.38,
+   'höchstens 38 % der Monatseinträge gehören den ersten drei der Monatstabelle',
+   _spitze.oben + ' von ' + _spitze.alle);
+// „Der Sprung" und „Die Kletterpartie" stellen einen Spieler gegen seinen
+// Vormonat: Siegquote und Platz, beide Monate ab acht Partien. Nachgerechnet
+// aus den rohen Partien beider Monate und der Rangliste der Saison.
+const _vgl = JSON.parse(K.eval(`JSON.stringify((function(){
+  const quote = sid => { const z = {};
+    matchesInSeason(sid).forEach(m => [m.a1, m.a2, m.b1, m.b2].forEach(id => {
+      const w = (m.a1 === id || m.a2 === id) ? m.winner === 'A' : m.winner === 'B';
+      z[id] = z[id] || {g:0, w:0}; z[id].g++; if(w) z[id].w++; }));
+    return z; };
+  const out = {};
+  ['2026-07','2026-08'].forEach(sid => {
+    const vor = _prevSeasonId(sid), a = quote(sid), b = quote(vor);
+    const beide = Object.keys(a).filter(id => a[id].g >= 8 && b[id] && b[id].g >= 8);
+    const bester = (l, ab) => { const max = Math.max(...l.map(x => x.d));
+      return max >= ab ? l.filter(x => x.d === max).map(x => x.id).sort() : []; };
+    const platz = s => { const r = saisonRang(s).map(e => e.id); return id => r.indexOf(id) + 1; };
+    const pa = platz(sid), pb = platz(vor);
+    const C = _seasonTitleCtx(sid);
+    const ist = id => { const r = SEASON_TITLE_BY_ID[id].pick(C, new Set()); return r && r.halter ? r.halter.slice().sort() : []; };
+    out[sid] = {sprungSoll:bester(beide.map(id => ({id, d:a[id].w / a[id].g - b[id].w / b[id].g})), 0.25), sprungIst:ist('sprung'),
+      kletterSoll:bester(beide.filter(id => pa(id) && pb(id)).map(id => ({id, d:pb(id) - pa(id)})), 4), kletterIst:ist('kletterer')};
+  });
+  return out; })())`));
+ok(Object.values(_vgl).every(x => x.sprungSoll.join() === x.sprungIst.join() && x.kletterSoll.join() === x.kletterIst.join())
+   && Object.values(_vgl).some(x => x.sprungIst.length) && Object.values(_vgl).some(x => x.kletterIst.length),
+   'Der Sprung und Die Kletterpartie halten, wer sich gegenüber dem Vormonat am meisten gesteigert hat',
+   JSON.stringify(_vgl));
+
 console.log('\n' + (fails ? '✗ ' + fails + ' von ' + checks + ' CHECKS FEHLGESCHLAGEN' : '✓ ALLE ' + checks + ' CHECKS BESTANDEN'));
 process.exit(fails ? 1 : 0);
