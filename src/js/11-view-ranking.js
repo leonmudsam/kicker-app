@@ -371,7 +371,9 @@ function _vRankingCore(){
       // ist dort schon ausgeschlossen, der Cache verhindert Neuberechnung.
       const _allRanks=getCachedAwardRankings('all');
       const _kingList=period==='week'?(_allRanks.weekKingList||[]):(_allRanks.dayKingList||[]);
-      const topKing=_kingList[0]||null;
+      // Nur, wer `KOENIG_MIN` erreicht, wie der Halter im Awards-Reiter:
+      // sonst stünde hier ein Titel aus einem einzigen Spieltag als 100 %.
+      const topKing=_kingList.find(k=>k.gilt)||null;
       const mitte = period==='week'
         ? renderHl('streak','Siegesserie',AW_IC.streaks, topStreak?pname(topStreak.id):null,
             topStreak?`${topStreak.v} in Folge`:'', topStreak?'data-toplist="periodStreak"':'')
@@ -383,7 +385,10 @@ function _vRankingCore(){
           ${mitte}
           ${renderHl('king', period==='week'?'Wochenkönig':'Tageskönig', period==='week'?'weekKing':'dayKing',
               topKing?pname(topKing.id):null,
-              topKing?(period==='week'?`${topKing.v} ${topKing.v===1?'Wochensieg':'Wochensiege'}`:`${topKing.v} ${topKing.v===1?'Tagessieg':'Tagessiege'}`):'',
+              // Der Anteil, nicht die Zahl: wer seltener spielt, aber öfter
+              // gewinnt, steht vorn [§C28]. „12/23" und nicht „12 von 23":
+              // auf einem Drittel endete die längere Form als „52 % · 12 v…".
+              topKing?`${Math.round(topKing.q*100)} % · ${topKing.v}/${topKing.n}`:'',
               topKing?'data-toplist="periodKing"':'')}
         </div>`;
 

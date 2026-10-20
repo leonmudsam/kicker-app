@@ -231,5 +231,30 @@ ok(eineRunde.karten.length===1&&eineRunde.karten[0].startsWith('ehrung_e1@17:40#
   'Partien mit weniger als zwei Stunden Abstand ergeben eine Karte mit allem seit der ersten: '+JSON.stringify(eineRunde));
 ok(zweiRunden.prestige.every(([a,b])=>a>0&&Math.abs(a-b)<=1),
   'Was die Ehrungen an Prestige nennen, ist das Prestige der Auszeichnungen in der Laufbahn: '+JSON.stringify(zweiRunden.prestige));
+// Tages- und Wochenkönig zählen den Anteil der eigenen Spieltage, nicht
+// die Zahl der Titel [§C28]: wer an 4 von 6 Spieltagen der Beste war, steht
+// vor dem, der es an 5 von 12 war.
+setNow(Date.UTC(2026,9,19,12,0));
+const koenige=K(`(() => {
+  const ids=['a','b','q1','q2','q3','q4','o1','o2'];
+  players=ids.map(id=>({id,name:'Spieler '+id,hidden:false,elo:0,atk:.5}));
+  const ms=[]; let n=0;
+  const tag=(pid,datum,sieg)=>{
+    const runden=sieg?4:1;
+    for(let i=0;i<runden;i++){
+      const mit='q'+(i+1), w=sieg;
+      ms.push({...window.__partie,id:'k'+(n++),a1:pid,a2:mit,b1:'o1',b2:'o2',
+        created_at:new Date(Date.UTC(2026,8,datum,10,i*20)).toISOString(),winner:w?'A':'B',
+        score_a:w?10:4,score_b:w?4:10,deltas:{[pid]:w?20:-20,[mit]:w?20:-20,o1:w?-20:20,o2:w?-20:20}});
+    }
+  };
+  [1,2,3,4,5,6].forEach((d,i)=>tag('a',d,i<4));
+  [7,8,9,10,11,12,13,14,15,16,17,18].forEach((d,i)=>tag('b',d,i<5));
+  matches=ms;seasons=[];cfg={...window.__cfgBasis};invalidateCache();
+  const l=awardRankings('all').dayKingList.filter(x=>x.id==='a'||x.id==='b');
+  return l.map(x=>x.id+':'+x.v+'/'+x.n);
+})()`);
+ok(koenige.join(' ')==='a:4/6 b:5/12',
+  'Der Tageskönig ist, wer den größten Anteil seiner Spieltage gewann, nicht wer die meisten Titel sammelte: '+JSON.stringify(koenige));
 console.log(fails?`${fails} von ${checks} CHECKS FEHLGESCHLAGEN`:`ALLE ${checks} CHECKS BESTANDEN`);
 process.exitCode=fails?1:0;
