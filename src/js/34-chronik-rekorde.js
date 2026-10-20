@@ -941,24 +941,38 @@ function allChronicles(bisMs){
 // ihn gemeinsam.
 function saisonRekorde(sid){
   if(!sid) return [];
-  const key = 'srek_' + sid + '_' + matches.length + '_' + _cache.version;
+  const vor = _prevSeasonId(sid);
+  return _rekordeZwischen('srek_' + sid, vor ? seasonEnd(vor).getTime() : null, seasonEnd(sid).getTime());
+}
+// Dieselbe Rechnung für einen beliebigen Zeitraum — die Woche eines
+// Rückblicks [§C31]: der Stand vor ihrem ersten Augenblick gegen den an
+// ihrem Ende. Dieselben Zeitschnitte wie die Laufbahn-Wirkung derselben
+// Woche (`rcpLaufbahnDaten`), damit `allChronicles` jeden nur einmal rechnet.
+function rekordeImZeitraum(vonMs, bisMs){
+  return _rekordeZwischen('zrek_' + vonMs + '_' + bisMs, vonMs - 1, bisMs);
+}
+function _rekordeZwischen(name, vorMs, bisMs){
+  const key = name + '_' + matches.length + '_' + _cache.version;
   if(!_cache._srek) _cache._srek = {};
   if(_cache._srek[key]) return _cache._srek[key];
   _topfDeckel(_cache._srek, 24);
 
   const out = [];
   try {
-    const jetzt = allChronicles(seasonEnd(sid).getTime()).byId;
-    const vor   = _prevSeasonId(sid)
-      ? allChronicles(seasonEnd(_prevSeasonId(sid)).getTime()).byId : {};
+    const jetzt = allChronicles(bisMs).byId;
+    const vor   = vorMs != null ? allChronicles(vorMs).byId : {};
     CHRONICLES.forEach(def => {
       if(def.kind === 'shame') return;
       const n = jetzt[def.id];
       if(!n) return;
       const a = vor[def.id];
+      // Ein Bestwert ist immer der größte (`allChronicles`). Fällt der Wert
+      // desselben Halters, weil eine Quote mit jeder Partie wandert, ist das
+      // kein Rekord dieses Zeitraums: es stand als „verbessert" da — in einer
+      // einzigen Augustwoche siebzehnmal, darunter „Der Glanztag" vom 20.07.
       let art = '';
       if(!a) art = 'neu';
-      else if(Math.abs(n.val - a.val) > 1e-9) art = (a.pid === n.pid) ? 'gesteigert' : 'geholt';
+      else if(n.val - a.val > 1e-9) art = (a.pid === n.pid) ? 'gesteigert' : 'geholt';
       else if(n.pids.join(',') !== a.pids.join(',')) art = 'geholt';
       if(!art) return;
       out.push(Object.assign({}, n, {art, vorwert: a ? a.val : null,

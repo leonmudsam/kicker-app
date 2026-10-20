@@ -74,21 +74,6 @@
     letter-spacing:-.01em;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .rcp-aw-val{font-family:'Sometype Mono',monospace;font-size:10.5px;color:var(--ink2);margin-top:3px;font-weight:600}
 
-  .rcp-tos{background:var(--surface);
-    border:1px solid var(--line);border-radius:16px;padding:13px 14px;
-    display:flex;align-items:center;gap:14px;margin-bottom:16px;transition:.16s}
-  .rcp-tos::after{content:"";flex:0 0 auto;width:6px;height:6px;
-    border-right:2px solid var(--faint);border-top:2px solid var(--faint);
-    transform:rotate(45deg);border-radius:1px}
-  .rcp-tos:active{transform:scale(.985)}
-  .rcp-tos-pair{display:flex;flex-shrink:0}
-  .rcp-tos-info{flex:1;min-width:0}
-  .rcp-tos-label{font-size:9px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);
-    font-family:'Sometype Mono',monospace;font-weight:700}
-  .rcp-tos-name{font-family:'Archivo Black',sans-serif;font-size:16px;margin-top:4px;letter-spacing:-.01em;
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .rcp-tos-detail{font-size:10.5px;color:var(--muted);font-family:'Sometype Mono',monospace;margin-top:2px}
-
   /* ── [§C31] Die Bauteile der Rückblicke ──────────────────────────────
      Ein Baukasten für Saison, Woche und Tag. Vorher trugen die beiden
      kleinen Rückblicke ihre Gestaltung als Inline-Styles im JS — eine
@@ -196,7 +181,7 @@
 
   /* Der Weiter-Pfeil. Eine Form für Kachel, Zeile und Notiz — als Symbol
      hätte er in jedem Bauteil einzeln gepflegt werden müssen. */
-  .rcp-aw.klick,.rcp-zeile.klick,.rcp-notiz.klick,.rcp-tos.klick{cursor:pointer}
+  .rcp-aw.klick,.rcp-zeile.klick,.rcp-notiz.klick{cursor:pointer}
   .rcp-notiz.klick::after,.rcp-zeile.klick::after{content:"";flex:0 0 auto;
     width:6px;height:6px;margin-left:2px;border-right:2px solid var(--faint);
     border-top:2px solid var(--faint);transform:rotate(45deg);border-radius:1px}
@@ -397,12 +382,15 @@
   .srn-l.silber{stroke:var(--silber);opacity:.75}
   .srn-l.bronze{stroke:var(--bronze);opacity:.75}
   .srn-p{opacity:0;transform-box:fill-box;transform-origin:center;animation:srnDa .35s 1.6s forwards}
-  .srn-p.gold{fill:var(--gold);animation:srnDa .35s 1.6s forwards,srnPuls 2.6s 2.2s ease-in-out infinite}
+  /* Der Endpunkt des Meisters pulsierte ohne Ende. Er sagt nichts, was die
+     goldene Linie nicht schon sagt, und im Rückblick lief er neben dem
+     Kranz und dem Glanz des Podests als dritte Bewegung für denselben
+     Sieger [§C43]. Er kommt jetzt einmal, mit der Linie. */
+  .srn-p.gold{fill:var(--gold)}
   .srn-p.silber{fill:var(--silber)} .srn-p.bronze{fill:var(--bronze)}
   .srn-fl{opacity:0;animation:srnDa .9s .8s forwards}
   @keyframes srnZieh{to{stroke-dashoffset:0}}
   @keyframes srnDa{to{opacity:1}}
-  @keyframes srnPuls{0%,100%{transform:scale(1)}50%{transform:scale(1.5)}}
   .srn-band{display:flex;gap:1px;height:7px;margin-top:6px;border-radius:3px;overflow:hidden}
   .srn-band i{flex:1;background:rgba(255,255,255,.05)}
   .srn-band i.gold{background:var(--gold)} .srn-band i.silber{background:var(--silber)}
@@ -447,8 +435,12 @@
    dem Helden. Bewegt wird nur transform und Deckkraft; bei Bewegungsruhe
    steht alles. Der Name im Feld bricht um, statt mit „…" zu enden. */
 .rcp-feld{display:flex;flex-direction:column;gap:6px;margin:0 0 16px}
-.rcp-feld-z{display:grid;grid-template-columns:minmax(0,30%) minmax(0,1fr) auto;align-items:center;gap:8px}
-.rcp-feld-n{font-size:12px;line-height:1.25;color:var(--ink2);overflow-wrap:break-word}
+.rcp-feld-z{display:grid;grid-template-columns:minmax(0,32%) minmax(0,1fr) auto 38px;align-items:center;gap:8px;cursor:pointer}
+.rcp-feld-n{display:flex;align-items:center;gap:7px;min-width:0;font-size:12px;line-height:1.25;color:var(--ink2);overflow-wrap:anywhere}
+.rcp-feld-n > .rcp-av{flex:none}
+.rcp-feld-e{font-size:11px;font-weight:700;color:var(--muted);text-align:right;white-space:nowrap}
+.rcp-feld-e.auf{color:var(--acid)}
+.rcp-feld-e.ab{color:var(--red)}
 .rcp-feld-z.held .rcp-feld-n{color:var(--gold);font-weight:700}
 .rcp-feld-b{position:relative;display:grid;grid-template-columns:1fr 1fr;height:10px}
 .rcp-feld-b i{display:block;height:100%}
@@ -592,3 +584,187 @@
     .ab-av,.ab-rang,.ab-zeit,.ab-sz-f{animation:none}
     .ab-duo-b i{animation:none}
   }
+
+/* ── Die Grafiken der Rückblicke [§C31] ──────────────────────────────
+   Kalender, Tabelle, Team, Laufbahn, Rekorde, Beinamen: jede Frage als Bild
+   statt als Zeile. Grün und Rot sind die Richtung, Gold der Sieger, alles
+   Übrige Metall [§C25]. Bewegt wird nur `transform` und Deckkraft, einmal,
+   beim Öffnen; bei Bewegungsruhe steht alles [§C43]. Kein Lauflicht: auf
+   einer Seite mit Podest, Säulen und Wappen ist jedes weitere Licht ein
+   Schimmer ohne Aussage. */
+
+/* Der Kalender: hell, wo viel gespielt wurde, die Zahl darin. */
+.rcp-kal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin:0 0 12px}
+.rcp-kal-w{font-family:'Sometype Mono',monospace;font-size:8.5px;font-weight:700;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--faint);text-align:center;padding-bottom:1px}
+.rcp-kal-t{position:relative;height:40px;border-radius:9px;display:grid;place-items:center;min-width:0;
+  background:rgba(194,201,208,var(--kal-a,.04));box-shadow:inset 0 0 0 1px rgba(194,201,208,var(--kal-r,.1))}
+.rcp-kal-t small{position:absolute;left:5px;top:3px;font-size:8px;color:var(--faint);line-height:1}
+.rcp-kal-t b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:14px;line-height:1;color:var(--ink);margin-top:6px}
+.rcp-kal-t.k0{background:none;box-shadow:inset 0 0 0 1px rgba(194,201,208,.07)}
+.rcp-kal-t.k1{--kal-a:.07;--kal-r:.14}
+.rcp-kal-t.k2{--kal-a:.13;--kal-r:.22}
+.rcp-kal-t.k3{--kal-a:.21;--kal-r:.32}
+.rcp-kal-t.k4{--kal-a:.32;--kal-r:.5}
+.rcp-kal-t.k4 b{color:#fff}
+.rcp-kal.woche .rcp-kal-t{height:50px}
+.rcp-kal.woche .rcp-kal-t b{font-size:18px}
+
+/* Die Tabelle: jede Zeile ein Balken in der Länge ihrer Elo. */
+.rcp-tab{display:flex;flex-direction:column;gap:4px;margin:0 0 16px}
+.rcp-tab-r{position:relative;isolation:isolate;display:flex;align-items:center;gap:8px;min-width:0;
+  padding:7px 10px 7px 6px;border-radius:11px;background:var(--bg2);box-shadow:inset 0 0 0 1px var(--line);cursor:pointer}
+.rcp-tab-r::before{content:"";position:absolute;left:0;top:0;bottom:0;width:var(--w);z-index:-1;border-radius:11px;
+  background:linear-gradient(90deg,rgba(var(--tab-m,194,201,208),.02),rgba(var(--tab-m,194,201,208),.10))}
+.rcp-tab-r:active{background:var(--surface)}
+.rcp-tab-r.gold{--tab-m:247,207,74;box-shadow:inset 0 0 0 1px rgba(247,207,74,.38)}
+.rcp-tab-r.silber{--tab-m:194,201,208;box-shadow:inset 0 0 0 1px rgba(194,201,208,.3)}
+.rcp-tab-r.bronze{--tab-m:192,132,87;box-shadow:inset 0 0 0 1px rgba(192,132,87,.32)}
+.rcp-tab-r.gold::before,.rcp-tab-r.silber::before,.rcp-tab-r.bronze::before{
+  background:linear-gradient(90deg,rgba(var(--tab-m),.04),rgba(var(--tab-m),.17))}
+.rcp-tab-p{flex:none;width:20px;text-align:center;font-family:'Archivo Black',sans-serif;font-size:13px;color:var(--faint)}
+.rcp-tab-r.gold .rcp-tab-p,.rcp-tab-r.gold .rcp-tab-e{color:var(--gold)}
+.rcp-tab-r.silber .rcp-tab-p{color:var(--silber)}
+.rcp-tab-r.bronze .rcp-tab-p{color:var(--bronze)}
+/* Die Bewegung gegenüber dem Vormonat; die weiteste nach oben und unten
+   steht in ihrer Farbe hinterlegt. */
+.rcp-tab-z{flex:none;width:30px;height:19px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;gap:1px;
+  font-family:'Sometype Mono',monospace;font-size:10.5px;font-weight:700;color:var(--faint)}
+.rcp-tab-z svg{width:10px;height:10px;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+.rcp-tab-z{--strich:2}
+.rcp-tab-z.auf{color:var(--acid)}
+.rcp-tab-z.ab{color:var(--red)}
+.rcp-tab-z.max.auf{background:rgba(190,242,100,.13);box-shadow:inset 0 0 0 1px rgba(190,242,100,.42)}
+.rcp-tab-z.max.ab{background:rgba(240,86,106,.13);box-shadow:inset 0 0 0 1px rgba(240,86,106,.42)}
+.rcp-tab-r > .rcp-av{flex:none}
+.rcp-tab-n{flex:1;min-width:0;font-size:13px;font-weight:700;color:var(--ink);line-height:1.2;overflow-wrap:anywhere}
+.rcp-tab-b{flex:none;width:52px;display:flex;flex-direction:column;gap:3px}
+.rcp-tab-wl{display:block;height:4px;border-radius:2px;background:rgba(240,86,106,.6);overflow:hidden}
+.rcp-tab-wl i{display:block;height:100%;background:var(--acid)}
+.rcp-tab-b small{font-size:9.5px;color:var(--muted);text-align:center;line-height:1}
+.rcp-tab-e{flex:none;min-width:34px;text-align:right;font-family:'Archivo Black',sans-serif;font-weight:400;font-size:14px;color:var(--ink)}
+
+/* Das Team der Saison: Blau ist, was zu zweit geholt wurde, wie im
+   Awards-Reiter [§C25]. */
+.rcp-team{position:relative;margin:0 0 18px;padding:12px 14px 13px;border-radius:16px;cursor:pointer;
+  background:radial-gradient(120% 90% at 0% 0%,rgba(86,180,232,.11),transparent 60%),var(--surface);
+  box-shadow:inset 0 0 0 1px rgba(86,180,232,.24)}
+.rcp-team::before{content:"";position:absolute;left:16px;right:16px;top:0;height:2px;border-radius:0 0 2px 2px;
+  background:linear-gradient(90deg,transparent,rgba(86,180,232,.8),transparent)}
+.rcp-team:active{transform:scale(.99)}
+.rcp-team-l{display:flex;align-items:center;gap:6px;font-family:'Sometype Mono',monospace;font-size:9.5px;font-weight:700;
+  letter-spacing:.18em;text-transform:uppercase;color:var(--blue)}
+.rcp-team-l .ic svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+.rcp-team-m{display:flex;align-items:center;gap:12px;margin:10px 0}
+.rcp-team-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.rcp-team-t b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:16px;letter-spacing:-.01em;line-height:1.15;overflow-wrap:anywhere}
+.rcp-team-t small{font-size:10.5px;color:var(--muted)}
+.rcp-team-e{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.rcp-team-e b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:22px;line-height:1}
+.rcp-team-e b.auf{color:var(--acid)}
+.rcp-team-e b.ab{color:var(--red)}
+.rcp-team-e small{font-family:'Sometype Mono',monospace;font-size:8.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.rcp-team .srn-z{margin:0}
+
+/* Die Wirkung auf die Laufbahn: je Spieler eine Bahn um die Null, rechts,
+   was dazukam, in der Farbe seiner Quelle, links rot gestreift, was
+   verloren ging. Darüber die neuen Zeichen auf einer Fläche im Violett der
+   Insignien [§C25]. */
+.rcp-is{margin:0 0 14px;padding:14px 6px 12px;border-radius:16px;gap:12px 6px;
+  background:radial-gradient(120% 90% at 50% 0%,rgba(167,139,250,.12),transparent 64%),var(--surface);
+  box-shadow:inset 0 0 0 1px rgba(167,139,250,.22)}
+/* Drei in einer Reihe: mit den 84 px des Blatts standen bei 360 px nur zwei
+   nebeneinander, und neun neue Zeichen waren fünf Reihen hoch. Die Regeln
+   nennen beide Klassen: `16-spieltag.css` kommt später und gewänne sonst
+   bei gleicher Spezifität. */
+.rcp-is.nd-is-viele .nd-is-sp{width:88px}
+.rcp-is.nd-is-viele .nd-is-neu,.rcp-is.nd-is-viele .nd-is-z svg{width:72px;height:72px}
+.rcp-is.nd-is-viele .nd-is-av .av{--av:26px;width:26px;height:26px;font-size:10px}
+.rcp-is.nd-is-viele .nd-is-sp b{font-size:12px}
+.rcp-is.nd-is-viele .nd-is-sp small{font-size:10.5px}
+.rcp-lb{display:flex;flex-direction:column;gap:7px;margin:2px 0 8px}
+.rcp-lb-z{display:grid;grid-template-columns:24px minmax(0,64px) minmax(0,1fr) 44px;align-items:center;gap:8px;cursor:pointer}
+.rcp-lb-n{font-size:12px;color:var(--ink2);line-height:1.2;overflow-wrap:anywhere}
+.rcp-lb-b{position:relative;height:12px;border-radius:3px;background:rgba(255,255,255,.035)}
+.rcp-lb-b u{position:absolute;top:-3px;bottom:-3px;width:1px;margin-left:-.5px;background:var(--line2)}
+.rcp-lb-b i{position:absolute;top:0;bottom:0;border-radius:2px;box-shadow:0 0 0 1px var(--bg2)}
+.rcp-lb-b i.auszeichnung{background:var(--purple)}
+.rcp-lb-b i.monat{background:var(--gold)}
+.rcp-lb-b i.rekord{background:var(--silber)}
+.rcp-lb-b i.weg{background:repeating-linear-gradient(135deg,rgba(240,86,106,.9) 0 3px,rgba(240,86,106,.42) 3px 6px)}
+.rcp-lb-d{text-align:right;font-family:'Archivo Black',sans-serif;font-weight:400;font-size:13px;color:var(--ink2)}
+.rcp-lb-d.auf{color:var(--acid)}
+.rcp-lb-d.ab{color:var(--red)}
+.rcp-lb-leg{display:flex;flex-wrap:wrap;gap:6px 14px;margin:8px 0 18px;font-size:11px;color:var(--ink2)}
+.rcp-lb-leg span{display:inline-flex;align-items:center;gap:6px}
+.rcp-lb-leg u{display:inline-block;width:12px;height:8px;border-radius:2px}
+.rcp-lb-leg .auszeichnung u{background:var(--purple)}
+.rcp-lb-leg .monat u{background:var(--gold)}
+.rcp-lb-leg .rekord u{background:var(--silber)}
+.rcp-lb-leg b{color:var(--ink);font-weight:700}
+
+/* Die Rekorde nach ihren Haltern. */
+.rcp-rw-arten{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.rcp-rw-arten span{font-size:11px;color:var(--ink2);padding:4px 10px;border-radius:99px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)}
+.rcp-rw-arten b{font-family:'Archivo Black',sans-serif;font-weight:400;color:var(--ink);margin-right:2px}
+.rcp-rw{display:flex;flex-direction:column;gap:8px;margin:0 0 16px}
+.rcp-rw-p{background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);border-radius:14px;padding:10px 10px 10px 11px}
+.rcp-rw-k{display:flex;align-items:center;gap:9px;cursor:pointer;min-width:0}
+.rcp-rw-k b{flex:0 1 auto;min-width:0;font-size:13.5px;font-weight:700;color:var(--ink);overflow-wrap:anywhere}
+.rcp-rw-s{flex:1 1 30px;height:4px;border-radius:2px;background:rgba(255,255,255,.04);overflow:hidden}
+.rcp-rw-s i{display:block;height:100%;width:var(--w);border-radius:2px;background:linear-gradient(90deg,rgba(194,201,208,.25),var(--silber))}
+.rcp-rw-k em{flex:none;font-style:normal;font-family:'Archivo Black',sans-serif;font-size:17px;color:var(--ink);min-width:20px;text-align:right}
+.rcp-rw-l{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin-top:9px}
+.rcp-rw-r{display:flex;align-items:center;gap:7px;min-width:0;padding:5px 7px 5px 5px;border-radius:10px;background:var(--bg2);cursor:pointer}
+.rcp-rw-r:active{background:var(--surface2)}
+.rcp-rw-r > span{display:flex;flex-direction:column;gap:2px;min-width:0}
+.rcp-rw-r b{font-size:11px;font-weight:700;color:var(--ink);line-height:1.2;overflow-wrap:break-word}
+.rcp-rw-r b.lang{font-size:10px;letter-spacing:-.02em}
+.rcp-rw-r b.sehrlang{font-size:9.5px;letter-spacing:-.03em}
+.rcp-rw-r small{font-family:'Sometype Mono',monospace;font-size:9px;color:var(--muted);line-height:1.2}
+.rcp-rw-r .zk{flex:none}
+
+/* Die Beinamen auf ihrem Band, ohne Lauflicht. */
+.rcp-bns{display:flex;flex-direction:column;gap:7px;margin:0 0 10px}
+.rcp-bn{display:flex;align-items:center;gap:12px;min-width:0;padding:10px 12px 10px 10px;border-radius:14px;cursor:pointer;
+  background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)}
+.rcp-bn:active{background:var(--surface2)}
+.rcp-bn > .rav,.rcp-bn > .rcp-av{flex:none}
+.rcp-bn-t{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:7px}
+.rcp-bn .pp-banner{max-width:100%}
+.rcp-bn .pp-title-pill{font-size:12px;padding:4px 12px;white-space:normal;line-height:1.2}
+.rcp-bn .pp-title-pill::after{content:none;animation:none}
+.rcp-bn-t small{font-size:10.5px;color:var(--muted);line-height:1.35;padding-left:2px}
+.rcp-bn-t small b{color:var(--ink2);font-weight:700}
+.rcp-bn-neg{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.rcp-bn-neg > span{display:inline-flex;align-items:center;gap:7px;max-width:100%;padding:5px 10px 5px 5px;border-radius:10px;cursor:pointer;
+  background:rgba(240,86,106,.05);box-shadow:inset 0 0 0 1px rgba(240,86,106,.24)}
+.rcp-bn-neg > span > span{display:flex;flex-direction:column;gap:1px;min-width:0}
+.rcp-bn-neg b{font-size:11px;font-weight:700;color:var(--ink)}
+.rcp-bn-neg small{font-size:9.5px;color:var(--muted)}
+
+/* Die Auszeichnungen: die Säulen der Ehrung als eigene Fläche, die Zahlen
+   ohne Gold — das trägt im Rückblick der Sieger. */
+.rcp-eh .eh-buehne{--fuge:6px;margin:0;padding:14px 6px 12px;gap:9px var(--fuge)}
+.rcp-eh .eh-s-w{color:var(--ink)}
+.eh-fuss.rcp-eh-k{border-top:0;padding:8px 2px 0;margin-bottom:16px}
+.rcp-eh-k .eh-k em{color:var(--ink2)}
+
+/* Der Platzhalter für das, was nachkommt: still, ohne Schimmer — er steht
+   eine halbe Sekunde, meist unter dem Rand des Bildschirms. */
+.rcp-spaet{display:grid;gap:9px;margin:4px 0 22px}
+.rcp-spaet i{display:block;height:22px;border-radius:7px;background:rgba(255,255,255,.035)}
+.rcp-spaet i:first-child{width:46%;height:11px;margin-bottom:4px}
+
+@media (prefers-reduced-motion:no-preference){
+  .rcp-kal-t{animation:rcpKalDa .4s cubic-bezier(.2,.8,.3,1) both;animation-delay:calc(var(--i,0) * 12ms)}
+  .rcp-tab-r::before{transform-origin:left;animation:rcpWachs .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(.1s + var(--i,0) * 35ms)}
+  .rcp-lb-b i{transform-origin:left;animation:rcpWachs .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(.15s + var(--i,0) * 40ms)}
+  .rcp-lb-b i.weg{transform-origin:right}
+  .rcp-rw-s i{transform-origin:left;animation:rcpWachs .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(.1s + var(--i,0) * 40ms)}
+  .rcp-is .nd-is-neu{animation-delay:calc(.1s + var(--i,0) * 80ms)}
+}
+@keyframes rcpKalDa{from{opacity:0;transform:scale(.8)}}
+/* Unter der Tabelle steht der Bezug ihrer Pfeile; er gehört zu ihr und
+   nicht zur nächsten Überschrift. */
+.rcp-tab-bezug{margin:-10px 0 18px}

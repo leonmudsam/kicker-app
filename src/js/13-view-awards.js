@@ -1314,6 +1314,8 @@ function _awNameVon(key, x){
 //   o.liste die ganze Liste für die Lage im Feld
 //   o.rang  Platz 2 oder 3, wo die Kachel keinen Platz 1 zeigt (Duo-Blatt)
 //   o.attr  was ein Tippen öffnet; ohne Angabe das Award-Blatt
+//   o.metall Metall statt Gold für das Können — im Rückblick trägt Gold
+//           der Sieger, sonst nichts [§C31]
 // Ein langes Wort im Kachelnamen wird kleiner, nicht gebrochen [§C27].
 // `overflow-wrap` hielt den Namen in der Kachel und brach ihn dafür mitten
 // im Wort: „Unaufhaltsa|m", „Showmaste|r" — ohne Trennstrich, weil nicht
@@ -1331,8 +1333,8 @@ function awKachelHtml(key, top, o){
   const ids = leer ? [] : awIds(key, x);
   const neg = awNeg(key);
   // Drei Rollen, nicht sechs Katalogtöne [§C25].
-  const ton = neg ? 'ton-neg' : ids.length >= 2 ? 'ton-team' : 'ton-pos';
-  const zkTon = neg ? 'rot' : ids.length >= 2 ? 'blau' : 'gold';
+  const ton = neg ? 'ton-neg' : ids.length >= 2 ? 'ton-team' : o.metall ? 'ton-metall' : 'ton-pos';
+  const zkTon = neg ? 'rot' : ids.length >= 2 ? 'blau' : o.metall ? '' : 'gold';
   const gross = !!o.gross && !leer;
   const attr = o.attr != null ? o.attr : `data-award="${esc(key)}"`;
   const kopf = `<div class="aw-t-kopf">${zkHtml(AW_IC[key] || 'trophy', 'k', leer ? '' : zkTon)}`
