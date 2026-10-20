@@ -3790,26 +3790,42 @@
     font-family:'Sometype Mono',monospace}
   .tun .w b{color:var(--ink2);font-weight:700}
 
-  .pp-title-row{display:flex;flex-direction:column;align-items:center;gap:5px;margin-top:10px}
+  .pp-title-row{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:10px}
   .pp-banner{position:relative;display:inline-flex;isolation:isolate;padding:0 11px}
-  .pp-banner::before,.pp-banner::after{content:"";position:absolute;top:4px;bottom:-4px;width:24px;
-    z-index:-1;background:linear-gradient(180deg,rgba(var(--ttr,247,207,74),.30),rgba(var(--ttr,247,207,74),.14));
-    box-shadow:inset 0 1px 0 rgba(var(--ttr,247,207,74),.40)}
-  .pp-banner::before{left:0;clip-path:polygon(0 0,100% 0,100% 100%,0 100%,7px 50%)}
-  .pp-banner::after{right:0;clip-path:polygon(0 0,100% 0,calc(100% - 7px) 50%,100% 100%,0 100%)}
+  .pp-banner::before,.pp-banner::after{content:"";position:absolute;top:4px;bottom:-4px;width:24px;z-index:-1;
+    box-shadow:inset 0 1px 0 rgba(var(--ttr,247,207,74),.45)}
+  .pp-banner::before{left:0;clip-path:polygon(0 0,100% 0,100% 100%,0 100%,7px 50%);
+    background:linear-gradient(90deg,transparent 46%,rgba(0,0,0,.5)),
+      linear-gradient(180deg,rgba(var(--ttr,247,207,74),.34),rgba(var(--ttr,247,207,74),.15))}
+  .pp-banner::after{right:0;clip-path:polygon(0 0,100% 0,calc(100% - 7px) 50%,100% 100%,0 100%);
+    background:linear-gradient(270deg,transparent 46%,rgba(0,0,0,.5)),
+      linear-gradient(180deg,rgba(var(--ttr,247,207,74),.34),rgba(var(--ttr,247,207,74),.15))}
   .pp-title-pill{position:relative;overflow:hidden;display:inline-flex;align-items:center;gap:7px;
     font-size:12.5px;font-weight:700;padding:5px 14px;border-radius:2px;color:var(--tt,var(--gold));
-    background:linear-gradient(180deg,rgba(var(--ttr,247,207,74),.26),rgba(var(--ttr,247,207,74),.11) 55%,rgba(var(--ttr,247,207,74),.19));
-    box-shadow:inset 0 1px 0 rgba(var(--ttr,247,207,74),.65),inset 0 -1px 0 rgba(var(--ttr,247,207,74),.45),
-      0 4px 10px -6px rgba(0,0,0,.7)}
+    text-shadow:0 0 12px rgba(var(--ttr,247,207,74),.45);
+    background:linear-gradient(180deg,rgba(var(--ttr,247,207,74),.34),rgba(var(--ttr,247,207,74),.12) 52%,rgba(var(--ttr,247,207,74),.24));
+    box-shadow:inset 0 1px 0 rgba(var(--ttr,247,207,74),.8),inset 0 -1px 0 rgba(var(--ttr,247,207,74),.5),
+      0 4px 10px -6px rgba(0,0,0,.7),0 0 22px -6px rgba(var(--ttr,247,207,74),.6)}
   .pp-title-pill::after{content:"";position:absolute;top:0;bottom:0;left:0;width:45%;pointer-events:none;
-    background:linear-gradient(100deg,transparent,rgba(255,255,255,.20),transparent);
+    background:linear-gradient(100deg,transparent,rgba(255,244,210,.32),transparent);
     transform:translateX(-120%);animation:ppBannerGlanz 7.5s ease-in-out 1.4s infinite}
   @keyframes ppBannerGlanz{0%{transform:translateX(-120%)}22%,100%{transform:translateX(330%)}}
+  @keyframes ppBannerAuf{from{transform:scaleX(.15);opacity:0}}
+  @keyframes ppBannerEndeL{from{transform:translateX(12px);opacity:0}}
+  @keyframes ppBannerEndeR{from{transform:translateX(-12px);opacity:0}}
+  @media (prefers-reduced-motion:no-preference){
+    .pp-title-pill{animation:ppBannerAuf .6s cubic-bezier(.2,.9,.3,1) .2s both}
+    .pp-banner::before{animation:ppBannerEndeL .45s cubic-bezier(.2,.8,.3,1) .6s both}
+    .pp-banner::after{animation:ppBannerEndeR .45s cubic-bezier(.2,.8,.3,1) .6s both}
+  }
   @media (prefers-reduced-motion:reduce){.pp-title-pill::after{animation:none;opacity:0}}
   .pp-title-pill .i{display:flex}
   .pp-title-pill .i svg{width:14px;height:14px}
-  .pp-title-sub{font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  .pp-title-sub{display:flex;align-items:center;gap:7px;font-size:9.5px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--muted)}
+  .pp-title-sub::before,.pp-title-sub::after{content:"";width:16px;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(247,207,74,.55))}
+  .pp-title-sub::after{background:linear-gradient(270deg,transparent,rgba(247,207,74,.55))}
 
   .chron-strip{display:flex;gap:7px;overflow-x:auto;padding:2px 0 6px;
     scrollbar-width:none;-webkit-overflow-scrolling:touch}
@@ -4366,7 +4382,6 @@
   .pp-root .pp-banner{--tt:#f7cf4a!important;--ttr:247,207,74!important}
   .pp-root .chron-one{--tt:#f7cf4a!important;--ttr:247,207,74!important}
   .pp-root .tmark{--tt:#f7cf4a!important;--ttr:247,207,74!important}
-  .pp-root .pp-banner.schatten{--tt:#f0566a!important;--ttr:240,86,106!important}
   .pp-root .chron-one.schatten{--tt:#f0566a!important;--ttr:240,86,106!important}
   .pp-root .tmark.schatten{--tt:#f0566a!important;--ttr:240,86,106!important}
 
@@ -5812,22 +5827,92 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   .nd-ff .ff{margin:0}
   .ff-zw-m small b{color:var(--ink);font-weight:600}
 
-.eh-reihe{display:flex;flex-wrap:wrap;gap:5px;margin:2px 0 8px}
-.eh-z{display:inline-flex}
-.eh-sp{border:1px solid var(--line);border-radius:12px;background:var(--surface);
-  overflow:hidden;margin-bottom:8px}
-.eh-sp-k{display:flex;align-items:center;gap:10px;padding:10px 13px;background:var(--surface2);
-  border-bottom:1px solid var(--line)}
-.eh-sp-k b{flex:1 1 auto;min-width:0;font-family:'Archivo Black',sans-serif;font-size:13px;
+.eh-buehne{position:relative;display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-end;
+  gap:10px 14px;margin:2px 4px 0;padding:10px 10px 9px;border-radius:14px;min-width:0;
+  background:radial-gradient(120% 90% at 50% 100%,color-mix(in srgb,var(--purple) 14%,transparent),transparent 62%),
+    linear-gradient(180deg,color-mix(in srgb,var(--purple) 6%,transparent),transparent 72%);
+  border:1px solid color-mix(in srgb,var(--purple) 22%,transparent)}
+.eh-s{display:flex;flex-direction:column;align-items:center;min-width:34px;max-width:60px;cursor:pointer}
+.eh-s-z{display:flex}
+.eh-s-z .zk{position:relative;overflow:hidden}
+.eh-s-w{margin:4px 0;font-style:normal;font-family:'Archivo Black',sans-serif;font-size:11.5px;line-height:1;
+  color:var(--gold);white-space:nowrap}
+.eh-saeule{display:flex;flex-direction:column;gap:2px;width:16px}
+.eh-saeule i{flex:1 1 0;min-height:3px;border-radius:2px}
+.eh-saeule i:first-child{border-radius:4px 4px 2px 2px}
+.eh-saeule i.legendary{background:var(--gold);box-shadow:0 0 10px rgba(247,207,74,.45)}
+.eh-saeule i.rare{background:var(--purple);box-shadow:0 0 8px rgba(167,139,250,.3)}
+.eh-saeule i.common{background:var(--acid);opacity:.85}
+.eh-s-av{display:flex;margin-top:5px}
+.eh-buehne.eng{gap:8px 3px;flex-wrap:nowrap;padding-left:6px;padding-right:6px}
+.eh-buehne.eng .eh-s{min-width:0;flex:1 1 0;max-width:40px}
+.eh-buehne.eng .eh-saeule{width:13px}
+.eh-buehne.eng .eh-s-w{font-size:10px}
+.eh-fuss{display:flex;flex-wrap:wrap;gap:5px 12px;padding:8px 13px 10px;border-top:1px solid var(--line)}
+.eh-k{display:inline-flex;align-items:baseline;gap:4px;font-size:11px;color:var(--ink2);white-space:nowrap}
+.eh-k i{align-self:center;width:8px;height:8px;border-radius:2px;flex:0 0 auto}
+.eh-k.legendary i{background:var(--gold)}
+.eh-k.rare i{background:var(--purple)}
+.eh-k.common i{background:var(--acid)}
+.eh-k b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:12px;color:var(--ink)}
+.eh-k em{font-style:normal;font-family:'Sometype Mono',monospace;font-size:10.5px;font-weight:700;color:var(--gold)}
+
+.nd-eh{padding:16px 10px 12px}
+.nd-eh .eh-buehne{margin:0;padding:0;background:none;border:none;gap:14px 16px}
+.eh-buehne.gross .eh-s{max-width:none}
+.eh-buehne.gross .eh-saeule{width:22px}
+.eh-buehne.gross .eh-s-w{font-size:13px;margin:5px 0}
+.eh-s-n{margin-top:4px;font-size:11px;font-weight:700;color:var(--ink);white-space:nowrap}
+.eh-anteil{margin:0 0 6px}
+.eh-anteil-k{display:flex;align-items:baseline;gap:8px;margin:0 2px 8px}
+.eh-anteil-k b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:26px;line-height:1;color:var(--gold)}
+.eh-anteil-k span{font-family:'Sometype Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--muted)}
+.eh-anteil-b{display:flex;gap:2px;height:8px;border-radius:999px;overflow:hidden}
+.eh-anteil-b i{flex:1 1 0;min-width:3px}
+.eh-anteil-b i.legendary{background:var(--gold)}
+.eh-anteil-b i.rare{background:var(--purple)}
+.eh-anteil-b i.common{background:var(--acid)}
+.eh-anteil-l{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:8px}
+.eh-p{border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden;margin-bottom:8px}
+.eh-p-k{display:flex;align-items:center;gap:10px;padding:9px 13px;background:var(--surface2);border-bottom:1px solid var(--line)}
+.eh-p-k b{flex:1 1 auto;min-width:0;font-family:'Archivo Black',sans-serif;font-weight:400;font-size:13px;
   color:var(--ink);overflow-wrap:anywhere}
-.eh-sp-k em{font-style:normal;font-family:'Archivo Black',sans-serif;font-size:15px;color:var(--gold)}
+.eh-p-k em{font-style:normal;font-family:'Archivo Black',sans-serif;font-size:15px;color:var(--gold)}
 .eh-q{display:flex;align-items:center;gap:10px;padding:8px 13px}
 .eh-q + .eh-q{border-top:1px solid var(--line)}
+.eh-q > .zk{position:relative;overflow:hidden}
 .eh-q-t{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px}
 .eh-q-t b{font-size:12.5px;font-weight:700;color:var(--ink);overflow-wrap:anywhere}
 .eh-q-t small{font-family:'Sometype Mono',monospace;font-size:9.5px;color:var(--muted);letter-spacing:.03em}
-.eh-q em{font-style:normal;font-family:'Sometype Mono',monospace;font-size:12px;font-weight:700;color:var(--gold)}
+.eh-q-m{display:block;height:3px;margin-top:3px;border-radius:2px;background:rgba(255,255,255,.06);overflow:hidden}
+.eh-q-m i{display:block;height:100%;border-radius:2px;background:var(--acid)}
+.eh-q.legendary .eh-q-m i{background:var(--gold)}
+.eh-q.rare .eh-q-m i{background:var(--purple)}
+.eh-q em{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;gap:1px;font-style:normal;
+  font-family:'Sometype Mono',monospace;font-size:12px;font-weight:700;color:var(--gold)}
+.eh-q em small{font-size:9px;font-weight:400;color:var(--muted)}
+.eh-g{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px 9px 9px}
+.eh-q + .eh-g{border-top:1px solid var(--line)}
+.eh-g-t{position:relative;display:flex;flex-direction:column;gap:2px;min-width:0;padding:7px 9px 9px;border-radius:10px;
+  background:var(--surface2);border:1px solid var(--line);overflow:hidden}
+.eh-g-o{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:3px}
+.eh-g-o em{font-style:normal;font-family:'Sometype Mono',monospace;font-size:11.5px;font-weight:700;color:var(--gold)}
+.eh-g-t > b{font-size:11.5px;font-weight:700;line-height:1.2;color:var(--ink);overflow-wrap:break-word}
+.eh-g-t > small{font-family:'Sometype Mono',monospace;font-size:9px;color:var(--muted)}
+.eh-g-t .eh-q-m{position:absolute;left:0;right:0;bottom:0;height:2px;margin:0;border-radius:0}
 .eh-zeit{margin:8px 2px 2px}
+@media (prefers-reduced-motion:no-preference){
+  .eh-saeule{transform-origin:bottom;animation:spY .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 70ms + 80ms)}
+  .eh-s-z{animation:ehSetzt .45s cubic-bezier(.3,1.5,.5,1) both;animation-delay:calc(var(--i,0) * 70ms + 520ms)}
+  .eh-s-w{animation:spDa .35s ease-out both;animation-delay:calc(var(--i,0) * 70ms + 600ms)}
+  .eh-anteil-b{transform-origin:left;animation:spX .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:.2s}
+}
+@keyframes ehSetzt{from{opacity:0;transform:translateY(-8px) scale(.7)}}
+.eh-s-z .zk.gold > .glanz-bahn::after,.eh-q > .zk.gold > .glanz-bahn::after{
+  content:"";position:absolute;top:0;bottom:0;left:0;width:250%;pointer-events:none;
+  background:linear-gradient(105deg,transparent 38%,rgba(255,236,170,.55) 50%,transparent 62%);
+  transform:translateX(-84%);animation:glanzZug 9s ease-in-out infinite;animation-delay:var(--gd,0s)}
 
   .geruest{position:relative;overflow:hidden;pointer-events:none}
   .gk{display:block;border-radius:7px;background:var(--surface2)}
@@ -6048,7 +6133,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.20.dfbec06a';
+const BUILD_VERSION='2026.10.20.6afb09fa';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -23811,8 +23896,10 @@ function _newsPrestigeBand(s){
   else nimm(d.laufbahn);
   const pm = pmap();
   const alle = Object.keys(je).filter(pid => pm[pid]).map(pid => {
-    const vor = Math.round(Number(je[pid].vor) || 0), nach = Math.round(Number(je[pid].nach) || 0);
-    return {pid, d: nach - vor, n: pm[pid].name || ''};
+    const w = je[pid];
+    const vor = Math.round(Number(w.vor) || 0), nach = Math.round(Number(w.nach) || 0);
+    const tafel = isFinite(w.rek) && isFinite(w.mon) && w.rek != null && w.mon != null;
+    return {pid, d: tafel ? Math.round(w.rek + w.mon) : nach - vor, n: pm[pid].name || ''};
   }).filter(x => x.d);
   const plus = alle.filter(x => x.d > 0).sort((a, b) => b.d - a.d || a.n.localeCompare(b.n, 'de'));
   const minus = alle.filter(x => x.d < 0).sort((a, b) => a.d - b.d || a.n.localeCompare(b.n, 'de'));
@@ -26548,12 +26635,11 @@ function _newsEhrungStory(liste, T, letzteM, rang){
     + ' für ' + _namenKurz(spieler.map(x => nm(x.pid)));
   let top = null;
   spieler.forEach(x => x.posten.forEach(q => {
-    if(q.klasse !== 'common' && (!top || ORD[q.klasse] < ORD[top.q.klasse] || (q.klasse === top.q.klasse && q.p > top.q.p)))
+    if(!top || ORD[q.klasse] < ORD[top.q.klasse] || (q.klasse === top.q.klasse && q.p > top.q.p))
       top = {pid:x.pid, q};
   }));
-  const desc = top
-    ? `${nm(top.pid)} holt dabei „${top.q.name}“ zum ${top.q.bis}. Mal, eine ${top.q.klasse === 'legendary' ? 'legendäre' : 'seltene'} Auszeichnung.`
-    : `Zusammen ${gesamt} Prestige für die Laufbahn.`;
+  const klasse = {legendary:', eine legendäre Auszeichnung', rare:', eine seltene Auszeichnung'}[top.q.klasse] || '';
+  const desc = `${nm(top.pid)} holt dabei „${top.q.name}“ zum ${top.q.bis === 1 ? 'ersten' : top.q.bis + '.'} Mal${klasse}.`;
   const tage = [...new Set(liste.map(e => tagKey(e.t)))];
   return {
     id:'ehrung_' + letzteM.id, cat:'badge', ic:'medal', when:new Date(T),
@@ -26564,47 +26650,109 @@ function _newsEhrungStory(liste, T, letzteM, rang){
 }
 
 function _ehrungTon(k){ return k === 'legendary' ? 'gold' : k === 'rare' ? 'viol' : 'gruen'; }
+const EH_KLASSEN = [['legendary', 'legendär'], ['rare', 'selten'], ['common', 'gewöhnlich']];
+const _ehZahl = v => komma(Math.round(v * 10) / 10).replace(',0', '');
+
+function _ehrungSaeulen(sp, gross){
+  const pm = pmap();
+  const da = sp.filter(x => pm[x.pid] && x.summe > 0);
+  if(!da.length) return '';
+  const eng = !gross && da.length > 6;
+  const H = gross ? 96 : 52, MIN = 6, max = Math.max(...da.map(x => x.summe));
+  let gold = 0;
+  const saeule = (x, i) => {
+    const h = Math.max(MIN, Math.round(H * x.summe / max));
+    const posten = (x.posten || []).filter(q => q.p > 0);
+    const gewoehnlich = posten.filter(q => q.klasse === 'common');
+    const stuecke = posten.filter(q => q.klasse !== 'common')
+      .map(q => ({klasse:q.klasse, p:q.p, name:q.name}))
+      .concat(gewoehnlich.length ? [{klasse:'common', p:gewoehnlich.reduce((n, q) => n + q.p, 0),
+        name:gewoehnlich.length === 1 ? gewoehnlich[0].name : gewoehnlich.length + ' gewöhnliche'}] : [])
+      .map(q => `<i class="${q.klasse}" style="flex-grow:${q.p}" title="${esc(q.name)}"></i>`).join('');
+    const top = posten[0];
+    return `<span class="eh-s" data-pid="${esc(x.pid)}" style="--i:${i}">`
+      + `<span class="eh-s-z" title="${esc(top ? top.name : '')}">${top ? _ehrungKachel(top, () => gold++, gross ? '' : 'k') : ''}</span>`
+      + `<em class="eh-s-w num">+${eng ? Math.round(x.summe) : _ehZahl(x.summe)}</em>`
+      + `<span class="eh-saeule" style="height:${h}px">${stuecke}</span>`
+      + `<span class="eh-s-av" title="${esc(pm[x.pid].name)}">${rcpAvHtml(x.pid, gross ? 40 : eng ? 26 : 30, {})}</span>`
+      + (gross ? `<b class="eh-s-n">${esc(pm[x.pid].name)}</b>` : '')
+      + `</span>`;
+  };
+  return `<div class="eh-buehne${gross ? ' gross' : eng ? ' eng' : ''}">${da.map(saeule).join('')}</div>`;
+}
+
+function _ehrungKachel(q, naechste, groesse){
+  const z = zkHtml(q.ic, groesse == null ? 'k' : groesse, _ehrungTon(q.klasse));
+  return q.klasse === 'legendary' ? z.replace(/<\/span>$/, glanzBahn(1 + naechste() * .35) + '</span>') : z;
+}
+
+function _ehrungKlassen(sp){
+  const k = {};
+  sp.forEach(x => (x.posten || []).forEach(q => {
+    const z = k[q.klasse] || (k[q.klasse] = {n:0, p:0});
+    z.n += q.mal; z.p += q.p;
+  }));
+  return EH_KLASSEN.filter(([id]) => k[id] && k[id].p > 0).map(([id, wort]) => ({id, wort, n:k[id].n, p:k[id].p}));
+}
+const _ehrungKlasseHtml = z => `<span class="eh-k ${z.id}"><i></i><b class="num">${z.n}</b> ${esc(z.wort)}`
+  + ` <em class="num">+${_ehZahl(z.p)}</em></span>`;
 
 function _newsEhrungHtml(s, isRead, fadenHtml){
   const d = s.dataRef || {};
   const sp = Array.isArray(d.spieler) ? d.spieler : [];
-  const gesehen = new Set(), zeichen = [];
-  sp.flatMap(x => x.posten || []).slice().sort((a, b) => ({legendary:0, rare:1, common:2}[a.klasse] - {legendary:0, rare:1, common:2}[b.klasse]))
-    .forEach(q => { if(!gesehen.has(q.id)){ gesehen.add(q.id); zeichen.push(q); } });
-  const lb = {};
-  sp.forEach(x => { lb[x.pid] = {vor:0, nach:x.summe}; });
-  return `<div class="nf-card nf-s-badge nf-ehrung nfc-badge${isRead ? ' read' : ''}" data-sid="${esc(s.id)}">
+  const klassen = _ehrungKlassen(sp);
+  const glanz = klassen.some(z => z.id === 'legendary');
+  return `<div class="nf-card nf-s-badge nf-ehrung nfc-badge${glanz ? ' nf-glanz' : ''}${isRead ? ' read' : ''}" data-sid="${esc(s.id)}"`
+    + `${glanz ? ` style="--gv:${_newsGlanzVersatz(s.id)}s"` : ''}>
     ${_newsMotiv('badge', s)}
     <div class="nf-top"><span class="nf-rub"><i>${svgI('medal')}</i><b>DIE EHRUNG</b></span>
       <span class="nf-when">${svgI('clock')}${esc(_newsUhrzeit(s.when))}${isRead ? '' : '<span class="nf-dot"></span>'}</span></div>
+    ${_ehrungSaeulen(sp, false)}
     <div class="nf-gr"><div class="nf-gr-r"><div class="nf-h">${esc(s.title)}</div><div class="nf-d">${_newsBetont(s.desc || '')}</div></div>
       <span class="nf-chev">${svgI('chevron')}</span></div>
-    <div class="eh-reihe">${zeichen.map((q, i) => `<span class="eh-z" style="--i:${i}" title="${esc(q.name)}">${zkHtml(q.ic, 'k', _ehrungTon(q.klasse))}</span>`).join('')}</div>
-    ${_newsPrestigeBand({dataRef:{laufbahn:lb}})}${fadenHtml || ''}</div>`;
+    ${klassen.length ? `<div class="eh-fuss">${klassen.map(_ehrungKlasseHtml).join('')}</div>` : ''}${fadenHtml || ''}</div>`;
 }
 
-function _newsEhrungBlatt(s){
+function _ndEhrungBlatt(s){
   const d = s.dataRef || {};
   const sp = Array.isArray(d.spieler) ? d.spieler : [];
-  if(!sp.length) return '';
   const pm = pmap();
-  const z = v => String(v).replace('.', ',');
-  const mal = q => q.mal === 1 ? `${q.bis}. Mal` : `${q.bis - q.mal + 1}. bis ${q.bis}. Mal`;
+  if(!sp.some(x => pm[x.pid])) return null;
+  const kopf = `<div class="nd-buehne nd-eh">${_ehrungSaeulen(sp, true)}</div>`;
+  const klassen = _ehrungKlassen(sp);
+  const summe = klassen.reduce((n, z) => n + z.p, 0);
+  const anteil = klassen.length ? `<div class="eh-anteil">`
+    + `<div class="eh-anteil-k"><b class="num">+${_ehZahl(summe)}</b><span>Prestige für die Laufbahn</span></div>`
+    + `<div class="eh-anteil-b">${klassen.map(z => `<i class="${z.id}" style="flex-grow:${z.p}"></i>`).join('')}</div>`
+    + `<div class="eh-anteil-l">${klassen.map(_ehrungKlasseHtml).join('')}</div></div>` : '';
+  const mal = q => q.mal === 1 ? `${q.bis}. Mal` : `${q.bis - q.mal + 1}.–${q.bis}. Mal`;
+  const voll = q => auszeichnungsTeilwert(q.id, 1) * q.mal;
+  const rest = q => { const v = voll(q); return v > 0 ? Math.min(1, q.p / v) : 1; };
+  const strich = q => `<span class="eh-q-m" role="img" aria-label="${Math.round(rest(q) * 100)} % des vollen Werts">`
+    + `<i style="width:${(rest(q) * 100).toFixed(1)}%"></i></span>`;
   const zeit = d.ab && d.bis ? `Aus den Partien ${d.tage > 1 ? 'seit dem ' + datumFmt(d.ab, 'tm') + ', ' : 'von '}`
     + `${datumFmt(d.ab, 'uhr')} bis ${datumFmt(d.bis, 'uhr')} Uhr.` : '';
-  const zahlen = rcpZahlenHtml([
-    {v:d.zahl || 0, l:(d.zahl === 1 ? 'Auszeichnung' : 'Auszeichnungen')},
-    {v:'+' + (d.gesamt || 0), l:'Prestige', ton:'gold'}]);
-  const bloecke = sp.filter(x => pm[x.pid]).map((x, i) => `<div class="eh-sp" style="--i:${i}">
-      <div class="eh-sp-k" data-pid="${esc(x.pid)}" style="cursor:pointer">${rcpAvHtml(x.pid, 34, {})}
-        <b>${esc(pm[x.pid].name)}</b><em class="num">+${z(x.summe)}</em></div>
-      ${(x.posten || []).map(q => `<div class="eh-q">${zkHtml(q.ic, 'k', _ehrungTon(q.klasse))}
-        <span class="eh-q-t"><b>${esc(q.name)}</b><small>${esc(_newsRarityLabel(q.klasse))} · ${esc(mal(q))}</small></span>
-        <em class="num">+${z(q.p)}</em></div>`).join('')}
-    </div>`).join('');
-  return zahlen + (zeit ? `<div class="nw-hinweis eh-zeit">${esc(zeit)}</div>` : '')
+  let gold = 0;
+  const zeile = q => `<div class="eh-q ${esc(q.klasse)}">${_ehrungKachel(q, () => gold++)}
+      <span class="eh-q-t"><b>${esc(q.name)}</b><small>${esc(_newsRarityLabel(q.klasse))} · ${esc(mal(q))}</small>${strich(q)}</span>
+      <em class="num">+${_ehZahl(q.p)}<small>von ${_ehZahl(voll(q))}</small></em></div>`;
+  const kachel = q => `<div class="eh-g-t ${esc(q.klasse)}">`
+    + `<span class="eh-g-o">${_ehrungKachel(q, () => gold++)}<em class="num">+${_ehZahl(q.p)}</em></span>`
+    + `<b>${esc(q.name)}</b><small>${esc(mal(q))}</small>${strich(q)}</div>`;
+  const bloecke = sp.filter(x => pm[x.pid]).map((x, i) => {
+    const gross = (x.posten || []).filter(q => q.klasse !== 'common');
+    const klein = (x.posten || []).filter(q => q.klasse === 'common');
+    return `<div class="eh-p" style="--i:${i}">
+      <div class="eh-p-k" data-pid="${esc(x.pid)}" style="cursor:pointer">${rcpAvHtml(x.pid, 30, {})}
+        <b>${esc(pm[x.pid].name)}</b><em class="num">+${_ehZahl(x.summe)}</em></div>
+      ${gross.map(zeile).join('')}
+      ${klein.length ? `<div class="eh-g">${klein.map(kachel).join('')}</div>` : ''}
+    </div>`;
+  }).join('');
+  return {kopf, mitte: anteil + (zeit ? `<div class="nw-hinweis eh-zeit">${esc(zeit)}</div>` : '')
     + `<div class="nd-section">Wer was geholt hat</div>${bloecke}`
-    + `<div class="nw-hinweis">Das erste und zweite Mal zählt eine Auszeichnung voll, danach etwas weniger. Jede weitere bringt trotzdem Prestige.</div>`;
+    + `<div class="nw-hinweis">Das erste und zweite Mal zählt eine Auszeichnung voll, danach etwas weniger. `
+    + `Der Strich unter jeder zeigt, wie viel vom vollen Wert bleibt.</div>`};
 }
 function _ndLead(desc, body){
   const lead = String(desc || '');
@@ -27877,7 +28025,7 @@ const _ND_BLATT = {win_streak:_ndSerieBlatt, loss_streak:_ndSerieBlatt, team_str
   jubilee:_ndMeilensteinBlatt, milestone_wins:_ndMeilensteinBlatt, milestone_goals:_ndMeilensteinBlatt,
   milestone_elo:_ndMeilensteinBlatt, top_form:_ndFormBlatt, elo_swing:_ndAusschlagBlatt,
   top_clash:_ndSpitzenspielBlatt, badge_marken:_ndMarkenBlatt, dry_spell:_ndFaktBlatt, ambient:_ndFaktBlatt,
-  karriereende:_ndAbschiedBlatt};
+  karriereende:_ndAbschiedBlatt, ehrung:_ndEhrungBlatt};
 function _ndAbschiedBlatt(s){
   const d = s.dataRef || {};
   if(!pmap()[d.pid]) return null;
@@ -27972,7 +28120,6 @@ function _ndMitteRoh(s){
   try {
     switch(d.type){
       case 'runde': return _newsRundeBlatt(s);
-      case 'ehrung': return _newsEhrungBlatt(s);
       case 'rekord_erstmals':
       case 'rekord_gesteigert':
       case 'rekord_geholt': {
@@ -32002,19 +32149,16 @@ function chronBeiname(t){
 
 function playerTitleBadge(pid){
   const rows = seasonTitleHistory(pid);
-  const cur = rows.find(r => r.live && r.title);
-  if(cur) return {kind:'season', name:chronBeiname(cur.title), titel:cur.title.name,
-                  titleId:cur.title.titleId,
-                  ic:cur.title.ic, tone:cur.title.tone,
-                  sub:cur.label + ' · läuft', live:true, sid:cur.sid, ev:cur.title.ev};
+  const schatten = id => { const m = _chronikMonat(id); return !!(m && m.art === 'schatten'); };
   for(let i = rows.length - 1; i >= 0; i--){
-    if(!rows[i].live && rows[i].title){
-      const r = rows[i];
-      return {kind:'season', name:chronBeiname(r.title), titel:r.title.name,
-              titleId:r.title.titleId,
-              ic:r.title.ic, tone:r.title.tone,
-              sub:r.label, live:false, sid:r.sid, ev:r.title.ev};
-    }
+    const r = rows[i];
+    if(!r.title) continue;
+    const t = !schatten(r.title.titleId) ? r.title
+      : (seasonTitles(r.sid).awarded || []).find(a => a.pid === pid && !schatten(a.titleId)) || null;
+    if(!t) continue;
+    return {kind:'season', name:chronBeiname(t), titel:t.name, titleId:t.titleId,
+            ic:t.ic, tone:t.tone, sub:r.label + (r.live ? ' · läuft' : ''), live:r.live,
+            sid:r.sid, ev:t.ev};
   }
   return null;
 }
@@ -32412,10 +32556,8 @@ function _titlePillHtml(pid){
   const b = playerTitleBadge(pid);
   if(!b) return '';
   const t = titleTone(b.tone);
-  const m = b.titleId ? _chronikMonat(b.titleId) : null;
-  const schatten = !!(m && m.art === 'schatten');
   return `<div class="pp-title-row">
-    <span class="pp-banner${b.live ? ' live' : ''}${schatten ? ' schatten' : ''}" style="--tt:${t.c};--ttr:${t.rgb}">
+    <span class="pp-banner${b.live ? ' live' : ''}" style="--tt:${t.c};--ttr:${t.rgb}">
       <span class="pp-title-pill"><span class="i">${svgI(b.ic)}</span>${esc(b.name)}</span></span>
     <span class="pp-title-sub num">${esc(b.sub)}</span>
   </div>`;

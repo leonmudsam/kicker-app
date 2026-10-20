@@ -494,17 +494,12 @@ function _titlePillHtml(pid){
   const b = playerTitleBadge(pid);
   if(!b) return '';
   const t = titleTone(b.tone);
-  // Was negativ ist, traegt Rot [§C25]. „Der Gestrandete" kommt aus der
-  // Durststrecke und stand golden unter dem Namen wie ein Titel — dieselbe
-  // Ausnahme gilt fuer die Zelle der Matrix und die Plakette seit jeher,
-  // nur die Pille im Profilkopf war nie davon erfasst.
-  const m = b.titleId ? _chronikMonat(b.titleId) : null;
-  const schatten = !!(m && m.art === 'schatten');
   // Ein Banner statt einer Pille: der Beiname ist ein Titel, und die
   // gestrichelte Pille sah aus wie ein Knopf, der noch lädt. Dass der Monat
-  // noch läuft, sagt die Zeile darunter („läuft").
+  // noch läuft, sagt die Zeile darunter („läuft"). Eine Schattenseite steht
+  // hier nie (`playerTitleBadge`), das Band ist immer Gold [§C25].
   return `<div class="pp-title-row">
-    <span class="pp-banner${b.live ? ' live' : ''}${schatten ? ' schatten' : ''}" style="--tt:${t.c};--ttr:${t.rgb}">
+    <span class="pp-banner${b.live ? ' live' : ''}" style="--tt:${t.c};--ttr:${t.rgb}">
       <span class="pp-title-pill"><span class="i">${svgI(b.ic)}</span>${esc(b.name)}</span></span>
     <span class="pp-title-sub num">${esc(b.sub)}</span>
   </div>`;

@@ -1750,7 +1750,7 @@ const _ND_BLATT = {win_streak:_ndSerieBlatt, loss_streak:_ndSerieBlatt, team_str
   jubilee:_ndMeilensteinBlatt, milestone_wins:_ndMeilensteinBlatt, milestone_goals:_ndMeilensteinBlatt,
   milestone_elo:_ndMeilensteinBlatt, top_form:_ndFormBlatt, elo_swing:_ndAusschlagBlatt,
   top_clash:_ndSpitzenspielBlatt, badge_marken:_ndMarkenBlatt, dry_spell:_ndFaktBlatt, ambient:_ndFaktBlatt,
-  karriereende:_ndAbschiedBlatt};
+  karriereende:_ndAbschiedBlatt, ehrung:_ndEhrungBlatt};
 // Das Blatt eines Karriereendes zeigt die Bühne und den Anfang des
 // Abschieds; der ganze steht einen Knopf weiter [§C40].
 function _ndAbschiedBlatt(s){

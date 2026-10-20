@@ -1188,6 +1188,32 @@ ok(K.eval(`(function(){
   const b = players.filter(p => !p.hidden).map(p => playerTitleBadge(p.id)).filter(Boolean);
   return b.length > 0 && b.every(x => x.name && x.titel);
 })()`), 'der Profilkopf zeigt den Beinamen und kennt den Katalognamen');
+// Im Band steht nur eine positive Monatschronik, die jüngste. Eine
+// Schattenseite stand dort rot, sobald sie die jüngste war, und verdrängte
+// den Beinamen eines früheren Monats: Jannik trug im August „Der
+// Durchlässige" (Das Scheunentor) statt „Der Zugeknöpfte" aus dem Juni.
+// Nachgerechnet aus der Tafel jedes Monats, von hinten.
+const _band = JSON.parse(K.eval(`JSON.stringify((function(){
+  const schatten = id => ((_chronikMonat(id) || {}).art === 'schatten');
+  const falsch = []; let zurueck = 0;
+  players.filter(p => !p.hidden).forEach(p => {
+    const b = playerTitleBadge(p.id), rows = seasonTitleHistory(p.id);
+    let soll = null;
+    for(let i = rows.length - 1; i >= 0 && !soll; i--){
+      const t = (seasonTitles(rows[i].sid).awarded || []).filter(a => a.pid === p.id && !schatten(a.titleId));
+      if(t.length) soll = {sid:rows[i].sid, ids:t.map(a => a.titleId)};
+    }
+    if(!soll){ if(b) falsch.push(p.name + ' trägt ' + b.name); return; }
+    if(!b || b.sid !== soll.sid || soll.ids.indexOf(b.titleId) < 0 || schatten(b.titleId))
+      falsch.push(p.name + ': ' + (b ? b.name + ' (' + b.sid + ')' : 'nichts') + ' statt ' + soll.sid);
+    // Ein jüngerer Monat mit nur Schattenseiten liegt dazwischen.
+    if(rows.some(r => r.sid > soll.sid && r.title)) zurueck++;
+  });
+  return {falsch, zurueck};
+})())`));
+ok(!_band.falsch.length && _band.zurueck > 0,
+   'im Band steht die jüngste positive Monatschronik, ein späterer Monat mit nur Schattenseiten verdrängt sie nicht',
+   _band.falsch.join(' | ') || _band.zurueck + ' Spieler mit einem Monat dazwischen');
 
 ok(K.eval(`SEASON_TITLES.every(t =>
      ['legendaer','selten','besonders'].indexOf(t.klasse) >= 0

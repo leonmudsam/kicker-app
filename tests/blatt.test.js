@@ -1402,8 +1402,8 @@ const ok = (c, msg, det) => {
                   'sp-fk',
                   // Die Insignium-Karte des Tages: die Verwandlung als Bühne.
                   'ni-b',
-                  // Die Ehrung: die Zeichen ihrer Auszeichnungen in Klassenfarbe.
-                  'eh-reihe'];
+                  // Die Ehrung: je Geehrtem eine Säule mit der Zeichenkachel.
+                  'eh-buehne'];
     arr.forEach(x => {
       host.innerHTML = x.html;
       const karte = host.querySelector('.nf-card');
@@ -1426,6 +1426,52 @@ const ok = (c, msg, det) => {
      kartenMobil.ohneBild.join(', ') || 'jede mit Bild');
   ok(kartenMobil.raus.length === 0, 'und keine laeuft bei 360 px aus ihrem Rand',
      kartenMobil.raus.slice(0, 4).join(' | ') || 'keine');
+
+  // ── Die Ehrung bei 360 px ────────────────────────────────────────
+  //    Je Geehrtem eine Säule, alle in EINER Reihe auf derselben Grundlinie:
+  //    neun Geehrte brachen in eine zweite Reihe um, und die Karte wurde so
+  //    hoch wie zwei. Im Blatt steht der Name einer gewöhnlichen
+  //    Auszeichnung über der ganzen Breite ihrer Kachel: neben Zeichen und
+  //    Wert brach „Pflichterfüller" mitten im Wort um.
+  const ehrung = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const roh = K(`JSON.stringify((function(){
+      const alle = [], ids = new Set();
+      for(let t = Date.parse('2026-05-10'); t < Date.parse('2026-09-01'); t += NEWS_FENSTER_TAGE * 864e5 * 0.9)
+        _newsEhrungStories(t).forEach(s => { if(!ids.has(s.id)){ ids.add(s.id); alle.push(s); } });
+      alle.sort((a, b) => b.dataRef.spieler.length - a.dataRef.spieler.length);
+      return [alle[0], alle[alle.length - 1]].map(s => ({n:s.dataRef.spieler.length,
+        karte:_newsEhrungHtml(s, false, ''), mitte:_ndEhrungBlatt(s).mitte}));
+    })())`);
+    const host = document.createElement('div');
+    host.style.cssText = 'width:360px;position:absolute;left:0;top:0';
+    document.body.appendChild(host);
+    const out = [];
+    JSON.parse(roh).forEach(x => {
+      host.innerHTML = x.karte;
+      const karte = host.querySelector('.nf-card'), kr = karte.getBoundingClientRect();
+      const s = [...karte.querySelectorAll('.eh-s')].map(e => e.getBoundingClientRect());
+      const boden = [...karte.querySelectorAll('.eh-s-av')].map(e => Math.round(e.getBoundingClientRect().bottom));
+      out.push({n:x.n, saeulen:s.length, eineReihe:new Set(boden).size === 1,
+        drin:s.every(r => r.left >= kr.left - .5 && r.right <= kr.right + .5)});
+      host.innerHTML = `<div style="padding:0 16px">${x.mitte}</div>`;
+      const gebrochen = [];
+      host.querySelectorAll('.eh-g-t > b').forEach(b => {
+        const zeile = parseFloat(getComputedStyle(b).lineHeight) || 14;
+        if(!/\s/.test(b.textContent.trim()) && b.getBoundingClientRect().height > zeile * 1.5) gebrochen.push(b.textContent);
+      });
+      out[out.length - 1].gebrochen = gebrochen;
+      out[out.length - 1].kacheln = host.querySelectorAll('.eh-g-t').length;
+    });
+    host.remove();
+    return out;
+  });
+  ok(ehrung.length === 2 && ehrung[0].n > 6 && ehrung.every(x => x.saeulen === x.n && x.eineReihe && x.drin),
+     'die Ehrung stellt jeden Geehrten als Säule in eine Reihe auf eine Grundlinie, auch neun, und bleibt in der Karte',
+     JSON.stringify(ehrung.map(x => ({n:x.n, s:x.saeulen, reihe:x.eineReihe, drin:x.drin}))));
+  ok(ehrung.some(x => x.kacheln > 0) && ehrung.every(x => !x.gebrochen.length),
+     'im Blatt der Ehrung bricht kein Name einer Kachel mitten im Wort',
+     ehrung.flatMap(x => x.gebrochen).join(', ') || ehrung.map(x => x.kacheln).join('+') + ' Kacheln');
 
   // ── Jedes Blatt passt auf das Telefon ────────────────────────────
   //    Gemessen am Blatt eines Tafel-Moments: die Zahlenreihe trug fuenf
@@ -5653,7 +5699,13 @@ return JSON.stringify(funde,null,1);
       const cs = getComputedStyle(pill), ende = w => getComputedStyle(b, w);
       out.push({live:b.classList.contains('live'), strich:cs.borderTopStyle, hoehe:+pill.getBoundingClientRect().height.toFixed(1),
         enden:[ende('::before'), ende('::after')].every(e => e.content !== 'none' && /polygon/.test(e.clipPath)),
-        glanz:getComputedStyle(pill, '::after').animationName});
+        // Die Falte: zum Band hin fällt jedes Ende in den Schatten.
+        falte:[ende('::before'), ende('::after')].every(e => (e.backgroundImage.match(/gradient/g) || []).length === 2
+          && e.backgroundImage.indexOf('rgba(0, 0, 0') >= 0),
+        glanz:getComputedStyle(pill, '::after').animationName,
+        auf:[cs.animationName, ende('::before').animationName, ende('::after').animationName].join(','),
+        schein:/rgba/.test(cs.textShadow) && (cs.boxShadow.match(/rgba/g) || []).length >= 4,
+        striche:['::before', '::after'].every(w => getComputedStyle(b.parentNode.querySelector('.pp-title-sub'), w).content !== 'none')});
     }
     closeSheet(true);
     return JSON.stringify(out);
@@ -5662,6 +5714,14 @@ return JSON.stringify(funde,null,1);
        && x.hoehe >= 24 && x.hoehe <= 32 && x.glanz === 'ppBannerGlanz'),
      'der Beiname steht als Banner mit gefalteten Enden unter dem Namen, ohne Strich, so hoch wie die Pille davor, mit Glanz',
      JSON.stringify(banner));
+  // Und es ist ein Titel, kein Schild: die Enden fallen zum Band hin in den
+  // Schatten, das Band trägt einen Lichthof und die Schrift einen Schein,
+  // der Monat steht zwischen zwei Strichen. Beim Öffnen entrollt es sich,
+  // danach schieben sich die Enden heraus — jede Bewegung an ihrem eigenen
+  // Element [§C43].
+  ok(banner.every(x => x.falte && x.schein && x.striche && x.auf === 'ppBannerAuf,ppBannerEndeL,ppBannerEndeR'),
+     'das Band hat gefaltete Enden im Schatten, Lichthof, Schein und Striche um den Monat und entrollt sich beim Öffnen',
+     JSON.stringify(banner.map(x => ({falte:x.falte, schein:x.schein, striche:x.striche, auf:x.auf}))));
 
   await page.setViewportSize({width:430, height:932});
 

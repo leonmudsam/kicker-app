@@ -100,18 +100,19 @@ function _newsEhrungStory(liste, T, letzteM, rang){
   const gesamt = Math.round(spieler.reduce((n, x) => n + x.summe, 0));
   const title = (zahl === 1 ? 'Eine Auszeichnung' : zahl + ' Auszeichnungen')
     + ' für ' + _namenKurz(spieler.map(x => nm(x.pid)));
-  // Der Satz nennt das Seltenste, nicht die Summe: die Summe steht je
-  // Spieler als Zahl auf der Karte. Ohne Doppelpunkt: das Blatt kürzt einen
-  // Satz mit Etikett auf seinen Rest (`_ndLead`), und „Darunter eine
-  // seltene: …" stand dort als Satzrest ohne Verb.
+  // Der Satz nennt die wertvollste Auszeichnung der Runde: die seltenste
+  // Klasse, darin der höchste Wert. Die Summe nannte er nur, wenn nichts
+  // Seltenes dabei war — und dieselbe Zahl stand im Fuß der Karte, je
+  // Klasse. Ohne Doppelpunkt: das Blatt kürzt einen Satz mit Etikett auf
+  // seinen Rest (`_ndLead`), und „Darunter eine seltene: …" stand dort als
+  // Satzrest ohne Verb.
   let top = null;
   spieler.forEach(x => x.posten.forEach(q => {
-    if(q.klasse !== 'common' && (!top || ORD[q.klasse] < ORD[top.q.klasse] || (q.klasse === top.q.klasse && q.p > top.q.p)))
+    if(!top || ORD[q.klasse] < ORD[top.q.klasse] || (q.klasse === top.q.klasse && q.p > top.q.p))
       top = {pid:x.pid, q};
   }));
-  const desc = top
-    ? `${nm(top.pid)} holt dabei „${top.q.name}“ zum ${top.q.bis}. Mal, eine ${top.q.klasse === 'legendary' ? 'legendäre' : 'seltene'} Auszeichnung.`
-    : `Zusammen ${gesamt} Prestige für die Laufbahn.`;
+  const klasse = {legendary:', eine legendäre Auszeichnung', rare:', eine seltene Auszeichnung'}[top.q.klasse] || '';
+  const desc = `${nm(top.pid)} holt dabei „${top.q.name}“ zum ${top.q.bis === 1 ? 'ersten' : top.q.bis + '.'} Mal${klasse}.`;
   const tage = [...new Set(liste.map(e => tagKey(e.t)))];
   return {
     id:'ehrung_' + letzteM.id, cat:'badge', ic:'medal', when:new Date(T),
@@ -124,54 +125,153 @@ function _newsEhrungStory(liste, T, letzteM, rang){
 // Der Ton einer Klasse, wie überall: Gold legendär, Violett selten, Grün
 // gewöhnlich [§C25].
 function _ehrungTon(k){ return k === 'legendary' ? 'gold' : k === 'rare' ? 'viol' : 'gruen'; }
+const EH_KLASSEN = [['legendary', 'legendär'], ['rare', 'selten'], ['common', 'gewöhnlich']];
+const _ehZahl = v => komma(Math.round(v * 10) / 10).replace(',0', '');
 
-// Die Karte bleibt klein: Schlagzeile, eine Reihe Zeichen der verliehenen
-// Auszeichnungen, das Seltenste vorn, und je Spieler, was es ihm bringt —
-// dasselbe Band wie auf der Ewigen Tafel [§C27]. Was jeder genau geholt hat,
-// steht im Blatt.
+// ── Die Säulen ──────────────────────────────────────────────────────
+// Je Geehrtem eine Säule, wie im Säulenbild eines Spieltags: unten das
+// Gesicht, darüber die Säule, so hoch wie das Prestige seiner Auszeichnungen
+// gegen den, der am meisten bekam, darauf die Zahl und die Zeichenkachel
+// seiner wertvollsten Auszeichnung [§C27]. Die Säule ist aus den
+// Auszeichnungen gestapelt, die Seltenste oben, in der Farbe ihrer Klasse
+// [§C25]: jede seltene und legendäre ein eigenes Stück, die gewöhnlichen
+// zusammen eins — man sieht, woher das Prestige kommt, ohne eine Zahl je
+// Auszeichnung. Auf der Karte stand vorher das Prestige je Spieler in Chips
+// wie auf der Ewigen Tafel: dieselbe Form für eine andere Zahl las sich als
+// dieselbe Nachricht. Ein Entwurf hängte Bänder mit Medaillen darunter —
+// eine Zeichnung, die es sonst nirgends in der App gibt.
+// `gross` ist das Blatt: dort steht der Name unter dem Gesicht.
+function _ehrungSaeulen(sp, gross){
+  const pm = pmap();
+  const da = sp.filter(x => pm[x.pid] && x.summe > 0);
+  if(!da.length) return '';
+  // Ab sieben rücken die Säulen der Karte zusammen und nennen ganze Zahlen:
+  // neun Spieler brachen sonst in eine zweite Reihe um, und die Karte wurde
+  // so hoch wie zwei. Das Blatt bricht um, dort stehen die Namen darunter.
+  const eng = !gross && da.length > 6;
+  const H = gross ? 96 : 52, MIN = 6, max = Math.max(...da.map(x => x.summe));
+  let gold = 0;
+  const saeule = (x, i) => {
+    const h = Math.max(MIN, Math.round(H * x.summe / max));
+    const posten = (x.posten || []).filter(q => q.p > 0);
+    const gewoehnlich = posten.filter(q => q.klasse === 'common');
+    const stuecke = posten.filter(q => q.klasse !== 'common')
+      .map(q => ({klasse:q.klasse, p:q.p, name:q.name}))
+      .concat(gewoehnlich.length ? [{klasse:'common', p:gewoehnlich.reduce((n, q) => n + q.p, 0),
+        name:gewoehnlich.length === 1 ? gewoehnlich[0].name : gewoehnlich.length + ' gewöhnliche'}] : [])
+      .map(q => `<i class="${q.klasse}" style="flex-grow:${q.p}" title="${esc(q.name)}"></i>`).join('');
+    // Die Kachel zeigt die wertvollste Auszeichnung: die seltenste Klasse,
+    // darin der höchste Wert — die Posten sind schon so geordnet.
+    const top = posten[0];
+    return `<span class="eh-s" data-pid="${esc(x.pid)}" style="--i:${i}">`
+      + `<span class="eh-s-z" title="${esc(top ? top.name : '')}">${top ? _ehrungKachel(top, () => gold++, gross ? '' : 'k') : ''}</span>`
+      + `<em class="eh-s-w num">+${eng ? Math.round(x.summe) : _ehZahl(x.summe)}</em>`
+      + `<span class="eh-saeule" style="height:${h}px">${stuecke}</span>`
+      + `<span class="eh-s-av" title="${esc(pm[x.pid].name)}">${rcpAvHtml(x.pid, gross ? 40 : eng ? 26 : 30, {})}</span>`
+      + (gross ? `<b class="eh-s-n">${esc(pm[x.pid].name)}</b>` : '')
+      + `</span>`;
+  };
+  return `<div class="eh-buehne${gross ? ' gross' : eng ? ' eng' : ''}">${da.map(saeule).join('')}</div>`;
+}
+
+// Die Zeichenkachel einer Auszeichnung in der Farbe ihrer Klasse [§C27].
+// Eine legendäre trägt das Lauflicht wie im Profil, versetzt von Kachel zu
+// Kachel (`naechste` zählt die goldenen einer Ansicht), damit es durch die
+// Reihe wandert, statt überall zugleich aufzublitzen. Klein (`k`) überall
+// außer auf der Bühne des Blatts.
+function _ehrungKachel(q, naechste, groesse){
+  const z = zkHtml(q.ic, groesse == null ? 'k' : groesse, _ehrungTon(q.klasse));
+  return q.klasse === 'legendary' ? z.replace(/<\/span>$/, glanzBahn(1 + naechste() * .35) + '</span>') : z;
+}
+
+// Die Klassen einer Runde: wie viele Auszeichnungen jeder Klasse und was sie
+// zusammen an Prestige brachten. Nur Klassen, die vorkommen.
+function _ehrungKlassen(sp){
+  const k = {};
+  sp.forEach(x => (x.posten || []).forEach(q => {
+    const z = k[q.klasse] || (k[q.klasse] = {n:0, p:0});
+    z.n += q.mal; z.p += q.p;
+  }));
+  return EH_KLASSEN.filter(([id]) => k[id] && k[id].p > 0).map(([id, wort]) => ({id, wort, n:k[id].n, p:k[id].p}));
+}
+const _ehrungKlasseHtml = z => `<span class="eh-k ${z.id}"><i></i><b class="num">${z.n}</b> ${esc(z.wort)}`
+  + ` <em class="num">+${_ehZahl(z.p)}</em></span>`;
+
+// Die Karte: die Säulen als Bühne, darunter Schlagzeile und Satz, der das
+// Seltenste nennt, und im Fuß, was jede Klasse gebracht hat. Was jeder genau
+// geholt hat, steht im Blatt. Mit einer legendären Auszeichnung trägt die
+// Karte den Schimmer des Seltenen, wie eine einzelne seltene Auszeichnung im
+// Feed [§C25]; eine seltene allein reicht nicht, sie steht in fast jeder
+// Ehrung.
 function _newsEhrungHtml(s, isRead, fadenHtml){
   const d = s.dataRef || {};
   const sp = Array.isArray(d.spieler) ? d.spieler : [];
-  const gesehen = new Set(), zeichen = [];
-  sp.flatMap(x => x.posten || []).slice().sort((a, b) => ({legendary:0, rare:1, common:2}[a.klasse] - {legendary:0, rare:1, common:2}[b.klasse]))
-    .forEach(q => { if(!gesehen.has(q.id)){ gesehen.add(q.id); zeichen.push(q); } });
-  const lb = {};
-  sp.forEach(x => { lb[x.pid] = {vor:0, nach:x.summe}; });
-  return `<div class="nf-card nf-s-badge nf-ehrung nfc-badge${isRead ? ' read' : ''}" data-sid="${esc(s.id)}">
+  const klassen = _ehrungKlassen(sp);
+  const glanz = klassen.some(z => z.id === 'legendary');
+  return `<div class="nf-card nf-s-badge nf-ehrung nfc-badge${glanz ? ' nf-glanz' : ''}${isRead ? ' read' : ''}" data-sid="${esc(s.id)}"`
+    + `${glanz ? ` style="--gv:${_newsGlanzVersatz(s.id)}s"` : ''}>
     ${_newsMotiv('badge', s)}
     <div class="nf-top"><span class="nf-rub"><i>${svgI('medal')}</i><b>DIE EHRUNG</b></span>
       <span class="nf-when">${svgI('clock')}${esc(_newsUhrzeit(s.when))}${isRead ? '' : '<span class="nf-dot"></span>'}</span></div>
+    ${_ehrungSaeulen(sp, false)}
     <div class="nf-gr"><div class="nf-gr-r"><div class="nf-h">${esc(s.title)}</div><div class="nf-d">${_newsBetont(s.desc || '')}</div></div>
       <span class="nf-chev">${svgI('chevron')}</span></div>
-    <div class="eh-reihe">${zeichen.map((q, i) => `<span class="eh-z" style="--i:${i}" title="${esc(q.name)}">${zkHtml(q.ic, 'k', _ehrungTon(q.klasse))}</span>`).join('')}</div>
-    ${_newsPrestigeBand({dataRef:{laufbahn:lb}})}${fadenHtml || ''}</div>`;
+    ${klassen.length ? `<div class="eh-fuss">${klassen.map(_ehrungKlasseHtml).join('')}</div>` : ''}${fadenHtml || ''}</div>`;
 }
 
-// Das Blatt: je Spieler jede Auszeichnung mit Klasse, dem wievielten Mal
-// und dem Prestige, das sie ihm bringt. Darunter in einem Satz, warum
-// dieselbe Auszeichnung nicht jedes Mal gleich viel wiegt.
-function _newsEhrungBlatt(s){
+// ── Das Blatt ───────────────────────────────────────────────────────
+// Oben dieselben Säulen groß, mit Namen. Darunter die Summe der Runde und,
+// was jede Klasse dazu beitrug, als geteilter Balken; dann je Spieler jede
+// Auszeichnung mit dem wievielten Mal und ihrem Wert. Unter jeder ein
+// Strich, wie viel vom vollen Wert sie beim wievielten Mal noch bringt: das
+// erklärte vorher nur ein Satz am Ende, gesehen hat es niemand.
+//
+// Seltene und legendäre stehen als eigene Zeile, die gewöhnlichen als
+// Kacheln in zwei Spalten. Je eine Zeile für jede machte das Blatt einer
+// Runde mit 35 Auszeichnungen fünf Bildschirme lang, und die Pflichterfüller
+// und Zittersiege standen so groß da wie die „Nerven aus Stahl".
+function _ndEhrungBlatt(s){
   const d = s.dataRef || {};
   const sp = Array.isArray(d.spieler) ? d.spieler : [];
-  if(!sp.length) return '';
   const pm = pmap();
-  const z = v => String(v).replace('.', ',');
-  const mal = q => q.mal === 1 ? `${q.bis}. Mal` : `${q.bis - q.mal + 1}. bis ${q.bis}. Mal`;
+  if(!sp.some(x => pm[x.pid])) return null;
+  const kopf = `<div class="nd-buehne nd-eh">${_ehrungSaeulen(sp, true)}</div>`;
+  const klassen = _ehrungKlassen(sp);
+  const summe = klassen.reduce((n, z) => n + z.p, 0);
+  const anteil = klassen.length ? `<div class="eh-anteil">`
+    + `<div class="eh-anteil-k"><b class="num">+${_ehZahl(summe)}</b><span>Prestige für die Laufbahn</span></div>`
+    + `<div class="eh-anteil-b">${klassen.map(z => `<i class="${z.id}" style="flex-grow:${z.p}"></i>`).join('')}</div>`
+    + `<div class="eh-anteil-l">${klassen.map(_ehrungKlasseHtml).join('')}</div></div>` : '';
+  const mal = q => q.mal === 1 ? `${q.bis}. Mal` : `${q.bis - q.mal + 1}.–${q.bis}. Mal`;
+  // Der volle Wert ist, was dieselbe Auszeichnung beim ersten Mal bringt,
+  // so oft genommen, wie sie diesmal kam.
+  const voll = q => auszeichnungsTeilwert(q.id, 1) * q.mal;
+  const rest = q => { const v = voll(q); return v > 0 ? Math.min(1, q.p / v) : 1; };
+  const strich = q => `<span class="eh-q-m" role="img" aria-label="${Math.round(rest(q) * 100)} % des vollen Werts">`
+    + `<i style="width:${(rest(q) * 100).toFixed(1)}%"></i></span>`;
   const zeit = d.ab && d.bis ? `Aus den Partien ${d.tage > 1 ? 'seit dem ' + datumFmt(d.ab, 'tm') + ', ' : 'von '}`
     + `${datumFmt(d.ab, 'uhr')} bis ${datumFmt(d.bis, 'uhr')} Uhr.` : '';
-  // Zwei Zellen: in einem Drittel der Breite brach „Auszeichnungen" mitten
-  // im Wort um. Wie viele Spieler es sind, zeigen die Kästen darunter.
-  const zahlen = rcpZahlenHtml([
-    {v:d.zahl || 0, l:(d.zahl === 1 ? 'Auszeichnung' : 'Auszeichnungen')},
-    {v:'+' + (d.gesamt || 0), l:'Prestige', ton:'gold'}]);
-  const bloecke = sp.filter(x => pm[x.pid]).map((x, i) => `<div class="eh-sp" style="--i:${i}">
-      <div class="eh-sp-k" data-pid="${esc(x.pid)}" style="cursor:pointer">${rcpAvHtml(x.pid, 34, {})}
-        <b>${esc(pm[x.pid].name)}</b><em class="num">+${z(x.summe)}</em></div>
-      ${(x.posten || []).map(q => `<div class="eh-q">${zkHtml(q.ic, 'k', _ehrungTon(q.klasse))}
-        <span class="eh-q-t"><b>${esc(q.name)}</b><small>${esc(_newsRarityLabel(q.klasse))} · ${esc(mal(q))}</small></span>
-        <em class="num">+${z(q.p)}</em></div>`).join('')}
-    </div>`).join('');
-  return zahlen + (zeit ? `<div class="nw-hinweis eh-zeit">${esc(zeit)}</div>` : '')
+  let gold = 0;
+  const zeile = q => `<div class="eh-q ${esc(q.klasse)}">${_ehrungKachel(q, () => gold++)}
+      <span class="eh-q-t"><b>${esc(q.name)}</b><small>${esc(_newsRarityLabel(q.klasse))} · ${esc(mal(q))}</small>${strich(q)}</span>
+      <em class="num">+${_ehZahl(q.p)}<small>von ${_ehZahl(voll(q))}</small></em></div>`;
+  // Oben die Zeichenkachel und der Wert, darunter der Name über die ganze
+  // Breite: neben Zeichen und Wert brach „Pflichterfüller" mitten im Wort.
+  const kachel = q => `<div class="eh-g-t ${esc(q.klasse)}">`
+    + `<span class="eh-g-o">${_ehrungKachel(q, () => gold++)}<em class="num">+${_ehZahl(q.p)}</em></span>`
+    + `<b>${esc(q.name)}</b><small>${esc(mal(q))}</small>${strich(q)}</div>`;
+  const bloecke = sp.filter(x => pm[x.pid]).map((x, i) => {
+    const gross = (x.posten || []).filter(q => q.klasse !== 'common');
+    const klein = (x.posten || []).filter(q => q.klasse === 'common');
+    return `<div class="eh-p" style="--i:${i}">
+      <div class="eh-p-k" data-pid="${esc(x.pid)}" style="cursor:pointer">${rcpAvHtml(x.pid, 30, {})}
+        <b>${esc(pm[x.pid].name)}</b><em class="num">+${_ehZahl(x.summe)}</em></div>
+      ${gross.map(zeile).join('')}
+      ${klein.length ? `<div class="eh-g">${klein.map(kachel).join('')}</div>` : ''}
+    </div>`;
+  }).join('');
+  return {kopf, mitte: anteil + (zeit ? `<div class="nw-hinweis eh-zeit">${esc(zeit)}</div>` : '')
     + `<div class="nd-section">Wer was geholt hat</div>${bloecke}`
-    + `<div class="nw-hinweis">Das erste und zweite Mal zählt eine Auszeichnung voll, danach etwas weniger. Jede weitere bringt trotzdem Prestige.</div>`;
+    + `<div class="nw-hinweis">Das erste und zweite Mal zählt eine Auszeichnung voll, danach etwas weniger. `
+    + `Der Strich unter jeder zeigt, wie viel vom vollen Wert bleibt.</div>`};
 }

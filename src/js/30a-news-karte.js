@@ -233,6 +233,12 @@ function _newsSammelBand(teile, kopfTitel, vollstaendig){
 // die Insignium-Karte desselben Tages; hier stand ein Rückfall als
 // „↓ Zierkranz" im Chip ein zweites Mal [§C33].
 // Gelesen wird die gespeicherte Wirkung der Karte, wie im Blatt.
+// Die Karte nennt nur, was die Tafel bewegt: Rekorde und Monatschroniken.
+// Der ganze Zuwachs des Tages enthielt auch die Auszeichnungen, und die
+// nennt die Ehrung derselben Runde: dasselbe Prestige stand auf zwei
+// Karten, einmal allein und einmal in einer größeren Zahl versteckt. Jede
+// Karte zeigt ihre Quelle; das Blatt der Tafel nennt alle drei. Eine Karte aus der Zeit vor
+// der Aufschlüsselung (ohne `rek` und `mon`) zeigt den ganzen Zuwachs.
 function _newsPrestigeBand(s){
   const d = (s && s.dataRef) || {};
   const je = {};
@@ -241,8 +247,10 @@ function _newsPrestigeBand(s){
   else nimm(d.laufbahn);
   const pm = pmap();
   const alle = Object.keys(je).filter(pid => pm[pid]).map(pid => {
-    const vor = Math.round(Number(je[pid].vor) || 0), nach = Math.round(Number(je[pid].nach) || 0);
-    return {pid, d: nach - vor, n: pm[pid].name || ''};
+    const w = je[pid];
+    const vor = Math.round(Number(w.vor) || 0), nach = Math.round(Number(w.nach) || 0);
+    const tafel = isFinite(w.rek) && isFinite(w.mon) && w.rek != null && w.mon != null;
+    return {pid, d: tafel ? Math.round(w.rek + w.mon) : nach - vor, n: pm[pid].name || ''};
   }).filter(x => x.d);
   // Bei gleichem Betrag nach dem Namen: sonst entschied die Reihenfolge der
   // gespeicherten Wirkung, und dieselbe Karte ordnete auf zwei Geräten anders.

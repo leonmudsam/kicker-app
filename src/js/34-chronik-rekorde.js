@@ -1189,24 +1189,25 @@ function chronBeiname(t){
   return (d && d.beiname) || (t && t.name) || '';
 }
 
+// Im Band steht nur, was ein Titel ist: die jüngste POSITIVE Monatschronik
+// [§C39]. Eine Schattenseite stand dort rot, sobald sie die jüngste war, und
+// verdrängte den Beinamen eines früheren Monats: Jannik trug im August „Der
+// Durchlässige" (Das Scheunentor) statt „Der Zugeknöpfte" aus dem Juni.
+// Jetzt bleibt der Juni stehen, bis wieder ein positiver Monat kommt; hat
+// ein Monat eine Schattenseite UND einen Titel, gilt der Titel. Die Monate
+// von hinten, der laufende zuerst — er ist der jüngste.
 function playerTitleBadge(pid){
   const rows = seasonTitleHistory(pid);
-  const cur = rows.find(r => r.live && r.title);
-  // `titleId` gehoert dazu: ohne sie kann der Aufrufer nicht nachsehen, ob
-  // die Chronik eine Schattenseite ist, und „Der Gestrandete" stand golden
-  // zwischen den Titeln [§C25].
-  if(cur) return {kind:'season', name:chronBeiname(cur.title), titel:cur.title.name,
-                  titleId:cur.title.titleId,
-                  ic:cur.title.ic, tone:cur.title.tone,
-                  sub:cur.label + ' · läuft', live:true, sid:cur.sid, ev:cur.title.ev};
+  const schatten = id => { const m = _chronikMonat(id); return !!(m && m.art === 'schatten'); };
   for(let i = rows.length - 1; i >= 0; i--){
-    if(!rows[i].live && rows[i].title){
-      const r = rows[i];
-      return {kind:'season', name:chronBeiname(r.title), titel:r.title.name,
-              titleId:r.title.titleId,
-              ic:r.title.ic, tone:r.title.tone,
-              sub:r.label, live:false, sid:r.sid, ev:r.title.ev};
-    }
+    const r = rows[i];
+    if(!r.title) continue;
+    const t = !schatten(r.title.titleId) ? r.title
+      : (seasonTitles(r.sid).awarded || []).find(a => a.pid === pid && !schatten(a.titleId)) || null;
+    if(!t) continue;
+    return {kind:'season', name:chronBeiname(t), titel:t.name, titleId:t.titleId,
+            ic:t.ic, tone:t.tone, sub:r.label + (r.live ? ' · läuft' : ''), live:r.live,
+            sid:r.sid, ev:t.ev};
   }
   return null;
 }
