@@ -512,8 +512,12 @@ async function neueSeite(ctx){
     ok(await e2.page.evaluate(() => document.getElementById('connDot').classList.contains('ping')),
       'Steht die Verbindung zum ersten Mal, geht vom Punkt oben links ein Ring aus');
     await e2.page.waitForTimeout(6200);
+    // Das leise Licht im laufenden Betrieb (`.kl-leise`) zählt nicht als
+    // Rest: es beginnt 7 bis 12 s nach dem Öffnen, und bis hierher sind es
+    // mit Laden und Verbindung oft mehr — der Test war dann rot, ohne dass
+    // vom Aufbau etwas übrig war.
     const rest = await e2.page.evaluate(() => ({aufbau:document.documentElement.classList.contains('aufbau'),
-      reste:document.querySelectorAll('.bau, .kl, .kl-schein, .glanz-einmal, [style=""]').length}));
+      reste:document.querySelectorAll('.bau, .kl:not(.kl-leise), .kl-schein:not(.kl-leise), .glanz-einmal, [style=""]').length}));
     ok(!rest.aufbau && rest.reste === 0, 'Nach seiner Zeit ist vom Aufbau und vom Licht nichts übrig ' + JSON.stringify(rest));
     // Ab dem Öffnen ist das leise Licht im laufenden Betrieb geplant [§C43].
     ok(await e2.page.evaluate(() => window.__K('!!_leiseAuftrag')), 'Das Öffnen plant das leise Licht im laufenden Betrieb');

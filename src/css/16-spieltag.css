@@ -1476,3 +1476,126 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   .nd-ff{padding:4px 0 2px}
   .nd-ff .ff{margin:0}
   .ff-zw-m small b{color:var(--ink);font-weight:600}
+
+/* ── Die Ehrung [§11.6f] ───────────────────────────────────────────── */
+/* Die Bühne der Karte: je Geehrtem eine Säule wie im Säulenbild eines
+   Spieltags, unten das Gesicht, oben die Zeichenkachel seiner wertvollsten
+   Auszeichnung [§C27]. Die Stücke der Säule tragen die Farbe ihrer Klasse
+   [§C25]. Der Grund wie die Bühne der Insignium-Karte, ein Hauch Violett,
+   der Farbe der Auszeichnungen im Feed. Kein Band mit Chips wie auf der
+   Ewigen Tafel: dieselbe Form für eine andere Zahl las sich als dieselbe
+   Nachricht. */
+.eh-buehne{--fuge:14px;position:relative;display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-end;
+  gap:5px var(--fuge);margin:2px 4px 0;padding:10px 6px 9px;border-radius:14px;min-width:0;container-type:inline-size;
+  background:radial-gradient(120% 90% at 50% 100%,color-mix(in srgb,var(--purple) 14%,transparent),transparent 62%),
+    linear-gradient(180deg,color-mix(in srgb,var(--purple) 6%,transparent),transparent 72%);
+  border:1px solid color-mix(in srgb,var(--purple) 22%,transparent)}
+.eh-s{display:flex;flex-direction:column;align-items:center;min-width:0;max-width:60px;cursor:pointer}
+.eh-s-z{display:flex}
+.eh-s-z .zk{position:relative;overflow:hidden}
+.eh-s-w{margin:4px 0;font-style:normal;font-family:'Archivo Black',sans-serif;font-size:11.5px;line-height:1;
+  color:var(--gold);white-space:nowrap}
+/* Die Säule: Stücke mit Fuge, oben rund wie die Säulen der Spieltage. */
+.eh-saeule{display:flex;flex-direction:column;gap:2px;width:16px}
+.eh-saeule i{flex:1 1 0;min-height:3px;border-radius:2px}
+.eh-saeule i:first-child{border-radius:4px 4px 2px 2px}
+.eh-saeule i.legendary{background:var(--gold);box-shadow:0 0 10px rgba(247,207,74,.45)}
+.eh-saeule i.rare{background:var(--purple);box-shadow:0 0 8px rgba(167,139,250,.3)}
+.eh-saeule i.common{background:var(--acid);opacity:.85}
+.eh-s-av{display:flex;margin-top:5px}
+/* Mehr als eine Reihe: der Umbruch steht als Element zwischen ihnen, jede
+   Reihe hat ihre eigene Grundlinie. Sechs Wappen zu 48 px brauchen bei
+   360 px eine schmale Fuge. */
+.eh-umbruch{flex-basis:100%;height:0}
+.eh-buehne.voll{--fuge:4px}
+/* Das Wappen so groß, wie die Reihe es zulässt, höchstens in seiner Größe:
+   bei 360 px stehen fünf zu 48 px, auf einem schmaleren Telefon werden sie
+   kleiner, statt dass die fünfte allein umbricht. Die Größe trägt das
+   Wappen als `--rav` am Element; die Regel hier ist die Breite der Bühne
+   (`100cqi`) geteilt durch die Säulen der Reihe (`--je`). */
+.eh-s-av > .rav{--rav:min(48px,calc((100cqi - (var(--je,5) - 1) * var(--fuge)) / var(--je,5)))!important}
+.eh-buehne.gross .eh-s-av > .rav{--rav:min(52px,calc((100cqi - (var(--je,4) - 1) * var(--fuge)) / var(--je,4)))!important}
+/* Im Fuß, was jede Klasse brachte: ein Punkt in ihrer Farbe, wie oft, das Wort, der Wert. */
+.eh-fuss{display:flex;flex-wrap:wrap;gap:5px 12px;padding:8px 13px 10px;border-top:1px solid var(--line)}
+.eh-k{display:inline-flex;align-items:baseline;gap:4px;font-size:11px;color:var(--ink2);white-space:nowrap}
+.eh-k i{align-self:center;width:8px;height:8px;border-radius:2px;flex:0 0 auto}
+.eh-k.legendary i{background:var(--gold)}
+.eh-k.rare i{background:var(--purple)}
+.eh-k.common i{background:var(--acid)}
+.eh-k b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:12px;color:var(--ink)}
+.eh-k em{font-style:normal;font-family:'Sometype Mono',monospace;font-size:10.5px;font-weight:700;color:var(--gold)}
+
+/* Im Blatt die Bühne groß, mit Namen; die Säulen breiter. */
+/* Die Bühne des Blatts ist schmaler als die der Karte: vier Säulen mit
+   Wappen und Namen passen nur mit schmaler Fuge, sonst brach die vierte
+   allein in eine zweite Reihe. */
+.nd-eh{padding:16px 6px 12px}
+.nd-eh .eh-buehne{--fuge:6px;margin:0;padding:0;background:none;border:none;gap:7px var(--fuge)}
+/* Die Säule so breit wie ihr Name: ein Blatt kürzt keinen Namen. */
+.eh-buehne.gross .eh-s{max-width:none}
+.eh-buehne.gross .eh-saeule{width:22px}
+.eh-buehne.gross .eh-s-w{font-size:13px;margin:5px 0}
+.eh-s-n{margin-top:4px;font-size:10.5px;font-weight:700;color:var(--ink);white-space:nowrap}
+/* Woher das Prestige der Runde kommt: die Summe groß, darunter ein
+   geteilter Balken je Klasse. */
+.eh-anteil{margin:0 0 6px}
+.eh-anteil-k{display:flex;align-items:baseline;gap:8px;margin:0 2px 8px}
+.eh-anteil-k b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:26px;line-height:1;color:var(--gold)}
+.eh-anteil-k span{font-family:'Sometype Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--muted)}
+.eh-anteil-b{display:flex;gap:2px;height:8px;border-radius:999px;overflow:hidden}
+.eh-anteil-b i{flex:1 1 0;min-width:3px}
+.eh-anteil-b i.legendary{background:var(--gold)}
+.eh-anteil-b i.rare{background:var(--purple)}
+.eh-anteil-b i.common{background:var(--acid)}
+.eh-anteil-l{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:8px}
+/* Je Spieler ein Kasten: Wappen, Name und Summe oben, darunter jede
+   seltene und legendäre Auszeichnung als Zeile, die gewöhnlichen als
+   Kacheln — jede mit dem Strich, wie viel vom vollen Wert sie noch bringt. */
+.eh-p{border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden;margin-bottom:8px}
+.eh-p-k{display:flex;align-items:center;gap:10px;padding:9px 13px;background:var(--surface2);border-bottom:1px solid var(--line)}
+.eh-p-k b{flex:1 1 auto;min-width:0;font-family:'Archivo Black',sans-serif;font-weight:400;font-size:13px;
+  color:var(--ink);overflow-wrap:anywhere}
+.eh-p-k em{font-style:normal;font-family:'Archivo Black',sans-serif;font-size:15px;color:var(--gold)}
+.eh-q{display:flex;align-items:center;gap:10px;padding:8px 13px}
+.eh-q + .eh-q{border-top:1px solid var(--line)}
+.eh-q > .zk{position:relative;overflow:hidden}
+.eh-q-t{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px}
+.eh-q-t b{font-size:12.5px;font-weight:700;color:var(--ink);overflow-wrap:anywhere}
+.eh-q-t small{font-family:'Sometype Mono',monospace;font-size:9.5px;color:var(--muted);letter-spacing:.03em}
+.eh-q-m{display:block;height:3px;margin-top:3px;border-radius:2px;background:rgba(255,255,255,.06);overflow:hidden}
+.eh-q-m i{display:block;height:100%;border-radius:2px;background:var(--acid)}
+.eh-q.legendary .eh-q-m i{background:var(--gold)}
+.eh-q.rare .eh-q-m i{background:var(--purple)}
+.eh-q em{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;gap:1px;font-style:normal;
+  font-family:'Sometype Mono',monospace;font-size:12px;font-weight:700;color:var(--gold)}
+.eh-q em small{font-size:9px;font-weight:400;color:var(--muted)}
+/* Die gewöhnlichen als Kacheln in zwei Spalten: oben Zeichenkachel und
+   Wert, darunter der Name über die ganze Breite, der Strich als Unterkante. */
+.eh-g{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px 9px 9px}
+.eh-q + .eh-g{border-top:1px solid var(--line)}
+.eh-g-t{position:relative;display:flex;flex-direction:column;gap:2px;min-width:0;padding:7px 9px 9px;border-radius:10px;
+  background:var(--surface2);border:1px solid var(--line);overflow:hidden}
+.eh-g-o{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:3px}
+.eh-g-o em{font-style:normal;font-family:'Sometype Mono',monospace;font-size:11.5px;font-weight:700;color:var(--gold)}
+.eh-g-t > b{font-size:11.5px;font-weight:700;line-height:1.2;color:var(--ink);overflow-wrap:break-word}
+.eh-g-t > small{font-family:'Sometype Mono',monospace;font-size:9px;color:var(--muted)}
+.eh-g-t .eh-q-m{position:absolute;left:0;right:0;bottom:0;height:2px;margin:0;border-radius:0}
+.eh-zeit{margin:8px 2px 2px}
+/* Die Säulen wachsen nacheinander aus dem Boden, wie im Säulenbild eines
+   Spieltags; die Kachel setzt sich darauf, wenn ihre Säule steht, und die
+   Zahl blendet ein. Nur transform und Deckkraft, jede Bewegung an ihrem
+   eigenen Element [§C43]. */
+@media (prefers-reduced-motion:no-preference){
+  .eh-saeule{transform-origin:bottom;animation:spY .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 70ms + 80ms)}
+  .eh-s-z{animation:ehSetzt .45s cubic-bezier(.3,1.5,.5,1) both;animation-delay:calc(var(--i,0) * 70ms + 520ms)}
+  .eh-s-w{animation:spDa .35s ease-out both;animation-delay:calc(var(--i,0) * 70ms + 600ms)}
+  .eh-anteil-b{transform-origin:left;animation:spX .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:.2s}
+}
+@keyframes ehSetzt{from{opacity:0;transform:translateY(-8px) scale(.7)}}
+/* Das Lauflicht über einer legendären Auszeichnung, wie im Profil [§C27];
+   bei Bewegungsruhe nimmt 06-misc.css es weg. */
+.eh-s-z .zk.gold > .glanz-bahn::after,.eh-q > .zk.gold > .glanz-bahn::after{
+  content:"";position:absolute;top:0;bottom:0;left:0;width:250%;pointer-events:none;
+  background:linear-gradient(105deg,transparent 38%,rgba(255,236,170,.55) 50%,transparent 62%);
+  transform:translateX(-84%);animation:glanzZug 9s ease-in-out infinite;animation-delay:var(--gd,0s)}

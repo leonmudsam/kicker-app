@@ -75,9 +75,13 @@
   .news-toast:active{transform:scale(.97)}
   #newsToastTxt{display:block}
   .nh{display:flex;align-items:center;gap:10px}
-  .nh-zahl{flex:0 0 auto;display:grid;place-items:center;min-width:32px;height:32px;padding:0 6px;border-radius:10px;
-    background:var(--acid);color:#0f1409;font-family:'Archivo Black',sans-serif;font-weight:400;font-size:15px;
-    line-height:1;letter-spacing:-.02em}
+  .nh-ic{flex:0 0 auto;position:relative;display:grid;place-items:center;width:34px;height:34px;border-radius:10px;
+    background:var(--acid);color:#0f1409}
+  .nh-blatt{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;
+    stroke-linecap:round;stroke-linejoin:round;transform-origin:50% 80%}
+  .nh-funke{position:absolute;top:-9px;right:-10px;width:18px;height:18px;fill:#f6ffe0;
+    stroke:#141a10;stroke-width:1.4;opacity:0;filter:drop-shadow(0 0 3px rgba(190,242,100,.75))}
+  .nh-wort .num{font-family:'Archivo Black',sans-serif;font-weight:400;color:var(--acid)}
   .nh-text{min-width:0;display:flex;flex-direction:column;gap:2px}
   .nh-wort{font-family:'Space Grotesk',system-ui,sans-serif;font-weight:600;font-size:13px;line-height:1.2;color:var(--ink)}
   .nh-zeile{display:flex;align-items:flex-start;gap:6px;min-width:0;font-family:'Space Grotesk',system-ui,sans-serif;
@@ -86,11 +90,16 @@
   .nh-zeile span{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
   .nh-zeile.nh-rot{--story-rgb:240,86,106}
   @media(prefers-reduced-motion:no-preference){
-    .news-toast.show .nh-zahl{animation:nhPop .45s cubic-bezier(.3,1.4,.5,1) .06s both}
+    .news-toast.show .nh-ic{animation:nhPop .45s cubic-bezier(.3,1.4,.5,1) .06s both}
+    .news-toast.show .nh-blatt{animation:nhBlatt .7s ease-in-out .48s 2 both}
+    .news-toast.show .nh-funke{animation:nhFunke .7s ease-out .52s 2 both}
     .news-toast.show .nh-text{animation:nhEin .32s cubic-bezier(.2,.8,.2,1) .12s both}
   }
   @keyframes nhPop{0%{opacity:0;transform:scale(.5)}65%{opacity:1;transform:scale(1.08)}100%{transform:none}}
   @keyframes nhEin{from{opacity:0;transform:translateX(-6px)}}
+  @keyframes nhBlatt{0%,100%{transform:none}30%{transform:rotate(-10deg) translateY(-1px)}65%{transform:rotate(6deg)}}
+  @keyframes nhFunke{0%{opacity:0;transform:scale(.3) rotate(0)}45%{opacity:1;transform:scale(1.1) rotate(35deg)}
+    100%{opacity:0;transform:scale(.6) rotate(80deg)}}
   .appbar-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
   .logo{display:flex;align-items:center;gap:10px;min-width:0}
   .logo-mark{background:#000 url("data:image/webp;base64,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") center/cover no-repeat}
@@ -3019,6 +3028,7 @@
     letter-spacing:.16em;text-transform:uppercase;color:var(--muted);padding:4px 2px 10px;
     display:flex;align-items:center;gap:8px}
   .rcp-section::after{content:"";flex:1;height:1px;background:var(--line)}
+  .rlist + .rcp-section,.rcp-liste + .rcp-section{margin-top:14px}
 
   .rcp-posmini{display:flex;align-items:center;gap:12px;margin:0 0 16px;width:100%;
     background:var(--surface);border:1px solid var(--line);border-radius:16px;
@@ -3089,6 +3099,18 @@
       var(--surface);
     border:1px solid var(--line2);border-radius:20px;
     padding:16px 16px 14px;margin-bottom:14px}
+  .rcp-held{isolation:isolate}
+  .rcp-held-av{position:relative}
+  .rcp-held .nf-ms-strahl.leise{top:50%;width:250px;height:250px;margin:-125px 0 0 -125px;opacity:.6}
+  @media (prefers-reduced-motion:no-preference){
+    .rcp-held.mit-strahl .rcp-held-av{animation:abHeben .8s cubic-bezier(.2,.8,.2,1) .08s both}
+    .rcp-held.mit-strahl .rcp-held-n,.rcp-held.mit-strahl .rcp-held-rang{animation:abHeben .7s cubic-bezier(.2,.8,.2,1) .2s both}
+    .rcp-held.mit-strahl .rcp-z-s{animation:rcpZahlKommt .5s cubic-bezier(.2,.8,.3,1.25) .32s both}
+    .rcp-held.mit-strahl .rcp-z-s:nth-child(2){animation-delay:.39s}
+    .rcp-held.mit-strahl .rcp-z-s:nth-child(3){animation-delay:.46s}
+    .rcp-held.mit-strahl .rcp-z-s:nth-child(4){animation-delay:.53s}
+  }
+  @keyframes rcpZahlKommt{from{opacity:0;transform:translateY(8px) scale(.88)}}
   .rcp-held.klick{cursor:pointer;transition:transform .16s}
   .rcp-held.klick:active{transform:scale(.99)}
   .rcp-held-label{font-family:'Sometype Mono',monospace;font-size:9.5px;
@@ -3101,6 +3123,7 @@
   .rcp-z{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}
   .rcp-held .rcp-z{justify-content:center;gap:16px;margin:14px 0 0;padding-top:13px;
     border-top:1px solid var(--line)}
+  .rcp-held .rcp-z.vier{gap:8px}
   .rcp-z-s{flex:1 1 78px;min-width:78px;text-align:center;background:var(--surface);
     border:1px solid var(--line);border-radius:12px;padding:10px 6px}
   .rcp-held .rcp-z-s{background:none;border:none;padding:0}
@@ -3112,6 +3135,17 @@
   .rcp-z-v.lang{font-size:14px;letter-spacing:-.03em}
   .rcp-z-v.sehrlang{font-size:11.5px;letter-spacing:-.03em;line-height:1.15}
   .rcp-z-s{overflow:hidden}
+  .rcp-z-d{font-family:'Sometype Mono',monospace;font-size:9.5px;color:var(--ink2);margin-top:3px}
+  .rcp-z-bezug{margin:-10px 0 16px;text-align:center;font-family:'Sometype Mono',monospace;
+    font-size:9.5px;letter-spacing:.06em;color:var(--faint)}
+  .rcp-buehne{margin:2px 0 12px}
+  .rcp-buehne .nf-ms-strahl{width:300px;height:300px;margin:-150px 0 0 -150px}
+  @media (prefers-reduced-motion:no-preference){
+    .rcp-buehne .pod-karte{animation:bauPodest .7s cubic-bezier(.2,.8,.2,1) both}
+    .rcp-buehne .pod-karte.bronze{animation-delay:.12s}
+    .rcp-buehne .pod-karte.silber{animation-delay:.3s}
+    .rcp-buehne .pod-karte.gold{animation-delay:.5s}
+  }
   .rcp-z-l{font-family:'Sometype Mono',monospace;font-size:8.5px;font-weight:700;
     color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:5px;
     white-space:normal;overflow-wrap:anywhere;line-height:1.25}
@@ -3375,7 +3409,13 @@
   .rcp-wo-o i{transform-origin:bottom;animation:rcpWachsY .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 40ms)}
   .rcp-wo-u i{transform-origin:top;animation:rcpWachsY .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 40ms)}
   .rcp-elo-l{stroke-dasharray:1;animation:rcpZieh 1.2s ease-out both}
+  .rcp-elo circle{transform-box:fill-box;transform-origin:center;
+    animation:rcpPunkt .32s cubic-bezier(.2,.8,.3,1.5) both;animation-delay:calc(var(--i,1) * 1.1s)}
+  .rcp-elo-fl{animation:rcpDa .8s .7s both}
+  .rcp-elo-z b{display:inline-block;animation:rcpZahlKommt .45s cubic-bezier(.2,.8,.3,1.25) 1.15s both}
 }
+@keyframes rcpPunkt{from{opacity:0;transform:scale(0)}}
+@keyframes rcpDa{from{opacity:0}}
 @keyframes rcpWachs{from{transform:scaleX(0)}}
 @keyframes rcpWachsY{from{transform:scaleY(0)}}
 @keyframes rcpZieh{from{stroke-dashoffset:1}}
@@ -3750,15 +3790,47 @@
     font-family:'Sometype Mono',monospace}
   .tun .w b{color:var(--ink2);font-weight:700}
 
-  .pp-title-row{display:flex;flex-direction:column;align-items:center;gap:5px;margin-top:10px}
-  .pp-title-pill{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;
-    padding:5px 14px;border-radius:20px;color:var(--tt,var(--gold));
-    background:linear-gradient(180deg,rgba(var(--ttr,247,207,74),.16),rgba(var(--ttr,247,207,74),.05));
-    border:1px solid rgba(var(--ttr,247,207,74),.42)}
-  .pp-title-pill.live{border-style:dashed}
+  .pp-title-row{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:10px}
+  .pp-banner{position:relative;display:inline-flex;isolation:isolate;padding:0 11px}
+  .pp-banner::before,.pp-banner::after{content:"";position:absolute;top:4px;bottom:-4px;width:24px;z-index:-1;
+    box-shadow:inset 0 1px 0 rgba(var(--ttr,247,207,74),.45),inset 0 -1px 0 rgba(var(--ttr,247,207,74),.2)}
+  .pp-banner::before{left:0;clip-path:polygon(0 0,100% 0,100% 100%,0 100%,7px 50%);
+    background:linear-gradient(90deg,transparent 46%,rgba(0,0,0,.55)),
+      linear-gradient(180deg,rgba(var(--ttr,247,207,74),.30),rgba(var(--ttr,247,207,74),.10)),
+      color-mix(in srgb,rgb(var(--ttr,247,207,74)) 9%,#080907)}
+  .pp-banner::after{right:0;clip-path:polygon(0 0,100% 0,calc(100% - 7px) 50%,100% 100%,0 100%);
+    background:linear-gradient(270deg,transparent 46%,rgba(0,0,0,.55)),
+      linear-gradient(180deg,rgba(var(--ttr,247,207,74),.30),rgba(var(--ttr,247,207,74),.10)),
+      color-mix(in srgb,rgb(var(--ttr,247,207,74)) 9%,#080907)}
+  .pp-title-pill{position:relative;overflow:hidden;display:inline-flex;align-items:center;gap:7px;
+    font-size:12.5px;font-weight:700;padding:5px 14px;border-radius:2px;color:var(--tt,var(--gold));
+    text-shadow:0 0 12px rgba(var(--ttr,247,207,74),.45);
+    background:linear-gradient(180deg,rgba(var(--ttr,247,207,74),.32),rgba(var(--ttr,247,207,74),.10) 52%,rgba(var(--ttr,247,207,74),.22)),
+      color-mix(in srgb,rgb(var(--ttr,247,207,74)) 12%,#0b0c09);
+    box-shadow:inset 0 1px 0 rgba(var(--ttr,247,207,74),.85),inset 0 -1px 0 rgba(var(--ttr,247,207,74),.55),
+      0 6px 14px -6px rgba(0,0,0,.85),0 0 22px -6px rgba(var(--ttr,247,207,74),.6)}
+  .pp-title-pill::before{content:"";position:absolute;left:5px;right:5px;top:2px;bottom:2px;pointer-events:none;
+    border-top:1px solid rgba(var(--ttr,247,207,74),.28);border-bottom:1px solid rgba(var(--ttr,247,207,74),.2)}
+  .pp-title-pill::after{content:"";position:absolute;top:0;bottom:0;left:0;width:45%;pointer-events:none;
+    background:linear-gradient(100deg,transparent,rgba(255,244,210,.32),transparent);
+    transform:translateX(-120%);animation:ppBannerGlanz 7.5s ease-in-out 1.4s infinite}
+  @keyframes ppBannerGlanz{0%{transform:translateX(-120%)}22%,100%{transform:translateX(330%)}}
+  @keyframes ppBannerAuf{from{transform:scaleX(.15);opacity:0}}
+  @keyframes ppBannerEndeL{from{transform:translateX(12px);opacity:0}}
+  @keyframes ppBannerEndeR{from{transform:translateX(-12px);opacity:0}}
+  @media (prefers-reduced-motion:no-preference){
+    .pp-title-pill{animation:ppBannerAuf .6s cubic-bezier(.2,.9,.3,1) .2s both}
+    .pp-banner::before{animation:ppBannerEndeL .45s cubic-bezier(.2,.8,.3,1) .6s both}
+    .pp-banner::after{animation:ppBannerEndeR .45s cubic-bezier(.2,.8,.3,1) .6s both}
+  }
+  @media (prefers-reduced-motion:reduce){.pp-title-pill::after{animation:none;opacity:0}}
   .pp-title-pill .i{display:flex}
   .pp-title-pill .i svg{width:14px;height:14px}
-  .pp-title-sub{font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  .pp-title-sub{display:flex;align-items:center;gap:7px;font-size:9.5px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--muted)}
+  .pp-title-sub::before,.pp-title-sub::after{content:"";width:16px;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(247,207,74,.55))}
+  .pp-title-sub::after{background:linear-gradient(270deg,transparent,rgba(247,207,74,.55))}
 
   .chron-strip{display:flex;gap:7px;overflow-x:auto;padding:2px 0 6px;
     scrollbar-width:none;-webkit-overflow-scrolling:touch}
@@ -3987,15 +4059,45 @@
 
   .pp-av-wrap.has-ring .pp-av-ring{box-shadow:0 0 0 3px var(--bg),
     0 0 0 5.5px var(--tt),0 0 30px rgba(var(--ttr),.5),0 12px 28px -8px rgba(0,0,0,.6)}
-  .pp-av-mark{position:absolute;right:-3px;top:0;width:28px;height:28px;
-    border-radius:50%;display:grid;place-items:center;z-index:3;
+  .pp-av-wrap.ring-zwei .pp-av-ring::after{content:"";position:absolute;inset:0;
+    border-radius:50%;pointer-events:none;opacity:0;
+    box-shadow:0 0 0 3px var(--bg),0 0 0 5.5px var(--tt2),0 0 30px rgba(var(--ttr2),.5);
+    animation:ppRingWechsel 8s ease-in-out 1.2s infinite}
+  @keyframes ppRingWechsel{0%,30%,100%{opacity:0}45%,85%{opacity:1}}
+  .pp-av-mark{position:absolute;width:28px;height:28px;margin:-14px 0 0 -14px;z-index:3;
+    animation:ppMarkKommt .42s cubic-bezier(.2,.9,.3,1.25) calc(.45s + var(--i,0) * .09s) both}
+  .pp-av-mark > .d{position:absolute;inset:0;border-radius:50%;display:grid;place-items:center;
     background:var(--bg);color:var(--tt);
-    box-shadow:0 0 0 2px rgba(var(--ttr),.55),0 0 14px rgba(var(--ttr),.5)}
+    box-shadow:0 0 0 2px rgba(var(--ttr),.55),0 0 14px rgba(var(--ttr),.5);
+    animation:ppMarkAtem 7s ease-in-out calc(1.6s + var(--i,0) * .32s) infinite}
+  .pp-av-mark > .d::before{content:"";position:absolute;inset:-8px;border-radius:50%;z-index:-1;
+    background:radial-gradient(circle,rgba(var(--ttr),.55),transparent 68%);opacity:0;
+    animation:ppMarkHof 7s ease-in-out calc(1.6s + var(--i,0) * .32s) infinite}
+  @keyframes ppMarkKommt{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:none}}
+  @keyframes ppMarkAtem{0%,18%,100%{transform:none}8%{transform:scale(1.12)}}
+  @keyframes ppMarkHof{0%,18%,100%{opacity:0}8%{opacity:1}}
   .pp-av-mark svg{width:15px;height:15px;fill:none;stroke:currentColor;
     stroke-linecap:round;stroke-linejoin:round}
+  @media (prefers-reduced-motion:reduce){
+    .pp-av-mark,.pp-av-mark > .d,.pp-av-mark > .d::before,.pp-ring-rest .pp-ring-chip{animation:none!important}
+    .pp-av-wrap.ring-zwei .pp-av-ring::after{animation:none}}
   .pp-ring-chip{display:inline-flex;align-items:center;gap:7px;margin:8px auto 0;
     padding:5px 11px 5px 8px;border-radius:999px;
     background:rgba(var(--ttr),.10);border:1px solid rgba(var(--ttr),.28)}
+  .pp-ringe{display:flex;flex-direction:column;align-items:center}
+  button.pp-ring-chip{font:inherit;color:inherit;cursor:pointer;
+    -webkit-tap-highlight-color:transparent;transition:transform .15s}
+  button.pp-ring-chip:active{transform:scale(.97)}
+  .pp-ring-mehr{display:inline-flex;align-items:center;gap:2px;margin-left:2px;
+    padding-left:7px;border-left:1px solid rgba(var(--ttr),.28);
+    font-size:10px;font-weight:700;color:var(--ink2)}
+  .pp-ring-mehr svg{width:12px;height:12px;transition:transform .18s ease}
+  .pp-ringe.open .pp-ring-mehr svg{transform:rotate(180deg)}
+  .pp-ring-rest{display:none;flex-direction:column;align-items:center}
+  .pp-ringe.open .pp-ring-rest{display:flex}
+  .pp-ring-rest .pp-ring-chip{margin-top:6px;
+    animation:ppRingZeile .32s cubic-bezier(.2,.8,.2,1) calc(var(--i,0) * .06s) both}
+  @keyframes ppRingZeile{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
   .pp-ring-chip .i{display:grid;place-items:center;color:var(--tt)}
   .pp-ring-chip .i svg{width:14px;height:14px;fill:none;stroke:currentColor;
     stroke-linecap:round;stroke-linejoin:round}
@@ -4155,6 +4257,10 @@
     text-transform:uppercase;color:var(--muted)}
   .lb-grp-k .num{font-family:'Archivo Black',sans-serif;font-size:13px;
     letter-spacing:0;text-transform:none;color:var(--ink2)}
+  .lb-rest{margin-top:0}
+  .lb-rest.open{display:block}
+  .lb-grp .chron-more{margin:0;border:0;border-top:1px solid var(--line);border-radius:0;
+    padding:9px 13px}
 
   .lb-regel-auf{width:100%;border:0;border-top:1px solid var(--line);
     border-radius:0;padding:11px 13px;background:var(--bg);color:var(--ink);
@@ -4278,10 +4384,9 @@
     background:repeating-linear-gradient(45deg,
       rgba(var(--ak-rgb),.85) 0 4px,rgba(var(--ak-rgb),.12) 4px 8px)}
 
-  .pp-root .pp-title-pill{--tt:#f7cf4a!important;--ttr:247,207,74!important}
+  .pp-root .pp-banner{--tt:#f7cf4a!important;--ttr:247,207,74!important}
   .pp-root .chron-one{--tt:#f7cf4a!important;--ttr:247,207,74!important}
   .pp-root .tmark{--tt:#f7cf4a!important;--ttr:247,207,74!important}
-  .pp-root .pp-title-pill.schatten{--tt:#f0566a!important;--ttr:240,86,106!important}
   .pp-root .chron-one.schatten{--tt:#f0566a!important;--ttr:240,86,106!important}
   .pp-root .tmark.schatten{--tt:#f0566a!important;--ttr:240,86,106!important}
 
@@ -5727,6 +5832,93 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   .nd-ff .ff{margin:0}
   .ff-zw-m small b{color:var(--ink);font-weight:600}
 
+.eh-buehne{--fuge:14px;position:relative;display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-end;
+  gap:5px var(--fuge);margin:2px 4px 0;padding:10px 6px 9px;border-radius:14px;min-width:0;container-type:inline-size;
+  background:radial-gradient(120% 90% at 50% 100%,color-mix(in srgb,var(--purple) 14%,transparent),transparent 62%),
+    linear-gradient(180deg,color-mix(in srgb,var(--purple) 6%,transparent),transparent 72%);
+  border:1px solid color-mix(in srgb,var(--purple) 22%,transparent)}
+.eh-s{display:flex;flex-direction:column;align-items:center;min-width:0;max-width:60px;cursor:pointer}
+.eh-s-z{display:flex}
+.eh-s-z .zk{position:relative;overflow:hidden}
+.eh-s-w{margin:4px 0;font-style:normal;font-family:'Archivo Black',sans-serif;font-size:11.5px;line-height:1;
+  color:var(--gold);white-space:nowrap}
+.eh-saeule{display:flex;flex-direction:column;gap:2px;width:16px}
+.eh-saeule i{flex:1 1 0;min-height:3px;border-radius:2px}
+.eh-saeule i:first-child{border-radius:4px 4px 2px 2px}
+.eh-saeule i.legendary{background:var(--gold);box-shadow:0 0 10px rgba(247,207,74,.45)}
+.eh-saeule i.rare{background:var(--purple);box-shadow:0 0 8px rgba(167,139,250,.3)}
+.eh-saeule i.common{background:var(--acid);opacity:.85}
+.eh-s-av{display:flex;margin-top:5px}
+.eh-umbruch{flex-basis:100%;height:0}
+.eh-buehne.voll{--fuge:4px}
+.eh-s-av > .rav{--rav:min(48px,calc((100cqi - (var(--je,5) - 1) * var(--fuge)) / var(--je,5)))!important}
+.eh-buehne.gross .eh-s-av > .rav{--rav:min(52px,calc((100cqi - (var(--je,4) - 1) * var(--fuge)) / var(--je,4)))!important}
+.eh-fuss{display:flex;flex-wrap:wrap;gap:5px 12px;padding:8px 13px 10px;border-top:1px solid var(--line)}
+.eh-k{display:inline-flex;align-items:baseline;gap:4px;font-size:11px;color:var(--ink2);white-space:nowrap}
+.eh-k i{align-self:center;width:8px;height:8px;border-radius:2px;flex:0 0 auto}
+.eh-k.legendary i{background:var(--gold)}
+.eh-k.rare i{background:var(--purple)}
+.eh-k.common i{background:var(--acid)}
+.eh-k b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:12px;color:var(--ink)}
+.eh-k em{font-style:normal;font-family:'Sometype Mono',monospace;font-size:10.5px;font-weight:700;color:var(--gold)}
+
+.nd-eh{padding:16px 6px 12px}
+.nd-eh .eh-buehne{--fuge:6px;margin:0;padding:0;background:none;border:none;gap:7px var(--fuge)}
+.eh-buehne.gross .eh-s{max-width:none}
+.eh-buehne.gross .eh-saeule{width:22px}
+.eh-buehne.gross .eh-s-w{font-size:13px;margin:5px 0}
+.eh-s-n{margin-top:4px;font-size:10.5px;font-weight:700;color:var(--ink);white-space:nowrap}
+.eh-anteil{margin:0 0 6px}
+.eh-anteil-k{display:flex;align-items:baseline;gap:8px;margin:0 2px 8px}
+.eh-anteil-k b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:26px;line-height:1;color:var(--gold)}
+.eh-anteil-k span{font-family:'Sometype Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--muted)}
+.eh-anteil-b{display:flex;gap:2px;height:8px;border-radius:999px;overflow:hidden}
+.eh-anteil-b i{flex:1 1 0;min-width:3px}
+.eh-anteil-b i.legendary{background:var(--gold)}
+.eh-anteil-b i.rare{background:var(--purple)}
+.eh-anteil-b i.common{background:var(--acid)}
+.eh-anteil-l{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:8px}
+.eh-p{border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden;margin-bottom:8px}
+.eh-p-k{display:flex;align-items:center;gap:10px;padding:9px 13px;background:var(--surface2);border-bottom:1px solid var(--line)}
+.eh-p-k b{flex:1 1 auto;min-width:0;font-family:'Archivo Black',sans-serif;font-weight:400;font-size:13px;
+  color:var(--ink);overflow-wrap:anywhere}
+.eh-p-k em{font-style:normal;font-family:'Archivo Black',sans-serif;font-size:15px;color:var(--gold)}
+.eh-q{display:flex;align-items:center;gap:10px;padding:8px 13px}
+.eh-q + .eh-q{border-top:1px solid var(--line)}
+.eh-q > .zk{position:relative;overflow:hidden}
+.eh-q-t{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px}
+.eh-q-t b{font-size:12.5px;font-weight:700;color:var(--ink);overflow-wrap:anywhere}
+.eh-q-t small{font-family:'Sometype Mono',monospace;font-size:9.5px;color:var(--muted);letter-spacing:.03em}
+.eh-q-m{display:block;height:3px;margin-top:3px;border-radius:2px;background:rgba(255,255,255,.06);overflow:hidden}
+.eh-q-m i{display:block;height:100%;border-radius:2px;background:var(--acid)}
+.eh-q.legendary .eh-q-m i{background:var(--gold)}
+.eh-q.rare .eh-q-m i{background:var(--purple)}
+.eh-q em{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;gap:1px;font-style:normal;
+  font-family:'Sometype Mono',monospace;font-size:12px;font-weight:700;color:var(--gold)}
+.eh-q em small{font-size:9px;font-weight:400;color:var(--muted)}
+.eh-g{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px 9px 9px}
+.eh-q + .eh-g{border-top:1px solid var(--line)}
+.eh-g-t{position:relative;display:flex;flex-direction:column;gap:2px;min-width:0;padding:7px 9px 9px;border-radius:10px;
+  background:var(--surface2);border:1px solid var(--line);overflow:hidden}
+.eh-g-o{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:3px}
+.eh-g-o em{font-style:normal;font-family:'Sometype Mono',monospace;font-size:11.5px;font-weight:700;color:var(--gold)}
+.eh-g-t > b{font-size:11.5px;font-weight:700;line-height:1.2;color:var(--ink);overflow-wrap:break-word}
+.eh-g-t > small{font-family:'Sometype Mono',monospace;font-size:9px;color:var(--muted)}
+.eh-g-t .eh-q-m{position:absolute;left:0;right:0;bottom:0;height:2px;margin:0;border-radius:0}
+.eh-zeit{margin:8px 2px 2px}
+@media (prefers-reduced-motion:no-preference){
+  .eh-saeule{transform-origin:bottom;animation:spY .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 70ms + 80ms)}
+  .eh-s-z{animation:ehSetzt .45s cubic-bezier(.3,1.5,.5,1) both;animation-delay:calc(var(--i,0) * 70ms + 520ms)}
+  .eh-s-w{animation:spDa .35s ease-out both;animation-delay:calc(var(--i,0) * 70ms + 600ms)}
+  .eh-anteil-b{transform-origin:left;animation:spX .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:.2s}
+}
+@keyframes ehSetzt{from{opacity:0;transform:translateY(-8px) scale(.7)}}
+.eh-s-z .zk.gold > .glanz-bahn::after,.eh-q > .zk.gold > .glanz-bahn::after{
+  content:"";position:absolute;top:0;bottom:0;left:0;width:250%;pointer-events:none;
+  background:linear-gradient(105deg,transparent 38%,rgba(255,236,170,.55) 50%,transparent 62%);
+  transform:translateX(-84%);animation:glanzZug 9s ease-in-out infinite;animation-delay:var(--gd,0s)}
+
   .geruest{position:relative;overflow:hidden;pointer-events:none}
   .gk{display:block;border-radius:7px;background:var(--surface2)}
   .g-kopf{margin:8px 2px 18px}
@@ -5819,6 +6011,11 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   @keyframes aufbauVonUnten{from{transform:translateY(100%)}}
   .sheet.show > .staffel{animation:none}
   .steht,.steht::before,.steht::after{animation-play-state:paused!important}
+  .nf-liste.sicht .nf-card:not(.nf-brk):not(.nf-gross):not(.im-bild)::before,
+  .nf-liste.sicht .nf-card:not(.nf-brk):not(.nf-gross):not(.im-bild)::after,
+  .nf-liste.sicht .nf-card:not(.nf-brk):not(.nf-gross):not(.im-bild) *,
+  .nf-liste.sicht .nf-card:not(.nf-brk):not(.nf-gross):not(.im-bild) *::before,
+  .nf-liste.sicht .nf-card:not(.nf-brk):not(.nf-gross):not(.im-bild) *::after{animation-play-state:paused!important}
   .news-pill.wartet{background:var(--surface2);border-color:var(--line);pointer-events:none}
   .news-pill.wartet > *{opacity:0}
   @keyframes pilleInhalt{from{opacity:0;transform:translateX(8px)}}
@@ -5941,7 +6138,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.19.2342defc';
+const BUILD_VERSION='2026.10.20.ed2640c4';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -6121,6 +6318,8 @@ const ICONS = {
   bothSides:     `<path d="M12 3v18"/><path d="M4 7h5M4 12h5M4 17h5"/><path d="M15 7h5M15 12h5M15 17h5"/>`,
   shieldRank:    `<path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6z"/><path d="M9 10l3-2 3 2M9 14l3-2 3 2"/>`,
   stepsUp:       `<path d="M3 20h5v-5h5v-5h5V5"/><path d="M16 8l3-3 3 3"/>`,
+  vormonatSprung:`<path d="M3 21h18M7 21v-4M17 21V10"/><path d="M6 13c2-6 8-8 11-6"/><path d="M14.5 4.5L17 7l-2.5 2.5"/>`,
+  leiterAuf:     `<path d="M6 21V3M13 21V3M6 7h7M6 12h7M6 17h7"/><path d="M19 13V5M16.5 7.5L19 5l2.5 2.5"/>`,
   strikeBoot:    `<path d="M4 8h7l3 4h4a2 2 0 012 2v3H6a2 2 0 01-2-2z"/><path d="M4 20h16"/><circle cx="8" cy="5" r="2"/>`,
   penLine:       `<path d="M3 17c4-9 7-13 9-13s1 4-1 8-4 6-2 6 4-3 6-6"/><path d="M3 21h18"/>`,
   baseLine:      `<path d="M3 21h18"/><rect x="5" y="13" width="14" height="5" rx="1"/><rect x="8" y="7" width="8" height="5" rx="1"/>`,
@@ -7193,10 +7392,11 @@ function rcpHeldHtml(o){
                  : rcpPaarHtml(ids, 64);
   const namen = ids.map(pname).join(' & ');
   const abzeichen = ein ? rankBadgeHtml(ids[0], 'sm') : '';
-  return `<div class="rcp-held${ein ? ' klick' : ''}"${
+  return `<div class="rcp-held${ein ? ' klick' : ''}${o.strahl ? ' mit-strahl' : ''}"${
       ein ? ` data-detail="${esc(ids[0])}"` : ''}>
     <div class="rcp-held-label">${esc(o.marke)}</div>
-    <div class="rcp-held-av${ein && band ? ' band' : ''}">${av}</div>
+    <div class="rcp-held-av${ein && band ? ' band' : ''}">${
+      o.strahl ? '<span class="nf-ms-strahl leise" aria-hidden="true"></span>' : ''}${av}</div>
     <div class="rcp-held-n">${esc(namen)}</div>
     ${abzeichen ? `<div class="rcp-held-rang">${abzeichen}</div>` : ''}
     ${o.zahlen || ''}${glanzBahn()}
@@ -7209,7 +7409,8 @@ function rcpZahlenHtml(zellen){
   return `<div class="rcp-z${n === 4 ? ' vier' : ''}">${zellen.filter(Boolean).map(z => {
     const t = String(z.v);
     return `<div class="rcp-z-s"><div class="rcp-z-v${z.ton ? ' ' + z.ton : ''}${
-      lang(t)} num">${esc(t)}</div><div class="rcp-z-l">${esc(z.l)}</div></div>`;
+      lang(t)} num">${esc(t)}</div><div class="rcp-z-l">${esc(z.l)}</div>${
+      z.d != null ? `<div class="rcp-z-d num">${esc(z.d)}</div>` : ''}</div>`;
   }).join('')}</div>`;
 }
 
@@ -7235,6 +7436,21 @@ function rcpKachelHtml(o){
       <div class="rcp-aw-val">${esc(o.wert || '')}</div>
     </div>
   </div>`;
+}
+
+function rcpAwardKacheln(R, metall, rot, attr, ohne){
+  const out = [];
+  const kachel = (key, ton) => {
+    const top = awTop(key, R); if(!top.length) return;
+    if(ohne && ohne(key, top)) return;
+    const t = awText(key, top[0]);
+    out.push(rcpKachelHtml({ic:AW_IC[key], label:AWARD_META[key].title,
+      name:awIds(key, top[0]).map(pname).join(' & ') + (top.length > 1 ? ' +'+(top.length-1) : ''),
+      wert:t.e ? t.z+' '+t.e : t.z, ton, attr:attr(key)}));
+  };
+  metall.forEach(k => kachel(k, 'metall'));
+  rot.forEach(k => kachel(k, 'red'));
+  return out;
 }
 
 function rcpZeileHtml(o){
@@ -7566,7 +7782,7 @@ function rcpEloBahnHtml(ms, pid){
     <line class="rcp-elo-0" x1="0" x2="${W}" y1="${null0}" y2="${null0}"/>
     <path class="rcp-elo-fl" d="${d}L${x(pts.length - 1)},${null0}L${x(0)},${null0}Z"/>
     <path class="rcp-elo-l" pathLength="1" d="${d}"/>
-    ${pts.map((v, i) => i ? `<circle class="${v >= pts[i - 1] ? 'w' : 'l'}" cx="${x(i)}" cy="${y(v)}" r="3"/>` : '').join('')}
+    ${pts.map((v, i) => i ? `<circle class="${v >= pts[i - 1] ? 'w' : 'l'}" style="--i:${(i / (pts.length - 1)).toFixed(2)}" cx="${x(i)}" cy="${y(v)}" r="3"/>` : '').join('')}
   </svg><div class="rcp-elo-z num"><span>Erste Partie</span><b class="${s >= 0 ? 'pos' : 'neg'}">${s >= 0 ? '+' : ''}${s} Elo</b></div></div>`;
 }
 function pmap(){
@@ -7920,6 +8136,29 @@ function showSeasonRecap(season, opts){
       }).join('')}</div>`;
   }
 
+  const vorSid = _prevSeasonId(sid);
+  const vorMs = vorSid ? matchesInSeason(vorSid) : [];
+  const unterschied = (jetzt, vor) => vorMs.length
+    ? (jetzt > vor ? '+' : jetzt < vor ? '−' : '±') + Math.abs(jetzt - vor) : null;
+  let sprungHtml = '';
+  if(vorMs.length && rang.length){
+    const platzVor = {};
+    saisonRang(vorSid).forEach((e, i) => { platzVor[e.id] = i + 1; });
+    const bewegt = rang.map((e, i) => ({id:e.id, jetzt:i + 1, vor:platzVor[e.id]})).filter(x => x.vor);
+    const weite = x => x.vor - x.jetzt;
+    const auf = bewegt.filter(x => weite(x) > 0).sort((a, b) => weite(b) - weite(a) || a.jetzt - b.jetzt)[0];
+    const ab = bewegt.filter(x => weite(x) < 0).sort((a, b) => weite(a) - weite(b) || a.jetzt - b.jetzt)[0];
+    const k = [];
+    if(auf) k.push(rcpKachelHtml({ic:'stepsUp', label:'Größter Sprung', name:pname(auf.id),
+      wert:'Platz ' + auf.vor + ' → ' + auf.jetzt, ton:'metall', attr:`data-detail="${esc(auf.id)}"`}));
+    if(ab) k.push(rcpKachelHtml({ic:'trendDown', label:'Tiefster Fall', name:pname(ab.id),
+      wert:'Platz ' + ab.vor + ' → ' + ab.jetzt, ton:'red', attr:`data-detail="${esc(ab.id)}"`}));
+    if(k.length) sprungHtml = rcpAbschnitt('Gegenüber ' + seasonLabel(vorSid))
+      + `<div class="rcp-awards${k.length % 2 ? ' ungerade' : ''}">${k.join('')}</div>`;
+  }
+  const vorTore = vorMs.reduce((s, m) => s + (m.score_a || 0) + (m.score_b || 0), 0);
+  const vorSpieler = new Set(vorMs.flatMap(m => [m.a1, m.a2, m.b1, m.b2])).size;
+
   let rennenHtml='';
   try {
     const drei = rang.slice(0, 3).map(e => e.id);
@@ -7946,10 +8185,17 @@ function showSeasonRecap(season, opts){
   try {
     const T = seasonTitles(sid);
     if(T.awarded.length){
-      chronikHtml = rcpAbschnitt('Chronik der Saison', T.awarded.length) + `<div class="rcp-liste">${
-        T.awarded.map(a=>rcpZeileHtml({pid:a.pid, px:38,
+      const zeile = a => rcpZeileHtml({pid:a.pid, px:38,
           ic:a.ic, ton:a.tone, name:a.name, sub:pname(a.pid),
-          attr:`data-tplayer="${esc(a.pid)}"`})).join('')}</div>`
+          attr:`data-tplayer="${esc(a.pid)}"`});
+      const gesehen = new Set(), zaehlt = [], weitere = [];
+      T.awarded.forEach(a => {
+        if(gesehen.has(a.pid)) weitere.push(a); else { gesehen.add(a.pid); zaehlt.push(a); }
+      });
+      chronikHtml = rcpAbschnitt('Chronik der Saison', zaehlt.length)
+        + `<div class="rcp-liste">${zaehlt.map(zeile).join('')}</div>`
+        + (weitere.length ? `<div class="rcp-liste chron-rest">${weitere.map(zeile).join('')}</div>`
+            + _chronMehrKnopf(weitere.length) : '')
         + `<div class="rcp-mehr klick" data-stafel="${esc(sid)}">Die ganze Tafel</div>`;
     }
   } catch(err){}
@@ -7970,16 +8216,10 @@ function showSeasonRecap(season, opts){
   awSeasonId = sid;
   const R = awardRankings('season');
   awSeasonId = vorherAw;
-  const kacheln = [];
-  const kachel = (key, ton) => {
-    const top = awTop(key, R); if(!top.length) return;
-    const t = awText(key, top[0]);
-    kacheln.push(rcpKachelHtml({ic:AW_IC[key], label:AWARD_META[key].title,
-      name:awIds(key, top[0]).map(pname).join(' & ') + (top.length > 1 ? ' +'+(top.length-1) : ''),
-      wert:t.e ? t.z+' '+t.e : t.z, ton, attr:`data-award="${key}"`}));
-  };
-  ['scorer','wall','streaks','perfect','weekKing','dayKing','grinder','upset'].forEach(k => kachel(k, 'metall'));
-  ['worstWr','pechvogel'].forEach(k => kachel(k, 'red'));
+  const kacheln = rcpAwardKacheln(R,
+    ['scorer','wall','streaks','perfect','clutch','plusMinus','underdog','biggest','weekKing','dayKing','grinder','upset'],
+    ['worstWr','lossStreaks','pechvogel'],
+    key => `data-award="${key}"`);
   const awardsHtml = kacheln.length
     ? rcpAbschnitt('Auszeichnungen', kacheln.length)
       + `<div class="rcp-awards${kacheln.length%2?' ungerade':''}">${kacheln.join('')}</div>` : '';
@@ -7991,10 +8231,15 @@ function showSeasonRecap(season, opts){
     rcpKopfHtml({ic:'trophy', marke:'Saison beendet', titel:season.label,
       extra:saisonWaehlerHtml('rcpSaisonwahl', sid, {liste:vergangene, attr:'rcpsaison'})})
     + rcpZahlenHtml([
-        {v:ms.length, l:'Matches'}, {v:tage, l:'Spieltage'},
-        {v:spielerImMonat.size, l:'Spieler'}, {v:tore, l:'Tore'}])
-    + rcpAbschnitt('Podest') + podestHtml + teamHtml
-    + listeHtml + rennenHtml + verlaufHtml + chronikHtml + rekordHtml + awardsHtml
+        {v:ms.length, l:'Matches', d:unterschied(ms.length, vorMs.length)},
+        {v:tage, l:'Spieltage', d:unterschied(tage, new Set(vorMs.map(mdayKey)).size)},
+        {v:spielerImMonat.size, l:'Spieler', d:unterschied(spielerImMonat.size, vorSpieler)},
+        {v:tore, l:'Tore', d:unterschied(tore, vorTore)}])
+    + (vorMs.length ? `<div class="rcp-z-bezug">Unterschied zum ${esc(seasonLabel(vorSid))}</div>` : '')
+    + rcpAbschnitt('Podest')
+    + (podestHtml ? `<div class="nf-meister rcp-buehne"><span class="nf-ms-strahl" aria-hidden="true"></span>${podestHtml}</div>` : '')
+    + teamHtml
+    + listeHtml + sprungHtml + rennenHtml + verlaufHtml + chronikHtml + rekordHtml + awardsHtml
     + `<button class="recap-done-btn" id="closeRecapBtn">Verstanden</button>`,
     {protectMs: opts.auto ? 2500 : 0});
 
@@ -8024,6 +8269,7 @@ function showSeasonRecap(season, opts){
   binden('[data-poshist]', el => sheetNav(()=>showPositionHistory(el.dataset.poshist)));
   binden('[data-stafel]', el => sheetNav(()=>showSeasonTable(el.dataset.stafel)));
   binden('[data-chron]', el => sheetNav(()=>showChronicle(el.dataset.chron)));
+  _chronMehrBinden(wurzel);
 }
 
 function _potwLastWeekRange(){
@@ -8644,56 +8890,13 @@ function showPotwRecap(opts){
 
     const ps={};
     const run={};
-    const defStats={};
-    const teamGames={};
-    const teamWins={};
-    const teamEloDeltaRaw={};
-
     const pm=pmap();
-
     const orderedMatchesForWeek = [...ms].sort((a,b)=>mts(a)-mts(b));
-
-    const weekSimKey = 'potwSim_'+wkKey+'_'+matches.length+'_'+_cache.version;
-    let weekSim;
-    if(_cache._potwSim && _cache._potwSimKey === weekSimKey){
-      weekSim = _cache._potwSim;
-    } else {
-      weekSim = simulateElo(orderedMatchesForWeek, {
-        initialState: {
-          elo: Object.fromEntries(players.map(p => [p.id, cfg.start_elo])),
-          played: Object.fromEntries(players.map(p => [p.id, 0])),
-          playedSeason: Object.fromEntries(players.map(p => [p.id, 0])),
-          wins: Object.fromEntries(players.map(p => [p.id, 0])),
-          losses: Object.fromEntries(players.map(p => [p.id, 0])),
-          curStreak: Object.fromEntries(players.map(p => [p.id, 0])),
-          bestStreak: Object.fromEntries(players.map(p => [p.id, 0])),
-          eloGain: Object.fromEntries(players.map(p => [p.id, 0])),
-          eloLoss: Object.fromEntries(players.map(p => [p.id, 0])),
-          gd: Object.fromEntries(players.map(p => [p.id, 0])),
-          teamElo: {},
-          seasonTeamElo: {},
-          history: [],
-          seasonEndElos: {},
-          seasonPlayed: {},
-          careerElo: {},
-          posTracker: {}, 
-          curSeason: null
-        },
-        startElo: cfg.start_elo
-      });
-      _cache._potwSim = weekSim;
-      _cache._potwSimKey = weekSimKey;
-    }
-
-    const weekHistById = new Map();
-    for(let i=0; i<weekSim.history.length; i++){
-      weekHistById.set(weekSim.history[i].matchId, weekSim.history[i]);
-    }
 
     orderedMatchesForWeek.forEach(m=>{
       const aWon=m.winner==='A';
       [m.a1,m.a2,m.b1,m.b2].forEach(id=>{
-        if(!ps[id]) ps[id]={wins:0,losses:0,gf:0,ga:0,eloDelta:0,bestStreak:0,defG:0,defGa:0};
+        if(!ps[id]) ps[id]={wins:0,losses:0,gf:0,ga:0,eloDelta:0,bestStreak:0};
         if(run[id]===undefined) run[id]=0;
         const onA=(id===m.a1||id===m.a2);
         const won=(onA&&aWon)||(!onA&&!aWon);
@@ -8703,29 +8906,6 @@ function showPotwRecap(opts){
         if(won){ ps[id].wins++; run[id]=run[id]>=0?run[id]+1:1; }
         else  { ps[id].losses++; run[id]=run[id]<=0?run[id]-1:-1; }
         if(run[id]>ps[id].bestStreak) ps[id].bestStreak=run[id];
-
-        const pos=id===m.a1?m.a1_pos:id===m.a2?m.a2_pos:id===m.b1?m.b1_pos:m.b2_pos;
-        if(pos==='def'){
-          if(!defStats[id]) defStats[id]={games:0,goalsAgainst:0};
-          defStats[id].games++;
-          defStats[id].goalsAgainst+=ga;
-        }
-      });
-
-      [[m.a1,m.a2,m.winner==='A'],[m.b1,m.b2,m.winner==='B']]
-      .forEach(([p1,p2,wonTeam])=>{
-        const k=paarKey(p1, p2);
-        if(!teamGames[k]) teamGames[k]=0;
-        if(!teamWins[k]) teamWins[k]=0;
-        if(!teamEloDeltaRaw[k]) teamEloDeltaRaw[k]=0;
-
-        teamGames[k]++;
-        if(wonTeam) teamWins[k]++;
-
-        const matchHistoryEntry = weekHistById.get(m.id);
-        if (matchHistoryEntry) {
-            teamEloDeltaRaw[k] += (matchHistoryEntry.deltas[p1] || 0) + (matchHistoryEntry.deltas[p2] || 0);
-        }
       });
     });
 
@@ -8758,83 +8938,30 @@ function showPotwRecap(opts){
     ms.forEach(m=>[m.a1,m.a2,m.b1,m.b2].forEach(id=>uniquePlayers.add(id)));
     const totalGoals=ms.reduce((a,m)=>a+(m.score_a||0)+(m.score_b||0),0);
 
-    const wkAtk={};
-    ms.forEach(m=>{
-      const strikersInA = [];
-      if (m.a1_pos === 'atk') strikersInA.push(m.a1);
-      if (m.a2_pos === 'atk') strikersInA.push(m.a2);
-
-      const strikersInB = [];
-      if (m.b1_pos === 'atk') strikersInB.push(m.b1);
-      if (m.b2_pos === 'atk') strikersInB.push(m.b2);
-
-      strikersInA.forEach(id => {
-          if (!wkAtk[id]) wkAtk[id] = { g: 0, goals: 0 };
-          wkAtk[id].g++; wkAtk[id].goals += m.score_a;
-      });
-      strikersInB.forEach(id => {
-          if (!wkAtk[id]) wkAtk[id] = { g: 0, goals: 0 };
-          wkAtk[id].g++; wkAtk[id].goals += m.score_b;
-      });
-    });
-
-    const scorerArr=Object.entries(wkAtk).filter(([,v])=>v.g>=1)
-      .map(([id,x])=>({id,gf:x.goals,g:x.g,avg:x.goals/x.g})).sort((a,b)=>b.avg-a.avg||b.gf-a.gf);
-    const topScorer=scorerArr[0] && scorerArr[0].gf>0 ? scorerArr[0] : null;
-
-    const bestDefenderArr=Object.entries(defStats)
-      .filter(([,s])=>s.games>=2)
-      .map(([id,s])=>({id,games:s.games,goalsAgainst:s.goalsAgainst,avg:s.goalsAgainst/s.games}))
-      .sort((a,b)=>a.avg-b.avg||a.goalsAgainst-b.goalsAgainst);
-    const bestDefender=bestDefenderArr[0];
-
     const biggestEloGainArr=Object.entries(ps)
       .filter(([id,s])=>s.wins+s.losses > 0 && sichtbar(pm[id]))
       .sort((a,b)=>b[1].eloDelta-a[1].eloDelta);
     const biggestEloGain=biggestEloGainArr[0];
 
-    let topUpset=null;
-    for(const m of ms){
-      const sp=m.exp_a==null?0.5:m.exp_a;
-      const winSp=m.winner==='A'?sp:(1-sp);
-      if(winSp<CHANCE_OFFEN && (!topUpset || winSp<topUpset.sp)) topUpset={m,sp:winSp};
-    }
-    const upsetNames=topUpset?
-      (topUpset.m.winner==='A'?[pname(topUpset.m.a1),pname(topUpset.m.a2)]:[pname(topUpset.m.b1),pname(topUpset.m.b2)])
-      :null;
+    const vorherWoche = awWeekStart;
+    awWeekStart = new Date(weekStart);
+    let R;
+    try { R = awardRankings('week'); } finally { awWeekStart = vorherWoche; }
 
-    const totwCandidates = Object.entries(teamEloDeltaRaw)
-      .filter(([k,v]) => {
-        const ids = k.split('|');
-        return teamGames[k] >= 2 && sichtbar(pm[ids[0]]) && sichtbar(pm[ids[1]]);
-      })
-      .map(([k,v]) => ({ ids: k.split('|'), eloDelta: v, games: teamGames[k], wins: teamWins[k] }))
-      .sort((a,b) => b.eloDelta - a.eloDelta || (b.wins/b.games) - (a.wins/a.games));
-    const teamOfTheWeek = totwCandidates[0];
+    const spieltage = new Set(ms.map(m => tagKey(mts(m)))).size;
+    const eng = ms.filter(m => Math.abs((m.score_a || 0) - (m.score_b || 0)) <= 2).length;
+    const duos = new Set(ms.flatMap(m => [paarKey(m.a1, m.a2), paarKey(m.b1, m.b2)])).size;
 
     const wkStartMs = weekStart.getTime();
     const hlKacheln = [];
-    const hl = (ic, label, name, wert, attr) => hlKacheln.push(rcpKachelHtml(
-      name ? {ic, label, name, wert, ton:'metall', attr} : {ic, label, leer:true}));
-
-    hl('handshake', 'Team der Woche',
-       teamOfTheWeek ? pname(teamOfTheWeek.ids[0])+' & '+pname(teamOfTheWeek.ids[1]) : null,
-       teamOfTheWeek ? teamOfTheWeek.games+' Spiele · '
-         +Math.round(teamOfTheWeek.wins/teamOfTheWeek.games*100)+'%' : null,
-       `data-potw-award="mvt" data-potw-week="${wkStartMs}"`);
-    hl('trendUp', 'Größter Aufwind',
-       biggestEloGain ? pname(biggestEloGain[0]) : null,
-       biggestEloGain ? '+'+Math.round(biggestEloGain[1].eloDelta)+' Elo' : null,
-       biggestEloGain ? `data-potw-player="${esc(biggestEloGain[0])}"` : '');
-    hl('ball', 'Torjäger', topScorer ? pname(topScorer.id) : null,
-       topScorer ? 'Ø '+komma(topScorer.avg,1)+' Tore' : null,
-       `data-potw-award="scorer" data-potw-week="${wkStartMs}"`);
-    hl('shieldCheck', 'Eiserne Abwehr', bestDefender ? pname(bestDefender.id) : null,
-       bestDefender ? 'Ø '+komma(bestDefender.avg,1)+' Gegentore' : null,
-       `data-potw-award="wall" data-potw-week="${wkStartMs}"`);
-    hl('bolt', 'Größte Überraschung', (topUpset && upsetNames) ? upsetNames.join(' & ') : null,
-       (topUpset && upsetNames) ? Math.round(topUpset.sp*100)+'% Chance' : null,
-       `data-potw-award="upset" data-potw-week="${wkStartMs}"`);
+    if(biggestEloGain) hlKacheln.push(rcpKachelHtml({ic:'trendUp', label:'Größter Aufwind',
+      name:pname(biggestEloGain[0]), wert:'+'+Math.round(biggestEloGain[1].eloDelta)+' Elo', ton:'metall',
+      attr:`data-potw-player="${esc(biggestEloGain[0])}"`}));
+    hlKacheln.push(...rcpAwardKacheln(R,
+      ['mvt', 'streaks', 'scorer', 'wall', 'clutch', 'upset', 'biggest', 'grinder'],
+      ['worstWr', 'lossStreaks'],
+      key => `data-potw-award="${key}" data-potw-week="${wkStartMs}"`,
+      (key, top) => key === 'streaks' && mainPotwStats.bestStreak >= 3 && top.some(x => x.id === mainPotwPlayerId)));
 
     const serieHtml = mainPotwStats.bestStreak >= 3
       ? rcpNotizHtml({ic:'flame',
@@ -8851,7 +8978,7 @@ function showPotwRecap(opts){
       + rcpHeldHtml({
           pid: mainPotwPlayerId,
           pids: geteilt ? potwWinners.map(w => w[0]) : null,
-          band:false, px:104, marke:'Spieler der Woche',
+          band:false, px:104, marke:'Spieler der Woche', strahl:true,
           zahlen: rcpZahlenHtml([
             {v:mainPotwStats.wins,   l:'Siege',       ton:'gruen'},
             {v:mainPotwStats.losses, l:'Niederlagen', ton:'rot'},
@@ -8859,10 +8986,16 @@ function showPotwRecap(opts){
             {v:eloDeltaStr,          l:'Elo', ton:eloDelta>=0 ? 'gruen' : 'rot'}
           ])})
       + serieHtml
+      + rcpAbschnitt('Die Woche in Zahlen')
+      + rcpZahlenHtml([
+          {v:spieltage,                        l:spieltage === 1 ? 'Spieltag' : 'Spieltage'},
+          {v:komma(totalGoals / ms.length, 1), l:'Tore je Partie'},
+          {v:eng,                              l:'Enge Partien'},
+          {v:duos,                             l:'Duos'}])
       + (geteilt ? '' : rcpAbschnitt('Die Woche von ' + pname(mainPotwPlayerId))
-          + rcpWocheHtml(ms, mainPotwPlayerId, weekStart))
+          + rcpWocheHtml(ms, mainPotwPlayerId, weekStart) + rcpEloBahnHtml(ms, mainPotwPlayerId))
       + rcpAbschnitt('Das Feld der Woche') + rcpFeldHtml(ms, mainPotwPlayerId)
-      + rcpAbschnitt('Höhepunkte der Woche')
+      + rcpAbschnitt('Auszeichnungen der Woche', hlKacheln.length)
       + `<div class="rcp-awards${hlKacheln.length%2 ? ' ungerade' : ''}">${hlKacheln.join('')}</div>`
       + `<button id="closePotwBtn" class="recap-done-btn">Verstanden</button>`,
       {protectMs: opts.auto ? 2500 : 0});
@@ -9072,7 +9205,7 @@ function showPotdRecap(opts){
     openSheet(
       rcpKopfHtml({ic:'trophyDay', marke:'Player of the Day', titel:dayStr,
         meta: rcpMeta([dayMatches.length+' Matches', uniquePlayers.size+' Spieler'])})
-      + rcpHeldHtml({pid:potdId, band:false, px:104, marke:'Spieler des Tages',
+      + rcpHeldHtml({pid:potdId, band:false, px:104, marke:'Spieler des Tages', strahl:true,
           zahlen: rcpZahlenHtml([
             {v:s.wins,      l:'Siege',       ton:'gruen'},
             {v:s.losses,    l:'Niederlagen', ton:'rot'},
@@ -10506,6 +10639,21 @@ if(_bewegungDa() && typeof IntersectionObserver === 'function')
     const i = namen.indexOf(e.animationName);
     if(i >= 0 && zahl[i % zahl.length] === 'infinite') _bewegungBeobachten(el);
   }, true);
+let _kartenSicht = null;
+const _kartenBeobachtet = new Set();
+const FEED_SICHT = typeof IntersectionObserver === 'function';
+function _feedKartenSicht(liste){
+  if(!FEED_SICHT || !liste) return;
+  if(!_kartenSicht) _kartenSicht = new IntersectionObserver(eintraege => eintraege.forEach(e => {
+    if(!e.target.isConnected){ _kartenSicht.unobserve(e.target); _kartenBeobachtet.delete(e.target); return; }
+    e.target.classList.toggle('im-bild', e.isIntersecting);
+  }), {rootMargin:'80px'});
+  _kartenBeobachtet.forEach(k => { if(!k.isConnected){ _kartenSicht.unobserve(k); _kartenBeobachtet.delete(k); } });
+  liste.querySelectorAll('.nf-card:not(.nf-brk):not(.nf-gross)').forEach(k => {
+    if(_kartenBeobachtet.has(k)) return;
+    _kartenBeobachtet.add(k); _kartenSicht.observe(k);
+  });
+}
 let _lichtSicht = null;
 const LICHT_TEILE = ':scope > .kl, :scope > .kl-schein, :scope > .glanz-einmal';
 function _lichtLoesen(el){
@@ -11241,7 +11389,7 @@ function _vRankingCore(){
       const teamName=bestTeam?`${pname(bestTeam.ids[0])} & ${pname(bestTeam.ids[1])}`:null;
       const _allRanks=getCachedAwardRankings('all');
       const _kingList=period==='week'?(_allRanks.weekKingList||[]):(_allRanks.dayKingList||[]);
-      const topKing=_kingList[0]||null;
+      const topKing=_kingList.find(k=>k.gilt)||null;
       const mitte = period==='week'
         ? renderHl('streak','Siegesserie',AW_IC.streaks, topStreak?pname(topStreak.id):null,
             topStreak?`${topStreak.v} in Folge`:'', topStreak?'data-toplist="periodStreak"':'')
@@ -11253,7 +11401,7 @@ function _vRankingCore(){
           ${mitte}
           ${renderHl('king', period==='week'?'Wochenkönig':'Tageskönig', period==='week'?'weekKing':'dayKing',
               topKing?pname(topKing.id):null,
-              topKing?(period==='week'?`${topKing.v} ${topKing.v===1?'Wochensieg':'Wochensiege'}`:`${topKing.v} ${topKing.v===1?'Tagessieg':'Tagessiege'}`):'',
+              topKing?`${Math.round(topKing.q*100)} % · ${topKing.v}/${topKing.n}`:'',
               topKing?'data-toplist="periodKing"':'')}
         </div>`;
 
@@ -11914,14 +12062,27 @@ function _awardRankingsUncached(period, sid){
   const showmasterList=_computeShowmaster(ms);
 
   const visiblePlayers = players.filter(dabei);
+  const eigene = {};
+  const laufendeWoche = _wochenKey(Date.now());
+  ms.forEach(m => {
+    const d = mdayKey(m), w = _wochenKey(m.created_at), zu = _tagZu(d);
+    [m.a1, m.a2, m.b1, m.b2].forEach(id => {
+      if(!id) return;
+      const e = eigene[id] || (eigene[id] = {tage:new Set(), wochen:new Set()});
+      if(zu) e.tage.add(d);
+      if(w !== laufendeWoche) e.wochen.add(w);
+    });
+  });
+  const koenig = (id, v, n, ab) => ({id, v, n, q:n ? v / n : 0, gilt:n >= ab});
+  const koenigFolge = (a, b) => (b.gilt - a.gilt) || (b.q - a.q) || (b.v - a.v);
   const weekKingList = visiblePlayers
-    .map(p=>({id:p.id, v:countPeriodWins(p.id, ms, 'week')}))
+    .map(p=>koenig(p.id, countPeriodWins(p.id, ms, 'week'), ((eigene[p.id] || {}).wochen || new Set()).size, KOENIG_MIN.woche))
     .filter(x=>x.v>0)
-    .sort((a,b)=>b.v-a.v);
+    .sort(koenigFolge);
   const dayKingList = visiblePlayers
-    .map(p=>({id:p.id, v:countDayWins(p.id, ms)}))
+    .map(p=>koenig(p.id, countDayWins(p.id, ms), ((eigene[p.id] || {}).tage || new Set()).size, KOENIG_MIN.tag))
     .filter(x=>x.v>0)
-    .sort((a,b)=>b.v-a.v);
+    .sort(koenigFolge);
 
 
   const _orderedForStreak = [...ms].sort((a,b)=>mts(a)-mts(b));
@@ -12394,6 +12555,8 @@ const AW_IC = {
   cheesePlatter:'cheese', favoriteLoser:'crownFallen'
 };
 
+const KOENIG_MIN = {tag:5, woche:3};
+
 const AWARD_META={
   wins:        {title:'Meiste Siege',          cls:'gold',  why:`Die meisten gewonnenen Partien im Zeitraum.`},
   mvt:         {title:'Bestes Team',           cls:'gold',  why:`Das Duo, das im Zeitraum zusammen die meisten Elo-Punkte geholt hat. Ab 2 gemeinsamen Partien.`},
@@ -12421,8 +12584,8 @@ const AWARD_META={
   formtief:    {title:'Formtief',              cls:'red',   why:`Der größte Abstand zwischen dem höchsten und dem aktuellen Elo-Stand innerhalb einer Saison.`},
   zirkus:      {title:'Zirkus',                cls:'red',   why:`Das Duo, bei dem die meisten Niederlagen hoch ausfallen (ab 5 Tore Unterschied), gemessen an allen Niederlagen. Ab ${AW_MIN.teamPleiten} Niederlagen.`},
   baustelle:   {title:'Baustelle',             cls:'red',   why:`Das Duo mit der längsten gemeinsamen Niederlagenserie.`},
-  weekKing:    {title:'Wochenkönig',           cls:'gold',  why:`Die meisten Titel als Player of the Week. Die laufende Woche zählt noch nicht.`},
-  dayKing:     {title:'Tageskönig',            cls:'gold',  why:`Die meisten Titel als Player of the Day. Der laufende Tag zählt noch nicht.`},
+  weekKing:    {title:'Wochenkönig',           cls:'gold',  why:`Der größte Anteil der eigenen Wochen als Player of the Week, ab ${KOENIG_MIN.woche} Wochen. Die laufende Woche zählt noch nicht.`},
+  dayKing:     {title:'Tageskönig',            cls:'gold',  why:`Der größte Anteil der eigenen Spieltage als Player of the Day, ab ${KOENIG_MIN.tag} Spieltagen. Der laufende Tag zählt noch nicht.`},
   plusMinus:   {title:'Plus-Minus',            cls:'orange',why:`Der höchste Torsaldo je Partie (Tore minus Gegentore). Ab ${AW_MIN.spielerSaldo} Partien.`},
   underdog:    {title:'Underdog-Held',         cls:'purple',why:`Die höchste Siegquote als Außenseiter (Siegchance unter 35 %). Ab ${AW_MIN.unter} solchen Partien.`},
   pechvogel:   {title:'Pechvogel',             cls:'red',   why:`Der höchste Anteil verlorener enger Partien (höchstens 2 Tore Unterschied). Ab ${AW_MIN.enge} engen Partien.`},
@@ -12445,8 +12608,10 @@ const AW_WERT = {
   perfect:     {l:R=>R.perfect, s:x=>Math.round(x.wr*100), z:x=>_awPz(x.wr), e:()=>'Siegquote', b:x=>x.w+' von '+x.g+' Partien gewonnen', f:x=>x.wr},
   streaks:     {l:R=>R.streaks, s:x=>x.v, z:x=>x.v, e:x=>_awN(x.v,'Sieg in Folge','Siege in Folge'), lauf:true},
   showmaster:  {l:R=>R.showmasterList, s:x=>x.v, z:x=>x.v+'×', e:()=>'10:0 gewonnen'},
-  weekKing:    {l:R=>R.weekKingList||[], s:x=>x.v, z:x=>x.v+'×', e:()=>'Player of the Week', gilt:x=>x.v>=1},
-  dayKing:     {l:R=>R.dayKingList||[], s:x=>x.v, z:x=>x.v+'×', e:()=>'Player of the Day', gilt:x=>x.v>=1},
+  weekKing:    {l:R=>R.weekKingList||[], s:x=>Math.round(x.q*1000), z:x=>_awPz(x.q), e:()=>'der eigenen Wochen',
+                b:x=>x.v+' von '+x.n+' als Player of the Week', f:x=>x.q, gilt:x=>x.gilt},
+  dayKing:     {l:R=>R.dayKingList||[], s:x=>Math.round(x.q*1000), z:x=>_awPz(x.q), e:()=>'der eigenen Spieltage',
+                b:x=>x.v+' von '+x.n+' als Player of the Day', f:x=>x.q, gilt:x=>x.gilt},
   mvt:         {l:R=>R.mvt, s:x=>Math.round(x.v), z:x=>(x.v>=0?'+':'')+Math.round(x.v), e:()=>'Elo zusammen', b:x=>x.g+' Partien zusammen'},
   bestDuo:     {l:R=>R.bestDuo, s:x=>x.g, z:x=>x.g, e:()=>'Partien zusammen', b:x=>x.w+' davon gewonnen', gilt:x=>x.g>=2},
   unstoppable: {l:R=>R.unstoppableList, s:x=>x.v, z:x=>x.v, e:x=>_awN(x.v,'Sieg in Folge','Siege in Folge'), lauf:true},
@@ -12692,11 +12857,11 @@ function openTopList(kind){
     const list=(getCachedAwardRankings('all')[isWeek?'weekKingList':'dayKingList'])||[];
     return showTopList({title:isWeek?'Wochenkönig':'Tageskönig', sub:'Alle Saisons',
       ic:isWeek?'weekKing':'dayKing', cls:'gold',
-      rows:list.map(k=>({ids:[k.id], name:pname(k.id), val:k.v+'×',
-        detail:isWeek?'Player of the Week':'Player of the Day'})),
+      rows:list.map(k=>({ids:[k.id], name:pname(k.id), val:Math.round(k.q*100)+' %',
+        detail:`${k.v} von ${k.n} ${isWeek?'Wochen':'Spieltagen'}`+(k.gilt?'':` · ab ${isWeek?KOENIG_MIN.woche:KOENIG_MIN.tag}`)})),
       why:isWeek
-        ? 'Wie oft ein Spieler eine abgeschlossene Woche als Bester beendet hat, mit mindestens 5 Siegen.'
-        : 'Wie oft ein Spieler einen Spieltag als Bester beendet hat, mit mindestens 3 Siegen.'});
+        ? `Der Anteil der eigenen abgeschlossenen Wochen, die ein Spieler als Bester beendet hat (mit mindestens 5 Siegen), ab ${KOENIG_MIN.woche} Wochen.`
+        : `Der Anteil der eigenen Spieltage, die ein Spieler als Bester beendet hat (mit mindestens 3 Siegen), ab ${KOENIG_MIN.tag} Spieltagen.`});
   }
 }
 
@@ -15632,11 +15797,13 @@ const rankProgHtml = rInfo ? `
         return _wz ? `<div class="pp-fa-wz">${_wz}</div>` : '';
       })()}
       ${(()=>{
-        const _rRoh = avRingOf(id);
-        const _r = (_rRoh && (_rRoh.kind === 'blaze' || _rRoh.kind === 'hot')) ? null : _rRoh;
+        const _ringe = avRingeOf(id).filter(r => r.kind !== 'blaze' && r.kind !== 'hot');
+        const _plus = _ringe.find(r => r.tone !== 'red'), _minus = _ringe.find(r => r.tone === 'red');
+        const _r = _plus || _minus;
         const _rt = _r ? titleTone(_r.tone) : null;
+        const _rt2 = (_plus && _minus) ? titleTone(_minus.tone) : null;
         const _fu = znFeuer(id);
-        return `<div class="pp-av-wrap${_r ? ' has-ring' : ''}${_fu ? ' zn-rang zn-l'+_fu : ''}"${_rt ? ` style="--tt:${_rt.c};--ttr:${_rt.rgb}"` : ''}
+        return `<div class="pp-av-wrap${_r ? ' has-ring' : ''}${_rt2 ? ' ring-zwei' : ''}${_fu ? ' zn-rang zn-l'+_fu : ''}"${_rt ? ` style="--tt:${_rt.c};--ttr:${_rt.rgb}${_rt2 ? `;--tt2:${_rt2.c};--ttr2:${_rt2.rgb}` : ''}"` : ''}
           data-prestige="${esc(id)}" title="${esc(prestigeOf(id).insignie.name + ' · ' + prestigeOf(id).punkte + ' Prestige')}">
         ${_fu ? ZN_FEUER_GROSS[_fu] : ''}
         ${auraLebendHtml(meisterTitel(id))}
@@ -15644,7 +15811,7 @@ const rankProgHtml = rInfo ? `
         <div class="pp-av-ring">
           <div class="${avClass}" ${avBg}>${avInner}</div>
         </div>
-        ${_r ? `<span class="pp-av-mark">${svgI(_r.ic)}</span>` : ''}
+        ${_avRingMarkenHtml(id)}
       </div>`;
       })()}
       <h1 class="pp-name">${esc(p.name)}${pleitenZeichen?` ${pleitenZeichen}`:''}</h1>
@@ -15987,6 +16154,7 @@ const rankProgHtml = rInfo ? `
   const tt=document.getElementById('ppTrTeam');
   if(tt) tt.onclick=()=>{ sheetNav(()=>showPlayerSeasons(id)); };
   const profil = document.getElementById('sheet');
+  _avRingBinden(profil);
   profil.querySelectorAll('.pp-trophies .pp-tr').forEach(el=>{
     el.onclick=()=>{ sheetNav(()=>showPlayerSeasons(id)); };
   });
@@ -18309,6 +18477,7 @@ const STORY_PRIO = {
   top_form:          64,
   spiel:             41,
   runde:             40,
+  ehrung:            41,
   match_result:      63,
   chronik_geholt:    62,
   team_streak:       60,
@@ -20075,6 +20244,8 @@ function _buildStories(){
     });
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] potd', e); }
 
+  try { _newsEhrungStories(now.getTime()).forEach(st => stories.push(st)); }
+  catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] ehrung', e); }
   try { _newsRundenStories(now.getTime()).forEach(st => stories.push(st)); }
   catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] runde', e); }
 
@@ -21935,7 +22106,7 @@ function _consolidateStoriesLegacy(list){
   const _sperreMs = 0;
   const _OHNE_SPERRE = new Set(['ambient', 'sammel', 'season_endgame', 'spiel',
                                 'potd', 'woche', 'chronik_monat', 'season_recap', 'runde',
-                                'karriereende']);
+                                'ehrung', 'karriereende']);
   const _aussage = st => {
     const d = (st && st.dataRef) || {};
     const typ = d.type || '';
@@ -22619,7 +22790,7 @@ function _consolidateStoriesLegacy(list){
   });
 
   const OHNE_DECKEL = new Set(['lead_change','elo_record','streak_record',
-                               'season_endgame','ambient','group','runde']);
+                               'season_endgame','ambient','group','runde','ehrung']);
   const NF_DECKEL = Number.POSITIVE_INFINITY;
   const _deckelSorte = s => {
     const d = (s && s.dataRef) || {};
@@ -23219,8 +23390,10 @@ function _newsHinweisStory(){
 function _newsToastFuellen(txt, n){
   const top = _newsHinweisStory();
   const ton = top ? (_isBreaking(top) || _newsIstNegativ(top) ? 'nh-rot' : _newsTonKlassen(top, 'nd')) : '';
-  txt.innerHTML = `<span class="nh"><b class="nh-zahl num">${n > 99 ? '99+' : n}</b><span class="nh-text">`
-    + `<b class="nh-wort">${n === 1 ? 'neue Story' : 'neue Stories'}</b>`
+  txt.innerHTML = `<span class="nh"><span class="nh-ic" aria-hidden="true">`
+    + `<svg class="nh-blatt" viewBox="0 0 24 24">${icPfad('newspaper')}</svg>`
+    + `<svg class="nh-funke" viewBox="0 0 24 24">${icPfad('funkeln')}</svg></span><span class="nh-text">`
+    + `<b class="nh-wort"><span class="num">${n > 99 ? '99+' : n}</span> ${n === 1 ? 'neue Story' : 'neue Stories'}</b>`
     + (top ? `<span class="nh-zeile ${ton}"><i></i><span>${esc(top.title || '')}</span></span>` : '')
     + '</span></span>';
 }
@@ -23436,6 +23609,7 @@ function _newsGlanzVersatz(id){
 }
 function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
   if(((s && s.dataRef) || {}).type === 'runde') return _newsRundeHtml(s, isRead, fadenHtml);
+  if(((s && s.dataRef) || {}).type === 'ehrung') return _newsEhrungHtml(s, isRead, fadenHtml);
   const dcat = _displayCat(s);
   const meta = NEWS_CATEGORIES[dcat] || NEWS_CATEGORIES.fun;
   const d = s.dataRef || {};
@@ -23598,6 +23772,7 @@ function _newsRubrik(sorte, s){
   const d = (s && s.dataRef) || {};
   if(_isBreaking(s)) return 'BREAKING';
   if(d.type === 'runde') return 'DIE RUNDE';
+  if(d.type === 'ehrung') return 'DIE EHRUNG';
   switch(sorte){
     case 'spiel':  return 'AM SPIELTAG';
     case 'tafel':  return 'EWIGE TAFEL';
@@ -23726,8 +23901,10 @@ function _newsPrestigeBand(s){
   else nimm(d.laufbahn);
   const pm = pmap();
   const alle = Object.keys(je).filter(pid => pm[pid]).map(pid => {
-    const vor = Math.round(Number(je[pid].vor) || 0), nach = Math.round(Number(je[pid].nach) || 0);
-    return {pid, d: nach - vor, n: pm[pid].name || ''};
+    const w = je[pid];
+    const vor = Math.round(Number(w.vor) || 0), nach = Math.round(Number(w.nach) || 0);
+    const tafel = isFinite(w.rek) && isFinite(w.mon) && w.rek != null && w.mon != null;
+    return {pid, d: tafel ? Math.round(w.rek + w.mon) : nach - vor, n: pm[pid].name || ''};
   }).filter(x => x.d);
   const plus = alle.filter(x => x.d > 0).sort((a, b) => b.d - a.d || a.n.localeCompare(b.n, 'de'));
   const minus = alle.filter(x => x.d < 0).sort((a, b) => a.d - b.d || a.n.localeCompare(b.n, 'de'));
@@ -24018,6 +24195,7 @@ function _newsSorte(s){
   const t = d.type || '';
   if(t === 'woche') return 'woche';
   if(t === 'runde') return 'spiel';
+  if(t === 'ehrung') return 'badge';
   if(t === 'insignium_stufe') return 'ins';
   if(t === 'insignium_tag') return 'ins';
   if(t === 'ambient') return 'fakt';
@@ -24257,7 +24435,7 @@ function _newsTagSpannung(s){
 
 const NEWS_TAGKARTE_OHNE = new Set(['ambient', 'dry_spell', 'season_endgame',
   'quiet_week', 'season_start', 'potd', 'potw', 'woche', 'chronik_monat',
-  'season_recap', 'runde']);
+  'season_recap', 'runde', 'ehrung']);
 function _newsTagKarteWuerdig(st){
   if(NEWS_TAGKARTE_OHNE.has(((st && st.dataRef) || {}).type || '')) return false;
   if(_newsIstNegativ(st)) return false;
@@ -24377,11 +24555,12 @@ function _renderNewsFeed(){
       </div>
       ${filterBar}
     </div>
-    <div class="nf-wrap nf-liste" style="padding-top:0">${listHtml}</div>
+    <div class="nf-wrap nf-liste${FEED_SICHT ? ' sicht' : ''}" style="padding-top:0">${listHtml}</div>
   `);
   const sheetEl = document.getElementById('sheet');
   if(!schonOffen) _feedLicht(sheetEl);
   const liste = sheetEl.querySelector('.nf-liste');
+  _feedKartenSicht(liste);
   _newsFeedOffen = nachreichen.length && liste
     ? {liste, jobs:nachreichen, index:0, version:_cache.version} : null;
   if(_newsFeedOffen) _newsFeedPlan(_newsFeedOffen);
@@ -24430,6 +24609,7 @@ function _newsFeedRest(alles = true){
     ziel.insertAdjacentHTML('beforeend', job.erster
       ? job.kopf + `<div class="nf-feed" data-feed-tag="${esc(job.tag)}">${html}</div>` : html);
   } while(alles && o.index < o.jobs.length);
+  _feedKartenSicht(o.liste);
   if(o.index >= o.jobs.length) _newsFeedOffen = null;
 }
 function _newsFeedPlan(o){
@@ -26386,6 +26566,201 @@ function _insAltZuTag(list){
   });
   return rest.map(s => ersetzt.get(s.id) || s);
 }
+const EHRUNG_PAUSE_MS = 2 * 3600e3;
+
+function _newsEhrungStories(nowMs){
+  const out = [];
+  const ms = (matches || []).slice().sort((a, b) => mts(a) - mts(b));
+  if(!ms.length) return out;
+  const ende = [], letzte = [];
+  ms.forEach((m, i) => {
+    const t = mts(m), n = i + 1 < ms.length ? mts(ms[i + 1]) : Infinity;
+    if(n - t >= EHRUNG_PAUSE_MS){ ende.push(t + EHRUNG_PAUSE_MS); letzte.push(m); }
+  });
+  const bMap = getBadgeEarnedCache();
+  const mVon = new Map(ms.map(m => [m.id, m]));
+  const zeiten = {}, ev = [];
+  Object.keys(bMap).forEach(mid => {
+    const m = mVon.get(mid);
+    if(!m) return;
+    const t = mts(m);
+    (bMap[mid] || []).forEach(e => {
+      const k = e.playerId + '|' + e.badge.id;
+      (zeiten[k] = zeiten[k] || []).push({t, mid});
+      const te = e.meta && e.meta.tagEnde;
+      let wann = t;
+      if(te){ const d = new Date(te + 'T00:00:00'); d.setHours(23, 57, 0, 0); wann = d.getTime(); }
+      ev.push({pid:e.playerId, badge:e.badge, mid, t, wann});
+    });
+  });
+  Object.keys(zeiten).forEach(k => zeiten[k].sort((a, b) => a.t - b.t));
+  const rang = e => {
+    const l = zeiten[e.pid + '|' + e.badge.id] || [];
+    const i = l.findIndex(x => x.mid === e.mid);
+    return i < 0 ? l.length : i + 1;
+  };
+  const fenster = ende.map(() => []);
+  ev.forEach(e => {
+    let lo = 0, hi = ende.length;
+    while(lo < hi){ const h = (lo + hi) >> 1; if(ende[h] > e.wann) hi = h; else lo = h + 1; }
+    if(lo < ende.length) fenster[lo].push(e);
+  });
+  const seit = nowMs - NEWS_FENSTER_TAGE * 864e5;
+  ende.forEach((T, i) => {
+    if(T > nowMs || T < seit) return;
+    const st = _newsEhrungStory(fenster[i], T, letzte[i], rang);
+    if(st) out.push(st);
+  });
+  return out;
+}
+
+function _newsEhrungStory(liste, T, letzteM, rang){
+  const je = {};
+  liste.forEach(e => {
+    if(!sichtbar(e.pid)) return;
+    const n = rang(e);
+    const p = auszeichnungsTeilwert(e.badge.id, n);
+    if(!(p > 0)) return;
+    const j = je[e.pid] || (je[e.pid] = {pid:e.pid, summe:0, posten:{}});
+    const q = j.posten[e.badge.id] || (j.posten[e.badge.id] =
+      {id:e.badge.id, name:e.badge.name, ic:e.badge.ic, klasse:rarityOf(e.badge.id), mal:0, bis:0, p:0});
+    q.mal++; q.bis = Math.max(q.bis, n); q.p += p; j.summe += p;
+  });
+  const r1 = x => Math.round(x * 10) / 10;
+  const nm = pid => pname(pid);
+  const ORD = {legendary:0, rare:1, common:2};
+  const spieler = Object.values(je).map(j => ({pid:j.pid, summe:r1(j.summe),
+    posten:Object.values(j.posten).map(q => Object.assign({}, q, {p:r1(q.p)}))
+      .sort((a, b) => (ORD[a.klasse] - ORD[b.klasse]) || (b.p - a.p) || a.name.localeCompare(b.name, 'de'))}))
+    .sort((a, b) => (b.summe - a.summe) || nm(a.pid).localeCompare(nm(b.pid), 'de'));
+  if(!spieler.length) return null;
+  const zahl = spieler.reduce((n, x) => n + x.posten.reduce((m, q) => m + q.mal, 0), 0);
+  const gesamt = Math.round(spieler.reduce((n, x) => n + x.summe, 0));
+  const title = (zahl === 1 ? 'Eine Auszeichnung' : zahl + ' Auszeichnungen')
+    + ' für ' + _namenKurz(spieler.map(x => nm(x.pid)));
+  let top = null;
+  spieler.forEach(x => x.posten.forEach(q => {
+    if(!top || ORD[q.klasse] < ORD[top.q.klasse] || (q.klasse === top.q.klasse && q.p > top.q.p))
+      top = {pid:x.pid, q};
+  }));
+  const klasse = {legendary:', eine legendäre Auszeichnung', rare:', eine seltene Auszeichnung'}[top.q.klasse] || '';
+  const desc = `${nm(top.pid)} holt dabei „${top.q.name}“ zum ${top.q.bis === 1 ? 'ersten' : top.q.bis + '.'} Mal${klasse}.`;
+  const tage = [...new Set(liste.map(e => tagKey(e.t)))];
+  return {
+    id:'ehrung_' + letzteM.id, cat:'badge', ic:'medal', when:new Date(T),
+    prio:STORY_PRIO.ehrung, title, desc,
+    dataRef:{type:'ehrung', playerIds:spieler.map(x => x.pid), spieler, zahl, gesamt,
+             ab:Math.min(...liste.map(e => e.t)), bis:mts(letzteM), tage:tage.length}
+  };
+}
+
+function _ehrungTon(k){ return k === 'legendary' ? 'gold' : k === 'rare' ? 'viol' : 'gruen'; }
+const EH_KLASSEN = [['legendary', 'legendär'], ['rare', 'selten'], ['common', 'gewöhnlich']];
+const _ehZahl = v => komma(Math.round(v * 10) / 10).replace(',0', '');
+
+function _ehrungSaeulen(sp, gross){
+  const pm = pmap();
+  const da = sp.filter(x => pm[x.pid] && x.summe > 0);
+  if(!da.length) return '';
+  const WAPPEN = gross ? 52 : 48, JE_REIHE = gross ? 4 : 5;
+  const reihen = Math.ceil(da.length / JE_REIHE), breite = Math.ceil(da.length / reihen);
+  const H = gross ? 96 : 52, MIN = 6, max = Math.max(...da.map(x => x.summe));
+  let gold = 0;
+  const saeule = (x, i) => {
+    const h = Math.max(MIN, Math.round(H * x.summe / max));
+    const posten = (x.posten || []).filter(q => q.p > 0);
+    const gewoehnlich = posten.filter(q => q.klasse === 'common');
+    const stuecke = posten.filter(q => q.klasse !== 'common')
+      .map(q => ({klasse:q.klasse, p:q.p, name:q.name}))
+      .concat(gewoehnlich.length ? [{klasse:'common', p:gewoehnlich.reduce((n, q) => n + q.p, 0),
+        name:gewoehnlich.length === 1 ? gewoehnlich[0].name : gewoehnlich.length + ' gewöhnliche'}] : [])
+      .map(q => `<i class="${q.klasse}" style="flex-grow:${q.p}" title="${esc(q.name)}"></i>`).join('');
+    const top = posten[0];
+    return `<span class="eh-s" data-pid="${esc(x.pid)}" style="--i:${i}">`
+      + `<span class="eh-s-z" title="${esc(top ? top.name : '')}">${top ? _ehrungKachel(top, () => gold++, gross ? '' : 'k') : ''}</span>`
+      + `<em class="eh-s-w num">+${_ehZahl(x.summe)}</em>`
+      + `<span class="eh-saeule" style="height:${h}px">${stuecke}</span>`
+      + `<span class="eh-s-av" title="${esc(pm[x.pid].name)}">${rcpAvHtml(x.pid, WAPPEN, {})}</span>`
+      + (gross ? `<b class="eh-s-n">${esc(pm[x.pid].name)}</b>` : '')
+      + `</span>`
+      + ((i + 1) % breite === 0 && i + 1 < da.length ? '<span class="eh-umbruch" aria-hidden="true"></span>' : '');
+  };
+  return `<div class="eh-buehne${gross ? ' gross' : breite >= 5 ? ' voll' : ''}" style="--je:${breite}">${da.map(saeule).join('')}</div>`;
+}
+
+function _ehrungKachel(q, naechste, groesse){
+  const z = zkHtml(q.ic, groesse == null ? 'k' : groesse, _ehrungTon(q.klasse));
+  return q.klasse === 'legendary' ? z.replace(/<\/span>$/, glanzBahn(1 + naechste() * .35) + '</span>') : z;
+}
+
+function _ehrungKlassen(sp){
+  const k = {};
+  sp.forEach(x => (x.posten || []).forEach(q => {
+    const z = k[q.klasse] || (k[q.klasse] = {n:0, p:0});
+    z.n += q.mal; z.p += q.p;
+  }));
+  return EH_KLASSEN.filter(([id]) => k[id] && k[id].p > 0).map(([id, wort]) => ({id, wort, n:k[id].n, p:k[id].p}));
+}
+const _ehrungKlasseHtml = z => `<span class="eh-k ${z.id}"><i></i><b class="num">${z.n}</b> ${esc(z.wort)}`
+  + ` <em class="num">+${_ehZahl(z.p)}</em></span>`;
+
+function _newsEhrungHtml(s, isRead, fadenHtml){
+  const d = s.dataRef || {};
+  const sp = Array.isArray(d.spieler) ? d.spieler : [];
+  const klassen = _ehrungKlassen(sp);
+  const glanz = klassen.some(z => z.id === 'legendary');
+  return `<div class="nf-card nf-s-badge nf-ehrung nfc-badge${glanz ? ' nf-glanz' : ''}${isRead ? ' read' : ''}" data-sid="${esc(s.id)}"`
+    + `${glanz ? ` style="--gv:${_newsGlanzVersatz(s.id)}s"` : ''}>
+    ${_newsMotiv('badge', s)}
+    <div class="nf-top"><span class="nf-rub"><i>${svgI('medal')}</i><b>DIE EHRUNG</b></span>
+      <span class="nf-when">${svgI('clock')}${esc(_newsUhrzeit(s.when))}${isRead ? '' : '<span class="nf-dot"></span>'}</span></div>
+    ${_ehrungSaeulen(sp, false)}
+    <div class="nf-gr"><div class="nf-gr-r"><div class="nf-h">${esc(s.title)}</div><div class="nf-d">${_newsBetont(s.desc || '')}</div></div>
+      <span class="nf-chev">${svgI('chevron')}</span></div>
+    ${klassen.length ? `<div class="eh-fuss">${klassen.map(_ehrungKlasseHtml).join('')}</div>` : ''}${fadenHtml || ''}</div>`;
+}
+
+function _ndEhrungBlatt(s){
+  const d = s.dataRef || {};
+  const sp = Array.isArray(d.spieler) ? d.spieler : [];
+  const pm = pmap();
+  if(!sp.some(x => pm[x.pid])) return null;
+  const kopf = `<div class="nd-buehne nd-eh">${_ehrungSaeulen(sp, true)}</div>`;
+  const klassen = _ehrungKlassen(sp);
+  const summe = klassen.reduce((n, z) => n + z.p, 0);
+  const anteil = klassen.length ? `<div class="eh-anteil">`
+    + `<div class="eh-anteil-k"><b class="num">+${_ehZahl(summe)}</b><span>Prestige für die Laufbahn</span></div>`
+    + `<div class="eh-anteil-b">${klassen.map(z => `<i class="${z.id}" style="flex-grow:${z.p}"></i>`).join('')}</div>`
+    + `<div class="eh-anteil-l">${klassen.map(_ehrungKlasseHtml).join('')}</div></div>` : '';
+  const mal = q => q.mal === 1 ? `${q.bis}. Mal` : `${q.bis - q.mal + 1}.–${q.bis}. Mal`;
+  const voll = q => auszeichnungsTeilwert(q.id, 1) * q.mal;
+  const rest = q => { const v = voll(q); return v > 0 ? Math.min(1, q.p / v) : 1; };
+  const strich = q => `<span class="eh-q-m" role="img" aria-label="${Math.round(rest(q) * 100)} % des vollen Werts">`
+    + `<i style="width:${(rest(q) * 100).toFixed(1)}%"></i></span>`;
+  const zeit = d.ab && d.bis ? `Aus den Partien ${d.tage > 1 ? 'seit dem ' + datumFmt(d.ab, 'tm') + ', ' : 'von '}`
+    + `${datumFmt(d.ab, 'uhr')} bis ${datumFmt(d.bis, 'uhr')} Uhr.` : '';
+  let gold = 0;
+  const zeile = q => `<div class="eh-q ${esc(q.klasse)}">${_ehrungKachel(q, () => gold++)}
+      <span class="eh-q-t"><b>${esc(q.name)}</b><small>${esc(_newsRarityLabel(q.klasse))} · ${esc(mal(q))}</small>${strich(q)}</span>
+      <em class="num">+${_ehZahl(q.p)}<small>von ${_ehZahl(voll(q))}</small></em></div>`;
+  const kachel = q => `<div class="eh-g-t ${esc(q.klasse)}">`
+    + `<span class="eh-g-o">${_ehrungKachel(q, () => gold++)}<em class="num">+${_ehZahl(q.p)}</em></span>`
+    + `<b>${esc(q.name)}</b><small>${esc(mal(q))}</small>${strich(q)}</div>`;
+  const bloecke = sp.filter(x => pm[x.pid]).map((x, i) => {
+    const gross = (x.posten || []).filter(q => q.klasse !== 'common');
+    const klein = (x.posten || []).filter(q => q.klasse === 'common');
+    return `<div class="eh-p" style="--i:${i}">
+      <div class="eh-p-k" data-pid="${esc(x.pid)}" style="cursor:pointer">${rcpAvHtml(x.pid, 30, {})}
+        <b>${esc(pm[x.pid].name)}</b><em class="num">+${_ehZahl(x.summe)}</em></div>
+      ${gross.map(zeile).join('')}
+      ${klein.length ? `<div class="eh-g">${klein.map(kachel).join('')}</div>` : ''}
+    </div>`;
+  }).join('');
+  return {kopf, mitte: anteil + (zeit ? `<div class="nw-hinweis eh-zeit">${esc(zeit)}</div>` : '')
+    + `<div class="nd-section">Wer was geholt hat</div>${bloecke}`
+    + `<div class="nw-hinweis">Das erste und zweite Mal zählt eine Auszeichnung voll, danach etwas weniger. `
+    + `Der Strich unter jeder zeigt, wie viel vom vollen Wert bleibt.</div>`};
+}
 function _ndLead(desc, body){
   const lead = String(desc || '');
   if(String(body || '').indexOf('rcp-z') < 0 || !/^[^:]+:\s+\S/.test(lead)) return lead;
@@ -27657,7 +28032,7 @@ const _ND_BLATT = {win_streak:_ndSerieBlatt, loss_streak:_ndSerieBlatt, team_str
   jubilee:_ndMeilensteinBlatt, milestone_wins:_ndMeilensteinBlatt, milestone_goals:_ndMeilensteinBlatt,
   milestone_elo:_ndMeilensteinBlatt, top_form:_ndFormBlatt, elo_swing:_ndAusschlagBlatt,
   top_clash:_ndSpitzenspielBlatt, badge_marken:_ndMarkenBlatt, dry_spell:_ndFaktBlatt, ambient:_ndFaktBlatt,
-  karriereende:_ndAbschiedBlatt};
+  karriereende:_ndAbschiedBlatt, ehrung:_ndEhrungBlatt};
 function _ndAbschiedBlatt(s){
   const d = s.dataRef || {};
   if(!pmap()[d.pid]) return null;
@@ -28722,6 +29097,37 @@ function _stSchlussBall(p, mindTage){
           raus: _stQuote(rest), n: letzte.length};
 }
 
+function _stErsterBall(p, mindTage){
+  const tage = Object.keys(p.tagGrp).filter(t => p.tagGrp[t].length >= 3);
+  if(tage.length < mindTage) return null;
+  const erste = [], rest = [];
+  tage.forEach(t => { const a = p.tagGrp[t];
+    erste.push(a[0]); rest.push(...a.slice(1)); });
+  if(!rest.length) return null;
+  return {d: _stQuote(erste) - _stQuote(rest), drin: _stQuote(erste),
+          raus: _stQuote(rest), n: erste.length};
+}
+function _stSoll(a){ return a.reduce((s, x) => s + x.exp, 0); }
+function _stTorSteigung(C){
+  if(C._torSteigung != null) return C._torSteigung;
+  let a = 0, b = 0;
+  C.ms.forEach(m => { const x = (m.exp_a == null ? .5 : m.exp_a) - .5;
+    a += x * ((m.score_a || 0) - (m.score_b || 0)); b += x * x; });
+  return (C._torSteigung = b ? a / b : 0);
+}
+function _stVormonat(p, C){
+  const v = _prevSeasonId(C.sid);
+  if(!v) return null;
+  const q = _seasonTitleCtx(v).P[p.pid];
+  return q && q.games >= 8 ? q : null;
+}
+function _stVormonatPlatz(p, C){
+  const v = _prevSeasonId(C.sid);
+  const a = v ? _seasonTitleCtx(v).rankAll.findIndex(r => r.id === p.pid) : -1;
+  const b = C.rankAll.findIndex(r => r.id === p.pid);
+  return a >= 0 && b >= 0 ? {vor:a + 1, jetzt:b + 1} : null;
+}
+
 function _stLagen(p, c){
   const stark = {};
   Object.values(c.P).forEach(x => { if(x.games >= 8) stark[x.pid] = x.q; });
@@ -28782,14 +29188,14 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Gefestigte',
       art:'konstanz',
-      klasse:'besonders', aus:1.64,
-      wie:'Ein Tag zählt, wenn am Ende mindestens so viele Siege wie Niederlagen stehen.',
-      cond:'An jedem eigenen Spieltag eine ausgeglichene oder positive Bilanz, ab 3 Spieltagen',
+      klasse:'selten', aus:2.31,
+      wie:'Ein Tag zählt, wenn am Ende mindestens so viele Siege stehen, wie die Siegchancen vor den Partien dieses Tages zusammen erwarten ließen.',
+      cond:'An jedem eigenen Spieltag mindestens so viele Siege, wie die Elo-Rechnung erwartet hat, ab 3 Spieltagen',
       ...(_stWertung(
         p=>p.tagN>=3,
-        p=>{const t=Object.values(p.tagGrp);return t.filter(a=>_stSiege(a)*2>=a.length).length/t.length;},
+        p=>{const t=Object.values(p.tagGrp);return t.filter(a=>_stSiege(a)>=_stSoll(a)-1e-9).length/t.length;},
         1,
-        p=>{const t=Object.values(p.tagGrp);return `${t.filter(a=>_stSiege(a)*2>=a.length).length} von ${t.length} Spieltagen nicht negativ`;}))}},
+        p=>{const t=Object.values(p.tagGrp);return `${t.filter(a=>_stSiege(a)>=_stSoll(a)-1e-9).length} von ${t.length} Spieltagen mindestens im Soll`;}))}},
 
   {id:'catalyst', name:'Der Katalysator', short:'Katalyse', ic:'partnerHebel', tone:'gold', art:'leistung',
     allzeit:{
@@ -28873,29 +29279,29 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Standhafte',
       art:'koennen',
-      klasse:'besonders', aus:1.73,
-      wie:'Regelmäßig heißt mindestens drei Duelle im Monat. Gemessen wird der Anteil, nicht die Anzahl.',
-      cond:'Gegen JEDEN regelmäßigen Gegner mehr Siege als Niederlagen, ab 4 solchen Gegnern',
+      klasse:'besonders', aus:1.82,
+      wie:'Regelmäßig heißt mindestens drei Duelle im Monat. Gegen jeden davon zählt, ob es mindestens so viele Siege wurden, wie die Siegchancen vor den Partien zusammen erwarten ließen. Gegen einen starken Gegner reichen weniger als gegen einen schwachen.',
+      cond:'Gegen JEDEN regelmäßigen Gegner mindestens so viele Siege, wie die Elo-Rechnung erwartet hat, ab 4 solchen Gegnern',
       ...(_stWertung(
         p=>Object.values(p.gegnerGrp).filter(d=>d.length>=3).length>=4,
         p=>{const r=Object.values(p.gegnerGrp).filter(d=>d.length>=3);
-      return r.filter(d=>_stSiege(d)*2>d.length).length/r.length;},
+      return r.filter(d=>_stSiege(d)>=_stSoll(d)-1e-9).length/r.length;},
         1,
         p=>{const r=Object.values(p.gegnerGrp).filter(d=>d.length>=3);
-      return `gegen ${r.filter(d=>_stSiege(d)*2>d.length).length} von ${r.length} regelmäßigen Gegnern im Plus`;}))}},
+      return `gegen ${r.filter(d=>_stSiege(d)>=_stSoll(d)-1e-9).length} von ${r.length} regelmäßigen Gegnern mindestens die erwarteten Siege`;}))}},
 
   {id:'deutlich', name:'Der Deutliche', short:'Deutlich', ic:'plusMinus', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Deutliche',
       art:'koennen',
-      klasse:'selten', aus:1.54,
-      wie:'Die eigene Tordifferenz je Partie. Sie sagt mehr als die Siegquote, weil auch die Höhe zählt.',
-      cond:'Mindestens 2 Tore Differenz je Partie',
+      klasse:'selten', aus:1.64,
+      wie:'Aus der Siegchance vor jeder Partie folgt, wie viele Tore Unterschied zu erwarten sind, gerechnet über alle Partien des Monats. Gewertet wird, wie weit die eigene Tordifferenz je Partie darüber liegt.',
+      cond:'Je Partie mindestens 1,8 Tore mehr Differenz, als die Stärke der Teams erwarten ließ',
       ...(_stWertung(
         p=>p.games>=8,
-        p=>(p.gf-p.ga)/p.games,
-        2,
-        (p,v)=>`${v<0?'−':'+'}${komma(Math.abs(v))} Tore je Partie · ${p.gf}:${p.ga}`))}},
+        (p,C)=>{const S=_stTorSteigung(C);return p.partien.reduce((s,x)=>s+(x.gf-x.ga)-S*(x.exp-.5),0)/p.games;},
+        1.8,
+        (p,v)=>`${v<0?'−':'+'}${komma(Math.abs(v))} Tore je Partie über der Erwartung · ${p.gf}:${p.ga}`))}},
 
   {id:'atk_ace', name:'Der komplette Stürmer', short:'Sturm', ic:'bolt', tone:'orange', art:'leistung',
     allzeit:{
@@ -29080,15 +29486,15 @@ const DISZIPLINEN = [
   {id:'kaltstart', name:'Der Kaltstart', short:'Kaltstart', ic:'sunrise', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Frühstarter',
-      art:'koennen',
-      klasse:'selten', aus:1.73,
-      wie:'Die jeweils erste Partie jedes eigenen Spieltags. Ohne Aufwärmen.',
-      cond:'Mindestens 85 % der ersten Partien eines Spieltags gewonnen, ab 5 Spieltagen',
+      art:'konstanz',
+      klasse:'selten', aus:1.74,
+      wie:'Gewertet wird die zeitlich erste Partie jedes eigenen Spieltags gegen alle anderen dieses Tages. Drei Partien je Tag, damit „die erste" überhaupt eine Auswahl ist. Das Gegenstück zum letzten Ball.',
+      cond:'In der ersten Partie eines Spieltags mindestens 35 Prozentpunkte stärker als in den übrigen, ab 3 Spieltagen mit je 3 Partien',
       ...(_stWertung(
-        p=>p.tagN>=ST_TEIL,
-        p=>{const l=Object.values(p.tagGrp).map(a=>a[0]);return _stQuoteRoh(l);},
-        0.85,
-        p=>{const l=Object.values(p.tagGrp).map(a=>a[0]);return `${_stSiege(l)} von ${l.length} Auftaktpartien gewonnen`;}))},
+        p=>_stErsterBall(p,3)!=null,
+        p=>{const s=_stErsterBall(p,3);return s?s.d:null;},
+        0.35,
+        p=>{const s=_stErsterBall(p,3);return `${pct(s.drin)} % in ${s.n} Startspielen, ${pct(s.raus)} % danach`;}))},
     allzeit:{
       kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, je Spieltag',
@@ -29862,14 +30268,14 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Ausdauernde',
       art:'koennen',
-      klasse:'selten', aus:1.79,
-      wie:'Die jeweils letzte Partie jedes eigenen Spieltags. Wer sie gewinnt, geht im Plus nach Hause.',
-      cond:'Mindestens 75 % der letzten Partien eines Spieltags gewonnen, ab 5 Spieltagen',
+      klasse:'selten', aus:1.64,
+      wie:'Die jeweils letzte Partie jedes eigenen Spieltags, verglichen mit der Siegchance, die die Elo-Rechnung vor genau diesen Partien gab.',
+      cond:'Die letzten Partien der Spieltage mindestens 22 Prozentpunkte häufiger gewonnen, als die Elo-Rechnung erwartet hat, ab 5 Spieltagen',
       ...(_stWertung(
         p=>p.tagN>=ST_TEIL,
-        p=>{const l=Object.values(p.tagGrp).map(a=>a[a.length-1]);return _stQuoteRoh(l);},
-        0.75,
-        p=>{const l=Object.values(p.tagGrp).map(a=>a[a.length-1]);return `${_stSiege(l)} von ${l.length} Tagesabschlüssen gewonnen`;}))}},
+        p=>{const l=Object.values(p.tagGrp).map(a=>a[a.length-1]);return _stQuoteRoh(l)-_stSoll(l)/l.length;},
+        0.22,
+        p=>{const l=Object.values(p.tagGrp).map(a=>a[a.length-1]);return `${_stSiege(l)} von ${l.length} Tagesabschlüssen gewonnen · erwartet ${pct(_stSoll(l)/l.length)} %`;}))}},
 
   {id:'umschwung', name:'Der Umschwung', short:'Wende', ic:'umschwung', tone:'gold', art:'leistung',
     monat:{
@@ -30165,6 +30571,32 @@ const DISZIPLINEN = [
         p=>p.platzErst-p.platzLetzt,
         8,
         (p,v)=>`von Platz ${p.platzErst} auf Platz ${p.platzLetzt} · ${v} Plätze`))}},
+
+  {id:'sprung', name:'Der Sprung', short:'Sprung', ic:'vormonatSprung', tone:'gold', art:'leistung',
+    monat:{
+      beiname:'Der Durchstarter',
+      art:'koennen',
+      klasse:'selten', aus:2.18,
+      wie:'Verglichen wird die eigene Siegquote dieses Monats mit der des Vormonats, in Prozentpunkten. Beide Monate brauchen acht eigene Partien.',
+      cond:'Siegquote mindestens 25 Prozentpunkte über der des Vormonats, ab 8 Partien in beiden Monaten',
+      ...(_stWertung(
+        (p,C)=>p.games>=8 && _stVormonat(p,C)!=null,
+        (p,C)=>p.q-_stVormonat(p,C).q,
+        0.25,
+        (p,v,C)=>`${pct(p.q)} % statt ${pct(_stVormonat(p,C).q)} % im Vormonat`))}},
+
+  {id:'kletterer', name:'Die Kletterpartie', short:'Klettern', ic:'leiterAuf', tone:'gold', art:'leistung',
+    monat:{
+      beiname:'Der Kletterer',
+      art:'koennen',
+      klasse:'besonders', aus:1.59,
+      wie:'Verglichen wird der Platz in der Monatstabelle mit dem am Ende des Vormonats. Beide Monate brauchen acht eigene Partien.',
+      cond:'Mindestens 4 Plätze weiter vorn als am Ende des Vormonats, ab 8 Partien in beiden Monaten',
+      ...(_stWertung(
+        (p,C)=>p.games>=8 && _stVormonat(p,C)!=null && _stVormonatPlatz(p,C)!=null,
+        (p,C)=>{const x=_stVormonatPlatz(p,C);return x.vor-x.jetzt;},
+        4,
+        (p,v,C)=>{const x=_stVormonatPlatz(p,C);return `von Platz ${x.vor} auf Platz ${x.jetzt} · ${v} Plätze`;}))}},
 
   {id:'zitterkoenig', name:'Der Zitterkönig', short:'Zittersieg', ic:'zitterkrone', tone:'purple', art:'ereignis',
     monat:{
@@ -31724,19 +32156,16 @@ function chronBeiname(t){
 
 function playerTitleBadge(pid){
   const rows = seasonTitleHistory(pid);
-  const cur = rows.find(r => r.live && r.title);
-  if(cur) return {kind:'season', name:chronBeiname(cur.title), titel:cur.title.name,
-                  titleId:cur.title.titleId,
-                  ic:cur.title.ic, tone:cur.title.tone,
-                  sub:cur.label + ' · läuft', live:true, sid:cur.sid, ev:cur.title.ev};
+  const schatten = id => { const m = _chronikMonat(id); return !!(m && m.art === 'schatten'); };
   for(let i = rows.length - 1; i >= 0; i--){
-    if(!rows[i].live && rows[i].title){
-      const r = rows[i];
-      return {kind:'season', name:chronBeiname(r.title), titel:r.title.name,
-              titleId:r.title.titleId,
-              ic:r.title.ic, tone:r.title.tone,
-              sub:r.label, live:false, sid:r.sid, ev:r.title.ev};
-    }
+    const r = rows[i];
+    if(!r.title) continue;
+    const t = !schatten(r.title.titleId) ? r.title
+      : (seasonTitles(r.sid).awarded || []).find(a => a.pid === pid && !schatten(a.titleId)) || null;
+    if(!t) continue;
+    return {kind:'season', name:chronBeiname(t), titel:t.name, titleId:t.titleId,
+            ic:t.ic, tone:t.tone, sub:r.label + (r.live ? ' · läuft' : ''), live:r.live,
+            sid:r.sid, ev:t.ev};
   }
   return null;
 }
@@ -31840,7 +32269,9 @@ function showSeasonTable(sid){
         <span class="tx"><span class="n">${esc(pname(ch.pid))} ${T.live ? 'führt die Saison an' : 'ist Meister'}</span>
           <span class="e num">${ch.elo} Elo · ${ch.wins} Siege aus ${ch.games} Spielen</span></span>
       </div><div style="height:14px"></div>` : ''}
-    <div class="tplates">${sichtbar.concat(weitere).map(a => _titlePlateHtml(a, {sid})).join('')}</div>
+    <div class="tplates">${sichtbar.map(a => _titlePlateHtml(a, {sid})).join('')}</div>
+    ${weitere.length ? `<div class="tplates chron-rest">${weitere.map(a => _titlePlateHtml(a, {sid})).join('')}</div>
+    ${_chronMehrKnopf(weitere.length)}` : ''}
     ${emptyNames.length ? `<div class="pp-sec-title" style="margin-top:16px"><div class="l"><h4>Ohne Eintrag</h4></div></div>
       <div class="tempty">${esc(emptyNames.join(', '))}<span>Keine Bedingung erfüllt, die Saison zählt trotzdem.</span></div>` : ''}
     ${unawarded.length ? `<div class="pp-sec-title" style="margin-top:16px"><div class="l"><h4>Nicht vergeben</h4></div><div class="m">${unawarded.length}</div></div>
@@ -31889,7 +32320,6 @@ function _chronStripHtml(pid, teil){
     };
     const liste = mine.length ? mine : [c];
     const rest = liste.slice(2);
-    const zu = rest.length === 1 ? '1 weiteren anzeigen' : rest.length + ' weitere anzeigen';
     chronBlock = `
     <div class="pp-sec-title">
       <div class="l"><span class="ic svg-ic">${svgI(nurNeg ? 'ghost' : 'trophyStar')}</span>
@@ -31900,11 +32330,7 @@ function _chronStripHtml(pid, teil){
     </div>
     <div class="chron-alle">${liste.slice(0, 2).map(card).join('')}</div>${rest.length ? `
     <div class="chron-alle chron-rest">${rest.map(card).join('')}</div>
-    <button class="chron-more" type="button" data-chron-more="${esc(zu)}" aria-expanded="false">
-      <span class="tx">${esc(zu)}</span>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-        stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
-    </button>` : ''}`;
+    ${_chronMehrKnopf(rest.length)}` : ''}`;
   } else {
     const nx = nextRecordFor(pid);
     if(nx){
@@ -32137,11 +32563,9 @@ function _titlePillHtml(pid){
   const b = playerTitleBadge(pid);
   if(!b) return '';
   const t = titleTone(b.tone);
-  const m = b.titleId ? _chronikMonat(b.titleId) : null;
-  const schatten = !!(m && m.art === 'schatten');
   return `<div class="pp-title-row">
-    <span class="pp-title-pill${b.live ? ' live' : ''}${schatten ? ' schatten' : ''}" style="--tt:${t.c};--ttr:${t.rgb}">
-      <span class="i">${svgI(b.ic)}</span>${esc(b.name)}</span>
+    <span class="pp-banner${b.live ? ' live' : ''}" style="--tt:${t.c};--ttr:${t.rgb}">
+      <span class="pp-title-pill"><span class="i">${svgI(b.ic)}</span>${esc(b.name)}</span></span>
     <span class="pp-title-sub num">${esc(b.sub)}</span>
   </div>`;
 }
@@ -32380,6 +32804,14 @@ function _bindChronikClicks(root){
   root.querySelectorAll('[data-chron]').forEach(el => {
     el.onclick = (e) => { e.stopPropagation(); sheetNav(()=>showChronicle(el.dataset.chron)); };
   });
+  _chronMehrBinden(root);
+  root.querySelectorAll('[data-prestige]').forEach(el => {
+    el.style.cursor = 'pointer';
+    el.onclick = (e) => { e.stopPropagation(); sheetNav(()=>showLaufbahn(el.dataset.prestige)); };
+  });
+}
+
+function _chronMehrBinden(root){
   root.querySelectorAll('[data-chron-more]').forEach(el => {
     el.onclick = (e) => {
       e.stopPropagation();
@@ -32392,10 +32824,14 @@ function _bindChronikClicks(root){
       if(tx) tx.textContent = auf ? 'Weniger anzeigen' : el.dataset.chronMore;
     };
   });
-  root.querySelectorAll('[data-prestige]').forEach(el => {
-    el.style.cursor = 'pointer';
-    el.onclick = (e) => { e.stopPropagation(); sheetNav(()=>showLaufbahn(el.dataset.prestige)); };
-  });
+}
+function _chronMehrKnopf(n){
+  const zu = n === 1 ? '1 weiteren anzeigen' : n + ' weitere anzeigen';
+  return `<button class="chron-more" type="button" data-chron-more="${esc(zu)}" aria-expanded="false">
+      <span class="tx">${esc(zu)}</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+        stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+    </button>`;
 }
 
 function _playerRankMarks(pid){
@@ -32436,18 +32872,20 @@ const AV_RINGS = {
   potw:  {prio:80, tone:'gold', ic:'weekKing',    label:'Player of the Week'},
   hot:   {prio:74, tone:'acid', ic:'flame',       label:'Siegesserie'},
   cold:  {prio:72, tone:'red',  ic:'drop',        label:'Niederlagenserie'},
+  potd:  {prio:68, tone:'gold', ic:'dayKing',     label:'Player of the Day'},
   tots:  {prio:64, tone:'gold', ic:'handshake',         label:'Team of the Season'},
 };
 function avatarRings(){
-  const key = matches.length + '_' + _cache.version;
+  const jetzt = new Date(), heute = jetzt.toISOString().slice(0, 10);
+  const key = matches.length + '_' + _cache.version + '_' + _wochenKey(jetzt)
+    + '_' + heute + (_tagZu(heute) ? 'z' : '');
   if(_cache._avRingKey === key) return _cache._avRing;
   const out = {};
   const put = (pid, kind, sub) => {
     if(!pid) return;
     const def = AV_RINGS[kind];
     if(!def) return;
-    if(out[pid] && out[pid].prio >= def.prio) return;
-    out[pid] = {kind, prio:def.prio, tone:def.tone, ic:def.ic, label:def.label, sub};
+    (out[pid] = out[pid] || []).push({kind, prio:def.prio, tone:def.tone, ic:def.ic, label:def.label, sub});
   };
   try {
     const gSim = getGlobalSim();
@@ -32464,10 +32902,17 @@ function avatarRings(){
     if(team) team.ids.forEach(id => put(id, 'tots',
       'mit ' + pname(team.ids.find(x => x !== id) || id)));
 
-    const wk = _periodWinnerMap(matches, 'week');
-    const wkKeys = Object.keys(wk).sort();
-    if(wkKeys.length) put(wk[wkKeys[wkKeys.length-1]], 'potw',
-      'Woche ' + wkKeys[wkKeys.length-1].split('-W')[1]);
+    const laufendeWoche = _wochenKey(Date.now()), tagZu = {};
+    let wkKey = null, tgKey = null, wkT = -Infinity, tgT = -Infinity;
+    matches.forEach(m => {
+      const t = mts(m), w = _wochenKey(m.created_at), d = mdayKey(m);
+      if(tagZu[d] === undefined) tagZu[d] = _tagZu(d);
+      if(w !== laufendeWoche && t > wkT){ wkT = t; wkKey = w; }
+      if(tagZu[d] && t > tgT){ tgT = t; tgKey = d; }
+    });
+    const wk = _periodWinnerMap(matches, 'week'), tg = _periodWinnerMap(matches, 'day');
+    if(wkKey && wk[wkKey]) put(wk[wkKey], 'potw', 'Woche ' + wkKey.split('-W')[1]);
+    if(tgKey && tg[tgKey]) put(tg[tgKey], 'potd', 'Spieltag ' + datumFmt(new Date(tgKey + 'T12:00:00Z'), 'tm'));
 
     Object.keys(pm).forEach(id => {
       if(!ligaAktiv(pm[id])) return;
@@ -32478,13 +32923,17 @@ function avatarRings(){
       else if(cs <= -5) put(id, 'cold',  (-cs) + ' Niederlagen in Folge');
     });
   } catch(e){  }
+  Object.values(out).forEach(l => l.sort((a, b) => b.prio - a.prio));
   _cache._avRingKey = key;
   _cache._avRing = out;
   return out;
 }
+function avRingeOf(pid){
+  if(imRuhestand(pid)) return [];
+  try { return avatarRings()[pid] || []; } catch(e){ return []; }
+}
 function avRingOf(pid){
-  if(imRuhestand(pid)) return null;
-  try { return avatarRings()[pid] || null; } catch(e){ return null; }
+  return avRingeOf(pid)[0] || null;
 }
 
 function _avRingAttrs(pid){
@@ -32498,15 +32947,47 @@ function _avRingAttrs(pid){
   };
 }
 
+function _avRingTon(r){
+  return (r.kind === 'blaze' || r.kind === 'hot')
+    ? {c:'var(--ak)', rgb:'var(--ak-rgb)'} : titleTone(r.tone);
+}
+
+const AV_RING_PLAETZE = [45, -45, 100, -100, 145];
+function _avRingMarkenHtml(pid){
+  return avRingeOf(pid).slice(0, AV_RING_PLAETZE.length).map((r, i) => {
+    const t = _avRingTon(r), w = AV_RING_PLAETZE[i] * Math.PI / 180;
+    const x = Math.round(Math.sin(w) * 58), y = Math.round(-Math.cos(w) * 58);
+    return `<span class="pp-av-mark" style="--tt:${t.c};--ttr:${t.rgb};--i:${i};`
+      + `left:calc(50% + ${x}px);top:calc(50% + ${y}px)" title="${esc(r.label + ' · ' + r.sub)}"><span class="d">${svgI(r.ic)}</span></span>`;
+  }).join('');
+}
+
 function _avRingChipHtml(pid){
-  const r = avRingOf(pid);
-  if(!r) return '';
-  const streak = (r.kind === 'blaze' || r.kind === 'hot');
-  const t = streak ? {c:'var(--ak)', rgb:'var(--ak-rgb)'} : titleTone(r.tone);
-  return `<div class="pp-ring-chip" style="--tt:${t.c};--ttr:${t.rgb}">
+  const l = avRingeOf(pid);
+  if(!l.length) return '';
+  const chip = (r, tag, attr, stil) => {
+    const t = _avRingTon(r);
+    return `<${tag} class="pp-ring-chip"${attr} style="--tt:${t.c};--ttr:${t.rgb}${stil}">
     <span class="i">${svgI(r.ic)}</span>
-    <b>${esc(r.label)}</b><span class="s num">${esc(r.sub)}</span>
+    <b>${esc(r.label)}</b><span class="s num">${esc(r.sub)}</span>`;
+  };
+  if(l.length === 1) return chip(l[0], 'div', '', '') + '\n  </div>';
+  return `<div class="pp-ringe">
+    ${chip(l[0], 'button', ' type="button" data-ringe aria-expanded="false"', '')}
+    <span class="pp-ring-mehr num">+${l.length - 1}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></span>
+    </button>
+    <div class="pp-ring-rest">${l.slice(1).map((r, i) => chip(r, 'div', '', ';--i:' + i) + '</div>').join('')}</div>
   </div>`;
+}
+function _avRingBinden(root){
+  const b = root.querySelector('[data-ringe]');
+  if(!b) return;
+  b.onclick = (e) => {
+    e.stopPropagation();
+    const auf = b.parentNode.classList.toggle('open');
+    b.setAttribute('aria-expanded', String(auf));
+  };
 }
 
 const IZ_RI = 220, IZ_RA = 266, IZ_RM = (IZ_RI + IZ_RA) / 2;
@@ -34157,13 +34638,17 @@ function showLaufbahn(pid){
     <span><b>Wie die Punkte entstehen</b><em>Klassen, Startwerte und Kurven</em></span>
     ${svgI('chevron')}
   </button>`;
+  const OFFEN = 5;
   const block = (g, gi) => {
     const qs = posten[gi], w = werte[gi];
+    const rest = qs.length > OFFEN ? qs.slice(OFFEN) : [];
     return `<div class="lb-grp">
       <div class="lb-grp-k"><span>${esc(g.kopf)}</span><span class="num">${zahl(summen[gi])}</span></div>
       ${g.q === 'auszeichnung' ? regeln : ''}
-      ${qs.length ? qs.map((q, i) => zeile(q, w[i])).join('')
+      ${qs.length ? qs.slice(0, OFFEN).map((q, i) => zeile(q, w[i])).join('')
                   : `<div class="lb-q leer">${g.leer}</div>`}
+      ${rest.length ? `<div class="lb-rest chron-rest">${rest.map((q, i) => zeile(q, w[OFFEN + i])).join('')}</div>
+      ${_chronMehrKnopf(rest.length)}` : ''}
     </div>`;
   };
 

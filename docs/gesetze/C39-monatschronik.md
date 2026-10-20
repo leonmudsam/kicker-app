@@ -3,13 +3,14 @@
 ## Regel
 
 - Die Monatschronik fragt nach Abweichung von der Erwartung, Konstanz, dem Verhältnis zum Ligamittel desselben Monats, zu einem bestimmten anderen Spieler oder einem seltenen Einzelereignis, nicht nach dem Können.
+- Eine Können-Chronik misst gegen die Elo-Erwartung (`_stSoll`, `_stTorSteigung`), gegen den eigenen Rest (`_stErsterBall`, `_stSchlussBall`) oder gegen den eigenen Vormonat (`_stVormonat`, `_stVormonatPlatz`), nicht gegen eine feste Latte, die nur der Stärkste erreicht. In den Fixture-Monaten gehören höchstens 38 % der Einträge den ersten drei der Monatstabelle.
 - Das Stichproben-Tor ist niedrig und für alle gleich: acht Partien im Monat, fünf in einer Teilmenge (`ST_TEIL`), drei Spieltage. Die Besonderheit steckt in der Schwelle.
 - Jede `monat`-Wertung trägt `art` (koennen, konstanz, fuegung, schatten), `klasse` (legendaer, selten, besonders) und `aus` (Ausschlag der Schwelle in σ), einmal an den Daten geprüft und dann festgeschrieben.
 - Die Klasse zählt keine Halter. Gedeckelt ist die Rate: höchstens ein Halter je gewerteten Monat.
 - Prestige einer Chronik: `PRESTIGE_SOCKEL` (55, nicht für Schattenseiten) + `PRESTIGE_CHRONIK[art]` × `aus` + `PRESTIGE_SELTEN[klasse]`, gerundet auf fünf, mit dem Ausschlag der SCHWELLE, nicht des Halters.
 - Eine Chronik schiebt ihre Schwelle mindestens 1,5 σ hinaus, korreliert höchstens 0,35 mit der Spielzahl, misst eine Leistung und keine reine Zählung von Gelegenheiten.
 - Vorgegeben und nicht kalibriert: „Der Tagesregent" (60 % der eigenen Spieltage), „Die Wochenkrone" (jede eigene Woche, über `_periodWinnerMap`), „Auf dem Thron" (Platz zwei oder besser an jedem Spieltag ab der ersten eigenen Partie, aus der Elo-Bahn von `getGlobalSim`, `_thronDerLiga`).
-- Im Profilkopf steht der Beiname (`monat.beiname`, `chronBeiname`), überall sonst der Katalogname; das Blatt nennt den Beinamen in `.chron-kose`, außer er ist der Katalogname.
+- Im Profilkopf steht der Beiname (`monat.beiname`, `chronBeiname`), überall sonst der Katalogname; das Blatt nennt den Beinamen in `.chron-kose`, außer er ist der Katalogname. Im Profilkopf steht er als Banner (`.pp-banner`) und nur der der jüngsten **positiven** Monatschronik (`playerTitleBadge`): ein Monat mit nur Schattenseiten verdrängt ihn nicht, hat ein Monat beides, gilt die positive; das Banner bleibt, bis ein neuerer Monat eine positive bringt, und die Zeile darunter nennt seinen Monat („läuft", solange er läuft). Das Banner: ein deckendes Band (Grund aus dunklem Gold unter der Tönung, an den Enden dunkler) mit einer durchgezogenen Naht innen an Ober- und Unterkante und gefalteten Enden, die zum Band hin in den Schatten fallen, Lichthof und Schein im Gold, so groß wie die Pille davor, ohne gestrichelte Kante; beim Öffnen entrollt es sich, danach schieben sich die Enden heraus, alle siebeneinhalb Sekunden ein Glanz; der Monat darunter zwischen zwei goldenen Strichen.
 - Die Klasse ist sichtbar: Gewicht der Zelle (`data-kl`), Name auf der Plakette (`CHRONIK_KLASSE_NAME`), Zahlenreihe im Blatt (`rcpZahlenHtml`).
 - Die Matrix ordnet nach Prestige, dann Zahl der Einträge, dann Name; sie steht in einer Karte (`_lchronTabelle`), Ruheständler in einer eigenen Karte (`ruhe_chronik`). Strich heißt gewertet ohne Eintrag, leer heißt nicht gewertet.
 - Ein Kürzel (`short`) ist ein ganzes Wort und passt gerendert in 54 px.
@@ -18,11 +19,11 @@
 
 ## Stellen
 
-`32-chronik-katalog.js` (`DISZIPLINEN`, `_stWertung`), `33-chronik-engine.js` (`_seasonTitleCtx`), `35-chronik-ui.js`, `35b-prestige.js` (`chronikPunkte`).
+`32-chronik-katalog.js` (`DISZIPLINEN`, `_stWertung`, `_stSoll`, `_stTorSteigung`, `_stErsterBall`, `_stVormonat`, `_stVormonatPlatz`), `33-chronik-engine.js` (`_seasonTitleCtx`), `35-chronik-ui.js`, `35b-prestige.js` (`chronikPunkte`).
 
 ## Prüfung
 
-`tests/rechnen` zählt den laufenden Tag erst um 23:59; `tests/disziplinen` hält jede Chronik an 1,5 σ, an der Spielzahl-Korrelation und am Halterdeckel; `tests/blatt` misst die Kürzel in der Zelle.
+`tests/rechnen` zählt den laufenden Tag erst um 23:59; `tests/disziplinen` hält jede Chronik an 1,5 σ, an der Spielzahl-Korrelation und am Halterdeckel, zählt den Anteil der ersten drei und rechnet „Der Sprung" und „Die Kletterpartie" aus den rohen Partien beider Monate nach und rechnet das Banner aus der Tafel jedes Monats nach (die jüngste positive Chronik); `tests/blatt` misst die Kürzel in der Zelle und das Banner im Profilkopf: deckend, mit Naht, Falte, Lichthof und Entrollen.
 
 ## Herleitung
 
@@ -30,7 +31,7 @@ Wie es dazu kam und was vorher falsch war — der Grund jeder Regel oben.
 
 Der alte
 Monatskatalog maß fast überall das Können, und wer eine Quote gewinnt,
-gewinnt fast jede. Er ist vollständig ersetzt: vierundsechzig Chroniken, die
+gewinnt fast jede. Er ist vollständig ersetzt: sechsundsechzig Chroniken, die
 nach der **Abweichung von der Erwartung** fragen, nach **Konstanz**, nach
 dem **Verhältnis zum Ligamittel** desselben Monats, zu einem **bestimmten
 anderen Spieler** oder nach einem **seltenen Einzelereignis**. Die
@@ -121,7 +122,21 @@ und sie ist trotzdem legendär: die Klasse zählt keine Halter.
 „Der Endspurt" liest sich dort wie eine Überschrift statt wie eine
 Beschreibung — „Der Ausdauernde" schon. Überall sonst bleibt der
 Katalogname: in der Matrix, auf der Plakette, im Blatt und in der Nachricht
-geht es um die Wertung, im Profilkopf um den Menschen. Ein eingefrorener
+geht es um die Wertung, im Profilkopf um den Menschen. Dort steht er als
+Banner und nicht mehr als Pille: die laufende Chronik trug eine gestrichelte
+Kante, und die sah aus wie ein Knopf, der noch lädt — für einen Beinamen,
+der ein Titel ist, das falsche Bild. Dass der Monat noch läuft, sagt die
+Zeile darunter ohnehin. Flach und mit Enden in der Farbe des Bands las es
+sich trotzdem als Schild; die Falte, der Lichthof und das Entrollen machen
+es zum Titel. Die Tönung allein war durchscheinend, und durch das Band sah
+man den Kopf des Profils in seiner Rangfarbe — Glas statt Stoff. Darunter
+liegt deshalb ein deckender Grund aus dunklem Gold.
+**Im Banner steht nur, was ein Titel ist.** Es zeigte den Eintrag des
+laufenden oder letzten Monats, auch eine Schattenseite, rot: Jannik trug im
+August „Der Durchlässige" (Das Scheunentor) statt „Der Zugeknöpfte" aus dem
+Juni, und wer einen schlechten Monat hatte, verlor damit den Titel eines
+guten. Jetzt bleibt der letzte positive Beiname stehen, bis ein neuerer
+Monat einen positiven bringt. Ein eingefrorener
 Monat kann eine Chronik tragen, die es nicht mehr gibt; dann bleibt der
 gespeicherte Name.
 **Das Blatt der Wertung nennt ihn trotzdem** (`.chron-kose`): dort steht,
@@ -173,3 +188,29 @@ um ein Viertel Pixel heraus.
 dem schwächsten Spieltag, der schwächsten Woche, dem unangenehmsten Gegner;
 solche Fragen lassen sich nicht in vierzig Zähler auflösen, ohne für jede
 neue Frage einen neuen Zähler zu erfinden.
+
+**Eine feste Latte erreicht nur der Stärkste.** Fünf Können-Chroniken
+fragten trotz der Regel oben nach dem Niveau: zwei Tore Differenz je Partie
+(„Der Deutliche"), gegen jeden regelmäßigen Gegner mehr Siege als
+Niederlagen („Kein Angstgegner"), 85 % der ersten und 75 % der letzten
+Partien eines Spieltags („Der Kaltstart", „Der Endspurt"), jeder Spieltag
+nicht negativ („Der Tagesabschluss"). Gemessen gingen damit 42 % aller
+Einträge der Fixture-Monate an die ersten drei der Monatstabelle, bei
+zwölf Spielern wären es nach ihrem Anteil 25 %, und „Kein Angstgegner"
+korrelierte mit 0,42 mit der Spielzahl. Jetzt messen sie gegen die
+Elo-Erwartung — die erwarteten Siege je Gegner und je Spieltag, die
+Tordifferenz, die die Siegchance erwarten ließ (die Steigung aus den
+Partien des Monats selbst) — oder gegen den eigenen Rest: die erste Partie
+eines Spieltags gegen die übrigen, wie ihr Gegenstück „Der letzte Ball".
+„Der Deutliche" ging damit an Johannes auf Platz elf und Leon auf Platz
+sechs, und der Anteil der ersten drei sank auf 35 %. Schwellen und
+Ausschlag sind über alle fünf Monate der Liga gemessen.
+
+**Der Vormonat ist ein Maßstab.** „Der Sprung" verlangt eine Siegquote
+25 Prozentpunkte über der des Vormonats, „Die Kletterpartie" vier Plätze
+weiter vorn in der Monatstabelle, beide ab acht Partien in beiden
+Monaten. Wer im Vormonat schwach war, hat mehr Raum nach oben, und wer
+ganz oben steht, kann kaum noch steigen: beide belohnen die Verbesserung
+und nicht das Niveau. Als Erster hielt beide Johannes, im Juli auf Platz
+sieben der Tabelle.
+

@@ -62,6 +62,10 @@ mehr im Dokument steht, fällt beim nächsten Beginn heraus), an jedem dieser
 Elemente `_sicht` (seine Gruppe) und `_ausSicht` (ob es gerade außerhalb des
 Bilds steht und dafür `_steht` mitzählt).
 `_lichtSicht` beobachtet die Karte jedes Kantenlichts, bis es endet.
+`_kartenBeobachtet` (die Karten des Feeds, die der IntersectionObserver
+`_kartenSicht` beobachtet; was nicht mehr im Dokument steht, fällt beim
+nächsten Zeichnen des Feeds heraus) setzt an jeder Karte `.im-bild`, solange
+sie im Bild steht; `FEED_SICHT` sagt, ob es den Beobachter gibt.
 `_leiseSchritt` (die
 Stelle in `LEISE_FOLGE`), `_leiseKarte` (welcher der drei Plätze als
 nächster dran ist) und `_leiseZuletzt` (das Element des letzten leisen
@@ -99,8 +103,8 @@ ist, an den niemand denkt.
 Kalenderabhängige Schlüssel tragen zusätzlich ihre echte Zeitgrenze:
 `matchesInPeriod` den Tages-/Wochenbeginn, `getCachedAwardRankings` die
 aktuelle Woche beziehungsweise den Tag, `allPastSeasons` den laufenden
-Monat und `getSeasonPositionHistory` den heutigen Tag, solange die Saison
-läuft. Die kleine Recap-Kurve trägt auch `ph.lastDay`. Ohne neue Partie darf
+Monat, `getSeasonPositionHistory` den heutigen Tag, solange die Saison
+läuft, und `avatarRings` die Woche, den Tag und ob er zu ist. Die kleine Recap-Kurve trägt auch `ph.lastDay`. Ohne neue Partie darf
 der Cache keinen alten Tag oder noch laufenden Vormonat behaupten.
 `tests/leistung` prüft das mit unveränderter Datenversion.
 

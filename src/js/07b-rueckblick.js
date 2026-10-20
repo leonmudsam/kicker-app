@@ -18,64 +18,18 @@ function showPotwRecap(opts){
     const wkKey=_potwKeyOf(weekStart);
     if(!ms.length){ toast('Letzte Woche keine Spiele','info'); return; }
 
-    // Spieler-Stats für die Woche (inkl. längster Serie innerhalb der Woche)
+    // Spieler-Stats für die Woche (inkl. längster Serie innerhalb der Woche).
+    // Torjäger, Abwehr, Team und Überraschung rechnet der Rückblick nicht
+    // mehr selbst: sie kommen aus den Auszeichnungen der Woche (unten).
     const ps={}; // player stats
     const run={}; // current streak
-    const defStats={}; // defender stats for 'Eiserne Abwehr'
-    const teamGames={}; // for Team of the Week
-    const teamWins={};
-    const teamEloDeltaRaw={}; // raw Elo delta for teams in this week
-
     const pm=pmap(); // Player map for quick lookup
-
     const orderedMatchesForWeek = [...ms].sort((a,b)=>mts(a)-mts(b));
-
-    // Cache-Schlüssel: pro Woche + Match-Count + Cache-Version
-    const weekSimKey = 'potwSim_'+wkKey+'_'+matches.length+'_'+_cache.version;
-    let weekSim;
-    if(_cache._potwSim && _cache._potwSimKey === weekSimKey){
-      weekSim = _cache._potwSim;
-    } else {
-      // Temporäre Elo-Simulation für die Woche, um Team-Elo-Deltas zu erhalten
-      // Starte von einem neutralen Zustand, da wir nur die Elo-Änderungen *innerhalb* der Woche wollen
-      weekSim = simulateElo(orderedMatchesForWeek, {
-        initialState: {
-          elo: Object.fromEntries(players.map(p => [p.id, cfg.start_elo])),
-          played: Object.fromEntries(players.map(p => [p.id, 0])),
-          playedSeason: Object.fromEntries(players.map(p => [p.id, 0])),
-          wins: Object.fromEntries(players.map(p => [p.id, 0])),
-          losses: Object.fromEntries(players.map(p => [p.id, 0])),
-          curStreak: Object.fromEntries(players.map(p => [p.id, 0])),
-          bestStreak: Object.fromEntries(players.map(p => [p.id, 0])),
-          eloGain: Object.fromEntries(players.map(p => [p.id, 0])),
-          eloLoss: Object.fromEntries(players.map(p => [p.id, 0])),
-          gd: Object.fromEntries(players.map(p => [p.id, 0])),
-          teamElo: {},
-          seasonTeamElo: {},
-          history: [],
-          seasonEndElos: {},
-          seasonPlayed: {},
-          careerElo: {},
-          posTracker: {}, 
-          curSeason: null
-        },
-        startElo: cfg.start_elo
-      });
-      _cache._potwSim = weekSim;
-      _cache._potwSimKey = weekSimKey;
-    }
-
-    // History-Lookup einmalig für O(1) Zugriff (statt history.find pro Match)
-    const weekHistById = new Map();
-    for(let i=0; i<weekSim.history.length; i++){
-      weekHistById.set(weekSim.history[i].matchId, weekSim.history[i]);
-    }
 
     orderedMatchesForWeek.forEach(m=>{
       const aWon=m.winner==='A';
-      // Player stats
       [m.a1,m.a2,m.b1,m.b2].forEach(id=>{
-        if(!ps[id]) ps[id]={wins:0,losses:0,gf:0,ga:0,eloDelta:0,bestStreak:0,defG:0,defGa:0};
+        if(!ps[id]) ps[id]={wins:0,losses:0,gf:0,ga:0,eloDelta:0,bestStreak:0};
         if(run[id]===undefined) run[id]=0;
         const onA=(id===m.a1||id===m.a2);
         const won=(onA&&aWon)||(!onA&&!aWon);
@@ -85,31 +39,6 @@ function showPotwRecap(opts){
         if(won){ ps[id].wins++; run[id]=run[id]>=0?run[id]+1:1; }
         else  { ps[id].losses++; run[id]=run[id]<=0?run[id]-1:-1; }
         if(run[id]>ps[id].bestStreak) ps[id].bestStreak=run[id];
-
-        // Defender-Stats
-        const pos=id===m.a1?m.a1_pos:id===m.a2?m.a2_pos:id===m.b1?m.b1_pos:m.b2_pos;
-        if(pos==='def'){
-          if(!defStats[id]) defStats[id]={games:0,goalsAgainst:0};
-          defStats[id].games++;
-          defStats[id].goalsAgainst+=ga;
-        }
-      });
-
-      // Team-Stats
-      [[m.a1,m.a2,m.winner==='A'],[m.b1,m.b2,m.winner==='B']]
-      .forEach(([p1,p2,wonTeam])=>{
-        const k=paarKey(p1, p2);
-        if(!teamGames[k]) teamGames[k]=0;
-        if(!teamWins[k]) teamWins[k]=0;
-        if(!teamEloDeltaRaw[k]) teamEloDeltaRaw[k]=0;
-
-        teamGames[k]++;
-        if(wonTeam) teamWins[k]++;
-
-        const matchHistoryEntry = weekHistById.get(m.id);
-        if (matchHistoryEntry) {
-            teamEloDeltaRaw[k] += (matchHistoryEntry.deltas[p1] || 0) + (matchHistoryEntry.deltas[p2] || 0);
-        }
       });
     });
 
@@ -147,60 +76,26 @@ function showPotwRecap(opts){
     ms.forEach(m=>[m.a1,m.a2,m.b1,m.b2].forEach(id=>uniquePlayers.add(id)));
     const totalGoals=ms.reduce((a,m)=>a+(m.score_a||0)+(m.score_b||0),0);
 
-    // Mini-Highlights
-    const wkAtk={};
-    ms.forEach(m=>{
-      const strikersInA = [];
-      if (m.a1_pos === 'atk') strikersInA.push(m.a1);
-      if (m.a2_pos === 'atk') strikersInA.push(m.a2);
-
-      const strikersInB = [];
-      if (m.b1_pos === 'atk') strikersInB.push(m.b1);
-      if (m.b2_pos === 'atk') strikersInB.push(m.b2);
-
-      strikersInA.forEach(id => {
-          if (!wkAtk[id]) wkAtk[id] = { g: 0, goals: 0 };
-          wkAtk[id].g++; wkAtk[id].goals += m.score_a;
-      });
-      strikersInB.forEach(id => {
-          if (!wkAtk[id]) wkAtk[id] = { g: 0, goals: 0 };
-          wkAtk[id].g++; wkAtk[id].goals += m.score_b;
-      });
-    });
-
-    const scorerArr=Object.entries(wkAtk).filter(([,v])=>v.g>=1)
-      .map(([id,x])=>({id,gf:x.goals,g:x.g,avg:x.goals/x.g})).sort((a,b)=>b.avg-a.avg||b.gf-a.gf);
-    const topScorer=scorerArr[0] && scorerArr[0].gf>0 ? scorerArr[0] : null;
-
-    const bestDefenderArr=Object.entries(defStats)
-      .filter(([,s])=>s.games>=2)
-      .map(([id,s])=>({id,games:s.games,goalsAgainst:s.goalsAgainst,avg:s.goalsAgainst/s.games}))
-      .sort((a,b)=>a.avg-b.avg||a.goalsAgainst-b.goalsAgainst);
-    const bestDefender=bestDefenderArr[0];
-
     const biggestEloGainArr=Object.entries(ps)
       .filter(([id,s])=>s.wins+s.losses > 0 && sichtbar(pm[id]))
       .sort((a,b)=>b[1].eloDelta-a[1].eloDelta);
     const biggestEloGain=biggestEloGainArr[0];
 
-    let topUpset=null;
-    for(const m of ms){
-      const sp=m.exp_a==null?0.5:m.exp_a;
-      const winSp=m.winner==='A'?sp:(1-sp);
-      if(winSp<CHANCE_OFFEN && (!topUpset || winSp<topUpset.sp)) topUpset={m,sp:winSp};
-    }
-    const upsetNames=topUpset?
-      (topUpset.m.winner==='A'?[pname(topUpset.m.a1),pname(topUpset.m.a2)]:[pname(topUpset.m.b1),pname(topUpset.m.b2)])
-      :null;
+    // Die Auszeichnungen DIESER Woche, aus derselben Rechnung wie der
+    // Awards-Reiter [§C27]. Vorher rechnete der Rückblick Torjäger, Abwehr,
+    // Team und Überraschung selbst — ohne die Mindestzahl an Partien und mit
+    // einer eigenen Elo-Simulation der Woche —, und die Kachel öffnete das
+    // Award-Blatt derselben Woche, auf dem ein anderer stehen konnte.
+    const vorherWoche = awWeekStart;
+    awWeekStart = new Date(weekStart);
+    let R;
+    try { R = awardRankings('week'); } finally { awWeekStart = vorherWoche; }
 
-    const totwCandidates = Object.entries(teamEloDeltaRaw)
-      .filter(([k,v]) => {
-        const ids = k.split('|');
-        return teamGames[k] >= 2 && sichtbar(pm[ids[0]]) && sichtbar(pm[ids[1]]);
-      })
-      .map(([k,v]) => ({ ids: k.split('|'), eloDelta: v, games: teamGames[k], wins: teamWins[k] }))
-      .sort((a,b) => b.eloDelta - a.eloDelta || (b.wins/b.games) - (a.wins/a.games));
-    const teamOfTheWeek = totwCandidates[0];
+    // Die Woche als Zahlen: was die Kopfzeile nicht schon sagt (Partien,
+    // Spieler, Tore).
+    const spieltage = new Set(ms.map(m => tagKey(mts(m)))).size;
+    const eng = ms.filter(m => Math.abs((m.score_a || 0) - (m.score_b || 0)) <= 2).length;
+    const duos = new Set(ms.flatMap(m => [paarKey(m.a1, m.a2), paarKey(m.b1, m.b2)])).size;
 
     // ─── Darstellung [§C31] ──────────────────────────────────────────
     // Dieselben Bauteile wie im Saison- und im Tages-Rückblick. Vorher
@@ -212,27 +107,16 @@ function showPotwRecap(opts){
     // Metall, nicht Gold: Gold gehört den Titeln [§C25], und der Titel
     // dieser Seite ist der Spieler der Woche. Fünf golden umrandete Kacheln
     // darunter nehmen ihm genau das weg.
-    const hl = (ic, label, name, wert, attr) => hlKacheln.push(rcpKachelHtml(
-      name ? {ic, label, name, wert, ton:'metall', attr} : {ic, label, leer:true}));
-
-    hl('handshake', 'Team der Woche',
-       teamOfTheWeek ? pname(teamOfTheWeek.ids[0])+' & '+pname(teamOfTheWeek.ids[1]) : null,
-       teamOfTheWeek ? teamOfTheWeek.games+' Spiele · '
-         +Math.round(teamOfTheWeek.wins/teamOfTheWeek.games*100)+'%' : null,
-       `data-potw-award="mvt" data-potw-week="${wkStartMs}"`);
-    hl('trendUp', 'Größter Aufwind',
-       biggestEloGain ? pname(biggestEloGain[0]) : null,
-       biggestEloGain ? '+'+Math.round(biggestEloGain[1].eloDelta)+' Elo' : null,
-       biggestEloGain ? `data-potw-player="${esc(biggestEloGain[0])}"` : '');
-    hl('ball', 'Torjäger', topScorer ? pname(topScorer.id) : null,
-       topScorer ? 'Ø '+komma(topScorer.avg,1)+' Tore' : null,
-       `data-potw-award="scorer" data-potw-week="${wkStartMs}"`);
-    hl('shieldCheck', 'Eiserne Abwehr', bestDefender ? pname(bestDefender.id) : null,
-       bestDefender ? 'Ø '+komma(bestDefender.avg,1)+' Gegentore' : null,
-       `data-potw-award="wall" data-potw-week="${wkStartMs}"`);
-    hl('bolt', 'Größte Überraschung', (topUpset && upsetNames) ? upsetNames.join(' & ') : null,
-       (topUpset && upsetNames) ? Math.round(topUpset.sp*100)+'% Chance' : null,
-       `data-potw-award="upset" data-potw-week="${wkStartMs}"`);
+    if(biggestEloGain) hlKacheln.push(rcpKachelHtml({ic:'trendUp', label:'Größter Aufwind',
+      name:pname(biggestEloGain[0]), wert:'+'+Math.round(biggestEloGain[1].eloDelta)+' Elo', ton:'metall',
+      attr:`data-potw-player="${esc(biggestEloGain[0])}"`}));
+    // Die längste Serie der Woche steht schon unter dem Helden, wenn er sie
+    // hält — als Kachel ein zweites Mal wäre dieselbe Zahl zweimal.
+    hlKacheln.push(...rcpAwardKacheln(R,
+      ['mvt', 'streaks', 'scorer', 'wall', 'clutch', 'upset', 'biggest', 'grinder'],
+      ['worstWr', 'lossStreaks'],
+      key => `data-potw-award="${key}" data-potw-week="${wkStartMs}"`,
+      (key, top) => key === 'streaks' && mainPotwStats.bestStreak >= 3 && top.some(x => x.id === mainPotwPlayerId)));
 
     const serieHtml = mainPotwStats.bestStreak >= 3
       ? rcpNotizHtml({ic:'flame',
@@ -252,7 +136,7 @@ function showPotwRecap(opts){
           // Ohne Banner: im Schild stünde die Ligaposition von heute, und die
           // hat mit dieser Woche nichts zu tun. Der Reif bleibt — er ist die
           // Laufbahn und gehört zur Person [§C31].
-          band:false, px:104, marke:'Spieler der Woche',
+          band:false, px:104, marke:'Spieler der Woche', strahl:true,
           zahlen: rcpZahlenHtml([
             {v:mainPotwStats.wins,   l:'Siege',       ton:'gruen'},
             {v:mainPotwStats.losses, l:'Niederlagen', ton:'rot'},
@@ -260,12 +144,19 @@ function showPotwRecap(opts){
             {v:eloDeltaStr,          l:'Elo', ton:eloDelta>=0 ? 'gruen' : 'rot'}
           ])})
       + serieHtml
+      + rcpAbschnitt('Die Woche in Zahlen')
+      + rcpZahlenHtml([
+          {v:spieltage,                        l:spieltage === 1 ? 'Spieltag' : 'Spieltage'},
+          {v:komma(totalGoals / ms.length, 1), l:'Tore je Partie'},
+          {v:eng,                              l:'Enge Partien'},
+          {v:duos,                             l:'Duos'}])
       // Wann die Woche gewonnen wurde und gegen wen [§C31]: die Bilanz
-      // allein sagte nicht, ob sie an einem Tag fiel oder über sieben.
+      // allein sagte nicht, ob sie an einem Tag fiel oder über sieben. Die
+      // Elo-Linie zeigt dazu, in welcher Reihenfolge.
       + (geteilt ? '' : rcpAbschnitt('Die Woche von ' + pname(mainPotwPlayerId))
-          + rcpWocheHtml(ms, mainPotwPlayerId, weekStart))
+          + rcpWocheHtml(ms, mainPotwPlayerId, weekStart) + rcpEloBahnHtml(ms, mainPotwPlayerId))
       + rcpAbschnitt('Das Feld der Woche') + rcpFeldHtml(ms, mainPotwPlayerId)
-      + rcpAbschnitt('Höhepunkte der Woche')
+      + rcpAbschnitt('Auszeichnungen der Woche', hlKacheln.length)
       + `<div class="rcp-awards${hlKacheln.length%2 ? ' ungerade' : ''}">${hlKacheln.join('')}</div>`
       + `<button id="closePotwBtn" class="recap-done-btn">Verstanden</button>`,
       {protectMs: opts.auto ? 2500 : 0});
@@ -526,7 +417,7 @@ function showPotdRecap(opts){
     openSheet(
       rcpKopfHtml({ic:'trophyDay', marke:'Player of the Day', titel:dayStr,
         meta: rcpMeta([dayMatches.length+' Matches', uniquePlayers.size+' Spieler'])})
-      + rcpHeldHtml({pid:potdId, band:false, px:104, marke:'Spieler des Tages',
+      + rcpHeldHtml({pid:potdId, band:false, px:104, marke:'Spieler des Tages', strahl:true,
           zahlen: rcpZahlenHtml([
             {v:s.wins,      l:'Siege',       ton:'gruen'},
             {v:s.losses,    l:'Niederlagen', ton:'rot'},

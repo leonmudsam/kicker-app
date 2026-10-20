@@ -1401,7 +1401,9 @@ const ok = (c, msg, det) => {
                   // gemeinsamer Bildrahmen ist kein fehlender Textkarten-Kopf.
                   'sp-fk',
                   // Die Insignium-Karte des Tages: die Verwandlung als Bühne.
-                  'ni-b'];
+                  'ni-b',
+                  // Die Ehrung: je Geehrtem eine Säule mit der Zeichenkachel.
+                  'eh-buehne'];
     arr.forEach(x => {
       host.innerHTML = x.html;
       const karte = host.querySelector('.nf-card');
@@ -1424,6 +1426,72 @@ const ok = (c, msg, det) => {
      kartenMobil.ohneBild.join(', ') || 'jede mit Bild');
   ok(kartenMobil.raus.length === 0, 'und keine laeuft bei 360 px aus ihrem Rand',
      kartenMobil.raus.slice(0, 4).join(' | ') || 'keine');
+
+  // ── Die Ehrung bei 360 px ────────────────────────────────────────
+  //    Je Geehrtem eine Säule auf seinem Wappen, höchstens fünf je Reihe,
+  //    jede Reihe auf ihrer Grundlinie, keine über den Rand — gemessen in der
+  //    Breite, die die Karte im Feed hat: 287 px bei 360, 247 px bei 320.
+  //    Gerechnet mit 360 px Kartenbreite brachen fünf Wappen im Feed in zwei
+  //    Reihen, die Karte wurde 130 px höher und schob die Breaking-Karte aus
+  //    dem Bild. Im Blatt stehen vier mit Namen in einer Reihe — die vierte
+  //    brach dort allein in eine zweite. Und der Name einer gewöhnlichen
+  //    Auszeichnung steht über der ganzen Breite ihrer Kachel: neben Zeichen
+  //    und Wert brach „Pflichterfüller" mitten im Wort.
+  const ehrung = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const roh = K(`JSON.stringify((function(){
+      const alle = [], ids = new Set();
+      for(let t = Date.parse('2026-05-10'); t < Date.parse('2026-09-01'); t += NEWS_FENSTER_TAGE * 864e5 * 0.9)
+        _newsEhrungStories(t).forEach(s => { if(!ids.has(s.id)){ ids.add(s.id); alle.push(s); } });
+      alle.sort((a, b) => b.dataRef.spieler.length - a.dataRef.spieler.length);
+      const mit = n => alle.find(s => s.dataRef.spieler.length === n);
+      return [alle[0], mit(5), mit(4), alle[alle.length - 1]].filter(Boolean).map(s => ({n:s.dataRef.spieler.length,
+        karte:_newsEhrungHtml(s, false, ''), mitte:_ndEhrungBlatt(s).mitte, kopf:_ndEhrungBlatt(s).kopf}));
+    })())`);
+    const host = document.createElement('div');
+    host.style.cssText = 'position:absolute;left:0;top:0';
+    document.body.appendChild(host);
+    const out = [];
+    JSON.parse(roh).forEach(x => {
+      const je = [287, 247].map(breite => {
+        host.style.width = breite + 'px';
+        host.innerHTML = x.karte;
+        const karte = host.querySelector('.nf-card'), kr = karte.getBoundingClientRect();
+        const s = [...karte.querySelectorAll('.eh-s')].map(e => e.getBoundingClientRect());
+        const boden = [...karte.querySelectorAll('.eh-s-av')].map(e => Math.round(e.getBoundingClientRect().bottom));
+        const groesse = [...karte.querySelectorAll('.eh-s-av > .rav')].map(e => Math.round(e.getBoundingClientRect().width));
+        return {reihen:new Set(boden).size, wappen:groesse.length, klein:Math.min(...groesse),
+          drin:s.every(r => r.left >= kr.left - .5 && r.right <= kr.right + .5)};
+      });
+      host.style.width = '360px';
+      out.push({n:x.n, saeulen:(x.karte.match(/class="eh-s"/g) || []).length, soll:Math.ceil(x.n / 5),
+        reihen:je.map(j => j.reihen), wappen:je.map(j => j.wappen), klein:je.map(j => j.klein), drin:je.every(j => j.drin)});
+      // Die Bühne des Blatts in seiner Breite: bei 360 px ist sie im Blatt
+      // 270 px breit, gemessen an einem offenen Blatt.
+      host.innerHTML = `<div style="width:270px">${x.kopf}</div>`;
+      const kb = [...host.querySelectorAll('.eh-s-av')].map(e => Math.round(e.getBoundingClientRect().bottom));
+      out[out.length - 1].blattReihen = new Set(kb).size;
+      out[out.length - 1].blattSoll = Math.ceil(x.n / 4);
+      host.innerHTML = `<div style="padding:0 16px">${x.mitte}</div>`;
+      const gebrochen = [];
+      host.querySelectorAll('.eh-g-t > b').forEach(b => {
+        const zeile = parseFloat(getComputedStyle(b).lineHeight) || 14;
+        if(!/\s/.test(b.textContent.trim()) && b.getBoundingClientRect().height > zeile * 1.5) gebrochen.push(b.textContent);
+      });
+      out[out.length - 1].gebrochen = gebrochen;
+      out[out.length - 1].kacheln = host.querySelectorAll('.eh-g-t').length;
+    });
+    host.remove();
+    return out;
+  });
+  ok(ehrung.length === 4 && ehrung[0].n > 6 && ehrung.every(x => x.saeulen === x.n && x.wappen.every(w => w === x.n)
+       && x.reihen.every(r => r === x.soll) && x.klein[0] === 48 && x.klein[1] >= 40 && x.blattReihen === x.blattSoll && x.drin),
+     'die Ehrung stellt jeden Geehrten als Säule auf sein Wappen, höchstens fünf je Reihe in der Karte des Feeds und vier im Blatt, bei 360 px zu 48 px, und bleibt in der Karte',
+     JSON.stringify(ehrung.map(x => ({n:x.n, s:x.saeulen, w:x.wappen, reihen:x.reihen.join(',') + '/' + x.soll, klein:x.klein,
+       blatt:x.blattReihen + '/' + x.blattSoll, drin:x.drin}))));
+  ok(ehrung.some(x => x.kacheln > 0) && ehrung.every(x => !x.gebrochen.length),
+     'im Blatt der Ehrung bricht kein Name einer Kachel mitten im Wort',
+     ehrung.flatMap(x => x.gebrochen).join(', ') || ehrung.map(x => x.kacheln).join('+') + ' Kacheln');
 
   // ── Jedes Blatt passt auf das Telefon ────────────────────────────
   //    Gemessen am Blatt eines Tafel-Moments: die Zahlenreihe trug fuenf
@@ -2368,14 +2436,16 @@ const ok = (c, msg, det) => {
     if(zeile) zeile.querySelector('span').textContent += ' — und noch ein Anlass und noch einer, der die Zeile füllt';
     K('_positionNewsToast()');
     const links = t.offsetLeft + t.offsetParent.getBoundingClientRect().left;
-    const out = {n:(x.querySelector('.nh-zahl') || {}).textContent, wort:(x.querySelector('.nh-wort') || {}).textContent,
+    const out = {n:(x.querySelector('.nh-wort .num') || {}).textContent, wort:(x.querySelector('.nh-wort') || {}).textContent,
       zeile:zeile ? zeile.querySelector('span').textContent.startsWith(top.title || '') : false,
       wichtigste:!!top && !!erwartet && top.id === erwartet.id && !!umgekehrt && umgekehrt.id === erwartet.id,
       ton:!!zeile && ton.split(' ').every(c => zeile.classList.contains(c)),
       punkt:zeile ? getComputedStyle(zeile.querySelector('i')).backgroundColor.replace(/\s/g, '') === 'rgb(' + getComputedStyle(zeile).getPropertyValue('--story-rgb').replace(/\s/g, '') + ')' : false,
       rand:[Math.round(links), Math.round(innerWidth - links - t.offsetWidth)],
       licht:t.querySelectorAll(':scope > .kl.kl-hinweis').length, ruf:getComputedStyle(btn, '::after').animationName,
-      zahl:getComputedStyle(x.querySelector('.nh-zahl')).animationName,
+      zahl:x.querySelector('.nh-ic') ? getComputedStyle(x.querySelector('.nh-ic')).animationName : '',
+      zeichen:!!x.querySelector('.nh-ic svg') && !!x.querySelector('.nh-funke') && !x.querySelector('.nh-zahl')
+        && getComputedStyle(x.querySelector('.nh-funke')).animationName === 'nhFunke',
       endlos:t.getAnimations({subtree:true}).filter(a => a.effect.getTiming().iterations === Infinity).length,
       zeitStart:zeiten.includes(K('NEWS_TOAST_START_MS'))};
     zeiten.length = 0;
@@ -2392,8 +2462,8 @@ const ok = (c, msg, det) => {
     return out;
   });
   const ntLebt = await toastLauf();
-  ok(ntLebt.n === '59' && ntLebt.wort === 'neue Stories' && ntLebt.zeile && ntLebt.wichtigste && ntLebt.ton && ntLebt.punkt,
-     'der Hinweis auf neue Stories zeigt die Zahl und darunter die wichtigste ungelesene Story mit dem Punkt in ihrer Farbe', JSON.stringify(ntLebt));
+  ok(ntLebt.n === '59' && ntLebt.wort === '59 neue Stories' && ntLebt.zeichen && ntLebt.zeile && ntLebt.wichtigste && ntLebt.ton && ntLebt.punkt,
+     'der Hinweis auf neue Stories trägt ein bewegtes Zeichen statt der Zahl, sagt „59 neue Stories" und darunter die wichtigste ungelesene Story mit dem Punkt in ihrer Farbe', JSON.stringify(ntLebt));
   ok(ntLebt.rand[0] >= 12 && ntLebt.rand[1] >= 8, 'der Hinweis hält bei 320 px Abstand zu beiden Rändern', JSON.stringify(ntLebt.rand));
   ok(ntLebt.licht === 1 && ntLebt.lichtDann === 1 && ntLebt.ruf === 'hinweisRuf' && ntLebt.zahl === 'nhPop' && ntLebt.endlos === 0 && ntLebt.pille,
      'beim Erscheinen fährt Licht um den Hinweis und ein Ring von der Pille, nichts läuft endlos, und aus dem Gerüst der Pille gleitet ihr Inhalt herein', JSON.stringify(ntLebt));
@@ -2714,6 +2784,37 @@ const ok = (c, msg, det) => {
     return [...new Set(falsch)];
   });
   ok(!endlos.length, 'was im Feed endlos läuft, bewegt nur transform und opacity', endlos.join(', '));
+
+  // Eine Karte im Feed bewegt sich nur im Bild [§C43]. Erzwang das Öffnen
+  // das Layout — direkt nach einem anderen Blatt —, legte Chromium die
+  // Bewegungen auch der Karten weit unter dem Bildrand an, bevor
+  // `content-visibility` sie übersprang; danach erreichte sie kein `.steht`
+  // mehr, und ein einziger Glanz 3000 px tiefer rechnete jedes Bild im
+  // Hauptthread — gemessen 130 statt 7 ms je Sekunde. Geprüft wird genau
+  // dieser Augenblick: im selben Takt wie das Öffnen, Layout erzwungen, noch
+  // vor jeder Antwort eines Beobachters.
+  const fern = await page.evaluate(async () => {
+    const warte = ms => new Promise(r => setTimeout(r, ms));
+    const karten = () => [...document.querySelectorAll('#sheet .nf-liste .nf-card:not(.nf-brk):not(.nf-gross)')];
+    const endlos = c => c.getAnimations({subtree:true}).filter(a => a.effect.getComputedTiming().iterations === Infinity);
+    window.__k.eval('closeSheet(true); _cache._consolFrom = null; openNewsFeed(); _newsFeedRest(true)');
+    const hoch = innerHeight, laufend = [];
+    let unten = 0;
+    karten().forEach(c => {
+      const r = c.getBoundingClientRect();
+      if(r.top < hoch + 80) return;
+      unten += endlos(c).length;
+      endlos(c).forEach(a => { if(a.playState === 'running') laufend.push(a.animationName + ' ' + Math.round(r.top) + ' px'); });
+    });
+    await warte(1200);
+    const imBild = karten().filter(c => { const r = c.getBoundingClientRect(); return r.bottom > -80 && r.top < hoch + 80; })
+      .map(c => c.classList.contains('im-bild'));
+    window.__k.eval('closeSheet(true)');
+    return {laufend, unten, imBild};
+  });
+  ok(fern.unten > 0 && !fern.laufend.length && fern.imBild.length > 0 && fern.imBild.every(Boolean),
+     'im Feed läuft endlos nur, was im Bild steht, auch wenn das Öffnen das Layout erzwingt',
+     fern.laufend.length ? fern.laufend.slice(0, 4).join(', ') : fern.unten + ' Bewegungen unter dem Bildrand, ' + fern.imBild.length + ' Karten im Bild');
 
   console.log('\n═══ JEDES BLATT ZEIGT SEINE STORY ═══');
   const inhalt = await page.evaluate(() => {
@@ -4976,15 +5077,54 @@ return JSON.stringify(funde,null,1);
     out.woche = {titel: /KW 34/.test(sh.textContent) ? 'KW 34' : '', tage: sh.querySelectorAll('.rcp-wo-t').length,
       feld: sh.querySelectorAll('.rcp-feld-z').length, soll: imFeld.size, held: sh.querySelectorAll('.rcp-feld-z.held').length,
       fehler: [...sh.querySelectorAll('.rcp-feld, .rcp-woche')].flatMap(fehler)};
+    // Die Auszeichnungen der Woche nennen, wen die Rechnung des
+    // Awards-Reiters für DIESE Woche nennt; die Zahlen der Woche zählen
+    // nach; der Held steht auf seiner Bühne, die vier Zahlen zwei mal zwei.
+    const soll = JSON.parse(K(`(function(){ const v = awWeekStart; awWeekStart = new Date(2026, 7, 17);
+      const R = awardRankings('week'); awWeekStart = v;
+      const o = {}; Object.keys(AW_WERT).forEach(k => { const t = awTop(k, R);
+        if(t.length) o[k] = awIds(k, t[0]).map(pname).join(' & ') + (t.length > 1 ? ' +' + (t.length - 1) : ''); });
+      return JSON.stringify(o); })()`));
+    const kacheln = [...sh.querySelectorAll('[data-potw-award]')].map(e => ({k:e.dataset.potwAward,
+      name:e.querySelector('.rcp-aw-name').textContent.trim()}));
+    const zahlenAb = [...sh.querySelectorAll('.rcp-section')].find(x => /Woche in Zahlen/.test(x.textContent));
+    const zellen = zahlenAb ? [...zahlenAb.nextElementSibling.querySelectorAll('.rcp-z-s')].map(z => z.textContent.replace(/\s+/g, ' ').trim()) : [];
+    const tageSoll = new Set(wochenMs.map(m => K(`tagKey(mts(${JSON.stringify(m)}))`))).size;
+    const heldZ = [...sh.querySelectorAll('.rcp-held .rcp-z-s')].map(z => Math.round(z.getBoundingClientRect().top));
+    const held = sh.querySelector('.rcp-held');
+    out.wocheAw = {kacheln:kacheln.length, falsch:kacheln.filter(k => soll[k.k] !== k.name),
+      zahlen:zellen, tageSoll, reihen:new Set(heldZ).size, zellenHeld:heldZ.length,
+      strahl:!!(held && held.querySelector('.rcp-held-av > .nf-ms-strahl')), stapel:held ? getComputedStyle(held).isolation : ''};
     K(`closeSheet(true); showPotdRecap({force:true, tag:'2026-08-24'}); 'x'`); await warte();
     sh = document.getElementById('sheet');
     const tagMs = K(`matches.filter(m => tagKey(mts(m)) === '2026-08-24').length`);
     out.tag = {bahn: !!sh.querySelector('.nd-bahn'), zeilen: sh.querySelectorAll('.nd-tml').length, elo: !!sh.querySelector('.rcp-elo svg'),
       feld: sh.querySelectorAll('.rcp-feld-z').length, partien: tagMs, datum: /24\. August/.test(sh.textContent),
+      // Der Spieler des Tages steht vor dem Strahlenkranz, und jede Partie
+      // setzt ihren Punkt, wenn die Linie bei ihr ankommt: der Anteil am Weg
+      // steigt und endet bei eins.
+      strahl: !!sh.querySelector('.rcp-held.mit-strahl .rcp-held-av > .nf-ms-strahl'),
+      punkte: [...sh.querySelectorAll('.rcp-elo circle')].map(c => +c.style.getPropertyValue('--i')),
+      punktAnim: [...new Set([...sh.querySelectorAll('.rcp-elo circle')].map(c => getComputedStyle(c).animationName))],
       fehler: [...sh.querySelectorAll('.rcp-feld, .rcp-elo')].flatMap(fehler)};
     K(`closeSheet(true); showSeasonRecap(seasons.find(s=>s.id==='2026-07')); 'x'`); await warte();
     sh = document.getElementById('sheet');
     const kopf = [...sh.querySelectorAll('.rcp-section')].map(x => x.textContent.replace(/\d+/g, '').trim());
+    // Gegenüber dem Vormonat: die Unterschiede der Eckdaten und die
+    // Plätze, nachgerechnet aus den Ranglisten beider Monate.
+    const vgl = JSON.parse(K(`(function(){ const a = saisonRang('2026-07'), b = saisonRang('2026-06');
+      const vor = {}; b.forEach((e, i) => { vor[e.id] = i + 1; });
+      const w = a.map((e, i) => ({n:pname(e.id), d:vor[e.id] ? vor[e.id] - (i + 1) : null})).filter(x => x.d != null);
+      const max = Math.max(...w.map(x => x.d)), min = Math.min(...w.map(x => x.d));
+      return JSON.stringify({ms:matchesInSeason('2026-07').length - matchesInSeason('2026-06').length,
+        auf:w.filter(x => x.d === max).map(x => x.n), ab:w.filter(x => x.d === min).map(x => x.n), max, min}); })()`));
+    const zelle0 = sh.querySelector('.rcp-head + .rcp-z .rcp-z-s .rcp-z-d');
+    const kachel = l => [...sh.querySelectorAll('.rcp-aw')].find(e => (e.querySelector('.rcp-aw-label') || {}).textContent === l);
+    const nameVon = e => e ? e.querySelector('.rcp-aw-name').textContent.trim() : '';
+    out.saisonVgl = {d:zelle0 ? zelle0.textContent.trim() : '', soll:(vgl.ms > 0 ? '+' : vgl.ms < 0 ? '−' : '±') + Math.abs(vgl.ms),
+      auf:nameVon(kachel('Größter Sprung')), aufSoll:vgl.auf, ab:nameVon(kachel('Tiefster Fall')), abSoll:vgl.ab,
+      buehne:!!sh.querySelector('.nf-meister.rcp-buehne > .nf-ms-strahl + .podest'),
+      awards:sh.querySelectorAll('[data-award]').length};
     out.saison = {rang: kopf.indexOf('Rangliste'), rennen: kopf.indexOf('Das Titelrennen'),
       spitze: kopf.indexOf('Tage an der Spitze'), meister: kopf.findIndex(x => /^Die Saison des Meisters/.test(x)),
       fehler: [...sh.querySelectorAll('.rcp-block')].flatMap(fehler)};
@@ -4995,9 +5135,26 @@ return JSON.stringify(funde,null,1);
      && rueck.woche.fehler.length === 0,
      'der Wochenrückblick zeigt die gewählte Woche, die sieben Tage des Helden und jeden Spieler im Feld',
      JSON.stringify(rueck.woche).slice(0, 200));
+  ok(rueck.wocheAw.kacheln >= 6 && rueck.wocheAw.falsch.length === 0,
+     'die Auszeichnungen der Woche nennen, wen der Awards-Reiter für diese Woche nennt',
+     JSON.stringify(rueck.wocheAw.falsch).slice(0, 240) + ' · ' + rueck.wocheAw.kacheln + ' Kacheln');
+  ok(rueck.wocheAw.zahlen.length === 4 && rueck.wocheAw.zahlen[0] === rueck.wocheAw.tageSoll + 'Spieltage',
+     'die Woche in Zahlen: Spieltage, Tore je Partie, enge Partien und Duos, gezählt aus den Partien der Woche',
+     JSON.stringify(rueck.wocheAw.zahlen) + ' · Spieltage ' + rueck.wocheAw.tageSoll);
+  ok(rueck.wocheAw.strahl && rueck.wocheAw.stapel === 'isolate' && rueck.wocheAw.zellenHeld === 4 && rueck.wocheAw.reihen === 2,
+     'der Spieler der Woche steht vor dem Strahlenkranz, seine vier Zahlen bei 360 px zwei mal zwei',
+     JSON.stringify({strahl:rueck.wocheAw.strahl, stapel:rueck.wocheAw.stapel, zellen:rueck.wocheAw.zellenHeld, reihen:rueck.wocheAw.reihen}));
+  ok(rueck.tag.strahl && rueck.tag.punkte.length >= 2 && rueck.tag.punkte.every((v, i, a) => !i || v > a[i - 1])
+       && rueck.tag.punkte[rueck.tag.punkte.length - 1] === 1 && rueck.tag.punktAnim.join() === 'rcpPunkt',
+     'der Tagesrückblick stellt den Helden vor den Strahlenkranz, die Punkte der Elo-Linie kommen mit der Linie',
+     JSON.stringify({strahl:rueck.tag.strahl, punkte:rueck.tag.punkte, anim:rueck.tag.punktAnim}));
   ok(rueck.tag.bahn && rueck.tag.zeilen === 0 && rueck.tag.elo && rueck.tag.feld > 3 && rueck.tag.datum && rueck.tag.fehler.length === 0,
      'der Tagesrückblick zeigt den gewählten Tag als Bahn, die Elo über den Tag und das Feld',
      JSON.stringify(rueck.tag).slice(0, 200));
+  ok(rueck.saisonVgl.d === rueck.saisonVgl.soll && rueck.saisonVgl.aufSoll.includes(rueck.saisonVgl.auf)
+       && rueck.saisonVgl.abSoll.includes(rueck.saisonVgl.ab) && rueck.saisonVgl.buehne && rueck.saisonVgl.awards >= 10,
+     'der Saison-Rückblick nennt den Unterschied zum Vormonat, den größten Sprung und den tiefsten Fall, das Podest steht auf der Bühne',
+     JSON.stringify(rueck.saisonVgl));
   ok(rueck.saison.rang >= 0 && rueck.saison.rennen > rueck.saison.rang && rueck.saison.spitze > rueck.saison.rennen
      && rueck.saison.meister > rueck.saison.spitze && rueck.saison.fehler.length === 0,
      'der Saison-Rückblick zeigt die Rangliste zuerst, darunter Titelrennen, Tage an der Spitze und die Saison des Meisters',
@@ -5164,6 +5321,42 @@ return JSON.stringify(funde,null,1);
      && /verloren/.test(voll.verloren),
      'der Zuwachs steht einmal, die vier Zahlen zwei mal zwei, und was verloren ging, über der Wirkung',
      JSON.stringify(voll && {satz: voll.satz, zellen: voll.zellen, reihen: voll.reihen, verloren: voll.verloren}));
+  // ── Offen steht, was zählt ───────────────────────────────────────
+  // In der Chronik der Saison standen alle Einträge untereinander, bei einem
+  // Spieler zwölf, von denen elf nichts zählten. Offen steht je Spieler der
+  // eine Eintrag des Monats [§C32]; die übrigen klappen darunter auf — im
+  // Blatt der Monatstafel und im Saison-Rückblick.
+  const zaehltOffen = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const zahl = sid => { const T = K("seasonTitles('" + sid + "')");
+      return {gesamt:T.awarded.length, spieler:new Set(T.awarded.map(a => a.pid)).size}; };
+    const sh = document.getElementById('sheet');
+    const pruefe = (offen, rest, alle) => {
+      const knopf = rest && rest.nextElementSibling && rest.nextElementSibling.matches('[data-chron-more]')
+        ? rest.nextElementSibling : null;
+      const zu = !rest || getComputedStyle(rest).display === 'none';
+      if(knopf) knopf.click();
+      return {offen, zu, auf: !!rest && getComputedStyle(rest).display !== 'none', knopf: !!knopf, alle: alle()};
+    };
+    K("closeSheet(true); showSeasonTable('2026-08')");
+    const tafel = Object.assign(zahl('2026-08'), pruefe(sh.querySelectorAll('.tplates:not(.chron-rest) .tplate').length,
+      sh.querySelector('.tplates.chron-rest'), () => sh.querySelectorAll('.tplate').length));
+    K("closeSheet(true); showSeasonRecap(seasons.find(s => s.id === '2026-07'))");
+    const kopf = [...sh.querySelectorAll('.rcp-section')].find(e => /Chronik der Saison/.test(e.textContent));
+    const liste = kopf && kopf.nextElementSibling;
+    const rest = liste && liste.nextElementSibling && liste.nextElementSibling.classList.contains('chron-rest')
+      ? liste.nextElementSibling : null;
+    const rueck = Object.assign(zahl('2026-07'), pruefe(liste ? liste.querySelectorAll('[data-tplayer]').length : 0,
+      rest, () => (liste ? liste.querySelectorAll('[data-tplayer]').length : 0) + (rest ? rest.querySelectorAll('[data-tplayer]').length : 0)));
+    K('closeSheet(true)');
+    return {tafel, rueck};
+  });
+  const _offenRecht = x => x && x.offen === x.spieler && x.alle === x.gesamt
+    && (x.gesamt === x.spieler || (x.knopf && x.zu && x.auf));
+  ok(_offenRecht(zaehltOffen.tafel) && _offenRecht(zaehltOffen.rueck)
+     && (zaehltOffen.tafel.gesamt > zaehltOffen.tafel.spieler || zaehltOffen.rueck.gesamt > zaehltOffen.rueck.spieler),
+     'Chronik der Saison: offen steht je Spieler der eine Eintrag, der zählt, die übrigen klappen darunter auf',
+     JSON.stringify(zaehltOffen));
   ok(voll && voll.wirkungen > 0 && !voll.gekappt.length && voll.hinweise.some(h => /Prestige/.test(h)),
      'in der Wirkung steht jeder Name und jeder Grund ganz, und die Gruppen sagen in einem Satz, was sie fürs Prestige heißen',
      JSON.stringify(voll && {gekappt: voll.gekappt.slice(0, 3), hinweise: voll.hinweise}));
@@ -5203,6 +5396,11 @@ return JSON.stringify(funde,null,1);
       const lbZeilen = lb.querySelectorAll('.lb-q:not(.leer)').length;
       const P = prestigeOf(bpid), posten = (P.quellen || []).length;
       const mehrLb = lb.querySelectorAll('[data-chron-more], .chron-more').length;
+      // Je Gruppe fünf offen, der Rest klappt in seiner Gruppe auf.
+      const lbGruppen = [...lb.querySelectorAll('.lb-grp')].map(g => ({
+        offen: g.querySelectorAll(':scope > .lb-q:not(.leer)').length,
+        rest: g.querySelectorAll('.lb-rest .lb-q').length,
+        knopf: g.querySelectorAll(':scope > .chron-more').length}));
       closeSheet(true);
       let bp = {id:'', n:0, zeilen:0};
       (getCachedBadges(bpid) || []).forEach(b => { const n = _badgeFireMatches(bpid, b.id).length; if(n > bp.n) bp = {id:b.id, n}; });
@@ -5214,7 +5412,7 @@ return JSON.stringify(funde,null,1);
         kopf: kopf.querySelectorAll('.nd-held-av .av').length,
         kopfNamen: ids.slice(0, 5).every(id => kopf.textContent.indexOf(nm(id)) >= 0) && !/weitere/.test(kopf.textContent),
         minis, badges:(getCachedBadges(bpid) || []).length, mehr: mehrLb,
-        lbZeilen, posten, bp
+        lbZeilen, posten, bp, lbGruppen
       };
     })())`));
   });
@@ -5224,10 +5422,15 @@ return JSON.stringify(funde,null,1);
      'Wechsel ' + alles.wechsel + ', Leiter ' + alles.leiter);
   ok(alles.kopf === 5 && alles.kopfNamen, 'der Kopf eines Blatts zeigt jedes Wappen und jeden Namen',
      alles.kopf + ' Wappen');
-  ok(alles.minis === alles.badges && alles.badges > 8 && alles.mehr === 0
-     && alles.lbZeilen === alles.posten && alles.posten > 4,
-     'Profil und Laufbahn zeigen jede Auszeichnung und jeden Posten, die Laufbahn nichts hinter „Mehr anzeigen"',
-     JSON.stringify({minis:alles.minis, badges:alles.badges, mehr:alles.mehr, zeilen:alles.lbZeilen, posten:alles.posten}));
+  // Die Laufbahn zeigt je Gruppe fünf Posten offen; der Rest steht im Blatt
+  // und klappt in seiner Gruppe auf, der Knopf nennt die Zahl.
+  ok(alles.minis === alles.badges && alles.badges > 8
+     && alles.lbZeilen === alles.posten && alles.posten > 4
+     && alles.lbGruppen.every(g => g.offen <= 5 && (g.rest ? g.offen === 5 && g.knopf === 1 : g.knopf === 0))
+     && alles.lbGruppen.some(g => g.rest > 0)
+     && alles.mehr === alles.lbGruppen.filter(g => g.rest > 0).length,
+     'Profil zeigt jede Auszeichnung, die Laufbahn je Gruppe fünf Posten offen und jeden weiteren aufklappbar in ihrer Gruppe',
+     JSON.stringify({minis:alles.minis, badges:alles.badges, mehr:alles.mehr, zeilen:alles.lbZeilen, posten:alles.posten, gruppen:alles.lbGruppen}));
   ok(alles.bp.n > 8 && alles.bp.zeilen === alles.bp.n,
      'das Blatt einer Auszeichnung zeigt jede Partie, in der sie fiel', JSON.stringify(alles.bp));
 
@@ -5436,6 +5639,117 @@ return JSON.stringify(funde,null,1);
   await page.emulateMedia({reducedMotion: 'no-preference'});
   ok(plRuhig.imBlatt === 0 && plRuhig.randDa === 'none' && plRuhig.titel.every(n => n === 'none'),
      'bei Bewegungsruhe steht im Profil alles still', JSON.stringify({laufen:plRuhig.imBlatt, rand:plRuhig.randDa}));
+
+  // ── Der Ring trägt jedes Zeichen [§13.7] ────────────────────────────
+  // Am Avatar stand nur der Zustand mit der höchsten Priorität: wer Player
+  // of the Week, Team of the Season und Player of the Day zugleich war,
+  // zeigte eins davon. Gemessen mit zwei bis fünf gesetzten Zuständen: jedes
+  // Zeichen sitzt auf dem Ring, keins auf einem anderen, keins oben mittig
+  // auf der Krone oder unten auf dem Schild; die Zeile darunter nennt einen
+  // und klappt zu allen auf; Lob und Niederlagenserie zugleich lassen den
+  // Ring zwischen beiden Farben wechseln, nur über die Deckkraft.
+  await page.setViewportSize({width:360, height:800});
+  const ringFaelle = JSON.parse(await K(`(async () => {
+    const warte = ms => new Promise(r => setTimeout(r, ms)), R = avatarRings(), out = [];
+    const faelle = [['potw','abyss'], ['potw','potd','tots'], ['champ','potw','potd','tots'], ['champ','blaze','potw','potd','tots']];
+    for(let f = 0; f < faelle.length; f++){
+      const id = players[f + 1].id;
+      R[id] = faelle[f].map(k => ({kind:k, prio:AV_RINGS[k].prio, tone:AV_RINGS[k].tone, ic:AV_RINGS[k].ic,
+        label:AV_RINGS[k].label, sub:'Probe'})).sort((a, b) => b.prio - a.prio);
+      closeSheet(true); showPlayer(id); await warte(1500);
+      const sh = document.querySelector('#sheet .pp-root'), w = sh.querySelector('.pp-av-wrap');
+      const rb = w.querySelector('.pp-av-ring').getBoundingClientRect();
+      const cx = rb.x + rb.width / 2, cy = rb.y + rb.height / 2;
+      const m = [...w.querySelectorAll('.pp-av-mark')].map(e => { const b = e.getBoundingClientRect();
+        const x = b.x + b.width / 2 - cx, y = b.y + b.height / 2 - cy;
+        return {w:Math.atan2(x, -y) * 180 / Math.PI, r:Math.hypot(x, y), d:b.width, x, y}; });
+      let ueber = 0;
+      m.forEach((a, i) => m.slice(i + 1).forEach(b => { if(Math.hypot(a.x - b.x, a.y - b.y) < (a.d + b.d) / 2) ueber++; }));
+      const zeilen = () => [...sh.querySelectorAll('.pp-ring-rest .pp-ring-chip')].filter(e => e.getClientRects().length).length;
+      const knopf = sh.querySelector('[data-ringe]'), vor = zeilen();
+      if(knopf) knopf.click();
+      await warte(500);
+      const nach = zeilen(), cs = getComputedStyle(w.querySelector('.pp-av-ring'), '::after');
+      // Zwei Animationen auf \`transform\` an einem Element rechnet Chromium
+      // jedes Bild im Hauptthread, auch wenn eine davon längst steht und nur
+      // ihren Endwert hält: Kommen und Atmen der Zeichen kosteten so 110
+      // statt 10 ms je Sekunde, solange das Profil offen war.
+      const proZiel = new Map();
+      document.getAnimations().filter(a => a.effect && a.effect.target && a.effect.target.closest
+          && a.effect.target.closest('#sheet .pp-root') && a.effect.getKeyframes().some(k => 'transform' in k))
+        .forEach(a => { const z = a.effect.target, ps = a.effect.pseudoElement || '';
+          if(!proZiel.has(z)) proZiel.set(z, {});
+          const e = proZiel.get(z); (e[ps] = e[ps] || []).push(a.animationName); });
+      const doppelt = [];
+      proZiel.forEach((e, z) => Object.entries(e).forEach(([ps, l]) => { if(l.length > 1) doppelt.push(z.className + ps + ':' + l.join('+')); }));
+      out.push({n:faelle[f].length, marken:m.length, ringR:rb.width / 2, doppelt,
+        aufRing:m.every(x => Math.abs(x.r - rb.width / 2) <= 6),
+        frei:m.every(x => Math.abs(x.w) >= 25 && 180 - Math.abs(x.w) >= 25), ueber,
+        plus:knopf ? knopf.querySelector('.pp-ring-mehr').textContent.trim() : '', vor, nach,
+        offen:knopf && knopf.getAttribute('aria-expanded'), zwei:w.classList.contains('ring-zwei'),
+        wechsel:cs.animationName });
+    }
+    closeSheet(true); invalidateCache();
+    return JSON.stringify(out);
+  })()`));
+  ok(ringFaelle.every(f => f.marken === f.n && f.aufRing && f.frei && f.ueber === 0),
+     'jedes Zeichen steht auf dem Ring, keins auf einem anderen, oben und unten mittig bleibt frei',
+     JSON.stringify(ringFaelle.map(f => ({n:f.n, marken:f.marken, aufRing:f.aufRing, frei:f.frei, ueber:f.ueber}))));
+  ok(ringFaelle.every(f => f.plus === '+' + (f.n - 1) && f.vor === 0 && f.nach === f.n - 1 && f.offen === 'true'),
+     'die Zeile unter dem Namen nennt einen Zustand und klappt zu allen auf',
+     JSON.stringify(ringFaelle.map(f => ({plus:f.plus, vor:f.vor, nach:f.nach, offen:f.offen}))));
+  ok(ringFaelle.every(f => !f.doppelt.length),
+     'kein Element im Profil trägt zwei Animationen auf transform zugleich',
+     JSON.stringify([...new Set(ringFaelle.flatMap(f => f.doppelt))]));
+  ok(ringFaelle[0].zwei && ringFaelle[0].wechsel === 'ppRingWechsel' && ringFaelle.slice(1).every(f => !f.zwei),
+     'Lob und Niederlagenserie zugleich: der Ring wechselt zwischen beiden Farben, sonst nicht',
+     JSON.stringify(ringFaelle.map(f => ({zwei:f.zwei, wechsel:f.wechsel}))));
+
+  // ── Der Beiname als Banner [§C39] ──────────────────────────────────
+  // Die laufende Chronik stand als gestrichelte Pille unter dem Namen und
+  // sah aus wie ein Knopf, der noch lädt. Jetzt ein Band mit gefalteten
+  // Enden, so hoch wie die Pille davor, ohne Strich, mit einem Glanz, der
+  // nur `transform` bewegt.
+  const banner = JSON.parse(await K(`(async () => {
+    const warte = ms => new Promise(r => setTimeout(r, ms)), out = [];
+    for(const p of players.filter(p => playerTitleBadge(p.id)).slice(0, 4)){
+      closeSheet(true); showPlayer(p.id); await warte(900);
+      const b = document.querySelector('#sheet .pp-banner'), pill = b && b.querySelector('.pp-title-pill');
+      if(!pill){ out.push({fehlt:p.name}); continue; }
+      const cs = getComputedStyle(pill), ende = w => getComputedStyle(b, w);
+      out.push({live:b.classList.contains('live'), strich:cs.borderTopStyle, hoehe:+pill.getBoundingClientRect().height.toFixed(1),
+        enden:[ende('::before'), ende('::after')].every(e => e.content !== 'none' && /polygon/.test(e.clipPath)),
+        // Die Falte: zum Band hin fällt jedes Ende in den Schatten.
+        falte:[ende('::before'), ende('::after')].every(e => (e.backgroundImage.match(/gradient/g) || []).length === 2
+          && e.backgroundImage.indexOf('rgba(0, 0, 0') >= 0),
+        // Deckend: unter der Tönung liegt ein Grund ohne Durchsicht, am Band
+        // und an beiden Enden — durch das Band sah man den Profilkopf.
+        deckend:[cs, ende('::before'), ende('::after')].every(e => { const c = e.backgroundColor;
+          return c !== 'transparent' && c.indexOf('rgba(') !== 0 && c.indexOf('/') < 0; }),
+        naht:getComputedStyle(pill, '::before').borderTopStyle === 'solid' && getComputedStyle(pill, '::before').borderBottomStyle === 'solid',
+        glanz:getComputedStyle(pill, '::after').animationName,
+        auf:[cs.animationName, ende('::before').animationName, ende('::after').animationName].join(','),
+        schein:/rgba/.test(cs.textShadow) && (cs.boxShadow.match(/rgba/g) || []).length >= 4,
+        striche:['::before', '::after'].every(w => getComputedStyle(b.parentNode.querySelector('.pp-title-sub'), w).content !== 'none')});
+    }
+    closeSheet(true);
+    return JSON.stringify(out);
+  })()`));
+  ok(banner.length > 0 && banner.some(x => x.live) && banner.every(x => !x.fehlt && x.strich !== 'dashed' && x.enden
+       && x.hoehe >= 24 && x.hoehe <= 32 && x.glanz === 'ppBannerGlanz'),
+     'der Beiname steht als Banner mit gefalteten Enden unter dem Namen, ohne Strich, so hoch wie die Pille davor, mit Glanz',
+     JSON.stringify(banner));
+  // Und es ist ein Titel, kein Schild: die Enden fallen zum Band hin in den
+  // Schatten, das Band trägt einen Lichthof und die Schrift einen Schein,
+  // der Monat steht zwischen zwei Strichen. Beim Öffnen entrollt es sich,
+  // danach schieben sich die Enden heraus — jede Bewegung an ihrem eigenen
+  // Element [§C43].
+  ok(banner.every(x => x.falte && x.schein && x.striche && x.auf === 'ppBannerAuf,ppBannerEndeL,ppBannerEndeR'),
+     'das Band hat gefaltete Enden im Schatten, Lichthof, Schein und Striche um den Monat und entrollt sich beim Öffnen',
+     JSON.stringify(banner.map(x => ({falte:x.falte, schein:x.schein, striche:x.striche, auf:x.auf}))));
+  ok(banner.every(x => x.deckend && x.naht),
+     'das Band ist deckend, an beiden Enden auch, und trägt innen eine durchgezogene Naht',
+     JSON.stringify(banner.map(x => ({deckend:x.deckend, naht:x.naht}))));
 
   await page.setViewportSize({width:430, height:932});
 

@@ -86,10 +86,14 @@ function rcpHeldHtml(o){
                  : rcpPaarHtml(ids, 64);
   const namen = ids.map(pname).join(' & ');
   const abzeichen = ein ? rankBadgeHtml(ids[0], 'sm') : '';
-  return `<div class="rcp-held${ein ? ' klick' : ''}"${
+  // `strahl`: hinter dem Wappen dreht sich der Strahlenkranz der
+  // Meisterbühne, leiser [§C27] — dasselbe Licht für denselben Gedanken,
+  // einen Sieger. Wappen, Name und Zahlen heben sich nacheinander herein.
+  return `<div class="rcp-held${ein ? ' klick' : ''}${o.strahl ? ' mit-strahl' : ''}"${
       ein ? ` data-detail="${esc(ids[0])}"` : ''}>
     <div class="rcp-held-label">${esc(o.marke)}</div>
-    <div class="rcp-held-av${ein && band ? ' band' : ''}">${av}</div>
+    <div class="rcp-held-av${ein && band ? ' band' : ''}">${
+      o.strahl ? '<span class="nf-ms-strahl leise" aria-hidden="true"></span>' : ''}${av}</div>
     <div class="rcp-held-n">${esc(namen)}</div>
     ${abzeichen ? `<div class="rcp-held-rang">${abzeichen}</div>` : ''}
     ${o.zahlen || ''}${glanzBahn()}
@@ -106,6 +110,9 @@ function rcpHeldHtml(o){
 // wird die Zeichenzahl und nicht die gerenderte Breite: hier steht kein
 // Fliesstext, sondern eine Handvoll fester Woerter aus dem Katalog.
 //
+// `d` ist der Unterschied zu einem Bezug (dem Vormonat): klein unter der
+// Zahl, ohne Farbe — mehr Partien sind kein Lob und weniger keine Warnung.
+//
 // Vier Zellen passen bei 360 px nicht in eine Reihe (je 78 px Mindestbreite,
 // „BESTMARKEN" braucht 75), und drei plus eine allein darunter las sich wie
 // eine Zahl, die nicht dazugehört. Vier stehen deshalb zwei mal zwei, wo die
@@ -116,7 +123,8 @@ function rcpZahlenHtml(zellen){
   return `<div class="rcp-z${n === 4 ? ' vier' : ''}">${zellen.filter(Boolean).map(z => {
     const t = String(z.v);
     return `<div class="rcp-z-s"><div class="rcp-z-v${z.ton ? ' ' + z.ton : ''}${
-      lang(t)} num">${esc(t)}</div><div class="rcp-z-l">${esc(z.l)}</div></div>`;
+      lang(t)} num">${esc(t)}</div><div class="rcp-z-l">${esc(z.l)}</div>${
+      z.d != null ? `<div class="rcp-z-d num">${esc(z.d)}</div>` : ''}</div>`;
   }).join('')}</div>`;
 }
 
@@ -146,6 +154,27 @@ function rcpKachelHtml(o){
       <div class="rcp-aw-val">${esc(o.wert || '')}</div>
     </div>
   </div>`;
+}
+
+// Die Auszeichnungen eines Zeitraums als Kacheln — aus `R`, der Rechnung
+// des Awards-Reiters für genau diesen Zeitraum [§C27]. Name, Zahl und
+// Einheit kommen aus AW_WERT, wie dort; bei Gleichstand steht der Erste mit
+// „+N". Wer keinen Halter hat, fällt weg. Metall vorn, die Schattenseiten in
+// Rot dahinter [§C25]. `attr(key)` sagt, wohin die Kachel führt; `ohne`
+// lässt eine weg, die dasselbe schon an anderer Stelle sagt.
+function rcpAwardKacheln(R, metall, rot, attr, ohne){
+  const out = [];
+  const kachel = (key, ton) => {
+    const top = awTop(key, R); if(!top.length) return;
+    if(ohne && ohne(key, top)) return;
+    const t = awText(key, top[0]);
+    out.push(rcpKachelHtml({ic:AW_IC[key], label:AWARD_META[key].title,
+      name:awIds(key, top[0]).map(pname).join(' & ') + (top.length > 1 ? ' +'+(top.length-1) : ''),
+      wert:t.e ? t.z+' '+t.e : t.z, ton, attr:attr(key)}));
+  };
+  metall.forEach(k => kachel(k, 'metall'));
+  rot.forEach(k => kachel(k, 'red'));
+  return out;
 }
 
 // Eine Ereigniszeile: ein Chronik-Eintrag oder ein Rekord. Links steht das
@@ -574,7 +603,9 @@ function rcpWocheHtml(ms, pid, start){
 // ── Die Elo eines Tages als Linie ────────────────────────────────────
 // Gerechnet wird nichts: die Deltas stehen an jeder Partie. Die Linie zeigt,
 // wie der Tag zustande kam — zwei Pleiten am Anfang und danach fünf Siege
-// sind dieselbe Bilanz wie umgekehrt, aber ein anderer Tag.
+// sind dieselbe Bilanz wie umgekehrt, aber ein anderer Tag. Sie zeichnet
+// sich von links, und jede Partie setzt ihren Punkt, wenn die Linie bei ihr
+// ankommt (`--i`); am Ende steht die Summe.
 function rcpEloBahnHtml(ms, pid){
   const e = ms.filter(m => [m.a1, m.a2, m.b1, m.b2].includes(pid)).sort((a, b) => mts(a) - mts(b));
   if(e.length < 2) return '';
@@ -590,6 +621,6 @@ function rcpEloBahnHtml(ms, pid){
     <line class="rcp-elo-0" x1="0" x2="${W}" y1="${null0}" y2="${null0}"/>
     <path class="rcp-elo-fl" d="${d}L${x(pts.length - 1)},${null0}L${x(0)},${null0}Z"/>
     <path class="rcp-elo-l" pathLength="1" d="${d}"/>
-    ${pts.map((v, i) => i ? `<circle class="${v >= pts[i - 1] ? 'w' : 'l'}" cx="${x(i)}" cy="${y(v)}" r="3"/>` : '').join('')}
+    ${pts.map((v, i) => i ? `<circle class="${v >= pts[i - 1] ? 'w' : 'l'}" style="--i:${(i / (pts.length - 1)).toFixed(2)}" cx="${x(i)}" cy="${y(v)}" r="3"/>` : '').join('')}
   </svg><div class="rcp-elo-z num"><span>Erste Partie</span><b class="${s >= 0 ? 'pos' : 'neg'}">${s >= 0 ? '+' : ''}${s} Elo</b></div></div>`;
 }

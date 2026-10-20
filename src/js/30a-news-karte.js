@@ -9,6 +9,7 @@ function _newsRubrik(sorte, s){
   const d = (s && s.dataRef) || {};
   if(_isBreaking(s)) return 'BREAKING';
   if(d.type === 'runde') return 'DIE RUNDE';
+  if(d.type === 'ehrung') return 'DIE EHRUNG';
   switch(sorte){
     case 'spiel':  return 'AM SPIELTAG';
     case 'tafel':  return 'EWIGE TAFEL';
@@ -232,6 +233,12 @@ function _newsSammelBand(teile, kopfTitel, vollstaendig){
 // die Insignium-Karte desselben Tages; hier stand ein Rückfall als
 // „↓ Zierkranz" im Chip ein zweites Mal [§C33].
 // Gelesen wird die gespeicherte Wirkung der Karte, wie im Blatt.
+// Die Karte nennt nur, was die Tafel bewegt: Rekorde und Monatschroniken.
+// Der ganze Zuwachs des Tages enthielt auch die Auszeichnungen, und die
+// nennt die Ehrung derselben Runde: dasselbe Prestige stand auf zwei
+// Karten, einmal allein und einmal in einer größeren Zahl versteckt. Jede
+// Karte zeigt ihre Quelle; das Blatt der Tafel nennt alle drei. Eine Karte aus der Zeit vor
+// der Aufschlüsselung (ohne `rek` und `mon`) zeigt den ganzen Zuwachs.
 function _newsPrestigeBand(s){
   const d = (s && s.dataRef) || {};
   const je = {};
@@ -240,8 +247,10 @@ function _newsPrestigeBand(s){
   else nimm(d.laufbahn);
   const pm = pmap();
   const alle = Object.keys(je).filter(pid => pm[pid]).map(pid => {
-    const vor = Math.round(Number(je[pid].vor) || 0), nach = Math.round(Number(je[pid].nach) || 0);
-    return {pid, d: nach - vor, n: pm[pid].name || ''};
+    const w = je[pid];
+    const vor = Math.round(Number(w.vor) || 0), nach = Math.round(Number(w.nach) || 0);
+    const tafel = isFinite(w.rek) && isFinite(w.mon) && w.rek != null && w.mon != null;
+    return {pid, d: tafel ? Math.round(w.rek + w.mon) : nach - vor, n: pm[pid].name || ''};
   }).filter(x => x.d);
   // Bei gleichem Betrag nach dem Namen: sonst entschied die Reihenfolge der
   // gespeicherten Wirkung, und dieselbe Karte ordnete auf zwei Geräten anders.
@@ -672,6 +681,7 @@ function _newsSorte(s){
   const t = d.type || '';
   if(t === 'woche') return 'woche';                       // Zeilen der Wertungen
   if(t === 'runde') return 'spiel';                       // die Runde der Vier [§11.6c]
+  if(t === 'ehrung') return 'badge';                      // die Ehrung nach einer Runde [§11.6f]
   if(t === 'insignium_stufe') return 'ins';               // die Leiter
   if(t === 'insignium_tag') return 'ins';                 // die Leiter des Tages
   if(t === 'ambient') return 'fakt';                      // leise, eine Zahl
@@ -1041,7 +1051,7 @@ function _newsTagSpannung(s){
 // beantwortet haben — zwei Listen fuer dieselbe Aussage waere eine zu viel.
 const NEWS_TAGKARTE_OHNE = new Set(['ambient', 'dry_spell', 'season_endgame',
   'quiet_week', 'season_start', 'potd', 'potw', 'woche', 'chronik_monat',
-  'season_recap', 'runde']);
+  'season_recap', 'runde', 'ehrung']);
 function _newsTagKarteWuerdig(st){
   if(NEWS_TAGKARTE_OHNE.has(((st && st.dataRef) || {}).type || '')) return false;
   if(_newsIstNegativ(st)) return false;
@@ -1211,11 +1221,12 @@ function _renderNewsFeed(){
       </div>
       ${filterBar}
     </div>
-    <div class="nf-wrap nf-liste" style="padding-top:0">${listHtml}</div>
+    <div class="nf-wrap nf-liste${FEED_SICHT ? ' sicht' : ''}" style="padding-top:0">${listHtml}</div>
   `);
   const sheetEl = document.getElementById('sheet');
   if(!schonOffen) _feedLicht(sheetEl);
   const liste = sheetEl.querySelector('.nf-liste');
+  _feedKartenSicht(liste);
   _newsFeedOffen = nachreichen.length && liste
     ? {liste, jobs:nachreichen, index:0, version:_cache.version} : null;
   if(_newsFeedOffen) _newsFeedPlan(_newsFeedOffen);
@@ -1277,6 +1288,7 @@ function _newsFeedRest(alles = true){
     ziel.insertAdjacentHTML('beforeend', job.erster
       ? job.kopf + `<div class="nf-feed" data-feed-tag="${esc(job.tag)}">${html}</div>` : html);
   } while(alles && o.index < o.jobs.length);
+  _feedKartenSicht(o.liste);
   if(o.index >= o.jobs.length) _newsFeedOffen = null;
 }
 function _newsFeedPlan(o){

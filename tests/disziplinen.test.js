@@ -435,14 +435,24 @@ console.log('\n=== 6. AVATAR-RING ===');
 const rings = K.eval('avatarRings()');
 const ringed = Object.keys(rings);
 console.log('  Spieler mit Ring:', ringed.length, '/', NAMES.length);
-ringed.forEach(id => {
-  const r = rings[id];
+ringed.forEach(id => rings[id].forEach(r => {
   console.log('  ' + nm(id).padEnd(9), r.kind.padEnd(6), r.label.padEnd(22), r.sub);
   ok(r.label && r.sub, nm(id)+' Ring hat Text');
   ok(!/undefined|NaN/.test(r.sub), nm(id)+' Ring-Text sauber', r.sub);
-});
+}));
 ok(ringed.length <= NAMES.length, 'Ringe nicht mehr als Spieler');
-ok(ringed.every(id => Object.keys(rings[id]).length), 'jeder Ring vollständig');
+ok(ringed.every(id => rings[id].length), 'jeder Ring vollständig');
+// Jeder Zustand gehört so vielen, wie ihn tragen können: eine Woche, ein
+// Tag und ein Meister haben einen, das Team zwei. Und jeder Spieler hat
+// höchstens eine Serie — eine gute und eine schlechte zugleich gibt es nicht.
+{
+  const je = {};
+  ringed.forEach(id => rings[id].forEach(r => { je[r.kind] = (je[r.kind] || 0) + 1; }));
+  ok(['champ','potw','potd'].every(k => (je[k] || 0) <= 1) && (je.tots || 0) <= 2,
+     'Meister, Woche und Tag tragen je einer, das Team zwei', JSON.stringify(je));
+  ok(ringed.every(id => rings[id].filter(r => /blaze|hot|abyss|cold/.test(r.kind)).length <= 1),
+     'höchstens eine Serie je Spieler');
+}
 
 console.log('\n=== 7. MARKEN NEBEN DEM NAMEN ===');
 let rowsMarked = 0, liveMarks = 0;
@@ -1178,6 +1188,32 @@ ok(K.eval(`(function(){
   const b = players.filter(p => !p.hidden).map(p => playerTitleBadge(p.id)).filter(Boolean);
   return b.length > 0 && b.every(x => x.name && x.titel);
 })()`), 'der Profilkopf zeigt den Beinamen und kennt den Katalognamen');
+// Im Band steht nur eine positive Monatschronik, die jüngste. Eine
+// Schattenseite stand dort rot, sobald sie die jüngste war, und verdrängte
+// den Beinamen eines früheren Monats: Jannik trug im August „Der
+// Durchlässige" (Das Scheunentor) statt „Der Zugeknöpfte" aus dem Juni.
+// Nachgerechnet aus der Tafel jedes Monats, von hinten.
+const _band = JSON.parse(K.eval(`JSON.stringify((function(){
+  const schatten = id => ((_chronikMonat(id) || {}).art === 'schatten');
+  const falsch = []; let zurueck = 0;
+  players.filter(p => !p.hidden).forEach(p => {
+    const b = playerTitleBadge(p.id), rows = seasonTitleHistory(p.id);
+    let soll = null;
+    for(let i = rows.length - 1; i >= 0 && !soll; i--){
+      const t = (seasonTitles(rows[i].sid).awarded || []).filter(a => a.pid === p.id && !schatten(a.titleId));
+      if(t.length) soll = {sid:rows[i].sid, ids:t.map(a => a.titleId)};
+    }
+    if(!soll){ if(b) falsch.push(p.name + ' trägt ' + b.name); return; }
+    if(!b || b.sid !== soll.sid || soll.ids.indexOf(b.titleId) < 0 || schatten(b.titleId))
+      falsch.push(p.name + ': ' + (b ? b.name + ' (' + b.sid + ')' : 'nichts') + ' statt ' + soll.sid);
+    // Ein jüngerer Monat mit nur Schattenseiten liegt dazwischen.
+    if(rows.some(r => r.sid > soll.sid && r.title)) zurueck++;
+  });
+  return {falsch, zurueck};
+})())`));
+ok(!_band.falsch.length && _band.zurueck > 0,
+   'im Band steht die jüngste positive Monatschronik, ein späterer Monat mit nur Schattenseiten verdrängt sie nicht',
+   _band.falsch.join(' | ') || _band.zurueck + ' Spieler mit einem Monat dazwischen');
 
 ok(K.eval(`SEASON_TITLES.every(t =>
      ['legendaer','selten','besonders'].indexOf(t.klasse) >= 0
@@ -3700,6 +3736,55 @@ const _zc = JSON.parse(K.eval(`JSON.stringify((function(){
   const fehlt = [...new Set(wort.filter(k => !_zc.keys.includes(k)))];
   ok(fehlt.length === 0, 'jedes wörtlich gesetzte Zeichen steht unter seinem heutigen Namen im Katalog', fehlt.join(', '));
 }
+
+// ══════════════════════════════════════════════════════════════════════
+console.log('\n═══ MONATSCHRONIKEN GEGEN DIE ERWARTUNG UND DEN VORMONAT ═══');
+// Die Monatschronik fragt nicht, wer der Beste ist [§C39]. Fünf Wertungen
+// fragten es trotzdem, mit festen Latten: zwei Tore Differenz je Partie,
+// gegen jeden Gegner im Plus, 85 % der ersten und 75 % der letzten Partien
+// eines Spieltags, jeder Spieltag nicht negativ. Gemessen gingen damit 42 %
+// aller Einträge der Fixture-Monate an die ersten drei der Monatstabelle —
+// bei zwölf Spielern wären es nach ihrem Anteil 25 %. Gegen die
+// Elo-Erwartung und den eigenen Rest gestellt, sind es 35 %.
+const _spitze = JSON.parse(K.eval(`JSON.stringify((function(){
+  let alle = 0, oben = 0;
+  ['2026-06','2026-07','2026-08'].forEach(sid => {
+    const drei = saisonRang(sid).slice(0, 3).map(e => e.id);
+    seasonTitles(sid).awarded.forEach(a => { alle++; if(drei.includes(a.pid)) oben++; });
+  });
+  return {alle, oben};
+})())`));
+console.log('  Einträge der ersten drei: ' + _spitze.oben + ' von ' + _spitze.alle);
+ok(_spitze.alle > 40 && _spitze.oben / _spitze.alle <= 0.38,
+   'höchstens 38 % der Monatseinträge gehören den ersten drei der Monatstabelle',
+   _spitze.oben + ' von ' + _spitze.alle);
+// „Der Sprung" und „Die Kletterpartie" stellen einen Spieler gegen seinen
+// Vormonat: Siegquote und Platz, beide Monate ab acht Partien. Nachgerechnet
+// aus den rohen Partien beider Monate und der Rangliste der Saison.
+const _vgl = JSON.parse(K.eval(`JSON.stringify((function(){
+  const quote = sid => { const z = {};
+    matchesInSeason(sid).forEach(m => [m.a1, m.a2, m.b1, m.b2].forEach(id => {
+      const w = (m.a1 === id || m.a2 === id) ? m.winner === 'A' : m.winner === 'B';
+      z[id] = z[id] || {g:0, w:0}; z[id].g++; if(w) z[id].w++; }));
+    return z; };
+  const out = {};
+  ['2026-07','2026-08'].forEach(sid => {
+    const vor = _prevSeasonId(sid), a = quote(sid), b = quote(vor);
+    const beide = Object.keys(a).filter(id => a[id].g >= 8 && b[id] && b[id].g >= 8);
+    const bester = (l, ab) => { const max = Math.max(...l.map(x => x.d));
+      return max >= ab ? l.filter(x => x.d === max).map(x => x.id).sort() : []; };
+    const platz = s => { const r = saisonRang(s).map(e => e.id); return id => r.indexOf(id) + 1; };
+    const pa = platz(sid), pb = platz(vor);
+    const C = _seasonTitleCtx(sid);
+    const ist = id => { const r = SEASON_TITLE_BY_ID[id].pick(C, new Set()); return r && r.halter ? r.halter.slice().sort() : []; };
+    out[sid] = {sprungSoll:bester(beide.map(id => ({id, d:a[id].w / a[id].g - b[id].w / b[id].g})), 0.25), sprungIst:ist('sprung'),
+      kletterSoll:bester(beide.filter(id => pa(id) && pb(id)).map(id => ({id, d:pb(id) - pa(id)})), 4), kletterIst:ist('kletterer')};
+  });
+  return out; })())`));
+ok(Object.values(_vgl).every(x => x.sprungSoll.join() === x.sprungIst.join() && x.kletterSoll.join() === x.kletterIst.join())
+   && Object.values(_vgl).some(x => x.sprungIst.length) && Object.values(_vgl).some(x => x.kletterIst.length),
+   'Der Sprung und Die Kletterpartie halten, wer sich gegenüber dem Vormonat am meisten gesteigert hat',
+   JSON.stringify(_vgl));
 
 console.log('\n' + (fails ? '✗ ' + fails + ' von ' + checks + ' CHECKS FEHLGESCHLAGEN' : '✓ ALLE ' + checks + ' CHECKS BESTANDEN'));
 process.exit(fails ? 1 : 0);

@@ -524,6 +524,34 @@ function showSeasonRecap(season, opts){
       }).join('')}</div>`;
   }
 
+  // ─── Gegenüber dem Vormonat [§C31] ─────────────────────────────────
+  // Ein Monat für sich sagt nicht, ob die Liga mehr gespielt hat oder wer
+  // vorangekommen ist. Die Eckdaten tragen deshalb den Unterschied zum
+  // Vormonat, und wer die meisten Plätze gutgemacht oder verloren hat, steht
+  // als Kachel unter der Rangliste — nur, wer in beiden Monaten darin steht.
+  const vorSid = _prevSeasonId(sid);
+  const vorMs = vorSid ? matchesInSeason(vorSid) : [];
+  const unterschied = (jetzt, vor) => vorMs.length
+    ? (jetzt > vor ? '+' : jetzt < vor ? '−' : '±') + Math.abs(jetzt - vor) : null;
+  let sprungHtml = '';
+  if(vorMs.length && rang.length){
+    const platzVor = {};
+    saisonRang(vorSid).forEach((e, i) => { platzVor[e.id] = i + 1; });
+    const bewegt = rang.map((e, i) => ({id:e.id, jetzt:i + 1, vor:platzVor[e.id]})).filter(x => x.vor);
+    const weite = x => x.vor - x.jetzt;
+    const auf = bewegt.filter(x => weite(x) > 0).sort((a, b) => weite(b) - weite(a) || a.jetzt - b.jetzt)[0];
+    const ab = bewegt.filter(x => weite(x) < 0).sort((a, b) => weite(a) - weite(b) || a.jetzt - b.jetzt)[0];
+    const k = [];
+    if(auf) k.push(rcpKachelHtml({ic:'stepsUp', label:'Größter Sprung', name:pname(auf.id),
+      wert:'Platz ' + auf.vor + ' → ' + auf.jetzt, ton:'metall', attr:`data-detail="${esc(auf.id)}"`}));
+    if(ab) k.push(rcpKachelHtml({ic:'trendDown', label:'Tiefster Fall', name:pname(ab.id),
+      wert:'Platz ' + ab.vor + ' → ' + ab.jetzt, ton:'red', attr:`data-detail="${esc(ab.id)}"`}));
+    if(k.length) sprungHtml = rcpAbschnitt('Gegenüber ' + seasonLabel(vorSid))
+      + `<div class="rcp-awards${k.length % 2 ? ' ungerade' : ''}">${k.join('')}</div>`;
+  }
+  const vorTore = vorMs.reduce((s, m) => s + (m.score_a || 0) + (m.score_b || 0), 0);
+  const vorSpieler = new Set(vorMs.flatMap(m => [m.a1, m.a2, m.b1, m.b2])).size;
+
   // ─── Wie es zum Titel kam [§C31] ───────────────────────────────────
   // Die Rangliste sagt, wer am Ende wo stand, nicht wie es dazu kam. Unter
   // ihr stehen deshalb das Titelrennen der ersten drei, die Tage an der
@@ -555,17 +583,24 @@ function showSeasonRecap(season, opts){
 
   // ─── Chronik der Saison ────────────────────────────────────────────
   // Als Zeilen, nicht als Plaketten: sechs Plaketten waren allein 547 px
-  // und sechs verschiedene Farbtöne. Jeder Eintrag steht da — es waren fünf
-  // und ein Knopf „Alle 17 Einträge"; die Plaketten der Tafel sind einen
-  // Tipp weit weg.
+  // und sechs verschiedene Farbtöne. Offen steht, was zählt — je Spieler
+  // der eine Eintrag des Monats [§C32] —, die übrigen klappen darunter auf.
+  // Alle offen waren siebzehn Zeilen, von denen zwölf nichts zählten.
   let chronikHtml='';
   try {
     const T = seasonTitles(sid);
     if(T.awarded.length){
-      chronikHtml = rcpAbschnitt('Chronik der Saison', T.awarded.length) + `<div class="rcp-liste">${
-        T.awarded.map(a=>rcpZeileHtml({pid:a.pid, px:38,
+      const zeile = a => rcpZeileHtml({pid:a.pid, px:38,
           ic:a.ic, ton:a.tone, name:a.name, sub:pname(a.pid),
-          attr:`data-tplayer="${esc(a.pid)}"`})).join('')}</div>`
+          attr:`data-tplayer="${esc(a.pid)}"`});
+      const gesehen = new Set(), zaehlt = [], weitere = [];
+      T.awarded.forEach(a => {
+        if(gesehen.has(a.pid)) weitere.push(a); else { gesehen.add(a.pid); zaehlt.push(a); }
+      });
+      chronikHtml = rcpAbschnitt('Chronik der Saison', zaehlt.length)
+        + `<div class="rcp-liste">${zaehlt.map(zeile).join('')}</div>`
+        + (weitere.length ? `<div class="rcp-liste chron-rest">${weitere.map(zeile).join('')}</div>`
+            + _chronMehrKnopf(weitere.length) : '')
         + `<div class="rcp-mehr klick" data-stafel="${esc(sid)}">Die ganze Tafel</div>`;
     }
   } catch(err){}
@@ -591,7 +626,6 @@ function showSeasonRecap(season, opts){
   awSeasonId = sid;
   const R = awardRankings('season');
   awSeasonId = vorherAw;
-  const kacheln = [];
   // Name, Zahl und Einheit aus AW_WERT [§5.3d], wie im Awards-Reiter — hier
   // stand eine fünfte Schreibweise („8 in Folge", „30% Chance"), und bei
   // Gleichstand nannte der Rückblick nur den ersten.
@@ -599,15 +633,10 @@ function showSeasonRecap(season, opts){
   // Kacheln golden umrandet sind, sagt Gold nichts mehr. Auf dieser Seite
   // trägt es das Podest, sonst nichts. Die Schattenseiten stehen hinten und
   // in Rot — Rot sagt hier die Richtung, nicht die Wichtigkeit.
-  const kachel = (key, ton) => {
-    const top = awTop(key, R); if(!top.length) return;
-    const t = awText(key, top[0]);
-    kacheln.push(rcpKachelHtml({ic:AW_IC[key], label:AWARD_META[key].title,
-      name:awIds(key, top[0]).map(pname).join(' & ') + (top.length > 1 ? ' +'+(top.length-1) : ''),
-      wert:t.e ? t.z+' '+t.e : t.z, ton, attr:`data-award="${key}"`}));
-  };
-  ['scorer','wall','streaks','perfect','weekKing','dayKing','grinder','upset'].forEach(k => kachel(k, 'metall'));
-  ['worstWr','pechvogel'].forEach(k => kachel(k, 'red'));
+  const kacheln = rcpAwardKacheln(R,
+    ['scorer','wall','streaks','perfect','clutch','plusMinus','underdog','biggest','weekKing','dayKing','grinder','upset'],
+    ['worstWr','lossStreaks','pechvogel'],
+    key => `data-award="${key}"`);
   // Eine ungerade Kachel nimmt die ganze Reihe, statt ein Loch zu lassen.
   const awardsHtml = kacheln.length
     ? rcpAbschnitt('Auszeichnungen', kacheln.length)
@@ -625,10 +654,18 @@ function showSeasonRecap(season, opts){
     // Die Eckdaten als Streifen statt als Textzeile: vier Zahlen in einer
     // Zeile Fließtext liest niemand, vier Felder schon.
     + rcpZahlenHtml([
-        {v:ms.length, l:'Matches'}, {v:tage, l:'Spieltage'},
-        {v:spielerImMonat.size, l:'Spieler'}, {v:tore, l:'Tore'}])
-    + rcpAbschnitt('Podest') + podestHtml + teamHtml
-    + listeHtml + rennenHtml + verlaufHtml + chronikHtml + rekordHtml + awardsHtml
+        {v:ms.length, l:'Matches', d:unterschied(ms.length, vorMs.length)},
+        {v:tage, l:'Spieltage', d:unterschied(tage, new Set(vorMs.map(mdayKey)).size)},
+        {v:spielerImMonat.size, l:'Spieler', d:unterschied(spielerImMonat.size, vorSpieler)},
+        {v:tore, l:'Tore', d:unterschied(tore, vorTore)}])
+    + (vorMs.length ? `<div class="rcp-z-bezug">Unterschied zum ${esc(seasonLabel(vorSid))}</div>` : '')
+    // Das Podest auf der Bühne der Meister-Story [§C27]: derselbe
+    // Strahlenkranz, und die drei steigen in der Reihenfolge auf, in der
+    // man sie ausruft — Platz 3, Platz 2, der Meister.
+    + rcpAbschnitt('Podest')
+    + (podestHtml ? `<div class="nf-meister rcp-buehne"><span class="nf-ms-strahl" aria-hidden="true"></span>${podestHtml}</div>` : '')
+    + teamHtml
+    + listeHtml + sprungHtml + rennenHtml + verlaufHtml + chronikHtml + rekordHtml + awardsHtml
     + `<button class="recap-done-btn" id="closeRecapBtn">Verstanden</button>`,
     {protectMs: opts.auto ? 2500 : 0});
 
@@ -659,6 +696,7 @@ function showSeasonRecap(season, opts){
   binden('[data-poshist]', el => sheetNav(()=>showPositionHistory(el.dataset.poshist)));
   binden('[data-stafel]', el => sheetNav(()=>showSeasonTable(el.dataset.stafel)));
   binden('[data-chron]', el => sheetNav(()=>showChronicle(el.dataset.chron)));
+  _chronMehrBinden(wurzel);
 }
 
 // Player-of-the-Day Recap: zeigt einmal pro Tag pro Gerät den Sieger des letzten Spieltags.

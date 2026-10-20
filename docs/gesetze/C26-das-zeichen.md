@@ -6,14 +6,15 @@
 - Feuer hinter dem Avatar heißt laufende Siegesserie in drei Stufen (3–4, 5–6, ab 7), Stop-Motion ohne JS-Timer, und nur dort. Neben dem Namen steht allein die Niederlagenserie (`lossStreakInline`, Tropfen bei 3, 5, 7).
 - Das Feuer trägt überall die Rangfarbe (`insAvWrap` setzt `--zn-c`), mit demselben hellen Kern wie im Profilkopf. Wie weit eine Stufe schlagen darf, sagt `spitze`, je Stufe überschreibbar.
 - Der Profilkopf rückt nur für brennende Stufen nach unten (`--feuerluft`). In den Formpunkten brennt die Serie als zwei Pseudo-Elemente (`.dot.glut`), nicht als SVG.
+- Am Ring im Profilkopf steht jeder Zustand, den jemand gerade trägt (`avRingeOf`): Titelverteidiger, Player of the Week der letzten abgeschlossenen Woche, Player of the Day des letzten abgeschlossenen Spieltags, Team of the Season, eine Serie — der wichtigste oben rechts, die übrigen auf festen Plätzen (`AV_RING_PLAETZE`), oben mittig und unten mittig nie. Die Zeile unter dem Namen nennt den wichtigsten und klappt zu allen auf. Lob und Niederlagenserie zugleich: der Ring wechselt langsam zwischen beiden Farben.
 
 ## Stellen
 
-`09c-zeichen.js` (`znWrap`, `znFeuer`), `35b-prestige.js` (`_insSterne`), `src/css/15-zeichen.css`.
+`09c-zeichen.js` (`znWrap`, `znFeuer`), `35b-prestige.js` (`_insSterne`), `35-chronik-ui.js` (`avatarRings`, `avRingeOf`, `_avRingMarkenHtml`, `_avRingChipHtml`), `18-profil.js`, `src/css/15-zeichen.css`, `src/css/11-chronik.css` (`.pp-av-mark`, `.pp-ringe`).
 
 ## Prüfung
 
-`tests/zeichen` misst Feuer, Sterne und die Füllung des Feuers in Zeile und Profil am Knoten.
+`tests/zeichen` misst Feuer, Sterne und die Füllung des Feuers in Zeile und Profil am Knoten; `tests/blatt` misst die Zeichen am Ring mit zwei bis fünf Zuständen und klappt die Zeile auf; `tests/rechnen` rechnet Woche und Tag des Rings.
 
 ## Herleitung
 
@@ -57,3 +58,20 @@ Dieselbe Serie brennt auch in den Formpunkten (`.dot.glut`, `formDotsHtml`)
 — dort aber als zwei Pseudo-Elemente, nicht als SVG: sechzig gezeichnete
 Feuer auf einer Liste sind auf dem Telefon eine Zumutung. Der Punkt bleibt
 grün, die Flamme sitzt darüber.
+
+**Am Ring steht jeder Zustand.** Der Ring trug nur den mit der höchsten
+Priorität: wer Player of the Week, Team of the Season und Player of the Day
+zugleich war, zeigte eins davon, und die anderen gab es im Profil nirgends.
+Jetzt sitzt jedes Zeichen auf dem Ring. Der wichtigste steht oben rechts, wo
+vorher der einzige stand; oben mittig sitzt die Krone der hohen Stufen und
+unten der Schild mit dem Platz, dort steht keins. Die Zeile darunter blieb
+eine Zeile — mehrere von Anfang an schoben die Elo-Werte aus dem ersten
+Bild —, sie klappt zu allen auf. Trägt jemand ein Lob und eine
+Niederlagenserie, verschwiege Gold allein die Serie und Rot allein das Lob:
+der Ring wechselt deshalb langsam zwischen beiden.
+
+Player of the Week und Player of the Day kommen aus dem letzten
+abgeschlossenen Zeitraum mit Partien, nicht aus dem letzten mit einem
+Sieger, und die Wochen werden nach der Zeit verglichen: als Text steht
+„2027-W10" vor „2027-W9", und der Sieger der neunten Woche hätte das Zeichen
+bis in die dreizehnte getragen.

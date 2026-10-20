@@ -2096,13 +2096,13 @@ const _kopfN = JSON.parse(K.eval(`JSON.stringify((function(){
       if(fehlt.length) falsch.push(s.title + ' → Bühne ohne ' + fehlt.map(x => pmap()[x].name).join(', '));
       return;
     }
-    // Gezaehlt wird am Markup: wie viele Gesichter stehen da, und steht der
-    // Chip mit dem Rest daneben?
+    // Gezaehlt wird am Markup: das Blatt zeigt jedes Wappen und keinen
+    // Chip mit einem Rest — „ein Blatt zeigt alles". Die Erwartung stand auf
+    // drei Wappen und „+2", galt aber nur, solange keine Story mit vier
+    // Genannten diesen Kopf erreichte; die Ehrung tut es.
     const nAv = (kopf.match(/class="rav zn"/g) || []).length;
     const mehr = (kopf.match(/nd-held-mehr">\\+(\\d+)</) || [])[1];
-    const zeig = Math.min(3, ids.length);
-    const rest = ids.length - zeig;
-    if(nAv !== zeig || (rest > 0 ? Number(mehr) !== rest : mehr != null))
+    if(nAv !== ids.length || mehr != null)
       falsch.push(s.title + ' → ' + nAv + ' von ' + ids.length + (mehr ? ' +' + mehr : ''));
   });
   return {n, falsch:falsch.slice(0, 4)};
@@ -6617,6 +6617,114 @@ const _vsatz = JSON.parse(K.eval(`JSON.stringify((function(){
 ok(_vsatz.n > 0 && _vsatz.fehlt.length === 0,
    'die Rekordkarte nennt im Satz, wer an diesem Spieltag Prestige verliert',
    _vsatz.fehlt.slice(0, 2).join(' · ') || _vsatz.n + ' Verluste');
+
+// Die Tafel-Karte nennt nur, was Rekorde und Monatschroniken bewegen. Der
+// ganze Zuwachs des Tages enthielt die Auszeichnungen mit, und die nennt die
+// Ehrung derselben Runde: dasselbe Prestige stand auf zwei Karten. Eine
+// gespeicherte Karte ohne Aufschlüsselung zeigt weiter den ganzen Zuwachs.
+const _vquelle = JSON.parse(K.eval(`JSON.stringify((function(){
+  const a = players[0].id, b = players[1].id, lb = {};
+  lb[a] = {vor:1000, nach:1262, rek:240, mon:10};
+  lb[b] = {vor:500, nach:512, rek:0, mon:0};
+  const txt = h => h.replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ').trim();
+  const h = _newsPrestigeBand({dataRef:{type:'rekord_geholt', laufbahn:lb}});
+  const alt = _newsPrestigeBand({dataRef:{type:'rekord_geholt', laufbahn:{[a]:{vor:1000, nach:1262}}}});
+  return {h:txt(h), alt:txt(alt), b:pmap()[b].name};
+})())`));
+ok(/\+250 P/.test(_vquelle.h) && !/\+262/.test(_vquelle.h) && _vquelle.h.indexOf(_vquelle.b) < 0 && /\+262 P/.test(_vquelle.alt),
+   'die Tafel-Karte zählt nur Rekorde und Chroniken, die Auszeichnungen stehen in der Ehrung',
+   _vquelle.h + ' | alt: ' + _vquelle.alt);
+
+console.log('=== DIE EHRUNG ===');
+// Jede Ehrung der Fixtures, nicht nur die im Fenster des Feeds: die mit
+// legendären Auszeichnungen und die mit neun Geehrten liegen davor.
+const _eh = JSON.parse(K.eval(`JSON.stringify((function(){
+  const alle = [], ids = new Set();
+  for(let t = Date.parse('2026-05-10'); t < Date.parse('2026-09-01'); t += NEWS_FENSTER_TAGE * 864e5 * 0.9)
+    _newsEhrungStories(t).forEach(s => { if(!ids.has(s.id)){ ids.add(s.id); alle.push(s); } });
+  const ORD = {legendary:0, rare:1, common:2};
+  const falsch = [];
+  let legendaer = 0, umbruch = 0, kacheln = 0, zeilen = 0;
+  alle.forEach(s => {
+    const d = s.dataRef, sp = d.spieler;
+    const h = _newsEhrungHtml(s, false, '');
+    // Keine Bilanz-Chips der Tafel: dieselbe Form las sich als dieselbe Nachricht.
+    if(/nf-verlust|nf-vl/.test(h)) falsch.push(s.id + ' trägt das Band der Tafel');
+    // Eine Säule je Geehrtem, darauf die Zeichenkachel der App [§C27] im Ton
+    // seiner seltensten Auszeichnung, die höchste beim höchsten Prestige,
+    // gestapelt aus jeder seltenen und legendären und einem Stück für alle
+    // gewöhnlichen. Keine eigene Zeichnung: ein Entwurf hängte Medaillen an
+    // Bänder, die es sonst nirgends in der App gibt.
+    if(/eh-m |eh-band/.test(h)) falsch.push(s.id + ' trägt Medaille oder Band');
+    const saeulen = h.split('<span class="eh-s" ').slice(1);
+    if(saeulen.length !== sp.length) falsch.push(s.id + ': ' + saeulen.length + ' Säulen für ' + sp.length);
+    const hoehe = saeulen.map(o => +((o.match(/eh-saeule" style="height:(\\d+)px/) || [])[1] || 0));
+    sp.forEach((x, i) => {
+      const o = saeulen[i] || '';
+      const m = o.match(/class="zk k (\\w+)"/);
+      if(!m || m[1] !== _ehrungTon(x.posten[0].klasse)) falsch.push(s.id + ' ' + pname(x.pid) + ': Kachel ' + (m && m[1]));
+      if(x.posten.some(q => ORD[q.klasse] < ORD[x.posten[0].klasse])) falsch.push(s.id + ' ' + pname(x.pid) + ': nicht die seltenste vorn');
+      const innen = (o.match(/eh-saeule" style="height:\\d+px">([\\s\\S]*?)<\\/span>/) || ['', ''])[1];
+      const stuecke = (innen.match(/<i class=/g) || []).length;
+      const soll = x.posten.filter(q => q.klasse !== 'common').length + (x.posten.some(q => q.klasse === 'common') ? 1 : 0);
+      if(stuecke !== soll) falsch.push(s.id + ' ' + pname(x.pid) + ': ' + stuecke + ' Stücke statt ' + soll);
+      if(x.posten[0].klasse === 'legendary' && o.indexOf('glanz-bahn') < 0) falsch.push(s.id + ' ' + pname(x.pid) + ': Gold ohne Lauflicht');
+      // Unter der Säule das Wappen, Insignium und Gesicht, nicht das
+      // nackte Gesicht von 30 px.
+      if(!/<span class="eh-s-av"[^>]*><span class="rav zn/.test(o)) falsch.push(s.id + ' ' + pname(x.pid) + ': ohne Wappen');
+    });
+    if(hoehe[0] !== Math.max(...hoehe)) falsch.push(s.id + ': Säulen ' + hoehe.join(','));
+    // Höchstens fünf je Reihe, die Reihen gleich lang.
+    const reihen = h.split('eh-umbruch').length, je = Math.ceil(sp.length / reihen);
+    if(reihen !== Math.ceil(sp.length / 5)) falsch.push(s.id + ': ' + reihen + ' Reihen für ' + sp.length);
+    if(reihen > 1){ umbruch++; if(sp.length - je * (reihen - 1) < je - 1) falsch.push(s.id + ': ungleiche Reihen'); }
+    // Der Schimmer des Seltenen nur mit einer legendären Auszeichnung.
+    const leg = sp.some(x => x.posten.some(q => q.klasse === 'legendary'));
+    if(leg !== /nf-glanz/.test(h.slice(0, 200))) falsch.push(s.id + ': Schimmer ' + !leg);
+    // Im Fuß jede Klasse, die vorkommt, und zusammen alle Auszeichnungen.
+    const fuss = (h.match(/<span class="eh-k \\w+"><i><\\/i><b class="num">\\d+<\\/b>/g) || []).map(x => +x.replace(/<[^>]+>/g, ''));
+    if(fuss.reduce((a, b) => a + b, 0) !== d.zahl) falsch.push(s.id + ': Fuß ' + fuss.join('+') + ' statt ' + d.zahl);
+    // Der Satz nennt die wertvollste Auszeichnung, nie die Summe — die steht im Fuß.
+    const top = sp.flatMap(x => x.posten.map(q => ({x, q}))).sort((a, b) => ORD[a.q.klasse] - ORD[b.q.klasse] || b.q.p - a.q.p)[0];
+    if(s.desc.indexOf('„' + top.q.name + '“') < 0 || /Zusammen|Prestige/.test(s.desc)) falsch.push(s.id + ': ' + s.desc);
+    if(top.q.klasse === 'legendary') legendaer++;
+    // Das Blatt: jede Auszeichnung genau einmal, die gewöhnlichen als Kachel,
+    // die übrigen als Zeile, jede mit dem Rest ihres vollen Werts als Strich.
+    const b = _ndEhrungBlatt(s);
+    // Je Spieler sein Kasten, darin jede Zeile und jede Kachel für sich.
+    const kasten = b.mitte.split('<div class="eh-p" ').slice(1);
+    sp.forEach((x, i) => {
+      const k = kasten[i] || '';
+      if(k.indexOf('<b>' + esc(pname(x.pid)) + '</b>') < 0) falsch.push(s.id + ': Kasten ' + i + ' nicht ' + pname(x.pid));
+      x.posten.forEach(q => {
+        const kl = q.klasse === 'common' ? 'eh-g-t' : 'eh-q';
+        const n = k.split('<div class="').filter(t => t.indexOf(kl + ' ' + q.klasse + '">') === 0
+          && t.indexOf('<b>' + esc(q.name) + '</b>') >= 0).length;
+        if(n !== 1) falsch.push(s.id + ' ' + pname(x.pid) + ': „' + q.name + '“ ' + n + '-mal als ' + kl);
+        if(q.klasse === 'common') kacheln++; else zeilen++;
+      });
+    });
+    const striche = (b.mitte.match(/class="eh-q-m"/g) || []).length;
+    const posten = sp.reduce((n, x) => n + x.posten.length, 0);
+    if(striche !== posten) falsch.push(s.id + ': ' + striche + ' Striche für ' + posten);
+    if(sp.some(x => b.kopf.indexOf('<b class="eh-s-n">' + esc(pname(x.pid)) + '</b>') < 0)) falsch.push(s.id + ': Bühne ohne Namen');
+  });
+  // Der Strich ist der Rest des vollen Werts: das vierte Mal einer seltenen
+  // Auszeichnung bringt gedämpft, das erste voll.
+  const r = q => Math.round(q.p / (auszeichnungsTeilwert(q.id, 1) * q.mal) * 100);
+  const probe = {id:'wall_badge', klasse:'rare', mal:1, bis:4, p:auszeichnungsTeilwert('wall_badge', 4)};
+  const erst = {id:'wall_badge', klasse:'rare', mal:1, bis:1, p:auszeichnungsTeilwert('wall_badge', 1)};
+  const blattP = _ndEhrungBlatt({dataRef:{spieler:[{pid:players[0].id, summe:probe.p,
+    posten:[Object.assign({name:'Mauer', ic:'shield'}, probe)]}]}}).mitte;
+  const breite = +((blattP.match(/eh-q-m"[^>]*><i style="width:([\\d.]+)%/) || [])[1]);
+  return {n:alle.length, falsch, legendaer, umbruch, kacheln, zeilen, breite, soll:r(probe), voll:r(erst)};
+})())`));
+ok(_eh.n >= 40 && _eh.legendaer > 0 && _eh.umbruch > 0 && _eh.kacheln > 0 && _eh.zeilen > 0 && !_eh.falsch.length,
+   'die Ehrung trägt je Geehrtem eine Säule auf seinem Wappen mit der Zeichenkachel der seltensten Auszeichnung, höchstens fünf je Reihe, im Fuß jede Klasse, im Satz die wertvollste, im Blatt jede genau einmal in ihrem Kasten',
+   _eh.falsch.slice(0, 4).join(' | ') || _eh.n + ' Ehrungen, ' + _eh.legendaer + ' legendär, ' + _eh.umbruch + ' auf zwei Reihen, ' + _eh.zeilen + ' Zeilen, ' + _eh.kacheln + ' Kacheln');
+ok(Math.round(_eh.breite) === _eh.soll && _eh.soll < 100 && _eh.voll === 100,
+   'der Strich unter einer Auszeichnung zeigt, wie viel vom vollen Wert sie beim wievielten Mal bringt',
+   _eh.breite + ' % statt ' + _eh.soll + ' %');
 
 console.log('=== DAS AUFGEHEN DER TAFEL IST EINE NACHRICHT ===');
 // Ein Monat unter CHRONIK_MIN_TAGE Spieltagen hat keine Chronik, und

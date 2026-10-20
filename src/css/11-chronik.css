@@ -57,15 +57,65 @@
   .tun .w b{color:var(--ink2);font-weight:700}
 
   /* Titel-Pille im Profilkopf */
-  .pp-title-row{display:flex;flex-direction:column;align-items:center;gap:5px;margin-top:10px}
-  .pp-title-pill{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;
-    padding:5px 14px;border-radius:20px;color:var(--tt,var(--gold));
-    background:linear-gradient(180deg,rgba(var(--ttr,247,207,74),.16),rgba(var(--ttr,247,207,74),.05));
-    border:1px solid rgba(var(--ttr,247,207,74),.42)}
-  .pp-title-pill.live{border-style:dashed}
+  .pp-title-row{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:10px}
+  /* Der Beiname als Banner: ein Band mit Kanten oben und unten, dahinter
+     an jeder Seite ein Ende mit Schwalbenschwanz, eine Stufe tiefer und
+     gefaltet — zum Band hin fällt das Ende in den Schatten, als liefe es
+     hinter ihm herum. Das Band trägt einen Lichthof in seinem Gold, die
+     Schrift einen Schein. Die Größe ist die der Pille davor.
+     Beim Öffnen des Profils entrollt es sich aus der Mitte, danach schieben
+     sich die Enden heraus; hin und wieder zieht ein Glanz darüber. Nur
+     `transform` und Deckkraft, jede Bewegung an ihrem eigenen Element
+     [§C43]. Vorher stand das Band einfach da, flach, mit Enden in derselben
+     Farbe wie das Band selbst: es las sich als Schild, nicht als Titel.
+     Band und Enden sind deckend: unter der Tönung liegt ein Grund aus
+     dunklem Gold (`color-mix`). Die Tönung allein war durchscheinend, und
+     durch das Band sah man den Kopf des Profils mit seiner Rangfarbe — es
+     las sich als Glas, nicht als Stoff. Die Enden sind dunkler als das Band:
+     sie sind seine Rückseite. Innen an Ober- und Unterkante läuft eine Naht
+     aus einer feinen, durchgezogenen Linie; gestrichelt sah die Kante schon
+     einmal aus wie ein Knopf, der lädt. */
+  .pp-banner{position:relative;display:inline-flex;isolation:isolate;padding:0 11px}
+  .pp-banner::before,.pp-banner::after{content:"";position:absolute;top:4px;bottom:-4px;width:24px;z-index:-1;
+    box-shadow:inset 0 1px 0 rgba(var(--ttr,247,207,74),.45),inset 0 -1px 0 rgba(var(--ttr,247,207,74),.2)}
+  .pp-banner::before{left:0;clip-path:polygon(0 0,100% 0,100% 100%,0 100%,7px 50%);
+    background:linear-gradient(90deg,transparent 46%,rgba(0,0,0,.55)),
+      linear-gradient(180deg,rgba(var(--ttr,247,207,74),.30),rgba(var(--ttr,247,207,74),.10)),
+      color-mix(in srgb,rgb(var(--ttr,247,207,74)) 9%,#080907)}
+  .pp-banner::after{right:0;clip-path:polygon(0 0,100% 0,calc(100% - 7px) 50%,100% 100%,0 100%);
+    background:linear-gradient(270deg,transparent 46%,rgba(0,0,0,.55)),
+      linear-gradient(180deg,rgba(var(--ttr,247,207,74),.30),rgba(var(--ttr,247,207,74),.10)),
+      color-mix(in srgb,rgb(var(--ttr,247,207,74)) 9%,#080907)}
+  .pp-title-pill{position:relative;overflow:hidden;display:inline-flex;align-items:center;gap:7px;
+    font-size:12.5px;font-weight:700;padding:5px 14px;border-radius:2px;color:var(--tt,var(--gold));
+    text-shadow:0 0 12px rgba(var(--ttr,247,207,74),.45);
+    background:linear-gradient(180deg,rgba(var(--ttr,247,207,74),.32),rgba(var(--ttr,247,207,74),.10) 52%,rgba(var(--ttr,247,207,74),.22)),
+      color-mix(in srgb,rgb(var(--ttr,247,207,74)) 12%,#0b0c09);
+    box-shadow:inset 0 1px 0 rgba(var(--ttr,247,207,74),.85),inset 0 -1px 0 rgba(var(--ttr,247,207,74),.55),
+      0 6px 14px -6px rgba(0,0,0,.85),0 0 22px -6px rgba(var(--ttr,247,207,74),.6)}
+  .pp-title-pill::before{content:"";position:absolute;left:5px;right:5px;top:2px;bottom:2px;pointer-events:none;
+    border-top:1px solid rgba(var(--ttr,247,207,74),.28);border-bottom:1px solid rgba(var(--ttr,247,207,74),.2)}
+  .pp-title-pill::after{content:"";position:absolute;top:0;bottom:0;left:0;width:45%;pointer-events:none;
+    background:linear-gradient(100deg,transparent,rgba(255,244,210,.32),transparent);
+    transform:translateX(-120%);animation:ppBannerGlanz 7.5s ease-in-out 1.4s infinite}
+  @keyframes ppBannerGlanz{0%{transform:translateX(-120%)}22%,100%{transform:translateX(330%)}}
+  @keyframes ppBannerAuf{from{transform:scaleX(.15);opacity:0}}
+  @keyframes ppBannerEndeL{from{transform:translateX(12px);opacity:0}}
+  @keyframes ppBannerEndeR{from{transform:translateX(-12px);opacity:0}}
+  @media (prefers-reduced-motion:no-preference){
+    .pp-title-pill{animation:ppBannerAuf .6s cubic-bezier(.2,.9,.3,1) .2s both}
+    .pp-banner::before{animation:ppBannerEndeL .45s cubic-bezier(.2,.8,.3,1) .6s both}
+    .pp-banner::after{animation:ppBannerEndeR .45s cubic-bezier(.2,.8,.3,1) .6s both}
+  }
+  @media (prefers-reduced-motion:reduce){.pp-title-pill::after{animation:none;opacity:0}}
   .pp-title-pill .i{display:flex}
   .pp-title-pill .i svg{width:14px;height:14px}
-  .pp-title-sub{font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  /* Unter dem Band der Monat, gerahmt von zwei Strichen im Gold des Titels. */
+  .pp-title-sub{display:flex;align-items:center;gap:7px;font-size:9.5px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--muted)}
+  .pp-title-sub::before,.pp-title-sub::after{content:"";width:16px;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(247,207,74,.55))}
+  .pp-title-sub::after{background:linear-gradient(270deg,transparent,rgba(247,207,74,.55))}
 
   /* Chronik-Streifen */
   .chron-strip{display:flex;gap:7px;overflow-x:auto;padding:2px 0 6px;
@@ -369,15 +419,59 @@
   /* Profilkopf: Ring-Emblem am Avatar + Erklär-Chip unter dem Namen */
   .pp-av-wrap.has-ring .pp-av-ring{box-shadow:0 0 0 3px var(--bg),
     0 0 0 5.5px var(--tt),0 0 30px rgba(var(--ttr),.5),0 12px 28px -8px rgba(0,0,0,.6)}
-  .pp-av-mark{position:absolute;right:-3px;top:0;width:28px;height:28px;
-    border-radius:50%;display:grid;place-items:center;z-index:3;
+  /* Lob und Niederlagenserie zugleich: die zweite Farbe liegt als eigener
+     Ring darüber und blendet langsam ein und aus — nur Deckkraft, kein
+     Umfärben, das der Browser bei jedem Bild neu malen müsste. */
+  .pp-av-wrap.ring-zwei .pp-av-ring::after{content:"";position:absolute;inset:0;
+    border-radius:50%;pointer-events:none;opacity:0;
+    box-shadow:0 0 0 3px var(--bg),0 0 0 5.5px var(--tt2),0 0 30px rgba(var(--ttr2),.5);
+    animation:ppRingWechsel 8s ease-in-out 1.2s infinite}
+  @keyframes ppRingWechsel{0%,30%,100%{opacity:0}45%,85%{opacity:1}}
+  /* Die Zeichen sitzen auf dem Ring, ihre Plätze setzt `AV_RING_PLAETZE`.
+     Sie kommen nacheinander, dann läuft hin und wieder ein Licht reihum —
+     einmal um den Ring, danach Ruhe. Ein Puls an jedem Zeichen zugleich
+     hätte den Kopf flackern lassen. Der Schein ist ein Lichthof im
+     Hintergrund, kein Filter [§C43].
+     Kommen und Atmen liegen auf zwei Elementen: zwei Animationen auf
+     `transform` an demselben Element rechnet Chromium nicht mehr auf der
+     Grafikkarte, sondern jedes Bild im Hauptthread — gemessen kostete das
+     offene Profil so 110 statt 10 ms je Sekunde. */
+  .pp-av-mark{position:absolute;width:28px;height:28px;margin:-14px 0 0 -14px;z-index:3;
+    animation:ppMarkKommt .42s cubic-bezier(.2,.9,.3,1.25) calc(.45s + var(--i,0) * .09s) both}
+  .pp-av-mark > .d{position:absolute;inset:0;border-radius:50%;display:grid;place-items:center;
     background:var(--bg);color:var(--tt);
-    box-shadow:0 0 0 2px rgba(var(--ttr),.55),0 0 14px rgba(var(--ttr),.5)}
+    box-shadow:0 0 0 2px rgba(var(--ttr),.55),0 0 14px rgba(var(--ttr),.5);
+    animation:ppMarkAtem 7s ease-in-out calc(1.6s + var(--i,0) * .32s) infinite}
+  .pp-av-mark > .d::before{content:"";position:absolute;inset:-8px;border-radius:50%;z-index:-1;
+    background:radial-gradient(circle,rgba(var(--ttr),.55),transparent 68%);opacity:0;
+    animation:ppMarkHof 7s ease-in-out calc(1.6s + var(--i,0) * .32s) infinite}
+  @keyframes ppMarkKommt{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:none}}
+  @keyframes ppMarkAtem{0%,18%,100%{transform:none}8%{transform:scale(1.12)}}
+  @keyframes ppMarkHof{0%,18%,100%{opacity:0}8%{opacity:1}}
   .pp-av-mark svg{width:15px;height:15px;fill:none;stroke:currentColor;
     stroke-linecap:round;stroke-linejoin:round}
+  @media (prefers-reduced-motion:reduce){
+    .pp-av-mark,.pp-av-mark > .d,.pp-av-mark > .d::before,.pp-ring-rest .pp-ring-chip{animation:none!important}
+    .pp-av-wrap.ring-zwei .pp-av-ring::after{animation:none}}
   .pp-ring-chip{display:inline-flex;align-items:center;gap:7px;margin:8px auto 0;
     padding:5px 11px 5px 8px;border-radius:999px;
     background:rgba(var(--ttr),.10);border:1px solid rgba(var(--ttr),.28)}
+  /* Mehrere Zustände: die erste Zeile bleibt, wie sie war, und klappt auf.
+     Die übrigen stehen in derselben Form darunter und kommen nacheinander. */
+  .pp-ringe{display:flex;flex-direction:column;align-items:center}
+  button.pp-ring-chip{font:inherit;color:inherit;cursor:pointer;
+    -webkit-tap-highlight-color:transparent;transition:transform .15s}
+  button.pp-ring-chip:active{transform:scale(.97)}
+  .pp-ring-mehr{display:inline-flex;align-items:center;gap:2px;margin-left:2px;
+    padding-left:7px;border-left:1px solid rgba(var(--ttr),.28);
+    font-size:10px;font-weight:700;color:var(--ink2)}
+  .pp-ring-mehr svg{width:12px;height:12px;transition:transform .18s ease}
+  .pp-ringe.open .pp-ring-mehr svg{transform:rotate(180deg)}
+  .pp-ring-rest{display:none;flex-direction:column;align-items:center}
+  .pp-ringe.open .pp-ring-rest{display:flex}
+  .pp-ring-rest .pp-ring-chip{margin-top:6px;
+    animation:ppRingZeile .32s cubic-bezier(.2,.8,.2,1) calc(var(--i,0) * .06s) both}
+  @keyframes ppRingZeile{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
   .pp-ring-chip .i{display:grid;place-items:center;color:var(--tt)}
   .pp-ring-chip .i svg{width:14px;height:14px;fill:none;stroke:currentColor;
     stroke-linecap:round;stroke-linejoin:round}

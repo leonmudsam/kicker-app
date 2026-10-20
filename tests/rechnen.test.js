@@ -197,5 +197,94 @@ ok(rekMittag.makellos===0&&rekMittag.abschluss===1&&rekMittag.schluss===1&&rekMi
   'Um 14:26 zählt nur der Vortag in Rekorden und Chroniken, die nach dem ganzen Tag fragen: '+JSON.stringify(rekMittag));
 ok(rekAbend.makellos===1&&rekAbend.abschluss===2&&rekAbend.schluss===2&&rekAbend.besterTag===8&&rekAbend.tage===2,
   'Um 23:59 zählt der Tag überall mit: '+JSON.stringify(rekAbend));
+// Die Ehrung [§11.6f]: zwei Stunden nach der letzten Partie, wenn keine mehr
+// kam, mit allem seit der Karte davor. 13:02 und 15:30 sind zwei Runden
+// (Karten um 15:02 und um 18:50, die zweite bis zur Partie um 16:50), 13:44
+// und 15:40 eine (Karte um 17:40). Und was die Karten zusammen an Prestige
+// nennen, ist das Prestige der Auszeichnungen in der Laufbahn.
+const ehrung=(zeiten,uhr)=>{
+  setNow(Date.UTC(2026,9,19,uhr[0],uhr[1]));
+  return K(`(() => {
+    players=Array.from({length:4},(_,i)=>({id:'t'+i,name:'Tag '+i,hidden:false,elo:0,atk:.5}));
+    matches=${JSON.stringify(zeiten)}.map((z,i)=>({...window.__partie,id:'e'+i,a1:'t0',a2:'t1',b1:'t2',b2:'t3',
+      created_at:new Date(Date.UTC(2026,9,19,z[0],z[1])).toISOString(),winner:'A',
+      score_a:10,score_b:i%2?9:4,deltas:{t0:20,t1:20,t2:-20,t3:-20}}));
+    seasons=[];cfg={...window.__cfgBasis};invalidateCache();
+    const l=_buildStories().filter(s=>(s.dataRef||{}).type==='ehrung').sort((a,b)=>a.when-b.when);
+    const bMap=getBadgeEarnedCache();
+    const jePartie=mid=>(bMap[mid]||[]).filter(e=>auszeichnungsPunkte(e.badge.id,1)>0).length;
+    const summe=pid=>l.reduce((n,s)=>n+((s.dataRef.spieler.find(x=>x.pid===pid)||{}).summe||0),0);
+    return {karten:l.map(s=>s.id+'@'+new Date(s.when).toISOString().slice(11,16)+'#'+s.dataRef.zahl),
+      partien:matches.map(m=>jePartie(m.id)),
+      prestige:['t0','t2'].map(pid=>[Math.round(summe(pid)),Math.round((prestigeOf(pid).teile||{}).auszeichnung||0)])};
+  })()`);
+};
+const zweiRunden=ehrung([[13,2],[15,30],[16,50]],[19,0]);
+const nochOffen=ehrung([[13,2],[15,30],[16,50]],[18,0]);
+const eineRunde=ehrung([[13,44],[15,40]],[17,40]);
+ok(zweiRunden.karten.length===2&&zweiRunden.karten[0].startsWith('ehrung_e0@15:02#')&&zweiRunden.karten[1].startsWith('ehrung_e2@18:50#')
+  &&+zweiRunden.karten[0].split('#')[1]===zweiRunden.partien[0]&&+zweiRunden.karten[1].split('#')[1]===zweiRunden.partien[1]+zweiRunden.partien[2],
+  'Die Ehrung kommt zwei Stunden nach der letzten Partie einer Runde und zählt alles seit der Karte davor: '+JSON.stringify(zweiRunden));
+ok(nochOffen.karten.length===1&&nochOffen.karten[0].startsWith('ehrung_e0@15:02'),
+  'Solange die zweite Runde keine zwei Stunden still ist, gibt es nur die erste Karte: '+JSON.stringify(nochOffen.karten));
+ok(eineRunde.karten.length===1&&eineRunde.karten[0].startsWith('ehrung_e1@17:40#')&&+eineRunde.karten[0].split('#')[1]===eineRunde.partien[0]+eineRunde.partien[1],
+  'Partien mit weniger als zwei Stunden Abstand ergeben eine Karte mit allem seit der ersten: '+JSON.stringify(eineRunde));
+ok(zweiRunden.prestige.every(([a,b])=>a>0&&Math.abs(a-b)<=1),
+  'Was die Ehrungen an Prestige nennen, ist das Prestige der Auszeichnungen in der Laufbahn: '+JSON.stringify(zweiRunden.prestige));
+// Tages- und Wochenkönig zählen den Anteil der eigenen Spieltage, nicht
+// die Zahl der Titel [§C28]: wer an 4 von 6 Spieltagen der Beste war, steht
+// vor dem, der es an 5 von 12 war.
+setNow(Date.UTC(2026,9,19,12,0));
+const koenige=K(`(() => {
+  const ids=['a','b','q1','q2','q3','q4','o1','o2'];
+  players=ids.map(id=>({id,name:'Spieler '+id,hidden:false,elo:0,atk:.5}));
+  const ms=[]; let n=0;
+  const tag=(pid,datum,sieg)=>{
+    const runden=sieg?4:1;
+    for(let i=0;i<runden;i++){
+      const mit='q'+(i+1), w=sieg;
+      ms.push({...window.__partie,id:'k'+(n++),a1:pid,a2:mit,b1:'o1',b2:'o2',
+        created_at:new Date(Date.UTC(2026,8,datum,10,i*20)).toISOString(),winner:w?'A':'B',
+        score_a:w?10:4,score_b:w?4:10,deltas:{[pid]:w?20:-20,[mit]:w?20:-20,o1:w?-20:20,o2:w?-20:20}});
+    }
+  };
+  [1,2,3,4,5,6].forEach((d,i)=>tag('a',d,i<4));
+  [7,8,9,10,11,12,13,14,15,16,17,18].forEach((d,i)=>tag('b',d,i<5));
+  matches=ms;seasons=[];cfg={...window.__cfgBasis};invalidateCache();
+  const l=awardRankings('all').dayKingList.filter(x=>x.id==='a'||x.id==='b');
+  return l.map(x=>x.id+':'+x.v+'/'+x.n);
+})()`);
+ok(koenige.join(' ')==='a:4/6 b:5/12',
+  'Der Tageskönig ist, wer den größten Anteil seiner Spieltage gewann, nicht wer die meisten Titel sammelte: '+JSON.stringify(koenige));
+// Der Ring am Avatar trägt jeden Zustand, nicht nur den ersten [§13.7]:
+// Player of the Week der letzten abgeschlossenen Woche, Player of the Day
+// des letzten abgeschlossenen Spieltags. Die Wochen werden nach der Zeit
+// verglichen — als Text steht „2027-W10" vor „2027-W9", und der Sieger der
+// neunten Woche trug das Zeichen weiter.
+setNow(Date.UTC(2027,2,17,12,0));
+const ringe=K(`(() => {
+  const ids=['a','b','q1','q2','q3','q4','o1','o2'];
+  players=ids.map(id=>({id,name:'Spieler '+id,hidden:false,elo:0,atk:.5}));
+  const ms=[]; let n=0;
+  const siege=(pid,tag,stunde,zahl)=>{
+    for(let i=0;i<zahl;i++){
+      const mit='q'+(1+i%4);
+      ms.push({...window.__partie,id:'r'+(n++),a1:pid,a2:mit,b1:'o1',b2:'o2',
+        created_at:new Date(Date.UTC(2027,2,tag,stunde,i*15)).toISOString(),winner:'A',
+        score_a:10,score_b:4,deltas:{[pid]:20,[mit]:20,o1:-20,o2:-20}});
+    }
+  };
+  siege('a',2,10,5);   // Woche 9
+  siege('b',9,10,5);   // Woche 10, die letzte abgeschlossene
+  siege('b',16,10,3);  // Spieltag 16.03., zu
+  siege('a',17,9,4);   // heute, noch offen
+  matches=ms;seasons=[];cfg={...window.__cfgBasis};invalidateCache();
+  const zeig=id=>avRingeOf(id).filter(r=>r.kind==='potw'||r.kind==='potd').map(r=>r.kind+':'+r.sub).join(',');
+  const l=avRingeOf('b');
+  return {a:zeig('a'),b:zeig('b'),erster:(avRingOf('b')||{}).kind,alle:l.map(r=>r.kind).join(),
+    geordnet:l.every((r,i)=>!i||l[i-1].prio>=r.prio)};
+})()`);
+ok(ringe.b==='potw:Woche 10,potd:Spieltag 16.03.'&&ringe.a===''&&ringe.geordnet&&ringe.erster===ringe.alle.split(',')[0],
+  'Der Ring trägt Woche und Tag zugleich, aus der letzten abgeschlossenen Woche und dem letzten abgeschlossenen Spieltag: '+JSON.stringify(ringe));
 console.log(fails?`${fails} von ${checks} CHECKS FEHLGESCHLAGEN`:`ALLE ${checks} CHECKS BESTANDEN`);
 process.exitCode=fails?1:0;
