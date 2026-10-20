@@ -3996,15 +3996,45 @@
 
   .pp-av-wrap.has-ring .pp-av-ring{box-shadow:0 0 0 3px var(--bg),
     0 0 0 5.5px var(--tt),0 0 30px rgba(var(--ttr),.5),0 12px 28px -8px rgba(0,0,0,.6)}
-  .pp-av-mark{position:absolute;right:-3px;top:0;width:28px;height:28px;
+  .pp-av-wrap.ring-zwei .pp-av-ring::after{content:"";position:absolute;inset:0;
+    border-radius:50%;pointer-events:none;opacity:0;
+    box-shadow:0 0 0 3px var(--bg),0 0 0 5.5px var(--tt2),0 0 30px rgba(var(--ttr2),.5);
+    animation:ppRingWechsel 8s ease-in-out 1.2s infinite}
+  @keyframes ppRingWechsel{0%,30%,100%{opacity:0}45%,85%{opacity:1}}
+  .pp-av-mark{position:absolute;width:28px;height:28px;margin:-14px 0 0 -14px;
     border-radius:50%;display:grid;place-items:center;z-index:3;
     background:var(--bg);color:var(--tt);
-    box-shadow:0 0 0 2px rgba(var(--ttr),.55),0 0 14px rgba(var(--ttr),.5)}
+    box-shadow:0 0 0 2px rgba(var(--ttr),.55),0 0 14px rgba(var(--ttr),.5);
+    animation:ppMarkKommt .42s cubic-bezier(.2,.9,.3,1.25) calc(.45s + var(--i,0) * .09s) both,
+      ppMarkAtem 7s ease-in-out calc(1.6s + var(--i,0) * .32s) infinite}
+  .pp-av-mark::before{content:"";position:absolute;inset:-8px;border-radius:50%;z-index:-1;
+    background:radial-gradient(circle,rgba(var(--ttr),.55),transparent 68%);opacity:0;
+    animation:ppMarkHof 7s ease-in-out calc(1.6s + var(--i,0) * .32s) infinite}
+  @keyframes ppMarkKommt{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:none}}
+  @keyframes ppMarkAtem{0%,18%,100%{transform:none}8%{transform:scale(1.12)}}
+  @keyframes ppMarkHof{0%,18%,100%{opacity:0}8%{opacity:1}}
   .pp-av-mark svg{width:15px;height:15px;fill:none;stroke:currentColor;
     stroke-linecap:round;stroke-linejoin:round}
+  @media (prefers-reduced-motion:reduce){
+    .pp-av-mark,.pp-av-mark::before,.pp-ring-rest .pp-ring-chip{animation:none!important}
+    .pp-av-wrap.ring-zwei .pp-av-ring::after{animation:none}}
   .pp-ring-chip{display:inline-flex;align-items:center;gap:7px;margin:8px auto 0;
     padding:5px 11px 5px 8px;border-radius:999px;
     background:rgba(var(--ttr),.10);border:1px solid rgba(var(--ttr),.28)}
+  .pp-ringe{display:flex;flex-direction:column;align-items:center}
+  button.pp-ring-chip{font:inherit;color:inherit;cursor:pointer;
+    -webkit-tap-highlight-color:transparent;transition:transform .15s}
+  button.pp-ring-chip:active{transform:scale(.97)}
+  .pp-ring-mehr{display:inline-flex;align-items:center;gap:2px;margin-left:2px;
+    padding-left:7px;border-left:1px solid rgba(var(--ttr),.28);
+    font-size:10px;font-weight:700;color:var(--ink2)}
+  .pp-ring-mehr svg{width:12px;height:12px;transition:transform .18s ease}
+  .pp-ringe.open .pp-ring-mehr svg{transform:rotate(180deg)}
+  .pp-ring-rest{display:none;flex-direction:column;align-items:center}
+  .pp-ringe.open .pp-ring-rest{display:flex}
+  .pp-ring-rest .pp-ring-chip{margin-top:6px;
+    animation:ppRingZeile .32s cubic-bezier(.2,.8,.2,1) calc(var(--i,0) * .06s) both}
+  @keyframes ppRingZeile{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
   .pp-ring-chip .i{display:grid;place-items:center;color:var(--tt)}
   .pp-ring-chip .i svg{width:14px;height:14px;fill:none;stroke:currentColor;
     stroke-linecap:round;stroke-linejoin:round}
@@ -5971,7 +6001,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.20.fc2636f0';
+const BUILD_VERSION='2026.10.20.67c50281';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -15687,11 +15717,13 @@ const rankProgHtml = rInfo ? `
         return _wz ? `<div class="pp-fa-wz">${_wz}</div>` : '';
       })()}
       ${(()=>{
-        const _rRoh = avRingOf(id);
-        const _r = (_rRoh && (_rRoh.kind === 'blaze' || _rRoh.kind === 'hot')) ? null : _rRoh;
+        const _ringe = avRingeOf(id).filter(r => r.kind !== 'blaze' && r.kind !== 'hot');
+        const _plus = _ringe.find(r => r.tone !== 'red'), _minus = _ringe.find(r => r.tone === 'red');
+        const _r = _plus || _minus;
         const _rt = _r ? titleTone(_r.tone) : null;
+        const _rt2 = (_plus && _minus) ? titleTone(_minus.tone) : null;
         const _fu = znFeuer(id);
-        return `<div class="pp-av-wrap${_r ? ' has-ring' : ''}${_fu ? ' zn-rang zn-l'+_fu : ''}"${_rt ? ` style="--tt:${_rt.c};--ttr:${_rt.rgb}"` : ''}
+        return `<div class="pp-av-wrap${_r ? ' has-ring' : ''}${_rt2 ? ' ring-zwei' : ''}${_fu ? ' zn-rang zn-l'+_fu : ''}"${_rt ? ` style="--tt:${_rt.c};--ttr:${_rt.rgb}${_rt2 ? `;--tt2:${_rt2.c};--ttr2:${_rt2.rgb}` : ''}"` : ''}
           data-prestige="${esc(id)}" title="${esc(prestigeOf(id).insignie.name + ' · ' + prestigeOf(id).punkte + ' Prestige')}">
         ${_fu ? ZN_FEUER_GROSS[_fu] : ''}
         ${auraLebendHtml(meisterTitel(id))}
@@ -15699,7 +15731,7 @@ const rankProgHtml = rInfo ? `
         <div class="pp-av-ring">
           <div class="${avClass}" ${avBg}>${avInner}</div>
         </div>
-        ${_r ? `<span class="pp-av-mark">${svgI(_r.ic)}</span>` : ''}
+        ${_avRingMarkenHtml(id)}
       </div>`;
       })()}
       <h1 class="pp-name">${esc(p.name)}${pleitenZeichen?` ${pleitenZeichen}`:''}</h1>
@@ -16042,6 +16074,7 @@ const rankProgHtml = rInfo ? `
   const tt=document.getElementById('ppTrTeam');
   if(tt) tt.onclick=()=>{ sheetNav(()=>showPlayerSeasons(id)); };
   const profil = document.getElementById('sheet');
+  _avRingBinden(profil);
   profil.querySelectorAll('.pp-trophies .pp-tr').forEach(el=>{
     el.onclick=()=>{ sheetNav(()=>showPlayerSeasons(id)); };
   });
@@ -32641,18 +32674,20 @@ const AV_RINGS = {
   potw:  {prio:80, tone:'gold', ic:'weekKing',    label:'Player of the Week'},
   hot:   {prio:74, tone:'acid', ic:'flame',       label:'Siegesserie'},
   cold:  {prio:72, tone:'red',  ic:'drop',        label:'Niederlagenserie'},
+  potd:  {prio:68, tone:'gold', ic:'dayKing',     label:'Player of the Day'},
   tots:  {prio:64, tone:'gold', ic:'handshake',         label:'Team of the Season'},
 };
 function avatarRings(){
-  const key = matches.length + '_' + _cache.version;
+  const jetzt = new Date(), heute = jetzt.toISOString().slice(0, 10);
+  const key = matches.length + '_' + _cache.version + '_' + _wochenKey(jetzt)
+    + '_' + heute + (_tagZu(heute) ? 'z' : '');
   if(_cache._avRingKey === key) return _cache._avRing;
   const out = {};
   const put = (pid, kind, sub) => {
     if(!pid) return;
     const def = AV_RINGS[kind];
     if(!def) return;
-    if(out[pid] && out[pid].prio >= def.prio) return;
-    out[pid] = {kind, prio:def.prio, tone:def.tone, ic:def.ic, label:def.label, sub};
+    (out[pid] = out[pid] || []).push({kind, prio:def.prio, tone:def.tone, ic:def.ic, label:def.label, sub});
   };
   try {
     const gSim = getGlobalSim();
@@ -32669,10 +32704,17 @@ function avatarRings(){
     if(team) team.ids.forEach(id => put(id, 'tots',
       'mit ' + pname(team.ids.find(x => x !== id) || id)));
 
-    const wk = _periodWinnerMap(matches, 'week');
-    const wkKeys = Object.keys(wk).sort();
-    if(wkKeys.length) put(wk[wkKeys[wkKeys.length-1]], 'potw',
-      'Woche ' + wkKeys[wkKeys.length-1].split('-W')[1]);
+    const laufendeWoche = _wochenKey(Date.now()), tagZu = {};
+    let wkKey = null, tgKey = null, wkT = -Infinity, tgT = -Infinity;
+    matches.forEach(m => {
+      const t = mts(m), w = _wochenKey(m.created_at), d = mdayKey(m);
+      if(tagZu[d] === undefined) tagZu[d] = _tagZu(d);
+      if(w !== laufendeWoche && t > wkT){ wkT = t; wkKey = w; }
+      if(tagZu[d] && t > tgT){ tgT = t; tgKey = d; }
+    });
+    const wk = _periodWinnerMap(matches, 'week'), tg = _periodWinnerMap(matches, 'day');
+    if(wkKey && wk[wkKey]) put(wk[wkKey], 'potw', 'Woche ' + wkKey.split('-W')[1]);
+    if(tgKey && tg[tgKey]) put(tg[tgKey], 'potd', 'Spieltag ' + datumFmt(new Date(tgKey + 'T12:00:00Z'), 'tm'));
 
     Object.keys(pm).forEach(id => {
       if(!ligaAktiv(pm[id])) return;
@@ -32683,13 +32725,17 @@ function avatarRings(){
       else if(cs <= -5) put(id, 'cold',  (-cs) + ' Niederlagen in Folge');
     });
   } catch(e){  }
+  Object.values(out).forEach(l => l.sort((a, b) => b.prio - a.prio));
   _cache._avRingKey = key;
   _cache._avRing = out;
   return out;
 }
+function avRingeOf(pid){
+  if(imRuhestand(pid)) return [];
+  try { return avatarRings()[pid] || []; } catch(e){ return []; }
+}
 function avRingOf(pid){
-  if(imRuhestand(pid)) return null;
-  try { return avatarRings()[pid] || null; } catch(e){ return null; }
+  return avRingeOf(pid)[0] || null;
 }
 
 function _avRingAttrs(pid){
@@ -32703,15 +32749,47 @@ function _avRingAttrs(pid){
   };
 }
 
+function _avRingTon(r){
+  return (r.kind === 'blaze' || r.kind === 'hot')
+    ? {c:'var(--ak)', rgb:'var(--ak-rgb)'} : titleTone(r.tone);
+}
+
+const AV_RING_PLAETZE = [45, -45, 100, -100, 145];
+function _avRingMarkenHtml(pid){
+  return avRingeOf(pid).slice(0, AV_RING_PLAETZE.length).map((r, i) => {
+    const t = _avRingTon(r), w = AV_RING_PLAETZE[i] * Math.PI / 180;
+    const x = Math.round(Math.sin(w) * 58), y = Math.round(-Math.cos(w) * 58);
+    return `<span class="pp-av-mark" style="--tt:${t.c};--ttr:${t.rgb};--i:${i};`
+      + `left:calc(50% + ${x}px);top:calc(50% + ${y}px)" title="${esc(r.label + ' · ' + r.sub)}">${svgI(r.ic)}</span>`;
+  }).join('');
+}
+
 function _avRingChipHtml(pid){
-  const r = avRingOf(pid);
-  if(!r) return '';
-  const streak = (r.kind === 'blaze' || r.kind === 'hot');
-  const t = streak ? {c:'var(--ak)', rgb:'var(--ak-rgb)'} : titleTone(r.tone);
-  return `<div class="pp-ring-chip" style="--tt:${t.c};--ttr:${t.rgb}">
+  const l = avRingeOf(pid);
+  if(!l.length) return '';
+  const chip = (r, tag, attr, stil) => {
+    const t = _avRingTon(r);
+    return `<${tag} class="pp-ring-chip"${attr} style="--tt:${t.c};--ttr:${t.rgb}${stil}">
     <span class="i">${svgI(r.ic)}</span>
-    <b>${esc(r.label)}</b><span class="s num">${esc(r.sub)}</span>
+    <b>${esc(r.label)}</b><span class="s num">${esc(r.sub)}</span>`;
+  };
+  if(l.length === 1) return chip(l[0], 'div', '', '') + '\n  </div>';
+  return `<div class="pp-ringe">
+    ${chip(l[0], 'button', ' type="button" data-ringe aria-expanded="false"', '')}
+    <span class="pp-ring-mehr num">+${l.length - 1}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></span>
+    </button>
+    <div class="pp-ring-rest">${l.slice(1).map((r, i) => chip(r, 'div', '', ';--i:' + i) + '</div>').join('')}</div>
   </div>`;
+}
+function _avRingBinden(root){
+  const b = root.querySelector('[data-ringe]');
+  if(!b) return;
+  b.onclick = (e) => {
+    e.stopPropagation();
+    const auf = b.parentNode.classList.toggle('open');
+    b.setAttribute('aria-expanded', String(auf));
+  };
 }
 
 const IZ_RI = 220, IZ_RA = 266, IZ_RM = (IZ_RI + IZ_RA) / 2;

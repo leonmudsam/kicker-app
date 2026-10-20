@@ -99,8 +99,8 @@ ist, an den niemand denkt.
 Kalenderabhängige Schlüssel tragen zusätzlich ihre echte Zeitgrenze:
 `matchesInPeriod` den Tages-/Wochenbeginn, `getCachedAwardRankings` die
 aktuelle Woche beziehungsweise den Tag, `allPastSeasons` den laufenden
-Monat und `getSeasonPositionHistory` den heutigen Tag, solange die Saison
-läuft. Die kleine Recap-Kurve trägt auch `ph.lastDay`. Ohne neue Partie darf
+Monat, `getSeasonPositionHistory` den heutigen Tag, solange die Saison
+läuft, und `avatarRings` die Woche, den Tag und ob er zu ist. Die kleine Recap-Kurve trägt auch `ph.lastDay`. Ohne neue Partie darf
 der Cache keinen alten Tag oder noch laufenden Vormonat behaupten.
 `tests/leistung` prüft das mit unveränderter Datenversion.
 

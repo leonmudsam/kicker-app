@@ -5487,6 +5487,56 @@ return JSON.stringify(funde,null,1);
   ok(plRuhig.imBlatt === 0 && plRuhig.randDa === 'none' && plRuhig.titel.every(n => n === 'none'),
      'bei Bewegungsruhe steht im Profil alles still', JSON.stringify({laufen:plRuhig.imBlatt, rand:plRuhig.randDa}));
 
+  // ── Der Ring trägt jedes Zeichen [§13.7] ────────────────────────────
+  // Am Avatar stand nur der Zustand mit der höchsten Priorität: wer Player
+  // of the Week, Team of the Season und Player of the Day zugleich war,
+  // zeigte eins davon. Gemessen mit zwei bis fünf gesetzten Zuständen: jedes
+  // Zeichen sitzt auf dem Ring, keins auf einem anderen, keins oben mittig
+  // auf der Krone oder unten auf dem Schild; die Zeile darunter nennt einen
+  // und klappt zu allen auf; Lob und Niederlagenserie zugleich lassen den
+  // Ring zwischen beiden Farben wechseln, nur über die Deckkraft.
+  await page.setViewportSize({width:360, height:800});
+  const ringFaelle = JSON.parse(await K(`(async () => {
+    const warte = ms => new Promise(r => setTimeout(r, ms)), R = avatarRings(), out = [];
+    const faelle = [['potw','abyss'], ['potw','potd','tots'], ['champ','potw','potd','tots'], ['champ','blaze','potw','potd','tots']];
+    for(let f = 0; f < faelle.length; f++){
+      const id = players[f + 1].id;
+      R[id] = faelle[f].map(k => ({kind:k, prio:AV_RINGS[k].prio, tone:AV_RINGS[k].tone, ic:AV_RINGS[k].ic,
+        label:AV_RINGS[k].label, sub:'Probe'})).sort((a, b) => b.prio - a.prio);
+      closeSheet(true); showPlayer(id); await warte(1500);
+      const sh = document.querySelector('#sheet .pp-root'), w = sh.querySelector('.pp-av-wrap');
+      const rb = w.querySelector('.pp-av-ring').getBoundingClientRect();
+      const cx = rb.x + rb.width / 2, cy = rb.y + rb.height / 2;
+      const m = [...w.querySelectorAll('.pp-av-mark')].map(e => { const b = e.getBoundingClientRect();
+        const x = b.x + b.width / 2 - cx, y = b.y + b.height / 2 - cy;
+        return {w:Math.atan2(x, -y) * 180 / Math.PI, r:Math.hypot(x, y), d:b.width, x, y}; });
+      let ueber = 0;
+      m.forEach((a, i) => m.slice(i + 1).forEach(b => { if(Math.hypot(a.x - b.x, a.y - b.y) < (a.d + b.d) / 2) ueber++; }));
+      const zeilen = () => [...sh.querySelectorAll('.pp-ring-rest .pp-ring-chip')].filter(e => e.getClientRects().length).length;
+      const knopf = sh.querySelector('[data-ringe]'), vor = zeilen();
+      if(knopf) knopf.click();
+      await warte(500);
+      const nach = zeilen(), cs = getComputedStyle(w.querySelector('.pp-av-ring'), '::after');
+      out.push({n:faelle[f].length, marken:m.length, ringR:rb.width / 2,
+        aufRing:m.every(x => Math.abs(x.r - rb.width / 2) <= 6),
+        frei:m.every(x => Math.abs(x.w) >= 25 && 180 - Math.abs(x.w) >= 25), ueber,
+        plus:knopf ? knopf.querySelector('.pp-ring-mehr').textContent.trim() : '', vor, nach,
+        offen:knopf && knopf.getAttribute('aria-expanded'), zwei:w.classList.contains('ring-zwei'),
+        wechsel:cs.animationName });
+    }
+    closeSheet(true); invalidateCache();
+    return JSON.stringify(out);
+  })()`));
+  ok(ringFaelle.every(f => f.marken === f.n && f.aufRing && f.frei && f.ueber === 0),
+     'jedes Zeichen steht auf dem Ring, keins auf einem anderen, oben und unten mittig bleibt frei',
+     JSON.stringify(ringFaelle.map(f => ({n:f.n, marken:f.marken, aufRing:f.aufRing, frei:f.frei, ueber:f.ueber}))));
+  ok(ringFaelle.every(f => f.plus === '+' + (f.n - 1) && f.vor === 0 && f.nach === f.n - 1 && f.offen === 'true'),
+     'die Zeile unter dem Namen nennt einen Zustand und klappt zu allen auf',
+     JSON.stringify(ringFaelle.map(f => ({plus:f.plus, vor:f.vor, nach:f.nach, offen:f.offen}))));
+  ok(ringFaelle[0].zwei && ringFaelle[0].wechsel === 'ppRingWechsel' && ringFaelle.slice(1).every(f => !f.zwei),
+     'Lob und Niederlagenserie zugleich: der Ring wechselt zwischen beiden Farben, sonst nicht',
+     JSON.stringify(ringFaelle.map(f => ({zwei:f.zwei, wechsel:f.wechsel}))));
+
   await page.setViewportSize({width:430, height:932});
 
   console.log('\n' + '═'.repeat(60));

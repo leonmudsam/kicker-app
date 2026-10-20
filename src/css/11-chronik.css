@@ -369,15 +369,55 @@
   /* Profilkopf: Ring-Emblem am Avatar + Erklär-Chip unter dem Namen */
   .pp-av-wrap.has-ring .pp-av-ring{box-shadow:0 0 0 3px var(--bg),
     0 0 0 5.5px var(--tt),0 0 30px rgba(var(--ttr),.5),0 12px 28px -8px rgba(0,0,0,.6)}
-  .pp-av-mark{position:absolute;right:-3px;top:0;width:28px;height:28px;
+  /* Lob und Niederlagenserie zugleich: die zweite Farbe liegt als eigener
+     Ring darüber und blendet langsam ein und aus — nur Deckkraft, kein
+     Umfärben, das der Browser bei jedem Bild neu malen müsste. */
+  .pp-av-wrap.ring-zwei .pp-av-ring::after{content:"";position:absolute;inset:0;
+    border-radius:50%;pointer-events:none;opacity:0;
+    box-shadow:0 0 0 3px var(--bg),0 0 0 5.5px var(--tt2),0 0 30px rgba(var(--ttr2),.5);
+    animation:ppRingWechsel 8s ease-in-out 1.2s infinite}
+  @keyframes ppRingWechsel{0%,30%,100%{opacity:0}45%,85%{opacity:1}}
+  /* Die Zeichen sitzen auf dem Ring, ihre Plätze setzt `AV_RING_PLAETZE`.
+     Sie kommen nacheinander, dann läuft hin und wieder ein Licht reihum —
+     einmal um den Ring, danach Ruhe. Ein Puls an jedem Zeichen zugleich
+     hätte den Kopf flackern lassen. Der Schein ist ein Lichthof im
+     Hintergrund, kein Filter [§C43]. */
+  .pp-av-mark{position:absolute;width:28px;height:28px;margin:-14px 0 0 -14px;
     border-radius:50%;display:grid;place-items:center;z-index:3;
     background:var(--bg);color:var(--tt);
-    box-shadow:0 0 0 2px rgba(var(--ttr),.55),0 0 14px rgba(var(--ttr),.5)}
+    box-shadow:0 0 0 2px rgba(var(--ttr),.55),0 0 14px rgba(var(--ttr),.5);
+    animation:ppMarkKommt .42s cubic-bezier(.2,.9,.3,1.25) calc(.45s + var(--i,0) * .09s) both,
+      ppMarkAtem 7s ease-in-out calc(1.6s + var(--i,0) * .32s) infinite}
+  .pp-av-mark::before{content:"";position:absolute;inset:-8px;border-radius:50%;z-index:-1;
+    background:radial-gradient(circle,rgba(var(--ttr),.55),transparent 68%);opacity:0;
+    animation:ppMarkHof 7s ease-in-out calc(1.6s + var(--i,0) * .32s) infinite}
+  @keyframes ppMarkKommt{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:none}}
+  @keyframes ppMarkAtem{0%,18%,100%{transform:none}8%{transform:scale(1.12)}}
+  @keyframes ppMarkHof{0%,18%,100%{opacity:0}8%{opacity:1}}
   .pp-av-mark svg{width:15px;height:15px;fill:none;stroke:currentColor;
     stroke-linecap:round;stroke-linejoin:round}
+  @media (prefers-reduced-motion:reduce){
+    .pp-av-mark,.pp-av-mark::before,.pp-ring-rest .pp-ring-chip{animation:none!important}
+    .pp-av-wrap.ring-zwei .pp-av-ring::after{animation:none}}
   .pp-ring-chip{display:inline-flex;align-items:center;gap:7px;margin:8px auto 0;
     padding:5px 11px 5px 8px;border-radius:999px;
     background:rgba(var(--ttr),.10);border:1px solid rgba(var(--ttr),.28)}
+  /* Mehrere Zustände: die erste Zeile bleibt, wie sie war, und klappt auf.
+     Die übrigen stehen in derselben Form darunter und kommen nacheinander. */
+  .pp-ringe{display:flex;flex-direction:column;align-items:center}
+  button.pp-ring-chip{font:inherit;color:inherit;cursor:pointer;
+    -webkit-tap-highlight-color:transparent;transition:transform .15s}
+  button.pp-ring-chip:active{transform:scale(.97)}
+  .pp-ring-mehr{display:inline-flex;align-items:center;gap:2px;margin-left:2px;
+    padding-left:7px;border-left:1px solid rgba(var(--ttr),.28);
+    font-size:10px;font-weight:700;color:var(--ink2)}
+  .pp-ring-mehr svg{width:12px;height:12px;transition:transform .18s ease}
+  .pp-ringe.open .pp-ring-mehr svg{transform:rotate(180deg)}
+  .pp-ring-rest{display:none;flex-direction:column;align-items:center}
+  .pp-ringe.open .pp-ring-rest{display:flex}
+  .pp-ring-rest .pp-ring-chip{margin-top:6px;
+    animation:ppRingZeile .32s cubic-bezier(.2,.8,.2,1) calc(var(--i,0) * .06s) both}
+  @keyframes ppRingZeile{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
   .pp-ring-chip .i{display:grid;place-items:center;color:var(--tt)}
   .pp-ring-chip .i svg{width:14px;height:14px;fill:none;stroke:currentColor;
     stroke-linecap:round;stroke-linejoin:round}

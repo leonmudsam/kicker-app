@@ -435,14 +435,24 @@ console.log('\n=== 6. AVATAR-RING ===');
 const rings = K.eval('avatarRings()');
 const ringed = Object.keys(rings);
 console.log('  Spieler mit Ring:', ringed.length, '/', NAMES.length);
-ringed.forEach(id => {
-  const r = rings[id];
+ringed.forEach(id => rings[id].forEach(r => {
   console.log('  ' + nm(id).padEnd(9), r.kind.padEnd(6), r.label.padEnd(22), r.sub);
   ok(r.label && r.sub, nm(id)+' Ring hat Text');
   ok(!/undefined|NaN/.test(r.sub), nm(id)+' Ring-Text sauber', r.sub);
-});
+}));
 ok(ringed.length <= NAMES.length, 'Ringe nicht mehr als Spieler');
-ok(ringed.every(id => Object.keys(rings[id]).length), 'jeder Ring vollständig');
+ok(ringed.every(id => rings[id].length), 'jeder Ring vollständig');
+// Jeder Zustand gehört so vielen, wie ihn tragen können: eine Woche, ein
+// Tag und ein Meister haben einen, das Team zwei. Und jeder Spieler hat
+// höchstens eine Serie — eine gute und eine schlechte zugleich gibt es nicht.
+{
+  const je = {};
+  ringed.forEach(id => rings[id].forEach(r => { je[r.kind] = (je[r.kind] || 0) + 1; }));
+  ok(['champ','potw','potd'].every(k => (je[k] || 0) <= 1) && (je.tots || 0) <= 2,
+     'Meister, Woche und Tag tragen je einer, das Team zwei', JSON.stringify(je));
+  ok(ringed.every(id => rings[id].filter(r => /blaze|hot|abyss|cold/.test(r.kind)).length <= 1),
+     'höchstens eine Serie je Spieler');
+}
 
 console.log('\n=== 7. MARKEN NEBEN DEM NAMEN ===');
 let rowsMarked = 0, liveMarks = 0;

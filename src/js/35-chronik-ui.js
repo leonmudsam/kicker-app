@@ -941,10 +941,12 @@ function _titleMarkHtml(pid, size, opts){
 //     und Chroniken ist er FLÜCHTIG — er kann nächste Woche weg sein, und
 //     genau das macht ihn spannend.
 //
-//     Jeder Spieler bekommt höchstens EINEN Ring: den mit der höchsten
-//     Priorität. Sonst wäre wieder jeder Avatar bunt und nichts hieße etwas.
-//     Alles wird in einem Rutsch für die ganze Liga berechnet und gecacht —
-//     die Rangliste ruft das pro Zeile auf.
+//     Jeder Spieler hat EINEN Ring, aber so viele Zeichen daran, wie er
+//     gerade Zustände trägt — nach Priorität geordnet. Vorher stand nur der
+//     erste: wer Player of the Week, Team of the Season und Player of the
+//     Day zugleich war, zeigte eins davon, und die anderen beiden gab es im
+//     Profil nirgends. Die Liste kommt in einem Rutsch für die ganze Liga
+//     und wird gecacht.
 // Der Ring hatte fuenf Farben fuer sieben Zustaende — Gold, Orange, Rot,
 // Lila, Blau — und damit keine Aussage: man musste die Legende kennen, um
 // ihn zu lesen. Nach dem Farbgesetz [§C25] gibt es hier nur drei:
@@ -959,18 +961,23 @@ const AV_RINGS = {
   potw:  {prio:80, tone:'gold', ic:'weekKing',    label:'Player of the Week'},
   hot:   {prio:74, tone:'acid', ic:'flame',       label:'Siegesserie'},
   cold:  {prio:72, tone:'red',  ic:'drop',        label:'Niederlagenserie'},
+  potd:  {prio:68, tone:'gold', ic:'dayKing',     label:'Player of the Day'},
   tots:  {prio:64, tone:'gold', ic:'handshake',         label:'Team of the Season'},
 };
 function avatarRings(){
-  const key = matches.length + '_' + _cache.version;
+  // Woche und Tag gehören in den Schlüssel: um 23:59 wird ein Spieler des
+  // Tages fertig, am Montag einer der Woche — ohne neue Partie, und ohne
+  // sie hielt der Ring den alten bis zur nächsten.
+  const jetzt = new Date(), heute = jetzt.toISOString().slice(0, 10);
+  const key = matches.length + '_' + _cache.version + '_' + _wochenKey(jetzt)
+    + '_' + heute + (_tagZu(heute) ? 'z' : '');
   if(_cache._avRingKey === key) return _cache._avRing;
   const out = {};
   const put = (pid, kind, sub) => {
     if(!pid) return;
     const def = AV_RINGS[kind];
     if(!def) return;
-    if(out[pid] && out[pid].prio >= def.prio) return;
-    out[pid] = {kind, prio:def.prio, tone:def.tone, ic:def.ic, label:def.label, sub};
+    (out[pid] = out[pid] || []).push({kind, prio:def.prio, tone:def.tone, ic:def.ic, label:def.label, sub});
   };
   try {
     const gSim = getGlobalSim();
@@ -989,14 +996,29 @@ function avatarRings(){
     if(team) team.ids.forEach(id => put(id, 'tots',
       'mit ' + pname(team.ids.find(x => x !== id) || id)));
 
-    // Player of the Week der letzten abgeschlossenen Woche.
-    const wk = _periodWinnerMap(matches, 'week');
-    const wkKeys = Object.keys(wk).sort();
-    if(wkKeys.length) put(wk[wkKeys[wkKeys.length-1]], 'potw',
-      'Woche ' + wkKeys[wkKeys.length-1].split('-W')[1]);
+    // Player of the Week der letzten abgeschlossenen Woche, Player of the
+    // Day des letzten abgeschlossenen Spieltags — derselbe, den „Letzte
+    // Woche" und „Letzter Tag" in der Liga zeigen. Gezählt wird der letzte
+    // Zeitraum MIT Partien, nicht der letzte mit einem Sieger: hatte die
+    // letzte Woche keinen, trug sonst der Sieger einer älteren das Zeichen,
+    // als wäre er es noch.
+    // Nach der Zeit der Partie, nicht nach dem Schlüssel: „2027-W10" steht
+    // als Text vor „2027-W9", und so trug im März der Sieger der neunten
+    // Woche das Zeichen bis in die dreizehnte.
+    const laufendeWoche = _wochenKey(Date.now()), tagZu = {};
+    let wkKey = null, tgKey = null, wkT = -Infinity, tgT = -Infinity;
+    matches.forEach(m => {
+      const t = mts(m), w = _wochenKey(m.created_at), d = mdayKey(m);
+      if(tagZu[d] === undefined) tagZu[d] = _tagZu(d);
+      if(w !== laufendeWoche && t > wkT){ wkT = t; wkKey = w; }
+      if(tagZu[d] && t > tgT){ tgT = t; tgKey = d; }
+    });
+    const wk = _periodWinnerMap(matches, 'week'), tg = _periodWinnerMap(matches, 'day');
+    if(wkKey && wk[wkKey]) put(wk[wkKey], 'potw', 'Woche ' + wkKey.split('-W')[1]);
+    if(tgKey && tg[tgKey]) put(tg[tgKey], 'potd', 'Spieltag ' + datumFmt(new Date(tgKey + 'T12:00:00Z'), 'tm'));
 
-    // Serien zuletzt — sie überschreiben alles außer dem Titelverteidiger,
-    // wenn sie lang genug sind. Eine 9er-Serie ist die Nachricht des Tages.
+    // Serien zuletzt. Eine Siegesserie und eine Niederlagenserie schließen
+    // sich aus, neben allem anderen steht die Serie als eigenes Zeichen.
     Object.keys(pm).forEach(id => {
       if(!ligaAktiv(pm[id])) return;
       const cs = gSim.curStreak[id] || 0;
@@ -1006,13 +1028,19 @@ function avatarRings(){
       else if(cs <= -5) put(id, 'cold',  (-cs) + ' Niederlagen in Folge');
     });
   } catch(e){ /* Ring ist Zierde — er darf die Rangliste nie kippen. */ }
+  Object.values(out).forEach(l => l.sort((a, b) => b.prio - a.prio));
   _cache._avRingKey = key;
   _cache._avRing = out;
   return out;
 }
+// Alle Zustände, die jemand gerade trägt, der wichtigste zuerst.
+function avRingeOf(pid){
+  if(imRuhestand(pid)) return [];
+  try { return avatarRings()[pid] || []; } catch(e){ return []; }
+}
+// Der wichtigste — er färbt den Avatar in Listen und steht im Profil vorn.
 function avRingOf(pid){
-  if(imRuhestand(pid)) return null;
-  try { return avatarRings()[pid] || null; } catch(e){ return null; }
+  return avRingeOf(pid)[0] || null;
 }
 
 // Zusatz-Attribute für einen Avatar mit Ring — von avHtml() eingesetzt.
@@ -1029,18 +1057,59 @@ function _avRingAttrs(pid){
   };
 }
 
-// Erklär-Zeile für den Profilkopf: welcher Ring, warum.
+// [§C25] Eine Seite, eine Farbe: die Siegesserie trägt im Profil die
+// Rangfarbe, weil dort schon die Flamme in ihr brennt. Gold bleibt den
+// Titeln, Rot der Niederlagenserie — beides sind eigene Aussagen.
+function _avRingTon(r){
+  return (r.kind === 'blaze' || r.kind === 'hot')
+    ? {c:'var(--ak)', rgb:'var(--ak-rgb)'} : titleTone(r.tone);
+}
+
+// Die Plätze der Zeichen am Ring, im Uhrzeigersinn von oben, in Grad. Oben
+// rechts steht der wichtigste, wo vorher der einzige stand; der zweite
+// spiegelt ihn nach links, die nächsten folgen an den Seiten. Oben in der
+// Mitte sitzt die Krone der hohen Stufen, unten der Schild mit dem Platz —
+// beide bleiben frei. Fünf Plätze, weil es höchstens fünf Zustände zugleich
+// gibt: Titelverteidiger, Woche, Tag, Team und eine Serie.
+const AV_RING_PLAETZE = [45, -45, 100, -100, 145];
+function _avRingMarkenHtml(pid){
+  return avRingeOf(pid).slice(0, AV_RING_PLAETZE.length).map((r, i) => {
+    const t = _avRingTon(r), w = AV_RING_PLAETZE[i] * Math.PI / 180;
+    const x = Math.round(Math.sin(w) * 58), y = Math.round(-Math.cos(w) * 58);
+    return `<span class="pp-av-mark" style="--tt:${t.c};--ttr:${t.rgb};--i:${i};`
+      + `left:calc(50% + ${x}px);top:calc(50% + ${y}px)" title="${esc(r.label + ' · ' + r.sub)}">${svgI(r.ic)}</span>`;
+  }).join('');
+}
+
+// Erklär-Zeile für den Profilkopf: welcher Ring, warum. Sie nennt den
+// wichtigsten Zustand; trägt jemand mehrere, klappt sie auf und nennt jeden
+// in derselben Form. Mehrere Zeilen von Anfang an schoben die Elo-Werte
+// unter den Rand des ersten Bilds.
 function _avRingChipHtml(pid){
-  const r = avRingOf(pid);
-  if(!r) return '';
-  // [§C25] Eine Seite, eine Farbe: die Siegesserie trägt im Profil die
-  // Rangfarbe, weil dort schon die Flamme in ihr brennt. Gold bleibt den
-  // Titeln, Rot der Niederlagenserie — beides sind eigene Aussagen.
-  const streak = (r.kind === 'blaze' || r.kind === 'hot');
-  const t = streak ? {c:'var(--ak)', rgb:'var(--ak-rgb)'} : titleTone(r.tone);
-  return `<div class="pp-ring-chip" style="--tt:${t.c};--ttr:${t.rgb}">
+  const l = avRingeOf(pid);
+  if(!l.length) return '';
+  const chip = (r, tag, attr, stil) => {
+    const t = _avRingTon(r);
+    return `<${tag} class="pp-ring-chip"${attr} style="--tt:${t.c};--ttr:${t.rgb}${stil}">
     <span class="i">${svgI(r.ic)}</span>
-    <b>${esc(r.label)}</b><span class="s num">${esc(r.sub)}</span>
+    <b>${esc(r.label)}</b><span class="s num">${esc(r.sub)}</span>`;
+  };
+  if(l.length === 1) return chip(l[0], 'div', '', '') + '\n  </div>';
+  return `<div class="pp-ringe">
+    ${chip(l[0], 'button', ' type="button" data-ringe aria-expanded="false"', '')}
+    <span class="pp-ring-mehr num">+${l.length - 1}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></span>
+    </button>
+    <div class="pp-ring-rest">${l.slice(1).map((r, i) => chip(r, 'div', '', ';--i:' + i) + '</div>').join('')}</div>
   </div>`;
+}
+function _avRingBinden(root){
+  const b = root.querySelector('[data-ringe]');
+  if(!b) return;
+  b.onclick = (e) => {
+    e.stopPropagation();
+    const auf = b.parentNode.classList.toggle('open');
+    b.setAttribute('aria-expanded', String(auf));
+  };
 }
 

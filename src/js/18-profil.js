@@ -415,10 +415,16 @@ const rankProgHtml = rInfo ? `
         // ersetzen — Rang und Zustand sind zwei verschiedene Aussagen.
         // Der Serienring war grün, die Flamme ist rangfarben, die Chip-Zeile
         // sagt dieselbe Zahl noch einmal: dreimal dieselbe Nachricht in zwei
-        // Farben. Wo die Flamme brennt, entfällt der Ring — sie IST der Ring.
-        const _rRoh = avRingOf(id);
-        const _r = (_rRoh && (_rRoh.kind === 'blaze' || _rRoh.kind === 'hot')) ? null : _rRoh;
+        // Farben. Wo die Flamme brennt, färbt sie den Ring nicht — sie IST
+        // der Ring; ihr Zeichen steht trotzdem daran.
+        // Ein Lob färbt den Ring, eine Niederlagenserie ebenso. Trägt jemand
+        // beides, wechselt der Ring langsam zwischen den Farben: Gold allein
+        // verschwiege die Serie, Rot allein die Auszeichnung.
+        const _ringe = avRingeOf(id).filter(r => r.kind !== 'blaze' && r.kind !== 'hot');
+        const _plus = _ringe.find(r => r.tone !== 'red'), _minus = _ringe.find(r => r.tone === 'red');
+        const _r = _plus || _minus;
         const _rt = _r ? titleTone(_r.tone) : null;
+        const _rt2 = (_plus && _minus) ? titleTone(_minus.tone) : null;
         // Das Insignium [§13.9] liegt HINTER dem Avatar: Stufe als Form,
         // Rang als Material, Meistertitel als Aura dahinter [§C36] — hier
         // bewegt, überall sonst als stilles Bild. Die Liga-Position
@@ -428,7 +434,7 @@ const rankProgHtml = rInfo ? `
         // und ganz hinten, hinter dem Insignium. Sie soll die Seite wärmen,
         // nicht mit ihr streiten.
         const _fu = znFeuer(id);
-        return `<div class="pp-av-wrap${_r ? ' has-ring' : ''}${_fu ? ' zn-rang zn-l'+_fu : ''}"${_rt ? ` style="--tt:${_rt.c};--ttr:${_rt.rgb}"` : ''}
+        return `<div class="pp-av-wrap${_r ? ' has-ring' : ''}${_rt2 ? ' ring-zwei' : ''}${_fu ? ' zn-rang zn-l'+_fu : ''}"${_rt ? ` style="--tt:${_rt.c};--ttr:${_rt.rgb}${_rt2 ? `;--tt2:${_rt2.c};--ttr2:${_rt2.rgb}` : ''}"` : ''}
           data-prestige="${esc(id)}" title="${esc(prestigeOf(id).insignie.name + ' · ' + prestigeOf(id).punkte + ' Prestige')}">
         ${_fu ? ZN_FEUER_GROSS[_fu] : ''}
         ${auraLebendHtml(meisterTitel(id))}
@@ -436,7 +442,7 @@ const rankProgHtml = rInfo ? `
         <div class="pp-av-ring">
           <div class="${avClass}" ${avBg}>${avInner}</div>
         </div>
-        ${_r ? `<span class="pp-av-mark">${svgI(_r.ic)}</span>` : ''}
+        ${_avRingMarkenHtml(id)}
       </div>`;
       })()}
       <h1 class="pp-name">${esc(p.name)}${pleitenZeichen?` ${pleitenZeichen}`:''}</h1>
@@ -829,6 +835,7 @@ const rankProgHtml = rInfo ? `
   const tt=document.getElementById('ppTrTeam');
   if(tt) tt.onclick=()=>{ sheetNav(()=>showPlayerSeasons(id)); };
   const profil = document.getElementById('sheet');
+  _avRingBinden(profil);
   profil.querySelectorAll('.pp-trophies .pp-tr').forEach(el=>{
     el.onclick=()=>{ sheetNav(()=>showPlayerSeasons(id)); };
   });
