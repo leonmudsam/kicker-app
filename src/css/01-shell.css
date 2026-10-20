@@ -38,9 +38,18 @@
   .news-toast:active{transform:scale(.97)}
   #newsToastTxt{display:block}
   .nh{display:flex;align-items:center;gap:10px}
-  .nh-zahl{flex:0 0 auto;display:grid;place-items:center;min-width:32px;height:32px;padding:0 6px;border-radius:10px;
-    background:var(--acid);color:#0f1409;font-family:'Archivo Black',sans-serif;font-weight:400;font-size:15px;
-    line-height:1;letter-spacing:-.02em}
+  /* Das Zeichen des Hinweises: die Zeitung der Pille auf einer Marke in
+     Acid, oben rechts ein Funke. Es springt auf, kippt zweimal und funkelt
+     zweimal, dann steht es still [§C43]. */
+  .nh-ic{flex:0 0 auto;position:relative;display:grid;place-items:center;width:34px;height:34px;border-radius:10px;
+    background:var(--acid);color:#0f1409}
+  .nh-blatt{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;
+    stroke-linecap:round;stroke-linejoin:round;transform-origin:50% 80%}
+  /* Der Funke steht halb über der Ecke der Marke, hell auf dem dunklen
+     Grund des Hinweises: Acid auf Acid war nicht zu sehen. */
+  .nh-funke{position:absolute;top:-9px;right:-10px;width:18px;height:18px;fill:#f6ffe0;
+    stroke:#141a10;stroke-width:1.4;opacity:0;filter:drop-shadow(0 0 3px rgba(190,242,100,.75))}
+  .nh-wort .num{font-family:'Archivo Black',sans-serif;font-weight:400;color:var(--acid)}
   .nh-text{min-width:0;display:flex;flex-direction:column;gap:2px}
   .nh-wort{font-family:'Space Grotesk',system-ui,sans-serif;font-weight:600;font-size:13px;line-height:1.2;color:var(--ink)}
   .nh-zeile{display:flex;align-items:flex-start;gap:6px;min-width:0;font-family:'Space Grotesk',system-ui,sans-serif;
@@ -49,11 +58,16 @@
   .nh-zeile span{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
   .nh-zeile.nh-rot{--story-rgb:240,86,106}
   @media(prefers-reduced-motion:no-preference){
-    .news-toast.show .nh-zahl{animation:nhPop .45s cubic-bezier(.3,1.4,.5,1) .06s both}
+    .news-toast.show .nh-ic{animation:nhPop .45s cubic-bezier(.3,1.4,.5,1) .06s both}
+    .news-toast.show .nh-blatt{animation:nhBlatt .7s ease-in-out .48s 2 both}
+    .news-toast.show .nh-funke{animation:nhFunke .7s ease-out .52s 2 both}
     .news-toast.show .nh-text{animation:nhEin .32s cubic-bezier(.2,.8,.2,1) .12s both}
   }
   @keyframes nhPop{0%{opacity:0;transform:scale(.5)}65%{opacity:1;transform:scale(1.08)}100%{transform:none}}
   @keyframes nhEin{from{opacity:0;transform:translateX(-6px)}}
+  @keyframes nhBlatt{0%,100%{transform:none}30%{transform:rotate(-10deg) translateY(-1px)}65%{transform:rotate(6deg)}}
+  @keyframes nhFunke{0%{opacity:0;transform:scale(.3) rotate(0)}45%{opacity:1;transform:scale(1.1) rotate(35deg)}
+    100%{opacity:0;transform:scale(.6) rotate(80deg)}}
   .appbar-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
   .logo{display:flex;align-items:center;gap:10px;min-width:0}
   /* Das Zeichen der Liga [§C43]: 252 px als WebP, 7 kB, in der Seite selbst,

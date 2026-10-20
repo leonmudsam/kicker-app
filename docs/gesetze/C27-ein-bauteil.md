@@ -256,8 +256,10 @@ doppelt auf Breaking oder der Karte des Tages; alle elf Sekunden, versetzt
 nach der ID, damit nicht alle Lichter im selben Takt laufen. Gemessen
 tragen ihn zehn von 77 Karten des Fensters.
 **Der Hinweis „x neue Stories" hat zwei Zeilen** (`_newsToastFuellen`,
-`_newsToastZeigen`): die Zahl auf einer Marke in Acid und „neue Stories",
-darunter leise die Schlagzeile der wichtigsten ungelesenen Story —
+`_newsToastZeigen`): „15 neue Stories" neben einem Zeichen auf einer Marke
+in Acid — die Zeitung der Pille mit einem Funken, der beim Erscheinen
+zweimal aufblitzt, während das Blatt zweimal kippt (`.nh-ic`) —, darunter
+leise die Schlagzeile der wichtigsten ungelesenen Story —
 Breaking, wichtig, Priorität, die neueste, nie ein Name — mit einem Punkt
 in der Farbe ihrer Karte (`_newsTonKlassen`, dieselben Klassen wie Karte
 und Blatt), höchstens zwei Zeilen. Er hält links wie rechts mindestens

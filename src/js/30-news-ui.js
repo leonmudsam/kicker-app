@@ -177,7 +177,10 @@ function _isSheetActive(){
   return false;
 }
 // ── Der Hinweis „x neue Stories" [§C33] ─────────────────────────────
-// Zwei Zeilen: die Zahl auf einer Marke in Acid und „neue Stories",
+// Zwei Zeilen: „15 neue Stories" neben einem Zeichen in Acid, das beim
+// Erscheinen aufspringt, zweimal kippt und funkelt und dann still steht
+// [§C43] — die Zahl stand vorher allein auf der Marke, und „neue Stories"
+// daneben las sich als zweiter Satz.
 // darunter leise die Schlagzeile der wichtigsten ungelesenen Story mit einem
 // Punkt in der Farbe ihrer Karte. Vorher stand er in einer Zeile mit
 // Zeichen und Lichtlauf alle vier Sekunden; ein Entwurf danach trug einen
@@ -196,8 +199,10 @@ function _newsHinweisStory(){
 function _newsToastFuellen(txt, n){
   const top = _newsHinweisStory();
   const ton = top ? (_isBreaking(top) || _newsIstNegativ(top) ? 'nh-rot' : _newsTonKlassen(top, 'nd')) : '';
-  txt.innerHTML = `<span class="nh"><b class="nh-zahl num">${n > 99 ? '99+' : n}</b><span class="nh-text">`
-    + `<b class="nh-wort">${n === 1 ? 'neue Story' : 'neue Stories'}</b>`
+  txt.innerHTML = `<span class="nh"><span class="nh-ic" aria-hidden="true">`
+    + `<svg class="nh-blatt" viewBox="0 0 24 24">${icPfad('newspaper')}</svg>`
+    + `<svg class="nh-funke" viewBox="0 0 24 24">${icPfad('funkeln')}</svg></span><span class="nh-text">`
+    + `<b class="nh-wort"><span class="num">${n > 99 ? '99+' : n}</span> ${n === 1 ? 'neue Story' : 'neue Stories'}</b>`
     + (top ? `<span class="nh-zeile ${ton}"><i></i><span>${esc(top.title || '')}</span></span>` : '')
     + '</span></span>';
 }

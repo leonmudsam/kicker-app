@@ -2370,14 +2370,16 @@ const ok = (c, msg, det) => {
     if(zeile) zeile.querySelector('span').textContent += ' — und noch ein Anlass und noch einer, der die Zeile füllt';
     K('_positionNewsToast()');
     const links = t.offsetLeft + t.offsetParent.getBoundingClientRect().left;
-    const out = {n:(x.querySelector('.nh-zahl') || {}).textContent, wort:(x.querySelector('.nh-wort') || {}).textContent,
+    const out = {n:(x.querySelector('.nh-wort .num') || {}).textContent, wort:(x.querySelector('.nh-wort') || {}).textContent,
       zeile:zeile ? zeile.querySelector('span').textContent.startsWith(top.title || '') : false,
       wichtigste:!!top && !!erwartet && top.id === erwartet.id && !!umgekehrt && umgekehrt.id === erwartet.id,
       ton:!!zeile && ton.split(' ').every(c => zeile.classList.contains(c)),
       punkt:zeile ? getComputedStyle(zeile.querySelector('i')).backgroundColor.replace(/\s/g, '') === 'rgb(' + getComputedStyle(zeile).getPropertyValue('--story-rgb').replace(/\s/g, '') + ')' : false,
       rand:[Math.round(links), Math.round(innerWidth - links - t.offsetWidth)],
       licht:t.querySelectorAll(':scope > .kl.kl-hinweis').length, ruf:getComputedStyle(btn, '::after').animationName,
-      zahl:getComputedStyle(x.querySelector('.nh-zahl')).animationName,
+      zahl:x.querySelector('.nh-ic') ? getComputedStyle(x.querySelector('.nh-ic')).animationName : '',
+      zeichen:!!x.querySelector('.nh-ic svg') && !!x.querySelector('.nh-funke') && !x.querySelector('.nh-zahl')
+        && getComputedStyle(x.querySelector('.nh-funke')).animationName === 'nhFunke',
       endlos:t.getAnimations({subtree:true}).filter(a => a.effect.getTiming().iterations === Infinity).length,
       zeitStart:zeiten.includes(K('NEWS_TOAST_START_MS'))};
     zeiten.length = 0;
@@ -2394,8 +2396,8 @@ const ok = (c, msg, det) => {
     return out;
   });
   const ntLebt = await toastLauf();
-  ok(ntLebt.n === '59' && ntLebt.wort === 'neue Stories' && ntLebt.zeile && ntLebt.wichtigste && ntLebt.ton && ntLebt.punkt,
-     'der Hinweis auf neue Stories zeigt die Zahl und darunter die wichtigste ungelesene Story mit dem Punkt in ihrer Farbe', JSON.stringify(ntLebt));
+  ok(ntLebt.n === '59' && ntLebt.wort === '59 neue Stories' && ntLebt.zeichen && ntLebt.zeile && ntLebt.wichtigste && ntLebt.ton && ntLebt.punkt,
+     'der Hinweis auf neue Stories trägt ein bewegtes Zeichen statt der Zahl, sagt „59 neue Stories" und darunter die wichtigste ungelesene Story mit dem Punkt in ihrer Farbe', JSON.stringify(ntLebt));
   ok(ntLebt.rand[0] >= 12 && ntLebt.rand[1] >= 8, 'der Hinweis hält bei 320 px Abstand zu beiden Rändern', JSON.stringify(ntLebt.rand));
   ok(ntLebt.licht === 1 && ntLebt.lichtDann === 1 && ntLebt.ruf === 'hinweisRuf' && ntLebt.zahl === 'nhPop' && ntLebt.endlos === 0 && ntLebt.pille,
      'beim Erscheinen fährt Licht um den Hinweis und ein Ring von der Pille, nichts läuft endlos, und aus dem Gerüst der Pille gleitet ihr Inhalt herein', JSON.stringify(ntLebt));
