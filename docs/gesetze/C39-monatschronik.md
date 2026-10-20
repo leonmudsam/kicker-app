@@ -10,7 +10,7 @@
 - Prestige einer Chronik: `PRESTIGE_SOCKEL` (55, nicht für Schattenseiten) + `PRESTIGE_CHRONIK[art]` × `aus` + `PRESTIGE_SELTEN[klasse]`, gerundet auf fünf, mit dem Ausschlag der SCHWELLE, nicht des Halters.
 - Eine Chronik schiebt ihre Schwelle mindestens 1,5 σ hinaus, korreliert höchstens 0,35 mit der Spielzahl, misst eine Leistung und keine reine Zählung von Gelegenheiten.
 - Vorgegeben und nicht kalibriert: „Der Tagesregent" (60 % der eigenen Spieltage), „Die Wochenkrone" (jede eigene Woche, über `_periodWinnerMap`), „Auf dem Thron" (Platz zwei oder besser an jedem Spieltag ab der ersten eigenen Partie, aus der Elo-Bahn von `getGlobalSim`, `_thronDerLiga`).
-- Im Profilkopf steht der Beiname (`monat.beiname`, `chronBeiname`), überall sonst der Katalogname; das Blatt nennt den Beinamen in `.chron-kose`, außer er ist der Katalogname. Im Profilkopf steht er als Banner (`.pp-banner`) und nur der der jüngsten **positiven** Monatschronik (`playerTitleBadge`): ein Monat mit nur Schattenseiten verdrängt ihn nicht, hat ein Monat beides, gilt die positive; das Banner bleibt, bis ein neuerer Monat eine positive bringt, und die Zeile darunter nennt seinen Monat („läuft", solange er läuft). Das Banner: ein Band mit gefalteten Enden, die zum Band hin in den Schatten fallen, Lichthof und Schein im Gold, so groß wie die Pille davor, ohne gestrichelte Kante; beim Öffnen entrollt es sich, danach schieben sich die Enden heraus, alle siebeneinhalb Sekunden ein Glanz; der Monat darunter zwischen zwei goldenen Strichen.
+- Im Profilkopf steht der Beiname (`monat.beiname`, `chronBeiname`), überall sonst der Katalogname; das Blatt nennt den Beinamen in `.chron-kose`, außer er ist der Katalogname. Im Profilkopf steht er als Banner (`.pp-banner`) und nur der der jüngsten **positiven** Monatschronik (`playerTitleBadge`): ein Monat mit nur Schattenseiten verdrängt ihn nicht, hat ein Monat beides, gilt die positive; das Banner bleibt, bis ein neuerer Monat eine positive bringt, und die Zeile darunter nennt seinen Monat („läuft", solange er läuft). Das Banner: ein deckendes Band (Grund aus dunklem Gold unter der Tönung, an den Enden dunkler) mit einer durchgezogenen Naht innen an Ober- und Unterkante und gefalteten Enden, die zum Band hin in den Schatten fallen, Lichthof und Schein im Gold, so groß wie die Pille davor, ohne gestrichelte Kante; beim Öffnen entrollt es sich, danach schieben sich die Enden heraus, alle siebeneinhalb Sekunden ein Glanz; der Monat darunter zwischen zwei goldenen Strichen.
 - Die Klasse ist sichtbar: Gewicht der Zelle (`data-kl`), Name auf der Plakette (`CHRONIK_KLASSE_NAME`), Zahlenreihe im Blatt (`rcpZahlenHtml`).
 - Die Matrix ordnet nach Prestige, dann Zahl der Einträge, dann Name; sie steht in einer Karte (`_lchronTabelle`), Ruheständler in einer eigenen Karte (`ruhe_chronik`). Strich heißt gewertet ohne Eintrag, leer heißt nicht gewertet.
 - Ein Kürzel (`short`) ist ein ganzes Wort und passt gerendert in 54 px.
@@ -23,7 +23,7 @@
 
 ## Prüfung
 
-`tests/rechnen` zählt den laufenden Tag erst um 23:59; `tests/disziplinen` hält jede Chronik an 1,5 σ, an der Spielzahl-Korrelation und am Halterdeckel, zählt den Anteil der ersten drei und rechnet „Der Sprung" und „Die Kletterpartie" aus den rohen Partien beider Monate nach und rechnet das Banner aus der Tafel jedes Monats nach (die jüngste positive Chronik); `tests/blatt` misst die Kürzel in der Zelle und das Banner im Profilkopf mit Falte, Lichthof und Entrollen.
+`tests/rechnen` zählt den laufenden Tag erst um 23:59; `tests/disziplinen` hält jede Chronik an 1,5 σ, an der Spielzahl-Korrelation und am Halterdeckel, zählt den Anteil der ersten drei und rechnet „Der Sprung" und „Die Kletterpartie" aus den rohen Partien beider Monate nach und rechnet das Banner aus der Tafel jedes Monats nach (die jüngste positive Chronik); `tests/blatt` misst die Kürzel in der Zelle und das Banner im Profilkopf: deckend, mit Naht, Falte, Lichthof und Entrollen.
 
 ## Herleitung
 
@@ -128,7 +128,9 @@ Kante, und die sah aus wie ein Knopf, der noch lädt — für einen Beinamen,
 der ein Titel ist, das falsche Bild. Dass der Monat noch läuft, sagt die
 Zeile darunter ohnehin. Flach und mit Enden in der Farbe des Bands las es
 sich trotzdem als Schild; die Falte, der Lichthof und das Entrollen machen
-es zum Titel.
+es zum Titel. Die Tönung allein war durchscheinend, und durch das Band sah
+man den Kopf des Profils in seiner Rangfarbe — Glas statt Stoff. Darunter
+liegt deshalb ein deckender Grund aus dunklem Gold.
 **Im Banner steht nur, was ein Titel ist.** Es zeigte den Eintrag des
 laufenden oder letzten Monats, auch eine Schattenseite, rot: Jannik trug im
 August „Der Durchlässige" (Das Scheunentor) statt „Der Zugeknöpfte" aus dem

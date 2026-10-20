@@ -1428,11 +1428,15 @@ const ok = (c, msg, det) => {
      kartenMobil.raus.slice(0, 4).join(' | ') || 'keine');
 
   // ── Die Ehrung bei 360 px ────────────────────────────────────────
-  //    Je Geehrtem eine Säule, alle in EINER Reihe auf derselben Grundlinie:
-  //    neun Geehrte brachen in eine zweite Reihe um, und die Karte wurde so
-  //    hoch wie zwei. Im Blatt steht der Name einer gewöhnlichen
-  //    Auszeichnung über der ganzen Breite ihrer Kachel: neben Zeichen und
-  //    Wert brach „Pflichterfüller" mitten im Wort um.
+  //    Je Geehrtem eine Säule auf seinem Wappen, höchstens fünf je Reihe,
+  //    jede Reihe auf ihrer Grundlinie, keine über den Rand — gemessen in der
+  //    Breite, die die Karte im Feed hat: 287 px bei 360, 247 px bei 320.
+  //    Gerechnet mit 360 px Kartenbreite brachen fünf Wappen im Feed in zwei
+  //    Reihen, die Karte wurde 130 px höher und schob die Breaking-Karte aus
+  //    dem Bild. Im Blatt stehen vier mit Namen in einer Reihe — die vierte
+  //    brach dort allein in eine zweite. Und der Name einer gewöhnlichen
+  //    Auszeichnung steht über der ganzen Breite ihrer Kachel: neben Zeichen
+  //    und Wert brach „Pflichterfüller" mitten im Wort.
   const ehrung = await page.evaluate(() => {
     const K = window.__k.eval.bind(window.__k);
     const roh = K(`JSON.stringify((function(){
@@ -1440,20 +1444,34 @@ const ok = (c, msg, det) => {
       for(let t = Date.parse('2026-05-10'); t < Date.parse('2026-09-01'); t += NEWS_FENSTER_TAGE * 864e5 * 0.9)
         _newsEhrungStories(t).forEach(s => { if(!ids.has(s.id)){ ids.add(s.id); alle.push(s); } });
       alle.sort((a, b) => b.dataRef.spieler.length - a.dataRef.spieler.length);
-      return [alle[0], alle[alle.length - 1]].map(s => ({n:s.dataRef.spieler.length,
-        karte:_newsEhrungHtml(s, false, ''), mitte:_ndEhrungBlatt(s).mitte}));
+      const mit = n => alle.find(s => s.dataRef.spieler.length === n);
+      return [alle[0], mit(5), mit(4), alle[alle.length - 1]].filter(Boolean).map(s => ({n:s.dataRef.spieler.length,
+        karte:_newsEhrungHtml(s, false, ''), mitte:_ndEhrungBlatt(s).mitte, kopf:_ndEhrungBlatt(s).kopf}));
     })())`);
     const host = document.createElement('div');
-    host.style.cssText = 'width:360px;position:absolute;left:0;top:0';
+    host.style.cssText = 'position:absolute;left:0;top:0';
     document.body.appendChild(host);
     const out = [];
     JSON.parse(roh).forEach(x => {
-      host.innerHTML = x.karte;
-      const karte = host.querySelector('.nf-card'), kr = karte.getBoundingClientRect();
-      const s = [...karte.querySelectorAll('.eh-s')].map(e => e.getBoundingClientRect());
-      const boden = [...karte.querySelectorAll('.eh-s-av')].map(e => Math.round(e.getBoundingClientRect().bottom));
-      out.push({n:x.n, saeulen:s.length, eineReihe:new Set(boden).size === 1,
-        drin:s.every(r => r.left >= kr.left - .5 && r.right <= kr.right + .5)});
+      const je = [287, 247].map(breite => {
+        host.style.width = breite + 'px';
+        host.innerHTML = x.karte;
+        const karte = host.querySelector('.nf-card'), kr = karte.getBoundingClientRect();
+        const s = [...karte.querySelectorAll('.eh-s')].map(e => e.getBoundingClientRect());
+        const boden = [...karte.querySelectorAll('.eh-s-av')].map(e => Math.round(e.getBoundingClientRect().bottom));
+        const groesse = [...karte.querySelectorAll('.eh-s-av > .rav')].map(e => Math.round(e.getBoundingClientRect().width));
+        return {reihen:new Set(boden).size, wappen:groesse.length, klein:Math.min(...groesse),
+          drin:s.every(r => r.left >= kr.left - .5 && r.right <= kr.right + .5)};
+      });
+      host.style.width = '360px';
+      out.push({n:x.n, saeulen:(x.karte.match(/class="eh-s"/g) || []).length, soll:Math.ceil(x.n / 5),
+        reihen:je.map(j => j.reihen), wappen:je.map(j => j.wappen), klein:je.map(j => j.klein), drin:je.every(j => j.drin)});
+      // Die Bühne des Blatts in seiner Breite: bei 360 px ist sie im Blatt
+      // 270 px breit, gemessen an einem offenen Blatt.
+      host.innerHTML = `<div style="width:270px">${x.kopf}</div>`;
+      const kb = [...host.querySelectorAll('.eh-s-av')].map(e => Math.round(e.getBoundingClientRect().bottom));
+      out[out.length - 1].blattReihen = new Set(kb).size;
+      out[out.length - 1].blattSoll = Math.ceil(x.n / 4);
       host.innerHTML = `<div style="padding:0 16px">${x.mitte}</div>`;
       const gebrochen = [];
       host.querySelectorAll('.eh-g-t > b').forEach(b => {
@@ -1466,9 +1484,11 @@ const ok = (c, msg, det) => {
     host.remove();
     return out;
   });
-  ok(ehrung.length === 2 && ehrung[0].n > 6 && ehrung.every(x => x.saeulen === x.n && x.eineReihe && x.drin),
-     'die Ehrung stellt jeden Geehrten als Säule in eine Reihe auf eine Grundlinie, auch neun, und bleibt in der Karte',
-     JSON.stringify(ehrung.map(x => ({n:x.n, s:x.saeulen, reihe:x.eineReihe, drin:x.drin}))));
+  ok(ehrung.length === 4 && ehrung[0].n > 6 && ehrung.every(x => x.saeulen === x.n && x.wappen.every(w => w === x.n)
+       && x.reihen.every(r => r === x.soll) && x.klein[0] === 48 && x.klein[1] >= 40 && x.blattReihen === x.blattSoll && x.drin),
+     'die Ehrung stellt jeden Geehrten als Säule auf sein Wappen, höchstens fünf je Reihe in der Karte des Feeds und vier im Blatt, bei 360 px zu 48 px, und bleibt in der Karte',
+     JSON.stringify(ehrung.map(x => ({n:x.n, s:x.saeulen, w:x.wappen, reihen:x.reihen.join(',') + '/' + x.soll, klein:x.klein,
+       blatt:x.blattReihen + '/' + x.blattSoll, drin:x.drin}))));
   ok(ehrung.some(x => x.kacheln > 0) && ehrung.every(x => !x.gebrochen.length),
      'im Blatt der Ehrung bricht kein Name einer Kachel mitten im Wort',
      ehrung.flatMap(x => x.gebrochen).join(', ') || ehrung.map(x => x.kacheln).join('+') + ' Kacheln');
@@ -5702,6 +5722,11 @@ return JSON.stringify(funde,null,1);
         // Die Falte: zum Band hin fällt jedes Ende in den Schatten.
         falte:[ende('::before'), ende('::after')].every(e => (e.backgroundImage.match(/gradient/g) || []).length === 2
           && e.backgroundImage.indexOf('rgba(0, 0, 0') >= 0),
+        // Deckend: unter der Tönung liegt ein Grund ohne Durchsicht, am Band
+        // und an beiden Enden — durch das Band sah man den Profilkopf.
+        deckend:[cs, ende('::before'), ende('::after')].every(e => { const c = e.backgroundColor;
+          return c !== 'transparent' && c.indexOf('rgba(') !== 0 && c.indexOf('/') < 0; }),
+        naht:getComputedStyle(pill, '::before').borderTopStyle === 'solid' && getComputedStyle(pill, '::before').borderBottomStyle === 'solid',
         glanz:getComputedStyle(pill, '::after').animationName,
         auf:[cs.animationName, ende('::before').animationName, ende('::after').animationName].join(','),
         schein:/rgba/.test(cs.textShadow) && (cs.boxShadow.match(/rgba/g) || []).length >= 4,
@@ -5722,6 +5747,9 @@ return JSON.stringify(funde,null,1);
   ok(banner.every(x => x.falte && x.schein && x.striche && x.auf === 'ppBannerAuf,ppBannerEndeL,ppBannerEndeR'),
      'das Band hat gefaltete Enden im Schatten, Lichthof, Schein und Striche um den Monat und entrollt sich beim Öffnen',
      JSON.stringify(banner.map(x => ({falte:x.falte, schein:x.schein, striche:x.striche, auf:x.auf}))));
+  ok(banner.every(x => x.deckend && x.naht),
+     'das Band ist deckend, an beiden Enden auch, und trägt innen eine durchgezogene Naht',
+     JSON.stringify(banner.map(x => ({deckend:x.deckend, naht:x.naht}))));
 
   await page.setViewportSize({width:430, height:932});
 

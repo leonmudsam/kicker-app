@@ -1485,12 +1485,12 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
    der Farbe der Auszeichnungen im Feed. Kein Band mit Chips wie auf der
    Ewigen Tafel: dieselbe Form für eine andere Zahl las sich als dieselbe
    Nachricht. */
-.eh-buehne{position:relative;display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-end;
-  gap:10px 14px;margin:2px 4px 0;padding:10px 10px 9px;border-radius:14px;min-width:0;
+.eh-buehne{--fuge:14px;position:relative;display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-end;
+  gap:5px var(--fuge);margin:2px 4px 0;padding:10px 6px 9px;border-radius:14px;min-width:0;container-type:inline-size;
   background:radial-gradient(120% 90% at 50% 100%,color-mix(in srgb,var(--purple) 14%,transparent),transparent 62%),
     linear-gradient(180deg,color-mix(in srgb,var(--purple) 6%,transparent),transparent 72%);
   border:1px solid color-mix(in srgb,var(--purple) 22%,transparent)}
-.eh-s{display:flex;flex-direction:column;align-items:center;min-width:34px;max-width:60px;cursor:pointer}
+.eh-s{display:flex;flex-direction:column;align-items:center;min-width:0;max-width:60px;cursor:pointer}
 .eh-s-z{display:flex}
 .eh-s-z .zk{position:relative;overflow:hidden}
 .eh-s-w{margin:4px 0;font-style:normal;font-family:'Archivo Black',sans-serif;font-size:11.5px;line-height:1;
@@ -1503,11 +1503,18 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 .eh-saeule i.rare{background:var(--purple);box-shadow:0 0 8px rgba(167,139,250,.3)}
 .eh-saeule i.common{background:var(--acid);opacity:.85}
 .eh-s-av{display:flex;margin-top:5px}
-/* Ab sieben Geehrten: schmaler, damit alle in einer Reihe stehen. */
-.eh-buehne.eng{gap:8px 3px;flex-wrap:nowrap;padding-left:6px;padding-right:6px}
-.eh-buehne.eng .eh-s{min-width:0;flex:1 1 0;max-width:40px}
-.eh-buehne.eng .eh-saeule{width:13px}
-.eh-buehne.eng .eh-s-w{font-size:10px}
+/* Mehr als eine Reihe: der Umbruch steht als Element zwischen ihnen, jede
+   Reihe hat ihre eigene Grundlinie. Sechs Wappen zu 48 px brauchen bei
+   360 px eine schmale Fuge. */
+.eh-umbruch{flex-basis:100%;height:0}
+.eh-buehne.voll{--fuge:4px}
+/* Das Wappen so groß, wie die Reihe es zulässt, höchstens in seiner Größe:
+   bei 360 px stehen fünf zu 48 px, auf einem schmaleren Telefon werden sie
+   kleiner, statt dass die fünfte allein umbricht. Die Größe trägt das
+   Wappen als `--rav` am Element; die Regel hier ist die Breite der Bühne
+   (`100cqi`) geteilt durch die Säulen der Reihe (`--je`). */
+.eh-s-av > .rav{--rav:min(48px,calc((100cqi - (var(--je,5) - 1) * var(--fuge)) / var(--je,5)))!important}
+.eh-buehne.gross .eh-s-av > .rav{--rav:min(52px,calc((100cqi - (var(--je,4) - 1) * var(--fuge)) / var(--je,4)))!important}
 /* Im Fuß, was jede Klasse brachte: ein Punkt in ihrer Farbe, wie oft, das Wort, der Wert. */
 .eh-fuss{display:flex;flex-wrap:wrap;gap:5px 12px;padding:8px 13px 10px;border-top:1px solid var(--line)}
 .eh-k{display:inline-flex;align-items:baseline;gap:4px;font-size:11px;color:var(--ink2);white-space:nowrap}
@@ -1519,13 +1526,16 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 .eh-k em{font-style:normal;font-family:'Sometype Mono',monospace;font-size:10.5px;font-weight:700;color:var(--gold)}
 
 /* Im Blatt die Bühne groß, mit Namen; die Säulen breiter. */
-.nd-eh{padding:16px 10px 12px}
-.nd-eh .eh-buehne{margin:0;padding:0;background:none;border:none;gap:14px 16px}
+/* Die Bühne des Blatts ist schmaler als die der Karte: vier Säulen mit
+   Wappen und Namen passen nur mit schmaler Fuge, sonst brach die vierte
+   allein in eine zweite Reihe. */
+.nd-eh{padding:16px 6px 12px}
+.nd-eh .eh-buehne{--fuge:6px;margin:0;padding:0;background:none;border:none;gap:7px var(--fuge)}
 /* Die Säule so breit wie ihr Name: ein Blatt kürzt keinen Namen. */
 .eh-buehne.gross .eh-s{max-width:none}
 .eh-buehne.gross .eh-saeule{width:22px}
 .eh-buehne.gross .eh-s-w{font-size:13px;margin:5px 0}
-.eh-s-n{margin-top:4px;font-size:11px;font-weight:700;color:var(--ink);white-space:nowrap}
+.eh-s-n{margin-top:4px;font-size:10.5px;font-weight:700;color:var(--ink);white-space:nowrap}
 /* Woher das Prestige der Runde kommt: die Summe groß, darunter ein
    geteilter Balken je Klasse. */
 .eh-anteil{margin:0 0 6px}

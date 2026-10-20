@@ -129,8 +129,8 @@ const EH_KLASSEN = [['legendary', 'legendär'], ['rare', 'selten'], ['common', '
 const _ehZahl = v => komma(Math.round(v * 10) / 10).replace(',0', '');
 
 // ── Die Säulen ──────────────────────────────────────────────────────
-// Je Geehrtem eine Säule, wie im Säulenbild eines Spieltags: unten das
-// Gesicht, darüber die Säule, so hoch wie das Prestige seiner Auszeichnungen
+// Je Geehrtem eine Säule, wie im Säulenbild eines Spieltags: unten sein
+// Wappen, Insignium und Gesicht wie in der Rangliste [§C27], darüber die Säule, so hoch wie das Prestige seiner Auszeichnungen
 // gegen den, der am meisten bekam, darauf die Zahl und die Zeichenkachel
 // seiner wertvollsten Auszeichnung [§C27]. Die Säule ist aus den
 // Auszeichnungen gestapelt, die Seltenste oben, in der Farbe ihrer Klasse
@@ -145,10 +145,17 @@ function _ehrungSaeulen(sp, gross){
   const pm = pmap();
   const da = sp.filter(x => pm[x.pid] && x.summe > 0);
   if(!da.length) return '';
-  // Ab sieben rücken die Säulen der Karte zusammen und nennen ganze Zahlen:
-  // neun Spieler brachen sonst in eine zweite Reihe um, und die Karte wurde
-  // so hoch wie zwei. Das Blatt bricht um, dort stehen die Namen darunter.
-  const eng = !gross && da.length > 6;
+  // Ein Wappen braucht 48 px, darunter bleibt nur das Gesicht
+  // (`insAvWrap`). Die Karte ist im Feed bei 360 px nur 287 px breit: in
+  // einer Reihe stehen höchstens fünf, im Blatt mit den Namen darunter vier;
+  // wer mehr ehrt, teilt die Säulen auf gleich lange Reihen, die vorderen
+  // für die mit dem meisten Prestige. Auf schmaleren Telefonen werden die
+  // Wappen über die Breite der Bühne kleiner (`--je`, CSS), statt dass eine
+  // Säule allein in die nächste Reihe bricht. Vorher standen auf der Karte
+  // nackte Gesichter von 30 px — ohne das Insignium, das sie überall sonst
+  // tragen.
+  const WAPPEN = gross ? 52 : 48, JE_REIHE = gross ? 4 : 5;
+  const reihen = Math.ceil(da.length / JE_REIHE), breite = Math.ceil(da.length / reihen);
   const H = gross ? 96 : 52, MIN = 6, max = Math.max(...da.map(x => x.summe));
   let gold = 0;
   const saeule = (x, i) => {
@@ -165,13 +172,16 @@ function _ehrungSaeulen(sp, gross){
     const top = posten[0];
     return `<span class="eh-s" data-pid="${esc(x.pid)}" style="--i:${i}">`
       + `<span class="eh-s-z" title="${esc(top ? top.name : '')}">${top ? _ehrungKachel(top, () => gold++, gross ? '' : 'k') : ''}</span>`
-      + `<em class="eh-s-w num">+${eng ? Math.round(x.summe) : _ehZahl(x.summe)}</em>`
+      + `<em class="eh-s-w num">+${_ehZahl(x.summe)}</em>`
       + `<span class="eh-saeule" style="height:${h}px">${stuecke}</span>`
-      + `<span class="eh-s-av" title="${esc(pm[x.pid].name)}">${rcpAvHtml(x.pid, gross ? 40 : eng ? 26 : 30, {})}</span>`
+      + `<span class="eh-s-av" title="${esc(pm[x.pid].name)}">${rcpAvHtml(x.pid, WAPPEN, {})}</span>`
       + (gross ? `<b class="eh-s-n">${esc(pm[x.pid].name)}</b>` : '')
-      + `</span>`;
+      + `</span>`
+      // Der Umbruch steht ausdrücklich da: von selbst bräche die Reihe erst
+      // am Rand und ließe einen allein in der zweiten.
+      + ((i + 1) % breite === 0 && i + 1 < da.length ? '<span class="eh-umbruch" aria-hidden="true"></span>' : '');
   };
-  return `<div class="eh-buehne${gross ? ' gross' : eng ? ' eng' : ''}">${da.map(saeule).join('')}</div>`;
+  return `<div class="eh-buehne${gross ? ' gross' : breite >= 5 ? ' voll' : ''}" style="--je:${breite}">${da.map(saeule).join('')}</div>`;
 }
 
 // Die Zeichenkachel einer Auszeichnung in der Farbe ihrer Klasse [§C27].

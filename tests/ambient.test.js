@@ -6644,7 +6644,7 @@ const _eh = JSON.parse(K.eval(`JSON.stringify((function(){
     _newsEhrungStories(t).forEach(s => { if(!ids.has(s.id)){ ids.add(s.id); alle.push(s); } });
   const ORD = {legendary:0, rare:1, common:2};
   const falsch = [];
-  let legendaer = 0, eng = 0, kacheln = 0, zeilen = 0;
+  let legendaer = 0, umbruch = 0, kacheln = 0, zeilen = 0;
   alle.forEach(s => {
     const d = s.dataRef, sp = d.spieler;
     const h = _newsEhrungHtml(s, false, '');
@@ -6669,12 +6669,18 @@ const _eh = JSON.parse(K.eval(`JSON.stringify((function(){
       const soll = x.posten.filter(q => q.klasse !== 'common').length + (x.posten.some(q => q.klasse === 'common') ? 1 : 0);
       if(stuecke !== soll) falsch.push(s.id + ' ' + pname(x.pid) + ': ' + stuecke + ' Stücke statt ' + soll);
       if(x.posten[0].klasse === 'legendary' && o.indexOf('glanz-bahn') < 0) falsch.push(s.id + ' ' + pname(x.pid) + ': Gold ohne Lauflicht');
+      // Unter der Säule das Wappen, Insignium und Gesicht, nicht das
+      // nackte Gesicht von 30 px.
+      if(!/<span class="eh-s-av"[^>]*><span class="rav zn/.test(o)) falsch.push(s.id + ' ' + pname(x.pid) + ': ohne Wappen');
     });
     if(hoehe[0] !== Math.max(...hoehe)) falsch.push(s.id + ': Säulen ' + hoehe.join(','));
+    // Höchstens fünf je Reihe, die Reihen gleich lang.
+    const reihen = h.split('eh-umbruch').length, je = Math.ceil(sp.length / reihen);
+    if(reihen !== Math.ceil(sp.length / 5)) falsch.push(s.id + ': ' + reihen + ' Reihen für ' + sp.length);
+    if(reihen > 1){ umbruch++; if(sp.length - je * (reihen - 1) < je - 1) falsch.push(s.id + ': ungleiche Reihen'); }
     // Der Schimmer des Seltenen nur mit einer legendären Auszeichnung.
     const leg = sp.some(x => x.posten.some(q => q.klasse === 'legendary'));
     if(leg !== /nf-glanz/.test(h.slice(0, 200))) falsch.push(s.id + ': Schimmer ' + !leg);
-    if(sp.length > 6){ eng++; if(h.indexOf('eh-buehne eng') < 0) falsch.push(s.id + ': ' + sp.length + ' ohne enge Form'); }
     // Im Fuß jede Klasse, die vorkommt, und zusammen alle Auszeichnungen.
     const fuss = (h.match(/<span class="eh-k \\w+"><i><\\/i><b class="num">\\d+<\\/b>/g) || []).map(x => +x.replace(/<[^>]+>/g, ''));
     if(fuss.reduce((a, b) => a + b, 0) !== d.zahl) falsch.push(s.id + ': Fuß ' + fuss.join('+') + ' statt ' + d.zahl);
@@ -6711,11 +6717,11 @@ const _eh = JSON.parse(K.eval(`JSON.stringify((function(){
   const blattP = _ndEhrungBlatt({dataRef:{spieler:[{pid:players[0].id, summe:probe.p,
     posten:[Object.assign({name:'Mauer', ic:'shield'}, probe)]}]}}).mitte;
   const breite = +((blattP.match(/eh-q-m"[^>]*><i style="width:([\\d.]+)%/) || [])[1]);
-  return {n:alle.length, falsch, legendaer, eng, kacheln, zeilen, breite, soll:r(probe), voll:r(erst)};
+  return {n:alle.length, falsch, legendaer, umbruch, kacheln, zeilen, breite, soll:r(probe), voll:r(erst)};
 })())`));
-ok(_eh.n >= 40 && _eh.legendaer > 0 && _eh.eng > 0 && _eh.kacheln > 0 && _eh.zeilen > 0 && !_eh.falsch.length,
-   'die Ehrung trägt je Geehrtem eine Säule aus seinen Auszeichnungen mit der Zeichenkachel der seltensten, im Fuß jede Klasse, im Satz die wertvollste, im Blatt jede genau einmal in ihrem Kasten',
-   _eh.falsch.slice(0, 4).join(' | ') || _eh.n + ' Ehrungen, ' + _eh.legendaer + ' legendär, ' + _eh.eng + ' eng, ' + _eh.zeilen + ' Zeilen, ' + _eh.kacheln + ' Kacheln');
+ok(_eh.n >= 40 && _eh.legendaer > 0 && _eh.umbruch > 0 && _eh.kacheln > 0 && _eh.zeilen > 0 && !_eh.falsch.length,
+   'die Ehrung trägt je Geehrtem eine Säule auf seinem Wappen mit der Zeichenkachel der seltensten Auszeichnung, höchstens fünf je Reihe, im Fuß jede Klasse, im Satz die wertvollste, im Blatt jede genau einmal in ihrem Kasten',
+   _eh.falsch.slice(0, 4).join(' | ') || _eh.n + ' Ehrungen, ' + _eh.legendaer + ' legendär, ' + _eh.umbruch + ' auf zwei Reihen, ' + _eh.zeilen + ' Zeilen, ' + _eh.kacheln + ' Kacheln');
 ok(Math.round(_eh.breite) === _eh.soll && _eh.soll < 100 && _eh.voll === 100,
    'der Strich unter einer Auszeichnung zeigt, wie viel vom vollen Wert sie beim wievielten Mal bringt',
    _eh.breite + ' % statt ' + _eh.soll + ' %');
