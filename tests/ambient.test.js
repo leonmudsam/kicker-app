@@ -2096,13 +2096,13 @@ const _kopfN = JSON.parse(K.eval(`JSON.stringify((function(){
       if(fehlt.length) falsch.push(s.title + ' → Bühne ohne ' + fehlt.map(x => pmap()[x].name).join(', '));
       return;
     }
-    // Gezaehlt wird am Markup: wie viele Gesichter stehen da, und steht der
-    // Chip mit dem Rest daneben?
+    // Gezaehlt wird am Markup: das Blatt zeigt jedes Wappen und keinen
+    // Chip mit einem Rest — „ein Blatt zeigt alles". Die Erwartung stand auf
+    // drei Wappen und „+2", galt aber nur, solange keine Story mit vier
+    // Genannten diesen Kopf erreichte; die Ehrung tut es.
     const nAv = (kopf.match(/class="rav zn"/g) || []).length;
     const mehr = (kopf.match(/nd-held-mehr">\\+(\\d+)</) || [])[1];
-    const zeig = Math.min(3, ids.length);
-    const rest = ids.length - zeig;
-    if(nAv !== zeig || (rest > 0 ? Number(mehr) !== rest : mehr != null))
+    if(nAv !== ids.length || mehr != null)
       falsch.push(s.title + ' → ' + nAv + ' von ' + ids.length + (mehr ? ' +' + mehr : ''));
   });
   return {n, falsch:falsch.slice(0, 4)};

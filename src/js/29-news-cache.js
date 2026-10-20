@@ -445,7 +445,7 @@ function _consolidateStoriesLegacy(list){
   // Tag: es gibt sie je Runde genau einmal, also wiederholt sie nichts.
   const _OHNE_SPERRE = new Set(['ambient', 'sammel', 'season_endgame', 'spiel',
                                 'potd', 'woche', 'chronik_monat', 'season_recap', 'runde',
-                                'karriereende']);
+                                'ehrung', 'karriereende']);
   const _aussage = st => {
     const d = (st && st.dataRef) || {};
     const typ = d.type || '';
@@ -1653,7 +1653,7 @@ function _consolidateStoriesLegacy(list){
   // derselben Woche zu unterschlagen wäre genau der Fehler, den die Regel
   // verhindern soll. Und `ambient`/`group` sind ohnehin je Slot einzeln.
   const OHNE_DECKEL = new Set(['lead_change','elo_record','streak_record',
-                               'season_endgame','ambient','group','runde']);
+                               'season_endgame','ambient','group','runde','ehrung']);
   const NF_DECKEL = Number.POSITIVE_INFINITY;
   // Eine Sammelkarte zaehlt nach ihrer ACHSE mit, nicht als „sammel". Sie war
   // ganz ausgenommen, und gemessen standen am 26.08. vier Karten „Ein Spiel,

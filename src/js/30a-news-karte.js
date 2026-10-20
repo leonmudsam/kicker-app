@@ -9,6 +9,7 @@ function _newsRubrik(sorte, s){
   const d = (s && s.dataRef) || {};
   if(_isBreaking(s)) return 'BREAKING';
   if(d.type === 'runde') return 'DIE RUNDE';
+  if(d.type === 'ehrung') return 'DIE EHRUNG';
   switch(sorte){
     case 'spiel':  return 'AM SPIELTAG';
     case 'tafel':  return 'EWIGE TAFEL';
@@ -672,6 +673,7 @@ function _newsSorte(s){
   const t = d.type || '';
   if(t === 'woche') return 'woche';                       // Zeilen der Wertungen
   if(t === 'runde') return 'spiel';                       // die Runde der Vier [§11.6c]
+  if(t === 'ehrung') return 'badge';                      // die Ehrung nach einer Runde [§11.6f]
   if(t === 'insignium_stufe') return 'ins';               // die Leiter
   if(t === 'insignium_tag') return 'ins';                 // die Leiter des Tages
   if(t === 'ambient') return 'fakt';                      // leise, eine Zahl
@@ -1041,7 +1043,7 @@ function _newsTagSpannung(s){
 // beantwortet haben — zwei Listen fuer dieselbe Aussage waere eine zu viel.
 const NEWS_TAGKARTE_OHNE = new Set(['ambient', 'dry_spell', 'season_endgame',
   'quiet_week', 'season_start', 'potd', 'potw', 'woche', 'chronik_monat',
-  'season_recap', 'runde']);
+  'season_recap', 'runde', 'ehrung']);
 function _newsTagKarteWuerdig(st){
   if(NEWS_TAGKARTE_OHNE.has(((st && st.dataRef) || {}).type || '')) return false;
   if(_newsIstNegativ(st)) return false;

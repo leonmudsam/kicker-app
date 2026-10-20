@@ -1476,3 +1476,25 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   .nd-ff{padding:4px 0 2px}
   .nd-ff .ff{margin:0}
   .ff-zw-m small b{color:var(--ink);font-weight:600}
+
+/* ── Die Ehrung [§11.6f] ───────────────────────────────────────────── */
+/* Auf der Karte eine Reihe Zeichen, das Seltenste vorn; sie bricht um,
+   statt eine Auszeichnung hinter „+3" zu verstecken. */
+.eh-reihe{display:flex;flex-wrap:wrap;gap:5px;margin:2px 0 8px}
+.eh-z{display:inline-flex}
+/* Im Blatt je Spieler ein Kasten: Wappen, Name und Summe oben, darunter
+   jede Auszeichnung mit Klasse, dem wievielten Mal und ihrem Wert. */
+.eh-sp{border:1px solid var(--line);border-radius:12px;background:var(--surface);
+  overflow:hidden;margin-bottom:8px}
+.eh-sp-k{display:flex;align-items:center;gap:10px;padding:10px 13px;background:var(--surface2);
+  border-bottom:1px solid var(--line)}
+.eh-sp-k b{flex:1 1 auto;min-width:0;font-family:'Archivo Black',sans-serif;font-size:13px;
+  color:var(--ink);overflow-wrap:anywhere}
+.eh-sp-k em{font-style:normal;font-family:'Archivo Black',sans-serif;font-size:15px;color:var(--gold)}
+.eh-q{display:flex;align-items:center;gap:10px;padding:8px 13px}
+.eh-q + .eh-q{border-top:1px solid var(--line)}
+.eh-q-t{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px}
+.eh-q-t b{font-size:12.5px;font-weight:700;color:var(--ink);overflow-wrap:anywhere}
+.eh-q-t small{font-family:'Sometype Mono',monospace;font-size:9.5px;color:var(--muted);letter-spacing:.03em}
+.eh-q em{font-style:normal;font-family:'Sometype Mono',monospace;font-size:12px;font-weight:700;color:var(--gold)}
+.eh-zeit{margin:8px 2px 2px}

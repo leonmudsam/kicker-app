@@ -1401,7 +1401,9 @@ const ok = (c, msg, det) => {
                   // gemeinsamer Bildrahmen ist kein fehlender Textkarten-Kopf.
                   'sp-fk',
                   // Die Insignium-Karte des Tages: die Verwandlung als Bühne.
-                  'ni-b'];
+                  'ni-b',
+                  // Die Ehrung: die Zeichen ihrer Auszeichnungen in Klassenfarbe.
+                  'eh-reihe'];
     arr.forEach(x => {
       host.innerHTML = x.html;
       const karte = host.querySelector('.nf-card');

@@ -2025,6 +2025,8 @@ function _buildStories(){
   // ── Die Runde der Vier [§C33, §11.6c] ────────────────────────────────
   // Eine eigene Story je abgeschlossener Runde, dreißig Minuten nach ihrer
   // letzten Partie. Die Karten der Partien bleiben daneben stehen.
+  try { _newsEhrungStories(now.getTime()).forEach(st => stories.push(st)); }
+  catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] ehrung', e); }
   try { _newsRundenStories(now.getTime()).forEach(st => stories.push(st)); }
   catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] runde', e); }
 
