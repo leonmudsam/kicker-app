@@ -3128,9 +3128,10 @@
   .rcp-buehne .nf-ms-strahl{width:300px;height:300px;margin:-150px 0 0 -150px}
   @media (prefers-reduced-motion:no-preference){
     .rcp-buehne .pod-karte{animation:bauPodest .7s cubic-bezier(.2,.8,.2,1) both}
-    .rcp-buehne .pod-karte.bronze{animation-delay:.12s}
-    .rcp-buehne .pod-karte.silber{animation-delay:.3s}
-    .rcp-buehne .pod-karte.gold{animation-delay:.5s}
+    .rcp-buehne .pod-karte.gold{animation-delay:0s}
+    .rcp-buehne .pod-karte.silber{animation-delay:.22s}
+    .rcp-buehne .pod-karte.bronze{animation-delay:.44s}
+    .rcp-buehne .nf-ms-strahl{animation:msDreh 48s linear infinite,rcpDa .9s ease-out .45s both}
   }
   .rcp-z-l{font-family:'Sometype Mono',monospace;font-size:8.5px;font-weight:700;
     color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:5px;
@@ -6282,7 +6283,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.20.6a00ffe3';
+const BUILD_VERSION='2026.10.20.d31125e7';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
