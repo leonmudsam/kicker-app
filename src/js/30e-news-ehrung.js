@@ -140,8 +140,12 @@ const _ehZahl = v => komma(Math.round(v * 10) / 10).replace(',0', '');
 // wie auf der Ewigen Tafel: dieselbe Form für eine andere Zahl las sich als
 // dieselbe Nachricht. Ein Entwurf hängte Bänder mit Medaillen darunter —
 // eine Zeichnung, die es sonst nirgends in der App gibt.
-// `gross` ist das Blatt: dort steht der Name unter dem Gesicht.
-function _ehrungSaeulen(sp, gross){
+// `gross` ist das Blatt: dort steht der Name unter dem Gesicht. `o.still`
+// lässt das Lauflicht der legendären weg: im Rückblick stehen Säulen,
+// Podest und Wappen untereinander, und ein Licht je Säule wäre dort
+// Schimmer ohne Aussage.
+function _ehrungSaeulen(sp, gross, o){
+  o = o || {};
   const pm = pmap();
   const da = sp.filter(x => pm[x.pid] && x.summe > 0);
   if(!da.length) return '';
@@ -171,7 +175,7 @@ function _ehrungSaeulen(sp, gross){
     // darin der höchste Wert — die Posten sind schon so geordnet.
     const top = posten[0];
     return `<span class="eh-s" data-pid="${esc(x.pid)}" style="--i:${i}">`
-      + `<span class="eh-s-z" title="${esc(top ? top.name : '')}">${top ? _ehrungKachel(top, () => gold++, gross ? '' : 'k') : ''}</span>`
+      + `<span class="eh-s-z" title="${esc(top ? top.name : '')}">${top ? _ehrungKachel(top, o.still ? null : () => gold++, gross ? '' : 'k') : ''}</span>`
       + `<em class="eh-s-w num">+${_ehZahl(x.summe)}</em>`
       + `<span class="eh-saeule" style="height:${h}px">${stuecke}</span>`
       + `<span class="eh-s-av" title="${esc(pm[x.pid].name)}">${rcpAvHtml(x.pid, WAPPEN, {})}</span>`
@@ -188,10 +192,10 @@ function _ehrungSaeulen(sp, gross){
 // Eine legendäre trägt das Lauflicht wie im Profil, versetzt von Kachel zu
 // Kachel (`naechste` zählt die goldenen einer Ansicht), damit es durch die
 // Reihe wandert, statt überall zugleich aufzublitzen. Klein (`k`) überall
-// außer auf der Bühne des Blatts.
+// außer auf der Bühne des Blatts. Ohne `naechste` steht sie still.
 function _ehrungKachel(q, naechste, groesse){
   const z = zkHtml(q.ic, groesse == null ? 'k' : groesse, _ehrungTon(q.klasse));
-  return q.klasse === 'legendary' ? z.replace(/<\/span>$/, glanzBahn(1 + naechste() * .35) + '</span>') : z;
+  return q.klasse === 'legendary' && naechste ? z.replace(/<\/span>$/, glanzBahn(1 + naechste() * .35) + '</span>') : z;
 }
 
 // Die Klassen einer Runde: wie viele Auszeichnungen jeder Klasse und was sie

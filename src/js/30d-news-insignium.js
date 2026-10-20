@@ -185,6 +185,20 @@ function _newsInsTagZeilen(s){
   return `<div class="ni-zs">${l.map(zeile).join('')}</div>`;
 }
 
+// ── Mehrere Bewegungen nebeneinander ────────────────────────────────
+// Jede mit dem Zeichen von jetzt, dem Gesicht darin, dem Namen, der neuen
+// Lage und dem Wort für die Art. Das Blatt eines Tages und die Laufbahn im
+// Rückblick zeigen sie gleich [§C27]; `--i` ordnet ihr Erscheinen.
+function _insBewegungenHtml(liste){
+  const pm = pmap();
+  return (liste || []).filter(x => pm[x.pid]).map((x, i) =>
+    `<span class="nd-is-sp${x.art === 'ab' ? ' ab' : ''}" data-pid="${esc(x.pid)}" style="--i:${i}">`
+    + `<span class="nd-is-neu"><span class="nd-is-z">${_insZeichen(x.pid, x.nach)}</span>`
+    + `<span class="nd-is-av">${avHtml(pm[x.pid], '', {px:30})}</span></span>`
+    + `<b>${esc(_spName(x.pid))}</b><small>${esc(_insLageName(x.nach))}</small>`
+    + `<em>${esc(_insArtWort(x))}</em></span>`).join('');
+}
+
 // ── Das Blatt ───────────────────────────────────────────────────────
 // Oben die Bewegung der Schlagzeile groß, darunter jede Bewegung mit ihrem
 // Weg durch die Stufe und den drei Quellen des Prestiges an diesem Tag
@@ -199,12 +213,7 @@ function _ndInsTagBlatt(s){
   // Liste weiter unten auf [§C33].
   const da = l.filter(x => pm[x.pid]);
   const kopf = da.length > 1
-    ? `<div class="nd-buehne nd-is nd-is-viele">` + da.map(x =>
-        `<span class="nd-is-sp${x.art === 'ab' ? ' ab' : ''}" data-pid="${esc(x.pid)}">`
-        + `<span class="nd-is-neu"><span class="nd-is-z">${_insZeichen(x.pid, x.nach)}</span>`
-        + `<span class="nd-is-av">${avHtml(pm[x.pid], '', {px:30})}</span></span>`
-        + `<b>${esc(_spName(x.pid))}</b><small>${esc(_insLageName(x.nach))}</small>`
-        + `<em>${esc(_insArtWort(x))}</em></span>`).join('') + `</div>`
+    ? `<div class="nd-buehne nd-is nd-is-viele">${_insBewegungenHtml(da)}</div>`
     : `<div class="nd-buehne nd-is">`
     // Wie auf der Karte: links die tiefere Stufe, das Gesicht auf der von
     // jetzt, der Pfeil vom alten zum neuen Zeichen — beim Rückfall zurück.

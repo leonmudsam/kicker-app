@@ -156,24 +156,26 @@ function rcpKachelHtml(o){
   </div>`;
 }
 
-// Die Auszeichnungen eines Zeitraums als Kacheln — aus `R`, der Rechnung
-// des Awards-Reiters für genau diesen Zeitraum [§C27]. Name, Zahl und
-// Einheit kommen aus AW_WERT, wie dort; bei Gleichstand steht der Erste mit
-// „+N". Wer keinen Halter hat, fällt weg. Metall vorn, die Schattenseiten in
-// Rot dahinter [§C25]. `attr(key)` sagt, wohin die Kachel führt; `ohne`
-// lässt eine weg, die dasselbe schon an anderer Stelle sagt.
+// Die Awards eines Zeitraums — aus `R`, der Rechnung des Awards-Reiters für
+// genau diesen Zeitraum, und in SEINER Kachel (`awKachelHtml`) [§C27]: wer
+// es hat, mit Wappen, wie viel, und woraus als Lauf oder Lage im Feld.
+// Vorher baute der Rückblick eine eigene Kachel aus Zeichen, Etikett und
+// einer Zeile Mono-Text: dieselbe Torjäger-Wertung sah im Reiter wie eine
+// Trophäe aus und hier wie ein Formularfeld, und „Ø 6,9 Gegentore je
+// Partie" brach in drei Zeilen. Die Kacheln sind Metall statt Gold
+// (`metall`): Gold trägt im Rückblick der Sieger, sonst nichts [§C31].
+// Wer keinen Halter hat, fällt weg; die Schattenseiten stehen hinten.
+// `attr(key)` sagt, wohin die Kachel führt; `ohne` lässt eine weg, die
+// dasselbe schon an anderer Stelle sagt.
 function rcpAwardKacheln(R, metall, rot, attr, ohne){
   const out = [];
-  const kachel = (key, ton) => {
+  const kachel = key => {
     const top = awTop(key, R); if(!top.length) return;
     if(ohne && ohne(key, top)) return;
-    const t = awText(key, top[0]);
-    out.push(rcpKachelHtml({ic:AW_IC[key], label:AWARD_META[key].title,
-      name:awIds(key, top[0]).map(pname).join(' & ') + (top.length > 1 ? ' +'+(top.length-1) : ''),
-      wert:t.e ? t.z+' '+t.e : t.z, ton, attr:attr(key)}));
+    out.push(awKachelHtml(key, top, {liste:awListe(key, R), attr:attr(key), metall:true}));
   };
-  metall.forEach(k => kachel(k, 'metall'));
-  rot.forEach(k => kachel(k, 'red'));
+  metall.forEach(kachel);
+  rot.forEach(kachel);
   return out;
 }
 
@@ -563,20 +565,27 @@ function saisonZellenHtml(sid, pid){
 // Vergleich mit den anderen. Jeder Spieler steht als Zeile, Siege nach
 // rechts, Niederlagen nach links, um eine gemeinsame Null; der Held in Gold
 // [§C25]. Der Name bricht um, statt mit „…" zu enden.
+// Rechts steht, was der Zeitraum an Elo brachte, aus den Deltas der Partien:
+// Größter Aufwind war vorher eine eigene Kachel unter den Awards und nannte
+// eine Zahl, die hier für jeden steht. Vor dem Namen das Gesicht — ohne
+// Wappen, eine Zeile von 20 px trägt keins (Detail folgt der Größe).
 function rcpFeldHtml(ms, held){
   const z = {};
   ms.forEach(m => [m.a1, m.a2, m.b1, m.b2].forEach(id => {
     if(!id) return;
-    z[id] = z[id] || {w:0, l:0};
+    z[id] = z[id] || {w:0, l:0, elo:0};
     ((m.a1 === id || m.a2 === id) ? m.winner === 'A' : m.winner === 'B') ? z[id].w++ : z[id].l++;
+    z[id].elo += (m.deltas || {})[id] || 0;
   }));
   const ids = Object.keys(z).sort((a, b) => (z[b].w - z[b].l) - (z[a].w - z[a].l) || z[b].w - z[a].w);
   if(!ids.length) return '';
   const max = Math.max(1, ...ids.map(id => Math.max(z[id].w, z[id].l)));
-  return `<div class="rcp-feld">${ids.map((id, i) => `<div class="rcp-feld-z${id === held ? ' held' : ''}" style="--i:${i}">
-    <span class="rcp-feld-n">${esc(pname(id))}</span>
+  const elo = id => { const e = Math.round(z[id].elo);
+    return `<span class="rcp-feld-e num ${e > 0 ? 'auf' : e < 0 ? 'ab' : ''}">${e > 0 ? '+' : e < 0 ? '−' : '±'}${Math.abs(e)}</span>`; };
+  return `<div class="rcp-feld">${ids.map((id, i) => `<div class="rcp-feld-z${id === held ? ' held' : ''}" data-detail="${esc(id)}" style="--i:${i}">
+    <span class="rcp-feld-n">${rcpAvHtml(id, 20, {})}<span>${esc(pname(id))}</span></span>
     <span class="rcp-feld-b"><i class="l" style="width:${(z[id].l / max * 50).toFixed(1)}%"></i><u></u><i class="w" style="width:${(z[id].w / max * 50).toFixed(1)}%"></i></span>
-    <span class="rcp-feld-v num">${z[id].w}:${z[id].l}</span></div>`).join('')}</div>`;
+    <span class="rcp-feld-v num">${z[id].w}:${z[id].l}</span>${elo(id)}</div>`).join('')}</div>`;
 }
 
 // ── Die Woche eines Spielers ─────────────────────────────────────────
@@ -623,4 +632,313 @@ function rcpEloBahnHtml(ms, pid){
     <path class="rcp-elo-l" pathLength="1" d="${d}"/>
     ${pts.map((v, i) => i ? `<circle class="${v >= pts[i - 1] ? 'w' : 'l'}" style="--i:${(i / (pts.length - 1)).toFixed(2)}" cx="${x(i)}" cy="${y(v)}" r="3"/>` : '').join('')}
   </svg><div class="rcp-elo-z num"><span>Erste Partie</span><b class="${s >= 0 ? 'pos' : 'neg'}">${s >= 0 ? '+' : ''}${s} Elo</b></div></div>`;
+}
+
+// ╔═══ §C31 ─── DIE GRAFIKEN DER RÜCKBLICKE ────────────────────────────╗
+//     Saison und Woche erzählten mit Zeilen und Kacheln aus Text: die
+//     Rangliste als zwölf große Karten, neununddreißig Rekorde als
+//     neununddreißig Zeilen, die Chronik als Liste, und was der Monat für die
+//     Laufbahnen bedeutete, stand nirgends. Die Bauteile hier zeigen jede
+//     dieser Fragen als Bild: der Zeitraum als Kalender, die Tabelle als
+//     Balken mit ihren Bewegungen, das Team mit seinen Partien, die Wirkung
+//     auf die Laufbahn nach Quellen, die Rekorde nach ihren Haltern, die
+//     Beinamen auf ihrem Band. Gerechnet wird darin nichts Neues: jede Zahl
+//     kommt aus der Stelle, die sie überall sonst liefert [§C27].
+// ╚═════════════════════════════════════════════════════════════════════╝
+
+// ── Der Zeitraum als Kalender ────────────────────────────────────────
+// Ein Feld je Tag, eine Woche je Reihe, montags beginnend; je mehr Partien
+// an einem Tag, desto heller das Feld, und die Zahl steht darin. „17
+// Spieltage, 120 Partien" sagte nicht, ob der Monat gleichmäßig lief oder
+// an zwei Abenden entschieden wurde. Die Woche ist dieselbe Zeichnung mit
+// einer Reihe. Hell ist Metall, keine Richtung und kein Titel [§C25].
+function rcpKalenderHtml(ms, von, tage){
+  const je = {};
+  (ms || []).forEach(m => { const k = tagKey(mts(m)); je[k] = (je[k] || 0) + 1; });
+  const d0 = new Date(von); d0.setHours(0, 0, 0, 0);
+  const max = Math.max(1, ...Object.values(je));
+  const WT = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+  let zellen = '';
+  for(let i = 0, vor = wochentagMo(d0); i < vor; i++) zellen += '<span class="rcp-kal-x"></span>';
+  for(let i = 0; i < tage; i++){
+    const d = new Date(d0); d.setDate(d0.getDate() + i);
+    const n = je[tagKey(d)] || 0;
+    const k = n ? Math.max(1, Math.ceil(n / max * 4)) : 0;
+    zellen += `<span class="rcp-kal-t k${k}" style="--i:${i}"><small class="num">${d.getDate()}</small>`
+      + `${n ? `<b class="num">${n}</b>` : ''}</span>`;
+  }
+  return `<div class="rcp-kal${tage <= 7 ? ' woche' : ''}">${
+    WT.map(t => `<span class="rcp-kal-w">${t}</span>`).join('')}${zellen}</div>`;
+}
+
+// ── Die Tabelle eines Monats ─────────────────────────────────────────
+// Jede Zeile ein Balken, so lang wie die Saison-Elo im Feld, dazu die
+// Bewegung gegenüber dem Vormonat, die Bilanz als geteilter Strich und die
+// Elo. Vorher stand jeder als große Ranglistenkarte mit Wappen da, zwölf
+// Karten über anderthalb Bildschirme, und der größte Sprung und der tiefste
+// Fall standen als zwei eigene Kacheln darunter. Hier stehen sie in ihrer
+// Zeile, hervorgehoben. Das Wappen trägt das Podest darüber; in einer
+// Tabelle reicht das Gesicht (Detail folgt der Größe).
+// `platzVor` ist {pid: Platz im Vormonat} oder null, wenn es keinen gab.
+function rcpTabelleHtml(rang, platzVor){
+  if(!rang || !rang.length) return '';
+  const elos = rang.map(e => e.elo), lo = Math.min(...elos), hi = Math.max(...elos);
+  const zug = rang.map((e, i) => platzVor && platzVor[e.id] ? platzVor[e.id] - (i + 1) : null);
+  const auf = Math.max(0, ...zug.filter(x => x != null)), ab = Math.min(0, ...zug.filter(x => x != null));
+  const METALL = ['gold', 'silber', 'bronze'];
+  const PF_AUF = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V5M6 11l6-6 6 6"/></svg>';
+  const PF_AB = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v15M6 13l6 6 6-6"/></svg>';
+  const chip = (z, e) => {
+    if(!platzVor) return '';
+    if(z == null) return `<span class="rcp-tab-z leer" title="im Vormonat nicht in der Tabelle">–</span>`;
+    if(z > 0) return `<span class="rcp-tab-z auf${z === auf ? ' max' : ''}" title="Platz ${platzVor[e.id]} im Vormonat">${PF_AUF}${z}</span>`;
+    if(z < 0) return `<span class="rcp-tab-z ab${z === ab ? ' max' : ''}" title="Platz ${platzVor[e.id]} im Vormonat">${PF_AB}${-z}</span>`;
+    return `<span class="rcp-tab-z gleich" title="derselbe Platz wie im Vormonat">=</span>`;
+  };
+  return `<div class="rcp-tab${platzVor ? ' mit-zug' : ''}">${rang.map((e, i) => {
+    const sp = e.wins + e.losses, wr = sp ? e.wins / sp * 100 : 0;
+    const w = hi > lo ? 22 + (e.elo - lo) / (hi - lo) * 78 : 100;
+    return `<div class="rcp-tab-r${i < 3 ? ' ' + METALL[i] : ''}" data-detail="${esc(e.id)}" style="--w:${w.toFixed(1)}%;--i:${i}">
+      <span class="rcp-tab-p num">${i + 1}</span>${chip(zug[i], e)}
+      ${rcpAvHtml(e.id, 26, {})}
+      <span class="rcp-tab-n">${esc(pname(e.id))}</span>
+      <span class="rcp-tab-b" title="${e.wins} Siege, ${e.losses} Niederlagen"><span class="rcp-tab-wl"><i style="width:${wr.toFixed(1)}%"></i></span>
+        <small class="num">${e.wins}–${e.losses}</small></span>
+      <b class="rcp-tab-e num">${e.elo < 0 ? '−' + Math.abs(e.elo) : e.elo}</b>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+// ── Das Team der Saison ──────────────────────────────────────────────
+// Das Duo mit dem größten gemeinsamen Elo-Zuwachs (`seasonTeamOf`, dieselbe
+// Rechnung wie der Badge-Zähler), mit seinen Partien als Zellen in
+// Spielreihenfolge. Vorher fragte der Rückblick nur die gespeicherte Zeile
+// der Saison: fehlte sie, gab es kein Team der Saison, obwohl die Rechnung
+// eins kannte. Ein Duo hat keinen Rang, also keine Wappen, sondern das Paar.
+function rcpTeamHtml(sid, ms){
+  let t = null;
+  try { t = seasonTeamOf(sid); } catch(e){ t = null; }
+  if(!t || !t[0] || !t[1] || !pmap()[t[0]] || !pmap()[t[1]]) return '';
+  const [a, b] = t;
+  const paar = (x, y) => (x === a && y === b) || (x === b && y === a);
+  const zusammen = (ms || []).filter(m => paar(m.a1, m.a2) || paar(m.b1, m.b2))
+    .slice().sort((x, y) => mts(x) - mts(y));
+  if(!zusammen.length) return '';
+  const sieg = m => paar(m.a1, m.a2) ? m.winner === 'A' : m.winner === 'B';
+  const w = zusammen.filter(sieg).length, l = zusammen.length - w;
+  let elo = 0;
+  try { elo = Math.round((((getGlobalSim().seasonTeamElo || {})[sid]) || {})[paarKey(a, b)] || 0); } catch(e){ elo = 0; }
+  return `<div class="rcp-team klick" data-team="${esc(paarKey(a, b))}">
+    <div class="rcp-team-l">${svgI('users')}Team der Saison</div>
+    <div class="rcp-team-m">${rcpPaarHtml([a, b], 46)}
+      <span class="rcp-team-t"><b>${esc(pname(a))} &amp; ${esc(pname(b))}</b>
+        <small class="num">${zusammen.length} Partien · ${w}:${l}</small></span>
+      <span class="rcp-team-e"><b class="num ${elo >= 0 ? 'auf' : 'ab'}">${elo >= 0 ? '+' : '−'}${Math.abs(elo)}</b><small>Elo zusammen</small></span>
+    </div>
+    <div class="srn-z">${zusammen.map(m => `<i class="${sieg(m) ? 'w' : 'l'}"></i>`).join('')}</div>
+  </div>`;
+}
+
+// ── Was nachkommt ────────────────────────────────────────────────────
+// Die Wirkung auf die Laufbahn braucht zwei Prestige-Stände, die Rekorde
+// einer Woche zwei Rekordstände — Zeitschnitte, die sonst niemand fragt.
+// Im Blatt gerechnet öffnete der Wochenrückblick gemessen 280 ms nach dem
+// Tippen statt 20 ms, auf dem Telefon ein Vielfaches, und so lange stand
+// nichts da [§C43]. Das Blatt öffnet deshalb ohne sie, mit einem ruhigen
+// Platzhalter, und sie kommen, wenn es eingefahren ist. Ist es inzwischen
+// ein anderes Blatt, fallen sie weg. `binden` bekommt den neuen Teil.
+const RCP_SPAET_MS = 380;
+function rcpSpaetHtml(){
+  return '<div class="rcp-spaet" data-rcp-spaet aria-busy="true"><i></i><i></i><i></i><i></i></div>';
+}
+function rcpSpaetLaden(wurzel, bau, binden){
+  const box = wurzel && wurzel.querySelector('[data-rcp-spaet]');
+  if(!box) return;
+  setTimeout(() => {
+    if(!box.isConnected) return;
+    let html = '';
+    try { html = bau() || ''; } catch(e){ html = ''; }
+    if(!box.isConnected) return;
+    const da = document.createElement('div');
+    da.className = 'rcp-spaet-da';
+    da.innerHTML = html;
+    box.replaceWith(da);
+    if(binden) binden(da);
+  }, RCP_SPAET_MS);
+}
+
+// ── Die Wirkung auf die Laufbahn ─────────────────────────────────────
+// Was ein Zeitraum an Prestige gebracht oder gekostet hat, je Spieler und
+// nach den drei Quellen [§C34]: Auszeichnungen Violett, Monatschroniken
+// Gold, Rekorde Silber — die Farben der Aufschlüsselung im Blatt einer
+// Stufe [§C27]. Was verloren ging (ein Rekord geteilt oder abgegeben),
+// steht links der Null in Rot [§C25]. Darüber, wer dadurch ein neues
+// Zeichen trägt. Vorher sagte kein Rückblick, was der Monat für die
+// Laufbahnen bedeutete: Rekorde, Chroniken und Auszeichnungen standen als
+// Listen da, ihre Summe nirgends.
+// Zwei Stände, wie überall, wo eine Änderung gezeigt wird [§11.0e]: vor dem
+// Zeitraum und an seinem Ende. Ein Zeitraum zeigt, wer darin sichtbar ist
+// [§C40]; ein Ruheständler bewegt sich nicht mehr und fällt heraus.
+// `posten` sind die Auszeichnungen des Zeitraums aus denselben zwei Ständen:
+// wie oft jede dazukam und was sie brachte. Die Säulen darüber lasen sie
+// zuerst aus den Verleihungen der Ehrung-Story, und die kennt nur, was an
+// einer Partie hängt — Spieler der Woche und des Tages, Team der Saison und
+// Sammler fehlten, und bei Julian standen in den Säulen 344 Prestige aus
+// Auszeichnungen, in der Laufbahn 633.
+function rcpLaufbahnDaten(vonMs, bisMs){
+  const A = _storyStand(vonMs - 1), B = _storyStand(bisMs);
+  const BADGE = new Map(BADGES.map(b => [b.id, b]));
+  return (players || []).filter(p => sichtbar(p)).map(p => {
+    const w = _prestigeWirkung(p.id, A, B);
+    const teile = {auszeichnung:w.delta - w.rekordDelta - w.monatDelta, monat:w.monatDelta, rekord:w.rekordDelta};
+    const lage = (st, gr, pt) => ({stufe:st | 0, grad:gr | 0, punkte:pt});
+    const je = st => { const o = {};
+      (((st.prestige(p.id) || {}).quellen) || []).forEach(q => { if(q.q === 'auszeichnung') o[q.id] = q; });
+      return o; };
+    const a = je(A), b = je(B);
+    const posten = Object.keys(b).map(id => {
+      const mal = (b[id].mal || 0) - ((a[id] || {}).mal || 0);
+      const pt = Math.round(((b[id].p || 0) - ((a[id] || {}).p || 0)) * 10) / 10;
+      const def = BADGE.get(id) || {};
+      return {id, name:b[id].name || def.name || id, ic:def.ic || 'medal', klasse:rarityOf(id), mal, bis:b[id].mal || 0, p:pt};
+    }).filter(q => q.mal > 0 && q.p > 0);
+    return {pid:p.id, delta:w.delta, vor:w.vor, nach:w.nach, teile, posten,
+            von:lage(w.stufeVor, w.gradVor, w.vor), zu:lage(w.stufeNach, w.gradNach, w.nach)};
+  });
+}
+// Die neuen Zeichen: wer eine Stufe oder einen Grad weiter oder zurück
+// steht, in der Form der Insignium-Karte (`_insBewegungenHtml`).
+function rcpZeichenZuege(daten){
+  return daten.map(x => {
+    const a = insigniumPos(x.von), b = insigniumPos(x.zu);
+    if(a === b) return null;
+    const art = x.zu.stufe > x.von.stufe ? 'auf' : b > a ? 'grad' : 'ab';
+    return {pid:x.pid, art, vor:x.von, nach:x.zu};
+  }).filter(Boolean).sort(_insZugVor);
+}
+const RCP_QUELLEN = [['auszeichnung', 'Auszeichnungen'], ['monat', 'Monatschroniken'], ['rekord', 'Rekorde']];
+function rcpLaufbahnHtml(daten){
+  const l = (daten || []).filter(x => x.delta || Object.values(x.teile).some(Boolean))
+    .sort((a, b) => b.delta - a.delta || pname(a.pid).localeCompare(pname(b.pid), 'de'));
+  if(!l.length) return '';
+  const plus = x => RCP_QUELLEN.reduce((n, [k]) => n + Math.max(0, x.teile[k]), 0);
+  const minus = x => RCP_QUELLEN.reduce((n, [k]) => n + Math.max(0, -x.teile[k]), 0);
+  const P = Math.max(0, ...l.map(plus)), M = Math.max(0, ...l.map(minus));
+  const ganz = Math.max(1, P + M), null0 = M / ganz * 100;
+  const pct = v => (v / ganz * 100).toFixed(2) + '%';
+  const summe = {};
+  RCP_QUELLEN.forEach(([k]) => { summe[k] = l.reduce((n, x) => n + x.teile[k], 0); });
+  const vz = v => (v > 0 ? '+' : v < 0 ? '−' : '±') + Math.abs(v);
+  // Jedes Stück steht an seinem Platz auf der ganzen Bahn: rechts der Null
+  // aneinander, was dazukam, links davon, was verloren ging.
+  const zeile = (x, i) => {
+    let stuecke = '', r = M, li = M;
+    RCP_QUELLEN.forEach(([k, name]) => {
+      const v = x.teile[k];
+      if(v > 0){ stuecke += `<i class="${k}" style="left:${pct(r)};width:${pct(v)}" title="${name} ${vz(v)}"></i>`; r += v; }
+      else if(v < 0){ li += v; stuecke += `<i class="${k} weg" style="left:${pct(li)};width:${pct(-v)}" title="${name} ${vz(v)}"></i>`; }
+    });
+    return `<div class="rcp-lb-z" data-laufbahn="${esc(x.pid)}" style="--i:${i}">
+      ${rcpAvHtml(x.pid, 24, {})}<span class="rcp-lb-n">${esc(pname(x.pid))}</span>
+      <span class="rcp-lb-b"><u style="left:${null0.toFixed(2)}%"></u>${stuecke}</span>
+      <b class="rcp-lb-d num ${x.delta > 0 ? 'auf' : x.delta < 0 ? 'ab' : ''}">${vz(x.delta)}</b>
+    </div>`;
+  };
+  return `<div class="rcp-lb">${l.map(zeile).join('')}</div>
+    <div class="rcp-lb-leg">${RCP_QUELLEN.map(([k, name]) => `<span class="${k}"><u></u>${name}`
+      + ` <b class="num">${vz(summe[k])}</b></span>`).join('')}</div>`;
+}
+
+// ── Die Rekorde eines Zeitraums nach ihren Haltern ───────────────────
+// Wer in diesem Monat welche Liga-Rekorde geholt hat, je Spieler eine
+// Gruppe: das Gesicht, die Zahl, darunter jeder Rekord mit seinem Zeichen
+// und dem, was passiert ist. Neununddreißig Zeilen untereinander waren
+// vier Bildschirme, und ob ein Spieler den Monat beherrscht hatte, musste
+// man aus den Namen darunter zusammenzählen. Ein geteilter Rekord steht bei
+// jedem seiner Halter. Die Zeichen sind Metall: Gold trägt hier der Sieger
+// [§C31]. Ein langes Wort im Namen wird kleiner, nicht gebrochen
+// (`_awLblLang`, wie in der Award-Kachel [§C27]): „Der Sonntagsschuss"
+// endete bei 360 px als „Sonntagsschus" und „s" darunter.
+const RCP_REKORD_ART = {neu:'erstmals', geholt:'übernommen', gesteigert:'verbessert'};
+function rcpRekordWandHtml(liste){
+  const je = {};
+  (liste || []).forEach(r => (r.pids || [r.pid]).forEach(pid => {
+    if(!pmap()[pid] || !sichtbar(pid)) return;
+    (je[pid] = je[pid] || []).push(r);
+  }));
+  const ids = Object.keys(je).sort((a, b) => je[b].length - je[a].length || pname(a).localeCompare(pname(b), 'de'));
+  if(!ids.length) return '';
+  const max = je[ids[0]].length;
+  return `<div class="rcp-rw">${ids.map((pid, i) => `<div class="rcp-rw-p" style="--i:${i}">
+    <div class="rcp-rw-k" data-detail="${esc(pid)}">${rcpAvHtml(pid, 28, {})}<b>${esc(pname(pid))}</b>
+      <span class="rcp-rw-s" style="--w:${(je[pid].length / max * 100).toFixed(1)}%"><i></i></span>
+      <em class="num">${je[pid].length}</em></div>
+    <div class="rcp-rw-l">${je[pid].map(r => `<span class="rcp-rw-r ${esc(r.art)}" data-chron="${esc(r.id)}">`
+      + `${zkHtml(r.ic, 'k', '')}<span><b class="${_awLblLang(r.name).trim()}">${esc(r.name)}</b><small>${esc(RCP_REKORD_ART[r.art] || '')}${
+        r.zeit ? ' · ' + esc(r.zeit) : ''}</small></span></span>`).join('')}</div>
+  </div>`).join('')}</div>`;
+}
+// Die Arten als Zahlen über der Wand: was an Rekorden neu, übernommen oder
+// verbessert wurde.
+function rcpRekordArtenHtml(liste){
+  const n = {};
+  (liste || []).forEach(r => { n[r.art] = (n[r.art] || 0) + 1; });
+  const teile = ['geholt', 'gesteigert', 'neu'].filter(k => n[k]);
+  return teile.length ? `<div class="rcp-rw-arten">${teile.map(k =>
+    `<span class="${k}"><b class="num">${n[k]}</b> ${RCP_REKORD_ART[k]}</span>`).join('')}</div>` : '';
+}
+
+// ── Die Beinamen eines Monats ────────────────────────────────────────
+// Je Spieler der eine Eintrag, der in seinem Profil steht und fürs Prestige
+// zählt [§C32], auf dem Band, das er dort trägt (`.pp-banner`) [§C27];
+// darunter der Beleg. Ohne Lauflicht: zehn Bänder untereinander mit je einem
+// Glanz wären zehn Schimmer ohne Aussage. Die Schattenseiten tragen kein Band
+// — das Band ist ein Titel [§C39] —, sie stehen klein und rot darunter.
+// Was jemand darüber hinaus anführte, klappt auf.
+function rcpBeinamenHtml(T){
+  if(!T || !T.awarded || !T.awarded.length) return {html:'', zahl:0};
+  const schatten = a => (_chronikMonat(a.titleId) || {}).art === 'schatten';
+  const gesehen = new Set(), zaehlt = [], neg = [], weitere = [];
+  T.awarded.forEach(a => {
+    if(!pmap()[a.pid]) return;
+    if(schatten(a)){ neg.push(a); return; }
+    if(gesehen.has(a.pid)) weitere.push(a); else { gesehen.add(a.pid); zaehlt.push(a); }
+  });
+  const band = a => {
+    const t = titleTone(a.tone);
+    return `<div class="rcp-bn" data-tplayer="${esc(a.pid)}">
+      ${rcpAvHtml(a.pid, 48, {})}
+      <span class="rcp-bn-t"><span class="pp-banner" style="--tt:${t.c};--ttr:${t.rgb}">
+        <span class="pp-title-pill"><span class="i">${svgI(a.ic)}</span>${esc(a.name)}</span></span>
+        <small><b>${esc(pname(a.pid))}</b>${a.ev ? ' · ' + esc(a.ev) : ''}</small></span>
+    </div>`;
+  };
+  const zeile = a => rcpZeileHtml({ic:a.ic, ton:a.tone, name:a.name, sub:pname(a.pid) + (a.ev ? ' · ' + a.ev : ''),
+    attr:`data-tplayer="${esc(a.pid)}"`});
+  const html = (zaehlt.length ? `<div class="rcp-bns">${zaehlt.map(band).join('')}</div>` : '')
+    + (neg.length ? `<div class="rcp-bn-neg">${neg.map(a => `<span data-tplayer="${esc(a.pid)}">`
+        + `${zkHtml(a.ic, 'k', 'rot')}<span><b>${esc(a.name)}</b><small>${esc(pname(a.pid))}</small></span></span>`).join('')}</div>` : '')
+    + (weitere.length ? `<div class="rcp-liste chron-rest">${weitere.map(zeile).join('')}</div>`
+        + _chronMehrKnopf(weitere.length) : '');
+  return {html, zahl:zaehlt.length};
+}
+
+// ── Die Auszeichnungen eines Zeitraums ───────────────────────────────
+// Die Säulen der Ehrung [§C27]: je Geehrtem sein Prestige aus
+// Auszeichnungen, gestapelt nach Klassen, auf seinem Wappen, darüber die
+// wertvollste als Zeichenkachel; darunter, was jede Klasse gebracht hat.
+// Still, ohne Lauflicht (`still`). Die Posten kommen aus den Ständen der
+// Laufbahn (`rcpLaufbahnDaten`): die Säule eines Spielers ist genau der
+// violette Teil seiner Zeile dort.
+function rcpEhrungHtml(daten){
+  const ORD = {legendary:0, rare:1, common:2};
+  const sp = (daten || []).filter(x => x.posten && x.posten.length).map(x => ({pid:x.pid,
+    summe:Math.round(x.posten.reduce((n, q) => n + q.p, 0) * 10) / 10,
+    posten:x.posten.slice().sort((a, b) => (ORD[a.klasse] - ORD[b.klasse]) || (b.p - a.p) || a.name.localeCompare(b.name, 'de'))}))
+    .sort((a, b) => b.summe - a.summe || pname(a.pid).localeCompare(pname(b.pid), 'de'));
+  if(!sp.length) return {html:'', zahl:0};
+  const klassen = _ehrungKlassen(sp);
+  const zahl = klassen.reduce((n, z) => n + z.n, 0);
+  return {zahl, html:`<div class="rcp-eh">${_ehrungSaeulen(sp, true, {still:true})}</div>`
+    + (klassen.length ? `<div class="eh-fuss rcp-eh-k">${klassen.map(_ehrungKlasseHtml).join('')}</div>` : '')};
 }

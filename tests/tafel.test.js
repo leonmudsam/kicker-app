@@ -716,7 +716,8 @@ const _rb = JSON.parse(K.eval(`JSON.stringify((function(){
       kopf: z(/class="rcp-head"/g), held: z(/class="rcp-held[" ]/g),
       podest: z(/class="podest /g), sieger: z(/class="pod-karte gold/g),
       zahlen: z(/class="rcp-z-s"/g), kacheln: z(/class="rcp-aw /g),
-      liste: z(/class="rcp-zeile/g),
+      trophaeen: z(/class="aw-trophy /g),
+      liste: z(/class="rcp-zeile/g), beinamen: z(/class="rcp-bn"/g), wand: z(/class="rcp-rw-r /g),
       wappen: z(/class="ins"/g), inline: z(/ style="/g),
       // Nicht die ZAHL der Inline-Styles zählt — ein berechneter Wert
       // (Avatarfarbe, --rav) gehört ins Markup. Es zählt, ob einer davon
@@ -760,10 +761,18 @@ ok(_kaputt.length === 0, 'alle drei Rückblicke rendern',
    _kaputt.map(([n,r]) => n + ': ' + r.fehler).join(' | ') || 'ohne Fehler');
 
 // 2. Alle drei benutzen denselben Baukasten: Kopf, Zahlenleiste, Kacheln.
-//    Wer eins davon neu baut, fällt hier auf.
-const _ohne = _drei.filter(([,r]) => !(r.kopf === 1 && r.zahlen >= 3 && r.kacheln >= 3));
+//    Wer eins davon neu baut, fällt hier auf. Saison und Woche zeigen ihre
+//    Awards in der Kachel des Awards-Reiters (`awKachelHtml`) [§C27] und
+//    keine eigene mehr: dieselbe Torjäger-Wertung sah im Reiter wie eine
+//    Trophäe aus und im Rückblick wie ein Formularfeld.
+// Der Tag hat zwei Kacheln: „Größter Aufwind" steht als Elo im Feld des
+// Tages, eine dritte Kachel sagte dieselbe Zahl ein zweites Mal.
+const _ohne = _drei.filter(([,r]) => !(r.kopf === 1 && r.zahlen >= 3 && r.kacheln + r.trophaeen >= 2));
 ok(_ohne.length === 0, 'alle drei benutzen Kopf, Zahlenleiste und Kacheln',
-   _drei.map(([n,r]) => n + ' ' + r.kopf + '/' + r.zahlen + '/' + r.kacheln).join(' · '));
+   _drei.map(([n,r]) => n + ' ' + r.kopf + '/' + r.zahlen + '/' + (r.kacheln + r.trophaeen)).join(' · '));
+ok(_rb.saison.trophaeen >= 10 && _rb.saison.kacheln === 0 && _rb.woche.trophaeen >= 6 && _rb.woche.kacheln === 0,
+   'Saison und Woche zeigen ihre Awards in der Kachel des Awards-Reiters',
+   'Saison ' + _rb.saison.trophaeen + '/' + _rb.saison.kacheln + ' · Woche ' + _rb.woche.trophaeen + '/' + _rb.woche.kacheln);
 
 // 2b. Der Saison-Rückblick zeigt das Podest der Ewigen Tafel und KEINE
 //     eigene Heldenkarte — die sagte dasselbe ein zweites Mal. Woche und Tag
@@ -795,9 +804,9 @@ ok(_viel.length === 0, 'kein Rückblick trägt ein ganzes Bauteil im style-Attri
 // 5. Der Saison-Rückblick zeigt, was in DIESEM Monat passiert ist: die
 //    Chronik und die Rekorde, die gefallen sind. Beides stand vorher nur
 //    woanders.
-ok(_rb.saison.chronik > 0 && _rb.saison.rekorde > 0 && _rb.saison.liste > 0,
+ok(_rb.saison.chronik > 0 && _rb.saison.rekorde > 0 && _rb.saison.beinamen > 0 && _rb.saison.wand > 0,
    'der Saison-Rückblick zeigt Chronik und Rekorde des Monats',
-   _rb.saison.chronik + ' Chronik-Einträge, ' + _rb.saison.rekorde + ' Rekorde');
+   _rb.saison.chronik + ' Chronik-Einträge, ' + _rb.saison.beinamen + ' Bänder, ' + _rb.saison.wand + ' Rekorde an der Wand');
 
 // 6. Das Banner zählt die Titel BIS ZU dieser Saison. Leon war in allen drei
 //    Monaten Meister; im Mai-Rückblick muss sein Banner einen Titel zeigen,
@@ -809,6 +818,78 @@ ok(_rb.federn1 !== _rb.federn3 && _rb.saisonMai.federn === _rb.federn1
    + 'Juli ' + _rb.saison.federn + ' (3 Titel = ' + _rb.federn3 + ') · heute '
    + _rb.titelHeute + ' Titel');
 K.eval(`closeSheet(true); awPeriod='all'; awSeasonId=null;`);
+
+// ─── Die Grafiken der Rückblicke rechnen nach [§C31] ─────────────────
+// Kalender, Tabelle, Laufbahn, Zeichen, Auszeichnungen und Rekorde zeigen
+// Zahlen, die anderswo schon gerechnet werden. Hier wird jede gegen ihre
+// Quelle gehalten: die Partien, die Rangliste, zwei Prestige-Stände.
+const _gr = JSON.parse(K.eval(`JSON.stringify((function(){
+  const sid = '2026-07', vor = _prevSeasonId(sid);
+  const von = seasonStart(sid).getTime(), bis = seasonEnd(sid).getTime();
+  const ms = matchesInSeason(sid);
+  // Der Kalender: ein Feld je Tag, davor die leeren bis zum Wochentag des
+  // Ersten, und die Zahlen darin ergeben die Partien des Monats.
+  const kal = rcpKalenderHtml(ms, seasonStart(sid), seasonEnd(sid).getDate());
+  const kalZahlen = [...kal.matchAll(/<b class="num">(\\d+)<\\/b>/g)].reduce((n, m) => n + +m[1], 0);
+  // Die Tabelle: eine Zeile je Spieler, Pfeile aus den Plätzen des Vormonats.
+  const rang = saisonRang(sid), pv = {};
+  saisonRang(vor).forEach((e, i) => { pv[e.id] = i + 1; });
+  const tab = rcpTabelleHtml(rang, pv);
+  const zug = rang.map((e, i) => pv[e.id] ? pv[e.id] - (i + 1) : null).filter(x => x != null);
+  const maxAuf = Math.max(...zug), maxAb = Math.min(...zug);
+  const istAuf = [...tab.matchAll(/data-detail="([^"]+)"[^>]*>\\s*<span class="rcp-tab-p num">\\d+<\\/span><span class="rcp-tab-z auf max"/g)].map(m => m[1]).sort();
+  const sollAuf = rang.filter((e, i) => pv[e.id] && pv[e.id] - (i + 1) === maxAuf).map(e => e.id).sort();
+  // Die Laufbahn: je Spieler der Unterschied zweier Stände, nach Quellen;
+  // die Auszeichnungen darin sind die Säulen darunter.
+  const daten = rcpLaufbahnDaten(von, bis);
+  const falsch = [], quelle = [], posten = [];
+  daten.forEach(x => {
+    const a = prestigeOf(x.pid, von - 1).punkte, b = prestigeOf(x.pid, bis).punkte;
+    if(Math.round(b - a) !== x.delta) falsch.push(pname(x.pid) + ' ' + x.delta + '≠' + (b - a));
+    const t = x.teile.auszeichnung + x.teile.monat + x.teile.rekord;
+    if(t !== x.delta) quelle.push(pname(x.pid));
+    const p = x.posten.reduce((n, q) => n + q.p, 0);
+    if(Math.abs(p - x.teile.auszeichnung) > 1.5) posten.push(pname(x.pid) + ' ' + Math.round(p) + '/' + x.teile.auszeichnung);
+  });
+  const eh = rcpEhrungHtml(daten).html;
+  const saeulen = [...eh.matchAll(/class="eh-s" data-pid="([^"]+)"[\\s\\S]*?class="eh-s-w num">\\+([\\d,]+)</g)]
+    .map(m => ({pid:m[1], w:parseFloat(m[2].replace(',', '.'))}));
+  const saeuleFalsch = saeulen.filter(s => Math.abs(s.w - daten.find(x => x.pid === s.pid).teile.auszeichnung) > 1.5).length;
+  // Die neuen Zeichen: genau wer zwischen den Ständen Stufe oder Grad wechselte.
+  const zuege = rcpZeichenZuege(daten).map(z => z.pid).sort();
+  const zSoll = players.filter(p => sichtbar(p)).filter(p => insigniumPos(prestigeOf(p.id, von - 1)) !== insigniumPos(prestigeOf(p.id, bis)))
+    .map(p => p.id).sort();
+  // Ein Rekord, dessen Wert beim selben Halter fiel, ist kein Rekord des
+  // Zeitraums; „verbessert" heißt gestiegen.
+  const w = _potwWocheVon('2026-08-17');
+  const rek = saisonRekorde(sid).concat(rekordeImZeitraum(w.start.getTime(), w.end.getTime()));
+  const gefallen = rek.filter(r => r.art === 'gesteigert' && !(r.val > r.vorwert)).map(r => r.name);
+  return {kalFelder:(kal.match(/class="rcp-kal-t /g) || []).length, tage:seasonEnd(sid).getDate(),
+    kalLeer:(kal.match(/class="rcp-kal-x"/g) || []).length, wt:wochentagMo(seasonStart(sid)),
+    kalZahlen, partien:ms.length,
+    zeilen:(tab.match(/class="rcp-tab-r/g) || []).length, rang:rang.length, istAuf, sollAuf,
+    abMax:(tab.match(/rcp-tab-z ab max/g) || []).length, abSoll:rang.filter((e, i) => pv[e.id] && pv[e.id] - (i + 1) === maxAb).length,
+    spieler:daten.length, bewegt:daten.filter(x => x.delta).length, falsch, quelle, posten,
+    saeulen:saeulen.length, saeuleFalsch, zuege, zSoll, rek:rek.length, gefallen};
+})())`));
+ok(_gr.kalFelder === _gr.tage && _gr.kalLeer === _gr.wt && _gr.kalZahlen === _gr.partien,
+   'der Kalender hat ein Feld je Tag ab dem Wochentag des Ersten, und seine Zahlen ergeben die Partien',
+   `${_gr.kalFelder}/${_gr.tage} Felder, ${_gr.kalLeer} leer vor dem Ersten, ${_gr.kalZahlen}/${_gr.partien} Partien`);
+ok(_gr.zeilen === _gr.rang && _gr.istAuf.join() === _gr.sollAuf.join() && _gr.istAuf.length > 0 && _gr.abMax === _gr.abSoll,
+   'die Tabelle zeigt jeden Spieler, und der größte Sprung und der tiefste Fall stehen hervorgehoben in ihren Zeilen',
+   `${_gr.zeilen}/${_gr.rang} Zeilen · Sprung ${_gr.istAuf.length}/${_gr.sollAuf.length} · Fall ${_gr.abMax}/${_gr.abSoll}`);
+ok(_gr.bewegt > 3 && !_gr.falsch.length && !_gr.quelle.length,
+   'die Wirkung auf die Laufbahn ist der Unterschied zweier Prestige-Stände, aufgeteilt in die drei Quellen',
+   `${_gr.bewegt} bewegt · ${_gr.falsch.join(', ') || 'Summe stimmt'} · ${_gr.quelle.join(', ') || 'Quellen stimmen'}`);
+ok(_gr.saeulen > 3 && !_gr.posten.length && _gr.saeuleFalsch === 0,
+   'die Säulen der Auszeichnungen sind genau der Teil der Laufbahn, der aus Auszeichnungen kommt',
+   `${_gr.saeulen} Säulen · ${_gr.posten.join(', ') || 'Posten stimmen'} · ${_gr.saeuleFalsch} abweichend`);
+ok(_gr.zuege.length > 0 && _gr.zuege.join() === _gr.zSoll.join(),
+   'neue Zeichen zeigt genau, wer im Zeitraum Stufe oder Grad gewechselt hat',
+   _gr.zuege.length + ' von ' + _gr.zSoll.length);
+ok(_gr.rek > 0 && !_gr.gefallen.length,
+   '„verbessert" heißt bei einem Rekord, dass sein Wert gestiegen ist',
+   _gr.gefallen.join(', ') || _gr.rek + ' Rekorde');
 
 // ─── Ein Klick auf eine Chronik-Karte fuehrt zur Disziplin ───────────
 // Vorher landete man im Spielerprofil: dort steht alles ueber den Spieler

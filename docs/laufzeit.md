@@ -436,6 +436,13 @@ solange die Seite offen ist. Ist die Seite versteckt, steht ein Blatt offen,
 ist der Verlauf offen oder baut sich eine Ansicht auf, setzt es aus und
 versucht es nach 2 s wieder (`LEISE_NOCHMAL_MS`).
 
+Saison- und Wochenrückblick öffnen ohne die Laufbahn, ihre Auszeichnungen
+und die Rekorde der Woche: die brauchen Prestige- und Rekordstände an den
+Rändern des Zeitraums, und die Woche öffnete damit gemessen 280 ms nach
+dem Tippen statt 20 ms. Ein Zeitgeber setzt den Teil 380 ms nach dem
+Öffnen ein, wenn das Blatt eingefahren ist (`RCP_SPAET_MS`,
+`rcpSpaetLaden`); ist das Blatt inzwischen ein anderes, fällt er weg.
+
 `_tickDaten` lässt außerdem ein offenes Blatt, den Eingabe-Tab und die
 Einstellungen in Ruhe:
 was man gerade unter den Fingern hat, wird nicht neu gezeichnet. `tests/blatt`

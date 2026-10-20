@@ -5069,8 +5069,41 @@ return JSON.stringify(funde,null,1);
     const K = window.__k.eval.bind(window.__k);
     const warte = () => new Promise(r => setTimeout(r, 450));
     const fehler = h => { document.getAnimations().forEach(a => { try { a.finish(); } catch(e){} }); return pruefen(h).fehler; };
+    // Die Laufbahn, die Auszeichnungen und die Rekorde einer Woche kommen
+    // nach, wenn das Blatt steht (`rcpSpaetLaden`).
+    const spaet = async () => { for(let t = 0; t < 40 && document.querySelector('#sheet [data-rcp-spaet]'); t++) await new Promise(r => setTimeout(r, 100)); };
+    // Die Grafiken bei 360 px: nichts ragt seitlich heraus, der Platzhalter
+    // ist ersetzt, die neuen Zeichen stehen zu dritt, kein Rekordname bricht
+    // mitten im Wort, jedes Stück einer Laufbahn-Bahn liegt in ihr, kein Text
+    // liegt auf einem anderen — und ohne Ende bewegt sich nur der Sieger:
+    // sein Strahlenkranz und das Licht auf seiner Karte [§C43].
+    const grafik = (sh, sieger) => {
+      document.getAnimations().forEach(a => { try { if(a.effect.getTiming().iterations !== Infinity) a.finish(); } catch(e){} });
+      const endlos = document.getAnimations().filter(a => a.effect && a.effect.target && sh.contains(a.effect.target)
+          && a.effect.getTiming().iterations === Infinity)
+        .map(a => a.effect.target).filter(t => !t.matches('.nf-ms-strahl') && !(t.matches('.glanz-bahn') && t.parentElement.matches(sieger)))
+        .map(t => String(t.className && t.className.baseVal != null ? t.className.baseVal : t.className));
+      const zeichen = [...sh.querySelectorAll('.rcp-is .nd-is-sp')].slice(0, 3).map(e => Math.round(e.getBoundingClientRect().top));
+      const gebrochen = [];
+      sh.querySelectorAll('.rcp-rw-r b').forEach(b => {
+        const n = b.firstChild; if(!n) return;
+        let i = 0;
+        n.textContent.split(' ').forEach(w => {
+          const rg = document.createRange(); rg.setStart(n, i); rg.setEnd(n, i + w.length);
+          if([...rg.getClientRects()].filter(r => r.width > 0).length > 1) gebrochen.push(w);
+          i += w.length + 1;
+        });
+      });
+      const ausBahn = [...sh.querySelectorAll('.rcp-lb-b i')].filter(i => {
+        const r = i.getBoundingClientRect(), b = i.parentElement.getBoundingClientRect();
+        return r.left < b.left - .6 || r.right > b.right + .6;
+      }).length;
+      return {breit:sh.scrollWidth - sh.clientWidth, offen:sh.querySelectorAll('[data-rcp-spaet]').length,
+        bahnen:sh.querySelectorAll('.rcp-lb-z').length, ausBahn, zeichen, gebrochen, endlos,
+        fehler:[...sh.querySelectorAll('.rcp-team, .rcp-kal, .rcp-tab, .rcp-lb, .rcp-rw, .rcp-bns, .rcp-is')].flatMap(fehler)};
+    };
     const out = {};
-    K(`closeSheet(true); showPotwRecap({woche:'2026-08-17'}); 'x'`); await warte();
+    K(`closeSheet(true); showPotwRecap({woche:'2026-08-17'}); 'x'`); await warte(); await spaet();
     let sh = document.getElementById('sheet');
     const wochenMs = K(`matches.filter(m => tagKey(mts(m)) >= '2026-08-17' && tagKey(mts(m)) <= '2026-08-23')`);
     const imFeld = new Set(); wochenMs.forEach(m => [m.a1, m.a2, m.b1, m.b2].forEach(x => imFeld.add(x)));
@@ -5083,18 +5116,26 @@ return JSON.stringify(funde,null,1);
     const soll = JSON.parse(K(`(function(){ const v = awWeekStart; awWeekStart = new Date(2026, 7, 17);
       const R = awardRankings('week'); awWeekStart = v;
       const o = {}; Object.keys(AW_WERT).forEach(k => { const t = awTop(k, R);
-        if(t.length) o[k] = awIds(k, t[0]).map(pname).join(' & ') + (t.length > 1 ? ' +' + (t.length - 1) : ''); });
+        if(t.length) o[k] = _awNameVon(k, t[0]) + (t.length > 1 ? ' +' + (t.length - 1) : ''); });
       return JSON.stringify(o); })()`));
+    // Die Kachel des Awards-Reiters: der Name im Namen, „+N" als Marke auf
+    // der Kante.
     const kacheln = [...sh.querySelectorAll('[data-potw-award]')].map(e => ({k:e.dataset.potwAward,
-      name:e.querySelector('.rcp-aw-name').textContent.trim()}));
+      name:e.querySelector('.aw-t-name').textContent.trim()
+        + (e.querySelector('.aw-t-gleich') ? ' ' + e.querySelector('.aw-t-gleich').textContent.trim() : '')}));
     const zahlenAb = [...sh.querySelectorAll('.rcp-section')].find(x => /Woche in Zahlen/.test(x.textContent));
-    const zellen = zahlenAb ? [...zahlenAb.nextElementSibling.querySelectorAll('.rcp-z-s')].map(z => z.textContent.replace(/\s+/g, ' ').trim()) : [];
+    const nach = (el, cls) => { for(let e = el && el.nextElementSibling; e; e = e.nextElementSibling) if(e.classList.contains(cls)) return e; return null; };
+    const zahlenZ = nach(zahlenAb, 'rcp-z'), kal = nach(zahlenAb, 'rcp-kal');
+    const zellen = zahlenZ ? [...zahlenZ.querySelectorAll('.rcp-z-s')].map(z => z.textContent.replace(/\s+/g, ' ').trim()) : [];
     const tageSoll = new Set(wochenMs.map(m => K(`tagKey(mts(${JSON.stringify(m)}))`))).size;
     const heldZ = [...sh.querySelectorAll('.rcp-held .rcp-z-s')].map(z => Math.round(z.getBoundingClientRect().top));
     const held = sh.querySelector('.rcp-held');
     out.wocheAw = {kacheln:kacheln.length, falsch:kacheln.filter(k => soll[k.k] !== k.name),
       zahlen:zellen, tageSoll, reihen:new Set(heldZ).size, zellenHeld:heldZ.length,
+      kalTage:kal ? kal.querySelectorAll('.rcp-kal-t').length : 0,
+      kalPartien:kal ? [...kal.querySelectorAll('.rcp-kal-t b')].reduce((n, b) => n + +b.textContent, 0) : 0, partien:wochenMs.length,
       strahl:!!(held && held.querySelector('.rcp-held-av > .nf-ms-strahl')), stapel:held ? getComputedStyle(held).isolation : ''};
+    out.wocheGrafik = grafik(sh, '.rcp-held');
     K(`closeSheet(true); showPotdRecap({force:true, tag:'2026-08-24'}); 'x'`); await warte();
     sh = document.getElementById('sheet');
     const tagMs = K(`matches.filter(m => tagKey(mts(m)) === '2026-08-24').length`);
@@ -5107,7 +5148,7 @@ return JSON.stringify(funde,null,1);
       punkte: [...sh.querySelectorAll('.rcp-elo circle')].map(c => +c.style.getPropertyValue('--i')),
       punktAnim: [...new Set([...sh.querySelectorAll('.rcp-elo circle')].map(c => getComputedStyle(c).animationName))],
       fehler: [...sh.querySelectorAll('.rcp-feld, .rcp-elo')].flatMap(fehler)};
-    K(`closeSheet(true); showSeasonRecap(seasons.find(s=>s.id==='2026-07')); 'x'`); await warte();
+    K(`closeSheet(true); showSeasonRecap(seasons.find(s=>s.id==='2026-07')); 'x'`); await warte(); await spaet();
     sh = document.getElementById('sheet');
     const kopf = [...sh.querySelectorAll('.rcp-section')].map(x => x.textContent.replace(/\d+/g, '').trim());
     // Gegenüber dem Vormonat: die Unterschiede der Eckdaten und die
@@ -5118,16 +5159,24 @@ return JSON.stringify(funde,null,1);
       const max = Math.max(...w.map(x => x.d)), min = Math.min(...w.map(x => x.d));
       return JSON.stringify({ms:matchesInSeason('2026-07').length - matchesInSeason('2026-06').length,
         auf:w.filter(x => x.d === max).map(x => x.n), ab:w.filter(x => x.d === min).map(x => x.n), max, min}); })()`));
-    const zelle0 = sh.querySelector('.rcp-head + .rcp-z .rcp-z-s .rcp-z-d');
-    const kachel = l => [...sh.querySelectorAll('.rcp-aw')].find(e => (e.querySelector('.rcp-aw-label') || {}).textContent === l);
-    const nameVon = e => e ? e.querySelector('.rcp-aw-name').textContent.trim() : '';
+    // Die Eckdaten unter dem Kalender tragen den Unterschied zum Vormonat;
+    // der größte Sprung und der tiefste Fall stehen hervorgehoben in ihren
+    // Zeilen der Tabelle — bei Gleichstand jeder.
+    const monatAb = [...sh.querySelectorAll('.rcp-section')].find(x => /Monat in Zahlen/.test(x.textContent));
+    const zelle0 = (nach(monatAb, 'rcp-z') || sh).querySelector('.rcp-z-s .rcp-z-d');
+    const markiert = cls => [...sh.querySelectorAll('.rcp-tab-r')].filter(r => r.querySelector('.rcp-tab-z.' + cls + '.max'))
+      .map(r => r.querySelector('.rcp-tab-n').textContent.trim()).sort();
+    const sektion = sh.querySelector('.rcp-section');
     out.saisonVgl = {d:zelle0 ? zelle0.textContent.trim() : '', soll:(vgl.ms > 0 ? '+' : vgl.ms < 0 ? '−' : '±') + Math.abs(vgl.ms),
-      auf:nameVon(kachel('Größter Sprung')), aufSoll:vgl.auf, ab:nameVon(kachel('Tiefster Fall')), abSoll:vgl.ab,
+      auf:markiert('auf'), aufSoll:vgl.auf.sort(), ab:markiert('ab'), abSoll:vgl.ab.sort(),
       buehne:!!sh.querySelector('.nf-meister.rcp-buehne > .nf-ms-strahl + .podest'),
+      // Wer gewonnen hat, ist die erste Frage: das Podest steht vor jeder Überschrift.
+      zuerst:!!(sektion && sh.querySelector('.rcp-buehne') && (sh.querySelector('.rcp-buehne').compareDocumentPosition(sektion) & Node.DOCUMENT_POSITION_FOLLOWING)),
       awards:sh.querySelectorAll('[data-award]').length};
-    out.saison = {rang: kopf.indexOf('Rangliste'), rennen: kopf.indexOf('Das Titelrennen'),
+    out.saison = {rang: kopf.indexOf('Die Tabelle'), rennen: kopf.indexOf('Das Titelrennen'),
       spitze: kopf.indexOf('Tage an der Spitze'), meister: kopf.findIndex(x => /^Die Saison des Meisters/.test(x)),
       fehler: [...sh.querySelectorAll('.rcp-block')].flatMap(fehler)};
+    out.saisonGrafik = grafik(sh, '.pod-karte.gold');
     K('closeSheet(true)');
     return out;
   }, PRUEFEN.toString());
@@ -5138,9 +5187,24 @@ return JSON.stringify(funde,null,1);
   ok(rueck.wocheAw.kacheln >= 6 && rueck.wocheAw.falsch.length === 0,
      'die Auszeichnungen der Woche nennen, wen der Awards-Reiter für diese Woche nennt',
      JSON.stringify(rueck.wocheAw.falsch).slice(0, 240) + ' · ' + rueck.wocheAw.kacheln + ' Kacheln');
-  ok(rueck.wocheAw.zahlen.length === 4 && rueck.wocheAw.zahlen[0] === rueck.wocheAw.tageSoll + 'Spieltage',
-     'die Woche in Zahlen: Spieltage, Tore je Partie, enge Partien und Duos, gezählt aus den Partien der Woche',
-     JSON.stringify(rueck.wocheAw.zahlen) + ' · Spieltage ' + rueck.wocheAw.tageSoll);
+  ok(rueck.wocheAw.zahlen.length === 4 && rueck.wocheAw.zahlen[0] === rueck.wocheAw.tageSoll + 'Spieltage'
+       && rueck.wocheAw.kalTage === 7 && rueck.wocheAw.kalPartien === rueck.wocheAw.partien,
+     'die Woche in Zahlen: ein Kalender der sieben Tage und Spieltage, Tore je Partie, enge Partien und Duos, gezählt aus den Partien der Woche',
+     JSON.stringify(rueck.wocheAw.zahlen) + ' · Spieltage ' + rueck.wocheAw.tageSoll + ' · Kalender ' + rueck.wocheAw.kalTage + ' Tage, '
+     + rueck.wocheAw.kalPartien + '/' + rueck.wocheAw.partien + ' Partien');
+  for(const [n, g] of [['Woche', rueck.wocheGrafik], ['Saison', rueck.saisonGrafik]]){
+    ok(g.breit <= 0 && g.offen === 0 && g.bahnen > 0 && g.ausBahn === 0,
+       n + ': die Grafiken bleiben in der Breite des Blatts, die Laufbahn kommt nach und jede Bahn hält ihre Stücke',
+       JSON.stringify({breit:g.breit, offen:g.offen, bahnen:g.bahnen, ausBahn:g.ausBahn}));
+    ok(g.zeichen.length < 3 || new Set(g.zeichen).size === 1,
+       n + ': die neuen Zeichen stehen bei 360 px zu dritt in einer Reihe', JSON.stringify(g.zeichen));
+    ok(g.gebrochen.length === 0 && g.fehler.length === 0,
+       n + ': kein Rekordname bricht mitten im Wort, kein Text liegt auf einem anderen oder wird abgeschnitten',
+       JSON.stringify(g.gebrochen.concat(g.fehler)).slice(0, 240));
+    ok(g.endlos.length === 0,
+       n + ': ohne Ende bewegt sich nur der Sieger, sein Kranz und das Licht auf seiner Karte',
+       JSON.stringify(g.endlos).slice(0, 240));
+  }
   ok(rueck.wocheAw.strahl && rueck.wocheAw.stapel === 'isolate' && rueck.wocheAw.zellenHeld === 4 && rueck.wocheAw.reihen === 2,
      'der Spieler der Woche steht vor dem Strahlenkranz, seine vier Zahlen bei 360 px zwei mal zwei',
      JSON.stringify({strahl:rueck.wocheAw.strahl, stapel:rueck.wocheAw.stapel, zellen:rueck.wocheAw.zellenHeld, reihen:rueck.wocheAw.reihen}));
@@ -5151,13 +5215,14 @@ return JSON.stringify(funde,null,1);
   ok(rueck.tag.bahn && rueck.tag.zeilen === 0 && rueck.tag.elo && rueck.tag.feld > 3 && rueck.tag.datum && rueck.tag.fehler.length === 0,
      'der Tagesrückblick zeigt den gewählten Tag als Bahn, die Elo über den Tag und das Feld',
      JSON.stringify(rueck.tag).slice(0, 200));
-  ok(rueck.saisonVgl.d === rueck.saisonVgl.soll && rueck.saisonVgl.aufSoll.includes(rueck.saisonVgl.auf)
-       && rueck.saisonVgl.abSoll.includes(rueck.saisonVgl.ab) && rueck.saisonVgl.buehne && rueck.saisonVgl.awards >= 10,
-     'der Saison-Rückblick nennt den Unterschied zum Vormonat, den größten Sprung und den tiefsten Fall, das Podest steht auf der Bühne',
+  ok(rueck.saisonVgl.d === rueck.saisonVgl.soll && rueck.saisonVgl.auf.length > 0
+       && rueck.saisonVgl.auf.join() === rueck.saisonVgl.aufSoll.join() && rueck.saisonVgl.ab.join() === rueck.saisonVgl.abSoll.join()
+       && rueck.saisonVgl.buehne && rueck.saisonVgl.zuerst && rueck.saisonVgl.awards >= 10,
+     'der Saison-Rückblick beginnt mit dem Podest auf der Bühne, nennt den Unterschied zum Vormonat und hebt den größten Sprung und den tiefsten Fall in der Tabelle hervor',
      JSON.stringify(rueck.saisonVgl));
   ok(rueck.saison.rang >= 0 && rueck.saison.rennen > rueck.saison.rang && rueck.saison.spitze > rueck.saison.rennen
      && rueck.saison.meister > rueck.saison.spitze && rueck.saison.fehler.length === 0,
-     'der Saison-Rückblick zeigt die Rangliste zuerst, darunter Titelrennen, Tage an der Spitze und die Saison des Meisters',
+     'der Saison-Rückblick zeigt die Tabelle vor Titelrennen, Tagen an der Spitze und der Saison des Meisters',
      JSON.stringify(rueck.saison).slice(0, 200));
 
   // ── Aus der Story in ihren Rückblick ──────────────────────────────
@@ -5341,18 +5406,26 @@ return JSON.stringify(funde,null,1);
     K("closeSheet(true); showSeasonTable('2026-08')");
     const tafel = Object.assign(zahl('2026-08'), pruefe(sh.querySelectorAll('.tplates:not(.chron-rest) .tplate').length,
       sh.querySelector('.tplates.chron-rest'), () => sh.querySelectorAll('.tplate').length));
+    // Im Saison-Rückblick steht der Eintrag, der zählt, auf dem Band des
+    // Beinamens; die Schattenseiten tragen kein Band [§C39] und stehen rot
+    // darunter, alle offen. Was jemand darüber hinaus anführte, klappt auf.
     K("closeSheet(true); showSeasonRecap(seasons.find(s => s.id === '2026-07'))");
     const kopf = [...sh.querySelectorAll('.rcp-section')].find(e => /Chronik der Saison/.test(e.textContent));
-    const liste = kopf && kopf.nextElementSibling;
-    const rest = liste && liste.nextElementSibling && liste.nextElementSibling.classList.contains('chron-rest')
-      ? liste.nextElementSibling : null;
-    const rueck = Object.assign(zahl('2026-07'), pruefe(liste ? liste.querySelectorAll('[data-tplayer]').length : 0,
-      rest, () => (liste ? liste.querySelectorAll('[data-tplayer]').length : 0) + (rest ? rest.querySelectorAll('[data-tplayer]').length : 0)));
+    const baender = kopf && kopf.nextElementSibling && kopf.nextElementSibling.classList.contains('rcp-bns') ? kopf.nextElementSibling : null;
+    let e = baender && baender.nextElementSibling;
+    const neg = e && e.classList.contains('rcp-bn-neg') ? e : null;
+    if(neg) e = e.nextElementSibling;
+    const rest = e && e.classList.contains('chron-rest') ? e : null;
+    const zaehle = el => el ? el.querySelectorAll('[data-tplayer]').length : 0;
+    const schatten = K("seasonTitles('2026-07').awarded.filter(a => (_chronikMonat(a.titleId) || {}).art === 'schatten').length");
+    const positiv = K("new Set(seasonTitles('2026-07').awarded.filter(a => (_chronikMonat(a.titleId) || {}).art !== 'schatten').map(a => a.pid)).size");
+    const rueck = Object.assign(zahl('2026-07'), {spieler:positiv, schatten, rot:zaehle(neg)},
+      pruefe(zaehle(baender), rest, () => zaehle(baender) + zaehle(neg) + zaehle(rest)));
     K('closeSheet(true)');
     return {tafel, rueck};
   });
-  const _offenRecht = x => x && x.offen === x.spieler && x.alle === x.gesamt
-    && (x.gesamt === x.spieler || (x.knopf && x.zu && x.auf));
+  const _offenRecht = x => x && x.offen === x.spieler && x.alle === x.gesamt && (x.rot == null || x.rot === x.schatten)
+    && (x.gesamt === x.spieler + (x.schatten || 0) || (x.knopf && x.zu && x.auf));
   ok(_offenRecht(zaehltOffen.tafel) && _offenRecht(zaehltOffen.rueck)
      && (zaehltOffen.tafel.gesamt > zaehltOffen.tafel.spieler || zaehltOffen.rueck.gesamt > zaehltOffen.rueck.spieler),
      'Chronik der Saison: offen steht je Spieler der eine Eintrag, der zählt, die übrigen klappen darunter auf',

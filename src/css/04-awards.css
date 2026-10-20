@@ -128,6 +128,7 @@
   .aw-trophy.ton-pos {--awc:var(--gold); --awc-rgb:247,207,74}
   .aw-trophy.ton-team{--awc:var(--blue); --awc-rgb:86,180,232}
   .aw-trophy.ton-neg {--awc:var(--red);  --awc-rgb:240,86,106}
+  .aw-trophy.ton-metall{--awc:var(--silber);--awc-rgb:194,201,208}
   /* ── Die Kachel [§C8] ────────────────────────────────────────────
      Drei Fragen, in dieser Reihenfolge: wer hat es, wie viel, woraus.
      Vorher stand die Zahl ohne Einheit („6,90", „+10", „8er") und ohne

@@ -630,6 +630,7 @@
   .aw-trophy.ton-pos {--awc:var(--gold); --awc-rgb:247,207,74}
   .aw-trophy.ton-team{--awc:var(--blue); --awc-rgb:86,180,232}
   .aw-trophy.ton-neg {--awc:var(--red);  --awc-rgb:240,86,106}
+  .aw-trophy.ton-metall{--awc:var(--silber);--awc-rgb:194,201,208}
   .aw-trophy{background-color:var(--bg2);
     background-image:radial-gradient(120% 80% at 0% 0%,rgba(var(--awc-rgb),.10),transparent 60%);
     border:1px solid rgba(var(--awc-rgb),.20);border-radius:16px;padding:11px 11px 12px;
@@ -3078,21 +3079,6 @@
     letter-spacing:-.01em;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .rcp-aw-val{font-family:'Sometype Mono',monospace;font-size:10.5px;color:var(--ink2);margin-top:3px;font-weight:600}
 
-  .rcp-tos{background:var(--surface);
-    border:1px solid var(--line);border-radius:16px;padding:13px 14px;
-    display:flex;align-items:center;gap:14px;margin-bottom:16px;transition:.16s}
-  .rcp-tos::after{content:"";flex:0 0 auto;width:6px;height:6px;
-    border-right:2px solid var(--faint);border-top:2px solid var(--faint);
-    transform:rotate(45deg);border-radius:1px}
-  .rcp-tos:active{transform:scale(.985)}
-  .rcp-tos-pair{display:flex;flex-shrink:0}
-  .rcp-tos-info{flex:1;min-width:0}
-  .rcp-tos-label{font-size:9px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);
-    font-family:'Sometype Mono',monospace;font-weight:700}
-  .rcp-tos-name{font-family:'Archivo Black',sans-serif;font-size:16px;margin-top:4px;letter-spacing:-.01em;
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .rcp-tos-detail{font-size:10.5px;color:var(--muted);font-family:'Sometype Mono',monospace;margin-top:2px}
-
 
   .rcp-held{position:relative;text-align:center;overflow:hidden;
     background:radial-gradient(120% 80% at 50% -8%,rgba(247,207,74,.09),transparent 62%),
@@ -3161,7 +3147,7 @@
   .rcp-paar > *+*{margin-left:calc(var(--rav) * -.22)}
   .rcp-paar > *{border:2px solid var(--bg2);border-radius:50%;background:var(--bg2)}
 
-  .rcp-aw.klick,.rcp-zeile.klick,.rcp-notiz.klick,.rcp-tos.klick{cursor:pointer}
+  .rcp-aw.klick,.rcp-zeile.klick,.rcp-notiz.klick{cursor:pointer}
   .rcp-notiz.klick::after,.rcp-zeile.klick::after{content:"";flex:0 0 auto;
     width:6px;height:6px;margin-left:2px;border-right:2px solid var(--faint);
     border-top:2px solid var(--faint);transform:rotate(45deg);border-radius:1px}
@@ -3330,12 +3316,11 @@
   .srn-l.silber{stroke:var(--silber);opacity:.75}
   .srn-l.bronze{stroke:var(--bronze);opacity:.75}
   .srn-p{opacity:0;transform-box:fill-box;transform-origin:center;animation:srnDa .35s 1.6s forwards}
-  .srn-p.gold{fill:var(--gold);animation:srnDa .35s 1.6s forwards,srnPuls 2.6s 2.2s ease-in-out infinite}
+  .srn-p.gold{fill:var(--gold)}
   .srn-p.silber{fill:var(--silber)} .srn-p.bronze{fill:var(--bronze)}
   .srn-fl{opacity:0;animation:srnDa .9s .8s forwards}
   @keyframes srnZieh{to{stroke-dashoffset:0}}
   @keyframes srnDa{to{opacity:1}}
-  @keyframes srnPuls{0%,100%{transform:scale(1)}50%{transform:scale(1.5)}}
   .srn-band{display:flex;gap:1px;height:7px;margin-top:6px;border-radius:3px;overflow:hidden}
   .srn-band i{flex:1;background:rgba(255,255,255,.05)}
   .srn-band i.gold{background:var(--gold)} .srn-band i.silber{background:var(--silber)}
@@ -3376,8 +3361,12 @@
   }
 
 .rcp-feld{display:flex;flex-direction:column;gap:6px;margin:0 0 16px}
-.rcp-feld-z{display:grid;grid-template-columns:minmax(0,30%) minmax(0,1fr) auto;align-items:center;gap:8px}
-.rcp-feld-n{font-size:12px;line-height:1.25;color:var(--ink2);overflow-wrap:break-word}
+.rcp-feld-z{display:grid;grid-template-columns:minmax(0,32%) minmax(0,1fr) auto 38px;align-items:center;gap:8px;cursor:pointer}
+.rcp-feld-n{display:flex;align-items:center;gap:7px;min-width:0;font-size:12px;line-height:1.25;color:var(--ink2);overflow-wrap:anywhere}
+.rcp-feld-n > .rcp-av{flex:none}
+.rcp-feld-e{font-size:11px;font-weight:700;color:var(--muted);text-align:right;white-space:nowrap}
+.rcp-feld-e.auf{color:var(--acid)}
+.rcp-feld-e.ab{color:var(--red)}
 .rcp-feld-z.held .rcp-feld-n{color:var(--gold);font-weight:700}
 .rcp-feld-b{position:relative;display:grid;grid-template-columns:1fr 1fr;height:10px}
 .rcp-feld-b i{display:block;height:100%}
@@ -3501,6 +3490,161 @@
     .ab-av,.ab-rang,.ab-zeit,.ab-sz-f{animation:none}
     .ab-duo-b i{animation:none}
   }
+
+
+.rcp-kal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin:0 0 12px}
+.rcp-kal-w{font-family:'Sometype Mono',monospace;font-size:8.5px;font-weight:700;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--faint);text-align:center;padding-bottom:1px}
+.rcp-kal-t{position:relative;height:40px;border-radius:9px;display:grid;place-items:center;min-width:0;
+  background:rgba(194,201,208,var(--kal-a,.04));box-shadow:inset 0 0 0 1px rgba(194,201,208,var(--kal-r,.1))}
+.rcp-kal-t small{position:absolute;left:5px;top:3px;font-size:8px;color:var(--faint);line-height:1}
+.rcp-kal-t b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:14px;line-height:1;color:var(--ink);margin-top:6px}
+.rcp-kal-t.k0{background:none;box-shadow:inset 0 0 0 1px rgba(194,201,208,.07)}
+.rcp-kal-t.k1{--kal-a:.07;--kal-r:.14}
+.rcp-kal-t.k2{--kal-a:.13;--kal-r:.22}
+.rcp-kal-t.k3{--kal-a:.21;--kal-r:.32}
+.rcp-kal-t.k4{--kal-a:.32;--kal-r:.5}
+.rcp-kal-t.k4 b{color:#fff}
+.rcp-kal.woche .rcp-kal-t{height:50px}
+.rcp-kal.woche .rcp-kal-t b{font-size:18px}
+
+.rcp-tab{display:flex;flex-direction:column;gap:4px;margin:0 0 16px}
+.rcp-tab-r{position:relative;isolation:isolate;display:flex;align-items:center;gap:8px;min-width:0;
+  padding:7px 10px 7px 6px;border-radius:11px;background:var(--bg2);box-shadow:inset 0 0 0 1px var(--line);cursor:pointer}
+.rcp-tab-r::before{content:"";position:absolute;left:0;top:0;bottom:0;width:var(--w);z-index:-1;border-radius:11px;
+  background:linear-gradient(90deg,rgba(var(--tab-m,194,201,208),.02),rgba(var(--tab-m,194,201,208),.10))}
+.rcp-tab-r:active{background:var(--surface)}
+.rcp-tab-r.gold{--tab-m:247,207,74;box-shadow:inset 0 0 0 1px rgba(247,207,74,.38)}
+.rcp-tab-r.silber{--tab-m:194,201,208;box-shadow:inset 0 0 0 1px rgba(194,201,208,.3)}
+.rcp-tab-r.bronze{--tab-m:192,132,87;box-shadow:inset 0 0 0 1px rgba(192,132,87,.32)}
+.rcp-tab-r.gold::before,.rcp-tab-r.silber::before,.rcp-tab-r.bronze::before{
+  background:linear-gradient(90deg,rgba(var(--tab-m),.04),rgba(var(--tab-m),.17))}
+.rcp-tab-p{flex:none;width:20px;text-align:center;font-family:'Archivo Black',sans-serif;font-size:13px;color:var(--faint)}
+.rcp-tab-r.gold .rcp-tab-p,.rcp-tab-r.gold .rcp-tab-e{color:var(--gold)}
+.rcp-tab-r.silber .rcp-tab-p{color:var(--silber)}
+.rcp-tab-r.bronze .rcp-tab-p{color:var(--bronze)}
+.rcp-tab-z{flex:none;width:30px;height:19px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;gap:1px;
+  font-family:'Sometype Mono',monospace;font-size:10.5px;font-weight:700;color:var(--faint)}
+.rcp-tab-z svg{width:10px;height:10px;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+.rcp-tab-z{--strich:2}
+.rcp-tab-z.auf{color:var(--acid)}
+.rcp-tab-z.ab{color:var(--red)}
+.rcp-tab-z.max.auf{background:rgba(190,242,100,.13);box-shadow:inset 0 0 0 1px rgba(190,242,100,.42)}
+.rcp-tab-z.max.ab{background:rgba(240,86,106,.13);box-shadow:inset 0 0 0 1px rgba(240,86,106,.42)}
+.rcp-tab-r > .rcp-av{flex:none}
+.rcp-tab-n{flex:1;min-width:0;font-size:13px;font-weight:700;color:var(--ink);line-height:1.2;overflow-wrap:anywhere}
+.rcp-tab-b{flex:none;width:52px;display:flex;flex-direction:column;gap:3px}
+.rcp-tab-wl{display:block;height:4px;border-radius:2px;background:rgba(240,86,106,.6);overflow:hidden}
+.rcp-tab-wl i{display:block;height:100%;background:var(--acid)}
+.rcp-tab-b small{font-size:9.5px;color:var(--muted);text-align:center;line-height:1}
+.rcp-tab-e{flex:none;min-width:34px;text-align:right;font-family:'Archivo Black',sans-serif;font-weight:400;font-size:14px;color:var(--ink)}
+
+.rcp-team{position:relative;margin:0 0 18px;padding:12px 14px 13px;border-radius:16px;cursor:pointer;
+  background:radial-gradient(120% 90% at 0% 0%,rgba(86,180,232,.11),transparent 60%),var(--surface);
+  box-shadow:inset 0 0 0 1px rgba(86,180,232,.24)}
+.rcp-team::before{content:"";position:absolute;left:16px;right:16px;top:0;height:2px;border-radius:0 0 2px 2px;
+  background:linear-gradient(90deg,transparent,rgba(86,180,232,.8),transparent)}
+.rcp-team:active{transform:scale(.99)}
+.rcp-team-l{display:flex;align-items:center;gap:6px;font-family:'Sometype Mono',monospace;font-size:9.5px;font-weight:700;
+  letter-spacing:.18em;text-transform:uppercase;color:var(--blue)}
+.rcp-team-l .ic svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+.rcp-team-m{display:flex;align-items:center;gap:12px;margin:10px 0}
+.rcp-team-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.rcp-team-t b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:16px;letter-spacing:-.01em;line-height:1.15;overflow-wrap:anywhere}
+.rcp-team-t small{font-size:10.5px;color:var(--muted)}
+.rcp-team-e{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.rcp-team-e b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:22px;line-height:1}
+.rcp-team-e b.auf{color:var(--acid)}
+.rcp-team-e b.ab{color:var(--red)}
+.rcp-team-e small{font-family:'Sometype Mono',monospace;font-size:8.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.rcp-team .srn-z{margin:0}
+
+.rcp-is{margin:0 0 14px;padding:14px 6px 12px;border-radius:16px;gap:12px 6px;
+  background:radial-gradient(120% 90% at 50% 0%,rgba(167,139,250,.12),transparent 64%),var(--surface);
+  box-shadow:inset 0 0 0 1px rgba(167,139,250,.22)}
+.rcp-is.nd-is-viele .nd-is-sp{width:88px}
+.rcp-is.nd-is-viele .nd-is-neu,.rcp-is.nd-is-viele .nd-is-z svg{width:72px;height:72px}
+.rcp-is.nd-is-viele .nd-is-av .av{--av:26px;width:26px;height:26px;font-size:10px}
+.rcp-is.nd-is-viele .nd-is-sp b{font-size:12px}
+.rcp-is.nd-is-viele .nd-is-sp small{font-size:10.5px}
+.rcp-lb{display:flex;flex-direction:column;gap:7px;margin:2px 0 8px}
+.rcp-lb-z{display:grid;grid-template-columns:24px minmax(0,64px) minmax(0,1fr) 44px;align-items:center;gap:8px;cursor:pointer}
+.rcp-lb-n{font-size:12px;color:var(--ink2);line-height:1.2;overflow-wrap:anywhere}
+.rcp-lb-b{position:relative;height:12px;border-radius:3px;background:rgba(255,255,255,.035)}
+.rcp-lb-b u{position:absolute;top:-3px;bottom:-3px;width:1px;margin-left:-.5px;background:var(--line2)}
+.rcp-lb-b i{position:absolute;top:0;bottom:0;border-radius:2px;box-shadow:0 0 0 1px var(--bg2)}
+.rcp-lb-b i.auszeichnung{background:var(--purple)}
+.rcp-lb-b i.monat{background:var(--gold)}
+.rcp-lb-b i.rekord{background:var(--silber)}
+.rcp-lb-b i.weg{background:repeating-linear-gradient(135deg,rgba(240,86,106,.9) 0 3px,rgba(240,86,106,.42) 3px 6px)}
+.rcp-lb-d{text-align:right;font-family:'Archivo Black',sans-serif;font-weight:400;font-size:13px;color:var(--ink2)}
+.rcp-lb-d.auf{color:var(--acid)}
+.rcp-lb-d.ab{color:var(--red)}
+.rcp-lb-leg{display:flex;flex-wrap:wrap;gap:6px 14px;margin:8px 0 18px;font-size:11px;color:var(--ink2)}
+.rcp-lb-leg span{display:inline-flex;align-items:center;gap:6px}
+.rcp-lb-leg u{display:inline-block;width:12px;height:8px;border-radius:2px}
+.rcp-lb-leg .auszeichnung u{background:var(--purple)}
+.rcp-lb-leg .monat u{background:var(--gold)}
+.rcp-lb-leg .rekord u{background:var(--silber)}
+.rcp-lb-leg b{color:var(--ink);font-weight:700}
+
+.rcp-rw-arten{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.rcp-rw-arten span{font-size:11px;color:var(--ink2);padding:4px 10px;border-radius:99px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)}
+.rcp-rw-arten b{font-family:'Archivo Black',sans-serif;font-weight:400;color:var(--ink);margin-right:2px}
+.rcp-rw{display:flex;flex-direction:column;gap:8px;margin:0 0 16px}
+.rcp-rw-p{background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);border-radius:14px;padding:10px 10px 10px 11px}
+.rcp-rw-k{display:flex;align-items:center;gap:9px;cursor:pointer;min-width:0}
+.rcp-rw-k b{flex:0 1 auto;min-width:0;font-size:13.5px;font-weight:700;color:var(--ink);overflow-wrap:anywhere}
+.rcp-rw-s{flex:1 1 30px;height:4px;border-radius:2px;background:rgba(255,255,255,.04);overflow:hidden}
+.rcp-rw-s i{display:block;height:100%;width:var(--w);border-radius:2px;background:linear-gradient(90deg,rgba(194,201,208,.25),var(--silber))}
+.rcp-rw-k em{flex:none;font-style:normal;font-family:'Archivo Black',sans-serif;font-size:17px;color:var(--ink);min-width:20px;text-align:right}
+.rcp-rw-l{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin-top:9px}
+.rcp-rw-r{display:flex;align-items:center;gap:7px;min-width:0;padding:5px 7px 5px 5px;border-radius:10px;background:var(--bg2);cursor:pointer}
+.rcp-rw-r:active{background:var(--surface2)}
+.rcp-rw-r > span{display:flex;flex-direction:column;gap:2px;min-width:0}
+.rcp-rw-r b{font-size:11px;font-weight:700;color:var(--ink);line-height:1.2;overflow-wrap:break-word}
+.rcp-rw-r b.lang{font-size:10px;letter-spacing:-.02em}
+.rcp-rw-r b.sehrlang{font-size:9.5px;letter-spacing:-.03em}
+.rcp-rw-r small{font-family:'Sometype Mono',monospace;font-size:9px;color:var(--muted);line-height:1.2}
+.rcp-rw-r .zk{flex:none}
+
+.rcp-bns{display:flex;flex-direction:column;gap:7px;margin:0 0 10px}
+.rcp-bn{display:flex;align-items:center;gap:12px;min-width:0;padding:10px 12px 10px 10px;border-radius:14px;cursor:pointer;
+  background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)}
+.rcp-bn:active{background:var(--surface2)}
+.rcp-bn > .rav,.rcp-bn > .rcp-av{flex:none}
+.rcp-bn-t{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:7px}
+.rcp-bn .pp-banner{max-width:100%}
+.rcp-bn .pp-title-pill{font-size:12px;padding:4px 12px;white-space:normal;line-height:1.2}
+.rcp-bn .pp-title-pill::after{content:none;animation:none}
+.rcp-bn-t small{font-size:10.5px;color:var(--muted);line-height:1.35;padding-left:2px}
+.rcp-bn-t small b{color:var(--ink2);font-weight:700}
+.rcp-bn-neg{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.rcp-bn-neg > span{display:inline-flex;align-items:center;gap:7px;max-width:100%;padding:5px 10px 5px 5px;border-radius:10px;cursor:pointer;
+  background:rgba(240,86,106,.05);box-shadow:inset 0 0 0 1px rgba(240,86,106,.24)}
+.rcp-bn-neg > span > span{display:flex;flex-direction:column;gap:1px;min-width:0}
+.rcp-bn-neg b{font-size:11px;font-weight:700;color:var(--ink)}
+.rcp-bn-neg small{font-size:9.5px;color:var(--muted)}
+
+.rcp-eh .eh-buehne{--fuge:6px;margin:0;padding:14px 6px 12px;gap:9px var(--fuge)}
+.rcp-eh .eh-s-w{color:var(--ink)}
+.eh-fuss.rcp-eh-k{border-top:0;padding:8px 2px 0;margin-bottom:16px}
+.rcp-eh-k .eh-k em{color:var(--ink2)}
+
+.rcp-spaet{display:grid;gap:9px;margin:4px 0 22px}
+.rcp-spaet i{display:block;height:22px;border-radius:7px;background:rgba(255,255,255,.035)}
+.rcp-spaet i:first-child{width:46%;height:11px;margin-bottom:4px}
+
+@media (prefers-reduced-motion:no-preference){
+  .rcp-kal-t{animation:rcpKalDa .4s cubic-bezier(.2,.8,.3,1) both;animation-delay:calc(var(--i,0) * 12ms)}
+  .rcp-tab-r::before{transform-origin:left;animation:rcpWachs .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(.1s + var(--i,0) * 35ms)}
+  .rcp-lb-b i{transform-origin:left;animation:rcpWachs .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(.15s + var(--i,0) * 40ms)}
+  .rcp-lb-b i.weg{transform-origin:right}
+  .rcp-rw-s i{transform-origin:left;animation:rcpWachs .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(.1s + var(--i,0) * 40ms)}
+  .rcp-is .nd-is-neu{animation-delay:calc(.1s + var(--i,0) * 80ms)}
+}
+@keyframes rcpKalDa{from{opacity:0;transform:scale(.8)}}
+.rcp-tab-bezug{margin:-10px 0 18px}
   .aw-list{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
   .aw-li{display:flex;align-items:center;gap:12px;background:var(--surface);
     border:1px solid var(--line);border-radius:14px;padding:10px 14px;position:relative;overflow:hidden;
@@ -6138,7 +6282,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.20.ed2640c4';
+const BUILD_VERSION='2026.10.20.6a00ffe3';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -7440,16 +7584,13 @@ function rcpKachelHtml(o){
 
 function rcpAwardKacheln(R, metall, rot, attr, ohne){
   const out = [];
-  const kachel = (key, ton) => {
+  const kachel = key => {
     const top = awTop(key, R); if(!top.length) return;
     if(ohne && ohne(key, top)) return;
-    const t = awText(key, top[0]);
-    out.push(rcpKachelHtml({ic:AW_IC[key], label:AWARD_META[key].title,
-      name:awIds(key, top[0]).map(pname).join(' & ') + (top.length > 1 ? ' +'+(top.length-1) : ''),
-      wert:t.e ? t.z+' '+t.e : t.z, ton, attr:attr(key)}));
+    out.push(awKachelHtml(key, top, {liste:awListe(key, R), attr:attr(key), metall:true}));
   };
-  metall.forEach(k => kachel(k, 'metall'));
-  rot.forEach(k => kachel(k, 'red'));
+  metall.forEach(kachel);
+  rot.forEach(kachel);
   return out;
 }
 
@@ -7738,16 +7879,19 @@ function rcpFeldHtml(ms, held){
   const z = {};
   ms.forEach(m => [m.a1, m.a2, m.b1, m.b2].forEach(id => {
     if(!id) return;
-    z[id] = z[id] || {w:0, l:0};
+    z[id] = z[id] || {w:0, l:0, elo:0};
     ((m.a1 === id || m.a2 === id) ? m.winner === 'A' : m.winner === 'B') ? z[id].w++ : z[id].l++;
+    z[id].elo += (m.deltas || {})[id] || 0;
   }));
   const ids = Object.keys(z).sort((a, b) => (z[b].w - z[b].l) - (z[a].w - z[a].l) || z[b].w - z[a].w);
   if(!ids.length) return '';
   const max = Math.max(1, ...ids.map(id => Math.max(z[id].w, z[id].l)));
-  return `<div class="rcp-feld">${ids.map((id, i) => `<div class="rcp-feld-z${id === held ? ' held' : ''}" style="--i:${i}">
-    <span class="rcp-feld-n">${esc(pname(id))}</span>
+  const elo = id => { const e = Math.round(z[id].elo);
+    return `<span class="rcp-feld-e num ${e > 0 ? 'auf' : e < 0 ? 'ab' : ''}">${e > 0 ? '+' : e < 0 ? '−' : '±'}${Math.abs(e)}</span>`; };
+  return `<div class="rcp-feld">${ids.map((id, i) => `<div class="rcp-feld-z${id === held ? ' held' : ''}" data-detail="${esc(id)}" style="--i:${i}">
+    <span class="rcp-feld-n">${rcpAvHtml(id, 20, {})}<span>${esc(pname(id))}</span></span>
     <span class="rcp-feld-b"><i class="l" style="width:${(z[id].l / max * 50).toFixed(1)}%"></i><u></u><i class="w" style="width:${(z[id].w / max * 50).toFixed(1)}%"></i></span>
-    <span class="rcp-feld-v num">${z[id].w}:${z[id].l}</span></div>`).join('')}</div>`;
+    <span class="rcp-feld-v num">${z[id].w}:${z[id].l}</span>${elo(id)}</div>`).join('')}</div>`;
 }
 
 function rcpWocheHtml(ms, pid, start){
@@ -7784,6 +7928,227 @@ function rcpEloBahnHtml(ms, pid){
     <path class="rcp-elo-l" pathLength="1" d="${d}"/>
     ${pts.map((v, i) => i ? `<circle class="${v >= pts[i - 1] ? 'w' : 'l'}" style="--i:${(i / (pts.length - 1)).toFixed(2)}" cx="${x(i)}" cy="${y(v)}" r="3"/>` : '').join('')}
   </svg><div class="rcp-elo-z num"><span>Erste Partie</span><b class="${s >= 0 ? 'pos' : 'neg'}">${s >= 0 ? '+' : ''}${s} Elo</b></div></div>`;
+}
+
+
+function rcpKalenderHtml(ms, von, tage){
+  const je = {};
+  (ms || []).forEach(m => { const k = tagKey(mts(m)); je[k] = (je[k] || 0) + 1; });
+  const d0 = new Date(von); d0.setHours(0, 0, 0, 0);
+  const max = Math.max(1, ...Object.values(je));
+  const WT = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+  let zellen = '';
+  for(let i = 0, vor = wochentagMo(d0); i < vor; i++) zellen += '<span class="rcp-kal-x"></span>';
+  for(let i = 0; i < tage; i++){
+    const d = new Date(d0); d.setDate(d0.getDate() + i);
+    const n = je[tagKey(d)] || 0;
+    const k = n ? Math.max(1, Math.ceil(n / max * 4)) : 0;
+    zellen += `<span class="rcp-kal-t k${k}" style="--i:${i}"><small class="num">${d.getDate()}</small>`
+      + `${n ? `<b class="num">${n}</b>` : ''}</span>`;
+  }
+  return `<div class="rcp-kal${tage <= 7 ? ' woche' : ''}">${
+    WT.map(t => `<span class="rcp-kal-w">${t}</span>`).join('')}${zellen}</div>`;
+}
+
+function rcpTabelleHtml(rang, platzVor){
+  if(!rang || !rang.length) return '';
+  const elos = rang.map(e => e.elo), lo = Math.min(...elos), hi = Math.max(...elos);
+  const zug = rang.map((e, i) => platzVor && platzVor[e.id] ? platzVor[e.id] - (i + 1) : null);
+  const auf = Math.max(0, ...zug.filter(x => x != null)), ab = Math.min(0, ...zug.filter(x => x != null));
+  const METALL = ['gold', 'silber', 'bronze'];
+  const PF_AUF = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V5M6 11l6-6 6 6"/></svg>';
+  const PF_AB = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v15M6 13l6 6 6-6"/></svg>';
+  const chip = (z, e) => {
+    if(!platzVor) return '';
+    if(z == null) return `<span class="rcp-tab-z leer" title="im Vormonat nicht in der Tabelle">–</span>`;
+    if(z > 0) return `<span class="rcp-tab-z auf${z === auf ? ' max' : ''}" title="Platz ${platzVor[e.id]} im Vormonat">${PF_AUF}${z}</span>`;
+    if(z < 0) return `<span class="rcp-tab-z ab${z === ab ? ' max' : ''}" title="Platz ${platzVor[e.id]} im Vormonat">${PF_AB}${-z}</span>`;
+    return `<span class="rcp-tab-z gleich" title="derselbe Platz wie im Vormonat">=</span>`;
+  };
+  return `<div class="rcp-tab${platzVor ? ' mit-zug' : ''}">${rang.map((e, i) => {
+    const sp = e.wins + e.losses, wr = sp ? e.wins / sp * 100 : 0;
+    const w = hi > lo ? 22 + (e.elo - lo) / (hi - lo) * 78 : 100;
+    return `<div class="rcp-tab-r${i < 3 ? ' ' + METALL[i] : ''}" data-detail="${esc(e.id)}" style="--w:${w.toFixed(1)}%;--i:${i}">
+      <span class="rcp-tab-p num">${i + 1}</span>${chip(zug[i], e)}
+      ${rcpAvHtml(e.id, 26, {})}
+      <span class="rcp-tab-n">${esc(pname(e.id))}</span>
+      <span class="rcp-tab-b" title="${e.wins} Siege, ${e.losses} Niederlagen"><span class="rcp-tab-wl"><i style="width:${wr.toFixed(1)}%"></i></span>
+        <small class="num">${e.wins}–${e.losses}</small></span>
+      <b class="rcp-tab-e num">${e.elo < 0 ? '−' + Math.abs(e.elo) : e.elo}</b>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function rcpTeamHtml(sid, ms){
+  let t = null;
+  try { t = seasonTeamOf(sid); } catch(e){ t = null; }
+  if(!t || !t[0] || !t[1] || !pmap()[t[0]] || !pmap()[t[1]]) return '';
+  const [a, b] = t;
+  const paar = (x, y) => (x === a && y === b) || (x === b && y === a);
+  const zusammen = (ms || []).filter(m => paar(m.a1, m.a2) || paar(m.b1, m.b2))
+    .slice().sort((x, y) => mts(x) - mts(y));
+  if(!zusammen.length) return '';
+  const sieg = m => paar(m.a1, m.a2) ? m.winner === 'A' : m.winner === 'B';
+  const w = zusammen.filter(sieg).length, l = zusammen.length - w;
+  let elo = 0;
+  try { elo = Math.round((((getGlobalSim().seasonTeamElo || {})[sid]) || {})[paarKey(a, b)] || 0); } catch(e){ elo = 0; }
+  return `<div class="rcp-team klick" data-team="${esc(paarKey(a, b))}">
+    <div class="rcp-team-l">${svgI('users')}Team der Saison</div>
+    <div class="rcp-team-m">${rcpPaarHtml([a, b], 46)}
+      <span class="rcp-team-t"><b>${esc(pname(a))} &amp; ${esc(pname(b))}</b>
+        <small class="num">${zusammen.length} Partien · ${w}:${l}</small></span>
+      <span class="rcp-team-e"><b class="num ${elo >= 0 ? 'auf' : 'ab'}">${elo >= 0 ? '+' : '−'}${Math.abs(elo)}</b><small>Elo zusammen</small></span>
+    </div>
+    <div class="srn-z">${zusammen.map(m => `<i class="${sieg(m) ? 'w' : 'l'}"></i>`).join('')}</div>
+  </div>`;
+}
+
+const RCP_SPAET_MS = 380;
+function rcpSpaetHtml(){
+  return '<div class="rcp-spaet" data-rcp-spaet aria-busy="true"><i></i><i></i><i></i><i></i></div>';
+}
+function rcpSpaetLaden(wurzel, bau, binden){
+  const box = wurzel && wurzel.querySelector('[data-rcp-spaet]');
+  if(!box) return;
+  setTimeout(() => {
+    if(!box.isConnected) return;
+    let html = '';
+    try { html = bau() || ''; } catch(e){ html = ''; }
+    if(!box.isConnected) return;
+    const da = document.createElement('div');
+    da.className = 'rcp-spaet-da';
+    da.innerHTML = html;
+    box.replaceWith(da);
+    if(binden) binden(da);
+  }, RCP_SPAET_MS);
+}
+
+function rcpLaufbahnDaten(vonMs, bisMs){
+  const A = _storyStand(vonMs - 1), B = _storyStand(bisMs);
+  const BADGE = new Map(BADGES.map(b => [b.id, b]));
+  return (players || []).filter(p => sichtbar(p)).map(p => {
+    const w = _prestigeWirkung(p.id, A, B);
+    const teile = {auszeichnung:w.delta - w.rekordDelta - w.monatDelta, monat:w.monatDelta, rekord:w.rekordDelta};
+    const lage = (st, gr, pt) => ({stufe:st | 0, grad:gr | 0, punkte:pt});
+    const je = st => { const o = {};
+      (((st.prestige(p.id) || {}).quellen) || []).forEach(q => { if(q.q === 'auszeichnung') o[q.id] = q; });
+      return o; };
+    const a = je(A), b = je(B);
+    const posten = Object.keys(b).map(id => {
+      const mal = (b[id].mal || 0) - ((a[id] || {}).mal || 0);
+      const pt = Math.round(((b[id].p || 0) - ((a[id] || {}).p || 0)) * 10) / 10;
+      const def = BADGE.get(id) || {};
+      return {id, name:b[id].name || def.name || id, ic:def.ic || 'medal', klasse:rarityOf(id), mal, bis:b[id].mal || 0, p:pt};
+    }).filter(q => q.mal > 0 && q.p > 0);
+    return {pid:p.id, delta:w.delta, vor:w.vor, nach:w.nach, teile, posten,
+            von:lage(w.stufeVor, w.gradVor, w.vor), zu:lage(w.stufeNach, w.gradNach, w.nach)};
+  });
+}
+function rcpZeichenZuege(daten){
+  return daten.map(x => {
+    const a = insigniumPos(x.von), b = insigniumPos(x.zu);
+    if(a === b) return null;
+    const art = x.zu.stufe > x.von.stufe ? 'auf' : b > a ? 'grad' : 'ab';
+    return {pid:x.pid, art, vor:x.von, nach:x.zu};
+  }).filter(Boolean).sort(_insZugVor);
+}
+const RCP_QUELLEN = [['auszeichnung', 'Auszeichnungen'], ['monat', 'Monatschroniken'], ['rekord', 'Rekorde']];
+function rcpLaufbahnHtml(daten){
+  const l = (daten || []).filter(x => x.delta || Object.values(x.teile).some(Boolean))
+    .sort((a, b) => b.delta - a.delta || pname(a.pid).localeCompare(pname(b.pid), 'de'));
+  if(!l.length) return '';
+  const plus = x => RCP_QUELLEN.reduce((n, [k]) => n + Math.max(0, x.teile[k]), 0);
+  const minus = x => RCP_QUELLEN.reduce((n, [k]) => n + Math.max(0, -x.teile[k]), 0);
+  const P = Math.max(0, ...l.map(plus)), M = Math.max(0, ...l.map(minus));
+  const ganz = Math.max(1, P + M), null0 = M / ganz * 100;
+  const pct = v => (v / ganz * 100).toFixed(2) + '%';
+  const summe = {};
+  RCP_QUELLEN.forEach(([k]) => { summe[k] = l.reduce((n, x) => n + x.teile[k], 0); });
+  const vz = v => (v > 0 ? '+' : v < 0 ? '−' : '±') + Math.abs(v);
+  const zeile = (x, i) => {
+    let stuecke = '', r = M, li = M;
+    RCP_QUELLEN.forEach(([k, name]) => {
+      const v = x.teile[k];
+      if(v > 0){ stuecke += `<i class="${k}" style="left:${pct(r)};width:${pct(v)}" title="${name} ${vz(v)}"></i>`; r += v; }
+      else if(v < 0){ li += v; stuecke += `<i class="${k} weg" style="left:${pct(li)};width:${pct(-v)}" title="${name} ${vz(v)}"></i>`; }
+    });
+    return `<div class="rcp-lb-z" data-laufbahn="${esc(x.pid)}" style="--i:${i}">
+      ${rcpAvHtml(x.pid, 24, {})}<span class="rcp-lb-n">${esc(pname(x.pid))}</span>
+      <span class="rcp-lb-b"><u style="left:${null0.toFixed(2)}%"></u>${stuecke}</span>
+      <b class="rcp-lb-d num ${x.delta > 0 ? 'auf' : x.delta < 0 ? 'ab' : ''}">${vz(x.delta)}</b>
+    </div>`;
+  };
+  return `<div class="rcp-lb">${l.map(zeile).join('')}</div>
+    <div class="rcp-lb-leg">${RCP_QUELLEN.map(([k, name]) => `<span class="${k}"><u></u>${name}`
+      + ` <b class="num">${vz(summe[k])}</b></span>`).join('')}</div>`;
+}
+
+const RCP_REKORD_ART = {neu:'erstmals', geholt:'übernommen', gesteigert:'verbessert'};
+function rcpRekordWandHtml(liste){
+  const je = {};
+  (liste || []).forEach(r => (r.pids || [r.pid]).forEach(pid => {
+    if(!pmap()[pid] || !sichtbar(pid)) return;
+    (je[pid] = je[pid] || []).push(r);
+  }));
+  const ids = Object.keys(je).sort((a, b) => je[b].length - je[a].length || pname(a).localeCompare(pname(b), 'de'));
+  if(!ids.length) return '';
+  const max = je[ids[0]].length;
+  return `<div class="rcp-rw">${ids.map((pid, i) => `<div class="rcp-rw-p" style="--i:${i}">
+    <div class="rcp-rw-k" data-detail="${esc(pid)}">${rcpAvHtml(pid, 28, {})}<b>${esc(pname(pid))}</b>
+      <span class="rcp-rw-s" style="--w:${(je[pid].length / max * 100).toFixed(1)}%"><i></i></span>
+      <em class="num">${je[pid].length}</em></div>
+    <div class="rcp-rw-l">${je[pid].map(r => `<span class="rcp-rw-r ${esc(r.art)}" data-chron="${esc(r.id)}">`
+      + `${zkHtml(r.ic, 'k', '')}<span><b class="${_awLblLang(r.name).trim()}">${esc(r.name)}</b><small>${esc(RCP_REKORD_ART[r.art] || '')}${
+        r.zeit ? ' · ' + esc(r.zeit) : ''}</small></span></span>`).join('')}</div>
+  </div>`).join('')}</div>`;
+}
+function rcpRekordArtenHtml(liste){
+  const n = {};
+  (liste || []).forEach(r => { n[r.art] = (n[r.art] || 0) + 1; });
+  const teile = ['geholt', 'gesteigert', 'neu'].filter(k => n[k]);
+  return teile.length ? `<div class="rcp-rw-arten">${teile.map(k =>
+    `<span class="${k}"><b class="num">${n[k]}</b> ${RCP_REKORD_ART[k]}</span>`).join('')}</div>` : '';
+}
+
+function rcpBeinamenHtml(T){
+  if(!T || !T.awarded || !T.awarded.length) return {html:'', zahl:0};
+  const schatten = a => (_chronikMonat(a.titleId) || {}).art === 'schatten';
+  const gesehen = new Set(), zaehlt = [], neg = [], weitere = [];
+  T.awarded.forEach(a => {
+    if(!pmap()[a.pid]) return;
+    if(schatten(a)){ neg.push(a); return; }
+    if(gesehen.has(a.pid)) weitere.push(a); else { gesehen.add(a.pid); zaehlt.push(a); }
+  });
+  const band = a => {
+    const t = titleTone(a.tone);
+    return `<div class="rcp-bn" data-tplayer="${esc(a.pid)}">
+      ${rcpAvHtml(a.pid, 48, {})}
+      <span class="rcp-bn-t"><span class="pp-banner" style="--tt:${t.c};--ttr:${t.rgb}">
+        <span class="pp-title-pill"><span class="i">${svgI(a.ic)}</span>${esc(a.name)}</span></span>
+        <small><b>${esc(pname(a.pid))}</b>${a.ev ? ' · ' + esc(a.ev) : ''}</small></span>
+    </div>`;
+  };
+  const zeile = a => rcpZeileHtml({ic:a.ic, ton:a.tone, name:a.name, sub:pname(a.pid) + (a.ev ? ' · ' + a.ev : ''),
+    attr:`data-tplayer="${esc(a.pid)}"`});
+  const html = (zaehlt.length ? `<div class="rcp-bns">${zaehlt.map(band).join('')}</div>` : '')
+    + (neg.length ? `<div class="rcp-bn-neg">${neg.map(a => `<span data-tplayer="${esc(a.pid)}">`
+        + `${zkHtml(a.ic, 'k', 'rot')}<span><b>${esc(a.name)}</b><small>${esc(pname(a.pid))}</small></span></span>`).join('')}</div>` : '')
+    + (weitere.length ? `<div class="rcp-liste chron-rest">${weitere.map(zeile).join('')}</div>`
+        + _chronMehrKnopf(weitere.length) : '');
+  return {html, zahl:zaehlt.length};
+}
+
+function rcpEhrungHtml(daten){
+  const ORD = {legendary:0, rare:1, common:2};
+  const sp = (daten || []).filter(x => x.posten && x.posten.length).map(x => ({pid:x.pid,
+    summe:Math.round(x.posten.reduce((n, q) => n + q.p, 0) * 10) / 10,
+    posten:x.posten.slice().sort((a, b) => (ORD[a.klasse] - ORD[b.klasse]) || (b.p - a.p) || a.name.localeCompare(b.name, 'de'))}))
+    .sort((a, b) => b.summe - a.summe || pname(a.pid).localeCompare(pname(b.pid), 'de'));
+  if(!sp.length) return {html:'', zahl:0};
+  const klassen = _ehrungKlassen(sp);
+  const zahl = klassen.reduce((n, z) => n + z.n, 0);
+  return {zahl, html:`<div class="rcp-eh">${_ehrungSaeulen(sp, true, {still:true})}</div>`
+    + (klassen.length ? `<div class="eh-fuss rcp-eh-k">${klassen.map(_ehrungKlasseHtml).join('')}</div>` : '')};
 }
 function pmap(){
   const key='pmap_'+players.length+'_'+_cache.version;
@@ -8091,73 +8456,36 @@ function showSeasonRecap(season, opts){
   ms.forEach(m=>[m.a1,m.a2,m.b1,m.b2].forEach(id=>spielerImMonat.add(id)));
   const tore = ms.reduce((s,m)=>s+(m.score_a||0)+(m.score_b||0),0);
   const tage = new Set(ms.map(mdayKey)).size;
+  const vonMs = seasonStart(sid).getTime(), bisMs = seasonEnd(sid).getTime();
 
   const rang = saisonRang(sid);
   const podestHtml = saisonPodestHtml(sid, rang);
-
-  let teamHtml='';
-  if(season.team_p1 && season.team_p2){
-    const a=season.team_p1, b=season.team_p2;
-    let tg=0, tw=0;
-    ms.forEach(m=>{
-      const aufA=(m.a1===a||m.a2===a)&&(m.a1===b||m.a2===b);
-      const aufB=(m.b1===a||m.b2===a)&&(m.b1===b||m.b2===b);
-      if(aufA){ tg++; if(m.winner==='A')tw++; }
-      else if(aufB){ tg++; if(m.winner==='B')tw++; }
-    });
-    teamHtml = `<div class="rcp-tos klick" data-team="${esc(paarKey(a, b))}">
-      <div class="rcp-tos-pair">${rcpPaarHtml([a,b],40)}</div>
-      <div class="rcp-tos-info">
-        <div class="rcp-tos-label">Team der Saison</div>
-        <div class="rcp-tos-name">${esc(pname(a)+' & '+pname(b))}</div>
-        <div class="rcp-tos-detail num">${tg?tg+' Spiele · '+Math.round(tw/tg*100)+'% Siegquote':'–'}</div>
-      </div>
-    </div>`;
-  }
-
-  let listeHtml='';
-  if(rang.length){
-    listeHtml = rcpAbschnitt('Rangliste', rang.length) + `<div class="rlist">${
-      rang.map((e,i)=>{
-        const p = pmap()[e.id];
-        const sp = e.wins + e.losses;
-        const wr = sp ? Math.round(e.wins/sp*100) : 0;
-        return `<div class="rrow${i<3?' top'+(i+1):''}" data-detail="${esc(e.id)}">
-          <span class="pos num">${i+1}</span>
-          ${avHtml(p, '', {ins:true, px:52, feuer:0})}
-          <div class="rmid">
-            <div class="rname">${esc(p.name)}</div>
-            <div class="rmeta"><span>${e.wins}–${e.losses}</span>
-              <span class="wbar"><i style="width:${wr}%"></i></span><span>${wr}%</span></div>
-          </div>
-          <div class="rval"><div class="big num">${e.elo}</div>
-            <div class="small num ${e.diff>=0?'plus':'minus'}">${e.diff>=0?'+':''}${e.diff} Tore</div></div>
-        </div>`;
-      }).join('')}</div>`;
-  }
 
   const vorSid = _prevSeasonId(sid);
   const vorMs = vorSid ? matchesInSeason(vorSid) : [];
   const unterschied = (jetzt, vor) => vorMs.length
     ? (jetzt > vor ? '+' : jetzt < vor ? '−' : '±') + Math.abs(jetzt - vor) : null;
-  let sprungHtml = '';
-  if(vorMs.length && rang.length){
-    const platzVor = {};
+  let platzVor = null;
+  if(vorMs.length){
+    platzVor = {};
     saisonRang(vorSid).forEach((e, i) => { platzVor[e.id] = i + 1; });
-    const bewegt = rang.map((e, i) => ({id:e.id, jetzt:i + 1, vor:platzVor[e.id]})).filter(x => x.vor);
-    const weite = x => x.vor - x.jetzt;
-    const auf = bewegt.filter(x => weite(x) > 0).sort((a, b) => weite(b) - weite(a) || a.jetzt - b.jetzt)[0];
-    const ab = bewegt.filter(x => weite(x) < 0).sort((a, b) => weite(a) - weite(b) || a.jetzt - b.jetzt)[0];
-    const k = [];
-    if(auf) k.push(rcpKachelHtml({ic:'stepsUp', label:'Größter Sprung', name:pname(auf.id),
-      wert:'Platz ' + auf.vor + ' → ' + auf.jetzt, ton:'metall', attr:`data-detail="${esc(auf.id)}"`}));
-    if(ab) k.push(rcpKachelHtml({ic:'trendDown', label:'Tiefster Fall', name:pname(ab.id),
-      wert:'Platz ' + ab.vor + ' → ' + ab.jetzt, ton:'red', attr:`data-detail="${esc(ab.id)}"`}));
-    if(k.length) sprungHtml = rcpAbschnitt('Gegenüber ' + seasonLabel(vorSid))
-      + `<div class="rcp-awards${k.length % 2 ? ' ungerade' : ''}">${k.join('')}</div>`;
   }
   const vorTore = vorMs.reduce((s, m) => s + (m.score_a || 0) + (m.score_b || 0), 0);
   const vorSpieler = new Set(vorMs.flatMap(m => [m.a1, m.a2, m.b1, m.b2])).size;
+
+  const zahlenHtml = rcpAbschnitt('Der Monat in Zahlen')
+    + rcpKalenderHtml(ms, seasonStart(sid), seasonEnd(sid).getDate())
+    + rcpZahlenHtml([
+        {v:ms.length, l:'Matches', d:unterschied(ms.length, vorMs.length)},
+        {v:tage, l:'Spieltage', d:unterschied(tage, new Set(vorMs.map(mdayKey)).size)},
+        {v:spielerImMonat.size, l:'Spieler', d:unterschied(spielerImMonat.size, vorSpieler)},
+        {v:tore, l:'Tore', d:unterschied(tore, vorTore)}])
+    + (vorMs.length ? `<div class="rcp-z-bezug">Unterschied zum ${esc(seasonLabel(vorSid))}</div>` : '');
+
+  const tabelleHtml = rang.length
+    ? rcpAbschnitt('Die Tabelle', rang.length) + rcpTabelleHtml(rang, platzVor)
+      + (platzVor ? `<div class="rcp-z-bezug rcp-tab-bezug">Bewegung gegenüber ${esc(seasonLabel(vorSid))}</div>` : '')
+    : '';
 
   let rennenHtml='';
   try {
@@ -8169,48 +8497,26 @@ function showSeasonRecap(season, opts){
         + (zl ? rcpAbschnitt('Die Saison des Meisters', pname(drei[0])) + `<div class="rcp-block">${zl}</div>` : '');
     }
   } catch(err){}
-
-  let verlaufHtml='';
   try {
     const mini = _recapPosMiniSVG(getSeasonPositionHistory(sid));
     if(mini){
-      verlaufHtml = `<button type="button" class="rcp-posmini" data-poshist="${esc(sid)}">
+      rennenHtml += `<button type="button" class="rcp-posmini" data-poshist="${esc(sid)}">
         <span class="rcp-posmini-chart">${mini}</span>
         <span class="rcp-posmini-tx"><span class="rcp-posmini-tt">Positionsverlauf</span><span class="rcp-posmini-su">Wer wann wo stand</span></span>
       </button>`;
     }
   } catch(err){}
 
-  let chronikHtml='';
-  try {
-    const T = seasonTitles(sid);
-    if(T.awarded.length){
-      const zeile = a => rcpZeileHtml({pid:a.pid, px:38,
-          ic:a.ic, ton:a.tone, name:a.name, sub:pname(a.pid),
-          attr:`data-tplayer="${esc(a.pid)}"`});
-      const gesehen = new Set(), zaehlt = [], weitere = [];
-      T.awarded.forEach(a => {
-        if(gesehen.has(a.pid)) weitere.push(a); else { gesehen.add(a.pid); zaehlt.push(a); }
-      });
-      chronikHtml = rcpAbschnitt('Chronik der Saison', zaehlt.length)
-        + `<div class="rcp-liste">${zaehlt.map(zeile).join('')}</div>`
-        + (weitere.length ? `<div class="rcp-liste chron-rest">${weitere.map(zeile).join('')}</div>`
-            + _chronMehrKnopf(weitere.length) : '')
-        + `<div class="rcp-mehr klick" data-stafel="${esc(sid)}">Die ganze Tafel</div>`;
-    }
-  } catch(err){}
-
-  let rekordHtml='';
-  try {
-    const REK = saisonRekorde(sid);
-    if(REK.length){
-      const wort = {neu:'zum ersten Mal', geholt:'übernommen', gesteigert:'verbessert'};
-      rekordHtml = rcpAbschnitt('Rekorde dieser Saison', REK.length) + `<div class="rcp-liste">${
-        REK.map(r=>rcpZeileHtml({pid:r.pid, px:38,
-          ic:r.ic, ton:r.tone, name:r.name, sub:pname(r.pid)+' · '+wort[r.art],
-          rechts:r.zeit || '', attr:`data-chron="${esc(r.id)}"`})).join('')}</div>`;
-    }
-  } catch(err){}
+  const spaet = () => {
+    const daten = rcpLaufbahnDaten(vonMs, bisMs);
+    const zuege = rcpZeichenZuege(daten);
+    const lb = rcpLaufbahnHtml(daten);
+    const eh = rcpEhrungHtml(daten);
+    return (zuege.length ? rcpAbschnitt('Neue Zeichen', zuege.length)
+        + `<div class="rcp-is nd-is nd-is-viele">${_insBewegungenHtml(zuege)}</div>` : '')
+      + (lb ? rcpAbschnitt('Wirkung auf die Laufbahn') + lb : '')
+      + (eh.html ? rcpAbschnitt('Auszeichnungen', eh.zahl) + eh.html : '');
+  };
 
   const vorherAw = awSeasonId;
   awSeasonId = sid;
@@ -8221,8 +8527,21 @@ function showSeasonRecap(season, opts){
     ['worstWr','lossStreaks','pechvogel'],
     key => `data-award="${key}"`);
   const awardsHtml = kacheln.length
-    ? rcpAbschnitt('Auszeichnungen', kacheln.length)
-      + `<div class="rcp-awards${kacheln.length%2?' ungerade':''}">${kacheln.join('')}</div>` : '';
+    ? rcpAbschnitt('Awards der Saison', kacheln.length) + awVitrineHtml(kacheln, '') : '';
+
+  let chronikHtml='';
+  try {
+    const bn = rcpBeinamenHtml(seasonTitles(sid));
+    if(bn.html) chronikHtml = rcpAbschnitt('Chronik der Saison', bn.zahl) + bn.html
+      + `<div class="rcp-mehr klick" data-stafel="${esc(sid)}">Die ganze Tafel</div>`;
+  } catch(err){}
+
+  let rekordHtml='';
+  try {
+    const REK = saisonRekorde(sid);
+    if(REK.length) rekordHtml = rcpAbschnitt('Rekorde dieser Saison', REK.length)
+      + rcpRekordArtenHtml(REK) + rcpRekordWandHtml(REK);
+  } catch(err){}
 
   const vergangene = seasons.filter(s => s.id !== currentSeason().id)
     .map(s => s.id).sort().reverse();
@@ -8230,16 +8549,10 @@ function showSeasonRecap(season, opts){
   openSheet(
     rcpKopfHtml({ic:'trophy', marke:'Saison beendet', titel:season.label,
       extra:saisonWaehlerHtml('rcpSaisonwahl', sid, {liste:vergangene, attr:'rcpsaison'})})
-    + rcpZahlenHtml([
-        {v:ms.length, l:'Matches', d:unterschied(ms.length, vorMs.length)},
-        {v:tage, l:'Spieltage', d:unterschied(tage, new Set(vorMs.map(mdayKey)).size)},
-        {v:spielerImMonat.size, l:'Spieler', d:unterschied(spielerImMonat.size, vorSpieler)},
-        {v:tore, l:'Tore', d:unterschied(tore, vorTore)}])
-    + (vorMs.length ? `<div class="rcp-z-bezug">Unterschied zum ${esc(seasonLabel(vorSid))}</div>` : '')
-    + rcpAbschnitt('Podest')
     + (podestHtml ? `<div class="nf-meister rcp-buehne"><span class="nf-ms-strahl" aria-hidden="true"></span>${podestHtml}</div>` : '')
-    + teamHtml
-    + listeHtml + sprungHtml + rennenHtml + verlaufHtml + chronikHtml + rekordHtml + awardsHtml
+    + rcpTeamHtml(sid, ms)
+    + zahlenHtml + tabelleHtml + rennenHtml + awardsHtml
+    + rcpSpaetHtml() + chronikHtml + rekordHtml
     + `<button class="recap-done-btn" id="closeRecapBtn">Verstanden</button>`,
     {protectMs: opts.auto ? 2500 : 0});
 
@@ -8253,23 +8566,30 @@ function showSeasonRecap(season, opts){
     const s = seasons.find(x => x.id === b.dataset.rcpsaison);
     if(s) showSeasonRecap(s);
   });
-  const binden = (sel, fn) => wurzel.querySelectorAll(sel).forEach(el => {
-    el.onclick = () => { merken(); fn(el); };
-  });
-  binden('[data-detail],[data-tplayer]', el =>
-    sheetNav(()=>showPlayer(el.dataset.detail || el.dataset.tplayer)));
-  binden('.rcp-tos[data-team]', el => {
-    const paar = el.dataset.team.split('|');
-    if(paar[0]&&paar[1]) sheetNav(()=>showTeam(paar[0],paar[1]));
-  });
-  binden('[data-award]', el => {
-    awPeriod='season'; awSeasonId=sid;
-    sheetNav(()=>showAward(el.dataset.award));
-  });
-  binden('[data-poshist]', el => sheetNav(()=>showPositionHistory(el.dataset.poshist)));
-  binden('[data-stafel]', el => sheetNav(()=>showSeasonTable(el.dataset.stafel)));
-  binden('[data-chron]', el => sheetNav(()=>showChronicle(el.dataset.chron)));
+  const bindeIn = root => {
+    const binden = (sel, fn) => root.querySelectorAll(sel).forEach(el => {
+      el.onclick = () => { merken(); fn(el); };
+    });
+    binden('[data-detail],[data-tplayer]', el =>
+      sheetNav(()=>showPlayer(el.dataset.detail || el.dataset.tplayer)));
+    binden('.rcp-team[data-team]', el => {
+      const paar = el.dataset.team.split('|');
+      if(paar[0]&&paar[1]) sheetNav(()=>showTeam(paar[0],paar[1]));
+    });
+    binden('[data-award]', el => {
+      awPeriod='season'; awSeasonId=sid;
+      sheetNav(()=>showAward(el.dataset.award));
+    });
+    binden('.rcp-is [data-pid],[data-laufbahn]', el =>
+      sheetNav(()=>showLaufbahn(el.dataset.laufbahn || el.dataset.pid)));
+    binden('.rcp-eh [data-pid]', el => sheetNav(()=>showPlayer(el.dataset.pid)));
+    binden('[data-poshist]', el => sheetNav(()=>showPositionHistory(el.dataset.poshist)));
+    binden('[data-stafel]', el => sheetNav(()=>showSeasonTable(el.dataset.stafel)));
+    binden('[data-chron]', el => sheetNav(()=>showChronicle(el.dataset.chron)));
+  };
+  bindeIn(wurzel);
   _chronMehrBinden(wurzel);
+  rcpSpaetLaden(wurzel, spaet, bindeIn);
 }
 
 function _potwLastWeekRange(){
@@ -8938,11 +9258,6 @@ function showPotwRecap(opts){
     ms.forEach(m=>[m.a1,m.a2,m.b1,m.b2].forEach(id=>uniquePlayers.add(id)));
     const totalGoals=ms.reduce((a,m)=>a+(m.score_a||0)+(m.score_b||0),0);
 
-    const biggestEloGainArr=Object.entries(ps)
-      .filter(([id,s])=>s.wins+s.losses > 0 && sichtbar(pm[id]))
-      .sort((a,b)=>b[1].eloDelta-a[1].eloDelta);
-    const biggestEloGain=biggestEloGainArr[0];
-
     const vorherWoche = awWeekStart;
     awWeekStart = new Date(weekStart);
     let R;
@@ -8952,16 +9267,25 @@ function showPotwRecap(opts){
     const eng = ms.filter(m => Math.abs((m.score_a || 0) - (m.score_b || 0)) <= 2).length;
     const duos = new Set(ms.flatMap(m => [paarKey(m.a1, m.a2), paarKey(m.b1, m.b2)])).size;
 
-    const wkStartMs = weekStart.getTime();
-    const hlKacheln = [];
-    if(biggestEloGain) hlKacheln.push(rcpKachelHtml({ic:'trendUp', label:'Größter Aufwind',
-      name:pname(biggestEloGain[0]), wert:'+'+Math.round(biggestEloGain[1].eloDelta)+' Elo', ton:'metall',
-      attr:`data-potw-player="${esc(biggestEloGain[0])}"`}));
-    hlKacheln.push(...rcpAwardKacheln(R,
+    const wkStartMs = weekStart.getTime(), wkEndMs = weekEnd.getTime();
+    const hlKacheln = rcpAwardKacheln(R,
       ['mvt', 'streaks', 'scorer', 'wall', 'clutch', 'upset', 'biggest', 'grinder'],
       ['worstWr', 'lossStreaks'],
       key => `data-potw-award="${key}" data-potw-week="${wkStartMs}"`,
-      (key, top) => key === 'streaks' && mainPotwStats.bestStreak >= 3 && top.some(x => x.id === mainPotwPlayerId)));
+      (key, top) => key === 'streaks' && mainPotwStats.bestStreak >= 3 && top.some(x => x.id === mainPotwPlayerId));
+
+    const spaet = () => {
+      const daten = rcpLaufbahnDaten(wkStartMs, wkEndMs);
+      const zuege = rcpZeichenZuege(daten);
+      const lb = rcpLaufbahnHtml(daten);
+      const eh = rcpEhrungHtml(daten);
+      const REK = rekordeImZeitraum(wkStartMs, wkEndMs);
+      return (zuege.length ? rcpAbschnitt('Neue Zeichen', zuege.length)
+          + `<div class="rcp-is nd-is nd-is-viele">${_insBewegungenHtml(zuege)}</div>` : '')
+        + (lb ? rcpAbschnitt('Wirkung auf die Laufbahn') + lb : '')
+        + (eh.html ? rcpAbschnitt('Auszeichnungen der Woche', eh.zahl) + eh.html : '')
+        + (REK.length ? rcpAbschnitt('Rekorde der Woche', REK.length) + rcpRekordArtenHtml(REK) + rcpRekordWandHtml(REK) : '');
+    };
 
     const serieHtml = mainPotwStats.bestStreak >= 3
       ? rcpNotizHtml({ic:'flame',
@@ -8986,17 +9310,18 @@ function showPotwRecap(opts){
             {v:eloDeltaStr,          l:'Elo', ton:eloDelta>=0 ? 'gruen' : 'rot'}
           ])})
       + serieHtml
+      + (geteilt ? '' : rcpAbschnitt('Die Woche von ' + pname(mainPotwPlayerId))
+          + rcpWocheHtml(ms, mainPotwPlayerId, weekStart) + rcpEloBahnHtml(ms, mainPotwPlayerId))
       + rcpAbschnitt('Die Woche in Zahlen')
+      + rcpKalenderHtml(ms, weekStart, 7)
       + rcpZahlenHtml([
           {v:spieltage,                        l:spieltage === 1 ? 'Spieltag' : 'Spieltage'},
           {v:komma(totalGoals / ms.length, 1), l:'Tore je Partie'},
           {v:eng,                              l:'Enge Partien'},
           {v:duos,                             l:'Duos'}])
-      + (geteilt ? '' : rcpAbschnitt('Die Woche von ' + pname(mainPotwPlayerId))
-          + rcpWocheHtml(ms, mainPotwPlayerId, weekStart) + rcpEloBahnHtml(ms, mainPotwPlayerId))
       + rcpAbschnitt('Das Feld der Woche') + rcpFeldHtml(ms, mainPotwPlayerId)
-      + rcpAbschnitt('Auszeichnungen der Woche', hlKacheln.length)
-      + `<div class="rcp-awards${hlKacheln.length%2 ? ' ungerade' : ''}">${hlKacheln.join('')}</div>`
+      + (hlKacheln.length ? rcpAbschnitt('Awards der Woche', hlKacheln.length) + awVitrineHtml(hlKacheln, '') : '')
+      + rcpSpaetHtml()
       + `<button id="closePotwBtn" class="recap-done-btn">Verstanden</button>`,
       {protectMs: opts.auto ? 2500 : 0});
 
@@ -9007,19 +9332,29 @@ function showPotwRecap(opts){
     const wurzel = document.getElementById('sheet');
     const zu = document.getElementById('closePotwBtn');
     if(zu) zu.onclick = () => closeSheet();
-    wurzel.querySelectorAll('[data-detail]').forEach(el => {
-      el.onclick = () => sheetNav(()=>showPlayer(el.dataset.detail));
-    });
-    wurzel.querySelectorAll('[data-potw-award]').forEach(el => {
-      el.onclick = () => sheetNav(()=>{
-        awPeriod = 'week';
-        awWeekStart = new Date(+el.dataset.potwWeek);
-        showAward(el.dataset.potwAward);
+    const bindeIn = root => {
+      root.querySelectorAll('[data-detail]').forEach(el => {
+        el.onclick = () => sheetNav(()=>showPlayer(el.dataset.detail));
       });
-    });
-    wurzel.querySelectorAll('[data-potw-player]').forEach(el => {
-      el.onclick = () => sheetNav(()=>showPlayer(el.dataset.potwPlayer));
-    });
+      root.querySelectorAll('[data-potw-award]').forEach(el => {
+        el.onclick = () => sheetNav(()=>{
+          awPeriod = 'week';
+          awWeekStart = new Date(+el.dataset.potwWeek);
+          showAward(el.dataset.potwAward);
+        });
+      });
+      root.querySelectorAll('[data-potw-player],.rcp-eh [data-pid]').forEach(el => {
+        el.onclick = () => sheetNav(()=>showPlayer(el.dataset.potwPlayer || el.dataset.pid));
+      });
+      root.querySelectorAll('.rcp-is [data-pid],[data-laufbahn]').forEach(el => {
+        el.onclick = () => sheetNav(()=>showLaufbahn(el.dataset.laufbahn || el.dataset.pid));
+      });
+      root.querySelectorAll('[data-chron]').forEach(el => {
+        el.onclick = () => sheetNav(()=>showChronicle(el.dataset.chron));
+      });
+    };
+    bindeIn(wurzel);
+    rcpSpaetLaden(wurzel, spaet, bindeIn);
   } catch(e){
     console.error('POTW Recap Fehler:',e);
   }
@@ -9169,11 +9504,6 @@ function showPotdRecap(opts){
       .filter(x => x.goals > 0 && sichtbar(pm[x.id]))
       .sort((a,b) => b.avg - a.avg || b.goals - a.goals)[0];
 
-    const tagAufstieg = Object.keys(ps)
-      .filter(id => sichtbar(pm[id]) && ps[id].eloDelta > 0)
-      .map(id => ({id, d:Math.round(ps[id].eloDelta)}))
-      .sort((a,b) => b.d - a.d)[0];
-
     let tagUpset = null;
     for(const m of dayMatches){
       const sp = m.exp_a == null ? 0.5 : m.exp_a;
@@ -9190,9 +9520,6 @@ function showPotdRecap(opts){
     tagHl('ball', 'Torjäger', tagScorer ? pname(tagScorer.id) : null,
           tagScorer ? 'Ø '+komma(tagScorer.avg,1)+' Tore' : null,
           tagScorer ? `data-potd-player="${esc(tagScorer.id)}"` : '');
-    tagHl('trendUp', 'Größter Aufwind', tagAufstieg ? pname(tagAufstieg.id) : null,
-          tagAufstieg ? '+'+tagAufstieg.d+' Elo' : null,
-          tagAufstieg ? `data-potd-player="${esc(tagAufstieg.id)}"` : '');
     tagHl('bolt', 'Größte Überraschung', upsetSieger ? pname(upsetSieger[0])+' & '+pname(upsetSieger[1]) : null,
           tagUpset ? Math.round(tagUpset.chance*100)+'% Chance' : null,
           upsetSieger ? `data-potd-team="${esc(upsetSieger.slice().sort().join('|'))}"` : '');
@@ -12712,8 +13039,8 @@ function awKachelHtml(key, top, o){
   const x = leer ? null : top[0];
   const ids = leer ? [] : awIds(key, x);
   const neg = awNeg(key);
-  const ton = neg ? 'ton-neg' : ids.length >= 2 ? 'ton-team' : 'ton-pos';
-  const zkTon = neg ? 'rot' : ids.length >= 2 ? 'blau' : 'gold';
+  const ton = neg ? 'ton-neg' : ids.length >= 2 ? 'ton-team' : o.metall ? 'ton-metall' : 'ton-pos';
+  const zkTon = neg ? 'rot' : ids.length >= 2 ? 'blau' : o.metall ? '' : 'gold';
   const gross = !!o.gross && !leer;
   const attr = o.attr != null ? o.attr : `data-award="${esc(key)}"`;
   const kopf = `<div class="aw-t-kopf">${zkHtml(AW_IC[key] || 'trophy', 'k', leer ? '' : zkTon)}`
@@ -26480,17 +26807,22 @@ function _newsInsTagZeilen(s){
   return `<div class="ni-zs">${l.map(zeile).join('')}</div>`;
 }
 
+function _insBewegungenHtml(liste){
+  const pm = pmap();
+  return (liste || []).filter(x => pm[x.pid]).map((x, i) =>
+    `<span class="nd-is-sp${x.art === 'ab' ? ' ab' : ''}" data-pid="${esc(x.pid)}" style="--i:${i}">`
+    + `<span class="nd-is-neu"><span class="nd-is-z">${_insZeichen(x.pid, x.nach)}</span>`
+    + `<span class="nd-is-av">${avHtml(pm[x.pid], '', {px:30})}</span></span>`
+    + `<b>${esc(_spName(x.pid))}</b><small>${esc(_insLageName(x.nach))}</small>`
+    + `<em>${esc(_insArtWort(x))}</em></span>`).join('');
+}
+
 function _ndInsTagBlatt(s){
   const d = (s && s.dataRef) || {}, l = _insZuege(d), pm = pmap(), z = l[0];
   if(!z || !pm[z.pid]) return null;
   const da = l.filter(x => pm[x.pid]);
   const kopf = da.length > 1
-    ? `<div class="nd-buehne nd-is nd-is-viele">` + da.map(x =>
-        `<span class="nd-is-sp${x.art === 'ab' ? ' ab' : ''}" data-pid="${esc(x.pid)}">`
-        + `<span class="nd-is-neu"><span class="nd-is-z">${_insZeichen(x.pid, x.nach)}</span>`
-        + `<span class="nd-is-av">${avHtml(pm[x.pid], '', {px:30})}</span></span>`
-        + `<b>${esc(_spName(x.pid))}</b><small>${esc(_insLageName(x.nach))}</small>`
-        + `<em>${esc(_insArtWort(x))}</em></span>`).join('') + `</div>`
+    ? `<div class="nd-buehne nd-is nd-is-viele">${_insBewegungenHtml(da)}</div>`
     : `<div class="nd-buehne nd-is">`
     + `<div class="nd-is-w">${(() => {
         const alt = `<span class="nd-is-alt">${_insZeichen(z.pid, z.vor, true)}<small>${esc(_insLageName(z.vor))}</small></span>`;
@@ -26658,7 +26990,8 @@ function _ehrungTon(k){ return k === 'legendary' ? 'gold' : k === 'rare' ? 'viol
 const EH_KLASSEN = [['legendary', 'legendär'], ['rare', 'selten'], ['common', 'gewöhnlich']];
 const _ehZahl = v => komma(Math.round(v * 10) / 10).replace(',0', '');
 
-function _ehrungSaeulen(sp, gross){
+function _ehrungSaeulen(sp, gross, o){
+  o = o || {};
   const pm = pmap();
   const da = sp.filter(x => pm[x.pid] && x.summe > 0);
   if(!da.length) return '';
@@ -26677,7 +27010,7 @@ function _ehrungSaeulen(sp, gross){
       .map(q => `<i class="${q.klasse}" style="flex-grow:${q.p}" title="${esc(q.name)}"></i>`).join('');
     const top = posten[0];
     return `<span class="eh-s" data-pid="${esc(x.pid)}" style="--i:${i}">`
-      + `<span class="eh-s-z" title="${esc(top ? top.name : '')}">${top ? _ehrungKachel(top, () => gold++, gross ? '' : 'k') : ''}</span>`
+      + `<span class="eh-s-z" title="${esc(top ? top.name : '')}">${top ? _ehrungKachel(top, o.still ? null : () => gold++, gross ? '' : 'k') : ''}</span>`
       + `<em class="eh-s-w num">+${_ehZahl(x.summe)}</em>`
       + `<span class="eh-saeule" style="height:${h}px">${stuecke}</span>`
       + `<span class="eh-s-av" title="${esc(pm[x.pid].name)}">${rcpAvHtml(x.pid, WAPPEN, {})}</span>`
@@ -26690,7 +27023,7 @@ function _ehrungSaeulen(sp, gross){
 
 function _ehrungKachel(q, naechste, groesse){
   const z = zkHtml(q.ic, groesse == null ? 'k' : groesse, _ehrungTon(q.klasse));
-  return q.klasse === 'legendary' ? z.replace(/<\/span>$/, glanzBahn(1 + naechste() * .35) + '</span>') : z;
+  return q.klasse === 'legendary' && naechste ? z.replace(/<\/span>$/, glanzBahn(1 + naechste() * .35) + '</span>') : z;
 }
 
 function _ehrungKlassen(sp){
@@ -31972,16 +32305,22 @@ function allChronicles(bisMs){
 
 function saisonRekorde(sid){
   if(!sid) return [];
-  const key = 'srek_' + sid + '_' + matches.length + '_' + _cache.version;
+  const vor = _prevSeasonId(sid);
+  return _rekordeZwischen('srek_' + sid, vor ? seasonEnd(vor).getTime() : null, seasonEnd(sid).getTime());
+}
+function rekordeImZeitraum(vonMs, bisMs){
+  return _rekordeZwischen('zrek_' + vonMs + '_' + bisMs, vonMs - 1, bisMs);
+}
+function _rekordeZwischen(name, vorMs, bisMs){
+  const key = name + '_' + matches.length + '_' + _cache.version;
   if(!_cache._srek) _cache._srek = {};
   if(_cache._srek[key]) return _cache._srek[key];
   _topfDeckel(_cache._srek, 24);
 
   const out = [];
   try {
-    const jetzt = allChronicles(seasonEnd(sid).getTime()).byId;
-    const vor   = _prevSeasonId(sid)
-      ? allChronicles(seasonEnd(_prevSeasonId(sid)).getTime()).byId : {};
+    const jetzt = allChronicles(bisMs).byId;
+    const vor   = vorMs != null ? allChronicles(vorMs).byId : {};
     CHRONICLES.forEach(def => {
       if(def.kind === 'shame') return;
       const n = jetzt[def.id];
@@ -31989,7 +32328,7 @@ function saisonRekorde(sid){
       const a = vor[def.id];
       let art = '';
       if(!a) art = 'neu';
-      else if(Math.abs(n.val - a.val) > 1e-9) art = (a.pid === n.pid) ? 'gesteigert' : 'geholt';
+      else if(n.val - a.val > 1e-9) art = (a.pid === n.pid) ? 'gesteigert' : 'geholt';
       else if(n.pids.join(',') !== a.pids.join(',')) art = 'geholt';
       if(!art) return;
       out.push(Object.assign({}, n, {art, vorwert: a ? a.val : null,

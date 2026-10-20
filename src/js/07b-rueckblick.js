@@ -76,11 +76,6 @@ function showPotwRecap(opts){
     ms.forEach(m=>[m.a1,m.a2,m.b1,m.b2].forEach(id=>uniquePlayers.add(id)));
     const totalGoals=ms.reduce((a,m)=>a+(m.score_a||0)+(m.score_b||0),0);
 
-    const biggestEloGainArr=Object.entries(ps)
-      .filter(([id,s])=>s.wins+s.losses > 0 && sichtbar(pm[id]))
-      .sort((a,b)=>b[1].eloDelta-a[1].eloDelta);
-    const biggestEloGain=biggestEloGainArr[0];
-
     // Die Auszeichnungen DIESER Woche, aus derselben Rechnung wie der
     // Awards-Reiter [§C27]. Vorher rechnete der Rückblick Torjäger, Abwehr,
     // Team und Überraschung selbst — ohne die Mindestzahl an Partien und mit
@@ -102,21 +97,34 @@ function showPotwRecap(opts){
     // stand die ganze Gestaltung hier als Inline-Style: ein eigener Kopf,
     // zwei Avatar-Varianten, vier Zahlenkacheln und eine eigene Kachelform
     // — alles Dinge, die es nebenan schon gab, nur anders aussehend.
-    const wkStartMs = weekStart.getTime();
-    const hlKacheln = [];
-    // Metall, nicht Gold: Gold gehört den Titeln [§C25], und der Titel
-    // dieser Seite ist der Spieler der Woche. Fünf golden umrandete Kacheln
-    // darunter nehmen ihm genau das weg.
-    if(biggestEloGain) hlKacheln.push(rcpKachelHtml({ic:'trendUp', label:'Größter Aufwind',
-      name:pname(biggestEloGain[0]), wert:'+'+Math.round(biggestEloGain[1].eloDelta)+' Elo', ton:'metall',
-      attr:`data-potw-player="${esc(biggestEloGain[0])}"`}));
-    // Die längste Serie der Woche steht schon unter dem Helden, wenn er sie
-    // hält — als Kachel ein zweites Mal wäre dieselbe Zahl zweimal.
-    hlKacheln.push(...rcpAwardKacheln(R,
+    const wkStartMs = weekStart.getTime(), wkEndMs = weekEnd.getTime();
+    // Die Awards in der Kachel des Reiters, Metall statt Gold: der Titel
+    // dieser Seite ist der Spieler der Woche [§C25]. Die längste Serie der
+    // Woche steht schon unter dem Helden, wenn er sie hält — als Kachel ein
+    // zweites Mal wäre dieselbe Zahl zweimal. „Größter Aufwind" ist keine
+    // Kachel mehr: die Elo jedes Spielers steht im Feld der Woche.
+    const hlKacheln = rcpAwardKacheln(R,
       ['mvt', 'streaks', 'scorer', 'wall', 'clutch', 'upset', 'biggest', 'grinder'],
       ['worstWr', 'lossStreaks'],
       key => `data-potw-award="${key}" data-potw-week="${wkStartMs}"`,
-      (key, top) => key === 'streaks' && mainPotwStats.bestStreak >= 3 && top.some(x => x.id === mainPotwPlayerId)));
+      (key, top) => key === 'streaks' && mainPotwStats.bestStreak >= 3 && top.some(x => x.id === mainPotwPlayerId));
+
+    // Was die Woche für die Laufbahnen bedeutete, und woraus [§C31]: die
+    // neuen Zeichen, das Prestige nach Quellen, die Auszeichnungen und die
+    // Rekorde, die in dieser Woche gefallen sind. Sie brauchen Zeitschnitte
+    // an den Rändern der Woche und kommen nach (`rcpSpaetLaden`).
+    const spaet = () => {
+      const daten = rcpLaufbahnDaten(wkStartMs, wkEndMs);
+      const zuege = rcpZeichenZuege(daten);
+      const lb = rcpLaufbahnHtml(daten);
+      const eh = rcpEhrungHtml(daten);
+      const REK = rekordeImZeitraum(wkStartMs, wkEndMs);
+      return (zuege.length ? rcpAbschnitt('Neue Zeichen', zuege.length)
+          + `<div class="rcp-is nd-is nd-is-viele">${_insBewegungenHtml(zuege)}</div>` : '')
+        + (lb ? rcpAbschnitt('Wirkung auf die Laufbahn') + lb : '')
+        + (eh.html ? rcpAbschnitt('Auszeichnungen der Woche', eh.zahl) + eh.html : '')
+        + (REK.length ? rcpAbschnitt('Rekorde der Woche', REK.length) + rcpRekordArtenHtml(REK) + rcpRekordWandHtml(REK) : '');
+    };
 
     const serieHtml = mainPotwStats.bestStreak >= 3
       ? rcpNotizHtml({ic:'flame',
@@ -144,20 +152,23 @@ function showPotwRecap(opts){
             {v:eloDeltaStr,          l:'Elo', ton:eloDelta>=0 ? 'gruen' : 'rot'}
           ])})
       + serieHtml
-      + rcpAbschnitt('Die Woche in Zahlen')
-      + rcpZahlenHtml([
-          {v:spieltage,                        l:spieltage === 1 ? 'Spieltag' : 'Spieltage'},
-          {v:komma(totalGoals / ms.length, 1), l:'Tore je Partie'},
-          {v:eng,                              l:'Enge Partien'},
-          {v:duos,                             l:'Duos'}])
       // Wann die Woche gewonnen wurde und gegen wen [§C31]: die Bilanz
       // allein sagte nicht, ob sie an einem Tag fiel oder über sieben. Die
       // Elo-Linie zeigt dazu, in welcher Reihenfolge.
       + (geteilt ? '' : rcpAbschnitt('Die Woche von ' + pname(mainPotwPlayerId))
           + rcpWocheHtml(ms, mainPotwPlayerId, weekStart) + rcpEloBahnHtml(ms, mainPotwPlayerId))
+      // Die Woche der Liga: an welchen Tagen wie viel gespielt wurde, als
+      // Kalender wie im Saison-Rückblick, darunter ihre Zahlen.
+      + rcpAbschnitt('Die Woche in Zahlen')
+      + rcpKalenderHtml(ms, weekStart, 7)
+      + rcpZahlenHtml([
+          {v:spieltage,                        l:spieltage === 1 ? 'Spieltag' : 'Spieltage'},
+          {v:komma(totalGoals / ms.length, 1), l:'Tore je Partie'},
+          {v:eng,                              l:'Enge Partien'},
+          {v:duos,                             l:'Duos'}])
       + rcpAbschnitt('Das Feld der Woche') + rcpFeldHtml(ms, mainPotwPlayerId)
-      + rcpAbschnitt('Auszeichnungen der Woche', hlKacheln.length)
-      + `<div class="rcp-awards${hlKacheln.length%2 ? ' ungerade' : ''}">${hlKacheln.join('')}</div>`
+      + (hlKacheln.length ? rcpAbschnitt('Awards der Woche', hlKacheln.length) + awVitrineHtml(hlKacheln, '') : '')
+      + rcpSpaetHtml()
       + `<button id="closePotwBtn" class="recap-done-btn">Verstanden</button>`,
       {protectMs: opts.auto ? 2500 : 0});
 
@@ -168,22 +179,35 @@ function showPotwRecap(opts){
     const wurzel = document.getElementById('sheet');
     const zu = document.getElementById('closePotwBtn');
     if(zu) zu.onclick = () => closeSheet();
-    wurzel.querySelectorAll('[data-detail]').forEach(el => {
-      el.onclick = () => sheetNav(()=>showPlayer(el.dataset.detail));
-    });
-    // Die Kacheln öffnen das Award-Detail FÜR DIESE WOCHE. Ein inline-onclick
-    // ginge nicht: der ganze Code liegt in einer IIFE, showAward steht dort
-    // nicht im globalen Namensraum.
-    wurzel.querySelectorAll('[data-potw-award]').forEach(el => {
-      el.onclick = () => sheetNav(()=>{
-        awPeriod = 'week';
-        awWeekStart = new Date(+el.dataset.potwWeek);
-        showAward(el.dataset.potwAward);
+    // Einmal für das Blatt, einmal für das, was nachkommt.
+    const bindeIn = root => {
+      root.querySelectorAll('[data-detail]').forEach(el => {
+        el.onclick = () => sheetNav(()=>showPlayer(el.dataset.detail));
       });
-    });
-    wurzel.querySelectorAll('[data-potw-player]').forEach(el => {
-      el.onclick = () => sheetNav(()=>showPlayer(el.dataset.potwPlayer));
-    });
+      // Die Kacheln öffnen das Award-Detail FÜR DIESE WOCHE. Ein inline-onclick
+      // ginge nicht: der ganze Code liegt in einer IIFE, showAward steht dort
+      // nicht im globalen Namensraum.
+      root.querySelectorAll('[data-potw-award]').forEach(el => {
+        el.onclick = () => sheetNav(()=>{
+          awPeriod = 'week';
+          awWeekStart = new Date(+el.dataset.potwWeek);
+          showAward(el.dataset.potwAward);
+        });
+      });
+      root.querySelectorAll('[data-potw-player],.rcp-eh [data-pid]').forEach(el => {
+        el.onclick = () => sheetNav(()=>showPlayer(el.dataset.potwPlayer || el.dataset.pid));
+      });
+      // Ein neues Zeichen und eine Zeile der Laufbahn öffnen die Laufbahn:
+      // dort steht die Rechnung Posten für Posten.
+      root.querySelectorAll('.rcp-is [data-pid],[data-laufbahn]').forEach(el => {
+        el.onclick = () => sheetNav(()=>showLaufbahn(el.dataset.laufbahn || el.dataset.pid));
+      });
+      root.querySelectorAll('[data-chron]').forEach(el => {
+        el.onclick = () => sheetNav(()=>showChronicle(el.dataset.chron));
+      });
+    };
+    bindeIn(wurzel);
+    rcpSpaetLaden(wurzel, spaet, bindeIn);
   } catch(e){
     console.error('POTW Recap Fehler:',e);
   }
@@ -381,11 +405,6 @@ function showPotdRecap(opts){
       .filter(x => x.goals > 0 && sichtbar(pm[x.id]))
       .sort((a,b) => b.avg - a.avg || b.goals - a.goals)[0];
 
-    const tagAufstieg = Object.keys(ps)
-      .filter(id => sichtbar(pm[id]) && ps[id].eloDelta > 0)
-      .map(id => ({id, d:Math.round(ps[id].eloDelta)}))
-      .sort((a,b) => b.d - a.d)[0];
-
     let tagUpset = null;
     for(const m of dayMatches){
       const sp = m.exp_a == null ? 0.5 : m.exp_a;
@@ -402,9 +421,8 @@ function showPotdRecap(opts){
     tagHl('ball', 'Torjäger', tagScorer ? pname(tagScorer.id) : null,
           tagScorer ? 'Ø '+komma(tagScorer.avg,1)+' Tore' : null,
           tagScorer ? `data-potd-player="${esc(tagScorer.id)}"` : '');
-    tagHl('trendUp', 'Größter Aufwind', tagAufstieg ? pname(tagAufstieg.id) : null,
-          tagAufstieg ? '+'+tagAufstieg.d+' Elo' : null,
-          tagAufstieg ? `data-potd-player="${esc(tagAufstieg.id)}"` : '');
+    // Größter Aufwind ist keine Kachel mehr: die Elo jedes Spielers steht im
+    // Feld des Tages, dieselbe Zahl stand sonst zweimal da.
     tagHl('bolt', 'Größte Überraschung', upsetSieger ? pname(upsetSieger[0])+' & '+pname(upsetSieger[1]) : null,
           tagUpset ? Math.round(tagUpset.chance*100)+'% Chance' : null,
           upsetSieger ? `data-potd-team="${esc(upsetSieger.slice().sort().join('|'))}"` : '');

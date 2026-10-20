@@ -84,8 +84,13 @@ const ok=(c,msg)=>{checks++;if(!c)fails++;console.log((c?'  ok  ':'  ✗   ')+ms
       const n=window.__cards;_newsFeedRest();_newsFeedFilter='all';return window.__cards===n;})()`);
     ok(zu,'Ein geschlossener Feed baut keine weiteren Karten');
     await K('window.__cards=0;openNewsFeed()');
-    await page.waitForTimeout(1800);
-    ok(await K('document.querySelectorAll("#sheet .nf-card").length===window.__gesamt.length'),'Automatisches Nachreichen zeigt schließlich den vollständigen Feed');
+    // Gewartet wird auf den vollen Feed, höchstens sechs Sekunden. Fest
+    // 1,8 s zu warten reichte auf einem frisch gestarteten Prüfrechner nicht:
+    // dort standen nach dieser Zeit 79 bis 87 der 88 Karten, mit jedem Stand
+    // der App, und der Lauf war rot, ohne dass das Nachreichen fehlte.
+    const voll = () => K('document.querySelectorAll("#sheet .nf-card").length===window.__gesamt.length');
+    for(let t = 0; t < 60 && !(await voll()); t++) await page.waitForTimeout(100);
+    ok(await voll(),'Automatisches Nachreichen zeigt schließlich den vollständigen Feed');
     const portion=await K(`(() => {
       openNewsFeed();const n=window.__cards;_newsFeedRest(false);return window.__cards-n;
     })()`);
