@@ -211,26 +211,26 @@ function _ehrungKlassen(sp){
 const _ehrungKlasseHtml = z => `<span class="eh-k ${z.id}"><i></i><b class="num">${z.n}</b> ${esc(z.wort)}`
   + ` <em class="num">+${_ehZahl(z.p)}</em></span>`;
 
-// Die Karte: die Säulen als Bühne, darunter Schlagzeile und Satz, der das
-// Seltenste nennt, und im Fuß, was jede Klasse gebracht hat. Was jeder genau
-// geholt hat, steht im Blatt. Mit einer legendären Auszeichnung trägt die
-// Karte den Schimmer des Seltenen, wie eine einzelne seltene Auszeichnung im
-// Feed [§C25]; eine seltene allein reicht nicht, sie steht in fast jeder
-// Ehrung.
+// Die Karte: die Säulen als Bühne, darunter nur die Schlagzeile. Ein Satz
+// nannte das Seltenste, und im Fuß stand, was jede Klasse gebracht hat —
+// beides Zusatztext unter einem Bild, das die Säulen, ihre Zeichenkachel
+// und ihr Prestige schon zeigt, wie bei der Insignium-Karte. Satz, Klassen
+// und was jeder genau geholt hat, stehen im Blatt. Mit einer legendären
+// Auszeichnung trägt die Karte den Schimmer des Seltenen, wie eine einzelne
+// seltene Auszeichnung im Feed [§C25]; eine seltene allein reicht nicht,
+// sie steht in fast jeder Ehrung.
 function _newsEhrungHtml(s, isRead, fadenHtml){
   const d = s.dataRef || {};
   const sp = Array.isArray(d.spieler) ? d.spieler : [];
-  const klassen = _ehrungKlassen(sp);
-  const glanz = klassen.some(z => z.id === 'legendary');
+  const glanz = sp.some(x => (x.posten || []).some(q => q.klasse === 'legendary'));
   return `<div class="nf-card nf-s-badge nf-ehrung nfc-badge${glanz ? ' nf-glanz' : ''}${isRead ? ' read' : ''}" data-sid="${esc(s.id)}"`
     + `${glanz ? ` style="--gv:${_newsGlanzVersatz(s.id)}s"` : ''}>
     ${_newsMotiv('badge', s)}
     <div class="nf-top"><span class="nf-rub"><i>${svgI('medal')}</i><b>DIE EHRUNG</b></span>
       <span class="nf-when">${svgI('clock')}${esc(_newsUhrzeit(s.when))}${isRead ? '' : '<span class="nf-dot"></span>'}</span></div>
     ${_ehrungSaeulen(sp, false)}
-    <div class="nf-gr"><div class="nf-gr-r"><div class="nf-h">${esc(s.title)}</div><div class="nf-d">${_newsBetont(s.desc || '')}</div></div>
-      <span class="nf-chev">${svgI('chevron')}</span></div>
-    ${klassen.length ? `<div class="eh-fuss">${klassen.map(_ehrungKlasseHtml).join('')}</div>` : ''}${fadenHtml || ''}</div>`;
+    <div class="nf-gr"><div class="nf-gr-r"><div class="nf-h">${esc(s.title)}</div></div>
+      <span class="nf-chev">${svgI('chevron')}</span></div>${fadenHtml || ''}</div>`;
 }
 
 // ── Das Blatt ───────────────────────────────────────────────────────

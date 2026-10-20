@@ -1515,7 +1515,9 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
    (`100cqi`) geteilt durch die Säulen der Reihe (`--je`). */
 .eh-s-av > .rav{--rav:min(48px,calc((100cqi - (var(--je,5) - 1) * var(--fuge)) / var(--je,5)))!important}
 .eh-buehne.gross .eh-s-av > .rav{--rav:min(52px,calc((100cqi - (var(--je,4) - 1) * var(--fuge)) / var(--je,4)))!important}
-/* Im Fuß, was jede Klasse brachte: ein Punkt in ihrer Farbe, wie oft, das Wort, der Wert. */
+/* Was jede Klasse brachte: ein Punkt in ihrer Farbe, wie oft, das Wort, der
+   Wert — im Rückblick unter den Säulen, im Blatt unter der Summe. Auf der
+   Karte steht es nicht mehr: dort reichen Bild und Schlagzeile. */
 .eh-fuss{display:flex;flex-wrap:wrap;gap:5px 12px;padding:8px 13px 10px;border-top:1px solid var(--line)}
 .eh-k{display:inline-flex;align-items:baseline;gap:4px;font-size:11px;color:var(--ink2);white-space:nowrap}
 .eh-k i{align-self:center;width:8px;height:8px;border-radius:2px;flex:0 0 auto}

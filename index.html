@@ -6283,7 +6283,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.20.d31125e7';
+const BUILD_VERSION='2026.10.20.c3abbe7e';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -27041,17 +27041,15 @@ const _ehrungKlasseHtml = z => `<span class="eh-k ${z.id}"><i></i><b class="num"
 function _newsEhrungHtml(s, isRead, fadenHtml){
   const d = s.dataRef || {};
   const sp = Array.isArray(d.spieler) ? d.spieler : [];
-  const klassen = _ehrungKlassen(sp);
-  const glanz = klassen.some(z => z.id === 'legendary');
+  const glanz = sp.some(x => (x.posten || []).some(q => q.klasse === 'legendary'));
   return `<div class="nf-card nf-s-badge nf-ehrung nfc-badge${glanz ? ' nf-glanz' : ''}${isRead ? ' read' : ''}" data-sid="${esc(s.id)}"`
     + `${glanz ? ` style="--gv:${_newsGlanzVersatz(s.id)}s"` : ''}>
     ${_newsMotiv('badge', s)}
     <div class="nf-top"><span class="nf-rub"><i>${svgI('medal')}</i><b>DIE EHRUNG</b></span>
       <span class="nf-when">${svgI('clock')}${esc(_newsUhrzeit(s.when))}${isRead ? '' : '<span class="nf-dot"></span>'}</span></div>
     ${_ehrungSaeulen(sp, false)}
-    <div class="nf-gr"><div class="nf-gr-r"><div class="nf-h">${esc(s.title)}</div><div class="nf-d">${_newsBetont(s.desc || '')}</div></div>
-      <span class="nf-chev">${svgI('chevron')}</span></div>
-    ${klassen.length ? `<div class="eh-fuss">${klassen.map(_ehrungKlasseHtml).join('')}</div>` : ''}${fadenHtml || ''}</div>`;
+    <div class="nf-gr"><div class="nf-gr-r"><div class="nf-h">${esc(s.title)}</div></div>
+      <span class="nf-chev">${svgI('chevron')}</span></div>${fadenHtml || ''}</div>`;
 }
 
 function _ndEhrungBlatt(s){
