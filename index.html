@@ -3020,6 +3020,7 @@
     font-size:10px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);
     padding:5px 12px;background:rgba(247,207,74,.10);border:1px solid rgba(247,207,74,.3);border-radius:99px}
   .rcp-label svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+  .rcp-label{position:relative}
   .rcp-label.metall{color:var(--silber);background:rgba(194,201,208,.08);border-color:rgba(194,201,208,.3)}
   .rcp-month{font-family:'Archivo Black',sans-serif;font-size:32px;letter-spacing:-.03em;margin-top:10px;line-height:1}
   .rcp-meta{font-size:11.5px;color:var(--muted);font-family:'Sometype Mono',monospace;margin-top:6px;letter-spacing:.04em}
@@ -6123,6 +6124,7 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   .kl-acid{--kr:190,242,100}
   .kl-weiss{--kr:255,255,255}
   .kl-story{--kr:var(--story-rgb,190,242,100)}
+  .kl-blau{--kr:86,180,232}
   @keyframes klZeichnen{
     0%{transform:rotate(-110deg);opacity:0;animation-timing-function:cubic-bezier(.4,0,.7,.6)}
     4%{opacity:1}
@@ -6176,6 +6178,81 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
     background:linear-gradient(105deg,transparent 42%,rgba(247,207,74,.3) 50%,transparent 58%);
     transform:translateX(-84%)}
   @keyframes glanzEinmal{from{transform:translateX(-84%)}to{transform:translateX(24%)}}
+  .glanz-einmal.glanz-blau::after{background:linear-gradient(105deg,transparent 42%,rgba(86,180,232,.3) 50%,transparent 58%)}
+
+  .rcp-buehne.vs-spot::before{content:"";position:absolute;left:50%;top:50%;width:300px;height:300px;margin:-150px 0 0 -150px;
+    z-index:-1;pointer-events:none;border-radius:50%;opacity:0;
+    background:radial-gradient(circle,rgba(247,207,74,.32),rgba(247,207,74,.09) 44%,transparent 68%)}
+  .rcp-buehne.vs-buehne:not(.vs-kranz) > .nf-ms-strahl{display:none}
+  .rcp-buehne.vs-buehne:not(.vs-kranz) .pod-karte.gold > .glanz-bahn::after{animation:none}
+  .rcp-buehne .pod-karte.vs-ring::before{content:"";position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;
+    border:2px solid rgba(var(--mrgb),.9);opacity:0}
+  .rcp-held.vs-ring .rcp-held-av::after{content:"";position:absolute;left:50%;top:50%;width:116px;height:116px;margin:-58px 0 0 -58px;
+    border-radius:50%;border:2px solid rgba(247,207,74,.85);pointer-events:none;opacity:0}
+  .rcp-kal-t.max::after{content:"";position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;
+    box-shadow:0 0 0 1.5px rgba(255,255,255,.5),0 0 12px rgba(255,255,255,.16);opacity:.75}
+  @media(prefers-reduced-motion:no-preference){
+    .sheet.show .vs:not(.vs-da):not(.vs-gross){animation:none}
+    .sheet.show .vs-w{opacity:0}
+    .vs-w::before,.vs-w::after,.vs-w *,.vs-w *::before,.vs-w *::after{animation-play-state:paused!important}
+    .sheet.show .vs.vs-da{animation:vsKommt .5s cubic-bezier(.2,.8,.2,1) backwards}
+    .rcp-head.vs-kopf .rcp-label{animation:vsMarke .55s cubic-bezier(.3,1.4,.5,1) backwards}
+    .rcp-head.vs-kopf .rcp-month{animation:vsTitel .6s cubic-bezier(.2,.8,.2,1) .08s backwards}
+    .rcp-head.vs-kopf .rcp-meta,.rcp-head.vs-kopf .saisonwahl{animation:vsKommt .5s cubic-bezier(.2,.8,.2,1) .18s backwards}
+    .sheet.show .rcp-buehne .pod-karte.vs-gross{animation:vsMeister 1.25s linear backwards;z-index:2}
+    .rcp-buehne.vs-buehne .pod-karte.erster.gold.vs-gross > .glanz-bahn::after{
+      background:linear-gradient(105deg,transparent 42%,rgba(247,207,74,.34) 50%,transparent 58%);
+      animation:glanzEinmal 1s cubic-bezier(.45,0,.25,1) .22s backwards}
+    .rcp-buehne.vs-spot::before{animation:vsSpot 1.6s ease-out backwards}
+    .sheet.show .rcp-buehne .pod-karte.vs.vs-da{animation:bauPodest .62s cubic-bezier(.2,.8,.2,1) backwards}
+    .rcp-buehne .pod-karte.vs-ring::before{animation:vsRing .9s cubic-bezier(.2,.8,.2,1) backwards}
+    .rcp-buehne.vs-buehne.vs-kranz > .nf-ms-strahl{animation:msDreh 48s linear infinite,vsDa 1.1s ease-out backwards}
+    .rcp-buehne.vs-buehne.vs-kranz > .nf-ms-strahl::after{animation:vsGlut 1.1s cubic-bezier(.2,.8,.2,1) backwards}
+    .sheet.show .rcp-team.vs.vs-da{animation:vsTeam .62s cubic-bezier(.2,.8,.2,1) backwards}
+    .rcp-team.vs-da::before{animation:vsLinie .7s cubic-bezier(.2,.8,.2,1) .18s backwards}
+    .rcp-team.vs-da .srn-z i{animation:vsZelle .32s cubic-bezier(.3,1.5,.5,1) backwards;animation-delay:calc(.24s + var(--i,0) * 24ms)}
+    .rcp-team.vs-da .rcp-team-e b{animation:rcpZahlKommt .5s cubic-bezier(.2,.8,.3,1.25) .36s backwards}
+    .sheet.show .rcp-held.vs.vs-da{animation:vsHeld .6s cubic-bezier(.2,.8,.2,1) backwards}
+    .rcp-held.vs-ring .rcp-held-av::after{animation:vsRingRund 1s cubic-bezier(.2,.8,.2,1) backwards}
+    .rcp-section.vs-da::after{transform-origin:left;animation:vsLinie .7s cubic-bezier(.2,.8,.2,1) .12s backwards}
+    .rcp-z.vs-da > .rcp-z-s{animation:rcpZahlKommt .5s cubic-bezier(.2,.8,.3,1.25) backwards}
+    .rcp-z.vs-da > .rcp-z-s:nth-child(2){animation-delay:.06s}
+    .rcp-z.vs-da > .rcp-z-s:nth-child(3){animation-delay:.12s}
+    .rcp-z.vs-da > .rcp-z-s:nth-child(4){animation-delay:.18s}
+    .rcp-z.vs-da > .rcp-z-s:nth-child(5){animation-delay:.24s}
+    :is(.rcp-tab,.rcp-feld,.rcp-lb).vs-da > *{animation:vsZeile .45s cubic-bezier(.2,.8,.2,1) backwards;animation-delay:calc(var(--i,0) * 32ms)}
+    :is(.aw-vitrine,.rcp-rw,.rcp-bns).vs-da > *{animation:vsKachel .5s cubic-bezier(.2,.8,.3,1.15) backwards}
+    :is(.aw-vitrine,.rcp-rw,.rcp-bns).vs-da > :nth-child(2){animation-delay:45ms}
+    :is(.aw-vitrine,.rcp-rw,.rcp-bns).vs-da > :nth-child(3){animation-delay:90ms}
+    :is(.aw-vitrine,.rcp-rw,.rcp-bns).vs-da > :nth-child(4){animation-delay:135ms}
+    :is(.aw-vitrine,.rcp-rw,.rcp-bns).vs-da > :nth-child(5){animation-delay:180ms}
+    :is(.aw-vitrine,.rcp-rw,.rcp-bns).vs-da > :nth-child(6){animation-delay:225ms}
+    :is(.aw-vitrine,.rcp-rw,.rcp-bns).vs-da > :nth-child(7){animation-delay:270ms}
+    :is(.aw-vitrine,.rcp-rw,.rcp-bns).vs-da > :nth-child(8){animation-delay:315ms}
+    :is(.aw-vitrine,.rcp-rw,.rcp-bns).vs-da > :nth-child(n+9){animation-delay:360ms}
+    .rcp-kal.vs-da .rcp-kal-t.max::after{animation:vsPuls 1.3s ease-out .5s backwards}
+  }
+  @keyframes vsKommt{from{opacity:0;transform:translateY(14px)}}
+  @keyframes vsMarke{from{opacity:0;transform:scale(.6)}}
+  @keyframes vsTitel{from{opacity:0;transform:translateY(14px) scale(.94)}}
+  @keyframes vsMeister{
+    0%{opacity:0;transform:translateY(46px) scale(1.2);animation-timing-function:cubic-bezier(.2,.8,.3,1)}
+    22%{opacity:1;transform:translateY(46px) scale(1.55);animation-timing-function:linear}
+    50%{opacity:1;transform:translateY(46px) scale(1.58);animation-timing-function:cubic-bezier(.6,0,.2,1)}
+    100%{opacity:1;transform:none}}
+  @keyframes vsSpot{0%{opacity:0;transform:translateY(46px) scale(.5)}25%{opacity:1;transform:translateY(46px) scale(1)}
+    55%{opacity:1;transform:translateY(46px) scale(1.04)}100%{opacity:0;transform:none}}
+  @keyframes vsRing{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(1.16,1.1)}}
+  @keyframes vsRingRund{from{opacity:1;transform:scale(.85)}to{opacity:0;transform:scale(1.7)}}
+  @keyframes vsDa{from{opacity:0}}
+  @keyframes vsGlut{from{opacity:0;transform:scale(.3)}}
+  @keyframes vsTeam{from{opacity:0;transform:translateY(22px) scale(.95)}}
+  @keyframes vsHeld{from{opacity:0;transform:translateY(14px) scale(.95)}}
+  @keyframes vsLinie{from{transform:scaleX(0)}}
+  @keyframes vsZelle{from{opacity:0;transform:scale(.3)}}
+  @keyframes vsZeile{from{opacity:0;transform:translateX(-12px)}}
+  @keyframes vsKachel{from{opacity:0;transform:translateY(12px) scale(.94)}}
+  @keyframes vsPuls{0%{opacity:0;transform:scale(.8)}40%{opacity:1;transform:scale(1.1)}}
   @media(prefers-reduced-motion:no-preference){
     .aufbau .botnav{animation:aufbauVonUnten .5s cubic-bezier(.2,.8,.2,1) .05s both}
     .aufbau .botnav button .ic{animation:aufbauPop .42s cubic-bezier(.3,1.4,.5,1) both}
@@ -6283,7 +6360,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.20.4040729a';
+const BUILD_VERSION='2026.10.20.8e64787f';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -7944,7 +8021,7 @@ function rcpKalenderHtml(ms, von, tage){
     const d = new Date(d0); d.setDate(d0.getDate() + i);
     const n = je[tagKey(d)] || 0;
     const k = n ? Math.max(1, Math.ceil(n / max * 4)) : 0;
-    zellen += `<span class="rcp-kal-t k${k}" style="--i:${i}"><small class="num">${d.getDate()}</small>`
+    zellen += `<span class="rcp-kal-t k${k}${n === max ? ' max' : ''}" style="--i:${i}"><small class="num">${d.getDate()}</small>`
       + `${n ? `<b class="num">${n}</b>` : ''}</span>`;
   }
   return `<div class="rcp-kal${tage <= 7 ? ' woche' : ''}">${
@@ -8000,7 +8077,7 @@ function rcpTeamHtml(sid, ms){
         <small class="num">${zusammen.length} Partien · ${w}:${l}</small></span>
       <span class="rcp-team-e"><b class="num ${elo >= 0 ? 'auf' : 'ab'}">${elo >= 0 ? '+' : '−'}${Math.abs(elo)}</b><small>Elo zusammen</small></span>
     </div>
-    <div class="srn-z">${zusammen.map(m => `<i class="${sieg(m) ? 'w' : 'l'}"></i>`).join('')}</div>
+    <div class="srn-z">${zusammen.map((m, i) => `<i class="${sieg(m) ? 'w' : 'l'}" style="--i:${i}"></i>`).join('')}</div>
   </div>`;
 }
 
@@ -8020,8 +8097,9 @@ function rcpSpaetLaden(wurzel, bau, binden){
     da.className = 'rcp-spaet-da';
     da.innerHTML = html;
     box.replaceWith(da);
+    _vorstellungNach(da, box);
     if(binden) binden(da);
-  }, RCP_SPAET_MS);
+  }, Math.max(RCP_SPAET_MS, _vorstellungRest(wurzel)));
 }
 
 function rcpLaufbahnDaten(vonMs, bisMs){
@@ -8555,7 +8633,7 @@ function showSeasonRecap(season, opts){
     + zahlenHtml + tabelleHtml + rennenHtml + awardsHtml
     + rcpSpaetHtml() + chronikHtml + rekordHtml
     + `<button class="recap-done-btn" id="closeRecapBtn">Verstanden</button>`,
-    {protectMs: opts.auto ? 2500 : 0});
+    {protectMs: opts.auto ? 2500 : 0, vorstellung: opts.wechsel ? 'wechsel' : 'saison'});
 
   const _grab = document.getElementById('sheetGrab');
   if(_grab) _grab.classList.add('grab-pulse');
@@ -8565,7 +8643,7 @@ function showSeasonRecap(season, opts){
   const wurzel = document.getElementById('sheet');
   wurzel.querySelectorAll('[data-rcpsaison]').forEach(b => b.onclick = () => {
     const s = seasons.find(x => x.id === b.dataset.rcpsaison);
-    if(s) showSeasonRecap(s);
+    if(s) showSeasonRecap(s, {wechsel:true});
   });
   const bindeIn = root => {
     const binden = (sel, fn) => root.querySelectorAll(sel).forEach(el => {
@@ -9324,7 +9402,7 @@ function showPotwRecap(opts){
       + (hlKacheln.length ? rcpAbschnitt('Awards der Woche', hlKacheln.length) + awVitrineHtml(hlKacheln, '') : '')
       + rcpSpaetHtml()
       + `<button id="closePotwBtn" class="recap-done-btn">Verstanden</button>`,
-      {protectMs: opts.auto ? 2500 : 0});
+      {protectMs: opts.auto ? 2500 : 0, vorstellung:'woche'});
 
     const _grab = document.getElementById('sheetGrab');
     if(_grab) _grab.classList.add('grab-pulse');
@@ -10519,7 +10597,7 @@ function _geruestHtml(){
 }
 const KANTE_MS = {zeichnen:4600, hinweis:4200};
 const KANTE_LEISE_MS = 6500;
-const KANTE_TON = {gold:'kl-gold', silber:'kl-silber', bronze:'kl-bronze', acid:'kl-acid', weiss:'kl-weiss', story:'kl-story'};
+const KANTE_TON = {gold:'kl-gold', silber:'kl-silber', bronze:'kl-bronze', acid:'kl-acid', weiss:'kl-weiss', story:'kl-story', blau:'kl-blau'};
 const KANTE_ART = {zeichnen:'kl-zeichnen', hinweis:'kl-hinweis'};
 function kantenlicht(ziel, ton, art, verzug, d, innen, leise){
   if(!ziel || _bewegungRuhig() || !KANTE_TON[ton] || !KANTE_ART[art]) return null;
@@ -10612,9 +10690,9 @@ function _metallTon(z, i){
   return /\s(top1|gold)\s/.test(k) ? 'gold' : /\s(top2|silber)\s/.test(k) ? 'silber'
     : /\s(top3|bronze)\s/.test(k) ? 'bronze' : ['gold', 'silber', 'bronze'][i] || 'gold';
 }
-function _glanzEinmal(ziel, verzug){
+function _glanzEinmal(ziel, verzug, ton){
   const b = document.createElement('span');
-  b.className = 'glanz-bahn glanz-einmal'; b.setAttribute('aria-hidden', 'true');
+  b.className = 'glanz-bahn glanz-einmal' + (ton === 'blau' ? ' glanz-blau' : ''); b.setAttribute('aria-hidden', 'true');
   b.style.setProperty('--gv', verzug + 'ms');
   b.dataset.t0 = performance.now(); b.dataset.kv = verzug;
   ziel.appendChild(b);
@@ -10682,6 +10760,7 @@ function _bewegungNachRender(root, warTab, geruest, behalten){
 function _vorfuehrungEnde(){
   if(_vorfuehrungAuftrag){ clearTimeout(_vorfuehrungAuftrag); _vorfuehrungAuftrag = 0; document.documentElement.classList.remove('aufbau'); }
   if(_aufbauTeile.length) _aufbauFertig();
+  _vorstellungEnde();
 }
 ['pointerdown', 'wheel', 'touchstart', 'keydown'].forEach(ev =>
   document.addEventListener(ev, _vorfuehrungEnde, {passive:true, capture:true}));
@@ -10868,6 +10947,143 @@ function _blattStaffeln(sheet){
     teile = [...teile[0].children];
   }
   teile.slice(0, BLATT_TEILE).forEach((k, i) => { k.classList.add('staffel-k'); k.style.animationDelay = i * 45 + 'ms'; });
+}
+
+const VORSTELLUNG = {
+  saison:{gross:true, meister:0, silber:1000, bronze:1120, kranz:1150, landung:1200, licht:1250,
+          team:1450, rest:1850, schritt:70, spaet:2500, ende:3000},
+  wechsel:{meister:0, silber:120, bronze:240, kranz:300, landung:520, licht:280,
+          team:420, rest:640, schritt:55, spaet:1100, ende:1500},
+  woche:{held:0, licht:380, ring:420, rest:560, schritt:55, spaet:1150, ende:1500}
+};
+function _vorstellung(sheet, art){
+  const Z = VORSTELLUNG[art];
+  if(!Z || _bewegungRuhig() || typeof IntersectionObserver !== 'function') return _blattStaffeln(sheet);
+  const vs = sheet._vs = {Z, t0:performance.now(), laeuft:true, wartet:new Set(), auftraege:[], zuletzt:0, io:null};
+  vs.zu = (ms, fn) => vs.auftraege.push(setTimeout(() => { if(sheet._vs === vs) fn(); }, ms));
+  vs.io = new IntersectionObserver(eintraege => eintraege.forEach(e => {
+    const el = e.target;
+    if(sheet._vs !== vs || !vs.wartet.has(el)) return vs.io.unobserve(el);
+    el._vsSicht = e.isIntersecting;
+    el._vsMass = e.boundingClientRect;
+    if(e.isIntersecting) _vsPlanen(vs, el);
+  }), {rootMargin:'0px 0px 40px 0px'});
+  const teile = [...sheet.children].filter(k => !k.classList.contains('sheet-leiste'));
+  const finde = sel => teile.find(k => k.matches(sel));
+  const kopf = finde('.rcp-head'), buehne = finde('.rcp-buehne'), held = finde('.rcp-held'), team = finde('.rcp-team');
+  if(kopf && art === 'wechsel') kopf.classList.add('vs');
+  else if(kopf){
+    kopf.classList.add('vs-kopf');
+    const marke = kopf.querySelector('.rcp-label');
+    if(marke) _glanzEinmal(marke, 380);
+  }
+  if(buehne) _vsBuehne(vs, buehne);
+  if(held) _vsHeld(vs, held);
+  if(team) _vsWarten(vs, team, vs.t0 + Z.team);
+  let k = 0;
+  teile.forEach(t => {
+    if(t !== kopf && t !== buehne && t !== held && t !== team) _vsWarten(vs, t, vs.t0 + Z.rest + Math.min(k++, 8) * Z.schritt);
+  });
+  vs.zu(Z.ende, () => { vs.laeuft = false; });
+}
+function _vsBuehne(vs, buehne){
+  const Z = vs.Z, karte = m => buehne.querySelector('.pod-karte.' + m);
+  const gold = karte('gold'), silber = karte('silber'), bronze = karte('bronze');
+  buehne.classList.add('vs', 'vs-buehne');
+  if(gold){
+    if(Z.gross){
+      gold.classList.add('vs', 'vs-gross'); buehne.classList.add('vs-spot');
+      vs.zu(Z.landung + 120, () => gold.classList.remove('vs-gross'));
+    } else _vsDirekt(vs, gold, Z.meister);
+    vs.zu(Z.landung, () => gold.classList.add('vs-ring'));
+  }
+  if(silber) _vsDirekt(vs, silber, Z.silber);
+  if(bronze) _vsDirekt(vs, bronze, Z.bronze);
+  vs.zu(Z.kranz, () => buehne.classList.add('vs-kranz'));
+  [gold, silber, bronze].forEach(z => {
+    if(!z) return;
+    const ton = _metallTon(z, 0);
+    kantenlicht(z, ton, 'zeichnen', Z.licht + PODEST_VERSATZ[ton], _diagonale('podest'));
+  });
+}
+function _vsHeld(vs, held){
+  const Z = vs.Z;
+  held.classList.add('vs', 'vs-da');
+  vs.zu(Z.ring, () => held.classList.add('vs-ring'));
+  kantenlicht(held, 'gold', 'zeichnen', Z.licht, Math.hypot(Math.min(innerWidth, 520) - 40, 340) + 8, true);
+}
+function _vsWarten(vs, el, ab){
+  el.classList.add('vs', 'vs-w');
+  el._vsAb = ab; el._vsGeplant = false; el._vsSicht = false;
+  vs.wartet.add(el);
+  vs.io.observe(el);
+}
+function _vsDirekt(vs, el, ms){
+  el.classList.add('vs', 'vs-w');
+  el._vsDirekt = true;
+  vs.wartet.add(el);
+  vs.zu(ms, () => _vsKommt(vs, el));
+}
+function _vsPlanen(vs, el){
+  if(el._vsGeplant) return;
+  el._vsGeplant = true;
+  const jetzt = performance.now();
+  const ab = Math.max(jetzt, vs.laeuft ? el._vsAb : 0, vs.zuletzt + (vs.laeuft ? vs.Z.schritt : 45));
+  vs.zuletzt = ab;
+  vs.zu(ab - jetzt, () => _vsKommt(vs, el));
+}
+function _vsKommt(vs, el){
+  if(!vs.wartet.delete(el)) return;
+  vs.io.unobserve(el);
+  el.classList.remove('vs-w');
+  el.classList.add('vs-da');
+  _vsLicht(el);
+}
+function _vsLicht(el){
+  const m = el._vsMass, b = m && m.width ? m.width : Math.min(innerWidth, 520) - 40;
+  if(el.matches('.rcp-team')){
+    kantenlicht(el, 'blau', 'zeichnen', 160, Math.hypot(b, m && m.height ? m.height : 130) + 8);
+    _glanzEinmal(el, 520, 'blau');
+  } else if(el.matches('.rcp-tab')){
+    [...el.children].slice(0, 3).forEach((z, i) => {
+      const ton = _metallTon(z, i);
+      kantenlicht(z, ton, 'zeichnen', 300 + PODEST_VERSATZ[ton], Math.hypot(b, 44) + 8);
+    });
+  }
+}
+function _vorstellungNach(da, alt){
+  const sheet = _bewegungDa() && da && da.closest ? da.closest('.sheet') : null, vs = sheet && sheet._vs;
+  if(!vs) return;
+  if(alt && vs.wartet.delete(alt)) vs.io.unobserve(alt);
+  [...da.children].forEach(k => _vsWarten(vs, k, 0));
+}
+function _vorstellungRest(sheet){
+  const vs = sheet && sheet._vs;
+  return vs ? Math.max(0, vs.t0 + vs.Z.spaet - performance.now()) : 0;
+}
+function _vorstellungEnde(){
+  const sheet = typeof document !== 'undefined' && document.getElementById ? document.getElementById('sheet') : null;
+  const vs = sheet && sheet._vs;
+  if(!vs || !vs.laeuft) return;
+  vs.laeuft = false;
+  vs.auftraege.forEach(clearTimeout); vs.auftraege = [];
+  sheet.querySelectorAll('.vs-gross, .vs-spot').forEach(e => e.classList.remove('vs-gross', 'vs-spot'));
+  sheet.querySelectorAll('.vs-buehne').forEach(e => e.classList.add('vs-kranz'));
+  vs.wartet.forEach(el => {
+    if(!el._vsDirekt && !el._vsSicht){ el._vsGeplant = false; return; }
+    vs.wartet.delete(el); vs.io.unobserve(el);
+    el.classList.remove('vs-w');
+    el.getAnimations({subtree:true}).forEach(a => {
+      if(a.effect && a.effect.getTiming().iterations !== Infinity) try { a.finish(); } catch(e){}
+    });
+  });
+}
+function _vorstellungAus(sheet){
+  const vs = sheet && sheet._vs;
+  if(!vs) return;
+  sheet._vs = null;
+  vs.auftraege.forEach(clearTimeout);
+  vs.io.disconnect();
 }
 function _feedLicht(sheet){
   if(!sheet || _bewegungRuhig() || typeof IntersectionObserver !== 'function') return;
@@ -14241,6 +14457,7 @@ function openSheet(html, opts){
   if(sheet._transitionAb) Object.values(sheet._transitionAb).forEach(ab => ab());
   sheet.classList.remove('sheet-nudge');
   sheet.scrollTop = 0;
+  _vorstellungAus(sheet);
   sheet._auf = (sheet._auf || 0) + 1;
   _sheetAnimating = false;
   sheet.style.transition=''; sheet.style.transform='';
@@ -14251,7 +14468,8 @@ function openSheet(html, opts){
   schlittenFahren(sheet);
   bg.classList.add('show');
   sheet.classList.add('show');
-  _blattStaffeln(sheet);
+  if(opts.vorstellung && !_sheetPopping) _vorstellung(sheet, opts.vorstellung);
+  else _blattStaffeln(sheet);
   _verdecken('blatt', true);
   if(opts.protectMs && opts.protectMs > 0){
     sheet._protectedUntil = Date.now() + opts.protectMs;
@@ -14285,6 +14503,7 @@ function _sheetForceClose(sheet,bg,schonUnten){
   const bpBg = document.getElementById('bpBg');
   if(bpBg && bpBg.classList.contains('show')) closeBadgePopover();
   _verdecken('blatt', false);
+  _vorstellungAus(sheet);
   const warOffen = sheet.classList.contains('show');
   if(warOffen || bg.classList.contains('show')){
     sheet._auf = (sheet._auf || 0) + 1;

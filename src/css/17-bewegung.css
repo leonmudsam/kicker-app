@@ -106,6 +106,7 @@
   .kl-acid{--kr:190,242,100}
   .kl-weiss{--kr:255,255,255}
   .kl-story{--kr:var(--story-rgb,190,242,100)}
+  .kl-blau{--kr:86,180,232}
   /* Die erste Runde beschleunigt und kommt in Fahrt an; danach läuft das
      Licht weiter und wird langsamer, bis es steht, während es verlischt. */
   @keyframes klZeichnen{
@@ -195,6 +196,107 @@
     background:linear-gradient(105deg,transparent 42%,rgba(247,207,74,.3) 50%,transparent 58%);
     transform:translateX(-84%)}
   @keyframes glanzEinmal{from{transform:translateX(-84%)}to{transform:translateX(24%)}}
+  .glanz-einmal.glanz-blau::after{background:linear-gradient(105deg,transparent 42%,rgba(86,180,232,.3) 50%,transparent 58%)}
+
+  /* ── Die Vorstellung eines Rückblicks (`_vorstellung`) ─────────────
+     Der Meister groß in der Mitte (`.vs-gross`), Licht hinter ihm
+     (`.vs-spot`); dann auf seinem Platz, ein Ring geht von ihm aus
+     (`.vs-ring`), Platz 2 und 3 steigen dazu, der Kranz geht auf
+     (`.vs-kranz`); dann das Team der Saison, dann der Rest. Was unter dem
+     Rand steht, wartet (`.vs-w`) und kommt beim Hereinscrollen (`.vs-da`);
+     bis dahin steht auch alles darin still. Ein Teil der Vorstellung
+     (`.vs`) trägt sonst keine Bewegung: das Einblenden jedes Blatts kam
+     sonst nach der Vorstellung noch einmal. Jede Bewegung einmal, mit
+     `backwards`, damit danach keine ihren Endwert hält [§C43]. */
+  .rcp-buehne.vs-spot::before{content:"";position:absolute;left:50%;top:50%;width:300px;height:300px;margin:-150px 0 0 -150px;
+    z-index:-1;pointer-events:none;border-radius:50%;opacity:0;
+    background:radial-gradient(circle,rgba(247,207,74,.32),rgba(247,207,74,.09) 44%,transparent 68%)}
+  .rcp-buehne.vs-buehne:not(.vs-kranz) > .nf-ms-strahl{display:none}
+  .rcp-buehne.vs-buehne:not(.vs-kranz) .pod-karte.gold > .glanz-bahn::after{animation:none}
+  .rcp-buehne .pod-karte.vs-ring::before{content:"";position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;
+    border:2px solid rgba(var(--mrgb),.9);opacity:0}
+  .rcp-held.vs-ring .rcp-held-av::after{content:"";position:absolute;left:50%;top:50%;width:116px;height:116px;margin:-58px 0 0 -58px;
+    border-radius:50%;border:2px solid rgba(247,207,74,.85);pointer-events:none;opacity:0}
+  /* Der Tag mit den meisten Partien trägt seinen Rand auch ohne Bewegung. */
+  .rcp-kal-t.max::after{content:"";position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;
+    box-shadow:0 0 0 1.5px rgba(255,255,255,.5),0 0 12px rgba(255,255,255,.16);opacity:.75}
+  @media(prefers-reduced-motion:no-preference){
+    .sheet.show .vs:not(.vs-da):not(.vs-gross){animation:none}
+    .sheet.show .vs-w{opacity:0}
+    .vs-w::before,.vs-w::after,.vs-w *,.vs-w *::before,.vs-w *::after{animation-play-state:paused!important}
+    .sheet.show .vs.vs-da{animation:vsKommt .5s cubic-bezier(.2,.8,.2,1) backwards}
+    /* Der Kopf: die Marke springt auf, ihr Glanz fährt einmal darüber, der
+       Monat hebt sich herein. */
+    .rcp-head.vs-kopf .rcp-label{animation:vsMarke .55s cubic-bezier(.3,1.4,.5,1) backwards}
+    .rcp-head.vs-kopf .rcp-month{animation:vsTitel .6s cubic-bezier(.2,.8,.2,1) .08s backwards}
+    .rcp-head.vs-kopf .rcp-meta,.rcp-head.vs-kopf .saisonwahl{animation:vsKommt .5s cubic-bezier(.2,.8,.2,1) .18s backwards}
+    /* Der Meister: groß, kurz stehen, dann auf seinen Platz. Er liegt dabei
+       über Platz 2 und 3, die schon aufsteigen, während er landet. Sein
+       eigenes Band fährt einmal über ihn, solange er groß ist, heller als
+       im Takt danach; es endet, bevor er landet. */
+    .sheet.show .rcp-buehne .pod-karte.vs-gross{animation:vsMeister 1.25s linear backwards;z-index:2}
+    .rcp-buehne.vs-buehne .pod-karte.erster.gold.vs-gross > .glanz-bahn::after{
+      background:linear-gradient(105deg,transparent 42%,rgba(247,207,74,.34) 50%,transparent 58%);
+      animation:glanzEinmal 1s cubic-bezier(.45,0,.25,1) .22s backwards}
+    .rcp-buehne.vs-spot::before{animation:vsSpot 1.6s ease-out backwards}
+    .sheet.show .rcp-buehne .pod-karte.vs.vs-da{animation:bauPodest .62s cubic-bezier(.2,.8,.2,1) backwards}
+    .rcp-buehne .pod-karte.vs-ring::before{animation:vsRing .9s cubic-bezier(.2,.8,.2,1) backwards}
+    /* Der Kranz: Drehung und Einblenden sind zwei Eigenschaften, das Glühen
+       in seiner Mitte ein eigenes Element — eine Bewegung je Element auf
+       transform. */
+    .rcp-buehne.vs-buehne.vs-kranz > .nf-ms-strahl{animation:msDreh 48s linear infinite,vsDa 1.1s ease-out backwards}
+    .rcp-buehne.vs-buehne.vs-kranz > .nf-ms-strahl::after{animation:vsGlut 1.1s cubic-bezier(.2,.8,.2,1) backwards}
+    /* Das Team der Saison: es hebt sich herein, seine Kante oben zieht sich
+       auf, die Partien kommen Zelle für Zelle, die Elo zuletzt. */
+    .sheet.show .rcp-team.vs.vs-da{animation:vsTeam .62s cubic-bezier(.2,.8,.2,1) backwards}
+    .rcp-team.vs-da::before{animation:vsLinie .7s cubic-bezier(.2,.8,.2,1) .18s backwards}
+    .rcp-team.vs-da .srn-z i{animation:vsZelle .32s cubic-bezier(.3,1.5,.5,1) backwards;animation-delay:calc(.24s + var(--i,0) * 24ms)}
+    .rcp-team.vs-da .rcp-team-e b{animation:rcpZahlKommt .5s cubic-bezier(.2,.8,.3,1.25) .36s backwards}
+    /* Der Held der Woche hebt sich herein, ein Ring geht von seinem Gesicht aus. */
+    .sheet.show .rcp-held.vs.vs-da{animation:vsHeld .6s cubic-bezier(.2,.8,.2,1) backwards}
+    .rcp-held.vs-ring .rcp-held-av::after{animation:vsRingRund 1s cubic-bezier(.2,.8,.2,1) backwards}
+    /* Was hereinkommt: die Linie einer Überschrift zieht sich auf, Zahlen
+       springen auf, Zeilen gleiten von links herein, Kacheln heben sich,
+       der stärkste Tag leuchtet einmal auf. */
+    .rcp-section.vs-da::after{transform-origin:left;animation:vsLinie .7s cubic-bezier(.2,.8,.2,1) .12s backwards}
+    .rcp-z.vs-da > .rcp-z-s{animation:rcpZahlKommt .5s cubic-bezier(.2,.8,.3,1.25) backwards}
+    .rcp-z.vs-da > .rcp-z-s:nth-child(2){animation-delay:.06s}
+    .rcp-z.vs-da > .rcp-z-s:nth-child(3){animation-delay:.12s}
+    .rcp-z.vs-da > .rcp-z-s:nth-child(4){animation-delay:.18s}
+    .rcp-z.vs-da > .rcp-z-s:nth-child(5){animation-delay:.24s}
+    :is(.rcp-tab,.rcp-feld,.rcp-lb).vs-da > *{animation:vsZeile .45s cubic-bezier(.2,.8,.2,1) backwards;animation-delay:calc(var(--i,0) * 32ms)}
+    :is(.aw-vitrine,.rcp-rw,.rcp-bns).vs-da > *{animation:vsKachel .5s cubic-bezier(.2,.8,.3,1.15) backwards}
+    :is(.aw-vitrine,.rcp-rw,.rcp-bns).vs-da > :nth-child(2){animation-delay:45ms}
+    :is(.aw-vitrine,.rcp-rw,.rcp-bns).vs-da > :nth-child(3){animation-delay:90ms}
+    :is(.aw-vitrine,.rcp-rw,.rcp-bns).vs-da > :nth-child(4){animation-delay:135ms}
+    :is(.aw-vitrine,.rcp-rw,.rcp-bns).vs-da > :nth-child(5){animation-delay:180ms}
+    :is(.aw-vitrine,.rcp-rw,.rcp-bns).vs-da > :nth-child(6){animation-delay:225ms}
+    :is(.aw-vitrine,.rcp-rw,.rcp-bns).vs-da > :nth-child(7){animation-delay:270ms}
+    :is(.aw-vitrine,.rcp-rw,.rcp-bns).vs-da > :nth-child(8){animation-delay:315ms}
+    :is(.aw-vitrine,.rcp-rw,.rcp-bns).vs-da > :nth-child(n+9){animation-delay:360ms}
+    .rcp-kal.vs-da .rcp-kal-t.max::after{animation:vsPuls 1.3s ease-out .5s backwards}
+  }
+  @keyframes vsKommt{from{opacity:0;transform:translateY(14px)}}
+  @keyframes vsMarke{from{opacity:0;transform:scale(.6)}}
+  @keyframes vsTitel{from{opacity:0;transform:translateY(14px) scale(.94)}}
+  @keyframes vsMeister{
+    0%{opacity:0;transform:translateY(46px) scale(1.2);animation-timing-function:cubic-bezier(.2,.8,.3,1)}
+    22%{opacity:1;transform:translateY(46px) scale(1.55);animation-timing-function:linear}
+    50%{opacity:1;transform:translateY(46px) scale(1.58);animation-timing-function:cubic-bezier(.6,0,.2,1)}
+    100%{opacity:1;transform:none}}
+  @keyframes vsSpot{0%{opacity:0;transform:translateY(46px) scale(.5)}25%{opacity:1;transform:translateY(46px) scale(1)}
+    55%{opacity:1;transform:translateY(46px) scale(1.04)}100%{opacity:0;transform:none}}
+  @keyframes vsRing{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(1.16,1.1)}}
+  @keyframes vsRingRund{from{opacity:1;transform:scale(.85)}to{opacity:0;transform:scale(1.7)}}
+  @keyframes vsDa{from{opacity:0}}
+  @keyframes vsGlut{from{opacity:0;transform:scale(.3)}}
+  @keyframes vsTeam{from{opacity:0;transform:translateY(22px) scale(.95)}}
+  @keyframes vsHeld{from{opacity:0;transform:translateY(14px) scale(.95)}}
+  @keyframes vsLinie{from{transform:scaleX(0)}}
+  @keyframes vsZelle{from{opacity:0;transform:scale(.3)}}
+  @keyframes vsZeile{from{opacity:0;transform:translateX(-12px)}}
+  @keyframes vsKachel{from{opacity:0;transform:translateY(12px) scale(.94)}}
+  @keyframes vsPuls{0%{opacity:0;transform:scale(.8)}40%{opacity:1;transform:scale(1.1)}}
   @media(prefers-reduced-motion:no-preference){
     .aufbau .botnav{animation:aufbauVonUnten .5s cubic-bezier(.2,.8,.2,1) .05s both}
     .aufbau .botnav button .ic{animation:aufbauPop .42s cubic-bezier(.3,1.4,.5,1) both}

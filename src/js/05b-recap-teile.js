@@ -651,7 +651,9 @@ function rcpEloBahnHtml(ms, pid){
 // an einem Tag, desto heller das Feld, und die Zahl steht darin. „17
 // Spieltage, 120 Partien" sagte nicht, ob der Monat gleichmäßig lief oder
 // an zwei Abenden entschieden wurde. Die Woche ist dieselbe Zeichnung mit
-// einer Reihe. Hell ist Metall, keine Richtung und kein Titel [§C25].
+// einer Reihe. Hell ist Metall, keine Richtung und kein Titel [§C25]. Der
+// Tag mit den meisten Partien (`max`) trägt einen Rand: in einem Monat mit
+// drei Feldern der hellsten Stufe sah man sonst nicht, welches es war.
 function rcpKalenderHtml(ms, von, tage){
   const je = {};
   (ms || []).forEach(m => { const k = tagKey(mts(m)); je[k] = (je[k] || 0) + 1; });
@@ -664,7 +666,7 @@ function rcpKalenderHtml(ms, von, tage){
     const d = new Date(d0); d.setDate(d0.getDate() + i);
     const n = je[tagKey(d)] || 0;
     const k = n ? Math.max(1, Math.ceil(n / max * 4)) : 0;
-    zellen += `<span class="rcp-kal-t k${k}" style="--i:${i}"><small class="num">${d.getDate()}</small>`
+    zellen += `<span class="rcp-kal-t k${k}${n === max ? ' max' : ''}" style="--i:${i}"><small class="num">${d.getDate()}</small>`
       + `${n ? `<b class="num">${n}</b>` : ''}</span>`;
   }
   return `<div class="rcp-kal${tage <= 7 ? ' woche' : ''}">${
@@ -735,7 +737,7 @@ function rcpTeamHtml(sid, ms){
         <small class="num">${zusammen.length} Partien · ${w}:${l}</small></span>
       <span class="rcp-team-e"><b class="num ${elo >= 0 ? 'auf' : 'ab'}">${elo >= 0 ? '+' : '−'}${Math.abs(elo)}</b><small>Elo zusammen</small></span>
     </div>
-    <div class="srn-z">${zusammen.map(m => `<i class="${sieg(m) ? 'w' : 'l'}"></i>`).join('')}</div>
+    <div class="srn-z">${zusammen.map((m, i) => `<i class="${sieg(m) ? 'w' : 'l'}" style="--i:${i}"></i>`).join('')}</div>
   </div>`;
 }
 
@@ -745,8 +747,11 @@ function rcpTeamHtml(sid, ms){
 // Im Blatt gerechnet öffnete der Wochenrückblick gemessen 280 ms nach dem
 // Tippen statt 20 ms, auf dem Telefon ein Vielfaches, und so lange stand
 // nichts da [§C43]. Das Blatt öffnet deshalb ohne sie, mit einem ruhigen
-// Platzhalter, und sie kommen, wenn es eingefahren ist. Ist es inzwischen
-// ein anderes Blatt, fallen sie weg. `binden` bekommt den neuen Teil.
+// Platzhalter, und sie kommen, wenn es eingefahren ist — stellt der
+// Rückblick vor, erst nach dem ersten Bildschirm der Vorstellung
+// (`_vorstellungRest`), und dann wie alles darunter beim Hereinscrollen.
+// Ist es inzwischen ein anderes Blatt, fallen sie weg. `binden` bekommt den
+// neuen Teil.
 const RCP_SPAET_MS = 380;
 function rcpSpaetHtml(){
   return '<div class="rcp-spaet" data-rcp-spaet aria-busy="true"><i></i><i></i><i></i><i></i></div>';
@@ -763,8 +768,9 @@ function rcpSpaetLaden(wurzel, bau, binden){
     da.className = 'rcp-spaet-da';
     da.innerHTML = html;
     box.replaceWith(da);
+    _vorstellungNach(da, box);
     if(binden) binden(da);
-  }, RCP_SPAET_MS);
+  }, Math.max(RCP_SPAET_MS, _vorstellungRest(wurzel)));
 }
 
 // ── Die Wirkung auf die Laufbahn ─────────────────────────────────────

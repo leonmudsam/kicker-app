@@ -192,6 +192,7 @@ function openSheet(html, opts){
   // beim Zurückgehen setzt closeSheet anschließend ausdrücklich den alten
   // Stand. Keine spätere Aufgabe darf einen vom Nutzer gesetzten Stand nullen.
   sheet.scrollTop = 0;
+  _vorstellungAus(sheet);
   // Griff und Schließen stehen in einer Leiste, die beim Scrollen oben
   // bleibt. Geschlossen wurde bisher nur durch Wischen, einen Tipp neben
   // das Blatt oder einen Knopf, den jedes Blatt selbst baute oder nicht —
@@ -209,8 +210,12 @@ function openSheet(html, opts){
   schlittenFahren(sheet);
   bg.classList.add('show');
   sheet.classList.add('show');
-  // Der Inhalt kommt gestaffelt, und was das Blatt verdeckt, steht still [§C43].
-  _blattStaffeln(sheet);
+  // Der Inhalt kommt gestaffelt, ein Rückblick als Vorstellung, und was das
+  // Blatt verdeckt, steht still [§C43]. Zurück aus einem Blatt darüber
+  // stellt nichts vor: wer ein Profil angesehen hat, will nicht noch einmal
+  // zwei Sekunden auf den Meister warten.
+  if(opts.vorstellung && !_sheetPopping) _vorstellung(sheet, opts.vorstellung);
+  else _blattStaffeln(sheet);
   _verdecken('blatt', true);
   // ⚠ Schutz-Phase: für auto-getriggerte Pop-Ups (Saison-/POTW-/POTD-Recap)
   // wird der Backdrop-Click für protectMs ms unterdrückt — verhindert
@@ -257,6 +262,7 @@ function _sheetForceClose(sheet,bg,schonUnten){
   const bpBg = document.getElementById('bpBg');
   if(bpBg && bpBg.classList.contains('show')) closeBadgePopover();
   _verdecken('blatt', false);
+  _vorstellungAus(sheet);
   // Ein zweiter Schließknopf während des Zuschiebens darf dessen einzigen
   // Abschluss nicht ersetzen und den Inhalt mitten in der Bewegung leeren.
   const warOffen = sheet.classList.contains('show');

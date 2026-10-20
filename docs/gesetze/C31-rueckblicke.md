@@ -4,7 +4,7 @@
 
 - Saison-, Wochen- und Tagesrückblick bauen aus denselben Teilen (`rcpKopfHtml`, `rcpHeldHtml`, `rcpZahlenHtml`, `rcpKachelHtml`, `rcpZeileHtml`, `rcpNotizHtml`, `rcpAbschnitt`, `rcpKalenderHtml`, `rcpFeldHtml`) und aus den Bauteilen, die die App schon hat: das Podest der Ewigen Tafel, die Award-Kachel des Reiters (`awKachelHtml` mit `metall`), die Säulen der Ehrung (`_ehrungSaeulen` mit `still`), die Bewegungen der Insignium-Karte (`_insBewegungenHtml`), das Band des Beinamens (`.pp-banner`).
 - Ein Gold je Blatt: die Marke im Kopf und der Sieger. Die Award-Kacheln sind Metall; ein Chronik-Band trägt den Ton seiner Chronik, die Monatschroniken in der Laufbahn die Farbe ihrer Quelle. Ohne Ende bewegt sich nur der Sieger: der Strahlenkranz hinter ihm und das Licht auf seiner Karte.
-- Der Saison-Rückblick beginnt mit dem Podest auf der Meisterbühne (`.nf-meister.rcp-buehne`: der Meister steigt zuerst auf, dann Platz 2 und 3 im Takt des Kantenlichts, und sein Strahlenkranz blendet ein, wenn er steht), darunter das Team der Saison (`rcpTeamHtml` aus `seasonTeamOf`, mit seinen Partien als Zellen), dann der Monat als Kalender mit den Eckdaten und ihrem Unterschied zum Vormonat, die Tabelle (`rcpTabelleHtml`: Elo als Balken, die Bewegung gegenüber dem Vormonat je Zeile, der größte Sprung und der tiefste Fall hervorgehoben), das Titelrennen mit den Tagen an der Spitze und der Saison des Meisters (`saisonRang`, `saisonPodestHtml`, `saisonSpitze`, `saisonRennenHtml`, `saisonSpitzeHtml`, `saisonZellenHtml`; die Elo je Tag aus `getSeasonPositionHistory`), die Awards, und dann die Laufbahnen: neue Zeichen, Wirkung auf die Laufbahn, Auszeichnungen, Chronik und Rekorde.
+- Der Saison-Rückblick beginnt mit dem Podest auf der Meisterbühne (`.nf-meister.rcp-buehne`), und er stellt vor [§C43]: der Meister groß in der Mitte, dann auf seinem Platz, Platz 2 und 3 im Takt des Kantenlichts, sein Strahlenkranz, wenn er steht, dann das Team der Saison, dann der Rest; die Woche stellt leiser vor, mit Licht um den Helden. Darunter das Team der Saison (`rcpTeamHtml` aus `seasonTeamOf`, mit seinen Partien als Zellen), dann der Monat als Kalender mit den Eckdaten und ihrem Unterschied zum Vormonat, die Tabelle (`rcpTabelleHtml`: Elo als Balken, die Bewegung gegenüber dem Vormonat je Zeile, der größte Sprung und der tiefste Fall hervorgehoben), das Titelrennen mit den Tagen an der Spitze und der Saison des Meisters (`saisonRang`, `saisonPodestHtml`, `saisonSpitze`, `saisonRennenHtml`, `saisonSpitzeHtml`, `saisonZellenHtml`; die Elo je Tag aus `getSeasonPositionHistory`), die Awards, und dann die Laufbahnen: neue Zeichen, Wirkung auf die Laufbahn, Auszeichnungen, Chronik und Rekorde.
 - Woche und Tag zeigen Held und Feld (`rcpWocheHtml`, `rcpEloBahnHtml`, `rcpFeldHtml` mit der Elo jedes Spielers). Der Held steht vor dem Strahlenkranz der Meisterbühne, leiser (`rcpHeldHtml` mit `strahl`); Wappen, Name und Zahlen heben sich nacheinander herein, die Elo-Linie zeichnet sich von links, jede Partie setzt ihren Punkt, wenn die Linie bei ihr ankommt. Die Woche zeigt dazu ihre Tage als Kalender mit ihren Zahlen (Spieltage, Tore je Partie, enge Partien, Duos), ihre Awards und dieselben Laufbahn-Abschnitte wie die Saison, mit den Rekorden der Woche.
 - Die Wirkung auf die Laufbahn ist der Unterschied zweier Prestige-Stände, vor dem Zeitraum und an seinem Ende (`rcpLaufbahnDaten`), je Spieler nach den drei Quellen [§C34]; die neuen Zeichen sind, wer dabei Stufe oder Grad wechselte (`rcpZeichenZuege`), die Säulen der Auszeichnungen genau ihr Teil aus Auszeichnungen (`rcpEhrungHtml`). Die Rekorde eines Zeitraums kommen aus `saisonRekorde` oder `rekordeImZeitraum`; „verbessert" heißt, dass der Wert gestiegen ist. Dieser Teil kommt nach, wenn das Blatt eingefahren ist (`rcpSpaetLaden`).
 - „Awards" sind die Wertungen eines Zeitraums aus dem Awards-Reiter (`rcpAwardKacheln`, `awardRankings` mit `awSeasonId` oder `awWeekStart`), nie aus einer eigenen Rechnung; „Auszeichnungen" sind, was im Profil gesammelt wird.
@@ -17,7 +17,7 @@
 
 ## Prüfung
 
-`tests/tafel` rechnet Tage an der Spitze, das Titelrennen, den Kalender, die Tabelle mit ihren Bewegungen, die Wirkung auf die Laufbahn, die Säulen der Auszeichnungen, die neuen Zeichen und die Arten der Rekorde aus ihren Quellen nach und misst die Inline-Styles; `tests/blatt` hält die Awards der Woche gegen den Awards-Reiter, zählt die Zahlen und den Kalender der Woche nach, misst die Heldenkarte bei 360 px, rechnet den Vergleich der Saison mit dem Vormonat nach und misst beide Rückblicke bei 360 px: nichts ragt heraus, die Laufbahn kommt nach, die neuen Zeichen stehen zu dritt, kein Rekordname bricht im Wort, und ohne Ende bewegt sich nur der Sieger.
+`tests/tafel` rechnet Tage an der Spitze, das Titelrennen, den Kalender, die Tabelle mit ihren Bewegungen, die Wirkung auf die Laufbahn, die Säulen der Auszeichnungen, die neuen Zeichen und die Arten der Rekorde aus ihren Quellen nach und misst die Inline-Styles; `tests/blatt` hält die Awards der Woche gegen den Awards-Reiter, zählt die Zahlen und den Kalender der Woche nach, misst die Heldenkarte bei 360 px, rechnet den Vergleich der Saison mit dem Vormonat nach und misst beide Rückblicke bei 360 px: nichts ragt heraus, die Laufbahn kommt nach, die neuen Zeichen stehen zu dritt, kein Rekordname bricht im Wort, und ohne Ende bewegt sich nur der Sieger; die Folge der Vorstellung misst es Bild für Bild (§C43).
 
 ## Herleitung
 
@@ -128,6 +128,11 @@ mehr, die Elo jedes Spielers steht im Feld.
 3, 2 und 1 nacheinander auf, der Meister eine halbe Sekunde nach dem
 Öffnen, und der Strahlenkranz drehte sich von Anfang an über der leeren
 Mitte: das Licht des Siegers war da, bevor er es war, und die wichtigste
-Karte kam zuletzt. Jetzt steigt der Meister zuerst auf, Silber und Bronze
-folgen im Takt des Kantenlichts um jedes andere Podest der App
-(`PODEST_VERSATZ`), und der Kranz blendet ein, wenn er steht.
+Karte kam zuletzt. Danach stieg der Meister zuerst auf, Silber und Bronze
+folgten im Takt des Kantenlichts (`PODEST_VERSATZ`), und der Kranz blendete
+ein, wenn er stand — aber das Blatt kam wie jedes andere in acht Teilen,
+45 ms auseinander, und der Meister war eine Karte unter vielen. Gewünscht
+war eine Vorstellung, die das Wichtigste zuerst zeigt: der Meister groß,
+dann auf seinem Platz, dann das Team der Saison, dann alles andere, schön,
+aber weder nervig noch lang. Sie steht in §C43; die Woche bekommt dieselbe
+Folge leiser, ohne großen Auftritt — eine Woche ist kein Monat.

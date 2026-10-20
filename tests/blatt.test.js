@@ -5170,19 +5170,6 @@ return JSON.stringify(funde,null,1);
     out.saisonVgl = {d:zelle0 ? zelle0.textContent.trim() : '', soll:(vgl.ms > 0 ? '+' : vgl.ms < 0 ? '−' : '±') + Math.abs(vgl.ms),
       auf:markiert('auf'), aufSoll:vgl.auf.sort(), ab:markiert('ab'), abSoll:vgl.ab.sort(),
       buehne:!!sh.querySelector('.nf-meister.rcp-buehne > .nf-ms-strahl + .podest'),
-      // Der Meister steigt zuerst auf, dann Platz 2 und 3, und der Kranz
-      // hinter ihm blendet erst ein, wenn er steht — vorher kam der Meister
-      // als Letzter, und der Kranz drehte sich schon über der leeren Mitte.
-      folge:(() => {
-        const zeit = el => { if(!el) return []; const cs = getComputedStyle(el);
-          const d = cs.animationDelay.split(',').map(x => parseFloat(x));
-          return cs.animationName.split(',').map((n, i) => ({n:n.trim(), d:d[i] != null ? d[i] : d[0]})); };
-        const k = m => (zeit(sh.querySelector('.rcp-buehne .pod-karte.' + m))[0] || {}).d;
-        const kranz = zeit(sh.querySelector('.rcp-buehne > .nf-ms-strahl'));
-        const ein = kranz.find(a => a.n !== 'msDreh' && a.n !== 'none');
-        return {gold:k('gold'), silber:k('silber'), bronze:k('bronze'), kranz:ein ? ein.d : null,
-          dreht:kranz.some(a => a.n === 'msDreh')};
-      })(),
       // Wer gewonnen hat, ist die erste Frage: das Podest steht vor jeder Überschrift.
       zuerst:!!(sektion && sh.querySelector('.rcp-buehne') && (sh.querySelector('.rcp-buehne').compareDocumentPosition(sektion) & Node.DOCUMENT_POSITION_FOLLOWING)),
       awards:sh.querySelectorAll('[data-award]').length};
@@ -5233,14 +5220,144 @@ return JSON.stringify(funde,null,1);
        && rueck.saisonVgl.buehne && rueck.saisonVgl.zuerst && rueck.saisonVgl.awards >= 10,
      'der Saison-Rückblick beginnt mit dem Podest auf der Bühne, nennt den Unterschied zum Vormonat und hebt den größten Sprung und den tiefsten Fall in der Tabelle hervor',
      JSON.stringify(rueck.saisonVgl));
-  ok(rueck.saisonVgl.folge.gold < rueck.saisonVgl.folge.silber && rueck.saisonVgl.folge.silber < rueck.saisonVgl.folge.bronze
-       && rueck.saisonVgl.folge.kranz != null && rueck.saisonVgl.folge.kranz >= rueck.saisonVgl.folge.gold + 0.3 && rueck.saisonVgl.folge.dreht,
-     'auf der Bühne des Saison-Rückblicks steigt der Meister zuerst auf, und sein Kranz blendet erst ein, wenn er steht',
-     JSON.stringify(rueck.saisonVgl.folge));
   ok(rueck.saison.rang >= 0 && rueck.saison.rennen > rueck.saison.rang && rueck.saison.spitze > rueck.saison.rennen
      && rueck.saison.meister > rueck.saison.spitze && rueck.saison.fehler.length === 0,
      'der Saison-Rückblick zeigt die Tabelle vor Titelrennen, Tagen an der Spitze und der Saison des Meisters',
      JSON.stringify(rueck.saison).slice(0, 200));
+
+  // ── Die Vorstellung eines Rückblicks [§C43] ──────────────────────
+  //    Der Meister kommt groß in die Mitte und setzt sich auf seinen Platz,
+  //    dann Platz 2 und 3, der Kranz, das Team der Saison, dann der Rest —
+  //    gemessen Bild für Bild, wann jedes Teil sichtbar wird und wie groß
+  //    der Meister ist. Vorher kam das Blatt in acht Teilen 45 ms
+  //    auseinander, der Meister als eine Karte unter vielen. Eine
+  //    Berührung beendet die Vorstellung; was darunter steht, wartet still
+  //    und kommt beim Hereinscrollen; was nachkommt, rechnet erst nach ihr.
+  //    Die Woche stellt leiser vor, der Wechsel des Monats ohne Auftritt und
+  //    mit stehendem Kopf, zurück aus einem Blatt darüber gar nicht.
+  const vorst = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const warte = ms => new Promise(r => setTimeout(r, ms));
+    const bild = () => new Promise(r => requestAnimationFrame(r));
+    const sh = document.getElementById('sheet'), q = s => sh.querySelector(s);
+    const sicht = el => !!el && el.isConnected && getComputedStyle(el).display !== 'none' && parseFloat(getComputedStyle(el).opacity) > .05;
+    const unten = () => sh.getBoundingClientRect().bottom;
+    // Was zugeklappt ist (die weiteren Einträge der Chronik), hat keine
+    // Fläche und steht nirgends; es kommt, wenn es aufgeklappt hereinkommt.
+    const imBild = () => [...sh.querySelectorAll('.vs-w')].filter(e => e.getBoundingClientRect().height > 0 && e.getBoundingClientRect().top < unten())
+      .map(e => String(e.className).split(' ')[0] + ' ' + Math.round(e.getBoundingClientRect().top) + '/' + Math.round(unten()));
+    const out = {};
+    const juli = `showSeasonRecap(seasons.find(s => s.id === '2026-07'))`;
+    K(`closeSheet(true); 'x'`); await warte(350);
+    K(juli + `; 'x'`);
+    const t0 = performance.now();
+    const gold = q('.rcp-buehne .pod-karte.gold'), breite = gold.offsetWidth;
+    const teile = {gold, silber:q('.rcp-buehne .pod-karte.silber'), bronze:q('.rcp-buehne .pod-karte.bronze'),
+      kranz:q('.rcp-buehne > .nf-ms-strahl'), team:q('.rcp-team'), rest:q(':scope > .rcp-section')};
+    const erst = {};
+    let gross = 0, mitte = 99, goldBeimTeam = null, spaetWaehrend = null;
+    while(performance.now() - t0 < 3200){
+      const t = performance.now() - t0;
+      Object.entries(teile).forEach(([n, el]) => { if(erst[n] == null && sicht(el)) erst[n] = Math.round(t); });
+      if(sicht(gold)){
+        const r = gold.getBoundingClientRect(), s = sh.getBoundingClientRect(), f = r.width / breite;
+        if(f > gross){ gross = f; mitte = Math.abs((r.left + r.right) / 2 - (s.left + s.right) / 2); }
+      }
+      if(erst.team != null && goldBeimTeam == null) goldBeimTeam = gold.getBoundingClientRect().width / breite;
+      if(t > 1900 && spaetWaehrend == null) spaetWaehrend = !!q('[data-rcp-spaet]');
+      await bild();
+    }
+    await warte(300);
+    out.saison = {erst, gross:+gross.toFixed(2), mitte:Math.round(mitte), goldBeimTeam:goldBeimTeam && +goldBeimTeam.toFixed(3),
+      spaetWaehrend, spaetDanach:!!q('[data-rcp-spaet]'), groessBleibt:!!q('.vs-gross'),
+      wartetImBild:imBild()};
+    // Unter dem Rand wartet die Tabelle, und was in ihr wächst, steht still;
+    // hereingescrollt kommt sie, mit Licht um Platz 1 bis 3.
+    const tab = q('.rcp-tab');
+    const lauf = () => [...new Set(tab.getAnimations({subtree:true}).map(a => a.playState))].sort().join();
+    out.hinein = {wartet:tab.matches('.vs-w'), still:lauf()};
+    tab.scrollIntoView({block:'center'}); await warte(800);
+    out.hinein.da = tab.matches('.vs-da') && !tab.matches('.vs-w');
+    out.hinein.lauf = lauf();
+    out.hinein.licht = [...tab.children].slice(0, 3).filter(z => z.querySelector(':scope > .kl.kl-zeichnen')).length;
+    // Eine Berührung mitten im Auftritt: der Meister steht auf seinem Platz,
+    // alles im Bild steht sofort, nur darunter wartet noch etwas.
+    K(`closeSheet(true); 'x'`); await warte(350);
+    K(juli + `; 'x'`); await warte(450);
+    const g2 = q('.rcp-buehne .pod-karte.gold');
+    document.dispatchEvent(new Event('pointerdown'));
+    await bild();
+    out.abbruch = {gross:!!q('.vs-gross'), faktor:+(g2.getBoundingClientRect().width / g2.offsetWidth).toFixed(3),
+      stehen:['.rcp-buehne .pod-karte.silber', '.rcp-buehne .pod-karte.bronze', '.rcp-team'].every(s => sicht(q(s)) && parseFloat(getComputedStyle(q(s)).opacity) > .99),
+      wartetImBild:imBild(), wartetUnten:sh.querySelectorAll('.vs-w').length};
+    // Die Woche: kein großer Auftritt, Licht innen an der Kante des Helden,
+    // ein Ring um sein Gesicht, der Rest danach.
+    K(`closeSheet(true); 'x'`); await warte(350);
+    K(`showPotwRecap({woche:'2026-08-17'}); 'x'`);
+    const w0 = performance.now(), held = q('.rcp-held'), hb = held.offsetWidth, we = {};
+    let heldMax = 0;
+    while(performance.now() - w0 < 1400){
+      const t = performance.now() - w0;
+      [['held', held], ['rest', q(':scope > .rcp-section')]].forEach(([n, el]) => { if(we[n] == null && sicht(el)) we[n] = Math.round(t); });
+      heldMax = Math.max(heldMax, held.getBoundingClientRect().width / hb);
+      await bild();
+    }
+    out.woche = {erst:we, heldMax:+heldMax.toFixed(3), gross:!!q('.vs-gross, .vs-spot'),
+      licht:!!held.querySelector(':scope > .kl.kl-gold.kl-innen'), ring:held.matches('.vs-ring')};
+    // Ein anderer Monat aus dem Wähler im Blatt: der Kopf steht, der Meister
+    // kommt zuerst, ohne Auftritt.
+    K(`closeSheet(true); ${juli}; 'x'`); await warte(3200);
+    K(`showSeasonRecap(seasons.find(s => s.id === '2026-06'), {wechsel:true}); 'x'`); await warte(60);
+    const kopfAn = q('.rcp-head').getAnimations({subtree:true}).filter(a => a instanceof CSSAnimation).map(a => a.animationName);
+    out.wechsel = {kopf:kopfAn, gross:!!q('.vs-gross, .vs-spot'), gold:q('.rcp-buehne .pod-karte.gold').matches('.vs-da'),
+      silberWartet:q('.rcp-buehne .pod-karte.silber').matches('.vs-w')};
+    // Zurück aus einem Blatt darüber stellt nichts vor.
+    K(`closeSheet(true); ${juli}; 'x'`); await warte(500);
+    K(`sheetNav(() => showPlayer(players[0].id)); 'x'`); await warte(500);
+    K(`closeSheet(); 'x'`); await warte(700);
+    out.zurueck = {buehne:!!q('.rcp-buehne'), vs:sh.querySelectorAll('.vs').length, vor:!!sh._vs};
+    K(`closeSheet(true); 'x'`);
+    return out;
+  });
+  const vs = vorst.saison.erst;
+  ok(vs.gold != null && vs.gold < vs.silber && vs.silber < vs.bronze && vs.bronze < vs.team && vs.team < vs.rest
+       && vs.kranz >= vs.silber && vorst.saison.gross >= 1.4 && vorst.saison.mitte <= 2 && Math.abs(vorst.saison.goldBeimTeam - 1) < 0.01,
+     'der Saison-Rückblick stellt vor: der Meister groß in der Mitte, dann auf seinem Platz, Platz 2 und 3, der Kranz, das Team, dann der Rest',
+     JSON.stringify(vorst.saison));
+  ok(vs.rest <= 2400 && !vorst.saison.groessBleibt && vorst.saison.wartetImBild.length === 0,
+     'die Vorstellung ist nach weniger als zweieinhalb Sekunden beim Rest, und danach wartet nichts im Bild',
+     JSON.stringify({rest:vs.rest, gross:vorst.saison.groessBleibt, wartet:vorst.saison.wartetImBild}));
+  ok(vorst.saison.spaetWaehrend === true && vorst.saison.spaetDanach === false,
+     'was nachkommt, rechnet erst nach dem ersten Bildschirm der Vorstellung',
+     JSON.stringify({waehrend:vorst.saison.spaetWaehrend, danach:vorst.saison.spaetDanach}));
+  ok(vorst.hinein.wartet && vorst.hinein.still === 'paused' && vorst.hinein.da && !/paused/.test(vorst.hinein.lauf) && vorst.hinein.licht === 3,
+     'unter dem Rand wartet die Tabelle still und kommt beim Hereinscrollen, mit Licht um Platz 1 bis 3',
+     JSON.stringify(vorst.hinein));
+  ok(!vorst.abbruch.gross && Math.abs(vorst.abbruch.faktor - 1) < 0.01 && vorst.abbruch.stehen
+       && vorst.abbruch.wartetImBild.length === 0 && vorst.abbruch.wartetUnten > 0,
+     'eine Berührung beendet die Vorstellung: alles im Bild steht sofort, was darunter steht, wartet aufs Hereinscrollen',
+     JSON.stringify(vorst.abbruch));
+  ok(vorst.woche.erst.held != null && vorst.woche.erst.held < vorst.woche.erst.rest && vorst.woche.heldMax <= 1.001
+       && !vorst.woche.gross && vorst.woche.licht && vorst.woche.ring,
+     'der Wochenrückblick stellt leiser vor: der Held ohne großen Auftritt, mit Licht an der Kante und einem Ring, dann der Rest',
+     JSON.stringify(vorst.woche));
+  ok(vorst.wechsel.kopf.length === 0 && !vorst.wechsel.gross && vorst.wechsel.gold && vorst.wechsel.silberWartet,
+     'ein anderer Monat im Blatt: der Kopf steht, der Meister kommt zuerst, ohne Auftritt',
+     JSON.stringify(vorst.wechsel));
+  ok(vorst.zurueck.buehne && vorst.zurueck.vs === 0 && !vorst.zurueck.vor,
+     'zurück aus einem Blatt darüber stellt der Rückblick nichts vor', JSON.stringify(vorst.zurueck));
+  await page.emulateMedia({reducedMotion: 'reduce'});
+  const vorstRuhig = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    K(`closeSheet(true); showSeasonRecap(seasons.find(s => s.id === '2026-07')); 'x'`);
+    await new Promise(r => setTimeout(r, 200));
+    const sh = document.getElementById('sheet');
+    const n = {vs:sh.querySelectorAll('.vs, .vs-w, .vs-gross').length, vor:!!sh._vs};
+    K(`closeSheet(true); 'x'`);
+    return n;
+  });
+  await page.emulateMedia({reducedMotion: 'no-preference'});
+  ok(vorstRuhig.vs === 0 && !vorstRuhig.vor, 'bei Bewegungsruhe stellt der Rückblick nichts vor', JSON.stringify(vorstRuhig));
 
   // ── Aus der Story in ihren Rückblick ──────────────────────────────
   //    Spieler des Tages und die Woche öffnen den Rückblick IHRES Tages und

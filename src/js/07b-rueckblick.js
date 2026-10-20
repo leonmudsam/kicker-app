@@ -170,7 +170,9 @@ function showPotwRecap(opts){
       + (hlKacheln.length ? rcpAbschnitt('Awards der Woche', hlKacheln.length) + awVitrineHtml(hlKacheln, '') : '')
       + rcpSpaetHtml()
       + `<button id="closePotwBtn" class="recap-done-btn">Verstanden</button>`,
-      {protectMs: opts.auto ? 2500 : 0});
+      // Eine leise Vorstellung [§C43]: der Spieler der Woche mit Licht,
+      // dann der Rest; kein großer Auftritt wie beim Meister.
+      {protectMs: opts.auto ? 2500 : 0, vorstellung:'woche'});
 
     const _grab = document.getElementById('sheetGrab');
     if(_grab) _grab.classList.add('grab-pulse');
