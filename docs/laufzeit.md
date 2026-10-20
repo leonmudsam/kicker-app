@@ -52,6 +52,11 @@ Aufbau räumt sie). Beim Wechsel: `_ladeGruende` (warum die Ladelinie läuft:
 `wechsel`, `daten`; sie endet, wenn keiner mehr gilt), `_ladeLauf` und
 `_schleierLauf` (die laufenden Animationen) und `_verbunden` (ob der Punkt
 schon einmal „verbunden" gezeigt hat; er wird nicht zurückgesetzt).
+Am Blatt hängt `_vs`, die Vorstellung eines Rückblicks (`_vorstellung`):
+ihr Zeitplan, ihre Zeitgeber, ihr IntersectionObserver und die Teile, die
+noch warten (`wartet`); ein neues Blatt und das Schließen räumen sie
+(`_vorstellungAus`), eine Berührung beendet ihren Auftritt
+(`_vorstellungEnde`), was noch unter dem Rand wartet, bleibt beobachtet.
 `_verdeckt` (je Blatt oder Fenster die Elemente, die es angehalten hat;
 das Schließen gibt sie frei) und an jedem dieser Elemente `_steht` (wie oft
 es angehalten ist; bei null verliert es `.steht`), an Story und Auszeichnung
@@ -441,7 +446,16 @@ und die Rekorde der Woche: die brauchen Prestige- und Rekordstände an den
 Rändern des Zeitraums, und die Woche öffnete damit gemessen 280 ms nach
 dem Tippen statt 20 ms. Ein Zeitgeber setzt den Teil 380 ms nach dem
 Öffnen ein, wenn das Blatt eingefahren ist (`RCP_SPAET_MS`,
-`rcpSpaetLaden`); ist das Blatt inzwischen ein anderes, fällt er weg.
+`rcpSpaetLaden`), und stellt der Rückblick vor, erst nach ihrem ersten
+Bildschirm (`VORSTELLUNG`, `spaet`: 2,5 s für die Saison, 1,1 s beim
+Wechsel des Monats, 1,15 s für die Woche, `_vorstellungRest`); ist das Blatt
+inzwischen ein anderes, fällt er weg.
+
+Die Vorstellung selbst zeitet mit Zeitgebern am Blatt (`_vs.zu`): jedes
+Teil bekommt seine Klasse zu seiner Zeit (`VORSTELLUNG`), was hereinkommt,
+45 bis 70 ms nach dem vorigen (`_vsPlanen`); nach `ende` (3 s, 1,5 s)
+wartet nichts mehr auf seine Zeit. Eine Berührung löscht die noch offenen
+Zeitgeber; ein neues Blatt und das Schließen ebenso (`_vorstellungAus`).
 
 `_tickDaten` lässt außerdem ein offenes Blatt, den Eingabe-Tab und die
 Einstellungen in Ruhe:

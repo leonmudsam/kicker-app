@@ -61,10 +61,11 @@ const KANTE_MS = {zeichnen:4600, hinweis:4200};
 // Zeit entfernt, risse es mitten in seiner Runde ab.
 const KANTE_LEISE_MS = 6500;
 // Die Farben des Lichts: das Metall der Plätze, Acid fürs Bedienen, Weiß
-// für den Knopf „Match eintragen", die Farbe einer Story [§C25]. Eine feste
-// Tabelle statt `'kl-' + ton`: ein Ton, den es nicht gibt, fällt so auf,
-// statt als farbloses Licht.
-const KANTE_TON = {gold:'kl-gold', silber:'kl-silber', bronze:'kl-bronze', acid:'kl-acid', weiss:'kl-weiss', story:'kl-story'};
+// für den Knopf „Match eintragen", die Farbe einer Story, Blau für das Team
+// der Saison — was zu zweit geholt wurde [§C25]. Eine feste Tabelle statt
+// `'kl-' + ton`: ein Ton, den es nicht gibt, fällt so auf, statt als
+// farbloses Licht.
+const KANTE_TON = {gold:'kl-gold', silber:'kl-silber', bronze:'kl-bronze', acid:'kl-acid', weiss:'kl-weiss', story:'kl-story', blau:'kl-blau'};
 const KANTE_ART = {zeichnen:'kl-zeichnen', hinweis:'kl-hinweis'};
 function kantenlicht(ziel, ton, art, verzug, d, innen, leise){
   if(!ziel || _bewegungRuhig() || !KANTE_TON[ton] || !KANTE_ART[art]) return null;
@@ -197,10 +198,12 @@ function _metallTon(z, i){
     : /\s(top3|bronze)\s/.test(k) ? 'bronze' : ['gold', 'silber', 'bronze'][i] || 'gold';
 }
 // Das Band über Gold: dieselbe Bahn wie das Licht über einem Titel
-// (`.glanz-bahn`, 06-misc.css) [§C27], einmal statt im Takt.
-function _glanzEinmal(ziel, verzug){
+// (`.glanz-bahn`, 06-misc.css) [§C27], einmal statt im Takt. `ton` 'blau'
+// gibt es für das Team der Saison: Gold auf ihm wäre ein zweiter Titel im
+// Blatt [§C25].
+function _glanzEinmal(ziel, verzug, ton){
   const b = document.createElement('span');
-  b.className = 'glanz-bahn glanz-einmal'; b.setAttribute('aria-hidden', 'true');
+  b.className = 'glanz-bahn glanz-einmal' + (ton === 'blau' ? ' glanz-blau' : ''); b.setAttribute('aria-hidden', 'true');
   b.style.setProperty('--gv', verzug + 'ms');
   b.dataset.t0 = performance.now(); b.dataset.kv = verzug;
   ziel.appendChild(b);
@@ -305,6 +308,7 @@ function _bewegungNachRender(root, warTab, geruest, behalten){
 function _vorfuehrungEnde(){
   if(_vorfuehrungAuftrag){ clearTimeout(_vorfuehrungAuftrag); _vorfuehrungAuftrag = 0; document.documentElement.classList.remove('aufbau'); }
   if(_aufbauTeile.length) _aufbauFertig();
+  _vorstellungEnde();
 }
 ['pointerdown', 'wheel', 'touchstart', 'keydown'].forEach(ev =>
   document.addEventListener(ev, _vorfuehrungEnde, {passive:true, capture:true}));
@@ -580,6 +584,195 @@ function _blattStaffeln(sheet){
     teile = [...teile[0].children];
   }
   teile.slice(0, BLATT_TEILE).forEach((k, i) => { k.classList.add('staffel-k'); k.style.animationDelay = i * 45 + 'ms'; });
+}
+
+// ── Die Vorstellung eines Rückblicks ───────────────────────────────────
+// Der Saison-Rückblick stellt vor, statt aufzuzählen [§C31]: zuerst der
+// Meister, groß in der Mitte, Licht hinter ihm; dann setzt er sich auf
+// seinen Platz, ein Ring geht von ihm aus, Platz 2 und 3 steigen dazu, um
+// alle drei fährt Licht in ihrem Metall, und der Kranz geht auf; dann das
+// Team der Saison mit Licht in Blau; dann der Rest. Vorher kam das Blatt wie
+// jedes andere, acht Teile 45 ms auseinander, und der Meister war eine Karte
+// unter vielen. Der Wochenrückblick stellt leiser vor: der Spieler der Woche
+// kommt mit Licht an der Kante und einem Ring um sein Gesicht, dann der Rest
+// — eine Woche ist kein Monat [§C25]. Wechselt der Monat im Blatt, steigt
+// der Meister nur zuerst auf (`wechsel`): wer durch die Monate blättert,
+// sähe sonst jedes Mal zwei Sekunden Auftritt. Zurück aus einem Blatt
+// darüber stellt nichts vor (`openSheet`).
+//
+// Was unter dem Rand steht, kommt erst, wenn es hereingescrollt wird
+// (`.vs-w` → `.vs-da`, gemeldet von einem IntersectionObserver), und alles
+// darin steht bis dahin still: Balken, Linien, Zellen und Säulen wuchsen
+// vorher beim Öffnen, weit unter dem Rand, und wer hinkam, sah sie fertig.
+//
+// Gezeitet wird mit Klassen zu ihrer Zeit, nicht mit `animation-delay`:
+// eine wartende Animation ist für Safari schon eine laufende, mit eigener
+// Ebene [§C43]. Jede Berührung beendet die Vorstellung (`_vorstellungEnde`):
+// was im Bild steht, steht sofort, was darunter wartet, kommt beim
+// Hereinscrollen. Die Zeiten in ms ab dem Öffnen; `spaet` ist der früheste
+// Zeitpunkt für das, was nachkommt (`rcpSpaetLaden`): es kostet beim ersten
+// Öffnen gemessen 790 ms Hauptthread (vierfach gedrosselt), und so lange
+// stünden die Zeitgeber der Vorstellung still.
+const VORSTELLUNG = {
+  saison:{gross:true, meister:0, silber:1000, bronze:1120, kranz:1150, landung:1200, licht:1250,
+          team:1450, rest:1850, schritt:70, spaet:2500, ende:3000},
+  wechsel:{meister:0, silber:120, bronze:240, kranz:300, landung:520, licht:280,
+          team:420, rest:640, schritt:55, spaet:1100, ende:1500},
+  woche:{held:0, licht:380, ring:420, rest:560, schritt:55, spaet:1150, ende:1500}
+};
+function _vorstellung(sheet, art){
+  const Z = VORSTELLUNG[art];
+  if(!Z || _bewegungRuhig() || typeof IntersectionObserver !== 'function') return _blattStaffeln(sheet);
+  const vs = sheet._vs = {Z, t0:performance.now(), laeuft:true, wartet:new Set(), auftraege:[], zuletzt:0, io:null};
+  vs.zu = (ms, fn) => vs.auftraege.push(setTimeout(() => { if(sheet._vs === vs) fn(); }, ms));
+  // 40 px unter dem unteren Rand: was hereinkommt, hat sein Einblenden
+  // schon begonnen. Gemeldet erst an der Kante, stand beim Scrollen eine
+  // halbe Sekunde lang eine leere Fläche, wo die Tabelle hingehörte.
+  vs.io = new IntersectionObserver(eintraege => eintraege.forEach(e => {
+    const el = e.target;
+    if(sheet._vs !== vs || !vs.wartet.has(el)) return vs.io.unobserve(el);
+    el._vsSicht = e.isIntersecting;
+    el._vsMass = e.boundingClientRect;
+    if(e.isIntersecting) _vsPlanen(vs, el);
+  }), {rootMargin:'0px 0px 40px 0px'});
+  const teile = [...sheet.children].filter(k => !k.classList.contains('sheet-leiste'));
+  const finde = sel => teile.find(k => k.matches(sel));
+  const kopf = finde('.rcp-head'), buehne = finde('.rcp-buehne'), held = finde('.rcp-held'), team = finde('.rcp-team');
+  // Beim Wechsel des Monats steht der Kopf mit seinem Wähler, wie bei jedem
+  // Wechsel im Reiter: kam er neu herein, verschwand der Monat, auf den man
+  // eben getippt hatte, unter dem Finger.
+  if(kopf && art === 'wechsel') kopf.classList.add('vs');
+  else if(kopf){
+    kopf.classList.add('vs-kopf');
+    const marke = kopf.querySelector('.rcp-label');
+    if(marke) _glanzEinmal(marke, 380);
+  }
+  if(buehne) _vsBuehne(vs, buehne);
+  if(held) _vsHeld(vs, held);
+  if(team) _vsWarten(vs, team, vs.t0 + Z.team);
+  let k = 0;
+  teile.forEach(t => {
+    if(t !== kopf && t !== buehne && t !== held && t !== team) _vsWarten(vs, t, vs.t0 + Z.rest + Math.min(k++, 8) * Z.schritt);
+  });
+  vs.zu(Z.ende, () => { vs.laeuft = false; });
+}
+// Die Bühne: der Meister groß (`.vs-gross`) oder, beim Wechsel des Monats,
+// zuerst; Platz 2 und 3 zu ihrer Zeit, das Licht um alle drei im Takt jedes
+// anderen Podests (`PODEST_VERSATZ`), wartend ohne Kasten (`kantenlicht`).
+function _vsBuehne(vs, buehne){
+  const Z = vs.Z, karte = m => buehne.querySelector('.pod-karte.' + m);
+  const gold = karte('gold'), silber = karte('silber'), bronze = karte('bronze');
+  buehne.classList.add('vs', 'vs-buehne');
+  if(gold){
+    if(Z.gross){
+      gold.classList.add('vs', 'vs-gross'); buehne.classList.add('vs-spot');
+      vs.zu(Z.landung + 120, () => gold.classList.remove('vs-gross'));
+    } else _vsDirekt(vs, gold, Z.meister);
+    vs.zu(Z.landung, () => gold.classList.add('vs-ring'));
+  }
+  if(silber) _vsDirekt(vs, silber, Z.silber);
+  if(bronze) _vsDirekt(vs, bronze, Z.bronze);
+  vs.zu(Z.kranz, () => buehne.classList.add('vs-kranz'));
+  [gold, silber, bronze].forEach(z => {
+    if(!z) return;
+    const ton = _metallTon(z, 0);
+    kantenlicht(z, ton, 'zeichnen', Z.licht + PODEST_VERSATZ[ton], _diagonale('podest'));
+  });
+}
+// Der Held der Woche: er kommt sofort, mit Licht innen an seiner Kante —
+// die Karte schneidet ab, was über ihren Rand ragt — und einem Ring um sein
+// Gesicht. Die Größe der Karte ist geschätzt: die Spalte und die Höhe, die
+// sie mit zwei Reihen Zahlen nicht überschreitet.
+function _vsHeld(vs, held){
+  const Z = vs.Z;
+  held.classList.add('vs', 'vs-da');
+  vs.zu(Z.ring, () => held.classList.add('vs-ring'));
+  kantenlicht(held, 'gold', 'zeichnen', Z.licht, Math.hypot(Math.min(innerWidth, 520) - 40, 340) + 8, true);
+}
+function _vsWarten(vs, el, ab){
+  el.classList.add('vs', 'vs-w');
+  el._vsAb = ab; el._vsGeplant = false; el._vsSicht = false;
+  vs.wartet.add(el);
+  vs.io.observe(el);
+}
+// Was im ersten Bild sicher steht, kommt zu seiner Zeit, ohne Beobachter.
+function _vsDirekt(vs, el, ms){
+  el.classList.add('vs', 'vs-w');
+  el._vsDirekt = true;
+  vs.wartet.add(el);
+  vs.zu(ms, () => _vsKommt(vs, el));
+}
+// Was hereinkommt, kommt zu seiner Zeit in der Vorstellung, danach sofort;
+// mehrere zugleich — schnell gescrollt — nacheinander.
+function _vsPlanen(vs, el){
+  if(el._vsGeplant) return;
+  el._vsGeplant = true;
+  const jetzt = performance.now();
+  const ab = Math.max(jetzt, vs.laeuft ? el._vsAb : 0, vs.zuletzt + (vs.laeuft ? vs.Z.schritt : 45));
+  vs.zuletzt = ab;
+  vs.zu(ab - jetzt, () => _vsKommt(vs, el));
+}
+function _vsKommt(vs, el){
+  if(!vs.wartet.delete(el)) return;
+  vs.io.unobserve(el);
+  el.classList.remove('vs-w');
+  el.classList.add('vs-da');
+  _vsLicht(el);
+}
+// Licht, wo eine Karte ankommt, die zählt [§C41]: um das Team der Saison in
+// Blau, dazu einmal sein Glanz; in der Tabelle um Platz 1 bis 3 in ihrem
+// Metall. Die Größe meldet der Beobachter mit dem Hereinkommen.
+function _vsLicht(el){
+  const m = el._vsMass, b = m && m.width ? m.width : Math.min(innerWidth, 520) - 40;
+  if(el.matches('.rcp-team')){
+    kantenlicht(el, 'blau', 'zeichnen', 160, Math.hypot(b, m && m.height ? m.height : 130) + 8);
+    _glanzEinmal(el, 520, 'blau');
+  } else if(el.matches('.rcp-tab')){
+    [...el.children].slice(0, 3).forEach((z, i) => {
+      const ton = _metallTon(z, i);
+      kantenlicht(z, ton, 'zeichnen', 300 + PODEST_VERSATZ[ton], Math.hypot(b, 44) + 8);
+    });
+  }
+}
+// Was nachkommt (`rcpSpaetLaden`), kommt wie alles darunter beim
+// Hereinscrollen; sein Platzhalter wartet nicht mehr.
+function _vorstellungNach(da, alt){
+  const sheet = _bewegungDa() && da && da.closest ? da.closest('.sheet') : null, vs = sheet && sheet._vs;
+  if(!vs) return;
+  if(alt && vs.wartet.delete(alt)) vs.io.unobserve(alt);
+  [...da.children].forEach(k => _vsWarten(vs, k, 0));
+}
+function _vorstellungRest(sheet){
+  const vs = sheet && sheet._vs;
+  return vs ? Math.max(0, vs.t0 + vs.Z.spaet - performance.now()) : 0;
+}
+// Eine Berührung: was im Bild steht oder schon an der Reihe war, steht
+// sofort, auch was darin wachsen sollte; was darunter wartet, kommt beim
+// Hereinscrollen. Das Licht läuft zu Ende.
+function _vorstellungEnde(){
+  const sheet = typeof document !== 'undefined' && document.getElementById ? document.getElementById('sheet') : null;
+  const vs = sheet && sheet._vs;
+  if(!vs || !vs.laeuft) return;
+  vs.laeuft = false;
+  vs.auftraege.forEach(clearTimeout); vs.auftraege = [];
+  sheet.querySelectorAll('.vs-gross, .vs-spot').forEach(e => e.classList.remove('vs-gross', 'vs-spot'));
+  sheet.querySelectorAll('.vs-buehne').forEach(e => e.classList.add('vs-kranz'));
+  vs.wartet.forEach(el => {
+    if(!el._vsDirekt && !el._vsSicht){ el._vsGeplant = false; return; }
+    vs.wartet.delete(el); vs.io.unobserve(el);
+    el.classList.remove('vs-w');
+    el.getAnimations({subtree:true}).forEach(a => {
+      if(a.effect && a.effect.getTiming().iterations !== Infinity) try { a.finish(); } catch(e){}
+    });
+  });
+}
+// Ein neues Blatt: die alte Vorstellung hört auf, ihr Beobachter auch.
+function _vorstellungAus(sheet){
+  const vs = sheet && sheet._vs;
+  if(!vs) return;
+  sheet._vs = null;
+  vs.auftraege.forEach(clearTimeout);
+  vs.io.disconnect();
 }
 // Im Feed fährt um jede ungelesene Story im Bild ein Licht in ihrer Farbe,
 // eine nach der anderen: das kam seit dem letzten Öffnen dazu. Höchstens

@@ -4,6 +4,8 @@
     font-size:10px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);
     padding:5px 12px;background:rgba(247,207,74,.10);border:1px solid rgba(247,207,74,.3);border-radius:99px}
   .rcp-label svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+  /* Über die Marke fährt beim Öffnen einmal ihr Glanz (`_vorstellung`). */
+  .rcp-label{position:relative}
   .rcp-label.metall{color:var(--silber);background:rgba(194,201,208,.08);border-color:rgba(194,201,208,.3)}
   .rcp-month{font-family:'Archivo Black',sans-serif;font-size:32px;letter-spacing:-.03em;margin-top:10px;line-height:1}
   .rcp-meta{font-size:11.5px;color:var(--muted);font-family:'Sometype Mono',monospace;margin-top:6px;letter-spacing:.04em}

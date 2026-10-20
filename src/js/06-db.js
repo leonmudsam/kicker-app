@@ -463,6 +463,8 @@ function _recapPosMiniSVG(ph){
 //
 // opts.auto=true  → Schutz-Phase (protectMs) gegen versehentliches Schließen,
 //                   nur beim automatischen Auftauchen am Monatsanfang.
+// opts.wechsel    → ein anderer Monat aus dem Wähler im Blatt: der Meister
+//                   steigt zuerst auf, ohne großen Auftritt (`_vorstellung`).
 function showSeasonRecap(season, opts){
   opts = opts || {};
   _sheetSetReopen(()=>showSeasonRecap(season));
@@ -599,10 +601,11 @@ function showSeasonRecap(season, opts){
     rcpKopfHtml({ic:'trophy', marke:'Saison beendet', titel:season.label,
       extra:saisonWaehlerHtml('rcpSaisonwahl', sid, {liste:vergangene, attr:'rcpsaison'})})
     // Gleich unter dem Kopf das Podest auf der Bühne der Meister-Story
-    // [§C27]: wer gewonnen hat, ist die erste Frage. Der Meister steigt
-    // zuerst auf, dann Platz 2 und 3, und sein Kranz kommt, wenn er steht.
-    // Vorher standen die Eckdaten darüber und schoben den Meister unter den
-    // Rand des ersten Bildschirms.
+    // [§C27]: wer gewonnen hat, ist die erste Frage. Der Meister kommt
+    // zuerst, groß, und setzt sich auf seinen Platz, dann Platz 2 und 3, und
+    // sein Kranz kommt, wenn er steht (`_vorstellung`). Vorher standen die
+    // Eckdaten darüber und schoben den Meister unter den Rand des ersten
+    // Bildschirms.
     + (podestHtml ? `<div class="nf-meister rcp-buehne"><span class="nf-ms-strahl" aria-hidden="true"></span>${podestHtml}</div>` : '')
     + rcpTeamHtml(sid, ms)
     // Erst der Sport des Monats — Zahlen, Tabelle, Titelrennen, Awards —,
@@ -611,7 +614,9 @@ function showSeasonRecap(season, opts){
     + zahlenHtml + tabelleHtml + rennenHtml + awardsHtml
     + rcpSpaetHtml() + chronikHtml + rekordHtml
     + `<button class="recap-done-btn" id="closeRecapBtn">Verstanden</button>`,
-    {protectMs: opts.auto ? 2500 : 0});
+    // Eine Vorstellung [§C43]: der Meister groß, dann auf seinem Platz,
+    // dann das Team, dann der Rest.
+    {protectMs: opts.auto ? 2500 : 0, vorstellung: opts.wechsel ? 'wechsel' : 'saison'});
 
   // Grab-Hint: kurz pulsieren, signalisiert „wegziehen geht auch"
   const _grab = document.getElementById('sheetGrab');
@@ -622,7 +627,7 @@ function showSeasonRecap(season, opts){
   const wurzel = document.getElementById('sheet');
   wurzel.querySelectorAll('[data-rcpsaison]').forEach(b => b.onclick = () => {
     const s = seasons.find(x => x.id === b.dataset.rcpsaison);
-    if(s) showSeasonRecap(s);
+    if(s) showSeasonRecap(s, {wechsel:true});
   });
   // Einmal für das Blatt, einmal für das, was nachkommt.
   const bindeIn = root => {

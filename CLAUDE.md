@@ -121,7 +121,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **1375**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **1388**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -145,7 +145,7 @@ Datei, deren Aufgabe niemand aufgeschrieben hat.
 | Zeichen und Wappen | `02-icons` (SVG-Katalog, `lossStreakInline`) · `09c-zeichen` (Feuer, Sterne, `avHtml`) · `17-badges` · `17b-fingerabdruck` · `35a-insignium-zeichen` (die 21 Zeichnungen der Leiter, `insBild`) · `35b-prestige` (Insignium, Laufbahn) · `35c-titel-aura` (die Aura der Meistertitel, `auraHref`) |
 | News | `26-news-konstanten` (Kategorien, Limits) · `26b-story-fakten` (ein Stand der Liga, der Spieltag als Paar aus Vorher und Nachher, die Punktewirkung, das Tor vor der Rangliste) · `26c-news-bausteine` (Rekorde aller Zeiten, Meilensteinleitern, Aufzählungen) · `27-news-generator` (Ereignisse, Ewige Tafel) · `28-news-ambient` · `29-news-cache` (Konsolidierung, Entzerrung) · `29b-news-sync` (Realtime, Autosync) · `29c-news-worker` (der Generator im Worker, mit demselben Code) · `30-news-ui` (Feed, `_isBreaking`) · `30a-news-karte` (die Bausteine einer Karte) · `30b-news-spieltag` (Kopf und Fuß einer Partie nach ihrem Anlass, die Runde der Vier) · `30c-news-fakt` (das Bild eines Fun Facts nach seinem Anlass) · `30d-news-insignium` (die Insignium-Karte des Tages: Sätze, Bühne, Blatt) · `30e-news-ehrung` (die Ehrung: was eine Runde an Auszeichnungen brachte, je Spieler mit Prestige) · `31-news-detail` (Kopf und Fuß eines Story-Blatts) · `31a-news-detail-mitte` (die Mitte je Typ) · `31b-news-detail-helfer` |
 | Chronik | `32-chronik-katalog` (`DISZIPLINEN`) · `33-chronik-engine` (Monat) · `34-chronik-rekorde` (Allzeit, `CHRON_KINDS`, `chronicleRang`, `rekordZaehlung`) · `35-chronik-ui` |
-| Bedienung | `09-ui-infra` · `09d-bewegung` (Öffnen, Gerüst, Kantenlicht, Aufbau, Podest-Licht, Wechsel [§C43]) · `20-bind` · `23-match-edit` · `24-lock` · `25-helpers` · `36-backup` |
+| Bedienung | `09-ui-infra` · `09d-bewegung` (Öffnen, Gerüst, Kantenlicht, Aufbau, Podest-Licht, Wechsel, Vorstellung der Rückblicke [§C43]) · `20-bind` · `23-match-edit` · `24-lock` · `25-helpers` · `36-backup` |
 
 Bewusst **keine** Zeilenzahlen hier: die veralten bei jeder Änderung.
 `wc -l src/js/* src/css/*` beantwortet das in einer Sekunde.
