@@ -3409,7 +3409,13 @@
   .rcp-wo-o i{transform-origin:bottom;animation:rcpWachsY .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 40ms)}
   .rcp-wo-u i{transform-origin:top;animation:rcpWachsY .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 40ms)}
   .rcp-elo-l{stroke-dasharray:1;animation:rcpZieh 1.2s ease-out both}
+  .rcp-elo circle{transform-box:fill-box;transform-origin:center;
+    animation:rcpPunkt .32s cubic-bezier(.2,.8,.3,1.5) both;animation-delay:calc(var(--i,1) * 1.1s)}
+  .rcp-elo-fl{animation:rcpDa .8s .7s both}
+  .rcp-elo-z b{display:inline-block;animation:rcpZahlKommt .45s cubic-bezier(.2,.8,.3,1.25) 1.15s both}
 }
+@keyframes rcpPunkt{from{opacity:0;transform:scale(0)}}
+@keyframes rcpDa{from{opacity:0}}
 @keyframes rcpWachs{from{transform:scaleX(0)}}
 @keyframes rcpWachsY{from{transform:scaleY(0)}}
 @keyframes rcpZieh{from{stroke-dashoffset:1}}
@@ -6037,7 +6043,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.20.e84e7873';
+const BUILD_VERSION='2026.10.20.fdbf8b7f';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -7679,7 +7685,7 @@ function rcpEloBahnHtml(ms, pid){
     <line class="rcp-elo-0" x1="0" x2="${W}" y1="${null0}" y2="${null0}"/>
     <path class="rcp-elo-fl" d="${d}L${x(pts.length - 1)},${null0}L${x(0)},${null0}Z"/>
     <path class="rcp-elo-l" pathLength="1" d="${d}"/>
-    ${pts.map((v, i) => i ? `<circle class="${v >= pts[i - 1] ? 'w' : 'l'}" cx="${x(i)}" cy="${y(v)}" r="3"/>` : '').join('')}
+    ${pts.map((v, i) => i ? `<circle class="${v >= pts[i - 1] ? 'w' : 'l'}" style="--i:${(i / (pts.length - 1)).toFixed(2)}" cx="${x(i)}" cy="${y(v)}" r="3"/>` : '').join('')}
   </svg><div class="rcp-elo-z num"><span>Erste Partie</span><b class="${s >= 0 ? 'pos' : 'neg'}">${s >= 0 ? '+' : ''}${s} Elo</b></div></div>`;
 }
 function pmap(){
@@ -9102,7 +9108,7 @@ function showPotdRecap(opts){
     openSheet(
       rcpKopfHtml({ic:'trophyDay', marke:'Player of the Day', titel:dayStr,
         meta: rcpMeta([dayMatches.length+' Matches', uniquePlayers.size+' Spieler'])})
-      + rcpHeldHtml({pid:potdId, band:false, px:104, marke:'Spieler des Tages',
+      + rcpHeldHtml({pid:potdId, band:false, px:104, marke:'Spieler des Tages', strahl:true,
           zahlen: rcpZahlenHtml([
             {v:s.wins,      l:'Siege',       ton:'gruen'},
             {v:s.losses,    l:'Niederlagen', ton:'rot'},

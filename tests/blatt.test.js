@@ -5003,6 +5003,12 @@ return JSON.stringify(funde,null,1);
     const tagMs = K(`matches.filter(m => tagKey(mts(m)) === '2026-08-24').length`);
     out.tag = {bahn: !!sh.querySelector('.nd-bahn'), zeilen: sh.querySelectorAll('.nd-tml').length, elo: !!sh.querySelector('.rcp-elo svg'),
       feld: sh.querySelectorAll('.rcp-feld-z').length, partien: tagMs, datum: /24\. August/.test(sh.textContent),
+      // Der Spieler des Tages steht vor dem Strahlenkranz, und jede Partie
+      // setzt ihren Punkt, wenn die Linie bei ihr ankommt: der Anteil am Weg
+      // steigt und endet bei eins.
+      strahl: !!sh.querySelector('.rcp-held.mit-strahl .rcp-held-av > .nf-ms-strahl'),
+      punkte: [...sh.querySelectorAll('.rcp-elo circle')].map(c => +c.style.getPropertyValue('--i')),
+      punktAnim: [...new Set([...sh.querySelectorAll('.rcp-elo circle')].map(c => getComputedStyle(c).animationName))],
       fehler: [...sh.querySelectorAll('.rcp-feld, .rcp-elo')].flatMap(fehler)};
     K(`closeSheet(true); showSeasonRecap(seasons.find(s=>s.id==='2026-07')); 'x'`); await warte();
     sh = document.getElementById('sheet');
@@ -5041,6 +5047,10 @@ return JSON.stringify(funde,null,1);
   ok(rueck.wocheAw.strahl && rueck.wocheAw.stapel === 'isolate' && rueck.wocheAw.zellenHeld === 4 && rueck.wocheAw.reihen === 2,
      'der Spieler der Woche steht vor dem Strahlenkranz, seine vier Zahlen bei 360 px zwei mal zwei',
      JSON.stringify({strahl:rueck.wocheAw.strahl, stapel:rueck.wocheAw.stapel, zellen:rueck.wocheAw.zellenHeld, reihen:rueck.wocheAw.reihen}));
+  ok(rueck.tag.strahl && rueck.tag.punkte.length >= 2 && rueck.tag.punkte.every((v, i, a) => !i || v > a[i - 1])
+       && rueck.tag.punkte[rueck.tag.punkte.length - 1] === 1 && rueck.tag.punktAnim.join() === 'rcpPunkt',
+     'der Tagesrückblick stellt den Helden vor den Strahlenkranz, die Punkte der Elo-Linie kommen mit der Linie',
+     JSON.stringify({strahl:rueck.tag.strahl, punkte:rueck.tag.punkte, anim:rueck.tag.punktAnim}));
   ok(rueck.tag.bahn && rueck.tag.zeilen === 0 && rueck.tag.elo && rueck.tag.feld > 3 && rueck.tag.datum && rueck.tag.fehler.length === 0,
      'der Tagesrückblick zeigt den gewählten Tag als Bahn, die Elo über den Tag und das Feld',
      JSON.stringify(rueck.tag).slice(0, 200));

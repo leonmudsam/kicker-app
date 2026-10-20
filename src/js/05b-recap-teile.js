@@ -603,7 +603,9 @@ function rcpWocheHtml(ms, pid, start){
 // ── Die Elo eines Tages als Linie ────────────────────────────────────
 // Gerechnet wird nichts: die Deltas stehen an jeder Partie. Die Linie zeigt,
 // wie der Tag zustande kam — zwei Pleiten am Anfang und danach fünf Siege
-// sind dieselbe Bilanz wie umgekehrt, aber ein anderer Tag.
+// sind dieselbe Bilanz wie umgekehrt, aber ein anderer Tag. Sie zeichnet
+// sich von links, und jede Partie setzt ihren Punkt, wenn die Linie bei ihr
+// ankommt (`--i`); am Ende steht die Summe.
 function rcpEloBahnHtml(ms, pid){
   const e = ms.filter(m => [m.a1, m.a2, m.b1, m.b2].includes(pid)).sort((a, b) => mts(a) - mts(b));
   if(e.length < 2) return '';
@@ -619,6 +621,6 @@ function rcpEloBahnHtml(ms, pid){
     <line class="rcp-elo-0" x1="0" x2="${W}" y1="${null0}" y2="${null0}"/>
     <path class="rcp-elo-fl" d="${d}L${x(pts.length - 1)},${null0}L${x(0)},${null0}Z"/>
     <path class="rcp-elo-l" pathLength="1" d="${d}"/>
-    ${pts.map((v, i) => i ? `<circle class="${v >= pts[i - 1] ? 'w' : 'l'}" cx="${x(i)}" cy="${y(v)}" r="3"/>` : '').join('')}
+    ${pts.map((v, i) => i ? `<circle class="${v >= pts[i - 1] ? 'w' : 'l'}" style="--i:${(i / (pts.length - 1)).toFixed(2)}" cx="${x(i)}" cy="${y(v)}" r="3"/>` : '').join('')}
   </svg><div class="rcp-elo-z num"><span>Erste Partie</span><b class="${s >= 0 ? 'pos' : 'neg'}">${s >= 0 ? '+' : ''}${s} Elo</b></div></div>`;
 }
