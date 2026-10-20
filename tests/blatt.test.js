@@ -4980,6 +4980,24 @@ return JSON.stringify(funde,null,1);
     out.woche = {titel: /KW 34/.test(sh.textContent) ? 'KW 34' : '', tage: sh.querySelectorAll('.rcp-wo-t').length,
       feld: sh.querySelectorAll('.rcp-feld-z').length, soll: imFeld.size, held: sh.querySelectorAll('.rcp-feld-z.held').length,
       fehler: [...sh.querySelectorAll('.rcp-feld, .rcp-woche')].flatMap(fehler)};
+    // Die Auszeichnungen der Woche nennen, wen die Rechnung des
+    // Awards-Reiters für DIESE Woche nennt; die Zahlen der Woche zählen
+    // nach; der Held steht auf seiner Bühne, die vier Zahlen zwei mal zwei.
+    const soll = JSON.parse(K(`(function(){ const v = awWeekStart; awWeekStart = new Date(2026, 7, 17);
+      const R = awardRankings('week'); awWeekStart = v;
+      const o = {}; Object.keys(AW_WERT).forEach(k => { const t = awTop(k, R);
+        if(t.length) o[k] = awIds(k, t[0]).map(pname).join(' & ') + (t.length > 1 ? ' +' + (t.length - 1) : ''); });
+      return JSON.stringify(o); })()`));
+    const kacheln = [...sh.querySelectorAll('[data-potw-award]')].map(e => ({k:e.dataset.potwAward,
+      name:e.querySelector('.rcp-aw-name').textContent.trim()}));
+    const zahlenAb = [...sh.querySelectorAll('.rcp-section')].find(x => /Woche in Zahlen/.test(x.textContent));
+    const zellen = zahlenAb ? [...zahlenAb.nextElementSibling.querySelectorAll('.rcp-z-s')].map(z => z.textContent.replace(/\s+/g, ' ').trim()) : [];
+    const tageSoll = new Set(wochenMs.map(m => K(`tagKey(mts(${JSON.stringify(m)}))`))).size;
+    const heldZ = [...sh.querySelectorAll('.rcp-held .rcp-z-s')].map(z => Math.round(z.getBoundingClientRect().top));
+    const held = sh.querySelector('.rcp-held');
+    out.wocheAw = {kacheln:kacheln.length, falsch:kacheln.filter(k => soll[k.k] !== k.name),
+      zahlen:zellen, tageSoll, reihen:new Set(heldZ).size, zellenHeld:heldZ.length,
+      strahl:!!(held && held.querySelector('.rcp-held-av > .nf-ms-strahl')), stapel:held ? getComputedStyle(held).isolation : ''};
     K(`closeSheet(true); showPotdRecap({force:true, tag:'2026-08-24'}); 'x'`); await warte();
     sh = document.getElementById('sheet');
     const tagMs = K(`matches.filter(m => tagKey(mts(m)) === '2026-08-24').length`);
@@ -4999,6 +5017,15 @@ return JSON.stringify(funde,null,1);
      && rueck.woche.fehler.length === 0,
      'der Wochenrückblick zeigt die gewählte Woche, die sieben Tage des Helden und jeden Spieler im Feld',
      JSON.stringify(rueck.woche).slice(0, 200));
+  ok(rueck.wocheAw.kacheln >= 6 && rueck.wocheAw.falsch.length === 0,
+     'die Auszeichnungen der Woche nennen, wen der Awards-Reiter für diese Woche nennt',
+     JSON.stringify(rueck.wocheAw.falsch).slice(0, 240) + ' · ' + rueck.wocheAw.kacheln + ' Kacheln');
+  ok(rueck.wocheAw.zahlen.length === 4 && rueck.wocheAw.zahlen[0] === rueck.wocheAw.tageSoll + 'Spieltage',
+     'die Woche in Zahlen: Spieltage, Tore je Partie, enge Partien und Duos, gezählt aus den Partien der Woche',
+     JSON.stringify(rueck.wocheAw.zahlen) + ' · Spieltage ' + rueck.wocheAw.tageSoll);
+  ok(rueck.wocheAw.strahl && rueck.wocheAw.stapel === 'isolate' && rueck.wocheAw.zellenHeld === 4 && rueck.wocheAw.reihen === 2,
+     'der Spieler der Woche steht vor dem Strahlenkranz, seine vier Zahlen bei 360 px zwei mal zwei',
+     JSON.stringify({strahl:rueck.wocheAw.strahl, stapel:rueck.wocheAw.stapel, zellen:rueck.wocheAw.zellenHeld, reihen:rueck.wocheAw.reihen}));
   ok(rueck.tag.bahn && rueck.tag.zeilen === 0 && rueck.tag.elo && rueck.tag.feld > 3 && rueck.tag.datum && rueck.tag.fehler.length === 0,
      'der Tagesrückblick zeigt den gewählten Tag als Bahn, die Elo über den Tag und das Feld',
      JSON.stringify(rueck.tag).slice(0, 200));

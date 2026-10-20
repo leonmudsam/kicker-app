@@ -86,10 +86,14 @@ function rcpHeldHtml(o){
                  : rcpPaarHtml(ids, 64);
   const namen = ids.map(pname).join(' & ');
   const abzeichen = ein ? rankBadgeHtml(ids[0], 'sm') : '';
-  return `<div class="rcp-held${ein ? ' klick' : ''}"${
+  // `strahl`: hinter dem Wappen dreht sich der Strahlenkranz der
+  // Meisterbühne, leiser [§C27] — dasselbe Licht für denselben Gedanken,
+  // einen Sieger. Wappen, Name und Zahlen heben sich nacheinander herein.
+  return `<div class="rcp-held${ein ? ' klick' : ''}${o.strahl ? ' mit-strahl' : ''}"${
       ein ? ` data-detail="${esc(ids[0])}"` : ''}>
     <div class="rcp-held-label">${esc(o.marke)}</div>
-    <div class="rcp-held-av${ein && band ? ' band' : ''}">${av}</div>
+    <div class="rcp-held-av${ein && band ? ' band' : ''}">${
+      o.strahl ? '<span class="nf-ms-strahl leise" aria-hidden="true"></span>' : ''}${av}</div>
     <div class="rcp-held-n">${esc(namen)}</div>
     ${abzeichen ? `<div class="rcp-held-rang">${abzeichen}</div>` : ''}
     ${o.zahlen || ''}${glanzBahn()}
@@ -146,6 +150,27 @@ function rcpKachelHtml(o){
       <div class="rcp-aw-val">${esc(o.wert || '')}</div>
     </div>
   </div>`;
+}
+
+// Die Auszeichnungen eines Zeitraums als Kacheln — aus `R`, der Rechnung
+// des Awards-Reiters für genau diesen Zeitraum [§C27]. Name, Zahl und
+// Einheit kommen aus AW_WERT, wie dort; bei Gleichstand steht der Erste mit
+// „+N". Wer keinen Halter hat, fällt weg. Metall vorn, die Schattenseiten in
+// Rot dahinter [§C25]. `attr(key)` sagt, wohin die Kachel führt; `ohne`
+// lässt eine weg, die dasselbe schon an anderer Stelle sagt.
+function rcpAwardKacheln(R, metall, rot, attr, ohne){
+  const out = [];
+  const kachel = (key, ton) => {
+    const top = awTop(key, R); if(!top.length) return;
+    if(ohne && ohne(key, top)) return;
+    const t = awText(key, top[0]);
+    out.push(rcpKachelHtml({ic:AW_IC[key], label:AWARD_META[key].title,
+      name:awIds(key, top[0]).map(pname).join(' & ') + (top.length > 1 ? ' +'+(top.length-1) : ''),
+      wert:t.e ? t.z+' '+t.e : t.z, ton, attr:attr(key)}));
+  };
+  metall.forEach(k => kachel(k, 'metall'));
+  rot.forEach(k => kachel(k, 'red'));
+  return out;
 }
 
 // Eine Ereigniszeile: ein Chronik-Eintrag oder ein Rekord. Links steht das

@@ -598,7 +598,6 @@ function showSeasonRecap(season, opts){
   awSeasonId = sid;
   const R = awardRankings('season');
   awSeasonId = vorherAw;
-  const kacheln = [];
   // Name, Zahl und Einheit aus AW_WERT [§5.3d], wie im Awards-Reiter — hier
   // stand eine fünfte Schreibweise („8 in Folge", „30% Chance"), und bei
   // Gleichstand nannte der Rückblick nur den ersten.
@@ -606,15 +605,9 @@ function showSeasonRecap(season, opts){
   // Kacheln golden umrandet sind, sagt Gold nichts mehr. Auf dieser Seite
   // trägt es das Podest, sonst nichts. Die Schattenseiten stehen hinten und
   // in Rot — Rot sagt hier die Richtung, nicht die Wichtigkeit.
-  const kachel = (key, ton) => {
-    const top = awTop(key, R); if(!top.length) return;
-    const t = awText(key, top[0]);
-    kacheln.push(rcpKachelHtml({ic:AW_IC[key], label:AWARD_META[key].title,
-      name:awIds(key, top[0]).map(pname).join(' & ') + (top.length > 1 ? ' +'+(top.length-1) : ''),
-      wert:t.e ? t.z+' '+t.e : t.z, ton, attr:`data-award="${key}"`}));
-  };
-  ['scorer','wall','streaks','perfect','weekKing','dayKing','grinder','upset'].forEach(k => kachel(k, 'metall'));
-  ['worstWr','pechvogel'].forEach(k => kachel(k, 'red'));
+  const kacheln = rcpAwardKacheln(R,
+    ['scorer','wall','streaks','perfect','weekKing','dayKing','grinder','upset'], ['worstWr','pechvogel'],
+    key => `data-award="${key}"`);
   // Eine ungerade Kachel nimmt die ganze Reihe, statt ein Loch zu lassen.
   const awardsHtml = kacheln.length
     ? rcpAbschnitt('Auszeichnungen', kacheln.length)
