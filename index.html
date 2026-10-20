@@ -3760,11 +3760,22 @@
   .tun .w b{color:var(--ink2);font-weight:700}
 
   .pp-title-row{display:flex;flex-direction:column;align-items:center;gap:5px;margin-top:10px}
-  .pp-title-pill{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;
-    padding:5px 14px;border-radius:20px;color:var(--tt,var(--gold));
-    background:linear-gradient(180deg,rgba(var(--ttr,247,207,74),.16),rgba(var(--ttr,247,207,74),.05));
-    border:1px solid rgba(var(--ttr,247,207,74),.42)}
-  .pp-title-pill.live{border-style:dashed}
+  .pp-banner{position:relative;display:inline-flex;isolation:isolate;padding:0 11px}
+  .pp-banner::before,.pp-banner::after{content:"";position:absolute;top:4px;bottom:-4px;width:24px;
+    z-index:-1;background:linear-gradient(180deg,rgba(var(--ttr,247,207,74),.30),rgba(var(--ttr,247,207,74),.14));
+    box-shadow:inset 0 1px 0 rgba(var(--ttr,247,207,74),.40)}
+  .pp-banner::before{left:0;clip-path:polygon(0 0,100% 0,100% 100%,0 100%,7px 50%)}
+  .pp-banner::after{right:0;clip-path:polygon(0 0,100% 0,calc(100% - 7px) 50%,100% 100%,0 100%)}
+  .pp-title-pill{position:relative;overflow:hidden;display:inline-flex;align-items:center;gap:7px;
+    font-size:12.5px;font-weight:700;padding:5px 14px;border-radius:2px;color:var(--tt,var(--gold));
+    background:linear-gradient(180deg,rgba(var(--ttr,247,207,74),.26),rgba(var(--ttr,247,207,74),.11) 55%,rgba(var(--ttr,247,207,74),.19));
+    box-shadow:inset 0 1px 0 rgba(var(--ttr,247,207,74),.65),inset 0 -1px 0 rgba(var(--ttr,247,207,74),.45),
+      0 4px 10px -6px rgba(0,0,0,.7)}
+  .pp-title-pill::after{content:"";position:absolute;top:0;bottom:0;left:0;width:45%;pointer-events:none;
+    background:linear-gradient(100deg,transparent,rgba(255,255,255,.20),transparent);
+    transform:translateX(-120%);animation:ppBannerGlanz 7.5s ease-in-out 1.4s infinite}
+  @keyframes ppBannerGlanz{0%{transform:translateX(-120%)}22%,100%{transform:translateX(330%)}}
+  @media (prefers-reduced-motion:reduce){.pp-title-pill::after{animation:none;opacity:0}}
   .pp-title-pill .i{display:flex}
   .pp-title-pill .i svg{width:14px;height:14px}
   .pp-title-sub{font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
@@ -4321,10 +4332,10 @@
     background:repeating-linear-gradient(45deg,
       rgba(var(--ak-rgb),.85) 0 4px,rgba(var(--ak-rgb),.12) 4px 8px)}
 
-  .pp-root .pp-title-pill{--tt:#f7cf4a!important;--ttr:247,207,74!important}
+  .pp-root .pp-banner{--tt:#f7cf4a!important;--ttr:247,207,74!important}
   .pp-root .chron-one{--tt:#f7cf4a!important;--ttr:247,207,74!important}
   .pp-root .tmark{--tt:#f7cf4a!important;--ttr:247,207,74!important}
-  .pp-root .pp-title-pill.schatten{--tt:#f0566a!important;--ttr:240,86,106!important}
+  .pp-root .pp-banner.schatten{--tt:#f0566a!important;--ttr:240,86,106!important}
   .pp-root .chron-one.schatten{--tt:#f0566a!important;--ttr:240,86,106!important}
   .pp-root .tmark.schatten{--tt:#f0566a!important;--ttr:240,86,106!important}
 
@@ -6001,7 +6012,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.20.67c50281';
+const BUILD_VERSION='2026.10.20.fddd9117';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -32366,8 +32377,8 @@ function _titlePillHtml(pid){
   const m = b.titleId ? _chronikMonat(b.titleId) : null;
   const schatten = !!(m && m.art === 'schatten');
   return `<div class="pp-title-row">
-    <span class="pp-title-pill${b.live ? ' live' : ''}${schatten ? ' schatten' : ''}" style="--tt:${t.c};--ttr:${t.rgb}">
-      <span class="i">${svgI(b.ic)}</span>${esc(b.name)}</span>
+    <span class="pp-banner${b.live ? ' live' : ''}${schatten ? ' schatten' : ''}" style="--tt:${t.c};--ttr:${t.rgb}">
+      <span class="pp-title-pill"><span class="i">${svgI(b.ic)}</span>${esc(b.name)}</span></span>
     <span class="pp-title-sub num">${esc(b.sub)}</span>
   </div>`;
 }

@@ -6,7 +6,7 @@
 - Der Feed trägt daneben eine leise Navigationsschicht und keine Wertung: Gold für Spieler des Tages und der Woche, kühles Metall für Ewige Tafel und Bestmarken, Violett für Insignien und Auszeichnungen, Grün für positive Spieltagsdynamik, Bronze für das Duell, Rot für Breaking und negative Richtung. Fun Facts tragen davon nur einen schwachen Farbschnitt.
 - Diese Farben sitzen nur an Kante, Rubrik, Zeichen und einem schwachen Schimmer; Kartenflächen bleiben dunkel.
 - Im Rekorde-Reiter tragen Können, Aktuelle Form und Bestmarke Gold, die Fügung Metall, die Schattenseite Rot: fünf Kammern, drei Töne.
-- Was negativ ist (`neg`, aus `art:'schatten'` oder `negativ:true`), trägt Rot, steht hinten und zählt nirgends als Rekord (`rekordZaehlung`); `nextRecordFor` schlägt es nicht vor. Das gilt auch für die Beinamen-Pille im Profilkopf.
+- Was negativ ist (`neg`, aus `art:'schatten'` oder `negativ:true`), trägt Rot, steht hinten und zählt nirgends als Rekord (`rekordZaehlung`); `nextRecordFor` schlägt es nicht vor. Das gilt auch für das Banner des Beinamens im Profilkopf.
 - Die Kammer steht als `data-kammer` an der Karte, nicht als Farbklasse: eine Fügung kann rot sein und bleibt eine Fügung.
 - Die Klassen der Auszeichnungen tragen ihren Namen als Farbe: Gold legendär, Lila selten, Rot negativ; „gewöhnlich" steht im Profil in Metall statt Grün, weil es die größte Gruppe ist und das Profil sonst bunt würde.
 - Im Profil und in der Laufbahn liegt unter jeder Überschrift eine gestrichelte Kante in der Rangfarbe; die Insignium-Stufe (`st-<Stufe>`) ändert nur Höhe und Kraft, der Ordensstern trägt sie facettiert.
@@ -46,10 +46,10 @@ Gold, die Fügung Metall [§C35] — sie zeichnet niemanden aus —, die
 Schattenseite Rot. Als alle Karten golden waren, sagte Gold dort nichts
 mehr. Fünf Kammern tragen deshalb drei Töne und nicht fünf: eine neue Farbe
 je Kammer wäre ein Regenbogen, und das Farbgesetz kennt vier Rollen.
-Das gilt auch für die **Beinamen-Pille im Profilkopf**: „Der Gestrandete"
+Das gilt auch für das **Banner des Beinamens im Profilkopf**: „Der Gestrandete"
 kommt aus der Durststrecke und stand golden unter dem Namen wie ein
 Titel. Die Ausnahme gab es für die Zelle der Matrix und die Plakette seit
-jeher, nur die Pille war nie davon erfasst.
+jeher, nur das Profil war nie davon erfasst.
 **Was negativ ist, trägt Rot und zählt nicht als Rekord** (`neg`, gesetzt
 von `art:'schatten'` oder `negativ:true` im Katalog). „Die bitterste
 Pleite" stand im Profil golden zwischen den Titeln und machte aus sechs

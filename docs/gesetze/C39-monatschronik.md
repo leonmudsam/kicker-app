@@ -9,7 +9,7 @@
 - Prestige einer Chronik: `PRESTIGE_SOCKEL` (55, nicht für Schattenseiten) + `PRESTIGE_CHRONIK[art]` × `aus` + `PRESTIGE_SELTEN[klasse]`, gerundet auf fünf, mit dem Ausschlag der SCHWELLE, nicht des Halters.
 - Eine Chronik schiebt ihre Schwelle mindestens 1,5 σ hinaus, korreliert höchstens 0,35 mit der Spielzahl, misst eine Leistung und keine reine Zählung von Gelegenheiten.
 - Vorgegeben und nicht kalibriert: „Der Tagesregent" (60 % der eigenen Spieltage), „Die Wochenkrone" (jede eigene Woche, über `_periodWinnerMap`), „Auf dem Thron" (Platz zwei oder besser an jedem Spieltag ab der ersten eigenen Partie, aus der Elo-Bahn von `getGlobalSim`, `_thronDerLiga`).
-- Im Profilkopf steht der Beiname (`monat.beiname`, `chronBeiname`), überall sonst der Katalogname; das Blatt nennt den Beinamen in `.chron-kose`, außer er ist der Katalogname.
+- Im Profilkopf steht der Beiname (`monat.beiname`, `chronBeiname`), überall sonst der Katalogname; das Blatt nennt den Beinamen in `.chron-kose`, außer er ist der Katalogname. Im Profilkopf steht er als Banner (`.pp-banner`): ein Band mit gefalteten Enden, so groß wie die Pille davor, ohne gestrichelte Kante, mit einem Glanz alle siebeneinhalb Sekunden; dass der Monat läuft, sagt die Zeile darunter.
 - Die Klasse ist sichtbar: Gewicht der Zelle (`data-kl`), Name auf der Plakette (`CHRONIK_KLASSE_NAME`), Zahlenreihe im Blatt (`rcpZahlenHtml`).
 - Die Matrix ordnet nach Prestige, dann Zahl der Einträge, dann Name; sie steht in einer Karte (`_lchronTabelle`), Ruheständler in einer eigenen Karte (`ruhe_chronik`). Strich heißt gewertet ohne Eintrag, leer heißt nicht gewertet.
 - Ein Kürzel (`short`) ist ein ganzes Wort und passt gerendert in 54 px.
@@ -22,7 +22,7 @@
 
 ## Prüfung
 
-`tests/rechnen` zählt den laufenden Tag erst um 23:59; `tests/disziplinen` hält jede Chronik an 1,5 σ, an der Spielzahl-Korrelation und am Halterdeckel; `tests/blatt` misst die Kürzel in der Zelle.
+`tests/rechnen` zählt den laufenden Tag erst um 23:59; `tests/disziplinen` hält jede Chronik an 1,5 σ, an der Spielzahl-Korrelation und am Halterdeckel; `tests/blatt` misst die Kürzel in der Zelle und das Banner im Profilkopf.
 
 ## Herleitung
 
@@ -121,7 +121,11 @@ und sie ist trotzdem legendär: die Klasse zählt keine Halter.
 „Der Endspurt" liest sich dort wie eine Überschrift statt wie eine
 Beschreibung — „Der Ausdauernde" schon. Überall sonst bleibt der
 Katalogname: in der Matrix, auf der Plakette, im Blatt und in der Nachricht
-geht es um die Wertung, im Profilkopf um den Menschen. Ein eingefrorener
+geht es um die Wertung, im Profilkopf um den Menschen. Dort steht er als
+Banner und nicht mehr als Pille: die laufende Chronik trug eine gestrichelte
+Kante, und die sah aus wie ein Knopf, der noch lädt — für einen Beinamen,
+der ein Titel ist, das falsche Bild. Dass der Monat noch läuft, sagt die
+Zeile darunter ohnehin. Ein eingefrorener
 Monat kann eine Chronik tragen, die es nicht mehr gibt; dann bleibt der
 gespeicherte Name.
 **Das Blatt der Wertung nennt ihn trotzdem** (`.chron-kose`): dort steht,

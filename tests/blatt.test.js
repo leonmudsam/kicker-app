@@ -5537,6 +5537,30 @@ return JSON.stringify(funde,null,1);
      'Lob und Niederlagenserie zugleich: der Ring wechselt zwischen beiden Farben, sonst nicht',
      JSON.stringify(ringFaelle.map(f => ({zwei:f.zwei, wechsel:f.wechsel}))));
 
+  // ── Der Beiname als Banner [§C39] ──────────────────────────────────
+  // Die laufende Chronik stand als gestrichelte Pille unter dem Namen und
+  // sah aus wie ein Knopf, der noch lädt. Jetzt ein Band mit gefalteten
+  // Enden, so hoch wie die Pille davor, ohne Strich, mit einem Glanz, der
+  // nur `transform` bewegt.
+  const banner = JSON.parse(await K(`(async () => {
+    const warte = ms => new Promise(r => setTimeout(r, ms)), out = [];
+    for(const p of players.filter(p => playerTitleBadge(p.id)).slice(0, 4)){
+      closeSheet(true); showPlayer(p.id); await warte(900);
+      const b = document.querySelector('#sheet .pp-banner'), pill = b && b.querySelector('.pp-title-pill');
+      if(!pill){ out.push({fehlt:p.name}); continue; }
+      const cs = getComputedStyle(pill), ende = w => getComputedStyle(b, w);
+      out.push({live:b.classList.contains('live'), strich:cs.borderTopStyle, hoehe:+pill.getBoundingClientRect().height.toFixed(1),
+        enden:[ende('::before'), ende('::after')].every(e => e.content !== 'none' && /polygon/.test(e.clipPath)),
+        glanz:getComputedStyle(pill, '::after').animationName});
+    }
+    closeSheet(true);
+    return JSON.stringify(out);
+  })()`));
+  ok(banner.length > 0 && banner.some(x => x.live) && banner.every(x => !x.fehlt && x.strich !== 'dashed' && x.enden
+       && x.hoehe >= 24 && x.hoehe <= 32 && x.glanz === 'ppBannerGlanz'),
+     'der Beiname steht als Banner mit gefalteten Enden unter dem Namen, ohne Strich, so hoch wie die Pille davor, mit Glanz',
+     JSON.stringify(banner));
+
   await page.setViewportSize({width:430, height:932});
 
   console.log('\n' + '═'.repeat(60));

@@ -500,9 +500,12 @@ function _titlePillHtml(pid){
   // nur die Pille im Profilkopf war nie davon erfasst.
   const m = b.titleId ? _chronikMonat(b.titleId) : null;
   const schatten = !!(m && m.art === 'schatten');
+  // Ein Banner statt einer Pille: der Beiname ist ein Titel, und die
+  // gestrichelte Pille sah aus wie ein Knopf, der noch lädt. Dass der Monat
+  // noch läuft, sagt die Zeile darunter („läuft").
   return `<div class="pp-title-row">
-    <span class="pp-title-pill${b.live ? ' live' : ''}${schatten ? ' schatten' : ''}" style="--tt:${t.c};--ttr:${t.rgb}">
-      <span class="i">${svgI(b.ic)}</span>${esc(b.name)}</span>
+    <span class="pp-banner${b.live ? ' live' : ''}${schatten ? ' schatten' : ''}" style="--tt:${t.c};--ttr:${t.rgb}">
+      <span class="pp-title-pill"><span class="i">${svgI(b.ic)}</span>${esc(b.name)}</span></span>
     <span class="pp-title-sub num">${esc(b.sub)}</span>
   </div>`;
 }
