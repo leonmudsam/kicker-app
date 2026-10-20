@@ -524,6 +524,34 @@ function showSeasonRecap(season, opts){
       }).join('')}</div>`;
   }
 
+  // ─── Gegenüber dem Vormonat [§C31] ─────────────────────────────────
+  // Ein Monat für sich sagt nicht, ob die Liga mehr gespielt hat oder wer
+  // vorangekommen ist. Die Eckdaten tragen deshalb den Unterschied zum
+  // Vormonat, und wer die meisten Plätze gutgemacht oder verloren hat, steht
+  // als Kachel unter der Rangliste — nur, wer in beiden Monaten darin steht.
+  const vorSid = _prevSeasonId(sid);
+  const vorMs = vorSid ? matchesInSeason(vorSid) : [];
+  const unterschied = (jetzt, vor) => vorMs.length
+    ? (jetzt > vor ? '+' : jetzt < vor ? '−' : '±') + Math.abs(jetzt - vor) : null;
+  let sprungHtml = '';
+  if(vorMs.length && rang.length){
+    const platzVor = {};
+    saisonRang(vorSid).forEach((e, i) => { platzVor[e.id] = i + 1; });
+    const bewegt = rang.map((e, i) => ({id:e.id, jetzt:i + 1, vor:platzVor[e.id]})).filter(x => x.vor);
+    const weite = x => x.vor - x.jetzt;
+    const auf = bewegt.filter(x => weite(x) > 0).sort((a, b) => weite(b) - weite(a) || a.jetzt - b.jetzt)[0];
+    const ab = bewegt.filter(x => weite(x) < 0).sort((a, b) => weite(a) - weite(b) || a.jetzt - b.jetzt)[0];
+    const k = [];
+    if(auf) k.push(rcpKachelHtml({ic:'stepsUp', label:'Größter Sprung', name:pname(auf.id),
+      wert:'Platz ' + auf.vor + ' → ' + auf.jetzt, ton:'metall', attr:`data-detail="${esc(auf.id)}"`}));
+    if(ab) k.push(rcpKachelHtml({ic:'trendDown', label:'Tiefster Fall', name:pname(ab.id),
+      wert:'Platz ' + ab.vor + ' → ' + ab.jetzt, ton:'red', attr:`data-detail="${esc(ab.id)}"`}));
+    if(k.length) sprungHtml = rcpAbschnitt('Gegenüber ' + seasonLabel(vorSid))
+      + `<div class="rcp-awards${k.length % 2 ? ' ungerade' : ''}">${k.join('')}</div>`;
+  }
+  const vorTore = vorMs.reduce((s, m) => s + (m.score_a || 0) + (m.score_b || 0), 0);
+  const vorSpieler = new Set(vorMs.flatMap(m => [m.a1, m.a2, m.b1, m.b2])).size;
+
   // ─── Wie es zum Titel kam [§C31] ───────────────────────────────────
   // Die Rangliste sagt, wer am Ende wo stand, nicht wie es dazu kam. Unter
   // ihr stehen deshalb das Titelrennen der ersten drei, die Tage an der
@@ -606,7 +634,8 @@ function showSeasonRecap(season, opts){
   // trägt es das Podest, sonst nichts. Die Schattenseiten stehen hinten und
   // in Rot — Rot sagt hier die Richtung, nicht die Wichtigkeit.
   const kacheln = rcpAwardKacheln(R,
-    ['scorer','wall','streaks','perfect','weekKing','dayKing','grinder','upset'], ['worstWr','pechvogel'],
+    ['scorer','wall','streaks','perfect','clutch','plusMinus','underdog','biggest','weekKing','dayKing','grinder','upset'],
+    ['worstWr','lossStreaks','pechvogel'],
     key => `data-award="${key}"`);
   // Eine ungerade Kachel nimmt die ganze Reihe, statt ein Loch zu lassen.
   const awardsHtml = kacheln.length
@@ -625,10 +654,18 @@ function showSeasonRecap(season, opts){
     // Die Eckdaten als Streifen statt als Textzeile: vier Zahlen in einer
     // Zeile Fließtext liest niemand, vier Felder schon.
     + rcpZahlenHtml([
-        {v:ms.length, l:'Matches'}, {v:tage, l:'Spieltage'},
-        {v:spielerImMonat.size, l:'Spieler'}, {v:tore, l:'Tore'}])
-    + rcpAbschnitt('Podest') + podestHtml + teamHtml
-    + listeHtml + rennenHtml + verlaufHtml + chronikHtml + rekordHtml + awardsHtml
+        {v:ms.length, l:'Matches', d:unterschied(ms.length, vorMs.length)},
+        {v:tage, l:'Spieltage', d:unterschied(tage, new Set(vorMs.map(mdayKey)).size)},
+        {v:spielerImMonat.size, l:'Spieler', d:unterschied(spielerImMonat.size, vorSpieler)},
+        {v:tore, l:'Tore', d:unterschied(tore, vorTore)}])
+    + (vorMs.length ? `<div class="rcp-z-bezug">Unterschied zum ${esc(seasonLabel(vorSid))}</div>` : '')
+    // Das Podest auf der Bühne der Meister-Story [§C27]: derselbe
+    // Strahlenkranz, und die drei steigen in der Reihenfolge auf, in der
+    // man sie ausruft — Platz 3, Platz 2, der Meister.
+    + rcpAbschnitt('Podest')
+    + (podestHtml ? `<div class="nf-meister rcp-buehne"><span class="nf-ms-strahl" aria-hidden="true"></span>${podestHtml}</div>` : '')
+    + teamHtml
+    + listeHtml + sprungHtml + rennenHtml + verlaufHtml + chronikHtml + rekordHtml + awardsHtml
     + `<button class="recap-done-btn" id="closeRecapBtn">Verstanden</button>`,
     {protectMs: opts.auto ? 2500 : 0});
 

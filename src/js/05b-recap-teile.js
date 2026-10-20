@@ -110,6 +110,9 @@ function rcpHeldHtml(o){
 // wird die Zeichenzahl und nicht die gerenderte Breite: hier steht kein
 // Fliesstext, sondern eine Handvoll fester Woerter aus dem Katalog.
 //
+// `d` ist der Unterschied zu einem Bezug (dem Vormonat): klein unter der
+// Zahl, ohne Farbe — mehr Partien sind kein Lob und weniger keine Warnung.
+//
 // Vier Zellen passen bei 360 px nicht in eine Reihe (je 78 px Mindestbreite,
 // „BESTMARKEN" braucht 75), und drei plus eine allein darunter las sich wie
 // eine Zahl, die nicht dazugehört. Vier stehen deshalb zwei mal zwei, wo die
@@ -120,7 +123,8 @@ function rcpZahlenHtml(zellen){
   return `<div class="rcp-z${n === 4 ? ' vier' : ''}">${zellen.filter(Boolean).map(z => {
     const t = String(z.v);
     return `<div class="rcp-z-s"><div class="rcp-z-v${z.ton ? ' ' + z.ton : ''}${
-      lang(t)} num">${esc(t)}</div><div class="rcp-z-l">${esc(z.l)}</div></div>`;
+      lang(t)} num">${esc(t)}</div><div class="rcp-z-l">${esc(z.l)}</div>${
+      z.d != null ? `<div class="rcp-z-d num">${esc(z.d)}</div>` : ''}</div>`;
   }).join('')}</div>`;
 }
 

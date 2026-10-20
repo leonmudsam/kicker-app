@@ -6,6 +6,7 @@
 - Ein Gold je Blatt: die Marke im Kopf und der Sieger. Der Saison-Rückblick hat keine Heldenkarte, das Podest ist der Held.
 - Der Meister hat eine Bühne (`saisonRang`, `saisonPodestHtml`, `saisonSpitze`, `saisonRennenHtml`, `saisonSpitzeHtml`, `saisonZellenHtml`); die Elo je Tag kommt aus `getSeasonPositionHistory`, keiner zweiten Rechnung.
 - Woche und Tag zeigen Held und Feld (`rcpWocheHtml`, `rcpEloBahnHtml`, `rcpFeldHtml`). Der Spieler der Woche steht vor dem Strahlenkranz der Meisterbühne, leiser (`rcpHeldHtml` mit `strahl`, `.nf-ms-strahl.leise`); Wappen, Name und Zahlen heben sich nacheinander herein. Die Woche nennt dazu ihre Zahlen (Spieltage, Tore je Partie, enge Partien, Duos) und die Elo-Linie des Helden.
+- Der Saison-Rückblick stellt das Podest auf die Meisterbühne (`.nf-meister.rcp-buehne`), Platz 3, 2 und 1 steigen nacheinander auf; die Eckdaten tragen den Unterschied zum Vormonat (`rcpZahlenHtml` mit `d`), und unter der Rangliste stehen der größte Sprung und der tiefste Fall gegenüber dem Vormonat — nur, wer in beiden Monaten in der Rangliste steht.
 - Die Auszeichnungen eines Zeitraums kommen aus der Rechnung des Awards-Reiters für genau diesen Zeitraum (`rcpAwardKacheln`, `awardRankings` mit `awSeasonId` oder `awWeekStart`), nie aus einer eigenen.
 - Ein Rückblick zeigt den Stand von damals (`insigniumSvg` mit `opt.titel`, `opt.pos`); der Reif bleibt der heutige.
 - Gestaltung steht im CSS; ein `style`-Attribut trägt nur einen berechneten Wert.
@@ -16,7 +17,7 @@
 
 ## Prüfung
 
-`tests/tafel` rechnet Tage an der Spitze und das Titelrennen aus den rohen Partien nach und misst die Inline-Styles; `tests/blatt` hält die Auszeichnungen der Woche gegen den Awards-Reiter, zählt die Zahlen der Woche nach und misst die Heldenkarte bei 360 px.
+`tests/tafel` rechnet Tage an der Spitze und das Titelrennen aus den rohen Partien nach und misst die Inline-Styles; `tests/blatt` hält die Auszeichnungen der Woche gegen den Awards-Reiter, zählt die Zahlen der Woche nach, misst die Heldenkarte bei 360 px und rechnet den Vergleich der Saison mit dem Vormonat nach.
 
 ## Herleitung
 
@@ -83,4 +84,14 @@ Metall vorn, Schattenseiten rot dahinter; die längste Serie fehlt, wenn
 sie schon unter dem Helden steht. Die vier Zahlen der Heldenkarte standen
 bei 360 px untereinander und ab 336 px als drei und eine: die Breite der
 Zellen rechnet mit 8 px Abstand, die Karte setzte 16.
+
+**Die Saison misst sich am Vormonat.** Ein Monat für sich sagte nicht, ob
+die Liga mehr gespielt hatte oder wer vorangekommen war: 161 Partien sind
+viel oder wenig, je nachdem, was davor war. Die Eckdaten tragen deshalb den
+Unterschied zum Vormonat, ohne Farbe — mehr Partien sind kein Lob —, und
+unter der Rangliste stehen der größte Sprung und der tiefste Fall. Das
+Podest steht auf derselben Bühne wie in der Meister-Story [§C27], und die
+Auszeichnungen sind dieselbe Liste wie dort mit der Siegquote in engen
+Partien, Plus-Minus, Underdog, dem höchsten Sieg und der längsten
+Pleitenserie dazu.
 

@@ -3028,6 +3028,7 @@
     letter-spacing:.16em;text-transform:uppercase;color:var(--muted);padding:4px 2px 10px;
     display:flex;align-items:center;gap:8px}
   .rcp-section::after{content:"";flex:1;height:1px;background:var(--line)}
+  .rlist + .rcp-section,.rcp-liste + .rcp-section{margin-top:14px}
 
   .rcp-posmini{display:flex;align-items:center;gap:12px;margin:0 0 16px;width:100%;
     background:var(--surface);border:1px solid var(--line);border-radius:16px;
@@ -3134,6 +3135,17 @@
   .rcp-z-v.lang{font-size:14px;letter-spacing:-.03em}
   .rcp-z-v.sehrlang{font-size:11.5px;letter-spacing:-.03em;line-height:1.15}
   .rcp-z-s{overflow:hidden}
+  .rcp-z-d{font-family:'Sometype Mono',monospace;font-size:9.5px;color:var(--ink2);margin-top:3px}
+  .rcp-z-bezug{margin:-10px 0 16px;text-align:center;font-family:'Sometype Mono',monospace;
+    font-size:9.5px;letter-spacing:.06em;color:var(--faint)}
+  .rcp-buehne{margin:2px 0 12px}
+  .rcp-buehne .nf-ms-strahl{width:300px;height:300px;margin:-150px 0 0 -150px}
+  @media (prefers-reduced-motion:no-preference){
+    .rcp-buehne .pod-karte{animation:bauPodest .7s cubic-bezier(.2,.8,.2,1) both}
+    .rcp-buehne .pod-karte.bronze{animation-delay:.12s}
+    .rcp-buehne .pod-karte.silber{animation-delay:.3s}
+    .rcp-buehne .pod-karte.gold{animation-delay:.5s}
+  }
   .rcp-z-l{font-family:'Sometype Mono',monospace;font-size:8.5px;font-weight:700;
     color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:5px;
     white-space:normal;overflow-wrap:anywhere;line-height:1.25}
@@ -6025,7 +6037,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.20.a803f205';
+const BUILD_VERSION='2026.10.20.e84e7873';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -7294,7 +7306,8 @@ function rcpZahlenHtml(zellen){
   return `<div class="rcp-z${n === 4 ? ' vier' : ''}">${zellen.filter(Boolean).map(z => {
     const t = String(z.v);
     return `<div class="rcp-z-s"><div class="rcp-z-v${z.ton ? ' ' + z.ton : ''}${
-      lang(t)} num">${esc(t)}</div><div class="rcp-z-l">${esc(z.l)}</div></div>`;
+      lang(t)} num">${esc(t)}</div><div class="rcp-z-l">${esc(z.l)}</div>${
+      z.d != null ? `<div class="rcp-z-d num">${esc(z.d)}</div>` : ''}</div>`;
   }).join('')}</div>`;
 }
 
@@ -8020,6 +8033,29 @@ function showSeasonRecap(season, opts){
       }).join('')}</div>`;
   }
 
+  const vorSid = _prevSeasonId(sid);
+  const vorMs = vorSid ? matchesInSeason(vorSid) : [];
+  const unterschied = (jetzt, vor) => vorMs.length
+    ? (jetzt > vor ? '+' : jetzt < vor ? '−' : '±') + Math.abs(jetzt - vor) : null;
+  let sprungHtml = '';
+  if(vorMs.length && rang.length){
+    const platzVor = {};
+    saisonRang(vorSid).forEach((e, i) => { platzVor[e.id] = i + 1; });
+    const bewegt = rang.map((e, i) => ({id:e.id, jetzt:i + 1, vor:platzVor[e.id]})).filter(x => x.vor);
+    const weite = x => x.vor - x.jetzt;
+    const auf = bewegt.filter(x => weite(x) > 0).sort((a, b) => weite(b) - weite(a) || a.jetzt - b.jetzt)[0];
+    const ab = bewegt.filter(x => weite(x) < 0).sort((a, b) => weite(a) - weite(b) || a.jetzt - b.jetzt)[0];
+    const k = [];
+    if(auf) k.push(rcpKachelHtml({ic:'stepsUp', label:'Größter Sprung', name:pname(auf.id),
+      wert:'Platz ' + auf.vor + ' → ' + auf.jetzt, ton:'metall', attr:`data-detail="${esc(auf.id)}"`}));
+    if(ab) k.push(rcpKachelHtml({ic:'trendDown', label:'Tiefster Fall', name:pname(ab.id),
+      wert:'Platz ' + ab.vor + ' → ' + ab.jetzt, ton:'red', attr:`data-detail="${esc(ab.id)}"`}));
+    if(k.length) sprungHtml = rcpAbschnitt('Gegenüber ' + seasonLabel(vorSid))
+      + `<div class="rcp-awards${k.length % 2 ? ' ungerade' : ''}">${k.join('')}</div>`;
+  }
+  const vorTore = vorMs.reduce((s, m) => s + (m.score_a || 0) + (m.score_b || 0), 0);
+  const vorSpieler = new Set(vorMs.flatMap(m => [m.a1, m.a2, m.b1, m.b2])).size;
+
   let rennenHtml='';
   try {
     const drei = rang.slice(0, 3).map(e => e.id);
@@ -8078,7 +8114,8 @@ function showSeasonRecap(season, opts){
   const R = awardRankings('season');
   awSeasonId = vorherAw;
   const kacheln = rcpAwardKacheln(R,
-    ['scorer','wall','streaks','perfect','weekKing','dayKing','grinder','upset'], ['worstWr','pechvogel'],
+    ['scorer','wall','streaks','perfect','clutch','plusMinus','underdog','biggest','weekKing','dayKing','grinder','upset'],
+    ['worstWr','lossStreaks','pechvogel'],
     key => `data-award="${key}"`);
   const awardsHtml = kacheln.length
     ? rcpAbschnitt('Auszeichnungen', kacheln.length)
@@ -8091,10 +8128,15 @@ function showSeasonRecap(season, opts){
     rcpKopfHtml({ic:'trophy', marke:'Saison beendet', titel:season.label,
       extra:saisonWaehlerHtml('rcpSaisonwahl', sid, {liste:vergangene, attr:'rcpsaison'})})
     + rcpZahlenHtml([
-        {v:ms.length, l:'Matches'}, {v:tage, l:'Spieltage'},
-        {v:spielerImMonat.size, l:'Spieler'}, {v:tore, l:'Tore'}])
-    + rcpAbschnitt('Podest') + podestHtml + teamHtml
-    + listeHtml + rennenHtml + verlaufHtml + chronikHtml + rekordHtml + awardsHtml
+        {v:ms.length, l:'Matches', d:unterschied(ms.length, vorMs.length)},
+        {v:tage, l:'Spieltage', d:unterschied(tage, new Set(vorMs.map(mdayKey)).size)},
+        {v:spielerImMonat.size, l:'Spieler', d:unterschied(spielerImMonat.size, vorSpieler)},
+        {v:tore, l:'Tore', d:unterschied(tore, vorTore)}])
+    + (vorMs.length ? `<div class="rcp-z-bezug">Unterschied zum ${esc(seasonLabel(vorSid))}</div>` : '')
+    + rcpAbschnitt('Podest')
+    + (podestHtml ? `<div class="nf-meister rcp-buehne"><span class="nf-ms-strahl" aria-hidden="true"></span>${podestHtml}</div>` : '')
+    + teamHtml
+    + listeHtml + sprungHtml + rennenHtml + verlaufHtml + chronikHtml + rekordHtml + awardsHtml
     + `<button class="recap-done-btn" id="closeRecapBtn">Verstanden</button>`,
     {protectMs: opts.auto ? 2500 : 0});
 

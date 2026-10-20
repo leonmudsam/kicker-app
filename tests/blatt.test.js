@@ -5007,6 +5007,21 @@ return JSON.stringify(funde,null,1);
     K(`closeSheet(true); showSeasonRecap(seasons.find(s=>s.id==='2026-07')); 'x'`); await warte();
     sh = document.getElementById('sheet');
     const kopf = [...sh.querySelectorAll('.rcp-section')].map(x => x.textContent.replace(/\d+/g, '').trim());
+    // Gegenüber dem Vormonat: die Unterschiede der Eckdaten und die
+    // Plätze, nachgerechnet aus den Ranglisten beider Monate.
+    const vgl = JSON.parse(K(`(function(){ const a = saisonRang('2026-07'), b = saisonRang('2026-06');
+      const vor = {}; b.forEach((e, i) => { vor[e.id] = i + 1; });
+      const w = a.map((e, i) => ({n:pname(e.id), d:vor[e.id] ? vor[e.id] - (i + 1) : null})).filter(x => x.d != null);
+      const max = Math.max(...w.map(x => x.d)), min = Math.min(...w.map(x => x.d));
+      return JSON.stringify({ms:matchesInSeason('2026-07').length - matchesInSeason('2026-06').length,
+        auf:w.filter(x => x.d === max).map(x => x.n), ab:w.filter(x => x.d === min).map(x => x.n), max, min}); })()`));
+    const zelle0 = sh.querySelector('.rcp-head + .rcp-z .rcp-z-s .rcp-z-d');
+    const kachel = l => [...sh.querySelectorAll('.rcp-aw')].find(e => (e.querySelector('.rcp-aw-label') || {}).textContent === l);
+    const nameVon = e => e ? e.querySelector('.rcp-aw-name').textContent.trim() : '';
+    out.saisonVgl = {d:zelle0 ? zelle0.textContent.trim() : '', soll:(vgl.ms > 0 ? '+' : vgl.ms < 0 ? '−' : '±') + Math.abs(vgl.ms),
+      auf:nameVon(kachel('Größter Sprung')), aufSoll:vgl.auf, ab:nameVon(kachel('Tiefster Fall')), abSoll:vgl.ab,
+      buehne:!!sh.querySelector('.nf-meister.rcp-buehne > .nf-ms-strahl + .podest'),
+      awards:sh.querySelectorAll('[data-award]').length};
     out.saison = {rang: kopf.indexOf('Rangliste'), rennen: kopf.indexOf('Das Titelrennen'),
       spitze: kopf.indexOf('Tage an der Spitze'), meister: kopf.findIndex(x => /^Die Saison des Meisters/.test(x)),
       fehler: [...sh.querySelectorAll('.rcp-block')].flatMap(fehler)};
@@ -5029,6 +5044,10 @@ return JSON.stringify(funde,null,1);
   ok(rueck.tag.bahn && rueck.tag.zeilen === 0 && rueck.tag.elo && rueck.tag.feld > 3 && rueck.tag.datum && rueck.tag.fehler.length === 0,
      'der Tagesrückblick zeigt den gewählten Tag als Bahn, die Elo über den Tag und das Feld',
      JSON.stringify(rueck.tag).slice(0, 200));
+  ok(rueck.saisonVgl.d === rueck.saisonVgl.soll && rueck.saisonVgl.aufSoll.includes(rueck.saisonVgl.auf)
+       && rueck.saisonVgl.abSoll.includes(rueck.saisonVgl.ab) && rueck.saisonVgl.buehne && rueck.saisonVgl.awards >= 10,
+     'der Saison-Rückblick nennt den Unterschied zum Vormonat, den größten Sprung und den tiefsten Fall, das Podest steht auf der Bühne',
+     JSON.stringify(rueck.saisonVgl));
   ok(rueck.saison.rang >= 0 && rueck.saison.rennen > rueck.saison.rang && rueck.saison.spitze > rueck.saison.rennen
      && rueck.saison.meister > rueck.saison.spitze && rueck.saison.fehler.length === 0,
      'der Saison-Rückblick zeigt die Rangliste zuerst, darunter Titelrennen, Tage an der Spitze und die Saison des Meisters',

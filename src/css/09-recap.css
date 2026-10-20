@@ -15,6 +15,9 @@
     letter-spacing:.16em;text-transform:uppercase;color:var(--muted);padding:4px 2px 10px;
     display:flex;align-items:center;gap:8px}
   .rcp-section::after{content:"";flex:1;height:1px;background:var(--line)}
+  /* Nach einer Liste ohne eigenen Abstand klebte die nächste Überschrift an
+     der letzten Zeile — „Gegenüber Juni" stand direkt unter Platz 12. */
+  .rlist + .rcp-section,.rcp-liste + .rcp-section{margin-top:14px}
 
   /* v9: dezenter, mittiger Mini-Positionsverlauf-Button weit oben im Recap.
      Zeigt eine kompakte Kurven-Vorschau der Saison, öffnet den vollen Verlauf. */
@@ -159,6 +162,22 @@
   .rcp-z-v.lang{font-size:14px;letter-spacing:-.03em}
   .rcp-z-v.sehrlang{font-size:11.5px;letter-spacing:-.03em;line-height:1.15}
   .rcp-z-s{overflow:hidden}
+  .rcp-z-d{font-family:'Sometype Mono',monospace;font-size:9.5px;color:var(--ink2);margin-top:3px}
+  .rcp-z-bezug{margin:-10px 0 16px;text-align:center;font-family:'Sometype Mono',monospace;
+    font-size:9.5px;letter-spacing:.06em;color:var(--faint)}
+  /* Das Podest des Rückblicks auf der Meisterbühne: Platz 3, 2 und 1
+     steigen nacheinander auf, der Meister zuletzt. */
+  .rcp-buehne{margin:2px 0 12px}
+  /* Schmaler als im Blatt der Meister-Story: dort schneidet der Rand des
+     Blatts den Kranz ab, hier ragte er bei 360 px fünf Pixel über das Blatt
+     hinaus und machte es seitlich verschiebbar. */
+  .rcp-buehne .nf-ms-strahl{width:300px;height:300px;margin:-150px 0 0 -150px}
+  @media (prefers-reduced-motion:no-preference){
+    .rcp-buehne .pod-karte{animation:bauPodest .7s cubic-bezier(.2,.8,.2,1) both}
+    .rcp-buehne .pod-karte.bronze{animation-delay:.12s}
+    .rcp-buehne .pod-karte.silber{animation-delay:.3s}
+    .rcp-buehne .pod-karte.gold{animation-delay:.5s}
+  }
   .rcp-z-l{font-family:'Sometype Mono',monospace;font-size:8.5px;font-weight:700;
     color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:5px;
     white-space:normal;overflow-wrap:anywhere;line-height:1.25}
