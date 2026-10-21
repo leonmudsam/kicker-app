@@ -2,7 +2,7 @@
 
 ## Regel
 
-- **Snapshot-Vertrag, er geht allem anderen vor:** eine veröffentlichte Zeile in `stories` bleibt in ID, Text, Zeitpunkt, Priorität, Beteiligten und Bild unverändert; weder gleicher Wortlaut noch spätere Stände noch ein Kontingent entfernen sie. Wo die Herleitung von Deckeln, Auffrischen oder Wegfallen erzählt, beschreibt sie, was der Generator VOR dem Veröffentlichen tut, oder einen früheren Stand. `_newsTexteAuffrischen` ist nur noch ein Identitätsweg; `_consolidateStories` verdichtet verlustfrei (`memberIds`, `sourceIds`). Das Fenster (`NEWS_FENSTER_TAGE`, vierzehn Tage) wird vollständig geladen.
+- **Snapshot-Vertrag, er geht allem anderen vor:** eine veröffentlichte Zeile in `stories` bleibt in ID, Text, Zeitpunkt, Priorität, Beteiligten und Bild unverändert; weder gleicher Wortlaut noch spätere Stände noch ein Kontingent entfernen sie. Wo die Herleitung von Deckeln, Auffrischen oder Wegfallen erzählt, beschreibt sie, was der Generator VOR dem Veröffentlichen tut, oder einen früheren Stand. `_newsTexteAuffrischen` ist nur noch ein Identitätsweg; `_consolidateStories` verdichtet verlustfrei (`memberIds`, `sourceIds`). Der Feed reicht bis zum selben Tag des Vormonats (`newsAnzeigeAb`), und dieses Fenster wird vollständig geladen; eine Zeile hält vierzig Tage ab ihrem Ereignis (`NEWS_HALTEN_TAGE`), und was davor liegt, fällt auch aus dem Stand des Geräts (`_mergeStorySnapshots`). Der Generator bildet nur die letzten vierzehn Tage (`NEWS_FENSTER_TAGE`); was älter ist, kommt so aus der Datenbank, wie es veröffentlicht wurde.
 - Zwei Karten wachsen mit dem Spieltag: die Ewige Tafel (`tafel:<Datum>`) und die Insignium-Karte (`instag_<Datum>`). Sie wachsen in Fassungen, nie durch Ändern einer Zeile: jede Fassung ist der ganze Stand des Tages, eingefügt unter `<ID>~<Fassung>` (`_tafelFassung`: die letzte Partie des Tages, dahinter `z`, wenn der Tag zu ist), und gezeigt wird je Tag nur eine (`_tafelFassungen`): die zu den vorhandenen Partien passende, sonst die jüngste. Hochgeladen wird nur eingefügt; die Datenbank erlaubt kein Ändern.
 - Jede Story, die einen Spieler nennt, zeigt ihn (`_newsPids`, `_newsGesichtHtml`): bis drei Beteiligte alle Gesichter, ab vier zwei und die Zahl der übrigen („+2“), nie „+1“. Die Farbfamilie folgt der Kartenform, nicht der Datenkategorie [§C25].
 - Eine Partie, eine Karte: jede Partie bekommt ihre Karte (`spiel_<Partie>`), und alles mit derselben `matchId` bündelt sich daran, auch Breaking, seltene Auszeichnungen und negative Zeilen (`neg`). Verschiedene Match-IDs werden nie über eine Minute zusammengelegt. Das Ergebnisband steht einmal (`bandFremd`). Keine Meldung einer Partie entsteht ohne die Karte ihrer Partie (`_buildStories`, außer der Ewigen Tafel, die nach Tag bündelt). Die Schlagzeile eines Bündels fasst seine Anlässe als Reihe zusammen: höchstens drei, der stärkste zuerst (`_leitWert`), eine Pleite hinter einem Sieg, jeder mit genau seinen Leuten, zwei Anlässe derselben Leute unter einem Namen („Elo-Höchststand und Elo-Marke für Maxi“, `_gruppen`), dasselbe für mehrere in der Mehrzahl, höchstens 96 Zeichen; das Ergebnis hängt sich als Ort an, wenn Platz ist. Auf der Karte einer Partie ist jede Zeile ein Satz (`_satzZeile`), der sagt, was genau passiert ist: welche Marken, wie viele Siege oder Pleiten in Folge, wie viele der letzten Partien; das Blatt erklärt es. Der Fuß zeigt den schwersten Anlass mit eigener Zeichnung, gewogen wie in der Schlagzeile (`_spFussFakt`); ohne einen wählt er unter allen zutreffenden Zeichnungen mit Abzug für die Füße der Partien davor (`_spFussSpur`), nie zweimal dieselbe hintereinander.
@@ -30,7 +30,7 @@
 
 ## Prüfung
 
-`tests/rechnen` (was den Tag beschreibt, erst am Tagesende; die Ehrung nach zwei stillen Stunden), `tests/ambient` (Snapshots, Bündel, IDs bei zweitem Lauf, Sprache über jeden vierten Spieltag, Breaking-Anlässe, Fun-Fact-Bilder, die Säulen, die Karte ohne Satz und Fuß, die Klassen, der Satz und das Blatt jeder Ehrung, die Tafel-Karte ohne Auszeichnungen, der Monatsabschluss mit Team, Chronik, Erstlingen und Zeichen, Tag vor Woche vor Monat), `tests/blatt` (jede Karte und jedes Blatt bei 288 und 360 px, Bildzonen, Faden, Bewegung, die Ehrung in einer Reihe und ohne gebrochenen Namen, der Monatsabschluss öffnet den Saison-Rückblick), `tests/wiederholung` (Auszeichnungsmarken), `tests/storyscroll`, `tests/leistung` (Feed in Portionen).
+`tests/rechnen` (was den Tag beschreibt, erst am Tagesende; die Ehrung nach zwei stillen Stunden), `tests/ambient` (Snapshots, Bündel, IDs bei zweitem Lauf, Sprache über jeden vierten Spieltag, Breaking-Anlässe, Fun-Fact-Bilder, die Säulen, die Karte ohne Satz und Fuß, die Klassen, der Satz und das Blatt jeder Ehrung, die Tafel-Karte ohne Auszeichnungen, der Monatsabschluss mit Team, Chronik, Erstlingen und Zeichen, Tag vor Woche vor Monat), `tests/blatt` (jede Karte und jedes Blatt bei 288 und 360 px, Bildzonen, Faden, Bewegung, die Ehrung in einer Reihe und ohne gebrochenen Namen, der Monatsabschluss öffnet den Saison-Rückblick), `tests/wiederholung` (Auszeichnungsmarken), `tests/storyscroll`, `tests/leistung` (Feed in Portionen), `tests/start` (der Feed liest einen Monat, eine Zeile hält ab ihrem Ereignis).
 
 ## Herleitung
 
@@ -1007,8 +1007,15 @@ Technische Floskeln wie „Ereignisse in einem Moment", „alle Belege" oder
 „alle Einzelheiten stehen darunter" sind verboten: Das Band selbst macht
 die Vollständigkeit sichtbar.
 
-**Der Feed reicht vierzehn Tage zurück** (`NEWS_FENSTER_TAGE`), und der
-Schnitt liegt am DATUM. Er lag an der Zeilenzahl: die App las die 100
+**Der Feed reicht einen Monat zurück** (`newsAnzeigeAb`), und der Schnitt
+liegt am DATUM. Vierzehn Tage waren zu kurz: am 20. Oktober endete der Feed
+am 6., und wer nach dem Monatsanfang fragte, fand ihn nicht mehr. Die
+vierzehn Tage bleiben das Fenster des Generators (`NEWS_FENSTER_TAGE`): ihn
+weiter zurückzuschicken hieße, für vergangene Tage Karten aus dem Stand von
+heute zu bilden. Eine Zeile hielt dreißig Tage ab dem Einfügen, die
+Vorgabe der Tabelle; jetzt hält sie vierzig ab ihrem Ereignis
+(`NEWS_HALTEN_TAGE`), denn der Monat zurück hat bis zu einunddreißig Tage.
+Der Schnitt lag einmal an der Zeilenzahl: die App las die 100
 jüngsten Zeilen und zeigte davon 50, und bei achtzehn bis sechsundzwanzig
 Karten je Spieltag reichte das rund acht Tage weit. Eine Zeilenzahl ist
 keine Fensterbreite — sie hängt daran, wie viel gerade los war, und wer

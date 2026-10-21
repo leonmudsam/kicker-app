@@ -6350,7 +6350,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.21.92da2dd5';
+const BUILD_VERSION='2026.10.21.a8dbdc7d';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -18975,6 +18975,13 @@ const NEWS_LIMITS = {
 
 const NEWS_FENSTER_TAGE = 14;
 const NEWS_DB_SEITENGROESSE = 500;
+const NEWS_HALTEN_TAGE = 40;
+
+function newsAnzeigeAb(jetztMs){
+  const d = new Date(jetztMs);
+  const letzter = new Date(d.getFullYear(), d.getMonth(), 0).getDate();
+  return new Date(d.getFullYear(), d.getMonth() - 1, Math.min(d.getDate(), letzter)).getTime();
+}
 
 const SAISON_ENDSPURT_ELO = 25;
 
@@ -23436,13 +23443,15 @@ function _tafelFassungen(list){
   });
 }
 function _mergeStorySnapshots(bestand, neu, jetzt){
+  const ab = newsAnzeigeAb(new Date(jetzt || Date.now()).getTime());
   const byId = new Map();
   (Array.isArray(bestand) ? bestand : []).forEach(s => { if(s && s.id) byId.set(s.id, s); });
   (Array.isArray(neu) ? neu : []).forEach(s => {
     if(!s || !s.id) return;
     if(!byId.has(s.id) || _storyIstTafelUpdate(s, jetzt)) byId.set(s.id, s);
   });
-  return [...byId.values()].sort((a, b) => new Date(b.when) - new Date(a.when));
+  return [...byId.values()].filter(s => new Date(s.when).getTime() >= ab)
+    .sort((a, b) => new Date(b.when) - new Date(a.when));
 }
 
 async function syncStoriesViaDb(){
@@ -23489,6 +23498,8 @@ function _storyToRow(s){
     data_ref:    s.dataRef || {},
     priority:    s.prio | 0,
     event_at:    (s.when instanceof Date ? s.when : new Date(s.when)).toISOString(),
+    expires_at:  new Date((s.when instanceof Date ? s.when : new Date(s.when)).getTime()
+                   + NEWS_HALTEN_TAGE * 86400000).toISOString(),
   };
 }
 function _rowToStory(r){
@@ -23527,7 +23538,7 @@ async function _uploadNewStoriesToDb(stories, bestand){
 }
 
 async function _loadStoriesFromDb(){
-  const _ab = new Date(Date.now() - NEWS_FENSTER_TAGE * 86400000).toISOString();
+  const _ab = new Date(newsAnzeigeAb(Date.now())).toISOString();
   const rows = [];
   for(let von = 0; ; von += NEWS_DB_SEITENGROESSE){
     const { data, error } = await sb.from('stories')

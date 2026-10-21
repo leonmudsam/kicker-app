@@ -1884,13 +1884,18 @@ function _tafelFassungen(list){
   });
 }
 function _mergeStorySnapshots(bestand, neu, jetzt){
+  // Was vor dem Fenster des Feeds liegt, fällt hier heraus [§11.0d]: der Stand
+  // des Geräts trägt jede Karte, die je geladen wurde, und ohne diesen Schnitt
+  // bliebe eine Karte stehen, die die Datenbank längst nicht mehr liefert.
+  const ab = newsAnzeigeAb(new Date(jetzt || Date.now()).getTime());
   const byId = new Map();
   (Array.isArray(bestand) ? bestand : []).forEach(s => { if(s && s.id) byId.set(s.id, s); });
   (Array.isArray(neu) ? neu : []).forEach(s => {
     if(!s || !s.id) return;
     if(!byId.has(s.id) || _storyIstTafelUpdate(s, jetzt)) byId.set(s.id, s);
   });
-  return [...byId.values()].sort((a, b) => new Date(b.when) - new Date(a.when));
+  return [...byId.values()].filter(s => new Date(s.when).getTime() >= ab)
+    .sort((a, b) => new Date(b.when) - new Date(a.when));
 }
 
 async function syncStoriesViaDb(){
@@ -1968,6 +1973,11 @@ function _storyToRow(s){
     data_ref:    s.dataRef || {},
     priority:    s.prio | 0,
     event_at:    (s.when instanceof Date ? s.when : new Date(s.when)).toISOString(),
+    // Ab dem Ereignis, nicht ab dem Einfügen [§11.0d]: der Feed zeigt einen
+    // Monat, und eine Karte, die um 18 Uhr für 23:59 entstand, lief sonst
+    // sechs Stunden zu früh ab.
+    expires_at:  new Date((s.when instanceof Date ? s.when : new Date(s.when)).getTime()
+                   + NEWS_HALTEN_TAGE * 86400000).toISOString(),
   };
 }
 function _rowToStory(r){
@@ -2016,8 +2026,10 @@ async function _uploadNewStoriesToDb(stories, bestand){
 async function _loadStoriesFromDb(){
   // Geschnitten wird am DATUM [§11.0d]. Mit `.limit(100)` hing die
   // Fensterbreite daran, wie viel gerade los war: an einem starken Spieltag
-  // entstehen sechsundzwanzig Karten, an einem stillen zwei.
-  const _ab = new Date(Date.now() - NEWS_FENSTER_TAGE * 86400000).toISOString();
+  // entstehen sechsundzwanzig Karten, an einem stillen zwei. Gelesen wird der
+  // ganze Monat zurück, nicht nur das Fenster des Generators: was dort steht,
+  // ist eingefroren und kommt nur noch von hier.
+  const _ab = new Date(newsAnzeigeAb(Date.now())).toISOString();
   const rows = [];
   for(let von = 0; ; von += NEWS_DB_SEITENGROESSE){
     const { data, error } = await sb.from('stories')

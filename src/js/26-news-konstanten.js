@@ -172,8 +172,28 @@ const NEWS_LIMITS = {
 //
 // Der Schnitt liegt jetzt am DATUM und nicht an der Zeilenzahl. Gelesen wird
 // in Seiten, bis das komplette Fenster im Speicher steht.
+//
+// Vierzehn Tage sind das Fenster des GENERATORS: nur so weit zurück bildet er
+// Karten. Gezeigt wird ein Monat (`newsAnzeigeAb`), und was älter als vierzehn
+// Tage ist, kommt allein aus der Datenbank, so wie es veröffentlicht wurde
+// [§C33]. Den Generator weiter zurückzuschicken hieße, für längst vergangene
+// Tage Karten aus dem Stand von heute zu bilden: eine Tafel-Fassung oder ein
+// Fun Fact, den es damals nicht gab.
 const NEWS_FENSTER_TAGE = 14;
 const NEWS_DB_SEITENGROESSE = 500;
+// So lange hält eine Zeile in der Datenbank, gerechnet ab ihrem Ereignis. Ohne
+// Angabe galt die Vorgabe der Tabelle, dreißig Tage ab dem Einfügen, und der
+// Monat zurück hat einunddreißig Tage, wenn der Vormonat einunddreißig hat.
+const NEWS_HALTEN_TAGE = 40;
+
+// Der Feed reicht bis zum selben Tag des Vormonats, 00:00 — am 20. Oktober
+// bis zum 20. September. Gab es den Tag dort nicht (31. März), gilt der
+// letzte des Vormonats.
+function newsAnzeigeAb(jetztMs){
+  const d = new Date(jetztMs);
+  const letzter = new Date(d.getFullYear(), d.getMonth(), 0).getDate();
+  return new Date(d.getFullYear(), d.getMonth() - 1, Math.min(d.getDate(), letzter)).getTime();
+}
 
 // ─── §11.0c — Wie oft dieselbe Auszeichnung Nachricht ist ────────────
 // Die Karte entstand jedes Mal neu, wenn jemand ein Badge wieder holte.
