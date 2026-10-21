@@ -2,17 +2,17 @@
 
 ## Regel
 
-- Die Monatschronik fragt nach Abweichung von der Erwartung, Konstanz, dem Verhältnis zum Ligamittel desselben Monats, zu einem bestimmten anderen Spieler oder einem seltenen Einzelereignis, nicht nach dem Können.
+- Die Monatschronik fragt nach Abweichung von der Erwartung, Konstanz, dem Verhältnis zum Ligamittel desselben Monats, zu einem bestimmten anderen Spieler, zum eigenen Spiel (vorne gegen hinten, neben neuen Partnern, in der Revanche, nach einem Sieg, gegen bekannte Gegner, gegen die beiden Ersten) oder einem seltenen Einzelereignis, nicht nach dem Können. Sie soll zeigen, worin ein Spieler besonders ist; dass jeder eine bekommt, ist kein Ziel.
 - Eine Können-Chronik misst gegen die Elo-Erwartung (`_stSoll`, `_stTorSteigung`), gegen den eigenen Rest (`_stErsterBall`, `_stSchlussBall`) oder gegen den eigenen Vormonat (`_stVormonat`, `_stVormonatPlatz`), nicht gegen eine feste Latte, die nur der Stärkste erreicht. In den Fixture-Monaten gehören höchstens 38 % der Einträge den ersten drei der Monatstabelle.
 - Das Stichproben-Tor ist niedrig und für alle gleich: acht Partien im Monat, fünf in einer Teilmenge (`ST_TEIL`), drei Spieltage. Die Besonderheit steckt in der Schwelle.
-- Jede `monat`-Wertung trägt `art` (koennen, konstanz, fuegung, schatten), `klasse` (legendaer, selten, besonders) und `aus` (Ausschlag der Schwelle in σ), einmal an den Daten geprüft und dann festgeschrieben.
+- Jede `monat`-Wertung trägt `art` (koennen, konstanz, fuegung, schatten), `klasse` (legendaer, selten, besonders) und `aus` (Ausschlag der Schwelle in σ), einmal an den Daten geprüft und dann festgeschrieben. Die Klasse folgt dem Ausschlag: ab 2,5 σ legendär, ab 1,9 σ selten, darunter besonders; gesetzt legendär sind nur die zwei, die nach einer Wahrscheinlichkeit fragen („Der Unmögliche Monat", „Der Ausreißer").
 - Die Klasse zählt keine Halter. Gedeckelt ist die Rate: höchstens ein Halter je gewerteten Monat.
-- Prestige einer Chronik: `PRESTIGE_SOCKEL` (55, nicht für Schattenseiten) + `PRESTIGE_CHRONIK[art]` × `aus` + `PRESTIGE_SELTEN[klasse]`, gerundet auf fünf, mit dem Ausschlag der SCHWELLE, nicht des Halters.
-- Eine Chronik schiebt ihre Schwelle mindestens 1,5 σ hinaus, korreliert höchstens 0,35 mit der Spielzahl, misst eine Leistung und keine reine Zählung von Gelegenheiten.
+- Die Klasse ist Farbe und Wert (`PRESTIGE_CHRONIK_KLASSE`, `chronikStufe`): Gold legendär 150, Lila selten 100, Metall besonders 50, Rot eine Schattenseite 0; eine Fügung zählt halb (`PRESTIGE_CHRONIK_FUEGUNG`). Je Spieler und Monat steht und zählt der wertvollste Eintrag (`chronikEintragVon`).
+- Eine Chronik schiebt ihre Schwelle mindestens 1,2 σ hinaus, korreliert höchstens 0,35 mit der Spielzahl, misst eine Leistung und keine reine Zählung von Gelegenheiten.
 - Vorgegeben und nicht kalibriert: „Der Tagesregent" (60 % der eigenen Spieltage), „Die Wochenkrone" (jede eigene Woche, über `_periodWinnerMap`), „Auf dem Thron" (Platz zwei oder besser an jedem Spieltag ab der ersten eigenen Partie, aus der Elo-Bahn von `getGlobalSim`, `_thronDerLiga`).
 - Im Profilkopf steht der Beiname (`monat.beiname`, `chronBeiname`), überall sonst der Katalogname; das Blatt nennt den Beinamen in `.chron-kose`, außer er ist der Katalogname. Im Profilkopf steht er als Banner (`.pp-banner`) und nur der der jüngsten **positiven** Monatschronik (`playerTitleBadge`): ein Monat mit nur Schattenseiten verdrängt ihn nicht, hat ein Monat beides, gilt die positive; das Banner bleibt, bis ein neuerer Monat eine positive bringt, und die Zeile darunter nennt seinen Monat („läuft", solange er läuft). Das Banner: ein deckendes Band (Grund aus dunklem Gold unter der Tönung, an den Enden dunkler) mit einer durchgezogenen Naht innen an Ober- und Unterkante und gefalteten Enden, die zum Band hin in den Schatten fallen, Lichthof und Schein im Gold, so groß wie die Pille davor, ohne gestrichelte Kante; beim Öffnen entrollt es sich, danach schieben sich die Enden heraus, alle siebeneinhalb Sekunden ein Glanz; der Monat darunter zwischen zwei goldenen Strichen.
-- Die Klasse ist sichtbar: Gewicht der Zelle (`data-kl`), Name auf der Plakette (`CHRONIK_KLASSE_NAME`), Zahlenreihe im Blatt (`rcpZahlenHtml`).
-- Die Matrix ordnet nach Prestige, dann Zahl der Einträge, dann Name; sie steht in einer Karte (`_lchronTabelle`), Ruheständler in einer eigenen Karte (`ruhe_chronik`). Strich heißt gewertet ohne Eintrag, leer heißt nicht gewertet.
+- Die Klasse ist sichtbar: Farbe der Zelle (`data-kl`, `chronikTon`), Gold mit einem Glanz alle sechs Sekunden, Name auf der Plakette (`CHRONIK_KLASSE_NAME`), Zahlenreihe im Blatt (`rcpZahlenHtml`).
+- Die Matrix ordnet nach Prestige, dann Zahl der Einträge, dann Name; sie steht in einer Karte (`_lchronTabelle`), Ruheständler in einer eigenen Karte (`ruhe_chronik`). Strich heißt gewertet ohne Eintrag, leer heißt nicht gewertet. Der Kopf jeder Spalte zeigt die Zahl und als Band die Stufen ihrer Einträge, die Zeile unter dem Namen je Stufe die Zahl ihrer Zellen, die Zelle „+N", wenn der Spieler im Monat mehr hält; die Legende nennt Stufe und Wert.
 - Ein Kürzel (`short`) ist ein ganzes Wort und passt gerendert in 54 px.
 - Die Rohsicht liegt in der Engine (`_seasonTitleCtx`: `partien`, `tagGrp`, `wochGrp`, `partnerGrp`, `gegnerGrp`).
 - Spieltage zählen erst, wenn sie zu sind (`_tagZu`): `tagGrp`, die letzte Partie eines Tages, die Tagesquoten und das Tagesende von „Auf dem Thron"; „Der Tagesregent" teilt durch diese Tage (`tagN`). Wochen bleiben offen gezählt — eine Woche geht Tage nach ihrer letzten Partie zu, und ihr Ende stünde in der Tafel eines anderen Tages.
@@ -23,7 +23,7 @@
 
 ## Prüfung
 
-`tests/rechnen` zählt den laufenden Tag erst um 23:59; `tests/disziplinen` hält jede Chronik an 1,5 σ, an der Spielzahl-Korrelation und am Halterdeckel, zählt den Anteil der ersten drei und rechnet „Der Sprung" und „Die Kletterpartie" aus den rohen Partien beider Monate nach und rechnet das Banner aus der Tafel jedes Monats nach (die jüngste positive Chronik); `tests/blatt` misst die Kürzel in der Zelle und das Banner im Profilkopf: deckend, mit Naht, Falte, Lichthof und Entrollen.
+`tests/rechnen` zählt den laufenden Tag erst um 23:59; `tests/archiv` friert einen Monat der alten Fassung neu ein und sonst keinen; `tests/disziplinen` hält jede Chronik an 1,2 σ, an der Spielzahl-Korrelation und am Halterdeckel, die Klasse an ihrem Band des Ausschlags und den Wert an der Klasse, zählt den Anteil der ersten drei, rechnet „Der Sprung" und „Die Kletterpartie" aus den rohen Partien beider Monate nach, ebenso die acht Chroniken gegen das Eigene, deren sieben positive an mindestens fünf Spieler und höchstens zu einem Viertel an den Monatsersten gehen, verwirft eine Chronik der alten Fassung und rechnet das Banner aus der Tafel jedes Monats nach (die jüngste positive Chronik); `tests/blatt` misst jedes Kürzel des Katalogs in der Zelle, die Farbe jeder Zelle nach ihrer Stufe, den Glanz nur auf Gold, „+N", die Zahlen je Stufe unter dem Namen, das Band im Kopf und die Legende, und das Banner im Profilkopf: deckend, mit Naht, Falte, Lichthof und Entrollen.
 
 ## Herleitung
 
@@ -31,7 +31,7 @@ Wie es dazu kam und was vorher falsch war — der Grund jeder Regel oben.
 
 Der alte
 Monatskatalog maß fast überall das Können, und wer eine Quote gewinnt,
-gewinnt fast jede. Er ist vollständig ersetzt: sechsundsechzig Chroniken, die
+gewinnt fast jede. Er ist vollständig ersetzt durch Chroniken, die
 nach der **Abweichung von der Erwartung** fragen, nach **Konstanz**, nach
 dem **Verhältnis zum Ligamittel** desselben Monats, zu einem **bestimmten
 anderen Spieler** oder nach einem **seltenen Einzelereignis**. Die
@@ -47,8 +47,8 @@ derselben Wertung wie jemand mit sechzig.
 Jede `monat`-Wertung trägt drei feste Angaben. **`art`** ist
 `koennen`, `konstanz`, `fuegung` oder `schatten` und sagt, wofür die Chronik
 steht. **`klasse`** ist `legendaer`, `selten` oder `besonders` und sagt, wie
-schwer ihre Bedingung zu erreichen ist — beim Kalibrieren an den Daten
-geprüft und dann festgeschrieben. **`aus`** ist der Ausschlag der Schwelle:
+schwer ihre Bedingung zu erreichen ist; sie folgt dem Ausschlag und wird mit
+ihm festgeschrieben. **`aus`** ist der Ausschlag der Schwelle:
 wie weit sie vom Schnitt aller liegt, die in dieser Disziplin je gewertet
 wurden, in Standardabweichungen.
 **Die Klasse ist keine Volkszählung.** Sie stand einmal als Grenze für die
@@ -60,30 +60,22 @@ leichter geworden ist. „Auf dem Thron" gehört heute zwei Monaten und ist
 legendär. Gedeckelt wird deshalb die **Rate** und für alle Klassen gleich:
 höchstens ein Halter je gewerteten Monat. Und ob eine Chronik ihren Platz
 verdient, entscheidet ihr Ausschlag, nicht ihre Häufigkeit — `tests/disziplinen`
-hält jede an der 1,5-σ-Grenze. Ein Test gegen die heutige Häufigkeit je
+hält jede an der 1,2-σ-Grenze. Ein Test gegen die heutige Häufigkeit je
 Klasse war nicht einmal rot zu bekommen: eine einzelne falsch eingeordnete
 Chronik verschiebt den Schnitt ihrer Klasse nicht genug.
-**Der Ausschlag trägt das Prestige**, nicht die Seltenheit:
-`PRESTIGE_SOCKEL + PRESTIGE_CHRONIK[art] × aus + PRESTIGE_SELTEN[klasse]`,
-gerundet auf fünf. Gemessen liegt der Median-Ausschlag bei 2,17 für
-legendäre, 1,79 für seltene und 1,71 für besondere Chroniken — die Klasse
-trennt also kaum und darf den Wert nicht tragen. „Der Kontrast" ist die
-seltenste Sache im Katalog und trotzdem nur ein Umstand [§C35]. Den Sockel
-bekommt jede Chronik außer einer Schattenseite: einen Monatseintrag zu
-halten ist an sich etwas Besonderes. Er liegt bei **55** (`PRESTIGE_SOCKEL`):
-mit 40 stand eine Chronik im Laufbahnblatt hinter einer einzigen seltenen
-Auszeichnung zurück, obwohl sie einen ganzen Monat braucht. „Die Nulldiät"
-bringt damit 130 statt 115, und alle Chroniken liegen zwischen 90 und 190.
-Die Dämpfung ab der dritten Chronik bleibt, wie sie ist [§C34].
-Gerechnet wird mit dem Ausschlag der **Schwelle**, nicht dem des Halters.
-Der Schwellen-Ausschlag ist eine feste Eigenschaft der Chronik; der eines
+**Den Wert trägt die Klasse** (unten: „Die Klasse ist Farbe und Wert"), und
+die Klasse folgt dem Ausschlag. Die Dämpfung ab der dritten Chronik bleibt,
+wie sie ist [§C34].
+Gerechnet wird mit der Klasse der Chronik und damit mit dem Ausschlag der
+**Schwelle**, nicht dem des Halters. Der Schwellen-Ausschlag ist eine feste
+Eigenschaft der Chronik; der eines
 Werts gehörte einem einzelnen Halter und wanderte, sobald neue Monate die
 Verteilung verschieben — dann sänke das Prestige aller bisherigen Halter,
 und genau dieser Fehler steckte schon einmal in den Auszeichnungen [§C34].
 Art, Klasse und Ausschlag werden **einmal an den Daten geprüft und dann
 festgeschrieben**, genau wie `BADGE_RARITY`.
 Zwei Regeln räumen den Katalog, und beide sind gemessen: eine Chronik muss
-ihre Schwelle **mindestens 1,5 σ** hinausschieben können, sonst liegt ihr
+ihre Schwelle **mindestens 1,2 σ** hinausschieben können, sonst liegt ihr
 Bester kaum weiter draußen als der Durchschnitt; und ihr Wert darf **nicht
 an der Spielzahl hängen** — höchstens 0,35 Korrelation. Die zweite nimmt am
 meisten weg: „wie viele verschiedene Ergebnisse" liegt bei −0,91, weil wer
@@ -153,9 +145,8 @@ aus [§C25].
 **Die Klasse ist zu sehen, nicht nur zu berechnen.** Von den vier Angaben,
 die den Wert einer Chronik bestimmen, stand keine einzige in der App: wer
 ein Chronik-Blatt öffnete, sah die Bedingung und sonst nichts. Jetzt trägt
-die Zelle der Matrix und die des Profilstreifens die Klasse als **Gewicht**
-(`data-kl`, dieselbe Farbe in drei Stärken — keine neue Farbe, das
-Farbgesetz kennt vier Rollen [§C25]), die Plakette nennt sie in Worten
+die Zelle der Matrix und die des Profilstreifens die Klasse als Farbe
+(`data-kl`, `chronikTon`, unten: „Die Klasse ist Farbe und Wert"), die Plakette nennt sie in Worten
 (`CHRONIK_KLASSE_NAME`, Metall — sie zeichnet niemanden aus), und das
 Chronik-Blatt zeigt Klasse, Art, Ausschlag und Prestige als Zahlenreihe —
 `rcpZahlenHtml`, das Bauteil der Rückblicke [§C27]. In der Laufbahn stand
@@ -168,9 +159,13 @@ nach ihrem Ausschlag verschieden viel wert sind, ist die Zahl gar keine
 Ordnung mehr.
 **Die Matrix steht in einer Karte und sagt mehr als ihre Zellen**
 (`_lchronTabelle`). Der Kopf jeder Spalte nennt unter dem Monat die Zahl
-seiner Einträge, die laufende Spalte ist getönt, die Namensspalte nennt die
-Einträge der Zeile, und eine Legende zeigt die drei Stärken und die
-gestrichelte Kante ohne einen Satz dazu. Ein Strich heißt gewertet ohne
+seiner Einträge und zeigt als schmales Band, wie sie sich auf die Stufen
+verteilen; die laufende Spalte ist getönt. Unter dem Namen steht je Stufe,
+wie viele Zellen der Zeile sie tragen — „5 Einträge" sagte nicht, welche.
+Eine Zelle nennt in der Ecke, wie viele Einträge ihr Spieler im selben
+Monat daneben hält („+2"): die Matrix zeigt je Monat einen, und dass Martin
+im August neun hielt, stand nirgends. Die Legende zeigt die vier Stufen mit
+ihrem Wert und die gestrichelte Kante ohne einen Satz dazu. Ein Strich heißt gewertet ohne
 Eintrag, eine leere Zelle nicht gewertet: vorher stand in beiden Fällen
 derselbe Strich, und wer einen Monat ausgesetzt hatte, sah aus wie einer,
 der leer ausging. Die Ruheständler stehen in einer Karte am Ende, zu
@@ -181,7 +176,10 @@ einem Punkt („Punktland.", „Angstgegn."), drei liefen über die 54 px der
 Zelle. Gezählt wird dafür nicht in Zeichen — „Umschwung" ist kürzer als
 „Nachzügler" und breiter —, sondern die gerenderte Breite in `tests/blatt`;
 `scrollWidth` taugt nicht, er rundet auf ganze Pixel, und „Augenhöhe" ragte
-um ein Viertel Pixel heraus.
+um ein Viertel Pixel heraus. Gemessen wird jedes Kürzel des Katalogs, nicht
+nur, was die Matrix gerade zeigt: „Wochenkron" und „Traummonat" liefen über,
+fielen aber nicht auf, weil sie in den Fixture-Monaten niemand hielt — heute
+heißen sie „Krone" und „Traumlauf".
 **Die Rohsicht liegt in der Engine.** `_seasonTitleCtx` legt je Spieler
 `partien` an (jede Partie aus seiner Sicht, in Spielreihenfolge) und daraus
 `tagGrp`, `wochGrp`, `partnerGrp`, `gegnerGrp`. Die Chroniken fragen nach
@@ -214,3 +212,34 @@ ganz oben steht, kann kaum noch steigen: beide belohnen die Verbesserung
 und nicht das Niveau. Als Erster hielt beide Johannes, im Juli auf Platz
 sieben der Tabelle.
 
+
+**Die Klasse ist Farbe und Wert.** Die Zelle trug den Ton ihrer Disziplin
+und die Klasse nur als Stärke derselben Farbe, und der Wert rechnete aus
+Sockel, Art × Ausschlag und einem kleinen Zuschlag der Klasse: alle lagen
+zwischen 90 und 190, „Der Kontrast" (legendär) brachte 95 und „Die weiße
+Weste" (besonders) 110, und eine goldene Zelle konnte weniger wert sein als
+eine blasse. Jetzt folgt die Klasse dem Ausschlag der Schwelle — 32
+Chroniken haben dabei ihre Klasse gewechselt —, und an der Farbe liest man
+ab, was ein Eintrag bringt: Gold 150, Lila 100, Metall 50, Rot nichts, eine
+Fügung halb wie bei den Rekorden [§C35]. Je Monat steht und zählt der
+wertvollste Eintrag; vorher war es der erste im Katalog, und der ordnet nach
+Art und Ausschlag, nicht nach Wert.
+**Acht Chroniken fragen nach dem Eigenen.** In den Fixture-Monaten gingen 21
+bis 28 Einträge an neun oder zehn Spieler, und die Mitte des Feldes fand
+sich in keiner Wertung wieder, die nach ihr fragte. „Der Knipser" und „Der
+Riegel" stellen vorne und hinten gegen das eigene Mittel, „Neuland" die
+Partien neben neuen Partnern, „Die Revanche" die zweite Partie gegen
+dieselben Gegner am selben Tag, „Das Nachlegen" die Partie nach einem Sieg,
+„Die Lernkurve" die späteren Duelle gegen dieselben Gegner gegen die
+früheren, „Der Spielverderber" die Partien gegen die beiden Ersten — alle
+gegen die Rechnung, nicht gegen eine feste Latte; „Der Absturz" ist das
+Gegenstück zum Sprung. Ihre Schwellen schieben sich nur 1,2 bis 2,2 σ
+hinaus: sechs sind besonders und tragen Metall und 50, „Die Lernkurve" ist
+mit 2,17 σ selten. Die Untergrenze liegt deshalb bei 1,2 σ statt 1,5 σ —
+über ihr steht der Beste immer noch deutlich außerhalb des Schnitts, und nur
+einer je Monat hält sie. Gemessen gehen die sieben positiven in den
+Fixture-Monaten neunmal an Alex, Jannik, Jane, Julian, Johannes und Martin,
+einmal an den Monatsersten (Martin im August). Mit ihnen bekam der Katalog eine neue Fassung
+(`SEASON_TITLES_FREEZE_V`): jeder abgeschlossene Monat wird einmal neu
+gerechnet und eingefroren, damit alle Spalten der Matrix dieselben Fragen
+stellen.

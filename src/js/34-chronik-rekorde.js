@@ -1207,18 +1207,18 @@ function chronBeiname(t){
 // [§C39]. Eine Schattenseite stand dort rot, sobald sie die jüngste war, und
 // verdrängte den Beinamen eines früheren Monats: Jannik trug im August „Der
 // Durchlässige" (Das Scheunentor) statt „Der Zugeknöpfte" aus dem Juni.
-// Jetzt bleibt der Juni stehen, bis wieder ein positiver Monat kommt; hat
-// ein Monat eine Schattenseite UND einen Titel, gilt der Titel. Die Monate
-// von hinten, der laufende zuerst — er ist der jüngste.
+// Jetzt bleibt der Juni stehen, bis wieder ein positiver Monat kommt. Je
+// Monat steht der Eintrag, der zählt (`seasonTitleOf`, der wertvollste):
+// der Beiname soll sagen, was den Spieler in diesem Monat ausmacht, und
+// vorher stand der erste positive im Katalog — „Der Torjäger" (50) vor „Der
+// Lernfähige" (100) desselben Monats. Eine Schattenseite zählt nichts und
+// ist deshalb nur dann der Eintrag eines Monats, wenn er sonst nichts
+// brachte. Die Monate von hinten, der laufende zuerst — er ist der jüngste.
 function playerTitleBadge(pid){
   const rows = seasonTitleHistory(pid);
-  const schatten = id => { const m = _chronikMonat(id); return !!(m && m.art === 'schatten'); };
   for(let i = rows.length - 1; i >= 0; i--){
-    const r = rows[i];
-    if(!r.title) continue;
-    const t = !schatten(r.title.titleId) ? r.title
-      : (seasonTitles(r.sid).awarded || []).find(a => a.pid === pid && !schatten(a.titleId)) || null;
-    if(!t) continue;
+    const r = rows[i], t = r.title;
+    if(!t || chronikStufe(t.titleId) === 'schatten') continue;
     return {kind:'season', name:chronBeiname(t), titel:t.name, titleId:t.titleId,
             ic:t.ic, tone:t.tone, sub:r.label + (r.live ? ' · läuft' : ''), live:r.live,
             sid:r.sid, ev:t.ev};

@@ -2,7 +2,7 @@
 // Eine Plakette. `hero` = die große Meister-Variante ganz oben auf der Tafel.
 function _titlePlateHtml(a, opts){
   const o = opts || {};
-  const t = titleTone(a.tone);
+  const t = chronikTon(a);
   const p = pmap()[a.pid];
   // Die Maße stehen in .tplate-w .av — im style-Attribut waren sie das
   // einzige, was man nicht im CSS fand, wenn die Plakette zu eng aussah.
@@ -28,12 +28,9 @@ function _titlePlateHtml(a, opts){
   </div>`;
 }
 
-// Die Klasse einer Monatschronik, oder leer. Ein eingefrorener Monat kann
+// Die Stufe einer Monatschronik, oder leer. Ein eingefrorener Monat kann
 // eine Chronik zeigen, die der Katalog nicht mehr kennt [§13.3a].
-function _chronKlasse(tid){
-  const d = tid && SEASON_TITLE_BY_ID[tid];
-  return (d && CHRONIK_KLASSE_NAME[d.klasse]) ? d.klasse : '';
-}
+function _chronKlasse(tid){ return tid ? chronikStufe(tid) : ''; }
 
 // Klasse, Art, Ausschlag und Prestige einer Monatschronik als Zahlenreihe —
 // dasselbe Bauteil wie in den Rückblicken [§C27]. Vorher stand von den vier
@@ -71,18 +68,14 @@ function showSeasonTable(sid){
   // Der Meister steht als eigene Zeile über der Chronik, nicht IN ihr: Platz 1
   // der Elo ist eine Tabellen-Aussage, kein Chronik-Eintrag — und er würde dem
   // Ersten sonst seinen einen Chronik-Platz wegnehmen.
-  // Offen steht, was zählt: je Spieler der erste Eintrag in
-  // Katalogreihenfolge, denn die Reihenfolge IST die Wertigkeit [§C32] — es
-  // ist der Eintrag, den Matrix, Profil und Prestige zeigen. Die übrigen
-  // klappen darunter auf. Alle offen untereinander waren bei Leon zwölf
-  // Plaketten, von denen elf nichts zählten; ganz weg, hinter „Alle
-  // anzeigen · 9 weitere" auf einem anderen Blatt, fehlte die halbe Tafel.
-  const gesehen = new Set();
-  const sichtbar = [], weitere = [];
-  T.awarded.forEach(a => {
-    if(gesehen.has(a.pid)) weitere.push(a);
-    else { gesehen.add(a.pid); sichtbar.push(a); }
-  });
+  // Offen steht, was zählt: je Spieler der wertvollste Eintrag
+  // (`chronikEintragVon`) [§C32] — der Eintrag, den Matrix, Profil und
+  // Prestige zeigen. Die übrigen klappen darunter auf. Alle offen
+  // untereinander waren bei Leon zwölf Plaketten, von denen elf nichts
+  // zählten; ganz weg, hinter „Alle anzeigen · 9 weitere" auf einem anderen
+  // Blatt, fehlte die halbe Tafel.
+  const zaehlt = new Set([...new Set(T.awarded.map(a => a.pid))].map(pid => chronikEintragVon(T, pid)));
+  const sichtbar = T.awarded.filter(a => zaehlt.has(a)), weitere = T.awarded.filter(a => !zaehlt.has(a));
   const gt = titleTone('gold');
   const ch = T.champ;
   openSheet(`
@@ -220,7 +213,7 @@ function _chronStripHtml(pid, teil){
   // läuft ist interessanter als der erste Monat der Liga-Geschichte.
   const cells = earned.slice(-12).reverse().map(r => {
     const t = r.title;
-    const tone = titleTone(t.tone);
+    const tone = chronikTon(t);
     const mon = String(r.label).split(' ')[0].slice(0,3);
     const kl = _chronKlasse(t.titleId);
     return `<div class="chron-cell${r.live ? ' live' : ''}"
@@ -710,9 +703,12 @@ function ligaChronikMatrixHtml(){
   const rows = _lchronZeilen(cols);
   const aktiv = rows.filter(pid => ligaAktiv(pid));
   const ruhe = rows.length - aktiv.length;
+  // Die Legende nennt je Stufe, was sie bringt [§C39]: an der Farbe soll man
+  // ablesen, was ein Eintrag wert ist. Eine Fügung zählt halb.
+  const wert = st => PRESTIGE_CHRONIK_KLASSE[st] ? ` <b class="num">${PRESTIGE_CHRONIK_KLASSE[st]}</b>` : '';
   return `${_lchronTabelle(cols, aktiv)}
-    <div class="lchron-lg" aria-hidden="true"><span data-kl="legendaer">legendär</span><span data-kl="selten">selten</span>`
-    + `<span data-kl="besonders">besonders</span><span class="live">läuft noch</span></div>`
+    <div class="lchron-lg" aria-hidden="true">${LC_STUFEN.map(st =>
+      `<span data-kl="${st}">${esc(CHRONIK_KLASSE_NAME[st])}${wert(st)}</span>`).join('')}<span class="live">läuft noch</span></div>`
     + (ruhe ? `<div class="ruhe-ende">${einblickHtml('ruhe_chronik', ruhe === 1 ? 'ein Spieler' : ruhe + ' Spieler')}</div>` : '');
 }
 // Die Zeilen der Matrix: alle, die in einer der Spalten gewertet wurden.
@@ -720,7 +716,7 @@ function ligaChronikMatrixHtml(){
 // dann nach Name. Nach der Zahl allein stand ein Monat mit drei billigen
 // Einträgen über einem mit einer legendären Chronik, und seit die Chroniken
 // nach ihrem Ausschlag verschieden viel wert sind [§C39], ist die Zahl gar
-// keine Ordnung mehr: „Der Wechselhafte" wiegt 75, „Die Wochenkrone" 175.
+// keine Ordnung mehr: „Der Wechselhafte" wiegt 50, „Die Wochenkrone" 150.
 // Gezählt wird nur, was in den sichtbaren Spalten steht — die Tabelle soll
 // die Ordnung erklären, die man sieht.
 function _lchronZeilen(cols){
@@ -738,21 +734,37 @@ function _lchronZeilen(cols){
                 || seen[b] - seen[a]
                 || pname(a).localeCompare(pname(b)));
 }
-// Die Tabelle selbst. Der Kopf jeder Spalte nennt den Monat und darunter, wie
-// viele Einträge er trägt; die laufende Spalte ist getönt, weil ihre Zellen
-// bis zum Monatsende noch wechseln können. Eine leere Zelle sagt zweierlei:
-// ein Strich heißt gewertet ohne Eintrag, eine leere Zelle heißt in diesem
-// Monat nicht gewertet — vorher stand in beiden Fällen derselbe Strich, und
-// wer einen Monat ausgesetzt hatte, sah aus wie einer, der leer ausging.
+// Die Tabelle selbst. Der Kopf jeder Spalte nennt den Monat, darunter, wie
+// viele Einträge er trägt, und als schmales Band, wie sie sich auf die vier
+// Stufen verteilen; die laufende Spalte ist getönt, weil ihre Zellen bis zum
+// Monatsende noch wechseln können. Eine leere Zelle sagt zweierlei: ein
+// Strich heißt gewertet ohne Eintrag, eine leere Zelle heißt in diesem Monat
+// nicht gewertet — vorher stand in beiden Fällen derselbe Strich, und wer
+// einen Monat ausgesetzt hatte, sah aus wie einer, der leer ausging.
+//
+// Die Zelle trägt die Farbe ihrer Stufe [§C39] und, wenn der Spieler im
+// selben Monat mehr hält, deren Zahl („+2"): die Matrix zeigte je Monat einen
+// Eintrag, und dass Martin im August neun hielt, stand nirgends. Unter dem
+// Namen steht, wie viele Zellen der Zeile golden, lila, metallen und rot
+// sind — „5 Einträge" sagte nicht, welche.
+const LC_STUFEN = ['legendaer', 'selten', 'besonders', 'schatten'];
 function _lchronTabelle(cols, rows){
   if(!rows.length) return '';
   const gewertet = cols.map(T => new Set((T.awarded || []).map(a => a.pid).concat(T.empty || [])));
+  const band = T => {
+    const je = {};
+    (T.awarded || []).forEach(a => { const st = chronikStufe(a.titleId); if(st) je[st] = (je[st] || 0) + 1; });
+    const n = LC_STUFEN.reduce((x, st) => x + (je[st] || 0), 0);
+    return n ? `<span class="lc-st">${LC_STUFEN.filter(st => je[st]).map(st =>
+      `<i data-kl="${st}" style="width:${(je[st] / n * 100).toFixed(1)}%"></i>`).join('')}</span>` : '';
+  };
+  let gold = 0;
   return `
     <div class="lchron-wrap">
       <table class="lchron">
         <thead><tr><th>Spieler</th>${cols.map(T =>
           `<th class="${T.live ? 'live' : ''}" data-season-table="${esc(T.sid)}"><span class="lc-m">${esc(String(T.label).split(' ')[0].slice(0,3))}</span>`
-          + `<span class="lc-z num">${T.awarded.length}</span></th>`
+          + `<span class="lc-z num">${T.awarded.length}</span>${band(T)}</th>`
         ).join('')}</tr></thead>
         <tbody>
           ${rows.map(pid => {
@@ -761,20 +773,27 @@ function _lchronTabelle(cols, rows){
             // darf in ihr stehen, solange dieser Monat vor seinem
             // Karriereende zu war.
             const bis = Math.max(...cols.filter(T => T.awarded.some(x => x.pid === pid)).map(T => seasonEnd(T.sid).getTime()));
-            const n = cols.reduce((k, T) => k + (T.awarded.some(x => x.pid === pid) ? 1 : 0), 0);
+            const zellen = cols.map(T => chronikEintragVon(T, pid));
+            const je = {};
+            zellen.forEach(a => { const st = a && chronikStufe(a.titleId); if(st) je[st] = (je[st] || 0) + 1; });
+            const zahl = LC_STUFEN.filter(st => je[st]).map(st => `<b data-kl="${st}">${je[st]}</b>`).join('');
             return `<tr${isFinite(bis) ? ` data-bis="${bis}"` : ''}>
             <td class="who" data-tplayer="${esc(pid)}"><div class="w">${avHtml(pmap()[pid])}`
-              + `<span class="wt"><span>${esc(pname(pid))}</span><small class="num">${n === 1 ? '1 Eintrag' : n + ' Einträge'}</small></span></div></td>
+              + `<span class="wt"><span>${esc(pname(pid))}</span>${zahl ? `<small class="lc-zahl num">${zahl}</small>` : ''}</span></div></td>
             ${cols.map((T, k) => {
-              const a = T.awarded.find(x => x.pid === pid);
+              const a = zellen[k];
               if(!a) return `<td class="${T.live ? 'live' : ''}">${gewertet[k].has(pid) ? '<span class="lc-dash">—</span>' : ''}</td>`;
-              const t = titleTone(a.tone);
+              const t = chronikTon(a);
               const kl = _chronKlasse(a.titleId);
-              return `<td class="${T.live ? 'live' : ''}"><span class="lc-cell${T.live?' live':''}" style="--tt:${t.c};--ttr:${t.rgb}"${
+              const mehr = T.awarded.filter(x => x.pid === pid).length - 1;
+              // Gold glänzt, jede Zelle in ihrem eigenen Takt (`--k`), damit
+              // nicht alle zugleich aufleuchten.
+              const glanz = kl === 'legendaer' ? ` style="--tt:${t.c};--ttr:${t.rgb};--k:${gold++}"` : ` style="--tt:${t.c};--ttr:${t.rgb}"`;
+              return `<td class="${T.live ? 'live' : ''}"><span class="lc-cell${T.live?' live':''}"${glanz}${
                 kl ? ` data-kl="${esc(kl)}"` : ''}
                 data-season-table="${esc(T.sid)}">
                 <span class="i">${svgI(a.ic)}</span>
-                <span class="n">${esc(a.short || a.name)}</span></span></td>`;
+                <span class="n">${esc(a.short || a.name)}</span>${mehr > 0 ? `<i class="lc-mehr num">+${mehr}</i>` : ''}</span></td>`;
             }).join('')}
           </tr>`; }).join('')}
         </tbody>

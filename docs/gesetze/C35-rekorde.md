@@ -313,7 +313,7 @@ den höheren Anteil hält.
 **Die Schandtafel ist keine Rangliste von hinten.** Dreizehn Rekorde tragen
 `art:'schatten'` und sieben Monatschroniken `monat.art:'schatten'` — die
 Kehrseite gehört dazu, sie zählt aber nichts: `PRESTIGE_ART.schatten` ist
-null, `PRESTIGE_CHRONIK.schatten` auch, `neg` hält sie aus der Zahl im
+null, `chronikPunkte` gibt einer Schattenseite nichts, `neg` hält sie aus der Zahl im
 Profil und in der Rangliste heraus, `nextRecordFor` schlägt sie niemandem
 vor, und der Feed meldet sie gar nicht. Eine negative FÜGUNG ist davon
 ausgenommen und behält ihren Wert [§C25].

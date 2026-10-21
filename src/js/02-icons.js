@@ -248,6 +248,24 @@ const ICONS = {
   // nicht durch. Nicht `strikeBoot` gespiegelt: zwei Rubriken tragen nie
   // dieselbe Zeichnung [§C27].
   misfireBall:   `<circle cx="9" cy="14" r="4"/><path d="M16 5v14"/><path d="M4 21h16"/><path d="M13 9l6 6M19 9l-6 6"/>`,
+  // Die acht Monatschroniken, die eine Besonderheit gegen das Eigene oder
+  // gegen die Spitze messen [§C39]: je ein eigenes Bild [§C41].
+  // Der Ball fliegt ins Tor: vorne mehr als sonst.
+  knipser:       `<circle cx="6.5" cy="15.5" r="3.5"/><path d="M10 13.5l6.5-4.5"/><path d="M13.6 8.6l2.9.4-.4 2.9"/><path d="M14 20h8V7"/>`,
+  // Ein Riegel vor der Tür: hinten weniger als sonst.
+  riegel:        `<rect x="3.5" y="3.5" width="17" height="17" rx="2"/><path d="M7 12h12"/><rect x="5.5" y="10" width="4" height="4" rx="1"/><path d="M15 9v6"/>`,
+  // Zwei Glieder, die sich zum ersten Mal fassen.
+  neuland:       `<path d="M10.5 13.5l-3 3a3 3 0 01-4.2-4.2l3-3a3 3 0 014.2 0"/><path d="M13.5 10.5l3-3a3 3 0 014.2 4.2l-3 3a3 3 0 01-4.2 0"/><path d="M19 2v4M17 4h4"/>`,
+  // Der Pfeil kehrt zum selben Gegner zurück.
+  revanche:      `<path d="M4 9h11a5 5 0 010 10H9"/><path d="M8 5L4 9l4 4"/><path d="M9 16l-3 3 3 3"/>`,
+  // Eine Krone mit einem Riss: Partien gegen die beiden Ersten.
+  kroneRiss:     `<path d="M3 18l1.6-10 4.4 4.4L12 5l3 7.4L19.4 8 21 18z"/><path d="M12 9l-1.5 3.5 2.5 1.5-1.5 4"/>`,
+  // Eine Kurve, die mit jedem Wiedersehen steiler wird.
+  lernkurve:     `<path d="M3 20h18"/><path d="M4 17c5 0 6-1.5 8-5s3-7 8-7"/><circle cx="8" cy="16.2" r="1.3"/><circle cx="13" cy="10.6" r="1.3"/><circle cx="18" cy="5.4" r="1.3"/>`,
+  // Zwei Winkel übereinander: nach dem Sieg gleich der nächste.
+  nachlegen:     `<path d="M6 12l6-6 6 6"/><path d="M6 19l6-6 6 6"/><path d="M4 22h16"/>`,
+  // Die Kurve bricht ab: der Monat unter dem Vormonat.
+  absturz:       `<path d="M3 4v16h18"/><path d="M6 7h5l2.5 3 2-1 4.5 8"/><path d="M20 13v4.5h-4.5"/>`,
   // Stumme Antwort: eine Sprechblase, durchgestrichen — es kommt nichts
   // zurück.
   mutedReply:    `<path d="M4 5h16v10H12l-5 4v-4H4z"/><path d="M8 3l12 14"/>`,

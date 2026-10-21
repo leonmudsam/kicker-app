@@ -1210,7 +1210,7 @@ function _ndChronikEbenen(d, bisMs, ids, wertVon, modus, titleId){
   const awarded = (T && T.awarded) || [];
   return ids.map(pid => {
     const plus = Number(wertVon(pid)) || 0;
-    const tp = awarded.find(a => a.pid === pid) || null;
+    const tp = chronikEintragVon(T, pid);
     const titel = (tp && tp.name) || (d.titelJeSpieler || {})[pid] || '';
     const diese = (titleId && tp) ? tp.titleId === titleId : false;
     const n = awarded.filter(a => a.pid === pid).length;

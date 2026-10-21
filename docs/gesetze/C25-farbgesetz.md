@@ -8,7 +8,7 @@
 - Im Rekorde-Reiter tragen Können, Aktuelle Form und Bestmarke Gold, die Fügung Metall, die Schattenseite Rot: fünf Kammern, drei Töne.
 - Was negativ ist (`neg`, aus `art:'schatten'` oder `negativ:true`), trägt Rot, steht hinten und zählt nirgends als Rekord (`rekordZaehlung`); `nextRecordFor` schlägt es nicht vor. Das Banner des Beinamens im Profilkopf trägt deshalb nie eine Schattenseite: es ist ein Titel und immer Gold [§C39].
 - Die Kammer steht als `data-kammer` an der Karte, nicht als Farbklasse: eine Fügung kann rot sein und bleibt eine Fügung.
-- Die Klassen der Auszeichnungen tragen ihren Namen als Farbe: Gold legendär, Lila selten, Rot negativ; „gewöhnlich" steht im Profil in Metall statt Grün, weil es die größte Gruppe ist und das Profil sonst bunt würde.
+- Die Klassen der Auszeichnungen tragen ihren Namen als Farbe: Gold legendär, Lila selten, Rot negativ; „gewöhnlich" steht im Profil in Metall statt Grün, weil es die größte Gruppe ist und das Profil sonst bunt würde. Die Monatschroniken ebenso (`chronikStufe`, `chronikTon`): Gold legendär, Lila selten, Metall besonders, Rot die Schattenseite — in Matrix, Profilstreifen und Plakette; Gold glänzt in der Matrix.
 - Im Profil und in der Laufbahn liegt unter jeder Überschrift eine gestrichelte Kante in der Rangfarbe; die Insignium-Stufe (`st-<Stufe>`) ändert nur Höhe und Kraft, der Ordensstern trägt sie facettiert.
 
 ## Stellen
@@ -17,7 +17,7 @@
 
 ## Prüfung
 
-`tests/blatt` hält Besitzleiste und Podest je Spieler aneinander, misst Farbfamilien und Kanten im Feed und im Profil die Klassenfarben der Auszeichnungen und die Kante unter jeder Überschrift auf jeder Stufe.
+`tests/blatt` hält Besitzleiste und Podest je Spieler aneinander, misst Farbfamilien und Kanten im Feed, im Profil die Klassenfarben der Auszeichnungen und die Kante unter jeder Überschrift auf jeder Stufe, in der Chronik-Matrix die Farbe jeder Zelle nach ihrer Stufe und den Glanz nur auf Gold.
 
 ## Herleitung
 

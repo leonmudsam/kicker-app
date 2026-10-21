@@ -2,9 +2,9 @@
 
 ## Regel
 
-- Ein Monatseintrag für die Mitte des Feldes misst den Abstand zum eigenen Niveau, nicht das Niveau: „Auf Augenhöhe", „Die Steigerung", „Der Sonntagsschuss", „Der Staffellauf", „Das Seitenbündnis" (beide über `_stUebergaenge`), „Der Quertreiber", „Die Tagesumkehr" (gegen den Erwartungswert 2·S·N durch n·(n−1)).
+- Ein Monatseintrag für die Mitte des Feldes misst den Abstand zum eigenen Niveau, nicht das Niveau: „Auf Augenhöhe", „Die Steigerung", „Der Sonntagsschuss", „Der Staffellauf", „Das Seitenbündnis" (beide über `_stUebergaenge`), „Der Quertreiber", „Die Tagesumkehr" (gegen den Erwartungswert 2·S·N durch n·(n−1)), und die sieben gegen das Eigene [§C39]: „Der Knipser", „Der Riegel" (vorne und hinten gegen das eigene Mittel), „Neuland", „Die Revanche", „Das Nachlegen", „Der Spielverderber" (je ein Ausschnitt der eigenen Partien gegen die Rechnung, `_stUeberSoll`) und „Die Lernkurve".
 - Dasselbe gilt für die Liga-Rekorde außerhalb des Niveaus [§C35]: „Der Wiedereinstieg" (Rückkehrspiele), „Der Umsteiger" (die Partie nach einem Positionswechsel), „Der Aufschwung" (die letzten 25 gegen die Laufbahn davor), „Der Glanztag" (der beste Spieltag) und ihre Kehrseiten „Der Rost" und „Der Abschwung" stellen einen Ausschnitt der eigenen Partien gegen den eigenen Rest.
-- Nicht eingebaut wird, was einen zweiten Monat zur Eichung braucht, nur mit einer Zufallsreferenz zu rechnen ist, Statistiksprache braucht, die 1,5 σ nicht erreicht oder an der Spielzahl hängt.
+- Nicht eingebaut wird, was einen zweiten Monat zur Eichung braucht, nur mit einer Zufallsreferenz zu rechnen ist, Statistiksprache braucht, die 1,2 σ nicht erreicht oder an der Spielzahl hängt.
 
 ## Stellen
 
@@ -12,7 +12,7 @@
 
 ## Prüfung
 
-`tests/disziplinen` fällt, wenn ein solcher Eintrag wieder an die Spitze der Siegquote geht, rechnet die vier neuen Chroniken und die Liga-Rekorde gegen das Eigene aus den rohen Partien nach und misst jeden Rekord mit Grundwert 150 gegen die Siegquote.
+`tests/disziplinen` fällt, wenn ein solcher Eintrag wieder an die Spitze der Siegquote geht, rechnet die vier Chroniken der Übergänge und Tage, die acht gegen das Eigene und die Liga-Rekorde gegen das Eigene aus den rohen Partien nach, verlangt für die sieben positiven gegen das Eigene mindestens fünf Halter und höchstens ein Viertel beim Monatsersten und misst jeden Rekord mit Grundwert 150 gegen die Siegquote.
 
 ## Herleitung
 
@@ -46,8 +46,9 @@ Spielzahl. Nicht eingebaut wurde, was einen zweiten Monat braucht
 Gegnerbalance, Torwende: drei Monatspaare sind keine Eichung), was nur
 mit einer Zufallsreferenz zu rechnen ist (Erwartungskorridor), was in
 Statistiksprache ausgedrückt werden müsste (Ergebnisdialekt in Bit,
-Verdichtung als Rangkorrelation), was die 1,5 σ nicht erreicht
-(Rückspielwelle), was es in den echten Partien kaum gibt (Bilanzparadox,
+Verdichtung als Rangkorrelation), was die damalige Grenze von 1,5 σ
+nicht erreichte (Rückspielwelle — seit die Grenze bei 1,2 σ liegt, steht
+sie als „Die Revanche" im Katalog), was es in den echten Partien kaum gibt (Bilanzparadox,
 Gegenläufer, Startzeit, Umschaltmoment, Positionspakt), was einen
 Effekt von wenigen Punkten ausschmückt (Chancenpendel, Doppelzone), was
 aus vielen Paaren das günstigste sucht (Gegnergeflecht, Doppelgesicht mit

@@ -105,7 +105,8 @@ console.log('=== ARCHIVLAUF FRIERT DIE CHRONIK EIN ===');
   const W = JSON.parse(written).filter(w => w.tbl === 'seasons');
   console.log('  geschriebene Saisons: ' + W.map(w=>w.row.id).join(', '));
   ok(W.length >= 1, 'mindestens eine Saison archiviert', W.length + '');
-  ok(W.every(w => w.row.titles && w.row.titles.v === 1), 'jede archivierte Saison bringt titles mit');
+  const FV = K.eval('SEASON_TITLES_FREEZE_V');
+  ok(W.every(w => w.row.titles && w.row.titles.v === FV), 'jede archivierte Saison bringt titles in der Fassung des Katalogs mit', 'v=' + FV);
   ok(W.every(w => Array.isArray(w.row.titles.awarded)), 'titles.awarded ist ein Array');
   const withEntries = W.filter(w => w.row.titles.awarded.length);
   ok(withEntries.length >= 1, 'mindestens eine Saison hat Eintraege', withEntries.length + '');
@@ -118,6 +119,19 @@ console.log('=== ARCHIVLAUF FRIERT DIE CHRONIK EIN ===');
   await K.eval('autoArchiveSeasons()');
   const W2 = globalThis.__written.filter(w => w.tbl === 'seasons');
   ok(W2.length === 0, 'zweiter Lauf schreibt nichts mehr', W2.map(w=>w.row.id).join(',') || '—');
+
+  // Eine Saison, die mit einer älteren Fassung des Katalogs eingefroren
+  // wurde, friert der nächste Lauf neu ein — genau sie und nur sie. Sonst
+  // stellte eine alte Spalte der Matrix andere Fragen als die neuen [§C39].
+  K.eval(`(function(){ const s = seasons.find(x => x.id === '2026-06');
+    const t = typeof s.titles === 'string' ? JSON.parse(s.titles) : s.titles;
+    s.titles = Object.assign({}, t, {v: SEASON_TITLES_FREEZE_V - 1}); invalidateCache(); })()`);
+  globalThis.__written = [];
+  await K.eval('autoArchiveSeasons()');
+  const W3 = globalThis.__written.filter(w => w.tbl === 'seasons');
+  ok(W3.length === 1 && W3[0].row.id === '2026-06' && W3[0].row.titles.v === FV,
+     'eine Saison der alten Fassung wird neu eingefroren, sonst keine',
+     W3.map(w => w.row.id + ' v' + (w.row.titles || {}).v).join(',') || '—');
 
   // Und die App liest ab jetzt die eingefrorene Fassung.
   const j = JSON.parse(K.eval("JSON.stringify(seasonTitles('2026-07'))"));
