@@ -1497,6 +1497,50 @@ const ok = (c, msg, det) => {
   ok(ehrung.some(x => x.kacheln > 0) && ehrung.every(x => !x.gebrochen.length),
      'im Blatt der Ehrung bricht kein Name einer Kachel mitten im Wort',
      ehrung.flatMap(x => x.gebrochen).join(', ') || ehrung.map(x => x.kacheln).join('+') + ' Kacheln');
+  // Unter der Schlagzeile, aus welchen Partien die Auszeichnungen stammen:
+  // in der Karte, vor dem Pfeil, höchstens zwei Zeilen — auch über
+  // Mitternacht, die längste Fassung („von gestern, 23:10 bis heute, 00:40").
+  // Ein gewöhnlicher Tag steht bei 360 px in einer Zeile: als Satz
+  // („Aus den Partien …") brauchte er 250 px, und die Karte hat dort 213.
+  const ehZeit = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const karten = JSON.parse(K(`JSON.stringify((function(){
+      let s = null;
+      for(let t = Date.parse('2026-05-10'); !s && t < Date.parse('2026-09-01'); t += NEWS_FENSTER_TAGE * 864e5 * 0.9)
+        s = _newsEhrungStories(t)[0] || null;
+      const um = (h, m) => { const d = new Date(); d.setHours(h, m, 0, 0); return d.getTime(); };
+      const mit = (ab, bis) => Object.assign({}, s, {dataRef:Object.assign({}, s.dataRef, {ab, bis})});
+      return [_newsEhrungHtml(s, false, ''), _newsEhrungHtml(mit(um(13, 44), um(15, 55)), false, ''),
+        _newsEhrungHtml(mit(um(0, 40) - 90 * 60000, um(0, 40)), false, '')];
+    })())`));
+    const host = document.createElement('div');
+    host.style.cssText = 'position:absolute;left:0;top:0';
+    document.body.appendChild(host);
+    const falsch = [];
+    let lang = '';
+    karten.forEach((h, i) => [287, 247].forEach(breite => {
+      host.style.width = breite + 'px';
+      host.innerHTML = h;
+      const k = host.querySelector('.nf-card').getBoundingClientRect();
+      const z = host.querySelector('.eh-zr'), c = host.querySelector('.nf-chev');
+      if(!z){ falsch.push(i + '/' + breite + ': keine Zeile'); return; }
+      // Die Ausdehnung des TEXTS, nicht des Kastens: ein Kasten in einer
+      // Flex-Zeile schrumpft, und der Text läuft dann über ihn hinaus.
+      const rg = document.createRange(); rg.selectNodeContents(z.querySelector('.eh-zr-t'));
+      const r = z.getBoundingClientRect(), t = rg.getBoundingClientRect();
+      const zeilen = Math.round(t.height / parseFloat(getComputedStyle(z).lineHeight));
+      if(r.left < k.left || r.right > k.right || t.right > r.right + .5) falsch.push(i + '/' + breite + ': ragt hinaus');
+      if(c && r.right > c.getBoundingClientRect().left + .5) falsch.push(i + '/' + breite + ': unter dem Pfeil');
+      if(zeilen > 2) falsch.push(i + '/' + breite + ': ' + zeilen + ' Zeilen');
+      if(i === 2) lang = z.querySelector('.eh-zr-t').textContent.trim().replace(/\u00a0/g, ' ');
+      if(i === 1 && breite === 287 && zeilen !== 1) falsch.push('ein Tag in ' + zeilen + ' Zeilen');
+    }));
+    host.remove();
+    return {falsch, lang};
+  });
+  ok(!ehZeit.falsch.length && /^Partien von gestern, 23:10 bis heute, 00:40$/.test(ehZeit.lang),
+     'die Ehrung nennt unter der Schlagzeile ihre Partien, in der Karte, vor dem Pfeil, in höchstens zwei Zeilen',
+     ehZeit.falsch.join(' | ') || ehZeit.lang);
 
   // ── Jedes Blatt passt auf das Telefon ────────────────────────────
   //    Gemessen am Blatt eines Tafel-Moments: die Zahlenreihe trug fuenf

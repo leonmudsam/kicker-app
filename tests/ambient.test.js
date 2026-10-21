@@ -6734,9 +6734,18 @@ const _eh = JSON.parse(K.eval(`JSON.stringify((function(){
     // Der Schimmer des Seltenen nur mit einer legendären Auszeichnung.
     const leg = sp.some(x => x.posten.some(q => q.klasse === 'legendary'));
     if(leg !== /nf-glanz/.test(h.slice(0, 200))) falsch.push(s.id + ': Schimmer ' + !leg);
-    // Auf der Karte nur Bild und Schlagzeile: kein Satz und kein Fuß mit
-    // den Klassen darunter. Beides steht im Blatt.
+    // Auf der Karte nur Bild, Schlagzeile und aus welchen Partien die
+    // Auszeichnungen stammen: kein Satz und kein Fuß mit den Klassen
+    // darunter. Beides steht im Blatt.
     if(/class="nf-d"|class="eh-fuss"|class="eh-k /.test(h)) falsch.push(s.id + ': Zusatztext auf der Karte');
+    // Dieselbe Zeile auf Karte und Blatt, und sie nennt die erste und die
+    // letzte Partie der Runde [§C27]. Das Blatt macht daraus den Satz.
+    const zr = (h.match(/<span class="eh-zr-t">([^<]*)<\\/span>/) || [])[1];
+    if(!zr || zr !== _ehrungZeitraum(d) || !/^Partien? /.test(zr)
+      || zr.indexOf(datumFmt(d.ab, 'uhr')) < 0 || zr.indexOf(datumFmt(d.bis, 'uhr')) < 0)
+      falsch.push(s.id + ': Zeitraum ' + zr);
+    if(_ndEhrungBlatt(s).mitte.indexOf('<div class="nw-hinweis eh-zeit">Aus ' + (d.ab === d.bis ? 'der ' : 'den ') + esc(zr) + '.</div>') < 0)
+      falsch.push(s.id + ': Blatt nennt einen anderen Zeitraum');
     // Im Blatt jede Klasse, die vorkommt, und zusammen alle Auszeichnungen.
     const anteil = _ndEhrungBlatt(s).mitte;
     const fuss = (anteil.match(/<span class="eh-k \\w+"><i><\\/i><b class="num">\\d+<\\/b>/g) || []).map(x => +x.replace(/<[^>]+>/g, ''));
@@ -6778,8 +6787,28 @@ const _eh = JSON.parse(K.eval(`JSON.stringify((function(){
   return {n:alle.length, falsch, legendaer, umbruch, kacheln, zeilen, breite, soll:r(probe), voll:r(erst)};
 })())`));
 ok(_eh.n >= 40 && _eh.legendaer > 0 && _eh.umbruch > 0 && _eh.kacheln > 0 && _eh.zeilen > 0 && !_eh.falsch.length,
-   'die Ehrung trägt je Geehrtem eine Säule auf seinem Wappen mit der Zeichenkachel der seltensten Auszeichnung, höchstens fünf je Reihe, auf der Karte nur Bild und Schlagzeile, im Blatt jede Klasse, im Satz die wertvollste und jede Auszeichnung genau einmal in ihrem Kasten',
+   'die Ehrung trägt je Geehrtem eine Säule auf seinem Wappen mit der Zeichenkachel der seltensten Auszeichnung, höchstens fünf je Reihe, auf der Karte nur Bild, Schlagzeile und ihre Partien wie im Blatt, im Blatt jede Klasse, im Satz die wertvollste und jede Auszeichnung genau einmal in ihrem Kasten',
    _eh.falsch.slice(0, 4).join(' | ') || _eh.n + ' Ehrungen, ' + _eh.legendaer + ' legendär, ' + _eh.umbruch + ' auf zwei Reihen, ' + _eh.zeilen + ' Zeilen, ' + _eh.kacheln + ' Kacheln');
+// Die Zeile in Worten: heute und gestern als Wort, weiter zurück das
+// Datum, über Mitternacht der zweite Tag, eine einzige Partie in der Einzahl.
+const _ehZr = JSON.parse(K.eval(`JSON.stringify((function(){
+  const um = (tage, h, m) => { const d = new Date(); d.setDate(d.getDate() - tage); d.setHours(h, m, 0, 0); return d.getTime(); };
+  const alt = new Date(um(4, 16, 44));
+  return [
+    [_ehrungZeitraum({ab:um(0, 13, 44), bis:um(0, 15, 55)}), 'Partien von heute, 13:44 bis 15:55'],
+    [_ehrungZeitraum({ab:um(1, 13, 44), bis:um(1, 15, 55)}), 'Partien von gestern, 13:44 bis 15:55'],
+    [_ehrungZeitraum({ab:um(4, 16, 44), bis:um(4, 18, 10)}), 'Partien vom ' + datumFmt(alt, 'tm') + ', 16:44 bis 18:10'],
+    [_ehrungZeitraum({ab:um(1, 23, 10), bis:um(0, 0, 40)}), 'Partien von gestern, 23:10 bis heute, 00:40'],
+    [_ehrungZeitraum({ab:um(0, 15, 55), bis:um(0, 15, 55)}), 'Partie von heute, 15:55'],
+    [_ehrungZeitraum({ab:um(0, 13, 44), bis:um(0, 15, 55)}, true), 'Aus den Partien von heute, 13:44 bis 15:55'],
+    [_ehrungZeitraum({ab:um(0, 15, 55), bis:um(0, 15, 55)}, true), 'Aus der Partie von heute, 15:55'],
+    [_ehrungZeitraum({}), '']];
+})())`));
+// Gelesen mit gewöhnlichen Leerzeichen: vor jeder Uhrzeit steht ein festes.
+_ehZr.forEach(x => { x[0] = x[0].replace(/\u00a0/g, ' '); });
+ok(_ehZr.every(([ist, soll]) => ist === soll),
+   'die Ehrung nennt ihre Partien mit heute, gestern oder Datum, über Mitternacht mit beiden Tagen, eine einzelne Partie in der Einzahl und im Blatt als Satz',
+   _ehZr.filter(([ist, soll]) => ist !== soll).map(([ist, soll]) => ist + ' statt ' + soll).join(' | '));
 ok(Math.round(_eh.breite) === _eh.soll && _eh.soll < 100 && _eh.voll === 100,
    'der Strich unter einer Auszeichnung zeigt, wie viel vom vollen Wert sie beim wievielten Mal bringt',
    _eh.breite + ' % statt ' + _eh.soll + ' %');

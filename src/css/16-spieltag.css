@@ -1565,6 +1565,15 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 .eh-g-t > small{font-family:'Sometype Mono',monospace;font-size:9px;color:var(--muted)}
 .eh-g-t .eh-q-m{position:absolute;left:0;right:0;bottom:0;height:2px;margin:0;border-radius:0}
 .eh-zeit{margin:8px 2px 2px}
+/* Aus welchen Partien die Auszeichnungen stammen, unter der Schlagzeile der
+   Karte: leise, mit derselben Uhr wie die Zeit im Kopf. In der Schrift des
+   Texts, nicht in der Mono der Uhrzeit: so passt die Zeile eines Tages bei
+   360 px in eine Zeile — in Mono brach „15:55" in die zweite. Über
+   Mitternacht darf sie umbrechen. */
+.eh-zr{display:flex;align-items:flex-start;gap:6px;margin-top:6px;
+  font-size:11.5px;line-height:1.45;font-variant-numeric:tabular-nums;color:var(--muted)}
+.eh-zr svg{flex:none;width:10px;height:10px;margin-top:3px;fill:none;stroke:currentColor;
+  stroke-linecap:round;stroke-linejoin:round;opacity:.55}
 /* Die Säulen wachsen nacheinander aus dem Boden, wie im Säulenbild eines
    Spieltags; die Kachel setzt sich darauf, wenn ihre Säule steht, und die
    Zahl blendet ein. Nur transform und Deckkraft, jede Bewegung an ihrem

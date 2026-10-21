@@ -113,12 +113,11 @@ function _newsEhrungStory(liste, T, letzteM, rang){
   }));
   const klasse = {legendary:', eine legendäre Auszeichnung', rare:', eine seltene Auszeichnung'}[top.q.klasse] || '';
   const desc = `${nm(top.pid)} holt dabei „${top.q.name}“ zum ${top.q.bis === 1 ? 'ersten' : top.q.bis + '.'} Mal${klasse}.`;
-  const tage = [...new Set(liste.map(e => tagKey(e.t)))];
   return {
     id:'ehrung_' + letzteM.id, cat:'badge', ic:'medal', when:new Date(T),
     prio:STORY_PRIO.ehrung, title, desc,
     dataRef:{type:'ehrung', playerIds:spieler.map(x => x.pid), spieler, zahl, gesamt,
-             ab:Math.min(...liste.map(e => e.t)), bis:mts(letzteM), tage:tage.length}
+             ab:Math.min(...liste.map(e => e.t)), bis:mts(letzteM)}
   };
 }
 
@@ -211,11 +210,36 @@ function _ehrungKlassen(sp){
 const _ehrungKlasseHtml = z => `<span class="eh-k ${z.id}"><i></i><b class="num">${z.n}</b> ${esc(z.wort)}`
   + ` <em class="num">+${_ehZahl(z.p)}</em></span>`;
 
-// Die Karte: die Säulen als Bühne, darunter nur die Schlagzeile. Ein Satz
-// nannte das Seltenste, und im Fuß stand, was jede Klasse gebracht hat —
-// beides Zusatztext unter einem Bild, das die Säulen, ihre Zeichenkachel
-// und ihr Prestige schon zeigt, wie bei der Insignium-Karte. Satz, Klassen
-// und was jeder genau geholt hat, stehen im Blatt. Mit einer legendären
+// Woher die Auszeichnungen einer Ehrung kommen, auf der Karte und im Blatt
+// dieselbe Zeile [§C27]. Die Karte trug nur die Uhrzeit, zu der sie entstand
+// — zwei Stunden nach der letzten Partie —, und neben „18:04" las sich eine
+// Runde von 13:44 bis 15:55 wie eine Ehrung für den Abend. Heute und gestern
+// als Wort, weiter zurück das Datum; über Mitternacht steht der zweite Tag
+// dabei. `ab` ist die erste Partie, aus der eine Auszeichnung der Runde
+// stammt — eine, die erst am Tagesende vergeben wird, kann vom Vortag sein.
+// Vor jeder Uhrzeit ein festes Leerzeichen: umbrochen stand „15:55" allein in
+// der zweiten Zeile, getrennt von seinem „bis". Die Karte nennt nur die
+// Partien, das Blatt den Satz („Aus den Partien …"): mit ihm brauchte ein
+// gewöhnlicher Tag 250 px, und neben dem Bild hat die Karte bei 360 px 213 —
+// die Zeile brach auf jedem Telefon um.
+function _ehrungZeitraum(d, satz){
+  if(!d || !d.ab || !d.bis) return '';
+  const jetzt = Date.now();
+  const tag = t => tagKey(t) === tagKey(jetzt) ? 'heute'
+    : tagKey(t) === tagKey(jetzt - 864e5) ? 'gestern' : datumFmt(t, 'tm');
+  const von = t => { const w = tag(t); return (/^\d/.test(w) ? 'vom ' : 'von ') + w; };
+  const uhr = t => '\u00a0' + datumFmt(t, 'uhr');
+  if(d.ab === d.bis) return `${satz ? 'Aus der ' : ''}Partie ${von(d.ab)},${uhr(d.ab)}`;
+  return `${satz ? 'Aus den ' : ''}Partien ${von(d.ab)},${uhr(d.ab)} bis`
+    + (tagKey(d.ab) === tagKey(d.bis) ? '' : '\u00a0' + tag(d.bis) + ',') + uhr(d.bis);
+}
+
+// Die Karte: die Säulen als Bühne, darunter die Schlagzeile und, leise,
+// aus welchen Partien die Auszeichnungen stammen. Ein Satz nannte das
+// Seltenste, und im Fuß stand, was jede Klasse gebracht hat — beides
+// Zusatztext unter einem Bild, das die Säulen, ihre Zeichenkachel und ihr
+// Prestige schon zeigt, wie bei der Insignium-Karte. Satz, Klassen und was
+// jeder genau geholt hat, stehen im Blatt. Mit einer legendären
 // Auszeichnung trägt die Karte den Schimmer des Seltenen, wie eine einzelne
 // seltene Auszeichnung im Feed [§C25]; eine seltene allein reicht nicht,
 // sie steht in fast jeder Ehrung.
@@ -223,13 +247,14 @@ function _newsEhrungHtml(s, isRead, fadenHtml){
   const d = s.dataRef || {};
   const sp = Array.isArray(d.spieler) ? d.spieler : [];
   const glanz = sp.some(x => (x.posten || []).some(q => q.klasse === 'legendary'));
+  const zr = _ehrungZeitraum(d);
   return `<div class="nf-card nf-s-badge nf-ehrung nfc-badge${glanz ? ' nf-glanz' : ''}${isRead ? ' read' : ''}" data-sid="${esc(s.id)}"`
     + `${glanz ? ` style="--gv:${_newsGlanzVersatz(s.id)}s"` : ''}>
     ${_newsMotiv('badge', s)}
     <div class="nf-top"><span class="nf-rub"><i>${svgI('medal')}</i><b>DIE EHRUNG</b></span>
       <span class="nf-when">${svgI('clock')}${esc(_newsUhrzeit(s.when))}${isRead ? '' : '<span class="nf-dot"></span>'}</span></div>
     ${_ehrungSaeulen(sp, false)}
-    <div class="nf-gr"><div class="nf-gr-r"><div class="nf-h">${esc(s.title)}</div></div>
+    <div class="nf-gr"><div class="nf-gr-r"><div class="nf-h">${esc(s.title)}</div>${zr ? `<div class="eh-zr">${svgI('clock')}<span class="eh-zr-t">${esc(zr)}</span></div>` : ''}</div>
       <span class="nf-chev">${svgI('chevron')}</span></div>${fadenHtml || ''}</div>`;
 }
 
@@ -263,8 +288,7 @@ function _ndEhrungBlatt(s){
   const rest = q => { const v = voll(q); return v > 0 ? Math.min(1, q.p / v) : 1; };
   const strich = q => `<span class="eh-q-m" role="img" aria-label="${Math.round(rest(q) * 100)} % des vollen Werts">`
     + `<i style="width:${(rest(q) * 100).toFixed(1)}%"></i></span>`;
-  const zeit = d.ab && d.bis ? `Aus den Partien ${d.tage > 1 ? 'seit dem ' + datumFmt(d.ab, 'tm') + ', ' : 'von '}`
-    + `${datumFmt(d.ab, 'uhr')} bis ${datumFmt(d.bis, 'uhr')} Uhr.` : '';
+  const zeit = _ehrungZeitraum(d, true);
   let gold = 0;
   const zeile = q => `<div class="eh-q ${esc(q.klasse)}">${_ehrungKachel(q, () => gold++)}
       <span class="eh-q-t"><b>${esc(q.name)}</b><small>${esc(_newsRarityLabel(q.klasse))} · ${esc(mal(q))}</small>${strich(q)}</span>
@@ -284,7 +308,7 @@ function _ndEhrungBlatt(s){
       ${klein.length ? `<div class="eh-g">${klein.map(kachel).join('')}</div>` : ''}
     </div>`;
   }).join('');
-  return {kopf, mitte: anteil + (zeit ? `<div class="nw-hinweis eh-zeit">${esc(zeit)}</div>` : '')
+  return {kopf, mitte: anteil + (zeit ? `<div class="nw-hinweis eh-zeit">${esc(zeit)}.</div>` : '')
     + `<div class="nd-section">Wer was geholt hat</div>${bloecke}`
     + `<div class="nw-hinweis">Das erste und zweite Mal zählt eine Auszeichnung voll, danach etwas weniger. `
     + `Der Strich unter jeder zeigt, wie viel vom vollen Wert bleibt.</div>`};
