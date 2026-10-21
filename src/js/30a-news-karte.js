@@ -851,8 +851,44 @@ function _newsMeisterKopf(d){
       saisonPodestHtml(d.sid, rang, {px1:64, px:52, klasse:'nf-podest', attr:'data-mpid'})}</div>`;
   } catch(e){ return ''; }
 }
+// ── Der Monatsabschluss im Fuß ───────────────────────────────────────
+// Was der Monat außer dem Meister entschieden hat, auf derselben Karte:
+// das Team der Saison mit Bilanz und Elo, die Chronik mit ihrer Zahl, den
+// drei mit den meisten Einträgen und wer zum ersten Mal darin steht, und
+// darunter jedes Zeichen, das erst mit den Titeln kam. Vorher standen die
+// Chronik und jeder Erstling auf eigenen Karten, das Team der Saison und
+// diese Zeichen auf keiner. Gelesen wird der Stand der Karte (`dataRef`),
+// nicht der von heute. Ältere Karten ohne diese Angaben behalten ihr
+// Zahlenband.
+function _newsMonatBand(d){
+  const pm = pmap(), t = d.team, c = d.chronik;
+  const feld = (art, l, inhalt, sub) => `<div class="nf-mb-f ${art}"><span class="nf-mb-l">${esc(l)}</span>`
+    + `<span class="nf-mb-v">${inhalt}</span><small>${sub}</small></div>`;
+  const felder = [];
+  if(t && Array.isArray(t.pids) && t.pids.every(id => pm[id]))
+    felder.push(feld('team', 'Team der Saison', _spChips(t.pids) + `<b class="num ${t.elo >= 0 ? 'auf' : 'ab'}">${_spVz(Number(t.elo) || 0)}</b>`,
+      `${esc(_namenListe(t.pids.map(_spName)))} · ${t.w}:${t.l}`));
+  if(c && c.eintraege){
+    const spitze = (c.spitze || []).map(x => x.pid).filter(id => pm[id]);
+    const erst = (c.erstlinge || []).filter(x => pm[x.pid]);
+    // Bis drei Erstlinge mit Namen, mehr als Zahl: im Juni 2026 waren es
+    // zehn, und zehn Namen machten das Feld höher als das Podest.
+    const erstText = !erst.length ? '' : erst.length <= 3
+      ? ` · ${esc(_namenListe(erst.map(x => _spName(x.pid))))} zum ersten Mal`
+      : ` · ${erst.length} zum ersten Mal`;
+    felder.push(feld('chron', 'Chronik', `<b class="num">${c.eintraege}</b>${_spChips(spitze)}`,
+      `${c.eintraege === 1 ? 'Eintrag' : 'Einträge'}${erstText}`));
+  }
+  const zeichen = _insZeilenHtml((d.zeichen || []).map(z => Object.assign({}, z)).sort(_insZugVor));
+  if(!felder.length && !zeichen) return '';
+  return `<div class="nf-mb">${felder.length ? `<div class="nf-mb-r${felder.length === 1 ? ' ein' : ''}">${felder.join('')}</div>` : ''}${zeichen}</div>`;
+}
 function _newsMeisterFuss(d){
   try {
+    // Die Karte des Monatsabschlusses trägt den Monat statt des Zahlenbands:
+    // Elo und Vorsprung stehen im Podest, die Tage vorn im Rennen.
+    const band = _newsMonatBand(d);
+    if(band) return saisonRennenHtml(d.sid, (Array.isArray(d.topElo) ? d.topElo : []).map(x => x && x.id).filter(Boolean), {klein:true}) + band;
     const te = Array.isArray(d.topElo) ? d.topElo : [];
     const ids = te.map(x => x && x.id).filter(Boolean);
     const sp = saisonSpitze(d.sid);
@@ -889,7 +925,6 @@ function _breakingHeroText(s){
         const te = Array.isArray(d.topElo) ? d.topElo : [];
         const cid = d.championId || (te[0] && te[0].id);
         const champ = nm(cid);
-        const monat = d.sid ? seasonLabel(d.sid) : 'Die Saison';
         let lauf = '';
         try {
           const sp = saisonSpitze(d.sid), f = sp.folge;
@@ -903,7 +938,10 @@ function _breakingHeroText(s){
                 + `und vom ${String(f[i].day).padStart(2, '0')}.${mm}. an blieb ${champ} vorn.`;
           }
         } catch(e){}
-        return `${monat} ist entschieden: ${champ} holt den Titel.` + lauf;
+        // Nur der Verlauf: „Juni 2026 ist entschieden: Leon holt den Titel"
+        // wiederholte die Schlagzeile „Leon ist Meister im Juni 2026" [§C33].
+        // Ohne Verlauf steht nichts — der Feed zeigt dann keinen Nachsatz.
+        return lauf.trim();
       }
       // ── Der Nachsatz nennt eine Zahl ────────────────────────────
       // „Machtwechsel an der Tabellenspitze: X verdraengt Y und uebernimmt
@@ -1050,7 +1088,7 @@ function _newsTagSpannung(s){
 // `tests/blatt` dieselbe Frage stellen und sie sich vorher jeder selbst
 // beantwortet haben — zwei Listen fuer dieselbe Aussage waere eine zu viel.
 const NEWS_TAGKARTE_OHNE = new Set(['ambient', 'dry_spell', 'season_endgame',
-  'quiet_week', 'season_start', 'potd', 'potw', 'woche', 'chronik_monat',
+  'quiet_week', 'season_start', 'potd', 'potw', 'woche',
   'season_recap', 'runde', 'ehrung']);
 function _newsTagKarteWuerdig(st){
   if(NEWS_TAGKARTE_OHNE.has(((st && st.dataRef) || {}).type || '')) return false;

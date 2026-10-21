@@ -4488,26 +4488,35 @@ const ok = (c, msg, det) => {
      'der Knopf „Match eintragen" fehlt nur auf der Match-Seite',
      reiter.map(r => r.name + ':' + r.fab).join(' '));
   // ── Die Meisterbühne [§C31] bei 360 px ─────────────────────────────
-  // Podest, Titelrennen und Tage vorn stehen auf Karte und Blatt. Gemessen
-  // wird, dass nichts davon über den Innenrand läuft, dass der Strahlenkranz
-  // hinter dem Podest liegt und nicht davor, und dass Kranz und Linien bei
-  // Bewegungsruhe stillstehen.
+  // Podest, Titelrennen, Team der Saison, Chronik und die Zeichen der Titel
+  // stehen auf der Karte des Monatsabschlusses; Titelrennen, Tage vorn und
+  // die Saison des Meisters im Saison-Rückblick, den ein Tippen auf die
+  // Karte öffnet. Gemessen wird, dass nichts davon über den Innenrand läuft,
+  // dass der Strahlenkranz hinter dem Podest liegt und nicht davor, und dass
+  // Kranz und Linien bei Bewegungsruhe stillstehen.
   await page.setViewportSize({width:360, height:780});
   const meisterMess = async () => page.evaluate(() => window.__k.eval(`(()=>{
     const sid = '2026-07', se = seasons.find(x => x.id === sid), top = JSON.parse(se.top_elo);
+    const drei = top.slice(0, 3).map(x => x.id), t = seasonTeamOf(sid), aw = seasonTitles(sid).awarded;
+    const ende = seasonEnd(sid).getTime();
     const s = {id:'season_recap_' + sid, cat:'season', ic:'crown', title:'x', desc:'x',
-      when:new Date(2026, 6, 31, 23, 50).getTime(), prio:92,
-      dataRef:{type:'season_recap', sid, championId:top[0].id, championElo:top[0].elo, topElo:top, fakten:{}}};
+      when:ende + 1000, prio:92,
+      dataRef:{type:'season_recap', sid, championId:top[0].id, championElo:top[0].elo, topElo:top, fakten:{},
+        team:{pids:[t[0], t[1]], elo:120, w:9, l:4},
+        chronik:{eintraege:aw.length, traeger:3, spitze:drei.map(pid => ({pid, n:2})), erstlinge:[]},
+        zeichen:rcpZeichenZuege(rcpLaufbahnDaten(ende, ende + 1000))}};
     const host = document.createElement('div');
     host.style.cssText = 'position:absolute;left:0;top:0;width:328px';
     host.innerHTML = '<div class="nf-wrap">' + _newsCardHtmlM2(s, false, false, '') + '</div>'
-      + '<div class="nd" style="position:static;transform:none;max-height:none">' + _newsDetailBody(s) + '</div>';
+      + '<div data-probe="rueckblick" style="width:328px"><div class="rcp-block">' + saisonRennenHtml(sid, drei) + '</div>'
+      + '<div class="rcp-block">' + saisonSpitzeHtml(sid, drei) + '</div>'
+      + '<div class="rcp-block">' + saisonZellenHtml(sid, drei[0]) + '</div></div>';
     document.body.appendChild(host);
     const raus = [];
-    [host.querySelector('.nf-card'), host.querySelector('.nd')].forEach(box => {
+    [host.querySelector('.nf-card'), host.querySelector('[data-probe]')].forEach(box => {
       if(!box) { raus.push('fehlt'); return; }
       const b = box.getBoundingClientRect();
-      box.querySelectorAll('.pod-karte, .srn-svg, .srn-band, .srn-leg, .srn-t, .srn-z, .nf-zb').forEach(e => {
+      box.querySelectorAll('.pod-karte, .srn-svg, .srn-band, .srn-leg, .srn-t, .srn-z, .nf-zb, .nf-mb-f, .ni-z').forEach(e => {
         const r = e.getBoundingClientRect();
         if(r.left < b.left - 0.5 || r.right > b.right + 0.5) raus.push(e.className.baseVal || e.className);
       });
@@ -4517,18 +4526,46 @@ const ok = (c, msg, det) => {
     const out = {raus, kranz:kranz ? getComputedStyle(kranz).animationName : 'fehlt',
       hinten:kranz ? getComputedStyle(kranz).zIndex : 'fehlt',
       linie:linie ? getComputedStyle(linie).animationName : 'fehlt',
-      tage:tage ? getComputedStyle(tage).animationName : 'fehlt'};
+      tage:tage ? getComputedStyle(tage).animationName : 'fehlt',
+      felder:host.querySelectorAll('.nf-mb-f').length};
     host.remove(); return out;
   })()`));
   const mb = await meisterMess();
   ok(mb.raus.length === 0, 'die Meisterbühne bleibt bei 360 px in Karte und Blatt', mb.raus.join(', '));
-  ok(mb.hinten === '-1' && mb.kranz !== 'none' && mb.linie !== 'none' && mb.tage !== 'none',
+  ok(mb.felder === 2, 'die Karte trägt Team der Saison und Chronik', mb.felder);
+  ok(mb.hinten === '-1' && mb.kranz !== 'none' && mb.linie !== 'none' && mb.tage !== 'none'
+     && mb.kranz !== 'fehlt' && mb.linie !== 'fehlt' && mb.tage !== 'fehlt',
      'der Strahlenkranz liegt hinter dem Podest, Kranz und Linien bewegen sich', JSON.stringify(mb));
   await page.emulateMedia({reducedMotion: 'reduce'});
   const mbRuhig = await meisterMess();
   await page.emulateMedia({reducedMotion: 'no-preference'});
   ok(mbRuhig.kranz === 'none' && mbRuhig.linie === 'none' && mbRuhig.tage === 'none',
      'bei prefers-reduced-motion steht die Meisterbühne still', JSON.stringify(mbRuhig));
+  // Ein Tippen auf die Karte öffnet den Saison-Rückblick, kein eigenes
+  // Blatt: das zeigte Podest, Titelrennen und Tage vorn ein zweites Mal, und
+  // vom Blatt führte kein Weg zum Rückblick [§C31].
+  const tipp = JSON.parse(await K(`(async()=>{
+    closeSheet(true);
+    const sid = '2026-07', top = JSON.parse(seasons.find(x => x.id === sid).top_elo);
+    const s = {id:'season_recap_' + sid, cat:'season', ic:'crown', title:'x', desc:'x',
+      when:new Date(2026, 7, 1).getTime(), prio:92,
+      dataRef:{type:'season_recap', sid, championId:top[0].id, championElo:top[0].elo, topElo:top, fakten:{}}};
+    _cache._stories = [s].concat((_cache._stories || []).filter(x => x.id !== s.id));
+    _cache._consolFrom = null;
+    openNewsDetail(s.id);
+    await new Promise(r => setTimeout(r, 450));
+    const sheet = document.getElementById('sheet'), nd = document.getElementById('ndBg');
+    const out = {offen:sheet.classList.contains('show'), rueckblick:!!sheet.querySelector('#closeRecapBtn'),
+      titel:(sheet.querySelector('.rcp-kopf, h2, .rcp-titel') || {}).textContent || '',
+      blatt:!!(nd && nd.classList.contains('show'))};
+    // Erst weiter, wenn das Blatt zugeschoben und leer ist: die Suche nach
+    // Filtern darunter liest das ganze Dokument.
+    closeSheet(true);
+    for(let i = 0; i < 20 && sheet.innerHTML; i++) await new Promise(r => setTimeout(r, 50));
+    return JSON.stringify(out);
+  })()`));
+  ok(tipp.offen && tipp.rueckblick && !tipp.blatt,
+     'ein Tippen auf den Monatsabschluss öffnet den Saison-Rückblick und kein Blatt', JSON.stringify(tipp));
 
   // ── Kein Filter über dem Zeichen [§C30] ─────────────────────────────
   // Jedes Wappen trug `filter: drop-shadow(…)` am ganzen `svg.ins`, und

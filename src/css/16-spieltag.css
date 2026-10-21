@@ -1031,8 +1031,7 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 .nd-mo{display:flex;flex-direction:column;gap:12px}
 .nd-mo-k{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:12px;align-items:center}
 .nd-mo-k > b{grid-row:span 2}
-.nd-mo-k > b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:44px;line-height:1;color:var(--gold)}
-.nd-mo.offen .nd-mo-k > b{color:var(--ink)}
+.nd-mo-k > b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:44px;line-height:1;color:var(--ink)}
 .nd-mo-k > span{font:600 9px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink2);align-self:end}
 .nd-mo-k > small{font-size:10.5px;color:var(--muted);margin-top:3px;align-self:start}
 .nd-mo .nd-bk{margin:0}
@@ -1043,24 +1042,6 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 .nd-mo-z > i svg{width:15px;height:15px}
 .nd-mo-z > b{font-size:11px;font-weight:600;color:var(--ink2);line-height:1.2;hyphens:manual;overflow-wrap:normal}
 .nd-mo-z > .av{--av:22px;width:22px;height:22px;font-size:8.5px;flex:0 0 auto}
-
-/* ── Der erste Eintrag ────────────────────────────────────────────── */
-.nd-er{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
-.nd-er-eins{position:absolute;top:-14px;left:50%;transform:translateX(-50%);font-family:'Archivo Black',sans-serif;
-  font-size:150px;line-height:1;color:rgba(247,207,74,.08);pointer-events:none}
-.nd-er-w{position:relative;display:inline-flex;cursor:pointer}
-.nd-er-ic{position:absolute;right:-6px;bottom:4px}
-.nd-er-n{font-size:16px;font-weight:700;color:var(--gold)}
-.nd-er-m{font:600 9px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
-.nd-er-ev{font-size:12.5px;color:var(--ink2);padding:2px 2px 8px;line-height:1.45}
-.nd-er-r{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px}
-.nd-er-r > span{display:flex;flex-direction:column;align-items:center;gap:3px;width:38px;padding:6px 0 4px;border-radius:9px;
-  background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)}
-.nd-er-r > span > i{display:flex;width:16px;height:16px;color:var(--muted)}
-.nd-er-r > span > i svg{width:16px;height:16px}
-.nd-er-r > span.da{box-shadow:inset 0 0 0 1px rgba(247,207,74,.45)}
-.nd-er-r > span.da > i{color:var(--gold)}
-.nd-er-r small{font-size:8.5px;color:var(--muted)}
 
 /* ── Die neue Stufe [§C30] ────────────────────────────────────────── */
 /* Die Verwandlung: die Stufe davor klein, ein Pfeil, die neue groß um das

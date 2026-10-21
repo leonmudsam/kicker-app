@@ -743,7 +743,6 @@ ok(_ldZwei.zeilen === _ldZwei.wechsel && _ldZwei.uhren === _ldZwei.ereignisse,
    'das Blatt zeigt jeden davon mit seiner Uhrzeit',
    _ldZwei.zeilen + ' Zeilen, ' + _ldZwei.uhren + ' Uhrzeiten');
 ok(_ldZwei.letzter, 'der Kopf nennt den Ersten am Ende des Tages');
-ok(br({type:'chronik_monat'}) === false, 'die Monatschronik ist kein Breaking');
 ok(br({type:'top_clash'}) === false, 'top_clash ist kein Breaking mehr');
 ok(br({type:'giant_slayer'}) === false, 'giant_slayer ist kein Breaking mehr');
 ok(br({type:'potd'}) === false, 'Alltag bleibt Alltag');
@@ -953,7 +952,6 @@ const _tafel = JSON.parse(K.eval(`JSON.stringify((function(){
     insignium: insKarte ? insKarte.dataRef.zuege.filter(z => z.art !== 'grad').length : 0, insErwartet,
     insGesicht: typ('insignium_tag').every(s => _newsPids(s).length > 0),
     insEine: typ('insignium_tag').length <= 1 && typ('insignium_stufe').length === 0,
-    chronik: typ('chronik_monat').length + typ('chronik_erstling').length,
     // Jede neue Karte nennt eine Zahl und bleibt ohne Platzhalter.
     sauber: roh.filter(s => s.cat === 'tafel').every(s => {
       const txt = (s.title || '') + ' ' + (s.desc || '');
@@ -1010,7 +1008,7 @@ ok(_tagRahmen.summe, 'die Punktewirkung erfindet keine Punkte');
 const _tafelGrund = JSON.parse(K.eval(`JSON.stringify((function(){
   const alle = matches.slice();
   const arten = ['rekord_erstmals','rekord_geholt','rekord_gesteigert',
-                 'insignium_stufe','chronik_erstling','chronik_geholt'];
+                 'insignium_stufe','chronik_geholt'];
   const tage = [...new Set(alle.map(m => tagKey(mts(m))))].sort()
     .filter(t => t >= '2026-07-28' && t <= '2026-08-26');
   let ohneGrund = 0, meldungen = 0, mehrfach = [], gemessen = 0;
@@ -1118,7 +1116,6 @@ ok(_tafel.insignium === _tafel.insErwartet,
    _tafel.insignium + ' von ' + _tafel.insErwartet);
 ok(_tafel.insGesicht, 'die Insignium-Karte zeigt den Traeger');
 ok(_tafel.insEine, 'die Leiter hat eine Karte je Spieltag und keine Einzelzeilen mehr');
-ok(_tafel.chronik > 0, 'die Monatschronik wird gemeldet', _tafel.chronik + '');
 ok(_tafel.sauber, 'jede Tafel-Karte nennt eine Zahl und traegt keinen Platzhalter');
 
 // Ein grosser Sprung darf keine Stufe ueberspringen. Der fachliche Zeitpunkt
@@ -1269,9 +1266,9 @@ const _rueck = JSON.parse(K.eval(`JSON.stringify((function(){
   const roh = _buildStories();
   const einer = t => roh.find(s => (s.dataRef||{}).type === t) || null;
   const body = s => { try { return s ? _newsDetailBody(s) : ''; } catch(e){ return 'FEHLER ' + e.message; } };
-  // Der Wochenrueckblick steht seit dem Umbau als EINE Karte am Sonntag um
-  // 23:00. Spieler der Woche, Team der Woche und die vier Superlative sind
-  // ihre Zeilen, keine eigenen Karten mehr.
+  // Der Wochenrueckblick steht als EINE Karte am Sonntag um 23:59:05, fuenf
+  // Sekunden nach dem Spieler des Tages. Spieler der Woche, Team der Woche
+  // und die vier Superlative sind ihre Zeilen, keine eigenen Karten mehr.
   const wo = einer('woche');
   const teile = wo ? ((wo.dataRef||{}).teile || []) : [];
   const tw = teile.find(t => t.art === 'team') || null;
@@ -1291,6 +1288,7 @@ const _rueck = JSON.parse(K.eval(`JSON.stringify((function(){
     potdBahn: (potdBody.match(/class="nd-bahn"/g)||[]).length,
     hatWoche: !!wo,
     wocheStunde: wo ? new Date(wo.when).getHours() : -1,
+    wocheZeit: wo ? new Date(wo.when).toTimeString().slice(0, 8) : '',
     wocheTag: wo ? new Date(wo.when).getDay() : -1,
     wocheTeile: teile.length,
     wocheArten: teile.map(t => t.art),
@@ -1308,7 +1306,9 @@ ok(!_rueck.hatPotd || _rueck.potdBahn === 1,
    'und den Tag als Bahn darueber', String(_rueck.potdBahn));
 ok(_rueck.hatWoche, 'der Wochenrueckblick steht als eine Karte');
 ok(!_rueck.hatWoche || _rueck.wocheTag === 0, 'die Wochenkarte steht am Sonntag', _rueck.wocheTag);
-ok(!_rueck.hatWoche || _rueck.wocheStunde === 23, 'die Wochenkarte steht um 23:00', _rueck.wocheStunde);
+// Um 23:00 stand sie vor dem Spieler des Sonntags (23:59): der Abschluss
+// eines Tages ueber dem der ganzen Woche.
+ok(!_rueck.hatWoche || _rueck.wocheZeit === '23:59:05', 'die Wochenkarte steht um 23:59:05, nach dem Spieler des Tages', _rueck.wocheZeit);
 ok(!_rueck.hatWoche || _rueck.wocheTeile >= 2, 'sie traegt mehrere Wertungen',
    _rueck.wocheTeile + ': ' + _rueck.wocheArten.join(', '));
 ok(!_rueck.hatWoche || _rueck.wocheGesicht > 0, 'die Wochenkarte zeigt ein Gesicht [§C33]', _rueck.wocheGesicht);
@@ -1340,7 +1340,8 @@ const _feed = JSON.parse(K.eval(`JSON.stringify((function(){
     // Gemessen wird die Verteilung ueber die EREIGNISSE, nicht ueber die
     // Karten: eine Sammelkarte buendelt bis zu vier davon, und wer sie als
     // eine zaehlt, bestraft genau die Buendelung.
-    ereignisse: ohnePartie.reduce((n, s) => {
+    // Ohne die Ehrungen, aus demselben Grund wie bei den Gesichtern.
+    ereignisse: ohnePartie.filter(s => (s.dataRef||{}).type !== 'ehrung').reduce((n, s) => {
       const t = ((s.dataRef||{}).teile||[]); return n + (t.length > 1 ? t.length : 1); }, 0),
     // Wer in der Geschichte vorkommt, bekommt sein Gesicht.
     mitSpieler: sichtbar.filter(s => _newsPids(s).length > 0).length,
@@ -1407,20 +1408,19 @@ const _feed = JSON.parse(K.eval(`JSON.stringify((function(){
     // Die Typen sammel und woche sind ausgenommen: jede Sammelkarte gehoert zu einer
     // anderen Partie oder einem anderen Tag, und die Wochenkarte gibt es je
     // Woche genau einmal. Sie zu deckeln hiesse, eine Buendelung zu bestrafen.
-    // potd und chronik_monat stehen dabei: was es je Tag oder Monat genau
-    // einmal gibt, ist keine Wiederholung, sondern die Schlagzeile eines
-    // eigenen Tages.
+    // potd steht dabei: was es je Tag genau einmal gibt, ist keine
+    // Wiederholung, sondern die Schlagzeile eines eigenen Tages.
     haeufung: Object.keys(proTag).filter(k => proTag[k] > 2 &&
       ['ambient','group','lead_change','elo_record','streak_record',
        'season_recap','season_endgame','sammel','woche','spiel',
-       'potd','chronik_monat'].indexOf(k.split('|')[0]) < 0)
+       'potd'].indexOf(k.split('|')[0]) < 0)
       .map(k => k + '×' + proTag[k]),
     // Doppelte Schlagzeilen: zweimal dieselbe Zeile ist eine Zeile zu viel.
     doppelt: (function(){
       // Was es je Tag genau einmal gibt, darf dieselbe Schlagzeile zweimal
       // tragen: zwei Spieltage, zwei Sieger, und jede Karte nennt im Text ihr
       // eigenes Datum. Dieselbe Ausnahme gilt fuer die Partie.
-      const PFL = ['potd','woche','chronik_monat','season_recap','chronik_frei'];
+      const PFL = ['potd','woche','season_recap','chronik_frei'];
       const g = {}; sichtbar.filter(s => !_prt(s)
         && PFL.indexOf((s.dataRef||{}).type) < 0)
         .forEach(s => { g[s.title]=(g[s.title]||0)+1; });
@@ -1429,7 +1429,7 @@ const _feed = JSON.parse(K.eval(`JSON.stringify((function(){
     // Und zweimal derselbe Text erst recht nicht — „Eine grosse Rivalitaet —
     // die Liga liebt's" stand wortgleich unter zwei Karten untereinander.
     doppelText: (function(){
-      const PFL = ['potd','woche','chronik_monat','season_recap','chronik_frei'];
+      const PFL = ['potd','woche','season_recap','chronik_frei'];
       const g = {}; sichtbar.filter(s => !_prt(s)
         && PFL.indexOf((s.dataRef||{}).type) < 0)
         .forEach(s => { g[s.desc]=(g[s.desc]||0)+1; });
@@ -1470,7 +1470,12 @@ const _feed = JSON.parse(K.eval(`JSON.stringify((function(){
       // Gezaehlt wird ueber die Karten, die eine AUSWAHL sind. Eine
       // Partie-Karte ist keine: wer oft spielt, steht oft darauf, und das ist
       // kein Uebergewicht im Feed, sondern der Spielplan.
-      const g = {}; ohnePartie.forEach(s => _newsPids(s).forEach(id => { g[id]=(g[id]||0)+1; }));
+      // Dasselbe gilt fuer die Ehrung einer Runde: sie nennt jeden, der darin
+      // eine Auszeichnung bekam, vollstaendig und ohne Auswahl [§C33].
+      // Gemessen stand Leon auf 15 von 42 Ereignissen, 10 davon Ehrungen;
+      // ohne sie steht niemand auf mehr als 6 von 31.
+      const g = {}; ohnePartie.filter(s => (s.dataRef||{}).type !== 'ehrung')
+        .forEach(s => _newsPids(s).forEach(id => { g[id]=(g[id]||0)+1; }));
       const w = Object.keys(g).map(k => g[k]).sort((x,y) => y-x);
       // Wer gewertet ist, muss auch vorkommen. Das ist die staerkere Frage als
       // die nach dem Spitzenreiter: der Feed darf jemanden feiern, aber er
@@ -2439,7 +2444,9 @@ const _plan = JSON.parse(K.eval(`JSON.stringify((function(){
   const roh = _buildStories();
   const s = _consolidateStories(roh.slice().sort((a,b)=>new Date(b.when)-new Date(a.when)));
   const potd = s.filter(x => (x.dataRef||{}).type === 'potd');
-  const chr  = s.filter(x => (x.dataRef||{}).type === 'chronik_monat');
+  // Die Chronik eines Monats steht auf der Karte seines Abschlusses; eigene
+  // Karten fuer sie und fuer jeden Erstling gibt es nicht mehr.
+  const chr  = roh.filter(x => ['chronik_monat','chronik_erstling'].indexOf((x.dataRef||{}).type) >= 0);
   const tagVon = m => { const d = new Date(m.created_at);
     return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
   const spieltage = new Set(matches.map(tagVon));
@@ -2449,9 +2456,7 @@ const _plan = JSON.parse(K.eval(`JSON.stringify((function(){
     // Der Spieler des Tages steht um 23:59 an dem Tag, an dem gespielt wurde.
     potdZeit: potd.map(x => new Date(x.when).getHours()+':'+String(new Date(x.when).getMinutes()).padStart(2,'0')),
     potdAmSpieltag: potd.every(x => spieltage.has(kVon(x.when))),
-    // Die Chronik erscheint mit dem Monatswechsel, nicht am Vormittag danach.
-    chrZeit: chr.map(x => new Date(x.when).getHours()+':'+new Date(x.when).getMinutes()),
-    chrErster: chr.every(x => new Date(x.when).getDate() === 1),
+    chrAlt: chr.map(x => x.id),
     // Die Sammelkarte muss wirklich buendeln: jede Zeile, die sie traegt,
     // stand vorher als eigene Karte im Feed und darf jetzt nicht mehr daneben
     // stehen. Ohne diese Gegenrechnung misst die Zusicherung nichts.
@@ -2695,48 +2700,96 @@ ok(_zeigtSich.band.indexOf('nf-sam-k') >= 0
    && _zeigtSich.band.indexOf('in der Chronik') >= 0,
    'das Sammelband zeigt die Marke',
    _zeigtSich.band.slice(0, 90));
-ok(_plan.chrZeit.every(t => t === '0:0'), 'die Chronik erscheint um 00:00',
-   _plan.chrZeit.join(', ') || 'keine');
-ok(_plan.chrErster, 'am ersten Tag des Folgemonats');
+ok(_plan.chrAlt.length === 0, 'die Chronik des Monats hat keine eigene Karte neben seinem Abschluss',
+   _plan.chrAlt.join(', '));
 
-// ── Der Rueckblick schliesst seinen Monat ab ──────────────────────────
-// Er stand auf dem Saisonstart, also am 1. um 00:00 — unter dem Tageskopf
-// eines Monats, von dem er gar nicht erzaehlt, und damit unter demselben Kopf
-// wie die Monatschronik. Der Generator bildet ihn nur in den ersten zwei
-// Tagen einer Saison; dafuer wird die Uhr kurz auf den 1. gestellt.
-const _recap = (function(){
+// ── Der Abschluss steht ueber dem Abend, der ihn beschliesst ─────────
+// EINE Karte je Monat, am 1. um 00:00: beim ersten Oeffnen nach dem
+// Monatswechsel ist sie die juengste. Sie stand am letzten Tag um 23:50 und
+// damit unter dem Spieler dieses Tages (23:59), die Chronik am 1. um 00:00
+// als eigene Karte und jeder Erstling als eine weitere. Das Team der Saison
+// und die Zeichen, die erst mit den Titeln kamen, standen auf keiner.
+// Der Generator bildet sie nur in den ersten zwei Tagen einer Saison; dafuer
+// wird die Uhr kurz verstellt.
+const _amErsten = (ms, code) => {
   const Echt = globalThis.Date;
-  const stellen = ms => { globalThis.Date = class extends Echt {
+  globalThis.Date = class extends Echt {
     constructor(...a){ if(a.length===0) super(ms); else super(...a); }
-    static now(){ return ms; } }; };
+    static now(){ return ms; } };
   try {
-    stellen(new Echt(2026, 7, 1, 12, 0, 0).getTime());
     return JSON.parse(K.eval(`JSON.stringify((function(){
       invalidateCache();
       _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
-      const r = _buildStories().filter(x => (x.dataRef||{}).type === 'season_recap');
-      return r.map(x => { const d = new Date(x.when);
-        return {sid:x.dataRef.sid, iso:d.toISOString(),
-          zeit:d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0'),
-          tag:d.getDate(),
-          letzter:new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate(),
-          breaking:_isBreaking(x)};
-      });
+      const roh = _buildStories();
+      ${code}
     })())`));
   } finally {
     globalThis.Date = FakeDate;
     K.eval('(function(){ invalidateCache();'
       + ' _cache._buildStoriesKey = null; _cache._buildStoriesResult = null; })()');
   }
-})();
-ok(_recap.length === 1, 'am Monatsersten steht genau ein Saison-Rueckblick',
-   _recap.length + ' Karten');
-ok(_recap.every(x => x.zeit === '23:50'), 'er steht um 23:50',
-   _recap.map(x => x.zeit).join(', ') || 'keiner');
-ok(_recap.every(x => x.tag === x.letzter),
-   'und am letzten Kalendertag des Monats, von dem er erzaehlt',
-   _recap.map(x => x.sid + ' -> ' + x.iso).join(', '));
+};
+const _recap = _amErsten(new RealDate(2026, 7, 1, 12, 0, 0).getTime(), `
+  return roh.filter(x => (x.dataRef||{}).type === 'season_recap').map(x => {
+    const d = new Date(x.when), r = x.dataRef, aw = seasonTitles(r.sid).awarded;
+    const karte = _newsCardHtmlM2(x, false, false, '');
+    return {sid:r.sid, iso:d.toISOString(), zeit:d.toTimeString().slice(0, 8),
+      // seasonEnd ist 23:59:59 des letzten Tages: eine Sekunde danach.
+      erster:d.getTime() === seasonEnd(r.sid).getTime() + 1000,
+      breaking:_isBreaking(x),
+      team:(r.team && r.team.pids || []).length, teamSoll:(seasonTeamOf(r.sid) || []).filter(Boolean).length,
+      eintraege:r.chronik ? r.chronik.eintraege : -1, eintraegeSoll:aw.length,
+      erstFalsch:((r.chronik || {}).erstlinge || []).filter(e =>
+        (seasonTitleHistory(e.pid) || []).some(t => t.title && t.sid < r.sid)).map(e => pname(e.pid)),
+      erstSoll:[...new Set(aw.map(a => a.pid))].filter(pid =>
+        !(seasonTitleHistory(pid) || []).some(t => t.title && t.sid < r.sid)).length,
+      erst:((r.chronik || {}).erstlinge || []).length,
+      zeichen:(r.zeichen || []).length,
+      band:/class="nf-mb"/.test(karte), felder:(karte.match(/class="nf-mb-f /g) || []).length,
+      zeilen:(karte.match(/class="ni-z ni-/g) || []).length,
+      nachsatzDoppelt:/holt den Titel|ist entschieden/.test(karte)};
+  });`);
+ok(_recap.length === 1, 'am Monatsersten steht genau ein Monatsabschluss', _recap.length + ' Karten');
+ok(_recap.every(x => x.zeit === '00:00:00' && x.erster),
+   'er steht am 1. um 00:00, am Ende des Monats, von dem er erzaehlt',
+   _recap.map(x => x.sid + ' -> ' + x.iso).join(', ') || 'keiner');
 ok(_recap.every(x => x.breaking), 'und er ist Breaking');
+ok(_recap.every(x => x.team === 2 && x.teamSoll === 2), 'er traegt das Team der Saison',
+   JSON.stringify(_recap.map(x => [x.team, x.teamSoll])));
+ok(_recap.every(x => x.eintraege === x.eintraegeSoll && x.eintraege > 0),
+   'und die Chronik des Monats mit jedem Eintrag', JSON.stringify(_recap.map(x => [x.eintraege, x.eintraegeSoll])));
+ok(_recap.every(x => x.erst === x.erstSoll && !x.erstFalsch.length),
+   'und genau die, die zum ersten Mal darin stehen',
+   JSON.stringify(_recap.map(x => [x.erst, x.erstSoll, x.erstFalsch])));
+ok(_recap.every(x => x.band && x.felder === 2 && x.zeilen === x.zeichen),
+   'die Karte zeigt Team und Chronik als Felder und jedes Zeichen, das mit den Titeln kam, als Zeile',
+   JSON.stringify(_recap.map(x => [x.band, x.felder, x.zeilen, x.zeichen])));
+ok(_recap.every(x => !x.nachsatzDoppelt), 'und wiederholt die Schlagzeile nicht');
+
+// Endet ein Monat an einem Sonntag, kommen drei Abschluesse in einer Minute:
+// der Tag, die Woche und der Monat — in dieser Reihenfolge. Der 31.05.2026
+// war ein Sonntag ohne Partie; gestellt werden drei Siege desselben Duos.
+const _reihe = _amErsten(new RealDate(2026, 5, 1, 9, 0, 0).getTime(), `
+  const alt = matches.slice();
+  const deltas = d => { const rc = simulateEloWithSliders(matches), m = {};
+    rc.history.forEach(h => { m[h.matchId] = h.deltas; }); matches.forEach(x => { x.deltas = m[x.id] || {}; }); };
+  const vorlage = alt.find(m => tagKey(mts(m)) === '2026-05-27');
+  try {
+    matches = alt.concat([0, 1, 2].map(i => Object.assign({}, vorlage, {id:'so31_' + i,
+      created_at:new Date(2026, 4, 31, 15, i * 20).toISOString(), score_a:10, score_b:4, winner:'A'})));
+    deltas(); invalidateCache(); _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+    const neu = _buildStories();
+    const art = t => neu.find(x => (x.dataRef||{}).type === t && tagKey(x.when) >= '2026-05-31');
+    const z = x => x ? new Date(x.when).getTime() : null;
+    const iso = x => x ? new Date(x.when).toString().slice(4, 24) : '-';
+    const p = art('potd'), w = art('woche'), m = art('season_recap');
+    return {potd:z(p), woche:z(w), monat:z(m), text:[p, w, m].map(iso).join(' < ')};
+  } finally { matches = alt; deltas(); }`);
+ok(_reihe.potd && _reihe.woche && _reihe.monat
+   && _reihe.potd < _reihe.woche && _reihe.woche < _reihe.monat
+   && _reihe.woche - _reihe.potd === 5000,
+   'Spieler des Tages, dann die Woche fuenf Sekunden spaeter, dann der Monat', _reihe.text);
+
 ok(_plan.sammel.length > 0, 'es gibt Sammelkarten', _plan.sammel.length + '');
 ok(_plan.sammel.every(n => n >= 2), 'eine Sammelkarte traegt alle verbundenen Zeilen',
    _plan.sammel.join(', ') || 'keine');
@@ -2996,7 +3049,7 @@ const _dop = JSON.parse(K.eval(`JSON.stringify((function(){
   // unter zwei Tagesköpfen bzw. zu zwei Uhrzeiten [§C33].
   const _prt = s => { const d=(s&&s.dataRef)||{};
     return d.type==='spiel' || (d.type==='sammel' && d.quelle==='spiel' && !!d.matchId); };
-  const _PFL = ['potd','woche','chronik_monat','season_recap','chronik_frei'];
+  const _PFL = ['potd','woche','season_recap','chronik_frei'];
   const titel = sicht.filter(s => !_prt(s) && _PFL.indexOf((s.dataRef||{}).type) < 0)
     .map(s => String(s.title||''));
   const zeilen = [];
@@ -3732,7 +3785,7 @@ const _wenig = JSON.parse(K.eval(`JSON.stringify((function(){
   // Und eine PARTIE-Karte zaehlt gar nicht mit: sie ist keine Auswahl, sie
   // wurde gespielt. Gemessen kamen von 52 Partien des Fensters 18 in einer
   // sichtbaren Karte vor, weil der Deckel die uebrigen wegnahm [§C33].
-  const PFLICHT = new Set(['potd','woche','chronik_monat','season_recap','chronik_frei']);
+  const PFLICHT = new Set(['potd','woche','season_recap','chronik_frei']);
   // Die Runde der Vier nimmt Partie-Karten auf und ist selbst eine [§11.6c].
   const prt = s => { const d = (s&&s.dataRef)||{};
     return d.type === 'spiel' || d.type === 'runde'
@@ -4967,7 +5020,7 @@ const _tagmix = JSON.parse(K.eval(`JSON.stringify((function(){
   // nicht mit [§C33].
   // Der Sieger des Tages und sein Gegenpart „Harter Tag fuer X" fassen den
   // ganzen Tag zusammen, stehen an seinem Ende und zaehlen nicht mit [§C33].
-  const pflicht = new Set(['potd','woche','chronik_monat','season_recap','elo_swing']);
+  const pflicht = new Set(['potd','woche','season_recap','elo_swing']);
   // Eine Partie-Karte zaehlt nicht mit: sie ist keine Auswahl, sie wurde
   // gespielt. Neun Partien an einem Tag sind neun Ereignisse [§C33].
   // Die Runde der Vier nimmt Partie-Karten auf und ist selbst eine [§11.6c].
@@ -7965,9 +8018,14 @@ const _tafelBl = JSON.parse(K.eval(`JSON.stringify((function(){
       wirkung:zahl(/<div class="nd-wk[ "]/g, b.m), personen:d.zuege.length,
       leiter:/nf-ll/.test(b.m), stufe:b.k.indexOf('>' + _insLageName(z.nach) + '<') >= 0};
   }
-  const mo = typ('chronik_monat')[0];
+  // Die Tafel am Tag, an dem sie aufgeht: gestellt am laufenden Monat, mit
+  // dem Schnitt der Karte. Die Tafel eines abgeschlossenen Monats zeigt der
+  // Saison-Rückblick.
+  const _frei = {id:'x_frei', cat:'tafel', ic:'scroll', title:'Offen', desc:'', when:new Date(Date.now()),
+    dataRef:{type:'chronik_frei', sid:currentSeason().id, eintraege:0, halter:0, traeger:[]}};
+  const mo = (seasonTitles(currentSeason().id) || {}).awarded ? _frei : null;
   if(mo){
-    const b = blatt(mo), aw = seasonTitles(mo.dataRef.sid).awarded;
+    const b = blatt(mo), aw = seasonTitles(mo.dataRef.sid, Date.now() + 1).awarded;
     const je = {}; aw.forEach(a => { je[a.pid] = (je[a.pid] || 0) + 1; });
     const max = Math.max(...Object.values(je));
     const erste = (b.k.match(/class="nd-bk-z hell"[\\s\\S]*?<b class="num">(\\d+)<\\/b>/) || [])[1];
@@ -7985,16 +8043,6 @@ const _tafelBl = JSON.parse(K.eval(`JSON.stringify((function(){
       namen:alle.every(id => b.k.indexOf(esc(pname(id))) >= 0),
       vorher:weg.length ? /nd-rk-alt/.test(b.k) : !/nd-rk-alt/.test(b.k),
       name:b.k.indexOf(esc(d.chronName)) >= 0, tafel:b.m.indexOf('Ganze Tafel') >= 0};
-  }
-  // Der Erstling entsteht nur am Monatswechsel; gestellt an einem echten Eintrag.
-  const a = seasonTitles('2026-07').awarded[0];
-  if(a){
-    const s = {id:'x_erst', cat:'tafel', ic:a.ic, title:'Erst', desc:'', when:new Date(2026,7,1,0,1),
-      dataRef:{type:'chronik_erstling', sid:'2026-07', pid:a.pid, titel:a.name}};
-    const b = blatt(s);
-    const monate = (seasonTitleHistory(a.pid) || []).filter(x => x.sid >= '2026-07');
-    r.erst = {buehne:/nd-buehne nd-er/.test(b.k), name:b.k.indexOf(esc(a.name)) >= 0,
-      monate:zahl(/<span class="(da)?"><i>/g, b.m), soll:monate.length > 1 ? monate.length : 0};
   }
   // Der Tafel-Moment: oben der Spieltag als Achse — jede Partie ein Strich,
   // jede Bewegung ein Punkt in der Farbe ihrer Art —, und ohne einen Namen:
@@ -8041,14 +8089,11 @@ ok(_tb.ins && _tb.ins.buehne && _tb.ins.grade === _tb.ins.soll && _tb.ins.wirkun
    JSON.stringify(_tb.ins));
 ok(_tb.monat && _tb.monat.zellen === _tb.monat.soll && _tb.monat.balken === _tb.monat.traeger
    && _tb.monat.erste === _tb.monat.max,
-   'das Blatt der Monatschronik zeigt jeden Eintrag der Tafel als Zelle und jeden Träger als Balken',
+   'das Blatt der offenen Monatstafel zeigt jeden Eintrag als Zelle und jeden Träger als Balken',
    JSON.stringify(_tb.monat));
 ok(_tb.chronik && _tb.chronik.buehne && _tb.chronik.namen && _tb.chronik.vorher && _tb.chronik.name && _tb.chronik.tafel,
    'das Blatt eines Chronik-Wechsels zeigt dieselbe Bühne wie ein Rekord, mit allen Haltern und nur echten Vorgängern',
    JSON.stringify(_tb.chronik));
-ok(_tb.erst && _tb.erst.buehne && _tb.erst.name && _tb.erst.monate === _tb.erst.soll,
-   'das Blatt eines ersten Eintrags zeigt das Wappen mit der Chronik und die Monate seitdem',
-   JSON.stringify(_tb.erst));
 
 console.log('=== EIN WAPPEN UND EINE ZAHL, UND KEINE LEERE UEBERSCHRIFT ===');
 // Meilenstein, Jubiläum, Form, Ausschlag, Spitzenspiel und runde Marken

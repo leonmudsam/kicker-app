@@ -517,7 +517,7 @@ function _newsTafelTon(s){
 // gehört dem Titel. Was ohnehin leuchtet, bekommt keinen zweiten, und eine
 // negative Richtung auch nicht. Der Versatz kommt aus der ID, damit nicht
 // alle Lichter im selben Takt laufen.
-const NEWS_GLANZ_TYP = new Set(['lead_change', 'rekord_geholt', 'insignium_stufe', 'chronik_erstling', 'streak_record', 'season_champion']);
+const NEWS_GLANZ_TYP = new Set(['lead_change', 'rekord_geholt', 'insignium_stufe', 'streak_record', 'season_champion']);
 // Die seltenen Formen der gewöhnlichen Partie (`glanz` aus `_spBild`):
 // Zählwerk, Rückkehr, Elo-Transfer und der gebrochene Fluch [§C33].
 const NEWS_GLANZ_ANLASS = new Set(['spitze', 'medaille', 'aussenseiter', 'premiere', 'riss', 'form']);

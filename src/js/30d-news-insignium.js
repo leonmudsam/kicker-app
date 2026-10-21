@@ -166,8 +166,13 @@ function _newsInsTagKopf(s){
 // „+1 weitere"; ohne Prestige-Zahl, die steht auf der Tafel-Karte und im
 // Blatt [§C33].
 function _newsInsTagZeilen(s){
-  const d = (s && s.dataRef) || {}, pm = pmap();
-  const l = _insZuege(d).slice(1).filter(z => pm[z.pid] && INSIGNIEN[z.nach.stufe | 0]);
+  return _insZeilenHtml(_insZuege((s && s.dataRef) || {}).slice(1));
+}
+// Die Zeilen selbst — auch für die Zeichen, die erst mit den Titeln eines
+// Monats kommen, auf der Karte des Monatsabschlusses [§C27].
+function _insZeilenHtml(zuege){
+  const pm = pmap();
+  const l = (zuege || []).filter(z => z && z.nach && pm[z.pid] && INSIGNIEN[z.nach.stufe | 0]);
   if(!l.length) return '';
   const text = z => z.art === 'ab' ? `fällt auf den ${INSIGNIEN[z.nach.stufe].name} zurück`
     : z.art === 'grad' ? `steigt auf ${_insLageName(z.nach)}`

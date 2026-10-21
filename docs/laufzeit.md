@@ -39,6 +39,15 @@ Der Schnellstart [§C42] hält zwei Werte in `06c-stand.js`: `_standOffen`
 `_standGezeigt` (sein Fingerabdruck, bis der Live-Abruf ihn bestätigt oder
 ersetzt; ein Fehler leert ihn).
 
+Die Rückblicke, die sich von selbst öffnen [§C31], merken sich in
+`06-db.js`, was gesehen ist: `_autoRecapSeen` für die laufende Sitzung (ein
+Neuladen alle dreißig Sekunden soll nichts zweimal öffnen) und auf dem Gerät
+`recap_shown_<Saison>`, `potw_shown_<Woche>` und `auto_rueckblick_tag` — der
+Tag, an dem sich zuletzt einer von selbst geöffnet hat. Gesetzt wird er, sobald
+einer geplant ist, nicht erst, wenn er offen ist: die Woche fragt 300 ms vor
+dem Öffnen des Monats, und sonst gingen beide auf. Zurückgesetzt wird nichts;
+der nächste Tag ist ein anderer Schlüssel.
+
 Die Bewegung [§C43] hält in `09d-bewegung.js`: `_podestZuletzt` (je
 Ansicht — Reiter mit seiner Wahl, `_ansichtSchluessel` —, wann ihr Podest
 zuletzt geglänzt hat; nach 45 s glänzt es wieder, ein neues Öffnen leert

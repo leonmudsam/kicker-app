@@ -43,6 +43,19 @@ function openNewsDetail(sid){
       el.querySelector('.nf-dot')?.remove();
     });
   } catch(e){}
+  // Der Monatsabschluss öffnet den Saison-Rückblick selbst [§C31], mit seiner
+  // Vorstellung; geschlossen steht der Feed wieder da (`sheetNav`). Sein
+  // Blatt zeigte Podest, Titelrennen, Tage an der Spitze und die Saison des
+  // Meisters ein zweites Mal, und zum Rückblick führte von dort kein Weg.
+  if((s.dataRef || {}).type === 'season_recap'){
+    const se = (seasons || []).find(x => x.id === s.dataRef.sid);
+    if(se){
+      const ndBg = document.getElementById('ndBg');
+      if(ndBg && ndBg.classList.contains('show')) closeNewsDetail();
+      sheetNav(() => showSeasonRecap(se));
+      return;
+    }
+  }
   // v9: Breaking-Stories im Detail ebenfalls in der Breaking-Optik anzeigen.
   const dcat = _displayCat(s);
   const cat = NEWS_CATEGORIES[dcat] || NEWS_CATEGORIES.fun;
@@ -254,7 +267,6 @@ function _ndBeziehung(s, anzahl){
   if(t === 'team_streak' || t === 'team_loss_streak') return 'als Duo';
   if(t === 'top_clash') return 'Sieger und Verlierer dieser Partie';
   if(t === 'streak_killer') return 'auf beiden Seiten der Partie';
-  if(t === 'chronik_monat') return 'die meisten Einträge in diesem Monat';
   if(t === 'badge_unlocked') return 'mit derselben Auszeichnung';
   if(t === 'potd' || t === 'potw') return 'punktgleich an der Spitze';
   // Das Blatt einer Partie zeigt ihre Sieger. „in derselben Partie" stand
@@ -285,9 +297,6 @@ function _newsBlattKopf(s){
   const nm = pid => (pm[pid] && pm[pid].name) || '';
   let ids = [];
   try { ids = (_newsPids(s) || []).filter(id => pm[id]); } catch(e){}
-  // Die Meisterbühne IST der Kopf: das Podest darunter zeigt den Meister
-  // groß, ein Wappen darüber sagte dasselbe ein zweites Mal [§C27].
-  if(d.type === 'season_recap') return d.matchId ? _newsBlattErgebnis(d.matchId) : '';
   // Die Runde hat ihre Tabelle als Kopf; vier Wappen darüber sagten dasselbe.
   if(d.type === 'runde') return '';
   // Das Blatt einer Partie trägt die Zeichnung ihrer Karte als Bühne. Es
@@ -1266,19 +1275,18 @@ function _ndChronikBlatt(s){
 }
 
 // ── Die Monatstafel als Bild [§C33] ─────────────────────────────────
-// Zwei Karten erzählen von der ganzen Tafel eines Monats: der Tag, an dem
-// sie aufgeht, und der Monatswechsel, an dem sie feststeht. Beide zeigten
-// eine Zahl in einem Kasten und darunter Namen mit Textzeilen. Die Bühne
+// Die Karte des Tages, an dem die Tafel eines Monats aufgeht; geschnitten
+// wird an der Karte. Wie sie am Monatswechsel feststeht, zeigt die Karte des
+// Monatsabschlusses, und die öffnet den Saison-Rückblick. Das Blatt
+// zeigte eine Zahl in einem Kasten und darunter Namen mit Textzeilen. Die Bühne
 // trägt jetzt die Zahl der Einträge und je Träger einen Balken so lang wie
 // seine Einträge; darunter steht jeder Eintrag als Zelle aus Zeichen,
 // Kurzname und Gesicht — die Tafel selbst, so wie sie am Tag der Karte
-// stand. Ein abgeschlossener Monat ist eingefroren, ein laufender wird an
-// der Karte geschnitten.
+// stand.
 function _ndMonatBlatt(s){
   const d = s.dataRef || {}, pm = pmap();
   if(!d.sid) return null;
-  const offen = d.type === 'chronik_frei';
-  const bis = offen ? new Date(s.when).getTime() + 1 : undefined;
+  const bis = new Date(s.when).getTime() + 1;
   let T = null;
   try { T = seasonTitles(d.sid, Number.isFinite(bis) ? bis : undefined); } catch(e){ T = null; }
   const aw = ((T && T.awarded) || []).filter(a => pm[a.pid]);
@@ -1294,16 +1302,16 @@ function _ndMonatBlatt(s){
     + `${_spChip(id)}<span class="nd-bk-n">${esc(_spName(id))}</span>`
     + `<span class="nd-bk-b"><i style="width:${Math.round(je[id] / max * 100)}%"><u style="width:100%"></u></i></span>`
     + `<b class="num">${je[id]}</b></div>`).join('');
-  const kopf = `<div class="nd-buehne nd-mo${offen ? ' offen' : ''}"><div class="nd-mo-k"><b class="num">${aw.length}</b>`
+  const kopf = `<div class="nd-buehne nd-mo"><div class="nd-mo-k"><b class="num">${aw.length}</b>`
     + `<span>${aw.length === 1 ? 'Eintrag' : 'Einträge'} · ${esc(seasonLabel(d.sid) || '')}</span>`
-    + `<small>${ids.length === 1 ? 'ein Spieler' : ids.length + ' Spieler'}${offen ? ' · bis Monatsende offen' : ''}</small></div>`
+    + `<small>${ids.length === 1 ? 'ein Spieler' : ids.length + ' Spieler'} · bis Monatsende offen</small></div>`
     + `<div class="nd-bk nd-ft">${balken}</div></div>`;
   const zellen = aw.map((a, k) => `<span class="nd-mo-z" data-pid="${esc(a.pid)}" style="--k:${k}">`
     + `<i>${svgI(a.ic || 'scroll')}</i><b>${esc(a.name || a.short || '')}</b>${avHtml(pm[a.pid], '', {px:22})}</span>`).join('');
   // Am Tag, an dem die Tafel aufgeht, zählt ab jetzt jeder Eintrag fürs
   // Prestige [§C34]: die vorläufigen Profileinträge stehen deshalb dabei.
   let ebenen = '';
-  if(offen){
+  {
     const tr = (Array.isArray(d.traeger) ? d.traeger : []).filter(id => pm[id]);
     const monatWert = pid => {
       try {
@@ -1315,37 +1323,8 @@ function _ndMonatBlatt(s){
     if(tr.length) ebenen = `<div class="nd-section">Tafel, Profil und Laufbahn</div>`
       + _ndChronikEbenen(d, Number.isFinite(bis) ? bis : undefined, tr, monatWert, 'bestand', '');
   }
-  return {kopf, mitte:`<div class="nd-section">${offen ? 'Die Tafel an diesem Tag' : 'Die Tafel'}</div><div class="nd-mo-g">${zellen}</div>`
+  return {kopf, mitte:`<div class="nd-section">Die Tafel an diesem Tag</div><div class="nd-mo-g">${zellen}</div>`
     + ebenen + `<button class="btn ghost sm" data-season-table="${esc(d.sid)}" style="margin-top:12px;width:100%">Ganze Tafel öffnen</button>`};
-}
-
-// ── Der erste Eintrag überhaupt [§C33] ──────────────────────────────
-// Der Moment, den ein Spieler aus der unteren Hälfte sonst nie im Feed
-// sieht. Das Blatt zeigte „1." in einem Kasten und darunter das Medaillon;
-// jetzt steht das Wappen mit dem Zeichen der Chronik auf der Bühne, die
-// Zahl Eins dahinter, und darunter, wie die Laufbahn in der Chronik weiterging.
-function _ndErstlingBlatt(s){
-  const d = s.dataRef || {}, pm = pmap(), pid = d.pid;
-  if(!pid || !pm[pid] || !d.sid) return null;
-  let t = null; try { t = seasonTitleOf(pid, d.sid); } catch(e){}
-  const def = (t && typeof SEASON_TITLE_BY_ID !== 'undefined') ? SEASON_TITLE_BY_ID[t.titleId] : null;
-  const kopf = `<div class="nd-buehne nd-er"><span class="nd-er-eins num">1</span>`
-    + `<span class="nd-er-w" data-pid="${esc(pid)}">${avHtml(pm[pid], '', {ins:true, px:84, feuer:0})}`
-    + `<span class="nd-er-ic">${zkHtml((t && t.ic) || (def && def.ic) || 'scroll', '', 'gold')}</span></span>`
-    + `<b class="nd-er-n">${esc((t && t.name) || d.titel || '')}</b>`
-    + `<span class="nd-er-m">${esc(seasonLabel(d.sid) || '')} · der erste Monatseintrag</span></div>`;
-  // Die Monate seitdem als Zellen: hell, wo ein Eintrag steht.
-  let reihe = '';
-  try {
-    const h = (seasonTitleHistory(pid) || []).filter(r => r.sid >= d.sid);
-    if(h.length > 1) reihe = `<div class="nd-er-r">${h.map(r => `<span class="${r.title ? 'da' : ''}">`
-      + `<i>${r.title ? svgI(r.title.ic || 'scroll') : ''}</i><small>${esc((seasonLabel(r.sid) || r.sid).split(' ')[0].slice(0, 3))}</small></span>`).join('')}</div>`;
-  } catch(e){}
-  const ab = (x, html) => html ? `<div class="nd-section">${esc(x)}</div>${html}` : '';
-  return {kopf, mitte:(def && _ndNeu(def.cond) ? `<div class="tnote nd-rk-c">${esc(def.cond)}</div>` : '')
-    + (t && _ndNeu(t.ev) ? `<div class="nd-er-ev">${_newsBetont(t.ev)}</div>` : '')
-    + ab('Die Monate seitdem', reihe)
-    + `<button class="btn ghost sm" data-season-table="${esc(d.sid)}" style="margin-top:12px;width:100%">Ganze Tafel öffnen</button>`};
 }
 
 // ── Die neue Stufe [§C30] ───────────────────────────────────────────
@@ -1745,7 +1724,7 @@ const _ND_BLATT = {win_streak:_ndSerieBlatt, loss_streak:_ndSerieBlatt, team_str
   rivalry_milestone:_ndRivalBlatt, badge_unlocked:_ndBadgeBlatt,
   rekord_erstmals:_ndRekordBlatt, rekord_gesteigert:_ndRekordBlatt, rekord_geholt:_ndRekordBlatt,
   potd:_ndPotdBlatt, season_endgame:_ndEndspurtBlatt, chronik_geholt:_ndChronikBlatt,
-  chronik_frei:_ndMonatBlatt, chronik_monat:_ndMonatBlatt, chronik_erstling:_ndErstlingBlatt,
+  chronik_frei:_ndMonatBlatt,
   insignium_stufe:_ndInsigniumBlatt, insignium_tag:_ndInsTagBlatt, sammel:_ndTafelMomentBlatt,
   jubilee:_ndMeilensteinBlatt, milestone_wins:_ndMeilensteinBlatt, milestone_goals:_ndMeilensteinBlatt,
   milestone_elo:_ndMeilensteinBlatt, top_form:_ndFormBlatt, elo_swing:_ndAusschlagBlatt,

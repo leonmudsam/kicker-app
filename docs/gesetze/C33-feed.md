@@ -14,6 +14,7 @@
 - Was im selben Moment passiert, kommt in eine Sammelkarte nach seinem Grund (`causalKey`): die dauerhafte Tafel eines Spieltags (`table:<Tag>`), die kurze Strecke (`form:<Tag>`), die Spieler-Karte (`quelle:'spieler'`) und die Erfolgs-Karte (`quelle:'erfolg'`). Der Schlüssel kommt aus dem Inhalt; die Uhrzeit ist die früheste Zeile, die die Karte zeigt; Titel und Text fassen die Gruppe zusammen; die Karte zeigt höchstens `NEWS_LIMITS.sammelZeilen` Zeilen ohne Ausbauten, das Blatt alle, gegliedert nach Sorte.
 - Die Reihenfolge ist die Zeit; nichts sortiert um. `prio` steht auf EINER Skala (`STORY_PRIO`, `_newsPrio`: Breaking 90+, Spieltag 38–89, Hintergrund 10–37) und wiegt nur Sammelkarte und Karte des Tages.
 - Was der Generator bildet: jede ID aus Fachlichem (Spieler, Sache, Spieltag), nie aus Uhrzeit oder Zufall, sodass derselbe Datenstand dieselben Karten ergibt; was es je Tag genau einmal gibt, fällt dort nicht weg (`GEN_PFLICHT`, `GEN_PARTIE`); Marken einer Serie hängen an ihrer Partie und bleiben stehen; was zählt, meldet Stufen und nicht jeden Schritt dazwischen: die Rivalität jedes zehnte Duell an der Partie, in der es gespielt wurde (ID mit Zahl), Chemie, Tagesring, Uhr des Tages und Duo gegen Duo nur an runden Zahlen (`SP_TAG_STUFEN`); der Spieler des Tages steht an jedem Spieltag des Fensters um 23:59; der härteste Tag (`elo_swing`) desselben Tages steht als Gegenstück auf dessen Karte und in dessen Blatt (`gegenstueck`, `memberIds`), nicht als eigene Karte daneben; Auszeichnungen sind nach Klasse Nachricht (`_badgeTakt`, `NEWS_BADGE_MARKEN`), kleine Marken einer Partie stehen zusammen (`badge_marken`); was der Generator nicht mehr bildet, meldet `STORY_ABGEMELDET` ab, was abläuft `STORY_LAEUFT_AB`.
+- Der Monatsabschluss (`season_recap`) ist **eine** Karte am 1. um 00:00: Podest, Titelrennen, darunter das Team der Saison mit Bilanz und Elo, die Chronik des Monats mit ihrer Zahl, den drei mit den meisten Einträgen und denen, die zum ersten Mal darin stehen (bis drei mit Namen, mehr als Zahl), und jede Insignium-Bewegung, die erst mit den Titeln kam (`_newsMonatBand`, gegen den Stand eine Millisekunde vor dem Monatsende). Ihr Satz nennt den Monat in Zahlen, der Nachsatz nur, wie der Titel entschieden wurde; Meister und Monat stehen in der Schlagzeile. Ein Tippen öffnet den Saison-Rückblick, ein eigenes Blatt hat sie nicht. Eigene Karten für die Chronik eines abgeschlossenen Monats und für jeden Erstling gibt es nicht (`STORY_ABGEMELDET`). Der Abschluss eines Tages, einer Woche und eines Monats kommt in dieser Reihenfolge: der Spieler des Tages um 23:59:00, die Wochenkarte am Sonntag um 23:59:05, der Monat um 00:00, sodass er beim ersten Öffnen danach die jüngste Karte ist.
 - Breaking ist das Seltenste und scheitert an keinem Deckel und keiner Sperre: legendäre Auszeichnung, längste Siegesserie aller Zeiten, Tabellenführer eines belastbaren Spieltags, feststehender Meister, Schlusssprint, erster Aufstieg in die obersten Insignium-Stufen, Karriereende. Entschieden nach dem Bündeln (`_isBreaking`); eine gebündelte Breaking-Karte nennt ihren Anlass zuerst (`brk`).
 - Die Karte des Tages (`_newsTagKarte`) steht nur an Spieltagen ab der dritten Partie (`NEWS_LIMITS.tagKartePartien`) und wechselt, solange eine spannendere Karte des Tages dazukommt; nie auf Breaking, dem Spieler des Tages, einem Rückblick oder einer negativen Karte (`_newsTagKarteWuerdig`, `_newsTagSpannung`).
 - Die Insignium-Karte des Tages (`insignium_tag`, `30d-news-insignium.js`) zeigt, was der Spieltag am Zeichen ändert, gegen den Stand vor dem Spieltag und neben der Tafel, die das Prestige zeigt: jede neue Stufe („wieder" nur mit Beleg, „zum ersten Mal" nie, weil die App das nicht belegen kann, ohne jeden Spieltag nachzurechnen), jeder Rückfall auf eine tiefere Stufe und ein Grad nur über dem höchsten bekannten Platz (`insigniumPos`, `_insBestVor`: das `best` der letzten Karte und alte Stufen-Zeilen im Bestand). Ein Grad, der in derselben Stufe zurückkommt oder geht, steht nicht da. Auf der Karte trägt die **besonderste** Bewegung die Bühne — die erste nach `_insZugVor`: neue Stufen vor Graden vor Rückfällen, darin die wertvollere Stufe zuerst, auch wenn sie jemand wieder trägt (ein Lorbeerreif vor zwei Volutenkränzen, die ihn sonst als Zeile darunter schoben); Generator, Schlagzeile, Zeilen und Blatt lesen dieselbe Reihenfolge, und eine gespeicherte Karte wird beim Anzeigen ebenso geordnet (`_insAltZuTag`): Wort und Lage darüber, darunter die Verwandlung (`_insVerwandlung`) aus zwei Zeichen und einem Pfeil, gelesen wie die Leiter, links die tiefere Stufe, rechts die höhere, das Gesicht auf dem Zeichen von jetzt, der Pfeil vom alten zum neuen („Zierkranz → Lorbeerreif (Gesicht)" beim Aufstieg mit zwei Ringen, „Zierkranz (Gesicht) ← Lorbeerreif" beim Rückfall, rot und ohne Ringe, im Blatt ebenso), und die Spur der ganzen Leiter (`_insSpur`: drei Felder je Stufe und die sieben Zeichen, das der Stufe von jetzt größer; gefüllt, was schon da war, Violett, was der Tag dazubringt, rot gestreift, was ein Rückfall kostet). **Jede übrige** Bewegung steht klein unter der Schlagzeile als Zeile (`_newsInsTagZeilen`): Gesicht, was passiert ist, die beiden Zeichen in derselben Leserichtung — alle, ohne Rest als Zahl, ohne Kästen. Jede Bewegung gleich groß als Bild, als Kacheln oder Zeilen mit eigener Spur, ließ keinen Anlass hervortreten. Die Karte trägt nur die Schlagzeile, keinen Satz und keine Prestige-Zahl: Gewinn und Verlust stehen auf der Tafel-Karte, und auf beiden Karten standen sie doppelt; der Satz, was die Stufe in der Liga bedeutet, und das Prestige stehen im Blatt. Verglichen wird der Stand vor mit dem nach dem Spieltag: wer an einem Tag auf- und wieder absteigt, hat sich nicht bewegt. Im Blatt steht jede Bewegung mit Zeichen und Gesicht im Kopf (`nd-is-viele`), darunter jede mit ihrem Weg durch die Stufe (`_insWegHtml`), ihrer Wirkung (`_ndWirkungBlock`) und die Leiter der Liga. Sie fragt `ligaAktiv`, auch im gespeicherten `best` [§C40]; nur Rückfälle machen sie negativ, nie Karte des Tages; nur ein Aufstieg ohne belegtes „wieder" kann sie dazu machen, in die obersten Stufen auch zu Breaking. Alte Einzelzeilen (`insignium_stufe`) werden beim Anzeigen zur Karte ihres Tages (`_insAltZuTag`).
@@ -21,7 +22,7 @@
 - Fun Facts: ein Slot um 15:00 (`ambient_<Tag>_15`), nachgetragen für stille Tage im Fenster, deterministisch gezogen mit Rotation von Vorlage, Rubrik (`ambientRubrik`) und These (`AMBIENT_PAAR_COOLDOWN_DAYS`); die Rubrik des Fun Facts davor ist immer gesperrt, auch über Spieltage ohne Slot hinweg, und zuerst gezogen wird eine Karte über jemanden, der in den drei Tagen davor keine eigene Karte hatte (Durchgang −1); jedes Bild aus `dataRef.bild` (`30c-news-fakt.js`).
 - Neu ist, was seit dem Lesestand dazukam (`NEWS_LS_STAND`, `_newsGelesen`); eine Karte, die eine frühere fortsetzt, sagt es mit einem Faden, an den Partien nachgeprüft (`_newsFaeden`).
 - So spricht die Liga: jede Zahl mit Komma, Ergebnis aus Sicht des Siegers, der Elo-Gewinn gehört einem (`eloPid`), kein Gedankenstrich, kein Etikett mit Doppelpunkt, kein Satzfragment, keine englische Aufschrift, der Text wiederholt nicht die Schlagzeile und nicht, was die Zeichnung zeigt (`_ndNeu`, `_ndLead`), und das Blatt einer Rekordkarte nicht ihren Beleg (`belegHtml` mit `kurz`: unter den Zellen steht nur „k von n"); kein Blatt erklärt die App.
-- Jedes Story-Blatt hat Kopf, typ-eigene Mitte und Fuß (§C27) und zeigt, wovon seine Story handelt: Serie mit ihren Partien, Rivalität mit ihrem Verlauf, Auszeichnung mit ihren Trägern, Spitzenwechsel mit jedem Wechsel, Spieler des Tages mit seiner Bahn, Woche mit allen sechs Wertungen, Rückblick per Knopf (`_newsRueckblickKnopf`).
+- Jedes Story-Blatt hat Kopf, typ-eigene Mitte und Fuß (§C27) und zeigt, wovon seine Story handelt: Serie mit ihren Partien, Rivalität mit ihrem Verlauf, Auszeichnung mit ihren Trägern, Spitzenwechsel mit jedem Wechsel, Spieler des Tages mit seiner Bahn, Woche mit allen sechs Wertungen, Rückblick per Knopf (`_newsRueckblickKnopf`); der Monatsabschluss öffnet den Saison-Rückblick statt eines Blatts.
 
 ## Stellen
 
@@ -29,7 +30,7 @@
 
 ## Prüfung
 
-`tests/rechnen` (was den Tag beschreibt, erst am Tagesende; die Ehrung nach zwei stillen Stunden), `tests/ambient` (Snapshots, Bündel, IDs bei zweitem Lauf, Sprache über jeden vierten Spieltag, Breaking-Anlässe, Fun-Fact-Bilder, die Säulen, die Karte ohne Satz und Fuß, die Klassen, der Satz und das Blatt jeder Ehrung, die Tafel-Karte ohne Auszeichnungen), `tests/blatt` (jede Karte und jedes Blatt bei 288 und 360 px, Bildzonen, Faden, Bewegung, die Ehrung in einer Reihe und ohne gebrochenen Namen), `tests/wiederholung` (Auszeichnungsmarken), `tests/storyscroll`, `tests/leistung` (Feed in Portionen).
+`tests/rechnen` (was den Tag beschreibt, erst am Tagesende; die Ehrung nach zwei stillen Stunden), `tests/ambient` (Snapshots, Bündel, IDs bei zweitem Lauf, Sprache über jeden vierten Spieltag, Breaking-Anlässe, Fun-Fact-Bilder, die Säulen, die Karte ohne Satz und Fuß, die Klassen, der Satz und das Blatt jeder Ehrung, die Tafel-Karte ohne Auszeichnungen, der Monatsabschluss mit Team, Chronik, Erstlingen und Zeichen, Tag vor Woche vor Monat), `tests/blatt` (jede Karte und jedes Blatt bei 288 und 360 px, Bildzonen, Faden, Bewegung, die Ehrung in einer Reihe und ohne gebrochenen Namen, der Monatsabschluss öffnet den Saison-Rückblick), `tests/wiederholung` (Auszeichnungsmarken), `tests/storyscroll`, `tests/leistung` (Feed in Portionen).
 
 ## Herleitung
 
@@ -517,7 +518,7 @@ seinem Ende — die Karte vom Vormittag fiel heraus, sobald am Nachmittag eine
 stärkere dazukam. **Breaking zählt nicht mit**:
 es ist das Seltenste und darf nie an einem Deckel scheitern. Und was es je
 Tag, Woche oder Monat genau einmal gibt, fällt nie darunter (`TAG_PFLICHT`:
-Spieler des Tages, Wochenkarte, Monatschronik, Saison-Rückblick; dazu
+Spieler des Tages, Wochenkarte, Monatsabschluss; dazu
 `TAG_SUMME` für den Gegenpart des Tagessiegers) — der
 Spieler des Tages IST die Schlagzeile seines Spieltags. In einer simulierten
 Liga aus hundert Partien fiel er als siebtstärkste Karte heraus, während zwei
@@ -583,8 +584,7 @@ und zwei Spieler bekamen im selben Spiel dieselbe Auszeichnung auf zwei
 Karten. `_consolidateStories` bündelt das zur **Sammelkarte** (`sammel`).
 Tafel-Ereignisse bilden dabei zuerst einen eigenen Strom, und zusammen
 gehören sie über ihren **Grund** (`causalKey`, `_storyGruppeKey`): die
-dauerhafte Tafel EINES Spieltags ist `table:<Tag>`, die Chronik eines
-abgeschlossenen Monats `recap:chronik_<Saison>`. Partie und Minute waren
+dauerhafte Tafel EINES Spieltags ist `table:<Tag>`. Partie und Minute waren
 dafür nur ein Stellvertreter, und er traf daneben: gemessen über die 19
 Spieltage vom 28.07. bis 26.08. stand am 29.07. eine zweite Tafel-Karte
 neben der ersten, weil eine Insignium-Stufe eine andere Minute trug als die
@@ -1503,18 +1503,28 @@ kanonische Text- und Zeit-Snapshot.
 (die späteste der Liga hat um 18 Uhr angefangen). Vorher erschien er am
 Morgen danach und stand in der Tafel unter einem Datum, an dem gar nicht
 gespielt wurde. Der Fun Fact steht einmal täglich um **15:00 Uhr**, sofern
-bis dahin keine Partie und kein Saisonabschluss lag. Die Chronik des Vormonats steht am
-**1. um 00:00** statt am Vormittag danach. Der **Saison-Rückblick** steht
-dagegen am **letzten Kalendertag um 23:50** und damit unter dem Kopf des
-Monats, den er beschließt: er hing am Saisonstart, also am 1. um 00:00, und
-stand damit unter demselben Tageskopf wie die Monatschronik, von einem Monat
-erzählend, der dort gar nicht steht. Gebildet wird er weiter nur in den
-ersten zwei Tagen der neuen Saison — vorher steht der Meister nicht fest. Und der Wochenrückblick ist
-**eine** Karte am **Sonntag um 23:00** (`woche`): vorher standen sechs
+bis dahin keine Partie und kein Saisonabschluss lag. Der Wochenrückblick ist
+**eine** Karte am **Sonntag um 23:59:05** (`woche`): vorher standen sechs
 Wertungen als sechs Karten über den Montag verteilt, und der Montag ist der
-Spieltag — die vergangene Woche verdeckte, was gerade passierte. Die
-Wochengrenze liegt dafür in `_potwLastWeekRange`, damit Rückblick, POTW und
-Wochenkarte über dasselbe Fenster reden.
+Spieltag — die vergangene Woche verdeckte, was gerade passierte. Danach stand
+sie um 23:00 und damit unter dem Spieler des Sonntags, der um 23:59 kommt:
+der Abschluss eines Tages über dem der ganzen Woche. Die Wochengrenze liegt
+dafür in `_potwLastWeekRange` (23:59, wie `_tagZu`), damit Rückblick, POTW
+und Wochenkarte über dasselbe Fenster reden.
+
+**Der Monat schließt mit einer Karte.** Am Monatswechsel entstanden drei
+Arten Karten: der Meister am letzten Tag um 23:50, die Chronik am 1. um
+00:00 und je Erstling eine Zeile in der Tafel des 1., zwischen den Rekorden
+eines Spieltags, der mit dem alten Monat nichts zu tun hat — im Juni 2026
+zehn. Dazwischen stand der Spieler des letzten Tages, über dem Meister.
+Das Team der Saison und die Zeichen, die erst mit den Titeln kamen, standen
+auf keiner: gemessen stieg Martin am 1. Juli um 00:00 auf den Volutenkranz
+III und fiel am Spieltag danach zurück, und keine Karte hatte es gesagt.
+Jetzt trägt der Monatsabschluss das alles am 1. um 00:00, und sein Tippen
+öffnet den Saison-Rückblick: sein Blatt hatte Podest, Titelrennen und Tage
+vorn ein zweites Mal gezeigt, und zum Rückblick führte von dort kein Weg.
+Gebildet wird er nur in den ersten zwei Tagen der neuen Saison — vorher
+steht der Meister nicht fest.
 
 **Der Spieltag führt, die Ewige Tafel ist die zweite Ebene daneben.**
 Inhaltlich teilte sich das Vierzehn-Tage-Fenster einmal ungefähr zur Hälfte in

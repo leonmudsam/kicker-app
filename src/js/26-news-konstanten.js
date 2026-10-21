@@ -336,14 +336,12 @@ const STORY_PRIO = {
   sammel_erfolg:     66,
   sammel_spieler:    66,
   potd:              88,   // der Sieger des Spieltags IST seine Schlagzeile
-  chronik_monat:     86,
   // Der Tag, an dem die Monatstafel aufgeht: eine Karte je Monat, und sie
   // betrifft die ganze Liga. Sie steht ueber dem einzelnen Chronik-Wechsel,
   // weil es an diesem Tag gar keinen gibt [§C32], und unter dem Rueckblick
   // des Vormonats, der von einem abgeschlossenen Monat erzaehlt.
   chronik_frei:      82,
   woche:             84,
-  chronik_erstling:  80,   // zum ersten Mal überhaupt in der Chronik
   rekord_geholt:     76,
   giant_slayer:      74,
   top_clash:         72,
