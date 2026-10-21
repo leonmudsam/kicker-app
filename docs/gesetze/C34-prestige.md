@@ -3,13 +3,13 @@
 ## Regel
 
 - Prestige kommt ausschließlich aus Auszeichnungen, Monatschroniken und aktuell gehaltenen Liga-Rekorden. Nur Rekorde können wieder sinken; Auszeichnungen und Chroniken bleiben Teil der Laufbahn.
-- Je Monat zählt der Eintrag, der in der Matrix steht [§C32]; für abgeschlossene Monate aus dem Einfrierer (`_frozenTitlesOf`), nicht aus einer neuen Rechnung.
+- Je Monat zählt der Eintrag, der in der Matrix steht [§C32]; für abgeschlossene Monate aus dem Einfrierer (`_frozenTitlesOf`), nicht aus einer neuen Rechnung — außer der Monat wurde mit einer älteren Fassung des Katalogs eingefroren (`SEASON_TITLES_FREEZE_V`).
 - Jede positive Auszeichnung zählt jedes Mal. Standard je Klasse in `PRESTIGE_AUSZEICHNUNG` (Rare 25 / −18 %, Common 3 / −25 %); jede legendäre, POTW/POTD und die acht Meilensteine der Laufbahn tragen einen eigenen Startwert in `PRESTIGE_AUSZEICHNUNG_SPEZIAL` (Siegermaschine 150, Urgestein 100, Abwehrchef und Mittelstürmer 60, Allrounder und Dauerbrenner 50, Stammgast 10, Debütant 5). Je zwei Verleihungen teilen eine Stufe, danach flacht die harmonische Kurve paarweise ab und endet nie. Schanden geben null.
 - Das Regelblatt liest die Startwerte aus der Tabelle (`_prestigeRegelListe`), nicht aus einer festen Liste.
-- Chroniken behalten ihren Wert aus `chronikPunkte`; die Sammlung wird nach Wert gedämpft: Platz 1–2 voll, 3–5 ÷ √2, 6–8 ÷ √3, danach alle drei eine Wurzelstufe weiter.
+- Chroniken behalten ihren Wert aus `chronikPunkte`: ihre Klasse ist der Wert (Gold 150, Lila 100, Grau 50, eine Fügung halb, eine Schattenseite nichts) [§C39]; je Monat zählt der wertvollste Eintrag (`chronikEintragVon`); die Sammlung wird nach Wert gedämpft: Platz 1–2 voll, 3–5 ÷ √2, 6–8 ÷ √3, danach alle drei eine Wurzelstufe weiter.
 - Rekorde beginnen bei `allzeit.basis` (`_rekordBasis`; 150 Können/Form/Bestmarke, 75 Rollenwert/Fügung, 0 Schattenseite), werden durch die Zahl der heutigen Halter geteilt und wie Chroniken gestapelt. Keine Quelle hat einen harten Deckel.
 - Das Blatt einer Rekord- oder Tafel-Karte zeigt die Wirkung aus den beiden gespeicherten Ständen (`laufbahn`, `_ndWirkungBlock`), keinen Rechentext; die Rechnung steht im Laufbahnblatt (`_prestigeQuellSatz`). Alle drei Rekordfälle teilen dieses Blatt. Die Zahl ist die Bewegung des ganzen Spieltags; darunter steht sie nach Quellen aufgeteilt (Rekorde, Monatschroniken, Auszeichnungen, `_ndWirkungQuellen`), die zusammen die Zahl ergeben, und bis zu zwei Posten in ihrer Richtung, die die Karte sonst nicht nennt. Neue Karten speichern die Quellen (`rek`, `mon`), ältere werden an den Ständen des Tages nachgerechnet und nur gezeigt, wenn sie die gespeicherte Zahl treffen.
-- Die Blätter der Ewigen Tafel tragen eine Bühne (`_ndWechselBuehne`, `_ndChronikBlatt`, `_ndMonatBlatt`, `_ndErstlingBlatt`, `_ndInsigniumBlatt`, `_ndInsTagBlatt`, `_ndTafelMomentBlatt`, `_ndHeldBuehne`, `_ndFaktBlatt`); eine Zeile führt zu ihrem Eintrag (`_ndTafelZiel`); keine Überschrift ohne Inhalt (`_ndOhneLeere`).
+- Die Blätter der Ewigen Tafel tragen eine Bühne (`_ndWechselBuehne`, `_ndChronikBlatt`, `_ndMonatBlatt`, `_ndInsigniumBlatt`, `_ndInsTagBlatt`, `_ndTafelMomentBlatt`, `_ndHeldBuehne`, `_ndFaktBlatt`); eine Zeile führt zu ihrem Eintrag (`_ndTafelZiel`); keine Überschrift ohne Inhalt (`_ndOhneLeere`).
 - Die Seltenheitsklasse (`BADGE_RARITY`) sagt, wie schwer eine Auszeichnung zu holen ist; Gold gehört nicht der Anwesenheit. Wer eine Klasse verschiebt, zieht `RARITY_META.total` mit.
 
 ## Stellen
@@ -142,19 +142,19 @@ dieses Blatt**: nur „übernommen" hatte einen Fall im Schalter, ein erstmals
 vergebener und ein ausgebauter Rekord öffneten gemessen ein Blatt mit null
 Zeichen Mitte. `tests/ambient` misst das alles.
 **Die übrigen Blätter der Ewigen Tafel tragen ebenfalls eine Bühne**
-(`_ndWechselBuehne`, `_ndChronikBlatt`, `_ndMonatBlatt`, `_ndErstlingBlatt`,
+(`_ndWechselBuehne`, `_ndChronikBlatt`, `_ndMonatBlatt`,
 `_ndInsigniumBlatt`). Sie waren eine Spalte aus Zahlenkästen, Podest und
 Textzeilen. Der **Chronik-Wechsel** steht auf derselben Bühne wie der
 Rekord — ein Wechsel ist ein Wechsel [§C27] — mit Klasse und Monat als
 Marken; das Podest des Monats nur, wenn mehr als einer die Bedingung
 erfüllt, sonst stünde der Halter zweimal da. Die **Monatstafel** (der Tag,
-an dem sie aufgeht, und der Monatswechsel) zeigt die Zahl der Einträge, je
+an dem sie aufgeht) zeigt die Zahl der Einträge, je
 Träger einen Balken mit Gesicht und Name (dasselbe Bauteil wie das Feld des
 Spielers des Tages) und jeden Eintrag als Zelle aus Zeichen, Name und
 Gesicht; eine laufende Tafel wird dabei an der Karte geschnitten
 (`seasonTitles(sid, bisMs)`), denn eine Karte von Dienstag erzählt vom
-Dienstag. Der **erste Eintrag** zeigt das Wappen mit dem Zeichen der Chronik
-und die Monate seitdem als Zellen. Die **Insignium-Stufe** zeigt die
+Dienstag. Den Monatswechsel und wer zum ersten Mal in der Chronik steht,
+zeigt die Karte des Monatsabschlusses [§C33]. Die **Insignium-Stufe** zeigt die
 Verwandlung — die Stufe davor leise, ein Pfeil, die neue groß um das
 Gesicht —, woraus die Punkte kommen als ein Balken in drei Farben, den Weg
 durch die drei Grade bis zur nächsten Schwelle und die Leiter; gerechnet

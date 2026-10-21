@@ -114,9 +114,16 @@ function tagKey(when){
 //
 // Ein Schnitt hinter der letzten Partie ist deshalb kein Schnitt. `matches`
 // ist aufsteigend sortiert, also ist die letzte auch die neueste.
+// Außer ein Monatswechsel liegt dazwischen: mit ihm kommen Meister, Vize und
+// Team der Saison [§C34], ohne Partie. Ein Schnitt am letzten Abend eines
+// Monats galt am Morgen danach, bevor jemand gespielt hatte, als „jetzt" und
+// trug die Titel schon, nach der ersten Partie nicht mehr: gemessen nannte
+// die Laufbahn der Woche bis zum 31.05. für Martin morgens 87 Prestige und
+// abends 62.
 function _schnitt(bisMs){
   if(!bisMs || !matches.length) return undefined;
-  return bisMs >= mts(matches[matches.length - 1]) ? undefined : bisMs;
+  if(bisMs < mts(matches[matches.length - 1])) return bisMs;
+  return bisMs >= seasonStart().getTime() ? undefined : bisMs;
 }
 
 // Dasselbe je Monat: ein Schnitt hinter dem Monatsende schneidet von DIESEM

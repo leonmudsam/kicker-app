@@ -71,6 +71,7 @@ const server = http.createServer((req, res) => {
 const ATTRAPPE = `(() => {
   const D = window.__startDaten;
   window.__schreib = []; window.__lesen = []; window.__storyIds = [];
+  window.__storyAb = []; window.__storyAblauf = [];
   const antwort = (t, ops) => {
     if(ops.some(o => ['insert','update','upsert','delete'].includes(o))) return {data:null, error:null};
     // Archivierte Monate bleiben wie in der echten Datenbank liegen:
@@ -78,7 +79,7 @@ const ATTRAPPE = `(() => {
     let archiv = {}; try { archiv = JSON.parse(localStorage.getItem('attrappe_seasons') || '{}'); } catch(e){}
     const saisons = D.seasons.filter(x => !archiv[x.id]).concat(Object.values(archiv))
       .sort((a, b) => String(b.start_date).localeCompare(String(a.start_date)));
-    const tab = {players:D.players, matches:D.matches, seasons:saisons, stories:[],
+    const tab = {players:D.players, matches:D.matches, seasons:saisons, stories:D.stories || [],
       config:{id:1, k_factor:32, risk_split:.6, pos_swing:.45, start_elo:0, win_boost:1.12,
         mov_loss_damp:.5, match_bonus:1.5, low_elo_loss_damp:0}}[t];
     return {data: tab === undefined ? [] : JSON.parse(JSON.stringify(tab)), error:null};
@@ -102,7 +103,9 @@ const ATTRAPPE = `(() => {
       const o = ops[ops.length-1];
       if(['insert','update','upsert','delete'].includes(o)) window.__schreib.push(t + '.' + o);
       if(t === 'stories' && o === 'upsert' && args[0])
-        (Array.isArray(args[0]) ? args[0] : [args[0]]).forEach(z => window.__storyIds.push(z && z.id));
+        (Array.isArray(args[0]) ? args[0] : [args[0]]).forEach(z => { window.__storyIds.push(z && z.id);
+          if(z) window.__storyAblauf.push([z.event_at, z.expires_at]); });
+      if(t === 'stories' && o === 'gte' && args[0] === 'event_at') window.__storyAb.push(args[1]);
       if(t === 'seasons' && o === 'upsert' && args[0]) try {
         const archiv = JSON.parse(localStorage.getItem('attrappe_seasons') || '{}');
         archiv[args[0].id] = args[0]; localStorage.setItem('attrappe_seasons', JSON.stringify(archiv));
@@ -202,6 +205,15 @@ async function neueSeite(ctx){
     // Der Start rechnet die Stories nicht auf dem Hauptthread, und der Worker
     // kommt zu denselben Stories wie der Hauptthread mit demselben Code.
     const w = await neueSeite(ctx);
+    // Zwei Karten, die die Datenbank schon trägt: eine vom 6. August, zwanzig
+    // Tage zurück, und eine vom 17. Juli, vor dem Monat.
+    await w.page.addInitScript(() => {
+      const zeile = (id, ms) => ({id, type:'ambient', category:'fun', icon:null, title:'Eine Karte von damals',
+        description:'Sie stand schon im Feed.', data_ref:{type:'ambient'}, priority:20,
+        event_at:new Date(ms).toISOString(), expires_at:'2026-12-31T00:00:00.000Z'});
+      window.__startDaten = Object.assign({}, window.__startDaten,
+        {stories:[zeile('monat_drin', Date.UTC(2026, 7, 6, 13)), zeile('monat_raus', Date.UTC(2026, 6, 17, 13))]});
+    });
     await w.page.addInitScript(() => {
       window.__vorStart = K => { window.__K = K; window.__haupt = 0;
         K('const __bs=_buildStories; _buildStories=function(){ window.__haupt++; return __bs.apply(this, arguments); }'); };
@@ -227,6 +239,27 @@ async function neueSeite(ctx){
     // Ein zweiter Lauf ohne neue Daten schickt den Stand nicht noch einmal.
     ok(await w.page.evaluate(async () => { const K = window.__K; const v = K('_storyWorkerStand');
       await K('_storiesImWorker()'); return K('_storyWorkerStand') === v; }), 'Unveränderter Stand wird nicht erneut übertragen');
+    // ── Der Feed reicht einen Monat zurück [§C33] ─────────────────────
+    // Gelesen wurden vierzehn Tage, das Fenster des Generators; was älter
+    // war, stand nicht mehr im Feed, obwohl die Datenbank es trug. Jetzt
+    // liest der Feed bis zum selben Tag des Vormonats, und jede Zeile hält
+    // ab ihrem Ereignis, nicht ab dem Einfügen.
+    const monat = await w.page.evaluate(() => {
+      const K = window.__K, ab = window.__storyAb[0];
+      const d = ab ? new Date(ab) : null;
+      return {ab, soll:K('new Date(newsAnzeigeAb(Date.now())).toISOString()'),
+        tag:d ? [d.getMonth() + 1, d.getDate(), d.getHours(), d.getMinutes()].join('.') : '',
+        drin:K('_cache._stories.some(x => x.id === "monat_drin")'),
+        raus:K('_cache._stories.some(x => x.id === "monat_raus")'),
+        halten:window.__storyAblauf.length > 0 && window.__storyAblauf.every(([e, x]) =>
+          new Date(x).getTime() - new Date(e).getTime() === 40 * 864e5),
+        zeilen:window.__storyAblauf.length};
+    });
+    ok(monat.ab === monat.soll && monat.tag === '7.26.0.0',
+       'Der Feed liest bis zum selben Tag des Vormonats, 00:00 ' + JSON.stringify([monat.ab, monat.tag]));
+    ok(monat.drin && !monat.raus, 'Eine Karte von vor zwanzig Tagen steht im Feed, eine von vor dem Monat nicht '
+       + JSON.stringify([monat.drin, monat.raus]));
+    ok(monat.halten, `Jede veröffentlichte Zeile hält vierzig Tage ab ihrem Ereignis (${monat.zeilen} Zeilen)`);
     // ── Nur die Uhr der Liga schreibt [§C42] ──────────────────────────
     // Stories und Archiv rechnet jedes Gerät in Tagen seiner eigenen Uhr. Am
     // 13.10. schrieb ein automatisierter Browser mit Tokioter Uhr eine

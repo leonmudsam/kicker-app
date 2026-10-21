@@ -373,14 +373,26 @@
   .nf-podest .pod-wert{font-size:17px}
   .nf-podest .pod-karte.erster .pod-wert{font-size:22px}
   .nf-podest .pod-platz{font-size:10px}
-
-  .nd-meister{position:relative;margin:2px 0 4px}
-  .nd-ms-band{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px;
-    font-size:11px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--gold)}
-  .nd-ms-band svg{width:16px;height:16px;border-radius:50%;
-    /* Lichthof statt `filter`. */
-    background:radial-gradient(closest-side,rgba(247,207,74,.45),transparent)}
-  .nd-ms-band i{font-style:normal;color:var(--ink2);letter-spacing:.12em}
+  /* Der Monatsabschluss im Fuß (`_newsMonatBand`): das Team der Saison in
+     Blau, dem Ton dessen, was zu zweit geholt wurde, die Chronik in Metall —
+     Gold trägt auf dieser Karte der Meister [§C25] —, darunter die Zeichen,
+     die erst mit den Titeln kamen, als die Zeilen der Insignium-Karte
+     [§C27]. Kein Feld wird gekürzt: der Name bricht um. */
+  .nf-mb{display:grid;gap:8px;margin-top:10px}
+  .nf-mb-r{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+  .nf-mb-r.ein{grid-template-columns:minmax(0,1fr)}
+  .nf-mb-f{display:flex;flex-direction:column;gap:6px;min-width:0;padding:9px 10px 10px;border-radius:12px;
+    background:var(--bg2);box-shadow:inset 0 0 0 1px var(--line)}
+  .nf-mb-f.team{background:radial-gradient(120% 90% at 0% 0%,rgba(86,180,232,.12),transparent 62%),var(--bg2);
+    box-shadow:inset 0 0 0 1px rgba(86,180,232,.3)}
+  .nf-mb-l{font-family:'Sometype Mono',monospace;font-size:8.5px;font-weight:700;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted)}
+  .nf-mb-f.team .nf-mb-l{color:var(--blue)}
+  .nf-mb-v{display:flex;align-items:center;gap:8px;min-width:0}
+  .nf-mb-v b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:17px;line-height:1;color:var(--ink)}
+  .nf-mb-v b.auf{color:var(--acid)} .nf-mb-v b.ab{color:var(--red)}
+  .nf-mb-f small{font-size:10.5px;line-height:1.3;color:var(--muted);overflow-wrap:anywhere}
+  .nf-mb .ni-zs{padding:0 2px;margin-top:0}
 
   .srn{margin:8px 0 2px}
   .srn.klein{margin:2px 0 6px}

@@ -114,7 +114,7 @@ function showPotwRecap(opts){
     // Rekorde, die in dieser Woche gefallen sind. Sie brauchen Zeitschnitte
     // an den Rändern der Woche und kommen nach (`rcpSpaetLaden`).
     const spaet = () => {
-      const daten = rcpLaufbahnDaten(wkStartMs, wkEndMs);
+      const daten = rcpWocheLaufbahn(wkStartMs, wkEndMs);
       const zuege = rcpZeichenZuege(daten);
       const lb = rcpLaufbahnHtml(daten);
       const eh = rcpEhrungHtml(daten);
@@ -216,11 +216,27 @@ function showPotwRecap(opts){
 }
 
 // Auto-Trigger: an Mo/Di der neuen Woche einmal pro Gerät
+// ── Die Laufbahn einer Woche ohne die Titel des Monats [§C31] ────────
+// Endet die Woche mit einem Monat, kommen in derselben Sekunde Meister,
+// Vize und Team der Saison [§C34]. Sie gehören dem Monat und stehen in
+// seinem Rückblick: in der Woche bis zum 31.05. standen sie unter „Wirkung
+// auf die Laufbahn" ein zweites Mal, Meister +150 und Team der Saison +75
+// als Gewinn einer Woche.
+function rcpWocheLaufbahn(vonMs, bisMs){
+  const monatsEnde = seasonEnd(seasonOf(bisMs).id).getTime();
+  return rcpLaufbahnDaten(vonMs, bisMs >= monatsEnde ? monatsEnde - 1 : bisMs);
+}
+
 function autoShowPotwRecap(){
   try{
     const now=new Date();
     const wd=wochentagMo(now);
-    if(wd>=2) return;            // nur Mo/Di
+    // Mo/Di — und der Mittwoch dazu, wenn der Monat an einem dieser Tage
+    // wechselt: sein Rückblick geht vor, und wer erst am Dienstag öffnete,
+    // bekam den Monat und danach keine Woche mehr [§C31].
+    const erster=new Date(now.getFullYear(), now.getMonth(), 1);
+    const verdraengt=now.getDate()<=3 && wochentagMo(erster)<=1;
+    if(wd>=(verdraengt?3:2)) return;
     if(!matches.length) return;
     const {start}=_potwLastWeekRange();
     const wkKey=_potwKeyOf(start);
@@ -234,7 +250,11 @@ function autoShowPotwRecap(){
       if(last && last.id!==currentSeason().id && !_recapSeen('recap_shown_'+last.id, 'season:'+last.id)) return;
     }
     if(!potwHasData()) return;
+    // Hat sich heute schon ein Rückblick von selbst geöffnet, kommt die Woche
+    // morgen [§C31].
+    if(_autoRueckblickHeute()) return;
     _autoRecapSeen.add('potw:'+wkKey); // Session-Guard gegen Wiederholung im selben Load
+    _autoRueckblickMerken();
     showPotwRecap({auto:true});
   } catch(e){ console.error('POTW auto:',e); }
 }

@@ -3,7 +3,7 @@
 ## Regel
 
 - Ein Monatseintrag gehört dem, der den Bestwert in diesem Monat hält, oder niemandem; punktgleich tragen ihn alle.
-- Die Matrix zeigt je Spieler und Monat einen Eintrag (`seasonTitleOf`, der erste in Katalogreihenfolge); das ist eine Anzeigeregel, die Tafel (`showSeasonTable`) zeigt alles, und nur dieser eine zählt fürs Prestige [§C34]. In der Tafel und im Saison-Rückblick steht offen, was zählt; die übrigen Einträge klappen darunter auf (`_chronMehrKnopf`, `.chron-rest`).
+- Die Matrix zeigt je Spieler und Monat einen Eintrag (`seasonTitleOf`, `chronikEintragVon`: der wertvollste, bei gleichem Wert der erste im Katalog) und daneben, wie viele er sonst noch hält („+2“); das ist eine Anzeigeregel, die Tafel (`showSeasonTable`) zeigt alles, und nur dieser eine zählt fürs Prestige [§C34]. In der Tafel und im Saison-Rückblick steht offen, was zählt; die übrigen Einträge klappen darunter auf (`_chronMehrKnopf`, `.chron-rest`).
 - Der Feed sagt bei einem alleinigen Halter mehrerer Einträge, welcher im Profil steht (`_chronikZeigtSich`, Marke `.nf-sam-k` neben dem Text), und nennt den stärkeren Eintrag nur für EINEN Spieler.
 - Ein Monat unter `CHRONIK_MIN_TAGE` Spieltagen bekommt keine Chronik; `seasonTitleHalter` zieht dieselbe Grenze und antwortet dann mit `null`. Das Aufgehen der Tafel ist kein Wechsel, aber eine eigene Karte (`chronik_frei`, ohne Partie, Träger in `traeger`).
 - Eine Monatswertung findet höchstens einen Halter je gewerteten Monat; die Schwellen (`ab` in `_stWertung`) sind an den echten Partien geeicht.

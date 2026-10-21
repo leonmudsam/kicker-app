@@ -675,10 +675,17 @@ function _prevSeasonId(sid){
 //     ev) — nicht nur die IDs. Nur so lässt sich eine alte Saison auch dann noch
 //     anzeigen, wenn ihr Eintrag im heutigen Katalog gar nicht mehr existiert.
 //
-//     `v` ist die Formatmarke: fehlt sie, gilt die Saison als nicht eingefroren
-//     und der nächste Archivlauf trägt es nach. Eine Saison ohne einen einzigen
-//     Eintrag ist damit unterscheidbar von einer, die noch nie eingefroren wurde.
-const SEASON_TITLES_FREEZE_V = 1;
+//     `v` ist die Fassung des Katalogs, mit der eingefroren wurde: fehlt sie
+//     oder ist sie älter als die heutige, gilt die Saison als nicht
+//     eingefroren — sie wird aus den Partien gerechnet, und der nächste
+//     Archivlauf friert sie neu ein. Eine Saison ohne einen einzigen Eintrag
+//     ist damit unterscheidbar von einer, die noch nie eingefroren wurde.
+//     Eine neue Fassung ist ein bewusster Schritt, kein Nachjustieren: die
+//     zweite kam mit den Klassen nach dem Ausschlag und den acht Chroniken
+//     gegen das Eigene [§C39], damit jeder Monat dieselben Fragen stellt —
+//     sonst hätte der Oktober vierundsiebzig Chroniken gehabt und der
+//     September sechsundsechzig.
+const SEASON_TITLES_FREEZE_V = 2;
 
 // Liest die eingefrorene Chronik einer Saison — aus dem seasons-Eintrag, egal
 // ob die Spalte als Objekt oder als JSON-Text ankommt. null = nicht eingefroren.
@@ -687,6 +694,7 @@ function _frozenTitlesOf(season){
   let t = season.titles;
   if(typeof t === 'string'){ try { t = JSON.parse(t); } catch(e){ return null; } }
   if(!t || typeof t !== 'object' || !t.v || !Array.isArray(t.awarded)) return null;
+  if(t.v < SEASON_TITLES_FREEZE_V) return null;
   return t;
 }
 
@@ -752,9 +760,8 @@ function seasonTitles(sid, bisMs){
     // unwahr.
     //
     // Dass ein Spieler in der Matrix trotzdem nur EINEN Eintrag je Monat
-    // zeigt, ist eine reine ANZEIGE-Regel: seasonTitleOf liefert den ersten
-    // in Katalogreihenfolge, und die Katalogreihenfolge IST die Wertigkeit.
-    // Die volle Tafel zeigt alles.
+    // zeigt, ist eine reine ANZEIGE-Regel: seasonTitleOf liefert den
+    // wertvollsten (`chronikEintragVon`). Die volle Tafel zeigt alles.
     SEASON_TITLES.forEach(t => {
       const r = t.pick(C, new Set());
       if(!r || !r.halter || !r.halter.length) return;
@@ -834,9 +841,22 @@ function seasonTitleHalter(sid, bisMs){
   return out;
 }
 
+// Der Eintrag, der für einen Spieler in einem Monat steht — in der Matrix,
+// im Prestige und im Banner des Profils [§C32]: der wertvollste, den er
+// hält, bei gleichem Wert der erste im Katalog. Vorher war es der erste im
+// Katalog, und der Katalog ordnet nach Art und Ausschlag, nicht nach Wert:
+// eine Können-Chronik in Grau stand vor einer Fügung in Gold.
+function chronikEintragVon(T, pid){
+  let best = null, bw = -1;
+  ((T && T.awarded) || []).forEach(a => {
+    if(a.pid !== pid) return;
+    const w = chronikPunkte(a.titleId);
+    if(w > bw){ best = a; bw = w; }
+  });
+  return best;
+}
 function seasonTitleOf(pid, sid, bisMs){
-  const t = seasonTitles(sid, bisMs);
-  return t.awarded.find(a => a.pid === pid) || null;
+  return chronikEintragVon(seasonTitles(sid, bisMs), pid);
 }
 
 // Wer in welchem Monat gespielt hat, einmal je Partienliste. Die Historie

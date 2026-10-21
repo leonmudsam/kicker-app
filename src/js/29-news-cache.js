@@ -49,7 +49,7 @@ function _newsTexteAuffrischen(list){
 
 // ── Was der Generator nicht mehr erzeugt, verschwindet auch ──────────
 // Der Wochenrückblick war einmal SECHS eigene Karten, über den Montag
-// verteilt. Er ist jetzt EINE Karte am Sonntag um 23:00 [§C33] — aber die
+// verteilt. Er ist jetzt EINE Karte am Sonntag um 23:59 [§C33] — aber die
 // sechs alten liegen persistiert in der Datenbank, und nichts hat sie je
 // wieder angefasst: am Montag danach stand „der größte Sprung der Woche"
 // neben dem Spieltag, der gerade lief. `_newsTexteAuffrischen` konnte sie
@@ -110,7 +110,13 @@ const STORY_ABGEMELDET = [
   // Partie ihre Karte (`spiel_<Partie>`), und die alte Zeile liegt daneben:
   // dieselbe Partie, dasselbe Ergebnisband, zwei Karten untereinander.
   // Umschreiben kann sie niemand, den Praefix bildet der Generator nicht mehr.
-  'match_result_'
+  'match_result_',
+  // ── Der Monat hatte drei Arten Karten ────────────────────────────
+  // Die Chronik eines Monats (`chronik_<Saison>`, am 1. um 00:00) und je
+  // Erstling eine Zeile (`chronik_erst_…`) stehen jetzt auf der einen Karte
+  // des Monatsabschlusses [§C33]. Jede Saison beginnt mit ihrem Jahr, daher
+  // `chronik_2`: `chronik_frei_…` bildet der Generator weiter.
+  'chronik_2', 'chronik_erst_'
 ];
 // ── Ein zurückgenommenes Karriereende [§C40] ─────────────────────────
 // Die Karte bleibt in der Datenbank wie jede andere, sie gilt aber nur,
@@ -156,7 +162,7 @@ function _consolidateStories(list){
   // Insigniums stehen nicht mehr darin: sie haben ihre eigene Karte je Tag
   // (`insignium_tag`), und alte Einzelzeilen werden zu ihr (`_insAltZuTag`).
   const tafelTypen = new Set(['rekord_erstmals','rekord_geholt','rekord_gesteigert',
-    'chronik_erstling','chronik_geholt']);
+    'chronik_geholt']);
   const matchById = new Map((matches || []).map(m => [m.id, m]));
   const duellMoment = new Map(), duellAnzahl = new Map();
   _spBasis().chrono.forEach(m => [m.a1,m.a2].forEach(a => [m.b1,m.b2].forEach(b => {
@@ -291,7 +297,7 @@ function _consolidateStoriesLegacy(list){
   // ihren Siegern standen gemessen zwei im Feed — vier Spieltage verloren
   // genau die Karte, die ihre Schlagzeile ist. Solange das Fenster sieben
   // Tage breit war, fiel das nicht auf: da passten zwei Sieger hinein.
-  const TAG_PFLICHT = new Set(['potd', 'woche', 'chronik_monat', 'season_recap',
+  const TAG_PFLICHT = new Set(['potd', 'woche', 'season_recap',
     'chronik_frei', 'karriereende']);
 
   // ── Was eine Auszeichnung erzaehlt, erzaehlt das Ergebnis nicht ──
@@ -444,7 +450,7 @@ function _consolidateStoriesLegacy(list){
   // Die Runde fasst ihre Partien zusammen wie der Spieler des Tages seinen
   // Tag: es gibt sie je Runde genau einmal, also wiederholt sie nichts.
   const _OHNE_SPERRE = new Set(['ambient', 'sammel', 'season_endgame', 'spiel',
-                                'potd', 'woche', 'chronik_monat', 'season_recap', 'runde',
+                                'potd', 'woche', 'season_recap', 'runde',
                                 'ehrung', 'karriereende']);
   const _aussage = st => {
     const d = (st && st.dataRef) || {};
@@ -645,7 +651,7 @@ function _consolidateStoriesLegacy(list){
     // nirgends sonst hin.
     'fluch','duo_jubilaeum','revanche','tagesmarathon','elo_hoch','tabellensprung']);
   const SAMMEL_TAFEL = new Set(['rekord_erstmals','rekord_geholt','rekord_gesteigert',
-    'chronik_erstling','chronik_geholt']);
+    'chronik_geholt']);
   const _minKey = w => { const d = new Date(w); return tagKey(w)+'-'+d.getHours()+'-'+d.getMinutes(); };
   // ── Was ein Spieler holen kann ─────────────────────────────────────
   // Die Bündelung nach Moment und Subjekt kannte den INHALT nicht: sie legte
@@ -670,7 +676,7 @@ function _consolidateStoriesLegacy(list){
   // eigener, mehrfach „geholter" Laufbahnerfolg.
   const ERFOLG_ART = {
     rekord_erstmals:  'rekord',   rekord_geholt:    'rekord',
-    chronik_geholt:   'chronik',  chronik_erstling: 'erstling',
+    chronik_geholt:   'chronik',
     insignium_stufe:  'ins',      badge_unlocked:   'badge',
     milestone_wins:   'marke',    milestone_goals:  'marke',
     milestone_elo:    'marke',    jubilee:          'jubilaeum'
@@ -684,9 +690,7 @@ function _consolidateStoriesLegacy(list){
     badge:     {verb:'holt',     ein:'eine Auszeichnung',           viele:n => `${n} Auszeichnungen`},
     ins:       {verb:'erreicht', ein:'die nächste Insignium-Stufe', viele:n => `${n} Insignium-Stufen`},
     marke:     {verb:'erreicht', ein:'einen Meilenstein',           viele:n => `${n} Meilensteine`},
-    jubilaeum: {verb:'feiert',   ein:'ein Jubiläum',                viele:n => `${n} Jubiläen`},
-    erstling:  {verb:'steht',    ein:'zum ersten Mal in der Chronik',
-                viele:n => `${n} Mal neu in der Chronik`}
+    jubilaeum: {verb:'feiert',   ein:'ein Jubiläum',                viele:n => `${n} Jubiläen`}
   };
   // ── Mehrere Spieler, derselbe Erfolg ───────────────────────────────
   // Nur die Typen, die überhaupt kollidieren können: einer je Spieler, und
@@ -705,12 +709,6 @@ function _consolidateStoriesLegacy(list){
       titel: (nm, d) => `${nm} tragen jetzt den ${d.stufeName || 'Reif'}`,
       satz:  n => `Ein gemeinsamer Sprung auf der Laufbahn: ${_zahlwortDe(n)} Zeichen wechseln zugleich ihre Form.`,
       zeile: (nm, d) => `${nm}: ${d.punkte} Prestige`
-    },
-    chronik_erstling: {
-      sache: d => 'erst|' + (d.sid || ''),
-      titel: nm => `${nm} stehen zum ersten Mal in der Chronik`,
-      satz:  n => `Dieser Monat öffnet gleich ${_zahlwortDe(n)} Laufbahnen ein neues Kapitel.`,
-      zeile: (nm, d) => `${nm}: „${d.titel || ''}"`
     },
     jubilee: {
       sache: d => 'jub|' + (d.total || ''),
@@ -1836,7 +1834,7 @@ function _leerlauf(ms){
 // bilden zusammen die eine rollende Karte "Ewige Tafel". Alle anderen IDs
 // sind unveränderliche Publikations-Snapshots.
 const STORY_TAFEL_UPDATE = new Set(['rekord_erstmals','rekord_geholt','rekord_gesteigert',
-  'insignium_stufe','insignium_tag','chronik_erstling','chronik_geholt']);
+  'insignium_stufe','insignium_tag','chronik_geholt']);
 function _storyIstTafelUpdate(s, jetzt){
   if(!s) return false;
   const d = s.dataRef || s.data_ref || {};
@@ -1886,13 +1884,18 @@ function _tafelFassungen(list){
   });
 }
 function _mergeStorySnapshots(bestand, neu, jetzt){
+  // Was vor dem Fenster des Feeds liegt, fällt hier heraus [§11.0d]: der Stand
+  // des Geräts trägt jede Karte, die je geladen wurde, und ohne diesen Schnitt
+  // bliebe eine Karte stehen, die die Datenbank längst nicht mehr liefert.
+  const ab = newsAnzeigeAb(new Date(jetzt || Date.now()).getTime());
   const byId = new Map();
   (Array.isArray(bestand) ? bestand : []).forEach(s => { if(s && s.id) byId.set(s.id, s); });
   (Array.isArray(neu) ? neu : []).forEach(s => {
     if(!s || !s.id) return;
     if(!byId.has(s.id) || _storyIstTafelUpdate(s, jetzt)) byId.set(s.id, s);
   });
-  return [...byId.values()].sort((a, b) => new Date(b.when) - new Date(a.when));
+  return [...byId.values()].filter(s => new Date(s.when).getTime() >= ab)
+    .sort((a, b) => new Date(b.when) - new Date(a.when));
 }
 
 async function syncStoriesViaDb(){
@@ -1970,6 +1973,11 @@ function _storyToRow(s){
     data_ref:    s.dataRef || {},
     priority:    s.prio | 0,
     event_at:    (s.when instanceof Date ? s.when : new Date(s.when)).toISOString(),
+    // Ab dem Ereignis, nicht ab dem Einfügen [§11.0d]: der Feed zeigt einen
+    // Monat, und eine Karte, die um 18 Uhr für 23:59 entstand, lief sonst
+    // sechs Stunden zu früh ab.
+    expires_at:  new Date((s.when instanceof Date ? s.when : new Date(s.when)).getTime()
+                   + NEWS_HALTEN_TAGE * 86400000).toISOString(),
   };
 }
 function _rowToStory(r){
@@ -2018,8 +2026,10 @@ async function _uploadNewStoriesToDb(stories, bestand){
 async function _loadStoriesFromDb(){
   // Geschnitten wird am DATUM [§11.0d]. Mit `.limit(100)` hing die
   // Fensterbreite daran, wie viel gerade los war: an einem starken Spieltag
-  // entstehen sechsundzwanzig Karten, an einem stillen zwei.
-  const _ab = new Date(Date.now() - NEWS_FENSTER_TAGE * 86400000).toISOString();
+  // entstehen sechsundzwanzig Karten, an einem stillen zwei. Gelesen wird der
+  // ganze Monat zurück, nicht nur das Fenster des Generators: was dort steht,
+  // ist eingefroren und kommt nur noch von hier.
+  const _ab = new Date(newsAnzeigeAb(Date.now())).toISOString();
   const rows = [];
   for(let von = 0; ; von += NEWS_DB_SEITENGROESSE){
     const { data, error } = await sb.from('stories')

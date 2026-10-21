@@ -470,8 +470,13 @@ const ok = (c, msg, det) => {
   const kopien = verweise.filter(v => v.rav > 0 && v.ravUse < v.rav);
   ok(kopien.length === 0, 'jedes Wappen des Listen-Bauteils ist ein Verweis',
      kopien.map(v => v.tab + ': ' + v.ravUse + ' von ' + v.rav).join(' | '));
+  // Geteilt wird, wo mehr Wappen stehen als Spieler — in den Awards
+  // dieselben Gesichter mehrmals. In der Rangliste steht jeder einmal, und
+  // ob zwei dieselbe Zeichnung tragen, hängt an ihrem Prestige: seit den
+  // Chroniken nach Stufe trug jeder der elf eine eigene, und „jede Ansicht
+  // teilt" war eine Aussage über die Daten, nicht über den Topf.
   const viele = verweise.filter(v => v.rav >= 10);
-  ok(viele.length > 0 && viele.every(v => v.symbole >= 1 && v.symbole < v.rav),
+  ok(viele.length > 0 && viele.every(v => v.symbole >= 1) && viele.some(v => v.symbole < v.rav),
      'viele Wappen teilen wenige Zeichnungen',
      verweise.map(v => v.tab + ':' + v.symbole + '/' + v.rav).join(' '));
 
@@ -3035,45 +3040,111 @@ const ok = (c, msg, det) => {
 
   console.log('\n═══ DIE CHRONIK-MATRIX ═══');
   const matrix = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
     const box = document.createElement('div');
     box.style.width = '430px';
     document.body.appendChild(box);
-    box.innerHTML = window.__k.eval('ligaChronikMatrixHtml()');
+    box.innerHTML = K('ligaChronikMatrixHtml()');
+    const breit = e => { const r = document.createRange(); r.selectNodeContents(e);
+      return r.getBoundingClientRect().width > e.getBoundingClientRect().width + 0.01; };
     const zu = [];
     box.querySelectorAll('.lc-cell .n').forEach(e => {
-      const r = document.createRange(); r.selectNodeContents(e);
-      const tw = r.getBoundingClientRect().width;
-      const cw = e.getBoundingClientRect().width;
-      if(tw > cw + 0.01) zu.push(e.textContent.trim() + ' (' + tw.toFixed(1) + '>' + cw.toFixed(1) + ')');
+      if(breit(e)) zu.push(e.textContent.trim()); });
+    // Jedes Kürzel des Katalogs, nicht nur die, die heute in der Matrix
+    // stehen: ein neues Kürzel fiele sonst erst auf, wenn es jemand hält.
+    const probe = document.createElement('div');
+    probe.className = 'lchron'; box.appendChild(probe);
+    probe.innerHTML = JSON.parse(K("JSON.stringify(SEASON_TITLES.map(t => t.short || t.name))"))
+      .map(n => `<span class="lc-cell" style="--tt:#fff;--ttr:255,255,255"><span class="i"></span><span class="n">${n}</span></span>`).join('');
+    probe.querySelectorAll('.n').forEach(e => { if(breit(e)) zu.push(e.textContent.trim()); });
+    probe.remove();
+    // Die Farbe ist die Stufe [§C39]: jede Zelle gegen die Farbe ihrer
+    // Stufe, gemessen am gezeichneten Zeichen.
+    const ton = JSON.parse(K("JSON.stringify(Object.fromEntries(Object.entries(CHRONIK_STUFE_TON).map(([k, v]) => [k, titleTone(v).c])))"));
+    const farbe = c => { const e = document.createElement('i'); e.style.color = c; box.appendChild(e);
+      const f = getComputedStyle(e).color; e.remove(); return f; };
+    const soll = Object.fromEntries(Object.entries(ton).map(([k, c]) => [k, farbe(c)]));
+    const zellen = [...box.querySelectorAll('.lc-cell')];
+    const stufen = {}, falschFarbe = [], glanzFalsch = [], verz = new Set();
+    let ohneKlasse = 0;
+    zellen.forEach(z => {
+      const kl = z.dataset.kl;
+      if(!kl){ ohneKlasse++; return; }
+      stufen[kl] = (stufen[kl] || 0) + 1;
+      const f = getComputedStyle(z.querySelector('.i')).color;
+      if(f !== soll[kl]) falschFarbe.push(kl + ' ' + z.textContent.trim() + ' ' + f);
+      // Gold glänzt, sonst nichts — und der Glanz bleibt in seiner Zelle.
+      const nach = getComputedStyle(z, '::after');
+      const laeuft = nach.content !== 'none' && nach.animationName === 'lcGlanz';
+      if(laeuft !== (kl === 'legendaer') || (laeuft && getComputedStyle(z).overflow !== 'hidden'))
+        glanzFalsch.push(kl + ' ' + z.textContent.trim());
+      if(laeuft) verz.add(nach.animationDelay);
     });
-    // Das Gewicht der Klasse: dieselbe Farbe in drei Staerken [§C39].
-    const grund = k => {
-      const el = box.querySelector('.lc-cell[data-kl="' + k + '"]');
-      if(!el) return null;
-      const m = getComputedStyle(el).backgroundColor.match(/[\d.]+/g);
-      return m ? +(m[3] === undefined ? 1 : m[3]) : null;
-    };
-    const zellen = box.querySelectorAll('.lc-cell').length;
-    const ohneKlasse = [...box.querySelectorAll('.lc-cell')].filter(e => !e.dataset.kl).length;
-    const r = {zu, zellen, ohneKlasse,
-               leg:grund('legendaer'), sel:grund('selten'), bes:grund('besonders')};
+    // Die Zelle zeigt den wertvollsten Eintrag, die Ecke, wie viele es
+    // daneben noch gibt, und die Zeile zählt ihre Zellen je Stufe.
+    const falschZelle = [], falschZahl = [];
+    box.querySelectorAll('.lchron tbody tr').forEach(tr => {
+      const pid = tr.querySelector('[data-tplayer]').dataset.tplayer;
+      const je = {};
+      tr.querySelectorAll('.lc-cell').forEach(z => {
+        const sid = z.dataset.seasonTable;
+        const ist = JSON.parse(K(`JSON.stringify((() => { const T = seasonTitles(${JSON.stringify(sid)});
+          const a = chronikEintragVon(T, ${JSON.stringify(pid)});
+          return {n:a && (a.short || a.name), mehr:T.awarded.filter(x => x.pid === ${JSON.stringify(pid)}).length - 1}; })())`));
+        const mehr = z.querySelector('.lc-mehr');
+        if(z.querySelector('.n').textContent.trim() !== ist.n
+           || (mehr ? mehr.textContent.trim() : '') !== (ist.mehr > 0 ? '+' + ist.mehr : ''))
+          falschZelle.push(pid + ' ' + sid + ' ' + z.textContent.trim().replace(/\s+/g, ' ') + ' statt ' + ist.n + ' +' + ist.mehr);
+        je[z.dataset.kl] = (je[z.dataset.kl] || 0) + 1;
+      });
+      const zahl = {};
+      tr.querySelectorAll('.lc-zahl b').forEach(b => { zahl[b.dataset.kl] = +b.textContent; });
+      if(JSON.stringify(Object.entries(zahl).sort()) !== JSON.stringify(Object.entries(je).sort()))
+        falschZahl.push(pid + ' ' + JSON.stringify(zahl) + ' statt ' + JSON.stringify(je));
+    });
+    // Das Band im Kopf verteilt die Einträge des Monats auf die Stufen.
+    const falschBand = [];
+    box.querySelectorAll('.lchron thead th[data-season-table]').forEach(th => {
+      const sid = th.dataset.seasonTable;
+      const je = JSON.parse(K(`JSON.stringify(seasonTitles(${JSON.stringify(sid)}).awarded.reduce((o, a) => {
+        const st = chronikStufe(a.titleId); if(st) o[st] = (o[st] || 0) + 1; return o; }, {}))`));
+      const n = Object.values(je).reduce((x, y) => x + y, 0);
+      const band = th.querySelector('.lc-st');
+      if(!band){ if(n) falschBand.push(sid + ' ohne Band'); return; }
+      const b = band.getBoundingClientRect().width;
+      band.querySelectorAll('i').forEach(i => {
+        const w = i.getBoundingClientRect().width / b, s = (je[i.dataset.kl] || 0) / n;
+        if(Math.abs(w - s) > 0.02) falschBand.push(sid + ' ' + i.dataset.kl + ' ' + w.toFixed(2) + ' statt ' + s.toFixed(2));
+      });
+    });
+    const legende = [...box.querySelectorAll('.lchron-lg [data-kl]')].map(e => e.dataset.kl + ' ' + e.textContent.trim());
+    const r = {zu, zellen:zellen.length, ohneKlasse, stufen, falschFarbe, glanzFalsch, verz:verz.size,
+               falschZelle, falschZahl, falschBand, legende};
     box.remove();
     return r;
   });
-  ok(matrix.zellen > 0, 'die Matrix zeigt Zellen', matrix.zellen + ' Zellen');
-  ok(matrix.zu.length === 0, 'kein Kuerzel wird in der Matrix abgeschnitten',
+  ok(matrix.zellen > 0, 'die Matrix zeigt Zellen', matrix.zellen + ' Zellen · ' + JSON.stringify(matrix.stufen));
+  ok(matrix.zu.length === 0, 'kein Kuerzel des Katalogs wird in einer Zelle abgeschnitten',
      matrix.zu.join(' | '));
-  ok(matrix.ohneKlasse === 0, 'jede Zelle traegt die Klasse ihrer Chronik',
+  ok(matrix.ohneKlasse === 0, 'jede Zelle traegt die Stufe ihrer Chronik',
      matrix.ohneKlasse + ' ohne');
-  // Alle drei Stufen, nicht nur die Enden: mit nur „legendaer > besonders"
-  // blieb die Zusicherung gruen, als die legendaere Regel ganz fehlte — die
-  // besondere allein reichte fuer den Vergleich.
-  ok(matrix.leg !== null && matrix.sel !== null && matrix.bes !== null,
-     'alle drei Klassen stehen in der Matrix',
-     'legendaer ' + matrix.leg + ' selten ' + matrix.sel + ' besonders ' + matrix.bes);
-  ok(matrix.leg > matrix.sel && matrix.sel > matrix.bes,
-     'je seltener die Chronik, desto staerker leuchtet ihre Zelle',
-     'legendaer ' + matrix.leg + ' > selten ' + matrix.sel + ' > besonders ' + matrix.bes);
+  // Alle drei Stufen der Plusseite, nicht nur die Enden: mit nur zwei blieb
+  // eine Zusicherung gruen, als die Regel einer Stufe ganz fehlte.
+  ok(matrix.stufen.legendaer && matrix.stufen.selten && matrix.stufen.besonders,
+     'Gold, Lila und Metall stehen in der Matrix', JSON.stringify(matrix.stufen));
+  ok(matrix.falschFarbe.length === 0, 'jede Zelle leuchtet in der Farbe ihrer Stufe, nicht ihrer Disziplin',
+     matrix.falschFarbe.slice(0, 4).join(' | '));
+  ok(matrix.glanzFalsch.length === 0 && matrix.verz > 1,
+     'nur goldene Zellen glaenzen, in ihrer Zelle und jede in eigenem Takt',
+     matrix.glanzFalsch.slice(0, 4).join(' | ') + ' · ' + matrix.verz + ' Takte');
+  ok(matrix.falschZelle.length === 0, 'jede Zelle zeigt den wertvollsten Eintrag und wie viele daneben',
+     matrix.falschZelle.slice(0, 3).join(' | '));
+  ok(matrix.falschZahl.length === 0, 'unter dem Namen steht je Stufe, wie viele Zellen der Zeile sie tragen',
+     matrix.falschZahl.slice(0, 3).join(' | '));
+  ok(matrix.falschBand.length === 0, 'das Band im Kopf teilt den Monat nach Stufen',
+     matrix.falschBand.slice(0, 3).join(' | '));
+  ok(matrix.legende.join() === 'legendaer legendär 150,selten selten 100,besonders besonders 50,schatten Schattenseite',
+     'die Legende nennt je Stufe, was sie bringt', matrix.legende.join(' · '));
 
   console.log('\n═══ CHRONIK-PRESTIGE IST NACHVOLLZIEHBAR ═══');
   const chronRechnung = await page.evaluate(async () => {
@@ -4488,26 +4559,35 @@ const ok = (c, msg, det) => {
      'der Knopf „Match eintragen" fehlt nur auf der Match-Seite',
      reiter.map(r => r.name + ':' + r.fab).join(' '));
   // ── Die Meisterbühne [§C31] bei 360 px ─────────────────────────────
-  // Podest, Titelrennen und Tage vorn stehen auf Karte und Blatt. Gemessen
-  // wird, dass nichts davon über den Innenrand läuft, dass der Strahlenkranz
-  // hinter dem Podest liegt und nicht davor, und dass Kranz und Linien bei
-  // Bewegungsruhe stillstehen.
+  // Podest, Titelrennen, Team der Saison, Chronik und die Zeichen der Titel
+  // stehen auf der Karte des Monatsabschlusses; Titelrennen, Tage vorn und
+  // die Saison des Meisters im Saison-Rückblick, den ein Tippen auf die
+  // Karte öffnet. Gemessen wird, dass nichts davon über den Innenrand läuft,
+  // dass der Strahlenkranz hinter dem Podest liegt und nicht davor, und dass
+  // Kranz und Linien bei Bewegungsruhe stillstehen.
   await page.setViewportSize({width:360, height:780});
   const meisterMess = async () => page.evaluate(() => window.__k.eval(`(()=>{
     const sid = '2026-07', se = seasons.find(x => x.id === sid), top = JSON.parse(se.top_elo);
+    const drei = top.slice(0, 3).map(x => x.id), t = seasonTeamOf(sid), aw = seasonTitles(sid).awarded;
+    const ende = seasonEnd(sid).getTime();
     const s = {id:'season_recap_' + sid, cat:'season', ic:'crown', title:'x', desc:'x',
-      when:new Date(2026, 6, 31, 23, 50).getTime(), prio:92,
-      dataRef:{type:'season_recap', sid, championId:top[0].id, championElo:top[0].elo, topElo:top, fakten:{}}};
+      when:ende + 1000, prio:92,
+      dataRef:{type:'season_recap', sid, championId:top[0].id, championElo:top[0].elo, topElo:top, fakten:{},
+        team:{pids:[t[0], t[1]], elo:120, w:9, l:4},
+        chronik:{eintraege:aw.length, traeger:3, spitze:drei.map(pid => ({pid, n:2})), erstlinge:[]},
+        zeichen:rcpZeichenZuege(rcpLaufbahnDaten(ende, ende + 1000))}};
     const host = document.createElement('div');
     host.style.cssText = 'position:absolute;left:0;top:0;width:328px';
     host.innerHTML = '<div class="nf-wrap">' + _newsCardHtmlM2(s, false, false, '') + '</div>'
-      + '<div class="nd" style="position:static;transform:none;max-height:none">' + _newsDetailBody(s) + '</div>';
+      + '<div data-probe="rueckblick" style="width:328px"><div class="rcp-block">' + saisonRennenHtml(sid, drei) + '</div>'
+      + '<div class="rcp-block">' + saisonSpitzeHtml(sid, drei) + '</div>'
+      + '<div class="rcp-block">' + saisonZellenHtml(sid, drei[0]) + '</div></div>';
     document.body.appendChild(host);
     const raus = [];
-    [host.querySelector('.nf-card'), host.querySelector('.nd')].forEach(box => {
+    [host.querySelector('.nf-card'), host.querySelector('[data-probe]')].forEach(box => {
       if(!box) { raus.push('fehlt'); return; }
       const b = box.getBoundingClientRect();
-      box.querySelectorAll('.pod-karte, .srn-svg, .srn-band, .srn-leg, .srn-t, .srn-z, .nf-zb').forEach(e => {
+      box.querySelectorAll('.pod-karte, .srn-svg, .srn-band, .srn-leg, .srn-t, .srn-z, .nf-zb, .nf-mb-f, .ni-z').forEach(e => {
         const r = e.getBoundingClientRect();
         if(r.left < b.left - 0.5 || r.right > b.right + 0.5) raus.push(e.className.baseVal || e.className);
       });
@@ -4517,18 +4597,46 @@ const ok = (c, msg, det) => {
     const out = {raus, kranz:kranz ? getComputedStyle(kranz).animationName : 'fehlt',
       hinten:kranz ? getComputedStyle(kranz).zIndex : 'fehlt',
       linie:linie ? getComputedStyle(linie).animationName : 'fehlt',
-      tage:tage ? getComputedStyle(tage).animationName : 'fehlt'};
+      tage:tage ? getComputedStyle(tage).animationName : 'fehlt',
+      felder:host.querySelectorAll('.nf-mb-f').length};
     host.remove(); return out;
   })()`));
   const mb = await meisterMess();
   ok(mb.raus.length === 0, 'die Meisterbühne bleibt bei 360 px in Karte und Blatt', mb.raus.join(', '));
-  ok(mb.hinten === '-1' && mb.kranz !== 'none' && mb.linie !== 'none' && mb.tage !== 'none',
+  ok(mb.felder === 2, 'die Karte trägt Team der Saison und Chronik', mb.felder);
+  ok(mb.hinten === '-1' && mb.kranz !== 'none' && mb.linie !== 'none' && mb.tage !== 'none'
+     && mb.kranz !== 'fehlt' && mb.linie !== 'fehlt' && mb.tage !== 'fehlt',
      'der Strahlenkranz liegt hinter dem Podest, Kranz und Linien bewegen sich', JSON.stringify(mb));
   await page.emulateMedia({reducedMotion: 'reduce'});
   const mbRuhig = await meisterMess();
   await page.emulateMedia({reducedMotion: 'no-preference'});
   ok(mbRuhig.kranz === 'none' && mbRuhig.linie === 'none' && mbRuhig.tage === 'none',
      'bei prefers-reduced-motion steht die Meisterbühne still', JSON.stringify(mbRuhig));
+  // Ein Tippen auf die Karte öffnet den Saison-Rückblick, kein eigenes
+  // Blatt: das zeigte Podest, Titelrennen und Tage vorn ein zweites Mal, und
+  // vom Blatt führte kein Weg zum Rückblick [§C31].
+  const tipp = JSON.parse(await K(`(async()=>{
+    closeSheet(true);
+    const sid = '2026-07', top = JSON.parse(seasons.find(x => x.id === sid).top_elo);
+    const s = {id:'season_recap_' + sid, cat:'season', ic:'crown', title:'x', desc:'x',
+      when:new Date(2026, 7, 1).getTime(), prio:92,
+      dataRef:{type:'season_recap', sid, championId:top[0].id, championElo:top[0].elo, topElo:top, fakten:{}}};
+    _cache._stories = [s].concat((_cache._stories || []).filter(x => x.id !== s.id));
+    _cache._consolFrom = null;
+    openNewsDetail(s.id);
+    await new Promise(r => setTimeout(r, 450));
+    const sheet = document.getElementById('sheet'), nd = document.getElementById('ndBg');
+    const out = {offen:sheet.classList.contains('show'), rueckblick:!!sheet.querySelector('#closeRecapBtn'),
+      titel:(sheet.querySelector('.rcp-kopf, h2, .rcp-titel') || {}).textContent || '',
+      blatt:!!(nd && nd.classList.contains('show'))};
+    // Erst weiter, wenn das Blatt zugeschoben und leer ist: die Suche nach
+    // Filtern darunter liest das ganze Dokument.
+    closeSheet(true);
+    for(let i = 0; i < 20 && sheet.innerHTML; i++) await new Promise(r => setTimeout(r, 50));
+    return JSON.stringify(out);
+  })()`));
+  ok(tipp.offen && tipp.rueckblick && !tipp.blatt,
+     'ein Tippen auf den Monatsabschluss öffnet den Saison-Rückblick und kein Blatt', JSON.stringify(tipp));
 
   // ── Kein Filter über dem Zeichen [§C30] ─────────────────────────────
   // Jedes Wappen trug `filter: drop-shadow(…)` am ganzen `svg.ins`, und

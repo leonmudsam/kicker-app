@@ -53,20 +53,23 @@ function _buildStories(){
   const _yesterdayKey  = new Date(_startOfYesterday).toISOString().slice(0,10);
   let   _lastWeekKey   = isoWeek(new Date(_prevWeekStart));
 
-  // ── Der Wochenrückblick: EINE Karte, Sonntag 23:00 ───────────────────
+  // ── Der Wochenrückblick: EINE Karte, Sonntag 23:59 ───────────────────
   // Vorher standen sechs Wertungen als sechs eigene Karten über den Montag
   // verteilt (09, 10, 12, 15, 18, 20 Uhr). Gemessen trug ein Montag damit zehn
   // Karten, neun davon zwischen 09 und 20 Uhr — und der Montag ist der
   // Spieltag: die vergangene Woche verdeckte, was gerade passierte.
   // Jetzt sammeln die sechs Blöcke ihre Wertung in `_wochenTeile`, und daraus
-  // entsteht am Sonntag um 23:00 eine einzige Karte. Jede Wertung behält ihre
+  // entsteht am Sonntag um 23:59 eine einzige Karte. Jede Wertung behält ihre
   // Zahl, ihr Gesicht und ihren Weg ins Blatt.
   // Die Grenzen kommen aus _potwLastWeekRange, damit Rückblick, POTW-Karte und
   // Wochenkarte über dasselbe Fenster reden [§C27].
   const _wr = _potwLastWeekRange();
   const _wocheStart = _wr ? _wr.start.getTime() : _prevWeekStart;
   const _wocheEnde  = _wr ? (_wr.end.getTime() + 1) : _thisWeekStart;
-  const _wocheSlotTs = _wocheEnde - 3600000;          // Sonntag 23:00
+  // Sonntag 23:59:05: wenn der Tag zu ist und fünf Sekunden nach dem Spieler
+  // des Tages (23:59:00) — der Abschluss der Woche über dem ihres letzten
+  // Tages, und beide unter dem des Monats, der um 00:00 kommt [§C33].
+  const _wocheSlotTs = _wocheEnde - 60000 + 5000;
   const _wocheDue = now.getTime() >= _wocheSlotTs;
   _lastWeekKey = isoWeek(new Date(_wocheStart));
   const _wochenTeile = [];
@@ -102,9 +105,9 @@ function _buildStories(){
   // an dem gar nicht gespielt wurde. Die Signatur kippt um 23:59 und bricht
   // dann den Memo-Key, damit die Karte ohne Reload erscheint.
   const _morningSlotSig = (now.getHours() * 60 + now.getMinutes()) >= (23 * 60 + 59) ? 1 : 0;
-  // Dasselbe für den Wochenrückblick: der Schalter kippt am Sonntag um 23:00
-  // und bricht den Memo-Key, sonst erschiene die Karte erst nach dem nächsten
-  // Match oder Reload.
+  // Dasselbe für den Wochenrückblick: der Schalter kippt am Sonntag um
+  // 23:59:05 und bricht den Memo-Key, sonst erschiene die Karte erst nach dem
+  // nächsten Match oder Reload.
   const _weekSlotSig = _wocheDue ? 1 : 0;
   // Die Runde der Vier entsteht dreißig Minuten nach ihrer letzten Partie,
   // auch ohne neue Partie: die Zahl der geschlossenen Runden bricht den Key.
@@ -1068,82 +1071,112 @@ function _buildStories(){
     }
   } catch(e){}
 
-  // ── 10. Saisonende-Recap (Saison gerade zu Ende) ──
-  // Wenn aktuelle Saison weniger als 2 Tage alt ist UND es eine archivierte
-  // Vorgängersaison gibt → kurzer Verweis auf den Champion.
+  // ── 10. Der Monatsabschluss ──────────────────────────────────────────
+  // EINE Karte für den ganzen Abschluss eines Monats: der Meister auf dem
+  // Podest, das Team der Saison, die Chronik mit denen, die zum ersten Mal
+  // darin stehen, und wer durch die Titel des Monats ein neues Zeichen trägt.
+  // Vorher waren es drei Arten Karten: der Meister am letzten Tag um 23:50,
+  // die Chronik am 1. um 00:00 und je Erstling eine Zeile in der Tafel des
+  // 1., zwischen den Rekorden eines Spieltags, der mit dem alten Monat nichts
+  // zu tun hat. Dazwischen stand der Spieler des letzten Tages. Das Team der
+  // Saison und die Zeichen, die erst mit den Titeln kamen, standen auf keiner.
+  // Gebildet wird sie nur in den ersten zwei Tagen der neuen Saison — vorher
+  // steht der Meister nicht fest —, und NUR für die unmittelbar vorige: wählte
+  // der Generator die höchste vorhandene ID, und die gerade beendete Saison
+  // war noch nicht synchronisiert, entstand eine dauerhaft falsche Karte für
+  // die vorletzte.
   try {
     const sStart = seasonStart();
     const ageDays = (now - sStart) / 86400000;
-    if(ageDays <= 2 && seasons && seasons.length){
-      // v9-Fix: NUR die unmittelbar vorige Saison (Vormonat der aktuellen)
-      // recap'en. Vorher wurde blind „die höchste vorhandene id" genommen —
-      // war das seasons-Array noch nicht voll synchronisiert (die gerade
-      // beendete Saison fehlte), wählte das die VORLETZTE Saison und
-      // persistierte eine dauerhaft falsche „Saison-Champion"-Story mit
-      // when = aktueller Saisonstart, die als Breaking-Hero konkurrierte.
-      // Jetzt matchen wir exakt den erwarteten Vormonat; fehlt er → nichts.
-      const _prevSeasonId = (curId) => {
-        const mm = /^(\d{4})-(\d{2})$/.exec(String(curId||''));
-        if(!mm) return null;
-        let yy = +mm[1], mo = +mm[2] - 1;
-        if(mo < 1){ mo = 12; yy--; }
-        return yy + '-' + String(mo).padStart(2,'0');
-      };
-      const prevId = _prevSeasonId(currentSeason().id);
-      const lastArchived = prevId ? seasons.find(s => s.id === prevId) : null;
-      if(lastArchived){
-        const topElo = (typeof lastArchived.top_elo === 'string')
-          ? JSON.parse(lastArchived.top_elo || '[]')
-          : (lastArchived.top_elo || []);
-        if(topElo.length && topElo[0] && topElo[0].id && pm[topElo[0].id]){
-          // Der Monatsrückblick erzählt NICHT noch einmal die Chronik, die
-          // direkt daneben als eigene Tafel-Karte steht. Er bekommt seine
-          // Fakten aus den Partien dieses Monats: Umfang, Tore, enge Spiele
-          // und die beiden auffälligen Ergebnisse. Alles bleibt damit eine
-          // Ableitung derselben Matchdaten wie Rangliste und Verlauf.
-          const _sm = matchesInSeason(lastArchived.id);
-          let _tore = 0, _eng = 0, _klar = null, _torreich = null;
-          _sm.forEach(m => {
-            const a = Number(m.score_a) || 0, b = Number(m.score_b) || 0;
-            const diff = Math.abs(a - b), gesamt = a + b;
-            _tore += gesamt;
-            if(diff <= 2) _eng++;
-            if(!_klar || diff > _klar.wert) _klar = {wert:diff, matchId:m.id, score:a+':'+b};
-            if(!_torreich || gesamt > _torreich.wert) _torreich = {wert:gesamt, matchId:m.id, score:a+':'+b};
-          });
-          const _fakten = {
-            spiele:_sm.length,
-            tore:_tore,
-            engeSpiele:_eng,
-            toreJeSpiel:_sm.length ? Math.round(_tore / _sm.length * 10) / 10 : 0,
-            klarstes:_klar,
-            torreichstes:_torreich
-          };
-          stories.push({
-            id: 'season_recap_'+lastArchived.id,
-            cat: 'season',
-            ic: 'crown',
-            title: `${nameOf(topElo[0].id)} ist Saison-Champion`,
-            desc: `${_fakten.spiele} Partien, ${_fakten.tore} Tore und ${_fakten.engeSpiele} enge Spiele prägten ${seasonLabel(lastArchived.id)}. `
-                + `${nameOf(topElo[0].id)} schließt den Monat mit ${topElo[0].elo} Elo an der Spitze ab.`,
-            // ── Der Rueckblick gehoert dem Monat, den er beschliesst ──
-            // Er stand auf `seasonStart()`, also am 1. des FOLGEmonats um
-            // 00:00 — unter dem Tageskopf eines Monats, von dem er gar nicht
-            // erzaehlt, und damit unter demselben Kopf wie die Monatschronik
-            // [§C33]. Er steht jetzt am letzten Kalendertag um 23:50: zehn
-            // Minuten vor dem Wechsel sind die Profileintraege eingefroren,
-            // und die Karte schliesst den Monat ab, statt den naechsten zu
-            // eroeffnen.
-            when: (function(){
-              const e = seasonEnd(lastArchived.id);
-              return new Date(e.getFullYear(), e.getMonth(), e.getDate(), 23, 50, 0, 0);
-            })(),
-            prio: STORY_PRIO.season_recap,
-            dataRef: {type:'season_recap', sid: lastArchived.id, championId: topElo[0].id,
-                      championElo: topElo[0].elo, topElo, fakten:_fakten}
-          });
+    const prevId = ageDays <= 2 && seasons && seasons.length ? _prevSeasonId(currentSeason().id) : null;
+    const lastArchived = prevId ? seasons.find(s => s.id === prevId) : null;
+    const topElo = !lastArchived ? [] : (typeof lastArchived.top_elo === 'string')
+      ? JSON.parse(lastArchived.top_elo || '[]') : (lastArchived.top_elo || []);
+    if(lastArchived && topElo.length && topElo[0] && topElo[0].id && pm[topElo[0].id]){
+      const sid = lastArchived.id, monat = seasonLabel(sid);
+      const _sm = matchesInSeason(sid);
+      // Die Fakten des Monats aus seinen Partien: Umfang, Tore, enge Spiele und
+      // die beiden auffälligen Ergebnisse.
+      let _tore = 0, _eng = 0, _klar = null, _torreich = null;
+      _sm.forEach(m => {
+        const a = Number(m.score_a) || 0, b = Number(m.score_b) || 0;
+        const diff = Math.abs(a - b), gesamt = a + b;
+        _tore += gesamt;
+        if(diff <= 2) _eng++;
+        if(!_klar || diff > _klar.wert) _klar = {wert:diff, matchId:m.id, score:a+':'+b};
+        if(!_torreich || gesamt > _torreich.wert) _torreich = {wert:gesamt, matchId:m.id, score:a+':'+b};
+      });
+      const _fakten = {spiele:_sm.length, tore:_tore, engeSpiele:_eng,
+        toreJeSpiel:_sm.length ? Math.round(_tore / _sm.length * 10) / 10 : 0,
+        klarstes:_klar, torreichstes:_torreich};
+      // Das Team der Saison: dieselbe Rechnung wie im Rückblick (`seasonTeamOf`)
+      // [§C27]. Ein Duo hat keinen Rang, nur seine Bilanz und seine Elo.
+      let team = null;
+      try {
+        const t = seasonTeamOf(sid);
+        if(t && t[0] && t[1] && pm[t[0]] && pm[t[1]]){
+          const paar = (x, y) => (x === t[0] && y === t[1]) || (x === t[1] && y === t[0]);
+          const zus = _sm.filter(m => paar(m.a1, m.a2) || paar(m.b1, m.b2));
+          const w = zus.filter(m => paar(m.a1, m.a2) ? m.winner === 'A' : m.winner === 'B').length;
+          const elo = Math.round(((getGlobalSim().seasonTeamElo || {})[sid] || {})[paarKey(t[0], t[1])] || 0);
+          team = {pids:[t[0], t[1]], elo, w, l:zus.length - w};
         }
-      }
+      } catch(e){ team = null; }
+      // Die Chronik des Monats: wie viele Einträge an wie viele Spieler, die
+      // drei mit den meisten und wer zum ersten Mal überhaupt darin steht —
+      // der Moment, den ein Neuling oder ein Spieler aus der unteren Hälfte
+      // sonst nie im Feed sieht. Wer zwei Einträge holt, ist einmal Erstling.
+      let chronik = null;
+      try {
+        const T = seasonTitles(sid);
+        if(T && T.awarded && T.awarded.length){
+          const je = {};
+          T.awarded.forEach(x => { je[x.pid] = (je[x.pid] || 0) + 1; });
+          const rang = Object.keys(je).sort((x, y) => je[y] - je[x]);
+          const erst = [];
+          T.awarded.forEach(x => {
+            if(erst.some(e => e.pid === x.pid)) return;
+            let frueher = 1;
+            try { frueher = (seasonTitleHistory(x.pid) || []).filter(r => r.title && r.sid < sid).length; } catch(e){}
+            if(!frueher) erst.push({pid:x.pid, titel:x.name});
+          });
+          chronik = {eintraege:T.awarded.length, traeger:rang.length,
+            spitze:rang.slice(0, 3).map(pid => ({pid, n:je[pid]})), erstlinge:erst};
+        }
+      } catch(e){ chronik = null; }
+      // Wer durch die Titel des Monats ein neues Zeichen trägt: der Stand eine
+      // Millisekunde vor dem Monatsende gegen den beim Wechsel. Meister, Vize
+      // und Team der Saison kommen erst dann [§C34], und gemessen stieg
+      // Martin am 1. Juli um 00:00 auf den Volutenkranz III und fiel am
+      // Spieltag danach zurück — keine Karte hatte es gesagt. Ein Vergleich
+      // über die Laufbahn mit der Liga von heute fragt `ligaAktiv` [§C40].
+      let zeichen = [];
+      try {
+        const ende = seasonEnd(sid).getTime();
+        zeichen = rcpZeichenZuege(rcpLaufbahnDaten(ende, ende + 1000))
+          .filter(z => pm[z.pid] && ligaAktiv(pm[z.pid]))
+          .map(z => ({pid:z.pid, art:z.art, vor:{stufe:z.vor.stufe, grad:z.vor.grad}, nach:{stufe:z.nach.stufe, grad:z.nach.grad}}));
+      } catch(e){ zeichen = []; }
+      const champ = nameOf(topElo[0].id);
+      stories.push({
+        id: 'season_recap_' + sid,
+        cat: 'season',
+        ic: 'crown',
+        title: `${champ} ist Meister im ${monat}`,
+        // Der Satz nennt, was weder Schlagzeile noch Podest zeigen: Meister,
+        // Monat und Elo standen vorher in allen dreien und im Satz darunter.
+        desc: `${_fakten.spiele} Partien, ${_fakten.tore} Tore und ${_fakten.engeSpiele} enge Spiele prägten den Monat.`,
+        // ── Der Abschluss steht über dem Abend, der ihn beschließt ──
+        // Am 1. um 00:00: beim ersten Öffnen nach dem Monatswechsel ist er die
+        // jüngste Karte, über dem Spieler des letzten Tages (23:59:00) und
+        // der Woche, wenn sie am selben Abend endet (23:59:05). Er stand
+        // zuletzt am letzten Tag um 23:50 und damit unter beiden — die Karte
+        // des Monats unter der eines einzelnen Tages.
+        when: new Date(sStart.getFullYear(), sStart.getMonth(), 1, 0, 0, 0, 0),
+        prio: STORY_PRIO.season_recap,
+        dataRef: {type:'season_recap', sid, championId:topElo[0].id, championElo:topElo[0].elo,
+                  topElo, fakten:_fakten, team, chronik, zeichen}
+      });
     }
   } catch(e){}
 
@@ -2070,8 +2103,8 @@ function _buildStories(){
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] team der woche', e); }
 
   // ── Die Woche: sechs Wertungen in einer Karte ────────────────────────
-  // Sie steht am Sonntag um 23:00, wenn die Woche vorbei ist und der Montag als
-  // Spieltag noch nicht angefangen hat. Erscheint gar nicht, wenn die Woche
+  // Sie steht am Sonntag um 23:59:05, wenn die Woche vorbei ist und der Montag
+  // als Spieltag noch nicht angefangen hat. Erscheint gar nicht, wenn die Woche
   // keine Partie hatte: ein Wochenrückblick ohne Woche ist ein Kalendereintrag.
   try {
     if(_wocheDue && _wochenTeile.length >= 2){
@@ -2468,81 +2501,6 @@ function _buildStories(){
       });
     }
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] rekorde', e); }
-
-  // ── Die Chronik eines abgeschlossenen Monats ─────────────────────────
-  // EINE Karte je Monat statt einer je Eintrag: dreiundzwanzig Einträge
-  // wären dreiundzwanzig Karten an einem Morgen. Die drei mit den meisten
-  // Einträgen bekommen ihr Gesicht [§C33], den Rest zeigt die Tafel.
-  try {
-    const _vorSid = _prevSeasonId(currentSeason().id);
-    if(_vorSid){
-      const T = seasonTitles(_vorSid);
-      if(T && T.awarded && T.awarded.length){
-        const proSpieler = {};
-        T.awarded.forEach(x => { proSpieler[x.pid] = (proSpieler[x.pid] || 0) + 1; });
-        const rang = Object.keys(proSpieler).sort((x, y) => proSpieler[y] - proSpieler[x]);
-        const spitze = rang.slice(0, 3);
-        // Die Karte erscheint mit dem Monatswechsel um 00:00 am Monatsersten.
-        // Vorher stand sie um 09:00 und damit mitten im nächsten Tag; um
-        // Mitternacht steht sie an der Spitze des neuen Monats, und wer nachts
-        // aufs Telefon schaut, sieht den Wechsel sofort.
-        // seasonEnd endet auf 23:59:59 des Vormonats. Gemeint ist der erste
-        // Moment des neuen Monats, deshalb der nächste Tag um 00:00.
-        const _mEnde = seasonEnd(_vorSid);
-        const wann = new Date(_mEnde.getFullYear(), _mEnde.getMonth(), _mEnde.getDate() + 1, 0, 0, 0, 0).getTime();
-        if(now.getTime() >= wann){
-          stories.push({
-            id: 'chronik_' + _vorSid,
-            cat: 'tafel',
-            ic: 'scroll',
-            title: `Die Chronik für ${seasonLabel(_vorSid)} steht`,
-            // „Vorn steht Julian mit 7, Martin mit 4, Jannik mit 4" — ein
-            // Singular ueber einer Aufzaehlung, und die gleiche Zahl zweimal.
-            desc: `${T.awarded.length} Einträge gehen an ${rang.length} Spieler. `
-                + (spitze.length > 1 ? 'Vorn stehen ' : 'Vorn steht ')
-                + _namenListe(spitze.map(pid => `${nameOf(pid)} mit ${proSpieler[pid]}`))
-                + '.',
-            when: wann,
-            prio: STORY_PRIO.chronik_monat,
-            dataRef: {type:'chronik_monat', sid:_vorSid, playerIds:spitze,
-                      eintraege:T.awarded.length, traeger:rang.length}
-          });
-          // Wer zum ERSTEN Mal überhaupt einen Monatseintrag holt, bekommt
-          // eine eigene Karte. Das ist der Moment, den ein Neuling oder ein
-          // Spieler aus der unteren Hälfte sonst nie im Feed sieht.
-          // Ein Spieler, der in einem Monat ZWEI Einträge holt, steht zweimal
-          // in `T.awarded` — und bekam damit zweimal dieselbe Karte mit
-          // derselben ID. Im Feed standen „Sina steht zum ersten Mal in der
-          // Chronik" doppelt untereinander.
-          const _erstlinge = new Set();
-          T.awarded.forEach(x => {
-            if(_erstlinge.has(x.pid)) return;
-            let frueher = 0;
-            try { frueher = (seasonTitleHistory(x.pid) || [])
-              .filter(r => r.title && r.sid !== _vorSid && r.sid < _vorSid).length; } catch(e){ frueher = 1; }
-            if(frueher > 0) return;
-            _erstlinge.add(x.pid);
-            stories.push({
-              id: 'chronik_erst_' + x.pid + '_' + _vorSid,
-              cat: 'tafel',
-              ic: x.ic || 'scroll',
-              title: `${nameOf(x.pid)} steht zum ersten Mal in der Chronik`,
-              desc: `„${x.name}" im ${seasonLabel(_vorSid)} ist der erste Monatseintrag überhaupt.`
-                  + (x.ev ? ` ${_evSatz(x.ev)}.` : ''),
-              when: wann + 60000,
-              prio: STORY_PRIO.chronik_erstling,
-              // Diese Karte gehoert keinem Spieltag: sie entsteht mit dem
-              // Monatswechsel. Ihr Grund ist die Chronik dieses Monats, und
-              // ueber ihn finden die Erstlinge zusammen — bisher tat das ihre
-              // gemeinsame Minute, und das ist ein Stellvertreter [§11.0e].
-              dataRef: {type:'chronik_erstling', sid:_vorSid, pid:x.pid, titel:x.name,
-                        causalKey:_storyGruppeKey('recap', 'chronik_' + _vorSid)}
-            });
-          });
-        }
-      }
-    }
-  } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] chronik', e); }
 
   // ── Eine Monatschronik wechselt den Halter ───────────────────────────
   // Der ganze laufende Monat kam im Feed nicht vor. Gemessen trug der August

@@ -228,9 +228,9 @@ function _abschiedSchluessel(pid){
   return 'abschied_' + pid + '_' + ruhestandMs(pid);
 }
 
-// Einmal je Gerät, bis vierzehn Tage nach dem Karriereende — so weit reicht
-// auch der Feed [§C33]. Der jüngste Abschied zuerst; ein offenes Blatt wird
-// nicht überdeckt.
+// Einmal je Gerät, bis vierzehn Tage nach dem Karriereende — so lange bildet
+// der Generator seine Karte [§C33]. Der jüngste Abschied zuerst; ein offenes
+// Blatt wird nicht überdeckt.
 function autoZeigeAbschied(){
   try {
     const sheetEl = document.getElementById('sheet');

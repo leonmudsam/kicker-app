@@ -173,41 +173,6 @@ function _ndMitteRoh(s){
             + _ndChronikEbenen(d, undefined, ids, monatWert, 'bestand', '') : ''}
           <button class="btn ghost sm" data-season-table="${esc(d.sid)}" style="margin-top:12px;width:100%">Ganze Tafel öffnen</button>`;
       }
-      case 'chronik_monat': {
-        const ids = (Array.isArray(d.playerIds) ? d.playerIds : []).filter(pid => pm[pid]);
-        // Neben dem Namen steht die Wertung, die er in diesem Monat haelt —
-        // eine leere Spalte sagte gar nichts.
-        const titelVon = pid => { try { const t = seasonTitleOf(pid, d.sid);
-          return t && t.name ? t.name : ''; } catch(e){ return ''; } };
-        return `<div class="nd-gwert gold"><b>${esc(String(d.eintraege != null ? d.eintraege : ids.length))}</b>
-            <span>Einträge im ${esc(seasonLabel(d.sid) || '')}</span></div>
-          ${ids.length ? `<div class="nd-section">Wer eingetragen ist</div>
-          <div class="nd-vf">${ids.map(pid => `<div class="nd-vf-z" data-pid="${esc(pid)}">
-            ${avHtml(pm[pid], '', {ins:true, px:30, feuer:0})}
-            <span class="nd-vf-nm">${esc(nameOf(pid))}</span>
-            <b class="nd-vf-t">${esc(titelVon(pid))}</b></div>`).join('')}</div>` : ''}
-          <button class="btn ghost sm" data-season-table="${esc(d.sid)}" style="margin-top:12px;width:100%">Ganze Tafel öffnen</button>`;
-      }
-      // Der erste Eintrag ueberhaupt — der Moment, den ein Spieler aus der
-      // unteren Haelfte sonst nie im Feed sieht [§C33]. Er verdient mehr als
-      // eine Zeile.
-      case 'chronik_erstling': {
-        // Der Beleg stand nur im Satz oben. Hier gehoert er hin: was war die
-        // Bedingung, und mit welcher Zahl hat er sie erfuellt.
-        let t = null; try { t = seasonTitleOf(d.pid, d.sid); } catch(e){}
-        const def = (t && typeof SEASON_TITLE_BY_ID !== 'undefined') ? SEASON_TITLE_BY_ID[t.id] : null;
-        return `<div class="nd-gwert gold"><b>1.</b><span>Eintrag in der Chronik</span></div>
-          <div class="nd-med nd-med-erst">
-            <div class="nd-med-r">${svgI((t && t.ic) || (def && def.ic) || 'scroll')}</div>
-            <div class="nd-med-t">
-              <div class="nd-med-n">${esc((t && t.name) || d.titel || '')}</div>
-              <div class="nd-med-k">${esc(seasonLabel(d.sid) || '')}</div>
-              ${def && _ndNeu(def.cond) ? `<div class="nd-med-b">${esc(def.cond)}</div>` : ''}
-            </div>
-            ${t && _ndNeu(t.ev) ? `<div class="nd-med-h">${_newsBetont(t.ev)}</div>` : ''}
-          </div>
-          <button class="btn ghost sm" data-season-table="${esc(d.sid)}" style="margin-top:12px;width:100%">Ganze Tafel öffnen</button>`;
-      }
       case 'top_clash': {
         // v9.3: Ränge explizit — Platz 1 (Sieger) & Platz 2 (Verfolger),
         // beide antippbar; darunter das Spitzenspiel als Match-VS-Block.
@@ -815,55 +780,6 @@ function _ndMitteRoh(s){
         return `<div class="nd-section">Aktivität</div>
           <div class="nd-stat-row"><div class="nd-stat-label">Letzte 7 Tage</div><div class="nd-stat-val">${d.lastWeek} Spiele</div></div>
           <div class="nd-stat-row"><div class="nd-stat-label">4-Wochen-Schnitt</div><div class="nd-stat-val">${d.avg} Spiele</div></div>`;
-      }
-      case 'season_recap': {
-        // Der Monatsrückblick und die Monatschronik sind zwei verschiedene
-        // Geschichten: hier stehen Saisonspitze und Spielgeschehen, dort die
-        // vergebenen Chronik-Einträge.
-        //
-        // ── Die Meisterbühne [§C31] ────────────────────────────────
-        // Das Blatt nannte drei Elo-Zahlen untereinander und darunter die
-        // Saison-ID. Wie der Titel zustande kam — ob der Meister die Spitze
-        // nie hergab oder sie am letzten Tag holte —, stand nirgends. Jetzt:
-        // das Podest unter einem Strahlenkranz, das Rennen um die Spitze als
-        // Linien, die Tage vorn als Balken und die Saison des Meisters als
-        // Zellen, eine je Partie. Alles aus den Bauteilen, die der
-        // Saison-Rückblick auch zeichnet [§C27].
-        const rang = saisonRang(d.sid);
-        const te = Array.isArray(d.topElo) ? d.topElo : [];
-        const ids = te.map(x => x && x.id).filter(id => id && pm[id]);
-        const monat = seasonLabel(d.sid);
-        const buehne = rang.length ? `<div class="nd-meister">
-            <div class="nd-ms-band">${svgI('crown')}<span>Meister</span><i>${esc(monat)}</i></div>
-            <div class="nf-meister gross"><span class="nf-ms-strahl" aria-hidden="true"></span>${
-              saisonPodestHtml(d.sid, rang, {px1:96, px:64, attr:'data-pid'})}</div></div>` : '';
-        const rennen = saisonRennenHtml(d.sid, ids);
-        const spitze = saisonSpitzeHtml(d.sid, ids);
-        const r = rang.find(x => x.id === d.championId);
-        // Drei Zellen je Reihe: eine vierte bricht bei 360 px in eine eigene
-        // Zeile um und steht dann doppelt so breit da wie ihre Nachbarn.
-        const meister = r ? rcpZahlenHtml([
-          {v: Math.round(r.wins / Math.max(1, r.wins + r.losses) * 100) + ' %', l:'Siegquote', ton:'gold'},
-          {v: r.wins + ':' + r.losses, l:'Siege zu Niederlagen'},
-          {v: (r.diff >= 0 ? '+' : '') + r.diff, l:'Torbilanz'}
-        ]) + saisonZellenHtml(d.sid, d.championId) : '';
-        const f = d.fakten || {};
-        const zahlen = (f.spiele != null || f.tore != null) ? rcpZahlenHtml([
-          f.spiele != null ? {v: f.spiele, l:'Partien'} : null,
-          f.toreJeSpiel != null ? {v: komma(f.toreJeSpiel), l:'Tore je Partie'} : null,
-          f.engeSpiele != null ? {v: f.engeSpiele, l:'knapp entschieden'} : null
-        ]) : '';
-        const klar = f.klarstes && f.klarstes.matchId
-          ? `<div class="nd-section">Klarstes Ergebnis</div>${_newsMatchVsBlock(f.klarstes.matchId)}` : '';
-        const torreich = f.torreichstes && f.torreichstes.matchId
-          && (!f.klarstes || f.torreichstes.matchId !== f.klarstes.matchId)
-          ? `<div class="nd-section">Torreichstes Spiel</div>${_newsMatchVsBlock(f.torreichstes.matchId)}` : '';
-        return buehne
-          + (rennen ? `<div class="nd-section">Das Titelrennen</div>${rennen}` : '')
-          + (spitze ? `<div class="nd-section">An der Spitze</div>${spitze}` : '')
-          + (meister ? `<div class="nd-section">Die Saison von ${esc(nameOf(d.championId))}</div>${meister}` : '')
-          + (zahlen ? `<div class="nd-section">Der Monat in Zahlen</div>${zahlen}` : '')
-          + klar + torreich;
       }
       // Die Karte sagt, dass der Monat eine Tabelle hat, und ihr Blatt zeigte
       // nur die Saison-ID — eine Zeichenkette, die niemanden interessiert. Die

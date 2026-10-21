@@ -1685,7 +1685,11 @@ NOW = new RealDate(2026, 7, 1, 9, 0, 0).getTime();
 const mst = JSON.parse(K.eval(`(()=>{ invalidateCache();
   const s = _buildStories().find(x => (x.dataRef||{}).type === 'season_recap');
   if(!s) return 'null';
-  const d = s.dataRef, karte = _newsCardHtmlM2(s, false, false, ''), blatt = _newsDetailBody(s);
+  // Ein Tippen auf die Karte öffnet den Saison-Rückblick [§C31]; dessen
+  // „Wie es zum Titel kam" ist das Blatt der Meister-Story.
+  const d = s.dataRef, karte = _newsCardHtmlM2(s, false, false, '');
+  const drei = (d.topElo || []).slice(0, 3).map(x => x.id);
+  const blatt = saisonRennenHtml(d.sid, drei) + saisonSpitzeHtml(d.sid, drei) + saisonZellenHtml(d.sid, d.championId);
   const ph = getSeasonPositionHistory(d.sid);
   return JSON.stringify({sorte:_newsSorte(s), held:_breakingHeroText(s), karte, blatt,
     champ:d.championId, label:seasonLabel(d.sid), tage:ph.lastDay});
@@ -1695,8 +1699,12 @@ K.eval('invalidateCache()');
 ok(mst && mst.sorte === 'held', 'der Meister trägt die Form des Helden, nicht die eines Fun Facts', mst && mst.sorte);
 if(mst){
   console.log(`     Nachsatz: ${mst.held}`);
-  ok(!/\d{4}-\d{2}/.test(mst.held) && mst.held.indexOf(mst.label) === 0,
-     'der Nachsatz nennt den Monat beim Namen, nicht die Saison-ID', mst.held);
+  // Die Schlagzeile nennt Meister und Monat; der Nachsatz erzählt nur noch,
+  // wie der Titel entschieden wurde. „Juli 2026 ist entschieden: Leon holt
+  // den Titel" sagte unter „Leon ist Meister im Juli 2026" dasselbe noch einmal.
+  ok(!/\d{4}-\d{2}/.test(mst.held) && !/holt den Titel|ist entschieden/.test(mst.held)
+     && mst.held.indexOf(mst.label) < 0 && /(vom \d\d\.\d\d\. an|vom ersten Spieltag an)/.test(mst.held),
+     'der Nachsatz erzählt den Verlauf und wiederholt die Schlagzeile nicht', mst.held);
   ok(!/(^|\.\s)Vor \S+\.(\s|$)/.test(mst.held), 'der Nachsatz hat kein Satzfragment', mst.held);
   const erster = (mst.karte.match(/pod-karte gold erster" data-mpid="([^"]+)"/) || [])[1];
   ok(erster === mst.champ, 'die Karte zeigt das Podest mit dem Meister in der Mitte', erster);
@@ -1708,6 +1716,88 @@ if(mst){
      'bei den Tagen vorn steht der Meister golden');
   ok(/class="srn-z"/.test(mst.blatt) && !/2026-\d\d/.test(mst.blatt.replace(/data-[a-z]+="[^"]*"/g, '')),
      'das Blatt zeigt die Saison des Meisters als Zellen und keine Saison-ID');
+}
+
+// ── Ein Rückblick von selbst je Tag [§C31] ──────────────────────────
+// Endet ein Monat am Sonntag, öffneten sich am Montag zwei: der Saison-
+// Rückblick beim Start und der Wochenrückblick 300 ms später. Der Monat geht
+// vor, die Woche kommt am nächsten Tag — und bekommt den Mittwoch dazu, wenn
+// sie erst am Dienstag an der Reihe wäre. Gestellt am 1. Juni 2026, einem
+// Montag, und an einer gewöhnlichen Woche im August.
+const _autoTag = (tag, std) => {
+  NOW = new RealDate(2026, tag[0], tag[1], std || 10, 0, 0).getTime();
+  return JSON.parse(K.eval(`(()=>{
+    _autoRecapSeen.clear();
+    const auf = [];
+    const alt = showPotwRecap;
+    showPotwRecap = () => { auf.push('woche'); };
+    try {
+      const vorher = localStorage.getItem('auto_rueckblick_tag');
+      autoShowSeasonRecap();
+      const monat = localStorage.getItem('auto_rueckblick_tag') !== vorher;
+      if(monat) auf.push('monat');
+      autoShowPotwRecap();
+      return JSON.stringify(auf);
+    } finally { showPotwRecap = alt; }
+  })()`));
+};
+{
+  const seasAlt = K.eval('JSON.stringify(seasons.map(s => s.id))');
+  K.eval(`globalThis.__seasAlt = seasons; seasons = seasons.filter(s => s.id === '2026-05')`);
+  ls.clear();
+  const mo = _autoTag([5, 1]);
+  ls.set('recap_shown_2026-05', '1');            // gesehen, auch weggewischt
+  const di = _autoTag([5, 2]);
+  ls.clear();
+  const diErst = _autoTag([5, 2]);
+  ls.set('recap_shown_2026-05', '1');
+  const mi = _autoTag([5, 3]);
+  const doTag = _autoTag([5, 4]);
+  K.eval('seasons = globalThis.__seasAlt');
+  ls.clear();
+  const aug = [_autoTag([7, 17]), _autoTag([7, 19])];
+  ls.clear();
+  NOW = new RealDate(2026, 7, 26, 21, 0, 0).getTime();
+  ok(JSON.stringify(mo) === '["monat"]' && JSON.stringify(di) === '["woche"]',
+     'am Montag nach dem Monatsende öffnet sich nur der Monat, die Woche am Dienstag', JSON.stringify([mo, di]));
+  ok(JSON.stringify(diErst) === '["monat"]' && JSON.stringify(mi) === '["woche"]' && JSON.stringify(doTag) === '[]',
+     'wer erst am Dienstag öffnet, bekommt den Monat und am Mittwoch die Woche', JSON.stringify([diErst, mi, doTag]));
+  ok(JSON.stringify(aug[0]) === '["woche"]' && JSON.stringify(aug[1]) === '[]',
+     'ohne Monatswechsel bleibt die Woche bei Montag und Dienstag', JSON.stringify(aug) + ' ' + seasAlt);
+}
+
+// ── Die Titel des Monats stehen im Monat [§C31] ─────────────────────
+// Endet die Woche mit dem Monat, kommen in derselben Sekunde Meister, Vize
+// und Team der Saison [§C34]. In der Woche bis zum 31.05. standen sie unter
+// „Wirkung auf die Laufbahn" ein zweites Mal, als Gewinn einer Woche. Und am
+// Morgen nach dem Monatswechsel galt der Schnitt am Monatsende als „jetzt"
+// und trug die Titel schon, abends nach der ersten Partie nicht mehr.
+{
+  // Die Woche vom 25. bis 31. Mai 2026, morgens am 1. Juni vor der ersten
+  // Partie und abends danach.
+  const woche = (morgens) => {
+    NOW = new RealDate(2026, 5, 1, morgens ? 9 : 21, 0, 0).getTime();
+    return JSON.parse(K.eval(`(()=>{
+      const echt = matches;
+      if(${morgens ? 'true' : 'false'}) matches = echt.filter(m => mts(m) < seasonStart().getTime());
+      invalidateCache();
+      try {
+        const von = new Date(2026, 4, 25).getTime(), bis = new Date(2026, 4, 31, 23, 59, 59, 999).getTime();
+        const je = l => { const o = {}; l.forEach(x => { o[pname(x.pid)] = Math.round(x.delta * 10) / 10; }); return o; };
+        return JSON.stringify({woche:je(rcpWocheLaufbahn(von, bis)), mitTiteln:je(rcpLaufbahnDaten(von, bis)),
+          meister:pname(JSON.parse(seasons.find(s => s.id === '2026-05').top_elo)[0].id)});
+      } finally { matches = echt; invalidateCache(); }
+    })()`));
+  };
+  const morgens = woche(true), abends = woche(false);
+  NOW = new RealDate(2026, 7, 26, 21, 0, 0).getTime();
+  K.eval('invalidateCache()');
+  ok(JSON.stringify(morgens.woche) === JSON.stringify(abends.woche),
+     'die Woche bis zum Monatsende zeigt morgens dieselbe Wirkung wie abends',
+     JSON.stringify([morgens.woche, abends.woche]));
+  ok(abends.mitTiteln[abends.meister] - abends.woche[abends.meister] >= 150,
+     'und ohne den Titel des Meisters, der erst mit dem Monat kommt',
+     abends.meister + ': ' + abends.woche[abends.meister] + ' statt ' + abends.mitTiteln[abends.meister]);
 }
 
 // ── Ein Strich für jedes Zeichen [§C27] ─────────────────────────────

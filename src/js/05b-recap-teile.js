@@ -904,11 +904,12 @@ function rcpRekordArtenHtml(liste){
 function rcpBeinamenHtml(T){
   if(!T || !T.awarded || !T.awarded.length) return {html:'', zahl:0};
   const schatten = a => (_chronikMonat(a.titleId) || {}).art === 'schatten';
-  const gesehen = new Set(), zaehlt = [], neg = [], weitere = [];
+  const eintrag = new Set([...new Set(T.awarded.map(a => a.pid))].map(pid => chronikEintragVon(T, pid)));
+  const zaehlt = [], neg = [], weitere = [];
   T.awarded.forEach(a => {
     if(!pmap()[a.pid]) return;
     if(schatten(a)){ neg.push(a); return; }
-    if(gesehen.has(a.pid)) weitere.push(a); else { gesehen.add(a.pid); zaehlt.push(a); }
+    (eintrag.has(a) ? zaehlt : weitere).push(a);
   });
   const band = a => {
     const t = titleTone(a.tone);

@@ -226,6 +226,23 @@
   .lchron td.who .wt > span{overflow:hidden;text-overflow:ellipsis;min-width:0}
   .lchron td.who .wt small{font-family:'Sometype Mono',monospace;font-size:9.5px;
     font-weight:500;color:var(--muted)}
+  /* Wie viele Zellen der Zeile golden, lila, metallen und rot sind, je eine
+     Zahl in ihrer Farbe mit einem Punkt davor [§C39]. */
+  .lchron td.who .lc-zahl{display:flex;gap:7px}
+  .lc-zahl b{display:inline-flex;align-items:center;gap:3px;font-weight:700;color:var(--kz)}
+  .lc-zahl b::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--kz)}
+  .lc-zahl b[data-kl="legendaer"]{--kz:var(--gold)}
+  .lc-zahl b[data-kl="selten"]{--kz:var(--purple)}
+  .lc-zahl b[data-kl="besonders"]{--kz:#c3ced9}
+  .lc-zahl b[data-kl="schatten"]{--kz:var(--red)}
+  /* Im Kopf der Spalte, wie sich ihre Einträge auf die Stufen verteilen. */
+  .lchron th .lc-st{display:flex;width:36px;height:3px;margin:5px auto 0;border-radius:2px;overflow:hidden;
+    background:var(--line)}
+  .lc-st i{display:block;height:100%}
+  .lc-st i[data-kl="legendaer"]{background:var(--gold)}
+  .lc-st i[data-kl="selten"]{background:var(--purple)}
+  .lc-st i[data-kl="besonders"]{background:#9aa7b5}
+  .lc-st i[data-kl="schatten"]{background:var(--red)}
   .lchron tbody tr:active td{background:var(--surface2)}
   .lc-dash{color:var(--faint);font-family:'Sometype Mono',monospace;font-size:12px}
   /* Die Legende: dieselben drei Stärken wie die Zellen und die gestrichelte
@@ -234,35 +251,54 @@
     font-family:'Sometype Mono',monospace;font-size:10px;letter-spacing:.06em;color:var(--muted)}
   .lchron-lg span{display:inline-flex;align-items:center;gap:6px}
   .lchron-lg span::before{content:"";width:14px;height:10px;border-radius:4px;
-    background:rgba(247,207,74,.11)}
-  .lchron-lg [data-kl="legendaer"]::before{background:rgba(247,207,74,.19);
-    box-shadow:inset 0 0 0 1px rgba(247,207,74,.34)}
-  .lchron-lg [data-kl="besonders"]::before{background:rgba(247,207,74,.08)}
-  .lchron-lg .live::before{background:none;outline:1px dashed rgba(247,207,74,.55);outline-offset:-1px}
+    background:rgba(var(--kr),.2);box-shadow:inset 0 0 0 1px rgba(var(--kr),.45)}
+  .lchron-lg span b{font-weight:700;color:var(--ink2)}
+  .lchron-lg [data-kl="legendaer"]{--kr:247,207,74}
+  .lchron-lg [data-kl="selten"]{--kr:167,139,250}
+  .lchron-lg [data-kl="besonders"]{--kr:154,167,181}
+  .lchron-lg [data-kl="schatten"]{--kr:240,86,106}
+  .lchron-lg .live::before{background:none;box-shadow:none;outline:1px dashed rgba(190,242,100,.55);outline-offset:-1px}
   .ruhe-ende .lchron-wrap{margin-top:4px}
-  .lc-cell{display:flex;flex-direction:column;align-items:center;gap:3px;
+  .lc-cell{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;
     padding:6px 3px;border-radius:11px;background:rgba(var(--ttr),.11);cursor:pointer;
-    width:60px;margin:0 auto}
+    width:60px;margin:0 auto;overflow:hidden;isolation:isolate}
+  /* Was derselbe Spieler im selben Monat noch hält: klein in der Ecke. */
+  .lc-mehr{position:absolute;top:3px;right:4px;font-style:normal;font-size:8px;font-weight:700;
+    line-height:1;color:var(--tt);opacity:.85}
   .lc-cell.live{outline:1px dashed rgba(var(--ttr),.55);outline-offset:-1px}
   .lc-cell .i{display:flex;color:var(--tt)}
   .lc-cell .i svg{width:16px;height:16px}
   .lc-cell .n{font-size:8.5px;font-weight:700;line-height:1.35;color:var(--tt);
     max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-  /* Das Gewicht der Klasse [§C39]. Keine neue Farbe — das Farbgesetz kennt
-     vier Rollen [§C25] —, sondern dieselbe Farbe in drei Stärken: eine
-     legendäre Chronik leuchtet, eine besondere ist ein Hauch. Vorher trugen
-     alle Zellen dieselbe Füllung, und dass zwischen „Der Wechselhafte" und
-     „Die Wochenkrone" hundert Prestige-Punkte liegen, sah man nirgends.
-     Auch die schwächste bleibt deutlich sichtbar: eine fast leere Zelle
-     liest sich als Fehler. */
-  .lc-cell[data-kl="legendaer"]{background:rgba(var(--ttr),.19);
+  /* Die Stufe als Farbe (`--tt` aus `chronikTon`) und als Gewicht [§C39]:
+     Gold mit Verlauf, Rahmen und Schein, Lila mit Rahmen, Metall flach, Rot
+     mit Rahmen. Vorher trug die Zelle die Farbe ihrer Disziplin und die
+     Klasse nur als Stärke: eine besondere Können-Chronik stand golden neben
+     einer legendären Fügung in Lila. Auch die schwächste bleibt deutlich
+     sichtbar: eine fast leere Zelle liest sich als Fehler. */
+  .lc-cell[data-kl="legendaer"]{background:linear-gradient(160deg,rgba(var(--ttr),.3),rgba(var(--ttr),.12));
+    box-shadow:inset 0 0 0 1px rgba(var(--ttr),.55),0 0 10px rgba(var(--ttr),.16)}
+  .lc-cell[data-kl="selten"]{background:rgba(var(--ttr),.16);
     box-shadow:inset 0 0 0 1px rgba(var(--ttr),.34)}
-  .lc-cell[data-kl="besonders"]{background:rgba(var(--ttr),.08)}
+  .lc-cell[data-kl="besonders"]{background:rgba(var(--ttr),.1)}
+  .lc-cell[data-kl="schatten"]{background:rgba(var(--ttr),.12);
+    box-shadow:inset 0 0 0 1px rgba(var(--ttr),.28)}
+  /* Gold glänzt: alle sechs Sekunden zieht ein Lichtband schräg über die
+     Zelle, jede in ihrem eigenen Takt (negative Verzögerung, kein Warten)
+     [§C43]. Nur Verschiebung, auf einem eigenen Element. */
+  .lc-cell[data-kl="legendaer"]::after{content:"";position:absolute;inset:-20% auto -20% -60%;width:45%;
+    background:linear-gradient(100deg,transparent,rgba(255,236,170,.55),transparent);
+    transform:translateX(0) skewX(-18deg);pointer-events:none;
+    animation:lcGlanz 6s ease-in-out infinite;animation-delay:calc(var(--k, 0) * -1.3s)}
+  @keyframes lcGlanz{0%,72%{transform:translateX(0) skewX(-18deg)}92%,100%{transform:translateX(420%) skewX(-18deg)}}
+  @media (prefers-reduced-motion:reduce){.lc-cell[data-kl="legendaer"]::after{animation:none;display:none}}
   .chron-cell[data-kl="legendaer"]{border-color:rgba(var(--ttr),.7);
     background:linear-gradient(180deg,rgba(var(--ttr),.16),var(--surface))}
   .chron-cell[data-kl="besonders"]{border-color:rgba(var(--ttr),.3);
     background:linear-gradient(180deg,rgba(var(--ttr),.05),var(--surface))}
+  .chron-cell[data-kl="schatten"]{border-color:rgba(var(--ttr),.4);
+    background:linear-gradient(180deg,rgba(var(--ttr),.08),var(--surface))}
   .tplate[data-kl="legendaer"]{border-left-width:4px}
   .tplate[data-kl="besonders"]{border-left-width:2px}
   /* Die Klasse in Worten, neben dem Namen. Metall, weil sie niemanden

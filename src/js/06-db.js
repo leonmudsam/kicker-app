@@ -382,18 +382,7 @@ async function autoArchiveSeasons(){
     }
     else console.error('Saison archivieren fehlgeschlagen:',sid,error);
   }
-  // Recap-Popup: in den ersten 3 Tagen des neuen Monats anzeigen
-      if(seasons.length&&new Date().getDate()<=3){
-    const last=seasons[0];
-// FIX
-if(last && last.id !== currentSeason().id
-   && !_recapSeen('recap_shown_'+last.id, 'season:'+last.id)){
-  _autoRecapSeen.add('season:'+last.id); // Session-Guard: kein Re-Trigger durch 30s-loadAll
-  setTimeout(()=>showSeasonRecap(last, {auto:true}),600);
-}
-
-  }
-
+  autoShowSeasonRecap();
 }
 
 // ─── Auto-Recap „schon gezeigt?"-Guard (v9.6) ────────────────────────
@@ -414,6 +403,32 @@ function _recapSeen(lsKey, sessKey){
 function _recapMarkSeen(lsKey, sessKey){
   _autoRecapSeen.add(sessKey);
   try { localStorage.setItem(lsKey, '1'); } catch(e){}
+}
+// ── Ein Rückblick von selbst je Tag ──────────────────────────────────
+// Endet ein Monat am Sonntag, warteten am Montag zwei: der Saison-Rückblick
+// beim Öffnen und der Wochenrückblick danach, beim nächsten Öffnen oder
+// sobald neue Daten kamen — gleich nach dem Speichern der ersten Partie des
+// Tages, mitten im Spielbetrieb. Von selbst öffnet sich deshalb höchstens
+// einer am Tag; der Monat geht vor, die Woche kommt am Dienstag. Gemerkt
+// wird der Tag auf dem Gerät.
+function _autoRueckblickHeute(){
+  try { return localStorage.getItem('auto_rueckblick_tag') === tagKey(Date.now()); } catch(e){ return false; }
+}
+function _autoRueckblickMerken(){
+  try { localStorage.setItem('auto_rueckblick_tag', tagKey(Date.now())); } catch(e){}
+}
+// Der Saison-Rückblick in den ersten drei Tagen des neuen Monats, einmal je
+// Gerät. Der Tag wird gemerkt, sobald er geplant ist, nicht erst, wenn er
+// offen ist: die Woche fragt 300 ms vor seinem Öffnen, und sonst gingen
+// beide auf.
+function autoShowSeasonRecap(){
+  if(!seasons.length || new Date().getDate() > 3) return;
+  const last = seasons[0];
+  if(!last || last.id === currentSeason().id || _recapSeen('recap_shown_'+last.id, 'season:'+last.id)) return;
+  if(_autoRueckblickHeute()) return;
+  _autoRecapSeen.add('season:'+last.id); // Session-Guard: kein Re-Trigger durch 30s-loadAll
+  _autoRueckblickMerken();
+  setTimeout(() => showSeasonRecap(last, {auto:true}), 600);
 }
 
 // v9: Kompakte Kurven-Vorschau des Saison-Positionsverlaufs für den Recap.
@@ -520,8 +535,9 @@ function showSeasonRecap(season, opts){
   // ─── Wie es zum Titel kam [§C31] ───────────────────────────────────
   // Die Tabelle sagt, wer am Ende wo stand, nicht wie es dazu kam: das
   // Titelrennen der ersten drei, die Tage an der Spitze und die Saison des
-  // Meisters als Zellen — dieselben Bauteile wie im Blatt der Meister-Story
-  // [§C27]. Darunter der Positionsverlauf für alle.
+  // Meisters als Zellen [§C27]. Die Karte des Monatsabschlusses öffnet
+  // diesen Rückblick und hat kein eigenes Blatt mehr. Darunter der
+  // Positionsverlauf für alle.
   let rennenHtml='';
   try {
     const drei = rang.slice(0, 3).map(e => e.id);
@@ -622,8 +638,11 @@ function showSeasonRecap(season, opts){
   const _grab = document.getElementById('sheetGrab');
   if(_grab) _grab.classList.add('grab-pulse');
 
-  const merken = () => _recapMarkSeen('recap_shown_'+sid, 'season:'+sid);
-  document.getElementById('closeRecapBtn').onclick = () => { merken(); closeSheet(); };
+  // Gesehen ist er, sobald er offen ist — wie der Wochenrückblick. Gemerkt
+  // wurde er nur über „Verstanden" oder ein Tippen darin; wer ihn wegwischte,
+  // bekam ihn bis zum dritten Tag bei jedem Öffnen der App wieder.
+  _recapMarkSeen('recap_shown_'+sid, 'season:'+sid);
+  document.getElementById('closeRecapBtn').onclick = () => closeSheet();
   const wurzel = document.getElementById('sheet');
   wurzel.querySelectorAll('[data-rcpsaison]').forEach(b => b.onclick = () => {
     const s = seasons.find(x => x.id === b.dataset.rcpsaison);
@@ -632,7 +651,7 @@ function showSeasonRecap(season, opts){
   // Einmal für das Blatt, einmal für das, was nachkommt.
   const bindeIn = root => {
     const binden = (sel, fn) => root.querySelectorAll(sel).forEach(el => {
-      el.onclick = () => { merken(); fn(el); };
+      el.onclick = () => fn(el);
     });
     binden('[data-detail],[data-tplayer]', el =>
       sheetNav(()=>showPlayer(el.dataset.detail || el.dataset.tplayer)));
@@ -664,11 +683,14 @@ function showSeasonRecap(season, opts){
 function _potwLastWeekRange(){
   const now=new Date();
   const monday=wochenBeginn(now);        // Montag DIESER Woche
-  // Eine Woche gilt ab Sonntag 23:00 als abgeschlossen, nicht erst ab Montag
-  // 00:00. Der Wochenrückblick stand vorher über den Montag verteilt in sechs
-  // Karten und verdeckte damit den Spieltag, um den es gerade ging. Die letzte
-  // Stunde kostet nichts: keine der 466 Partien hat nach 18 Uhr angefangen.
-  const abschluss=new Date(monday); abschluss.setDate(abschluss.getDate()+6); abschluss.setHours(23,0,0,0);
+  // Eine Woche gilt ab Sonntag 23:59 als abgeschlossen, wenn der Tag zu ist
+  // (`_tagZu`), nicht erst ab Montag 00:00. Der Wochenrückblick stand vorher
+  // über den Montag verteilt in sechs Karten und verdeckte damit den Spieltag,
+  // um den es gerade ging. Danach schloss sie um 23:00, und ihre Karte stand
+  // damit vor dem Spieler des Sonntags, der um 23:59 kommt: der Abschluss
+  // eines Tages unter dem der ganzen Woche. Die letzte Minute kostet nichts:
+  // keine der 466 Partien hat nach 18 Uhr angefangen.
+  const abschluss=new Date(monday); abschluss.setDate(abschluss.getDate()+6); abschluss.setHours(23,59,0,0);
   if(now.getTime() < abschluss.getTime()) monday.setDate(monday.getDate()-7);
   const end=new Date(monday); end.setDate(end.getDate()+7); end.setMilliseconds(-1);
   return {start:monday, end};

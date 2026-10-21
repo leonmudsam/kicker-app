@@ -305,43 +305,34 @@ function _chronikMonat(titleId){
 }
 
 // ─── §C39 Was eine Monatschronik wert ist ────────────────────────────
-// Nicht mehr ein fester Grundwert je Art, sondern die ABWEICHUNG: wie weit
-// die Schwelle einer Chronik vom Schnitt aller liegt, die in dieser
-// Disziplin je gewertet wurden, in Standardabweichungen (`monat.aus`).
-// Je weiter draussen die Latte haengt, desto mehr ist es wert, sie zu
-// reissen. Vorher bekam jede Monatswertung pauschal 120 Punkte fuer eine
-// Leistung und 60 fuer ein Ereignis, ohne jede Abstufung dazwischen.
+// Die Klasse ist Farbe und Wert zugleich: Gold heißt legendär und 150,
+// Lila selten und 100, Grau besonders und 50, Rot eine Schattenseite und
+// nichts. Die Klasse folgt dem Ausschlag der Schwelle (ab 2,5 σ legendär,
+// ab 1,9 σ selten, darunter besonders), also dem, wie weit draußen die
+// Latte hängt, nicht dem, wie viele sie je gerissen haben.
 //
-// Den SOCKEL bekommt jede Chronik ausser einer Schattenseite: einen
-// Monatseintrag zu halten ist an sich etwas Besonderes, und keine Chronik
-// soll sich wie ein Trostpreis anfuehlen. Er lag bei 40, und eine Chronik
-// stand damit im Laufbahnblatt hinter einer einzigen seltenen Auszeichnung
-// zurueck, obwohl sie einen ganzen Monat braucht: mit 55 bringt etwa „Die
-// Nulldiaet" 130 statt 115. Die Daempfung ab der dritten Chronik bleibt, wie
-// sie ist — sie steht in der Zusammenrechnung und nicht hier.
+// Vorher rechnete der Wert aus Sockel, Art × Ausschlag und einem kleinen
+// Zuschlag der Klasse, und alle Chroniken lagen zwischen 90 und 190: eine
+// legendäre („Der Kontrast", 95) brachte weniger als eine besondere („Die
+// weiße Weste", 110), und die Klasse in Gold oder Grau sagte über den Wert
+// nichts. Jetzt liest man an der Farbe ab, was ein Eintrag bringt.
 //
-// Der Zuschlag der Seltenheit ist klein mit Absicht. Selten heisst nicht
-// wertvoll: „Der Kontrast" ist die seltenste Sache im Katalog und trotzdem
-// nur ein Umstand [§C35]. Gemessen liegt der Median-Ausschlag der Schwellen
-// bei 2,17 fuer legendaere, 1,79 fuer seltene und 1,71 fuer besondere
-// Chroniken — die Klasse trennt also kaum und darf den Wert nicht tragen.
+// Eine Fügung ist ein Umstand und zählt halb, wie bei den Liga-Rekorden
+// [§C35]: „Der Nervenkitzel" ist legendär selten, aber niemand hat ihn
+// sich erspielt.
 //
-// Gerechnet wird mit dem Ausschlag der SCHWELLE, nicht dem des Halters. Der
-// Schwellen-Ausschlag ist eine feste Eigenschaft der Chronik; der eines
-// Werts gehoert einem einzelnen Halter und wanderte, sobald neue Monate die
-// Verteilung verschieben. Dann saenke das Prestige aller bisherigen Halter,
-// und genau dieser Fehler steckte schon einmal in den Auszeichnungen [§C34].
-const PRESTIGE_SOCKEL = 55;
-const PRESTIGE_CHRONIK = {koennen:30, konstanz:24, fuegung:15, schatten:0};
-const PRESTIGE_SELTEN  = {legendaer:15, selten:8, besonders:0};
-
+// Gerechnet wird mit der Klasse der Chronik, nicht mit dem Wert eines
+// Halters: der gehört einem einzelnen Monat und wanderte, sobald neue
+// Monate die Verteilung verschieben — dann sänke das Prestige aller
+// bisherigen Halter, und genau dieser Fehler steckte schon einmal in den
+// Auszeichnungen [§C34].
+const PRESTIGE_CHRONIK_KLASSE = {legendaer:150, selten:100, besonders:50};
+const PRESTIGE_CHRONIK_FUEGUNG = 0.5;
 function chronikPunkte(titleId){
   const m = _chronikMonat(titleId);
-  if(!m) return 0;
-  const grund = PRESTIGE_CHRONIK[m.art];
-  if(!grund) return 0;                       // Schattenseiten geben nichts
-  return Math.round((PRESTIGE_SOCKEL + grund * (m.aus || 0)
-                     + (PRESTIGE_SELTEN[m.klasse] || 0)) / 5) * 5;
+  if(!m || m.art === 'schatten') return 0;   // Schattenseiten geben nichts
+  const w = PRESTIGE_CHRONIK_KLASSE[m.klasse] || 0;
+  return m.art === 'fuegung' ? Math.round(w * PRESTIGE_CHRONIK_FUEGUNG / 5) * 5 : w;
 }
 
 // EIN Durchlauf für die ganze Liga. Seltenheit lässt sich nicht für einen

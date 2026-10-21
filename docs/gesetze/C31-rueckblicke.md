@@ -8,16 +8,18 @@
 - Woche und Tag zeigen Held und Feld (`rcpWocheHtml`, `rcpEloBahnHtml`, `rcpFeldHtml` mit der Elo jedes Spielers). Der Held steht vor dem Strahlenkranz der Meisterbühne, leiser (`rcpHeldHtml` mit `strahl`); Wappen, Name und Zahlen heben sich nacheinander herein, die Elo-Linie zeichnet sich von links, jede Partie setzt ihren Punkt, wenn die Linie bei ihr ankommt. Die Woche zeigt dazu ihre Tage als Kalender mit ihren Zahlen (Spieltage, Tore je Partie, enge Partien, Duos), ihre Awards und dieselben Laufbahn-Abschnitte wie die Saison, mit den Rekorden der Woche.
 - Die Wirkung auf die Laufbahn ist der Unterschied zweier Prestige-Stände, vor dem Zeitraum und an seinem Ende (`rcpLaufbahnDaten`), je Spieler nach den drei Quellen [§C34]; die neuen Zeichen sind, wer dabei Stufe oder Grad wechselte (`rcpZeichenZuege`), die Säulen der Auszeichnungen genau ihr Teil aus Auszeichnungen (`rcpEhrungHtml`). Die Rekorde eines Zeitraums kommen aus `saisonRekorde` oder `rekordeImZeitraum`; „verbessert" heißt, dass der Wert gestiegen ist. Dieser Teil kommt nach, wenn das Blatt eingefahren ist (`rcpSpaetLaden`).
 - „Awards" sind die Wertungen eines Zeitraums aus dem Awards-Reiter (`rcpAwardKacheln`, `awardRankings` mit `awSeasonId` oder `awWeekStart`), nie aus einer eigenen Rechnung; „Auszeichnungen" sind, was im Profil gesammelt wird.
+- Die Wirkung einer Woche, die mit einem Monat endet, schneidet eine Millisekunde vor dem Monatsende (`rcpWocheLaufbahn`): Meister, Vize und Team der Saison kommen mit dem Monat und stehen in seinem Rückblick, nicht in dem der Woche. Ein Schnitt nach der letzten Partie ist „jetzt" nur, wenn kein Monatswechsel dazwischen liegt (`_schnitt`), sonst zeigte der Morgen nach dem Monatsende andere Zahlen als der Abend.
+- Von selbst öffnet sich höchstens ein Rückblick am Tag (`_autoRueckblickHeute`, gemerkt, sobald er geplant ist): der Saison-Rückblick in den ersten drei Tagen des Monats (`autoShowSeasonRecap`) geht vor, die Woche kommt am Montag oder Dienstag, und am Mittwoch, wenn der Monat an einem dieser Tage wechselt. Gesehen ist ein Rückblick, sobald er offen ist; Wegwischen zählt. Der Monatsabschluss im Feed öffnet den Saison-Rückblick.
 - Ein Rückblick zeigt den Stand von damals (`insigniumSvg` mit `opt.titel`, `opt.pos`); der Reif bleibt der heutige.
 - Gestaltung steht im CSS; ein `style`-Attribut trägt nur einen berechneten Wert.
 
 ## Stellen
 
-`05b-recap-teile.js` (Bauteile und Grafiken), `07b-rueckblick.js`, `06-db.js` (`showSeasonRecap`), `34-chronik-rekorde.js` (`saisonRekorde`, `rekordeImZeitraum`), `src/css/09-recap.css`.
+`05b-recap-teile.js` (Bauteile und Grafiken), `07b-rueckblick.js` (`rcpWocheLaufbahn`, `autoShowPotwRecap`), `06-db.js` (`showSeasonRecap`, `autoShowSeasonRecap`), `03-saison.js` (`_schnitt`), `34-chronik-rekorde.js` (`saisonRekorde`, `rekordeImZeitraum`), `src/css/09-recap.css`.
 
 ## Prüfung
 
-`tests/tafel` rechnet Tage an der Spitze, das Titelrennen, den Kalender, die Tabelle mit ihren Bewegungen, die Wirkung auf die Laufbahn, die Säulen der Auszeichnungen, die neuen Zeichen und die Arten der Rekorde aus ihren Quellen nach und misst die Inline-Styles; `tests/blatt` hält die Awards der Woche gegen den Awards-Reiter, zählt die Zahlen und den Kalender der Woche nach, misst die Heldenkarte bei 360 px, rechnet den Vergleich der Saison mit dem Vormonat nach und misst beide Rückblicke bei 360 px: nichts ragt heraus, die Laufbahn kommt nach, die neuen Zeichen stehen zu dritt, kein Rekordname bricht im Wort, und ohne Ende bewegt sich nur der Sieger; die Folge der Vorstellung misst es Bild für Bild (§C43).
+`tests/tafel` rechnet Tage an der Spitze, das Titelrennen, den Kalender, die Tabelle mit ihren Bewegungen, die Wirkung auf die Laufbahn (die Woche zum Monatsende morgens wie abends und ohne die Titel des Monats), welcher Rückblick sich an welchem Tag von selbst öffnet, die Säulen der Auszeichnungen, die neuen Zeichen und die Arten der Rekorde aus ihren Quellen nach und misst die Inline-Styles; `tests/blatt` hält die Awards der Woche gegen den Awards-Reiter, zählt die Zahlen und den Kalender der Woche nach, misst die Heldenkarte bei 360 px, rechnet den Vergleich der Saison mit dem Vormonat nach und misst beide Rückblicke bei 360 px: nichts ragt heraus, die Laufbahn kommt nach, die neuen Zeichen stehen zu dritt, kein Rekordname bricht im Wort, und ohne Ende bewegt sich nur der Sieger; die Folge der Vorstellung misst es Bild für Bild (§C43).
 
 ## Herleitung
 
@@ -136,3 +138,11 @@ war eine Vorstellung, die das Wichtigste zuerst zeigt: der Meister groß,
 dann auf seinem Platz, dann das Team der Saison, dann alles andere, schön,
 aber weder nervig noch lang. Sie steht in §C43; die Woche bekommt dieselbe
 Folge leiser, ohne großen Auftritt — eine Woche ist kein Monat.
+
+**Ein Rückblick am Tag, die Titel im Monat.** Endete ein Monat am Sonntag,
+öffneten sich am Montag zwei Rückblicke: der Monat beim Start und die Woche
+300 ms später, und wer den Monat wegwischte statt „Verstanden" zu tippen,
+bekam ihn bis zum dritten Tag bei jedem Öffnen wieder. Die Woche bis zum
+31.05. zeigte unter „Wirkung auf die Laufbahn" Meister +150 und Team der
+Saison +75 als Gewinn einer Woche, und am Morgen danach galt ihr Schnitt als
+„jetzt": gemessen nannte sie für Martin morgens 87 Prestige und abends 62.
