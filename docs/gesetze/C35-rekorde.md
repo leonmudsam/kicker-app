@@ -2,12 +2,12 @@
 
 ## Regel
 
-- Sechzig Liga-Rekorde in fünf Kammern (17 Können, 7 Aktuelle Form, 7 Bestmarken, 16 Fügungen, 13 Schattenseiten). Die Kammer steht am Eintrag (`allzeit.kammer`), nicht aus `art` erraten.
+- Sechzig Liga-Rekorde in fünf Kammern (7 Bestmarken, 17 Können, 7 Aktuelle Form, 16 Fügungen, 13 Schattenseiten), in dieser Reihenfolge in Leiste und Liste (`CHRON_KINDS.ord`). Die Kammer steht am Eintrag (`allzeit.kammer`), nicht aus `art` erraten.
 - Die Siegquote zählt einmal. Nach dem Niveau fragen nur der beste Monat, der höchste Gipfel, die längste Siegesserie, die Form von jetzt und die beiden Positionen (`NIVEAU` in `tests/disziplinen`); jeder andere Rekord mit Grundwert 150 fragt nach dem Abstand zum Eigenen [§C38], nach einer Teilmenge oder nach einer Folge und folgt der Siegquote gemessen mit r unter 0,75.
 - Die Karte nennt Zeitraum, Grundwert und Mindestbasis (`zeitraum`, `basis`, `mind`) und zeigt, wie weit der Halter vorn liegt (`_rekFeldHtml`, aus `chronicleRang`); der Kopf jeder Kammer sagt in einem Satz, was sie misst (`CHRON_KINDS.satz`). Kein Text beschreibt die App oder eine frühere Rechnung.
 - Ein Rekord hat keine Wertlatte, nur eine Stichprobe (Partien, Spieltage, Wochen, Niederlagen). Was ein Wert von sich aus braucht (erstes Glied, zwei Partien, eine Richtung, die sein Name verspricht: Sprung, Vorsprung, Aufschwung), bleibt; eine Teilmenge, die beschreibt, welche Partien zählen, ist keine Latte. Ein Abstand, der auf null rundet, ist keine Richtung.
 - Was einen ganzen Spieltag beschreibt (der makellose Tag, Kaltstart und Tagesabschluss, der Glanztag, die Fügungen eines Abends), zählt nur Tage, die für den gefragten Stand zu sind (`_tagZu`); ein laufender Tag hat noch keine letzte Partie und keine Tagesquote.
-- Aktuelle Form ist ein festes Endfenster der letzten 10, 20, 25 oder 50 eigenen Partien, nie der beste Abschnitt. Ein gleitendes Fenster (`fenster`) meldet kein „ausgebaut" und nennt nicht den Wert seines Vorgängers.
+- Aktuelle Form ist ein festes Endfenster der letzten 20, 25, 40 oder 50 eigenen Partien, nie der beste Abschnitt; kein Fenster ist kürzer als zwanzig Partien. „Der Lauf" zählt die letzten 40, „Der Höhenflug" vergleicht die letzten 20 mit den 20 davor. Ein gleitendes Fenster (`fenster`) meldet kein „ausgebaut" und nennt nicht den Wert seines Vorgängers.
 - Gemessen wird der Anteil, nicht die Anzahl; der Beleg (`ev`) beginnt mit dem Sortierwert. Ein Anteil an den eigenen Gelegenheiten kennt die Spielzahl nicht. Stehen neben einem Abstand seine beiden Quoten, ist er ihre Differenz, so wie sie dastehen: die Vergleichsquote folgt aus der eigenen Quote und dem Abstand (`_ppGegen`), der Wandler zeigt die Anteile des Profils.
 - `offen`: erfüllbar mit fünfzig Partien in der Laufbahn — im Rennen steht jemand mit unter hundert Partien, der Rekord ist vergeben und gehört nicht nur den drei Besten.
 - Zwölf Gegenpaare tragen dieselbe Mindestbasis; ein `paar` (zwei Enden eines Werts mit Vorzeichen) zeigt zurück, und die Rennen schneiden sich nicht.
@@ -123,12 +123,24 @@ Erklärung): bei drei Tagen war fast jede Woche eine Rückkehr. Nach sechs
 Tagen kommen nur zwei Spieler auf acht Rückkehrspiele, also verlangen
 Wiedereinstieg und Rost vier.
 **Aktuelle Form ist ein festes Endfenster und nie der beste Abschnitt.**
-Sieben Rekorde stehen auf den letzten 10, 20, 25 oder 50 eigenen
+Sieben Rekorde stehen auf den letzten 20, 25, 40 oder 50 eigenen
 Partien. Der beste Zwanzigerblock IRGENDWO in einer Laufbahn gehörte immer
 dem Vielspieler: dreihundert Partien haben 281 solche Blöcke, dreißig
 Partien haben elf, und das Maximum aus vielen Ziehungen ist größer.
 `tests/disziplinen` rechnet jedes Fenster unabhängig aus den echten
 Partien nach.
+**Kein Fenster ist kürzer als zwanzig Partien.** „Der Lauf" zählte die
+letzten 20, „Der Höhenflug" verglich 10 mit 10. Ein Spieler bestreitet
+gemessen 3,5 bis 7,4 Partien je Spieltag; zehn Partien waren zwei, drei
+Tage und zwanzig drei bis fünf. Der Rekord wechselte mit jeder Woche, und
+weil zehn Partien nur Schritte von zehn Prozentpunkten kennen, teilten
+sich drei Spieler den Höhenflug mit genau +30. Jetzt zählt der Lauf 40
+Partien (fünf bis elf Spieltage) und der Höhenflug 20 gegen 20, in
+Schritten von fünf Punkten; an den Fixtures hält ihn danach einer allein.
+**Die Bestmarken stehen vorn.** Mit dem Können zuerst begann der Reiter mit
+siebzehn Karten aus Schnitten und Erwartungsabständen; eine Serie, ein
+Gipfel, ein Tag sind ohne Erklärung zu lesen. Die Reihenfolge ist Alle,
+Bestmarken, Können, Form, Fügungen, Schatten.
 **Elf Rekorde sind gefallen, elf sind dazugekommen.** Weg sind „Der
 Gigantentöter", „Der Nervenkitzler", „Der Unerschütterliche", „Der
 Hausherr", „Das Sonntagskind", „Die starke Phase", „Der Aufschwung", „Die

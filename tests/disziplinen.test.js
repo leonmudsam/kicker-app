@@ -3356,11 +3356,11 @@ const _fenster = (cid, label, soll) => {
      || Object.keys(ist).length + ' Spieler geprueft');
 };
 const _rkQ = a => a.length ? a.filter(x => x.w).length / a.length : null;
-_fenster('lauf', '„Der Lauf" nimmt genau die letzten 20 Partien',
-  r => r.length >= 20 ? _rkQ(r.slice(-20)) : null);
-_fenster('hochform', '„Der Hoehenflug" vergleicht 10 gegen die vorherigen 10',
-  r => { if(r.length < 20) return null;
-    const d = _rkQ(r.slice(-10)) - _rkQ(r.slice(-20, -10)); return d > 0 ? d : null; });
+_fenster('lauf', '„Der Lauf" nimmt genau die letzten 40 Partien',
+  r => r.length >= 40 ? _rkQ(r.slice(-40)) : null);
+_fenster('hochform', '„Der Hoehenflug" vergleicht 20 gegen die vorherigen 20',
+  r => { if(r.length < 40) return null;
+    const d = _rkQ(r.slice(-20)) - _rkQ(r.slice(-40, -20)); return d > 0 ? d : null; });
 _fenster('dauersturm', '„Der Dauerstuermer" nimmt genau die letzten 50 Partien',
   r => r.length >= 50
     ? r.slice(-50).filter(x => x.pos === 'atk').length / 50 : null);
@@ -3665,7 +3665,7 @@ const _nullLauf = {
   hartTag:null, hartTagLabel:'', pechExp:null, pechLabel:'',
   gleichTag:0, gleichTore:0, gleichLabel:'', wiederTag:0, wiederErg:'',
   wiederLabel:'', beidesTag:0, beidesLabel:'',
-  l30N:30, l30Ga:300, l30Gf:0, l20N:20, l20W:0, r50N:50, r50Atk:25,
+  l30N:30, l30Ga:300, l30Gf:0, l40N:40, l40W:0, r50N:50, r50Atk:25,
   hfDelta:0, hfNeu:0, hfAlt:0, sbDelta:0, sbDrin:0, sbRaus:0, sbN:10,
   ksDelta:0, ksDrin:0, ksRaus:0, ksN:10, rwDelta:0, rwNeu:100, rwAlt:100,
   taN:20, taOk:0, agQ:0, agN:3, mtN:12, mtAvg:0, mtMad:0,

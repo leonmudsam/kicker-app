@@ -583,11 +583,16 @@ console.log('\n═══ 7e. DIE REKORDE SIND SORTIERT, DIE VITRINE HAT KEINE L�
   const koepfe = (rek.match(/class="rek-g-n">([^<]+)</g)||[])
     .map(x => x.replace(/.*>/, ''));
   ok(koepfe.length >= 2, 'die Rekorde stehen in Gruppen', koepfe.join(' · '));
-  // Fuenf Kammern in der Reihenfolge des Katalogs.
-  const erwartet = ['Können', 'Aktuelle Form', 'Bestmarken', 'Fügungen', 'Schattenseiten'];
+  // Fuenf Kammern, die Bestmarken vorn: mit dem Koennen zuerst begann der
+  // Reiter mit siebzehn Karten aus Schnitten und Erwartungsabstaenden. Die
+  // Leiste darueber steht in derselben Reihenfolge wie die Liste.
+  const erwartet = ['Bestmarken', 'Können', 'Aktuelle Form', 'Fügungen', 'Schattenseiten'];
   const rang = koepfe.map(k => erwartet.findIndex(e => k.indexOf(e) === 0));
-  ok(rang.every((r, i) => r > -1 && (i === 0 || r > rang[i-1])),
-     'Leistung vor Ereignis vor Schatten', koepfe.join(' · '));
+  const leiste = (rek.match(/data-rekkammer="([^"]*)"/g) || []).map(x => x.replace(/.*="|"/g, ''));
+  ok(rang.every((r, i) => r > -1 && (i === 0 || r > rang[i-1]))
+     && leiste.join(',') === ',mark,koennen,form,fuegung,shame',
+     'Alle, Bestmarken, Können, Form, Fügungen, Schatten — in der Leiste wie in der Liste',
+     koepfe.join(' · ') + ' | ' + leiste.join(','));
   // Keine Karte steht vor der ersten Überschrift.
   ok(rek.indexOf('class="rek-gruppe') < rek.indexOf('class="rek"'),
      'keine Karte steht vor ihrer Überschrift');

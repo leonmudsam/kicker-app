@@ -1541,9 +1541,13 @@ Partien überhaupt eine Karte hatte: gemessen kamen von 52 Partien des Fensters
 18 vor. Seit jede Partie ihre Karte bekommt, führt der Spieltag — die Tafel
 ist nicht die halbe Tafel, sondern die Ebene daneben, und ihren Platz je Tag
 hält sie über die Reservierung und nicht über eine Quote. Gemessen liegt sie
-bei 35 % der Ereignisse und 16 % der Karten; der Test erlaubt 25 bis 50 %,
+bei 25 % der Ereignisse und 17 % der Karten; der Test erlaubt 20 bis 50 %,
 damit ein ungewöhnlich ruhiger oder ereignisreicher Spieltag nicht künstlich
-mit belanglosen Karten aufgefüllt wird. Gemessen werden Ereignisse, nicht
+mit belanglosen Karten aufgefüllt wird. Die Untergrenze stand bei 25 %: seit
+„Der Lauf" vierzig Partien zählt und „Der Höhenflug" zwanzig gegen zwanzig
+vergleicht [§C35], wechseln die beiden nicht mehr jede Woche den Halter, und
+das nahm sieben der 53 Tafel-Ereignisse des Fensters — bei gleich vielen
+Tafel-Karten. Gemessen werden Ereignisse, nicht
 bloß Karten: eine Sammelkarte mit vier vollständig sichtbaren Zeilen zählt
 vier Geschichten. `Tafel` und `Spieltag` sind im Filter exklusiv: eine
 Tafelmeldung darf einen Match-Zeitpunkt tragen, zählt deshalb aber nicht
