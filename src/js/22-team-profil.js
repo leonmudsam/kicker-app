@@ -554,12 +554,20 @@ function showMatchDetail(mid){
 // Eine Partie löschen und die Liga neu rechnen. Eine Stelle für das Blatt
 // der Partie und für „Rückgängig" nach dem Speichern [§C27] — zwei Kopien
 // hätten irgendwann verschiedene Töpfe geleert.
+// Gezeigt wird die Liga ohne die Partie, sobald die Datenbank sie gelöscht
+// hat; die Deltas, die sich dadurch ändern, schreibt die Kette danach
+// [§3.1c]. Vorher stand „Lösche & berechne neu…" sechs Sekunden da, und ein
+// Fehler beim Löschen fiel nicht auf: die Liga wurde trotzdem ohne die
+// Partie neu gerechnet, die in der Datenbank noch stand.
 async function partieLoeschen(mid){
-  toast('Lösche & berechne neu…');
-  await sb.from('matches').delete().eq('id', mid);
-  const rest = matches.filter(x => x.id !== mid);
-  invalidateCache(['global', 'stats', 'awards', 'teams', 'period', 'badges']);
-  await persistRecalc(rest);
-  toast('Gelöscht & neu berechnet', 'ok');
-  await loadAll();
+  toast('Lösche…');
+  const {error} = await sb.from('matches').delete().eq('id', mid);
+  if(error){ toast('Nicht gelöscht', 'err', {sub:'Die Verbindung zur Datenbank ist fehlgeschlagen.'}); return; }
+  const weg = matches.find(x => x.id === mid);
+  const r = ligaNeuRechnen(matches.filter(x => x.id !== mid));
+  neuZeichnen();
+  toast('Gelöscht', 'ok');
+  // Der Monat der Partie ändert sich auch, wenn keine andere Delta es tut.
+  imHintergrund(() => rechnungSchreiben(r, weg ? [seasonOf(weg.created_at).id] : []), true);
+  loadAll();
 }

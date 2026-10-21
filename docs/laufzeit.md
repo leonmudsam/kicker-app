@@ -373,6 +373,25 @@ jeden weiteren Tap erneut verworfen. Unveränderte Daten behalten DOM/Caches;
 Abruffehler behalten die letzte Ansicht. Ein sich anschließender expliziter
 Vordergrundaufruf hebt den stillen Modus auf (`_loadAllLeise`).
 
+Was gespeichert wird, steht, sobald die Datenbank die eine Anfrage
+bestätigt hat, die es braucht — Insert, Update oder Delete der Partie
+[§3.1c]: die Liga wird auf dem Gerät gerechnet (`ligaNeuRechnen`, eine neue
+Partie leert `LADEN_TOEPFE` wie ein Abruf) und gezeichnet (`neuZeichnen`,
+dasselbe wie nach einem Abruf: ein offenes Formular bleibt). Was die
+Datenbank daraus ableitet — Positionsstärke und Saison-Elo
+(`_spielerSchreiben`), die Deltas, die sich geändert haben, die Archive der
+vergangenen Monate, in denen das geschah (`rechnungSchreiben`) —, schreibt
+`imHintergrund` danach in einer Kette (`06-db.js`: `_schreibKette`,
+`_schreibOffen` zählt die offenen Aufträge, `_schreibFehler` merkt sich einen
+gescheiterten bis zum nächsten Nachholen). Jeder Auftrag beginnt nach dem
+nächsten Bild (`nachDemBild`), auf einer versteckten Seite gleich. `loadAll`
+holt erst, wenn die Kette leer ist: ein Abruf dazwischen brächte halb
+geschriebene Deltas und archivierte aus ihnen. Ein Auftrag, der Deltas
+schreibt, setzt auf dem Gerät `kicker_nachrechnen`, bis er durch ist; steht
+die Marke nach einem Live-Abruf noch, rechnet `_nachholen` die Liga nach und
+schreibt, was abweicht — nur mit der Uhr der Liga [§C42]. Ein Fehler beim
+Nachschreiben sagt ein Hinweis; die Partie bleibt.
+
 Der erste Durchlauf startet den Abruf und zeichnet, während das Netz noch
 antwortet, aus dem gespeicherten Stand (`_standZeigen`, höchstens 400 ms
 Warten auf IndexedDB); aus dem Stand wird nichts geschrieben [§C42].

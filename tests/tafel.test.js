@@ -1011,7 +1011,7 @@ const _topf = JSON.parse(K.eval(`JSON.stringify((function(){
     created_at:new Date(new Date(letzte.created_at).getTime() + 7200000).toISOString()});
   const alt = matches;
   matches = [...matches, zusammen, gegen];
-  invalidateCache(['global', 'stats', 'awards', 'badges']);   // genau wie doSaveMatch
+  invalidateCache(LADEN_TOEPFE);   // genau wie doSaveMatch
   const nachher = lies();
   matches = alt; invalidateCache();
   return {vorher, nachher};

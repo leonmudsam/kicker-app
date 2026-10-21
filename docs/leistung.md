@@ -489,3 +489,40 @@ node tools/performance.cjs --cpu=4 --ruhe
 node tools/performance.cjs --cpu=4 --mobil
 node tests/blatt.test.js
 ```
+
+## Neunte Runde: Speichern ohne Warten
+
+Eine neue Partie stand auf dem Telefon sekundenlang auf „Speichere…". Nach
+dem Insert wartete der Knopf auf die Positionsstärke aller zwölf Spieler,
+die Saison-Elo, das Neuladen der ganzen Liga und die Stories; erst danach
+wechselte die Ansicht. Löschen, „Rückgängig" und Bearbeiten schrieben die
+Deltas **aller** Partien der Liga — rund 500 Anfragen in zwanzig Runden
+hintereinander, um fast überall denselben Wert zu schreiben — und leerten
+jeden vergangenen Monat samt eingefrorener Chronik.
+
+Jetzt steht die Änderung, sobald die Datenbank die eine Anfrage bestätigt
+hat, die es braucht; die Liga rechnet das Gerät, und was die Datenbank
+daraus ableitet, schreibt eine Kette danach, nur wo sich etwas geändert hat
+[§3.1c]. Gemessen mit einer Attrappe, die jede Anfrage nach 250 ms
+beantwortet, eingefrorenen vergangenen Monaten wie in der Liga und
+`exp_a` als `real` wie in der Datenbank:
+
+| vierfach gedrosselte CPU | sichtbar vorher | sichtbar nachher | Anfragen vorher | Anfragen nachher |
+|---|--:|--:|--:|--:|
+| Speichern | 3,5 s | 1,5 s | 30 | 18 |
+| Rückgängig (letzte Partie) | 5,9 s | 0,7 s | 498 | 10 |
+| Bearbeiten (40 Partien zurück) | 5,9 s | 0,6 s | 499 | 6 |
+
+Ohne Drosselung sind es 0,5, 0,4 und 0,4 s. „Sichtbar" heißt: Rangliste und
+Hinweis stehen. Beim Speichern davon 250 ms die Antwort auf den Insert und
+rund 600 ms (gedrosselt) das Zeichnen der Rangliste mit dem neuen Stand —
+fast ganz das Prestige hinter den Wappen der Zeilen. Die zwölf Anfragen an
+`players` sind der Attrappe geschuldet (Positionsstärke 0,5 für alle); in
+der Liga ändert sie sich nur bei den vier, die gespielt haben. Bearbeiten
+schreibt die Deltas der Partie und jeder späteren desselben Monats — die
+Elo verschiebt sich durch alle —, keine davor und keine eines anderen
+Monats.
+
+```
+node tests/eingabe.test.js
+```

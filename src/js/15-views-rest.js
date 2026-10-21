@@ -596,42 +596,49 @@ async function doSaveMatch(){
   const savedRow = inserted || {...row, created_at:new Date().toISOString()};
   insertedRow=savedRow;
 
-  // Lokal updaten, dann über die EINE kanonische Engine neu berechnen.
-  // persistRecalc schreibt atk, Match-Deltas und Saison-Elos konsistent.
+  // Die Partie steht in der Datenbank; ab hier wartet niemand mehr auf das
+  // Netz [§3.1c]. Lokal anhängen, zeichnen, und was die Datenbank daraus
+  // ableitet (Positionsstärke, Saison-Elo), schreibt die Kette danach.
+  // Vorher stand der Knopf bis zum Ende des Neuladens auf „Speichere…" —
+  // gemessen 3,3 Sekunden, davon eine Anfrage für die Partie selbst.
+  // Eine neue Partie ist ein neuer Datenstand: dieselben Töpfe wie nach
+  // einem Abruf (`LADEN_TOEPFE`), sonst zeigte ein Reiter den alten.
   matches = [...matches, savedRow];
-  invalidateCache(['global', 'stats', 'awards', 'badges']);
-  await persistNewMatch(savedRow.id);
-
-  // ─── ACHIEVEMENT-TOASTS ───────────────────────────────────────────
-  // Nach dem persist+invalidate liefert badgesEarnedInMatch genau die in
-  // DIESEM Match neu erreichten Badges (Pre-State-Vergleich → echte Neu-
-  // erreichungen, keine Wiederholungen). Sequenzielle Queue zeigt sie der
-  // Reihe nach, jeder Toast 2.6s. Spielername aus pname() konsistent zur
-  // gesamten App.
-  //
-  // ⚠ Common-Badges (grün) werden NICHT als Toast gezeigt, weil sie zu
-  // häufig feuern und sonst eine Toast-Kaskade von 5+ PopUps entsteht.
-  // Sie bleiben im Match-Review sichtbar und zählen im Profil weiter.
-  const newBadges = badgesEarnedInMatch(savedRow.id);
-  const toastWorthy = newBadges.filter(e => rarityOf(e.badge.id) !== 'common');
-  if(toastWorthy.length){
-    toastWorthy.forEach(e => showAchievementToast(pname(e.playerId), e.badge));
-  } else {
-    // Die Wirkung in der zweiten Zeile, und ein Weg zurück: wer sich beim
-    // Stand vertippt hat, musste bisher die Partie suchen, öffnen und
-    // löschen.
-    const sieger = winner === 'A' ? [row.a1,row.a2] : [row.b1,row.b2];
-    toast('Match gespeichert', 'ok', {
-      sub: sieger.map(pname).join(' & ') + ' gewinnen ' + standFuer(savedRow),
-      aktion: {label:'Rückgängig', fn: () => partieLoeschen(savedRow.id)}});
-  }
+  invalidateCache(LADEN_TOEPFE);
   // Ein während des Wartens geänderter Entwurf und ein bewusst gewechselter
   // Reiter gehören dem Nutzer, nicht der verspäteten Speicherantwort.
   if(M===state && Object.keys(draft).every(k=>M[k]===draft[k])){
     M={A1:'',A2:'',B1:'',B2:'',pA1:'atk',pA2:'def',pB1:'atk',pB2:'def',sa:0,sb:0};
     if(tab==='match') tab='ranking';
   }
-  await loadAll();
+  neuZeichnen();
+  imHintergrund(() => persistNewMatch(savedRow.id));
+  loadAll();
+
+  // ─── ACHIEVEMENT-TOASTS ───────────────────────────────────────────
+  // badgesEarnedInMatch liefert genau die in DIESEM Match neu erreichten
+  // Badges (Pre-State-Vergleich → echte Neuerreichungen, keine
+  // Wiederholungen). Gerechnet nach dem ersten Bild der neuen Ansicht: die
+  // Auszeichnungen der ganzen Liga zu rechnen kostet mehr als das Zeichnen,
+  // und die Rangliste soll nicht auf den Toast warten.
+  //
+  // ⚠ Common-Badges (grün) werden NICHT als Toast gezeigt, weil sie zu
+  // häufig feuern und sonst eine Toast-Kaskade von 5+ PopUps entsteht.
+  // Sie bleiben im Match-Review sichtbar und zählen im Profil weiter.
+  nachDemBild().then(() => {
+    const toastWorthy = badgesEarnedInMatch(savedRow.id).filter(e => rarityOf(e.badge.id) !== 'common');
+    if(toastWorthy.length){
+      toastWorthy.forEach(e => showAchievementToast(pname(e.playerId), e.badge));
+    } else {
+      // Die Wirkung in der zweiten Zeile, und ein Weg zurück: wer sich beim
+      // Stand vertippt hat, musste bisher die Partie suchen, öffnen und
+      // löschen.
+      const sieger = winner === 'A' ? [row.a1,row.a2] : [row.b1,row.b2];
+      toast('Match gespeichert', 'ok', {
+        sub: sieger.map(pname).join(' & ') + ' gewinnen ' + standFuer(savedRow),
+        aktion: {label:'Rückgängig', fn: () => partieLoeschen(savedRow.id)}});
+    }
+  });
   } catch(e){
     console.warn('Match speichern:',e);
     // Nach erfolgreichem Insert ist die Partie schon gespeichert. Den alten
@@ -641,7 +648,7 @@ async function doSaveMatch(){
       M={A1:'',A2:'',B1:'',B2:'',pA1:'atk',pA2:'def',pB1:'atk',pB2:'def',sa:0,sb:0};
       if(tab==='match') render();
     }
-    toast(insertedRow?'Match gespeichert. Nachladen fehlgeschlagen.':'Speichern fehlgeschlagen.',true);
+    toast(insertedRow?'Match gespeichert. Anzeige fehlgeschlagen.':'Speichern fehlgeschlagen.',true);
   } finally {
     doSaveMatch._busy=false;
     if(save && save.isConnected){save.removeAttribute('aria-busy');save.innerHTML=saveHtml;}
