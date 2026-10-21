@@ -32,6 +32,7 @@ Wächter 8 vergleicht. Ein Kürzel `§n.m` ist ein Abschnitt des Codes,
 - **05b-recap-teile.js** — ohne Banner
 - **06-db.js**
   - §3.1 DATENBANK-LAYER
+  - §3.1c Erst zeigen, dann nachschreiben
   - §3.3 Player-of-the-Week / Player-of-the-Day Recap
 - **06b-ruhestand.js** — ohne Banner
 - **06c-stand.js**

@@ -9,7 +9,11 @@ const {createHarness}=require('../tools/performance.cjs');
 let checks=0,fails=0;
 const ok=(c,msg)=>{checks++;if(!c)fails++;console.log((c?'  ok  ':'  ✗   ')+msg);};
 (async()=>{
-  const {browser,page,K,errors}=await createHarness();
+  // Die Seite des Gerüsts darf keinen echten Speicher öffnen; die Marke des
+  // Nachschreibens [§3.1c] braucht einen, also einen im Speicher der Seite.
+  const {browser,page,K,errors}=await createHarness({vorApp:`(()=>{const d={};
+    Object.defineProperty(window,'localStorage',{configurable:true,value:{getItem:k=>k in d?d[k]:null,
+      setItem:(k,v)=>{d[k]=String(v)},removeItem:k=>{delete d[k]},clear:()=>{for(const k in d)delete d[k]}}});})();`});
   try{
     await K(`window.__computeMatch=computeMatch;window.__inputCalls=0;
       computeMatch=(...a)=>{window.__inputCalls++;return window.__computeMatch(...a)};
@@ -110,12 +114,84 @@ const ok=(c,msg)=>{checks++;if(!c)fails++;console.log((c?'  ok  ':'  ✗   ')+ms
     await K('window.__saveFirst.catch(()=>null)');
     ok(await K(`matches.find(m=>m.id==='gespeicherter-test').score_b===4 && M.sb===6`),'Späte Speicherantwort behält den neuen Entwurf und speichert den ursprünglichen Stand');
     ok(await K('tab==="teams" && !!document.getElementById("teamSearch")'),'Späte Speicherantwort holt den Nutzer nicht in einen verlassenen Reiter zurück');
+    // Nach dem Insert steht die Partie; scheitert danach das Nachschreiben,
+    // bleibt sie stehen, der Entwurf ist leer, und ein Hinweis sagt es [§3.1c].
     await K(`window.__draft();persistNewMatch=async()=>{throw new Error('erwarteter Folgefehler')};
       window.__saveFirst=doSaveMatch();window.__saveResolve({data:{...window.__row,id:'folgefehler-test',created_at:new Date().toISOString()}});0;`);
     await K('window.__saveFirst.catch(()=>null)');
-    ok(await K(`matches.some(m=>m.id==='folgefehler-test') && M.A1==='' && document.getElementById('saveM').disabled && !doSaveMatch._busy`),'Fehler nach erfolgreichem Insert hinterlässt keine erneut speicherbare Kopie');
-    await K(`persistNewMatch=window.__persist;badgesEarnedInMatch=window.__earned;loadAll=window.__load;0;`);
-    await K(`window.__recalc=persistRecalc;persistRecalc=async()=>{};loadAll=async()=>{};
+    await K('_schreibKette');
+    ok(await K(`matches.some(m=>m.id==='folgefehler-test') && M.A1==='' && tab==='ranking' && !doSaveMatch._busy
+      && /Nicht alles gespeichert/.test(document.querySelector('.toast b').textContent)`),'Ein Fehler beim Nachschreiben lässt die Partie stehen, leert den Entwurf und sagt es');
+    await K(`persistNewMatch=window.__persist;badgesEarnedInMatch=window.__earned;loadAll=window.__load;_schreibFehler=false;0;`);
+
+    // ── Nach dem Insert wartet nichts mehr auf das Netz [§3.1c] ──────────
+    // Eine Attrappe, deren Insert und Delete sofort antworten und deren
+    // übrige Anfragen hängen, bis der Test sie freigibt. Vorher stand der
+    // Knopf, bis Elo, Positionsstärke und das Neuladen der Liga durch waren,
+    // und Löschen und Bearbeiten schrieben die Deltas aller Partien.
+    // Wie in der Datenbank: exp_a aus derselben Rechnung, als real gespeichert.
+    await K(`(()=>{const h=new Map(simulateEloWithSliders(matches).history.map(x=>[x.matchId,x]));
+      matches.forEach(m=>{const e=h.get(m.id);if(e){m.exp_a=Math.fround(e.expA);m.deltas={...e.deltas};}});invalidateCache();
+      try{localStorage.removeItem(NACHRECHNEN_MARKE)}catch(e){}
+      window.__haengt=[];window.__anfr=[];window.__frei=false;
+      const tabelle=t=>({players,matches,seasons,config:cfg})[t];
+      sb.from=table=>{const st={table,op:'select',single:false};const b=new Proxy({},{get(_,p){
+        if(p==='then') return (ok,no)=>{window.__anfr.push(st.table+':'+st.op);
+          if(st.op==='update'&&st.table==='matches') window.__ids.push(st.id);
+          const antwort=()=>{let data=null;
+            if(st.op==='insert') data={...st.row,id:'sofort-'+window.__anfr.length,created_at:new Date().toISOString()};
+            else if(st.op==='select'){const t=tabelle(st.table);data=t?JSON.parse(JSON.stringify(t)):[];if(st.single&&Array.isArray(data))data=data[0]||null;}
+            return {data,error:null};};
+          if(st.op==='insert'||st.op==='delete'||window.__frei) return Promise.resolve(antwort()).then(ok,no);
+          return new Promise(r=>window.__haengt.push(()=>r(antwort()))).then(ok,no);};
+        if(['insert','update','delete','upsert'].includes(p)) return row=>{st.op=p;st.row=row;return b};
+        if(p==='single'||p==='maybeSingle') return ()=>{st.single=true;return b};
+        if(p==='eq') return (k,v)=>{st.id=v;return b};
+        return ()=>b;}});return b;};
+      window.__ids=[];
+      window.__frist=p=>Promise.race([p.then(()=>'fertig'),new Promise(r=>setTimeout(()=>r('wartet'),3000))]);
+      window.__loslassen=()=>{window.__frei=true;window.__haengt.splice(0).forEach(f=>f());};
+      window.__draft();window.__save=doSaveMatch();})();0;`);
+    ok(await K(`window.__frist(window.__save)`)==='fertig' && await K(`tab==='ranking' && !doSaveMatch._busy
+      && matches.some(m=>String(m.id).startsWith('sofort-')) && window.__haengt.length>0`),
+      'Speichern ist fertig und zeigt die Rangliste, während das Nachschreiben noch läuft');
+    ok(await K(`!window.__anfr.some(a=>/^(players|matches):select$/.test(a))`),'Der Abruf der Liga wartet, bis geschrieben ist, was eben gespeichert wurde');
+    await K(`window.__loslassen();_schreibKette`);
+    await K(`window.__frei=false;window.__anfr=[];window.__del=matches[matches.length-1].id;
+      window.__p=partieLoeschen(window.__del);0;`);
+    ok(await K(`window.__frist(window.__p)`)==='fertig' && await K(`!matches.some(m=>m.id===window.__del)
+      && /Gelöscht/.test(document.querySelector('.toast b').textContent) && localStorage.getItem(NACHRECHNEN_MARKE)==='1'`),
+      'Rückgängig zeigt die Liga ohne die Partie, bevor nachgeschrieben ist, und merkt sich das Nachschreiben');
+    await K(`window.__loslassen();_schreibKette`);
+    ok(await K(`window.__anfr.filter(a=>a==='matches:update').length===0 && localStorage.getItem(NACHRECHNEN_MARKE)===null`),
+      'Löschen der letzten Partie schreibt keine Delta einer anderen Partie, danach ist nichts mehr nachzuholen');
+    await K(`window.__frei=false;window.__anfr=[];window.__ids=[];window.__mid=matches[matches.length-40].id;showEditMatch(window.__mid);
+      E.sa=E.sa===10?9:10;if(E.sa===E.sb)E.sb=E.sa-2;window.__neuSa=E.sa;
+      window.__p=document.getElementById('saveEdit').onclick();0;`);
+    await K(`(async()=>{for(let i=0;i<100&&window.__haengt.length===0;i++) await new Promise(r=>setTimeout(r,10));
+      const erste=window.__haengt.shift(); window.__frei=false; erste&&erste();})()`);
+    ok(await K(`window.__frist(window.__p)`)==='fertig' && await K(`matches.find(m=>m.id===window.__mid).score_a===window.__neuSa
+      && /Gespeichert/.test(document.querySelector('.toast b').textContent)`),'Bearbeiten zeigt die geänderte Partie, bevor nachgeschrieben ist');
+    await K(`window.__loslassen();_schreibKette`);
+    // Eine geänderte Partie verschiebt die Elo jeder späteren desselben
+    // Monats; geschrieben wird genau das, keine Partie davor und keine eines
+    // anderen Monats. Vorher waren es die Deltas aller Partien der Liga.
+    ok(await K(`(()=>{const e=matches.find(m=>m.id===window.__mid),sid=seasonOf(e.created_at).id;
+      const ok=new Set(matches.filter(m=>m.created_at>=e.created_at&&seasonOf(m.created_at).id===sid).map(m=>m.id));
+      const ids=new Set(window.__ids);
+      return ids.size>1 && [...ids].every(id=>ok.has(id));})()`),
+      'Bearbeiten schreibt nur die Deltas der Partie und der späteren desselben Monats');
+    // Das Nachholen: eine Delta, die nie in der Datenbank ankam, wird beim
+    // nächsten Laden geschrieben, und nur sie — mit der Uhr der Liga [§C42].
+    await K(`window.__frei=true;window.__anfr=[];window.__lsa=ligaSchreibtAbgeleitet;ligaSchreibtAbgeleitet=()=>true;
+      const m=matches[matches.length-5];m.deltas={...m.deltas};const k=Object.keys(m.deltas)[0];m.deltas[k]+=3;
+      localStorage.setItem(NACHRECHNEN_MARKE,'1');_nachholen();0;`);
+    await K('_schreibKette');
+    ok(await K(`window.__anfr.filter(a=>a==='matches:update').length===1 && localStorage.getItem(NACHRECHNEN_MARKE)===null`),
+      'Das Nachholen schreibt genau die Partie, die abweicht, und löscht die Marke');
+    await K(`ligaSchreibtAbgeleitet=window.__lsa;0;`);
+
+    await K(`window.__lnr=ligaNeuRechnen;window.__rs=rechnungSchreiben;ligaNeuRechnen=()=>({geaendert:[]});rechnungSchreiben=async()=>{};loadAll=async()=>{};
       sb.from=window.__from;showEditMatch(matches[matches.length-1].id);
       E.sa=10;document.getElementById('esvA').textContent='10';document.querySelector('[data-estep="sa,1"]').click();0;`);
     ok(await K('E.sa===10 && document.getElementById("esvA").textContent==="10"'),'Bearbeitungs-Score nutzt dieselbe obere Grenze wie die neue Eingabe');
@@ -126,13 +202,13 @@ const ok=(c,msg)=>{checks++;if(!c)fails++;console.log((c?'  ok  ':'  ✗   ')+ms
     await K(`while(window.__editResolves.length) window.__editResolves.shift()({error:{message:'erwarteter Editfehler'}});0;`);
     await K('window.__editFirst');
     ok(await K('!document.getElementById("saveEdit").disabled && document.getElementById("sheet").classList.contains("show")'),'Fehlgeschlagene Bearbeitung bleibt offen und kann erneut gespeichert werden');
-    await K(`persistRecalc=async list=>{window.__editUpdated=list.find(m=>m.id===E.id)};
+    await K(`ligaNeuRechnen=list=>{window.__editUpdated=list.find(m=>m.id===E.id);return {geaendert:[]}};
       window.__editFirst=window.__editClick();document.querySelector('[data-estep="sb,1"]').click();0;`);
     ok(await K('document.getElementById("saveEdit").disabled'),'Bearbeitung bleibt auch bei weiteren Eingaben während des Speicherns gesperrt');
     await K('window.__editResolve({});0;');
     await K('window.__editFirst');
     ok(await K('window.__editUpdated.score_b===4 && E.sb===5 && document.getElementById("sheet").classList.contains("show")'),'Späte Editantwort berechnet den ursprünglichen Stand und erhält einen inzwischen geänderten Entwurf');
-    await K('persistRecalc=window.__recalc;loadAll=window.__load;0;');
+    await K('ligaNeuRechnen=window.__lnr;rechnungSchreiben=window.__rs;loadAll=window.__load;0;');
     await K('sb.from=window.__from;0;');
     await K(`window.__draft();openSheet('<select data-pos="A1"><option value="def" selected>Andere Rolle im Blatt</option></select>');readM();0;`);
     ok(await K('M.pA1==="atk"'),'Match-Eingabe liest nur ihr eigenes Formular und keine gleich benannten Blattfelder');

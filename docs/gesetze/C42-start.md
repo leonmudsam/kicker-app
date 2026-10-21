@@ -6,6 +6,7 @@
 - Der erste Durchlauf von `loadAll` startet den Abruf und zeichnet währenddessen aus dem Stand (`_standZeigen`). Ist der Abruf schon da, entfällt der Stand.
 - **Abgeleitetes schreibt nur ein Gerät mit der Uhr der Liga** (`ligaSchreibtAbgeleitet`, `LIGA_ZEITZONE`): Stories und Saison-Archiv rechnet jedes Gerät in Tagen und Monaten seiner eigenen Uhr. Veröffentlichen, aufräumen und archivieren darf nur ein Gerät, dessen Uhr dieselbe Wanduhr zeigt wie Europe/Berlin — jetzt und ein halbes Jahr davor und danach, also mit derselben Sommerzeit — und das kein automatisierter Browser ist (`navigator.webdriver`). Jedes andere rechnet und zeigt seine Stories nur sich selbst. Was ein Spieler selbst einträgt, gilt immer.
 - **Stories nur aus den Partien von eben** (`_datenFrisch`, `_partienGeholt`, `DATEN_FRISCH_MS`): veröffentlicht werden Stories nur, wenn der letzte vollständige Abruf der Partien höchstens eine Minute zurückliegt — gezählt ab seinem Absenden. Der Takt der News (`_newsAutoSyncTick`) rechnet gar nicht mit einem älteren Stand: beim Zurückkommen aus dem Hintergrund wartet er auf den Abruf, den das Zurückkommen gestartet hat, und läuft keiner, weil ein Blatt offen ist, setzt er aus.
+- **Das Nachholen eines abgebrochenen Nachschreibens** (`_nachholen`, Marke `kicker_nachrechnen`) [§3.1c] läuft nur nach einem Live-Abruf und nur mit der Uhr der Liga: es schreibt abgeleitete Deltas wie das Archiv.
 - **Aus dem Stand wird nur gezeichnet, nie geschrieben.** Kein Archiv, keine Story, kein Karriereende, kein Rückblick, der von selbst aufgeht, keine Migration der Einstellungen: was veröffentlicht oder speichert, hängt am Live-Abruf. Bis er da ist, steht „verbinde…“.
 - Der Live-Abruf mit demselben Fingerabdruck lässt Daten, Töpfe und DOM stehen (`_standGezeigt`); ein anderer ersetzt alles wie ohne Stand.
 - Scheitert der Live-Abruf, bleibt der Stand stehen und ein Hinweis sagt es; die Fehlerkarte kommt nur ohne Stand.
@@ -15,7 +16,7 @@
 
 ## Stellen
 
-`06c-stand.js`, `06-db.js` (`_loadAllDurchlauf`, `_datenEinbauen`, `_overridesNachziehen`, `ligaSchreibtAbgeleitet`, `_datenFrisch`, `autoArchiveSeasons`), `29-news-cache.js` (`syncStoriesViaDb`), `29b-news-sync.js` (`_newsAutoSyncTick`), `src/sw.js`, `37-boot.js` (Registrierung), `tools/build.mjs` und Wächter 1 und 5 in `tools/check.mjs`.
+`06c-stand.js`, `06-db.js` (`_loadAllDurchlauf`, `_datenEinbauen`, `_overridesNachziehen`, `ligaSchreibtAbgeleitet`, `_datenFrisch`, `autoArchiveSeasons`, `_nachholen`), `29-news-cache.js` (`syncStoriesViaDb`), `29b-news-sync.js` (`_newsAutoSyncTick`), `src/sw.js`, `37-boot.js` (Registrierung), `tools/build.mjs` und Wächter 1 und 5 in `tools/check.mjs`.
 
 ## Prüfung
 

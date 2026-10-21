@@ -6380,7 +6380,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.21.f2ca2fd5';
+const BUILD_VERSION='2026.10.21.47f075c8';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -7290,17 +7290,6 @@ function getSeasonEloMap(){
   }
 }
 
-async function syncSeasonEloToDB(){
-  const map=getSeasonEloMap();
-  const updates=[];
-  for(const p of players){
-    const newElo=Math.round(map[p.id] ?? cfg.start_elo);
-    if(newElo!==Math.round(p.elo)){
-      updates.push(sb.from('players').update({elo:newElo}).eq('id',p.id));
-    }
-  }
-  if(updates.length) await Promise.all(updates);
-}
 
 
 let _vorwaermAuftrag = null;
@@ -7540,65 +7529,79 @@ function computeMatch(teamA, teamB, winner, sa, sb){
   return {res, expA, mov: rawMov};
 }
 
+function _zahlAnders(a, b){ return !(Math.abs((+a || 0) - (+b || 0)) < 1e-6); }
+function _deltaAnders(m, patch){
+  if(!m) return true;
+  if(_zahlAnders(m.exp_a, patch.exp_a)) return true;
+  const a = m.deltas || {}, b = patch.deltas || {};
+  const k = new Set([...Object.keys(a), ...Object.keys(b)]);
+  for(const id of k) if(_zahlAnders(a[id], b[id])) return true;
+  return false;
+}
+async function _spielerSchreiben(){
+  const map = getSeasonEloMap(), schreiben = [];
+  players.forEach(p => {
+    const atk = atkStrengthFrom(p.id, matches);
+    const elo = Math.round(map[p.id] ?? cfg.start_elo);
+    const o = {};
+    if(_zahlAnders(atk, p.atk)) o.atk = atk;
+    if(elo !== Math.round(p.elo)) o.elo = elo;
+    if(!Object.keys(o).length) return;
+    schreiben.push(sb.from('players').update(o).eq('id', p.id).then(r => {
+      if(r && r.error) throw r.error;
+      Object.assign(p, o);
+    }));
+  });
+  await Promise.all(schreiben);
+}
+
 async function persistNewMatch(newMatchId) {
   const sim = getGlobalSim();
   const entry = sim.history.find(h => h.matchId === newMatchId);
-
-  const writes = [];
-  if(entry) {
-    writes.push(
-      sb.from('matches').update({ deltas: entry.deltas, exp_a: entry.expA })
-        .eq('id', newMatchId)
-    );
+  const m = matches.find(x => x.id === newMatchId);
+  const patch = entry && {id:newMatchId, deltas:entry.deltas, exp_a:entry.expA};
+  const schreiben = [_spielerSchreiben()];
+  if(patch && _deltaAnders(m, patch)){
+    schreiben.push(sb.from('matches').update({deltas:patch.deltas, exp_a:patch.exp_a}).eq('id', newMatchId)
+      .then(r => { if(r && r.error) throw r.error; if(m){ m.deltas = patch.deltas; m.exp_a = patch.exp_a; } }));
   }
-  players.forEach(p => {
-    const atk = atkStrengthFrom(p.id, matches);
-    writes.push(sb.from('players').update({ atk }).eq('id', p.id));
-  });
-
-  const BATCH = 25;
-  for(let i = 0; i < writes.length; i += BATCH) {
-    await Promise.all(writes.slice(i, i + BATCH));
-  }
-  await syncSeasonEloToDB();
-  invalidateCache(['global', 'stats', 'awards', 'badges', 'allTeamStats', 'allPastSeasons']);
+  await Promise.all(schreiben);
 }
-async function persistRecalc(matchList){
-  const BATCH_SIZE = 25;
-  const runBatch = async (promises) => {
-    for(let i=0; i<promises.length; i+=BATCH_SIZE){
-      await Promise.all(promises.slice(i, i+BATCH_SIZE));
-    }
-  };
-  const atkUpdates = players.map(p=>{
-    const atk = atkStrengthFrom(p.id, matchList);
-    return sb.from('players').update({atk}).eq('id', p.id);
+
+function ligaNeuRechnen(matchList){
+  const {matchPatches} = recalcHistory(matchList);
+  const vorher = new Map(matchList.map(m => [m.id, m]));
+  const geaendert = matchPatches.filter(p => _deltaAnders(vorher.get(p.id), p));
+  const neu = new Map(geaendert.map(p => [p.id, p]));
+  const anders = geaendert.length || matchList !== matches;
+  matches = matchList.map(m => {
+    const p = neu.get(m.id);
+    return p ? {...m, deltas:p.deltas, exp_a:p.exp_a} : m;
   });
-  const{matchPatches} = recalcHistory(matchList);
-  const matchUpdates = matchPatches.map(patch =>
-    sb.from('matches').update({
-      deltas: patch.deltas,
-      exp_a: patch.exp_a
-    }).eq('id', patch.id)
-  );
-  await runBatch([...atkUpdates, ...matchUpdates]);
-  const patchById = {};
-  matchPatches.forEach(p => { patchById[p.id] = p; });
-  matches.forEach(m => {
-    const p = patchById[m.id];
-    if(p){ m.deltas = p.deltas; m.exp_a = p.exp_a; }
-  });
-  invalidateCache();
-  const pastIds = allPastSeasons();
-  const wipeArchives = pastIds.map(sid =>
-    sb.from('seasons').update({top_elo: JSON.stringify([]), titles: null}).eq('id', sid)
-  );
-  await runBatch(wipeArchives);
-  seasons.forEach(s => {
-    if(pastIds.includes(s.id)){ s.top_elo = JSON.stringify([]); s.titles = null; }
-  });
-  await syncSeasonEloToDB();
+  if(anders) invalidateCache();
+  return {geaendert};
+}
+
+async function rechnungSchreiben(r, monate){
+  const BATCH = 25;
+  const deltas = r.geaendert.map(p => () => sb.from('matches').update({deltas:p.deltas, exp_a:p.exp_a}).eq('id', p.id)
+    .then(x => { if(x && x.error) throw x.error; }));
+  for(let i = 0; i < deltas.length; i += BATCH) await Promise.all(deltas.slice(i, i + BATCH).map(f => f()));
+  await _spielerSchreiben();
+  const vergangen = new Set(allPastSeasons());
+  const betroffen = new Set(monate || []);
+  const zeit = new Map(matches.map(m => [m.id, m.created_at]));
+  r.geaendert.forEach(p => { const t = zeit.get(p.id); if(t) betroffen.add(seasonOf(t).id); });
+  const leeren = [...betroffen].filter(sid => vergangen.has(sid));
+  if(!leeren.length) return;
+  await Promise.all(leeren.map(sid => sb.from('seasons').update({top_elo: JSON.stringify([]), titles: null}).eq('id', sid)));
+  seasons.forEach(s => { if(leeren.includes(s.id)){ s.top_elo = JSON.stringify([]); s.titles = null; } });
   await autoArchiveSeasons();
+}
+async function persistRecalc(matchList, monate){
+  const r = ligaNeuRechnen(matchList);
+  await rechnungSchreiben(r, monate);
+  return r;
 }
 
 function rcpMeta(teile){ return teile.filter(Boolean).join(' · '); }
@@ -8350,6 +8353,7 @@ async function _loadAllDurchlauf(){
   let ausStand = false;
   try{
     let abrufFertig = false;
+    if(_schreibOffen) await _schreibKette;
     const abrufBeginn = Date.now();
     const abruf=Promise.allSettled([
       sb.from('players').select('*').order('elo',{ascending:false}),
@@ -8385,15 +8389,11 @@ async function _loadAllDurchlauf(){
     _overridesNachziehen();
     const active=activePlayers();
     setConn(active.length+' Spieler · '+matches.length+' Matches','ok');
-    const zeichnen = () => {
-      if(_eingabeOffen()){
-        if(tab==='match') requestMatchPreview();
-      }else render();
-    };
-    if(!bestaetigt) zeichnen();
+    if(!bestaetigt) neuZeichnen();
     const vorArchiv=_cache.version;
     await autoArchiveSeasons();
-    if(_cache.version!==vorArchiv) zeichnen();
+    if(_cache.version!==vorArchiv) neuZeichnen();
+    _nachholen();
     if(window._updateRecapBtn) window._updateRecapBtn();
     if(window._updatePosHistBtn) window._updatePosHistBtn();
     if(!bestaetigt || _cache.version!==vorArchiv) _vorwaermen();
@@ -8435,6 +8435,44 @@ function ligaSchreibtAbgeleitet(){
 const DATEN_FRISCH_MS = 60 * 1000;
 let _partienGeholt = 0;
 function _datenFrisch(){ return _partienGeholt > 0 && Date.now() - _partienGeholt <= DATEN_FRISCH_MS; }
+
+let _schreibKette = Promise.resolve();
+let _schreibOffen = 0;
+let _schreibFehler = false;
+const NACHRECHNEN_MARKE = 'kicker_nachrechnen';
+function nachDemBild(){
+  return new Promise(fertig => {
+    if(document.hidden) setTimeout(fertig, 0);
+    else requestAnimationFrame(() => setTimeout(fertig, 0));
+  });
+}
+function imHintergrund(auftrag, nachholen){
+  _schreibOffen++;
+  if(nachholen) try { localStorage.setItem(NACHRECHNEN_MARKE, '1'); } catch(e){}
+  _schreibKette = _schreibKette.then(nachDemBild).then(auftrag).then(() => {
+    if(nachholen && !_schreibFehler) try { localStorage.removeItem(NACHRECHNEN_MARKE); } catch(e){}
+  }, e => {
+    _schreibFehler = true;
+    console.warn('Nachschreiben:', e);
+    toast('Nicht alles gespeichert', 'err', {sub:'Die Partie steht. Die Elo der Liga wird beim nächsten Laden nachgetragen.'});
+  }).finally(() => { _schreibOffen--; });
+  return _schreibKette;
+}
+function _nachholen(){
+  let offen = false;
+  try { offen = !!localStorage.getItem(NACHRECHNEN_MARKE); } catch(e){}
+  if(!offen || _schreibOffen || !ligaSchreibtAbgeleitet()) return;
+  _schreibFehler = false;
+  imHintergrund(async () => {
+    const r = await persistRecalc(matches);
+    if(r.geaendert.length) neuZeichnen();
+  }, true);
+}
+function neuZeichnen(){
+  if(_eingabeOffen()){
+    if(tab==='match') requestMatchPreview();
+  }else render();
+}
 
 async function autoArchiveSeasons(){
   const past=ligaSchreibtAbgeleitet()?allPastSeasons():[];
@@ -14240,31 +14278,33 @@ async function doSaveMatch(){
   insertedRow=savedRow;
 
   matches = [...matches, savedRow];
-  invalidateCache(['global', 'stats', 'awards', 'badges']);
-  await persistNewMatch(savedRow.id);
-
-  const newBadges = badgesEarnedInMatch(savedRow.id);
-  const toastWorthy = newBadges.filter(e => rarityOf(e.badge.id) !== 'common');
-  if(toastWorthy.length){
-    toastWorthy.forEach(e => showAchievementToast(pname(e.playerId), e.badge));
-  } else {
-    const sieger = winner === 'A' ? [row.a1,row.a2] : [row.b1,row.b2];
-    toast('Match gespeichert', 'ok', {
-      sub: sieger.map(pname).join(' & ') + ' gewinnen ' + standFuer(savedRow),
-      aktion: {label:'Rückgängig', fn: () => partieLoeschen(savedRow.id)}});
-  }
+  invalidateCache(LADEN_TOEPFE);
   if(M===state && Object.keys(draft).every(k=>M[k]===draft[k])){
     M={A1:'',A2:'',B1:'',B2:'',pA1:'atk',pA2:'def',pB1:'atk',pB2:'def',sa:0,sb:0};
     if(tab==='match') tab='ranking';
   }
-  await loadAll();
+  neuZeichnen();
+  imHintergrund(() => persistNewMatch(savedRow.id));
+  loadAll();
+
+  nachDemBild().then(() => {
+    const toastWorthy = badgesEarnedInMatch(savedRow.id).filter(e => rarityOf(e.badge.id) !== 'common');
+    if(toastWorthy.length){
+      toastWorthy.forEach(e => showAchievementToast(pname(e.playerId), e.badge));
+    } else {
+      const sieger = winner === 'A' ? [row.a1,row.a2] : [row.b1,row.b2];
+      toast('Match gespeichert', 'ok', {
+        sub: sieger.map(pname).join(' & ') + ' gewinnen ' + standFuer(savedRow),
+        aktion: {label:'Rückgängig', fn: () => partieLoeschen(savedRow.id)}});
+    }
+  });
   } catch(e){
     console.warn('Match speichern:',e);
     if(insertedRow && M===state && Object.keys(draft).every(k=>M[k]===draft[k])){
       M={A1:'',A2:'',B1:'',B2:'',pA1:'atk',pA2:'def',pB1:'atk',pB2:'def',sa:0,sb:0};
       if(tab==='match') render();
     }
-    toast(insertedRow?'Match gespeichert. Nachladen fehlgeschlagen.':'Speichern fehlgeschlagen.',true);
+    toast(insertedRow?'Match gespeichert. Anzeige fehlgeschlagen.':'Speichern fehlgeschlagen.',true);
   } finally {
     doSaveMatch._busy=false;
     if(save && save.isConnected){save.removeAttribute('aria-busy');save.innerHTML=saveHtml;}
@@ -18685,13 +18725,15 @@ function showMatchDetail(mid){
 }
 
 async function partieLoeschen(mid){
-  toast('Lösche & berechne neu…');
-  await sb.from('matches').delete().eq('id', mid);
-  const rest = matches.filter(x => x.id !== mid);
-  invalidateCache(['global', 'stats', 'awards', 'teams', 'period', 'badges']);
-  await persistRecalc(rest);
-  toast('Gelöscht & neu berechnet', 'ok');
-  await loadAll();
+  toast('Lösche…');
+  const {error} = await sb.from('matches').delete().eq('id', mid);
+  if(error){ toast('Nicht gelöscht', 'err', {sub:'Die Verbindung zur Datenbank ist fehlgeschlagen.'}); return; }
+  const weg = matches.find(x => x.id === mid);
+  const r = ligaNeuRechnen(matches.filter(x => x.id !== mid));
+  neuZeichnen();
+  toast('Gelöscht', 'ok');
+  imHintergrund(() => rechnungSchreiben(r, weg ? [seasonOf(weg.created_at).id] : []), true);
+  loadAll();
 }
 let E={};
 function showEditMatch(mid){
@@ -18752,7 +18794,7 @@ function showEditMatch(mid){
     if(ids.some(zuSpaet)){toast('Ein Spieler hat die Karriere vor dieser Partie beendet.',true);return;}
     const state=E,draft={...E},save=document.getElementById('saveEdit');
     speichert=true;save.disabled=true;save.setAttribute('aria-busy','true');
-    toast('Speichere & berechne neu…');
+    toast('Speichere…');
     const winner=draft.sa>draft.sb?'A':'B';
     try {
     const {error}=await sb.from('matches').update({
@@ -18765,9 +18807,11 @@ function showEditMatch(mid){
       ?{...x,a1:draft.A1,a1_pos:draft.pA1,a2:draft.A2,a2_pos:draft.pA2,b1:draft.B1,b1_pos:draft.pB1,b2:draft.B2,b2_pos:draft.pB2,score_a:draft.sa,score_b:draft.sb,winner}
       :x);
 
-    invalidateCache(['global', 'stats', 'awards', 'teams', 'period', 'badges']);
-    await persistRecalc(updated);
-    toast('Gespeichert & neu berechnet','ok'); await loadAll();
+    const r = ligaNeuRechnen(updated);
+    neuZeichnen();
+    toast('Gespeichert','ok');
+    imHintergrund(() => rechnungSchreiben(r), true);
+    loadAll();
     } catch(e){console.warn('Match bearbeiten:',e);toast('Speichern oder Neuberechnen fehlgeschlagen.',true);}
     finally{speichert=false;if(save.isConnected){save.removeAttribute('aria-busy');checkE();}}
   };

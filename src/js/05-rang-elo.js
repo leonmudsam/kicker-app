@@ -355,83 +355,116 @@ function computeMatch(teamA, teamB, winner, sa, sb){
   return {res, expA, mov: rawMov};
 }
 
-async function persistNewMatch(newMatchId) {
-  // Ein neues Match am Ende ändert nie vorherige Match-Deltas.
-  // → Nur schreiben: dieses Match + Spieler-Stats (atk + Saison-Elo)
-  // O(Spieler) statt O(alle Matches) DB-Writes.
-  const sim = getGlobalSim(); // nutzt bereits das neue Match (cache invalidiert)
-  const entry = sim.history.find(h => h.matchId === newMatchId);
-
-  const writes = [];
-  if(entry) {
-    writes.push(
-      sb.from('matches').update({ deltas: entry.deltas, exp_a: entry.expA })
-        .eq('id', newMatchId)
-    );
-  }
+// ─── Schreiben, was sich geändert hat ───────────────────────────────
+// Eine neue Partie schrieb die Positionsstärke ALLER Spieler, auch derer,
+// die nicht mitgespielt hatten, und eine gelöschte oder bearbeitete die
+// Deltas ALLER Partien der Liga — gemessen 498 Anfragen in zwanzig Runden
+// hintereinander, um am Ende fast überall denselben Wert zu schreiben. Für
+// die Ansicht gebraucht wird davon nichts: die App rechnet aus den Partien
+// [§3.1c]. Geschrieben wird deshalb nur, was sich wirklich geändert hat.
+// Verglichen wird mit Spielraum: eine Zahl, die einmal durch die Datenbank
+// gegangen ist, kann in der letzten Stelle abweichen, und dann schriebe
+// jeder Durchlauf alles noch einmal.
+function _zahlAnders(a, b){ return !(Math.abs((+a || 0) - (+b || 0)) < 1e-6); }
+function _deltaAnders(m, patch){
+  if(!m) return true;
+  if(_zahlAnders(m.exp_a, patch.exp_a)) return true;
+  const a = m.deltas || {}, b = patch.deltas || {};
+  const k = new Set([...Object.keys(a), ...Object.keys(b)]);
+  for(const id of k) if(_zahlAnders(a[id], b[id])) return true;
+  return false;
+}
+// Positionsstärke und Saison-Elo der Spieler: in der Datenbank nur ein
+// Abbild der Partien (die Rangliste liest sie nicht), deshalb nur, wo sie
+// abweichen, und danach lokal nachgezogen — sonst schriebe der nächste
+// Durchlauf dieselben Werte noch einmal.
+async function _spielerSchreiben(){
+  const map = getSeasonEloMap(), schreiben = [];
   players.forEach(p => {
     const atk = atkStrengthFrom(p.id, matches);
-    writes.push(sb.from('players').update({ atk }).eq('id', p.id));
+    const elo = Math.round(map[p.id] ?? cfg.start_elo);
+    const o = {};
+    if(_zahlAnders(atk, p.atk)) o.atk = atk;
+    if(elo !== Math.round(p.elo)) o.elo = elo;
+    if(!Object.keys(o).length) return;
+    schreiben.push(sb.from('players').update(o).eq('id', p.id).then(r => {
+      if(r && r.error) throw r.error;
+      Object.assign(p, o);
+    }));
   });
-
-  const BATCH = 25;
-  for(let i = 0; i < writes.length; i += BATCH) {
-    await Promise.all(writes.slice(i, i + BATCH));
-  }
-  await syncSeasonEloToDB();
-  // NEU: Zusätzliche Caches invalidieren, die durch ein neues Match beeinflusst werden
-  invalidateCache(['global', 'stats', 'awards', 'badges', 'allTeamStats', 'allPastSeasons']);
+  await Promise.all(schreiben);
 }
-// Schreibt eine neu berechnete Historie in die DB (Spieler-Elos + atk + Match-Deltas).
-// WICHTIG: invalidiert auch die archivierten Saison-Snapshots (seasons.top_elo),
-// damit das Recap-Podium nach Recalc konsistent zu der frischen Berechnung ist.
+
+async function persistNewMatch(newMatchId) {
+  // Ein neues Match am Ende ändert nie vorherige Match-Deltas. Seine eigenen
+  // stehen schon in der Zeile (`computeMatch`); neu geschrieben werden sie
+  // nur, wenn die Rechnung mit dem Zeitpunkt der Datenbank anders ausgeht.
+  const sim = getGlobalSim();
+  const entry = sim.history.find(h => h.matchId === newMatchId);
+  const m = matches.find(x => x.id === newMatchId);
+  const patch = entry && {id:newMatchId, deltas:entry.deltas, exp_a:entry.expA};
+  const schreiben = [_spielerSchreiben()];
+  if(patch && _deltaAnders(m, patch)){
+    schreiben.push(sb.from('matches').update({deltas:patch.deltas, exp_a:patch.exp_a}).eq('id', newMatchId)
+      .then(r => { if(r && r.error) throw r.error; if(m){ m.deltas = patch.deltas; m.exp_a = patch.exp_a; } }));
+  }
+  await Promise.all(schreiben);
+}
+
+// Die Liga aus einer Partienliste neu rechnen, nur auf dem Gerät: die
+// Liste wird zu `matches`, jede Partie trägt ihre neuen Deltas. Zurück
+// kommt, was die Datenbank danach braucht — die Partien, deren Deltas sich
+// geändert haben. Verglichen wird VOR dem Einsetzen, sonst wäre nichts mehr
+// anders.
+function ligaNeuRechnen(matchList){
+  const {matchPatches} = recalcHistory(matchList);
+  const vorher = new Map(matchList.map(m => [m.id, m]));
+  const geaendert = matchPatches.filter(p => _deltaAnders(vorher.get(p.id), p));
+  const neu = new Map(geaendert.map(p => [p.id, p]));
+  // Ohne Änderung bleiben die Töpfe: das Nachholen rechnet meist nach und
+  // findet nichts, und danach rechnete jeder Reiter kalt.
+  const anders = geaendert.length || matchList !== matches;
+  matches = matchList.map(m => {
+    const p = neu.get(m.id);
+    return p ? {...m, deltas:p.deltas, exp_a:p.exp_a} : m;
+  });
+  if(anders) invalidateCache();
+  return {geaendert};
+}
+
+// Schreibt eine neu gerechnete Liga in die Datenbank: die geänderten
+// Deltas, Positionsstärke und Saison-Elo, und die Archive der vergangenen
+// Monate, in denen sich etwas geändert hat. Vorher wurde JEDER vergangene
+// Monat geleert und neu archiviert, auch wenn nur die letzte Partie von heute
+// gelöscht war — und mit ihm seine eingefrorene Chronik. `monate` nennt
+// zusätzlich Monate, die sich ohne geänderte Delta geändert haben: die
+// gelöschte Partie selbst taucht in keiner Rechnung mehr auf.
 // Updates laufen in Batches parallel, um Rate-Limits zu respektieren (Supabase ~100 req/s).
-async function persistRecalc(matchList){
-  const BATCH_SIZE = 25;
-  const runBatch = async (promises) => {
-    for(let i=0; i<promises.length; i+=BATCH_SIZE){
-      await Promise.all(promises.slice(i, i+BATCH_SIZE));
-    }
-  };
-  // Positions-Stärke neu berechnen
-  const atkUpdates = players.map(p=>{
-    const atk = atkStrengthFrom(p.id, matchList);
-    return sb.from('players').update({atk}).eq('id', p.id);
-  });
-  // Match-Deltas/exp_a aktualisieren (Slider-basiert)
-  const{matchPatches} = recalcHistory(matchList);
-  const matchUpdates = matchPatches.map(patch =>
-    sb.from('matches').update({
-      deltas: patch.deltas,
-      exp_a: patch.exp_a
-    }).eq('id', patch.id)
-  );
-  await runBatch([...atkUpdates, ...matchUpdates]);
-  // Lokale Matches mit neuen Deltas updaten, damit die nachfolgende Archivierung
-  // die frischen Werte sieht
-  const patchById = {};
-  matchPatches.forEach(p => { patchById[p.id] = p; });
-  matches.forEach(m => {
-    const p = patchById[m.id];
-    if(p){ m.deltas = p.deltas; m.exp_a = p.exp_a; }
-  });
-  invalidateCache();
-  // Archivierte Saison-Snapshots invalidieren → autoArchiveSeasons wird sie neu schreiben
-  // (mit den frisch berechneten DB-Deltas → konsistent zu Profil/Recap).
-  const pastIds = allPastSeasons();
-  // `titles` muss mit: Die eingefrorene Chronik steht auf der alten Elo-Kurve.
-  // Nach einem Recalc waeren „+148 Elo gegenueber der Vorsaison" oder „Von -65
-  // zurueck auf 195" Behauptungen ueber Zahlen, die es nicht mehr gibt.
-  const wipeArchives = pastIds.map(sid =>
-    sb.from('seasons').update({top_elo: JSON.stringify([]), titles: null}).eq('id', sid)
-  );
-  await runBatch(wipeArchives);
+async function rechnungSchreiben(r, monate){
+  const BATCH = 25;
+  const deltas = r.geaendert.map(p => () => sb.from('matches').update({deltas:p.deltas, exp_a:p.exp_a}).eq('id', p.id)
+    .then(x => { if(x && x.error) throw x.error; }));
+  for(let i = 0; i < deltas.length; i += BATCH) await Promise.all(deltas.slice(i, i + BATCH).map(f => f()));
+  await _spielerSchreiben();
+  // Archivierte Saison-Snapshots invalidieren → autoArchiveSeasons schreibt
+  // sie neu. `titles` muss mit: die eingefrorene Chronik steht auf der alten
+  // Elo-Kurve, und „+148 Elo gegenueber der Vorsaison" waere eine Behauptung
+  // ueber Zahlen, die es nicht mehr gibt.
+  const vergangen = new Set(allPastSeasons());
+  const betroffen = new Set(monate || []);
+  const zeit = new Map(matches.map(m => [m.id, m.created_at]));
+  r.geaendert.forEach(p => { const t = zeit.get(p.id); if(t) betroffen.add(seasonOf(t).id); });
+  const leeren = [...betroffen].filter(sid => vergangen.has(sid));
+  if(!leeren.length) return;
+  await Promise.all(leeren.map(sid => sb.from('seasons').update({top_elo: JSON.stringify([]), titles: null}).eq('id', sid)));
   // Lokal: top_elo leeren, damit autoArchiveSeasons sie als stale erkennt
-  seasons.forEach(s => {
-    if(pastIds.includes(s.id)){ s.top_elo = JSON.stringify([]); s.titles = null; }
-  });
-  // Saison-Elo in DB synchronisieren
-  await syncSeasonEloToDB();
-  // Saisons neu archivieren mit den frischen Werten
+  seasons.forEach(s => { if(leeren.includes(s.id)){ s.top_elo = JSON.stringify([]); s.titles = null; } });
   await autoArchiveSeasons();
+}
+// Rechnen und Schreiben in einem, für den Knopf „Neu berechnen" und das
+// Nachholen nach einem abgebrochenen Schreiben [§3.1c].
+async function persistRecalc(matchList, monate){
+  const r = ligaNeuRechnen(matchList);
+  await rechnungSchreiben(r, monate);
+  return r;
 }

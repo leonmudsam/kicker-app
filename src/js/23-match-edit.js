@@ -65,7 +65,7 @@ function showEditMatch(mid){
     if(ids.some(zuSpaet)){toast('Ein Spieler hat die Karriere vor dieser Partie beendet.',true);return;}
     const state=E,draft={...E},save=document.getElementById('saveEdit');
     speichert=true;save.disabled=true;save.setAttribute('aria-busy','true');
-    toast('Speichere & berechne neu…');
+    toast('Speichere…');
     const winner=draft.sa>draft.sb?'A':'B';
     try {
     // Match-Zeile aktualisieren (Deltas folgen aus der Neuberechnung)
@@ -80,9 +80,15 @@ function showEditMatch(mid){
       ?{...x,a1:draft.A1,a1_pos:draft.pA1,a2:draft.A2,a2_pos:draft.pA2,b1:draft.B1,b1_pos:draft.pB1,b2:draft.B2,b2_pos:draft.pB2,score_a:draft.sa,score_b:draft.sb,winner}
       :x);
 
-    invalidateCache(['global', 'stats', 'awards', 'teams', 'period', 'badges']);
-    await persistRecalc(updated);
-    toast('Gespeichert & neu berechnet','ok'); await loadAll();
+    // Die Liga mit der geänderten Partie steht sofort; die Deltas, die
+    // sich dadurch ändern, schreibt die Kette danach [§3.1c]. Vorher
+    // schrieb dieser Knopf die Deltas aller Partien der Liga und lud sie
+    // neu, bevor die Änderung zu sehen war — gemessen sechs Sekunden.
+    const r = ligaNeuRechnen(updated);
+    neuZeichnen();
+    toast('Gespeichert','ok');
+    imHintergrund(() => rechnungSchreiben(r), true);
+    loadAll();
     } catch(e){console.warn('Match bearbeiten:',e);toast('Speichern oder Neuberechnen fehlgeschlagen.',true);}
     finally{speichert=false;if(save.isConnected){save.removeAttribute('aria-busy');checkE();}}
   };

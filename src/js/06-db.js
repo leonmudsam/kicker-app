@@ -133,6 +133,8 @@ async function _loadAllDurchlauf(){
   let ausStand = false;
   try{
     let abrufFertig = false;
+    // Erst holen, wenn geschrieben ist, was eben gespeichert wurde [§3.1c].
+    if(_schreibOffen) await _schreibKette;
     // Der Stand, den die Antwort zeigt, ist der beim Absenden.
     const abrufBeginn = Date.now();
     const abruf=Promise.allSettled([
@@ -190,19 +192,14 @@ async function _loadAllDurchlauf(){
     // abgeschlossenem Monat auf einen Upsert, und am ersten Tag eines Monats
     // stand die Rangliste so lange leer. Ändert das Archiv etwas, wird neu
     // gezeichnet.
-    // Ein Abruf kann schon vor dem Öffnen der Eingabe begonnen haben. Die
-    // Daten werden frisch, das bestehende Formular aber nicht ersetzt:
-    // freier Suchtext steht nicht in M, und ein neuer DOM-Knoten verlöre
-    // Cursor, Bildschirmtastatur und den Regler unter dem Finger.
-    const zeichnen = () => {
-      if(_eingabeOffen()){
-        if(tab==='match') requestMatchPreview();
-      }else render();
-    };
-    if(!bestaetigt) zeichnen();
+    // Ein Abruf kann schon vor dem Öffnen der Eingabe begonnen haben: die
+    // Daten werden frisch, das Formular bleibt (`neuZeichnen`).
+    if(!bestaetigt) neuZeichnen();
     const vorArchiv=_cache.version;
     await autoArchiveSeasons();
-    if(_cache.version!==vorArchiv) zeichnen();
+    if(_cache.version!==vorArchiv) neuZeichnen();
+    // Ein abgebrochenes Nachschreiben holt der Live-Abruf nach [§3.1c].
+    _nachholen();
     if(window._updateRecapBtn) window._updateRecapBtn();
     if(window._updatePosHistBtn) window._updatePosHistBtn();
     // Die übrigen Reiter rechnen im Leerlauf vor [§2.1b].
@@ -287,6 +284,71 @@ function ligaSchreibtAbgeleitet(){
 const DATEN_FRISCH_MS = 60 * 1000;
 let _partienGeholt = 0;   // Beginn des letzten vollständigen Abrufs
 function _datenFrisch(){ return _partienGeholt > 0 && Date.now() - _partienGeholt <= DATEN_FRISCH_MS; }
+
+// ─── §3.1c Erst zeigen, dann nachschreiben ─────────────────────────────
+// Eine neue Partie stand 3,3 Sekunden auf „Speichere…", eine gelöschte oder
+// bearbeitete 6 Sekunden, bis sie zu sehen war (gemessen mit vierfach
+// gedrosselter CPU und 250 ms je Anfrage): nach dem einen Aufruf, der die
+// Partie schreibt, wartete die Ansicht auf die Elo jedes Spielers, die
+// Deltas aller Partien, das Neuladen der ganzen Liga und die Stories.
+// Gebraucht wird davon für die Ansicht nichts — die App rechnet aus den
+// Partien, und die hat sie in der Hand. Sie zeigt den neuen Stand deshalb
+// sofort, und was die Datenbank daraus ableitet, schreibt `imHintergrund`
+// danach, Auftrag für Auftrag in EINER Kette: zwei schnelle Änderungen
+// schreiben nicht durcheinander, und `loadAll` holt erst, wenn alles
+// geschrieben ist — ein Abruf mittendrin brächte halb nachgerechnete
+// Deltas zurück und archivierte aus ihnen.
+// Ein Auftrag, der die Deltas der Liga schreibt (`nachholen`), lässt eine
+// Marke auf dem Gerät, bis er durch ist: wird die App mittendrin
+// geschlossen oder reißt das Netz ab, rechnet der nächste Live-Abruf die
+// Liga nach und schreibt, was abweicht — mit der Uhr der Liga, wie jedes
+// Abgeleitete [§C42].
+let _schreibKette = Promise.resolve();
+let _schreibOffen = 0;
+let _schreibFehler = false;
+const NACHRECHNEN_MARKE = 'kicker_nachrechnen';
+// Ein Auftrag beginnt nach dem nächsten Bild: auch sein Rechnen vor der
+// ersten Anfrage (Positionsstärke aller Spieler) lief sonst noch vor dem
+// Zeichnen, im selben Augenblick wie die neue Ansicht. Eine versteckte
+// Seite zeichnet nicht; dort beginnt er gleich, sonst stünde die Kette, bis
+// das Telefon wieder entsperrt ist.
+function nachDemBild(){
+  return new Promise(fertig => {
+    if(document.hidden) setTimeout(fertig, 0);
+    else requestAnimationFrame(() => setTimeout(fertig, 0));
+  });
+}
+function imHintergrund(auftrag, nachholen){
+  _schreibOffen++;
+  if(nachholen) try { localStorage.setItem(NACHRECHNEN_MARKE, '1'); } catch(e){}
+  _schreibKette = _schreibKette.then(nachDemBild).then(auftrag).then(() => {
+    if(nachholen && !_schreibFehler) try { localStorage.removeItem(NACHRECHNEN_MARKE); } catch(e){}
+  }, e => {
+    _schreibFehler = true;
+    console.warn('Nachschreiben:', e);
+    toast('Nicht alles gespeichert', 'err', {sub:'Die Partie steht. Die Elo der Liga wird beim nächsten Laden nachgetragen.'});
+  }).finally(() => { _schreibOffen--; });
+  return _schreibKette;
+}
+function _nachholen(){
+  let offen = false;
+  try { offen = !!localStorage.getItem(NACHRECHNEN_MARKE); } catch(e){}
+  if(!offen || _schreibOffen || !ligaSchreibtAbgeleitet()) return;
+  _schreibFehler = false;
+  imHintergrund(async () => {
+    const r = await persistRecalc(matches);
+    if(r.geaendert.length) neuZeichnen();
+  }, true);
+}
+// Neue Daten zeigen, ohne ein offenes Formular zu ersetzen: freier
+// Suchtext steht nicht in M, und ein neuer DOM-Knoten verlöre Cursor,
+// Bildschirmtastatur und den Regler unter dem Finger. Eine Stelle für den
+// Live-Abruf und für das, was gerade gespeichert wurde.
+function neuZeichnen(){
+  if(_eingabeOffen()){
+    if(tab==='match') requestMatchPreview();
+  }else render();
+}
 
 // Automatischer Saison-Abschluss: archiviert vergangene Monate
 async function autoArchiveSeasons(){

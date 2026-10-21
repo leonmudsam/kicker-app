@@ -562,17 +562,6 @@ function getSeasonEloMap(){
   }
 }
 
-async function syncSeasonEloToDB(){
-  const map=getSeasonEloMap();
-  const updates=[];
-  for(const p of players){
-    const newElo=Math.round(map[p.id] ?? cfg.start_elo);
-    if(newElo!==Math.round(p.elo)){
-      updates.push(sb.from('players').update({elo:newElo}).eq('id',p.id));
-    }
-  }
-  if(updates.length) await Promise.all(updates);
-}
 
 
 // ─── §2.1b Vorwärmen im Leerlauf ─────────────────────────────────────
