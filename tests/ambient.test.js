@@ -4727,7 +4727,7 @@ const _partie = JSON.parse(K.eval(`JSON.stringify((function(){
   roh.filter(s => (s.dataRef||{}).type === 'spiel').forEach(s => {
     const m = matches.find(x => x.id === s.dataRef.matchId); if(!m) return;
     const refs = roh.filter(x => (x.dataRef||{}).matchId === m.id && x.dataRef.type !== 'spiel').map(x => x.dataRef);
-    const a = _spFussFakt(m, refs);
+    const a = (_spFussFakten(m, refs)[0] || {}).a;
     if(!a || !refs.some(r => FUSS[r.type] === a.key)) return;
     const o = (s.dataRef.visual || {}).occasion;
     if(o && o.key === a.key) folgt++; else fremd.push(s.title + ': ' + (o ? o.key : '-') + ' statt ' + a.key);
@@ -6740,13 +6740,16 @@ const _eh = JSON.parse(K.eval(`JSON.stringify((function(){
     // Auszeichnungen stammen: kein Satz und kein Fuß mit den Klassen
     // darunter. Beides steht im Blatt.
     if(/class="nf-d"|class="eh-fuss"|class="eh-k /.test(h)) falsch.push(s.id + ': Zusatztext auf der Karte');
-    // Dieselbe Zeile auf Karte und Blatt, und sie nennt die erste und die
-    // letzte Partie der Runde [§C27]. Das Blatt macht daraus den Satz.
+    // Dieselbe Angabe auf Karte und Blatt [§C27]: oben, was der Zeitraum
+    // bedeutet, darunter die erste und die letzte Partie der Runde mit
+    // „Uhr". Das Blatt setzt beide Teile zu einem Satz zusammen.
+    const z = _ehrungZeitraum(d);
+    const vor = (h.match(/<span class="eh-zr-k">([^<]*)<\\/span>/) || [])[1];
     const zr = (h.match(/<span class="eh-zr-t">([^<]*)<\\/span>/) || [])[1];
-    if(!zr || zr !== _ehrungZeitraum(d) || !/^Partien? /.test(zr)
-      || zr.indexOf(datumFmt(d.ab, 'uhr')) < 0 || zr.indexOf(datumFmt(d.bis, 'uhr')) < 0)
-      falsch.push(s.id + ': Zeitraum ' + zr);
-    if(_ndEhrungBlatt(s).mitte.indexOf('<div class="nw-hinweis eh-zeit">Aus ' + (d.ab === d.bis ? 'der ' : 'den ') + esc(zr) + '.</div>') < 0)
+    if(!z || vor !== esc(z.vor) || zr !== esc(z.wann) || !/^Geholt in de[nr] Partien?$/.test(vor)
+      || !/\u00a0Uhr$/.test(zr) || zr.indexOf(datumFmt(d.ab, 'uhr')) < 0 || zr.indexOf(datumFmt(d.bis, 'uhr')) < 0)
+      falsch.push(s.id + ': Zeitraum ' + vor + ' | ' + zr);
+    if(z && _ndEhrungBlatt(s).mitte.indexOf('<div class="nw-hinweis eh-zeit">' + esc(z.vor + ' ' + z.wann) + '.</div>') < 0)
       falsch.push(s.id + ': Blatt nennt einen anderen Zeitraum');
     // Im Blatt jede Klasse, die vorkommt, und zusammen alle Auszeichnungen.
     const anteil = _ndEhrungBlatt(s).mitte;
@@ -6795,21 +6798,21 @@ ok(_eh.n >= 40 && _eh.legendaer > 0 && _eh.umbruch > 0 && _eh.kacheln > 0 && _eh
 // Datum, über Mitternacht der zweite Tag, eine einzige Partie in der Einzahl.
 const _ehZr = JSON.parse(K.eval(`JSON.stringify((function(){
   const um = (tage, h, m) => { const d = new Date(); d.setDate(d.getDate() - tage); d.setHours(h, m, 0, 0); return d.getTime(); };
-  const alt = new Date(um(4, 16, 44));
+  const tm = t => datumFmt(new Date(t), 'tm');
+  const satz = z => z ? z.vor + ' | ' + z.wann : '';
   return [
-    [_ehrungZeitraum({ab:um(0, 13, 44), bis:um(0, 15, 55)}), 'Partien von heute, 13:44 bis 15:55'],
-    [_ehrungZeitraum({ab:um(1, 13, 44), bis:um(1, 15, 55)}), 'Partien von gestern, 13:44 bis 15:55'],
-    [_ehrungZeitraum({ab:um(4, 16, 44), bis:um(4, 18, 10)}), 'Partien vom ' + datumFmt(alt, 'tm') + ', 16:44 bis 18:10'],
-    [_ehrungZeitraum({ab:um(1, 23, 10), bis:um(0, 0, 40)}), 'Partien von gestern, 23:10 bis heute, 00:40'],
-    [_ehrungZeitraum({ab:um(0, 15, 55), bis:um(0, 15, 55)}), 'Partie von heute, 15:55'],
-    [_ehrungZeitraum({ab:um(0, 13, 44), bis:um(0, 15, 55)}, true), 'Aus den Partien von heute, 13:44 bis 15:55'],
-    [_ehrungZeitraum({ab:um(0, 15, 55), bis:um(0, 15, 55)}, true), 'Aus der Partie von heute, 15:55'],
-    [_ehrungZeitraum({}), '']];
+    [satz(_ehrungZeitraum({ab:um(0, 13, 44), bis:um(0, 15, 55)})), 'Geholt in den Partien | von heute, 13:44 bis 15:55 Uhr'],
+    [satz(_ehrungZeitraum({ab:um(1, 13, 44), bis:um(1, 15, 55)})), 'Geholt in den Partien | von gestern, 13:44 bis 15:55 Uhr'],
+    [satz(_ehrungZeitraum({ab:um(4, 16, 44), bis:um(4, 18, 10)})), 'Geholt in den Partien | vom ' + tm(um(4, 0, 0)) + ', 16:44 bis 18:10 Uhr'],
+    [satz(_ehrungZeitraum({ab:um(1, 23, 10), bis:um(0, 0, 40)})), 'Geholt in den Partien | von gestern, 23:10 bis heute, 00:40 Uhr'],
+    [satz(_ehrungZeitraum({ab:um(16, 15, 12), bis:um(14, 15, 10)})), 'Geholt in den Partien | vom ' + tm(um(16, 0, 0)) + ', 15:12 bis ' + tm(um(14, 0, 0)) + ', 15:10 Uhr'],
+    [satz(_ehrungZeitraum({ab:um(0, 15, 55), bis:um(0, 15, 55)})), 'Geholt in der Partie | von heute, 15:55 Uhr'],
+    [satz(_ehrungZeitraum({})), '']];
 })())`));
 // Gelesen mit gewöhnlichen Leerzeichen: vor jeder Uhrzeit steht ein festes.
 _ehZr.forEach(x => { x[0] = x[0].replace(/\u00a0/g, ' '); });
 ok(_ehZr.every(([ist, soll]) => ist === soll),
-   'die Ehrung nennt ihre Partien mit heute, gestern oder Datum, über Mitternacht mit beiden Tagen, eine einzelne Partie in der Einzahl und im Blatt als Satz',
+   'die Ehrung sagt, dass die Auszeichnungen in diesen Partien geholt sind, und nennt sie mit heute, gestern oder Datum, über Mitternacht und über mehrere Tage mit beiden Tagen, mit „Uhr" und eine einzelne Partie in der Einzahl',
    _ehZr.filter(([ist, soll]) => ist !== soll).map(([ist, soll]) => ist + ' statt ' + soll).join(' | '));
 ok(Math.round(_eh.breite) === _eh.soll && _eh.soll < 100 && _eh.voll === 100,
    'der Strich unter einer Auszeichnung zeigt, wie viel vom vollen Wert sie beim wievielten Mal bringt',
@@ -7635,8 +7638,20 @@ const _scoreWahl = JSON.parse(K.eval(`JSON.stringify((function(){
   });
   const eng = transferBei.some((v, i) => i && v - transferBei[i - 1] < 5);
   const doppelt = spur.filter((k, i) => i && k === spur[i - 1]);
+  // „Zwei Welten" je Duo: dieselben zwei Sieger auf dreißig Karten nur einmal.
+  const welten = [];
+  reihe.forEach((m, i) => { if(spur[i] !== 'gefaelle') return;
+    const duo = _spSieger(m).slice().sort().join();
+    const vor = reihe.slice(Math.max(0, i - 30), i).findIndex((y, j) => spur[Math.max(0, i - 30) + j] === 'gefaelle'
+      && _spSieger(y).slice().sort().join() === duo);
+    if(vor >= 0) welten.push(m.id + ' ' + duo.split(',').map(pname).join(' und ')); });
+  const GRUND = ['tacho', 'tauziehen', 'abstand', 'zeile', 'feld'];
+  const SPEZIAL = ['krimi', 'deutlich', 'aussenseiter', 'weste'];
+  const grund = GRUND.map(k => zahl[k] || 0);
+  const gewoehnlich = Object.keys(zahl).filter(k => !SPEZIAL.includes(k)).map(k => [k, zahl[k]])
+    .sort((a, b) => b[1] - a[1])[0];
   return {n:reihe.length, zahl, falsch, transfer:transferBei.length, eng,
-          doppelt:doppelt.length};
+          doppelt:doppelt.length, welten, grund, gewoehnlich};
 })())`));
 ok(_scoreWahl.falsch.length === 0,
    'Mosaik und Elo-Transfer erscheinen nur mit einem belegten besonderen Anlass',
@@ -7647,6 +7662,35 @@ ok(_scoreWahl.transfer <= Math.ceil(_scoreWahl.n * .05) && !_scoreWahl.eng,
 ok(_scoreWahl.doppelt === 0,
    'neue Scoregrafiken wiederholen sich nicht direkt hintereinander',
    _scoreWahl.doppelt + ' Wiederholungen · ' + JSON.stringify(_scoreWahl.zahl));
+// Die Grundansichten einer gewöhnlichen Partie wechseln sich ab, statt dass
+// die mit dem höchsten Gewicht gewinnt: der Tacho stand auf 69 von 466
+// Karten, das Spielfeld auf vier. Kein Kopf ohne besonderen Ausgang steht
+// auf mehr als jeder zehnten Karte.
+ok(Math.min(..._scoreWahl.grund) > 0 && Math.max(..._scoreWahl.grund) <= 1.5 * Math.min(..._scoreWahl.grund)
+   && _scoreWahl.gewoehnlich[1] <= _scoreWahl.n / 10,
+   'die Grundansichten wechseln sich ab, und kein gewöhnlicher Kopf steht auf mehr als jeder zehnten Karte',
+   'Tacho, Tauziehen, Abstand, Zeile, Feld ' + _scoreWahl.grund.join('/') + ' · am häufigsten '
+   + _scoreWahl.gewoehnlich.join(' ') + ' von ' + _scoreWahl.n);
+ok(_scoreWahl.welten.length === 0,
+   'ein Duo gewinnt nicht zweimal in dreißig Karten „als ungleiches Paar“',
+   _scoreWahl.welten.slice(0, 3).join(' | ') || (_scoreWahl.zahl.gefaelle || 0) + ' Karten');
+
+// Ein Zustand, der über viele Partien gilt — eine Serie, die Serie eines
+// Duos, eine Rivalität —, steht als Fuß nicht auf zwei Karten hintereinander.
+// Er stand, sobald er zutraf: die Siegesserie auf zwölf von 43 Karten, an
+// einem Tag dreimal.
+const _fussFolge = JSON.parse(K.eval(`JSON.stringify((function(){
+  const karten = _buildStories().filter(s => (s.dataRef||{}).type === 'spiel' && s.dataRef.visual)
+    .sort((a, b) => a.when - b.when);
+  const fuss = karten.map(s => (s.dataRef.visual.occasion || {}).key || '-');
+  const ZUSTAND = ['serie', 'teamserie', 'duell'];
+  const zahl = {}; fuss.forEach(k => { zahl[k] = (zahl[k] || 0) + 1; });
+  return {n:fuss.length, zahl, folge:fuss.filter((k, i) => i && ZUSTAND.includes(k) && fuss[i - 1] === k).length,
+    max:Math.max(...Object.keys(zahl).filter(k => k !== '-').map(k => zahl[k]))};
+})())`));
+ok(_fussFolge.n >= 30 && _fussFolge.folge === 0 && _fussFolge.max <= _fussFolge.n * .15,
+   'Serie, Duo-Serie und Rivalität stehen als Fuß nicht zweimal hintereinander, und kein Fuß steht auf mehr als jeder siebten Karte',
+   _fussFolge.folge + ' hintereinander · ' + JSON.stringify(_fussFolge.zahl));
 
 // Die vorherigen Formen kommen aus dem veroeffentlichten Bestand. Zwei
 // alte Spielfelder muessen auch nach geaenderten Auswahlregeln als solche

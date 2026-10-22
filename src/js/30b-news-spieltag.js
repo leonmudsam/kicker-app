@@ -1468,6 +1468,17 @@ const SP_FUSS = {
 const SP_SCORE_FORMEN = new Set(['mosaik','tacho','streu','transfer','gefaelle','feld','tauziehen','muenze']);
 const SP_ANLASS_FORMEN = new Set(['chemie','gegner','revanche','gipfel','rueckkehr','tagesring','zaehlwerk',
   'uhr','ueberholt','duoserie']);
+// Die Grundansichten einer gewöhnlichen Partie: der Favorit und seine Nadel,
+// das Tauziehen, der Abstand, die Ergebniszeile, das Spielfeld. Jede ist für
+// fast jede Partie wahr, und keine sagt mehr als die andere. Sie wechseln
+// sich deshalb reihum ab, statt nach Gewicht zu gewinnen: mit Gewicht 20
+// stand der Tacho über jedem Sieg eines Favoriten, gemessen auf neun von 43
+// Karten in dreißig Tagen, öfter als jede andere Zeichnung.
+const SP_GRUNDFORMEN = new Set(['tacho','tauziehen','abstand','zeile','feld']);
+// Ein Befund (Münzwurf, ungleiches Paar, Streuung, Mosaik, Transfer) geht
+// einer Grundansicht vor, solange er nach den Abschlägen für die letzten
+// Karten noch mindestens so viel wiegt.
+const SP_BEFUND_MIN = 12;
 function _spVisualHash(v){
   let h = 2166136261 >>> 0, s = String(v || '');
   for(let i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
@@ -1505,11 +1516,41 @@ function _spScoreKandidaten(m){
   k.forEach(x => { const alt = jeKey.get(x.key); if(!alt || x.rang > alt.rang) jeKey.set(x.key, x); });
   return [...jeKey.values()].sort((a, b) => b.rang - a.rang || a.key.localeCompare(b.key));
 }
-// Die fachlich staerkste passende Scoreform gewinnt. Variation ist ein
-// Abschlag fuer kuerzlich wirklich verwendete Formen, kein Zufallsgriff in
-// die ersten drei Kandidaten. Nur fachlich passende Alternativen duerfen
-// wechseln; dieselbe Form steht nicht direkt hintereinander. Ein besonderer
-// Ausgang bleibt auch bei einem anderen Scorekopf als Anlass sichtbar.
+// Die Wahl des Kopfs, in einem chronologischen Durchlauf je Datenstand.
+// Ein besonderer Ausgang (Krimi, klarer Sieg, Außenseiter, weiße Weste) ist
+// selbst die Geschichte und steht oben — außer derselbe stand schon auf
+// einer der beiden Karten davor; dann trägt ihn der Fuß, und der Kopf zeigt
+// eine andere Seite der Partie. Sonst gewinnt ein Befund, wenn er nach den
+// Abschlägen für die letzten zwei und zehn Karten noch `SP_BEFUND_MIN`
+// wiegt, und andernfalls die Grundansicht, die am längsten nicht dran war.
+// Vorher entschied überall das Gewicht, und eine Grundansicht mit hohem
+// Gewicht (der Tacho) setzte sich gegen alle gleichwertigen durch. Dieselbe
+// Form steht nie direkt hintereinander, wenn es eine andere gibt.
+// „Zwei Welten" hängt am Duo und nicht an der Partie: Leon und Henry liegen
+// immer 220 Elo auseinander, und „gewinnen als ungleiches Paar" stand an
+// zwei Tagen dreimal über ihnen. Es zählt deshalb nur, wenn dieses Duo es
+// auf den letzten dreißig Karten nicht schon hatte.
+function _spScoreAuswahl(x, spur, duos, ohne){
+  const zuletzt = spur[spur.length - 1], duo = _spSieger(x).slice().sort().join();
+  const oft = (k, n) => spur.slice(-n).filter(y => y === k).length;
+  const schonDuo = k => spur.slice(-30).some((y, i, a) => y === k && duos[duos.length - a.length + i] === duo);
+  const kand = _spScoreKandidaten(x).filter(c => c.key !== ohne && !(c.key === 'gefaelle' && schonDuo('gefaelle')));
+  const los = c => _spVisualHash(x.id + '|' + c.key);
+  const befund = kand.filter(c => !SP_GRUNDFORMEN.has(c.key))
+    .map(c => Object.assign({}, c, {eff:c.rang - 10 * oft(c.key, 2) - 4 * oft(c.key, 10)
+      - (c.key === 'transfer' ? 7 * oft(c.key, 12) : 0), los:los(c)}))
+    .sort((p, q) => q.eff - p.eff || q.rang - p.rang || p.los - q.los);
+  const seit = k => { const i = spur.lastIndexOf(k); return i < 0 ? Infinity : spur.length - 1 - i; };
+  const grund = kand.filter(c => SP_GRUNDFORMEN.has(c.key))
+    .map(c => Object.assign({}, c, {seit:seit(c.key), los:los(c)}))
+    .sort((p, q) => q.seit - p.seit || q.rang - p.rang || p.los - q.los);
+  let w = befund[0] && befund[0].eff >= SP_BEFUND_MIN ? befund[0] : (grund[0] || befund[0]);
+  if(w && w.key === zuletzt){
+    const anders = (w === befund[0] ? befund.concat(grund) : grund.concat(befund)).find(c => c.key !== zuletzt);
+    if(anders) w = anders;
+  }
+  return w || null;
+}
 function _spScoreWahl(m){
   const FB = _spFormBasis(), B = _spBasis();
   const roh = Array.isArray(_cache._stories) ? _cache._stories : null;
@@ -1525,58 +1566,23 @@ function _spScoreWahl(m){
       if(d.type === 'spiel' && d.matchId && d.visual && d.visual.version === 2
          && d.visual.score && d.visual.score.key) FB.scorePublished.set(d.matchId, d.visual);
     });
-    FB.scoreWahl = new Map(); FB.scoreSpur = []; FB.scoreBis = -1; FB.fussWahl = new Map();
+    FB.scoreWahl = new Map(); FB.scoreSpur = []; FB.scoreDuo = []; FB.scoreBis = -1; FB.fussWahl = new Map();
   }
   let w = FB.scoreWahl && FB.scoreWahl.get(m.id);
   if(w) return w;
-  if(!FB.scoreWahl){ FB.scoreWahl = new Map(); FB.scoreSpur = []; FB.scoreBis = -1; }
+  if(!FB.scoreWahl){ FB.scoreWahl = new Map(); FB.scoreSpur = []; FB.scoreDuo = []; FB.scoreBis = -1; }
   const bis = B.idx.get(m.id);
   for(let j = FB.scoreBis + 1; j <= bis; j++){
-    const x = B.chrono[j], spezial = _spScoreSpezial(x);
+    const x = B.chrono[j], spezial = _spScoreSpezial(x), spur = FB.scoreSpur;
     FB.scoreBis = j;
     const publiziert = FB.scorePublished.get(x.id);
-    if(publiziert){
-      const fest = {key:publiziert.score.key, x:{}};
-      FB.scoreWahl.set(x.id, fest); FB.scoreSpur.push(fest.key);
-      continue;
-    }
-    if(spezial){
-      // Auch zwei Krimis oder klare Siege brauchen nicht denselben Kopf.
-      // Die Besonderheit reist als Anlassgrafik darunter mit, statt dass
-      // die Abwechslung einen falschen Matchbefund erfindet.
-      const spur = FB.scoreSpur;
-      w = spezial;
-      if(spur[spur.length - 1] === spezial.key){
-        const alt = _spScoreKandidaten(x).filter(c => c.key !== spezial.key)
-          .map(c => Object.assign({}, c, {eff:c.rang
-            - 8 * spur.slice(-2).filter(k => k === c.key).length
-            - 3 * spur.slice(-8).filter(k => k === c.key).length,
-            los:_spVisualHash(x.id + '|' + c.key)}))
-          .sort((a, b) => b.eff - a.eff || b.rang - a.rang || a.los - b.los)[0];
-        if(alt) w = alt;
-      }
-      FB.scoreWahl.set(x.id, w);
-      FB.scoreSpur.push(w.key);
-      continue;
-    }
-    const spur = FB.scoreSpur, zuletzt = spur[spur.length - 1];
-    const gewertet = _spScoreKandidaten(x).map(c => {
-      const zweimal = spur.slice(-2).filter(k => k === c.key).length;
-      const achtmal = spur.slice(-8).filter(k => k === c.key).length;
-      const zwoelfmal = c.key === 'transfer' ? spur.slice(-12).filter(k => k === c.key).length : 0;
-      return Object.assign({}, c, {eff:c.rang - 8 * zweimal - 3 * achtmal - 7 * zwoelfmal,
-        los:_spVisualHash(x.id + '|' + c.key)});
-    }).sort((a, b) => b.eff - a.eff || b.rang - a.rang || a.los - b.los);
-    w = gewertet[0] || {key:'feld', x:{}, rang:SP_FORM.feld.rang};
-    if(w.key === zuletzt){
-      // Der alte Zwei-Punkte-Korridor erlaubte trotz gueltiger Alternativen
-      // wiederholte Streudiagramme und Spielfelder. Eignung wurde bereits
-      // oben geprueft; unter diesen Kandidaten gilt der direkte Wechsel.
-      const anders = gewertet.find(c => c.key !== zuletzt);
-      if(anders) w = anders;
-    }
+    if(publiziert) w = {key:publiziert.score.key, x:{}};
+    else if(spezial && !spur.slice(-2).includes(spezial.key)) w = spezial;
+    else w = _spScoreAuswahl(x, spur, FB.scoreDuo, spezial && spezial.key) || spezial
+      || {key:'feld', x:{}, rang:SP_FORM.feld.rang};
     FB.scoreWahl.set(x.id, w);
     spur.push(w.key);
+    FB.scoreDuo.push(_spSieger(x).slice().sort().join());
   }
   return FB.scoreWahl.get(m.id) || {key:'feld', x:{}, rang:SP_FORM.feld.rang};
 }
@@ -1603,7 +1609,7 @@ function _spScoreSnapshot(m){
 // zutreffende gewann immer: gemessen trugen 11 von 52 Partien in vierzehn
 // Tagen die Wende. Jetzt stehen alle zutreffenden Zeichnungen zur Wahl, und
 // was in den Partien davor schon stand, wiegt weniger — wie beim Kopf.
-function _spFussFakt(m, fakten){
+function _spFussFakten(m, fakten){
   const f = t => fakten.find(x => x.type === t), out = [];
   let x;
   if((x = f('lead_change')) && x.newLeader) out.push({w:96, a:{key:'spitze', m, x}});
@@ -1632,9 +1638,18 @@ function _spFussFakt(m, fakten){
   if((x = f('tagesmarathon')) && x.pid) out.push({w:40, a:{key:'tagesring', m, x}});
   if((x = f('rivalry_milestone')) && x.a && x.b) out.push({w:54, a:{key:'duell', m, x}});
   else if((x = f('rivalry')) && x.a && x.b) out.push({w:34, a:{key:'duell', m, x}});
-  out.sort((p, q) => q.w - p.w);
-  return out.length ? out[0].a : null;
+  return out.sort((p, q) => q.w - p.w);
 }
+// Zustände, die über viele Partien gelten: eine Serie, die Serie eines Duos,
+// eine Rivalität. Sie trafen gemessen auf jede vierte Partie zu und standen
+// als Fuß, sobald sie zutrafen — die Siegesserie auf zwölf von 43 Karten in
+// dreißig Tagen, an einem Tag dreimal dieselbe. Ein Ereignis (Fluch,
+// Höchststand, Tabellensprung, Revanche, Jubiläum, langer Tag, Meilenstein,
+// Spitzenwechsel, Auszeichnung, gerissene Serie) geschieht einmal und geht
+// weiter vor allem anderen; ein Zustand tritt zurück, wenn er auf einer der
+// letzten Karten schon gezeichnet war, und misst sich dann mit dem, was die
+// Partie selbst zeigt.
+const SP_FUSS_ZUSTAND = new Set(['serie', 'teamserie', 'duell']);
 // Die Füße der Partien davor, die jüngste zuletzt: veröffentlicht oder in
 // diesem Lauf gewählt. Der Generator friert die Partien deshalb in ihrer
 // zeitlichen Folge ein.
@@ -1654,15 +1669,13 @@ function _spAnlassSnapshot(m, fakten, scoreKey){
   const FB = _spFormBasis();
   if(!FB.fussWahl) FB.fussWahl = new Map();
   const merke = v => { if(v && v.key) FB.fussWahl.set(m.id, v.key); return v; };
-  const a = _spFussFakt(m, fakten);
-  if(a){
-    if(a.key === 'zaehlwerk'){
-      const F = _spFakten(m);
-      return merke({key:a.key, data:{wer:a.x.wer, wert:a.x.wert, label:a.x.label,
-        W:F.W, L:F.L, hoch:F.hoch, tief:F.tief}});
-    }
-    const F = _spFakten(m);
+  const F = _spFakten(m), kand = [];
+  // Was die Karte als Zeile trägt, mit der Zeichnung dazu. Ein Ereignis
+  // steht über allem, was die Partie selbst zeigt (+100); ein Zustand misst
+  // sich mit ihm [SP_FUSS_ZUSTAND].
+  _spFussFakten(m, fakten).forEach(({w, a}) => {
     const daten = {
+      zaehlwerk:() => ({wer:a.x.wer, wert:a.x.wert, label:a.x.label, W:F.W, L:F.L, hoch:F.hoch, tief:F.tief}),
       spitze:() => _spTabelleDaten(a, true), serie:() => _spSerieDaten(a),
       duell:() => _spDuellDaten(a), riss:() => _spRissDaten(a),
       teamserie:() => _spDuoDaten(a), medaille:() => _spMedailleDaten(a),
@@ -1674,12 +1687,12 @@ function _spAnlassSnapshot(m, fakten, scoreKey){
       chemie:() => SP_FORM.chemie.daten(F, {rund:true}),
       tagesring:() => SP_FORM.tagesring.daten(F, {id:a.x.pid,
         ms:F.tag.filter(y => [y.a1, y.a2, y.b1, y.b2].includes(a.x.pid))})
-    };
-    if(daten[a.key]){ const dd = daten[a.key](); if(dd) return merke({key:a.key, data:dd}); }
-  }
+    }[a.key];
+    if(daten) kand.push({key:a.key, rang:w, data:daten, fakt:true, zustand:SP_FUSS_ZUSTAND.has(a.key)});
+  });
 
   // Alle Zeichnungen, die aus der Partie selbst zutreffen, mit ihrem Gewicht.
-  const diff = Math.abs(m.score_a - m.score_b), F = _spFakten(m), kand = [];
+  const diff = Math.abs(m.score_a - m.score_b);
   const plus = (key, rang, data) => { if(key !== scoreKey) kand.push({key, rang, data}); };
   let x;
   if((x = _spPremiereDaten(m))) plus('premiere', 36, () => x);
@@ -1701,14 +1714,18 @@ function _spAnlassSnapshot(m, fakten, scoreKey){
     .forEach(k => plus(k.key, k.rang, () => SP_FORM[k.key].daten(F, k.x)));
   if(!kand.length) return null;
   const spur = _spFussSpur(m, 8), zuletzt = spur[spur.length - 1];
-  const gewertet = kand.map(k => Object.assign({}, k, {eff:k.rang
-      - 8 * spur.slice(-2).filter(y => y === k.key).length
-      - 3 * spur.filter(y => y === k.key).length,
+  const oft = (k, n) => spur.slice(-n).filter(y => y === k).length;
+  const gewertet = kand.map(k => Object.assign({}, k, {eff:k.fakt && !k.zustand ? k.rang + 100
+      : k.rang - (k.zustand ? 14 * oft(k.key, 2) + 5 * oft(k.key, 8) : 8 * oft(k.key, 2) + 3 * oft(k.key, 8)),
     los:_spVisualHash(m.id + '|fuss|' + k.key)}))
     .sort((p, q) => q.eff - p.eff || q.rang - p.rang || p.los - q.los);
-  let w = gewertet[0];
-  if(w.key === zuletzt){ const anders = gewertet.find(k => k.key !== zuletzt); if(anders) w = anders; }
-  return merke({key:w.key, data:w.data()});
+  // Dieselbe Zeichnung nicht zweimal hintereinander, außer für ein Ereignis.
+  if(gewertet[0].key === zuletzt && !(gewertet[0].fakt && !gewertet[0].zustand)){
+    const i = gewertet.findIndex(k => k.key !== zuletzt);
+    if(i > 0) gewertet.unshift(gewertet.splice(i, 1)[0]);
+  }
+  for(const k of gewertet){ const dd = k.data(); if(dd) return merke({key:k.key, data:dd}); }
+  return null;
 }
 function _spVisualSnapshot(m, fakten){
   const score = _spScoreSnapshot(m);

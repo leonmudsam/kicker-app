@@ -1498,48 +1498,51 @@ const ok = (c, msg, det) => {
      'im Blatt der Ehrung bricht kein Name einer Kachel mitten im Wort',
      ehrung.flatMap(x => x.gebrochen).join(', ') || ehrung.map(x => x.kacheln).join('+') + ' Kacheln');
   // Unter der Schlagzeile, aus welchen Partien die Auszeichnungen stammen:
-  // in der Karte, vor dem Pfeil, höchstens zwei Zeilen — auch über
-  // Mitternacht, die längste Fassung („von gestern, 23:10 bis heute, 00:40").
-  // Ein gewöhnlicher Tag steht bei 360 px in einer Zeile: als Satz
-  // („Aus den Partien …") brauchte er 250 px, und die Karte hat dort 213.
+  // oben in einer Zeile, was der Zeitraum bedeutet, darunter der Zeitraum —
+  // in der Karte, vor dem Pfeil. Ein Tag steht bei 360 px in einer Zeile;
+  // bei 320 px und über mehrere Tage höchstens zwei, auch im längsten Fall
+  // („vom 06.10., 15:12 bis 08.10., 15:10 Uhr").
   const ehZeit = await page.evaluate(() => {
     const K = window.__k.eval.bind(window.__k);
     const karten = JSON.parse(K(`JSON.stringify((function(){
       let s = null;
       for(let t = Date.parse('2026-05-10'); !s && t < Date.parse('2026-09-01'); t += NEWS_FENSTER_TAGE * 864e5 * 0.9)
         s = _newsEhrungStories(t)[0] || null;
-      const um = (h, m) => { const d = new Date(); d.setHours(h, m, 0, 0); return d.getTime(); };
+      const um = (tage, h, m) => { const d = new Date(); d.setDate(d.getDate() - tage); d.setHours(h, m, 0, 0); return d.getTime(); };
       const mit = (ab, bis) => Object.assign({}, s, {dataRef:Object.assign({}, s.dataRef, {ab, bis})});
-      return [_newsEhrungHtml(s, false, ''), _newsEhrungHtml(mit(um(13, 44), um(15, 55)), false, ''),
-        _newsEhrungHtml(mit(um(0, 40) - 90 * 60000, um(0, 40)), false, '')];
+      return [[_newsEhrungHtml(s, false, ''), 0], [_newsEhrungHtml(mit(um(0, 13, 44), um(0, 15, 55)), false, ''), 1],
+        [_newsEhrungHtml(mit(um(1, 23, 10), um(0, 0, 40)), false, ''), 0],
+        [_newsEhrungHtml(mit(um(16, 15, 12), um(14, 15, 10)), false, ''), 0]];
     })())`));
     const host = document.createElement('div');
     host.style.cssText = 'position:absolute;left:0;top:0';
     document.body.appendChild(host);
     const falsch = [];
     let lang = '';
-    karten.forEach((h, i) => [287, 247].forEach(breite => {
+    // Die Ausdehnung des TEXTS, nicht des Kastens: ein Kasten schrumpft
+    // nicht mit, wenn der Text über ihn hinausläuft.
+    const zeilen = el => { const rg = document.createRange(); rg.selectNodeContents(el);
+      return {r:rg.getBoundingClientRect(), n:Math.round(rg.getBoundingClientRect().height / parseFloat(getComputedStyle(el).lineHeight))}; };
+    karten.forEach(([h, einTag], i) => [287, 247].forEach(breite => {
       host.style.width = breite + 'px';
       host.innerHTML = h;
       const k = host.querySelector('.nf-card').getBoundingClientRect();
       const z = host.querySelector('.eh-zr'), c = host.querySelector('.nf-chev');
-      if(!z){ falsch.push(i + '/' + breite + ': keine Zeile'); return; }
-      // Die Ausdehnung des TEXTS, nicht des Kastens: ein Kasten in einer
-      // Flex-Zeile schrumpft, und der Text läuft dann über ihn hinaus.
-      const rg = document.createRange(); rg.selectNodeContents(z.querySelector('.eh-zr-t'));
-      const r = z.getBoundingClientRect(), t = rg.getBoundingClientRect();
-      const zeilen = Math.round(t.height / parseFloat(getComputedStyle(z).lineHeight));
-      if(r.left < k.left || r.right > k.right || t.right > r.right + .5) falsch.push(i + '/' + breite + ': ragt hinaus');
+      const kv = z && z.querySelector('.eh-zr-k'), t = z && z.querySelector('.eh-zr-t');
+      if(!kv || !t){ falsch.push(i + '/' + breite + ': keine Zeile'); return; }
+      const r = z.getBoundingClientRect(), a = zeilen(kv), b = zeilen(t);
+      if(r.left < k.left || r.right > k.right || a.r.right > r.right + .5 || b.r.right > r.right + .5) falsch.push(i + '/' + breite + ': ragt hinaus');
       if(c && r.right > c.getBoundingClientRect().left + .5) falsch.push(i + '/' + breite + ': unter dem Pfeil');
-      if(zeilen > 2) falsch.push(i + '/' + breite + ': ' + zeilen + ' Zeilen');
-      if(i === 2) lang = z.querySelector('.eh-zr-t').textContent.trim().replace(/\u00a0/g, ' ');
-      if(i === 1 && breite === 287 && zeilen !== 1) falsch.push('ein Tag in ' + zeilen + ' Zeilen');
+      if(a.n !== 1) falsch.push(i + '/' + breite + ': Bedeutung in ' + a.n + ' Zeilen');
+      if(b.r.top < a.r.bottom - .5) falsch.push(i + '/' + breite + ': Zeitraum neben der Bedeutung');
+      if(b.n > 2 || (einTag && breite === 287 && b.n !== 1)) falsch.push(i + '/' + breite + ': Zeitraum in ' + b.n + ' Zeilen');
+      if(i === 3) lang = (kv.textContent + ' ' + t.textContent).replace(/\u00a0/g, ' ');
     }));
     host.remove();
     return {falsch, lang};
   });
-  ok(!ehZeit.falsch.length && /^Partien von gestern, 23:10 bis heute, 00:40$/.test(ehZeit.lang),
-     'die Ehrung nennt unter der Schlagzeile ihre Partien, in der Karte, vor dem Pfeil, in höchstens zwei Zeilen',
+  ok(!ehZeit.falsch.length && /^Geholt in den Partien vom \d\d\.\d\d\., 15:12 bis \d\d\.\d\d\., 15:10 Uhr$/.test(ehZeit.lang),
+     'die Ehrung sagt unter der Schlagzeile, in welchen Partien die Auszeichnungen geholt sind: in der Karte, vor dem Pfeil, ein Tag bei 360 px in einer Zeile, sonst in höchstens zwei',
      ehZeit.falsch.join(' | ') || ehZeit.lang);
 
   // ── Jedes Blatt passt auf das Telefon ────────────────────────────
