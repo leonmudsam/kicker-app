@@ -858,7 +858,13 @@ const ok = (c, msg, det) => {
      tafel.falscherTag + ' daneben');
   ok(/^[A-ZÄÖÜ]+$/.test(tafel.wochentag || '') && /\d{2}\.\d{2}\.\d{2}/.test(tafel.datum || ''),
      'der Kopf nennt Wochentag und Datum', (tafel.wochentag + ' ' + tafel.datum).trim() || tafel.roh);
-  ok(tafel.chips.length === 4, 'vier Filterchips, nicht elf Rubriken',
+  // Jede Karte steht auf genau einer Seite: die Zahlen der fünf Seiten
+  // ergeben zusammen „Alle". Vorher gab es nur Tafel und Spieltag, und die
+  // Ehrung, die Fun Facts und die Saison fand man nur unter „Alle".
+  const seiten = tafel.chips.filter(c => !/^(Alle|Breaking)/.test(c.text));
+  ok(tafel.chips.map(c => c.text.replace(/\d+$/, '')).join(',') === 'Alle,Breaking,Tafel,Spieltag,Zeichen,Ehrung,Liga'
+     && seiten.reduce((n, c) => n + c.zahl, 0) === tafel.chips[0].zahl && seiten.every(c => c.zahl > 0),
+     'sieben Filterchips, nicht elf Rubriken: Alle, Breaking und fünf Seiten, auf denen jede Karte genau einmal steht',
      tafel.chips.map(c => c.text).join(' · '));
   ok(tafel.chips.every(c => c.zahl !== null), 'jeder Chip traegt seine Anzahl',
      tafel.chips.map(c => c.zahl).join(', '));

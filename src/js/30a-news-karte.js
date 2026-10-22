@@ -720,6 +720,36 @@ function _newsSorte(s){
   return 'fakt';
 }
 
+// ── Die Seiten des Feeds [§C33] ─────────────────────────────────────
+// Jede Karte gehört genau einer Seite, und jede Seite hat ihren Chip. Es
+// gab vier Chips — Alle, Breaking, Tafel, Spieltag —, und die Ehrung, die
+// Fun Facts und die Saison standen auf keiner Seite: wer sie suchte, fand
+// sie nur unter „Alle". Das Zeichen stand unter der Tafel, obwohl seine
+// Karte eine eigene Rubrik trägt. Die Seiten schließen sich aus (eine
+// Tafelmeldung darf den Zeitpunkt ihrer Partie tragen, ohne deshalb auch
+// unter „Spieltag" zu stehen), und „Liga" nimmt, was keiner anderen gehört,
+// damit keine Karte ohne Seite bleibt. Breaking liegt quer dazu. Das
+// Zeichen jedes Chips ist das des Rubrikbands seiner Karten [§C27].
+const NEWS_SEITEN = [
+  {k:'tafel',    label:'Tafel',    ic:'tafelStein'},
+  {k:'spieltag', label:'Spieltag', ic:'spielfeld'},
+  {k:'zeichen',  label:'Zeichen',  ic:'shieldStar'},
+  {k:'ehrung',   label:'Ehrung',   ic:'medal'},
+  {k:'liga',     label:'Liga',     ic:'chartBar'},
+];
+function _newsSeite(s){
+  const d = (s && s.dataRef) || {}, sorte = _newsSorte(s);
+  if(sorte === 'ins') return 'zeichen';
+  if(s.cat === 'tafel' || d.quelle === 'tafel' || d.quelle === 'form') return 'tafel';
+  // Auszeichnungen und was ein Spieler ohne Partie auf einmal holt: die
+  // Ehrung, die einzelne Auszeichnung, die runden Marken, „Alles auf
+  // einmal" und „Gemeinsam geholt".
+  if(sorte === 'badge' || sorte === 'spieler' || sorte === 'erfolg') return 'ehrung';
+  if(d.type !== 'ambient' && (d.matchId || ['potd', 'potw', 'woche', 'runde'].includes(d.type)
+     || (d.type === 'sammel' && d.quelle === 'spiel'))) return 'spieltag';
+  return 'liga';
+}
+
 // Das Ergebnisband: vier Wappen und der Endstand über der Schlagzeile. Wer
 // nur scrollt, sieht schon, wer gegen wen gespielt hat und wie es ausging.
 function _newsErgebnisBand(matchId){
@@ -1130,30 +1160,14 @@ function _renderNewsFeed(){
   const seen = _newsLoadSeen();
   const stand = _newsLesestand();
   const gelesen = s => _newsGelesen(s, seen, stand);
-  // Vier Chips, nicht elf. Elf Rubriken sind eine Sortierhilfe für den, der
-  // sie gebaut hat, nicht für den, der liest. Jeder Chip trägt seine Anzahl,
-  // damit man vorher sieht, ob sich das Tippen lohnt.
-  const _istTafel   = s => s.cat === 'tafel' || (s.dataRef||{}).quelle === 'tafel'
-    || (s.dataRef||{}).quelle === 'form';
-  const _istSpieltag = s => {
-    const d = s.dataRef || {};
-    // Die Filter sind redaktionelle Seiten, keine sich überschneidenden
-    // Suchbegriffe. Eine Tafelmeldung darf ihren Match-Zeitpunkt tragen,
-    // ohne deshalb zugleich im Spieltag-Chip zu erscheinen.
-    if(_istTafel(s)) return false;
-    if(d.type === 'ambient') return false;
-    return !!(d.matchId || d.type === 'potd' || d.type === 'woche' || d.type === 'runde' ||
-              (d.type === 'sammel' && d.quelle === 'spiel'));
-  };
-  // Jeder Chip traegt sein Zeichen — dasselbe wie im Rubrikband der Karten,
-  // zu denen er filtert [§C27]. Vier gleich aussehende Pillen unterschied
-  // vorher nur ihr Wort.
+  // Sieben Chips, nicht elf Rubriken: Alle, Breaking und je Seite einer
+  // [NEWS_SEITEN]. Jeder trägt seine Anzahl, damit man vorher sieht, ob sich
+  // das Tippen lohnt, und sein Zeichen, dasselbe wie im Rubrikband der
+  // Karten, zu denen er filtert [§C27].
   const filters = [
     {k:'all',      label:'Alle',     ic:'newspaper',  test:() => true},
-    {k:'breaking', label:'Breaking', ic:'sirene',       test:_isBreaking},
-    {k:'tafel',    label:'Tafel',    ic:'tafelStein', test:_istTafel},
-    {k:'spieltag', label:'Spieltag', ic:'spielfeld', test:_istSpieltag},
-  ];
+    {k:'breaking', label:'Breaking', ic:'sirene',     test:_isBreaking},
+  ].concat(NEWS_SEITEN.map(x => Object.assign({test:s => _newsSeite(s) === x.k}, x)));
   const aktiv = filters.find(f => f.k === _newsFeedFilter) || filters[0];
   const cards = _newsFeedFilter === 'all' ? stories : stories.filter(aktiv.test);
 
