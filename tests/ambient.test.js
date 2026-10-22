@@ -6740,13 +6740,16 @@ const _eh = JSON.parse(K.eval(`JSON.stringify((function(){
     // Auszeichnungen stammen: kein Satz und kein Fuß mit den Klassen
     // darunter. Beides steht im Blatt.
     if(/class="nf-d"|class="eh-fuss"|class="eh-k /.test(h)) falsch.push(s.id + ': Zusatztext auf der Karte');
-    // Dieselbe Zeile auf Karte und Blatt, und sie nennt die erste und die
-    // letzte Partie der Runde [§C27]. Das Blatt macht daraus den Satz.
+    // Dieselbe Angabe auf Karte und Blatt [§C27]: oben, was der Zeitraum
+    // bedeutet, darunter die erste und die letzte Partie der Runde mit
+    // „Uhr". Das Blatt setzt beide Teile zu einem Satz zusammen.
+    const z = _ehrungZeitraum(d);
+    const vor = (h.match(/<span class="eh-zr-k">([^<]*)<\\/span>/) || [])[1];
     const zr = (h.match(/<span class="eh-zr-t">([^<]*)<\\/span>/) || [])[1];
-    if(!zr || zr !== _ehrungZeitraum(d) || !/^Partien? /.test(zr)
-      || zr.indexOf(datumFmt(d.ab, 'uhr')) < 0 || zr.indexOf(datumFmt(d.bis, 'uhr')) < 0)
-      falsch.push(s.id + ': Zeitraum ' + zr);
-    if(_ndEhrungBlatt(s).mitte.indexOf('<div class="nw-hinweis eh-zeit">Aus ' + (d.ab === d.bis ? 'der ' : 'den ') + esc(zr) + '.</div>') < 0)
+    if(!z || vor !== esc(z.vor) || zr !== esc(z.wann) || !/^Geholt in de[nr] Partien?$/.test(vor)
+      || !/\u00a0Uhr$/.test(zr) || zr.indexOf(datumFmt(d.ab, 'uhr')) < 0 || zr.indexOf(datumFmt(d.bis, 'uhr')) < 0)
+      falsch.push(s.id + ': Zeitraum ' + vor + ' | ' + zr);
+    if(z && _ndEhrungBlatt(s).mitte.indexOf('<div class="nw-hinweis eh-zeit">' + esc(z.vor + ' ' + z.wann) + '.</div>') < 0)
       falsch.push(s.id + ': Blatt nennt einen anderen Zeitraum');
     // Im Blatt jede Klasse, die vorkommt, und zusammen alle Auszeichnungen.
     const anteil = _ndEhrungBlatt(s).mitte;
@@ -6795,21 +6798,21 @@ ok(_eh.n >= 40 && _eh.legendaer > 0 && _eh.umbruch > 0 && _eh.kacheln > 0 && _eh
 // Datum, über Mitternacht der zweite Tag, eine einzige Partie in der Einzahl.
 const _ehZr = JSON.parse(K.eval(`JSON.stringify((function(){
   const um = (tage, h, m) => { const d = new Date(); d.setDate(d.getDate() - tage); d.setHours(h, m, 0, 0); return d.getTime(); };
-  const alt = new Date(um(4, 16, 44));
+  const tm = t => datumFmt(new Date(t), 'tm');
+  const satz = z => z ? z.vor + ' | ' + z.wann : '';
   return [
-    [_ehrungZeitraum({ab:um(0, 13, 44), bis:um(0, 15, 55)}), 'Partien von heute, 13:44 bis 15:55'],
-    [_ehrungZeitraum({ab:um(1, 13, 44), bis:um(1, 15, 55)}), 'Partien von gestern, 13:44 bis 15:55'],
-    [_ehrungZeitraum({ab:um(4, 16, 44), bis:um(4, 18, 10)}), 'Partien vom ' + datumFmt(alt, 'tm') + ', 16:44 bis 18:10'],
-    [_ehrungZeitraum({ab:um(1, 23, 10), bis:um(0, 0, 40)}), 'Partien von gestern, 23:10 bis heute, 00:40'],
-    [_ehrungZeitraum({ab:um(0, 15, 55), bis:um(0, 15, 55)}), 'Partie von heute, 15:55'],
-    [_ehrungZeitraum({ab:um(0, 13, 44), bis:um(0, 15, 55)}, true), 'Aus den Partien von heute, 13:44 bis 15:55'],
-    [_ehrungZeitraum({ab:um(0, 15, 55), bis:um(0, 15, 55)}, true), 'Aus der Partie von heute, 15:55'],
-    [_ehrungZeitraum({}), '']];
+    [satz(_ehrungZeitraum({ab:um(0, 13, 44), bis:um(0, 15, 55)})), 'Geholt in den Partien | von heute, 13:44 bis 15:55 Uhr'],
+    [satz(_ehrungZeitraum({ab:um(1, 13, 44), bis:um(1, 15, 55)})), 'Geholt in den Partien | von gestern, 13:44 bis 15:55 Uhr'],
+    [satz(_ehrungZeitraum({ab:um(4, 16, 44), bis:um(4, 18, 10)})), 'Geholt in den Partien | vom ' + tm(um(4, 0, 0)) + ', 16:44 bis 18:10 Uhr'],
+    [satz(_ehrungZeitraum({ab:um(1, 23, 10), bis:um(0, 0, 40)})), 'Geholt in den Partien | von gestern, 23:10 bis heute, 00:40 Uhr'],
+    [satz(_ehrungZeitraum({ab:um(16, 15, 12), bis:um(14, 15, 10)})), 'Geholt in den Partien | vom ' + tm(um(16, 0, 0)) + ', 15:12 bis ' + tm(um(14, 0, 0)) + ', 15:10 Uhr'],
+    [satz(_ehrungZeitraum({ab:um(0, 15, 55), bis:um(0, 15, 55)})), 'Geholt in der Partie | von heute, 15:55 Uhr'],
+    [satz(_ehrungZeitraum({})), '']];
 })())`));
 // Gelesen mit gewöhnlichen Leerzeichen: vor jeder Uhrzeit steht ein festes.
 _ehZr.forEach(x => { x[0] = x[0].replace(/\u00a0/g, ' '); });
 ok(_ehZr.every(([ist, soll]) => ist === soll),
-   'die Ehrung nennt ihre Partien mit heute, gestern oder Datum, über Mitternacht mit beiden Tagen, eine einzelne Partie in der Einzahl und im Blatt als Satz',
+   'die Ehrung sagt, dass die Auszeichnungen in diesen Partien geholt sind, und nennt sie mit heute, gestern oder Datum, über Mitternacht und über mehrere Tage mit beiden Tagen, mit „Uhr" und eine einzelne Partie in der Einzahl',
    _ehZr.filter(([ist, soll]) => ist !== soll).map(([ist, soll]) => ist + ' statt ' + soll).join(' | '));
 ok(Math.round(_eh.breite) === _eh.soll && _eh.soll < 100 && _eh.voll === 100,
    'der Strich unter einer Auszeichnung zeigt, wie viel vom vollen Wert sie beim wievielten Mal bringt',
