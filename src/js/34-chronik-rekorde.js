@@ -45,9 +45,9 @@
 // Kammer: sie zeichnen niemanden aus, sie gehoeren jemandem.
 // `pl` benennt die Kammer, `kurz` den Reiter darüber: fünf Reiter nebeneinander
 // haben auf 430 Pixeln keinen Platz für „Schattenseiten".
-// FÜNF Kammern. „Aktuelle Form" ist die neue: acht Rekorde, deren Wert auf
-// einem festen Endfenster der eigenen Partien steht — die letzten 10, 20, 25,
-// 30 oder 50. Sie standen bisher zwischen den Laufbahn-Rekorden im Können und
+// FÜNF Kammern. „Aktuelle Form" ist die neue: sieben Rekorde, deren Wert auf
+// einem festen Endfenster der eigenen Partien steht — die letzten 20, 25, 40
+// oder 50. Sie standen bisher zwischen den Laufbahn-Rekorden im Können und
 // in den Bestmarken, und damit stand „Höchste Siegquote in den letzten 20
 // Partien" neben „Beste Siegquote als Außenseiter über die ganze Laufbahn":
 // zwei verschiedene Zeitachsen in einer Kammer. Wer die Tafel liest, kann so
@@ -56,13 +56,17 @@
 // Rekorde darin gemeinsam haben. Ohne ihn stand „Fügungen" über zwölf
 // Karten, und warum „Der Rückenwind" dort steht und nicht im Können, sagte
 // erst das Blatt.
+// `ord` ist die Reihenfolge in der Leiste und in der Liste darunter. Die
+// Bestmarken stehen vorn: eine Serie, ein Gipfel, ein Tag sind ohne
+// Erklärung zu lesen, und mit dem Können zuerst begann der Reiter mit
+// siebzehn Karten aus Schnitten und Erwartungsabständen.
 const CHRON_KINDS = {
-  koennen: {label:'Können',        pl:'Können',         kurz:'Können',   ic:'trophyStar', ord:0,
-            satz:'Schnitt und Quote über die ganze Laufbahn'},
-  form:    {label:'Aktuelle Form', pl:'Aktuelle Form',  kurz:'Form',     ic:'trendUp',    ord:1,
-            satz:'Gerechnet über die letzten eigenen Partien'},
-  mark:    {label:'Bestmarke',     pl:'Bestmarken',     kurz:'Marken',   ic:'target',     ord:2,
+  mark:    {label:'Bestmarke',     pl:'Bestmarken',     kurz:'Marken',   ic:'target',     ord:0,
             satz:'Einzelne Bestleistungen, jede an einem Tag erreicht'},
+  koennen: {label:'Können',        pl:'Können',         kurz:'Können',   ic:'trophyStar', ord:1,
+            satz:'Schnitt und Quote über die ganze Laufbahn'},
+  form:    {label:'Aktuelle Form', pl:'Aktuelle Form',  kurz:'Form',     ic:'trendUp',    ord:2,
+            satz:'Gerechnet über die letzten eigenen Partien'},
   fuegung: {label:'Fügung',        pl:'Fügungen',       kurz:'Fügungen', ic:'weatherMix', ord:3,
             satz:'Was Auslosung und letzter Ball entscheiden'},
   shame:   {label:'Schattenseite', pl:'Schattenseiten', kurz:'Schatten', ic:'ghost',      ord:4,
@@ -264,14 +268,14 @@ function _chronicleCtx(bisMs){
     //    in `roh` und nach der Auswertung verworfen: am gecachten `P` haengen
     //    nur diese Skalare, sonst truege jeder der 24 Zeitschnitte 4×N
     //    Partien-Objekte mit sich.
-    l20N:0, l20W:0,                      // die letzten 20 Partien
+    l40N:0, l40W:0,                      // die letzten 40 Partien
     r50N:0, r50Atk:0,                    // Sturmpartien unter den letzten 50
     // ── Der Abstand zum EIGENEN [§C38]. Wer eine Quote gewinnt, gewinnt
     //    fast jede; ein Eintrag auf das Niveau gehoert damit immer denselben
     //    drei Spielern. Diese Felder fragen stattdessen, wie weit ein
     //    Ausschnitt der eigenen Partien vom eigenen Rest abweicht — und sind
     //    damit fuer jede Koennensklasse erreichbar.
-    hfDelta:null, hfNeu:0, hfAlt:0,              // letzte 10 gegen die 10 davor
+    hfDelta:null, hfNeu:0, hfAlt:0,              // letzte 20 gegen die 20 davor
     sbDelta:null, sbDrin:0, sbRaus:0, sbN:0,     // Schlussspiel eines Tages
     ksDelta:null, ksDrin:0, ksRaus:0, ksN:0,     // erstes Spiel eines Tages
     rwDelta:null, rwNeu:0, rwAlt:0,              // Mitspieler-Elo im Fenster
@@ -478,7 +482,7 @@ function _chronicleCtx(bisMs){
   // ── Die zwei Kammern [§C35]: ein Durchlauf ueber die Rohsicht ──────
   // Zehn Rekorde fragen nach einem gleitenden Fenster, nach einer Rolle oder
   // nach dem Gegnerkreis. Sie stehen hier und nicht als zehn Zaehler im
-  // Match-Durchlauf oben: „die letzten 20 Partien" und „die 25 davor" haengen
+  // Match-Durchlauf oben: „die letzten 40 Partien" und „die 25 davor" haengen
   // an der Reihenfolge, und die kennt erst die fertige Liste.
   const _sd = (a) => {
     if(a.length < 2) return 0;
@@ -494,11 +498,11 @@ function _chronicleCtx(bisMs){
     // wer dreihundert Partien hat, hat 281 Zwanzigerbloecke und wer zwanzig
     // hat, hat einen — das Maximum aus vielen Ziehungen ist groesser, und
     // damit gehoerte jeder Formrekord dem Vielspieler [Regel 20].
-    // Die letzten zwanzig: „Der Lauf" fragt nach der Siegquote von jetzt.
-    if(r.length >= 20){
-      const l20 = r.slice(-20);
-      p.l20N = 20;
-      p.l20W = l20.filter(x => x.w).length;
+    // Die letzten vierzig: „Der Lauf" fragt nach der Siegquote von jetzt.
+    if(r.length >= 40){
+      const l40 = r.slice(-40);
+      p.l40N = 40;
+      p.l40W = l40.filter(x => x.w).length;
     }
     // Die Rollen unter den letzten 50. Gezaehlt wird der Sturm; „Die
     // Abwehrmauer" liest dieselbe Zahl von der anderen Seite, damit die
@@ -509,14 +513,14 @@ function _chronicleCtx(bisMs){
       p.r50Atk = l50.filter(x => x.pos === 'atk').length;
     }
     // ── Der Abstand zum EIGENEN [§C38] ────────────────────────────
-    // Die letzten zehn Partien gegen die zehn DAVOR. Gegen alles davor
+    // Die letzten zwanzig Partien gegen die zwanzig DAVOR. Gegen alles davor
     // gerechnet hing der Wert an der Laenge der Laufbahn: je mehr Partien im
     // Vergleichsteil, desto traeger die Zahl, gegen die das Fenster laeuft.
     // Zwei gleich grosse Fenster fragen dieselbe Frage fuer jeden gleich.
-    if(r.length >= 20){
-      const drin = r.slice(-10), raus = r.slice(-20, -10);
-      p.hfNeu = drin.filter(x => x.w).length / 10;
-      p.hfAlt = raus.filter(x => x.w).length / 10;
+    if(r.length >= 40){
+      const drin = r.slice(-20), raus = r.slice(-40, -20);
+      p.hfNeu = drin.filter(x => x.w).length / 20;
+      p.hfAlt = raus.filter(x => x.w).length / 20;
       p.hfDelta = p.hfNeu - p.hfAlt;
     }
     // Die letzte Partie jedes eigenen Spieltags gegen alle anderen dieses
@@ -650,7 +654,7 @@ function _chronicleCtx(bisMs){
       if(n && rn){ p.umRaus = rw / rn; p.umDelta = w / n - p.umRaus; }
     }
     // „Der Aufschwung": die letzten 25 Partien gegen die ganze Laufbahn
-    // davor. „Der Höhenflug" vergleicht zehn mit zehn und misst einen
+    // davor. „Der Höhenflug" vergleicht zwanzig mit zwanzig und misst einen
     // Ausschlag; dieser misst, ob jemand dauerhaft besser geworden ist.
     if(r.length >= 50){
       const neu = r.slice(-25), alt = r.slice(0, -25);

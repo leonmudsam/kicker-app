@@ -715,15 +715,19 @@ const DISZIPLINEN = [
   // KANN. Die Schwellen stehen auf einem 5er-Raster — eine Bedingung ist
   // eine Absprache und keine Kalibrierung, und „ab 22 Siegen" liest sich wie
   // ein Versehen.
+  // Vierzig Partien und nicht zwanzig: bei fünf bis sieben Partien je
+  // Spieltag waren zwanzig drei gute Tage, und der Rekord wechselte mit
+  // jeder Woche. Vierzig sind fünf bis elf Spieltage — eine Form und keine
+  // Woche.
   {id:'lauf', name:'Der Lauf', short:'Lauf', ic:'formPeak', tone:'orange', art:'leistung',
     allzeit:{
       kammer:'form', basis:150, offen:true, fenster:true,
-      zeitraum:'Die letzten 20 Partien',
-      mind:'20 Partien',
-      wie:'Gezählt werden genau die letzten zwanzig eigenen Partien, ohne Rücksicht darauf, wann sie gespielt wurden. Das Fenster liegt fest am Ende der Laufbahn.',
-      cond:'Höchste Siegquote in den letzten 20 Partien, ab 20 Partien',
-      val:p => p.l20N >= 20 ? p.l20W / p.l20N : null,
-      ev:(p,v) => `${Math.round(v*100)} % aus den letzten 20 Partien · ${p.l20W} Siege`
+      zeitraum:'Die letzten 40 Partien',
+      mind:'40 Partien',
+      wie:'Gezählt werden genau die letzten vierzig eigenen Partien, ohne Rücksicht darauf, wann sie gespielt wurden. Das Fenster liegt fest am Ende der Laufbahn.',
+      cond:'Höchste Siegquote in den letzten 40 Partien, ab 40 Partien',
+      val:p => p.l40N >= 40 ? p.l40W / p.l40N : null,
+      ev:(p,v) => `${Math.round(v*100)} % aus den letzten 40 Partien · ${p.l40W} Siege`
     }},
 
   {id:'allrounder', name:'Der Allrounder', short:'Allround', ic:'bothSides', tone:'gold', art:'leistung',
@@ -826,14 +830,18 @@ const DISZIPLINEN = [
         p=>{const f=_stLetzteZehn(p);return f?f.d:null;},
         0.30,
         p=>{const f=_stLetzteZehn(p);return `${pct(f.drin)} % in den letzten 10, ${pct(f.raus)} % in den ${f.vor} davor`;}))},
+    // Zwanzig gegen zwanzig und nicht zehn gegen zehn: zehn Partien sind
+    // zwei, drei Spieltage, und jeder Wert ist ein Vielfaches von zehn
+    // Prozentpunkten — drei Spieler teilten sich den Rekord mit genau +30.
+    // Zwanzig sind drei bis fünf Spieltage, in Schritten von fünf Punkten.
     allzeit:{
       kammer:'form', basis:150, offen:true, fenster:true,
-      zeitraum:'Die letzten 10 gegen die 10 davor',
-      mind:'20 Partien',
-      wie:'Die letzten zehn Partien gegen die zehn unmittelbar davor. Zwei gleich große Fenster, damit die Frage für jeden dieselbe ist.',
-      cond:'Größte Verbesserung der letzten 10 Partien gegenüber den 10 davor, ab 20 Partien',
+      zeitraum:'Die letzten 20 gegen die 20 davor',
+      mind:'40 Partien',
+      wie:'Die letzten zwanzig Partien gegen die zwanzig unmittelbar davor. Zwei gleich große Fenster, damit die Frage für jeden dieselbe ist.',
+      cond:'Größte Verbesserung der letzten 20 Partien gegenüber den 20 davor, ab 40 Partien',
       val:p => (p.hfDelta != null && p.hfDelta > 0) ? p.hfDelta : null,
-      ev:(p,v) => `+${Math.round(v*100)} %-Punkte · ${pct(p.hfNeu)} % in den letzten 10 statt ${_ppGegen(p.hfNeu, v)} % in den 10 davor`
+      ev:(p,v) => `+${Math.round(v*100)} %-Punkte · ${pct(p.hfNeu)} % in den letzten 20 statt ${_ppGegen(p.hfNeu, v)} % in den 20 davor`
     }},
   // Ob jemand dauerhaft besser geworden ist: die letzten 25 gegen alles
   // davor. Gegen das Eigene gemessen [§C38] und damit fuer jede

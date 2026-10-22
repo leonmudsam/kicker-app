@@ -535,16 +535,16 @@ function ligaRekordeHtml(weit){
   // aus, und „Der Fels" stand neben „Das Scheunentor", als wären es
   // dieselbe Aussage. CHRON_KINDS trennt sie:
   //
+  //   BESTMARKEN    Ein Ereignis. Eine Serie, ein Elo-Tag, ein Gipfel —
+  //                 an einem Datum passiert, und das steht dabei.
   //   KÖNNEN        Ein Schnitt, eine Quote über die ganze Laufbahn.
   //                 Er hat keinen Zeitpunkt, er gilt heute.
-  //   AKTUELLE FORM Ein festes Endfenster: die letzten 10, 20, 25, 30 oder
-  //                 50 eigenen Partien. Sie stand vorher im Können, und
+  //   AKTUELLE FORM Ein festes Endfenster: die letzten 20, 25, 40 oder 50
+  //                 eigenen Partien. Sie stand vorher im Können, und
   //                 damit stand „Höchste Siegquote in den letzten 20
   //                 Partien" neben einem Laufbahnwert — zwei Zeitachsen in
   //                 einer Kammer, und wer die Tafel liest, kann so nicht
   //                 sehen, was gerade gilt und was für immer.
-  //   BESTMARKEN    Ein Ereignis. Eine Serie, ein Elo-Tag, ein Gipfel —
-  //                 an einem Datum passiert, und das steht dabei.
   //   FÜGUNGEN      Auslosung und letzter Ball [§C35]. Sie zeichnen
   //                 niemanden aus, sie gehören jemandem.
   //   SCHATTENSEITEN Dasselbe, nur andersherum.

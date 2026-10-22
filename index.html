@@ -6384,7 +6384,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.21.91fbd797';
+const BUILD_VERSION='2026.10.21.36f14a50';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -29993,12 +29993,12 @@ const DISZIPLINEN = [
   {id:'lauf', name:'Der Lauf', short:'Lauf', ic:'formPeak', tone:'orange', art:'leistung',
     allzeit:{
       kammer:'form', basis:150, offen:true, fenster:true,
-      zeitraum:'Die letzten 20 Partien',
-      mind:'20 Partien',
-      wie:'Gezählt werden genau die letzten zwanzig eigenen Partien, ohne Rücksicht darauf, wann sie gespielt wurden. Das Fenster liegt fest am Ende der Laufbahn.',
-      cond:'Höchste Siegquote in den letzten 20 Partien, ab 20 Partien',
-      val:p => p.l20N >= 20 ? p.l20W / p.l20N : null,
-      ev:(p,v) => `${Math.round(v*100)} % aus den letzten 20 Partien · ${p.l20W} Siege`
+      zeitraum:'Die letzten 40 Partien',
+      mind:'40 Partien',
+      wie:'Gezählt werden genau die letzten vierzig eigenen Partien, ohne Rücksicht darauf, wann sie gespielt wurden. Das Fenster liegt fest am Ende der Laufbahn.',
+      cond:'Höchste Siegquote in den letzten 40 Partien, ab 40 Partien',
+      val:p => p.l40N >= 40 ? p.l40W / p.l40N : null,
+      ev:(p,v) => `${Math.round(v*100)} % aus den letzten 40 Partien · ${p.l40W} Siege`
     }},
 
   {id:'allrounder', name:'Der Allrounder', short:'Allround', ic:'bothSides', tone:'gold', art:'leistung',
@@ -30075,12 +30075,12 @@ const DISZIPLINEN = [
         p=>{const f=_stLetzteZehn(p);return `${pct(f.drin)} % in den letzten 10, ${pct(f.raus)} % in den ${f.vor} davor`;}))},
     allzeit:{
       kammer:'form', basis:150, offen:true, fenster:true,
-      zeitraum:'Die letzten 10 gegen die 10 davor',
-      mind:'20 Partien',
-      wie:'Die letzten zehn Partien gegen die zehn unmittelbar davor. Zwei gleich große Fenster, damit die Frage für jeden dieselbe ist.',
-      cond:'Größte Verbesserung der letzten 10 Partien gegenüber den 10 davor, ab 20 Partien',
+      zeitraum:'Die letzten 20 gegen die 20 davor',
+      mind:'40 Partien',
+      wie:'Die letzten zwanzig Partien gegen die zwanzig unmittelbar davor. Zwei gleich große Fenster, damit die Frage für jeden dieselbe ist.',
+      cond:'Größte Verbesserung der letzten 20 Partien gegenüber den 20 davor, ab 40 Partien',
       val:p => (p.hfDelta != null && p.hfDelta > 0) ? p.hfDelta : null,
-      ev:(p,v) => `+${Math.round(v*100)} %-Punkte · ${pct(p.hfNeu)} % in den letzten 10 statt ${_ppGegen(p.hfNeu, v)} % in den 10 davor`
+      ev:(p,v) => `+${Math.round(v*100)} %-Punkte · ${pct(p.hfNeu)} % in den letzten 20 statt ${_ppGegen(p.hfNeu, v)} % in den 20 davor`
     }},
   {id:'aufschwung', name:'Der Aufschwung', short:'Aufschwung', ic:'aufschwung', tone:'gold', art:'leistung',
     allzeit:{
@@ -32163,12 +32163,12 @@ function seasonTitleHistory(pid, bisMs){
 }
 
 const CHRON_KINDS = {
-  koennen: {label:'Können',        pl:'Können',         kurz:'Können',   ic:'trophyStar', ord:0,
-            satz:'Schnitt und Quote über die ganze Laufbahn'},
-  form:    {label:'Aktuelle Form', pl:'Aktuelle Form',  kurz:'Form',     ic:'trendUp',    ord:1,
-            satz:'Gerechnet über die letzten eigenen Partien'},
-  mark:    {label:'Bestmarke',     pl:'Bestmarken',     kurz:'Marken',   ic:'target',     ord:2,
+  mark:    {label:'Bestmarke',     pl:'Bestmarken',     kurz:'Marken',   ic:'target',     ord:0,
             satz:'Einzelne Bestleistungen, jede an einem Tag erreicht'},
+  koennen: {label:'Können',        pl:'Können',         kurz:'Können',   ic:'trophyStar', ord:1,
+            satz:'Schnitt und Quote über die ganze Laufbahn'},
+  form:    {label:'Aktuelle Form', pl:'Aktuelle Form',  kurz:'Form',     ic:'trendUp',    ord:2,
+            satz:'Gerechnet über die letzten eigenen Partien'},
   fuegung: {label:'Fügung',        pl:'Fügungen',       kurz:'Fügungen', ic:'weatherMix', ord:3,
             satz:'Was Auslosung und letzter Ball entscheiden'},
   shame:   {label:'Schattenseite', pl:'Schattenseiten', kurz:'Schatten', ic:'ghost',      ord:4,
@@ -32260,7 +32260,7 @@ function _chronicleCtx(bisMs){
     gleichTag:0, gleichTore:0, gleichLabel:'',
     wiederTag:0, wiederErg:'', wiederLabel:'',
     beidesTag:0, beidesLabel:'',
-    l20N:0, l20W:0,
+    l40N:0, l40W:0,
     r50N:0, r50Atk:0,
     hfDelta:null, hfNeu:0, hfAlt:0,
     sbDelta:null, sbDrin:0, sbRaus:0, sbN:0,
@@ -32411,20 +32411,20 @@ function _chronicleCtx(bisMs){
   const _mit = (a) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
   Object.keys(P).forEach(id => {
     const p = P[id], r = roh[id] || [];
-    if(r.length >= 20){
-      const l20 = r.slice(-20);
-      p.l20N = 20;
-      p.l20W = l20.filter(x => x.w).length;
+    if(r.length >= 40){
+      const l40 = r.slice(-40);
+      p.l40N = 40;
+      p.l40W = l40.filter(x => x.w).length;
     }
     if(r.length >= 50){
       const l50 = r.slice(-50);
       p.r50N = 50;
       p.r50Atk = l50.filter(x => x.pos === 'atk').length;
     }
-    if(r.length >= 20){
-      const drin = r.slice(-10), raus = r.slice(-20, -10);
-      p.hfNeu = drin.filter(x => x.w).length / 10;
-      p.hfAlt = raus.filter(x => x.w).length / 10;
+    if(r.length >= 40){
+      const drin = r.slice(-20), raus = r.slice(-40, -20);
+      p.hfNeu = drin.filter(x => x.w).length / 20;
+      p.hfAlt = raus.filter(x => x.w).length / 20;
       p.hfDelta = p.hfNeu - p.hfAlt;
     }
     const _tage = {};
