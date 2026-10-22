@@ -23,6 +23,7 @@
 - Neu ist, was seit dem Lesestand dazukam (`NEWS_LS_STAND`, `_newsGelesen`); eine Karte, die eine frühere fortsetzt, sagt es mit einem Faden, an den Partien nachgeprüft (`_newsFaeden`).
 - So spricht die Liga: jede Zahl mit Komma, Ergebnis aus Sicht des Siegers, der Elo-Gewinn gehört einem (`eloPid`), kein Gedankenstrich, kein Etikett mit Doppelpunkt, kein Satzfragment, keine englische Aufschrift, der Text wiederholt nicht die Schlagzeile und nicht, was die Zeichnung zeigt (`_ndNeu`, `_ndLead`), und das Blatt einer Rekordkarte nicht ihren Beleg (`belegHtml` mit `kurz`: unter den Zellen steht nur „k von n"); kein Blatt erklärt die App.
 - Jedes Story-Blatt hat Kopf, typ-eigene Mitte und Fuß (§C27) und zeigt, wovon seine Story handelt: Serie mit ihren Partien, Rivalität mit ihrem Verlauf, Auszeichnung mit ihren Trägern, Spitzenwechsel mit jedem Wechsel, Spieler des Tages mit seiner Bahn, Woche mit allen sechs Wertungen, Rückblick per Knopf (`_newsRueckblickKnopf`); der Monatsabschluss öffnet den Saison-Rückblick statt eines Blatts.
+- Der Feed hat sieben Chips: Alle, Breaking und fünf Seiten (`NEWS_SEITEN`, `_newsSeite`) — Tafel, Spieltag, Zeichen, Ehrung, Liga. Jede Karte steht auf genau einer Seite, und die Zahlen der Seiten ergeben zusammen „Alle"; „Liga" nimmt, was keiner anderen gehört (Fun Facts, Saison, Spieler der Woche ohne Partie, Karriereende). Breaking liegt quer dazu. Das Zeichen eines Chips ist das des Rubrikbands seiner Karten.
 
 ## Stellen
 
@@ -30,7 +31,7 @@
 
 ## Prüfung
 
-`tests/rechnen` (was den Tag beschreibt, erst am Tagesende; die Ehrung nach zwei stillen Stunden), `tests/ambient` (Snapshots, Bündel, IDs bei zweitem Lauf, Abwechslung von Kopf und Fuß der Partie-Karten, Sprache über jeden vierten Spieltag, Breaking-Anlässe, Fun-Fact-Bilder, die Säulen, die Karte ohne Satz und Fuß, die Klassen, der Satz und das Blatt jeder Ehrung, die Tafel-Karte ohne Auszeichnungen, der Monatsabschluss mit Team, Chronik, Erstlingen und Zeichen, Tag vor Woche vor Monat), `tests/blatt` (jede Karte und jedes Blatt bei 288 und 360 px, Bildzonen, Faden, Bewegung, die Ehrung in einer Reihe und ohne gebrochenen Namen, unter der Schlagzeile, in welchen Partien sie geholt ist, ein Tag in einer Zeile, der Monatsabschluss öffnet den Saison-Rückblick), `tests/wiederholung` (Auszeichnungsmarken), `tests/storyscroll`, `tests/leistung` (Feed in Portionen), `tests/start` (der Feed liest einen Monat, eine Zeile hält ab ihrem Ereignis).
+`tests/rechnen` (was den Tag beschreibt, erst am Tagesende; die Ehrung nach zwei stillen Stunden), `tests/ambient` (Snapshots, Bündel, IDs bei zweitem Lauf, Abwechslung von Kopf und Fuß der Partie-Karten, Sprache über jeden vierten Spieltag, Breaking-Anlässe, Fun-Fact-Bilder, die Säulen, die Karte ohne Satz und Fuß, die Klassen, der Satz und das Blatt jeder Ehrung, die Tafel-Karte ohne Auszeichnungen, der Monatsabschluss mit Team, Chronik, Erstlingen und Zeichen, Tag vor Woche vor Monat), `tests/blatt` (jede Karte und jedes Blatt bei 288 und 360 px, die sieben Chips und jede Karte auf genau einer Seite, Bildzonen, Faden, Bewegung, die Ehrung in einer Reihe und ohne gebrochenen Namen, unter der Schlagzeile, in welchen Partien sie geholt ist, ein Tag in einer Zeile, der Monatsabschluss öffnet den Saison-Rückblick), `tests/wiederholung` (Auszeichnungsmarken), `tests/storyscroll`, `tests/leistung` (Feed in Portionen), `tests/start` (der Feed liest einen Monat, eine Zeile hält ab ihrem Ereignis).
 
 ## Herleitung
 
@@ -1555,9 +1556,13 @@ vergleicht [§C35], wechseln die beiden nicht mehr jede Woche den Halter, und
 das nahm sieben der 53 Tafel-Ereignisse des Fensters — bei gleich vielen
 Tafel-Karten. Gemessen werden Ereignisse, nicht
 bloß Karten: eine Sammelkarte mit vier vollständig sichtbaren Zeilen zählt
-vier Geschichten. `Tafel` und `Spieltag` sind im Filter exklusiv: eine
+vier Geschichten. Die Seiten des Feeds sind im Filter exklusiv: eine
 Tafelmeldung darf einen Match-Zeitpunkt tragen, zählt deshalb aber nicht
-ein zweites Mal als Spieltagsmeldung.
+ein zweites Mal als Spieltagsmeldung. Es gab nur Tafel und Spieltag; die
+Ehrung, die Fun Facts und die Saison standen auf keiner Seite, und das
+Zeichen stand unter der Tafel, obwohl seine Karte eine eigene Rubrik trägt.
+Gemessen standen im Vierzehn-Tage-Fenster der Fixtures 19 von 83 Karten
+auf keiner Seite.
 
 **Dieselbe These kommt nicht vor dreißig Tagen wieder**
 (`AMBIENT_PAAR_COOLDOWN_DAYS`). Eine These ist der Typ UND die Person:

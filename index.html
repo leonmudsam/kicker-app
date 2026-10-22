@@ -6384,7 +6384,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.22.a0ba78c6';
+const BUILD_VERSION='2026.10.22.75f67673';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -24825,6 +24825,23 @@ function _newsSorte(s){
   return 'fakt';
 }
 
+const NEWS_SEITEN = [
+  {k:'tafel',    label:'Tafel',    ic:'tafelStein'},
+  {k:'spieltag', label:'Spieltag', ic:'spielfeld'},
+  {k:'zeichen',  label:'Zeichen',  ic:'shieldStar'},
+  {k:'ehrung',   label:'Ehrung',   ic:'medal'},
+  {k:'liga',     label:'Liga',     ic:'chartBar'},
+];
+function _newsSeite(s){
+  const d = (s && s.dataRef) || {}, sorte = _newsSorte(s);
+  if(sorte === 'ins') return 'zeichen';
+  if(s.cat === 'tafel' || d.quelle === 'tafel' || d.quelle === 'form') return 'tafel';
+  if(sorte === 'badge' || sorte === 'spieler' || sorte === 'erfolg') return 'ehrung';
+  if(d.type !== 'ambient' && (d.matchId || ['potd', 'potw', 'woche', 'runde'].includes(d.type)
+     || (d.type === 'sammel' && d.quelle === 'spiel'))) return 'spieltag';
+  return 'liga';
+}
+
 function _newsErgebnisBand(matchId){
   if(!matchId) return '';
   const m = (matches || []).find(x => x.id === matchId);
@@ -25093,21 +25110,10 @@ function _renderNewsFeed(){
   const seen = _newsLoadSeen();
   const stand = _newsLesestand();
   const gelesen = s => _newsGelesen(s, seen, stand);
-  const _istTafel   = s => s.cat === 'tafel' || (s.dataRef||{}).quelle === 'tafel'
-    || (s.dataRef||{}).quelle === 'form';
-  const _istSpieltag = s => {
-    const d = s.dataRef || {};
-    if(_istTafel(s)) return false;
-    if(d.type === 'ambient') return false;
-    return !!(d.matchId || d.type === 'potd' || d.type === 'woche' || d.type === 'runde' ||
-              (d.type === 'sammel' && d.quelle === 'spiel'));
-  };
   const filters = [
     {k:'all',      label:'Alle',     ic:'newspaper',  test:() => true},
-    {k:'breaking', label:'Breaking', ic:'sirene',       test:_isBreaking},
-    {k:'tafel',    label:'Tafel',    ic:'tafelStein', test:_istTafel},
-    {k:'spieltag', label:'Spieltag', ic:'spielfeld', test:_istSpieltag},
-  ];
+    {k:'breaking', label:'Breaking', ic:'sirene',     test:_isBreaking},
+  ].concat(NEWS_SEITEN.map(x => Object.assign({test:s => _newsSeite(s) === x.k}, x)));
   const aktiv = filters.find(f => f.k === _newsFeedFilter) || filters[0];
   const cards = _newsFeedFilter === 'all' ? stories : stories.filter(aktiv.test);
 

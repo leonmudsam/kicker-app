@@ -332,7 +332,7 @@ function _newsDayDate(when){
 }
 
 // ─── §11.6 — Voller Feed (im Sheet) mit Filter-Pills ─────────────────
-let _newsFeedFilter = 'all'; // 'all' | 'new' | cat-Key
+let _newsFeedFilter = 'all'; // 'all' | 'breaking' | eine Seite aus NEWS_SEITEN
 function openNewsFeed(){
   _newsFeedFilter = 'all';
   _renderNewsFeed();
