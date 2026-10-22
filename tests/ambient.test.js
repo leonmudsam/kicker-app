@@ -4727,7 +4727,7 @@ const _partie = JSON.parse(K.eval(`JSON.stringify((function(){
   roh.filter(s => (s.dataRef||{}).type === 'spiel').forEach(s => {
     const m = matches.find(x => x.id === s.dataRef.matchId); if(!m) return;
     const refs = roh.filter(x => (x.dataRef||{}).matchId === m.id && x.dataRef.type !== 'spiel').map(x => x.dataRef);
-    const a = _spFussFakt(m, refs);
+    const a = (_spFussFakten(m, refs)[0] || {}).a;
     if(!a || !refs.some(r => FUSS[r.type] === a.key)) return;
     const o = (s.dataRef.visual || {}).occasion;
     if(o && o.key === a.key) folgt++; else fremd.push(s.title + ': ' + (o ? o.key : '-') + ' statt ' + a.key);
@@ -7638,8 +7638,20 @@ const _scoreWahl = JSON.parse(K.eval(`JSON.stringify((function(){
   });
   const eng = transferBei.some((v, i) => i && v - transferBei[i - 1] < 5);
   const doppelt = spur.filter((k, i) => i && k === spur[i - 1]);
+  // „Zwei Welten" je Duo: dieselben zwei Sieger auf dreißig Karten nur einmal.
+  const welten = [];
+  reihe.forEach((m, i) => { if(spur[i] !== 'gefaelle') return;
+    const duo = _spSieger(m).slice().sort().join();
+    const vor = reihe.slice(Math.max(0, i - 30), i).findIndex((y, j) => spur[Math.max(0, i - 30) + j] === 'gefaelle'
+      && _spSieger(y).slice().sort().join() === duo);
+    if(vor >= 0) welten.push(m.id + ' ' + duo.split(',').map(pname).join(' und ')); });
+  const GRUND = ['tacho', 'tauziehen', 'abstand', 'zeile', 'feld'];
+  const SPEZIAL = ['krimi', 'deutlich', 'aussenseiter', 'weste'];
+  const grund = GRUND.map(k => zahl[k] || 0);
+  const gewoehnlich = Object.keys(zahl).filter(k => !SPEZIAL.includes(k)).map(k => [k, zahl[k]])
+    .sort((a, b) => b[1] - a[1])[0];
   return {n:reihe.length, zahl, falsch, transfer:transferBei.length, eng,
-          doppelt:doppelt.length};
+          doppelt:doppelt.length, welten, grund, gewoehnlich};
 })())`));
 ok(_scoreWahl.falsch.length === 0,
    'Mosaik und Elo-Transfer erscheinen nur mit einem belegten besonderen Anlass',
@@ -7650,6 +7662,35 @@ ok(_scoreWahl.transfer <= Math.ceil(_scoreWahl.n * .05) && !_scoreWahl.eng,
 ok(_scoreWahl.doppelt === 0,
    'neue Scoregrafiken wiederholen sich nicht direkt hintereinander',
    _scoreWahl.doppelt + ' Wiederholungen · ' + JSON.stringify(_scoreWahl.zahl));
+// Die Grundansichten einer gewöhnlichen Partie wechseln sich ab, statt dass
+// die mit dem höchsten Gewicht gewinnt: der Tacho stand auf 69 von 466
+// Karten, das Spielfeld auf vier. Kein Kopf ohne besonderen Ausgang steht
+// auf mehr als jeder zehnten Karte.
+ok(Math.min(..._scoreWahl.grund) > 0 && Math.max(..._scoreWahl.grund) <= 1.5 * Math.min(..._scoreWahl.grund)
+   && _scoreWahl.gewoehnlich[1] <= _scoreWahl.n / 10,
+   'die Grundansichten wechseln sich ab, und kein gewöhnlicher Kopf steht auf mehr als jeder zehnten Karte',
+   'Tacho, Tauziehen, Abstand, Zeile, Feld ' + _scoreWahl.grund.join('/') + ' · am häufigsten '
+   + _scoreWahl.gewoehnlich.join(' ') + ' von ' + _scoreWahl.n);
+ok(_scoreWahl.welten.length === 0,
+   'ein Duo gewinnt nicht zweimal in dreißig Karten „als ungleiches Paar“',
+   _scoreWahl.welten.slice(0, 3).join(' | ') || (_scoreWahl.zahl.gefaelle || 0) + ' Karten');
+
+// Ein Zustand, der über viele Partien gilt — eine Serie, die Serie eines
+// Duos, eine Rivalität —, steht als Fuß nicht auf zwei Karten hintereinander.
+// Er stand, sobald er zutraf: die Siegesserie auf zwölf von 43 Karten, an
+// einem Tag dreimal.
+const _fussFolge = JSON.parse(K.eval(`JSON.stringify((function(){
+  const karten = _buildStories().filter(s => (s.dataRef||{}).type === 'spiel' && s.dataRef.visual)
+    .sort((a, b) => a.when - b.when);
+  const fuss = karten.map(s => (s.dataRef.visual.occasion || {}).key || '-');
+  const ZUSTAND = ['serie', 'teamserie', 'duell'];
+  const zahl = {}; fuss.forEach(k => { zahl[k] = (zahl[k] || 0) + 1; });
+  return {n:fuss.length, zahl, folge:fuss.filter((k, i) => i && ZUSTAND.includes(k) && fuss[i - 1] === k).length,
+    max:Math.max(...Object.keys(zahl).filter(k => k !== '-').map(k => zahl[k]))};
+})())`));
+ok(_fussFolge.n >= 30 && _fussFolge.folge === 0 && _fussFolge.max <= _fussFolge.n * .15,
+   'Serie, Duo-Serie und Rivalität stehen als Fuß nicht zweimal hintereinander, und kein Fuß steht auf mehr als jeder siebten Karte',
+   _fussFolge.folge + ' hintereinander · ' + JSON.stringify(_fussFolge.zahl));
 
 // Die vorherigen Formen kommen aus dem veroeffentlichten Bestand. Zwei
 // alte Spielfelder muessen auch nach geaenderten Auswahlregeln als solche
