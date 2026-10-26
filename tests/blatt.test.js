@@ -1507,7 +1507,7 @@ const ok = (c, msg, det) => {
   // oben in einer Zeile, was der Zeitraum bedeutet, darunter der Zeitraum —
   // in der Karte, vor dem Pfeil. Ein Tag steht bei 360 px in einer Zeile;
   // bei 320 px und über mehrere Tage höchstens zwei, auch im längsten Fall
-  // („vom 06.10., 15:12 bis 08.10., 15:10 Uhr").
+  // („vom 06.10., 15:12 Uhr bis 08.10., 15:10 Uhr").
   const ehZeit = await page.evaluate(() => {
     const K = window.__k.eval.bind(window.__k);
     const karten = JSON.parse(K(`JSON.stringify((function(){
@@ -1547,7 +1547,7 @@ const ok = (c, msg, det) => {
     host.remove();
     return {falsch, lang};
   });
-  ok(!ehZeit.falsch.length && /^Geholt in den Partien vom \d\d\.\d\d\., 15:12 bis \d\d\.\d\d\., 15:10 Uhr$/.test(ehZeit.lang),
+  ok(!ehZeit.falsch.length && /^Geholt in den Partien vom \d\d\.\d\d\., 15:12 Uhr bis \d\d\.\d\d\., 15:10 Uhr$/.test(ehZeit.lang),
      'die Ehrung sagt unter der Schlagzeile, in welchen Partien die Auszeichnungen geholt sind: in der Karte, vor dem Pfeil, ein Tag bei 360 px in einer Zeile, sonst in höchstens zwei',
      ehZeit.falsch.join(' | ') || ehZeit.lang);
 

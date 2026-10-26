@@ -219,22 +219,25 @@ const _ehrungKlasseHtml = z => `<span class="eh-k ${z.id}"><i></i><b class="num"
 // Runde stammt — eine, die erst am Tagesende vergeben wird, kann vom Vortag
 // sein.
 // Zwei Teile, die zusammen einen Satz ergeben: `vor` sagt, was der Zeitraum
-// bedeutet, `wann` nennt ihn, mit „Uhr" am Ende. „Partien vom 06.10., 15:12
-// bis 08.10., 15:10" allein sagte nicht, wozu die Zahlen gehören, und vier
-// Ziffern mit Doppelpunkt hinter einem Datum lasen sich auch als Ergebnis.
-// Die Karte setzt beide Teile untereinander, das Blatt hintereinander.
-// Vor jeder Uhrzeit und vor „Uhr" ein festes Leerzeichen: umbrochen stand
-// „15:55" allein in der zweiten Zeile, getrennt von seinem „bis".
+// bedeutet, `wann` nennt ihn. „Partien vom 06.10., 15:12 bis 08.10., 15:10"
+// allein sagte nicht, wozu die Zahlen gehören, und vier Ziffern mit
+// Doppelpunkt hinter einem Datum lasen sich auch als Ergebnis. Hinter JEDER
+// Uhrzeit steht „Uhr": mit einem „Uhr" nur am Ende stand „vom 19.10., 17:17
+// bis gestern, 16:04 Uhr" da, und die erste Zahl las sich wieder nicht als
+// Uhrzeit. Die Karte setzt beide Teile untereinander, das Blatt
+// hintereinander. Innerhalb eines Endes nur feste Leerzeichen, damit der
+// Zeitraum nur vor dem „bis" umbricht: umbrochen stand „15:55" allein in
+// der zweiten Zeile, getrennt von seinem „bis".
 function _ehrungZeitraum(d){
   if(!d || !d.ab || !d.bis) return null;
   const jetzt = Date.now();
   const tag = t => tagKey(t) === tagKey(jetzt) ? 'heute'
     : tagKey(t) === tagKey(jetzt - 864e5) ? 'gestern' : datumFmt(t, 'tm');
-  const von = t => { const w = tag(t); return (/^\d/.test(w) ? 'vom ' : 'von ') + w; };
-  const uhr = t => '\u00a0' + datumFmt(t, 'uhr');
-  if(d.ab === d.bis) return {vor:'Geholt in der Partie', wann:`${von(d.ab)},${uhr(d.ab)}\u00a0Uhr`};
+  const von = t => { const w = tag(t); return (/^\d/.test(w) ? 'vom' : 'von') + '\u00a0' + w; };
+  const uhr = t => '\u00a0' + datumFmt(t, 'uhr') + '\u00a0Uhr';
+  if(d.ab === d.bis) return {vor:'Geholt in der Partie', wann:`${von(d.ab)},${uhr(d.ab)}`};
   return {vor:'Geholt in den Partien', wann:`${von(d.ab)},${uhr(d.ab)} bis`
-    + (tagKey(d.ab) === tagKey(d.bis) ? '' : '\u00a0' + tag(d.bis) + ',') + uhr(d.bis) + '\u00a0Uhr'};
+    + (tagKey(d.ab) === tagKey(d.bis) ? '' : '\u00a0' + tag(d.bis) + ',') + uhr(d.bis)};
 }
 
 // Die Karte: die Säulen als Bühne, darunter die Schlagzeile und, leise,

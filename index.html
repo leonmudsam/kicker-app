@@ -6384,7 +6384,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.22.75f67673';
+const BUILD_VERSION='2026.10.26.feaf63c8';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -27344,11 +27344,11 @@ function _ehrungZeitraum(d){
   const jetzt = Date.now();
   const tag = t => tagKey(t) === tagKey(jetzt) ? 'heute'
     : tagKey(t) === tagKey(jetzt - 864e5) ? 'gestern' : datumFmt(t, 'tm');
-  const von = t => { const w = tag(t); return (/^\d/.test(w) ? 'vom ' : 'von ') + w; };
-  const uhr = t => '\u00a0' + datumFmt(t, 'uhr');
-  if(d.ab === d.bis) return {vor:'Geholt in der Partie', wann:`${von(d.ab)},${uhr(d.ab)}\u00a0Uhr`};
+  const von = t => { const w = tag(t); return (/^\d/.test(w) ? 'vom' : 'von') + '\u00a0' + w; };
+  const uhr = t => '\u00a0' + datumFmt(t, 'uhr') + '\u00a0Uhr';
+  if(d.ab === d.bis) return {vor:'Geholt in der Partie', wann:`${von(d.ab)},${uhr(d.ab)}`};
   return {vor:'Geholt in den Partien', wann:`${von(d.ab)},${uhr(d.ab)} bis`
-    + (tagKey(d.ab) === tagKey(d.bis) ? '' : '\u00a0' + tag(d.bis) + ',') + uhr(d.bis) + '\u00a0Uhr'};
+    + (tagKey(d.ab) === tagKey(d.bis) ? '' : '\u00a0' + tag(d.bis) + ',') + uhr(d.bis)};
 }
 
 function _newsEhrungHtml(s, isRead, fadenHtml){

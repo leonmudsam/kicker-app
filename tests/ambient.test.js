@@ -6801,18 +6801,18 @@ const _ehZr = JSON.parse(K.eval(`JSON.stringify((function(){
   const tm = t => datumFmt(new Date(t), 'tm');
   const satz = z => z ? z.vor + ' | ' + z.wann : '';
   return [
-    [satz(_ehrungZeitraum({ab:um(0, 13, 44), bis:um(0, 15, 55)})), 'Geholt in den Partien | von heute, 13:44 bis 15:55 Uhr'],
-    [satz(_ehrungZeitraum({ab:um(1, 13, 44), bis:um(1, 15, 55)})), 'Geholt in den Partien | von gestern, 13:44 bis 15:55 Uhr'],
-    [satz(_ehrungZeitraum({ab:um(4, 16, 44), bis:um(4, 18, 10)})), 'Geholt in den Partien | vom ' + tm(um(4, 0, 0)) + ', 16:44 bis 18:10 Uhr'],
-    [satz(_ehrungZeitraum({ab:um(1, 23, 10), bis:um(0, 0, 40)})), 'Geholt in den Partien | von gestern, 23:10 bis heute, 00:40 Uhr'],
-    [satz(_ehrungZeitraum({ab:um(16, 15, 12), bis:um(14, 15, 10)})), 'Geholt in den Partien | vom ' + tm(um(16, 0, 0)) + ', 15:12 bis ' + tm(um(14, 0, 0)) + ', 15:10 Uhr'],
+    [satz(_ehrungZeitraum({ab:um(0, 13, 44), bis:um(0, 15, 55)})), 'Geholt in den Partien | von heute, 13:44 Uhr bis 15:55 Uhr'],
+    [satz(_ehrungZeitraum({ab:um(1, 13, 44), bis:um(1, 15, 55)})), 'Geholt in den Partien | von gestern, 13:44 Uhr bis 15:55 Uhr'],
+    [satz(_ehrungZeitraum({ab:um(4, 16, 44), bis:um(4, 18, 10)})), 'Geholt in den Partien | vom ' + tm(um(4, 0, 0)) + ', 16:44 Uhr bis 18:10 Uhr'],
+    [satz(_ehrungZeitraum({ab:um(1, 23, 10), bis:um(0, 0, 40)})), 'Geholt in den Partien | von gestern, 23:10 Uhr bis heute, 00:40 Uhr'],
+    [satz(_ehrungZeitraum({ab:um(16, 15, 12), bis:um(14, 15, 10)})), 'Geholt in den Partien | vom ' + tm(um(16, 0, 0)) + ', 15:12 Uhr bis ' + tm(um(14, 0, 0)) + ', 15:10 Uhr'],
     [satz(_ehrungZeitraum({ab:um(0, 15, 55), bis:um(0, 15, 55)})), 'Geholt in der Partie | von heute, 15:55 Uhr'],
     [satz(_ehrungZeitraum({})), '']];
 })())`));
 // Gelesen mit gewöhnlichen Leerzeichen: vor jeder Uhrzeit steht ein festes.
 _ehZr.forEach(x => { x[0] = x[0].replace(/\u00a0/g, ' '); });
 ok(_ehZr.every(([ist, soll]) => ist === soll),
-   'die Ehrung sagt, dass die Auszeichnungen in diesen Partien geholt sind, und nennt sie mit heute, gestern oder Datum, über Mitternacht und über mehrere Tage mit beiden Tagen, mit „Uhr" und eine einzelne Partie in der Einzahl',
+   'die Ehrung sagt, dass die Auszeichnungen in diesen Partien geholt sind, und nennt sie mit heute, gestern oder Datum, über Mitternacht und über mehrere Tage mit beiden Tagen, mit „Uhr" hinter jeder Uhrzeit und eine einzelne Partie in der Einzahl',
    _ehZr.filter(([ist, soll]) => ist !== soll).map(([ist, soll]) => ist + ' statt ' + soll).join(' | '));
 ok(Math.round(_eh.breite) === _eh.soll && _eh.soll < 100 && _eh.voll === 100,
    'der Strich unter einer Auszeichnung zeigt, wie viel vom vollen Wert sie beim wievielten Mal bringt',
