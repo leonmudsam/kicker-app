@@ -937,7 +937,7 @@ const _tafel = JSON.parse(K.eval(`JSON.stringify((function(){
   // unten, steht als Bewegung auf der Insignium-Karte dieses Tages.
   const insErwartet = players.filter(p => ligaAktiv(p))
     .filter(p => prestigeOf(p.id).stufe !== prestigeOf(p.id, vor).stufe).length;
-  const insKarte = typ('insignium_tag')[0] || null;
+  const insKarte = typ('insignium_tag').filter(s => !s.dataRef.schluss)[0] || null;
   return {
     rekorde: rek.length,
     ausbau: typ('rekord_gesteigert').length,
@@ -951,7 +951,8 @@ const _tafel = JSON.parse(K.eval(`JSON.stringify((function(){
     gesichter: rek.every(s => _newsPids(s).length > 0),
     insignium: insKarte ? insKarte.dataRef.zuege.filter(z => z.art !== 'grad').length : 0, insErwartet,
     insGesicht: typ('insignium_tag').every(s => _newsPids(s).length > 0),
-    insEine: typ('insignium_tag').length <= 1 && typ('insignium_stufe').length === 0,
+    // Die Karte eines Wochenschlusses (schluss) gehoert keinem Spieltag.
+    insEine: typ('insignium_tag').filter(s => !s.dataRef.schluss).length <= 1 && typ('insignium_stufe').length === 0,
     // Jede neue Karte nennt eine Zahl und bleibt ohne Platzhalter.
     sauber: roh.filter(s => s.cat === 'tafel').every(s => {
       const txt = (s.title || '') + ' ' + (s.desc || '');
@@ -980,10 +981,14 @@ const _tagRahmen = JSON.parse(K.eval(`JSON.stringify((function(){
   const w = {};
   aktive.forEach(p => { w[p.id] = _prestigeWirkung(p.id, vor, nach); });
   return {
-    // Der juengste Spieltag ist „heute": ein Schnitt hinter seiner letzten
-    // Partie schneidet nichts ab und kostet nur eine kalte Rechnung [§3].
-    nachOhneSchnitt: tg.nachMs === 0 && tg.istHeute === true,
-    grenze: tg.vorMs === tg.vonMs - 1 && tg.tag === tagKey(tg.vonMs),
+    // Der juengste Spieltag reicht bis zum Ende seines Tages. Solange danach
+    // nichts zugegangen ist — keine Woche, kein Monat —, ist das „jetzt": ein
+    // Schnitt dort schneidet nichts ab und kostet nur eine kalte Rechnung [§3].
+    // Bis eine Sekunde vor Mitternacht: um 23:59:59 schliesst der Monat.
+    nachOhneSchnitt: tg.nachMs === tg.vonMs + 864e5 - 1001 && _schnitt(tg.nachMs) === undefined
+      && tg.istHeute === true,
+    // Ab Mitternacht selbst: dort schliesst die Woche.
+    grenze: tg.vorMs === tg.vonMs && tg.tag === tagKey(tg.vonMs),
     partien: tg.partien === tagPartien,
     // Die Wirkung erfindet keine Punkte. Dass die Insignium-Karten eines
     // Laufs genau die gekreuzten Stufen sind, misst die Probe insErwartet
@@ -993,8 +998,8 @@ const _tagRahmen = JSON.parse(K.eval(`JSON.stringify((function(){
     summe: aktive.every(p => w[p.id].vor + w[p.id].delta === w[p.id].nach)
   };
 })())`));
-ok(_tagRahmen.nachOhneSchnitt, 'der juengste Spieltag vergleicht gegen „jetzt", nicht gegen einen Schnitt');
-ok(_tagRahmen.grenze, 'Vorher ist eine Millisekunde vor Mitternacht, und der Tagesschluessel gehoert dazu');
+ok(_tagRahmen.nachOhneSchnitt, 'der juengste Spieltag vergleicht bis zum Ende seines Tages, und das ist „jetzt", solange danach nichts zugegangen ist');
+ok(_tagRahmen.grenze, 'Vorher ist Mitternacht, nach dem Schluss der Woche, und der Tagesschluessel gehoert dazu');
 ok(_tagRahmen.partien, 'der Rahmen zaehlt die Partien seines Tages');
 ok(_tagRahmen.summe, 'die Punktewirkung erfindet keine Punkte');
 
@@ -1138,7 +1143,7 @@ const _insHistorisch = JSON.parse(K.eval(`JSON.stringify((function(){
       : stand((bisMs != null && bisMs < kreuz) ? 0 : 2);
     _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
     const lauf = () => { _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
-      return _buildStories().filter(s => (s.dataRef||{}).type === 'insignium_tag'); };
+      return _buildStories().filter(s => (s.dataRef||{}).type === 'insignium_tag' && !s.dataRef.schluss); };
     const a = lauf(), b = lauf();
     const z = a.length ? (a[0].dataRef.zuege || []).find(x => x.pid === pid) : null;
     return {n:a.length, art:z && z.art, von:z && z.vor.stufe, nach:z && z.nach.stufe, zeit:z && z.ms,
@@ -2790,6 +2795,131 @@ ok(_reihe.potd && _reihe.woche && _reihe.monat
    && _reihe.woche - _reihe.potd === 5000,
    'Spieler des Tages, dann die Woche fuenf Sekunden spaeter, dann der Monat', _reihe.text);
 
+// ── Was erst mit dem Schluss kommt [§11.0e] ─────────────────────────
+// Der Spieler des Tages, der Woche, der Award-Sammler, Unschlagbar,
+// Untouchable entstehen ohne Partie. Keine Karte nannte sie, und wer durch
+// sie eine Stufe weiter stand, stand in keinem Vergleich: der Stand eine
+// Millisekunde vor dem Wochenschluss trug den Spieler der Woche schon, sobald
+// die Woche nach der Uhr vorbei war (`_periodeOffen`). Gemessen an den
+// echten Partien: der Wochenschluss am 15.06. hob Julian um einen Grad, der
+// am 03.08. brachte ihm den Award-Sammler, der Monatsschluss im Juli Leon
+// und Martin Untouchable.
+const _schlussAm = (ms, code) => _amErsten(ms, `
+  const bestand = _cache._stories;
+  try { _cache._stories = []; _cache._buildStoriesKey = null;
+    const roh = _buildStories();
+    ${code}
+  } finally { _cache._stories = bestand; }`);
+const _J = IDS[NAMES.indexOf('Julian')], _M = IDS[NAMES.indexOf('Martin')],
+      _L = IDS[NAMES.indexOf('Leon')], _X = IDS[NAMES.indexOf('Maxi')];
+
+// Der Tag endet vor dem Monat (23:59:59) und beginnt nach der Woche (Mo 00:00).
+const _grenzen = JSON.parse(K.eval(`JSON.stringify((function(){
+  const pos = (pid, t) => insigniumPos(prestigeOf(pid, t));
+  const juni30 = _storyTagGrenzen(new Date(2026, 5, 30, 12).getTime());
+  const juni15 = _storyTagGrenzen(new Date(2026, 5, 15, 12).getTime());
+  const woche = new Date(2026, 5, 15).getTime();
+  return {
+    monat: pos('${_M}', juni30.nachMs) < pos('${_M}', seasonEnd('2026-06').getTime()),
+    monatText: pos('${_M}', juni30.nachMs) + ' -> ' + pos('${_M}', seasonEnd('2026-06').getTime()),
+    woche: pos('${_J}', juni15.vorMs) === pos('${_J}', woche) && pos('${_J}', woche) > pos('${_J}', woche - 1),
+    wocheText: pos('${_J}', woche - 1) + ' -> ' + pos('${_J}', juni15.vorMs)
+  };
+})())`));
+ok(_grenzen.monat, 'der letzte Tag des Monats endet vor dessen Schluss: Martins Grad aus dem Vize-Titel steht nicht in der Karte des 30.06.', _grenzen.monatText);
+ok(_grenzen.woche, 'ein Montag beginnt nach dem Schluss der Woche: Julians Grad aus dem Spieler der Woche steht nicht in der Karte des 15.06.', _grenzen.wocheText);
+
+// Der Tag: die Karte des Spielers des Tages nennt, was sein Schluss vergab.
+const _tagSchluss = _schlussAm(FIXED, `
+  const p = roh.find(x => x.id === 'potd_2026-08-26');
+  const a = ((p && p.dataRef.abschluss) || []).find(x => x.id === 'allwetter');
+  const html = p ? _newsCardHtmlM2(p, false, false, '') : '';
+  return {da:!!a, maxi:!!a && a.spieler.some(x => x.pid === '${_X}' && x.mal === 1 && x.p > 0),
+    nurSelten:roh.filter(x => (x.dataRef||{}).type === 'potd').every(x => (x.dataRef.abschluss || [])
+      .every(y => y.klasse === 'legendary' || y.klasse === 'rare')),
+    zeile:/class="nf-abs viol"[\\s\\S]*Maxi[\\s\\S]*Allwetter[\\s\\S]*Selten/.test(html)};`);
+ok(_tagSchluss.da && _tagSchluss.maxi, 'der Schluss des 26.08. vergibt Maxi Allwetter, und die Karte des Tages traegt es',
+   JSON.stringify(_tagSchluss));
+ok(_tagSchluss.zeile, 'die Karte zeigt es als Zeile mit Gesicht, Name und Klasse');
+ok(_tagSchluss.nurSelten, 'nur Seltenes und Legendaeres: das Gewoehnliche eines Tages steht in der Ehrung');
+
+// Die Woche: Award-Sammler in der Karte der Woche, die Stufe in einer
+// Zeichen-Karte des Schlusses.
+const _wocheSchluss = _schlussAm(new RealDate(2026, 7, 4, 8, 0, 0).getTime(), `
+  const w = roh.find(x => (x.dataRef||{}).type === 'woche');
+  const a = ((w && w.dataRef.abschluss) || []).find(x => x.id === 'award_collector');
+  const z = roh.find(x => x.id === 'instag_woche_2026-08-03');
+  const d = (z && z.dataRef) || {};
+  const karte = z ? _newsCardHtmlM2(z, false, false, '') : '';
+  const blatt = z ? (_ndInsTagBlatt(z) || {}).mitte || '' : '';
+  return {sammler:!!a && a.klasse === 'legendary' && a.spieler.some(x => x.pid === '${_J}' && x.mal === 1),
+    brk:!!w && _isBreaking(w) && !roh.filter(x => (x.dataRef||{}).type === 'woche' && x !== w).some(_isBreaking),
+    wocheZeile:w ? /nf-abs gold[\\s\\S]*Award-Sammler[\\s\\S]*Legendär/.test(_newsCardHtmlM2(w, false, false, '')) : false,
+    zeichen:!!z, schluss:d.schluss, wann:z ? new Date(z.when).getTime() === new Date(2026, 7, 3).getTime() : false,
+    zug:(d.zuege || []).map(x => x.pid === '${_J}' ? x.art : '?').join(','),
+    grund:(d.grund || []).map(x => x.id).join(','),
+    karte:/nf-abs gold[\\s\\S]*Award-Sammler/.test(karte),
+    blatt:blatt.indexOf('Mit dem Schluss der Woche vergeben') >= 0 && blatt.indexOf('nach der Woche') >= 0,
+    seite:z ? _newsSeite(z) : ''};`);
+ok(_wocheSchluss.sammler && _wocheSchluss.wocheZeile,
+   'der Schluss der Woche bis 02.08. vergibt Julian den Award-Sammler, legendaer, in der Karte der Woche', JSON.stringify(_wocheSchluss));
+ok(_wocheSchluss.brk, 'eine legendaere Auszeichnung ist Breaking, auch in der Karte der Woche');
+ok(_wocheSchluss.zeichen && _wocheSchluss.schluss === 'woche' && _wocheSchluss.wann && _wocheSchluss.zug === 'grad',
+   'und Julians neuer Grad steht in einer Zeichen-Karte am Montag um 00:00', JSON.stringify(_wocheSchluss));
+ok(_wocheSchluss.grund === 'award_collector,potw' && _wocheSchluss.karte && _wocheSchluss.blatt,
+   'die Zeichen-Karte nennt, was der Schluss vergab, auf der Karte und im Blatt', _wocheSchluss.grund);
+ok(_wocheSchluss.seite === 'zeichen', 'sie steht auf der Seite der Zeichen', _wocheSchluss.seite);
+
+// Faellt der Schluss der Woche auf den des Monats (31.05., ein Sonntag),
+// traegt der Monatsabschluss beide Zeichen, und keine zweite Karte entsteht.
+// In den echten Partien bewegte der Wochenschluss an diesem Abend allein
+// niemanden; die Bewegung wird deshalb gestellt, sonst bliebe die Probe auch
+// ohne die Regel gruen.
+const _wocheMonat = _schlussAm(new RealDate(2026, 5, 1, 9, 0, 0).getTime(), `
+  const m = roh.find(x => x.id === 'season_recap_2026-05');
+  const echt = _insZuegeZwischen;
+  let gestellt = false;
+  try {
+    _insZuegeZwischen = (vor, nach, best, wann) => { const L = echt(vor, nach, best, wann);
+      if(!L.zuege.length) L.zuege.push({pid:'${_L}', art:'grad', vor:{stufe:0, grad:0, punkte:100},
+        nach:{stufe:0, grad:1, punkte:140}, ms:(wann('${_L}') || {}).ms, matchId:null, wieder:false, traeger:1, von:12});
+      return L; };
+    _cache._stories = []; _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+    gestellt = _buildStories().some(x => (x.dataRef||{}).schluss === 'woche');
+  } finally { _insZuegeZwischen = echt; }
+  return {woche:roh.some(x => (x.dataRef||{}).schluss === 'woche'), gestellt,
+    monat:!!m && (m.dataRef.zeichen || []).some(z => z.pid === '${_L}')};`);
+ok(!_wocheMonat.woche && !_wocheMonat.gestellt && _wocheMonat.monat,
+   'am Monatsende traegt der Monatsabschluss die Zeichen der Woche mit, ohne eigene Karte', JSON.stringify(_wocheMonat));
+
+// Der Monat: Untouchable in der Karte des Monatsabschlusses.
+const _monatSchluss = _schlussAm(new RealDate(2026, 7, 1, 12, 0, 0).getTime(), `
+  const m = roh.find(x => x.id === 'season_recap_2026-07');
+  const a = ((m && m.dataRef.abschluss) || []).find(x => x.id === 'untouchable');
+  return {wer:a ? a.spieler.map(x => x.pid).sort().join(',') : '',
+    zeile:m ? /nf-abs gold[\\s\\S]*Untouchable/.test(_newsCardHtmlM2(m, false, false, '')) : false};`);
+ok(_monatSchluss.wer === [_L, _M].sort().join(',') && _monatSchluss.zeile,
+   'der Schluss des Juli vergibt Leon und Martin Untouchable, und der Monatsabschluss zeigt es', JSON.stringify(_monatSchluss));
+
+// Die Ehrung nennt nicht noch einmal, was die Karte des Tages traegt — eine
+// Karte von vor diesem Feld traegt nichts, und dann behaelt die Ehrung es.
+const _ehrungSchluss = _schlussAm(new RealDate(2026, 5, 16, 8, 0, 0).getTime(), `
+  const p = roh.find(x => x.id === 'potd_2026-06-11');
+  const traegt = ((p && p.dataRef.abschluss) || []).some(a => a.id === 'unbeatable' && a.spieler.some(x => x.pid === '${_J}'));
+  const unb = l => l.filter(x => (x.dataRef||{}).type === 'ehrung').some(x => x.dataRef.spieler
+    .some(y => y.pid === '${_J}' && y.posten.some(q => q.id === 'unbeatable')));
+  const eigen = l => l.some(x => (x.dataRef||{}).type === 'badge_unlocked' && x.dataRef.badgeId === 'unbeatable'
+    && x.dataRef.playerId === '${_J}' && x.dataRef.tag === '2026-06-11');
+  const neu = unb(roh), neuEigen = eigen(roh);
+  _cache._stories = [{id:'potd_2026-06-11', when:new Date(2026, 5, 11, 23, 59), dataRef:{type:'potd', dayKey:'2026-06-11'}}];
+  _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+  const zweit = _buildStories(), alt = unb(zweit), altEigen = eigen(zweit);
+  return {traegt, neu, alt, neuEigen, altEigen};`);
+ok(_ehrungSchluss.traegt && !_ehrungSchluss.neu && !_ehrungSchluss.neuEigen,
+   'Julians Unschlagbar vom 11.06. steht in der Karte des Tages, in keiner Ehrung und ohne eigene Karte', JSON.stringify(_ehrungSchluss));
+ok(_ehrungSchluss.alt && _ehrungSchluss.altEigen,
+   'eine gespeicherte Karte ohne Abschluss laesst es der Ehrung und der eigenen Karte', JSON.stringify(_ehrungSchluss));
+
 ok(_plan.sammel.length > 0, 'es gibt Sammelkarten', _plan.sammel.length + '');
 ok(_plan.sammel.every(n => n >= 2), 'eine Sammelkarte traegt alle verbundenen Zeilen',
    _plan.sammel.join(', ') || 'keine');
@@ -3274,8 +3404,10 @@ const _chrg = JSON.parse(K.eval(`JSON.stringify((function(){
   // gespielt hat.
   const ohneEigenePartie = chr.filter(s =>
     !((s.dataRef||{}).playerIds || []).some(p => amTag.has(p))).length;
+  // Verglichen wird bis zum Ende des Tages, wie die Karte selbst: was den
+  // ganzen Tag beschreibt, kommt erst um 23:59 [§11.0e].
   const vorPrestige = prestigeTabelle(t0.getTime() - 1).byPid;
-  const jetztPrestige = prestigeTabelle(letzte).byPid;
+  const jetztPrestige = prestigeTabelle(_storyTagGrenzen(letzte).nachMs).byPid;
   const gemeldet = {};
   chr.forEach(s => Object.entries((s.dataRef||{}).prestigeDelta || {}).forEach(([pid, x]) => {
     gemeldet[pid] = (gemeldet[pid] || 0) + (Number(x) || 0);
@@ -5064,8 +5196,11 @@ const _tagmix = JSON.parse(K.eval(`JSON.stringify((function(){
   // aber fuer alle vierzehn Tage. Ueber das Fenster gerechnet waere die Quote
   // damit eine Aussage ueber den Generator und nicht ueber die Mischung.
   const istSpieltagsKarte = s => !istTafel(s) && (s.dataRef||{}).type !== 'ambient';
+  // Die Zeichen-Karte eines Wochenschlusses steht am Montag um 00:00, ist
+  // aber keine Tafel dieses Spieltags: sie gehoert der Woche davor.
+  const istTafelTag = s => istTafel(s) && !(s.dataRef||{}).schluss;
   const beides = Object.keys(rohTag).filter(k =>
-    rohTag[k].some(istTafel) && rohTag[k].some(istSpieltagsKarte));
+    rohTag[k].some(istTafelTag) && rohTag[k].some(istSpieltagsKarte));
   const ohneSpieltag = beides.filter(k => !(proTag[k] || []).some(istSpieltagsKarte));
   const mischung = beides.map(k => {
     let t = 0, sp = 0;

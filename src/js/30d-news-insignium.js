@@ -19,8 +19,10 @@ function _insLageName(l){
 // was die neue Lage bedeutet. Mehrere: die Schlagzeile als Reihe von
 // Etiketten wie bei der Partie [§C33], höchstens drei, die Aufstiege zuerst.
 // Gespeichert wird der Text der heutigen Karte bei jedem Lauf neu; die Karte
-// eines vergangenen Tages behält ihren.
-function _insTagTexte(zuege){
+// eines vergangenen Tages behält ihren. `schluss` ist der Zeitraum einer
+// Karte, die mit seinem Schluss entstand (die Woche): ein Rückfall geschah
+// dann nicht „an diesem Tag".
+function _insTagTexte(zuege, schluss){
   const pm = pmap(), nm = pid => (pm[pid] && pm[pid].name) || '?';
   const l = (zuege || []).filter(z => z && INSIGNIEN[(z.nach || {}).stufe | 0]).sort(_insZugVor);
   if(!l.length) return {title:'', desc:''};
@@ -42,7 +44,8 @@ function _insTagTexte(zuege){
         + (next ? ` Bis zum ${next.name} fehlen ${Math.max(0, next.min - z.nach.punkte)}.` : '')};
     return {
       title: `${n} fällt auf den ${S.name} zurück`,
-      desc: `Nach ${Math.max(0, z.vor.punkte - z.nach.punkte)} Prestige weniger an diesem Tag fehlen bis zum `
+      desc: `Nach ${Math.max(0, z.vor.punkte - z.nach.punkte)} Prestige weniger `
+        + `${schluss === 'woche' ? 'mit dem Schluss der Woche' : 'an diesem Tag'} fehlen bis zum `
         + `${vorS.name} wieder ${Math.max(0, vorS.min - z.nach.punkte)}.`};
   };
   if(l.length === 1) return satz(l[0]);
@@ -240,9 +243,13 @@ function _ndInsTagBlatt(s){
     + `<b>${esc(pm[x.pid].name)}</b><span>${esc(_insLageName(x.vor))} → ${esc(_insLageName(x.nach))}</span></div>`
     + _insWegHtml(x.pid, x.nach.punkte, x.vor.punkte)).join('');
   const leiter = Array.isArray(d.leiter) ? _newsLigaLeiter({je:d.leiter}) : '';
+  // Die Karte eines Schlusses nennt, was er vergab: daher kommt die Bewegung,
+  // ohne Partie [§11.0e].
+  const woche = d.schluss === 'woche';
   return {kopf, mitte: ab(l.length > 1 ? 'Die Bewegungen' : 'Der Weg durch die Stufe', weg)
+    + (woche ? ab('Mit dem Schluss der Woche vergeben', _newsAbschlussHtml(d.grund, true)) : '')
     + ab('Woher das Prestige kommt', _ndWirkungBlock(je, null, new Date(s.when).getTime()))
-    + ab('Die Leiter der Liga an diesem Tag', leiter)};
+    + ab(woche ? 'Die Leiter der Liga nach der Woche' : 'Die Leiter der Liga an diesem Tag', leiter)};
 }
 
 // ── Alte Einzelzeilen werden zur Karte ihres Tages ───────────────────
@@ -264,7 +271,7 @@ function _insAltZuTag(list){
     const zuege = _insZuege(d);
     if(zuege.length !== d.zuege.length || zuege.every((z, i) => z === d.zuege[i])
        || !zuege.every(z => pm[z.pid])) return s;
-    const t = _insTagTexte(zuege);
+    const t = _insTagTexte(zuege, d.schluss);
     return Object.assign({}, s, {title:t.title || s.title, desc:t.desc || s.desc,
       dataRef:Object.assign({}, d, {zuege})});
   });
@@ -272,7 +279,7 @@ function _insAltZuTag(list){
   const neu = new Map(), alt = new Map(), rest = [];
   list.forEach(s => {
     const d = (s && s.dataRef) || {};
-    if(d.type === 'insignium_tag') neu.set(d.tag || tagKey(s.when), s);
+    if(d.type === 'insignium_tag' && !d.schluss) neu.set(d.tag || tagKey(s.when), s);
     if(d.type === 'insignium_stufe'){ const k = tagKey(s.when); (alt.get(k) || alt.set(k, []).get(k)).push(s); }
     else rest.push(s);
   });

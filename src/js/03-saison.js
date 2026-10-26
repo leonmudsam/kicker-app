@@ -114,15 +114,29 @@ function tagKey(when){
 //
 // Ein Schnitt hinter der letzten Partie ist deshalb kein Schnitt. `matches`
 // ist aufsteigend sortiert, also ist die letzte auch die neueste.
-// Außer ein Monatswechsel liegt dazwischen: mit ihm kommen Meister, Vize und
-// Team der Saison [§C34], ohne Partie. Ein Schnitt am letzten Abend eines
-// Monats galt am Morgen danach, bevor jemand gespielt hatte, als „jetzt" und
-// trug die Titel schon, nach der ersten Partie nicht mehr: gemessen nannte
-// die Laufbahn der Woche bis zum 31.05. für Martin morgens 87 Prestige und
-// abends 62.
+// Außer ein Abschluss liegt zwischen ihm und jetzt: mit ihm kommt etwas ohne
+// Partie. Mit dem Monatswechsel Meister, Vize und Team der Saison [§C34] —
+// ein Schnitt am letzten Abend eines Monats galt am Morgen danach, bevor
+// jemand gespielt hatte, als „jetzt" und trug die Titel schon, nach der
+// ersten Partie nicht mehr: gemessen nannte die Laufbahn der Woche bis zum
+// 31.05. für Martin morgens 87 Prestige und abends 62. Mit dem Schluss des
+// letzten Spieltags um 23:59 der Spieler des Tages, was den ganzen Tag
+// beschreibt (`_tagZu`) und die Rekorde über volle Tage; mit dem Wechsel
+// der Woche der Spieler der Woche. Ohne diese beiden war der Stand vor und
+// nach dem Schluss derselbe „jetzt", und wer durch den Spieler der Woche
+// eine Stufe aufstieg, stand in keinem Vergleich.
 function _schnitt(bisMs){
   if(!bisMs || !matches.length) return undefined;
-  if(bisMs < mts(matches[matches.length - 1])) return bisMs;
+  const letzte = mts(matches[matches.length - 1]);
+  if(bisMs < letzte) return bisMs;
+  const jetzt = Date.now();
+  const tagSchluss = new Date(letzte); tagSchluss.setHours(23, 59, 0, 0);
+  if(bisMs < tagSchluss.getTime() && jetzt >= tagSchluss.getTime()) return bisMs;
+  // Über den Kalender und nicht in Millisekunden: eine Woche mit der
+  // Zeitumstellung hat 167 oder 169 Stunden.
+  const w = wochenBeginn(letzte); w.setDate(w.getDate() + 7);
+  const wocheSchluss = w.getTime();
+  if(bisMs < wocheSchluss && jetzt >= wocheSchluss) return bisMs;
   return bisMs >= seasonStart().getTime() ? undefined : bisMs;
 }
 

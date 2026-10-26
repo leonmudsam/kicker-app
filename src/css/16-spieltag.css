@@ -295,6 +295,22 @@
 .nf-gegen b.r,.nd-gegen b.r{font-family:'Sometype Mono',monospace;color:var(--red);white-space:nowrap}
 .nf-gegen .av,.nd-gegen .av{--av:20px;width:20px;height:20px;font-size:8px;flex:0 0 auto}
 .sp-tg-z b.g{color:var(--acid)}.sp-tg-z b.r{color:var(--red)}
+/* Was der Schluss eines Zeitraums vergab [§11.0e]: dieselbe Zeile wie das
+   Gegenstück, im Ton der Klasse [§C25] — Gold legendär, Violett selten. */
+.nf-abs-l{display:flex;flex-direction:column;gap:6px;margin:8px 13px 10px}
+.nf-abs-l.im-blatt{margin:0 0 8px}
+.nf-abs{display:flex;align-items:center;gap:8px;padding:6px 10px 6px 7px;border-radius:10px;font-size:11px;line-height:1.35;color:var(--muted)}
+.nf-abs.gold{background:rgba(247,207,74,.07);box-shadow:inset 3px 0 0 rgba(247,207,74,.6)}
+.nf-abs.viol{background:rgba(167,139,250,.08);box-shadow:inset 3px 0 0 rgba(167,139,250,.6)}
+.nf-abs-l.im-blatt .nf-abs{cursor:pointer}
+.nf-abs > span:not(.av):not(.zk){flex:1 1 auto;min-width:0}
+.nf-abs b{color:var(--ink)}
+.nf-abs em{font-style:normal;white-space:nowrap}
+.nf-abs > i{font-style:normal;font-size:10px;font-weight:600;white-space:nowrap;flex:0 0 auto}
+.nf-abs.gold > i{color:var(--gold)}.nf-abs.viol > i{color:var(--purple)}
+.nf-abs .av{--av:20px;width:20px;height:20px;font-size:8px;flex:0 0 auto}
+.nf-abs .zk{flex:0 0 auto}
+
 
 /* ── Die Elo-Kurve ── */
 .sp-ku{padding:9px 13px 9px;border-top:1px solid var(--line)}

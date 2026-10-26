@@ -17,6 +17,7 @@ Alles in `17-badges.js`, außer wo anders genannt.
 | Stelle | was | wenn es fehlt |
 |---|---|---|
 | `BADGES[]` | Eintrag mit `id`, `ic`, `name`, `desc`, `count` | — |
+| dort `count(id, ms, bis)` | bei einer Auszeichnung, die an einem Zeitraum hängt (Tag, Woche, Monat): den Schnitt `bis` weiterreichen; welcher Zeitraum offen ist, sagt `_periodeOffen`, nie die Uhr | der Stand eine Millisekunde vor dem Schluss der Woche trug den Spieler der Woche schon, sobald die Woche nach der Uhr vorbei war, und den Aufstieg, den er brachte, sah keine Karte. `tests/ambient` misst es am 03.08. |
 | dort `name` | ein Name, den keine Stufe des Karriere-Rangs trägt (`RANKS`) | die Auszeichnung für 150 Partien hieß „Legende" wie die oberste Rangstufe, und im Profil stand dasselbe Wort für zwei Dinge. `tests/disziplinen` misst es |
 | dort `desc` | ein Satz ohne Kürzel und Formelzeichen („ab 3 Partien", „höchstens 2 Tore Unterschied", „10:0-Sieg", nicht „20+ Siege") | er steht im Blatt und als Text der Karte im Feed; „Sieg mit Tordifferenz ≥ 7" und „mind. einen Gegner aus den Bottom-2" waren eine Formel. `tests/disziplinen` misst es |
 | `BADGE_RARITY` | die Klasse | `rarityOf` liefert still `common`, die billigste — das Badge ist als „Legendary" gedacht und zählt wie ein Zittersieg |
@@ -24,6 +25,7 @@ Alles in `17-badges.js`, außer wo anders genannt.
 | `BADGE_WUERDE` | **nur**, wenn jeder neue saisonweise Erfolg eine neue News-Karte auslösen soll | ohne Eintrag meldet der Feed nur die festen Meilensteine; auf Prestige hat die Liste keinen Einfluss |
 | — | nichts weiter für den News-Takt | er hängt an der Klasse (`_badgeTakt`, [§C33]): legendär jedes Mal, selten an `NEWS_BADGE_MARKEN`, gewöhnlich an `NEWS_BADGE_MARKEN_KLEIN` und dort nur in der gemeinsamen Matchkarte |
 | `getBadgeEarnedCache` | `fire('id')` | das Badge erscheint nur im Profil: kein Toast, kein Chip im Match-Review |
+| `ABSCHLUSS_TAG`, `ABSCHLUSS_WOCHE`, `ABSCHLUSS_MONAT` (`26b-story-fakten.js`) | **nur**, wenn die Auszeichnung ohne Partie mit dem Schluss eines Tages, einer Woche oder eines Monats kommt, selten oder legendär ist und nicht die Karte selbst ist (Spieler des Tages, der Woche, Meister, Vize, Team der Saison) | sie stand nur im Rückblick: der Award-Sammler, legendär, hatte keine Karte [§C33]. Ein seltenes Badge mit `tagEnde` in `ABSCHLUSS_TAG` steht dann in der Karte des Spielers des Tages statt als eigene Karte und in der Ehrung |
 | `src/js/02-icons.js` | das Icon aus `ic`: ein Schlüssel, den keine andere Sache trägt, oder das Zeichen derselben Sache, dann mit ihrer Familie in `ZEICHEN_FAMILIEN` (`tests/disziplinen`) [§C41] | die Kachel bleibt leer, oder ein Zeichen sagt zwei Dinge — die Krone stand für sechs |
 
 Die ersten fünf Zeilen der goldenen Vitrine folgen `BADGE_PROFIL_ORDER`, je

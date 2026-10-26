@@ -12,7 +12,10 @@
 //     davor. Partien mit weniger als zwei Stunden Abstand gehören zu einer
 //     Karte: 13:44 und 15:40 ergeben eine um 17:40; 13:02 und 15:30 zwei,
 //     um 15:02 und um 17:30. Was erst am Tagesende vergeben wird (`tagEnde`,
-//     23:57), steht in der nächsten Karte, die danach entsteht [§C33].
+//     23:57), steht in der nächsten Karte, die danach entsteht [§C33] — außer
+//     die Karte des Spielers des Tages nennt es schon als Abschluss
+//     (`getragen`, [§11.0e]): Unschlagbar stand sonst um 23:59 dort und Tage
+//     später ein zweites Mal hier.
 //
 //     Der Wert je Auszeichnung ist ihr Teilwert beim wievielten Mal
 //     (`auszeichnungsTeilwert`): das erste und zweite Mal voll, danach eine
@@ -23,7 +26,7 @@ const EHRUNG_PAUSE_MS = 2 * 3600e3;
 // Eine Karte je abgeschlossener Runde im Fenster des Feeds. Die Grenzen
 // werden über ALLE Partien gezogen: sonst begänne die erste Runde im
 // Fenster bei null und nähme Auszeichnungen von vor zwei Wochen mit.
-function _newsEhrungStories(nowMs){
+function _newsEhrungStories(nowMs, getragen){
   const out = [];
   const ms = (matches || []).slice().sort((a, b) => mts(a) - mts(b));
   if(!ms.length) return out;
@@ -48,6 +51,8 @@ function _newsEhrungStories(nowMs){
       const te = e.meta && e.meta.tagEnde;
       let wann = t;
       if(te){ const d = new Date(te + 'T00:00:00'); d.setHours(23, 57, 0, 0); wann = d.getTime(); }
+      // Gezählt ist sie oben schon: der Rang der nächsten hängt daran.
+      if(te && getragen && getragen.has(te + '|' + e.playerId + '|' + e.badge.id)) return;
       ev.push({pid:e.playerId, badge:e.badge, mid, t, wann});
     });
   });

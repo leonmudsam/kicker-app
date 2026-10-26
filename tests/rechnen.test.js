@@ -155,9 +155,16 @@ const tag=(uhr,jetzt,mitPleite)=>{
     seasons=[];cfg={...window.__cfgBasis};invalidateCache();
     const ev=Object.entries(getBadgeEarnedCache()).flatMap(([mid,l])=>l.map(e=>({mid,pid:e.playerId,b:e.badge.id,ende:e.meta&&e.meta.tagEnde})));
     const n=(pid,b)=>(computeBadges(pid).find(x=>x.id===b)||{}).count||0;
+    // Wo Unschlagbar steht: eine eigene Karte, die Karte einer Partie oder —
+    // seit der Schluss des Tages nennt, was er vergab — die Karte des
+    // Spielers des Tages [§11.0e]. Dort stand es sonst ein zweites Mal.
     let karte='';
-    try { const s=_buildStories().find(x=>(x.dataRef||{}).badgeId==='unbeatable');
-      if(s) karte=new Date(s.when).toISOString().slice(11,16)+(s.dataRef.matchId?' an der Partie':' eigene Karte'); } catch(e){ karte='Fehler '+e.message; }
+    try { const l=_buildStories(), s=l.find(x=>(x.dataRef||{}).badgeId==='unbeatable');
+      const t=l.find(x=>(x.dataRef||{}).type==='potd'&&(x.dataRef.abschluss||[]).some(a=>a.id==='unbeatable'));
+      const k=[];
+      if(s) k.push(new Date(s.when).toISOString().slice(11,16)+(s.dataRef.matchId?' an der Partie':' eigene Karte'));
+      if(t) k.push(new Date(t.when).toISOString().slice(11,16)+' Spieler des Tages');
+      karte=k.join(', '); } catch(e){ karte='Fehler '+e.message; }
     return {karte,unschlagbar:n('t0','unbeatable'),schwarz:n('t2','black_day'),zusammenbruch:n('t0','crash_day'),
       comeback:n('t2','comeback_day'),potd:n('t0','potd'),
       ev:ev.filter(e=>['unbeatable','black_day','crash_day','comeback_day'].includes(e.b)).map(e=>e.pid+':'+e.b+'@'+e.mid+(e.ende?'/'+e.ende:'')).sort().join(' ')};
@@ -166,9 +173,9 @@ const tag=(uhr,jetzt,mitPleite)=>{
 const mittag=tag([14,26],0,false), abend=tag([23,59],0,false), pleite=tag([23,59],0,true), pleiteMittag=tag([17,30],0,true);
 ok(mittag.unschlagbar===0&&mittag.schwarz===0&&mittag.potd===0&&mittag.ev==='',
   'Um 14:26 ist kein Tag zu: weder Unschlagbar noch Schwarzer Tag noch Spieler des Tages, und keine Vergabe: '+JSON.stringify(mittag));
-ok(abend.unschlagbar===1&&abend.schwarz===1&&abend.potd===1&&abend.karte==='23:57 eigene Karte'
+ok(abend.unschlagbar===1&&abend.schwarz===1&&abend.potd===1&&abend.karte==='23:59 Spieler des Tages'
   &&abend.ev==='t0:unbeatable@t3/2026-10-19 t1:unbeatable@t3/2026-10-19 t2:black_day@t3/2026-10-19 t3:black_day@t3/2026-10-19',
-  'Um 23:59 gilt der Tag, an der letzten Partie, und seine Karte steht am Tagesende für sich statt in der Karte einer Partie: '+JSON.stringify(abend));
+  'Um 23:59 gilt der Tag, an der letzten Partie, und Unschlagbar steht einmal, am Tagesende in der Karte des Spielers des Tages statt in der Karte einer Partie: '+JSON.stringify(abend));
 ok(pleiteMittag.zusammenbruch===0&&pleiteMittag.comeback===0&&pleiteMittag.ev==='',
   'Nach einer Niederlage um 17 Uhr ist der Tag noch nicht „mit einer Niederlage beendet": '+JSON.stringify(pleiteMittag));
 ok(pleite.unschlagbar===0&&pleite.schwarz===0&&pleite.zusammenbruch===1&&pleite.comeback===1

@@ -4969,6 +4969,20 @@
 .nf-gegen b.r,.nd-gegen b.r{font-family:'Sometype Mono',monospace;color:var(--red);white-space:nowrap}
 .nf-gegen .av,.nd-gegen .av{--av:20px;width:20px;height:20px;font-size:8px;flex:0 0 auto}
 .sp-tg-z b.g{color:var(--acid)}.sp-tg-z b.r{color:var(--red)}
+.nf-abs-l{display:flex;flex-direction:column;gap:6px;margin:8px 13px 10px}
+.nf-abs-l.im-blatt{margin:0 0 8px}
+.nf-abs{display:flex;align-items:center;gap:8px;padding:6px 10px 6px 7px;border-radius:10px;font-size:11px;line-height:1.35;color:var(--muted)}
+.nf-abs.gold{background:rgba(247,207,74,.07);box-shadow:inset 3px 0 0 rgba(247,207,74,.6)}
+.nf-abs.viol{background:rgba(167,139,250,.08);box-shadow:inset 3px 0 0 rgba(167,139,250,.6)}
+.nf-abs-l.im-blatt .nf-abs{cursor:pointer}
+.nf-abs > span:not(.av):not(.zk){flex:1 1 auto;min-width:0}
+.nf-abs b{color:var(--ink)}
+.nf-abs em{font-style:normal;white-space:nowrap}
+.nf-abs > i{font-style:normal;font-size:10px;font-weight:600;white-space:nowrap;flex:0 0 auto}
+.nf-abs.gold > i{color:var(--gold)}.nf-abs.viol > i{color:var(--purple)}
+.nf-abs .av{--av:20px;width:20px;height:20px;font-size:8px;flex:0 0 auto}
+.nf-abs .zk{flex:0 0 auto}
+
 
 .sp-ku{padding:9px 13px 9px;border-top:1px solid var(--line)}
 .sp-ku-k{display:flex;align-items:center;gap:7px;font-size:11.5px;min-width:0}
@@ -6384,7 +6398,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.26.feaf63c8';
+const BUILD_VERSION='2026.10.26.4cd48aff';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -6788,7 +6802,14 @@ function tagKey(when){
 
 function _schnitt(bisMs){
   if(!bisMs || !matches.length) return undefined;
-  if(bisMs < mts(matches[matches.length - 1])) return bisMs;
+  const letzte = mts(matches[matches.length - 1]);
+  if(bisMs < letzte) return bisMs;
+  const jetzt = Date.now();
+  const tagSchluss = new Date(letzte); tagSchluss.setHours(23, 59, 0, 0);
+  if(bisMs < tagSchluss.getTime() && jetzt >= tagSchluss.getTime()) return bisMs;
+  const w = wochenBeginn(letzte); w.setDate(w.getDate() + 7);
+  const wocheSchluss = w.getTime();
+  if(bisMs < wocheSchluss && jetzt >= wocheSchluss) return bisMs;
   return bisMs >= seasonStart().getTime() ? undefined : bisMs;
 }
 
@@ -14899,11 +14920,11 @@ const BADGES=[
   {id:'team_of_season',ic:'handshake',name:'Team der Saison',desc:'Bestes Duo einer Saison',
     multi:true,count:(id,ms,bis)=>countTeamOfSeason(id,bis)},
   {id:'award_collector',ic:'medalTrio',name:'Award-Sammler',desc:'In einer Saison mindestens 5-mal Player of the Day und 2-mal Player of the Week',
-    multi:true,count:(id,ms)=>countAwardCollector(id,ms)},
+    multi:true,count:(id,ms,bis)=>countAwardCollector(id,ms,bis)},
   {id:'potw',ic:'weekKing',name:'Player of the Week',desc:'Höchste Siegquote einer Kalenderwoche (ab 5 Siegen)',
-    multi:true,count:(id,ms)=>countPeriodWins(id,ms,'week')},
+    multi:true,count:(id,ms,bis)=>countPeriodWins(id,ms,'week',bis)},
   {id:'potd',ic:'dayKing',name:'Player of the Day',desc:'Die meisten Siege eines Spieltags (ab 3)',
-    multi:true,count:(id,ms)=>countDayWins(id,ms)},
+    multi:true,count:(id,ms,bis)=>countDayWins(id,ms,bis)},
   {id:'kingslayer',ic:'kingFall',name:'Thronfäller',desc:'Sieg gegen den Ersten der Saison-Rangliste, gemessen vor der Partie',
     multi:true,count:(id,ms)=>countKingslayer(id,ms)},
   {id:'overtake',ic:'ueberholen',name:'Überholmanöver',desc:'Einen Gegner der Partie besiegt und dabei in der Saison-Rangliste überholt',
@@ -14921,9 +14942,9 @@ const BADGES=[
   {id:'mr_perfect',ic:'tripleCup',name:'Mr. Perfect',desc:'3× 10:0-Sieg in einer Saison',
     multi:true,count:(id,ms)=>countMrPerfect(id,ms)},
   {id:'allwetter',ic:'weatherMix',name:'Allwetter',desc:'An 5 verschiedenen Wochentagen Player of the Day geworden',
-    multi:true,count:(id,ms)=>countAllwetter(id,ms)},
+    multi:true,count:(id,ms,bis)=>countAllwetter(id,ms,bis)},
   {id:'godly_streak',ic:'godRay',name:'Tag der Götter',desc:'An 3 eigenen Spieltagen in Folge Player of the Day geworden',
-    multi:true,count:(id,ms)=>countGodlyStreak(id,ms)},
+    multi:true,count:(id,ms,bis)=>countGodlyStreak(id,ms,bis)},
   {id:'bitter_loss',ic:'pille',name:'Bittere Pille',desc:'9:10-Niederlage',
     multi:true,count:(id,ms)=>matchesOfPlayer(id,ms).filter(m=>!won(id,m)&&goalsFor(id,m)===9&&goalsAgainst(id,m)===10).length},
   {id:'mr_disaster',ic:'tripleCrash',name:'Mr. Disaster',desc:'3× 0:10-Niederlage in einer Saison',
@@ -15220,12 +15241,15 @@ function _periodeRangliste(ms, regel, nurSichtbar){
              : a.wins!==b.wins ? b.wins-a.wins : b.eloDelta-a.eloDelta);
 }
 
-function _periodWinnerMap(allMs, kind){
-  const now=new Date();
-  let curKey;
-  if(kind==='week')       curKey=_wochenKey(now);
-  else if(kind==='month') curKey=now.getFullYear()+'-'+now.getMonth();
-  else { const heute=now.toISOString().slice(0,10); curKey=_tagZu(heute) ? '' : heute; }
+function _periodeOffen(kind, bisMs){
+  const t = Number.isFinite(bisMs) ? new Date(bisMs) : new Date();
+  if(kind==='week')  return _wochenKey(t.getTime());
+  if(kind==='month') return t.getFullYear()+'-'+t.getMonth();
+  const tag=t.toISOString().slice(0,10);
+  return _tagZu(tag, t.getTime()) ? '' : tag;
+}
+function _periodWinnerMap(allMs, kind, bisMs){
+  const curKey=_periodeOffen(kind, bisMs);
   let slot=_winnerCountsMemo.get(allMs);
   if(!slot){ slot={}; _winnerCountsMemo.set(allMs, slot); }
   const slotKey='win_'+kind+'_'+curKey;
@@ -15256,22 +15280,22 @@ function _periodWinnerMap(allMs, kind){
   slot[slotKey]=winners;
   return winners;
 }
-function _winnerCountsOf(allMs, kind){
-  const winners=_periodWinnerMap(allMs, kind);
+function _winnerCountsOf(allMs, kind, bisMs){
+  const winners=_periodWinnerMap(allMs, kind, bisMs);
   let slot=_winnerCountsMemo.get(allMs);
   if(!slot){ slot={}; _winnerCountsMemo.set(allMs, slot); }
-  const slotKey='cnt_'+kind+'_'+Object.keys(winners).length;
+  const slotKey='cnt_'+kind+'_'+_periodeOffen(kind, bisMs);
   if(slot[slotKey]) return slot[slotKey];
   const counts={};
   Object.values(winners).forEach(pid=>{ counts[pid]=(counts[pid]||0)+1; });
   slot[slotKey]=counts;
   return counts;
 }
-function countPeriodWins(id,allMs,periodType){
-  return _winnerCountsOf(allMs, periodType==='week'?'week':'month')[id]||0;
+function countPeriodWins(id,allMs,periodType,bisMs){
+  return _winnerCountsOf(allMs, periodType==='week'?'week':'month', bisMs)[id]||0;
 }
-function countDayWins(id,allMs){
-  return _winnerCountsOf(allMs,'day')[id]||0;
+function countDayWins(id,allMs,bisMs){
+  return _winnerCountsOf(allMs,'day',bisMs)[id]||0;
 }
 
 function countKrimiStreaks(id,ms){
@@ -15382,14 +15406,14 @@ function countOvertake(id,ms){
   return count;
 }
 
-function countAwardCollector(id, matchSubset){
+function countAwardCollector(id, matchSubset, bisMs){
   const quelle = Array.isArray(matchSubset) ? matchSubset : matches;
   const bySeason = getMatchesBySeason(quelle);
   let count=0;
   Object.values(bySeason).forEach(seasonMs=>{
-    const potd=countDayWins(id,seasonMs);
+    const potd=countDayWins(id,seasonMs,bisMs);
     if(potd<5) return;
-    const potw=countPeriodWins(id,seasonMs,'week');
+    const potw=countPeriodWins(id,seasonMs,'week',bisMs);
     if(potw>=2) count++;
   });
   return count;
@@ -15428,16 +15452,14 @@ function countMrPerfect(id, matchSubset){
   return count;
 }
 
-function countAllwetter(id, matchSubset){
-  return _allwetterTage(id, matchSubset).size >= 5 ? 1 : 0;
+function countAllwetter(id, matchSubset, bisMs){
+  return _allwetterTage(id, matchSubset, bisMs).size >= 5 ? 1 : 0;
 }
-function _allwetterTage(id, matchSubset){
+function _allwetterTage(id, matchSubset, bisMs){
   const quelle = Array.isArray(matchSubset) ? matchSubset : matches;
-  const sieger = _periodWinnerMap(quelle, 'day');
-  const heute = new Date().toISOString().slice(0, 10);
+  const sieger = _periodWinnerMap(quelle, 'day', bisMs);
   const wochentage = new Set();
   for(const tag in sieger){
-    if(tag === heute) continue;
     if(sieger[tag] !== id) continue;
     const [y, mo, d] = tag.split('-').map(Number);
     wochentage.add(new Date(y, mo - 1, d).getDay());
@@ -15445,12 +15467,12 @@ function _allwetterTage(id, matchSubset){
   return wochentage;
 }
 
-function countGodlyStreak(id, matchSubset){
+function countGodlyStreak(id, matchSubset, bisMs){
   const quelle = Array.isArray(matchSubset) ? matchSubset : matches;
-  const sieger = _periodWinnerMap(quelle, 'day');
+  const sieger = _periodWinnerMap(quelle, 'day', bisMs);
   const proTag = matchesByDay(quelle);
-  const heute = new Date().toISOString().slice(0, 10);
-  const tage = Object.keys(proTag).filter(d => d !== heute).sort();
+  const offen = _periodeOffen('day', bisMs);
+  const tage = Object.keys(proTag).filter(d => d !== offen).sort();
   let cur = 0, count = 0;
   for(const tag of tage){
     const dayMs = proTag[tag];
@@ -19226,8 +19248,8 @@ function _storyTagGrenzen(ms){
   if(!n) return null;
   const juengste = matches.length ? mts(matches[matches.length - 1]) : 0;
   return {tag: tagKey(von), vonMs: von, erste, letzte, partien: n,
-          vorMs: von - 1,
-          nachMs: letzte >= juengste ? 0 : bis,
+          vorMs: von,
+          nachMs: bis - 1000,
           istHeute: letzte >= juengste};
 }
 
@@ -19269,15 +19291,73 @@ function _insBestVor(vonMs, bestand){
   const best = {};
   const merk = (pid, pos) => { if(aktiv.has(pid) && isFinite(pos) && (best[pid] == null || pos > best[pid])) best[pid] = pos; };
   const l = Array.isArray(bestand) ? _tafelFassungen(bestand) : [];
-  const alt = l.filter(x => { const d = (x && x.dataRef) || {}; return d.type === 'insignium_tag' && d.best && String(d.tag) < tag; })
-    .sort((a, b) => String(b.dataRef.tag).localeCompare(String(a.dataRef.tag)))[0];
-  if(alt) Object.keys(alt.dataRef.best).forEach(pid => merk(pid, Number(alt.dataRef.best[pid])));
+  l.forEach(x => {
+    const d = (x && x.dataRef) || {};
+    if(d.type === 'insignium_tag' && d.best && String(d.tag) < tag)
+      Object.keys(d.best).forEach(pid => merk(pid, Number(d.best[pid])));
+  });
   l.forEach(x => {
     const d = (x && x.dataRef) || {};
     if(d.type !== 'insignium_stufe' || !d.pid || tagKey(x.when) >= tag) return;
     merk(d.pid, (Number(d.punkte) ? insigniumStufeVon(Number(d.punkte)) : (d.stufe | 0)) * INSIGNIUM_GRADE);
   });
   return best;
+}
+
+const ABSCHLUSS_KLASSEN = {legendary:0, rare:1};
+const ABSCHLUSS_TAG = ['award_collector', 'godly_streak', 'allwetter', 'unbeatable'];
+const ABSCHLUSS_WOCHE = ['award_collector'];
+const ABSCHLUSS_MONAT = ['untouchable'];
+function _abschlussAuszeichnungen(schlussMs, ids){
+  const vor = schlussMs - 1;
+  const msA = _partienBis(vor), msB = _partienBis(schlussMs);
+  const out = [];
+  BADGES.forEach(b => {
+    const klasse = rarityOf(b.id);
+    if(!ids.includes(b.id) || !(klasse in ABSCHLUSS_KLASSEN)) return;
+    const spieler = [];
+    (players || []).forEach(p => {
+      if(!sichtbar(p)) return;
+      let a = 0, n = 0;
+      try { a = b.count(p.id, msA, vor) || 0; n = b.count(p.id, msB, schlussMs) || 0; } catch(e){ return; }
+      let wert = 0;
+      for(let i = a + 1; i <= n; i++) wert += auszeichnungsTeilwert(b.id, i);
+      if(wert > 0) spieler.push({pid:p.id, mal:n, p:Math.round(wert * 10) / 10});
+    });
+    if(spieler.length) out.push({id:b.id, name:b.name, ic:b.ic, klasse, spieler});
+  });
+  return out.sort((x, y) => ABSCHLUSS_KLASSEN[x.klasse] - ABSCHLUSS_KLASSEN[y.klasse]
+    || ids.indexOf(x.id) - ids.indexOf(y.id));
+}
+
+function _insZuegeZwischen(vor, nach, best, wann){
+  const aktiv = (players || []).filter(p => ligaAktiv(p));
+  const lage = P => ({stufe:P.stufe | 0, grad:P.grad | 0, punkte:Math.round(P.punkte || 0)});
+  const zuege = [], bestNeu = {};
+  aktiv.forEach(p => {
+    const a = vor.prestige(p.id), b = nach.prestige(p.id);
+    if(!a || !b) return;
+    const pa = insigniumPos(a), pb = insigniumPos(b);
+    const bp = best[p.id] != null ? best[p.id] : pa;
+    bestNeu[p.id] = Math.max(bp, pa, pb);
+    let art = '';
+    if(b.stufe > a.stufe) art = 'auf';
+    else if(b.stufe < a.stufe) art = 'ab';
+    else if(pb > pa && pb > bp) art = 'grad';
+    if(!art) return;
+    const w = wann(p.id, art, pb) || {};
+    zuege.push({pid:p.id, art, vor:lage(a), nach:lage(b), ms:w.ms, matchId:w.matchId || null,
+      wieder:art === 'auf' && best[p.id] != null && best[p.id] >= b.stufe * INSIGNIUM_GRADE,
+      traeger:aktiv.filter(q => { const x = nach.prestige(q.id); return x && x.stufe >= b.stufe; }).length,
+      von:aktiv.length});
+  });
+  zuege.sort(_insZugVor);
+  return {zuege, best:bestNeu,
+    laufbahn:zuege.reduce((o, z) => { const w = _prestigeWirkung(z.pid, vor, nach);
+      o[z.pid] = {vor:w.vor, nach:w.nach, delta:w.delta, stufeVor:w.stufeVor, stufeNach:w.stufeNach,
+        rek:w.rekordDelta, mon:w.monatDelta}; return o; }, {}),
+    leiter:INSIGNIEN.map((_, i) => aktiv.filter(q => { const x = nach.prestige(q.id);
+      return x && x.stufe === i; }).length)};
 }
 
 const STORY_RANG_MIN_PARTIEN = 15;
@@ -19864,6 +19944,33 @@ function _buildStories(){
     });
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] loss_streak', e); }
 
+  const _potdTage = new Map(), _tagGetragen = new Set();
+  try {
+    const bestand = new Map((Array.isArray(_cache._stories) ? _cache._stories : [])
+      .filter(x => x && typeof x.id === 'string' && x.id.indexOf('potd_') === 0).map(x => [x.id, x]));
+    const seit = now.getTime() - NEWS_FENSTER_TAGE * 86400000;
+    const tage = new Map();
+    matches.forEach(m => {
+      const ts = mts(m);
+      if(ts < seit || ts > now.getTime()) return;
+      const dk = tagKey(ts);
+      let l = tage.get(dk);
+      if(!l){ l = []; tage.set(dk, l); }
+      l.push(m);
+    });
+    tage.forEach((dayMatches, dayKey) => {
+      const rep = new Date(dayKey + 'T00:00:00'); rep.setHours(23, 59, 0, 0);
+      if(now.getTime() < rep.getTime()) return;
+      const res = _newsPeriodWinner(dayMatches, 'tag');
+      if(!res) return;
+      const abschluss = _abschlussAuszeichnungen(rep.getTime(), ABSCHLUSS_TAG);
+      const alt = bestand.get('potd_' + dayKey);
+      ((alt ? (alt.dataRef || {}).abschluss : abschluss) || []).forEach(a =>
+        (a.spieler || []).forEach(x => _tagGetragen.add(dayKey + '|' + x.pid + '|' + a.id)));
+      _potdTage.set(dayKey, {rep, res, abschluss});
+    });
+  } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] potd abschluss', e); }
+
   try {
     const cutoff = now.getTime() - 7*86400000;
     const bMap = getBadgeEarnedCache();
@@ -19878,6 +19985,7 @@ function _buildStories(){
       if(t < cutoff) continue;
       arr.forEach(e => {
         const te = e.meta && e.meta.tagEnde;
+        if(te && _tagGetragen.has(te + '|' + e.playerId + '|' + e.badge.id)) return;
         let when = new Date(matchObj.created_at);
         if(te){ when = new Date(te + 'T00:00:00'); when.setHours(23, 57, 0, 0); }
         events.push({...e, when, matchId: mid, tagEnde: te || null});
@@ -20245,13 +20353,14 @@ function _buildStories(){
             spitze:rang.slice(0, 3).map(pid => ({pid, n:je[pid]})), erstlinge:erst};
         }
       } catch(e){ chronik = null; }
-      let zeichen = [];
+      let zeichen = [], abschluss = [];
       try {
         const ende = seasonEnd(sid).getTime();
+        abschluss = _abschlussAuszeichnungen(ende, ABSCHLUSS_MONAT);
         zeichen = rcpZeichenZuege(rcpLaufbahnDaten(ende, ende + 1000))
           .filter(z => pm[z.pid] && ligaAktiv(pm[z.pid]))
           .map(z => ({pid:z.pid, art:z.art, vor:{stufe:z.vor.stufe, grad:z.vor.grad}, nach:{stufe:z.nach.stufe, grad:z.nach.grad}}));
-      } catch(e){ zeichen = []; }
+      } catch(e){ zeichen = []; abschluss = []; }
       const champ = nameOf(topElo[0].id);
       stories.push({
         id: 'season_recap_' + sid,
@@ -20262,7 +20371,7 @@ function _buildStories(){
         when: new Date(sStart.getFullYear(), sStart.getMonth(), 1, 0, 0, 0, 0),
         prio: STORY_PRIO.season_recap,
         dataRef: {type:'season_recap', sid, championId:topElo[0].id, championElo:topElo[0].elo,
-                  topElo, fakten:_fakten, team, chronik, zeichen}
+                  topElo, fakten:_fakten, team, chronik, zeichen, abschluss}
       });
     }
   } catch(e){}
@@ -20869,21 +20978,7 @@ function _buildStories(){
   } catch(e){}
 
   try {
-    const potdSeit = now.getTime() - NEWS_FENSTER_TAGE * 86400000;
-    const potdTage = new Map();
-    matches.forEach(m => {
-      const ts = mts(m);
-      if(ts < potdSeit || ts > now.getTime()) return;
-      const dk = tagKey(ts);
-      let l = potdTage.get(dk);
-      if(!l){ l = []; potdTage.set(dk, l); }
-      l.push(m);
-    });
-    potdTage.forEach((dayMatches, dayKey) => {
-      const rep = new Date(dayKey + 'T00:00:00'); rep.setHours(23, 59, 0, 0);
-      if(now.getTime() < rep.getTime()) return;
-      const res = _newsPeriodWinner(dayMatches, 'tag');
-      if(!res) return;
+    _potdTage.forEach(({rep, res, abschluss}, dayKey) => {
       const main = res.main;
       const names = res.winners.map(w => nameOf(w.id));
       const titleNames = _namenKurz(names);
@@ -20901,12 +20996,13 @@ function _buildStories(){
         prio: STORY_PRIO.potd,
         dataRef: {type:'potd', dayKey, playerId: main.id,
                   playerIds: res.winners.map(w => w.id),
-                  wins: main.wins, games: main.wins + main.losses, wr: main.wr}
+                  wins: main.wins, games: main.wins + main.losses, wr: main.wr,
+                  abschluss}
       });
     });
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] potd', e); }
 
-  try { _newsEhrungStories(now.getTime()).forEach(st => stories.push(st)); }
+  try { _newsEhrungStories(now.getTime(), _tagGetragen).forEach(st => stories.push(st)); }
   catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] ehrung', e); }
   try { _newsRundenStories(now.getTime()).forEach(st => stories.push(st)); }
   catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] runde', e); }
@@ -20961,6 +21057,7 @@ function _buildStories(){
         prio: STORY_PRIO.woche,
         dataRef: {type:'woche', woche:_lastWeekKey, spiele:_wSpiele.length, tage:_wTage,
                   playerIds: _wHeld.pids.slice(0, 2),
+                  abschluss: _abschlussAuszeichnungen(_wocheEnde, ABSCHLUSS_WOCHE),
                   teile: _wochenTeile.map(t => ({art:t.art, ic:t.ic, label:t.label, pids:t.pids,
                                                  wert:t.wert, satz:t.satz, duo:!!t.duo,
                                                  matchId:t.matchId || null}))}
@@ -21294,58 +21391,60 @@ function _buildStories(){
     if(_tafelTag){
       const tagMs = matches.filter(m => mts(m) > _tafelTag.vorMs && mts(m) <= _tafelTag.letzte)
         .slice().sort((a, b) => mts(a) - mts(b));
-      const aktiv = (players || []).filter(p => ligaAktiv(p));
-      const best = _insBestVor(_tafelTag.vonMs, _cache._stories);
-      const zuege = [], bestNeu = {};
-      const wann = (pid, erreicht) => {
-        let lo = 0, hi = tagMs.length - 1, t = _tafelTag.letzte;
+      const schluss = new Date(_tafelTag.vonMs); schluss.setHours(23, 59, 0, 0);
+      const wann = (pid, art, pb) => {
+        const erreicht = art === 'ab' ? (x => x <= pb) : (x => x >= pb);
+        let lo = 0, hi = tagMs.length - 1, t = schluss.getTime();
         while(lo <= hi){
           const mid = (lo + hi) >> 1, ts = mts(tagMs[mid]);
           let P = null; try { P = prestigeOf(pid, ts); } catch(e){}
           if(P && erreicht(insigniumPos(P))){ t = ts; hi = mid - 1; } else lo = mid + 1;
         }
-        return t;
+        const m = tagMs.find(x => mts(x) === t && [x.a1, x.a2, x.b1, x.b2].includes(pid));
+        return {ms:t, matchId:m ? m.id : null};
       };
-      const lage = P => ({stufe:P.stufe | 0, grad:P.grad | 0, punkte:Math.round(P.punkte || 0)});
-      aktiv.forEach(p => {
-        const a = _tafelVor.prestige(p.id), b = _tafelNach.prestige(p.id);
-        if(!a || !b) return;
-        const pa = insigniumPos(a), pb = insigniumPos(b);
-        const bp = best[p.id] != null ? best[p.id] : pa;
-        bestNeu[p.id] = Math.max(bp, pa, pb);
-        let art = '';
-        if(b.stufe > a.stufe) art = 'auf';
-        else if(b.stufe < a.stufe) art = 'ab';
-        else if(pb > pa && pb > bp) art = 'grad';
-        if(!art) return;
-        const ms = wann(p.id, art === 'ab' ? (x => x <= pb) : (x => x >= pb));
-        const m = tagMs.find(x => mts(x) === ms && [x.a1, x.a2, x.b1, x.b2].includes(p.id));
-        zuege.push({pid:p.id, art, vor:lage(a), nach:lage(b), ms, matchId:m ? m.id : null,
-          wieder:art === 'auf' && best[p.id] != null && best[p.id] >= b.stufe * INSIGNIUM_GRADE,
-          traeger:aktiv.filter(q => { const x = _tafelNach.prestige(q.id); return x && x.stufe >= b.stufe; }).length,
-          von:aktiv.length});
-      });
-      if(zuege.length){
-        zuege.sort(_insZugVor);
-        const pids = zuege.map(z => z.pid);
-        const t = _insTagTexte(zuege);
-        const oben = zuege.some(z => z.art === 'auf' && !z.wieder && z.nach.stufe >= INSIGNIUM_OBEN);
+      const L = _insZuegeZwischen(_tafelVor, _tafelNach, _insBestVor(_tafelTag.vonMs, _cache._stories), wann);
+      if(L.zuege.length){
+        const t = _insTagTexte(L.zuege);
+        const oben = L.zuege.some(z => z.art === 'auf' && !z.wieder && z.nach.stufe >= INSIGNIUM_OBEN);
         stories.push({
           id:'instag_' + _tafelTag.tag, cat:'tafel', ic:'award',
           title:t.title, desc:t.desc,
-          when:new Date(Math.max(...zuege.map(z => z.ms))),
+          when:new Date(Math.max(...L.zuege.map(z => z.ms))),
           prio:STORY_PRIO.insignium_tag + (oben ? 34 : 0),
-          dataRef:{type:'insignium_tag', tag:_tafelTag.tag, zuege, playerIds:pids,
-            laufbahn:pids.reduce((o, pid) => { const w = _tafelWirkung(pid);
-              o[pid] = {vor:w.vor, nach:w.nach, delta:w.delta, stufeVor:w.stufeVor, stufeNach:w.stufeNach,
-                rek:w.rekordDelta, mon:w.monatDelta}; return o; }, {}),
-            leiter:INSIGNIEN.map((_, i) => aktiv.filter(q => { const x = _tafelNach.prestige(q.id);
-              return x && x.stufe === i; }).length),
-            best:bestNeu}
+          dataRef:{type:'insignium_tag', tag:_tafelTag.tag, zuege:L.zuege, playerIds:L.zuege.map(z => z.pid),
+            laufbahn:L.laufbahn, leiter:L.leiter, best:L.best}
         });
       }
     }
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] insignium', e); }
+
+  try {
+    const id = 'instag_woche_' + tagKey(_wocheEnde);
+    const bestand = Array.isArray(_cache._stories) ? _cache._stories : [];
+    const monat = stories.concat(bestand).some(x => { const d = (x && x.dataRef) || {};
+      return d.type === 'season_recap' && d.sid && Array.isArray(d.zeichen)
+        && seasonEnd(d.sid).getTime() + 1000 === _wocheEnde; });
+    if(now.getTime() >= _wocheEnde && !monat && !bestand.some(x => x && x.id === id)){
+      const L = _insZuegeZwischen(_storyStand(_wocheEnde - 1), _storyStand(_wocheEnde),
+        _insBestVor(_wocheEnde, bestand), () => ({ms:_wocheEnde}));
+      if(L.zuege.length){
+        const t = _insTagTexte(L.zuege, 'woche');
+        const oben = L.zuege.some(z => z.art === 'auf' && !z.wieder && z.nach.stufe >= INSIGNIUM_OBEN);
+        stories.push({
+          id, cat:'tafel', ic:'award', title:t.title, desc:t.desc,
+          when:new Date(_wocheEnde),
+          prio:STORY_PRIO.insignium_tag + (oben ? 34 : 0),
+          dataRef:{type:'insignium_tag', schluss:'woche', tag:tagKey(_wocheEnde), woche:_lastWeekKey,
+            zuege:L.zuege, playerIds:L.zuege.map(z => z.pid),
+            grund:_abschlussAuszeichnungen(_wocheEnde, ['award_collector', 'potw'])
+              .map(a => Object.assign({}, a, {spieler:a.spieler.filter(x => L.zuege.some(z => z.pid === x.pid))}))
+              .filter(a => a.spieler.length),
+            laufbahn:L.laufbahn, leiter:L.leiter, best:L.best}
+        });
+      }
+    }
+  } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] insignium woche', e); }
 
   try {
     const amb = _buildAmbientStories(now, pm, nameOf, stories);
@@ -21385,7 +21484,7 @@ function _buildStories(){
     const fassung = _tafelFassung(_tafelTag.tag, _tafelTag.letzte);
     stories.forEach(s => {
       const d = s.dataRef || {};
-      if(!STORY_TAFEL_UPDATE.has(d.type) || tagKey(s.when) !== _tafelTag.tag) return;
+      if(!STORY_TAFEL_UPDATE.has(d.type) || d.schluss || tagKey(s.when) !== _tafelTag.tag) return;
       s.id += '~' + fassung;
       s.dataRef = Object.assign({}, d, {fassung});
     });
@@ -23495,7 +23594,7 @@ function _storyIstTafelUpdate(s, jetzt){
   if(!s) return false;
   const d = s.dataRef || s.data_ref || {};
   const w = s.when || s.event_at;
-  if(!STORY_TAFEL_UPDATE.has(d.type) || !w) return false;
+  if(!STORY_TAFEL_UPDATE.has(d.type) || d.schluss || !w) return false;
   return tagKey(w) === tagKey(jetzt || new Date());
 }
 function _tafelFassung(tag, letzteMs){
@@ -23503,7 +23602,7 @@ function _tafelFassung(tag, letzteMs){
 }
 function _tafelFassungen(list){
   if(!Array.isArray(list)) return list;
-  const art = d => !STORY_TAFEL_UPDATE.has(d.type) ? '' : /^insignium_/.test(d.type) ? 'ins' : 'tafel';
+  const art = d => !STORY_TAFEL_UPDATE.has(d.type) || d.schluss ? '' : /^insignium_/.test(d.type) ? 'ins' : 'tafel';
   const gruppen = new Map();
   list.forEach(s => {
     const d = (s && s.dataRef) || {}, a = art(d);
@@ -24113,6 +24212,9 @@ function _isBreaking(s){
       return true;
     case 'badge_unlocked':
       return d.rarity === 'legendary';
+    case 'potd':
+    case 'woche':
+      return (d.abschluss || []).some(a => a && a.klasse === 'legendary');
     case 'insignium_stufe':
       return !!d.oben && !d.wieder;
     case 'insignium_tag':
@@ -24255,14 +24357,14 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
     gesicht = `<div class="nf-gr-l">${w ? _newsWertBlock(w.v, w.l, 'ton') : ''}${_newsGesichtHtml(s)}</div>`;
   } else if(sorte === 'ins' && d.type === 'insignium_tag'){
     kopf = _newsInsTagKopf(s);
-    fuss = _newsInsTagZeilen(s);
+    fuss = _newsInsTagZeilen(s) + (d.schluss ? _newsAbschlussHtml(d.grund) : '');
     satz = '';
   } else if(sorte === 'ins'){
     gesicht = `<div class="nf-gr-l">${av(d.pid, 48)}</div>`;
     fuss = _newsLeiter(d.pid);
   } else if(sorte === 'held' && d.type === 'season_recap'){
     kopf = _newsMeisterKopf(d);
-    fuss = _newsMeisterFuss(d);
+    fuss = _newsMeisterFuss(d) + _newsAbschlussHtml(d.abschluss);
   } else if(sorte === 'held' && d.type === 'karriereende'){
     kopf = _newsAbschiedKopf(d);
     fuss = _newsZahlband([
@@ -24277,6 +24379,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
     const g = d.type === 'potd' && d.gegenstueck;
     if(g && pmap()[g.pid]) fuss += `<div class="nf-gegen">${_spChip(g.pid)}<span><b>${esc(_spName(g.pid))}</b> gibt am meisten ab</span>`
       + `<b class="num r">${_spVz(Number(g.delta) || 0)} Elo</b></div>`;
+    if(d.type === 'potd') fuss += _newsAbschlussHtml(d.abschluss);
     if(!fuss) fuss = _newsZahlband([
       {v: d.wr != null ? Math.round(d.wr * 100) + ' %' : null, l:'Siegquote', f:'g'},
       {v: (d.wins != null && d.games != null) ? d.wins + ' : ' + (d.games - d.wins) : null,
@@ -24305,7 +24408,8 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
       + (t.ic ? `<em class="nf-wl-i">${svgI(t.ic)}</em>` : '')
       + `<span>${esc(t.label || '')}</span>`
       + `<i>${esc(_namenKurz((t.pids || []).map(p => (pm[p] || {}).name || '').filter(Boolean), 2))}</i>`
-      + `<b>${esc(t.wert || '')}</b></div>`).join('')}</div>`;
+      + `<b>${esc(t.wert || '')}</b></div>`).join('')}</div>`
+      + _newsAbschlussHtml(d.abschluss);
   } else if(sorte === 'duell'){
     kopf = `<div class="nf-duell-band">${av(d.a, 34)}`
       + `<span class="nf-duell-vs"><b>${esc(String(d.n || ''))}</b><i>Duelle</i></span>`
@@ -24785,6 +24889,20 @@ function _newsRangKurz(pid){
 function _newsRarityLabel(r){
   return r === 'legendary' ? 'Legendär' : r === 'rare' ? 'Selten'
        : r === 'negative' ? 'Schande' : 'Gewöhnlich';
+}
+
+function _newsAbschlussHtml(liste, blatt){
+  const pm = pmap(), z = [];
+  (Array.isArray(liste) ? liste : []).forEach(a => (a.spieler || []).forEach(x => {
+    if(!pm[x.pid]) return;
+    const ton = a.klasse === 'legendary' ? 'gold' : 'viol';
+    z.push(`<div class="nf-abs ${ton}"${blatt ? ` data-pid="${esc(x.pid)}"` : ''}>`
+      + zkHtml(a.ic, 'k', ton) + _spChip(x.pid)
+      + `<span><b>${esc(_spName(x.pid))}</b> holt <em>„${esc(a.name)}“</em> zum `
+      + `${x.mal > 1 ? x.mal + '.' : 'ersten'}\u00a0Mal</span>`
+      + `<i>${esc(_newsRarityLabel(a.klasse))}</i></div>`);
+  }));
+  return z.length ? `<div class="nf-abs-l${blatt ? ' im-blatt' : ''}">${z.join('')}</div>` : '';
 }
 
 function _newsBadgeHalterText(badgeId){
@@ -26998,7 +27116,7 @@ function _insLageName(l){
   return `${ins.name} ${INSIGNIUM_GRAD_NAME[(l.grad | 0)] || 'I'}`;
 }
 
-function _insTagTexte(zuege){
+function _insTagTexte(zuege, schluss){
   const pm = pmap(), nm = pid => (pm[pid] && pm[pid].name) || '?';
   const l = (zuege || []).filter(z => z && INSIGNIEN[(z.nach || {}).stufe | 0]).sort(_insZugVor);
   if(!l.length) return {title:'', desc:''};
@@ -27016,7 +27134,8 @@ function _insTagTexte(zuege){
         + (next ? ` Bis zum ${next.name} fehlen ${Math.max(0, next.min - z.nach.punkte)}.` : '')};
     return {
       title: `${n} fällt auf den ${S.name} zurück`,
-      desc: `Nach ${Math.max(0, z.vor.punkte - z.nach.punkte)} Prestige weniger an diesem Tag fehlen bis zum `
+      desc: `Nach ${Math.max(0, z.vor.punkte - z.nach.punkte)} Prestige weniger `
+        + `${schluss === 'woche' ? 'mit dem Schluss der Woche' : 'an diesem Tag'} fehlen bis zum `
         + `${vorS.name} wieder ${Math.max(0, vorS.min - z.nach.punkte)}.`};
   };
   if(l.length === 1) return satz(l[0]);
@@ -27145,9 +27264,11 @@ function _ndInsTagBlatt(s){
     + `<b>${esc(pm[x.pid].name)}</b><span>${esc(_insLageName(x.vor))} → ${esc(_insLageName(x.nach))}</span></div>`
     + _insWegHtml(x.pid, x.nach.punkte, x.vor.punkte)).join('');
   const leiter = Array.isArray(d.leiter) ? _newsLigaLeiter({je:d.leiter}) : '';
+  const woche = d.schluss === 'woche';
   return {kopf, mitte: ab(l.length > 1 ? 'Die Bewegungen' : 'Der Weg durch die Stufe', weg)
+    + (woche ? ab('Mit dem Schluss der Woche vergeben', _newsAbschlussHtml(d.grund, true)) : '')
     + ab('Woher das Prestige kommt', _ndWirkungBlock(je, null, new Date(s.when).getTime()))
-    + ab('Die Leiter der Liga an diesem Tag', leiter)};
+    + ab(woche ? 'Die Leiter der Liga nach der Woche' : 'Die Leiter der Liga an diesem Tag', leiter)};
 }
 
 function _insAltZuTag(list){
@@ -27159,7 +27280,7 @@ function _insAltZuTag(list){
     const zuege = _insZuege(d);
     if(zuege.length !== d.zuege.length || zuege.every((z, i) => z === d.zuege[i])
        || !zuege.every(z => pm[z.pid])) return s;
-    const t = _insTagTexte(zuege);
+    const t = _insTagTexte(zuege, d.schluss);
     return Object.assign({}, s, {title:t.title || s.title, desc:t.desc || s.desc,
       dataRef:Object.assign({}, d, {zuege})});
   });
@@ -27167,7 +27288,7 @@ function _insAltZuTag(list){
   const neu = new Map(), alt = new Map(), rest = [];
   list.forEach(s => {
     const d = (s && s.dataRef) || {};
-    if(d.type === 'insignium_tag') neu.set(d.tag || tagKey(s.when), s);
+    if(d.type === 'insignium_tag' && !d.schluss) neu.set(d.tag || tagKey(s.when), s);
     if(d.type === 'insignium_stufe'){ const k = tagKey(s.when); (alt.get(k) || alt.set(k, []).get(k)).push(s); }
     else rest.push(s);
   });
@@ -27203,7 +27324,7 @@ function _insAltZuTag(list){
 }
 const EHRUNG_PAUSE_MS = 2 * 3600e3;
 
-function _newsEhrungStories(nowMs){
+function _newsEhrungStories(nowMs, getragen){
   const out = [];
   const ms = (matches || []).slice().sort((a, b) => mts(a) - mts(b));
   if(!ms.length) return out;
@@ -27225,6 +27346,7 @@ function _newsEhrungStories(nowMs){
       const te = e.meta && e.meta.tagEnde;
       let wann = t;
       if(te){ const d = new Date(te + 'T00:00:00'); d.setHours(23, 57, 0, 0); wann = d.getTime(); }
+      if(te && getragen && getragen.has(te + '|' + e.playerId + '|' + e.badge.id)) return;
       ev.push({pid:e.playerId, badge:e.badge, mid, t, wann});
     });
   });
@@ -28205,7 +28327,7 @@ function _ndPotdBlatt(s){
       + `<b class="num r">${_spVz(Number(g.delta) || 0)} Elo</b></div>`
       + _ndTagesbahn([g.pid], _newsTagPartien(d.dayKey, [g.pid])) : '';
   return {kopf, mitte:ab('Das Feld des Tages', balken) + ab(pids.length > 1 ? 'Der Tag der Tagessieger' : 'Der Tag in Partien', bahn)
-    + ab('Der härteste Tag', gegen)};
+    + ab('Der härteste Tag', gegen) + ab('Mit dem Schluss des Tages vergeben', _newsAbschlussHtml(d.abschluss, true))};
 }
 
 function _ndEndspurtBlatt(s){
@@ -28909,8 +29031,10 @@ function _ndMitteRoh(s){
               <span class="nd-wo-t"><b>${esc(_namenListe(ids.map(nameOf)))}</b><small>${esc(t.label || '')}</small></span>
               <b class="nd-wo-w num">${esc(t.wert || '')}</b></div>`;
         }).join('');
+        const abschluss = _newsAbschlussHtml(d.abschluss, true);
         return `<div class="nd-section">Die Woche</div>${kopf}
-          <div class="nd-wo">${zeilen}</div>`;
+          <div class="nd-wo">${zeilen}</div>`
+          + (abschluss ? `<div class="nd-section">Mit dem Schluss der Woche vergeben</div>${abschluss}` : '');
       }
       case 'sammel': {
         const teile = Array.isArray(d.teile) ? d.teile : [];

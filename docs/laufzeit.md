@@ -234,12 +234,18 @@ selbst aus, und jeder ein bisschen anders — die Chronik fragte
 `prestigeTabelle` am Zeitstempel der letzten Partie, also mit einem Schnitt,
 der nichts abschneidet. Drei Rechnungen über dieselbe Änderung nennen
 irgendwann drei Zahlen, und die stehen dann auf drei Karten derselben Minute.
-„Nachher" ist für den jüngsten Spieltag deshalb `0` und damit „jetzt": so
-treffen alle vier zentralen Funktionen ihren heißen Cache. Wo eine
-Rechnung an der Identität eines Arrays hängt statt an einer Version
-(`_winnerCountsOf`, `matchesOfPlayer`, `matchesByDay`), reicht eine `WeakMap`
-— `matches` wird immer **ersetzt**, nie an Ort und Stelle verändert, und ein
-frisches Array verwirft den Memo von selbst.
+„Vorher" ist Mitternacht, nach dem Schluss der Woche, „nachher" eine Sekunde
+vor Mitternacht, vor dem Schluss des Monats (23:59:59, `seasonEnd`): beide
+Abschlüsse haben ihre eigene Karte [§C33]. Für den jüngsten Spieltag ist das
+Ende „jetzt", solange danach nichts zuging (`_schnitt`), und alle vier
+zentralen Funktionen treffen ihren heißen Cache. Wo eine Rechnung an der
+Identität eines Arrays hängt statt an einer Version (`_winnerCountsOf`,
+`matchesOfPlayer`, `matchesByDay`), reicht eine `WeakMap` — `matches` wird
+immer **ersetzt**, nie an Ort und Stelle verändert, und ein frisches Array
+verwirft den Memo von selbst. Die Sieger der Zeiträume tragen im Schlüssel
+dazu den Zeitraum, der beim Schnitt noch offen ist (`_periodeOffen`), nicht
+die Uhr und nicht die Zahl der Sieger: zwei Schnitte, die je einen anderen
+Zeitraum offen lassen, haben gleich viele Sieger und trotzdem andere.
 
 **Ein Zeitschnitt ist ein Array je Stand** (`_partienBis`, `04-cache.js`):
 die Partien bis `bisMs`, gefunden per Binärsuche wie in `getSimAt`, gemerkt
