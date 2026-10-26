@@ -659,6 +659,31 @@ function _newsRarityLabel(r){
        : r === 'negative' ? 'Schande' : 'Gewöhnlich';
 }
 
+// Was der Schluss eines Zeitraums vergab [§11.0e]: unter dem Spieler des
+// Tages, der Woche und dem Meister eine Zeile je Spieler und Auszeichnung,
+// die mit dem Schluss kam und an keiner Partie hängt. Zeichen in der Kachel
+// [§C27], Ton und Wort der Klasse [§C25], das Gesicht [§C33] — dieselbe
+// Zeile wie das Gegenstück des Tages darüber. Der Award-Sammler stand sonst
+// nur im Rückblick der Woche, Unschlagbar Tage später in einer Ehrung.
+// `blatt` macht die Zeile zum Weg ins Profil.
+function _newsAbschlussHtml(liste, blatt){
+  const pm = pmap(), z = [];
+  (Array.isArray(liste) ? liste : []).forEach(a => (a.spieler || []).forEach(x => {
+    if(!pm[x.pid]) return;
+    const ton = a.klasse === 'legendary' ? 'gold' : 'viol';
+    z.push(`<div class="nf-abs ${ton}"${blatt ? ` data-pid="${esc(x.pid)}"` : ''}>`
+      + zkHtml(a.ic, 'k', ton) + _spChip(x.pid)
+      // Der Name der Auszeichnung bricht nicht: „Award-“ stand am Zeilenende
+      // und „Sammler“ darunter.
+      + `<span><b>${esc(_spName(x.pid))}</b> holt <em>„${esc(a.name)}“</em> zum `
+      + `${x.mal > 1 ? x.mal + '.' : 'ersten'}\u00a0Mal</span>`
+      + `<i>${esc(_newsRarityLabel(a.klasse))}</i></div>`);
+  }));
+  // Nicht `nd`: so heißt das Blatt selbst, und die Zeilen standen darin in
+  // einem zweiten Blatt mit Rand und Verlauf.
+  return z.length ? `<div class="nf-abs-l${blatt ? ' im-blatt' : ''}">${z.join('')}</div>` : '';
+}
+
 // Wie viele der Liga diese Auszeichnung tragen. Das ist die Gegenprobe zur
 // Klasse [§C34] und die Zahl, die eine Auszeichnung belohnend macht: „einer
 // von zwölf" sagt mehr als „Legendär".

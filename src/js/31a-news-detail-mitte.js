@@ -302,8 +302,10 @@ function _ndMitteRoh(s){
               <span class="nd-wo-t"><b>${esc(_namenListe(ids.map(nameOf)))}</b><small>${esc(t.label || '')}</small></span>
               <b class="nd-wo-w num">${esc(t.wert || '')}</b></div>`;
         }).join('');
+        const abschluss = _newsAbschlussHtml(d.abschluss, true);
         return `<div class="nd-section">Die Woche</div>${kopf}
-          <div class="nd-wo">${zeilen}</div>`;
+          <div class="nd-wo">${zeilen}</div>`
+          + (abschluss ? `<div class="nd-section">Mit dem Schluss der Woche vergeben</div>${abschluss}` : '');
       }
       // ── Die Sammelkarte: was im selben Moment passiert ist ───────────
       // Der Kopf fasst zusammen. Darunter stehen alle Teile gleichrangig;

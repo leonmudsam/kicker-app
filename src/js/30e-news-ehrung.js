@@ -12,7 +12,10 @@
 //     davor. Partien mit weniger als zwei Stunden Abstand gehören zu einer
 //     Karte: 13:44 und 15:40 ergeben eine um 17:40; 13:02 und 15:30 zwei,
 //     um 15:02 und um 17:30. Was erst am Tagesende vergeben wird (`tagEnde`,
-//     23:57), steht in der nächsten Karte, die danach entsteht [§C33].
+//     23:57), steht in der nächsten Karte, die danach entsteht [§C33] — außer
+//     die Karte des Spielers des Tages nennt es schon als Abschluss
+//     (`getragen`, [§11.0e]): Unschlagbar stand sonst um 23:59 dort und Tage
+//     später ein zweites Mal hier.
 //
 //     Der Wert je Auszeichnung ist ihr Teilwert beim wievielten Mal
 //     (`auszeichnungsTeilwert`): das erste und zweite Mal voll, danach eine
@@ -23,7 +26,7 @@ const EHRUNG_PAUSE_MS = 2 * 3600e3;
 // Eine Karte je abgeschlossener Runde im Fenster des Feeds. Die Grenzen
 // werden über ALLE Partien gezogen: sonst begänne die erste Runde im
 // Fenster bei null und nähme Auszeichnungen von vor zwei Wochen mit.
-function _newsEhrungStories(nowMs){
+function _newsEhrungStories(nowMs, getragen){
   const out = [];
   const ms = (matches || []).slice().sort((a, b) => mts(a) - mts(b));
   if(!ms.length) return out;
@@ -48,6 +51,8 @@ function _newsEhrungStories(nowMs){
       const te = e.meta && e.meta.tagEnde;
       let wann = t;
       if(te){ const d = new Date(te + 'T00:00:00'); d.setHours(23, 57, 0, 0); wann = d.getTime(); }
+      // Gezählt ist sie oben schon: der Rang der nächsten hängt daran.
+      if(te && getragen && getragen.has(te + '|' + e.playerId + '|' + e.badge.id)) return;
       ev.push({pid:e.playerId, badge:e.badge, mid, t, wann});
     });
   });
@@ -219,22 +224,25 @@ const _ehrungKlasseHtml = z => `<span class="eh-k ${z.id}"><i></i><b class="num"
 // Runde stammt — eine, die erst am Tagesende vergeben wird, kann vom Vortag
 // sein.
 // Zwei Teile, die zusammen einen Satz ergeben: `vor` sagt, was der Zeitraum
-// bedeutet, `wann` nennt ihn, mit „Uhr" am Ende. „Partien vom 06.10., 15:12
-// bis 08.10., 15:10" allein sagte nicht, wozu die Zahlen gehören, und vier
-// Ziffern mit Doppelpunkt hinter einem Datum lasen sich auch als Ergebnis.
-// Die Karte setzt beide Teile untereinander, das Blatt hintereinander.
-// Vor jeder Uhrzeit und vor „Uhr" ein festes Leerzeichen: umbrochen stand
-// „15:55" allein in der zweiten Zeile, getrennt von seinem „bis".
+// bedeutet, `wann` nennt ihn. „Partien vom 06.10., 15:12 bis 08.10., 15:10"
+// allein sagte nicht, wozu die Zahlen gehören, und vier Ziffern mit
+// Doppelpunkt hinter einem Datum lasen sich auch als Ergebnis. Hinter JEDER
+// Uhrzeit steht „Uhr": mit einem „Uhr" nur am Ende stand „vom 19.10., 17:17
+// bis gestern, 16:04 Uhr" da, und die erste Zahl las sich wieder nicht als
+// Uhrzeit. Die Karte setzt beide Teile untereinander, das Blatt
+// hintereinander. Innerhalb eines Endes nur feste Leerzeichen, damit der
+// Zeitraum nur vor dem „bis" umbricht: umbrochen stand „15:55" allein in
+// der zweiten Zeile, getrennt von seinem „bis".
 function _ehrungZeitraum(d){
   if(!d || !d.ab || !d.bis) return null;
   const jetzt = Date.now();
   const tag = t => tagKey(t) === tagKey(jetzt) ? 'heute'
     : tagKey(t) === tagKey(jetzt - 864e5) ? 'gestern' : datumFmt(t, 'tm');
-  const von = t => { const w = tag(t); return (/^\d/.test(w) ? 'vom ' : 'von ') + w; };
-  const uhr = t => '\u00a0' + datumFmt(t, 'uhr');
-  if(d.ab === d.bis) return {vor:'Geholt in der Partie', wann:`${von(d.ab)},${uhr(d.ab)}\u00a0Uhr`};
+  const von = t => { const w = tag(t); return (/^\d/.test(w) ? 'vom' : 'von') + '\u00a0' + w; };
+  const uhr = t => '\u00a0' + datumFmt(t, 'uhr') + '\u00a0Uhr';
+  if(d.ab === d.bis) return {vor:'Geholt in der Partie', wann:`${von(d.ab)},${uhr(d.ab)}`};
   return {vor:'Geholt in den Partien', wann:`${von(d.ab)},${uhr(d.ab)} bis`
-    + (tagKey(d.ab) === tagKey(d.bis) ? '' : '\u00a0' + tag(d.bis) + ',') + uhr(d.bis) + '\u00a0Uhr'};
+    + (tagKey(d.ab) === tagKey(d.bis) ? '' : '\u00a0' + tag(d.bis) + ',') + uhr(d.bis)};
 }
 
 // Die Karte: die Säulen als Bühne, darunter die Schlagzeile und, leise,

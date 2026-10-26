@@ -1132,7 +1132,7 @@ function _ndPotdBlatt(s){
       + `<b class="num r">${_spVz(Number(g.delta) || 0)} Elo</b></div>`
       + _ndTagesbahn([g.pid], _newsTagPartien(d.dayKey, [g.pid])) : '';
   return {kopf, mitte:ab('Das Feld des Tages', balken) + ab(pids.length > 1 ? 'Der Tag der Tagessieger' : 'Der Tag in Partien', bahn)
-    + ab('Der härteste Tag', gegen)};
+    + ab('Der härteste Tag', gegen) + ab('Mit dem Schluss des Tages vergeben', _newsAbschlussHtml(d.abschluss, true))};
 }
 
 // ── Der Endspurt der Saison [§C33] ──────────────────────────────────

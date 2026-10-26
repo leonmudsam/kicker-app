@@ -604,6 +604,48 @@ function _buildStories(){
     });
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] loss_streak', e); }
 
+  // ── Die Spieltage des Fensters und was ihr Schluss vergab [§11.0e] ──
+  // Je Spieltag, dessen Karte des Spielers des Tages steht (um 23:59, mit
+  // einem Sieger), der Abschluss dieser Karte. Gerechnet vor den
+  // Auszeichnungen (6.) und der Ehrung: was die Karte des Tages trägt, steht
+  // in keiner eigenen Karte und in keiner Ehrung noch einmal, je
+  // 'Tag|Spieler|Auszeichnung' (`_tagGetragen`). Unschlagbar stand sonst um
+  // 23:57 als eigene Karte, um 23:59 in der des Tages und Tage später in der
+  // Ehrung. Gilt die gespeicherte Karte, dann ihre Zeilen — eine Karte von
+  // vor diesem Feld trägt keine, und die beiden anderen behalten es.
+  const _potdTage = new Map(), _tagGetragen = new Set();
+  try {
+    const bestand = new Map((Array.isArray(_cache._stories) ? _cache._stories : [])
+      .filter(x => x && typeof x.id === 'string' && x.id.indexOf('potd_') === 0).map(x => [x.id, x]));
+    const seit = now.getTime() - NEWS_FENSTER_TAGE * 86400000;
+    const tage = new Map();
+    matches.forEach(m => {
+      const ts = mts(m);
+      if(ts < seit || ts > now.getTime()) return;
+      const dk = tagKey(ts);
+      let l = tage.get(dk);
+      if(!l){ l = []; tage.set(dk, l); }
+      l.push(m);
+    });
+    tage.forEach((dayMatches, dayKey) => {
+      // Die Karte steht um 23:59 DESSELBEN Tages, nicht am Morgen danach: um
+      // 23:59 kann keine Partie mehr dazukommen (die spaeteste der Liga hat um
+      // 18 Uhr angefangen), und die Karte steht damit unter dem Datum, an dem
+      // gespielt wurde.
+      const rep = new Date(dayKey + 'T00:00:00'); rep.setHours(23, 59, 0, 0);
+      if(now.getTime() < rep.getTime()) return;
+      // Tages-Regel = meiste Siege (Tiebreak Elo-Delta) — identisch zu
+      // showPotdRecap und zum Badge-Zaehler countDayWins.
+      const res = _newsPeriodWinner(dayMatches, 'tag');
+      if(!res) return;
+      const abschluss = _abschlussAuszeichnungen(rep.getTime(), ABSCHLUSS_TAG);
+      const alt = bestand.get('potd_' + dayKey);
+      ((alt ? (alt.dataRef || {}).abschluss : abschluss) || []).forEach(a =>
+        (a.spieler || []).forEach(x => _tagGetragen.add(dayKey + '|' + x.pid + '|' + a.id)));
+      _potdTage.set(dayKey, {rep, res, abschluss});
+    });
+  } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] potd abschluss', e); }
+
   // ── 6. Badge freigeschaltet (letzte 7 Tage) ──
   // Tap-Quelle: getBadgeEarnedCache. Wir zeigen die NEUSTEN N freigeschalteten,
   // Dubletten pro Spieler+Badge dedupliziert.
@@ -627,6 +669,8 @@ function _buildStories(){
       // „Julian holt ‚Comeback-Tag'" als zweite Karte über denselben Spieler.
       arr.forEach(e => {
         const te = e.meta && e.meta.tagEnde;
+        // Trägt die Karte des Tages es als Abschluss, steht es dort.
+        if(te && _tagGetragen.has(te + '|' + e.playerId + '|' + e.badge.id)) return;
         let when = new Date(matchObj.created_at);
         if(te){ when = new Date(te + 'T00:00:00'); when.setHours(23, 57, 0, 0); }
         events.push({...e, when, matchId: mid, tagEnde: te || null});
@@ -1150,13 +1194,16 @@ function _buildStories(){
       // Martin am 1. Juli um 00:00 auf den Volutenkranz III und fiel am
       // Spieltag danach zurück — keine Karte hatte es gesagt. Ein Vergleich
       // über die Laufbahn mit der Liga von heute fragt `ligaAktiv` [§C40].
-      let zeichen = [];
+      let zeichen = [], abschluss = [];
       try {
         const ende = seasonEnd(sid).getTime();
+        // Meister, Vize und Team der Saison stehen auf Podest und Bühne;
+        // was der Monat sonst vergibt, steht darunter [§11.0e].
+        abschluss = _abschlussAuszeichnungen(ende, ABSCHLUSS_MONAT);
         zeichen = rcpZeichenZuege(rcpLaufbahnDaten(ende, ende + 1000))
           .filter(z => pm[z.pid] && ligaAktiv(pm[z.pid]))
           .map(z => ({pid:z.pid, art:z.art, vor:{stufe:z.vor.stufe, grad:z.vor.grad}, nach:{stufe:z.nach.stufe, grad:z.nach.grad}}));
-      } catch(e){ zeichen = []; }
+      } catch(e){ zeichen = []; abschluss = []; }
       const champ = nameOf(topElo[0].id);
       stories.push({
         id: 'season_recap_' + sid,
@@ -1175,7 +1222,7 @@ function _buildStories(){
         when: new Date(sStart.getFullYear(), sStart.getMonth(), 1, 0, 0, 0, 0),
         prio: STORY_PRIO.season_recap,
         dataRef: {type:'season_recap', sid, championId:topElo[0].id, championElo:topElo[0].elo,
-                  topElo, fakten:_fakten, team, chronik, zeichen}
+                  topElo, fakten:_fakten, team, chronik, zeichen, abschluss}
       });
     }
   } catch(e){}
@@ -2006,27 +2053,7 @@ function _buildStories(){
   // sonst Partien ohne Zusammenfassung. Die ID traegt den Tag, ist also
   // stabil, und ein zweiter Lauf legt keine Zeile dazu.
   try {
-    const potdSeit = now.getTime() - NEWS_FENSTER_TAGE * 86400000;
-    const potdTage = new Map();
-    matches.forEach(m => {
-      const ts = mts(m);
-      if(ts < potdSeit || ts > now.getTime()) return;
-      const dk = tagKey(ts);
-      let l = potdTage.get(dk);
-      if(!l){ l = []; potdTage.set(dk, l); }
-      l.push(m);
-    });
-    potdTage.forEach((dayMatches, dayKey) => {
-      // Die Karte steht um 23:59 DESSELBEN Tages, nicht am Morgen danach: um
-      // 23:59 kann keine Partie mehr dazukommen (die spaeteste der Liga hat um
-      // 18 Uhr angefangen), und die Karte steht damit unter dem Datum, an dem
-      // gespielt wurde.
-      const rep = new Date(dayKey + 'T00:00:00'); rep.setHours(23, 59, 0, 0);
-      if(now.getTime() < rep.getTime()) return;
-      // Tages-Regel = meiste Siege (Tiebreak Elo-Delta) — identisch zu
-      // showPotdRecap und zum Badge-Zaehler countDayWins.
-      const res = _newsPeriodWinner(dayMatches, 'tag');
-      if(!res) return;
+    _potdTage.forEach(({rep, res, abschluss}, dayKey) => {
       const main = res.main;
       const names = res.winners.map(w => nameOf(w.id));
       // Auch hier die Aufzaehlung der App [§C27]: „Leon & Martin holen den
@@ -2050,7 +2077,11 @@ function _buildStories(){
         prio: STORY_PRIO.potd,
         dataRef: {type:'potd', dayKey, playerId: main.id,
                   playerIds: res.winners.map(w => w.id),
-                  wins: main.wins, games: main.wins + main.losses, wr: main.wr}
+                  wins: main.wins, games: main.wins + main.losses, wr: main.wr,
+                  // Was der Schluss des Tages sonst noch vergab: Unschlagbar,
+                  // Tag der Götter, Allwetter, der Award-Sammler — keine
+                  // Partie trägt es [§11.0e `_abschlussAuszeichnungen`].
+                  abschluss}
       });
     });
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] potd', e); }
@@ -2058,7 +2089,7 @@ function _buildStories(){
   // ── Die Runde der Vier [§C33, §11.6c] ────────────────────────────────
   // Eine eigene Story je abgeschlossener Runde, dreißig Minuten nach ihrer
   // letzten Partie. Die Karten der Partien bleiben daneben stehen.
-  try { _newsEhrungStories(now.getTime()).forEach(st => stories.push(st)); }
+  try { _newsEhrungStories(now.getTime(), _tagGetragen).forEach(st => stories.push(st)); }
   catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] ehrung', e); }
   try { _newsRundenStories(now.getTime()).forEach(st => stories.push(st)); }
   catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] runde', e); }
@@ -2133,6 +2164,10 @@ function _buildStories(){
         prio: STORY_PRIO.woche,
         dataRef: {type:'woche', woche:_lastWeekKey, spiele:_wSpiele.length, tage:_wTage,
                   playerIds: _wHeld.pids.slice(0, 2),
+                  // Der Schluss der Woche am Montag um 00:00 vergibt neben dem
+                  // Spieler der Woche auch den Award-Sammler, wenn er der
+                  // zweite der Saison war [§11.0e].
+                  abschluss: _abschlussAuszeichnungen(_wocheEnde, ABSCHLUSS_WOCHE),
                   teile: _wochenTeile.map(t => ({art:t.art, ic:t.ic, label:t.label, pids:t.pids,
                                                  wert:t.wert, satz:t.satz, duo:!!t.duo,
                                                  matchId:t.matchId || null}))}
@@ -2818,84 +2853,91 @@ function _buildStories(){
   // von jetzt, bei jedem Lauf neu, abends eingefroren [§C33]. Eine Bewegung,
   // die sich im Lauf des Tages wieder aufhebt, steht damit gar nicht erst da.
   //
-  // Gemeldet wird, was sich am Zeichen ablesen lässt, ohne Spam: jede neue
-  // Stufe (neu oder, mit Beleg, wieder), jeder Rückfall auf eine tiefere Stufe und
-  // ein Grad nur, wenn der Spieler über seinem höchsten bekannten Platz steht
-  // (`_insBestVor`, aus dem Bestand).
-  // Ein Grad, der innerhalb derselben Stufe zurückkommt oder wieder geht, ist
-  // das Hin und Her geteilter Rekorde; das Prestige dazu zeigt die Tafel.
+  // Was gemeldet wird, steht bei `_insZuegeZwischen` (26b-story-fakten.js).
   try {
     if(_tafelTag){
       const tagMs = matches.filter(m => mts(m) > _tafelTag.vorMs && mts(m) <= _tafelTag.letzte)
         .slice().sort((a, b) => mts(a) - mts(b));
-      const aktiv = (players || []).filter(p => ligaAktiv(p));
-      const best = _insBestVor(_tafelTag.vonMs, _cache._stories);
-      const zuege = [], bestNeu = {};
       // Der erste Augenblick des Tages, an dem die neue Lage stand. Geprüft
-      // an den Partien des Tages, halbiert wie bisher.
-      const wann = (pid, erreicht) => {
-        let lo = 0, hi = tagMs.length - 1, t = _tafelTag.letzte;
+      // an den Partien des Tages, halbiert wie bisher. Steht sie an keiner,
+      // kam sie mit dem Schluss des Tages um 23:59 (der Spieler des Tages,
+      // was den ganzen Tag beschreibt): die Karte stand sonst bei der letzten
+      // Partie, Stunden bevor es so war.
+      const schluss = new Date(_tafelTag.vonMs); schluss.setHours(23, 59, 0, 0);
+      const wann = (pid, art, pb) => {
+        const erreicht = art === 'ab' ? (x => x <= pb) : (x => x >= pb);
+        let lo = 0, hi = tagMs.length - 1, t = schluss.getTime();
         while(lo <= hi){
           const mid = (lo + hi) >> 1, ts = mts(tagMs[mid]);
           let P = null; try { P = prestigeOf(pid, ts); } catch(e){}
           if(P && erreicht(insigniumPos(P))){ t = ts; hi = mid - 1; } else lo = mid + 1;
         }
-        return t;
-      };
-      const lage = P => ({stufe:P.stufe | 0, grad:P.grad | 0, punkte:Math.round(P.punkte || 0)});
-      aktiv.forEach(p => {
-        const a = _tafelVor.prestige(p.id), b = _tafelNach.prestige(p.id);
-        if(!a || !b) return;
-        const pa = insigniumPos(a), pb = insigniumPos(b);
-        const bp = best[p.id] != null ? best[p.id] : pa;
-        bestNeu[p.id] = Math.max(bp, pa, pb);
-        let art = '';
-        if(b.stufe > a.stufe) art = 'auf';
-        else if(b.stufe < a.stufe) art = 'ab';
-        else if(pb > pa && pb > bp) art = 'grad';
-        if(!art) return;
-        const ms = wann(p.id, art === 'ab' ? (x => x <= pb) : (x => x >= pb));
         // Die Partie nur, wenn er darin mitgespielt hat: eine Stufe kann
         // fallen, weil ANDERE gespielt haben [§C34].
-        const m = tagMs.find(x => mts(x) === ms && [x.a1, x.a2, x.b1, x.b2].includes(p.id));
-        // „wieder" nur mit Beleg: der höchste bekannte Platz lag schon in
-        // dieser Stufe. Ohne Beleg heißt es „erreicht", nie „zum ersten Mal".
-        zuege.push({pid:p.id, art, vor:lage(a), nach:lage(b), ms, matchId:m ? m.id : null,
-          wieder:art === 'auf' && best[p.id] != null && best[p.id] >= b.stufe * INSIGNIUM_GRADE,
-          // Wie viele jetzt so hoch oder höher stehen: das sagt, was die
-          // Stufe in dieser Liga bedeutet.
-          traeger:aktiv.filter(q => { const x = _tafelNach.prestige(q.id); return x && x.stufe >= b.stufe; }).length,
-          von:aktiv.length});
-      });
-      if(zuege.length){
-        zuege.sort(_insZugVor);
-        const pids = zuege.map(z => z.pid);
-        const t = _insTagTexte(zuege);
-        const oben = zuege.some(z => z.art === 'auf' && !z.wieder && z.nach.stufe >= INSIGNIUM_OBEN);
+        const m = tagMs.find(x => mts(x) === t && [x.a1, x.a2, x.b1, x.b2].includes(pid));
+        return {ms:t, matchId:m ? m.id : null};
+      };
+      const L = _insZuegeZwischen(_tafelVor, _tafelNach, _insBestVor(_tafelTag.vonMs, _cache._stories), wann);
+      if(L.zuege.length){
+        const t = _insTagTexte(L.zuege);
+        const oben = L.zuege.some(z => z.art === 'auf' && !z.wieder && z.nach.stufe >= INSIGNIUM_OBEN);
         stories.push({
           id:'instag_' + _tafelTag.tag, cat:'tafel', ic:'award',
           title:t.title, desc:t.desc,
           // Die Karte steht beim jüngsten Wechsel, wie die Tafel [§C33].
-          when:new Date(Math.max(...zuege.map(z => z.ms))),
+          when:new Date(Math.max(...L.zuege.map(z => z.ms))),
           prio:STORY_PRIO.insignium_tag + (oben ? 34 : 0),
           // Ohne `matchId` oben: die Karte handelt von der Leiter, nicht von
           // einer Partie, und bekäme sonst deren Ergebnisband und Bündel.
-          dataRef:{type:'insignium_tag', tag:_tafelTag.tag, zuege, playerIds:pids,
-            // Die Wirkung des Tages je Beteiligtem, für das Blatt [§C34] —
-            // für alle, nicht nur vier wie in der Tafel.
-            laufbahn:pids.reduce((o, pid) => { const w = _tafelWirkung(pid);
-              o[pid] = {vor:w.vor, nach:w.nach, delta:w.delta, stufeVor:w.stufeVor, stufeNach:w.stufeNach,
-                rek:w.rekordDelta, mon:w.monatDelta}; return o; }, {}),
-            // Die Leiter der Liga an diesem Tag: wie viele je Stufe stehen.
-            leiter:INSIGNIEN.map((_, i) => aktiv.filter(q => { const x = _tafelNach.prestige(q.id);
-              return x && x.stufe === i; }).length),
-            // Der höchste Platz bis heute Abend: die Karte des nächsten
-            // Spieltags liest ihn hier, statt die Geschichte nachzurechnen.
-            best:bestNeu}
+          dataRef:{type:'insignium_tag', tag:_tafelTag.tag, zuege:L.zuege, playerIds:L.zuege.map(z => z.pid),
+            laufbahn:L.laufbahn, leiter:L.leiter, best:L.best}
         });
       }
     }
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] insignium', e); }
+
+  // ── Das Zeichen beim Schluss der Woche [§C30, §C33] ────────────────
+  // Der Spieler der Woche und der Award-Sammler kommen am Montag um 00:00,
+  // ohne Partie. Wer durch sie eine Stufe oder einen Grad weiter stand, stand
+  // in keiner Karte: die des Sonntags endet davor, die des Montags beginnt
+  // danach (`_storyTagGrenzen`). Gemessen stieg Julian so zweimal um einen
+  // Grad, am 15.06. mit dem Spieler der Woche und am 03.08. mit ihm und dem
+  // Award-Sammler, und das Zeichen im Profil hatte sich still verändert.
+  // Dieselbe Karte wie die eines Spieltags,
+  // mit `schluss` gekennzeichnet: sie wächst nicht mit, sie ist ein Schnitt.
+  // Fällt der Schluss der Woche auf den des Monats, trägt die Karte des
+  // Monatsabschlusses beide Zeichen, und diese entsteht nicht.
+  try {
+    const id = 'instag_woche_' + tagKey(_wocheEnde);
+    const bestand = Array.isArray(_cache._stories) ? _cache._stories : [];
+    const monat = stories.concat(bestand).some(x => { const d = (x && x.dataRef) || {};
+      return d.type === 'season_recap' && d.sid && Array.isArray(d.zeichen)
+        && seasonEnd(d.sid).getTime() + 1000 === _wocheEnde; });
+    // Eine veröffentlichte Karte bleibt, wie sie ist [§C33]; zwei Stände
+    // dafür neu zu schneiden kostete jeden Lauf der Woche zwei Rechnungen.
+    if(now.getTime() >= _wocheEnde && !monat && !bestand.some(x => x && x.id === id)){
+      const L = _insZuegeZwischen(_storyStand(_wocheEnde - 1), _storyStand(_wocheEnde),
+        _insBestVor(_wocheEnde, bestand), () => ({ms:_wocheEnde}));
+      if(L.zuege.length){
+        const t = _insTagTexte(L.zuege, 'woche');
+        const oben = L.zuege.some(z => z.art === 'auf' && !z.wieder && z.nach.stufe >= INSIGNIUM_OBEN);
+        stories.push({
+          id, cat:'tafel', ic:'award', title:t.title, desc:t.desc,
+          when:new Date(_wocheEnde),
+          prio:STORY_PRIO.insignium_tag + (oben ? 34 : 0),
+          dataRef:{type:'insignium_tag', schluss:'woche', tag:tagKey(_wocheEnde), woche:_lastWeekKey,
+            zuege:L.zuege, playerIds:L.zuege.map(z => z.pid),
+            // Was die Woche zum Schluss vergab, als Grund der Bewegungen —
+            // nur bei denen, die sich bewegt haben: die Karte handelt vom
+            // Zeichen, nicht von der Woche.
+            grund:_abschlussAuszeichnungen(_wocheEnde, ['award_collector', 'potw'])
+              .map(a => Object.assign({}, a, {spieler:a.spieler.filter(x => L.zuege.some(z => z.pid === x.pid))}))
+              .filter(a => a.spieler.length),
+            laufbahn:L.laufbahn, leiter:L.leiter, best:L.best}
+        });
+      }
+    }
+  } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] insignium woche', e); }
 
   // ── Ambiente Tages-Stories (v8.5) ──
   // Zeitlich verteilte Fun Facts / Nuggets, damit der Feed auch ohne neue
@@ -2960,7 +3002,8 @@ function _buildStories(){
     const fassung = _tafelFassung(_tafelTag.tag, _tafelTag.letzte);
     stories.forEach(s => {
       const d = s.dataRef || {};
-      if(!STORY_TAFEL_UPDATE.has(d.type) || tagKey(s.when) !== _tafelTag.tag) return;
+      // Die Karte eines Schlusses ist ein Schnitt, keine Fassung.
+      if(!STORY_TAFEL_UPDATE.has(d.type) || d.schluss || tagKey(s.when) !== _tafelTag.tag) return;
       s.id += '~' + fassung;
       s.dataRef = Object.assign({}, d, {fassung});
     });

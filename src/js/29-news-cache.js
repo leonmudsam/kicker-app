@@ -1839,7 +1839,7 @@ function _storyIstTafelUpdate(s, jetzt){
   if(!s) return false;
   const d = s.dataRef || s.data_ref || {};
   const w = s.when || s.event_at;
-  if(!STORY_TAFEL_UPDATE.has(d.type) || !w) return false;
+  if(!STORY_TAFEL_UPDATE.has(d.type) || d.schluss || !w) return false;
   return tagKey(w) === tagKey(jetzt || new Date());
 }
 // Der Stand, aus dem eine Fassung der Tafel gerechnet ist: die letzte
@@ -1855,9 +1855,12 @@ function _tafelFassung(tag, letzteMs){
 // nach dem Löschen der letzten Partie eines Tages wäre die spätere falsch.
 // Zeilen ohne `fassung` stammen aus der Zeit vor den Fassungen und gelten nur,
 // wenn es für ihren Tag keine andere gibt.
+// Die Zeichen-Karte eines Schlusses (`schluss`, die Woche) wächst nicht und
+// hat keine Fassung: sie stand sonst mit der Karte des Montags in einer
+// Gruppe und fiel gegen deren Fassung heraus.
 function _tafelFassungen(list){
   if(!Array.isArray(list)) return list;
-  const art = d => !STORY_TAFEL_UPDATE.has(d.type) ? '' : /^insignium_/.test(d.type) ? 'ins' : 'tafel';
+  const art = d => !STORY_TAFEL_UPDATE.has(d.type) || d.schluss ? '' : /^insignium_/.test(d.type) ? 'ins' : 'tafel';
   const gruppen = new Map();
   list.forEach(s => {
     const d = (s && s.dataRef) || {}, a = art(d);

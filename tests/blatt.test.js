@@ -1503,11 +1503,60 @@ const ok = (c, msg, det) => {
   ok(ehrung.some(x => x.kacheln > 0) && ehrung.every(x => !x.gebrochen.length),
      'im Blatt der Ehrung bricht kein Name einer Kachel mitten im Wort',
      ehrung.flatMap(x => x.gebrochen).join(', ') || ehrung.map(x => x.kacheln).join('+') + ' Kacheln');
+  // ── Was ein Schluss vergibt, als Zeile seiner Karte [§11.0e] ─────
+  //    Unter dem Spieler des Tages, in der Woche, im Monatsabschluss und in
+  //    der Zeichen-Karte des Wochenschlusses: Kachel, Gesicht, Satz und Wort
+  //    der Klasse in einer Zeile, die in der Karte bleibt — gemessen in der
+  //    Breite der Karte im Feed (287 px bei 360, 247 px bei 320) und im Blatt.
+  //    Der Name der Auszeichnung bricht nicht: im Blatt stand „Award-" am
+  //    Zeilenende und „Sammler" darunter.
+  const abschluss = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const roh = K(`JSON.stringify((function(){
+      const p = players.filter(x => !x.hidden).map(x => x.id);
+      const liste = [{id:'award_collector', name:'Award-Sammler', ic:'medalTrio', klasse:'legendary',
+          spieler:[{pid:p[6], mal:1, p:70}]},
+        {id:'potw', name:'Player of the Week', ic:'weekKing', klasse:'rare', spieler:[{pid:p[3], mal:12, p:30}]},
+        {id:'godly_streak', name:'Tag der Götter', ic:'godRay', klasse:'rare', spieler:[{pid:p[9], mal:2, p:25}]}];
+      const potd = {id:'potd_probe', cat:'highlight', ic:'dayKing', title:'Julian ist Spieler des Tages',
+        desc:'6 von 8 Spielen gewonnen.', when:new Date(2026, 7, 26, 23, 59), prio:60,
+        dataRef:{type:'potd', dayKey:'2026-08-26', playerId:p[6], playerIds:[p[6]], wins:6, games:8, wr:.75, abschluss:liste}};
+      return {karte:_newsCardHtmlM2(potd, false, false, ''), blatt:_newsAbschlussHtml(liste, true)};
+    })())`);
+    const x = JSON.parse(roh);
+    const host = document.createElement('div');
+    host.style.cssText = 'position:absolute;left:0;top:0';
+    document.body.appendChild(host);
+    const miss = (wo, breite, html) => {
+      host.style.width = breite + 'px';
+      host.innerHTML = html;
+      const rahmen = (host.querySelector('.nf-card') || host).getBoundingClientRect();
+      const zeilen = [...host.querySelectorAll('.nf-abs')];
+      const fehler = [];
+      zeilen.forEach(z => {
+        const r = z.getBoundingClientRect();
+        if(r.left < rahmen.left - .5 || r.right > rahmen.right + .5) fehler.push(wo + ' ' + breite + ': Zeile ragt hinaus');
+        [...z.children].forEach(k => { const q = k.getBoundingClientRect();
+          if(q.right > r.right + .5 || q.left < r.left - .5) fehler.push(wo + ' ' + breite + ': ' + k.className + ' ragt hinaus'); });
+        const em = z.querySelector('em');
+        if(!em || [...em.getClientRects()].filter(q => q.width > 0).length !== 1) fehler.push(wo + ' ' + breite + ': ' + (em ? em.textContent : 'kein Name') + ' bricht');
+        if(!z.querySelector('.zk') || !z.querySelector('.av') || !z.querySelector(':scope > i')) fehler.push(wo + ' ' + breite + ': Teil fehlt');
+      });
+      return {n:zeilen.length, fehler};
+    };
+    const out = [miss('Karte', 287, x.karte), miss('Karte', 247, x.karte),
+      miss('Blatt', 328, '<div>' + x.blatt + '</div>'), miss('Blatt', 288, '<div>' + x.blatt + '</div>')];
+    host.remove();
+    return out;
+  });
+  ok(abschluss.every(a => a.n === 3) && abschluss.every(a => !a.fehler.length),
+     'was ein Schluss vergibt, steht als Zeile in der Karte und im Blatt, bei 320 und 360 px, und kein Name einer Auszeichnung bricht',
+     JSON.stringify(abschluss.map(a => a.n)) + ' ' + abschluss.flatMap(a => a.fehler).slice(0, 4).join(' | '));
   // Unter der Schlagzeile, aus welchen Partien die Auszeichnungen stammen:
   // oben in einer Zeile, was der Zeitraum bedeutet, darunter der Zeitraum —
   // in der Karte, vor dem Pfeil. Ein Tag steht bei 360 px in einer Zeile;
   // bei 320 px und über mehrere Tage höchstens zwei, auch im längsten Fall
-  // („vom 06.10., 15:12 bis 08.10., 15:10 Uhr").
+  // („vom 06.10., 15:12 Uhr bis 08.10., 15:10 Uhr").
   const ehZeit = await page.evaluate(() => {
     const K = window.__k.eval.bind(window.__k);
     const karten = JSON.parse(K(`JSON.stringify((function(){
@@ -1547,7 +1596,7 @@ const ok = (c, msg, det) => {
     host.remove();
     return {falsch, lang};
   });
-  ok(!ehZeit.falsch.length && /^Geholt in den Partien vom \d\d\.\d\d\., 15:12 bis \d\d\.\d\d\., 15:10 Uhr$/.test(ehZeit.lang),
+  ok(!ehZeit.falsch.length && /^Geholt in den Partien vom \d\d\.\d\d\., 15:12 Uhr bis \d\d\.\d\d\., 15:10 Uhr$/.test(ehZeit.lang),
      'die Ehrung sagt unter der Schlagzeile, in welchen Partien die Auszeichnungen geholt sind: in der Karte, vor dem Pfeil, ein Tag bei 360 px in einer Zeile, sonst in höchstens zwei',
      ehZeit.falsch.join(' | ') || ehZeit.lang);
 

@@ -141,12 +141,12 @@ const BADGES=[
     multi:true,count:(id,ms,bis)=>countTeamOfSeason(id,bis)},
   // Zeile 16 — Award-Sammler
   {id:'award_collector',ic:'medalTrio',name:'Award-Sammler',desc:'In einer Saison mindestens 5-mal Player of the Day und 2-mal Player of the Week',
-    multi:true,count:(id,ms)=>countAwardCollector(id,ms)},
+    multi:true,count:(id,ms,bis)=>countAwardCollector(id,ms,bis)},
   // Zeile 17 — POTW, POTD (Perioden-Auszeichnungen, ganz am Ende)
   {id:'potw',ic:'weekKing',name:'Player of the Week',desc:'Höchste Siegquote einer Kalenderwoche (ab 5 Siegen)',
-    multi:true,count:(id,ms)=>countPeriodWins(id,ms,'week')},
+    multi:true,count:(id,ms,bis)=>countPeriodWins(id,ms,'week',bis)},
   {id:'potd',ic:'dayKing',name:'Player of the Day',desc:'Die meisten Siege eines Spieltags (ab 3)',
-    multi:true,count:(id,ms)=>countDayWins(id,ms)},
+    multi:true,count:(id,ms,bis)=>countDayWins(id,ms,bis)},
   // ── NEUE BADGES v4 ──
   // Thronfäller: Sieg gegen den Top-1 der laufenden Saison-Rangliste (Stand vor dem Match)
   {id:'kingslayer',ic:'kingFall',name:'Thronfäller',desc:'Sieg gegen den Ersten der Saison-Rangliste, gemessen vor der Partie',
@@ -178,10 +178,10 @@ const BADGES=[
     multi:true,count:(id,ms)=>countMrPerfect(id,ms)},
   // Allwetter: an 5 verschiedenen Wochentagen Player-of-the-Day geworden.
   {id:'allwetter',ic:'weatherMix',name:'Allwetter',desc:'An 5 verschiedenen Wochentagen Player of the Day geworden',
-    multi:true,count:(id,ms)=>countAllwetter(id,ms)},
+    multi:true,count:(id,ms,bis)=>countAllwetter(id,ms,bis)},
   // Tag der Götter: 3 eigene Spieltage in Folge als POTD gewonnen.
   {id:'godly_streak',ic:'godRay',name:'Tag der Götter',desc:'An 3 eigenen Spieltagen in Folge Player of the Day geworden',
-    multi:true,count:(id,ms)=>countGodlyStreak(id,ms)},
+    multi:true,count:(id,ms,bis)=>countGodlyStreak(id,ms,bis)},
   // ── NEUE NEGATIV-BADGES v8 ──
   // Bittere Pille: 9:10-Niederlage (Pendant zu nail_biter / 10:9-Sieg).
   {id:'bitter_loss',ic:'pille',name:'Bittere Pille',desc:'9:10-Niederlage',
@@ -616,15 +616,23 @@ function _periodeRangliste(ms, regel, nurSichtbar){
              : a.wins!==b.wins ? b.wins-a.wins : b.eloDelta-a.eloDelta);
 }
 
-function _periodWinnerMap(allMs, kind){
-  const now=new Date();
-  let curKey;
-  if(kind==='week')       curKey=_wochenKey(now);
-  else if(kind==='month') curKey=now.getFullYear()+'-'+now.getMonth();
-  // Der laufende Tag ist offen, bis er zu ist (`_tagZu`): der Spieler des
-  // Tages zählte um 14 Uhr schon im Profil und im Prestige, während seine
-  // Karte erst um 23:59 erscheint und am Abend ein anderer vorbeiziehen kann.
-  else { const heute=now.toISOString().slice(0,10); curKey=_tagZu(heute) ? '' : heute; }
+// Welcher Tag, welche Woche, welcher Monat zum Zeitpunkt `bisMs` noch offen
+// ist — ohne ihn die Uhr. Der laufende Tag ist offen, bis er zu ist
+// (`_tagZu`): der Spieler des Tages zählte um 14 Uhr schon im Profil und im
+// Prestige, während seine Karte erst um 23:59 erscheint und am Abend ein
+// anderer vorbeiziehen kann. Gefragt wurde dabei immer die Uhr, auch für
+// einen Schnitt in der Vergangenheit: der Stand eine Millisekunde vor dem
+// Wochenschluss trug den Spieler der Woche schon, sobald die Woche heute
+// vorbei war, und wer durch ihn aufstieg, stand in keinem Vergleich.
+function _periodeOffen(kind, bisMs){
+  const t = Number.isFinite(bisMs) ? new Date(bisMs) : new Date();
+  if(kind==='week')  return _wochenKey(t.getTime());
+  if(kind==='month') return t.getFullYear()+'-'+t.getMonth();
+  const tag=t.toISOString().slice(0,10);
+  return _tagZu(tag, t.getTime()) ? '' : tag;
+}
+function _periodWinnerMap(allMs, kind, bisMs){
+  const curKey=_periodeOffen(kind, bisMs);
   let slot=_winnerCountsMemo.get(allMs);
   if(!slot){ slot={}; _winnerCountsMemo.set(allMs, slot); }
   const slotKey='win_'+kind+'_'+curKey;
@@ -660,11 +668,14 @@ function _periodWinnerMap(allMs, kind){
   return winners;
 }
 // Zählt, wie oft jeder Spieler eine Periode gewonnen hat.
-function _winnerCountsOf(allMs, kind){
-  const winners=_periodWinnerMap(allMs, kind);
+function _winnerCountsOf(allMs, kind, bisMs){
+  const winners=_periodWinnerMap(allMs, kind, bisMs);
   let slot=_winnerCountsMemo.get(allMs);
   if(!slot){ slot={}; _winnerCountsMemo.set(allMs, slot); }
-  const slotKey='cnt_'+kind+'_'+Object.keys(winners).length;
+  // Der offene Zeitraum gehört in den Schlüssel, nicht die Zahl der Sieger:
+  // zwei Schnitte, die je einen anderen Zeitraum offen lassen, haben gleich
+  // viele Sieger und trotzdem andere.
+  const slotKey='cnt_'+kind+'_'+_periodeOffen(kind, bisMs);
   if(slot[slotKey]) return slot[slotKey];
   const counts={};
   Object.values(winners).forEach(pid=>{ counts[pid]=(counts[pid]||0)+1; });
@@ -672,16 +683,16 @@ function _winnerCountsOf(allMs, kind){
   return counts;
 }
 // Zählt in wie vielen abgeschlossenen Wochen/Monaten der Spieler die meisten Siege hatte
-function countPeriodWins(id,allMs,periodType){
-  return _winnerCountsOf(allMs, periodType==='week'?'week':'month')[id]||0;
+function countPeriodWins(id,allMs,periodType,bisMs){
+  return _winnerCountsOf(allMs, periodType==='week'?'week':'month', bisMs)[id]||0;
 }
 // Player of the Day: zählt Tage an denen dieser Spieler den POTD-Titel
 // erringen würde (analog zur Recap-Pop-Up-Logik in showPotdRecap).
 // ⚠ Tiebreak-Konsistenz: Bei gleichem Maximum von Tagessiegen gewinnt
 // das höhere Elo-Delta des Tages — exakt wie das Pop-Up sortiert. Nur DIESER
 // Spieler bekommt das Badge (vorher: alle Spieler mit max wins → mehrfach).
-function countDayWins(id,allMs){
-  return _winnerCountsOf(allMs,'day')[id]||0;
+function countDayWins(id,allMs,bisMs){
+  return _winnerCountsOf(allMs,'day',bisMs)[id]||0;
 }
 
 // ─── Krimi-Reihe: 5 Spiele in Folge mit Tordifferenz ≤ 2 (Sieg ODER Niederlage) ───
@@ -824,16 +835,16 @@ function countOvertake(id,ms){
 
 // ─── Award-Sammler: in einer Saison min. 5 POTD UND min. 2 POTW Auszeichnungen ───
 // Pro qualifizierter Saison vergeben (mehrfach über Karriere).
-function countAwardCollector(id, matchSubset){
+function countAwardCollector(id, matchSubset, bisMs){
   const quelle = Array.isArray(matchSubset) ? matchSubset : matches;
   // Stabile Saison-Arrays fuer alle Spieler: die Perioden-Sieger haengen
   // per WeakMap an deren Identitaet und brauchen je Monat nur einen Lauf.
   const bySeason = getMatchesBySeason(quelle);
   let count=0;
   Object.values(bySeason).forEach(seasonMs=>{
-    const potd=countDayWins(id,seasonMs);
+    const potd=countDayWins(id,seasonMs,bisMs);
     if(potd<5) return; // billiger Vorab-Filter
-    const potw=countPeriodWins(id,seasonMs,'week');
+    const potw=countPeriodWins(id,seasonMs,'week',bisMs);
     if(potw>=2) count++;
   });
   return count;
@@ -893,14 +904,14 @@ function countMrPerfect(id, matchSubset){
 // Allwetter: an mind. 5 verschiedenen Wochentagen je mind. 1× POTD geworden.
 // Karriere-Stat — sobald 5 erreicht, bleibt das Badge dauerhaft erreicht.
 // Counter ist deshalb max. 1 (entweder erreicht oder nicht).
-function countAllwetter(id, matchSubset){
-  return _allwetterTage(id, matchSubset).size >= 5 ? 1 : 0;
+function countAllwetter(id, matchSubset, bisMs){
+  return _allwetterTage(id, matchSubset, bisMs).size >= 5 ? 1 : 0;
 }
 // Die Wochentage, an denen ein Spieler Player of the Day war. Auszeichnung
 // und Fortschritt im Popover lesen beide hier: das Popover zählte den Tag
 // selbst nach und ohne den Tiebreak über die Elo, und bei Gleichstand an
 // Siegen markierte es Wochentage, die die Auszeichnung nicht zählt.
-function _allwetterTage(id, matchSubset){
+function _allwetterTage(id, matchSubset, bisMs){
   const quelle = Array.isArray(matchSubset) ? matchSubset : matches;
   // „Player of the Day" gibt es genau einmal im Code: `_periodWinnerMap`
   // bestimmt den Sieger eines Tages, mit Tiebreak über das Elo-Delta. Hier
@@ -908,11 +919,12 @@ function _allwetterTage(id, matchSubset){
   // einer anderen Antwort: gemessen sind 12 der 51 entschiedenen Tage
   // punktgleich, und dort trugen beide Spieler den Tag. Die Beschreibung sagt
   // „Player of the Day geworden"; dann muss es auch derselbe sein [§C27].
-  const sieger = _periodWinnerMap(quelle, 'day');
-  const heute = new Date().toISOString().slice(0, 10);
+  // Der laufende Tag fehlt in `sieger`, bis er zu ist. Er stand hier noch
+  // einmal nach der Uhr in UTC ausgeschlossen: um 23:59 zählte der Spieler
+  // des Tages, sein Wochentag aber erst ab ein oder zwei Uhr nachts.
+  const sieger = _periodWinnerMap(quelle, 'day', bisMs);
   const wochentage = new Set();
   for(const tag in sieger){
-    if(tag === heute) continue;   // der laufende Tag ist noch nicht vorbei
     if(sieger[tag] !== id) continue;
     // Der Schlüssel ist 'YYYY-MM-DD' — daraus den Wochentag, ohne Zeitzone.
     const [y, mo, d] = tag.split('-').map(Number);
@@ -925,15 +937,16 @@ function _allwetterTage(id, matchSubset){
 // "Eigene Spieltage" = Tage, an denen der Spieler beteiligt war. Tage, an
 // denen die Liga ohne ihn spielte, BRECHEN die Serie NICHT — sie werden
 // übersprungen. Karriere-aggregiert (separate Drei-Strecken zählen einzeln).
-function countGodlyStreak(id, matchSubset){
+function countGodlyStreak(id, matchSubset, bisMs){
   const quelle = Array.isArray(matchSubset) ? matchSubset : matches;
   // Dieselbe eine Quelle wie beim Allwetter [§C27]: wer den Tag gewonnen hat,
   // sagt `_periodWinnerMap`. Gebraucht wird hier zusätzlich, an welchen Tagen
   // der Spieler überhaupt gespielt hat — Tage ohne ihn brechen die Serie nicht.
-  const sieger = _periodWinnerMap(quelle, 'day');
+  // Der offene Tag zählt nicht mit, nach demselben Schnitt wie der Sieger.
+  const sieger = _periodWinnerMap(quelle, 'day', bisMs);
   const proTag = matchesByDay(quelle);
-  const heute = new Date().toISOString().slice(0, 10);
-  const tage = Object.keys(proTag).filter(d => d !== heute).sort();
+  const offen = _periodeOffen('day', bisMs);
+  const tage = Object.keys(proTag).filter(d => d !== offen).sort();
   let cur = 0, count = 0;
   for(const tag of tage){
     const dayMs = proTag[tag];
