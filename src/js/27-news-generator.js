@@ -34,7 +34,7 @@ function _buildStories(){
     const weekNum = Math.ceil((((t - yearStart) / 86400000) + 1) / 7);
     return t.getUTCFullYear() + '-W' + String(weekNum).padStart(2, '0');
   };
-  const todayKey = now.toISOString().slice(0,10);
+  const todayKey = tagKey(now);
   const weekKey  = isoWeek(now);
 
   // ── Abgeschlossene Zeiträume (v9.5) ──
@@ -45,11 +45,14 @@ function _buildStories(){
   // rechnen deshalb auf „gestern" (voller Kalendertag) bzw. die „vergangene
   // Woche" (letzte abgeschlossene ISO-Woche, Mo–So).
   const _dayMs = 86400000;
+  // Gestern und die Vorwoche nach dem Kalender: an einer Zeitumstellung
+  // ist ein Tag 23 oder 25 Stunden lang, und mit festen 24 begann „gestern"
+  // um 23 Uhr des Vorvortags oder um 1 Uhr.
   const _startOfToday     = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  const _startOfYesterday = _startOfToday - _dayMs;
+  const _startOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).getTime();
   const _weekStartOf = (ts) => wochenBeginn(ts).getTime();
   const _thisWeekStart = _weekStartOf(now.getTime());
-  const _prevWeekStart = _thisWeekStart - 7*_dayMs;
+  const _prevWeekStart = _weekStartOf(_thisWeekStart - 3 * _dayMs);
   const _yesterdayKey  = new Date(_startOfYesterday).toISOString().slice(0,10);
   let   _lastWeekKey   = isoWeek(new Date(_prevWeekStart));
 

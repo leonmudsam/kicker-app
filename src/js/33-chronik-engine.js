@@ -30,10 +30,13 @@ function _seasonTitleCtx(sid, bisMs){
 // Der Wochenschluessel der Liga, an EINER Stelle: `_periodWinnerMap`, die
 // Monatschronik und die Laufbahn-Rekorde muessen dieselbe Woche meinen, sonst
 // zaehlt „Die Wochenkrone" Titel in Wochen, die es fuer den Sieger-Ermittler
-// gar nicht gibt. Er stand viermal ausgeschrieben. Das Jahr ist das
-// Kalenderjahr, nicht das ISO-Jahr: in der ersten Januarwoche weicht das ab,
-// aber der Schluessel steckt in gespeicherten Staenden und bleibt, wie er ist.
-// Nimmt einen Zeitstempel oder ein Date. Text und Zahl werden gemerkt wie
+// gar nicht gibt. Er stand viermal ausgeschrieben. Das Jahr ist das Jahr
+// des Donnerstags der Woche, wie bei der ISO-Woche selbst: mit dem
+// Kalenderjahr zerfiel die Woche vom 28.12.2026 bis 03.01.2027 in
+// „2026-W53" und „2027-W53", zwei halbe Wochen mit je einem Spieler der
+// Woche. Gespeichert wird der Schluessel nirgends — der Stand eines
+// Ruhestaendlers traegt Zaehlungen, keine Wochen —, und bis dahin hatte die
+// Liga keinen Jahreswechsel gespielt. Nimmt einen Zeitstempel oder ein Date. Text und Zahl werden gemerkt wie
 // bei `mts`: der Schlüssel fiel je Partie und Aufrufer neu an, mit drei
 // Date-Objekten je Aufruf.
 const _wochenKeyMemo = new Map();
@@ -41,7 +44,8 @@ function _wochenKey(iso){
   const merk = (typeof iso === 'string' || typeof iso === 'number') ? iso : null;
   if(merk !== null){ const hit = _wochenKeyMemo.get(merk); if(hit !== undefined) return hit; }
   const d = new Date(iso);
-  const k = d.getFullYear() + '-W' + isoWeek(d);
+  const donnerstag = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 3 - wochentagMo(d));
+  const k = donnerstag.getFullYear() + '-W' + isoWeek(d);
   if(merk !== null){
     if(_wochenKeyMemo.size > 50000) _wochenKeyMemo.clear(); // Wachstums-Schutz
     _wochenKeyMemo.set(merk, k);

@@ -445,15 +445,18 @@ function _vRankingCore(){
       }
       return s;
     };
+    // Der heutige Tag, die heutige Stunde und die Länge des Monats kommen
+    // aus dem Kalender, nicht aus Millisekunden durch vierundzwanzig Stunden:
+    // der Oktober hat mit der Zeitumstellung 31 Tage und eine Stunde, und
+    // die Liga zeigte „Tag 27 von 32" mit zweiunddreißig Zellen. Nach der
+    // Umstellung auf die Sommerzeit stand eine Stunde lang der gestrige Tag
+    // gerahmt, und an jedem Umstellungstag die Stunde daneben.
+    const jetztD=new Date();
     let kontextHtml='';
     if(period==='season'){
       if(laeuft){
-        const sStart=seasonStart(sid), sEnd=seasonEnd(sid);
-        const totalMs=sEnd-sStart;
-        const elapsedMs=Math.max(0,Math.min(totalMs,Date.now()-sStart));
-        kontextHtml=fortschritt(
-          Math.max(1,Math.ceil(elapsedMs/86400000)),
-          Math.ceil(totalMs/86400000), 'Tag', spieltage(sStart, Math.ceil(totalMs/86400000)));
+        const sStart=seasonStart(sid), tage=seasonEnd(sid).getDate();
+        kontextHtml=fortschritt(Math.min(tage,jetztD.getDate()), tage, 'Tag', spieltage(sStart, tage));
       } else {
         // Eine abgeschlossene Saison hat keinen Fortschritt. Der Balken
         // stünde voll da und behauptete, es ginge noch weiter. Statt seiner
@@ -466,17 +469,9 @@ function _vRankingCore(){
         </div>`;
       }
     } else if(period==='week'){
-      const wkStart=periodStart('week');
-      const wkEnd=new Date(wkStart); wkEnd.setDate(wkEnd.getDate()+7);
-      const el=Math.max(0,Math.min(wkEnd-wkStart,Date.now()-wkStart));
-      kontextHtml=fortschritt(
-        Math.max(1,Math.min(7,Math.ceil(el/86400000))), 7, 'Tag', spieltage(wkStart, 7));
+      kontextHtml=fortschritt(wochentagMo(jetztD)+1, 7, 'Tag', spieltage(periodStart('week'), 7));
     } else if(period==='day'){
-      const dyStart=periodStart('day');
-      const dyEnd=new Date(dyStart); dyEnd.setDate(dyEnd.getDate()+1);
-      const el=Math.max(0,Math.min(dyEnd-dyStart,Date.now()-dyStart));
-      kontextHtml=fortschritt(
-        Math.max(1,Math.min(24,Math.ceil(el/3600000))), 24, 'Stunde',
+      kontextHtml=fortschritt(jetztD.getHours()+1, 24, 'Stunde',
         new Set(periodMs.map(m=>new Date(m.created_at).getHours()+1)));
     }
 

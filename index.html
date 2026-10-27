@@ -6408,7 +6408,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.27.e4d7143d';
+const BUILD_VERSION='2026.10.27.18d49763';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -6822,6 +6822,11 @@ function tagKey(when){
   const d = new Date(when);
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0')
        + '-' + String(d.getDate()).padStart(2, '0');
+}
+function gesternKey(jetzt){
+  const d = new Date(jetzt);
+  d.setDate(d.getDate() - 1);
+  return tagKey(d);
 }
 
 function _schnitt(bisMs){
@@ -11987,15 +11992,12 @@ function _vRankingCore(){
       }
       return s;
     };
+    const jetztD=new Date();
     let kontextHtml='';
     if(period==='season'){
       if(laeuft){
-        const sStart=seasonStart(sid), sEnd=seasonEnd(sid);
-        const totalMs=sEnd-sStart;
-        const elapsedMs=Math.max(0,Math.min(totalMs,Date.now()-sStart));
-        kontextHtml=fortschritt(
-          Math.max(1,Math.ceil(elapsedMs/86400000)),
-          Math.ceil(totalMs/86400000), 'Tag', spieltage(sStart, Math.ceil(totalMs/86400000)));
+        const sStart=seasonStart(sid), tage=seasonEnd(sid).getDate();
+        kontextHtml=fortschritt(Math.min(tage,jetztD.getDate()), tage, 'Tag', spieltage(sStart, tage));
       } else {
         const meister=ps.length&&ps[0].games>0?ps[0]:null;
         kontextHtml=`<div class="saison-abgeschlossen">
@@ -12005,17 +12007,9 @@ function _vRankingCore(){
         </div>`;
       }
     } else if(period==='week'){
-      const wkStart=periodStart('week');
-      const wkEnd=new Date(wkStart); wkEnd.setDate(wkEnd.getDate()+7);
-      const el=Math.max(0,Math.min(wkEnd-wkStart,Date.now()-wkStart));
-      kontextHtml=fortschritt(
-        Math.max(1,Math.min(7,Math.ceil(el/86400000))), 7, 'Tag', spieltage(wkStart, 7));
+      kontextHtml=fortschritt(wochentagMo(jetztD)+1, 7, 'Tag', spieltage(periodStart('week'), 7));
     } else if(period==='day'){
-      const dyStart=periodStart('day');
-      const dyEnd=new Date(dyStart); dyEnd.setDate(dyEnd.getDate()+1);
-      const el=Math.max(0,Math.min(dyEnd-dyStart,Date.now()-dyStart));
-      kontextHtml=fortschritt(
-        Math.max(1,Math.min(24,Math.ceil(el/3600000))), 24, 'Stunde',
+      kontextHtml=fortschritt(jetztD.getHours()+1, 24, 'Stunde',
         new Set(periodMs.map(m=>new Date(m.created_at).getHours()+1)));
     }
 
@@ -16035,6 +16029,7 @@ function playerAwards(id){
   const _pawKey = 'paw_'+id+'_'+_pawSid+'_'+matches.length+'_'+_cache.version;
   if(!_cache._playerAwards) _cache._playerAwards = {};
   if(_cache._playerAwards[_pawKey]) return _cache._playerAwards[_pawKey];
+  _topfDeckel(_cache._playerAwards, 40);
   const R=awardRankings('season', _pawSid);
   const found=[];
   Object.keys(AW_WERT).forEach(key=>{
@@ -17947,10 +17942,18 @@ function bindCombo(inp){
     const rankElo=p=>gSim.careerElo[p.id]??p.elo;
     const dispElo=p=>Math.round(gSim.elo[p.id]??cfg.start_elo);
     let arr=[...activePlayers()].sort((a,b)=>rankElo(b)-rankElo(a)).filter(p=>!taken.includes(p.id));
-    if(q)arr=arr.filter(p=>p.name.toLowerCase().includes(q.toLowerCase()));
+    const passt=p=>!q||p.name.toLowerCase().includes(q.toLowerCase());
+    arr=arr.filter(passt);
     aktiv=-1;inp.removeAttribute('aria-activedescendant');
+    const leer=()=>{
+      const da=players.find(p=>taken.includes(p.id)&&passt(p));
+      if(q&&da) return `<div class="combo-opt empty">${esc(da.name)} steht schon in dieser Partie</div>`;
+      const weg=players.find(p=>sichtbar(p)&&!ligaAktiv(p)&&passt(p));
+      if(q&&weg) return `<div class="combo-opt empty" data-ruhestand>${esc(weg.name)} hat die Karriere beendet</div>`;
+      return `<div class="combo-opt empty">Kein Treffer</div>`;
+    };
     list.innerHTML=arr.length ? arr.slice(0,8).map((p,i)=>`<div class="combo-opt" id="match-choice-${key}-${i}" role="option" aria-selected="false" data-pick="${p.id}">${esc(p.name)}<span class="ce">${dispElo(p)}</span></div>`).join('')
-      : `<div class="combo-opt empty">Kein Treffer</div>`;
+      : leer();
     list.classList.add('show');inp.setAttribute('aria-expanded','true');
     list.querySelectorAll('[data-pick]').forEach(o=>{
       o.onpointerdown=e=>e.preventDefault();o.onclick=()=>waehlen(o);
@@ -19171,7 +19174,7 @@ function _storyStand(bisMs){
 function _storyTagGrenzen(ms){
   if(!ms) return null;
   const d = new Date(ms); d.setHours(0, 0, 0, 0);
-  const von = d.getTime(), bis = von + 864e5 - 1;
+  const von = d.getTime(), bis = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).getTime() - 1;
   let letzte = 0, erste = 0, n = 0;
   (matches || []).forEach(m => {
     const t = mts(m);
@@ -19518,15 +19521,15 @@ function _buildStories(){
     const weekNum = Math.ceil((((t - yearStart) / 86400000) + 1) / 7);
     return t.getUTCFullYear() + '-W' + String(weekNum).padStart(2, '0');
   };
-  const todayKey = now.toISOString().slice(0,10);
+  const todayKey = tagKey(now);
   const weekKey  = isoWeek(now);
 
   const _dayMs = 86400000;
   const _startOfToday     = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  const _startOfYesterday = _startOfToday - _dayMs;
+  const _startOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).getTime();
   const _weekStartOf = (ts) => wochenBeginn(ts).getTime();
   const _thisWeekStart = _weekStartOf(now.getTime());
-  const _prevWeekStart = _thisWeekStart - 7*_dayMs;
+  const _prevWeekStart = _weekStartOf(_thisWeekStart - 3 * _dayMs);
   const _yesterdayKey  = new Date(_startOfYesterday).toISOString().slice(0,10);
   let   _lastWeekKey   = isoWeek(new Date(_prevWeekStart));
 
@@ -24111,7 +24114,7 @@ function _newsWhenLabel(when){
   const d = new Date(when);
   const now = new Date();
   const todayKey = tagKey(now);
-  const yest = tagKey(now.getTime() - 86400000);
+  const yest = gesternKey(now);
   const dKey = tagKey(d);
   const hhmm = datumFmt(d, 'uhr');
   if(dKey === todayKey) return 'Heute, '+hhmm;
@@ -24122,7 +24125,7 @@ function _newsWhenLabel(when){
 function _newsDayLabel(when){
   const d = new Date(when), now = new Date();
   if(tagKey(d) === tagKey(now)) return 'HEUTE';
-  if(tagKey(d) === tagKey(now.getTime() - 86400000)) return 'GESTERN';
+  if(tagKey(d) === gesternKey(now)) return 'GESTERN';
   return datumFmt(d, 'wt').toUpperCase();
 }
 function _newsDayDate(when){
@@ -25094,11 +25097,20 @@ function _breakingHeroText(s){
   } catch(e){}
   return s.desc || '';
 }
+const _tagMsIndex = new WeakMap();
 function _newsTagMs(dayKey){
   try {
-    const out = [];
-    (matches || []).forEach(m => { if(tagKey(m.created_at) === dayKey) out.push(m); });
-    return out;
+    let je = _tagMsIndex.get(matches);
+    if(!je){
+      je = new Map();
+      (matches || []).forEach(m => {
+        const k = tagKey(m.created_at);
+        if(!je.has(k)) je.set(k, []);
+        je.get(k).push(m);
+      });
+      _tagMsIndex.set(matches, je);
+    }
+    return je.get(dayKey) || [];
   } catch(e){ return []; }
 }
 function _newsTagSpannung(s){
@@ -27400,7 +27412,7 @@ function _ehrungZeitraum(d){
   if(!d || !d.ab || !d.bis) return null;
   const jetzt = Date.now();
   const tag = t => tagKey(t) === tagKey(jetzt) ? 'heute'
-    : tagKey(t) === tagKey(jetzt - 864e5) ? 'gestern' : datumFmt(t, 'tm');
+    : tagKey(t) === gesternKey(jetzt) ? 'gestern' : datumFmt(t, 'tm');
   const von = t => { const w = tag(t); return (/^\d/.test(w) ? 'vom' : 'von') + '\u00a0' + w; };
   const uhr = t => '\u00a0' + datumFmt(t, 'uhr') + '\u00a0Uhr';
   if(d.ab === d.bis) return {vor:'Geholt in der Partie', wann:`${von(d.ab)},${uhr(d.ab)}`};
@@ -31914,7 +31926,8 @@ function _wochenKey(iso){
   const merk = (typeof iso === 'string' || typeof iso === 'number') ? iso : null;
   if(merk !== null){ const hit = _wochenKeyMemo.get(merk); if(hit !== undefined) return hit; }
   const d = new Date(iso);
-  const k = d.getFullYear() + '-W' + isoWeek(d);
+  const donnerstag = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 3 - wochentagMo(d));
+  const k = donnerstag.getFullYear() + '-W' + isoWeek(d);
   if(merk !== null){
     if(_wochenKeyMemo.size > 50000) _wochenKeyMemo.clear();
     _wochenKeyMemo.set(merk, k);
@@ -34020,7 +34033,7 @@ const AV_RINGS = {
   tots:  {prio:64, tone:'gold', ic:'handshake',         label:'Team of the Season'},
 };
 function avatarRings(){
-  const jetzt = new Date(), heute = jetzt.toISOString().slice(0, 10);
+  const jetzt = new Date(), heute = tagKey(jetzt);
   const key = matches.length + '_' + _cache.version + '_' + _wochenKey(jetzt)
     + '_' + heute + (_tagZu(heute) ? 'z' : '');
   if(_cache._avRingKey === key) return _cache._avRing;

@@ -304,7 +304,7 @@ function _newsWhenLabel(when){
   // eine Story mit when=heute 00:00 Lokalzeit in Zonen mit positivem UTC-Offset
   // fälschlich „Gestern", obwohl die Uhrzeit lokal (toLocaleTimeString) heute ist.
   const todayKey = tagKey(now);
-  const yest = tagKey(now.getTime() - 86400000);
+  const yest = gesternKey(now);
   const dKey = tagKey(d);
   const hhmm = datumFmt(d, 'uhr');
   if(dKey === todayKey) return 'Heute, '+hhmm;
@@ -321,7 +321,7 @@ function _newsWhenLabel(when){
 function _newsDayLabel(when){
   const d = new Date(when), now = new Date();
   if(tagKey(d) === tagKey(now)) return 'HEUTE';
-  if(tagKey(d) === tagKey(now.getTime() - 86400000)) return 'GESTERN';
+  if(tagKey(d) === gesternKey(now)) return 'GESTERN';
   return datumFmt(d, 'wt').toUpperCase();
 }
 // Das Datum unter dem Wochentag. Bei „Heute" und „Gestern" steht es trotzdem

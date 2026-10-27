@@ -988,7 +988,7 @@ function avatarRings(){
   // Woche und Tag gehören in den Schlüssel: um 23:59 wird ein Spieler des
   // Tages fertig, am Montag einer der Woche — ohne neue Partie, und ohne
   // sie hielt der Ring den alten bis zur nächsten.
-  const jetzt = new Date(), heute = jetzt.toISOString().slice(0, 10);
+  const jetzt = new Date(), heute = tagKey(jetzt);
   const key = matches.length + '_' + _cache.version + '_' + _wochenKey(jetzt)
     + '_' + heute + (_tagZu(heute) ? 'z' : '');
   if(_cache._avRingKey === key) return _cache._avRing;

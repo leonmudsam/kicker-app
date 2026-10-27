@@ -111,7 +111,8 @@ Vergleich über die Laufbahn (`ligaAktiv`)? Mehr ist nicht zu tun. Eine rohe
 seinem Abschluss, während die anderen weiterspielen, jeder Reiter aus
 `NAV`, jeder Knopf darin bis zur Tiefe drei und die Spielerwahl. Erlaubt ist
 er nur in `[data-ruhestand]` (die Liste der Ruheständler,
-`EINBLICK.….ruhestand`) und in `[data-bis]`, einem Stück Geschichte, das
+`EINBLICK.….ruhestand`, und der Hinweis der Spielerwahl, wer seinen Namen
+tippt: „… hat die Karriere beendet" statt „Kein Treffer") und in `[data-bis]`, einem Stück Geschichte, das
 spätestens mit seinem Abschluss endet (`geschichteHtml`: ein vergangener
 Monat in Liga und Awards, eine vergangene Woche, die Zeile der
 Chronik-Matrix bis zu ihrem letzten Eintrag), und im Verlauf

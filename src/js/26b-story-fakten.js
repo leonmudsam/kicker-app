@@ -90,7 +90,12 @@ function _storyStand(bisMs){
 function _storyTagGrenzen(ms){
   if(!ms) return null;
   const d = new Date(ms); d.setHours(0, 0, 0, 0);
-  const von = d.getTime(), bis = von + 864e5 - 1;
+  // Das Ende ist die nächste Mitternacht des Kalenders: an den Tagen der
+  // Zeitumstellung hat ein Tag 23 oder 25 Stunden, und mit 24 endete der
+  // 25. Oktober um 23 Uhr — sein Spieler des Tages um 23:59 fiel aus der
+  // Karte —, und der 29. März reichte in den Montag und nahm den Abschluss
+  // der Woche mit.
+  const von = d.getTime(), bis = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).getTime() - 1;
   let letzte = 0, erste = 0, n = 0;
   (matches || []).forEach(m => {
     const t = mts(m);

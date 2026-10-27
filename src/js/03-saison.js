@@ -98,6 +98,15 @@ function tagKey(when){
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0')
        + '-' + String(d.getDate()).padStart(2, '0');
 }
+// Der Kalendertag davor. Vierundzwanzig Stunden zurück ist er nicht immer:
+// nach der Umstellung auf die Sommerzeit lag 00:30 minus einen Tag in
+// Millisekunden noch im Vorvortag, und „Gestern" stand eine Stunde lang
+// über dem falschen Tag.
+function gesternKey(jetzt){
+  const d = new Date(jetzt);
+  d.setDate(d.getDate() - 1);
+  return tagKey(d);
+}
 
 // ─── Ein Zeitschnitt, der nichts abschneidet ─────────────────────────
 // Der Feed vergleicht „vor dem letzten Spieltag" mit „heute", und „heute"

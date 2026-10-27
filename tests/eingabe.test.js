@@ -81,6 +81,17 @@ const ok=(c,msg)=>{checks++;if(!c)fails++;console.log((c?'  ok  ':'  ✗   ')+ms
     await K(`window.__combo.onfocus();window.__pick=document.querySelector('[data-combolist="A1"] [data-pick]').dataset.pick;0;`);
     await page.locator('[data-combolist="A1"] [data-pick]').first().click();
     ok(await K('M.A1===window.__pick && document.activeElement===window.__combo'),'Pointer-Auswahl übernimmt den Spieler ohne die Eingabetastatur durch Fokusverlust zu schließen');
+    // Wer schon in der Partie steht, ist kein Tippfehler: dort stand
+    // „Kein Treffer", als gäbe es den Namen nicht.
+    const vergeben=await K(`(()=>{const b2=document.querySelector('[data-combo="B2"]'),n=pname(M.A1);
+      b2.focus();b2.value=n;b2.dispatchEvent(new InputEvent('input',{bubbles:true}));
+      const t=document.querySelector('[data-combolist="B2"]').textContent.trim();
+      b2.value='Zzz';b2.dispatchEvent(new InputEvent('input',{bubbles:true}));
+      const u=document.querySelector('[data-combolist="B2"]').textContent.trim();
+      b2.value='';b2.dispatchEvent(new InputEvent('input',{bubbles:true}));b2.blur();
+      return {t,u,n};})()`);
+    ok(vergeben.t===vergeben.n+' steht schon in dieser Partie' && vergeben.u==='Kein Treffer',
+      'Die Spielersuche sagt, wenn ein Name schon in der Partie steht, und nur sonst „Kein Treffer": '+JSON.stringify(vergeben));
 
     await K(`window.requestAnimationFrame=window.__raf;tab='teams';teamSearch='';render();
       window.__search=document.getElementById('teamSearch');window.__search.focus();

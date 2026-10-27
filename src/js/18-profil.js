@@ -18,6 +18,8 @@ function playerAwards(id){
   const _pawKey = 'paw_'+id+'_'+_pawSid+'_'+matches.length+'_'+_cache.version;
   if(!_cache._playerAwards) _cache._playerAwards = {};
   if(_cache._playerAwards[_pawKey]) return _cache._playerAwards[_pawKey];
+  // Mit der Version im Schlüssel wüchse der Topf sonst über jede Version mit.
+  _topfDeckel(_cache._playerAwards, 40);
   const R=awardRankings('season', _pawSid);
   // Platz und Wert kommen aus AW_WERT [§5.3d]: dieselbe Sortierung wie
   // Kachel und Blatt, gleichauf heißt geteilt. Hier standen drei eigene
