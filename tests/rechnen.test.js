@@ -123,6 +123,65 @@ const prestige=K(`(() => {
     cache:t===prestigeTabelle()};
 })()`);
 for(const [key,value]of Object.entries(prestige))ok(value,'Eine Prestige-Aufteilung für Engine, Story und Laufbahn: '+key);
+// Das Positionsprofil [§C44] an den echten Partien und an gebauten Fällen.
+// Henry spielte 14 von 152 Partien vorne und dort 26 Prozentpunkte
+// schlechter gegen die Erwartung als hinten; die alte Rechnung verglich die
+// Summen und stellte ihn bei 30 % Sturm als Verteidiger ein.
+const profil=K(`(() => {
+  const henry=positionsLage(posPerfFrom(${JSON.stringify(ids[2])},matches));
+  const lage=p=>positionsLage(p);
+  // gleiche Leistung je Partie auf beiden Seiten: übrig bleibt der Anteil
+  const gleich=lage({aG:15,dG:187,aPerf:-.1*15,dPerf:-.1*187});
+  // dieselbe Leistung je Partie vorne, einmal aus 3, einmal aus 30 Partien
+  const wenig=lage({aG:3,dG:100,aPerf:-.5*3,dPerf:0}), viel=lage({aG:30,dG:100,aPerf:-.5*30,dPerf:0});
+  const mehrVorne=lage({aG:60,dG:40,aPerf:0,dPerf:0}).wert>lage({aG:40,dG:60,aPerf:0,dPerf:0}).wert;
+  const besserVorne=lage({aG:50,dG:50,aPerf:.1*50,dPerf:0}).wert>lage({aG:50,dG:50,aPerf:0,dPerf:0}).wert;
+  // die stärkere Rolle aus der Leistung gegen die Erwartung, nicht aus der Siegquote
+  const staerker=[lage({aG:20,aW:12,dG:20,dW:10,aPerf:-.05*20,dPerf:.1*20}).staerker,
+    lage({aG:40,dG:40,aPerf:.01*40,dPerf:0}).staerker, lage({aG:0,dG:40,dPerf:.2*40}).staerker];
+  // die Stammposition kostet nichts: je Spieler ist eine Seite genau 1, die
+  // andere nicht darunter; Henry hinten 1, vorne mehr
+  const seiten=players.map(p=>{const l=positionsLage(posPerfFrom(p.id,matches));
+    return [posFactor(l,'atk',.4),posFactor(l,'def',.4)];});
+  const hl=positionsLage(posPerfFrom(${JSON.stringify(ids[2])},matches));
+  const nurHinten=positionsLage({aG:0,dG:200,dPerf:-.1*200});
+  return {henry:{wert:henry.wert,anteil:henry.anteil,kl:posClassify(henry.wert).label},
+    gleich:gleich.wert, gleichSoll:16/204, wenig:wenig.rA, viel:viel.rA, mehrVorne, besserVorne, staerker,
+    stamm:seiten.every(f=>Math.min(...f)===1 && Math.max(...f)>=1),
+    henryElo:[posFactor(hl,'def',.4),posFactor(hl,'atk',.4)], nurHinten:posFactor(nurHinten,'def',.4),
+    profil:players.every(p=>atkStrength(p.id)===positionsLage(posPerfFrom(p.id,matches)).wert)};
+})()`);
+ok(profil.henry.kl==='Reiner Verteidiger' && profil.henry.wert<profil.henry.anteil,
+  'Henry steht als Reiner Verteidiger, unter dem Anteil seiner Sturmpartien, weil er vorne schwächer ist: '+JSON.stringify(profil.henry));
+ok(Math.abs(profil.gleich-profil.gleichSoll)<1e-12,
+  'Gleiche Leistung je Partie auf beiden Seiten lässt nur den Anteil der Partien übrig, wie viele es auch sind: '+profil.gleich);
+ok(profil.wenig>profil.viel && profil.wenig<0,
+  'Drei schwache Sturmpartien zählen weniger als dreißig mit derselben Leistung: '+profil.wenig+' gegen '+profil.viel);
+ok(profil.mehrVorne && profil.besserVorne, 'Mehr Partien vorne und bessere Leistung vorne heben das Profil');
+ok(profil.staerker.join()==='def,beide,beide',
+  'Die stärkere Rolle sagt die Leistung gegen die Erwartung, gleichauf bis drei Prozentpunkte, ohne Partien keine: '+profil.staerker.join());
+ok(profil.stamm && profil.henryElo[0]===1 && profil.henryElo[1]>1 && profil.nurHinten===1,
+  'Die Stammposition kostet in der Elo nichts, auch wer dauerhaft hinten spielt; nur die schwächere Seite bekommt einen Ausgleich: '+JSON.stringify([profil.henryElo,profil.nurHinten]));
+ok(profil.profil, 'Profil und Stärke für das Durchwechseln sind dieselbe Zahl');
+// Die Elo-Rechnung liest dieselbe Lage wie das Profil, aus den Partien vor
+// der Partie. Dort stand eine eigene Kopie der alten Formel.
+const eloLage=K(`(() => {
+  players=Array.from({length:4},(_,i)=>({id:'e'+i,name:'Elo '+i,hidden:false,elo:0,atk:.5}));
+  cfg={...window.__cfgBasis};
+  const t0=Date.UTC(2026,7,3,18,0), vorher=[];
+  for(let i=0;i<9;i++) vorher.push({...window.__partie,id:'ev'+i,a1:'e0',a2:'e1',b1:'e2',b2:'e3',
+    a1_pos:i%3?'atk':'def',a2_pos:i%3?'def':'atk',winner:i%4?'A':'B',score_a:i%4?10:6,score_b:i%4?7:10,
+    created_at:new Date(t0+i*6e5).toISOString(),deltas:{}});
+  const h=simulateEloWithSliders(vorher).history;
+  vorher.forEach((m,i)=>m.exp_a=h[i].expA);
+  const letzte={...window.__partie,id:'ez',a1:'e0',a2:'e1',b1:'e2',b2:'e3',a1_pos:'def',a2_pos:'atk',
+    created_at:new Date(t0+20*6e5).toISOString(),deltas:{}};
+  const bd=simulateEloWithSliders(vorher.concat(letzte)).history[9].breakdowns.e0;
+  const l=positionsLage(posPerfFrom('e0',vorher));
+  return {wert:bd.posStrength, soll:l.wert, faktor:bd.posFactor, sollFaktor:posFactor(l,'def',cfg.pos_swing)};
+})()`);
+ok(Math.abs(eloLage.wert-eloLage.soll)<1e-12 && Math.abs(eloLage.faktor-eloLage.sollFaktor)<1e-12,
+  'Die Elo-Rechnung nimmt das Positionsprofil aus den Partien davor, mit derselben Lage und demselben Bonus: '+JSON.stringify(eloLage));
 // Der Saisonverlauf rechnet jede Saison, in der gespielt wurde, die neueste
 // zuerst; die echten Partien reichen über weniger Monate, deshalb hier
 // sieben mit je einer Partie am Monatsersten. Dass das Profil sie alle zeigt

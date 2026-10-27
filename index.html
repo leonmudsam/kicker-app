@@ -139,6 +139,10 @@
   .kopf-info .ic,.kopf-info svg{width:14px;height:14px}
   .pos-info p{font-size:13px;line-height:1.5;color:var(--ink2);margin:0 0 10px}
   .pos-info b{color:var(--ink)}
+  .pos-info-tab{display:grid;grid-template-columns:1fr auto auto;gap:6px 14px;align-items:baseline;
+    margin:0 0 14px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;
+    font-family:'Sometype Mono',monospace;font-size:12px;color:var(--ink2);text-align:right}
+  .pos-info-tab .l{text-align:left;color:var(--muted)}
 
   .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;margin-bottom:14px}
   .card.flush{padding:6px}
@@ -2834,6 +2838,7 @@
   .pp-posprof .pp-thumb{position:absolute;top:50%;transform:translate(-50%,-50%);
     width:14px;height:14px;border-radius:50%;background:var(--ink);border:2px solid var(--bg);
     box-shadow:0 2px 8px rgba(0,0,0,.5)}
+  .pp-sec-title .kopf-info{width:22px;height:22px;margin:-4px 0 -4px 2px}
   .pp-posprof .ppf{margin-top:10px;font-size:11px;color:var(--ink2);text-align:center}
   .pp-posprof .ppf .lab{font-weight:700;color:var(--ink)}
 
@@ -6403,7 +6408,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.27.cb82182b';
+const BUILD_VERSION='2026.10.27.d9180b54';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -7445,13 +7450,10 @@ function chanceWort(c){
   return c < CHANCE_SENSATION ? 'Sensation' : c < CHANCE_UPSET ? 'Außenseiter'
        : c < CHANCE_FAVORIT ? 'Augenhöhe' : 'Favorit';
 }
-function posFactor(ps,sw){ return 1+sw*(0.5-ps)*2; }
 function riskWeights(hi,lo,rs){ const gap=Math.min(Math.abs(hi-lo)/400,1); const s=rs*gap; return {strong:1-s,weak:1+s}; }
 
-const POS_MIN_GAMES_DEFAULT = 3;
-const EXP_WEIGHT_DEFAULT = 0.5;
-const _posMinGames = () => cfg.pos_min_games ?? POS_MIN_GAMES_DEFAULT;
-const _expWeight  = () => cfg.exp_weight ?? EXP_WEIGHT_DEFAULT;
+const POS_SCHRUMPF = 15;
+const POS_LEISTUNG = 4;
 
 function posPerfFrom(id, matchSubset){
   if (!matchSubset || matchSubset === matches) {
@@ -7496,34 +7498,29 @@ function posWert(pos, g, w, goalsAvg, perfAvg){
   return posLeistung(pos, g, w, goalsAvg, perfAvg) * (1 - Math.exp(-g/5));
 }
 
-function positionsProfilWert(p){
+function positionsLage(p){
   p = p || {};
   const aG = Number(p.aG != null ? p.aG : p.atkG) || 0;
   const dG = Number(p.dG != null ? p.dG : p.defG) || 0;
-  const aPerfAvg = Number(p.aPerfAvg != null ? p.aPerfAvg : (aG ? p.atkPerf / aG : 0)) || 0;
-  const dPerfAvg = Number(p.dPerfAvg != null ? p.dPerfAvg : (dG ? p.defPerf / dG : 0)) || 0;
-  const total = aG + dG;
-  const minG = _posMinGames();
-  const aOk = aG>=minG, dOk = dG>=minG;
-  if(!aOk && !dOk) return 0.5;
+  const summe = (g, roh, avg) => roh != null ? (Number(roh) || 0) : (Number(avg) || 0) * g;
+  const aS = summe(aG, p.aPerf != null ? p.aPerf : p.atkPerf, p.aPerfAvg);
+  const dS = summe(dG, p.dPerf != null ? p.dPerf : p.defPerf, p.dPerfAvg);
+  const n = aG + dG;
+  if(!n) return {aG, dG, anteil:.5, rA:0, rD:0, wert:.5, staerker:'beide'};
+  const schnitt = (aS + dS) / n;
+  const rA = (aS - aG * schnitt) / (aG + POS_SCHRUMPF);
+  const rD = (dS - dG * schnitt) / (dG + POS_SCHRUMPF);
+  const lg = Math.log((aG + 1) / (dG + 1)) + POS_LEISTUNG * (rA - rD);
+  const staerker = (!aG || !dG || Math.abs(rA - rD) <= .03) ? 'beide' : rA > rD ? 'atk' : 'def';
+  return {aG, dG, anteil:aG / n, rA, rD, staerker,
+    wert:Math.min(.95, Math.max(.05, 1 / (1 + Math.exp(-lg))))};
+}
+function positionsProfilWert(p){ return positionsLage(p).wert; }
 
-  let perfAtk;
-  if(aOk && dOk){
-    const aScore = aPerfAvg * aG;
-    const dScore = dPerfAvg * dG;
-    const diff = (aScore - dScore) / total;
-    perfAtk = 0.5 + diff * 0.5;
-  } else if(aOk) {
-    perfAtk = 0.5 + aPerfAvg * 0.3;
-  } else {
-    perfAtk = 0.5 - dPerfAvg * 0.3;
-  }
-
-  const expAtk = total>0 ? aG/total : 0.5;
-
-  const ew = _expWeight();
-  const combined = (1-ew)*perfAtk + ew*expAtk;
-  return Math.max(0.1, Math.min(0.9, combined));
+function posFactor(lage, pos, sw){
+  const a = lage.wert, s = lage.aG + lage.dG ? lage.anteil : .5;
+  const mitte = s * a + (1 - s) * (1 - a);
+  return 1 + (sw || 0) * Math.max(0, mitte - (pos === 'atk' ? a : 1 - a));
 }
 function atkStrengthFrom(id, matchSubset){
   return positionsProfilWert(posPerfFrom(id,matchSubset));
@@ -11542,25 +11539,6 @@ function simulateEloWithSliders(matchSubset, opts={}){
     }
     _curSeason=opts.initialCurSeason||null;
   }
-  const atkFromTracker=(id)=>{
-    const t=posTracker[id]||{aG:0,aW:0,dG:0,dW:0,aPerf:0,dPerf:0};
-    const total=t.aG+t.dG;
-    const minG = _posMinGames();
-    const aOk=t.aG>=minG, dOk=t.dG>=minG;
-    if(!aOk&&!dOk) return 0.5;
-    let perfAtk;
-    if(aOk&&dOk){
-      const diff=(t.aPerf-t.dPerf)/total;
-      perfAtk=0.5+diff*0.5;
-    } else if(aOk){
-      perfAtk=0.5+(t.aPerf/t.aG)*0.3;
-    } else {
-      perfAtk=0.5-(t.dPerf/t.dG)*0.3;
-    }
-    const expAtk=total>0?t.aG/total:0.5;
-    const ew = _expWeight();
-    return Math.max(0.1,Math.min(0.9,(1-ew)*perfAtk+ew*expAtk));
-  };
 
   const ordered=[...matchSubset].sort((a,b)=>mts(a)-mts(b));
   const localDynK=(id)=>{const g=playedSeason[id]||0,e=elo[id];
@@ -11657,11 +11635,10 @@ function simulateEloWithSliders(matchSubset, opts={}){
     const share=slot.id===high.id?w.strong:w.weak;
     bd.riskShare=share; bd.riskEffect=afterMods*share-afterMods;
 
-    const a=atkFromTracker(slot.id);
-    const ps=slot.pos==='atk'?a:(1-a);
-    const pf=posFactor(ps,cfg.pos_swing);
+    const lage=positionsLage(posTracker[slot.id]);
+    const pf=posFactor(lage,slot.pos,cfg.pos_swing);
     const posMult=won?pf:(2-pf);
-    bd.posStrength=a; bd.posMult=posMult; bd.posEffect=afterMods*share*posMult-afterMods*share;
+    bd.posStrength=lage.wert; bd.posFactor=pf; bd.posMult=posMult; bd.posEffect=afterMods*share*posMult-afterMods*share;
 
     const mb=cfg.match_bonus ?? 1.5;
     bd.matchBonus=mb;
@@ -12381,8 +12358,9 @@ function vPositions(){
 function zeigePositionsInfo(){
   openSheet(blattKopfHtml({ic:'info', titel:'So entsteht der Wert', unter:'Positionen'})
     + `<div class="pos-info">
-      <p>Der Wert verbindet drei Dinge: die Siegquote auf dieser Position, die Leistung gegen die Erwartung — gemessen an Partner und Gegnern — und die Erfahrung, also wie oft jemand dort gespielt hat.</p>
-      <p><b>▲</b> heißt über, <b>▼</b> unter der Erwartung. Gerechnet wird über alle Partien.</p></div>`);
+      <p>Der Wert verbindet vier Dinge: die Siegquote auf dieser Position, die Leistung gegen die Erwartung — gemessen an Partner und Gegnern —, die Tore, vorne die eigenen und hinten die zugelassenen, und die Erfahrung, also wie oft jemand dort gespielt hat.</p>
+      <p><b>▲</b> heißt über, <b>▼</b> unter der Erwartung. Gerechnet wird über alle Partien.</p>
+      <p>Der Wert vergleicht die Liga auf einer Position. Auf welcher Position jemand selbst stärker ist, sagt das Positions-Profil im Profil.</p></div>`);
 }
 const AW_MIN = {
   teamSpiele: 3,
@@ -14057,8 +14035,6 @@ function vSettings(){
     movDamp:    Math.round((cfg.mov_loss_damp ?? 0.5)*100),
     bonus:      komma(cfg.match_bonus ?? 1.5, 1),
     startElo:   Math.round(cfg.start_elo ?? 0),
-    posMin:     Math.round(cfg.pos_min_games ?? 3),
-    expW:       Math.round((cfg.exp_weight ?? 0.5)*100),
     npMult:     Math.round((cfg.new_player_mult ?? 1.5)*100),
     npMidMult:  Math.round((cfg.new_player_mid_mult ?? 1.2)*100),
     vetDamp:    Math.round((cfg.veteran_damp ?? 0.85)*100),
@@ -14081,8 +14057,6 @@ function vSettings(){
     <div class="card">
       ${sl('cfgRisk','Risiko-Split (schwacher Partner)',c.risk,0,100,'%')}
       ${sl('cfgPos','Positions-Swing',c.pos,0,100,'%')}
-      ${sl('cfgExpW','Positions-Erfahrungs-Gewicht',c.expW,0,100,'%')}
-      ${sl('cfgPosMin','Mindestspiele je Position',c.posMin,1,10,'')}
     </div>
 
     <div class="cfg-section-title">Sieg & Niederlage</div>
@@ -14114,9 +14088,7 @@ function vSettings(){
         <b style="color:var(--acid)">K-Faktor</b> — Wie stark einzelne Matches die Elo verändern. Hoch = schnelle Änderungen, niedrig = stabile Elo.<br>
         <b style="color:var(--acid)">Start-Elo</b> — Der Wert auf den jeder Spieler zu Saisonbeginn zurückgesetzt wird. Höhere Werte machen Verluste in den ersten Matches "weniger schmerzhaft".<br>
         <b style="color:var(--acid)">Risiko-Split</b> — Wie viel Last der schwächere Mitspieler trägt. Bei ${c.risk} % verliert weniger Elo, wer mit einem deutlich schwächeren Partner spielt.<br>
-        <b style="color:var(--acid)">Positions-Swing</b> — Bonus für Siege auf der schwachen Position. Ein Abwehr-Spieler der im Sturm gewinnt bekommt extra Elo.<br>
-        <b style="color:var(--acid)">Positions-Erfahrungs-Gewicht</b> — Mischverhältnis bei der automatischen Positions-Erkennung. ${c.expW}% bedeutet: ${c.expW}% Häufigkeit der Position, ${100-c.expW}% Leistung. Hoch = wer oft Abwehr spielt gilt als Verteidiger, egal wie gut. Niedrig = nur die Leistung über der Erwartung zählt.<br>
-        <b style="color:var(--acid)">Mindestspiele je Position</b> — Erst ab ${c.posMin} Spielen auf einer Position fließt sie in die Positions-Wertung ein. Schützt vor Zufalls-Einstufung nach 1 Spiel.<br>
+        <b style="color:var(--acid)">Positions-Swing</b> — Ausgleich für die schwächere Position. Wer meist hinten spielt und im Sturm gewinnt, bekommt bis zu ${c.pos} % mehr Elo und verliert dort entsprechend weniger. Auf der Stammposition kostet die Position nichts, auch wer dauerhaft hinten oder vorne spielt. Welche Position die schwächere ist, sagt das Positions-Profil: wo jemand spielt und wo er gegen die Erwartung besser ist.<br>
         <b style="color:var(--acid)">Sieg-Boost</b> — Siege bringen ${c.winBoost-100}% mehr als Niederlagen kosten. Sorgt für langfristigen Aufwärtstrend.<br>
         <b style="color:var(--acid)">MoV-Dämpfung</b> — Tordifferenz bei Niederlagen nur ${c.movDamp}% so stark wie bei Siegen. Eine 0:10 Niederlage bestraft so nicht 3× so hart wie 5:10.<br>
         <b style="color:var(--acid)">MoV-Max-Boost</b> — Maximaler Multiplikator durch Tordifferenz bei einem Kantersieg. ${c.movMax}% heißt: ein 10:0 zählt bis zu ${(100+c.movMax)}% des normalen Werts.<br>
@@ -16185,6 +16157,21 @@ function playerAwards(id){
   return found;
 }
 
+function zeigeProfilPosInfo(id){
+  const t = posPerfFrom(id, matches), lage = positionsLage(t);
+  const pp = v => v == null ? '–' : _ppZeichen(v) + ' %-Punkte';
+  const zeile = (lbl, a, d) => `<span class="l">${lbl}</span><span>${a}</span><span>${d}</span>`;
+  openSheet(blattKopfHtml({ic:'info', titel:'So entsteht die Einstufung', unter:pname(id)})
+    + `<div class="pos-info">
+      <div class="pos-info-tab">${zeile('', '<b>Sturm</b>', '<b>Abwehr</b>')}${
+        zeile('Partien', t.aG, t.dG)}${zeile('Siege', t.aW, t.dW)}${
+        zeile('Gegen die Erwartung', pp(t.aPerfAvg), pp(t.dPerfAvg))}</div>
+      <p>Die Einstufung fragt zuerst, wo jemand spielt, und rückt dann zu der Seite, auf der die Leistung gegen die Erwartung besser ist. Die Erwartung kennt Partner und Gegner jeder Partie.</p>
+      <p>Wenige Partien auf einer Seite sagen wenig: dort zählt zuerst der Schnitt aller Partien, bis mehr dazukommen.</p>
+      <p>In der Elo bringt ein Sieg auf der schwächeren Seite mehr, und eine Niederlage dort kostet weniger. Auf der Stammposition zählt jede Partie wie sonst.</p>
+      <p><b>${pct(lage.wert)} % Sturm</b> · eingestuft als <b>${esc(posClassify(lage.wert).label)}</b></p></div>`);
+}
+
 function showPlayer(id){
   const p=pmap()[id];if(!p)return;
   _sheetSetReopen(()=>showPlayer(id));
@@ -16202,7 +16189,8 @@ function showPlayer(id){
     .sort((a,b)=>(gSim.elo[b.id]??cfg.start_elo)-(gSim.elo[a.id]??cfg.start_elo));
   const rank=rankedSeason.findIndex(x=>x.id===id)+1;
   const streak=s.curStreak;
-  const autoAtk=atkStrength(id);
+  const posLage=positionsLage(posPerfFrom(id,matches));
+  const autoAtk=posLage.wert;
   const atkPct=Math.round(autoAtk*100);
   const defPct=100-atkPct;
   const _streakInfo=longestPlayerStreakInfo(id,matches);
@@ -16554,8 +16542,7 @@ const rankProgHtml = rInfo ? `
             <div class="pp-roles-empty">Keine Spiele</div>
           </div>`;
         }
-        const _stark = (atkWr == null || defWr == null || Math.abs(atkWr - defWr) <= 3)
-          ? 'beide' : (atkWr > defWr ? 'atk' : 'def');
+        const _stark = posLage.staerker;
         const donut = (cls, lbl, icon, wr, w, g, valLbl, valNum, color) => {
           if(g === 0) return `
             <div class="pp-rd ${cls}">
@@ -16781,9 +16768,11 @@ const rankProgHtml = rInfo ? `
 
     <div class="pp-sec" style="animation-delay:.8s">
       <div class="pp-sec-title">
-        <div class="l">${svgI('posFlex')}<h4>Positions-Profil</h4></div>
-        <div class="m">${posLabel}</div>
+        <div class="l">${svgI('posFlex')}<h4>Positions-Profil</h4><button class="kopf-info" id="ppPosInfo" type="button" aria-label="So entsteht die Einstufung">${svgI('info')}</button></div>
       </div>
+      <!-- Die Einstufung steht einmal, unten in der Karte. Rechts in der
+           Überschrift stand sie ein zweites Mal, und mit dem Knopf brach
+           die Überschrift bei 360 px in zwei Zeilen. -->
       <div class="pp-posprof ${atkPct > defPct + 4 ? 'atk-seite' : defPct > atkPct + 4 ? 'def-seite' : 'neutral'}" style="--atk:${atkPct}%;--strahl:${Math.max(atkPct, defPct)}%">
         <div class="pph">
           <span class="lf">${svgI('posSturm')}Sturm</span>
@@ -16819,6 +16808,8 @@ const rankProgHtml = rInfo ? `
   if(pab) pab.onclick=()=>{ sheetNav(()=>zeigeAbschied(id)); };
   const eb=document.getElementById('ppEditBtn');
   if(eb) eb.onclick=()=>{ sheetNav(()=>showEditPlayer(id)); };
+  const ppi=document.getElementById('ppPosInfo');
+  if(ppi) ppi.onclick=()=>{ sheetNav(()=>zeigeProfilPosInfo(id)); };
   const ag=document.getElementById('ppAwardsGrid');
   if(ag) ag.onclick=()=>{ sheetNav(()=>showPlayerAwards(id,awards)); };
   const bb=document.getElementById('ppBadgesBtn');
@@ -17971,8 +17962,6 @@ function bind(){
   bindSlider('cfgLowEloLossDamp','low_elo_loss_damp',v=>v/100,v=>Math.round(v));
   bindSlider('cfgBonus','match_bonus',v=>v/10,v=>Math.round(v));
   bindSlider('cfgStartElo','start_elo',v=>v,v=>Math.round(v));
-  bindSlider('cfgExpW','exp_weight',v=>v/100,v=>Math.round(v));
-  bindSlider('cfgPosMin','pos_min_games',v=>v,v=>Math.round(v));
   bindSlider('cfgMovMax','mov_max_boost',v=>v/100,v=>Math.round(v));
   bindSlider('cfgExpProt','exp_protect_max',v=>v/100,v=>Math.round(v));
   bindSlider('cfgUdElo','underdog_elo_max',v=>v/100,v=>Math.round(v));
@@ -18722,7 +18711,7 @@ function showMatchDetail(mid){
         factors.push({label:'Underdog-Boost',val:undEffect, desc});
       }
       if(Math.abs(b.riskEffect)>0.1) factors.push({label:b.riskShare<1?'Risiko-Split (stark)':'Risiko-Split (schwach)',val:b.riskEffect,desc:'Stärkeverteilung im Team'});
-      if(Math.abs(b.posEffect)>0.1) factors.push({label:'Positions-Bonus',val:b.posEffect,desc:(b.posMult>1?'Schwache':'Starke')+' Position'});
+      if(Math.abs(b.posEffect)>0.1) factors.push({label:'Positions-Bonus',val:b.posEffect,desc:(b.posFactor>1?'Schwache':'Starke')+' Position'});
       factors.push({label:'Spielbonus',val:b.matchBonus,desc:'fest +'+komma(b.matchBonus,2)+' je Match'});
       const factorRows=factors.map(f=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:11px">
         <div><span style="color:var(--ink)">${f.label}</span> <span style="color:var(--muted);font-size:10px">${f.desc}</span></div>

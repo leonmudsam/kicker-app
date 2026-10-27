@@ -304,8 +304,6 @@ function vSettings(){
     movDamp:    Math.round((cfg.mov_loss_damp ?? 0.5)*100),
     bonus:      komma(cfg.match_bonus ?? 1.5, 1),
     startElo:   Math.round(cfg.start_elo ?? 0),
-    posMin:     Math.round(cfg.pos_min_games ?? 3),
-    expW:       Math.round((cfg.exp_weight ?? 0.5)*100),
     npMult:     Math.round((cfg.new_player_mult ?? 1.5)*100),
     npMidMult:  Math.round((cfg.new_player_mid_mult ?? 1.2)*100),
     vetDamp:    Math.round((cfg.veteran_damp ?? 0.85)*100),
@@ -328,8 +326,6 @@ function vSettings(){
     <div class="card">
       ${sl('cfgRisk','Risiko-Split (schwacher Partner)',c.risk,0,100,'%')}
       ${sl('cfgPos','Positions-Swing',c.pos,0,100,'%')}
-      ${sl('cfgExpW','Positions-Erfahrungs-Gewicht',c.expW,0,100,'%')}
-      ${sl('cfgPosMin','Mindestspiele je Position',c.posMin,1,10,'')}
     </div>
 
     <div class="cfg-section-title">Sieg & Niederlage</div>
@@ -361,9 +357,7 @@ function vSettings(){
         <b style="color:var(--acid)">K-Faktor</b> — Wie stark einzelne Matches die Elo verändern. Hoch = schnelle Änderungen, niedrig = stabile Elo.<br>
         <b style="color:var(--acid)">Start-Elo</b> — Der Wert auf den jeder Spieler zu Saisonbeginn zurückgesetzt wird. Höhere Werte machen Verluste in den ersten Matches "weniger schmerzhaft".<br>
         <b style="color:var(--acid)">Risiko-Split</b> — Wie viel Last der schwächere Mitspieler trägt. Bei ${c.risk} % verliert weniger Elo, wer mit einem deutlich schwächeren Partner spielt.<br>
-        <b style="color:var(--acid)">Positions-Swing</b> — Bonus für Siege auf der schwachen Position. Ein Abwehr-Spieler der im Sturm gewinnt bekommt extra Elo.<br>
-        <b style="color:var(--acid)">Positions-Erfahrungs-Gewicht</b> — Mischverhältnis bei der automatischen Positions-Erkennung. ${c.expW}% bedeutet: ${c.expW}% Häufigkeit der Position, ${100-c.expW}% Leistung. Hoch = wer oft Abwehr spielt gilt als Verteidiger, egal wie gut. Niedrig = nur die Leistung über der Erwartung zählt.<br>
-        <b style="color:var(--acid)">Mindestspiele je Position</b> — Erst ab ${c.posMin} Spielen auf einer Position fließt sie in die Positions-Wertung ein. Schützt vor Zufalls-Einstufung nach 1 Spiel.<br>
+        <b style="color:var(--acid)">Positions-Swing</b> — Ausgleich für die schwächere Position. Wer meist hinten spielt und im Sturm gewinnt, bekommt bis zu ${c.pos} % mehr Elo und verliert dort entsprechend weniger. Auf der Stammposition kostet die Position nichts, auch wer dauerhaft hinten oder vorne spielt. Welche Position die schwächere ist, sagt das Positions-Profil: wo jemand spielt und wo er gegen die Erwartung besser ist.<br>
         <b style="color:var(--acid)">Sieg-Boost</b> — Siege bringen ${c.winBoost-100}% mehr als Niederlagen kosten. Sorgt für langfristigen Aufwärtstrend.<br>
         <b style="color:var(--acid)">MoV-Dämpfung</b> — Tordifferenz bei Niederlagen nur ${c.movDamp}% so stark wie bei Siegen. Eine 0:10 Niederlage bestraft so nicht 3× so hart wie 5:10.<br>
         <b style="color:var(--acid)">MoV-Max-Boost</b> — Maximaler Multiplikator durch Tordifferenz bei einem Kantersieg. ${c.movMax}% heißt: ein 10:0 zählt bis zu ${(100+c.movMax)}% des normalen Werts.<br>

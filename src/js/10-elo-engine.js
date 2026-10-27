@@ -217,25 +217,6 @@ function simulateEloWithSliders(matchSubset, opts={}){
     }
     _curSeason=opts.initialCurSeason||null;
   }
-  const atkFromTracker=(id)=>{
-    const t=posTracker[id]||{aG:0,aW:0,dG:0,dW:0,aPerf:0,dPerf:0};
-    const total=t.aG+t.dG;
-    const minG = _posMinGames();
-    const aOk=t.aG>=minG, dOk=t.dG>=minG;
-    if(!aOk&&!dOk) return 0.5;
-    let perfAtk;
-    if(aOk&&dOk){
-      const diff=(t.aPerf-t.dPerf)/total;
-      perfAtk=0.5+diff*0.5;
-    } else if(aOk){
-      perfAtk=0.5+(t.aPerf/t.aG)*0.3;
-    } else {
-      perfAtk=0.5-(t.dPerf/t.dG)*0.3;
-    }
-    const expAtk=total>0?t.aG/total:0.5;
-    const ew = _expWeight();
-    return Math.max(0.1,Math.min(0.9,(1-ew)*perfAtk+ew*expAtk));
-  };
 
   const ordered=[...matchSubset].sort((a,b)=>mts(a)-mts(b));
   const localDynK=(id)=>{const g=playedSeason[id]||0,e=elo[id];
@@ -359,12 +340,12 @@ function simulateEloWithSliders(matchSubset, opts={}){
     const share=slot.id===high.id?w.strong:w.weak;
     bd.riskShare=share; bd.riskEffect=afterMods*share-afterMods;
 
-    // Positions-Bonus
-    const a=atkFromTracker(slot.id);
-    const ps=slot.pos==='atk'?a:(1-a);
-    const pf=posFactor(ps,cfg.pos_swing);
+    // Positions-Bonus [§C44]: dieselbe Lage wie im Profil, aus den Partien
+    // vor dieser. Hier stand eine eigene Kopie der Profilformel.
+    const lage=positionsLage(posTracker[slot.id]);
+    const pf=posFactor(lage,slot.pos,cfg.pos_swing);
     const posMult=won?pf:(2-pf);
-    bd.posStrength=a; bd.posMult=posMult; bd.posEffect=afterMods*share*posMult-afterMods*share;
+    bd.posStrength=lage.wert; bd.posFactor=pf; bd.posMult=posMult; bd.posEffect=afterMods*share*posMult-afterMods*share;
 
     // Match-Bonus
     // Der Spielbonus lässt sich abschalten; `||` aktivierte bei 0 wieder 1,5.

@@ -88,8 +88,9 @@ gemeinsame Kern aus Siegquote, Erwartungsabstand und Rollenbeitrag, und
 darf die Spielzahl den Wert nicht mehr heben, sonst hielte ihn wieder der
 Vielspieler. Eine zweite Formel daneben wäre genau der Fehler, den dieser
 Absatz verbietet. Das
-Sturm-/Abwehrprofil steht ebenso nur in `positionsProfilWert`; Profil und
-„Der Wandler" rufen dieselbe Funktion auf. Zwei
+Sturm-/Abwehrprofil steht ebenso nur in `positionsLage` [§C44]; Profil,
+hell gezeichnete Rolle, Elo-Positionsbonus und „Der Wandler" rufen dieselbe
+Funktion auf. Zwei
 Rechnungen über dieselbe Frage nennen irgendwann zwei verschiedene Beste, und
 dann steht in der Chronik ein anderer Name als über der Liste, auf der er ihn
 geholt hat. `tests/disziplinen` legt beide nebeneinander.
@@ -121,7 +122,7 @@ der ihn hält — und für sonst niemanden.
    fünfzig Katalogeinträge.
 3. **Die Schwellen in `INSIGNIEN` werden an der echten Liga kalibriert**
    [§C30]. Keine Spanne ist kürzer als 500 und keine kürzer als die vorige:
-   die Spitze trägt den Lorbeerreif im ersten Grad, die beiden dahinter den
+   die Spitze trägt den Lorbeerreif im ersten oder zweiten Grad, die beiden dahinter den
    Zierkranz, und der erste Ordensstern bei **6.000 Prestige** soll
    langfristig erreichbar sein; seine Grade II und III folgen je 500 darüber.
    Wer Startwerte anhebt, zieht die Schwellen mit — sonst steigt die Liga
@@ -144,7 +145,7 @@ Partien und fällt, wenn es kippt:
 | Glut und Hof in der Rangfarbe werden mit der Leiter nicht schwächer, die Lichter tragen die Rangfarbe | der Schimmer nicht mehr sagt, wer weiter oben steht [§C30] |
 | keine Spanne ist kürzer als 500 | eine Stufe fast geschenkt ist |
 | der Ordensstern hat drei Grade, I ab 6000, II ab 6500, III ab 7000, der Kronenreif 4500, 5000, 5500, und Ordensstern III ist das oberste Feld | er wieder anders zählt als jede andere Stufe [§C30] |
-| die Spitze trägt den Lorbeerreif im ersten Grad, die beiden dahinter den Zierkranz | Schwellen und Grade die heutige Liga falsch abbilden. Gemessen wird ohne Namen und ohne Reihenfolge: die war festgeschrieben, und damit fiel die Zusicherung bei jedem Rekord, der Punkte verschiebt — kalibriert ist die Leiter und nicht die Tabelle |
+| die Spitze trägt den Lorbeerreif im ersten oder zweiten Grad, die beiden dahinter den Zierkranz | Schwellen und Grade die heutige Liga falsch abbilden. Gemessen wird ohne Namen und ohne Reihenfolge: die war festgeschrieben, und damit fiel die Zusicherung bei jedem Rekord, der Punkte verschiebt — kalibriert ist die Leiter und nicht die Tabelle |
 | nur die Rekorde des Niveaus folgen der Siegquote | ein Rekord die Siegquote anders verpackt noch einmal zählt und damit dem Besten Prestige schenkt, das er schon hat [§C35] |
 | das Langzeitmodell kann den Ordensstern erreichen | ein weicher Deckel zur harten Obergrenze wird |
 | jede positive Dauerquelle behält einen positiven Zuwachs | das Prestige stehen bleibt, obwohl weiter gewonnen wird |

@@ -1853,6 +1853,9 @@
   .pp-posprof .pp-thumb{position:absolute;top:50%;transform:translate(-50%,-50%);
     width:14px;height:14px;border-radius:50%;background:var(--ink);border:2px solid var(--bg);
     box-shadow:0 2px 8px rgba(0,0,0,.5)}
+  /* Der Knopf zur Einstufung sitzt in der Überschrift und darf sie nicht
+     höher machen als die übrigen Abschnitte. */
+  .pp-sec-title .kopf-info{width:22px;height:22px;margin:-4px 0 -4px 2px}
   .pp-posprof .ppf{margin-top:10px;font-size:11px;color:var(--ink2);text-align:center}
   .pp-posprof .ppf .lab{font-weight:700;color:var(--ink)}
 

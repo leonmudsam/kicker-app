@@ -1228,8 +1228,13 @@ ok(_flach.length === 0,
 // hielt, und elf aeltere Chroniken reissen sie; sie stehen hier namentlich,
 // damit die Liste nur kuerzer werden kann. Eine neue Chronik darf nicht
 // dazukommen.
+// Die zwoelfte ist „Auf dem Thron": sie fragt nicht nach einer Rechnung,
+// sondern nach dem Platz in der Liga-Tabelle, und die schreibt jede Partie
+// mit dem Spielbonus gut. Sie stand bei 0,348; seit der Positionsbonus der
+// Elo gegen die eigene Aufteilung misst und Spezialisten auf ihrer Position
+// nicht mehr abzieht [§C44], steht sie bei 0,42.
 const _SPIELZAHL_ALT = ['ausreisser2','umschwung','formgipfel','schwachstelle','kontrast',
-  'schattenmann','traumquote','schwachewoche','evenkeel','metronom','lieblingszahl'];
+  'schattenmann','traumquote','schwachewoche','evenkeel','metronom','lieblingszahl','thron'];
 const _spielzahl = JSON.parse(K.eval(`JSON.stringify((function(){
   const sids = ['2026-05','2026-06','2026-07','2026-08'].filter(s => _seasonTitleCtx(s).days >= CHRONIK_MIN_TAGE);
   const out = {};
@@ -1249,7 +1254,7 @@ const _spielzahl = JSON.parse(K.eval(`JSON.stringify((function(){
 })())`));
 const _spNeu = Object.keys(_spielzahl).filter(id => Math.abs(_spielzahl[id]) > 0.35 && !_SPIELZAHL_ALT.includes(id));
 ok(Object.keys(_spielzahl).length >= 60 && _spNeu.length === 0,
-   'keine Chronik ausser den elf aelteren haengt an der Spielzahl',
+   'keine Chronik ausser den zwoelf genannten haengt an der Spielzahl',
    _spNeu.map(id => id + ' r=' + _spielzahl[id].toFixed(2)).join(', ') || Object.keys(_spielzahl).length + ' gemessen');
 const _spErledigt = _SPIELZAHL_ALT.filter(id => !(Math.abs(_spielzahl[id] || 0) > 0.35));
 ok(_spErledigt.length === 0, 'die Liste der aelteren Ausnahmen ist nicht laenger als noetig',
@@ -2145,10 +2150,12 @@ const _lbN = Object.fromEntries(_lb.werte.map(x=>[x.name,x]));
 // Gemessen wird ohne Namen und ohne Reihenfolge: festgeschrieben fiel diese
 // Zusicherung bei jedem Rekord, der Punkte verschiebt, ohne dass sich an
 // der Leiter etwas geaendert hat. Kalibriert ist die Leiter und nicht die
-// Tabelle.
+// Tabelle. Seit die Stammposition in der Elo nichts mehr kostet [§C44],
+// steht sie mit 3577 Punkten 77 ueber der Grenze zum zweiten Grad; die
+// Zusicherung haelt die Stufe und die ersten beiden Grade.
 const _lbSpitze = _lb.werte.slice().sort((a, b) => b.punkte - a.punkte);
-ok(_lbSpitze[0] && _lbSpitze[0].stufe === 4 && _lbSpitze[0].grad === 0,
-   'die Spitze traegt den Lorbeerreif im ersten Grad', JSON.stringify(_lbSpitze[0]));
+ok(_lbSpitze[0] && _lbSpitze[0].stufe === 4 && _lbSpitze[0].grad <= 1,
+   'die Spitze traegt den Lorbeerreif im ersten oder zweiten Grad', JSON.stringify(_lbSpitze[0]));
 // Die beiden dahinter stehen im Zierkranz und nicht mehr neben der Spitze.
 // Zwei trugen den Lorbeerreif, solange einundzwanzig Liga-Rekorde die
 // Siegquote noch einmal zaehlten [§C35]: wer viel gewann, hielt sie fast
@@ -2482,12 +2489,15 @@ ok(_ms.length > 0 && _ms.every(x => x.badge === x.titel && x.punkte > 0),
 //    verschiebt still, wer welches Zeichen traegt.
 //    Die Fixtures sind fest, also ist die Zahl es auch. Aendert sich der
 //    Katalog absichtlich, nennt das rote Ergebnis die neue Zeile — sie wird
-//    uebernommen, nicht weggeklickt.
+//    uebernommen, nicht weggeklickt. Ebenso, wenn sich die Elo der Partien
+//    absichtlich aendert: mit dem Positionsbonus gegen die eigene Aufteilung
+//    [§C44] haelt Henry 149 statt 131 Auszeichnungen, weil ihm die Abwehr
+//    nicht mehr bei jeder Partie Elo abzieht.
 const _bz = K.eval(`players.map(p => {
   const b = getCachedBadges(p.id) || [];
   return p.name + ':' + b.length + '/' + b.reduce((n, x) => n + (x.count || 0), 0);
 }).join(' ')`);
-const _bzSoll = 'Alex:18/33 Anton:7/7 Henry:29/131 Jane:26/132 Jannik:22/83 Johannes:24/71 Julian:32/231 Leo:30/234 Leon:39/433 Martin:37/317 Maxi:33/380 Stefan:21/61';
+const _bzSoll = 'Alex:19/36 Anton:8/8 Henry:30/149 Jane:27/135 Jannik:22/82 Johannes:24/66 Julian:33/231 Leo:31/235 Leon:40/430 Martin:36/329 Maxi:33/394 Stefan:21/59';
 ok(_bz === _bzSoll, 'jeder Spieler haelt dieselben Auszeichnungen wie gemessen', _bz);
 
 // ══════════════════════════════════════════════════════════════════════

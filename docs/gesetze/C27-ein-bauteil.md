@@ -487,8 +487,11 @@ ein Flex-Profil liegt als ruhiger Kern in der Mitte. Der Knopf bleibt an
 der Grenze zwischen beiden — die ist die Aussage.
 **Die stärkere Rolle trägt ihre Farbe, die schwächere steht zurück**
 (`.pp-rd.stark` / `.schwach`). Beide gleich laut gezeichnet sagten nicht,
-worin jemand besser ist, und genau das beantwortet diese Karte. Bis drei
-Prozentpunkte Abstand gelten beide als neutral. Die Nebenrolle bleibt mit
+worin jemand besser ist, und genau das beantwortet diese Karte. Welche
+stärker ist, sagt `positionsLage` (`staerker`) [§C44], die Leistung gegen
+die Erwartung je Position, nicht die rohe Siegquote: die kannte weder
+Partner noch Gegner und zeichnete nach zwei Sturmpartien ohne Sieg die
+Abwehr hell. Bis drei Prozentpunkte Abstand gelten beide als neutral. Die Nebenrolle bleibt mit
 78 % Deckkraft lesbar, die starke Rolle bekommt nur einen kleinen Schein;
 auch Abwehrdominanz behält die Rangfarbe statt auf Metallgrau zu fallen.
 **Ein langer Wert in der Zahlenreihe wird kleiner, nicht breiter.**

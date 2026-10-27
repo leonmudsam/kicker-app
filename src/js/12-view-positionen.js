@@ -89,9 +89,14 @@ function vPositions(){
 // Die Erklärung stand als zwei Zeilen unter der Überschrift und nahm der
 // Liste bei jedem Öffnen den Platz. Sie steht jetzt hinter dem kleinen Knopf
 // neben dem Wort — wer sie braucht, tippt, alle anderen sehen die Liste.
+// Die Erklärung nannte drei Dinge, `posLeistung` rechnet vier: die Tore
+// fehlten. Und sie grenzt sich vom Positions-Profil ab [§C44] — der Wert
+// hier fragt, wer auf einer Position der Beste der Liga ist, das Profil,
+// wo jemand selbst besser ist.
 function zeigePositionsInfo(){
   openSheet(blattKopfHtml({ic:'info', titel:'So entsteht der Wert', unter:'Positionen'})
     + `<div class="pos-info">
-      <p>Der Wert verbindet drei Dinge: die Siegquote auf dieser Position, die Leistung gegen die Erwartung — gemessen an Partner und Gegnern — und die Erfahrung, also wie oft jemand dort gespielt hat.</p>
-      <p><b>▲</b> heißt über, <b>▼</b> unter der Erwartung. Gerechnet wird über alle Partien.</p></div>`);
+      <p>Der Wert verbindet vier Dinge: die Siegquote auf dieser Position, die Leistung gegen die Erwartung — gemessen an Partner und Gegnern —, die Tore, vorne die eigenen und hinten die zugelassenen, und die Erfahrung, also wie oft jemand dort gespielt hat.</p>
+      <p><b>▲</b> heißt über, <b>▼</b> unter der Erwartung. Gerechnet wird über alle Partien.</p>
+      <p>Der Wert vergleicht die Liga auf einer Position. Auf welcher Position jemand selbst stärker ist, sagt das Positions-Profil im Profil.</p></div>`);
 }
