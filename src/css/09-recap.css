@@ -302,15 +302,21 @@
   .bl-lz-z .v{text-align:right;color:var(--ink2)}
   .bl-verlauf{display:block;width:100%;height:84px;overflow:visible}
   .bl-verlauf polyline{fill:none;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
-  .bl-verlauf .bl-v-a{stroke:var(--gold);stroke-width:2.2}
-  .bl-verlauf .bl-v-b{stroke:var(--muted);stroke-width:1.6}
-  .bl-verlauf circle.bl-v-a{fill:var(--gold);stroke:none}
-  .bl-verlauf circle.bl-v-b{fill:var(--muted);stroke:none}
+  /* Die drei Plätze des Podests in seinen Metallen [§C25, §C27]: Gold für
+     den Halter, Silber und Bronze dahinter, jede dünner als die davor. */
+  .bl-verlauf .bl-v-p1{stroke:var(--gold);stroke-width:2.2}
+  .bl-verlauf .bl-v-p2{stroke:var(--silber);stroke-width:1.7}
+  .bl-verlauf .bl-v-p3{stroke:var(--bronze);stroke-width:1.5}
+  .bl-verlauf circle.bl-v-p1{fill:var(--gold);stroke:none}
+  .bl-verlauf circle.bl-v-p2{fill:var(--silber);stroke:none}
+  .bl-verlauf circle.bl-v-p3{fill:var(--bronze);stroke:none}
   .bl-verlauf .bl-v-seit{fill:var(--gold);stroke:var(--surface);stroke-width:2}
   .bl-verlauf text{font-family:'Sometype Mono',monospace;font-size:9px;fill:var(--faint)}
   .bl-legende{display:flex;flex-wrap:wrap;gap:4px 14px;font-family:'Sometype Mono',monospace;font-size:10.5px;color:var(--muted);margin-top:6px}
   .bl-legende span::before{content:"";display:inline-block;width:10px;height:2px;border-radius:1px;margin-right:6px;vertical-align:3px;background:var(--muted)}
-  .bl-legende .a::before{background:var(--gold)}
+  .bl-legende .p1::before{background:var(--gold)}
+  .bl-legende .p2::before{background:var(--silber)}
+  .bl-legende .p3::before{background:var(--bronze)}
   .bl-legende .seit{margin-left:auto;color:var(--ink2)}
   .bl-legende .seit::before{width:7px;height:7px;border-radius:50%;background:var(--gold);vertical-align:1px}
   /* Bis der Verlauf gerechnet ist, steht ein Schimmer in seiner Höhe: ein

@@ -1579,7 +1579,7 @@ ok(_awNenner.zkNenner && _awNenner.zkNenner.gemeldet === _awNenner.zkNenner.geza
 // und jede dieser Zahlen muss stimmen, sonst ist die Zeichnung eine
 // Behauptung mehr.
 const _beleg = JSON.parse(K.eval(`JSON.stringify((function(){
-  const f = []; let zellen = 0, felder = 0, spannen = 0, verlaeufe = 0;
+  const f = []; let zellen = 0, felder = 0, spannen = 0, verlaeufe = 0, dreier = 0;
   const H = chronicleHolders();
   const st = globalThis.setTimeout;
   globalThis.setTimeout = fn => fn();
@@ -1628,26 +1628,39 @@ const _beleg = JSON.parse(K.eval(`JSON.stringify((function(){
         if(!_belegIstQuote(h.ev, a)) f.push(c.id + ': Vorsprung um etwas, das kein Anteil ist');
       }
       // Der Verlauf endet heute beim Bestwert, und „vorn seit" zeigt auf
-      // einen Monat, in dem der Halter wirklich vorn lag.
+      // einen Monat, in dem der Halter wirklich vorn lag. Er zeichnet die
+      // drei des Podests in dessen Reihenfolge, jeden mit seinem Wert von
+      // heute, und die Legende nennt alle drei: vorher fehlte der Dritte.
       rekordVerlauf(c.id, v => {
         if(!v) return;
         verlaeufe++;
-        const r = chronicleRang(c.id);
-        if(Math.abs(v.a[v.a.length - 1] - r[0].wert) > 1e-9) f.push(c.id + ': Verlauf endet bei ' + v.a[v.a.length - 1] + ' statt ' + r[0].wert);
-        if(v.seit == null || v.a[v.seit] == null) f.push(c.id + ': vorn seit einem Monat ohne Wert');
+        const r = chronicleRang(c.id), a = v.reihen[0].werte;
+        if(Math.abs(a[a.length - 1] - r[0].wert) > 1e-9) f.push(c.id + ': Verlauf endet bei ' + a[a.length - 1] + ' statt ' + r[0].wert);
+        if(v.seit == null || a[v.seit] == null) f.push(c.id + ': vorn seit einem Monat ohne Wert');
+        const soll = r.slice(0, 3);
+        if(v.reihen.length !== soll.length || v.reihen.some((x, k) => x.pid !== soll[k].pid
+             || Math.abs(x.werte[x.werte.length - 1] - soll[k].wert) > 1e-9))
+          f.push(c.id + ': Verlauf zeichnet ' + v.reihen.map(x => x.name).join('/') + ' statt des Podests');
+        const html = belegVerlaufHtml(v);
+        const leg = (html.match(/<div class="bl-legende">([\\s\\S]*?)<\\/div>/) || [])[1] || '';
+        if(soll.length === 3){
+          dreier++;
+          if(!/class="p3"/.test(leg) || !/bl-v-p3/.test(html)) f.push(c.id + ': der Dritte fehlt im Verlauf');
+        }
       });
     });
   } finally { globalThis.setTimeout = st; }
-  return {f, zellen, felder, spannen, verlaeufe};
+  return {f, zellen, felder, spannen, verlaeufe, dreier};
 })())`));
 // Die Zahlen dahinter sagen nur, dass die Pruefung ueberhaupt greift. Seit
 // die Anteile gewonnener Spieltage, Wochen und Partien als Rekorde
 // gestrichen sind [§C35], tragen vier Rekorde einen Anteil als Beleg und
 // drei davon einen Zweiten, gegen den ein Vorsprung zaehlt.
-ok(_beleg.f.length === 0 && _beleg.zellen >= 4 && _beleg.felder > 30 && _beleg.spannen >= 3 && _beleg.verlaeufe > 30,
-   'der Beleg zählt seine Stichprobe, zeigt die Halter im Feld, zählt den Vorsprung und endet beim Bestwert',
+ok(_beleg.f.length === 0 && _beleg.zellen >= 4 && _beleg.felder > 30 && _beleg.spannen >= 3 && _beleg.verlaeufe > 30
+   && _beleg.dreier > 30,
+   'der Beleg zählt seine Stichprobe, zeigt die Halter im Feld, zählt den Vorsprung, endet beim Bestwert und zeichnet das Podest',
    _beleg.f.slice(0, 5).join(' · ') || _beleg.zellen + ' Zellenreihen · ' + _beleg.felder + ' Felder · '
-     + _beleg.spannen + ' Vorsprünge · ' + _beleg.verlaeufe + ' Verläufe');
+     + _beleg.spannen + ' Vorsprünge · ' + _beleg.verlaeufe + ' Verläufe · ' + _beleg.dreier + ' mit drei Linien');
 
 // ── Die Meisterbühne [§C31] ─────────────────────────────────────────
 // Der Meister stand im Feed als Karte ohne ein einziges Bild, und sein Blatt

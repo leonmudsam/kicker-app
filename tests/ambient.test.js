@@ -1034,9 +1034,15 @@ const _tafelGrund = JSON.parse(K.eval(`JSON.stringify((function(){
     // erzaehlen etwas anderes [§C35]. Je Achse aber nur eine, und ihre
     // Schlagzeilen muessen sich unterscheiden — gemessen trugen 13 von 19
     // Spieltagen sonst zweimal „... bewegen die Ewige Tafel".
+    // Der Schluss einer Woche ist eine eigene Achse: seine Zeichen-Karte
+    // steht um Mitternacht vor dem ersten Spieltag der neuen Woche und
+    // erzaehlt, was der Schluss vergab, nicht was an diesem Tag gespielt
+    // wurde [§11.0e]. Gemessen hob er am 24.08. Jane auf den Volutenkranz,
+    // waehrend Stefan am Nachmittag selbst aufstieg — zwei Ereignisse.
     const jeAchse = {};
     karten.forEach(s => {
-      const q = (s.dataRef||{}).quelle || (s.dataRef||{}).type;
+      const d = s.dataRef || {};
+      const q = (d.quelle || d.type) + (d.schluss ? ':' + d.schluss : '');
       jeAchse[q] = (jeAchse[q] || 0) + 1;
     });
     const doppelt = Object.keys(jeAchse).filter(q => jeAchse[q] > 1);
@@ -2816,17 +2822,22 @@ const _J = IDS[NAMES.indexOf('Julian')], _M = IDS[NAMES.indexOf('Martin')],
 // Der Tag endet vor dem Monat (23:59:59) und beginnt nach der Woche (Mo 00:00).
 const _grenzen = JSON.parse(K.eval(`JSON.stringify((function(){
   const pos = (pid, t) => insigniumPos(prestigeOf(pid, t));
+  // Gemessen werden Punkte und nicht der Grad: Martins Vize-Titel hob ihn
+  // einmal um einen Grad, seit „Neuland" und „Der Zerstörer" ihm Rekorde
+  // geben, steht er schon vorher darauf. Der 30.06. bleibt der Prüfstein,
+  // weil er der letzte Tag seines Monats ist.
+  const pkt = (pid, t) => prestigeOf(pid, t).punkte;
   const juni30 = _storyTagGrenzen(new Date(2026, 5, 30, 12).getTime());
   const juni15 = _storyTagGrenzen(new Date(2026, 5, 15, 12).getTime());
   const woche = new Date(2026, 5, 15).getTime();
   return {
-    monat: pos('${_M}', juni30.nachMs) < pos('${_M}', seasonEnd('2026-06').getTime()),
-    monatText: pos('${_M}', juni30.nachMs) + ' -> ' + pos('${_M}', seasonEnd('2026-06').getTime()),
+    monat: pkt('${_M}', juni30.nachMs) < pkt('${_M}', seasonEnd('2026-06').getTime()),
+    monatText: Math.round(pkt('${_M}', juni30.nachMs)) + ' -> ' + Math.round(pkt('${_M}', seasonEnd('2026-06').getTime())),
     woche: pos('${_J}', juni15.vorMs) === pos('${_J}', woche) && pos('${_J}', woche) > pos('${_J}', woche - 1),
     wocheText: pos('${_J}', woche - 1) + ' -> ' + pos('${_J}', juni15.vorMs)
   };
 })())`));
-ok(_grenzen.monat, 'der letzte Tag des Monats endet vor dessen Schluss: Martins Grad aus dem Vize-Titel steht nicht in der Karte des 30.06.', _grenzen.monatText);
+ok(_grenzen.monat, 'der letzte Tag des Monats endet vor dessen Schluss: Martins Prestige aus dem Vize-Titel steht nicht in der Karte des 30.06.', _grenzen.monatText);
 ok(_grenzen.woche, 'ein Montag beginnt nach dem Schluss der Woche: Julians Grad aus dem Spieler der Woche steht nicht in der Karte des 15.06.', _grenzen.wocheText);
 
 // Der Tag: die Karte des Spielers des Tages nennt, was sein Schluss vergab.
