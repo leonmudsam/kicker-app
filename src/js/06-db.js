@@ -419,8 +419,10 @@ async function autoArchiveSeasons(){
     const entry={
       id:sid,
       label:seasonLabel(sid),
-      start_date:seasonStart(sid).toISOString().slice(0,10),
-      end_date:seasonEnd(sid).toISOString().slice(0,10),
+      // Der Kalendertag in Ortszeit: `toISOString` machte aus Mitternacht
+      // am Ersten 22 Uhr am Vortag, und der Mai begann am 30. April.
+      start_date:tagKey(seasonStart(sid)),
+      end_date:tagKey(seasonEnd(sid)),
       player_id:top[0].id,
       team_p1:bestTeam?bestTeam[0]:null,
       team_p2:bestTeam?bestTeam[1]:null,

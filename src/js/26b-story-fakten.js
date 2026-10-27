@@ -79,7 +79,7 @@ function _storyStand(bisMs){
 // alle zentralen Funktionen treffen ihren heißen Cache.
 //
 // Beide Grenzen lassen die Abschlüsse draußen, die nicht dem Tag gehören.
-// Der Monat schließt am letzten Tag um 23:59:59 (`seasonEnd`), deshalb endet
+// Der Monat schließt in der letzten Millisekunde (`seasonEnd`), deshalb endet
 // der Tag eine Sekunde davor; die Woche schließt am Montag um 00:00, deshalb
 // beginnt der Tag dort und nicht eine Millisekunde davor. Gemessen trug die
 // Karte des 30.06. sonst Martins neuen Grad, den erst Vize-Titel und Team

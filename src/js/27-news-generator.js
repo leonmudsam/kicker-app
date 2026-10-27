@@ -1200,7 +1200,7 @@ function _buildStories(){
         // Meister, Vize und Team der Saison stehen auf Podest und Bühne;
         // was der Monat sonst vergibt, steht darunter [§11.0e].
         abschluss = _abschlussAuszeichnungen(ende, ABSCHLUSS_MONAT);
-        zeichen = rcpZeichenZuege(rcpLaufbahnDaten(ende, ende + 1000))
+        zeichen = rcpZeichenZuege(rcpLaufbahnDaten(ende, ende + 1))
           .filter(z => pm[z.pid] && ligaAktiv(pm[z.pid]))
           .map(z => ({pid:z.pid, art:z.art, vor:{stufe:z.vor.stufe, grad:z.vor.grad}, nach:{stufe:z.nach.stufe, grad:z.nach.grad}}));
       } catch(e){ zeichen = []; abschluss = []; }
@@ -2912,7 +2912,7 @@ function _buildStories(){
     const bestand = Array.isArray(_cache._stories) ? _cache._stories : [];
     const monat = stories.concat(bestand).some(x => { const d = (x && x.dataRef) || {};
       return d.type === 'season_recap' && d.sid && Array.isArray(d.zeichen)
-        && seasonEnd(d.sid).getTime() + 1000 === _wocheEnde; });
+        && seasonEnd(d.sid).getTime() + 1 === _wocheEnde; });
     // Eine veröffentlichte Karte bleibt, wie sie ist [§C33]; zwei Stände
     // dafür neu zu schneiden kostete jeden Lauf der Woche zwei Rechnungen.
     if(now.getTime() >= _wocheEnde && !monat && !bestand.some(x => x && x.id === id)){

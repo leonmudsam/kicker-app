@@ -464,11 +464,13 @@ function showMatchDetail(mid){
       const b=bd[id]; if(!b)return '';
       // Elo-Analyse zeigt exakte Werte mit 2 Nachkommastellen — keine Rundung wie überall sonst.
       const sign=v=>v>=0 ? '+'+komma(v,2) : komma(v,2);
-      // Der Detail-Header zeigt IMMER den präzisen Sim-Wert, damit die große Zahl
-      // exakt der Summe der Faktoren-Liste darunter entspricht. Der gerundete DB-Wert
-      // bleibt nur oben in der Match-Übersicht sichtbar (eigener Render-Pfad).
+      // Die große Zahl ist, was die Partie wirklich verbucht hat — die Elo
+      // darunter springt um genau diese Zahl. Verbucht wird gerundet, und die
+      // Faktoren rechnen ungerundet; die Differenz steht als eigene Zeile
+      // „Rundung", damit die Liste weiter genau die große Zahl ergibt. Vorher
+      // stand oben der ungerundete Wert: „+56,54" über „−47 → 10".
       const hasDb=dbDeltas[id]!==undefined;
-      const headerDelta=b.finalDelta;
+      const headerDelta=hasDb?dbDeltas[id]:Math.round(b.finalDelta);
       // Saison-Elo: bei DB-Werten sind das gespeicherte Integer (deshalb keine zusätzliche
       // Präzision möglich). Bei Sim-Fallback geben wir 1 Nachkommastelle aus.
       const fmtElo=v=>Number.isInteger(v)?String(v):komma(v,1);
@@ -476,15 +478,18 @@ function showMatchDetail(mid){
       const seasonAfter=fmtElo(hasDb?dbAfter[id]:b.endElo);
       const simDelta=b.finalDelta;
       const rowDiverged=hasDb&&Math.abs(dbDeltas[id]-simDelta)>=1;
+      // Ausgeblendet wird nur, was als 0,00 dastünde. Mit einer Schwelle von
+      // 0,1 fehlten kleine Posten, und die Zeilen ergaben die Summe nicht.
+      const zeigt=v=>Math.abs(v)>=0.005;
       const factors=[];
       factors.push({label:'Basis (Erwartung)',val:b.rawBase,desc:b.won?'Sieg'+(b.expected<0.5?' gegen stärkeres Team':''):'Niederlage'+(b.expected>0.5?' gegen schwächeres Team':'')});
-      if(Math.abs(b.movEffect)>0.1) factors.push({label:'Tordifferenz',val:b.movEffect,desc:b.won?'Klarer Sieg':'Hohe Niederlage'+(b.movMult<1.2?' (gedämpft)':'')});
-      if(Math.abs(b.winBoostEffect)>0.1) factors.push({label:'Sieg-Boost',val:b.winBoostEffect,desc:'+'+komma(((b.winBoost-1)*100),1)+'% für Siege'});
+      if(zeigt(b.movEffect)) factors.push({label:'Tordifferenz',val:b.movEffect,desc:b.won?'Klarer Sieg':'Hohe Niederlage'+(b.movMult<1.2?' (gedämpft)':'')});
+      if(zeigt(b.winBoostEffect)) factors.push({label:'Sieg-Boost',val:b.winBoostEffect,desc:'+'+komma(((b.winBoost-1)*100),1)+'% für Siege'});
       if(b.expProtect<1) factors.push({label:'Erfahrungs-Schutz',val:b.expProtectEffect,desc:komma(((1-b.expProtect)*100),1)+'% Schutz'});
-      if(b.lowEloDamp!==undefined && b.lowEloDamp<0.995){
+      if(b.lowEloDamp!==undefined && zeigt(b.lowEloEffect||0)){
         factors.push({label:'Low-Elo Schutz',val:b.lowEloEffect,desc:komma(((1-b.lowEloDamp)*100),1)+'% Schutz (schwacher Spieler)'});
       }
-      if(b.underdogMult>1.005){
+      if(zeigt(b.rawBase*b.movMult*b.winBoost*b.expProtect*(b.underdogMult-1))){
         // Underdog-Boost setzt sich aus zwei unabhängig clampten Komponenten zusammen
         // (Elo-Gap + Spiele-Gap). Wir zeigen nur die wirksamen (positiven) Anteile,
         // weil negative Differenzen keinen Effekt mehr haben.
@@ -495,27 +500,31 @@ function showMatchDetail(mid){
         const undEffect = b.rawBase*b.movMult*b.winBoost*b.expProtect*(b.underdogMult-1);
         factors.push({label:'Underdog-Boost',val:undEffect, desc});
       }
-      if(Math.abs(b.riskEffect)>0.1) factors.push({label:b.riskShare<1?'Risiko-Split (stark)':'Risiko-Split (schwach)',val:b.riskEffect,desc:'Stärkeverteilung im Team'});
+      if(zeigt(b.riskEffect)) factors.push({label:b.riskShare<1?'Risiko-Split (stark)':'Risiko-Split (schwach)',val:b.riskEffect,desc:'Stärkeverteilung im Team'});
       // Schwach oder stark sagt der Faktor, nicht der Multiplikator: nach
       // einer Niederlage auf der schwachen Position ist der kleiner als
       // eins, und dort stand „Starke Position". Dahinter steht, was der
       // Faktor tut, in Prozent wie beim Sieg-Boost: ohne die Zahl war nicht
       // zu sehen, warum 0,49 bei einem und 2,48 beim anderen stand [§C44].
-      if(Math.abs(b.posEffect)>0.1){
+      if(zeigt(b.posEffect)){
         const schwach=b.posFactor>1, pz=komma(Math.abs(b.posFactor-1)*100,1)+'% ';
         factors.push({label:'Positions-Bonus',val:b.posEffect,
           desc:(schwach?'Schwache':'Starke')+' Position · '+pz+(schwach?(b.won?'Bonus':'Schutz'):(b.won?'Dämpfer':'Abzug'))});
       }
       factors.push({label:'Spielbonus',val:b.matchBonus,desc:'fest +'+komma(b.matchBonus,2)+' je Match'});
-      const factorRows=factors.map(f=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:11px">
+      if(!rowDiverged && zeigt(headerDelta-simDelta)) factors.push({label:'Rundung',val:headerDelta-simDelta,desc:'verbucht wird in ganzen Elo'});
+      const factorRows=factors.map(f=>`<div class="ea-posten" style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:11px">
         <div><span style="color:var(--ink)">${f.label}</span> <span style="color:var(--muted);font-size:10px">${f.desc}</span></div>
-        <span style="font-family:'Sometype Mono',monospace;font-weight:700;color:${f.val>=0?'var(--acid)':'var(--red)'}">${sign(f.val)}</span>
+        <span class="ea-wert" style="font-family:'Sometype Mono',monospace;font-weight:700;color:${f.val>=0?'var(--acid)':'var(--red)'}">${sign(f.val)}</span>
       </div>`).join('');
-      const divergeNote=rowDiverged?`<div style="font-size:10px;color:var(--gold);margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);font-family:'Sometype Mono',monospace">↻ Aktuelle Regler: ${sign(simDelta)} (Σ Faktoren)</div>`:'';
-      return `<div style="background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:12px;margin-top:8px">
+      // Gespeichert ist das Delta vom Tag der Partie; die Faktoren rechnen mit
+      // den Einstellungen von heute. Stehen sie mehr als eine Elo auseinander,
+      // sagt die Zeile, was heute herauskäme, statt eine Summe zu behaupten.
+      const divergeNote=rowDiverged?`<div class="ea-heute" style="font-size:10px;color:var(--gold);margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);font-family:'Sometype Mono',monospace">Mit den heutigen Einstellungen wären es ${sign(simDelta)}</div>`:'';
+      return `<div class="ea-spieler" style="background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:12px;margin-top:8px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <span style="font-weight:700;font-size:13px">${esc(pname(id))}</span>
-          <span style="font-family:'Archivo Black',sans-serif;font-size:15px;color:${headerDelta>=0?'var(--acid)':'var(--red)'}">${sign(headerDelta)}</span>
+          <span class="ea-summe" data-elo="${headerDelta}" style="font-family:'Archivo Black',sans-serif;font-size:15px;color:${headerDelta>=0?'var(--acid)':'var(--red)'}">${sign(headerDelta)}</span>
         </div>
         <div style="font-size:10px;color:var(--muted);margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--line)">
           <div style="display:flex;justify-content:space-between">
@@ -528,7 +537,7 @@ function showMatchDetail(mid){
       </div>`;
     }).join('');
     const banner=anyDiverged?`<div style="background:rgba(247,207,74,.08);border:1px solid rgba(247,207,74,.3);border-radius:10px;padding:10px 12px;margin-top:10px;font-size:11.5px;color:var(--gold);line-height:1.5">
-      <b>Hinweis:</b> Die Faktoren unten werden mit den <i>aktuellen</i> Reglern berechnet. Die gespeicherten Deltas (oben) stammen aus der Berechnung zum Zeitpunkt des Matches. <b>Settings → Neu berechnen</b> bringt beides in Deckung.
+      Verbucht wurde, was am Tag der Partie galt; die Zeilen darunter rechnen mit den heutigen Einstellungen. <b>Alle Matches rückwirkend neu berechnen</b> in den Einstellungen bringt beides zusammen.
     </div>`:'';
     slot.innerHTML=`<div class="mini-label" style="margin-top:14px">Elo-Analyse</div>${banner}${rows}`;
     document.getElementById('showBreakdownBtn').style.display='none';

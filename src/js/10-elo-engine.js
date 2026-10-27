@@ -22,232 +22,147 @@
 
 // ─── §3.5a DB-First Aggregation (default simulateElo) ────────────────
 function simulateElo(matchSubset, opts={}){
-  const startElo=opts.startElo ?? cfg.start_elo;
-  const elo={}, played={}, playedSeason={}, wins={}, losses={}, curStreak={}, bestStreak={};
-  const eloGain={}, eloLoss={}, gd={};
-  const peakElo={};
-  const teamElo={};
-  const seasonTeamElo={};
-  const history=[];
-  const posTracker={};
-  players.forEach(p=>{
-    elo[p.id]=startElo;played[p.id]=0;playedSeason[p.id]=0;
-    wins[p.id]=0;losses[p.id]=0;curStreak[p.id]=0;bestStreak[p.id]=0;
-    eloGain[p.id]=0;eloLoss[p.id]=0;gd[p.id]=0;peakElo[p.id]=startElo;
-    posTracker[p.id]=posZaehler();
-  });
-
-  // Initial-State (für inkrementelle Sim)
-  let _curSeason=null;
-  if(opts.initialState){
-    const s=opts.initialState;
-    Object.assign(elo, s.elo||{});
-    Object.assign(played, s.played||{});
-    Object.assign(playedSeason, s.playedSeason||{});
-    Object.assign(wins, s.wins||{});
-    Object.assign(losses, s.losses||{});
-    Object.assign(curStreak, s.curStreak||{});
-    Object.assign(bestStreak, s.bestStreak||{});
-    Object.assign(eloGain, s.eloGain||{});
-    Object.assign(eloLoss, s.eloLoss||{});
-    Object.assign(gd, s.gd||{});
-    Object.assign(peakElo, s.peakElo||{});
-    if(s.posTracker){
-      Object.keys(s.posTracker).forEach(id=>{ posTracker[id]={...s.posTracker[id]}; });
-    }
-    _curSeason=opts.initialCurSeason||null;
-  }
-
-  const ordered=[...matchSubset].sort((a,b)=>mts(a)-mts(b));
-
-  const seasonEndElos={};
-  const seasonPlayed={};
-  const resetSeason=()=>{ players.forEach(p=>{elo[p.id]=startElo;playedSeason[p.id]=0;}); };
-
-  ordered.forEach(m=>{
-    const mSeason=seasonOf(m.created_at).id;
-    if(_curSeason && _curSeason!==mSeason){
-      // Snapshot der abgelaufenen Saison
-      seasonEndElos[_curSeason]={};
-      seasonPlayed[_curSeason]={};
-      players.forEach(p=>{
-        if((playedSeason[p.id]||0)>0){
-          seasonEndElos[_curSeason][p.id]=elo[p.id];
-          seasonPlayed[_curSeason][p.id]=playedSeason[p.id];
-        }
-      });
-      resetSeason();
-    }
-    _curSeason=mSeason;
-
-    const ids=[m.a1,m.a2,m.b1,m.b2];
-    if(ids.some(id=>elo[id]===undefined)){
-      history.push({matchId:m.id,eloBefore:{},eloAfter:{},deltas:{},expA:0.5,breakdowns:{}});
-      return;
-    }
-
-    const eloBefore={}; ids.forEach(id=>eloBefore[id]=elo[id]);
-
+  const st=_eloStand(opts);
+  [...matchSubset].sort((a,b)=>mts(a)-mts(b)).forEach(m=>{
+    if(!_eloPartieBeginnt(st,m)) return;
     // ★ DB-First: Deltas aus DB lesen, NICHT mit Slidern berechnen
-    const dbDeltas=m.deltas||{};
-    const expA=m.exp_a ?? 0.5;
-    const res={};
-    ids.forEach(id=>{ res[id]=dbDeltas[id]||0; });
-
-    const aWon=m.winner==='A';
-
-    // Apply (gleiche Aggregation wie vorher)
-    ids.forEach(id=>{
-      const d=res[id];
-      elo[id]+=d; played[id]++; playedSeason[id]++;
-      if(d>=0) eloGain[id]=(eloGain[id]||0)+d;
-      else     eloLoss[id]=(eloLoss[id]||0)+d;
-      if(elo[id] > (peakElo[id] ?? startElo)) peakElo[id]=elo[id];
-    });
-
-    ids.forEach(id=>{
-      const onA=(id===m.a1||id===m.a2);
-      const won=(onA&&aWon)||(!onA&&!aWon);
-      const gf=onA?m.score_a:m.score_b, ga=onA?m.score_b:m.score_a;
-      gd[id]=(gd[id]||0)+(gf-ga);
-      if(won){wins[id]++; curStreak[id]=curStreak[id]>0?curStreak[id]+1:1;}
-      else{losses[id]++; curStreak[id]=curStreak[id]<0?curStreak[id]-1:-1;}
-      if(curStreak[id]>bestStreak[id]) bestStreak[id]=curStreak[id];
-    });
-
-    // Team-Elo
-    const winnerIds=aWon?[m.a1,m.a2]:[m.b1,m.b2];
-    const loserIds =aWon?[m.b1,m.b2]:[m.a1,m.a2];
-    const wKey=winnerIds.slice().sort().join('|'), lKey=loserIds.slice().sort().join('|');
-    const wDelta=winnerIds.reduce((s,id)=>s+(res[id]||0),0);
-    const lDelta=loserIds.reduce((s,id)=>s+(res[id]||0),0);
-    teamElo[wKey]=(teamElo[wKey]||0)+wDelta;
-    teamElo[lKey]=(teamElo[lKey]||0)+lDelta;
-    if(!seasonTeamElo[mSeason]) seasonTeamElo[mSeason]={};
-    seasonTeamElo[mSeason][wKey]=(seasonTeamElo[mSeason][wKey]||0)+wDelta;
-    seasonTeamElo[mSeason][lKey]=(seasonTeamElo[mSeason][lKey]||0)+lDelta;
-
-    history.push({matchId:m.id,eloBefore,eloAfter:{...elo},deltas:res,expA,breakdowns:{}});
-
-    // Positions-Zähler [§C44], mit dem Stand VOR der Partie
-    posZaehlenPartie(posTracker,m,aWon,expA,eloBefore);
+    const dbDeltas=m.deltas||{}, res={};
+    [m.a1,m.a2,m.b1,m.b2].forEach(id=>{ res[id]=dbDeltas[id]||0; });
+    _eloBuchen(st,m,res,m.exp_a ?? 0.5,{});
   });
+  return _eloErgebnis(st);
+}
 
-  // Letzten Saison-Snapshot + ggf. Reset auf Kalender-Saison
-  if(_curSeason){
-    seasonEndElos[_curSeason]={};
-    seasonPlayed[_curSeason]={};
-    players.forEach(p=>{
-      if((playedSeason[p.id]||0)>0){
-        seasonEndElos[_curSeason][p.id]=elo[p.id];
-        seasonPlayed[_curSeason][p.id]=playedSeason[p.id];
-      }
-    });
+// ─── §3.5b Was beide Engines gleich buchen ───────────────────────────
+// Beide Engines unterscheiden sich nur darin, woher das Delta einer Partie
+// kommt: aus der Datenbank oder aus den Reglern. Alles andere — Elo,
+// Spiele, Serien, Tore, Team-Elo, Saisonschnitt, Karriere-Elo, der
+// Positions-Zähler — stand zweimal im Code, Zeile für Zeile abgeschrieben,
+// und lief schon auseinander (eine Fassung sortierte die Sieger-Liste an
+// Ort und Stelle, die andere eine Kopie). Eine Korrektur an der einen
+// erreichte die andere nicht, und die Vorschau einer Partie rechnete dann
+// auf einem anderen Stand als die Rangliste.
+function _eloStand(opts){
+  const startElo=opts.startElo ?? cfg.start_elo;
+  const st={startElo, elo:{}, played:{}, playedSeason:{}, wins:{}, losses:{}, curStreak:{}, bestStreak:{},
+    eloGain:{}, eloLoss:{}, gd:{}, peakElo:{}, teamElo:{}, seasonTeamElo:{}, history:[], posTracker:{},
+    seasonEndElos:{}, seasonPlayed:{}, curSeason:null};
+  players.forEach(p=>{
+    st.elo[p.id]=startElo; st.played[p.id]=0; st.playedSeason[p.id]=0;
+    st.wins[p.id]=0; st.losses[p.id]=0; st.curStreak[p.id]=0; st.bestStreak[p.id]=0;
+    st.eloGain[p.id]=0; st.eloLoss[p.id]=0; st.gd[p.id]=0; st.peakElo[p.id]=startElo;
+    st.posTracker[p.id]=posZaehler();
+  });
+  // Ein Stand zum Weiterrechnen (Vorschau einer einzelnen Partie). Ohne
+  // `initialCurSeason` griffe der Saisonwechsel vor der ersten Partie nicht.
+  const s=opts.initialState;
+  if(s){
+    ['elo','played','playedSeason','wins','losses','curStreak','bestStreak','eloGain','eloLoss','gd','peakElo']
+      .forEach(k=>Object.assign(st[k], s[k]||{}));
+    // Der Zähler je Spieler ist ein eigenes Objekt: flach kopiert zählte
+    // die Vorschau in den Stand der Rangliste hinein.
+    if(s.posTracker) Object.keys(s.posTracker).forEach(id=>{ st.posTracker[id]={...s.posTracker[id]}; });
+    st.curSeason=opts.initialCurSeason||null;
+  }
+  return st;
+}
+// Der Schnappschuss der laufenden Saison: Endstand und Spiele je Spieler,
+// der gespielt hat. Daraus rechnen Karriere-Elo und jede Monatsansicht.
+function _eloSaisonZu(st){
+  const sid=st.curSeason, ende=st.seasonEndElos[sid]={}, n=st.seasonPlayed[sid]={};
+  players.forEach(p=>{
+    if((st.playedSeason[p.id]||0)>0){ ende[p.id]=st.elo[p.id]; n[p.id]=st.playedSeason[p.id]; }
+  });
+}
+function _eloSaisonNeu(st){
+  players.forEach(p=>{ st.elo[p.id]=st.startElo; st.playedSeason[p.id]=0; });
+}
+// Vor jeder Partie: ein neuer Monat schließt den alten und setzt Elo und
+// Saisonspiele zurück; der Positions-Zähler läuft über die Saisons weiter.
+// Eine Partie mit einem unbekannten Spieler steht in der Geschichte, aber
+// ohne Delta, und zählt nirgends.
+function _eloPartieBeginnt(st, m){
+  const sid=seasonOf(m.created_at).id;
+  if(st.curSeason && st.curSeason!==sid){ _eloSaisonZu(st); _eloSaisonNeu(st); }
+  st.curSeason=sid;
+  if([m.a1,m.a2,m.b1,m.b2].some(id=>st.elo[id]===undefined)){
+    st.history.push({matchId:m.id,eloBefore:{},eloAfter:{},deltas:{},expA:0.5,breakdowns:{}});
+    return false;
+  }
+  return true;
+}
+function _eloBuchen(st, m, res, expA, breakdowns){
+  const ids=[m.a1,m.a2,m.b1,m.b2], aWon=m.winner==='A';
+  const eloBefore={}; ids.forEach(id=>eloBefore[id]=st.elo[id]);
+  ids.forEach(id=>{
+    const d=res[id], onA=(id===m.a1||id===m.a2), won=onA===aWon;
+    st.elo[id]+=d; st.played[id]++; st.playedSeason[id]++;
+    if(d>=0) st.eloGain[id]=(st.eloGain[id]||0)+d; else st.eloLoss[id]=(st.eloLoss[id]||0)+d;
+    // Peak Elo: höchster je erreichter Saison-Elo (überlebt Saison-Resets)
+    if(st.elo[id] > (st.peakElo[id] ?? st.startElo)) st.peakElo[id]=st.elo[id];
+    const gf=onA?m.score_a:m.score_b, ga=onA?m.score_b:m.score_a;
+    st.gd[id]=(st.gd[id]||0)+(gf-ga);
+    if(won){ st.wins[id]++; st.curStreak[id]=st.curStreak[id]>0?st.curStreak[id]+1:1; }
+    else   { st.losses[id]++; st.curStreak[id]=st.curStreak[id]<0?st.curStreak[id]-1:-1; }
+    if(st.curStreak[id]>st.bestStreak[id]) st.bestStreak[id]=st.curStreak[id];
+  });
+  // Team-Elo, über alle Zeit und je Saison
+  const sieger=aWon?[m.a1,m.a2]:[m.b1,m.b2], verlierer=aWon?[m.b1,m.b2]:[m.a1,m.a2];
+  const saison=st.seasonTeamElo[st.curSeason]||(st.seasonTeamElo[st.curSeason]={});
+  [sieger,verlierer].forEach(team=>{
+    const key=team.slice().sort().join('|'), d=team.reduce((x,id)=>x+(res[id]||0),0);
+    st.teamElo[key]=(st.teamElo[key]||0)+d;
+    saison[key]=(saison[key]||0)+d;
+  });
+  st.history.push({matchId:m.id,eloBefore,eloAfter:{...st.elo},deltas:res,expA,breakdowns});
+  // Positions-Zähler [§C44], mit dem Stand VOR der Partie
+  posZaehlenPartie(st.posTracker,m,aWon,expA,eloBefore);
+}
+// Nach der letzten Partie: ihre Saison schließen, und liegt der Kalender
+// schon im nächsten Monat, beginnt der leer — sonst zeigte die Rangliste
+// am Ersten noch die Werte des Vormonats. Karriere-Elo ist der Schnitt der
+// Saison-Endstände, gewichtet nach Spielen: eine Saison mit 30 Partien
+// zählt 30-mal so viel wie eine mit einer.
+function _eloErgebnis(st){
+  if(st.curSeason){
+    _eloSaisonZu(st);
     try {
-      const currentCalSeason=currentSeason().id;
-      if(currentCalSeason !== _curSeason){
-        resetSeason();
-        _curSeason=currentCalSeason;
-      }
+      const kalender=currentSeason().id;
+      if(kalender!==st.curSeason){ _eloSaisonNeu(st); st.curSeason=kalender; }
     } catch(e){}
   }
-
-  // Karriere-Elo
   const careerElo={};
   players.forEach(p=>{
     let sumElo=0, sumGames=0;
-    Object.keys(seasonEndElos).forEach(sid=>{
-      if(seasonEndElos[sid][p.id]!==undefined){
-        const g=seasonPlayed[sid][p.id]||0;
-        sumElo+=seasonEndElos[sid][p.id]*g;
+    Object.keys(st.seasonEndElos).forEach(sid=>{
+      if(st.seasonEndElos[sid][p.id]!==undefined){
+        const g=st.seasonPlayed[sid][p.id]||0;
+        sumElo+=st.seasonEndElos[sid][p.id]*g;
         sumGames+=g;
       }
     });
     careerElo[p.id]=sumGames>0?sumElo/sumGames:null;
   });
-
+  const {elo,played,playedSeason,wins,losses,curStreak,bestStreak,eloGain,eloLoss,gd,
+         teamElo,seasonTeamElo,history,seasonEndElos,seasonPlayed,posTracker,peakElo,curSeason}=st;
   return {elo,played,playedSeason,wins,losses,curStreak,bestStreak,eloGain,eloLoss,gd,
           teamElo,seasonTeamElo,history,seasonEndElos,seasonPlayed,careerElo,
-          posTracker,peakElo,curSeason:_curSeason};
+          posTracker,peakElo,curSeason};
 }
 
 // ─── §3.6 Slider-basierte Berechnung (für Match-Eingabe + Recalc) ────
 function simulateEloWithSliders(matchSubset, opts={}){
-  const startElo=opts.startElo ?? cfg.start_elo;
-  const elo={}, played={}, playedSeason={}, wins={}, losses={}, curStreak={}, bestStreak={};
-  const eloGain={}, eloLoss={}, gd={};
-  const peakElo={}; // saison-übergreifender Allzeit-Höchst-Elo pro Spieler
-  const teamElo={};
-  const seasonTeamElo={}; // seasonId → {teamKey → cumulative Elo-Zuwachs in dieser Saison}
-  const history=[];
-  players.forEach(p=>{elo[p.id]=startElo;played[p.id]=0;playedSeason[p.id]=0;wins[p.id]=0;losses[p.id]=0;curStreak[p.id]=0;bestStreak[p.id]=0;eloGain[p.id]=0;eloLoss[p.id]=0;gd[p.id]=0;peakElo[p.id]=startElo;});
-  // Inkrementeller Positions-Tracker (ersetzt atkStrengthFrom(id, prior))
-  const posTracker={};
-  players.forEach(p=>{posTracker[p.id]=posZaehler();});
-
-  // Optional: initialer State (für schnelle Vorschau eines einzelnen Hypo-Matches)
-  // Erwartet ein Objekt mit den gleichen Keys wie der Return-Value von simulateElo.
-  // Achtung: opts.initialCurSeason wird benötigt damit der Saison-Reset korrekt greift.
-  let _curSeason=null;
-  if(opts.initialState){
-    const s=opts.initialState;
-    Object.assign(elo, s.elo||{});
-    Object.assign(played, s.played||{});
-    Object.assign(playedSeason, s.playedSeason||{});
-    Object.assign(wins, s.wins||{});
-    Object.assign(losses, s.losses||{});
-    Object.assign(curStreak, s.curStreak||{});
-    Object.assign(bestStreak, s.bestStreak||{});
-    Object.assign(eloGain, s.eloGain||{});
-    Object.assign(eloLoss, s.eloLoss||{});
-    Object.assign(gd, s.gd||{});
-    Object.assign(peakElo, s.peakElo||{});
-    // posTracker ist ein nested object → tief kopieren
-    if(s.posTracker){
-      Object.keys(s.posTracker).forEach(id=>{
-        posTracker[id]={...s.posTracker[id]};
-      });
-    }
-    _curSeason=opts.initialCurSeason||null;
-  }
-
-  const ordered=[...matchSubset].sort((a,b)=>mts(a)-mts(b));
+  const st=_eloStand(opts);
+  const {elo,playedSeason,posTracker}=st;
   const localDynK=(id)=>{const g=playedSeason[id]||0,e=elo[id];
     if(g<5)return cfg.k_factor*(cfg.new_player_mult ?? 1.5);
     if(g<15)return cfg.k_factor*(cfg.new_player_mid_mult ?? 1.2);
     if(e>cfg.start_elo+400)return cfg.k_factor*(cfg.veteran_damp ?? 0.85);
     return cfg.k_factor;};
 
-  // Saison-Reset Tracking: bei jedem Monatswechsel werden Elo/Played zurückgesetzt
-  // Positions-Tracker bleibt erhalten (saison-übergreifend gewollt).
-  // Per-Saison Snapshots: Karriere-Elo = Durchschnitt der End-Elos pro Saison
-  const seasonEndElos={}; // seasonId → {playerId → endElo}
-  const seasonPlayed={};  // seasonId → {playerId → games}
-  const resetSeason=()=>{
-    players.forEach(p=>{elo[p.id]=startElo;playedSeason[p.id]=0;});
-  };
-
-  ordered.forEach((m)=>{
-    const mSeason=seasonOf(m.created_at).id;
-    if(_curSeason && _curSeason!==mSeason){
-      // Snapshot der abgelaufenen Saison
-      seasonEndElos[_curSeason]={};
-      seasonPlayed[_curSeason]={};
-      players.forEach(p=>{
-        if((playedSeason[p.id]||0)>0){
-          seasonEndElos[_curSeason][p.id]=elo[p.id];
-          seasonPlayed[_curSeason][p.id]=playedSeason[p.id];
-        }
-      });
-      resetSeason();
-    }
-    _curSeason=mSeason;
+  [...matchSubset].sort((a,b)=>mts(a)-mts(b)).forEach(m=>{
+    if(!_eloPartieBeginnt(st,m)) return;
     const ids=[m.a1,m.a2,m.b1,m.b2];
-    if(ids.some(id=>elo[id]===undefined)){
-      history.push({matchId:m.id,eloBefore:{},eloAfter:{},deltas:{},expA:0.5,breakdowns:{}});
-      return;
-    }
-    const eloBefore={};ids.forEach(id=>eloBefore[id]=elo[id]);
     const teamA=[{id:m.a1,pos:m.a1_pos},{id:m.a2,pos:m.a2_pos}];
     const teamB=[{id:m.b1,pos:m.b1_pos},{id:m.b2,pos:m.b2_pos}];
     const aAvg=(elo[m.a1]+elo[m.a2])/2,bAvg=(elo[m.b1]+elo[m.b2])/2;
@@ -264,182 +179,104 @@ function simulateEloWithSliders(matchSubset, opts={}){
     const matchK=ids.reduce((s,id)=>s+localDynK(id),0)/4;
 
     const applyTeam=(team,opp,won,exp)=>{
-  const e0=elo[team[0].id],e1=elo[team[1].id];
-  const high=e0>=e1?team[0]:team[1];
-  const w=riskWeights(Math.max(e0,e1),Math.min(e0,e1),cfg.risk_split);
-  const oppAvg=(elo[opp[0].id]+elo[opp[1].id])/2;
-  const teamDeltas=[]; // Temporärer Array für alle Deltas dieses Teams
-  
-  team.forEach(slot=>{
-    const bd={playerId:slot.id,won,startElo:elo[slot.id]};
-    const k=matchK; bd.kFactor=k;
-    bd.expected=exp;
-    const rawBase=k*((won?1:0)-exp); bd.rawBase=rawBase;
+      const e0=elo[team[0].id],e1=elo[team[1].id];
+      const high=e0>=e1?team[0]:team[1];
+      const w=riskWeights(Math.max(e0,e1),Math.min(e0,e1),cfg.risk_split);
+      const oppAvg=(elo[opp[0].id]+elo[opp[1].id])/2;
+      team.forEach(slot=>{
+        const bd={playerId:slot.id,won,startElo:elo[slot.id]};
+        const k=matchK; bd.kFactor=k;
+        bd.expected=exp;
+        const rawBase=k*((won?1:0)-exp); bd.rawBase=rawBase;
 
-    // MoV
-    // Null ist ein gültiger Sliderwert: dann gibt es keinen MoV-Aufschlag
-    // bei Niederlagen. Nur eine fehlende Einstellung nutzt den Standard.
-    const mov=won?rawMov:(1+(rawMov-1)*(cfg.mov_loss_damp ?? 0.5));
-    bd.movMult=mov; bd.movEffect=rawBase*mov-rawBase;
+        // MoV
+        // Null ist ein gültiger Sliderwert: dann gibt es keinen MoV-Aufschlag
+        // bei Niederlagen. Nur eine fehlende Einstellung nutzt den Standard.
+        const mov=won?rawMov:(1+(rawMov-1)*(cfg.mov_loss_damp ?? 0.5));
+        bd.movMult=mov; bd.movEffect=rawBase*mov-rawBase;
 
-    // Win-Boost
-    const boost=won?(cfg.win_boost||1.12):1.0;
-    bd.winBoost=boost; bd.winBoostEffect=rawBase*mov*boost-rawBase*mov;
+        // Win-Boost
+        const boost=won?(cfg.win_boost||1.12):1.0;
+        bd.winBoost=boost; bd.winBoostEffect=rawBase*mov*boost-rawBase*mov;
 
-    // Erfahrungs-Schutz
-    const g=playedSeason[slot.id]||0;
-    const protectShare=Math.max(0,Math.min(1,(g-5)/25));
-    const protectMax = cfg.exp_protect_max ?? 0.1;
-    const expProtect=won?1:(1-protectMax*protectShare);
-    bd.expProtect=expProtect; bd.expProtectEffect=won?0:rawBase*mov*boost*expProtect-rawBase*mov*boost;
+        // Erfahrungs-Schutz
+        const g=playedSeason[slot.id]||0;
+        const protectShare=Math.max(0,Math.min(1,(g-5)/25));
+        const protectMax = cfg.exp_protect_max ?? 0.1;
+        const expProtect=won?1:(1-protectMax*protectShare);
+        bd.expProtect=expProtect; bd.expProtectEffect=won?0:rawBase*mov*boost*expProtect-rawBase*mov*boost;
 
-    // Underdog-Boost
-    const myElo=elo[slot.id];
-    const eloDiff=oppAvg-myElo;
-    const gamesDiff=avgGames-(playedSeason[slot.id]||0);
-    const eloMax = cfg.underdog_elo_max ?? 0.15;
-    const gamesMax = cfg.underdog_games_max ?? 0.05;
-    // Jede Komponente einzeln auf >=0 begrenzt: der Bonus belohnt nur, die Faktoren
-    // bestrafen sich nicht gegenseitig. Ein Veteran mit Elo-Rückstand bekommt den
-    // Elo-Boost trotz vieler Spiele; ein Neuling mit hohem Elo bekommt den
-    // Spiele-Boost trotz Top-Elo. Niemand wird durch eine zweite Komponente bestraft.
-    const eloFactor=Math.max(0, Math.tanh(eloDiff/400)*eloMax);
-    const gamesFactor=Math.max(0, Math.tanh(gamesDiff/30)*gamesMax);
-    const underdogRaw=eloFactor+gamesFactor;
-    // Favoriten-Malus entfernt: nur Underdog-Boost (Sieg als Schwächerer) wirkt.
-    // Favoriten/Veteranen, die verlieren, nehmen den vollen Elo-Hit.
-    const underdogMult=(won&&underdogRaw>0)?1+underdogRaw:1;
-    bd.underdogMult=underdogMult;
-    bd.underdogEloDiff=Math.round(eloDiff);
-    bd.underdogGamesDiff=Math.round(gamesDiff);
+        // Underdog-Boost
+        const myElo=elo[slot.id];
+        const eloDiff=oppAvg-myElo;
+        const gamesDiff=avgGames-(playedSeason[slot.id]||0);
+        const eloMax = cfg.underdog_elo_max ?? 0.15;
+        const gamesMax = cfg.underdog_games_max ?? 0.05;
+        // Jede Komponente einzeln auf >=0 begrenzt: der Bonus belohnt nur, die Faktoren
+        // bestrafen sich nicht gegenseitig. Ein Veteran mit Elo-Rückstand bekommt den
+        // Elo-Boost trotz vieler Spiele; ein Neuling mit hohem Elo bekommt den
+        // Spiele-Boost trotz Top-Elo. Niemand wird durch eine zweite Komponente bestraft.
+        const eloFactor=Math.max(0, Math.tanh(eloDiff/400)*eloMax);
+        const gamesFactor=Math.max(0, Math.tanh(gamesDiff/30)*gamesMax);
+        const underdogRaw=eloFactor+gamesFactor;
+        // Favoriten-Malus entfernt: nur Underdog-Boost (Sieg als Schwächerer) wirkt.
+        // Favoriten/Veteranen, die verlieren, nehmen den vollen Elo-Hit.
+        const underdogMult=(won&&underdogRaw>0)?1+underdogRaw:1;
+        bd.underdogMult=underdogMult;
+        bd.underdogEloDiff=Math.round(eloDiff);
+        bd.underdogGamesDiff=Math.round(gamesDiff);
 
-    // ── Low-Elo Verlustschutz ──
-    // Spieler unter dem Match-Durchschnitts-Elo werden bei Niederlagen gedämpft.
-    // Symmetrisch zum Underdog-Boost (gleiche tanh-Skala auf 200 Elo), wirkt aber
-    // nur bei Niederlagen. Slider 0..1 bestimmt die maximale Dämpfung.
-    // Beispiel (Slider=70%, Spieler 80 Elo unter Match-Avg): tanh(80/200)≈0.38,
-    //   Dämpfung = 1 - 0.7*0.38 = 0.733 → Verlust auf 73% reduziert.
-    const lowEloMax = cfg.low_elo_loss_damp ?? 0;
-    const eloBelowAvg = Math.max(0, avgElo - myElo);
-    const lowEloShare = Math.tanh(eloBelowAvg/200);
-    const lowEloDamp = won ? 1 : (1 - lowEloMax*lowEloShare);
-    bd.lowEloDamp=lowEloDamp; bd.lowEloShare=lowEloShare;
-    bd.lowEloEffect=won?0:rawBase*mov*boost*expProtect*underdogMult*lowEloDamp - rawBase*mov*boost*expProtect*underdogMult;
+        // ── Low-Elo Verlustschutz ──
+        // Spieler unter dem Match-Durchschnitts-Elo werden bei Niederlagen gedämpft.
+        // Symmetrisch zum Underdog-Boost (gleiche tanh-Skala auf 200 Elo), wirkt aber
+        // nur bei Niederlagen. Slider 0..1 bestimmt die maximale Dämpfung.
+        // Beispiel (Slider=70%, Spieler 80 Elo unter Match-Avg): tanh(80/200)≈0.38,
+        //   Dämpfung = 1 - 0.7*0.38 = 0.733 → Verlust auf 73% reduziert.
+        const lowEloMax = cfg.low_elo_loss_damp ?? 0;
+        const eloBelowAvg = Math.max(0, avgElo - myElo);
+        const lowEloShare = Math.tanh(eloBelowAvg/200);
+        const lowEloDamp = won ? 1 : (1 - lowEloMax*lowEloShare);
+        bd.lowEloDamp=lowEloDamp; bd.lowEloShare=lowEloShare;
+        bd.lowEloEffect=won?0:rawBase*mov*boost*expProtect*underdogMult*lowEloDamp - rawBase*mov*boost*expProtect*underdogMult;
 
-    const afterMods=rawBase*mov*boost*expProtect*underdogMult*lowEloDamp;
-    bd.afterMods=afterMods;
+        const afterMods=rawBase*mov*boost*expProtect*underdogMult*lowEloDamp;
+        bd.afterMods=afterMods;
 
-    // Risiko-Split
-    const share=slot.id===high.id?w.strong:w.weak;
-    bd.riskShare=share; bd.riskEffect=afterMods*share-afterMods;
+        // Risiko-Split
+        const share=slot.id===high.id?w.strong:w.weak;
+        bd.riskShare=share; bd.riskEffect=afterMods*share-afterMods;
 
-    // Positions-Bonus [§C44]: dieselbe Lage wie im Profil, aus den Partien
-    // vor dieser. Hier stand eine eigene Kopie der Profilformel.
-    const lage=positionsLage(posTracker[slot.id]);
-    const pf=posFactor(lage,slot.pos,cfg.pos_swing);
-    const posMult=won?pf:(2-pf);
-    bd.posStrength=lage.wert; bd.posFactor=pf; bd.posMult=posMult; bd.posEffect=afterMods*share*posMult-afterMods*share;
+        // Positions-Bonus [§C44]: dieselbe Lage wie im Profil, aus den Partien
+        // vor dieser. Hier stand eine eigene Kopie der Profilformel.
+        const lage=positionsLage(posTracker[slot.id]);
+        const pf=posFactor(lage,slot.pos,cfg.pos_swing);
+        const posMult=won?pf:(2-pf);
+        bd.posStrength=lage.wert; bd.posFactor=pf; bd.posMult=posMult; bd.posEffect=afterMods*share*posMult-afterMods*share;
 
-    // Match-Bonus
-    // Der Spielbonus lässt sich abschalten; `||` aktivierte bei 0 wieder 1,5.
-    const mb=cfg.match_bonus ?? 1.5;
-    bd.matchBonus=mb;
+        // Match-Bonus
+        // Der Spielbonus lässt sich abschalten; `||` aktivierte bei 0 wieder 1,5.
+        const mb=cfg.match_bonus ?? 1.5;
+        bd.matchBonus=mb;
 
-    // Finale Delta (NICHT GERUNDET)
-    const finalDelta=afterMods*share*posMult+mb;
-    bd.finalDelta=finalDelta;
-    bd.endElo=elo[slot.id]+finalDelta;
-
-    teamDeltas.push({slot, delta: finalDelta, bd});
-  });
-  
-  // ═══ RUNDUNGS-KORREKTUR ═══
-  // Runde beide Deltas einzeln, dann korrigiere die Summe
-  let totalDelta = 0;
-  teamDeltas.forEach(item => {
-    const rounded = Math.round(item.delta);
-    res[item.slot.id] = rounded;
-    breakdowns[item.slot.id] = item.bd;
-    totalDelta += rounded;
-  });
-};
+        const finalDelta=afterMods*share*posMult+mb;
+        bd.finalDelta=finalDelta;
+        bd.endElo=elo[slot.id]+finalDelta;
+        // Verbucht wird jeder Spieler für sich in ganzen Elo. Eine Korrektur,
+        // die die Summe eines Teams erhält, gibt es nicht und braucht es
+        // nicht: mit dem Spielbonus ist keine Partie ein Nullsummenspiel,
+        // und sie schöbe einen halben Punkt von einem Spieler zum anderen.
+        // Hier stand ihr Name über einer Summe, die niemand las.
+        res[slot.id]=Math.round(finalDelta);
+        breakdowns[slot.id]=bd;
+      });
+    };
 
     const aWon=m.winner==='A';
     applyTeam(teamA,teamB,aWon,expA);
     applyTeam(teamB,teamA,!aWon,1-expA);
-
-    // Apply
-    Object.entries(res).forEach(([id,d])=>{
-      elo[id]+=d;played[id]++;playedSeason[id]++;
-      if(d>=0)eloGain[id]=(eloGain[id]||0)+d; else eloLoss[id]=(eloLoss[id]||0)+d;
-      // Peak Elo: höchster je erreichter Saison-Elo (überlebt Saison-Resets)
-      if(elo[id] > (peakElo[id] ?? startElo)) peakElo[id]=elo[id];
-    });
-    ids.forEach(id=>{
-      const onA=(id===m.a1||id===m.a2);
-      const won=(onA&&aWon)||(!onA&&!aWon);
-      const gf=onA?m.score_a:m.score_b, ga=onA?m.score_b:m.score_a;
-      gd[id]=(gd[id]||0)+(gf-ga);
-      if(won){wins[id]++;curStreak[id]=curStreak[id]>0?curStreak[id]+1:1;}
-      else{losses[id]++;curStreak[id]=curStreak[id]<0?curStreak[id]-1:-1;}
-      if(curStreak[id]>bestStreak[id])bestStreak[id]=curStreak[id];
-    });
-
-    // Team-Elo tracking (global + pro Saison)
-    const winnerIds=aWon?[m.a1,m.a2]:[m.b1,m.b2];
-    const loserIds=aWon?[m.b1,m.b2]:[m.a1,m.a2];
-    const wKey=winnerIds.sort().join('|'),lKey=loserIds.sort().join('|');
-    const wDelta=winnerIds.reduce((s,id)=>s+(res[id]||0),0);
-    const lDelta=loserIds.reduce((s,id)=>s+(res[id]||0),0);
-    teamElo[wKey]=(teamElo[wKey]||0)+wDelta;
-    teamElo[lKey]=(teamElo[lKey]||0)+lDelta;
-    // Pro Saison
-    if(!seasonTeamElo[mSeason])seasonTeamElo[mSeason]={};
-    seasonTeamElo[mSeason][wKey]=(seasonTeamElo[mSeason][wKey]||0)+wDelta;
-    seasonTeamElo[mSeason][lKey]=(seasonTeamElo[mSeason][lKey]||0)+lDelta;
-
-    history.push({matchId:m.id,eloBefore,eloAfter:{...elo},deltas:res,expA,breakdowns});
-    // Positions-Zähler [§C44], mit dem Stand VOR der Partie
-    posZaehlenPartie(posTracker,m,aWon,expA,eloBefore);
+    _eloBuchen(st,m,res,expA,breakdowns);
   });
-
-  // Letzten Saison-Snapshot festhalten
-  if(_curSeason){
-    seasonEndElos[_curSeason]={};
-    seasonPlayed[_curSeason]={};
-    players.forEach(p=>{
-      if((playedSeason[p.id]||0)>0){
-        seasonEndElos[_curSeason][p.id]=elo[p.id];
-        seasonPlayed[_curSeason][p.id]=playedSeason[p.id];
-      }
-    });
-
-    // Falls die aktuelle Kalender-Saison NACH der letzten Match-Saison liegt
-    // (z.B. neuer Monat ohne Matches), Elo zurücksetzen — sonst zeigt die UI
-    // noch die Werte vom Vormonat.
-    try {
-      const currentCalSeason = currentSeason().id;
-      if(currentCalSeason !== _curSeason){
-        resetSeason();
-        _curSeason = currentCalSeason;
-      }
-    } catch(e){}
-  }
-  // Karriere-Elo: gewichteter Durchschnitt der End-Elos, gewichtet nach Spielanzahl pro Saison.
-  // So zählt eine Saison mit 30 Spielen 30× stärker als eine mit 1 Spiel.
-  const careerElo={};
-  players.forEach(p=>{
-    let sumElo=0, sumGames=0;
-    Object.keys(seasonEndElos).forEach(sid=>{
-      if(seasonEndElos[sid][p.id]!==undefined){
-        const g=seasonPlayed[sid][p.id]||0;
-        sumElo+=seasonEndElos[sid][p.id]*g;
-        sumGames+=g;
-      }
-    });
-    careerElo[p.id]=sumGames>0?sumElo/sumGames:null;
-  });
-  return {elo,played,playedSeason,wins,losses,curStreak,bestStreak,eloGain,eloLoss,gd,teamElo,seasonTeamElo,history,seasonEndElos,seasonPlayed,careerElo,posTracker,peakElo,curSeason:_curSeason};
+  return _eloErgebnis(st);
 }
 
 // recalcHistory nutzt simulateEloWithSliders — berechnet ALLE Deltas mit aktuellen

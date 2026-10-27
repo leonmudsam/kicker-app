@@ -4712,7 +4712,7 @@ const ok = (c, msg, det) => {
     const K = window.__k.eval.bind(window.__k);
     const ids = K('matches.slice(-40).map(m=>m.id)');
     const fehler = [];
-    let mitMarken = 0;
+    let mitMarken = 0, eloAnalysen = 0;
     for(const mid of ids){
       K('closeSheet(true);showMatchDetail(' + JSON.stringify(mid) + ')');
       const soll = K(`(function(){ const m=matches.find(x=>x.id===${JSON.stringify(mid)});
@@ -4726,6 +4726,25 @@ const ok = (c, msg, det) => {
       const zeilen = [...document.querySelectorAll('#sheet .rrow .rname')].map(e => e.textContent.trim());
       if(zeilen.length) mitMarken++;
       if(new Set(zeilen).size !== zeilen.length) fehler.push('doppelt: ' + zeilen.join(','));
+      // Die Elo-Analyse: oben steht, was die Partie verbucht hat, und die
+      // Zeilen darunter ergeben genau das. Oben stand der ungerundete Wert
+      // („+56,54" über einem Sprung von 57), und Posten unter 0,1 fehlten.
+      const knopf = document.getElementById('showBreakdownBtn');
+      if(knopf){
+        knopf.click();
+        const verbucht = K(`(getHistoryByMatchId().get(${JSON.stringify(mid)})||{}).deltas||{}`);
+        const zahl = t => Number(t.replace(',', '.').replace('\u2212', '-'));
+        [...document.querySelectorAll('#sheet .ea-spieler')].forEach((el, i) => {
+          const oben = Number(el.querySelector('.ea-summe').dataset.elo);
+          const posten = [...el.querySelectorAll('.ea-wert')].map(w => zahl(w.textContent));
+          const summe = posten.reduce((x, y) => x + y, 0);
+          const pid = K(`(()=>{const m=matches.find(x=>x.id===${JSON.stringify(mid)});return [m.a1,m.a2,m.b1,m.b2][${i}]})()`);
+          if(verbucht[pid] !== undefined && oben !== verbucht[pid]) fehler.push(mid + ': oben ' + oben + ', verbucht ' + verbucht[pid]);
+          if(!el.querySelector('.ea-heute') && Math.abs(summe - oben) > .005 * posten.length + 1e-9)
+            fehler.push(mid + ': Zeilen ' + summe.toFixed(2) + ', oben ' + oben);
+          eloAnalysen++;
+        });
+      }
     }
     // Und ein Name in der Elo-Liste führt ins Profil.
     K('closeSheet(true);showMatchDetail(matches[matches.length-1].id)');
@@ -4734,12 +4753,12 @@ const ok = (c, msg, det) => {
     if(zeile){ zeile.click(); await new Promise(r => setTimeout(r, 700));
       profil = !!document.querySelector('#sheet .pp-root'); }
     K('closeSheet(true)');
-    return {fehler, mitMarken, profil};
+    return {fehler, mitMarken, profil, eloAnalysen};
   });
   ok(partie.profil, 'ein Name im Blatt einer Partie führt ins Profil');
-  ok(partie.fehler.length === 0 && partie.mitMarken > 0,
-     'das Blatt einer Partie nennt Sieger und Siegchance und jeden Spieler einmal',
-     partie.fehler.slice(0,3).join(' | ') || partie.mitMarken + ' Partien mit Auszeichnungen');
+  ok(partie.fehler.length === 0 && partie.mitMarken > 0 && partie.eloAnalysen === 4 * 40,
+     'das Blatt einer Partie nennt Sieger und Siegchance und jeden Spieler einmal; die Elo-Analyse zeigt oben das verbuchte Delta, und ihre Zeilen ergeben es',
+     partie.fehler.slice(0,3).join(' | ') || partie.mitMarken + ' Partien mit Auszeichnungen, ' + partie.eloAnalysen + ' Analysen');
   const reiterPunkt = reiter.filter(r => r.punkt.length).map(r => r.name + ': ' + r.punkt.join(' '));
   ok(reiterPunkt.length + blattPunkt.length === 0,
      'keine Dezimalzahl mit Punkt in einem Reiter oder Blatt',

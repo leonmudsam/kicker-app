@@ -6408,7 +6408,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.27.1d63b2d2';
+const BUILD_VERSION='2026.10.27.ba13ba95';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -6851,7 +6851,7 @@ function seasonStart(seasonId){
 function seasonEnd(seasonId){
   if(!seasonId) seasonId=currentSeason().id;
   const [y,m]=seasonId.split('-').map(Number);
-  return new Date(y,m,0,23,59,59);
+  return new Date(y,m,0,23,59,59,999);
 }
 function seasonLabel(seasonId){
   if(!seasonId) return '';
@@ -8591,8 +8591,8 @@ async function autoArchiveSeasons(){
     const entry={
       id:sid,
       label:seasonLabel(sid),
-      start_date:seasonStart(sid).toISOString().slice(0,10),
-      end_date:seasonEnd(sid).toISOString().slice(0,10),
+      start_date:tagKey(seasonStart(sid)),
+      end_date:tagKey(seasonEnd(sid)),
       player_id:top[0].id,
       team_p1:bestTeam?bestTeam[0]:null,
       team_p2:bestTeam?bestTeam[1]:null,
@@ -10356,9 +10356,7 @@ function renderNav(){
       <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor">${ic}</svg></span>
       <span class="lb">${lb}</span></button>`).join('');
   document.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>{
-    tab=b.dataset.nav;teamSearch='';ligaSeasonId=null;ligaSicht='spieler';
-    awPeriod='season';awSeasonId=null;awWeekStart=null;rekKammer='';einblickOffen='';
-    window.scrollTo(0,0);_renderNachEingabe();
+    _reiterSetzen(b.dataset.nav);
     if(tab==='ranking'){ _ladeStart('daten'); _ligaAktualisieren(); }});
   nav._navKnoop=nav.firstElementChild;
   }
@@ -10369,7 +10367,54 @@ function renderNav(){
   });
   document.getElementById('fab').style.display = tab==='match' ? 'none' : 'grid';
   _navSchlitten();
+  _zurueckAbgleichen();
 }
+function _reiterSetzen(id){
+  tab=id;teamSearch='';ligaSeasonId=null;ligaSicht='spieler';
+  awPeriod='season';awSeasonId=null;awWeekStart=null;rekKammer='';einblickOffen='';
+  window.scrollTo(0,0);_renderNachEingabe();
+}
+
+let _zurueckEintrag = false;
+let _zurueckEigene = 0;
+let _zurueckPlan = 0;
+function _zurueckZeigt(id){
+  const e = document.getElementById(id);
+  return !!(e && e.classList.contains('show'));
+}
+function _zurueckOffen(){
+  return !!document.querySelector('.dlg-bg.show') || _zurueckZeigt('bpBg') || _zurueckZeigt('ndBg')
+    || _zurueckZeigt('sheetBg') || tab !== 'ranking';
+}
+function _zurueckAbgleichen(){
+  if(_zurueckPlan) return;
+  _zurueckPlan = setTimeout(() => {
+    _zurueckPlan = 0;
+    try {
+      const offen = _zurueckOffen();
+      if(offen && !_zurueckEintrag){ history.pushState({kicker:'zurueck'}, ''); _zurueckEintrag = true; }
+      else if(!offen && _zurueckEintrag){ _zurueckEintrag = false; _zurueckEigene++; history.back(); }
+    } catch(e){}
+  }, 0);
+}
+function _zurueckSchritt(){
+  const nein = document.querySelector('.dlg-bg.show [data-dlg="0"]');
+  if(nein){ nein.click(); return; }
+  if(_zurueckZeigt('bpBg')){ closeBadgePopover(); return; }
+  if(_zurueckZeigt('ndBg')){ closeNewsDetail(); return; }
+  if(_zurueckZeigt('sheetBg')){ closeSheet(); return; }
+  if(tab !== 'ranking') _reiterSetzen('ranking');
+}
+try {
+  if(history.state && history.state.kicker) history.replaceState(null, '');
+  window.addEventListener('popstate', () => {
+    if(_zurueckEigene > 0){ _zurueckEigene--; return; }
+    if(!_zurueckEintrag) return;
+    _zurueckEintrag = false;
+    _zurueckSchritt();
+    _zurueckAbgleichen();
+  });
+} catch(e){}
 
 let _ligaRefreshAuftrag=null;
 function _ligaAktualisieren(){
@@ -11379,214 +11424,118 @@ function _connBewegung(c){
 }
 
 function simulateElo(matchSubset, opts={}){
+  const st=_eloStand(opts);
+  [...matchSubset].sort((a,b)=>mts(a)-mts(b)).forEach(m=>{
+    if(!_eloPartieBeginnt(st,m)) return;
+    const dbDeltas=m.deltas||{}, res={};
+    [m.a1,m.a2,m.b1,m.b2].forEach(id=>{ res[id]=dbDeltas[id]||0; });
+    _eloBuchen(st,m,res,m.exp_a ?? 0.5,{});
+  });
+  return _eloErgebnis(st);
+}
+
+function _eloStand(opts){
   const startElo=opts.startElo ?? cfg.start_elo;
-  const elo={}, played={}, playedSeason={}, wins={}, losses={}, curStreak={}, bestStreak={};
-  const eloGain={}, eloLoss={}, gd={};
-  const peakElo={};
-  const teamElo={};
-  const seasonTeamElo={};
-  const history=[];
-  const posTracker={};
+  const st={startElo, elo:{}, played:{}, playedSeason:{}, wins:{}, losses:{}, curStreak:{}, bestStreak:{},
+    eloGain:{}, eloLoss:{}, gd:{}, peakElo:{}, teamElo:{}, seasonTeamElo:{}, history:[], posTracker:{},
+    seasonEndElos:{}, seasonPlayed:{}, curSeason:null};
   players.forEach(p=>{
-    elo[p.id]=startElo;played[p.id]=0;playedSeason[p.id]=0;
-    wins[p.id]=0;losses[p.id]=0;curStreak[p.id]=0;bestStreak[p.id]=0;
-    eloGain[p.id]=0;eloLoss[p.id]=0;gd[p.id]=0;peakElo[p.id]=startElo;
-    posTracker[p.id]=posZaehler();
+    st.elo[p.id]=startElo; st.played[p.id]=0; st.playedSeason[p.id]=0;
+    st.wins[p.id]=0; st.losses[p.id]=0; st.curStreak[p.id]=0; st.bestStreak[p.id]=0;
+    st.eloGain[p.id]=0; st.eloLoss[p.id]=0; st.gd[p.id]=0; st.peakElo[p.id]=startElo;
+    st.posTracker[p.id]=posZaehler();
   });
-
-  let _curSeason=null;
-  if(opts.initialState){
-    const s=opts.initialState;
-    Object.assign(elo, s.elo||{});
-    Object.assign(played, s.played||{});
-    Object.assign(playedSeason, s.playedSeason||{});
-    Object.assign(wins, s.wins||{});
-    Object.assign(losses, s.losses||{});
-    Object.assign(curStreak, s.curStreak||{});
-    Object.assign(bestStreak, s.bestStreak||{});
-    Object.assign(eloGain, s.eloGain||{});
-    Object.assign(eloLoss, s.eloLoss||{});
-    Object.assign(gd, s.gd||{});
-    Object.assign(peakElo, s.peakElo||{});
-    if(s.posTracker){
-      Object.keys(s.posTracker).forEach(id=>{ posTracker[id]={...s.posTracker[id]}; });
-    }
-    _curSeason=opts.initialCurSeason||null;
+  const s=opts.initialState;
+  if(s){
+    ['elo','played','playedSeason','wins','losses','curStreak','bestStreak','eloGain','eloLoss','gd','peakElo']
+      .forEach(k=>Object.assign(st[k], s[k]||{}));
+    if(s.posTracker) Object.keys(s.posTracker).forEach(id=>{ st.posTracker[id]={...s.posTracker[id]}; });
+    st.curSeason=opts.initialCurSeason||null;
   }
-
-  const ordered=[...matchSubset].sort((a,b)=>mts(a)-mts(b));
-
-  const seasonEndElos={};
-  const seasonPlayed={};
-  const resetSeason=()=>{ players.forEach(p=>{elo[p.id]=startElo;playedSeason[p.id]=0;}); };
-
-  ordered.forEach(m=>{
-    const mSeason=seasonOf(m.created_at).id;
-    if(_curSeason && _curSeason!==mSeason){
-      seasonEndElos[_curSeason]={};
-      seasonPlayed[_curSeason]={};
-      players.forEach(p=>{
-        if((playedSeason[p.id]||0)>0){
-          seasonEndElos[_curSeason][p.id]=elo[p.id];
-          seasonPlayed[_curSeason][p.id]=playedSeason[p.id];
-        }
-      });
-      resetSeason();
-    }
-    _curSeason=mSeason;
-
-    const ids=[m.a1,m.a2,m.b1,m.b2];
-    if(ids.some(id=>elo[id]===undefined)){
-      history.push({matchId:m.id,eloBefore:{},eloAfter:{},deltas:{},expA:0.5,breakdowns:{}});
-      return;
-    }
-
-    const eloBefore={}; ids.forEach(id=>eloBefore[id]=elo[id]);
-
-    const dbDeltas=m.deltas||{};
-    const expA=m.exp_a ?? 0.5;
-    const res={};
-    ids.forEach(id=>{ res[id]=dbDeltas[id]||0; });
-
-    const aWon=m.winner==='A';
-
-    ids.forEach(id=>{
-      const d=res[id];
-      elo[id]+=d; played[id]++; playedSeason[id]++;
-      if(d>=0) eloGain[id]=(eloGain[id]||0)+d;
-      else     eloLoss[id]=(eloLoss[id]||0)+d;
-      if(elo[id] > (peakElo[id] ?? startElo)) peakElo[id]=elo[id];
-    });
-
-    ids.forEach(id=>{
-      const onA=(id===m.a1||id===m.a2);
-      const won=(onA&&aWon)||(!onA&&!aWon);
-      const gf=onA?m.score_a:m.score_b, ga=onA?m.score_b:m.score_a;
-      gd[id]=(gd[id]||0)+(gf-ga);
-      if(won){wins[id]++; curStreak[id]=curStreak[id]>0?curStreak[id]+1:1;}
-      else{losses[id]++; curStreak[id]=curStreak[id]<0?curStreak[id]-1:-1;}
-      if(curStreak[id]>bestStreak[id]) bestStreak[id]=curStreak[id];
-    });
-
-    const winnerIds=aWon?[m.a1,m.a2]:[m.b1,m.b2];
-    const loserIds =aWon?[m.b1,m.b2]:[m.a1,m.a2];
-    const wKey=winnerIds.slice().sort().join('|'), lKey=loserIds.slice().sort().join('|');
-    const wDelta=winnerIds.reduce((s,id)=>s+(res[id]||0),0);
-    const lDelta=loserIds.reduce((s,id)=>s+(res[id]||0),0);
-    teamElo[wKey]=(teamElo[wKey]||0)+wDelta;
-    teamElo[lKey]=(teamElo[lKey]||0)+lDelta;
-    if(!seasonTeamElo[mSeason]) seasonTeamElo[mSeason]={};
-    seasonTeamElo[mSeason][wKey]=(seasonTeamElo[mSeason][wKey]||0)+wDelta;
-    seasonTeamElo[mSeason][lKey]=(seasonTeamElo[mSeason][lKey]||0)+lDelta;
-
-    history.push({matchId:m.id,eloBefore,eloAfter:{...elo},deltas:res,expA,breakdowns:{}});
-
-    posZaehlenPartie(posTracker,m,aWon,expA,eloBefore);
+  return st;
+}
+function _eloSaisonZu(st){
+  const sid=st.curSeason, ende=st.seasonEndElos[sid]={}, n=st.seasonPlayed[sid]={};
+  players.forEach(p=>{
+    if((st.playedSeason[p.id]||0)>0){ ende[p.id]=st.elo[p.id]; n[p.id]=st.playedSeason[p.id]; }
   });
-
-  if(_curSeason){
-    seasonEndElos[_curSeason]={};
-    seasonPlayed[_curSeason]={};
-    players.forEach(p=>{
-      if((playedSeason[p.id]||0)>0){
-        seasonEndElos[_curSeason][p.id]=elo[p.id];
-        seasonPlayed[_curSeason][p.id]=playedSeason[p.id];
-      }
-    });
+}
+function _eloSaisonNeu(st){
+  players.forEach(p=>{ st.elo[p.id]=st.startElo; st.playedSeason[p.id]=0; });
+}
+function _eloPartieBeginnt(st, m){
+  const sid=seasonOf(m.created_at).id;
+  if(st.curSeason && st.curSeason!==sid){ _eloSaisonZu(st); _eloSaisonNeu(st); }
+  st.curSeason=sid;
+  if([m.a1,m.a2,m.b1,m.b2].some(id=>st.elo[id]===undefined)){
+    st.history.push({matchId:m.id,eloBefore:{},eloAfter:{},deltas:{},expA:0.5,breakdowns:{}});
+    return false;
+  }
+  return true;
+}
+function _eloBuchen(st, m, res, expA, breakdowns){
+  const ids=[m.a1,m.a2,m.b1,m.b2], aWon=m.winner==='A';
+  const eloBefore={}; ids.forEach(id=>eloBefore[id]=st.elo[id]);
+  ids.forEach(id=>{
+    const d=res[id], onA=(id===m.a1||id===m.a2), won=onA===aWon;
+    st.elo[id]+=d; st.played[id]++; st.playedSeason[id]++;
+    if(d>=0) st.eloGain[id]=(st.eloGain[id]||0)+d; else st.eloLoss[id]=(st.eloLoss[id]||0)+d;
+    if(st.elo[id] > (st.peakElo[id] ?? st.startElo)) st.peakElo[id]=st.elo[id];
+    const gf=onA?m.score_a:m.score_b, ga=onA?m.score_b:m.score_a;
+    st.gd[id]=(st.gd[id]||0)+(gf-ga);
+    if(won){ st.wins[id]++; st.curStreak[id]=st.curStreak[id]>0?st.curStreak[id]+1:1; }
+    else   { st.losses[id]++; st.curStreak[id]=st.curStreak[id]<0?st.curStreak[id]-1:-1; }
+    if(st.curStreak[id]>st.bestStreak[id]) st.bestStreak[id]=st.curStreak[id];
+  });
+  const sieger=aWon?[m.a1,m.a2]:[m.b1,m.b2], verlierer=aWon?[m.b1,m.b2]:[m.a1,m.a2];
+  const saison=st.seasonTeamElo[st.curSeason]||(st.seasonTeamElo[st.curSeason]={});
+  [sieger,verlierer].forEach(team=>{
+    const key=team.slice().sort().join('|'), d=team.reduce((x,id)=>x+(res[id]||0),0);
+    st.teamElo[key]=(st.teamElo[key]||0)+d;
+    saison[key]=(saison[key]||0)+d;
+  });
+  st.history.push({matchId:m.id,eloBefore,eloAfter:{...st.elo},deltas:res,expA,breakdowns});
+  posZaehlenPartie(st.posTracker,m,aWon,expA,eloBefore);
+}
+function _eloErgebnis(st){
+  if(st.curSeason){
+    _eloSaisonZu(st);
     try {
-      const currentCalSeason=currentSeason().id;
-      if(currentCalSeason !== _curSeason){
-        resetSeason();
-        _curSeason=currentCalSeason;
-      }
+      const kalender=currentSeason().id;
+      if(kalender!==st.curSeason){ _eloSaisonNeu(st); st.curSeason=kalender; }
     } catch(e){}
   }
-
   const careerElo={};
   players.forEach(p=>{
     let sumElo=0, sumGames=0;
-    Object.keys(seasonEndElos).forEach(sid=>{
-      if(seasonEndElos[sid][p.id]!==undefined){
-        const g=seasonPlayed[sid][p.id]||0;
-        sumElo+=seasonEndElos[sid][p.id]*g;
+    Object.keys(st.seasonEndElos).forEach(sid=>{
+      if(st.seasonEndElos[sid][p.id]!==undefined){
+        const g=st.seasonPlayed[sid][p.id]||0;
+        sumElo+=st.seasonEndElos[sid][p.id]*g;
         sumGames+=g;
       }
     });
     careerElo[p.id]=sumGames>0?sumElo/sumGames:null;
   });
-
+  const {elo,played,playedSeason,wins,losses,curStreak,bestStreak,eloGain,eloLoss,gd,
+         teamElo,seasonTeamElo,history,seasonEndElos,seasonPlayed,posTracker,peakElo,curSeason}=st;
   return {elo,played,playedSeason,wins,losses,curStreak,bestStreak,eloGain,eloLoss,gd,
           teamElo,seasonTeamElo,history,seasonEndElos,seasonPlayed,careerElo,
-          posTracker,peakElo,curSeason:_curSeason};
+          posTracker,peakElo,curSeason};
 }
 
 function simulateEloWithSliders(matchSubset, opts={}){
-  const startElo=opts.startElo ?? cfg.start_elo;
-  const elo={}, played={}, playedSeason={}, wins={}, losses={}, curStreak={}, bestStreak={};
-  const eloGain={}, eloLoss={}, gd={};
-  const peakElo={};
-  const teamElo={};
-  const seasonTeamElo={};
-  const history=[];
-  players.forEach(p=>{elo[p.id]=startElo;played[p.id]=0;playedSeason[p.id]=0;wins[p.id]=0;losses[p.id]=0;curStreak[p.id]=0;bestStreak[p.id]=0;eloGain[p.id]=0;eloLoss[p.id]=0;gd[p.id]=0;peakElo[p.id]=startElo;});
-  const posTracker={};
-  players.forEach(p=>{posTracker[p.id]=posZaehler();});
-
-  let _curSeason=null;
-  if(opts.initialState){
-    const s=opts.initialState;
-    Object.assign(elo, s.elo||{});
-    Object.assign(played, s.played||{});
-    Object.assign(playedSeason, s.playedSeason||{});
-    Object.assign(wins, s.wins||{});
-    Object.assign(losses, s.losses||{});
-    Object.assign(curStreak, s.curStreak||{});
-    Object.assign(bestStreak, s.bestStreak||{});
-    Object.assign(eloGain, s.eloGain||{});
-    Object.assign(eloLoss, s.eloLoss||{});
-    Object.assign(gd, s.gd||{});
-    Object.assign(peakElo, s.peakElo||{});
-    if(s.posTracker){
-      Object.keys(s.posTracker).forEach(id=>{
-        posTracker[id]={...s.posTracker[id]};
-      });
-    }
-    _curSeason=opts.initialCurSeason||null;
-  }
-
-  const ordered=[...matchSubset].sort((a,b)=>mts(a)-mts(b));
+  const st=_eloStand(opts);
+  const {elo,playedSeason,posTracker}=st;
   const localDynK=(id)=>{const g=playedSeason[id]||0,e=elo[id];
     if(g<5)return cfg.k_factor*(cfg.new_player_mult ?? 1.5);
     if(g<15)return cfg.k_factor*(cfg.new_player_mid_mult ?? 1.2);
     if(e>cfg.start_elo+400)return cfg.k_factor*(cfg.veteran_damp ?? 0.85);
     return cfg.k_factor;};
 
-  const seasonEndElos={};
-  const seasonPlayed={};
-  const resetSeason=()=>{
-    players.forEach(p=>{elo[p.id]=startElo;playedSeason[p.id]=0;});
-  };
-
-  ordered.forEach((m)=>{
-    const mSeason=seasonOf(m.created_at).id;
-    if(_curSeason && _curSeason!==mSeason){
-      seasonEndElos[_curSeason]={};
-      seasonPlayed[_curSeason]={};
-      players.forEach(p=>{
-        if((playedSeason[p.id]||0)>0){
-          seasonEndElos[_curSeason][p.id]=elo[p.id];
-          seasonPlayed[_curSeason][p.id]=playedSeason[p.id];
-        }
-      });
-      resetSeason();
-    }
-    _curSeason=mSeason;
+  [...matchSubset].sort((a,b)=>mts(a)-mts(b)).forEach(m=>{
+    if(!_eloPartieBeginnt(st,m)) return;
     const ids=[m.a1,m.a2,m.b1,m.b2];
-    if(ids.some(id=>elo[id]===undefined)){
-      history.push({matchId:m.id,eloBefore:{},eloAfter:{},deltas:{},expA:0.5,breakdowns:{}});
-      return;
-    }
-    const eloBefore={};ids.forEach(id=>eloBefore[id]=elo[id]);
     const teamA=[{id:m.a1,pos:m.a1_pos},{id:m.a2,pos:m.a2_pos}];
     const teamB=[{id:m.b1,pos:m.b1_pos},{id:m.b2,pos:m.b2_pos}];
     const aAvg=(elo[m.a1]+elo[m.a2])/2,bAvg=(elo[m.b1]+elo[m.b2])/2;
@@ -11599,145 +11548,76 @@ function simulateEloWithSliders(matchSubset, opts={}){
     const matchK=ids.reduce((s,id)=>s+localDynK(id),0)/4;
 
     const applyTeam=(team,opp,won,exp)=>{
-  const e0=elo[team[0].id],e1=elo[team[1].id];
-  const high=e0>=e1?team[0]:team[1];
-  const w=riskWeights(Math.max(e0,e1),Math.min(e0,e1),cfg.risk_split);
-  const oppAvg=(elo[opp[0].id]+elo[opp[1].id])/2;
-  const teamDeltas=[];
-  
-  team.forEach(slot=>{
-    const bd={playerId:slot.id,won,startElo:elo[slot.id]};
-    const k=matchK; bd.kFactor=k;
-    bd.expected=exp;
-    const rawBase=k*((won?1:0)-exp); bd.rawBase=rawBase;
+      const e0=elo[team[0].id],e1=elo[team[1].id];
+      const high=e0>=e1?team[0]:team[1];
+      const w=riskWeights(Math.max(e0,e1),Math.min(e0,e1),cfg.risk_split);
+      const oppAvg=(elo[opp[0].id]+elo[opp[1].id])/2;
+      team.forEach(slot=>{
+        const bd={playerId:slot.id,won,startElo:elo[slot.id]};
+        const k=matchK; bd.kFactor=k;
+        bd.expected=exp;
+        const rawBase=k*((won?1:0)-exp); bd.rawBase=rawBase;
 
-    const mov=won?rawMov:(1+(rawMov-1)*(cfg.mov_loss_damp ?? 0.5));
-    bd.movMult=mov; bd.movEffect=rawBase*mov-rawBase;
+        const mov=won?rawMov:(1+(rawMov-1)*(cfg.mov_loss_damp ?? 0.5));
+        bd.movMult=mov; bd.movEffect=rawBase*mov-rawBase;
 
-    const boost=won?(cfg.win_boost||1.12):1.0;
-    bd.winBoost=boost; bd.winBoostEffect=rawBase*mov*boost-rawBase*mov;
+        const boost=won?(cfg.win_boost||1.12):1.0;
+        bd.winBoost=boost; bd.winBoostEffect=rawBase*mov*boost-rawBase*mov;
 
-    const g=playedSeason[slot.id]||0;
-    const protectShare=Math.max(0,Math.min(1,(g-5)/25));
-    const protectMax = cfg.exp_protect_max ?? 0.1;
-    const expProtect=won?1:(1-protectMax*protectShare);
-    bd.expProtect=expProtect; bd.expProtectEffect=won?0:rawBase*mov*boost*expProtect-rawBase*mov*boost;
+        const g=playedSeason[slot.id]||0;
+        const protectShare=Math.max(0,Math.min(1,(g-5)/25));
+        const protectMax = cfg.exp_protect_max ?? 0.1;
+        const expProtect=won?1:(1-protectMax*protectShare);
+        bd.expProtect=expProtect; bd.expProtectEffect=won?0:rawBase*mov*boost*expProtect-rawBase*mov*boost;
 
-    const myElo=elo[slot.id];
-    const eloDiff=oppAvg-myElo;
-    const gamesDiff=avgGames-(playedSeason[slot.id]||0);
-    const eloMax = cfg.underdog_elo_max ?? 0.15;
-    const gamesMax = cfg.underdog_games_max ?? 0.05;
-    const eloFactor=Math.max(0, Math.tanh(eloDiff/400)*eloMax);
-    const gamesFactor=Math.max(0, Math.tanh(gamesDiff/30)*gamesMax);
-    const underdogRaw=eloFactor+gamesFactor;
-    const underdogMult=(won&&underdogRaw>0)?1+underdogRaw:1;
-    bd.underdogMult=underdogMult;
-    bd.underdogEloDiff=Math.round(eloDiff);
-    bd.underdogGamesDiff=Math.round(gamesDiff);
+        const myElo=elo[slot.id];
+        const eloDiff=oppAvg-myElo;
+        const gamesDiff=avgGames-(playedSeason[slot.id]||0);
+        const eloMax = cfg.underdog_elo_max ?? 0.15;
+        const gamesMax = cfg.underdog_games_max ?? 0.05;
+        const eloFactor=Math.max(0, Math.tanh(eloDiff/400)*eloMax);
+        const gamesFactor=Math.max(0, Math.tanh(gamesDiff/30)*gamesMax);
+        const underdogRaw=eloFactor+gamesFactor;
+        const underdogMult=(won&&underdogRaw>0)?1+underdogRaw:1;
+        bd.underdogMult=underdogMult;
+        bd.underdogEloDiff=Math.round(eloDiff);
+        bd.underdogGamesDiff=Math.round(gamesDiff);
 
-    const lowEloMax = cfg.low_elo_loss_damp ?? 0;
-    const eloBelowAvg = Math.max(0, avgElo - myElo);
-    const lowEloShare = Math.tanh(eloBelowAvg/200);
-    const lowEloDamp = won ? 1 : (1 - lowEloMax*lowEloShare);
-    bd.lowEloDamp=lowEloDamp; bd.lowEloShare=lowEloShare;
-    bd.lowEloEffect=won?0:rawBase*mov*boost*expProtect*underdogMult*lowEloDamp - rawBase*mov*boost*expProtect*underdogMult;
+        const lowEloMax = cfg.low_elo_loss_damp ?? 0;
+        const eloBelowAvg = Math.max(0, avgElo - myElo);
+        const lowEloShare = Math.tanh(eloBelowAvg/200);
+        const lowEloDamp = won ? 1 : (1 - lowEloMax*lowEloShare);
+        bd.lowEloDamp=lowEloDamp; bd.lowEloShare=lowEloShare;
+        bd.lowEloEffect=won?0:rawBase*mov*boost*expProtect*underdogMult*lowEloDamp - rawBase*mov*boost*expProtect*underdogMult;
 
-    const afterMods=rawBase*mov*boost*expProtect*underdogMult*lowEloDamp;
-    bd.afterMods=afterMods;
+        const afterMods=rawBase*mov*boost*expProtect*underdogMult*lowEloDamp;
+        bd.afterMods=afterMods;
 
-    const share=slot.id===high.id?w.strong:w.weak;
-    bd.riskShare=share; bd.riskEffect=afterMods*share-afterMods;
+        const share=slot.id===high.id?w.strong:w.weak;
+        bd.riskShare=share; bd.riskEffect=afterMods*share-afterMods;
 
-    const lage=positionsLage(posTracker[slot.id]);
-    const pf=posFactor(lage,slot.pos,cfg.pos_swing);
-    const posMult=won?pf:(2-pf);
-    bd.posStrength=lage.wert; bd.posFactor=pf; bd.posMult=posMult; bd.posEffect=afterMods*share*posMult-afterMods*share;
+        const lage=positionsLage(posTracker[slot.id]);
+        const pf=posFactor(lage,slot.pos,cfg.pos_swing);
+        const posMult=won?pf:(2-pf);
+        bd.posStrength=lage.wert; bd.posFactor=pf; bd.posMult=posMult; bd.posEffect=afterMods*share*posMult-afterMods*share;
 
-    const mb=cfg.match_bonus ?? 1.5;
-    bd.matchBonus=mb;
+        const mb=cfg.match_bonus ?? 1.5;
+        bd.matchBonus=mb;
 
-    const finalDelta=afterMods*share*posMult+mb;
-    bd.finalDelta=finalDelta;
-    bd.endElo=elo[slot.id]+finalDelta;
-
-    teamDeltas.push({slot, delta: finalDelta, bd});
-  });
-  
-  let totalDelta = 0;
-  teamDeltas.forEach(item => {
-    const rounded = Math.round(item.delta);
-    res[item.slot.id] = rounded;
-    breakdowns[item.slot.id] = item.bd;
-    totalDelta += rounded;
-  });
-};
+        const finalDelta=afterMods*share*posMult+mb;
+        bd.finalDelta=finalDelta;
+        bd.endElo=elo[slot.id]+finalDelta;
+        res[slot.id]=Math.round(finalDelta);
+        breakdowns[slot.id]=bd;
+      });
+    };
 
     const aWon=m.winner==='A';
     applyTeam(teamA,teamB,aWon,expA);
     applyTeam(teamB,teamA,!aWon,1-expA);
-
-    Object.entries(res).forEach(([id,d])=>{
-      elo[id]+=d;played[id]++;playedSeason[id]++;
-      if(d>=0)eloGain[id]=(eloGain[id]||0)+d; else eloLoss[id]=(eloLoss[id]||0)+d;
-      if(elo[id] > (peakElo[id] ?? startElo)) peakElo[id]=elo[id];
-    });
-    ids.forEach(id=>{
-      const onA=(id===m.a1||id===m.a2);
-      const won=(onA&&aWon)||(!onA&&!aWon);
-      const gf=onA?m.score_a:m.score_b, ga=onA?m.score_b:m.score_a;
-      gd[id]=(gd[id]||0)+(gf-ga);
-      if(won){wins[id]++;curStreak[id]=curStreak[id]>0?curStreak[id]+1:1;}
-      else{losses[id]++;curStreak[id]=curStreak[id]<0?curStreak[id]-1:-1;}
-      if(curStreak[id]>bestStreak[id])bestStreak[id]=curStreak[id];
-    });
-
-    const winnerIds=aWon?[m.a1,m.a2]:[m.b1,m.b2];
-    const loserIds=aWon?[m.b1,m.b2]:[m.a1,m.a2];
-    const wKey=winnerIds.sort().join('|'),lKey=loserIds.sort().join('|');
-    const wDelta=winnerIds.reduce((s,id)=>s+(res[id]||0),0);
-    const lDelta=loserIds.reduce((s,id)=>s+(res[id]||0),0);
-    teamElo[wKey]=(teamElo[wKey]||0)+wDelta;
-    teamElo[lKey]=(teamElo[lKey]||0)+lDelta;
-    if(!seasonTeamElo[mSeason])seasonTeamElo[mSeason]={};
-    seasonTeamElo[mSeason][wKey]=(seasonTeamElo[mSeason][wKey]||0)+wDelta;
-    seasonTeamElo[mSeason][lKey]=(seasonTeamElo[mSeason][lKey]||0)+lDelta;
-
-    history.push({matchId:m.id,eloBefore,eloAfter:{...elo},deltas:res,expA,breakdowns});
-    posZaehlenPartie(posTracker,m,aWon,expA,eloBefore);
+    _eloBuchen(st,m,res,expA,breakdowns);
   });
-
-  if(_curSeason){
-    seasonEndElos[_curSeason]={};
-    seasonPlayed[_curSeason]={};
-    players.forEach(p=>{
-      if((playedSeason[p.id]||0)>0){
-        seasonEndElos[_curSeason][p.id]=elo[p.id];
-        seasonPlayed[_curSeason][p.id]=playedSeason[p.id];
-      }
-    });
-
-    try {
-      const currentCalSeason = currentSeason().id;
-      if(currentCalSeason !== _curSeason){
-        resetSeason();
-        _curSeason = currentCalSeason;
-      }
-    } catch(e){}
-  }
-  const careerElo={};
-  players.forEach(p=>{
-    let sumElo=0, sumGames=0;
-    Object.keys(seasonEndElos).forEach(sid=>{
-      if(seasonEndElos[sid][p.id]!==undefined){
-        const g=seasonPlayed[sid][p.id]||0;
-        sumElo+=seasonEndElos[sid][p.id]*g;
-        sumGames+=g;
-      }
-    });
-    careerElo[p.id]=sumGames>0?sumElo/sumGames:null;
-  });
-  return {elo,played,playedSeason,wins,losses,curStreak,bestStreak,eloGain,eloLoss,gd,teamElo,seasonTeamElo,history,seasonEndElos,seasonPlayed,careerElo,posTracker,peakElo,curSeason:_curSeason};
+  return _eloErgebnis(st);
 }
 
 function recalcHistory(matchList){
@@ -14579,6 +14459,7 @@ function openSheet(html, opts){
   schlittenFahren(sheet);
   bg.classList.add('show');
   sheet.classList.add('show');
+  _zurueckAbgleichen();
   if(opts.vorstellung && !_sheetPopping) _vorstellung(sheet, opts.vorstellung);
   else _blattStaffeln(sheet);
   _verdecken('blatt', true);
@@ -14637,6 +14518,7 @@ function _sheetForceClose(sheet,bg,schonUnten){
     bg.classList.remove('show');
   }
   try { if(window._processDeferredNewsToast) window._processDeferredNewsToast(); } catch(e){}
+  _zurueckAbgleichen();
 }
 
 function bindSheetSwipe(){
@@ -17496,6 +17378,7 @@ function showBadgePopover(badgeId, playerId){
     <button class="bp-close" id="bpCloseBtn">Schließen</button>
   `;
   bpBg.classList.add('show');
+  _zurueckAbgleichen();
   bp.scrollTop = 0;
   _fensterLicht(bp, 'weiss');
   _verdecken('bp', true);
@@ -17513,6 +17396,7 @@ function closeBadgePopover(){
   const bpBg = document.getElementById('bpBg');
   if(bpBg) bpBg.classList.remove('show');
   _fensterZu(bpBg, document.getElementById('bp'), 'bp');
+  _zurueckAbgleichen();
 }
 
 
@@ -18712,43 +18596,45 @@ function showMatchDetail(mid){
       const b=bd[id]; if(!b)return '';
       const sign=v=>v>=0 ? '+'+komma(v,2) : komma(v,2);
       const hasDb=dbDeltas[id]!==undefined;
-      const headerDelta=b.finalDelta;
+      const headerDelta=hasDb?dbDeltas[id]:Math.round(b.finalDelta);
       const fmtElo=v=>Number.isInteger(v)?String(v):komma(v,1);
       const seasonBefore=fmtElo(hasDb?dbBefore[id]:b.startElo);
       const seasonAfter=fmtElo(hasDb?dbAfter[id]:b.endElo);
       const simDelta=b.finalDelta;
       const rowDiverged=hasDb&&Math.abs(dbDeltas[id]-simDelta)>=1;
+      const zeigt=v=>Math.abs(v)>=0.005;
       const factors=[];
       factors.push({label:'Basis (Erwartung)',val:b.rawBase,desc:b.won?'Sieg'+(b.expected<0.5?' gegen stärkeres Team':''):'Niederlage'+(b.expected>0.5?' gegen schwächeres Team':'')});
-      if(Math.abs(b.movEffect)>0.1) factors.push({label:'Tordifferenz',val:b.movEffect,desc:b.won?'Klarer Sieg':'Hohe Niederlage'+(b.movMult<1.2?' (gedämpft)':'')});
-      if(Math.abs(b.winBoostEffect)>0.1) factors.push({label:'Sieg-Boost',val:b.winBoostEffect,desc:'+'+komma(((b.winBoost-1)*100),1)+'% für Siege'});
+      if(zeigt(b.movEffect)) factors.push({label:'Tordifferenz',val:b.movEffect,desc:b.won?'Klarer Sieg':'Hohe Niederlage'+(b.movMult<1.2?' (gedämpft)':'')});
+      if(zeigt(b.winBoostEffect)) factors.push({label:'Sieg-Boost',val:b.winBoostEffect,desc:'+'+komma(((b.winBoost-1)*100),1)+'% für Siege'});
       if(b.expProtect<1) factors.push({label:'Erfahrungs-Schutz',val:b.expProtectEffect,desc:komma(((1-b.expProtect)*100),1)+'% Schutz'});
-      if(b.lowEloDamp!==undefined && b.lowEloDamp<0.995){
+      if(b.lowEloDamp!==undefined && zeigt(b.lowEloEffect||0)){
         factors.push({label:'Low-Elo Schutz',val:b.lowEloEffect,desc:komma(((1-b.lowEloDamp)*100),1)+'% Schutz (schwacher Spieler)'});
       }
-      if(b.underdogMult>1.005){
+      if(zeigt(b.rawBase*b.movMult*b.winBoost*b.expProtect*(b.underdogMult-1))){
         const eloPart   = b.underdogEloDiff>0   ? b.underdogEloDiff+' Elo schwächer'   : null;
         const gamesPart = b.underdogGamesDiff>0 ? b.underdogGamesDiff+' Spiele weniger' : null;
         const desc = [eloPart, gamesPart].filter(Boolean).join(' · ') || 'Underdog';
         const undEffect = b.rawBase*b.movMult*b.winBoost*b.expProtect*(b.underdogMult-1);
         factors.push({label:'Underdog-Boost',val:undEffect, desc});
       }
-      if(Math.abs(b.riskEffect)>0.1) factors.push({label:b.riskShare<1?'Risiko-Split (stark)':'Risiko-Split (schwach)',val:b.riskEffect,desc:'Stärkeverteilung im Team'});
-      if(Math.abs(b.posEffect)>0.1){
+      if(zeigt(b.riskEffect)) factors.push({label:b.riskShare<1?'Risiko-Split (stark)':'Risiko-Split (schwach)',val:b.riskEffect,desc:'Stärkeverteilung im Team'});
+      if(zeigt(b.posEffect)){
         const schwach=b.posFactor>1, pz=komma(Math.abs(b.posFactor-1)*100,1)+'% ';
         factors.push({label:'Positions-Bonus',val:b.posEffect,
           desc:(schwach?'Schwache':'Starke')+' Position · '+pz+(schwach?(b.won?'Bonus':'Schutz'):(b.won?'Dämpfer':'Abzug'))});
       }
       factors.push({label:'Spielbonus',val:b.matchBonus,desc:'fest +'+komma(b.matchBonus,2)+' je Match'});
-      const factorRows=factors.map(f=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:11px">
+      if(!rowDiverged && zeigt(headerDelta-simDelta)) factors.push({label:'Rundung',val:headerDelta-simDelta,desc:'verbucht wird in ganzen Elo'});
+      const factorRows=factors.map(f=>`<div class="ea-posten" style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:11px">
         <div><span style="color:var(--ink)">${f.label}</span> <span style="color:var(--muted);font-size:10px">${f.desc}</span></div>
-        <span style="font-family:'Sometype Mono',monospace;font-weight:700;color:${f.val>=0?'var(--acid)':'var(--red)'}">${sign(f.val)}</span>
+        <span class="ea-wert" style="font-family:'Sometype Mono',monospace;font-weight:700;color:${f.val>=0?'var(--acid)':'var(--red)'}">${sign(f.val)}</span>
       </div>`).join('');
-      const divergeNote=rowDiverged?`<div style="font-size:10px;color:var(--gold);margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);font-family:'Sometype Mono',monospace">↻ Aktuelle Regler: ${sign(simDelta)} (Σ Faktoren)</div>`:'';
-      return `<div style="background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:12px;margin-top:8px">
+      const divergeNote=rowDiverged?`<div class="ea-heute" style="font-size:10px;color:var(--gold);margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);font-family:'Sometype Mono',monospace">Mit den heutigen Einstellungen wären es ${sign(simDelta)}</div>`:'';
+      return `<div class="ea-spieler" style="background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:12px;margin-top:8px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <span style="font-weight:700;font-size:13px">${esc(pname(id))}</span>
-          <span style="font-family:'Archivo Black',sans-serif;font-size:15px;color:${headerDelta>=0?'var(--acid)':'var(--red)'}">${sign(headerDelta)}</span>
+          <span class="ea-summe" data-elo="${headerDelta}" style="font-family:'Archivo Black',sans-serif;font-size:15px;color:${headerDelta>=0?'var(--acid)':'var(--red)'}">${sign(headerDelta)}</span>
         </div>
         <div style="font-size:10px;color:var(--muted);margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--line)">
           <div style="display:flex;justify-content:space-between">
@@ -18761,7 +18647,7 @@ function showMatchDetail(mid){
       </div>`;
     }).join('');
     const banner=anyDiverged?`<div style="background:rgba(247,207,74,.08);border:1px solid rgba(247,207,74,.3);border-radius:10px;padding:10px 12px;margin-top:10px;font-size:11.5px;color:var(--gold);line-height:1.5">
-      <b>Hinweis:</b> Die Faktoren unten werden mit den <i>aktuellen</i> Reglern berechnet. Die gespeicherten Deltas (oben) stammen aus der Berechnung zum Zeitpunkt des Matches. <b>Settings → Neu berechnen</b> bringt beides in Deckung.
+      Verbucht wurde, was am Tag der Partie galt; die Zeilen darunter rechnen mit den heutigen Einstellungen. <b>Alle Matches rückwirkend neu berechnen</b> in den Einstellungen bringt beides zusammen.
     </div>`:'';
     slot.innerHTML=`<div class="mini-label" style="margin-top:14px">Elo-Analyse</div>${banner}${rows}`;
     document.getElementById('showBreakdownBtn').style.display='none';
@@ -19029,11 +18915,12 @@ function bestaetigen(o){
     bg.querySelector('p').textContent = o.text || '';
     bg.querySelector('[data-dlg="0"]').textContent = o.nein || 'Abbrechen';
     bg.querySelector('[data-dlg="1"]').textContent = o.ja || 'Bestätigen';
-    const zu = ja => { bg.classList.remove('show'); setTimeout(() => bg.remove(), 200); fertig(ja); };
+    const zu = ja => { bg.classList.remove('show'); setTimeout(() => bg.remove(), 200); _zurueckAbgleichen(); fertig(ja); };
     bg.onclick = e => { if(e.target === bg) zu(false); };
     bg.querySelectorAll('[data-dlg]').forEach(b => b.onclick = () => zu(b.dataset.dlg === '1'));
     document.body.appendChild(bg);
     void bg.offsetWidth; bg.classList.add('show');
+    _zurueckAbgleichen();
   });
 }
 
@@ -20395,7 +20282,7 @@ function _buildStories(){
       try {
         const ende = seasonEnd(sid).getTime();
         abschluss = _abschlussAuszeichnungen(ende, ABSCHLUSS_MONAT);
-        zeichen = rcpZeichenZuege(rcpLaufbahnDaten(ende, ende + 1000))
+        zeichen = rcpZeichenZuege(rcpLaufbahnDaten(ende, ende + 1))
           .filter(z => pm[z.pid] && ligaAktiv(pm[z.pid]))
           .map(z => ({pid:z.pid, art:z.art, vor:{stufe:z.vor.stufe, grad:z.vor.grad}, nach:{stufe:z.nach.stufe, grad:z.nach.grad}}));
       } catch(e){ zeichen = []; abschluss = []; }
@@ -21462,7 +21349,7 @@ function _buildStories(){
     const bestand = Array.isArray(_cache._stories) ? _cache._stories : [];
     const monat = stories.concat(bestand).some(x => { const d = (x && x.dataRef) || {};
       return d.type === 'season_recap' && d.sid && Array.isArray(d.zeichen)
-        && seasonEnd(d.sid).getTime() + 1000 === _wocheEnde; });
+        && seasonEnd(d.sid).getTime() + 1 === _wocheEnde; });
     if(now.getTime() >= _wocheEnde && !monat && !bestand.some(x => x && x.id === id)){
       const L = _insZuegeZwischen(_storyStand(_wocheEnde - 1), _storyStand(_wocheEnde),
         _insBestVor(_wocheEnde, bestand), () => ({ms:_wocheEnde}));
@@ -27643,6 +27530,7 @@ function openNewsDetail(sid){
     ${_newsRueckblickKnopf(s)}
     <button class="nd-close" id="ndCloseBtn">Schließen</button>`;
   bg.classList.add('show');
+  _zurueckAbgleichen();
   _fensterLicht(nd, 'story');
   _verdecken('nd', true);
   document.getElementById('ndCloseBtn').onclick = closeNewsDetail;
@@ -27722,6 +27610,7 @@ function closeNewsDetail(){
   const bg = document.getElementById('ndBg');
   if(bg) bg.classList.remove('show');
   _fensterZu(bg, document.getElementById('nd'), 'nd');
+  _zurueckAbgleichen();
 }
 
 function _newsRangZeile(pid){
