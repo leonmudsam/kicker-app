@@ -194,6 +194,9 @@
   /* Der Monat und darunter, wie viele Einträge er trägt: eine Spalte voller
      Zellen und eine mit zwei sahen im Kopf gleich aus. */
   .lchron th .lc-m{display:block}
+  /* Das Jahr steht leise hinter dem Monat, im selben Kopf: eine eigene
+     Zeile hätte jede Spalte um eine Zeile höher gemacht, für zwei Ziffern. */
+  .lchron th .lc-j{margin-left:.3em;color:var(--faint);letter-spacing:.04em}
   .lchron th .lc-z{display:block;margin-top:3px;font-size:13px;font-weight:700;
     letter-spacing:0;color:var(--ink)}
   /* Die laufende Spalte ist getönt: ihre Zellen können bis zum Monatsende

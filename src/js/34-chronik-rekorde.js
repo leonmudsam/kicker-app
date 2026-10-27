@@ -313,7 +313,10 @@ function _chronicleCtx(bisMs){
     pdLauf:0, pdSpan:'',                 // jedes Mal die andere Position
     spLauf:0, spSpan:'',                 // abwechselnd Favorit und Aussenseiter
     bannMax:0, bannLabel:'',             // laengste beendete Pleitenserie gegen einen Gegner
-    stoppMax:0, stoppLabel:''            // laengste beendete Siegesserie eines Gegners
+    stoppMax:0, stoppLabel:'',           // laengste beendete Siegesserie eines Gegners
+    eiskaltLauf:0, eiskaltSpan:'',       // gewonnene Partien mit einem Tor Unterschied in Folge
+    sollLauf:0, sollSpan:'',             // eigene Spieltage im Soll in Folge
+    nlN:0, nlW:0, nlDelta:null           // die ersten drei Partien neben jedem Partner
   });
 
   // Die Elo VOR jeder Partie, aus der zentralen Simulation. „Der Rueckenwind"
@@ -777,6 +780,59 @@ function _chronicleCtx(bisMs){
         if(x.w && x.gR > p.stoppMax){ p.stoppMax = x.gR; p.stoppLabel = dLabel(x.day); }
       });
     }
+    // „Der Eiskalte": gewonnene Partien mit einem Tor Unterschied in Folge.
+    // Gezaehlt wird nur, was `_stEinTorPartie` als solche erkennt — dieselbe
+    // Frage, die „Das Kaltblut" im Monat stellt [§10.2]. Partien mit anderem
+    // Ausgang dazwischen unterbrechen nicht, erst ein 9:10 beendet die Folge.
+    {
+      let n = 0, start = '';
+      r.forEach(x => {
+        if(!_stEinTorPartie(x)) return;
+        if(!x.w){ n = 0; return; }
+        if(++n === 1) start = x.day;
+        if(n > p.eiskaltLauf){
+          p.eiskaltLauf = n;
+          p.eiskaltSpan = start === x.day ? dLabel(x.day) : (dLabel(start) + '–' + dLabel(x.day));
+        }
+      });
+    }
+    // „Der Tagesabschluss" ueber die Laufbahn: eigene Spieltage im Soll in
+    // Folge. Ein Tag zaehlt wie im Monat ab der ersten Partie und erst, wenn
+    // er zu ist (`tagZu`); im Soll heisst mindestens so viele Siege, wie die
+    // Siegchancen des Tages zusammen erwarten liessen — dieselbe Toleranz wie
+    // in der Monatswertung, sonst kippt ein Tag mit genau erfuelltem Soll an
+    // einer Rundung.
+    {
+      let n = 0, start = '';
+      _tagListe.forEach(t => {
+        if(!tagZu(t)) return;
+        const a = _tage[t];
+        const siege = a.filter(x => x.w).length, soll = a.reduce((s, x) => s + x.exp, 0);
+        if(siege < soll - 1e-9){ n = 0; return; }
+        if(++n === 1) start = t;
+        if(n > p.sollLauf){
+          p.sollLauf = n;
+          p.sollSpan = start === t ? dLabel(t) : (dLabel(start) + '–' + dLabel(t));
+        }
+      });
+    }
+    // „Neuland" ueber die Laufbahn: die ersten drei Partien neben jedem
+    // Partner gegen alle uebrigen, beide gegen die Rechnung [§C38]. Der
+    // Abstand zur Rechnung allein ordnete die Liga wie die Siegquote, weil die
+    // Elo jeden Monat neu beginnt; gegen den eigenen Abstand sonst faellt das
+    // weg.
+    {
+      const zahl = {}, neu = [], sonst = [];
+      r.forEach(x => {
+        if(!x.mate) return;
+        zahl[x.mate] = (zahl[x.mate] || 0) + 1;
+        (zahl[x.mate] <= 3 ? neu : sonst).push(x);
+      });
+      const ueber = a => (a.filter(x => x.w).length - a.reduce((s, x) => s + x.exp, 0)) / a.length;
+      p.nlN = neu.length;
+      p.nlW = neu.filter(x => x.w).length;
+      if(neu.length && sonst.length) p.nlDelta = ueber(neu) - ueber(sonst);
+    }
     const dz = (a) => a.map(x => x.gf - x.ga);
     if(ausg.length >= 2){ p.ausgN = ausg.length; p.ausgSd = _sd(dz(ausg)); p.ausgMit = _mit(dz(ausg)); }
     if(atk.length  >= 2){ p.atkSd  = _sd(dz(atk));  p.atkMit  = _mit(dz(atk));  }
@@ -1145,14 +1201,19 @@ function chronicleRang(cid){
   return reihe;
 }
 
-// Wie ein Rekord zu seinem Halter kam: der Wert des Halters und des Zweiten
-// an jedem Monatsende der letzten sechs Monate und heute — für den Beleg im
+// Wie ein Rekord zu seinem Halter kam: der Wert der drei auf dem Podest an
+// jedem Monatsende der letzten sechs Monate und heute — für den Beleg im
 // Rekord-Blatt [§C27]. Gerechnet über den Zeitschnitt, den es gibt
 // (_chronicleCtx), und nicht neu: ein Schnitt rechnet die Elo-Bahn bis
 // dorthin nach, gemessen 7 bis 36 ms je Monat. Deshalb in Schritten, einer
 // je Takt, und erst nach dem Öffnen des Blatts — sechs Schnitte auf einmal
 // stünden mitten in der Animation. Die Schnitte selbst liegen danach im
 // Cache und teilen ihn mit dem Feed und den Rückblicken.
+//
+// Die drei Linien sind die drei Plätze des Podests darüber, in derselben
+// Reihenfolge (`chronicleRang`). Vorher zeichnete der Verlauf nur den Halter
+// und den Zweiten, und wer auf dem Podest Dritter stand, fehlte darunter:
+// ob er näher kam oder zurückfiel, stand nirgends.
 function rekordVerlauf(cid, fertig){
   const def = CHRONICLE_BY_ID[cid];
   const key = cid + '_' + matches.length + '_' + _cache.version;
@@ -1160,13 +1221,11 @@ function rekordVerlauf(cid, fertig){
   if(key in _cache._rekVerlauf){ fertig(_cache._rekVerlauf[key]); return; }
   const rang = def && def.val ? chronicleRang(cid) : [];
   if(!rang.length){ fertig(null); return; }
-  const a = rang[0].pid;
-  const zweit = rang.find(r => r.wert < rang[0].wert - 1e-9) || rang[1] || null;
-  const b = zweit ? zweit.pid : null;
+  const drei = rang.slice(0, 3).map(r => r.pid);
   const monate = allPastSeasons().slice(-6);
   const schnitte = monate.map(sid => seasonEnd(sid).getTime()).concat([0]);
   const labels = monate.map(sid => String(seasonLabel(sid)).split(' ')[0].slice(0, 3)).concat(['heute']);
-  const va = [], vb = [], vorn = [];
+  const werte = drei.map(() => []), vorn = [];
   const wert = (C, pid) => {
     if(!pid || !C.P[pid]) return null;
     try { const v = def.val(C.P[pid], C); return v == null || !isFinite(v) ? null : v; } catch(e){ return null; }
@@ -1174,16 +1233,18 @@ function rekordVerlauf(cid, fertig){
   let i = 0;
   const schritt = () => {
     const C = _chronicleCtx(schnitte[i] || undefined);
-    const x = wert(C, a);
+    drei.forEach((pid, k) => werte[k].push(wert(C, pid)));
+    const x = werte[0][werte[0].length - 1];
     let best = -Infinity;
     Object.keys(C.P).forEach(pid => { const v = wert(C, pid); if(v != null && v > best) best = v; });
-    va.push(x); vb.push(wert(C, b)); vorn.push(x != null && x >= best - 1e-9);
+    vorn.push(x != null && x >= best - 1e-9);
     if(++i < schnitte.length){ setTimeout(schritt, 0); return; }
     // „vorn seit": der erste Monat, ab dem der Halter bis heute nie
     // dahinter lag. Heute liegt er vorn — er hält den Rekord.
     let seit = vorn.length - 1;
     while(seit > 0 && vorn[seit - 1]) seit--;
-    const ergebnis = {labels, a:va, b:b ? vb : null, aName:pname(a), bName:b ? pname(b) : '', seit};
+    const ergebnis = {labels, seit,
+      reihen:drei.map((pid, k) => ({pid, name:pname(pid), werte:werte[k]}))};
     _topfDeckel(_cache._rekVerlauf, 16);
     _cache._rekVerlauf[key] = ergebnis;
     fertig(ergebnis);

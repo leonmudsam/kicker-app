@@ -3240,15 +3240,19 @@
   .bl-lz-z .v{text-align:right;color:var(--ink2)}
   .bl-verlauf{display:block;width:100%;height:84px;overflow:visible}
   .bl-verlauf polyline{fill:none;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
-  .bl-verlauf .bl-v-a{stroke:var(--gold);stroke-width:2.2}
-  .bl-verlauf .bl-v-b{stroke:var(--muted);stroke-width:1.6}
-  .bl-verlauf circle.bl-v-a{fill:var(--gold);stroke:none}
-  .bl-verlauf circle.bl-v-b{fill:var(--muted);stroke:none}
+  .bl-verlauf .bl-v-p1{stroke:var(--gold);stroke-width:2.2}
+  .bl-verlauf .bl-v-p2{stroke:var(--silber);stroke-width:1.7}
+  .bl-verlauf .bl-v-p3{stroke:var(--bronze);stroke-width:1.5}
+  .bl-verlauf circle.bl-v-p1{fill:var(--gold);stroke:none}
+  .bl-verlauf circle.bl-v-p2{fill:var(--silber);stroke:none}
+  .bl-verlauf circle.bl-v-p3{fill:var(--bronze);stroke:none}
   .bl-verlauf .bl-v-seit{fill:var(--gold);stroke:var(--surface);stroke-width:2}
   .bl-verlauf text{font-family:'Sometype Mono',monospace;font-size:9px;fill:var(--faint)}
   .bl-legende{display:flex;flex-wrap:wrap;gap:4px 14px;font-family:'Sometype Mono',monospace;font-size:10.5px;color:var(--muted);margin-top:6px}
   .bl-legende span::before{content:"";display:inline-block;width:10px;height:2px;border-radius:1px;margin-right:6px;vertical-align:3px;background:var(--muted)}
-  .bl-legende .a::before{background:var(--gold)}
+  .bl-legende .p1::before{background:var(--gold)}
+  .bl-legende .p2::before{background:var(--silber)}
+  .bl-legende .p3::before{background:var(--bronze)}
   .bl-legende .seit{margin-left:auto;color:var(--ink2)}
   .bl-legende .seit::before{width:7px;height:7px;border-radius:50%;background:var(--gold);vertical-align:1px}
   .bl-lade{height:84px;border-radius:8px;
@@ -4044,6 +4048,7 @@
     text-transform:uppercase;color:var(--muted);font-weight:500;padding:9px 4px 7px;
     text-align:center;border-bottom:1px solid var(--line);white-space:nowrap;vertical-align:bottom}
   .lchron th .lc-m{display:block}
+  .lchron th .lc-j{margin-left:.3em;color:var(--faint);letter-spacing:.04em}
   .lchron th .lc-z{display:block;margin-top:3px;font-size:13px;font-weight:700;
     letter-spacing:0;color:var(--ink)}
   .lchron th.live,.lchron td.live{background:rgba(190,242,100,.045)}
@@ -6398,7 +6403,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.26.4cd48aff';
+const BUILD_VERSION='2026.10.27.cb82182b';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -6705,6 +6710,20 @@ const ICONS = {
   aufstehen:      `<path d="M3 21h18"/><circle cx="12" cy="5" r="2.4"/><path d="M12 8.5V16M8.5 12L12 8.5l3.5 3.5"/><path d="M8 21l4-4 4 4"/>`,
   abwehrFenster:  `<rect x="5" y="3" width="14" height="18" rx="2" stroke-dasharray="2.4 2.2"/><path d="M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7z" fill="currentColor" fill-opacity=".3"/><path d="M5 12h14"/><circle cx="12" cy="16.5" r="2" fill="currentColor"/>`,
   lieblingszahl:  `<path d="M9.5 3L7.5 21M16.5 3l-2 18M4 8.5h16.5M3.5 15.5h16.5"/>`,
+  eiskalt:        `<path d="M12 3v10M7.7 5.5l8.6 5M7.7 10.5l8.6-5"/><path d="M3 18.5l1.5 1.5 3-3M9.5 18.5l1.5 1.5 3-3M16 18.5l1.5 1.5 3-3"/>`,
+  fehlstart:      `<circle cx="12" cy="13" r="7.5"/><path d="M12 2.5v3M9.5 2.5h5"/><path d="M9.5 10.5l5 5M14.5 10.5l-5 5"/>`,
+  kraefteverfall: `<rect x="2.5" y="7" width="17" height="10" rx="2"/><path d="M21.5 10.5v3"/><path d="M5.5 10v4" stroke-width="2.4"/>`,
+  einbruch:       `<path d="M3 4v16h18"/><path d="M6 8h6l2 2 2 6 3 1"/><path d="M12 5v14" stroke-dasharray="1.5 2"/>`,
+  sattheit:       `<path d="M3 12h18a9 9 0 01-18 0z"/><path d="M8 8c0-1.5 1.5-1.5 1.5-3.5M12.5 8c0-1.5 1.5-1.5 1.5-3.5"/>`,
+  ehrfurcht:      `<path d="M6 10l-1.5-6 4 3L12 3l3.5 4 4-3L18 10z"/><path d="M12 13v8M9 18l3 3 3-3"/>`,
+  rueckfall:      `<path d="M3 17c3-9 6-11 9-11s5 6 9 11"/><path d="M21 13v4h-4"/>`,
+  wochenloch:     `<rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/><rect x="6.5" y="12" width="11" height="5.5" rx="1" fill="currentColor" fill-opacity=".55"/>`,
+  aufdreher:      `<path d="M4 17a8 8 0 1116 0"/><path d="M12 17l4.5-5.5"/><circle cx="12" cy="17" r="1.3" fill="currentColor"/><path d="M4 21h16"/>`,
+  rueckzug:       `<path d="M14 4h5v16h-5"/><path d="M14 12H3M7 8l-4 4 4 4"/>`,
+  sollstrecke:    `<path d="M3 11.5h18" stroke-dasharray="1.5 2"/><path d="M5.5 20.5v-10M10 20.5v-11.5M14.5 20.5v-10.5M19 20.5v-12"/><path d="M3 20.5h18"/>`,
+  ausnahmemonat:  `<rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/><path d="M6 18h12" stroke-dasharray="1.5 2"/><path d="M12 17.5v-6M9.5 14l2.5-2.5 2.5 2.5"/>`,
+  klartext:       `<path d="M4 4h16v11H9l-5 4z"/><path d="M12 7.5v3.5M12 13.2h.01"/>`,
+  rollentausch:   `<circle cx="9" cy="7.5" r="3"/><path d="M3.5 20.5a5.5 5.5 0 0111 0"/><path d="M15.5 6.5a4 4 0 016.5 3"/><path d="M22 6.5v3h-3"/><path d="M22 15a4 4 0 01-6.5 3"/><path d="M15.5 21v-3h3"/>`,
 };
 const ZEICHEN_ALT = {
   weightSmall:'weight', heartBroken:'pille', concreteWall:'betonmauer', blackDay:'schwarzerTag',
@@ -7812,8 +7831,9 @@ function belegLuftHtml(a, zweiter){
     <div class="bl-satz">${satz}</div>`;
 }
 function belegVerlaufHtml(s){
-  if(!s || !s.labels || s.labels.length < 2) return '';
-  const alle = s.a.concat(s.b || []).filter(v => v != null && isFinite(v));
+  const PLATZ = ['p1', 'p2', 'p3'];
+  if(!s || !s.labels || s.labels.length < 2 || !s.reihen || !s.reihen.length) return '';
+  const alle = [].concat(...s.reihen.map(r => r.werte)).filter(v => v != null && isFinite(v));
   if(alle.length < 2) return '';
   let lo = Math.min(...alle), hi = Math.max(...alle);
   if(!(hi > lo)){ lo -= 1; hi += 1; }
@@ -7831,13 +7851,15 @@ function belegVerlaufHtml(s){
       ? `<polyline class="${cls}" points="${t.join(' ')}"/>`
       : `<circle class="${cls}" cx="${t[0].split(',')[0]}" cy="${t[0].split(',')[1]}" r="2"/>`).join('');
   };
-  const seit = s.seit != null && s.a[s.seit] != null
-    ? `<circle class="bl-v-seit" cx="${x(s.seit)}" cy="${y(s.a[s.seit])}" r="4.5"/>` : '';
+  const reihen = s.reihen.slice(0, 3), erste = reihen[0].werte;
+  const linien = reihen.map((r, k) => linie(r.werte, 'bl-v-' + PLATZ[k])).reverse().join('');
+  const seit = s.seit != null && erste[s.seit] != null
+    ? `<circle class="bl-v-seit" cx="${x(s.seit)}" cy="${y(erste[s.seit])}" r="4.5"/>` : '';
   const achse = s.labels.map((l, i) => (i === 0 || i === n - 1 || n <= 6)
     ? `<text x="${x(i)}" y="${H - 2}" text-anchor="${i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle'}">${esc(l)}</text>` : '').join('');
   return `<svg class="bl-verlauf" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
-      ${s.b ? linie(s.b, 'bl-v-b') : ''}${linie(s.a, 'bl-v-a')}${seit}${achse}</svg>
-    <div class="bl-legende"><span class="a">${esc(s.aName)}</span>${s.b ? `<span class="b">${esc(s.bName)}</span>` : ''}${
+      ${linien}${seit}${achse}</svg>
+    <div class="bl-legende">${reihen.map((r, k) => `<span class="${PLATZ[k]}">${esc(r.name)}</span>`).join('')}${
       s.seit != null ? `<span class="seit">vorn seit ${esc(s.labels[s.seit])}</span>` : ''}</div>`;
 }
 function belegHtml(o){
@@ -29764,7 +29786,8 @@ const _stRollen = p => ({
   fav: p.partien.filter(_stFavorit),
   aus: p.partien.filter(s => s.exp < CHANCE_OFFEN)
 });
-const _stEinTor = p => p.partien.filter(s => Math.abs(s.gf - s.ga) === 1);
+const _stEinTorPartie = s => Math.abs(s.gf - s.ga) === 1;
+const _stEinTor = p => p.partien.filter(_stEinTorPartie);
 const _stUebergaenge = p => p.partien.map((s, i) => ({vor:p.partien[i-1], s}))
   .filter(x => x.vor && x.vor.tag === x.s.tag && x.vor.mate && x.s.mate)
   .map(x => ({wechsel:x.vor.mate !== x.s.mate, bund:x.vor.geg.includes(x.s.mate),
@@ -29827,6 +29850,42 @@ function _stNeuland(p, C){
   }
   const alt = C._partnerVorher[p.pid];
   return p.partien.filter(s => s.mate && !(alt && alt.has(s.mate)));
+}
+function _stLaufbahnVor(p, C){
+  if(!C._laufbahnVor){
+    const ab = seasonStart(C.sid).getTime(), o = {};
+    (matches || []).forEach(m => {
+      if(mts(m) >= ab) return;
+      [['a1', 'A'], ['a2', 'A'], ['b1', 'B'], ['b2', 'B']].forEach(([k, seite]) => {
+        const id = m[k];
+        if(!id) return;
+        const x = o[id] || (o[id] = {g:0, w:0, atk:0});
+        x.g++;
+        if(m.winner === seite) x.w++;
+        if(m[k + '_pos'] === 'atk') x.atk++;
+      });
+    });
+    C._laufbahnVor = o;
+  }
+  const x = C._laufbahnVor[p.pid];
+  return x && x.g >= 30 ? {g:x.g, q:x.w / x.g, atk:x.atk / x.g} : null;
+}
+function _stAnteilVor(p, C){
+  if(!C._anteilVor){
+    const ab = seasonStart(C.sid).getTime(), je = {}, liga = {};
+    (matches || []).forEach(m => {
+      if(mts(m) >= ab) return;
+      const sid = (seasonOf(m.created_at) || {}).id;
+      if(!sid) return;
+      liga[sid] = (liga[sid] || 0) + 1;
+      [m.a1, m.a2, m.b1, m.b2].forEach(id => {
+        if(id) (je[id] = je[id] || {})[sid] = (je[id][sid] || 0) + 1; });
+    });
+    C._anteilVor = {je, liga};
+  }
+  const v = C._anteilVor, eigen = v.je[p.pid] || {};
+  const l = Object.keys(eigen).filter(sid => eigen[sid] >= TITLE_MIN_GAMES).map(sid => eigen[sid] / v.liga[sid]);
+  return l.length ? {anteil:_stMittel(l), monate:l.length} : null;
 }
 function _stSpitzeGegen(p, C){
   const spitze = C.rankAll.slice(0, 2).map(r => r.id).filter(id => id !== p.pid);
@@ -29971,7 +30030,19 @@ const DISZIPLINEN = [
         return d > 0 ? d : null;
       },
       ev:(p,v) => `+${Math.round(v*100)} %-Punkte in engen Spielen · ${pct(p.closeW/p.close)} statt ${_ppGegen(p.closeW/p.close, v)} % sonst`
-    }},
+    },
+    monat:{
+      beiname:'Der Abgeklärte',
+      art:'koennen',
+      klasse:'besonders', aus:1.28,
+      wie:'Eng heißt höchstens zwei Tore Unterschied. Verglichen wird die Siegquote dieser Partien mit der in allen übrigen eigenen Partien des Monats.',
+      cond:'In engen Partien mindestens 30 Prozentpunkte stärker als in den übrigen, ab 5 engen und 5 übrigen Partien',
+      ...(_stWertung(
+        p => p.partien.filter(_stEng).length >= ST_TEIL && p.partien.filter(s => !_stEng(s)).length >= ST_TEIL,
+        p => _stQuoteRoh(p.partien.filter(_stEng)) - _stQuoteRoh(p.partien.filter(s => !_stEng(s))),
+        0.30,
+        (p, v) => { const e = p.partien.filter(_stEng);
+          return `+${pct(v)} %-Punkte in engen Partien · ${_stSiege(e)} von ${e.length} gewonnen`; }))}},
 
   {id:'gleichauf', name:'Auf Augenhöhe', short:'Auf Höhe', ic:'augenhoehe', tone:'gold', art:'leistung',
     allzeit:{
@@ -30005,7 +30076,18 @@ const DISZIPLINEN = [
       cond:'Höchster Anteil Kantersiege an allen eigenen Siegen, ab 20 Siegen',
       val:p => p.wins >= 20 ? p.blowW/p.wins : null,
       ev:(p,v) => `${Math.round(v*100)} % aller ${p.wins} Siege waren Kantersiege · ${p.blowW} Kantersiege`
-    }},
+    },
+    monat:{
+      beiname:'Der Zerstörer',
+      art:'koennen',
+      klasse:'besonders', aus:1.82,
+      wie:'Ein Kantersieg ist ein Sieg mit sieben oder mehr Toren Vorsprung. Der Nenner sind die eigenen Siege des Monats und nicht alle Partien.',
+      cond:'Mindestens 30 % der eigenen Siege waren Kantersiege, ab 5 Siegen',
+      ...(_stWertung(
+        p => p.wins >= ST_TEIL,
+        p => p.partien.filter(s => s.win && s.gf - s.ga >= 7).length / p.wins,
+        0.30,
+        (p, v) => `${pct(v)} % aller ${p.wins} Siege waren Kantersiege · ${p.partien.filter(s => s.win && s.gf - s.ga >= 7).length} Stück`))}},
 
   {id:'breitenwirkung', name:'Kein Angstgegner', short:'Kein Angst', ic:'jederGegner', tone:'gold', art:'leistung',
     monat:{
@@ -30087,7 +30169,7 @@ const DISZIPLINEN = [
       ev:(p,v) => `+${Math.round(v*100)} %-Punkte nach einer Pleite · ${pct(p.afterLoss/p.afterLossOpp)} statt ${_ppGegen(p.afterLoss/p.afterLossOpp, v)} % sonst`
     }},
 
-  {id:'damage_control', name:'Der Widerstand', short:'Widerstand', ic:'widerstand', tone:'blue', art:'leistung',
+  {id:'damage_control', name:'Der Widerstand', short:'Zähigkeit', ic:'widerstand', tone:'blue', art:'leistung',
     allzeit:{
       kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, alle Niederlagen',
@@ -30096,7 +30178,18 @@ const DISZIPLINEN = [
       cond:'Niedrigster mittlerer Torrückstand in allen eigenen Niederlagen, ab 20 Niederlagen',
       val:p => p.losses >= 20 ? -(p.wdSum / p.losses) : null,
       ev:p => `${komma(p.wdSum/p.losses, 2)} Tore Rückstand je Niederlage im Schnitt · ${p.losses} Niederlagen`
-    }},
+    },
+    monat:{
+      beiname:'Der Zähe',
+      art:'koennen',
+      klasse:'besonders', aus:1.72,
+      wie:'Gemessen wird der Torrückstand jeder eigenen Niederlage, gemittelt, gegen den mittleren Torabstand aller Partien desselben Monats. Gefragt ist, wie hoch verloren wird, und nicht wie oft.',
+      cond:'In den eigenen Niederlagen im Schnitt mindestens 1,3 Tore knapper als der Ligaschnitt, ab 5 Niederlagen',
+      ...(_stWertung(
+        p => p.losses >= ST_TEIL,
+        (p, c) => c.L.torAbstand - _stMittel(p.partien.filter(s => !s.win).map(s => s.ga - s.gf)),
+        1.3,
+        (p, v, c) => `${komma(c.L.torAbstand - v)} Tore Rückstand je Niederlage · Liga ${komma(c.L.torAbstand)} je Partie`))}},
 
   {id:'metronom', name:'Das Metronom', short:'Metronom', ic:'clock', tone:'blue', art:'leistung',
     monat:{
@@ -30280,6 +30373,29 @@ const DISZIPLINEN = [
       ev:(p,v) => `+${Math.round(v*100)} %-Punkte · ${pct(p.sbDrin)} % in ${p.sbN} Schlussspielen, sonst ${_ppGegen(p.sbDrin, v)} %`
     }},
 
+  {id:'neuland', name:'Neuland', short:'Neuland', ic:'neuland', tone:'gold', art:'leistung',
+    monat:{
+      beiname:'Der Brückenbauer',
+      art:'koennen',
+      klasse:'besonders', aus:1.21,
+      wie:'Nur die Partien neben einem Partner, mit dem es vor diesem Monat keine einzige gab. Verglichen wird die Quote darin mit der Siegchance, die die Elo-Rechnung diesen Partien gab.',
+      cond:'Neben neuen Partnern mindestens 17 Prozentpunkte über der Rechnung, ab 5 solchen Partien',
+      ...(_stWertung(
+        (p, C) => p.games >= TITLE_MIN_GAMES && _stNeuland(p, C).length >= ST_TEIL,
+        (p, C) => _stUeberSoll(_stNeuland(p, C)),
+        0.17,
+        (p, v, C) => { const a = _stNeuland(p, C);
+          return `${_stSiege(a)} von ${a.length} Partien neben neuen Partnern · ${_ppZeichen(v)} %-Punkte über der Rechnung`; }))},
+    allzeit:{
+      kammer:'koennen', basis:150, offen:true,
+      zeitraum:'Ganze Laufbahn, die ersten Partien je Partner',
+      mind:'15 Partien neben einem neuen Partner',
+      wie:'Neu ist ein Partner in den ersten drei gemeinsamen Partien. Für diese Partien und für alle übrigen wird die Siegquote gegen die Siegchance gestellt, die die Elo-Rechnung vor dem Anpfiff gab. Gewertet wird, wie weit der Abstand neben neuen Partnern über dem Abstand sonst liegt, in Prozentpunkten.',
+      cond:'Größter Vorsprung auf die Rechnung in den ersten drei Partien neben jedem Partner gegenüber den übrigen Partien, ab 15 solchen Partien',
+      val:p => (p.nlN >= 15 && p.nlDelta != null && pct(p.nlDelta) > 0) ? p.nlDelta : null,
+      ev:(p,v) => `+${Math.round(v*100)} %-Punkte gegen die Rechnung · ${p.nlW} von ${p.nlN} ersten Partien`
+    }},
+
   {id:'unstoppable', name:'Der Unaufhaltsame', short:'Serie', ic:'flameTriple', tone:'orange', art:'ereignis',
     allzeit:{
       kammer:'mark', basis:150, offen:true,
@@ -30312,6 +30428,18 @@ const DISZIPLINEN = [
       val:p => (p.gtDelta != null && pct(p.gtDelta) > 0) ? p.gtDelta : null,
       ev:(p,v) => `+${Math.round(v*100)} %-Punkte · ${p.gtW} von ${p.gtN} gewonnen, sonst ${_ppGegen(p.gtW / p.gtN, v)} %`,
       zeit:p => p.gtLabel || ''
+    }},
+
+  {id:'sollstrecke', name:'Die Sollstrecke', short:'Strecke', ic:'sollstrecke', tone:'gold', art:'ereignis',
+    allzeit:{
+      kammer:'mark', basis:150, offen:true,
+      zeitraum:'Ganze Ligageschichte, Spieltag für Spieltag',
+      mind:'Ein Spieltag im Soll',
+      wie:'Ein Spieltag ist im Soll, wenn am Ende mindestens so viele Siege stehen, wie die Siegchancen vor den Partien dieses Tages zusammen erwarten ließen. Gezählt werden die eigenen Spieltage hintereinander, ein Tag darunter beendet die Folge. Gegen einen starken Gegner reichen weniger Siege als gegen einen schwachen.',
+      cond:'Längste Folge eigener Spieltage, an denen jedes Mal mindestens so viele Siege standen, wie die Elo-Rechnung erwartet hat',
+      unit:'Spieltage in Folge', min:1, raw:p => p.sollLauf,
+      ev:(p,v) => `${v} Spieltage in Folge mindestens im Soll`,
+      zeit:p => p.sollSpan || ''
     }},
 
   {id:'wall', name:'Die Mauer', short:'Mauer', ic:'posReinAbwehr', tone:'blue', art:'ereignis',
@@ -30434,6 +30562,18 @@ const DISZIPLINEN = [
       zeit:p => p.spSpan || ''
     }},
 
+  {id:'eiskalt', name:'Der Eiskalte', short:'Eiskalt', ic:'eiskalt', tone:'purple', art:'ereignis', zufall:'quote',
+    allzeit:{
+      kammer:'fuegung', basis:75, offen:true,
+      zeitraum:'Ganze Ligageschichte',
+      mind:'Ein Sieg mit einem Tor Unterschied',
+      wie:'Gezählt werden nur Partien mit genau einem Tor Unterschied, aus eigener Sicht also 10:9 oder 9:10. Jedes 10:9 verlängert die Folge, ein 9:10 beendet sie; Partien mit anderem Ausgang dazwischen zählen nicht und unterbrechen sie nicht. Tag und Monat unterbrechen sie ebenso wenig.',
+      cond:'Längste Folge gewonnener Partien mit einem Tor Unterschied, ohne eine solche Niederlage dazwischen',
+      unit:'Siege mit einem Tor in Folge', min:1, raw:p => p.eiskaltLauf,
+      ev:(p,v) => `${v} Siege mit einem Tor Unterschied in Folge`,
+      zeit:p => p.eiskaltSpan || ''
+    }},
+
   {id:'hardnight', name:'Der schwerste Tag', short:'Losglück', ic:'schwererTag', tone:'blue',
     art:'ereignis', zufall:'quote',
     allzeit:{
@@ -30445,7 +30585,18 @@ const DISZIPLINEN = [
       val:p => p.hartTag != null ? -p.hartTag : null,
       ev:p => `${Math.round(p.hartTag*100)} % mittlere Siegchance über einen ganzen Spieltag`,
       zeit:p => p.hartTagLabel || ''
-    }},
+    },
+    monat:{
+      beiname:'Der Leidgeprüfte',
+      art:'fuegung',
+      klasse:'besonders', aus:1.42,
+      wie:'Gemittelt wird die Siegchance vor dem Anpfiff über alle eigenen Partien eines Spieltags, ab vier Partien an diesem Tag. Gewertet wird der schwerste solche Tag des Monats.',
+      cond:'Ein Spieltag mit höchstens 32 % mittlerer Siegchance, ab 4 Partien an diesem Tag',
+      ...(_stWertung(
+        p => Object.values(p.tagGrp).some(a => a.length >= 4),
+        p => -Math.min(...Object.values(p.tagGrp).filter(a => a.length >= 4).map(a => _stSoll(a) / a.length)),
+        -0.32,
+        (p, v) => `${pct(-v)} % mittlere Siegchance über einen ganzen Spieltag`))}},
 
   {id:'mirrorday', name:'Der Wiedergänger', short:'Déjà-vu', ic:'duplicate', tone:'blue',
     art:'ereignis', zufall:'quote',
@@ -30799,6 +30950,19 @@ const DISZIPLINEN = [
     }},
 
   {id:'noanswer', name:'Die stumme Antwort', short:'Stumm', ic:'mutedReply', tone:'red', art:'schatten',
+    monat:{
+      beiname:'Der Verstummte',
+      art:'schatten',
+      klasse:'selten', aus:2.02,
+      wie:'Die Partien direkt nach einer eigenen Niederlage gegen alle übrigen eigenen Partien des Monats. Das Gegenstück zur Antwort.',
+      cond:'Direkt nach einer Niederlage mindestens 25 Prozentpunkte schwächer als sonst, ab 5 solchen und 5 übrigen Partien',
+      ...(_stWertung(
+        p => _stNachPleite(p).length >= ST_TEIL && p.games - _stNachPleite(p).length >= ST_TEIL,
+        p => { const a = _stNachPleite(p), r = p.partien.filter((s, i) => !(i > 0 && !p.partien[i - 1].win));
+          return _stQuoteRoh(r) - _stQuoteRoh(a); },
+        0.25,
+        p => { const a = _stNachPleite(p);
+          return `${_stSiege(a)} von ${a.length} Partien nach einer Niederlage gewonnen`; }))},
     allzeit:{
       kammer:'shame', basis:0,
       zeitraum:'Ganze Laufbahn',
@@ -30824,7 +30988,19 @@ const DISZIPLINEN = [
       cond:'Höchster Niederlagenanteil als Favorit, ab 20 Partien als Favorit',
       val:p => p.favN >= 20 ? p.favL/p.favN : null,
       ev:(p,v) => `${Math.round(v*100)} % der ${p.favN} Favoritenspiele verloren · ${p.favL} Niederlagen`
-    }},
+    },
+    monat:{
+      beiname:'Der Wackelkandidat',
+      art:'schatten',
+      klasse:'besonders', aus:1.38,
+      wie:'Favorit heißt über 55 % Siegchance vor dem Anpfiff. Gewertet wird der Niederlagenanteil in genau diesen Partien.',
+      cond:'Mindestens 55 % der Partien als Favorit verloren, ab 5 solchen Partien',
+      ...(_stWertung(
+        p => p.partien.filter(_stFavorit).length >= ST_TEIL,
+        p => { const f = p.partien.filter(_stFavorit); return 1 - _stQuoteRoh(f); },
+        0.55,
+        p => { const f = p.partien.filter(_stFavorit);
+          return `${f.length - _stSiege(f)} von ${f.length} Partien als Favorit verloren`; }))}},
 
   {id:'ballast', name:'Der Klotz am Bein', short:'Klotz', ic:'dragWeight', tone:'red', art:'schatten',
     allzeit:{
@@ -31485,6 +31661,32 @@ const DISZIPLINEN = [
         0.25,
         (p,v)=>`${_stEinTor(p).length} von ${p.games} Partien mit einem Tor Unterschied · ${pct(v)} %`))}},
 
+  {id:'klartext', name:'Klare Verhältnisse', short:'Klartext', ic:'klartext', tone:'purple', art:'ereignis',
+    monat:{
+      beiname:'Der Kompromisslose',
+      art:'fuegung',
+      klasse:'besonders', aus:1.50,
+      wie:'Deutlich heißt sieben oder mehr Tore Unterschied, in beide Richtungen. Verglichen wird der eigene Anteil mit dem aller Partien desselben Monats.',
+      cond:'Mindestens 7 Prozentpunkte mehr deutlich entschiedene Partien als im Ligaschnitt, ab 8 Partien',
+      ...(_stWertung(
+        p => p.games >= TITLE_MIN_GAMES,
+        (p, c) => p.partien.filter(s => Math.abs(s.gf - s.ga) >= 7).length / p.games - c.L.klarAnteil,
+        0.07,
+        (p, v, c) => `${pct(p.partien.filter(s => Math.abs(s.gf - s.ga) >= 7).length / p.games)} % deutlich entschieden · Liga ${pct(c.L.klarAnteil)} %`))}},
+
+  {id:'rollentausch', name:'Der Rollentausch', short:'Tausch', ic:'rollentausch', tone:'purple', art:'ereignis',
+    monat:{
+      beiname:'Der Rollenwechsler',
+      art:'fuegung',
+      klasse:'besonders', aus:1.45,
+      wie:'Der Anteil der Sturmspiele dieses Monats gegen den Anteil in allen eigenen Partien davor, in beide Richtungen. Gewertet wird nur, wer davor schon dreißig Partien hatte.',
+      cond:'Mindestens 18 Prozentpunkte mehr oder weniger im Sturm als in der eigenen Laufbahn davor, ab 8 Partien und 30 Partien davor',
+      ...(_stWertung(
+        (p, C) => p.games >= TITLE_MIN_GAMES && _stLaufbahnVor(p, C) != null,
+        (p, C) => Math.abs(p.atkG / p.games - _stLaufbahnVor(p, C).atk),
+        0.18,
+        (p, v, C) => `${pct(p.atkG / p.games)} % im Sturm statt ${pct(_stLaufbahnVor(p, C).atk)} % in der Laufbahn davor`))}},
+
   {id:'knipser', name:'Der Knipser', short:'Knipser', ic:'knipser', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Torjäger',
@@ -31510,20 +31712,6 @@ const DISZIPLINEN = [
         p => (p.ga / p.games) - (p.defConceded / p.defG),
         0.5,
         (p, v) => `${komma(v)} Gegentore weniger hinten · ${komma(p.defConceded/p.defG)} statt ${komma(p.ga/p.games)} in ${p.defG} Abwehrspielen`))}},
-
-  {id:'neuland', name:'Neuland', short:'Neuland', ic:'neuland', tone:'gold', art:'leistung',
-    monat:{
-      beiname:'Der Brückenbauer',
-      art:'koennen',
-      klasse:'besonders', aus:1.21,
-      wie:'Nur die Partien neben einem Partner, mit dem es vor diesem Monat keine einzige gab. Verglichen wird die Quote darin mit der Siegchance, die die Elo-Rechnung diesen Partien gab.',
-      cond:'Neben neuen Partnern mindestens 17 Prozentpunkte über der Rechnung, ab 5 solchen Partien',
-      ...(_stWertung(
-        (p, C) => p.games >= TITLE_MIN_GAMES && _stNeuland(p, C).length >= ST_TEIL,
-        (p, C) => _stUeberSoll(_stNeuland(p, C)),
-        0.17,
-        (p, v, C) => { const a = _stNeuland(p, C);
-          return `${_stSiege(a)} von ${a.length} Partien neben neuen Partnern · ${_ppZeichen(v)} %-Punkte über der Rechnung`; }))}},
 
   {id:'revanche', name:'Die Revanche', short:'Revanche', ic:'revanche', tone:'gold', art:'leistung',
     monat:{
@@ -31579,6 +31767,20 @@ const DISZIPLINEN = [
         (p, v) => { const a = _stNachSieg(p);
           return `${_stSiege(a)} von ${a.length} Partien nach einem Sieg · ${_ppZeichen(v)} %-Punkte über der Rechnung`; }))}},
 
+  {id:'ausnahmemonat', name:'Der Ausnahmemonat', short:'Ausnahme', ic:'ausnahmemonat', tone:'gold', art:'leistung',
+    monat:{
+      beiname:'Der Überflieger',
+      art:'koennen',
+      klasse:'besonders', aus:1.30,
+      wie:'Die Siegquote dieses Monats gegen die Siegquote aller eigenen Partien vor diesem Monat. Gewertet wird nur, wer davor schon dreißig Partien hatte: darunter gibt es keine Laufbahn, gegen die ein Monat herausragen könnte.',
+      cond:'Siegquote mindestens 10 Prozentpunkte über der eigenen Laufbahn vor diesem Monat, ab 8 Partien und 30 Partien davor',
+      ...(_stWertung(
+        (p, C) => p.games >= TITLE_MIN_GAMES && _stLaufbahnVor(p, C) != null,
+        (p, C) => p.q - _stLaufbahnVor(p, C).q,
+        0.10,
+        (p, v, C) => { const l = _stLaufbahnVor(p, C);
+          return `${pct(p.q)} % statt ${pct(l.q)} % in ${l.g} Partien davor`; }))}},
+
   {id:'absturz', name:'Der Absturz', short:'Absturz', ic:'absturz', tone:'red', art:'schatten',
     monat:{
       beiname:'Der Abgestürzte',
@@ -31590,7 +31792,130 @@ const DISZIPLINEN = [
         (p, C) => p.games >= 8 && _stVormonat(p, C) != null,
         (p, C) => _stVormonat(p, C).q - p.q,
         0.17,
-        (p, v, C) => `${pct(p.q)} % statt ${pct(_stVormonat(p, C).q)} % im Vormonat`))}}
+        (p, v, C) => `${pct(p.q)} % statt ${pct(_stVormonat(p, C).q)} % im Vormonat`))}},
+
+  {id:'fehlstart', name:'Der Fehlstart', short:'Fehlstart', ic:'fehlstart', tone:'red', art:'schatten',
+    monat:{
+      beiname:'Die Schlafmütze',
+      art:'schatten',
+      klasse:'besonders', aus:1.86,
+      wie:'Gewertet wird die zeitlich erste Partie jedes eigenen Spieltags gegen alle anderen dieses Tages, ab drei Partien je Tag. Das Gegenstück zum Kaltstart.',
+      cond:'In der ersten Partie eines Spieltags mindestens 40 Prozentpunkte schwächer als in den übrigen, ab 3 Spieltagen mit je 3 Partien',
+      ...(_stWertung(
+        p => _stErsterBall(p, 3) != null,
+        p => -_stErsterBall(p, 3).d,
+        0.40,
+        p => { const s = _stErsterBall(p, 3);
+          return `${pct(s.drin)} % in ${s.n} Startspielen, ${pct(s.raus)} % danach`; }))}},
+
+  {id:'kraefteverfall', name:'Der Kräfteverfall', short:'Verfall', ic:'kraefteverfall', tone:'red', art:'schatten',
+    monat:{
+      beiname:'Der Ausgelaugte',
+      art:'schatten',
+      klasse:'besonders', aus:1.72,
+      wie:'Der Vergleich läuft innerhalb der eigenen Spieltage: ab der vierten Partie gegen die ersten drei desselben Tages. Das Gegenstück zur zweiten Luft.',
+      cond:'Ab der vierten Partie eines Spieltags mindestens 30 Prozentpunkte schwächer als in den ersten drei, ab 5 Partien in jedem Block',
+      ...(_stWertung(
+        p => _stTagBlock(p).frueh.length >= ST_TEIL && _stTagBlock(p).spaet.length >= ST_TEIL,
+        p => { const b = _stTagBlock(p); return _stQuote(b.frueh) - _stQuote(b.spaet); },
+        0.30,
+        p => { const b = _stTagBlock(p);
+          return `${pct(_stQuote(b.spaet))} % ab der vierten Partie, ${pct(_stQuote(b.frueh))} % davor`; }))}},
+
+  {id:'einbruch', name:'Der Einbruch', short:'Einbruch', ic:'einbruch', tone:'red', art:'schatten',
+    monat:{
+      beiname:'Der Nachlassende',
+      art:'schatten',
+      klasse:'selten', aus:1.95,
+      wie:'Die Spieltage des Monats werden in der Mitte geteilt und die beiden Quoten desselben Spielers verglichen. Das Gegenstück zur Steigerung.',
+      cond:'In der zweiten Hälfte des Monats mindestens 30 Prozentpunkte schwächer als in der ersten, ab 4 Partien je Hälfte',
+      ...(_stWertung(
+        p => _stHaelften(p) != null,
+        p => { const h = _stHaelften(p); return h.q1 - h.q2; },
+        0.30,
+        p => { const h = _stHaelften(p);
+          return `${pct(h.q2)} % in der zweiten Hälfte, ${pct(h.q1)} % in der ersten`; }))}},
+
+  {id:'sattheit', name:'Die Sattheit', short:'Satt', ic:'sattheit', tone:'red', art:'schatten',
+    monat:{
+      beiname:'Der Satte',
+      art:'schatten',
+      klasse:'besonders', aus:1.29,
+      wie:'Nur die Partien am selben Tag direkt nach einem Sieg. Verglichen wird die Quote darin mit der Siegchance, die die Elo-Rechnung diesen Partien gab. Das Gegenstück zum Nachlegen.',
+      cond:'Nach einem Sieg mindestens 15 Prozentpunkte unter der Rechnung, ab 5 solchen Partien',
+      ...(_stWertung(
+        p => p.games >= TITLE_MIN_GAMES && _stNachSieg(p).length >= ST_TEIL,
+        p => -_stUeberSoll(_stNachSieg(p)),
+        0.15,
+        (p, v) => { const a = _stNachSieg(p);
+          return `${_stSiege(a)} von ${a.length} Partien nach einem Sieg · ${pct(v)} %-Punkte unter der Rechnung`; }))}},
+
+  {id:'ehrfurcht', name:'Die Ehrfurcht', short:'Ehrfurcht', ic:'ehrfurcht', tone:'red', art:'schatten',
+    monat:{
+      beiname:'Der Ehrfürchtige',
+      art:'schatten',
+      klasse:'besonders', aus:1.68,
+      wie:'Nur die Partien gegen die beiden Ersten der Monatstabelle. Der Erste selbst wird nicht gewertet. Verglichen wird die Quote darin mit der Siegchance, die die Elo-Rechnung diesen Partien gab. Das Gegenstück zum Spielverderber.',
+      cond:'Gegen die beiden Ersten der Monatstabelle mindestens 30 Prozentpunkte unter der Rechnung, ab 5 solchen Partien',
+      ...(_stWertung(
+        (p, C) => p.games >= TITLE_MIN_GAMES && C.rankAll[0] && C.rankAll[0].id !== p.pid && _stSpitzeGegen(p, C).length >= ST_TEIL,
+        (p, C) => -_stUeberSoll(_stSpitzeGegen(p, C)),
+        0.30,
+        (p, v, C) => { const a = _stSpitzeGegen(p, C);
+          return `${_stSiege(a)} von ${a.length} Partien gegen die Spitze · ${pct(v)} %-Punkte unter der Rechnung`; }))}},
+
+  {id:'rueckfall', name:'Der Rückfall', short:'Rückfall', ic:'rueckfall', tone:'red', art:'schatten',
+    monat:{
+      beiname:'Der Vergessliche',
+      art:'schatten',
+      klasse:'besonders', aus:1.70,
+      wie:'Gegen jeden Gegner mit mindestens vier Duellen im Monat zählt, um wie viel die zweite Hälfte der Duelle unter der Rechnung lag, verglichen mit der ersten. Gemittelt wird über alle solchen Gegner. Das Gegenstück zur Lernkurve.',
+      cond:'Gegen bekannte Gegner im Mittel mindestens 25 Prozentpunkte schwächer als zu Beginn, ab 3 Gegnern mit je 4 Duellen',
+      ...(_stWertung(
+        p => p.games >= TITLE_MIN_GAMES && _stLernkurve(p) != null,
+        p => -_stLernkurve(p).v,
+        0.25,
+        (p, v) => `gegen ${_stLernkurve(p).n} Gegner zuletzt ${pct(v)} %-Punkte schwächer als zu Beginn`))}},
+
+  {id:'schwarzewoche', name:'Die schwarze Woche', short:'Woche', ic:'wochenloch', tone:'red', art:'schatten',
+    monat:{
+      beiname:'Der Gebeutelte',
+      art:'schatten',
+      klasse:'selten', aus:2.00,
+      wie:'Eine Woche zählt ab fünf eigenen Partien. Verglichen wird die Quote dieser Woche mit der Siegchance, die die Elo-Rechnung den Partien darin gab; gewertet wird die schwächste solche Woche des Monats.',
+      cond:'Eine Woche mindestens 35 Prozentpunkte unter der Rechnung, ab 2 Wochen mit je 5 Partien',
+      ...(_stWertung(
+        p => _stWochen(p).length >= 2,
+        p => -Math.min(..._stWochen(p).map(a => _stUeberSoll(a))),
+        0.35,
+        (p, v) => { const a = _stWochen(p).slice().sort((x, y) => _stUeberSoll(x) - _stUeberSoll(y))[0];
+          return `${_stSiege(a)} von ${a.length} Partien in der schwächsten Woche · ${pct(v)} %-Punkte unter der Rechnung`; }))}},
+
+  {id:'aufdreher', name:'Der Aufdreher', short:'Aufdreher', ic:'aufdreher', tone:'purple', art:'ereignis',
+    monat:{
+      beiname:'Der Aufdreher',
+      art:'fuegung',
+      klasse:'besonders', aus:1.25,
+      wie:'Der eigene Anteil an allen Partien des Monats gegen den eigenen Anteil in den Monaten davor, gemittelt über die Monate mit mindestens acht eigenen Partien. Gefragt ist nicht, wer am meisten spielt, sondern wer deutlich mehr dabei ist als sonst.',
+      cond:'Mindestens doppelt so großer Anteil an den Partien des Monats wie in den Monaten davor, ab 8 Partien',
+      ...(_stWertung(
+        (p, C) => _stAnteilVor(p, C) != null,
+        (p, C) => (p.games / C.ms.length) / _stAnteilVor(p, C).anteil,
+        2,
+        (p, v, C) => `${pct(p.games / C.ms.length)} % aller Partien des Monats statt ${pct(_stAnteilVor(p, C).anteil)} % davor`))}},
+
+  {id:'rueckzug', name:'Der Rückzug', short:'Rückzug', ic:'rueckzug', tone:'red', art:'schatten',
+    monat:{
+      beiname:'Der Zurückgezogene',
+      art:'schatten',
+      klasse:'besonders', aus:1.22,
+      wie:'Dieselbe Rechnung wie beim Aufdreher, in die andere Richtung: der eigene Anteil an allen Partien des Monats gegen den eigenen Anteil in den Monaten davor.',
+      cond:'Höchstens ein Viertel des eigenen Anteils an den Partien aus den Monaten davor, ab 8 Partien',
+      ...(_stWertung(
+        (p, C) => _stAnteilVor(p, C) != null,
+        (p, C) => -(p.games / C.ms.length) / _stAnteilVor(p, C).anteil,
+        -0.25,
+        (p, v, C) => `${pct(p.games / C.ms.length)} % aller Partien des Monats statt ${pct(_stAnteilVor(p, C).anteil)} % davor`))}}
 ];
 
 const _STA = {leistung:0, ereignis:1, schatten:2};
@@ -32109,7 +32434,9 @@ function _seasonTitleCtxRechnen(sid, bisMs){
 
   const L = {
     torSchnitt: ms.length ? ms.reduce((a, m) => a + m.score_a + m.score_b, 0) / ms.length : 0,
-    engAnteil:  ms.length ? ms.filter(m => Math.abs(m.score_a - m.score_b) <= 2).length / ms.length : 0
+    engAnteil:  ms.length ? ms.filter(m => Math.abs(m.score_a - m.score_b) <= 2).length / ms.length : 0,
+    klarAnteil: ms.length ? ms.filter(m => Math.abs(m.score_a - m.score_b) >= 7).length / ms.length : 0,
+    torAbstand: ms.length ? ms.reduce((a, m) => a + Math.abs(m.score_a - m.score_b), 0) / ms.length : 0
   };
   return {
     sid, label:seasonLabel(sid), live, P, rank, rankAll, topId, L, ms,
@@ -32128,7 +32455,7 @@ function _prevSeasonId(sid){
   return y + '-' + String(m).padStart(2,'0');
 }
 
-const SEASON_TITLES_FREEZE_V = 2;
+const SEASON_TITLES_FREEZE_V = 3;
 
 function _frozenTitlesOf(season){
   if(!season) return null;
@@ -32406,7 +32733,10 @@ function _chronicleCtx(bisMs){
     pdLauf:0, pdSpan:'',
     spLauf:0, spSpan:'',
     bannMax:0, bannLabel:'',
-    stoppMax:0, stoppLabel:''
+    stoppMax:0, stoppLabel:'',
+    eiskaltLauf:0, eiskaltSpan:'',
+    sollLauf:0, sollSpan:'',
+    nlN:0, nlW:0, nlDelta:null
   });
 
   const eloVor = {};
@@ -32707,6 +33037,44 @@ function _chronicleCtx(bisMs){
         if(x.w && x.gR > p.stoppMax){ p.stoppMax = x.gR; p.stoppLabel = dLabel(x.day); }
       });
     }
+    {
+      let n = 0, start = '';
+      r.forEach(x => {
+        if(!_stEinTorPartie(x)) return;
+        if(!x.w){ n = 0; return; }
+        if(++n === 1) start = x.day;
+        if(n > p.eiskaltLauf){
+          p.eiskaltLauf = n;
+          p.eiskaltSpan = start === x.day ? dLabel(x.day) : (dLabel(start) + '–' + dLabel(x.day));
+        }
+      });
+    }
+    {
+      let n = 0, start = '';
+      _tagListe.forEach(t => {
+        if(!tagZu(t)) return;
+        const a = _tage[t];
+        const siege = a.filter(x => x.w).length, soll = a.reduce((s, x) => s + x.exp, 0);
+        if(siege < soll - 1e-9){ n = 0; return; }
+        if(++n === 1) start = t;
+        if(n > p.sollLauf){
+          p.sollLauf = n;
+          p.sollSpan = start === t ? dLabel(t) : (dLabel(start) + '–' + dLabel(t));
+        }
+      });
+    }
+    {
+      const zahl = {}, neu = [], sonst = [];
+      r.forEach(x => {
+        if(!x.mate) return;
+        zahl[x.mate] = (zahl[x.mate] || 0) + 1;
+        (zahl[x.mate] <= 3 ? neu : sonst).push(x);
+      });
+      const ueber = a => (a.filter(x => x.w).length - a.reduce((s, x) => s + x.exp, 0)) / a.length;
+      p.nlN = neu.length;
+      p.nlW = neu.filter(x => x.w).length;
+      if(neu.length && sonst.length) p.nlDelta = ueber(neu) - ueber(sonst);
+    }
     const dz = (a) => a.map(x => x.gf - x.ga);
     if(ausg.length >= 2){ p.ausgN = ausg.length; p.ausgSd = _sd(dz(ausg)); p.ausgMit = _mit(dz(ausg)); }
     if(atk.length  >= 2){ p.atkSd  = _sd(dz(atk));  p.atkMit  = _mit(dz(atk));  }
@@ -32974,13 +33342,11 @@ function rekordVerlauf(cid, fertig){
   if(key in _cache._rekVerlauf){ fertig(_cache._rekVerlauf[key]); return; }
   const rang = def && def.val ? chronicleRang(cid) : [];
   if(!rang.length){ fertig(null); return; }
-  const a = rang[0].pid;
-  const zweit = rang.find(r => r.wert < rang[0].wert - 1e-9) || rang[1] || null;
-  const b = zweit ? zweit.pid : null;
+  const drei = rang.slice(0, 3).map(r => r.pid);
   const monate = allPastSeasons().slice(-6);
   const schnitte = monate.map(sid => seasonEnd(sid).getTime()).concat([0]);
   const labels = monate.map(sid => String(seasonLabel(sid)).split(' ')[0].slice(0, 3)).concat(['heute']);
-  const va = [], vb = [], vorn = [];
+  const werte = drei.map(() => []), vorn = [];
   const wert = (C, pid) => {
     if(!pid || !C.P[pid]) return null;
     try { const v = def.val(C.P[pid], C); return v == null || !isFinite(v) ? null : v; } catch(e){ return null; }
@@ -32988,14 +33354,16 @@ function rekordVerlauf(cid, fertig){
   let i = 0;
   const schritt = () => {
     const C = _chronicleCtx(schnitte[i] || undefined);
-    const x = wert(C, a);
+    drei.forEach((pid, k) => werte[k].push(wert(C, pid)));
+    const x = werte[0][werte[0].length - 1];
     let best = -Infinity;
     Object.keys(C.P).forEach(pid => { const v = wert(C, pid); if(v != null && v > best) best = v; });
-    va.push(x); vb.push(wert(C, b)); vorn.push(x != null && x >= best - 1e-9);
+    vorn.push(x != null && x >= best - 1e-9);
     if(++i < schnitte.length){ setTimeout(schritt, 0); return; }
     let seit = vorn.length - 1;
     while(seit > 0 && vorn[seit - 1]) seit--;
-    const ergebnis = {labels, a:va, b:b ? vb : null, aName:pname(a), bName:b ? pname(b) : '', seit};
+    const ergebnis = {labels, seit,
+      reihen:drei.map((pid, k) => ({pid, name:pname(pid), werte:werte[k]}))};
     _topfDeckel(_cache._rekVerlauf, 16);
     _cache._rekVerlauf[key] = ergebnis;
     fertig(ergebnis);
@@ -33577,7 +33945,7 @@ function _lchronTabelle(cols, rows){
     <div class="lchron-wrap">
       <table class="lchron">
         <thead><tr><th>Spieler</th>${cols.map(T =>
-          `<th class="${T.live ? 'live' : ''}" data-season-table="${esc(T.sid)}"><span class="lc-m">${esc(String(T.label).split(' ')[0].slice(0,3))}</span>`
+          `<th class="${T.live ? 'live' : ''}" data-season-table="${esc(T.sid)}"><span class="lc-m">${esc(String(T.label).split(' ')[0].slice(0,3))}<span class="lc-j">’${esc(String(T.sid).slice(2, 4))}</span></span>`
           + `<span class="lc-z num">${T.awarded.length}</span>${band(T)}</th>`
         ).join('')}</tr></thead>
         <tbody>
@@ -33760,17 +34128,23 @@ function avatarRings(){
     if(team) team.ids.forEach(id => put(id, 'tots',
       'mit ' + pname(team.ids.find(x => x !== id) || id)));
 
-    const laufendeWoche = _wochenKey(Date.now()), tagZu = {};
-    let wkKey = null, tgKey = null, wkT = -Infinity, tgT = -Infinity;
+    const laufendeWoche = _wochenKey(Date.now()), tagZu = {}, letzte = {};
     matches.forEach(m => {
       const t = mts(m), w = _wochenKey(m.created_at), d = mdayKey(m);
       if(tagZu[d] === undefined) tagZu[d] = _tagZu(d);
-      if(w !== laufendeWoche && t > wkT){ wkT = t; wkKey = w; }
-      if(tagZu[d] && t > tgT){ tgT = t; tgKey = d; }
+      [m.a1, m.a2, m.b1, m.b2].forEach(pid => {
+        if(!pid) return;
+        const l = letzte[pid] || (letzte[pid] = {wkT:-Infinity, tgT:-Infinity, wk:null, tg:null});
+        if(w !== laufendeWoche && t > l.wkT){ l.wkT = t; l.wk = w; }
+        if(tagZu[d] && t > l.tgT){ l.tgT = t; l.tg = d; }
+      });
     });
     const wk = _periodWinnerMap(matches, 'week'), tg = _periodWinnerMap(matches, 'day');
-    if(wkKey && wk[wkKey]) put(wk[wkKey], 'potw', 'Woche ' + wkKey.split('-W')[1]);
-    if(tgKey && tg[tgKey]) put(tg[tgKey], 'potd', 'Spieltag ' + datumFmt(new Date(tgKey + 'T12:00:00Z'), 'tm'));
+    Object.keys(letzte).forEach(pid => {
+      const l = letzte[pid];
+      if(l.wk && wk[l.wk] === pid) put(pid, 'potw', 'Woche ' + l.wk.split('-W')[1]);
+      if(l.tg && tg[l.tg] === pid) put(pid, 'potd', 'Spieltag ' + datumFmt(new Date(l.tg + 'T12:00:00Z'), 'tm'));
+    });
 
     Object.keys(pm).forEach(id => {
       if(!ligaAktiv(pm[id])) return;

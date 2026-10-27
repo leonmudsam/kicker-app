@@ -3219,13 +3219,23 @@ const ok = (c, msg, det) => {
         if(Math.abs(w - s) > 0.02) falschBand.push(sid + ' ' + i.dataset.kl + ' ' + w.toFixed(2) + ' statt ' + s.toFixed(2));
       });
     });
+    // Jeder Monat trägt sein Jahr, und der Kopf passt in seine Spalte.
+    const falschJahr = [];
+    box.querySelectorAll('.lchron thead th[data-season-table]').forEach(th => {
+      const sid = th.dataset.seasonTable, m = th.querySelector('.lc-m'), j = th.querySelector('.lc-j');
+      if(!j || j.textContent.trim() !== '’' + sid.slice(2, 4)) falschJahr.push(sid + ' ' + (m ? m.textContent.trim() : '—'));
+      else if(m.scrollWidth > th.clientWidth + 0.5) falschJahr.push(sid + ' breiter als die Spalte');
+    });
     const legende = [...box.querySelectorAll('.lchron-lg [data-kl]')].map(e => e.dataset.kl + ' ' + e.textContent.trim());
     const r = {zu, zellen:zellen.length, ohneKlasse, stufen, falschFarbe, glanzFalsch, verz:verz.size,
-               falschZelle, falschZahl, falschBand, legende};
+               falschZelle, falschZahl, falschBand, falschJahr, legende};
     box.remove();
     return r;
   });
   ok(matrix.zellen > 0, 'die Matrix zeigt Zellen', matrix.zellen + ' Zellen · ' + JSON.stringify(matrix.stufen));
+  // Nach dem zweiten Oktober stünden sonst zwei Spalten „OKT" nebeneinander.
+  ok(matrix.falschJahr.length === 0, 'jeder Monat im Kopf der Matrix trägt sein Jahr und passt in die Spalte',
+     matrix.falschJahr.join(' | '));
   ok(matrix.zu.length === 0, 'kein Kuerzel des Katalogs wird in einer Zelle abgeschnitten',
      matrix.zu.join(' | '));
   ok(matrix.ohneKlasse === 0, 'jede Zelle traegt die Stufe ihrer Chronik',

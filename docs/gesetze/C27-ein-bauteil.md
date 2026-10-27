@@ -430,8 +430,10 @@ Spanne um den Anteil, Wilson mit 90 %, und darunter „wären ein paar
 Partien anders ausgegangen, läge der Wert wohl irgendwo zwischen 36 und
 57 %" — richtig gerechnet und eine Frage an den Leser; eine Zahl, die man
 abzählen kann, beantwortet sie) und **Wie es dazu kam**
-(`rekordVerlauf`: Halter und Zweiter an den letzten sechs Monatsenden und
-heute, mit „vorn seit"). Der Fuß des Rekord-Blatts führt ins Profil des
+(`rekordVerlauf`: die drei des Podests an den letzten sechs Monatsenden
+und heute, in dessen Reihenfolge und Metallen Gold, Silber, Bronze, mit
+„vorn seit"; vorher zeichnete er nur Halter und Zweiten, und wer auf dem
+Podest darüber Dritter stand, fehlte im Verlauf). Der Fuß des Rekord-Blatts führt ins Profil des
 Halters und nennt ihn auf dem Knopf; „Direkter Vergleich" öffnete die
 Bilanz von Halter und Zweitem gegeneinander, die mit dem Rekord nichts zu
 tun hat. Gerechnet wird nichts Neues: die Zahlen kommen aus

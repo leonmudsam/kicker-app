@@ -6,7 +6,7 @@
 - Feuer hinter dem Avatar heißt laufende Siegesserie in drei Stufen (3–4, 5–6, ab 7), Stop-Motion ohne JS-Timer, und nur dort. Neben dem Namen steht allein die Niederlagenserie (`lossStreakInline`, Tropfen bei 3, 5, 7).
 - Das Feuer trägt überall die Rangfarbe (`insAvWrap` setzt `--zn-c`), mit demselben hellen Kern wie im Profilkopf. Wie weit eine Stufe schlagen darf, sagt `spitze`, je Stufe überschreibbar.
 - Der Profilkopf rückt nur für brennende Stufen nach unten (`--feuerluft`). In den Formpunkten brennt die Serie als zwei Pseudo-Elemente (`.dot.glut`), nicht als SVG.
-- Am Ring im Profilkopf steht jeder Zustand, den jemand gerade trägt (`avRingeOf`): Titelverteidiger, Player of the Week der letzten abgeschlossenen Woche, Player of the Day des letzten abgeschlossenen Spieltags, Team of the Season, eine Serie — der wichtigste oben rechts, die übrigen auf festen Plätzen (`AV_RING_PLAETZE`), oben mittig und unten mittig nie. Die Zeile unter dem Namen nennt den wichtigsten und klappt zu allen auf. Lob und Niederlagenserie zugleich: der Ring wechselt langsam zwischen beiden Farben.
+- Am Ring im Profilkopf steht jeder Zustand, den jemand gerade trägt (`avRingeOf`): Titelverteidiger, Player of the Week und Player of the Day — je Spieler aus seiner eigenen letzten abgeschlossenen Woche und seinem letzten abgeschlossenen Spieltag mit Partien, also auch für mehrere zugleich, während der Titelverteidiger einer bleibt —, Team of the Season, eine Serie — der wichtigste oben rechts, die übrigen auf festen Plätzen (`AV_RING_PLAETZE`), oben mittig und unten mittig nie. Die Zeile unter dem Namen nennt den wichtigsten und klappt zu allen auf. Lob und Niederlagenserie zugleich: der Ring wechselt langsam zwischen beiden Farben.
 
 ## Stellen
 
@@ -14,7 +14,7 @@
 
 ## Prüfung
 
-`tests/zeichen` misst Feuer, Sterne und die Füllung des Feuers in Zeile und Profil am Knoten; `tests/blatt` misst die Zeichen am Ring mit zwei bis fünf Zuständen und klappt die Zeile auf; `tests/rechnen` rechnet Woche und Tag des Rings.
+`tests/zeichen` misst Feuer, Sterne und die Füllung des Feuers in Zeile und Profil am Knoten; `tests/blatt` misst die Zeichen am Ring mit zwei bis fünf Zuständen und klappt die Zeile auf; `tests/rechnen` rechnet Woche und Tag des Rings, auch für den, der danach nicht mehr spielte, und für den, der seinen letzten Zeitraum nicht gewann.
 
 ## Herleitung
 
@@ -70,8 +70,12 @@ Bild —, sie klappt zu allen auf. Trägt jemand ein Lob und eine
 Niederlagenserie, verschwiege Gold allein die Serie und Rot allein das Lob:
 der Ring wechselt deshalb langsam zwischen beiden.
 
-Player of the Week und Player of the Day kommen aus dem letzten
-abgeschlossenen Zeitraum mit Partien, nicht aus dem letzten mit einem
-Sieger, und die Wochen werden nach der Zeit verglichen: als Text steht
+Player of the Week und Player of the Day kommen je Spieler aus dem letzten
+abgeschlossenen Zeitraum, in dem er selbst gespielt hat — nicht aus dem
+letzten der Liga und nicht aus dem letzten mit einem Sieger. Am Sieger des
+letzten Zeitraums der Liga verlor Leon sein Zeichen: er war am 21.10.
+Spieler des Tages, an den drei Spieltagen danach spielte die Liga ohne ihn.
+Den Titelverteidiger gibt es weiter nur einmal, weil die Vorsaison nur einen
+Meister hat. Die Wochen werden nach der Zeit verglichen: als Text steht
 „2027-W10" vor „2027-W9", und der Sieger der neunten Woche hätte das Zeichen
 bis in die dreizehnte getragen.

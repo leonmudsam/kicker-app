@@ -643,7 +643,12 @@ function _seasonTitleCtxRechnen(sid, bisMs){
   // der Liga, und ein torarmer Monat verschenkt keine Eintraege [§C39].
   const L = {
     torSchnitt: ms.length ? ms.reduce((a, m) => a + m.score_a + m.score_b, 0) / ms.length : 0,
-    engAnteil:  ms.length ? ms.filter(m => Math.abs(m.score_a - m.score_b) <= 2).length / ms.length : 0
+    engAnteil:  ms.length ? ms.filter(m => Math.abs(m.score_a - m.score_b) <= 2).length / ms.length : 0,
+    // Das Gegenstueck zu den engen: wie oft mit sieben oder mehr Toren
+    // entschieden wurde („Klare Verhältnisse"), und mit welchem Abstand im
+    // Mittel ueberhaupt („Der Widerstand" im Monat).
+    klarAnteil: ms.length ? ms.filter(m => Math.abs(m.score_a - m.score_b) >= 7).length / ms.length : 0,
+    torAbstand: ms.length ? ms.reduce((a, m) => a + Math.abs(m.score_a - m.score_b), 0) / ms.length : 0
   };
   return {
     sid, label:seasonLabel(sid), live, P, rank, rankAll, topId, L, ms,
@@ -682,10 +687,13 @@ function _prevSeasonId(sid){
 //     ist damit unterscheidbar von einer, die noch nie eingefroren wurde.
 //     Eine neue Fassung ist ein bewusster Schritt, kein Nachjustieren: die
 //     zweite kam mit den Klassen nach dem Ausschlag und den acht Chroniken
-//     gegen das Eigene [§C39], damit jeder Monat dieselben Fragen stellt —
-//     sonst hätte der Oktober vierundsiebzig Chroniken gehabt und der
-//     September sechsundsechzig.
-const SEASON_TITLES_FREEZE_V = 2;
+//     gegen das Eigene [§C39], die dritte mit achtzehn weiteren: gegen
+//     Ligamittel und Laufbahn, die Laufbahnfragen auf der Monatsachse, die
+//     Schattenseiten gegen das Eigene und der Anteil an den Partien gegen die
+//     Monate davor. Beide Male, damit jeder Monat dieselben Fragen stellt —
+//     sonst hätte der Oktober zweiundneunzig Chroniken gehabt und der
+//     September vierundsiebzig.
+const SEASON_TITLES_FREEZE_V = 3;
 
 // Liest die eingefrorene Chronik einer Saison — aus dem seasons-Eintrag, egal
 // ob die Spalte als Objekt oder als JSON-Text ankommt. null = nicht eingefroren.

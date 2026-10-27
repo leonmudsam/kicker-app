@@ -264,34 +264,50 @@ const koenige=K(`(() => {
 ok(koenige.join(' ')==='a:4/6 b:5/12',
   'Der Tageskönig ist, wer den größten Anteil seiner Spieltage gewann, nicht wer die meisten Titel sammelte: '+JSON.stringify(koenige));
 // Der Ring am Avatar trägt jeden Zustand, nicht nur den ersten [§13.7]:
-// Player of the Week der letzten abgeschlossenen Woche, Player of the Day
-// des letzten abgeschlossenen Spieltags. Die Wochen werden nach der Zeit
-// verglichen — als Text steht „2027-W10" vor „2027-W9", und der Sieger der
-// neunten Woche trug das Zeichen weiter.
+// Player of the Week und Player of the Day, je Spieler aus SEINER letzten
+// abgeschlossenen Woche und SEINEM letzten abgeschlossenen Spieltag mit
+// eigenen Partien. Gezählt wurde der letzte Zeitraum der Liga: Leon war am
+// 21.10. Spieler des Tages, an den drei Spieltagen danach spielte die Liga
+// ohne ihn, und das Zeichen war weg. Hier gewinnt c die Woche 8 und den
+// 23.02. und spielt danach nicht mehr — er trägt beides, obwohl b Woche 10
+// und den 16.03. gewann. a gewann Woche 9 und den 02.03., verlor am 10.03.
+// in Woche 10 und spielt heute: sein letzter Zeitraum ist Woche 10 und der
+// 10.03., an dem niemand drei Siege holte — kein Zeichen. Die Wochen werden
+// nach der Zeit verglichen: als Text steht „2027-W10" vor „2027-W9", und a
+// trüge sonst die neunte weiter.
 setNow(Date.UTC(2027,2,17,12,0));
 const ringe=K(`(() => {
-  const ids=['a','b','q1','q2','q3','q4','o1','o2'];
+  const ids=['a','b','c','q1','q2','q3','q4','o1','o2'];
   players=ids.map(id=>({id,name:'Spieler '+id,hidden:false,elo:0,atk:.5}));
   const ms=[]; let n=0;
-  const siege=(pid,tag,stunde,zahl)=>{
+  const siege=(pid,tag,stunde,zahl,monat)=>{
     for(let i=0;i<zahl;i++){
       const mit='q'+(1+i%4);
       ms.push({...window.__partie,id:'r'+(n++),a1:pid,a2:mit,b1:'o1',b2:'o2',
-        created_at:new Date(Date.UTC(2027,2,tag,stunde,i*15)).toISOString(),winner:'A',
+        created_at:new Date(Date.UTC(2027,monat==null?2:monat,tag,stunde,i*15)).toISOString(),winner:'A',
         score_a:10,score_b:4,deltas:{[pid]:20,[mit]:20,o1:-20,o2:-20}});
     }
   };
-  siege('a',2,10,5);   // Woche 9
-  siege('b',9,10,5);   // Woche 10, die letzte abgeschlossene
-  siege('b',16,10,3);  // Spieltag 16.03., zu
-  siege('a',17,9,4);   // heute, noch offen
-  matches=ms;seasons=[];cfg={...window.__cfgBasis};invalidateCache();
+  siege('c',23,10,5,1);  // Woche 8, Spieltag 23.02., danach nie wieder
+  siege('a',2,10,5);     // Woche 9, Spieltag 02.03.
+  siege('b',9,10,5);     // Woche 10, die letzte abgeschlossene
+  ms.push({...window.__partie,id:'r'+(n++),a1:'b',a2:'q1',b1:'a',b2:'o1',   // a verliert am 10.03.
+    created_at:new Date(Date.UTC(2027,2,10,10,0)).toISOString(),winner:'A',
+    score_a:10,score_b:6,deltas:{b:20,q1:20,a:-20,o1:-20}});
+  siege('b',16,10,3);    // Spieltag 16.03., zu
+  siege('a',17,9,4);     // heute, noch offen
+  matches=ms.sort((x,y)=>new Date(x.created_at)-new Date(y.created_at));
+  seasons=[];cfg={...window.__cfgBasis};invalidateCache();
   const zeig=id=>avRingeOf(id).filter(r=>r.kind==='potw'||r.kind==='potd').map(r=>r.kind+':'+r.sub).join(',');
   const l=avRingeOf('b');
-  return {a:zeig('a'),b:zeig('b'),erster:(avRingOf('b')||{}).kind,alle:l.map(r=>r.kind).join(),
+  return {a:zeig('a'),b:zeig('b'),c:zeig('c'),erster:(avRingOf('b')||{}).kind,alle:l.map(r=>r.kind).join(),
     geordnet:l.every((r,i)=>!i||l[i-1].prio>=r.prio)};
 })()`);
-ok(ringe.b==='potw:Woche 10,potd:Spieltag 16.03.'&&ringe.a===''&&ringe.geordnet&&ringe.erster===ringe.alle.split(',')[0],
+ok(ringe.b==='potw:Woche 10,potd:Spieltag 16.03.'&&ringe.geordnet&&ringe.erster===ringe.alle.split(',')[0],
   'Der Ring trägt Woche und Tag zugleich, aus der letzten abgeschlossenen Woche und dem letzten abgeschlossenen Spieltag: '+JSON.stringify(ringe));
+ok(ringe.c==='potw:Woche 8,potd:Spieltag 23.02.',
+  'Wer danach nicht mehr spielte, trägt Woche und Tag seines letzten eigenen Zeitraums weiter: '+JSON.stringify(ringe));
+ok(ringe.a==='',
+  'Wer seinen letzten eigenen Zeitraum nicht gewann, trägt keinen älteren Sieg, auch nicht nach der Reihenfolge der Schlüssel: '+JSON.stringify(ringe));
 console.log(fails?`${fails} von ${checks} CHECKS FEHLGESCHLAGEN`:`ALLE ${checks} CHECKS BESTANDEN`);
 process.exitCode=fails?1:0;

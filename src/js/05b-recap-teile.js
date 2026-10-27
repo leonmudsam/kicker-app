@@ -310,12 +310,15 @@ function belegLuftHtml(a, zweiter){
     </div>
     <div class="bl-satz">${satz}</div>`;
 }
-// Wie es dazu kam: der Wert des Halters und des Zweiten an jedem Monatsende
-// und heute. `serie` = {labels, a, b, aName, bName, seit}; ein fehlender
-// Wert (noch nicht in der Wertung) unterbricht die Linie.
+// Wie es dazu kam: der Wert der drei auf dem Podest an jedem Monatsende und
+// heute. `serie` = {labels, reihen:[{name, werte}], seit}, die Reihen in der
+// Folge des Podests; ein fehlender Wert (noch nicht in der Wertung)
+// unterbricht die Linie. Die Linien tragen die Metalle des Podests — Gold,
+// Silber, Bronze —, damit Linie und Karte darüber dieselbe Person meinen.
 function belegVerlaufHtml(s){
-  if(!s || !s.labels || s.labels.length < 2) return '';
-  const alle = s.a.concat(s.b || []).filter(v => v != null && isFinite(v));
+  const PLATZ = ['p1', 'p2', 'p3'];
+  if(!s || !s.labels || s.labels.length < 2 || !s.reihen || !s.reihen.length) return '';
+  const alle = [].concat(...s.reihen.map(r => r.werte)).filter(v => v != null && isFinite(v));
   if(alle.length < 2) return '';
   let lo = Math.min(...alle), hi = Math.max(...alle);
   if(!(hi > lo)){ lo -= 1; hi += 1; }
@@ -333,13 +336,16 @@ function belegVerlaufHtml(s){
       ? `<polyline class="${cls}" points="${t.join(' ')}"/>`
       : `<circle class="${cls}" cx="${t[0].split(',')[0]}" cy="${t[0].split(',')[1]}" r="2"/>`).join('');
   };
-  const seit = s.seit != null && s.a[s.seit] != null
-    ? `<circle class="bl-v-seit" cx="${x(s.seit)}" cy="${y(s.a[s.seit])}" r="4.5"/>` : '';
+  const reihen = s.reihen.slice(0, 3), erste = reihen[0].werte;
+  // Der Erste zuletzt, damit seine Linie über den anderen liegt.
+  const linien = reihen.map((r, k) => linie(r.werte, 'bl-v-' + PLATZ[k])).reverse().join('');
+  const seit = s.seit != null && erste[s.seit] != null
+    ? `<circle class="bl-v-seit" cx="${x(s.seit)}" cy="${y(erste[s.seit])}" r="4.5"/>` : '';
   const achse = s.labels.map((l, i) => (i === 0 || i === n - 1 || n <= 6)
     ? `<text x="${x(i)}" y="${H - 2}" text-anchor="${i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle'}">${esc(l)}</text>` : '').join('');
   return `<svg class="bl-verlauf" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
-      ${s.b ? linie(s.b, 'bl-v-b') : ''}${linie(s.a, 'bl-v-a')}${seit}${achse}</svg>
-    <div class="bl-legende"><span class="a">${esc(s.aName)}</span>${s.b ? `<span class="b">${esc(s.bName)}</span>` : ''}${
+      ${linien}${seit}${achse}</svg>
+    <div class="bl-legende">${reihen.map((r, k) => `<span class="${PLATZ[k]}">${esc(r.name)}</span>`).join('')}${
       s.seit != null ? `<span class="seit">vorn seit ${esc(s.labels[s.seit])}</span>` : ''}</div>`;
 }
 // Der Beleg in seiner festen Reihenfolge — nur die Formen, die für die
