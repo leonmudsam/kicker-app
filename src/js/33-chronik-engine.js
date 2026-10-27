@@ -687,10 +687,12 @@ function _prevSeasonId(sid){
 //     ist damit unterscheidbar von einer, die noch nie eingefroren wurde.
 //     Eine neue Fassung ist ein bewusster Schritt, kein Nachjustieren: die
 //     zweite kam mit den Klassen nach dem Ausschlag und den acht Chroniken
-//     gegen das Eigene [§C39], die dritte mit acht weiteren gegen Ligamittel
-//     und Laufbahn und den Laufbahnfragen auf der Monatsachse. Beide Male,
-//     damit jeder Monat dieselben Fragen stellt — sonst hätte der Oktober
-//     zweiundachtzig Chroniken gehabt und der September vierundsiebzig.
+//     gegen das Eigene [§C39], die dritte mit achtzehn weiteren: gegen
+//     Ligamittel und Laufbahn, die Laufbahnfragen auf der Monatsachse, die
+//     Schattenseiten gegen das Eigene und der Anteil an den Partien gegen die
+//     Monate davor. Beide Male, damit jeder Monat dieselben Fragen stellt —
+//     sonst hätte der Oktober zweiundneunzig Chroniken gehabt und der
+//     September vierundsiebzig.
 const SEASON_TITLES_FREEZE_V = 3;
 
 // Liest die eingefrorene Chronik einer Saison — aus dem seasons-Eintrag, egal

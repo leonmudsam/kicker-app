@@ -56,7 +56,10 @@
 //     Allgegenwärtiger, Immerdabei, Malocher, Gründervater, Veteran,
 //     längster Tag, Nachtschwärmer, Frühaufsteher — sind gestrichen. Wer
 //     oft spielt, sammelt dadurch schon mehr Gelegenheiten; er musste dafür
-//     nicht zusätzlich ausgezeichnet werden.
+//     nicht zusätzlich ausgezeichnet werden. Wie viel jemand dabei war, fragt
+//     nur der eigene ANTEIL an den Partien eines Monats gegen den eigenen
+//     Anteil davor („Der Aufdreher", „Der Rückzug"): den hält nicht, wer am
+//     meisten spielt, sondern wer deutlich mehr oder weniger spielt als sonst.
 //
 //     KEINE VERBINDUNGEN: Es gibt keine Einträge, die ein DUO beschreiben.
 //     Wer sie hielt, hatte sie halb dem anderen zu verdanken, und dieselbe
@@ -402,6 +405,30 @@ function _stLaufbahnVor(p, C){
   }
   const x = C._laufbahnVor[p.pid];
   return x && x.g >= 30 ? {g:x.g, q:x.w / x.g, atk:x.atk / x.g} : null;
+}
+// Der eigene Anteil an allen Partien eines Monats, gemittelt über die Monate
+// davor mit mindestens acht eigenen Partien. „Der Aufdreher" und „Der Rückzug"
+// stellen den Monat dagegen. Gefragt ist der ANTEIL und nicht die Zahl: die
+// Zahl gegen den Vormonat schwankte mit der Liga selbst — im Juni spielte
+// jeder ein Vielfaches des Mai, weil die Liga erst anlief, und der Wert hing
+// mit 0,63 an der Spielzahl. Der Anteil fragt, ob jemand mehr dabei war als
+// sonst, unabhängig davon, wie viel die Liga spielte (gemessen −0,02).
+function _stAnteilVor(p, C){
+  if(!C._anteilVor){
+    const ab = seasonStart(C.sid).getTime(), je = {}, liga = {};
+    (matches || []).forEach(m => {
+      if(mts(m) >= ab) return;
+      const sid = (seasonOf(m.created_at) || {}).id;
+      if(!sid) return;
+      liga[sid] = (liga[sid] || 0) + 1;
+      [m.a1, m.a2, m.b1, m.b2].forEach(id => {
+        if(id) (je[id] = je[id] || {})[sid] = (je[id][sid] || 0) + 1; });
+    });
+    C._anteilVor = {je, liga};
+  }
+  const v = C._anteilVor, eigen = v.je[p.pid] || {};
+  const l = Object.keys(eigen).filter(sid => eigen[sid] >= TITLE_MIN_GAMES).map(sid => eigen[sid] / v.liga[sid]);
+  return l.length ? {anteil:_stMittel(l), monate:l.length} : null;
 }
 // Die Partien gegen die beiden Ersten der Monatstabelle, ohne sich selbst.
 function _stSpitzeGegen(p, C){
@@ -1708,12 +1735,24 @@ const DISZIPLINEN = [
       ev:(p,v) => `${komma(v)} eigene Tore weniger je Sturmspiel · ${komma(p.atkGoals/p.atkG)} statt ${komma(p.gf/p.games)}`
     }},
 
-  // Nur die Laufbahn: auf der Monatsachse schiebt diese Frage ihre Schwelle
-  // gemessen hoechstens 1,39 σ hinaus, und darunter liegt ihr Bester kaum
-  // weiter draussen als der Schnitt [§C39]. Ein Monat ist zu kurz dafuer —
-  // fuenf Gelegenheiten zu antworten sind ein Wurf, fuenfundzwanzig ein
-  // Muster.
+  // Beide Zeitachsen [§13.1]. Im Monat stand sie lange nur in der Laufbahn,
+  // weil ihre Schwelle unter der alten Grenze von 1,5 σ blieb; gegen die
+  // uebrigen Partien des Monats gemessen liegt sie bei 2,02 σ, und die
+  // Untergrenze ist 1,2 σ [§C39].
   {id:'noanswer', name:'Die stumme Antwort', short:'Stumm', ic:'mutedReply', tone:'red', art:'schatten',
+    monat:{
+      beiname:'Der Verstummte',
+      art:'schatten',
+      klasse:'selten', aus:2.02,
+      wie:'Die Partien direkt nach einer eigenen Niederlage gegen alle übrigen eigenen Partien des Monats. Das Gegenstück zur Antwort.',
+      cond:'Direkt nach einer Niederlage mindestens 25 Prozentpunkte schwächer als sonst, ab 5 solchen und 5 übrigen Partien',
+      ...(_stWertung(
+        p => _stNachPleite(p).length >= ST_TEIL && p.games - _stNachPleite(p).length >= ST_TEIL,
+        p => { const a = _stNachPleite(p), r = p.partien.filter((s, i) => !(i > 0 && !p.partien[i - 1].win));
+          return _stQuoteRoh(r) - _stQuoteRoh(a); },
+        0.25,
+        p => { const a = _stNachPleite(p);
+          return `${_stSiege(a)} von ${a.length} Partien nach einer Niederlage gewonnen`; }))},
     allzeit:{
       kammer:'shame', basis:0,
       zeitraum:'Ganze Laufbahn',
@@ -2624,7 +2663,147 @@ const DISZIPLINEN = [
         (p, C) => p.games >= 8 && _stVormonat(p, C) != null,
         (p, C) => _stVormonat(p, C).q - p.q,
         0.17,
-        (p, v, C) => `${pct(p.q)} % statt ${pct(_stVormonat(p, C).q)} % im Vormonat`))}}
+        (p, v, C) => `${pct(p.q)} % statt ${pct(_stVormonat(p, C).q)} % im Vormonat`))}},
+
+  // ── Schattenseiten gegen das Eigene [§C39] ─────────────────────────
+  // Sieben Gegenstücke zu Chroniken, die es schon gibt: was dort über dem
+  // eigenen Rest liegt, liegt hier darunter. Sie fragen wie ihre Vorbilder
+  // gegen das Eigene oder gegen die Rechnung, nicht nach dem Niveau — eine
+  // Schattenseite auf das Niveau gehoerte immer dem Schwaechsten der Liga.
+  // Gemessen gehen sie in den Fixture-Monaten an Alex, Henry, Jannik,
+  // Johannes und Stefan, keiner auf den ersten drei Plaetzen eines Monats.
+  {id:'fehlstart', name:'Der Fehlstart', short:'Fehlstart', ic:'fehlstart', tone:'red', art:'schatten',
+    monat:{
+      beiname:'Die Schlafmütze',
+      art:'schatten',
+      klasse:'besonders', aus:1.86,
+      wie:'Gewertet wird die zeitlich erste Partie jedes eigenen Spieltags gegen alle anderen dieses Tages, ab drei Partien je Tag. Das Gegenstück zum Kaltstart.',
+      cond:'In der ersten Partie eines Spieltags mindestens 40 Prozentpunkte schwächer als in den übrigen, ab 3 Spieltagen mit je 3 Partien',
+      ...(_stWertung(
+        p => _stErsterBall(p, 3) != null,
+        p => -_stErsterBall(p, 3).d,
+        0.40,
+        p => { const s = _stErsterBall(p, 3);
+          return `${pct(s.drin)} % in ${s.n} Startspielen, ${pct(s.raus)} % danach`; }))}},
+
+  {id:'kraefteverfall', name:'Der Kräfteverfall', short:'Verfall', ic:'kraefteverfall', tone:'red', art:'schatten',
+    monat:{
+      beiname:'Der Ausgelaugte',
+      art:'schatten',
+      klasse:'besonders', aus:1.72,
+      wie:'Der Vergleich läuft innerhalb der eigenen Spieltage: ab der vierten Partie gegen die ersten drei desselben Tages. Das Gegenstück zur zweiten Luft.',
+      cond:'Ab der vierten Partie eines Spieltags mindestens 30 Prozentpunkte schwächer als in den ersten drei, ab 5 Partien in jedem Block',
+      ...(_stWertung(
+        p => _stTagBlock(p).frueh.length >= ST_TEIL && _stTagBlock(p).spaet.length >= ST_TEIL,
+        p => { const b = _stTagBlock(p); return _stQuote(b.frueh) - _stQuote(b.spaet); },
+        0.30,
+        p => { const b = _stTagBlock(p);
+          return `${pct(_stQuote(b.spaet))} % ab der vierten Partie, ${pct(_stQuote(b.frueh))} % davor`; }))}},
+
+  {id:'einbruch', name:'Der Einbruch', short:'Einbruch', ic:'einbruch', tone:'red', art:'schatten',
+    monat:{
+      beiname:'Der Nachlassende',
+      art:'schatten',
+      klasse:'selten', aus:1.95,
+      wie:'Die Spieltage des Monats werden in der Mitte geteilt und die beiden Quoten desselben Spielers verglichen. Das Gegenstück zur Steigerung.',
+      cond:'In der zweiten Hälfte des Monats mindestens 30 Prozentpunkte schwächer als in der ersten, ab 4 Partien je Hälfte',
+      ...(_stWertung(
+        p => _stHaelften(p) != null,
+        p => { const h = _stHaelften(p); return h.q1 - h.q2; },
+        0.30,
+        p => { const h = _stHaelften(p);
+          return `${pct(h.q2)} % in der zweiten Hälfte, ${pct(h.q1)} % in der ersten`; }))}},
+
+  {id:'sattheit', name:'Die Sattheit', short:'Satt', ic:'sattheit', tone:'red', art:'schatten',
+    monat:{
+      beiname:'Der Satte',
+      art:'schatten',
+      klasse:'besonders', aus:1.29,
+      wie:'Nur die Partien am selben Tag direkt nach einem Sieg. Verglichen wird die Quote darin mit der Siegchance, die die Elo-Rechnung diesen Partien gab. Das Gegenstück zum Nachlegen.',
+      cond:'Nach einem Sieg mindestens 15 Prozentpunkte unter der Rechnung, ab 5 solchen Partien',
+      ...(_stWertung(
+        p => p.games >= TITLE_MIN_GAMES && _stNachSieg(p).length >= ST_TEIL,
+        p => -_stUeberSoll(_stNachSieg(p)),
+        0.15,
+        (p, v) => { const a = _stNachSieg(p);
+          return `${_stSiege(a)} von ${a.length} Partien nach einem Sieg · ${pct(v)} %-Punkte unter der Rechnung`; }))}},
+
+  {id:'ehrfurcht', name:'Die Ehrfurcht', short:'Ehrfurcht', ic:'ehrfurcht', tone:'red', art:'schatten',
+    monat:{
+      beiname:'Der Ehrfürchtige',
+      art:'schatten',
+      klasse:'besonders', aus:1.68,
+      wie:'Nur die Partien gegen die beiden Ersten der Monatstabelle. Der Erste selbst wird nicht gewertet. Verglichen wird die Quote darin mit der Siegchance, die die Elo-Rechnung diesen Partien gab. Das Gegenstück zum Spielverderber.',
+      cond:'Gegen die beiden Ersten der Monatstabelle mindestens 30 Prozentpunkte unter der Rechnung, ab 5 solchen Partien',
+      ...(_stWertung(
+        (p, C) => p.games >= TITLE_MIN_GAMES && C.rankAll[0] && C.rankAll[0].id !== p.pid && _stSpitzeGegen(p, C).length >= ST_TEIL,
+        (p, C) => -_stUeberSoll(_stSpitzeGegen(p, C)),
+        0.30,
+        (p, v, C) => { const a = _stSpitzeGegen(p, C);
+          return `${_stSiege(a)} von ${a.length} Partien gegen die Spitze · ${pct(v)} %-Punkte unter der Rechnung`; }))}},
+
+  {id:'rueckfall', name:'Der Rückfall', short:'Rückfall', ic:'rueckfall', tone:'red', art:'schatten',
+    monat:{
+      beiname:'Der Vergessliche',
+      art:'schatten',
+      klasse:'besonders', aus:1.70,
+      wie:'Gegen jeden Gegner mit mindestens vier Duellen im Monat zählt, um wie viel die zweite Hälfte der Duelle unter der Rechnung lag, verglichen mit der ersten. Gemittelt wird über alle solchen Gegner. Das Gegenstück zur Lernkurve.',
+      cond:'Gegen bekannte Gegner im Mittel mindestens 25 Prozentpunkte schwächer als zu Beginn, ab 3 Gegnern mit je 4 Duellen',
+      ...(_stWertung(
+        p => p.games >= TITLE_MIN_GAMES && _stLernkurve(p) != null,
+        p => -_stLernkurve(p).v,
+        0.25,
+        (p, v) => `gegen ${_stLernkurve(p).n} Gegner zuletzt ${pct(v)} %-Punkte schwächer als zu Beginn`))}},
+
+  // Die schwaechste eigene Woche gegen die Rechnung. „Ohne schwache Woche"
+  // fragt, ob es keine gab; hier zaehlt, wie tief die eine war.
+  {id:'schwarzewoche', name:'Die schwarze Woche', short:'Woche', ic:'wochenloch', tone:'red', art:'schatten',
+    monat:{
+      beiname:'Der Gebeutelte',
+      art:'schatten',
+      klasse:'selten', aus:2.00,
+      wie:'Eine Woche zählt ab fünf eigenen Partien. Verglichen wird die Quote dieser Woche mit der Siegchance, die die Elo-Rechnung den Partien darin gab; gewertet wird die schwächste solche Woche des Monats.',
+      cond:'Eine Woche mindestens 35 Prozentpunkte unter der Rechnung, ab 2 Wochen mit je 5 Partien',
+      ...(_stWertung(
+        p => _stWochen(p).length >= 2,
+        p => -Math.min(..._stWochen(p).map(a => _stUeberSoll(a))),
+        0.35,
+        (p, v) => { const a = _stWochen(p).slice().sort((x, y) => _stUeberSoll(x) - _stUeberSoll(y))[0];
+          return `${_stSiege(a)} von ${a.length} Partien in der schwächsten Woche · ${pct(v)} %-Punkte unter der Rechnung`; }))}},
+
+  // ── Wie viel jemand dabei war, gegen die eigenen Monate davor [§C39] ──
+  // Kein Pensum: wer am meisten spielt, haelt keine der beiden. Gefragt ist
+  // der eigene Anteil an allen Partien des Monats gegen den eigenen Anteil
+  // davor (`_stAnteilVor`), also wer DEUTLICH mehr oder weniger dabei war
+  // als sonst. Gemessen hielt den Aufdreher Johannes, Neunter der
+  // Siegquote, und den Rueckzug Henry. Der Aufdreher ist eine Fuegung und
+  // zaehlt halb: Anwesenheit ist kein Koennen [§C34], und der Rueckzug ist
+  // eine Schattenseite und zaehlt nichts.
+  {id:'aufdreher', name:'Der Aufdreher', short:'Aufdreher', ic:'aufdreher', tone:'purple', art:'ereignis',
+    monat:{
+      beiname:'Der Aufdreher',
+      art:'fuegung',
+      klasse:'besonders', aus:1.25,
+      wie:'Der eigene Anteil an allen Partien des Monats gegen den eigenen Anteil in den Monaten davor, gemittelt über die Monate mit mindestens acht eigenen Partien. Gefragt ist nicht, wer am meisten spielt, sondern wer deutlich mehr dabei ist als sonst.',
+      cond:'Mindestens doppelt so großer Anteil an den Partien des Monats wie in den Monaten davor, ab 8 Partien',
+      ...(_stWertung(
+        (p, C) => _stAnteilVor(p, C) != null,
+        (p, C) => (p.games / C.ms.length) / _stAnteilVor(p, C).anteil,
+        2,
+        (p, v, C) => `${pct(p.games / C.ms.length)} % aller Partien des Monats statt ${pct(_stAnteilVor(p, C).anteil)} % davor`))}},
+
+  {id:'rueckzug', name:'Der Rückzug', short:'Rückzug', ic:'rueckzug', tone:'red', art:'schatten',
+    monat:{
+      beiname:'Der Zurückgezogene',
+      art:'schatten',
+      klasse:'besonders', aus:1.22,
+      wie:'Dieselbe Rechnung wie beim Aufdreher, in die andere Richtung: der eigene Anteil an allen Partien des Monats gegen den eigenen Anteil in den Monaten davor.',
+      cond:'Höchstens ein Viertel des eigenen Anteils an den Partien aus den Monaten davor, ab 8 Partien',
+      ...(_stWertung(
+        (p, C) => _stAnteilVor(p, C) != null,
+        (p, C) => -(p.games / C.ms.length) / _stAnteilVor(p, C).anteil,
+        -0.25,
+        (p, v, C) => `${pct(p.games / C.ms.length)} % aller Partien des Monats statt ${pct(_stAnteilVor(p, C).anteil)} % davor`))}}
 ];
 
 // Die beiden Wertungen als eigene Listen — die Engines darunter bleiben

@@ -1503,9 +1503,14 @@ ok(_eigenErste.n >= 8 && _eigenErste.erste * 4 <= _eigenErste.n && Object.keys(_
 // hier ueber alle Partien des Monats, die Laufbahn davor ueber alle Partien
 // vor seinem ersten Tag.
 const _neuMon = ['ausnahmemonat','rollentausch','klartext','damage_control','destroyer','clutch','hardnight','favflop'];
+// Die Schattenseiten gegen das Eigene und der eigene Anteil an den Partien
+// [§C39], im selben Durchlauf: „Die Ehrfurcht" und „Der Rückfall" stehen auf
+// denselben Bausteinen wie „Der Spielverderber" und „Die Lernkurve", die
+// oben schon nachgerechnet werden.
+const _schattMon = ['fehlstart','kraefteverfall','einbruch','sattheit','schwarzewoche','aufdreher','rueckzug','noanswer'];
 const _neuSoll = (() => {
   const zu = JSON.parse(K.eval(`JSON.stringify(matches.reduce((o, m) =>
-    (o[m.id] = {sid:(seasonOf(m.created_at) || {}).id, tag:mdayKey(m), zu:_tagZu(mdayKey(m))}, o), {}))`));
+    (o[m.id] = {sid:(seasonOf(m.created_at) || {}).id, tag:mdayKey(m), zu:_tagZu(mdayKey(m)), wk:_wochenKey(m.created_at)}, o), {}))`));
   const beginn = JSON.parse(K.eval(`JSON.stringify(['2026-06','2026-07','2026-08'].reduce((o, sid) =>
     (o[sid] = seasonStart(sid).getTime(), o), {}))`));
   const ms = realMatches.slice().sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
@@ -1516,7 +1521,7 @@ const _neuSoll = (() => {
     [m.a1, m.a2, m.b1, m.b2].forEach(id => {
       const onA = id === m.a1 || id === m.a2;
       const pos = id === m.a1 ? m.a1_pos : id === m.a2 ? m.a2_pos : id === m.b1 ? m.b1_pos : m.b2_pos;
-      const x = {w:(m.winner === 'A') === onA, tag:z.tag, zu:z.zu, pos, ts:new Date(m.created_at).getTime(),
+      const x = {w:(m.winner === 'A') === onA, tag:z.tag, zu:z.zu, wk:z.wk, pos, ts:new Date(m.created_at).getTime(),
         gf:onA ? m.score_a : m.score_b, ga:onA ? m.score_b : m.score_a, e:onA ? m.exp_a : 1 - m.exp_a};
       (P[z.sid + '|' + id] = P[z.sid + '|' + id] || []).push(x);
       (vor[id] = vor[id] || []).push(x);
@@ -1526,7 +1531,29 @@ const _neuSoll = (() => {
   const davor = (sid, pid) => { const a = (vor[pid] || []).filter(x => x.ts < beginn[sid]);
     return a.length >= 30 ? {q:q(a), atk:a.filter(x => x.pos === 'atk').length / a.length} : null; };
   const eng = x => Math.abs(x.gf - x.ga) <= 2;
+  const ueber = a => q(a) - a.reduce((s, x) => s + x.e, 0) / a.length;
+  const tage = a => { const t = {}; a.filter(x => x.zu).forEach(x => (t[x.tag] = t[x.tag] || []).push(x)); return t; };
+  const anteilVor = (sid, pid) => { const l = Object.keys(M).filter(s => s < sid && (P[s + '|' + pid] || []).length >= 8)
+      .map(s => P[s + '|' + pid].length / M[s].length);
+    return l.length ? l.reduce((x, y) => x + y, 0) / l.length : null; };
   const W = {
+    fehlstart:(a) => { const t = Object.values(tage(a)).filter(d => d.length >= 3); if(t.length < 3) return null;
+      const erste = t.map(d => d[0]), rest = [].concat(...t.map(d => d.slice(1)));
+      return q(rest) - q(erste); },
+    kraefteverfall:(a) => { const t = Object.values(tage(a));
+      const frueh = [].concat(...t.map(d => d.slice(0, 3))), spaet = [].concat(...t.map(d => d.slice(3)));
+      return frueh.length >= 5 && spaet.length >= 5 ? q(frueh) - q(spaet) : null; },
+    einbruch:(a) => { const k = Object.keys(tage(a)).sort(); if(k.length < 4) return null;
+      const mitte = k[Math.floor(k.length / 2)], e1 = a.filter(x => x.tag < mitte), e2 = a.filter(x => x.tag >= mitte);
+      return e1.length >= 4 && e2.length >= 4 ? q(e1) - q(e2) : null; },
+    sattheit:(a) => { const n = a.filter((x, i) => i > 0 && a[i-1].w && a[i-1].tag === x.tag);
+      return n.length >= 5 ? -ueber(n) : null; },
+    schwarzewoche:(a) => { const w = {}; a.forEach(x => (w[x.wk] = w[x.wk] || []).push(x));
+      const l = Object.values(w).filter(d => d.length >= 5); return l.length >= 2 ? -Math.min(...l.map(ueber)) : null; },
+    aufdreher:(a, sid, pid) => { const v = anteilVor(sid, pid); return v ? (a.length / M[sid].length) / v : null; },
+    rueckzug:(a, sid, pid) => { const v = anteilVor(sid, pid); return v ? -(a.length / M[sid].length) / v : null; },
+    noanswer:(a) => { const n = a.filter((x, i) => i > 0 && !a[i-1].w), r = a.filter((x, i) => !(i > 0 && !a[i-1].w));
+      return n.length >= 5 && r.length >= 5 ? q(r) - q(n) : null; },
     ausnahmemonat:(a, sid, pid) => { const l = davor(sid, pid); return l ? q(a) - l.q : null; },
     rollentausch:(a, sid, pid) => { const l = davor(sid, pid);
       return l ? Math.abs(a.filter(x => x.pos === 'atk').length / a.length - l.atk) : null; },
@@ -1545,9 +1572,11 @@ const _neuSoll = (() => {
     favflop:(a) => { const f = a.filter(x => x.e > 0.55); return f.length >= 5 ? 1 - q(f) : null; }
   };
   const AB = {ausnahmemonat:0.10, rollentausch:0.18, klartext:0.07, damage_control:1.3,
-              destroyer:0.30, clutch:0.30, hardnight:-0.32, favflop:0.55};
+              destroyer:0.30, clutch:0.30, hardnight:-0.32, favflop:0.55,
+              fehlstart:0.40, kraefteverfall:0.30, einbruch:0.30, sattheit:0.15, schwarzewoche:0.35,
+              aufdreher:2, rueckzug:-0.25, noanswer:0.25};
   const out = {};
-  ['2026-06','2026-07','2026-08'].forEach(sid => _neuMon.forEach(id => {
+  ['2026-06','2026-07','2026-08'].forEach(sid => _neuMon.concat(_schattMon).forEach(id => {
     const feld = Object.keys(P).filter(k => k.startsWith(sid + '|') && P[k].length >= 8)
       .map(k => ({pid:k.split('|')[1], v:W[id](P[k], sid, k.split('|')[1])}))
       .filter(f => f.v != null && f.v >= AB[id] - 1e-12);
@@ -1558,12 +1587,13 @@ const _neuSoll = (() => {
 })();
 const _neuIst = JSON.parse(K.eval(`JSON.stringify(['2026-06','2026-07','2026-08'].reduce((o, sid) => {
   const C = _seasonTitleCtx(sid);
-  ${JSON.stringify(_neuMon)}.forEach(id => {
+  ${JSON.stringify(_neuMon.concat(_schattMon))}.forEach(id => {
     const r = SEASON_TITLE_BY_ID[id].pick(C, new Set());
     o[sid + ' ' + id] = r && r.halter ? r.halter.slice().sort().join() : ''; });
   return o; }, {}))`));
-const _neuAb = Object.keys(_neuSoll).filter(k => _neuSoll[k] !== _neuIst[k]);
-console.log('  neu im Monat:', Object.keys(_neuIst).filter(k => _neuIst[k])
+const _imKreis = l => k => l.includes(k.split(' ')[1]);
+const _neuAb = Object.keys(_neuSoll).filter(_imKreis(_neuMon)).filter(k => _neuSoll[k] !== _neuIst[k]);
+console.log('  neu im Monat:', Object.keys(_neuIst).filter(_imKreis(_neuMon)).filter(k => _neuIst[k])
   .map(k => k.slice(5) + ' ' + _neuIst[k].split(',').map(nm).join('/')).join(' · '));
 ok(_neuAb.length === 0, 'die acht neuen Monatschroniken stimmen mit der Nachrechnung aus den rohen Partien',
    _neuAb.map(k => k + ': ' + (_neuIst[k].split(',').map(nm).join('/') || '–') + ' statt '
@@ -1571,9 +1601,28 @@ ok(_neuAb.length === 0, 'die acht neuen Monatschroniken stimmen mit der Nachrech
 // Kalibriert sind sie auf fuenfzehn Haltungen in drei Monaten, keine mehr
 // als zwei: eine Schwelle, die rutscht, faellt hier auf und nicht erst am
 // Prestige.
-const _neuZahl = Object.values(_neuIst).filter(Boolean).reduce((n, v) => n + v.split(',').length, 0);
+const _haltungen = l => Object.keys(_neuIst).filter(_imKreis(l)).filter(k => _neuIst[k])
+  .reduce((n, k) => n + _neuIst[k].split(',').length, 0);
+const _neuZahl = _haltungen(_neuMon);
 ok(_neuZahl === 15 && _neuMon.every(id => Object.keys(_neuIst).filter(k => k.endsWith(' ' + id) && _neuIst[k]).length <= 2),
    'die acht neuen Monatschroniken sind fuenfzehnmal vergeben, wie kalibriert', _neuZahl + ' Haltungen');
+const _schAb = Object.keys(_neuSoll).filter(_imKreis(_schattMon)).filter(k => _neuSoll[k] !== _neuIst[k]);
+console.log('  Schatten und Anteil:', Object.keys(_neuIst).filter(_imKreis(_schattMon)).filter(k => _neuIst[k])
+  .map(k => k.slice(5) + ' ' + _neuIst[k].split(',').map(nm).join('/')).join(' · '));
+ok(_schAb.length === 0, 'die Schattenseiten gegen das Eigene und der Anteil an den Partien stimmen mit der Nachrechnung',
+   _schAb.map(k => k + ': ' + (_neuIst[k].split(',').map(nm).join('/') || '–') + ' statt '
+     + (_neuSoll[k].split(',').map(nm).join('/') || '–')).join(' · '));
+// Kalibriert auf zwoelf Haltungen, und keine geht an die ersten drei eines
+// Monats: eine Schattenseite auf das Niveau gehoerte immer dem Letzten,
+// ein Aufdreher auf die Zahl dem, der am meisten spielt.
+const _schZahl = _haltungen(_schattMon);
+const _schErste = JSON.parse(K.eval(`JSON.stringify(['2026-06','2026-07','2026-08'].reduce((o, sid) =>
+  (o[sid] = _seasonTitleCtx(sid).rankAll.slice(0, 3).map(r => r.id), o), {}))`));
+const _schOben = Object.keys(_neuIst).filter(_imKreis(_schattMon)).filter(k => _neuIst[k])
+  .filter(k => _neuIst[k].split(',').some(p => _schErste[k.split(' ')[0]].includes(p)));
+ok(_schZahl === 12 && _schOben.length === 0,
+   'sie sind zwoelfmal vergeben, wie kalibriert, und nie an die ersten drei eines Monats',
+   _schZahl + ' Haltungen' + (_schOben.length ? ' · oben: ' + _schOben.join(', ') : ''));
 
 // ─── 17. v9.22: Ausnahmetage und alle Rekorde im Profil ─────────────
 console.log('\n=== 17. AUSNAHMETAGE UND ALLE REKORDE IM PROFIL ===');
@@ -2856,15 +2905,15 @@ ok(_sch.posten > 0, 'die gehaltenen Rekorde stehen als Prestige-Quelle da',
 ok(_sch.ausSchande.length === 0, 'keine Schattenseite gibt Prestige',
    _sch.ausSchande.slice(0, 4).join(', ') || 'keine');
 
-// Sieben Schand-Disziplinen tragen beide Zeitachsen [§13.1]: dieselbe Frage
+// Acht Schand-Disziplinen tragen beide Zeitachsen [§13.1]: dieselbe Frage
 // auf Monat UND Laufbahn gehoert in EINE Disziplin, sonst stehen zwei Namen
 // und zwei Icons fuer denselben Gedanken. „Der Wackelkandidat" kam dazu, seit
 // eine Chronik ihre Schwelle 1,2 σ und nicht mehr 1,5 σ hinausschieben muss:
-// im Monat liegt sie bei 1,38 σ [§C39].
-['sieve','abyss','hardluck','angstgegner','untersoll','misfire','favflop'].forEach(id =>
+// im Monat liegt sie bei 1,38 σ [§C39]; ebenso „Die stumme Antwort" mit 2,02 σ.
+['sieve','abyss','hardluck','angstgegner','untersoll','misfire','favflop','noanswer'].forEach(id =>
   ok(K.eval(`!!SEASON_TITLE_BY_ID['${id}'] && !!CHRONICLE_BY_ID['${id}']`),
      'Schande ' + id + ' traegt beide Zeitachsen'));
-['noanswer','ballast'].forEach(id =>
+['ballast'].forEach(id =>
   ok(K.eval(`!!CHRONICLE_BY_ID['${id}'] && !SEASON_TITLE_BY_ID['${id}']`),
      'Schandrekord ' + id + ' traegt nur die Laufbahn'));
 

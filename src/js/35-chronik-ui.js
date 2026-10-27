@@ -763,7 +763,10 @@ function _lchronTabelle(cols, rows){
     <div class="lchron-wrap">
       <table class="lchron">
         <thead><tr><th>Spieler</th>${cols.map(T =>
-          `<th class="${T.live ? 'live' : ''}" data-season-table="${esc(T.sid)}"><span class="lc-m">${esc(String(T.label).split(' ')[0].slice(0,3))}</span>`
+          // Der Monat trägt sein Jahr: nach dem zweiten Oktober stünden sonst
+          // zwei Spalten „OKT" nebeneinander, und welche welche ist, sagte
+          // erst ein Tipp auf den Kopf.
+          `<th class="${T.live ? 'live' : ''}" data-season-table="${esc(T.sid)}"><span class="lc-m">${esc(String(T.label).split(' ')[0].slice(0,3))}<span class="lc-j">’${esc(String(T.sid).slice(2, 4))}</span></span>`
           + `<span class="lc-z num">${T.awarded.length}</span>${band(T)}</th>`
         ).join('')}</tr></thead>
         <tbody>
