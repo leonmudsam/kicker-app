@@ -442,14 +442,18 @@ ringed.forEach(id => rings[id].forEach(r => {
 }));
 ok(ringed.length <= NAMES.length, 'Ringe nicht mehr als Spieler');
 ok(ringed.every(id => rings[id].length), 'jeder Ring vollständig');
-// Jeder Zustand gehört so vielen, wie ihn tragen können: eine Woche, ein
-// Tag und ein Meister haben einen, das Team zwei. Und jeder Spieler hat
-// höchstens eine Serie — eine gute und eine schlechte zugleich gibt es nicht.
+// Jeder Zustand gehört so vielen, wie ihn tragen können: der Meister einem,
+// das Team zwei. Woche und Tag zählt jeder aus seinem eigenen letzten
+// Zeitraum [§13.7], also tragen sie mehrere zugleich — aber jede Woche und
+// jeden Spieltag nur einer, denn jeder hat nur einen Sieger. Und jeder
+// Spieler hat höchstens eine Serie — eine gute und eine schlechte zugleich
+// gibt es nicht.
 {
-  const je = {};
-  ringed.forEach(id => rings[id].forEach(r => { je[r.kind] = (je[r.kind] || 0) + 1; }));
-  ok(['champ','potw','potd'].every(k => (je[k] || 0) <= 1) && (je.tots || 0) <= 2,
-     'Meister, Woche und Tag tragen je einer, das Team zwei', JSON.stringify(je));
+  const je = {}, zeitraum = {};
+  ringed.forEach(id => rings[id].forEach(r => { je[r.kind] = (je[r.kind] || 0) + 1;
+    if(r.kind === 'potw' || r.kind === 'potd') zeitraum[r.kind + '|' + r.sub] = (zeitraum[r.kind + '|' + r.sub] || 0) + 1; }));
+  ok((je.champ || 0) <= 1 && (je.tots || 0) <= 2 && Object.values(zeitraum).every(n => n === 1),
+     'der Meister trägt einer, das Team zwei, jede Woche und jeden Spieltag einer', JSON.stringify({je, zeitraum}));
   ok(ringed.every(id => rings[id].filter(r => /blaze|hot|abyss|cold/.test(r.kind)).length <= 1),
      'höchstens eine Serie je Spieler');
 }

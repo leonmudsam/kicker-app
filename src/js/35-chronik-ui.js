@@ -1013,26 +1013,37 @@ function avatarRings(){
     if(team) team.ids.forEach(id => put(id, 'tots',
       'mit ' + pname(team.ids.find(x => x !== id) || id)));
 
-    // Player of the Week der letzten abgeschlossenen Woche, Player of the
-    // Day des letzten abgeschlossenen Spieltags — derselbe, den „Letzte
-    // Woche" und „Letzter Tag" in der Liga zeigen. Gezählt wird der letzte
-    // Zeitraum MIT Partien, nicht der letzte mit einem Sieger: hatte die
-    // letzte Woche keinen, trug sonst der Sieger einer älteren das Zeichen,
-    // als wäre er es noch.
+    // Player of the Week und Player of the Day: je Spieler aus SEINER
+    // letzten abgeschlossenen Woche und SEINEM letzten abgeschlossenen
+    // Spieltag mit eigenen Partien. Wer dort gewann, trägt das Zeichen, bis
+    // ein Zeitraum zu Ende geht, in dem er wieder gespielt und nicht gewonnen
+    // hat. Gezählt wurde der letzte Zeitraum der LIGA: Leon war am 21.10.
+    // Spieler des Tages, am 22., 23. und 24. spielte die Liga ohne ihn, und
+    // sein Zeichen ging an Spieltage, an denen er gar nicht angetreten war.
+    // Mehrere tragen es so zugleich, jeder für seinen letzten Spieltag; der
+    // Titelverteidiger bleibt einer, die Vorsaison hat nur einen Meister.
+    // Ein Zeitraum ohne Sieger nimmt es auch: wer an seinem letzten Tag nicht
+    // gewann, trug sonst den Sieg eines älteren, als wäre er es noch.
     // Nach der Zeit der Partie, nicht nach dem Schlüssel: „2027-W10" steht
     // als Text vor „2027-W9", und so trug im März der Sieger der neunten
     // Woche das Zeichen bis in die dreizehnte.
-    const laufendeWoche = _wochenKey(Date.now()), tagZu = {};
-    let wkKey = null, tgKey = null, wkT = -Infinity, tgT = -Infinity;
+    const laufendeWoche = _wochenKey(Date.now()), tagZu = {}, letzte = {};
     matches.forEach(m => {
       const t = mts(m), w = _wochenKey(m.created_at), d = mdayKey(m);
       if(tagZu[d] === undefined) tagZu[d] = _tagZu(d);
-      if(w !== laufendeWoche && t > wkT){ wkT = t; wkKey = w; }
-      if(tagZu[d] && t > tgT){ tgT = t; tgKey = d; }
+      [m.a1, m.a2, m.b1, m.b2].forEach(pid => {
+        if(!pid) return;
+        const l = letzte[pid] || (letzte[pid] = {wkT:-Infinity, tgT:-Infinity, wk:null, tg:null});
+        if(w !== laufendeWoche && t > l.wkT){ l.wkT = t; l.wk = w; }
+        if(tagZu[d] && t > l.tgT){ l.tgT = t; l.tg = d; }
+      });
     });
     const wk = _periodWinnerMap(matches, 'week'), tg = _periodWinnerMap(matches, 'day');
-    if(wkKey && wk[wkKey]) put(wk[wkKey], 'potw', 'Woche ' + wkKey.split('-W')[1]);
-    if(tgKey && tg[tgKey]) put(tg[tgKey], 'potd', 'Spieltag ' + datumFmt(new Date(tgKey + 'T12:00:00Z'), 'tm'));
+    Object.keys(letzte).forEach(pid => {
+      const l = letzte[pid];
+      if(l.wk && wk[l.wk] === pid) put(pid, 'potw', 'Woche ' + l.wk.split('-W')[1]);
+      if(l.tg && tg[l.tg] === pid) put(pid, 'potd', 'Spieltag ' + datumFmt(new Date(l.tg + 'T12:00:00Z'), 'tm'));
+    });
 
     // Serien zuletzt. Eine Siegesserie und eine Niederlagenserie schließen
     // sich aus, neben allem anderen steht die Serie als eigenes Zeichen.
