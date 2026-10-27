@@ -2491,13 +2491,14 @@ ok(_ms.length > 0 && _ms.every(x => x.badge === x.titel && x.punkte > 0),
 //    uebernommen, nicht weggeklickt. Ebenso, wenn sich die Elo der Partien
 //    absichtlich aendert: der Positionsbonus [§C44] verschiebt jedes Delta
 //    und damit jede Auszeichnung, die an der Elo haengt. Gegen 50:50
-//    gemessen hielt Henry 131, seit er gegen die eigene Aufteilung misst
-//    und hoechstens 10 % in jede Richtung reicht, 146.
+//    gemessen hielt Henry 131, gegen die eigene Aufteilung 146, seit der
+//    Ausschlag der Klarheit folgt und die staerkere Seite einen Daempfer
+//    traegt, 141.
 const _bz = K.eval(`players.map(p => {
   const b = getCachedBadges(p.id) || [];
   return p.name + ':' + b.length + '/' + b.reduce((n, x) => n + (x.count || 0), 0);
 }).join(' ')`);
-const _bzSoll = 'Alex:18/34 Anton:7/7 Henry:29/146 Jane:26/137 Jannik:22/84 Johannes:24/68 Julian:33/232 Leo:30/234 Leon:39/427 Martin:37/330 Maxi:33/389 Stefan:21/60';
+const _bzSoll = 'Alex:18/35 Anton:7/7 Henry:29/141 Jane:26/133 Jannik:22/83 Johannes:24/70 Julian:33/230 Leo:31/236 Leon:39/429 Martin:36/323 Maxi:33/388 Stefan:21/58';
 ok(_bz === _bzSoll, 'jeder Spieler haelt dieselben Auszeichnungen wie gemessen', _bz);
 
 // ══════════════════════════════════════════════════════════════════════

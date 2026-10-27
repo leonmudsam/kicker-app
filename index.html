@@ -6408,7 +6408,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.27.737acb03';
+const BUILD_VERSION='2026.10.27.1d63b2d2';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -7534,12 +7534,14 @@ function positionsLage(p){
 function positionsProfilWert(p){ return positionsLage(p).wert; }
 
 const POS_GRENZE = 0.10;
+const POS_DAEMPFER = 0.05;
 function posFactor(lage, pos, sw){
-  const a = lage.wert, s = lage.aG + lage.dG ? lage.anteil : .5;
-  const fA = (sw || 0) * (1 - s) * (1 - 2 * a), fD = -(sw || 0) * s * (1 - 2 * a);
-  const spitze = Math.max(Math.abs(fA), Math.abs(fD));
-  const k = spitze > POS_GRENZE ? POS_GRENZE / spitze : 1;
-  return 1 + k * (pos === 'atk' ? fA : fD);
+  const a = lage.wert;
+  const klar = Math.min(1, Math.abs(a - .5) / .45);
+  const anteil = Math.min(1, 2 * (sw || 0) * klar);
+  if(!anteil) return 1;
+  const schwach = a < .5 ? 'atk' : 'def';
+  return pos === schwach ? 1 + POS_GRENZE * anteil : 1 - POS_DAEMPFER * anteil;
 }
 function atkStrengthFrom(id, matchSubset){
   return positionsProfilWert(posPerfFrom(id,matchSubset));
@@ -14093,7 +14095,7 @@ function vSettings(){
         <b style="color:var(--acid)">K-Faktor</b> — Wie stark einzelne Matches die Elo verändern. Hoch = schnelle Änderungen, niedrig = stabile Elo.<br>
         <b style="color:var(--acid)">Start-Elo</b> — Der Wert auf den jeder Spieler zu Saisonbeginn zurückgesetzt wird. Höhere Werte machen Verluste in den ersten Matches "weniger schmerzhaft".<br>
         <b style="color:var(--acid)">Risiko-Split</b> — Wie viel Last der schwächere Mitspieler trägt. Bei ${c.risk} % verliert weniger Elo, wer mit einem deutlich schwächeren Partner spielt.<br>
-        <b style="color:var(--acid)">Positions-Swing</b> — Ausgleich für die schwächere Position. Ein Sieg dort bringt mehr Elo, eine Niederlage kostet weniger; auf der stärkeren Position ist es umgekehrt. Höchstens ${Math.round(POS_GRENZE*100)} % in jede Richtung, der Regler bestimmt, wie schnell diese Grenze erreicht ist. Über die eigene Aufteilung hebt sich beides auf. Welche Position die schwächere ist, sagt das Positions-Profil: vor allem Sieg und Torverhältnis gegen die Erwartung, die Gegner und Mitspieler kennt, und daneben, wo jemand spielt.<br>
+        <b style="color:var(--acid)">Positions-Swing</b> — Ausgleich für die schwächere Position. Ein Sieg dort bringt mehr Elo, und eine Niederlage kostet genauso viel weniger, höchstens ${Math.round(POS_GRENZE*100)} %. Auf der stärkeren Position dämpft ein Sieg, und eine Niederlage kostet zusätzlich, höchstens ${Math.round(POS_DAEMPFER*100)} %. Wie viel davon gilt, folgt der Klarheit der Einstufung; der Regler bestimmt, wie schnell die Grenze erreicht ist. Welche Position die schwächere ist, sagt das Positions-Profil: vor allem Sieg und Torverhältnis gegen die Erwartung, die Gegner und Mitspieler kennt, und daneben, wo jemand spielt.<br>
         <b style="color:var(--acid)">Sieg-Boost</b> — Siege bringen ${c.winBoost-100}% mehr als Niederlagen kosten. Sorgt für langfristigen Aufwärtstrend.<br>
         <b style="color:var(--acid)">MoV-Dämpfung</b> — Tordifferenz bei Niederlagen nur ${c.movDamp}% so stark wie bei Siegen. Eine 0:10 Niederlage bestraft so nicht 3× so hart wie 5:10.<br>
         <b style="color:var(--acid)">MoV-Max-Boost</b> — Maximaler Multiplikator durch Tordifferenz bei einem Kantersieg. ${c.movMax}% heißt: ein 10:0 zählt bis zu ${(100+c.movMax)}% des normalen Werts.<br>
@@ -16172,13 +16174,12 @@ function zeigeProfilPosInfo(id){
   const proz = f => { const q = Math.abs(f - 1) * 100; return q >= 9.95 ? String(Math.round(q)) : komma(q, 1); };
   const [plus, minus] = fS >= fD ? [['im Sturm', fS], ['in der Abwehr', fD]] : [['in der Abwehr', fD], ['im Sturm', fS]];
   const gross = w => w[0].toUpperCase() + w.slice(1);
-  const grenze = Math.round(POS_GRENZE * 100);
+  const grenze = Math.round(POS_GRENZE * 100), daempfer = Math.round(POS_DAEMPFER * 100);
   const wirkung = Math.abs(plus[1] - 1) < .0005
     ? 'In der Elo zählen beide Positionen gleich.'
     : `In der Elo bringt ein Sieg ${plus[0]} ${proz(plus[1])} % mehr, und eine Niederlage dort kostet ${proz(plus[1])} % weniger. `
-      + (Math.abs(minus[1] - 1) < .0005 ? `${gross(minus[0])} zählt eine Partie unverändert.`
-        : `${gross(minus[0])} ist es umgekehrt, ${proz(minus[1])} %.`)
-      + ` Höchstens ${grenze} % in jede Richtung; über die eigene Aufteilung hebt sich beides auf.`;
+      + `${gross(minus[0])} ist es umgekehrt, ${proz(minus[1])} %.`
+      + ` Je klarer die Einstufung, desto mehr: auf der schwächeren Seite höchstens ${grenze} %, auf der stärkeren höchstens ${daempfer} %.`;
   openSheet(blattKopfHtml({ic:'info', titel:'So entsteht die Einstufung', unter:pname(id)})
     + `<div class="pos-info">
       <div class="pos-info-tab">${zeile('', '<b>Sturm</b>', '<b>Abwehr</b>')}${
@@ -18733,7 +18734,11 @@ function showMatchDetail(mid){
         factors.push({label:'Underdog-Boost',val:undEffect, desc});
       }
       if(Math.abs(b.riskEffect)>0.1) factors.push({label:b.riskShare<1?'Risiko-Split (stark)':'Risiko-Split (schwach)',val:b.riskEffect,desc:'Stärkeverteilung im Team'});
-      if(Math.abs(b.posEffect)>0.1) factors.push({label:'Positions-Bonus',val:b.posEffect,desc:(b.posFactor>1?'Schwache':'Starke')+' Position'});
+      if(Math.abs(b.posEffect)>0.1){
+        const schwach=b.posFactor>1, pz=komma(Math.abs(b.posFactor-1)*100,1)+'% ';
+        factors.push({label:'Positions-Bonus',val:b.posEffect,
+          desc:(schwach?'Schwache':'Starke')+' Position · '+pz+(schwach?(b.won?'Bonus':'Schutz'):(b.won?'Dämpfer':'Abzug'))});
+      }
       factors.push({label:'Spielbonus',val:b.matchBonus,desc:'fest +'+komma(b.matchBonus,2)+' je Match'});
       const factorRows=factors.map(f=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:11px">
         <div><span style="color:var(--ink)">${f.label}</span> <span style="color:var(--muted);font-size:10px">${f.desc}</span></div>
