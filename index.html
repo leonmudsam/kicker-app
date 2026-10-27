@@ -6408,7 +6408,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.27.18d49763';
+const BUILD_VERSION='2026.10.27.901b349e';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -18609,7 +18609,7 @@ function showMatchDetail(mid){
       const b=bd[id]; if(!b)return '';
       const sign=v=>v>=0 ? '+'+komma(v,2) : komma(v,2);
       const hasDb=dbDeltas[id]!==undefined;
-      const headerDelta=hasDb?dbDeltas[id]:Math.round(b.finalDelta);
+      const headerDelta=b.finalDelta;
       const fmtElo=v=>Number.isInteger(v)?String(v):komma(v,1);
       const seasonBefore=fmtElo(hasDb?dbBefore[id]:b.startElo);
       const seasonAfter=fmtElo(hasDb?dbAfter[id]:b.endElo);
@@ -18638,12 +18638,11 @@ function showMatchDetail(mid){
           desc:(schwach?'Schwache':'Starke')+' Position · '+pz+(schwach?(b.won?'Bonus':'Schutz'):(b.won?'Dämpfer':'Abzug'))});
       }
       factors.push({label:'Spielbonus',val:b.matchBonus,desc:'fest +'+komma(b.matchBonus,2)+' je Match'});
-      if(!rowDiverged && zeigt(headerDelta-simDelta)) factors.push({label:'Rundung',val:headerDelta-simDelta,desc:'verbucht wird in ganzen Elo'});
       const factorRows=factors.map(f=>`<div class="ea-posten" style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:11px">
         <div><span style="color:var(--ink)">${f.label}</span> <span style="color:var(--muted);font-size:10px">${f.desc}</span></div>
         <span class="ea-wert" style="font-family:'Sometype Mono',monospace;font-weight:700;color:${f.val>=0?'var(--acid)':'var(--red)'}">${sign(f.val)}</span>
       </div>`).join('');
-      const divergeNote=rowDiverged?`<div class="ea-heute" style="font-size:10px;color:var(--gold);margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);font-family:'Sometype Mono',monospace">Mit den heutigen Einstellungen wären es ${sign(simDelta)}</div>`:'';
+      const divergeNote=rowDiverged?`<div class="ea-heute" style="font-size:10px;color:var(--gold);margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);font-family:'Sometype Mono',monospace">Verbucht wurden ${dbDeltas[id]>=0?'+':''}${dbDeltas[id]} mit den Einstellungen vom Tag der Partie</div>`:'';
       return `<div class="ea-spieler" style="background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:12px;margin-top:8px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <span style="font-weight:700;font-size:13px">${esc(pname(id))}</span>
