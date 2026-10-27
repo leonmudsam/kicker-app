@@ -66,13 +66,12 @@ function zeigeProfilPosInfo(id){
   const proz = f => { const q = Math.abs(f - 1) * 100; return q >= 9.95 ? String(Math.round(q)) : komma(q, 1); };
   const [plus, minus] = fS >= fD ? [['im Sturm', fS], ['in der Abwehr', fD]] : [['in der Abwehr', fD], ['im Sturm', fS]];
   const gross = w => w[0].toUpperCase() + w.slice(1);
-  const grenze = Math.round(POS_GRENZE * 100);
+  const grenze = Math.round(POS_GRENZE * 100), daempfer = Math.round(POS_DAEMPFER * 100);
   const wirkung = Math.abs(plus[1] - 1) < .0005
     ? 'In der Elo zählen beide Positionen gleich.'
     : `In der Elo bringt ein Sieg ${plus[0]} ${proz(plus[1])} % mehr, und eine Niederlage dort kostet ${proz(plus[1])} % weniger. `
-      + (Math.abs(minus[1] - 1) < .0005 ? `${gross(minus[0])} zählt eine Partie unverändert.`
-        : `${gross(minus[0])} ist es umgekehrt, ${proz(minus[1])} %.`)
-      + ` Höchstens ${grenze} % in jede Richtung; über die eigene Aufteilung hebt sich beides auf.`;
+      + `${gross(minus[0])} ist es umgekehrt, ${proz(minus[1])} %.`
+      + ` Je klarer die Einstufung, desto mehr: auf der schwächeren Seite höchstens ${grenze} %, auf der stärkeren höchstens ${daempfer} %.`;
   openSheet(blattKopfHtml({ic:'info', titel:'So entsteht die Einstufung', unter:pname(id)})
     + `<div class="pos-info">
       <div class="pos-info-tab">${zeile('', '<b>Sturm</b>', '<b>Abwehr</b>')}${

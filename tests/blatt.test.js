@@ -3408,7 +3408,7 @@ const ok = (c, msg, det) => {
   // Zahlen, aus denen `positionsLage` rechnet —, dazu die Wirkung in der
   // Elo, ohne die Überschrift höher zu machen als die übrigen. Henry spielt
   // fast nur hinten und ist vorne schwächer: ein Sieg im Sturm bringt ihm
-  // den vollen Ausgleich von 10 %.
+  // klar mehr, ein Sieg hinten halb so viel weniger.
   const einstufung = await page.evaluate(async () => {
     const K = window.__k.eval.bind(window.__k);
     const pid = K('(players.find(p=>p.name==="Henry")||{}).id');
@@ -3451,8 +3451,8 @@ const ok = (c, msg, det) => {
   ok(einstufung.offen && einstufung.soll.every(_reiheDa) && einstufung.klImBlatt,
      'der Knopf im Positions-Profil öffnet die Einstufung mit Partien, Siegquote, Elo-Abstand zu Gegnern und Mitspieler und der Leistung gegen die Erwartung je Position, Sturm links, Abwehr rechts',
      einstufung.soll.filter(r => !_reiheDa(r)).map(r => r.join(' ')).join(' | ') + ' fehlt · ' + einstufung.zellen.join(' | ') + ' · ' + einstufung.kl);
-  ok(einstufung.wirkungDa && Math.abs(einstufung.f[0] - 1.1) < 1e-12 && einstufung.f[1] < 1,
-     'das Blatt nennt die Wirkung in der Elo: für Henry bringt ein Sieg im Sturm die vollen 10 % mehr, die Abwehr zählt etwas weniger',
+  ok(einstufung.wirkungDa && einstufung.f[0] > 1.05 && Math.abs((1 - einstufung.f[1]) - (einstufung.f[0] - 1) / 2) < 1e-12,
+     'das Blatt nennt die Wirkung in der Elo: für Henry bringt ein Sieg im Sturm klar mehr, die Abwehr dämpft halb so viel',
      einstufung.wirkung + ' · ' + JSON.stringify(einstufung.f));
   ok(einstufung.raus.length === 0 && einstufung.mitKnopf <= einstufung.ohne + .5,
      'das Blatt der Einstufung läuft bei 360 px nicht über, und der Knopf macht die Überschrift nicht höher',

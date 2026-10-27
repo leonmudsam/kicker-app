@@ -498,8 +498,14 @@ function showMatchDetail(mid){
       if(Math.abs(b.riskEffect)>0.1) factors.push({label:b.riskShare<1?'Risiko-Split (stark)':'Risiko-Split (schwach)',val:b.riskEffect,desc:'Stärkeverteilung im Team'});
       // Schwach oder stark sagt der Faktor, nicht der Multiplikator: nach
       // einer Niederlage auf der schwachen Position ist der kleiner als
-      // eins, und dort stand „Starke Position".
-      if(Math.abs(b.posEffect)>0.1) factors.push({label:'Positions-Bonus',val:b.posEffect,desc:(b.posFactor>1?'Schwache':'Starke')+' Position'});
+      // eins, und dort stand „Starke Position". Dahinter steht, was der
+      // Faktor tut, in Prozent wie beim Sieg-Boost: ohne die Zahl war nicht
+      // zu sehen, warum 0,49 bei einem und 2,48 beim anderen stand [§C44].
+      if(Math.abs(b.posEffect)>0.1){
+        const schwach=b.posFactor>1, pz=komma(Math.abs(b.posFactor-1)*100,1)+'% ';
+        factors.push({label:'Positions-Bonus',val:b.posEffect,
+          desc:(schwach?'Schwache':'Starke')+' Position · '+pz+(schwach?(b.won?'Bonus':'Schutz'):(b.won?'Dämpfer':'Abzug'))});
+      }
       factors.push({label:'Spielbonus',val:b.matchBonus,desc:'fest +'+komma(b.matchBonus,2)+' je Match'});
       const factorRows=factors.map(f=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:11px">
         <div><span style="color:var(--ink)">${f.label}</span> <span style="color:var(--muted);font-size:10px">${f.desc}</span></div>

@@ -154,20 +154,28 @@ const profil=K(`(() => {
   // die stärkere Rolle aus der Leistung gegen die Erwartung, nicht aus der Siegquote
   const staerker=[lage({aG:20,aW:12,dG:20,dW:10,aPerf:-.05*20,dPerf:.1*20}).staerker,
     lage({aG:40,dG:40,aPerf:.01*40,dPerf:0}).staerker, lage({aG:0,dG:40,dPerf:.2*40}).staerker];
-  // höchstens 10 % in jede Richtung, und über die eigene Aufteilung hebt
-  // sich der Bonus auf; mit dem vollen Regler stoßen beide Richtungen an
+  // die schwächere Seite bis 10 %, die stärkere halb so viel, bis 5 %; mit
+  // dem vollen Regler stoßen die klaren Profile an beide Grenzen
   const seiten=sw=>players.map(p=>{const l=positionsLage(posPerfFrom(p.id,matches));
     const f=[posFactor(l,'atk',sw),posFactor(l,'def',sw)];
-    return {f, mittel:l.anteil*(f[0]-1)+(1-l.anteil)*(f[1]-1)};});
-  const voll=seiten(1), vier=seiten(.4);
+    return {f, schwach:Math.max(...f)-1, stark:1-Math.min(...f)};});
+  const voll=seiten(1), sechs=seiten(.6);
   const hl=positionsLage(posPerfFrom(${JSON.stringify(ids[2])},matches));
-  const nurHinten=positionsLage({aG:0,dG:200,dPerf:-.1*200});
+  // die Höhe folgt der Klarheit der Einstufung und nicht dem Anteil der
+  // Partien: dasselbe Profil aus 50:50 und aus 90:10 gibt denselben Faktor,
+  // und ein klarerer Stürmer (78 %) trägt mehr als ein weniger klarer
+  // Verteidiger (72 %)
+  const bau=(wert,anteil)=>({wert,anteil,aG:anteil*100,dG:(1-anteil)*100});
+  const anteilEgal=posFactor(bau(.3,.5),'def',.6)===posFactor(bau(.3,.1),'def',.6)
+    && posFactor(bau(.3,.5),'atk',.6)===posFactor(bau(.3,.1),'atk',.6);
+  const klarer=[1-posFactor(bau(.78,.68),'atk',.6), 1-posFactor(bau(.28,.47),'def',.6)];
+  const mitte=[posFactor(bau(.5,.5),'atk',.6), posFactor(bau(.5,.5),'def',.6)];
   return {henry:{wert:henry.wert,anteil:henry.anteil,kl:posClassify(henry.wert).label},
     gleich:gleich.wert, gleichSoll:1/(1+Math.pow(188/16,1-15/30*.75)), wenig:wenig.rA, viel:viel.rA, mehrVorne, besserVorne,
     mengeKlein:mengeKlein.wert, mengeGross:mengeGross.wert, leistung, menge, nurTore, nurSiege, tor, staerker,
     unten:Math.min(...voll.map(x=>Math.min(...x.f))), oben:Math.max(...voll.map(x=>Math.max(...x.f))),
-    mittel:Math.max(...voll.concat(vier).map(x=>Math.abs(x.mittel))),
-    henryElo:[posFactor(hl,'def',.4),posFactor(hl,'atk',.4)], nurHinten:posFactor(nurHinten,'def',.4),
+    halb:Math.max(...voll.concat(sechs).map(x=>Math.abs(x.stark-x.schwach/2))),
+    henryElo:[posFactor(hl,'def',.6),posFactor(hl,'atk',.6)], anteilEgal, klarer, mitte,
     profil:players.every(p=>atkStrength(p.id)===positionsLage(posPerfFrom(p.id,matches)).wert)};
 })()`);
 ok(profil.henry.kl==='Reiner Verteidiger' && profil.henry.wert<profil.henry.anteil,
@@ -187,12 +195,15 @@ ok(Math.abs(profil.nurTore-profil.nurSiege)<1e-12 && profil.nurTore>.5
   +JSON.stringify({nurTore:profil.nurTore,nurSiege:profil.nurSiege,tor:profil.tor}));
 ok(profil.staerker.join()==='def,beide,beide',
   'Die stärkere Rolle sagt die Leistung gegen die Erwartung, gleichauf bis drei Prozentpunkte, ohne Partien keine: '+profil.staerker.join());
-ok(Math.abs(profil.unten-.9)<1e-12 && Math.abs(profil.oben-1.1)<1e-12,
-  'Der Positionsbonus reicht höchstens 10 % in jede Richtung, auch mit dem vollen Regler: '+profil.unten+' bis '+profil.oben);
-ok(Math.abs(profil.henryElo[1]-1.1)<1e-12 && profil.henryElo[0]<1 && profil.henryElo[0]>.98 && profil.nurHinten===1,
-  'Henry bekommt vorne den vollen Ausgleich von 10 %, und hinten kostet die Stammposition etwas, unter 2 %; wer nie vorne spielt, zahlt nichts: '
-  +JSON.stringify({henry:profil.henryElo,nurHinten:profil.nurHinten}));
-ok(profil.mittel<1e-12, 'Über die eigene Aufteilung hebt sich der Positionsbonus auf, auch wo er an der Grenze gekappt ist: '+profil.mittel);
+ok(Math.abs(profil.unten-.95)<1e-12 && Math.abs(profil.oben-1.1)<1e-12 && profil.halb<1e-12,
+  'Die schwächere Seite reicht bis 10 %, die stärkere halb so weit, bis 5 %, auch mit dem vollen Regler: '
+  +profil.unten+' bis '+profil.oben+', Abweichung von der Hälfte '+profil.halb);
+ok(Math.abs(profil.henryElo[1]-1.1)<1e-12 && Math.abs(profil.henryElo[0]-.95)<1e-12,
+  'Henry bekommt vorne die vollen 10 %, und hinten dämpft ein Sieg um 5 % und eine Niederlage kostet 5 % mehr: '
+  +JSON.stringify(profil.henryElo));
+ok(profil.anteilEgal && profil.klarer[0]>profil.klarer[1] && profil.klarer[1]>0 && profil.mitte.join()==='1,1',
+  'Die Höhe folgt der Klarheit der Einstufung, nicht dem Anteil der Partien; bei 50 % zählt keine Seite anders: '
+  +JSON.stringify({klarer:profil.klarer,mitte:profil.mitte}));
 ok(profil.profil, 'Profil und Stärke für das Durchwechseln sind dieselbe Zahl');
 // Der Elo-Abstand zu Gegnern und Mitspieler, den das Blatt der Einstufung
 // zeigt, nachgerechnet aus dem Stand vor jeder Sturmpartie von Henry.
@@ -225,8 +236,14 @@ const eloLage=K(`(() => {
     created_at:new Date(t0+20*6e5).toISOString(),deltas:{}};
   const bd=simulateEloWithSliders(vorher.concat(letzte)).history[9].breakdowns.e0;
   const l=positionsLage(posPerfFrom('e0',vorher));
-  return {wert:bd.posStrength, soll:l.wert, faktor:bd.posFactor, sollFaktor:posFactor(l,'def',cfg.pos_swing)};
+  // dazu das andere Team: wer verliert, trägt den Faktor gespiegelt — auf
+  // der schwächeren Seite so viel Schutz, wie ein Sieg dort Bonus brächte
+  const alle=simulateEloWithSliders(vorher.concat(letzte)).history[9].breakdowns;
+  const spiegel=Object.values(alle).every(x=>Math.abs(x.posMult-(x.won?x.posFactor:2-x.posFactor))<1e-12)
+    && Object.values(alle).some(x=>!x.won && x.posFactor!==1);
+  return {wert:bd.posStrength, soll:l.wert, faktor:bd.posFactor, sollFaktor:posFactor(l,'def',cfg.pos_swing), spiegel};
 })()`);
+ok(eloLage.spiegel, 'Nach einer Niederlage gilt der Faktor gespiegelt: Schutz auf der schwächeren Seite, Abzug auf der stärkeren');
 ok(Math.abs(eloLage.wert-eloLage.soll)<1e-12 && Math.abs(eloLage.faktor-eloLage.sollFaktor)<1e-12,
   'Die Elo-Rechnung nimmt das Positionsprofil aus den Partien davor, mit derselben Lage und demselben Bonus: '+JSON.stringify(eloLage));
 // Der Saisonverlauf rechnet jede Saison, in der gespielt wurde, die neueste

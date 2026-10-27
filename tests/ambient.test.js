@@ -7988,13 +7988,14 @@ const _formen = JSON.parse(K.eval(`JSON.stringify((function(){
   const sieger = m => (m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2]).slice().sort().join();
   const verlierer = m => (m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2]).slice().sort().join();
   const feld = reihe.filter(m => _spIstFeld(m));
-  const zahl = {}, falsch = [], ohneStand = [];
+  const zahl = {}, falsch = [], ohneStand = [], moeglich = new Set();
   let folgeGleich = 0;
   const spur = [];
   feld.forEach(m => {
     const w = _spForm(m), x = w.x, i = reihe.indexOf(m), vor = reihe.slice(0, i + 1);
     const hoch = Math.max(m.score_a, m.score_b), tief = Math.min(m.score_a, m.score_b);
     zahl[w.key] = (zahl[w.key] || 0) + 1;
+    _spFormKand(m).filter(c => !SP_FORM[c.key].v2).forEach(c => moeglich.add(c.key));
     // Zweimal hintereinander darf nur das Spielfeld stehen, und nur, wenn
     // sonst keine Form auf die Partie passt.
     // Die alte Kette kennt nur die dreizehn alten Formen (ohne v2).
@@ -8051,7 +8052,8 @@ const _formen = JSON.parse(K.eval(`JSON.stringify((function(){
     if(jetzt.k !== voll[k].k || jetzt.t !== voll[k].t) wackelt.push(m.id + ' ' + voll[k].k + '→' + jetzt.k);
   });
   matches = alle; invalidateCache();
-  return {n:feld.length, zahl, falsch, ohneStand, folgeGleich, wackelt, stich:stich.length};
+  return {n:feld.length, zahl, falsch, ohneStand, folgeGleich, wackelt, stich:stich.length,
+    nieGewaehlt:[...moeglich].filter(k => !zahl[k])};
 })())`));
 const _formWerte = Object.values(_formen.zahl);
 ok(_formen.n > 50 && !_formen.falsch.length,
@@ -8060,10 +8062,17 @@ ok(_formen.n > 50 && !_formen.falsch.length,
 ok(_formen.ohneStand.length === 0,
    'jede Form trägt den Stand der Partie und alle vier Namen, den Sieger zuerst',
    _formen.ohneStand.slice(0, 4).join(', ') || 'alle');
-ok(Object.keys(_formen.zahl).length === 13 && Math.max(..._formWerte) <= _formen.n * 0.25
+// Welche Form überhaupt passt, hängt an den Partien: „Rückkehr" trifft in
+// den echten Partien zwei gewöhnliche Partien, und seit der Positionsbonus
+// die Elo verschoben hat, tragen beide einen Ranglistensprung als Anlass.
+// Gefordert ist deshalb, dass jede Form, die auf eine gewöhnliche Partie
+// zutrifft, auch irgendwo steht, und dass es mindestens zwölf sind — nicht
+// eine feste Zahl, die an zwei Partien hängt.
+ok(!_formen.nieGewaehlt.length && Object.keys(_formen.zahl).length >= 12 && Math.max(..._formWerte) <= _formen.n * 0.25
    && (_formen.zahl.feld || 0) <= _formen.n * 0.15 && _formen.folgeGleich === 0,
-   'die Formen wechseln: alle dreizehn kommen vor, keine trägt ein Viertel, das Spielfeld ist selten, keine zweimal hintereinander, wo eine andere passt',
-   JSON.stringify(_formen.zahl) + ' · gleich hintereinander ' + _formen.folgeGleich);
+   'die Formen wechseln: jede, die irgendwo passt, kommt vor, keine trägt ein Viertel, das Spielfeld ist selten, keine zweimal hintereinander, wo eine andere passt',
+   JSON.stringify(_formen.zahl) + ' · gleich hintereinander ' + _formen.folgeGleich
+   + (_formen.nieGewaehlt.length ? ' · passt, steht nie: ' + _formen.nieGewaehlt.join(', ') : ''));
 ok(_formen.stich >= 8 && !_formen.wackelt.length,
    'eine Partie behält Form und Schlagzeile, wenn danach weitergespielt wird',
    _formen.wackelt.join(', ') || _formen.stich + ' Stichproben');

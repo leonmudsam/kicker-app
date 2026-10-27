@@ -331,31 +331,39 @@ function positionsLage(p){
 }
 function positionsProfilWert(p){ return positionsLage(p).wert; }
 
-// Der Positionsbonus der Elo-Rechnung [§3.6]: auf der Seite, auf der das
-// Profil schwächer ist, bringt ein Sieg mehr und kostet eine Niederlage
-// weniger; auf der stärkeren umgekehrt. Höchstens POS_GRENZE in jede
-// Richtung. Gemessen wird gegen die eigene Aufteilung: der Ausschlag einer
-// Seite wächst mit dem Anteil der ANDEREN Seite, sodass sich Bonus und
-// Abzug über die eigenen Partien aufheben —
-//   Sturm   Swing × Anteil Abwehr × (1 − 2 × Profil)
-//   Abwehr  −Swing × Anteil Sturm × (1 − 2 × Profil)
-// Wird eine Seite an der Grenze gekappt, schrumpft die andere im selben
-// Verhältnis, sonst brächte die Position Elo, die niemand verloren hat.
+// Der Positionsbonus der Elo-Rechnung [§3.6]. Auf der Seite, auf der das
+// Profil schwächer ist, bringt ein Sieg mehr, und eine Niederlage kostet
+// um genauso viel weniger: bis POS_GRENZE. Auf der stärkeren Seite gibt es
+// beim Sieg einen Dämpfer und bei der Niederlage einen Abzug dazu, halb so
+// viel: bis POS_DAEMPFER. Wie viel davon gilt, sagt allein die Klarheit der
+// Einstufung — 0 bei 50 % Sturm, voll bei 5 oder 95 % —, mal zwei mal
+// Swing: bei einem Swing von 50 % wächst der Ausschlag genau mit der
+// Klarheit, darüber erreichen klare Profile die Grenze früher.
 //
-// Vorher maß der Bonus gegen 50:50 und zog jedem, der fast nur auf einer
-// Position spielt, dort bei jedem Sieg ein Sechstel ab (Henry hinten 0,83
-// und 1,17): die Elo eines Spezialisten lief nach unten, weil er dort
-// spielte, wo er es kann. Danach war nur der Abzug auf 5 % begrenzt und
-// der Bonus nicht: Henry bekam vorne 33 %, Leo hinten trug den vollen
-// Abzug bei kaum einem Bonus, und ein Ausschlag von einem Drittel sagt
-// mehr, als eine Einstufung aus 15 Partien weiß.
+// Vorher hing der Ausschlag am Anteil der Partien auf der ANDEREN Seite,
+// damit sich Bonus und Abzug über die eigenen Partien aufhoben. Wer fast nur
+// hinten spielt, bekam hinten dadurch fast nichts: Henry gewann in der Abwehr
+// und verlor 0,49 von 57 Elo (0,8 %). Und wer gleich oft auf beiden Seiten
+// stand, trug den größten Abzug: Leo (72 % Verteidiger) verlor nach einer
+// Niederlage hinten 2,48, Leon (78 % Stürmer) nach derselben vorne nur 1,37.
+// Noch davor maß der Bonus gegen 50:50 ohne Grenze und zog einem
+// Spezialisten bei jedem Sieg ein Sechstel ab (Henry hinten 0,83 und 1,17).
+//
+// Ohne Ausgleich über die eigenen Partien steht ein reiner Spezialist auf
+// Dauer etwas tiefer, aber nicht weit: die Elo gleicht sich nach. Wer hinten
+// bei jedem Sieg 5 % weniger bekommt und 5 % mehr verliert, steht dort im
+// Gleichgewicht, wenn die Erwartung seines Teams um 2,5 Punkte tiefer liegt;
+// weil sie aus dem Schnitt beider Spieler kommt, sind das rund 35 Elo der
+// eigenen.
 const POS_GRENZE = 0.10;
+const POS_DAEMPFER = 0.05;
 function posFactor(lage, pos, sw){
-  const a = lage.wert, s = lage.aG + lage.dG ? lage.anteil : .5;
-  const fA = (sw || 0) * (1 - s) * (1 - 2 * a), fD = -(sw || 0) * s * (1 - 2 * a);
-  const spitze = Math.max(Math.abs(fA), Math.abs(fD));
-  const k = spitze > POS_GRENZE ? POS_GRENZE / spitze : 1;
-  return 1 + k * (pos === 'atk' ? fA : fD);
+  const a = lage.wert;
+  const klar = Math.min(1, Math.abs(a - .5) / .45);
+  const anteil = Math.min(1, 2 * (sw || 0) * klar);
+  if(!anteil) return 1;
+  const schwach = a < .5 ? 'atk' : 'def';
+  return pos === schwach ? 1 + POS_GRENZE * anteil : 1 - POS_DAEMPFER * anteil;
 }
 // Sturm-Anteil 0..1 nach dem Positionsprofil.
 function atkStrengthFrom(id, matchSubset){
