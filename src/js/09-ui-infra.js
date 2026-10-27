@@ -110,7 +110,7 @@ function awHeroPair(p1,p2){
 }
 
 
-// ╔═══ §4.3 ─── NAVIGATION (Tabs/Filter/History-State) ─────────────────╗
+// ╔═══ §4.3 ─── NAVIGATION (Tabs/Filter/Zurück-Taste) ─────────────────╗
 //     tab, period, awView und die übrigen Ansichtsvariablen aus 01-update.js
 //     steuern, was render() zeichnet; ein Reiterwechsel geht durch
 //     _renderNachEingabe (docs/laufzeit.md).
@@ -143,9 +143,7 @@ function renderNav(){
   // einem Zeitraum, für den es keinen Knopf gibt — und keiner der beiden
   // Reiter sähe eingeschaltet aus.
   document.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>{
-    tab=b.dataset.nav;teamSearch='';ligaSeasonId=null;ligaSicht='spieler';
-    awPeriod='season';awSeasonId=null;awWeekStart=null;rekKammer='';einblickOffen='';
-    window.scrollTo(0,0);_renderNachEingabe();
+    _reiterSetzen(b.dataset.nav);
     if(tab==='ranking'){ _ladeStart('daten'); _ligaAktualisieren(); }});
   nav._navKnoop=nav.firstElementChild;
   }
@@ -158,7 +156,83 @@ function renderNav(){
   // auf der man schon ist, und lag über dem Knopf „Mischen".
   document.getElementById('fab').style.display = tab==='match' ? 'none' : 'grid';
   _navSchlitten();
+  _zurueckAbgleichen();
 }
+function _reiterSetzen(id){
+  tab=id;teamSearch='';ligaSeasonId=null;ligaSicht='spieler';
+  awPeriod='season';awSeasonId=null;awWeekStart=null;rekKammer='';einblickOffen='';
+  window.scrollTo(0,0);_renderNachEingabe();
+}
+
+// ── Die Zurück-Taste ─────────────────────────────────────────────────
+// Die App ist eine einzige Seite, und der Verlauf des Browsers kannte nur
+// sie: die Zurück-Taste des Telefons schloss nicht das offene Blatt,
+// sondern die ganze App, auch aus einem Profil drei Blätter tief. Solange
+// es etwas gibt, wohin „zurück" führt — ein Dialog, ein Popover, eine
+// Story, ein Blatt, ein anderer Reiter als die Liga —, liegt deshalb genau
+// EIN eigener Eintrag im Verlauf. Die Taste nimmt ihn weg, die App geht
+// einen Schritt zurück und legt ihn wieder hin, wenn danach noch etwas
+// offen ist. Ein Eintrag je Blatt wäre genauer, aber jeder Weg, der ohne
+// die Taste schließt (Wischen, Knopf, Löschen), müsste dann mitzählen, und
+// ein Fehler darin schickte die Taste aus der App.
+let _zurueckEintrag = false;  // liegt der eigene Eintrag im Verlauf?
+let _zurueckEigene = 0;       // so viele `popstate` hat die App selbst ausgelöst
+let _zurueckPlan = 0;
+function _zurueckZeigt(id){
+  const e = document.getElementById(id);
+  return !!(e && e.classList.contains('show'));
+}
+// Was gerade offen ist: ein Dialog, ein Popover, eine Story, ein Blatt
+// oder ein Formular, in das jemand schreibt. Was sich von selbst öffnet —
+// Monat, Woche, Abschied [§C31] —, deckt nichts davon zu. Der Monat prüfte
+// es gar nicht und ging 600 ms nach einem Datenabruf über das Bearbeiten
+// einer Partie auf, das Formular war weg; Woche und Abschied sahen nur nach
+// dem Blatt.
+function _etwasOffen(){
+  return !!document.querySelector('.dlg-bg.show') || _zurueckZeigt('bpBg') || _zurueckZeigt('ndBg')
+    || _zurueckZeigt('sheetBg') || _eingabeOffen();
+}
+function _zurueckOffen(){
+  return _etwasOffen() || tab !== 'ranking';
+}
+// Abgeglichen wird nach der laufenden Aufgabe. Schließen und Öffnen folgen
+// oft direkt aufeinander (eine Story schließt, das Profil daraus öffnet),
+// und `history.back()` wirkt erst später: sofort abgeglichen, nähme es den
+// Eintrag, den das neue Blatt im selben Zug hingelegt hat.
+function _zurueckAbgleichen(){
+  if(_zurueckPlan) return;
+  _zurueckPlan = setTimeout(() => {
+    _zurueckPlan = 0;
+    try {
+      const offen = _zurueckOffen();
+      if(offen && !_zurueckEintrag){ history.pushState({kicker:'zurueck'}, ''); _zurueckEintrag = true; }
+      else if(!offen && _zurueckEintrag){ _zurueckEintrag = false; _zurueckEigene++; history.back(); }
+    } catch(e){}
+  }, 0);
+}
+// Ein Schritt, von oben nach unten: was zuletzt aufging, schließt zuerst.
+// Ein Blatt geht eine Ebene zurück wie sein Schließknopf, ein Dialog
+// antwortet „nein", ein anderer Reiter führt zur Liga.
+function _zurueckSchritt(){
+  const nein = document.querySelector('.dlg-bg.show [data-dlg="0"]');
+  if(nein){ nein.click(); return; }
+  if(_zurueckZeigt('bpBg')){ closeBadgePopover(); return; }
+  if(_zurueckZeigt('ndBg')){ closeNewsDetail(); return; }
+  if(_zurueckZeigt('sheetBg')){ closeSheet(); return; }
+  if(tab !== 'ranking') _reiterSetzen('ranking');
+}
+try {
+  // Nach einem Neuladen kann die Seite auf dem alten Eintrag stehen; er
+  // gehört dem vorigen Lauf und ist hier nichts, wohin zurück führt.
+  if(history.state && history.state.kicker) history.replaceState(null, '');
+  window.addEventListener('popstate', () => {
+    if(_zurueckEigene > 0){ _zurueckEigene--; return; }
+    if(!_zurueckEintrag) return;
+    _zurueckEintrag = false;
+    _zurueckSchritt();
+    _zurueckAbgleichen();
+  });
+} catch(e){}
 
 let _ligaRefreshAuftrag=null;
 function _ligaAktualisieren(){

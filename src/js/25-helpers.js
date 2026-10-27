@@ -97,11 +97,12 @@ function bestaetigen(o){
     bg.querySelector('p').textContent = o.text || '';
     bg.querySelector('[data-dlg="0"]').textContent = o.nein || 'Abbrechen';
     bg.querySelector('[data-dlg="1"]').textContent = o.ja || 'Bestätigen';
-    const zu = ja => { bg.classList.remove('show'); setTimeout(() => bg.remove(), 200); fertig(ja); };
+    const zu = ja => { bg.classList.remove('show'); setTimeout(() => bg.remove(), 200); _zurueckAbgleichen(); fertig(ja); };
     bg.onclick = e => { if(e.target === bg) zu(false); };
     bg.querySelectorAll('[data-dlg]').forEach(b => b.onclick = () => zu(b.dataset.dlg === '1'));
     document.body.appendChild(bg);
     void bg.offsetWidth; bg.classList.add('show');
+    _zurueckAbgleichen();
   });
 }
 

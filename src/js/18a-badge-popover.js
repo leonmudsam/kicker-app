@@ -374,6 +374,7 @@ function showBadgePopover(badgeId, playerId){
     <button class="bp-close" id="bpCloseBtn">Schließen</button>
   `;
   bpBg.classList.add('show');
+  _zurueckAbgleichen();
   bp.scrollTop = 0;
   _fensterLicht(bp, 'weiss');
   _verdecken('bp', true);
@@ -392,5 +393,6 @@ function closeBadgePopover(){
   const bpBg = document.getElementById('bpBg');
   if(bpBg) bpBg.classList.remove('show');
   _fensterZu(bpBg, document.getElementById('bp'), 'bp');
+  _zurueckAbgleichen();
 }
 

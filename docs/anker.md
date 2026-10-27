@@ -46,7 +46,7 @@ Wächter 8 vergleicht. Ein Kürzel `§n.m` ist ein Abschnitt des Codes,
 - **09-ui-infra.js**
   - §4.1 AVATAR COLORS & EMOJIS
   - §4.2 AWARD AVATAR HELPER (Hero/Mini/Li)
-  - §4.3 NAVIGATION (Tabs/Filter/History-State)
+  - §4.3 NAVIGATION (Tabs/Filter/Zurück-Taste)
   - §4.4 ZEITRÄUME (Saison/Woche/Gesamt)
 - **09c-zeichen.js**
   - §4.1b DAS ZEICHEN
@@ -55,6 +55,7 @@ Wächter 8 vergleicht. Ein Kürzel `§n.m` ist ein Abschnitt des Codes,
 - **10-elo-engine.js**
   - §3.5 ZENTRALE ELO-ENGINE (simulateElo)
   - §3.5a DB-First Aggregation (default simulateElo)
+  - §3.5b Was beide Engines gleich buchen
   - §3.6 Slider-basierte Berechnung (für Match-Eingabe + Recalc)
 - **11-view-ranking.js**
   - §5.1 VIEW: RANKING

@@ -86,6 +86,77 @@ const ok=(c,s)=>{checks++;if(!c)fails++;console.log((c?'  ok  ':'  ✗   ')+s);}
       'Eine späte Datenantwort ersetzt keinen Regler unter dem Finger');
     await K('sb.from=window.__dbFn;autoArchiveSeasons=window.__archFn;syncStoriesViaDb=window.__syncFn');
     await K('render=window.__renderFn');
+
+    // Die Zurück-Taste [§4.3]: sie schloss die ganze App, auch aus einem
+    // Profil drei Blätter tief. Jetzt geht sie einen Schritt zurück —
+    // Dialog, Blatt Ebene für Ebene, dann der Reiter zur Liga —, und es
+    // liegt genau dann ein eigener Eintrag im Verlauf, wenn es etwas gibt,
+    // wohin sie führt.
+    const warte=ms=>page.waitForTimeout(ms);
+    const zurueck=async()=>{await page.evaluate(()=>history.back());await warte(700);};
+    const eintrag=()=>K('!!(history.state&&history.state.kicker)');
+    const blattName=()=>K('(document.querySelector("#sheet.show .pp-name")||{}).textContent||""');
+    await K(`closeSheet(true);tab='ranking';render();`);await warte(150);
+    const leer=!(await eintrag());
+    await K('showPlayer(players[0].id)');await warte(150);
+    const offen=await eintrag();
+    await K('sheetNav(()=>showPlayer(players[1].id))');await warte(700);
+    const kind=await blattName();
+    await zurueck();
+    const eltern=await blattName(), wieder=await eintrag();
+    await zurueck();
+    const zu=await K('!document.getElementById("sheetBg").classList.contains("show") && tab==="ranking" && !!document.getElementById("main")');
+    const nachZu=!(await eintrag());
+    const namen=await K('[pname(players[0].id),pname(players[1].id)]');
+    ok(leer && offen && kind.includes(namen[1]) && eltern.includes(namen[0]) && wieder && zu && nachZu,
+      'Die Zurück-Taste schließt ein Blatt Ebene für Ebene und verlässt die App nicht: '
+      +JSON.stringify({leer,offen,kind,eltern,wieder,zu,nachZu}));
+    // Schließen per Knopf nimmt den Eintrag wieder weg; Schließen und
+    // Öffnen im selben Zug (eine Story schließt, ihr Profil öffnet) lässt
+    // ihn stehen, sonst führte die nächste Taste aus der App.
+    await K('showPlayer(players[0].id)');await warte(150);
+    await K('document.getElementById("sheetZu").click()');await warte(400);
+    const knopf=!(await eintrag());
+    await K('showPlayer(players[0].id)');await warte(150);
+    await K('closeSheet(true);showPlayer(players[1].id)');await warte(400);
+    const zug=await eintrag();
+    await zurueck();
+    const zugZu=await K('!document.getElementById("sheetBg").classList.contains("show")');
+    ok(knopf && zug && zugZu,'Der Schließknopf nimmt den Eintrag weg, ein Wechsel im selben Zug lässt ihn stehen: '
+      +JSON.stringify({knopf,zug,zugZu}));
+    await K('document.querySelector(\'[data-nav="awards"]\').click()');await warte(300);
+    const reiterEintrag=await eintrag();
+    await zurueck();
+    const liga=await K('tab');
+    await K('window.__antwortDlg=null;bestaetigen({titel:"Frage"}).then(v=>window.__antwortDlg=v);0');await warte(150);
+    await zurueck();
+    const dlg=await K('window.__antwortDlg===false && !document.querySelector(".dlg-bg.show")');
+    ok(reiterEintrag && liga==='ranking' && dlg && !(await eintrag()),
+      'Aus einem anderen Reiter führt die Zurück-Taste zur Liga, ein Dialog antwortet „nein": '
+      +JSON.stringify({reiterEintrag,liga,dlg}));
+    // Was sich von selbst öffnet, deckt nichts Offenes zu [§C31]. Der
+    // Saison-Rückblick ging 600 ms nach einem Datenabruf auf, ohne zu
+    // fragen, und nahm das Bearbeiten einer Partie mit, das in der
+    // Zwischenzeit aufgegangen war. Gestellt am 1. September, der August
+    // noch nicht gesehen.
+    await K(`window.__jetztVorher=window.__perfJetzt;window.__seasVorher=seasons;window.__ssr=showSeasonRecap;
+      window.__perfJetzt=new Date(2026,8,1,12).getTime();seasons=[{id:'2026-08',label:'August 2026'}];
+      window.__auf=[];showSeasonRecap=s=>window.__auf.push(s.id);_autoRecapSeen.clear();
+      try{localStorage.removeItem('auto_rueckblick_tag')}catch(e){}
+      closeSheet(true);tab='ranking';render();0`);await warte(200);
+    await K('autoShowSeasonRecap();showEditMatch(matches[matches.length-1].id);0');await warte(900);
+    const zwischen=await K(`({auf:window.__auf.length,formular:!!document.getElementById('saveEdit'),
+      offen:!_autoRecapSeen.has('season:2026-08')})`);
+    await K(`closeSheet(true);tab='match';render();autoShowSeasonRecap();0`);await warte(900);
+    const eingabe=await K('window.__auf.length');
+    await K(`tab='ranking';render();0`);await warte(400);
+    await K('autoShowSeasonRecap();0');await warte(900);
+    const spaeter=await K('window.__auf.join()');
+    await K(`showSeasonRecap=window.__ssr;seasons=window.__seasVorher;window.__perfJetzt=window.__jetztVorher;
+      _autoRecapSeen.clear();closeSheet(true);0`);
+    ok(zwischen.auf===0 && zwischen.formular && zwischen.offen && eingabe===0 && spaeter==='2026-08',
+      'Der Monatsrückblick öffnet sich nicht über ein Blatt, das in der Zwischenzeit aufging, und nicht über ein Formular, sondern danach: '
+      +JSON.stringify({zwischen,eingabe,spaeter}));
     ok(errors.length===0,'Keine Browserfehler beim Zusammenfassen und Abbrechen');
   }finally{await browser.close();}
   console.log(fails?`${fails} von ${checks} CHECKS FEHLGESCHLAGEN`:`ALLE ${checks} CHECKS BESTANDEN`);

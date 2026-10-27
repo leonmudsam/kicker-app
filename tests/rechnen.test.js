@@ -246,6 +246,22 @@ const eloLage=K(`(() => {
 ok(eloLage.spiegel, 'Nach einer Niederlage gilt der Faktor gespiegelt: Schutz auf der schwächeren Seite, Abzug auf der stärkeren');
 ok(Math.abs(eloLage.wert-eloLage.soll)<1e-12 && Math.abs(eloLage.faktor-eloLage.sollFaktor)<1e-12,
   'Die Elo-Rechnung nimmt das Positionsprofil aus den Partien davor, mit derselben Lage und demselben Bonus: '+JSON.stringify(eloLage));
+// Eine Partie in der letzten Sekunde des Monats gehört ihm ganz: `seasonOf`
+// ordnete sie dem Mai zu, aber `seasonEnd` war 23:59:59,000, und jeder
+// Filter bis zum Monatsende — die Partien des Monats, der Schnitt eines
+// abgeschlossenen Monats — verlor sie. Der Mai hatte dann keine Partie, und
+// der Juni auch nicht.
+const randMonat=K(`(() => {
+  players=Array.from({length:4},(_,i)=>({id:'r'+i,name:'Rand '+i,hidden:false,elo:0,atk:.5}));
+  const t=new Date(2026,4,31,23,59,59,500).toISOString();
+  matches=[{...window.__partie,id:'rand',a1:'r0',a2:'r1',b1:'r2',b2:'r3',created_at:t,deltas:{r0:10,r1:10,r2:-10,r3:-10}}];
+  seasons=[];cfg={...window.__cfgBasis};invalidateCache();
+  return {monat:seasonOf(t).id, drin:matchesInSeason('2026-05').length, juni:matchesInSeason('2026-06').length,
+    schnitt:_partienBis(seasonEnd('2026-05').getTime()).length,
+    erster:seasonEnd('2026-05').getTime()+1===new Date(2026,5,1).getTime()};
+})()`);
+ok(randMonat.monat==='2026-05'&&randMonat.drin===1&&randMonat.juni===0&&randMonat.schnitt===1&&randMonat.erster,
+  'Eine Partie in der letzten Sekunde des Monats zählt zu ihm, und eine Millisekunde nach seinem Ende ist der Erste: '+JSON.stringify(randMonat));
 // Der Saisonverlauf rechnet jede Saison, in der gespielt wurde, die neueste
 // zuerst; die echten Partien reichen über weniger Monate, deshalb hier
 // sieben mit je einer Partie am Monatsersten. Dass das Profil sie alle zeigt

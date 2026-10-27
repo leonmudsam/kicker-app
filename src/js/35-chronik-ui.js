@@ -704,7 +704,7 @@ function ligaChronikMatrixHtml(){
   const aktiv = rows.filter(pid => ligaAktiv(pid));
   const ruhe = rows.length - aktiv.length;
   // Die Legende nennt je Stufe, was sie bringt [§C39]: an der Farbe soll man
-  // ablesen, was ein Eintrag wert ist. Eine Fügung zählt halb.
+  // ablesen, was ein Eintrag wert ist, gleich welcher Art.
   const wert = st => PRESTIGE_CHRONIK_KLASSE[st] ? ` <b class="num">${PRESTIGE_CHRONIK_KLASSE[st]}</b>` : '';
   return `${_lchronTabelle(cols, aktiv)}
     <div class="lchron-lg" aria-hidden="true">${LC_STUFEN.map(st =>

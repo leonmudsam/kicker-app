@@ -856,18 +856,23 @@ const _pkt = JSON.parse(K.eval(`JSON.stringify((function(){
   const bad=[], band=[]; let max=0, min=1e9;
   SEASON_TITLES.forEach(t=>{
     const d=DISZIPLINEN.find(x=>x.id===t.id), m=d.monat;
-    const soll = m.art==='schatten' ? 0 : m.art==='fuegung' ? Math.round(W[m.klasse]/2/5)*5 : W[m.klasse];
+    // die Art ändert den Wert nicht: eine Fügung zählt wie Können und Konstanz
+    const soll = m.art==='schatten' ? 0 : W[m.klasse];
     if(chronikPunkte(t.id) !== soll) bad.push(t.id);
     const kl = ${JSON.stringify(_KLASSE_GESETZT)}.includes(t.id) ? 'legendaer'
       : m.aus >= 2.5 ? 'legendaer' : m.aus >= 1.9 ? 'selten' : 'besonders';
     if(kl !== m.klasse) band.push(t.id + ' (' + m.aus + ': ' + m.klasse + ' statt ' + kl + ')');
-    if(soll>0){ max=Math.max(max,soll); min=Math.min(min,soll); }
+    const ist=chronikPunkte(t.id);
+    if(m.art!=='schatten'){ max=Math.max(max,ist); min=Math.min(min,ist); }
   });
   return {bad, band, max, min};
 })())`));
 ok(_pkt.bad.length === 0, 'jede Chronik ist so viel wert, wie ihre Klasse sagt', _pkt.bad.join(', '));
 ok(_pkt.band.length === 0, 'jede Klasse folgt dem Ausschlag ihrer Schwelle', _pkt.band.join(', '));
-ok(_pkt.min === 25 && _pkt.max === 150, 'die Werte reichen von einer besonderen Fügung bis Gold',
+// Jede Chronik bringt mindestens 50. Eine besondere Fügung brachte 25,
+// „Der Aufdreher" mit 45 % aller Partien eines Monats weniger als die
+// kleinste Auszeichnung, die sich wiederholt.
+ok(_pkt.min === 50 && _pkt.max === 150, 'jede Chronik bringt mindestens 50 und höchstens Gold',
    _pkt.min + ' bis ' + _pkt.max + ' Punkte');
 ok(K.eval("DISZIPLINEN.filter(d=>d.monat&&d.monat.art==='schatten').every(d=>chronikPunkte(d.id)===0)"),
    'Schattenseiten geben kein Prestige');

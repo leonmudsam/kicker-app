@@ -2748,8 +2748,8 @@ const _recap = _amErsten(new RealDate(2026, 7, 1, 12, 0, 0).getTime(), `
     const d = new Date(x.when), r = x.dataRef, aw = seasonTitles(r.sid).awarded;
     const karte = _newsCardHtmlM2(x, false, false, '');
     return {sid:r.sid, iso:d.toISOString(), zeit:d.toTimeString().slice(0, 8),
-      // seasonEnd ist 23:59:59 des letzten Tages: eine Sekunde danach.
-      erster:d.getTime() === seasonEnd(r.sid).getTime() + 1000,
+      // seasonEnd ist die letzte Millisekunde des Monats: eine danach.
+      erster:d.getTime() === seasonEnd(r.sid).getTime() + 1,
       breaking:_isBreaking(x),
       team:(r.team && r.team.pids || []).length, teamSoll:(seasonTeamOf(r.sid) || []).filter(Boolean).length,
       eintraege:r.chronik ? r.chronik.eintraege : -1, eintraegeSoll:aw.length,

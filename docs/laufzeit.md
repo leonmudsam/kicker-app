@@ -45,7 +45,9 @@ Neuladen alle dreißig Sekunden soll nichts zweimal öffnen) und auf dem Gerät
 `recap_shown_<Saison>`, `potw_shown_<Woche>` und `auto_rueckblick_tag` — der
 Tag, an dem sich zuletzt einer von selbst geöffnet hat. Gesetzt wird er, sobald
 einer geplant ist, nicht erst, wenn er offen ist: die Woche fragt 300 ms vor
-dem Öffnen des Monats, und sonst gingen beide auf. Zurückgesetzt wird nichts;
+dem Öffnen des Monats, und sonst gingen beide auf. Ist beim Öffnen des Monats
+etwas offen (`_etwasOffen`), nimmt er `_autoRecapSeen` und den Tag zurück,
+und der nächste Abruf fragt wieder. Zurückgesetzt wird nichts;
 der nächste Tag ist ein anderer Schlüssel.
 
 Die Bewegung [§C43] hält in `09d-bewegung.js`: `_podestZuletzt` (je
@@ -87,6 +89,15 @@ Lichts, damit es nicht zweimal hintereinander leuchtet); sie werden nicht
 zurückgesetzt, ein neu gezeichnetes Element ist ein anderes.
 `_schlittenVorher` (`09-ui-infra.js`) trägt zusätzlich `t0`, das Bild, mit
 dem der Schlitten eines Wählers losfuhr; `schlittenFahren` verbraucht ihn.
+
+Die Zurück-Taste (`09-ui-infra.js`, [§4.3]) hält `_zurueckEintrag` (ob der
+eine eigene Eintrag im Verlauf liegt), `_zurueckEigene` (wie viele
+`popstate` die App mit `history.back()` selbst ausgelöst hat; jeder wird
+einmal verbraucht) und `_zurueckPlan` (der Zeitgeber des Abgleichs, siehe
+Takt). Der Eintrag liegt genau dann im Verlauf, wenn es etwas gibt, wohin
+„zurück" führt: ein Dialog, ein Popover, eine Story, ein Blatt oder ein
+anderer Reiter als die Liga. Ein Neuladen auf dem alten Eintrag ersetzt ihn
+(`replaceState`); sonst wird nichts zurückgesetzt.
 
 Zeitweilige Arbeitsaufträge sind keine Ansichtsauswahl: `_ligaRefreshAuftrag`
 lebt im Navigations-Layer und wird nach Ende des gemeinsamen Datenabrufs
@@ -337,6 +348,11 @@ mit `_cb` (Update-Check, Neu laden) liegen nie darin.
 > **Pflegepflicht.** Kommt ein Topf dazu, steht seine Schlüsselregel hier.
 
 # Takt
+
+`_zurueckAbgleichen` (`09-ui-infra.js`) gleicht den Eintrag der Zurück-Taste
+nach der laufenden Aufgabe ab (`setTimeout` 0, höchstens einer offen):
+Schließen und Öffnen folgen oft im selben Zug, und ein sofortiges
+`history.back()` nähme den Eintrag, den das neue Blatt gerade hingelegt hat.
 
 Zwei Zeitgeber laufen dauerhaft (`37-boot.js`): `_tickDaten` alle dreißig
 Sekunden, `_tickVersion` alle fünf Minuten. Beide **ruhen, solange die Seite

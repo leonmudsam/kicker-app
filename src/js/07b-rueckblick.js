@@ -241,9 +241,8 @@ function autoShowPotwRecap(){
     const {start}=_potwLastWeekRange();
     const wkKey=_potwKeyOf(start);
     if(_recapSeen('potw_shown_'+wkKey, 'potw:'+wkKey)) return;
-    // Sheet bereits offen?
-    const sheetEl=document.getElementById('sheet');
-    if(sheetEl && sheetEl.classList.contains('show')) return;
+    // Nichts Offenes zudecken [§C31]
+    if(_etwasOffen()) return;
     // Saison-Recap hat Vorrang
     if(seasons.length && now.getDate()<=3){
       const last=seasons[0];

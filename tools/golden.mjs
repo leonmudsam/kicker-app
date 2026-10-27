@@ -225,8 +225,21 @@ async function blobKennungen(page){
   return Object.fromEntries(roh.map(([u, t]) => [u, 'blob:#' + sha1(t)]));
 }
 
-function normal(text, blobs){
+// Die Zeichen des Insigniums liegen je einmal als Symbol im Topf und werden
+// über `<use href="#inst12">` geholt. Die Nummer ist die Reihenfolge der
+// ersten Verwendung, und die hängt am Vorwärmen im Leerlauf: dieselbe
+// Fassung zeigte in zwei Läufen „#inst145" und „#inst146" für dasselbe
+// Zeichen. Verglichen wird deshalb, WELCHES Zeichen dort steht. Die Tabellen
+// vergeben eine Nummer nie neu, nach dem letzten Bild kennen sie also jede.
+async function symbolNamen(K){
+  try{
+    return JSON.parse(await K(`JSON.stringify(Object.fromEntries([..._insStufeSym, ..._insZIds].map(([k, v]) => [v, k])))`));
+  }catch(e){ return {}; }
+}
+
+function normal(text, blobs, symbole = {}){
   return text
+    .replace(/#(inst|izg)(\d+)\b/g, (m, a, n) => symbole[a + n] ? '#' + a + '{' + symbole[a + n] + '}' : m)
     .replace(/blob:[^"')\s&]+/g, u => blobs[u] || 'blob:#unbekannt')
     .replace(/data:[a-z/+.-]+;base64,[A-Za-z0-9+/=]{200,}/g, d => 'data:#' + sha1(d))
     .replace(/data:image\/svg\+xml[^"')]{300,}/g, d => 'data:svg#' + sha1(d));
@@ -271,8 +284,8 @@ async function abzug(html){
       roh[`${sz.id}/css`] = sha1(await page.evaluate(() => [...document.querySelectorAll('style')].map(s => s.textContent).join('\n')));
       roh[`${sz.id}/schreibzugriffe`] = JSON.stringify(await page.evaluate(() => window.__schreib));
       roh[`${sz.id}/seitenfehler`] = JSON.stringify(errors);
-      const blobs = await blobKennungen(page);
-      for(const [k, v] of Object.entries(roh)) dump[k] = normal(version ? String(v).split(version).join('VERSION') : String(v), blobs);
+      const blobs = await blobKennungen(page), symbole = await symbolNamen(K);
+      for(const [k, v] of Object.entries(roh)) dump[k] = normal(version ? String(v).split(version).join('VERSION') : String(v), blobs, symbole);
       console.error(`  ${sz.id}: ${Object.keys(roh).length} Einträge`);
     } finally { await browser.close(); }
   }

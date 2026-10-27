@@ -210,6 +210,7 @@ function openSheet(html, opts){
   schlittenFahren(sheet);
   bg.classList.add('show');
   sheet.classList.add('show');
+  _zurueckAbgleichen();
   // Der Inhalt kommt gestaffelt, ein Rückblick als Vorstellung, und was das
   // Blatt verdeckt, steht still [§C43]. Zurück aus einem Blatt darüber
   // stellt nichts vor: wer ein Profil angesehen hat, will nicht noch einmal
@@ -304,6 +305,7 @@ function _sheetForceClose(sheet,bg,schonUnten){
   // v8.2: gequeuten News-Toast nachholen, falls beim Boot ein Recap
   // ihn blockiert hat. Verzögerung kommt aus _processDeferredNewsToast.
   try { if(window._processDeferredNewsToast) window._processDeferredNewsToast(); } catch(e){}
+  _zurueckAbgleichen();
 }
 
 function bindSheetSwipe(){

@@ -155,10 +155,15 @@ function seasonStart(seasonId){
   const [y,m]=seasonId.split('-').map(Number);
   return new Date(y,m-1,1);
 }
+// Die letzte Millisekunde des Monats. Sie war 23:59:59,000: eine Partie in
+// der letzten Sekunde gehörte nach `seasonOf` zum Monat und fiel aus jedem
+// Filter, der bis `seasonEnd` zählt (`matchesInSeason`, der Schnitt eines
+// abgeschlossenen Monats in Auszeichnungen und Rekorden). Wer den Ersten
+// 00:00 braucht, rechnet `seasonEnd + 1`.
 function seasonEnd(seasonId){
   if(!seasonId) seasonId=currentSeason().id;
   const [y,m]=seasonId.split('-').map(Number);
-  return new Date(y,m,0,23,59,59); // letzter Tag des Monats
+  return new Date(y,m,0,23,59,59,999); // letzter Tag des Monats
 }
 function seasonLabel(seasonId){
   if(!seasonId) return '';

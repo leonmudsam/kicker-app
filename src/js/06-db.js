@@ -419,8 +419,10 @@ async function autoArchiveSeasons(){
     const entry={
       id:sid,
       label:seasonLabel(sid),
-      start_date:seasonStart(sid).toISOString().slice(0,10),
-      end_date:seasonEnd(sid).toISOString().slice(0,10),
+      // Der Kalendertag in Ortszeit: `toISOString` machte aus Mitternacht
+      // am Ersten 22 Uhr am Vortag, und der Mai begann am 30. April.
+      start_date:tagKey(seasonStart(sid)),
+      end_date:tagKey(seasonEnd(sid)),
       player_id:top[0].id,
       team_p1:bestTeam?bestTeam[0]:null,
       team_p2:bestTeam?bestTeam[1]:null,
@@ -483,14 +485,25 @@ function _autoRueckblickMerken(){
 // Gerät. Der Tag wird gemerkt, sobald er geplant ist, nicht erst, wenn er
 // offen ist: die Woche fragt 300 ms vor seinem Öffnen, und sonst gingen
 // beide auf.
+// Ist beim Öffnen etwas offen [§C31], wartet er: die Merker werden
+// zurückgenommen, und der nächste Abruf fragt wieder.
 function autoShowSeasonRecap(){
   if(!seasons.length || new Date().getDate() > 3) return;
   const last = seasons[0];
   if(!last || last.id === currentSeason().id || _recapSeen('recap_shown_'+last.id, 'season:'+last.id)) return;
-  if(_autoRueckblickHeute()) return;
+  if(_autoRueckblickHeute() || _etwasOffen()) return;
+  let vorher = null;
+  try { vorher = localStorage.getItem('auto_rueckblick_tag'); } catch(e){}
   _autoRecapSeen.add('season:'+last.id); // Session-Guard: kein Re-Trigger durch 30s-loadAll
   _autoRueckblickMerken();
-  setTimeout(() => showSeasonRecap(last, {auto:true}), 600);
+  setTimeout(() => {
+    if(!_etwasOffen()){ showSeasonRecap(last, {auto:true}); return; }
+    _autoRecapSeen.delete('season:'+last.id);
+    try {
+      if(vorher === null) localStorage.removeItem('auto_rueckblick_tag');
+      else localStorage.setItem('auto_rueckblick_tag', vorher);
+    } catch(e){}
+  }, 600);
 }
 
 // v9: Kompakte Kurven-Vorschau des Saison-Positionsverlaufs für den Recap.
