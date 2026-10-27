@@ -134,6 +134,29 @@ const ok=(c,s)=>{checks++;if(!c)fails++;console.log((c?'  ok  ':'  ✗   ')+s);}
     ok(reiterEintrag && liga==='ranking' && dlg && !(await eintrag()),
       'Aus einem anderen Reiter führt die Zurück-Taste zur Liga, ein Dialog antwortet „nein": '
       +JSON.stringify({reiterEintrag,liga,dlg}));
+    // Was sich von selbst öffnet, deckt nichts Offenes zu [§C31]. Der
+    // Saison-Rückblick ging 600 ms nach einem Datenabruf auf, ohne zu
+    // fragen, und nahm das Bearbeiten einer Partie mit, das in der
+    // Zwischenzeit aufgegangen war. Gestellt am 1. September, der August
+    // noch nicht gesehen.
+    await K(`window.__jetztVorher=window.__perfJetzt;window.__seasVorher=seasons;window.__ssr=showSeasonRecap;
+      window.__perfJetzt=new Date(2026,8,1,12).getTime();seasons=[{id:'2026-08',label:'August 2026'}];
+      window.__auf=[];showSeasonRecap=s=>window.__auf.push(s.id);_autoRecapSeen.clear();
+      try{localStorage.removeItem('auto_rueckblick_tag')}catch(e){}
+      closeSheet(true);tab='ranking';render();0`);await warte(200);
+    await K('autoShowSeasonRecap();showEditMatch(matches[matches.length-1].id);0');await warte(900);
+    const zwischen=await K(`({auf:window.__auf.length,formular:!!document.getElementById('saveEdit'),
+      offen:!_autoRecapSeen.has('season:2026-08')})`);
+    await K(`closeSheet(true);tab='match';render();autoShowSeasonRecap();0`);await warte(900);
+    const eingabe=await K('window.__auf.length');
+    await K(`tab='ranking';render();0`);await warte(400);
+    await K('autoShowSeasonRecap();0');await warte(900);
+    const spaeter=await K('window.__auf.join()');
+    await K(`showSeasonRecap=window.__ssr;seasons=window.__seasVorher;window.__perfJetzt=window.__jetztVorher;
+      _autoRecapSeen.clear();closeSheet(true);0`);
+    ok(zwischen.auf===0 && zwischen.formular && zwischen.offen && eingabe===0 && spaeter==='2026-08',
+      'Der Monatsrückblick öffnet sich nicht über ein Blatt, das in der Zwischenzeit aufging, und nicht über ein Formular, sondern danach: '
+      +JSON.stringify({zwischen,eingabe,spaeter}));
     ok(errors.length===0,'Keine Browserfehler beim Zusammenfassen und Abbrechen');
   }finally{await browser.close();}
   console.log(fails?`${fails} von ${checks} CHECKS FEHLGESCHLAGEN`:`ALLE ${checks} CHECKS BESTANDEN`);

@@ -229,12 +229,11 @@ function _abschiedSchluessel(pid){
 }
 
 // Einmal je Gerät, bis vierzehn Tage nach dem Karriereende — so lange bildet
-// der Generator seine Karte [§C33]. Der jüngste Abschied zuerst; ein offenes
-// Blatt wird nicht überdeckt.
+// der Generator seine Karte [§C33]. Der jüngste Abschied zuerst; was offen
+// ist, wird nicht überdeckt [§C31].
 function autoZeigeAbschied(){
   try {
-    const sheetEl = document.getElementById('sheet');
-    if(sheetEl && sheetEl.classList.contains('show')) return;
+    if(_etwasOffen()) return;
     const jetzt = Date.now();
     const p = ruhestandSpieler().find(x => jetzt - ruhestandMs(x) < NEWS_FENSTER_TAGE * 864e5
       && !_recapSeen(_abschiedSchluessel(x.id), 'abschied:' + x.id));

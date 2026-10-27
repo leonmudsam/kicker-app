@@ -182,9 +182,18 @@ function _zurueckZeigt(id){
   const e = document.getElementById(id);
   return !!(e && e.classList.contains('show'));
 }
-function _zurueckOffen(){
+// Was gerade offen ist: ein Dialog, ein Popover, eine Story, ein Blatt
+// oder ein Formular, in das jemand schreibt. Was sich von selbst öffnet —
+// Monat, Woche, Abschied [§C31] —, deckt nichts davon zu. Der Monat prüfte
+// es gar nicht und ging 600 ms nach einem Datenabruf über das Bearbeiten
+// einer Partie auf, das Formular war weg; Woche und Abschied sahen nur nach
+// dem Blatt.
+function _etwasOffen(){
   return !!document.querySelector('.dlg-bg.show') || _zurueckZeigt('bpBg') || _zurueckZeigt('ndBg')
-    || _zurueckZeigt('sheetBg') || tab !== 'ranking';
+    || _zurueckZeigt('sheetBg') || _eingabeOffen();
+}
+function _zurueckOffen(){
+  return _etwasOffen() || tab !== 'ranking';
 }
 // Abgeglichen wird nach der laufenden Aufgabe. Schließen und Öffnen folgen
 // oft direkt aufeinander (eine Story schließt, das Profil daraus öffnet),

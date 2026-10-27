@@ -45,7 +45,9 @@ Neuladen alle dreißig Sekunden soll nichts zweimal öffnen) und auf dem Gerät
 `recap_shown_<Saison>`, `potw_shown_<Woche>` und `auto_rueckblick_tag` — der
 Tag, an dem sich zuletzt einer von selbst geöffnet hat. Gesetzt wird er, sobald
 einer geplant ist, nicht erst, wenn er offen ist: die Woche fragt 300 ms vor
-dem Öffnen des Monats, und sonst gingen beide auf. Zurückgesetzt wird nichts;
+dem Öffnen des Monats, und sonst gingen beide auf. Ist beim Öffnen des Monats
+etwas offen (`_etwasOffen`), nimmt er `_autoRecapSeen` und den Tag zurück,
+und der nächste Abruf fragt wieder. Zurückgesetzt wird nichts;
 der nächste Tag ist ein anderer Schlüssel.
 
 Die Bewegung [§C43] hält in `09d-bewegung.js`: `_podestZuletzt` (je

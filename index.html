@@ -6408,7 +6408,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.27.29dfdc15';
+const BUILD_VERSION='2026.10.27.c1d1f333';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -8631,10 +8631,19 @@ function autoShowSeasonRecap(){
   if(!seasons.length || new Date().getDate() > 3) return;
   const last = seasons[0];
   if(!last || last.id === currentSeason().id || _recapSeen('recap_shown_'+last.id, 'season:'+last.id)) return;
-  if(_autoRueckblickHeute()) return;
+  if(_autoRueckblickHeute() || _etwasOffen()) return;
+  let vorher = null;
+  try { vorher = localStorage.getItem('auto_rueckblick_tag'); } catch(e){}
   _autoRecapSeen.add('season:'+last.id);
   _autoRueckblickMerken();
-  setTimeout(() => showSeasonRecap(last, {auto:true}), 600);
+  setTimeout(() => {
+    if(!_etwasOffen()){ showSeasonRecap(last, {auto:true}); return; }
+    _autoRecapSeen.delete('season:'+last.id);
+    try {
+      if(vorher === null) localStorage.removeItem('auto_rueckblick_tag');
+      else localStorage.setItem('auto_rueckblick_tag', vorher);
+    } catch(e){}
+  }, 600);
 }
 
 function _recapPosMiniSVG(ph){
@@ -9594,8 +9603,7 @@ function autoShowPotwRecap(){
     const {start}=_potwLastWeekRange();
     const wkKey=_potwKeyOf(start);
     if(_recapSeen('potw_shown_'+wkKey, 'potw:'+wkKey)) return;
-    const sheetEl=document.getElementById('sheet');
-    if(sheetEl && sheetEl.classList.contains('show')) return;
+    if(_etwasOffen()) return;
     if(seasons.length && now.getDate()<=3){
       const last=seasons[0];
       if(last && last.id!==currentSeason().id && !_recapSeen('recap_shown_'+last.id, 'season:'+last.id)) return;
@@ -10382,9 +10390,12 @@ function _zurueckZeigt(id){
   const e = document.getElementById(id);
   return !!(e && e.classList.contains('show'));
 }
-function _zurueckOffen(){
+function _etwasOffen(){
   return !!document.querySelector('.dlg-bg.show') || _zurueckZeigt('bpBg') || _zurueckZeigt('ndBg')
-    || _zurueckZeigt('sheetBg') || tab !== 'ranking';
+    || _zurueckZeigt('sheetBg') || _eingabeOffen();
+}
+function _zurueckOffen(){
+  return _etwasOffen() || tab !== 'ranking';
 }
 function _zurueckAbgleichen(){
   if(_zurueckPlan) return;
@@ -17590,8 +17601,7 @@ function _abschiedSchluessel(pid){
 
 function autoZeigeAbschied(){
   try {
-    const sheetEl = document.getElementById('sheet');
-    if(sheetEl && sheetEl.classList.contains('show')) return;
+    if(_etwasOffen()) return;
     const jetzt = Date.now();
     const p = ruhestandSpieler().find(x => jetzt - ruhestandMs(x) < NEWS_FENSTER_TAGE * 864e5
       && !_recapSeen(_abschiedSchluessel(x.id), 'abschied:' + x.id));
