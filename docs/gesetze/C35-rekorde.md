@@ -3,7 +3,7 @@
 ## Regel
 
 - Dreiundsechzig Liga-Rekorde in fünf Kammern (8 Bestmarken, 18 Können, 7 Aktuelle Form, 17 Fügungen, 13 Schattenseiten), in dieser Reihenfolge in Leiste und Liste (`CHRON_KINDS.ord`). Die Kammer steht am Eintrag (`allzeit.kammer`), nicht aus `art` erraten.
-- Die Siegquote zählt einmal. Nach dem Niveau fragen nur der beste Monat, der höchste Gipfel, die längste Siegesserie, die Form von jetzt und die beiden Positionen (`NIVEAU` in `tests/disziplinen`); jeder andere Rekord mit Grundwert 150 fragt nach dem Abstand zum Eigenen [§C38], nach einer Teilmenge oder nach einer Folge und folgt der Siegquote gemessen mit r unter 0,75.
+- Die Siegquote zählt einmal. Nach dem Niveau fragen nur der beste Monat, der höchste Gipfel, die längste Siegesserie, die Form von jetzt und die beiden Positionen (`NIVEAU` in `tests/disziplinen`); jeder andere Rekord mit dem Grundwert des Könnens (100) fragt nach dem Abstand zum Eigenen [§C38], nach einer Teilmenge oder nach einer Folge und folgt der Siegquote gemessen mit r unter 0,75.
 - Die Karte nennt Zeitraum, Grundwert und Mindestbasis (`zeitraum`, `basis`, `mind`) und zeigt, wie weit der Halter vorn liegt (`_rekFeldHtml`, aus `chronicleRang`); der Kopf jeder Kammer sagt in einem Satz, was sie misst (`CHRON_KINDS.satz`). Kein Text beschreibt die App oder eine frühere Rechnung.
 - Ein Rekord hat keine Wertlatte, nur eine Stichprobe (Partien, Spieltage, Wochen, Niederlagen). Was ein Wert von sich aus braucht (erstes Glied, zwei Partien, eine Richtung, die sein Name verspricht: Sprung, Vorsprung, Aufschwung), bleibt; eine Teilmenge, die beschreibt, welche Partien zählen, ist keine Latte. Ein Abstand, der auf null rundet, ist keine Richtung.
 - Was einen ganzen Spieltag beschreibt (der makellose Tag, Kaltstart und Tagesabschluss, der Glanztag, die Fügungen eines Abends), zählt nur Tage, die für den gefragten Stand zu sind (`_tagZu`); ein laufender Tag hat noch keine letzte Partie und keine Tagesquote.
@@ -11,7 +11,7 @@
 - Gemessen wird der Anteil, nicht die Anzahl; der Beleg (`ev`) beginnt mit dem Sortierwert. Ein Anteil an den eigenen Gelegenheiten kennt die Spielzahl nicht. Stehen neben einem Abstand seine beiden Quoten, ist er ihre Differenz, so wie sie dastehen: die Vergleichsquote folgt aus der eigenen Quote und dem Abstand (`_ppGegen`), der Wandler zeigt die Anteile des Profils.
 - `offen`: erfüllbar mit fünfzig Partien in der Laufbahn — im Rennen steht jemand mit unter hundert Partien, der Rekord ist vergeben und gehört nicht nur den drei Besten.
 - Zwölf Gegenpaare tragen dieselbe Mindestbasis; ein `paar` (zwei Enden eines Werts mit Vorzeichen) zeigt zurück, und die Rennen schneiden sich nicht.
-- Fügungen tragen `zufall` (`quote`: erreichbar, mindestens die halbe Liga im Rennen; `fund`: darf selten und unbesetzt sein, höchstens die Hälfte leer) und wiegen 75 statt 150. Eine Laufbahn aus lauter Niederlagen erreicht keinen Rekord mit Grundwert 150.
+- Fügungen tragen `zufall` (`quote`: erreichbar, mindestens die halbe Liga im Rennen; `fund`: darf selten und unbesetzt sein, höchstens die Hälfte leer) und wiegen 75 statt 100. Eine Laufbahn aus lauter Niederlagen erreicht keinen Rekord mit Grundwert 100.
 - Kein Halter trägt mehr als ein Viertel der Tafel; jeder gewertete Spieler mindestens einen Eintrag. Die Schandtafel (`art:'schatten'`) zählt nichts und fragt eher den Abstand zum Eigenen als das Niveau; kein Halter über zwei Fünftel davon, mindestens sechs Namen.
 - Dieselbe Frage auf zwei Zeitachsen bleibt EINE Disziplin (zwanzig tragen beide); ein neuer Rekord steht im Katalog neben seinem nächsten Verwandten. Was eine Beziehung zweier Spieler misst oder an der Spielzahl hängt, wird kein Rekord.
 - `cond` nennt jede Schwelle der Wertfunktion, `wie` sagt, wie gemessen wird, samt Nenner. Gestrichene Rekorde stehen namentlich in `STORY_ABGEMELDET`; eine ID wechselt nicht, wenn ein Eintrag seine Frage wechselt, und die ID eines gestrichenen Rekords wird nicht für eine neue Frage wiederbenutzt (die Folge der Tage im Soll heißt `sollstrecke`, nicht `kopfhoch`).
@@ -48,7 +48,7 @@ was für immer.
 **Die Karte nennt Zeitraum, Grundwert und Mindestbasis** (`zeitraum`,
 `basis`, `mind`). Die Mindestbasis musste der Leser aus dem Bedingungssatz
 heraussuchen, und über welche Strecke gerechnet wird, stand nirgends. Der
-Grundwert steht dabei ausdrücklich als „150 P Basis": er ist NICHT, was
+Grundwert steht dabei ausdrücklich als „100 P Basis": er ist NICHT, was
 jemand bekommt — er wird durch die Zahl der Halter geteilt und danach in
 der Wurzelstaffel gedämpft [§C34]. Den tatsächlichen Beitrag zeigt das
 Blatt. Die Zeile steht leise und ohne Rahmen: zwei gerahmte Pillen
@@ -98,7 +98,7 @@ Abschwung"; an den echten Partien liegen sie bei r zwischen −0,46 und
 +0,16 und gehören fünf verschiedenen Spielern. Sechs der gestrichenen behalten ihre
 Monatschronik: im Monat beginnen alle bei derselben Elo, und dort misst
 dieselbe Frage etwas anderes.
-`tests/disziplinen` misst jeden Rekord mit Grundwert 150 gegen die
+`tests/disziplinen` misst jeden Rekord mit dem Grundwert des Könnens gegen die
 Siegquote und fällt, sobald einer außerhalb von `NIVEAU` darüber steigt.
 „Die ruhige Hand" bleibt, weil sie den SPRUNG in engen Partien misst und
 nicht die Quote darin; ebenso „Der Stehaufmann" den Sprung nach einer
@@ -188,9 +188,9 @@ Rückgang in der Liste.
 **Eine Kammer, die die Auslosung misst, wiegt 75.** Rollenwerte und
 Fügungen dürfen von einer Laufbahn aus lauter Niederlagen gehalten werden:
 „Das Fundament" fragt nach der gleichmäßigsten Tordifferenz, und wer immer
-0:10 verliert, ist gleichmäßig. Was 150 Punkte wert ist, darf sie nicht
-erreichen — `tests/disziplinen` spielt genau diese Laufbahn gegen jeden
-Rekord mit Grundwert 150.
+0:10 verliert, ist gleichmäßig. Was den Grundwert des Könnens trägt, darf
+sie nicht erreichen — `tests/disziplinen` spielt genau diese Laufbahn gegen
+jeden Rekord mit Grundwert 100.
 **Der Anteil an den eigenen Gelegenheiten kennt die Spielzahl nicht.** Er
 zählt nicht, wie oft etwas gelang, sondern wie oft von wie vielen
 Gelegenheiten. Wer an zwanzig Spieltagen dabei war, wird an zwanzig
@@ -325,7 +325,7 @@ Anzahl, und das Podest zeigte genau diese 32 über der 10 des Spielers, der
 den höheren Anteil hält.
 **Die Schandtafel ist keine Rangliste von hinten.** Dreizehn Rekorde tragen
 `art:'schatten'` und sieben Monatschroniken `monat.art:'schatten'` — die
-Kehrseite gehört dazu, sie zählt aber nichts: `PRESTIGE_ART.schatten` ist
+Kehrseite gehört dazu, sie zählt aber nichts: `REKORD_GRUNDWERT.schatten` ist
 null, `chronikPunkte` gibt einer Schattenseite nichts, `neg` hält sie aus der Zahl im
 Profil und in der Rangliste heraus, `nextRecordFor` schlägt sie niemandem
 vor, und der Feed meldet sie gar nicht. Eine negative FÜGUNG ist davon

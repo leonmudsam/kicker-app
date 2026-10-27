@@ -2200,7 +2200,7 @@ function _buildStories(){
   const _tafelWirkung = pid => _prestigeWirkung(pid, _tafelVor, _tafelNach);
   // Was ein Rekord der Laufbahn WIRKLICH bringt [§C34]. Gespeichert werden
   // die beiden Stände und die Rechnung der Quelle, nie der Grundwert: ein
-  // zehnter Rekord gibt nicht 150 Prestige, er wird durch die Zahl seiner
+  // zehnter Rekord gibt nicht 100 Prestige, er wird durch die Zahl seiner
   // Halter geteilt, landet auf einem Rang im Stapel und wird dort durch die
   // Wurzel seiner Staffel geteilt — und weil er die anderen Rekorde mit
   // verschiebt, ist der Nettozuwachs am Ende noch eine dritte Zahl.

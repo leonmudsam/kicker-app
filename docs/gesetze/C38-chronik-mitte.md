@@ -12,7 +12,7 @@
 
 ## Prüfung
 
-`tests/disziplinen` fällt, wenn ein solcher Eintrag wieder an die Spitze der Siegquote geht, rechnet die vier Chroniken der Übergänge und Tage, die acht gegen das Eigene und die Liga-Rekorde gegen das Eigene aus den rohen Partien nach, verlangt für die sieben positiven gegen das Eigene mindestens fünf Halter und höchstens ein Viertel beim Monatsersten und misst jeden Rekord mit Grundwert 150 gegen die Siegquote.
+`tests/disziplinen` fällt, wenn ein solcher Eintrag wieder an die Spitze der Siegquote geht, rechnet die vier Chroniken der Übergänge und Tage, die acht gegen das Eigene und die Liga-Rekorde gegen das Eigene aus den rohen Partien nach, verlangt für die sieben positiven gegen das Eigene mindestens fünf Halter und höchstens ein Viertel beim Monatsersten und misst jeden Rekord mit dem Grundwert des Könnens (100) gegen die Siegquote.
 
 ## Herleitung
 

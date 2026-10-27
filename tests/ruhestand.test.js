@@ -418,9 +418,13 @@ console.log('\n=== DER GESPEICHERTE STAND ===');
      'der Abschluss zählt genau die Monatschroniken, die das Profil zeigt, den letzten Monat eingeschlossen',
      sa.abschluss.prestige.zahlen.monat + ' gezählt, ' + matrix.length + ' in der Matrix (' + matrix.join(', ') + ')');
   // Eine neue Fassung der App: eine Auszeichnung, die jeder hat, der je
-  // gespielt hat, und ein höherer Startwert für die seltenen.
+  // gespielt hat, ein höherer Startwert für die seltenen und ein anderer
+  // Grundwert für die Rekorde des Könnens [§C34]. Der Startwert hieß hier
+  // `start`, das Feld heißt `basis`: die seltenen blieben unverändert, und
+  // geprüft war nur die neue Auszeichnung.
   K.eval(`BADGES.push({id:'zz_neu', ic:'star', name:'Neu im Katalog', desc:'Eine Partie', count:(id, q) => q.some(m => [m.a1,m.a2,m.b1,m.b2].includes(id)) ? 1 : 0});
-          globalThis.__rareAlt = PRESTIGE_AUSZEICHNUNG.rare.start; PRESTIGE_AUSZEICHNUNG.rare.start += 40;
+          globalThis.__rareAlt = PRESTIGE_AUSZEICHNUNG.rare.basis; PRESTIGE_AUSZEICHNUNG.rare.basis += 40;
+          CHRONICLES.forEach(c => { if(c.basis === REKORD_GRUNDWERT.koennen) c.basis += 50; });
           invalidateCache(); _ruheGespeichertMemo.clear();`);
   const andere = IDS.find(id => id !== MARTIN && J("getCachedBadges('" + id + "').length") > 0);
   const nachher = J(`(p=>({punkte:p.punkte,stufe:p.stufe,grad:p.grad,teile:p.teile}))(prestigeOf('${MARTIN}'))`);
@@ -433,7 +437,15 @@ console.log('\n=== DER GESPEICHERTE STAND ===');
   const gerechnet = J(`prestigeOf('${MARTIN}').punkte`);
   ok(gerechnet !== gespeichert.punkte, 'ohne Abschluss-Teil hätte die neue Fassung das Prestige verschoben',
      gespeichert.punkte + ' gespeichert, ' + gerechnet + ' gerechnet');
-  K.eval(`pmap()['${MARTIN}'].retired_stand = __sa; BADGES.pop(); PRESTIGE_AUSZEICHNUNG.rare.start = globalThis.__rareAlt;
+  // Bis zum Abschluss rechnen seine Rekorde vom Karriereende mit dem
+  // Grundwert von heute, wie die jedes anderen.
+  const rekQ = J(`(prestigeOf('${MARTIN}').quellen || []).filter(q => q.q === 'rekord')
+    .map(q => ({id:q.id, basis:q.basis, soll:CHRONICLE_BY_ID[q.id].basis}))`);
+  ok(rekQ.length > 0 && rekQ.every(q => q.basis === q.soll) && rekQ.some(q => q.basis === K.eval('REKORD_GRUNDWERT.koennen') + 50),
+     'vor dem Abschluss rechnen seine Rekorde mit dem Grundwert von heute',
+     rekQ.map(q => q.id + ' ' + q.basis + '/' + q.soll).slice(0, 4).join(', '));
+  K.eval(`pmap()['${MARTIN}'].retired_stand = __sa; BADGES.pop(); PRESTIGE_AUSZEICHNUNG.rare.basis = globalThis.__rareAlt;
+          CHRONICLES.forEach(c => { if(c.basis === REKORD_GRUNDWERT.koennen + 50) c.basis -= 50; });
           invalidateCache(); _ruheGespeichertMemo.clear();`);
   // Eine Stufe mehr in der Leiter: der Schlüssel gilt, die Zahl folgt ihm.
   {
