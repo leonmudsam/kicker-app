@@ -88,8 +88,9 @@ gemeinsame Kern aus Siegquote, Erwartungsabstand und Rollenbeitrag, und
 darf die Spielzahl den Wert nicht mehr heben, sonst hielte ihn wieder der
 Vielspieler. Eine zweite Formel daneben wäre genau der Fehler, den dieser
 Absatz verbietet. Das
-Sturm-/Abwehrprofil steht ebenso nur in `positionsProfilWert`; Profil und
-„Der Wandler" rufen dieselbe Funktion auf. Zwei
+Sturm-/Abwehrprofil steht ebenso nur in `positionsLage` [§C44]; Profil,
+hell gezeichnete Rolle, Elo-Positionsbonus und „Der Wandler" rufen dieselbe
+Funktion auf. Zwei
 Rechnungen über dieselbe Frage nennen irgendwann zwei verschiedene Beste, und
 dann steht in der Chronik ein anderer Name als über der Liste, auf der er ihn
 geholt hat. `tests/disziplinen` legt beide nebeneinander.

@@ -496,7 +496,10 @@ function showMatchDetail(mid){
         factors.push({label:'Underdog-Boost',val:undEffect, desc});
       }
       if(Math.abs(b.riskEffect)>0.1) factors.push({label:b.riskShare<1?'Risiko-Split (stark)':'Risiko-Split (schwach)',val:b.riskEffect,desc:'Stärkeverteilung im Team'});
-      if(Math.abs(b.posEffect)>0.1) factors.push({label:'Positions-Bonus',val:b.posEffect,desc:(b.posMult>1?'Schwache':'Starke')+' Position'});
+      // Schwach oder stark sagt der Faktor, nicht der Multiplikator: nach
+      // einer Niederlage auf der schwachen Position ist der kleiner als
+      // eins, und dort stand „Starke Position".
+      if(Math.abs(b.posEffect)>0.1) factors.push({label:'Positions-Bonus',val:b.posEffect,desc:(b.posFactor>1?'Schwache':'Starke')+' Position'});
       factors.push({label:'Spielbonus',val:b.matchBonus,desc:'fest +'+komma(b.matchBonus,2)+' je Match'});
       const factorRows=factors.map(f=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:11px">
         <div><span style="color:var(--ink)">${f.label}</span> <span style="color:var(--muted);font-size:10px">${f.desc}</span></div>

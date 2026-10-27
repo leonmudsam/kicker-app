@@ -27,7 +27,7 @@ Wächter 8 vergleicht. Ein Kürzel `§n.m` ist ein Abschnitt des Codes,
 - **05-rang-elo.js**
   - §2.7 RANG-SYSTEM (Durchschnitts-Saison-Elo)
   - §2.8 ERWEITERTES ELO + AUTO-POSITION
-  - §2.8a Automatische Position (erwartungsbasiert + Erfahrung)
+  - §2.8a Das Positionsprofil [§C44]
   - §2.9 POSITIONS-KLASSIFIZIERUNG (7 Stufen)
 - **05b-recap-teile.js** — ohne Banner
 - **06-db.js**

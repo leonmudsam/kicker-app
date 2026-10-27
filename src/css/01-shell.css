@@ -118,6 +118,12 @@
   .kopf-info .ic,.kopf-info svg{width:14px;height:14px}
   .pos-info p{font-size:13px;line-height:1.5;color:var(--ink2);margin:0 0 10px}
   .pos-info b{color:var(--ink)}
+  /* Die Zahlen hinter der Einstufung im Profil [§C44]: je Zeile Sturm und
+     Abwehr nebeneinander, damit der Abstand gegen die Erwartung abzulesen ist. */
+  .pos-info-tab{display:grid;grid-template-columns:1fr auto auto;gap:6px 14px;align-items:baseline;
+    margin:0 0 14px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;
+    font-family:'Sometype Mono',monospace;font-size:12px;color:var(--ink2);text-align:right}
+  .pos-info-tab .l{text-align:left;color:var(--muted)}
 
   .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;margin-bottom:14px}
   .card.flush{padding:6px}

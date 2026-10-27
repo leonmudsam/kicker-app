@@ -3318,7 +3318,7 @@ const ok = (c, msg, det) => {
     const K = window.__k.eval.bind(window.__k);
     const ids = K('players.filter(p=>!p.hidden).map(p=>p.id)');
     const out = [];
-    for(const pid of ids){
+    const miss = async pid => {
       K('showPlayer(' + JSON.stringify(pid) + ')');
       await new Promise(r => requestAnimationFrame(r));
       const root = document.querySelector('#sheet .pp-root');
@@ -3341,7 +3341,8 @@ const ok = (c, msg, det) => {
       const def = cards.find(e=>e.classList.contains('def'));
       const probe = document.createElement('i');
       if(root){ probe.style.color='var(--ak)'; root.appendChild(probe); }
-      out.push({pid, wr, cls:cards.map(e=>e.className), seite:pos ?
+      out.push({pid, wr, st:K('positionsLage(posPerfFrom(' + JSON.stringify(pid) + ',matches)).staerker'),
+        cls:cards.map(e=>e.className), seite:pos ?
         (pos.classList.contains('atk-seite')?'atk':pos.classList.contains('def-seite')?'def':'neutral') : '',
         ursprung, overflow:spill,
         op:cards.map(e=>+getComputedStyle(e).opacity),
@@ -3350,15 +3351,36 @@ const ok = (c, msg, det) => {
         defFarbe:def ? getComputedStyle(def.querySelector('.pp-rd-lbl')).color : '',
         rangFarbe:root ? getComputedStyle(probe).color : ''});
       probe.remove();
-    }
+    };
+    for(const pid of ids) await miss(pid);
+    // In den echten Partien steht niemand mehr bei 50:50 [§C44]. Der
+    // Flex-Strahl wird an einem gebauten Spieler gemessen, der vorne und
+    // hinten gleich oft und gleich gut spielt; danach steht die Liga wieder.
+    K(`window.__vorFlex={players,matches,stories:_cache._stories};
+      const mit=players.filter(p=>!p.hidden).map(p=>p.id).slice(0,3);
+      const t0=new Date(matches[0].created_at).getTime()-3*864e5, neu=[];
+      for(let i=0;i<20;i++){ const sieg=i%4<2;
+        neu.push({id:'flex'+i,a1:'flex',a2:mit[0],b1:mit[1],b2:mit[2],a1_pos:i%2?'atk':'def',a2_pos:i%2?'def':'atk',
+          b1_pos:'atk',b2_pos:'def',score_a:sieg?10:5,score_b:sieg?5:10,winner:sieg?'A':'B',exp_a:.5,
+          created_at:new Date(t0+i*6e4).toISOString(),deltas:{}}); }
+      players=players.concat({id:'flex',name:'Flex',hidden:false,elo:0,atk:.5});
+      matches=neu.concat(matches);invalidateCache();`);
+    await miss('flex');
+    // invalidateCache leert auch den Story-Bestand; ohne ihn stand der Feed
+    // für alle späteren Prüfungen leer und ohne ungelesene Karten.
+    K('players=window.__vorFlex.players;matches=window.__vorFlex.matches;invalidateCache();'
+      + '_cache._stories=window.__vorFlex.stories;');
     K('closeSheet && closeSheet()');
     return out;
   });
+  // Hell gezeichnet ist die Rolle, die `positionsLage` stärker nennt
+  // [§C44], nicht die mit der höheren Siegquote: die kannte weder Partner
+  // noch Gegner und zeichnete Anton nach zwei Sturmpartien ohne Sieg die
+  // Abwehr hell.
   const beide = rollen.filter(r => r.wr.length === 2);
   const rollenFalsch = beide.filter(r => {
-    const nah = Math.abs(r.wr[0]-r.wr[1]) <= 3;
-    if(nah) return !r.cls.every(c => / neutral/.test(c));
-    const hi = r.wr[0] > r.wr[1] ? 0 : 1, lo = 1-hi;
+    if(r.st === 'beide') return !r.cls.every(c => / neutral/.test(c));
+    const hi = r.st === 'atk' ? 0 : 1, lo = 1-hi;
     return !/ stark/.test(r.cls[hi]) || !/ schwach/.test(r.cls[lo])
       || !(r.op[hi] > r.op[lo]) || r.schatten[hi] === 'none';
   });
@@ -3379,6 +3401,46 @@ const ok = (c, msg, det) => {
   ok(rollen.every(r => r.overflow <= 1),
      'das Profil bleibt bei 360 px ohne horizontalen Ueberlauf',
      Math.max(...rollen.map(r=>r.overflow)).toFixed(1) + ' px');
+
+  // Woraus die Einstufung entsteht [§C44]: der Knopf in der Überschrift
+  // öffnet ein Blatt mit Partien, Siegen und der Leistung gegen die
+  // Erwartung je Position — dieselben Zahlen, aus denen `positionsLage`
+  // rechnet —, ohne die Überschrift höher zu machen als die übrigen.
+  const einstufung = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const pid = K('(players.find(p=>p.name==="Henry")||{}).id');
+    K('showPlayer(' + JSON.stringify(pid) + ')');
+    await new Promise(r => requestAnimationFrame(r));
+    const knopf = document.querySelector('#sheet #ppPosInfo');
+    const titel = [...document.querySelectorAll('#sheet .pp-sec-title')];
+    const hoehe = e => e.getBoundingClientRect().height;
+    const mitKnopf = knopf ? hoehe(knopf.closest('.pp-sec-title')) : 0;
+    const ohne = Math.max(...titel.filter(e => !e.querySelector('#ppPosInfo')).map(hoehe));
+    if(knopf) knopf.click();
+    await new Promise(r => setTimeout(r, 500));
+    const blatt = document.querySelector('#sheet');
+    const tab = blatt.querySelector('.pos-info-tab');
+    const zellen = tab ? [...tab.children].map(e => e.textContent.trim()) : [];
+    const rb = blatt.getBoundingClientRect();
+    const raus = tab ? [...blatt.querySelectorAll('.pos-info *')].filter(e => {
+      const b = e.getBoundingClientRect();
+      return b.right > rb.right + .5 || b.left < rb.left - .5 || e.scrollWidth > e.clientWidth + 1;
+    }).map(e => e.className || e.tagName) : ['keine Tabelle'];
+    const t = K('posPerfFrom(' + JSON.stringify(pid) + ',matches)');
+    const kl = K('posClassify(atkStrength(' + JSON.stringify(pid) + ')).label');
+    const text = blatt.textContent;
+    K('closeSheet && closeSheet()');
+    return {mitKnopf, ohne, offen:/So entsteht die Einstufung/.test(text), zellen, raus, kl,
+      soll:['Partien', String(t.aG), String(t.dG), 'Siege', String(t.aW), String(t.dW)],
+      klImBlatt:text.includes(kl)};
+  });
+  ok(einstufung.offen && einstufung.soll.every(z => einstufung.zellen.includes(z))
+     && einstufung.zellen.includes('Gegen die Erwartung') && einstufung.klImBlatt,
+     'der Knopf im Positions-Profil öffnet die Einstufung mit Partien, Siegen und der Leistung gegen die Erwartung je Position',
+     einstufung.zellen.join(' | ') + ' · ' + einstufung.kl);
+  ok(einstufung.raus.length === 0 && einstufung.mitKnopf <= einstufung.ohne + .5,
+     'das Blatt der Einstufung läuft bei 360 px nicht über, und der Knopf macht die Überschrift nicht höher',
+     (einstufung.raus.join(', ') || 'kein Überlauf') + ' · ' + einstufung.mitKnopf + ' gegen ' + einstufung.ohne + ' px');
   await page.setViewportSize({width:430, height:932});
 
   // ── Die Leiter im Blatt traegt die echten Zeichen ──────────────────

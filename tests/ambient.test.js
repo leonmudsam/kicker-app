@@ -773,10 +773,13 @@ const _brkZu = JSON.parse(K.eval(`JSON.stringify((function(){
       const d = x.dataRef || {};
       if(d.type === 'sammel'){
         const teile = d.teile || [];
-        // Die Zeile einer Sammelkarte traegt ihren Typ nicht mit, also wird
-        // der Anlass an den Rohmeldungen desselben Tages gesucht.
+        // Jede Zeile einer Sammelkarte traegt den dataRef ihrer Meldung in
+        // „ref“. Ueber den Titel allein fand der Test die legendaere
+        // Auszeichnung nicht, deren Zeile anders heisst als ihre Meldung
+        // („Martin holt die legendaere Auszeichnung" gegen „Martin: Dominator").
         const titel = new Set(teile.map(z => z.titel));
-        if(r.filter(y => titel.has(y.title)).some(y => anlass(y.dataRef || {}))) geerbt++;
+        if(teile.some(z => anlass(z.ref || {}))
+           || r.filter(y => titel.has(y.title)).some(y => anlass(y.dataRef || {}))) geerbt++;
         else fremd.push(x.title);
       } else if(!anlass(d)) fremd.push(x.title);
     });
@@ -2855,31 +2858,37 @@ ok(_tagSchluss.zeile, 'die Karte zeigt es als Zeile mit Gesicht, Name und Klasse
 ok(_tagSchluss.nurSelten, 'nur Seltenes und Legendaeres: das Gewoehnliche eines Tages steht in der Ehrung');
 
 // Die Woche: Award-Sammler in der Karte der Woche, die Stufe in einer
-// Zeichen-Karte des Schlusses.
+// Zeichen-Karte des Schlusses. Beides fiel einmal auf denselben Schluss:
+// der vom 03.08. gab Julian den Award-Sammler und einen Grad. Seit der
+// Positionsbonus der Elo gegen die eigene Aufteilung misst [§C44], hebt er
+// Julian über keine Gradgrenze mehr; die Zeichen-Karte wird am Schluss vom
+// 20.07. gemessen, der Leo mit dem Spieler der Woche einen Grad gibt.
 const _wocheSchluss = _schlussAm(new RealDate(2026, 7, 4, 8, 0, 0).getTime(), `
   const w = roh.find(x => (x.dataRef||{}).type === 'woche');
   const a = ((w && w.dataRef.abschluss) || []).find(x => x.id === 'award_collector');
-  const z = roh.find(x => x.id === 'instag_woche_2026-08-03');
-  const d = (z && z.dataRef) || {};
-  const karte = z ? _newsCardHtmlM2(z, false, false, '') : '';
-  const blatt = z ? (_ndInsTagBlatt(z) || {}).mitte || '' : '';
   return {sammler:!!a && a.klasse === 'legendary' && a.spieler.some(x => x.pid === '${_J}' && x.mal === 1),
     brk:!!w && _isBreaking(w) && !roh.filter(x => (x.dataRef||{}).type === 'woche' && x !== w).some(_isBreaking),
-    wocheZeile:w ? /nf-abs gold[\\s\\S]*Award-Sammler[\\s\\S]*Legendär/.test(_newsCardHtmlM2(w, false, false, '')) : false,
-    zeichen:!!z, schluss:d.schluss, wann:z ? new Date(z.when).getTime() === new Date(2026, 7, 3).getTime() : false,
-    zug:(d.zuege || []).map(x => x.pid === '${_J}' ? x.art : '?').join(','),
-    grund:(d.grund || []).map(x => x.id).join(','),
-    karte:/nf-abs gold[\\s\\S]*Award-Sammler/.test(karte),
-    blatt:blatt.indexOf('Mit dem Schluss der Woche vergeben') >= 0 && blatt.indexOf('nach der Woche') >= 0,
-    seite:z ? _newsSeite(z) : ''};`);
+    wocheZeile:w ? /nf-abs gold[\\s\\S]*Award-Sammler[\\s\\S]*Legendär/.test(_newsCardHtmlM2(w, false, false, '')) : false};`);
 ok(_wocheSchluss.sammler && _wocheSchluss.wocheZeile,
    'der Schluss der Woche bis 02.08. vergibt Julian den Award-Sammler, legendaer, in der Karte der Woche', JSON.stringify(_wocheSchluss));
 ok(_wocheSchluss.brk, 'eine legendaere Auszeichnung ist Breaking, auch in der Karte der Woche');
-ok(_wocheSchluss.zeichen && _wocheSchluss.schluss === 'woche' && _wocheSchluss.wann && _wocheSchluss.zug === 'grad',
-   'und Julians neuer Grad steht in einer Zeichen-Karte am Montag um 00:00', JSON.stringify(_wocheSchluss));
-ok(_wocheSchluss.grund === 'award_collector,potw' && _wocheSchluss.karte && _wocheSchluss.blatt,
-   'die Zeichen-Karte nennt, was der Schluss vergab, auf der Karte und im Blatt', _wocheSchluss.grund);
-ok(_wocheSchluss.seite === 'zeichen', 'sie steht auf der Seite der Zeichen', _wocheSchluss.seite);
+const _Lo = IDS[NAMES.indexOf('Leo')];
+const _zeichenSchluss = _schlussAm(new RealDate(2026, 6, 20, 8, 0, 0).getTime(), `
+  const z = roh.find(x => x.id === 'instag_woche_2026-07-20');
+  const d = (z && z.dataRef) || {};
+  const karte = z ? _newsCardHtmlM2(z, false, false, '') : '';
+  const blatt = z ? (_ndInsTagBlatt(z) || {}).mitte || '' : '';
+  return {zeichen:!!z, schluss:d.schluss, wann:z ? new Date(z.when).getTime() === new Date(2026, 6, 20).getTime() : false,
+    zug:(d.zuege || []).map(x => x.pid === '${_Lo}' ? x.art : '?').join(','),
+    grund:(d.grund || []).map(x => x.id).join(','),
+    karte:/nf-abs viol[\\s\\S]*Leo[\\s\\S]*Player of the Week/.test(karte),
+    blatt:blatt.indexOf('Mit dem Schluss der Woche vergeben') >= 0 && blatt.indexOf('nach der Woche') >= 0,
+    seite:z ? _newsSeite(z) : ''};`);
+ok(_zeichenSchluss.zeichen && _zeichenSchluss.schluss === 'woche' && _zeichenSchluss.wann && _zeichenSchluss.zug === 'grad',
+   'Leos neuer Grad aus dem Schluss der Woche steht in einer Zeichen-Karte am Montag um 00:00', JSON.stringify(_zeichenSchluss));
+ok(_zeichenSchluss.grund === 'potw' && _zeichenSchluss.karte && _zeichenSchluss.blatt,
+   'die Zeichen-Karte nennt, was der Schluss vergab, auf der Karte und im Blatt', _zeichenSchluss.grund);
+ok(_zeichenSchluss.seite === 'zeichen', 'sie steht auf der Seite der Zeichen', _zeichenSchluss.seite);
 
 // Faellt der Schluss der Woche auf den des Monats (31.05., ein Sonntag),
 // traegt der Monatsabschluss beide Zeichen, und keine zweite Karte entsteht.
@@ -4847,7 +4856,12 @@ ok(_stufen.falsch.length === 0,
 // selben Tag, der lange Tag, der Höchststand, der Tabellensprung. Keins
 // steht allein, jedes meldet nur seine Stufen, und ist es das stärkste der
 // Partie, zeichnet der Fuß es.
-const _partie = JSON.parse(K.eval(`JSON.stringify((function(){
+// Gemessen an zwei Stichtagen, dem 22.07. und dem 27.08.: welche dieser
+// Ereignisse in den letzten Tagen liegen, ist Zufall der Partien. Schon eine
+// kleine Änderung am Positionsbonus der Elo [§C44] nahm am 27.08.
+// Höchststand und Tabellensprung aus dem Fenster — die Spitzen aus Mai bis
+// Juli lagen höher, und im August übertraf sie niemand.
+const _partieRechnung = `(function(){
   const T = ['fluch', 'duo_jubilaeum', 'revanche', 'tagesmarathon', 'elo_hoch', 'tabellensprung'];
   const FUSS = {fluch:'gegner', elo_hoch:'hoch', tabellensprung:'rang', revanche:'revanche',
     duo_jubilaeum:'chemie', tagesmarathon:'tagesring'};
@@ -4893,7 +4907,18 @@ const _partie = JSON.parse(K.eval(`JSON.stringify((function(){
     {id:'g-tag', when:w2, dataRef:{type:'elo_hoch', pid:'p1'}}]).map(s => s.id).join(',');
   return {n:neu.length, typen:[...new Set(neu.map(s => s.dataRef.type))], allein, inKarte, stufe, folgt, fremd, gipfel,
     hoch:hoch.length, hochFalsch:hoch.filter(Boolean)};
-})())`));
+})`;
+const _partieJuli = _amErsten(new RealDate(2026, 6, 22, 23, 0, 0).getTime(), `
+  const alle = matches.slice();
+  matches = alle.filter(m => mts(m) <= Date.now()); invalidateCache();
+  _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+  try { return ${_partieRechnung}(); } finally { matches = alle; }`);
+const _partieJetzt = JSON.parse(K.eval(`JSON.stringify(${_partieRechnung}())`));
+const _partie = {n:_partieJuli.n + _partieJetzt.n, typen:[...new Set(_partieJuli.typen.concat(_partieJetzt.typen))],
+  allein:_partieJuli.allein.concat(_partieJetzt.allein), inKarte:_partieJuli.inKarte + _partieJetzt.inKarte,
+  stufe:_partieJuli.stufe.concat(_partieJetzt.stufe), folgt:_partieJuli.folgt + _partieJetzt.folgt,
+  fremd:_partieJuli.fremd.concat(_partieJetzt.fremd), gipfel:_partieJetzt.gipfel,
+  hoch:_partieJuli.hoch + _partieJetzt.hoch, hochFalsch:_partieJuli.hochFalsch.concat(_partieJetzt.hochFalsch)};
 ok(_partie.typen.length >= 4 && _partie.allein.length === 0 && _partie.inKarte === _partie.n,
    'was in einer Partie sonst noch passiert, steht als Zeile in ihrer Karte und nie allein',
    _partie.n + ' Ereignisse (' + _partie.typen.join(', ') + '), ' + _partie.inKarte + ' in ihrer Karte'
@@ -6489,13 +6514,15 @@ ok(_brkTitel.normal === 2, 'auch ohne Breaking bleiben verschiedene Ereignisse m
 // keine und war damit an jedem Wechsel derselbe Satz. Am 14.09. wechselte
 // die Spitze zweimal und am 15.09. erneut; zwei der drei Karten trugen Wort
 // fuer Wort denselben Text, und der Doublettenfilter warf die aeltere weg.
-// Gebaut, nicht gehofft: in den echten 466 Partien wechselt die Spitze an
-// keinem der 56 Spieltage — der Erste steht von Anfang an oben. Gebaut wird
-// der Wechsel deshalb: der Zweite schlaegt den Ersten so lange, bis er vorn
-// ist.
+// Gebaut, nicht gehofft: der Zweite schlaegt den Ersten so lange, bis er
+// vorn ist. Gebaut wird an einem eigenen Tag nach der letzten echten
+// Partie, ab 6 Uhr im Minutentakt: am 26.08. wechselt die Spitze auch in
+// den echten Partien, seit der Positionsbonus gegen die eigene Aufteilung
+// misst [§C44], und ein gebauter Tag dort zaehlte drei Wechsel statt zwei.
 const _fw = JSON.parse(K.eval(`JSON.stringify((function(){
   const alle = matches.slice();
-  const basis = mts(alle[alle.length - 1]);
+  const letzte = new Date(mts(alle[alle.length - 1]));
+  const basis = new Date(letzte.getFullYear(), letzte.getMonth(), letzte.getDate() + 1, 6).getTime();
   const sim = getGlobalSim();
   const rang = Object.keys(sim.elo || {})
     .filter(pid => pmap()[pid] && !pmap()[pid].hidden)
@@ -6512,7 +6539,7 @@ const _fw = JSON.parse(K.eval(`JSON.stringify((function(){
     id:'fw' + i, a1:zweiter, a2:rest[0], b1:erster, b2:rest[1],
     a1_pos:'atk', a2_pos:'def', b1_pos:'atk', b2_pos:'def',
     score_a:10, score_b:2, winner:'A', exp_a:0.5,
-    created_at:new Date(basis + (i + 1) * 300000).toISOString(),
+    created_at:new Date(basis + (i + 1) * 60000).toISOString(),
     deltas:Object.assign({}, d)
   });
   // Und dieselbe Partie mit umgekehrten Vorzeichen: damit holt der alte
@@ -6521,7 +6548,7 @@ const _fw = JSON.parse(K.eval(`JSON.stringify((function(){
     id:'fz' + i, a1:erster, a2:rest[1], b1:zweiter, b2:rest[0],
     a1_pos:'atk', a2_pos:'def', b1_pos:'atk', b2_pos:'def',
     score_a:10, score_b:2, winner:'A', exp_a:0.5,
-    created_at:new Date(basis + (i + 1) * 300000).toISOString(),
+    created_at:new Date(basis + (i + 1) * 60000).toISOString(),
     deltas:{[erster]:12, [rest[1]]:12, [zweiter]:-12, [rest[0]]:-12}
   });
   // Die Karte entsteht nur, wenn die LETZTE Partie den Wechsel ausgeloest
@@ -7825,15 +7852,30 @@ ok(_scoreWahl.welten.length === 0,
 // Duos, eine Rivalität —, steht als Fuß nicht auf zwei Karten hintereinander.
 // Er stand, sobald er zutraf: die Siegesserie auf zwölf von 43 Karten, an
 // einem Tag dreimal.
-const _fussFolge = JSON.parse(K.eval(`JSON.stringify((function(){
+// Gezählt wird an denselben zwei Stichtagen wie oben: zwei Wochen Partien
+// allein sind zu wenig für eine Verteilung — am 27.08. stand der Fuß des
+// Angstgegners auf 8 von 52 Karten, sobald Höchststand und Tabellensprung
+// dort fehlten [§C44].
+const _fussRechnung = `(function(){
   const karten = _buildStories().filter(s => (s.dataRef||{}).type === 'spiel' && s.dataRef.visual)
     .sort((a, b) => a.when - b.when);
   const fuss = karten.map(s => (s.dataRef.visual.occasion || {}).key || '-');
   const ZUSTAND = ['serie', 'teamserie', 'duell'];
   const zahl = {}; fuss.forEach(k => { zahl[k] = (zahl[k] || 0) + 1; });
-  return {n:fuss.length, zahl, folge:fuss.filter((k, i) => i && ZUSTAND.includes(k) && fuss[i - 1] === k).length,
+  return {n:fuss.length, zahl, folge:fuss.filter((k, i) => i && ZUSTAND.includes(k) && fuss[i - 1] === k).length};
+})`;
+const _fussJuli = _amErsten(new RealDate(2026, 6, 22, 23, 0, 0).getTime(), `
+  const alle = matches.slice();
+  matches = alle.filter(m => mts(m) <= Date.now()); invalidateCache();
+  _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+  try { return ${_fussRechnung}(); } finally { matches = alle; }`);
+const _fussJetzt = JSON.parse(K.eval(`JSON.stringify(${_fussRechnung}())`));
+const _fussFolge = (() => {
+  const zahl = {};
+  [_fussJuli, _fussJetzt].forEach(f => Object.keys(f.zahl).forEach(k => { zahl[k] = (zahl[k] || 0) + f.zahl[k]; }));
+  return {n:_fussJuli.n + _fussJetzt.n, zahl, folge:_fussJuli.folge + _fussJetzt.folge,
     max:Math.max(...Object.keys(zahl).filter(k => k !== '-').map(k => zahl[k]))};
-})())`));
+})();
 ok(_fussFolge.n >= 30 && _fussFolge.folge === 0 && _fussFolge.max <= _fussFolge.n * .15,
    'Serie, Duo-Serie und Rivalität stehen als Fuß nicht zweimal hintereinander, und kein Fuß steht auf mehr als jeder siebten Karte',
    _fussFolge.folge + ' hintereinander · ' + JSON.stringify(_fussFolge.zahl));
@@ -8321,12 +8363,16 @@ console.log('=== EIN WAPPEN UND EINE ZAHL, UND KEINE LEERE UEBERSCHRIFT ===');
 // tragen eine Bühne, deren Zahl die der Karte ist. Und kein Blatt trägt eine
 // Überschrift ohne etwas darunter: „Die Partie zum Meilenstein" stand über
 // nichts, weil die Partie schon im Kopf stand.
+// Jubiläum und Siegmeilenstein entstehen an früheren Spieltagen (14. und
+// 20.08.) und werden dort gemessen; den Elo-Meilenstein, den der letzte Tag
+// trug, gibt es nicht mehr, seit der Positionsbonus gegen die eigene
+// Aufteilung misst [§C44].
 const _wz = JSON.parse(K.eval(`JSON.stringify((function(){
   const roh = _buildStories();
   const blatt = s => { _ndBlattJetzt = null; return {k:_newsBlattKopf(s) || '', m:_newsDetailMitte(s) || ''}; };
   const falsch = [], gesehen = {};
   let n = 0, leer = [];
-  roh.forEach(s => {
+  const pruefe = s => {
     const d = s.dataRef || {};
     let b; try { b = blatt(s); } catch(e){ return; }
     if(/class="nd-section">[^<]*<\\/div>\\s*(<div class="nd-section"|$)/.test(b.m.trim())) leer.push(d.type);
@@ -8349,7 +8395,16 @@ const _wz = JSON.parse(K.eval(`JSON.stringify((function(){
       gesehen[d.type] = 1; n++;
       if((b.k.match(/class="nd-bm-k/g) || []).length !== d.marken.length) falsch.push('badge_marken');
     }
+  };
+  const alle = matches.slice();
+  ['2026-08-14', '2026-08-20'].forEach(t => {
+    matches = alle.filter(m => mts(m) <= new Date(t + 'T23:59:59').getTime());
+    invalidateCache(); _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+    let r = []; try { r = _buildStories() || []; } catch(e){}
+    r.forEach(pruefe);
   });
+  matches = alle; invalidateCache(); _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+  roh.forEach(pruefe);
   // Der Fun Fact eines Spielers: dieselbe Bühne mit seinem Wert. Gezogen an
   // mehreren Tagen, weil je Tag genau einer entsteht.
   let fakten = 0;

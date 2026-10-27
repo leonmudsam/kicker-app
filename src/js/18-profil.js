@@ -46,6 +46,25 @@ function playerAwards(id){
   return found;
 }
 
+// Woraus die Einstufung im Positions-Profil entsteht [§C44], mit den
+// Zahlen des Spielers. Ohne das Blatt stand dort nur ein Prozentwert, und
+// wer ihn nachrechnen wollte, fand Partien und Siegquoten, aber nicht die
+// Leistung gegen die Erwartung, die ihn verschiebt.
+function zeigeProfilPosInfo(id){
+  const t = posPerfFrom(id, matches), lage = positionsLage(t);
+  const pp = v => v == null ? '–' : _ppZeichen(v) + ' %-Punkte';
+  const zeile = (lbl, a, d) => `<span class="l">${lbl}</span><span>${a}</span><span>${d}</span>`;
+  openSheet(blattKopfHtml({ic:'info', titel:'So entsteht die Einstufung', unter:pname(id)})
+    + `<div class="pos-info">
+      <div class="pos-info-tab">${zeile('', '<b>Sturm</b>', '<b>Abwehr</b>')}${
+        zeile('Partien', t.aG, t.dG)}${zeile('Siege', t.aW, t.dW)}${
+        zeile('Gegen die Erwartung', pp(t.aPerfAvg), pp(t.dPerfAvg))}</div>
+      <p>Die Einstufung fragt zuerst, wo jemand spielt, und rückt dann zu der Seite, auf der die Leistung gegen die Erwartung besser ist. Die Erwartung kennt Partner und Gegner jeder Partie.</p>
+      <p>Wenige Partien auf einer Seite sagen wenig: dort zählt zuerst der Schnitt aller Partien, bis mehr dazukommen.</p>
+      <p>In der Elo bringt ein Sieg auf der schwächeren Seite mehr, und eine Niederlage dort kostet weniger. Auf der Stammposition zählt eine Partie etwas weniger, höchstens 5 %. Über die eigene Aufteilung hebt sich beides auf.</p>
+      <p><b>${pct(lage.wert)} % Sturm</b> · eingestuft als <b>${esc(posClassify(lage.wert).label)}</b></p></div>`);
+}
+
 function showPlayer(id){
   const p=pmap()[id];if(!p)return;
   _sheetSetReopen(()=>showPlayer(id));
@@ -70,7 +89,9 @@ function showPlayer(id){
     .sort((a,b)=>(gSim.elo[b.id]??cfg.start_elo)-(gSim.elo[a.id]??cfg.start_elo));
   const rank=rankedSeason.findIndex(x=>x.id===id)+1;
   const streak=s.curStreak;
-  const autoAtk=atkStrength(id);
+  // Eine Lage für Profil, Rollen und Info-Blatt [§C44].
+  const posLage=positionsLage(posPerfFrom(id,matches));
+  const autoAtk=posLage.wert;
   const atkPct=Math.round(autoAtk*100);
   const defPct=100-atkPct;
   const _streakInfo=longestPlayerStreakInfo(id,matches);
@@ -519,11 +540,14 @@ const rankProgHtml = rInfo ? `
         // Die staerkere Rolle traegt ihre Farbe, die schwaechere steht
         // zurueck. Beide gleich laut gezeichnet sagten sie nicht, worin
         // jemand besser ist — und genau das ist die Frage, die diese
-        // Karte beantwortet. Bis drei Prozentpunkte Unterschied gelten als
-        // praktisch gleichauf; eine Rundungsdifferenz soll keine Rolle matt
-        // zeichnen.
-        const _stark = (atkWr == null || defWr == null || Math.abs(atkWr - defWr) <= 3)
-          ? 'beide' : (atkWr > defWr ? 'atk' : 'def');
+        // Karte beantwortet. Welche stärker ist, sagt dieselbe Rechnung wie
+        // das Positions-Profil darunter [§C44]: die Leistung gegen die
+        // Erwartung je Position, am eigenen Schnitt gemessen. Hier stand die
+        // rohe Siegquote, die nichts von Partnern und Gegnern wusste und
+        // nichts davon, dass fünf Partien wenig sagen — die Karte konnte
+        // eine andere Rolle hell zeichnen, als das Profil einstufte. Bis
+        // drei Prozentpunkte Abstand gelten beide als gleichauf.
+        const _stark = posLage.staerker;
         const donut = (cls, lbl, icon, wr, w, g, valLbl, valNum, color) => {
           if(g === 0) return `
             <div class="pp-rd ${cls}">
@@ -780,9 +804,11 @@ const rankProgHtml = rInfo ? `
 
     <div class="pp-sec" style="animation-delay:.8s">
       <div class="pp-sec-title">
-        <div class="l">${svgI('posFlex')}<h4>Positions-Profil</h4></div>
-        <div class="m">${posLabel}</div>
+        <div class="l">${svgI('posFlex')}<h4>Positions-Profil</h4><button class="kopf-info" id="ppPosInfo" type="button" aria-label="So entsteht die Einstufung">${svgI('info')}</button></div>
       </div>
+      <!-- Die Einstufung steht einmal, unten in der Karte. Rechts in der
+           Überschrift stand sie ein zweites Mal, und mit dem Knopf brach
+           die Überschrift bei 360 px in zwei Zeilen. -->
       <div class="pp-posprof ${atkPct > defPct + 4 ? 'atk-seite' : defPct > atkPct + 4 ? 'def-seite' : 'neutral'}" style="--atk:${atkPct}%;--strahl:${Math.max(atkPct, defPct)}%">
         <div class="pph">
           <span class="lf">${svgI('posSturm')}Sturm</span>
@@ -820,6 +846,8 @@ const rankProgHtml = rInfo ? `
   if(pab) pab.onclick=()=>{ sheetNav(()=>zeigeAbschied(id)); };
   const eb=document.getElementById('ppEditBtn');
   if(eb) eb.onclick=()=>{ sheetNav(()=>showEditPlayer(id)); };
+  const ppi=document.getElementById('ppPosInfo');
+  if(ppi) ppi.onclick=()=>{ sheetNav(()=>zeigeProfilPosInfo(id)); };
   const ag=document.getElementById('ppAwardsGrid');
   if(ag) ag.onclick=()=>{ sheetNav(()=>showPlayerAwards(id,awards)); };
   const bb=document.getElementById('ppBadgesBtn');

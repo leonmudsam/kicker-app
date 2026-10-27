@@ -214,8 +214,6 @@ function bind(){
   bindSlider('cfgBonus','match_bonus',v=>v/10,v=>Math.round(v));
   // Neue Slider
   bindSlider('cfgStartElo','start_elo',v=>v,v=>Math.round(v));
-  bindSlider('cfgExpW','exp_weight',v=>v/100,v=>Math.round(v));
-  bindSlider('cfgPosMin','pos_min_games',v=>v,v=>Math.round(v));
   bindSlider('cfgMovMax','mov_max_boost',v=>v/100,v=>Math.round(v));
   bindSlider('cfgExpProt','exp_protect_max',v=>v/100,v=>Math.round(v));
   bindSlider('cfgUdElo','underdog_elo_max',v=>v/100,v=>Math.round(v));

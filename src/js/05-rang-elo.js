@@ -163,21 +163,34 @@ function chanceWort(c){
   return c < CHANCE_SENSATION ? 'Sensation' : c < CHANCE_UPSET ? 'Außenseiter'
        : c < CHANCE_FAVORIT ? 'Augenhöhe' : 'Favorit';
 }
-function posFactor(ps,sw){ return 1+sw*(0.5-ps)*2; }
 function riskWeights(hi,lo,rs){ const gap=Math.min(Math.abs(hi-lo)/400,1); const s=rs*gap; return {strong:1-s,weak:1+s}; }
 
-// ─── §2.8a Automatische Position (erwartungsbasiert + Erfahrung) ─────
-// Misst NICHT nur rohe Siege, sondern:
-//   1) Leistung ÜBER der Erwartung je Position (Performance)
-//   2) Wie OFT der Spieler auf der Position spielt (Erfahrung)
-// Wer 90% der Spiele in der Abwehr macht, hat dort einen Erfahrungs-Bonus —
-// auch wenn die Siegrate schlecht ist. Sonst wird jemand, der 9/10 als Verteidiger
-// spielt und dort schlecht abschneidet, fälschlich als "Stürmer" eingestuft.
-// ─── Konstanten sind jetzt cfg-getunt (Defaults als Fallback) ───
-const POS_MIN_GAMES_DEFAULT = 3;
-const EXP_WEIGHT_DEFAULT = 0.5;
-const _posMinGames = () => cfg.pos_min_games ?? POS_MIN_GAMES_DEFAULT;
-const _expWeight  = () => cfg.exp_weight ?? EXP_WEIGHT_DEFAULT;
+// ─── §2.8a Das Positionsprofil [§C44] ──────────────────────────────────
+// Eine Zahl zwischen 0 und 1: wie sehr jemand Stürmer ist. Sie fragt zwei
+// Dinge und rechnet beide als Chance (log-odds), damit sie sich addieren:
+//   1) Wo spielt jemand?  ln((Sturmpartien + 1) / (Abwehrpartien + 1))
+//   2) Wo ist er besser?  POS_LEISTUNG mal der Abstand der Leistung gegen
+//      die Erwartung je Partie, vorne gegen hinten, beide gemessen am
+//      eigenen Schnitt und mit POS_SCHRUMPF Partien dorthin gezogen
+// Das Ergebnis liegt zwischen 5 und 95 %: ganz am Rand trüge der
+// Positionsbonus der Elo-Rechnung (`posFactor`) mehr, als eine Einstufung
+// sicher sagen kann.
+//
+// Vorher verglich die Leistungshälfte die SUMME der Überperformance je
+// Position. Wer hinten oft und leicht unter der Erwartung spielte, sammelte
+// dort mehr Minus als vorne in wenigen schlechten Partien: Henry stand mit
+// 4 Siegen aus 15 Sturmpartien (−25 %-Punkte je Partie) gegen 76 aus 187 in
+// der Abwehr (−3) bei 50:50 in der Leistung und mit der Häufigkeit gemischt
+// bei 29 % Sturm. Ein fester Regler mischte Häufigkeit und Leistung linear,
+// und ab drei Partien zählte eine Seite voll, darunter gar nicht.
+//
+// Der eigene Schnitt als Maßstab, nicht null: wer insgesamt unter der
+// Erwartung spielt, ist deshalb nicht auf beiden Seiten gleich schwach,
+// und wer selten vorne steht, wird dort am eigenen Schnitt gemessen, bis
+// genug Partien dazukommen. Beide Konstanten sind an den echten Partien
+// gemessen (Henry 5 %, Jane 11 %, Leo 35 %, Leon 77 %, Julian 79 %).
+const POS_SCHRUMPF = 15;
+const POS_LEISTUNG = 4;
 
 function posPerfFrom(id, matchSubset){
   if (!matchSubset || matchSubset === matches) {
@@ -243,51 +256,62 @@ function posWert(pos, g, w, goalsAvg, perfAvg){
   return posLeistung(pos, g, w, goalsAvg, perfAvg) * (1 - Math.exp(-g/5));
 }
 
-// Ein gemeinsamer Positionswert fuer Profil, Chronik und alle Ableitungen.
-// Der Kontext der Chronik nennt die Felder atkG/defG und summiert die
-// Ueberperformance; `posPerfFrom` liefert aG/dG plus Mittelwerte. Beides wird
-// hier auf dieselbe Form gebracht, damit „Der Wandler" nicht mehr eine andere
-// Definition von Ausgeglichenheit benutzt als das Profil.
-function positionsProfilWert(p){
+// Die Lage eines Spielers auf beiden Positionen, aus jeder Form, in der
+// die Zahlen anfallen: `posPerfFrom` (aG/dG und Mittelwerte), der Kontext
+// der Chronik (atkG/defG und Summen) und der Zähler der Elo-Rechnung
+// (aG/dG und Summen). Eine Rechnung für Profil, Elo, die stärkere Rolle im
+// Profil, „Der Wandler" und das Durchwechseln [§C27]: vorher stand eine
+// Kopie davon in der Elo-Rechnung, und die Rollen im Profil fragten nach
+// der rohen Siegquote — drei Antworten auf die Frage, wo jemand besser ist.
+//   rA, rD    Leistung je Partie vorne und hinten gegen den eigenen Schnitt
+//   anteil    Anteil der Partien vorne
+//   wert      das Profil
+//   staerker  'atk', 'def' oder 'beide' (bis drei Prozentpunkte Abstand,
+//             und ohne Partien auf einer Seite)
+function positionsLage(p){
   p = p || {};
   const aG = Number(p.aG != null ? p.aG : p.atkG) || 0;
   const dG = Number(p.dG != null ? p.dG : p.defG) || 0;
-  const aPerfAvg = Number(p.aPerfAvg != null ? p.aPerfAvg : (aG ? p.atkPerf / aG : 0)) || 0;
-  const dPerfAvg = Number(p.dPerfAvg != null ? p.dPerfAvg : (dG ? p.defPerf / dG : 0)) || 0;
-  const total = aG + dG;
-  const minG = _posMinGames();
-  const aOk = aG>=minG, dOk = dG>=minG;
-  if(!aOk && !dOk) return 0.5;
-
-  // ── Faktor 1: Spielanzahl-gewichtete Performance ──
-  // Statt perfAtk = aPerfAvg vs dPerfAvg direkt zu vergleichen (was bei ungleicher
-  // Spielanzahl verzerrt), gewichten wir jede Performance mit der Spielanzahl.
-  // So hat eine Position mit 9 Spielen 3x so viel Einfluss wie eine mit 3.
-  let perfAtk;
-  if(aOk && dOk){
-    // Gewichteter Vergleich: perf*games normalisiert
-    const aScore = aPerfAvg * aG;  // Gesamt-Überperformance im Sturm
-    const dScore = dPerfAvg * dG;  // Gesamt-Überperformance in Abwehr
-    // Positiv = Sturm-Spieler, Negativ = Abwehr-Spieler
-    // Normalisiert auf [-1,1] durch Division durch total
-    const diff = (aScore - dScore) / total;
-    perfAtk = 0.5 + diff * 0.5;
-  } else if(aOk) {
-    perfAtk = 0.5 + aPerfAvg * 0.3;  // Nur Sturm-Daten: gedämpft
-  } else {
-    perfAtk = 0.5 - dPerfAvg * 0.3;  // Nur Abwehr-Daten: gedämpft
-  }
-
-  // ── Faktor 2: Erfahrung (wie oft auf der Position) ──
-  const expAtk = total>0 ? aG/total : 0.5;
-
-  // ── Kombination ──
-  // exp_weight steuert den Mix. Bei 0.4: 60% gewichtete Performance, 40% Erfahrung.
-  const ew = _expWeight();
-  const combined = (1-ew)*perfAtk + ew*expAtk;
-  return Math.max(0.1, Math.min(0.9, combined));
+  const summe = (g, roh, avg) => roh != null ? (Number(roh) || 0) : (Number(avg) || 0) * g;
+  const aS = summe(aG, p.aPerf != null ? p.aPerf : p.atkPerf, p.aPerfAvg);
+  const dS = summe(dG, p.dPerf != null ? p.dPerf : p.defPerf, p.dPerfAvg);
+  const n = aG + dG;
+  if(!n) return {aG, dG, anteil:.5, rA:0, rD:0, wert:.5, staerker:'beide'};
+  const schnitt = (aS + dS) / n;
+  const rA = (aS - aG * schnitt) / (aG + POS_SCHRUMPF);
+  const rD = (dS - dG * schnitt) / (dG + POS_SCHRUMPF);
+  const lg = Math.log((aG + 1) / (dG + 1)) + POS_LEISTUNG * (rA - rD);
+  const staerker = (!aG || !dG || Math.abs(rA - rD) <= .03) ? 'beide' : rA > rD ? 'atk' : 'def';
+  return {aG, dG, anteil:aG / n, rA, rD, staerker,
+    wert:Math.min(.95, Math.max(.05, 1 / (1 + Math.exp(-lg))))};
 }
-// Sturm-Anteil 0..1, kombiniert Performance + Erfahrung.
+function positionsProfilWert(p){ return positionsLage(p).wert; }
+
+// Der Positionsbonus der Elo-Rechnung [§3.6]: auf der Seite, die schwächer
+// ist als die eigene Mischung, bringt ein Sieg mehr und kostet eine
+// Niederlage weniger; auf der Stammposition zählt eine Partie etwas
+// weniger, höchstens POS_ABZUG_MAX. Gemessen wird gegen die eigene
+// Aufteilung, und über die eigenen Partien hebt sich beides auf: wird der
+// Abzug gekappt, schrumpft der Ausgleich der anderen Seite im selben
+// Verhältnis, sonst brächte die Position den starken Spezialisten Elo.
+//
+// Vorher maß der Bonus gegen 50:50 und zog jedem, der fast nur auf einer
+// Position spielt, dort bei jedem Sieg ein Sechstel ab und schlug bei jeder
+// Niederlage ein Sechstel auf (Henry hinten 0,83 und 1,17): die Elo eines
+// Spezialisten lief nach unten, weil er dort spielte, wo er es kann. Ohne
+// Grenze kostete die Stammposition bis zu 7 % (Jane, Julian, Leon); ganz
+// ohne Abzug zählte ein Sieg dort so viel wie auf der schwächeren Seite,
+// obwohl er dort leichter fällt.
+const POS_ABZUG_MAX = 0.05;
+function posFactor(lage, pos, sw){
+  const a = lage.wert, s = lage.aG + lage.dG ? lage.anteil : .5;
+  const mitte = s * a + (1 - s) * (1 - a);
+  const fA = (sw || 0) * (mitte - a), fD = (sw || 0) * (mitte - (1 - a));
+  const abzug = -Math.min(fA, fD, 0);
+  const k = abzug > POS_ABZUG_MAX ? POS_ABZUG_MAX / abzug : 1;
+  return 1 + k * (pos === 'atk' ? fA : fD);
+}
+// Sturm-Anteil 0..1 nach dem Positionsprofil.
 function atkStrengthFrom(id, matchSubset){
   return positionsProfilWert(posPerfFrom(id,matchSubset));
 }
@@ -298,7 +322,7 @@ function atkStrength(id){ return atkStrengthFrom(id, matches); }
 //     Reine Sturm-Spieler -> "Stürmer", reine Abwehr -> "Verteidiger",
 //     Mischformen -> 5 Zwischenstufen.
 // ╚═════════════════════════════════════════════════════════════════════════╝
-// Wandelt atkStrength (0.1 - 0.9) in ein Label + Icon um.
+// Wandelt das Positionsprofil (0,05 bis 0,95) in ein Label + Icon um.
 // Feingranular: 60/40-Splits sollen NICHT als reines "Flex" durchrutschen.
 function posClassify(autoAtk){
   const a = autoAtk;
