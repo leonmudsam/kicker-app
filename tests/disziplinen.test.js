@@ -251,7 +251,8 @@ Object.keys(_nrSicht).forEach(id => {
 // hielt sie alle, und die zwei Besten hielten zusammen 31 Eintraege
 // [§C35]. Das Niveau steht jetzt an genau diesen Stellen — der beste Monat,
 // der hoechste Gipfel, die laengste Serie, die Form von jetzt und die
-// beiden Positionen —, und jeder andere Rekord mit Grundwert 150 muss
+// beiden Positionen —, und jeder andere Rekord mit dem Grundwert des
+// Koennens (`REKORD_GRUNDWERT.koennen`) muss
 // etwas anderes fragen. Gemessen wird die Korrelation des Werts mit der
 // eigenen Siegquote ueber alle im Rennen, ab sechs Werten: darunter ist
 // eine Korrelation ein Wurf.
@@ -259,7 +260,7 @@ const NIVEAU = ['best_record','peak','unstoppable','lauf','atk_ace','def_ace'];
 const _sq = JSON.parse(K.eval(`JSON.stringify((function(){
   const C = _chronicleCtx(), out = [];
   CHRONICLES.forEach(c => {
-    if(c.basis !== 150) return;
+    if(c.basis !== REKORD_GRUNDWERT.koennen) return;
     const x = [], y = [];
     Object.keys(C.P).forEach(pid => { const p = C.P[pid]; let v = null;
       try { v = c.val(p, C); } catch(e){}
@@ -2880,7 +2881,7 @@ const _sch = JSON.parse(K.eval(`JSON.stringify((function(){
   });
   // Und keine Schande darf Prestige geben. Gemessen wird die QUELLE in der
   // Laufbahn und nicht der Zielvorschlag daneben: prestigeTabelle sammelt
-  // JEDEN gehaltenen Rekord ein, und erst PRESTIGE_ART macht aus einer
+  // JEDEN gehaltenen Rekord ein, und erst der Grundwert macht aus einer
   // Schattenseite eine Null. Am Zielvorschlag geprueft war die Zusicherung
   // gruen, auch als der Filter der Punkte ganz entfernt war.
   // (Kein Backtick in diesem Kommentar: er steht in einem Template-Literal.)
@@ -3437,22 +3438,25 @@ ok(_rkIntern.length === 0, 'kein interner Begriff in einem sichtbaren Text',
    _rkIntern.join(', ') || 'keiner');
 
 // Die Grundwerte je Kammer [§C34]. Koennen und die leistungsbezogene Form
-// wiegen 150, eine Rolle und eine Fuegung 75, eine Schattenseite null.
+// wiegen 100, eine Rolle und eine Fuegung 75, eine Schattenseite null. Mit
+// 150 wog ein Koennen-Rekord so viel wie ein Meistertitel. Geprueft wird die
+// Zahl selbst und nicht nur `REKORD_GRUNDWERT`: die Konstante stimmt immer
+// mit sich selbst ueberein.
 const _rolle = ['dauersturm','abwehrmauer','tailwind','solorun',
                 'wall','sturmtreue','switcher'];
 const _basisFehler = _rk.filter(c => {
   const soll = c.kind === 'shame' ? 0
     : c.kind === 'fuegung' ? 75
-    : _rolle.indexOf(c.id) >= 0 ? 75 : 150;
+    : _rolle.indexOf(c.id) >= 0 ? 75 : 100;
   return c.basis !== soll;
 }).map(c => c.id + ' ' + c.basis);
 ok(_basisFehler.length === 0, 'jede Kammer traegt ihren Grundwert',
-   _basisFehler.join(', ') || '150 / 75 / 0');
-ok(_rk.filter(c => c.kind === 'koennen').every(c => c.basis === 150),
-   'Koennen gibt 150 Punkte Grundwert');
+   _basisFehler.join(', ') || '100 / 75 / 0');
+ok(_rk.filter(c => c.kind === 'koennen').every(c => c.basis === 100),
+   'Koennen gibt 100 Punkte Grundwert');
 ok(_rk.filter(c => c.kind === 'form' && _rolle.indexOf(c.id) < 0)
-     .every(c => c.basis === 150),
-   'leistungsbezogene Form gibt 150 Punkte Grundwert');
+     .every(c => c.basis === 100),
+   'leistungsbezogene Form gibt 100 Punkte Grundwert');
 ok(_rk.filter(c => c.kind === 'form' && _rolle.indexOf(c.id) >= 0)
      .every(c => c.basis === 75),
    'rollenbezogene Form gibt 75 Punkte Grundwert');
@@ -3495,6 +3499,13 @@ ok(_teil.length > 10, 'es gibt Rekordquellen im Prestige', _teil.length + '');
 const _tBasis = _teil.filter(x => x.basis !== x.soll).map(x => x.id);
 ok(_tBasis.length === 0, 'die Quelle rechnet mit dem Grundwert des Katalogs',
    _tBasis.join(', ') || 'alle');
+// Ohne Grundwert am Eintrag gilt der der Kammer. Der Rueckfall las vorher
+// einen Faktor je Art mit Schluesseln, die der Katalog nicht fuehrt, und gab
+// jedem Eintrag 75 — auch einem Koennen-Rekord.
+const _rueckfall = JSON.parse(K.eval(`JSON.stringify(['koennen','form','mark','fuegung','shame']
+  .map(k => k + ':' + _rekordBasis({kind:k})))`)).join(' ');
+ok(_rueckfall === 'koennen:100 form:100 mark:100 fuegung:75 shame:0',
+   'ohne Grundwert am Eintrag gilt der Wert der Kammer', _rueckfall);
 const _tHalter = _teil.filter(x => x.halter !== x.echt).map(x => x.id);
 ok(_tHalter.length === 0, 'die Quelle teilt durch die Zahl der heutigen Halter',
    _tHalter.join(', ') || 'alle');
@@ -3876,8 +3887,8 @@ console.log('\n═══ KONSTANT SCHLECHT GEWINNT NICHTS ═══');
 // 0:10 verliert, ist gleichmaessig. Dasselbe gilt fuer die ROLLENWERTE: „Der
 // Wandler" misst eine Aufstellung von fuenfzig zu fuenfzig, und wo jemand
 // steht, entscheidet die Auslosung. Beide zeichnen niemanden aus, sie
-// gehoeren jemandem [§C35] — deshalb wiegen sie 75 und nicht 150. Geprueft
-// wird also genau das, was 150 Punkte wert ist.
+// gehoeren jemandem [§C35] — deshalb wiegen sie 75 und nicht 100. Geprueft
+// wird also genau das, was den Grundwert des Koennens traegt.
 const _nullLauf = {
   id:'probe', games:60, wins:0, losses:60, gf:0, ga:600, gd:-600,
   atkG:30, atkW:0, defG:30, defW:0, atkGoals:0, defConceded:600,
@@ -3908,7 +3919,7 @@ const _nullTreffer = JSON.parse(K.eval(`JSON.stringify((function(){
   const out = {gewinnt:[], dabei:[]};
   CHRONICLES.forEach(c => {
     if(c.kind === 'shame' || c.kind === 'fuegung') return;
-    if(c.basis !== 150) return;
+    if(c.basis !== REKORD_GRUNDWERT.koennen) return;
     let v = null;
     try { v = c.val(probe, C); } catch(e){ return; }
     if(v == null || !isFinite(v)) return;

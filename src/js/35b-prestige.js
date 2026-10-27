@@ -52,18 +52,12 @@
 //     liegt noch mehr als ein heutiges Spitzen-Lebenswerk entfernt.
 // ╚═════════════════════════════════════════════════════════════════════════╝
 
-// Die Art bleibt für Chroniken und Rekorde relevant. Bei Auszeichnungen gibt
-// die sichtbare Seltenheitsklasse den Rahmen vor. Innerhalb dieses Rahmens
-// dürfen wenige fachlich begründete Spitzenleistungen höher liegen: Eine
-// Meisterschaft ist mehr wert als Dominator, Dominator mehr als Team der
-// Saison; ein Wochensieg mehr als der deutlich mengenabhängigere Tagessieg.
-const PRESTIGE_ART = {leistung:2, ereignis:1, schatten:0};
-
-// Wie die drei Rekordarten in der Aufschlüsselung heißen. Ohne Eintrag gilt
-// `ereignis` — das ist der Normalfall.
-const PRESTIGE_ART_NAME = {leistung:'Leistung', ereignis:'Ereignis',
-                           schatten:'Schatten'};
-
+// Bei Auszeichnungen gibt die sichtbare Seltenheitsklasse den Rahmen vor.
+// Innerhalb dieses Rahmens dürfen wenige fachlich begründete
+// Spitzenleistungen höher liegen: Eine Meisterschaft ist mehr wert als
+// Dominator, Dominator mehr als Team der Saison; ein Wochensieg mehr als der
+// deutlich mengenabhängigere Tagessieg.
+//
 // Startwert und Abnahme der nächsten Zweiergruppe. Die Klasse setzt den
 // Standard: je wertvoller, desto höher der Start und desto langsamer die
 // Abnahme. Die harmonische Folge darunter flacht ab, bleibt aber bei jedem
@@ -129,24 +123,18 @@ const PRESTIGE_AUSZEICHNUNG_SPEZIAL = {
   first_match:    {basis:5,   abnahme:0.25},
 };
 
-// Grundwert einer Allzeitwertung, bevor Art und Halterzahl darauf wirken.
-// Ein heute gehaltener Liga-Rekord wiegt deutlich schwerer als eine
-// Auszeichnung — es gibt ihn nur einmal in der Liga.
-//
-// Mit `PRESTIGE_ART` ergibt das 150 fuer einen Leistungsrekord und 75 fuer
-// ein Ereignis, dieselben Grundwerte wie im Katalog. Eine runde Zahl ist im
-// Blatt nachrechenbar: „144 Punkte, geteilt durch zwei Halter, dann durch
-// Wurzel zwei" liest niemand nach, 150 schon.
-const PRESTIGE_REKORD = 75;
-// Der Grundwert eines Rekords steht am Katalogeintrag [§C34]. Er stand allein
-// in `PRESTIGE_ART[art]`, und damit konnte eine Bestmarke wie die laengste
-// Siegesserie nicht 150 wiegen, ohne gleichzeitig ihren Platz in der
-// Katalogreihenfolge und in der Monatstafel zu verschieben: `art` ordnet den
-// Katalog, der Grundwert wiegt. Der Rueckfall bleibt fuer einen Eintrag, der
-// ihn nicht setzt.
+// Grundwert einer Allzeitwertung, bevor Halterzahl und Stapel darauf wirken.
+// Er steht am Katalogeintrag, aus `REKORD_GRUNDWERT` [§C34]: eine runde Zahl
+// ist im Blatt nachrechenbar, „100 Punkte, geteilt durch zwei Halter, dann
+// durch Wurzel zwei". Fehlt er, gilt der Wert der Kammer. Der Rückfall las
+// vorher einen Faktor je `art` mit den Schlüsseln „leistung" und „ereignis",
+// die der Katalog nicht kennt („koennen", „fuegung"): jeder Eintrag ohne
+// Grundwert wäre still bei 75 gelandet, auch ein Können-Rekord.
 function _rekordBasis(def){
-  return (def && def.basis != null && isFinite(def.basis))
-    ? def.basis : PRESTIGE_REKORD * (PRESTIGE_ART[def && def.art] ?? 1);
+  if(def && def.basis != null && isFinite(def.basis)) return def.basis;
+  const kind = def && def.kind;
+  return kind === 'shame' ? REKORD_GRUNDWERT.schatten
+       : kind === 'fuegung' ? REKORD_GRUNDWERT.fuegung : REKORD_GRUNDWERT.koennen;
 }
 
 // ─── Wiederholung zählt weniger, aber nie nichts ────────────────────
@@ -1327,10 +1315,12 @@ function _prestigeQuellSatz(q, ohneKopf){
   if(q.q === 'rekord'){
     // Die KAMMER und nicht die Art der Disziplin: seit der Grundwert am
     // Eintrag steht [§C34], sagt `art` ueber den Wert nichts mehr — „Der
-    // Unaufhaltsame" ist ein Ereignis und wiegt trotzdem 150. Die Zeile
-    // nannte damit eine Einordnung, die den Wert daneben nicht erklaerte.
+    // Unaufhaltsame" ist ein Ereignis und wiegt trotzdem wie das Koennen. Die
+    // Zeile nannte damit eine Einordnung, die den Wert daneben nicht
+    // erklaerte. Der Rueckfall las Namen je „leistung"/„ereignis", die der
+    // Katalog nicht kennt, und schrieb damit immer „Ereignis".
     if(!ohneKopf) teile.push((CHRON_KINDS[q.kind] || {}).label
-      || PRESTIGE_ART_NAME[q.art] || 'Ereignis');
+      || CHRONIK_ART_NAME[q.art] || 'Bestmarke');
     let rechnung = `Grundwert ${zahl(q.basis)}`;
     if(q.halter > 1) rechnung += ` ÷ ${q.halter} Halter`;
     if(q.staffel > 1) rechnung += ` · ${q.rang}. Rekord ÷ √${q.staffel}`;

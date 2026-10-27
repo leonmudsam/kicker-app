@@ -95,16 +95,13 @@ const _chronRoh = DISZIPLINEN.filter(d => d.allzeit).map(d => ({
   // keiner sie vergisst, zaehlt `tests/disziplinen` nach.
   kind: d.allzeit.kammer || (d.zufall ? 'fuegung' : d.art === 'schatten' ? 'shame'
       : d.art === 'ereignis' ? 'mark' : 'koennen'),
-  // Der Grundwert des Rekords fuers Prestige [§C34]: 150 fuer eine Leistung,
-  // 75 fuer eine Rolle oder eine Fuegung, 0 fuer eine Schattenseite. Er stand
-  // vorher allein in `PRESTIGE_ART[art]`, und damit konnte eine Bestmarke wie
-  // die laengste Siegesserie nicht 150 wiegen, ohne gleichzeitig ihren Platz
-  // in der Katalogreihenfolge und in der Monatstafel zu verschieben — `art`
-  // ordnet den Katalog, der Grundwert wiegt.
-  // Er steht hier nur als Zahl und wird nicht hier gerechnet: die
-  // Prestige-Datei laedt nach dieser, und ihre Konstanten sind zur
-  // Ladezeit dieser Projektion noch nicht da. Fehlt er, faellt
-  // `prestigeTabelle` auf `PRESTIGE_ART` zurueck.
+  // Der Grundwert des Rekords fuers Prestige [§C34], aus `REKORD_GRUNDWERT`:
+  // 100 fuer eine Leistung, 75 fuer eine Rolle oder eine Fuegung, 0 fuer eine
+  // Schattenseite. Er stand vorher allein in einem Faktor je `art`, und damit
+  // konnte eine Bestmarke wie die laengste Siegesserie nicht wie das Koennen
+  // wiegen, ohne gleichzeitig ihren Platz in der Katalogreihenfolge und in
+  // der Monatstafel zu verschieben — `art` ordnet den Katalog, der Grundwert
+  // wiegt. Fehlt er, nimmt `_rekordBasis` den Wert der Kammer.
   basis: d.allzeit.basis,
   // Die drei Angaben, die das Blatt nennt und die vorher nur im Satz der
   // Bedingung standen: woraus gerechnet wird, ab wann jemand mitzaehlt und
