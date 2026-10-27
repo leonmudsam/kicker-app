@@ -2860,8 +2860,8 @@ ok(_tagSchluss.nurSelten, 'nur Seltenes und Legendaeres: das Gewoehnliche eines 
 // Die Woche: Award-Sammler in der Karte der Woche, die Stufe in einer
 // Zeichen-Karte des Schlusses. Beides fiel einmal auf denselben Schluss:
 // der vom 03.08. gab Julian den Award-Sammler und einen Grad. Seit der
-// Positionsbonus der Elo gegen die eigene Aufteilung misst [§C44], steht
-// Julian dort schon über der Grenze; die Zeichen-Karte wird am Schluss vom
+// Positionsbonus der Elo gegen die eigene Aufteilung misst [§C44], hebt er
+// Julian über keine Gradgrenze mehr; die Zeichen-Karte wird am Schluss vom
 // 20.07. gemessen, der Leo mit dem Spieler der Woche einen Grad gibt.
 const _wocheSchluss = _schlussAm(new RealDate(2026, 7, 4, 8, 0, 0).getTime(), `
   const w = roh.find(x => (x.dataRef||{}).type === 'woche');
@@ -4857,10 +4857,10 @@ ok(_stufen.falsch.length === 0,
 // steht allein, jedes meldet nur seine Stufen, und ist es das stärkste der
 // Partie, zeichnet der Fuß es.
 // Gemessen an zwei Stichtagen, dem 22.07. und dem 27.08.: welche dieser
-// Ereignisse in den letzten Tagen liegen, ist Zufall der Partien. Am 27.08.
-// allein fehlen Höchststand und Tabellensprung, seit die Stammposition in
-// der Elo nichts mehr kostet [§C44] — die Spitzen aus Mai bis Juli liegen
-// höher, und im August übertrifft sie niemand.
+// Ereignisse in den letzten Tagen liegen, ist Zufall der Partien. Schon eine
+// kleine Änderung am Positionsbonus der Elo [§C44] nahm am 27.08.
+// Höchststand und Tabellensprung aus dem Fenster — die Spitzen aus Mai bis
+// Juli lagen höher, und im August übertraf sie niemand.
 const _partieRechnung = `(function(){
   const T = ['fluch', 'duo_jubilaeum', 'revanche', 'tagesmarathon', 'elo_hoch', 'tabellensprung'];
   const FUSS = {fluch:'gegner', elo_hoch:'hoch', tabellensprung:'rang', revanche:'revanche',

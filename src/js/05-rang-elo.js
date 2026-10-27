@@ -287,21 +287,29 @@ function positionsLage(p){
 }
 function positionsProfilWert(p){ return positionsLage(p).wert; }
 
-// Der Positionsbonus der Elo-Rechnung [§3.6]: nur auf der Seite, die
-// schwächer ist als die eigene Mischung, bringt ein Sieg mehr und kostet
-// eine Niederlage weniger. Auf der Stammposition ist der Faktor genau 1 —
-// wer dort spielt, wo er immer spielt, verliert durch die Position nichts.
+// Der Positionsbonus der Elo-Rechnung [§3.6]: auf der Seite, die schwächer
+// ist als die eigene Mischung, bringt ein Sieg mehr und kostet eine
+// Niederlage weniger; auf der Stammposition zählt eine Partie etwas
+// weniger, höchstens POS_ABZUG_MAX. Gemessen wird gegen die eigene
+// Aufteilung, und über die eigenen Partien hebt sich beides auf: wird der
+// Abzug gekappt, schrumpft der Ausgleich der anderen Seite im selben
+// Verhältnis, sonst brächte die Position den starken Spezialisten Elo.
+//
 // Vorher maß der Bonus gegen 50:50 und zog jedem, der fast nur auf einer
 // Position spielt, dort bei jedem Sieg ein Sechstel ab und schlug bei jeder
 // Niederlage ein Sechstel auf (Henry hinten 0,83 und 1,17): die Elo eines
-// Spezialisten lief nach unten, weil er dort spielte, wo er es kann. Auch
-// gegen die eigene Mischung gemessen, aber in beide Richtungen, blieb ein
-// Rest (Henry hinten 0,97), den nur ausglich, wer auch vorne spielte —
-// wer dauerhaft hinten steht, zahlte ihn bei jeder Partie.
+// Spezialisten lief nach unten, weil er dort spielte, wo er es kann. Ohne
+// Grenze kostete die Stammposition bis zu 7 % (Jane, Julian, Leon); ganz
+// ohne Abzug zählte ein Sieg dort so viel wie auf der schwächeren Seite,
+// obwohl er dort leichter fällt.
+const POS_ABZUG_MAX = 0.05;
 function posFactor(lage, pos, sw){
   const a = lage.wert, s = lage.aG + lage.dG ? lage.anteil : .5;
   const mitte = s * a + (1 - s) * (1 - a);
-  return 1 + (sw || 0) * Math.max(0, mitte - (pos === 'atk' ? a : 1 - a));
+  const fA = (sw || 0) * (mitte - a), fD = (sw || 0) * (mitte - (1 - a));
+  const abzug = -Math.min(fA, fD, 0);
+  const k = abzug > POS_ABZUG_MAX ? POS_ABZUG_MAX / abzug : 1;
+  return 1 + k * (pos === 'atk' ? fA : fD);
 }
 // Sturm-Anteil 0..1 nach dem Positionsprofil.
 function atkStrengthFrom(id, matchSubset){

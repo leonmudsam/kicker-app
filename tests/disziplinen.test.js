@@ -1232,7 +1232,7 @@ ok(_flach.length === 0,
 // sondern nach dem Platz in der Liga-Tabelle, und die schreibt jede Partie
 // mit dem Spielbonus gut. Sie stand bei 0,348; seit der Positionsbonus der
 // Elo gegen die eigene Aufteilung misst und Spezialisten auf ihrer Position
-// nicht mehr abzieht [§C44], steht sie bei 0,42.
+// nicht mehr abzieht [§C44], steht sie bei 0,39.
 const _SPIELZAHL_ALT = ['ausreisser2','umschwung','formgipfel','schwachstelle','kontrast',
   'schattenmann','traumquote','schwachewoche','evenkeel','metronom','lieblingszahl','thron'];
 const _spielzahl = JSON.parse(K.eval(`JSON.stringify((function(){
@@ -2150,12 +2150,10 @@ const _lbN = Object.fromEntries(_lb.werte.map(x=>[x.name,x]));
 // Gemessen wird ohne Namen und ohne Reihenfolge: festgeschrieben fiel diese
 // Zusicherung bei jedem Rekord, der Punkte verschiebt, ohne dass sich an
 // der Leiter etwas geaendert hat. Kalibriert ist die Leiter und nicht die
-// Tabelle. Seit die Stammposition in der Elo nichts mehr kostet [§C44],
-// steht sie mit 3577 Punkten 77 ueber der Grenze zum zweiten Grad; die
-// Zusicherung haelt die Stufe und die ersten beiden Grade.
+// Tabelle.
 const _lbSpitze = _lb.werte.slice().sort((a, b) => b.punkte - a.punkte);
-ok(_lbSpitze[0] && _lbSpitze[0].stufe === 4 && _lbSpitze[0].grad <= 1,
-   'die Spitze traegt den Lorbeerreif im ersten oder zweiten Grad', JSON.stringify(_lbSpitze[0]));
+ok(_lbSpitze[0] && _lbSpitze[0].stufe === 4 && _lbSpitze[0].grad === 0,
+   'die Spitze traegt den Lorbeerreif im ersten Grad', JSON.stringify(_lbSpitze[0]));
 // Die beiden dahinter stehen im Zierkranz und nicht mehr neben der Spitze.
 // Zwei trugen den Lorbeerreif, solange einundzwanzig Liga-Rekorde die
 // Siegquote noch einmal zaehlten [§C35]: wer viel gewann, hielt sie fast
@@ -2491,13 +2489,13 @@ ok(_ms.length > 0 && _ms.every(x => x.badge === x.titel && x.punkte > 0),
 //    Katalog absichtlich, nennt das rote Ergebnis die neue Zeile — sie wird
 //    uebernommen, nicht weggeklickt. Ebenso, wenn sich die Elo der Partien
 //    absichtlich aendert: mit dem Positionsbonus gegen die eigene Aufteilung
-//    [§C44] haelt Henry 149 statt 131 Auszeichnungen, weil ihm die Abwehr
-//    nicht mehr bei jeder Partie Elo abzieht.
+//    [§C44] haelt Henry 147 statt 131 Auszeichnungen, weil ihm die Abwehr
+//    nicht mehr bei jeder Partie ein Sechstel abzieht.
 const _bz = K.eval(`players.map(p => {
   const b = getCachedBadges(p.id) || [];
   return p.name + ':' + b.length + '/' + b.reduce((n, x) => n + (x.count || 0), 0);
 }).join(' ')`);
-const _bzSoll = 'Alex:19/36 Anton:8/8 Henry:30/149 Jane:27/135 Jannik:22/82 Johannes:24/66 Julian:33/231 Leo:31/235 Leon:40/430 Martin:36/329 Maxi:33/394 Stefan:21/59';
+const _bzSoll = 'Alex:18/35 Anton:7/7 Henry:30/147 Jane:26/134 Jannik:22/84 Johannes:24/70 Julian:33/229 Leo:31/230 Leon:39/426 Martin:36/324 Maxi:33/387 Stefan:21/60';
 ok(_bz === _bzSoll, 'jeder Spieler haelt dieselben Auszeichnungen wie gemessen', _bz);
 
 // ══════════════════════════════════════════════════════════════════════

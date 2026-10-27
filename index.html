@@ -6408,7 +6408,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.27.d9180b54';
+const BUILD_VERSION='2026.10.27.c9bdb597';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -7517,10 +7517,14 @@ function positionsLage(p){
 }
 function positionsProfilWert(p){ return positionsLage(p).wert; }
 
+const POS_ABZUG_MAX = 0.05;
 function posFactor(lage, pos, sw){
   const a = lage.wert, s = lage.aG + lage.dG ? lage.anteil : .5;
   const mitte = s * a + (1 - s) * (1 - a);
-  return 1 + (sw || 0) * Math.max(0, mitte - (pos === 'atk' ? a : 1 - a));
+  const fA = (sw || 0) * (mitte - a), fD = (sw || 0) * (mitte - (1 - a));
+  const abzug = -Math.min(fA, fD, 0);
+  const k = abzug > POS_ABZUG_MAX ? POS_ABZUG_MAX / abzug : 1;
+  return 1 + k * (pos === 'atk' ? fA : fD);
 }
 function atkStrengthFrom(id, matchSubset){
   return positionsProfilWert(posPerfFrom(id,matchSubset));
@@ -14088,7 +14092,7 @@ function vSettings(){
         <b style="color:var(--acid)">K-Faktor</b> — Wie stark einzelne Matches die Elo verändern. Hoch = schnelle Änderungen, niedrig = stabile Elo.<br>
         <b style="color:var(--acid)">Start-Elo</b> — Der Wert auf den jeder Spieler zu Saisonbeginn zurückgesetzt wird. Höhere Werte machen Verluste in den ersten Matches "weniger schmerzhaft".<br>
         <b style="color:var(--acid)">Risiko-Split</b> — Wie viel Last der schwächere Mitspieler trägt. Bei ${c.risk} % verliert weniger Elo, wer mit einem deutlich schwächeren Partner spielt.<br>
-        <b style="color:var(--acid)">Positions-Swing</b> — Ausgleich für die schwächere Position. Wer meist hinten spielt und im Sturm gewinnt, bekommt bis zu ${c.pos} % mehr Elo und verliert dort entsprechend weniger. Auf der Stammposition kostet die Position nichts, auch wer dauerhaft hinten oder vorne spielt. Welche Position die schwächere ist, sagt das Positions-Profil: wo jemand spielt und wo er gegen die Erwartung besser ist.<br>
+        <b style="color:var(--acid)">Positions-Swing</b> — Ausgleich für die schwächere Position. Wer meist hinten spielt und im Sturm gewinnt, bekommt bis zu ${c.pos} % mehr Elo und verliert dort entsprechend weniger. Auf der Stammposition zählt eine Partie etwas weniger, höchstens 5 %; über die eigene Aufteilung hebt sich beides auf. Welche Position die schwächere ist, sagt das Positions-Profil: wo jemand spielt und wo er gegen die Erwartung besser ist.<br>
         <b style="color:var(--acid)">Sieg-Boost</b> — Siege bringen ${c.winBoost-100}% mehr als Niederlagen kosten. Sorgt für langfristigen Aufwärtstrend.<br>
         <b style="color:var(--acid)">MoV-Dämpfung</b> — Tordifferenz bei Niederlagen nur ${c.movDamp}% so stark wie bei Siegen. Eine 0:10 Niederlage bestraft so nicht 3× so hart wie 5:10.<br>
         <b style="color:var(--acid)">MoV-Max-Boost</b> — Maximaler Multiplikator durch Tordifferenz bei einem Kantersieg. ${c.movMax}% heißt: ein 10:0 zählt bis zu ${(100+c.movMax)}% des normalen Werts.<br>
@@ -16168,7 +16172,7 @@ function zeigeProfilPosInfo(id){
         zeile('Gegen die Erwartung', pp(t.aPerfAvg), pp(t.dPerfAvg))}</div>
       <p>Die Einstufung fragt zuerst, wo jemand spielt, und rückt dann zu der Seite, auf der die Leistung gegen die Erwartung besser ist. Die Erwartung kennt Partner und Gegner jeder Partie.</p>
       <p>Wenige Partien auf einer Seite sagen wenig: dort zählt zuerst der Schnitt aller Partien, bis mehr dazukommen.</p>
-      <p>In der Elo bringt ein Sieg auf der schwächeren Seite mehr, und eine Niederlage dort kostet weniger. Auf der Stammposition zählt jede Partie wie sonst.</p>
+      <p>In der Elo bringt ein Sieg auf der schwächeren Seite mehr, und eine Niederlage dort kostet weniger. Auf der Stammposition zählt eine Partie etwas weniger, höchstens 5 %. Über die eigene Aufteilung hebt sich beides auf.</p>
       <p><b>${pct(lage.wert)} % Sturm</b> · eingestuft als <b>${esc(posClassify(lage.wert).label)}</b></p></div>`);
 }
 

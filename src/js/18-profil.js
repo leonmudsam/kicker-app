@@ -61,7 +61,7 @@ function zeigeProfilPosInfo(id){
         zeile('Gegen die Erwartung', pp(t.aPerfAvg), pp(t.dPerfAvg))}</div>
       <p>Die Einstufung fragt zuerst, wo jemand spielt, und rückt dann zu der Seite, auf der die Leistung gegen die Erwartung besser ist. Die Erwartung kennt Partner und Gegner jeder Partie.</p>
       <p>Wenige Partien auf einer Seite sagen wenig: dort zählt zuerst der Schnitt aller Partien, bis mehr dazukommen.</p>
-      <p>In der Elo bringt ein Sieg auf der schwächeren Seite mehr, und eine Niederlage dort kostet weniger. Auf der Stammposition zählt jede Partie wie sonst.</p>
+      <p>In der Elo bringt ein Sieg auf der schwächeren Seite mehr, und eine Niederlage dort kostet weniger. Auf der Stammposition zählt eine Partie etwas weniger, höchstens 5 %. Über die eigene Aufteilung hebt sich beides auf.</p>
       <p><b>${pct(lage.wert)} % Sturm</b> · eingestuft als <b>${esc(posClassify(lage.wert).label)}</b></p></div>`);
 }
 

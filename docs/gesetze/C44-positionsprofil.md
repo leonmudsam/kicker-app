@@ -6,17 +6,17 @@
 - Die Leistung je Position misst gegen den eigenen Schnitt aller Partien, nicht gegen null, und wird mit `POS_SCHRUMPF` (15) Partien dorthin gezogen. Wenige Partien auf einer Seite sagen wenig; keine Mindestzahl schaltet eine Seite hart ein oder aus.
 - Verglichen wird je Partie, nie die Summe: eine Summe wächst mit der Zahl der Partien.
 - Eine Rechnung für jede Frage nach der Position eines Spielers: das Profil und seine Einstufung (`posClassify`), die hell gezeichnete Rolle im Profil (`staerker`, gleichauf bis drei Prozentpunkte), das Blatt „So entsteht die Einstufung", der Positionsbonus der Elo-Rechnung, „Der Wandler", das Durchwechseln im Match-Builder und die Spalte `players.atk`.
-- Der Positionsbonus der Elo (`posFactor`) misst gegen die eigene Aufteilung und wirkt nur auf der Seite unter der eigenen Mischung: dort bringt ein Sieg mehr und kostet eine Niederlage weniger. Auf der Stammposition ist der Faktor genau 1 — wer dauerhaft hinten (oder vorne) spielt, verliert durch die Position nichts. `pos_swing` ist die größte Verschiebung. Gespeicherte Deltas bleiben, wie sie sind [§3.5a]; die Regel gilt für neue Partien und für eine Neuberechnung aus den Einstellungen.
+- Der Positionsbonus der Elo (`posFactor`) misst gegen die eigene Aufteilung: auf der Seite unter der eigenen Mischung bringt ein Sieg mehr und kostet eine Niederlage weniger, auf der Stammposition zählt eine Partie etwas weniger, höchstens `POS_ABZUG_MAX` (5 %). Über die eigenen Partien hebt sich beides auf; wird der Abzug gekappt, schrumpft der Ausgleich der anderen Seite im selben Verhältnis. `pos_swing` ist die größte Verschiebung. Gespeicherte Deltas bleiben, wie sie sind [§3.5a]; die Regel gilt für neue Partien und für eine Neuberechnung aus den Einstellungen.
 - Der Wert der Positions-Rangliste (`posWert` [§5.2]) fragt etwas anderes, nämlich wer auf einer Position der Beste der Liga ist, und bleibt getrennt. Die Erklärung dort sagt das.
 - Karriereende [§C40]: das Profil vergleicht einen Spieler nur mit sich selbst und entsteht aus den eigenen Partien; es fragt weder `sichtbar` noch `ligaAktiv`.
 
 ## Stellen
 
-`05-rang-elo.js` (`POS_SCHRUMPF`, `POS_LEISTUNG`, `positionsLage`, `positionsProfilWert`, `posFactor`, `atkStrength`, `posClassify`), `10-elo-engine.js` (Positionsbonus in `simulateEloWithSliders`), `18-profil.js` (Positions-Profil, Rollen, `zeigeProfilPosInfo`), `22-team-profil.js` (Aufschlüsselung „Positions-Bonus"), `32-chronik-katalog.js` („Der Wandler"), `20-bind.js` (Durchwechseln), `15-views-rest.js` (Erklärung des Positions-Swing), `12-view-positionen.js` (Abgrenzung im Blatt „So entsteht der Wert").
+`05-rang-elo.js` (`POS_SCHRUMPF`, `POS_LEISTUNG`, `POS_ABZUG_MAX`, `positionsLage`, `positionsProfilWert`, `posFactor`, `atkStrength`, `posClassify`), `10-elo-engine.js` (Positionsbonus in `simulateEloWithSliders`), `18-profil.js` (Positions-Profil, Rollen, `zeigeProfilPosInfo`), `22-team-profil.js` (Aufschlüsselung „Positions-Bonus"), `32-chronik-katalog.js` („Der Wandler"), `20-bind.js` (Durchwechseln), `15-views-rest.js` (Erklärung des Positions-Swing), `12-view-positionen.js` (Abgrenzung im Blatt „So entsteht der Wert").
 
 ## Prüfung
 
-`tests/rechnen` hält Henry an den echten Partien bei „Reiner Verteidiger" unter dem Anteil seiner Sturmpartien und prüft, dass gleiche Leistung je Partie auf beiden Seiten nur den Anteil der Partien übrig lässt, dass wenige Partien auf einer Seite zum eigenen Schnitt gezogen werden, dass mehr Partien und bessere Leistung vorne das Profil heben, dass `staerker` der Leistung folgt und nicht der Siegquote, dass die Stammposition in der Elo nichts kostet, auch bei dauerhaft einer Position, und nur die schwächere Seite einen Ausgleich bekommt und dass die Elo-Rechnung dieselbe Lage aus den Partien davor liest; `tests/disziplinen` legt „Der Wandler" und das Profil nebeneinander; `tests/blatt` misst die hell gezeichnete Rolle gegen `staerker` und das Blatt der Einstufung bei 360 px.
+`tests/rechnen` hält Henry an den echten Partien bei „Reiner Verteidiger" unter dem Anteil seiner Sturmpartien und prüft, dass gleiche Leistung je Partie auf beiden Seiten nur den Anteil der Partien übrig lässt, dass wenige Partien auf einer Seite zum eigenen Schnitt gezogen werden, dass mehr Partien und bessere Leistung vorne das Profil heben, dass `staerker` der Leistung folgt und nicht der Siegquote, dass die Stammposition in der Elo etwas kostet, aber nie mehr als 5 %, auch bei dauerhaft einer Position, dass die Grenze greift und dass sich der Bonus über die eigene Aufteilung aufhebt und dass die Elo-Rechnung dieselbe Lage aus den Partien davor liest; `tests/disziplinen` legt „Der Wandler" und das Profil nebeneinander; `tests/blatt` misst die hell gezeichnete Rolle gegen `staerker` und das Blatt der Einstufung bei 360 px.
 
 ## Herleitung
 
@@ -47,12 +47,13 @@ einer Position spielt, war das ein Abzug bei jedem Sieg und ein Aufschlag
 bei jeder Niederlage auf der eigenen Stammposition (Henry hinten 0,83 und
 1,17): die Elo eines Spezialisten lief nach unten, weil er dort spielte,
 wo er es kann. Ein genaueres Profil hätte das verschärft. Gegen die
-eigene Aufteilung gemessen, aber in beide Richtungen, blieb ein Rest
-(Henry hinten 0,97), den nur ausglich, wer auch vorne spielte; wer
-dauerhaft hinten steht, zahlte ihn bei jeder Partie. Schwächere Spieler,
-die immer auf derselben Position spielen, dürfen dadurch keinen Nachteil
-haben: die Stammposition steht deshalb bei genau 1, und nur ein Sieg auf
-der seltenen, schwächeren Seite zählt mehr (Henry vorne 1,32).
+eigene Aufteilung gemessen hebt sich der Bonus über die eigenen Partien
+auf, aber auf der Stammposition kostete er ohne Grenze bis zu 7 % (Jane,
+Julian, Leon). Ganz ohne Abzug zählte ein Sieg dort so viel wie auf der
+schwächeren Seite, obwohl er dort leichter fällt. Die Stammposition
+kostet deshalb etwas, höchstens 5 % (Henry hinten 2,7 %, vorne 33 % mehr);
+wer darüber läge, bekommt auch den Ausgleich im selben Verhältnis
+kleiner, sonst brächte die Position gerade den starken Spezialisten Elo.
 
 Drei Stellen beantworteten die Frage, wo jemand besser ist, auf drei
 Arten: das Profil, eine Kopie seiner Formel in der Elo-Rechnung und die

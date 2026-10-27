@@ -139,15 +139,16 @@ const profil=K(`(() => {
   // die stärkere Rolle aus der Leistung gegen die Erwartung, nicht aus der Siegquote
   const staerker=[lage({aG:20,aW:12,dG:20,dW:10,aPerf:-.05*20,dPerf:.1*20}).staerker,
     lage({aG:40,dG:40,aPerf:.01*40,dPerf:0}).staerker, lage({aG:0,dG:40,dPerf:.2*40}).staerker];
-  // die Stammposition kostet nichts: je Spieler ist eine Seite genau 1, die
-  // andere nicht darunter; Henry hinten 1, vorne mehr
+  // die Stammposition kostet höchstens 5 %, und über die eigene Aufteilung
+  // hebt sich der Bonus auf; Henry zahlt hinten etwas, vorne bekommt er mehr
   const seiten=players.map(p=>{const l=positionsLage(posPerfFrom(p.id,matches));
-    return [posFactor(l,'atk',.4),posFactor(l,'def',.4)];});
+    const f=[posFactor(l,'atk',.4),posFactor(l,'def',.4)];
+    return {f, mittel:l.anteil*(f[0]-1)+(1-l.anteil)*(f[1]-1)};});
   const hl=positionsLage(posPerfFrom(${JSON.stringify(ids[2])},matches));
   const nurHinten=positionsLage({aG:0,dG:200,dPerf:-.1*200});
   return {henry:{wert:henry.wert,anteil:henry.anteil,kl:posClassify(henry.wert).label},
     gleich:gleich.wert, gleichSoll:16/204, wenig:wenig.rA, viel:viel.rA, mehrVorne, besserVorne, staerker,
-    stamm:seiten.every(f=>Math.min(...f)===1 && Math.max(...f)>=1),
+    grenze:Math.min(...seiten.map(x=>Math.min(...x.f))), mittel:Math.max(...seiten.map(x=>Math.abs(x.mittel))),
     henryElo:[posFactor(hl,'def',.4),posFactor(hl,'atk',.4)], nurHinten:posFactor(nurHinten,'def',.4),
     profil:players.every(p=>atkStrength(p.id)===positionsLage(posPerfFrom(p.id,matches)).wert)};
 })()`);
@@ -160,8 +161,10 @@ ok(profil.wenig>profil.viel && profil.wenig<0,
 ok(profil.mehrVorne && profil.besserVorne, 'Mehr Partien vorne und bessere Leistung vorne heben das Profil');
 ok(profil.staerker.join()==='def,beide,beide',
   'Die stärkere Rolle sagt die Leistung gegen die Erwartung, gleichauf bis drei Prozentpunkte, ohne Partien keine: '+profil.staerker.join());
-ok(profil.stamm && profil.henryElo[0]===1 && profil.henryElo[1]>1 && profil.nurHinten===1,
-  'Die Stammposition kostet in der Elo nichts, auch wer dauerhaft hinten spielt; nur die schwächere Seite bekommt einen Ausgleich: '+JSON.stringify([profil.henryElo,profil.nurHinten]));
+ok(Math.abs(profil.grenze-.95)<1e-12 && profil.henryElo[0]<1 && profil.henryElo[0]>.95 && profil.henryElo[1]>1 && profil.nurHinten===1,
+  'Die Stammposition kostet in der Elo etwas, höchstens 5 %, auch wer dauerhaft hinten spielt; die schwächere Seite bekommt den Ausgleich: '
+  +JSON.stringify({grenze:profil.grenze,henry:profil.henryElo,nurHinten:profil.nurHinten}));
+ok(profil.mittel<1e-12, 'Über die eigene Aufteilung hebt sich der Positionsbonus auf, auch wo der Abzug gekappt ist: '+profil.mittel);
 ok(profil.profil, 'Profil und Stärke für das Durchwechseln sind dieselbe Zahl');
 // Die Elo-Rechnung liest dieselbe Lage wie das Profil, aus den Partien vor
 // der Partie. Dort stand eine eigene Kopie der alten Formel.
