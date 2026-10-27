@@ -3403,9 +3403,12 @@ const ok = (c, msg, det) => {
      Math.max(...rollen.map(r=>r.overflow)).toFixed(1) + ' px');
 
   // Woraus die Einstufung entsteht [§C44]: der Knopf in der Überschrift
-  // öffnet ein Blatt mit Partien, Siegen und der Leistung gegen die
-  // Erwartung je Position — dieselben Zahlen, aus denen `positionsLage`
-  // rechnet —, ohne die Überschrift höher zu machen als die übrigen.
+  // öffnet ein Blatt mit Partien, Siegquote, Elo-Abstand zu Gegnern und
+  // Mitspieler und der Leistung gegen die Erwartung je Position — dieselben
+  // Zahlen, aus denen `positionsLage` rechnet —, dazu die Wirkung in der
+  // Elo, ohne die Überschrift höher zu machen als die übrigen. Henry spielt
+  // fast nur hinten und ist vorne schwächer: ein Sieg im Sturm bringt ihm
+  // den vollen Ausgleich von 10 %.
   const einstufung = await page.evaluate(async () => {
     const K = window.__k.eval.bind(window.__k);
     const pid = K('(players.find(p=>p.name==="Henry")||{}).id');
@@ -3428,16 +3431,29 @@ const ok = (c, msg, det) => {
     }).map(e => e.className || e.tagName) : ['keine Tabelle'];
     const t = K('posPerfFrom(' + JSON.stringify(pid) + ',matches)');
     const kl = K('posClassify(atkStrength(' + JSON.stringify(pid) + ')).label');
+    const f = K('(()=>{const l=positionsLage(posPerfFrom(' + JSON.stringify(pid) + ',matches));'
+      + 'return [posFactor(l,"atk",cfg.pos_swing),posFactor(l,"def",cfg.pos_swing)]})()');
+    const elo = v => v >= .5 ? '+' + Math.round(v) : v <= -.5 ? '−' + Math.round(-v) : '0';
+    const proz = x => { const q = Math.abs(x - 1) * 100; return q >= 9.95 ? String(Math.round(q)) : q.toFixed(1).replace('.', ','); };
     const text = blatt.textContent;
     K('closeSheet && closeSheet()');
-    return {mitKnopf, ohne, offen:/So entsteht die Einstufung/.test(text), zellen, raus, kl,
-      soll:['Partien', String(t.aG), String(t.dG), 'Siege', String(t.aW), String(t.dW)],
+    return {mitKnopf, ohne, offen:/So entsteht die Einstufung/.test(text), zellen, raus, kl, f,
+      // je Zeile die Beschriftung, dann Sturm, dann Abwehr: dieselben Zahlen
+      // in vertauschten Spalten sagten das Gegenteil
+      soll:[['Partien', String(t.aG), String(t.dG)], ['Siegquote', Math.round(t.aWr * 100) + ' %', Math.round(t.dWr * 100) + ' %'],
+        ['Gegner, Elo-Abstand', elo(t.aGegAvg), elo(t.dGegAvg)], ['Mitspieler, Elo-Abstand', elo(t.aMitAvg), elo(t.dMitAvg)],
+        ['Siege gegen die Erwartung, %-Punkte'], ['Tore gegen die Erwartung, %-Punkte'], ['Leistung gegen den eigenen Schnitt']],
+      wirkung:'Sieg im Sturm ' + proz(f[0]) + ' % mehr', wirkungDa:text.includes('Sieg im Sturm ' + proz(f[0]) + ' % mehr')
+        && text.includes('In der Abwehr ist es umgekehrt, ' + proz(f[1]) + ' %'),
       klImBlatt:text.includes(kl)};
   });
-  ok(einstufung.offen && einstufung.soll.every(z => einstufung.zellen.includes(z))
-     && einstufung.zellen.includes('Gegen die Erwartung') && einstufung.klImBlatt,
-     'der Knopf im Positions-Profil öffnet die Einstufung mit Partien, Siegen und der Leistung gegen die Erwartung je Position',
-     einstufung.zellen.join(' | ') + ' · ' + einstufung.kl);
+  const _reiheDa = r => { const i = einstufung.zellen.indexOf(r[0]); return i >= 0 && r.every((z, k) => einstufung.zellen[i + k] === z); };
+  ok(einstufung.offen && einstufung.soll.every(_reiheDa) && einstufung.klImBlatt,
+     'der Knopf im Positions-Profil öffnet die Einstufung mit Partien, Siegquote, Elo-Abstand zu Gegnern und Mitspieler und der Leistung gegen die Erwartung je Position, Sturm links, Abwehr rechts',
+     einstufung.soll.filter(r => !_reiheDa(r)).map(r => r.join(' ')).join(' | ') + ' fehlt · ' + einstufung.zellen.join(' | ') + ' · ' + einstufung.kl);
+  ok(einstufung.wirkungDa && Math.abs(einstufung.f[0] - 1.1) < 1e-12 && einstufung.f[1] < 1,
+     'das Blatt nennt die Wirkung in der Elo: für Henry bringt ein Sieg im Sturm die vollen 10 % mehr, die Abwehr zählt etwas weniger',
+     einstufung.wirkung + ' · ' + JSON.stringify(einstufung.f));
   ok(einstufung.raus.length === 0 && einstufung.mitKnopf <= einstufung.ohne + .5,
      'das Blatt der Einstufung läuft bei 360 px nicht über, und der Knopf macht die Überschrift nicht höher',
      (einstufung.raus.join(', ') || 'kein Überlauf') + ' · ' + einstufung.mitKnopf + ' gegen ' + einstufung.ohne + ' px');

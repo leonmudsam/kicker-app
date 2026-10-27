@@ -2,21 +2,24 @@
 
 ## Regel
 
-- Das Positionsprofil ist eine Zahl zwischen 5 und 95 % Sturm (`positionsLage`, `positionsProfilWert`). Es addiert zwei Chancen: den Anteil der Partien vorne, ln((Sturm + 1) / (Abwehr + 1)), und `POS_LEISTUNG` (4) mal den Abstand der Leistung gegen die Erwartung je Partie, vorne gegen hinten.
+- Das Positionsprofil ist eine Zahl zwischen 5 und 95 % Sturm (`positionsLage`, `positionsProfilWert`). Es addiert zwei Chancen: `POS_LEISTUNG` (10) mal den Abstand der Leistung je Partie, vorne gegen hinten, und die Aufstellung, ln((Sturm + 1) / (Abwehr + 1)).
+- Leistung heißt: Sieg und Torverhältnis, beide gegen die Erwartung der Partie, je zur Hälfte (`posTorLeistung`: Vorsprung durch alle Tore weniger Siegchance minus 50 %). Die Erwartung kommt aus der Elo aller vier und kennt damit Gegner und Mitspieler.
 - Die Leistung je Position misst gegen den eigenen Schnitt aller Partien, nicht gegen null, und wird mit `POS_SCHRUMPF` (15) Partien dorthin gezogen. Wenige Partien auf einer Seite sagen wenig; keine Mindestzahl schaltet eine Seite hart ein oder aus.
+- Die Aufstellung zählt voll, solange eine Seite kaum Partien hat, und mit Partien auf beiden Seiten bis hinunter auf `POS_MENGE_MIN` (ein Viertel): Gewicht 1 − s / (s + 15) · 0,75, s die Partien auf der selteneren Seite.
 - Verglichen wird je Partie, nie die Summe: eine Summe wächst mit der Zahl der Partien.
-- Eine Rechnung für jede Frage nach der Position eines Spielers: das Profil und seine Einstufung (`posClassify`), die hell gezeichnete Rolle im Profil (`staerker`, gleichauf bis drei Prozentpunkte), das Blatt „So entsteht die Einstufung", der Positionsbonus der Elo-Rechnung, „Der Wandler", das Durchwechseln im Match-Builder und die Spalte `players.atk`.
-- Der Positionsbonus der Elo (`posFactor`) misst gegen die eigene Aufteilung: auf der Seite unter der eigenen Mischung bringt ein Sieg mehr und kostet eine Niederlage weniger, auf der Stammposition zählt eine Partie etwas weniger, höchstens `POS_ABZUG_MAX` (5 %). Über die eigenen Partien hebt sich beides auf; wird der Abzug gekappt, schrumpft der Ausgleich der anderen Seite im selben Verhältnis. `pos_swing` ist die größte Verschiebung. Gespeicherte Deltas bleiben, wie sie sind [§3.5a]; die Regel gilt für neue Partien und für eine Neuberechnung aus den Einstellungen.
+- Eine Rechnung für jede Frage nach der Position eines Spielers: das Profil und seine Einstufung (`posClassify`), die hell gezeichnete Rolle im Profil (`staerker`, gleichauf bis drei Prozentpunkte), das Blatt „So entsteht die Einstufung", der Positionsbonus der Elo-Rechnung, „Der Wandler", das Durchwechseln im Match-Builder und die Spalte `players.atk`. Die Zähler je Position schreiben beide Elo-Rechnungen mit `posZaehlenPartie` fort, die Chronik mit `posTorLeistung`.
+- Der Positionsbonus der Elo (`posFactor`) reicht höchstens `POS_GRENZE` (10 %) in jede Richtung. Auf der Seite, auf der das Profil schwächer ist, bringt ein Sieg mehr und kostet eine Niederlage weniger, auf der stärkeren umgekehrt: Sturm `pos_swing` × Anteil Abwehr × (1 − 2 × Profil), Abwehr −`pos_swing` × Anteil Sturm × (1 − 2 × Profil). Über die eigenen Partien hebt sich beides auf; stößt eine Seite an die Grenze, schrumpft die andere im selben Verhältnis. Gespeicherte Deltas bleiben, wie sie sind [§3.5a]; die Regel gilt für neue Partien und für eine Neuberechnung aus den Einstellungen.
+- Das Blatt der Einstufung zeigt je Position Partien, Siegquote, den Elo-Abstand zu Gegnern und Mitspieler vor jeder Partie, Sieg und Tore gegen die Erwartung, die Leistung gegen den eigenen Schnitt und die Wirkung in der Elo für genau diesen Spieler.
 - Der Wert der Positions-Rangliste (`posWert` [§5.2]) fragt etwas anderes, nämlich wer auf einer Position der Beste der Liga ist, und bleibt getrennt. Die Erklärung dort sagt das.
 - Karriereende [§C40]: das Profil vergleicht einen Spieler nur mit sich selbst und entsteht aus den eigenen Partien; es fragt weder `sichtbar` noch `ligaAktiv`.
 
 ## Stellen
 
-`05-rang-elo.js` (`POS_SCHRUMPF`, `POS_LEISTUNG`, `POS_ABZUG_MAX`, `positionsLage`, `positionsProfilWert`, `posFactor`, `atkStrength`, `posClassify`), `10-elo-engine.js` (Positionsbonus in `simulateEloWithSliders`), `18-profil.js` (Positions-Profil, Rollen, `zeigeProfilPosInfo`), `22-team-profil.js` (Aufschlüsselung „Positions-Bonus"), `32-chronik-katalog.js` („Der Wandler"), `20-bind.js` (Durchwechseln), `15-views-rest.js` (Erklärung des Positions-Swing), `12-view-positionen.js` (Abgrenzung im Blatt „So entsteht der Wert").
+`05-rang-elo.js` (`POS_SCHRUMPF`, `POS_LEISTUNG`, `POS_MENGE_MIN`, `POS_GRENZE`, `posTorLeistung`, `posZaehler`, `posZaehlenPartie`, `posPerfFrom`, `positionsLage`, `positionsProfilWert`, `posFactor`, `atkStrength`, `posClassify`), `10-elo-engine.js` (Zähler in beiden Rechnungen, Positionsbonus in `simulateEloWithSliders`), `34-chronik-rekorde.js` (`atkTor`, `defTor`), `18-profil.js` (Positions-Profil, Rollen, `zeigeProfilPosInfo`), `22-team-profil.js` (Aufschlüsselung „Positions-Bonus"), `32-chronik-katalog.js` („Der Wandler"), `20-bind.js` (Durchwechseln), `15-views-rest.js` (Erklärung des Positions-Swing), `12-view-positionen.js` (Abgrenzung im Blatt „So entsteht der Wert").
 
 ## Prüfung
 
-`tests/rechnen` hält Henry an den echten Partien bei „Reiner Verteidiger" unter dem Anteil seiner Sturmpartien und prüft, dass gleiche Leistung je Partie auf beiden Seiten nur den Anteil der Partien übrig lässt, dass wenige Partien auf einer Seite zum eigenen Schnitt gezogen werden, dass mehr Partien und bessere Leistung vorne das Profil heben, dass `staerker` der Leistung folgt und nicht der Siegquote, dass die Stammposition in der Elo etwas kostet, aber nie mehr als 5 %, auch bei dauerhaft einer Position, dass die Grenze greift und dass sich der Bonus über die eigene Aufteilung aufhebt und dass die Elo-Rechnung dieselbe Lage aus den Partien davor liest; `tests/disziplinen` legt „Der Wandler" und das Profil nebeneinander; `tests/blatt` misst die hell gezeichnete Rolle gegen `staerker` und das Blatt der Einstufung bei 360 px.
+`tests/rechnen` hält Henry an den echten Partien bei „Reiner Verteidiger" unter dem Anteil seiner Sturmpartien und prüft, dass gleiche Leistung je Partie auf beiden Seiten nur die Aufstellung übrig lässt, gewogen nach der selteneren Seite, dass dieselbe Aufteilung aus mehr Partien weniger zählt, dass zehn Prozentpunkte besser vorne bei 50:50 mehr wiegen als drei Viertel der Partien vorne, dass Sieg und Torverhältnis je zur Hälfte zählen und ein 10:6 bei 75 % genau die Erwartung ist, dass wenige Partien zum eigenen Schnitt gezogen werden, dass `staerker` der Leistung folgt, dass der Bonus auch mit vollem Regler zwischen 0,9 und 1,1 bleibt, dass Henry vorne die vollen 10 % bekommt und hinten unter 2 % zahlt, wer nie vorne spielt nichts, dass sich der Bonus über die eigene Aufteilung aufhebt, dass der Elo-Abstand zu Gegnern und Mitspieler aus dem Stand vor jeder Partie kommt und dass die Elo-Rechnung dieselbe Lage aus den Partien davor liest; `tests/disziplinen` legt „Der Wandler" und das Profil nebeneinander; `tests/blatt` misst die hell gezeichnete Rolle gegen `staerker` und das Blatt der Einstufung bei 360 px, Zeile für Zeile mit Sturm links und Abwehr rechts, samt der Wirkung in der Elo.
 
 ## Herleitung
 
@@ -37,10 +40,23 @@ Leo (vorne 34 %, hinten 52 %) als Abwehr-Flex.
 Dazu kamen ein Regler „Positions-Erfahrungs-Gewicht", der Häufigkeit und
 Leistung linear mischte, und eine Mindestzahl von drei Partien, ab der eine
 Seite voll zählte und darunter gar nicht. Beides ersetzt die Rechnung in
-Chancen: die Häufigkeit ist der Anfang, die Leistung verschiebt, und das
-Ziehen zum eigenen Schnitt macht aus drei Partien keinen Beweis. Gemessen
-an den echten Partien stehen Henry bei 5 %, Jane bei 11 %, Leo bei 35 %,
-Leon bei 77 % und Julian bei 79 %.
+Chancen: die Leistung entscheidet, die Häufigkeit hilft, solange es
+wenig zu messen gibt, und das Ziehen zum eigenen Schnitt macht aus drei
+Partien keinen Beweis.
+
+In der ersten Fassung dieser Rechnung zählte die Häufigkeit voll und die
+Leistung mit dem Faktor 4. Bei Henry stand −2,5 aus der Aufstellung gegen
+−0,5 aus der Leistung; Leo spielte gleich oft vorne und hinten, vorne 14
+Prozentpunkte schwächer, und stand bei 35 % kaum anders als jemand ohne
+Unterschied; Maxi und Stefan, auf beiden Seiten gleich stark, standen als
+Stürmer, weil sie öfter vorne spielten. Die Leistung zählt jetzt zehnfach,
+die Aufstellung mit Partien auf beiden Seiten nur noch zu einem Viertel.
+Das Torverhältnis kam dazu, weil es verlässlicher misst als der Sieg
+allein: an den echten Partien, in zwei Hälften geteilt, stimmte der
+Abstand vorne gegen hinten mit Toren zu 0,62 überein, mit Siegen allein
+zu 0,41. An den 611 Partien der Liga stehen Henry bei 6 %, Jane bei 8 %,
+Leo bei 28 %, Maxi bei 55 % (Sturm-Flex), Stefan bei 49 % (Flex), Jannik
+bei 65 %, Leon bei 77 % und Julian bei 82 %.
 
 Der Positionsbonus der Elo maß gegen 50:50. Für jeden, der fast nur auf
 einer Position spielt, war das ein Abzug bei jedem Sieg und ein Aufschlag
@@ -50,10 +66,15 @@ wo er es kann. Ein genaueres Profil hätte das verschärft. Gegen die
 eigene Aufteilung gemessen hebt sich der Bonus über die eigenen Partien
 auf, aber auf der Stammposition kostete er ohne Grenze bis zu 7 % (Jane,
 Julian, Leon). Ganz ohne Abzug zählte ein Sieg dort so viel wie auf der
-schwächeren Seite, obwohl er dort leichter fällt. Die Stammposition
-kostet deshalb etwas, höchstens 5 % (Henry hinten 2,7 %, vorne 33 % mehr);
-wer darüber läge, bekommt auch den Ausgleich im selben Verhältnis
-kleiner, sonst brächte die Position gerade den starken Spezialisten Elo.
+schwächeren Seite, obwohl er dort leichter fällt. Danach war nur der
+Abzug begrenzt, auf 5 %, und der Bonus nicht: Henry bekam vorne 33 %
+mehr, und ein Ausschlag von einem Drittel sagt mehr, als eine Einstufung
+aus 15 Partien weiß. Jetzt gilt die Grenze von 10 % in beide Richtungen.
+Wer auf beiden Seiten viel spielt und auf einer klar schwächer ist, trägt
+beide Ausschläge fast voll (Leo vorne +10 %, hinten −8,7 %); wer fast nur
+auf einer Seite spielt, bekommt auf der seltenen den vollen Bonus und
+zahlt auf der Stammposition wenig (Henry hinten 0,8 %), weil sich beides
+über die eigenen Partien aufhebt.
 
 Drei Stellen beantworteten die Frage, wo jemand besser ist, auf drei
 Arten: das Profil, eine Kopie seiner Formel in der Elo-Rechnung und die

@@ -124,48 +124,92 @@ const prestige=K(`(() => {
 })()`);
 for(const [key,value]of Object.entries(prestige))ok(value,'Eine Prestige-Aufteilung für Engine, Story und Laufbahn: '+key);
 // Das Positionsprofil [§C44] an den echten Partien und an gebauten Fällen.
-// Henry spielte 14 von 152 Partien vorne und dort 26 Prozentpunkte
-// schlechter gegen die Erwartung als hinten; die alte Rechnung verglich die
-// Summen und stellte ihn bei 30 % Sturm als Verteidiger ein.
+// Henry spielte 14 von 152 Partien vorne und dort klar schlechter gegen die
+// Erwartung als hinten. Die erste Rechnung verglich die Summen und stellte
+// ihn bei 30 % Sturm als Verteidiger ein; die zweite ließ die Aufstellung
+// fünfmal so stark zählen wie die Leistung, und wer gleich oft vorne und
+// hinten spielte, aber vorne klar schwächer war, stand kaum anders als
+// jemand ohne Unterschied.
 const profil=K(`(() => {
   const henry=positionsLage(posPerfFrom(${JSON.stringify(ids[2])},matches));
   const lage=p=>positionsLage(p);
-  // gleiche Leistung je Partie auf beiden Seiten: übrig bleibt der Anteil
+  // gleiche Leistung je Partie auf beiden Seiten: übrig bleibt die
+  // Aufstellung, gewogen nach den Partien auf der selteneren Seite
   const gleich=lage({aG:15,dG:187,aPerf:-.1*15,dPerf:-.1*187});
   // dieselbe Leistung je Partie vorne, einmal aus 3, einmal aus 30 Partien
   const wenig=lage({aG:3,dG:100,aPerf:-.5*3,dPerf:0}), viel=lage({aG:30,dG:100,aPerf:-.5*30,dPerf:0});
   const mehrVorne=lage({aG:60,dG:40,aPerf:0,dPerf:0}).wert>lage({aG:40,dG:60,aPerf:0,dPerf:0}).wert;
   const besserVorne=lage({aG:50,dG:50,aPerf:.1*50,dPerf:0}).wert>lage({aG:50,dG:50,aPerf:0,dPerf:0}).wert;
+  // die Aufstellung zählt weniger, je mehr Partien beide Seiten haben:
+  // dasselbe Verhältnis 3 zu 7, einmal aus 10, einmal aus 100 Partien
+  const mengeKlein=lage({aG:3,dG:7,aPerf:0,dPerf:0}), mengeGross=lage({aG:30,dG:70,aPerf:0,dPerf:0});
+  // vorne zehn Prozentpunkte besser bei 50:50 wiegt mehr als 75 % der
+  // Partien vorne ohne jeden Unterschied
+  const leistung=lage({aG:50,dG:50,aPerf:.1*50,dPerf:0,aTor:.1*50,dTor:0}).wert;
+  const menge=lage({aG:75,dG:25,aPerf:0,dPerf:0,aTor:0,dTor:0}).wert;
+  // Sieg und Torverhältnis zählen je zur Hälfte
+  const nurTore=lage({aG:50,dG:50,aPerf:0,dPerf:0,aTor:.1*50,dTor:0}).wert;
+  const nurSiege=lage({aG:50,dG:50,aPerf:.1*50,dPerf:0,aTor:0,dTor:0}).wert;
+  const tor=[posTorLeistung(10,6,.75),posTorLeistung(9,10,.5),posTorLeistung(2,10,.5)];
   // die stärkere Rolle aus der Leistung gegen die Erwartung, nicht aus der Siegquote
   const staerker=[lage({aG:20,aW:12,dG:20,dW:10,aPerf:-.05*20,dPerf:.1*20}).staerker,
     lage({aG:40,dG:40,aPerf:.01*40,dPerf:0}).staerker, lage({aG:0,dG:40,dPerf:.2*40}).staerker];
-  // die Stammposition kostet höchstens 5 %, und über die eigene Aufteilung
-  // hebt sich der Bonus auf; Henry zahlt hinten etwas, vorne bekommt er mehr
-  const seiten=players.map(p=>{const l=positionsLage(posPerfFrom(p.id,matches));
-    const f=[posFactor(l,'atk',.4),posFactor(l,'def',.4)];
+  // höchstens 10 % in jede Richtung, und über die eigene Aufteilung hebt
+  // sich der Bonus auf; mit dem vollen Regler stoßen beide Richtungen an
+  const seiten=sw=>players.map(p=>{const l=positionsLage(posPerfFrom(p.id,matches));
+    const f=[posFactor(l,'atk',sw),posFactor(l,'def',sw)];
     return {f, mittel:l.anteil*(f[0]-1)+(1-l.anteil)*(f[1]-1)};});
+  const voll=seiten(1), vier=seiten(.4);
   const hl=positionsLage(posPerfFrom(${JSON.stringify(ids[2])},matches));
   const nurHinten=positionsLage({aG:0,dG:200,dPerf:-.1*200});
   return {henry:{wert:henry.wert,anteil:henry.anteil,kl:posClassify(henry.wert).label},
-    gleich:gleich.wert, gleichSoll:16/204, wenig:wenig.rA, viel:viel.rA, mehrVorne, besserVorne, staerker,
-    grenze:Math.min(...seiten.map(x=>Math.min(...x.f))), mittel:Math.max(...seiten.map(x=>Math.abs(x.mittel))),
+    gleich:gleich.wert, gleichSoll:1/(1+Math.pow(188/16,1-15/30*.75)), wenig:wenig.rA, viel:viel.rA, mehrVorne, besserVorne,
+    mengeKlein:mengeKlein.wert, mengeGross:mengeGross.wert, leistung, menge, nurTore, nurSiege, tor, staerker,
+    unten:Math.min(...voll.map(x=>Math.min(...x.f))), oben:Math.max(...voll.map(x=>Math.max(...x.f))),
+    mittel:Math.max(...voll.concat(vier).map(x=>Math.abs(x.mittel))),
     henryElo:[posFactor(hl,'def',.4),posFactor(hl,'atk',.4)], nurHinten:posFactor(nurHinten,'def',.4),
     profil:players.every(p=>atkStrength(p.id)===positionsLage(posPerfFrom(p.id,matches)).wert)};
 })()`);
 ok(profil.henry.kl==='Reiner Verteidiger' && profil.henry.wert<profil.henry.anteil,
   'Henry steht als Reiner Verteidiger, unter dem Anteil seiner Sturmpartien, weil er vorne schwächer ist: '+JSON.stringify(profil.henry));
 ok(Math.abs(profil.gleich-profil.gleichSoll)<1e-12,
-  'Gleiche Leistung je Partie auf beiden Seiten lässt nur den Anteil der Partien übrig, wie viele es auch sind: '+profil.gleich);
+  'Gleiche Leistung je Partie auf beiden Seiten lässt nur die Aufstellung übrig, gewogen nach den Partien auf der selteneren Seite: '+profil.gleich);
 ok(profil.wenig>profil.viel && profil.wenig<0,
   'Drei schwache Sturmpartien zählen weniger als dreißig mit derselben Leistung: '+profil.wenig+' gegen '+profil.viel);
 ok(profil.mehrVorne && profil.besserVorne, 'Mehr Partien vorne und bessere Leistung vorne heben das Profil');
+ok(profil.mengeKlein<profil.mengeGross && profil.mengeGross<.5,
+  'Die Aufstellung zählt weniger, je mehr Partien beide Seiten haben (3 zu 7 gegen 30 zu 70): '+profil.mengeKlein+' gegen '+profil.mengeGross);
+ok(profil.leistung>profil.menge && profil.menge>.5,
+  'Zehn Prozentpunkte besser vorne bei 50:50 wiegen mehr als drei Viertel der Partien vorne ohne Unterschied: '+profil.leistung+' gegen '+profil.menge);
+ok(Math.abs(profil.nurTore-profil.nurSiege)<1e-12 && profil.nurTore>.5
+  && Math.abs(profil.tor[0])<1e-12 && Math.abs(profil.tor[1]+1/19)<1e-12 && Math.abs(profil.tor[2]+2/3)<1e-12,
+  'Sieg und Torverhältnis gegen die Erwartung zählen je zur Hälfte; ein 10:6 bei 75 % Siegchance ist genau die Erwartung, ein 9:10 bei 50 % fast: '
+  +JSON.stringify({nurTore:profil.nurTore,nurSiege:profil.nurSiege,tor:profil.tor}));
 ok(profil.staerker.join()==='def,beide,beide',
   'Die stärkere Rolle sagt die Leistung gegen die Erwartung, gleichauf bis drei Prozentpunkte, ohne Partien keine: '+profil.staerker.join());
-ok(Math.abs(profil.grenze-.95)<1e-12 && profil.henryElo[0]<1 && profil.henryElo[0]>.95 && profil.henryElo[1]>1 && profil.nurHinten===1,
-  'Die Stammposition kostet in der Elo etwas, höchstens 5 %, auch wer dauerhaft hinten spielt; die schwächere Seite bekommt den Ausgleich: '
-  +JSON.stringify({grenze:profil.grenze,henry:profil.henryElo,nurHinten:profil.nurHinten}));
-ok(profil.mittel<1e-12, 'Über die eigene Aufteilung hebt sich der Positionsbonus auf, auch wo der Abzug gekappt ist: '+profil.mittel);
+ok(Math.abs(profil.unten-.9)<1e-12 && Math.abs(profil.oben-1.1)<1e-12,
+  'Der Positionsbonus reicht höchstens 10 % in jede Richtung, auch mit dem vollen Regler: '+profil.unten+' bis '+profil.oben);
+ok(Math.abs(profil.henryElo[1]-1.1)<1e-12 && profil.henryElo[0]<1 && profil.henryElo[0]>.98 && profil.nurHinten===1,
+  'Henry bekommt vorne den vollen Ausgleich von 10 %, und hinten kostet die Stammposition etwas, unter 2 %; wer nie vorne spielt, zahlt nichts: '
+  +JSON.stringify({henry:profil.henryElo,nurHinten:profil.nurHinten}));
+ok(profil.mittel<1e-12, 'Über die eigene Aufteilung hebt sich der Positionsbonus auf, auch wo er an der Grenze gekappt ist: '+profil.mittel);
 ok(profil.profil, 'Profil und Stärke für das Durchwechseln sind dieselbe Zahl');
+// Der Elo-Abstand zu Gegnern und Mitspieler, den das Blatt der Einstufung
+// zeigt, nachgerechnet aus dem Stand vor jeder Sturmpartie von Henry.
+const abstand=K(`(() => {
+  const id=${JSON.stringify(ids[2])}, vor=new Map(getGlobalSim().history.map(h=>[h.matchId,h.eloBefore]));
+  let n=0, geg=0, mit=0;
+  matches.forEach(m=>{
+    const slot=[['a1','a2','b1','b2'],['a2','a1','b1','b2'],['b1','b2','a1','a2'],['b2','b1','a1','a2']].find(x=>m[x[0]]===id);
+    if(!slot||m[slot[0]+'_pos']!=='atk') return;
+    const e=vor.get(m.id); n++;
+    geg+=(e[m[slot[2]]]+e[m[slot[3]]])/2-e[id]; mit+=e[m[slot[1]]]-e[id];
+  });
+  const t=posPerfFrom(id,matches);
+  return {n, geg:t.aGegAvg, gegSoll:geg/n, mit:t.aMitAvg, mitSoll:mit/n};
+})()`);
+ok(abstand.n>10 && Math.abs(abstand.geg-abstand.gegSoll)<1e-9 && Math.abs(abstand.mit-abstand.mitSoll)<1e-9,
+  'Der Elo-Abstand zu Gegnern und Mitspieler je Position kommt aus dem Stand vor jeder Partie: '+JSON.stringify(abstand));
 // Die Elo-Rechnung liest dieselbe Lage wie das Profil, aus den Partien vor
 // der Partie. Dort stand eine eigene Kopie der alten Formel.
 const eloLage=K(`(() => {

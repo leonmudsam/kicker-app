@@ -2858,11 +2858,11 @@ ok(_tagSchluss.zeile, 'die Karte zeigt es als Zeile mit Gesicht, Name und Klasse
 ok(_tagSchluss.nurSelten, 'nur Seltenes und Legendaeres: das Gewoehnliche eines Tages steht in der Ehrung');
 
 // Die Woche: Award-Sammler in der Karte der Woche, die Stufe in einer
-// Zeichen-Karte des Schlusses. Beides fiel einmal auf denselben Schluss:
-// der vom 03.08. gab Julian den Award-Sammler und einen Grad. Seit der
-// Positionsbonus der Elo gegen die eigene Aufteilung misst [§C44], hebt er
-// Julian über keine Gradgrenze mehr; die Zeichen-Karte wird am Schluss vom
-// 20.07. gemessen, der Leo mit dem Spieler der Woche einen Grad gibt.
+// Zeichen-Karte des Schlusses. Ob der Schluss vom 03.08. Julian neben dem
+// Award-Sammler auch einen Grad gibt, hängt an der Elo der Partien und
+// wechselte mit jeder Fassung des Positionsbonus [§C44]. Die Zeichen-Karte
+// wird deshalb am Schluss vom 15.06. gemessen, der Julian allein mit dem
+// Spieler der Woche einen Grad gibt: dort steht genau ein Grund.
 const _wocheSchluss = _schlussAm(new RealDate(2026, 7, 4, 8, 0, 0).getTime(), `
   const w = roh.find(x => (x.dataRef||{}).type === 'woche');
   const a = ((w && w.dataRef.abschluss) || []).find(x => x.id === 'award_collector');
@@ -2872,20 +2872,19 @@ const _wocheSchluss = _schlussAm(new RealDate(2026, 7, 4, 8, 0, 0).getTime(), `
 ok(_wocheSchluss.sammler && _wocheSchluss.wocheZeile,
    'der Schluss der Woche bis 02.08. vergibt Julian den Award-Sammler, legendaer, in der Karte der Woche', JSON.stringify(_wocheSchluss));
 ok(_wocheSchluss.brk, 'eine legendaere Auszeichnung ist Breaking, auch in der Karte der Woche');
-const _Lo = IDS[NAMES.indexOf('Leo')];
-const _zeichenSchluss = _schlussAm(new RealDate(2026, 6, 20, 8, 0, 0).getTime(), `
-  const z = roh.find(x => x.id === 'instag_woche_2026-07-20');
+const _zeichenSchluss = _schlussAm(new RealDate(2026, 5, 15, 8, 0, 0).getTime(), `
+  const z = roh.find(x => x.id === 'instag_woche_2026-06-15');
   const d = (z && z.dataRef) || {};
   const karte = z ? _newsCardHtmlM2(z, false, false, '') : '';
   const blatt = z ? (_ndInsTagBlatt(z) || {}).mitte || '' : '';
-  return {zeichen:!!z, schluss:d.schluss, wann:z ? new Date(z.when).getTime() === new Date(2026, 6, 20).getTime() : false,
-    zug:(d.zuege || []).map(x => x.pid === '${_Lo}' ? x.art : '?').join(','),
+  return {zeichen:!!z, schluss:d.schluss, wann:z ? new Date(z.when).getTime() === new Date(2026, 5, 15).getTime() : false,
+    zug:(d.zuege || []).map(x => x.pid === '${_J}' ? x.art : '?').join(','),
     grund:(d.grund || []).map(x => x.id).join(','),
-    karte:/nf-abs viol[\\s\\S]*Leo[\\s\\S]*Player of the Week/.test(karte),
+    karte:/nf-abs viol[\\s\\S]*Julian[\\s\\S]*Player of the Week/.test(karte),
     blatt:blatt.indexOf('Mit dem Schluss der Woche vergeben') >= 0 && blatt.indexOf('nach der Woche') >= 0,
     seite:z ? _newsSeite(z) : ''};`);
 ok(_zeichenSchluss.zeichen && _zeichenSchluss.schluss === 'woche' && _zeichenSchluss.wann && _zeichenSchluss.zug === 'grad',
-   'Leos neuer Grad aus dem Schluss der Woche steht in einer Zeichen-Karte am Montag um 00:00', JSON.stringify(_zeichenSchluss));
+   'Julians neuer Grad aus dem Schluss der Woche steht in einer Zeichen-Karte am Montag um 00:00', JSON.stringify(_zeichenSchluss));
 ok(_zeichenSchluss.grund === 'potw' && _zeichenSchluss.karte && _zeichenSchluss.blatt,
    'die Zeichen-Karte nennt, was der Schluss vergab, auf der Karte und im Blatt', _zeichenSchluss.grund);
 ok(_zeichenSchluss.seite === 'zeichen', 'sie steht auf der Seite der Zeichen', _zeichenSchluss.seite);

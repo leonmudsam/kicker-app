@@ -1232,7 +1232,7 @@ ok(_flach.length === 0,
 // sondern nach dem Platz in der Liga-Tabelle, und die schreibt jede Partie
 // mit dem Spielbonus gut. Sie stand bei 0,348; seit der Positionsbonus der
 // Elo gegen die eigene Aufteilung misst und Spezialisten auf ihrer Position
-// nicht mehr abzieht [§C44], steht sie bei 0,39.
+// nicht mehr abzieht [§C44], steht sie bei 0,38.
 const _SPIELZAHL_ALT = ['ausreisser2','umschwung','formgipfel','schwachstelle','kontrast',
   'schattenmann','traumquote','schwachewoche','evenkeel','metronom','lieblingszahl','thron'];
 const _spielzahl = JSON.parse(K.eval(`JSON.stringify((function(){
@@ -2488,14 +2488,15 @@ ok(_ms.length > 0 && _ms.every(x => x.badge === x.titel && x.punkte > 0),
 //    Die Fixtures sind fest, also ist die Zahl es auch. Aendert sich der
 //    Katalog absichtlich, nennt das rote Ergebnis die neue Zeile — sie wird
 //    uebernommen, nicht weggeklickt. Ebenso, wenn sich die Elo der Partien
-//    absichtlich aendert: mit dem Positionsbonus gegen die eigene Aufteilung
-//    [§C44] haelt Henry 147 statt 131 Auszeichnungen, weil ihm die Abwehr
-//    nicht mehr bei jeder Partie ein Sechstel abzieht.
+//    absichtlich aendert: der Positionsbonus [§C44] verschiebt jedes Delta
+//    und damit jede Auszeichnung, die an der Elo haengt. Gegen 50:50
+//    gemessen hielt Henry 131, seit er gegen die eigene Aufteilung misst
+//    und hoechstens 10 % in jede Richtung reicht, 146.
 const _bz = K.eval(`players.map(p => {
   const b = getCachedBadges(p.id) || [];
   return p.name + ':' + b.length + '/' + b.reduce((n, x) => n + (x.count || 0), 0);
 }).join(' ')`);
-const _bzSoll = 'Alex:18/35 Anton:7/7 Henry:30/147 Jane:26/134 Jannik:22/84 Johannes:24/70 Julian:33/229 Leo:31/230 Leon:39/426 Martin:36/324 Maxi:33/387 Stefan:21/60';
+const _bzSoll = 'Alex:18/34 Anton:7/7 Henry:29/146 Jane:26/137 Jannik:22/84 Johannes:24/68 Julian:33/232 Leo:30/234 Leon:39/427 Martin:37/330 Maxi:33/389 Stefan:21/60';
 ok(_bz === _bzSoll, 'jeder Spieler haelt dieselben Auszeichnungen wie gemessen', _bz);
 
 // ══════════════════════════════════════════════════════════════════════
