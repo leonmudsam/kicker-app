@@ -305,13 +305,13 @@ function _chronikMonat(titleId){
 // weiße Weste", 110), und die Klasse in Gold oder Grau sagte über den Wert
 // nichts. Jetzt liest man an der Farbe ab, was ein Eintrag bringt.
 //
-// Jede Chronik bringt mindestens den Grundwert von 50. Eine Fügung ist ein
-// Umstand, und über dem Grundwert steigt sie halb so schnell wie Können und
-// Konstanz: 50, 75, 100 statt 50, 100, 150 — „Der Nervenkitzel" ist
-// legendär selten, aber niemand hat ihn sich erspielt. Vorher zählte die
-// ganze Fügung halb, und eine besondere brachte 25: „Der Aufdreher", ein
-// Monat mit 45 % aller Partien statt 11 %, stand mit weniger in der
-// Laufbahn als die kleinste Auszeichnung, die sich wiederholt.
+// Die Art ändert den Wert nicht: eine Fügung zählt wie Können und
+// Konstanz. Anders als ein Liga-Rekord [§C35] hält niemand sie über Monate
+// gegen die Liga, sie gehört einem Monat, und die Klasse sagt schon, wie
+// selten er war. Vorher zählte eine Fügung halb, und eine besondere brachte
+// 25: „Der Aufdreher", ein Monat mit 45 % aller Partien statt 11 %, stand
+// mit weniger in der Laufbahn als die kleinste Auszeichnung, die sich
+// wiederholt, und die Farbe der Zelle sagte über den Wert wieder nichts.
 //
 // Gerechnet wird mit der Klasse der Chronik, nicht mit dem Wert eines
 // Halters: der gehört einem einzelnen Monat und wanderte, sobald neue
@@ -319,15 +319,10 @@ function _chronikMonat(titleId){
 // bisherigen Halter, und genau dieser Fehler steckte schon einmal in den
 // Auszeichnungen [§C34].
 const PRESTIGE_CHRONIK_KLASSE = {legendaer:150, selten:100, besonders:50};
-const PRESTIGE_CHRONIK_GRUNDWERT = 50;
-const PRESTIGE_CHRONIK_FUEGUNG = 0.5;
 function chronikPunkte(titleId){
   const m = _chronikMonat(titleId);
   if(!m || m.art === 'schatten') return 0;   // Schattenseiten geben nichts
-  const w = PRESTIGE_CHRONIK_KLASSE[m.klasse] || 0;
-  if(!w || m.art !== 'fuegung') return w;
-  const g = PRESTIGE_CHRONIK_GRUNDWERT;
-  return g + Math.round((w - g) * PRESTIGE_CHRONIK_FUEGUNG / 5) * 5;
+  return PRESTIGE_CHRONIK_KLASSE[m.klasse] || 0;
 }
 
 // EIN Durchlauf für die ganze Liga. Seltenheit lässt sich nicht für einen

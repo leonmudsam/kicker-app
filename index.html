@@ -6408,7 +6408,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.27.c1d1f333';
+const BUILD_VERSION='2026.10.27.e4d7143d';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -35036,15 +35036,10 @@ function _chronikMonat(titleId){
 }
 
 const PRESTIGE_CHRONIK_KLASSE = {legendaer:150, selten:100, besonders:50};
-const PRESTIGE_CHRONIK_GRUNDWERT = 50;
-const PRESTIGE_CHRONIK_FUEGUNG = 0.5;
 function chronikPunkte(titleId){
   const m = _chronikMonat(titleId);
   if(!m || m.art === 'schatten') return 0;
-  const w = PRESTIGE_CHRONIK_KLASSE[m.klasse] || 0;
-  if(!w || m.art !== 'fuegung') return w;
-  const g = PRESTIGE_CHRONIK_GRUNDWERT;
-  return g + Math.round((w - g) * PRESTIGE_CHRONIK_FUEGUNG / 5) * 5;
+  return PRESTIGE_CHRONIK_KLASSE[m.klasse] || 0;
 }
 
 function prestigeTabelle(bisMs){

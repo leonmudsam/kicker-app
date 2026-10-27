@@ -7,7 +7,7 @@
 - Das Stichproben-Tor ist niedrig und für alle gleich: acht Partien im Monat, fünf in einer Teilmenge (`ST_TEIL`), drei Spieltage. Die Besonderheit steckt in der Schwelle.
 - Jede `monat`-Wertung trägt `art` (koennen, konstanz, fuegung, schatten), `klasse` (legendaer, selten, besonders) und `aus` (Ausschlag der Schwelle in σ), einmal an den Daten geprüft und dann festgeschrieben. Die Klasse folgt dem Ausschlag: ab 2,5 σ legendär, ab 1,9 σ selten, darunter besonders; gesetzt legendär sind nur die zwei, die nach einer Wahrscheinlichkeit fragen („Der Unmögliche Monat", „Der Ausreißer").
 - Die Klasse zählt keine Halter. Gedeckelt ist die Rate: höchstens ein Halter je gewerteten Monat.
-- Die Klasse ist Farbe und Wert (`PRESTIGE_CHRONIK_KLASSE`, `chronikStufe`): Gold legendär 150, Lila selten 100, Metall besonders 50, Rot eine Schattenseite 0. Jede andere Chronik bringt mindestens den Grundwert 50 (`PRESTIGE_CHRONIK_GRUNDWERT`); eine Fügung steigt darüber halb so schnell (`PRESTIGE_CHRONIK_FUEGUNG`): 50, 75, 100. Je Spieler und Monat steht und zählt der wertvollste Eintrag (`chronikEintragVon`).
+- Die Klasse ist Farbe und Wert (`PRESTIGE_CHRONIK_KLASSE`, `chronikStufe`): Gold legendär 150, Lila selten 100, Metall besonders 50, Rot eine Schattenseite 0 — für Können, Konstanz und Fügung gleich; jede Chronik außer einer Schattenseite bringt also mindestens 50. Je Spieler und Monat steht und zählt der wertvollste Eintrag (`chronikEintragVon`).
 - Eine Chronik schiebt ihre Schwelle mindestens 1,2 σ hinaus, korreliert höchstens 0,35 mit der Spielzahl, in beide Richtungen, misst eine Leistung und keine reine Zählung von Gelegenheiten. Elf ältere Chroniken reißen die Korrelation und stehen namentlich im Test (`_SPIELZAHL_ALT`), dazu „Auf dem Thron", das nach dem Platz in der Liga-Tabelle fragt und mit ihr an der Spielzahl hängt (0,38, seit der Positionsbonus der Elo Spezialisten nicht mehr abzieht [§C44]); die Liste wird nur kürzer, eine neue Chronik kommt nicht dazu.
 - Ein Vergleich mit der eigenen Laufbahn zählt alle Partien vor dem ersten Tag des Monats und erst ab dreißig davon (`_stLaufbahnVor`); ein Vergleich mit dem Ligamittel nimmt alle Partien desselben Monats (`C.L`: `torSchnitt`, `engAnteil`, `klarAnteil`, `torAbstand`).
 - Wie viel jemand spielt, fragt nur der eigene Anteil an allen Partien des Monats gegen den eigenen Anteil in den Monaten davor (`_stAnteilVor`, Monate ab acht eigenen Partien), nie die Zahl selbst. Mehr als sonst ist eine Fügung, weniger als sonst eine Schattenseite: Anwesenheit ist kein Können [§C34].
@@ -224,11 +224,12 @@ Weste" (besonders) 110, und eine goldene Zelle konnte weniger wert sein als
 eine blasse. Jetzt folgt die Klasse dem Ausschlag der Schwelle — 32
 Chroniken haben dabei ihre Klasse gewechselt —, und an der Farbe liest man
 ab, was ein Eintrag bringt: Gold 150, Lila 100, Metall 50, Rot nichts. Eine
-Fügung zählte zuerst ganz halb wie bei den Rekorden [§C35], und eine
-besondere brachte 25 — „Der Aufdreher" mit 45 % aller Partien eines Monats
-statt 11 % stand damit unter der kleinsten Auszeichnung, die sich
-wiederholt. Seitdem bringt jede Chronik mindestens 50, und nur der Teil
-darüber zählt bei einer Fügung halb. Je Monat steht und zählt der
+Fügung zählte zuerst halb wie bei den Rekorden [§C35], und eine besondere
+brachte 25 — „Der Aufdreher" mit 45 % aller Partien eines Monats statt 11 %
+stand damit unter der kleinsten Auszeichnung, die sich wiederholt, und die
+Farbe sagte über den Wert wieder nichts. Anders als ein Rekord hält niemand
+eine Chronik gegen die Liga; sie gehört einem Monat, und wie selten er war,
+sagt schon die Klasse. Seitdem zählt die Art nicht mehr. Je Monat steht und zählt der
 wertvollste Eintrag; vorher war es der erste im Katalog, und der ordnet nach
 Art und Ausschlag, nicht nach Wert.
 **Acht Chroniken fragen nach dem Eigenen.** In den Fixture-Monaten gingen 21

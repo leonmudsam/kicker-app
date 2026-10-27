@@ -856,8 +856,8 @@ const _pkt = JSON.parse(K.eval(`JSON.stringify((function(){
   const bad=[], band=[]; let max=0, min=1e9;
   SEASON_TITLES.forEach(t=>{
     const d=DISZIPLINEN.find(x=>x.id===t.id), m=d.monat;
-    // eine Fügung steigt über den Grundwert 50 halb so schnell: 50, 75, 100
-    const soll = m.art==='schatten' ? 0 : m.art==='fuegung' ? 50 + Math.round((W[m.klasse]-50)/2/5)*5 : W[m.klasse];
+    // die Art ändert den Wert nicht: eine Fügung zählt wie Können und Konstanz
+    const soll = m.art==='schatten' ? 0 : W[m.klasse];
     if(chronikPunkte(t.id) !== soll) bad.push(t.id);
     const kl = ${JSON.stringify(_KLASSE_GESETZT)}.includes(t.id) ? 'legendaer'
       : m.aus >= 2.5 ? 'legendaer' : m.aus >= 1.9 ? 'selten' : 'besonders';
