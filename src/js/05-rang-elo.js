@@ -168,58 +168,94 @@ function riskWeights(hi,lo,rs){ const gap=Math.min(Math.abs(hi-lo)/400,1); const
 // ─── §2.8a Das Positionsprofil [§C44] ──────────────────────────────────
 // Eine Zahl zwischen 0 und 1: wie sehr jemand Stürmer ist. Sie fragt zwei
 // Dinge und rechnet beide als Chance (log-odds), damit sie sich addieren:
-//   1) Wo spielt jemand?  ln((Sturmpartien + 1) / (Abwehrpartien + 1))
-//   2) Wo ist er besser?  POS_LEISTUNG mal der Abstand der Leistung gegen
-//      die Erwartung je Partie, vorne gegen hinten, beide gemessen am
-//      eigenen Schnitt und mit POS_SCHRUMPF Partien dorthin gezogen
+//   1) Wo ist jemand besser?  POS_LEISTUNG mal der Abstand der Leistung je
+//      Partie, vorne gegen hinten, beide gemessen am eigenen Schnitt und mit
+//      POS_SCHRUMPF Partien dorthin gezogen. Leistung heißt: Sieg und
+//      Torverhältnis, beide gegen die Erwartung der Partie, je zur Hälfte.
+//      Die Erwartung kommt aus der Elo aller vier, sie kennt also Gegner
+//      und Mitspieler.
+//   2) Wo spielt jemand?  ln((Sturmpartien + 1) / (Abwehrpartien + 1)),
+//      voll gewogen, solange eine Seite kaum Partien hat, und mit Partien
+//      auf beiden Seiten bis auf POS_MENGE_MIN herunter: dann sagt die
+//      Leistung, wo jemand hingehört, und die Aufstellung nur noch wenig.
 // Das Ergebnis liegt zwischen 5 und 95 %: ganz am Rand trüge der
 // Positionsbonus der Elo-Rechnung (`posFactor`) mehr, als eine Einstufung
 // sicher sagen kann.
 //
-// Vorher verglich die Leistungshälfte die SUMME der Überperformance je
-// Position. Wer hinten oft und leicht unter der Erwartung spielte, sammelte
-// dort mehr Minus als vorne in wenigen schlechten Partien: Henry stand mit
-// 4 Siegen aus 15 Sturmpartien (−25 %-Punkte je Partie) gegen 76 aus 187 in
-// der Abwehr (−3) bei 50:50 in der Leistung und mit der Häufigkeit gemischt
-// bei 29 % Sturm. Ein fester Regler mischte Häufigkeit und Leistung linear,
-// und ab drei Partien zählte eine Seite voll, darunter gar nicht.
+// Vorher zählte die Häufigkeit voll und die Leistung mit dem Faktor 4: bei
+// Henry stand −2,5 aus der Aufstellung gegen −0,5 aus der Leistung, und wer
+// gleich viel vorne und hinten spielte, aber vorne klar schwächer war (Leo,
+// 14 Prozentpunkte), stand bei 35 % Sturm, kaum anders als ein Spieler ohne
+// jeden Unterschied. Noch davor verglich die Leistungshälfte die SUMME der
+// Überperformance je Position und stellte Henry bei 29 % Sturm ein.
+//
+// Das Torverhältnis kommt dazu, weil es an den echten Partien verlässlicher
+// misst als der Sieg allein: ein 9:10 ist fast ein Unentschieden, ein 2:10
+// nicht. Geteilt in zwei Hälften der Partien stimmte der Abstand vorne
+// gegen hinten mit Toren zu 0,62 überein, mit Siegen allein zu 0,41.
+// Erwartet wird ein Vorsprung, so wie die Siegchance über 50 % liegt: bei
+// 75 % Siegchance ein Viertel der Tore mehr (10:6).
 //
 // Der eigene Schnitt als Maßstab, nicht null: wer insgesamt unter der
 // Erwartung spielt, ist deshalb nicht auf beiden Seiten gleich schwach,
 // und wer selten vorne steht, wird dort am eigenen Schnitt gemessen, bis
-// genug Partien dazukommen. Beide Konstanten sind an den echten Partien
-// gemessen (Henry 5 %, Jane 11 %, Leo 35 %, Leon 77 %, Julian 79 %).
+// genug Partien dazukommen. Die Konstanten sind an den 611 Partien der
+// Liga gemessen (Henry 6 %, Jane 8 %, Leo 28 %, Maxi 55 %, Jannik 65 %,
+// Leon 77 %, Julian 82 %).
 const POS_SCHRUMPF = 15;
-const POS_LEISTUNG = 4;
+const POS_LEISTUNG = 10;
+const POS_MENGE_MIN = .25;
+
+// Das Torverhältnis einer Partie gegen ihre Erwartung, aus Sicht einer
+// Seite: Vorsprung durch alle Tore, weniger der Vorsprung, den die
+// Siegchance erwarten lässt. Eine Stelle für die Elo-Rechnung, den
+// Rückfall in `posPerfFrom` und die Chronik [§C27].
+function posTorLeistung(gf, ga, exp){
+  return gf + ga ? (gf - ga) / (gf + ga) - (exp - .5) : 0;
+}
+// Die Zähler je Spieler, die beide Elo-Rechnungen Partie für Partie
+// fortschreiben: Partien, Siege, Leistung (Sieg und Tore gegen die
+// Erwartung) und der Elo-Abstand zu Gegnern und Mitspieler, den das
+// Blatt der Einstufung zeigt. Beide Rechnungen führten je eine eigene
+// Kopie dieser Zeilen. `vorher` ist der Elo-Stand vor der Partie; ohne
+// ihn bleiben Gegner und Mitspieler ungezählt.
+function posZaehler(){
+  return {aG:0,aW:0,dG:0,dW:0,aPerf:0,dPerf:0,aTor:0,dTor:0,aGeg:0,dGeg:0,aMit:0,dMit:0};
+}
+function posZaehlenPartie(zaehler, m, aWon, expA, vorher){
+  [[m.a1,m.a1_pos,m.a2,true],[m.a2,m.a2_pos,m.a1,true],[m.b1,m.b1_pos,m.b2,false],[m.b2,m.b2_pos,m.b1,false]]
+  .forEach(([id,pos,mate,onA])=>{
+    const t=zaehler[id]; if(!t) return;
+    const s=pos==='atk'?'a':'d', won=onA?aWon:!aWon, exp=onA?expA:1-expA;
+    t[s+'G']++; if(won) t[s+'W']++;
+    t[s+'Perf']+=(won?1:0)-exp;
+    t[s+'Tor']+=posTorLeistung(onA?m.score_a:m.score_b, onA?m.score_b:m.score_a, exp);
+    if(vorher && t[s+'Geg']!=null){
+      const opp=onA?[m.b1,m.b2]:[m.a1,m.a2];
+      t[s+'Geg']+=(vorher[opp[0]]+vorher[opp[1]])/2-vorher[id];
+      t[s+'Mit']+=vorher[mate]-vorher[id];
+    }
+  });
+}
 
 function posPerfFrom(id, matchSubset){
+  const schnitt = (t, s) => {
+    const g = t[s + 'G'];
+    return {[s + 'Wr']: g ? t[s + 'W'] / g : null, [s + 'PerfAvg']: g ? t[s + 'Perf'] / g : null,
+      [s + 'TorAvg']: g ? t[s + 'Tor'] / g : null,
+      [s + 'GegAvg']: g && t[s + 'Geg'] != null ? t[s + 'Geg'] / g : null,
+      [s + 'MitAvg']: g && t[s + 'Mit'] != null ? t[s + 'Mit'] / g : null};
+  };
+  const aus = t => ({aG:t.aG, aW:t.aW, dG:t.dG, dW:t.dW, ...schnitt(t, 'a'), ...schnitt(t, 'd')});
   if (!matchSubset || matchSubset === matches) {
-    const sim = getGlobalSim();
-    const t = sim.posTracker[id];
-    if (t) {
-      return {
-        aG: t.aG, aW: t.aW, dG: t.dG, dW: t.dW,
-        aWr: t.aG ? t.aW / t.aG : null,
-        dWr: t.dG ? t.dW / t.dG : null,
-        aPerfAvg: t.aG ? t.aPerf / t.aG : null,
-        dPerfAvg: t.dG ? t.dPerf / t.dG : null
-      };
-    }
+    const t = getGlobalSim().posTracker[id];
+    if (t) return aus(t);
   }
-  let aG=0,aW=0,dG=0,dW=0, aPerf=0, dPerf=0;
-  for(const m of matchSubset){
-    const onA=(id===m.a1||id===m.a2), onB=(id===m.b1||id===m.b2);
-    if(!onA&&!onB) continue;
-    const won=(onA&&m.winner==='A')||(onB&&m.winner==='B');
-    const pos=id===m.a1?m.a1_pos:id===m.a2?m.a2_pos:id===m.b1?m.b1_pos:m.b2_pos;
-    const myExp = onA ? (m.exp_a!=null?m.exp_a:0.5) : (m.exp_a!=null?1-m.exp_a:0.5);
-    const score = won?1:0;
-    const perf = score - myExp;  // >0 = über Erwartung, <0 = darunter
-    if(pos==='atk'){aG++; if(won)aW++; aPerf+=perf;} else {dG++; if(won)dW++; dPerf+=perf;}
-  }
-  return {aG,aW,dG,dW,
-    aWr:aG?aW/aG:null, dWr:dG?dW/dG:null,
-    aPerfAvg:aG?aPerf/aG:null, dPerfAvg:dG?dPerf/dG:null};
+  // Ohne die Elo-Rechnung fehlt der Stand vor jeder Partie: Gegner und
+  // Mitspieler bleiben hier leer statt null Elo Abstand zu zeigen.
+  const t = {...posZaehler(), aGeg:null, dGeg:null, aMit:null, dMit:null};
+  for(const m of matchSubset) posZaehlenPartie({[id]:t}, m, m.winner==='A', m.exp_a!=null ? m.exp_a : 0.5);
+  return aus(t);
 }
 
 // ─── Der Positionswert [§5.2] ────────────────────────────────────────
@@ -265,50 +301,60 @@ function posWert(pos, g, w, goalsAvg, perfAvg){
 // der rohen Siegquote — drei Antworten auf die Frage, wo jemand besser ist.
 //   rA, rD    Leistung je Partie vorne und hinten gegen den eigenen Schnitt
 //   anteil    Anteil der Partien vorne
+//   menge     wie stark die Aufstellung noch zählt (1 bis POS_MENGE_MIN)
 //   wert      das Profil
 //   staerker  'atk', 'def' oder 'beide' (bis drei Prozentpunkte Abstand,
 //             und ohne Partien auf einer Seite)
+// Fehlen die Tore ganz, zählt der Sieg allein — so rechnen gebaute Fälle
+// in den Tests, die nur die Siegleistung angeben.
 function positionsLage(p){
   p = p || {};
   const aG = Number(p.aG != null ? p.aG : p.atkG) || 0;
   const dG = Number(p.dG != null ? p.dG : p.defG) || 0;
-  const summe = (g, roh, avg) => roh != null ? (Number(roh) || 0) : (Number(avg) || 0) * g;
-  const aS = summe(aG, p.aPerf != null ? p.aPerf : p.atkPerf, p.aPerfAvg);
-  const dS = summe(dG, p.dPerf != null ? p.dPerf : p.defPerf, p.dPerfAvg);
+  const summe = (g, roh, avg) => roh != null ? (Number(roh) || 0) : avg != null ? (Number(avg) || 0) * g : null;
+  const seite = (g, sieg, tor) => tor == null ? (sieg || 0) : ((sieg || 0) + tor) / 2;
+  const aS = seite(aG, summe(aG, p.aPerf != null ? p.aPerf : p.atkPerf, p.aPerfAvg),
+    summe(aG, p.aTor != null ? p.aTor : p.atkTor, p.aTorAvg));
+  const dS = seite(dG, summe(dG, p.dPerf != null ? p.dPerf : p.defPerf, p.dPerfAvg),
+    summe(dG, p.dTor != null ? p.dTor : p.defTor, p.dTorAvg));
   const n = aG + dG;
-  if(!n) return {aG, dG, anteil:.5, rA:0, rD:0, wert:.5, staerker:'beide'};
+  if(!n) return {aG, dG, anteil:.5, rA:0, rD:0, menge:1, wert:.5, staerker:'beide'};
   const schnitt = (aS + dS) / n;
   const rA = (aS - aG * schnitt) / (aG + POS_SCHRUMPF);
   const rD = (dS - dG * schnitt) / (dG + POS_SCHRUMPF);
-  const lg = Math.log((aG + 1) / (dG + 1)) + POS_LEISTUNG * (rA - rD);
+  const selten = Math.min(aG, dG);
+  const menge = 1 - selten / (selten + POS_SCHRUMPF) * (1 - POS_MENGE_MIN);
+  const lg = menge * Math.log((aG + 1) / (dG + 1)) + POS_LEISTUNG * (rA - rD);
   const staerker = (!aG || !dG || Math.abs(rA - rD) <= .03) ? 'beide' : rA > rD ? 'atk' : 'def';
-  return {aG, dG, anteil:aG / n, rA, rD, staerker,
+  return {aG, dG, anteil:aG / n, rA, rD, menge, staerker,
     wert:Math.min(.95, Math.max(.05, 1 / (1 + Math.exp(-lg))))};
 }
 function positionsProfilWert(p){ return positionsLage(p).wert; }
 
-// Der Positionsbonus der Elo-Rechnung [§3.6]: auf der Seite, die schwächer
-// ist als die eigene Mischung, bringt ein Sieg mehr und kostet eine
-// Niederlage weniger; auf der Stammposition zählt eine Partie etwas
-// weniger, höchstens POS_ABZUG_MAX. Gemessen wird gegen die eigene
-// Aufteilung, und über die eigenen Partien hebt sich beides auf: wird der
-// Abzug gekappt, schrumpft der Ausgleich der anderen Seite im selben
-// Verhältnis, sonst brächte die Position den starken Spezialisten Elo.
+// Der Positionsbonus der Elo-Rechnung [§3.6]: auf der Seite, auf der das
+// Profil schwächer ist, bringt ein Sieg mehr und kostet eine Niederlage
+// weniger; auf der stärkeren umgekehrt. Höchstens POS_GRENZE in jede
+// Richtung. Gemessen wird gegen die eigene Aufteilung: der Ausschlag einer
+// Seite wächst mit dem Anteil der ANDEREN Seite, sodass sich Bonus und
+// Abzug über die eigenen Partien aufheben —
+//   Sturm   Swing × Anteil Abwehr × (1 − 2 × Profil)
+//   Abwehr  −Swing × Anteil Sturm × (1 − 2 × Profil)
+// Wird eine Seite an der Grenze gekappt, schrumpft die andere im selben
+// Verhältnis, sonst brächte die Position Elo, die niemand verloren hat.
 //
 // Vorher maß der Bonus gegen 50:50 und zog jedem, der fast nur auf einer
-// Position spielt, dort bei jedem Sieg ein Sechstel ab und schlug bei jeder
-// Niederlage ein Sechstel auf (Henry hinten 0,83 und 1,17): die Elo eines
-// Spezialisten lief nach unten, weil er dort spielte, wo er es kann. Ohne
-// Grenze kostete die Stammposition bis zu 7 % (Jane, Julian, Leon); ganz
-// ohne Abzug zählte ein Sieg dort so viel wie auf der schwächeren Seite,
-// obwohl er dort leichter fällt.
-const POS_ABZUG_MAX = 0.05;
+// Position spielt, dort bei jedem Sieg ein Sechstel ab (Henry hinten 0,83
+// und 1,17): die Elo eines Spezialisten lief nach unten, weil er dort
+// spielte, wo er es kann. Danach war nur der Abzug auf 5 % begrenzt und
+// der Bonus nicht: Henry bekam vorne 33 %, Leo hinten trug den vollen
+// Abzug bei kaum einem Bonus, und ein Ausschlag von einem Drittel sagt
+// mehr, als eine Einstufung aus 15 Partien weiß.
+const POS_GRENZE = 0.10;
 function posFactor(lage, pos, sw){
   const a = lage.wert, s = lage.aG + lage.dG ? lage.anteil : .5;
-  const mitte = s * a + (1 - s) * (1 - a);
-  const fA = (sw || 0) * (mitte - a), fD = (sw || 0) * (mitte - (1 - a));
-  const abzug = -Math.min(fA, fD, 0);
-  const k = abzug > POS_ABZUG_MAX ? POS_ABZUG_MAX / abzug : 1;
+  const fA = (sw || 0) * (1 - s) * (1 - 2 * a), fD = -(sw || 0) * s * (1 - 2 * a);
+  const spitze = Math.max(Math.abs(fA), Math.abs(fD));
+  const k = spitze > POS_GRENZE ? POS_GRENZE / spitze : 1;
   return 1 + k * (pos === 'atk' ? fA : fD);
 }
 // Sturm-Anteil 0..1 nach dem Positionsprofil.

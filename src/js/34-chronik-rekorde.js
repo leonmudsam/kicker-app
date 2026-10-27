@@ -236,6 +236,9 @@ function _chronicleCtx(bisMs){
     // beruecksichtigt — ohne sie waere „der komplette Stuermer" nur eine
     // Siegquote mit Torzugabe.
     atkPerf:0, defPerf:0,
+    // Das Torverhaeltnis gegen die Erwartung je Position, die zweite
+    // Haelfte der Leistung im Positionsprofil von „Der Wandler" [§C44].
+    atkTor:0, defTor:0,
     expSum:0,                        // Summe der Siegchancen — das eigene Soll
     winStreak:0, winSpan:'', lossStreak:0, lossSpan:'',
     debacle:0, nail:0, bitter:0, close:0, closeW:0,
@@ -378,8 +381,8 @@ function _chronicleCtx(bisMs){
         // „Der Serienstopp" fragt, welche Serie ein eigener Sieg beendet hat,
         // und `run` steht fuer die A-Seite hier schon auf dem neuen Stand.
         gR: Math.max(runVor[onA ? m.b1 : m.a1] || 0, runVor[onA ? m.b2 : m.a2] || 0)});
-      if(pos === 'atk'){ p.atkG++; p.atkGoals += gf; if(w) p.atkW++; p.atkPerf += (w?1:0) - exp; }
-      else             { p.defG++; p.defConceded += ga; if(w) p.defW++; p.defPerf += (w?1:0) - exp; }
+      if(pos === 'atk'){ p.atkG++; p.atkGoals += gf; if(w) p.atkW++; p.atkPerf += (w?1:0) - exp; p.atkTor += posTorLeistung(gf, ga, exp); }
+      else             { p.defG++; p.defConceded += ga; if(w) p.defW++; p.defPerf += (w?1:0) - exp; p.defTor += posTorLeistung(gf, ga, exp); }
       const kanter = (w && gf===10 && ga===0);
       if(!w && gf===0 && ga===10) p.debacle++;
       if(w && gf===10 && ga===9)  p.nail++;

@@ -47,21 +47,44 @@ function playerAwards(id){
 }
 
 // Woraus die Einstufung im Positions-Profil entsteht [§C44], mit den
-// Zahlen des Spielers. Ohne das Blatt stand dort nur ein Prozentwert, und
-// wer ihn nachrechnen wollte, fand Partien und Siegquoten, aber nicht die
-// Leistung gegen die Erwartung, die ihn verschiebt.
+// Zahlen des Spielers, und was sie in der Elo bewirkt. Ohne das Blatt stand
+// dort nur ein Prozentwert, und wer ihn nachrechnen wollte, fand Partien
+// und Siegquoten, aber nicht die Leistung gegen die Erwartung, die ihn
+// verschiebt, und nicht, wie stark Gegner und Mitspieler waren.
+//
+// Die Einheit steht in der Zeile, nicht hinter jeder Zahl: mit „%-Punkte"
+// in beiden Spalten lief die Tabelle bei 360 px über den Rand.
 function zeigeProfilPosInfo(id){
   const t = posPerfFrom(id, matches), lage = positionsLage(t);
-  const pp = v => v == null ? '–' : _ppZeichen(v) + ' %-Punkte';
+  const pp = v => v == null ? '–' : _ppZeichen(v);
+  const elo = v => v == null ? '–' : v >= .5 ? '+' + Math.round(v) : v <= -.5 ? '−' + Math.round(-v) : '0';
+  const quote = v => v == null ? '–' : pct(v) + ' %';
   const zeile = (lbl, a, d) => `<span class="l">${lbl}</span><span>${a}</span><span>${d}</span>`;
+  // Die Wirkung in der Elo, für diesen Spieler ausgerechnet: die Seite mit
+  // Bonus zuerst. Ein Ausschlag unter 0,05 % ist keiner.
+  const fS = posFactor(lage, 'atk', cfg.pos_swing), fD = posFactor(lage, 'def', cfg.pos_swing);
+  const proz = f => { const q = Math.abs(f - 1) * 100; return q >= 9.95 ? String(Math.round(q)) : komma(q, 1); };
+  const [plus, minus] = fS >= fD ? [['im Sturm', fS], ['in der Abwehr', fD]] : [['in der Abwehr', fD], ['im Sturm', fS]];
+  const gross = w => w[0].toUpperCase() + w.slice(1);
+  const grenze = Math.round(POS_GRENZE * 100);
+  const wirkung = Math.abs(plus[1] - 1) < .0005
+    ? 'In der Elo zählen beide Positionen gleich.'
+    : `In der Elo bringt ein Sieg ${plus[0]} ${proz(plus[1])} % mehr, und eine Niederlage dort kostet ${proz(plus[1])} % weniger. `
+      + (Math.abs(minus[1] - 1) < .0005 ? `${gross(minus[0])} zählt eine Partie unverändert.`
+        : `${gross(minus[0])} ist es umgekehrt, ${proz(minus[1])} %.`)
+      + ` Höchstens ${grenze} % in jede Richtung; über die eigene Aufteilung hebt sich beides auf.`;
   openSheet(blattKopfHtml({ic:'info', titel:'So entsteht die Einstufung', unter:pname(id)})
     + `<div class="pos-info">
       <div class="pos-info-tab">${zeile('', '<b>Sturm</b>', '<b>Abwehr</b>')}${
-        zeile('Partien', t.aG, t.dG)}${zeile('Siege', t.aW, t.dW)}${
-        zeile('Gegen die Erwartung', pp(t.aPerfAvg), pp(t.dPerfAvg))}</div>
-      <p>Die Einstufung fragt zuerst, wo jemand spielt, und rückt dann zu der Seite, auf der die Leistung gegen die Erwartung besser ist. Die Erwartung kennt Partner und Gegner jeder Partie.</p>
-      <p>Wenige Partien auf einer Seite sagen wenig: dort zählt zuerst der Schnitt aller Partien, bis mehr dazukommen.</p>
-      <p>In der Elo bringt ein Sieg auf der schwächeren Seite mehr, und eine Niederlage dort kostet weniger. Auf der Stammposition zählt eine Partie etwas weniger, höchstens 5 %. Über die eigene Aufteilung hebt sich beides auf.</p>
+        zeile('Partien', t.aG, t.dG)}${zeile('Siegquote', quote(t.aWr), quote(t.dWr))}${
+        zeile('Gegner, Elo-Abstand', elo(t.aGegAvg), elo(t.dGegAvg))}${
+        zeile('Mitspieler, Elo-Abstand', elo(t.aMitAvg), elo(t.dMitAvg))}${
+        zeile('Siege gegen die Erwartung, %-Punkte', pp(t.aPerfAvg), pp(t.dPerfAvg))}${
+        zeile('Tore gegen die Erwartung, %-Punkte', pp(t.aTorAvg), pp(t.dTorAvg))}${
+        zeile('Leistung gegen den eigenen Schnitt', pp(lage.rA), pp(lage.rD))}</div>
+      <p>Die Erwartung jeder Partie kommt aus der Elo aller vier: gegen stärkere Gegner liegt sie niedriger, mit einem stärkeren Mitspieler höher. Der Elo-Abstand zeigt, wie viel stärker (+) oder schwächer (−) Gegner und Mitspieler im Schnitt waren. Gegen die Erwartung zählen Sieg und Torverhältnis je zur Hälfte.</p>
+      <p>Die Einstufung rückt zu der Seite, auf der die Leistung besser ist. Wo jemand spielt, zählt vor allem, solange eine Seite wenige Partien hat; dort sagt die Leistung noch wenig.</p>
+      <p>${wirkung}</p>
       <p><b>${pct(lage.wert)} % Sturm</b> · eingestuft als <b>${esc(posClassify(lage.wert).label)}</b></p></div>`);
 }
 

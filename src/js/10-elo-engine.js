@@ -34,7 +34,7 @@ function simulateElo(matchSubset, opts={}){
     elo[p.id]=startElo;played[p.id]=0;playedSeason[p.id]=0;
     wins[p.id]=0;losses[p.id]=0;curStreak[p.id]=0;bestStreak[p.id]=0;
     eloGain[p.id]=0;eloLoss[p.id]=0;gd[p.id]=0;peakElo[p.id]=startElo;
-    posTracker[p.id]={aG:0,aW:0,dG:0,dW:0,aPerf:0,dPerf:0};
+    posTracker[p.id]=posZaehler();
   });
 
   // Initial-State (für inkrementelle Sim)
@@ -129,15 +129,8 @@ function simulateElo(matchSubset, opts={}){
 
     history.push({matchId:m.id,eloBefore,eloAfter:{...elo},deltas:res,expA,breakdowns:{}});
 
-    // Position-Tracker
-    [[m.a1,m.a1_pos,aWon,expA],[m.a2,m.a2_pos,aWon,expA],
-     [m.b1,m.b1_pos,!aWon,1-expA],[m.b2,m.b2_pos,!aWon,1-expA]]
-    .forEach(([id,pos,won,myExp])=>{
-      const t=posTracker[id]; if(!t) return;
-      const perf=(won?1:0)-myExp;
-      if(pos==='atk'){t.aG++; if(won)t.aW++; t.aPerf+=perf;}
-      else           {t.dG++; if(won)t.dW++; t.dPerf+=perf;}
-    });
+    // Positions-Zähler [§C44], mit dem Stand VOR der Partie
+    posZaehlenPartie(posTracker,m,aWon,expA,eloBefore);
   });
 
   // Letzten Saison-Snapshot + ggf. Reset auf Kalender-Saison
@@ -190,7 +183,7 @@ function simulateEloWithSliders(matchSubset, opts={}){
   players.forEach(p=>{elo[p.id]=startElo;played[p.id]=0;playedSeason[p.id]=0;wins[p.id]=0;losses[p.id]=0;curStreak[p.id]=0;bestStreak[p.id]=0;eloGain[p.id]=0;eloLoss[p.id]=0;gd[p.id]=0;peakElo[p.id]=startElo;});
   // Inkrementeller Positions-Tracker (ersetzt atkStrengthFrom(id, prior))
   const posTracker={};
-  players.forEach(p=>{posTracker[p.id]={aG:0,aW:0,dG:0,dW:0,aPerf:0,dPerf:0};});
+  players.forEach(p=>{posTracker[p.id]=posZaehler();});
 
   // Optional: initialer State (für schnelle Vorschau eines einzelnen Hypo-Matches)
   // Erwartet ein Objekt mit den gleichen Keys wie der Return-Value von simulateElo.
@@ -406,15 +399,8 @@ function simulateEloWithSliders(matchSubset, opts={}){
     seasonTeamElo[mSeason][lKey]=(seasonTeamElo[mSeason][lKey]||0)+lDelta;
 
     history.push({matchId:m.id,eloBefore,eloAfter:{...elo},deltas:res,expA,breakdowns});
-    // Positions-Tracker inkrementell updaten
-    [[m.a1,m.a1_pos,aWon,expA],[m.a2,m.a2_pos,aWon,expA],
-     [m.b1,m.b1_pos,!aWon,1-expA],[m.b2,m.b2_pos,!aWon,1-expA]]
-    .forEach(([id,pos,won,myExp])=>{
-      const t=posTracker[id]; if(!t) return;
-      const perf=(won?1:0)-myExp;
-      if(pos==='atk'){t.aG++;if(won)t.aW++;t.aPerf+=perf;}
-      else{t.dG++;if(won)t.dW++;t.dPerf+=perf;}
-    });
+    // Positions-Zähler [§C44], mit dem Stand VOR der Partie
+    posZaehlenPartie(posTracker,m,aWon,expA,eloBefore);
   });
 
   // Letzten Saison-Snapshot festhalten

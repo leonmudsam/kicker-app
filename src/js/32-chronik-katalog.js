@@ -1156,8 +1156,8 @@ const DISZIPLINEN = [
       kammer:'mark', basis:75, offen:true,
       zeitraum:'Ganze Laufbahn',
       mind:'40 Partien',
-      wie:'Gerechnet wird mit demselben Sturmanteil, den das Positionsprofil im Profil zeigt. Gewertet wird der Abstand zu einer Verteilung von fünfzig zu fünfzig; bei genau fünfzig zu fünfzig stünde der Wert bei 100 Prozent.',
-      cond:'Ausgeglichenste Verteilung auf Sturm und Abwehr, ab 40 Partien',
+      wie:'Gerechnet wird mit dem Positionsprofil aus dem Profil: wo jemand spielt und auf welcher Seite Siege und Tore gegen die Erwartung besser sind. Gewertet wird der Abstand zu fünfzig zu fünfzig; bei genau fünfzig zu fünfzig stünde der Wert bei 100 Prozent.',
+      cond:'Ausgeglichenstes Positionsprofil zwischen Sturm und Abwehr, ab 40 Partien',
       val:p => {
         if(p.games < 40) return null;
         return 1 - Math.abs(positionsProfilWert(p) - 0.5) * 2;
