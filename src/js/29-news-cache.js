@@ -104,6 +104,12 @@ const STORY_ABGEMELDET = [
   'rek_gegenwind_', 'rek_entscheider_', 'rek_laufstopper_', 'rek_sovereign_', 'rek_rock_',
   'rek_sniper_', 'rek_densephase_', 'rek_torrausch_', 'rek_bitterloss_', 'rek_uebersoll_',
   'rek_deutlich_', 'rek_ausgleich_',
+  // Drei fielen, weil sie sich mit anderen überschnitten: „Der Umsteiger"
+  // neben dem Wandler und den Positionsrekorden, „Der Aufschwung" neben dem
+  // Höhenflug, „Neuland" über die Laufbahn neben der Monatschronik gleichen
+  // Namens, die bleibt. Gespeichert standen noch „Leon übernimmt ‚Der
+  // Aufschwung'" und „Stefan übernimmt ‚Neuland'" im Feed.
+  'rek_umsteiger_', 'rek_aufschwung_', 'rek_neuland_',
   // ── Das Ergebnis hiess einmal anders ─────────────────────────────
   // Eine Ergebnis-Karte entstand nur fuer ein auffaelliges Muster und
   // hoechstens zweimal je Tag (`match_result_<Partie>`). Heute bekommt jede
@@ -130,12 +136,18 @@ function _storyWiderrufen(s){
   const p = pmap()[d.pid];
   return !p || !p.retired_at || ruhestandMs(p) !== Date.parse(d.retiredAt);
 }
-function _storyAbgemeldet(id){
-  const t = String(id || '');
+// Eine Hinweiskarte trägt die ID ihres Zeitfensters (`ambient_<Tag>_<Stunde>`)
+// und nicht die ihres Inhalts; abgemeldet wird sie deshalb an ihrer Sorte
+// (`dataRef.sub`). „Johannes im Aufschwung" stand als Bestwert der Liga im
+// Feed, nachdem es den Rekord nicht mehr gab.
+const AMBIENT_ABGEMELDET = ['personal_umsteiger', 'personal_aufschwung'];
+function _storyAbgemeldet(s){
+  const t = String((s && s.id) || '');
   for(let i = 0; i < STORY_ABGEMELDET.length; i++){
     if(t.indexOf(STORY_ABGEMELDET[i]) === 0) return true;
   }
-  return false;
+  const sub = s && s.dataRef && s.dataRef.sub;
+  return !!sub && AMBIENT_ABGEMELDET.indexOf(sub) >= 0;
 }
 
 // Display-seitige Konsolidierung gegen Match-Event-Spam (v8.6).
@@ -173,7 +185,7 @@ function _consolidateStories(list){
     if(!l){ l = new Map(); duellMoment.set(key, l); }
     l.set(n, m);
   })));
-  const quelle = _insAltZuTag(_tafelFassungen(ohneStoriesNachAbschied(list).filter(s => !_storyAbgemeldet(s && s.id) && !_storyWiderrufen(s))));
+  const quelle = _insAltZuTag(_tafelFassungen(ohneStoriesNachAbschied(list).filter(s => !_storyAbgemeldet(s) && !_storyWiderrufen(s))));
   const marken = new Map(), normal = [];
   // Alte kleine Marken wurden je Tag gespeichert, neue je Partie. Die alten
   // Snapshots bleiben erhalten: nur ihre Anzeige wird an den gespeicherten
@@ -342,7 +354,7 @@ function _consolidateStoriesLegacy(list){
   };
   list.forEach(s => {
     const d = (s && s.dataRef) || {};
-    if(_storyAbgemeldet(s && s.id)) return;
+    if(_storyAbgemeldet(s)) return;
     if(d.type === 'badge_unlocked') return _merk(d.matchId, d.badgeId);
     if(d.type === 'badge_marken')
       (d.marken || []).forEach(m => _merk(d.matchId || (m && m.matchId), m && m.badgeId));
@@ -355,7 +367,7 @@ function _consolidateStoriesLegacy(list){
   };
   // Historische Fakten bleiben wahr. Spätere Zustände oder weitere Partien
   // dürfen einen bereits publizierten Snapshot nicht wieder entfernen.
-  const src = ohneStoriesNachAbschied(list).filter(s => !_storyAbgemeldet(s && s.id) && !_storyWiderrufen(s));
+  const src = ohneStoriesNachAbschied(list).filter(s => !_storyAbgemeldet(s) && !_storyWiderrufen(s));
 
   // Frühere Anzeige-Suppressions bleiben bewusst leer: veröffentlichte
   // Snapshot-Ereignisse werden weder durch ähnliche Badges noch durch spätere

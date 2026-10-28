@@ -293,9 +293,7 @@ const ICONS = {
   doorReturn:    `<path d="M4 3h9v18H4z"/><circle cx="10" cy="12" r="1"/><path d="M21 12h-5"/><polyline points="19 9 16 12 19 15"/>`,
   // Umsteiger: die Position wechselt, hinauf in den Sturm, hinunter in die
   // Abwehr.
-  umstieg:       `<path d="M7 20V5M4 8l3-3 3 3M17 4v15M14 16l3 3 3-3M10 12h4"/>`,
   // Aufschwung: die Kurve steigt aus der Grundlinie und bleibt oben.
-  aufschwung:    `<path d="M3 21h18"/><path d="M3 17c4 0 6-1 9-5s5-6 9-7"/><polyline points="16 5 21 5 20 10"/>`,
   // Glanztag: ein Tag im Kalender mit einem Stern.
   glanztag:      `<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/><path d="M12 12.4l1.1 2.2 2.4.3-1.8 1.7.5 2.4-2.2-1.2-2.2 1.2.5-2.4-1.8-1.7 2.4-.3z"/>`,
   // Abschwung: die Kurve fällt aus der Höhe und bleibt unten, das
@@ -427,6 +425,9 @@ const ICONS = {
   // ── Neu gezeichnet, weil zwei Zeichnungen Zwillinge waren (der alte
   //    Name steht in ZEICHEN_ALT und zeigt hierher)
   pille:         `<path d="M4.7 13.6l8.9-8.9a4 4 0 015.7 5.7l-8.9 8.9a4 4 0 01-5.7-5.7z"/><path d="M9.2 9.1l5.7 5.7"/>`,
+  // Zwei Beine, deren Knie zueinander einknicken, daneben das Zittern:
+  // „Die weichen Knie" verlieren die Partie, die der letzte Ball entscheidet.
+  weicheKnie:    `<path d="M9 3v6l3 4-3 4v4M15 3v6l-3 4 3 4v4"/><path d="M5.5 10.5l-2 1M5.5 15.5l-2-1M18.5 10.5l2 1M18.5 15.5l2-1"/>`,
   schwarzerTag:  `<circle cx="12" cy="12" r="4.8" fill="currentColor" fill-opacity=".55"/><path d="M12 2.2v2.6M12 19.2v2.6M2.2 12h2.6M19.2 12h2.6M5.1 5.1l1.8 1.8M17.1 17.1l1.8 1.8M5.1 18.9l1.8-1.8M17.1 6.9l1.8-1.8"/>`,
   ueberholen:    `<circle cx="12" cy="16" r="2.4"/><path d="M3.5 18c0-6.5 4.2-10 10.5-10h6"/><path d="M17 5l3 3-3 3"/>`,
   rakete:        `<path d="M12 2.5c3 2 4.5 5.5 4.5 9.5l-2 3h-5l-2-3c0-4 1.5-7.5 4.5-9.5z"/><circle cx="12" cy="9" r="1.6"/><path d="M9.5 15l-2.5 2.5V20l2.5-1.5M14.5 15l2.5 2.5V20l-2.5-1.5M12 17.5V21"/>`,

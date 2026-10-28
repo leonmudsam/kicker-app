@@ -38,7 +38,7 @@ gewinnt fast jede. Er ist vollständig ersetzt durch Chroniken, die
 nach der **Abweichung von der Erwartung** fragen, nach **Konstanz**, nach
 dem **Verhältnis zum Ligamittel** desselben Monats, zu einem **bestimmten
 anderen Spieler** oder nach einem **seltenen Einzelereignis**. Die
-Liga-Rekorde der Ewigen Tafel sind davon unberührt; zwanzig Disziplinen tragen
+Liga-Rekorde der Ewigen Tafel sind davon unberührt; einundzwanzig Disziplinen tragen
 beide Zeitachsen, weil dieselbe Frage auf zwei Zeitachsen in EINE Disziplin
 gehört [§13.1] — sie sind in §C35 genannt.
 **Das Stichproben-Tor ist niedrig und für alle gleich:** acht Partien im

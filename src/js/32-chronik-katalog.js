@@ -955,22 +955,6 @@ const DISZIPLINEN = [
       val:p => (p.hfDelta != null && p.hfDelta > 0) ? p.hfDelta : null,
       ev:(p,v) => `+${Math.round(v*100)} %-Punkte · ${pct(p.hfNeu)} % in den letzten 20 statt ${_ppGegen(p.hfNeu, v)} % in den 20 davor`
     }},
-  // Ob jemand dauerhaft besser geworden ist: die letzten 25 gegen alles
-  // davor. Gegen das Eigene gemessen [§C38] und damit fuer jede
-  // Koennensklasse erreichbar.
-  {id:'aufschwung', name:'Der Aufschwung', short:'Aufschwung', ic:'aufschwung', tone:'gold', art:'leistung',
-    allzeit:{
-      kammer:'form', basis:REKORD_GRUNDWERT.koennen, offen:true, fenster:true,
-      zeitraum:'Die letzten 25 gegen die Laufbahn davor',
-      mind:'50 Partien',
-      wie:'Die Siegquote der letzten 25 eigenen Partien gegen die Siegquote aller Partien davor. Der Wert ist der Abstand in Prozentpunkten. Vorn steht, wer heute dauerhaft besser spielt als früher.',
-      cond:'Größte Verbesserung der letzten 25 Partien gegenüber der Laufbahn davor, ab 50 Partien',
-      // Eine Richtung braucht einen sichtbaren Abstand: was auf null Punkte
-      // rundet, stand als „−0 %-Punkte" in der Liste [§C35].
-      val:p => (p.asDelta != null && pct(p.asDelta) > 0) ? p.asDelta : null,
-      ev:(p,v) => `+${Math.round(v*100)} %-Punkte · ${pct(p.asNeu)} % in den letzten 25 statt ${_ppGegen(p.asNeu, v)} % davor`
-    }},
-
   {id:'kaltstart', name:'Der Kaltstart', short:'Kaltstart', ic:'sunrise', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Frühstarter',
@@ -1011,20 +995,6 @@ const DISZIPLINEN = [
       val:p => (p.weDelta != null && p.weN >= 4 && pct(p.weDelta) > 0) ? p.weDelta : null,
       ev:(p,v) => `+${Math.round(v*100)} %-Punkte · ${pct(p.weW / p.weN)} % in ${p.weN} Rückkehrspielen, sonst ${_ppGegen(p.weW / p.weN, v)} %`
     }},
-  // Wer den Wechsel zwischen Sturm und Abwehr besser verkraftet als sein
-  // eigener Schnitt. Gegen das Eigene gemessen [§C38]: die Siegquote nach
-  // einem Wechsel allein ordnete die Liga wie die Siegquote (0,93).
-  {id:'umsteiger', name:'Der Umsteiger', short:'Umsteiger', ic:'umstieg', tone:'gold', art:'leistung',
-    allzeit:{
-      kammer:'koennen', basis:REKORD_GRUNDWERT.koennen, offen:true,
-      zeitraum:'Ganze Laufbahn, jeder Positionswechsel',
-      mind:'15 Partien nach einem Wechsel',
-      wie:'Gezählt wird die erste eigene Partie nach einem Wechsel von Sturm zu Abwehr oder umgekehrt. Die Siegquote dieser Partien wird gegen die Siegquote aller Partien gestellt, in denen die Position dieselbe blieb. Der Wert ist der Abstand in Prozentpunkten.',
-      cond:'Größter Vorsprung in der ersten Partie nach einem Positionswechsel gegenüber den übrigen Partien, ab 15 solchen Partien',
-      val:p => (p.umDelta != null && p.umN >= 15 && pct(p.umDelta) > 0) ? p.umDelta : null,
-      ev:(p,v) => `+${Math.round(v*100)} %-Punkte · ${pct(p.umW / p.umN)} % in ${p.umN} Partien nach einem Wechsel, sonst ${_ppGegen(p.umW / p.umN, v)} %`
-    }},
-
   {id:'schlussball', name:'Der letzte Ball', short:'Schluss', ic:'whistle', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Nervenstarke',
@@ -1045,37 +1015,6 @@ const DISZIPLINEN = [
       cond:'Größter Vorsprung im letzten Spiel eines Spieltags, ab 10 Spieltagen mit je 3 Partien',
       val:p => (p.sbDelta != null && p.sbN >= 10 && p.sbDelta > 0) ? p.sbDelta : null,
       ev:(p,v) => `+${Math.round(v*100)} %-Punkte · ${pct(p.sbDrin)} % in ${p.sbN} Schlussspielen, sonst ${_ppGegen(p.sbDrin, v)} %`
-    }},
-
-  // Steht hier und nicht bei den Chroniken gegen das Eigene unten, weil die
-  // Liga-Rekorde der Katalogfolge folgen: Leistung vor Ereignis [§C35].
-  {id:'neuland', name:'Neuland', short:'Neuland', ic:'neuland', tone:'gold', art:'leistung',
-    monat:{
-      beiname:'Der Brückenbauer',
-      art:'koennen',
-      klasse:'besonders', aus:1.21, streu:0.164,
-      wie:'Nur die Partien neben einem Partner, mit dem es vor diesem Monat keine einzige gab. Verglichen wird die Quote darin mit der Siegchance, die die Elo-Rechnung diesen Partien gab.',
-      cond:'Neben neuen Partnern mindestens 17 Prozentpunkte über der Rechnung, ab 5 solchen Partien',
-      ...(_stWertung(
-        (p, C) => p.games >= TITLE_MIN_GAMES && _stNeuland(p, C).length >= ST_TEIL,
-        (p, C) => _stUeberSoll(_stNeuland(p, C)),
-        0.17,
-        (p, v, C) => { const a = _stNeuland(p, C);
-          return `${_stSiege(a)} von ${a.length} Partien neben neuen Partnern · ${_ppZeichen(v)} %-Punkte über der Rechnung`; }))},
-    // Dieselbe Frage ueber die Laufbahn [§13.1]. Neu ist ein Partner hier in
-    // den ersten drei gemeinsamen Partien. Der Abstand zur Rechnung allein
-    // ordnete die Liga ueber die Laufbahn wie die Siegquote (r = 0,91), weil
-    // die Elo jeden Monat neu beginnt und der Starke seine Rechnung fast
-    // immer schlaegt; gegen den eigenen Abstand in allen uebrigen Partien
-    // gestellt faellt das weg (gemessen −0,08) [§C38].
-    allzeit:{
-      kammer:'koennen', basis:REKORD_GRUNDWERT.koennen, offen:true,
-      zeitraum:'Ganze Laufbahn, die ersten Partien je Partner',
-      mind:'15 Partien neben einem neuen Partner',
-      wie:'Neu ist ein Partner in den ersten drei gemeinsamen Partien. Für diese Partien und für alle übrigen wird die Siegquote gegen die Siegchance gestellt, die die Elo-Rechnung vor dem Anpfiff gab. Gewertet wird, wie weit der Abstand neben neuen Partnern über dem Abstand sonst liegt, in Prozentpunkten.',
-      cond:'Größter Vorsprung auf die Rechnung in den ersten drei Partien neben jedem Partner gegenüber den übrigen Partien, ab 15 solchen Partien',
-      val:p => (p.nlN >= 15 && p.nlDelta != null && pct(p.nlDelta) > 0) ? p.nlDelta : null,
-      ev:(p,v) => `+${Math.round(v*100)} %-Punkte gegen die Rechnung · ${p.nlW} von ${p.nlN} ersten Partien`
     }},
 
   {id:'unstoppable', name:'Der Unaufhaltsame', short:'Serie', ic:'flameTriple', tone:'orange', art:'ereignis',
@@ -1303,6 +1242,37 @@ const DISZIPLINEN = [
       unit:'Siege mit einem Tor in Folge', min:1, raw:p => p.eiskaltLauf,
       ev:(p,v) => `${v} Siege mit einem Tor Unterschied in Folge`,
       zeit:p => p.eiskaltSpan || ''
+    }},
+
+  {id:'kaltblut', name:'Das Kaltblut', short:'Kaltblut', ic:'kaltblut', tone:'purple', art:'ereignis', zufall:'quote',
+    monat:{
+      beiname:'Der Kaltblütige',
+      art:'fuegung',
+      klasse:'besonders', aus:1.61, streu:0.142,
+      wie:'Ein Tor Unterschied heißt: der letzte Ball hat entschieden.',
+      cond:'Mindestens 80 % der Partien gewonnen, die mit einem Tor Unterschied endeten, ab 5 solchen Partien',
+      ...(_stWertung(
+        p=>_stEinTor(p).length>=ST_TEIL,
+        p=>_stQuote(_stEinTor(p)),
+        0.80,
+        (p,v)=>{const a=_stEinTor(p);
+          return `${_stSiege(a)} von ${a.length} Partien um den letzten Ball · ${pct(v)} %`;}))},
+    // Dieselbe Frage über die Laufbahn [§13.1]: Zittersiege gegen 9:10.
+    // Ein Verhältnis gewonnener zu verlorenen Extremergebnissen galt als
+    // zweite Siegquote [§C35]. Für dieses gilt es nicht: gemessen an den
+    // echten Partien folgt der Anteil der Siegquote mit r = 0,62, vorn steht
+    // Jannik mit 64 %, die Besten der Tabelle liegen in der Mitte. Für 10:0
+    // gegen 0:10 sind es 0,98, das bleibt eine zweite Siegquote. Eine Fügung,
+    // weil der letzte Ball öfter springt als entscheidet; das Gegenstück
+    // sind „Die weichen Knie" mit derselben Mindestbasis.
+    allzeit:{
+      kammer:'fuegung', basis:REKORD_GRUNDWERT.fuegung, offen:true,
+      zeitraum:'Ganze Laufbahn, Partien mit 10:9 und 9:10',
+      mind:'10 Partien mit 10:9 oder 9:10',
+      wie:'Gezählt werden die Zittersiege (10:9), geteilt durch alle eigenen Partien, die 10:9 oder 9:10 ausgingen. Der Nenner sind diese Zitterpartien und nicht alle Partien: gefragt ist, wem der letzte Ball öfter gehört.',
+      cond:'Höchster Anteil an Zittersiegen unter allen Partien mit 10:9 oder 9:10, ab 10 solchen Partien',
+      val:p => (p.nail + p.bitter) >= 10 ? p.nail / (p.nail + p.bitter) : null,
+      ev:(p,v) => `${Math.round(v*100)} % der ${p.nail + p.bitter} Zitterpartien gewonnen · ${p.nail} zu ${p.bitter}`
     }},
 
   {id:'hardnight', name:'Der schwerste Tag', short:'Losglück', ic:'schwererTag', tone:'blue',
@@ -1616,6 +1586,21 @@ const DISZIPLINEN = [
       cond:'Höchster Anteil an 9:10-Niederlagen unter allen eigenen Niederlagen, ab 25 Niederlagen',
       val:p => p.losses >= 25 ? p.bitter/p.losses : null,
       ev:(p,v) => `${Math.round(v*100)} % aller ${p.losses} Niederlagen endeten 9:10 · ${p.bitter} Stück`
+    }},
+
+  // Das Gegenstück zum Kaltblut [§C35]: wer die Zitterpartien verliert.
+  // Der Pechvogel darüber teilt die 9:10 durch alle eigenen Pleiten und fragt,
+  // wie jemand verliert; hier ist der Nenner die Zitterpartie selbst, und
+  // gefragt ist, auf welcher Seite der letzte Ball landet.
+  {id:'weicheknie', name:'Die weichen Knie', short:'Weiche Knie', ic:'weicheKnie', tone:'red', art:'schatten',
+    allzeit:{
+      kammer:'shame', basis:REKORD_GRUNDWERT.schatten,
+      zeitraum:'Ganze Laufbahn, Partien mit 10:9 und 9:10',
+      mind:'10 Partien mit 10:9 oder 9:10',
+      wie:'Gezählt werden die Niederlagen mit 9:10, geteilt durch alle eigenen Partien, die 10:9 oder 9:10 ausgingen. Der Nenner sind diese Zitterpartien und nicht alle Niederlagen.',
+      cond:'Höchster Anteil an 9:10-Niederlagen unter allen Partien mit 10:9 oder 9:10, ab 10 solchen Partien',
+      val:p => (p.nail + p.bitter) >= 10 ? p.bitter / (p.nail + p.bitter) : null,
+      ev:(p,v) => `${Math.round(v*100)} % der ${p.nail + p.bitter} Zitterpartien verloren · ${p.nail} zu ${p.bitter}`
     }},
 
   {id:'freefall', name:'Der Sturzflug', short:'Sturzflug', ic:'sturzflug', tone:'red', art:'schatten',
@@ -2491,20 +2476,6 @@ const DISZIPLINEN = [
         (p,v)=>{const t=Object.values(p.tagGrp).filter(a=>a.length>=3);
       return `${pct(v)} %-Punkte über der eigenen Bilanz · ${t.filter(a=>a[0].win!==a[a.length-1].win).length} von ${t.length} Spieltagen endeten anders, als sie begannen`;}))}},
 
-  {id:'kaltblut', name:'Das Kaltblut', short:'Kaltblut', ic:'kaltblut', tone:'purple', art:'ereignis',
-    monat:{
-      beiname:'Der Kaltblütige',
-      art:'fuegung',
-      klasse:'besonders', aus:1.61, streu:0.142,
-      wie:'Ein Tor Unterschied heißt: der letzte Ball hat entschieden.',
-      cond:'Mindestens 80 % der Partien gewonnen, die mit einem Tor Unterschied endeten, ab 5 solchen Partien',
-      ...(_stWertung(
-        p=>_stEinTor(p).length>=ST_TEIL,
-        p=>_stQuote(_stEinTor(p)),
-        0.80,
-        (p,v)=>{const a=_stEinTor(p);
-          return `${_stSiege(a)} von ${a.length} Partien um den letzten Ball · ${pct(v)} %`;}))}},
-
   {id:'randlage', name:'Immer am Rand', short:'Am Rand', ic:'search', tone:'purple', art:'ereignis',
     monat:{
       beiname:'Der Grenzgänger',
@@ -2556,12 +2527,25 @@ const DISZIPLINEN = [
   // jemand anders spielt als sonst oder als die Liga: vorne mehr als hinten,
   // hinten weniger als sonst, neben neuen Partnern, in der Revanche, gegen
   // die beiden Ersten, gegen Gegner, die er schon kennt, und nach einem Sieg.
-  // „Neuland" steht oben bei den Liga-Rekorden, seit es auch die Laufbahn
-  // traegt [§13.1]. Gemessen gingen in den Fixture-Monaten Juni bis August 21 bis 28 Einträge
+  // Gemessen gingen in den Fixture-Monaten Juni bis August 21 bis 28 Einträge
   // an neun oder zehn Spieler, und Jannik, Jane oder Maxi standen in manchem
   // Monat leer da; diese gehen an Alex, Jannik, Jane, Julian, Johannes und
   // Martin — fünf der sechs nicht auf Platz eins. Dazu das Gegenstück zum
   // Sprung als Schattenseite.
+  {id:'neuland', name:'Neuland', short:'Neuland', ic:'neuland', tone:'gold', art:'leistung',
+    monat:{
+      beiname:'Der Brückenbauer',
+      art:'koennen',
+      klasse:'besonders', aus:1.21, streu:0.164,
+      wie:'Nur die Partien neben einem Partner, mit dem es vor diesem Monat keine einzige gab. Verglichen wird die Quote darin mit der Siegchance, die die Elo-Rechnung diesen Partien gab.',
+      cond:'Neben neuen Partnern mindestens 17 Prozentpunkte über der Rechnung, ab 5 solchen Partien',
+      ...(_stWertung(
+        (p, C) => p.games >= TITLE_MIN_GAMES && _stNeuland(p, C).length >= ST_TEIL,
+        (p, C) => _stUeberSoll(_stNeuland(p, C)),
+        0.17,
+        (p, v, C) => { const a = _stNeuland(p, C);
+          return `${_stSiege(a)} von ${a.length} Partien neben neuen Partnern · ${_ppZeichen(v)} %-Punkte über der Rechnung`; }))}},
+
   {id:'knipser', name:'Der Knipser', short:'Knipser', ic:'knipser', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Torjäger',

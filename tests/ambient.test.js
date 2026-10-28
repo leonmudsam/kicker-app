@@ -4526,8 +4526,8 @@ ok(_keineSchande.treffer.length === 0, 'keine Schande steht im Feed',
 const _bmk = JSON.parse(K.eval(`JSON.stringify((function(){
   const pm = pmap();
   const nameOf = pid => (pm[pid] && pm[pid].name) || '?';
-  const paare = { personal_glanztag:'glanztag', personal_umsteiger:'umsteiger',
-                  personal_aufschwung:'aufschwung' };
+  // Der Umsteiger und der Aufschwung sind gestrichen; ihre Karten mit ihnen.
+  const paare = { personal_glanztag:'glanztag' };
   const T = _ambientTemplatePool(new Date(), pm, nameOf);
   const out = [];
   Object.keys(paare).forEach(key => {
@@ -4553,8 +4553,8 @@ const _bmk = JSON.parse(K.eval(`JSON.stringify((function(){
   });
   return out;
 })())`));
-ok(_bmk.length >= 3 && !_bmk.some(x => x.fehlt),
-   'die drei Bestmarken-Karten stehen im Pool',
+ok(_bmk.length >= 1 && !_bmk.some(x => x.fehlt),
+   'die Bestmarken-Karte steht im Pool',
    _bmk.filter(x => x.fehlt).map(x => x.key).join(', ') || String(_bmk.length));
 ok(_bmk.every(x => x.fehlt || x.n > 0),
    'jede Bestmarken-Karte nennt ueberhaupt einen Spieler',
@@ -4570,6 +4570,30 @@ const _bmkRechnung = _bmk.filter(x => !x.fehlt && x.n && !x.rechnung);
 ok(_bmk.some(x => x.rechnung) && _bmkRechnung.length === 0,
    'der Wert einer Bestmarken-Karte ist die Differenz der Quoten im Satz',
    _bmkRechnung.length ? _bmkRechnung[0].satz : 'stimmt');
+
+// „Das Kaltblut" misst einen Anteil und keinen Abstand: die Karte nennt nur
+// Halter des Rekords, und ihr grosser Wert ist der Anteil, den das „x von n"
+// im Satz ergibt — nicht ein zweites Mal gerechnet und anders gerundet.
+const _kbl = JSON.parse(K.eval(`JSON.stringify((function(){
+  const pm = pmap();
+  const nameOf = pid => (pm[pid] && pm[pid].name) || '?';
+  const v = _ambientTemplatePool(new Date(), pm, nameOf).find(x => x.key === 'personal_kaltblut');
+  if(!v) return {fehlt:true};
+  const r = chronicleRang('kaltblut') || [];
+  const halter = r.filter(x => x.wert === (r[0] || {}).wert).map(x => x.pid);
+  const k = v.make(() => 0.5);
+  if(!k) return {leer:true, n:r.length};
+  const d = k.dataRef || {};
+  const pids = d.ambientPids || (d.ambientPid ? [d.ambientPid] : []);
+  const m = String(k.desc).match(/([0-9]+) von ([0-9]+) Partien/);
+  return {n:pids.length, fremd:pids.filter(x => halter.indexOf(x) < 0).map(nameOf),
+    stimmt: !!m && parseInt(k.vv, 10) === Math.round(+m[1] / +m[2] * 100),
+    satz: k.vv + ' · ' + k.desc};
+})())`));
+ok(!_kbl.fehlt && !_kbl.leer && _kbl.n > 0 && _kbl.fremd.length === 0,
+   'die Kaltblut-Karte steht im Pool und nennt nur Halter des Rekords',
+   _kbl.fehlt ? 'fehlt' : _kbl.leer ? 'leer bei ' + _kbl.n + ' im Rennen' : (_kbl.fremd.join(', ') || _kbl.satz));
+ok(_kbl.stimmt, 'der Wert der Kaltblut-Karte ist der Anteil aus dem Satz darunter', _kbl.satz || '');
 
 // ── Kein Listentrenner im Fliesstext ────────────────────────────────
 // Ein Beleg wie „20 % aller 25 Siege endeten 10:9 · 5" ist fuer eine Zelle
@@ -6249,8 +6273,9 @@ const _rekFelder = JSON.parse(K.eval(`JSON.stringify((function(){
   // Spieltag; ein Rekord, der nur an einem anderen Tag wechselt, fiele
   // heraus, und dann gehoert er nicht in diese Liste.
   // Der Wiedereinstieg fehlt: seit eine Pause sechs Tage dauert, wechselt er
-  // an den echten Partien nur an Tagen, die dieser Lauf nicht sieht.
-  const NEU = ['damage_control','rollencoup','umsteiger','aufschwung','glanztag'];
+  // an den echten Partien nur an Tagen, die dieser Lauf nicht sieht. Die
+  // weichen Knie fehlen, weil eine Schattenseite keine Rekordkarte bekommt.
+  const NEU = ['damage_control','rollencoup','glanztag','kaltblut'];
   const neuGesehen = NEU.filter(id => karten.some(s => s.dataRef.rekordId === id));
   return {n:karten.length, fehlt:fehlt.slice(0, 6), falscherFall:falscherFall.slice(0, 3),
           ohneZeit:ohneZeit.slice(0, 3), basisFalsch:basisFalsch.slice(0, 3),
@@ -6269,7 +6294,7 @@ ok(_rekFelder.ohneZeit.length === 0, 'jede Rekordkarte traegt ihren Zeitpunkt',
 ok(_rekFelder.basisFalsch.length === 0,
    'der weitergegebene Grundwert ist der des Katalogs',
    _rekFelder.basisFalsch.join(', ') || 'alle');
-// Alle sechs sind der gemessene Stand. Die Schwelle steht auf dem gemessenen
+// Alle vier sind der gemessene Stand. Die Schwelle steht auf dem gemessenen
 // Wert und nicht darunter — jeder Rekord, der still uebersprungen wird,
 // kostet genau einen.
 ok(_rekFelder.neuGesehen.length === _rekFelder.neuN,

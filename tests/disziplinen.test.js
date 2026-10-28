@@ -147,8 +147,8 @@ console.log('\n=== LIGA-REKORDE GEGEN DAS EIGENE, UNABHAENGIG NACHGERECHNET ==='
 // Zusicherung, die dieselbe Formel gegen sich selbst haelt, prueft nichts.
 // Gemessen wird der Wert je Spieler, nicht nur der des Halters: ein
 // Vorzeichenfehler trifft sonst zufaellig nur die, die gar nicht antreten.
-// Die meisten fragen gegen das EIGENE [§C38]: Rueckkehr, Positionswechsel,
-// die letzten 25 und der beste Spieltag, je mit ihrem Gegenstueck.
+// Die meisten fragen gegen das EIGENE [§C38]: Rueckkehr, die letzten 25 und
+// der beste Spieltag; dazu die Zitterpartien, je mit ihrem Gegenstueck.
 const _nr = {};
 const _nrSicht = {};
 ordered.forEach(mm => {
@@ -183,18 +183,18 @@ Object.keys(_nrSicht).forEach(id => {
     o.wieder = (d != null && drin.length >= 4 && Math.round(d * 100) > 0) ? d : null;
     o.rost = (d != null && drin.length >= 4 && Math.round(d * 100) < 0) ? -d : null;
   }
-  // Der Umsteiger — die erste Partie nach einem Positionswechsel
-  {
-    const drin = [], raus = [];
-    for(let i = 1; i < r.length; i++) (r[i].pos !== r[i-1].pos ? drin : raus).push(r[i]);
-    const d = drin.length && raus.length ? _nrQ(drin) - _nrQ(raus) : null;
-    o.umsteiger = (d != null && drin.length >= 15 && Math.round(d * 100) > 0) ? d : null;
-  }
-  // Aufschwung und Abschwung — die letzten 25 gegen alles davor
+  // Der Abschwung — die letzten 25 gegen alles davor
   {
     const d = r.length >= 50 ? _nrQ(r.slice(-25)) - _nrQ(r.slice(0, -25)) : null;
-    o.aufschwung = (d != null && Math.round(d * 100) > 0) ? d : null;
     o.abschwung = (d != null && Math.round(d * 100) < 0) ? -d : null;
+  }
+  // Das Kaltblut und die weichen Knie — Zittersiege (10:9) gegen 9:10,
+  // ab zehn solchen Partien
+  {
+    const z = r.filter(x => (x.gf === 10 && x.ga === 9) || (x.gf === 9 && x.ga === 10));
+    const w = z.filter(x => x.w).length;
+    o.kaltblut = z.length >= 10 ? w / z.length : null;
+    o.weicheknie = z.length >= 10 ? (z.length - w) / z.length : null;
   }
   // Der Glanztag — der beste Spieltag ab fuenf Partien gegen die eigene Quote
   {
@@ -221,15 +221,6 @@ Object.keys(_nrSicht).forEach(id => {
       n = a.filter(x => x.w).length >= a.reduce((s, x) => s + x.exp, 0) - 1e-9 ? n + 1 : 0;
       if(n > b) b = n; });
     o.sollstrecke = b >= 1 ? b : null;
-  }
-  // Neuland — die ersten drei Partien neben jedem Partner gegen alle
-  // uebrigen, beide gegen die Siegchance der Partie
-  {
-    const zahl = {}, neu = [], sonst = [];
-    r.forEach(x => { zahl[x.mate] = (zahl[x.mate] || 0) + 1; (zahl[x.mate] <= 3 ? neu : sonst).push(x); });
-    const ueber = a => (a.filter(x => x.w).length - a.reduce((s, x) => s + x.exp, 0)) / a.length;
-    const d = neu.length && sonst.length ? ueber(neu) - ueber(sonst) : null;
-    o.neuland = (d != null && neu.length >= 15 && Math.round(d * 100) > 0) ? d : null;
   }
   // Der Rollencoup — der Vorsprung auf die Erwartung als Aussenseiter, je Position
   {
@@ -295,9 +286,8 @@ ok(NIVEAU.every(id => K.eval(`!!CHRONICLE_BY_ID['${id}']`)),
 
 // Der Wert, den die App fuer denselben Spieler ausrechnet.
 const _nrPaare = [['damage_control','widerstand'], ['wiedereinstieg','wieder'], ['rost','rost'],
-  ['umsteiger','umsteiger'], ['aufschwung','aufschwung'], ['abschwung','abschwung'],
-  ['glanztag','glanztag'], ['rollencoup','rollencoup'],
-  ['eiskalt','eiskalt'], ['sollstrecke','sollstrecke'], ['neuland','neuland']];
+  ['abschwung','abschwung'], ['glanztag','glanztag'], ['rollencoup','rollencoup'],
+  ['eiskalt','eiskalt'], ['sollstrecke','sollstrecke'], ['kaltblut','kaltblut'], ['weicheknie','weicheknie']];
 const _appWert = JSON.parse(K.eval(`JSON.stringify((function(){
   const C = _chronicleCtx(), o = {};
   ${JSON.stringify(_nrPaare.map(x => x[0]))}.forEach(cid => {
@@ -3371,10 +3361,10 @@ const _rk = JSON.parse(K.eval(`JSON.stringify(CHRONICLES.map(c => ({
   mind:c.mind, zeitraum:c.zeitraum, cond:c.cond, wie:c.wie,
   neg:c.neg, fenster:c.fenster, hatVal:typeof c.val === 'function'
 })))`));
-ok(_rk.length === 63, 'der aktive Katalog enthaelt genau 63 Rekorde', _rk.length + '');
+ok(_rk.length === 62, 'der aktive Katalog enthaelt genau 62 Rekorde', _rk.length + '');
 const _rkZahl = {};
 _rk.forEach(c => { _rkZahl[c.kind] = (_rkZahl[c.kind] || 0) + 1; });
-const _rkSoll = {koennen:18, form:7, mark:8, fuegung:17, shame:13};
+const _rkSoll = {koennen:16, form:6, mark:8, fuegung:18, shame:14};
 Object.keys(_rkSoll).forEach(k => ok(_rkZahl[k] === _rkSoll[k],
   'die Kammer ' + k + ' hat ' + _rkSoll[k] + ' Rekorde', (_rkZahl[k] || 0) + ''));
 // Ein Abstand zwischen zwei Quoten heisst „%-Punkte", auch gekuerzt: als
@@ -3846,7 +3836,7 @@ const PAARE = [
   ['kaltstart','schlussball'], ['dauersturm','abwehrmauer'],
   ['sturmtreue','wall'], ['bedrock','handwriting'], ['tailwind','solorun'],
   ['catalyst','ballast'], ['comeback_king','noanswer'],
-  ['unstoppable','drought'], ['wiedereinstieg','rost'], ['aufschwung','abschwung']
+  ['unstoppable','drought'], ['wiedereinstieg','rost'], ['kaltblut','weicheknie']
 ];
 const _byId = {}; _rk.forEach(c => { _byId[c.id] = c; });
 const _paarFehlt = PAARE.filter(([a, b]) => !_byId[a] || !_byId[b])
@@ -3921,7 +3911,10 @@ const WEG = ['giant_slayer','thriller','unbowed','homefield','sundaychild',
              'daylord','weeklord','unbeugsam','eloday','kopfhoch','breitenwirkung',
              'retourkutsche','rueckschlag','metronom','gegenwind','entscheider',
              'laufstopper','sovereign','rock','sniper','densephase','torrausch',
-             'bitterloss','uebersoll','deutlich','ausgleich'];
+             'bitterloss','uebersoll','deutlich','ausgleich',
+             // Drei, die sich mit anderen ueberschnitten: Wandler und
+             // Positionsrekorde, Hoehenflug, die Monatschronik „Neuland"
+             'umsteiger','aufschwung','neuland'];
 const _nochDa = WEG.filter(id => _byId[id]);
 ok(_nochDa.length === 0, 'kein entfernter Rekord steht im aktiven Katalog',
    _nochDa.join(', ') || WEG.length + ' geprueft');
@@ -3931,15 +3924,22 @@ ok(!_byId.steigerung && K.eval(`!!SEASON_TITLE_BY_ID['steigerung']`),
    '„Die Steigerung" verliert den Rekord und behaelt die Monatschronik');
 // Dasselbe fuer sechs der einundzwanzig: im Monat beginnen alle bei
 // derselben Elo, und dort misst die Frage etwas anderes als ueber die
-// Laufbahn.
-ok(['kopfhoch','breitenwirkung','metronom','uebersoll','deutlich','ausgleich'].every(id =>
+// Laufbahn. „Neuland" wiederholte als Rekord nur die Monatschronik.
+ok(['kopfhoch','breitenwirkung','metronom','uebersoll','deutlich','ausgleich','neuland'].every(id =>
      !_byId[id] && K.eval(`!!SEASON_TITLE_BY_ID['${id}']`)),
-   'sechs gestrichene Rekorde behalten ihre Monatschronik');
+   'sieben gestrichene Rekorde behalten ihre Monatschronik');
 // Und die persistierten Karten der gestrichenen Rekorde sind abgemeldet,
 // sonst behaupten sie fuer immer einen Rekord, den es nicht mehr gibt.
 ok(K.eval(`${JSON.stringify(WEG.concat(['steigerung']))}
-     .every(id => _storyAbgemeldet('rek_' + id + '_geholt_x_1_2026-08-01'))`),
+     .every(id => _storyAbgemeldet({id:'rek_' + id + '_geholt_x_1_2026-08-01'}))`),
    'jede Karte eines gestrichenen Rekords ist abgemeldet');
+// Eine Hinweiskarte traegt die ID ihres Zeitfensters, nicht die ihres
+// Inhalts: abgemeldet wird sie an der Sorte. Und nur diese — eine Karte
+// einer Sorte, die es noch gibt, bleibt.
+ok(K.eval(`_storyAbgemeldet({id:'ambient_2026-10-20_15', dataRef:{type:'ambient', sub:'personal_aufschwung'}})
+     && _storyAbgemeldet({id:'ambient_2026-10-12_15', dataRef:{type:'ambient', sub:'personal_umsteiger'}})
+     && !_storyAbgemeldet({id:'ambient_2026-10-21_15', dataRef:{type:'ambient', sub:'personal_glanztag'}})`),
+   'die Hinweiskarten der gestrichenen Rekorde sind abgemeldet, die uebrigen nicht');
 // Eine alte Datenbankzeile mit einer entfernten Rekord-ID darf kein Blatt
 // zerreissen: die Definition steht nicht mehr im Katalog, der Text aber in
 // der Zeile.
@@ -4038,17 +4038,22 @@ ok(_groesster <= _verteilung.summe / 4,
    'kein Halter traegt mehr als ein Viertel aller Haltungen',
    _groesster + ' von ' + _verteilung.summe);
 // Und die Tafel liegt nicht bei den Vielspielern: der Spieler mit den
-// meisten Partien haelt nicht die meisten Rekorde.
+// meisten Partien haelt nicht mehr Rekorde als jeder andere. Ein Gleichstand
+// an der Spitze ist keine Haeufung; welcher der beiden zuerst stand,
+// entschied vorher die Reihenfolge der Schluessel, und mit dem Kaltblut
+// stehen Leon und Stefan in den Fixture-Monaten bei je zehn.
 const _meistPartien = JSON.parse(K.eval(`JSON.stringify((function(){
   const P = _chronicleCtx().P;
   return Object.keys(P).sort((a, b) => P[b].games - P[a].games)[0];
 })())`));
 const _meistRekorde = Object.keys(_verteilung.n)
   .sort((a, b) => _verteilung.n[b] - _verteilung.n[a])[0];
-ok(_meistPartien !== _meistRekorde,
-   'wer am meisten spielt, haelt nicht die meisten Rekorde',
-   nm(_meistPartien) + ' spielt am meisten, ' + nm(_meistRekorde)
-   + ' haelt am meisten');
+const _vielspielerAllein = (_verteilung.n[_meistPartien] || 0)
+  > Math.max(0, ...Object.keys(_verteilung.n).filter(p => p !== _meistPartien).map(p => _verteilung.n[p]));
+ok(!_vielspielerAllein,
+   'wer am meisten spielt, haelt nicht mehr Rekorde als jeder andere',
+   nm(_meistPartien) + ' spielt am meisten und haelt ' + (_verteilung.n[_meistPartien] || 0)
+   + ', ' + nm(_meistRekorde) + ' haelt ' + _verteilung.n[_meistRekorde]);
 
 // ══════════════════════════════════════════════════════════════════════
 console.log('\n═══ KEIN TEXT ERKLAERT DIE APP ═══');
