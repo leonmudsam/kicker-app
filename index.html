@@ -6410,7 +6410,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.28.abe0072d';
+const BUILD_VERSION='2026.10.28.78dfc6af';
 function forceReload(nach){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -21566,9 +21566,12 @@ function _buildAmbientStories(now, pm, nameOf, tagesStories){
   }
 
   for(const slot of dueSlots){
-    const slotId = 'ambient_' + slot.dateKey + '_' + slot.slotHour;
-    const existing = knownById.get(slotId);
-    if(existing) continue;
+    let slotId = 'ambient_' + slot.dateKey + '_' + slot.slotHour, belegt = false;
+    for(let n = 2; knownById.has(slotId); n++){
+      if(!_storyAbgemeldet(knownById.get(slotId))){ belegt = true; break; }
+      slotId = 'ambient_' + slot.dateKey + '_' + slot.slotHour + '_' + n;
+    }
+    if(belegt) continue;
 
     const refMs = new Date(slot.dateKey + 'T00:00:00').getTime();
     const cooldownKeys = new Set();

@@ -344,6 +344,26 @@ ok(_thesen.verstoesse.length <= 2,
    'die Nachholung bleibt trotz grosser Luecke abwechslungsreich',
    _thesen.verstoesse.slice(0, 3).join(' | ') || 'keine Wiederholung');
 
+// ── Eine abgemeldete Karte gibt ihren Slot frei ───────────────────────
+// Am 28.10. schrieb ein Gerät mit der Fassung vor dem Streichen des
+// Umsteigers dessen Karte in den 15-Uhr-Slot. Die neue Fassung blendete sie
+// aus (`AMBIENT_ABGEMELDET`) und fand den Slot belegt: der Tag blieb ohne Fun
+// Fact. Der Ersatz bekommt die nächste freie ID, weil die Datenbank keine
+// Zeile ändert.
+const _abSlot = fresh[0];
+const _abKarte = (id, sub) => ({id, when:_abSlot.when, title:'gespeichert', desc:'gespeichert', prio:12,
+  cat:'personal', ic:'sparkle', dataRef:{type:'ambient', sub, ambientRubrik:'persoenlich'}});
+const _abErsatz = build(NOW, [_abKarte(_abSlot.id, 'personal_umsteiger')]);
+ok(_abErsatz.some(x => x.id === _abSlot.id + '_2') && !_abErsatz.some(x => x.id === _abSlot.id),
+   'eine abgemeldete Karte gibt ihren Slot frei, der Ersatz trägt die nächste ID',
+   _abErsatz.filter(x => x.id.indexOf(_abSlot.id) === 0).map(x => x.id + ' ' + x.sub).join(', ') || 'kein Ersatz');
+const _abGilt = build(NOW, [_abKarte(_abSlot.id, 'personal_glanztag')]);
+ok(!_abGilt.some(x => x.id.indexOf(_abSlot.id) === 0),
+   'eine gültige Karte hält ihren Slot', _abGilt.filter(x => x.id.indexOf(_abSlot.id) === 0).map(x => x.id).join(', ') || 'frei');
+const _abBeide = build(NOW, [_abKarte(_abSlot.id, 'personal_umsteiger'), _abKarte(_abSlot.id + '_2', 'personal_glanztag')]);
+ok(!_abBeide.some(x => x.id.indexOf(_abSlot.id) === 0),
+   'steht der Ersatz schon, entsteht kein zweiter', _abBeide.filter(x => x.id.indexOf(_abSlot.id) === 0).map(x => x.id).join(', ') || 'keiner');
+
 console.log('\n=== 6. ZUKUENFTIGE SLOTS BLEIBEN ZU ===');
 const morning = build('2026-08-27T11:30:00Z', []);   // vor 15:00 lokal
 ok(!morning.some(s => s.id === 'ambient_2026-08-27_15'), 'der heutige 15-Uhr-Slot wartet noch');
