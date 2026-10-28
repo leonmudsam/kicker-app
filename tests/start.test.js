@@ -42,6 +42,12 @@ if(/cdn\.jsdelivr\.net|fonts\.googleapis\.com\/css2/.test(SEITE)) throw new Erro
 const SW_DATEI = path.join(path.dirname(ZIEL), 'sw.js');
 let swFassung = null, seiteAus = false;
 const ETAG = '"seite-1"';
+// `neueFassung` liefert eine Seite mit anderer BUILD_VERSION aus (eine neue
+// Auslieferung); `nurAbfrage` nur an den Update-Check, die Navigation bekommt
+// weiter die alte — ein Zwischenspeicher, der beim Neuladen die alte Seite
+// zurückgibt.
+let neueFassung = null, nurAbfrage = false;
+const neuSeite = () => SEITE.replace(/const BUILD_VERSION='[^']*'/, `const BUILD_VERSION='${neueFassung}'`);
 const anfragen = [];
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, 'http://x');
@@ -56,6 +62,11 @@ const server = http.createServer((req, res) => {
     res.writeHead(200, {'Content-Type':'text/javascript', 'Cache-Control':'no-cache'}); return res.end(sw);
   }
   if((url.pathname === '/' || url.pathname === '/index.html') && seiteAus){ res.writeHead(503); return res.end(); }
+  if((url.pathname === '/' || url.pathname === '/index.html') && neueFassung
+     && !(nurAbfrage && req.headers['sec-fetch-mode'] === 'navigate')){
+    res.writeHead(200, {'Content-Type':'text/html; charset=utf-8', ETag:'"seite-2"', 'Cache-Control':'no-cache'});
+    return res.end(neuSeite());
+  }
   if(url.pathname === '/' || url.pathname === '/index.html'){
     if(req.headers['if-none-match'] === ETAG){ res.writeHead(304, {ETag:ETAG}); return res.end(); }
     res.writeHead(200, {'Content-Type':'text/html; charset=utf-8', ETag:ETAG, 'Cache-Control':'no-cache'});
@@ -200,6 +211,87 @@ async function neueSeite(ctx){
     const dritter = anfragen.filter(x => x.cb);
     ok(dritter.length === 1 && dritter[0].inm === null, 'Ein ETag einer anderen Version wird nicht gesendet');
     await c.page.close();
+
+    // ── Das Update lädt von selbst [§C42] ─────────────────────────────
+    // Der Banner „Neu laden" wartete auf einen Finger, und ein offenes Symbol
+    // blieb auf der alten Fassung. Jetzt lädt die App selbst, sobald nichts
+    // offen ist und niemand gerade etwas berührt, und sagt es danach kurz.
+    const u = await neueSeite(ctx);
+    await u.page.addInitScript(() => { window.__vorStart = K => { window.__K = K; }; });
+    const updBereit = async () => {
+      await u.page.waitForFunction(() => document.querySelector('#main .rlist') && window.__K, null, {timeout:20000});
+      // Der erste Check des Starts ist durch, kein Abruf läuft mehr.
+      await u.page.waitForFunction(() => window.__K('!_updErster && !_loadAllPromise && !_schreibOffen && !_newsAutoSyncRunning'), null, {timeout:30000});
+      await u.page.waitForTimeout(3600);
+    };
+    // Gezählt wird ein neues Dokument, nicht jede Navigation: der Zurück-
+    // Eintrag der App (`history.back()` beim Schließen eines Blatts) ist
+    // auch eine, und mit ihr stand ein Neuladen fest, das noch nicht war.
+    const navigiert = async (fn, ms) => {
+      let nav = false;
+      const hoeren = () => { nav = true; };
+      u.page.on('domcontentloaded', hoeren);
+      await fn();
+      for(let i = 0; i < ms / 100 && !nav; i++) await u.page.waitForTimeout(100);
+      u.page.off('domcontentloaded', hoeren);
+      return nav;
+    };
+    await u.page.goto(BASIS);
+    await updBereit();
+    const alteFassung = await u.page.evaluate(() => window.__K('BUILD_VERSION'));
+    // Über einem offenen Blatt lädt nichts, auch wenn niemand etwas berührt.
+    neueFassung = '2099.01.01.neu1';
+    await u.page.evaluate(() => window.__K('showPlayer(players[0].id)'));
+    await u.page.waitForFunction(() => document.getElementById('sheetBg').classList.contains('show'), null, {timeout:5000});
+    ok(!await navigiert(() => u.page.evaluate(() => window.__K('checkForUpdate()')), 3500),
+      'Über einem offenen Blatt lädt das Update nicht');
+    ok(await u.page.evaluate(() => window.__K('_updNeu')) === neueFassung, 'Die gefundene Fassung wartet');
+    // Ist das Blatt zu, lädt sie ohne weiteren Check.
+    const nachBlatt = await navigiert(() => u.page.evaluate(() => window.__K('closeSheet()')), 6000);
+    ok(nachBlatt, 'Ist das Blatt zu, lädt die App die neue Fassung von selbst');
+    await u.page.waitForFunction(() => document.querySelector('#main .rlist') && window.__K, null, {timeout:20000});
+    ok(await u.page.evaluate(() => window.__K('BUILD_VERSION')) === neueFassung, 'Danach läuft die neue Fassung');
+    const hinweis = await u.page.waitForFunction(() => {
+      const t = document.querySelector('.toast.show'); return t && t.textContent;
+    }, null, {timeout:4000}).then(h => h.jsonValue()).catch(() => '');
+    ok(hinweis === 'App aktualisiert', 'Danach steht kurz „App aktualisiert" (' + (hinweis || 'nichts') + ')');
+    ok(await u.page.evaluate(() => !document.querySelector('.toast.mit-akt') && !document.getElementById('updateBanner')),
+      'Der Hinweis trägt keinen Knopf, und es gibt keinen Banner');
+    ok(await u.page.evaluate(() => !new URL(location.href).searchParams.has('_upd')),
+      'Die Adresse trägt danach kein Merkmal des Updates mehr');
+    await u.page.waitForTimeout(3000);
+    ok(await u.page.evaluate(() => !document.querySelector('.toast.show')), 'Der Hinweis geht von selbst');
+    // Wer gerade etwas berührt hat, wird nicht unterbrochen; das Zurückkommen
+    // aus dem Hintergrund ist der ruhige Moment.
+    await updBereit();
+    neueFassung = '2099.01.01.neu2';
+    await u.page.mouse.click(5, 300);
+    ok(!await navigiert(() => u.page.evaluate(() => window.__K('checkForUpdate()')), 3500),
+      'Nach einer Berührung lädt das Update nicht sofort');
+    ok(await navigiert(() => u.page.evaluate(() => document.dispatchEvent(new Event('visibilitychange'))), 6000),
+      'Beim Zurückkommen lädt die wartende Fassung');
+    await u.page.waitForFunction(() => document.querySelector('#main .rlist') && window.__K, null, {timeout:20000});
+    ok(await u.page.evaluate(() => window.__K('BUILD_VERSION')) === neueFassung, 'Auch dann läuft danach die neue Fassung');
+    // Bringt das Neuladen die alte Seite zurück, lädt die App nicht im Kreis.
+    await updBereit();
+    neueFassung = '2099.01.01.neu3'; nurAbfrage = true;
+    ok(await navigiert(() => u.page.evaluate(() => window.__K('checkForUpdate()')), 6000), 'Das dritte Update lädt');
+    await u.page.waitForFunction(() => document.querySelector('#main .rlist') && window.__K, null, {timeout:20000});
+    ok(await u.page.evaluate(() => window.__K('BUILD_VERSION')) === alteFassung, 'Der Zwischenspeicher bringt eine alte Fassung zurück');
+    // Gleich nach dem Start nachgesehen: der Hinweis stünde 700 ms nach dem
+    // Start und wäre nach seiner Standzeit wieder fort.
+    let falscherHinweis = false;
+    for(let i = 0; i < 32 && !falscherHinweis; i++){
+      falscherHinweis = await u.page.evaluate(() => /aktualisiert/.test((document.querySelector('.toast.show') || {}).textContent || ''));
+      await u.page.waitForTimeout(100);
+    }
+    ok(!falscherHinweis, 'Kam die Fassung nicht an, steht kein Hinweis');
+    await u.page.waitForFunction(() => window.__K('!_updErster && !_loadAllPromise'), null, {timeout:30000});
+    ok(!await navigiert(async () => { await u.page.waitForTimeout(3600); await u.page.evaluate(() => window.__K('checkForUpdate()')); }, 4000),
+      'Kam die Fassung nicht an, lädt die App nicht gleich noch einmal');
+    ok(u.fehler.length === 0, 'Update ohne Seitenfehler' + (u.fehler.length ? ': ' + u.fehler[0] : ''));
+    neueFassung = null; nurAbfrage = false;
+    await u.page.close();
 
     // ── Der Generator im Worker ───────────────────────────────────────
     // Der Start rechnet die Stories nicht auf dem Hauptthread, und der Worker

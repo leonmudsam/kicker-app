@@ -1,14 +1,21 @@
 // ╔═══ §0.2 ─── BUILD-VERSION & UPDATE-CHECK ───────────────────────────╗
 //     Die Version vergibt `tools/build.mjs` als Datum und Hash über den
 //     ausgelieferten Inhalt. Der Hintergrund-Check holt die index.html mit
-//     Cache-Bust und zeigt ein Banner, wenn sie eine andere Version trägt.
+//     Cache-Bust; trägt sie eine andere Version, lädt die App von selbst neu,
+//     sobald niemand etwas offen hat, und sagt es danach kurz.
 // ╚═════════════════════════════════════════════════════════════════════════╝
 const BUILD_VERSION='2026.08.28.1';
-// Neu laden mit Cache-Bust: der Banner und der Knopf in den Einstellungen
-// brechen damit den Seitencache von iOS-PWA und Browser.
-function forceReload(){
+// Neu laden mit Cache-Bust: das Update und der Knopf in den Einstellungen
+// brechen damit den Seitencache von iOS-PWA und Browser. `nach` ist die
+// Fassung, die das Update erwartet; sie reist in der Adresse mit und nicht
+// im Speicher des Geräts, weil der in einem privaten Fenster fehlen kann —
+// und ohne sie sähe die neue Seite weder, dass sie kurz Bescheid sagen soll,
+// noch, dass das Neuladen die alte Fassung zurückbrachte.
+function forceReload(nach){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
+  if(typeof nach==='string') u.searchParams.set('_upd',nach);
+  else u.searchParams.delete('_upd');
   // replace statt assign damit der alte Eintrag nicht in der History bleibt
   location.replace(u.toString());
 }
@@ -20,9 +27,9 @@ function forceReload(){
 // ganze Seite (1,7 MB, ohne Kompression gerechnet) erneut herunter — genau in
 // dem Moment, in dem auch die vier Datenabfragen laufen. Er steht jetzt mit
 // der Version, zu der er gehört, im Speicher des Geräts: nur wenn diese
-// Version die laufende ist, gilt er. Sonst hätte ein Gerät, das den Banner
-// gesehen und nicht neu geladen hat, beim nächsten Start ein 304 auf die neue
-// Fassung bekommen und den Banner nie wieder gesehen.
+// Version die laufende ist, gilt er. Sonst hätte ein Gerät, das die neue
+// Fassung gefunden und vor dem Neuladen geschlossen wurde, beim nächsten
+// Start ein 304 auf sie bekommen und nie wieder von ihr erfahren.
 const UPD_LS = 'kicker_upd_v1';
 let _updEtag=(()=>{
   try{
@@ -30,6 +37,69 @@ let _updEtag=(()=>{
     return s && s.version===BUILD_VERSION && s.etag ? s.etag : null;
   }catch(e){ return null; }
 })();
+
+// ── Das Update lädt von selbst [§C42] ─────────────────────────────────
+// Vorher stand oben ein Banner „Neue Version — Neu laden", und die App blieb
+// auf der alten Fassung, bis jemand ihn antippte. Ein PWA-Symbol bleibt
+// tagelang offen, und wer den Banner übersah oder wegwischte, spielte mit
+// einer Fassung weiter, deren Fehler schon behoben waren.
+// Neu geladen wird aber nie unter den Fingern: nicht über einem Blatt, einem
+// Dialog oder einer Story, nicht im Eingabe- und Einstellungsreiter, nicht
+// mit fokussiertem Feld, nicht während die Kette im Hintergrund schreibt
+// (eine Partie stünde dann ohne ihre Elo), nicht während ein Abruf oder der
+// News-Takt Stories veröffentlicht, nicht neben einem Hinweis mit Knopf
+// („Rückgängig" ginge verloren). Und nur in Ruhe: entweder hat seit dem
+// Öffnen oder Zurückkommen niemand etwas berührt — dann sieht man den Start
+// ohnehin gerade —, oder die letzte Berührung liegt eine Minute zurück. Eine
+// kürzere Ruhe ließe die App jemandem, der die Rangliste liest, unter den
+// Augen an den Anfang springen: wer liest, berührt nichts.
+const UPD_RUHE_MS = 60*1000;
+// Brachte das Neuladen die alte Fassung zurück (ein Zwischenspeicher, der
+// noch die alte Seite ausliefert), versucht es die App erst nach dieser Zeit
+// wieder — sonst lüde sie im Takt des Checks immer wieder neu.
+const UPD_SPERRE_MS = 10*60*1000;
+let _updNeu=null;            // gefundene Fassung, die noch nicht läuft
+let _updSperre=null;         // {nach, bis}: Neuladen kam nicht an
+// Gemessen mit `performance.now()`: Ruhe ist eine Dauer, und die Uhr des
+// Geräts darf dazwischen springen (Zeitumstellung, Abgleich mit dem Netz).
+let _updBeruehrt=-1;         // letzte Berührung (Zeiger, Taste, Rad)
+let _updSichtbar=0;          // Start oder letztes Zurückkommen
+let _updWarten=0;
+function _updBelegt(){
+  const fokus=document.activeElement;
+  return _etwasOffen() || tab==='match' || tab==='settings'
+    || (fokus && /^(INPUT|TEXTAREA|SELECT)$/.test(fokus.tagName))
+    || _schreibOffen>0 || !!_loadAllPromise || _newsAutoSyncRunning
+    || !!document.querySelector('.toast.show.mit-akt');
+}
+function _updRuhig(){
+  return _updBeruehrt<_updSichtbar || performance.now()-_updBeruehrt>=UPD_RUHE_MS;
+}
+function _updVersuchen(){
+  clearTimeout(_updWarten); _updWarten=0;
+  if(!_updNeu || document.hidden) return;   // das Zurückkommen versucht es wieder
+  if(_updSperre && _updSperre.nach===_updNeu && performance.now()<_updSperre.bis) return;
+  if(_updBelegt() || !_updRuhig()){
+    const rest=_updRuhig() ? 0 : _updBeruehrt+UPD_RUHE_MS-performance.now();
+    _updWarten=setTimeout(_updVersuchen, Math.max(2000, rest));
+    return;
+  }
+  forceReload(_updNeu);
+}
+// Beim Start nach dem Update: die Adresse sagt, welche Fassung erwartet war.
+// Läuft sie, kommt der Hinweis; läuft noch die alte, gilt die Sperre. Danach
+// verschwindet das Merkmal aus der Adresse, sonst meldete ein späteres
+// Neuladen von Hand ein zweites Update.
+function _updMelden(){
+  try{
+    const u=new URL(location.href), nach=u.searchParams.get('_upd');
+    if(!nach) return;
+    u.searchParams.delete('_upd');
+    history.replaceState(history.state, '', u.toString());
+    if(nach!==BUILD_VERSION){ _updSperre={nach, bis:performance.now()+UPD_SPERRE_MS}; return; }
+    setTimeout(()=>toast('App aktualisiert', 'ok'), 700);
+  }catch(e){}
+}
 // Der erste Check wartet, bis der erste Datenlauf gezeichnet hat und die
 // Seite ruht: er ist nie eilig, die Rangliste schon.
 let _updErster=true;
@@ -37,9 +107,20 @@ async function checkForUpdate(){
   try{
     if(_updErster){
       _updErster=false;
+      _updMelden();
+      ['pointerdown','keydown','wheel'].forEach(t=>
+        window.addEventListener(t, ()=>{ _updBeruehrt=performance.now(); }, {capture:true, passive:true}));
+      document.addEventListener('visibilitychange', ()=>{
+        if(document.hidden) return;
+        _updSichtbar=performance.now();
+        _updVersuchen();
+      });
       try{ if(_loadAllPromise) await _loadAllPromise; }catch(e){}
       await _leerlauf(3000);
     }
+    // Schon gefunden: nur noch auf den ruhigen Moment warten, nicht noch
+    // einmal fragen — der ETag der neuen Fassung bekäme ohnehin ein 304.
+    if(_updNeu){ _updVersuchen(); return; }
     const url=location.pathname+'?_cb='+Date.now();
     const r=await fetch(url,{cache:'no-store',headers:_updEtag?{'If-None-Match':_updEtag}:{}});
     if(r.status===304)return; // unverändert — kein Body übertragen
@@ -48,22 +129,17 @@ async function checkForUpdate(){
     const text=await r.text();
     const m=text.match(/const BUILD_VERSION=['"]([^'"]+)['"]/);
     if(!m||!m[1])return;
-    // In dieser Sitzung gilt jeder ETag: auch nach dem Banner soll der
-    // Fünf-Minuten-Takt nicht jedes Mal die ganze Seite holen. Für den
-    // nächsten Start gemerkt wird aber nur der eigene — der einer neuen
+    // In dieser Sitzung gilt jeder ETag: auch während das Update wartet,
+    // soll der Fünf-Minuten-Takt nicht jedes Mal die ganze Seite holen. Für
+    // den nächsten Start gemerkt wird aber nur der eigene — der einer neuen
     // Fassung gilt erst, wenn sie läuft.
     _updEtag=etag;
     if(m[1]===BUILD_VERSION){
       try{ if(etag) localStorage.setItem(UPD_LS, JSON.stringify({etag, version:BUILD_VERSION})); }catch(e){}
       return;
     }
-    if(document.getElementById('updateBanner'))return;
-    const b=document.createElement('div');
-    b.id='updateBanner';
-    b.style.cssText='position:fixed;top:calc(var(--safe-top) + 10px);left:50%;transform:translateX(-50%);z-index:9000;background:var(--acid);color:var(--acid-deep);font-family:inherit;font-size:12.5px;font-weight:700;padding:9px 14px;border-radius:12px;box-shadow:var(--shadow-acid);display:flex;gap:10px;align-items:center;cursor:pointer;max-width:92vw;white-space:nowrap';
-    b.innerHTML='<span>Neue Version ('+m[1]+')</span><span style="background:rgba(0,0,0,.18);padding:4px 9px;border-radius:8px">Neu laden</span>';
-    b.onclick=forceReload;
-    document.body.appendChild(b);
+    _updNeu=m[1];
+    _updVersuchen();
   }catch(e){/* offline / CORS — still ignorieren */}
 }
 

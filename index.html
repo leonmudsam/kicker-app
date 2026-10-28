@@ -6410,10 +6410,12 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.28.17047b97';
-function forceReload(){
+const BUILD_VERSION='2026.10.28.abe0072d';
+function forceReload(nach){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
+  if(typeof nach==='string') u.searchParams.set('_upd',nach);
+  else u.searchParams.delete('_upd');
   location.replace(u.toString());
 }
 const UPD_LS = 'kicker_upd_v1';
@@ -6423,14 +6425,62 @@ let _updEtag=(()=>{
     return s && s.version===BUILD_VERSION && s.etag ? s.etag : null;
   }catch(e){ return null; }
 })();
+
+const UPD_RUHE_MS = 60*1000;
+const UPD_SPERRE_MS = 10*60*1000;
+let _updNeu=null;
+let _updSperre=null;
+let _updBeruehrt=-1;
+let _updSichtbar=0;
+let _updWarten=0;
+function _updBelegt(){
+  const fokus=document.activeElement;
+  return _etwasOffen() || tab==='match' || tab==='settings'
+    || (fokus && /^(INPUT|TEXTAREA|SELECT)$/.test(fokus.tagName))
+    || _schreibOffen>0 || !!_loadAllPromise || _newsAutoSyncRunning
+    || !!document.querySelector('.toast.show.mit-akt');
+}
+function _updRuhig(){
+  return _updBeruehrt<_updSichtbar || performance.now()-_updBeruehrt>=UPD_RUHE_MS;
+}
+function _updVersuchen(){
+  clearTimeout(_updWarten); _updWarten=0;
+  if(!_updNeu || document.hidden) return;
+  if(_updSperre && _updSperre.nach===_updNeu && performance.now()<_updSperre.bis) return;
+  if(_updBelegt() || !_updRuhig()){
+    const rest=_updRuhig() ? 0 : _updBeruehrt+UPD_RUHE_MS-performance.now();
+    _updWarten=setTimeout(_updVersuchen, Math.max(2000, rest));
+    return;
+  }
+  forceReload(_updNeu);
+}
+function _updMelden(){
+  try{
+    const u=new URL(location.href), nach=u.searchParams.get('_upd');
+    if(!nach) return;
+    u.searchParams.delete('_upd');
+    history.replaceState(history.state, '', u.toString());
+    if(nach!==BUILD_VERSION){ _updSperre={nach, bis:performance.now()+UPD_SPERRE_MS}; return; }
+    setTimeout(()=>toast('App aktualisiert', 'ok'), 700);
+  }catch(e){}
+}
 let _updErster=true;
 async function checkForUpdate(){
   try{
     if(_updErster){
       _updErster=false;
+      _updMelden();
+      ['pointerdown','keydown','wheel'].forEach(t=>
+        window.addEventListener(t, ()=>{ _updBeruehrt=performance.now(); }, {capture:true, passive:true}));
+      document.addEventListener('visibilitychange', ()=>{
+        if(document.hidden) return;
+        _updSichtbar=performance.now();
+        _updVersuchen();
+      });
       try{ if(_loadAllPromise) await _loadAllPromise; }catch(e){}
       await _leerlauf(3000);
     }
+    if(_updNeu){ _updVersuchen(); return; }
     const url=location.pathname+'?_cb='+Date.now();
     const r=await fetch(url,{cache:'no-store',headers:_updEtag?{'If-None-Match':_updEtag}:{}});
     if(r.status===304)return;
@@ -6444,13 +6494,8 @@ async function checkForUpdate(){
       try{ if(etag) localStorage.setItem(UPD_LS, JSON.stringify({etag, version:BUILD_VERSION})); }catch(e){}
       return;
     }
-    if(document.getElementById('updateBanner'))return;
-    const b=document.createElement('div');
-    b.id='updateBanner';
-    b.style.cssText='position:fixed;top:calc(var(--safe-top) + 10px);left:50%;transform:translateX(-50%);z-index:9000;background:var(--acid);color:var(--acid-deep);font-family:inherit;font-size:12.5px;font-weight:700;padding:9px 14px;border-radius:12px;box-shadow:var(--shadow-acid);display:flex;gap:10px;align-items:center;cursor:pointer;max-width:92vw;white-space:nowrap';
-    b.innerHTML='<span>Neue Version ('+m[1]+')</span><span style="background:rgba(0,0,0,.18);padding:4px 9px;border-radius:8px">Neu laden</span>';
-    b.onclick=forceReload;
-    document.body.appendChild(b);
+    _updNeu=m[1];
+    _updVersuchen();
   }catch(e){}
 }
 
