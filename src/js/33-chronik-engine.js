@@ -696,8 +696,11 @@ function _prevSeasonId(sid){
 //     Schattenseiten gegen das Eigene und der Anteil an den Partien gegen die
 //     Monate davor. Beide Male, damit jeder Monat dieselben Fragen stellt —
 //     sonst hätte der Oktober zweiundneunzig Chroniken gehabt und der
-//     September vierundsiebzig.
-const SEASON_TITLES_FREEZE_V = 3;
+//     September vierundsiebzig. Die vierte trägt je Halter seinen Wert
+//     (`wert`), aus dem der Bonus über der Schwelle rechnet [§C39]: ohne ihn
+//     brächte jeder eingefrorene Monat nur den Grundwert, und dieselbe
+//     Chronik zählte im laufenden Monat mehr als nach seinem Abschluss.
+const SEASON_TITLES_FREEZE_V = 4;
 
 // Liest die eingefrorene Chronik einer Saison — aus dem seasons-Eintrag, egal
 // ob die Spalte als Objekt oder als JSON-Text ankommt. null = nicht eingefroren.
@@ -721,14 +724,16 @@ function _freezeSeasonTitles(sid){
       days: T.days, matches: T.matches,
       champ: T.champ || null,
       awarded: T.awarded.map(a => ({titleId:a.titleId, name:a.name, short:a.short,
-                                    ic:a.ic, tone:a.tone, cond:a.cond, pid:a.pid, ev:a.ev})),
+                                    ic:a.ic, tone:a.tone, cond:a.cond, pid:a.pid, ev:a.ev,
+                                    wert:a.wert})),
       empty: T.empty.slice()
     };
   } catch(e){ return null; }
 }
 
 // ─── §13.3 Vergabe ───────────────────────────────────────────────────
-// Liefert [{titleId, name, ic, tone, pid, ev}] in Katalog-Reihenfolge.
+// Liefert [{titleId, name, ic, tone, pid, ev, wert}] in Katalog-Reihenfolge;
+// `wert` ist die Größe des Halters, aus der der Bonus rechnet [§C39].
 // Memoisiert pro Saison — der Kontext-Pass läuft nur einmal je Cache-Stand.
 function seasonTitles(sid, bisMs){
   if(!sid) sid = currentSeason().id;
@@ -779,7 +784,7 @@ function seasonTitles(sid, bisMs){
       if(!r || !r.halter || !r.halter.length) return;
       r.halter.forEach(pid => {
         out.push({titleId:t.id, name:t.name, short:t.short||t.name, ic:t.ic,
-                  tone:t.tone, cond:t.cond, pid, ev:r.evVon(pid)});
+                  tone:t.tone, cond:t.cond, pid, ev:r.evVon(pid), wert:r.wert(pid)});
       });
     });
   }
@@ -847,7 +852,8 @@ function seasonTitleHalter(sid, bisMs){
     if(r && r.halter && r.halter.length){
       let ev = '';
       try { ev = r.evVon(r.halter[0]) || ''; } catch(e){ ev = ''; }
-      out[t.id] = {pids: r.halter.slice().sort(), ev};
+      // Alle Halter teilen den Bestwert, also auch den Bonus [§C39].
+      out[t.id] = {pids: r.halter.slice().sort(), ev, wert: r.wert(r.halter[0])};
     }
   });
   return out;
@@ -857,18 +863,40 @@ function seasonTitleHalter(sid, bisMs){
 // im Prestige und im Banner des Profils [§C32]: der wertvollste, den er
 // hält, bei gleichem Wert der erste im Katalog. Vorher war es der erste im
 // Katalog, und der Katalog ordnet nach Art und Ausschlag, nicht nach Wert:
-// eine Können-Chronik in Grau stand vor einer Fügung in Gold.
+// eine Können-Chronik in Grau stand vor einer Fügung in Gold. Seit jede
+// Chronik denselben Grundwert hat, entscheidet der Bonus: der Eintrag, in
+// dem jemand seine Schwelle am weitesten überbietet [§C39].
 function chronikEintragVon(T, pid){
   let best = null, bw = -1;
   ((T && T.awarded) || []).forEach(a => {
     if(a.pid !== pid) return;
-    const w = chronikPunkte(a.titleId);
+    const w = chronikPunkte(a.titleId, a.wert);
     if(w > bw){ best = a; bw = w; }
   });
   return best;
 }
 function seasonTitleOf(pid, sid, bisMs){
   return chronikEintragVon(seasonTitles(sid, bisMs), pid);
+}
+
+// Die Farbe der Zelle eines Spielers in einem Monat [§C39]: die höchste
+// Klasse unter seinen positiven Einträgen, auch wenn der Eintrag, der in der
+// Zelle steht und zählt (`chronikEintragVon`), eine niedrigere trägt. Seit
+// der Bonus entscheidet, welcher Eintrag zählt, kann eine besondere Chronik
+// eine legendäre schlagen — mit der Farbe ihrer eigenen Klasse stand dann
+// ein grauer Monat da, in dem jemand eine goldene hielt. Nur Schattenseiten:
+// rot. Eine Chronik, die der Katalog nicht mehr kennt, zählt nicht mit.
+const _CHRONIK_STUFE_RANG = {legendaer:3, selten:2, besonders:1};
+function chronikZellStufe(T, pid){
+  let best = '', rang = 0;
+  ((T && T.awarded) || []).forEach(a => {
+    if(a.pid !== pid) return;
+    const st = chronikStufe(a.titleId), r = _CHRONIK_STUFE_RANG[st] || 0;
+    if(r > rang){ rang = r; best = st; }
+  });
+  if(best) return best;
+  const e = chronikEintragVon(T, pid);
+  return e ? chronikStufe(e.titleId) : '';
 }
 
 // Wer in welchem Monat gespielt hat, einmal je Partienliste. Die Historie

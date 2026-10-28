@@ -2653,7 +2653,9 @@ function _buildStories(){
         // Sortiert verglichen: dieselben Halter in anderer Reihenfolge sind
         // kein Wechsel [§C33].
         if(a && a.pids.join(',') === neuKey) return;
-        const punkte = chronikPunkte(t.id);
+        // Mit dem Wert der Halter: der Bonus über der Schwelle gehört zum
+        // Wert des Eintrags [§C39], und nach ihm ordnet die Karte unten.
+        const punkte = chronikPunkte(t.id, n.wert);
         const artikel = t.klasse === 'legendaer' ? 'Eine legendäre' :
                         t.klasse === 'selten' ? 'Eine seltene' : 'Eine besondere';
         // Vier Faelle, vier Verben. „Julian holt ‚Der Nachzuegler'. Vorher
@@ -2835,10 +2837,13 @@ function _buildStories(){
                     zeileText:m.zeileText,
                     chronArt:m.t.kunst, aus:m.t.aus,
                     // `punkte` ist der tatsaechliche neue Beitrag, nicht der
-                    // ungedaempfte Katalogwert. Der bleibt als Grundwert fuer
-                    // das Detail nachvollziehbar.
+                    // ungedaempfte Wert des Eintrags. Der bleibt fuer das
+                    // Detail nachvollziehbar: Grundwert, Bonus und der Wert
+                    // der Halter, aus dem der Bonus rechnet [§C39] — am Tag
+                    // der Karte, nicht am Tag, an dem sie geoeffnet wird.
                     punkte:Object.values(m.prestigeDelta).reduce((s, x) => s + x, 0),
-                    grundwert:m.punkte, prestigeDelta:m.prestigeDelta,
+                    grundwert:CHRONIK_GRUNDWERT, bonus:m.punkte - CHRONIK_GRUNDWERT,
+                    wert:m.n.wert, prestigeDelta:m.prestigeDelta,
                     titelJeSpieler:m.titelJeSpieler,
                     // Steht diese Chronik in der Monatstafel? null heisst:
                     // die Frage stellt sich nicht [§C32].

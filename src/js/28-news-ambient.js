@@ -1356,12 +1356,15 @@ function _ambientTemplatePool(now, pm, nameOf){
     // „Kein anderer ist gerade so nah dran" behauptete einen Vergleich, den
     // die Karte nie angestellt hat: der Spieler wird unter allen gezogen,
     // die ueberhaupt einen offenen Schritt haben, nicht als der naechste.
+    // Eine Monatschronik bringt den Grundwert und dazu, wie weit die
+    // Schwelle am Ende ueberboten ist [§C39] — der Gewinn ist hier also
+    // eine Untergrenze und steht als solche da.
     return { cat:'personal', ic:s.ic, prio:5,
       title:`${nameOf(pid)} kann „${s.name}" holen`,
       desc: (_bed ? `Dafür zählt: ${_bed}. ` : '')
         + (_stand ? _stand + '. ' : '')
         + (s.mein ? `${nameOf(pid)} steht bei ${s.mein}. ` : '')
-        + `Gelingt es, bringt das ${s.gewinn} Prestige.`,
+        + `Gelingt es, bringt das ${s.art === 'monat' ? 'mindestens ' : ''}${s.gewinn} Prestige.`,
       // Der grosse Wert war die Aussicht auf Prestige — eine Zahl, die
       // niemand geholt hat, im Goldrahmen einer gehaltenen Bestmarke
       // [§C25]. Er zeigt jetzt den eigenen Stand: das ist die Zahl, mit

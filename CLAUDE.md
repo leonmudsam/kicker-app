@@ -121,7 +121,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **1454**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **1460**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -446,7 +446,7 @@ Immer im **selben Commit** wie die Änderung, die sie auslöst:
 | Regel für Agenten ändert sich | §9 |
 | Auszeichnung, Disziplin oder Prestige-Konstante ändert sich | `docs/erweitern.md` |
 | Monatschronik kommt dazu oder ändert Art, Klasse oder Ausschlag | `docs/gesetze/C39-monatschronik.md`, `docs/erweitern.md` §10.2 |
-| Ein Katalogfeld kommt dazu (`beiname`, `zufall`, `offen`, `fenster`, `paar`, …) | `docs/erweitern.md` §10.1/§10.2 als eigene Zeile, **und** eine Zusicherung in `tests/disziplinen`, die es für jeden Eintrag verlangt — **und** die Projektion `_chronRoh` in `34-chronik-rekorde.js`, sonst kommt das Feld nie an |
+| Ein Katalogfeld kommt dazu (`beiname`, `streu`, `zufall`, `offen`, `fenster`, `paar`, …) | `docs/erweitern.md` §10.1/§10.2 als eigene Zeile, **und** eine Zusicherung in `tests/disziplinen`, die es für jeden Eintrag verlangt — **und** bei einem Feld unter `allzeit` die Projektion `_chronRoh` in `34-chronik-rekorde.js`, bei einem unter `monat` die Projektion `SEASON_TITLES` in `32-chronik-katalog.js` oder das Lesen über `_chronikMonat`, sonst kommt das Feld nie an |
 | Ein Liga-Rekord kommt dazu oder fällt weg | `docs/gesetze/C35-rekorde.md` (Zahl der Rekorde und Haltungen), `docs/erweitern.md` §10.2, §10.3 — und das Prestige verschiebt sich [§C34] |
 | Eine Anweisung hier hat sich als falsch erwiesen | die Stelle selbst |
 

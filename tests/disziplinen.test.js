@@ -635,6 +635,11 @@ ok(Array.isArray(F.awarded) && F.awarded.length === JL.awarded.length,
    'alle Eintraege eingefroren', F.awarded.length + '/' + JL.awarded.length);
 ok(F.awarded.every(a => a.titleId && a.name && a.ic && a.tone && a.cond && a.pid && a.ev),
    'Anzeigefelder mit eingefroren (name/ic/tone/cond/ev)');
+// Der Wert jedes Halters friert mit ein: ohne ihn brächte ein
+// abgeschlossener Monat nur den Grundwert, und dieselbe Chronik zählte nach
+// dem Monatswechsel weniger als davor [§C39].
+ok(F.awarded.length && F.awarded.every((a, i) => Number.isFinite(a.wert) && a.wert === JL.awarded[i].wert),
+   'der Wert jedes Halters ist mit eingefroren', F.awarded.map(a => a.wert).slice(0, 4).join(', '));
 ok(F.champ && F.champ.pid === JL.champ.pid, 'Meister mit eingefroren', nm(F.champ.pid));
 ok(F.days === JL.days && F.matches === JL.matches, 'Spieltage und Matches mit eingefroren');
 
@@ -840,40 +845,99 @@ ok(K.eval(`(function(){
   return stimmt;
 })()`), 'die Wochenkrone zaehlt dieselben Wochen wie _periodWinnerMap');
 
-// Die Klasse ist Farbe und Wert [§C39]: Gold 150, Lila 100, Grau 50, eine
-// Fügung halb, eine Schattenseite nichts. Und die Klasse folgt dem
-// Ausschlag der Schwelle: ab 2,5 σ legendär, ab 1,9 σ selten, darunter
-// besonders. Vorher lagen alle zwischen 90 und 190, eine legendäre („Der
-// Kontrast", 95) unter einer besonderen („Die weiße Weste", 110), und die
-// Farbe der Zelle sagte über den Wert nichts.
+// Jede Chronik außer einer Schattenseite bringt denselben Grundwert, 100,
+// gleich welcher Klasse und Art [§C39]; die Klasse ist Farbe und Name. Und
+// die Klasse folgt dem Ausschlag der Schwelle: ab 2,5 σ legendär, ab 1,9 σ
+// selten, darunter besonders. Vorher war die Klasse der Wert, 150, 100 und
+// 50: ein besonderer Monat brachte ein Drittel eines legendären, auch wenn
+// sein Halter die Latte weit hinter sich ließ.
 // Gesetzt, nicht gemessen, ist die Klasse zweier Chroniken, die nach einer
 // Wahrscheinlichkeit fragen: ein Monat oder ein Tag, den die Rechnung mit
 // höchstens zwei oder drei Prozent erwartet hat, ist legendär, auch wenn die
 // Werte darunter so schief liegen, dass die Schwelle in σ nah wirkt.
 const _KLASSE_GESETZT = ['unmoeglich', 'ausreisser2'];
 const _pkt = JSON.parse(K.eval(`JSON.stringify((function(){
-  const W={legendaer:150, selten:100, besonders:50};
-  const bad=[], band=[]; let max=0, min=1e9;
+  const bad=[], band=[], streu=[];
   SEASON_TITLES.forEach(t=>{
     const d=DISZIPLINEN.find(x=>x.id===t.id), m=d.monat;
-    // die Art ändert den Wert nicht: eine Fügung zählt wie Können und Konstanz
-    const soll = m.art==='schatten' ? 0 : W[m.klasse];
-    if(chronikPunkte(t.id) !== soll) bad.push(t.id);
+    // Ohne den Wert eines Halters steht der Grundwert da, für jede Klasse
+    // und jede Art gleich.
+    const soll = m.art==='schatten' ? 0 : 100;
+    if(chronikPunkte(t.id) !== soll) bad.push(t.id + '=' + chronikPunkte(t.id));
     const kl = ${JSON.stringify(_KLASSE_GESETZT)}.includes(t.id) ? 'legendaer'
       : m.aus >= 2.5 ? 'legendaer' : m.aus >= 1.9 ? 'selten' : 'besonders';
     if(kl !== m.klasse) band.push(t.id + ' (' + m.aus + ': ' + m.klasse + ' statt ' + kl + ')');
-    const ist=chronikPunkte(t.id);
-    if(m.art!=='schatten'){ max=Math.max(max,ist); min=Math.min(min,ist); }
+    // Jede positive Chronik trägt ihre Streuung, eine Schattenseite keine.
+    if(m.art==='schatten' ? m.streu != null : !(m.streu > 0 && isFinite(m.streu))) streu.push(t.id);
   });
-  return {bad, band, max, min};
+  return {bad, band, streu};
 })())`));
-ok(_pkt.bad.length === 0, 'jede Chronik ist so viel wert, wie ihre Klasse sagt', _pkt.bad.join(', '));
+ok(_pkt.bad.length === 0, 'jede Chronik bringt den Grundwert 100, gleich welcher Klasse', _pkt.bad.join(', '));
 ok(_pkt.band.length === 0, 'jede Klasse folgt dem Ausschlag ihrer Schwelle', _pkt.band.join(', '));
-// Jede Chronik bringt mindestens 50. Eine besondere Fügung brachte 25,
-// „Der Aufdreher" mit 45 % aller Partien eines Monats weniger als die
-// kleinste Auszeichnung, die sich wiederholt.
-ok(_pkt.min === 50 && _pkt.max === 150, 'jede Chronik bringt mindestens 50 und höchstens Gold',
-   _pkt.min + ' bis ' + _pkt.max + ' Punkte');
+ok(_pkt.streu.length === 0, 'jede positive Chronik trägt ihre Streuung, keine Schattenseite',
+   _pkt.streu.join(', '));
+// Die Streuung ist einmal gemessen und festgeschrieben. Die Fixture-Monate
+// sind ein Teil der Partien, an denen sie gemessen wurde; liegt sie dort um
+// mehr als das Doppelte daneben, steht sie in der falschen Einheit
+// (Prozent statt Anteil, Spiele statt Tage) und der Bonus mit ihr.
+const _streuMess = JSON.parse(K.eval(`JSON.stringify((function(){
+  const sids = ['2026-05','2026-06','2026-07','2026-08'].filter(s => _seasonTitleCtx(s).days >= CHRONIK_MIN_TAGE);
+  const daneben = []; let n = 0;
+  DISZIPLINEN.filter(d => d.monat && d.monat.streu).forEach(d => {
+    const w = d.monat, x = [];
+    sids.forEach(sid => { const C = _seasonTitleCtx(sid);
+      Object.keys(C.P).forEach(pid => { let v = null;
+        try { if(!w.mind(C.P[pid], C)) return; v = w.wert(C.P[pid], C); } catch(e){ return; }
+        if(v != null && isFinite(v)) x.push(v); }); });
+    if(x.length < 15) return;
+    const mu = x.reduce((a, b) => a + b, 0) / x.length;
+    const sd = Math.sqrt(x.reduce((a, b) => a + (b - mu) ** 2, 0) / x.length);
+    if(!(sd > 0)) return;
+    n++;
+    if(w.streu / sd > 2 || sd / w.streu > 2) daneben.push(d.id + ' ' + w.streu + ' statt ' + sd.toPrecision(3));
+  });
+  return {n, daneben};
+})())`));
+ok(_streuMess.n >= 60 && _streuMess.daneben.length === 0,
+   'die Streuung jeder Chronik passt zu den Fixture-Monaten',
+   _streuMess.daneben.join(', ') || _streuMess.n + ' gemessen');
+// Der Bonus: 25 je σ über der Schwelle, mindestens 1, wer sie überhaupt
+// überbietet, nichts genau auf ihr. Das Beispiel der Absprache: an 71 %
+// statt an 60 % der eigenen Spieltage Player of the Day sind 0,64 σ über
+// „Dem Tagesregenten" und 16 dazu. Eine Chronik „höchstens" (Minus vor
+// dem Wert) rechnet in dieselbe Richtung: weniger Streuung als erlaubt ist
+// darüber.
+const _bonus = JSON.parse(K.eval(`JSON.stringify((function(){
+  const m = id => _chronikMonat(id), P = (id, k) => chronikPunkte(id, m(id).ab + k * m(id).streu);
+  return {regent:chronikPunkte('tagesregent', 0.71), genau:chronikPunkte('tagesregent', 0.6),
+          hauch:P('ausbruch', 1e-4), eins:P('ausbruch', 1), zwei:P('ausbruch', 2), drei:P('ausbruch', 3),
+          metronom:P('metronom', 0.6), metronomAb:m('metronom').ab, ohneWert:chronikPunkte('ausbruch'),
+          schatten:chronikPunkte('drought', 99), krone:chronikPunkte('wochenkrone', 1)};
+})())`));
+ok(_bonus.regent === 116 && _bonus.genau === 100,
+   '71 % statt 60 % Player of the Day bringen 100 und 16 Bonus, genau 60 % den Grundwert',
+   JSON.stringify(_bonus));
+ok(_bonus.hauch === 101 && _bonus.eins === 125 && _bonus.zwei === 150 && _bonus.drei === 175 && _bonus.ohneWert === 100,
+   'der Bonus ist 25 je σ über der Schwelle, mindestens 1 und nach oben offen', JSON.stringify(_bonus));
+ok(_bonus.metronomAb < 0 && _bonus.metronom === 115,
+   'eine Chronik „höchstens" rechnet den Bonus in dieselbe Richtung', JSON.stringify(_bonus));
+ok(_bonus.schatten === 0 && _bonus.krone === 100,
+   'eine Schattenseite bringt nichts, eine Schwelle, die schon das Höchste ist, keinen Bonus',
+   JSON.stringify(_bonus));
+// In der Regel liegt der Bonus zwischen 1 und 50 — gemessen an allen
+// positiven Einträgen der Fixture-Monate. Eine Streuung, die zu klein
+// geraten ist, triebe ihn weit darüber; eine zu große drückte ihn auf null.
+const _bonusVert = JSON.parse(K.eval(`JSON.stringify((function(){
+  const b = [];
+  ['2026-05','2026-06','2026-07','2026-08'].forEach(sid => seasonTitles(sid).awarded.forEach(a => {
+    if((_chronikMonat(a.titleId) || {}).art !== 'schatten') b.push(chronikBonus(a.titleId, a.wert));
+  }));
+  b.sort((x, y) => x - y);
+  return {n:b.length, imBand:b.filter(x => x >= 1 && x <= 50).length, null:b.filter(x => x === 0).length,
+          median:b[Math.floor(b.length / 2)], max:b[b.length - 1]};
+})())`));
+ok(_bonusVert.n > 50 && _bonusVert.imBand / _bonusVert.n >= 0.7 && _bonusVert.median >= 1 && _bonusVert.median <= 50,
+   'der Bonus liegt in der Regel zwischen 1 und 50', JSON.stringify(_bonusVert));
 ok(K.eval("DISZIPLINEN.filter(d=>d.monat&&d.monat.art==='schatten').every(d=>chronikPunkte(d.id)===0)"),
    'Schattenseiten geben kein Prestige');
 
@@ -1302,7 +1366,7 @@ const _band = JSON.parse(K.eval(`JSON.stringify((function(){
     for(let i = rows.length - 1; i >= 0 && !soll; i--){
       const t = (seasonTitles(rows[i].sid).awarded || []).filter(a => a.pid === p.id && !schatten(a.titleId));
       if(!t.length) continue;
-      const w = t.map(a => chronikPunkte(a.titleId)), max = Math.max(...w);
+      const w = t.map(a => chronikPunkte(a.titleId, a.wert)), max = Math.max(...w);
       soll = {sid:rows[i].sid, id:t[w.indexOf(max)].titleId};
       if(new Set(w).size > 1) gewaehlt++;
     }
@@ -1916,23 +1980,27 @@ ok(_prTausch.profil.join(',') === [
    'die ersten fünf Auszeichnungszeilen folgen der gewünschten Reihenfolge',
    _prTausch.profil.join(', '));
 
-// Das Chronik-Blatt zeigt den Grundwert (zum Beispiel +115), die Laufbahn
-// darf daneben nicht kommentarlos nur den gekappten Rest zeigen. Die Daten
-// tragen deshalb Basis, Wiederholung, Rohwert und tatsaechlichen Beitrag.
+// Das Chronik-Blatt zeigt den Wert des Eintrags (zum Beispiel +116), die
+// Laufbahn darf daneben nicht kommentarlos nur den gekappten Rest zeigen. Die
+// Daten tragen deshalb Grundwert, Bonus, Rohwert und tatsaechlichen Beitrag,
+// und der Bonus kommt aus dem Wert, mit dem der Halter in der Tafel steht.
 const _prChron = JSON.parse(K.eval(`JSON.stringify((function(){
-  const falsch=[], alle=[];
-  Object.values(prestigeTabelle().byPid).forEach(e => (e.quellen||[])
+  const falsch=[], alle=[]; let mitBonus=0;
+  Object.entries(prestigeTabelle().byPid).forEach(([pid, e]) => (e.quellen||[])
     .filter(q=>q.q==='monat').forEach(q=>{
       alle.push(q);
-      if(q.grundwert!==chronikPunkte(q.id) || q.p==null) falsch.push(q.id);
+      const a = seasonTitleOf(pid, q.sid);
+      if(q.bonus > 0) mitBonus++;
+      if(!a || q.grundwert!==100 || q.voll!==chronikPunkte(a.titleId, a.wert)
+         || q.bonus!==q.voll-q.grundwert || q.p==null) falsch.push(q.id);
     }));
-  return {n:alle.length,falsch,
-    abweichend:alle.filter(q=>Math.abs(q.p-q.grundwert/Math.sqrt(q.staffel))>1e-8).length,
+  return {n:alle.length,falsch,mitBonus,
+    abweichend:alle.filter(q=>Math.abs(q.p-q.voll/Math.sqrt(q.staffel))>1e-8).length,
     staffeln:alle.map(q=>({rang:q.rang,staffel:q.staffel}))};
 })())`));
-ok(_prChron.n > 0 && _prChron.falsch.length === 0,
-   'jede Monatsquelle traegt den echten Chronik-Wert und ihre Rechnung',
-   _prChron.falsch.join(', ') || _prChron.n + ' Quellen');
+ok(_prChron.n > 0 && _prChron.falsch.length === 0 && _prChron.mitBonus > _prChron.n / 2,
+   'jede Monatsquelle traegt Grundwert, Bonus aus dem Wert der Tafel und ihre Rechnung',
+   _prChron.falsch.join(', ') || _prChron.n + ' Quellen, ' + _prChron.mitBonus + ' mit Bonus');
 ok(_prChron.abweichend === 0 && _prChron.staffeln.every(q =>
      q.staffel === Math.floor(q.rang / 3) + 1),
    'Chroniken wechseln alle drei Einträge in die nächste Wurzelstaffel',
@@ -1966,6 +2034,19 @@ ok(_prMonat.n > 0 && _prMonat.doppelt.length === 0,
 ok(_prMonat.fremd.length === 0,
    'und es ist der Eintrag, den das Profil zeigt',
    _prMonat.fremd.slice(0, 2).join(' | ') || 'alle');
+// Die Matrix ordnet ihre Zeilen nach dem Prestige ihrer Zellen: je Monat
+// der Eintrag, der zählt [§C39]. Gezählt wurde jeder Eintrag eines Monats,
+// und seit jede Chronik denselben Grundwert bringt, war das nur noch ihre
+// Zahl — neun Einträge in einem Monat standen über drei Monaten mit je einem.
+const _mtx = JSON.parse(K.eval(`JSON.stringify((function(){
+  const cols = allSeasonTitles().slice(0, 8).reverse();
+  const werte = _lchronZeilen(cols).map(pid => cols.reduce((s, T) => {
+    const a = chronikEintragVon(T, pid);
+    return s + (a ? chronikPunkte(a.titleId, a.wert) : 0); }, 0));
+  return {werte, ok:werte.every((v, i) => i === 0 || werte[i - 1] >= v - 1e-9)};
+})())`));
+ok(_mtx.ok && _mtx.werte.length > 3, 'die Matrix ordnet nach dem Prestige ihrer Zellen, nicht nach der Zahl der Einträge',
+   _mtx.werte.join(' · '));
 
 // Der Verlust eines Rekords zieht den Anteil wieder ab [§C34]: nur HEUTE
 // gehaltene Rekorde zaehlen. Gemessen wird an einem echten Halterwechsel der
@@ -2160,14 +2241,17 @@ const _lbN = Object.fromEntries(_lb.werte.map(x=>[x.name,x]));
 const _lbSpitze = _lb.werte.slice().sort((a, b) => b.punkte - a.punkte);
 ok(_lbSpitze[0] && _lbSpitze[0].stufe === 4 && _lbSpitze[0].grad === 0,
    'die Spitze traegt den Lorbeerreif im ersten Grad', JSON.stringify(_lbSpitze[0]));
-// Die beiden dahinter stehen im Zierkranz und nicht mehr neben der Spitze.
-// Zwei trugen den Lorbeerreif, solange einundzwanzig Liga-Rekorde die
-// Siegquote noch einmal zaehlten [§C35]: wer viel gewann, hielt sie fast
-// alle, und die zwei Besten hielten zusammen 31 Eintraege. Seit sie
-// gestrichen sind, liegen zwischen dem Ersten und dem Dritten gemessen
-// knapp tausend Prestige.
-ok(_lbSpitze.slice(1, 3).every(x => x.stufe === 3),
-   'die beiden dahinter stehen im Zierkranz',
+// Die beiden dahinter stehen nicht mehr neben der Spitze, sondern
+// darunter, im Zierkranz oder in der Volute. Zwei trugen den Lorbeerreif,
+// solange einundzwanzig Liga-Rekorde die Siegquote noch einmal zaehlten
+// [§C35]: wer viel gewann, hielt sie fast alle, und die zwei Besten hielten
+// zusammen 31 Eintraege. Seit sie gestrichen sind, liegen zwischen dem
+// Ersten und dem Dritten gemessen knapp tausend Prestige. Die Zusicherung
+// hiess „im Zierkranz"; seit jede Chronik den Grundwert und ihren Bonus
+// bringt statt 150 fuer Gold [§C39], steht der Dritte in den Fixture-Monaten
+// zwoelf Punkte davor. Gemeint war der Abstand zur Spitze, nicht die Stufe.
+ok(_lbSpitze.slice(1, 3).every(x => x.stufe < _lbSpitze[0].stufe && x.stufe >= 2),
+   'die beiden dahinter stehen unter der Spitze, im Zierkranz oder in der Volute',
    _lbSpitze.slice(1, 3).map(x => x.name + ' ' + x.punkte + ' / ' + x.stufe + '.' + x.grad).join(' · '));
 
 const _sternMoeglich = K.eval(`BADGES.reduce((sum,b)=>

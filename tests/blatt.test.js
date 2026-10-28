@@ -3121,24 +3121,55 @@ const ok = (c, msg, det) => {
     box.style.width = '430px';
     document.body.appendChild(box);
     const K = window.__k.eval.bind(window.__k);
-    // Jede Chronik des Katalogs, nicht nur die, die heute jemand haelt.
+    // Jede Chronik des Katalogs, nicht nur die, die heute jemand haelt —
+    // ohne Halter und mit einem, der die Schwelle um 2,37 σ ueberbietet:
+    // dann stehen unter Ausschlag und Prestige die beiden laengsten Zeilen
+    // („+2,37 σ", „100 + 59").
     const ids = K('SEASON_TITLES.map(t => t.id)');
-    box.innerHTML = ids.map(id =>
-      K('_chronFaktenHtml(SEASON_TITLE_BY_ID[' + JSON.stringify(id) + '])')).join('');
+    box.innerHTML = ids.map(id => {
+      const d = 'SEASON_TITLE_BY_ID[' + JSON.stringify(id) + ']', m = '_chronikMonat(' + JSON.stringify(id) + ')';
+      return K('_chronFaktenHtml(' + d + ')')
+        + K('_chronFaktenHtml(' + d + ', ' + m + '.streu ? ' + m + '.ab + 2.37 * ' + m + '.streu : undefined)');
+    }).join('');
     const zu = [];
-    box.querySelectorAll('.rcp-z-v').forEach(e => {
+    box.querySelectorAll('.rcp-z-v, .rcp-z-d').forEach(e => {
       const r = document.createRange(); r.selectNodeContents(e);
       const tw = r.getBoundingClientRect().width;
       const cw = e.getBoundingClientRect().width;
       if(tw > cw + 0.01) zu.push(e.textContent.trim() + ' (' + tw.toFixed(1) + '>' + cw.toFixed(1) + ')');
     });
-    const n = box.querySelectorAll('.rcp-z-v').length;
+    const n = box.querySelectorAll('.rcp-z-v').length, nd = box.querySelectorAll('.rcp-z-d').length;
     box.remove();
-    return {zu, n};
+    // Das Blatt einer gehaltenen Chronik rechnet mit dem Wert ihres Halters
+    // in der Tafel [§C39]: unter dem Prestige stehen Grundwert und Bonus, und
+    // die Summe ist, was die Laufbahn zählt.
+    const a = JSON.parse(K(`JSON.stringify((function(){
+      for(const sid of ['2026-08','2026-07','2026-06']){
+        const x = seasonTitles(sid).awarded.find(a => chronikBonus(a.titleId, a.wert) > 0);
+        if(x) return {sid, id:x.titleId, p:chronikPunkte(x.titleId, x.wert), b:chronikBonus(x.titleId, x.wert)};
+      }
+      return null;
+    })())`));
+    let blatt = null;
+    if(a){
+      K('showDisziplin(' + JSON.stringify(a.id) + ',' + JSON.stringify(a.sid) + ')');
+      const zellen = [...document.querySelectorAll('#sheet .rcp-z-s')];
+      const pr = zellen.find(z => /Prestige/.test((z.querySelector('.rcp-z-l') || {}).textContent || ''));
+      const aus = zellen.find(z => /Ausschlag/.test((z.querySelector('.rcp-z-l') || {}).textContent || ''));
+      blatt = {soll:a, v:pr && pr.querySelector('.rcp-z-v').textContent.trim(),
+               d:pr && pr.querySelector('.rcp-z-d') ? pr.querySelector('.rcp-z-d').textContent.trim() : '',
+               ueber:aus && aus.querySelector('.rcp-z-d') ? aus.querySelector('.rcp-z-d').textContent.trim() : ''};
+      K('closeSheet()');
+    }
+    return {zu, n, nd, blatt};
   });
-  ok(zahlen.n > 0, 'die Zahlenreihe der Chronik wird gebaut', zahlen.n + ' Zellen');
-  ok(zahlen.zu.length === 0, 'kein Wert laeuft ueber seine Zelle',
+  ok(zahlen.n > 0 && zahlen.nd > 0, 'die Zahlenreihe der Chronik wird gebaut', zahlen.n + ' Zellen, ' + zahlen.nd + ' Zeilen darunter');
+  ok(zahlen.zu.length === 0, 'kein Wert und keine Zeile darunter laeuft ueber ihre Zelle',
      zahlen.zu.slice(0, 3).join(', ') || 'keiner');
+  ok(zahlen.blatt && zahlen.blatt.v === '+' + zahlen.blatt.soll.p
+       && zahlen.blatt.d === '100 + ' + zahlen.blatt.soll.b && /^\+\d+,?\d* σ$/.test(zahlen.blatt.ueber),
+     'das Blatt einer gehaltenen Chronik zeigt Grundwert, Bonus und den Abstand zur Schwelle',
+     JSON.stringify(zahlen.blatt));
 
   console.log('\n═══ DIE CHRONIK-MATRIX ═══');
   const matrix = await page.evaluate(() => {
@@ -3184,7 +3215,8 @@ const ok = (c, msg, det) => {
     });
     // Die Zelle zeigt den wertvollsten Eintrag, die Ecke, wie viele es
     // daneben noch gibt, und die Zeile zählt ihre Zellen je Stufe.
-    const falschZelle = [], falschZahl = [];
+    const falschZelle = [], falschZahl = [], falschKl = [];
+    let hoeher = 0;
     box.querySelectorAll('.lchron tbody tr').forEach(tr => {
       const pid = tr.querySelector('[data-tplayer]').dataset.tplayer;
       const je = {};
@@ -3192,7 +3224,15 @@ const ok = (c, msg, det) => {
         const sid = z.dataset.seasonTable;
         const ist = JSON.parse(K(`JSON.stringify((() => { const T = seasonTitles(${JSON.stringify(sid)});
           const a = chronikEintragVon(T, ${JSON.stringify(pid)});
-          return {n:a && (a.short || a.name), mehr:T.awarded.filter(x => x.pid === ${JSON.stringify(pid)}).length - 1}; })())`));
+          // Die Farbe der Zelle ist die höchste Klasse, die der Spieler im
+          // Monat hält, nicht die des Eintrags, der zählt [§C39].
+          const R = {legendaer:3, selten:2, besonders:1};
+          const kl = T.awarded.filter(x => x.pid === ${JSON.stringify(pid)}).map(x => chronikStufe(x.titleId))
+            .filter(st => R[st]).sort((x, y) => R[y] - R[x])[0] || chronikStufe(a.titleId);
+          return {n:a && (a.short || a.name), kl, eigen:chronikStufe(a.titleId),
+                  mehr:T.awarded.filter(x => x.pid === ${JSON.stringify(pid)}).length - 1}; })())`));
+        if(z.dataset.kl !== ist.kl) falschKl.push(pid + ' ' + sid + ' ' + z.dataset.kl + ' statt ' + ist.kl);
+        if(ist.kl !== ist.eigen) hoeher++;
         const mehr = z.querySelector('.lc-mehr');
         if(z.querySelector('.n').textContent.trim() !== ist.n
            || (mehr ? mehr.textContent.trim() : '') !== (ist.mehr > 0 ? '+' + ist.mehr : ''))
@@ -3228,7 +3268,7 @@ const ok = (c, msg, det) => {
     });
     const legende = [...box.querySelectorAll('.lchron-lg [data-kl]')].map(e => e.dataset.kl + ' ' + e.textContent.trim());
     const r = {zu, zellen:zellen.length, ohneKlasse, stufen, falschFarbe, glanzFalsch, verz:verz.size,
-               falschZelle, falschZahl, falschBand, falschJahr, legende};
+               falschZelle, falschZahl, falschKl, hoeher, falschBand, falschJahr, legende};
     box.remove();
     return r;
   });
@@ -3253,10 +3293,18 @@ const ok = (c, msg, det) => {
      matrix.falschZelle.slice(0, 3).join(' | '));
   ok(matrix.falschZahl.length === 0, 'unter dem Namen steht je Stufe, wie viele Zellen der Zeile sie tragen',
      matrix.falschZahl.slice(0, 3).join(' | '));
+  // Gemessen auch an einem Monat, in dem der wertvollste Eintrag eine
+  // niedrigere Klasse trägt als eine andere Chronik desselben Spielers:
+  // ohne ihn bliebe die Regel in den Fixtures ungeprüft.
+  ok(matrix.falschKl.length === 0 && matrix.hoeher > 0,
+     'jede Zelle trägt die höchste Klasse, die der Spieler im Monat hält, auch über einem Eintrag niedrigerer Klasse',
+     matrix.falschKl.slice(0, 3).join(' | ') || matrix.hoeher + ' solche Zellen');
   ok(matrix.falschBand.length === 0, 'das Band im Kopf teilt den Monat nach Stufen',
      matrix.falschBand.slice(0, 3).join(' | '));
-  ok(matrix.legende.join() === 'legendaer legendär 150,selten selten 100,besonders besonders 50,schatten Schattenseite',
-     'die Legende nennt je Stufe, was sie bringt', matrix.legende.join(' · '));
+  // Ohne Wert: seit jede Chronik denselben Grundwert bringt [§C39], stünde
+  // dreimal dieselbe Zahl neben drei Farben.
+  ok(matrix.legende.join() === 'legendaer legendär,selten selten,besonders besonders,schatten Schattenseite',
+     'die Legende nennt die Stufen und keinen Wert je Stufe', matrix.legende.join(' · '));
 
   console.log('\n═══ CHRONIK-PRESTIGE IST NACHVOLLZIEHBAR ═══');
   const chronRechnung = await page.evaluate(async () => {
@@ -3265,8 +3313,8 @@ const ok = (c, msg, det) => {
       const T=prestigeTabelle();
       for(const pid of T.rang){
         const qs=(prestigeOf(pid).quellen||[]).filter(q=>q.q==='monat');
-        const q=qs.find(x=>x.staffel>1)||qs[0];
-        if(q) return {pid,id:q.id,basis:q.grundwert,beitrag:q.p,rang:q.rang,staffel:q.staffel};
+        const q=qs.find(x=>x.staffel>1&&x.bonus>0)||qs.find(x=>x.bonus>0)||qs[0];
+        if(q) return {pid,id:q.id,basis:q.grundwert,bonus:q.bonus,beitrag:q.p,rang:q.rang,staffel:q.staffel};
       }
       return null;
     })())`));
@@ -3290,9 +3338,11 @@ const ok = (c, msg, det) => {
       sport
     });
   });
-  ok(!chronRechnung.fehlt && /Chronikwert/.test(chronRechnung.text),
-     'das Laufbahnblatt nennt den unverkuerzten Chronik-Wert',
-     chronRechnung.text.slice(0,180));
+  // Grundwert und Bonus mit seinem Grund: „+16" allein sagt nicht, wofuer.
+  ok(!chronRechnung.fehlt && chronRechnung.bonus > 0
+     && new RegExp('Grundwert 100 \\+ ' + chronRechnung.bonus + ' für [\\d,]+ σ über der Schwelle').test(chronRechnung.text),
+     'das Laufbahnblatt nennt Grundwert und Bonus einer Chronik',
+     chronRechnung.text.slice(0,220));
   ok(chronRechnung.rang === 1 || new RegExp(chronRechnung.rang + '\\. Chronik.*√' + chronRechnung.staffel).test(chronRechnung.text),
      'eine Wiederholung zeigt knapp ihre Herunterrechnung',
      chronRechnung.text.slice(0,220));
