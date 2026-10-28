@@ -127,9 +127,19 @@ function _buildAmbientStories(now, pm, nameOf, tagesStories){
   }
 
   for(const slot of dueSlots){
-    const slotId = 'ambient_' + slot.dateKey + '_' + slot.slotHour;
-    const existing = knownById.get(slotId);
-    if(existing) continue;   // steht schon in der DB — nichts nachzutragen
+    // Steht der Slot schon in der DB, ist nichts nachzutragen — es sei denn,
+    // die Karte dort ist abgemeldet (`_storyAbgemeldet`): dann gibt sie den
+    // Slot frei, und der Ersatz bekommt die nächste freie ID (`_2`, `_3`, …),
+    // weil die Datenbank keine Zeile ändert [§C33]. Am 28.10. schrieb ein
+    // Gerät mit der Fassung vor dem Streichen des Umsteigers um 15:19 dessen
+    // Karte in den Slot; die neue Fassung blendete sie aus und fand den Slot
+    // belegt, und der Tag blieb ohne Fun Fact.
+    let slotId = 'ambient_' + slot.dateKey + '_' + slot.slotHour, belegt = false;
+    for(let n = 2; knownById.has(slotId); n++){
+      if(!_storyAbgemeldet(knownById.get(slotId))){ belegt = true; break; }
+      slotId = 'ambient_' + slot.dateKey + '_' + slot.slotHour + '_' + n;
+    }
+    if(belegt) continue;
 
     // Sperren immer aus Sicht des SLOT-TAGES, nicht aus Sicht von jetzt.
     const refMs = new Date(slot.dateKey + 'T00:00:00').getTime();

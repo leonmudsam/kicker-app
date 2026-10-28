@@ -53,6 +53,10 @@ function _buildStories(){
   const _weekStartOf = (ts) => wochenBeginn(ts).getTime();
   const _thisWeekStart = _weekStartOf(now.getTime());
   const _prevWeekStart = _weekStartOf(_thisWeekStart - 3 * _dayMs);
+  // Das UTC-Datum der lokalen Mitternacht: in Berlin der Tag davor
+  // („Harter Tag" vom 27.10. heißt `…_2026-10-26`). Das ist schief, aber
+  // die ID ist veröffentlicht — mit `tagKey` stünde derselbe Tag ein
+  // zweites Mal unter neuer ID im Feed, weil die Datenbank nur einfügt.
   const _yesterdayKey  = new Date(_startOfYesterday).toISOString().slice(0,10);
   let   _lastWeekKey   = isoWeek(new Date(_prevWeekStart));
 
