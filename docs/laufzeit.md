@@ -99,6 +99,15 @@ Takt). Der Eintrag liegt genau dann im Verlauf, wenn es etwas gibt, wohin
 anderer Reiter als die Liga. Ein Neuladen auf dem alten Eintrag ersetzt ihn
 (`replaceState`); sonst wird nichts zurückgesetzt.
 
+Das Update [§C42] hält in `01-update.js`: `_updNeu` (die Fassung, die der
+Check gefunden hat und die noch nicht läuft), `_updSperre` (welche Fassung
+ein Neuladen erwartet hatte und bis wann kein zweites versucht wird, wenn
+die alte zurückkam), `_updBeruehrt` (die letzte Berührung: Zeiger, Taste,
+Rad) und `_updSichtbar` (Start oder letztes Zurückkommen), beide als
+`performance.now()`, weil Ruhe eine Dauer ist und die Uhr des Geräts
+springen darf. Zurückgesetzt wird keiner: das Neuladen beginnt eine neue
+Seite.
+
 Zeitweilige Arbeitsaufträge sind keine Ansichtsauswahl: `_ligaRefreshAuftrag`
 lebt im Navigations-Layer und wird nach Ende des gemeinsamen Datenabrufs
 geleert; `_loadAllLeise` gilt nur für dessen Lauf und wird im `finally`
@@ -373,6 +382,15 @@ des Geräts (`kicker_upd_v1`) und gilt nur, solange diese Version läuft. Ohne
 ihn lud jeder Start die ganze Seite erneut — neben den vier Datenabfragen.
 Der erste Check des Starts wartet, bis der erste Datenlauf gezeichnet hat und
 die Seite ruht. `tests/start` misst beides am echten Start.
+
+Findet er eine andere Fassung, lädt `_updVersuchen` neu, sobald nichts offen
+ist, nichts geschrieben oder abgerufen wird und Ruhe ist (seit dem Start
+oder Zurückkommen keine Berührung, oder die letzte eine Minute her,
+`UPD_RUHE_MS`). Bis dahin fragt `_updWarten` nach — alle zwei Sekunden, nach
+einer Berührung erst, wenn die Minute um ist — und nur, solange die Seite
+sichtbar ist; das Zurückkommen versucht es sofort. Eine wartende Fassung
+fragt das Netz nicht noch einmal. Brachte das Neuladen die alte Fassung
+zurück, ruht der Versuch `UPD_SPERRE_MS` (zehn Minuten).
 
 `loadAll` hält höchstens einen Durchlauf offen (`_loadAllPromise`). Weitere
 explizite Anforderungen setzen `_loadAllNochmals` und erhalten dieselbe Promise, die

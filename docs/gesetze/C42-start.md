@@ -13,14 +13,15 @@
 - Dieselbe Liste leerer Töpfe gilt für Stand und Live-Abruf (`LADEN_TOEPFE`), dasselbe Einbauen (`_datenEinbauen`).
 - Der Service Worker (`src/sw.js`, ausgeliefert als `sw.js`) hält die Seite, das Symbol, die Schriften und die Supabase-Bibliothek: aus dem Topf, im Hintergrund nachgefüllt. Die Antworten der Datenbank hält er nie, und jede Anfrage mit `_cb` geht ans Netz — der Update-Check ganz, `forceReload` holt die Seite frisch und legt sie in den Topf.
 - Er trägt die Fassung der Seite (`SW_FASSUNG`, gesetzt von `tools/build.mjs`); eine neue Fassung räumt beim Aktivieren die Töpfe der alten. Registriert wird er nur über https oder auf dem eigenen Rechner.
+- **Eine neue Fassung lädt von selbst** (`checkForUpdate`, `_updVersuchen`): nie über einem Blatt, Dialog, Popover oder einer Story, nicht im Eingabe- oder Einstellungsreiter, nicht mit fokussiertem Feld, nicht während geschrieben (`_schreibOffen`), abgerufen (`_loadAllPromise`) oder Stories veröffentlicht werden (`_newsAutoSyncRunning`), nicht neben einem Hinweis mit Knopf — und nur in Ruhe: seit Start oder Zurückkommen keine Berührung, oder die letzte eine Minute her (`UPD_RUHE_MS`). Danach steht kurz „App aktualisiert" (`_updMelden`), ohne Knopf. Die erwartete Fassung reist als `_upd` in der Adresse; kam die alte zurück, gibt es keinen Hinweis und zehn Minuten keinen zweiten Versuch (`UPD_SPERRE_MS`).
 
 ## Stellen
 
-`06c-stand.js`, `06-db.js` (`_loadAllDurchlauf`, `_datenEinbauen`, `_overridesNachziehen`, `ligaSchreibtAbgeleitet`, `_datenFrisch`, `autoArchiveSeasons`, `_nachholen`), `29-news-cache.js` (`syncStoriesViaDb`), `29b-news-sync.js` (`_newsAutoSyncTick`), `src/sw.js`, `37-boot.js` (Registrierung), `tools/build.mjs` und Wächter 1 und 5 in `tools/check.mjs`.
+`01-update.js` (`checkForUpdate`, `_updVersuchen`, `_updBelegt`, `_updMelden`, `forceReload`), `06c-stand.js`, `06-db.js` (`_loadAllDurchlauf`, `_datenEinbauen`, `_overridesNachziehen`, `ligaSchreibtAbgeleitet`, `_datenFrisch`, `autoArchiveSeasons`, `_nachholen`), `29-news-cache.js` (`syncStoriesViaDb`), `29b-news-sync.js` (`_newsAutoSyncTick`), `src/sw.js`, `37-boot.js` (Registrierung), `tools/build.mjs` und Wächter 1 und 5 in `tools/check.mjs`.
 
 ## Prüfung
 
-`tests/start` (ein Telefon der Liga mit Berliner Uhr veröffentlicht; ein Gerät mit Tokioter oder Londoner Uhr und ein automatisierter Browser zeigen die Stories, schreiben aber weder Stories noch Archiv; ein Telefon, das mittags im Hintergrund verschwindet und nach Partien vor 15 Uhr zurückkommt, schreibt keinen Fun Fact für diesen Tag — mit offenem Feed und bei langsamem Netz, dann mit den Partien des Tages und ihren Stories —, und an einem Tag ohne Partie kommt der Fun Fact nach dem Zurückkommen; die Liga steht aus dem Stand, bevor das Netz antwortet; kein Schreibzugriff bis dahin; dasselbe Markup und derselbe Knoten nach dem Live-Abruf mit denselben Daten; ohne Netz bleibt der Stand; ein Stand einer anderen Fassung gilt nicht; der Service Worker hält die Seite unter ihrer Fassung, ohne Netz öffnet die App aus ihm, Update-Check und Neu laden gehen ans Netz, eine neue Fassung räumt den Topf der alten, keine Anfrage geht an eine fremde Adresse).
+`tests/start` (ein Telefon der Liga mit Berliner Uhr veröffentlicht; ein Gerät mit Tokioter oder Londoner Uhr und ein automatisierter Browser zeigen die Stories, schreiben aber weder Stories noch Archiv; ein Telefon, das mittags im Hintergrund verschwindet und nach Partien vor 15 Uhr zurückkommt, schreibt keinen Fun Fact für diesen Tag — mit offenem Feed und bei langsamem Netz, dann mit den Partien des Tages und ihren Stories —, und an einem Tag ohne Partie kommt der Fun Fact nach dem Zurückkommen; die Liga steht aus dem Stand, bevor das Netz antwortet; kein Schreibzugriff bis dahin; dasselbe Markup und derselbe Knoten nach dem Live-Abruf mit denselben Daten; ohne Netz bleibt der Stand; ein Stand einer anderen Fassung gilt nicht; der Service Worker hält die Seite unter ihrer Fassung, ohne Netz öffnet die App aus ihm, Update-Check und Neu laden gehen ans Netz, eine neue Fassung räumt den Topf der alten, keine Anfrage geht an eine fremde Adresse; über einem offenen Blatt lädt das Update nicht, nach dem Schließen von selbst, danach läuft die neue Fassung und steht kurz „App aktualisiert" ohne Knopf und ohne Merkmal in der Adresse; nach einer Berührung lädt es nicht sofort, beim Zurückkommen schon; bringt das Neuladen eine alte Fassung zurück, lädt es nicht gleich noch einmal und meldet nichts).
 
 ## Herleitung
 
@@ -63,6 +64,21 @@ selbst — genau der Fehler, den die Version aus dem Fingerabdruck einmal
 behoben hat. Im Test geht keine Anfrage an eine fremde Adresse: ein Service
 Worker holt fremde Quellen selbst, an jeder Umleitung des Browsers vorbei,
 und mit der echten Bibliothek spräche der Test mit der echten Datenbank.
+
+Das Update stand vorher als Banner oben („Neue Version — Neu laden") und
+wartete auf einen Finger. Ein PWA-Symbol bleibt tagelang offen; wer den
+Banner übersah, spielte mit einer Fassung weiter, deren Fehler schon behoben
+waren. Jetzt lädt die App selbst — aber nie unter den Fingern: ein Neuladen
+über einem Formular verlöre die Eingabe, eines während der Kette im
+Hintergrund eine Partie ohne ihre Elo, eines während des Veröffentlichens
+eine halbe Story. Ruhe heißt: seit dem Öffnen oder Zurückkommen nichts
+berührt — dann sieht man den Start ohnehin gerade —, oder eine Minute nichts;
+wer die Rangliste liest, berührt nichts, und eine kürzere Ruhe ließe sie
+unter den Augen an den Anfang springen. Die erwartete Fassung steht in der
+Adresse und nicht im Speicher des Geräts, der in einem privaten Fenster
+fehlt: ohne sie wüsste die neue Seite weder, dass sie Bescheid sagen soll,
+noch, dass ein Zwischenspeicher die alte zurückgab — und lüde im Takt des
+Checks immer wieder neu.
 
 Am 13.10. stand im Feed „Harter Tag für Maxi", 33 Elo verloren, datiert auf
 Dienstag 16:58 — einen Tag ohne Spiel. Geschrieben hatte die Karte ein

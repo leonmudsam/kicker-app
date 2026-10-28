@@ -44,7 +44,9 @@ prüft Wächter 4 — er ersetzt, was ein Modulsystem geschenkt hätte.
 `BUILD_VERSION` steht im ausgelieferten Code, und `checkForUpdate` fragt
 alle fünf Minuten die veröffentlichte Datei ab, um die beiden zu vergleichen —
 mit dem ETag der letzten Antwort, sodass eine unveränderte Seite nicht noch
-einmal übertragen wird. Ist die entfernte Version neuer, erscheint das Banner.
+einmal übertragen wird. Ist die entfernte Version eine andere, lädt die App
+von selbst neu, sobald nichts offen ist und niemand gerade etwas berührt
+[§C42], und sagt es danach kurz.
 
 Von Hand gepflegt stand diese Nummer sechs Veröffentlichungen lang still.
 Die Folge war nicht sichtbar, sondern das Gegenteil: jedes Gerät, das die
