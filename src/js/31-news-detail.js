@@ -1220,13 +1220,17 @@ function _ndChronikEbenen(d, bisMs, ids, wertVon, modus, titleId){
     if(n) ebenen.push(n + (n === 1 ? ' Eintrag' : ' Einträge') + ' in der Tafel');
     if(diese) ebenen.push('im Profil steht diese');
     else if(titel) ebenen.push('im Profil „' + titel + '"');
-    const aussage = modus === 'zuwachs'
-      ? (plus > 0 ? '+' + plus + ' Prestige' : 'kein zusätzliches Prestige')
-      : (plus > 0 ? String(plus).replace('.', ',') + ' Prestige · zählt aktuell'
-                  : 'zählt aktuell nicht');
+    // Der Wert und was er bedeutet stehen untereinander, und die Spalte
+    // bricht um (`.nd-ce > em`). In einer Zeile („126,5 Prestige · zählt
+    // aktuell", „kein zusätzliches Prestige") nahm sie dem Namen daneben so
+    // viel Platz, dass er bei 310 px abgeschnitten wurde.
+    const [wert, was] = modus === 'zuwachs'
+      ? (plus > 0 ? ['+' + plus + ' Prestige', ''] : ['kein zusätzliches Prestige', ''])
+      : (plus > 0 ? [String(plus).replace('.', ',') + ' Prestige', 'zählt aktuell']
+                  : ['zählt aktuell nicht', '']);
     return `<div class="nd-ce" data-pid="${esc(pid)}">${pm[pid] ? avHtml(pm[pid], '', {px:30}) : ''}
       <span class="nd-ce-t"><b>${esc(_spName(pid))}</b>${ebenen.length ? `<small>${esc(ebenen.join(' · '))}</small>` : ''}</span>
-      <em class="${plus > 0 ? 'g' : ''}">${esc(aussage)}</em></div>`;
+      <em class="${plus > 0 ? 'g' : ''}">${esc(wert)}${was ? `<small>${esc(was)}</small>` : ''}</em></div>`;
   }).join('');
 }
 
@@ -1247,10 +1251,13 @@ function _ndChronikBlatt(s){
   const kopf = _ndWechselBuehne({neu, weg, wert:d.ev ? _chronKurz(d.ev) : '', label:'Monatschronik',
     name, marken:[kl, seasonLabel(d.sid)].filter(Boolean)});
   const bis = new Date(s.when).getTime() + 1;
-  let podest = '';
+  let podest = '', halterWert = Number.isFinite(d.wert) ? d.wert : undefined;
   try {
     const C = _seasonTitleCtx(d.sid, Number.isFinite(bis) ? bis : undefined);
     const r = def && def.pick ? def.pick(C, new Set()) : null;
+    // Eine Karte von vor dem Bonus trägt keinen Wert; dann rechnet die
+    // Zahlenreihe mit dem Halter am Tag der Karte [§C39].
+    if(halterWert === undefined && r && r.halter && r.halter.length && r.wert) halterWert = r.wert(r.halter[0]);
     if(r && r.rang && r.rang.length > 1){
       podest = _chronPodestHtml(r.rang.map(pid => {
         let w = ''; try { w = r.evFuer ? r.evFuer(pid) : ''; } catch(e){}
@@ -1269,7 +1276,7 @@ function _ndChronikBlatt(s){
   const ab = (t, html) => html ? `<div class="nd-section">${esc(t)}</div>${html}` : '';
   const cond = def && def.cond && _ndNeu(def.cond) ? def.cond : '';
   return {kopf, mitte:(cond ? `<div class="tnote nd-rk-c">${esc(cond)}</div>` : '')
-    + (def ? _chronFaktenHtml(def) : '')
+    + (def ? _chronFaktenHtml(def, halterWert) : '')
     + ab('Das Feld im Monat', podest)
     + ab('Wirkung auf die Laufbahn', wirkung)
     + ab('Tafel, Profil und Laufbahn', ebenen)

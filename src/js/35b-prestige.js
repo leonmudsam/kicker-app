@@ -293,36 +293,61 @@ function _chronikMonat(titleId){
 }
 
 // ─── §C39 Was eine Monatschronik wert ist ────────────────────────────
-// Die Klasse ist Farbe und Wert zugleich: Gold heißt legendär und 150,
-// Lila selten und 100, Grau besonders und 50, Rot eine Schattenseite und
-// nichts. Die Klasse folgt dem Ausschlag der Schwelle (ab 2,5 σ legendär,
-// ab 1,9 σ selten, darunter besonders), also dem, wie weit draußen die
-// Latte hängt, nicht dem, wie viele sie je gerissen haben.
+// Jede Chronik außer einer Schattenseite bringt denselben Grundwert, 100,
+// gleich welcher Klasse und welcher Art. Wer in einem Monat etwas erreicht,
+// wofür es eine Chronik gibt, wird dafür belohnt — auch dann, wenn wenig
+// Können darin steckt. Die Klasse bleibt Farbe und Name (Gold legendär,
+// Lila selten, Metall besonders, Rot eine Schattenseite) und sagt, wie weit
+// draußen die Latte hängt; über den Wert entscheidet sie nicht mehr.
 //
-// Vorher rechnete der Wert aus Sockel, Art × Ausschlag und einem kleinen
-// Zuschlag der Klasse, und alle Chroniken lagen zwischen 90 und 190: eine
-// legendäre („Der Kontrast", 95) brachte weniger als eine besondere („Die
-// weiße Weste", 110), und die Klasse in Gold oder Grau sagte über den Wert
-// nichts. Jetzt liest man an der Farbe ab, was ein Eintrag bringt.
+// Dazu kommt der Bonus: wie weit der Halter die Schwelle überbietet, in
+// Standardabweichungen der Chronik (`streu`), 25 je σ. Wer an 71 % statt
+// an 60 % der eigenen Spieltage Player of the Day war, liegt 0,64 σ über
+// „Dem Tagesregenten" und bekommt 16 dazu. Gemessen an den echten Partien
+// liegt der Bonus fast immer zwischen 1 und 50; nach oben ist er offen.
+// Genau auf der Schwelle gibt es keinen, und wo die Schwelle schon das
+// Höchste ist („Die Wochenkrone": jede eigene Woche), auch nicht.
 //
-// Die Art ändert den Wert nicht: eine Fügung zählt wie Können und
-// Konstanz. Anders als ein Liga-Rekord [§C35] hält niemand sie über Monate
-// gegen die Liga, sie gehört einem Monat, und die Klasse sagt schon, wie
-// selten er war. Vorher zählte eine Fügung halb, und eine besondere brachte
-// 25: „Der Aufdreher", ein Monat mit 45 % aller Partien statt 11 %, stand
-// mit weniger in der Laufbahn als die kleinste Auszeichnung, die sich
-// wiederholt, und die Farbe der Zelle sagte über den Wert wieder nichts.
+// Vorher galt die Klasse als Wert, 150, 100 und 50. Damit brachte ein
+// besonderer Monat ein Drittel eines legendären, auch wenn sein Halter die
+// Latte weit hinter sich ließ, und wer sie gerade eben riss, bekam dasselbe
+// wie einer, der sie verdoppelte.
 //
-// Gerechnet wird mit der Klasse der Chronik, nicht mit dem Wert eines
-// Halters: der gehört einem einzelnen Monat und wanderte, sobald neue
-// Monate die Verteilung verschieben — dann sänke das Prestige aller
-// bisherigen Halter, und genau dieser Fehler steckte schon einmal in den
-// Auszeichnungen [§C34].
-const PRESTIGE_CHRONIK_KLASSE = {legendaer:150, selten:100, besonders:50};
-function chronikPunkte(titleId){
+// Der Bonus misst mit festgeschriebenen Größen (`ab`, `streu`), nicht mit
+// der Verteilung von heute: sonst sänke das Prestige aller bisherigen
+// Halter, sobald neue Monate sie verschieben, und genau dieser Fehler
+// steckte schon einmal in den Auszeichnungen [§C34]. Der Wert des Halters
+// steht dazu in der Tafel und im eingefrorenen Monat (`wert`).
+const CHRONIK_GRUNDWERT = 100;
+const CHRONIK_BONUS_JE_SIGMA = 25;
+
+// Wie weit ein Wert über der Schwelle liegt, in σ der Chronik; null, wenn
+// es keine Rechnung dafür gibt (Schattenseite, unbekannte Chronik, kein
+// Wert). Ein Wert genau auf der Schwelle, der nur durch die Rechnung in
+// Gleitkomma ein Hauch darüber liegt, zählt als genau darauf.
+function chronikUeber(titleId, wert){
+  const m = _chronikMonat(titleId);
+  if(!m || m.art === 'schatten' || !(m.streu > 0)) return null;
+  if(wert == null || !isFinite(wert) || !isFinite(m.ab)) return null;
+  const z = (wert - m.ab) / m.streu;
+  return z > 1e-9 ? z : 0;
+}
+// Wer die Schwelle überhaupt überbietet, bekommt mindestens 1: eine Null
+// neben „über der Schwelle" läse sich als Fehler.
+function chronikBonus(titleId, wert){
+  const z = chronikUeber(titleId, wert);
+  return z > 0 ? Math.max(1, Math.round(CHRONIK_BONUS_JE_SIGMA * z)) : 0;
+}
+// Ein Abstand in σ, wie der Ausschlag im Blatt steht: zwei Stellen, Komma.
+function chronikSigma(z){
+  return String(Math.round((Number(z) || 0) * 100) / 100).replace('.', ',') + ' \u03c3';
+}
+// Ohne `wert` der Grundwert allein — für eine Chronik, die noch niemand
+// hält, und für einen Monat, dessen Halterwert nicht bekannt ist.
+function chronikPunkte(titleId, wert){
   const m = _chronikMonat(titleId);
   if(!m || m.art === 'schatten') return 0;   // Schattenseiten geben nichts
-  return PRESTIGE_CHRONIK_KLASSE[m.klasse] || 0;
+  return CHRONIK_GRUNDWERT + chronikBonus(titleId, wert);
 }
 
 // EIN Durchlauf für die ganze Liga. Seltenheit lässt sich nicht für einen
@@ -369,7 +394,7 @@ function prestigeTabelle(bisMs){
   alle.forEach(p => {
     (seasonTitleHistory(p.id, bisMs) || []).forEach(r => {
       if(r.title) roh[p.id].monat.push(
-        {id:r.title.titleId, name:r.title.name, label:r.label, sid:r.sid});
+        {id:r.title.titleId, name:r.title.name, label:r.label, sid:r.sid, wert:r.title.wert});
     });
   });
 
@@ -418,14 +443,14 @@ function prestigeTabelle(bisMs){
     });
     const pb = az.reduce((sum, q) => sum + q.p, 0);
 
-    // Monatschroniken: der Wert haengt an der Abweichung [§C39].
+    // Monatschroniken: Grundwert und Bonus über der Schwelle [§C39].
     const mo = [];
     // Hohe Chronikwerte stehen vor kleinen und bekommen damit die geringste
     // Wurzeldämpfung. So kann eine später erreichte, außergewöhnliche Chronik
     // eine Laufbahn noch sichtbar prägen; die Reihenfolge des Katalogs oder
     // der Monate beeinflusst die Punkte nicht.
     r.monat.forEach(m => {
-      const voll = chronikPunkte(m.id);
+      const voll = chronikPunkte(m.id, m.wert);
       if(voll <= 0) return;
       // Die Art der CHRONIK, nicht die der Disziplin: seit §C39 traegt
       // `monat.art` den Wert (Koennen, Konstanz, Fuegung), waehrend `art` der
@@ -433,8 +458,12 @@ function prestigeTabelle(bisMs){
       // stand deshalb „Leistung" neben einer Chronik, deren Punkte aus
       // „Konstanz" kamen — die Zeile erklaerte den Wert daneben nicht.
       const km = _chronikMonat(m.id) || {};
+      // `grundwert` und `bonus` getrennt: das Laufbahnblatt zeigt die
+      // Rechnung, und aus der Summe allein war nicht zu sehen, wie weit
+      // jemand über der Schwelle lag.
       mo.push({q:'monat', id:m.id, name:m.name, label:m.label,
-               sid:m.sid, p:voll, voll, grundwert:voll,
+               sid:m.sid, p:voll, voll, grundwert:CHRONIK_GRUNDWERT,
+               bonus:voll - CHRONIK_GRUNDWERT, ueber:chronikUeber(m.id, m.wert),
                kunst:km.art || '', klasse:km.klasse || ''});
     });
     const pm = _wurzelStapel(mo, 3);
@@ -1209,6 +1238,8 @@ function prestigeSchritte(pid, n){
         out.push({
           art:'monat', id:r.id, name:r.name || (d && d.name), ic:d.ic, tone:d.tone,
           rel: 0.55,          // ein offener Monatseintrag ist immer „diesen Monat noch"
+          // Der Grundwert: was darüber kommt, hängt daran, wie weit die
+          // Schwelle am Ende überboten wird [§C39], und das steht noch aus.
           gewinn: Math.round(_wurzelZuwachs(
             P.quellen.filter(q => q.q === 'monat').map(q => q.voll),
             chronikPunkte(r.id), 3)),
@@ -1339,8 +1370,12 @@ function _prestigeQuellSatz(q, ohneKopf){
   if(q.q === 'monat'){
     if(CHRONIK_KLASSE_NAME[q.klasse]) teile.push(CHRONIK_KLASSE_NAME[q.klasse]);
     if(CHRONIK_ART_NAME[q.kunst]) teile.push(CHRONIK_ART_NAME[q.kunst]);
+    // Der Bonus steht mit seinem Grund daneben: „+16" allein sagt nicht,
+    // wofür. Ein Stand, der vor dem Bonus gespeichert wurde (der Abschluss
+    // eines Ruheständlers [§C40]), hat keinen und zeigt seinen Wert von damals.
     const basis = q.grundwert == null ? q.voll : q.grundwert;
-    let rechnung = `Chronikwert ${zahl(basis)}`;
+    let rechnung = `Grundwert ${zahl(basis)}`;
+    if(q.bonus > 0) rechnung += ` + ${zahl(q.bonus)} für ${chronikSigma(q.ueber)} über der Schwelle`;
     if(q.staffel > 1) rechnung += ` · ${q.rang}. Chronik ÷ √${q.staffel}`;
     teile.push(rechnung);
   }

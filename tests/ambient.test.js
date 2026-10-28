@@ -2810,8 +2810,8 @@ ok(_reihe.potd && _reihe.woche && _reihe.monat
 // sie eine Stufe weiter stand, stand in keinem Vergleich: der Stand eine
 // Millisekunde vor dem Wochenschluss trug den Spieler der Woche schon, sobald
 // die Woche nach der Uhr vorbei war (`_periodeOffen`). Gemessen an den
-// echten Partien: der Wochenschluss am 15.06. hob Julian um einen Grad, der
-// am 03.08. brachte ihm den Award-Sammler, der Monatsschluss im Juli Leon
+// echten Partien: der Wochenschluss am 27.07. hob Jannik um einen Grad, der
+// am 03.08. brachte Julian den Award-Sammler, der Monatsschluss im Juli Leon
 // und Martin Untouchable.
 const _schlussAm = (ms, code) => _amErsten(ms, `
   const bestand = _cache._stories;
@@ -2820,7 +2820,8 @@ const _schlussAm = (ms, code) => _amErsten(ms, `
     ${code}
   } finally { _cache._stories = bestand; }`);
 const _J = IDS[NAMES.indexOf('Julian')], _M = IDS[NAMES.indexOf('Martin')],
-      _L = IDS[NAMES.indexOf('Leon')], _X = IDS[NAMES.indexOf('Maxi')];
+      _L = IDS[NAMES.indexOf('Leon')], _X = IDS[NAMES.indexOf('Maxi')],
+      _JN = IDS[NAMES.indexOf('Jannik')];
 
 // Der Tag endet vor dem Monat (23:59:59) und beginnt nach der Woche (Mo 00:00).
 const _grenzen = JSON.parse(K.eval(`JSON.stringify((function(){
@@ -2831,17 +2832,17 @@ const _grenzen = JSON.parse(K.eval(`JSON.stringify((function(){
   // weil er der letzte Tag seines Monats ist.
   const pkt = (pid, t) => prestigeOf(pid, t).punkte;
   const juni30 = _storyTagGrenzen(new Date(2026, 5, 30, 12).getTime());
-  const juni15 = _storyTagGrenzen(new Date(2026, 5, 15, 12).getTime());
-  const woche = new Date(2026, 5, 15).getTime();
+  const juli27 = _storyTagGrenzen(new Date(2026, 6, 27, 12).getTime());
+  const woche = new Date(2026, 6, 27).getTime();
   return {
     monat: pkt('${_M}', juni30.nachMs) < pkt('${_M}', seasonEnd('2026-06').getTime()),
     monatText: Math.round(pkt('${_M}', juni30.nachMs)) + ' -> ' + Math.round(pkt('${_M}', seasonEnd('2026-06').getTime())),
-    woche: pos('${_J}', juni15.vorMs) === pos('${_J}', woche) && pos('${_J}', woche) > pos('${_J}', woche - 1),
-    wocheText: pos('${_J}', woche - 1) + ' -> ' + pos('${_J}', juni15.vorMs)
+    woche: pos('${_JN}', juli27.vorMs) === pos('${_JN}', woche) && pos('${_JN}', woche) > pos('${_JN}', woche - 1),
+    wocheText: pos('${_JN}', woche - 1) + ' -> ' + pos('${_JN}', juli27.vorMs)
   };
 })())`));
 ok(_grenzen.monat, 'der letzte Tag des Monats endet vor dessen Schluss: Martins Prestige aus dem Vize-Titel steht nicht in der Karte des 30.06.', _grenzen.monatText);
-ok(_grenzen.woche, 'ein Montag beginnt nach dem Schluss der Woche: Julians Grad aus dem Spieler der Woche steht nicht in der Karte des 15.06.', _grenzen.wocheText);
+ok(_grenzen.woche, 'ein Montag beginnt nach dem Schluss der Woche: Janniks Grad aus dem Spieler der Woche steht nicht in der Karte des 27.07.', _grenzen.wocheText);
 
 // Der Tag: die Karte des Spielers des Tages nennt, was sein Schluss vergab.
 const _tagSchluss = _schlussAm(FIXED, `
@@ -2861,8 +2862,11 @@ ok(_tagSchluss.nurSelten, 'nur Seltenes und Legendaeres: das Gewoehnliche eines 
 // Zeichen-Karte des Schlusses. Ob der Schluss vom 03.08. Julian neben dem
 // Award-Sammler auch einen Grad gibt, hängt an der Elo der Partien und
 // wechselte mit jeder Fassung des Positionsbonus [§C44]. Die Zeichen-Karte
-// wird deshalb am Schluss vom 15.06. gemessen, der Julian allein mit dem
-// Spieler der Woche einen Grad gibt: dort steht genau ein Grund.
+// wird deshalb am Schluss vom 27.07. gemessen, der Jannik allein mit dem
+// Spieler der Woche einen Grad gibt: dort steht genau ein Grund. Bis jede
+// Chronik den Grundwert und ihren Bonus brachte [§C39], war es der Schluss
+// vom 15.06. mit Julian; seitdem steht er dort schon vorher auf dem Grad,
+// und in den Fixture-Monaten hebt nur dieser eine Wochenschluss jemanden.
 const _wocheSchluss = _schlussAm(new RealDate(2026, 7, 4, 8, 0, 0).getTime(), `
   const w = roh.find(x => (x.dataRef||{}).type === 'woche');
   const a = ((w && w.dataRef.abschluss) || []).find(x => x.id === 'award_collector');
@@ -2872,19 +2876,19 @@ const _wocheSchluss = _schlussAm(new RealDate(2026, 7, 4, 8, 0, 0).getTime(), `
 ok(_wocheSchluss.sammler && _wocheSchluss.wocheZeile,
    'der Schluss der Woche bis 02.08. vergibt Julian den Award-Sammler, legendaer, in der Karte der Woche', JSON.stringify(_wocheSchluss));
 ok(_wocheSchluss.brk, 'eine legendaere Auszeichnung ist Breaking, auch in der Karte der Woche');
-const _zeichenSchluss = _schlussAm(new RealDate(2026, 5, 15, 8, 0, 0).getTime(), `
-  const z = roh.find(x => x.id === 'instag_woche_2026-06-15');
+const _zeichenSchluss = _schlussAm(new RealDate(2026, 6, 27, 8, 0, 0).getTime(), `
+  const z = roh.find(x => x.id === 'instag_woche_2026-07-27');
   const d = (z && z.dataRef) || {};
   const karte = z ? _newsCardHtmlM2(z, false, false, '') : '';
   const blatt = z ? (_ndInsTagBlatt(z) || {}).mitte || '' : '';
-  return {zeichen:!!z, schluss:d.schluss, wann:z ? new Date(z.when).getTime() === new Date(2026, 5, 15).getTime() : false,
-    zug:(d.zuege || []).map(x => x.pid === '${_J}' ? x.art : '?').join(','),
+  return {zeichen:!!z, schluss:d.schluss, wann:z ? new Date(z.when).getTime() === new Date(2026, 6, 27).getTime() : false,
+    zug:(d.zuege || []).map(x => x.pid === '${_JN}' ? x.art : '?').join(','),
     grund:(d.grund || []).map(x => x.id).join(','),
-    karte:/nf-abs viol[\\s\\S]*Julian[\\s\\S]*Player of the Week/.test(karte),
+    karte:/nf-abs viol[\\s\\S]*Jannik[\\s\\S]*Player of the Week/.test(karte),
     blatt:blatt.indexOf('Mit dem Schluss der Woche vergeben') >= 0 && blatt.indexOf('nach der Woche') >= 0,
     seite:z ? _newsSeite(z) : ''};`);
 ok(_zeichenSchluss.zeichen && _zeichenSchluss.schluss === 'woche' && _zeichenSchluss.wann && _zeichenSchluss.zug === 'grad',
-   'Julians neuer Grad aus dem Schluss der Woche steht in einer Zeichen-Karte am Montag um 00:00', JSON.stringify(_zeichenSchluss));
+   'Janniks neuer Grad aus dem Schluss der Woche steht in einer Zeichen-Karte am Montag um 00:00', JSON.stringify(_zeichenSchluss));
 ok(_zeichenSchluss.grund === 'potw' && _zeichenSchluss.karte && _zeichenSchluss.blatt,
    'die Zeichen-Karte nennt, was der Schluss vergab, auf der Karte und im Blatt', _zeichenSchluss.grund);
 ok(_zeichenSchluss.seite === 'zeichen', 'sie steht auf der Seite der Zeichen', _zeichenSchluss.seite);
@@ -3431,9 +3435,20 @@ const _chrg = JSON.parse(K.eval(`JSON.stringify((function(){
   chr.forEach(s => Object.entries((s.dataRef||{}).prestigeDelta || {}).forEach(([pid, x]) => {
     gemeldet[pid] = (gemeldet[pid] || 0) + (Number(x) || 0);
   }));
-  const deltaFalsch = Object.keys(gemeldet).filter(pid => gemeldet[pid] !== Math.max(0,
-    ((((jetztPrestige[pid]||{}).teile||{}).monat)||0)
-    - ((((vorPrestige[pid]||{}).teile||{}).monat)||0)));
+  // Gutgeschrieben wird der ganze Zuwachs dem, dessen Profileintrag mit
+  // dieser Chronik wechselt; wer seinen Eintrag behält, bekommt durch den
+  // Wechsel nichts. Dass dessen Bonus mit dem Spieltag wächst, weil der
+  // Halter seine Schwelle weiter überbietet [§C39], ist keine Nachricht
+  // einer Chronik-Karte: gemessen holte Johannes „Den Beidfüßigen", sein
+  // „Aufdreher" stieg am selben Tag von 158 auf 159, und die Karte sagte
+  // richtig „kein zusätzliches Prestige".
+  const nachMs = _storyTagGrenzen(letzte).nachMs;
+  const profil = (pid, t) => (seasonTitleOf(pid, sid, t) || {}).titleId || '';
+  const deltaFalsch = Object.keys(gemeldet).filter(pid => {
+    const echt = Math.max(0, ((((jetztPrestige[pid]||{}).teile||{}).monat)||0)
+      - ((((vorPrestige[pid]||{}).teile||{}).monat)||0));
+    return profil(pid, t0.getTime() - 1) === profil(pid, nachMs) ? gemeldet[pid] !== 0 : gemeldet[pid] !== echt;
+  });
   // Persistierte Karten aus älteren Builds besitzen noch kein Delta. Karte
   // und Blatt müssen dann denselben aktuell gezählten Laufbahnbeitrag lesen.
   let altKonsistent = true;
@@ -3448,7 +3463,7 @@ const _chrg = JSON.parse(K.eval(`JSON.stringify((function(){
     altKonsistent = laufbahn.modus === 'bestand'
       && Math.abs(kartenwert - Math.round(summe*10)/10) < 1e-9
       && Object.values(laufbahn.werte).every(x => Number(x)>0
-        ? blatt.includes(String(x).replace('.',',')+' Prestige · zählt aktuell')
+        ? blatt.includes(String(x).replace('.',',')+' Prestige<small>zählt aktuell</small>')
         : blatt.includes('zählt aktuell nicht'));
   }
   return {
@@ -4511,8 +4526,8 @@ ok(_keineSchande.treffer.length === 0, 'keine Schande steht im Feed',
 const _bmk = JSON.parse(K.eval(`JSON.stringify((function(){
   const pm = pmap();
   const nameOf = pid => (pm[pid] && pm[pid].name) || '?';
-  const paare = { personal_glanztag:'glanztag', personal_umsteiger:'umsteiger',
-                  personal_aufschwung:'aufschwung' };
+  // Der Umsteiger und der Aufschwung sind gestrichen; ihre Karten mit ihnen.
+  const paare = { personal_glanztag:'glanztag' };
   const T = _ambientTemplatePool(new Date(), pm, nameOf);
   const out = [];
   Object.keys(paare).forEach(key => {
@@ -4538,8 +4553,8 @@ const _bmk = JSON.parse(K.eval(`JSON.stringify((function(){
   });
   return out;
 })())`));
-ok(_bmk.length >= 3 && !_bmk.some(x => x.fehlt),
-   'die drei Bestmarken-Karten stehen im Pool',
+ok(_bmk.length >= 1 && !_bmk.some(x => x.fehlt),
+   'die Bestmarken-Karte steht im Pool',
    _bmk.filter(x => x.fehlt).map(x => x.key).join(', ') || String(_bmk.length));
 ok(_bmk.every(x => x.fehlt || x.n > 0),
    'jede Bestmarken-Karte nennt ueberhaupt einen Spieler',
@@ -4555,6 +4570,30 @@ const _bmkRechnung = _bmk.filter(x => !x.fehlt && x.n && !x.rechnung);
 ok(_bmk.some(x => x.rechnung) && _bmkRechnung.length === 0,
    'der Wert einer Bestmarken-Karte ist die Differenz der Quoten im Satz',
    _bmkRechnung.length ? _bmkRechnung[0].satz : 'stimmt');
+
+// „Das Kaltblut" misst einen Anteil und keinen Abstand: die Karte nennt nur
+// Halter des Rekords, und ihr grosser Wert ist der Anteil, den das „x von n"
+// im Satz ergibt — nicht ein zweites Mal gerechnet und anders gerundet.
+const _kbl = JSON.parse(K.eval(`JSON.stringify((function(){
+  const pm = pmap();
+  const nameOf = pid => (pm[pid] && pm[pid].name) || '?';
+  const v = _ambientTemplatePool(new Date(), pm, nameOf).find(x => x.key === 'personal_kaltblut');
+  if(!v) return {fehlt:true};
+  const r = chronicleRang('kaltblut') || [];
+  const halter = r.filter(x => x.wert === (r[0] || {}).wert).map(x => x.pid);
+  const k = v.make(() => 0.5);
+  if(!k) return {leer:true, n:r.length};
+  const d = k.dataRef || {};
+  const pids = d.ambientPids || (d.ambientPid ? [d.ambientPid] : []);
+  const m = String(k.desc).match(/([0-9]+) von ([0-9]+) Partien/);
+  return {n:pids.length, fremd:pids.filter(x => halter.indexOf(x) < 0).map(nameOf),
+    stimmt: !!m && parseInt(k.vv, 10) === Math.round(+m[1] / +m[2] * 100),
+    satz: k.vv + ' · ' + k.desc};
+})())`));
+ok(!_kbl.fehlt && !_kbl.leer && _kbl.n > 0 && _kbl.fremd.length === 0,
+   'die Kaltblut-Karte steht im Pool und nennt nur Halter des Rekords',
+   _kbl.fehlt ? 'fehlt' : _kbl.leer ? 'leer bei ' + _kbl.n + ' im Rennen' : (_kbl.fremd.join(', ') || _kbl.satz));
+ok(_kbl.stimmt, 'der Wert der Kaltblut-Karte ist der Anteil aus dem Satz darunter', _kbl.satz || '');
 
 // ── Kein Listentrenner im Fliesstext ────────────────────────────────
 // Ein Beleg wie „20 % aller 25 Siege endeten 10:9 · 5" ist fuer eine Zelle
@@ -6234,8 +6273,9 @@ const _rekFelder = JSON.parse(K.eval(`JSON.stringify((function(){
   // Spieltag; ein Rekord, der nur an einem anderen Tag wechselt, fiele
   // heraus, und dann gehoert er nicht in diese Liste.
   // Der Wiedereinstieg fehlt: seit eine Pause sechs Tage dauert, wechselt er
-  // an den echten Partien nur an Tagen, die dieser Lauf nicht sieht.
-  const NEU = ['damage_control','rollencoup','umsteiger','aufschwung','glanztag'];
+  // an den echten Partien nur an Tagen, die dieser Lauf nicht sieht. Die
+  // weichen Knie fehlen, weil eine Schattenseite keine Rekordkarte bekommt.
+  const NEU = ['damage_control','rollencoup','glanztag','kaltblut'];
   const neuGesehen = NEU.filter(id => karten.some(s => s.dataRef.rekordId === id));
   return {n:karten.length, fehlt:fehlt.slice(0, 6), falscherFall:falscherFall.slice(0, 3),
           ohneZeit:ohneZeit.slice(0, 3), basisFalsch:basisFalsch.slice(0, 3),
@@ -6254,7 +6294,7 @@ ok(_rekFelder.ohneZeit.length === 0, 'jede Rekordkarte traegt ihren Zeitpunkt',
 ok(_rekFelder.basisFalsch.length === 0,
    'der weitergegebene Grundwert ist der des Katalogs',
    _rekFelder.basisFalsch.join(', ') || 'alle');
-// Alle sechs sind der gemessene Stand. Die Schwelle steht auf dem gemessenen
+// Alle vier sind der gemessene Stand. Die Schwelle steht auf dem gemessenen
 // Wert und nicht darunter — jeder Rekord, der still uebersprungen wird,
 // kostet genau einen.
 ok(_rekFelder.neuGesehen.length === _rekFelder.neuN,
@@ -7105,7 +7145,13 @@ const _drei = JSON.parse(K.eval(`JSON.stringify((function(){
   if(!k.length) return {n:0};
   const roh = s => String(_newsDetailMitte(s) || '')
     .replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ');
-  const echt = roh(k[0]);
+  // Die Karte einer Chronik, die der Profileintrag ihres Halters ist. Es
+  // war die erste Karte des Tages; seit die Karten nach dem Wert mit Bonus
+  // ordnen [§C39], steht dort Johannes mit „Dem Beidfüßigen", der hinter
+  // seinem „Aufdreher" zurücksteht.
+  const eig = k.find(s => { const d = s.dataRef || {};
+    return (d.playerIds || []).some(p => (seasonTitleOf(p, d.sid) || {}).titleId === d.titleId); }) || k[0];
+  const echt = roh(eig);
   // Und der Fall, den die echten Daten an diesem Tag nicht hergeben: eine
   // Karte ueber eine Chronik, die NICHT der Profileintrag ihres Halters ist.
   const sid = k[0].dataRef.sid;

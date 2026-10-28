@@ -36,14 +36,23 @@ function _chronKlasse(tid){ return tid ? chronikStufe(tid) : ''; }
 // dasselbe Bauteil wie in den Rückblicken [§C27]. Vorher stand von den vier
 // Angaben, die den Wert einer Chronik bestimmen, keine einzige in der App:
 // wer ein Chronik-Blatt öffnete, sah die Bedingung und sonst nichts.
-function _chronFaktenHtml(def){
+//
+// `wert` ist die Größe des Halters. Mit ihm steht unter dem Ausschlag der
+// Schwelle, wie weit der Halter darüber liegt, und unter dem Prestige die
+// Rechnung aus Grundwert und Bonus [§C39]: „+116" allein ließ offen, warum
+// dieselbe Chronik im Vormonat 103 brachte. Ohne Halter steht der Grundwert
+// da, und dass mehr möglich ist.
+function _chronFaktenHtml(def, wert){
   if(!def || !CHRONIK_KLASSE_NAME[def.klasse]) return '';
-  const p = chronikPunkte(def.id);
+  const p = chronikPunkte(def.id, wert);
+  const z = chronikUeber(def.id, wert);
   return rcpZahlenHtml([
     {v:CHRONIK_KLASSE_NAME[def.klasse], l:'Klasse'},
     {v:CHRONIK_ART_NAME[def.kunst] || '—', l:'Art'},
-    {v:String(def.aus || 0).replace('.', ',') + ' \u03c3', l:'Ausschlag'},
-    p > 0 ? {v:'+' + p, l:'Prestige', ton:'gold'} : {v:'0', l:'Prestige'},
+    {v:chronikSigma(def.aus), l:'Ausschlag', d:z > 0 ? '+' + chronikSigma(z) : null},
+    p > 0 ? {v:'+' + p, l:'Prestige', ton:'gold',
+             d:z == null ? '+ Bonus' : CHRONIK_GRUNDWERT + ' + ' + chronikBonus(def.id, wert)}
+          : {v:'0', l:'Prestige'},
   ]);
 }
 
@@ -213,9 +222,11 @@ function _chronStripHtml(pid, teil){
   // läuft ist interessanter als der erste Monat der Liga-Geschichte.
   const cells = earned.slice(-12).reverse().map(r => {
     const t = r.title;
-    const tone = chronikTon(t);
+    // Dieselbe Farbe wie die Zelle der Liga-Chronik: die höchste Klasse des
+    // Monats, nicht die des Eintrags, der zählt [§C39].
+    const kl = chronikZellStufe(seasonTitles(r.sid), pid);
+    const tone = titleTone(CHRONIK_STUFE_TON[kl] || t.tone);
     const mon = String(r.label).split(' ')[0].slice(0,3);
-    const kl = _chronKlasse(t.titleId);
     return `<div class="chron-cell${r.live ? ' live' : ''}"
       style="--tt:${tone.c};--ttr:${tone.rgb}"${kl ? ` data-kl="${esc(kl)}"` : ''}
       data-season-table="${esc(r.sid)}">
@@ -337,7 +348,7 @@ function showDisziplin(tid, sid){
         def.beiname && def.beiname !== def.name ? `<span class="chron-kose"><i>Beiname im Profil</i>`
         + `<b>${esc(def.beiname)}</b></span>` : ''}
     </div>
-    ${_chronFaktenHtml(def)}
+    ${_chronFaktenHtml(def, eigene.length ? eigene[0].wert : undefined)}
     ${def.wie ? `<div class="tnote">${esc(def.wie)}</div>` : ''}
     ${beleg}
     ${rang.length
@@ -703,28 +714,29 @@ function ligaChronikMatrixHtml(){
   const rows = _lchronZeilen(cols);
   const aktiv = rows.filter(pid => ligaAktiv(pid));
   const ruhe = rows.length - aktiv.length;
-  // Die Legende nennt je Stufe, was sie bringt [§C39]: an der Farbe soll man
-  // ablesen, was ein Eintrag wert ist, gleich welcher Art.
-  const wert = st => PRESTIGE_CHRONIK_KLASSE[st] ? ` <b class="num">${PRESTIGE_CHRONIK_KLASSE[st]}</b>` : '';
+  // Die Legende nennt die Stufen [§C39]. Sie nannte daneben ihren Wert, 150,
+  // 100 und 50; seit jede Chronik außer einer Schattenseite denselben
+  // Grundwert bringt, stünde dreimal dieselbe Zahl da.
   return `${_lchronTabelle(cols, aktiv)}
     <div class="lchron-lg" aria-hidden="true">${LC_STUFEN.map(st =>
-      `<span data-kl="${st}">${esc(CHRONIK_KLASSE_NAME[st])}${wert(st)}</span>`).join('')}<span class="live">läuft noch</span></div>`
+      `<span data-kl="${st}">${esc(CHRONIK_KLASSE_NAME[st])}</span>`).join('')}<span class="live">läuft noch</span></div>`
     + (ruhe ? `<div class="ruhe-ende">${einblickHtml('ruhe_chronik', ruhe === 1 ? 'ein Spieler' : ruhe + ' Spieler')}</div>` : '');
 }
 // Die Zeilen der Matrix: alle, die in einer der Spalten gewertet wurden.
-// Sortiert nach dem PRESTIGE der gehaltenen Chroniken, dann nach ihrer Zahl,
-// dann nach Name. Nach der Zahl allein stand ein Monat mit drei billigen
-// Einträgen über einem mit einer legendären Chronik, und seit die Chroniken
-// nach ihrem Ausschlag verschieden viel wert sind [§C39], ist die Zahl gar
-// keine Ordnung mehr: „Der Wechselhafte" wiegt 50, „Die Wochenkrone" 150.
-// Gezählt wird nur, was in den sichtbaren Spalten steht — die Tabelle soll
-// die Ordnung erklären, die man sieht.
+// Sortiert nach dem PRESTIGE der Zellen, dann nach der Zahl aller Einträge,
+// dann nach Name. Gezählt wird je Monat der Eintrag, der in der Zelle steht
+// und fürs Prestige zählt (`chronikEintragVon`) [§C32], nur in den
+// sichtbaren Spalten — die Tabelle soll die Ordnung erklären, die man sieht.
+// Vorher zählte jeder Eintrag eines Monats mit; seit jede Chronik denselben
+// Grundwert bringt [§C39], war das nur noch ihre Zahl, und neun Einträge in
+// einem Monat standen über drei Monaten mit je einem.
 function _lchronZeilen(cols){
   const seen = {}, wert = {};
   cols.forEach(T => {
-    T.awarded.forEach(a => {
-      seen[a.pid] = (seen[a.pid] || 0) + 1;
-      wert[a.pid] = (wert[a.pid] || 0) + chronikPunkte(a.titleId);
+    T.awarded.forEach(a => { seen[a.pid] = (seen[a.pid] || 0) + 1; });
+    new Set(T.awarded.map(a => a.pid)).forEach(pid => {
+      const a = chronikEintragVon(T, pid);
+      wert[pid] = (wert[pid] || 0) + chronikPunkte(a.titleId, a.wert);
     });
     (T.empty || []).forEach(pid => { if(seen[pid] === undefined){ seen[pid] = 0; wert[pid] = 0; } });
   });
@@ -777,8 +789,12 @@ function _lchronTabelle(cols, rows){
             // Karriereende zu war.
             const bis = Math.max(...cols.filter(T => T.awarded.some(x => x.pid === pid)).map(T => seasonEnd(T.sid).getTime()));
             const zellen = cols.map(T => chronikEintragVon(T, pid));
+            // Die Stufe der ZELLE, nicht die ihres Eintrags [§C39]: die
+            // höchste Klasse, die der Spieler im Monat hält. Die Zahlen unter
+            // dem Namen zählen dieselben Farben, die man in der Zeile sieht.
+            const stufen = cols.map((T, k) => zellen[k] ? chronikZellStufe(T, pid) : '');
             const je = {};
-            zellen.forEach(a => { const st = a && chronikStufe(a.titleId); if(st) je[st] = (je[st] || 0) + 1; });
+            stufen.forEach(st => { if(st) je[st] = (je[st] || 0) + 1; });
             const zahl = LC_STUFEN.filter(st => je[st]).map(st => `<b data-kl="${st}">${je[st]}</b>`).join('');
             return `<tr${isFinite(bis) ? ` data-bis="${bis}"` : ''}>
             <td class="who" data-tplayer="${esc(pid)}"><div class="w">${avHtml(pmap()[pid])}`
@@ -786,8 +802,8 @@ function _lchronTabelle(cols, rows){
             ${cols.map((T, k) => {
               const a = zellen[k];
               if(!a) return `<td class="${T.live ? 'live' : ''}">${gewertet[k].has(pid) ? '<span class="lc-dash">—</span>' : ''}</td>`;
-              const t = chronikTon(a);
-              const kl = _chronKlasse(a.titleId);
+              const kl = stufen[k];
+              const t = titleTone(CHRONIK_STUFE_TON[kl] || a.tone);
               const mehr = T.awarded.filter(x => x.pid === pid).length - 1;
               // Gold glänzt, jede Zelle in ihrem eigenen Takt (`--k`), damit
               // nicht alle zugleich aufleuchten.
@@ -988,7 +1004,7 @@ function avatarRings(){
   // Woche und Tag gehören in den Schlüssel: um 23:59 wird ein Spieler des
   // Tages fertig, am Montag einer der Woche — ohne neue Partie, und ohne
   // sie hielt der Ring den alten bis zur nächsten.
-  const jetzt = new Date(), heute = jetzt.toISOString().slice(0, 10);
+  const jetzt = new Date(), heute = tagKey(jetzt);
   const key = matches.length + '_' + _cache.version + '_' + _wochenKey(jetzt)
     + '_' + heute + (_tagZu(heute) ? 'z' : '');
   if(_cache._avRingKey === key) return _cache._avRing;

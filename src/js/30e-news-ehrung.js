@@ -237,7 +237,7 @@ function _ehrungZeitraum(d){
   if(!d || !d.ab || !d.bis) return null;
   const jetzt = Date.now();
   const tag = t => tagKey(t) === tagKey(jetzt) ? 'heute'
-    : tagKey(t) === tagKey(jetzt - 864e5) ? 'gestern' : datumFmt(t, 'tm');
+    : tagKey(t) === gesternKey(jetzt) ? 'gestern' : datumFmt(t, 'tm');
   const von = t => { const w = tag(t); return (/^\d/.test(w) ? 'vom' : 'von') + '\u00a0' + w; };
   const uhr = t => '\u00a0' + datumFmt(t, 'uhr') + '\u00a0Uhr';
   if(d.ab === d.bis) return {vor:'Geholt in der Partie', wann:`${von(d.ab)},${uhr(d.ab)}`};

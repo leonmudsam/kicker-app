@@ -288,10 +288,24 @@ function bindCombo(inp){
     const rankElo=p=>gSim.careerElo[p.id]??p.elo; // Karriere-Elo für Sortierung
     const dispElo=p=>Math.round(gSim.elo[p.id]??cfg.start_elo); // Saison-Elo für Anzeige
     let arr=[...activePlayers()].sort((a,b)=>rankElo(b)-rankElo(a)).filter(p=>!taken.includes(p.id));
-    if(q)arr=arr.filter(p=>p.name.toLowerCase().includes(q.toLowerCase()));
+    const passt=p=>!q||p.name.toLowerCase().includes(q.toLowerCase());
+    arr=arr.filter(passt);
     aktiv=-1;inp.removeAttribute('aria-activedescendant');
+    // Ohne Vorschlag sagt die Liste, warum: wer schon in der Partie steht
+    // oder die Karriere beendet hat, ist kein Tippfehler. Dort stand für
+    // beide „Kein Treffer", als gäbe es den Namen nicht.
+    // Der Hinweis auf ein Karriereende trägt `data-ruhestand` wie die Liste
+    // der Ruheständler: er nennt den Namen, um zu sagen, dass er nicht zur
+    // Wahl steht [§C40].
+    const leer=()=>{
+      const da=players.find(p=>taken.includes(p.id)&&passt(p));
+      if(q&&da) return `<div class="combo-opt empty">${esc(da.name)} steht schon in dieser Partie</div>`;
+      const weg=players.find(p=>sichtbar(p)&&!ligaAktiv(p)&&passt(p));
+      if(q&&weg) return `<div class="combo-opt empty" data-ruhestand>${esc(weg.name)} hat die Karriere beendet</div>`;
+      return `<div class="combo-opt empty">Kein Treffer</div>`;
+    };
     list.innerHTML=arr.length ? arr.slice(0,8).map((p,i)=>`<div class="combo-opt" id="match-choice-${key}-${i}" role="option" aria-selected="false" data-pick="${p.id}">${esc(p.name)}<span class="ce">${dispElo(p)}</span></div>`).join('')
-      : `<div class="combo-opt empty">Kein Treffer</div>`;
+      : leer();
     list.classList.add('show');inp.setAttribute('aria-expanded','true');
     list.querySelectorAll('[data-pick]').forEach(o=>{
       // Den Eingabefokus erhalten; so klappt die Bildschirmtastatur nicht

@@ -2,7 +2,7 @@
 
 ## Regel
 
-- Dreiundsechzig Liga-Rekorde in fünf Kammern (8 Bestmarken, 18 Können, 7 Aktuelle Form, 17 Fügungen, 13 Schattenseiten), in dieser Reihenfolge in Leiste und Liste (`CHRON_KINDS.ord`). Die Kammer steht am Eintrag (`allzeit.kammer`), nicht aus `art` erraten.
+- Zweiundsechzig Liga-Rekorde in fünf Kammern (8 Bestmarken, 16 Können, 6 Aktuelle Form, 18 Fügungen, 14 Schattenseiten), in dieser Reihenfolge in Leiste und Liste (`CHRON_KINDS.ord`). Die Kammer steht am Eintrag (`allzeit.kammer`), nicht aus `art` erraten.
 - Die Siegquote zählt einmal. Nach dem Niveau fragen nur der beste Monat, der höchste Gipfel, die längste Siegesserie, die Form von jetzt und die beiden Positionen (`NIVEAU` in `tests/disziplinen`); jeder andere Rekord mit dem Grundwert des Könnens (100) fragt nach dem Abstand zum Eigenen [§C38], nach einer Teilmenge oder nach einer Folge und folgt der Siegquote gemessen mit r unter 0,75.
 - Die Karte nennt Zeitraum, Grundwert und Mindestbasis (`zeitraum`, `basis`, `mind`) und zeigt, wie weit der Halter vorn liegt (`_rekFeldHtml`, aus `chronicleRang`); der Kopf jeder Kammer sagt in einem Satz, was sie misst (`CHRON_KINDS.satz`). Kein Text beschreibt die App oder eine frühere Rechnung.
 - Ein Rekord hat keine Wertlatte, nur eine Stichprobe (Partien, Spieltage, Wochen, Niederlagen). Was ein Wert von sich aus braucht (erstes Glied, zwei Partien, eine Richtung, die sein Name verspricht: Sprung, Vorsprung, Aufschwung), bleibt; eine Teilmenge, die beschreibt, welche Partien zählen, ist keine Latte. Ein Abstand, der auf null rundet, ist keine Richtung.
@@ -13,9 +13,9 @@
 - Zwölf Gegenpaare tragen dieselbe Mindestbasis; ein `paar` (zwei Enden eines Werts mit Vorzeichen) zeigt zurück, und die Rennen schneiden sich nicht.
 - Fügungen tragen `zufall` (`quote`: erreichbar, mindestens die halbe Liga im Rennen; `fund`: darf selten und unbesetzt sein, höchstens die Hälfte leer) und wiegen 75 statt 100. Eine Laufbahn aus lauter Niederlagen erreicht keinen Rekord mit Grundwert 100.
 - Kein Halter trägt mehr als ein Viertel der Tafel; jeder gewertete Spieler mindestens einen Eintrag. Die Schandtafel (`art:'schatten'`) zählt nichts und fragt eher den Abstand zum Eigenen als das Niveau; kein Halter über zwei Fünftel davon, mindestens sechs Namen.
-- Dieselbe Frage auf zwei Zeitachsen bleibt EINE Disziplin (zwanzig tragen beide); ein neuer Rekord steht im Katalog neben seinem nächsten Verwandten. Was eine Beziehung zweier Spieler misst oder an der Spielzahl hängt, wird kein Rekord.
+- Dieselbe Frage auf zwei Zeitachsen bleibt EINE Disziplin (einundzwanzig tragen beide); ein neuer Rekord steht im Katalog neben seinem nächsten Verwandten. Was eine Beziehung zweier Spieler misst oder an der Spielzahl hängt, wird kein Rekord.
 - `cond` nennt jede Schwelle der Wertfunktion, `wie` sagt, wie gemessen wird, samt Nenner. Gestrichene Rekorde stehen namentlich in `STORY_ABGEMELDET`; eine ID wechselt nicht, wenn ein Eintrag seine Frage wechselt, und die ID eines gestrichenen Rekords wird nicht für eine neue Frage wiederbenutzt (die Folge der Tage im Soll heißt `sollstrecke`, nicht `kopfhoch`).
-- Ein Verhältnis gewonnener zu verlorenen Extremergebnissen (10:0 zu 0:10, 10:9 zu 9:10) ist kein Rekord: als Anteil ordnet es die Liga wie die Siegquote. Die Frage steht als Folge („Der Eiskalte") und im Monat („Das Kaltblut", „Der Zerstörer", „Der Widerstand").
+- Ein Verhältnis gewonnener zu verlorenen Extremergebnissen ist nur ein Rekord, wenn es die Liga nicht wie die Siegquote ordnet. 10:9 zu 9:10 folgt ihr gemessen mit r = 0,62 und steht als Paar: „Das Kaltblut" (Fügung) und „Die weichen Knie" (Schattenseite), ab zehn Zitterpartien, der Nenner sind die Zitterpartien. 10:0 zu 0:10 folgt ihr mit r = 0,98 und ist keiner; die Frage steht im Monat („Der Zerstörer", „Der Widerstand").
 
 ## Stellen
 
@@ -33,9 +33,9 @@ Wer besser spielt,
 gewinnt jede Quote und jede Serie — am Ende liegen alle Liga-Einträge bei
 denselben drei Spielern. Zweiundzwanzig von sechsunddreißig Rekorden
 fragten direkt nach Können, und drei Spieler hielten vierundzwanzig der
-achtunddreißig Haltungen. Heute sind es **dreiundsechzig Rekorde** in
-**fünf Kammern** — 18 Können, 7 Aktuelle Form, 8 Bestmarken, 17 Fügungen,
-13 Schattenseiten. Gemessen halten zehn der elf gewerteten Spieler zwischen
+achtunddreißig Haltungen. Heute sind es **zweiundsechzig Rekorde** in
+**fünf Kammern** — 16 Können, 6 Aktuelle Form, 8 Bestmarken, 18 Fügungen,
+14 Schattenseiten. Gemessen halten zehn der elf gewerteten Spieler zwischen
 fünf und elf Einträgen, die beiden Besten der Siegquote sechs und acht.
 **Die Kammer steht am Eintrag** (`allzeit.kammer`), sie wird nicht mehr aus
 `art` erraten. Abgeleitet war „Fügung, sonst Schatten, sonst Ereignis gleich
@@ -90,14 +90,34 @@ Einträge, und jeder neue Rekord dieser Art machte die Tafel nur länger.
 Das Niveau steht jetzt an sechs Stellen — „Der Maßstab", „Der höchste
 Gipfel", „Der Unaufhaltsame", „Der Lauf" und die beiden kompletten
 Positionen —, und die übrigen fragen, was die Siegquote nicht sagt: wie
-weit ein Ausschnitt der eigenen Partien vom eigenen Rest abweicht. Neu sind
-„Der Umsteiger" (die Partie nach einem Positionswechsel), „Der Aufschwung"
-(die letzten 25 gegen die Laufbahn davor), „Der Glanztag" (der beste
-Spieltag gegen die eigene Quote) und als Kehrseiten „Der Rost" und „Der
-Abschwung"; an den echten Partien liegen sie bei r zwischen −0,46 und
-+0,16 und gehören fünf verschiedenen Spielern. Sechs der gestrichenen behalten ihre
-Monatschronik: im Monat beginnen alle bei derselben Elo, und dort misst
-dieselbe Frage etwas anderes.
+weit ein Ausschnitt der eigenen Partien vom eigenen Rest abweicht: „Der
+Glanztag" (der beste Spieltag gegen die eigene Quote) und als Kehrseiten
+„Der Rost" und „Der Abschwung" (die letzten 25 gegen die Laufbahn davor);
+an den echten Partien liegen sie bei r zwischen −0,46 und +0,16. Sechs der
+gestrichenen behalten ihre Monatschronik: im Monat beginnen alle bei
+derselben Elo, und dort misst dieselbe Frage etwas anderes.
+**Drei Rekorde fielen, weil sie sich überschnitten.** „Der Umsteiger" (die
+Partie nach einem Positionswechsel) fragte, was der Wandler und die beiden
+Positionsrekorde schon beantworten; „Der Aufschwung" (die letzten 25 gegen
+die Laufbahn davor) stand neben „Dem Höhenflug", der dieselbe Richtung mit
+zwei gleichen Fenstern misst; „Neuland" über die Laufbahn wiederholte die
+Monatschronik gleichen Namens, die bleibt. Ihre gespeicherten Karten sind
+abgemeldet, die Hinweiskarten am Eintrag ihrer Sorte
+(`AMBIENT_ABGEMELDET`), weil deren ID nur das Zeitfenster trägt. An die
+Stelle der beiden Hinweiskarten tritt die des Kaltbluts
+(`personal_kaltblut`): ohne Ersatz wiederholte die Rotation in vierzig
+nachgespielten Tagen drei Thesen über dieselbe Person statt zwei.
+**Die Zitterpartie steht als Paar.** Ein Verhältnis gewonnener zu verlorenen
+Extremergebnissen war ausgeschlossen, weil es als Anteil die Liga wie die
+Siegquote ordnet. Für 10:9 gegen 9:10 gilt das nicht: gemessen folgt der
+Anteil der Siegquote mit r = 0,62, vorn steht ein Spieler aus der Mitte der
+Tabelle, und die Besten liegen um die Hälfte. „Das Kaltblut" bekommt deshalb
+zur Monatschronik die Laufbahn-Achse, „Die weichen Knie" stehen als
+Schattenseite daneben; beide ab zehn Zitterpartien, der Nenner sind die
+Zitterpartien und nicht alle Partien oder Pleiten — das unterscheidet sie
+vom Pechvogel, der die 9:10 durch alle Pleiten teilt. Für 10:0 gegen 0:10
+sind es r = 0,98 bei einer Handvoll Fällen je Spieler: eine zweite
+Siegquote, und kein Rekord.
 `tests/disziplinen` misst jeden Rekord mit dem Grundwert des Könnens gegen die
 Siegquote und fällt, sobald einer außerhalb von `NIVEAU` darüber steigt.
 „Die ruhige Hand" bleibt, weil sie den SPRUNG in engen Partien misst und
@@ -160,7 +180,7 @@ abgefragt, der Text steht in der Zeile.
 dieselbe Mindestbasis: sonst wäre eine Hälfte leichter zu halten als die
 andere. Keines ist mehr je Seite geeicht: Unaufhaltsamer und
 Durststrecke verlangen ihr erstes Glied, Wiedereinstieg und Rost vier
-Rückkehrspiele, Aufschwung und Abschwung fünfzig Partien.
+Rückkehrspiele, Kaltblut und weiche Knie zehn Zitterpartien.
 **Ein Rekord hat keine Wertlatte, nur eine Stichprobe.** Der Rekord ist
 der beste Wert, den es gibt, und nicht der beste über einer Latte. Siebzehn Rekorde trugen eine solche Latte — in Prozent („mindestens
 25 %", „höchstens 45 % Siegchance", „ein Sturmanteil zwischen 43 und
@@ -182,7 +202,7 @@ liegen, das schaffte ein einziger Spieler, und mit seinem Karriereende stand
 der Rekord leer. Sein Name verspricht keine Richtung, nur Ausgewogenheit;
 im Rennen steht jetzt jeder mit zwanzig Spielen je Position, und vorn, wer
 auf der schwächeren am nächsten an der Rechnung liegt. Wo der Name eine
-Richtung verspricht („Der Aufschwung", „Der Wiedereinstieg"), bleibt sie —
+Richtung verspricht („Der Wiedereinstieg", „Der Abschwung"), bleibt sie —
 aber erst ab einem sichtbaren Prozentpunkt: „−0 %-Punkte" stand sonst als
 Rückgang in der Liste.
 **Eine Kammer, die die Auslosung misst, wiegt 75.** Rollenwerte und
@@ -197,16 +217,16 @@ Gelegenheiten. Wer an zwanzig Spieltagen dabei war, wird an zwanzig
 gemessen — und genau deshalb erreicht ein solcher Anteil den, der weniger
 spielt. Gemessen verlangten 17 der 57 Rekorde eine Mindestzahl von vierzig
 Partien oder mehr, darunter die vier mit fünfzig Sturm- oder
-Abwehrspielen; „Auf Augenhöhe", „Der Wiedereinstieg" und „Der Umsteiger"
-fragen stattdessen nach den eigenen offenen Partien, Rückkehrspielen und
-Positionswechseln. Die Herleitung samt Messung steht in
+Abwehrspielen; „Auf Augenhöhe" und „Der Wiedereinstieg" fragen
+stattdessen nach den eigenen offenen Partien und Rückkehrspielen. Die Herleitung samt Messung steht in
 `mockup/README-staerken.md`.
 **Ein neuer Rekord steht neben seinem nächsten Verwandten.** Die
 Katalogreihenfolge IST die Reihenfolge im Rekorde-Reiter, und ein Eintrag
 am Ende der Liste erklärt sich niemandem: „Auf Augenhöhe" steht neben
 „Die ruhige Hand", „Der Sturmführer" neben „Der Abwehrchef", „Der
-Aufschwung" neben „Der Höhenflug", „Der Kaltstart", „Der Wiedereinstieg",
-„Der Umsteiger" und „Der letzte Ball" beieinander, „Der Glanztag" neben
+Kaltstart", „Der Wiedereinstieg" und „Der letzte Ball" beieinander, „Das
+Kaltblut" neben „Der Eiskalte", „Die weichen Knie" neben „Der Pechvogel",
+„Der Glanztag" neben
 „Der höchste Gipfel", „Der Sturmtreue" neben „Die Mauer", „Die
 Abwehrmauer" neben „Der Dauerstürmer" und „Der Rollencoup" neben dem
 kompletten Verteidiger. „Der Pendler" und „Der Wanderpass"
@@ -221,9 +241,9 @@ DARF eine hohe Mindestzahl verlangen: wer sie hält, hat die Frage über eine
 lange Strecke beantwortet, und Rekorde sind auch dazu da, Können zu
 belohnen. Er darf aber nicht nur das. Rekorde tragen deshalb
 `offen` im Katalog: ihre Bedingung ist mit **fünfzig Partien** in der
-Laufbahn erfüllbar — 41 der 60, unter anderem „Der Lauf", „Der
-Höhenflug", „Der Aufschwung", „Der letzte Ball", „Der Kaltstart", „Der
-Wiedereinstieg", „Der Umsteiger", „Der Glanztag", „Der Dauerstürmer", „Die
+Laufbahn erfüllbar — 42 der 62, unter anderem „Der Lauf", „Der
+Höhenflug", „Der letzte Ball", „Der Kaltstart", „Der Wiedereinstieg",
+„Das Kaltblut", „Der Glanztag", „Der Dauerstürmer", „Die
 Abwehrmauer", „Der Sturmtreue", „Die Mauer" und „Der Rollencoup". Sie
 fragen nach einer Teilmenge der eigenen Partien und nicht nach einer
 Gesamtzahl, und genau deshalb erreicht sie auch, wer weniger spielt. Nicht
@@ -337,8 +357,8 @@ Haltungen, sobald die Kandidaten das reine Niveau fragten. Die meisten
 fragen deshalb nach dem **Abstand zum Eigenen** [§C38] statt nach dem
 Niveau, und genau dadurch haben sie ihr Tor bestanden: „Die Ladehemmung"
 ging von r = −0,35 auf +0,14, „Die stumme Antwort" von −0,40 auf +0,06;
-„Der Rost" und „Der Abschwung" sind die Kehrseiten von Wiedereinstieg und
-Aufschwung. Ein gleichmäßiger Streu wäre gelogen — eine Schande MISST, dass
+„Der Rost" ist die Kehrseite des Wiedereinstiegs, „Der Abschwung" misst,
+ob jemand dauerhaft schwächer geworden ist. Ein gleichmäßiger Streu wäre gelogen — eine Schande MISST, dass
 jemand schlecht war —, also ist nur der Extremfall gedeckelt: kein Halter
 über zwei Fünftel der Schandtafel, und mindestens sechs Namen tragen mit.
 **Dieselbe Frage auf zwei Zeitachsen bleibt EINE Disziplin** [§13.1].

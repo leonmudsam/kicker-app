@@ -202,6 +202,21 @@ const ZUSTAND = ['period','ligaSeasonId','ligaSicht','awView','awPeriod','awSeas
   }
   ok(felder >= 4 && !angeboten.length, 'kein Feld der Eingabe bietet ' + RUHE + ' an',
      angeboten.length ? 'Feld ' + angeboten.join(', ') : felder + ' Felder');
+  // Wer seinen Namen tippt, liest, warum er nicht zur Wahl steht — dort stand
+  // „Kein Treffer", als gäbe es ihn nicht.
+  {
+    const f = page.locator('#main [data-combo]').first();
+    await f.focus();
+    await f.fill(RUHE);
+    await warte();
+    const hinweis = await page.evaluate(() => {
+      const e = document.querySelector('#main [data-combolist] [data-ruhestand]');
+      return e ? e.textContent.trim() : '';
+    });
+    await f.press('Escape');
+    await f.fill('');
+    ok(hinweis === RUHE + ' hat die Karriere beendet', 'die Spielerwahl sagt, dass ' + RUHE + ' die Karriere beendet hat', hinweis || 'kein Hinweis');
+  }
 
   // Die Profile der Aktiven sind Blätter und liegen außerhalb von `#main`.
   // Ein Bestwert darin ist ein Vergleich über die Laufbahn [§C40]: bester

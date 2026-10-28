@@ -952,9 +952,10 @@ function _ambientTemplatePool(now, pm, nameOf){
   };
 
   // ── Bestmarken gegen das Eigene [§C38] ──
-  //    Drei Fun Facts nennen den Halter eines Liga-Rekords, der gegen die
-  //    eigene Quote misst: der beste Spieltag, die Partie nach dem
-  //    Positionswechsel, die letzten 25 Partien. Hier standen vorher die
+  //    Der Fun Fact nennt den Halter eines Liga-Rekords, der gegen die
+  //    eigene Quote misst: den besten Spieltag. Die Partie nach dem
+  //    Positionswechsel und die letzten 25 Partien sind als Rekorde
+  //    gestrichen und ihre Karten mit ihnen [§C35]. Hier standen vorher die
   //    Anteile gewonnener Spieltage und Wochen und die Tore je Sturmspiel —
   //    alle drei zählten die Siegquote noch einmal und zeigten fast immer
   //    dieselben zwei Spieler. Diese drei gehören nicht automatisch dem, der
@@ -986,10 +987,39 @@ function _ambientTemplatePool(now, pm, nameOf){
   }});
   _bestmarke('personal_glanztag', 'glanztag', n => `Der Glanztag gehört ${n}`,
     (p, n, v) => `Am ${p.gtLabel} gewann ${n} ${p.gtW} von ${p.gtN} Partien, sonst sind es ${_ppGegen(p.gtW / p.gtN, v)} %`);
-  _bestmarke('personal_umsteiger', 'umsteiger', n => `${n} gewinnt nach dem Wechsel`,
-    (p, n, v) => `Nach einem Wechsel zwischen Sturm und Abwehr gewinnt ${n} ${pct(p.umW / p.umN)} % der Partien, sonst ${_ppGegen(p.umW / p.umN, v)} %`);
-  _bestmarke('personal_aufschwung', 'aufschwung', n => `${n} im Aufschwung`,
-    (p, n, v) => `${n} gewinnt ${pct(p.asNeu)} % der letzten 25 Partien, davor waren es ${_ppGegen(p.asNeu, v)} %`);
+
+  // ── Das Kaltblut: wem der letzte Ball gehört ──
+  //    Der Rekord misst den Anteil der 10:9 an den eigenen Partien mit 10:9
+  //    oder 9:10, nicht den Abstand zur eigenen Quote; deshalb eine eigene
+  //    Karte und nicht `_bestmarke`, deren Satz eine zweite Quote verlangt.
+  //    Sie steht an der Stelle der beiden gestrichenen Bestmarken-Karten:
+  //    ohne sie wiederholte die Rotation über vierzig Tage drei Fakten über
+  //    dieselbe Person statt zwei (`tests/ambient`). Gerechnet wird über
+  //    `chronicleRang` wie im Rekord-Blatt [§C27], damit die Karte nur den
+  //    Halter nennt, den auch der Rekorde-Reiter nennt.
+  T.push({ key:'personal_kaltblut', weight:2, make: () => {
+    const def = CHRONICLE_BY_ID.kaltblut, rank = _rekRang('kaltblut');
+    if(!def || !rank.length) return null;
+    const lead = _rekSpitze(rank), top = rank[0], nxt = rank[lead.length];
+    const P = _chronicleCtx().P || {}, p = P[top.pid], q = nxt && P[nxt.pid];
+    if(!p) return null;
+    const pc = x => Math.round(x.wert * 100);
+    const bild = _bRennen(rank.map(x => ({p:x.pid, v:x.wert, t:pc(x) + ' %'})));
+    if(lead.length > 1) return { cat:'personal', ic:def.ic, prio:4,
+      title:'Gleichstand beim Kaltblut',
+      desc:`${_namesOf(lead)} gewinnen je ${pc(top)} % der Partien, die 10:9 oder 9:10 ausgingen.`,
+      vv:pc(top) + ' %', vl:'der Zitterpartien',
+      dataRef:{ ambientPids: lead.slice(0, 2).map(x => x.pid), pairKind:'duel', bild } };
+    return { cat:'personal', ic:def.ic, prio:4,
+      title:`Das Kaltblut gehört ${nameOf(top.pid)}`,
+      desc:`${nameOf(top.pid)} gewann ${p.nail} von ${p.nail + p.bitter} Partien, die 10:9 oder 9:10 ausgingen, das sind ${pc(top)} %. Bestwert der Liga`
+        // Der Verfolger mit seinen Partien und nicht mit dem Anteil: 27 von
+        // 49 und 23 von 42 runden beide auf 55 %, und „folgt mit 55 %" stand
+        // gleichauf neben dem Bestwert.
+        + (q ? `, ${nameOf(nxt.pid)} folgt mit ${q.nail} von ${q.nail + q.bitter}.` : '.'),
+      vv:pc(top) + ' %', vl:'der Zitterpartien',
+      dataRef:{ ambientPid: top.pid, bild } };
+  }});
 
   // ── Der alte Zähler-Weg, nur noch für die Auszeichnungs-Vitrine ──
   T.push({ key:'award_potd_zahl', weight:1, make: () => {
@@ -1356,12 +1386,15 @@ function _ambientTemplatePool(now, pm, nameOf){
     // „Kein anderer ist gerade so nah dran" behauptete einen Vergleich, den
     // die Karte nie angestellt hat: der Spieler wird unter allen gezogen,
     // die ueberhaupt einen offenen Schritt haben, nicht als der naechste.
+    // Eine Monatschronik bringt den Grundwert und dazu, wie weit die
+    // Schwelle am Ende ueberboten ist [§C39] — der Gewinn ist hier also
+    // eine Untergrenze und steht als solche da.
     return { cat:'personal', ic:s.ic, prio:5,
       title:`${nameOf(pid)} kann „${s.name}" holen`,
       desc: (_bed ? `Dafür zählt: ${_bed}. ` : '')
         + (_stand ? _stand + '. ' : '')
         + (s.mein ? `${nameOf(pid)} steht bei ${s.mein}. ` : '')
-        + `Gelingt es, bringt das ${s.gewinn} Prestige.`,
+        + `Gelingt es, bringt das ${s.art === 'monat' ? 'mindestens ' : ''}${s.gewinn} Prestige.`,
       // Der grosse Wert war die Aussicht auf Prestige — eine Zahl, die
       // niemand geholt hat, im Goldrahmen einer gehaltenen Bestmarke
       // [§C25]. Er zeigt jetzt den eigenen Stand: das ist die Zahl, mit

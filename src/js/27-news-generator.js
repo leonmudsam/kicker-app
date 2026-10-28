@@ -34,7 +34,7 @@ function _buildStories(){
     const weekNum = Math.ceil((((t - yearStart) / 86400000) + 1) / 7);
     return t.getUTCFullYear() + '-W' + String(weekNum).padStart(2, '0');
   };
-  const todayKey = now.toISOString().slice(0,10);
+  const todayKey = tagKey(now);
   const weekKey  = isoWeek(now);
 
   // ── Abgeschlossene Zeiträume (v9.5) ──
@@ -45,11 +45,14 @@ function _buildStories(){
   // rechnen deshalb auf „gestern" (voller Kalendertag) bzw. die „vergangene
   // Woche" (letzte abgeschlossene ISO-Woche, Mo–So).
   const _dayMs = 86400000;
+  // Gestern und die Vorwoche nach dem Kalender: an einer Zeitumstellung
+  // ist ein Tag 23 oder 25 Stunden lang, und mit festen 24 begann „gestern"
+  // um 23 Uhr des Vorvortags oder um 1 Uhr.
   const _startOfToday     = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  const _startOfYesterday = _startOfToday - _dayMs;
+  const _startOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).getTime();
   const _weekStartOf = (ts) => wochenBeginn(ts).getTime();
   const _thisWeekStart = _weekStartOf(now.getTime());
-  const _prevWeekStart = _thisWeekStart - 7*_dayMs;
+  const _prevWeekStart = _weekStartOf(_thisWeekStart - 3 * _dayMs);
   const _yesterdayKey  = new Date(_startOfYesterday).toISOString().slice(0,10);
   let   _lastWeekKey   = isoWeek(new Date(_prevWeekStart));
 
@@ -2650,7 +2653,9 @@ function _buildStories(){
         // Sortiert verglichen: dieselben Halter in anderer Reihenfolge sind
         // kein Wechsel [§C33].
         if(a && a.pids.join(',') === neuKey) return;
-        const punkte = chronikPunkte(t.id);
+        // Mit dem Wert der Halter: der Bonus über der Schwelle gehört zum
+        // Wert des Eintrags [§C39], und nach ihm ordnet die Karte unten.
+        const punkte = chronikPunkte(t.id, n.wert);
         const artikel = t.klasse === 'legendaer' ? 'Eine legendäre' :
                         t.klasse === 'selten' ? 'Eine seltene' : 'Eine besondere';
         // Vier Faelle, vier Verben. „Julian holt ‚Der Nachzuegler'. Vorher
@@ -2832,10 +2837,13 @@ function _buildStories(){
                     zeileText:m.zeileText,
                     chronArt:m.t.kunst, aus:m.t.aus,
                     // `punkte` ist der tatsaechliche neue Beitrag, nicht der
-                    // ungedaempfte Katalogwert. Der bleibt als Grundwert fuer
-                    // das Detail nachvollziehbar.
+                    // ungedaempfte Wert des Eintrags. Der bleibt fuer das
+                    // Detail nachvollziehbar: Grundwert, Bonus und der Wert
+                    // der Halter, aus dem der Bonus rechnet [§C39] — am Tag
+                    // der Karte, nicht am Tag, an dem sie geoeffnet wird.
                     punkte:Object.values(m.prestigeDelta).reduce((s, x) => s + x, 0),
-                    grundwert:m.punkte, prestigeDelta:m.prestigeDelta,
+                    grundwert:CHRONIK_GRUNDWERT, bonus:m.punkte - CHRONIK_GRUNDWERT,
+                    wert:m.n.wert, prestigeDelta:m.prestigeDelta,
                     titelJeSpieler:m.titelJeSpieler,
                     // Steht diese Chronik in der Monatstafel? null heisst:
                     // die Frage stellt sich nicht [§C32].

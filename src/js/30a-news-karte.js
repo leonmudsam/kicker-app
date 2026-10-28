@@ -1069,11 +1069,25 @@ function _breakingHeroText(s){
 // schluesselt nach `toISOString()` und damit nach UTC, der Feed gruppiert
 // aber nach Ortszeit (`tagKey`) — an einer Tagesgrenze fielen beide
 // auseinander und die Karte des Tages haenge am falschen Tag.
+// Die Partien eines Kalendertags, nachgeschlagen statt gezählt: die
+// Konsolidierung fragt für jede Story nach ihrem Tag, und jede Frage ging
+// durch alle Partien der Liga, mit einem Datumsobjekt je Partie. Der Index
+// hängt an der Identität von `matches`, das bei jeder Änderung neu entsteht;
+// die Listen darin sind nur zu lesen.
+const _tagMsIndex = new WeakMap();
 function _newsTagMs(dayKey){
   try {
-    const out = [];
-    (matches || []).forEach(m => { if(tagKey(m.created_at) === dayKey) out.push(m); });
-    return out;
+    let je = _tagMsIndex.get(matches);
+    if(!je){
+      je = new Map();
+      (matches || []).forEach(m => {
+        const k = tagKey(m.created_at);
+        if(!je.has(k)) je.set(k, []);
+        je.get(k).push(m);
+      });
+      _tagMsIndex.set(matches, je);
+    }
+    return je.get(dayKey) || [];
   } catch(e){ return []; }
 }
 // Welche Karte ist die Karte des Tages? Nicht automatisch der Spieler des

@@ -457,7 +457,7 @@ const AMBIENT_SLOT_ROLLE = {
   // Der Stand — nach vorn
   form_best_wr:'stand', form_striker:'stand', form_defender:'stand',
   form_clutch:'stand', form_close_wins:'stand', form_most_active:'stand',
-  award_gold_leader:'stand', personal_umsteiger:'stand', personal_aufschwung:'stand',
+  award_gold_leader:'stand',
   award_total_leader:'stand', fun_award_leader:'stand', fun_leader:'stand',
   fun_top_scorer:'stand', season_title_race:'stand',
   personal_wr:'stand', personal_streak:'stand',
@@ -469,7 +469,7 @@ const AMBIENT_SLOT_ROLLE = {
   rivalry_close:'geschichte', chronicle_spotlight:'geschichte',
   award_latest_gold:'geschichte', personal_favourite_opp:'geschichte',
   personal_best_mate:'geschichte', personal_position:'geschichte',
-  personal_grinder:'geschichte', personal_glanztag:'geschichte',
+  personal_grinder:'geschichte', personal_glanztag:'geschichte', personal_kaltblut:'geschichte',
   insignium_stand:'geschichte', titelband_stand:'geschichte',
 };
 function _ambientRolleVon(key){ return AMBIENT_SLOT_ROLLE[key] || null; }

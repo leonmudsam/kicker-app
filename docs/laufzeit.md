@@ -269,7 +269,10 @@ Array ist nur zu lesen; `tests/prefix` sieht nach einem Generatorlauf nach,
 dass keines verändert wurde. Liegt die Liga nicht aufsteigend vor, gilt der
 alte Filter. Wer in welchem Monat gespielt hat, steht je Liste einmal in
 `_spielerJeSaison` (`WeakMap`), `_wochenKey` merkt sich Text und Zahl wie
-`mts`, und die Badge-Vergabe sucht ein Badge in einer Map statt in `BADGES`.
+`mts`, die Partien je Kalendertag stehen in `_tagMsIndex` (`WeakMap` an
+`matches`; die Konsolidierung des Feeds fragte für jede Story einmal durch
+die ganze Liga), und die Badge-Vergabe sucht ein Badge in einer Map statt
+in `BADGES`.
 
 **Der Verlauf eines Rekords** (`_rekVerlauf`, Schlüssel Rekord, Partienzahl
 und Version, Deckel 16) wird nach dem Öffnen des Blatts gerechnet, ein

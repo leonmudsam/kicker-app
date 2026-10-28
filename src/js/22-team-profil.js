@@ -464,13 +464,13 @@ function showMatchDetail(mid){
       const b=bd[id]; if(!b)return '';
       // Elo-Analyse zeigt exakte Werte mit 2 Nachkommastellen — keine Rundung wie überall sonst.
       const sign=v=>v>=0 ? '+'+komma(v,2) : komma(v,2);
-      // Die große Zahl ist, was die Partie wirklich verbucht hat — die Elo
-      // darunter springt um genau diese Zahl. Verbucht wird gerundet, und die
-      // Faktoren rechnen ungerundet; die Differenz steht als eigene Zeile
-      // „Rundung", damit die Liste weiter genau die große Zahl ergibt. Vorher
-      // stand oben der ungerundete Wert: „+56,54" über „−47 → 10".
+      // Die große Zahl ist die genaue Rechnung, die Summe der Zeilen darunter.
+      // Verbucht wird in ganzen Elo; das zeigt die Zeile „40 → 55" darunter,
+      // und die Analyse ist dazu da, zu zeigen, was vor dem Runden steht. Eine
+      // Zeile „Rundung" glich die große Zahl an den verbuchten Wert an —
+      // „+15,00" über „Rundung −0,12" — und versteckte damit die Rechnung.
       const hasDb=dbDeltas[id]!==undefined;
-      const headerDelta=hasDb?dbDeltas[id]:Math.round(b.finalDelta);
+      const headerDelta=b.finalDelta;
       // Saison-Elo: bei DB-Werten sind das gespeicherte Integer (deshalb keine zusätzliche
       // Präzision möglich). Bei Sim-Fallback geben wir 1 Nachkommastelle aus.
       const fmtElo=v=>Number.isInteger(v)?String(v):komma(v,1);
@@ -512,15 +512,14 @@ function showMatchDetail(mid){
           desc:(schwach?'Schwache':'Starke')+' Position · '+pz+(schwach?(b.won?'Bonus':'Schutz'):(b.won?'Dämpfer':'Abzug'))});
       }
       factors.push({label:'Spielbonus',val:b.matchBonus,desc:'fest +'+komma(b.matchBonus,2)+' je Match'});
-      if(!rowDiverged && zeigt(headerDelta-simDelta)) factors.push({label:'Rundung',val:headerDelta-simDelta,desc:'verbucht wird in ganzen Elo'});
       const factorRows=factors.map(f=>`<div class="ea-posten" style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:11px">
         <div><span style="color:var(--ink)">${f.label}</span> <span style="color:var(--muted);font-size:10px">${f.desc}</span></div>
         <span class="ea-wert" style="font-family:'Sometype Mono',monospace;font-weight:700;color:${f.val>=0?'var(--acid)':'var(--red)'}">${sign(f.val)}</span>
       </div>`).join('');
       // Gespeichert ist das Delta vom Tag der Partie; die Faktoren rechnen mit
       // den Einstellungen von heute. Stehen sie mehr als eine Elo auseinander,
-      // sagt die Zeile, was heute herauskäme, statt eine Summe zu behaupten.
-      const divergeNote=rowDiverged?`<div class="ea-heute" style="font-size:10px;color:var(--gold);margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);font-family:'Sometype Mono',monospace">Mit den heutigen Einstellungen wären es ${sign(simDelta)}</div>`:'';
+      // sagt die Zeile, was damals verbucht wurde.
+      const divergeNote=rowDiverged?`<div class="ea-heute" style="font-size:10px;color:var(--gold);margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);font-family:'Sometype Mono',monospace">Verbucht wurden ${dbDeltas[id]>=0?'+':''}${dbDeltas[id]} mit den Einstellungen vom Tag der Partie</div>`:'';
       return `<div class="ea-spieler" style="background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:12px;margin-top:8px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <span style="font-weight:700;font-size:13px">${esc(pname(id))}</span>

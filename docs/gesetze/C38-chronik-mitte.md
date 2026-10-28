@@ -3,7 +3,7 @@
 ## Regel
 
 - Ein Monatseintrag für die Mitte des Feldes misst den Abstand zum eigenen Niveau, nicht das Niveau: „Auf Augenhöhe", „Die Steigerung", „Der Sonntagsschuss", „Der Staffellauf", „Das Seitenbündnis" (beide über `_stUebergaenge`), „Der Quertreiber", „Die Tagesumkehr" (gegen den Erwartungswert 2·S·N durch n·(n−1)), und die sieben gegen das Eigene [§C39]: „Der Knipser", „Der Riegel" (vorne und hinten gegen das eigene Mittel), „Neuland", „Die Revanche", „Das Nachlegen", „Der Spielverderber" (je ein Ausschnitt der eigenen Partien gegen die Rechnung, `_stUeberSoll`) und „Die Lernkurve".
-- Dasselbe gilt für die Liga-Rekorde außerhalb des Niveaus [§C35]: „Der Wiedereinstieg" (Rückkehrspiele), „Der Umsteiger" (die Partie nach einem Positionswechsel), „Der Aufschwung" (die letzten 25 gegen die Laufbahn davor), „Der Glanztag" (der beste Spieltag) und ihre Kehrseiten „Der Rost" und „Der Abschwung" stellen einen Ausschnitt der eigenen Partien gegen den eigenen Rest.
+- Dasselbe gilt für die Liga-Rekorde außerhalb des Niveaus [§C35]: „Der Wiedereinstieg" (Rückkehrspiele), „Der Glanztag" (der beste Spieltag) und die Kehrseiten „Der Rost" und „Der Abschwung" (die letzten 25 gegen die Laufbahn davor) stellen einen Ausschnitt der eigenen Partien gegen den eigenen Rest.
 - Nicht eingebaut wird, was einen zweiten Monat zur Eichung braucht, nur mit einer Zufallsreferenz zu rechnen ist, Statistiksprache braucht, die 1,2 σ nicht erreicht oder an der Spielzahl hängt.
 
 ## Stellen

@@ -896,8 +896,12 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 .nd-ce-t{display:flex;flex-direction:column;min-width:0}
 .nd-ce-t b{font-size:12.5px;color:var(--ink)}
 .nd-ce-t small{font-size:10px;color:var(--muted);line-height:1.35}
-.nd-ce > em{font-style:normal;font-size:11px;font-weight:600;color:var(--ink2);text-align:right}
+/* Höchstens 9,5em breit: „kein zusätzliches Prestige" in einer Zeile ließ
+   dem Namen daneben bei 310 px 38 px, und „Johannes" war abgeschnitten. */
+.nd-ce > em{font-style:normal;font-size:11px;font-weight:600;color:var(--ink2);text-align:right;
+  display:flex;flex-direction:column;align-items:flex-end;max-width:9.5em}
 .nd-ce > em.g{color:var(--acid)}
+.nd-ce > em small{font-size:9.5px;font-weight:500;color:var(--muted)}
 
 /* ── Ein Wappen und eine Zahl [§C33] ──────────────────────────────── */
 .nd-hz{display:flex;flex-direction:column;align-items:stretch;gap:10px}

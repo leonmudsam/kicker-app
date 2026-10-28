@@ -122,10 +122,13 @@ function _ndMitteRoh(s){
       case 'chronik_geholt': {
         const def = (typeof SEASON_TITLE_BY_ID !== 'undefined')
           ? SEASON_TITLE_BY_ID[d.titleId] : null;
-        let podest = '', erfuellt = 0;
+        let podest = '', erfuellt = 0, halterWert = Number.isFinite(d.wert) ? d.wert : undefined;
         try {
           const C = _seasonTitleCtx(d.sid);
           const r = def && def.pick ? def.pick(C, new Set()) : null;
+          // Eine Karte von vor dem Bonus trägt keinen Wert; dann rechnet die
+          // Zahlenreihe mit dem Halter des Podests darunter [§C39].
+          if(halterWert === undefined && r && r.halter && r.halter.length && r.wert) halterWert = r.wert(r.halter[0]);
           if(r && r.rang && r.rang.length){
             erfuellt = r.rang.length;
             podest = _chronPodestHtml(r.rang.map(pid => {
@@ -143,7 +146,7 @@ function _ndMitteRoh(s){
             + _ndChronikEbenen(d, undefined, beitragIds, pid => laufbahn.werte[pid],
                             laufbahn.modus, d.titleId)
           : '';
-        return (def ? _chronFaktenHtml(def) : '')
+        return (def ? _chronFaktenHtml(def, halterWert) : '')
           + (cond ? `<div class="tnote">${esc(cond)}</div>` : '')
           + (podest ? `<div class="nd-section">Dieser Monat</div>${podest}` : '')
           + (erfuellt > 1 ? `<div class="tnote">${erfuellt} erfüllen die Bedingung in diesem Monat.</div>` : '')

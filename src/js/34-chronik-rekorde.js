@@ -281,7 +281,6 @@ function _chronicleCtx(bisMs){
     rwDelta:null, rwNeu:0, rwAlt:0,              // Mitspieler-Elo im Fenster
     ahN:0, ahQ:0, ahRest:0, ahDelta:null,        // offene Partien gegen die uebrigen
     weN:0, weW:0, weDelta:null, weRaus:0,        // die erste Partie nach einer Pause
-    umN:0, umW:0, umDelta:null, umRaus:0,        // die erste Partie nach einem Positionswechsel
     asDelta:null, asNeu:0, asAlt:0,              // die letzten 25 gegen die Laufbahn davor
     gtDelta:null, gtW:0, gtN:0, gtQ:0, gtLabel:'',  // der beste Spieltag gegen die eigene Quote
     // ── Teilmengen der Rohsicht. Sie fallen im Durchlauf ab, den es fuer
@@ -316,7 +315,6 @@ function _chronicleCtx(bisMs){
     stoppMax:0, stoppLabel:'',           // laengste beendete Siegesserie eines Gegners
     eiskaltLauf:0, eiskaltSpan:'',       // gewonnene Partien mit einem Tor Unterschied in Folge
     sollLauf:0, sollSpan:'',             // eigene Spieltage im Soll in Folge
-    nlN:0, nlW:0, nlDelta:null           // die ersten drei Partien neben jedem Partner
   });
 
   // Die Elo VOR jeder Partie, aus der zentralen Simulation. „Der Rueckenwind"
@@ -641,24 +639,9 @@ function _chronicleCtx(bisMs){
       p.weN = n; p.weW = w;
       if(n && rn){ p.weRaus = rw / rn; p.weDelta = w / n - p.weRaus; }
     }
-    // „Der Umsteiger": die erste Partie nach einem Wechsel von Sturm zu
-    // Abwehr oder umgekehrt, gegen alle Partien auf derselben Position wie
-    // davor. Eine Siegquote nach dem Wechsel ordnete die Liga wieder wie die
-    // Siegquote (0,93); gegen das Eigene steht vorn, wer den Wechsel besser
-    // verkraftet als der eigene Schnitt — gemessen der Letzte der Siegquote
-    // vor dem Ersten.
-    {
-      let n = 0, w = 0, rn = 0, rw = 0;
-      for(let i = 1; i < r.length; i++){
-        if(r[i].pos !== r[i - 1].pos){ n++; if(r[i].w) w++; }
-        else { rn++; if(r[i].w) rw++; }
-      }
-      p.umN = n; p.umW = w;
-      if(n && rn){ p.umRaus = rw / rn; p.umDelta = w / n - p.umRaus; }
-    }
-    // „Der Aufschwung": die letzten 25 Partien gegen die ganze Laufbahn
+    // „Der Abschwung": die letzten 25 Partien gegen die ganze Laufbahn
     // davor. „Der Höhenflug" vergleicht zwanzig mit zwanzig und misst einen
-    // Ausschlag; dieser misst, ob jemand dauerhaft besser geworden ist.
+    // Ausschlag; dieser misst, ob jemand dauerhaft schwächer geworden ist.
     if(r.length >= 50){
       const neu = r.slice(-25), alt = r.slice(0, -25);
       p.asNeu = neu.filter(x => x.w).length / neu.length;
@@ -815,23 +798,6 @@ function _chronicleCtx(bisMs){
           p.sollSpan = start === t ? dLabel(t) : (dLabel(start) + '–' + dLabel(t));
         }
       });
-    }
-    // „Neuland" ueber die Laufbahn: die ersten drei Partien neben jedem
-    // Partner gegen alle uebrigen, beide gegen die Rechnung [§C38]. Der
-    // Abstand zur Rechnung allein ordnete die Liga wie die Siegquote, weil die
-    // Elo jeden Monat neu beginnt; gegen den eigenen Abstand sonst faellt das
-    // weg.
-    {
-      const zahl = {}, neu = [], sonst = [];
-      r.forEach(x => {
-        if(!x.mate) return;
-        zahl[x.mate] = (zahl[x.mate] || 0) + 1;
-        (zahl[x.mate] <= 3 ? neu : sonst).push(x);
-      });
-      const ueber = a => (a.filter(x => x.w).length - a.reduce((s, x) => s + x.exp, 0)) / a.length;
-      p.nlN = neu.length;
-      p.nlW = neu.filter(x => x.w).length;
-      if(neu.length && sonst.length) p.nlDelta = ueber(neu) - ueber(sonst);
     }
     const dz = (a) => a.map(x => x.gf - x.ga);
     if(ausg.length >= 2){ p.ausgN = ausg.length; p.ausgSd = _sd(dz(ausg)); p.ausgMit = _mit(dz(ausg)); }
