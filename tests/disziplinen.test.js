@@ -836,16 +836,16 @@ ok(K.eval(`(function(){
 })()`), 'die Wochenkrone zaehlt dieselben Wochen wie _periodWinnerMap');
 
 // Jede Chronik außer einer Schattenseite bringt denselben Grundwert, 100,
-// gleich welcher Klasse und Art [§C39]; die Klasse ist Farbe und Name. Und
-// die Klasse folgt dem Ausschlag der Schwelle: ab 2,5 σ legendär, ab 1,9 σ
-// selten, darunter besonders. Vorher war die Klasse der Wert, 150, 100 und
-// 50: ein besonderer Monat brachte ein Drittel eines legendären, auch wenn
-// sein Halter die Latte weit hinter sich ließ.
-// Gesetzt, nicht gemessen, ist die Klasse zweier Chroniken, die nach einer
-// Wahrscheinlichkeit fragen: ein Monat oder ein Tag, den die Rechnung mit
-// höchstens zwei oder drei Prozent erwartet hat, ist legendär, auch wenn die
-// Werte darunter so schief liegen, dass die Schwelle in σ nah wirkt.
-const _KLASSE_GESETZT = ['unmoeglich', 'ausreisser2'];
+// gleich welcher Klasse und Art [§C39]; die Klasse ist Farbe und Name.
+// Vorher war die Klasse der Wert, 150, 100 und 50: ein besonderer Monat
+// brachte ein Drittel eines legendären, auch wenn sein Halter die Latte weit
+// hinter sich ließ.
+// Die Klasse sagt, was eine Chronik als Leistung bedeutet, nicht, wie weit
+// ihre Schwelle hinausliegt [§C39]. Sie folgte dem Ausschlag, und „Der Ausbruch", „Die
+// Lieblingszahl" und „Der Torhagel" waren legendär, „Der Souveraen"
+// besonders. Pruefbar sind die Grenzen: legendaer ist nur Koennen oder
+// Konstanz und nie eine Wende, eine Wende ist selten, eine Schattenseite
+// hat keine dieser Klassen.
 const _pkt = JSON.parse(K.eval(`JSON.stringify((function(){
   const bad=[], band=[], streu=[];
   SEASON_TITLES.forEach(t=>{
@@ -854,16 +854,17 @@ const _pkt = JSON.parse(K.eval(`JSON.stringify((function(){
     // und jede Art gleich.
     const soll = m.art==='schatten' ? 0 : 100;
     if(chronikPunkte(t.id) !== soll) bad.push(t.id + '=' + chronikPunkte(t.id));
-    const kl = ${JSON.stringify(_KLASSE_GESETZT)}.includes(t.id) ? 'legendaer'
-      : m.aus >= 2.5 ? 'legendaer' : m.aus >= 1.9 ? 'selten' : 'besonders';
-    if(kl !== m.klasse) band.push(t.id + ' (' + m.aus + ': ' + m.klasse + ' statt ' + kl + ')');
+    if((m.art === 'schatten') !== (m.klasse === 'schatten')) band.push(t.id + ': Schattenseite als ' + m.klasse);
+    if(m.wende && m.klasse !== 'selten') band.push(t.id + ': Wende als ' + m.klasse);
+    if(m.klasse === 'legendaer' && (m.wende || !['koennen', 'konstanz'].includes(m.art)))
+      band.push(t.id + ': legendaer als ' + m.art + (m.wende ? ' und Wende' : ''));
     // Jede positive Chronik trägt ihre Streuung, eine Schattenseite keine.
     if(m.art==='schatten' ? m.streu != null : !(m.streu > 0 && isFinite(m.streu))) streu.push(t.id);
   });
   return {bad, band, streu};
 })())`));
 ok(_pkt.bad.length === 0, 'jede Chronik bringt den Grundwert 100, gleich welcher Klasse', _pkt.bad.join(', '));
-ok(_pkt.band.length === 0, 'jede Klasse folgt dem Ausschlag ihrer Schwelle', _pkt.band.join(', '));
+ok(_pkt.band.length === 0, 'die Klasse folgt der Leistung: legendaer nur Koennen oder Konstanz ohne Wende, jede Wende selten, eine Schattenseite als Schattenseite', _pkt.band.join(', '));
 ok(_pkt.streu.length === 0, 'jede positive Chronik trägt ihre Streuung, keine Schattenseite',
    _pkt.streu.join(', '));
 // Die Streuung ist einmal gemessen und festgeschrieben. Die Fixture-Monate
@@ -1464,11 +1465,11 @@ ok(!_band.falsch.length && _band.gewaehlt > 0 && _bandSchatten,
      + ', ' + _band.zurueck + ' Spieler mit einem Monat dazwischen, ' + _band.gewaehlt + ' mit einer Wahl');
 
 ok(K.eval(`SEASON_TITLES.every(t =>
-     ['legendaer','selten','besonders'].indexOf(t.klasse) >= 0
+     ['legendaer','selten','besonders','schatten'].indexOf(t.klasse) >= 0
      && ['koennen','konstanz','fuegung','schatten'].indexOf(t.kunst) >= 0)`),
    'jede Chronik traegt eine gueltige Klasse und Art',
    K.eval(`SEASON_TITLES.filter(t =>
-     ['legendaer','selten','besonders'].indexOf(t.klasse) < 0
+     ['legendaer','selten','besonders','schatten'].indexOf(t.klasse) < 0
      || ['koennen','konstanz','fuegung','schatten'].indexOf(t.kunst) < 0)
      .map(t => t.id).join(', ')`));
 
