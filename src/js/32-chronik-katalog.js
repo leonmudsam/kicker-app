@@ -2068,19 +2068,21 @@ const DISZIPLINEN = [
   // diesem Monat keine einzige Chronik — die Fragen nach der Rechnung
   // schlägt niemand, den die Rechnung schon ganz oben sieht. Wie weit
   // jemand vorne steht, ist trotzdem eine Besonderheit; die Schwelle sorgt
-  // dafür, dass nicht jeder Erste sie hat.
+  // dafür, dass nicht jeder Erste sie hat. Hundert Elo erreichte die Liga in
+  // fünf Monaten zweimal (103 im Juni, 131 im Oktober); die übrigen Ersten
+  // lagen 40 bis 65 vorn.
   {id:'souveraen', name:'Der Souverän', short:'Souverän', ic:'souveraen', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Souveräne',
       art:'koennen',
-      klasse:'besonders', aus:1.67, streu:199,
+      klasse:'besonders', aus:1.82, streu:199,
       wie:'Die Monatstabelle ordnet nach der Elo dieses Monats. Gewertet wird der Abstand zum Zweiten: einen Vorsprung hat nur, wer vorne steht.',
-      cond:'Mit mindestens 70 Elo Vorsprung an der Spitze der Monatstabelle',
+      cond:'Mit mindestens 100 Elo Vorsprung an der Spitze der Monatstabelle',
       ...(_stWertung(
         (p, C) => C.rank.length >= 2,
         (p, C) => { const ich = C.rank.find(r => r.id === p.pid), zweit = C.rank.find(r => r.id !== p.pid);
           return ich && zweit ? ich.elo - zweit.elo : null; },
-        70,
+        100,
         (p, v, C) => `${Math.round(v)} Elo vor ${pname(C.rank.find(r => r.id !== p.pid).id)} auf Platz zwei`))}},
 
   {id:'angstfrei', name:'Ohne Angstgegner', short:'Angstfrei', ic:'geistBann', tone:'gold', art:'leistung',

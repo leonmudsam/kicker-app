@@ -6410,7 +6410,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.29.9c0212f7';
+const BUILD_VERSION='2026.10.29.916feb23';
 function forceReload(nach){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -31222,14 +31222,14 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Souveräne',
       art:'koennen',
-      klasse:'besonders', aus:1.67, streu:199,
+      klasse:'besonders', aus:1.82, streu:199,
       wie:'Die Monatstabelle ordnet nach der Elo dieses Monats. Gewertet wird der Abstand zum Zweiten: einen Vorsprung hat nur, wer vorne steht.',
-      cond:'Mit mindestens 70 Elo Vorsprung an der Spitze der Monatstabelle',
+      cond:'Mit mindestens 100 Elo Vorsprung an der Spitze der Monatstabelle',
       ...(_stWertung(
         (p, C) => C.rank.length >= 2,
         (p, C) => { const ich = C.rank.find(r => r.id === p.pid), zweit = C.rank.find(r => r.id !== p.pid);
           return ich && zweit ? ich.elo - zweit.elo : null; },
-        70,
+        100,
         (p, v, C) => `${Math.round(v)} Elo vor ${pname(C.rank.find(r => r.id !== p.pid).id)} auf Platz zwei`))}},
 
   {id:'angstfrei', name:'Ohne Angstgegner', short:'Angstfrei', ic:'geistBann', tone:'gold', art:'leistung',
