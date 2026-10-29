@@ -7165,21 +7165,23 @@ const _drei = JSON.parse(K.eval(`JSON.stringify((function(){
   if(!k.length) return {n:0};
   const roh = s => String(_newsDetailMitte(s) || '')
     .replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ');
-  // Die Karte einer Chronik, die der Profileintrag ihres Halters ist. Es
-  // war die erste Karte des Tages; seit die Karten nach dem Wert mit Bonus
-  // ordnen [§C39], steht dort Johannes mit „Dem Beidfüßigen", der hinter
-  // seinem „Aufdreher" zurücksteht.
-  const eig = k.find(s => { const d = s.dataRef || {};
-    return (d.playerIds || []).some(p => (seasonTitleOf(p, d.sid) || {}).titleId === d.titleId); }) || k[0];
-  const echt = roh(eig);
-  // Und der Fall, den die echten Daten an diesem Tag nicht hergeben: eine
-  // Karte ueber eine Chronik, die NICHT der Profileintrag ihres Halters ist.
   const sid = k[0].dataRef.sid;
   const T = seasonTitles(sid) || {awarded:[]};
   const je = {};
   (T.awarded || []).forEach(a => { (je[a.pid] = je[a.pid] || []).push(a); });
   const pid = Object.keys(je).filter(p => je[p].length > 1)[0] || '';
   const profil = pid ? seasonTitleOf(pid, sid) : null;
+  // Die Karte einer Chronik, die der Profileintrag ihres Halters ist. Es
+  // war die erste Karte des Tages, dann die über Leos „Wochenschluss"; seit
+  // „Das Zielwasser" Leos Profileintrag im August ist, trägt keine Karte
+  // dieses Tages mehr den Profileintrag ihres Halters. Dann wird sie gebaut
+  // wie der Fall darunter — gefragt ist das Blatt, nicht der Spieltag.
+  const eig = k.find(s => { const d = s.dataRef || {};
+    return (d.playerIds || []).some(p => (seasonTitleOf(p, d.sid) || {}).titleId === d.titleId); })
+    || (profil ? {dataRef:{type:'chronik_geholt', sid, titleId:profil.titleId, playerIds:[pid]}} : k[0]);
+  const echt = roh(eig);
+  // Und der Fall, den die echten Daten an diesem Tag nicht hergeben: eine
+  // Karte ueber eine Chronik, die NICHT der Profileintrag ihres Halters ist.
   const ander = pid ? je[pid].filter(a => a.titleId !== (profil || {}).titleId)[0] : null;
   const gebaut = ander ? roh({dataRef:{type:'chronik_geholt', sid,
     titleId:ander.titleId, playerIds:[pid]}}) : '';

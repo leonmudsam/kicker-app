@@ -405,16 +405,84 @@ function _stLaufbahnVor(p, C){
       [['a1', 'A'], ['a2', 'A'], ['b1', 'B'], ['b2', 'B']].forEach(([k, seite]) => {
         const id = m[k];
         if(!id) return;
-        const x = o[id] || (o[id] = {g:0, w:0, atk:0});
+        const x = o[id] || (o[id] = {g:0, w:0, atk:0, atkTore:0});
         x.g++;
         if(m.winner === seite) x.w++;
-        if(m[k + '_pos'] === 'atk') x.atk++;
+        if(m[k + '_pos'] === 'atk'){ x.atk++; x.atkTore += seite === 'A' ? m.score_a : m.score_b; }
       });
     });
     C._laufbahnVor = o;
   }
   const x = C._laufbahnVor[p.pid];
-  return x && x.g >= 30 ? {g:x.g, q:x.w / x.g, atk:x.atk / x.g} : null;
+  // `atkG` und `atkTore` zählen die Sturmspiele davor: „Das Zielwasser"
+  // stellt den Sturm des Monats gegen den eigenen Sturm der Laufbahn.
+  return x && x.g >= 30 ? {g:x.g, q:x.w / x.g, atk:x.atk / x.g, atkG:x.atk, atkTore:x.atkTore} : null;
+}
+// Die Duelle der Laufbahn vor diesem Monat, je Gegner: wie oft gegen ihn
+// gespielt und wie oft gewonnen. „Der Bannbrecher" und „Die Retourkutsche"
+// fragen, wie der Monat gegen den schwierigsten und den liebsten Gegner der
+// Laufbahn ausging. Einmal je Monat für alle gerechnet und am Kontext gemerkt.
+function _stDuelleVor(p, C){
+  if(!C._duelleVor){
+    const ab = seasonStart(C.sid).getTime(), o = {};
+    (matches || []).forEach(m => {
+      if(mts(m) >= ab) return;
+      [['a1', 'A', ['b1', 'b2']], ['a2', 'A', ['b1', 'b2']], ['b1', 'B', ['a1', 'a2']], ['b2', 'B', ['a1', 'a2']]]
+        .forEach(([k, seite, geg]) => {
+          const id = m[k];
+          if(!id) return;
+          geg.forEach(g => {
+            const fid = m[g];
+            if(!fid) return;
+            const x = ((o[id] = o[id] || {})[fid] = o[id][fid] || {g:0, w:0});
+            x.g++;
+            if(m.winner === seite) x.w++;
+          });
+        });
+    });
+    C._duelleVor = o;
+  }
+  return C._duelleVor[p.pid] || {};
+}
+// Der Gegner, gegen den die Laufbahn davor am schlechtesten (`richtung` -1)
+// oder am besten (+1) aussah, unter denen, gegen die es im Monat mindestens
+// vier Duelle und davor zehn gab. Schlecht und gut heißt: unter und über der
+// eigenen Quote der Laufbahn — ohne diese Grenze wählte die Chronik bei
+// jemandem mit nur einem solchen Gegner denselben für beide Fragen, und ein
+// Gegner, gegen den es wie gegen alle lief, stand als Angstgegner da.
+function _stDuellWende(p, C, richtung){
+  const lv = _stLaufbahnVor(p, C);
+  if(!lv) return null;
+  const vor = _stDuelleVor(p, C);
+  const l = Object.keys(p.gegnerGrp)
+    .filter(g => (vor[g] || {}).g >= 10 && p.gegnerGrp[g].length >= 4)
+    .map(g => ({fid:g, kq:vor[g].w / vor[g].g, kn:vor[g].g,
+                mq:_stQuoteRoh(p.gegnerGrp[g]), mn:p.gegnerGrp[g].length, mw:_stSiege(p.gegnerGrp[g])}))
+    .filter(x => richtung < 0 ? x.kq < lv.q : x.kq > lv.q)
+    .sort((a, b) => richtung * (b.kq - a.kq) || b.kn - a.kn || (a.fid < b.fid ? -1 : 1));
+  return l.length ? l[0] : null;
+}
+// Die Partien neben einem Partner, der seine zwei Partien davor verloren
+// hatte, gleich wann — auch über den Monatswechsel: „Die Stütze" fragt, was
+// an der Seite von jemandem geschieht, dem es gerade nicht läuft. Einmal je
+// Monat für alle Partien gerechnet und am Kontext gemerkt.
+function _stPartnerTief(p, C){
+  if(!C._partnerTief){
+    const ende = C.ms.length ? mts(C.ms[C.ms.length - 1]) : 0, imMonat = new Set(C.ms.map(m => m.id));
+    const zuletzt = {}, o = {};
+    (matches || []).filter(m => mts(m) <= ende).sort((a, b) => mts(a) - mts(b)).forEach(m => {
+      const ids = [m.a1, m.a2, m.b1, m.b2];
+      if(imMonat.has(m.id)) o[m.id] = new Set(ids.filter(id => id && (zuletzt[id] || []).length === 2
+        && zuletzt[id].every(w => !w)));
+      ids.forEach((id, i) => {
+        if(!id) return;
+        const w = (i < 2) === (m.winner === 'A');
+        zuletzt[id] = (zuletzt[id] || []).concat(w).slice(-2);
+      });
+    });
+    C._partnerTief = o;
+  }
+  return p.partien.filter(s => s.mate && C._partnerTief[s.mid] && C._partnerTief[s.mid].has(s.mate));
 }
 // Der eigene Anteil an allen Partien eines Monats, gemittelt über die Monate
 // davor mit mindestens acht eigenen Partien. „Der Aufdreher" und „Der Rückzug"
@@ -1592,7 +1660,21 @@ const DISZIPLINEN = [
   // Der Pechvogel darüber teilt die 9:10 durch alle eigenen Pleiten und fragt,
   // wie jemand verliert; hier ist der Nenner die Zitterpartie selbst, und
   // gefragt ist, auf welcher Seite der letzte Ball landet.
-  {id:'weicheknie', name:'Die weichen Knie', short:'Weiche Knie', ic:'weicheKnie', tone:'red', art:'schatten',
+  // Im Monat ist es das Gegenstück zur Monatschronik „Das Kaltblut", mit
+  // derselben Schwelle: achtzig Prozent der Partien um den letzten Ball.
+  {id:'weicheknie', name:'Die weichen Knie', short:'Knie', ic:'weicheKnie', tone:'red', art:'schatten',
+    monat:{
+      beiname:'Der Wankende',
+      art:'schatten',
+      klasse:'selten', aus:2.12,
+      wie:'Ein Tor Unterschied heißt: der letzte Ball hat entschieden. Gezählt werden die Niederlagen darunter. Das Gegenstück zum Kaltblut.',
+      cond:'Mindestens 80 % der Partien verloren, die mit einem Tor Unterschied endeten, ab 5 solchen Partien',
+      ...(_stWertung(
+        p => _stEinTor(p).length >= ST_TEIL,
+        p => 1 - _stQuote(_stEinTor(p)),
+        0.80,
+        (p, v) => { const a = _stEinTor(p);
+          return `${a.length - _stSiege(a)} von ${a.length} Partien um den letzten Ball verloren · ${pct(v)} %`; }))},
     allzeit:{
       kammer:'shame', basis:REKORD_GRUNDWERT.schatten,
       zeitraum:'Ganze Laufbahn, Partien mit 10:9 und 9:10',
@@ -1669,6 +1751,24 @@ const DISZIPLINEN = [
       val:p => p.angstQ != null ? 1 - p.angstQ : null,
       ev:p => `${Math.round((1-p.angstQ)*100)} % der ${p.angstN} Duelle gegen einen einzelnen Gegner verloren · ${p.angstN - p.angstW} Pleiten`
     }},
+
+  // Das Gegenstück zum Bannbrecher: gegen den Gegner, gegen den es in der
+  // Laufbahn am besten lief, im Monat schwächer als davor. Der Angstgegner
+  // darüber fragt nach einem Gegner ohne Sieg; hier zählt der Abstand zur
+  // eigenen Geschichte gegen ihn, nicht das Niveau.
+  {id:'retourkutsche', name:'Die Retourkutsche', short:'Retour', ic:'retourkutsche', tone:'red', art:'schatten',
+    monat:{
+      beiname:'Der Entzauberte',
+      art:'schatten',
+      klasse:'selten', aus:1.91,
+      wie:'Gewertet wird der Gegner, gegen den die eigene Laufbahn vor diesem Monat am besten aussah, unter denen mit mindestens zehn Duellen davor, vier Duellen im Monat und einer Quote über der eigenen Laufbahnquote. Verglichen wird die Quote gegen diesen Gegner in diesem Monat mit der Quote gegen denselben Gegner davor. Das Gegenstück zum Bannbrecher.',
+      cond:'Gegen den liebsten Gegner der Laufbahn mindestens 35 Prozentpunkte schwächer als davor, ab 10 Duellen davor, 4 im Monat und 30 Partien in der Laufbahn',
+      ...(_stWertung(
+        (p, C) => p.games >= TITLE_MIN_GAMES && _stDuellWende(p, C, 1) != null,
+        (p, C) => { const x = _stDuellWende(p, C, 1); return x.kq - x.mq; },
+        0.35,
+        (p, v, C) => { const x = _stDuellWende(p, C, 1);
+          return `${pct(v)} %-Punkte unter der Laufbahn gegen ${pname(x.fid)} · ${x.mw} von ${x.mn} Duellen, davor ${pct(x.kq)} % in ${x.kn}`; }))}},
 
   {id:'untersoll', name:'Das Untersoll', short:'Untersoll', ic:'sollMinus', tone:'red', art:'schatten',
     monat:{
@@ -2051,6 +2151,25 @@ const DISZIPLINEN = [
         0.35,
         (p,v)=>{const u=_stUebergaenge(p).filter(x=>x.wechsel);
       return `${pct(v)} %-Punkte weiter über der Rechnung neben dem Gegner von eben · ${u.filter(x=>x.bund).length} solche Partien, ${u.filter(x=>!x.bund).length} andere Wechsel`;}))}},
+
+  // Was neben einem Partner geschieht, dem es gerade nicht läuft: zwei
+  // Pleiten am Stück, gleich an welchem Tag. Der Schattenmann fragt nach
+  // einem einzelnen Partner über den ganzen Monat, hier zählt der Moment. Die
+  // zwei Partien davor zählen über den Monatswechsel: sonst hätte die erste
+  // Woche eines Monats keinen Partner, dem es gerade nicht läuft.
+  {id:'stuetze', name:'Die Stütze', short:'Stütze', ic:'stuetze', tone:'gold', art:'leistung',
+    monat:{
+      beiname:'Der Mutmacher',
+      art:'koennen',
+      klasse:'besonders', aus:1.83, streu:0.158,
+      wie:'Nur die Partien neben einem Partner, der die zwei Partien davor verloren hatte, auch an einem früheren Tag. Verglichen wird die Quote darin mit der Siegchance, die die Elo-Rechnung diesen Partien gab.',
+      cond:'Neben einem Partner nach zwei Pleiten am Stück mindestens 30 Prozentpunkte über der Rechnung, ab 5 solchen Partien',
+      ...(_stWertung(
+        (p, C) => p.games >= TITLE_MIN_GAMES && _stPartnerTief(p, C).length >= ST_TEIL,
+        (p, C) => _stUeberSoll(_stPartnerTief(p, C)),
+        0.30,
+        (p, v, C) => { const a = _stPartnerTief(p, C);
+          return `${_stSiege(a)} von ${a.length} Partien neben einem Partner nach zwei Pleiten · ${_ppZeichen(v)} %-Punkte über der Rechnung`; }))}},
 
   {id:'aufholjagd', name:'Die Antwort', short:'Antwort', ic:'antwort', tone:'gold', art:'leistung',
     monat:{
@@ -2559,6 +2678,24 @@ const DISZIPLINEN = [
         0.6,
         (p, v) => `${komma(v)} Tore mehr im Sturm · ${komma(p.atkGoals/p.atkG)} statt ${komma(p.gf/p.games)} in ${p.atkG} Sturmspielen`))}},
 
+  // Der Sturm des Monats gegen den eigenen Sturm der Laufbahn. Der Knipser
+  // vergleicht vorne mit hinten im selben Monat; hier steht vorne gegen
+  // vorne, einen Monat gegen alle davor. Gemessen hängt der Wert mit −0,1 an
+  // der Siegquote: treffen kann, wer sonst weniger trifft.
+  {id:'zielwasser', name:'Das Zielwasser', short:'Zielwasser', ic:'zielwasser', tone:'gold', art:'leistung',
+    monat:{
+      beiname:'Der Treffsichere',
+      art:'koennen',
+      klasse:'besonders', aus:1.27, streu:0.51,
+      wie:'Verglichen werden die Tore des eigenen Teams je Sturmspiel in diesem Monat mit denen je Sturmspiel der Laufbahn davor. Gefragt ist nicht, wer viele Tore sieht, sondern wer vorne mehr trifft als sonst vorne.',
+      cond:'Mindestens 0,65 Tore je Sturmspiel über den Sturmspielen der Laufbahn davor, ab 5 Sturmspielen im Monat, 20 davor und 30 Partien in der Laufbahn',
+      ...(_stWertung(
+        (p, C) => { const l = _stLaufbahnVor(p, C); return p.atkG >= ST_TEIL && !!l && l.atkG >= 20; },
+        (p, C) => { const l = _stLaufbahnVor(p, C); return p.atkGoals / p.atkG - l.atkTore / l.atkG; },
+        0.65,
+        (p, v, C) => { const l = _stLaufbahnVor(p, C);
+          return `${komma(v)} Tore mehr je Sturmspiel · ${komma(p.atkGoals/p.atkG)} statt ${komma(l.atkTore/l.atkG)} in ${p.atkG} Sturmspielen`; }))}},
+
   {id:'riegel', name:'Der Riegel', short:'Riegel', ic:'riegel', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Abräumer',
@@ -2611,6 +2748,26 @@ const DISZIPLINEN = [
         p => _stLernkurve(p).v,
         0.30,
         (p, v) => `gegen ${_stLernkurve(p).n} Gegner zuletzt ${_ppZeichen(v)} %-Punkte stärker als zu Beginn`))}},
+
+  // Die Laufbahn gegen einen Gegner auf den Monat geholt [§C39]: gegen den,
+  // gegen den es davor am schlechtesten lief, im Monat besser als davor. Die
+  // Lernkurve daneben vergleicht zwei Hälften desselben Monats, der Ausbruch
+  // eine einzelne Serie; hier steht die Quote gegen ihn in diesem Monat gegen
+  // die ganze Laufbahn davor. Gemessen an den echten Partien hängt der Wert
+  // mit 0,1 an der Siegquote und an der Spielzahl.
+  {id:'bannbrecher', name:'Der Bannbrecher', short:'Bannbruch', ic:'bannbruch', tone:'gold', art:'leistung',
+    monat:{
+      beiname:'Der Bannbrecher',
+      art:'koennen',
+      klasse:'besonders', aus:1.38, streu:0.136,
+      wie:'Gewertet wird der Gegner, gegen den die eigene Laufbahn vor diesem Monat am schlechtesten aussah, unter denen mit mindestens zehn Duellen davor, vier Duellen im Monat und einer Quote unter der eigenen Laufbahnquote. Verglichen wird die Quote gegen diesen Gegner in diesem Monat mit der Quote gegen denselben Gegner davor.',
+      cond:'Gegen den schwierigsten Gegner der Laufbahn mindestens 25 Prozentpunkte besser als davor, ab 10 Duellen davor, 4 im Monat und 30 Partien in der Laufbahn',
+      ...(_stWertung(
+        (p, C) => p.games >= TITLE_MIN_GAMES && _stDuellWende(p, C, -1) != null,
+        (p, C) => { const x = _stDuellWende(p, C, -1); return x.mq - x.kq; },
+        0.25,
+        (p, v, C) => { const x = _stDuellWende(p, C, -1);
+          return `${_ppZeichen(v)} %-Punkte gegen ${pname(x.fid)} · ${x.mw} von ${x.mn} Duellen, davor ${pct(x.kq)} % in ${x.kn}`; }))}},
 
   {id:'nachlegen', name:'Das Nachlegen', short:'Nachlegen', ic:'nachlegen', tone:'gold', art:'leistung',
     monat:{
@@ -2694,6 +2851,21 @@ const DISZIPLINEN = [
         p => { const b = _stTagBlock(p);
           return `${pct(_stQuote(b.spaet))} % ab der vierten Partie, ${pct(_stQuote(b.frueh))} % davor`; }))}},
 
+  // Das Gegenstück zum letzten Ball: die letzte Partie eines Spieltags
+  // gegen die übrigen desselben Tages, nur mit umgekehrtem Vorzeichen.
+  {id:'abgesang', name:'Der Abgesang', short:'Abgesang', ic:'abgesang', tone:'red', art:'schatten',
+    monat:{
+      beiname:'Der Schlussmüde',
+      art:'schatten',
+      klasse:'besonders', aus:1.46,
+      wie:'Gewertet wird die zeitlich letzte Partie jedes eigenen Spieltags gegen alle anderen dieses Tages. Drei Partien je Tag, damit „die letzte" überhaupt eine Auswahl ist. Das Gegenstück zum letzten Ball.',
+      cond:'In der letzten Partie eines Spieltags mindestens 35 Prozentpunkte schwächer als in den übrigen, ab 3 Spieltagen mit je 3 Partien',
+      ...(_stWertung(
+        p => _stSchlussBall(p, 3) != null,
+        p => -_stSchlussBall(p, 3).d,
+        0.35,
+        p => { const s = _stSchlussBall(p, 3); return `${pct(s.drin)} % in ${s.n} Schlussspielen, ${pct(s.raus)} % davor`; }))}},
+
   {id:'einbruch', name:'Der Einbruch', short:'Einbruch', ic:'einbruch', tone:'red', art:'schatten',
     monat:{
       beiname:'Der Nachlassende',
@@ -2748,6 +2920,22 @@ const DISZIPLINEN = [
         p => -_stLernkurve(p).v,
         0.25,
         (p, v) => `gegen ${_stLernkurve(p).n} Gegner zuletzt ${pct(v)} %-Punkte schwächer als zu Beginn`))}},
+
+  // Das Gegenstück zu Neuland: neben Partnern, mit denen es vor diesem
+  // Monat keine Partie gab, unter der Rechnung.
+  {id:'fremdeln', name:'Das Fremdeln', short:'Fremdeln', ic:'fremdeln', tone:'red', art:'schatten',
+    monat:{
+      beiname:'Der Fremdelnde',
+      art:'schatten',
+      klasse:'besonders', aus:1.58,
+      wie:'Nur die Partien neben einem Partner, mit dem es vor diesem Monat keine einzige gab. Verglichen wird die Quote darin mit der Siegchance, die die Elo-Rechnung diesen Partien gab. Das Gegenstück zu Neuland.',
+      cond:'Neben neuen Partnern mindestens 30 Prozentpunkte unter der Rechnung, ab 5 solchen Partien',
+      ...(_stWertung(
+        (p, C) => p.games >= TITLE_MIN_GAMES && _stNeuland(p, C).length >= ST_TEIL,
+        (p, C) => -_stUeberSoll(_stNeuland(p, C)),
+        0.30,
+        (p, v, C) => { const a = _stNeuland(p, C);
+          return `${_stSiege(a)} von ${a.length} Partien neben neuen Partnern · ${pct(v)} %-Punkte unter der Rechnung`; }))}},
 
   // Die schwaechste eigene Woche gegen die Rechnung. „Ohne schwache Woche"
   // fragt, ob es keine gab; hier zaehlt, wie tief die eine war.

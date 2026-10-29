@@ -33,6 +33,23 @@ const ok=(c,s)=>{checks++;if(!c)fails++;console.log((c?'  ok  ':'  ✗   ')+s);}
     await page.waitForFunction(()=>document.getElementById('main').getAttribute('aria-busy')!=='true');
     ok(await K('window.__renderZahl===1 && !!document.getElementById("histSel")'),'Ein Tap-Burst baut nur die zuletzt gewählte Ansicht');
 
+    // „Gesamt" und gleich danach ein Monat der noch stehenden Zeitleiste:
+    // die Wahl des Monats kam mit dem Zeitraum „Gesamt" an, und unter der
+    // Gesamttabelle standen die Werkzeuge jenes Monats, ohne als Geschichte
+    // gekennzeichnet zu sein [§C40].
+    const wahl=await K(`(() => {
+      tab='ranking';period='season';ligaSeasonId=null;render();
+      const b=[...document.querySelectorAll('#ligaSeasonPicker [data-saisonwahl]')]
+        .find(b=>b.dataset.saisonwahl!==currentSeason().id && matchesInSeason(b.dataset.saisonwahl).length);
+      document.querySelector('#main [data-period="all"]').click();
+      if(b) b.click();
+      return b ? b.dataset.saisonwahl : '';})()`);
+    await page.waitForFunction(()=>document.getElementById('main').getAttribute('aria-busy')!=='true');
+    const gewaehlt=await K(`({period,liga:ligaSeasonId,
+      lose:[...document.querySelectorAll('#main [data-seasontool]')].filter(e=>!e.closest('[data-bis]')).map(e=>e.dataset.sid)})`);
+    ok(wahl && gewaehlt.period==='season' && gewaehlt.liga===wahl && !gewaehlt.lose.length,
+      'Ein Monat, gewählt auf der Leiste, die nach „Gesamt" noch stand, zeigt diesen Monat als Geschichte: '+JSON.stringify({wahl,gewaehlt}));
+
     await K(`tab='ranking';render();window.__renderZahl=0;
       document.querySelector('[data-nav="teams"]').click();tab='history';render();`);
     await page.waitForTimeout(100);

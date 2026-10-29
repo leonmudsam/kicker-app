@@ -6410,7 +6410,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.28.78dfc6af';
+const BUILD_VERSION='2026.10.29.9c0227a1';
 function forceReload(nach){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -6742,6 +6742,12 @@ const ICONS = {
 
   pille:         `<path d="M4.7 13.6l8.9-8.9a4 4 0 015.7 5.7l-8.9 8.9a4 4 0 01-5.7-5.7z"/><path d="M9.2 9.1l5.7 5.7"/>`,
   weicheKnie:    `<path d="M9 3v6l3 4-3 4v4M15 3v6l-3 4 3 4v4"/><path d="M5.5 10.5l-2 1M5.5 15.5l-2-1M18.5 10.5l2 1M18.5 15.5l2-1"/>`,
+  bannbruch:     `<path d="M17.7 6.3A8 8 0 104 12"/><path d="M11 13l9-9"/><path d="M15 4h5v5"/>`,
+  stuetze:       `<circle cx="14" cy="6" r="3"/><path d="M3 14h4l3.5 3H17a2 2 0 000-4h-3.5"/><path d="M7 14v7H3"/>`,
+  zielwasser:    `<path d="M8 3c2.6 3 4 5.2 4 7a4 4 0 01-8 0c0-1.8 1.4-4 4-7z"/><circle cx="17" cy="16" r="4"/><circle cx="17" cy="16" r="1" fill="currentColor"/>`,
+  retourkutsche: `<path d="M20 12a8 8 0 11-3-6.2"/><path d="M17 2v4h-4"/><path d="M8.5 12h7"/>`,
+  abgesang:      `<path d="M9 18V6l8-2v9"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="14.5" cy="13" r="2.5"/><path d="M20 15v6M18 19l2 2 2-2"/>`,
+  fremdeln:      `<circle cx="7" cy="8" r="2.5"/><path d="M2.5 20c0-3 2-5 4.5-5s4.5 2 4.5 5"/><path d="M15 6.5a2.5 2.5 0 114 2c-1 .7-1.5 1.2-1.5 2.5"/><circle cx="17.5" cy="15" r=".7" fill="currentColor"/><path d="M14 20h7"/>`,
   schwarzerTag:  `<circle cx="12" cy="12" r="4.8" fill="currentColor" fill-opacity=".55"/><path d="M12 2.2v2.6M12 19.2v2.6M2.2 12h2.6M19.2 12h2.6M5.1 5.1l1.8 1.8M17.1 17.1l1.8 1.8M5.1 18.9l1.8-1.8M17.1 6.9l1.8-1.8"/>`,
   ueberholen:    `<circle cx="12" cy="16" r="2.4"/><path d="M3.5 18c0-6.5 4.2-10 10.5-10h6"/><path d="M17 5l3 3-3 3"/>`,
   rakete:        `<path d="M12 2.5c3 2 4.5 5.5 4.5 9.5l-2 3h-5l-2-3c0-4 1.5-7.5 4.5-9.5z"/><circle cx="12" cy="9" r="1.6"/><path d="M9.5 15l-2.5 2.5V20l2.5-1.5M14.5 15l2.5 2.5V20l-2.5-1.5M12 17.5V21"/>`,
@@ -17823,8 +17829,9 @@ function bind(){
       if(b && el.contains(b)) fn(b.dataset.saisonwahl);
     };
   };
-  swBind('awSeasonPicker', sid=>{awSeasonId=sid;_renderNachEingabe();});
+  swBind('awSeasonPicker', sid=>{awPeriod='season';awSeasonId=sid;_renderNachEingabe();});
   swBind('ligaSeasonPicker', sid=>{
+    period='season';
     ligaSeasonId = sid===currentSeason().id ? null : sid;
     _renderNachEingabe();window.scrollTo(0,0);});
 
@@ -29859,16 +29866,68 @@ function _stLaufbahnVor(p, C){
       [['a1', 'A'], ['a2', 'A'], ['b1', 'B'], ['b2', 'B']].forEach(([k, seite]) => {
         const id = m[k];
         if(!id) return;
-        const x = o[id] || (o[id] = {g:0, w:0, atk:0});
+        const x = o[id] || (o[id] = {g:0, w:0, atk:0, atkTore:0});
         x.g++;
         if(m.winner === seite) x.w++;
-        if(m[k + '_pos'] === 'atk') x.atk++;
+        if(m[k + '_pos'] === 'atk'){ x.atk++; x.atkTore += seite === 'A' ? m.score_a : m.score_b; }
       });
     });
     C._laufbahnVor = o;
   }
   const x = C._laufbahnVor[p.pid];
-  return x && x.g >= 30 ? {g:x.g, q:x.w / x.g, atk:x.atk / x.g} : null;
+  return x && x.g >= 30 ? {g:x.g, q:x.w / x.g, atk:x.atk / x.g, atkG:x.atk, atkTore:x.atkTore} : null;
+}
+function _stDuelleVor(p, C){
+  if(!C._duelleVor){
+    const ab = seasonStart(C.sid).getTime(), o = {};
+    (matches || []).forEach(m => {
+      if(mts(m) >= ab) return;
+      [['a1', 'A', ['b1', 'b2']], ['a2', 'A', ['b1', 'b2']], ['b1', 'B', ['a1', 'a2']], ['b2', 'B', ['a1', 'a2']]]
+        .forEach(([k, seite, geg]) => {
+          const id = m[k];
+          if(!id) return;
+          geg.forEach(g => {
+            const fid = m[g];
+            if(!fid) return;
+            const x = ((o[id] = o[id] || {})[fid] = o[id][fid] || {g:0, w:0});
+            x.g++;
+            if(m.winner === seite) x.w++;
+          });
+        });
+    });
+    C._duelleVor = o;
+  }
+  return C._duelleVor[p.pid] || {};
+}
+function _stDuellWende(p, C, richtung){
+  const lv = _stLaufbahnVor(p, C);
+  if(!lv) return null;
+  const vor = _stDuelleVor(p, C);
+  const l = Object.keys(p.gegnerGrp)
+    .filter(g => (vor[g] || {}).g >= 10 && p.gegnerGrp[g].length >= 4)
+    .map(g => ({fid:g, kq:vor[g].w / vor[g].g, kn:vor[g].g,
+                mq:_stQuoteRoh(p.gegnerGrp[g]), mn:p.gegnerGrp[g].length, mw:_stSiege(p.gegnerGrp[g])}))
+    .filter(x => richtung < 0 ? x.kq < lv.q : x.kq > lv.q)
+    .sort((a, b) => richtung * (b.kq - a.kq) || b.kn - a.kn || (a.fid < b.fid ? -1 : 1));
+  return l.length ? l[0] : null;
+}
+function _stPartnerTief(p, C){
+  if(!C._partnerTief){
+    const ende = C.ms.length ? mts(C.ms[C.ms.length - 1]) : 0, imMonat = new Set(C.ms.map(m => m.id));
+    const zuletzt = {}, o = {};
+    (matches || []).filter(m => mts(m) <= ende).sort((a, b) => mts(a) - mts(b)).forEach(m => {
+      const ids = [m.a1, m.a2, m.b1, m.b2];
+      if(imMonat.has(m.id)) o[m.id] = new Set(ids.filter(id => id && (zuletzt[id] || []).length === 2
+        && zuletzt[id].every(w => !w)));
+      ids.forEach((id, i) => {
+        if(!id) return;
+        const w = (i < 2) === (m.winner === 'A');
+        zuletzt[id] = (zuletzt[id] || []).concat(w).slice(-2);
+      });
+    });
+    C._partnerTief = o;
+  }
+  return p.partien.filter(s => s.mate && C._partnerTief[s.mid] && C._partnerTief[s.mid].has(s.mate));
 }
 function _stAnteilVor(p, C){
   if(!C._anteilVor){
@@ -30812,7 +30871,19 @@ const DISZIPLINEN = [
       ev:(p,v) => `${Math.round(v*100)} % aller ${p.losses} Niederlagen endeten 9:10 · ${p.bitter} Stück`
     }},
 
-  {id:'weicheknie', name:'Die weichen Knie', short:'Weiche Knie', ic:'weicheKnie', tone:'red', art:'schatten',
+  {id:'weicheknie', name:'Die weichen Knie', short:'Knie', ic:'weicheKnie', tone:'red', art:'schatten',
+    monat:{
+      beiname:'Der Wankende',
+      art:'schatten',
+      klasse:'selten', aus:2.12,
+      wie:'Ein Tor Unterschied heißt: der letzte Ball hat entschieden. Gezählt werden die Niederlagen darunter. Das Gegenstück zum Kaltblut.',
+      cond:'Mindestens 80 % der Partien verloren, die mit einem Tor Unterschied endeten, ab 5 solchen Partien',
+      ...(_stWertung(
+        p => _stEinTor(p).length >= ST_TEIL,
+        p => 1 - _stQuote(_stEinTor(p)),
+        0.80,
+        (p, v) => { const a = _stEinTor(p);
+          return `${a.length - _stSiege(a)} von ${a.length} Partien um den letzten Ball verloren · ${pct(v)} %`; }))},
     allzeit:{
       kammer:'shame', basis:REKORD_GRUNDWERT.schatten,
       zeitraum:'Ganze Laufbahn, Partien mit 10:9 und 9:10',
@@ -30884,6 +30955,20 @@ const DISZIPLINEN = [
       val:p => p.angstQ != null ? 1 - p.angstQ : null,
       ev:p => `${Math.round((1-p.angstQ)*100)} % der ${p.angstN} Duelle gegen einen einzelnen Gegner verloren · ${p.angstN - p.angstW} Pleiten`
     }},
+
+  {id:'retourkutsche', name:'Die Retourkutsche', short:'Retour', ic:'retourkutsche', tone:'red', art:'schatten',
+    monat:{
+      beiname:'Der Entzauberte',
+      art:'schatten',
+      klasse:'selten', aus:1.91,
+      wie:'Gewertet wird der Gegner, gegen den die eigene Laufbahn vor diesem Monat am besten aussah, unter denen mit mindestens zehn Duellen davor, vier Duellen im Monat und einer Quote über der eigenen Laufbahnquote. Verglichen wird die Quote gegen diesen Gegner in diesem Monat mit der Quote gegen denselben Gegner davor. Das Gegenstück zum Bannbrecher.',
+      cond:'Gegen den liebsten Gegner der Laufbahn mindestens 35 Prozentpunkte schwächer als davor, ab 10 Duellen davor, 4 im Monat und 30 Partien in der Laufbahn',
+      ...(_stWertung(
+        (p, C) => p.games >= TITLE_MIN_GAMES && _stDuellWende(p, C, 1) != null,
+        (p, C) => { const x = _stDuellWende(p, C, 1); return x.kq - x.mq; },
+        0.35,
+        (p, v, C) => { const x = _stDuellWende(p, C, 1);
+          return `${pct(v)} %-Punkte unter der Laufbahn gegen ${pname(x.fid)} · ${x.mw} von ${x.mn} Duellen, davor ${pct(x.kq)} % in ${x.kn}`; }))}},
 
   {id:'untersoll', name:'Das Untersoll', short:'Untersoll', ic:'sollMinus', tone:'red', art:'schatten',
     monat:{
@@ -31220,6 +31305,20 @@ const DISZIPLINEN = [
         0.35,
         (p,v)=>{const u=_stUebergaenge(p).filter(x=>x.wechsel);
       return `${pct(v)} %-Punkte weiter über der Rechnung neben dem Gegner von eben · ${u.filter(x=>x.bund).length} solche Partien, ${u.filter(x=>!x.bund).length} andere Wechsel`;}))}},
+
+  {id:'stuetze', name:'Die Stütze', short:'Stütze', ic:'stuetze', tone:'gold', art:'leistung',
+    monat:{
+      beiname:'Der Mutmacher',
+      art:'koennen',
+      klasse:'besonders', aus:1.83, streu:0.158,
+      wie:'Nur die Partien neben einem Partner, der die zwei Partien davor verloren hatte, auch an einem früheren Tag. Verglichen wird die Quote darin mit der Siegchance, die die Elo-Rechnung diesen Partien gab.',
+      cond:'Neben einem Partner nach zwei Pleiten am Stück mindestens 30 Prozentpunkte über der Rechnung, ab 5 solchen Partien',
+      ...(_stWertung(
+        (p, C) => p.games >= TITLE_MIN_GAMES && _stPartnerTief(p, C).length >= ST_TEIL,
+        (p, C) => _stUeberSoll(_stPartnerTief(p, C)),
+        0.30,
+        (p, v, C) => { const a = _stPartnerTief(p, C);
+          return `${_stSiege(a)} von ${a.length} Partien neben einem Partner nach zwei Pleiten · ${_ppZeichen(v)} %-Punkte über der Rechnung`; }))}},
 
   {id:'aufholjagd', name:'Die Antwort', short:'Antwort', ic:'antwort', tone:'gold', art:'leistung',
     monat:{
@@ -31689,6 +31788,20 @@ const DISZIPLINEN = [
         0.6,
         (p, v) => `${komma(v)} Tore mehr im Sturm · ${komma(p.atkGoals/p.atkG)} statt ${komma(p.gf/p.games)} in ${p.atkG} Sturmspielen`))}},
 
+  {id:'zielwasser', name:'Das Zielwasser', short:'Zielwasser', ic:'zielwasser', tone:'gold', art:'leistung',
+    monat:{
+      beiname:'Der Treffsichere',
+      art:'koennen',
+      klasse:'besonders', aus:1.27, streu:0.51,
+      wie:'Verglichen werden die Tore des eigenen Teams je Sturmspiel in diesem Monat mit denen je Sturmspiel der Laufbahn davor. Gefragt ist nicht, wer viele Tore sieht, sondern wer vorne mehr trifft als sonst vorne.',
+      cond:'Mindestens 0,65 Tore je Sturmspiel über den Sturmspielen der Laufbahn davor, ab 5 Sturmspielen im Monat, 20 davor und 30 Partien in der Laufbahn',
+      ...(_stWertung(
+        (p, C) => { const l = _stLaufbahnVor(p, C); return p.atkG >= ST_TEIL && !!l && l.atkG >= 20; },
+        (p, C) => { const l = _stLaufbahnVor(p, C); return p.atkGoals / p.atkG - l.atkTore / l.atkG; },
+        0.65,
+        (p, v, C) => { const l = _stLaufbahnVor(p, C);
+          return `${komma(v)} Tore mehr je Sturmspiel · ${komma(p.atkGoals/p.atkG)} statt ${komma(l.atkTore/l.atkG)} in ${p.atkG} Sturmspielen`; }))}},
+
   {id:'riegel', name:'Der Riegel', short:'Riegel', ic:'riegel', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Abräumer',
@@ -31741,6 +31854,20 @@ const DISZIPLINEN = [
         p => _stLernkurve(p).v,
         0.30,
         (p, v) => `gegen ${_stLernkurve(p).n} Gegner zuletzt ${_ppZeichen(v)} %-Punkte stärker als zu Beginn`))}},
+
+  {id:'bannbrecher', name:'Der Bannbrecher', short:'Bannbruch', ic:'bannbruch', tone:'gold', art:'leistung',
+    monat:{
+      beiname:'Der Bannbrecher',
+      art:'koennen',
+      klasse:'besonders', aus:1.38, streu:0.136,
+      wie:'Gewertet wird der Gegner, gegen den die eigene Laufbahn vor diesem Monat am schlechtesten aussah, unter denen mit mindestens zehn Duellen davor, vier Duellen im Monat und einer Quote unter der eigenen Laufbahnquote. Verglichen wird die Quote gegen diesen Gegner in diesem Monat mit der Quote gegen denselben Gegner davor.',
+      cond:'Gegen den schwierigsten Gegner der Laufbahn mindestens 25 Prozentpunkte besser als davor, ab 10 Duellen davor, 4 im Monat und 30 Partien in der Laufbahn',
+      ...(_stWertung(
+        (p, C) => p.games >= TITLE_MIN_GAMES && _stDuellWende(p, C, -1) != null,
+        (p, C) => { const x = _stDuellWende(p, C, -1); return x.mq - x.kq; },
+        0.25,
+        (p, v, C) => { const x = _stDuellWende(p, C, -1);
+          return `${_ppZeichen(v)} %-Punkte gegen ${pname(x.fid)} · ${x.mw} von ${x.mn} Duellen, davor ${pct(x.kq)} % in ${x.kn}`; }))}},
 
   {id:'nachlegen', name:'Das Nachlegen', short:'Nachlegen', ic:'nachlegen', tone:'gold', art:'leistung',
     monat:{
@@ -31811,6 +31938,19 @@ const DISZIPLINEN = [
         p => { const b = _stTagBlock(p);
           return `${pct(_stQuote(b.spaet))} % ab der vierten Partie, ${pct(_stQuote(b.frueh))} % davor`; }))}},
 
+  {id:'abgesang', name:'Der Abgesang', short:'Abgesang', ic:'abgesang', tone:'red', art:'schatten',
+    monat:{
+      beiname:'Der Schlussmüde',
+      art:'schatten',
+      klasse:'besonders', aus:1.46,
+      wie:'Gewertet wird die zeitlich letzte Partie jedes eigenen Spieltags gegen alle anderen dieses Tages. Drei Partien je Tag, damit „die letzte" überhaupt eine Auswahl ist. Das Gegenstück zum letzten Ball.',
+      cond:'In der letzten Partie eines Spieltags mindestens 35 Prozentpunkte schwächer als in den übrigen, ab 3 Spieltagen mit je 3 Partien',
+      ...(_stWertung(
+        p => _stSchlussBall(p, 3) != null,
+        p => -_stSchlussBall(p, 3).d,
+        0.35,
+        p => { const s = _stSchlussBall(p, 3); return `${pct(s.drin)} % in ${s.n} Schlussspielen, ${pct(s.raus)} % davor`; }))}},
+
   {id:'einbruch', name:'Der Einbruch', short:'Einbruch', ic:'einbruch', tone:'red', art:'schatten',
     monat:{
       beiname:'Der Nachlassende',
@@ -31865,6 +32005,20 @@ const DISZIPLINEN = [
         p => -_stLernkurve(p).v,
         0.25,
         (p, v) => `gegen ${_stLernkurve(p).n} Gegner zuletzt ${pct(v)} %-Punkte schwächer als zu Beginn`))}},
+
+  {id:'fremdeln', name:'Das Fremdeln', short:'Fremdeln', ic:'fremdeln', tone:'red', art:'schatten',
+    monat:{
+      beiname:'Der Fremdelnde',
+      art:'schatten',
+      klasse:'besonders', aus:1.58,
+      wie:'Nur die Partien neben einem Partner, mit dem es vor diesem Monat keine einzige gab. Verglichen wird die Quote darin mit der Siegchance, die die Elo-Rechnung diesen Partien gab. Das Gegenstück zu Neuland.',
+      cond:'Neben neuen Partnern mindestens 30 Prozentpunkte unter der Rechnung, ab 5 solchen Partien',
+      ...(_stWertung(
+        (p, C) => p.games >= TITLE_MIN_GAMES && _stNeuland(p, C).length >= ST_TEIL,
+        (p, C) => -_stUeberSoll(_stNeuland(p, C)),
+        0.30,
+        (p, v, C) => { const a = _stNeuland(p, C);
+          return `${_stSiege(a)} von ${a.length} Partien neben neuen Partnern · ${pct(v)} %-Punkte unter der Rechnung`; }))}},
 
   {id:'schwarzewoche', name:'Die schwarze Woche', short:'Woche', ic:'wochenloch', tone:'red', art:'schatten',
     monat:{
@@ -32178,7 +32332,7 @@ function _seasonTitleCtxRechnen(sid, bisMs){
       const gf = onA ? m.score_a : m.score_b;
       const ga = onA ? m.score_b : m.score_a;
       const pos = id===m.a1 ? m.a1_pos : id===m.a2 ? m.a2_pos : id===m.b1 ? m.b1_pos : m.b2_pos;
-      p.partien.push({win:w, gf, ga, pos, tag:day, wk:_wochenKey(m.created_at),
+      p.partien.push({win:w, gf, ga, pos, tag:day, wk:_wochenKey(m.created_at), mid:m.id,
                       mate:mateOf(id),
                       geg: onA ? [m.b1, m.b2] : [m.a1, m.a2], exp:myExp(id, m)});
       p.games++; p.gf += gf; p.ga += ga; p.gd += (gf - ga);
@@ -32445,7 +32599,7 @@ function _prevSeasonId(sid){
   return y + '-' + String(m).padStart(2,'0');
 }
 
-const SEASON_TITLES_FREEZE_V = 4;
+const SEASON_TITLES_FREEZE_V = 5;
 
 function _frozenTitlesOf(season){
   if(!season) return null;

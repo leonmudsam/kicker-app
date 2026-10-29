@@ -1689,6 +1689,99 @@ ok(_schZahl === 12 && _schOben.length === 0,
    'sie sind zwoelfmal vergeben, wie kalibriert, und nie an die ersten drei eines Monats',
    _schZahl + ' Haltungen' + (_schOben.length ? ' · oben: ' + _schOben.join(', ') : ''));
 
+// Sieben weitere Chroniken [§C39], Wert für Wert aus den rohen Partien
+// nachgerechnet und nicht nur ihr Halter: drei davon haben in den
+// Fixture-Monaten keinen oder genau einen, und ein Halterabgleich prüfte dort
+// fast nichts. Gegen die Laufbahn davor (Bannbrecher, Retourkutsche,
+// Zielwasser), neben dem Partner der Partie (Stütze, Fremdeln) und die
+// Gegenstücke des letzten Balls und des Kaltbluts. Monat, Kalendertag, ob ein
+// Tag zu ist, und der Beginn des Monats kommen aus der App; alles andere
+// zählt der Test selbst, über die ganze Laufbahn jedes Spielers.
+const _neu7 = ['bannbrecher','stuetze','zielwasser','retourkutsche','weicheknie','abgesang','fremdeln'];
+const _neu7Soll = (() => {
+  const info = JSON.parse(K.eval(`JSON.stringify(matches.reduce((o, m) =>
+    (o[m.id] = {sid:(seasonOf(m.created_at) || {}).id, tag:mdayKey(m), zu:_tagZu(mdayKey(m))}, o), {}))`));
+  const beginn = JSON.parse(K.eval(`JSON.stringify(['2026-06','2026-07','2026-08'].reduce((o, sid) =>
+    (o[sid] = seasonStart(sid).getTime(), o), {}))`));
+  const ms = realMatches.slice().sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  const seiten = m => [[m.a1, 'A', m.a1_pos, m.a2, [m.b1, m.b2]], [m.a2, 'A', m.a2_pos, m.a1, [m.b1, m.b2]],
+                       [m.b1, 'B', m.b1_pos, m.b2, [m.a1, m.a2]], [m.b2, 'B', m.b2_pos, m.b1, [m.a1, m.a2]]];
+  const L = {};
+  ms.forEach(m => { const z = info[m.id]; seiten(m).forEach(([id, sd, pos, mate, geg]) => {
+    (L[id] = L[id] || []).push({mid:m.id, sid:z.sid, tag:z.tag, zu:z.zu, ts:new Date(m.created_at).getTime(),
+      w:m.winner === sd, pos, mate, geg, gf:sd === 'A' ? m.score_a : m.score_b, ga:sd === 'A' ? m.score_b : m.score_a,
+      e:sd === 'A' ? m.exp_a : 1 - m.exp_a}); }); });
+  const q = a => a.filter(x => x.w).length / a.length;
+  const ueber = a => q(a) - a.reduce((t, x) => t + x.e, 0) / a.length;
+  // Wer vor einer Partie zwei Pleiten am Stück hatte, gleich an welchem Tag.
+  const tief = {};
+  Object.keys(L).forEach(id => L[id].forEach((x, i) => {
+    if(i >= 2 && !L[id][i-1].w && !L[id][i-2].w) (tief[x.mid] = tief[x.mid] || new Set()).add(id); }));
+  const W = (sid, pid, a) => {
+    const vor = L[pid].filter(x => x.ts < beginn[sid]);
+    const lauf = vor.length >= 30 ? {q:q(vor), atk:vor.filter(x => x.pos === 'atk')} : null;
+    const wende = r => { if(!lauf) return null;
+      const l = [...new Set([].concat(...a.map(x => x.geg)))]
+        .map(g => ({g, d:vor.filter(x => x.geg.includes(g)), m:a.filter(x => x.geg.includes(g))}))
+        .filter(x => x.d.length >= 10 && x.m.length >= 4).map(x => ({g:x.g, kq:q(x.d), kn:x.d.length, mq:q(x.m)}))
+        .filter(x => r < 0 ? x.kq < lauf.q : x.kq > lauf.q)
+        .sort((x, y) => r * (y.kq - x.kq) || y.kn - x.kn || (x.g < y.g ? -1 : 1));
+      return l.length ? l[0] : null; };
+    const partnerVor = new Set(vor.map(x => x.mate));
+    const neuland = a.filter(x => !partnerVor.has(x.mate));
+    const einTor = a.filter(x => Math.abs(x.gf - x.ga) === 1);
+    const tage = {}; a.filter(x => x.zu).forEach(x => (tage[x.tag] = tage[x.tag] || []).push(x));
+    const voll = Object.values(tage).filter(d => d.length >= 3);
+    const sturm = a.filter(x => x.pos === 'atk');
+    const bei = a.filter(x => tief[x.mid] && tief[x.mid].has(x.mate));
+    const tore = l => l.reduce((t, x) => t + x.gf, 0) / l.length;
+    const bann = wende(-1), retour = wende(1);
+    return {
+      bannbrecher: bann ? bann.mq - bann.kq : null,
+      retourkutsche: retour ? retour.kq - retour.mq : null,
+      zielwasser: lauf && lauf.atk.length >= 20 && sturm.length >= 5 ? tore(sturm) - tore(lauf.atk) : null,
+      stuetze: bei.length >= 5 ? ueber(bei) : null,
+      fremdeln: neuland.length >= 5 ? -ueber(neuland) : null,
+      weicheknie: einTor.length >= 5 ? 1 - q(einTor) : null,
+      abgesang: voll.length >= 3
+        ? q([].concat(...voll.map(d => d.slice(0, -1)))) - q(voll.map(d => d[d.length - 1])) : null
+    };
+  };
+  const out = {};
+  ['2026-06','2026-07','2026-08'].forEach(sid => Object.keys(L).forEach(pid => {
+    const a = L[pid].filter(x => x.sid === sid);
+    if(a.length < 8) return;
+    const w = W(sid, pid, a);
+    _neu7.forEach(id => { out[sid + ' ' + pid + ' ' + id] = w[id]; });
+  }));
+  return out;
+})();
+const _neu7Ist = JSON.parse(K.eval(`JSON.stringify(['2026-06','2026-07','2026-08'].reduce((o, sid) => {
+  const C = _seasonTitleCtx(sid);
+  Object.keys(C.P).forEach(pid => ${JSON.stringify(_neu7)}.forEach(id => {
+    const w = _chronikMonat(id), p = C.P[pid];
+    o[sid + ' ' + pid + ' ' + id] = w.mind(p, C) ? w.wert(p, C) : null; }));
+  return o; }, {}))`));
+const _neu7Ab = [...new Set(Object.keys(_neu7Soll).concat(Object.keys(_neu7Ist)))].filter(k => {
+  const a = _neu7Soll[k], b = _neu7Ist[k];
+  return (a == null) !== (b == null) || (a != null && Math.abs(a - b) > 1e-9);
+});
+const _neu7Werte = Object.keys(_neu7Ist).filter(k => _neu7Ist[k] != null).length;
+ok(_neu7Werte > 100 && _neu7Ab.length === 0,
+   'die sieben weiteren Monatschroniken rechnen jeden Wert wie die Nachrechnung aus den rohen Partien',
+   _neu7Ab.slice(0, 3).map(k => k.split(' ')[0] + ' ' + nm(k.split(' ')[1]) + ' ' + k.split(' ')[2] + ': '
+     + _neu7Ist[k] + ' statt ' + _neu7Soll[k]).join(' · ') || _neu7Werte + ' Werte');
+// Kalibriert an den echten Partien auf höchstens einen Halter je Monat: in
+// den drei Fixture-Monaten sechs Haltungen, keine Chronik mehr als zweimal.
+const _neu7Halter = JSON.parse(K.eval(`JSON.stringify(['2026-06','2026-07','2026-08'].reduce((o, sid) => {
+  seasonTitles(sid).awarded.filter(a => ${JSON.stringify(_neu7)}.includes(a.titleId))
+    .forEach(a => (o[a.titleId] = o[a.titleId] || []).push(sid.slice(5) + ' ' + pname(a.pid)));
+  return o; }, {}))`));
+const _neu7Zahl = Object.values(_neu7Halter).reduce((n, l) => n + l.length, 0);
+console.log('  sieben weitere:', Object.keys(_neu7Halter).map(id => id + ' ' + _neu7Halter[id].join('/')).join(' · '));
+ok(_neu7Zahl === 6 && Object.values(_neu7Halter).every(l => l.length <= 2),
+   'die sieben weiteren sind sechsmal vergeben, wie kalibriert, keine mehr als zweimal', _neu7Zahl + ' Haltungen');
+
 // ─── 17. v9.22: Ausnahmetage und alle Rekorde im Profil ─────────────
 console.log('\n=== 17. AUSNAHMETAGE UND ALLE REKORDE IM PROFIL ===');
 

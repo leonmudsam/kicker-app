@@ -428,6 +428,21 @@ const ICONS = {
   // Zwei Beine, deren Knie zueinander einknicken, daneben das Zittern:
   // „Die weichen Knie" verlieren die Partie, die der letzte Ball entscheidet.
   weicheKnie:    `<path d="M9 3v6l3 4-3 4v4M15 3v6l-3 4 3 4v4"/><path d="M5.5 10.5l-2 1M5.5 15.5l-2-1M18.5 10.5l2 1M18.5 15.5l2-1"/>`,
+  // ── Sechs Monatschroniken: Gegner der Laufbahn, Partner, Sturm, Schluss
+  // Ein Kreis, der nicht schließt, und ein Pfeil, der aus ihm herausführt:
+  // „Der Bannbrecher" kommt gegen den schwierigsten Gegner heraus.
+  bannbruch:     `<path d="M17.7 6.3A8 8 0 104 12"/><path d="M11 13l9-9"/><path d="M15 4h5v5"/>`,
+  // Eine Hand, die von unten hält: „Die Stütze" neben dem, der gerade fällt.
+  stuetze:       `<circle cx="14" cy="6" r="3"/><path d="M3 14h4l3.5 3H17a2 2 0 000-4h-3.5"/><path d="M7 14v7H3"/>`,
+  // Ein Tropfen und ein getroffenes Ziel: „Das Zielwasser".
+  zielwasser:    `<path d="M8 3c2.6 3 4 5.2 4 7a4 4 0 01-8 0c0-1.8 1.4-4 4-7z"/><circle cx="17" cy="16" r="4"/><circle cx="17" cy="16" r="1" fill="currentColor"/>`,
+  // Ein Pfeil, der zurückkommt und dorthin trifft, woher er kam:
+  // „Die Retourkutsche" des liebsten Gegners.
+  retourkutsche: `<path d="M20 12a8 8 0 11-3-6.2"/><path d="M17 2v4h-4"/><path d="M8.5 12h7"/>`,
+  // Eine Note und ein Pfeil nach unten: „Der Abgesang" in der letzten Partie.
+  abgesang:      `<path d="M9 18V6l8-2v9"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="14.5" cy="13" r="2.5"/><path d="M20 15v6M18 19l2 2 2-2"/>`,
+  // Einer allein und eine Frage daneben: „Das Fremdeln" neben neuen Partnern.
+  fremdeln:      `<circle cx="7" cy="8" r="2.5"/><path d="M2.5 20c0-3 2-5 4.5-5s4.5 2 4.5 5"/><path d="M15 6.5a2.5 2.5 0 114 2c-1 .7-1.5 1.2-1.5 2.5"/><circle cx="17.5" cy="15" r=".7" fill="currentColor"/><path d="M14 20h7"/>`,
   schwarzerTag:  `<circle cx="12" cy="12" r="4.8" fill="currentColor" fill-opacity=".55"/><path d="M12 2.2v2.6M12 19.2v2.6M2.2 12h2.6M19.2 12h2.6M5.1 5.1l1.8 1.8M17.1 17.1l1.8 1.8M5.1 18.9l1.8-1.8M17.1 6.9l1.8-1.8"/>`,
   ueberholen:    `<circle cx="12" cy="16" r="2.4"/><path d="M3.5 18c0-6.5 4.2-10 10.5-10h6"/><path d="M17 5l3 3-3 3"/>`,
   rakete:        `<path d="M12 2.5c3 2 4.5 5.5 4.5 9.5l-2 3h-5l-2-3c0-4 1.5-7.5 4.5-9.5z"/><circle cx="12" cy="9" r="1.6"/><path d="M9.5 15l-2.5 2.5V20l2.5-1.5M14.5 15l2.5 2.5V20l-2.5-1.5M12 17.5V21"/>`,
