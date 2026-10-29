@@ -313,7 +313,10 @@ function _seasonTitleCtxRechnen(sid, bisMs){
       const gf = onA ? m.score_a : m.score_b;
       const ga = onA ? m.score_b : m.score_a;
       const pos = id===m.a1 ? m.a1_pos : id===m.a2 ? m.a2_pos : id===m.b1 ? m.b1_pos : m.b2_pos;
-      p.partien.push({win:w, gf, ga, pos, tag:day, wk:_wochenKey(m.created_at),
+      // `mid` ist die Partie selbst: „Die Stütze" fragt, ob der Partner die
+      // zwei Partien davor verloren hatte, und die stehen in der Liste des
+      // Partners, nicht in dieser.
+      p.partien.push({win:w, gf, ga, pos, tag:day, wk:_wochenKey(m.created_at), mid:m.id,
                       mate:mateOf(id),
                       geg: onA ? [m.b1, m.b2] : [m.a1, m.a2], exp:myExp(id, m)});
       p.games++; p.gf += gf; p.ga += ga; p.gd += (gf - ga);
@@ -699,8 +702,15 @@ function _prevSeasonId(sid){
 //     September vierundsiebzig. Die vierte trägt je Halter seinen Wert
 //     (`wert`), aus dem der Bonus über der Schwelle rechnet [§C39]: ohne ihn
 //     brächte jeder eingefrorene Monat nur den Grundwert, und dieselbe
-//     Chronik zählte im laufenden Monat mehr als nach seinem Abschluss.
-const SEASON_TITLES_FREEZE_V = 4;
+//     Chronik zählte im laufenden Monat mehr als nach seinem Abschluss. Die
+//     fünfte kam mit sieben weiteren Chroniken (Bannbrecher, Stütze,
+//     Zielwasser, Retourkutsche, weiche Knie, Abgesang, Fremdeln), aus
+//     demselben Grund wie die zweite und dritte. Die sechste hob die
+//     Schwellen von dreiundzwanzig Chroniken, die in drei bis fünf von fünf
+//     Monaten vergeben wurden, brachte neunzehn neue und rundete jede
+//     Schwelle [§C39]: ein Monat, der mit den alten Schwellen eingefroren
+//     bliebe, trüge Einträge, die es heute nicht mehr gäbe.
+const SEASON_TITLES_FREEZE_V = 6;
 
 // Liest die eingefrorene Chronik einer Saison — aus dem seasons-Eintrag, egal
 // ob die Spalte als Objekt oder als JSON-Text ankommt. null = nicht eingefroren.

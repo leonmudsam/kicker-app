@@ -342,10 +342,10 @@ function showDisziplin(tid, sid){
             beide Namen standen nirgends nebeneinander. Er sitzt IM Kopf
             des Blatts, weil er zur Wertung gehoert und nicht zu ihren
             Zahlen — die Zahlenreihe darunter traegt die vier Angaben,
-            die ihren Wert bestimmen [§C39]. Heisst die Wertung schon wie
-            ihr Halter („Der Beidfuessige"), steht er nicht darunter noch
-            einmal: neun Blaetter trugen denselben Namen zweimal. */
-        def.beiname && def.beiname !== def.name ? `<span class="chron-kose"><i>Beiname im Profil</i>`
+            die ihren Wert bestimmen [§C39]. Er heisst nie wie die Wertung;
+            hiess er so wie bei „Der Beidfuessige", trug das Profil keinen
+            Beinamen, sondern den Namen der Wertung. */
+        def.beiname ? `<span class="chron-kose"><i>Beiname im Profil</i>`
         + `<b>${esc(def.beiname)}</b></span>` : ''}
     </div>
     ${_chronFaktenHtml(def, eigene.length ? eigene[0].wert : undefined)}

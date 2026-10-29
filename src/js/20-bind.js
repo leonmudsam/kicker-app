@@ -89,8 +89,16 @@ function bind(){
       if(b && el.contains(b)) fn(b.dataset.saisonwahl);
     };
   };
-  swBind('awSeasonPicker', sid=>{awSeasonId=sid;_renderNachEingabe();});
+  // Aus demselben Grund wie im Liga-Tab darunter setzt die Wahl den Zeitraum mit.
+  swBind('awSeasonPicker', sid=>{awPeriod='season';awSeasonId=sid;_renderNachEingabe();});
+  // Die Zeitleiste steht nur unter „Saison", ihre Wahl meint also immer die
+  // Saison. Der Zeitraum wird trotzdem mitgesetzt: die Ansicht baut sich erst
+  // nach dem Tippen auf, und wer „Gesamt" und gleich danach einen Monat der
+  // noch stehenden Leiste traf, bekam die Gesamttabelle mit den Werkzeugen
+  // jenes Monats darunter — nicht als Geschichte gekennzeichnet, weil die
+  // Rangliste das nur unter „Saison" tut [§C40].
   swBind('ligaSeasonPicker', sid=>{
+    period='season';
     ligaSeasonId = sid===currentSeason().id ? null : sid;
     _renderNachEingabe();window.scrollTo(0,0);});
 
