@@ -1177,14 +1177,38 @@ ok(_mai.tage < _mai.grenze && _mai.vergeben === 0,
    'ein Monat unter der Spieltag-Grenze bekommt keine Chronik',
    _mai.tage + ' Spieltage, Grenze ' + _mai.grenze + ', vergeben ' + _mai.vergeben);
 
+// Fuenf echte Monate statt drei: alle Partien der Liga bis Ende Oktober
+// (`fixtures/oktober.txt`), in einer zweiten Laufzeit. An drei Monaten liess
+// sich nicht sagen, ob eine Chronik in jedem dritten Monat vergeben wird oder
+// in jedem zweiten — und genau das ist die Frage der Seltenheit [§C39]. Die
+// Siegchancen stehen dort, wie die Liga sie heute rechnet; in `matches.txt`
+// stehen fuer dieselben Partien noch die von damals, und mit ihnen hielt Leon
+// im Juni eine Chronik, die er in der App nie hatte.
+const HERBST_MON = ['2026-06','2026-07','2026-08','2026-09','2026-10'];
+const KH = (() => {
+  const {K:k, setNow} = require('./runtime.js').createRuntime();
+  const liga = fs.readFileSync(DIR + '/fixtures/oktober.txt', 'utf8').trim().split(';').map((row, i) => {
+    const f = row.split(',').map(Number), pos = j => f[4+j] === 0 ? 'atk' : 'def';
+    return {id:'o'+String(i).padStart(4,'0'), a1:IDS[f[0]], a2:IDS[f[1]], b1:IDS[f[2]], b2:IDS[f[3]],
+      a1_pos:pos(0), a2_pos:pos(1), b1_pos:pos(2), b2_pos:pos(3), score_a:f[8], score_b:f[9],
+      winner:f[10]===0?'A':'B', exp_a:f[11]/1000, created_at:new Date(f[12]*1000).toISOString(), deltas:{}};
+  });
+  setNow(new Date('2026-10-29T20:00:00Z').getTime());
+  k(`players = ${JSON.stringify(NAMES.map((n,i)=>({id:IDS[i],name:n,hidden:false,elo:0,atk:0.5,avatar_id:null})))};
+    matches = ${JSON.stringify(liga)}; seasons = []; invalidateCache();
+    const _d = new Map(simulateEloWithSliders(matches).history.map(h => [h.matchId, h.deltas]));
+    matches.forEach(m => { m.deltas = _d.get(m.id) || {}; }); invalidateCache(); 0`);
+  return k;
+})();
+
 // Wert vor Haeufigkeit: LEISTUNG vor EREIGNIS vor SCHATTEN, und innerhalb
 // jedes Blocks moeglichst SELTEN vor HAEUFIG. Nicht gegen eine Namensliste
 // geprueft, sondern gegen die echten Daten — wie oft trifft eine Bedingung
 // ueberhaupt zu? Damit haelt der Test das Gesetz fest, nicht einen
 // Katalogstand.
-const TREFFER = JSON.parse(K.eval(`(function(){
+const TREFFER = JSON.parse(KH(`(function(){
   const n={};
-  ['2026-05','2026-06','2026-07','2026-08'].forEach(sid=>{
+  ${JSON.stringify(HERBST_MON)}.forEach(sid=>{
     const C=_seasonTitleCtx(sid);
     // Ein Monat unter der Spieltag-Grenze bekommt gar keine Chronik. Seine
     // Werte zaehlen deshalb auch nicht als Treffer — sonst misst der Test
@@ -1197,7 +1221,7 @@ const TREFFER = JSON.parse(K.eval(`(function(){
   });
   return JSON.stringify(n);
 })()`));
-const KAT = JSON.parse(K.eval("JSON.stringify(SEASON_TITLES.map(t=>({id:t.id,art:t.art})))"));
+const KAT = JSON.parse(K.eval("JSON.stringify(SEASON_TITLES.map(t=>({id:t.id,art:t.art,kunst:t.kunst})))"));
 const ARTRANG = {leistung:0, ereignis:1, schatten:2};
 let artOk = true, artWo = '';
 for(let i = 1; i < KAT.length; i++){
@@ -1211,9 +1235,12 @@ ok(artOk, 'Leistung steht vor Ereignis steht vor Schatten', artWo);
 // die auch einen Liga-Rekord tragen, stehen dort, wo die Rekord-Reihenfolge
 // sie braucht — sie lassen sich nicht frei einsortieren. Geprueft wird
 // deshalb, dass die erste Haelfte eines Blocks im Schnitt seltener zutrifft
-// als die zweite.
-Object.keys(ARTRANG).forEach(art => {
-  const B = KAT.filter(t => t.art === art);
+// als die zweite. Ein Block ist Art und Kammer zusammen, so wie
+// `SEASON_TITLES` sortiert: die Konstanz steht hinter dem Koennen, mit
+// eigenen Ausschlaegen, und ueber beide hinweg verglich der Test die
+// seltenste Konstanz mit dem haeufigsten Koennen.
+[...new Set(KAT.map(t => t.art + '/' + t.kunst))].forEach(art => {
+  const B = KAT.filter(t => t.art + '/' + t.kunst === art);
   if(B.length < 4) return;
   const m = Math.floor(B.length / 2);
   const schnitt = L => L.reduce((a, t) => a + TREFFER[t.id], 0) / L.length;
@@ -1249,12 +1276,31 @@ ok(ICS.every(d => K.eval(`!!ICONS[${JSON.stringify(d.ic)}]`)),
 // [§C39]; sie ist keine Volkszaehlung.
 const _klasseVon = JSON.parse(K.eval(
   "JSON.stringify(SEASON_TITLES.reduce((o,t)=>(o[t.id]=t.klasse,o),{}))"));
-const _monN = K.eval(`['2026-05','2026-06','2026-07','2026-08']
-  .filter(sid=>_seasonTitleCtx(sid).days >= CHRONIK_MIN_TAGE).length`);
-const _zuOft = Object.keys(TREFFER).filter(id => TREFFER[id] > _monN);
-ok(_zuOft.length === 0,
-   'keine Bedingung findet mehr Halter als die Liga Monate hat',
-   _monN + ' Monate, zu oft: ' + _zuOft.map(id => id+'('+TREFFER[id]+')').join(', '));
+// Gezaehlt werden MONATE mit einem Halter, nicht Halter: hoechstens ein
+// Drittel der gewerteten, aufgerundet — in fuenf Monaten zwei. Vorher hiess
+// die Grenze „nicht mehr Halter als Monate", und „Der Spielverderber" ging
+// in allen fuenf echten Monaten an jemanden, „Die Steigerung" in vier.
+const _monate = JSON.parse(KH(`JSON.stringify((function(){
+  const n = {}, sids = ${JSON.stringify(HERBST_MON)}.filter(sid => _seasonTitleCtx(sid).days >= CHRONIK_MIN_TAGE);
+  sids.forEach(sid => { const C = _seasonTitleCtx(sid);
+    SEASON_TITLES.forEach(t => { const r = t.pick(C, new Set());
+      if(r && r.halter && r.halter.length) (n[t.id] = n[t.id] || []).push(sid.slice(5)); }); });
+  return {n, m:sids.length}; })())`));
+const _monN = _monate.m, _drittel = Math.ceil(_monN / 3);
+const _zuOft = Object.keys(_monate.n).filter(id => _monate.n[id].length > _drittel);
+ok(_monN === 5 && _zuOft.length === 0,
+   'keine Chronik geht in mehr als einem Drittel der gewerteten Monate an jemanden',
+   _monN + ' Monate, hoechstens ' + _drittel + ', zu oft: ' + _zuOft.map(id => id + '(' + _monate.n[id].join(',') + ')').join(', '));
+// Und der Beste eines Monats geht dabei nicht leer aus. Im Juni hielt Leon
+// als Meister keine einzige Chronik: die Fragen nach der Rechnung reisst
+// kaum, wen die Rechnung schon oben sieht, und ein Abstand ueber hundert
+// Partien schwankt weniger als ueber zehn. „Der Souveraen", „Das
+// Stammduell" und „Der lange Atem" fragen so, dass auch er sie halten kann.
+const _meister = JSON.parse(KH(`JSON.stringify(${JSON.stringify(HERBST_MON)}.map(sid => { const T = seasonTitles(sid);
+  return {sid, m:T.champ && pname(T.champ.pid), n:T.awarded.filter(a => T.champ && a.pid === T.champ.pid
+    && chronikStufe(a.titleId) !== 'schatten').length}; }))`));
+ok(_meister.every(x => x.n >= 1), 'der Meister jedes Monats haelt mindestens eine positive Chronik',
+   _meister.map(x => x.sid.slice(5) + ' ' + x.m + ' ' + x.n).join(' · '));
 
 // Die Klasse selbst wird hier NICHT nachgezaehlt. Sie ist beim Kalibrieren
 // an den Daten festgeschrieben, so wie `aus` und `BADGE_RARITY` [§C39]: eine
@@ -1288,13 +1334,16 @@ ok(_flach.length === 0,
 // hielt, und elf aeltere Chroniken reissen sie; sie stehen hier namentlich,
 // damit die Liste nur kuerzer werden kann. Eine neue Chronik darf nicht
 // dazukommen.
-// Die zwoelfte ist „Auf dem Thron": sie fragt nicht nach einer Rechnung,
-// sondern nach dem Platz in der Liga-Tabelle, und die schreibt jede Partie
-// mit dem Spielbonus gut. Sie stand bei 0,348; seit der Positionsbonus der
-// Elo gegen die eigene Aufteilung misst und Spezialisten auf ihrer Position
-// nicht mehr abzieht [§C44], steht sie bei 0,38.
+// Ausgenommen sind ausserdem die zwei, die nach der Tabelle fragen
+// (`_SPIELZAHL_TABELLE`): sie fragen nicht nach einer Rechnung, sondern nach
+// Platz und Vorsprung in der Monatstabelle, und die schreibt jede Partie mit
+// dem Spielbonus gut. „Auf dem Thron" stand bei 0,348; seit der
+// Positionsbonus der Elo gegen die eigene Aufteilung misst [§C44], steht er
+// bei 0,38. „Der Souveraen" kam dazu, damit der Beste eines Monats nicht leer
+// ausgeht [§C39]: ein Vorsprung wird ueber Partien erspielt.
 const _SPIELZAHL_ALT = ['ausreisser2','umschwung','formgipfel','schwachstelle','kontrast',
-  'schattenmann','traumquote','schwachewoche','evenkeel','metronom','lieblingszahl','thron'];
+  'schattenmann','traumquote','schwachewoche','evenkeel','metronom','lieblingszahl'];
+const _SPIELZAHL_TABELLE = ['thron','souveraen'];
 const _spielzahl = JSON.parse(K.eval(`JSON.stringify((function(){
   const sids = ['2026-05','2026-06','2026-07','2026-08'].filter(s => _seasonTitleCtx(s).days >= CHRONIK_MIN_TAGE);
   const out = {};
@@ -1312,13 +1361,14 @@ const _spielzahl = JSON.parse(K.eval(`JSON.stringify((function(){
   });
   return out;
 })())`));
-const _spNeu = Object.keys(_spielzahl).filter(id => Math.abs(_spielzahl[id]) > 0.35 && !_SPIELZAHL_ALT.includes(id));
+const _spNeu = Object.keys(_spielzahl).filter(id => Math.abs(_spielzahl[id]) > 0.35
+  && !_SPIELZAHL_ALT.includes(id) && !_SPIELZAHL_TABELLE.includes(id));
 ok(Object.keys(_spielzahl).length >= 60 && _spNeu.length === 0,
-   'keine Chronik ausser den zwoelf genannten haengt an der Spielzahl',
+   'keine Chronik ausser den elf aelteren und den zwei Fragen nach der Tabelle haengt an der Spielzahl',
    _spNeu.map(id => id + ' r=' + _spielzahl[id].toFixed(2)).join(', ') || Object.keys(_spielzahl).length + ' gemessen');
-const _spErledigt = _SPIELZAHL_ALT.filter(id => !(Math.abs(_spielzahl[id] || 0) > 0.35));
+const _spErledigt = _SPIELZAHL_ALT.concat(_SPIELZAHL_TABELLE).filter(id => !(Math.abs(_spielzahl[id] || 0) > 0.35));
 ok(_spErledigt.length === 0, 'die Liste der aelteren Ausnahmen ist nicht laenger als noetig',
-   _spErledigt.join(', ') || _SPIELZAHL_ALT.length + ' Ausnahmen');
+   _spErledigt.join(', ') || _SPIELZAHL_ALT.length + _SPIELZAHL_TABELLE.length + ' Ausnahmen');
 // Der Beiname beschreibt den SPIELER und steht im Profilkopf. Ohne ihn
 // stuende dort der Katalogname, und „Der Endspurt" ist keine Beschreibung
 // eines Spielertyps. Er muss da sein, in die Pille passen und eindeutig
@@ -1454,7 +1504,7 @@ const _monSoll = (() => {
       const S = a.filter(x => x.w).length, n = a.length;
       return v.filter(d => d[0].w !== d[d.length-1].w).length / v.length - 2 * S * (n - S) / (n * (n - 1)); }
   };
-  const AB = {staffellauf:0.30, seitenbuendnis:0.35, quertreiber:0.05, tagesumkehr:0.25};
+  const AB = {staffellauf:0.32, seitenbuendnis:0.35, quertreiber:0.05, tagesumkehr:0.25};
   const out = {};
   ['2026-06','2026-07','2026-08'].forEach(sid => Object.keys(W).forEach(id => {
     const feld = Object.keys(P).filter(k => k.startsWith(sid + '|'))
@@ -1475,8 +1525,8 @@ const _monAb = Object.keys(_monSoll).filter(k => _monSoll[k] !== _monIst[k]);
 ok(_monAb.length === 0, 'die vier neuen Monatschroniken stimmen mit der Nachrechnung aus den rohen Partien',
    _monAb.map(k => k + ': ' + (_monIst[k].split(',').map(nm).join('/') || '–') + ' statt '
      + (_monSoll[k].split(',').map(nm).join('/') || '–')).join(' · '));
-ok(Object.values(_monIst).filter(Boolean).length === 5,
-   'die vier neuen Monatschroniken sind fuenfmal vergeben, wie kalibriert',
+ok(Object.values(_monIst).filter(Boolean).length === 4,
+   'die vier neuen Monatschroniken sind viermal vergeben, wie kalibriert',
    Object.keys(_monIst).filter(k => _monIst[k]).map(k => k + ' ' + nm(_monIst[k])).join(' · '));
 
 // Die acht Chroniken gegen das Eigene [§C39], ein zweites Mal aus den rohen
@@ -1526,7 +1576,7 @@ const _eigenSoll = (() => {
     absturz:(a, sid, pid) => { const v = P[vormonat(sid) + '|' + pid]; if(!v || v.length < 8) return null;
       return v.filter(x => x.w).length / v.length - a.filter(x => x.w).length / a.length; }
   };
-  const AB = {knipser:0.6, riegel:0.5, neuland:0.17, revanche:0.45, spielverderber:0.06, lernkurve:0.30, nachlegen:0.15, absturz:0.17};
+  const AB = {knipser:0.75, riegel:0.5, neuland:0.17, revanche:0.45, spielverderber:0.11, lernkurve:0.33, nachlegen:0.15, absturz:0.17};
   const out = {};
   ['2026-06','2026-07','2026-08'].forEach(sid => Object.keys(W).forEach(id => {
     const feld = Object.keys(P).filter(k => k.startsWith(sid + '|') && P[k].length >= 8)
@@ -1636,10 +1686,10 @@ const _neuSoll = (() => {
       return -Math.min(...l.map(d => d.reduce((s, x) => s + x.e, 0) / d.length)); },
     favflop:(a) => { const f = a.filter(x => x.e > 0.55); return f.length >= 5 ? 1 - q(f) : null; }
   };
-  const AB = {ausnahmemonat:0.10, rollentausch:0.18, klartext:0.07, damage_control:1.3,
-              destroyer:0.30, clutch:0.30, hardnight:-0.32, favflop:0.55,
-              fehlstart:0.40, kraefteverfall:0.30, einbruch:0.30, sattheit:0.15, schwarzewoche:0.35,
-              aufdreher:2, rueckzug:-0.25, noanswer:0.25};
+  const AB = {ausnahmemonat:0.12, rollentausch:0.23, klartext:0.09, damage_control:1.3,
+              destroyer:0.30, clutch:0.30, hardnight:-0.31, favflop:0.55,
+              fehlstart:0.40, kraefteverfall:0.30, einbruch:0.35, sattheit:0.22, schwarzewoche:0.35,
+              aufdreher:3, rueckzug:-0.25, noanswer:0.25};
   const out = {};
   ['2026-06','2026-07','2026-08'].forEach(sid => _neuMon.concat(_schattMon).forEach(id => {
     const feld = Object.keys(P).filter(k => k.startsWith(sid + '|') && P[k].length >= 8)
@@ -1663,30 +1713,32 @@ console.log('  neu im Monat:', Object.keys(_neuIst).filter(_imKreis(_neuMon)).fi
 ok(_neuAb.length === 0, 'die acht neuen Monatschroniken stimmen mit der Nachrechnung aus den rohen Partien',
    _neuAb.map(k => k + ': ' + (_neuIst[k].split(',').map(nm).join('/') || '–') + ' statt '
      + (_neuSoll[k].split(',').map(nm).join('/') || '–')).join(' · '));
-// Kalibriert sind sie auf fuenfzehn Haltungen in drei Monaten, keine mehr
-// als zwei: eine Schwelle, die rutscht, faellt hier auf und nicht erst am
-// Prestige.
+// Kalibriert sind sie auf neun Haltungen in drei Monaten, keine mehr als
+// zwei: eine Schwelle, die rutscht, faellt hier auf und nicht erst am
+// Prestige. Es waren fuenfzehn, bis die sechste Fassung die Schwellen der zu
+// haeufigen anhob [§C39].
 const _haltungen = l => Object.keys(_neuIst).filter(_imKreis(l)).filter(k => _neuIst[k])
   .reduce((n, k) => n + _neuIst[k].split(',').length, 0);
 const _neuZahl = _haltungen(_neuMon);
-ok(_neuZahl === 15 && _neuMon.every(id => Object.keys(_neuIst).filter(k => k.endsWith(' ' + id) && _neuIst[k]).length <= 2),
-   'die acht neuen Monatschroniken sind fuenfzehnmal vergeben, wie kalibriert', _neuZahl + ' Haltungen');
+ok(_neuZahl === 9 && _neuMon.every(id => Object.keys(_neuIst).filter(k => k.endsWith(' ' + id) && _neuIst[k]).length <= 2),
+   'die acht neuen Monatschroniken sind neunmal vergeben, wie kalibriert', _neuZahl + ' Haltungen');
 const _schAb = Object.keys(_neuSoll).filter(_imKreis(_schattMon)).filter(k => _neuSoll[k] !== _neuIst[k]);
 console.log('  Schatten und Anteil:', Object.keys(_neuIst).filter(_imKreis(_schattMon)).filter(k => _neuIst[k])
   .map(k => k.slice(5) + ' ' + _neuIst[k].split(',').map(nm).join('/')).join(' · '));
 ok(_schAb.length === 0, 'die Schattenseiten gegen das Eigene und der Anteil an den Partien stimmen mit der Nachrechnung',
    _schAb.map(k => k + ': ' + (_neuIst[k].split(',').map(nm).join('/') || '–') + ' statt '
      + (_neuSoll[k].split(',').map(nm).join('/') || '–')).join(' · '));
-// Kalibriert auf zwoelf Haltungen, und keine geht an die ersten drei eines
-// Monats: eine Schattenseite auf das Niveau gehoerte immer dem Letzten,
-// ein Aufdreher auf die Zahl dem, der am meisten spielt.
+// Kalibriert auf acht Haltungen (zwoelf vor der sechsten Fassung), und
+// keine geht an die ersten drei eines Monats: eine Schattenseite auf das
+// Niveau gehoerte immer dem Letzten, ein Aufdreher auf die Zahl dem, der am
+// meisten spielt.
 const _schZahl = _haltungen(_schattMon);
 const _schErste = JSON.parse(K.eval(`JSON.stringify(['2026-06','2026-07','2026-08'].reduce((o, sid) =>
   (o[sid] = _seasonTitleCtx(sid).rankAll.slice(0, 3).map(r => r.id), o), {}))`));
 const _schOben = Object.keys(_neuIst).filter(_imKreis(_schattMon)).filter(k => _neuIst[k])
   .filter(k => _neuIst[k].split(',').some(p => _schErste[k.split(' ')[0]].includes(p)));
-ok(_schZahl === 12 && _schOben.length === 0,
-   'sie sind zwoelfmal vergeben, wie kalibriert, und nie an die ersten drei eines Monats',
+ok(_schZahl === 8 && _schOben.length === 0,
+   'sie sind achtmal vergeben, wie kalibriert, und nie an die ersten drei eines Monats',
    _schZahl + ' Haltungen' + (_schOben.length ? ' · oben: ' + _schOben.join(', ') : ''));
 
 // Sieben weitere Chroniken [§C39], Wert für Wert aus den rohen Partien
@@ -1781,6 +1833,114 @@ const _neu7Zahl = Object.values(_neu7Halter).reduce((n, l) => n + l.length, 0);
 console.log('  sieben weitere:', Object.keys(_neu7Halter).map(id => id + ' ' + _neu7Halter[id].join('/')).join(' · '));
 ok(_neu7Zahl === 6 && Object.values(_neu7Halter).every(l => l.length <= 2),
    'die sieben weiteren sind sechsmal vergeben, wie kalibriert, keine mehr als zweimal', _neu7Zahl + ' Haltungen');
+
+// Die sechste Fassung [§C39]: neunzehn weitere Monatschroniken, Wert für
+// Wert aus den rohen Partien nachgerechnet. Elf fragen nach einer
+// Wahrscheinlichkeit statt nach einem Abstand (`_stUnwahr`) oder stellen den
+// Monat gegen die eigene Laufbahn, und ein Fehler in der Poisson-Binomial-
+// Rechnung, im Rivalen oder in der Laufbahn davor fiele an einem Halterabgleich
+// nicht auf: in drei Monaten halten die meisten keinen. Monat, Kalendertag,
+// ob ein Tag zu ist, der Beginn des Monats und die Monatstabelle (Elo und
+// Platz) kommen aus der App; alles andere zählt der Test selbst.
+const _neu19 = ['favoritenrolle','siegeszug','stammduell','uebermacht','langeratem','abwehrwall','leck',
+  'aufbau','torflaute','spaeterevanche','torgefahr','souveraen','platztausch','festhalten','abrutsch',
+  'abschwung','klatsche','vergessen','strohfeuer'];
+const _pbin = (ps, k) => {
+  let d = [1];
+  ps.forEach(p => { const n = new Array(d.length + 1).fill(0);
+    for(let i = 0; i < d.length; i++){ n[i] += d[i] * (1 - p); n[i + 1] += d[i] * p; } d = n; });
+  return {ab:d.slice(k).reduce((a, b) => a + b, 0), bis:d.slice(0, k + 1).reduce((a, b) => a + b, 0)};
+};
+const _lg = x => -Math.log10(Math.max(x, 1e-9));
+const _neu19Soll = (() => {
+  const info = JSON.parse(K.eval(`JSON.stringify(matches.reduce((o, m) =>
+    (o[m.id] = {sid:(seasonOf(m.created_at) || {}).id, tag:mdayKey(m), zu:_tagZu(mdayKey(m))}, o), {}))`));
+  const MON = ['2026-05','2026-06','2026-07','2026-08'];
+  const beginn = JSON.parse(K.eval(`JSON.stringify(${JSON.stringify(MON)}.reduce((o, sid) =>
+    (o[sid] = seasonStart(sid).getTime(), o), {}))`));
+  const tab = JSON.parse(K.eval(`JSON.stringify(${JSON.stringify(MON)}.reduce((o, sid) => { const C = _seasonTitleCtx(sid);
+    o[sid] = {elo:C.rank.map(r => [r.id, r.elo]), platz:C.rankAll.map(r => r.id)}; return o; }, {}))`));
+  const ms = realMatches.slice().sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  const tore = {};
+  ms.forEach(m => { const t = tore[info[m.id].sid] = tore[info[m.id].sid] || {s:0, n:0}; t.s += m.score_a + m.score_b; t.n++; });
+  const L = {};
+  ms.forEach(m => { const z = info[m.id];
+    [[m.a1, 'A', m.a1_pos, m.a2, [m.b1, m.b2]], [m.a2, 'A', m.a2_pos, m.a1, [m.b1, m.b2]],
+     [m.b1, 'B', m.b1_pos, m.b2, [m.a1, m.a2]], [m.b2, 'B', m.b2_pos, m.b1, [m.a1, m.a2]]].forEach(([id, sd, pos, mate, geg]) => {
+      (L[id] = L[id] || []).push({sid:z.sid, tag:z.tag, zu:z.zu, ts:new Date(m.created_at).getTime(),
+        w:m.winner === sd, pos, mate, geg, gf:sd === 'A' ? m.score_a : m.score_b, ga:sd === 'A' ? m.score_b : m.score_a,
+        e:sd === 'A' ? m.exp_a : 1 - m.exp_a}); }); });
+  const siege = l => l.filter(x => x.w).length;
+  const q = l => siege(l) / l.length;
+  const ueber = l => q(l) - l.reduce((t, x) => t + x.e, 0) / l.length;
+  const mittel = (l, f) => l.reduce((t, x) => t + f(x), 0) / l.length;
+  const oben = l => _lg(_pbin(l.map(x => x.e), siege(l)).ab), unten = l => _lg(_pbin(l.map(x => x.e), siege(l)).bis);
+  const W = (sid, pid, a) => {
+    const vor = L[pid].filter(x => x.ts < beginn[sid]), lauf = vor.length >= 30;
+    const vd = vor.filter(x => x.pos === 'def'), va = vor.filter(x => x.pos === 'atk');
+    const def = a.filter(x => x.pos === 'def'), atk = a.filter(x => x.pos === 'atk');
+    const fav = a.filter(x => x.e > 0.55);
+    let serie = null, run = 1;
+    a.forEach(x => { if(!x.w){ run = 1; return; } run *= x.e; if(serie == null || run < serie) serie = run; });
+    const geg = {}; a.forEach(x => x.geg.forEach(g => (geg[g] = geg[g] || []).push(x)));
+    const riv = Object.keys(geg).sort((x, y) => geg[y].length - geg[x].length || (x < y ? -1 : 1))[0];
+    const rv = riv && geg[riv].length >= 6 ? geg[riv] : null;
+    const tage = {}; a.filter(x => x.zu).forEach(x => (tage[x.tag] = tage[x.tag] || []).push(x));
+    const lang = Object.values(tage).filter(d => d.length >= 7), vier = Object.values(tage).filter(d => d.length >= 4);
+    const sp = [], letzte = {};
+    a.forEach(x => { const k = x.geg.slice().sort().join('+'), l = letzte[k]; if(l && !l.w && l.tag !== x.tag) sp.push(x); letzte[k] = x; });
+    const pw = [], pb = [];
+    a.forEach((x, i) => { const v = a[i - 1]; if(!v || v.tag !== x.tag) return; (v.pos !== x.pos ? pw : pb).push(x); });
+    const platz = pw.length >= 5 && pb.length >= 5 ? ueber(pw) - ueber(pb) : null;
+    const elo = tab[sid].elo, ich = elo.find(r => r[0] === pid), zweit = elo.find(r => r[0] !== pid);
+    const vs = MON[MON.indexOf(sid) - 1], vorN = vs ? L[pid].filter(x => x.sid === vs).length : 0;
+    const pv = vs ? tab[vs].platz.indexOf(pid) + 1 : 0, pj = tab[sid].platz.indexOf(pid) + 1;
+    const pleiten = a.filter(x => !x.w), hinten = lauf && vd.length >= 20 && def.length >= 5;
+    return {
+      favoritenrolle: fav.length >= 8 ? oben(fav) : null,
+      siegeszug: serie != null ? _lg(serie * a.length) : null,
+      stammduell: rv ? oben(rv) : null,
+      uebermacht: rv ? unten(rv) : null,
+      langeratem: lang.length >= 2 ? oben([].concat(...lang)) : null,
+      abwehrwall: hinten ? mittel(vd, x => x.ga) - mittel(def, x => x.ga) : null,
+      leck: hinten ? mittel(def, x => x.ga) - mittel(vd, x => x.ga) : null,
+      aufbau: hinten ? mittel(def, x => x.gf) - mittel(vd, x => x.gf) : null,
+      torflaute: lauf && va.length >= 20 && atk.length >= 5 ? mittel(va, x => x.gf) - mittel(atk, x => x.gf) : null,
+      spaeterevanche: sp.length >= 5 ? ueber(sp) : null,
+      torgefahr: atk.length >= 5 ? mittel(atk, x => x.gf) - tore[sid].s / tore[sid].n / 2 : null,
+      souveraen: ich && zweit ? ich[1] - zweit[1] : null,
+      platztausch: platz, festhalten: platz == null ? null : -platz,
+      abrutsch: vorN >= 8 && pv && pj && tab[vs].elo.some(r => r[0] === pid) ? pj - pv : null,
+      abschwung: lauf ? q(vor) - q(a) : null,
+      klatsche: pleiten.length >= 5 ? pleiten.filter(x => x.ga - x.gf >= 7).length / pleiten.length : null,
+      vergessen: vier.length ? Math.max(...vier.map(unten)) : null,
+      strohfeuer: a.length >= 12 ? (siege(a.slice(0, 5)) - siege(a.slice(-5))) / 5 : null
+    };
+  };
+  const out = {};
+  ['2026-06','2026-07','2026-08'].forEach(sid => Object.keys(L).forEach(pid => {
+    const a = L[pid].filter(x => x.sid === sid);
+    if(a.length < 8) return;
+    const w = W(sid, pid, a);
+    _neu19.forEach(id => { out[sid + ' ' + pid + ' ' + id] = w[id]; });
+  }));
+  return out;
+})();
+const _neu19Ist = JSON.parse(K.eval(`JSON.stringify(['2026-06','2026-07','2026-08'].reduce((o, sid) => {
+  const C = _seasonTitleCtx(sid);
+  Object.keys(C.P).forEach(pid => ${JSON.stringify(_neu19)}.forEach(id => {
+    const w = _chronikMonat(id), p = C.P[pid];
+    o[sid + ' ' + pid + ' ' + id] = w.mind(p, C) ? w.wert(p, C) : null; }));
+  return o; }, {}))`));
+const _neu19Ab = [...new Set(Object.keys(_neu19Soll).concat(Object.keys(_neu19Ist)))].filter(k => {
+  const a = _neu19Soll[k], b = _neu19Ist[k];
+  return (a == null) !== (b == null) || (a != null && Math.abs(a - b) > 1e-9);
+});
+const _neu19Werte = Object.keys(_neu19Ist).filter(k => _neu19Ist[k] != null).length;
+ok(_neu19Werte > 300 && _neu19Ab.length === 0,
+   'die neunzehn der sechsten Fassung rechnen jeden Wert wie die Nachrechnung aus den rohen Partien',
+   _neu19Ab.slice(0, 3).map(k => k.split(' ')[0] + ' ' + nm(k.split(' ')[1]) + ' ' + k.split(' ')[2] + ': '
+     + _neu19Ist[k] + ' statt ' + _neu19Soll[k]).join(' · ') || _neu19Werte + ' Werte');
 
 // ─── 17. v9.22: Ausnahmetage und alle Rekorde im Profil ─────────────
 console.log('\n=== 17. AUSNAHMETAGE UND ALLE REKORDE IM PROFIL ===');
@@ -4293,15 +4453,17 @@ ok(_spitze.alle > 40 && _spitze.oben / _spitze.alle <= 0.38,
    _spitze.oben + ' von ' + _spitze.alle);
 // „Der Sprung" und „Die Kletterpartie" stellen einen Spieler gegen seinen
 // Vormonat: Siegquote und Platz, beide Monate ab acht Partien. Nachgerechnet
-// aus den rohen Partien beider Monate und der Rangliste der Saison.
-const _vgl = JSON.parse(K.eval(`JSON.stringify((function(){
+// aus den rohen Partien beider Monate und der Rangliste der Saison, an den
+// fuenf echten Monaten: seit die Kletterpartie fuenf Plaetze verlangt, haelt
+// sie in den drei Fixture-Monaten niemand mehr.
+const _vgl = JSON.parse(KH(`JSON.stringify((function(){
   const quote = sid => { const z = {};
     matchesInSeason(sid).forEach(m => [m.a1, m.a2, m.b1, m.b2].forEach(id => {
       const w = (m.a1 === id || m.a2 === id) ? m.winner === 'A' : m.winner === 'B';
       z[id] = z[id] || {g:0, w:0}; z[id].g++; if(w) z[id].w++; }));
     return z; };
   const out = {};
-  ['2026-07','2026-08'].forEach(sid => {
+  ['2026-07','2026-08','2026-09','2026-10'].forEach(sid => {
     const vor = _prevSeasonId(sid), a = quote(sid), b = quote(vor);
     const beide = Object.keys(a).filter(id => a[id].g >= 8 && b[id] && b[id].g >= 8);
     const bester = (l, ab) => { const max = Math.max(...l.map(x => x.d));
@@ -4311,7 +4473,7 @@ const _vgl = JSON.parse(K.eval(`JSON.stringify((function(){
     const C = _seasonTitleCtx(sid);
     const ist = id => { const r = SEASON_TITLE_BY_ID[id].pick(C, new Set()); return r && r.halter ? r.halter.slice().sort() : []; };
     out[sid] = {sprungSoll:bester(beide.map(id => ({id, d:a[id].w / a[id].g - b[id].w / b[id].g})), 0.25), sprungIst:ist('sprung'),
-      kletterSoll:bester(beide.filter(id => pa(id) && pb(id)).map(id => ({id, d:pb(id) - pa(id)})), 4), kletterIst:ist('kletterer')};
+      kletterSoll:bester(beide.filter(id => pa(id) && pb(id)).map(id => ({id, d:pb(id) - pa(id)})), 5), kletterIst:ist('kletterer')};
   });
   return out; })())`));
 ok(Object.values(_vgl).every(x => x.sprungSoll.join() === x.sprungIst.join() && x.kletterSoll.join() === x.kletterIst.join())

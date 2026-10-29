@@ -6,7 +6,7 @@
 - Die Matrix zeigt je Spieler und Monat einen Eintrag (`seasonTitleOf`, `chronikEintragVon`: der wertvollste, bei gleichem Wert der erste im Katalog) und daneben, wie viele er sonst noch hält („+2“); das ist eine Anzeigeregel, die Tafel (`showSeasonTable`) zeigt alles, und nur dieser eine zählt fürs Prestige [§C34]. In der Tafel und im Saison-Rückblick steht offen, was zählt; die übrigen Einträge klappen darunter auf (`_chronMehrKnopf`, `.chron-rest`).
 - Der Feed sagt bei einem alleinigen Halter mehrerer Einträge, welcher im Profil steht (`_chronikZeigtSich`, Marke `.nf-sam-k` neben dem Text), und nennt den stärkeren Eintrag nur für EINEN Spieler.
 - Ein Monat unter `CHRONIK_MIN_TAGE` Spieltagen bekommt keine Chronik; `seasonTitleHalter` zieht dieselbe Grenze und antwortet dann mit `null`. Das Aufgehen der Tafel ist kein Wechsel, aber eine eigene Karte (`chronik_frei`, ohne Partie, Träger in `traeger`).
-- Eine Monatswertung findet höchstens einen Halter je gewerteten Monat; die Schwellen (`ab` in `_stWertung`) sind an den echten Partien geeicht.
+- Eine Monatswertung geht in höchstens einem Drittel der gewerteten Monate an jemanden, aufgerundet; die Schwellen (`ab` in `_stWertung`) sind an den echten Partien geeicht (`tests/fixtures/oktober.txt`, höchstens zwei von fünf Monaten) [§C39].
 
 ## Stellen
 
@@ -14,7 +14,7 @@
 
 ## Prüfung
 
-`tests/disziplinen` zählt Halter je Monat und nennt die zu tief hängende Schwelle; `tests/ambient` prüft die Chronik-Karten; `tests/blatt` prüft, was in Tafel und Rückblick offen steht.
+`tests/disziplinen` zählt die Monate mit einem Halter und nennt die zu tief hängende Schwelle; `tests/ambient` prüft die Chronik-Karten; `tests/blatt` prüft, was in Tafel und Rückblick offen steht.
 
 ## Herleitung
 
@@ -91,12 +91,14 @@ Einträgen stehen dabei in `traeger` und nicht in `playerIds`: auf der Karte
 steht kein Name, und mit Beteiligten hätte der Deckel je Spieler gerade die
 Karte gezählt, die es je Monat genau einmal gibt. Im Tagesdeckel gehört sie
 zu `TAG_PFLICHT`.
-**Eine Monatswertung findet höchstens einen Halter je gewerteten Monat.**
-Die Schwellen (`ab` in `_stWertung`) sind an den echten Partien geeicht,
-nicht geschätzt. Vorher lagen sie so tief, dass ein Monat vierundzwanzig der
-vierunddreißig Wertungen vergab und ein einzelner Spieler neun davon trug:
-was fast jeder Monat hergibt, zeichnet niemanden mehr aus. Jetzt sind es
-siebzehn bis zweiundzwanzig. Gedeckelt wird die Rate und nicht eine feste
-Zahl — eine Zahl wäre mit der Liga von selbst falsch geworden [§C39].
+**Eine Monatswertung geht in höchstens einem Drittel der Monate an
+jemanden.** Die Schwellen (`ab` in `_stWertung`) sind an den echten Partien
+geeicht, nicht geschätzt. Vorher lagen sie so tief, dass ein Monat
+vierundzwanzig der vierunddreißig Wertungen vergab und ein einzelner Spieler
+neun davon trug: was fast jeder Monat hergibt, zeichnet niemanden mehr aus.
+Danach hieß die Grenze eine Zeit lang nur „nicht mehr Halter als Monate",
+und „Der Spielverderber" ging in jedem Monat an jemanden. Gedeckelt wird die
+Rate und nicht eine feste Zahl — eine Zahl wäre mit der Liga von selbst
+falsch geworden [§C39].
 `tests/disziplinen` zählt es nach und nennt die Wertung, deren Schwelle zu
 tief hängt.

@@ -443,6 +443,48 @@ const ICONS = {
   abgesang:      `<path d="M9 18V6l8-2v9"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="14.5" cy="13" r="2.5"/><path d="M20 15v6M18 19l2 2 2-2"/>`,
   // Einer allein und eine Frage daneben: „Das Fremdeln" neben neuen Partnern.
   fremdeln:      `<circle cx="7" cy="8" r="2.5"/><path d="M2.5 20c0-3 2-5 4.5-5s4.5 2 4.5 5"/><path d="M15 6.5a2.5 2.5 0 114 2c-1 .7-1.5 1.2-1.5 2.5"/><circle cx="17.5" cy="15" r=".7" fill="currentColor"/><path d="M14 20h7"/>`,
+  // ── Die sechste Fassung der Monatschronik [§C39] ────────────────
+  // Zwei Figuren und ein Hin und Her: „Das Stammduell" gegen den Gegner,
+  // den der Monat am häufigsten gegenüberstellte. Keine gekreuzten
+  // Schwerter — die gehören der Rivalität zweier Teams.
+  stammduell:    `<circle cx="5" cy="7" r="2.5"/><circle cx="19" cy="7" r="2.5"/><path d="M2 20c0-3 1.3-5 3-5s3 2 3 5M16 20c0-3 1.3-5 3-5s3 2 3 5"/><path d="M9 9.5h6M13 7.5l2 2-2 2M15 14H9M11 12l-2 2 2 2"/>`,
+  // Ein Großer über einem Kleinen: „Die Übermacht" desselben Gegners.
+  uebermacht:    `<circle cx="15" cy="5" r="3"/><path d="M9 21v-6a6 6 0 0112 0v6"/><circle cx="5" cy="13" r="1.8"/><path d="M2 21v-2.5a3 3 0 016 0V21"/>`,
+  // Ein Stern auf dem Podest: „Die Favoritenrolle", getragen.
+  favoritenrolle:`<path d="M4 21h16"/><path d="M8 21v-7h8v7"/><path d="M12 3.5l1.4 2.8 3.1.5-2.2 2.2.5 3.1-2.8-1.5-2.8 1.5.5-3.1-2.2-2.2 3.1-.5z"/>`,
+  // Drei Stufen hinauf: „Der Siegeszug", eine Serie gegen die Rechnung.
+  siegeszug:     `<path d="M3 17l3-3 3 3M9 13l3-3 3 3M15 9l3-3 3 3"/><path d="M3 21h18"/>`,
+  // Drei Luftzüge, der unterste reicht am weitesten: „Der lange Atem".
+  langerAtem:    `<path d="M3 8h9a3 3 0 10-3-3"/><path d="M3 12h15a3 3 0 11-3 3"/><path d="M3 16h7"/>`,
+  // Ein Tor und ein Ball davor: „Die Torgefahr" im Sturm.
+  torgefahr:     `<path d="M3 20V6h11v14"/><path d="M3 10h11"/><circle cx="18.5" cy="15" r="2.8"/><path d="M15.5 15H12"/>`,
+  // Ein Schild über einer Mauer: „Der Abwehrwall".
+  abwehrwall:    `<path d="M12 2.5l5 2v3.5c0 2.8-2.2 4.3-5 5.2-2.8-.9-5-2.4-5-5.2V4.5z"/><rect x="3" y="14" width="18" height="7" rx="1"/><path d="M3 17.5h18M9 14v3.5M15 14v3.5M12 17.5V21"/>`,
+  // Ein Pfeil von hinten nach vorn zum Ball: „Der Aufbauspieler".
+  aufbau:        `<circle cx="17.5" cy="6.5" r="3"/><path d="M4 20l9-9"/><path d="M8 11h5v5"/><path d="M3 20h4"/>`,
+  // Ein Mond und ein Pfeil zurück: „Die späte Revanche", eine Nacht danach.
+  spaeteRevanche:`<path d="M10 3.5a6 6 0 107.5 7.5 7 7 0 01-7.5-7.5z"/><path d="M21 19h-9"/><path d="M15 16l-3 3 3 3"/>`,
+  // Eine Krone auf der hohen Stufe, die niedrige weit daneben: „Der
+  // Souverän" an der Spitze, mit Abstand.
+  souveraen:     `<path d="M2 21h20"/><path d="M14 21V11h7v10"/><path d="M3 21v-4h6v4"/><path d="M14 8l1.5-4 2 2.5 2-2.5L21 8z"/>`,
+  // Ein Platz, ein Bogen, ein anderer Platz: „Der Platztausch".
+  platztausch:   `<rect x="3" y="14" width="6" height="6" rx="1"/><rect x="15" y="4" width="6" height="6" rx="1"/><path d="M6 11c0-3.5 3.5-4.5 8.5-4.5"/><path d="M12 4l2.5 2.5L12 9"/>`,
+  // Eine Nadel in einem Feld: „Das Festhalten" an der Position.
+  festhalten:    `<rect x="4" y="12" width="16" height="8" rx="1"/><path d="M12 15V7"/><circle cx="12" cy="5" r="2.2"/><path d="M8 20v-2M16 20v-2"/>`,
+  // Stufen hinab und ein Pfeil: „Der Abrutsch" in der Tabelle.
+  abrutsch:      `<path d="M3 4h5v5h5v5h5v6"/><path d="M8 4l9 9"/><path d="M17 8v5h-5"/>`,
+  // Ein leeres Tor und ein Pfeil nach unten: „Die Torflaute".
+  torflaute:     `<path d="M4 20V6h16v14"/><path d="M4 10h16"/><path d="M12 12.5v5.5M9.5 15.5l2.5 2.5 2.5-2.5"/>`,
+  // Ein Schild mit einem Riss: „Das Leck" in der Abwehr.
+  leck:          `<path d="M12 3l7 3v5c0 4-3 6.5-7 8-4-1.5-7-4-7-8V6z"/><path d="M12.5 6l-2.5 4 3 2-2.5 4.5"/>`,
+  // Eine Tafel mit minus sieben: „Die Klatsche".
+  klatsche:      `<rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M6 12h4"/><path d="M13 9h5l-3.5 6"/>`,
+  // Ein Kalenderblatt, durchgestrichen: „Der Tag zum Vergessen". Nicht das
+  // Zeichen des schwarzen Tages — der zählt Niederlagen, dieser die Rechnung.
+  tagVergessen:  `<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/><path d="M9.5 12.5l5 5M14.5 12.5l-5 5"/>`,
+  // Ein Bündel Stroh: „Das Strohfeuer" brennt hell und kurz. Bewusst keine
+  // Flamme — die steht für die laufende Siegesserie [§C41].
+  strohfeuer:    `<path d="M12 21V10"/><path d="M12 10L7 3M12 10l5-7M12 10L9.5 3M12 10l2.5-7"/><path d="M8 21h8"/><path d="M9 14h6"/>`,
   schwarzerTag:  `<circle cx="12" cy="12" r="4.8" fill="currentColor" fill-opacity=".55"/><path d="M12 2.2v2.6M12 19.2v2.6M2.2 12h2.6M19.2 12h2.6M5.1 5.1l1.8 1.8M17.1 17.1l1.8 1.8M5.1 18.9l1.8-1.8M17.1 6.9l1.8-1.8"/>`,
   ueberholen:    `<circle cx="12" cy="16" r="2.4"/><path d="M3.5 18c0-6.5 4.2-10 10.5-10h6"/><path d="M17 5l3 3-3 3"/>`,
   rakete:        `<path d="M12 2.5c3 2 4.5 5.5 4.5 9.5l-2 3h-5l-2-3c0-4 1.5-7.5 4.5-9.5z"/><circle cx="12" cy="9" r="1.6"/><path d="M9.5 15l-2.5 2.5V20l2.5-1.5M14.5 15l2.5 2.5V20l-2.5-1.5M12 17.5V21"/>`,

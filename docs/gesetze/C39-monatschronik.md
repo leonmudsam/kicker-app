@@ -2,13 +2,14 @@
 
 ## Regel
 
-- Die Monatschronik fragt nach Abweichung von der Erwartung, Konstanz, dem Verhältnis zum Ligamittel desselben Monats, zu einem bestimmten anderen Spieler, zum eigenen Spiel (vorne gegen hinten, neben neuen Partnern, in der Revanche, nach einem Sieg, gegen bekannte Gegner, gegen die beiden Ersten, neben einem Partner nach zwei Pleiten), zur eigenen Laufbahn (die Tore im Sturm, die Bilanz gegen denselben Gegner) oder einem seltenen Einzelereignis, nicht nach dem Können. Sie soll zeigen, worin ein Spieler besonders ist; dass jeder eine bekommt, ist kein Ziel.
+- Die Monatschronik fragt nach Abweichung von der Erwartung, Konstanz, dem Verhältnis zum Ligamittel desselben Monats, zu einem bestimmten anderen Spieler, zum eigenen Spiel (vorne gegen hinten, neben neuen Partnern, in der Revanche, nach einem Sieg, gegen bekannte Gegner, gegen die beiden Ersten, neben einem Partner nach zwei Pleiten, als Favorit, gegen den häufigsten Gegner, an langen Spieltagen, nach einem Positionswechsel), zur eigenen Laufbahn (die Tore im Sturm, die Gegentore und Tore in der Abwehr, die Bilanz gegen denselben Gegner) oder einem seltenen Einzelereignis, nicht nach dem Können. Nur zwei fragen nach der Tabelle: „Auf dem Thron" und „Der Souverän" (mindestens 70 Elo Vorsprung an der Spitze der Monatstabelle). Sie soll zeigen, worin ein Spieler besonders ist; dass jeder eine bekommt, ist kein Ziel, dass der Beste eines Monats leer ausgeht, aber auch nicht: an den echten Monaten hält der Meister jedes Monats mindestens eine positive Chronik.
 - Eine Können-Chronik misst gegen die Elo-Erwartung (`_stSoll`, `_stTorSteigung`), gegen den eigenen Rest (`_stErsterBall`, `_stSchlussBall`) oder gegen den eigenen Vormonat (`_stVormonat`, `_stVormonatPlatz`), nicht gegen eine feste Latte, die nur der Stärkste erreicht. In den Fixture-Monaten gehören höchstens 38 % der Einträge den ersten drei der Monatstabelle.
 - Das Stichproben-Tor ist niedrig und für alle gleich: acht Partien im Monat, fünf in einer Teilmenge (`ST_TEIL`), drei Spieltage. Die Besonderheit steckt in der Schwelle.
 - Jede `monat`-Wertung trägt `art` (koennen, konstanz, fuegung, schatten), `klasse` (legendaer, selten, besonders) und `aus` (Ausschlag der Schwelle in σ), jede positive dazu `streu` (Standardabweichung der Größe in ihrer eigenen Einheit), einmal an den Daten geprüft und dann festgeschrieben. Die Klasse folgt dem Ausschlag: ab 2,5 σ legendär, ab 1,9 σ selten, darunter besonders; gesetzt legendär sind nur die zwei, die nach einer Wahrscheinlichkeit fragen („Der Unmögliche Monat", „Der Ausreißer").
-- Die Klasse zählt keine Halter. Gedeckelt ist die Rate: höchstens ein Halter je gewerteten Monat.
-- Die Klasse ist Farbe und Name (`chronikStufe`): Gold legendär, Lila selten, Metall besonders, Rot eine Schattenseite. Über den Wert entscheidet sie nicht: jede Chronik außer einer Schattenseite bringt den Grundwert 100 (`CHRONIK_GRUNDWERT`), gleich welcher Klasse und Art, dazu den Bonus — 25 je σ, um die der Halter die Schwelle überbietet (`chronikBonus`: `(wert − ab) / streu`, mindestens 1, wer sie überhaupt überbietet, nach oben offen; genau auf der Schwelle nichts). Eine Schattenseite bringt nichts. Der Wert des Halters steht in der Tafel und im eingefrorenen Monat (`awarded[].wert`, `SEASON_TITLES_FREEZE_V` 5). Je Spieler und Monat steht und zählt der wertvollste Eintrag (`chronikEintragVon`), also der mit dem größten Bonus.
-- Eine Chronik schiebt ihre Schwelle mindestens 1,2 σ hinaus, korreliert höchstens 0,35 mit der Spielzahl, in beide Richtungen, misst eine Leistung und keine reine Zählung von Gelegenheiten. Elf ältere Chroniken reißen die Korrelation und stehen namentlich im Test (`_SPIELZAHL_ALT`), dazu „Auf dem Thron", das nach dem Platz in der Liga-Tabelle fragt und mit ihr an der Spielzahl hängt (0,38, seit der Positionsbonus der Elo Spezialisten nicht mehr abzieht [§C44]); die Liste wird nur kürzer, eine neue Chronik kommt nicht dazu.
+- Die Klasse zählt keine Halter. Gedeckelt ist die Rate: eine Chronik geht in höchstens einem Drittel der gewerteten Monate an jemanden, aufgerundet — gemessen an allen Partien der Liga bis Ende Oktober (`tests/fixtures/oktober.txt`), also in höchstens zwei von fünf Monaten.
+- Fragt eine Chronik, wie ein Ausschnitt der eigenen Partien gegen die Rechnung ausging, fragt eine neue nach der Wahrscheinlichkeit (`_stUnwahr`: der Zehnerlogarithmus der Wahrscheinlichkeit, mindestens so viele oder höchstens so wenige Siege zu holen), nicht nach dem Abstand in Prozentpunkten. Ein Abstand schwankt über wenige Partien stärker; eine Wahrscheinlichkeit ist für zehn und für hundert Partien gleich schwer zu reißen, solange nur der Zufall spielt.
+- Die Klasse ist Farbe und Name (`chronikStufe`): Gold legendär, Lila selten, Metall besonders, Rot eine Schattenseite. Über den Wert entscheidet sie nicht: jede Chronik außer einer Schattenseite bringt den Grundwert 100 (`CHRONIK_GRUNDWERT`), gleich welcher Klasse und Art, dazu den Bonus — 25 je σ, um die der Halter die Schwelle überbietet (`chronikBonus`: `(wert − ab) / streu`, mindestens 1, wer sie überhaupt überbietet, nach oben offen; genau auf der Schwelle nichts). Eine Schattenseite bringt nichts. Der Wert des Halters steht in der Tafel und im eingefrorenen Monat (`awarded[].wert`, `SEASON_TITLES_FREEZE_V` 6). Je Spieler und Monat steht und zählt der wertvollste Eintrag (`chronikEintragVon`), also der mit dem größten Bonus.
+- Eine Chronik schiebt ihre Schwelle mindestens 1,2 σ hinaus, korreliert höchstens 0,35 mit der Spielzahl, in beide Richtungen, misst eine Leistung und keine reine Zählung von Gelegenheiten. Elf ältere Chroniken reißen die Korrelation und stehen namentlich im Test (`_SPIELZAHL_ALT`); die Liste wird nur kürzer, eine neue Chronik kommt nicht dazu. Ausgenommen sind außerdem die zwei Fragen nach der Tabelle (`_SPIELZAHL_TABELLE`): „Auf dem Thron" (0,38, seit der Positionsbonus der Elo Spezialisten nicht mehr abzieht [§C44]) und „Der Souverän" — Platz und Vorsprung werden über Partien erspielt.
 - Ein Vergleich mit der eigenen Laufbahn zählt alle Partien vor dem ersten Tag des Monats und erst ab dreißig davon (`_stLaufbahnVor`), einer gegen einen bestimmten Gegner dazu erst ab zehn Duellen davor und vier im Monat (`_stDuelleVor`, `_stDuellWende`); welcher Gegner gemeint ist, entscheidet die Laufbahn davor und nicht der Monat, sonst suchte sich die Chronik ihren Ausreißer selbst; ein Vergleich mit dem Ligamittel nimmt alle Partien desselben Monats (`C.L`: `torSchnitt`, `engAnteil`, `klarAnteil`, `torAbstand`).
 - Wie viel jemand spielt, fragt nur der eigene Anteil an allen Partien des Monats gegen den eigenen Anteil in den Monaten davor (`_stAnteilVor`, Monate ab acht eigenen Partien), nie die Zahl selbst. Mehr als sonst ist eine Fügung, weniger als sonst eine Schattenseite: Anwesenheit ist kein Können [§C34].
 - Eine Schattenseite fragt wie ihr Gegenstück gegen das Eigene oder gegen die Rechnung, nicht nach dem Niveau; sonst gehörte sie immer dem Schwächsten der Liga.
@@ -22,11 +23,11 @@
 
 ## Stellen
 
-`32-chronik-katalog.js` (`DISZIPLINEN`, `_stWertung`, `_stSoll`, `_stTorSteigung`, `_stErsterBall`, `_stVormonat`, `_stVormonatPlatz`, `_stLaufbahnVor`, `_stDuelleVor`, `_stDuellWende`, `_stPartnerTief`), `33-chronik-engine.js` (`_seasonTitleCtx`, das Ligamittel `L`), `35-chronik-ui.js`, `35b-prestige.js` (`chronikPunkte`, `chronikBonus`, `chronikUeber`, `CHRONIK_GRUNDWERT`, `CHRONIK_BONUS_JE_SIGMA`).
+`32-chronik-katalog.js` (`DISZIPLINEN`, `_stWertung`, `_stSoll`, `_stTorSteigung`, `_stErsterBall`, `_stVormonat`, `_stVormonatPlatz`, `_stLaufbahnVor`, `_stDuelleVor`, `_stDuellWende`, `_stPartnerTief`, `_stUnwahr`, `_stRivale`, `_stLangeTage`, `_stSpaeteRevanchen`, `_stPlatzwechsel`, `_stSiegeszug`), `33-chronik-engine.js` (`_seasonTitleCtx`, das Ligamittel `L`), `35-chronik-ui.js`, `35b-prestige.js` (`chronikPunkte`, `chronikBonus`, `chronikUeber`, `CHRONIK_GRUNDWERT`, `CHRONIK_BONUS_JE_SIGMA`).
 
 ## Prüfung
 
-`tests/rechnen` zählt den laufenden Tag erst um 23:59; `tests/archiv` friert einen Monat der alten Fassung neu ein und sonst keinen; `tests/disziplinen` hält jede Chronik an 1,2 σ, an der Spielzahl-Korrelation und am Halterdeckel, die Klasse an ihrem Band des Ausschlags, den Grundwert 100 für jede Klasse, die Streuung jeder positiven Chronik gegen die Fixture-Monate, den Bonus (71 % statt 60 % beim Tagesregenten bringen 116, 25 je σ, mindestens 1, „höchstens“ in dieselbe Richtung, in der Regel zwischen 1 und 50) und den eingefrorenen Wert jedes Halters, zählt den Anteil der ersten drei, rechnet „Der Sprung" und „Die Kletterpartie" aus den rohen Partien beider Monate nach, ebenso die acht Chroniken gegen das Eigene, deren sieben positive an mindestens fünf Spieler und höchstens zu einem Viertel an den Monatsersten gehen, und die acht gegen Ligamittel, Laufbahn davor und die Laufbahnfragen auf der Monatsachse mit ihren fünfzehn Haltungen, ebenso die Schattenseiten gegen das Eigene und den Anteil an den Partien mit ihren zwölf Haltungen, keine davon bei den ersten drei eines Monats, und die sieben der fünften Fassung Wert für Wert mit ihren sechs Haltungen, keine Chronik mehr als zweimal, verwirft eine Chronik der alten Fassung und rechnet das Banner aus der Tafel jedes Monats nach (die jüngste positive Chronik); `tests/blatt` misst jedes Kürzel des Katalogs in der Zelle, die Farbe jeder Zelle nach ihrer Stufe, den Glanz nur auf Gold, die höchste Klasse des Monats als Farbe der Zelle auch über einem Eintrag niedrigerer Klasse, „+N", die Zahlen je Stufe unter dem Namen, das Band im Kopf und die Legende ohne Wert, die Zahlenreihe einer gehaltenen Chronik mit Grundwert, Bonus und Abstand zur Schwelle, ohne dass eine Zeile ihre Zelle verlässt, die Laufbahn mit Grundwert und Bonus, das Jahr jedes Monats im Kopf in seiner Spalte, und das Banner im Profilkopf: deckend, mit Naht, Falte, Lichthof und Entrollen.
+`tests/rechnen` zählt den laufenden Tag erst um 23:59; `tests/archiv` friert einen Monat der alten Fassung neu ein und sonst keinen; `tests/disziplinen` hält jede Chronik an 1,2 σ, an der Spielzahl-Korrelation und an der Seltenheit (an `tests/fixtures/oktober.txt` in höchstens zwei von fünf Monaten vergeben, der Meister jedes dieser Monate mit mindestens einer positiven Chronik), die Klasse an ihrem Band des Ausschlags, den Grundwert 100 für jede Klasse, die Streuung jeder positiven Chronik gegen die Fixture-Monate, den Bonus (71 % statt 60 % beim Tagesregenten bringen 116, 25 je σ, mindestens 1, „höchstens“ in dieselbe Richtung, in der Regel zwischen 1 und 50) und den eingefrorenen Wert jedes Halters, zählt den Anteil der ersten drei, rechnet „Der Sprung" und „Die Kletterpartie" aus den rohen Partien beider Monate nach, an allen fünf Monaten, ebenso die acht Chroniken gegen das Eigene, deren sieben positive an mindestens fünf Spieler und höchstens zu einem Viertel an den Monatsersten gehen, und die acht gegen Ligamittel, Laufbahn davor und die Laufbahnfragen auf der Monatsachse mit ihren neun Haltungen, ebenso die Schattenseiten gegen das Eigene und den Anteil an den Partien mit ihren acht Haltungen, keine davon bei den ersten drei eines Monats, die sieben der fünften Fassung Wert für Wert mit ihren sechs Haltungen, keine Chronik mehr als zweimal, und die neunzehn der sechsten Fassung Wert für Wert, verwirft eine Chronik der alten Fassung und rechnet das Banner aus der Tafel jedes Monats nach (die jüngste positive Chronik); `tests/blatt` misst jedes Kürzel des Katalogs in der Zelle, die Farbe jeder Zelle nach ihrer Stufe, den Glanz nur auf Gold, die höchste Klasse des Monats als Farbe der Zelle auch über einem Eintrag niedrigerer Klasse, „+N", die Zahlen je Stufe unter dem Namen, das Band im Kopf und die Legende ohne Wert, die Zahlenreihe einer gehaltenen Chronik mit Grundwert, Bonus und Abstand zur Schwelle, ohne dass eine Zeile ihre Zelle verlässt, die Laufbahn mit Grundwert und Bonus, das Jahr jedes Monats im Kopf in seiner Spalte, und das Banner im Profilkopf: deckend, mit Naht, Falte, Lichthof und Entrollen.
 
 ## Herleitung
 
@@ -38,7 +39,7 @@ gewinnt fast jede. Er ist vollständig ersetzt durch Chroniken, die
 nach der **Abweichung von der Erwartung** fragen, nach **Konstanz**, nach
 dem **Verhältnis zum Ligamittel** desselben Monats, zu einem **bestimmten
 anderen Spieler** oder nach einem **seltenen Einzelereignis**. Die
-Liga-Rekorde der Ewigen Tafel sind davon unberührt; zweiundzwanzig Disziplinen tragen
+Liga-Rekorde der Ewigen Tafel sind davon unberührt; dreiundzwanzig Disziplinen tragen
 beide Zeitachsen, weil dieselbe Frage auf zwei Zeitachsen in EINE Disziplin
 gehört [§13.1] — sie sind in §C35 genannt.
 **Das Stichproben-Tor ist niedrig und für alle gleich:** acht Partien im
@@ -61,7 +62,8 @@ legendäre Bedingung wird mit den Jahren zwangsläufig ein zweites und ein
 drittes Mal erreicht und bleibt trotzdem legendär, weil sie keinen Deut
 leichter geworden ist. „Auf dem Thron" gehört heute zwei Monaten und ist
 legendär. Gedeckelt wird deshalb die **Rate** und für alle Klassen gleich:
-höchstens ein Halter je gewerteten Monat. Und ob eine Chronik ihren Platz
+in höchstens einem Drittel der gewerteten Monate (unten, sechste Fassung).
+Und ob eine Chronik ihren Platz
 verdient, entscheidet ihr Ausschlag, nicht ihre Häufigkeit — `tests/disziplinen`
 hält jede an der 1,2-σ-Grenze. Ein Test gegen die heutige Häufigkeit je
 Klasse war nicht einmal rot zu bekommen: eine einzelne falsch eingeordnete
@@ -88,7 +90,7 @@ Streuung `streu`, beide einmal an den Daten gemessen. Eine Streuung, die mit
 der Liga wandert, verschöbe das Prestige aller bisherigen Halter, sobald
 neue Monate die Verteilung verschieben, und genau dieser Fehler steckte
 schon einmal in den Auszeichnungen [§C34]. Der Wert des Halters dagegen
-gehört seinem Monat und friert mit ihm ein (`SEASON_TITLES_FREEZE_V` 5);
+gehört seinem Monat und friert mit ihm ein (`SEASON_TITLES_FREEZE_V` 6);
 ohne ihn brächte ein abgeschlossener Monat nur den Grundwert, und dieselbe
 Chronik zählte nach dem Monatswechsel weniger als davor.
 Art, Klasse und Ausschlag werden **einmal an den Daten geprüft und dann
@@ -325,3 +327,54 @@ gegen die beiden Letzten: 0,90 und 0,60 mit „Das Übersoll", dieselbe
 Frage noch einmal) und das Spiel auf der Nebenposition (vier Werte in fünf
 Monaten, keine Stichprobe). Mit der fünften Fassung wird jeder
 abgeschlossene Monat noch einmal gerechnet und eingefroren.
+
+**Die sechste Fassung macht die Chronik selten und gerecht für den, der
+viel spielt.** Drei Dinge waren falsch, alle an den echten Partien von Juni
+bis Oktober gemessen. Erstens war die Grenze der Seltenheit keine mehr: sie
+hieß „nicht mehr Halter als Monate", und „Der Spielverderber" ging in allen
+fünf Monaten an jemanden, „Die Steigerung", „Der Rollentausch" und „Die
+Sattheit" in vier, achtzehn weitere in drei. Was fast
+jeder Monat hergibt, ist keine Besonderheit. Jetzt geht eine Chronik in
+höchstens einem Drittel der Monate an jemanden; dafür stiegen
+dreiundzwanzig Schwellen (vom Spielverderber mit 11 statt 6 Prozentpunkten
+bis zur Durststrecke mit 12 statt 11 Pleiten), „Kein Angstgegner" verlangt
+acht regelmäßige Gegner statt vier und „Der Angstgegner" zehn Duelle statt
+acht, und wo eine Schwelle stieg, stieg mit ihr der Ausschlag und, wo er die
+Grenze überschritt, die Klasse. Zweitens bekam, wer viel spielt, kaum eine
+Chronik: wer im Monat achtzig Partien und mehr spielte, hielt im Schnitt
+eine positive, alle anderen drei (r = −0,30 zwischen Spielzahl und
+positiven Einträgen). Die Schwellen fragen nach Abständen, und ein Abstand
+über zehn Partien schwankt so weit, dass ihn der Zufall reißt; über hundert
+reißt ihn nur, wer wirklich anders spielt. Drittens hielt Leon im Juni als
+Meister mit 131 Partien und 103 Elo Vorsprung keine einzige Chronik.
+Dazu kamen neunzehn neue, sechs davon nach einer Wahrscheinlichkeit
+(`_stUnwahr`): „Die Favoritenrolle" (als Favorit, höchstens 3 %), „Der
+Siegeszug" (die unwahrscheinlichste Serie, mal der Zahl der Partien, sonst
+hätte mehr Anläufe, wer mehr spielt), „Das Stammduell" und „Die Übermacht"
+(gegen den häufigsten Gegner des Monats, 10 % und 4 %), „Der lange Atem"
+(an Tagen mit sieben Partien, 4 %) und „Der Tag zum Vergessen" (das
+Gegenstück zum Ausreißer). Gegen die eigene Laufbahn fragen „Der
+Abwehrwall", „Das Leck" und „Der Aufbauspieler" (die Abwehr, wie das
+Zielwasser den Sturm), „Die Torflaute" und „Der Abschwung" auf der
+Monatsachse; „Die Torgefahr" stellt den Sturm gegen das Ligamittel, „Die
+späte Revanche" das Wiedersehen nach einer Nacht gegen die Rechnung, „Der
+Platztausch" und „Das Festhalten" den Positionswechsel gegen das Bleiben;
+„Der Abrutsch", „Die Klatsche" und „Das Strohfeuer" sind Gegenstücke der
+Kletterpartie, des Zerstörers und des Nachzüglers, und „Der Souverän" fragt
+nach dem Vorsprung an der Spitze. Leon hält im Juni jetzt drei (Souverän,
+Stammduell, langer Atem). Die Vielspieler holen auf, aber nicht ganz —
+achtzig Partien und mehr bringen im Schnitt 1,4 positive statt 1,0 —, denn
+wer viel spielt und genau so spielt, wie die Rechnung erwartet, ist in
+keinem Monat besonders. Verworfen wurde, was eine bestehende Frage
+wiederholte, gemessen an der Korrelation mit ihr: der Teamspieler (0,85
+mit dem Übersoll), der Kronprinz neben den beiden Ersten (0,76 mit dem
+Schattenmann), der Bremsklotz (0,79), der Wochentakt (0,82 mit „Ohne
+schwache Woche"), jede Woche über der Rechnung (0,87 mit dem
+Tagesabschluss), ohne Minus im Monat (0,85 mit dem Traummonat), das
+Drehbuch der Favoriten (−0,83 mit „Favorit wie Außenseiter") und das Pendel
+aus Sieg und Niederlage (−0,85 mit der stummen Antwort); was an der
+Spielzahl hing: die Blamage als Favorit (0,48), die längste Serie ohne
+Rechnung (0,41) und der Sonntagsschuss im Monat (0,45 in den
+Fixture-Monaten); und was keine Besonderheit ist: das Zugpferd neben
+schwächeren Partnern und der Blitzstart in den Monat erreichten als
+Bestes eines Monats nur 14 bis 30 % Wahrscheinlichkeit.
