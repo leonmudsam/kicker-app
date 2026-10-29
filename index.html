@@ -6410,7 +6410,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.29.4ecfc075';
+const BUILD_VERSION='2026.10.29.9c0212f7';
 function forceReload(nach){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -30195,7 +30195,7 @@ const DISZIPLINEN = [
       ev:(p,v) => `${Math.round(v*100)} % aller ${p.wins} Siege waren Kantersiege · ${p.blowW} Kantersiege`
     },
     monat:{
-      beiname:'Der Zerstörer',
+      beiname:'Der Kantersieger',
       art:'koennen',
       klasse:'besonders', aus:1.82, streu:0.0959,
       wie:'Ein Kantersieg ist ein Sieg mit sieben oder mehr Toren Vorsprung. Der Nenner sind die eigenen Siege des Monats und nicht alle Partien.',
@@ -30223,7 +30223,7 @@ const DISZIPLINEN = [
 
   {id:'deutlich', name:'Der Deutliche', short:'Deutlich', ic:'plusMinus', tone:'gold', art:'leistung',
     monat:{
-      beiname:'Der Deutliche',
+      beiname:'Der Unbarmherzige',
       art:'koennen',
       klasse:'besonders', aus:1.59, streu:1.08,
       wie:'Aus der Siegchance vor jeder Partie folgt, wie viele Tore Unterschied zu erwarten sind, gerechnet über alle Partien des Monats. Gewertet wird, wie weit die eigene Tordifferenz je Partie darüber liegt.',
@@ -31136,7 +31136,7 @@ const DISZIPLINEN = [
       ev:(p,v) => `${Math.round(v*100)} % der ${p.favN} Favoritenspiele verloren · ${p.favL} Niederlagen`
     },
     monat:{
-      beiname:'Der Wackelkandidat',
+      beiname:'Der Favoritenpatzer',
       art:'schatten',
       klasse:'besonders', aus:1.38,
       wie:'Favorit heißt über 55 % Siegchance vor dem Anpfiff. Gewertet wird der Niederlagenanteil in genau diesen Partien.',
@@ -31331,7 +31331,7 @@ const DISZIPLINEN = [
 
   {id:'ausreisser2', name:'Der Ausreißer', short:'Ausreißer', ic:'ausreisser', tone:'gold', art:'leistung',
     monat:{
-      beiname:'Der Ausreißer',
+      beiname:'Der Senkrechtstarter',
       art:'koennen',
       klasse:'legendaer', aus:2.21, streu:0.437,
       wie:'Die Elo-Erwartung auf einen Tag zusammengezogen. Gemessen wird der Zehnerlogarithmus, weil ein Tag mit einem Prozent Wahrscheinlichkeit zehnmal unwahrscheinlicher ist als einer mit zehn.',
@@ -31447,7 +31447,7 @@ const DISZIPLINEN = [
 
   {id:'favschreck', name:'Der Favoritenschreck', short:'Schreck', ic:'giantSlayer', tone:'gold', art:'leistung',
     monat:{
-      beiname:'Der Favoritenschreck',
+      beiname:'Der Unerschrockene',
       art:'koennen',
       klasse:'selten', aus:1.96, streu:0.193,
       wie:'Klarer Favorit heißt: das gegnerische Team hatte vorher mindestens 65 Prozent Siegchance.',
@@ -31530,7 +31530,7 @@ const DISZIPLINEN = [
 
   {id:'punktgenau2', name:'Der Erwartungstreue', short:'Erwartung', ic:'stopwatch', tone:'blue', art:'leistung',
     monat:{
-      beiname:'Der Erwartungstreue',
+      beiname:'Der Berechenbare',
       art:'konstanz',
       klasse:'selten', aus:2.46, streu:0.469,
       wie:'Der Abstand zwischen der eigenen Quote und dem, was die Rechnung vorher auswies. Gemessen wird logarithmisch, weil die Frage „wie nah an null" ist: zwischen einem halben und drei Prozentpunkten liegt mehr als zwischen drei und achtzehn.',
@@ -31557,7 +31557,7 @@ const DISZIPLINEN = [
 
   {id:'beidseitig', name:'Der Beidfüßige', short:'Beidfüßig', ic:'sort', tone:'blue', art:'leistung',
     monat:{
-      beiname:'Der Beidfüßige',
+      beiname:'Der Vielseitige',
       art:'konstanz',
       klasse:'selten', aus:2.01, streu:0.457,
       wie:'Die Quote im Sturm und die in der Abwehr, beide gegen die eigene Gesamtquote. Gemessen logarithmisch: nah an null ist die Aussage, und ein halber Prozentpunkt ist etwas anderes als fünf.',
@@ -31656,7 +31656,7 @@ const DISZIPLINEN = [
 
   {id:'serienbrecher', name:'Der Serienbrecher', short:'Brecher', ic:'flameBreak', tone:'gold', art:'leistung',
     monat:{
-      beiname:'Der Serienbrecher',
+      beiname:'Der Feuerlöscher',
       art:'koennen',
       klasse:'selten', aus:2.12, streu:0.191,
       wie:'Die Serie des Gegners wird für jede Partie neu nachgezählt, mit dem Stand vor dem Anpfiff.',
@@ -31736,7 +31736,7 @@ const DISZIPLINEN = [
 
   {id:'zitterkoenig', name:'Der Zitterkönig', short:'Zittersieg', ic:'zitterkrone', tone:'purple', art:'ereignis',
     monat:{
-      beiname:'Der Zitterkönig',
+      beiname:'Der Nervenkünstler',
       art:'fuegung',
       klasse:'legendaer', aus:3.84, streu:0.148,
       wie:'Knapp heißt höchstens zwei Tore Vorsprung. Gezählt wird der Anteil an den eigenen Siegen, nicht an allen Partien.',
@@ -31762,7 +31762,7 @@ const DISZIPLINEN = [
 
   {id:'spezialisiert', name:'Der Spezialist', short:'Spezialist', ic:'spezialist', tone:'purple', art:'ereignis',
     monat:{
-      beiname:'Der Spezialist',
+      beiname:'Der Fachmann',
       art:'fuegung',
       klasse:'legendaer', aus:2.69, streu:0.126,
       wie:'Dasselbe andersherum. Groß heißt einseitig, nicht gut.',
@@ -31804,7 +31804,7 @@ const DISZIPLINEN = [
 
   {id:'wechselhaft', name:'Der Wechselhafte', short:'Wechsel', ic:'wechselhaft', tone:'purple', art:'ereignis',
     monat:{
-      beiname:'Der Wechselhafte',
+      beiname:'Der Launische',
       art:'fuegung',
       klasse:'selten', aus:1.96, streu:0.0355,
       wie:'Das Gegenstück zum Metronom. Gemessen wird die Streuung der Tagesquoten um den eigenen Monatsschnitt: groß heißt, kein Tag sah aus wie der andere.',
@@ -31834,7 +31834,7 @@ const DISZIPLINEN = [
 
   {id:'quertreiber', name:'Der Quertreiber', short:'Quer', ic:'crossFlip', tone:'purple', art:'ereignis',
     monat:{
-      beiname:'Der Quertreiber',
+      beiname:'Der Querkopf',
       art:'fuegung',
       klasse:'selten', aus:2.03, streu:0.165,
       wie:'Favorit heißt über 55 % Siegchance vor dem Anpfiff, Außenseiter unter 45 %. Verglichen werden die beiden Siegquoten: als Außenseiter höher als als Favorit ist die Umkehrung dessen, was die Rechnung erwartet.',
@@ -32054,7 +32054,7 @@ const DISZIPLINEN = [
 
   {id:'spielverderber', name:'Der Spielverderber', short:'Störfeuer', ic:'kroneRiss', tone:'gold', art:'leistung',
     monat:{
-      beiname:'Der Spielverderber',
+      beiname:'Der Gipfelstürmer',
       art:'koennen',
       klasse:'selten', aus:2.07, streu:0.123,
       wie:'Nur die Partien gegen die beiden Ersten der Monatstabelle. Der Erste selbst wird nicht gewertet. Verglichen wird die Quote darin mit der Siegchance, die die Elo-Rechnung diesen Partien gab.',
@@ -32081,7 +32081,7 @@ const DISZIPLINEN = [
 
   {id:'bannbrecher', name:'Der Bannbrecher', short:'Bannbruch', ic:'bannbruch', tone:'gold', art:'leistung',
     monat:{
-      beiname:'Der Bannbrecher',
+      beiname:'Der Überwinder',
       art:'koennen',
       klasse:'besonders', aus:1.38, streu:0.136,
       wie:'Gewertet wird der Gegner, gegen den die eigene Laufbahn vor diesem Monat am schlechtesten aussah, unter denen mit mindestens zehn Duellen davor, vier Duellen im Monat und einer Quote unter der eigenen Laufbahnquote. Verglichen wird die Quote gegen diesen Gegner in diesem Monat mit der Quote gegen denselben Gegner davor.',
@@ -32355,7 +32355,7 @@ const DISZIPLINEN = [
 
   {id:'aufdreher', name:'Der Aufdreher', short:'Aufdreher', ic:'aufdreher', tone:'purple', art:'ereignis',
     monat:{
-      beiname:'Der Aufdreher',
+      beiname:'Der Eifrige',
       art:'fuegung',
       klasse:'legendaer', aus:2.62, streu:0.732,
       wie:'Der eigene Anteil an allen Partien des Monats gegen den eigenen Anteil in den Monaten davor, gemittelt über die Monate mit mindestens acht eigenen Partien. Gefragt ist nicht, wer am meisten spielt, sondern wer deutlich mehr dabei ist als sonst.',
@@ -34122,7 +34122,7 @@ function showDisziplin(tid, sid){
       <span class="c">${esc(def.cond)}</span>
       ${
 
-        def.beiname && def.beiname !== def.name ? `<span class="chron-kose"><i>Beiname im Profil</i>`
+        def.beiname ? `<span class="chron-kose"><i>Beiname im Profil</i>`
         + `<b>${esc(def.beiname)}</b></span>` : ''}
     </div>
     ${_chronFaktenHtml(def, eigene.length ? eigene[0].wert : undefined)}

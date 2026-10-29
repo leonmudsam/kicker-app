@@ -1394,6 +1394,7 @@ const _bei = JSON.parse(K.eval(`JSON.stringify((function(){
   const t = SEASON_TITLES.map(x => ({id:x.id, bei:x.beiname || ''}));
   const dop = {}; t.forEach(x => { (dop[x.bei] = dop[x.bei] || []).push(x.id); });
   return {ohne: t.filter(x => !x.bei).map(x => x.id),
+          gleich: SEASON_TITLES.filter(x => x.beiname === x.name).map(x => x.id),
           lang: t.filter(x => x.bei.length > 20).map(x => x.bei),
           mehr: Object.keys(dop).filter(k => dop[k].length > 1)};
 })())`));
@@ -1402,6 +1403,11 @@ ok(_bei.ohne.length === 0, 'jede Chronik traegt ihren Beinamen fuers Profil',
 ok(_bei.lang.length === 0, 'kein Beiname sprengt die Pille im Profilkopf',
    _bei.lang.join(', '));
 ok(_bei.mehr.length === 0, 'kein Beiname kommt zweimal vor', _bei.mehr.join(', '));
+// Ein Beiname ist ein Alias, nicht der Katalogname noch einmal. Fuenfzehn
+// Chroniken hiessen im Profil genauso wie in der Matrix — „Der Ausreisser",
+// „Der Zerstoerer", „Der Spielverderber" —, und wer eine davon hielt,
+// trug im Profilkopf den Namen einer Wertung statt eines Spielertyps.
+ok(_bei.gleich.length === 0, 'kein Beiname ist der Name seiner Chronik', _bei.gleich.join(', '));
 ok(K.eval(`(function(){
   const b = players.filter(p => !p.hidden).map(p => playerTitleBadge(p.id)).filter(Boolean);
   return b.length > 0 && b.every(x => x.name && x.titel);
