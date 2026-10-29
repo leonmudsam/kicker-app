@@ -17,6 +17,7 @@
 - Im Profilkopf steht der Beiname (`monat.beiname`, `chronBeiname`), überall sonst der Katalogname; das Blatt nennt den Beinamen in `.chron-kose`, außer er ist der Katalogname. Im Profilkopf steht er als Banner (`.pp-banner`) und nur der der jüngsten **positiven** Monatschronik (`playerTitleBadge`): ein Monat mit nur Schattenseiten verdrängt ihn nicht, hat ein Monat beides, gilt die positive; das Banner bleibt, bis ein neuerer Monat eine positive bringt, und die Zeile darunter nennt seinen Monat („läuft", solange er läuft). Das Banner: ein deckendes Band (Grund aus dunklem Gold unter der Tönung, an den Enden dunkler) mit einer durchgezogenen Naht innen an Ober- und Unterkante und gefalteten Enden, die zum Band hin in den Schatten fallen, Lichthof und Schein im Gold, so groß wie die Pille davor, ohne gestrichelte Kante; beim Öffnen entrollt es sich, danach schieben sich die Enden heraus, alle siebeneinhalb Sekunden ein Glanz; der Monat darunter zwischen zwei goldenen Strichen.
 - Die Klasse ist sichtbar: Farbe der Zelle (`data-kl`, `chronikTon`) — in der Matrix und im Profilstreifen die höchste Klasse, die der Spieler im Monat hält (`chronikZellStufe`), auch wenn der Eintrag, der in der Zelle steht und zählt, eine niedrigere trägt; die Zahlen je Stufe unter dem Namen zählen diese Farben, das Band im Kopf die Klassen aller Einträge — Gold mit einem Glanz alle sechs Sekunden, Name auf der Plakette (`CHRONIK_KLASSE_NAME`), Zahlenreihe im Blatt (`rcpZahlenHtml`, `_chronFaktenHtml`): Klasse, Art, Ausschlag und Prestige; mit einem Halter steht unter dem Ausschlag, wie weit er darüber liegt („+0,64 σ“), und unter dem Prestige die Rechnung („100 + 16“), ohne Halter „+ Bonus“. Die Laufbahn nennt je Chronik „Grundwert 100 + 16 für 0,64 σ über der Schwelle“.
 - Die Matrix ordnet nach dem Prestige ihrer Zellen (je Monat der Eintrag, der zählt), dann Zahl der Einträge, dann Name; sie steht in einer Karte (`_lchronTabelle`), Ruheständler in einer eigenen Karte (`ruhe_chronik`). Strich heißt gewertet ohne Eintrag, leer heißt nicht gewertet. Der Kopf jeder Spalte nennt den Monat mit seinem Jahr („Okt ’26“), sonst sind nach dem zweiten Jahr zwei Oktober nicht zu unterscheiden, und zeigt die Zahl und als Band die Stufen ihrer Einträge, die Zeile unter dem Namen je Stufe die Zahl ihrer Zellen, die Zelle „+N", wenn der Spieler im Monat mehr hält; die Legende nennt die Stufen, ohne Wert.
+- Eine Schwelle ist eine runde Zahl, so wie sie in der Bedingung steht: Prozent und Prozentpunkte in Fünferschritten, darunter nur 2, 1 oder 0,5; Tore in Vierteln, Elo in Zehnern. Gerundet wird in die Richtung, in der die Seltenheit hält.
 - Ein Kürzel (`short`) ist ein ganzes Wort und passt gerendert in 54 px.
 - Die Rohsicht liegt in der Engine (`_seasonTitleCtx`: `partien`, `tagGrp`, `wochGrp`, `partnerGrp`, `gegnerGrp`).
 - Spieltage zählen erst, wenn sie zu sind (`_tagZu`): `tagGrp`, die letzte Partie eines Tages, die Tagesquoten und das Tagesende von „Auf dem Thron"; „Der Tagesregent" teilt durch diese Tage (`tagN`). Wochen bleiben offen gezählt — eine Woche geht Tage nach ihrer letzten Partie zu, und ihr Ende stünde in der Tafel eines anderen Tages.
@@ -27,7 +28,7 @@
 
 ## Prüfung
 
-`tests/rechnen` zählt den laufenden Tag erst um 23:59; `tests/archiv` friert einen Monat der alten Fassung neu ein und sonst keinen; `tests/disziplinen` hält jede Chronik an 1,2 σ, an der Spielzahl-Korrelation und an der Seltenheit (an `tests/fixtures/oktober.txt` in höchstens zwei von fünf Monaten vergeben, der Meister jedes dieser Monate mit mindestens einer positiven Chronik), die Klasse an ihrem Band des Ausschlags, den Grundwert 100 für jede Klasse, die Streuung jeder positiven Chronik gegen die Fixture-Monate, den Bonus (71 % statt 60 % beim Tagesregenten bringen 116, 25 je σ, mindestens 1, „höchstens“ in dieselbe Richtung, in der Regel zwischen 1 und 50) und den eingefrorenen Wert jedes Halters, zählt den Anteil der ersten drei, rechnet „Der Sprung" und „Die Kletterpartie" aus den rohen Partien beider Monate nach, an allen fünf Monaten, ebenso die acht Chroniken gegen das Eigene, deren sieben positive an mindestens fünf Spieler und höchstens zu einem Viertel an den Monatsersten gehen, und die acht gegen Ligamittel, Laufbahn davor und die Laufbahnfragen auf der Monatsachse mit ihren neun Haltungen, ebenso die Schattenseiten gegen das Eigene und den Anteil an den Partien mit ihren acht Haltungen, keine davon bei den ersten drei eines Monats, die sieben der fünften Fassung Wert für Wert mit ihren sechs Haltungen, keine Chronik mehr als zweimal, und die neunzehn der sechsten Fassung Wert für Wert, verwirft eine Chronik der alten Fassung und rechnet das Banner aus der Tafel jedes Monats nach (die jüngste positive Chronik); `tests/blatt` misst jedes Kürzel des Katalogs in der Zelle, die Farbe jeder Zelle nach ihrer Stufe, den Glanz nur auf Gold, die höchste Klasse des Monats als Farbe der Zelle auch über einem Eintrag niedrigerer Klasse, „+N", die Zahlen je Stufe unter dem Namen, das Band im Kopf und die Legende ohne Wert, die Zahlenreihe einer gehaltenen Chronik mit Grundwert, Bonus und Abstand zur Schwelle, ohne dass eine Zeile ihre Zelle verlässt, die Laufbahn mit Grundwert und Bonus, das Jahr jedes Monats im Kopf in seiner Spalte, und das Banner im Profilkopf: deckend, mit Naht, Falte, Lichthof und Entrollen.
+`tests/rechnen` zählt den laufenden Tag erst um 23:59; `tests/archiv` friert einen Monat der alten Fassung neu ein und sonst keinen; `tests/disziplinen` hält jede Chronik an 1,2 σ, an der Spielzahl-Korrelation und an der Seltenheit (an `tests/fixtures/oktober.txt` in höchstens zwei von fünf Monaten vergeben, der Meister jedes dieser Monate mit mindestens einer positiven Chronik), die Klasse an ihrem Band des Ausschlags, den Grundwert 100 für jede Klasse, die Streuung jeder positiven Chronik gegen die Fixture-Monate, den Bonus (71 % statt 60 % beim Tagesregenten bringen 116, 25 je σ, mindestens 1, „höchstens“ in dieselbe Richtung, in der Regel zwischen 1 und 50) und den eingefrorenen Wert jedes Halters, zählt den Anteil der ersten drei, rechnet „Der Sprung" und „Die Kletterpartie" aus den rohen Partien beider Monate nach, an allen fünf Monaten, ebenso die acht Chroniken gegen das Eigene, deren sieben positive an mindestens fünf Spieler und höchstens zu einem Viertel an den Monatsersten gehen, und die acht gegen Ligamittel, Laufbahn davor und die Laufbahnfragen auf der Monatsachse mit ihren neun Haltungen, ebenso die Schattenseiten gegen das Eigene und den Anteil an den Partien mit ihren acht Haltungen, keine davon bei den ersten drei eines Monats, die sieben der fünften Fassung Wert für Wert mit ihren fünf Haltungen, keine Chronik mehr als zweimal, und die neunzehn der sechsten Fassung Wert für Wert, liest jede Schwelle aus der Bedingung und verlangt eine runde Zahl, verwirft eine Chronik der alten Fassung und rechnet das Banner aus der Tafel jedes Monats nach (die jüngste positive Chronik); `tests/blatt` misst jedes Kürzel des Katalogs in der Zelle, die Farbe jeder Zelle nach ihrer Stufe, den Glanz nur auf Gold, die höchste Klasse des Monats als Farbe der Zelle auch über einem Eintrag niedrigerer Klasse, „+N", die Zahlen je Stufe unter dem Namen, das Band im Kopf und die Legende ohne Wert, die Zahlenreihe einer gehaltenen Chronik mit Grundwert, Bonus und Abstand zur Schwelle, ohne dass eine Zeile ihre Zelle verlässt, die Laufbahn mit Grundwert und Bonus, das Jahr jedes Monats im Kopf in seiner Spalte, und das Banner im Profilkopf: deckend, mit Naht, Falte, Lichthof und Entrollen.
 
 ## Herleitung
 
@@ -233,7 +234,7 @@ sechs, und der Anteil der ersten drei sank auf 35 %. Schwellen und
 Ausschlag sind über alle fünf Monate der Liga gemessen.
 
 **Der Vormonat ist ein Maßstab.** „Der Sprung" verlangt eine Siegquote
-25 Prozentpunkte über der des Vormonats, „Die Kletterpartie" vier Plätze
+25 Prozentpunkte über der des Vormonats, „Die Kletterpartie" fünf Plätze
 weiter vorn in der Monatstabelle, beide ab acht Partien in beiden
 Monaten. Wer im Vormonat schwach war, hat mehr Raum nach oben, und wer
 ganz oben steht, kann kaum noch steigen: beide belohnen die Verbesserung
@@ -304,7 +305,7 @@ vergleichen mit der eigenen Laufbahn oder mit einem Gegenüber: „Der
 Bannbrecher" schlägt den Gegner, gegen den die Laufbahn davor am
 schlechtesten lief, um mindestens 25 Prozentpunkte besser als davor,
 „Die Retourkutsche" ist das Gegenstück gegen den liebsten Gegner, „Das
-Zielwasser" trifft im Sturm mindestens 0,65 Tore je Partie mehr als in den
+Zielwasser" trifft im Sturm mindestens 0,75 Tore je Partie mehr als in den
 Sturmspielen davor, „Die Stütze" gewinnt neben einem Partner, der die zwei
 Partien davor verloren hatte, über die Rechnung hinaus — die zwei Partien
 zählen über die Monatsgrenze hinweg, denn wer am Ersten aus zwei Pleiten
@@ -336,7 +337,7 @@ fünf Monaten an jemanden, „Die Steigerung", „Der Rollentausch" und „Die
 Sattheit" in vier, achtzehn weitere in drei. Was fast
 jeder Monat hergibt, ist keine Besonderheit. Jetzt geht eine Chronik in
 höchstens einem Drittel der Monate an jemanden; dafür stiegen
-dreiundzwanzig Schwellen (vom Spielverderber mit 11 statt 6 Prozentpunkten
+dreiundzwanzig Schwellen (vom Spielverderber mit 15 statt 6 Prozentpunkten
 bis zur Durststrecke mit 12 statt 11 Pleiten), „Kein Angstgegner" verlangt
 acht regelmäßige Gegner statt vier und „Der Angstgegner" zehn Duelle statt
 acht, und wo eine Schwelle stieg, stieg mit ihr der Ausschlag und, wo er die
@@ -348,11 +349,11 @@ positiven Einträgen). Die Schwellen fragen nach Abständen, und ein Abstand
 reißt ihn nur, wer wirklich anders spielt. Drittens hielt Leon im Juni als
 Meister mit 131 Partien und 103 Elo Vorsprung keine einzige Chronik.
 Dazu kamen neunzehn neue, sechs davon nach einer Wahrscheinlichkeit
-(`_stUnwahr`): „Die Favoritenrolle" (als Favorit, höchstens 3 %), „Der
+(`_stUnwahr`): „Die Favoritenrolle" (als Favorit, höchstens 2 %), „Der
 Siegeszug" (die unwahrscheinlichste Serie, mal der Zahl der Partien, sonst
 hätte mehr Anläufe, wer mehr spielt), „Das Stammduell" und „Die Übermacht"
-(gegen den häufigsten Gegner des Monats, 10 % und 4 %), „Der lange Atem"
-(an Tagen mit sieben Partien, 4 %) und „Der Tag zum Vergessen" (das
+(gegen den häufigsten Gegner des Monats, 10 % und 2 %), „Der lange Atem"
+(an Tagen mit sieben Partien, 2 %) und „Der Tag zum Vergessen" (das
 Gegenstück zum Ausreißer). Gegen die eigene Laufbahn fragen „Der
 Abwehrwall", „Das Leck" und „Der Aufbauspieler" (die Abwehr, wie das
 Zielwasser den Sturm), „Die Torflaute" und „Der Abschwung" auf der
@@ -361,9 +362,9 @@ späte Revanche" das Wiedersehen nach einer Nacht gegen die Rechnung, „Der
 Platztausch" und „Das Festhalten" den Positionswechsel gegen das Bleiben;
 „Der Abrutsch", „Die Klatsche" und „Das Strohfeuer" sind Gegenstücke der
 Kletterpartie, des Zerstörers und des Nachzüglers, und „Der Souverän" fragt
-nach dem Vorsprung an der Spitze. Leon hält im Juni jetzt drei (Souverän,
-Stammduell, langer Atem). Die Vielspieler holen auf, aber nicht ganz —
-achtzig Partien und mehr bringen im Schnitt 1,4 positive statt 1,0 —, denn
+nach dem Vorsprung an der Spitze. Leon hält im Juni jetzt zwei (Souverän,
+Stammduell). Die Vielspieler holen kaum auf — achtzig Partien und mehr
+bringen im Schnitt 1,1 positive statt 1,0 —, denn
 wer viel spielt und genau so spielt, wie die Rechnung erwartet, ist in
 keinem Monat besonders. Verworfen wurde, was eine bestehende Frage
 wiederholte, gemessen an der Korrelation mit ihr: der Teamspieler (0,85
@@ -378,3 +379,21 @@ Rechnung (0,41) und der Sonntagsschuss im Monat (0,45 in den
 Fixture-Monaten); und was keine Besonderheit ist: das Zugpferd neben
 schwächeren Partnern und der Blitzstart in den Monat erreichten als
 Bestes eines Monats nur 14 bis 30 % Wahrscheinlichkeit.
+
+**Eine Schwelle ist rund.** Die Kalibrierung lieferte Schwellen wie 82 %,
+33 Prozentpunkte, 0,65 Tore oder 4 %, und so standen sie in der Bedingung.
+Eine krumme Zahl merkt sich niemand, und sie liest sich, als sei sie auf
+einen bestimmten Halter zugeschnitten. Jetzt stehen Prozent und
+Prozentpunkte in Fünferschritten, kleine Wahrscheinlichkeiten bei 2, 1 oder
+0,5 %, Tore in Vierteln und Elo in Zehnern; dreiunddreißig Schwellen wurden
+gerundet, jede in die Richtung, in der die Chronik in höchstens zwei von
+fünf Monaten vergeben bleibt und ihren Ausschlag von 1,2 σ behält. Meist
+war das nach oben: „Die weiße Weste" verlangt 15 statt 11 %, „Die Antwort"
+85 statt 82 %, „Neuland" 20 statt 17 Prozentpunkte. Nach unten ging es, wo
+die Seltenheit trotzdem hielt: „Der Staffellauf" mit 30 statt 32, „Der
+Endspurt" mit 20 statt 22 Prozentpunkten. Die Fragen nach einer
+Wahrscheinlichkeit stehen alle bei 2 %: mit 5 % wären „Der Ausreißer", „Der
+lange Atem", „Die Favoritenrolle", „Die Übermacht" und „Der Siegeszug" in
+drei oder vier von fünf Monaten vergeben worden, und „Der Tag zum
+Vergessen" folgt dem Ausreißer als dessen Gegenstück. Leon verliert damit
+den langen Atem im Juni.

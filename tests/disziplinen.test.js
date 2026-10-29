@@ -1291,6 +1291,22 @@ const _zuOft = Object.keys(_monate.n).filter(id => _monate.n[id].length > _dritt
 ok(_monN === 5 && _zuOft.length === 0,
    'keine Chronik geht in mehr als einem Drittel der gewerteten Monate an jemanden',
    _monN + ' Monate, hoechstens ' + _drittel + ', zu oft: ' + _zuOft.map(id => id + '(' + _monate.n[id].join(',') + ')').join(', '));
+// Eine Schwelle ist eine runde Zahl: niemand merkt sich „82 %" oder „33
+// Prozentpunkte", und eine krumme Zahl liest sich, als sei sie auf einen
+// bestimmten Halter zugeschnitten. Prozent und Prozentpunkte stehen in
+// Fuenferschritten, darunter nur 2, 1 oder 0,5; Tore in Vierteln, Elo in
+// Zehnern. Gelesen wird die Bedingung, wie sie auf dem Bildschirm steht.
+const _krumm = JSON.parse(K.eval(`JSON.stringify(SEASON_TITLES.map(t => {
+  const c = _chronikMonat(t.id).cond || '';
+  const bad = [...c.matchAll(/(\\d+(?:,\\d+)?)\\s*(%|Prozentpunkte?|Gegentore?|Tore?\\b|Elo)/g)].filter(m => {
+    const f = parseFloat(m[1].replace(',', '.')), u = m[2];
+    if(u === '%' || u.startsWith('Prozentpunkt')) return f >= 5 ? Math.abs(f / 5 - Math.round(f / 5)) > 1e-9 : ![0.5, 1, 2].includes(f);
+    if(u === 'Elo') return f % 10 !== 0;
+    return Math.abs(f * 4 - Math.round(f * 4)) > 1e-9;
+  }).map(m => m[0]);
+  return bad.length ? t.id + ': ' + bad.join(', ') : '';
+}).filter(Boolean))`));
+ok(_krumm.length === 0, 'jede Schwelle einer Bedingung ist eine runde Zahl', _krumm.join(' · '));
 // Und der Beste eines Monats geht dabei nicht leer aus. Im Juni hielt Leon
 // als Meister keine einzige Chronik: die Fragen nach der Rechnung reisst
 // kaum, wen die Rechnung schon oben sieht, und ein Abstand ueber hundert
@@ -1504,7 +1520,7 @@ const _monSoll = (() => {
       const S = a.filter(x => x.w).length, n = a.length;
       return v.filter(d => d[0].w !== d[d.length-1].w).length / v.length - 2 * S * (n - S) / (n * (n - 1)); }
   };
-  const AB = {staffellauf:0.32, seitenbuendnis:0.35, quertreiber:0.05, tagesumkehr:0.25};
+  const AB = {staffellauf:0.30, seitenbuendnis:0.35, quertreiber:0.05, tagesumkehr:0.25};
   const out = {};
   ['2026-06','2026-07','2026-08'].forEach(sid => Object.keys(W).forEach(id => {
     const feld = Object.keys(P).filter(k => k.startsWith(sid + '|'))
@@ -1525,8 +1541,8 @@ const _monAb = Object.keys(_monSoll).filter(k => _monSoll[k] !== _monIst[k]);
 ok(_monAb.length === 0, 'die vier neuen Monatschroniken stimmen mit der Nachrechnung aus den rohen Partien',
    _monAb.map(k => k + ': ' + (_monIst[k].split(',').map(nm).join('/') || '–') + ' statt '
      + (_monSoll[k].split(',').map(nm).join('/') || '–')).join(' · '));
-ok(Object.values(_monIst).filter(Boolean).length === 4,
-   'die vier neuen Monatschroniken sind viermal vergeben, wie kalibriert',
+ok(Object.values(_monIst).filter(Boolean).length === 5,
+   'die vier neuen Monatschroniken sind fuenfmal vergeben, wie kalibriert',
    Object.keys(_monIst).filter(k => _monIst[k]).map(k => k + ' ' + nm(_monIst[k])).join(' · '));
 
 // Die acht Chroniken gegen das Eigene [§C39], ein zweites Mal aus den rohen
@@ -1576,7 +1592,7 @@ const _eigenSoll = (() => {
     absturz:(a, sid, pid) => { const v = P[vormonat(sid) + '|' + pid]; if(!v || v.length < 8) return null;
       return v.filter(x => x.w).length / v.length - a.filter(x => x.w).length / a.length; }
   };
-  const AB = {knipser:0.75, riegel:0.5, neuland:0.17, revanche:0.45, spielverderber:0.11, lernkurve:0.33, nachlegen:0.15, absturz:0.17};
+  const AB = {knipser:0.75, riegel:0.5, neuland:0.20, revanche:0.45, spielverderber:0.15, lernkurve:0.35, nachlegen:0.15, absturz:0.20};
   const out = {};
   ['2026-06','2026-07','2026-08'].forEach(sid => Object.keys(W).forEach(id => {
     const feld = Object.keys(P).filter(k => k.startsWith(sid + '|') && P[k].length >= 8)
@@ -1686,9 +1702,9 @@ const _neuSoll = (() => {
       return -Math.min(...l.map(d => d.reduce((s, x) => s + x.e, 0) / d.length)); },
     favflop:(a) => { const f = a.filter(x => x.e > 0.55); return f.length >= 5 ? 1 - q(f) : null; }
   };
-  const AB = {ausnahmemonat:0.12, rollentausch:0.23, klartext:0.09, damage_control:1.3,
-              destroyer:0.30, clutch:0.30, hardnight:-0.31, favflop:0.55,
-              fehlstart:0.40, kraefteverfall:0.30, einbruch:0.35, sattheit:0.22, schwarzewoche:0.35,
+  const AB = {ausnahmemonat:0.15, rollentausch:0.25, klartext:0.10, damage_control:1.25,
+              destroyer:0.30, clutch:0.30, hardnight:-0.30, favflop:0.55,
+              fehlstart:0.40, kraefteverfall:0.30, einbruch:0.35, sattheit:0.25, schwarzewoche:0.35,
               aufdreher:3, rueckzug:-0.25, noanswer:0.25};
   const out = {};
   ['2026-06','2026-07','2026-08'].forEach(sid => _neuMon.concat(_schattMon).forEach(id => {
@@ -1823,16 +1839,17 @@ ok(_neu7Werte > 100 && _neu7Ab.length === 0,
    'die sieben weiteren Monatschroniken rechnen jeden Wert wie die Nachrechnung aus den rohen Partien',
    _neu7Ab.slice(0, 3).map(k => k.split(' ')[0] + ' ' + nm(k.split(' ')[1]) + ' ' + k.split(' ')[2] + ': '
      + _neu7Ist[k] + ' statt ' + _neu7Soll[k]).join(' · ') || _neu7Werte + ' Werte');
-// Kalibriert an den echten Partien auf höchstens einen Halter je Monat: in
-// den drei Fixture-Monaten sechs Haltungen, keine Chronik mehr als zweimal.
+// Kalibriert an den echten Partien: in den drei Fixture-Monaten fünf
+// Haltungen, keine Chronik mehr als zweimal. Es waren sechs, bis das
+// Zielwasser seine Schwelle auf 0,75 Tore rundete.
 const _neu7Halter = JSON.parse(K.eval(`JSON.stringify(['2026-06','2026-07','2026-08'].reduce((o, sid) => {
   seasonTitles(sid).awarded.filter(a => ${JSON.stringify(_neu7)}.includes(a.titleId))
     .forEach(a => (o[a.titleId] = o[a.titleId] || []).push(sid.slice(5) + ' ' + pname(a.pid)));
   return o; }, {}))`));
 const _neu7Zahl = Object.values(_neu7Halter).reduce((n, l) => n + l.length, 0);
 console.log('  sieben weitere:', Object.keys(_neu7Halter).map(id => id + ' ' + _neu7Halter[id].join('/')).join(' · '));
-ok(_neu7Zahl === 6 && Object.values(_neu7Halter).every(l => l.length <= 2),
-   'die sieben weiteren sind sechsmal vergeben, wie kalibriert, keine mehr als zweimal', _neu7Zahl + ' Haltungen');
+ok(_neu7Zahl === 5 && Object.values(_neu7Halter).every(l => l.length <= 2),
+   'die sieben weiteren sind fuenfmal vergeben, wie kalibriert, keine mehr als zweimal', _neu7Zahl + ' Haltungen');
 
 // Die sechste Fassung [§C39]: neunzehn weitere Monatschroniken, Wert für
 // Wert aus den rohen Partien nachgerechnet. Elf fragen nach einer

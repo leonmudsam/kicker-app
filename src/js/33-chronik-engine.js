@@ -707,9 +707,9 @@ function _prevSeasonId(sid){
 //     Zielwasser, Retourkutsche, weiche Knie, Abgesang, Fremdeln), aus
 //     demselben Grund wie die zweite und dritte. Die sechste hob die
 //     Schwellen von dreiundzwanzig Chroniken, die in drei bis fünf von fünf
-//     Monaten vergeben wurden, und brachte neunzehn neue [§C39]: ein Monat,
-//     der mit den alten Schwellen eingefroren bliebe, trüge Einträge, die es
-//     heute nicht mehr gäbe.
+//     Monaten vergeben wurden, brachte neunzehn neue und rundete jede
+//     Schwelle [§C39]: ein Monat, der mit den alten Schwellen eingefroren
+//     bliebe, trüge Einträge, die es heute nicht mehr gäbe.
 const SEASON_TITLES_FREEZE_V = 6;
 
 // Liest die eingefrorene Chronik einer Saison — aus dem seasons-Eintrag, egal
