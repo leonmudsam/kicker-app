@@ -482,6 +482,10 @@ const ICONS = {
   // Ein Kalenderblatt, durchgestrichen: „Der Tag zum Vergessen". Nicht das
   // Zeichen des schwarzen Tages — der zählt Niederlagen, dieser die Rechnung.
   tagVergessen:  `<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/><path d="M9.5 12.5l5 5M14.5 12.5l-5 5"/>`,
+  // Eine Stempelkarte, fünf Felder gestempelt, im sechsten der Haken: „Der
+  // Stammkunde" verliert gegen denselben Gegner, bis ein Sieg gelingt.
+  // Nicht das Schloss des Ausbruchs — der zählt den Bruch, dieser die Serie.
+  stammkunde:    `<rect x="2.5" y="5" width="19" height="14" rx="2"/><circle cx="7" cy="9.5" r="1.6" fill="currentColor" fill-opacity=".45"/><circle cx="12" cy="9.5" r="1.6" fill="currentColor" fill-opacity=".45"/><circle cx="17" cy="9.5" r="1.6" fill="currentColor" fill-opacity=".45"/><circle cx="7" cy="14.5" r="1.6" fill="currentColor" fill-opacity=".45"/><circle cx="12" cy="14.5" r="1.6" fill="currentColor" fill-opacity=".45"/><path d="M15.4 14.6l1.2 1.2 2.4-2.6"/>`,
   // Ein Bündel Stroh: „Das Strohfeuer" brennt hell und kurz. Bewusst keine
   // Flamme — die steht für die laufende Siegesserie [§C41].
   strohfeuer:    `<path d="M12 21V10"/><path d="M12 10L7 3M12 10l5-7M12 10L9.5 3M12 10l2.5-7"/><path d="M8 21h8"/><path d="M9 14h6"/>`,

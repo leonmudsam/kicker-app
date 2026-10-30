@@ -743,10 +743,10 @@ function _chronicleCtx(bisMs){
                         (a, b) => (a.exp < CHANCE_OFFEN) !== (b.exp < CHANCE_OFFEN));
       p.spLauf = sp.n; p.spSpan = sp.span;
     }
-    // „Der Ausbruch" ueber die Laufbahn: dieselbe Frage wie im Monat
-    // (`_bannLaufDerLiga`), nur ohne Monatsgrenze. Je Gegner laufen die
-    // direkten Niederlagen in Folge; ein Sieg beendet sie, und erst dann
-    // zaehlt der Stand. Eine noch laufende Serie ist kein Ausbruch.
+    // „Der Stammkunde": dieselbe Zaehlung wie die Monatschronik „Der
+    // Ausbruch" (`_bannLaufDerLiga`), nur ohne Monatsgrenze. Je Gegner laufen
+    // die direkten Niederlagen in Folge; ein Sieg beendet sie, und erst dann
+    // zaehlt der Stand. Eine noch laufende Serie hat noch keine Laenge.
     // „Der Serienstopp": die laengste Siegesserie eines Gegners, die ein
     // eigener Sieg beendet hat. Je Partie zaehlt die laengere der beiden,
     // nicht ihre Summe.

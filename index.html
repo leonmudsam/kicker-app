@@ -6410,7 +6410,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.29.c0f82537';
+const BUILD_VERSION='2026.10.29.bce9c3b9';
 function forceReload(nach){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -6765,6 +6765,7 @@ const ICONS = {
   leck:          `<path d="M12 3l7 3v5c0 4-3 6.5-7 8-4-1.5-7-4-7-8V6z"/><path d="M12.5 6l-2.5 4 3 2-2.5 4.5"/>`,
   klatsche:      `<rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M6 12h4"/><path d="M13 9h5l-3.5 6"/>`,
   tagVergessen:  `<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/><path d="M9.5 12.5l5 5M14.5 12.5l-5 5"/>`,
+  stammkunde:    `<rect x="2.5" y="5" width="19" height="14" rx="2"/><circle cx="7" cy="9.5" r="1.6" fill="currentColor" fill-opacity=".45"/><circle cx="12" cy="9.5" r="1.6" fill="currentColor" fill-opacity=".45"/><circle cx="17" cy="9.5" r="1.6" fill="currentColor" fill-opacity=".45"/><circle cx="7" cy="14.5" r="1.6" fill="currentColor" fill-opacity=".45"/><circle cx="12" cy="14.5" r="1.6" fill="currentColor" fill-opacity=".45"/><path d="M15.4 14.6l1.2 1.2 2.4-2.6"/>`,
   strohfeuer:    `<path d="M12 21V10"/><path d="M12 10L7 3M12 10l5-7M12 10L9.5 3M12 10l2.5-7"/><path d="M8 21h8"/><path d="M9 14h6"/>`,
   schwarzerTag:  `<circle cx="12" cy="12" r="4.8" fill="currentColor" fill-opacity=".55"/><path d="M12 2.2v2.6M12 19.2v2.6M2.2 12h2.6M19.2 12h2.6M5.1 5.1l1.8 1.8M17.1 17.1l1.8 1.8M5.1 18.9l1.8-1.8M17.1 6.9l1.8-1.8"/>`,
   ueberholen:    `<circle cx="12" cy="16" r="2.4"/><path d="M3.5 18c0-6.5 4.2-10 10.5-10h6"/><path d="M17 5l3 3-3 3"/>`,
@@ -22665,6 +22666,7 @@ const STORY_ABGEMELDET = [
   'rek_sniper_', 'rek_densephase_', 'rek_torrausch_', 'rek_bitterloss_', 'rek_uebersoll_',
   'rek_deutlich_', 'rek_ausgleich_',
   'rek_umsteiger_', 'rek_aufschwung_', 'rek_neuland_',
+  'rek_ausbruch_',
   'match_result_',
   'chronik_2', 'chronik_erst_'
 ];
@@ -30767,7 +30769,7 @@ const DISZIPLINEN = [
       zeit:p => p.flukeLabel || ''
     }},
 
-  {id:'ausbruch', name:'Der Ausbruch', short:'Ausbruch', ic:'lock', tone:'purple', art:'ereignis', zufall:'quote',
+  {id:'ausbruch', name:'Der Ausbruch', short:'Ausbruch', ic:'lock', tone:'purple', art:'ereignis',
     monat:{
       beiname:'Der Befreite',
       art:'fuegung',
@@ -30778,17 +30780,7 @@ const DISZIPLINEN = [
         p=>true,
         (p,c)=>p.bannLauf,
         17,
-        (p,v)=>`nach ${v} Pleiten in Folge gegen denselben Gegner wieder gewonnen`))},
-    allzeit:{
-      kammer:'fuegung', basis:REKORD_GRUNDWERT.fuegung, offen:true,
-      zeitraum:'Ganze Ligageschichte',
-      mind:'Ein Sieg nach einer Niederlage gegen denselben Gegner',
-      wie:'Je Gegner werden die direkten Niederlagen in Folge gezählt; Partien gegen andere Gegner dazwischen unterbrechen die Zählung nicht. Ein Sieg gegen diesen Gegner beendet sie, und erst dann zählt ihr Stand. Gegen wen es lange nicht läuft, entscheidet die Auslosung so sehr wie das eigene Spiel.',
-      cond:'Längste Pleitenserie gegen einen Gegner, die mit einem Sieg gegen diesen Gegner endete',
-      val:p => p.bannMax > 0 ? p.bannMax : null,
-      ev:(p,v) => `${v} Niederlagen in Folge gegen denselben Gegner, dann gewonnen`,
-      zeit:p => p.bannLabel || ''
-    }},
+        (p,v)=>`nach ${v} Pleiten in Folge gegen denselben Gegner wieder gewonnen`))}},
 
   {id:'serienstopp', name:'Der Serienstopp', short:'Stopp', ic:'handStop', tone:'purple', art:'ereignis', zufall:'quote',
     allzeit:{
@@ -31012,6 +31004,18 @@ const DISZIPLINEN = [
       cond:'Höchster Niederlagenanteil gegen einen einzelnen regelmäßigen Gegner, ab 20 Duellen',
       val:p => p.angstQ != null ? 1 - p.angstQ : null,
       ev:p => `${Math.round((1-p.angstQ)*100)} % der ${p.angstN} Duelle gegen einen einzelnen Gegner verloren · ${p.angstN - p.angstW} Pleiten`
+    }},
+
+  {id:'stammkunde', name:'Der Stammkunde', short:'Stammkunde', ic:'stammkunde', tone:'red', art:'schatten',
+    allzeit:{
+      kammer:'shame', basis:REKORD_GRUNDWERT.schatten, offen:true,
+      zeitraum:'Ganze Ligageschichte, je Gegner',
+      mind:'Ein Sieg nach einer Niederlage gegen denselben Gegner',
+      wie:'Je Gegner werden die direkten Niederlagen in Folge gezählt, bis ein Sieg gegen genau diesen Gegner gelingt. Partien gegen andere Gegner dazwischen unterbrechen die Zählung nicht. Gewertet wird die Serie erst mit diesem Sieg, vorher steht nicht fest, wie lang sie wird.',
+      cond:'Die meisten Niederlagen in Folge gegen einen einzelnen Gegner, bis ein Sieg gegen genau diesen Gegner gelang',
+      val:p => p.bannMax > 0 ? p.bannMax : null,
+      ev:(p,v) => `${v} Niederlagen in Folge gegen denselben Gegner bis zum nächsten Sieg`,
+      zeit:p => p.bannLabel || ''
     }},
 
   {id:'retourkutsche', name:'Die Retourkutsche', short:'Retour', ic:'retourkutsche', tone:'red', art:'schatten',

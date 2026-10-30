@@ -324,12 +324,19 @@ const _thesen = (function(){
         bestand.push({id:x.id, when:x.when, title:x.title, desc:'gespeichert',
           prio:20, cat:'season', ic:'sparkle',
           dataRef:{type:'ambient', sub:x.sub, ambientRubrik:x.rubrik, ambientPids:x.pids}});
+        // Der Abstand zaehlt am Datum der KARTE, nicht am Tag des Nachlaufs:
+        // der erste Durchgang traegt das ganze Feed-Fenster auf einmal nach,
+        // und alle diese Karten standen als Tag 0 da. „personal_glanztag"
+        // vom 8. August und vom 8. September galt damit als Wiederholung
+        // nach 19 Tagen, obwohl 31 dazwischen liegen — die Sperre der App
+        // rechnet ebenso am Zeitpunkt der Karte.
+        const tag = Math.round(new Date(x.when).getTime() / 864e5);
         (x.pids && x.pids.length ? x.pids : ['']).forEach(pid => {
           const k = x.sub + '|' + pid;
           thesen++;
-          if(wann[k] != null && d - wann[k] < 30 && !_pflichtKeys.has(x.sub))
-            verstoesse.push(k + ' nach ' + (d - wann[k]) + ' Tagen');
-          wann[k] = d;
+          if(wann[k] != null && tag - wann[k] < 30 && !_pflichtKeys.has(x.sub))
+            verstoesse.push(k + ' nach ' + (tag - wann[k]) + ' Tagen');
+          wann[k] = tag;
         });
       });
     });

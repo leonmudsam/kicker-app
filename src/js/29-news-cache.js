@@ -110,6 +110,11 @@ const STORY_ABGEMELDET = [
   // Namens, die bleibt. Gespeichert standen noch „Leon übernimmt ‚Der
   // Aufschwung'" und „Stefan übernimmt ‚Neuland'" im Feed.
   'rek_umsteiger_', 'rek_aufschwung_', 'rek_neuland_',
+  // „Der Ausbruch" über die Laufbahn heißt jetzt „Der Stammkunde" und steht
+  // unter den Schattenseiten [§C35]; die Monatschronik behält den Namen.
+  // Eine Karte „X übernimmt ‚Der Ausbruch'" feierte als Rekord, was eine
+  // Kehrseite ist, und eine Schattenseite meldet der Feed nicht.
+  'rek_ausbruch_',
   // ── Das Ergebnis hiess einmal anders ─────────────────────────────
   // Eine Ergebnis-Karte entstand nur fuer ein auffaelliges Muster und
   // hoechstens zweimal je Tag (`match_result_<Partie>`). Heute bekommt jede
