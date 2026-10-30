@@ -3280,9 +3280,19 @@ ok(_sch.ausSchande.length === 0, 'keine Schattenseite gibt Prestige',
 ['sieve','abyss','hardluck','angstgegner','untersoll','misfire','favflop','noanswer'].forEach(id =>
   ok(K.eval(`!!SEASON_TITLE_BY_ID['${id}'] && !!CHRONICLE_BY_ID['${id}']`),
      'Schande ' + id + ' traegt beide Zeitachsen'));
-['ballast'].forEach(id =>
+['ballast','stammkunde'].forEach(id =>
   ok(K.eval(`!!CHRONICLE_BY_ID['${id}'] && !SEASON_TITLE_BY_ID['${id}']`),
      'Schandrekord ' + id + ' traegt nur die Laufbahn'));
+// Dieselbe Zaehlung, zwei Bedeutungen: im Monat feiert „Der Ausbruch" den
+// Bruch einer Pleitenserie gegen einen Gegner, als Wende und damit selten
+// [§C39]; ueber die Laufbahn bleibt die Serie, und die steht als „Der
+// Stammkunde" unter den Schattenseiten. Als Fuegung gab sie Prestige fuer
+// siebzehn Niederlagen in Folge [§C34, §C35].
+ok(K.eval(`(function(){
+  const r = CHRONICLE_BY_ID.stammkunde, d = DISZIPLINEN.find(x => x.id === 'ausbruch'), m = d && d.monat;
+  return !!r && r.kind === 'shame' && r.neg && r.basis === 0 && !CHRONICLE_BY_ID.ausbruch
+    && !!m && m.wende === true && m.klasse === 'selten';
+})()`), 'der Ausbruch ist im Monat eine Wende, die Serie ueber die Laufbahn eine Schattenseite');
 
 // Die Rohsicht bleibt aus dem Cache. Sie wird fuer die zehn Rekorde der zwei
 // Kammern gebaut, ausgewertet und verworfen: am gecachten Spielerobjekt
@@ -3641,7 +3651,7 @@ const _rk = JSON.parse(K.eval(`JSON.stringify(CHRONICLES.map(c => ({
 ok(_rk.length === 62, 'der aktive Katalog enthaelt genau 62 Rekorde', _rk.length + '');
 const _rkZahl = {};
 _rk.forEach(c => { _rkZahl[c.kind] = (_rkZahl[c.kind] || 0) + 1; });
-const _rkSoll = {koennen:16, form:6, mark:8, fuegung:18, shame:14};
+const _rkSoll = {koennen:16, form:6, mark:8, fuegung:17, shame:15};
 Object.keys(_rkSoll).forEach(k => ok(_rkZahl[k] === _rkSoll[k],
   'die Kammer ' + k + ' hat ' + _rkSoll[k] + ' Rekorde', (_rkZahl[k] || 0) + ''));
 // Ein Abstand zwischen zwei Quoten heisst „%-Punkte", auch gekuerzt: als
@@ -3695,8 +3705,8 @@ ok(Object.keys(_rkZahl).length === 5, 'es gibt genau fuenf Kammern',
 // rohen Partien gerechnet und nicht aus der Rohsicht der Engine: die Engine
 // zaehlt ueber `roh`, der Test ueber die gepackten Fixtures. Pendler,
 // Wanderpass und Spurwechsel sind laengste Folgen (Partien, nicht
-// Uebergaenge), Ausbruch die laengste BEENDETE Pleitenserie gegen einen
-// Gegner, Serienstopp die laengste Gegner-Siegesserie, die ein eigener Sieg
+// Uebergaenge), der Stammkunde die laengste BEENDETE Pleitenserie gegen
+// einen Gegner, Serienstopp die laengste Gegner-Siegesserie, die ein eigener Sieg
 // beendet — je Partie die laengere der beiden, nicht ihre Summe.
 const _folgeSoll = (() => {
   const ms = realMatches.slice().sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
@@ -3733,7 +3743,7 @@ const _folgeSoll = (() => {
   });
   const wert = {pendler:x => x.st.pd.best, wanderpass:x => x.st.wp.best,
                 spurwechsel:x => (x.st.sp || {best:0}).best,
-                ausbruch:x => x.bannMax, serienstopp:x => x.stopp};
+                stammkunde:x => x.bannMax, serienstopp:x => x.stopp};
   const out = {};
   Object.keys(wert).forEach(id => {
     const feld = Object.keys(P).filter(pid => P[pid].g >= 30).map(pid => ({pid, v:wert[id](P[pid])}));
@@ -3742,7 +3752,7 @@ const _folgeSoll = (() => {
   });
   return out;
 })();
-const _folgeIst = JSON.parse(K.eval(`JSON.stringify(['pendler','wanderpass','spurwechsel','ausbruch','serienstopp']
+const _folgeIst = JSON.parse(K.eval(`JSON.stringify(['pendler','wanderpass','spurwechsel','stammkunde','serienstopp']
   .reduce((o, id) => { const e = allChronicles().byId[id];
     o[id] = e ? {best:e.val, halter:e.pids.slice().sort()} : null; return o; }, {}))`));
 Object.keys(_folgeSoll).forEach(id => {
@@ -3752,9 +3762,9 @@ Object.keys(_folgeSoll).forEach(id => {
      i ? i.best + ' ' + i.halter.map(nm).join('/') + ' statt ' + s.best + ' ' + s.halter.map(nm).join('/')
        : 'nicht vergeben');
 });
-// Eine Folge ist eine Laenge und keine Summe: der Ausbruch nennt EINEN Gegner,
+// Eine Folge ist eine Laenge und keine Summe: der Stammkunde nennt EINEN Gegner,
 // der Serienstopp EINE Serie. Der Beleg beginnt mit dieser Zahl.
-ok(K.eval(`['pendler','wanderpass','spurwechsel','ausbruch','serienstopp'].every(id => {
+ok(K.eval(`['pendler','wanderpass','spurwechsel','stammkunde','serienstopp'].every(id => {
   const e = allChronicles().byId[id]; if(!e) return false;
   const c = CHRONICLE_BY_ID[id];
   return parseInt(c.ev(_chronicleCtx().P[e.pid], e.val), 10) === e.val && !!c.zeit(_chronicleCtx().P[e.pid]);
@@ -4191,7 +4201,10 @@ const WEG = ['giant_slayer','thriller','unbowed','homefield','sundaychild',
              'bitterloss','uebersoll','deutlich','ausgleich',
              // Drei, die sich mit anderen ueberschnitten: Wandler und
              // Positionsrekorde, Hoehenflug, die Monatschronik „Neuland"
-             'umsteiger','aufschwung','neuland'];
+             'umsteiger','aufschwung','neuland',
+             // Einer, der als Schattenseite unter neuem Namen weitergeht:
+             // „Der Ausbruch" ueber die Laufbahn ist „Der Stammkunde"
+             'ausbruch'];
 const _nochDa = WEG.filter(id => _byId[id]);
 ok(_nochDa.length === 0, 'kein entfernter Rekord steht im aktiven Katalog',
    _nochDa.join(', ') || WEG.length + ' geprueft');
@@ -4201,10 +4214,12 @@ ok(!_byId.steigerung && K.eval(`!!SEASON_TITLE_BY_ID['steigerung']`),
    '„Die Steigerung" verliert den Rekord und behaelt die Monatschronik');
 // Dasselbe fuer sechs der einundzwanzig: im Monat beginnen alle bei
 // derselben Elo, und dort misst die Frage etwas anderes als ueber die
-// Laufbahn. „Neuland" wiederholte als Rekord nur die Monatschronik.
-ok(['kopfhoch','breitenwirkung','metronom','uebersoll','deutlich','ausgleich','neuland'].every(id =>
+// Laufbahn. „Neuland" wiederholte als Rekord nur die Monatschronik, und
+// „Der Ausbruch" feiert im Monat den Bruch einer Serie, die ueber die
+// Laufbahn eine Kehrseite ist.
+ok(['kopfhoch','breitenwirkung','metronom','uebersoll','deutlich','ausgleich','neuland','ausbruch'].every(id =>
      !_byId[id] && K.eval(`!!SEASON_TITLE_BY_ID['${id}']`)),
-   'sieben gestrichene Rekorde behalten ihre Monatschronik');
+   'acht gestrichene Rekorde behalten ihre Monatschronik');
 // Und die persistierten Karten der gestrichenen Rekorde sind abgemeldet,
 // sonst behaupten sie fuer immer einen Rekord, den es nicht mehr gibt.
 ok(K.eval(`${JSON.stringify(WEG.concat(['steigerung']))}

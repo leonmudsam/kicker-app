@@ -2,7 +2,7 @@
 
 ## Regel
 
-- Zweiundsechzig Liga-Rekorde in fünf Kammern (8 Bestmarken, 16 Können, 6 Aktuelle Form, 18 Fügungen, 14 Schattenseiten), in dieser Reihenfolge in Leiste und Liste (`CHRON_KINDS.ord`). Die Kammer steht am Eintrag (`allzeit.kammer`), nicht aus `art` erraten.
+- Zweiundsechzig Liga-Rekorde in fünf Kammern (8 Bestmarken, 16 Können, 6 Aktuelle Form, 17 Fügungen, 15 Schattenseiten), in dieser Reihenfolge in Leiste und Liste (`CHRON_KINDS.ord`). Die Kammer steht am Eintrag (`allzeit.kammer`), nicht aus `art` erraten.
 - Die Siegquote zählt einmal. Nach dem Niveau fragen nur der beste Monat, der höchste Gipfel, die längste Siegesserie, die Form von jetzt und die beiden Positionen (`NIVEAU` in `tests/disziplinen`); jeder andere Rekord mit dem Grundwert des Könnens (100) fragt nach dem Abstand zum Eigenen [§C38], nach einer Teilmenge oder nach einer Folge und folgt der Siegquote gemessen mit r unter 0,75.
 - Die Karte nennt Zeitraum, Grundwert und Mindestbasis (`zeitraum`, `basis`, `mind`) und zeigt, wie weit der Halter vorn liegt (`_rekFeldHtml`, aus `chronicleRang`); der Kopf jeder Kammer sagt in einem Satz, was sie misst (`CHRON_KINDS.satz`). Kein Text beschreibt die App oder eine frühere Rechnung.
 - Ein Rekord hat keine Wertlatte, nur eine Stichprobe (Partien, Spieltage, Wochen, Niederlagen). Was ein Wert von sich aus braucht (erstes Glied, zwei Partien, eine Richtung, die sein Name verspricht: Sprung, Vorsprung, Aufschwung), bleibt; eine Teilmenge, die beschreibt, welche Partien zählen, ist keine Latte. Ein Abstand, der auf null rundet, ist keine Richtung.
@@ -13,7 +13,7 @@
 - Zwölf Gegenpaare tragen dieselbe Mindestbasis; ein `paar` (zwei Enden eines Werts mit Vorzeichen) zeigt zurück, und die Rennen schneiden sich nicht.
 - Fügungen tragen `zufall` (`quote`: erreichbar, mindestens die halbe Liga im Rennen; `fund`: darf selten und unbesetzt sein, höchstens die Hälfte leer) und wiegen 75 statt 100. Eine Laufbahn aus lauter Niederlagen erreicht keinen Rekord mit Grundwert 100.
 - Kein Halter trägt mehr als ein Viertel der Tafel; jeder gewertete Spieler mindestens einen Eintrag. Die Schandtafel (`art:'schatten'`) zählt nichts und fragt eher den Abstand zum Eigenen als das Niveau; kein Halter über zwei Fünftel davon, mindestens sechs Namen.
-- Dieselbe Frage auf zwei Zeitachsen bleibt EINE Disziplin (dreiundzwanzig tragen beide); ein neuer Rekord steht im Katalog neben seinem nächsten Verwandten. Was eine Beziehung zweier Spieler misst oder an der Spielzahl hängt, wird kein Rekord.
+- Dieselbe Frage auf zwei Zeitachsen bleibt EINE Disziplin (zweiundzwanzig tragen beide); liest der Monat eine Zählung als Wende und die Laufbahn als Kehrseite, sind es zwei Fragen und zwei Einträge („Der Ausbruch" und „Der Stammkunde"). Ein neuer Rekord steht im Katalog neben seinem nächsten Verwandten. Was eine Beziehung zweier Spieler misst oder an der Spielzahl hängt, wird kein Rekord.
 - `cond` nennt jede Schwelle der Wertfunktion, `wie` sagt, wie gemessen wird, samt Nenner. Gestrichene Rekorde stehen namentlich in `STORY_ABGEMELDET`; eine ID wechselt nicht, wenn ein Eintrag seine Frage wechselt, und die ID eines gestrichenen Rekords wird nicht für eine neue Frage wiederbenutzt (die Folge der Tage im Soll heißt `sollstrecke`, nicht `kopfhoch`).
 - Ein Verhältnis gewonnener zu verlorenen Extremergebnissen ist nur ein Rekord, wenn es die Liga nicht wie die Siegquote ordnet. 10:9 zu 9:10 folgt ihr gemessen mit r = 0,62 und steht als Paar: „Das Kaltblut" (Fügung) und „Die weichen Knie" (Schattenseite), ab zehn Zitterpartien, der Nenner sind die Zitterpartien; „Die weichen Knie" tragen dazu die Monatsachse. 10:0 zu 0:10 folgt ihr mit r = 0,98 und ist keiner; die Frage steht im Monat („Der Zerstörer", „Der Widerstand").
 
@@ -34,8 +34,8 @@ gewinnt jede Quote und jede Serie — am Ende liegen alle Liga-Einträge bei
 denselben drei Spielern. Zweiundzwanzig von sechsunddreißig Rekorden
 fragten direkt nach Können, und drei Spieler hielten vierundzwanzig der
 achtunddreißig Haltungen. Heute sind es **zweiundsechzig Rekorde** in
-**fünf Kammern** — 16 Können, 6 Aktuelle Form, 8 Bestmarken, 18 Fügungen,
-14 Schattenseiten. Gemessen halten zehn der elf gewerteten Spieler zwischen
+**fünf Kammern** — 16 Können, 6 Aktuelle Form, 8 Bestmarken, 17 Fügungen,
+15 Schattenseiten. Gemessen halten zehn der elf gewerteten Spieler zwischen
 fünf und elf Einträgen, die beiden Besten der Siegquote sechs und acht.
 **Die Kammer steht am Eintrag** (`allzeit.kammer`), sie wird nicht mehr aus
 `art` erraten. Abgeleitet war „Fügung, sonst Schatten, sonst Ereignis gleich
@@ -231,8 +231,8 @@ Kaltblut" neben „Der Eiskalte", „Die weichen Knie" neben „Der Pechvogel",
 Abwehrmauer" neben „Der Dauerstürmer" und „Der Rollencoup" neben dem
 kompletten Verteidiger. „Der Pendler" und „Der Wanderpass"
 stehen neben „Der Seitenwechsler", „Der Spurwechsel" neben „Das
-Wechselbad", „Der Ausbruch" und „Der Serienstopp" neben „Der
-Sonntagsschuss". Wer eine
+Wechselbad", „Der Serienstopp" neben „Der Sonntagsschuss" und „Der
+Stammkunde" neben „Der Angstgegner". Wer eine
 Monatschronik um ihre Laufbahn-Achse ergänzt, verschiebt ihren Eintrag
 dorthin; die Monatstafel bleibt davon unberührt, weil `SEASON_TITLES` nach
 Art, Chronik-Art und Ausschlag sortiert und nicht nach der Katalogfolge.
@@ -362,14 +362,24 @@ ob jemand dauerhaft schwächer geworden ist. Ein gleichmäßiger Streu wäre gel
 jemand schlecht war —, also ist nur der Extremfall gedeckelt: kein Halter
 über zwei Fünftel der Schandtafel, und mindestens sechs Namen tragen mit.
 **Dieselbe Frage auf zwei Zeitachsen bleibt EINE Disziplin** [§13.1].
-Vierzehn Disziplinen tragen beide: `spotless`, `gleichauf`, `hochform`,
-`schlussball`, `kaltstart`, `evenkeel`, `ausbruch`, `drought`, `abyss`,
-`hardluck`, `sieve`, `angstgegner`, `untersoll` und `misfire`. Zwei Namen
-und zwei Icons für denselben Gedanken wären eins zu viel [§C27] — deshalb
-bekommen „Der Kaltstart" und „Der Ausbruch" ihre Laufbahn-Achse an der
-bestehenden Monatsdisziplin und keine zweite daneben. Die 17 Pleiten der
-Monatswertung sind dort eine Schwelle für die Chronik; der Rekord ist die
-längste beendete Serie, die es gibt.
+Unter den ersten taten das `spotless`, `gleichauf`, `hochform`,
+`schlussball`, `kaltstart`, `evenkeel`, `drought`, `abyss`, `hardluck`,
+`sieve`, `angstgegner`, `untersoll` und `misfire`. Zwei Namen und zwei
+Icons für denselben Gedanken wären eins zu viel [§C27] — deshalb bekam
+„Der Kaltstart" seine Laufbahn-Achse an der bestehenden Monatsdisziplin
+und keine zweite daneben.
+**Der Ausbruch und der Stammkunde zählen dasselbe und fragen nicht
+dasselbe.** Beide zählen die Niederlagen in Folge gegen einen Gegner, bis
+ein Sieg gegen genau diesen Gegner gelingt. Im Monat zählt der Bruch: „Der
+Ausbruch" ist eine Wende und selten [§C39]. Über die Laufbahn bleibt die
+Serie selbst, und die ist eine Kehrseite. Sie stand als Laufbahn-Achse des
+Ausbruchs unter den Fügungen und gab dem Prestige den Grundwert einer
+Fügung für siebzehn Niederlagen in Folge gegen denselben Gegner [§C34].
+Jetzt steht sie als „Der Stammkunde" unter den Schattenseiten, neben dem
+Angstgegner, der dieselbe Lage als Anteil misst; gewertet wird weiter erst
+nach dem Sieg, weil eine laufende Serie noch keine Länge hat. Die alte ID
+`ausbruch` ist als Rekord abgemeldet wie jeder gestrichene, die
+Monatschronik behält sie.
 **Eine Folge ist eine Fügung, wenn die Auslosung sie schreibt.** „Der
 Pendler" (jedes Mal die andere Position), „Der Wanderpass" (jedes Mal ein
 anderer Partner) und „Der Spurwechsel" (abwechselnd Favorit und

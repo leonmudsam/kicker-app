@@ -1540,7 +1540,13 @@ const DISZIPLINEN = [
       zeit:p => p.flukeLabel || ''
     }},
 
-  {id:'ausbruch', name:'Der Ausbruch', short:'Ausbruch', ic:'lock', tone:'purple', art:'ereignis', zufall:'quote',
+  {id:'ausbruch', name:'Der Ausbruch', short:'Ausbruch', ic:'lock', tone:'purple', art:'ereignis',
+    // Keine Laufbahn-Achse: dieselbe Zählung über die ganze Ligageschichte
+    // ist „Der Stammkunde" unter den Schattenseiten. Als Fügung stand hier
+    // ein Rekord, der mit dem Grundwert einer Fügung Prestige dafür gab,
+    // siebzehnmal in Folge gegen denselben Gegner verloren zu haben. Im
+    // Monat zählt der Bruch, und der ist eine Wende [§C39]; über die
+    // Laufbahn bleibt die Serie, und die ist eine Kehrseite [§C35].
     monat:{
       beiname:'Der Befreite',
       art:'fuegung',
@@ -1551,21 +1557,7 @@ const DISZIPLINEN = [
         p=>true,
         (p,c)=>p.bannLauf,
         17,
-        (p,v)=>`nach ${v} Pleiten in Folge gegen denselben Gegner wieder gewonnen`))},
-    // Dieselbe Frage ueber die Laufbahn [§13.1]: die 17 der Monatswertung ist
-    // dort eine Schwelle fuer die Chronik, hier gilt der beste Wert, den es
-    // gibt [§C35]. Eine noch laufende Serie zaehlt nicht — erst der Sieg
-    // macht aus ihr einen Ausbruch.
-    allzeit:{
-      kammer:'fuegung', basis:REKORD_GRUNDWERT.fuegung, offen:true,
-      zeitraum:'Ganze Ligageschichte',
-      mind:'Ein Sieg nach einer Niederlage gegen denselben Gegner',
-      wie:'Je Gegner werden die direkten Niederlagen in Folge gezählt; Partien gegen andere Gegner dazwischen unterbrechen die Zählung nicht. Ein Sieg gegen diesen Gegner beendet sie, und erst dann zählt ihr Stand. Gegen wen es lange nicht läuft, entscheidet die Auslosung so sehr wie das eigene Spiel.',
-      cond:'Längste Pleitenserie gegen einen Gegner, die mit einem Sieg gegen diesen Gegner endete',
-      val:p => p.bannMax > 0 ? p.bannMax : null,
-      ev:(p,v) => `${v} Niederlagen in Folge gegen denselben Gegner, dann gewonnen`,
-      zeit:p => p.bannLabel || ''
-    }},
+        (p,v)=>`nach ${v} Pleiten in Folge gegen denselben Gegner wieder gewonnen`))}},
 
   // Das Gegenstueck zum Ausbruch von der anderen Seite: nicht die eigene
   // Pleitenserie endet, sondern die Siegesserie eines Gegners. Gezaehlt
@@ -1841,6 +1833,27 @@ const DISZIPLINEN = [
       cond:'Höchster Niederlagenanteil gegen einen einzelnen regelmäßigen Gegner, ab 20 Duellen',
       val:p => p.angstQ != null ? 1 - p.angstQ : null,
       ev:p => `${Math.round((1-p.angstQ)*100)} % der ${p.angstN} Duelle gegen einen einzelnen Gegner verloren · ${p.angstN - p.angstW} Pleiten`
+    }},
+
+  // Der Angstgegner als Folge statt als Anteil: wie oft in Folge gegen
+  // denselben Gegner verloren wurde, bevor ein Sieg gegen genau diesen
+  // Gegner gelang. Dieselbe Zählung wie die Monatschronik „Der Ausbruch"
+  // (`bannMax`), aber nicht dieselbe Frage: dort zählt der Bruch, und der ist
+  // eine Wende [§C39]; hier bleibt die Serie, und die ist eine Kehrseite.
+  // Sie stand als Fügung unter dem Namen des Ausbruchs und gab dem Prestige
+  // [§C34] den Grundwert einer Fügung für siebzehn Niederlagen in Folge.
+  // Gewertet wird erst nach dem Sieg, wie bisher: vorher steht nicht fest,
+  // wie lang die Serie wird.
+  {id:'stammkunde', name:'Der Stammkunde', short:'Stammkunde', ic:'stammkunde', tone:'red', art:'schatten',
+    allzeit:{
+      kammer:'shame', basis:REKORD_GRUNDWERT.schatten, offen:true,
+      zeitraum:'Ganze Ligageschichte, je Gegner',
+      mind:'Ein Sieg nach einer Niederlage gegen denselben Gegner',
+      wie:'Je Gegner werden die direkten Niederlagen in Folge gezählt, bis ein Sieg gegen genau diesen Gegner gelingt. Partien gegen andere Gegner dazwischen unterbrechen die Zählung nicht. Gewertet wird die Serie erst mit diesem Sieg, vorher steht nicht fest, wie lang sie wird.',
+      cond:'Die meisten Niederlagen in Folge gegen einen einzelnen Gegner, bis ein Sieg gegen genau diesen Gegner gelang',
+      val:p => p.bannMax > 0 ? p.bannMax : null,
+      ev:(p,v) => `${v} Niederlagen in Folge gegen denselben Gegner bis zum nächsten Sieg`,
+      zeit:p => p.bannLabel || ''
     }},
 
   // Das Gegenstück zum Bannbrecher: gegen den Gegner, gegen den es in der
