@@ -810,15 +810,20 @@ ok(K.eval(`(function(){
 })()`) === '', 'kein Rekord-Beleg nennt einen anderen Spieler');
 
 // Zwei Schwellen sind vorgegeben und werden NICHT kalibriert: Player of the
-// Day an 60 % der eigenen Spieltage, Player of the Week in JEDER eigenen
-// Woche. Sie sind eine Ansage, keine Messgroesse, die sich der Verteilung
-// anpasst — deshalb stehen sie hier als Zahl.
+// Day an 60 % der eigenen Spieltage, Player of the Week in zwei Dritteln der
+// eigenen Wochen. Sie sind eine Ansage, keine Messgroesse, die sich der
+// Verteilung anpasst — deshalb stehen sie hier als Zahl.
 const _fest = JSON.parse(K.eval(`JSON.stringify({
   potd: DISZIPLINEN.find(d=>d.id==='tagesregent').monat.ab,
   potw: DISZIPLINEN.find(d=>d.id==='wochenkrone').monat.ab
 })`));
 ok(_fest.potd === 0.6, 'Der Tagesregent verlangt 60 % der eigenen Spieltage', String(_fest.potd));
-ok(_fest.potw === 1, 'Die Wochenkrone verlangt JEDE eigene Woche', String(_fest.potw));
+ok(Math.abs(_fest.potw - 2 / 3) < 1e-12, 'Die Wochenkrone verlangt zwei Drittel der eigenen Wochen', String(_fest.potw));
+// Eine Woche zaehlt ab fuenf eigenen Partien. Bei drei zaehlte eine Woche
+// mit drei Partien so viel wie eine mit dreissig.
+ok(K.eval(`['2026-06','2026-07','2026-08'].every(sid => { const C = _seasonTitleCtx(sid);
+  return Object.values(C.P).every(p => p.potwG === Object.values(p.wochGrp).filter(a => a.length >= 5).length); })`),
+   'die Wochenkrone zaehlt nur Wochen mit mindestens fuenf eigenen Partien');
 // Player of the Week kommt aus derselben Quelle wie die Auszeichnung, sonst
 // zaehlt die Chronik Titel in Wochen, die es fuer den Sieger-Ermittler gar
 // nicht gibt [§C27].
@@ -859,20 +864,22 @@ const _pkt = JSON.parse(K.eval(`JSON.stringify((function(){
     if(m.klasse === 'legendaer' && (m.wende || !['koennen', 'konstanz'].includes(m.art)))
       band.push(t.id + ': legendaer als ' + m.art + (m.wende ? ' und Wende' : ''));
     // Jede positive Chronik trägt ihre Streuung, eine Schattenseite keine.
-    if(m.art==='schatten' ? m.streu != null : !(m.streu > 0 && isFinite(m.streu))) streu.push(t.id);
+    // Auch eine Schattenseite traegt ihre Streuung: sie bringt keine Punkte,
+    // wiegt aber in σ gegen eine besondere Chronik desselben Monats [§C39].
+    if(!(m.streu > 0 && isFinite(m.streu))) streu.push(t.id);
   });
   return {bad, band, streu};
 })())`));
 ok(_pkt.bad.length === 0, 'jede Chronik bringt den Grundwert 100, gleich welcher Klasse', _pkt.bad.join(', '));
 ok(_pkt.band.length === 0, 'die Klasse folgt der Leistung: legendaer nur Koennen oder Konstanz ohne Wende, jede Wende selten, eine Schattenseite als Schattenseite', _pkt.band.join(', '));
-ok(_pkt.streu.length === 0, 'jede positive Chronik trägt ihre Streuung, keine Schattenseite',
+ok(_pkt.streu.length === 0, 'jede Chronik trägt ihre Streuung, auch eine Schattenseite',
    _pkt.streu.join(', '));
 // Die Streuung ist einmal gemessen und festgeschrieben. Die Fixture-Monate
 // sind ein Teil der Partien, an denen sie gemessen wurde; liegt sie dort um
 // mehr als das Doppelte daneben, steht sie in der falschen Einheit
 // (Prozent statt Anteil, Spiele statt Tage) und der Bonus mit ihr.
 const _streuMess = JSON.parse(K.eval(`JSON.stringify((function(){
-  const sids = ['2026-05','2026-06','2026-07','2026-08'].filter(s => _seasonTitleCtx(s).days >= CHRONIK_MIN_TAGE);
+  const sids = ['2026-05','2026-06','2026-07','2026-08'];
   const daneben = []; let n = 0;
   DISZIPLINEN.filter(d => d.monat && d.monat.streu).forEach(d => {
     const w = d.monat, x = [];
@@ -892,29 +899,96 @@ const _streuMess = JSON.parse(K.eval(`JSON.stringify((function(){
 ok(_streuMess.n >= 60 && _streuMess.daneben.length === 0,
    'die Streuung jeder Chronik passt zu den Fixture-Monaten',
    _streuMess.daneben.join(', ') || _streuMess.n + ' gemessen');
-// Der Bonus: 25 je σ über der Schwelle, mindestens 1, wer sie überhaupt
-// überbietet, nichts genau auf ihr. Das Beispiel der Absprache: an 71 %
-// statt an 60 % der eigenen Spieltage Player of the Day sind 0,64 σ über
-// „Dem Tagesregenten" und 16 dazu. Eine Chronik „höchstens" (Minus vor
-// dem Wert) rechnet in dieselbe Richtung: weniger Streuung als erlaubt ist
-// darüber.
+// Der Bonus: je σ über der Schwelle zehn Punkte mal die Halbierungen, die
+// an der Schwelle auf ein σ kommen (`chronikHalbierungenJeSigma`, aus dem
+// Ausschlag); mindestens 1, wer sie ueberhaupt ueberbietet, nichts genau auf
+// ihr. Bei 1,2 σ Ausschlag sind das 24 je σ, wie vorher die festen 25; weiter
+// draussen mehr. Das Beispiel der Absprache: an 71 % statt an 60 % der
+// eigenen Spieltage Player of the Day sind 0,64 σ ueber „Dem Tagesregenten",
+// dessen Schwelle 2,55 σ draussen liegt — 26 dazu, vorher 16. Eine Chronik
+// „hoechstens" (Minus vor dem Wert) rechnet in dieselbe Richtung: weniger
+// Streuung als erlaubt ist darueber.
 const _bonus = JSON.parse(K.eval(`JSON.stringify((function(){
   const m = id => _chronikMonat(id), P = (id, k) => chronikPunkte(id, m(id).ab + k * m(id).streu);
   return {regent:chronikPunkte('tagesregent', 0.71), genau:chronikPunkte('tagesregent', 0.6),
           hauch:P('ausbruch', 1e-4), eins:P('ausbruch', 1), zwei:P('ausbruch', 2), drei:P('ausbruch', 3),
           metronom:P('metronom', 0.6), metronomAb:m('metronom').ab, ohneWert:chronikPunkte('ausbruch'),
-          schatten:chronikPunkte('drought', 99), krone:chronikPunkte('wochenkrone', 1)};
+          steigung:[1.2, 2.5, 3.5].map(a => Math.round(10 * chronikHalbierungenJeSigma(a))),
+          ausbruchSteigung:10 * chronikHalbierungenJeSigma(m('ausbruch').aus),
+          metronomSteigung:10 * chronikHalbierungenJeSigma(m('metronom').aus),
+          // Gleich weit ueber der Schwelle: die legendaere weit draussen bringt
+          // mehr als die besondere nahe am Feld.
+          weitDraussen:P('zitterkoenig', 1), naheAmFeld:P('destroyer', 1),
+          schatten:chronikPunkte('drought', 99), hoechstes:chronikPunkte('breitenwirkung', 1),
+          krone:chronikPunkte('wochenkrone', 1),
+          // Je unwahrscheinlicher der Monat, desto mehr: 0,05 % gegen 5 %.
+          moeglich:chronikPunkte('unmoeglich', -Math.log10(0.05)), unmoeglich:chronikPunkte('unmoeglich', -Math.log10(0.0005)),
+          // Die Punktlandung selbst gegen ein Tor daneben.
+          landung:chronikPunkte('evenkeel', m('evenkeel').wert({gf:212, ga:212, games:30})),
+          einTor:chronikPunkte('evenkeel', m('evenkeel').wert({gf:212, ga:211, games:30}))};
 })())`));
-ok(_bonus.regent === 116 && _bonus.genau === 100,
-   '71 % statt 60 % Player of the Day bringen 100 und 16 Bonus, genau 60 % den Grundwert',
+ok(_bonus.regent === 126 && _bonus.genau === 100,
+   '71 % statt 60 % Player of the Day bringen 100 und 26 Bonus, genau 60 % den Grundwert',
    JSON.stringify(_bonus));
-ok(_bonus.hauch === 101 && _bonus.eins === 125 && _bonus.zwei === 150 && _bonus.drei === 175 && _bonus.ohneWert === 100,
-   'der Bonus ist 25 je σ über der Schwelle, mindestens 1 und nach oben offen', JSON.stringify(_bonus));
-ok(_bonus.metronomAb < 0 && _bonus.metronom === 115,
+ok(JSON.stringify(_bonus.steigung) === '[24,41,54]',
+   'je σ bringt der Bonus bei 1,2 σ Ausschlag 24, bei 2,5 σ 41 und bei 3,5 σ 54', JSON.stringify(_bonus.steigung));
+const _s = _bonus.ausbruchSteigung;
+ok(_bonus.hauch === 101 && _bonus.eins === 100 + Math.round(_s) && _bonus.zwei === 100 + Math.round(2 * _s)
+   && _bonus.drei === 100 + Math.round(3 * _s) && _bonus.ohneWert === 100,
+   'der Bonus waechst gleichmaessig mit der Abweichung, mindestens 1 und nach oben offen', JSON.stringify(_bonus));
+ok(_bonus.weitDraussen > _bonus.naheAmFeld + 30,
+   'eine Schwelle weit draussen bringt je σ mehr als eine nahe am Feld', _bonus.weitDraussen + ' gegen ' + _bonus.naheAmFeld);
+ok(_bonus.metronomAb < 0 && _bonus.metronom === 100 + Math.round(0.6 * _bonus.metronomSteigung),
    'eine Chronik „höchstens" rechnet den Bonus in dieselbe Richtung', JSON.stringify(_bonus));
-ok(_bonus.schatten === 0 && _bonus.krone === 100,
+ok(_bonus.schatten === 0 && _bonus.hoechstes === 100,
    'eine Schattenseite bringt nichts, eine Schwelle, die schon das Höchste ist, keinen Bonus',
    JSON.stringify(_bonus));
+// Die Wochenkrone verlangt zwei Drittel der Wochen; wer jede Woche holt,
+// liegt darueber und bekommt Bonus.
+ok(_bonus.krone > 125, 'jede eigene Woche Player of the Week bringt bei der Wochenkrone Bonus', String(_bonus.krone));
+// Eine Chronik mit „hoechstens" bringt mehr, je naeher sie am Ziel liegt.
+// Der unmoegliche Monat rechnete mit eins minus der Wahrscheinlichkeit:
+// zwischen 5 % und 0,05 % lagen damit 0,05, ein Zehntel der Streuung, und
+// ein hundertmal unwahrscheinlicherer Monat brachte drei Punkte mehr. Die
+// Punktlandung stellte 212:212 gleich mit 212:211.
+ok(_bonus.moeglich === 100 && _bonus.unmoeglich - _bonus.moeglich >= 50,
+   'der unmoegliche Monat zaehlt mehr, je unwahrscheinlicher er war', JSON.stringify(_bonus));
+ok(_bonus.landung > _bonus.einTor && _bonus.einTor > 100,
+   'die Punktlandung ohne Tor Unterschied zaehlt mehr als ein Tor daneben', JSON.stringify(_bonus));
+// ── Die Schattenseite ueberschattet eine besondere Chronik [§C39] ────
+// Wer viele Schattenseiten sammelte, holte trotzdem jeden Monat eine
+// besondere Chronik und damit hundert Punkte. Eine besondere zaehlt nicht,
+// wenn im selben Monat eine Schattenseite desselben Spielers mindestens
+// doppelt so weit ueber ihre Schwelle hinausgeht wie die besondere ueber
+// ihre, und mindestens eine Streuung weit. Seltene und legendaere bleiben.
+const _schattig = JSON.parse(K.eval(`JSON.stringify((function(){
+  const m = id => _chronikMonat(id);
+  const e = (id, z, pid) => ({titleId:id, pid:pid || 'x', name:id, wert:m(id).ab + z * m(id).streu});
+  const U = (a, l) => !!chronikUeberschattet({awarded:[a].concat(l)}, a);
+  const nurSchatten = {awarded:[e('randlage', 0.2), e('klatsche', 1.5)]};
+  const mitSelten = {awarded:[e('randlage', 0.2), e('klatsche', 1.5), e('deutlich', 0.1)]};
+  return {
+    doppelt:U(e('randlage', 0.5), [e('klatsche', 1.0)]),
+    knapp:U(e('randlage', 0.5), [e('klatsche', 0.99)]),
+    mindestens:U(e('randlage', 0), [e('klatsche', 0.9)]),
+    eineStreuung:U(e('randlage', 0), [e('klatsche', 1.0)]),
+    selten:U(e('deutlich', 0), [e('klatsche', 5)]),
+    fremd:U(e('randlage', 0), [e('klatsche', 5, 'y')]),
+    zelle:(chronikEintragVon(nurSchatten, 'x') || {}).titleId,
+    stufe:chronikZellStufe(nurSchatten, 'x'),
+    zelleSelten:(chronikEintragVon(mitSelten, 'x') || {}).titleId
+  };
+})())`));
+ok(_schattig.doppelt && !_schattig.knapp,
+   'eine Schattenseite doppelt so weit ueber der Schwelle ueberschattet eine besondere Chronik, knapp darunter nicht',
+   JSON.stringify(_schattig));
+ok(!_schattig.mindestens && _schattig.eineStreuung,
+   'eine Schattenseite ueberschattet erst ab einer Streuung ueber ihrer Schwelle', JSON.stringify(_schattig));
+ok(!_schattig.selten && !_schattig.fremd,
+   'eine seltene Chronik und die Schattenseite eines anderen ueberschatten nicht', JSON.stringify(_schattig));
+ok(_schattig.zelle === 'klatsche' && _schattig.stufe === 'schatten' && _schattig.zelleSelten === 'deutlich',
+   'in Matrix und Prestige steht die Schattenseite, die ueberschattet, und eine seltene Chronik zaehlt weiter',
+   JSON.stringify(_schattig));
 // In der Regel liegt der Bonus zwischen 1 und 50 — gemessen an allen
 // positiven Einträgen der Fixture-Monate. Eine Streuung, die zu klein
 // geraten ist, triebe ihn weit darüber; eine zu große drückte ihn auf null.
@@ -1167,16 +1241,35 @@ const SUP = {unstoppable:'bestStreak', drought:'worstLoss'};
   });
 });
 
-// Ein Monat mit zu wenigen Spieltagen bekommt gar keine Chronik: aus drei
-// Abenden laesst sich kein Monat ablesen, und eine Siegquote aus zwoelf
-// Spielen ist ein Zufall. Der Mai der Liga hatte drei.
-const _mai = JSON.parse(K.eval(`JSON.stringify((function(){
-  const C=_seasonTitleCtx('2026-05');
-  return {tage:C.days, vergeben:seasonTitles('2026-05').awarded.length, grenze:CHRONIK_MIN_TAGE};
-})())`));
-ok(_mai.tage < _mai.grenze && _mai.vergeben === 0,
-   'ein Monat unter der Spieltag-Grenze bekommt keine Chronik',
-   _mai.tage + ' Spieltage, Grenze ' + _mai.grenze + ', vergeben ' + _mai.vergeben);
+// Eine Monatschronik haelt, wer im Monat fuenfzehn eigene Partien hat —
+// vom ersten Spieltag an [§C39]. Vorher galt eine Grenze fuer den ganzen
+// Monat (fuenf Spieltage) und danach acht Partien je Spieler: wer an einem
+// Spieltag zwanzig Partien spielte, wartete, und wer mit acht kam, holte mit
+// den Ausreissern einer kleinen Stichprobe.
+const _tor = JSON.parse(K.eval(`JSON.stringify((function(){
+  const out = {unter:[], zuWenig:[], leer:[], n:0, grenze:CHRONIK_MIN_SPIELE};
+  ['2026-05','2026-06','2026-07','2026-08'].forEach(sid => { const T = seasonTitles(sid), C = _seasonTitleCtx(sid);
+    const g = id => (C.rankAll.find(r => r.id === id) || {}).games || 0;
+    T.awarded.forEach(a => { out.n++; if(g(a.pid) < CHRONIK_MIN_SPIELE) out.unter.push(sid + ' ' + a.pid); });
+    C.rankAll.filter(r => r.games > 0 && r.games < CHRONIK_MIN_SPIELE).forEach(r => {
+      if(!(T.zuWenig || []).includes(r.id)) out.zuWenig.push(sid + ' ' + r.id);
+      if(T.empty.includes(r.id)) out.leer.push(sid + ' ' + r.id); }); });
+  return out; })())`));
+ok(_tor.grenze === 15 && _tor.n > 0 && !_tor.unter.length,
+   'eine Monatschronik haelt nur, wer im Monat mindestens fuenfzehn Partien hat', _tor.unter.slice(0, 3).join(', ') || _tor.n + ' Eintraege');
+ok(!_tor.zuWenig.length && !_tor.leer.length,
+   'wer darunter bleibt, ist nicht gewertet und steht nicht als „ohne Eintrag"', _tor.zuWenig.concat(_tor.leer).slice(0, 3).join(', '));
+// Und keine Bedingung nennt fuer den Monat selbst eine kleinere Zahl: „ab 8
+// Partien in beiden Monaten" stand noch beim Sprung, als die fuenfzehn
+// schon galten. Was nach einer Zahl unter fuenfzehn folgt, muss einen Teil
+// des Monats meinen (je Position, an diesem Tag, in jeder Gruppe) oder den
+// Vormonat.
+const _torText = JSON.parse(K.eval(`JSON.stringify(SEASON_TITLES.filter(t => {
+  const r = /ab (\\d+) Partien( [^,]*)?/g; let m, falsch = false;
+  while((m = r.exec(t.cond))){ if(+m[1] < CHRONIK_MIN_SPIELE
+    && !/^ (je|in jede[mr]|in dieser|an diesem|am Tag|an beiden Tagen|als |im Vormonat)/.test(m[2] || '')) falsch = true; }
+  return falsch; }).map(t => t.id + ': ' + t.cond))`));
+ok(_torText.length === 0, 'keine Bedingung nennt fuer den Monat weniger als fuenfzehn Partien', _torText.join(' · '));
 
 // Fuenf echte Monate statt drei: alle Partien der Liga bis Ende Oktober
 // (`fixtures/oktober.txt`), in einer zweiten Laufzeit. An drei Monaten liess
@@ -1211,10 +1304,6 @@ const TREFFER = JSON.parse(KH(`(function(){
   const n={};
   ${JSON.stringify(HERBST_MON)}.forEach(sid=>{
     const C=_seasonTitleCtx(sid);
-    // Ein Monat unter der Spieltag-Grenze bekommt gar keine Chronik. Seine
-    // Werte zaehlen deshalb auch nicht als Treffer — sonst misst der Test
-    // eine Vergabe, die es nie gibt.
-    if(C.days < CHRONIK_MIN_TAGE) return;
     SEASON_TITLES.forEach(t=>{
       const r=t.pick(C,new Set());
       n[t.id]=(n[t.id]||0) + ((r && r.halter) ? r.halter.length : 0);
@@ -1222,6 +1311,20 @@ const TREFFER = JSON.parse(KH(`(function(){
   });
   return JSON.stringify(n);
 })()`));
+// Gewertet wird vom ersten Spieltag an: an den echten Partien hielten Leon,
+// Henry, Maxi und Leo im Juni schon am zweiten Spieltag Chroniken, jeder mit
+// mindestens fuenfzehn Partien. Vorher war vor dem fuenften Spieltag niemand
+// gewertet.
+const _frueh = JSON.parse(KH(`JSON.stringify((function(){
+  const sid = '2026-06', ms = matchesInSeason(sid).slice().sort((a, b) => mts(a) - mts(b));
+  const tag = [...new Set(ms.map(m => tagKey(mts(m))))].sort()[1];
+  const bis = Math.max(...ms.filter(m => tagKey(mts(m)) === tag).map(mts));
+  const H = seasonTitleHalter(sid, bis) || {}, C = _seasonTitleCtx(sid, bis);
+  const wer = [...new Set(Object.values(H).flatMap(h => h.pids))];
+  return {tag, tage:C.days, n:Object.keys(H).length,
+    unter:wer.filter(id => (C.rankAll.find(r => r.id === id) || {}).games < CHRONIK_MIN_SPIELE).length}; })())`));
+ok(_frueh.tage < 5 && _frueh.n > 0 && _frueh.unter === 0,
+   'eine Monatschronik gibt es vom ersten Spieltag an, fuer jeden ab fuenfzehn Partien', JSON.stringify(_frueh));
 const KAT = JSON.parse(K.eval("JSON.stringify(SEASON_TITLES.map(t=>({id:t.id,art:t.art,kunst:t.kunst})))"));
 const ARTRANG = {leistung:0, ereignis:1, schatten:2};
 let artOk = true, artWo = '';
@@ -1282,26 +1385,51 @@ const _klasseVon = JSON.parse(K.eval(
 // die Grenze „nicht mehr Halter als Monate", und „Der Spielverderber" ging
 // in allen fuenf echten Monaten an jemanden, „Die Steigerung" in vier.
 const _monate = JSON.parse(KH(`JSON.stringify((function(){
-  const n = {}, sids = ${JSON.stringify(HERBST_MON)}.filter(sid => _seasonTitleCtx(sid).days >= CHRONIK_MIN_TAGE);
+  const n = {}, sids = ${JSON.stringify(HERBST_MON)};
   sids.forEach(sid => { const C = _seasonTitleCtx(sid);
     SEASON_TITLES.forEach(t => { const r = t.pick(C, new Set());
       if(r && r.halter && r.halter.length) (n[t.id] = n[t.id] || []).push(sid.slice(5)); }); });
   return {n, m:sids.length}; })())`));
 const _monN = _monate.m, _drittel = Math.ceil(_monN / 3);
-const _zuOft = Object.keys(_monate.n).filter(id => _monate.n[id].length > _drittel);
+// Ausgenommen sind die Schwellen, die die Liga selbst festgelegt hat: sie
+// sind eine Ansage wie der Tagesregent und die Wochenkrone und werden nicht
+// gegen Seltenheit und Ausschlag geeicht [§C39]. Die Liste kann nur
+// kuerzer werden — jede neue Chronik hat sich an beide Regeln zu halten.
+const _LIGA_SETZT = ['wochenkrone','zunull','wochwunder','traumquote','auferstehung','wochenschluss',
+  'destroyer','umschwung','formgipfel','deutlich','unmoeglich','punktgenau2','beidseitig','evenkeel',
+  'zitterkoenig','nervenkitzel','ausbruch','spezialisiert','randlage','abyss','hardluck','drought',
+  'einbruch','klatsche','kraefteverfall','favflop'];
+ok(_LIGA_SETZT.every(id => _klasseVon[id]), 'jede von der Liga gesetzte Schwelle gehoert zu einer Chronik',
+   _LIGA_SETZT.filter(id => !_klasseVon[id]).join(', ') || _LIGA_SETZT.length + ' Chroniken');
+const _zuOft = Object.keys(_monate.n).filter(id => _monate.n[id].length > _drittel && !_LIGA_SETZT.includes(id));
+// An den echten Partien: wer ueberschattet ist, bekommt fuer diesen Monat
+// nichts aus der besonderen Chronik, und es geschieht, aber nicht jedem.
+const _schattenEcht = JSON.parse(KH(`JSON.stringify((function(){
+  const out = [];
+  ${JSON.stringify(HERBST_MON)}.forEach(sid => { const T = seasonTitles(sid);
+    T.awarded.forEach(a => { const s = chronikUeberschattet(T, a); if(!s) return;
+      const e = chronikEintragVon(T, a.pid);
+      out.push({sid, pid:a.pid, id:a.titleId, s:s.titleId, zaehlt:e && e.titleId, punkte:e ? chronikPunkte(e.titleId, e.wert) : 0}); }); });
+  return out; })())`));
+console.log('  ueberschattet: ' + _schattenEcht.map(x => x.sid.slice(5) + ' ' + nm(x.pid) + ' ' + x.id + ' von ' + x.s).join(' · '));
+ok(_schattenEcht.length >= 3 && new Set(_schattenEcht.map(x => x.pid)).size >= 2
+   && _schattenEcht.every(x => x.zaehlt !== x.id),
+   'an den echten Partien ueberschattet eine Schattenseite manche besondere Chronik, und die zaehlt dann nicht',
+   _schattenEcht.length + ' Faelle');
 ok(_monN === 5 && _zuOft.length === 0,
    'keine Chronik geht in mehr als einem Drittel der gewerteten Monate an jemanden',
    _monN + ' Monate, hoechstens ' + _drittel + ', zu oft: ' + _zuOft.map(id => id + '(' + _monate.n[id].join(',') + ')').join(', '));
 // Eine Schwelle ist eine runde Zahl: niemand merkt sich „82 %" oder „33
 // Prozentpunkte", und eine krumme Zahl liest sich, als sei sie auf einen
 // bestimmten Halter zugeschnitten. Prozent und Prozentpunkte stehen in
-// Fuenferschritten, darunter nur 2, 1 oder 0,5; Tore in Vierteln, Elo in
-// Zehnern. Gelesen wird die Bedingung, wie sie auf dem Bildschirm steht.
+// Fuenferschritten, darunter in halben Schritten (1,5 %, 3 Prozentpunkte);
+// Tore in Vierteln, Elo in Zehnern. Gelesen wird die Bedingung, wie sie auf
+// dem Bildschirm steht.
 const _krumm = JSON.parse(K.eval(`JSON.stringify(SEASON_TITLES.map(t => {
   const c = _chronikMonat(t.id).cond || '';
   const bad = [...c.matchAll(/(\\d+(?:,\\d+)?)\\s*(%|Prozentpunkte?|Gegentore?|Tore?\\b|Elo)/g)].filter(m => {
     const f = parseFloat(m[1].replace(',', '.')), u = m[2];
-    if(u === '%' || u.startsWith('Prozentpunkt')) return f >= 5 ? Math.abs(f / 5 - Math.round(f / 5)) > 1e-9 : ![0.5, 1, 2].includes(f);
+    if(u === '%' || u.startsWith('Prozentpunkt')) return f >= 5 ? Math.abs(f / 5 - Math.round(f / 5)) > 1e-9 : Math.abs(f * 2 - Math.round(f * 2)) > 1e-9;
     if(u === 'Elo') return f % 10 !== 0;
     return Math.abs(f * 4 - Math.round(f * 4)) > 1e-9;
   }).map(m => m[0]);
@@ -1337,32 +1465,35 @@ ok(_meister.every(x => x.n >= 1), 'der Meister jedes Monats haelt mindestens ein
 // klar ausserhalb des Feldes steht.
 const _MIN_AUS = 1.2;
 const _flach = JSON.parse(K.eval(`JSON.stringify(SEASON_TITLES
-  .filter(t => !(t.aus >= ${_MIN_AUS}))
+  .filter(t => !(t.aus >= ${_MIN_AUS}) && !${JSON.stringify(_LIGA_SETZT)}.includes(t.id))
   .map(t => t.id + ' (' + (t.aus || 0) + ')'))`));
 ok(_flach.length === 0,
    'jede Chronik schiebt ihre Schwelle mindestens 1,2 σ hinaus',
    _flach.join(', '));
 // Und ihr Wert haengt nicht an der Spielzahl [§C39]: wer mehr spielt, hat
 // mehr Tage, mehr Gegner und mehr Gelegenheiten, und eine Chronik, die das
-// belohnt, gehoert dem Vielspieler. Gemessen wird die Korrelation des Werts
-// mit den Partien des Monats ueber alle gewerteten Monate, in beide
-// Richtungen — auch ein Wert, der mit wenigen Partien leichter extrem wird,
-// haengt an der Spielzahl. Die Regel stand in §C39, ohne dass ein Test sie
-// hielt, und elf aeltere Chroniken reissen sie; sie stehen hier namentlich,
-// damit die Liste nur kuerzer werden kann. Eine neue Chronik darf nicht
-// dazukommen.
-// Ausgenommen sind ausserdem die zwei, die nach der Tabelle fragen
-// (`_SPIELZAHL_TABELLE`): sie fragen nicht nach einer Rechnung, sondern nach
-// Platz und Vorsprung in der Monatstabelle, und die schreibt jede Partie mit
-// dem Spielbonus gut. „Auf dem Thron" stand bei 0,348; seit der
-// Positionsbonus der Elo gegen die eigene Aufteilung misst [§C44], steht er
-// bei 0,38. „Der Souveraen" kam dazu, damit der Beste eines Monats nicht leer
-// ausgeht [§C39]: ein Vorsprung wird ueber Partien erspielt.
-const _SPIELZAHL_ALT = ['ausreisser2','umschwung','formgipfel','schwachstelle','kontrast',
-  'schattenmann','traumquote','schwachewoche','evenkeel','metronom','lieblingszahl'];
-const _SPIELZAHL_TABELLE = ['thron','souveraen'];
-const _spielzahl = JSON.parse(K.eval(`JSON.stringify((function(){
-  const sids = ['2026-05','2026-06','2026-07','2026-08'].filter(s => _seasonTitleCtx(s).days >= CHRONIK_MIN_TAGE);
+// belohnt, gehoert dem Vielspieler. Gemessen wird die Korrelation des
+// GEWERTETEN Werts mit den Partien des Monats ueber die fuenf echten Monate,
+// in beide Richtungen — auch ein Wert, der mit wenigen Partien leichter
+// extrem wird, haengt an der Spielzahl, und die Wertung nach der Stichprobe
+// darf keine neue Abhaengigkeit bringen.
+//
+// Die Ausnahmen stehen hier namentlich, damit die Liste nur kuerzer werden
+// kann. Gemessen an drei Monaten waren es elf und zwei Fragen nach der
+// Tabelle; an fuenf Monaten und mit der Wertung nach der Stichprobe liegen
+// sieben davon unter der Grenze. Sechs bleiben: ein bester Tag, ein bester
+// Block, ein bester Wechsel von Tag zu Tag und das schwaechste von fuenf
+// Feldern werden mit mehr Gelegenheiten von selbst extremer, ein haeufigstes
+// Ergebnis mit mehr Partien von selbst seltener. Zwei kamen mit den fuenf
+// Monaten dazu, beide nicht durch die Zahl selbst: die Auferstehung fragt
+// nach einer Quote, und wer viel spielt, ist im Schnitt der Staerkere —
+// die Schwelle setzte die Liga [§C39]; beim Favoritenschreck ist, wer oft
+// klarer Aussenseiter ist, meist ein tieferer Aussenseiter, und gewinnt
+// seltener (roh −0,29, gewertet −0,38).
+const _SPIELZAHL_ALT = ['ausreisser2','umschwung','formgipfel','schwachstelle','metronom','lieblingszahl',
+  'auferstehung','favschreck'];
+const _spielzahl = JSON.parse(KH(`JSON.stringify((function(){
+  const sids = ${JSON.stringify(HERBST_MON)};
   const out = {};
   DISZIPLINEN.filter(d => d.monat && d.monat.wert).forEach(d => {
     const w = d.monat, x = [], g = [];
@@ -1378,14 +1509,13 @@ const _spielzahl = JSON.parse(K.eval(`JSON.stringify((function(){
   });
   return out;
 })())`));
-const _spNeu = Object.keys(_spielzahl).filter(id => Math.abs(_spielzahl[id]) > 0.35
-  && !_SPIELZAHL_ALT.includes(id) && !_SPIELZAHL_TABELLE.includes(id));
+const _spNeu = Object.keys(_spielzahl).filter(id => Math.abs(_spielzahl[id]) > 0.35 && !_SPIELZAHL_ALT.includes(id));
 ok(Object.keys(_spielzahl).length >= 60 && _spNeu.length === 0,
-   'keine Chronik ausser den elf aelteren und den zwei Fragen nach der Tabelle haengt an der Spielzahl',
+   'keine Chronik ausser den acht genannten haengt an der Spielzahl',
    _spNeu.map(id => id + ' r=' + _spielzahl[id].toFixed(2)).join(', ') || Object.keys(_spielzahl).length + ' gemessen');
-const _spErledigt = _SPIELZAHL_ALT.concat(_SPIELZAHL_TABELLE).filter(id => !(Math.abs(_spielzahl[id] || 0) > 0.35));
-ok(_spErledigt.length === 0, 'die Liste der aelteren Ausnahmen ist nicht laenger als noetig',
-   _spErledigt.join(', ') || _SPIELZAHL_ALT.length + _SPIELZAHL_TABELLE.length + ' Ausnahmen');
+const _spErledigt = _SPIELZAHL_ALT.filter(id => !(Math.abs(_spielzahl[id] || 0) > 0.35));
+ok(_spErledigt.length === 0, 'die Liste der Ausnahmen ist nicht laenger als noetig',
+   _spErledigt.join(', ') || _SPIELZAHL_ALT.length + ' Ausnahmen');
 // Der Beiname beschreibt den SPIELER und steht im Profilkopf. Ohne ihn
 // stuende dort der Katalogname, und „Der Endspurt" ist keine Beschreibung
 // eines Spielertyps. Er muss da sein, in die Pille passen und eindeutig
@@ -1490,6 +1620,35 @@ ok(K.eval(`(function(){
   return bad.join(',');
 })()`) === '', 'die Geteilt-Marke steht genau bei geteilten Rekorden');
 
+// Die Umrechnung auf die uebliche Stichprobe [§C39] rechnet der Test selbst
+// nach: die Groesse der Stichprobe und die Eichung (`mitte`, `n0`, `echt`)
+// kommen aus der App, die Formel steht hier. Ein Wert, den der Test aus den
+// rohen Partien zaehlt, wird damit genauso gewertet wie in der App, und eine
+// kaputte Umrechnung faellt hier auf und nicht erst am Prestige.
+const _stich = (ids, sids, KK) => JSON.parse((KK || K.eval)(`JSON.stringify((function(){ const o = {};
+  ${JSON.stringify(sids)}.forEach(sid => { const C = _seasonTitleCtx(sid);
+    ${JSON.stringify(ids)}.forEach(id => { const m = _chronikMonat(id);
+      Object.keys(C.P).forEach(pid => { const p = C.P[pid]; let n = null;
+        try { if(m.mind(p, C)){ m.roh(p, C); n = typeof m.stichprobe === 'function' ? m.stichprobe(p, C) : null; } } catch(e){}
+        o[sid + '|' + pid + '|' + id] = n; }); }); });
+  return o; })())`));
+const _eichung = (ids, KK) => JSON.parse((KK || K.eval)(`JSON.stringify(${JSON.stringify(ids)}.reduce((o, id) => {
+  const m = _chronikMonat(id); o[id] = {mitte:m.mitte, n0:m.n0, echt:m.echt, fn:typeof m.stichprobe === 'function'}; return o; }, {}))`));
+const _gewertet = (e, v, n) => (e && e.fn && n > 0 && e.n0 > 0)
+  ? e.mitte + (v - e.mitte) / Math.sqrt(e.echt + (1 - e.echt) * e.n0 / n) : v;
+// Jede Chronik entscheidet die Stichprobe ausdruecklich: eine Funktion
+// samt Eichung (`mitte`, `n0` ueber null, `echt` in Zwanzigsteln zwischen 0
+// und 1) oder `false`, dann ohne Eichung. Fehlt sie, wuerde der Wert still
+// roh gewertet, und der Wenigspieler laege wieder oefter draussen; steht
+// eine Eichung ohne Funktion daneben, glaubt der Leser an eine Wertung, die
+// es nicht gibt.
+const _stichFeld = JSON.parse(K.eval(`JSON.stringify(DISZIPLINEN.filter(d => d.monat).map(d => {
+  const m = d.monat, fn = typeof m.stichprobe === 'function', geeicht = [m.mitte, m.n0, m.echt].some(x => x != null);
+  const gut = fn ? (isFinite(m.mitte) && m.n0 > 0 && m.echt >= 0 && m.echt <= 1 && Math.abs(m.echt * 20 - Math.round(m.echt * 20)) < 1e-9)
+                 : (m.stichprobe === false && !geeicht);
+  return gut ? null : d.id; }).filter(Boolean))`));
+ok(_stichFeld.length === 0, 'jede Monatschronik nennt ihre Stichprobe samt Eichung oder ausdruecklich keine', _stichFeld.join(', '));
+
 // Die vier Monatschroniken aus `mockup/besonderheiten`, ein zweites Mal aus
 // den rohen Partien gerechnet. Monat und Kalendertag kommen aus der App
 // (`seasonOf`, `mdayKey`), weil das die Grenzen SIND; alles andere zaehlt
@@ -1528,11 +1687,14 @@ const _monSoll = (() => {
       return v.filter(d => d[0].w !== d[d.length-1].w).length / v.length - 2 * S * (n - S) / (n * (n - 1)); }
   };
   const AB = {staffellauf:0.30, seitenbuendnis:0.35, quertreiber:0.05, tagesumkehr:0.25};
+  const N = _stich(Object.keys(W), ['2026-06','2026-07','2026-08']), E = _eichung(Object.keys(W));
   const out = {};
   ['2026-06','2026-07','2026-08'].forEach(sid => Object.keys(W).forEach(id => {
     const feld = Object.keys(P).filter(k => k.startsWith(sid + '|'))
-      .filter(k => P[k].length >= 8 && new Set(P[k].map(x => x.tag)).size >= 3)
-      .map(k => ({pid:k.split('|')[1], v:W[id](P[k])})).filter(f => f.v != null && f.v >= AB[id] - 1e-12);
+      .filter(k => P[k].length >= 15 && new Set(P[k].map(x => x.tag)).size >= 3)
+      .map(k => { const pid = k.split('|')[1], v = W[id](P[k]);
+        return {pid, v:v == null ? null : _gewertet(E[id], v, N[sid + '|' + pid + '|' + id])}; })
+      .filter(f => f.v != null && f.v >= AB[id] - 1e-12);
     const best = Math.max(...feld.map(f => f.v));
     out[sid + ' ' + id] = feld.filter(f => Math.abs(f.v - best) < 1e-9).map(f => f.pid).sort().join();
   }));
@@ -1600,10 +1762,12 @@ const _eigenSoll = (() => {
       return v.filter(x => x.w).length / v.length - a.filter(x => x.w).length / a.length; }
   };
   const AB = {knipser:0.75, riegel:0.5, neuland:0.20, revanche:0.45, spielverderber:0.15, lernkurve:0.35, nachlegen:0.15, absturz:0.20};
+  const N = _stich(Object.keys(W), ['2026-06','2026-07','2026-08']), E = _eichung(Object.keys(W));
   const out = {};
   ['2026-06','2026-07','2026-08'].forEach(sid => Object.keys(W).forEach(id => {
-    const feld = Object.keys(P).filter(k => k.startsWith(sid + '|') && P[k].length >= 8)
-      .map(k => ({pid:k.split('|')[1], v:W[id](P[k], sid, k.split('|')[1])}))
+    const feld = Object.keys(P).filter(k => k.startsWith(sid + '|') && P[k].length >= 15)
+      .map(k => { const pid = k.split('|')[1], v = W[id](P[k], sid, pid);
+        return {pid, v:v == null ? null : _gewertet(E[id], v, N[sid + '|' + pid + '|' + id])}; })
       .filter(f => f.v != null && f.v >= AB[id] - 1e-12);
     const best = Math.max(...feld.map(f => f.v));
     out[sid + ' ' + id] = feld.filter(f => Math.abs(f.v - best) < 1e-9).map(f => f.pid).sort().join();
@@ -1622,14 +1786,15 @@ console.log('  gegen das Eigene:', Object.keys(_eigenIst).filter(k => _eigenIst[
 ok(_eigenAb.length === 0, 'die acht Chroniken gegen das Eigene stimmen mit der Nachrechnung aus den rohen Partien',
    _eigenAb.map(k => k + ': ' + (_eigenIst[k].split(',').map(nm).join('/') || '–') + ' statt '
      + (_eigenSoll[k].split(',').map(nm).join('/') || '–')).join(' · '));
-// Für wen sie da sind: nicht für den Ersten der Monatstabelle.
+// Für wen sie da sind: nicht für den Ersten der Monatstabelle. Sieben
+// Haltungen statt acht, seit eine Chronik erst ab fünfzehn Partien zählt.
 const _eigenErste = JSON.parse(K.eval(`JSON.stringify(['2026-06','2026-07','2026-08'].reduce((o, sid) => {
   const C = _seasonTitleCtx(sid), erst = C.rankAll[0] && C.rankAll[0].id;
   ['knipser','riegel','neuland','revanche','spielverderber','lernkurve','nachlegen'].forEach(id => {
     const r = SEASON_TITLE_BY_ID[id].pick(C, new Set());
     (r && r.halter || []).forEach(pid => { o.n++; if(pid === erst) o.erste++; o.wer[pname(pid)] = 1; }); });
   return o; }, {n:0, erste:0, wer:{}}))`));
-ok(_eigenErste.n >= 8 && _eigenErste.erste * 4 <= _eigenErste.n && Object.keys(_eigenErste.wer).length >= 5,
+ok(_eigenErste.n >= 7 && _eigenErste.erste * 4 <= _eigenErste.n && Object.keys(_eigenErste.wer).length >= 5,
    'die sieben positiven gehen an mindestens fünf verschiedene Spieler, höchstens ein Viertel an den Monatsersten',
    JSON.stringify(_eigenErste));
 
@@ -1680,7 +1845,7 @@ const _neuSoll = (() => {
       return q(rest) - q(erste); },
     kraefteverfall:(a) => { const t = Object.values(tage(a));
       const frueh = [].concat(...t.map(d => d.slice(0, 3))), spaet = [].concat(...t.map(d => d.slice(3)));
-      return frueh.length >= 5 && spaet.length >= 5 ? q(frueh) - q(spaet) : null; },
+      return frueh.length >= 3 && spaet.length >= 3 ? q(frueh) - q(spaet) : null; },
     einbruch:(a) => { const k = Object.keys(tage(a)).sort(); if(k.length < 4) return null;
       const mitte = k[Math.floor(k.length / 2)], e1 = a.filter(x => x.tag < mitte), e2 = a.filter(x => x.tag >= mitte);
       return e1.length >= 4 && e2.length >= 4 ? q(e1) - q(e2) : null; },
@@ -1707,16 +1872,19 @@ const _neuSoll = (() => {
     hardnight:(a) => { const t = {}; a.filter(x => x.zu).forEach(x => (t[x.tag] = t[x.tag] || []).push(x));
       const l = Object.values(t).filter(d => d.length >= 4); if(!l.length) return null;
       return -Math.min(...l.map(d => d.reduce((s, x) => s + x.e, 0) / d.length)); },
-    favflop:(a) => { const f = a.filter(x => x.e > 0.55); return f.length >= 5 ? 1 - q(f) : null; }
+    favflop:(a) => { const f = a.filter(x => x.e > 0.55); return f.length >= 4 ? 1 - q(f) : null; }
   };
   const AB = {ausnahmemonat:0.15, rollentausch:0.25, klartext:0.10, damage_control:1.25,
-              destroyer:0.30, clutch:0.30, hardnight:-0.30, favflop:0.55,
-              fehlstart:0.40, kraefteverfall:0.30, einbruch:0.35, sattheit:0.25, schwarzewoche:0.35,
+              destroyer:0.25, clutch:0.35, hardnight:-0.30, favflop:0.50,
+              fehlstart:0.40, kraefteverfall:0.25, einbruch:0.25, sattheit:0.25, schwarzewoche:0.35,
               aufdreher:3, rueckzug:-0.25, noanswer:0.25};
+  const ids = _neuMon.concat(_schattMon);
+  const N = _stich(ids, ['2026-06','2026-07','2026-08']), E = _eichung(ids);
   const out = {};
-  ['2026-06','2026-07','2026-08'].forEach(sid => _neuMon.concat(_schattMon).forEach(id => {
-    const feld = Object.keys(P).filter(k => k.startsWith(sid + '|') && P[k].length >= 8)
-      .map(k => ({pid:k.split('|')[1], v:W[id](P[k], sid, k.split('|')[1])}))
+  ['2026-06','2026-07','2026-08'].forEach(sid => ids.forEach(id => {
+    const feld = Object.keys(P).filter(k => k.startsWith(sid + '|') && P[k].length >= 15)
+      .map(k => { const pid = k.split('|')[1], v = W[id](P[k], sid, pid);
+        return {pid, v:v == null ? null : _gewertet(E[id], v, N[sid + '|' + pid + '|' + id])}; })
       .filter(f => f.v != null && f.v >= AB[id] - 1e-12);
     const best = Math.max(...feld.map(f => f.v));
     out[sid + ' ' + id] = feld.filter(f => Math.abs(f.v - best) < 1e-9).map(f => f.pid).sort().join();
@@ -1736,33 +1904,41 @@ console.log('  neu im Monat:', Object.keys(_neuIst).filter(_imKreis(_neuMon)).fi
 ok(_neuAb.length === 0, 'die acht neuen Monatschroniken stimmen mit der Nachrechnung aus den rohen Partien',
    _neuAb.map(k => k + ': ' + (_neuIst[k].split(',').map(nm).join('/') || '–') + ' statt '
      + (_neuSoll[k].split(',').map(nm).join('/') || '–')).join(' · '));
-// Kalibriert sind sie auf neun Haltungen in drei Monaten, keine mehr als
-// zwei: eine Schwelle, die rutscht, faellt hier auf und nicht erst am
-// Prestige. Es waren fuenfzehn, bis die sechste Fassung die Schwellen der zu
-// haeufigen anhob [§C39].
+// Gezaehlt sind acht Haltungen in drei Monaten, keine mehr als zwei ausser
+// denen mit einer Schwelle der Liga: eine Schwelle, die rutscht, faellt hier
+// auf und nicht erst am Prestige. Es waren fuenfzehn, bis die sechste
+// Fassung die Schwellen der zu haeufigen anhob, dann neun, bis die Liga die
+// Schwellen von Zerstoerer und Wackelkandidat selbst setzte, dann elf, bis
+// eine Chronik erst ab fuenfzehn Partien zaehlte und ein Anteil nach seiner
+// Stichprobe gewertet wurde [§C39]: Johannes hatte im Juni zehn Partien,
+// Henry im August elf.
 const _haltungen = l => Object.keys(_neuIst).filter(_imKreis(l)).filter(k => _neuIst[k])
   .reduce((n, k) => n + _neuIst[k].split(',').length, 0);
 const _neuZahl = _haltungen(_neuMon);
-ok(_neuZahl === 9 && _neuMon.every(id => Object.keys(_neuIst).filter(k => k.endsWith(' ' + id) && _neuIst[k]).length <= 2),
-   'die acht neuen Monatschroniken sind neunmal vergeben, wie kalibriert', _neuZahl + ' Haltungen');
+ok(_neuZahl === 8 && _neuMon.every(id => _LIGA_SETZT.includes(id) || Object.keys(_neuIst).filter(k => k.endsWith(' ' + id) && _neuIst[k]).length <= 2),
+   'die acht neuen Monatschroniken sind achtmal vergeben', _neuZahl + ' Haltungen');
 const _schAb = Object.keys(_neuSoll).filter(_imKreis(_schattMon)).filter(k => _neuSoll[k] !== _neuIst[k]);
 console.log('  Schatten und Anteil:', Object.keys(_neuIst).filter(_imKreis(_schattMon)).filter(k => _neuIst[k])
   .map(k => k.slice(5) + ' ' + _neuIst[k].split(',').map(nm).join('/')).join(' · '));
 ok(_schAb.length === 0, 'die Schattenseiten gegen das Eigene und der Anteil an den Partien stimmen mit der Nachrechnung',
    _schAb.map(k => k + ': ' + (_neuIst[k].split(',').map(nm).join('/') || '–') + ' statt '
      + (_neuSoll[k].split(',').map(nm).join('/') || '–')).join(' · '));
-// Kalibriert auf acht Haltungen (zwoelf vor der sechsten Fassung), und
-// keine geht an die ersten drei eines Monats: eine Schattenseite auf das
-// Niveau gehoerte immer dem Letzten, ein Aufdreher auf die Zahl dem, der am
-// meisten spielt.
+// Drei Haltungen (zwoelf vor der sechsten Fassung, acht vor den Schwellen
+// der Liga, neun vor der Grenze von fuenfzehn Partien und der Wertung nach
+// der Stichprobe), und nicht alle bei den letzten drei der Gewerteten: eine
+// Schattenseite auf das Niveau gehoerte immer dem Letzten. Dass keine an die
+// ersten drei geht, galt, solange ein kleiner Anteil leichter weit
+// ausschlug: seit er nach seiner Stichprobe zaehlt, haelt Leon im Juli den
+// Fehlstart — der Erste der Tabelle, schwaecher in den Startspielen als
+// danach, und das ueber mehr Spieltage als jeder andere.
 const _schZahl = _haltungen(_schattMon);
-const _schErste = JSON.parse(K.eval(`JSON.stringify(['2026-06','2026-07','2026-08'].reduce((o, sid) =>
-  (o[sid] = _seasonTitleCtx(sid).rankAll.slice(0, 3).map(r => r.id), o), {}))`));
-const _schOben = Object.keys(_neuIst).filter(_imKreis(_schattMon)).filter(k => _neuIst[k])
-  .filter(k => _neuIst[k].split(',').some(p => _schErste[k.split(' ')[0]].includes(p)));
-ok(_schZahl === 8 && _schOben.length === 0,
-   'sie sind achtmal vergeben, wie kalibriert, und nie an die ersten drei eines Monats',
-   _schZahl + ' Haltungen' + (_schOben.length ? ' · oben: ' + _schOben.join(', ') : ''));
+const _schLetzte = JSON.parse(K.eval(`JSON.stringify(['2026-06','2026-07','2026-08'].reduce((o, sid) =>
+  (o[sid] = _seasonTitleCtx(sid).rankAll.filter(r => r.games >= CHRONIK_MIN_SPIELE).slice(-3).map(r => r.id), o), {}))`));
+const _schUnten = Object.keys(_neuIst).filter(_imKreis(_schattMon)).filter(k => _neuIst[k])
+  .filter(k => _neuIst[k].split(',').every(p => _schLetzte[k.split(' ')[0]].includes(p)));
+ok(_schZahl === 3 && _schUnten.length < _schZahl,
+   'sie sind dreimal vergeben und nicht alle an die letzten drei eines Monats',
+   _schZahl + ' Haltungen' + (_schUnten.length ? ' · unten: ' + _schUnten.join(', ') : ''));
 
 // Sieben weitere Chroniken [§C39], Wert für Wert aus den rohen Partien
 // nachgerechnet und nicht nur ihr Halter: drei davon haben in den
@@ -1825,7 +2001,7 @@ const _neu7Soll = (() => {
   const out = {};
   ['2026-06','2026-07','2026-08'].forEach(sid => Object.keys(L).forEach(pid => {
     const a = L[pid].filter(x => x.sid === sid);
-    if(a.length < 8) return;
+    if(a.length < 15) return;
     const w = W(sid, pid, a);
     _neu7.forEach(id => { out[sid + ' ' + pid + ' ' + id] = w[id]; });
   }));
@@ -1834,8 +2010,10 @@ const _neu7Soll = (() => {
 const _neu7Ist = JSON.parse(K.eval(`JSON.stringify(['2026-06','2026-07','2026-08'].reduce((o, sid) => {
   const C = _seasonTitleCtx(sid);
   Object.keys(C.P).forEach(pid => ${JSON.stringify(_neu7)}.forEach(id => {
+    // Verglichen wird der gemessene Wert (roh): wie er gewertet wird,
+    // prueft die Umrechnung oben [§C39].
     const w = _chronikMonat(id), p = C.P[pid];
-    o[sid + ' ' + pid + ' ' + id] = w.mind(p, C) ? w.wert(p, C) : null; }));
+    o[sid + ' ' + pid + ' ' + id] = w.mind(p, C) ? w.roh(p, C) : null; }));
   return o; }, {}))`));
 const _neu7Ab = [...new Set(Object.keys(_neu7Soll).concat(Object.keys(_neu7Ist)))].filter(k => {
   const a = _neu7Soll[k], b = _neu7Ist[k];
@@ -1846,17 +2024,20 @@ ok(_neu7Werte > 100 && _neu7Ab.length === 0,
    'die sieben weiteren Monatschroniken rechnen jeden Wert wie die Nachrechnung aus den rohen Partien',
    _neu7Ab.slice(0, 3).map(k => k.split(' ')[0] + ' ' + nm(k.split(' ')[1]) + ' ' + k.split(' ')[2] + ': '
      + _neu7Ist[k] + ' statt ' + _neu7Soll[k]).join(' · ') || _neu7Werte + ' Werte');
-// Kalibriert an den echten Partien: in den drei Fixture-Monaten fünf
+// Kalibriert an den echten Partien: in den drei Fixture-Monaten zwei
 // Haltungen, keine Chronik mehr als zweimal. Es waren sechs, bis das
-// Zielwasser seine Schwelle auf 0,75 Tore rundete.
+// Zielwasser seine Schwelle auf 0,75 Tore rundete, und fünf, bis eine
+// Chronik erst ab fünfzehn Partien zählte: Jannik hatte im August
+// vierzehn, und Henrys Fremdeln im Juni und Janes Stütze im Juli lagen
+// gewertet auf ihre Stichprobe unter der Schwelle.
 const _neu7Halter = JSON.parse(K.eval(`JSON.stringify(['2026-06','2026-07','2026-08'].reduce((o, sid) => {
   seasonTitles(sid).awarded.filter(a => ${JSON.stringify(_neu7)}.includes(a.titleId))
     .forEach(a => (o[a.titleId] = o[a.titleId] || []).push(sid.slice(5) + ' ' + pname(a.pid)));
   return o; }, {}))`));
 const _neu7Zahl = Object.values(_neu7Halter).reduce((n, l) => n + l.length, 0);
 console.log('  sieben weitere:', Object.keys(_neu7Halter).map(id => id + ' ' + _neu7Halter[id].join('/')).join(' · '));
-ok(_neu7Zahl === 5 && Object.values(_neu7Halter).every(l => l.length <= 2),
-   'die sieben weiteren sind fuenfmal vergeben, wie kalibriert, keine mehr als zweimal', _neu7Zahl + ' Haltungen');
+ok(_neu7Zahl === 2 && Object.values(_neu7Halter).every(l => l.length <= 2),
+   'die sieben weiteren sind zweimal vergeben, keine mehr als zweimal', _neu7Zahl + ' Haltungen');
 
 // Die sechste Fassung [§C39]: neunzehn weitere Monatschroniken, Wert für
 // Wert aus den rohen Partien nachgerechnet. Elf fragen nach einer
@@ -1944,7 +2125,7 @@ const _neu19Soll = (() => {
   const out = {};
   ['2026-06','2026-07','2026-08'].forEach(sid => Object.keys(L).forEach(pid => {
     const a = L[pid].filter(x => x.sid === sid);
-    if(a.length < 8) return;
+    if(a.length < 15) return;
     const w = W(sid, pid, a);
     _neu19.forEach(id => { out[sid + ' ' + pid + ' ' + id] = w[id]; });
   }));
@@ -1954,7 +2135,7 @@ const _neu19Ist = JSON.parse(K.eval(`JSON.stringify(['2026-06','2026-07','2026-0
   const C = _seasonTitleCtx(sid);
   Object.keys(C.P).forEach(pid => ${JSON.stringify(_neu19)}.forEach(id => {
     const w = _chronikMonat(id), p = C.P[pid];
-    o[sid + ' ' + pid + ' ' + id] = w.mind(p, C) ? w.wert(p, C) : null; }));
+    o[sid + ' ' + pid + ' ' + id] = w.mind(p, C) ? w.roh(p, C) : null; }));
   return o; }, {}))`));
 const _neu19Ab = [...new Set(Object.keys(_neu19Soll).concat(Object.keys(_neu19Ist)))].filter(k => {
   const a = _neu19Soll[k], b = _neu19Ist[k];
@@ -4476,26 +4657,40 @@ console.log('\n═══ MONATSCHRONIKEN GEGEN DIE ERWARTUNG UND DEN VORMONAT �
 // gegen jeden Gegner im Plus, 85 % der ersten und 75 % der letzten Partien
 // eines Spieltags, jeder Spieltag nicht negativ. Gemessen gingen damit 42 %
 // aller Einträge der Fixture-Monate an die ersten drei der Monatstabelle —
-// bei zwölf Spielern wären es nach ihrem Anteil 25 %. Gegen die
-// Elo-Erwartung und den eigenen Rest gestellt, sind es 35 %.
+// bei zwölf Spielern wären es nach ihrem Anteil 25 %, das 1,7-fache.
+// Gemessen wird gegen ihren Anteil an den GEWERTETEN: seit eine Chronik erst
+// ab fünfzehn Partien zählt, sind im August sieben gewertet, und drei von
+// sieben sind 43 %. Gegen die Elo-Erwartung und den eigenen Rest gestellt,
+// war es das 0,9-fache; seit ein Anteil nach seiner Stichprobe zählt, das
+// 1,2-fache — die ersten drei spielen am meisten, und ein Abstand über
+// hundert Partien wiegt jetzt, was er ist.
 const _spitze = JSON.parse(K.eval(`JSON.stringify((function(){
-  let alle = 0, oben = 0;
+  let alle = 0, oben = 0, soll = 0;
   ['2026-06','2026-07','2026-08'].forEach(sid => {
     const drei = saisonRang(sid).slice(0, 3).map(e => e.id);
-    seasonTitles(sid).awarded.forEach(a => { alle++; if(drei.includes(a.pid)) oben++; });
+    const n = _seasonTitleCtx(sid).rankAll.filter(r => r.games >= CHRONIK_MIN_SPIELE).length;
+    seasonTitles(sid).awarded.forEach(a => { alle++; soll += 3 / n; if(drei.includes(a.pid)) oben++; });
   });
-  return {alle, oben};
+  return {alle, oben, soll};
 })())`));
-console.log('  Einträge der ersten drei: ' + _spitze.oben + ' von ' + _spitze.alle);
-ok(_spitze.alle > 40 && _spitze.oben / _spitze.alle <= 0.38,
-   'höchstens 38 % der Monatseinträge gehören den ersten drei der Monatstabelle',
-   _spitze.oben + ' von ' + _spitze.alle);
+console.log('  Einträge der ersten drei: ' + _spitze.oben + ' von ' + _spitze.alle + ', nach ihrer Zahl ' + _spitze.soll.toFixed(1));
+ok(_spitze.alle > 40 && _spitze.oben <= 1.3 * _spitze.soll,
+   'die ersten drei der Monatstabelle halten höchstens das 1,3-fache der Einträge, die ihnen nach ihrer Zahl zustehen',
+   _spitze.oben + ' von ' + _spitze.alle + ', nach ihrer Zahl ' + _spitze.soll.toFixed(1));
 // „Der Sprung" und „Die Kletterpartie" stellen einen Spieler gegen seinen
-// Vormonat: Siegquote und Platz, beide Monate ab acht Partien. Nachgerechnet
+// Vormonat: Siegquote und Platz, der Monat ab fuenfzehn Partien, der
+// Vormonat ab acht; der Sprung gewertet auf die uebliche Stichprobe beider
+// Monate [§C39]. Nachgerechnet
 // aus den rohen Partien beider Monate und der Rangliste der Saison, an den
 // fuenf echten Monaten: seit die Kletterpartie fuenf Plaetze verlangt, haelt
-// sie in den drei Fixture-Monaten niemand mehr.
+// sie in den drei Fixture-Monaten niemand mehr, und den Sprung haelt seit
+// der Wertung nach der Stichprobe in keinem der fuenf Monate jemand. Damit
+// der Abgleich trotzdem etwas prueft, wird beim Sprung jeder Wert
+// verglichen, nicht nur der Halter.
+const _vglE = _eichung(['sprung'], KH).sprung;
 const _vgl = JSON.parse(KH(`JSON.stringify((function(){
+  const E = ${JSON.stringify(_vglE)};
+  const gewertet = ${_gewertet.toString()};
   const quote = sid => { const z = {};
     matchesInSeason(sid).forEach(m => [m.a1, m.a2, m.b1, m.b2].forEach(id => {
       const w = (m.a1 === id || m.a2 === id) ? m.winner === 'A' : m.winner === 'B';
@@ -4504,19 +4699,24 @@ const _vgl = JSON.parse(KH(`JSON.stringify((function(){
   const out = {};
   ['2026-07','2026-08','2026-09','2026-10'].forEach(sid => {
     const vor = _prevSeasonId(sid), a = quote(sid), b = quote(vor);
-    const beide = Object.keys(a).filter(id => a[id].g >= 8 && b[id] && b[id].g >= 8);
+    const beide = Object.keys(a).filter(id => a[id].g >= 15 && b[id] && b[id].g >= 8);
     const bester = (l, ab) => { const max = Math.max(...l.map(x => x.d));
       return max >= ab ? l.filter(x => x.d === max).map(x => x.id).sort() : []; };
     const platz = s => { const r = saisonRang(s).map(e => e.id); return id => r.indexOf(id) + 1; };
     const pa = platz(sid), pb = platz(vor);
     const C = _seasonTitleCtx(sid);
     const ist = id => { const r = SEASON_TITLE_BY_ID[id].pick(C, new Set()); return r && r.halter ? r.halter.slice().sort() : []; };
-    out[sid] = {sprungSoll:bester(beide.map(id => ({id, d:a[id].w / a[id].g - b[id].w / b[id].g})), 0.25), sprungIst:ist('sprung'),
+    const sprung = beide.map(id => ({id, d:gewertet(E, a[id].w / a[id].g - b[id].w / b[id].g,
+        a[id].g * b[id].g / (a[id].g + b[id].g))}));
+    const w = _chronikMonat('sprung');
+    out[sid] = {sprungSoll:bester(sprung, 0.25), sprungIst:ist('sprung'),
+      werte:sprung.length, daneben:sprung.filter(x => !(Math.abs(w.wert(C.P[x.id], C) - x.d) < 1e-9)).map(x => x.id),
       kletterSoll:bester(beide.filter(id => pa(id) && pb(id)).map(id => ({id, d:pb(id) - pa(id)})), 5), kletterIst:ist('kletterer')};
   });
   return out; })())`));
-ok(Object.values(_vgl).every(x => x.sprungSoll.join() === x.sprungIst.join() && x.kletterSoll.join() === x.kletterIst.join())
-   && Object.values(_vgl).some(x => x.sprungIst.length) && Object.values(_vgl).some(x => x.kletterIst.length),
+ok(Object.values(_vgl).every(x => x.sprungSoll.join() === x.sprungIst.join() && x.kletterSoll.join() === x.kletterIst.join()
+     && !x.daneben.length)
+   && Object.values(_vgl).reduce((n, x) => n + x.werte, 0) >= 20 && Object.values(_vgl).some(x => x.kletterIst.length),
    'Der Sprung und Die Kletterpartie halten, wer sich gegenüber dem Vormonat am meisten gesteigert hat',
    JSON.stringify(_vgl));
 

@@ -301,12 +301,26 @@ function _chronikMonat(titleId){
 // draußen die Latte hängt; über den Wert entscheidet sie nicht mehr.
 //
 // Dazu kommt der Bonus: wie weit der Halter die Schwelle überbietet, in
-// Standardabweichungen der Chronik (`streu`), 25 je σ. Wer an 71 % statt
-// an 60 % der eigenen Spieltage Player of the Day war, liegt 0,64 σ über
-// „Dem Tagesregenten" und bekommt 16 dazu. Gemessen an den echten Partien
-// liegt der Bonus fast immer zwischen 1 und 50; nach oben ist er offen.
-// Genau auf der Schwelle gibt es keinen, und wo die Schwelle schon das
-// Höchste ist („Die Wochenkrone": jede eigene Woche), auch nicht.
+// Standardabweichungen der Chronik (`streu`), mal einer Steigung, die mit dem
+// Ausschlag der Schwelle (`aus`) wächst. Die Steigung ist die Rate, mit der
+// Werte an der Schwelle seltener werden: je σ halbiert sich dort der Anteil
+// der Spieler-Monate, die so weit kommen, φ/Q-mal durch ln 2 (das
+// Mills-Verhältnis der Normalverteilung), und jede Halbierung bringt zehn
+// Punkte. Bei 1,2 σ Ausschlag sind das 24 je σ, bei 2,5 σ 41, bei 3,5 σ 54.
+// Genau auf der Schwelle gibt es keinen Bonus, und wo die Schwelle schon das
+// Höchste ist („Gegen jeden regelmäßigen Gegner"), auch nicht.
+//
+// Vorher brachte jedes σ 25, gleich wo die Schwelle lag. Eine legendäre
+// Chronik liegt weit draußen, ihre Halter selten weit darüber, und sie stand
+// fast immer hinter einer seltenen oder besonderen mit mehr Bonus: der
+// unmögliche Monat stand mit 101 da, ein Punkt über dem Grundwert. Weit
+// draußen ist jeder Schritt seltener als nahe am Feld, und das zählt jetzt.
+// Der Bonus bleibt linear in der Abweichung: mehr Abweichung bringt immer
+// mehr, und eine besondere Chronik mit viel davon steht weiter vor einer
+// legendären mit wenig. Die
+// Seltenheit selbst als Bonus (die Halbierungen bis zum Wert des Halters,
+// nicht bis eine σ über der Schwelle) wüchse im Quadrat und gäbe einem
+// einzigen Monat weit draußen über tausend Punkte.
 //
 // Vorher galt die Klasse als Wert, 150, 100 und 50. Damit brachte ein
 // besonderer Monat ein Drittel eines legendären, auch wenn sein Halter die
@@ -319,7 +333,21 @@ function _chronikMonat(titleId){
 // steckte schon einmal in den Auszeichnungen [§C34]. Der Wert des Halters
 // steht dazu in der Tafel und im eingefrorenen Monat (`wert`).
 const CHRONIK_GRUNDWERT = 100;
-const CHRONIK_BONUS_JE_SIGMA = 25;
+const CHRONIK_BONUS_JE_HALBIERUNG = 10;
+// Die komplementäre Fehlerfunktion (Numerical Recipes, `erfcc`, relativ
+// genauer als 1,2·10⁻⁷) und daraus die Halbierungen je σ an einem Ausschlag.
+function _erfc(x){
+  const z = Math.abs(x), t = 1 / (1 + 0.5 * z);
+  const r = t * Math.exp(-z * z - 1.26551223 + t * (1.00002368 + t * (0.37409196 + t * (0.09678418
+    + t * (-0.18628806 + t * (0.27886807 + t * (-1.13520398 + t * (1.48851587
+    + t * (-0.82215223 + t * 0.17087277)))))))));
+  return x >= 0 ? r : 2 - r;
+}
+function chronikHalbierungenJeSigma(aus){
+  const a = Number(aus) || 0;
+  const phi = Math.exp(-a * a / 2) / Math.sqrt(2 * Math.PI), q = 0.5 * _erfc(a / Math.SQRT2);
+  return q > 0 ? phi / q / Math.LN2 : 0;
+}
 
 // Wie weit ein Wert über der Schwelle liegt, in σ der Chronik; null, wenn
 // es keine Rechnung dafür gibt (Schattenseite, unbekannte Chronik, kein
@@ -336,7 +364,49 @@ function chronikUeber(titleId, wert){
 // neben „über der Schwelle" läse sich als Fehler.
 function chronikBonus(titleId, wert){
   const z = chronikUeber(titleId, wert);
-  return z > 0 ? Math.max(1, Math.round(CHRONIK_BONUS_JE_SIGMA * z)) : 0;
+  if(!(z > 0)) return 0;
+  const m = _chronikMonat(titleId);
+  return Math.max(1, Math.round(CHRONIK_BONUS_JE_HALBIERUNG * chronikHalbierungenJeSigma(m.aus) * z));
+}
+// Wie schwer eine Schattenseite wiegt: wie weit sie über ihre Schwelle
+// hinausgeht, in σ ihrer eigenen Streuung. Dieselbe Rechnung wie der Bonus
+// einer positiven Chronik, nur ohne Punkte; null ohne Rechnung.
+function chronikSchattenGewicht(titleId, wert){
+  const m = _chronikMonat(titleId);
+  if(!m || m.art !== 'schatten' || !(m.streu > 0)) return null;
+  if(wert == null || !isFinite(wert) || !isFinite(m.ab)) return null;
+  const z = (wert - m.ab) / m.streu;
+  return z > 1e-9 ? z : 0;
+}
+// ─── §C39 Die Schattenseite überschattet eine besondere Chronik ──────
+// Eine besondere Chronik bringt kein Prestige, wenn derselbe Spieler im
+// selben Monat eine Schattenseite hält, die mindestens doppelt so weit über
+// ihre Schwelle hinausgeht wie die besondere über ihre — und mindestens eine
+// Streuung weit. In Punkten gelesen: die Schattenseite wiegt mindestens
+// doppelt so schwer wie der Bonus und mindestens 25. Die besondere Chronik
+// bleibt in der Tafel, sie zählt nur nicht.
+// Nur „besonders": ein Muster in einem Ausschnitt der eigenen Partien ist
+// in einem Monat voller Pleiten leicht zu finden. Gemessen holte, wer viele
+// Schattenseiten sammelte, trotzdem jeden Monat eine besondere Chronik und
+// damit hundert Punkte, oft genau an ihrer Schwelle neben einer
+// Schattenseite weit über ihrer. Eine seltene oder legendäre Chronik ist
+// eine Leistung über den ganzen Monat und bleibt stehen.
+// Die Mindestweite verhindert, dass eine Schattenseite knapp an ihrer
+// Schwelle eine besondere knapp an ihrer löscht: beide sagen dann gleich
+// viel, und gleich viel ist nicht „doppelt so schlecht".
+const CHRONIK_SCHATTEN_FAKTOR = 2;
+const CHRONIK_SCHATTEN_MIN = 1;
+function chronikUeberschattet(T, a){
+  if(!a || chronikStufe(a.titleId) !== 'besonders') return null;
+  const grenze = Math.max(CHRONIK_SCHATTEN_MIN,
+    CHRONIK_SCHATTEN_FAKTOR * (chronikUeber(a.titleId, a.wert) || 0));
+  let best = null, bz = -1;
+  ((T && T.awarded) || []).forEach(s => {
+    if(s.pid !== a.pid) return;
+    const g = chronikSchattenGewicht(s.titleId, s.wert);
+    if(g != null && g >= grenze - 1e-9 && g > bz){ best = s; bz = g; }
+  });
+  return best;
 }
 // Ein Abstand in σ, wie der Ausschlag im Blatt steht: zwei Stellen, Komma.
 function chronikSigma(z){
@@ -1375,7 +1445,11 @@ function _prestigeQuellSatz(q, ohneKopf){
     // eines Ruheständlers [§C40]), hat keinen und zeigt seinen Wert von damals.
     const basis = q.grundwert == null ? q.voll : q.grundwert;
     let rechnung = `Grundwert ${zahl(basis)}`;
-    if(q.bonus > 0) rechnung += ` + ${zahl(q.bonus)} für ${chronikSigma(q.ueber)} über der Schwelle`;
+    // „weiter als verlangt" und nicht „über der Schwelle": bei einer Chronik
+    // mit „höchstens" (die Punktlandung, die Wahrscheinlichkeit eines
+    // Monats) las sich „über der Schwelle" so, als brächte der größere
+    // Abstand den Bonus. Er kommt aus dem kleineren.
+    if(q.bonus > 0) rechnung += ` + ${zahl(q.bonus)} für ${chronikSigma(q.ueber)} weiter als verlangt`;
     if(q.staffel > 1) rechnung += ` · ${q.rang}. Chronik ÷ √${q.staffel}`;
     teile.push(rechnung);
   }

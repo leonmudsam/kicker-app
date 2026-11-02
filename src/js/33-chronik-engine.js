@@ -159,9 +159,10 @@ function _rohGruppen(pid, p, wochenSieger, offen){
   p.q    = p.games ? p.wins / p.games : 0;
   p.expQ = p.games ? p.expSum / p.games : 0;
   // Player of the Week: gewertet werden die eigenen Wochen mit mindestens
-  // drei Partien, damit ein Kurzbesuch keine Woche ist.
+  // fünf Partien, damit ein Kurzbesuch keine Woche ist. Bei drei zählte
+  // eine Woche mit drei Partien so viel wie eine mit dreißig.
   Object.keys(p.wochGrp).forEach(k => {
-    if(p.wochGrp[k].length < 3) return;
+    if(p.wochGrp[k].length < 5) return;
     p.potwG++;
     if(wochenSieger[k] === pid) p.potw++;
   });
@@ -709,8 +710,16 @@ function _prevSeasonId(sid){
 //     Schwellen von dreiundzwanzig Chroniken, die in drei bis fünf von fünf
 //     Monaten vergeben wurden, brachte neunzehn neue und rundete jede
 //     Schwelle [§C39]: ein Monat, der mit den alten Schwellen eingefroren
-//     bliebe, trüge Einträge, die es heute nicht mehr gäbe.
-const SEASON_TITLES_FREEZE_V = 6;
+//     bliebe, trüge Einträge, die es heute nicht mehr gäbe. Die siebte
+//     setzte die Schwellen von sechsundzwanzig Chroniken so, wie die Liga sie
+//     festgelegt hat, und rechnet den unmöglichen Monat als Wahrscheinlichkeit
+//     — aus demselben Grund. Die achte zählt eine Chronik je Spieler ab
+//     fünfzehn Partien statt für den ganzen Monat ab dem fünften Spieltag
+//     und wertet einen Anteil nach seiner Stichprobe [§C39]; sie friert dazu
+//     ein, wer nicht gewertet ist (`zuWenig`). Ein Oktober
+//     mit der siebten Fassung trüge Chroniken von Spielern mit acht Partien
+//     und keine von denen, die sie jetzt halten.
+const SEASON_TITLES_FREEZE_V = 8;
 
 // Liest die eingefrorene Chronik einer Saison — aus dem seasons-Eintrag, egal
 // ob die Spalte als Objekt oder als JSON-Text ankommt. null = nicht eingefroren.
@@ -736,7 +745,8 @@ function _freezeSeasonTitles(sid){
       awarded: T.awarded.map(a => ({titleId:a.titleId, name:a.name, short:a.short,
                                     ic:a.ic, tone:a.tone, cond:a.cond, pid:a.pid, ev:a.ev,
                                     wert:a.wert})),
-      empty: T.empty.slice()
+      empty: T.empty.slice(),
+      zuWenig: (T.zuWenig || []).slice()
     };
   } catch(e){ return null; }
 }
@@ -762,7 +772,7 @@ function seasonTitles(sid, bisMs){
       const res = {sid, label:seasonLabel(sid), live:false,
                    days:frozen.days || 0, matches:frozen.matches || 0,
                    champ:frozen.champ || null,
-                   awarded:frozen.awarded, empty:frozen.empty || [], frozen:true};
+                   awarded:frozen.awarded, empty:frozen.empty || [], zuWenig:frozen.zuWenig || [], frozen:true};
       _cache._seasonTitles[key] = res;
       return res;
     }
@@ -770,9 +780,9 @@ function seasonTitles(sid, bisMs){
 
   const C = _seasonTitleCtx(sid, bisMs);
   const out = [];
-  // Ein Monat mit zu wenigen Spieltagen bekommt gar keine Chronik: aus drei
-  // Abenden lässt sich kein Monat ablesen [§C32].
-  if(Object.keys(C.P).length && C.days >= CHRONIK_MIN_TAGE){
+  // Gewertet wird vom ersten Spieltag an, je Spieler ab fünfzehn Partien
+  // (`CHRONIK_MIN_SPIELE` in `_stWertung`) [§C39].
+  if(Object.keys(C.P).length){
     // ─── Die Vergabe [§C32] ────────────────────────────────────────
     // EIN EINTRAG = EIN BESTWERT. Jeder Eintrag geht an den, der ihn in
     // diesem Monat wirklich hält — genau wie bei den Allzeit-Rekorden, und
@@ -806,7 +816,11 @@ function seasonTitles(sid, bisMs){
                // Avatar-Ring und Saison-Tafel dieselbe Quelle brauchen.
                champ: C.rank[0] ? {pid:C.rank[0].id, elo:C.rank[0].elo,
                                    wins:C.rank[0].wins, games:C.rank[0].games} : null,
-               awarded:out, empty:Object.keys(C.P).filter(id => !out.some(o => o.pid === id))};
+               // Ohne Eintrag ist, wer gewertet wurde und nichts hält; wer
+               // unter fünfzehn Partien blieb, ist nicht gewertet und steht
+               // als `zuWenig` daneben — in der Matrix leer, nicht als Strich.
+               awarded:out, empty:Object.keys(C.P).filter(id => C.P[id].games >= CHRONIK_MIN_SPIELE && !out.some(o => o.pid === id)),
+               zuWenig:C.rankAll.filter(r => r.games > 0 && r.games < CHRONIK_MIN_SPIELE).map(r => r.id)};
   _cache._seasonTitles[key] = res;
   return res;
 }
@@ -837,25 +851,21 @@ function allSeasonTitles(){
 // `seasonTitles` taugt dafuer nicht — es ist auf HEUTE gemerkt und friert
 // abgeschlossene Monate ein.
 //
-// Ein Monat unter CHRONIK_MIN_TAGE Spieltagen bekommt GAR KEINE Chronik
-// [§C32] — dieselbe Grenze, die `seasonTitles` zieht. Sie fehlte hier, und
-// damit meldete der Feed Chroniken, die es nicht gab: gemessen nannte diese
-// Funktion am 04.08. acht, am 06.08. zehn und am 07.08. dreizehn Halter,
-// waehrend die Monatstafel null Eintraege zeigte. „Leon holt ‚Auf
-// Augenhoehe'" stand im Feed, im Chronik-Tab stand nichts, und `seasonTitleOf`
-// fand folgerichtig keinen Eintrag — die Karte schrieb deshalb „kein Prestige
-// hinzu" unter eine Chronik, die sie selbst gerade verkuendet hatte.
+// Dieselbe Vergabe wie `seasonTitles`, mit demselben Tor je Spieler
+// (`_stWertung`) [§C39]. Eine Grenze, die nur dort stünde, meldete im Feed
+// Chroniken, die es nicht gibt: als es noch eine Grenze für den ganzen
+// Monat gab und sie hier fehlte, nannte diese Funktion am 04.08. acht Halter,
+// während die Monatstafel keinen zeigte.
 //
-// `null` statt `{}`: ein ungewerteter Monat und ein gewerteter ohne Halter
-// sind zwei verschiedene Antworten. Der Feed braucht den Unterschied, sonst
-// liest er das Aufgehen der Tafel als vierzehn Neuvergaben.
+// Jeder Monat ist vom ersten Spieltag an gewertet, ein Monat ohne Halter ist
+// deshalb `{}` und nicht `null`: der Feed meldet damit vom ersten Spieltag an
+// jede Chronik, die jemand holt, und kein Aufgehen einer Tafel mehr.
 function seasonTitleHalter(sid, bisMs){
   bisMs = _schnittSaison(sid, bisMs);
   const out = {};
   let C = null;
   try { C = _seasonTitleCtx(sid, bisMs); } catch(e){ return out; }
   if(!C) return out;
-  if(!Object.keys(C.P).length || C.days < CHRONIK_MIN_TAGE) return null;
   SEASON_TITLES.forEach(t => {
     let r = null;
     try { r = t.pick(C, new Set()); } catch(e){ r = null; }
@@ -876,14 +886,21 @@ function seasonTitleHalter(sid, bisMs){
 // eine Können-Chronik in Grau stand vor einer Fügung in Gold. Seit jede
 // Chronik denselben Grundwert hat, entscheidet der Bonus: der Eintrag, in
 // dem jemand seine Schwelle am weitesten überbietet [§C39].
+// Eine besondere Chronik, die eine Schattenseite überschattet
+// (`chronikUeberschattet`), zählt hier mit null; bringt im Monat nichts mehr
+// Punkte, steht die Schattenseite, die überschattet: sonst stünde in Matrix
+// und Profil ein grauer Eintrag, der nichts zählt, und der Monat sähe aus wie
+// einer mit Prestige.
 function chronikEintragVon(T, pid){
-  let best = null, bw = -1;
+  let best = null, bw = -1, schatten = null;
   ((T && T.awarded) || []).forEach(a => {
     if(a.pid !== pid) return;
-    const w = chronikPunkte(a.titleId, a.wert);
+    const s = chronikUeberschattet(T, a);
+    if(s && !schatten) schatten = s;
+    const w = s ? 0 : chronikPunkte(a.titleId, a.wert);
     if(w > bw){ best = a; bw = w; }
   });
-  return best;
+  return bw <= 0 && schatten ? schatten : best;
 }
 function seasonTitleOf(pid, sid, bisMs){
   return chronikEintragVon(seasonTitles(sid, bisMs), pid);
@@ -895,12 +912,13 @@ function seasonTitleOf(pid, sid, bisMs){
 // der Bonus entscheidet, welcher Eintrag zählt, kann eine besondere Chronik
 // eine legendäre schlagen — mit der Farbe ihrer eigenen Klasse stand dann
 // ein grauer Monat da, in dem jemand eine goldene hielt. Nur Schattenseiten:
-// rot. Eine Chronik, die der Katalog nicht mehr kennt, zählt nicht mit.
+// rot. Eine Chronik, die der Katalog nicht mehr kennt, zählt nicht mit, eine
+// überschattete auch nicht: sie bringt nichts, und die Zelle zeigt, was zählt.
 const _CHRONIK_STUFE_RANG = {legendaer:3, selten:2, besonders:1};
 function chronikZellStufe(T, pid){
   let best = '', rang = 0;
   ((T && T.awarded) || []).forEach(a => {
-    if(a.pid !== pid) return;
+    if(a.pid !== pid || chronikUeberschattet(T, a)) return;
     const st = chronikStufe(a.titleId), r = _CHRONIK_STUFE_RANG[st] || 0;
     if(r > rang){ rang = r; best = st; }
   });

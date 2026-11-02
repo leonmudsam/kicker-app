@@ -5,7 +5,7 @@
 - Ein Monatseintrag gehört dem, der den Bestwert in diesem Monat hält, oder niemandem; punktgleich tragen ihn alle.
 - Die Matrix zeigt je Spieler und Monat einen Eintrag (`seasonTitleOf`, `chronikEintragVon`: der wertvollste, bei gleichem Wert der erste im Katalog) und daneben, wie viele er sonst noch hält („+2“); das ist eine Anzeigeregel, die Tafel (`showSeasonTable`) zeigt alles, und nur dieser eine zählt fürs Prestige [§C34]. In der Tafel und im Saison-Rückblick steht offen, was zählt; die übrigen Einträge klappen darunter auf (`_chronMehrKnopf`, `.chron-rest`).
 - Der Feed sagt bei einem alleinigen Halter mehrerer Einträge, welcher im Profil steht (`_chronikZeigtSich`, Marke `.nf-sam-k` neben dem Text), und nennt den stärkeren Eintrag nur für EINEN Spieler.
-- Ein Monat unter `CHRONIK_MIN_TAGE` Spieltagen bekommt keine Chronik; `seasonTitleHalter` zieht dieselbe Grenze und antwortet dann mit `null`. Das Aufgehen der Tafel ist kein Wechsel, aber eine eigene Karte (`chronik_frei`, ohne Partie, Träger in `traeger`).
+- Einen Eintrag hält nur, wer im Monat fünfzehn eigene Partien hat (`CHRONIK_MIN_SPIELE`) [§C39]; eine Grenze für den ganzen Monat gibt es nicht. `seasonTitleHalter` zieht dieselbe Grenze wie die Tafel, aus derselben Quelle (`pick`), und antwortet nur ohne Monat mit einem leeren Stand. Die erste Chronik eines Monats ist ein Wechsel wie jeder andere; eine Karte für das Aufgehen der Tafel gibt es nicht mehr, die gespeicherten (`chronik_frei`) bleiben.
 - Eine Monatswertung geht in höchstens einem Drittel der gewerteten Monate an jemanden, aufgerundet; die Schwellen (`ab` in `_stWertung`) sind an den echten Partien geeicht (`tests/fixtures/oktober.txt`, höchstens zwei von fünf Monaten) [§C39].
 
 ## Stellen
@@ -63,34 +63,24 @@ dreizehn danebensaß — und in den echten Daten ging ein Drittel aller
 Einträge an jemanden, der nicht der Beste war. Deshalb gibt es die
 Markierung `strict` nicht mehr: sie galt für vier von siebenundzwanzig
 Einträgen, und was für vier richtig ist, ist für alle richtig.
-Ein Monat unter `CHRONIK_MIN_TAGE` Spieltagen bekommt **gar keine**
-Chronik: aus drei Abenden lässt sich kein Monat ablesen. **Der Feed zieht
-dieselbe Grenze**, und zwar aus derselben Quelle: `seasonTitleHalter` zog
-sie nicht und meldete deshalb Chroniken, die es nicht gab — gemessen acht
+Ein Monat unter fünf Spieltagen bekam einmal **gar keine** Chronik. **Der
+Feed muss dieselbe Grenze ziehen**, und zwar aus derselben Quelle:
+`seasonTitleHalter` zog sie nicht und meldete deshalb Chroniken, die es
+nicht gab — gemessen acht
 Halter am 04.08., zehn am 06.08. und dreizehn am 07.08., während die
 Monatstafel null Einträge zeigte. „Leon holt ‚Auf Augenhöhe'" stand im Feed,
 im Chronik-Tab stand nichts, und `seasonTitleOf` fand folgerichtig keinen
 Eintrag — die Karte schrieb „kein Prestige hinzu" unter eine Chronik, die
-sie selbst gerade verkündete. Die Funktion antwortet dafür mit `null` statt
-`{}`: ein ungewerteter Monat und ein gewerteter ohne Halter sind zwei
-verschiedene Antworten. **Und das Aufgehen der Tafel ist kein Wechsel** —
-wer am 2. August fünf von fünf gewonnen hat, hat das nicht am 10. getan;
-gemeldet wird erst, was sich von der ersten gewerteten Lage an ändert.
-**Es ist aber selbst eine Nachricht** (`chronik_frei`). Am Tag, an dem der
-Monat zum ersten Mal gewertet wird, stand deshalb gar nichts im Feed —
-obwohl in diesem Moment die ganze Monatstafel entsteht und jeder Eintrag
-darin ab jetzt fürs Prestige zählt [§C34]. Eine Karte je Monat, neutral:
-sie sagt, ab welchem Spieltag gewertet wird, wie viele Einträge in der
-Chronik stehen und von wie vielen Spielern sie gehalten werden, und dass
-bis zum Monatsende jeder davon noch wechseln kann. Sie behauptet nicht,
-dass diese Einträge in der letzten Partie geholt wurden, und trägt deshalb
-auch **keine Partie**: ein Ergebnisband darüber hieße genau das Gegenteil.
-Ihr Blatt zeigt die vorläufigen Profileinträge samt Punktewirkung, in
-derselben Zeile wie der Chronik-Wechsel [§C27]. Die drei mit den meisten
-Einträgen stehen dabei in `traeger` und nicht in `playerIds`: auf der Karte
-steht kein Name, und mit Beteiligten hätte der Deckel je Spieler gerade die
-Karte gezählt, die es je Monat genau einmal gibt. Im Tagesdeckel gehört sie
-zu `TAG_PFLICHT`.
+sie selbst gerade verkündete. Damals antwortete die Funktion für einen
+ungewerteten Monat mit `null`, und das Aufgehen der Tafel am fünften
+Spieltag war kein Wechsel, sondern eine eigene Karte („Die Monatstafel ist
+offen", `chronik_frei`): sonst stand jeder Eintrag als „holt" im Feed, für
+Werte, die über fünf Spieltage entstanden waren. Heute gilt die Grenze je
+Spieler — fünfzehn Partien [§C39] —, und wer sie erreicht, holt seine
+Chronik an genau diesem Spieltag; das ist ein Wechsel wie jeder andere und
+steht in der Tafel-Karte des Tages. Die gespeicherten Karten bleiben, wie
+sie sind: sie waren an ihrem Tag richtig, und ihr Blatt und ihr Platz im
+Tagesdeckel (`TAG_PFLICHT`) bleiben mit ihnen.
 **Eine Monatswertung geht in höchstens einem Drittel der Monate an
 jemanden.** Die Schwellen (`ab` in `_stWertung`) sind an den echten Partien
 geeicht, nicht geschätzt. Vorher lagen sie so tief, dass ein Monat

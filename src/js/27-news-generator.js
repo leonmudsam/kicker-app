@@ -2579,61 +2579,17 @@ function _buildStories(){
         });
         return best ? best.id : null;
       };
-      // ── Das Aufgehen der Tafel ist kein Wechsel ─────────────────────
-      // Ein Monat unter CHRONIK_MIN_TAGE Spieltagen hat keine Chronik
-      // [§C32], und `seasonTitleHalter` sagt das mit `null`. Am fuenften
-      // Spieltag geht die Tafel auf, und ohne diese Sperre stuende jeder
-      // Eintrag als „holt" im Feed: gemessen vierzehn Neuvergaben an einem
-      // Nachmittag, fuer Werte, die ueber fuenf Spieltage entstanden sind.
-      // Wer am 2. August 5 von 5 gewonnen hat, hat das nicht am 10. getan.
-      // Gemeldet wird deshalb erst, was sich von der ersten gewerteten Lage
-      // an aendert.
-      const _jetztRoh = _tafelNach.chronik(_sid);
-      const _vorherRoh = _tafelVor.chronik(_sid);
-      const _gewertet = !!(_jetztRoh && _vorherRoh);
-      const _jetztH = _gewertet ? _jetztRoh : {};
-      const _vorherH = _gewertet ? _vorherRoh : {};
-      // ── Das Aufgehen der Tafel ist selbst eine Nachricht ────────────
-      // Gemeldet wird kein Wechsel, und damit stand am Tag, an dem der Monat
-      // zum ersten Mal gewertet wird, gar nichts im Feed — obwohl in diesem
-      // Moment die ganze Monatstafel entsteht und jeder Eintrag darin ab
-      // jetzt fuers Prestige zaehlt [§C34]. Die Karte ist bewusst neutral:
-      // sie behauptet nicht, dass diese Eintraege in der letzten Partie
-      // geholt wurden, sondern dass der Monat ab jetzt gewertet ist. Sie
-      // traegt deshalb auch keine Partie — ein Ergebnisband darueber hiesse
-      // genau das Gegenteil [§C33].
-      if(!_vorherRoh && _jetztRoh && Object.keys(_jetztRoh).length){
-        const _fEintraege = Object.keys(_jetztRoh).length;
-        const _fJe = {};
-        Object.keys(_jetztRoh).forEach(tid => (_jetztRoh[tid].pids || [])
-          .forEach(pid => { _fJe[pid] = (_fJe[pid] || 0) + 1; }));
-        const _fHalter = Object.keys(_fJe);
-        // Die drei mit den meisten Eintraegen stehen im BLATT, nicht auf der
-        // Karte: die Karte handelt von der ganzen Tafel und nennt in
-        // Schlagzeile und Satz keinen Namen, also braucht sie auch kein
-        // Gesicht [§C33]. Sie stehen deshalb in `traeger` und nicht in
-        // `playerIds` — mit Beteiligten zaehlt der Deckel je Spieler sie mit,
-        // und an einem vollen Spieltag faellt gerade die Karte weg, die es je
-        // Monat genau einmal gibt.
-        const _fTop = _fHalter.slice().sort((x, y) => _fJe[y] - _fJe[x]).slice(0, 3);
-        stories.push({
-          id: `chronik_frei_${_sid}`,
-          cat: 'tafel',
-          // „chronicle" gibt es im Katalog nicht, und der Kopf des Blatts
-          // stand ohne Zeichen da.
-          ic: 'scroll',
-          title: `Die Monatstafel im ${seasonLabel(_sid)} ist offen`,
-          desc: `Ab dem ${CHRONIK_MIN_TAGE}. Spieltag wird der Monat gewertet. `
-              + `${_fEintraege} ${_fEintraege === 1 ? 'Eintrag steht' : 'Einträge stehen'} `
-              + `in der Chronik, gehalten von ${_fHalter.length === 1
-                  ? 'einem Spieler' : _fHalter.length + ' Spielern'}. `
-              + `Bis zum Monatsende kann jeder davon noch wechseln.`,
-          when: _letzteMs2,
-          prio: STORY_PRIO.chronik_frei,
-          dataRef: {type:'chronik_frei', sid:_sid, eintraege:_fEintraege,
-                    halter:_fHalter.length, traeger:_fTop}
-        });
-      }
+      // ── Gemeldet wird vom ersten Spieltag an ─────────────────────────
+      // Eine Grenze für den ganzen Monat gibt es nicht mehr: gewertet wird je
+      // Spieler ab fünfzehn Partien [§C39]. Vorher ging die Tafel am fünften
+      // Spieltag auf, und eine eigene Karte meldete das, damit nicht jeder
+      // Eintrag als „holt" im Feed stand. Wer jetzt mit seiner fünfzehnten
+      // Partie mehrere Chroniken auf einmal hält, steht in derselben
+      // Tafel-Karte des Spieltags wie jeder andere Wechsel [§11.0e]; die
+      // gespeicherten Karten „Die Monatstafel ist offen" bleiben, wie sie
+      // sind [§C33]. `null` heißt nur noch, dass es den Monat gar nicht gibt.
+      const _jetztH = _tafelNach.chronik(_sid) || {};
+      const _vorherH = _tafelVor.chronik(_sid) || {};
       // Eine Chronik-Karte darf nicht den Katalogwert als neuen Prestige-
       // Gewinn ausgeben. Pro Monat zaehlt nur der eine Eintrag, der in der
       // Tafel steht; ein besserer Eintrag kann den gerade geholten also
@@ -2736,7 +2692,14 @@ function _buildStories(){
         } else if(ohnePlus.length){
           const istSelbst = ohnePlus.some(pid => titelJeSpieler[pid] === t.name);
           const staerker = [...new Set(ohnePlus.map(pid => titelJeSpieler[pid]).filter(Boolean))];
-          prestigeSatz = istSelbst
+          // Zählt im Monat eine Schattenseite, ist diese Chronik überschattet
+          // [§C39]: eine positive mit Prestige stünde sonst vor ihr. „bleibt
+          // stärker" passte dazu nicht — eine Schattenseite ist nicht stärker,
+          // sie wiegt schwerer.
+          const schattenTitel = ohnePlus.length === 1 && (x => x && chronikStufe(x.titleId) === 'schatten' ? x : null)(_monatTitel(ohnePlus[0]));
+          prestigeSatz = schattenTitel
+            ? ` „${schattenTitel.name}“ überschattet sie in diesem Monat, also kommt für die Laufbahn kein Prestige hinzu.`
+            : istSelbst
             // Ohne den Namen: `_zeigtSatz` sagt eine Zeile darueber schon
             // „Steht jetzt in der Chronik", und mit dem Namen stand da
             // „Steht jetzt in der Chronik. ‚Der Endspurt' steht in der

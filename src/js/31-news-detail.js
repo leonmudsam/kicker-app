@@ -1216,9 +1216,14 @@ function _ndChronikEbenen(d, bisMs, ids, wertVon, modus, titleId){
     const titel = (tp && tp.name) || (d.titelJeSpieler || {})[pid] || '';
     const diese = (titleId && tp) ? tp.titleId === titleId : false;
     const n = awarded.filter(a => a.pid === pid).length;
+    // Überschattet, steht im Profil nicht die Schattenseite, die hier zählt
+    // — das Profil zeigt keine —, sondern dass diese Chronik nichts bringt.
+    const eigen = titleId ? awarded.find(a => a.pid === pid && a.titleId === titleId) : null;
+    const schatten = eigen ? chronikUeberschattet(T, eigen) : null;
     const ebenen = [];
     if(n) ebenen.push(n + (n === 1 ? ' Eintrag' : ' Einträge') + ' in der Tafel');
-    if(diese) ebenen.push('im Profil steht diese');
+    if(schatten) ebenen.push('überschattet von „' + schatten.name + '"');
+    else if(diese) ebenen.push('im Profil steht diese');
     else if(titel) ebenen.push('im Profil „' + titel + '"');
     // Der Wert und was er bedeutet stehen untereinander, und die Spalte
     // bricht um (`.nd-ce > em`). In einer Zeile („126,5 Prestige · zählt
