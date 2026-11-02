@@ -12,6 +12,10 @@
 // baut. Gelesen wird `dist/index.html` (über `tests/runtime.js`), dieselbe
 // Datei, die die Testsuiten prüfen.
 'use strict';
+// Die Uhr der Liga: Tage, Wochen und Uhrzeiten wie auf den Telefonen der
+// Liga. Ohne sie rechnete der Lauf in der Zeitzone des Rechners, und auf
+// einem Server standen alle Partien zwei Stunden früher.
+process.env.TZ = 'Europe/Berlin';
 const fs = require('fs');
 const path = require('path');
 const ROOT = path.join(__dirname, '..');

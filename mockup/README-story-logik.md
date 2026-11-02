@@ -8,8 +8,13 @@ des Generators mit seiner Regel, die **Uhr** eines Tages (was wann steht),
 ```
 node tools/build.mjs                 # die Seite liest dist/index.html
 node mockup/story-logik-lauf.js      # spielt die Partien nach → .story-logik.json (nicht eingecheckt)
-node mockup/story-logik-seite.js     # baut story-logik.html
+node mockup/story-neu-lauf.js        # misst die Entwürfe neuer Stories → .story-neu.json (nicht eingecheckt)
+node mockup/story-logik-seite.js     # baut story-logik.html, mit dem Teil „Neue Stories" aus story-neu-seite.js
 ```
+
+Beide Läufe rechnen mit der Uhr der Liga (`Europe/Berlin`): Tage, Wochen
+und Uhrzeiten wie auf den Telefonen. In der Zeitzone eines Servers standen
+alle Partien zwei Stunden früher.
 
 Der Lauf spielt die 616 echten Partien aus `tests/fixtures/oktober.txt`
 Kalendertag für Kalendertag nach: an jedem Abend läuft der echte Generator,
@@ -35,6 +40,20 @@ hält jede Zeichnung einmal in einem Wörterbuch (die Kennungen ihrer Verläufe
 auf einen Platzhalter gebracht, beim Einsetzen je Einsatz neu vergeben) und
 alles gzip-gepackt; sie entpackt im Browser (`DecompressionStream`) und
 zeichnet eine Form erst, wenn sie ins Bild kommt.
+
+## Neue Stories
+
+Der Teil „Neue Stories" zeigt Entwürfe für Anlässe und Grafiken, die es in
+der App noch nicht gibt: den Elo-Fluss eines Tages, die kippende direkte
+Bilanz, die Jagd auf den Serien-Rekord, Siege gegen die Erwartung, die
+Woche in Plätzen, das Zusammenrücken der Spitze, Marken in Reichweite, die
+Uhr der Liga und die Halbzeit gegen den Vormonat. `story-neu-lauf.js`
+rechnet jeden über alle Partien mit den Zahlen der App (Elo vor und nach
+jeder Partie, Siegchance, belastbare Tabelle, Leiter der Meilensteine) und
+hält fest, wie oft er ausgelöst hätte; `story-neu-seite.js` zeichnet die
+Karten im Rahmen des Feeds und nennt je Entwurf, was er neu zeigt, wann er
+käme, wo er stünde, ob er Breaking wäre und wie er das Karriereende
+behandelt. Die Schwellen sind an diesen Zählungen gewählt.
 
 Die **Texte** stehen in `story-logik-seite.js`, gelesen aus
 `src/js/26-news-konstanten.js`, `27-news-generator.js`, `28-news-ambient.js`,

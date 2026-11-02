@@ -17,6 +17,8 @@
 // vergeben), und alles zusammen gzip-gepackt; die Seite entpackt im Browser
 // und zeichnet eine Form erst, wenn sie ins Bild kommt.
 'use strict';
+// Die Uhr der Liga: Tage und Uhrzeiten wie auf den Telefonen der Liga.
+process.env.TZ = 'Europe/Berlin';
 const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
@@ -30,6 +32,8 @@ const appCss = (kopf.match(/<style[^>]*>([\s\S]*?)<\/style>/gi) || [])
 const esc = s => String(s == null ? '' : s)
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const c = s => `<code>${esc(s)}</code>`;
+// Der Teil „Neue Stories" (Entwürfe), wenn sein Lauf da ist.
+const NEU = require('./story-neu-seite.js')(esc);
 const zahl = n => Number(n).toLocaleString('de-DE');
 const K = D.konstanten, P = K.prio, L = K.limits;
 const datum = ms => new Date(ms).toLocaleDateString('de-DE', {weekday:'short', day:'2-digit', month:'2-digit'});
@@ -277,7 +281,7 @@ const inhalt = `
   <p class="sl-hinweis">Gestellt ist eine Sache: ein Karriereende kommt in den Partien nicht vor. Für das Beispiel beendet Anton am 20.10. um 18:00 die Karriere.</p>
   <nav class="sl-nav">
     <a href="#weg">Weg</a><a href="#uhr">Uhr</a><a href="#breaking">Breaking</a><a href="#seiten">Seiten</a>
-    <a href="#zusammen">Zusammenführen</a><a href="#karten">Karten</a><a href="#anlaesse">Anlässe</a><a href="#zahlen">Zahlen</a>
+    <a href="#zusammen">Zusammenführen</a><a href="#karten">Karten</a><a href="#anlaesse">Anlässe</a>${NEU ? NEU.nav : ''}<a href="#zahlen">Zahlen</a>
   </nav>
 </header>
 
@@ -363,6 +367,8 @@ const inhalt = `
   <div class="sl-tab"><table class="sl-anl"><thead><tr><th>Anlass</th><th>Regel</th><th>Steht als</th><th>Zeilen</th><th>Rang</th><th>Zuletzt</th></tr></thead><tbody>${anlassZeilen}</tbody></table></div>
   ${nieGesehen.length ? `<p class="sl-mess">Im Lauf nicht vorgekommen: ${esc(nieGesehen.join(', '))}.</p>` : ''}
 </section>
+
+${NEU ? NEU.html : ''}
 
 <section id="zahlen" class="sl-abschnitt">
   <h2>Zahlen</h2>
@@ -513,7 +519,7 @@ const teil = `<title>Die Stories der Liga</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 ${fonts}
 <style>${appCss}</style>
-<style>${css}</style>
+<style>${css}${NEU ? NEU.css : ''}</style>
 <main class="sl-seite">${inhalt}</main>
 <div class="nd-bg" id="slNd" role="dialog" aria-modal="true" aria-label="Blatt"><div class="nd"></div></div>
 <script type="application/octet-stream" id="sl-daten">${daten}</script>
