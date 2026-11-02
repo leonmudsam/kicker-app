@@ -338,6 +338,46 @@ function chronikBonus(titleId, wert){
   const z = chronikUeber(titleId, wert);
   return z > 0 ? Math.max(1, Math.round(CHRONIK_BONUS_JE_SIGMA * z)) : 0;
 }
+// Wie schwer eine Schattenseite wiegt: wie weit sie über ihre Schwelle
+// hinausgeht, in σ ihrer eigenen Streuung. Dieselbe Rechnung wie der Bonus
+// einer positiven Chronik, nur ohne Punkte; null ohne Rechnung.
+function chronikSchattenGewicht(titleId, wert){
+  const m = _chronikMonat(titleId);
+  if(!m || m.art !== 'schatten' || !(m.streu > 0)) return null;
+  if(wert == null || !isFinite(wert) || !isFinite(m.ab)) return null;
+  const z = (wert - m.ab) / m.streu;
+  return z > 1e-9 ? z : 0;
+}
+// ─── §C39 Die Schattenseite überschattet eine besondere Chronik ──────
+// Eine besondere Chronik bringt kein Prestige, wenn derselbe Spieler im
+// selben Monat eine Schattenseite hält, die mindestens doppelt so weit über
+// ihre Schwelle hinausgeht wie die besondere über ihre — und mindestens eine
+// Streuung weit. In Punkten gelesen: die Schattenseite wiegt mindestens
+// doppelt so schwer wie der Bonus und mindestens 25. Die besondere Chronik
+// bleibt in der Tafel, sie zählt nur nicht.
+// Nur „besonders": ein Muster in einem Ausschnitt der eigenen Partien ist
+// in einem Monat voller Pleiten leicht zu finden. Gemessen holte, wer viele
+// Schattenseiten sammelte, trotzdem jeden Monat eine besondere Chronik und
+// damit hundert Punkte, oft genau an ihrer Schwelle neben einer
+// Schattenseite weit über ihrer. Eine seltene oder legendäre Chronik ist
+// eine Leistung über den ganzen Monat und bleibt stehen.
+// Die Mindestweite verhindert, dass eine Schattenseite knapp an ihrer
+// Schwelle eine besondere knapp an ihrer löscht: beide sagen dann gleich
+// viel, und gleich viel ist nicht „doppelt so schlecht".
+const CHRONIK_SCHATTEN_FAKTOR = 2;
+const CHRONIK_SCHATTEN_MIN = 1;
+function chronikUeberschattet(T, a){
+  if(!a || chronikStufe(a.titleId) !== 'besonders') return null;
+  const grenze = Math.max(CHRONIK_SCHATTEN_MIN,
+    CHRONIK_SCHATTEN_FAKTOR * (chronikUeber(a.titleId, a.wert) || 0));
+  let best = null, bz = -1;
+  ((T && T.awarded) || []).forEach(s => {
+    if(s.pid !== a.pid) return;
+    const g = chronikSchattenGewicht(s.titleId, s.wert);
+    if(g != null && g >= grenze - 1e-9 && g > bz){ best = s; bz = g; }
+  });
+  return best;
+}
 // Ein Abstand in σ, wie der Ausschlag im Blatt steht: zwei Stellen, Komma.
 function chronikSigma(z){
   return String(Math.round((Number(z) || 0) * 100) / 100).replace('.', ',') + ' \u03c3';
@@ -1375,7 +1415,11 @@ function _prestigeQuellSatz(q, ohneKopf){
     // eines Ruheständlers [§C40]), hat keinen und zeigt seinen Wert von damals.
     const basis = q.grundwert == null ? q.voll : q.grundwert;
     let rechnung = `Grundwert ${zahl(basis)}`;
-    if(q.bonus > 0) rechnung += ` + ${zahl(q.bonus)} für ${chronikSigma(q.ueber)} über der Schwelle`;
+    // „weiter als verlangt" und nicht „über der Schwelle": bei einer Chronik
+    // mit „höchstens" (die Punktlandung, die Wahrscheinlichkeit eines
+    // Monats) las sich „über der Schwelle" so, als brächte der größere
+    // Abstand den Bonus. Er kommt aus dem kleineren.
+    if(q.bonus > 0) rechnung += ` + ${zahl(q.bonus)} für ${chronikSigma(q.ueber)} weiter als verlangt`;
     if(q.staffel > 1) rechnung += ` · ${q.rang}. Chronik ÷ √${q.staffel}`;
     teile.push(rechnung);
   }

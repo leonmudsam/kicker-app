@@ -3225,9 +3225,10 @@ const ok = (c, msg, det) => {
         const ist = JSON.parse(K(`JSON.stringify((() => { const T = seasonTitles(${JSON.stringify(sid)});
           const a = chronikEintragVon(T, ${JSON.stringify(pid)});
           // Die Farbe der Zelle ist die höchste Klasse, die der Spieler im
-          // Monat hält, nicht die des Eintrags, der zählt [§C39].
+          // Monat hält, nicht die des Eintrags, der zählt [§C39] — ohne eine
+          // überschattete Chronik: sie bringt nichts.
           const R = {legendaer:3, selten:2, besonders:1};
-          const kl = T.awarded.filter(x => x.pid === ${JSON.stringify(pid)}).map(x => chronikStufe(x.titleId))
+          const kl = T.awarded.filter(x => x.pid === ${JSON.stringify(pid)} && !chronikUeberschattet(T, x)).map(x => chronikStufe(x.titleId))
             .filter(st => R[st]).sort((x, y) => R[y] - R[x])[0] || chronikStufe(a.titleId);
           return {n:a && (a.short || a.name), kl, eigen:chronikStufe(a.titleId),
                   mehr:T.awarded.filter(x => x.pid === ${JSON.stringify(pid)}).length - 1}; })())`));
@@ -3340,7 +3341,7 @@ const ok = (c, msg, det) => {
   });
   // Grundwert und Bonus mit seinem Grund: „+16" allein sagt nicht, wofuer.
   ok(!chronRechnung.fehlt && chronRechnung.bonus > 0
-     && new RegExp('Grundwert 100 \\+ ' + chronRechnung.bonus + ' für [\\d,]+ σ über der Schwelle').test(chronRechnung.text),
+     && new RegExp('Grundwert 100 \\+ ' + chronRechnung.bonus + ' für [\\d,]+ σ weiter als verlangt').test(chronRechnung.text),
      'das Laufbahnblatt nennt Grundwert und Bonus einer Chronik',
      chronRechnung.text.slice(0,220));
   ok(chronRechnung.rang === 1 || new RegExp(chronRechnung.rang + '\\. Chronik.*√' + chronRechnung.staffel).test(chronRechnung.text),
@@ -5924,11 +5925,21 @@ return JSON.stringify(funde,null,1);
     const rest = e && e.classList.contains('chron-rest') ? e : null;
     const zaehle = el => el ? el.querySelectorAll('[data-tplayer]').length : 0;
     const schatten = K("seasonTitles('2026-07').awarded.filter(a => (_chronikMonat(a.titleId) || {}).art === 'schatten').length");
-    const positiv = K("new Set(seasonTitles('2026-07').awarded.filter(a => (_chronikMonat(a.titleId) || {}).art !== 'schatten').map(a => a.pid)).size");
+    // Ein Band traegt, wessen zaehlender Eintrag positiv ist: wessen einzige
+    // positive Chronik ueberschattet ist, steht nur rot darunter [§C39].
+    const positiv = K("(T => new Set(T.awarded.map(a => a.pid).filter(pid => { const e = chronikEintragVon(T, pid); return e && (_chronikMonat(e.titleId) || {}).art !== 'schatten'; })).size)(seasonTitles('2026-07'))");
     const rueck = Object.assign(zahl('2026-07'), {spieler:positiv, schatten, rot:zaehle(neg)},
       pruefe(zaehle(baender), rest, () => zaehle(baender) + zaehle(neg) + zaehle(rest)));
+    // Eine ueberschattete Chronik nennt auf ihrer Plakette, wovon.
+    const fall = K("(() => { for(const sid of ['2026-06','2026-07','2026-08']){ const T = seasonTitles(sid);"
+      + " const a = T.awarded.find(x => chronikUeberschattet(T, x)); if(a) return {sid, name:chronikUeberschattet(T, a).name}; } return null; })()");
+    let schattenZeile = null;
+    if(fall){
+      K("closeSheet(true); showSeasonTable('" + fall.sid + "')");
+      schattenZeile = [...sh.querySelectorAll('.tplate-e')].some(e => e.textContent === 'überschattet von „' + fall.name + '“');
+    }
     K('closeSheet(true)');
-    return {tafel, rueck};
+    return {tafel, rueck, fall, schattenZeile};
   });
   const _offenRecht = x => x && x.offen === x.spieler && x.alle === x.gesamt && (x.rot == null || x.rot === x.schatten)
     && (x.gesamt === x.spieler + (x.schatten || 0) || (x.knopf && x.zu && x.auf));
@@ -5936,6 +5947,11 @@ return JSON.stringify(funde,null,1);
      && (zaehltOffen.tafel.gesamt > zaehltOffen.tafel.spieler || zaehltOffen.rueck.gesamt > zaehltOffen.rueck.spieler),
      'Chronik der Saison: offen steht je Spieler der eine Eintrag, der zählt, die übrigen klappen darunter auf',
      JSON.stringify(zaehltOffen));
+  // Eine überschattete Chronik bleibt in der Tafel und sagt, wovon [§C39];
+  // ohne die Zeile sähe sie aus wie eine, die zählt.
+  ok(zaehltOffen.fall && zaehltOffen.schattenZeile,
+     'eine überschattete Chronik nennt auf ihrer Plakette die Schattenseite, die sie überschattet',
+     JSON.stringify(zaehltOffen.fall));
   ok(voll && voll.wirkungen > 0 && !voll.gekappt.length && voll.hinweise.some(h => /Prestige/.test(h)),
      'in der Wirkung steht jeder Name und jeder Grund ganz, und die Gruppen sagen in einem Satz, was sie fürs Prestige heißen',
      JSON.stringify(voll && {gekappt: voll.gekappt.slice(0, 3), hinweise: voll.hinweise}));

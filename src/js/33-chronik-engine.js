@@ -159,9 +159,10 @@ function _rohGruppen(pid, p, wochenSieger, offen){
   p.q    = p.games ? p.wins / p.games : 0;
   p.expQ = p.games ? p.expSum / p.games : 0;
   // Player of the Week: gewertet werden die eigenen Wochen mit mindestens
-  // drei Partien, damit ein Kurzbesuch keine Woche ist.
+  // fünf Partien, damit ein Kurzbesuch keine Woche ist. Bei drei zählte
+  // eine Woche mit drei Partien so viel wie eine mit dreißig.
   Object.keys(p.wochGrp).forEach(k => {
-    if(p.wochGrp[k].length < 3) return;
+    if(p.wochGrp[k].length < 5) return;
     p.potwG++;
     if(wochenSieger[k] === pid) p.potw++;
   });
@@ -709,8 +710,11 @@ function _prevSeasonId(sid){
 //     Schwellen von dreiundzwanzig Chroniken, die in drei bis fünf von fünf
 //     Monaten vergeben wurden, brachte neunzehn neue und rundete jede
 //     Schwelle [§C39]: ein Monat, der mit den alten Schwellen eingefroren
-//     bliebe, trüge Einträge, die es heute nicht mehr gäbe.
-const SEASON_TITLES_FREEZE_V = 6;
+//     bliebe, trüge Einträge, die es heute nicht mehr gäbe. Die siebte
+//     setzte die Schwellen von sechsundzwanzig Chroniken so, wie die Liga sie
+//     festgelegt hat, und rechnet den unmöglichen Monat als Wahrscheinlichkeit
+//     — aus demselben Grund.
+const SEASON_TITLES_FREEZE_V = 7;
 
 // Liest die eingefrorene Chronik einer Saison — aus dem seasons-Eintrag, egal
 // ob die Spalte als Objekt oder als JSON-Text ankommt. null = nicht eingefroren.
@@ -876,14 +880,21 @@ function seasonTitleHalter(sid, bisMs){
 // eine Können-Chronik in Grau stand vor einer Fügung in Gold. Seit jede
 // Chronik denselben Grundwert hat, entscheidet der Bonus: der Eintrag, in
 // dem jemand seine Schwelle am weitesten überbietet [§C39].
+// Eine besondere Chronik, die eine Schattenseite überschattet
+// (`chronikUeberschattet`), zählt hier mit null; bringt im Monat nichts mehr
+// Punkte, steht die Schattenseite, die überschattet: sonst stünde in Matrix
+// und Profil ein grauer Eintrag, der nichts zählt, und der Monat sähe aus wie
+// einer mit Prestige.
 function chronikEintragVon(T, pid){
-  let best = null, bw = -1;
+  let best = null, bw = -1, schatten = null;
   ((T && T.awarded) || []).forEach(a => {
     if(a.pid !== pid) return;
-    const w = chronikPunkte(a.titleId, a.wert);
+    const s = chronikUeberschattet(T, a);
+    if(s && !schatten) schatten = s;
+    const w = s ? 0 : chronikPunkte(a.titleId, a.wert);
     if(w > bw){ best = a; bw = w; }
   });
-  return best;
+  return bw <= 0 && schatten ? schatten : best;
 }
 function seasonTitleOf(pid, sid, bisMs){
   return chronikEintragVon(seasonTitles(sid, bisMs), pid);
@@ -895,12 +906,13 @@ function seasonTitleOf(pid, sid, bisMs){
 // der Bonus entscheidet, welcher Eintrag zählt, kann eine besondere Chronik
 // eine legendäre schlagen — mit der Farbe ihrer eigenen Klasse stand dann
 // ein grauer Monat da, in dem jemand eine goldene hielt. Nur Schattenseiten:
-// rot. Eine Chronik, die der Katalog nicht mehr kennt, zählt nicht mit.
+// rot. Eine Chronik, die der Katalog nicht mehr kennt, zählt nicht mit, eine
+// überschattete auch nicht: sie bringt nichts, und die Zelle zeigt, was zählt.
 const _CHRONIK_STUFE_RANG = {legendaer:3, selten:2, besonders:1};
 function chronikZellStufe(T, pid){
   let best = '', rang = 0;
   ((T && T.awarded) || []).forEach(a => {
-    if(a.pid !== pid) return;
+    if(a.pid !== pid || chronikUeberschattet(T, a)) return;
     const st = chronikStufe(a.titleId), r = _CHRONIK_STUFE_RANG[st] || 0;
     if(r > rang){ rang = r; best = st; }
   });

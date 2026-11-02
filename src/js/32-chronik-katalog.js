@@ -822,13 +822,13 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Kantersieger',
       art:'koennen',
-      klasse:'besonders', aus:1.82, streu:0.0959,
+      klasse:'besonders', aus:1.06, streu:0.0959,
       wie:'Ein Kantersieg ist ein Sieg mit sieben oder mehr Toren Vorsprung. Der Nenner sind die eigenen Siege des Monats und nicht alle Partien.',
-      cond:'Mindestens 30 % der eigenen Siege waren Kantersiege, ab 5 Siegen',
+      cond:'Mindestens 25 % der eigenen Siege waren Kantersiege, ab 5 Siegen',
       ...(_stWertung(
         p => p.wins >= ST_TEIL,
         p => p.partien.filter(s => s.win && s.gf - s.ga >= 7).length / p.wins,
-        0.30,
+        0.25,
         (p, v) => `${pct(v)} % aller ${p.wins} Siege waren Kantersiege · ${p.partien.filter(s => s.win && s.gf - s.ga >= 7).length} Stück`))}},
 
   {id:'breitenwirkung', name:'Kein Angstgegner', short:'Kein Angst', ic:'jederGegner', tone:'gold', art:'leistung',
@@ -850,13 +850,13 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Unbarmherzige',
       art:'koennen',
-      klasse:'selten', aus:1.59, streu:1.08,
+      klasse:'selten', aus:1.4, streu:1.08,
       wie:'Aus der Siegchance vor jeder Partie folgt, wie viele Tore Unterschied zu erwarten sind, gerechnet über alle Partien des Monats. Gewertet wird, wie weit die eigene Tordifferenz je Partie darüber liegt.',
-      cond:'Je Partie mindestens 1,75 Tore mehr Differenz, als die Stärke der Teams erwarten ließ',
+      cond:'Je Partie mindestens 1,5 Tore mehr Differenz, als die Stärke der Teams erwarten ließ',
       ...(_stWertung(
         p=>p.games>=8,
         (p,C)=>{const S=_stTorSteigung(C);return p.partien.reduce((s,x)=>s+(x.gf-x.ga)-S*(x.exp-.5),0)/p.games;},
-        1.75,
+        1.5,
         (p,v)=>`${v<0?'−':'+'}${komma(Math.abs(v))} Tore je Partie über der Erwartung · ${p.gf}:${p.ga}`))}},
 
   // Die beiden Positionen als GANZES, nicht als Einzelmaß. Gegentore allein
@@ -1492,13 +1492,16 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Ausbalancierte',
       art:'konstanz',
-      klasse:'besonders', aus:2.97, streu:0.446,
+      klasse:'besonders', aus:0.74, streu:0.446,
       wie:'Erzielte und kassierte Tore über den ganzen Monat. Gemessen logarithmisch, weil die Frage „wie nah an null" ist: zwischen zwei und zwanzig Toren Unterschied liegt mehr als zwischen zwanzig und vierzig.',
-      cond:'Am Monatsende höchstens 2 Tore Differenz, ab 20 Partien',
+      cond:'Am Monatsende höchstens 20 Tore Differenz, ab 20 Partien',
+      // Die Untergrenze ist ein halbes Tor und nicht eins: mit eins stand ein
+      // 212:212 gleichauf mit 212:211, und die Punktlandung selbst brachte
+      // nicht mehr als ein Tor daneben [§C39].
       ...(_stWertung(
         p=>p.games>=20,
-        p=>-Math.log10(Math.max(Math.abs(p.gf-p.ga),1)),
-        -0.3010299956639812,
+        p=>-Math.log10(Math.max(Math.abs(p.gf-p.ga),0.5)),
+        -Math.log10(20),
         p=>`${p.gf}:${p.ga} nach ${p.games} Partien`))},
     allzeit:{
       kammer:'fuegung', basis:REKORD_GRUNDWERT.fuegung,
@@ -1550,13 +1553,13 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Befreite',
       art:'fuegung',
-      klasse:'selten', wende:true, aus:2.78, streu:3.88,
+      klasse:'selten', wende:true, aus:2.14, streu:3.88,
       wie:'Gegen manche läuft es über Monate nicht. Gezählt wird die längste Pleitenserie gegen einen Gegner, die in diesem Monat gebrochen wurde.',
-      cond:'Einen Gegner besiegt, gegen den zuvor 17 Duelle in Folge verloren gingen',
+      cond:'Einen Gegner besiegt, gegen den zuvor 15 Duelle in Folge verloren gingen',
       ...(_stWertung(
         p=>true,
         (p,c)=>p.bannLauf,
-        17,
+        15,
         (p,v)=>`nach ${v} Pleiten in Folge gegen denselben Gegner wieder gewonnen`))}},
 
   // Das Gegenstueck zum Ausbruch von der anderen Seite: nicht die eigene
@@ -1674,13 +1677,13 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Gestrandete',
       art:'schatten',
-      klasse:'schatten', aus:2.77,
+      klasse:'schatten', aus:1.99, streu:2.54,
       wie:'Die längste Pleitenserie des Monats.',
-      cond:'12 Niederlagen am Stück',
+      cond:'10 Niederlagen am Stück',
       ...(_stWertung(
         p=>true,
         p=>{let l=0,b=0;p.partien.forEach(s=>{if(s.win)l=0;else{l++;b=Math.max(b,l);}});return b;},
-        12,
+        10,
         (p,v)=>`${v} Niederlagen in Folge`))},
     allzeit:{
       kammer:'shame', basis:REKORD_GRUNDWERT.schatten,
@@ -1698,13 +1701,13 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Eingebrochene',
       art:'schatten',
-      klasse:'schatten', aus:3.52,
+      klasse:'schatten', aus:2.45, streu:0.0335,
       wie:'Ein 0:10 ist die höchstmögliche Niederlage. Der Nenner sind die eigenen Pleiten des Monats und nicht alle Partien: gefragt ist, wie hoch verloren wird, und nicht wie oft.',
-      cond:'Mindestens 15 % der eigenen Pleiten endeten 0:10, ab 5 Pleiten',
+      cond:'Mindestens 10 % der eigenen Pleiten endeten 0:10, ab 5 Pleiten',
       ...(_stWertung(
         p => p.losses >= ST_TEIL,
         p => p.debacle / p.losses,
-        0.15,
+        0.10,
         (p, v) => `${pct(v)} % aller ${p.losses} Pleiten endeten 0:10 · ${p.debacle} Debakel`))},
     allzeit:{
       kammer:'shame', basis:REKORD_GRUNDWERT.schatten,
@@ -1721,13 +1724,13 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Unglückliche',
       art:'schatten',
-      klasse:'schatten', aus:3.13,
+      klasse:'schatten', aus:1.24, streu:0.0933,
       wie:'Ein 9:10 ist die knappste mögliche Niederlage. Der Nenner sind die eigenen Pleiten und nicht die engen Partien: gefragt ist, wie jemand verliert, nicht wie eng es zuging.',
-      cond:'Mindestens 35 % der eigenen Pleiten endeten 9:10, ab 5 Pleiten',
+      cond:'Mindestens 25 % der eigenen Pleiten endeten 9:10, ab 5 Pleiten',
       ...(_stWertung(
         p => p.losses >= ST_TEIL,
         p => p.bitter / p.losses,
-        0.35,
+        0.25,
         (p, v) => `${pct(v)} % aller ${p.losses} Pleiten endeten 9:10 · ${p.bitter} davon`))},
     allzeit:{
       kammer:'shame', basis:REKORD_GRUNDWERT.schatten,
@@ -1749,7 +1752,7 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Wankende',
       art:'schatten',
-      klasse:'schatten', aus:2.12,
+      klasse:'schatten', aus:2.12, streu:0.145,
       wie:'Ein Tor Unterschied heißt: der letzte Ball hat entschieden. Gezählt werden die Niederlagen darunter. Das Gegenstück zum Kaltblut.',
       cond:'Mindestens 80 % der Partien verloren, die mit einem Tor Unterschied endeten, ab 5 solchen Partien',
       ...(_stWertung(
@@ -1785,7 +1788,7 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Durchlässige',
       art:'schatten',
-      klasse:'schatten', aus:2.12,
+      klasse:'schatten', aus:2.12, streu:0.825,
       wie:'Gezählt werden die Tore, die das eigene Team kassiert hat, während dieser Spieler hinten stand, geteilt durch die Zahl dieser Partien.',
       cond:'Mindestens 9,75 Gegentore je Abwehrspiel, ab 5 Abwehrspielen',
       ...(_stWertung(
@@ -1811,7 +1814,7 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Geplagte',
       art:'schatten',
-      klasse:'schatten', aus:1.92,
+      klasse:'schatten', aus:1.92, streu:0.188,
       wie:'Der Gegner, gegen den im Monat am wenigsten zu holen war. Zehn Duelle, damit es kein Ausrutscher ist.',
       cond:'Gegen einen Gegner mit mindestens 10 Duellen keinen einzigen Sieg',
       ...(_stWertung(
@@ -1864,7 +1867,7 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Entzauberte',
       art:'schatten',
-      klasse:'schatten', aus:1.91,
+      klasse:'schatten', aus:1.91, streu:0.137,
       wie:'Gewertet wird der Gegner, gegen den die eigene Laufbahn vor diesem Monat am besten aussah, unter denen mit mindestens zehn Duellen davor, vier Duellen im Monat und einer Quote über der eigenen Laufbahnquote. Verglichen wird die Quote gegen diesen Gegner in diesem Monat mit der Quote gegen denselben Gegner davor. Das Gegenstück zum Bannbrecher.',
       cond:'Gegen den liebsten Gegner der Laufbahn mindestens 35 Prozentpunkte schwächer als davor, ab 10 Duellen davor, 4 im Monat und 30 Partien in der Laufbahn',
       ...(_stWertung(
@@ -1881,7 +1884,7 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Unterlegene',
       art:'schatten',
-      klasse:'schatten', aus:3.47,
+      klasse:'schatten', aus:3.47, streu:0.408,
       wie:'Gewertet wird der Gegner mit den meisten Duellen im Monat. Aus den Siegchancen aller Duelle gegen diesen Gegner folgt, wie wahrscheinlich höchstens so wenige Siege waren.',
       cond:'Gegen den häufigsten Gegner des Monats so selten gewonnen, wie es die Rechnung mit höchstens 2 % erwartet hat, ab 6 Duellen',
       ...(_stWertung(
@@ -1895,7 +1898,7 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Gehemmte',
       art:'schatten',
-      klasse:'schatten', aus:1.81,
+      klasse:'schatten', aus:1.81, streu:0.11,
       wie:'Vor jeder Partie gibt die Elo-Rechnung dem eigenen Team eine Siegchance. Ihr Mittel über den Monat ist die erwartete Siegquote. Gewertet wird, wie weit die tatsächliche Quote darunter liegt.',
       cond:'Mindestens 20 Prozentpunkte unter der eigenen Elo-Erwartung',
       ...(_stWertung(
@@ -1928,7 +1931,7 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Harmlose',
       art:'schatten',
-      klasse:'schatten', aus:1.90,
+      klasse:'schatten', aus:1.90, streu:0.529,
       wie:'Verglichen werden die Tore des eigenen Teams je Sturmspiel mit denen je Partie über alles. Gefragt ist nicht, wer wenig Tore sieht, sondern wer vorne weniger beiträgt als hinten.',
       cond:'Mindestens 1,25 Tore je Sturmspiel unter dem eigenen Mittel, ab 5 Sturmspielen und 8 Partien',
       ...(_stWertung(
@@ -1959,7 +1962,7 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Verstummte',
       art:'schatten',
-      klasse:'schatten', aus:2.02,
+      klasse:'schatten', aus:2.02, streu:0.163,
       wie:'Die Partien direkt nach einer eigenen Niederlage gegen alle übrigen eigenen Partien des Monats. Das Gegenstück zur Antwort.',
       cond:'Direkt nach einer Niederlage mindestens 25 Prozentpunkte schwächer als sonst, ab 5 solchen und 5 übrigen Partien',
       ...(_stWertung(
@@ -2000,13 +2003,13 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Favoritenpatzer',
       art:'schatten',
-      klasse:'schatten', aus:1.38,
+      klasse:'schatten', aus:1.4, streu:0.134,
       wie:'Favorit heißt über 55 % Siegchance vor dem Anpfiff. Gewertet wird der Niederlagenanteil in genau diesen Partien.',
-      cond:'Mindestens 55 % der Partien als Favorit verloren, ab 5 solchen Partien',
+      cond:'Mindestens 50 % der Partien als Favorit verloren, ab 4 solchen Partien',
       ...(_stWertung(
-        p => p.partien.filter(_stFavorit).length >= ST_TEIL,
+        p => p.partien.filter(_stFavorit).length >= 4,
         p => { const f = p.partien.filter(_stFavorit); return 1 - _stQuoteRoh(f); },
-        0.55,
+        0.50,
         p => { const f = p.partien.filter(_stFavorit);
           return `${f.length - _stSiege(f)} von ${f.length} Partien als Favorit verloren`; }))}},
 
@@ -2050,7 +2053,7 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Formlose',
       art:'schatten',
-      klasse:'schatten', aus:1.87,
+      klasse:'schatten', aus:1.87, streu:0.0882,
       wie:'Die Siegquote dieses Monats gegen die Siegquote aller eigenen Partien vor diesem Monat. Gewertet wird nur, wer davor schon dreißig Partien hatte.',
       cond:'Siegquote mindestens 15 Prozentpunkte unter der eigenen Laufbahn vor diesem Monat, ab 8 Partien und 30 Partien davor',
       ...(_stWertung(
@@ -2143,26 +2146,26 @@ const DISZIPLINEN = [
       // Messwerte sagt eine Standardabweichung nichts mehr, deshalb ist der
       // Ausschlag auf vier gedeckelt: den hoechsten, den es im Katalog
       // wirklich gibt [§C39].
-      klasse:'legendaer', aus:4, streu:0.176,
-      wie:'Player of the Week ist, wer in einer Kalenderwoche die beste Bilanz hat. Gezählt wird der Anteil an den eigenen Wochen, nicht die Zahl der Wochen.',
-      cond:'In JEDER eigenen Spielwoche Player of the Week, ab 3 Wochen mit je 3 Partien',
+      klasse:'legendaer', aus:2.74, streu:0.19,
+      wie:'Player of the Week ist, wer in einer Kalenderwoche die beste Bilanz hat. Gezählt wird der Anteil an den eigenen Wochen mit mindestens fünf Partien, nicht die Zahl der Wochen.',
+      cond:'In mindestens zwei Dritteln der eigenen Spielwochen Player of the Week, ab 3 Wochen mit je 5 Partien',
       ...(_stWertung(
         p=>p.potwG>=3,
         p=>p.potw/p.potwG,
-        1,
+        2/3,
         (p,v)=>`Player of the Week in ${p.potw} von ${p.potwG} Wochen · ${pct(v)} %`))}},
 
   {id:'traumquote', name:'Der Traummonat', short:'Traumlauf', ic:'star', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Überlegene',
       art:'koennen',
-      klasse:'legendaer', aus:2.5, streu:0.164,
+      klasse:'legendaer', aus:1.67, streu:0.164,
       wie:'Die blanke Siegquote. Sie steht hier als das eine Ziel, das keine Erklärung braucht.',
-      cond:'Mindestens 85 % Siegquote über den ganzen Monat',
+      cond:'Mindestens 75 % Siegquote über den ganzen Monat',
       ...(_stWertung(
         p=>p.games>=8,
         p=>p.q,
-        0.85,
+        0.75,
         p=>`${p.wins} von ${p.games} Partien gewonnen · ${pct(p.q)} %`))}},
 
   {id:'nachzuegler', name:'Der Nachzügler', short:'Nachzügler', ic:'spaetStart', tone:'gold', art:'leistung',
@@ -2200,13 +2203,13 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Saubermann',
       art:'koennen',
-      klasse:'besonders', aus:3.18, streu:0.0387,
+      klasse:'besonders', aus:1.75, streu:0.0387,
       wie:'Ein Sieg zu null oder zu eins ist die seltenste Art zu gewinnen.',
-      cond:'Mindestens 15 % der eigenen Siege mit höchstens einem Gegentor, ab 5 Siegen',
+      cond:'Mindestens 10 % der eigenen Siege mit höchstens einem Gegentor, ab 5 Siegen',
       ...(_stWertung(
         p=>p.wins>=ST_TEIL,
         p=>p.partien.filter(s=>s.win&&s.ga<=1).length/p.wins,
-        0.15,
+        0.10,
         p=>`${p.partien.filter(s=>s.win&&s.ga<=1).length} von ${p.wins} Siegen mit höchstens einem Gegentor`))}},
 
   {id:'bollwerk', name:'Das Bollwerk', short:'Bollwerk', ic:'bollwerk', tone:'gold', art:'leistung',
@@ -2272,9 +2275,9 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Verwandelte',
       art:'koennen',
-      klasse:'selten', wende:true, aus:1.74, streu:0.2,
+      klasse:'selten', wende:true, aus:0.99, streu:0.2,
       wie:'Zwei aufeinanderfolgende eigene Spieltage nebeneinander. Gesucht ist der größte Sprung nach oben.',
-      cond:'Von einem Spieltag zum nächsten mindestens 65 Prozentpunkte besser, ab 4 Partien an beiden Tagen',
+      cond:'Von einem Spieltag zum nächsten mindestens 50 Prozentpunkte besser, ab 4 Partien an beiden Tagen',
       ...(_stWertung(
         p=>Object.values(p.tagGrp).filter(a=>a.length>=4).length>=2,
         p=>{const t=Object.keys(p.tagGrp).sort().map(k=>p.tagGrp[k]).filter(a=>a.length>=4);
@@ -2282,7 +2285,7 @@ const DISZIPLINEN = [
       const x=_stQuoteRoh(t[i-1]), y=_stQuoteRoh(t[i]);
       if(!b||y-x>b.d) b={d:y-x,x,y};}
       p._um=b;return b?b.d:null;},
-        0.65,
+        0.50,
         p=>`von ${pct(p._um.x)} % auf ${pct(p._um.y)} % am nächsten Spieltag`))}},
 
   // Der Zeitpunkt eines Partnerwechsels, nicht der Partner selbst: „Der
@@ -2396,27 +2399,34 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Entfesselte',
       art:'koennen',
-      klasse:'besonders', aus:1.67, streu:0.121,
-      wie:'Jeder Fünferblock des Monats wird gegen die eigene Monatsquote gestellt. Gesucht ist der beste.',
-      cond:'Ein Block aus 5 Partien mindestens 55 Prozentpunkte über dem eigenen Monatsschnitt',
+      klasse:'besonders', aus:0.69, streu:0.101,
+      wie:'Jeder Block aus sieben Partien am Stück wird gegen die eigene Monatsquote gestellt. Gesucht ist der beste. Gewertet wird ab vierzehn Partien, damit der Block nicht den halben Monat ausmacht.',
+      cond:'Ein Block aus 7 Partien mindestens 35 Prozentpunkte über dem eigenen Monatsschnitt',
       ...(_stWertung(
-        p=>p.games>=10,
-        p=>{let b=-9;for(let i=0;i+5<=p.games;i++){const q=_stSiege(p.partien.slice(i,i+5))/5;if(q-p.q>b)b=q-p.q;}return b;},
-        0.55,
-        (p,v)=>`${Math.round((p.q+v)*5)} von 5 am Stück · sonst ${pct(p.q)} %`))}},
+        p=>p.games>=14,
+        p=>{let b=-9;for(let i=0;i+7<=p.games;i++){const q=_stSiege(p.partien.slice(i,i+7))/7;if(q-p.q>b)b=q-p.q;}return b;},
+        0.35,
+        (p,v)=>`${Math.round((p.q+v)*7)} von 7 am Stück · sonst ${pct(p.q)} %`))}},
 
   {id:'unmoeglich', name:'Der Unmögliche Monat', short:'Unmöglich', ic:'diamond', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Unmögliche',
       art:'koennen',
-      klasse:'legendaer', aus:1.57, streu:0.34,
-      wie:'Die Rechnung gab vor jeder Partie eine Siegchance. Daraus folgt, wie wahrscheinlich der ganze Monat so oder besser ausgeht.',
-      cond:'Ein Monat, den die Elo-Rechnung mit höchstens 2 % erwartet hat',
+      klasse:'legendaer', aus:1.87, streu:0.468,
+      wie:'Die Rechnung gab vor jeder Partie eine Siegchance. Daraus folgt, wie wahrscheinlich der ganze Monat so oder besser ausgeht. Je unwahrscheinlicher der Monat, desto höher der Bonus.',
+      cond:'Ein Monat, den die Elo-Rechnung mit höchstens 5 % erwartet hat',
+      // Gewertet wird die Wahrscheinlichkeit als Zehnerlogarithmus wie bei
+      // jeder anderen Chronik, die nach der Rechnung fragt (`_stUnwahr`). Der
+      // Wert war eins minus die Wahrscheinlichkeit: zwischen 2 % und einem
+      // Tausendstel lagen damit 0,02, ein Zwanzigstel der Streuung, und ein
+      // Monat, der hundertmal unwahrscheinlicher war, brachte einen Punkt
+      // Bonus mehr [§C39].
       ...(_stWertung(
         p=>p.games>=8,
-        p=>1-_stPBinom(p.exp,p.wins),
-        0.98,
-        (p,v)=>`${p.wins} von ${p.games} Siegen · erwartet waren ${pct(1-v)} %`))}},
+        p=>_stUnwahr(p.partien),
+        -Math.log10(0.05),
+        (p,v)=>{ const c = Math.pow(10, -v) * 100;
+          return `${p.wins} von ${p.games} Siegen · die Rechnung gab dafür ${c < 0.1 ? 'unter 0,1' : komma(c, 1)} %`; }))}},
 
   {id:'schwachstelle', name:'Ohne Schwachstelle', short:'Lückenlos', ic:'kingClass', tone:'gold', art:'leistung',
     monat:{
@@ -2452,14 +2462,18 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Berechenbare',
       art:'konstanz',
-      klasse:'besonders', aus:2.46, streu:0.469,
+      klasse:'besonders', aus:1.39, streu:0.469,
       wie:'Der Abstand zwischen der eigenen Quote und dem, was die Rechnung vorher auswies. Gemessen wird logarithmisch, weil die Frage „wie nah an null" ist: zwischen einem halben und drei Prozentpunkten liegt mehr als zwischen drei und achtzehn.',
-      cond:'Die eigene Quote liegt am Monatsende höchstens 0,5 Prozentpunkte neben der Elo-Erwartung',
+      cond:'Die eigene Quote liegt am Monatsende höchstens 2 Prozentpunkte neben der Elo-Erwartung',
       ...(_stWertung(
         p=>p.games>=8,
         p=>-Math.log10(Math.max(Math.abs(p.q-p.expQ),0.0005)),
-        2.3010299956639813,
-        p=>`${pct(p.q)} % gespielt, ${pct(p.expQ)} % erwartet`))}},
+        -Math.log10(0.02),
+        // Der Abstand steht vorn und mit einer Stelle: „50 % gespielt, 50 %
+        // erwartet" stand bei 0,3 Prozentpunkten Abstand, und der Bonus, der
+        // daraus folgt, war auf dem Bildschirm nicht zu sehen.
+        p=>{ const q = Math.round(p.q * 1000) / 10, e = Math.round(p.expQ * 1000) / 10;
+          return `${komma(Math.abs(q - e), 1)} %-Punkte neben der Rechnung · ${komma(q, 1)} % gespielt, ${komma(e, 1)} % erwartet`; }))}},
 
   {id:'schwaechstertag', name:'Der schwächste Tag', short:'Jeder Tag', ic:'schwaechsterTag', tone:'blue', art:'leistung',
     monat:{
@@ -2479,18 +2493,19 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Vielseitige',
       art:'konstanz',
-      klasse:'besonders', aus:2.01, streu:0.457,
+      klasse:'besonders', aus:0.73, streu:0.457,
       wie:'Die Quote im Sturm und die in der Abwehr, beide gegen die eigene Gesamtquote. Gemessen logarithmisch: nah an null ist die Aussage, und ein halber Prozentpunkt ist etwas anderes als fünf.',
-      cond:'Auf beiden Positionen höchstens 1 Prozentpunkt neben der eigenen Gesamtquote, ab 5 Partien je Position',
+      cond:'Auf beiden Positionen höchstens 3 Prozentpunkte neben der eigenen Gesamtquote, ab 5 Partien je Position',
       ...(_stWertung(
         p=>p.partien.filter(s=>s.pos==='atk').length>=ST_TEIL&&p.partien.filter(s=>s.pos==='def').length>=ST_TEIL,
         p=>{const a=p.partien.filter(s=>s.pos==='atk'),d=p.partien.filter(s=>s.pos==='def');
       const m=Math.max(Math.abs(_stQuoteRoh(a)-p.q),
       Math.abs(_stQuoteRoh(d)-p.q));
       return -Math.log10(Math.max(m,0.0005));},
-        2,
+        -Math.log10(0.03),
         p=>{const a=p.partien.filter(s=>s.pos==='atk'),d=p.partien.filter(s=>s.pos==='def');
-      return `${pct(_stQuoteRoh(a))} % vorne, ${pct(_stQuoteRoh(d))} % hinten`;}))}},
+      const r=x=>Math.round(x*1000)/10, q=r(p.q), qa=r(_stQuoteRoh(a)), qd=r(_stQuoteRoh(d));
+      return `höchstens ${komma(Math.max(Math.abs(qa-q),Math.abs(qd-q)),1)} %-Punkte neben ${komma(q,1)} % · ${komma(qa,1)} % vorne, ${komma(qd,1)} % hinten`;}))}},
 
   // ── Zweite Runde: neun Chroniken mehr [§C39] ─────────────────────
   // Alle an den echten Partien kalibriert. Was hier nicht steht, hat eine
@@ -2503,14 +2518,14 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Wundertäter',
       art:'koennen',
-      klasse:'selten', aus:2.79, streu:0.543,
+      klasse:'selten', aus:2.29, streu:0.543,
       wie:'Gerechnet wird die Wahrscheinlichkeit, in dieser Woche so viele Siege oder mehr zu holen. Partie für Partie aus der Siegchance, die vor dem Anpfiff stand.',
-      cond:'Eine Kalenderwoche, die die Elo-Rechnung mit höchstens 0,5 % erwartet hat, ab 6 Partien in dieser Woche',
+      cond:'Eine Kalenderwoche, die die Elo-Rechnung mit höchstens 1,5 % erwartet hat, ab 6 Partien in dieser Woche',
       ...(_stWertung(
         p=>_stWochGross(p).length>=1,
         p=>-Math.log10(Math.max(1e-6, Math.min(..._stWochGross(p)
              .map(a=>_stPBinom(a.map(s=>s.exp), _stSiege(a)))))),
-        -Math.log10(0.005),
+        -Math.log10(0.015),
         (p,v)=>`Eine Woche, die mit ${komma(Math.pow(10,-v)*100)} % erwartet war · ${_stWochGross(p).length} Wochen gewertet`))}},
 
   {id:'gleichmut', name:'Der Gleichmut', short:'Gleichmut', ic:'gleichmass', tone:'blue', art:'leistung',
@@ -2563,13 +2578,13 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Unbeugsame',
       art:'koennen',
-      klasse:'selten', wende:true, aus:2.14, streu:0.21,
+      klasse:'selten', wende:true, aus:1.51, streu:0.21,
       wie:'Nach einer Pleite fragt „Die Antwort". Zwei am Stück sind die Stelle, an der ein Tag kippt.',
-      cond:'Jede Partie nach zwei Pleiten am Stück gewonnen, ab 5 solchen Gelegenheiten',
+      cond:'Mindestens 80 % der Partien nach zwei Pleiten am Stück gewonnen, ab 5 solchen Gelegenheiten',
       ...(_stWertung(
         p=>_stNachZwei(p).length>=ST_TEIL,
         p=>_stQuote(_stNachZwei(p)),
-        1,
+        0.80,
         (p)=>{const a=_stNachZwei(p);
           return `${_stSiege(a)} von ${a.length} Partien nach zwei Pleiten am Stück`;}))}},
 
@@ -2603,13 +2618,13 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Vollender',
       art:'koennen',
-      klasse:'besonders', aus:1.83, streu:0.269,
+      klasse:'besonders', aus:1.08, streu:0.292,
       wie:'Der letzte Ball einer Woche ist der, der stehen bleibt, bis wieder gespielt wird.',
-      cond:'Jede letzte Partie einer Kalenderwoche gewonnen, ab 4 Wochen mit je 3 Partien',
+      cond:'Mindestens 80 % der letzten Partien einer Kalenderwoche gewonnen, ab 3 Wochen mit je 3 Partien',
       ...(_stWertung(
-        p=>_stWochLetzte(p).length>=4,
+        p=>_stWochLetzte(p).length>=3,
         p=>_stQuote(_stWochLetzte(p)),
-        1,
+        0.80,
         (p)=>{const a=_stWochLetzte(p);
           return `${_stSiege(a)} von ${a.length} Wochenabschlüssen gewonnen`;}))}},
 
@@ -2675,40 +2690,40 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Nervenkünstler',
       art:'fuegung',
-      klasse:'selten', aus:3.84, streu:0.148,
+      klasse:'selten', aus:4.67, streu:0.093,
       wie:'Knapp heißt höchstens zwei Tore Vorsprung. Gezählt wird der Anteil an den eigenen Siegen, nicht an allen Partien.',
-      cond:'JEDER einzelne Sieg des Monats war knapp, ab 6 Siegen',
+      cond:'Mindestens 75 % der Siege des Monats waren knapp, ab 10 Siegen',
       ...(_stWertung(
-        p=>p.wins>=6,
+        p=>p.wins>=10,
         p=>p.partien.filter(s=>s.win&&s.gf-s.ga<=2).length/p.wins,
-        1,
+        0.75,
         p=>`${p.partien.filter(s=>s.win&&s.gf-s.ga<=2).length} von ${p.wins} Siegen waren knapp`))}},
 
   {id:'nervenkitzel', name:'Der Nervenkitzel', short:'Kitzel', ic:'thriller', tone:'purple', art:'ereignis',
     monat:{
       beiname:'Der Dauerzitterer',
       art:'fuegung',
-      klasse:'besonders', aus:3.62, streu:0.0864,
+      klasse:'besonders', aus:2.32, streu:0.0864,
       wie:'Eng heißt höchstens zwei Tore Unterschied. Verglichen wird der eigene Anteil mit dem der ganzen Liga.',
-      cond:'Mindestens 35 Prozentpunkte mehr enge Partien als im Ligaschnitt',
+      cond:'Mindestens 20 Prozentpunkte mehr enge Partien als im Ligaschnitt',
       ...(_stWertung(
         p=>p.games>=8,
         (p,c)=>p.partien.filter(_stEng).length/p.games-c.L.engAnteil,
-        0.35,
+        0.20,
         (p,v,c)=>`${pct(p.partien.filter(_stEng).length/p.games)} % enge Partien · Liga ${pct(c.L.engAnteil)} %`))}},
 
   {id:'spezialisiert', name:'Der Spezialist', short:'Spezialist', ic:'spezialist', tone:'purple', art:'ereignis',
     monat:{
       beiname:'Der Fachmann',
       art:'fuegung',
-      klasse:'besonders', aus:2.69, streu:0.126,
+      klasse:'besonders', aus:1.6, streu:0.126,
       wie:'Dasselbe andersherum. Groß heißt einseitig, nicht gut.',
-      cond:'Auf einer Position mindestens 50 Prozentpunkte besser als auf der anderen, ab 5 Partien je Position',
+      cond:'Auf einer Position mindestens 35 Prozentpunkte besser als auf der anderen, ab 5 Partien je Position',
       ...(_stWertung(
         p=>p.partien.filter(s=>s.pos==='atk').length>=ST_TEIL&&p.partien.filter(s=>s.pos==='def').length>=ST_TEIL,
         p=>{const a=p.partien.filter(s=>s.pos==='atk'),d=p.partien.filter(s=>s.pos==='def');
       return Math.abs(_stQuoteRoh(a)-_stQuoteRoh(d));},
-        0.5,
+        0.35,
         (p,v)=>{const a=p.partien.filter(s=>s.pos==='atk'),d=p.partien.filter(s=>s.pos==='def');
       return `${pct(v)} %-Punkte Unterschied, stärker ${_stQuoteRoh(a)>_stQuoteRoh(d)?'vorne':'hinten'}`;}))}},
 
@@ -2813,13 +2828,13 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Grenzgänger',
       art:'fuegung',
-      klasse:'besonders', aus:1.95, streu:0.0642,
+      klasse:'besonders', aus:1.09, streu:0.0642,
       wie:'Keine Leistung, eine Fügung: wem die engen Partien zufallen, entscheidet niemand selbst.',
-      cond:'Mindestens 25 % der eigenen Partien endeten mit genau einem Tor Unterschied',
+      cond:'Mindestens 20 % der eigenen Partien endeten mit genau einem Tor Unterschied',
       ...(_stWertung(
         p=>p.games>=TITLE_MIN_GAMES,
         p=>_stEinTor(p).length/p.games,
-        0.25,
+        0.20,
         (p,v)=>`${_stEinTor(p).length} von ${p.games} Partien mit einem Tor Unterschied · ${pct(v)} %`))}},
 
   // Das Gegenstueck zum Nervenkitzel: dort zaehlen die engen Partien gegen das
@@ -3143,7 +3158,7 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Abgestürzte',
       art:'schatten',
-      klasse:'schatten', aus:1.51,
+      klasse:'schatten', aus:1.51, streu:0.118,
       wie:'Das Gegenstück zum Sprung: die eigene Siegquote dieses Monats gegen die des Vormonats, in Prozentpunkten. Beide Monate brauchen acht eigene Partien.',
       cond:'Siegquote mindestens 20 Prozentpunkte unter der des Vormonats, ab 8 Partien in beiden Monaten',
       ...(_stWertung(
@@ -3158,7 +3173,7 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Abgerutschte',
       art:'schatten',
-      klasse:'schatten', aus:2.16,
+      klasse:'schatten', aus:2.16, streu:2.35,
       cond:'Mindestens 5 Plätze weiter hinten als am Ende des Vormonats, ab 8 Partien in beiden Monaten',
       ...(_stWertung(
         (p, C) => p.games >= 8 && _stVormonat(p, C) != null && _stVormonatPlatz(p, C) != null,
@@ -3173,7 +3188,7 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Glücklose',
       art:'schatten',
-      klasse:'schatten', aus:1.62,
+      klasse:'schatten', aus:1.62, streu:0.51,
       wie:'Verglichen werden die Tore des eigenen Teams je Sturmspiel in diesem Monat mit denen je Sturmspiel der Laufbahn davor.',
       cond:'Mindestens 0,75 Tore je Sturmspiel weniger als in den Sturmspielen der Laufbahn davor, ab 5 Sturmspielen im Monat, 20 davor und 30 Partien in der Laufbahn',
       ...(_stWertung(
@@ -3190,7 +3205,7 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Undichte',
       art:'schatten',
-      klasse:'schatten', aus:1.74,
+      klasse:'schatten', aus:1.74, streu:0.568,
       wie:'Verglichen werden die Gegentore je Abwehrspiel in diesem Monat mit denen je Abwehrspiel der Laufbahn davor.',
       cond:'Mindestens 1 Gegentor je Abwehrspiel mehr als in den Abwehrspielen der Laufbahn davor, ab 5 Abwehrspielen im Monat, 20 davor und 30 Partien in der Laufbahn',
       ...(_stWertung(
@@ -3206,13 +3221,13 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Gerupfte',
       art:'schatten',
-      klasse:'schatten', aus:1.86,
+      klasse:'schatten', aus:0.45, streu:0.112,
       wie:'Eine Klatsche ist eine Niederlage mit sieben oder mehr Toren Rückstand. Der Nenner sind die eigenen Niederlagen des Monats und nicht alle Partien.',
-      cond:'Mindestens 35 % der eigenen Niederlagen waren Klatschen, ab 5 Niederlagen',
+      cond:'Mindestens 20 % der eigenen Niederlagen waren Klatschen, ab 5 Niederlagen',
       ...(_stWertung(
         p => p.losses >= ST_TEIL,
         p => p.partien.filter(s => !s.win && s.ga - s.gf >= 7).length / p.losses,
-        0.35,
+        0.20,
         (p, v) => `${pct(v)} % aller ${p.losses} Niederlagen waren Klatschen · ${p.partien.filter(s => !s.win && s.ga - s.gf >= 7).length} Stück`))}},
 
   // ── Schattenseiten gegen das Eigene [§C39] ─────────────────────────
@@ -3226,7 +3241,7 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Die Schlafmütze',
       art:'schatten',
-      klasse:'schatten', aus:1.86,
+      klasse:'schatten', aus:1.86, streu:0.193,
       wie:'Gewertet wird die zeitlich erste Partie jedes eigenen Spieltags gegen alle anderen dieses Tages, ab drei Partien je Tag. Das Gegenstück zum Kaltstart.',
       cond:'In der ersten Partie eines Spieltags mindestens 40 Prozentpunkte schwächer als in den übrigen, ab 3 Spieltagen mit je 3 Partien',
       ...(_stWertung(
@@ -3240,13 +3255,13 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Ausgelaugte',
       art:'schatten',
-      klasse:'schatten', aus:1.72,
+      klasse:'schatten', aus:1.64, streu:0.164,
       wie:'Der Vergleich läuft innerhalb der eigenen Spieltage: ab der vierten Partie gegen die ersten drei desselben Tages. Das Gegenstück zur zweiten Luft.',
-      cond:'Ab der vierten Partie eines Spieltags mindestens 30 Prozentpunkte schwächer als in den ersten drei, ab 5 Partien in jedem Block',
+      cond:'Ab der vierten Partie eines Spieltags mindestens 25 Prozentpunkte schwächer als in den ersten drei, ab 3 Partien in jedem Block',
       ...(_stWertung(
-        p => _stTagBlock(p).frueh.length >= ST_TEIL && _stTagBlock(p).spaet.length >= ST_TEIL,
+        p => _stTagBlock(p).frueh.length >= 3 && _stTagBlock(p).spaet.length >= 3,
         p => { const b = _stTagBlock(p); return _stQuote(b.frueh) - _stQuote(b.spaet); },
-        0.30,
+        0.25,
         p => { const b = _stTagBlock(p);
           return `${pct(_stQuote(b.spaet))} % ab der vierten Partie, ${pct(_stQuote(b.frueh))} % davor`; }))}},
 
@@ -3256,7 +3271,7 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Schlussmüde',
       art:'schatten',
-      klasse:'schatten', aus:1.46,
+      klasse:'schatten', aus:1.46, streu:0.227,
       wie:'Gewertet wird die zeitlich letzte Partie jedes eigenen Spieltags gegen alle anderen dieses Tages. Drei Partien je Tag, damit „die letzte" überhaupt eine Auswahl ist. Das Gegenstück zum letzten Ball.',
       cond:'In der letzten Partie eines Spieltags mindestens 35 Prozentpunkte schwächer als in den übrigen, ab 3 Spieltagen mit je 3 Partien',
       ...(_stWertung(
@@ -3269,13 +3284,13 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Nachlassende',
       art:'schatten',
-      klasse:'schatten', aus:2.22,
+      klasse:'schatten', aus:1.5, streu:0.179,
       wie:'Die Spieltage des Monats werden in der Mitte geteilt und die beiden Quoten desselben Spielers verglichen. Das Gegenstück zur Steigerung.',
-      cond:'In der zweiten Hälfte des Monats mindestens 35 Prozentpunkte schwächer als in der ersten, ab 4 Partien je Hälfte',
+      cond:'In der zweiten Hälfte des Monats mindestens 25 Prozentpunkte schwächer als in der ersten, ab 4 Partien je Hälfte',
       ...(_stWertung(
         p => _stHaelften(p) != null,
         p => { const h = _stHaelften(p); return h.q1 - h.q2; },
-        0.35,
+        0.25,
         p => { const h = _stHaelften(p);
           return `${pct(h.q2)} % in der zweiten Hälfte, ${pct(h.q1)} % in der ersten`; }))}},
 
@@ -3284,7 +3299,7 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Verglühte',
       art:'schatten',
-      klasse:'schatten', aus:2.23,
+      klasse:'schatten', aus:2.23, streu:0.283,
       wie:'Nicht die Monatshälften, sondern die Ränder, wie beim Nachzügler.',
       cond:'In den ersten 5 Partien des Monats mindestens 3 Siege mehr als in den letzten 5',
       ...(_stWertung(
@@ -3297,7 +3312,7 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Satte',
       art:'schatten',
-      klasse:'schatten', aus:2.18,
+      klasse:'schatten', aus:2.18, streu:0.115,
       wie:'Nur die Partien am selben Tag direkt nach einem Sieg. Verglichen wird die Quote darin mit der Siegchance, die die Elo-Rechnung diesen Partien gab. Das Gegenstück zum Nachlegen.',
       cond:'Nach einem Sieg mindestens 25 Prozentpunkte unter der Rechnung, ab 5 solchen Partien',
       ...(_stWertung(
@@ -3311,7 +3326,7 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Ehrfürchtige',
       art:'schatten',
-      klasse:'schatten', aus:1.68,
+      klasse:'schatten', aus:1.68, streu:0.127,
       wie:'Nur die Partien gegen die beiden Ersten der Monatstabelle. Der Erste selbst wird nicht gewertet. Verglichen wird die Quote darin mit der Siegchance, die die Elo-Rechnung diesen Partien gab. Das Gegenstück zum Spielverderber.',
       cond:'Gegen die beiden Ersten der Monatstabelle mindestens 30 Prozentpunkte unter der Rechnung, ab 5 solchen Partien',
       ...(_stWertung(
@@ -3325,7 +3340,7 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Vergessliche',
       art:'schatten',
-      klasse:'schatten', aus:1.70,
+      klasse:'schatten', aus:1.70, streu:0.165,
       wie:'Gegen jeden Gegner mit mindestens vier Duellen im Monat zählt, um wie viel die zweite Hälfte der Duelle unter der Rechnung lag, verglichen mit der ersten. Gemittelt wird über alle solchen Gegner. Das Gegenstück zur Lernkurve.',
       cond:'Gegen bekannte Gegner im Mittel mindestens 25 Prozentpunkte schwächer als zu Beginn, ab 3 Gegnern mit je 4 Duellen',
       ...(_stWertung(
@@ -3340,7 +3355,7 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Fremdelnde',
       art:'schatten',
-      klasse:'schatten', aus:1.58,
+      klasse:'schatten', aus:1.58, streu:0.163,
       wie:'Nur die Partien neben einem Partner, mit dem es vor diesem Monat keine einzige gab. Verglichen wird die Quote darin mit der Siegchance, die die Elo-Rechnung diesen Partien gab. Das Gegenstück zu Neuland.',
       cond:'Neben neuen Partnern mindestens 30 Prozentpunkte unter der Rechnung, ab 5 solchen Partien',
       ...(_stWertung(
@@ -3357,7 +3372,7 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Gestrauchelte',
       art:'schatten',
-      klasse:'schatten', aus:2.63,
+      klasse:'schatten', aus:2.63, streu:0.407,
       wie:'Die Elo-Erwartung auf einen Tag zusammengezogen: wie wahrscheinlich höchstens so wenige Siege an diesem Tag waren. Gewertet wird der unwahrscheinlichste eigene Spieltag.',
       cond:'Ein Spieltag, den die Rechnung mit höchstens 2 % so schlecht erwartet hat, ab 4 Partien am Tag',
       ...(_stWertung(
@@ -3374,7 +3389,7 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Gebeutelte',
       art:'schatten',
-      klasse:'schatten', aus:2.00,
+      klasse:'schatten', aus:2.00, streu:0.133,
       wie:'Eine Woche zählt ab fünf eigenen Partien. Verglichen wird die Quote dieser Woche mit der Siegchance, die die Elo-Rechnung den Partien darin gab; gewertet wird die schwächste solche Woche des Monats.',
       cond:'Eine Woche mindestens 35 Prozentpunkte unter der Rechnung, ab 2 Wochen mit je 5 Partien',
       ...(_stWertung(
@@ -3409,7 +3424,7 @@ const DISZIPLINEN = [
     monat:{
       beiname:'Der Zurückgezogene',
       art:'schatten',
-      klasse:'schatten', aus:1.22,
+      klasse:'schatten', aus:1.22, streu:0.733,
       wie:'Dieselbe Rechnung wie beim Aufdreher, in die andere Richtung: der eigene Anteil an allen Partien des Monats gegen den eigenen Anteil in den Monaten davor.',
       cond:'Höchstens ein Viertel des eigenen Anteils an den Partien aus den Monaten davor, ab 8 Partien',
       ...(_stWertung(

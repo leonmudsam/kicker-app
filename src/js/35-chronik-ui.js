@@ -24,6 +24,9 @@ function _titlePlateHtml(a, opts){
         kl ? `<span class="tplate-kl">${esc(CHRONIK_KLASSE_NAME[kl])}</span>` : ''}</div>
       <div class="tplate-w">${av}<span>${esc(p ? p.name : '?')}</span></div>
       ${a.ev ? `<div class="tplate-e num">${esc(a.ev)}</div>` : ''}
+      ${/* Eine überschattete Chronik steht weiter in der Tafel [§C39], und
+            ohne diese Zeile sähe sie aus wie eine, die zählt. */
+        o.schatten ? `<div class="tplate-e">überschattet von „${esc(o.schatten.name)}“</div>` : ''}
     </div>
   </div>`;
 }
@@ -42,9 +45,12 @@ function _chronKlasse(tid){ return tid ? chronikStufe(tid) : ''; }
 // Rechnung aus Grundwert und Bonus [§C39]: „+116" allein ließ offen, warum
 // dieselbe Chronik im Vormonat 103 brachte. Ohne Halter steht der Grundwert
 // da, und dass mehr möglich ist.
-function _chronFaktenHtml(def, wert){
+// `schatten` ist die Schattenseite, die den Halter in diesem Monat
+// überschattet (`chronikUeberschattet`): dann steht die Null da, die er
+// bekommt, und nicht der Wert, den die Chronik sonst hätte.
+function _chronFaktenHtml(def, wert, schatten){
   if(!def || !CHRONIK_KLASSE_NAME[def.klasse]) return '';
-  const p = chronikPunkte(def.id, wert);
+  const p = schatten ? 0 : chronikPunkte(def.id, wert);
   const z = chronikUeber(def.id, wert);
   return rcpZahlenHtml([
     {v:CHRONIK_KLASSE_NAME[def.klasse], l:'Klasse'},
@@ -52,7 +58,7 @@ function _chronFaktenHtml(def, wert){
     {v:chronikSigma(def.aus), l:'Ausschlag', d:z > 0 ? '+' + chronikSigma(z) : null},
     p > 0 ? {v:'+' + p, l:'Prestige', ton:'gold',
              d:z == null ? '+ Bonus' : CHRONIK_GRUNDWERT + ' + ' + chronikBonus(def.id, wert)}
-          : {v:'0', l:'Prestige'},
+          : {v:'0', l:'Prestige', d:schatten ? 'überschattet' : null},
   ]);
 }
 
@@ -96,8 +102,8 @@ function showSeasonTable(sid){
         <span class="tx"><span class="n">${esc(pname(ch.pid))} ${T.live ? 'führt die Saison an' : 'ist Meister'}</span>
           <span class="e num">${ch.elo} Elo · ${ch.wins} Siege aus ${ch.games} Spielen</span></span>
       </div><div style="height:14px"></div>` : ''}
-    <div class="tplates">${sichtbar.map(a => _titlePlateHtml(a, {sid})).join('')}</div>
-    ${weitere.length ? `<div class="tplates chron-rest">${weitere.map(a => _titlePlateHtml(a, {sid})).join('')}</div>
+    <div class="tplates">${sichtbar.map(a => _titlePlateHtml(a, {sid, schatten:chronikUeberschattet(T, a)})).join('')}</div>
+    ${weitere.length ? `<div class="tplates chron-rest">${weitere.map(a => _titlePlateHtml(a, {sid, schatten:chronikUeberschattet(T, a)})).join('')}</div>
     ${_chronMehrKnopf(weitere.length)}` : ''}
     ${emptyNames.length ? `<div class="pp-sec-title" style="margin-top:16px"><div class="l"><h4>Ohne Eintrag</h4></div></div>
       <div class="tempty">${esc(emptyNames.join(', '))}<span>Keine Bedingung erfüllt, die Saison zählt trotzdem.</span></div>` : ''}
@@ -320,6 +326,9 @@ function showDisziplin(tid, sid){
   // Der Beleg [§C27] aus derselben Reihenfolge wie das Podest. Einen
   // Verlauf hat ein Monat nicht — er ist die Zeitachse selbst.
   const halterM = new Set(eigene.map(a => a.pid));
+  // Überschattet wird je Halter; das Blatt nennt es, wenn es einen einzigen
+  // Halter gibt und der überschattet ist.
+  const schattenM = eigene.length === 1 ? chronikUeberschattet(T, eigene[0]) : null;
   const zweitM = reihe.find(r => !halterM.has(r.pid)) || null;
   const zweitMA = zweitM ? belegAnteil(zweitM.wert) : null;
   const beleg = reihe.length ? belegHtml({
@@ -348,7 +357,8 @@ function showDisziplin(tid, sid){
         def.beiname ? `<span class="chron-kose"><i>Beiname im Profil</i>`
         + `<b>${esc(def.beiname)}</b></span>` : ''}
     </div>
-    ${_chronFaktenHtml(def, eigene.length ? eigene[0].wert : undefined)}
+    ${_chronFaktenHtml(def, eigene.length ? eigene[0].wert : undefined, schattenM)}
+    ${schattenM ? `<div class="tnote">„${esc(schattenM.name)}“ überschattet diese Chronik im selben Monat: die Schattenseite geht mindestens doppelt so weit über ihre Schwelle hinaus wie diese über ihre. Die Chronik bleibt in der Tafel und bringt kein Prestige.</div>` : ''}
     ${def.wie ? `<div class="tnote">${esc(def.wie)}</div>` : ''}
     ${beleg}
     ${rang.length

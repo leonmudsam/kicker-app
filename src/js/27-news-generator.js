@@ -2736,7 +2736,14 @@ function _buildStories(){
         } else if(ohnePlus.length){
           const istSelbst = ohnePlus.some(pid => titelJeSpieler[pid] === t.name);
           const staerker = [...new Set(ohnePlus.map(pid => titelJeSpieler[pid]).filter(Boolean))];
-          prestigeSatz = istSelbst
+          // Zählt im Monat eine Schattenseite, ist diese Chronik überschattet
+          // [§C39]: eine positive mit Prestige stünde sonst vor ihr. „bleibt
+          // stärker" passte dazu nicht — eine Schattenseite ist nicht stärker,
+          // sie wiegt schwerer.
+          const schattenTitel = ohnePlus.length === 1 && (x => x && chronikStufe(x.titleId) === 'schatten' ? x : null)(_monatTitel(ohnePlus[0]));
+          prestigeSatz = schattenTitel
+            ? ` „${schattenTitel.name}“ überschattet sie in diesem Monat, also kommt für die Laufbahn kein Prestige hinzu.`
+            : istSelbst
             // Ohne den Namen: `_zeigtSatz` sagt eine Zeile darueber schon
             // „Steht jetzt in der Chronik", und mit dem Namen stand da
             // „Steht jetzt in der Chronik. ‚Der Endspurt' steht in der

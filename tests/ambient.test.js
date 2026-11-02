@@ -2837,7 +2837,7 @@ ok(_reihe.potd && _reihe.woche && _reihe.monat
 // sie eine Stufe weiter stand, stand in keinem Vergleich: der Stand eine
 // Millisekunde vor dem Wochenschluss trug den Spieler der Woche schon, sobald
 // die Woche nach der Uhr vorbei war (`_periodeOffen`). Gemessen an den
-// echten Partien: der Wochenschluss am 27.07. hob Jannik um einen Grad, der
+// echten Partien: der Wochenschluss am 29.06. hob Leon um einen Grad, der
 // am 03.08. brachte Julian den Award-Sammler, der Monatsschluss im Juli Leon
 // und Martin Untouchable.
 const _schlussAm = (ms, code) => _amErsten(ms, `
@@ -2847,8 +2847,7 @@ const _schlussAm = (ms, code) => _amErsten(ms, `
     ${code}
   } finally { _cache._stories = bestand; }`);
 const _J = IDS[NAMES.indexOf('Julian')], _M = IDS[NAMES.indexOf('Martin')],
-      _L = IDS[NAMES.indexOf('Leon')], _X = IDS[NAMES.indexOf('Maxi')],
-      _JN = IDS[NAMES.indexOf('Jannik')];
+      _L = IDS[NAMES.indexOf('Leon')], _X = IDS[NAMES.indexOf('Maxi')];
 
 // Der Tag endet vor dem Monat (23:59:59) und beginnt nach der Woche (Mo 00:00).
 const _grenzen = JSON.parse(K.eval(`JSON.stringify((function(){
@@ -2859,17 +2858,17 @@ const _grenzen = JSON.parse(K.eval(`JSON.stringify((function(){
   // weil er der letzte Tag seines Monats ist.
   const pkt = (pid, t) => prestigeOf(pid, t).punkte;
   const juni30 = _storyTagGrenzen(new Date(2026, 5, 30, 12).getTime());
-  const juli27 = _storyTagGrenzen(new Date(2026, 6, 27, 12).getTime());
-  const woche = new Date(2026, 6, 27).getTime();
+  const juni29 = _storyTagGrenzen(new Date(2026, 5, 29, 12).getTime());
+  const woche = new Date(2026, 5, 29).getTime();
   return {
     monat: pkt('${_M}', juni30.nachMs) < pkt('${_M}', seasonEnd('2026-06').getTime()),
     monatText: Math.round(pkt('${_M}', juni30.nachMs)) + ' -> ' + Math.round(pkt('${_M}', seasonEnd('2026-06').getTime())),
-    woche: pos('${_JN}', juli27.vorMs) === pos('${_JN}', woche) && pos('${_JN}', woche) > pos('${_JN}', woche - 1),
-    wocheText: pos('${_JN}', woche - 1) + ' -> ' + pos('${_JN}', juli27.vorMs)
+    woche: pos('${_L}', juni29.vorMs) === pos('${_L}', woche) && pos('${_L}', woche) > pos('${_L}', woche - 1),
+    wocheText: pos('${_L}', woche - 1) + ' -> ' + pos('${_L}', juni29.vorMs)
   };
 })())`));
 ok(_grenzen.monat, 'der letzte Tag des Monats endet vor dessen Schluss: Martins Prestige aus dem Vize-Titel steht nicht in der Karte des 30.06.', _grenzen.monatText);
-ok(_grenzen.woche, 'ein Montag beginnt nach dem Schluss der Woche: Janniks Grad aus dem Spieler der Woche steht nicht in der Karte des 27.07.', _grenzen.wocheText);
+ok(_grenzen.woche, 'ein Montag beginnt nach dem Schluss der Woche: Leons Grad aus dem Spieler der Woche steht nicht in der Karte des 29.06.', _grenzen.wocheText);
 
 // Der Tag: die Karte des Spielers des Tages nennt, was sein Schluss vergab.
 const _tagSchluss = _schlussAm(FIXED, `
@@ -2889,11 +2888,14 @@ ok(_tagSchluss.nurSelten, 'nur Seltenes und Legendaeres: das Gewoehnliche eines 
 // Zeichen-Karte des Schlusses. Ob der Schluss vom 03.08. Julian neben dem
 // Award-Sammler auch einen Grad gibt, hängt an der Elo der Partien und
 // wechselte mit jeder Fassung des Positionsbonus [§C44]. Die Zeichen-Karte
-// wird deshalb am Schluss vom 27.07. gemessen, der Jannik allein mit dem
+// wird deshalb am Schluss vom 29.06. gemessen, der Leon allein mit dem
 // Spieler der Woche einen Grad gibt: dort steht genau ein Grund. Bis jede
 // Chronik den Grundwert und ihren Bonus brachte [§C39], war es der Schluss
-// vom 15.06. mit Julian; seitdem steht er dort schon vorher auf dem Grad,
-// und in den Fixture-Monaten hebt nur dieser eine Wochenschluss jemanden.
+// vom 15.06. mit Julian, danach der vom 27.07. mit Jannik; seit die Liga die
+// Schwellen von sechsundzwanzig Chroniken selbst setzte und eine
+// Schattenseite eine besondere Chronik überschattet, steht Jannik dort schon
+// vorher auf dem Grad. Gemessen heben in den Fixture-Monaten nur die
+// Wochenschlüsse vom 29.06. und 10.08. jemanden, beide Leon.
 const _wocheSchluss = _schlussAm(new RealDate(2026, 7, 4, 8, 0, 0).getTime(), `
   const w = roh.find(x => (x.dataRef||{}).type === 'woche');
   const a = ((w && w.dataRef.abschluss) || []).find(x => x.id === 'award_collector');
@@ -2903,19 +2905,19 @@ const _wocheSchluss = _schlussAm(new RealDate(2026, 7, 4, 8, 0, 0).getTime(), `
 ok(_wocheSchluss.sammler && _wocheSchluss.wocheZeile,
    'der Schluss der Woche bis 02.08. vergibt Julian den Award-Sammler, legendaer, in der Karte der Woche', JSON.stringify(_wocheSchluss));
 ok(_wocheSchluss.brk, 'eine legendaere Auszeichnung ist Breaking, auch in der Karte der Woche');
-const _zeichenSchluss = _schlussAm(new RealDate(2026, 6, 27, 8, 0, 0).getTime(), `
-  const z = roh.find(x => x.id === 'instag_woche_2026-07-27');
+const _zeichenSchluss = _schlussAm(new RealDate(2026, 5, 29, 8, 0, 0).getTime(), `
+  const z = roh.find(x => x.id === 'instag_woche_2026-06-29');
   const d = (z && z.dataRef) || {};
   const karte = z ? _newsCardHtmlM2(z, false, false, '') : '';
   const blatt = z ? (_ndInsTagBlatt(z) || {}).mitte || '' : '';
-  return {zeichen:!!z, schluss:d.schluss, wann:z ? new Date(z.when).getTime() === new Date(2026, 6, 27).getTime() : false,
-    zug:(d.zuege || []).map(x => x.pid === '${_JN}' ? x.art : '?').join(','),
+  return {zeichen:!!z, schluss:d.schluss, wann:z ? new Date(z.when).getTime() === new Date(2026, 5, 29).getTime() : false,
+    zug:(d.zuege || []).map(x => x.pid === '${_L}' ? x.art : '?').join(','),
     grund:(d.grund || []).map(x => x.id).join(','),
-    karte:/nf-abs viol[\\s\\S]*Jannik[\\s\\S]*Player of the Week/.test(karte),
+    karte:/nf-abs viol[\\s\\S]*Leon[\\s\\S]*Player of the Week/.test(karte),
     blatt:blatt.indexOf('Mit dem Schluss der Woche vergeben') >= 0 && blatt.indexOf('nach der Woche') >= 0,
     seite:z ? _newsSeite(z) : ''};`);
 ok(_zeichenSchluss.zeichen && _zeichenSchluss.schluss === 'woche' && _zeichenSchluss.wann && _zeichenSchluss.zug === 'grad',
-   'Janniks neuer Grad aus dem Schluss der Woche steht in einer Zeichen-Karte am Montag um 00:00', JSON.stringify(_zeichenSchluss));
+   'Leons neuer Grad aus dem Schluss der Woche steht in einer Zeichen-Karte am Montag um 00:00', JSON.stringify(_zeichenSchluss));
 ok(_zeichenSchluss.grund === 'potw' && _zeichenSchluss.karte && _zeichenSchluss.blatt,
    'die Zeichen-Karte nennt, was der Schluss vergab, auf der Karte und im Blatt', _zeichenSchluss.grund);
 ok(_zeichenSchluss.seite === 'zeichen', 'sie steht auf der Seite der Zeichen', _zeichenSchluss.seite);
