@@ -14,7 +14,6 @@ eigenen Kopie: so entsteht kein zweiter Generator.
 | Eintrag | Inhalt | Stand |
 |---|---|---|
 | `README-story-simulation.md`, `story-simulation*` | Hundert erfundene Partien, gerechnet und erzählt mit dem Code der App | Herleitung |
-| `README-story-logik.md`, `story-logik*` | Welche Daten, in welcher Reihenfolge, nach welchem Prinzip und wie oft eine Karte entsteht | Herleitung |
 | `README-rekord-vorschlag.md`, `rekord-vorschlag*` | Neue Liga-Rekorde in zwei Kammern (offen und Anspruch): 278 gesuchte Kombinationen gegen neun Tore und sieben Wächter | zehn eingebaut [§C35] |
 | `README-probe-liga.md`, `probe-*` | Eine erfundene Liga aus 571 Partien mit Schaufenster, Tag für Tag nachgespielt: welche Karte entsteht, welche verloren geht und warum | Herleitung |
 | `schande-lauf.js` → `schande.html` | Schandrekorde und -chroniken: dreizehn Kandidaten gegen sechs Tore, darunter: die Schande darf sich nicht beim Schwächsten sammeln | Herleitung [§C35] |
@@ -26,6 +25,7 @@ eigenen Kopie: so entsteht kein zweiter Generator.
 
 | Eintrag | Inhalt |
 |---|---|
+| `README-story-logik.md`, `story-logik*` | Die Übersicht aller Stories: jede Kartenform mit echten, von der App gezeichneten Beispielen und ihrem Blatt, jeder Anlass mit seiner Regel, die Uhr eines Tages, Breaking, die Seiten und das Zusammenführen, an den Partien bis Oktober nachgespielt; dazu neun Entwürfe neuer Stories mit neuen Grafiken, an denselben Partien gemessen (`story-neu-*`) |
 | `story-labor.html` | Partien eintragen und sehen, welche Stories daraus werden. Lädt die ausgelieferte `index.html` in einen abgeriegelten Rahmen: Supabase-Attrappe, kein CDN-Script, kein `fetch`, ein eigener Speicher-Topf — App und Labor liegen auf derselben Adresse, und sonst überschriebe das Labor den Lesestand des Feeds |
 
 ## Gestaltungsentwürfe

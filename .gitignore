@@ -3,3 +3,5 @@ node_modules/
 package-lock.json
 /mockup/.story-simulation.json
 .golden/
+/mockup/.story-logik.json
+/mockup/.story-neu.json

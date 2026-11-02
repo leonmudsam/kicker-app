@@ -2,7 +2,8 @@
 //     Die Version vergibt `tools/build.mjs` als Datum und Hash über den
 //     ausgelieferten Inhalt. Der Hintergrund-Check holt die index.html mit
 //     Cache-Bust; trägt sie eine andere Version, lädt die App von selbst neu,
-//     sobald niemand etwas offen hat, und sagt es danach kurz.
+//     sobald niemand etwas offen hat oder sie in den Hintergrund geht, und
+//     sagt es danach kurz.
 // ╚═════════════════════════════════════════════════════════════════════════╝
 const BUILD_VERSION='2026.08.28.1';
 // Neu laden mit Cache-Bust: das Update und der Knopf in den Einstellungen
@@ -77,11 +78,36 @@ function _updRuhig(){
 }
 function _updVersuchen(){
   clearTimeout(_updWarten); _updWarten=0;
-  if(!_updNeu || document.hidden) return;   // das Zurückkommen versucht es wieder
+  if(!_updNeu) return;
+  if(document.hidden){ _updImHintergrund(); return; }
   if(_updSperre && _updSperre.nach===_updNeu && performance.now()<_updSperre.bis) return;
   if(_updBelegt() || !_updRuhig()){
     const rest=_updRuhig() ? 0 : _updBeruehrt+UPD_RUHE_MS-performance.now();
     _updWarten=setTimeout(_updVersuchen, Math.max(2000, rest));
+    return;
+  }
+  forceReload(_updNeu);
+}
+// ── Wer die App verlässt, sieht das Neuladen nicht ────────────────────
+// In Ruhe kam es kaum: wer die App öffnet, liest im Feed — einem Blatt —
+// oder tippt, und wer sie verlässt, ließ die gefundene Fassung bis zum
+// nächsten Mal liegen; dort begann dasselbe von vorn. Geht die Seite in
+// den Hintergrund, lädt sie deshalb gleich, auch über einem Blatt oder
+// einer Story: die liest niemand mehr. Nicht aber über einer Eingabe, einem
+// Dialog oder einem fokussierten Feld (dort steht etwas, das noch nicht
+// gespeichert ist), nicht neben einem Hinweis mit Knopf („Rückgängig") und
+// nicht, solange geschrieben, abgerufen oder veröffentlicht wird — dann,
+// sobald das fertig ist und die Seite noch im Hintergrund liegt.
+function _updImHintergrund(){
+  clearTimeout(_updWarten); _updWarten=0;
+  if(!_updNeu || !document.hidden) return;
+  if(_updSperre && _updSperre.nach===_updNeu && performance.now()<_updSperre.bis) return;
+  const fokus=document.activeElement;
+  if(_eingabeOffen() || !!document.querySelector('.dlg-bg.show')
+     || (fokus && /^(INPUT|TEXTAREA|SELECT)$/.test(fokus.tagName))
+     || !!document.querySelector('.toast.show.mit-akt')) return;
+  if(_schreibOffen>0 || !!_loadAllPromise || _newsAutoSyncRunning){
+    _updWarten=setTimeout(_updImHintergrund, 1000);
     return;
   }
   forceReload(_updNeu);
@@ -97,7 +123,12 @@ function _updMelden(){
     u.searchParams.delete('_upd');
     history.replaceState(history.state, '', u.toString());
     if(nach!==BUILD_VERSION){ _updSperre={nach, bis:performance.now()+UPD_SPERRE_MS}; return; }
-    setTimeout(()=>toast('App aktualisiert', 'ok'), 700);
+    // Lud sie im Hintergrund, sagt sie es beim Zurückkommen: vorher stünde
+    // der Hinweis auf einer Seite, die niemand sieht.
+    const sagen=()=>setTimeout(()=>toast('App aktualisiert', 'ok'), 700);
+    if(!document.hidden){ sagen(); return; }
+    const zurueck=()=>{ if(document.hidden) return; document.removeEventListener('visibilitychange', zurueck); sagen(); };
+    document.addEventListener('visibilitychange', zurueck);
   }catch(e){}
 }
 // Der erste Check wartet, bis der erste Datenlauf gezeichnet hat und die
@@ -111,7 +142,7 @@ async function checkForUpdate(){
       ['pointerdown','keydown','wheel'].forEach(t=>
         window.addEventListener(t, ()=>{ _updBeruehrt=performance.now(); }, {capture:true, passive:true}));
       document.addEventListener('visibilitychange', ()=>{
-        if(document.hidden) return;
+        if(document.hidden){ _updImHintergrund(); return; }
         _updSichtbar=performance.now();
         _updVersuchen();
       });

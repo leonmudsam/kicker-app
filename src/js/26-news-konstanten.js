@@ -426,6 +426,15 @@ const STORY_PRIO = {
 // INNERHALB des Fun-Fact-Topfs eine Rangfolge — er darf das Band nicht
 // verlassen, sonst stünde ein Fun Fact über einer Pleitenserie.
 const AMBIENT_PRIO_SPANNE = 7;
+// Die Reihenfolge des Feeds ist die Zeit; bei gleicher Zeit steht die
+// wichtigere Karte oben. Der Generator sortierte schon so, der Bestand und
+// die Realtime-Zeilen nicht: dort entschied bei gleicher Zeit die
+// Reihenfolge des Einlesens, und die Ehrung des Monats, die zur selben
+// Sekunde wie sein Rückblick steht, landete mal darüber, mal darunter
+// [§11.6f].
+function _storyFolge(a, b){
+  return (new Date(b.when) - new Date(a.when)) || ((b.prio || 0) - (a.prio || 0));
+}
 
 // Ambiente Fun-Fact-Stories (v8.5, v9.5) — Fun Facts / persönliche Nuggets,
 // damit der Feed auch ohne neue Matches lebt.

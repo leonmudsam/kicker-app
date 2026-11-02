@@ -201,8 +201,9 @@ function _insBestVor(vonMs, bestand){
 // ─── Was der Schluss eines Zeitraums vergibt, als Grund ──────────────
 // Steigt jemand mit dem Schluss der Woche auf einen neuen Grad, nennt die
 // Zeichen-Karte den Grund: den Spieler der Woche, den Award-Sammler [§C30].
-// Alles, was ein Schluss vergibt, steht in der Ehrung dieses Schlusses
-// (`_newsSchlussEhrungen`, [§11.6f]); hier nur Seltenes und Legendäres, je
+// Alles, was ein Schluss vergibt, steht in seiner Ehrung — der des Tages
+// unter dem Spieler des Tages, der der Woche und des Monats [§11.6f]; hier
+// nur Seltenes und Legendäres, je
 // Auszeichnung mit ihren Spielern, so wie die Zeile unter der Karte es
 // zeigt (`_newsAbschlussHtml`).
 //

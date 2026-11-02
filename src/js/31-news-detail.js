@@ -1134,7 +1134,11 @@ function _ndPotdBlatt(s){
       + `<b class="num r">${_spVz(Number(g.delta) || 0)} Elo</b></div>`
       + _ndTagesbahn([g.pid], _newsTagPartien(d.dayKey, [g.pid])) : '';
   return {kopf, mitte:ab('Das Feld des Tages', balken) + ab(pids.length > 1 ? 'Der Tag der Tagessieger' : 'Der Tag in Partien', bahn)
-    + ab('Der härteste Tag', gegen)};
+    + ab('Der härteste Tag', gegen)
+    // Was der Schluss des Tages vergab, im Blatt mit jedem Posten, dem
+    // wievielten Mal und dem Rest seines Werts — derselbe Kasten wie im
+    // Blatt einer Ehrung [§11.6f, §C27].
+    + ab('Die Ehrung des Tages', _ehrungBloeckeHtml(d.ehrung))};
 }
 
 // ── Der Endspurt der Saison [§C33] ──────────────────────────────────
