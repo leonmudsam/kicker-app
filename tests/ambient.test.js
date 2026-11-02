@@ -1373,7 +1373,10 @@ const _feed = JSON.parse(K.eval(`JSON.stringify((function(){
     return d.type==='spiel' || (d.type==='sammel' && d.quelle==='spiel' && !!d.matchId); };
   const ohnePartie = sichtbar.filter(s => !_prt(s));
   const zaehl = {}, proTag = {};
-  sichtbar.forEach(s => { const t=(s.dataRef&&s.dataRef.type)||'-';
+  // Die Ehrung eines Schlusses zaehlt fuer sich: es gibt sie je Tag, Woche
+  // und Monat genau einmal, neben den Ehrungen der Runden [§11.6f].
+  sichtbar.forEach(s => { const t=(s.dataRef&&s.dataRef.type)==='ehrung'&&s.dataRef.periode
+      ? 'ehrung_'+s.dataRef.periode : (s.dataRef&&s.dataRef.type)||'-';
     zaehl[t]=(zaehl[t]||0)+1;
     const k=t+'|'+tagKey(s.when); proTag[k]=(proTag[k]||0)+1; });
   return {
@@ -1454,7 +1457,7 @@ const _feed = JSON.parse(K.eval(`JSON.stringify((function(){
     haeufung: Object.keys(proTag).filter(k => proTag[k] > 2 &&
       ['ambient','group','lead_change','elo_record','streak_record',
        'season_recap','season_endgame','sammel','woche','spiel',
-       'potd'].indexOf(k.split('|')[0]) < 0)
+       'potd','ehrung_tag','ehrung_woche','ehrung_monat'].indexOf(k.split('|')[0]) < 0)
       .map(k => k + '×' + proTag[k]),
     // Doppelte Schlagzeilen: zweimal dieselbe Zeile ist eine Zeile zu viel.
     doppelt: (function(){
@@ -2870,19 +2873,35 @@ const _grenzen = JSON.parse(K.eval(`JSON.stringify((function(){
 ok(_grenzen.monat, 'der letzte Tag des Monats endet vor dessen Schluss: Martins Prestige aus dem Vize-Titel steht nicht in der Karte des 30.06.', _grenzen.monatText);
 ok(_grenzen.woche, 'ein Montag beginnt nach dem Schluss der Woche: Leons Grad aus dem Spieler der Woche steht nicht in der Karte des 29.06.', _grenzen.wocheText);
 
-// Der Tag: die Karte des Spielers des Tages nennt, was sein Schluss vergab.
+// Der Tag: was sein Schluss vergab, steht in der Ehrung des Tages [§11.6f],
+// mit allen Klassen und dem Spieler des Tages selbst. Seltenes und
+// Legendaeres stand als Zeile unter dem Spieler des Tages, das Gewoehnliche
+// Tage spaeter in der Ehrung einer Runde, und der Spieler des Tages war
+// nirgends eine Auszeichnung mit Wert.
 const _tagSchluss = _schlussAm(FIXED, `
+  const e = roh.find(x => x.id === 'ehrung_tag_2026-08-26');
   const p = roh.find(x => x.id === 'potd_2026-08-26');
-  const a = ((p && p.dataRef.abschluss) || []).find(x => x.id === 'allwetter');
-  const html = p ? _newsCardHtmlM2(p, false, false, '') : '';
-  return {da:!!a, maxi:!!a && a.spieler.some(x => x.pid === '${_X}' && x.mal === 1 && x.p > 0),
-    nurSelten:roh.filter(x => (x.dataRef||{}).type === 'potd').every(x => (x.dataRef.abschluss || [])
-      .every(y => y.klasse === 'legendary' || y.klasse === 'rare')),
-    zeile:/class="nf-abs viol"[\\s\\S]*Maxi[\\s\\S]*Allwetter[\\s\\S]*Selten/.test(html)};`);
-ok(_tagSchluss.da && _tagSchluss.maxi, 'der Schluss des 26.08. vergibt Maxi Allwetter, und die Karte des Tages traegt es',
-   JSON.stringify(_tagSchluss));
-ok(_tagSchluss.zeile, 'die Karte zeigt es als Zeile mit Gesicht, Name und Klasse');
-ok(_tagSchluss.nurSelten, 'nur Seltenes und Legendaeres: das Gewoehnliche eines Tages steht in der Ehrung');
+  const d = (e && e.dataRef) || {};
+  const q = (d.spieler || []).flatMap(x => x.posten.map(y => Object.assign({pid:x.pid}, y)));
+  const tage = roh.filter(x => /^ehrung_tag_/.test(x.id));
+  const alt = tage.find(x => x.dataRef.tag < '2026-08-25');
+  const zr = x => { const z = _ehrungZeitraum(x.dataRef) || {}; return z.vor + ' ' + z.wann; };
+  const html = e ? _newsCardHtmlM2(e, false, false, '') : '';
+  return {da:!!e, maxi:q.some(y => y.pid === '${_X}' && y.id === 'allwetter' && y.mal === 1 && y.bis === 1 && y.p > 0),
+    potd:q.some(y => y.id === 'potd' && y.p > 0),
+    gewoehnlich:tage.some(x => x.dataRef.spieler.some(y => y.posten.some(z => z.klasse === 'common'))),
+    wann:e && p ? new Date(p.when) - new Date(e.when) : null,
+    gestern:e ? zr(e) : '', alt:alt ? [zr(alt), alt.dataRef.tag.slice(8) + '.' + alt.dataRef.tag.slice(5, 7) + '.'] : null,
+    karte:/DIE EHRUNG/.test(html) && /Geholt/.test(html) && /gestern/.test(html),
+    potdOhne:!!p && !p.dataRef.abschluss && !/nf-abs/.test(_newsCardHtmlM2(p, false, false, ''))};`);
+ok(_tagSchluss.da && _tagSchluss.maxi && _tagSchluss.potd,
+   'der Schluss des 26.08. vergibt Maxi Allwetter, und die Ehrung des Tages traegt es samt dem Spieler des Tages', JSON.stringify(_tagSchluss));
+ok(_tagSchluss.gewoehnlich, 'die Ehrung eines Tages nennt auch das Gewoehnliche');
+ok(_tagSchluss.karte && _tagSchluss.gestern === 'Geholt gestern' && _tagSchluss.alt
+   && _tagSchluss.alt[0] === 'Geholt am ' + _tagSchluss.alt[1],
+   'sie sagt, an welchem Tag sie geholt sind: gestern oder mit Datum', JSON.stringify([_tagSchluss.gestern, _tagSchluss.alt]));
+ok(_tagSchluss.wann === 30000 && _tagSchluss.potdOhne,
+   'sie steht direkt unter dem Spieler des Tages, eine Minute weiter, und der traegt keine Zeile mehr dafuer', JSON.stringify(_tagSchluss));
 
 // Die Woche: Award-Sammler in der Karte der Woche, die Stufe in einer
 // Zeichen-Karte des Schlusses. Ob der Schluss vom 03.08. Julian neben dem
@@ -2898,13 +2917,20 @@ ok(_tagSchluss.nurSelten, 'nur Seltenes und Legendaeres: das Gewoehnliche eines 
 // Wochenschlüsse vom 29.06. und 10.08. jemanden, beide Leon.
 const _wocheSchluss = _schlussAm(new RealDate(2026, 7, 4, 8, 0, 0).getTime(), `
   const w = roh.find(x => (x.dataRef||{}).type === 'woche');
-  const a = ((w && w.dataRef.abschluss) || []).find(x => x.id === 'award_collector');
-  return {sammler:!!a && a.klasse === 'legendary' && a.spieler.some(x => x.pid === '${_J}' && x.mal === 1),
-    brk:!!w && _isBreaking(w) && !roh.filter(x => (x.dataRef||{}).type === 'woche' && x !== w).some(_isBreaking),
-    wocheZeile:w ? /nf-abs gold[\\s\\S]*Award-Sammler[\\s\\S]*Legendär/.test(_newsCardHtmlM2(w, false, false, '')) : false};`);
-ok(_wocheSchluss.sammler && _wocheSchluss.wocheZeile,
-   'der Schluss der Woche bis 02.08. vergibt Julian den Award-Sammler, legendaer, in der Karte der Woche', JSON.stringify(_wocheSchluss));
-ok(_wocheSchluss.brk, 'eine legendaere Auszeichnung ist Breaking, auch in der Karte der Woche');
+  const e = roh.find(x => x.id === 'ehrung_woche_2026-07-27');
+  const d = (e && e.dataRef) || {};
+  const q = (d.spieler || []).flatMap(x => x.posten.map(y => Object.assign({pid:x.pid}, y)));
+  const z = _ehrungZeitraum(d) || {};
+  return {sammler:q.some(y => y.pid === '${_J}' && y.id === 'award_collector' && y.klasse === 'legendary' && y.bis === 1),
+    potw:q.some(y => y.id === 'potw'), zr:z.vor + ' ' + z.wann,
+    wann:e && w ? new Date(w.when) - new Date(e.when) : null,
+    brk:!!e && _isBreaking(e) && !!w && !_isBreaking(w) && !w.dataRef.abschluss,
+    still:roh.filter(x => (x.dataRef||{}).type === 'ehrung' && !x.dataRef.periode).every(x => !_isBreaking(x))};`);
+ok(_wocheSchluss.sammler && _wocheSchluss.potw && _wocheSchluss.zr === 'Geholt in der Woche vom\u00a027.07. bis\u00a002.08.',
+   'der Schluss der Woche bis 02.08. vergibt Julian den Award-Sammler, legendaer, und die Ehrung der Woche nennt ihn samt dem Spieler der Woche und der Woche', JSON.stringify(_wocheSchluss));
+ok(_wocheSchluss.brk && _wocheSchluss.wann === 95000,
+   'eine legendaere Auszeichnung macht die Ehrung der Woche zum Breaking, am Sonntag um 23:57:30 unter der Ehrung des Tages', JSON.stringify(_wocheSchluss));
+ok(_wocheSchluss.still, 'die Ehrung einer Runde bleibt still');
 const _zeichenSchluss = _schlussAm(new RealDate(2026, 5, 29, 8, 0, 0).getTime(), `
   const z = roh.find(x => x.id === 'instag_woche_2026-06-29');
   const d = (z && z.dataRef) || {};
@@ -2944,33 +2970,89 @@ const _wocheMonat = _schlussAm(new RealDate(2026, 5, 1, 9, 0, 0).getTime(), `
 ok(!_wocheMonat.woche && !_wocheMonat.gestellt && _wocheMonat.monat,
    'am Monatsende traegt der Monatsabschluss die Zeichen der Woche mit, ohne eigene Karte', JSON.stringify(_wocheMonat));
 
-// Der Monat: Untouchable in der Karte des Monatsabschlusses.
+// Der Monat: Meister, Vize-Meister, Team der Saison und Untouchable in der
+// Ehrung des Monats, direkt ueber dem Rueckblick. Wer mit dem Monat Team
+// der Saison oder Vize-Meister wurde, stand auf dem Podest, aber nirgends
+// als Auszeichnung mit ihrem Wert.
 const _monatSchluss = _schlussAm(new RealDate(2026, 7, 1, 12, 0, 0).getTime(), `
   const m = roh.find(x => x.id === 'season_recap_2026-07');
-  const a = ((m && m.dataRef.abschluss) || []).find(x => x.id === 'untouchable');
-  return {wer:a ? a.spieler.map(x => x.pid).sort().join(',') : '',
-    zeile:m ? /nf-abs gold[\\s\\S]*Untouchable/.test(_newsCardHtmlM2(m, false, false, '')) : false};`);
-ok(_monatSchluss.wer === [_L, _M].sort().join(',') && _monatSchluss.zeile,
-   'der Schluss des Juli vergibt Leon und Martin Untouchable, und der Monatsabschluss zeigt es', JSON.stringify(_monatSchluss));
+  const e = roh.find(x => x.id === 'ehrung_monat_2026-07');
+  const d = (e && e.dataRef) || {};
+  const q = (d.spieler || []).flatMap(x => x.posten.map(y => Object.assign({pid:x.pid}, y)));
+  const wer = id => q.filter(y => y.id === id).map(y => y.pid).sort().join(',');
+  const top = JSON.parse(seasons.find(s => s.id === '2026-07').top_elo);
+  const z = _ehrungZeitraum(d) || {};
+  return {untouchable:wer('untouchable'), meister:wer('champion') === seasonChampion('2026-07'),
+    vize:wer('vice_champion') === top[1].id, team:wer('team_of_season').split(',').filter(Boolean).length,
+    zr:z.vor + ' ' + z.wann, wann:e && m ? new Date(e.when) - new Date(m.when) : null,
+    brk:!!e && _isBreaking(e), recapOhne:!!m && !m.dataRef.abschluss && !/nf-abs/.test(_newsCardHtmlM2(m, false, false, ''))};`);
+ok(_monatSchluss.untouchable === [_L, _M].sort().join(',') && _monatSchluss.meister && _monatSchluss.vize && _monatSchluss.team === 2,
+   'der Schluss des Juli vergibt Meister, Vize, Team der Saison und Leon und Martin Untouchable, alles in der Ehrung des Monats', JSON.stringify(_monatSchluss));
+ok(_monatSchluss.zr === 'Geholt im Juli 2026' && _monatSchluss.wann === 60000 && _monatSchluss.recapOhne,
+   'sie nennt den Monat und steht eine Minute ueber dem Rueckblick, der keine Zeile mehr dafuer traegt', JSON.stringify(_monatSchluss));
+ok(_monatSchluss.brk, 'Untouchable, legendaer und nicht vom Podest, macht sie zum Breaking');
 
-// Die Ehrung nennt nicht noch einmal, was die Karte des Tages traegt — eine
-// Karte von vor diesem Feld traegt nichts, und dann behaelt die Ehrung es.
+// Was den ganzen Tag beschreibt, vergibt sein Schluss: Julians Unschlagbar
+// vom 11.06. steht in der Ehrung des Tages, in keiner Ehrung einer Runde und
+// ohne eigene Karte. Es stand in der naechsten Ehrung danach, der einer
+// Runde Tage spaeter. Und keine Auszeichnung steht in zwei Ehrungen: je
+// Spieler, Auszeichnung und dem wievielten Mal genau eine.
 const _ehrungSchluss = _schlussAm(new RealDate(2026, 5, 16, 8, 0, 0).getTime(), `
-  const p = roh.find(x => x.id === 'potd_2026-06-11');
-  const traegt = ((p && p.dataRef.abschluss) || []).some(a => a.id === 'unbeatable' && a.spieler.some(x => x.pid === '${_J}'));
-  const unb = l => l.filter(x => (x.dataRef||{}).type === 'ehrung').some(x => x.dataRef.spieler
-    .some(y => y.pid === '${_J}' && y.posten.some(q => q.id === 'unbeatable')));
-  const eigen = l => l.some(x => (x.dataRef||{}).type === 'badge_unlocked' && x.dataRef.badgeId === 'unbeatable'
-    && x.dataRef.playerId === '${_J}' && x.dataRef.tag === '2026-06-11');
-  const neu = unb(roh), neuEigen = eigen(roh);
-  _cache._stories = [{id:'potd_2026-06-11', when:new Date(2026, 5, 11, 23, 59), dataRef:{type:'potd', dayKey:'2026-06-11'}}];
+  const eh = roh.filter(x => (x.dataRef||{}).type === 'ehrung');
+  const hat = x => x.dataRef.spieler.some(y => y.pid === '${_J}' && y.posten.some(q => q.id === 'unbeatable'));
+  const tag = eh.find(x => x.id === 'ehrung_tag_2026-06-11');
+  const n = {};
+  eh.forEach(x => x.dataRef.spieler.forEach(y => y.posten.forEach(q => {
+    for(let i = q.bis - q.mal + 1; i <= q.bis; i++){ const k = y.pid + '|' + q.id + '|' + i; n[k] = (n[k] || 0) + 1; } })));
+  // Eine gespeicherte Ehrung einer Runde von vor dieser Fassung nennt es
+  // schon: dann laesst die Ehrung des Tages es weg, statt es ein zweites
+  // Mal zu nennen.
+  const rang = tag ? tag.dataRef.spieler.find(y => y.pid === '${_J}').posten.find(q => q.id === 'unbeatable').bis : 0;
+  _cache._stories = [{id:'ehrung_gespeichert', when:new Date(2026, 5, 13, 18), dataRef:{type:'ehrung',
+    spieler:[{pid:'${_J}', summe:25, posten:[{id:'unbeatable', name:'Unschlagbar', ic:'shield', klasse:'rare', mal:1, bis:rang, p:25}]}]}}];
   _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
-  const zweit = _buildStories(), alt = unb(zweit), altEigen = eigen(zweit);
-  return {traegt, neu, alt, neuEigen, altEigen};`);
-ok(_ehrungSchluss.traegt && !_ehrungSchluss.neu && !_ehrungSchluss.neuEigen,
-   'Julians Unschlagbar vom 11.06. steht in der Karte des Tages, in keiner Ehrung und ohne eigene Karte', JSON.stringify(_ehrungSchluss));
-ok(_ehrungSchluss.alt && _ehrungSchluss.altEigen,
-   'eine gespeicherte Karte ohne Abschluss laesst es der Ehrung und der eigenen Karte', JSON.stringify(_ehrungSchluss));
+  const zweit = _buildStories().find(x => x.id === 'ehrung_tag_2026-06-11');
+  return {tag:!!tag && hat(tag), gespeichert:rang > 0 && !(zweit && hat(zweit)), runde:eh.filter(x => !x.dataRef.periode).some(hat),
+    eigen:roh.some(x => (x.dataRef||{}).type === 'badge_unlocked' && x.dataRef.badgeId === 'unbeatable'
+      && x.dataRef.playerId === '${_J}' && x.dataRef.tag === '2026-06-11'),
+    doppelt:Object.keys(n).filter(k => n[k] > 1), posten:Object.keys(n).length};`);
+ok(_ehrungSchluss.tag && !_ehrungSchluss.runde && !_ehrungSchluss.eigen,
+   'Julians Unschlagbar vom 11.06. steht in der Ehrung des Tages, in keiner Ehrung einer Runde und ohne eigene Karte', JSON.stringify(_ehrungSchluss));
+ok(_ehrungSchluss.gespeichert, 'nennt es eine gespeicherte Ehrung einer Runde schon, laesst die Ehrung des Tages es weg', JSON.stringify(_ehrungSchluss));
+ok(_ehrungSchluss.posten > 20 && !_ehrungSchluss.doppelt.length,
+   'keine Auszeichnung steht in zwei Ehrungen', _ehrungSchluss.doppelt.slice(0, 3).join(', ') || _ehrungSchluss.posten + ' Verleihungen');
+
+// Welche Auszeichnung welcher Schluss vergeben kann, steht in
+// `EHRUNG_SCHLUSS` fest — ueber alle Auszeichnungen zu zaehlen kostete je
+// Schluss das Zehnfache. Nachgerechnet wird es an jedem Schluss der echten
+// Partien ueber ALLE Auszeichnungen: was sich zwischen einer Millisekunde
+// davor und dem Schluss aendert und Prestige bringt, muss auf der Liste
+// stehen, und was auf der Liste steht, kommt auch vor.
+const _schlussListe = JSON.parse(K.eval(`JSON.stringify((function(){
+  const S = [], tage = new Set(matches.map(m => tagKey(mts(m))).filter(t => t >= '2026-06-01'));
+  tage.forEach(t => { const d = new Date(t + 'T00:00:00'); d.setHours(23, 59, 0, 0); S.push(['tag', d.getTime()]);
+    const w = new Date(t + 'T00:00:00'); w.setDate(w.getDate() - (w.getDay() + 6) % 7 + 7); S.push(['woche', w.getTime()]); });
+  ['2026-06','2026-07'].forEach(sid => S.push(['monat', seasonEnd(sid).getTime()]));
+  const gesehen = {}, fehlt = [];
+  [...new Map(S.map(x => [x.join('|'), x])).values()].forEach(([art, s]) => {
+    const vor = s - 1, msA = _partienBis(vor), msB = _partienBis(s);
+    BADGES.forEach(b => players.forEach(p => { let a = 0, z = 0;
+      try { a = b.count(p.id, msA, vor) || 0; z = b.count(p.id, msB, s) || 0; } catch(e){ return; }
+      if(!(z > a) || !(auszeichnungsTeilwert(b.id, z) > 0)) return;
+      gesehen[art + '|' + b.id] = 1;
+      if(!EHRUNG_SCHLUSS[art].includes(b.id)) fehlt.push(art + ' ' + b.id); }));
+  });
+  const nie = Object.keys(EHRUNG_SCHLUSS).flatMap(art => EHRUNG_SCHLUSS[art].filter(id => !gesehen[art + '|' + id]).map(id => art + ' ' + id));
+  return {fehlt:[...new Set(fehlt)], nie, n:Object.keys(gesehen).length};
+})())`));
+ok(!_schlussListe.fehlt.length, 'jede Auszeichnung, die ein Schluss vergibt, steht auf seiner Liste', _schlussListe.fehlt.join(', '));
+// Eine steht auf der Liste, ohne in den echten Partien vorzukommen: der
+// Award-Sammler am Schluss eines Tages, wenn der fuenfte Spieler des Tages
+// nach dem zweiten Spieler der Woche kommt. In den Fixtures kam der zweite
+// Spieler der Woche immer zuletzt.
+const _SCHLUSS_MOEGLICH = ['tag award_collector'];
+ok(_schlussListe.nie.every(x => _SCHLUSS_MOEGLICH.includes(x)),
+   'und jede auf der Liste vergibt er an den echten Partien', _schlussListe.nie.join(', ') || _schlussListe.n + ' gesehen');
 
 ok(_plan.sammel.length > 0, 'es gibt Sammelkarten', _plan.sammel.length + '');
 ok(_plan.sammel.every(n => n >= 2), 'eine Sammelkarte traegt alle verbundenen Zeilen',
@@ -6943,11 +7025,13 @@ console.log('=== DIE EHRUNG ===');
 const _eh = JSON.parse(K.eval(`JSON.stringify((function(){
   const alle = [], ids = new Set();
   for(let t = Date.parse('2026-05-10'); t < Date.parse('2026-09-01'); t += NEWS_FENSTER_TAGE * 864e5 * 0.9)
-    _newsEhrungStories(t).forEach(s => { if(!ids.has(s.id)){ ids.add(s.id); alle.push(s); } });
+    _newsEhrungStories(t).concat(_newsSchlussEhrungen(t)).forEach(s => { if(!ids.has(s.id)){ ids.add(s.id); alle.push(s); } });
   const ORD = {legendary:0, rare:1, common:2};
   const falsch = [];
   let legendaer = 0, umbruch = 0, kacheln = 0, zeilen = 0;
+  const perioden = {};
   alle.forEach(s => {
+    if(s.dataRef.periode) perioden[s.dataRef.periode] = (perioden[s.dataRef.periode] || 0) + 1;
     const d = s.dataRef, sp = d.spieler;
     const h = _newsEhrungHtml(s, false, '');
     // Keine Bilanz-Chips der Tafel: dieselbe Form las sich als dieselbe Nachricht.
@@ -6993,10 +7077,14 @@ const _eh = JSON.parse(K.eval(`JSON.stringify((function(){
     const z = _ehrungZeitraum(d);
     const vor = (h.match(/<span class="eh-zr-k">([^<]*)<\\/span>/) || [])[1];
     const zr = (h.match(/<span class="eh-zr-t">([^<]*)<\\/span>/) || [])[1];
-    if(!z || vor !== esc(z.vor) || zr !== esc(z.wann) || !/^Geholt in de[nr] Partien?$/.test(vor)
-      || !/\u00a0Uhr$/.test(zr) || zr.indexOf(datumFmt(d.ab, 'uhr')) < 0 || zr.indexOf(datumFmt(d.bis, 'uhr')) < 0)
+    // Die Ehrung eines Schlusses nennt den Zeitraum statt der Partien.
+    if(!z || vor !== esc(z.vor) || zr !== esc(z.wann) || (d.periode
+      ? !({tag:/^Geholt( am)?$/, woche:/^Geholt in der Woche$/, monat:/^Geholt im$/}[d.periode] || /^$/).test(vor)
+      : (!/^Geholt in de[nr] Partien?$/.test(vor)
+        || !/\u00a0Uhr$/.test(zr) || zr.indexOf(datumFmt(d.ab, 'uhr')) < 0 || zr.indexOf(datumFmt(d.bis, 'uhr')) < 0)))
       falsch.push(s.id + ': Zeitraum ' + vor + ' | ' + zr);
-    if(z && _ndEhrungBlatt(s).mitte.indexOf('<div class="nw-hinweis eh-zeit">' + esc(z.vor + ' ' + z.wann) + '.</div>') < 0)
+    if(z && _ndEhrungBlatt(s).mitte.indexOf('<div class="nw-hinweis eh-zeit">' + esc(z.vor + ' ' + z.wann)
+      + (/\\.$/.test(z.wann) ? '' : '.') + '</div>') < 0)
       falsch.push(s.id + ': Blatt nennt einen anderen Zeitraum');
     // Im Blatt jede Klasse, die vorkommt, und zusammen alle Auszeichnungen.
     const anteil = _ndEhrungBlatt(s).mitte;
@@ -7036,9 +7124,10 @@ const _eh = JSON.parse(K.eval(`JSON.stringify((function(){
   const blattP = _ndEhrungBlatt({dataRef:{spieler:[{pid:players[0].id, summe:probe.p,
     posten:[Object.assign({name:'Mauer', ic:'shield'}, probe)]}]}}).mitte;
   const breite = +((blattP.match(/eh-q-m"[^>]*><i style="width:([\\d.]+)%/) || [])[1]);
-  return {n:alle.length, falsch, legendaer, umbruch, kacheln, zeilen, breite, soll:r(probe), voll:r(erst)};
+  return {n:alle.length, falsch, legendaer, umbruch, kacheln, zeilen, perioden, breite, soll:r(probe), voll:r(erst)};
 })())`));
-ok(_eh.n >= 40 && _eh.legendaer > 0 && _eh.umbruch > 0 && _eh.kacheln > 0 && _eh.zeilen > 0 && !_eh.falsch.length,
+ok(_eh.n >= 40 && _eh.legendaer > 0 && _eh.umbruch > 0 && _eh.kacheln > 0 && _eh.zeilen > 0 && !_eh.falsch.length
+   && _eh.perioden.tag > 20 && _eh.perioden.woche > 5 && _eh.perioden.monat >= 2,
    'die Ehrung trägt je Geehrtem eine Säule auf seinem Wappen mit der Zeichenkachel der seltensten Auszeichnung, höchstens fünf je Reihe, auf der Karte nur Bild, Schlagzeile und ihre Partien wie im Blatt, im Blatt jede Klasse, im Satz die wertvollste und jede Auszeichnung genau einmal in ihrem Kasten',
    _eh.falsch.slice(0, 4).join(' | ') || _eh.n + ' Ehrungen, ' + _eh.legendaer + ' legendär, ' + _eh.umbruch + ' auf zwei Reihen, ' + _eh.zeilen + ' Zeilen, ' + _eh.kacheln + ' Kacheln');
 // Die Zeile in Worten: heute und gestern als Wort, weiter zurück das
