@@ -1792,16 +1792,21 @@ const _autoTag = (tag, std) => {
   // Partie und abends danach.
   const woche = (morgens) => {
     NOW = new RealDate(2026, 5, 1, morgens ? 9 : 21, 0, 0).getTime();
+    // Die Tabelle der Saisons trägt nur abgeschlossene Monate. Die Welt
+    // dieser Suite trägt für ihre Uhr im August auch Juni und Juli; am 1.
+    // Juni morgens, ohne spätere Partie, gilt der Schluss der Woche als
+    // „jetzt", und dann zählte der Vize-Titel des Juli schon mit.
     return JSON.parse(K.eval(`(()=>{
-      const echt = matches;
+      const echt = matches, archiv = seasons;
       if(${morgens ? 'true' : 'false'}) matches = echt.filter(m => mts(m) < seasonStart().getTime());
+      seasons = archiv.filter(s => seasonEnd(s.id).getTime() < Date.now());
       invalidateCache();
       try {
         const von = new Date(2026, 4, 25).getTime(), bis = new Date(2026, 4, 31, 23, 59, 59, 999).getTime();
         const je = l => { const o = {}; l.forEach(x => { o[pname(x.pid)] = Math.round(x.delta * 10) / 10; }); return o; };
         return JSON.stringify({woche:je(rcpWocheLaufbahn(von, bis)), mitTiteln:je(rcpLaufbahnDaten(von, bis)),
           meister:pname(JSON.parse(seasons.find(s => s.id === '2026-05').top_elo)[0].id)});
-      } finally { matches = echt; invalidateCache(); }
+      } finally { matches = echt; seasons = archiv; invalidateCache(); }
     })()`));
   };
   const morgens = woche(true), abends = woche(false);

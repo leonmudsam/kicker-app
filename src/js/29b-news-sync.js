@@ -59,7 +59,7 @@ function _onStoryRealtimeInsert(row){
   // Einsortieren (newest-first nach event_at) + auf 100 kürzen (Reserve, §11.2).
   // NEUE Array-Referenz → Konsolidierungs-Memo (§11.2) bricht sauber.
   const next = _cache._stories.concat([story]);
-  next.sort((a, b) => b.when - a.when);
+  next.sort(_storyFolge);
   _cache._stories = next;
   // Badge + Toast + offene Views aktualisieren (Story-Detail #ndBg bleibt unberührt).
   _refreshOpenNewsViews();
@@ -76,7 +76,7 @@ function _onStoryRealtimeUpdate(row){
   const alt = _cache._stories.findIndex(s => s.id === story.id);
   const next = _cache._stories.slice();
   if(alt >= 0) next[alt] = story; else next.push(story);
-  next.sort((a, b) => b.when - a.when);
+  next.sort(_storyFolge);
   _cache._stories = next;
   _refreshOpenNewsViews();
 }

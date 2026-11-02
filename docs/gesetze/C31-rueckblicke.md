@@ -8,7 +8,7 @@
 - Woche und Tag zeigen Held und Feld (`rcpWocheHtml`, `rcpEloBahnHtml`, `rcpFeldHtml` mit der Elo jedes Spielers). Der Held steht vor dem Strahlenkranz der Meisterbühne, leiser (`rcpHeldHtml` mit `strahl`); Wappen, Name und Zahlen heben sich nacheinander herein, die Elo-Linie zeichnet sich von links, jede Partie setzt ihren Punkt, wenn die Linie bei ihr ankommt. Die Woche zeigt dazu ihre Tage als Kalender mit ihren Zahlen (Spieltage, Tore je Partie, enge Partien, Duos), ihre Awards und dieselben Laufbahn-Abschnitte wie die Saison, mit den Rekorden der Woche.
 - Die Wirkung auf die Laufbahn ist der Unterschied zweier Prestige-Stände, vor dem Zeitraum und an seinem Ende (`rcpLaufbahnDaten`), je Spieler nach den drei Quellen [§C34]; die neuen Zeichen sind, wer dabei Stufe oder Grad wechselte (`rcpZeichenZuege`), die Säulen der Auszeichnungen genau ihr Teil aus Auszeichnungen (`rcpEhrungHtml`). Die Rekorde eines Zeitraums kommen aus `saisonRekorde` oder `rekordeImZeitraum`; „verbessert" heißt, dass der Wert gestiegen ist. Dieser Teil kommt nach, wenn das Blatt eingefahren ist (`rcpSpaetLaden`).
 - „Awards" sind die Wertungen eines Zeitraums aus dem Awards-Reiter (`rcpAwardKacheln`, `awardRankings` mit `awSeasonId` oder `awWeekStart`), nie aus einer eigenen Rechnung; „Auszeichnungen" sind, was im Profil gesammelt wird.
-- Die Wirkung einer Woche, die mit einem Monat endet, schneidet eine Millisekunde vor dem Monatsende (`rcpWocheLaufbahn`): Meister, Vize und Team der Saison kommen mit dem Monat und stehen in seinem Rückblick, nicht in dem der Woche. Ein Schnitt nach der letzten Partie ist „jetzt" nur, wenn kein Monatswechsel dazwischen liegt (`_schnitt`), sonst zeigte der Morgen nach dem Monatsende andere Zahlen als der Abend.
+- Die Wirkung einer Woche zählt bis zu ihrem Schluss am Montag um 00:00, mit Spieler der Woche und Award-Sammler, und ohne die Titel eines Monats, der in ihr endet (`rcpWocheLaufbahn`): Meister, Vize, Team der Saison und Untouchable kommen mit dem Monat und stehen in seinem Rückblick und seiner Ehrung, nicht in denen der Woche, auch wenn die Woche über das Monatsende hinausreicht. Ein Schnitt nach der letzten Partie ist „jetzt" nur, wenn kein Monatswechsel dazwischen liegt (`_schnitt`), sonst zeigte der Morgen nach dem Monatsende andere Zahlen als der Abend.
 - Von selbst öffnet sich höchstens ein Rückblick am Tag (`_autoRueckblickHeute`, gemerkt, sobald er geplant ist): der Saison-Rückblick in den ersten drei Tagen des Monats (`autoShowSeasonRecap`) geht vor, die Woche kommt am Montag oder Dienstag, und am Mittwoch, wenn der Monat an einem dieser Tage wechselt. Gesehen ist ein Rückblick, sobald er offen ist; Wegwischen zählt. Der Monatsabschluss im Feed öffnet den Saison-Rückblick.
 - Was sich von selbst öffnet — Monat, Woche, Abschied —, deckt nichts zu, das offen ist (`_etwasOffen`): kein Blatt, keine Story, kein Popover, keinen Dialog, kein Formular, in das jemand schreibt. Ist beim Öffnen des Monats etwas offen, nimmt er seine Merker zurück und kommt beim nächsten Abruf; vorher ging er 600 ms nach einem Datenabruf über das Bearbeiten einer Partie auf.
 - Ein Rückblick zeigt den Stand von damals (`insigniumSvg` mit `opt.titel`, `opt.pos`); der Reif bleibt der heutige.
@@ -126,6 +126,14 @@ Auszeichnungen keins. Die zwei Prestige-Stände an den Rändern einer Woche
 kosteten gemessen 280 ms vor dem ersten Bild: dieser Teil kommt nach, und
 das Blatt öffnet so schnell wie vorher. „Größter Aufwind" ist keine Kachel
 mehr, die Elo jedes Spielers steht im Feld.
+
+**Die Woche zählt bis zu ihrem Schluss.** Gerechnet bis zur letzten
+Millisekunde des Sonntags fehlten in den Auszeichnungen der Woche der
+Spieler der Woche und der Award-Sammler: sie kommen am Montag um 00:00.
+Die Titel des Monats nahm die Woche nur heraus, wenn sie mit dem Monat
+endete; die Woche vom 26.10. bis 01.11., über das Ende des Oktobers
+hinweg, zählte Meister, Vize und Team des Oktobers mit. Die Ehrung der
+Woche liest dieselben Stände und hätte beides geerbt.
 
 **Der Meister kommt zuerst.** Auf der Bühne des Rückblicks stiegen Platz
 3, 2 und 1 nacheinander auf, der Meister eine halbe Sekunde nach dem

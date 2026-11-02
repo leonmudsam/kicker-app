@@ -215,18 +215,45 @@ function showPotwRecap(opts){
   }
 }
 
-// Auto-Trigger: an Mo/Di der neuen Woche einmal pro Gerät
 // ── Die Laufbahn einer Woche ohne die Titel des Monats [§C31] ────────
-// Endet die Woche mit einem Monat, kommen in derselben Sekunde Meister,
-// Vize und Team der Saison [§C34]. Sie gehören dem Monat und stehen in
-// seinem Rückblick: in der Woche bis zum 31.05. standen sie unter „Wirkung
-// auf die Laufbahn" ein zweites Mal, Meister +150 und Team der Saison +75
-// als Gewinn einer Woche.
+// Endet in einer Woche ein Monat, kommen in seiner letzten Millisekunde
+// Meister, Vize, Team der Saison und Untouchable [§C34]. Sie gehören dem
+// Monat und stehen in seinem Rückblick und seiner Ehrung: in der Woche bis
+// zum 31.05. standen sie unter „Wirkung auf die Laufbahn" ein zweites Mal,
+// Meister +150 und Team der Saison +75 als Gewinn einer Woche. Herausgenommen
+// waren sie nur, wenn die Woche mit dem Monat endete; die Woche vom 26.10.
+// bis 01.11., über das Ende des Oktobers hinweg, zählte sie mit.
+// Gezählt wird dafür bis zum Schluss der Woche, Montag 00:00 [§11.6f]: dort
+// kommen der Spieler der Woche und der Award-Sammler. Bis zur letzten
+// Millisekunde des Sonntags gerechnet fehlten sie in den Auszeichnungen der
+// Woche, und die Ehrung der Woche, die dieselben Stände liest, hätte ihren
+// Spieler der Woche nicht genannt. Die neuen Zeichen bleiben, wie die Liga
+// sie in dieser Woche getragen hat — auch mit einem Titel.
 function rcpWocheLaufbahn(vonMs, bisMs){
-  const monatsEnde = seasonEnd(seasonOf(bisMs).id).getTime();
-  return rcpLaufbahnDaten(vonMs, bisMs >= monatsEnde ? monatsEnde - 1 : bisMs);
+  const daten = rcpLaufbahnDaten(vonMs, bisMs + 1);
+  const je = new Map(daten.map(x => [x.pid, x]));
+  const monate = new Set();
+  for(let t = vonMs; t <= bisMs + 864e5; t += 864e5) monate.add(seasonOf(Math.min(t, bisMs)).id);
+  monate.forEach(sid => {
+    const E = seasonEnd(sid).getTime();
+    if(E < vonMs || E > bisMs) return;
+    _ehrungSchlussPosten(E, EHRUNG_SCHLUSS.monat).forEach(z => {
+      const x = je.get(z.pid);
+      if(!x) return;
+      z.posten.forEach(q => {
+        const alt = x.posten.find(y => y.id === q.id);
+        if(!alt) return;
+        alt.mal -= q.mal; alt.p = Math.round((alt.p - q.p) * 10) / 10;
+      });
+      x.posten = x.posten.filter(y => y.mal > 0 && y.p > 0);
+      const minus = Math.round(z.summe);
+      x.teile.auszeichnung -= minus; x.delta -= minus;
+    });
+  });
+  return daten;
 }
 
+// Auto-Trigger: an Mo/Di der neuen Woche einmal pro Gerät
 function autoShowPotwRecap(){
   try{
     const now=new Date();

@@ -115,6 +115,16 @@ const STORY_ABGEMELDET = [
   // Eine Karte „X übernimmt ‚Der Ausbruch'" feierte als Rekord, was eine
   // Kehrseite ist, und eine Schattenseite meldet der Feed nicht.
   'rek_ausbruch_',
+  // ── Die Ehrung einer Woche und eines Monats hieß einmal anders ─────
+  // Je Woche und Monat stand eine Ehrung dessen, was die letzte
+  // Millisekunde vergab (`ehrung_woche_…`, `ehrung_monat_…`). Jetzt nennen
+  // sie alles, was im Zeitraum geholt wurde (`ehrung_der_woche_…`,
+  // `ehrung_des_monats_…`) [§11.6f]. Die alten Zeilen liegen gespeichert
+  // daneben und nannten neben dem Rückblick des Oktobers vier Auszeichnungen
+  // statt aller. Die alte Ehrung eines Tages (`ehrung_tag_…`) steht nicht
+  // hier: sie geht in die Karte ihres Spielers des Tages auf
+  // (`_consolidateStories`), abgemeldet stünde sie nirgends mehr.
+  'ehrung_woche_', 'ehrung_monat_',
   // ── Das Ergebnis hiess einmal anders ─────────────────────────────
   // Eine Ergebnis-Karte entstand nur fuer ein auffaelliges Muster und
   // hoechstens zweimal je Tag (`match_result_<Partie>`). Heute bekommt jede
@@ -281,6 +291,39 @@ function _consolidateStories(list){
     });
   }
 
+  // ── Die Ehrung des Tages gehört zum Spieler des Tages ─────────────
+  // Je Tag stand eine eigene Ehrung dessen, was sein Schluss vergab
+  // (`ehrung_tag_<Tag>`), eine halbe Minute unter dem Spieler des Tages, und
+  // nannte ihn ein zweites Mal. Heute trägt dessen Karte sie selbst
+  // (`ehrung`, [§11.6f]). Gespeicherte Tage tragen sie als eigene Zeile, und
+  // ihr Spieler des Tages ist älter als sie und trägt keine; eine Zeile
+  // ändert sich nicht [§C33]. Abgemeldet stünde die Ehrung dieser Tage
+  // nirgends mehr. Sie kommt deshalb hier auf die Karte ihres Spielers des
+  // Tages und reist mit (`memberIds`); trägt die Karte schon eine, gilt die.
+  // Ohne Spieler des Tages bleibt sie, wie sie war.
+  {
+    const potdJeTag = new Map();
+    aus.forEach(s => { const d = s.dataRef || {};
+      if(d.type === 'potd') potdJeTag.set(d.dayKey || tagKey(s.when), s); });
+    const weg = new Set(), dazu = new Map();
+    aus.forEach(s => {
+      const d = s.dataRef || {};
+      if(d.type !== 'ehrung' || d.periode !== 'tag' || !Array.isArray(d.spieler)) return;
+      const p = potdJeTag.get(d.tag || tagKey(s.when));
+      if(!p || dazu.has(p.id)) return;
+      weg.add(s.id);
+      dazu.set(p.id, s);
+    });
+    if(weg.size) aus = aus.filter(s => !weg.has(s.id)).map(s => {
+      const e = dazu.get(s.id);
+      if(!e) return s;
+      const d = s.dataRef || {};
+      return Object.assign({}, s, {dataRef:Object.assign({}, d, {
+        ehrung:Array.isArray(d.ehrung) ? d.ehrung : e.dataRef.spieler,
+        memberIds:[...new Set((d.memberIds || [s.id]).concat([e.id]))]})});
+    });
+  }
+
   // Der sichtbare Tages-Tafel-Eintrag sitzt immer beim neuesten enthaltenen
   // Wechsel. So ersetzt eine Aktualisierung die heutige Karte an der richtigen
   // Stelle im Feed; historische Tage bleiben unangetastet.
@@ -289,7 +332,7 @@ function _consolidateStories(list){
     if(d.type !== 'sammel' || d.quelle !== 'tafel' || !Array.isArray(d.teile)) return s;
     const neu = d.teile.reduce((mx, t) => Math.max(mx, Number(t && t.ms) || 0), 0);
     return neu ? Object.assign({}, s, {when:new Date(neu)}) : s;
-  }).sort((a, b) => new Date(b.when) - new Date(a.when));
+  }).sort(_storyFolge);
   _cache._snapshotConsolFrom = list;
   _cache._snapshotConsolVersion = _cache.version;
   _cache._snapshotConsolMatches = matches;
@@ -1801,7 +1844,7 @@ function _consolidateStoriesLegacy(list){
   // entstanden ist: am Anfang eines Tages, zwischen zwei Partien oder an
   // seinem Ende.
   ausbalanciert = ausbalanciert.slice()
-    .sort((a, b) => new Date(b.when) - new Date(a.when));
+    .sort(_storyFolge);
   // ── Eine Partie zeigt ihr Ergebnis einmal ─────────────────────────
   // Jede Geschichte mit einer `matchId` zeigt das Ergebnisband — vier Wappen
   // und den Endstand [§C33]. Stehen zwei Karten derselben Partie im Feed,
@@ -1917,7 +1960,7 @@ function _mergeStorySnapshots(bestand, neu, jetzt){
     if(!byId.has(s.id) || _storyIstTafelUpdate(s, jetzt)) byId.set(s.id, s);
   });
   return [...byId.values()].filter(s => new Date(s.when).getTime() >= ab)
-    .sort((a, b) => new Date(b.when) - new Date(a.when));
+    .sort(_storyFolge);
 }
 
 async function syncStoriesViaDb(){
