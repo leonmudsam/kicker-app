@@ -235,6 +235,131 @@ const halbzeit = [];
   if(zeilen.length >= 4) halbzeit.push({sid, vor, zeilen});
 });
 
+// ── Neue Köpfe und Füße einer Partie ────────────────────────────────
+// Je Partie der Stand davor (Serie, die letzten fünf, die Bilanz des Tages,
+// die direkten Duelle, Partner, Monat) und danach. Ein Kopf zeigt immer alle
+// vier und das Ergebnis; ob ein neuer Kopf oder Fuß ausgelöst hätte, steht in
+// `kopf` und `fuss` der Partie.
+const KF = [];
+{
+  const serie = {}, letzte = {}, tagRec = {}, tagElo = {}, h2h = {}, partner = {}, gesamt = {}, monRec = {}, monSprung = {};
+  let tag = null, sid = null;
+  const r1 = x => Math.round(x);
+  P.forEach(p => {
+    if(p.tag !== tag){ tag = p.tag; Object.keys(tagRec).forEach(k => delete tagRec[k]); Object.keys(tagElo).forEach(k => delete tagElo[k]); }
+    if(p.sid !== sid){ sid = p.sid; Object.keys(monRec).forEach(k => delete monRec[k]); Object.keys(monSprung).forEach(k => delete monSprung[k]); }
+    const vier = p.W.concat(p.L);
+    const vor = {};
+    vier.forEach(x => { vor[x] = {serie:serie[x] || 0, letzte:(letzte[x] || []).slice(-5), tag:Object.assign({s:0, n:0}, tagRec[x]),
+      tagElo:(tagElo[x] || []).slice(), mon:Object.assign({s:0, n:0, q:[]}, monRec[x] && {s:monRec[x].s, n:monRec[x].n, q:monRec[x].q.slice()})}; });
+    const kreuz = p.W.map(w => p.L.map(l => ({w, l, s:(h2h[w + '|' + l] || 0), n:(h2h[w + '|' + l] || 0) + (h2h[l + '|' + w] || 0)})));
+    // ── danach ──
+    vier.forEach(x => {
+      const sieg = p.W.includes(x);
+      serie[x] = sieg ? (serie[x] || 0) + 1 : 0;
+      (letzte[x] = letzte[x] || []).push(sieg ? 1 : 0);
+      const t = tagRec[x] || (tagRec[x] = {s:0, n:0}); t.n++; if(sieg) t.s++;
+      const e = tagElo[x] || (tagElo[x] = []); e.push((e.length ? e[e.length - 1] : 0) + p.delta[x]);
+      const m = monRec[x] || (monRec[x] = {s:0, n:0, q:[]}); m.n++; if(sieg) m.s++; m.q.push(Math.round(m.s / m.n * 100));
+      const g = gesamt[x] || (gesamt[x] = {s:0, n:0}); g.n++; if(sieg) g.s++;
+    });
+    p.W.forEach(w => p.L.forEach(l => { h2h[w + '|' + l] = (h2h[w + '|' + l] || 0) + 1; }));
+    [[p.W[0], p.W[1], 1], [p.W[1], p.W[0], 1], [p.L[0], p.L[1], 0], [p.L[1], p.L[0], 0]].forEach(([a, b, s1]) => {
+      const q = (partner[a] = partner[a] || {})[b] || (partner[a][b] = {s:0, n:0}); q.n++; q.s += s1; });
+    const kopf = [], fuss = [];
+    // K1 Serie gegen Serie: beide Seiten bringen eine laufende Serie mit.
+    const sW = Math.max(...p.W.map(x => vor[x].serie)), sL = Math.max(...p.L.map(x => vor[x].serie));
+    if(sW >= 3 && sL >= 3) kopf.push('serien');
+    // K2 Gegen die Form: die Sieger kamen mit höchstens drei Siegen aus ihren
+    // letzten zehn Partien zusammen, die Verlierer mit mindestens sieben.
+    const f5 = x => vor[x].letzte.reduce((a, c) => a + c, 0);
+    if(vier.every(x => vor[x].letzte.length === 5) && p.W.reduce((a, x) => a + f5(x), 0) <= 3 && p.L.reduce((a, x) => a + f5(x), 0) >= 7) kopf.push('form');
+    // K3 Erster Sieg des Tages: beide Sieger hatten heute noch keinen Sieg,
+    // zusammen mindestens vier Partien. Mit fünf kam es in sechs Monaten
+    // nie vor.
+    if(p.W.every(x => vor[x].tag.s === 0) && p.W.reduce((a, x) => a + vor[x].tag.n, 0) >= 4) kopf.push('tag');
+    // K4 Kreuzduelle: in den vier Einzelduellen gewannen die Sieger vorher
+    // höchstens 35 Prozent, bei mindestens 16 Duellen.
+    const kz = kreuz.flat(), kn = kz.reduce((a, c) => a + c.n, 0), ks = kz.reduce((a, c) => a + c.s, 0);
+    if(kn >= 16 && ks / kn <= .35) kopf.push('kreuz');
+    // F1 Ins Plus gedreht: das Elo des Tages kippt von unter null auf über
+    // null, ab der vierten Partie des Tages und nach einem Tief von
+    // mindestens 30. Ohne das Tief kippte es in fast jeder fünften Partie.
+    const plus = vier.filter(x => vor[x].tagElo.length >= 3 && Math.min(...vor[x].tagElo) <= -30
+      && vor[x].tagElo[vor[x].tagElo.length - 1] < 0 && tagElo[x][tagElo[x].length - 1] > 0);
+    if(plus.length) fuss.push('plus');
+    // F2 Abstand zur Spitze: ein Sieger steht danach auf Platz 2 oder 3,
+    // höchstens 10 Elo hinter Platz 1, und hat mindestens 10 gutgemacht.
+    const rl = rangliste(p), eins = rl[0];
+    const jagd = p.frei ? p.W.filter(w => { const r = rl.findIndex(x => x.id === w);
+      return r >= 1 && r <= 2 && eins.elo - rl[r].elo <= 10 && p.delta[w] >= 10; }) : [];
+    if(jagd.length) fuss.push('spitze');
+    // F3 Wieder bei 50 Prozent: die Siegquote des Monats erreicht 50 von
+    // unten, ab der zehnten Partie im Monat. Von unter auf über 50 springt
+    // sie mit einem Sieg nie.
+    const halb = p.W.filter(w => vor[w].mon.n >= 9 && vor[w].mon.s / vor[w].mon.n < .5 && monRec[w].s / monRec[w].n >= .5);
+    if(halb.length) fuss.push('halb');
+    // F4 Der beste Partner: der gemeinsame Sieg ist ein Fünfter, und kein
+    // Partner (ab sechs Partien) bringt eine bessere Quote, mindestens 15
+    // Punkte über der eigenen.
+    const best = p.W.filter(w => { const b2 = p.W.find(x => x !== w), q = partner[w][b2];
+      if(q.s % 5 || q.n < 8) return false;
+      const rate = q.s / q.n, allg = gesamt[w].s / gesamt[w].n;
+      const andere = Object.keys(partner[w]).filter(x => x !== b2 && partner[w][x].n >= 6).map(x => partner[w][x].s / partner[w][x].n);
+      return rate - allg >= .15 && andere.every(r => r <= rate); });
+    if(best.length) fuss.push('partner');
+    // F5 Der größte Sprung des Monats: der höchste Elo-Gewinn eines Spielers
+    // in diesem Monat, mindestens 25, ab der achten Partie im Monat.
+    const sprung = p.W.filter(w => monRec[w].n >= 8 && p.delta[w] >= 25 && p.delta[w] > (monSprung[w] || 0));
+    p.W.forEach(w => { monSprung[w] = Math.max(monSprung[w] || 0, p.delta[w]); });
+    if(sprung.length) fuss.push('sprung');
+    if(kopf.length || fuss.length) KF.push({mid:p.id, t:p.t, tag:p.tag, sid:p.sid, W:p.W, L:p.L, hoch:p.hoch, tief:p.tief,
+      kopf, fuss, delta:Object.fromEntries(vier.map(x => [x, r1(p.delta[x])])),
+      vor:Object.fromEntries(vier.map(x => [x, {serie:vor[x].serie, letzte:vor[x].letzte, tag:vor[x].tag, tagElo:vor[x].tagElo.map(r1)}])),
+      kreuz:kz.map(k => ({w:k.w, l:k.l, s:k.s, n:k.n})),
+      plus:plus.map(x => ({pid:x, verlauf:[0].concat(tagElo[x].map(r1))})),
+      spitze:jagd.map(w => ({pid:w, liste:rl.slice(0, 5)})),
+      halb:halb.map(w => ({pid:w, verlauf:monRec[w].q.slice(), n:monRec[w].n})),
+      partner:best.map(w => ({pid:w, mit:p.W.find(x => x !== w), allg:Math.round(gesamt[w].s / gesamt[w].n * 100),
+        liste:Object.keys(partner[w]).filter(x => partner[w][x].n >= 6).map(x => ({pid:x, n:partner[w][x].n, q:Math.round(partner[w][x].s / partner[w][x].n * 100)})).sort((a, b) => b.q - a.q)})),
+      sprung:sprung.map(w => ({pid:w, gewinn:r1(p.delta[w]), n:monRec[w].n,
+        verlauf:[0].concat(P.filter(q => q.sid === p.sid && q.i <= p.i && q.W.concat(q.L).includes(w)).map(q => r1(q.nach[w] || 0)))}))});
+  });
+}
+const KF_ZAHL = {};
+KF.forEach(k => k.kopf.concat(k.fuss).forEach(x => { KF_ZAHL[x] = (KF_ZAHL[x] || 0) + 1; }));
+// Beispiele: je Kopf die zwei jüngsten Partien, bevorzugt mit einem neuen
+// Fuß; je Fuß, der so nicht vorkommt, die jüngste Partie mit ihm.
+const kfBsp = [];
+['serien', 'form', 'tag', 'kreuz'].forEach(k => {
+  const l = KF.filter(x => x.kopf.includes(k));
+  // Bis zu zwei Partien mit einem neuen Fuß, je mit einem anderen Fuß;
+  // ohne eine solche die jüngste.
+  const mit = [];
+  l.slice().reverse().forEach(x => { if(x.fuss.length && mit.length < 2 && !mit.some(y => y.fuss[0] === x.fuss[0])) mit.push(x); });
+  (mit.length ? mit : l.slice(-1)).forEach(x => kfBsp.push(Object.assign({}, x, {kopfZeigt:k})));
+});
+['plus', 'spitze', 'halb', 'partner', 'sprung'].forEach(f => {
+  if(kfBsp.some(x => x.fuss.includes(f))) return;
+  const x = KF.filter(y => y.fuss.includes(f)).slice(-1)[0];
+  if(x) kfBsp.push(Object.assign({}, x, {kopfZeigt:x.kopf[0] || 'grund'}));
+});
+
+// Was die App heute in diesen Partien zeigt: ihr eigener Kopf und Fuß,
+// abgefragt mit dem Generator an dem Abend des Spieltags.
+K('globalThis.ALLE = matches.slice(); 0');
+kfBsp.forEach(x => {
+  const ende = new Date(x.tag + 'T23:59:30').getTime();
+  setNow(ende);
+  try {
+    x.app = JSON.parse(K(`(() => { matches = ALLE.filter(m => mts(m) <= ${ende}); invalidateCache();
+      _cache._stories = []; _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+      const s = _buildStories().find(y => y.id === 'spiel_${x.mid}'), d = (s && s.dataRef) || {};
+      return JSON.stringify({kopf:d.scoreVisualKey || null, fuss:d.occasionVisualKey || null}); })()`));
+  } catch(e){ x.app = {kopf:null, fuss:null}; }
+});
+K('matches = ALLE; invalidateCache(); 0');
+
 // ── Beispiele ───────────────────────────────────────────────────────
 const nimm = (l, f, n) => l.slice().sort(f).slice(0, n);
 const aus = {
@@ -255,8 +380,9 @@ const aus = {
   vorschau:{n:vorschau.length, bsp:vorschau.filter(v => v.nah.length >= 3).slice(-2)},
   uhr:{je:uhrJe},
   halbzeit:{n:halbzeit.length, bsp:halbzeit.slice(-1)},
+  kf:{zahl:KF_ZAHL, bsp:kfBsp},
 };
 fs.writeFileSync(path.join(__dirname, '.story-neu.json'), JSON.stringify(aus));
 console.log(JSON.stringify({fluss:[aus.fluss.n, aus.fluss.von, aus.fluss.ab40, aus.fluss.ab50], erw3:aus.erwartung.ab3, kippt:[aus.kippt.n, aus.kippt.paare], jagd:[aus.jagd.n, aus.jagd.gleich],
   erwartung:[aus.erwartung.n, aus.erwartung.von], plaetze:[aus.plaetze.n, aus.plaetze.von], eng:aus.eng.n,
-  vorschau:aus.vorschau.n, halbzeit:aus.halbzeit.n}));
+  vorschau:aus.vorschau.n, halbzeit:aus.halbzeit.n, kf:KF_ZAHL, kfBsp:kfBsp.map(x => x.kopfZeigt + '/' + x.fuss.join('+') + ' app ' + JSON.stringify(x.app))}));
