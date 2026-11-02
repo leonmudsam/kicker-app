@@ -126,7 +126,9 @@ const STORY_ABGEMELDET = [
   // Die Chronik eines Monats (`chronik_<Saison>`, am 1. um 00:00) und je
   // Erstling eine Zeile (`chronik_erst_…`) stehen jetzt auf der einen Karte
   // des Monatsabschlusses [§C33]. Jede Saison beginnt mit ihrem Jahr, daher
-  // `chronik_2`: `chronik_frei_…` bildet der Generator weiter.
+  // `chronik_2`: die gespeicherten `chronik_frei_…` bleiben. Der Generator
+  // bildet sie nicht mehr, seit eine Chronik je Spieler ab fünfzehn Partien
+  // zählt [§C39], aber sie waren an ihrem Tag richtig.
   'chronik_2', 'chronik_erst_'
 ];
 // ── Ein zurückgenommenes Karriereende [§C40] ─────────────────────────

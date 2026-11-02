@@ -1,4 +1,4 @@
-const SW_FASSUNG = '2026.10.30.a0a2c09a';
+const SW_FASSUNG = '2026.11.02.b32fb030';
 const SEITE = 'kicker-seite-' + SW_FASSUNG;
 const FREMD = 'kicker-fremd';
 const FREMDE_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com', 'cdn.jsdelivr.net'];

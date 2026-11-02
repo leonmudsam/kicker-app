@@ -3541,12 +3541,14 @@ const _chrg = JSON.parse(K.eval(`JSON.stringify((function(){
   };
 })())`));
 // ── Eine gemeldete Chronik steht auch in der Tafel ──────────────────
-//    `seasonTitles` zieht die Grenze CHRONIK_MIN_TAGE [§C32],
-//    `seasonTitleHalter` zog sie nicht — und damit meldete der Feed
-//    Chroniken, die es nicht gab: gemessen nannte die Funktion am 04.08.
-//    acht, am 06.08. zehn und am 07.08. dreizehn Halter, waehrend die
+//    Als der Monat erst ab dem fuenften Spieltag gewertet wurde, zog
+//    `seasonTitles` die Grenze und `seasonTitleHalter` nicht — und der Feed
+//    meldete Chroniken, die es nicht gab: gemessen nannte die Funktion am
+//    04.08. acht, am 06.08. zehn und am 07.08. dreizehn Halter, waehrend die
 //    Monatstafel null Eintraege zeigte. „Leon holt ‚Auf Augenhoehe'" stand
-//    im Feed, im Chronik-Tab stand nichts.
+//    im Feed, im Chronik-Tab stand nichts. Heute gibt es keine Grenze fuer
+//    den ganzen Monat, sondern fuenfzehn Partien je Spieler [§C39]; beide
+//    muessen sie gleich ziehen, und zwar in beide Richtungen.
 const _gate = JSON.parse(K.eval(`JSON.stringify((function(){
   const tage = {};
   matches.forEach(m => {
@@ -3557,32 +3559,36 @@ const _gate = JSON.parse(K.eval(`JSON.stringify((function(){
   const schnitte = [];
   Object.keys(tage).forEach(sid => {
     const liste = [...tage[sid]].sort();
-    // Je Monat ein Schnitt hinter jedem der ersten acht Spieltage: die
-    // Grenze liegt bei fuenf, also muss sie dabei sein.
+    // Je Monat ein Schnitt hinter jedem der ersten acht Spieltage: in ihnen
+    // erreichen die meisten ihre fuenfzehnte Partie.
     liste.slice(0, 8).forEach(tag => {
       const bis = new Date(tag + 'T23:59:59').getTime();
       schnitte.push({sid, tag, bis});
     });
   });
   const falscheGrenze = [], ohneEintrag = [];
+  let frueh = 0;
   schnitte.forEach(x => {
     let H = null, T = null;
     try { H = seasonTitleHalter(x.sid, x.bis); T = seasonTitles(x.sid, x.bis); } catch(e){ return; }
     if(!T) return;
-    const gesperrt = T.days < CHRONIK_MIN_TAGE;
-    if(gesperrt !== (H === null)) falscheGrenze.push(x.sid + '/' + x.tag
-      + ' Tage=' + T.days + ' halter=' + (H === null ? 'null' : Object.keys(H).length));
-    if(H) Object.keys(H).forEach(id => {
-      if(!T.awarded.some(a => a.titleId === id)) ohneEintrag.push(x.sid + '/' + x.tag + '/' + id);
-    });
+    if(!H) { falscheGrenze.push(x.sid + '/' + x.tag + ' halter=null'); return; }
+    if(T.days < 5 && Object.keys(H).length) frueh++;
+    Object.keys(H).forEach(id => H[id].pids.forEach(pid => {
+      if(!T.awarded.some(a => a.titleId === id && a.pid === pid)) ohneEintrag.push(x.sid + '/' + x.tag + '/' + id);
+    }));
+    // Und umgekehrt: was die Tafel zeigt, kennt auch der Halterstand.
+    T.awarded.forEach(a => { if(!(H[a.titleId] && H[a.titleId].pids.includes(a.pid)))
+      falscheGrenze.push(x.sid + '/' + x.tag + ' ' + a.titleId + ' fehlt im Halterstand'); });
   });
-  return {n:schnitte.length, falscheGrenze:falscheGrenze.slice(0,4),
+  return {n:schnitte.length, falscheGrenze:falscheGrenze.slice(0,4), frueh,
           ohneEintrag:ohneEintrag.slice(0,4), nOhne:ohneEintrag.length};
 })())`));
 ok(_gate.n > 20, 'die Grenze wird an vielen Zeitschnitten geprueft', _gate.n + ' Schnitte');
 ok(_gate.falscheGrenze.length === 0,
    'Halterstand und Monatstafel ziehen dieselbe Grenze',
    _gate.falscheGrenze.join(' | '));
+ok(_gate.frueh > 0, 'vor dem fuenften Spieltag gibt es schon Chroniken', _gate.frueh + ' Schnitte');
 ok(_gate.nOhne === 0, 'keine gemeldete Chronik fehlt in der Monatstafel',
    _gate.ohneEintrag.join(' | ') || _gate.nOhne + ' ohne Eintrag');
 
@@ -7059,14 +7065,15 @@ ok(Math.round(_eh.breite) === _eh.soll && _eh.soll < 100 && _eh.voll === 100,
    'der Strich unter einer Auszeichnung zeigt, wie viel vom vollen Wert sie beim wievielten Mal bringt',
    _eh.breite + ' % statt ' + _eh.soll + ' %');
 
-console.log('=== DAS AUFGEHEN DER TAFEL IST EINE NACHRICHT ===');
-// Ein Monat unter CHRONIK_MIN_TAGE Spieltagen hat keine Chronik, und
-// gemeldet wird erst, was sich von der ersten gewerteten Lage an aendert
-// [§C32]. Damit stand am Tag, an dem der Monat zum ersten Mal gewertet wird,
-// gar nichts im Feed — obwohl in diesem Moment die ganze Monatstafel
-// entsteht und jeder Eintrag darin ab jetzt fuers Prestige zaehlt. Gemessen
-// wird am echten Verlauf: die Partien werden Spieltag fuer Spieltag
-// zurueckgenommen, bis die Tafel aufgeht.
+console.log('=== GEMELDET WIRD VOM ERSTEN SPIELTAG AN ===');
+// Ein Monat hatte unter fuenf Spieltagen keine Chronik, und am fuenften ging
+// die Tafel mit einer eigenen Karte auf („Die Monatstafel ist offen"):
+// sonst stand jeder Eintrag als „holt" im Feed, fuer Werte, die ueber fuenf
+// Spieltage entstanden waren. Heute zaehlt eine Chronik je Spieler ab
+// fuenfzehn Partien [§C39]; wer sie erreicht, holt seine Chronik an diesem
+// Spieltag wie jeder andere, in der Tafel-Karte des Tages [§11.0e]. Gemessen
+// am echten Verlauf: die Partien werden Spieltag fuer Spieltag
+// zurueckgenommen, bis es im August die erste Chronik gibt.
 const _frei = JSON.parse(K.eval(`JSON.stringify((function(){
   const alle = matches.slice();
   try {
@@ -7074,92 +7081,36 @@ const _frei = JSON.parse(K.eval(`JSON.stringify((function(){
     const ms = alle.filter(m => (seasonOf(m.created_at) || {}).id === sid)
       .map(m => mts(m)).sort((a, b) => a - b);
     const tage = [...new Set(ms.map(t => tagKey(t)))];
-    // Der Spieltag, an dem die Tafel aufgeht: davor null, danach nicht.
     let treffer = null;
     for(let i = 0; i < tage.length; i++){
       const grenze = Math.max(...ms.filter(t => tagKey(t) === tage[i]));
       matches = alle.filter(m => mts(m) <= grenze);
       invalidateCache();
-      if(seasonTitleHalter(sid)){ treffer = {i, grenze}; break; }
+      if(Object.keys(seasonTitleHalter(sid) || {}).length){ treffer = {i, grenze}; break; }
     }
     if(!treffer) return {tag:''};
     matches = alle.filter(m => mts(m) <= treffer.grenze);
     invalidateCache();
     _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
     const roh = _buildStories() || [];
-    const k = roh.filter(x => (x.dataRef || {}).type === 'chronik_frei');
+    const C = _seasonTitleCtx(sid);
+    const spiele = pid => ((C.rankAll || []).find(r => r.id === pid) || {}).games || 0;
     const wechsel = roh.filter(x => (x.dataRef || {}).type === 'chronik_geholt');
-    const blatt = k.length ? String(_newsDetailMitte(k[0]) || '') : '';
-    // Und am naechsten Spieltag nicht mehr: eine Karte je Monat.
-    let zweiter = -1;
-    if(treffer.i + 1 < tage.length){
-      const g2 = Math.max(...ms.filter(t => tagKey(t) === tage[treffer.i + 1]));
-      matches = alle.filter(m => mts(m) <= g2);
-      invalidateCache();
-      _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
-      zweiter = (_buildStories() || [])
-        .filter(x => (x.dataRef || {}).type === 'chronik_frei').length;
-    }
-    return {tag:tagKey(treffer.grenze), n:k.length, wechsel:wechsel.length,
-      id:k.length ? k[0].id : '', titel:k.length ? k[0].title : '',
-      text:k.length ? k[0].desc : '',
-      match:k.length ? !!k[0].dataRef.matchId : false,
-      eintraege:k.length ? k[0].dataRef.eintraege : 0,
-      // Der Tagesdeckel gibt fuenf Plaetze her, und an einem ruhigen Tag
-      // faellt gar nichts weg — gemessen wird deshalb gegen sechs staerkere
-      // Karten desselben Tages, so wie beim schwachen Tafel-Wechsel.
-      pflicht:(function(){
-        if(!k.length) return false;
-        const stark = [];
-        const sorten = ['top_clash','top_clash','giant_slayer','giant_slayer',
-                        'streak_killer','streak_killer'];
-        for(let i = 0; i < 6; i++) stark.push({
-          id:'frei-st-' + i, cat:'highlight', ic:'ball',
-          when:new Date(treffer.grenze - (i + 1) * 60000),
-          prio: 90 + i, title:'Starke Karte ' + i,
-          desc:'Ein Satz mit ' + i + ' Zahlen.',
-          dataRef:{type:sorten[i], matchId:'kein-' + i, playerIds:[players[i].id]}
-        });
-        // Eine davon ist selbst eine Tafel-Karte, und zwar die staerkere:
-        // sonst haelt die neue Karte den fuer die Ewige Tafel reservierten
-        // Platz [§C33], und der Test misst nicht die Pflicht, sondern die
-        // Reservierung.
-        stark.push({id:'frei-st-tf', cat:'tafel', ic:'trophyStar',
-          when:new Date(treffer.grenze - 7 * 60000), prio: 97,
-          title:'Eine starke Tafel-Karte', desc:'Ein Rekord wandert um 2 Plätze.',
-          dataRef:{type:'rekord_geholt', rekordId:'xx', playerIds:[players[7].id]}});
-        _cache._consolFrom = null;
-        return (_consolidateStories(stark.concat([k[0]])) || [])
-          .some(x => (x.dataRef || {}).type === 'chronik_frei');
-      })(),
-      blattLen:blatt.length, ebenen:blatt.indexOf('Tafel, Profil und Laufbahn') >= 0,
-      zweiter};
+    return {tag:tagKey(treffer.grenze), i:treffer.i,
+      frei:roh.filter(x => (x.dataRef || {}).type === 'chronik_frei').length,
+      wechsel:wechsel.length, titel:wechsel.map(x => x.title).slice(0, 3),
+      unter:wechsel.flatMap(x => x.dataRef.playerIds || []).filter(pid => spiele(pid) < CHRONIK_MIN_SPIELE)};
   } finally {
     matches = alle; invalidateCache();
     _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
   }
 })())`));
-ok(_frei.tag && _frei.n === 1,
-   'am Tag, an dem die Monatstafel aufgeht, steht genau eine Karte',
-   _frei.tag + ': ' + _frei.n + ' — ' + (_frei.titel || ''));
-ok(_frei.wechsel === 0,
-   'und kein einziger Chronik-Wechsel daneben', String(_frei.wechsel));
-// „gehalten von 5 Spielern" ist richtig, „holt" waere die Behauptung, die
-// diese Karte gerade nicht aufstellt — gemessen wird deshalb das Wort, nicht
-// die Zeichenfolge.
-ok(_frei.id === 'chronik_frei_2026-08' && _frei.eintraege > 0
-   && /\d/.test(String(_frei.text))
-   && !/\b(holt|holen|geholt)\b/.test(String(_frei.text)),
-   'sie ist neutral, nennt die Zahl der Eintraege und behauptet keinen Erfolg',
-   _frei.id + ' · ' + String(_frei.text).slice(0, 110));
-ok(_frei.match === false,
-   'sie traegt keine Partie, denn sie kommt nicht aus der letzten');
-ok(_frei.pflicht, 'und faellt keinem Tagesdeckel zum Opfer');
-ok(_frei.blattLen > 200 && _frei.ebenen,
-   'ihr Blatt zeigt die vorlaeufigen Profileintraege samt Punktewirkung',
-   _frei.blattLen + ' Zeichen');
-ok(_frei.zweiter === 0,
-   'am naechsten Spieltag kommt sie nicht wieder', String(_frei.zweiter));
+ok(_frei.tag && _frei.i < 4,
+   'die erste Chronik des Monats gibt es vor dem fuenften Spieltag', _frei.tag + ', Spieltag ' + (_frei.i + 1));
+ok(_frei.frei === 0, 'keine Karte meldet, dass die Monatstafel aufgeht', String(_frei.frei));
+ok(_frei.wechsel > 0 && _frei.unter.length === 0,
+   'am selben Spieltag steht jede erste Chronik als Wechsel im Feed, jeder Halter mit fuenfzehn Partien',
+   _frei.wechsel + ' · ' + _frei.titel.join(' | ') + (_frei.unter.length ? ' · unter fuenfzehn: ' + _frei.unter.join(', ') : ''));
 
 console.log('=== TAFEL, PROFIL UND PRESTIGE SIND DREI EBENEN ===');
 // Ein Spieler kann in der Monatstafel mehrere Disziplinen fuehren, im Profil
