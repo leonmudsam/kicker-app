@@ -90,17 +90,15 @@ blockiert. Lokal: `npm install --no-save playwright-core`.
 
 ## Veröffentlichung
 
-Heute: Pages liefert `index.html` direkt aus dem `main`-Branch aus. Der
-Stand im Repository IST der Stand im Netz; deshalb wird `index.html`
-mitversioniert und deshalb prüft Wächter 1, dass sie zu `src/` passt.
+Veröffentlicht wird über GitHub Actions (`.github/workflows/pages.yml`,
+Pages-Quelle „GitHub Actions" und die Variable `PAGES_VIA_ACTIONS` = `true`):
+bei jedem Push auf `main` wird gebaut, geprüft und das Ergebnis aus `dist/`
+veröffentlicht. Jeder andere Zweig und jeder Pull Request läuft nur durch
+den Prüf-Job. Die Läufe stehen je Zweig in einer eigenen Reihe: mit einer
+gemeinsamen Gruppe verdrängte ein Push auf einen Arbeitszweig den wartenden
+Lauf von `main`, und dessen Fassung kam nie ins Netz.
 
-`.github/workflows/pages.yml` liegt bereit und läuft schon mit — vorerst nur
-der Prüf-Job. Zum Umschalten:
-
-1. Settings › Pages › Source: **GitHub Actions**
-2. Settings › Secrets and variables › Actions › Variables:
-   `PAGES_VIA_ACTIONS` = `true`
-
-Ab dann wird bei jedem Push auf `main` gebaut, geprüft und veröffentlicht.
-Zurück geht es genauso schnell: Variable löschen, Source wieder auf den
-Branch — `index.html` liegt weiterhin im Wurzelverzeichnis.
+`index.html` und `sw.js` werden trotzdem mitversioniert, und Wächter 1 prüft,
+dass sie zu `src/` passen: zurück auf „Deploy from a branch" geht es mit zwei
+Handgriffen (Variable löschen, Pages-Quelle wieder auf den Branch), und dann
+ist der Stand im Repository der Stand im Netz.

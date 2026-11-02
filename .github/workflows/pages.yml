@@ -29,8 +29,14 @@ permissions:
   pages: write
   id-token: write
 
+# Eine Reihe je Zweig, nicht eine für alle. Mit der einen Gruppe `pages`
+# verdrängte ein Push auf einen Arbeitszweig den wartenden Lauf von `main`:
+# am 02.11. wurde der Merge von PR #212 so abgebrochen, bevor er
+# veröffentlichte, und keine App konnte die Fassung finden. Auf `main`
+# bleibt es eine Reihe: ein Veröffentlichen bricht nie mitten ab, und
+# warten zwei, läuft der jüngere — er trägt beide Stände.
 concurrency:
-  group: pages
+  group: pages-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:

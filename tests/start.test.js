@@ -272,10 +272,31 @@ async function neueSeite(ctx){
       'Beim Zurückkommen lädt die wartende Fassung');
     await u.page.waitForFunction(() => document.querySelector('#main .rlist') && window.__K, null, {timeout:20000});
     ok(await u.page.evaluate(() => window.__K('BUILD_VERSION')) === neueFassung, 'Auch dann läuft danach die neue Fassung');
+    // Wer die App verlässt, bekommt die wartende Fassung im Hintergrund —
+    // auch über einem Blatt, dort liest niemand mehr. In Ruhe kam sie kaum:
+    // wer die App offen hat, liest im Feed oder tippt. Über einer Eingabe
+    // wartet sie weiter, dort steht etwas, das noch nicht gespeichert ist.
+    const versteckt = () => u.page.evaluate(() => {
+      Object.defineProperty(document, 'hidden', {configurable:true, get:() => !!window.__weg});
+      window.__weg = true; document.dispatchEvent(new Event('visibilitychange')); });
+    const wieder = () => u.page.evaluate(() => { window.__weg = false; });
+    await updBereit();
+    neueFassung = '2099.01.01.neu3';
+    await u.page.evaluate(() => window.__K("tab='match';render()"));
+    ok(!await navigiert(() => u.page.evaluate(() => window.__K('checkForUpdate()')), 3000), 'In der Eingabe wartet die neue Fassung');
+    ok(!await navigiert(versteckt, 3000), 'Geht die App über einer Eingabe in den Hintergrund, wartet sie weiter');
+    await wieder();
+    await u.page.evaluate(() => window.__K("tab='ranking';render()"));
+    await u.page.evaluate(() => window.__K('showPlayer(players[0].id)'));
+    await u.page.waitForFunction(() => document.getElementById('sheetBg').classList.contains('show'), null, {timeout:5000});
+    ok(!await navigiert(() => u.page.evaluate(() => window.__K('_updVersuchen()')), 3000), 'Über einem Blatt wartet sie, solange jemand hinsieht');
+    ok(await navigiert(versteckt, 6000), 'Geht die App in den Hintergrund, lädt die wartende Fassung, auch über einem Blatt');
+    await u.page.waitForFunction(() => document.querySelector('#main .rlist') && window.__K, null, {timeout:20000});
+    ok(await u.page.evaluate(() => window.__K('BUILD_VERSION')) === neueFassung, 'Danach läuft die neue Fassung');
     // Bringt das Neuladen die alte Seite zurück, lädt die App nicht im Kreis.
     await updBereit();
-    neueFassung = '2099.01.01.neu3'; nurAbfrage = true;
-    ok(await navigiert(() => u.page.evaluate(() => window.__K('checkForUpdate()')), 6000), 'Das dritte Update lädt');
+    neueFassung = '2099.01.01.neu4'; nurAbfrage = true;
+    ok(await navigiert(() => u.page.evaluate(() => window.__K('checkForUpdate()')), 6000), 'Das nächste Update lädt');
     await u.page.waitForFunction(() => document.querySelector('#main .rlist') && window.__K, null, {timeout:20000});
     ok(await u.page.evaluate(() => window.__K('BUILD_VERSION')) === alteFassung, 'Der Zwischenspeicher bringt eine alte Fassung zurück');
     // Gleich nach dem Start nachgesehen: der Hinweis stünde 700 ms nach dem
@@ -292,6 +313,12 @@ async function neueSeite(ctx){
     ok(u.fehler.length === 0, 'Update ohne Seitenfehler' + (u.fehler.length ? ': ' + u.fehler[0] : ''));
     neueFassung = null; nurAbfrage = false;
     await u.page.close();
+    // Und die Fassung muss überhaupt ins Netz kommen: mit einer Gruppe für
+    // alle Zweige verdrängte ein Push auf einen Arbeitszweig den wartenden
+    // Lauf von main, und der Merge von PR #212 wurde nie veröffentlicht.
+    const ablauf = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', 'pages.yml'), 'utf8');
+    ok(/\nconcurrency:\s*\n\s*group:\s*pages-\$\{\{ github\.ref \}\}\s*\n\s*cancel-in-progress:\s*false/.test(ablauf),
+      'Die Läufe stehen je Zweig in einer eigenen Reihe, und ein Veröffentlichen bricht nie ab');
 
     // ── Der Generator im Worker ───────────────────────────────────────
     // Der Start rechnet die Stories nicht auf dem Hauptthread, und der Worker
