@@ -363,11 +363,14 @@ function _isBreaking(s){
     case 'badge_unlocked':   // nur legendäre Auszeichnungen
       return d.rarity === 'legendary';
     // Eine legendäre Auszeichnung ist Breaking, wo sie auch steht: der
-    // Award-Sammler hatte keine eigene Karte und steht jetzt in der Karte des
-    // Schlusses, der ihn brachte [§11.0e].
-    case 'potd':
-    case 'woche':
-      return (d.abschluss || []).some(a => a && a.klasse === 'legendary');
+    // Award-Sammler hat keine eigene Karte und steht in der Ehrung des
+    // Schlusses, der ihn brachte [§11.6f]. Was die Karte des Schlusses
+    // selbst trägt (`EHRUNG_KOPF`), zählt nicht: sonst stünde jeder Monat
+    // mit seinem Meister zweimal oben. Die Ehrung einer Runde bleibt still,
+    // ihre legendären Auszeichnungen haben ihre eigene Karte.
+    case 'ehrung':
+      return !!d.periode && (d.spieler || []).some(x => ((x && x.posten) || [])
+        .some(q => q && q.klasse === 'legendary' && !EHRUNG_KOPF.has(q.id)));
     // ── Nur der ERSTE Aufstieg in die oberen zwei Stufen ────────────
     // Prestige aus Liga-Rekorden wird geteilt und fällt mit einem verlorenen
     // Bestwert wieder [§C34]: dieselbe Stufe kann mehrmals erreicht werden,
@@ -646,7 +649,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
     // Bauteil wie im Saison-Rückblick [§C27] —, und im Fuß das Rennen um die
     // Spitze, klein, samt der Tage vorn und dem Vorsprung.
     kopf = _newsMeisterKopf(d);
-    fuss = _newsMeisterFuss(d) + _newsAbschlussHtml(d.abschluss);
+    fuss = _newsMeisterFuss(d);
   } else if(sorte === 'held' && d.type === 'karriereende'){
     // Die Bühne des Abschieds und darunter die Zahlen, die die Karte bei
     // ihrer Entstehung trug — der Stand von damals, nicht von heute.
@@ -668,8 +671,6 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
     const g = d.type === 'potd' && d.gegenstueck;
     if(g && pmap()[g.pid]) fuss += `<div class="nf-gegen">${_spChip(g.pid)}<span><b>${esc(_spName(g.pid))}</b> gibt am meisten ab</span>`
       + `<b class="num r">${_spVz(Number(g.delta) || 0)} Elo</b></div>`;
-    // Und was der Schluss des Tages sonst vergab [§11.0e].
-    if(d.type === 'potd') fuss += _newsAbschlussHtml(d.abschluss);
     if(!fuss) fuss = _newsZahlband([
       {v: d.wr != null ? Math.round(d.wr * 100) + ' %' : null, l:'Siegquote', f:'g'},
       {v: (d.wins != null && d.games != null) ? d.wins + ' : ' + (d.games - d.wins) : null,
@@ -718,8 +719,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
       + (t.ic ? `<em class="nf-wl-i">${svgI(t.ic)}</em>` : '')
       + `<span>${esc(t.label || '')}</span>`
       + `<i>${esc(_namenKurz((t.pids || []).map(p => (pm[p] || {}).name || '').filter(Boolean), 2))}</i>`
-      + `<b>${esc(t.wert || '')}</b></div>`).join('')}</div>`
-      + _newsAbschlussHtml(d.abschluss);
+      + `<b>${esc(t.wert || '')}</b></div>`).join('')}</div>`;
   } else if(sorte === 'duell'){
     // Eine Rivalitaet lebt vom Verhaeltnis. Die beiden Wappen standen
     // uebereinander in der linken Spalte und machten die Karte 56 Pixel

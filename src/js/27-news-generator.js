@@ -611,19 +611,28 @@ function _buildStories(){
     });
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] loss_streak', e); }
 
-  // ── Die Spieltage des Fensters und was ihr Schluss vergab [§11.0e] ──
-  // Je Spieltag, dessen Karte des Spielers des Tages steht (um 23:59, mit
-  // einem Sieger), der Abschluss dieser Karte. Gerechnet vor den
-  // Auszeichnungen (6.) und der Ehrung: was die Karte des Tages trägt, steht
-  // in keiner eigenen Karte und in keiner Ehrung noch einmal, je
-  // 'Tag|Spieler|Auszeichnung' (`_tagGetragen`). Unschlagbar stand sonst um
-  // 23:57 als eigene Karte, um 23:59 in der des Tages und Tage später in der
-  // Ehrung. Gilt die gespeicherte Karte, dann ihre Zeilen — eine Karte von
-  // vor diesem Feld trägt keine, und die beiden anderen behalten es.
-  const _potdTage = new Map(), _tagGetragen = new Set();
+  // ── Was die Schlüsse des Fensters vergaben [§11.6f] ──────────────────
+  // Je Tag, Woche und Monat eine Ehrung des Schlusses. Gerechnet vor den
+  // Auszeichnungen (6.): was die Ehrung eines Tages trägt, steht in keiner
+  // eigenen Karte noch einmal, je 'Tag|Spieler|Auszeichnung'
+  // (`_tagGetragen`). Unschlagbar stand sonst um 23:57 als eigene Karte und
+  // in der Ehrung daneben.
+  const _schlussEhrungen = [], _tagGetragen = new Set();
   try {
-    const bestand = new Map((Array.isArray(_cache._stories) ? _cache._stories : [])
-      .filter(x => x && typeof x.id === 'string' && x.id.indexOf('potd_') === 0).map(x => [x.id, x]));
+    _newsSchlussEhrungen(now.getTime(), _cache._stories).forEach(st => {
+      _schlussEhrungen.push(st);
+      const d = st.dataRef;
+      if(d.periode === 'tag') d.spieler.forEach(x => x.posten.forEach(q => _tagGetragen.add(d.tag + '|' + x.pid + '|' + q.id)));
+    });
+  } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] schluss', e); }
+
+  // ── Die Spieltage des Fensters ────────────────────────────────────────
+  // Je Spieltag, dessen Karte des Spielers des Tages steht (um 23:59, mit
+  // einem Sieger). Was sein Schluss sonst vergab, stand als Zeile darunter;
+  // es steht jetzt in der Ehrung des Tages direkt darüber, mit allen
+  // Klassen, und nicht zweimal.
+  const _potdTage = new Map();
+  try {
     const seit = now.getTime() - NEWS_FENSTER_TAGE * 86400000;
     const tage = new Map();
     matches.forEach(m => {
@@ -645,13 +654,9 @@ function _buildStories(){
       // showPotdRecap und zum Badge-Zaehler countDayWins.
       const res = _newsPeriodWinner(dayMatches, 'tag');
       if(!res) return;
-      const abschluss = _abschlussAuszeichnungen(rep.getTime(), ABSCHLUSS_TAG);
-      const alt = bestand.get('potd_' + dayKey);
-      ((alt ? (alt.dataRef || {}).abschluss : abschluss) || []).forEach(a =>
-        (a.spieler || []).forEach(x => _tagGetragen.add(dayKey + '|' + x.pid + '|' + a.id)));
-      _potdTage.set(dayKey, {rep, res, abschluss});
+      _potdTage.set(dayKey, {rep, res});
     });
-  } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] potd abschluss', e); }
+  } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] potd tage', e); }
 
   // ── 6. Badge freigeschaltet (letzte 7 Tage) ──
   // Tap-Quelle: getBadgeEarnedCache. Wir zeigen die NEUSTEN N freigeschalteten,
@@ -676,7 +681,7 @@ function _buildStories(){
       // „Julian holt ‚Comeback-Tag'" als zweite Karte über denselben Spieler.
       arr.forEach(e => {
         const te = e.meta && e.meta.tagEnde;
-        // Trägt die Karte des Tages es als Abschluss, steht es dort.
+        // Trägt die Ehrung des Tages es, steht es dort.
         if(te && _tagGetragen.has(te + '|' + e.playerId + '|' + e.badge.id)) return;
         let when = new Date(matchObj.created_at);
         if(te){ when = new Date(te + 'T00:00:00'); when.setHours(23, 57, 0, 0); }
@@ -1201,16 +1206,16 @@ function _buildStories(){
       // Martin am 1. Juli um 00:00 auf den Volutenkranz III und fiel am
       // Spieltag danach zurück — keine Karte hatte es gesagt. Ein Vergleich
       // über die Laufbahn mit der Liga von heute fragt `ligaAktiv` [§C40].
-      let zeichen = [], abschluss = [];
+      // Was der Schluss des Monats an Auszeichnungen vergibt — Meister,
+      // Vize, Team der Saison, Untouchable —, steht in der Ehrung des Monats
+      // direkt darüber, mit seinem Wert [§11.6f].
+      let zeichen = [];
       try {
         const ende = seasonEnd(sid).getTime();
-        // Meister, Vize und Team der Saison stehen auf Podest und Bühne;
-        // was der Monat sonst vergibt, steht darunter [§11.0e].
-        abschluss = _abschlussAuszeichnungen(ende, ABSCHLUSS_MONAT);
         zeichen = rcpZeichenZuege(rcpLaufbahnDaten(ende, ende + 1))
           .filter(z => pm[z.pid] && ligaAktiv(pm[z.pid]))
           .map(z => ({pid:z.pid, art:z.art, vor:{stufe:z.vor.stufe, grad:z.vor.grad}, nach:{stufe:z.nach.stufe, grad:z.nach.grad}}));
-      } catch(e){ zeichen = []; abschluss = []; }
+      } catch(e){ zeichen = []; }
       const champ = nameOf(topElo[0].id);
       stories.push({
         id: 'season_recap_' + sid,
@@ -1229,7 +1234,7 @@ function _buildStories(){
         when: new Date(sStart.getFullYear(), sStart.getMonth(), 1, 0, 0, 0, 0),
         prio: STORY_PRIO.season_recap,
         dataRef: {type:'season_recap', sid, championId:topElo[0].id, championElo:topElo[0].elo,
-                  topElo, fakten:_fakten, team, chronik, zeichen, abschluss}
+                  topElo, fakten:_fakten, team, chronik, zeichen}
       });
     }
   } catch(e){}
@@ -2060,7 +2065,7 @@ function _buildStories(){
   // sonst Partien ohne Zusammenfassung. Die ID traegt den Tag, ist also
   // stabil, und ein zweiter Lauf legt keine Zeile dazu.
   try {
-    _potdTage.forEach(({rep, res, abschluss}, dayKey) => {
+    _potdTage.forEach(({rep, res}, dayKey) => {
       const main = res.main;
       const names = res.winners.map(w => nameOf(w.id));
       // Auch hier die Aufzaehlung der App [§C27]: „Leon & Martin holen den
@@ -2084,11 +2089,7 @@ function _buildStories(){
         prio: STORY_PRIO.potd,
         dataRef: {type:'potd', dayKey, playerId: main.id,
                   playerIds: res.winners.map(w => w.id),
-                  wins: main.wins, games: main.wins + main.losses, wr: main.wr,
-                  // Was der Schluss des Tages sonst noch vergab: Unschlagbar,
-                  // Tag der Götter, Allwetter, der Award-Sammler — keine
-                  // Partie trägt es [§11.0e `_abschlussAuszeichnungen`].
-                  abschluss}
+                  wins: main.wins, games: main.wins + main.losses, wr: main.wr}
       });
     });
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] potd', e); }
@@ -2096,7 +2097,9 @@ function _buildStories(){
   // ── Die Runde der Vier [§C33, §11.6c] ────────────────────────────────
   // Eine eigene Story je abgeschlossener Runde, dreißig Minuten nach ihrer
   // letzten Partie. Die Karten der Partien bleiben daneben stehen.
-  try { _newsEhrungStories(now.getTime(), _tagGetragen).forEach(st => stories.push(st)); }
+  try { _newsEhrungStories(now.getTime()).forEach(st => stories.push(st)); }
+  catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] ehrung', e); }
+  try { _schlussEhrungen.forEach(st => stories.push(st)); }
   catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] ehrung', e); }
   try { _newsRundenStories(now.getTime()).forEach(st => stories.push(st)); }
   catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] runde', e); }
@@ -2171,10 +2174,8 @@ function _buildStories(){
         prio: STORY_PRIO.woche,
         dataRef: {type:'woche', woche:_lastWeekKey, spiele:_wSpiele.length, tage:_wTage,
                   playerIds: _wHeld.pids.slice(0, 2),
-                  // Der Schluss der Woche am Montag um 00:00 vergibt neben dem
-                  // Spieler der Woche auch den Award-Sammler, wenn er der
-                  // zweite der Saison war [§11.0e].
-                  abschluss: _abschlussAuszeichnungen(_wocheEnde, ABSCHLUSS_WOCHE),
+                  // Was der Schluss der Woche neben dem Spieler der Woche
+                  // vergibt, steht in der Ehrung der Woche [§11.6f].
                   teile: _wochenTeile.map(t => ({art:t.art, ic:t.ic, label:t.label, pids:t.pids,
                                                  wert:t.wert, satz:t.satz, duo:!!t.duo,
                                                  matchId:t.matchId || null}))}

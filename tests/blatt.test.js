@@ -1503,11 +1503,12 @@ const ok = (c, msg, det) => {
   ok(ehrung.some(x => x.kacheln > 0) && ehrung.every(x => !x.gebrochen.length),
      'im Blatt der Ehrung bricht kein Name einer Kachel mitten im Wort',
      ehrung.flatMap(x => x.gebrochen).join(', ') || ehrung.map(x => x.kacheln).join('+') + ' Kacheln');
-  // ── Was ein Schluss vergibt, als Zeile seiner Karte [§11.0e] ─────
-  //    Unter dem Spieler des Tages, in der Woche, im Monatsabschluss und in
-  //    der Zeichen-Karte des Wochenschlusses: Kachel, Gesicht, Satz und Wort
-  //    der Klasse in einer Zeile, die in der Karte bleibt — gemessen in der
-  //    Breite der Karte im Feed (287 px bei 360, 247 px bei 320) und im Blatt.
+  // ── Was ein Schluss vergibt, als Grund eines Zeichens [§11.0e] ────
+  //    In der Zeichen-Karte des Wochenschlusses: Kachel, Gesicht, Satz und
+  //    Wort der Klasse in einer Zeile, die in der Karte bleibt — gemessen in
+  //    der Breite der Karte im Feed (287 px bei 360, 247 px bei 320) und im
+  //    Blatt. Unter dem Spieler des Tages, der Woche und dem Meister steht
+  //    sie nicht mehr: das trägt die Ehrung des Schlusses [§11.6f].
   //    Der Name der Auszeichnung bricht nicht: im Blatt stand „Award-" am
   //    Zeilenende und „Sammler" darunter.
   const abschluss = await page.evaluate(() => {
@@ -1518,10 +1519,7 @@ const ok = (c, msg, det) => {
           spieler:[{pid:p[6], mal:1, p:70}]},
         {id:'potw', name:'Player of the Week', ic:'weekKing', klasse:'rare', spieler:[{pid:p[3], mal:12, p:30}]},
         {id:'godly_streak', name:'Tag der Götter', ic:'godRay', klasse:'rare', spieler:[{pid:p[9], mal:2, p:25}]}];
-      const potd = {id:'potd_probe', cat:'highlight', ic:'dayKing', title:'Julian ist Spieler des Tages',
-        desc:'6 von 8 Spielen gewonnen.', when:new Date(2026, 7, 26, 23, 59), prio:60,
-        dataRef:{type:'potd', dayKey:'2026-08-26', playerId:p[6], playerIds:[p[6]], wins:6, games:8, wr:.75, abschluss:liste}};
-      return {karte:_newsCardHtmlM2(potd, false, false, ''), blatt:_newsAbschlussHtml(liste, true)};
+      return {karte:'<div class="nf-card">' + _newsAbschlussHtml(liste) + '</div>', blatt:_newsAbschlussHtml(liste, true)};
     })())`);
     const x = JSON.parse(roh);
     const host = document.createElement('div');

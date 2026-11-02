@@ -16,7 +16,7 @@
 //       _storyStand(bisMs)      ein Stand der Liga zu EINEM Zeitpunkt
 //       _storyTagGrenzen(ms)    der Spieltag als Paar aus Vorher und Nachher
 //       _prestigeWirkung(…)     was eine Änderung wirklich gebracht hat
-//       _abschlussAuszeichnungen(…)  was der Schluss eines Zeitraums vergibt
+//       _abschlussAuszeichnungen(…)  was ein Schluss vergibt, als Grund eines Zeichens
 //       _insZuegeZwischen(…)    die Bewegungen auf der Leiter dazwischen
 //       _storyRangFrei(sid)     ist die Rangliste dieser Saison belastbar
 // ╚═════════════════════════════════════════════════════════════════════════╝
@@ -198,32 +198,20 @@ function _insBestVor(vonMs, bestand){
   return best;
 }
 
-// ─── Was der Schluss eines Zeitraums vergibt ─────────────────────────
-// Manche Auszeichnung entsteht ohne Partie: mit dem Schluss des Tages um
-// 23:59 der Spieler des Tages und, was den ganzen Tag beschreibt
-// (Unschlagbar), dazu Allwetter, Tag der Götter und der Award-Sammler, die an
-// ihm hängen; mit dem Schluss der Woche am Montag um 00:00 der Spieler der
-// Woche und wieder der Award-Sammler; mit dem Schluss des Monats um 23:59:59
-// Untouchable. Keine Partie-Karte und keine Ehrung nannte sie — die Ehrung
-// sammelt, was an Partien hängt. Der Award-Sammler, legendär, stand im
-// Rückblick der Woche und sonst nirgends. Der Abschluss, der sie bringt,
-// nennt sie deshalb selbst: in der Karte des Tages, der Woche, des Monats,
-// ohne eigene Karte [§C33].
+// ─── Was der Schluss eines Zeitraums vergibt, als Grund ──────────────
+// Steigt jemand mit dem Schluss der Woche auf einen neuen Grad, nennt die
+// Zeichen-Karte den Grund: den Spieler der Woche, den Award-Sammler [§C30].
+// Alles, was ein Schluss vergibt, steht in der Ehrung dieses Schlusses
+// (`_newsSchlussEhrungen`, [§11.6f]); hier nur Seltenes und Legendäres, je
+// Auszeichnung mit ihren Spielern, so wie die Zeile unter der Karte es
+// zeigt (`_newsAbschlussHtml`).
 //
 // Gezählt wird mit der Auszeichnung selbst (`count` mit Schnitt), eine
 // Millisekunde vor dem Schluss gegen den Schluss: was dazwischen dazukam,
 // hat er gebracht. Der Wert ist derselbe wie in der Ehrung, der Teilwert
-// beim wievielten Mal [§C34]. Nur Seltenes und Legendäres — das Gewöhnliche
-// eines Tages (Comeback-Tag) steht in der nächsten Ehrung, und eine Zeile
-// dafür in jeder Karte des Spielers des Tages wäre der Spam, den die Karte
-// vermeiden soll. Ein Zeitraum: wer darin stand, steht darin [§C40].
+// beim wievielten Mal [§C34]. Ein Zeitraum: wer darin stand, steht darin
+// [§C40].
 const ABSCHLUSS_KLASSEN = {legendary:0, rare:1};
-// Was jeder Schluss vergeben kann, ohne die Auszeichnung, die die Karte
-// selbst ist: der Spieler des Tages, der Woche, Meister, Vize und Team der
-// Saison stehen dort schon groß.
-const ABSCHLUSS_TAG = ['award_collector', 'godly_streak', 'allwetter', 'unbeatable'];
-const ABSCHLUSS_WOCHE = ['award_collector'];
-const ABSCHLUSS_MONAT = ['untouchable'];
 function _abschlussAuszeichnungen(schlussMs, ids){
   const vor = schlussMs - 1;
   const msA = _partienBis(vor), msB = _partienBis(schlussMs);

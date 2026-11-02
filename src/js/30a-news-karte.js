@@ -659,13 +659,12 @@ function _newsRarityLabel(r){
        : r === 'negative' ? 'Schande' : 'Gewöhnlich';
 }
 
-// Was der Schluss eines Zeitraums vergab [§11.0e]: unter dem Spieler des
-// Tages, der Woche und dem Meister eine Zeile je Spieler und Auszeichnung,
-// die mit dem Schluss kam und an keiner Partie hängt. Zeichen in der Kachel
-// [§C27], Ton und Wort der Klasse [§C25], das Gesicht [§C33] — dieselbe
-// Zeile wie das Gegenstück des Tages darüber. Der Award-Sammler stand sonst
-// nur im Rückblick der Woche, Unschlagbar Tage später in einer Ehrung.
-// `blatt` macht die Zeile zum Weg ins Profil.
+// Was der Schluss einer Woche vergab, als Grund eines neuen Zeichens
+// [§11.0e]: in der Zeichen-Karte des Wochenschlusses eine Zeile je Spieler
+// und Auszeichnung. Zeichen in der Kachel [§C27], Ton und Wort der Klasse
+// [§C25], das Gesicht [§C33]. Sie stand auch unter dem Spieler des Tages,
+// der Woche und dem Meister; das trägt jetzt die Ehrung des Schlusses
+// [§11.6f], mit allen Klassen. `blatt` macht die Zeile zum Weg ins Profil.
 function _newsAbschlussHtml(liste, blatt){
   const pm = pmap(), z = [];
   (Array.isArray(liste) ? liste : []).forEach(a => (a.spieler || []).forEach(x => {

@@ -17,6 +17,11 @@
 //     (`getragen`, [§11.0e]): Unschlagbar stand sonst um 23:59 dort und Tage
 //     später ein zweites Mal hier.
 //
+//     Was erst ein Schluss vergibt — der Tag um 23:59, die Woche am Montag
+//     um 00:00, der Monat in seiner letzten Millisekunde —, steht in einer
+//     eigenen Ehrung dieses Schlusses (`_newsSchlussEhrungen`), nicht in der
+//     einer Runde. Was am Tagesende vergeben wird (`tagEnde`), gehört dazu.
+//
 //     Der Wert je Auszeichnung ist ihr Teilwert beim wievielten Mal
 //     (`auszeichnungsTeilwert`): das erste und zweite Mal voll, danach eine
 //     Stufe weniger [§C34]. Dieselbe Rechnung trägt die Laufbahn.
@@ -26,7 +31,7 @@ const EHRUNG_PAUSE_MS = 2 * 3600e3;
 // Eine Karte je abgeschlossener Runde im Fenster des Feeds. Die Grenzen
 // werden über ALLE Partien gezogen: sonst begänne die erste Runde im
 // Fenster bei null und nähme Auszeichnungen von vor zwei Wochen mit.
-function _newsEhrungStories(nowMs, getragen){
+function _newsEhrungStories(nowMs){
   const out = [];
   const ms = (matches || []).slice().sort((a, b) => mts(a) - mts(b));
   if(!ms.length) return out;
@@ -48,12 +53,13 @@ function _newsEhrungStories(nowMs, getragen){
     (bMap[mid] || []).forEach(e => {
       const k = e.playerId + '|' + e.badge.id;
       (zeiten[k] = zeiten[k] || []).push({t, mid});
-      const te = e.meta && e.meta.tagEnde;
-      let wann = t;
-      if(te){ const d = new Date(te + 'T00:00:00'); d.setHours(23, 57, 0, 0); wann = d.getTime(); }
-      // Gezählt ist sie oben schon: der Rang der nächsten hängt daran.
-      if(te && getragen && getragen.has(te + '|' + e.playerId + '|' + e.badge.id)) return;
-      ev.push({pid:e.playerId, badge:e.badge, mid, t, wann});
+      // Was den ganzen Tag beschreibt, vergibt der Schluss des Tages, und
+      // seine Ehrung nennt es (`_newsSchlussEhrungen`). Es stand in der
+      // nächsten Ehrung danach, oft der einer Runde Tage später: Julians
+      // Unschlagbar vom 11.06. kam so in einer Karte vom 15.06. an.
+      // Gezählt ist es oben schon: der Rang der nächsten hängt daran.
+      if(e.meta && e.meta.tagEnde) return;
+      ev.push({pid:e.playerId, badge:e.badge, mid, t, wann:t});
     });
   });
   Object.keys(zeiten).forEach(k => zeiten[k].sort((a, b) => a.t - b.t));
@@ -79,6 +85,7 @@ function _newsEhrungStories(nowMs, getragen){
 }
 
 function _newsEhrungStory(liste, T, letzteM, rang){
+  if(!liste.length) return null;
   const je = {};
   liste.forEach(e => {
     // Ein Zeitraum: wer darin gespielt hat, steht darin [§C40].
@@ -93,11 +100,21 @@ function _newsEhrungStory(liste, T, letzteM, rang){
       {id:e.badge.id, name:e.badge.name, ic:e.badge.ic, klasse:rarityOf(e.badge.id), mal:0, bis:0, p:0});
     q.mal++; q.bis = Math.max(q.bis, n); q.p += p; j.summe += p;
   });
+  return _ehrungKarte(Object.values(je).map(j => ({pid:j.pid, summe:j.summe, posten:Object.values(j.posten)})),
+    'ehrung_' + letzteM.id, T, {ab:Math.min(...liste.map(e => e.t)), bis:mts(letzteM)});
+}
+
+// Die Karte aus den Geehrten, für eine Runde wie für einen Schluss: je
+// Spieler seine Posten (`{id, name, ic, klasse, mal, bis, p}`) und ihre
+// Summe. `ref` trägt, woher sie kommen — `ab` und `bis` einer Runde oder
+// `periode` mit Tag, Woche oder Monat (nicht `schluss`: so heißt bei der
+// Zeichen-Karte der Schluss, der sie auslöste).
+function _ehrungKarte(roh, id, T, ref){
   const r1 = x => Math.round(x * 10) / 10;
   const nm = pid => pname(pid);
   const ORD = {legendary:0, rare:1, common:2};
-  const spieler = Object.values(je).map(j => ({pid:j.pid, summe:r1(j.summe),
-    posten:Object.values(j.posten).map(q => Object.assign({}, q, {p:r1(q.p)}))
+  const spieler = roh.filter(j => j.summe > 0).map(j => ({pid:j.pid, summe:r1(j.summe),
+    posten:j.posten.map(q => Object.assign({}, q, {p:r1(q.p)}))
       .sort((a, b) => (ORD[a.klasse] - ORD[b.klasse]) || (b.p - a.p) || a.name.localeCompare(b.name, 'de'))}))
     .sort((a, b) => (b.summe - a.summe) || nm(a.pid).localeCompare(nm(b.pid), 'de'));
   if(!spieler.length) return null;
@@ -117,13 +134,129 @@ function _newsEhrungStory(liste, T, letzteM, rang){
       top = {pid:x.pid, q};
   }));
   const klasse = {legendary:', eine legendäre Auszeichnung', rare:', eine seltene Auszeichnung'}[top.q.klasse] || '';
-  const desc = `${nm(top.pid)} holt dabei „${top.q.name}“ zum ${top.q.bis === 1 ? 'ersten' : top.q.bis + '.'} Mal${klasse}.`;
+  // Das wievielte Mal als Ziffer, wie im Blatt darunter („1. Mal"): mit
+  // „zum ersten Mal" stand im Satz keine Zahl, und Prestige soll er nicht
+  // nennen — das steht bei den Klassen.
+  const desc = `${nm(top.pid)} holt dabei „${top.q.name}“ zum ${top.q.bis}. Mal${klasse}.`;
   return {
-    id:'ehrung_' + letzteM.id, cat:'badge', ic:'medal', when:new Date(T),
+    id, cat:'badge', ic:'medal', when:new Date(T),
     prio:STORY_PRIO.ehrung, title, desc,
-    dataRef:{type:'ehrung', playerIds:spieler.map(x => x.pid), spieler, zahl, gesamt,
-             ab:Math.min(...liste.map(e => e.t)), bis:mts(letzteM)}
+    dataRef:Object.assign({type:'ehrung', playerIds:spieler.map(x => x.pid), spieler, zahl, gesamt}, ref)
   };
+}
+
+// ── Was ein Schluss vergibt ─────────────────────────────────────────
+// Manche Auszeichnung entsteht ohne Partie: mit dem Schluss des Tages um
+// 23:59 der Spieler des Tages und, was den ganzen Tag beschreibt
+// (Unschlagbar, Comeback-Tag), dazu Allwetter, Tag der Götter und der
+// Award-Sammler, die an ihm hängen; mit dem Schluss der Woche am Montag um
+// 00:00 der Spieler der Woche und wieder der Award-Sammler; mit dem Schluss
+// des Monats Meister, Vize-Meister, Team der Saison und Untouchable. Sie
+// standen nirgends als Auszeichnung: der Meister und sein Podest im
+// Rückblick, Seltenes und Legendäres als Zeile unter dem Spieler des Tages
+// oder der Woche, das Gewöhnliche Tage später in der Ehrung einer Runde,
+// und dass Maxi mit dem Oktober Team der Saison wurde und Julian
+// Vize-Meister, sagte keine Karte. Jetzt hat jeder Schluss, der etwas
+// vergibt, seine Ehrung, mit allen Klassen und dem Wert beim wievielten Mal.
+//
+// Welche Auszeichnung welcher Schluss vergeben kann, steht hier fest;
+// `tests/ambient` rechnet an allen Schlüssen der echten Partien nach, dass
+// keine fehlt. Über alle Auszeichnungen zu zählen kostete je Schluss das
+// Zehnfache. Eine Schattenseite bringt kein Prestige und steht in keiner
+// Ehrung (Schwarzer Tag, Zusammenbruch).
+const EHRUNG_SCHLUSS = {
+  tag:['potd', 'unbeatable', 'godly_streak', 'allwetter', 'comeback_day', 'award_collector'],
+  woche:['potw', 'award_collector'],
+  monat:['champion', 'vice_champion', 'team_of_season', 'untouchable']
+};
+// Was die Karte des Schlusses selbst als Schlagzeile trägt: der Spieler des
+// Tages, der Woche, das Podest des Monats. Eine legendäre Auszeichnung
+// daneben macht die Ehrung zum Breaking [§C33]; diese nicht, sonst stünde
+// jeder Monat zweimal oben.
+const EHRUNG_KOPF = new Set(['potd', 'potw', 'champion', 'vice_champion', 'team_of_season']);
+
+// Gezählt wird mit der Auszeichnung selbst (`count` mit Schnitt), eine
+// Millisekunde vor dem Schluss gegen den Schluss: was dazwischen dazukam,
+// hat er gebracht. Ein Zeitraum: wer darin stand, steht darin [§C40].
+// `schon` sind die Verleihungen ('Spieler|Auszeichnung|wievieltes Mal'),
+// die eine gespeicherte Ehrung einer Runde schon nennt: vor dieser Fassung
+// kam dort an, was den ganzen Tag beschreibt, und eine Karte ist ein
+// Snapshot [§C33] — es stünde sonst in zwei Ehrungen.
+function _ehrungSchlussPosten(schlussMs, ids, schon){
+  const vor = schlussMs - 1, msA = _partienBis(vor), msB = _partienBis(schlussMs);
+  const je = {};
+  BADGES.forEach(b => {
+    if(!ids.includes(b.id)) return;
+    const klasse = rarityOf(b.id);
+    (players || []).forEach(p => {
+      if(!sichtbar(p)) return;
+      let a = 0, n = 0;
+      try { a = b.count(p.id, msA, vor) || 0; n = b.count(p.id, msB, schlussMs) || 0; } catch(e){ return; }
+      if(!(n > a)) return;
+      let wert = 0, mal = 0;
+      for(let i = a + 1; i <= n; i++){
+        if(schon && schon.has(p.id + '|' + b.id + '|' + i)) continue;
+        wert += auszeichnungsTeilwert(b.id, i); mal++;
+      }
+      if(!(wert > 0)) return;
+      const j = je[p.id] || (je[p.id] = {pid:p.id, summe:0, posten:[]});
+      j.posten.push({id:b.id, name:b.name, ic:b.ic, klasse, mal, bis:n, p:wert});
+      j.summe += wert;
+    });
+  });
+  return Object.values(je);
+}
+
+// Je Schluss im Fenster des Feeds eine Ehrung, wenn er etwas vergab: jeder
+// Tag mit Partien, jede Woche mit Partien, jeder Monat mit Partien. Sie
+// steht neben der Karte ihres Schlusses, aber nie in deren Minute: in einer
+// Minute steht höchstens eine Karte je Spieler [§C33], und der Spieler des
+// Tages steht in beiden. Der Tag um 23:58:30, unter seinem Spieler des
+// Tages (23:59); die Woche am Sonntag um 23:57:30, unter der Ehrung ihres
+// letzten Tages; der Monat am Ersten um 00:01, über seinem Rückblick
+// (00:00).
+function _newsSchlussEhrungen(nowMs, bestand){
+  const out = [], seit = nowMs - NEWS_FENSTER_TAGE * 864e5;
+  const schon = new Set();
+  (Array.isArray(bestand) ? bestand : []).forEach(st => {
+    const d = (st && st.dataRef) || {};
+    if(d.type !== 'ehrung' || d.periode) return;
+    (d.spieler || []).forEach(x => ((x && x.posten) || []).forEach(q => {
+      for(let i = (q.bis | 0) - (q.mal | 0) + 1; i <= (q.bis | 0); i++) schon.add(x.pid + '|' + q.id + '|' + i);
+    }));
+  });
+  const tage = new Set(), wochen = new Set(), monate = new Set();
+  (matches || []).forEach(m => {
+    const t = mts(m);
+    if(t > nowMs || t < seit - 31 * 864e5) return;
+    const tag = tagKey(t);
+    tage.add(tag);
+    const d = new Date(tag + 'T00:00:00');
+    d.setDate(d.getDate() - (d.getDay() + 6) % 7);
+    wochen.add(d.getTime());
+    const s = seasonOf(m.created_at);
+    if(s && s.id) monate.add(s.id);
+  });
+  const machen = (art, S, wann, ref) => {
+    if(S > nowMs || S < seit) return;
+    const st = _ehrungKarte(_ehrungSchlussPosten(S, EHRUNG_SCHLUSS[art], schon),
+      'ehrung_' + art + '_' + (ref.tag || ref.woche || ref.sid), wann, Object.assign({periode:art}, ref));
+    if(st) out.push(st);
+  };
+  tage.forEach(tag => {
+    const d = new Date(tag + 'T00:00:00'); d.setHours(23, 59, 0, 0);
+    machen('tag', d.getTime(), d.getTime() - 30000, {tag});
+  });
+  wochen.forEach(ab => {
+    const ende = new Date(ab); ende.setDate(ende.getDate() + 7);
+    machen('woche', ende.getTime(), ende.getTime() - 150000,
+      {woche:tagKey(ab), von:ab, bis:ende.getTime() - 1});
+  });
+  monate.forEach(sid => {
+    const ende = seasonEnd(sid).getTime();
+    machen('monat', ende, ende + 1 + 60000, {sid});
+  });
+  return out.sort((a, b) => a.when - b.when);
 }
 
 // Der Ton einer Klasse, wie überall: Gold legendär, Violett selten, Grün
@@ -233,11 +366,21 @@ const _ehrungKlasseHtml = z => `<span class="eh-k ${z.id}"><i></i><b class="num"
 // hintereinander. Innerhalb eines Endes nur feste Leerzeichen, damit der
 // Zeitraum nur vor dem „bis" umbricht: umbrochen stand „15:55" allein in
 // der zweiten Zeile, getrennt von seinem „bis".
+// Eine Ehrung des Schlusses nennt den Zeitraum, nicht seine Partien: „Geholt
+// am 22.10.", „Geholt in der Woche vom 19.10. bis 25.10.", „Geholt im
+// Oktober 2026".
 function _ehrungZeitraum(d){
-  if(!d || !d.ab || !d.bis) return null;
   const jetzt = Date.now();
   const tag = t => tagKey(t) === tagKey(jetzt) ? 'heute'
     : tagKey(t) === gesternKey(jetzt) ? 'gestern' : datumFmt(t, 'tm');
+  if(d && d.periode === 'tag' && d.tag){
+    const w = tag(new Date(d.tag + 'T12:00:00').getTime());
+    return /^\d/.test(w) ? {vor:'Geholt am', wann:w} : {vor:'Geholt', wann:w};
+  }
+  if(d && d.periode === 'woche' && d.von && d.bis)
+    return {vor:'Geholt in der Woche', wann:`vom\u00a0${datumFmt(d.von, 'tm')} bis\u00a0${datumFmt(d.bis, 'tm')}`};
+  if(d && d.periode === 'monat' && d.sid) return {vor:'Geholt im', wann:seasonLabel(d.sid)};
+  if(!d || !d.ab || !d.bis) return null;
   const von = t => { const w = tag(t); return (/^\d/.test(w) ? 'vom' : 'von') + '\u00a0' + w; };
   const uhr = t => '\u00a0' + datumFmt(t, 'uhr') + '\u00a0Uhr';
   if(d.ab === d.bis) return {vor:'Geholt in der Partie', wann:`${von(d.ab)},${uhr(d.ab)}`};
@@ -319,7 +462,8 @@ function _ndEhrungBlatt(s){
       ${klein.length ? `<div class="eh-g">${klein.map(kachel).join('')}</div>` : ''}
     </div>`;
   }).join('');
-  return {kopf, mitte: anteil + (zeit ? `<div class="nw-hinweis eh-zeit">${esc(zeit.vor + ' ' + zeit.wann)}.</div>` : '')
+  // Ein Datum trägt seinen Punkt schon: „Geholt am 22.10.." stand doppelt.
+  return {kopf, mitte: anteil + (zeit ? `<div class="nw-hinweis eh-zeit">${esc(zeit.vor + ' ' + zeit.wann)}${/\.$/.test(zeit.wann) ? '' : '.'}</div>` : '')
     + `<div class="nd-section">Wer was geholt hat</div>${bloecke}`
     + `<div class="nw-hinweis">Das erste und zweite Mal zählt eine Auszeichnung voll, danach etwas weniger. `
     + `Der Strich unter jeder zeigt, wie viel vom vollen Wert bleibt.</div>`};
