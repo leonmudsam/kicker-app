@@ -126,17 +126,35 @@ function _ehrungBrkGrund(art, ms){
   } catch(e){ sp = []; }
   const l = [];
   sp.forEach(x => (x.posten || []).forEach(q => {
-    if(q.klasse === 'legendary' && !EHRUNG_KOPF.has(q.id)) l.push({pid:x.pid, id:q.id, name:q.name}); }));
+    if(q.klasse === 'legendary' && !EHRUNG_KOPF.has(q.id)) l.push({pid:x.pid, id:q.id, name:q.name, bis:q.bis}); }));
   m.je.set(k, l);
   return l;
 }
 // Der Satz dazu, im Kleintext unter der Karte (`.nf-brk-sub`): ohne ihn
-// stand über einer Karte „BREAKING", und niemand sah, wofür.
+// stand über einer Karte „BREAKING", und niemand sah, wofür. Er erzählt die
+// Nachricht, nicht die Regel: „Breaking, weil der Schluss der Woche
+// „Award-Sammler“ für Julian brachte, eine legendäre Auszeichnung." las sich
+// wie eine Begründung der App für sich selbst, und die Oberfläche beschreibt
+// sich nicht (CLAUDE.md, Sprache und Ton). Das Band darüber sagt schon „Breaking"; hier steht, wer
+// was holt und zum wievielten Mal.
 function _ehrungBrkSatz(l, art){
   if(!l || !l.length) return '';
-  const was = l.map(q => `„${q.name}“ für ${pname(q.pid)}`);
-  return `Breaking, weil der Schluss ${art === 'woche' ? 'der Woche' : 'des Tages'} ${_namenKurz(was)} brachte, `
-    + (l.length === 1 ? 'eine legendäre Auszeichnung.' : 'legendäre Auszeichnungen.');
+  const wann = art === 'woche' ? 'zum Schluss der Woche' : 'zum Schluss des Tages';
+  const je = new Map();
+  l.forEach(q => { if(!je.has(q.pid)) je.set(q.pid, []); je.get(q.pid).push(q); });
+  const titel = qs => _namenListe(qs.map(q => `„${q.name}“`));
+  if(je.size === 1){
+    const [pid, qs] = [...je][0];
+    if(qs.length > 1) return `${pname(pid)} holt sich ${wann} die legendären Auszeichnungen ${titel(qs)}.`;
+    const n = qs[0].bis;
+    const mal = n === 1 ? ', zum ersten Mal' : n > 1 ? `, zum ${n}.\u00a0Mal` : '';
+    return `${pname(pid)} holt sich ${wann} die legendäre Auszeichnung ${titel(qs)}${mal}.`;
+  }
+  // Mehrere Spieler: je einer mit seinen Titeln, ab dem vierten gezählt
+  // (`_namenKurz`) — eine Zeile Kleintext, keine Liste.
+  const wer = [...je].map(([pid, qs]) => `${titel(qs)} für ${pname(pid)}`);
+  const n = l.length, oft = n <= 4 ? _zahlwortDe(n) + 'mal' : n + '-mal';
+  return `${wann[0].toUpperCase() + wann.slice(1)} ${oft} legendär: ${_namenKurz(wer)}.`;
 }
 // Der Schluss, den eine Karte trägt: der Tag eines Spielers des Tages oder
 // einer Ehrung des Tages, der Montag nach einer Woche.

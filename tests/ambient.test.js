@@ -2982,8 +2982,8 @@ ok(_wocheSchluss.zahl === _wocheSchluss.rck && _wocheSchluss.zahl > 10 && !_woch
 ok(_wocheSchluss.gleich && _wocheSchluss.darunter && _wocheSchluss.gold,
    'sie steht zur Zeit der Wochenkarte direkt darunter, in deren Gold und mit eigener Rubrik', JSON.stringify(_wocheSchluss));
 ok(_wocheSchluss.brk, 'der Award-Sammler aus dem Schluss macht sie zum Breaking, nicht die Wochenkarte', JSON.stringify(_wocheSchluss));
-ok(_wocheSchluss.balken && _wocheSchluss.grund === 'Breaking, weil der Schluss der Woche „Award-Sammler“ für Julian brachte, eine legendäre Auszeichnung.',
-   'sie traegt den Balken mit ihrer Ehrung und nennt im Kleintext, welche Auszeichnung des Schlusses sie zum Breaking macht', JSON.stringify([_wocheSchluss.balken, _wocheSchluss.grund]));
+ok(_wocheSchluss.balken && _wocheSchluss.grund === 'Julian holt sich zum Schluss der Woche die legendäre Auszeichnung „Award-Sammler“, zum ersten Mal.',
+   'sie traegt den Balken mit ihrer Ehrung und erzaehlt im Kleintext, wer welche legendaere Auszeichnung des Schlusses holt', JSON.stringify([_wocheSchluss.balken, _wocheSchluss.grund]));
 
 // ── Eine legendäre aus einer Partie ist einmal Breaking ─────────────
 // An ihrer Partie. Der Spieler des Tages trug sie in seiner Ehrung, und ein
@@ -3013,12 +3013,19 @@ const _einmalBrk = _schlussAm(FIXED, `
     const html = _newsCardHtmlM2(zus, false, false, '');
     gestellt = {brk:_isBreaking(zus), grund:(html.match(/<div class="nf-brk-sub">([^<]*)<\\/div>/) || [])[1] || ''};
   } finally { _ehrungTagesSchluss = echt; _ehrungGrundMemo.delete(matches); }
-  return {legendaer:leg.length, neu:_isBreaking(p), alt:_isBreaking(zus), traegt:(zus.dataRef.ehrung || []).some(x => x.posten.some(q => q.klasse === 'legendary')),
+  const saetze = [_ehrungBrkSatz([{pid:'${_X}', name:'Award-Sammler', bis:3}], 'tag'),
+    _ehrungBrkSatz([{pid:'${_X}', name:'Award-Sammler', bis:1}, {pid:'${_X}', name:'Unantastbar', bis:2}], 'woche'),
+    _ehrungBrkSatz([{pid:'${_X}', name:'Award-Sammler', bis:1}, {pid:'${_J}', name:'Unantastbar', bis:1}], 'tag')];
+  return {saetze, legendaer:leg.length, neu:_isBreaking(p), alt:_isBreaking(zus), traegt:(zus.dataRef.ehrung || []).some(x => x.posten.some(q => q.klasse === 'legendary')),
     partie:roh.some(x => _isBreaking(x) && (x.dataRef||{}).matchId && tagKey(x.when) === '2026-08-26'), gestellt};`);
 ok(_einmalBrk.legendaer > 0 && _einmalBrk.traegt && !_einmalBrk.neu && !_einmalBrk.alt && _einmalBrk.partie,
    'eine legendaere Auszeichnung aus einer Partie ist an ihrer Partie Breaking, der Spieler des Tages nicht, auch nicht ein gespeicherter, der sie in seiner Ehrung traegt', JSON.stringify(_einmalBrk));
-ok(_einmalBrk.gestellt && _einmalBrk.gestellt.brk && _einmalBrk.gestellt.grund === 'Breaking, weil der Schluss des Tages „Award-Sammler“ für Maxi brachte, eine legendäre Auszeichnung.',
-   'vergibt der Schluss des Tages eine legendaere, ist er Breaking und sagt im Kleintext, welche', JSON.stringify(_einmalBrk.gestellt));
+ok(_einmalBrk.gestellt && _einmalBrk.gestellt.brk && _einmalBrk.gestellt.grund === 'Maxi holt sich zum Schluss des Tages die legendäre Auszeichnung „Award-Sammler“, zum ersten Mal.',
+   'vergibt der Schluss des Tages eine legendaere, ist er Breaking und erzaehlt im Kleintext, wer sie holt', JSON.stringify(_einmalBrk.gestellt));
+ok(JSON.stringify(_einmalBrk.saetze) === JSON.stringify(['Maxi holt sich zum Schluss des Tages die legendäre Auszeichnung „Award-Sammler“, zum 3.\u00a0Mal.',
+    'Maxi holt sich zum Schluss der Woche die legendären Auszeichnungen „Award-Sammler“ und „Unantastbar“.',
+    'Zum Schluss des Tages zweimal legendär: „Award-Sammler“ für Maxi und „Unantastbar“ für Julian.']),
+   'der Kleintext erzaehlt die Nachricht: wer was zum wievielten Mal holt, zwei fuer einen, eine Zeile fuer mehrere', JSON.stringify(_einmalBrk.saetze));
 ok(_wocheSchluss.runden === 0, 'eine Ehrung je Runde entsteht nicht mehr: der Tag hat eine', JSON.stringify(_wocheSchluss));
 const _zeichenSchluss = _schlussAm(new RealDate(2026, 5, 29, 8, 0, 0).getTime(), `
   const z = roh.find(x => x.id === 'instag_woche_2026-06-29');
