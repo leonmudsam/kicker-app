@@ -6635,6 +6635,76 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
 .fx-st{grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:2px;height:72px}
 .fx-st>span>i{width:80%;max-height:56px}
 
+/* Zählwerk ohne Spieler */
+.fx-zl.ohne{grid-template-columns:auto minmax(0,1fr) auto}
+/* Reihe der Wertung */
+.fx-rh{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:2px}
+.fx-rh>span{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0}
+.fx-rh em{display:block;width:12px;height:12px}
+.fx-rh em svg{display:block;width:12px;height:12px;fill:var(--gold)}
+.fx-rh .av{--av:19px;font-size:7px;opacity:.55}
+.fx-rh>span.m .av{opacity:1;box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px var(--gold),0 0 10px rgba(247,207,74,.5)}
+.fx-rh small{font:600 8.5px 'Sometype Mono',monospace;color:var(--faint)}
+.fx-rh>span.m small{color:var(--gold)}
+/* Wechsel des Halters */
+.fx-wx{display:grid;grid-template-columns:minmax(0,1fr) 40px minmax(0,1fr);align-items:center;gap:8px}
+.fx-wx>span{display:flex;align-items:center;gap:6px;min-width:0}
+.fx-wx>span.alt{opacity:.5;filter:grayscale(1)}
+.fx-wx>span.neu{justify-content:flex-end}
+.fx-wx>span.neu .av{box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px var(--gold),0 0 12px rgba(247,207,74,.5)}
+.fx-wx>i{height:2px;background:linear-gradient(90deg,var(--line2),var(--gold));position:relative}
+.fx-wx>i::after{content:"";position:absolute;right:-1px;top:-4px;border:5px solid transparent;border-left:7px solid var(--gold);border-right:0}
+.fx-wx-t{font:500 9.5px 'Sometype Mono',monospace;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Stern der Partner */
+.fx-sn{display:grid;grid-template-columns:104px minmax(0,1fr);gap:12px;align-items:center}
+.fx-sn-b{position:relative;width:104px;height:104px}
+.fx-sn-b svg{position:absolute;inset:0;width:100%;height:100%}
+.fx-sn-b line{stroke:var(--fx);stroke-width:1.2}
+.fx-sn-b line.neu{stroke:var(--gold);stroke-width:2}
+.fx-sn-b>i{position:absolute;transform:translate(-50%,-50%)}
+.fx-sn-b>i .av{--av:17px;font-size:6.5px}
+.fx-sn-b>i.mitte .av{--av:26px;font-size:9px;box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px var(--fx)}
+.fx-sn-b>i.neu .av{box-shadow:0 0 0 1.5px var(--surface),0 0 0 3px var(--gold)}
+.fx-sn-t{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0}
+.fx-sn-t small{font:500 9.5px 'Sometype Mono',monospace;color:var(--muted)}
+/* Zwei Paare */
+.fx-pg{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px}
+.fx-pg>b.num{text-align:center;font-size:22px;color:var(--fx)}
+.fx-pg-k{grid-template-columns:minmax(0,1fr)}
+/* Spanne */
+.fx-sp{position:relative;height:30px;margin:0 6px}
+.fx-sp u{position:absolute;height:8px;border-radius:4px}
+.fx-sp u.vor{top:4px;border:1px dashed var(--line2)}
+.fx-sp u.jetzt{top:4px;background:rgba(var(--fx-rgb),.18);border:1px solid rgba(var(--fx-rgb),.6)}
+.fx-sp i{position:absolute;top:18px;width:8px;height:8px;margin-left:-4px;border-radius:50%;box-shadow:0 0 0 1.5px var(--surface)}
+.fx-sp-n{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.fx-sp-n>span{display:flex;align-items:center;gap:5px;min-width:0}
+.fx-sp-n b.num{font-size:13px;color:var(--fx);white-space:nowrap}
+.fx-sp-n b small{font:500 9.5px 'Sometype Mono',monospace;color:var(--muted)}
+
+/* Form der Liga: Balken von der Mitte */
+.fx-fb,.fx-fp{display:flex;flex-direction:column;gap:3px}
+.fx-fb>div,.fx-fp>div{display:grid;grid-template-columns:18px 54px minmax(0,1fr) 36px;gap:6px;align-items:center;height:19px}
+.fx-fb .av,.fx-fp .av{--av:18px;font-size:7px}
+.fx-fb .fx-n,.fx-fp .fx-n{font-size:10.5px}
+.fx-fb b.num,.fx-fp b.num{text-align:right;font-size:11px;color:var(--muted)}
+.fx-fb>div.eins b.num,.fx-fp>div.eins b.num{color:var(--fx)}
+.fx-fb>div.eins .fx-n,.fx-fp>div.eins .fx-n{color:var(--ink)}
+.fx-fb-s{position:relative;height:8px}
+.fx-fb-s u{position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:rgba(255,255,255,.25)}
+.fx-fb-s i{position:absolute;top:0;bottom:0;border-radius:2px;background:var(--surface3)}
+.fx-fb>div.neg .fx-fb-s i{background:rgba(240,86,106,.45)}
+.fx-fb>div.eins .fx-fb-s i{background:var(--fx)}
+/* Form gegen die eigene Laufbahn */
+.fx-fp-s{position:relative;height:10px}
+.fx-fp-s u{position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:rgba(255,255,255,.18)}
+.fx-fp-s em{position:absolute;top:4px;height:2px;background:var(--line2)}
+.fx-fp-s s{position:absolute;top:1px;width:8px;height:8px;margin-left:-4px;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--muted)}
+.fx-fp-s i{position:absolute;top:1px;width:8px;height:8px;margin-left:-4px;border-radius:50%;background:var(--ink2)}
+.fx-fp>div.neg .fx-fp-s i{background:rgba(240,86,106,.7)}
+.fx-fp>div.eins .fx-fp-s em{background:var(--fx)}
+.fx-fp>div.eins .fx-fp-s i{background:var(--fx);box-shadow:0 0 6px rgba(var(--fx-rgb),.6)}
+
 /* ── Bewegung ───────────────────────────────────────────────────── */
 /* Nur Verschiebung und Deckkraft, einmal, und erst, wenn die Karte im
    Bild ist [§C43]. */
@@ -6643,22 +6713,36 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
   .fx-bt i,.fx-tau-s i,.fx-lt>span>i{animation:fxDa .5s ease-out .15s both}
   .fx-pr i,.fx-kt i,.fx-zl-f i{animation:fxDa .3s ease-out both}
   .fx-pr i:nth-child(n+4),.fx-kt i:nth-child(n+4){animation-delay:.08s}.fx-pr i:nth-child(n+8),.fx-kt i:nth-child(n+8){animation-delay:.16s}
-  .fx-svg .ln,.fx-svg .fl,.fx-svg .pt{animation:fxDa .6s ease-out both}
+  .fx-svg .ln,.fx-svg .fl{animation:fxDa .6s ease-out both}
+  .fx-svg .pt{transform-box:fill-box;transform-origin:center;animation:fxPop .4s cubic-bezier(.3,1.6,.5,1) .45s both}
+  .fx-bar i,.fx-sl>span>i,.fx-wo>span>i{animation:fxWachs .6s cubic-bezier(.3,1,.4,1) .1s both}
+  .fx-bar i{transform-origin:left center}.fx-sl>span>i,.fx-wo>span>i{transform-origin:bottom center;animation-name:fxHoch}
+  .fx-sn-b>i,.fx-rh>span.m .av,.fx-wx>span.neu .av{animation:fxPop .45s cubic-bezier(.3,1.6,.5,1) .2s both}
+  .fx-sn-b line{animation:fxDa .5s ease-out .3s both}
+  .fx-cd-r b{animation:fxPop .5s cubic-bezier(.3,1.6,.5,1) both}
+  .fx-fb-s i{animation:fxDa .5s ease-out both}
+  .fx-fb>div:nth-child(2) .fx-fb-s i{animation-delay:.05s}.fx-fb>div:nth-child(3) .fx-fb-s i{animation-delay:.1s}.fx-fb>div:nth-child(n+4) .fx-fb-s i{animation-delay:.15s}
+  .fx-fp-s i{animation:fxDa .5s ease-out .2s both}
 }
 @keyframes fxDa{from{opacity:0}}
+@keyframes fxPop{from{transform:scale(.3);opacity:0}}
+@keyframes fxWachs{from{transform:scaleX(0)}}
+@keyframes fxHoch{from{transform:scaleY(0)}}
+/* „40 davor“ und „letzte 20“ brauchen mehr Platz als „Abwehr“ und „Sturm“. */
+.fx-b-anteil .fx-sd-l>div{grid-template-columns:64px minmax(0,1fr) 40px}
 </style>
 </head><body class="ff-seite">
 <header class="ff-held">
   <p class="ff-ober">Fun Facts um 15 Uhr · Entwurf</p>
   <h1>Was heute spannend ist</h1>
-  <p class="ff-lead">Ein Fun Fact am Tag, an jedem Tag ohne Partie bis 15 Uhr. Die App zieht ihn heute per Los aus ihren Vorlagen, und die meisten sagen „X führt bei Y“. Der Entwurf prüft 23 Fakten aus 12 Rubriken — Titelrennen, Saisonschluss, Rekorde, Auszeichnungen, Chronik, Laufbahn, Insignium, Teams, Positionen, Abweichung, Duelle, Liga — und nimmt den spannendsten, der nicht eben erst dran war. Gerechnet an den 88 Tagen der echten Liga von Mai bis Oktober.</p>
+  <p class="ff-lead">Ein Fun Fact am Tag, an jedem Tag ohne Partie bis 15 Uhr. Die App zieht ihn heute per Los aus ihren Vorlagen, und die meisten sagen „X führt bei Y“. Der Entwurf prüft 34 Fakten aus 13 Rubriken — Titelrennen, Saisonschluss, Rekorde, Auszeichnungen, Chronik, Laufbahn, Insignium, Teams, Positionen, Abweichung, Duelle, Liga — und nimmt den spannendsten, der nicht eben erst dran war. Gerechnet an den 88 Tagen der echten Liga von Mai bis Oktober.</p>
   <div class="ff-kennz">
-    <span><b class="num">23</b> Fakten, 12 Rubriken</span>
-    <span><b class="num">61.1</b> treffen je Tag zu</span>
-    <span><b class="num">21</b> verschiedene Fakten in 88 Tagen <small>App 32</small></span>
+    <span><b class="num">34</b> Fakten, 13 Rubriken</span>
+    <span><b class="num">78.5</b> treffen je Tag zu</span>
+    <span><b class="num">24</b> verschiedene Fakten in 88 Tagen <small>App 32</small></span>
     <span><b class="num">12</b> Spieler im Fun Fact <small>App 12</small></span>
-    <span><b class="num">25</b> Wiederholungen von Fakt und Spieler <small>App 15</small></span>
-    <span><b class="num">2</b> Fun Facts mindestens zwischen zwei gleichen <small>App 1</small></span>
+    <span><b class="num">17</b> Wiederholungen von Fakt und Spieler <small>App 15</small></span>
+    <span><b class="num">1</b> Fun Facts mindestens zwischen zwei gleichen <small>App 1</small></span>
   </div>
   <nav><a href="#monat">Ein Monat</a><a href="#katalog">Alle Fakten</a><a href="#regel">Die Regel</a><a href="#verteilung">Verteilung</a></nav>
 </header>
@@ -6666,24 +6750,27 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
 <section id="monat" class="ff-abschnitt">
   <h2>Der Oktober, Tag für Tag</h2>
   <p class="ff-satz">Jeder Tag ohne Partie bis 15 Uhr: oben der Fun Fact des Entwurfs, darunter klein, was die App an diesem Tag zog.</p>
-  <div class="ff-reihe"><div class="ff-tag"><div class="ff-datum">Fr., 02.10.<small>Spannung 44</small></div>
-    <div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-auszeichnung nfc-fun read" data-sid="ambient_0">
+  <div class="ff-reihe"><div class="ff-tag"><div class="ff-datum">Fr., 02.10.<small>Spannung 73</small></div>
+    <div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-laufbahn nfc-fun read" data-sid="ambient_0">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
     
     <div class="nf-top">
-      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>REKORDJAGD</b></span>
+      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>DIE LEITER</b></span>
       <span class="nf-when"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/></svg></span>15:00</span>
     </div>
-    <div class="ff ff-neu"><div class="fx fx-b-saeulen fx-r-rekord"><div class="fx-k">Liga-Rekorde je Spieler</div><div class="fx-sl"><span class="vorn"><b class="num">9</b>
-      <i style="height:100%"></i><span class="av" style="background:#f0566a;">LE</span><span class="fx-n">Leon</span></span><span class="vorn"><b class="num">7</b>
-      <i style="height:78%"></i><span class="av" style="background:#BEF264;">JA</span><span class="fx-n">Jannik</span></span><span class=""><b class="num">7</b>
-      <i style="height:78%"></i><span class="av" style="background:#4ade80;">MA</span><span class="fx-n">Martin</span></span><span class=""><b class="num">6</b>
-      <i style="height:67%"></i><span class="av" style="background:#f7cf4a;">MA</span><span class="fx-n">Maxi</span></span><span class=""><b class="num">5</b>
-      <i style="height:56%"></i><span class="av" style="background:#56b4e8;">HE</span><span class="fx-n">Henry</span></span></div></div></div>
+    <div class="ff ff-neu"><div class="fx fx-b-leiter fx-r-insignium"><div class="fx-k">Insignium · 1197 Prestige</div><div class="fx-lt"><span class="unter">
+      <small>Reif</small></span><span class="jetzt">
+      <i style="left:99.5%"><span class="av" style="background:#BEF264;">JA</span></i><small>Schildring</small></span><span class="naechste">
+      <small>Volutenkranz</small></span><span class="">
+      <small>Zierkranz</small></span><span class="">
+      <small>Lorbeerreif</small></span><span class="">
+      <small>Kronenreif</small></span><span class="">
+      <small>Ordensstern</small></span></div>
+      <div class="fx-lt-t"><b class="num">noch 3</b> bis Volutenkranz</div></div></div>
     <div class="nf-gr">
       
-      <div class="nf-gr-r"><div class="nf-h">Leon hält 9 Liga-Rekorde, Jannik 7</div><div class="nf-d">Dahinter <b>Martin</b> mit <b>7</b>.</div></div>
+      <div class="nf-gr-r"><div class="nf-h">Jannik fehlen 3 Prestige zum Volutenkranz</div><div class="nf-d">Heute Schildring, <b>1197 </b>Prestige.</div></div>
       <span class="nf-chev"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span></span>
     </div>
     
@@ -6711,21 +6798,19 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
     
     
-  </div></div></div></div></div><div class="ff-tag"><div class="ff-datum">Sa., 03.10.<small>Spannung 56</small></div>
-    <div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-laufbahn nfc-fun read" data-sid="ambient_1">
+  </div></div></div></div></div><div class="ff-tag"><div class="ff-datum">Sa., 03.10.<small>Spannung 65</small></div>
+    <div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-auszeichnung nfc-fun read" data-sid="ambient_1">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
     
     <div class="nf-top">
-      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>AUS DER LAUFBAHN</b></span>
+      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>AUSZEICHNUNGEN</b></span>
       <span class="nf-when"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/></svg></span>15:00</span>
     </div>
-    <div class="ff ff-neu"><div class="fx fx-b-zaehler fx-r-laufbahn"><div class="fx-k">Spiele in der Laufbahn</div><div class="fx-zl"><span class="av" style="background:#4ade80;">MA</span>
-      <span class="fx-zl-z"><i>2</i><i>4</i><i>7</i></span><span class="fx-zl-f"><i></i><i></i><i></i></span>
-      <span class="fx-zl-m"><b class="num">250</b><small>noch 3</small></span></div></div></div>
+    <div class="ff ff-neu"><div class="fx fx-b-perlen fx-r-auszeich"><div class="fx-k">Absoluter Sieger · bis zur 5</div><div class="fx-pa"><span class="av" style="background:#f0566a;">LE</span><span class="fx-pr"><i class="w"></i><i class="w"></i><i class="w"></i><i class="w"></i><i class="offen"></i></span><b class="num">4/5</b></div></div></div>
     <div class="nf-gr">
       
-      <div class="nf-gr-r"><div class="nf-h">Martin fehlen drei Spiele zum 250. Spiel</div><div class="nf-d"><b>161 </b>davon gewonnen.</div></div>
+      <div class="nf-gr-r"><div class="nf-h">Noch einmal „Absoluter Sieger“, und Leon holt sie zum 5. Mal</div><div class="nf-d"><b>4</b>-mal steht sie schon in der Vitrine.</div></div>
       <span class="nf-chev"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span></span>
     </div>
     
@@ -6753,7 +6838,7 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
     
     
-  </div></div></div></div></div><div class="ff-tag"><div class="ff-datum">So., 04.10.<small>Spannung 75</small></div>
+  </div></div></div></div></div><div class="ff-tag"><div class="ff-datum">So., 04.10.<small>Spannung 74</small></div>
     <div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-form nfc-fun read" data-sid="ambient_2">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
@@ -6763,14 +6848,14 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
       <span class="nf-when"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/></svg></span>15:00</span>
     </div>
     <div class="ff ff-neu"><div class="fx fx-b-erwartung fx-r-abweich"><div class="fx-k">Siege über der Erwartung, letzte 40</div><svg class="fx-svg" viewBox="0 0 244 72" aria-hidden="true">
-      <line class="ref" x1="26" x2="210" y1="58.1" y2="58.1"/><text class="ax" x="20" y="61.1">±0</text>
-      <path class="fl" d="M26.0 58.1L30.6 56.6L35.2 54.9L39.8 57.6L44.4 56.8L49.0 54.6L53.6 50.8L58.2 48.3L62.8 46.1L67.4 44.7L72.0 41.8L76.6 45.8L81.2 40.5L85.8 39.3L90.4 44.2L95.0 42.6L99.6 39.8L104.2 37.2L108.8 34.9L113.4 33.3L118.0 39.6L122.6 43.0L127.2 46.0L131.8 44.7L136.4 40.7L141.0 38.9L145.6 43.0L150.2 38.9L154.8 43.1L159.4 38.2L164.0 34.1L168.6 29.8L173.2 26.3L177.8 22.7L182.4 26.6L187.0 22.0L191.6 25.9L196.2 21.4L200.8 17.7L205.4 13.8L210.0 9.9L210.0 58.1L26 58.1Z"/><path class="ln" d="M26.0 58.1L30.6 56.6L35.2 54.9L39.8 57.6L44.4 56.8L49.0 54.6L53.6 50.8L58.2 48.3L62.8 46.1L67.4 44.7L72.0 41.8L76.6 45.8L81.2 40.5L85.8 39.3L90.4 44.2L95.0 42.6L99.6 39.8L104.2 37.2L108.8 34.9L113.4 33.3L118.0 39.6L122.6 43.0L127.2 46.0L131.8 44.7L136.4 40.7L141.0 38.9L145.6 43.0L150.2 38.9L154.8 43.1L159.4 38.2L164.0 34.1L168.6 29.8L173.2 26.3L177.8 22.7L182.4 26.6L187.0 22.0L191.6 25.9L196.2 21.4L200.8 17.7L205.4 13.8L210.0 9.9"/>
-      <circle class="pt" cx="210.0" cy="9.9" r="4"/>
-      <text class="w" x="217.0" y="13.9">+6</text>
-      <text class="ax" x="26" y="70">vor 40 Partien</text><text class="ax re" x="210.0" y="70">heute</text></svg><div class="fx-lg"><span class="av" style="background:#f0566a;">LE</span><span class="fx-n">Leon</span></div></div></div>
+      <line class="ref" x1="26" x2="210" y1="58.0" y2="58.0"/><text class="ax" x="20" y="61.0">±0</text>
+      <path class="fl" d="M26.0 58.0L30.6 56.7L35.2 51.7L39.8 48.3L44.4 45.1L49.0 43.8L53.6 42.5L58.2 46.5L62.8 42.2L67.4 46.4L72.0 42.4L76.6 47.1L81.2 43.0L85.8 39.7L90.4 37.0L95.0 40.9L99.6 44.2L104.2 41.2L108.8 37.6L113.4 34.2L118.0 31.4L122.6 26.8L127.2 23.9L131.8 21.4L136.4 27.1L141.0 31.5L145.6 28.1L150.2 25.3L154.8 30.4L159.4 26.7L164.0 23.6L168.6 20.0L173.2 23.3L177.8 20.8L182.4 18.5L187.0 16.5L191.6 13.9L196.2 11.6L200.8 15.9L205.4 13.1L210.0 10.0L210.0 58.0L26 58.0Z"/><path class="ln" d="M26.0 58.0L30.6 56.7L35.2 51.7L39.8 48.3L44.4 45.1L49.0 43.8L53.6 42.5L58.2 46.5L62.8 42.2L67.4 46.4L72.0 42.4L76.6 47.1L81.2 43.0L85.8 39.7L90.4 37.0L95.0 40.9L99.6 44.2L104.2 41.2L108.8 37.6L113.4 34.2L118.0 31.4L122.6 26.8L127.2 23.9L131.8 21.4L136.4 27.1L141.0 31.5L145.6 28.1L150.2 25.3L154.8 30.4L159.4 26.7L164.0 23.6L168.6 20.0L173.2 23.3L177.8 20.8L182.4 18.5L187.0 16.5L191.6 13.9L196.2 11.6L200.8 15.9L205.4 13.1L210.0 10.0"/>
+      <circle class="pt" cx="210.0" cy="10.0" r="4"/>
+      <text class="w" x="217.0" y="14.0">+6</text>
+      <text class="ax" x="26" y="70">vor 40 Partien</text><text class="ax re" x="210.0" y="70">heute</text></svg><div class="fx-lg"><span class="av" style="background:#4ade80;">MA</span><span class="fx-n">Martin</span></div></div></div>
     <div class="nf-gr">
       
-      <div class="nf-gr-r"><div class="nf-h">Leon gewinnt mehr, als die Chancen sagen</div><div class="nf-d">In den letzten <b>40 </b>Partien <b>30 </b>Siege, erwartet waren <b>24</b>.</div></div>
+      <div class="nf-gr-r"><div class="nf-h">Martin gewinnt mehr, als die Chancen sagen</div><div class="nf-d">In den letzten <b>40 </b>Partien <b>30 </b>Siege, erwartet waren <b>24</b>.</div></div>
       <span class="nf-chev"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span></span>
     </div>
     
@@ -6798,19 +6883,25 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
     
     
-  </div></div></div></div></div><div class="ff-tag"><div class="ff-datum">Mi., 07.10.<small>Spannung 58</small></div>
-    <div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-auszeichnung nfc-fun read" data-sid="ambient_3">
+  </div></div></div></div></div><div class="ff-tag"><div class="ff-datum">Mi., 07.10.<small>Spannung 66</small></div>
+    <div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-form nfc-fun read" data-sid="ambient_3">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
     
     <div class="nf-top">
-      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>AUSZEICHNUNGEN</b></span>
+      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>DIE FORMKURVE</b></span>
       <span class="nf-when"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/></svg></span>15:00</span>
     </div>
-    <div class="ff ff-neu"><div class="fx fx-b-zwoelf fx-r-auszeich"><div class="fx-k">Selten · Allwetter</div><div class="fx-zw rare"><span class=""><span class="av" style="background:#a78bfa;">AL</span></span><span class=""><span class="av" style="background:#f7cf4a;">AN</span></span><span class=""><span class="av" style="background:#56b4e8;">HE</span></span><span class=""><span class="av" style="background:#ff7849;">JA</span></span><span class=""><span class="av" style="background:#BEF264;">JA</span></span><span class=""><span class="av" style="background:#e879f9;">JO</span></span><span class=""><span class="av" style="background:#fb923c;">JU</span></span><span class=""><span class="av" style="background:#22d3ee;">LE</span></span><span class="hat"><span class="av" style="background:#f0566a;">LE</span></span><span class=""><span class="av" style="background:#4ade80;">MA</span></span><span class=""><span class="av" style="background:#f7cf4a;">MA</span></span><span class=""><span class="av" style="background:#56b4e8;">ST</span></span></div><div class="fx-zw-t"><span class="fx-n">Leon</span><small>trägt sie, 11 nicht</small></div></div></div>
+    <div class="ff ff-neu"><div class="fx fx-b-monatskurve fx-r-form"><div class="fx-k">Elo im Monat, Partie für Partie</div><svg class="fx-svg" viewBox="0 0 244 70" aria-hidden="true">
+      <line class="ref" x1="6" x2="206" y1="26.1" y2="26.1"/>
+      <path class="fl" d="M6.0 26.1L17.8 40.8L29.5 47.2L41.3 52.9L53.1 58.8L64.8 50.5L76.6 43.9L88.4 49.1L100.1 41.5L111.9 35.1L123.6 29.2L135.4 23.5L147.2 18.8L158.9 14.8L170.7 11.4L182.5 13.6L194.2 10.3L206.0 7.2L206.0 26.1L6 26.1Z"/><path class="ln" d="M6.0 26.1L17.8 40.8L29.5 47.2L41.3 52.9L53.1 58.8L64.8 50.5L76.6 43.9L88.4 49.1L100.1 41.5L111.9 35.1L123.6 29.2L135.4 23.5L147.2 18.8L158.9 14.8L170.7 11.4L182.5 13.6L194.2 10.3L206.0 7.2"/>
+      <circle class="pt" cx="206.0" cy="7.2" r="4"/>
+      <text class="w" x="213.0" y="11.2">+80</text>
+      <text class="ax" x="6" y="68">Monatsbeginn</text><text class="ax re" x="206.0" y="68">heute</text></svg>
+      <div class="fx-lg"><span class="av" style="background:#22d3ee;">LE</span><span class="fx-n">Leo</span></div></div></div>
     <div class="nf-gr">
       
-      <div class="nf-gr-r"><div class="nf-h">Nur Leon trägt „Allwetter“</div><div class="nf-d">Selten: elf der Liga haben die Auszeichnung noch nie geholt.</div></div>
+      <div class="nf-gr-r"><div class="nf-h">Leo hat im Oktober schon +80 Elo geholt</div><div class="nf-d"><b>12 </b>von <b>17 </b>Partien im Oktober gewonnen.</div></div>
       <span class="nf-chev"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span></span>
     </div>
     
@@ -6886,7 +6977,7 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
     
     
-  </div></div></div></div></div><div class="ff-tag"><div class="ff-datum">Sa., 10.10.<small>Spannung 75</small></div>
+  </div></div></div></div></div><div class="ff-tag"><div class="ff-datum">Sa., 10.10.<small>Spannung 88</small></div>
     <div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-auszeichnung nfc-fun read" data-sid="ambient_5">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
@@ -6895,14 +6986,14 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
       <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>REKORDJAGD</b></span>
       <span class="nf-when"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/></svg></span>15:00</span>
     </div>
-    <div class="ff ff-neu"><div class="fx fx-b-jagd fx-r-rekord"><div class="fx-k">Liga-Rekord · Der letzte Ball</div><div class="fx-jg"><div class="fx-jg-z"><span class="av" style="background:#e879f9;">JO</span>
-      <span class="fx-jg-m"><span class="fx-n">Johannes</span><span class="fx-bar"><i style="width:100.0%"></i></span><small>+13 %-Punkte · 45 % in 22 Schlussspielen, sonst 32 %</small></span>
-      <b class="num">Rekord</b></div><div class="fx-jg-z jaeger"><span class="av" style="background:#ff7849;">JA</span>
-      <span class="fx-jg-m"><span class="fx-n">Jane</span><span class="fx-bar"><i style="width:93.4%"></i></span><small>+13 %-Punkte · 70 % in 23 Schlussspielen, sonst 57 %</small></span>
-      <b class="num">93,3 %</b></div></div></div></div>
+    <div class="ff ff-neu"><div class="fx fx-b-jagd fx-r-rekord"><div class="fx-k">Liga-Rekord · Der Wiedereinstieg</div><div class="fx-jg"><div class="fx-jg-z"><span class="av" style="background:#a78bfa;">AL</span>
+      <span class="fx-jg-m"><span class="fx-n">Alex</span><span class="fx-bar"><i style="width:100.0%"></i></span><small>+11 %-Punkte · 40 % in 5 Rückkehrspielen, sonst 29 %</small></span>
+      <b class="num">Rekord</b></div><div class="fx-jg-z jaeger"><span class="av" style="background:#BEF264;">JA</span>
+      <span class="fx-jg-m"><span class="fx-n">Jannik</span><span class="fx-bar"><i style="width:97.7%"></i></span><small>+11 %-Punkte · 60 % in 10 Rückkehrspielen, sonst 49 %</small></span>
+      <b class="num">97,6 %</b></div></div></div></div>
     <div class="nf-gr">
       
-      <div class="nf-gr-r"><div class="nf-h">Jane rückt an den Rekord „Der letzte Ball“ heran</div><div class="nf-d"><b>Johannes</b> hält ihn, <b>Jane</b> hat <b>93,3 %</b> davon.</div></div>
+      <div class="nf-gr-r"><div class="nf-h">Jannik rückt an den Rekord „Der Wiedereinstieg“ heran</div><div class="nf-d"><b>Alex</b> hält ihn, <b>Jannik</b> hat <b>97,6 %</b> davon.</div></div>
       <span class="nf-chev"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span></span>
     </div>
     
@@ -6930,21 +7021,24 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
     
     
-  </div></div></div></div></div><div class="ff-tag"><div class="ff-datum">So., 11.10.<small>Spannung 65</small></div>
+  </div></div></div></div></div><div class="ff-tag"><div class="ff-datum">So., 11.10.<small>Spannung 74</small></div>
     <div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-form nfc-fun read" data-sid="ambient_6">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
     
     <div class="nf-top">
-      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>VORN UND HINTEN</b></span>
+      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>GEGEN DIE ERWARTUNG</b></span>
       <span class="nf-when"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/></svg></span>15:00</span>
     </div>
-    <div class="ff ff-neu"><div class="fx fx-b-seiten fx-r-position"><div class="fx-k">Siegquote nach Position</div><div class="fx-sd"><span class="av" style="background:#ff7849;">JA</span><span class="fx-sd-l">
-      <div class="besser"><small>Abwehr</small><span class="fx-bar"><i style="width:65%"></i><u></u></span><b class="num">65 %</b></div>
-      <div class=""><small>Sturm</small><span class="fx-bar"><i style="width:37%"></i><u></u></span><b class="num">37 %</b></div></span></div></div></div>
+    <div class="ff ff-neu"><div class="fx fx-b-erwartung fx-r-abweich"><div class="fx-k">Siege über der Erwartung, letzte 40</div><svg class="fx-svg neg" viewBox="0 0 244 72" aria-hidden="true">
+      <line class="ref" x1="26" x2="210" y1="8.8" y2="8.8"/><text class="ax" x="20" y="11.8">±0</text>
+      <path class="fl" d="M26.0 8.8L30.6 10.7L35.2 13.4L39.8 15.7L44.4 17.9L49.0 20.3L53.6 22.1L58.2 24.6L62.8 20.7L67.4 22.7L72.0 19.5L76.6 21.2L81.2 22.7L85.8 25.1L90.4 27.4L95.0 28.8L99.6 30.4L104.2 32.0L108.8 33.4L113.4 30.5L118.0 33.0L122.6 35.9L127.2 32.8L131.8 35.4L136.4 37.1L141.0 33.0L145.6 35.5L150.2 31.8L154.8 34.1L159.4 35.9L164.0 37.4L168.6 38.9L173.2 41.6L177.8 44.4L182.4 46.6L187.0 48.8L191.6 50.8L196.2 52.5L200.8 55.2L205.4 57.3L210.0 59.2L210.0 8.8L26 8.8Z"/><path class="ln" d="M26.0 8.8L30.6 10.7L35.2 13.4L39.8 15.7L44.4 17.9L49.0 20.3L53.6 22.1L58.2 24.6L62.8 20.7L67.4 22.7L72.0 19.5L76.6 21.2L81.2 22.7L85.8 25.1L90.4 27.4L95.0 28.8L99.6 30.4L104.2 32.0L108.8 33.4L113.4 30.5L118.0 33.0L122.6 35.9L127.2 32.8L131.8 35.4L136.4 37.1L141.0 33.0L145.6 35.5L150.2 31.8L154.8 34.1L159.4 35.9L164.0 37.4L168.6 38.9L173.2 41.6L177.8 44.4L182.4 46.6L187.0 48.8L191.6 50.8L196.2 52.5L200.8 55.2L205.4 57.3L210.0 59.2"/>
+      <circle class="pt" cx="210.0" cy="59.2" r="4"/>
+      <text class="w" x="217.0" y="63.2">−9</text>
+      <text class="ax" x="26" y="70">vor 40 Partien</text><text class="ax re" x="210.0" y="70">heute</text></svg><div class="fx-lg"><span class="av" style="background:#56b4e8;">ST</span><span class="fx-n">Stefan</span></div></div></div>
     <div class="nf-gr">
       
-      <div class="nf-gr-r"><div class="nf-h">Im Sturm gewinnt Jane 37 %, in der Abwehr 65 %</div><div class="nf-d"><b>30 </b>Partien vorn, <b>97 </b>hinten.</div></div>
+      <div class="nf-gr-r"><div class="nf-h">Stefan fehlen Siege auf die eigenen Chancen</div><div class="nf-d">In den letzten <b>40 </b>Partien <b>6 </b>Siege, erwartet waren <b>15</b>.</div></div>
       <span class="nf-chev"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span></span>
     </div>
     
@@ -6972,19 +7066,21 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
     
     
-  </div></div></div></div></div><div class="ff-tag"><div class="ff-datum">Di., 13.10.<small>Spannung 61</small></div>
-    <div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-chronik nfc-fun read" data-sid="ambient_7">
+  </div></div></div></div></div><div class="ff-tag"><div class="ff-datum">Di., 13.10.<small>Spannung 64</small></div>
+    <div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-duell nfc-fun read" data-sid="ambient_7">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
     
     <div class="nf-top">
-      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>AUS DER CHRONIK</b></span>
+      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>DUELL IN ZAHLEN</b></span>
       <span class="nf-when"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/></svg></span>15:00</span>
     </div>
-    <div class="ff ff-neu"><div class="fx fx-b-chronik fx-r-chronik"><div class="fx-k">Chronik des Monats · 3 von 20</div><div class="fx-ch"><span class="av" style="background:#f7cf4a;">MA</span><span class="fx-ch-l"><em>Der Riegel</em><em>Der Beidfüßige</em><em>Die Klatsche</em></span></div></div></div>
+    <div class="ff ff-neu"><div class="fx fx-b-tau fx-r-duell"><div class="fx-k">Bilanz nach 70 Duellen</div><div class="fx-tau"><span class="av" style="background:#56b4e8;">HE</span>
+      <span class="fx-tau-s"><u></u><i style="left:50.0%"></i></span><span class="av" style="background:#f7cf4a;">MA</span></div>
+      <div class="fx-tau-n"><span><span class="fx-n">Henry</span><b class="num">35</b></span><span><span class="fx-n">Maxi</span><b class="num">35</b></span></div></div></div>
     <div class="nf-gr">
       
-      <div class="nf-gr-r"><div class="nf-h">Maxi hält im Oktober schon drei Einträge der Chronik</div><div class="nf-d">Darunter „Der Riegel“ und „Der Beidfüßige“. <b>20 </b>Einträge sind im Oktober vergeben.</div></div>
+      <div class="nf-gr-r"><div class="nf-h">Henry und Maxi: 35:35 nach 70 Duellen</div><div class="nf-d">Keiner liegt vorn.</div></div>
       <span class="nf-chev"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span></span>
     </div>
     
@@ -7012,19 +7108,22 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
     
     
-  </div></div></div></div></div><div class="ff-tag"><div class="ff-datum">Mi., 14.10.<small>Spannung 57</small></div>
-    <div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-auszeichnung nfc-fun read" data-sid="ambient_8">
+  </div></div></div></div></div><div class="ff-tag"><div class="ff-datum">Mi., 14.10.<small>Spannung 64</small></div>
+    <div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-persoenlich nfc-fun read" data-sid="ambient_8">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
     
     <div class="nf-top">
-      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>AUSZEICHNUNGEN</b></span>
+      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>ZU ZWEIT</b></span>
       <span class="nf-when"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/></svg></span>15:00</span>
     </div>
-    <div class="ff ff-neu"><div class="fx fx-b-perlen fx-r-auszeich"><div class="fx-k">Player of the Week · bis zur 5</div><div class="fx-pa"><span class="av" style="background:#4ade80;">MA</span><span class="fx-pr"><i class="w"></i><i class="w"></i><i class="w"></i><i class="w"></i><i class="offen"></i></span><b class="num">4/5</b></div></div></div>
+    <div class="ff ff-neu"><div class="fx fx-b-chemie fx-r-team"><div class="fx-k">Siegquote · 35 Partien zu zweit</div><div class="fx-cm">
+      <div><span class="av" style="background:#fb923c;">JU</span><span class="fx-n">Julian</span><span class="fx-bar"><i style="width:63%"></i></span><b class="num">63 %</b></div>
+      <div><span class="av" style="background:#4ade80;">MA</span><span class="fx-n">Martin</span><span class="fx-bar"><i style="width:65%"></i></span><b class="num">65 %</b></div>
+      <div class="zus"><span class="fx-paar"><span class="av" style="background:#fb923c;">JU</span><span class="av" style="background:#4ade80;">MA</span></span><span class="fx-n">zusammen</span><span class="fx-bar"><i style="width:80%"></i></span><b class="num">80 %</b></div></div></div></div>
     <div class="nf-gr">
       
-      <div class="nf-gr-r"><div class="nf-h">Noch einmal „Player of the Week“, und Martin holt sie zum 5. Mal</div><div class="nf-d"><b>4</b>-mal steht sie schon in der Vitrine.</div></div>
+      <div class="nf-gr-r"><div class="nf-h">Zusammen gewinnen Julian und Martin 80 %</div><div class="nf-d">Allein <b>Julian</b> <b>63 %</b>, <b>Martin</b> <b>65 %</b>. <b>35 </b>Partien zu zweit.</div></div>
       <span class="nf-chev"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span></span>
     </div>
     
@@ -7052,21 +7151,19 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
     
     
-  </div></div></div></div></div><div class="ff-tag"><div class="ff-datum">Do., 15.10.<small>Spannung 54</small></div>
-    <div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-laufbahn nfc-fun read" data-sid="ambient_9">
+  </div></div></div></div></div><div class="ff-tag"><div class="ff-datum">Do., 15.10.<small>Spannung 67</small></div>
+    <div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-form nfc-fun read" data-sid="ambient_9">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
     
     <div class="nf-top">
-      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>AUS DER LAUFBAHN</b></span>
+      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>DIE FORMKURVE</b></span>
       <span class="nf-when"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/></svg></span>15:00</span>
     </div>
-    <div class="ff ff-neu"><div class="fx fx-b-zaehler fx-r-laufbahn"><div class="fx-k">Spiele in der Laufbahn</div><div class="fx-zl"><span class="av" style="background:#BEF264;">JA</span>
-      <span class="fx-zl-z"><i>9</i><i>7</i></span><span class="fx-zl-f"><i></i><i></i><i></i></span>
-      <span class="fx-zl-m"><b class="num">100</b><small>noch 3</small></span></div></div></div>
+    <div class="ff ff-neu"><div class="fx fx-b-formpunkte fx-r-form"><div class="fx-k">Siegquote: Laufbahn → letzte 14 Tage</div><div class="fx-fp"><div class="eins"><span class="av" style="background:#22d3ee;">LE</span><span class="fx-n">Leo</span><span class="fx-fp-s"><u></u><em style="left:42%;width:23%"></em><s style="left:42%"></s><i style="left:65%"></i></span><b class="num">65 %</b></div><div class=""><span class="av" style="background:#ff7849;">JA</span><span class="fx-n">Jane</span><span class="fx-fp-s"><u></u><em style="left:58%;width:5%"></em><s style="left:58%"></s><i style="left:63%"></i></span><b class="num">63 %</b></div><div class=""><span class="av" style="background:#f7cf4a;">MA</span><span class="fx-n">Maxi</span><span class="fx-fp-s"><u></u><em style="left:44%;width:1%"></em><s style="left:44%"></s><i style="left:45%"></i></span><b class="num">45 %</b></div><div class=" neg"><span class="av" style="background:#f0566a;">LE</span><span class="fx-n">Leon</span><span class="fx-fp-s"><u></u><em style="left:63%;width:2%"></em><s style="left:65%"></s><i style="left:63%"></i></span><b class="num">63 %</b></div><div class=" neg"><span class="av" style="background:#56b4e8;">ST</span><span class="fx-n">Stefan</span><span class="fx-fp-s"><u></u><em style="left:17%;width:8%"></em><s style="left:25%"></s><i style="left:17%"></i></span><b class="num">17 %</b></div><div class=" neg"><span class="av" style="background:#fb923c;">JU</span><span class="fx-n">Julian</span><span class="fx-fp-s"><u></u><em style="left:54%;width:9%"></em><s style="left:63%"></s><i style="left:54%"></i></span><b class="num">54 %</b></div></div></div></div>
     <div class="nf-gr">
       
-      <div class="nf-gr-r"><div class="nf-h">Jannik fehlen drei Spiele zum 100. Spiel</div><div class="nf-d"><b>48 </b>davon gewonnen.</div></div>
+      <div class="nf-gr-r"><div class="nf-h">Leo gewinnt seit zwei Wochen 65 %, sonst 42 %</div><div class="nf-d"><b>23 </b>Partien in <b>14 </b>Tagen; niemand der Liga liegt weiter über der eigenen Laufbahn.</div></div>
       <span class="nf-chev"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span></span>
     </div>
     
@@ -7094,27 +7191,20 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
     
     
-  </div></div></div></div></div><div class="ff-tag"><div class="ff-datum">Fr., 16.10.<small>Spannung 47</small></div>
-    <div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-laufbahn nfc-fun read" data-sid="ambient_10">
+  </div></div></div></div></div><div class="ff-tag"><div class="ff-datum">Fr., 16.10.<small>Spannung 51</small></div>
+    <div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-auszeichnung nfc-fun read" data-sid="ambient_10">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
     
     <div class="nf-top">
-      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>DIE LEITER</b></span>
+      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>REKORDJAGD</b></span>
       <span class="nf-when"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/></svg></span>15:00</span>
     </div>
-    <div class="ff ff-neu"><div class="fx fx-b-leiter fx-r-insignium"><div class="fx-k">Insignium · 1954 Prestige</div><div class="fx-lt"><span class="unter">
-      <small>Reif</small></span><span class="unter">
-      <small>Schildring</small></span><span class="jetzt">
-      <i style="left:83.8%"><span class="av" style="background:#22d3ee;">LE</span></i><small>Volutenkranz</small></span><span class="naechste">
-      <small>Zierkranz</small></span><span class="">
-      <small>Lorbeerreif</small></span><span class="">
-      <small>Kronenreif</small></span><span class="">
-      <small>Ordensstern</small></span></div>
-      <div class="fx-lt-t"><b class="num">noch 146</b> bis Zierkranz</div></div></div>
+    <div class="ff ff-neu"><div class="fx fx-b-wechsel fx-r-rekord"><div class="fx-k">Liga-Rekord · Der letzte Ball</div><div class="fx-wx"><span class="alt"><span class="av" style="background:#ff7849;">JA</span><span class="fx-n">Jane</span></span><i aria-hidden="true"></i>
+    <span class="neu"><span class="av" style="background:#e879f9;">JO</span><span class="fx-n">Johannes</span></span></div><div class="fx-wx-t">+13 %-Punkte · 45 % in 22 Schlussspielen, sonst 32 %</div></div></div>
     <div class="nf-gr">
       
-      <div class="nf-gr-r"><div class="nf-h">Leo fehlen 146 Prestige zum Zierkranz</div><div class="nf-d">Heute Volutenkranz, <b>1954 </b>Prestige.</div></div>
+      <div class="nf-gr-r"><div class="nf-h">Johannes hält jetzt „Der letzte Ball“</div><div class="nf-d">Seit <b>9 </b>Tagen; davor hielt ihn <b>Jane</b>.</div></div>
       <span class="nf-chev"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span></span>
     </div>
     
@@ -7142,24 +7232,19 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
     
     
-  </div></div></div></div></div><div class="ff-tag"><div class="ff-datum">Sa., 17.10.<small>Spannung 66</small></div>
-    <div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-form nfc-fun read" data-sid="ambient_11">
+  </div></div></div></div></div><div class="ff-tag"><div class="ff-datum">Sa., 17.10.<small>Spannung 61</small></div>
+    <div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-chronik nfc-fun read" data-sid="ambient_11">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
     
     <div class="nf-top">
-      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>GEGEN DIE ERWARTUNG</b></span>
+      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>AUS DER CHRONIK</b></span>
       <span class="nf-when"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/></svg></span>15:00</span>
     </div>
-    <div class="ff ff-neu"><div class="fx fx-b-erwartung fx-r-abweich"><div class="fx-k">Siege über der Erwartung, letzte 40</div><svg class="fx-svg neg" viewBox="0 0 244 72" aria-hidden="true">
-      <line class="ref" x1="26" x2="210" y1="9.2" y2="9.2"/><text class="ax" x="20" y="12.2">±0</text>
-      <path class="fl" d="M26.0 9.2L30.6 11.6L35.2 14.4L39.8 16.5L44.4 19.3L49.0 14.8L53.6 17.0L58.2 13.4L62.8 15.3L67.4 17.1L72.0 20.0L76.6 22.5L81.2 24.0L85.8 26.0L90.4 27.7L95.0 29.3L99.6 26.0L104.2 28.8L108.8 32.2L113.4 28.7L118.0 31.6L122.6 33.6L127.2 28.9L131.8 31.8L136.4 27.5L141.0 30.1L145.6 32.2L150.2 34.0L154.8 35.6L159.4 38.7L164.0 41.9L168.6 44.4L173.2 46.9L177.8 49.3L182.4 51.1L187.0 54.2L191.6 56.6L196.2 58.8L200.8 55.2L205.4 57.4L210.0 53.4L210.0 9.2L26 9.2Z"/><path class="ln" d="M26.0 9.2L30.6 11.6L35.2 14.4L39.8 16.5L44.4 19.3L49.0 14.8L53.6 17.0L58.2 13.4L62.8 15.3L67.4 17.1L72.0 20.0L76.6 22.5L81.2 24.0L85.8 26.0L90.4 27.7L95.0 29.3L99.6 26.0L104.2 28.8L108.8 32.2L113.4 28.7L118.0 31.6L122.6 33.6L127.2 28.9L131.8 31.8L136.4 27.5L141.0 30.1L145.6 32.2L150.2 34.0L154.8 35.6L159.4 38.7L164.0 41.9L168.6 44.4L173.2 46.9L177.8 49.3L182.4 51.1L187.0 54.2L191.6 56.6L196.2 58.8L200.8 55.2L205.4 57.4L210.0 53.4"/>
-      <circle class="pt" cx="210.0" cy="53.4" r="4"/>
-      <text class="w" x="217.0" y="57.4">−7</text>
-      <text class="ax" x="26" y="70">vor 40 Partien</text><text class="ax re" x="210.0" y="70">heute</text></svg><div class="fx-lg"><span class="av" style="background:#56b4e8;">ST</span><span class="fx-n">Stefan</span></div></div></div>
+    <div class="ff ff-neu"><div class="fx fx-b-chronik fx-r-chronik"><div class="fx-k">Chronik des Monats · 3 von 20</div><div class="fx-ch"><span class="av" style="background:#f7cf4a;">MA</span><span class="fx-ch-l"><em>Der Riegel</em><em>Der Beidfüßige</em><em>Die Klatsche</em></span></div></div></div>
     <div class="nf-gr">
       
-      <div class="nf-gr-r"><div class="nf-h">Stefan fehlen Siege auf die eigenen Chancen</div><div class="nf-d">In den letzten <b>40 </b>Partien <b>8 </b>Siege, erwartet waren <b>15</b>.</div></div>
+      <div class="nf-gr-r"><div class="nf-h">Maxi hält im Oktober schon drei Einträge der Chronik</div><div class="nf-d">Darunter „Der Riegel“ und „Der Beidfüßige“. <b>20 </b>Einträge sind im Oktober vergeben.</div></div>
       <span class="nf-chev"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span></span>
     </div>
     
@@ -7187,7 +7272,7 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
     
     
-  </div></div></div></div></div><div class="ff-tag"><div class="ff-datum">So., 18.10.<small>Spannung 66</small></div>
+  </div></div></div></div></div><div class="ff-tag"><div class="ff-datum">So., 18.10.<small>Spannung 70</small></div>
     <div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-duell nfc-fun read" data-sid="ambient_12">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
@@ -7196,11 +7281,11 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
       <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>DUELL IN ZAHLEN</b></span>
       <span class="nf-when"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/></svg></span>15:00</span>
     </div>
-    <div class="ff ff-neu"><div class="fx fx-b-kette fx-r-duell"><div class="fx-k">Die letzten 8 Duelle</div><div class="fx-kt"><span class="av" style="background:#22d3ee;">LE</span><span class="fx-kt-l"><i class="l"></i><i class="l"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i></span><span class="av" style="background:#f7cf4a;">AN</span></div>
-      <div class="fx-tau-n"><span class="fx-n">Leo</span><span class="fx-n">Anton</span></div></div></div>
+    <div class="ff ff-neu"><div class="fx fx-b-kette fx-r-duell"><div class="fx-k">Die letzten 14 Duelle</div><div class="fx-kt"><span class="av" style="background:#f0566a;">LE</span><span class="fx-kt-l"><i class="w"></i><i class="w"></i><i class="w"></i><i class="w"></i><i class="w"></i><i class="w"></i><i class="l"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i></span><span class="av" style="background:#56b4e8;">HE</span></div>
+      <div class="fx-tau-n"><span class="fx-n">Leon</span><span class="fx-n">Henry</span></div></div></div>
     <div class="nf-gr">
       
-      <div class="nf-gr-r"><div class="nf-h">Leo hat Anton sechs Duelle in Folge geschlagen</div><div class="nf-d">Insgesamt <b>6:2</b> in <b>8 </b>Duellen.</div></div>
+      <div class="nf-gr-r"><div class="nf-h">Leon hat Henry sieben Duelle in Folge geschlagen</div><div class="nf-d">Insgesamt <b>58:17</b> in <b>75 </b>Duellen.</div></div>
       <span class="nf-chev"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span></span>
     </div>
     
@@ -7228,7 +7313,7 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
     
     
-  </div></div></div></div></div><div class="ff-tag"><div class="ff-datum">Di., 20.10.<small>Spannung 65</small></div>
+  </div></div></div></div></div><div class="ff-tag"><div class="ff-datum">Di., 20.10.<small>Spannung 57</small></div>
     <div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-auszeichnung nfc-fun read" data-sid="ambient_13">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
@@ -7237,10 +7322,10 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
       <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>AUSZEICHNUNGEN</b></span>
       <span class="nf-when"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/></svg></span>15:00</span>
     </div>
-    <div class="ff ff-neu"><div class="fx fx-b-perlen fx-r-auszeich"><div class="fx-k">Absoluter Sieger · bis zur 5</div><div class="fx-pa"><span class="av" style="background:#f7cf4a;">MA</span><span class="fx-pr"><i class="w"></i><i class="w"></i><i class="w"></i><i class="w"></i><i class="offen"></i></span><b class="num">4/5</b></div></div></div>
+    <div class="ff ff-neu"><div class="fx fx-b-perlen fx-r-auszeich"><div class="fx-k">Player of the Week · bis zur 5</div><div class="fx-pa"><span class="av" style="background:#4ade80;">MA</span><span class="fx-pr"><i class="w"></i><i class="w"></i><i class="w"></i><i class="w"></i><i class="offen"></i></span><b class="num">4/5</b></div></div></div>
     <div class="nf-gr">
       
-      <div class="nf-gr-r"><div class="nf-h">Noch einmal „Absoluter Sieger“, und Maxi holt sie zum 5. Mal</div><div class="nf-d"><b>4</b>-mal steht sie schon in der Vitrine.</div></div>
+      <div class="nf-gr-r"><div class="nf-h">Noch einmal „Player of the Week“, und Martin holt sie zum 5. Mal</div><div class="nf-d"><b>4</b>-mal steht sie schon in der Vitrine.</div></div>
       <span class="nf-chev"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span></span>
     </div>
     
@@ -7268,19 +7353,27 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
     
     
-  </div></div></div></div></div><div class="ff-tag"><div class="ff-datum">Do., 22.10.<small>Spannung 100</small></div>
-    <div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-chronik nfc-fun read" data-sid="ambient_14">
+  </div></div></div></div></div><div class="ff-tag"><div class="ff-datum">Do., 22.10.<small>Spannung 73</small></div>
+    <div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-laufbahn nfc-fun read" data-sid="ambient_14">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
     
     <div class="nf-top">
-      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>AUS DER CHRONIK</b></span>
+      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>DIE LEITER</b></span>
       <span class="nf-when"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/></svg></span>15:00</span>
     </div>
-    <div class="ff ff-neu"><div class="fx fx-b-chronik fx-r-chronik"><div class="fx-k">Chronik des Monats · 9 von 23</div><div class="fx-ch"><span class="av" style="background:#f0566a;">LE</span><span class="fx-ch-l"><em>Der Siegeszug</em><em>Auf dem Thron</em><em>Der Tagesregent</em><em>Die Kletterpartie</em><em>Der Souverän</em><em class="mehr">+4</em></span></div></div></div>
+    <div class="ff ff-neu"><div class="fx fx-b-leiter fx-r-insignium"><div class="fx-k">Insignium · 1194 Prestige</div><div class="fx-lt"><span class="unter">
+      <small>Reif</small></span><span class="jetzt">
+      <i style="left:99.0%"><span class="av" style="background:#e879f9;">JO</span></i><small>Schildring</small></span><span class="naechste">
+      <small>Volutenkranz</small></span><span class="">
+      <small>Zierkranz</small></span><span class="">
+      <small>Lorbeerreif</small></span><span class="">
+      <small>Kronenreif</small></span><span class="">
+      <small>Ordensstern</small></span></div>
+      <div class="fx-lt-t"><b class="num">noch 6</b> bis Volutenkranz</div></div></div>
     <div class="nf-gr">
       
-      <div class="nf-gr-r"><div class="nf-h">Leon hält im Oktober schon neun Einträge der Chronik</div><div class="nf-d">Darunter „Der Siegeszug“ und „Auf dem Thron“. <b>23 </b>Einträge sind im Oktober vergeben.</div></div>
+      <div class="nf-gr-r"><div class="nf-h">Johannes fehlen 6 Prestige zum Volutenkranz</div><div class="nf-d">Heute Schildring, <b>1194 </b>Prestige.</div></div>
       <span class="nf-chev"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span></span>
     </div>
     
@@ -7308,23 +7401,24 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
     
     
-  </div></div></div></div></div><div class="ff-tag"><div class="ff-datum">Fr., 23.10.<small>Spannung 88</small></div>
-    <div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-auszeichnung nfc-fun read" data-sid="ambient_15">
+  </div></div></div></div></div><div class="ff-tag"><div class="ff-datum">Fr., 23.10.<small>Spannung 65</small></div>
+    <div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-form nfc-fun read" data-sid="ambient_15">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
     
     <div class="nf-top">
-      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>REKORDJAGD</b></span>
+      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>GEGEN DIE ERWARTUNG</b></span>
       <span class="nf-when"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/></svg></span>15:00</span>
     </div>
-    <div class="ff ff-neu"><div class="fx fx-b-jagd fx-r-rekord"><div class="fx-k">Liga-Rekord · Der Wiedereinstieg</div><div class="fx-jg"><div class="fx-jg-z"><span class="av" style="background:#a78bfa;">AL</span>
-      <span class="fx-jg-m"><span class="fx-n">Alex</span><span class="fx-bar"><i style="width:100.0%"></i></span><small>+11 %-Punkte · 40 % in 5 Rückkehrspielen, sonst 29 %</small></span>
-      <b class="num">Rekord</b></div><div class="fx-jg-z jaeger"><span class="av" style="background:#BEF264;">JA</span>
-      <span class="fx-jg-m"><span class="fx-n">Jannik</span><span class="fx-bar"><i style="width:97.7%"></i></span><small>+11 %-Punkte · 60 % in 10 Rückkehrspielen, sonst 49 %</small></span>
-      <b class="num">97,6 %</b></div></div></div></div>
+    <div class="ff ff-neu"><div class="fx fx-b-erwartung fx-r-abweich"><div class="fx-k">Siege über der Erwartung, letzte 40</div><svg class="fx-svg" viewBox="0 0 244 72" aria-hidden="true">
+      <line class="ref" x1="26" x2="210" y1="52.9" y2="52.9"/><text class="ax" x="20" y="55.9">±0</text>
+      <path class="fl" d="M26.0 52.9L30.6 57.9L35.2 53.8L39.8 48.5L44.4 43.4L49.0 40.7L53.6 36.3L58.2 39.9L62.8 42.4L67.4 38.7L72.0 35.4L76.6 30.0L81.2 33.3L85.8 31.3L90.4 28.8L95.0 26.5L99.6 24.4L104.2 21.3L108.8 26.8L113.4 30.3L118.0 27.6L122.6 33.8L127.2 30.0L131.8 26.6L136.4 23.9L141.0 26.2L145.6 28.4L150.2 23.9L154.8 26.7L159.4 23.5L164.0 19.5L168.6 14.5L173.2 10.1L177.8 14.6L182.4 19.0L187.0 14.6L191.6 11.3L196.2 15.7L200.8 18.1L205.4 15.6L210.0 19.0L210.0 52.9L26 52.9Z"/><path class="ln" d="M26.0 52.9L30.6 57.9L35.2 53.8L39.8 48.5L44.4 43.4L49.0 40.7L53.6 36.3L58.2 39.9L62.8 42.4L67.4 38.7L72.0 35.4L76.6 30.0L81.2 33.3L85.8 31.3L90.4 28.8L95.0 26.5L99.6 24.4L104.2 21.3L108.8 26.8L113.4 30.3L118.0 27.6L122.6 33.8L127.2 30.0L131.8 26.6L136.4 23.9L141.0 26.2L145.6 28.4L150.2 23.9L154.8 26.7L159.4 23.5L164.0 19.5L168.6 14.5L173.2 10.1L177.8 14.6L182.4 19.0L187.0 14.6L191.6 11.3L196.2 15.7L200.8 18.1L205.4 15.6L210.0 19.0"/>
+      <circle class="pt" cx="210.0" cy="19.0" r="4"/>
+      <text class="w" x="217.0" y="23.0">+4</text>
+      <text class="ax" x="26" y="70">vor 40 Partien</text><text class="ax re" x="210.0" y="70">heute</text></svg><div class="fx-lg"><span class="av" style="background:#ff7849;">JA</span><span class="fx-n">Jane</span></div></div></div>
     <div class="nf-gr">
       
-      <div class="nf-gr-r"><div class="nf-h">Jannik rückt an den Rekord „Der Wiedereinstieg“ heran</div><div class="nf-d"><b>Alex</b> hält ihn, <b>Jannik</b> hat <b>97,6 %</b> davon.</div></div>
+      <div class="nf-gr-r"><div class="nf-h">Jane gewinnt mehr, als die Chancen sagen</div><div class="nf-d">In den letzten <b>40 </b>Partien <b>25 </b>Siege, erwartet waren <b>21</b>.</div></div>
       <span class="nf-chev"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span></span>
     </div>
     
@@ -7352,27 +7446,25 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
     
     
-  </div></div></div></div></div><div class="ff-tag"><div class="ff-datum">Sa., 24.10.<small>Spannung 46</small></div>
-    <div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-laufbahn nfc-fun read" data-sid="ambient_16">
+  </div></div></div></div></div><div class="ff-tag"><div class="ff-datum">Sa., 24.10.<small>Spannung 91</small></div>
+    <div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-form nfc-fun read" data-sid="ambient_16">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
     
     <div class="nf-top">
-      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>DIE LEITER</b></span>
+      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>DIE FORMKURVE</b></span>
       <span class="nf-when"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/></svg></span>15:00</span>
     </div>
-    <div class="ff ff-neu"><div class="fx fx-b-leiter fx-r-insignium"><div class="fx-k">Insignium · 1060 Prestige</div><div class="fx-lt"><span class="unter">
-      <small>Reif</small></span><span class="jetzt">
-      <i style="left:76.7%"><span class="av" style="background:#56b4e8;">HE</span></i><small>Schildring</small></span><span class="naechste">
-      <small>Volutenkranz</small></span><span class="">
-      <small>Zierkranz</small></span><span class="">
-      <small>Lorbeerreif</small></span><span class="">
-      <small>Kronenreif</small></span><span class="">
-      <small>Ordensstern</small></span></div>
-      <div class="fx-lt-t"><b class="num">noch 140</b> bis Volutenkranz</div></div></div>
+    <div class="ff ff-neu"><div class="fx fx-b-monatskurve fx-r-form"><div class="fx-k">Elo im Monat, Partie für Partie</div><svg class="fx-svg" viewBox="0 0 244 70" aria-hidden="true">
+      <line class="ref" x1="6" x2="206" y1="35.7" y2="35.7"/>
+      <path class="fl" d="M6.0 35.7L10.9 59.2L15.8 54.1L20.6 48.5L25.5 44.4L30.4 40.7L35.3 44.0L40.1 46.9L45.0 42.9L49.9 45.4L54.8 48.0L59.7 43.2L64.5 44.9L69.4 41.9L74.3 39.5L79.2 36.2L84.0 37.1L88.9 37.9L93.8 40.7L98.7 42.3L103.6 38.2L108.4 35.3L113.3 32.9L118.2 30.7L123.1 27.6L128.0 25.0L132.8 23.1L137.7 20.3L142.6 18.4L147.5 16.7L152.3 14.9L157.2 13.2L162.1 11.4L167.0 14.6L171.9 12.5L176.7 10.7L181.6 9.4L186.5 8.2L191.4 6.8L196.2 7.7L201.1 6.8L206.0 7.7L206.0 35.7L6 35.7Z"/><path class="ln" d="M6.0 35.7L10.9 59.2L15.8 54.1L20.6 48.5L25.5 44.4L30.4 40.7L35.3 44.0L40.1 46.9L45.0 42.9L49.9 45.4L54.8 48.0L59.7 43.2L64.5 44.9L69.4 41.9L74.3 39.5L79.2 36.2L84.0 37.1L88.9 37.9L93.8 40.7L98.7 42.3L103.6 38.2L108.4 35.3L113.3 32.9L118.2 30.7L123.1 27.6L128.0 25.0L132.8 23.1L137.7 20.3L142.6 18.4L147.5 16.7L152.3 14.9L157.2 13.2L162.1 11.4L167.0 14.6L171.9 12.5L176.7 10.7L181.6 9.4L186.5 8.2L191.4 6.8L196.2 7.7L201.1 6.8L206.0 7.7"/>
+      <circle class="pt" cx="206.0" cy="7.7" r="4"/>
+      <text class="w" x="213.0" y="11.7">+180</text>
+      <text class="ax" x="6" y="68">Monatsbeginn</text><text class="ax re" x="206.0" y="68">heute</text></svg>
+      <div class="fx-lg"><span class="av" style="background:#f0566a;">LE</span><span class="fx-n">Leon</span></div></div></div>
     <div class="nf-gr">
       
-      <div class="nf-gr-r"><div class="nf-h">Henry fehlen 140 Prestige zum Volutenkranz</div><div class="nf-d">Heute Schildring, <b>1060 </b>Prestige.</div></div>
+      <div class="nf-gr-r"><div class="nf-h">Leon hat im Oktober schon +180 Elo geholt</div><div class="nf-d"><b>28 </b>von <b>41 </b>Partien im Oktober gewonnen.</div></div>
       <span class="nf-chev"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span></span>
     </div>
     
@@ -7400,19 +7492,21 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
     
     
-  </div></div></div></div></div><div class="ff-tag"><div class="ff-datum">So., 25.10.<small>Spannung 100</small></div>
-    <div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-chronik nfc-fun read" data-sid="ambient_17">
+  </div></div></div></div></div><div class="ff-tag"><div class="ff-datum">So., 25.10.<small>Spannung 54</small></div>
+    <div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-laufbahn nfc-fun read" data-sid="ambient_17">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
     
     <div class="nf-top">
-      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>AUS DER CHRONIK</b></span>
+      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>AUS DER LAUFBAHN</b></span>
       <span class="nf-when"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/></svg></span>15:00</span>
     </div>
-    <div class="ff ff-neu"><div class="fx fx-b-chronik fx-r-chronik"><div class="fx-k">Chronik des Monats · 9 von 23</div><div class="fx-ch"><span class="av" style="background:#f0566a;">LE</span><span class="fx-ch-l"><em>Der Siegeszug</em><em>Auf dem Thron</em><em>Der Tagesregent</em><em>Die Kletterpartie</em><em>Der Souverän</em><em class="mehr">+4</em></span></div></div></div>
+    <div class="ff ff-neu"><div class="fx fx-b-zaehler fx-r-laufbahn"><div class="fx-k">Spiele in der Laufbahn</div><div class="fx-zl"><span class="av" style="background:#BEF264;">JA</span>
+      <span class="fx-zl-z"><i>9</i><i>7</i></span><span class="fx-zl-f"><i></i><i></i><i></i></span>
+      <span class="fx-zl-m"><b class="num">100</b><small>noch 3</small></span></div></div></div>
     <div class="nf-gr">
       
-      <div class="nf-gr-r"><div class="nf-h">Leon hält im Oktober schon neun Einträge der Chronik</div><div class="nf-d">Darunter „Der Siegeszug“ und „Auf dem Thron“. <b>23 </b>Einträge sind im Oktober vergeben.</div></div>
+      <div class="nf-gr-r"><div class="nf-h">Jannik fehlen drei Spiele zum 100. Spiel</div><div class="nf-d"><b>48 </b>davon gewonnen.</div></div>
       <span class="nf-chev"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span></span>
     </div>
     
@@ -7440,21 +7534,20 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
     
     
-  </div></div></div></div></div><div class="ff-tag"><div class="ff-datum">Mi., 28.10.<small>Spannung 52</small></div>
-    <div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-laufbahn nfc-fun read" data-sid="ambient_18">
+  </div></div></div></div></div><div class="ff-tag"><div class="ff-datum">Mi., 28.10.<small>Spannung 67</small></div>
+    <div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-duell nfc-fun read" data-sid="ambient_18">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
     
     <div class="nf-top">
-      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>DIE LEITER</b></span>
+      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>DUELL IN ZAHLEN</b></span>
       <span class="nf-when"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/></svg></span>15:00</span>
     </div>
-    <div class="ff ff-neu"><div class="fx fx-b-tau fx-r-insignium"><div class="fx-k">Prestige · Platz 3 und 4</div><div class="fx-tau"><span class="av" style="background:#fb923c;">JU</span>
-      <span class="fx-tau-s"><u></u><i style="left:50.2%"></i></span><span class="av" style="background:#f7cf4a;">MA</span></div>
-      <div class="fx-tau-n"><span><span class="fx-n">Julian</span><b class="num">2259</b></span><span><span class="fx-n">Maxi</span><b class="num">2243</b></span></div></div></div>
+    <div class="ff ff-neu"><div class="fx fx-b-kette fx-r-duell"><div class="fx-k">Die letzten 7 Duelle</div><div class="fx-kt"><span class="av" style="background:#4ade80;">MA</span><span class="fx-kt-l"><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i></span><span class="av" style="background:#f7cf4a;">AN</span></div>
+      <div class="fx-tau-n"><span class="fx-n">Martin</span><span class="fx-n">Anton</span></div></div></div>
     <div class="nf-gr">
       
-      <div class="nf-gr-r"><div class="nf-h">16 Prestige trennen Julian und Maxi</div><div class="nf-d">Platz <b>3 </b>und <b>4 </b>im Prestige der Liga.</div></div>
+      <div class="nf-gr-r"><div class="nf-h">Martin hat gegen Anton noch nie verloren</div><div class="nf-d"><b>7:0</b> in <b>7 </b>Duellen.</div></div>
       <span class="nf-chev"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span></span>
     </div>
     
@@ -7486,22 +7579,26 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
     
     
-  </div></div></div></div></div><div class="ff-tag"><div class="ff-datum">Do., 29.10.<small>Spannung 58</small></div>
-    <div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-persoenlich nfc-fun read" data-sid="ambient_19">
+  </div></div></div></div></div><div class="ff-tag"><div class="ff-datum">Do., 29.10.<small>Spannung 66</small></div>
+    <div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-form nfc-fun read" data-sid="ambient_19">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
     
     <div class="nf-top">
-      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>ZU ZWEIT</b></span>
+      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>DIE FORMKURVE</b></span>
       <span class="nf-when"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/></svg></span>15:00</span>
     </div>
-    <div class="ff ff-neu"><div class="fx fx-b-chemie fx-r-team"><div class="fx-k">Siegquote · 11 Partien zu zweit</div><div class="fx-cm">
-      <div><span class="av" style="background:#e879f9;">JO</span><span class="fx-n">Johannes</span><span class="fx-bar"><i style="width:38%"></i></span><b class="num">38 %</b></div>
-      <div><span class="av" style="background:#4ade80;">MA</span><span class="fx-n">Martin</span><span class="fx-bar"><i style="width:65%"></i></span><b class="num">65 %</b></div>
-      <div class="zus"><span class="fx-paar"><span class="av" style="background:#e879f9;">JO</span><span class="av" style="background:#4ade80;">MA</span></span><span class="fx-n">zusammen</span><span class="fx-bar"><i style="width:64%"></i></span><b class="num">64 %</b></div></div></div></div>
+    <div class="ff ff-neu"><div class="fx fx-b-formbalken fx-r-form"><div class="fx-k">Elo in den letzten 14 Tagen</div><div class="fx-fb"><div class="eins"><span class="av" style="background:#f7cf4a;">MA</span><span class="fx-n">Maxi</span>
+      <span class="fx-fb-s"><u></u><i style="left:50%;width:50.0%"></i></span><b class="num">+163</b></div><div class=""><span class="av" style="background:#56b4e8;">HE</span><span class="fx-n">Henry</span>
+      <span class="fx-fb-s"><u></u><i style="left:50%;width:37.7%"></i></span><b class="num">+123</b></div><div class=""><span class="av" style="background:#fb923c;">JU</span><span class="fx-n">Julian</span>
+      <span class="fx-fb-s"><u></u><i style="left:50%;width:35.6%"></i></span><b class="num">+116</b></div><div class=""><span class="av" style="background:#f0566a;">LE</span><span class="fx-n">Leon</span>
+      <span class="fx-fb-s"><u></u><i style="left:50%;width:34.0%"></i></span><b class="num">+111</b></div><div class=""><span class="av" style="background:#ff7849;">JA</span><span class="fx-n">Jane</span>
+      <span class="fx-fb-s"><u></u><i style="left:50%;width:2.5%"></i></span><b class="num">+8</b></div><div class=" neg"><span class="av" style="background:#22d3ee;">LE</span><span class="fx-n">Leo</span>
+      <span class="fx-fb-s"><u></u><i style="right:50%;width:10.4%"></i></span><b class="num">−34</b></div><div class=" neg"><span class="av" style="background:#56b4e8;">ST</span><span class="fx-n">Stefan</span>
+      <span class="fx-fb-s"><u></u><i style="right:50%;width:45.7%"></i></span><b class="num">−149</b></div></div></div></div>
     <div class="nf-gr">
       
-      <div class="nf-gr-r"><div class="nf-h">Zusammen gewinnen Johannes und Martin 64 %</div><div class="nf-d">Allein <b>Johannes</b> <b>38 %</b>, <b>Martin</b> <b>65 %</b>. <b>11 </b>Partien zu zweit.</div></div>
+      <div class="nf-gr-r"><div class="nf-h">Maxi ist die Form der Liga: +163 Elo in zwei Wochen</div><div class="nf-d">Dahinter <b>Henry</b> mit +<b>123</b>; <b>2 </b>der <b>7 </b>verloren in der Zeit Elo.</div></div>
       <span class="nf-chev"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span></span>
     </div>
     
@@ -7564,7 +7661,7 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
   </div></div></div>
       <figcaption><b>Das Rennen um den Monat</b><span>ab dem 7. Tag, bis acht Tage vor Schluss; die ersten zwei der Wertung höchstens 40 Elo auseinander</span><small>Spannung: je knapper, desto mehr; ein Dritter in Reichweite zählt mit</small>
-      <small class="num">trifft an 21 von 88 Tagen zu · gewählt 5-mal · Beispiel vom Fr., 10.07.</small></figcaption></figure><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-chronik nfc-fun read" data-sid="ambient_21">
+      <small class="num">trifft an 21 von 88 Tagen zu · gewählt 4-mal · Beispiel vom Fr., 10.07.</small></figcaption></figure><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-chronik nfc-fun read" data-sid="ambient_21">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
     
@@ -7586,7 +7683,28 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
   </div></div></div>
       <figcaption><b>Die Spitze wechselt</b><span>die Spitze der Wertung hat im Monat mindestens dreimal gewechselt</span><small>Spannung: je öfter, desto mehr</small>
-      <small class="num">trifft an 16 von 88 Tagen zu · gewählt 2-mal · Beispiel vom Fr., 26.06.</small></figcaption></figure></div><h3>Saisonschluss</h3><div class="ff-gal"><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-chronik nfc-fun read" data-sid="ambient_22">
+      <small class="num">trifft an 16 von 88 Tagen zu · gewählt 2-mal · Beispiel vom Fr., 26.06.</small></figcaption></figure><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-chronik nfc-fun read" data-sid="ambient_22">
+    <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
+    
+    
+    <div class="nf-top">
+      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>TITELRENNEN</b></span>
+      <span class="nf-when"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/></svg></span>15:00</span>
+    </div>
+    <div class="ff ff-neu"><div class="fx fx-b-reihe fx-r-titel"><div class="fx-k">Wertung des Monats · Meister des Mais</div><div class="fx-rh" style="--n:12"><span class="m"><em aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 18h18l-1.6-10-4.9 4-2.5-7-2.5 7-4.9-4z"/></svg></em><span class="av" style="background:#f0566a;">LE</span><small class="num">1</small></span><span class=""><em></em><span class="av" style="background:#fb923c;">JU</span><small class="num">2</small></span><span class=""><em></em><span class="av" style="background:#4ade80;">MA</span><small class="num">3</small></span><span class=""><em></em><span class="av" style="background:#ff7849;">JA</span><small class="num">4</small></span><span class=""><em></em><span class="av" style="background:#f7cf4a;">MA</span><small class="num">5</small></span><span class=""><em></em><span class="av" style="background:#BEF264;">JA</span><small class="num">6</small></span><span class=""><em></em><span class="av" style="background:#56b4e8;">HE</span><small class="num">7</small></span><span class=""><em></em><span class="av" style="background:#22d3ee;">LE</span><small class="num">8</small></span><span class=""><em></em><span class="av" style="background:#a78bfa;">AL</span><small class="num">9</small></span><span class=""><em></em><span class="av" style="background:#f7cf4a;">AN</span><small class="num">10</small></span><span class=""><em></em><span class="av" style="background:#e879f9;">JO</span><small class="num">11</small></span><span class=""><em></em><span class="av" style="background:#56b4e8;">ST</span><small class="num">12</small></span></div></div></div>
+    <div class="nf-gr">
+      
+      <div class="nf-gr-r"><div class="nf-h">Leon verteidigt: Platz 1 auch im Juni</div><div class="nf-d"><b>89 </b>Elo vor <b>Julian</b>.</div></div>
+      <span class="nf-chev"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span></span>
+    </div>
+    
+    
+    
+    
+    
+  </div></div></div>
+      <figcaption><b>Der Meister von gestern</b><span>ab dem 5. Tag; wo der Meister des Vormonats in der Wertung des Monats steht</span><small>Spannung: an der Spitze oder ganz hinten mehr als dazwischen</small>
+      <small class="num">trifft an 51 von 88 Tagen zu · gewählt 4-mal · Beispiel vom Fr., 26.06.</small></figcaption></figure></div><h3>Saisonschluss</h3><div class="ff-gal"><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-chronik nfc-fun read" data-sid="ambient_23">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
     
@@ -7610,7 +7728,7 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
   </div></div></div>
       <figcaption><b>Der Schlussspurt</b><span>die letzten sieben Tage des Monats; wer höchstens 40 Elo hinter der Spitze liegt, kann noch Meister werden</span><small>Spannung: je weniger Tage und je mehr Anwärter, desto mehr</small>
-      <small class="num">trifft an 8 von 88 Tagen zu · gewählt 3-mal · Beispiel vom Di., 29.09.</small></figcaption></figure></div><h3>Rekorde</h3><div class="ff-gal"><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-auszeichnung nfc-fun read" data-sid="ambient_23">
+      <small class="num">trifft an 8 von 88 Tagen zu · gewählt 3-mal · Beispiel vom Di., 29.09.</small></figcaption></figure></div><h3>Rekorde</h3><div class="ff-gal"><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-auszeichnung nfc-fun read" data-sid="ambient_24">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
     
@@ -7635,7 +7753,7 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
   </div></div></div>
       <figcaption><b>Jagd auf den Rekord</b><span>der Zweite eines Liga-Rekords hat mindestens 85 % des Rekordwerts</span><small>Spannung: je näher am Rekord, desto mehr</small>
-      <small class="num">trifft an 80 von 88 Tagen zu · gewählt 7-mal · Beispiel vom Sa., 20.06.</small></figcaption></figure><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-auszeichnung nfc-fun read" data-sid="ambient_24">
+      <small class="num">trifft an 80 von 88 Tagen zu · gewählt 5-mal · Beispiel vom Sa., 20.06.</small></figcaption></figure><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-auszeichnung nfc-fun read" data-sid="ambient_25">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
     
@@ -7661,7 +7779,29 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
   </div></div></div>
       <figcaption><b>Die Rekordtafel</b><span>die ersten zwei der Rekordtafel liegen höchstens zwei Rekorde auseinander</span><small>Spannung: gleichauf mehr als knapp dahinter</small>
-      <small class="num">trifft an 50 von 88 Tagen zu · gewählt 2-mal · Beispiel vom Mi., 07.10.</small></figcaption></figure></div><h3>Auszeichnungen</h3><div class="ff-gal"><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-auszeichnung nfc-fun read" data-sid="ambient_25">
+      <small class="num">trifft an 50 von 88 Tagen zu · gewählt 0-mal · Beispiel vom Mi., 07.10.</small></figcaption></figure><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-auszeichnung nfc-fun read" data-sid="ambient_26">
+    <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
+    
+    
+    <div class="nf-top">
+      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>REKORDJAGD</b></span>
+      <span class="nf-when"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/></svg></span>15:00</span>
+    </div>
+    <div class="ff ff-neu"><div class="fx fx-b-wechsel fx-r-rekord"><div class="fx-k">Liga-Rekord · Der Unaufhaltsame</div><div class="fx-wx"><span class="alt"><span class="av" style="background:#f0566a;">LE</span><span class="fx-n">Leon</span></span><i aria-hidden="true"></i>
+    <span class="neu"><span class="av" style="background:#4ade80;">MA</span><span class="fx-n">Martin</span></span></div><div class="fx-wx-t">7 Siege in Folge</div></div></div>
+    <div class="nf-gr">
+      
+      <div class="nf-gr-r"><div class="nf-h">Martin hält jetzt „Der Unaufhaltsame“</div><div class="nf-d">Seit gestern; davor hielt ihn <b>Leon</b>.</div></div>
+      <span class="nf-chev"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span></span>
+    </div>
+    
+    
+    
+    
+    
+  </div></div></div>
+      <figcaption><b>Neuer Halter</b><span>ein Liga-Rekord hat in den letzten 14 Tagen den Halter gewechselt</span><small>Spannung: je frischer, desto mehr</small>
+      <small class="num">trifft an 76 von 88 Tagen zu · gewählt 4-mal · Beispiel vom Fr., 12.06.</small></figcaption></figure></div><h3>Auszeichnungen</h3><div class="ff-gal"><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-auszeichnung nfc-fun read" data-sid="ambient_27">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
     
@@ -7682,7 +7822,7 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
   </div></div></div>
       <figcaption><b>Fast allein</b><span>eine legendäre oder seltene Auszeichnung, die höchstens zwei der Liga tragen</span><small>Spannung: legendär mehr als selten, allein mehr als zu zweit</small>
-      <small class="num">trifft an 88 von 88 Tagen zu · gewählt 6-mal · Beispiel vom Di., 02.06.</small></figcaption></figure><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-auszeichnung nfc-fun read" data-sid="ambient_26">
+      <small class="num">trifft an 88 von 88 Tagen zu · gewählt 9-mal · Beispiel vom Di., 02.06.</small></figcaption></figure><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-auszeichnung nfc-fun read" data-sid="ambient_28">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
     
@@ -7703,7 +7843,7 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
   </div></div></div>
       <figcaption><b>Eine fehlt</b><span>eine Auszeichnung, die man gern holt, fehlt einmal bis zur nächsten runden Zahl (5, 10, 25 …)</span><small>Spannung: legendär und hohe Zahl mehr</small>
-      <small class="num">trifft an 81 von 88 Tagen zu · gewählt 8-mal · Beispiel vom Fr., 31.07.</small></figcaption></figure></div><h3>Chronik</h3><div class="ff-gal"><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-chronik nfc-fun read" data-sid="ambient_27">
+      <small class="num">trifft an 81 von 88 Tagen zu · gewählt 5-mal · Beispiel vom Fr., 31.07.</small></figcaption></figure></div><h3>Chronik</h3><div class="ff-gal"><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-chronik nfc-fun read" data-sid="ambient_29">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
     
@@ -7724,7 +7864,7 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
   </div></div></div>
       <figcaption><b>Die Chronik des Monats</b><span>ab dem 10. Tag; einer hält im laufenden Monat mindestens drei Einträge der Chronik</span><small>Spannung: je mehr Einträge, desto mehr</small>
-      <small class="num">trifft an 59 von 88 Tagen zu · gewählt 8-mal · Beispiel vom Fr., 12.06.</small></figcaption></figure></div><h3>Laufbahn</h3><div class="ff-gal"><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-laufbahn nfc-fun read" data-sid="ambient_28">
+      <small class="num">trifft an 59 von 88 Tagen zu · gewählt 6-mal · Beispiel vom Fr., 12.06.</small></figcaption></figure></div><h3>Laufbahn</h3><div class="ff-gal"><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-laufbahn nfc-fun read" data-sid="ambient_30">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
     
@@ -7747,7 +7887,7 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
   </div></div></div>
       <figcaption><b>Kurz vor der Marke</b><span>bis zum 100., 250., 500. … Sieg, zum 100., 250., 500. … Spiel oder zum 500., 1000. … Tor fehlen höchstens 3</span><small>Spannung: je weniger fehlen, desto mehr</small>
-      <small class="num">trifft an 47 von 88 Tagen zu · gewählt 4-mal · Beispiel vom Fr., 09.10.</small></figcaption></figure><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-laufbahn nfc-fun read" data-sid="ambient_29">
+      <small class="num">trifft an 47 von 88 Tagen zu · gewählt 2-mal · Beispiel vom Fr., 09.10.</small></figcaption></figure><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-laufbahn nfc-fun read" data-sid="ambient_31">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
     
@@ -7773,7 +7913,7 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
   </div></div></div>
       <figcaption><b>Unter dem Gipfel</b><span>das Elo liegt höchstens 12 unter dem eigenen Höchststand, der mindestens 14 Tage alt ist</span><small>Spannung: je näher, desto mehr</small>
-      <small class="num">trifft an 3 von 88 Tagen zu · gewählt 0-mal · Beispiel vom Fr., 17.07.</small></figcaption></figure></div><h3>Insignium</h3><div class="ff-gal"><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-laufbahn nfc-fun read" data-sid="ambient_30">
+      <small class="num">trifft an 3 von 88 Tagen zu · gewählt 0-mal · Beispiel vom Fr., 17.07.</small></figcaption></figure></div><h3>Insignium</h3><div class="ff-gal"><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-laufbahn nfc-fun read" data-sid="ambient_32">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
     
@@ -7802,7 +7942,7 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
   </div></div></div>
       <figcaption><b>Vor der nächsten Stufe</b><span>bis zur nächsten Stufe des Insigniums fehlen höchstens 150 Prestige</span><small>Spannung: je weniger fehlen, desto mehr; hohe Stufe mehr</small>
-      <small class="num">trifft an 67 von 88 Tagen zu · gewählt 7-mal · Beispiel vom Fr., 21.08.</small></figcaption></figure><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-laufbahn nfc-fun read" data-sid="ambient_31">
+      <small class="num">trifft an 67 von 88 Tagen zu · gewählt 4-mal · Beispiel vom Fr., 21.08.</small></figcaption></figure><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-laufbahn nfc-fun read" data-sid="ambient_33">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
     
@@ -7810,12 +7950,12 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
       <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>DIE LEITER</b></span>
       <span class="nf-when"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/></svg></span>15:00</span>
     </div>
-    <div class="ff ff-neu"><div class="fx fx-b-tau fx-r-insignium"><div class="fx-k">Prestige · Platz 2 und 3</div><div class="fx-tau"><span class="av" style="background:#f7cf4a;">MA</span>
-      <span class="fx-tau-s"><u></u><i style="left:57.9%"></i></span><span class="av" style="background:#f0566a;">LE</span></div>
-      <div class="fx-tau-n"><span><span class="fx-n">Maxi</span><b class="num">11</b></span><span><span class="fx-n">Leon</span><b class="num">8</b></span></div></div></div>
+    <div class="ff ff-neu"><div class="fx fx-b-tau fx-r-insignium"><div class="fx-k">Prestige · Platz 7 und 8</div><div class="fx-tau"><span class="av" style="background:#BEF264;">JA</span>
+      <span class="fx-tau-s"><u></u><i style="left:50.0%"></i></span><span class="av" style="background:#e879f9;">JO</span></div>
+      <div class="fx-tau-n"><span><span class="fx-n">Jannik</span><b class="num">1201</b></span><span><span class="fx-n">Johannes</span><b class="num">1201</b></span></div></div></div>
     <div class="nf-gr">
       
-      <div class="nf-gr-r"><div class="nf-h">3 Prestige trennen Maxi und Leon</div><div class="nf-d">Platz <b>2 </b>und <b>3 </b>im Prestige der Liga.</div></div>
+      <div class="nf-gr-r"><div class="nf-h">Jannik und Johannes: gleich viel Prestige</div><div class="nf-d">Platz <b>7 </b>und <b>8 </b>im Prestige der Liga.</div></div>
       <span class="nf-chev"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span></span>
     </div>
     
@@ -7824,8 +7964,8 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
     
   </div></div></div>
-      <figcaption><b>Zwei auf einer Sprosse</b><span>zwei Nachbarn im Prestige liegen höchstens 60 Punkte auseinander</span><small>Spannung: je knapper, desto mehr</small>
-      <small class="num">trifft an 81 von 88 Tagen zu · gewählt 6-mal · Beispiel vom Sa., 23.05.</small></figcaption></figure></div><h3>Teams</h3><div class="ff-gal"><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-persoenlich nfc-fun read" data-sid="ambient_32">
+      <figcaption><b>Zwei auf einer Sprosse</b><span>zwei Nachbarn im Prestige, beide ab 300, liegen höchstens 60 Punkte auseinander</span><small>Spannung: je knapper, desto mehr</small>
+      <small class="num">trifft an 65 von 88 Tagen zu · gewählt 0-mal · Beispiel vom Di., 13.10.</small></figcaption></figure></div><h3>Teams</h3><div class="ff-gal"><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-persoenlich nfc-fun read" data-sid="ambient_34">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
     
@@ -7849,7 +7989,7 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
   </div></div></div>
       <figcaption><b>Zusammen besser</b><span>ein Paar ab zehn gemeinsamen Partien gewinnt mindestens 12 Punkte öfter als beide im Schnitt allein</span><small>Spannung: je größer der Unterschied, desto mehr</small>
-      <small class="num">trifft an 80 von 88 Tagen zu · gewählt 5-mal · Beispiel vom Fr., 03.07.</small></figcaption></figure><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-persoenlich nfc-fun read" data-sid="ambient_33">
+      <small class="num">trifft an 80 von 88 Tagen zu · gewählt 4-mal · Beispiel vom Fr., 03.07.</small></figcaption></figure><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-persoenlich nfc-fun read" data-sid="ambient_35">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
     
@@ -7870,7 +8010,7 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
   </div></div></div>
       <figcaption><b>Ungeschlagen zu zweit</b><span>ein Paar hat jede seiner mindestens vier gemeinsamen Partien gewonnen</span><small>Spannung: je mehr Siege, desto mehr</small>
-      <small class="num">trifft an 12 von 88 Tagen zu · gewählt 0-mal · Beispiel vom Fr., 03.07.</small></figcaption></figure><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-persoenlich nfc-fun read" data-sid="ambient_34">
+      <small class="num">trifft an 12 von 88 Tagen zu · gewählt 0-mal · Beispiel vom Fr., 03.07.</small></figcaption></figure><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-persoenlich nfc-fun read" data-sid="ambient_36">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
     
@@ -7892,7 +8032,30 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
   </div></div></div>
       <figcaption><b>Noch nie zusammen</b><span>zwei mit je mindestens 60 Partien haben nie auf derselben Seite gestanden</span><small>Spannung: je mehr Partien beide haben, desto mehr</small>
-      <small class="num">trifft an 25 von 88 Tagen zu · gewählt 1-mal · Beispiel vom Fr., 04.09.</small></figcaption></figure></div><h3>Positionen</h3><div class="ff-gal"><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-form nfc-fun read" data-sid="ambient_35">
+      <small class="num">trifft an 25 von 88 Tagen zu · gewählt 0-mal · Beispiel vom Fr., 04.09.</small></figcaption></figure><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-persoenlich nfc-fun read" data-sid="ambient_37">
+    <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
+    
+    
+    <div class="nf-top">
+      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>ZU ZWEIT</b></span>
+      <span class="nf-when"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/></svg></span>15:00</span>
+    </div>
+    <div class="ff ff-neu"><div class="fx fx-b-stern fx-r-team"><div class="fx-k">Partner, mit allen 11</div><div class="fx-sn"><span class="fx-sn-b"><svg viewBox="0 0 104 104" aria-hidden="true"><line x1="52" y1="52" x2="52.0" y2="10.0" class="" style="opacity:0.45"/><line x1="52" y1="52" x2="74.7" y2="16.7" class="neu" style="opacity:0.27"/><line x1="52" y1="52" x2="90.2" y2="34.6" class="" style="opacity:0.78"/><line x1="52" y1="52" x2="93.6" y2="58.0" class="" style="opacity:0.56"/><line x1="52" y1="52" x2="83.7" y2="79.5" class="" style="opacity:0.53"/><line x1="52" y1="52" x2="63.8" y2="92.3" class="" style="opacity:0.43"/><line x1="52" y1="52" x2="40.2" y2="92.3" class="" style="opacity:0.73"/><line x1="52" y1="52" x2="20.3" y2="79.5" class="" style="opacity:1.00"/><line x1="52" y1="52" x2="10.4" y2="58.0" class="" style="opacity:0.52"/><line x1="52" y1="52" x2="13.8" y2="34.6" class="" style="opacity:0.97"/><line x1="52" y1="52" x2="29.3" y2="16.7" class="" style="opacity:0.47"/></svg>
+      <i class="mitte" style="left:52px;top:52px"><span class="av" style="background:#f0566a;">LE</span></i><i class="" style="left:52.0px;top:10.0px"><span class="av" style="background:#a78bfa;">AL</span></i><i class="neu" style="left:74.7px;top:16.7px"><span class="av" style="background:#f7cf4a;">AN</span></i><i class="" style="left:90.2px;top:34.6px"><span class="av" style="background:#56b4e8;">HE</span></i><i class="" style="left:93.6px;top:58.0px"><span class="av" style="background:#ff7849;">JA</span></i><i class="" style="left:83.7px;top:79.5px"><span class="av" style="background:#BEF264;">JA</span></i><i class="" style="left:63.8px;top:92.3px"><span class="av" style="background:#e879f9;">JO</span></i><i class="" style="left:40.2px;top:92.3px"><span class="av" style="background:#fb923c;">JU</span></i><i class="" style="left:20.3px;top:79.5px"><span class="av" style="background:#22d3ee;">LE</span></i><i class="" style="left:10.4px;top:58.0px"><span class="av" style="background:#4ade80;">MA</span></i><i class="" style="left:13.8px;top:34.6px"><span class="av" style="background:#f7cf4a;">MA</span></i><i class="" style="left:29.3px;top:16.7px"><span class="av" style="background:#56b4e8;">ST</span></i></span>
+      <span class="fx-sn-t"><span class="av" style="background:#f7cf4a;">AN</span><span class="fx-n">Anton</span><small>zuletzt dazu</small></span></div></div></div>
+    <div class="nf-gr">
+      
+      <div class="nf-gr-r"><div class="nf-h">Leon hat jetzt mit allen elf zusammengespielt</div><div class="nf-d">Als Letzter kam <b>Anton</b> dazu, am <b>30</b>. Juli.</div></div>
+      <span class="nf-chev"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span></span>
+    </div>
+    
+    
+    
+    
+    
+  </div></div></div>
+      <figcaption><b>Mit allen zusammen</b><span>in den letzten 30 Tagen kam der letzte Partner dazu: jetzt hat einer mit jedem der Liga zusammengespielt</span><small>Spannung: fest</small>
+      <small class="num">trifft an 45 von 88 Tagen zu · gewählt 0-mal · Beispiel vom Fr., 31.07.</small></figcaption></figure></div><h3>Positionen</h3><div class="ff-gal"><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-form nfc-fun read" data-sid="ambient_38">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
     
@@ -7915,7 +8078,30 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
   </div></div></div>
       <figcaption><b>Vorn oder hinten</b><span>ab je 15 Partien in Abwehr und Sturm liegt die Siegquote mindestens 20 Punkte auseinander</span><small>Spannung: je größer der Unterschied, desto mehr</small>
-      <small class="num">trifft an 76 von 88 Tagen zu · gewählt 3-mal · Beispiel vom Fr., 31.07.</small></figcaption></figure></div><h3>Abweichung</h3><div class="ff-gal"><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-form nfc-fun read" data-sid="ambient_36">
+      <small class="num">trifft an 76 von 88 Tagen zu · gewählt 3-mal · Beispiel vom Fr., 31.07.</small></figcaption></figure><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-form nfc-fun read" data-sid="ambient_39">
+    <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
+    
+    
+    <div class="nf-top">
+      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>VORN UND HINTEN</b></span>
+      <span class="nf-when"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/></svg></span>15:00</span>
+    </div>
+    <div class="ff ff-neu"><div class="fx fx-b-anteil fx-r-position"><div class="fx-k">Anteil im Sturm</div><div class="fx-sd"><span class="av" style="background:#e879f9;">JO</span><span class="fx-sd-l">
+      <div><small>40 davor</small><span class="fx-bar"><i style="width:45%"></i><u></u></span><b class="num">45 %</b></div>
+      <div class="besser"><small>letzte 20</small><span class="fx-bar"><i style="width:85%"></i><u></u></span><b class="num">85 %</b></div></span></div></div></div>
+    <div class="nf-gr">
+      
+      <div class="nf-gr-r"><div class="nf-h">Johannes spielt jetzt vorn</div><div class="nf-d">In den letzten <b>20 </b>Partien <b>85 %</b> im Sturm, in den <b>40 </b>davor <b>45 %</b>.</div></div>
+      <span class="nf-chev"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span></span>
+    </div>
+    
+    
+    
+    
+    
+  </div></div></div>
+      <figcaption><b>Die Seite gewechselt</b><span>in den letzten 20 Partien mindestens 30 Punkte öfter oder seltener im Sturm als in den 40 davor</span><small>Spannung: je größer der Wechsel, desto mehr</small>
+      <small class="num">trifft an 35 von 88 Tagen zu · gewählt 2-mal · Beispiel vom Mi., 07.10.</small></figcaption></figure></div><h3>Abweichung</h3><div class="ff-gal"><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-form nfc-fun read" data-sid="ambient_40">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
     
@@ -7941,7 +8127,7 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
   </div></div></div>
       <figcaption><b>Mehr als erwartet</b><span>in den letzten 40 Partien mindestens vier Siege mehr, als die Siegchancen zusammen ergeben</span><small>Spannung: je mehr, desto mehr</small>
-      <small class="num">trifft an 73 von 88 Tagen zu · gewählt 5-mal · Beispiel vom Sa., 15.08.</small></figcaption></figure><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-form nfc-fun read" data-sid="ambient_37">
+      <small class="num">trifft an 73 von 88 Tagen zu · gewählt 5-mal · Beispiel vom Sa., 15.08.</small></figcaption></figure><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-form nfc-fun read" data-sid="ambient_41">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
     
@@ -7967,7 +8153,7 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
   </div></div></div>
       <figcaption><b>Weniger als erwartet</b><span>in den letzten 40 Partien mindestens vier Siege weniger, als die Siegchancen zusammen ergeben</span><small>Spannung: je mehr, desto mehr; etwas leiser als „mehr“</small>
-      <small class="num">trifft an 69 von 88 Tagen zu · gewählt 5-mal · Beispiel vom Mi., 07.10.</small></figcaption></figure><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-form nfc-fun read" data-sid="ambient_38">
+      <small class="num">trifft an 69 von 88 Tagen zu · gewählt 4-mal · Beispiel vom Mi., 07.10.</small></figcaption></figure><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-form nfc-fun read" data-sid="ambient_42">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
     
@@ -7990,7 +8176,7 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
   </div></div></div>
       <figcaption><b>Gern Außenseiter</b><span>als Außenseiter (Siegchance unter 45 %) ab zwölf Partien mindestens 48 % gewonnen</span><small>Spannung: je höher die Quote, desto mehr</small>
-      <small class="num">trifft an 14 von 88 Tagen zu · gewählt 1-mal · Beispiel vom Sa., 20.06.</small></figcaption></figure></div><h3>Duelle</h3><div class="ff-gal"><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-duell nfc-fun read" data-sid="ambient_39">
+      <small class="num">trifft an 14 von 88 Tagen zu · gewählt 1-mal · Beispiel vom Sa., 20.06.</small></figcaption></figure></div><h3>Duelle</h3><div class="ff-gal"><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-duell nfc-fun read" data-sid="ambient_43">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
     
@@ -7998,11 +8184,11 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
       <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>DUELL IN ZAHLEN</b></span>
       <span class="nf-when"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/></svg></span>15:00</span>
     </div>
-    <div class="ff ff-neu"><div class="fx fx-b-kette fx-r-duell"><div class="fx-k">Die letzten 14 Duelle</div><div class="fx-kt"><span class="av" style="background:#fb923c;">JU</span><span class="fx-kt-l"><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i></span><span class="av" style="background:#56b4e8;">ST</span></div>
-      <div class="fx-tau-n"><span class="fx-n">Julian</span><span class="fx-n">Stefan</span></div></div></div>
+    <div class="ff ff-neu"><div class="fx fx-b-kette fx-r-duell"><div class="fx-k">Die letzten 14 Duelle</div><div class="fx-kt"><span class="av" style="background:#f0566a;">LE</span><span class="fx-kt-l"><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i></span><span class="av" style="background:#22d3ee;">LE</span></div>
+      <div class="fx-tau-n"><span class="fx-n">Leon</span><span class="fx-n">Leo</span></div></div></div>
     <div class="nf-gr">
       
-      <div class="nf-gr-r"><div class="nf-h">Julian hat Stefan 17 Duelle in Folge geschlagen</div><div class="nf-d">Insgesamt <b>17:0</b> in <b>17 </b>Duellen.</div></div>
+      <div class="nf-gr-r"><div class="nf-h">Leon hat Leo 14 Duelle in Folge geschlagen</div><div class="nf-d">Insgesamt <b>28:7</b> in <b>35 </b>Duellen.</div></div>
       <span class="nf-chev"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span></span>
     </div>
     
@@ -8011,8 +8197,8 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
     
   </div></div></div>
-      <figcaption><b>Die Serie im Duell</b><span>einer hat einen anderen in den letzten sechs Duellen oder mehr jedes Mal geschlagen</span><small>Spannung: je länger, desto mehr</small>
-      <small class="num">trifft an 76 von 88 Tagen zu · gewählt 5-mal · Beispiel vom Fr., 17.07.</small></figcaption></figure><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-duell nfc-fun read" data-sid="ambient_40">
+      <figcaption><b>Die Serie im Duell</b><span>einer hat einen anderen in den letzten sechs Duellen oder mehr jedes Mal geschlagen, aber nicht in allen (das ist „Nie verloren“)</span><small>Spannung: je länger, desto mehr</small>
+      <small class="num">trifft an 75 von 88 Tagen zu · gewählt 4-mal · Beispiel vom Fr., 26.06.</small></figcaption></figure><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-duell nfc-fun read" data-sid="ambient_44">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
     
@@ -8035,7 +8221,176 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
   </div></div></div>
       <figcaption><b>Ein Sieg entscheidet</b><span>zwei mit mindestens 30 Duellen stehen gleich oder einen Sieg auseinander</span><small>Spannung: gleich mehr als einen auseinander; je mehr Duelle, desto mehr</small>
-      <small class="num">trifft an 60 von 88 Tagen zu · gewählt 3-mal · Beispiel vom Di., 20.10.</small></figcaption></figure></div><h3>Liga</h3><div class="ff-gal"><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-liga nfc-fun read" data-sid="ambient_41">
+      <small class="num">trifft an 60 von 88 Tagen zu · gewählt 2-mal · Beispiel vom Di., 20.10.</small></figcaption></figure><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-duell nfc-fun read" data-sid="ambient_45">
+    <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
+    
+    
+    <div class="nf-top">
+      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>DUELL IN ZAHLEN</b></span>
+      <span class="nf-when"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/></svg></span>15:00</span>
+    </div>
+    <div class="ff ff-neu"><div class="fx fx-b-kette fx-r-duell"><div class="fx-k">Die letzten 14 Duelle</div><div class="fx-kt"><span class="av" style="background:#fb923c;">JU</span><span class="fx-kt-l"><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i></span><span class="av" style="background:#56b4e8;">ST</span></div>
+      <div class="fx-tau-n"><span class="fx-n">Julian</span><span class="fx-n">Stefan</span></div></div></div>
+    <div class="nf-gr">
+      
+      <div class="nf-gr-r"><div class="nf-h">Julian hat gegen Stefan noch nie verloren</div><div class="nf-d"><b>17:0</b> in <b>17 </b>Duellen.</div></div>
+      <span class="nf-chev"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span></span>
+    </div>
+    
+    
+    
+    
+    
+  </div></div></div>
+      <figcaption><b>Nie verloren</b><span>einer hat gegen einen anderen in mindestens sechs Duellen nie verloren</span><small>Spannung: je mehr Duelle, desto mehr</small>
+      <small class="num">trifft an 44 von 88 Tagen zu · gewählt 2-mal · Beispiel vom Fr., 17.07.</small></figcaption></figure><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-duell nfc-fun read" data-sid="ambient_46">
+    <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
+    
+    
+    <div class="nf-top">
+      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>DUELL IN ZAHLEN</b></span>
+      <span class="nf-when"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/></svg></span>15:00</span>
+    </div>
+    <div class="ff ff-neu"><div class="fx fx-b-paarung fx-r-duell"><div class="fx-k">Genau diese zwei Paare</div><div class="fx-pg"><span class="fx-paar"><span class="av" style="background:#56b4e8;">HE</span><span class="av" style="background:#f0566a;">LE</span></span>
+      <b class="num">12:2</b><span class="fx-paar"><span class="av" style="background:#22d3ee;">LE</span><span class="av" style="background:#f7cf4a;">MA</span></span></div>
+      <div class="fx-kt fx-pg-k"><span class="fx-kt-l"><i class="w serie"></i><i class="l"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="w serie"></i><i class="l"></i><i class="w serie"></i></span></div></div></div>
+    <div class="nf-gr">
+      
+      <div class="nf-gr-r"><div class="nf-h">Henry und Leon gegen Leo und Maxi: 12:2</div><div class="nf-d"><b>14 </b>Begegnungen genau dieser zwei Paare, die letzte am <b>19</b>. Oktober.</div></div>
+      <span class="nf-chev"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span></span>
+    </div>
+    
+    
+    
+    
+    
+  </div></div></div>
+      <figcaption><b>Dieselben vier</b><span>dieselben zwei Paare trafen mindestens fünfmal aufeinander, und eines gewann mindestens 80 %</span><small>Spannung: je mehr Begegnungen und je klarer, desto mehr</small>
+      <small class="num">trifft an 76 von 88 Tagen zu · gewählt 0-mal · Beispiel vom Di., 20.10.</small></figcaption></figure></div><h3>Form</h3><div class="ff-gal"><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-form nfc-fun read" data-sid="ambient_47">
+    <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
+    
+    
+    <div class="nf-top">
+      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>DIE FORMKURVE</b></span>
+      <span class="nf-when"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/></svg></span>15:00</span>
+    </div>
+    <div class="ff ff-neu"><div class="fx fx-b-monatskurve fx-r-form"><div class="fx-k">Elo im Monat, Partie für Partie</div><svg class="fx-svg" viewBox="0 0 244 70" aria-hidden="true">
+      <line class="ref" x1="6" x2="206" y1="58.1" y2="58.1"/>
+      <path class="fl" d="M6.0 58.1L16.0 56.0L26.0 49.5L36.0 43.6L46.0 49.9L56.0 55.1L66.0 47.8L76.0 52.5L86.0 56.3L96.0 58.8L106.0 53.7L116.0 49.0L126.0 43.9L136.0 37.3L146.0 32.4L156.0 27.0L166.0 22.1L176.0 19.6L186.0 15.4L196.0 11.8L206.0 7.2L206.0 58.1L6 58.1Z"/><path class="ln" d="M6.0 58.1L16.0 56.0L26.0 49.5L36.0 43.6L46.0 49.9L56.0 55.1L66.0 47.8L76.0 52.5L86.0 56.3L96.0 58.8L106.0 53.7L116.0 49.0L126.0 43.9L136.0 37.3L146.0 32.4L156.0 27.0L166.0 22.1L176.0 19.6L186.0 15.4L196.0 11.8L206.0 7.2"/>
+      <circle class="pt" cx="206.0" cy="7.2" r="4"/>
+      <text class="w" x="213.0" y="11.2">+218</text>
+      <text class="ax" x="6" y="68">Monatsbeginn</text><text class="ax re" x="206.0" y="68">heute</text></svg>
+      <div class="fx-lg"><span class="av" style="background:#fb923c;">JU</span><span class="fx-n">Julian</span></div></div></div>
+    <div class="nf-gr">
+      
+      <div class="nf-gr-r"><div class="nf-h">Julian hat im Juni schon +218 Elo geholt</div><div class="nf-d"><b>15 </b>von <b>20 </b>Partien im Juni gewonnen.</div></div>
+      <span class="nf-chev"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span></span>
+    </div>
+    
+    
+    
+    
+    
+  </div></div></div>
+      <figcaption><b>Der Monat eines Spielers</b><span>ab dem 7. Tag und acht Partien im Monat; mindestens 60 Elo im Monat gewonnen</span><small>Spannung: je mehr, desto mehr</small>
+      <small class="num">trifft an 50 von 88 Tagen zu · gewählt 4-mal · Beispiel vom Fr., 12.06.</small></figcaption></figure><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-form nfc-fun read" data-sid="ambient_48">
+    <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
+    
+    
+    <div class="nf-top">
+      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>DIE FORMKURVE</b></span>
+      <span class="nf-when"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/></svg></span>15:00</span>
+    </div>
+    <div class="ff ff-neu"><div class="fx fx-b-formbalken fx-r-form"><div class="fx-k">Elo in den letzten 14 Tagen · die ersten acht</div><div class="fx-fb"><div class="eins"><span class="av" style="background:#56b4e8;">ST</span><span class="fx-n">Stefan</span>
+      <span class="fx-fb-s"><u></u><i style="left:50%;width:31.8%"></i></span><b class="num">+214</b></div><div class=""><span class="av" style="background:#e879f9;">JO</span><span class="fx-n">Johannes</span>
+      <span class="fx-fb-s"><u></u><i style="left:50%;width:0.1%"></i></span><b class="num">+1</b></div><div class=" neg"><span class="av" style="background:#a78bfa;">AL</span><span class="fx-n">Alex</span>
+      <span class="fx-fb-s"><u></u><i style="right:50%;width:6.8%"></i></span><b class="num">−46</b></div><div class=" neg"><span class="av" style="background:#f7cf4a;">MA</span><span class="fx-n">Maxi</span>
+      <span class="fx-fb-s"><u></u><i style="right:50%;width:11.0%"></i></span><b class="num">−74</b></div><div class=" neg"><span class="av" style="background:#22d3ee;">LE</span><span class="fx-n">Leo</span>
+      <span class="fx-fb-s"><u></u><i style="right:50%;width:19.9%"></i></span><b class="num">−134</b></div><div class=" neg"><span class="av" style="background:#ff7849;">JA</span><span class="fx-n">Jane</span>
+      <span class="fx-fb-s"><u></u><i style="right:50%;width:31.1%"></i></span><b class="num">−209</b></div><div class=" neg"><span class="av" style="background:#BEF264;">JA</span><span class="fx-n">Jannik</span>
+      <span class="fx-fb-s"><u></u><i style="right:50%;width:33.8%"></i></span><b class="num">−227</b></div><div class=" neg"><span class="av" style="background:#56b4e8;">HE</span><span class="fx-n">Henry</span>
+      <span class="fx-fb-s"><u></u><i style="right:50%;width:34.5%"></i></span><b class="num">−232</b></div></div></div></div>
+    <div class="nf-gr">
+      
+      <div class="nf-gr-r"><div class="nf-h">Stefan ist die Form der Liga: +214 Elo in zwei Wochen</div><div class="nf-d">Dahinter <b>Johannes</b> mit +<b>1</b>; <b>9 </b>der <b>11 </b>verloren in der Zeit Elo.</div></div>
+      <span class="nf-chev"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span></span>
+    </div>
+    
+    
+    
+    
+    
+  </div></div></div>
+      <figcaption><b>Die Form der Liga</b><span>die letzten 14 Tage, wer dort mindestens vier Partien hat (mindestens sechs Spieler): der Erste hat mindestens 30 Elo gewonnen und 15 mehr als der Zweite</span><small>Spannung: je weiter vor dem Zweiten, desto mehr</small>
+      <small class="num">trifft an 53 von 88 Tagen zu · gewählt 5-mal · Beispiel vom Fr., 10.07.</small></figcaption></figure><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-form nfc-fun read" data-sid="ambient_49">
+    <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
+    
+    
+    <div class="nf-top">
+      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>DIE FORMKURVE</b></span>
+      <span class="nf-when"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/></svg></span>15:00</span>
+    </div>
+    <div class="ff ff-neu"><div class="fx fx-b-formpunkte fx-r-form"><div class="fx-k">Siegquote: Laufbahn → letzte 14 Tage</div><div class="fx-fp"><div class="eins"><span class="av" style="background:#e879f9;">JO</span><span class="fx-n">Johannes</span><span class="fx-fp-s"><u></u><em style="left:35%;width:40%"></em><s style="left:35%"></s><i style="left:75%"></i></span><b class="num">75 %</b></div><div class=""><span class="av" style="background:#56b4e8;">ST</span><span class="fx-n">Stefan</span><span class="fx-fp-s"><u></u><em style="left:24%;width:7%"></em><s style="left:24%"></s><i style="left:31%"></i></span><b class="num">31 %</b></div><div class=""><span class="av" style="background:#fb923c;">JU</span><span class="fx-n">Julian</span><span class="fx-fp-s"><u></u><em style="left:63%;width:1%"></em><s style="left:63%"></s><i style="left:64%"></i></span><b class="num">64 %</b></div><div class=" neg"><span class="av" style="background:#f7cf4a;">MA</span><span class="fx-n">Maxi</span><span class="fx-fp-s"><u></u><em style="left:38%;width:6%"></em><s style="left:44%"></s><i style="left:38%"></i></span><b class="num">38 %</b></div><div class=" neg"><span class="av" style="background:#ff7849;">JA</span><span class="fx-n">Jane</span><span class="fx-fp-s"><u></u><em style="left:50%;width:8%"></em><s style="left:58%"></s><i style="left:50%"></i></span><b class="num">50 %</b></div></div></div></div>
+    <div class="nf-gr">
+      
+      <div class="nf-gr-r"><div class="nf-h">Johannes gewinnt seit zwei Wochen 75 %, sonst 35 %</div><div class="nf-d"><b>8 </b>Partien in <b>14 </b>Tagen; niemand der Liga liegt weiter über der eigenen Laufbahn.</div></div>
+      <span class="nf-chev"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span></span>
+    </div>
+    
+    
+    
+    
+    
+  </div></div></div>
+      <figcaption><b>Besser als sonst</b><span>die letzten 14 Tage ab acht Partien: die Siegquote liegt mindestens 20 Punkte über der eigenen Laufbahn, und kein anderer der Liga liegt weiter darüber</span><small>Spannung: je größer der Abstand, desto mehr</small>
+      <small class="num">trifft an 33 von 88 Tagen zu · gewählt 3-mal · Beispiel vom Di., 29.09.</small></figcaption></figure></div><h3>Liga</h3><div class="ff-gal"><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-liga nfc-fun read" data-sid="ambient_50">
+    <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
+    
+    
+    <div class="nf-top">
+      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>LIGA IN ZAHLEN</b></span>
+      <span class="nf-when"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/></svg></span>15:00</span>
+    </div>
+    <div class="ff ff-neu"><div class="fx fx-b-zaehler fx-r-liga"><div class="fx-k">Partien der Liga</div><div class="fx-zl ohne">
+      <span class="fx-zl-z"><i>4</i><i>9</i><i>8</i></span><span class="fx-zl-f"><i></i><i></i></span>
+      <span class="fx-zl-m"><b class="num">500</b><small>noch 2</small></span></div></div></div>
+    <div class="nf-gr">
+      
+      <div class="nf-gr-r"><div class="nf-h">Noch zwei Partien bis zur 500. Partie der Liga</div><div class="nf-d"><b>498 </b>Partien seit dem <b>22</b>. Mai <b>2026</b>.</div></div>
+      <span class="nf-chev"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span></span>
+    </div>
+    
+    
+    
+    
+    
+  </div></div></div>
+      <figcaption><b>Die Partie der Liga</b><span>bis zur nächsten vollen Hundert an Partien der Liga fehlen höchstens fünf</span><small>Spannung: je weniger fehlen, desto mehr; volle 500 mehr</small>
+      <small class="num">trifft an 4 von 88 Tagen zu · gewählt 1-mal · Beispiel vom Fr., 04.09.</small></figcaption></figure><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-liga nfc-fun read" data-sid="ambient_51">
+    <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
+    
+    
+    <div class="nf-top">
+      <span class="nf-rub"><i><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></i><b>LIGA IN ZAHLEN</b></span>
+      <span class="nf-when"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/></svg></span>15:00</span>
+    </div>
+    <div class="ff ff-neu"><div class="fx fx-b-spanne fx-r-liga"><div class="fx-k">Elo der Liga, heute und vor 30 Tagen</div><div class="fx-sp"><u class="vor" style="left:2.3%;width:95.4%"></u>
+      <u class="jetzt" style="left:14.3%;width:59.8%"></u>
+      <i style="left:74.1%;background:#f0566a"></i><i style="left:14.3%;background:#56b4e8"></i><i style="left:64.1%;background:#f7cf4a"></i><i style="left:73.6%;background:#fb923c"></i><i style="left:23.2%;background:#22d3ee"></i><i style="left:72.0%;background:#4ade80"></i><i style="left:37.0%;background:#56b4e8"></i><i style="left:46.4%;background:#ff7849"></i></div>
+      <div class="fx-sp-n"><span><span class="av" style="background:#56b4e8;">HE</span><span class="fx-n">Henry</span></span><b class="num">263 Elo <small>vorher 420</small></b><span><span class="fx-n">Leon</span><span class="av" style="background:#f0566a;">LE</span></span></div></div></div>
+    <div class="nf-gr">
+      
+      <div class="nf-gr-r"><div class="nf-h">Die Liga rückt zusammen</div><div class="nf-d"><b>263 </b>Elo zwischen dem Ersten und dem Letzten, vor <b>30 </b>Tagen <b>420</b>.</div></div>
+      <span class="nf-chev"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span></span>
+    </div>
+    
+    
+    
+    
+    
+  </div></div></div>
+      <figcaption><b>Zusammen oder auseinander</b><span>zwischen Erstem und Letztem im Elo (ab 20 Partien, auch schon vor 30 Tagen) liegen mindestens 40 Elo weniger oder mehr als vor 30 Tagen</span><small>Spannung: leise</small>
+      <small class="num">trifft an 55 von 88 Tagen zu · gewählt 0-mal · Beispiel vom So., 12.07.</small></figcaption></figure><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-liga nfc-fun read" data-sid="ambient_52">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
     
@@ -8056,7 +8411,7 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
   </div></div></div>
       <figcaption><b>Der Tag der Liga</b><span>ab 100 Partien; ein Wochentag trägt mindestens 25 % aller Partien</span><small>Spannung: leise</small>
-      <small class="num">trifft an 73 von 88 Tagen zu · gewählt 1-mal · Beispiel vom Di., 16.06.</small></figcaption></figure><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-liga nfc-fun read" data-sid="ambient_42">
+      <small class="num">trifft an 73 von 88 Tagen zu · gewählt 0-mal · Beispiel vom Di., 16.06.</small></figcaption></figure><figure class="ff-kat"><div class="nf-wrap nf-liste"><div class="nf-feed"><div class="nf-card nf-s-fakt nf-fakt-liga nfc-fun read" data-sid="ambient_53">
     <span class="nf-motiv" aria-hidden="true"><span class="ic svg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/></svg></span></span>
     
     
@@ -8077,7 +8432,7 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     
   </div></div></div>
       <figcaption><b>Die Stunde der Liga</b><span>ab 100 Partien; die Stunde mit den meisten Partien</span><small>Spannung: leise</small>
-      <small class="num">trifft an 73 von 88 Tagen zu · gewählt 1-mal · Beispiel vom Di., 16.06.</small></figcaption></figure></div>
+      <small class="num">trifft an 73 von 88 Tagen zu · gewählt 0-mal · Beispiel vom Di., 16.06.</small></figcaption></figure></div>
 </section>
 
 <section id="regel" class="ff-abschnitt">
@@ -8086,223 +8441,223 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
     <li><b>Prüfen.</b> Um 15 Uhr rechnet jeder Fakt auf dem Stand der Liga, ob er zutrifft, mit welchen Spielern und wie spannend: 0 bis 100, je knapper, näher oder seltener, desto mehr.</li>
     <li><b>Sperren.</b> Nicht dieselbe Art wie in den letzten zehn Fun Facts (der Schlussspurt: drei), nicht dieselbe Rubrik wie in den letzten zwei, kein Spieler aus den letzten drei, und dieselbe Art über denselben Spieler höchstens alle neunzig Tage. Das Titelrennen kennt die Sperren für Spieler nicht: oben stehen jeden Monat dieselben.</li>
     <li><b>Wählen.</b> Der spannendste, der frei ist; wer in den letzten zehn Fun Facts schon stand, verliert je Auftritt zehn Punkte. Gleich spannend entscheidet das Los des Datums, auf jedem Gerät dasselbe.</li>
-    <li><b>Lockern.</b> Bleibt nichts, gelten erst die Spieler nur noch für den letzten Fun Fact, dann die Rubrik nur noch für den letzten, dann die Art nur noch für die letzten vier; ganz zuletzt nur, dass nicht dieselbe Art wie zuletzt kommt. Ein Tag bleibt nie leer.</li>
+    <li><b>Lockern.</b> Bleibt nichts, gelten erst die Spieler nur noch für den letzten Fun Fact, dann die Rubrik nur noch für den letzten, dann die Art nur noch für die letzten vier; ganz zuletzt gilt keine Sperre mehr. Ein Tag bleibt nie leer.</li>
   </ol>
   <p class="ff-satz">Die App zieht per Los mit Sperren für Art (sieben Tage), Rubrik (zwei Tage), Spieler (zwei Tage) und Art mit Spieler (dreißig Tage); wie knapp ein Rennen ist, weiß das Los nicht. Ihre Rubriken sind sieben, die des Entwurfs zwölf: Titelrennen, Saisonschluss, Rekorde, Teams, Positionen und Abweichung kommen dazu, die Laufbahn teilt sich mit dem Insignium.</p>
-  <p class="ff-satz">Gelockert werden musste an 27 von 88 Tagen (Stufe 0: 61, Stufe 1: 7, Stufe 2: 6, Stufe 3: 7, Stufe 4: 7).</p>
+  <p class="ff-satz">Gelockert werden musste an 9 von 88 Tagen (Stufe 0: 79, Stufe 1: 1, Stufe 2: 1, Stufe 3: 1, Stufe 4: 6).</p>
 </section>
 
 <section id="verteilung" class="ff-abschnitt">
   <h2>Verteilung</h2>
   <div class="ff-zwei">
-    <div><h3>Rubriken im Entwurf</h3><div class="ff-vt"><div class="ff-vt-z"><span>Auszeichnungen</span><span class="ff-vt-b"><i style="width:100.0%"></i></span><b class="num">14</b></div><div class="ff-vt-z"><span>Insignium</span><span class="ff-vt-b"><i style="width:92.9%"></i></span><b class="num">13</b></div><div class="ff-vt-z"><span>Abweichung</span><span class="ff-vt-b"><i style="width:78.6%"></i></span><b class="num">11</b></div><div class="ff-vt-z"><span>Rekorde</span><span class="ff-vt-b"><i style="width:64.3%"></i></span><b class="num">9</b></div><div class="ff-vt-z"><span>Chronik</span><span class="ff-vt-b"><i style="width:57.1%"></i></span><b class="num">8</b></div><div class="ff-vt-z"><span>Duelle</span><span class="ff-vt-b"><i style="width:57.1%"></i></span><b class="num">8</b></div><div class="ff-vt-z"><span>Titelrennen</span><span class="ff-vt-b"><i style="width:50.0%"></i></span><b class="num">7</b></div><div class="ff-vt-z"><span>Teams</span><span class="ff-vt-b"><i style="width:42.9%"></i></span><b class="num">6</b></div><div class="ff-vt-z"><span>Laufbahn</span><span class="ff-vt-b"><i style="width:28.6%"></i></span><b class="num">4</b></div><div class="ff-vt-z"><span>Positionen</span><span class="ff-vt-b"><i style="width:21.4%"></i></span><b class="num">3</b></div><div class="ff-vt-z"><span>Saisonschluss</span><span class="ff-vt-b"><i style="width:21.4%"></i></span><b class="num">3</b></div><div class="ff-vt-z"><span>Liga</span><span class="ff-vt-b"><i style="width:14.3%"></i></span><b class="num">2</b></div></div></div>
+    <div><h3>Rubriken im Entwurf</h3><div class="ff-vt"><div class="ff-vt-z"><span>Auszeichnungen</span><span class="ff-vt-b"><i style="width:100.0%"></i></span><b class="num">14</b></div><div class="ff-vt-z"><span>Form</span><span class="ff-vt-b"><i style="width:85.7%"></i></span><b class="num">12</b></div><div class="ff-vt-z"><span>Titelrennen</span><span class="ff-vt-b"><i style="width:71.4%"></i></span><b class="num">10</b></div><div class="ff-vt-z"><span>Abweichung</span><span class="ff-vt-b"><i style="width:71.4%"></i></span><b class="num">10</b></div><div class="ff-vt-z"><span>Rekorde</span><span class="ff-vt-b"><i style="width:64.3%"></i></span><b class="num">9</b></div><div class="ff-vt-z"><span>Duelle</span><span class="ff-vt-b"><i style="width:57.1%"></i></span><b class="num">8</b></div><div class="ff-vt-z"><span>Chronik</span><span class="ff-vt-b"><i style="width:42.9%"></i></span><b class="num">6</b></div><div class="ff-vt-z"><span>Positionen</span><span class="ff-vt-b"><i style="width:35.7%"></i></span><b class="num">5</b></div><div class="ff-vt-z"><span>Teams</span><span class="ff-vt-b"><i style="width:28.6%"></i></span><b class="num">4</b></div><div class="ff-vt-z"><span>Insignium</span><span class="ff-vt-b"><i style="width:28.6%"></i></span><b class="num">4</b></div><div class="ff-vt-z"><span>Saisonschluss</span><span class="ff-vt-b"><i style="width:21.4%"></i></span><b class="num">3</b></div><div class="ff-vt-z"><span>Laufbahn</span><span class="ff-vt-b"><i style="width:14.3%"></i></span><b class="num">2</b></div><div class="ff-vt-z"><span>Liga</span><span class="ff-vt-b"><i style="width:7.1%"></i></span><b class="num">1</b></div></div></div>
     <div><h3>Spieler · Entwurf und <span class="ff-a">App</span></h3><div class="ff-sv"><div class="ff-sv-z"><span class="av" style="background:#f0566a;">LE</span><span>Leon</span>
-    <span class="ff-sv-b"><i class="e" style="width:100.0%"></i><i class="a" style="width:78.3%"></i></span>
-    <b class="num">23</b><small class="num">18</small></div><div class="ff-sv-z"><span class="av" style="background:#4ade80;">MA</span><span>Martin</span>
-    <span class="ff-sv-b"><i class="e" style="width:78.3%"></i><i class="a" style="width:56.5%"></i></span>
-    <b class="num">18</b><small class="num">13</small></div><div class="ff-sv-z"><span class="av" style="background:#f7cf4a;">MA</span><span>Maxi</span>
-    <span class="ff-sv-b"><i class="e" style="width:69.6%"></i><i class="a" style="width:47.8%"></i></span>
-    <b class="num">16</b><small class="num">11</small></div><div class="ff-sv-z"><span class="av" style="background:#22d3ee;">LE</span><span>Leo</span>
-    <span class="ff-sv-b"><i class="e" style="width:47.8%"></i><i class="a" style="width:34.8%"></i></span>
-    <b class="num">11</b><small class="num">8</small></div><div class="ff-sv-z"><span class="av" style="background:#56b4e8;">HE</span><span>Henry</span>
-    <span class="ff-sv-b"><i class="e" style="width:43.5%"></i><i class="a" style="width:39.1%"></i></span>
-    <b class="num">10</b><small class="num">9</small></div><div class="ff-sv-z"><span class="av" style="background:#ff7849;">JA</span><span>Jane</span>
-    <span class="ff-sv-b"><i class="e" style="width:43.5%"></i><i class="a" style="width:43.5%"></i></span>
-    <b class="num">10</b><small class="num">10</small></div><div class="ff-sv-z"><span class="av" style="background:#BEF264;">JA</span><span>Jannik</span>
-    <span class="ff-sv-b"><i class="e" style="width:43.5%"></i><i class="a" style="width:26.1%"></i></span>
-    <b class="num">10</b><small class="num">6</small></div><div class="ff-sv-z"><span class="av" style="background:#fb923c;">JU</span><span>Julian</span>
-    <span class="ff-sv-b"><i class="e" style="width:43.5%"></i><i class="a" style="width:30.4%"></i></span>
-    <b class="num">10</b><small class="num">7</small></div><div class="ff-sv-z"><span class="av" style="background:#e879f9;">JO</span><span>Johannes</span>
-    <span class="ff-sv-b"><i class="e" style="width:30.4%"></i><i class="a" style="width:13.0%"></i></span>
-    <b class="num">7</b><small class="num">3</small></div><div class="ff-sv-z"><span class="av" style="background:#56b4e8;">ST</span><span>Stefan</span>
-    <span class="ff-sv-b"><i class="e" style="width:26.1%"></i><i class="a" style="width:21.7%"></i></span>
-    <b class="num">6</b><small class="num">5</small></div><div class="ff-sv-z"><span class="av" style="background:#a78bfa;">AL</span><span>Alex</span>
-    <span class="ff-sv-b"><i class="e" style="width:21.7%"></i><i class="a" style="width:8.7%"></i></span>
-    <b class="num">5</b><small class="num">2</small></div><div class="ff-sv-z"><span class="av" style="background:#f7cf4a;">AN</span><span>Anton</span>
-    <span class="ff-sv-b"><i class="e" style="width:4.3%"></i><i class="a" style="width:4.3%"></i></span>
+    <span class="ff-sv-b"><i class="e" style="width:100.0%"></i><i class="a" style="width:94.7%"></i></span>
+    <b class="num">19</b><small class="num">18</small></div><div class="ff-sv-z"><span class="av" style="background:#4ade80;">MA</span><span>Martin</span>
+    <span class="ff-sv-b"><i class="e" style="width:84.2%"></i><i class="a" style="width:68.4%"></i></span>
+    <b class="num">16</b><small class="num">13</small></div><div class="ff-sv-z"><span class="av" style="background:#f7cf4a;">MA</span><span>Maxi</span>
+    <span class="ff-sv-b"><i class="e" style="width:73.7%"></i><i class="a" style="width:57.9%"></i></span>
+    <b class="num">14</b><small class="num">11</small></div><div class="ff-sv-z"><span class="av" style="background:#56b4e8;">HE</span><span>Henry</span>
+    <span class="ff-sv-b"><i class="e" style="width:68.4%"></i><i class="a" style="width:47.4%"></i></span>
+    <b class="num">13</b><small class="num">9</small></div><div class="ff-sv-z"><span class="av" style="background:#22d3ee;">LE</span><span>Leo</span>
+    <span class="ff-sv-b"><i class="e" style="width:52.6%"></i><i class="a" style="width:42.1%"></i></span>
+    <b class="num">10</b><small class="num">8</small></div><div class="ff-sv-z"><span class="av" style="background:#ff7849;">JA</span><span>Jane</span>
+    <span class="ff-sv-b"><i class="e" style="width:47.4%"></i><i class="a" style="width:52.6%"></i></span>
+    <b class="num">9</b><small class="num">10</small></div><div class="ff-sv-z"><span class="av" style="background:#e879f9;">JO</span><span>Johannes</span>
+    <span class="ff-sv-b"><i class="e" style="width:47.4%"></i><i class="a" style="width:15.8%"></i></span>
+    <b class="num">9</b><small class="num">3</small></div><div class="ff-sv-z"><span class="av" style="background:#fb923c;">JU</span><span>Julian</span>
+    <span class="ff-sv-b"><i class="e" style="width:47.4%"></i><i class="a" style="width:36.8%"></i></span>
+    <b class="num">9</b><small class="num">7</small></div><div class="ff-sv-z"><span class="av" style="background:#56b4e8;">ST</span><span>Stefan</span>
+    <span class="ff-sv-b"><i class="e" style="width:42.1%"></i><i class="a" style="width:26.3%"></i></span>
+    <b class="num">8</b><small class="num">5</small></div><div class="ff-sv-z"><span class="av" style="background:#BEF264;">JA</span><span>Jannik</span>
+    <span class="ff-sv-b"><i class="e" style="width:36.8%"></i><i class="a" style="width:31.6%"></i></span>
+    <b class="num">7</b><small class="num">6</small></div><div class="ff-sv-z"><span class="av" style="background:#a78bfa;">AL</span><span>Alex</span>
+    <span class="ff-sv-b"><i class="e" style="width:21.1%"></i><i class="a" style="width:10.5%"></i></span>
+    <b class="num">4</b><small class="num">2</small></div><div class="ff-sv-z"><span class="av" style="background:#f7cf4a;">AN</span><span>Anton</span>
+    <span class="ff-sv-b"><i class="e" style="width:5.3%"></i><i class="a" style="width:5.3%"></i></span>
     <b class="num">1</b><small class="num">1</small></div></div></div>
-    <div><h3>Fakten im Entwurf</h3><div class="ff-vt"><div class="ff-vt-z"><span>Eine fehlt</span><span class="ff-vt-b"><i style="width:100.0%"></i></span><b class="num">8</b></div><div class="ff-vt-z"><span>Die Chronik des Monats</span><span class="ff-vt-b"><i style="width:100.0%"></i></span><b class="num">8</b></div><div class="ff-vt-z"><span>Jagd auf den Rekord</span><span class="ff-vt-b"><i style="width:87.5%"></i></span><b class="num">7</b></div><div class="ff-vt-z"><span>Vor der nächsten Stufe</span><span class="ff-vt-b"><i style="width:87.5%"></i></span><b class="num">7</b></div><div class="ff-vt-z"><span>Zwei auf einer Sprosse</span><span class="ff-vt-b"><i style="width:75.0%"></i></span><b class="num">6</b></div><div class="ff-vt-z"><span>Fast allein</span><span class="ff-vt-b"><i style="width:75.0%"></i></span><b class="num">6</b></div><div class="ff-vt-z"><span>Zusammen besser</span><span class="ff-vt-b"><i style="width:62.5%"></i></span><b class="num">5</b></div><div class="ff-vt-z"><span>Das Rennen um den Monat</span><span class="ff-vt-b"><i style="width:62.5%"></i></span><b class="num">5</b></div><div class="ff-vt-z"><span>Die Serie im Duell</span><span class="ff-vt-b"><i style="width:62.5%"></i></span><b class="num">5</b></div><div class="ff-vt-z"><span>Weniger als erwartet</span><span class="ff-vt-b"><i style="width:62.5%"></i></span><b class="num">5</b></div><div class="ff-vt-z"><span>Mehr als erwartet</span><span class="ff-vt-b"><i style="width:62.5%"></i></span><b class="num">5</b></div><div class="ff-vt-z"><span>Kurz vor der Marke</span><span class="ff-vt-b"><i style="width:50.0%"></i></span><b class="num">4</b></div><div class="ff-vt-z"><span>Vorn oder hinten</span><span class="ff-vt-b"><i style="width:37.5%"></i></span><b class="num">3</b></div><div class="ff-vt-z"><span>Ein Sieg entscheidet</span><span class="ff-vt-b"><i style="width:37.5%"></i></span><b class="num">3</b></div><div class="ff-vt-z"><span>Der Schlussspurt</span><span class="ff-vt-b"><i style="width:37.5%"></i></span><b class="num">3</b></div><div class="ff-vt-z"><span>Die Rekordtafel</span><span class="ff-vt-b"><i style="width:25.0%"></i></span><b class="num">2</b></div><div class="ff-vt-z"><span>Die Spitze wechselt</span><span class="ff-vt-b"><i style="width:25.0%"></i></span><b class="num">2</b></div><div class="ff-vt-z"><span>Gern Außenseiter</span><span class="ff-vt-b"><i style="width:12.5%"></i></span><b class="num">1</b></div><div class="ff-vt-z"><span>Der Tag der Liga</span><span class="ff-vt-b"><i style="width:12.5%"></i></span><b class="num">1</b></div><div class="ff-vt-z"><span>Die Stunde der Liga</span><span class="ff-vt-b"><i style="width:12.5%"></i></span><b class="num">1</b></div><div class="ff-vt-z"><span>Noch nie zusammen</span><span class="ff-vt-b"><i style="width:12.5%"></i></span><b class="num">1</b></div></div></div>
+    <div><h3>Fakten im Entwurf</h3><div class="ff-vt"><div class="ff-vt-z"><span>Fast allein</span><span class="ff-vt-b"><i style="width:100.0%"></i></span><b class="num">9</b></div><div class="ff-vt-z"><span>Die Chronik des Monats</span><span class="ff-vt-b"><i style="width:66.7%"></i></span><b class="num">6</b></div><div class="ff-vt-z"><span>Eine fehlt</span><span class="ff-vt-b"><i style="width:55.6%"></i></span><b class="num">5</b></div><div class="ff-vt-z"><span>Jagd auf den Rekord</span><span class="ff-vt-b"><i style="width:55.6%"></i></span><b class="num">5</b></div><div class="ff-vt-z"><span>Mehr als erwartet</span><span class="ff-vt-b"><i style="width:55.6%"></i></span><b class="num">5</b></div><div class="ff-vt-z"><span>Die Form der Liga</span><span class="ff-vt-b"><i style="width:55.6%"></i></span><b class="num">5</b></div><div class="ff-vt-z"><span>Zusammen besser</span><span class="ff-vt-b"><i style="width:44.4%"></i></span><b class="num">4</b></div><div class="ff-vt-z"><span>Der Meister von gestern</span><span class="ff-vt-b"><i style="width:44.4%"></i></span><b class="num">4</b></div><div class="ff-vt-z"><span>Der Monat eines Spielers</span><span class="ff-vt-b"><i style="width:44.4%"></i></span><b class="num">4</b></div><div class="ff-vt-z"><span>Neuer Halter</span><span class="ff-vt-b"><i style="width:44.4%"></i></span><b class="num">4</b></div><div class="ff-vt-z"><span>Das Rennen um den Monat</span><span class="ff-vt-b"><i style="width:44.4%"></i></span><b class="num">4</b></div><div class="ff-vt-z"><span>Die Serie im Duell</span><span class="ff-vt-b"><i style="width:44.4%"></i></span><b class="num">4</b></div><div class="ff-vt-z"><span>Weniger als erwartet</span><span class="ff-vt-b"><i style="width:44.4%"></i></span><b class="num">4</b></div><div class="ff-vt-z"><span>Vor der nächsten Stufe</span><span class="ff-vt-b"><i style="width:44.4%"></i></span><b class="num">4</b></div><div class="ff-vt-z"><span>Vorn oder hinten</span><span class="ff-vt-b"><i style="width:33.3%"></i></span><b class="num">3</b></div><div class="ff-vt-z"><span>Besser als sonst</span><span class="ff-vt-b"><i style="width:33.3%"></i></span><b class="num">3</b></div><div class="ff-vt-z"><span>Der Schlussspurt</span><span class="ff-vt-b"><i style="width:33.3%"></i></span><b class="num">3</b></div><div class="ff-vt-z"><span>Die Spitze wechselt</span><span class="ff-vt-b"><i style="width:22.2%"></i></span><b class="num">2</b></div><div class="ff-vt-z"><span>Die Seite gewechselt</span><span class="ff-vt-b"><i style="width:22.2%"></i></span><b class="num">2</b></div><div class="ff-vt-z"><span>Ein Sieg entscheidet</span><span class="ff-vt-b"><i style="width:22.2%"></i></span><b class="num">2</b></div><div class="ff-vt-z"><span>Nie verloren</span><span class="ff-vt-b"><i style="width:22.2%"></i></span><b class="num">2</b></div><div class="ff-vt-z"><span>Kurz vor der Marke</span><span class="ff-vt-b"><i style="width:22.2%"></i></span><b class="num">2</b></div><div class="ff-vt-z"><span>Gern Außenseiter</span><span class="ff-vt-b"><i style="width:11.1%"></i></span><b class="num">1</b></div><div class="ff-vt-z"><span>Die Partie der Liga</span><span class="ff-vt-b"><i style="width:11.1%"></i></span><b class="num">1</b></div></div></div>
     <div><h3>Vorlagen der App</h3><div class="ff-vt"><div class="ff-vt-z"><span>fun_random_stat</span><span class="ff-vt-b"><i style="width:100.0%"></i></span><b class="num">8</b></div><div class="ff-vt-z"><span>season_title_race</span><span class="ff-vt-b"><i style="width:62.5%"></i></span><b class="num">5</b></div><div class="ff-vt-z"><span>personal_position</span><span class="ff-vt-b"><i style="width:62.5%"></i></span><b class="num">5</b></div><div class="ff-vt-z"><span>prestige_fuehrung</span><span class="ff-vt-b"><i style="width:50.0%"></i></span><b class="num">4</b></div><div class="ff-vt-z"><span>award_latest_gold</span><span class="ff-vt-b"><i style="width:50.0%"></i></span><b class="num">4</b></div><div class="ff-vt-z"><span>personal_glanztag</span><span class="ff-vt-b"><i style="width:50.0%"></i></span><b class="num">4</b></div><div class="ff-vt-z"><span>form_clutch</span><span class="ff-vt-b"><i style="width:50.0%"></i></span><b class="num">4</b></div><div class="ff-vt-z"><span>rueckblick_halbzeit</span><span class="ff-vt-b"><i style="width:50.0%"></i></span><b class="num">4</b></div><div class="ff-vt-z"><span>chronicle_spotlight</span><span class="ff-vt-b"><i style="width:50.0%"></i></span><b class="num">4</b></div><div class="ff-vt-z"><span>prestige_schwelle</span><span class="ff-vt-b"><i style="width:50.0%"></i></span><b class="num">4</b></div><div class="ff-vt-z"><span>personal_best_mate</span><span class="ff-vt-b"><i style="width:37.5%"></i></span><b class="num">3</b></div><div class="ff-vt-z"><span>personal_wr</span><span class="ff-vt-b"><i style="width:37.5%"></i></span><b class="num">3</b></div><div class="ff-vt-z"><span>personal_favourite_opp</span><span class="ff-vt-b"><i style="width:37.5%"></i></span><b class="num">3</b></div><div class="ff-vt-z"><span>record_spotlight</span><span class="ff-vt-b"><i style="width:37.5%"></i></span><b class="num">3</b></div><div class="ff-vt-z"><span>award_gold_leader</span><span class="ff-vt-b"><i style="width:37.5%"></i></span><b class="num">3</b></div><div class="ff-vt-z"><span>form_close_wins</span><span class="ff-vt-b"><i style="width:37.5%"></i></span><b class="num">3</b></div><div class="ff-vt-z"><span>personal_kaltblut</span><span class="ff-vt-b"><i style="width:37.5%"></i></span><b class="num">3</b></div><div class="ff-vt-z"><span>award_potd_zahl</span><span class="ff-vt-b"><i style="width:25.0%"></i></span><b class="num">2</b></div><div class="ff-vt-z"><span>form_defender</span><span class="ff-vt-b"><i style="width:25.0%"></i></span><b class="num">2</b></div><div class="ff-vt-z"><span>prestige_schritt</span><span class="ff-vt-b"><i style="width:25.0%"></i></span><b class="num">2</b></div><div class="ff-vt-z"><span>form_striker</span><span class="ff-vt-b"><i style="width:25.0%"></i></span><b class="num">2</b></div><div class="ff-vt-z"><span>titelband_stand</span><span class="ff-vt-b"><i style="width:25.0%"></i></span><b class="num">2</b></div><div class="ff-vt-z"><span>personal_grinder</span><span class="ff-vt-b"><i style="width:12.5%"></i></span><b class="num">1</b></div><div class="ff-vt-z"><span>form_most_active</span><span class="ff-vt-b"><i style="width:12.5%"></i></span><b class="num">1</b></div><div class="ff-vt-z"><span>fun_goals</span><span class="ff-vt-b"><i style="width:12.5%"></i></span><b class="num">1</b></div><div class="ff-vt-z"><span>personal_streak</span><span class="ff-vt-b"><i style="width:12.5%"></i></span><b class="num">1</b></div><div class="ff-vt-z"><span>award_total_leader</span><span class="ff-vt-b"><i style="width:12.5%"></i></span><b class="num">1</b></div><div class="ff-vt-z"><span>form_best_wr</span><span class="ff-vt-b"><i style="width:12.5%"></i></span><b class="num">1</b></div><div class="ff-vt-z"><span>insignium_stand</span><span class="ff-vt-b"><i style="width:12.5%"></i></span><b class="num">1</b></div><div class="ff-vt-z"><span>rivalry_most</span><span class="ff-vt-b"><i style="width:12.5%"></i></span><b class="num">1</b></div><div class="ff-vt-z"><span>award_potw_zahl</span><span class="ff-vt-b"><i style="width:12.5%"></i></span><b class="num">1</b></div><div class="ff-vt-z"><span>rivalry_close</span><span class="ff-vt-b"><i style="width:12.5%"></i></span><b class="num">1</b></div></div></div>
   </div>
   <h3>Jeder Tag</h3>
   <div class="ff-tab-w"><table class="ff-tab"><thead><tr><th>Tag</th><th>Die App</th><th>Der Entwurf</th><th class="num">Spannung</th><th class="num">Lockerung</th></tr></thead><tbody>
   <tr><td class="num">Do., 29.10.</td><td>Martin ist beidfüßig<small>personal_position</small></td>
-    <td>Zusammen gewinnen Johannes und Martin 64 %<small>Zusammen besser · Teams</small></td>
-    <td class="num">58</td><td class="num">—</td></tr><tr><td class="num">Mi., 28.10.</td><td>Johannes steht kurz vor dem Volutenkranz<small>prestige_schwelle</small></td>
-    <td>16 Prestige trennen Julian und Maxi<small>Zwei auf einer Sprosse · Insignium</small></td>
-    <td class="num">52</td><td class="num">2</td></tr><tr><td class="num">So., 25.10.</td><td>Julian hält „Der Sturmtreue&quot;<small>chronicle_spotlight</small></td>
-    <td>Leon hält im Oktober schon neun Einträge der Chronik<small>Die Chronik des Monats · Chronik</small></td>
-    <td class="num">100</td><td class="num">4</td></tr><tr><td class="num">Sa., 24.10.</td><td>Anton ist Nummer 10 bei Toren je Partie<small>fun_random_stat</small></td>
-    <td>Henry fehlen 140 Prestige zum Volutenkranz<small>Vor der nächsten Stufe · Insignium</small></td>
-    <td class="num">46</td><td class="num">3</td></tr><tr><td class="num">Fr., 23.10.</td><td>Wettrüsten in Gold<small>award_gold_leader</small></td>
-    <td>Jannik rückt an den Rekord „Der Wiedereinstieg“ heran<small>Jagd auf den Rekord · Rekorde</small></td>
-    <td class="num">88</td><td class="num">3</td></tr><tr><td class="num">Do., 22.10.</td><td>Jane gehört nach hinten<small>personal_position</small></td>
-    <td>Leon hält im Oktober schon neun Einträge der Chronik<small>Die Chronik des Monats · Chronik</small></td>
-    <td class="num">100</td><td class="num">4</td></tr><tr><td class="num">Di., 20.10.</td><td>Jannik ist Nummer 5 bei der Siegquote<small>fun_random_stat</small></td>
-    <td>Noch einmal „Absoluter Sieger“, und Maxi holt sie zum 5. Mal<small>Eine fehlt · Auszeichnungen</small></td>
-    <td class="num">65</td><td class="num">3</td></tr><tr><td class="num">So., 18.10.</td><td>Leon trägt die hellste Aura<small>titelband_stand</small></td>
-    <td>Leo hat Anton sechs Duelle in Folge geschlagen<small>Die Serie im Duell · Duelle</small></td>
-    <td class="num">66</td><td class="num">1</td></tr><tr><td class="num">Sa., 17.10.</td><td>Das Kaltblut gehört Jannik<small>personal_kaltblut</small></td>
-    <td>Stefan fehlen Siege auf die eigenen Chancen<small>Weniger als erwartet · Abweichung</small></td>
-    <td class="num">66</td><td class="num">—</td></tr><tr><td class="num">Fr., 16.10.</td><td>Leo zittert sich durch<small>form_close_wins</small></td>
-    <td>Leo fehlen 146 Prestige zum Zierkranz<small>Vor der nächsten Stufe · Insignium</small></td>
-    <td class="num">47</td><td class="num">—</td></tr><tr><td class="num">Do., 15.10.</td><td>Halbzeit im Oktober 2026<small>rueckblick_halbzeit</small></td>
+    <td>Maxi ist die Form der Liga: +163 Elo in zwei Wochen<small>Die Form der Liga · Form</small></td>
+    <td class="num">66</td><td class="num">—</td></tr><tr><td class="num">Mi., 28.10.</td><td>Johannes steht kurz vor dem Volutenkranz<small>prestige_schwelle</small></td>
+    <td>Martin hat gegen Anton noch nie verloren<small>Nie verloren · Duelle</small></td>
+    <td class="num">67</td><td class="num">—</td></tr><tr><td class="num">So., 25.10.</td><td>Julian hält „Der Sturmtreue&quot;<small>chronicle_spotlight</small></td>
     <td>Jannik fehlen drei Spiele zum 100. Spiel<small>Kurz vor der Marke · Laufbahn</small></td>
-    <td class="num">54</td><td class="num">3</td></tr><tr><td class="num">Mi., 14.10.</td><td>Leon führt bei „Der makellose Tag&quot;<small>season_title_race</small></td>
+    <td class="num">54</td><td class="num">—</td></tr><tr><td class="num">Sa., 24.10.</td><td>Anton ist Nummer 10 bei Toren je Partie<small>fun_random_stat</small></td>
+    <td>Leon hat im Oktober schon +180 Elo geholt<small>Der Monat eines Spielers · Form</small></td>
+    <td class="num">91</td><td class="num">—</td></tr><tr><td class="num">Fr., 23.10.</td><td>Wettrüsten in Gold<small>award_gold_leader</small></td>
+    <td>Jane gewinnt mehr, als die Chancen sagen<small>Mehr als erwartet · Abweichung</small></td>
+    <td class="num">65</td><td class="num">—</td></tr><tr><td class="num">Do., 22.10.</td><td>Jane gehört nach hinten<small>personal_position</small></td>
+    <td>Johannes fehlen 6 Prestige zum Volutenkranz<small>Vor der nächsten Stufe · Insignium</small></td>
+    <td class="num">73</td><td class="num">—</td></tr><tr><td class="num">Di., 20.10.</td><td>Jannik ist Nummer 5 bei der Siegquote<small>fun_random_stat</small></td>
     <td>Noch einmal „Player of the Week“, und Martin holt sie zum 5. Mal<small>Eine fehlt · Auszeichnungen</small></td>
-    <td class="num">57</td><td class="num">3</td></tr><tr><td class="num">Di., 13.10.</td><td>Johannes ist Nummer 7 bei Toren je Partie<small>fun_random_stat</small></td>
+    <td class="num">57</td><td class="num">—</td></tr><tr><td class="num">So., 18.10.</td><td>Leon trägt die hellste Aura<small>titelband_stand</small></td>
+    <td>Leon hat Henry sieben Duelle in Folge geschlagen<small>Die Serie im Duell · Duelle</small></td>
+    <td class="num">70</td><td class="num">—</td></tr><tr><td class="num">Sa., 17.10.</td><td>Das Kaltblut gehört Jannik<small>personal_kaltblut</small></td>
     <td>Maxi hält im Oktober schon drei Einträge der Chronik<small>Die Chronik des Monats · Chronik</small></td>
-    <td class="num">61</td><td class="num">—</td></tr><tr><td class="num">So., 11.10.</td><td>Jannik ist der Sturm-Chef<small>form_striker</small></td>
-    <td>Im Sturm gewinnt Jane 37 %, in der Abwehr 65 %<small>Vorn oder hinten · Positionen</small></td>
-    <td class="num">65</td><td class="num">2</td></tr><tr><td class="num">Sa., 10.10.</td><td>Beste Freunde: Jane und Julian<small>personal_best_mate</small></td>
-    <td>Jane rückt an den Rekord „Der letzte Ball“ heran<small>Jagd auf den Rekord · Rekorde</small></td>
-    <td class="num">75</td><td class="num">—</td></tr><tr><td class="num">Fr., 09.10.</td><td>Martin hält „Der komplette Verteidiger&quot;<small>chronicle_spotlight</small></td>
+    <td class="num">61</td><td class="num">—</td></tr><tr><td class="num">Fr., 16.10.</td><td>Leo zittert sich durch<small>form_close_wins</small></td>
+    <td>Johannes hält jetzt „Der letzte Ball“<small>Neuer Halter · Rekorde</small></td>
+    <td class="num">51</td><td class="num">—</td></tr><tr><td class="num">Do., 15.10.</td><td>Halbzeit im Oktober 2026<small>rueckblick_halbzeit</small></td>
+    <td>Leo gewinnt seit zwei Wochen 65 %, sonst 42 %<small>Besser als sonst · Form</small></td>
+    <td class="num">67</td><td class="num">—</td></tr><tr><td class="num">Mi., 14.10.</td><td>Leon führt bei „Der makellose Tag&quot;<small>season_title_race</small></td>
+    <td>Zusammen gewinnen Julian und Martin 80 %<small>Zusammen besser · Teams</small></td>
+    <td class="num">64</td><td class="num">—</td></tr><tr><td class="num">Di., 13.10.</td><td>Johannes ist Nummer 7 bei Toren je Partie<small>fun_random_stat</small></td>
+    <td>Henry und Maxi: 35:35 nach 70 Duellen<small>Ein Sieg entscheidet · Duelle</small></td>
+    <td class="num">64</td><td class="num">—</td></tr><tr><td class="num">So., 11.10.</td><td>Jannik ist der Sturm-Chef<small>form_striker</small></td>
+    <td>Stefan fehlen Siege auf die eigenen Chancen<small>Weniger als erwartet · Abweichung</small></td>
+    <td class="num">74</td><td class="num">—</td></tr><tr><td class="num">Sa., 10.10.</td><td>Beste Freunde: Jane und Julian<small>personal_best_mate</small></td>
+    <td>Jannik rückt an den Rekord „Der Wiedereinstieg“ heran<small>Jagd auf den Rekord · Rekorde</small></td>
+    <td class="num">88</td><td class="num">—</td></tr><tr><td class="num">Fr., 09.10.</td><td>Martin hält „Der komplette Verteidiger&quot;<small>chronicle_spotlight</small></td>
     <td>Leo führt den Oktober mit 35 Elo vor Leon<small>Das Rennen um den Monat · Titelrennen</small></td>
     <td class="num">53</td><td class="num">—</td></tr><tr><td class="num">Mi., 07.10.</td><td>Kopf-an-Kopf: Leo und Maxi<small>rivalry_close</small></td>
-    <td>Nur Leon trägt „Allwetter“<small>Fast allein · Auszeichnungen</small></td>
-    <td class="num">58</td><td class="num">2</td></tr><tr><td class="num">So., 04.10.</td><td>Stefan ist Janes Lieblingsgegner<small>personal_favourite_opp</small></td>
-    <td>Leon gewinnt mehr, als die Chancen sagen<small>Mehr als erwartet · Abweichung</small></td>
-    <td class="num">75</td><td class="num">1</td></tr><tr><td class="num">Sa., 03.10.</td><td>Maxi holte zuletzt Gold<small>award_latest_gold</small></td>
-    <td>Martin fehlen drei Spiele zum 250. Spiel<small>Kurz vor der Marke · Laufbahn</small></td>
-    <td class="num">56</td><td class="num">—</td></tr><tr><td class="num">Fr., 02.10.</td><td>Halbzeit im Oktober 2026<small>rueckblick_halbzeit</small></td>
-    <td>Leon hält 9 Liga-Rekorde, Jannik 7<small>Die Rekordtafel · Rekorde</small></td>
-    <td class="num">44</td><td class="num">—</td></tr><tr><td class="num">Di., 29.09.</td><td>Leon sammelt Wochensiege<small>award_potw_zahl</small></td>
-    <td>Maxi fehlen 13 Prestige zum Zierkranz<small>Vor der nächsten Stufe · Insignium</small></td>
-    <td class="num">73</td><td class="num">1</td></tr><tr><td class="num">Mo., 28.09.</td><td>Johannes hat Nerven aus Stahl<small>form_clutch</small></td>
-    <td>Noch einmal „Nerven aus Stahl“, und Leo holt sie zum 5. Mal<small>Eine fehlt · Auszeichnungen</small></td>
-    <td class="num">57</td><td class="num">3</td></tr><tr><td class="num">So., 27.09.</td><td>Julian ist Nummer 3 bei der Siegquote<small>fun_random_stat</small></td>
+    <td>Leo hat im Oktober schon +80 Elo geholt<small>Der Monat eines Spielers · Form</small></td>
+    <td class="num">66</td><td class="num">—</td></tr><tr><td class="num">So., 04.10.</td><td>Stefan ist Janes Lieblingsgegner<small>personal_favourite_opp</small></td>
+    <td>Martin gewinnt mehr, als die Chancen sagen<small>Mehr als erwartet · Abweichung</small></td>
+    <td class="num">74</td><td class="num">—</td></tr><tr><td class="num">Sa., 03.10.</td><td>Maxi holte zuletzt Gold<small>award_latest_gold</small></td>
+    <td>Noch einmal „Absoluter Sieger“, und Leon holt sie zum 5. Mal<small>Eine fehlt · Auszeichnungen</small></td>
+    <td class="num">65</td><td class="num">—</td></tr><tr><td class="num">Fr., 02.10.</td><td>Halbzeit im Oktober 2026<small>rueckblick_halbzeit</small></td>
+    <td>Jannik fehlen 3 Prestige zum Volutenkranz<small>Vor der nächsten Stufe · Insignium</small></td>
+    <td class="num">73</td><td class="num">—</td></tr><tr><td class="num">Di., 29.09.</td><td>Leon sammelt Wochensiege<small>award_potw_zahl</small></td>
+    <td>Johannes spielt jetzt vorn<small>Die Seite gewechselt · Positionen</small></td>
+    <td class="num">66</td><td class="num">—</td></tr><tr><td class="num">Mo., 28.09.</td><td>Johannes hat Nerven aus Stahl<small>form_clutch</small></td>
+    <td>Stefan hält im September schon vier Einträge der Chronik<small>Die Chronik des Monats · Chronik</small></td>
+    <td class="num">68</td><td class="num">—</td></tr><tr><td class="num">So., 27.09.</td><td>Julian ist Nummer 3 bei der Siegquote<small>fun_random_stat</small></td>
     <td>Noch 3 Tage: Maxi und Martin machen den September unter sich aus<small>Der Schlussspurt · Saisonschluss</small></td>
     <td class="num">77</td><td class="num">—</td></tr><tr><td class="num">Sa., 26.09.</td><td>Duell der Liga: Leon vs Maxi<small>rivalry_most</small></td>
-    <td>Johannes hält im September schon zehn Einträge der Chronik<small>Die Chronik des Monats · Chronik</small></td>
-    <td class="num">100</td><td class="num">3</td></tr><tr><td class="num">Fr., 25.09.</td><td>Der Glanztag gehört Leo<small>personal_glanztag</small></td>
-    <td>Martin hat Stefan sechs Duelle in Folge geschlagen<small>Die Serie im Duell · Duelle</small></td>
-    <td class="num">66</td><td class="num">1</td></tr><tr><td class="num">Do., 24.09.</td><td>Zwei Stufen der Leiter trägt noch niemand<small>insignium_stand</small></td>
-    <td>Julian rückt an den Rekord „Der komplette Stürmer“ heran<small>Jagd auf den Rekord · Rekorde</small></td>
-    <td class="num">92</td><td class="num">—</td></tr><tr><td class="num">Mi., 23.09.</td><td>Leon ist in Topform<small>form_best_wr</small></td>
+    <td>Im Sturm gewinnt Jane 38 %, in der Abwehr 65 %<small>Vorn oder hinten · Positionen</small></td>
+    <td class="num">64</td><td class="num">—</td></tr><tr><td class="num">Fr., 25.09.</td><td>Der Glanztag gehört Leo<small>personal_glanztag</small></td>
+    <td>Johannes ist die Form der Liga: +129 Elo in zwei Wochen<small>Die Form der Liga · Form</small></td>
+    <td class="num">78</td><td class="num">—</td></tr><tr><td class="num">Do., 24.09.</td><td>Zwei Stufen der Leiter trägt noch niemand<small>insignium_stand</small></td>
+    <td>Zusammen gewinnen Jannik und Leon 74 %<small>Zusammen besser · Teams</small></td>
+    <td class="num">66</td><td class="num">—</td></tr><tr><td class="num">Mi., 23.09.</td><td>Leon ist in Topform<small>form_best_wr</small></td>
     <td>Noch 7 Tage: Maxi und Martin machen den September unter sich aus<small>Der Schlussspurt · Saisonschluss</small></td>
     <td class="num">65</td><td class="num">—</td></tr><tr><td class="num">Di., 22.09.</td><td>Martin führt bei „Der makellose Tag&quot;<small>season_title_race</small></td>
-    <td>48 Prestige trennen Johannes und Henry<small>Zwei auf einer Sprosse · Insignium</small></td>
-    <td class="num">36</td><td class="num">—</td></tr><tr><td class="num">So., 20.09.</td><td>Leon führt das Prestige an<small>prestige_fuehrung</small></td>
-    <td>Maxi gewinnt mehr, als die Chancen sagen<small>Mehr als erwartet · Abweichung</small></td>
-    <td class="num">65</td><td class="num">—</td></tr><tr><td class="num">Sa., 19.09.</td><td>Leo hat Nerven aus Stahl<small>form_clutch</small></td>
-    <td>Zusammen gewinnen Jannik und Leon 74 %<small>Zusammen besser · Teams</small></td>
-    <td class="num">66</td><td class="num">1</td></tr><tr><td class="num">Fr., 18.09.</td><td>Martin gewinnt einfach<small>personal_wr</small></td>
-    <td>Noch einmal „Pflichterfüller“, und Alex holt sie zum 10. Mal<small>Eine fehlt · Auszeichnungen</small></td>
-    <td class="num">48</td><td class="num">—</td></tr><tr><td class="num">Do., 17.09.</td><td>Leon trägt die hellste Aura<small>titelband_stand</small></td>
-    <td>Jannik fehlen 97 Prestige zum Volutenkranz<small>Vor der nächsten Stufe · Insignium</small></td>
-    <td class="num">55</td><td class="num">—</td></tr><tr><td class="num">Mi., 16.09.</td><td>Maxi hält „Der Spurwechsel&quot;<small>chronicle_spotlight</small></td>
-    <td>Ein Sieg, und Leon gleicht gegen Julian aus<small>Ein Sieg entscheidet · Duelle</small></td>
-    <td class="num">55</td><td class="num">—</td></tr><tr><td class="num">So., 13.09.</td><td>Stefan steht kurz vor dem Schildring<small>prestige_schwelle</small></td>
-    <td>Leo hält im September schon vier Einträge der Chronik<small>Die Chronik des Monats · Chronik</small></td>
-    <td class="num">68</td><td class="num">—</td></tr><tr><td class="num">Sa., 12.09.</td><td>Martin macht die Bude dicht<small>form_defender</small></td>
+    <td>Jane rückt an den Rekord „Der Kaltstart“ heran<small>Jagd auf den Rekord · Rekorde</small></td>
+    <td class="num">95</td><td class="num">—</td></tr><tr><td class="num">So., 20.09.</td><td>Leon führt das Prestige an<small>prestige_fuehrung</small></td>
+    <td>Johannes hat im September schon +122 Elo geholt<small>Der Monat eines Spielers · Form</small></td>
+    <td class="num">77</td><td class="num">—</td></tr><tr><td class="num">Sa., 19.09.</td><td>Leo hat Nerven aus Stahl<small>form_clutch</small></td>
+    <td>Alex fehlen Siege auf die eigenen Chancen<small>Weniger als erwartet · Abweichung</small></td>
+    <td class="num">68</td><td class="num">—</td></tr><tr><td class="num">Fr., 18.09.</td><td>Martin gewinnt einfach<small>personal_wr</small></td>
+    <td>Noch einmal „Player of the Week“, und Julian holt sie zum 5. Mal<small>Eine fehlt · Auszeichnungen</small></td>
+    <td class="num">57</td><td class="num">—</td></tr><tr><td class="num">Do., 17.09.</td><td>Leon trägt die hellste Aura<small>titelband_stand</small></td>
+    <td>Stefan fehlen 6 Prestige zum Schildring<small>Vor der nächsten Stufe · Insignium</small></td>
+    <td class="num">71</td><td class="num">—</td></tr><tr><td class="num">Mi., 16.09.</td><td>Maxi hält „Der Spurwechsel&quot;<small>chronicle_spotlight</small></td>
+    <td>Johannes hält im September schon vier Einträge der Chronik<small>Die Chronik des Monats · Chronik</small></td>
+    <td class="num">68</td><td class="num">—</td></tr><tr><td class="num">So., 13.09.</td><td>Stefan steht kurz vor dem Schildring<small>prestige_schwelle</small></td>
+    <td>Leon gewinnt mehr, als die Chancen sagen<small>Mehr als erwartet · Abweichung</small></td>
+    <td class="num">69</td><td class="num">—</td></tr><tr><td class="num">Sa., 12.09.</td><td>Martin macht die Bude dicht<small>form_defender</small></td>
     <td>Martin führt den September mit 17 Elo vor Maxi<small>Das Rennen um den Monat · Titelrennen</small></td>
     <td class="num">75</td><td class="num">—</td></tr><tr><td class="num">Mi., 09.09.</td><td>Jane ist Nummer 3 bei Toren je Partie<small>fun_random_stat</small></td>
-    <td>Stefan und Jane haben noch nie zusammen gespielt<small>Noch nie zusammen · Teams</small></td>
-    <td class="num">47</td><td class="num">1</td></tr><tr><td class="num">So., 06.09.</td><td>Beste Freunde: Jane und Julian<small>personal_best_mate</small></td>
-    <td>Alex fehlen Siege auf die eigenen Chancen<small>Weniger als erwartet · Abweichung</small></td>
-    <td class="num">63</td><td class="num">—</td></tr><tr><td class="num">Sa., 05.09.</td><td>Rekord im Fokus: Die Abwehrmauer<small>record_spotlight</small></td>
-    <td>Stefan rückt an den Rekord „Der Wandler“ heran<small>Jagd auf den Rekord · Rekorde</small></td>
-    <td class="num">93</td><td class="num">1</td></tr><tr><td class="num">Fr., 04.09.</td><td>Leon sammelt Gold<small>award_gold_leader</small></td>
-    <td>Leon hat Henry 14 Duelle in Folge geschlagen<small>Die Serie im Duell · Duelle</small></td>
-    <td class="num">98</td><td class="num">—</td></tr><tr><td class="num">So., 30.08.</td><td>Martin zittert sich durch<small>form_close_wins</small></td>
-    <td>Martin gewinnt mehr, als die Chancen sagen<small>Mehr als erwartet · Abweichung</small></td>
-    <td class="num">81</td><td class="num">—</td></tr><tr><td class="num">Sa., 29.08.</td><td>Leon holte zuletzt Gold<small>award_latest_gold</small></td>
-    <td>Zusammen gewinnen Jane und Maxi 62 %<small>Zusammen besser · Teams</small></td>
-    <td class="num">59</td><td class="num">—</td></tr><tr><td class="num">Fr., 28.08.</td><td>Henry ist Janes Lieblingsgegner<small>personal_favourite_opp</small></td>
-    <td>Noch einmal „Player of the Week“, und Julian holt sie zum 5. Mal<small>Eine fehlt · Auszeichnungen</small></td>
+    <td>Stefan hält jetzt „Der Wandler“<small>Neuer Halter · Rekorde</small></td>
+    <td class="num">64</td><td class="num">—</td></tr><tr><td class="num">So., 06.09.</td><td>Beste Freunde: Jane und Julian<small>personal_best_mate</small></td>
+    <td>Alex ist die Form der Liga: +169 Elo in zwei Wochen<small>Die Form der Liga · Form</small></td>
+    <td class="num">61</td><td class="num">—</td></tr><tr><td class="num">Sa., 05.09.</td><td>Rekord im Fokus: Die Abwehrmauer<small>record_spotlight</small></td>
+    <td>Martin hat Johannes zehn Duelle in Folge geschlagen<small>Die Serie im Duell · Duelle</small></td>
+    <td class="num">82</td><td class="num">—</td></tr><tr><td class="num">Fr., 04.09.</td><td>Leon sammelt Gold<small>award_gold_leader</small></td>
+    <td>Noch zwei Partien bis zur 500. Partie der Liga<small>Die Partie der Liga · Liga</small></td>
+    <td class="num">68</td><td class="num">—</td></tr><tr><td class="num">So., 30.08.</td><td>Martin zittert sich durch<small>form_close_wins</small></td>
+    <td>Jane gewinnt seit zwei Wochen 75 %, sonst 55 %<small>Besser als sonst · Form</small></td>
+    <td class="num">64</td><td class="num">—</td></tr><tr><td class="num">Sa., 29.08.</td><td>Leon holte zuletzt Gold<small>award_latest_gold</small></td>
+    <td>Henry fehlen Siege auf die eigenen Chancen<small>Weniger als erwartet · Abweichung</small></td>
+    <td class="num">60</td><td class="num">—</td></tr><tr><td class="num">Fr., 28.08.</td><td>Henry ist Janes Lieblingsgegner<small>personal_favourite_opp</small></td>
+    <td>Noch einmal „Nerven aus Stahl“, und Leo holt sie zum 5. Mal<small>Eine fehlt · Auszeichnungen</small></td>
     <td class="num">57</td><td class="num">—</td></tr><tr><td class="num">Do., 27.08.</td><td>Rekord im Fokus: Das Fass ohne Boden<small>record_spotlight</small></td>
-    <td>Johannes fehlen 71 Prestige zum Schildring<small>Vor der nächsten Stufe · Insignium</small></td>
-    <td class="num">58</td><td class="num">—</td></tr><tr><td class="num">Mo., 24.08.</td><td>Martin ist der Sturm-Chef<small>form_striker</small></td>
+    <td>Leon verteidigt: Platz 1 auch im August<small>Der Meister von gestern · Titelrennen</small></td>
+    <td class="num">72</td><td class="num">—</td></tr><tr><td class="num">Mo., 24.08.</td><td>Martin ist der Sturm-Chef<small>form_striker</small></td>
     <td>Noch 7 Tage: Martin und Leon machen den August unter sich aus<small>Der Schlussspurt · Saisonschluss</small></td>
     <td class="num">68</td><td class="num">—</td></tr><tr><td class="num">So., 23.08.</td><td>Jannik ist beidfüßig<small>personal_position</small></td>
-    <td>Ein Sieg, und Maxi gleicht gegen Jannik aus<small>Ein Sieg entscheidet · Duelle</small></td>
-    <td class="num">52</td><td class="num">—</td></tr><tr><td class="num">Sa., 22.08.</td><td>Stefan ist Nummer 8 bei Partien<small>fun_random_stat</small></td>
-    <td>Leo fehlen zwei Siege zum 100. Sieg<small>Kurz vor der Marke · Laufbahn</small></td>
-    <td class="num">61</td><td class="num">—</td></tr><tr><td class="num">Fr., 21.08.</td><td>Martin führt bei „Der makellose Tag&quot;<small>season_title_race</small></td>
+    <td>Julian fehlen 16 Prestige zum Zierkranz<small>Vor der nächsten Stufe · Insignium</small></td>
+    <td class="num">73</td><td class="num">—</td></tr><tr><td class="num">Sa., 22.08.</td><td>Stefan ist Nummer 8 bei Partien<small>fun_random_stat</small></td>
+    <td>Zusammen gewinnen Jane und Maxi 62 %<small>Zusammen besser · Teams</small></td>
+    <td class="num">59</td><td class="num">—</td></tr><tr><td class="num">Fr., 21.08.</td><td>Martin führt bei „Der makellose Tag&quot;<small>season_title_race</small></td>
     <td>Martin führt den August mit 7 Elo vor Leon<small>Das Rennen um den Monat · Titelrennen</small></td>
     <td class="num">87</td><td class="num">—</td></tr><tr><td class="num">So., 16.08.</td><td>Julian gewinnt einfach<small>personal_wr</small></td>
-    <td>Henry fehlen Siege auf die eigenen Chancen<small>Weniger als erwartet · Abweichung</small></td>
-    <td class="num">60</td><td class="num">—</td></tr><tr><td class="num">Sa., 15.08.</td><td>Halbzeit im August 2026<small>rueckblick_halbzeit</small></td>
     <td>Leon hält im August schon sechs Einträge der Chronik<small>Die Chronik des Monats · Chronik</small></td>
-    <td class="num">82</td><td class="num">—</td></tr><tr><td class="num">So., 09.08.</td><td>Stefan steht kurz vor dem Schildring<small>prestige_schwelle</small></td>
-    <td>Um 13 Uhr wird am meisten gekickert<small>Die Stunde der Liga · Liga</small></td>
-    <td class="num">24</td><td class="num">—</td></tr><tr><td class="num">Sa., 08.08.</td><td>Das Kaltblut gehört Jane<small>personal_kaltblut</small></td>
+    <td class="num">82</td><td class="num">—</td></tr><tr><td class="num">Sa., 15.08.</td><td>Halbzeit im August 2026<small>rueckblick_halbzeit</small></td>
+    <td>Stefan rückt an den Rekord „Der Dauerstürmer“ heran<small>Jagd auf den Rekord · Rekorde</small></td>
+    <td class="num">87</td><td class="num">—</td></tr><tr><td class="num">So., 09.08.</td><td>Stefan steht kurz vor dem Schildring<small>prestige_schwelle</small></td>
     <td>Nur Martin trägt „Mr. Perfect“<small>Fast allein · Auszeichnungen</small></td>
-    <td class="num">74</td><td class="num">—</td></tr><tr><td class="num">Mi., 05.08.</td><td>Alex kann „Die ruhige Hand&quot; holen<small>prestige_schritt</small></td>
-    <td>Jane gewinnt mehr, als die Chancen sagen<small>Mehr als erwartet · Abweichung</small></td>
-    <td class="num">65</td><td class="num">—</td></tr><tr><td class="num">So., 02.08.</td><td>Der Glanztag gehört Leo<small>personal_glanztag</small></td>
-    <td>Montag ist der Tag der Liga<small>Der Tag der Liga · Liga</small></td>
-    <td class="num">28</td><td class="num">—</td></tr><tr><td class="num">Sa., 01.08.</td><td><small>keiner</small></td>
-    <td>Leon fehlen 146 Prestige zum Lorbeerreif<small>Vor der nächsten Stufe · Insignium</small></td>
-    <td class="num">49</td><td class="num">—</td></tr><tr><td class="num">Fr., 31.07.</td><td>Leon hat die volle Vitrine<small>award_total_leader</small></td>
-    <td>Zusammen gewinnen Julian und Martin 80 %<small>Zusammen besser · Teams</small></td>
-    <td class="num">63</td><td class="num">—</td></tr><tr><td class="num">So., 26.07.</td><td>Jannik läuft heiß<small>personal_streak</small></td>
-    <td>Noch einmal „Überholmanöver“, und Johannes holt sie zum 5. Mal<small>Eine fehlt · Auszeichnungen</small></td>
-    <td class="num">47</td><td class="num">—</td></tr><tr><td class="num">Sa., 25.07.</td><td>Jane steht kurz vor dem Volutenkranz<small>prestige_schwelle</small></td>
-    <td>Maxi fehlen zwei Siege zum 100. Sieg<small>Kurz vor der Marke · Laufbahn</small></td>
-    <td class="num">61</td><td class="num">—</td></tr><tr><td class="num">Fr., 24.07.</td><td>Leo führt bei „Die Steigerung&quot;<small>season_title_race</small></td>
-    <td>Henry rückt an den Rekord „Der Einzelkämpfer“ heran<small>Jagd auf den Rekord · Rekorde</small></td>
-    <td class="num">73</td><td class="num">—</td></tr><tr><td class="num">So., 19.07.</td><td>Jannik holte zuletzt Gold<small>award_latest_gold</small></td>
+    <td class="num">74</td><td class="num">—</td></tr><tr><td class="num">Sa., 08.08.</td><td>Das Kaltblut gehört Jane<small>personal_kaltblut</small></td>
+    <td>Johannes gewinnt seit zwei Wochen 62 %, sonst 26 %<small>Besser als sonst · Form</small></td>
+    <td class="num">80</td><td class="num">—</td></tr><tr><td class="num">Mi., 05.08.</td><td>Alex kann „Die ruhige Hand&quot; holen<small>prestige_schritt</small></td>
+    <td>Jannik hält jetzt „Der Rückenwind“<small>Neuer Halter · Rekorde</small></td>
+    <td class="num">64</td><td class="num">—</td></tr><tr><td class="num">So., 02.08.</td><td>Der Glanztag gehört Leo<small>personal_glanztag</small></td>
     <td>Leo hat Alex acht Duelle in Folge geschlagen<small>Die Serie im Duell · Duelle</small></td>
-    <td class="num">74</td><td class="num">—</td></tr><tr><td class="num">Sa., 18.07.</td><td>Julian kann „Der komplette Stürmer&quot; holen<small>prestige_schritt</small></td>
-    <td>Stefan fehlen Siege auf die eigenen Chancen<small>Weniger als erwartet · Abweichung</small></td>
-    <td class="num">64</td><td class="num">—</td></tr><tr><td class="num">Fr., 17.07.</td><td>Das Kaltblut gehört Martin<small>personal_kaltblut</small></td>
-    <td>Die Spitze des Julis wechselte schon dreimal<small>Die Spitze wechselt · Titelrennen</small></td>
-    <td class="num">61</td><td class="num">—</td></tr><tr><td class="num">So., 12.07.</td><td>Maxi führt die Liga bei Partien an<small>fun_random_stat</small></td>
-    <td>Im Sturm gewinnt Jane 35 %, in der Abwehr 65 %<small>Vorn oder hinten · Positionen</small></td>
-    <td class="num">66</td><td class="num">—</td></tr><tr><td class="num">Sa., 11.07.</td><td>Der Glanztag gehört Henry<small>personal_glanztag</small></td>
-    <td>Maxi hält im Juli schon vier Einträge der Chronik<small>Die Chronik des Monats · Chronik</small></td>
-    <td class="num">68</td><td class="num">—</td></tr><tr><td class="num">Fr., 10.07.</td><td>Jane zittert sich durch<small>form_close_wins</small></td>
-    <td>Leon und Julian gleichauf an der Spitze des Julis<small>Das Rennen um den Monat · Titelrennen</small></td>
-    <td class="num">99</td><td class="num">—</td></tr><tr><td class="num">So., 05.07.</td><td>Leon sammelt Gold<small>award_gold_leader</small></td>
-    <td>Als Außenseiter gewinnt Jannik 53 %<small>Gern Außenseiter · Abweichung</small></td>
-    <td class="num">50</td><td class="num">—</td></tr><tr><td class="num">Sa., 04.07.</td><td>Alex gehört nach vorn<small>personal_position</small></td>
-    <td>Henry und Leo: 20:20 nach 40 Duellen<small>Ein Sieg entscheidet · Duelle</small></td>
-    <td class="num">62</td><td class="num">—</td></tr><tr><td class="num">Fr., 03.07.</td><td>Rekord im Fokus: Der Kaltstart<small>record_spotlight</small></td>
-    <td>Nur Leon trägt „Meister der Saison“<small>Fast allein · Auszeichnungen</small></td>
-    <td class="num">74</td><td class="num">—</td></tr><tr><td class="num">So., 28.06.</td><td>Leo ist Leons Lieblingsgegner<small>personal_favourite_opp</small></td>
+    <td class="num">74</td><td class="num">—</td></tr><tr><td class="num">Sa., 01.08.</td><td><small>keiner</small></td>
     <td>Julian gewinnt mehr, als die Chancen sagen<small>Mehr als erwartet · Abweichung</small></td>
-    <td class="num">74</td><td class="num">—</td></tr><tr><td class="num">Sa., 27.06.</td><td>2862 Tore in 179 Partien<small>fun_goals</small></td>
-    <td>Martin rückt an den Rekord „Der komplette Verteidiger“ heran<small>Jagd auf den Rekord · Rekorde</small></td>
-    <td class="num">79</td><td class="num">—</td></tr><tr><td class="num">Fr., 26.06.</td><td>Julian hat Nerven aus Stahl<small>form_clutch</small></td>
-    <td>Noch einmal „Überholmanöver“, und Jannik holt sie zum 5. Mal<small>Eine fehlt · Auszeichnungen</small></td>
-    <td class="num">47</td><td class="num">—</td></tr><tr><td class="num">So., 21.06.</td><td>Jane hält „Der Abwehrchef&quot;<small>chronicle_spotlight</small></td>
-    <td>Leo fehlen Siege auf die eigenen Chancen<small>Weniger als erwartet · Abweichung</small></td>
-    <td class="num">62</td><td class="num">—</td></tr><tr><td class="num">Sa., 20.06.</td><td>Martin gewinnt einfach<small>personal_wr</small></td>
-    <td>Julian hat Stefan acht Duelle in Folge geschlagen<small>Die Serie im Duell · Duelle</small></td>
-    <td class="num">74</td><td class="num">—</td></tr><tr><td class="num">Di., 16.06.</td><td>Maxi gibt Vollgas<small>form_most_active</small></td>
-    <td>Jane fehlen 93 Prestige zum Schildring<small>Vor der nächsten Stufe · Insignium</small></td>
-    <td class="num">53</td><td class="num">—</td></tr><tr><td class="num">So., 14.06.</td><td>Leon sammelt Tagessiege<small>award_potd_zahl</small></td>
+    <td class="num">67</td><td class="num">—</td></tr><tr><td class="num">Fr., 31.07.</td><td>Leon hat die volle Vitrine<small>award_total_leader</small></td>
+    <td>Im Sturm gewinnt Johannes 20 %, in der Abwehr 45 %<small>Vorn oder hinten · Positionen</small></td>
+    <td class="num">62</td><td class="num">—</td></tr><tr><td class="num">So., 26.07.</td><td>Jannik läuft heiß<small>personal_streak</small></td>
+    <td>Leon verteidigt: Platz 1 auch im Juli<small>Der Meister von gestern · Titelrennen</small></td>
+    <td class="num">72</td><td class="num">—</td></tr><tr><td class="num">Sa., 25.07.</td><td>Jane steht kurz vor dem Volutenkranz<small>prestige_schwelle</small></td>
+    <td>Leo ist die Form der Liga: +293 Elo in zwei Wochen<small>Die Form der Liga · Form</small></td>
+    <td class="num">91</td><td class="num">—</td></tr><tr><td class="num">Fr., 24.07.</td><td>Leo führt bei „Die Steigerung&quot;<small>season_title_race</small></td>
+    <td>Maxi fehlen zwei Siege zum 100. Sieg<small>Kurz vor der Marke · Laufbahn</small></td>
+    <td class="num">61</td><td class="num">—</td></tr><tr><td class="num">So., 19.07.</td><td>Jannik holte zuletzt Gold<small>award_latest_gold</small></td>
+    <td>Die Spitze des Julis wechselte schon dreimal<small>Die Spitze wechselt · Titelrennen</small></td>
+    <td class="num">61</td><td class="num">—</td></tr><tr><td class="num">Sa., 18.07.</td><td>Julian kann „Der komplette Stürmer&quot; holen<small>prestige_schritt</small></td>
+    <td>Julian hat gegen Stefan noch nie verloren<small>Nie verloren · Duelle</small></td>
+    <td class="num">97</td><td class="num">—</td></tr><tr><td class="num">Fr., 17.07.</td><td>Das Kaltblut gehört Martin<small>personal_kaltblut</small></td>
+    <td>Leo hält im Juli schon sieben Einträge der Chronik<small>Die Chronik des Monats · Chronik</small></td>
+    <td class="num">89</td><td class="num">—</td></tr><tr><td class="num">So., 12.07.</td><td>Maxi führt die Liga bei Partien an<small>fun_random_stat</small></td>
+    <td>Nur Leon trägt „Meister der Saison“<small>Fast allein · Auszeichnungen</small></td>
+    <td class="num">74</td><td class="num">—</td></tr><tr><td class="num">Sa., 11.07.</td><td>Der Glanztag gehört Henry<small>personal_glanztag</small></td>
+    <td>Martin rückt an den Rekord „Der Wandler“ heran<small>Jagd auf den Rekord · Rekorde</small></td>
+    <td class="num">91</td><td class="num">—</td></tr><tr><td class="num">Fr., 10.07.</td><td>Jane zittert sich durch<small>form_close_wins</small></td>
+    <td>Stefan fehlen Siege auf die eigenen Chancen<small>Weniger als erwartet · Abweichung</small></td>
+    <td class="num">60</td><td class="num">—</td></tr><tr><td class="num">So., 05.07.</td><td>Leon sammelt Gold<small>award_gold_leader</small></td>
+    <td>Henry und Leo: 20:20 nach 40 Duellen<small>Ein Sieg entscheidet · Duelle</small></td>
+    <td class="num">62</td><td class="num">—</td></tr><tr><td class="num">Sa., 04.07.</td><td>Alex gehört nach vorn<small>personal_position</small></td>
+    <td>Maxi spielt jetzt vorn<small>Die Seite gewechselt · Positionen</small></td>
+    <td class="num">67</td><td class="num">—</td></tr><tr><td class="num">Fr., 03.07.</td><td>Rekord im Fokus: Der Kaltstart<small>record_spotlight</small></td>
+    <td>Als Außenseiter gewinnt Jannik 53 %<small>Gern Außenseiter · Abweichung</small></td>
+    <td class="num">50</td><td class="num">—</td></tr><tr><td class="num">So., 28.06.</td><td>Leo ist Leons Lieblingsgegner<small>personal_favourite_opp</small></td>
+    <td>Leon verteidigt: Platz 1 auch im Juni<small>Der Meister von gestern · Titelrennen</small></td>
+    <td class="num">72</td><td class="num">—</td></tr><tr><td class="num">Sa., 27.06.</td><td>2862 Tore in 179 Partien<small>fun_goals</small></td>
+    <td>Im Sturm gewinnt Jane 40 %, in der Abwehr 63 %<small>Vorn oder hinten · Positionen</small></td>
+    <td class="num">60</td><td class="num">—</td></tr><tr><td class="num">Fr., 26.06.</td><td>Julian hat Nerven aus Stahl<small>form_clutch</small></td>
+    <td>Maxi hat Stefan sechs Duelle in Folge geschlagen<small>Die Serie im Duell · Duelle</small></td>
+    <td class="num">66</td><td class="num">—</td></tr><tr><td class="num">So., 21.06.</td><td>Jane hält „Der Abwehrchef&quot;<small>chronicle_spotlight</small></td>
+    <td>Martin führt den Juni mit 15 Elo vor Leon<small>Das Rennen um den Monat · Titelrennen</small></td>
+    <td class="num">83</td><td class="num">—</td></tr><tr><td class="num">Sa., 20.06.</td><td>Martin gewinnt einfach<small>personal_wr</small></td>
+    <td>Julian ist die Form der Liga: +337 Elo in zwei Wochen<small>Die Form der Liga · Form</small></td>
+    <td class="num">89</td><td class="num">—</td></tr><tr><td class="num">Di., 16.06.</td><td>Maxi gibt Vollgas<small>form_most_active</small></td>
+    <td>Jane hält jetzt „Der Glanztag“<small>Neuer Halter · Rekorde</small></td>
+    <td class="num">64</td><td class="num">—</td></tr><tr><td class="num">So., 14.06.</td><td>Leon sammelt Tagessiege<small>award_potd_zahl</small></td>
     <td>Die Spitze des Junis wechselte schon dreimal<small>Die Spitze wechselt · Titelrennen</small></td>
     <td class="num">61</td><td class="num">—</td></tr><tr><td class="num">Sa., 13.06.</td><td>Maxi ist beidfüßig<small>personal_position</small></td>
-    <td>Im Sturm gewinnt Leo 27 %, in der Abwehr 50 %<small>Vorn oder hinten · Positionen</small></td>
-    <td class="num">60</td><td class="num">—</td></tr><tr><td class="num">Fr., 12.06.</td><td>Halbzeit im Juni 2026<small>rueckblick_halbzeit</small></td>
+    <td>Martin gewinnt mehr, als die Chancen sagen<small>Mehr als erwartet · Abweichung</small></td>
+    <td class="num">73</td><td class="num">—</td></tr><tr><td class="num">Fr., 12.06.</td><td>Halbzeit im Juni 2026<small>rueckblick_halbzeit</small></td>
     <td>Julian hält im Juni schon elf Einträge der Chronik<small>Die Chronik des Monats · Chronik</small></td>
     <td class="num">100</td><td class="num">—</td></tr><tr><td class="num">So., 07.06.</td><td>Leon führt bei „Auf dem Thron&quot;<small>season_title_race</small></td>
-    <td>Martin führt den Juni mit 28 Elo vor Leon<small>Das Rennen um den Monat · Titelrennen</small></td>
-    <td class="num">61</td><td class="num">—</td></tr><tr><td class="num">Sa., 06.06.</td><td>Henry hat Nerven aus Stahl<small>form_clutch</small></td>
-    <td>Maxi hält 14 Liga-Rekorde, Leon 12<small>Die Rekordtafel · Rekorde</small></td>
-    <td class="num">44</td><td class="num">2</td></tr><tr><td class="num">Fr., 05.06.</td><td>Der Glanztag gehört Maxi<small>personal_glanztag</small></td>
-    <td>Zusammen gewinnen Henry und Leon 80 %<small>Zusammen besser · Teams</small></td>
-    <td class="num">73</td><td class="num">2</td></tr><tr><td class="num">Do., 04.06.</td><td>Leon führt das Prestige an<small>prestige_fuehrung</small></td>
+    <td>Leo hat im Juni schon +128 Elo geholt<small>Der Monat eines Spielers · Form</small></td>
+    <td class="num">78</td><td class="num">—</td></tr><tr><td class="num">Sa., 06.06.</td><td>Henry hat Nerven aus Stahl<small>form_clutch</small></td>
     <td>Leon rückt an den Rekord „Der Glanztag“ heran<small>Jagd auf den Rekord · Rekorde</small></td>
-    <td class="num">73</td><td class="num">—</td></tr><tr><td class="num">Di., 02.06.</td><td>Maxi holte zuletzt Gold<small>award_latest_gold</small></td>
-    <td>Noch einmal „Carry“, und Martin holt sie zum 5. Mal<small>Eine fehlt · Auszeichnungen</small></td>
-    <td class="num">47</td><td class="num">2</td></tr><tr><td class="num">So., 31.05.</td><td>Henry ist Dauergast<small>personal_grinder</small></td>
-    <td>3 Prestige trennen Jannik und Alex<small>Zwei auf einer Sprosse · Insignium</small></td>
-    <td class="num">59</td><td class="num">4</td></tr><tr><td class="num">Sa., 30.05.</td><td>Maxi ist Nummer 3 bei Partien<small>fun_random_stat</small></td>
+    <td class="num">73</td><td class="num">2</td></tr><tr><td class="num">Fr., 05.06.</td><td>Der Glanztag gehört Maxi<small>personal_glanztag</small></td>
+    <td>Der Meister des Mais steht im Juni auf Platz 2<small>Der Meister von gestern · Titelrennen</small></td>
+    <td class="num">56</td><td class="num">—</td></tr><tr><td class="num">Do., 04.06.</td><td>Leon führt das Prestige an<small>prestige_fuehrung</small></td>
+    <td>Zusammen gewinnen Henry und Leon 80 %<small>Zusammen besser · Teams</small></td>
+    <td class="num">73</td><td class="num">1</td></tr><tr><td class="num">Di., 02.06.</td><td>Maxi holte zuletzt Gold<small>award_latest_gold</small></td>
+    <td>Noch einmal „Serienbrecher“, und Maxi holt sie zum 5. Mal<small>Eine fehlt · Auszeichnungen</small></td>
+    <td class="num">47</td><td class="num">3</td></tr><tr><td class="num">So., 31.05.</td><td>Henry ist Dauergast<small>personal_grinder</small></td>
+    <td>Nur Henry trägt „Wiederholungstäter“<small>Fast allein · Auszeichnungen</small></td>
+    <td class="num">58</td><td class="num">4</td></tr><tr><td class="num">Sa., 30.05.</td><td>Maxi ist Nummer 3 bei Partien<small>fun_random_stat</small></td>
     <td>Nur Henry trägt „Wiederholungstäter“<small>Fast allein · Auszeichnungen</small></td>
     <td class="num">58</td><td class="num">4</td></tr><tr><td class="num">Fr., 29.05.</td><td>Leo macht die Bude dicht<small>form_defender</small></td>
-    <td>Jane und Johannes: gleich viel Prestige<small>Zwei auf einer Sprosse · Insignium</small></td>
-    <td class="num">60</td><td class="num">4</td></tr><tr><td class="num">Do., 28.05.</td><td>Beste Freunde: Henry und Leon<small>personal_best_mate</small></td>
+    <td>Nur Henry trägt „Wiederholungstäter“<small>Fast allein · Auszeichnungen</small></td>
+    <td class="num">58</td><td class="num">4</td></tr><tr><td class="num">Do., 28.05.</td><td>Beste Freunde: Henry und Leon<small>personal_best_mate</small></td>
     <td>Nur Henry trägt „Wiederholungstäter“<small>Fast allein · Auszeichnungen</small></td>
     <td class="num">58</td><td class="num">4</td></tr><tr><td class="num">Mo., 25.05.</td><td>Henry führt das Prestige an<small>prestige_fuehrung</small></td>
-    <td>Julian und Leo: gleich viel Prestige<small>Zwei auf einer Sprosse · Insignium</small></td>
-    <td class="num">60</td><td class="num">4</td></tr><tr><td class="num">So., 24.05.</td><td>Henry führt das Prestige an<small>prestige_fuehrung</small></td>
     <td>Nur Henry trägt „Unschlagbar“<small>Fast allein · Auszeichnungen</small></td>
-    <td class="num">58</td><td class="num">—</td></tr><tr><td class="num">Sa., 23.05.</td><td>Henry sammelt Tagessiege<small>award_potd_zahl</small></td>
-    <td>3 Prestige trennen Maxi und Leon<small>Zwei auf einer Sprosse · Insignium</small></td>
-    <td class="num">65</td><td class="num">—</td></tr></tbody></table></div>
+    <td class="num">58</td><td class="num">4</td></tr><tr><td class="num">So., 24.05.</td><td>Henry führt das Prestige an<small>prestige_fuehrung</small></td>
+    <td>Nur Henry trägt „Unschlagbar“<small>Fast allein · Auszeichnungen</small></td>
+    <td class="num">58</td><td class="num">4</td></tr><tr><td class="num">Sa., 23.05.</td><td>Henry sammelt Tagessiege<small>award_potd_zahl</small></td>
+    <td>Nur Henry trägt „Unschlagbar“<small>Fast allein · Auszeichnungen</small></td>
+    <td class="num">58</td><td class="num">—</td></tr></tbody></table></div>
 </section>
 <script>
 (() => { const io = 'IntersectionObserver' in window && new IntersectionObserver(l => l.forEach(e => {

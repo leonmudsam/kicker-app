@@ -22,9 +22,8 @@
 //     dasselbe.
 //  4. Lockern. Bleibt nichts, fallen die Sperren in dieser Folge: erst die
 //     Spieler bis auf den letzten Fun Fact, dann die Rubrik bis auf den
-//     letzten, dann die Art bis auf die letzten vier; ganz zuletzt gilt nur
-//     noch, dass nicht dieselbe Art wie zuletzt kommt. Ein Tag bleibt nie
-//     leer.
+//     letzten, dann die Art bis auf die letzten vier; ganz zuletzt gilt
+//     keine Sperre mehr. Ein Tag bleibt nie leer.
 //  Die App zieht heute aus 39 Vorlagen per Los; die meisten sagen „X führt
 //  bei Y“, und ob ein Rennen knapp ist, weiß das Los nicht.
 'use strict';
@@ -44,6 +43,7 @@ const RUBRIK = {
   position:  {name:'Positionen',         label:'VORN UND HINTEN',    ton:'form'},
   abweich:   {name:'Abweichung',         label:'GEGEN DIE ERWARTUNG',ton:'form'},
   duell:     {name:'Duelle',             label:'DUELL IN ZAHLEN',    ton:'duell'},
+  form:      {name:'Form',               label:'DIE FORMKURVE',      ton:'form'},
   liga:      {name:'Liga',               label:'LIGA IN ZAHLEN',     ton:'liga'}
 };
 
@@ -90,7 +90,7 @@ const FAKT = {
     wann:'bis zur nächsten Stufe des Insigniums fehlen höchstens 150 Prestige',
     spannung:'je weniger fehlen, desto mehr; hohe Stufe mehr'},
   insig_duell:    {name:'Zwei auf einer Sprosse', rubrik:'insignium', bild:'tau', ic:'scaleBalance',
-    wann:'zwei Nachbarn im Prestige liegen höchstens 60 Punkte auseinander',
+    wann:'zwei Nachbarn im Prestige, beide ab 300, liegen höchstens 60 Punkte auseinander',
     spannung:'je knapper, desto mehr'},
   team_chemie:    {name:'Zusammen besser', rubrik:'team', bild:'chemie', ic:'handshake',
     wann:'ein Paar ab zehn gemeinsamen Partien gewinnt mindestens 12 Punkte öfter als beide im Schnitt allein',
@@ -114,11 +114,44 @@ const FAKT = {
     wann:'als Außenseiter (Siegchance unter 45 %) ab zwölf Partien mindestens 48 % gewonnen',
     spannung:'je höher die Quote, desto mehr'},
   duell_serie:    {name:'Die Serie im Duell', rubrik:'duell', bild:'kette', ic:'crossedSwords',
-    wann:'einer hat einen anderen in den letzten sechs Duellen oder mehr jedes Mal geschlagen',
+    wann:'einer hat einen anderen in den letzten sechs Duellen oder mehr jedes Mal geschlagen, aber nicht in allen (das ist „Nie verloren“)',
     spannung:'je länger, desto mehr'},
   duell_kipp:     {name:'Ein Sieg entscheidet', rubrik:'duell', bild:'tau', ic:'scaleBalance',
     wann:'zwei mit mindestens 30 Duellen stehen gleich oder einen Sieg auseinander',
     spannung:'gleich mehr als einen auseinander; je mehr Duelle, desto mehr'},
+  titel_meister:  {name:'Der Meister von gestern', rubrik:'titel', bild:'reihe', ic:'crown', spitze:true,
+    wann:'ab dem 5. Tag; wo der Meister des Vormonats in der Wertung des Monats steht',
+    spannung:'an der Spitze oder ganz hinten mehr als dazwischen'},
+  rekord_wechsel: {name:'Neuer Halter', rubrik:'rekord', bild:'wechsel', ic:'medalTrio',
+    wann:'ein Liga-Rekord hat in den letzten 14 Tagen den Halter gewechselt',
+    spannung:'je frischer, desto mehr'},
+  form_monat:     {name:'Der Monat eines Spielers', rubrik:'form', bild:'monatskurve', ic:'trendUp',
+    wann:'ab dem 7. Tag und acht Partien im Monat; mindestens 60 Elo im Monat gewonnen',
+    spannung:'je mehr, desto mehr'},
+  form_liga:      {name:'Die Form der Liga', rubrik:'form', bild:'formbalken', ic:'trendUp',
+    wann:'die letzten 14 Tage, wer dort mindestens vier Partien hat (mindestens sechs Spieler): der Erste hat mindestens 30 Elo gewonnen und 15 mehr als der Zweite',
+    spannung:'je weiter vor dem Zweiten, desto mehr'},
+  form_quote:     {name:'Besser als sonst', rubrik:'form', bild:'formpunkte', ic:'flame',
+    wann:'die letzten 14 Tage ab acht Partien: die Siegquote liegt mindestens 20 Punkte über der eigenen Laufbahn, und kein anderer der Liga liegt weiter darüber',
+    spannung:'je größer der Abstand, desto mehr'},
+  team_alle:      {name:'Mit allen zusammen', rubrik:'team', bild:'stern', ic:'partnerHebel',
+    wann:'in den letzten 30 Tagen kam der letzte Partner dazu: jetzt hat einer mit jedem der Liga zusammengespielt',
+    spannung:'fest'},
+  position_wechsel:{name:'Die Seite gewechselt', rubrik:'position', bild:'anteil', ic:'posSwap',
+    wann:'in den letzten 20 Partien mindestens 30 Punkte öfter oder seltener im Sturm als in den 40 davor',
+    spannung:'je größer der Wechsel, desto mehr'},
+  duell_weisse:   {name:'Nie verloren', rubrik:'duell', bild:'kette', ic:'crossedSwords',
+    wann:'einer hat gegen einen anderen in mindestens sechs Duellen nie verloren',
+    spannung:'je mehr Duelle, desto mehr'},
+  duell_vier:     {name:'Dieselben vier', rubrik:'duell', bild:'paarung', ic:'users',
+    wann:'dieselben zwei Paare trafen mindestens fünfmal aufeinander, und eines gewann mindestens 80 %',
+    spannung:'je mehr Begegnungen und je klarer, desto mehr'},
+  liga_marke:     {name:'Die Partie der Liga', rubrik:'liga', bild:'zaehler', ic:'hundred',
+    wann:'bis zur nächsten vollen Hundert an Partien der Liga fehlen höchstens fünf',
+    spannung:'je weniger fehlen, desto mehr; volle 500 mehr'},
+  liga_spanne:    {name:'Zusammen oder auseinander', rubrik:'liga', bild:'spanne', ic:'scaleBalance',
+    wann:'zwischen Erstem und Letztem im Elo (ab 20 Partien, auch schon vor 30 Tagen) liegen mindestens 40 Elo weniger oder mehr als vor 30 Tagen',
+    spannung:'leise'},
   liga_wochentag: {name:'Der Tag der Liga', rubrik:'liga', bild:'woche', ic:'calendar',
     wann:'ab 100 Partien; ein Wochentag trägt mindestens 25 % aller Partien',
     spannung:'leise'},

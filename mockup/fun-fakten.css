@@ -253,6 +253,76 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
 .fx-st{grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:2px;height:72px}
 .fx-st>span>i{width:80%;max-height:56px}
 
+/* Zählwerk ohne Spieler */
+.fx-zl.ohne{grid-template-columns:auto minmax(0,1fr) auto}
+/* Reihe der Wertung */
+.fx-rh{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:2px}
+.fx-rh>span{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0}
+.fx-rh em{display:block;width:12px;height:12px}
+.fx-rh em svg{display:block;width:12px;height:12px;fill:var(--gold)}
+.fx-rh .av{--av:19px;font-size:7px;opacity:.55}
+.fx-rh>span.m .av{opacity:1;box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px var(--gold),0 0 10px rgba(247,207,74,.5)}
+.fx-rh small{font:600 8.5px 'Sometype Mono',monospace;color:var(--faint)}
+.fx-rh>span.m small{color:var(--gold)}
+/* Wechsel des Halters */
+.fx-wx{display:grid;grid-template-columns:minmax(0,1fr) 40px minmax(0,1fr);align-items:center;gap:8px}
+.fx-wx>span{display:flex;align-items:center;gap:6px;min-width:0}
+.fx-wx>span.alt{opacity:.5;filter:grayscale(1)}
+.fx-wx>span.neu{justify-content:flex-end}
+.fx-wx>span.neu .av{box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px var(--gold),0 0 12px rgba(247,207,74,.5)}
+.fx-wx>i{height:2px;background:linear-gradient(90deg,var(--line2),var(--gold));position:relative}
+.fx-wx>i::after{content:"";position:absolute;right:-1px;top:-4px;border:5px solid transparent;border-left:7px solid var(--gold);border-right:0}
+.fx-wx-t{font:500 9.5px 'Sometype Mono',monospace;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Stern der Partner */
+.fx-sn{display:grid;grid-template-columns:104px minmax(0,1fr);gap:12px;align-items:center}
+.fx-sn-b{position:relative;width:104px;height:104px}
+.fx-sn-b svg{position:absolute;inset:0;width:100%;height:100%}
+.fx-sn-b line{stroke:var(--fx);stroke-width:1.2}
+.fx-sn-b line.neu{stroke:var(--gold);stroke-width:2}
+.fx-sn-b>i{position:absolute;transform:translate(-50%,-50%)}
+.fx-sn-b>i .av{--av:17px;font-size:6.5px}
+.fx-sn-b>i.mitte .av{--av:26px;font-size:9px;box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px var(--fx)}
+.fx-sn-b>i.neu .av{box-shadow:0 0 0 1.5px var(--surface),0 0 0 3px var(--gold)}
+.fx-sn-t{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0}
+.fx-sn-t small{font:500 9.5px 'Sometype Mono',monospace;color:var(--muted)}
+/* Zwei Paare */
+.fx-pg{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px}
+.fx-pg>b.num{text-align:center;font-size:22px;color:var(--fx)}
+.fx-pg-k{grid-template-columns:minmax(0,1fr)}
+/* Spanne */
+.fx-sp{position:relative;height:30px;margin:0 6px}
+.fx-sp u{position:absolute;height:8px;border-radius:4px}
+.fx-sp u.vor{top:4px;border:1px dashed var(--line2)}
+.fx-sp u.jetzt{top:4px;background:rgba(var(--fx-rgb),.18);border:1px solid rgba(var(--fx-rgb),.6)}
+.fx-sp i{position:absolute;top:18px;width:8px;height:8px;margin-left:-4px;border-radius:50%;box-shadow:0 0 0 1.5px var(--surface)}
+.fx-sp-n{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.fx-sp-n>span{display:flex;align-items:center;gap:5px;min-width:0}
+.fx-sp-n b.num{font-size:13px;color:var(--fx);white-space:nowrap}
+.fx-sp-n b small{font:500 9.5px 'Sometype Mono',monospace;color:var(--muted)}
+
+/* Form der Liga: Balken von der Mitte */
+.fx-fb,.fx-fp{display:flex;flex-direction:column;gap:3px}
+.fx-fb>div,.fx-fp>div{display:grid;grid-template-columns:18px 54px minmax(0,1fr) 36px;gap:6px;align-items:center;height:19px}
+.fx-fb .av,.fx-fp .av{--av:18px;font-size:7px}
+.fx-fb .fx-n,.fx-fp .fx-n{font-size:10.5px}
+.fx-fb b.num,.fx-fp b.num{text-align:right;font-size:11px;color:var(--muted)}
+.fx-fb>div.eins b.num,.fx-fp>div.eins b.num{color:var(--fx)}
+.fx-fb>div.eins .fx-n,.fx-fp>div.eins .fx-n{color:var(--ink)}
+.fx-fb-s{position:relative;height:8px}
+.fx-fb-s u{position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:rgba(255,255,255,.25)}
+.fx-fb-s i{position:absolute;top:0;bottom:0;border-radius:2px;background:var(--surface3)}
+.fx-fb>div.neg .fx-fb-s i{background:rgba(240,86,106,.45)}
+.fx-fb>div.eins .fx-fb-s i{background:var(--fx)}
+/* Form gegen die eigene Laufbahn */
+.fx-fp-s{position:relative;height:10px}
+.fx-fp-s u{position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:rgba(255,255,255,.18)}
+.fx-fp-s em{position:absolute;top:4px;height:2px;background:var(--line2)}
+.fx-fp-s s{position:absolute;top:1px;width:8px;height:8px;margin-left:-4px;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--muted)}
+.fx-fp-s i{position:absolute;top:1px;width:8px;height:8px;margin-left:-4px;border-radius:50%;background:var(--ink2)}
+.fx-fp>div.neg .fx-fp-s i{background:rgba(240,86,106,.7)}
+.fx-fp>div.eins .fx-fp-s em{background:var(--fx)}
+.fx-fp>div.eins .fx-fp-s i{background:var(--fx);box-shadow:0 0 6px rgba(var(--fx-rgb),.6)}
+
 /* ── Bewegung ───────────────────────────────────────────────────── */
 /* Nur Verschiebung und Deckkraft, einmal, und erst, wenn die Karte im
    Bild ist [§C43]. */
@@ -261,6 +331,20 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
   .fx-bt i,.fx-tau-s i,.fx-lt>span>i{animation:fxDa .5s ease-out .15s both}
   .fx-pr i,.fx-kt i,.fx-zl-f i{animation:fxDa .3s ease-out both}
   .fx-pr i:nth-child(n+4),.fx-kt i:nth-child(n+4){animation-delay:.08s}.fx-pr i:nth-child(n+8),.fx-kt i:nth-child(n+8){animation-delay:.16s}
-  .fx-svg .ln,.fx-svg .fl,.fx-svg .pt{animation:fxDa .6s ease-out both}
+  .fx-svg .ln,.fx-svg .fl{animation:fxDa .6s ease-out both}
+  .fx-svg .pt{transform-box:fill-box;transform-origin:center;animation:fxPop .4s cubic-bezier(.3,1.6,.5,1) .45s both}
+  .fx-bar i,.fx-sl>span>i,.fx-wo>span>i{animation:fxWachs .6s cubic-bezier(.3,1,.4,1) .1s both}
+  .fx-bar i{transform-origin:left center}.fx-sl>span>i,.fx-wo>span>i{transform-origin:bottom center;animation-name:fxHoch}
+  .fx-sn-b>i,.fx-rh>span.m .av,.fx-wx>span.neu .av{animation:fxPop .45s cubic-bezier(.3,1.6,.5,1) .2s both}
+  .fx-sn-b line{animation:fxDa .5s ease-out .3s both}
+  .fx-cd-r b{animation:fxPop .5s cubic-bezier(.3,1.6,.5,1) both}
+  .fx-fb-s i{animation:fxDa .5s ease-out both}
+  .fx-fb>div:nth-child(2) .fx-fb-s i{animation-delay:.05s}.fx-fb>div:nth-child(3) .fx-fb-s i{animation-delay:.1s}.fx-fb>div:nth-child(n+4) .fx-fb-s i{animation-delay:.15s}
+  .fx-fp-s i{animation:fxDa .5s ease-out .2s both}
 }
 @keyframes fxDa{from{opacity:0}}
+@keyframes fxPop{from{transform:scale(.3);opacity:0}}
+@keyframes fxWachs{from{transform:scaleX(0)}}
+@keyframes fxHoch{from{transform:scaleY(0)}}
+/* „40 davor“ und „letzte 20“ brauchen mehr Platz als „Abwehr“ und „Sturm“. */
+.fx-b-anteil .fx-sd-l>div{grid-template-columns:64px minmax(0,1fr) 40px}

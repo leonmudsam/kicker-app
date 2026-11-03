@@ -65,6 +65,7 @@ const pct = x => Math.round(x * 100);
 const MONAT = t => new Date(t).toLocaleDateString('de-DE', {month:'long'});
 const ZAHL = ['null', 'eins', 'zwei', 'drei', 'vier', 'fünf', 'sechs', 'sieben', 'acht', 'neun', 'zehn', 'elf', 'zwölf'];
 const zahlwort = n => n <= 12 ? ZAHL[n] : String(n);
+const vzL = v => (v > 0 ? '+' : v < 0 ? '−' : '±') + Math.abs(v);
 const mal = n => n === 1 ? 'einmal' : n === 2 ? 'zweimal' : n === 3 ? 'dreimal' : n + '-mal';
 const und = l => l.length > 1 ? l.slice(0, -1).join(', ') + ' und ' + l[l.length - 1] : (l[0] || '');
 // Die Leiter der runden Zahlen wie in der App (`_ladderCrossing`): 1, 2,5
@@ -77,23 +78,26 @@ const GERN = new Set(['common', 'rare', 'legendary']);
 // Alles, was ein Fakt aus den Partien bis zu einem Zeitpunkt braucht.
 function stand(T){
   const bis = liga.filter(m => Date.parse(m.created_at) <= T);
-  const S = {n:bis.length, sp:{}, duo:{}, h2h:{}, wtag:[0, 0, 0, 0, 0, 0, 0], std:{}};
-  const sp = id => S.sp[id] || (S.sp[id] = {g:0, w:0, tore:0, elo:[], pos:{atk:{g:0, w:0}, def:{g:0, w:0}}, erw:[], aussen:{g:0, w:0}});
+  const S = {n:bis.length, erste:bis.length ? Date.parse(bis[0].created_at) : 0, sp:{}, duo:{}, h2h:{}, partner:{}, paarung:{}, wtag:[0, 0, 0, 0, 0, 0, 0], std:{}};
+  const sp = id => S.sp[id] || (S.sp[id] = {g:0, w:0, tore:0, elo:[], pos:{atk:{g:0, w:0}, def:{g:0, w:0}}, posFolge:[], erw:[], aussen:{g:0, w:0}});
   bis.forEach(m => {
     const t = Date.parse(m.created_at), aw = m.winner === 'A', d = new Date(t), el = H.get(m.id) || {};
     S.wtag[(d.getDay() + 6) % 7]++; S.std[d.getHours()] = (S.std[d.getHours()] || 0) + 1;
     [[m.a1, m.a1_pos, true], [m.a2, m.a2_pos, true], [m.b1, m.b1_pos, false], [m.b2, m.b2_pos, false]].forEach(([id, pos, a]) => {
       const s = sp(id), won = a === aw, e = a ? m.exp_a : 1 - m.exp_a;
       s.g++; if(won) s.w++; s.tore += a ? m.score_a : m.score_b;
-      s.pos[pos].g++; if(won) s.pos[pos].w++;
-      s.erw.push({e, w:won ? 1 : 0});
+      s.pos[pos].g++; if(won) s.pos[pos].w++; s.posFolge.push(pos);
+      s.erw.push({e, w:won ? 1 : 0, t});
       if(e < .45){ s.aussen.g++; if(won) s.aussen.w++; }
       if(el[id] != null) s.elo.push({t, e:el[id]});
     });
     [[m.a1, m.a2, aw], [m.b1, m.b2, !aw]].forEach(([x, y, won]) => {
       const k = [x, y].sort().join('|'), q = S.duo[k] || (S.duo[k] = {g:0, w:0, l:[]});
       q.g++; if(won) q.w++; q.l.push(won ? 1 : 0);
+      [[x, y], [y, x]].forEach(([u, v]) => { const pa = S.partner[u] || (S.partner[u] = {}); if(!pa[v]) pa[v] = t; });
     });
+    const dk = [[m.a1, m.a2].sort().join('|'), [m.b1, m.b2].sort().join('|')], pk = dk.slice().sort().join('#');
+    (S.paarung[pk] = S.paarung[pk] || []).push({s:dk[aw ? 0 : 1], t});
     const W = aw ? [m.a1, m.a2] : [m.b1, m.b2], L = aw ? [m.b1, m.b2] : [m.a1, m.a2];
     W.forEach(w => L.forEach(l => { (S.h2h[w + '|' + l] = S.h2h[w + '|' + l] || []).push(1); (S.h2h[l + '|' + w] = S.h2h[l + '|' + w] || []).push(0); }));
   });
@@ -207,8 +211,9 @@ const FAKTEN = {
       `Heute ${x.ins}, ${x.punkte} Prestige.`, {p:x.pid, punkte:x.punkte, stufe:x.stufe, fehlt:x.fehlt, stufen:A.stufen})),
   insig_duell:(S, A) => {
     const out = [], l = A.pres;
+    // Erst ab 300 Prestige: im Mai trennten „3 Prestige“ zwei mit 11 und 8.
     for(let i = 1; i < l.length; i++){ const d = l[i - 1].punkte - l[i].punkte;
-      if(d <= 60) out.push(fall('insig_duell', [l[i].pid, l[i - 1].pid], 60 - d / 2 + (i <= 2 ? 6 : 0),
+      if(d <= 60 && l[i].punkte >= 300) out.push(fall('insig_duell', [l[i].pid, l[i - 1].pid], 60 - d / 2 + (i <= 2 ? 6 : 0),
         d === 0 ? `${nm(l[i - 1].pid)} und ${nm(l[i].pid)}: gleich viel Prestige` : `${d} Prestige trennen ${nm(l[i - 1].pid)} und ${nm(l[i].pid)}`,
         `Platz ${i} und ${i + 1} im Prestige der Liga.`, {a:{p:l[i - 1].pid, n:l[i - 1].punkte}, b:{p:l[i].pid, n:l[i].punkte}, platz:i})); }
     return out;
@@ -252,7 +257,8 @@ const FAKTEN = {
       `${a.w} von ${a.g} Partien mit einer Siegchance unter 45 %.`, {p, q:pct(q), g:a.g, w:a.w}); }).filter(Boolean),
   duell_serie:(S) => Object.keys(S.h2h).map(k => { const l = S.h2h[k]; let n = 0;
     for(let i = l.length - 1; i >= 0 && l[i] === 1; i--) n++;
-    if(n < 6) return null;
+    // Wer nie verloren hat, ist „Nie verloren“, nicht eine Serie.
+    if(n < 6 || n === l.length) return null;
     const [a, b] = k.split('|');
     return fall('duell_serie', [a, b], 42 + n * 4, `${nm(a)} hat ${nm(b)} ${zahlwort(n)} Duelle in Folge geschlagen`,
       `Insgesamt ${l.filter(x => x).length}:${l.filter(x => !x).length} in ${l.length} Duellen.`, {a, b, l:l.slice(-14), n}); }).filter(Boolean),
@@ -264,6 +270,90 @@ const FAKTEN = {
       w === v ? `${nm(a)} und ${nm(b)}: ${w}:${v} nach ${l.length} Duellen` : `Ein Sieg, und ${nm(hinten)} gleicht gegen ${nm(vorn)} aus`,
       w === v ? 'Keiner liegt vorn.' : `${Math.max(w, v)}:${Math.min(w, v)} für ${nm(vorn)} nach ${l.length} Duellen.`,
       {a, b, w, v, l:l.slice(-20)}); }).filter(Boolean),
+  titel_meister:(S, A, U) => {
+    const r = A.rankAll, m = A.meister;
+    if(U.tagNr < 5 || !m || r.length < 4) return [];
+    const i = r.findIndex(x => x.id === m.pid);
+    if(i < 0) return [];
+    const platz = i + 1, hinten = platz >= r.length - 1;
+    return [fall('titel_meister', [m.pid], platz === 1 ? 72 : platz <= 3 ? 56 : hinten ? 60 : 40,
+      platz === 1 ? `${nm(m.pid)} verteidigt: Platz 1 auch im ${U.monat}` : `Der Meister des ${m.monat}s steht im ${U.monat} auf Platz ${platz}`,
+      platz === 1 ? `${r[0].elo - r[1].elo} Elo vor ${nm(r[1].id)}.` : `${nm(r[0].id)} führt, ${r[0].elo - r[i].elo} Elo vor ${nm(m.pid)}.`,
+      {r:r.slice(0, 12).map(x => ({p:x.id})), m:m.pid, monat:m.monat})];
+  },
+  rekord_wechsel:(S, A, U) => A.rek.map(x => {
+    const h = U.halter[x.id] || [], jetzt = x.r[0];
+    if(!jetzt || (x.r[1] && x.r[1].wert === jetzt.wert)) return null;
+    let i = h.length - 1; while(i >= 0 && h[i].pid === jetzt.pid) i--;
+    if(i < 0 || i === h.length - 1) return null;
+    const seit = h[i + 1].T, alt = h[i].pid, tage = Math.round((U.T - seit) / 864e5);
+    if(tage > 14) return null;
+    return fall('rekord_wechsel', [jetzt.pid, alt], 64 - tage * 1.5, `${nm(jetzt.pid)} hält jetzt „${x.name}“`,
+      `Seit ${tage <= 1 ? 'gestern' : tage + ' Tagen'}; davor hielt ihn ${nm(alt)}.`, {name:x.name, neu:{p:jetzt.pid, ev:jetzt.ev}, alt}); }).filter(Boolean),
+  form_monat:(S, A, U) => { if(U.tagNr < 7) return [];
+    const T0 = new Date(new Date(U.T).getFullYear(), new Date(U.T).getMonth(), 1).getTime();
+    return Object.keys(S.sp).map(p => { const e = S.sp[p].elo, vor = e.filter(x => x.t < T0), im = e.filter(x => x.t >= T0);
+      if(!vor.length || im.length < 8) return null;
+      const g = r1(im[im.length - 1].e - vor[vor.length - 1].e);
+      if(g < 60) return null;
+      const siege = S.sp[p].erw.filter(x => x.t >= T0 && x.w).length;
+      return fall('form_monat', [p], 46 + g / 4, `${nm(p)} hat im ${U.monat} schon +${g} Elo geholt`, `${siege} von ${im.length} Partien im ${U.monat} gewonnen.`,
+        {p, g, kurve:[r1(vor[vor.length - 1].e)].concat(im.map(x => r1(x.e)))}); }).filter(Boolean); },
+  team_alle:(S, A, U) => Object.keys(S.sp).map(p => { const pa = S.partner[p] || {}, andere = IDS.filter(x => x !== p);
+    if(!andere.every(x => pa[x])) return null;
+    const letzter = andere.reduce((m, x) => pa[x] > pa[m] ? x : m, andere[0]);
+    if(U.T - pa[letzter] > 30 * 864e5) return null;
+    return fall('team_alle', [p, letzter], 55, `${nm(p)} hat jetzt mit allen ${zahlwort(andere.length)} zusammengespielt`,
+      `Als Letzter kam ${nm(letzter)} dazu, am ${new Date(pa[letzter]).toLocaleDateString('de-DE', {day:'numeric', month:'long'})}.`,
+      {p, letzter, l:andere.map(x => ({p:x, g:(S.duo[[p, x].sort().join('|')] || {g:0}).g}))}); }).filter(Boolean),
+  position_wechsel:(S) => Object.keys(S.sp).map(p => { const f = S.sp[p].posFolge; if(f.length < 60) return null;
+    const qj = f.slice(-20).filter(x => x === 'atk').length / 20, qv = f.slice(-60, -20).filter(x => x === 'atk').length / 40, d = qj - qv;
+    if(Math.abs(d) < .3) return null;
+    return fall('position_wechsel', [p], 48 + Math.abs(d) * 50, d > 0 ? `${nm(p)} spielt jetzt vorn` : `${nm(p)} spielt jetzt hinten`,
+      `In den letzten 20 Partien ${pct(qj)} % im Sturm, in den 40 davor ${pct(qv)} %.`, {p, qj:pct(qj), qv:pct(qv)}); }).filter(Boolean),
+  duell_weisse:(S) => Object.keys(S.h2h).map(k => { const l = S.h2h[k]; if(l.length < 6 || l.some(x => !x)) return null;
+    const [a, b] = k.split('|');
+    return fall('duell_weisse', [a, b], 46 + l.length * 3, `${nm(a)} hat gegen ${nm(b)} noch nie verloren`,
+      `${l.length}:0 in ${l.length} Duellen.`, {a, b, l:l.slice(-14), n:l.length}); }).filter(Boolean),
+  duell_vier:(S) => Object.keys(S.paarung).map(k => { const l = S.paarung[k]; if(l.length < 5) return null;
+    const [d1, d2] = k.split('#'), w1 = l.filter(x => x.s === d1).length, w2 = l.length - w1, q = Math.max(w1, w2) / l.length;
+    if(q < .8) return null;
+    const vorn = w1 >= w2 ? d1 : d2, hinten = vorn === d1 ? d2 : d1, V = vorn.split('|'), Hn = hinten.split('|');
+    return fall('duell_vier', V.concat(Hn), 44 + l.length * 2 + (q === 1 ? 8 : 0),
+      `${nm(V[0])} und ${nm(V[1])} gegen ${nm(Hn[0])} und ${nm(Hn[1])}: ${Math.max(w1, w2)}:${Math.min(w1, w2)}`,
+      `${zahlwort(l.length)} Begegnungen genau dieser zwei Paare, die letzte am ${new Date(l[l.length - 1].t).toLocaleDateString('de-DE', {day:'numeric', month:'long'})}.`,
+      {v:V, h:Hn, w:Math.max(w1, w2), l:Math.min(w1, w2), folge:l.slice(-12).map(x => x.s === vorn ? 1 : 0)}); }).filter(Boolean),
+  liga_marke:(S) => { const z = Math.ceil((S.n + 1) / 100) * 100, fehlt = z - S.n;
+    if(S.n < 50 || fehlt > 5) return [];
+    return [fall('liga_marke', [], 46 + (5 - fehlt) * 4 + (z % 500 === 0 ? 10 : 0),
+      `Noch ${fehlt === 1 ? 'eine Partie' : zahlwort(fehlt) + ' Partien'} bis zur ${z}. Partie der Liga`,
+      `${S.n} Partien seit dem ${new Date(S.erste).toLocaleDateString('de-DE', {day:'numeric', month:'long', year:'numeric'})}.`, {p:null, was:'Liga', n:S.n, ziel:z})]; },
+  // Die Form der letzten 14 Tage gegen den Rest der Liga: das Elo, das
+  // jeder in diesem Fenster gewann oder verlor.
+  form_liga:(S, A, U) => { const T0 = U.T - 14 * 864e5;
+    const l = Object.keys(S.sp).map(p => { const e = S.sp[p].elo, vor = e.filter(x => x.t < T0), im = e.filter(x => x.t >= T0);
+      return vor.length && im.length >= 4 ? {p, d:r1(im[im.length - 1].e - vor[vor.length - 1].e), n:im.length} : null; }).filter(Boolean).sort((a, b) => b.d - a.d);
+    if(l.length < 6 || l[0].d < 30 || l[0].d - l[1].d < 15) return [];
+    return [fall('form_liga', [l[0].p], 46 + (l[0].d - l[1].d) / 2, `${nm(l[0].p)} ist die Form der Liga: ${vzL(l[0].d)} Elo in zwei Wochen`,
+      `Dahinter ${nm(l[1].p)} mit ${vzL(l[1].d)}; ${l.filter(x => x.d < 0).length} der ${l.length} verloren in der Zeit Elo.`, {l, p:l[0].p})]; },
+  // Die Siegquote der letzten 14 Tage gegen die eigene Laufbahn, für jeden
+  // der Liga: wer liegt am weitesten über sich selbst.
+  form_quote:(S, A, U) => { const T0 = U.T - 14 * 864e5;
+    const l = Object.keys(S.sp).map(p => { const e = S.sp[p].erw, im = e.filter(x => x.t >= T0), vor = e.filter(x => x.t < T0);
+      return im.length >= 8 && vor.length >= 20 ? {p, q:pct(im.filter(x => x.w).length / im.length), qa:pct(vor.filter(x => x.w).length / vor.length), n:im.length} : null; }).filter(Boolean)
+      .map(x => Object.assign(x, {d:x.q - x.qa})).sort((a, b) => b.d - a.d);
+    if(l.length < 5 || l[0].d < 20) return [];
+    return [fall('form_quote', [l[0].p], 44 + l[0].d, `${nm(l[0].p)} gewinnt seit zwei Wochen ${l[0].q} %, sonst ${l[0].qa} %`,
+      `${l[0].n} Partien in 14 Tagen; niemand der Liga liegt weiter über der eigenen Laufbahn.`, {l, p:l[0].p})]; },
+  liga_spanne:(S, A, U) => { const akt = Object.keys(S.sp).filter(p => S.sp[p].g >= 20 && S.sp[p].elo.filter(x => x.t <= U.T - 30 * 864e5).length >= 20);
+    const elo = (p, T) => { const e = S.sp[p].elo.filter(x => x.t <= T); return e.length ? e[e.length - 1].e : null; };
+    const jetzt = akt.map(p => ({p, e:elo(p, U.T)})), vor = akt.map(p => ({p, e:elo(p, U.T - 30 * 864e5)})).filter(x => x.e != null);
+    if(jetzt.length < 6 || vor.length < 6) return [];
+    const lo = l => Math.min(...l.map(x => x.e)), hi = l => Math.max(...l.map(x => x.e)), a = r1(hi(jetzt) - lo(jetzt)), b = r1(hi(vor) - lo(vor));
+    if(Math.abs(a - b) < 40) return [];
+    return [fall('liga_spanne', [], 34, a < b ? 'Die Liga rückt zusammen' : 'Die Liga zieht auseinander',
+      `${a} Elo zwischen dem Ersten und dem Letzten, vor 30 Tagen ${b}.`,
+      {jetzt:jetzt.map(x => ({p:x.p, e:r1(x.e)})), vor:{lo:r1(lo(vor)), hi:r1(hi(vor))}, a, b})]; },
   liga_wochentag:(S) => { if(S.n < 100) return [];
     const i = S.wtag.indexOf(Math.max(...S.wtag)), q = S.wtag[i] / S.n;
     if(q < .25) return [];
@@ -278,16 +368,16 @@ Object.keys(FAKT).forEach(k => { if(!FAKTEN[k]) throw new Error('Fakt ohne Rechn
 
 // ── Wählen ──────────────────────────────────────────────────────────
 // Die Sperren der Durchgänge; der vierte lässt nur noch die Art der
-// letzten vier und das Paar aus Art und Spieler gelten, der fünfte nur, dass
-// nicht dieselbe Art wie zuletzt kommt.
+// letzten vier und das Paar aus Art und Spieler gelten, der fünfte nichts.
 const SPERRE = [
   {art:10, rubrik:2, spieler:3, paar:true},
   {art:10, rubrik:2, spieler:1, paar:true},
   {art:10, rubrik:1, spieler:0, paar:true},
   {art:4,  rubrik:0, spieler:0, paar:true},
   // Der Notnagel: an einem Tag blieb sonst nichts, weil jeder Fakt, den
-  // die Paar-Sperre ließ, zu den letzten vier gehörte.
-  {art:1,  rubrik:0, spieler:0, paar:false}
+  // die Paar-Sperre ließ, zu den letzten vier gehörte — und in der ersten
+  // Woche der Liga trifft kaum etwas zu.
+  {art:0,  rubrik:0, spieler:0, paar:false}
 ];
 const PAAR_TAGE = 90;
 const los = s => { let h = 2166136261 >>> 0; for(let i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0) / 4294967296; };
@@ -317,7 +407,7 @@ function waehle(kand, spur, U){
 
 // ── Der Lauf ────────────────────────────────────────────────────────
 const ersterMs = Date.parse(liga[0].created_at);
-const TAGE = [], spur = [], fuehrung = {}, beste = {};
+const TAGE = [], spur = [], fuehrung = {}, beste = {}, HALTER = {};
 let fehlerApp = 0;
 const t0 = Date.now();
 // Tag für Tag über das Datum, nicht über 24 Stunden: am Ende der Sommerzeit
@@ -338,7 +428,10 @@ for(let d0 = new Date(tagKey(ersterMs) + 'T00:00:00'); d0.getTime() <= letzterMs
       _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
       _buildStories().forEach(s => { if(!DB.has(s.id)) DB.set(s.id, s); });
       const sid = currentSeason().id, C = _seasonTitleCtx(sid);
-      const aus = {sid, rank:C.rank.map(r => ({id:r.id, elo:Math.round(r.elo), games:r.games}))};
+      const aus = {sid, rank:C.rank.map(r => ({id:r.id, elo:Math.round(r.elo), games:r.games})),
+        rankAll:C.rankAll.filter(r => r.games > 0).map(r => ({id:r.id, elo:Math.round(r.elo), games:r.games}))};
+      const vs = (ALLE_SAISONS.filter(x => x.id < sid).slice(-1)[0] || null), vz = vs && seasons.find(x => x.id === vs.id);
+      aus.meister = vz && vz.player_id ? {pid:vz.player_id, monat:new Date(vz.id + '-15T12:00:00').toLocaleDateString('de-DE', {month:'long'})} : null;
       if(${vorher}) return JSON.stringify(aus);
       const amb = DB.get('ambient_${tag}_15');
       if(amb){ const d = amb.dataRef || {};
@@ -364,6 +457,9 @@ for(let d0 = new Date(tagKey(ersterMs) + 'T00:00:00'); d0.getTime() <= letzterMs
   if(vorher) continue;
   const monatTage = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
   const U = {T, tag, tagNr:d.getDate(), monat:MONAT(T), rest:monatTage - d.getDate(), monatTage, fuehrung:fuehrung[sid].slice()};
+  // Wer jeden Rekord an diesem Tag hält: für den Wechsel des Halters.
+  (A.rek || []).forEach(x => { if(x.r[0]) (HALTER[x.id] = HALTER[x.id] || []).push({T, pid:x.r[0].pid}); });
+  U.halter = HALTER;
   const S = stand(T);
   const kand = [];
   Object.keys(FAKTEN).forEach(k => { let l = []; try { l = FAKTEN[k](S, A, U) || []; } catch(e){ console.error(k, tag, String(e).slice(0, 120)); }

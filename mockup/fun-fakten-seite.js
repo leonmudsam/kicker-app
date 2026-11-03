@@ -79,7 +79,7 @@ const BILD = {
   chronik:(b) => kopf(`Chronik des Monats · ${b.l.length} von ${b.alle}`) + `<div class="fx-ch">${av(b.p)}<span class="fx-ch-l">${b.l.slice(0, 5).map(t => `<em>${esc(t)}</em>`).join('')}${b.l.length > 5 ? `<em class="mehr">+${b.l.length - 5}</em>` : ''}</span></div>`,
   // Das Zählwerk: die Zahl heute, die Marke, dazwischen die fehlenden.
   zaehler:(b) => { const fehlt = b.ziel - b.n, ziffern = String(b.n).split('');
-    return kopf(`${b.was === 'Sieg' ? 'Siege' : b.was === 'Spiel' ? 'Spiele' : 'Tore'} in der Laufbahn`) + `<div class="fx-zl">${av(b.p)}
+    return kopf(b.was === 'Liga' ? 'Partien der Liga' : `${b.was === 'Sieg' ? 'Siege' : b.was === 'Spiel' ? 'Spiele' : 'Tore'} in der Laufbahn`) + `<div class="fx-zl${b.p ? '' : ' ohne'}">${b.p ? av(b.p) : ''}
       <span class="fx-zl-z">${ziffern.map(c => `<i>${c}</i>`).join('')}</span><span class="fx-zl-f">${Array.from({length:fehlt}, () => '<i></i>').join('')}</span>
       <span class="fx-zl-m"><b class="num">${b.ziel}</b><small>noch ${fehlt}</small></span></div>`; },
   // Die Laufbahn als Kurve, der Gipfel mit Fahne, heute ein Punkt.
@@ -144,6 +144,59 @@ const BILD = {
   // Die Kette der letzten Duelle, die Serie am Ende hervorgehoben.
   kette:(b) => kopf(`Die letzten ${b.l.length} Duelle`) + `<div class="fx-kt">${av(b.a)}<span class="fx-kt-l">${b.l.map((x, i) => `<i class="${x ? 'w' : 'l'}${i >= b.l.length - b.n ? ' serie' : ''}"></i>`).join('')}</span>${av(b.b)}</div>
       <div class="fx-tau-n">${name(b.a)}${name(b.b)}</div>`,
+  // Die Wertung des Monats als Kette der Gesichter, der Meister des
+  // Vormonats mit Krone auf seinem Platz.
+  reihe:(b) => kopf(`Wertung des Monats · Meister des ${b.monat}s`) + `<div class="fx-rh" style="--n:${b.r.length}">${b.r.map((x, i) =>
+    `<span class="${x.p === b.m ? 'm' : ''}">${x.p === b.m ? '<em aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 18h18l-1.6-10-4.9 4-2.5-7-2.5 7-4.9-4z"/></svg></em>' : '<em></em>'}${av(x.p)}<small class="num">${i + 1}</small></span>`).join('')}</div>`,
+  // Der Wechsel eines Rekords: der alte Halter blass, der neue mit Licht.
+  wechsel:(b) => kopf(`Liga-Rekord · ${b.name}`) + `<div class="fx-wx"><span class="alt">${av(b.alt)}${name(b.alt)}</span><i aria-hidden="true"></i>
+    <span class="neu">${av(b.neu.p)}${name(b.neu.p)}</span></div><div class="fx-wx-t">${esc(b.neu.ev)}</div>`,
+  // Das Elo des Monats, Partie für Partie, ab dem Stand vor dem Monat.
+  monatskurve:(b, f) => { const v = b.kurve, W = 244, H = 70, lo = Math.min(...v) - 5, hi = Math.max(...v) + 5;
+    const X = i => 6 + i * (W - 44) / Math.max(1, v.length - 1), Y = y => 6 + (hi - y) * (H - 16) / (hi - lo);
+    const d = v.map((y, i) => (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(y).toFixed(1)).join('');
+    return kopf('Elo im Monat, Partie für Partie') + `<svg class="fx-svg" viewBox="0 0 ${W} ${H}" aria-hidden="true">
+      <line class="ref" x1="6" x2="${W - 38}" y1="${Y(v[0]).toFixed(1)}" y2="${Y(v[0]).toFixed(1)}"/>
+      <path class="fl" d="${d}L${X(v.length - 1).toFixed(1)} ${Y(v[0]).toFixed(1)}L6 ${Y(v[0]).toFixed(1)}Z"/><path class="ln" d="${d}"/>
+      <circle class="pt" cx="${X(v.length - 1).toFixed(1)}" cy="${Y(v[v.length - 1]).toFixed(1)}" r="4"/>
+      <text class="w" x="${(X(v.length - 1) + 7).toFixed(1)}" y="${(Y(v[v.length - 1]) + 4).toFixed(1)}">+${b.g}</text>
+      <text class="ax" x="6" y="${H - 2}">Monatsbeginn</text><text class="ax re" x="${X(v.length - 1).toFixed(1)}" y="${H - 2}">heute</text></svg>
+      <div class="fx-lg">${av(b.p)}${name(b.p)}</div>`; },
+  // Der Stern: einer in der Mitte, um ihn jeder, mit dem er gespielt hat,
+  // der Neue hell.
+  stern:(b) => { const n = b.l.length, R = 42, C = 52, max = Math.max(...b.l.map(x => x.g));
+    const pos = i => { const w = -Math.PI / 2 + i * 2 * Math.PI / n; return [C + R * Math.cos(w), C + R * Math.sin(w)]; };
+    return kopf(`Partner, mit allen ${n}`) + `<div class="fx-sn"><span class="fx-sn-b"><svg viewBox="0 0 104 104" aria-hidden="true">${b.l.map((x, i) => { const [px, py] = pos(i);
+      return `<line x1="${C}" y1="${C}" x2="${px.toFixed(1)}" y2="${py.toFixed(1)}" class="${x.p === b.letzter ? 'neu' : ''}" style="opacity:${(.25 + .75 * x.g / max).toFixed(2)}"/>`; }).join('')}</svg>
+      <i class="mitte" style="left:${C}px;top:${C}px">${av(b.p)}</i>${b.l.map((x, i) => { const [px, py] = pos(i); return `<i class="${x.p === b.letzter ? 'neu' : ''}" style="left:${px.toFixed(1)}px;top:${py.toFixed(1)}px">${av(x.p)}</i>`; }).join('')}</span>
+      <span class="fx-sn-t">${av(b.letzter)}${name(b.letzter)}<small>zuletzt dazu</small></span></div>`; },
+  // Zwei Balken: wie oft im Sturm, in den 40 Partien davor und in den
+  // letzten 20.
+  anteil:(b) => kopf('Anteil im Sturm') + `<div class="fx-sd">${av(b.p)}<span class="fx-sd-l">
+      <div><small>40 davor</small><span class="fx-bar"><i style="width:${b.qv}%"></i><u></u></span><b class="num">${b.qv} %</b></div>
+      <div class="besser"><small>letzte 20</small><span class="fx-bar"><i style="width:${b.qj}%"></i><u></u></span><b class="num">${b.qj} %</b></div></span></div>`,
+  // Dieselben vier: die zwei Paare, ihre Bilanz und die letzten Begegnungen.
+  paarung:(b) => kopf('Genau diese zwei Paare') + `<div class="fx-pg"><span class="fx-paar">${av(b.v[0])}${av(b.v[1])}</span>
+      <b class="num">${b.w}:${b.l}</b><span class="fx-paar">${av(b.h[0])}${av(b.h[1])}</span></div>
+      <div class="fx-kt fx-pg-k"><span class="fx-kt-l">${b.folge.map(x => `<i class="${x ? 'w serie' : 'l'}"></i>`).join('')}</span></div>`,
+  // Die Spanne der Liga: jeder als Punkt auf der Elo-Achse, die Klammer
+  // heute und gestrichelt die vor 30 Tagen.
+  spanne:(b) => { const e = b.jetzt.map(x => x.e), lo = Math.min(...e, b.vor.lo) - 10, hi = Math.max(...e, b.vor.hi) + 10, X = v => ((v - lo) / (hi - lo) * 100).toFixed(1);
+    const unten = b.jetzt.reduce((m, x) => x.e < m.e ? x : m), oben = b.jetzt.reduce((m, x) => x.e > m.e ? x : m);
+    return kopf('Elo der Liga, heute und vor 30 Tagen') + `<div class="fx-sp"><u class="vor" style="left:${X(b.vor.lo)}%;width:${(X(b.vor.hi) - X(b.vor.lo)).toFixed(1)}%"></u>
+      <u class="jetzt" style="left:${X(Math.min(...e))}%;width:${(X(Math.max(...e)) - X(Math.min(...e))).toFixed(1)}%"></u>
+      ${b.jetzt.map(x => `<i style="left:${X(x.e)}%;background:${farbe(x.p)}"></i>`).join('')}</div>
+      <div class="fx-sp-n"><span>${av(unten.p)}${name(unten.p)}</span><b class="num">${b.a} Elo <small>vorher ${b.b}</small></b><span>${name(oben.p)}${av(oben.p)}</span></div>`; },
+  // Die Form der Liga: jeder als Balken von der Mitte, nach rechts, was er
+  // in 14 Tagen gewann, nach links, was er verlor; der Erste in der Farbe.
+  formbalken:(b) => { const max = Math.max(...b.l.map(x => Math.abs(x.d)), 1), l = b.l.slice(0, 8);
+    return kopf(`Elo in den letzten 14 Tagen${b.l.length > 8 ? ' · die ersten acht' : ''}`) + `<div class="fx-fb">${l.map((x, i) => `<div class="${i ? '' : 'eins'}${x.d < 0 ? ' neg' : ''}">${av(x.p)}${name(x.p)}
+      <span class="fx-fb-s"><u></u><i style="${x.d < 0 ? `right:50%;width:${(-x.d / max * 50).toFixed(1)}%` : `left:50%;width:${(x.d / max * 50).toFixed(1)}%`}"></i></span><b class="num">${vz(x.d)}</b></div>`).join('')}</div>`; },
+  // Jeder als Pfeil von der Quote seiner Laufbahn (Kreis) zur Quote der
+  // letzten 14 Tage (Punkt); der mit dem größten Sprung in der Farbe.
+  formpunkte:(b) => { const l = b.l.slice(0, 8);
+    return kopf('Siegquote: Laufbahn → letzte 14 Tage') + `<div class="fx-fp">${l.map((x, i) => { const a = Math.min(x.qa, x.q), c = Math.max(x.qa, x.q);
+      return `<div class="${i ? '' : 'eins'}${x.d < 0 ? ' neg' : ''}">${av(x.p)}${name(x.p)}<span class="fx-fp-s"><u></u><em style="left:${a}%;width:${c - a}%"></em><s style="left:${x.qa}%"></s><i style="left:${x.q}%"></i></span><b class="num">${x.q} %</b></div>`; }).join('')}</div>`; },
   // Die Woche als Säulen, der Tag der Liga in der Farbe.
   woche:(b) => { const max = Math.max(...b.w);
     return kopf('Partien je Wochentag') + `<div class="fx-wo">${b.w.map((n, i) => `<span class="${i === b.i ? 'an' : ''}"><b class="num">${n}</b><i style="height:${(n / max * 100).toFixed(0)}%"></i><small>${['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'][i]}</small></span>`).join('')}</div>`; },
@@ -236,7 +289,7 @@ const seite = `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta 
     <li><b>Prüfen.</b> Um 15 Uhr rechnet jeder Fakt auf dem Stand der Liga, ob er zutrifft, mit welchen Spielern und wie spannend: 0 bis 100, je knapper, näher oder seltener, desto mehr.</li>
     <li><b>Sperren.</b> Nicht dieselbe Art wie in den letzten zehn Fun Facts (der Schlussspurt: drei), nicht dieselbe Rubrik wie in den letzten zwei, kein Spieler aus den letzten drei, und dieselbe Art über denselben Spieler höchstens alle neunzig Tage. Das Titelrennen kennt die Sperren für Spieler nicht: oben stehen jeden Monat dieselben.</li>
     <li><b>Wählen.</b> Der spannendste, der frei ist; wer in den letzten zehn Fun Facts schon stand, verliert je Auftritt zehn Punkte. Gleich spannend entscheidet das Los des Datums, auf jedem Gerät dasselbe.</li>
-    <li><b>Lockern.</b> Bleibt nichts, gelten erst die Spieler nur noch für den letzten Fun Fact, dann die Rubrik nur noch für den letzten, dann die Art nur noch für die letzten vier; ganz zuletzt nur, dass nicht dieselbe Art wie zuletzt kommt. Ein Tag bleibt nie leer.</li>
+    <li><b>Lockern.</b> Bleibt nichts, gelten erst die Spieler nur noch für den letzten Fun Fact, dann die Rubrik nur noch für den letzten, dann die Art nur noch für die letzten vier; ganz zuletzt gilt keine Sperre mehr. Ein Tag bleibt nie leer.</li>
   </ol>
   <p class="ff-satz">Die App zieht per Los mit Sperren für Art (sieben Tage), Rubrik (zwei Tage), Spieler (zwei Tage) und Art mit Spieler (dreißig Tage); wie knapp ein Rennen ist, weiß das Los nicht. Ihre Rubriken sind sieben, die des Entwurfs zwölf: Titelrennen, Saisonschluss, Rekorde, Teams, Positionen und Abweichung kommen dazu, die Laufbahn teilt sich mit dem Insignium.</p>
   <p class="ff-satz">Gelockert werden musste an ${Object.entries(E.durchgang).filter(([d]) => d !== '0').reduce((s, [, n]) => s + n, 0)} von ${E.n} Tagen (${Object.entries(E.durchgang).map(([d, n]) => `Stufe ${d}: ${n}`).join(', ')}).</p>
