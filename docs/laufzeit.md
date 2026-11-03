@@ -304,6 +304,13 @@ an `matches`: die Partien je Tag, je Partie Siegchance, Abstand und Gewinn,
 und gemerkt die Fakten, Kandidaten und die Wahl je Partie — die Kette der
 Wahl läuft einmal je Datenstand.
 
+**Warum eine Karte eines Schlusses Breaking ist** (`_ehrungGrundMemo`, eine
+`WeakMap` an `matches`, je Schluss, neu, sobald `players` ein anderes Array
+ist): was der Schluss eines Tages oder einer Woche an legendären
+Auszeichnungen vergab. `_isBreaking` fragt es bei jedem Zeichnen des Feeds
+für jeden Spieler des Tages und jede Ehrung, und jede Frage zählte sonst
+sechs Auszeichnungen für alle Spieler zweimal.
+
 Die V2-Scorewahl indiziert außerdem die wirklich publizierten `visual.score`
 je Match und Storybestand. Dieser Index und die chronologische Variationsspur
 werden bei neuer Rohstory-Referenz oder `_cache.version` neu aufgebaut;

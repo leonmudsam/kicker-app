@@ -98,6 +98,10 @@ function openNewsDetail(sid){
   // Karte seit dem Rubrikband nicht mehr gibt.
   const sorte = _newsSorte(s);
   const brk = _isBreaking(s);
+  // Warum der Spieler des Tages oder eine Ehrung Breaking ist, steht auch im
+  // Blatt unter dem Balken: der Satz der Karte, ohne ihn hieß es nur
+  // „BREAKING" über einer Ehrung (`_ehrungBrkSatz`).
+  const brkGrund = brk && (((s.dataRef || {}).type === 'potd') || ((s.dataRef || {}).type === 'ehrung')) ? _breakingHeroText(s) : '';
   const negativ = _newsIstNegativ(s);
   nd.className = 'nd ' + _newsTonKlassen(s, 'nd') + (negativ ? ' nd-neg' : '') + (brk ? ' nd-brk' : '');
   // #nd ist der Scrollbehälter, nicht der Feed darunter. Eine Öffnung ist
@@ -108,6 +112,7 @@ function openNewsDetail(sid){
   nd.innerHTML = `
     ${_newsMotiv(sorte, s)}
     ${brk ? '<div class="nf-brk-band"><span class="nf-brk-punkt"></span>BREAKING</div>' : ''}
+    ${brkGrund ? `<div class="nd-brk-grund">${esc(brkGrund)}</div>` : ''}
     <div class="nd-head">
       <div class="nd-ic nv-cat-${dcat}">${svgI(icPfad(s.ic) ? s.ic : cat.ic)}</div>
       <div class="nd-title-wrap">

@@ -101,6 +101,53 @@ const EHRUNG_KOPF = new Set(['potd', 'potw', 'champion', 'vice_champion', 'team_
 const _ehrungBrichtVor = sp => (sp || []).some(x => ((x && x.posten) || [])
   .some(q => q && q.klasse === 'legendary' && !EHRUNG_KOPF.has(q.id)));
 
+// ── Warum die Karte eines Schlusses Breaking ist ────────────────────
+// Was der Schluss eines Tages (`art` 'tag', `ms` 23:59) oder einer Woche
+// ('woche', `ms` Montag 00:00, mit dem Schluss ihres Sonntags, den sie
+// trägt) an legendären Auszeichnungen vergab, die nicht seine Schlagzeile
+// sind: je Spieler und Auszeichnung eine Zeile. Nur das macht die Karte zum
+// Breaking. Eine legendäre aus einer Partie hat ihre Partie-Karte, und die
+// ist schon Breaking: gemessen am 28.10. stand „Absoluter Sieger" um 16:11
+// als Breaking an der Partie und um 23:59 noch einmal, weil der gespeicherte
+// Spieler des Tages kein `ehrungBrk` trug und beim Anzeigen jede legendäre
+// des ganzen Tages gefragt wurde. Je Datenstand und Schluss gemerkt:
+// `_isBreaking` fragt bei jedem Zeichnen des Feeds.
+const _ehrungGrundMemo = new WeakMap();
+function _ehrungBrkGrund(art, ms){
+  let m = _ehrungGrundMemo.get(matches);
+  if(!m || m.pl !== players){ m = {pl:players, je:new Map()}; _ehrungGrundMemo.set(matches, m); }
+  const k = art + '|' + ms;
+  if(m.je.has(k)) return m.je.get(k);
+  let sp = [];
+  try {
+    if(art === 'tag') sp = _ehrungTagesSchluss(ms);
+    else { const so = new Date(ms - 1); so.setHours(23, 59, 0, 0);
+      sp = _ehrungSpieler(_ehrungSchlussPosten(ms, EHRUNG_SCHLUSS.woche)).concat(_ehrungTagesSchluss(so.getTime())); }
+  } catch(e){ sp = []; }
+  const l = [];
+  sp.forEach(x => (x.posten || []).forEach(q => {
+    if(q.klasse === 'legendary' && !EHRUNG_KOPF.has(q.id)) l.push({pid:x.pid, id:q.id, name:q.name}); }));
+  m.je.set(k, l);
+  return l;
+}
+// Der Satz dazu, im Kleintext unter der Karte (`.nf-brk-sub`): ohne ihn
+// stand über einer Karte „BREAKING", und niemand sah, wofür.
+function _ehrungBrkSatz(l, art){
+  if(!l || !l.length) return '';
+  const was = l.map(q => `„${q.name}“ für ${pname(q.pid)}`);
+  return `Breaking, weil der Schluss ${art === 'woche' ? 'der Woche' : 'des Tages'} ${_namenKurz(was)} brachte, `
+    + (l.length === 1 ? 'eine legendäre Auszeichnung.' : 'legendäre Auszeichnungen.');
+}
+// Der Schluss, den eine Karte trägt: der Tag eines Spielers des Tages oder
+// einer Ehrung des Tages, der Montag nach einer Woche.
+function _ehrungSchlussVon(s){
+  const d = (s && s.dataRef) || {};
+  const tag = d.type === 'potd' ? d.dayKey : d.periode === 'tag' ? d.tag : null;
+  if(tag){ const t = new Date(tag + 'T00:00:00'); t.setHours(23, 59, 0, 0); return {art:'tag', ms:t.getTime()}; }
+  if(d.periode === 'woche' && d.bis) return {art:'woche', ms:Number(d.bis) + 1};
+  return null;
+}
+
 // Gezählt wird mit der Auszeichnung selbst (`count` mit Schnitt), eine
 // Millisekunde vor dem Schluss gegen den Schluss: was dazwischen dazukam,
 // hat er gebracht. Ein Zeitraum: wer darin stand, steht darin [§C40].
@@ -218,10 +265,8 @@ function _newsZeitraumEhrungen(nowMs){
     const ende = new Date(ab); ende.setDate(ende.getDate() + 7);
     const S = ende.getTime();
     if(S > nowMs || S < seit || _ehrungGroessere(S - 1) === 'monat') return;
-    const sonntag = new Date(S - 1); sonntag.setHours(23, 59, 0, 0);
-    const zu = _ehrungSpieler(_ehrungSchlussPosten(S, EHRUNG_SCHLUSS.woche)).concat(_ehrungTagesSchluss(sonntag.getTime()));
     const st = _ehrungKarte(_ehrungAusLaufbahn(rcpWocheLaufbahn(ab, S - 1)), 'ehrung_der_woche_' + tagKey(ab), S - 60000 + 5000,
-      {periode:'woche', woche:tagKey(ab), von:ab, bis:S - 1, breaking:_ehrungBrichtVor(zu)});
+      {periode:'woche', woche:tagKey(ab), von:ab, bis:S - 1, breaking:_ehrungBrkGrund('woche', S).length > 0});
     if(st) out.push(st);
   });
   monate.forEach(sid => {
@@ -416,14 +461,23 @@ function _newsEhrungKompaktHtml(s, d, sp, zr, isRead, fadenHtml){
   const da = sp.filter(x => x && pm[x.pid] && x.summe > 0);
   // Nie „+1": wer als Einziger übrig bliebe, steht mit Gesicht da [§C33].
   const vorn = da.length > EH_KOMPAKT ? da.slice(0, EH_KOMPAKT - 1) : da, rest = da.length - vorn.length;
-  const art = {monat:['crown', 'EHRUNG DES MONATS'], woche:['weekKing', 'EHRUNG DER WOCHE'],
-    tag:['medal', 'EHRUNG DES TAGES']}[d.periode] || ['medal', 'DIE EHRUNG'];
+  const art = {monat:['crown', 'EHRUNG DES MONATS', 'Ehrung des Monats'], woche:['weekKing', 'EHRUNG DER WOCHE', 'Ehrung der Woche'],
+    tag:['medal', 'EHRUNG DES TAGES', 'Ehrung des Tages']}[d.periode] || ['medal', 'DIE EHRUNG', 'Ehrung'];
   const gold = d.periode === 'woche' || d.periode === 'monat';
   const kopf = x => `<span class="eh-kp-s ${_ehrungTon((x.posten[0] || {}).klasse)}">${_spChip(x.pid)}`
     + `<b class="num">+${_ehZahl(x.summe)}</b><small>${esc(_spName(x.pid))}</small></span>`;
   const g = d.gegenstueck;
-  return `<div class="nf-card nf-s-badge nf-ehrung nf-ehrung-kp${gold ? ' nf-ehrung-zr zr-' + d.periode : ''} nfc-badge${isRead ? ' read' : ''}" data-sid="${esc(s.id)}">
+  // Breaking wie jede andere Karte: der rote Balken, darin, welche Ehrung es
+  // ist, und unten im Kleintext, welche legendäre Auszeichnung ihres
+  // Schlusses es macht (`_ehrungBrkSatz`). Vorher zählte sie im Chip
+  // „Breaking" mit und sah im Feed aus wie jede Ehrung.
+  const brk = _isBreaking(s), grund = brk ? _breakingHeroText(s) : '';
+  return (brk ? '<div class="nf-brk-hof">' : '') + `<div class="nf-card nf-s-badge nf-ehrung nf-ehrung-kp${gold ? ' nf-ehrung-zr zr-' + d.periode : ''} nfc-badge${brk ? ' nf-brk' : ''}${isRead ? ' read' : ''}" data-sid="${esc(s.id)}">
     ${_newsMotiv('badge', s)}
+    ${brk ? `<div class="nf-brk-band"><span class="nf-brk-punkt"></span>BREAKING<span class="nf-brk-n">${esc(art[2])}</span>`
+      // Nur die Uhrzeit: mit Datum und dem Namen der Ehrung brach sie bei
+      // 360 px in eine zweite Zeile; der Tag steht im Kopf des Feeds.
+      + `<span class="nf-brk-zeit">${esc(_newsUhrzeit(s.when))}</span></div>` : ''}
     <div class="nf-top"><span class="nf-rub"><i>${svgI(art[0])}</i><b>${art[1]}</b></span>
       <span class="nf-when">${svgI('clock')}${esc(_newsUhrzeit(s.when))}${isRead ? '' : '<span class="nf-dot"></span>'}</span></div>
     <div class="nf-gr"><div class="nf-gr-r"><div class="nf-h">${esc(s.title)}</div>${zr ? `<div class="eh-zr"><span class="eh-zr-k">${esc(zr.vor)}</span> <span class="eh-zr-t">${esc(zr.wann)}</span></div>` : ''}</div>
@@ -431,7 +485,8 @@ function _newsEhrungKompaktHtml(s, d, sp, zr, isRead, fadenHtml){
     <div class="eh-kp">${vorn.map(kopf).join('')}${rest ? `<span class="eh-kp-s eh-kp-rest"><i class="num">+${rest}</i><small>weitere</small></span>` : ''}</div>
     ${klassen.length ? `<div class="eh-kp-k"><div class="eh-kp-l">${klassen.map(z => `<span class="eh-k ${z.id}"><i></i><b class="num">${z.n}</b> ${esc(z.wort)}</span>`).join('')}</div>`
       + `<div class="eh-kp-b">${klassen.map(z => `<i class="${z.id}" style="flex-grow:${z.p}"></i>`).join('')}</div></div>` : ''}
-    ${g && pm[g.pid] ? _spGegenHtml(g) : ''}${fadenHtml || ''}</div>`;
+    ${g && pm[g.pid] ? _spGegenHtml(g) : ''}
+    ${grund ? `<div class="nf-brk-sub">${esc(grund)}</div>` : ''}${fadenHtml || ''}</div>` + (brk ? '</div>' : '');
 }
 
 // Wer an einem Tag am meisten Elo abgab, als Zeile auf der Karte, die den
