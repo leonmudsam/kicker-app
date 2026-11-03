@@ -9,8 +9,10 @@
 //   node tools/build.mjs && node mockup/kopf-fuss-anlaesse.js && node mockup/kopf-fuss-lauf.js && node mockup/kopf-fuss-seite.js
 //
 // Ergebnis ist `.kopf-fuss-anlaesse.json` (nicht eingecheckt): je Partie
-// {titel, text, teile:[{typ, titel, html, ic, neg, brk}]}. `html` ist die
-// Zeile, wie das Sammelband der App sie setzt (`_newsBetont`), samt Zeichen.
+// {titel, text, teile:[{typ, titel, desc, html, …}], fuesse:{key:{rang, html}},
+// formen:{key:{rang, t, d}}, koepfe:{key:{rang, html}}, app:{kopf, fuss}}.
+// `html` ist gezeichnet wie in der App: die Zeile wie im Sammelband, Kopf
+// und Fuß mit `_spScoreBild` und `_spOccasionBild`.
 'use strict';
 process.env.TZ = 'Europe/Berlin';
 const fs = require('fs');
@@ -50,6 +52,14 @@ K(`players = ${JSON.stringify(NAMES.map((n, i) => ({id:IDS[i], name:n, hidden:fa
     s.top_elo = JSON.stringify(top.slice(0, 3)); s.player_id = top[0] ? top[0].id : null; });
   globalThis.ALLE_SAISONS = seasons.slice();
   globalThis.DB = new Map();
+  // Alle Füße, die die App für eine Partie zeichnen könnte: ihre eigene
+  // Wahl (_spAnlassSnapshot) bis vor die Entscheidung, also die ganze
+  // Liste der Kandidaten statt des ersten.
+  // Die Wappen der App (Insignium um das Gesicht) wiegen je Stück viele
+  // Kilobyte; auf einer Seite mit hundert Karten wurde sie damit 240 MB
+  // groß. Hier steht das Gesicht allein, so groß wie im Wappen.
+  _spWappen = (id, px) => { const p = pmap()[id]; return p ? avHtml(p, '--av:' + Math.round((px || 48) * .62) + 'px', {}) : ''; };
+  globalThis._alleFuesse = (src => eval('(' + src.slice(0, src.indexOf('if(!kand.length)')) + 'return kand; })'))(_spAnlassSnapshot.toString());
   invalidateCache(); 0`);
 
 const tagKey = ms => { const d = new Date(ms);
@@ -73,9 +83,11 @@ for(let t = new Date(tagKey(ersterMs) + 'T00:00:00').getTime(); t <= letzterMs +
     })()`);
   } catch(e){ console.error('Generator', tagKey(jetzt), String(e).slice(0, 160)); }
   if(!spieltage.has(tagKey(jetzt))) continue;
-  // Die Karte jeder Partie dieses Tages, wie der Feed sie am Abend zeigt.
-  // Alle Zeilen, nicht die ersten vier: die Entwürfe sollen zeigen, was
-  // eine Partie trägt, auch wenn es mehr ist, als die Karte heute zeigt.
+  // Die Karte jeder Partie dieses Tages, wie der Feed sie am Abend zeigt:
+  // jede Zeile ihres Bündels mit dem Satz der Meldung, aus der sie kommt,
+  // und alles, was die App für diese Partie zeichnen könnte — jeden Kopf und
+  // jeden Fuß, der zutrifft, nicht nur den gewählten. So kann der Katalog
+  // der Entwürfe für jeden Anlass die Zeichnung der App nehmen.
   try {
     const heute = JSON.parse(K(`(() => {
       const ab = newsAnzeigeAb(${jetzt});
@@ -83,14 +95,54 @@ for(let t = new Date(tagKey(ersterMs) + 'T00:00:00').getTime(); t <= letzterMs +
         .filter(s => new Date(s.when).getTime() >= ab && new Date(s.when).getTime() <= ${jetzt}).sort(_storyFolge);
       _cache._consolFrom = null; _cache._frischVon = null; _cache._snapshotConsolFrom = null;
       const tk = ${JSON.stringify(tagKey(jetzt))}, aus = {};
+      const bild = (f, d) => { try { return d ? f(d) : ''; } catch(e){ return ''; } };
       getStoriesCache().forEach(s => {
         const d = s.dataRef || {};
         if(!d.matchId || (d.type !== 'spiel' && !(d.type === 'sammel' && d.quelle === 'spiel'))) return;
         if(tagKey(new Date(s.when)) !== tk) return;
-        const teile = (d.teile || []).map(t => ({typ:t.typ || t.type || '', titel:t.titel || '', ic:t.ic || '',
-          neg:!!t.neg, brk:!!t.brk, klasse:t.klasse || '', wert:t.wert || '', marke:t.marke || '',
+        const m = _spMatch(d.matchId);
+        if(!m) return;
+        const roh = id => DB.get(id) || {};
+        const teile = (d.type === 'sammel' ? (d.teile || []) : [{typ:'spiel', titel:s.title, ic:s.ic, id:s.id}]).map(t => ({
+          typ:t.typ || t.type || '', titel:t.titel || '', desc:roh(t.id).desc || '', ic:t.ic || '',
+          neg:!!t.neg, brk:!!t.brk, klasse:t.klasse || '', rarity:((roh(t.id).dataRef || {}).rarity) || '',
           html:'<i class="nf-sam-i">' + svgI(t.ic || 'chartBar') + '</i><span>' + _newsBetont(t.titel || '') + '</span>'}));
-        aus[d.matchId] = {titel:s.title, text:s.desc || '', brk:_isBreaking(s), teile};
+        // Jeder Fuß der App, der für diese Partie zutrifft, gezeichnet.
+        let fuesse = {};
+        try {
+          _alleFuesse(m, _newsSpielFakten(s), '').forEach(k => {
+            if(fuesse[k.key]) return;
+            const dd = k.data();
+            if(dd) fuesse[k.key] = {rang:k.rang, html:bild(v => _spOccasionBild({key:k.key, data:v}), dd)};
+          });
+        } catch(e){ fuesse = {fehler:String(e).slice(0, 80)}; }
+        // Die Formen der App, die aus der Partie selbst kommen, mit ihrem Satz.
+        const F = _spFakten(m), formen = {};
+        _spFormKand(m).filter(k => SP_ANLASS_FORMEN.has(k.key)).forEach(k => {
+          let tx = {}; try { tx = SP_FORM[k.key].text(F, k.x) || {}; } catch(e){}
+          formen[k.key] = {rang:k.rang, t:tx.t || '', d:tx.d || '',
+            html:'<i class="nf-sam-i">' + svgI(SP_FORM[k.key].ic || 'chartBar') + '</i><span>' + _newsBetont(tx.t || '') + '</span>'};
+        });
+        // Jeder Kopf der App, der zutrifft.
+        const c = _spChance(m), koepfe = {};
+        const sp = _spScoreSpezial(m);
+        const kopfDaten = k => k.key === 'aussenseiter' ? _spWippeDaten({m, c}) : k.key === 'krimi' ? _spTafelDaten({m, c})
+          : k.key === 'deutlich' ? _spZeileDaten(m) : SP_FORM[k.key] ? SP_FORM[k.key].daten(F, k.x || {}) : null;
+        (sp ? [sp] : []).concat(_spScoreKandidaten(m)).forEach(k => { if(!koepfe[k.key])
+          koepfe[k.key] = {rang:k.rang || 0, html:bild(v => _spScoreBild({key:k.key, data:v}), kopfDaten(k))}; });
+        // Was die App aus der Partie selbst zeichnet und keine Meldung hat:
+        // das erste gemeinsame Spiel, die Wende, der Rollentausch — mit
+        // einem Satz, wie ihn eine Zeile braucht.
+        const partie = {}, zeile = (ic, x) => '<i class="nf-sam-i">' + svgI(ic) + '</i><span>' + _newsBetont(x) + '</span>';
+        try { if(_spPremiereDaten(m)){ const x = _spNl(_spSieger(m)) + ' gewinnen das erste gemeinsame Spiel'; partie.premiere = {t:x, html:zeile('premiere', x)}; } } catch(e){}
+        try { const w = _spSieger(m).map(pid => ({pid, n:_newsPleitenVor(pid, m)})).filter(w => w.n >= 3).sort((a, b) => b.n - a.n)[0];
+          if(w){ const x = _spName(w.pid) + ' beendet ' + w.n + ' Niederlagen in Folge'; partie.wende = {t:x, html:zeile('comeback', x)}; } } catch(e){}
+        try { const r = _spRolleDaten(m);
+          if(r){ const x = _spName(r.pid) + ' gewinnt ' + (r.r === 'atk' ? 'im Sturm' : 'in der Abwehr') + ', sonst in ' + Math.round(r.anteil * 100) + ' % der Partien dort';
+            partie.rolle = {t:x, html:zeile('posSwap', x)}; } } catch(e){}
+        const v = _spBild(s);
+        aus[d.matchId] = {titel:s.title, text:s.desc || '', brk:_isBreaking(s), teile, fuesse, formen, koepfe, partie,
+          app:{kopf:v.form || '', fuss:v.key && v.key !== v.form ? v.key : ''}};
       });
       return JSON.stringify(aus);
     })()`));

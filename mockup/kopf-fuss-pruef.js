@@ -14,6 +14,8 @@
 //  • abgeschnitten — ein Name oder eine Zahl passt nicht in ihr Feld;
 //  • Umbruch — eine Beschriftung außer dem Satz des Fußes bricht um.
 // Die Zeilen unter der Schlagzeile (`.nf-sam`) zählen für die ersten drei mit.
+// Köpfe und Füße der App (`-app`) nur für die ersten und das Abschneiden:
+// ihr Inneres misst die App selbst.
 // Das Ergebnis steht in `.kopf-fuss-pruef.json` und auf der Seite; der Lauf
 // endet rot, wenn eine Zahl nicht null ist.
 'use strict';
@@ -50,17 +52,20 @@ node('kopf-fuss-seite.js', {KF_ALLE:daten, KF_ALLE_HTML:seite});
       return q.width > 0 && q.height > 0 && s.visibility !== 'hidden' && s.display !== 'none' && +s.opacity > 0; };
     const mitText = e => [...e.childNodes].some(t => t.nodeType === 3 && t.textContent.trim());
     // Zeichen ohne eigenen Text, die einander trotzdem nicht berühren dürfen.
-    const ZEICHEN = '.kf-wt i, .kf-rg-l em, .kf-zw-l i, .kf-wp-a, .kf-wp-n, .kf-tp-av, .kf-kal-g i, .kf-pk-r i, .kf-luecke, .kf-dom i, '
-      + '.kf-kette i, .kf-kette u, .kf-fk, .kf-gauge, .kf-st-a, .kf-st-m, .kf-flap, .kf-tor, .kf-dv-s i, .kf-ew-a em, .kf-jub-m, '
-      + '.kf-b-b, .kf-ch-b, .kf-ab-r i, .kf-sb i, .kf-nul-t, .kf-nul-b, .kf-od>i, .kf-sz-s>i, .kf-em-l em, .kf-rg-l em';
+    const ZEICHEN = '.kf-pk-r i, .kf-st-a, .kf-st-m, .kf-flap, .kf-nul-t, .kf-nul-b, .kf-rl-b, .kf-k';
     document.querySelectorAll('.kf-karte').forEach(c => {
       out.karten++;
       const n = name(c);
       // Die Zeilen (`.nf-sam`) zählen mit: Text bricht dort um, aber nichts
       // darf übereinander liegen oder über den Rand stehen.
-      ['.kf-kopf', '.kf-fuss', '.nf-sam'].forEach(sel => {
+      ['.kf-kopf', '.kf-kopf-app', '.kf-fuss', '.kf-fuss-app', '.nf-sam'].forEach(sel => {
         const box = c.querySelector(sel); if(!box) return;
         const B = rect(box), alle = [...box.querySelectorAll('*')].filter(sicht);
+        // Die Zeichnungen der App misst die App selbst (\`tests/blatt\`):
+        // dort liegen die zwei Gesichter eines Paars absichtlich übereinander,
+        // und ihre Sätze brechen um. Hier zählt nur, dass sie in der Karte
+        // bleiben und nichts abgeschnitten wird.
+        const vonApp = sel.endsWith('-app');
         alle.forEach(e => {
           if(e.closest('svg') && e.tagName !== 'svg' && e.tagName !== 'text') return;
           const q = rect(e), d = Math.max(B.left - q.left, q.right - B.right, B.top - q.top, q.bottom - B.bottom);
@@ -73,7 +78,7 @@ node('kopf-fuss-seite.js', {KF_ALLE:daten, KF_ALLE_HTML:seite});
         });
         // Zeile für Zeile: ein umbrochener Satzteil ist als Ganzes ein
         // Rechteck über beide Zeilen und träfe sonst jeden Nachbarn.
-        for(let i = 0; i < atome.length; i++) for(let j = i + 1; j < atome.length; j++){
+        if(!vonApp) for(let i = 0; i < atome.length; i++) for(let j = i + 1; j < atome.length; j++){
           const a = atome[i], b = atome[j];
           if(a.contains(b) || b.contains(a)) continue;
           let treffer = null;
@@ -91,8 +96,9 @@ node('kopf-fuss-seite.js', {KF_ALLE:daten, KF_ALLE_HTML:seite});
              || (+s.webkitLineClamp > 0 && e.scrollHeight > e.clientHeight + 1))
             out.ab.push(`${n} | ${sel} | ${cls(e)} | „${e.textContent.trim().slice(0, 30)}“`);
         });
-        if(sel !== '.nf-sam') alle.forEach(e => {
-          if(e.closest('svg') || e.closest('.kf-satz') || e.closest('.av') || !mitText(e)) return;
+        if(sel !== '.nf-sam' && !vonApp) alle.forEach(e => {
+          // Sätze brechen um wie jede Zeile: der Titel über einem Fuß auch.
+          if(e.closest('svg') || e.closest('.kf-satz') || e.closest('.kf-fuss-t') || e.closest('.av') || !mitText(e)) return;
           const s = getComputedStyle(e), lh = parseFloat(s.lineHeight) || parseFloat(s.fontSize) * 1.25;
           if(s.display === 'grid' || s.display === 'flex') return;
           const innen = rect(e).height - parseFloat(s.paddingTop) - parseFloat(s.paddingBottom) - parseFloat(s.borderTopWidth) - parseFloat(s.borderBottomWidth);
@@ -112,7 +118,7 @@ node('kopf-fuss-seite.js', {KF_ALLE:daten, KF_ALLE_HTML:seite});
   const zeig = (titel, l) => {
     const g = {};
     l.forEach(x => { const t = x.split(' | '), teil = t[0].split(' · ');
-      const key = (t[1] === '.kf-kopf' ? teil[1] : teil[2]) + ' | ' + t[2]; (g[key] = g[key] || []).push(x); });
+      const key = (t[1].startsWith('.kf-kopf') ? teil[1] : teil[2] + ' ' + (teil[3] || '')) + ' | ' + t[1] + ' | ' + t[2]; (g[key] = g[key] || []).push(x); });
     console.log(`${l.length ? '✗' : '✓'} ${titel}: ${l.length}`);
     Object.keys(g).sort((a, b) => g[b].length - g[a].length).slice(0, 12)
       .forEach(k => console.log(`    ${g[k].length}× ${k}\n       z. B. ${g[k][0]}`));
