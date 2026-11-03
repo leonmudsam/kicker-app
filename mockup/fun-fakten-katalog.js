@@ -1,0 +1,130 @@
+// Der Katalog der Fun Facts um 15 Uhr, Entwurf: jeder Fakt an genau einer
+// Stelle. `fun-fakten-lauf.js` prüft und wählt damit, `fun-fakten-seite.js`
+// zeichnet und beschreibt damit. Wer etwas ergänzt, ergänzt es hier und in
+// `FAKTEN` des Laufs (die Bedingung) und `BILD` der Seite (die Zeichnung).
+//
+// ── Die Regel in vier Schritten ─────────────────────────────────────
+//  1. Prüfen. Um 15 Uhr eines Tages ohne Partie bis dahin rechnet jeder Fakt
+//     auf dem Stand der Liga, ob er gerade zutrifft, und wenn ja, mit welchen
+//     Spielern und wie spannend: `spannung` von 0 bis 100 sagt, wie knapp,
+//     wie nah, wie selten es gerade ist — ein Titelrennen mit 4 Elo Abstand
+//     mehr als eines mit 38, eine Marke, der ein Sieg fehlt, mehr als eine,
+//     der fünf fehlen.
+//  2. Sperren. Nicht wieder, was eben stand: dieselbe Art in den letzten
+//     zehn Fun Facts (der Schlussspurt: drei), dieselbe Rubrik wie einer der
+//     letzten zwei, ein Spieler aus einem der letzten drei, dieselbe Art
+//     über denselben Spieler in den letzten neunzig Tagen. Das Titelrennen
+//     kennt die letzten beiden nicht: oben stehen jeden Monat dieselben.
+//  3. Wählen. Der spannendste Fakt, der nicht gesperrt ist; wer in den
+//     letzten zehn Fun Facts schon stand, verliert je Auftritt zehn Punkte
+//     (außer im Titelrennen).
+//     Gleich spannend entscheidet das Los des Datums, auf jedem Gerät
+//     dasselbe.
+//  4. Lockern. Bleibt nichts, fallen die Sperren in dieser Folge: erst die
+//     Spieler bis auf den letzten Fun Fact, dann die Rubrik bis auf den
+//     letzten, dann die Art bis auf die letzten vier; ganz zuletzt gilt nur
+//     noch, dass nicht dieselbe Art wie zuletzt kommt. Ein Tag bleibt nie
+//     leer.
+//  Die App zieht heute aus 39 Vorlagen per Los; die meisten sagen „X führt
+//  bei Y“, und ob ein Rennen knapp ist, weiß das Los nicht.
+'use strict';
+
+// ── Die Rubriken ────────────────────────────────────────────────────
+// Je Rubrik die Aufschrift der Karte und ihr Ton (eine Farbe der App,
+// `nf-fakt-<ton>`). Neue Rubriken nehmen einen vorhandenen Ton.
+const RUBRIK = {
+  titel:     {name:'Titelrennen',        label:'TITELRENNEN',        ton:'chronik'},
+  schluss:   {name:'Saisonschluss',      label:'SAISONSCHLUSS',      ton:'chronik'},
+  rekord:    {name:'Rekorde',            label:'REKORDJAGD',         ton:'auszeichnung'},
+  auszeich:  {name:'Auszeichnungen',     label:'AUSZEICHNUNGEN',     ton:'auszeichnung'},
+  chronik:   {name:'Chronik',            label:'AUS DER CHRONIK',    ton:'chronik'},
+  laufbahn:  {name:'Laufbahn',           label:'AUS DER LAUFBAHN',   ton:'laufbahn'},
+  insignium: {name:'Insignium',          label:'DIE LEITER',         ton:'laufbahn'},
+  team:      {name:'Teams',              label:'ZU ZWEIT',           ton:'persoenlich'},
+  position:  {name:'Positionen',         label:'VORN UND HINTEN',    ton:'form'},
+  abweich:   {name:'Abweichung',         label:'GEGEN DIE ERWARTUNG',ton:'form'},
+  duell:     {name:'Duelle',             label:'DUELL IN ZAHLEN',    ton:'duell'},
+  liga:      {name:'Liga',               label:'LIGA IN ZAHLEN',     ton:'liga'}
+};
+
+// ── Die Fakten ──────────────────────────────────────────────────────
+// Je Art: `name`, `rubrik`, `bild` (die Zeichnung in `fun-fakten-seite.js`),
+// `ic` (das Zeichen der App oben links), `wann` (die Bedingung in Worten),
+// `spannung` (wovon sie abhängt, in Worten), `spitze` (handelt von der
+// Spitze der Liga und kennt deshalb keine Spieler-Sperre: die Spitze sind
+// immer dieselben, und das Titelrennen kam sonst einmal in fünf Monaten)
+// und `abstand` (so viele Fun Facts mindestens bis zur selben Art, sonst
+// zehn). Die Rechnung steht im Lauf.
+const FAKT = {
+  titel_rennen:   {name:'Das Rennen um den Monat', rubrik:'titel', bild:'bahn', ic:'crown', spitze:true,
+    wann:'ab dem 7. Tag, bis acht Tage vor Schluss; die ersten zwei der Wertung höchstens 40 Elo auseinander',
+    spannung:'je knapper, desto mehr; ein Dritter in Reichweite zählt mit'},
+  titel_wechsel:  {name:'Die Spitze wechselt', rubrik:'titel', bild:'fuehrung', ic:'leiterAuf', spitze:true,
+    wann:'die Spitze der Wertung hat im Monat mindestens dreimal gewechselt',
+    spannung:'je öfter, desto mehr'},
+  schluss_sprint: {name:'Der Schlussspurt', rubrik:'schluss', bild:'countdown', ic:'stopwatch', spitze:true, abstand:3,
+    wann:'die letzten sieben Tage des Monats; wer höchstens 40 Elo hinter der Spitze liegt, kann noch Meister werden',
+    spannung:'je weniger Tage und je mehr Anwärter, desto mehr'},
+  rekord_jagd:    {name:'Jagd auf den Rekord', rubrik:'rekord', bild:'jagd', ic:'target',
+    wann:'der Zweite eines Liga-Rekords hat mindestens 85 % des Rekordwerts',
+    spannung:'je näher am Rekord, desto mehr'},
+  rekord_tafel:   {name:'Die Rekordtafel', rubrik:'rekord', bild:'saeulen', ic:'medalTrio',
+    wann:'die ersten zwei der Rekordtafel liegen höchstens zwei Rekorde auseinander',
+    spannung:'gleichauf mehr als knapp dahinter'},
+  auszeich_selten:{name:'Fast allein', rubrik:'auszeich', bild:'zwoelf', ic:'medalTrio',
+    wann:'eine legendäre oder seltene Auszeichnung, die höchstens zwei der Liga tragen',
+    spannung:'legendär mehr als selten, allein mehr als zu zweit'},
+  auszeich_marke: {name:'Eine fehlt', rubrik:'auszeich', bild:'perlen', ic:'marke',
+    wann:'eine Auszeichnung, die man gern holt, fehlt einmal bis zur nächsten runden Zahl (5, 10, 25 …)',
+    spannung:'legendär und hohe Zahl mehr'},
+  chronik_monat:  {name:'Die Chronik des Monats', rubrik:'chronik', bild:'chronik', ic:'calendar',
+    wann:'ab dem 10. Tag; einer hält im laufenden Monat mindestens drei Einträge der Chronik',
+    spannung:'je mehr Einträge, desto mehr'},
+  laufbahn_marke: {name:'Kurz vor der Marke', rubrik:'laufbahn', bild:'zaehler', ic:'hundred',
+    wann:'bis zum 100., 250., 500. … Sieg, zum 100., 250., 500. … Spiel oder zum 500., 1000. … Tor fehlen höchstens 3',
+    spannung:'je weniger fehlen, desto mehr'},
+  laufbahn_gipfel:{name:'Unter dem Gipfel', rubrik:'laufbahn', bild:'gipfel', ic:'peak',
+    wann:'das Elo liegt höchstens 12 unter dem eigenen Höchststand, der mindestens 14 Tage alt ist',
+    spannung:'je näher, desto mehr'},
+  insig_schwelle: {name:'Vor der nächsten Stufe', rubrik:'insignium', bild:'leiter', ic:'leiterAuf',
+    wann:'bis zur nächsten Stufe des Insigniums fehlen höchstens 150 Prestige',
+    spannung:'je weniger fehlen, desto mehr; hohe Stufe mehr'},
+  insig_duell:    {name:'Zwei auf einer Sprosse', rubrik:'insignium', bild:'tau', ic:'scaleBalance',
+    wann:'zwei Nachbarn im Prestige liegen höchstens 60 Punkte auseinander',
+    spannung:'je knapper, desto mehr'},
+  team_chemie:    {name:'Zusammen besser', rubrik:'team', bild:'chemie', ic:'handshake',
+    wann:'ein Paar ab zehn gemeinsamen Partien gewinnt mindestens 12 Punkte öfter als beide im Schnitt allein',
+    spannung:'je größer der Unterschied, desto mehr'},
+  team_ungeschlagen:{name:'Ungeschlagen zu zweit', rubrik:'team', bild:'perlen', ic:'unstoppable',
+    wann:'ein Paar hat jede seiner mindestens vier gemeinsamen Partien gewonnen',
+    spannung:'je mehr Siege, desto mehr'},
+  team_nie:       {name:'Noch nie zusammen', rubrik:'team', bild:'netz', ic:'users',
+    wann:'zwei mit je mindestens 60 Partien haben nie auf derselben Seite gestanden',
+    spannung:'je mehr Partien beide haben, desto mehr'},
+  position_seiten:{name:'Vorn oder hinten', rubrik:'position', bild:'seiten', ic:'posSwap',
+    wann:'ab je 15 Partien in Abwehr und Sturm liegt die Siegquote mindestens 20 Punkte auseinander',
+    spannung:'je größer der Unterschied, desto mehr'},
+  abweich_mehr:   {name:'Mehr als erwartet', rubrik:'abweich', bild:'erwartung', ic:'trendUp',
+    wann:'in den letzten 40 Partien mindestens vier Siege mehr, als die Siegchancen zusammen ergeben',
+    spannung:'je mehr, desto mehr'},
+  abweich_weniger:{name:'Weniger als erwartet', rubrik:'abweich', bild:'erwartung', ic:'trendDown',
+    wann:'in den letzten 40 Partien mindestens vier Siege weniger, als die Siegchancen zusammen ergeben',
+    spannung:'je mehr, desto mehr; etwas leiser als „mehr“'},
+  abweich_aussen: {name:'Gern Außenseiter', rubrik:'abweich', bild:'tacho2', ic:'underdog',
+    wann:'als Außenseiter (Siegchance unter 45 %) ab zwölf Partien mindestens 48 % gewonnen',
+    spannung:'je höher die Quote, desto mehr'},
+  duell_serie:    {name:'Die Serie im Duell', rubrik:'duell', bild:'kette', ic:'crossedSwords',
+    wann:'einer hat einen anderen in den letzten sechs Duellen oder mehr jedes Mal geschlagen',
+    spannung:'je länger, desto mehr'},
+  duell_kipp:     {name:'Ein Sieg entscheidet', rubrik:'duell', bild:'tau', ic:'scaleBalance',
+    wann:'zwei mit mindestens 30 Duellen stehen gleich oder einen Sieg auseinander',
+    spannung:'gleich mehr als einen auseinander; je mehr Duelle, desto mehr'},
+  liga_wochentag: {name:'Der Tag der Liga', rubrik:'liga', bild:'woche', ic:'calendar',
+    wann:'ab 100 Partien; ein Wochentag trägt mindestens 25 % aller Partien',
+    spannung:'leise'},
+  liga_stunde:    {name:'Die Stunde der Liga', rubrik:'liga', bild:'stunden', ic:'clock',
+    wann:'ab 100 Partien; die Stunde mit den meisten Partien',
+    spannung:'leise'}
+};
+
+module.exports = {RUBRIK, FAKT};

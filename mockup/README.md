@@ -20,6 +20,7 @@ eigenen Kopie: so entsteht kein zweiter Generator.
 | `README-abweichung.md`, `abweichung*` | Einträge aus der Abweichung statt dem Niveau (zehn Kandidaten, vier tragen) und Rekorde auf gleitendem Fenster (vierzehn Kandidaten, sechs tragen) | Herleitung |
 | `README-staerken.md`, `staerken*` | Rekorde als Errungenschaft je Gelegenheit wie „Der Platzhirsch“, dazu „Das Übersoll“ | fünf und drei Fenster-Rekorde eingebaut |
 | `besonderheiten/` | Fünfzehn Rekorde und vierundzwanzig Monatsideen aus Besonderheiten | fünf Rekorde und vier Chroniken eingebaut [§C35, §C38]; die Seite nennt den Grund für jeden übrigen |
+| `fun-fakten*` | Die Fun Facts um 15 Uhr nach einem Katalog (`fun-fakten-katalog.js`): dreiundzwanzig Fakten in zwölf Rubriken (Titelrennen, Saisonschluss, Rekorde, Auszeichnungen, Chronik, Laufbahn, Insignium, Teams, Positionen, Abweichung, Duelle, Liga), jeder mit Bedingung, Spannung und eigener Zeichnung im Rahmen der App; an jedem Tag ohne Partie bis 15 Uhr von Mai bis Oktober geprüft und nach einer Regel gewählt (prüfen, sperren, wählen, lockern), neben dem, was die App an denselben Tagen zog | Entwurf |
 
 ## Werkzeuge
 
