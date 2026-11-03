@@ -1,4 +1,4 @@
-// Köpfe und Füße der Karte einer Partie, zweite Runde: Entwürfe, an den
+// Köpfe und Füße der Karte einer Partie, dritte Runde: Entwürfe, an den
 // echten Partien gemessen. Der Lauf spielt alle 616 Partien bis Oktober nach,
 // rechnet je Partie, welcher Kopf und welcher Fuß zutreffen würde, und wählt
 // mit der Regel, die die Seite beschreibt: ein besonderer Ausgang zuerst,
@@ -93,8 +93,6 @@ P.forEach(p => {
   const liste = (elo, wer) => [...wer].map(id => ({id, elo:r1(elo[id] || 0)})).sort((a, b) => b.elo - a.elo);
   const rangVor = liste(p.vorElo, dabeiVor), rangNach = liste(p.nachElo, im);
   const platz = (l, id) => l.findIndex(x => x.id === id) + 1;
-  // Der Tag der Liga bis hierher, für das Rennen um den Spieler des Tages.
-  const tagSiegeVor = Object.fromEntries(Object.keys(S.tag).map(k => [k, S.tag[k].s]));
   const kreuz = p.W.flatMap(w => p.L.map(l => ({w, l, s:S.h2h[w + '|' + l] || 0, n:(S.h2h[w + '|' + l] || 0) + (S.h2h[l + '|' + w] || 0)})));
   const duoVor = {W:Object.assign({s:0, n:0}, S.duo[duoKey(...p.W)]), L:Object.assign({s:0, n:0}, S.duo[duoKey(...p.L)])};
   const wocheVorAlle = JSON.parse(JSON.stringify(S.woche));
@@ -122,13 +120,10 @@ P.forEach(p => {
     const q = (S.partner[a] = S.partner[a] || {})[b] || (S.partner[a][b] = {s:0, n:0}); q.n++; q.s += s1; });
   if(p.tief === 0) (S.westen[p.sid] = S.westen[p.sid] || []).push({mid:p.id, W:p.W, L:p.L, t:p.t});
 
-  FAKT.push({p, vor, rangVor, rangNach, platz, tagSiegeVor, kreuz, duoVor, wocheVorAlle, westenVor,
+  FAKT.push({p, vor, rangVor, rangNach, platz, kreuz, duoVor, wocheVorAlle, westenVor,
     nach:Object.fromEntries(vier.map(x => [x, {serie:S.serie[x], tag:{s:S.tag[x].s, n:S.tag[x].n, folge:S.tag[x].folge.slice()},
       tagElo:S.tagElo[x].map(r1), mon:{s:S.mon[x].s, n:S.mon[x].n, q:S.mon[x].q.slice(), elo:S.mon[x].elo.slice()},
       gesamt:Object.assign({}, S.gesamt[x]), monTage:S.monTage[x].size, woche:Object.assign({}, S.woche[x])}])),
-    tagSiegeNach:Object.fromEntries(Object.keys(S.tag).map(k => [k, S.tag[k].s])),
-    tagNach:Object.fromEntries(Object.keys(S.tag).map(k => [k, {s:S.tag[k].s, n:S.tag[k].n}])),
-    tagSpieler:Object.keys(S.tag).length,
     wocheNach:JSON.parse(JSON.stringify(S.woche)),
     monTageNach:Object.fromEntries(vier.map(x => [x, [...S.monTage[x]].sort()])),
     partnerNach:p.W.map(w => ({pid:w, liste:Object.keys(S.partner[w]).filter(x => S.partner[w][x].n >= 6)
@@ -164,12 +159,6 @@ function koepfe(F){
     const fw = p.W.reduce((a, x) => a + f5(x), 0), fl = p.L.reduce((a, x) => a + f5(x), 0);
     if(fl - fw >= 3) out.push({key:'form', w:36 + 2 * (fl - fw)});
   }
-  // Der Tag bis hierher: ab der dritten Partie des Tages für alle vier.
-  if(p.W.concat(p.L).every(x => vor[x].tag.n >= 2)) out.push({key:'tag', w:34 + Math.min(10, Math.min(...p.W.concat(p.L).map(x => vor[x].tag.n)))});
-  // Kreuzduelle: mindestens zwölf Einzelduelle vorher, die Sieger mit
-  // höchstens 40 Prozent davon.
-  const kn = F.kreuz.reduce((a, c) => a + c.n, 0), ks = F.kreuz.reduce((a, c) => a + c.s, 0);
-  if(kn >= 12 && ks / kn <= .4) out.push({key:'kreuz', w:40 + r1((.4 - ks / kn) * 60)});
   // Tabellenduell: in einer belastbaren Tabelle, mit einem der ersten drei
   // oder einem Abstand von mindestens vier Plätzen.
   if(p.frei){
@@ -213,9 +202,6 @@ function fuesse(F){
     return null;
   }).filter(Boolean).sort((a, b) => b.wert - a.wert)[0];
   if(marke) add('zaehlwerk', 62 + Math.min(20, marke.wert / 20), marke, true);
-  const kurz = p.W.map(x => { const s = nach[x].gesamt.s, ziel = MARKEN.find(m => m > s);
-    return ziel && ziel - s === 1 && ziel >= 50 ? {pid:x, s, ziel, n:nach[x].gesamt.n} : null; }).filter(Boolean)[0];
-  if(kurz) add('marke', 44, kurz);
   const fluch = F.h2hFolge.map(h => { const f = h.folge.slice(0, -1); let n = 0;
     for(let i = f.length - 1; i >= 0 && f[i] === 0; i--) n++; return n >= 5 ? {w:h.w, l:h.l, n, folge:h.folge} : null; })
     .filter(Boolean).sort((a, b) => b.n - a.n)[0];
@@ -227,15 +213,7 @@ function fuesse(F){
   [['W', p.W], ['L', p.L]].forEach(([s, d]) => { const n = F.duoNach[s].n; if(n >= 25 && n % 25 === 0) jub.push({art:'duo', ids:d, n, s:F.duoNach[s].s}); });
   F.kreuz.forEach(k => { const n = k.n + 1; if(n >= 25 && n % 25 === 0) jub.push({art:'duell', ids:[k.w, k.l], n, s:k.s + 1}); });
   if(jub.length) add('jubilaeum', 56, jub.sort((a, b) => b.n - a.n)[0], true);
-  if(p.tief === 0) add('westen', 74, {liste:F.westen.slice(-8), n:F.westen.length, sid:p.sid}, true);
-  // Das Rennen um den Spieler des Tages: ein Sieger übernimmt allein die
-  // Führung, ab drei Siegen.
-  const allein = o => { const max = Math.max(0, ...Object.values(o)), l = Object.keys(o).filter(k => o[k] === max);
-    return max > 0 && l.length === 1 ? l[0] : null; };
-  const tagVorn = allein(F.tagSiegeNach);
-  if(tagVorn && p.W.includes(tagVorn) && F.tagSiegeNach[tagVorn] >= 3 && allein(F.tagSiegeVor) !== tagVorn)
-    add('tagesrennen', 52, {pid:tagVorn, liste:Object.keys(F.tagNach).map(k => ({pid:k, s:F.tagNach[k].s, n:F.tagNach[k].n}))
-      .sort((a, b) => b.s - a.s || a.n - b.n).slice(0, 5)}, true);
+  if(p.tief === 0) add('westen', 74, {liste:F.westen.map(w => ({mid:w.mid, t:w.t})), n:F.westen.length, sid:p.sid}, true);
   // Das Rennen um den Spieler der Woche: höchste Siegquote ab fünf Siegen.
   const wq = o => Object.keys(o).filter(k => o[k].s >= 5).map(k => ({pid:k, s:o[k].s, n:o[k].n, q:o[k].s / o[k].n}))
     .sort((a, b) => b.q - a.q || b.s - a.s);
@@ -309,7 +287,7 @@ FAKT.forEach(F => {
   if(spez && !KOPF_REIHE.slice(-sperre).includes(spez.key)) kopf = spez;
   else if(spez) verschoben = spez.key;
   if(!kopf){
-    const fair = 1 / 14;
+    const fair = 1 / 12;
     const befund = kk.filter(c => !c.spezial && !c.grund && c.key !== letzter)
       .map(c => Object.assign({}, c, {eff:wert(KOPF_REIHE, c, kk, fair)})).sort((a, b) => b.eff - a.eff)[0];
     if(befund && befund.eff >= 34) kopf = befund;
@@ -328,7 +306,7 @@ FAKT.forEach(F => {
   // Karten trugen dieselbe Tabelle. Die Schlagzeile nennt ihn trotzdem.
   const gewertet = ff.filter(c => c.key !== lf && !(c.w >= 90 && FUSS_REIHE.slice(-2).includes(c.key)))
     .filter(c => (tagZustand.n[c.key] || 0) < (c.w >= 90 ? 3 : 2))
-    .map(c => Object.assign({}, c, {eff:(c.ereignis ? 30 : 0) + wert(FUSS_REIHE.filter(Boolean), c, ff, 1 / 20)}))
+    .map(c => Object.assign({}, c, {eff:(c.ereignis ? 30 : 0) + wert(FUSS_REIHE.filter(Boolean), c, ff, 1 / 18)}))
     .sort((a, b) => b.eff - a.eff);
   const fuss = gewertet[0] || null;
   if(fuss) tagZustand.n[fuss.key] = (tagZustand.n[fuss.key] || 0) + 1;
@@ -393,5 +371,11 @@ const aus = {partien:P.length, av:AV, ic:IC, name:NAME, kopfZahl:KZ, fussZahl:FZ
   kopfFolge:folgen(KOPF_REIHE), fussFolge:folgen(FUSS_REIHE), kopfFenster:fenster(KOPF_REIHE), fussFenster:fenster(FUSS_REIHE),
   app:APP, bsp, tag:{tag:dichtester, karten:tagAmStueck}};
 fs.writeFileSync(path.join(__dirname, '.kopf-fuss.json'), JSON.stringify(aus));
+// Für die Prüfung jeder Zeichnung an jeder Partie (KF_ALLE=ziel.json): je
+// Partie alle Köpfe und Füße, die zutreffen, mit ihren Daten. So misst die
+// Prüfung auch die Partie mit der längsten Serie, dem vollsten Monat zu null
+// und den engsten Plätzen, nicht nur die zwei Beispiele der Seite.
+if(process.env.KF_ALLE) fs.writeFileSync(process.env.KF_ALLE, JSON.stringify({partien:P.length, av:AV, ic:IC, name:NAME,
+  karten:WAHL.map(w => Object.assign(karte(w), {kk:[...new Set(w.kandK)], ff:fuesse(w.F).map(c => ({key:c.key, x:c.x}))}))}));
 console.log(JSON.stringify({kopf:KZ, fuss:FZ, ohneFuss:aus.ohneFuss, moeglichK, moeglichF,
   kopfFolge:aus.kopfFolge, fussFolge:aus.fussFolge, kopfFenster:aus.kopfFenster, fussFenster:aus.fussFenster, tag:[dichtester, tagAmStueck.length]}));

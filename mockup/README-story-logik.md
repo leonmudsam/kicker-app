@@ -12,6 +12,7 @@ node mockup/story-neu-lauf.js        # misst die Entwürfe neuer Stories → .st
 node mockup/story-logik-seite.js     # baut story-logik.html, mit „Neue Stories" (story-neu-seite.js)
 node mockup/kopf-fuss-lauf.js        # wählt Kopf und Fuß jeder Partie nach der Regel der Entwürfe → .kopf-fuss.json (nicht eingecheckt)
 node mockup/kopf-fuss-seite.js       # baut kopf-fuss.html
+node mockup/kopf-fuss-pruef.js       # misst jeden Kopf und Fuß an jeder Partie, baut kopf-fuss.html mit dem Ergebnis
 ```
 
 Beide Läufe rechnen mit der Uhr der Liga (`Europe/Berlin`): Tage, Wochen
@@ -60,9 +61,9 @@ behandelt. Die Schwellen sind an diesen Zählungen gewählt.
 ## Köpfe und Füße
 
 `kopf-fuss.html` zeigt Entwürfe für die Karte einer Partie als ganze Karten
-aus echten Partien: vierzehn Köpfe, die alle vier Gesichter und den Endstand
-zeigen (vier Grundansichten, vier besondere Ausgänge, sechs Befunde), und
-zwanzig Füße, je mit einem Anlass (zehn Ereignisse, zehn Zustände).
+aus echten Partien: zwölf Köpfe, die alle vier Gesichter und den Endstand
+zeigen (vier Grundansichten, vier besondere Ausgänge, vier Befunde), und
+achtzehn Füße, je mit einem Anlass (neun Ereignisse, neun Zustände).
 `kopf-fuss-lauf.js` rechnet für jede der 616 Partien, welche zutreffen, und
 wählt nach der Regel der Seite: ein besonderer Ausgang zuerst, dann ein
 Befund nach Gewicht, das mit jedem Einsatz abklingt und für Seltenes steigt,
@@ -71,7 +72,10 @@ hintereinander, ein Fuß höchstens zweimal am Tag. Die Seite zeigt einen
 Spieltag am Stück, jede Zeichnung mit Regel und zwei Beispielen und die
 Verteilung über alle Partien. Den Rahmen der Karte und die Gesichter
 zeichnet die App (`dist/index.html`), Kopf und Fuß `kopf-fuss-seite.js` mit
-`kopf-fuss.css`.
+`kopf-fuss.css`. `kopf-fuss-pruef.js` zeichnet jeden Kopf und jeden Fuß an
+jeder Partie, an der er zutrifft, als eigene Karte und misst sie in Chromium:
+nichts ragt hinaus, nichts überschneidet sich, kein Name und keine Zahl wird
+abgeschnitten, keine Beschriftung bricht um. Die Seite nennt das Ergebnis.
 
 Die **Texte** stehen in `story-logik-seite.js`, gelesen aus
 `src/js/26-news-konstanten.js`, `27-news-generator.js`, `28-news-ambient.js`,
