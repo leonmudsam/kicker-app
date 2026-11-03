@@ -2969,6 +2969,10 @@ const _wocheSchluss = _schlussAm(new RealDate(2026, 7, 4, 8, 0, 0).getTime(), `
     gleich:!!e && !!w && new Date(e.when).getTime() === new Date(w.when).getTime(),
     darunter:!!e && !!w && folgen.every(f => f.indexOf(e.id) === f.indexOf(w.id) + 1),
     brk:!!e && _isBreaking(e) && !!w && !_isBreaking(w) && !w.dataRef.abschluss,
+    // Breaking wie jede Karte, mit dem Grund im Kleintext: welche Ehrung im
+    // Balken, welche legendäre Auszeichnung des Schlusses darunter.
+    balken:/class="nf-brk-band"[^]*?Ehrung der Woche/.test(e ? _newsCardHtmlM2(e, false, false, '') : ''),
+    grund:((e ? _newsCardHtmlM2(e, false, false, '') : '').match(/<div class="nf-brk-sub">([^<]*)<\\/div>/) || [])[1] || '',
     gold:/nf-ehrung-zr zr-woche/.test(e ? _newsCardHtmlM2(e, false, false, '') : '') && /EHRUNG DER WOCHE/.test(e ? _newsCardHtmlM2(e, false, false, '') : ''),
     runden:roh.filter(x => (x.dataRef||{}).type === 'ehrung' && !x.dataRef.periode).length};`);
 ok(_wocheSchluss.sammler && _wocheSchluss.potw && _wocheSchluss.zr === 'Geholt vom\u00a027.07. bis\u00a002.08.',
@@ -2978,6 +2982,50 @@ ok(_wocheSchluss.zahl === _wocheSchluss.rck && _wocheSchluss.zahl > 10 && !_woch
 ok(_wocheSchluss.gleich && _wocheSchluss.darunter && _wocheSchluss.gold,
    'sie steht zur Zeit der Wochenkarte direkt darunter, in deren Gold und mit eigener Rubrik', JSON.stringify(_wocheSchluss));
 ok(_wocheSchluss.brk, 'der Award-Sammler aus dem Schluss macht sie zum Breaking, nicht die Wochenkarte', JSON.stringify(_wocheSchluss));
+ok(_wocheSchluss.balken && _wocheSchluss.grund === 'Julian holt sich zum Schluss der Woche die legendäre Auszeichnung „Award-Sammler“, zum ersten Mal.',
+   'sie traegt den Balken mit ihrer Ehrung und erzaehlt im Kleintext, wer welche legendaere Auszeichnung des Schlusses holt', JSON.stringify([_wocheSchluss.balken, _wocheSchluss.grund]));
+
+// ── Eine legendäre aus einer Partie ist einmal Breaking ─────────────
+// An ihrer Partie. Der Spieler des Tages trug sie in seiner Ehrung, und ein
+// gespeicherter ohne ehrungBrk wurde an jeder legendären des ganzen Tages
+// gemessen: am 28.10. stand „Absoluter Sieger" um 16:11 als Breaking an der
+// Partie und um 23:59 noch einmal am Spieler des Tages. Am 26.08. holen Leon
+// und Martin „Dominator" in einer Partie; weder der neue noch ein
+// gespeicherter Spieler des Tages, dem eine Ehrung der Runde mit dieser
+// Auszeichnung beim Anzeigen zufällt, ist Breaking. Vergibt der Schluss
+// selbst eine (gestellt: der Award-Sammler), ist er es, und der Kleintext
+// sagt warum.
+const _einmalBrk = _schlussAm(FIXED, `
+  const p = roh.find(x => x.id === 'potd_2026-08-26');
+  const alt = Object.assign({}, p, {dataRef:Object.assign({}, p.dataRef)});
+  delete alt.dataRef.ehrung; delete alt.dataRef.ehrungVoll; delete alt.dataRef.ehrungBrk;
+  const leg = p.dataRef.ehrung.filter(x => x.posten.some(q => q.klasse === 'legendary'));
+  const runde = {id:'ehrung_m_alt', cat:'badge', ic:'medal', when:new Date(2026, 7, 26, 18, 30), prio:STORY_PRIO.ehrung,
+    title:'Alte Ehrung einer Runde', desc:'', dataRef:{type:'ehrung', ab:new Date(2026, 7, 26, 15).getTime(), bis:new Date(2026, 7, 26, 16, 30).getTime(),
+      playerIds:leg.map(x => x.pid), spieler:leg}};
+  const zus = _consolidateStories([alt, runde]).find(x => x.id === p.id);
+  const echt = _ehrungTagesSchluss;
+  let gestellt = null;
+  try {
+    _ehrungTagesSchluss = ms => tagKey(ms) === '2026-08-26'
+      ? [{pid:'${_X}', summe:70, posten:[{id:'award_collector', name:'Award-Sammler', ic:'medalTrio', klasse:'legendary', mal:1, bis:1, p:70}]}] : echt(ms);
+    _ehrungGrundMemo.delete(matches);
+    const html = _newsCardHtmlM2(zus, false, false, '');
+    gestellt = {brk:_isBreaking(zus), grund:(html.match(/<div class="nf-brk-sub">([^<]*)<\\/div>/) || [])[1] || ''};
+  } finally { _ehrungTagesSchluss = echt; _ehrungGrundMemo.delete(matches); }
+  const saetze = [_ehrungBrkSatz([{pid:'${_X}', name:'Award-Sammler', bis:3}], 'tag'),
+    _ehrungBrkSatz([{pid:'${_X}', name:'Award-Sammler', bis:1}, {pid:'${_X}', name:'Unantastbar', bis:2}], 'woche'),
+    _ehrungBrkSatz([{pid:'${_X}', name:'Award-Sammler', bis:1}, {pid:'${_J}', name:'Unantastbar', bis:1}], 'tag')];
+  return {saetze, legendaer:leg.length, neu:_isBreaking(p), alt:_isBreaking(zus), traegt:(zus.dataRef.ehrung || []).some(x => x.posten.some(q => q.klasse === 'legendary')),
+    partie:roh.some(x => _isBreaking(x) && (x.dataRef||{}).matchId && tagKey(x.when) === '2026-08-26'), gestellt};`);
+ok(_einmalBrk.legendaer > 0 && _einmalBrk.traegt && !_einmalBrk.neu && !_einmalBrk.alt && _einmalBrk.partie,
+   'eine legendaere Auszeichnung aus einer Partie ist an ihrer Partie Breaking, der Spieler des Tages nicht, auch nicht ein gespeicherter, der sie in seiner Ehrung traegt', JSON.stringify(_einmalBrk));
+ok(_einmalBrk.gestellt && _einmalBrk.gestellt.brk && _einmalBrk.gestellt.grund === 'Maxi holt sich zum Schluss des Tages die legendäre Auszeichnung „Award-Sammler“, zum ersten Mal.',
+   'vergibt der Schluss des Tages eine legendaere, ist er Breaking und erzaehlt im Kleintext, wer sie holt', JSON.stringify(_einmalBrk.gestellt));
+ok(JSON.stringify(_einmalBrk.saetze) === JSON.stringify(['Maxi holt sich zum Schluss des Tages die legendäre Auszeichnung „Award-Sammler“, zum 3.\u00a0Mal.',
+    'Maxi holt sich zum Schluss der Woche die legendären Auszeichnungen „Award-Sammler“ und „Unantastbar“.',
+    'Zum Schluss des Tages zweimal legendär: „Award-Sammler“ für Maxi und „Unantastbar“ für Julian.']),
+   'der Kleintext erzaehlt die Nachricht: wer was zum wievielten Mal holt, zwei fuer einen, eine Zeile fuer mehrere', JSON.stringify(_einmalBrk.saetze));
 ok(_wocheSchluss.runden === 0, 'eine Ehrung je Runde entsteht nicht mehr: der Tag hat eine', JSON.stringify(_wocheSchluss));
 const _zeichenSchluss = _schlussAm(new RealDate(2026, 5, 29, 8, 0, 0).getTime(), `
   const z = roh.find(x => x.id === 'instag_woche_2026-06-29');

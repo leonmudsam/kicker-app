@@ -1,0 +1,253 @@
+/* Köpfe und Füße, fünfte Runde — die Seite und die Entwürfe. Die Seite steht
+   im Gewand der App: ihre Farben (`--acid`, `--gold`, `--red` …), ihre
+   Schriften, dunkel. Die Karten sind 288 px breit wie im Feed bei 360 px. */
+:root{color-scheme:dark}
+html,body{height:auto;overflow:auto;background:var(--bg)}
+.kf-seite{padding:28px max(16px,env(safe-area-inset-left,0px)) 72px;font-family:'Space Grotesk',system-ui,sans-serif;line-height:1.5;color:var(--ink)}
+.kf-held,.kf-abschnitt{position:relative;z-index:1;max-width:1180px;margin:0 auto 56px}
+.kf-ober{font:600 12px 'Sometype Mono',ui-monospace,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.kf-held h1{font-family:'Archivo Black','Arial Black',sans-serif;font-size:clamp(38px,9vw,72px);line-height:.98;letter-spacing:-.02em;margin:10px 0 14px;
+  background:linear-gradient(100deg,var(--ink) 30%,var(--acid));-webkit-background-clip:text;background-clip:text;color:transparent}
+.kf-lead{font-size:17px;color:var(--ink2);max-width:68ch;text-wrap:pretty}
+.kf-kennz{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 14px}
+.kf-kennz span{border:1px solid var(--line);border-radius:14px;padding:9px 13px;font-size:12.5px;color:var(--ink2);background:var(--surface)}
+.kf-kennz b{display:block;font:400 21px 'Archivo Black',sans-serif;color:var(--acid);line-height:1.15}
+.kf-held nav{display:flex;flex-wrap:wrap;gap:6px}
+.kf-held nav a{font:500 12px 'Sometype Mono',monospace;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;color:var(--ink);
+  border:1px solid var(--line);border-radius:999px;padding:6px 12px}
+.kf-held nav a:hover,.kf-held nav a:focus-visible{border-color:var(--acid);color:var(--acid)}
+.kf-abschnitt h2{font:400 clamp(26px,5vw,36px)/1.1 'Archivo Black',sans-serif;letter-spacing:-.01em;margin-bottom:10px}
+.kf-abschnitt h3{font:600 12.5px 'Sometype Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--acid);margin:30px 0 6px}
+.kf-satz-l{max-width:72ch;color:var(--ink2);margin-bottom:14px;text-wrap:pretty}
+.kf-reihe{display:flex;gap:2px;overflow-x:auto;scroll-snap-type:x proximity;padding-bottom:14px;margin:0 -16px;padding-inline:4px;
+  scrollbar-width:thin;scrollbar-color:var(--line2) transparent}
+.kf-reihe .kf-bsp{flex:0 0 320px;scroll-snap-align:start}
+.kf-bsp{width:min(320px,100%);margin:0}
+.kf-bsp .nf-wrap{padding:6px 16px 4px}
+.kf-bsp figcaption{font:500 10.5px 'Sometype Mono',monospace;color:var(--muted);padding:4px 16px 0;line-height:1.5}
+
+.kf-zahl b{color:var(--acid);font-weight:600}
+.kf-bsp-l{display:flex;flex-wrap:wrap;margin:2px -16px 0}
+.kf-liste{display:flex;flex-direction:column;gap:8px;max-width:76ch;margin:0 0 20px 1.1em;color:var(--ink2)}
+.kf-liste b{color:var(--ink)}
+.kf-zwei{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:12px 40px}
+.kf-vt{display:flex;flex-direction:column;gap:5px}
+.kf-vt-z{display:grid;grid-template-columns:minmax(0,190px) minmax(0,1fr) 34px 48px;align-items:center;gap:10px;font-size:13px;color:var(--ink2)}
+.kf-vt-z span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kf-vt-b{height:8px;border-radius:4px;background:var(--surface2)}
+.kf-vt-b i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,rgba(190,242,100,.35),var(--acid))}
+.kf-vt-z b{text-align:right;color:var(--ink);font-weight:600}
+.kf-vt-z small{text-align:right;color:var(--muted);font-size:11.5px}
+
+/* ── Die Karte ──────────────────────────────────────────────────── */
+/* Die App legt Karten außerhalb des Bildschirms erst an, wenn sie
+   hineinkommen; auf dieser Seite stehen sie immer. */
+.kf-seite .nf-card.kf-karte:not(.nf-brk){content-visibility:visible}
+.kf-karte .av{--av:28px;box-shadow:0 0 0 2px var(--bg2)}
+.kf-kopf{position:relative;margin:2px 10px 0;padding:11px 10px 8px;border-radius:13px;border:1px solid var(--line);
+  background:radial-gradient(240px 90px at 50% 0%,rgba(190,242,100,.07),transparent 70%),linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.008));
+  display:flex;flex-direction:column;gap:9px;overflow:hidden}
+/* Ohne Überlappung: übereinander deckte das zweite Gesicht die Buchstaben
+   des ersten zu. */
+.kf-paar{display:inline-flex;flex:0 0 auto;gap:3px}
+.kf-stand{display:inline-flex;align-items:baseline;gap:2px;font:400 27px/1 'Archivo Black',sans-serif;white-space:nowrap}
+.kf-stand b{font-weight:400;color:var(--acid);text-shadow:0 0 16px rgba(190,242,100,.35)}
+.kf-stand i{font-style:normal;color:var(--faint);font-size:.75em;margin:0 1px}
+.kf-stand span{color:var(--ink2)}
+.kf-nz{display:flex;align-items:baseline;justify-content:space-between;gap:6px;font-size:11px;color:var(--muted);padding-top:7px;
+  border-top:1px dashed rgba(255,255,255,.07);min-width:0}
+.kf-nz span{display:flex;gap:7px;min-width:0}
+.kf-nz span:last-child{justify-content:flex-end}
+.kf-nz b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kf-nz span.w b{color:var(--ink)}
+.kf-nz i{font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);font-style:normal}
+.kf-k-t{display:flex;justify-content:space-between;gap:8px;font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-style:normal}
+.kf-k-t .num{color:var(--ink2)}
+
+/* Anzeigetafel */
+.kf-tafel{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:6px}
+.kf-tf-s{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0}
+.kf-tf-s span.num{font:600 10.5px 'Sometype Mono',monospace;color:var(--red);white-space:nowrap}
+.kf-tf-s.w span.num{color:var(--acid)}
+.kf-tf-s:not(.w) .kf-paar{opacity:.78}
+.kf-tf-z{display:flex;align-items:center;gap:4px;perspective:300px}
+.kf-tf-z>i{width:4px;height:14px;background:radial-gradient(circle,var(--muted) 1.6px,transparent 2.1px) 0 0/4px 7px}
+.kf-flap{position:relative;display:inline-grid;place-items:center;min-width:48px;height:54px;padding:0 6px;border-radius:8px;
+  background:linear-gradient(180deg,#26302a 0 50%,#1b221d 50% 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),inset 0 -1px 0 rgba(0,0,0,.4),0 6px 14px rgba(0,0,0,.45)}
+.kf-flap::after{content:"";position:absolute;z-index:0;left:0;right:0;top:50%;height:1px;background:rgba(0,0,0,.6);box-shadow:0 1px 0 rgba(255,255,255,.035)}
+.kf-flap::before{content:"";position:absolute;left:2px;right:2px;top:calc(50% - 2px);height:4px;
+  background:radial-gradient(circle,#070908 1.5px,transparent 2px) left/4px 4px no-repeat,radial-gradient(circle,#070908 1.5px,transparent 2px) right/4px 4px no-repeat}
+/* Die Fuge liegt hinter der Ziffer: darüber las sie sich als Durchstreichen. */
+.kf-flap b{position:relative;z-index:1;font:400 34px/1 'Archivo Black',sans-serif;color:var(--ink2);transform-origin:50% 50%}
+.kf-flap.w b{color:var(--acid);text-shadow:0 0 16px rgba(190,242,100,.5)}
+
+/* Torpucks */
+.kf-pucks{position:relative;display:flex;flex-direction:column;gap:8px}
+.kf-pk-z{display:grid;grid-template-columns:auto minmax(0,1fr) 30px;align-items:center;gap:9px}
+.kf-pk-z .av{--av:24px}
+.kf-pk-z:not(.w) .kf-paar{opacity:.78}
+.kf-pk-r{position:relative;display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:3px;align-items:center}
+.kf-pk-r i{aspect-ratio:1;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--line2)}
+.kf-pk-r i.w{background:radial-gradient(circle at 35% 30%,#efffc2,var(--acid) 45%,#6f9a2c);box-shadow:0 0 7px rgba(190,242,100,.35)}
+.kf-pk-r i.l{background:radial-gradient(circle at 35% 30%,#ffc2ca,var(--red) 50%,#9b2c3f);opacity:.8}
+.kf-pk-r u{position:absolute;top:-4px;bottom:-4px;left:calc(var(--von) * 10% - 2px);right:-2px;border:1px dashed rgba(190,242,100,.35);border-radius:9px;pointer-events:none}
+.kf-pk-z b{font:400 22px/1 'Archivo Black',sans-serif;text-align:right;color:var(--ink2)}
+.kf-pk-z.w b{color:var(--acid)}
+
+/* Elo-Strom */
+.kf-strom{position:relative;height:98px}
+.kf-strom svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 0 5px rgba(247,207,74,.25))}
+.kf-st-p{fill:none;stroke-linecap:round;opacity:.78;vector-effect:non-scaling-stroke}
+.kf-st-a{position:absolute;z-index:1;display:flex;flex-direction:column;align-items:center;gap:1px}
+.kf-st-a b{font:600 10px 'Sometype Mono',monospace;color:var(--red);background:rgba(10,12,11,.8);border-radius:4px;padding:0 3px}
+.kf-st-a.w b{color:var(--acid)}
+.kf-st-a:not(.w) .av{opacity:.82}
+.kf-st-m{position:absolute;z-index:1;left:50%;top:50%;transform:translate(-50%,-50%);padding:5px 9px;border-radius:11px;
+  background:rgba(10,12,11,.86);border:1px solid var(--line2);box-shadow:0 0 18px rgba(0,0,0,.55)}
+.kf-st-m .kf-stand{font-size:23px}
+
+/* ── Der Fuß ────────────────────────────────────────────────────── */
+.kf-fuss{--fa:var(--acid);--fa-rgb:190,242,100;margin:0 10px 10px;padding:10px 11px 11px;border-radius:13px;
+  background:linear-gradient(180deg,rgba(var(--fa-rgb),.05),rgba(255,255,255,.012));border:1px solid rgba(var(--fa-rgb),.16);
+  display:flex;flex-direction:column;gap:9px}
+.kf-f-riss,.kf-f-serie,.kf-f-fluch,.kf-f-duoserie,.kf-f-liebling{--fa:var(--orange);--fa-rgb:255,120,73}
+.kf-f-spitze,.kf-f-westen,.kf-f-zaehlwerk,.kf-f-wochenrennen,.kf-f-sprung,.kf-f-aussenseiter,.kf-f-kanter,.kf-f-spitzenspiel,.kf-f-elomarke{--fa:var(--gold);--fa-rgb:247,207,74}
+.kf-f-jubilaeum,.kf-f-partner,.kf-f-auszeichnung,.kf-f-paarung{--fa:var(--purple);--fa-rgb:167,139,250}
+.kf-f-kippt,.kf-f-kalender,.kf-f-halb,.kf-f-marathon,.kf-f-pleiten{--fa:var(--blue);--fa-rgb:86,180,232}
+.kf-f-k{display:flex;align-items:center;gap:8px;min-width:0;font:600 9.5px 'Sometype Mono',monospace;letter-spacing:.13em;text-transform:uppercase;color:var(--ink2)}
+.kf-f-k>i{display:grid;place-items:center;width:23px;height:23px;border-radius:7px;background:rgba(var(--fa-rgb),.13);color:var(--fa);flex:0 0 auto}
+.kf-f-k>i svg{width:14px;height:14px}
+.kf-f-k span{min-width:0;text-wrap:balance}
+.kf-f-k b{margin-left:auto;font:400 15px/1 'Archivo Black',sans-serif;letter-spacing:0;color:var(--fa);text-transform:none;white-space:nowrap}
+.kf-satz{font-size:11.5px;color:var(--ink2);line-height:1.42}
+.kf-satz b{color:var(--ink);font-weight:600}
+.kf-fuss .av{--av:22px}
+
+.kf-fahne{fill:var(--gold);stroke:var(--gold);stroke-width:1.2;stroke-linejoin:round}
+
+/* Die Zeilen: alle, ab der fünften enger. Gestrichelt nur auf dieser
+   Seite: die Zeilen, die dieser Entwurf neu dazunimmt. */
+.kf-sam.viele .nf-sam-z:nth-child(n+5){padding-top:5px;padding-bottom:5px;font-size:12px}
+.kf-sam.viele .nf-sam-z:nth-child(n+5) .nf-sam-i{transform:scale(.82)}
+.kf-sam .nf-sam-z.kf-neu{box-shadow:inset 3px 0 0 -1px rgba(190,242,100,.55)}
+.kf-legende{display:inline-block;width:14px;height:12px;vertical-align:-1px;margin-right:4px;box-shadow:inset 3px 0 0 -1px rgba(190,242,100,.75);background:var(--surface2);border-radius:2px}
+
+/* ── Vierte Runde: Diagramme, Tabellen, Statistiken ────────────── */
+/* Statistikleiste unter der Anzeigetafel */
+.kf-stat{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;border-radius:9px;overflow:hidden}
+.kf-stat span{display:flex;flex-direction:column;align-items:center;gap:1px;padding:5px 2px;background:rgba(255,255,255,.035)}
+.kf-stat b{font:400 14px/1.1 'Archivo Black',sans-serif;color:var(--ink)}
+.kf-stat small{font:600 7.5px 'Sometype Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+
+/* Zu null: zwei Tore */
+.kf-nul{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);grid-template-rows:auto auto auto;align-items:center;justify-items:center;gap:6px 6px;
+  margin:-4px -4px 0;padding:8px 4px 4px;border-radius:11px;overflow:hidden;
+  /* Flutlicht: zwei Kegel von oben, unten der goldene Schein des leeren Tors */
+  background:linear-gradient(118deg,transparent 22%,rgba(255,255,255,.055) 30%,transparent 40%),
+    linear-gradient(242deg,transparent 22%,rgba(255,255,255,.055) 30%,transparent 40%),
+    radial-gradient(130px 70px at 22% 100%,rgba(247,207,74,.18),transparent 70%),
+    radial-gradient(160px 60px at 50% 0%,rgba(190,242,100,.10),transparent 70%)}
+.kf-nul>*{position:relative}
+.kf-nul-p.aus{filter:grayscale(1);opacity:.5}
+.kf-nul-z{display:flex;align-items:baseline;font:400 44px/1 'Archivo Black',sans-serif;letter-spacing:-.01em}
+.kf-nul-z b{font-weight:400;color:var(--acid);text-shadow:0 0 22px rgba(190,242,100,.55)}
+.kf-nul-z i{font-style:normal;color:var(--faint);font-size:.7em;margin:0 3px}
+.kf-nul-z u{text-decoration:none;color:transparent;-webkit-text-stroke:1.5px var(--gold);text-shadow:0 0 18px rgba(247,207,74,.45)}
+.kf-nul-tore{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;padding:0 4px}
+.kf-nul-t{width:100%;height:auto;aspect-ratio:100/58;overflow:visible}
+.kf-nt-n{fill:none;stroke:rgba(255,255,255,.14);stroke-width:.8}
+.kf-nt-r{fill:none;stroke:#eef3ef;stroke-width:3;stroke-linejoin:round}
+.kf-nt-b{stroke:var(--line2);stroke-width:1}
+.kf-nul-t.leer .kf-nt-r{stroke:var(--gold);filter:drop-shadow(0 0 6px rgba(247,207,74,.65))}
+.kf-nul-t.leer .kf-nt-n{stroke:rgba(247,207,74,.22)}
+.kf-nt-0{font:400 30px 'Archivo Black',sans-serif;fill:var(--gold);opacity:.32;text-anchor:middle}
+.kf-nul-t.voll .kf-nt-r{stroke:var(--ink2)}
+.kf-nt-ball{filter:drop-shadow(0 0 3px rgba(190,242,100,.55))}
+.kf-nul-b{display:flex;flex-direction:column;align-items:center;gap:2px;font-style:normal;padding:5px 8px;border-radius:9px;
+  border:1.5px solid rgba(247,207,74,.6);background:rgba(247,207,74,.08);box-shadow:0 0 16px rgba(247,207,74,.2)}
+.kf-nul-b svg{width:16px;height:16px;color:var(--gold)}
+.kf-nul-b b{font:600 9px 'Sometype Mono',monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);white-space:nowrap}
+.kf-nul-b small{font:500 8.5px 'Sometype Mono',monospace;color:var(--ink2);white-space:nowrap}
+.kf-nul-u{font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.06em;color:var(--muted);white-space:nowrap}
+.kf-nul-u.w{color:var(--gold)}
+/* Das Liniendiagramm */
+.kf-k{width:100%;height:auto;display:block;overflow:visible}
+.kf-k-g{stroke:rgba(255,255,255,.07);stroke-width:1}
+.kf-k-r{stroke:var(--fa);stroke-width:1;opacity:.6}
+.kf-k-t{font:500 8px 'Sometype Mono',monospace;fill:var(--muted);text-anchor:end}
+.kf-k-t.ref{fill:var(--fa);font-weight:700}
+.kf-k-x{font:500 8px 'Sometype Mono',monospace;fill:var(--faint)}
+.kf-k-x.re{text-anchor:end}
+.kf-k-f{fill:var(--fa);opacity:.12}.kf-k-f.neg{fill:var(--red);opacity:.16}
+.kf-k-l{fill:none;stroke:var(--fa);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.kf-k-l.neg{stroke:var(--red)}
+.kf-k-l.letzt{stroke:var(--gold);stroke-width:3.2;filter:drop-shadow(0 0 4px rgba(247,207,74,.6))}
+.kf-k-p{fill:var(--fa);stroke:var(--bg2);stroke-width:2}.kf-k-p.neg{fill:var(--red)}
+.kf-k-w{font:700 10px 'Sometype Mono',monospace;fill:var(--ink)}
+.kf-fahne{fill:var(--gold);stroke:var(--gold);stroke-width:1.2;stroke-linejoin:round}
+.kf-f-plus,.kf-f-hoehe{--fa:var(--acid);--fa-rgb:190,242,100}
+.kf-lgz{display:flex;align-items:center;gap:5px;font-size:9.5px;color:var(--muted);flex-wrap:wrap}
+.kf-lgz .av{--av:16px;font-size:6.5px;box-shadow:none}
+.kf-lgz small+.av{margin-left:6px}
+/* Rangliste der Spitze */
+.kf-rl{width:100%;border-collapse:collapse;font-size:11px;color:var(--muted)}
+.kf-rl td{padding:2px 3px;vertical-align:middle;white-space:nowrap}
+.kf-rl td:first-child{width:16px;font:600 9px 'Sometype Mono',monospace;color:var(--faint)}
+.kf-rl td:nth-child(2){width:1%}
+.kf-rl td:nth-child(2)>*{vertical-align:middle}
+/* Der Name hat seine ganze Länge: auf 48 px gekürzt stand „Johann…“. Der
+   Balken nimmt, was übrig bleibt. */
+.kf-rl td:nth-child(2) span{margin-left:5px}
+.kf-rl td.kf-rl-b{width:auto;min-width:40px}
+.kf-rl .av{--av:18px;font-size:7px;box-shadow:none}
+.kf-rl-b{position:relative}
+.kf-rl-b i{display:block;height:7px;border-radius:0 4px 4px 0;background:var(--line2)}
+.kf-rl-b u{position:absolute;top:2px;bottom:2px;width:1.5px;background:var(--ink2);transform:translateX(-50%)}
+.kf-rl th{font:600 7.5px 'Sometype Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);text-align:right;padding:0 3px 3px}
+.kf-rl-lg{display:flex;align-items:center;gap:6px;justify-content:flex-end;font:500 9px 'Sometype Mono',monospace;color:var(--muted)}
+.kf-rl-lg i{width:1.5px;height:10px;background:var(--ink2)}
+.kf-rl td.num{text-align:right;font:600 10px 'Sometype Mono',monospace;color:var(--ink2);width:28px}
+.kf-rl td.kf-rl-a{color:var(--faint);width:30px}
+.kf-rl tr.an td{color:var(--ink)}.kf-rl tr.an .kf-rl-b i{background:var(--fa);box-shadow:0 0 8px rgba(var(--fa-rgb),.45)}
+.kf-rl tr.an td:first-child{color:var(--fa)}
+
+/* ── Fünfte Runde: Regel, Katalog, Karte ─────────────────────────── */
+.kf-seite code{font:500 .92em 'Sometype Mono',monospace;color:var(--acid)}
+.kf-schritte{display:flex;flex-direction:column;gap:8px;max-width:78ch;margin:4px 0 18px 1.3em;color:var(--ink2)}
+.kf-schritte b{color:var(--ink)}
+.kf-tab-w{max-width:100%;overflow-x:auto;margin:6px 0 14px}
+.kf-kat{border-collapse:collapse;font-size:12.5px;color:var(--ink2);min-width:640px}
+.kf-kat th{font:600 10px 'Sometype Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:left;padding:6px 10px;border-bottom:1px solid var(--line2);white-space:nowrap}
+.kf-kat td{padding:6px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.kf-kat td b{color:var(--ink);font-weight:600}
+.kf-kat td small{display:block;font-size:11px;color:var(--muted)}
+.kf-kat .num{text-align:right;font-family:'Sometype Mono',monospace;white-space:nowrap}
+.kf-vgl{min-width:0;max-width:880px}
+/* Die Köpfe der App stehen, wie die App sie zeichnet. */
+.kf-kopf-app{margin:2px 0 0}
+/* Ein Fuß, der nicht den Hauptanlass zeichnet, trägt dessen Zeile als
+   Titel: sonst stünde ein Bild auf der Karte, zu dem kein Satz gehört. */
+.kf-fuss-t{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink2);line-height:1.35}
+.kf-fuss-t .nf-sam-i{flex:0 0 auto}
+.kf-fuss-app>.kf-fuss-t{margin:0 14px 6px}
+.kf-fuss .kf-fuss-t{margin-bottom:2px}
+.kf-sam .nf-sam-z.kf-neu{box-shadow:inset 3px 0 0 -1px rgba(190,242,100,.55)}
+
+/* ── Bewegung, nur wenn das Telefon sie erlaubt ─────────────────── */
+@media (prefers-reduced-motion:no-preference){
+  .kf-flap b{animation:kfKlapp .55s cubic-bezier(.3,1.4,.5,1) both}
+  .kf-tf-z .kf-flap+i+.kf-flap b{animation-delay:.12s}
+  .kf-pk-r i.w,.kf-pk-r i.l{animation:kfPuck .35s cubic-bezier(.3,1.6,.5,1) both}
+  .kf-pk-r i:nth-child(2){animation-delay:.03s}.kf-pk-r i:nth-child(3){animation-delay:.06s}.kf-pk-r i:nth-child(4){animation-delay:.09s}
+  .kf-pk-r i:nth-child(5){animation-delay:.12s}.kf-pk-r i:nth-child(6){animation-delay:.15s}.kf-pk-r i:nth-child(7){animation-delay:.18s}
+  .kf-pk-r i:nth-child(8){animation-delay:.21s}.kf-pk-r i:nth-child(9){animation-delay:.24s}.kf-pk-r i:nth-child(10){animation-delay:.27s}
+  .kf-st-p{stroke-dasharray:7 5;animation:kfFluss 1.4s linear infinite}
+  .kf-nt-ball{animation:kfBall .5s cubic-bezier(.3,1.5,.5,1) both;animation-delay:calc(var(--i) * 60ms + .2s)}
+  .kf-nul-t.leer .kf-nt-r{animation:kfPuls 2.6s ease-in-out infinite}
+}
+@keyframes kfKlapp{from{transform:rotateX(-88deg);opacity:.2}}
+@keyframes kfPuck{from{transform:scale(.2);opacity:0}}
+@keyframes kfFluss{to{stroke-dashoffset:-24}}
+@keyframes kfBall{from{transform:translateY(-26px);opacity:0}}
+@keyframes kfPuls{50%{filter:brightness(1.35)}}

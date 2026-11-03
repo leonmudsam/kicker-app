@@ -9,7 +9,11 @@ des Generators mit seiner Regel, die **Uhr** eines Tages (was wann steht),
 node tools/build.mjs                 # die Seite liest dist/index.html
 node mockup/story-logik-lauf.js      # spielt die Partien nach → .story-logik.json (nicht eingecheckt)
 node mockup/story-neu-lauf.js        # misst die Entwürfe neuer Stories → .story-neu.json (nicht eingecheckt)
-node mockup/story-logik-seite.js     # baut story-logik.html, mit „Neue Stories" (story-neu-seite.js) und „Neue Köpfe und Füße" (story-kopf-fuss-seite.js)
+node mockup/story-logik-seite.js     # baut story-logik.html, mit „Neue Stories" (story-neu-seite.js)
+node mockup/kopf-fuss-anlaesse.js    # spielt den Generator nach, je Partie Meldungen, Formen, Köpfe und Füße der App → .kopf-fuss-anlaesse.json (nicht eingecheckt)
+node mockup/kopf-fuss-lauf.js        # baut jede Karte nach dem Katalog (kopf-fuss-katalog.js) → .kopf-fuss.json (nicht eingecheckt)
+node mockup/kopf-fuss-seite.js       # baut kopf-fuss.html
+node mockup/kopf-fuss-pruef.js       # misst jeden Kopf und Fuß an jeder Partie, baut kopf-fuss.html mit dem Ergebnis
 ```
 
 Beide Läufe rechnen mit der Uhr der Liga (`Europe/Berlin`): Tage, Wochen
@@ -55,19 +59,36 @@ Karten im Rahmen des Feeds und nennt je Entwurf, was er neu zeigt, wann er
 käme, wo er stünde, ob er Breaking wäre und wie er das Karriereende
 behandelt. Die Schwellen sind an diesen Zählungen gewählt.
 
-## Neue Köpfe und Füße
+## Köpfe und Füße
 
-Der Teil „Neue Köpfe und Füße" zeigt Entwürfe für die Karte einer Partie
-als ganze Karten aus echten Partien: vier Köpfe (Serie gegen Serie, Gegen
-die Form, Erster Sieg des Tages, Kreuzduelle), die wie die Köpfe der App
-alle vier und das Ergebnis zeigen, und fünf Füße (Abstand zur Spitze, Ins
-Plus gedreht, Größter Sprung des Monats, Wieder bei 50 Prozent, Der beste
-Partner). `story-neu-lauf.js` zählt jede Regel über alle Partien und wählt
-als Beispiele Partien, in denen ein neuer Kopf und ein neuer Fuß zusammen
-auslösen; für jede fragt er den Generator der App, welchen Kopf und Fuß sie
-dort heute zeigt, und die Seite schreibt es unter die Karte.
-`story-kopf-fuss-seite.js` zeichnet sie in den Klassen der App (`sp-fk`,
-`sp-nz`, `sp-lg`).
+`kopf-fuss.html` zeigt die Karte einer Partie, wie sie nach einem Katalog
+aussähe. `kopf-fuss-katalog.js` nennt jeden Anlass und jeden Kopf genau
+einmal — Name, Quelle (Meldung der App, Form der App, aus der Partie, neu),
+Gewicht, Zeichnung, Bedingung — und beschreibt die Regel in fünf Schritten:
+sammeln, gewichten, Hauptanlass als Schlagzeile, Fuß, höchstens drei Zeilen
+und „+n weitere“. Jeder Anlass steht damit genau einmal auf der Karte. Der
+Kopf ist davon getrennt und zeigt nur das Ergebnis: ein besonderer Ausgang
+mit festem Bild, sonst die Grundansicht, die am längsten nicht dran war.
+
+`kopf-fuss-anlaesse.js` spielt den Generator der App Tag für Tag nach wie
+`story-logik-lauf.js` und liest am Abend jeder Partie, was die App über sie
+sagt und zeichnet: ihre Meldungen, ihre Formen, jeden Kopf und jeden Fuß, der
+zutrifft (gezeichnet mit `_spScoreBild` und `_spOccasionBild`, die Wappen als
+einfache Gesichter). `kopf-fuss-lauf.js` zählt den Stand vor und nach jeder
+Partie für die neuen Fakten (`neueFakten`) und baut jede Karte nach dem
+Katalog (`sammeln`, `karteBauen`, `kopfWahl`). `kopf-fuss-seite.js` zeichnet
+die Seite: die Regel, einen Spieltag am Stück, den Katalog als Tabelle mit
+Häufigkeiten und Beispielen, die Köpfe, die Verteilung; eigene Zeichnungen
+nur für die Köpfe und Füße, die die App nicht kennt (`KOPF_BILD`,
+`FUSS_BILD`). `kopf-fuss-pruef.js` zeichnet jeden Kopf und jeden Anlass mit
+Zeichnung an jeder Partie, an der er zutrifft, und misst sie in Chromium; die
+Zeichnungen der App nur auf Rand und Abschneiden, ihr Inneres misst die App
+selbst (`tests/blatt`).
+
+Ergänzen: ein neuer Anlass ist eine Zeile in `ANLASS`; ist er neu, kommen
+seine Bedingung in `neueFakten` und seine Zeichnung in `FUSS_BILD` dazu. Ein
+neuer Kopf ist eine Zeile in `KOPF`, und ist er neu, ein Eintrag in
+`KOPF_BILD`.
 
 Die **Texte** stehen in `story-logik-seite.js`, gelesen aus
 `src/js/26-news-konstanten.js`, `27-news-generator.js`, `28-news-ambient.js`,

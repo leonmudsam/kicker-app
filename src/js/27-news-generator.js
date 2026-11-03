@@ -652,7 +652,7 @@ function _buildStories(){
       try {
         ehrung = _ehrungDesTages(rep.getTime());
         groesser = _ehrungGroessere(rep.getTime());
-        brk = !groesser && _ehrungBrichtVor(_ehrungTagesSchluss(rep.getTime()));
+        brk = !groesser && _ehrungBrkGrund('tag', rep.getTime()).length > 0;
       } catch(e){ ehrung = []; }
       ehrung.forEach(x => x.posten.forEach(q => _tagGetragen.add(dayKey + '|' + x.pid + '|' + q.id)));
       if(groesser) ehrung = [];

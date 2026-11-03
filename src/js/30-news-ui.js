@@ -369,12 +369,19 @@ function _isBreaking(s){
     // Karte des Schlusses selbst trägt (`EHRUNG_KOPF`), zählt nicht. Die
     // Ehrung einer Runde bleibt still, ihre legendären Auszeichnungen haben
     // ihre eigene Karte, und der Monat ist es mit seinem Rückblick schon.
-    // Gefragt wird nur, was der Schluss vergab (`ehrungBrk`, `breaking`),
-    // nicht jede legendäre der Partien: die Ehrung trägt den ganzen Tag, die
-    // ganze Woche. Gespeicherte Karten von vorher tragen nur, was ihr
-    // Schluss vergab, und werden daran gemessen.
-    case 'potd':
-      return typeof d.ehrungBrk === 'boolean' ? d.ehrungBrk : _ehrungBrichtVor(d.ehrung);
+    // Gefragt wird nur, was der Schluss vergab (`ehrungBrk`, `breaking`,
+    // `_ehrungBrkGrund`), nicht jede legendäre der Partien: die Ehrung trägt
+    // den ganzen Tag, die ganze Woche, und eine legendäre aus einer Partie
+    // ist an ihrer Partie-Karte schon Breaking. Ein gespeicherter Spieler des
+    // Tages von vorher trägt die Antwort nicht; seine Ehrung bekommt beim
+    // Anzeigen die Ehrungen des Tages dazu (`_consolidateStories`), und an
+    // ihr gemessen war der 28.10. ein zweites Mal Breaking, für „Absoluter
+    // Sieger" aus der Partie um 16:11. Er fragt deshalb den Schluss selbst.
+    case 'potd': {
+      if(typeof d.ehrungBrk === 'boolean') return d.ehrungBrk;
+      const sch = _ehrungSchlussVon(s);
+      return !!sch && !_ehrungGroessere(sch.ms) && _ehrungBrkGrund('tag', sch.ms).length > 0;
+    }
     case 'ehrung':
       if(typeof d.breaking === 'boolean') return d.breaking;
       return d.periode === 'tag' && _ehrungBrichtVor(d.spieler);

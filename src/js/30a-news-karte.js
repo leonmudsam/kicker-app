@@ -1032,6 +1032,14 @@ function _breakingHeroText(s){
       // mit 390 Elo, Leon liegt 11 dahinter") schon, und der Schlusssatz
       // nennt keine [§C33]. Wo es nichts Neues zu sagen gibt, gibt es keinen
       // dritten Satz: der Aufrufer unterdrueckt den Rueckfall auf `desc`.
+      // Der Spieler des Tages und eine Ehrung sind Breaking nur für eine
+      // legendäre Auszeichnung ihres Schlusses; der Nachsatz sagt welche
+      // (`_ehrungBrkSatz`).
+      case 'potd':
+      case 'ehrung': {
+        const sch = _ehrungSchlussVon(s);
+        return sch ? _ehrungBrkSatz(_ehrungBrkGrund(sch.art, sch.ms), sch.art) : '';
+      }
       case 'badge_unlocked':
         return `${nm(d.playerId)} schnappt sich mit „${d.badgeName || s.title}" eine der seltensten Auszeichnungen der Liga. Das gelingt fast niemandem.`;
       case 'elo_record':

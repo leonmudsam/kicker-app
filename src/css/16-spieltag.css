@@ -1645,6 +1645,10 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 .eh-kp-b i{min-width:3px}
 .eh-kp-b i.legendary{background:var(--gold)}.eh-kp-b i.rare{background:var(--purple)}.eh-kp-b i.common{background:var(--acid)}
 .nf-ehrung-kp .nf-gegen{margin-top:0}
+/* Breaking: der Name der Ehrung im Balken weicht der Uhrzeit, bevor sie
+   umbricht. */
+.nf-ehrung-kp .nf-brk-n{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nf-ehrung-kp .nf-brk-zeit{white-space:nowrap}
 
 /* ── Die Ehrung des Tages, unter dem Spieler des Tages [§11.6f] ──────── */
 /* Ein Kopf mit Zeichen und Summe, darunter je Geehrtem eine Zeile:

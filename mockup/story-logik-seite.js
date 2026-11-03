@@ -34,8 +34,6 @@ const esc = s => String(s == null ? '' : s)
 const c = s => `<code>${esc(s)}</code>`;
 // Der Teil „Neue Stories" (Entwürfe), wenn sein Lauf da ist.
 const NEU = require('./story-neu-seite.js')(esc);
-// Der Teil „Neue Köpfe und Füße" (Entwürfe für die Karte einer Partie).
-const KF = require('./story-kopf-fuss-seite.js')(esc);
 const zahl = n => Number(n).toLocaleString('de-DE');
 const K = D.konstanten, P = K.prio, L = K.limits;
 const datum = ms => new Date(ms).toLocaleDateString('de-DE', {weekday:'short', day:'2-digit', month:'2-digit'});
@@ -284,7 +282,7 @@ const inhalt = `
   <p class="sl-hinweis">Gestellt ist eine Sache: ein Karriereende kommt in den Partien nicht vor. Für das Beispiel beendet Anton am 20.10. um 18:00 die Karriere.</p>
   <nav class="sl-nav">
     <a href="#weg">Weg</a><a href="#uhr">Uhr</a><a href="#breaking">Breaking</a><a href="#seiten">Seiten</a>
-    <a href="#zusammen">Zusammenführen</a><a href="#karten">Karten</a><a href="#anlaesse">Anlässe</a>${NEU ? NEU.nav : ''}${KF ? KF.nav : ''}<a href="#zahlen">Zahlen</a>
+    <a href="#zusammen">Zusammenführen</a><a href="#karten">Karten</a><a href="#anlaesse">Anlässe</a>${NEU ? NEU.nav : ''}<a href="kopf-fuss.html">Köpfe und Füße</a><a href="#zahlen">Zahlen</a>
   </nav>
 </header>
 
@@ -375,7 +373,6 @@ const inhalt = `
 
 ${NEU ? NEU.html : ''}
 
-${KF ? KF.html : ''}
 
 <section id="zahlen" class="sl-abschnitt">
   <h2>Zahlen</h2>
@@ -526,7 +523,7 @@ const teil = `<title>Die Stories der Liga</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 ${fonts}
 <style>${appCss}</style>
-<style>${css}${NEU ? NEU.css : ''}${KF ? KF.css : ''}</style>
+<style>${css}${NEU ? NEU.css : ''}</style>
 <main class="sl-seite">${inhalt}</main>
 <div class="nd-bg" id="slNd" role="dialog" aria-modal="true" aria-label="Blatt"><div class="nd"></div></div>
 <script type="application/octet-stream" id="sl-daten">${daten}</script>

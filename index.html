@@ -2571,6 +2571,7 @@
   .nd.nd-brk{border-color:rgba(240,86,106,.5);
     background:radial-gradient(240px 150px at 6% 0%,rgba(240,86,106,.13),transparent 70%),var(--bg2)}
   .nd-brk .nf-brk-band{margin:-18px -20px 14px;border-radius:18px 18px 0 0}
+  .nd-brk-grund{margin:-4px 0 12px;font-size:11.5px;line-height:1.45;color:var(--ink2)}
   .nd-brk .nf-motiv{color:var(--red);opacity:.11}
   .nd-bg{position:fixed;inset:0;z-index:140;background:rgba(0,0,0,.65);
     backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
@@ -6139,6 +6140,8 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 .eh-kp-b i{min-width:3px}
 .eh-kp-b i.legendary{background:var(--gold)}.eh-kp-b i.rare{background:var(--purple)}.eh-kp-b i.common{background:var(--acid)}
 .nf-ehrung-kp .nf-gegen{margin-top:0}
+.nf-ehrung-kp .nf-brk-n{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nf-ehrung-kp .nf-brk-zeit{white-space:nowrap}
 
 .nf-eht{margin:8px 13px 11px;padding:8px 10px 6px;border-radius:12px;
   background:linear-gradient(180deg,rgba(167,139,250,.07),rgba(167,139,250,.025));
@@ -6461,7 +6464,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.11.03.8e819584';
+const BUILD_VERSION='2026.11.03.12673c4d';
 function forceReload(nach){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -20133,7 +20136,7 @@ function _buildStories(){
       try {
         ehrung = _ehrungDesTages(rep.getTime());
         groesser = _ehrungGroessere(rep.getTime());
-        brk = !groesser && _ehrungBrichtVor(_ehrungTagesSchluss(rep.getTime()));
+        brk = !groesser && _ehrungBrkGrund('tag', rep.getTime()).length > 0;
       } catch(e){ ehrung = []; }
       ehrung.forEach(x => x.posten.forEach(q => _tagGetragen.add(dayKey + '|' + x.pid + '|' + q.id)));
       if(groesser) ehrung = [];
@@ -24433,8 +24436,11 @@ function _isBreaking(s){
       return true;
     case 'badge_unlocked':
       return d.rarity === 'legendary';
-    case 'potd':
-      return typeof d.ehrungBrk === 'boolean' ? d.ehrungBrk : _ehrungBrichtVor(d.ehrung);
+    case 'potd': {
+      if(typeof d.ehrungBrk === 'boolean') return d.ehrungBrk;
+      const sch = _ehrungSchlussVon(s);
+      return !!sch && !_ehrungGroessere(sch.ms) && _ehrungBrkGrund('tag', sch.ms).length > 0;
+    }
     case 'ehrung':
       if(typeof d.breaking === 'boolean') return d.breaking;
       return d.periode === 'tag' && _ehrungBrichtVor(d.spieler);
@@ -25356,6 +25362,11 @@ function _breakingHeroText(s){
         return b
           ? `Gipfeltreffen an der Spitze: Tabellenführer ${a} bezwingt Verfolger ${b} im direkten Duell und baut den Vorsprung an der Spitze aus.`
           : `Gipfeltreffen an der Spitze: ${a} setzt sich im Spitzenspiel durch und zieht weiter davon.`;
+      }
+      case 'potd':
+      case 'ehrung': {
+        const sch = _ehrungSchlussVon(s);
+        return sch ? _ehrungBrkSatz(_ehrungBrkGrund(sch.art, sch.ms), sch.art) : '';
       }
       case 'badge_unlocked':
         return `${nm(d.playerId)} schnappt sich mit „${d.badgeName || s.title}" eine der seltensten Auszeichnungen der Liga. Das gelingt fast niemandem.`;
@@ -27593,6 +27604,49 @@ const EHRUNG_KOPF = new Set(['potd', 'potw', 'champion', 'vice_champion', 'team_
 const _ehrungBrichtVor = sp => (sp || []).some(x => ((x && x.posten) || [])
   .some(q => q && q.klasse === 'legendary' && !EHRUNG_KOPF.has(q.id)));
 
+const _ehrungGrundMemo = new WeakMap();
+function _ehrungBrkGrund(art, ms){
+  let m = _ehrungGrundMemo.get(matches);
+  if(!m || m.pl !== players){ m = {pl:players, je:new Map()}; _ehrungGrundMemo.set(matches, m); }
+  const k = art + '|' + ms;
+  if(m.je.has(k)) return m.je.get(k);
+  let sp = [];
+  try {
+    if(art === 'tag') sp = _ehrungTagesSchluss(ms);
+    else { const so = new Date(ms - 1); so.setHours(23, 59, 0, 0);
+      sp = _ehrungSpieler(_ehrungSchlussPosten(ms, EHRUNG_SCHLUSS.woche)).concat(_ehrungTagesSchluss(so.getTime())); }
+  } catch(e){ sp = []; }
+  const l = [];
+  sp.forEach(x => (x.posten || []).forEach(q => {
+    if(q.klasse === 'legendary' && !EHRUNG_KOPF.has(q.id)) l.push({pid:x.pid, id:q.id, name:q.name, bis:q.bis}); }));
+  m.je.set(k, l);
+  return l;
+}
+function _ehrungBrkSatz(l, art){
+  if(!l || !l.length) return '';
+  const wann = art === 'woche' ? 'zum Schluss der Woche' : 'zum Schluss des Tages';
+  const je = new Map();
+  l.forEach(q => { if(!je.has(q.pid)) je.set(q.pid, []); je.get(q.pid).push(q); });
+  const titel = qs => _namenListe(qs.map(q => `„${q.name}“`));
+  if(je.size === 1){
+    const [pid, qs] = [...je][0];
+    if(qs.length > 1) return `${pname(pid)} holt sich ${wann} die legendären Auszeichnungen ${titel(qs)}.`;
+    const n = qs[0].bis;
+    const mal = n === 1 ? ', zum ersten Mal' : n > 1 ? `, zum ${n}.\u00a0Mal` : '';
+    return `${pname(pid)} holt sich ${wann} die legendäre Auszeichnung ${titel(qs)}${mal}.`;
+  }
+  const wer = [...je].map(([pid, qs]) => `${titel(qs)} für ${pname(pid)}`);
+  const n = l.length, oft = n <= 4 ? _zahlwortDe(n) + 'mal' : n + '-mal';
+  return `${wann[0].toUpperCase() + wann.slice(1)} ${oft} legendär: ${_namenKurz(wer)}.`;
+}
+function _ehrungSchlussVon(s){
+  const d = (s && s.dataRef) || {};
+  const tag = d.type === 'potd' ? d.dayKey : d.periode === 'tag' ? d.tag : null;
+  if(tag){ const t = new Date(tag + 'T00:00:00'); t.setHours(23, 59, 0, 0); return {art:'tag', ms:t.getTime()}; }
+  if(d.periode === 'woche' && d.bis) return {art:'woche', ms:Number(d.bis) + 1};
+  return null;
+}
+
 function _ehrungSchlussPosten(schlussMs, ids){
   const vor = schlussMs - 1, msA = _partienBis(vor), msB = _partienBis(schlussMs);
   const je = {};
@@ -27659,10 +27713,8 @@ function _newsZeitraumEhrungen(nowMs){
     const ende = new Date(ab); ende.setDate(ende.getDate() + 7);
     const S = ende.getTime();
     if(S > nowMs || S < seit || _ehrungGroessere(S - 1) === 'monat') return;
-    const sonntag = new Date(S - 1); sonntag.setHours(23, 59, 0, 0);
-    const zu = _ehrungSpieler(_ehrungSchlussPosten(S, EHRUNG_SCHLUSS.woche)).concat(_ehrungTagesSchluss(sonntag.getTime()));
     const st = _ehrungKarte(_ehrungAusLaufbahn(rcpWocheLaufbahn(ab, S - 1)), 'ehrung_der_woche_' + tagKey(ab), S - 60000 + 5000,
-      {periode:'woche', woche:tagKey(ab), von:ab, bis:S - 1, breaking:_ehrungBrichtVor(zu)});
+      {periode:'woche', woche:tagKey(ab), von:ab, bis:S - 1, breaking:_ehrungBrkGrund('woche', S).length > 0});
     if(st) out.push(st);
   });
   monate.forEach(sid => {
@@ -27771,14 +27823,17 @@ function _newsEhrungKompaktHtml(s, d, sp, zr, isRead, fadenHtml){
   const pm = pmap(), klassen = _ehrungKlassen(sp);
   const da = sp.filter(x => x && pm[x.pid] && x.summe > 0);
   const vorn = da.length > EH_KOMPAKT ? da.slice(0, EH_KOMPAKT - 1) : da, rest = da.length - vorn.length;
-  const art = {monat:['crown', 'EHRUNG DES MONATS'], woche:['weekKing', 'EHRUNG DER WOCHE'],
-    tag:['medal', 'EHRUNG DES TAGES']}[d.periode] || ['medal', 'DIE EHRUNG'];
+  const art = {monat:['crown', 'EHRUNG DES MONATS', 'Ehrung des Monats'], woche:['weekKing', 'EHRUNG DER WOCHE', 'Ehrung der Woche'],
+    tag:['medal', 'EHRUNG DES TAGES', 'Ehrung des Tages']}[d.periode] || ['medal', 'DIE EHRUNG', 'Ehrung'];
   const gold = d.periode === 'woche' || d.periode === 'monat';
   const kopf = x => `<span class="eh-kp-s ${_ehrungTon((x.posten[0] || {}).klasse)}">${_spChip(x.pid)}`
     + `<b class="num">+${_ehZahl(x.summe)}</b><small>${esc(_spName(x.pid))}</small></span>`;
   const g = d.gegenstueck;
-  return `<div class="nf-card nf-s-badge nf-ehrung nf-ehrung-kp${gold ? ' nf-ehrung-zr zr-' + d.periode : ''} nfc-badge${isRead ? ' read' : ''}" data-sid="${esc(s.id)}">
+  const brk = _isBreaking(s), grund = brk ? _breakingHeroText(s) : '';
+  return (brk ? '<div class="nf-brk-hof">' : '') + `<div class="nf-card nf-s-badge nf-ehrung nf-ehrung-kp${gold ? ' nf-ehrung-zr zr-' + d.periode : ''} nfc-badge${brk ? ' nf-brk' : ''}${isRead ? ' read' : ''}" data-sid="${esc(s.id)}">
     ${_newsMotiv('badge', s)}
+    ${brk ? `<div class="nf-brk-band"><span class="nf-brk-punkt"></span>BREAKING<span class="nf-brk-n">${esc(art[2])}</span>`
+      + `<span class="nf-brk-zeit">${esc(_newsUhrzeit(s.when))}</span></div>` : ''}
     <div class="nf-top"><span class="nf-rub"><i>${svgI(art[0])}</i><b>${art[1]}</b></span>
       <span class="nf-when">${svgI('clock')}${esc(_newsUhrzeit(s.when))}${isRead ? '' : '<span class="nf-dot"></span>'}</span></div>
     <div class="nf-gr"><div class="nf-gr-r"><div class="nf-h">${esc(s.title)}</div>${zr ? `<div class="eh-zr"><span class="eh-zr-k">${esc(zr.vor)}</span> <span class="eh-zr-t">${esc(zr.wann)}</span></div>` : ''}</div>
@@ -27786,7 +27841,8 @@ function _newsEhrungKompaktHtml(s, d, sp, zr, isRead, fadenHtml){
     <div class="eh-kp">${vorn.map(kopf).join('')}${rest ? `<span class="eh-kp-s eh-kp-rest"><i class="num">+${rest}</i><small>weitere</small></span>` : ''}</div>
     ${klassen.length ? `<div class="eh-kp-k"><div class="eh-kp-l">${klassen.map(z => `<span class="eh-k ${z.id}"><i></i><b class="num">${z.n}</b> ${esc(z.wort)}</span>`).join('')}</div>`
       + `<div class="eh-kp-b">${klassen.map(z => `<i class="${z.id}" style="flex-grow:${z.p}"></i>`).join('')}</div></div>` : ''}
-    ${g && pm[g.pid] ? _spGegenHtml(g) : ''}${fadenHtml || ''}</div>`;
+    ${g && pm[g.pid] ? _spGegenHtml(g) : ''}
+    ${grund ? `<div class="nf-brk-sub">${esc(grund)}</div>` : ''}${fadenHtml || ''}</div>` + (brk ? '</div>' : '');
 }
 
 const _spGegenHtml = g => `<div class="nf-gegen">${_spChip(g.pid)}<span><b>${esc(_spName(g.pid))}</b> gibt am meisten ab</span>`
@@ -27918,12 +27974,14 @@ function openNewsDetail(sid){
   } catch(e){}
   const sorte = _newsSorte(s);
   const brk = _isBreaking(s);
+  const brkGrund = brk && (((s.dataRef || {}).type === 'potd') || ((s.dataRef || {}).type === 'ehrung')) ? _breakingHeroText(s) : '';
   const negativ = _newsIstNegativ(s);
   nd.className = 'nd ' + _newsTonKlassen(s, 'nd') + (negativ ? ' nd-neg' : '') + (brk ? ' nd-brk' : '');
   nd.scrollTop = 0;
   nd.innerHTML = `
     ${_newsMotiv(sorte, s)}
     ${brk ? '<div class="nf-brk-band"><span class="nf-brk-punkt"></span>BREAKING</div>' : ''}
+    ${brkGrund ? `<div class="nd-brk-grund">${esc(brkGrund)}</div>` : ''}
     <div class="nd-head">
       <div class="nd-ic nv-cat-${dcat}">${svgI(icPfad(s.ic) ? s.ic : cat.ic)}</div>
       <div class="nd-title-wrap">
