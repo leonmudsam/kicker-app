@@ -285,7 +285,8 @@ function _buildAmbientStories(now, pm, nameOf, tagesStories){
       // einen Blick lesbar. Wandert in dataRef, damit sie mitpersistiert wird.
       dataRef: Object.assign({type:'ambient', sub: chosenKey, ambientRubrik:rubrikVon(chosenKey)},
                              chosen.dataRef || {},
-                             chosen.vv != null ? {vv: String(chosen.vv), vl: chosen.vl || ''} : {})
+                             // Der große Wert wie der Satz: lange Zahlen mit Tausenderpunkt.
+                             chosen.vv != null ? {vv: tausender(chosen.vv), vl: chosen.vl || ''} : {})
     });
   }
   return out;
@@ -646,7 +647,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     const bis = new Date(x.von.getFullYear(), x.von.getMonth(), x.von.getDate() + 6);
     return {cat:'history', ic:istLaut ? 'flame' : 'calendar', prio:4,
       title:istLaut ? 'Die spielreichste Woche bisher' : 'Die ruhigste Spielwoche bisher',
-      desc:`${x.n} ${x.n === 1 ? 'Partie' : 'Partien'} zwischen ${datumFmt(x.von, 'tm')} und ${datumFmt(bis, 'tm')}. `
+      desc:`${x.n} ${x.n === 1 ? 'Partie' : 'Partien'} zwischen ${datumFmt(x.von, 'tmx')} und ${tagImSatz(bis)} `
         + (istLaut ? `Der bisherige Wochenrekord.` : `Weniger wurde in keiner Woche mit Spielbetrieb gespielt.`),
       vv:String(x.n), vl:'Partien',
       dataRef:{ bild:(() => { const ws = Object.values(wochen).sort((a, b) => a.von - b.von).slice(-24);
@@ -1126,12 +1127,16 @@ function _ambientTemplatePool(now, pm, nameOf){
     }
     if(!latest) return null;
     const days = Math.floor((now.getTime() - latest.t) / 86400000);
+    // Ab dem zweiten Tag in der Einheit, die man sagen würde (`_spSeit`):
+    // eine Liga, in der Gold selten geworden ist, schrieb sonst „vor 400
+    // Tagen" und darüber „400 Tage her".
+    const her = days < 2 ? null : days < 14 ? {n:days, e:'Tagen', nom:'Tage'} : _spSeit(now.getTime() - latest.t);
     return { cat:'badge', ic: latest.badge.ic || 'trophyStar', prio:5,
       title:`${nameOf(latest.pid)} holte zuletzt Gold`,
-      desc:`Die Auszeichnung „${latest.badge.name}" ${days === 0 ? 'heute' : days === 1 ? 'gestern' : 'vor ' + days + ' Tagen'}. ${latest.badge.desc}.`,
+      desc:`Die Auszeichnung „${latest.badge.name}" ${days === 0 ? 'heute' : days === 1 ? 'gestern' : 'vor ' + her.n + ' ' + her.e}. ${latest.badge.desc}.`,
       // Ohne Wert blieb der grosse Block der Karte leer [§6].
-      vv:String(days === 0 ? 'heute' : days === 1 ? 'gestern' : days),
-      vl:days > 1 ? 'Tage her' : 'geholt',
+      vv:String(days === 0 ? 'heute' : days === 1 ? 'gestern' : her.n),
+      vl:her ? her.nom + ' her' : 'geholt',
       dataRef:{ ambientPid: latest.pid, bild:{f:'medaille', p:latest.pid, b:latest.badge.id,
         n:activePids.filter(p2 => getCachedBadges(p2).some(b => b.id === latest.badge.id)).length} } };
   }});

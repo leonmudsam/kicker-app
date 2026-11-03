@@ -22,9 +22,20 @@ function dateStr(ts){
 const _FMT_ARTEN = {uhr:{hour:'2-digit', minute:'2-digit'}, tm:{day:'2-digit', month:'2-digit'},
   tmj:{day:'2-digit', month:'2-digit', year:'2-digit'}, wt:{weekday:'long'}};
 const _FMT = {};
+// `tmx` ist ein Tag, den man in einem Satz nennt: ohne Jahr, wenn es das
+// laufende ist, sonst mit. Mit den Jahren stand „Der letzte Sieg gegen Leon
+// war am 15.03." da, und gemeint war ein März drei Jahre zuvor.
 function datumFmt(when, art){
+  const d = when instanceof Date ? when : new Date(when);
+  if(art === 'tmx') art = d.getFullYear() === new Date().getFullYear() ? 'tm' : 'tmj';
   const f = _FMT[art] || (_FMT[art] = new Intl.DateTimeFormat('de-DE', _FMT_ARTEN[art]));
-  return f.format(when instanceof Date ? when : new Date(when));
+  return f.format(d);
+}
+// Ein Tag am Ende eines Satzes trägt dessen Punkt: „am 15.03." hat ihn
+// schon, „am 15.03.27" nicht. Vorher stand „bis 21.06.." mit zweien da.
+function tagImSatz(when){
+  const t = datumFmt(when, 'tmx');
+  return t.endsWith('.') ? t : t + '.';
 }
 // ── Eine Dezimalzahl trägt hier ein Komma ───────────────────────────
 // Die Oberfläche schreibt „6,9 Gegentore", die Fun Facts schrieben „6.9" —
@@ -33,6 +44,16 @@ function datumFmt(when, art){
 function komma(v, n){
   const z = Number(v);
   return (isFinite(z) ? z : 0).toFixed(n == null ? 1 : n).replace('.', ',');
+}
+// ── Eine lange Zahl trägt Tausenderpunkte ───────────────────────────
+// Die Fun Facts setzen ihre Zahlen roh in den Satz, und mit den Jahren
+// wurden sie fünfstellig: „82820 Tore in 5152 Partien", „22673 Tore" im
+// Jahresrückblick. Ab fünf Stellen gruppiert, wie die Norm es verlangt;
+// vierstellige bleiben, wie sie sind, und eine Zahl hinter Komma, Punkt
+// oder Buchstabe ist keine eigene.
+function tausender(text){
+  return String(text == null ? '' : text).replace(/(^|[^\d.,\w])(\d{5,})(?!\d)/g,
+    (m, vor, z) => vor + _spZahl(Number(z)));
 }
 // Der Stand aus Sicht einer Seite: ihre Tore zuerst. Ohne zweites Argument
 // die der Sieger. Gespeichert ist er in der Reihenfolge der Eingabe (Team A

@@ -314,7 +314,14 @@ sechs Auszeichnungen für alle Spieler zweimal.
 Die V2-Scorewahl indiziert außerdem die wirklich publizierten `visual.score`
 je Match und Storybestand. Dieser Index und die chronologische Variationsspur
 werden bei neuer Rohstory-Referenz oder `_cache.version` neu aufgebaut;
-publizierte Grafiken selbst bleiben unverändert. `_consolidateStories` hängt
+publizierte Grafiken selbst bleiben unverändert. Die Spur beginnt nicht bei
+der ersten Partie, sondern `SP_SCORE_VORLAUF` (120) Partien vor der ältesten
+veröffentlichten Karte oder der ältesten Partie im Fenster des Generators,
+je nachdem, was früher liegt (`_spScoreAb`). Der Bestand reicht nur einen
+Monat zurück, und ab der ersten Partie wählte der Generator bei jedem neuen
+Datenstand jeden älteren Kopf noch einmal: mit vier Jahren Liga 3642 Wahlen
+und elf Sekunden je Lauf. Fragt jemand nach einer Partie vor dem Anfang,
+läuft die Spur von der ersten Partie an neu. `_consolidateStories` hängt
 neben der Eingabeliste auch an `matches` und `_cache.version`, damit eine zuvor
 noch nicht geladene Matchreferenz nach dem Datenladen richtig aufgelöst wird.
 
@@ -469,10 +476,16 @@ Worker lebt die Sitzung lang und bekommt den Datenstand nur, wenn sich
 (`_storyWorkerStand`), den Story-Bestand jedes Mal — so trifft sein Memo genau
 dann, wenn er auf dem Hauptthread getroffen hätte. Hat sich der Stand während
 der Rechnung geändert, gilt die Antwort nicht. Ohne Worker, ohne Skripttext,
-bei einem Fehler oder nach zwanzig Sekunden ohne Antwort (`STORY_WORKER_MS`)
-rechnet der Hauptthread wie zuvor, in einem ruhigen Moment (`_leerlauf`,
-höchstens anderthalb Sekunden später); nach einem Fehlschlag bleibt der
-Worker für die Sitzung aus. `tests/start` hält Worker und Hauptthread
+bei einem Fehler oder wenn ein neuer Worker den Lauf nicht binnen zwanzig
+Sekunden annimmt (`STORY_WORKER_FRIST.annahme`), rechnet der Hauptthread wie
+zuvor, in einem ruhigen Moment (`_leerlauf`, höchstens anderthalb Sekunden
+später); nach einem Fehlschlag bleibt der Worker für die Sitzung aus. Hat er
+angenommen (`_storyWorkerLebt`), rechnet er bis zu fünf Minuten
+(`STORY_WORKER_FRIST.rechnen`), ohne dass der Hauptthread übernimmt: dort liefe
+derselbe Code, nur stünde das Telefon still. Mit zwanzig Sekunden für alles
+übernahm er, sobald die Liga einige Jahre alt war. Wer die fünf Minuten
+überschreitet, wird beendet (`_storyWorkerNeu`); der Lauf bringt keine neuen
+Stories, und der nächste startet einen neuen Worker. `tests/start` hält Worker und Hauptthread
 aneinander, `tests/ambient` sieht nach, dass der Generator nicht im selben
 Aufruf wie das Zeichnen läuft.
 

@@ -6464,7 +6464,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.11.03.12673c4d';
+const BUILD_VERSION='2026.11.03.ebf2f0fa';
 function forceReload(nach){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -19111,12 +19111,22 @@ const _FMT_ARTEN = {uhr:{hour:'2-digit', minute:'2-digit'}, tm:{day:'2-digit', m
   tmj:{day:'2-digit', month:'2-digit', year:'2-digit'}, wt:{weekday:'long'}};
 const _FMT = {};
 function datumFmt(when, art){
+  const d = when instanceof Date ? when : new Date(when);
+  if(art === 'tmx') art = d.getFullYear() === new Date().getFullYear() ? 'tm' : 'tmj';
   const f = _FMT[art] || (_FMT[art] = new Intl.DateTimeFormat('de-DE', _FMT_ARTEN[art]));
-  return f.format(when instanceof Date ? when : new Date(when));
+  return f.format(d);
+}
+function tagImSatz(when){
+  const t = datumFmt(when, 'tmx');
+  return t.endsWith('.') ? t : t + '.';
 }
 function komma(v, n){
   const z = Number(v);
   return (isFinite(z) ? z : 0).toFixed(n == null ? 1 : n).replace('.', ',');
+}
+function tausender(text){
+  return String(text == null ? '' : text).replace(/(^|[^\d.,\w])(\d{5,})(?!\d)/g,
+    (m, vor, z) => vor + _spZahl(Number(z)));
 }
 function standFuer(m, gewonnen = true){
   const s = m.winner === 'B' ? [m.score_b, m.score_a] : [m.score_a, m.score_b];
@@ -20107,7 +20117,7 @@ function _buildStories(){
         ic: c.streak >= 7 ? 'dropTriple' : 'dropDouble',
         title: `${nameOf(c.pid)} findet gerade kein Mittel`,
         desc: `${_zahlwortDe(c.streak)} Niederlagen am Stück.`
-            + (c.seit ? ` Der letzte Sieg liegt vor dem ${datumFmt(c.seit, 'tm')}` : ''),
+            + (c.seit ? ` Der letzte Sieg liegt vor dem ${tagImSatz(c.seit)}` : ''),
         when: c.when,
         prio: STORY_PRIO.loss_streak + (c.streak >= 8 ? 4 : 0),
         dataRef: {type:'loss_streak', pid: c.pid, streak: c.streak,
@@ -20385,7 +20395,7 @@ function _buildStories(){
       }));
       if(fluch) neuSt.push({id:'fluch_' + fluch.w + '_' + fluch.l + '_' + m.id, cat:'rivalry', ic:'ghost',
         title:`${nameOf(fluch.w)} gewinnt nach ${fluch.n} Niederlagen in Folge wieder gegen ${nameOf(fluch.l)}`,
-        desc: fluch.sieg ? `Der letzte Sieg gegen ${nameOf(fluch.l)} war am ${datumFmt(fluch.sieg, 'tm')}`
+        desc: fluch.sieg ? `Der letzte Sieg gegen ${nameOf(fluch.l)} war am ${tagImSatz(fluch.sieg)}`
                          : `Es ist der erste Sieg gegen ${nameOf(fluch.l)} überhaupt.`,
         when:zeit, prio:STORY_PRIO.fluch,
         dataRef:{type:'fluch', pid:fluch.w, gegen:fluch.l, n:fluch.n, matchId:m.id, playerIds:[fluch.w, fluch.l]}});
@@ -21647,6 +21657,11 @@ function _buildStories(){
     });
   }
 
+  stories.forEach(s => {
+    if(typeof s.title === 'string') s.title = tausender(s.title);
+    if(typeof s.desc === 'string') s.desc = tausender(s.desc);
+  });
+
   stories.sort((a,b) => {
     const dt = b.when - a.when;
     if(dt !== 0) return dt;
@@ -21833,7 +21848,7 @@ function _buildAmbientStories(now, pm, nameOf, tagesStories){
              + Math.max(0, Math.min(AMBIENT_PRIO_SPANNE, (chosen.prio || 4))),
       dataRef: Object.assign({type:'ambient', sub: chosenKey, ambientRubrik:rubrikVon(chosenKey)},
                              chosen.dataRef || {},
-                             chosen.vv != null ? {vv: String(chosen.vv), vl: chosen.vl || ''} : {})
+                             chosen.vv != null ? {vv: tausender(chosen.vv), vl: chosen.vl || ''} : {})
     });
   }
   return out;
@@ -22127,7 +22142,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     const bis = new Date(x.von.getFullYear(), x.von.getMonth(), x.von.getDate() + 6);
     return {cat:'history', ic:istLaut ? 'flame' : 'calendar', prio:4,
       title:istLaut ? 'Die spielreichste Woche bisher' : 'Die ruhigste Spielwoche bisher',
-      desc:`${x.n} ${x.n === 1 ? 'Partie' : 'Partien'} zwischen ${datumFmt(x.von, 'tm')} und ${datumFmt(bis, 'tm')}. `
+      desc:`${x.n} ${x.n === 1 ? 'Partie' : 'Partien'} zwischen ${datumFmt(x.von, 'tmx')} und ${tagImSatz(bis)} `
         + (istLaut ? `Der bisherige Wochenrekord.` : `Weniger wurde in keiner Woche mit Spielbetrieb gespielt.`),
       vv:String(x.n), vl:'Partien',
       dataRef:{ bild:(() => { const ws = Object.values(wochen).sort((a, b) => a.von - b.von).slice(-24);
@@ -22477,11 +22492,12 @@ function _ambientTemplatePool(now, pm, nameOf){
     }
     if(!latest) return null;
     const days = Math.floor((now.getTime() - latest.t) / 86400000);
+    const her = days < 2 ? null : days < 14 ? {n:days, e:'Tagen', nom:'Tage'} : _spSeit(now.getTime() - latest.t);
     return { cat:'badge', ic: latest.badge.ic || 'trophyStar', prio:5,
       title:`${nameOf(latest.pid)} holte zuletzt Gold`,
-      desc:`Die Auszeichnung „${latest.badge.name}" ${days === 0 ? 'heute' : days === 1 ? 'gestern' : 'vor ' + days + ' Tagen'}. ${latest.badge.desc}.`,
-      vv:String(days === 0 ? 'heute' : days === 1 ? 'gestern' : days),
-      vl:days > 1 ? 'Tage her' : 'geholt',
+      desc:`Die Auszeichnung „${latest.badge.name}" ${days === 0 ? 'heute' : days === 1 ? 'gestern' : 'vor ' + her.n + ' ' + her.e}. ${latest.badge.desc}.`,
+      vv:String(days === 0 ? 'heute' : days === 1 ? 'gestern' : her.n),
+      vl:her ? her.nom + ' her' : 'geholt',
       dataRef:{ ambientPid: latest.pid, bild:{f:'medaille', p:latest.pid, b:latest.badge.id,
         n:activePids.filter(p2 => getCachedBadges(p2).some(b => b.id === latest.badge.id)).length} } };
   }});
@@ -24079,8 +24095,9 @@ function _startNewsAutoSync(){
 
 const _APP_QUELLE = (typeof document !== 'undefined' && document.currentScript
   && document.currentScript.textContent) || null;
-const STORY_WORKER_MS = 20000;
+const STORY_WORKER_FRIST = {annahme:20000, rechnen:300000};
 let _storyWorker = null;
+let _storyWorkerLebt = false;
 let _storyWorkerStand = null;
 let _storyWorkerNr = 0;
 const _storyWorkerWarten = new Map();
@@ -24117,6 +24134,7 @@ function _storyWorkerAttrappe(){
 function _storyWorkerAntwort(){
   self.onmessage = (e) => {
     const d = e.data;
+    self.postMessage({nr:d.nr, angenommen:true});
     try {
       self.__jetzt = d.jetzt;
       self.__nachricht = d;
@@ -24133,9 +24151,29 @@ function _storyWorkerAntwort(){
 function _storyWorkerAus(){
   try { if(_storyWorker) _storyWorker.terminate(); } catch(e){}
   _storyWorker = false;
+  _storyWorkerLebt = false;
   _storyWorkerStand = null;
   _storyWorkerWarten.forEach(fertig => fertig(null));
   _storyWorkerWarten.clear();
+}
+function _storyWorkerNeu(){
+  try { if(_storyWorker) _storyWorker.terminate(); } catch(e){}
+  _storyWorker = null;
+  _storyWorkerLebt = false;
+  _storyWorkerStand = null;
+  _storyWorkerWarten.forEach(fertig => fertig.ab());
+  _storyWorkerWarten.clear();
+}
+
+function _storyWorkerPost(e){
+  const fertig = _storyWorkerWarten.get(e.data && e.data.nr);
+  if(!fertig) return;
+  if(e.data.angenommen){ _storyWorkerLebt = true; fertig.angenommen(); return; }
+  _storyWorkerWarten.delete(e.data.nr);
+  if(e.data.ok) return fertig(e.data.stories);
+  if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] worker', e.data.fehler);
+  _storyWorkerAus();
+  fertig(null);
 }
 
 function _storyWorkerStarten(){
@@ -24146,15 +24184,7 @@ function _storyWorkerStarten(){
   const url = URL.createObjectURL(new Blob([quelle], {type:'text/javascript'}));
   const w = new Worker(url);
   URL.revokeObjectURL(url);
-  w.onmessage = (e) => {
-    const fertig = _storyWorkerWarten.get(e.data && e.data.nr);
-    if(!fertig) return;
-    _storyWorkerWarten.delete(e.data.nr);
-    if(e.data.ok) return fertig(e.data.stories);
-    if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] worker', e.data.fehler);
-    _storyWorkerAus();
-    fertig(null);
-  };
+  w.onmessage = _storyWorkerPost;
   w.onerror = (e) => {
     if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] worker', e && e.message);
     _storyWorkerAus();
@@ -24174,17 +24204,25 @@ function _storiesImWorker(){
     || alt.seasons !== seasons || alt.version !== _cache.version;
   return new Promise(fertig => {
     const nr = ++_storyWorkerNr;
-    const uhr = setTimeout(() => {
+    const rechnen = () => setTimeout(() => {
+      if(!_storyWorkerWarten.has(nr)) return;
+      if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] worker rechnet zu lange');
+      _storyWorkerNeu();
+    }, STORY_WORKER_FRIST.rechnen);
+    let uhr = _storyWorkerLebt ? rechnen() : setTimeout(() => {
       if(!_storyWorkerWarten.has(nr)) return;
       if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] worker antwortet nicht');
       _storyWorkerAus();
-    }, STORY_WORKER_MS);
-    _storyWorkerWarten.set(nr, stories => {
+    }, STORY_WORKER_FRIST.annahme);
+    const ende = stories => {
       clearTimeout(uhr);
       const gleich = stories && players === jetzt.players && matches === jetzt.matches && cfg === jetzt.cfg
         && seasons === jetzt.seasons && _cache.version === jetzt.version;
       fertig(gleich ? stories : null);
-    });
+    };
+    ende.angenommen = () => { clearTimeout(uhr); uhr = rechnen(); };
+    ende.ab = () => { clearTimeout(uhr); fertig([]); };
+    _storyWorkerWarten.set(nr, ende);
     try {
       _storyWorker.postMessage({nr, jetzt:Date.now(), bestand:_cache._stories || null,
         stand: neu ? {players, matches, cfg, seasons} : null});
@@ -25846,7 +25884,7 @@ function _spVerteilungBild(d){
   return `<div class="sp-vt"><div class="sp-k">Alle ${_spZahl(d.gesamt)} Partien nach Gegentoren</div>
     <div class="sp-vt-g">${saeulen.join('')}</div>
     <div class="sp-vt-f"><b class="num">${_spZahl(d.so)}</b> von ${_spZahl(d.gesamt)} Partien so deutlich oder deutlicher`
-    + `${d.zuletzt ? `, zuletzt am ${datumFmt(d.zuletzt, 'tm')}` : ''}</div></div>`;
+    + `${d.zuletzt ? `, zuletzt am ${datumFmt(d.zuletzt, 'tmx')}` : ''}</div></div>`;
 }
 
 function _spWippeDaten(a){
@@ -26159,14 +26197,17 @@ function _spNz(W, L, wort){
     + `<span class="re">${_spStapel(L)}</span></div>`;
 }
 function _spSeit(ms){
+  const ein = (n, e1, eN, nom1, nomN) => ({n, e:n === 1 ? e1 : eN, nom:n === 1 ? nom1 : nomN});
   const min = Math.max(1, Math.round(ms / 60000));
-  if(min < 60) return {n:min, e:min === 1 ? 'Minute' : 'Minuten'};
+  if(min < 60) return ein(min, 'Minute', 'Minuten', 'Minute', 'Minuten');
   const h = Math.round(min / 60);
-  if(h < 24) return {n:h, e:h === 1 ? 'Stunde' : 'Stunden'};
+  if(h < 24) return ein(h, 'Stunde', 'Stunden', 'Stunde', 'Stunden');
   const t = Math.round(h / 24);
-  if(t < 14) return {n:t, e:t === 1 ? 'Tag' : 'Tagen'};
-  const w = Math.round(t / 7);
-  return {n:w, e:'Wochen'};
+  if(t < 14) return ein(t, 'Tag', 'Tagen', 'Tag', 'Tage');
+  if(t < 61) return ein(Math.round(t / 7), 'Woche', 'Wochen', 'Woche', 'Wochen');
+  const mo = Math.round(t / 30.44);
+  if(mo < 24) return ein(mo, 'Monat', 'Monaten', 'Monat', 'Monate');
+  return ein(Math.round(t / 365.25), 'Jahr', 'Jahren', 'Jahr', 'Jahre');
 }
 
 const _spFormBasisMemo = new WeakMap();
@@ -26317,7 +26358,7 @@ const SP_FORM = {
       let z = null;
       for(let j = F.i - 1; j >= 0; j--) if(pk[j].g >= F.gewinn){ z = B.chrono[j]; break; }
       return {t:`${_spZahl(F.gewinn)} Elo wechseln die Seite`,
-        d:z ? `So viel brachte zuletzt eine Partie am ${datumFmt(mts(z), 'tm')}` : 'So viel brachte bis hier keine Partie der Liga.'};
+        d:z ? `So viel brachte zuletzt eine Partie am ${tagImSatz(mts(z))}` : 'So viel brachte bis hier keine Partie der Liga.'};
     }},
   chemie:{rang:26, ic:'handshake',
     wann:F => (F.duo.p >= 12 && F.duo.s / F.duo.p >= 0.75 && F.duo.s % 5 === 0) || (SP_RUND.has(F.duo.s) && F.duo.p >= 5) ? {rund:SP_RUND.has(F.duo.s)} : null,
@@ -26344,12 +26385,12 @@ const SP_FORM = {
       if(x.fluch){
         const s = eig.filter(y => _spGew(y, g.w)).pop();
         return {t:`${_spName(g.w)} schlägt ${_spName(g.l)} wieder`,
-          d:s ? `Der letzte Sieg gegen ${_spName(g.l)} war am ${datumFmt(mts(s), 'tm')}` : `Es ist der erste Sieg gegen ${_spName(g.l)} nach ${g.fluch} Niederlagen.`};
+          d:s ? `Der letzte Sieg gegen ${_spName(g.l)} war am ${tagImSatz(mts(s))}` : `Es ist der erste Sieg gegen ${_spName(g.l)} nach ${g.fluch} Niederlagen.`};
       }
       let k = 0; for(let j = eig.length - 1; j >= 0 && _spGew(eig[j], g.w); j--) k++;
       return {t:`${_spName(g.w)} schlägt ${_spName(g.l)} zum ${g.s}. Mal`,
         d:k ? `Das ist der ${k + 1}. Sieg in Folge gegen ${_spName(g.l)}.`
-          : `Die letzte Niederlage gegen ${_spName(g.l)} war am ${datumFmt(mts(eig[eig.length - 1]), 'tm')}`};
+          : `Die letzte Niederlage gegen ${_spName(g.l)} war am ${tagImSatz(mts(eig[eig.length - 1]))}`};
     }},
   revanche:{rang:28, ic:'rematch',
     wann:F => F.revanche || null,
@@ -26378,7 +26419,7 @@ const SP_FORM = {
   rueckkehr:{rang:32, ic:'doorReturn',
     wann:F => F.pause.filter(p => p.tage != null && p.tage >= 10).sort((a, b) => b.tage - a.tage)[0] || null,
     daten:(F, x) => ({id:x.id, mit:F.W.find(o => o !== x.id), tage:x.tage, L:F.L, hoch:F.hoch, tief:F.tief}),
-    text:(F, x) => ({t:`${_spName(x.id)} ist zurück`, d:`Die letzte Partie davor war am ${datumFmt(mts(x.vorher), 'tm')}`}),
+    text:(F, x) => ({t:`${_spName(x.id)} ist zurück`, d:`Die letzte Partie davor war am ${tagImSatz(mts(x.vorher))}`}),
   },
   gefaelle:{rang:16, ic:'weight',
     wann:F => Math.abs(F.elo[F.W[0]] - F.elo[F.W[1]]) >= 220 ? {} : null,
@@ -26657,7 +26698,7 @@ function _spWesteBild(d){
     + `<path d="M30 3L55 12V33C55 50 44 61 30 67C16 61 5 50 5 33V12Z"/></svg>${_spSt(d)}</div>`
     + `<div class="sp-ws-t"><em>Weiße Weste</em>${_spChips(d.W)}`
     + `<span class="sp-ws-u">${d.n === 1 ? 'das erste Zu-null der Liga' : `das <b class="num">${_spZahl(d.n)}.</b> Zu-null der Liga`}</span>`
-    + (d.zuletzt ? `<span class="sp-ws-u">zuletzt am <b class="num">${datumFmt(d.zuletzt, 'tm')}</b></span>` : '') + `</div></div>`
+    + (d.zuletzt ? `<span class="sp-ws-u">zuletzt am <b class="num">${datumFmt(d.zuletzt, 'tmx')}</b></span>` : '') + `</div></div>`
     + _spNz(d.W, d.L);
 }
 function _spUhrBild(d){
@@ -26805,6 +26846,19 @@ function _spScoreAuswahl(x, spur, duos, ohne){
   }
   return w || null;
 }
+const SP_SCORE_VORLAUF = 120;
+function _spScoreAb(B, pub){
+  let erste = B.chrono.length;
+  pub.forEach((v, id) => { const i = B.idx.get(id); if(i != null && i < erste) erste = i; });
+  const seit = Date.now() - NEWS_FENSTER_TAGE * 864e5;
+  let fenster = B.chrono.length;
+  while(fenster > 0 && mts(B.chrono[fenster - 1]) >= seit) fenster--;
+  return Math.max(0, Math.min(erste, fenster) - SP_SCORE_VORLAUF);
+}
+function _spScoreNeu(FB, ab){
+  FB.scoreWahl = new Map(); FB.scoreSpur = []; FB.scoreDuo = [];
+  FB.scoreAb = ab; FB.scoreBis = ab - 1;
+}
 function _spScoreWahl(m){
   const FB = _spFormBasis(), B = _spBasis();
   const roh = Array.isArray(_cache._stories) ? _cache._stories : null;
@@ -26816,12 +26870,14 @@ function _spScoreWahl(m){
       if(d.type === 'spiel' && d.matchId && d.visual && d.visual.version === 2
          && d.visual.score && d.visual.score.key) FB.scorePublished.set(d.matchId, d.visual);
     });
-    FB.scoreWahl = new Map(); FB.scoreSpur = []; FB.scoreDuo = []; FB.scoreBis = -1; FB.fussWahl = new Map();
+    FB.fussWahl = new Map();
+    _spScoreNeu(FB, _spScoreAb(B, FB.scorePublished));
   }
   let w = FB.scoreWahl && FB.scoreWahl.get(m.id);
   if(w) return w;
-  if(!FB.scoreWahl){ FB.scoreWahl = new Map(); FB.scoreSpur = []; FB.scoreDuo = []; FB.scoreBis = -1; }
+  if(!FB.scoreWahl) _spScoreNeu(FB, _spScoreAb(B, FB.scorePublished || new Map()));
   const bis = B.idx.get(m.id);
+  if(bis != null && bis < FB.scoreAb) _spScoreNeu(FB, 0);
   for(let j = FB.scoreBis + 1; j <= bis; j++){
     const x = B.chrono[j], spezial = _spScoreSpezial(x), spur = FB.scoreSpur;
     FB.scoreBis = j;
@@ -28900,7 +28956,7 @@ function _ndInsigniumBlatt(s){
     + `<span class="nd-is-av">${avHtml(pm[pid], '', {px:58})}</span></span></div>`
     + `<b class="nd-is-n">${esc(ins.name)}</b><span class="nd-is-p"><b class="num">${punkte}</b> Prestige · ${esc(_spName(pid))}</span>`
     + (d.wieder ? `<span class="nd-is-wd">wieder getragen${typeof d.wieder === 'string'
-      ? ' · zuletzt ' + esc(datumFmt(d.wieder + 'T12:00:00', 'tm')) : ''}</span>` : '') + `</div>`;
+      ? ' · zuletzt ' + esc(datumFmt(d.wieder + 'T12:00:00', 'tmx')) : ''}</span>` : '') + `</div>`;
   let teile = d.teile || null;
   if(!teile){
     const m = /(\d+) aus Auszeichnungen, (\d+) aus Monatschroniken und (\d+) aus Rekorden/.exec(String(s.desc || ''));
@@ -33681,7 +33737,8 @@ function _chronicleCtx(bisMs){
   const allDays = new Set();
   const allSeasons = new Set();
   const roh = {};
-  const dLabel = (k) => { const [y,m,d] = k.split('-'); return d + '.' + m + '.'; };
+  const jahrJetzt = String(new Date().getFullYear());
+  const dLabel = (k) => { const [y,m,d] = k.split('-'); return d + '.' + m + '.' + (y === jahrJetzt ? '' : y.slice(2)); };
   const ensure = (id) => P[id] || (P[id] = {
     id, games:0, wins:0, losses:0, gf:0, ga:0, gd:0,
     atkG:0, atkW:0, defG:0, defW:0, atkGoals:0, defConceded:0,

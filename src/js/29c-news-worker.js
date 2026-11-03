@@ -18,10 +18,20 @@
 // ohne Browser gibt es ihn nicht — dort bleibt es beim Hauptthread.
 const _APP_QUELLE = (typeof document !== 'undefined' && document.currentScript
   && document.currentScript.textContent) || null;
-// Ein kalter Lauf auf einem schwachen Telefon braucht wenige Sekunden; wer
-// länger schweigt, ist hängen geblieben, und der Hauptthread übernimmt.
-const STORY_WORKER_MS = 20000;
+// Ein Lauf hat zwei Fristen. Bis ein neuer Worker den ersten ANNIMMT,
+// zwanzig Sekunden: so lange braucht er auf einem schwachen Telefon
+// höchstens, um den Code zu laden; wer dann schweigt, ist nicht angelaufen,
+// und der Hauptthread übernimmt. Danach rechnet im Worker derselbe Code wie
+// auf dem Hauptthread, und dort wäre er nicht schneller — nur das Telefon
+// stünde so lange still. Mit zwanzig Sekunden für alles übernahm der
+// Hauptthread, sobald die Liga groß genug war: mit vier Jahren Partien
+// braucht der Generator auf dem Rechner elf Sekunden, auf einem Telefon ein
+// Mehrfaches, und danach blieb der Worker für die Sitzung aus. Wer nach fünf
+// Minuten nicht fertig ist, wird beendet: der Feed behält, was er hat, und
+// der nächste Lauf startet einen neuen Worker (`_storyWorkerNeu`).
+const STORY_WORKER_FRIST = {annahme:20000, rechnen:300000};
 let _storyWorker = null;          // Worker, oder false nach einem Fehlschlag
+let _storyWorkerLebt = false;     // hat dieser Worker schon einen Lauf angenommen
 let _storyWorkerStand = null;     // was der Worker zuletzt bekommen hat
 let _storyWorkerNr = 0;
 const _storyWorkerWarten = new Map();
@@ -67,6 +77,8 @@ function _storyWorkerAttrappe(){
 function _storyWorkerAntwort(){
   self.onmessage = (e) => {
     const d = e.data;
+    // Zuerst sagen, dass er rechnet: von hier an gilt die Frist des Rechnens.
+    self.postMessage({nr:d.nr, angenommen:true});
     try {
       self.__jetzt = d.jetzt;
       self.__nachricht = d;
@@ -83,9 +95,34 @@ function _storyWorkerAntwort(){
 function _storyWorkerAus(){
   try { if(_storyWorker) _storyWorker.terminate(); } catch(e){}
   _storyWorker = false;
+  _storyWorkerLebt = false;
   _storyWorkerStand = null;
   _storyWorkerWarten.forEach(fertig => fertig(null));
   _storyWorkerWarten.clear();
+}
+// Ein Worker, der zu lange rechnet: beendet, ohne den Hauptthread zu rufen.
+// Jeder wartende Lauf endet ohne neue Stories, der nächste startet einen
+// neuen Worker.
+function _storyWorkerNeu(){
+  try { if(_storyWorker) _storyWorker.terminate(); } catch(e){}
+  _storyWorker = null;
+  _storyWorkerLebt = false;
+  _storyWorkerStand = null;
+  _storyWorkerWarten.forEach(fertig => fertig.ab());
+  _storyWorkerWarten.clear();
+}
+
+// Was der Worker zurückschickt: die Annahme eines Laufs, dann sein Ergebnis
+// oder seinen Fehler.
+function _storyWorkerPost(e){
+  const fertig = _storyWorkerWarten.get(e.data && e.data.nr);
+  if(!fertig) return;
+  if(e.data.angenommen){ _storyWorkerLebt = true; fertig.angenommen(); return; }
+  _storyWorkerWarten.delete(e.data.nr);
+  if(e.data.ok) return fertig(e.data.stories);
+  if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] worker', e.data.fehler);
+  _storyWorkerAus();
+  fertig(null);
 }
 
 function _storyWorkerStarten(){
@@ -97,15 +134,7 @@ function _storyWorkerStarten(){
   const url = URL.createObjectURL(new Blob([quelle], {type:'text/javascript'}));
   const w = new Worker(url);
   URL.revokeObjectURL(url);
-  w.onmessage = (e) => {
-    const fertig = _storyWorkerWarten.get(e.data && e.data.nr);
-    if(!fertig) return;
-    _storyWorkerWarten.delete(e.data.nr);
-    if(e.data.ok) return fertig(e.data.stories);
-    if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] worker', e.data.fehler);
-    _storyWorkerAus();
-    fertig(null);
-  };
+  w.onmessage = _storyWorkerPost;
   w.onerror = (e) => {
     if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] worker', e && e.message);
     _storyWorkerAus();
@@ -129,17 +158,30 @@ function _storiesImWorker(){
     || alt.seasons !== seasons || alt.version !== _cache.version;
   return new Promise(fertig => {
     const nr = ++_storyWorkerNr;
-    const uhr = setTimeout(() => {
+    // Die Frist des Rechnens beginnt mit der Annahme. Hat dieser Worker schon
+    // einen Lauf angenommen, lebt er, und ein Lauf hinter einem anderen
+    // wartet in seiner Reihe: dann gilt sie gleich, sonst stünde der zweite
+    // nach zwanzig Sekunden als hängengeblieben da.
+    const rechnen = () => setTimeout(() => {
+      if(!_storyWorkerWarten.has(nr)) return;
+      if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] worker rechnet zu lange');
+      _storyWorkerNeu();
+    }, STORY_WORKER_FRIST.rechnen);
+    let uhr = _storyWorkerLebt ? rechnen() : setTimeout(() => {
       if(!_storyWorkerWarten.has(nr)) return;
       if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] worker antwortet nicht');
       _storyWorkerAus();
-    }, STORY_WORKER_MS);
-    _storyWorkerWarten.set(nr, stories => {
+    }, STORY_WORKER_FRIST.annahme);
+    const ende = stories => {
       clearTimeout(uhr);
       const gleich = stories && players === jetzt.players && matches === jetzt.matches && cfg === jetzt.cfg
         && seasons === jetzt.seasons && _cache.version === jetzt.version;
       fertig(gleich ? stories : null);
-    });
+    };
+    ende.angenommen = () => { clearTimeout(uhr); uhr = rechnen(); };
+    // Abgebrochen: dieser Lauf bringt nichts Neues, auch nicht vom Hauptthread.
+    ende.ab = () => { clearTimeout(uhr); fertig([]); };
+    _storyWorkerWarten.set(nr, ende);
     try {
       _storyWorker.postMessage({nr, jetzt:Date.now(), bestand:_cache._stories || null,
         stand: neu ? {players, matches, cfg, seasons} : null});

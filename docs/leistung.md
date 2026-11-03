@@ -526,3 +526,51 @@ Monats.
 ```
 node tests/eingabe.test.js
 ```
+
+## Zehnte Runde: eine Liga, die Jahre alt ist
+
+Gemessen mit `mockup/langlebig-lauf.js`: die 616 echten Partien bis Oktober
+neunmal hintereinander, jedes Mal 23 Wochen später, mit vertauschten
+Spielern — 5544 Partien über 49 Monate, die vergangenen Monate eingefroren
+wie in der Datenbank. Ein Lauf des Generators nach einer neuen Partie, in
+Node auf dem Rechner, nicht auf dem Telefon:
+
+| 5544 Partien | vorher | nachher |
+|---|--:|--:|
+| neuer Datenstand (eine Partie mehr) | 24,2 s | 10,9 s |
+| derselbe Datenstand noch einmal | 1,0 s | 0,7 s |
+| Wahlen eines Kopfs je Lauf | 3642 | 92 |
+
+Fast die Hälfte war die Kette der Köpfe: sie lief bei jedem Datenstand ab
+der ersten Partie der Liga, und weil der Bestand nur einen Monat
+zurückreicht, wählte sie jeden älteren Kopf neu. Sie beginnt jetzt
+`SP_SCORE_VORLAUF` Partien vor der ältesten Karte, die noch gebraucht wird
+(`docs/laufzeit.md`), und wächst nicht mehr mit dem Alter der Liga.
+
+Was bleibt, wächst weiter mit ihr: rund sieben der elf Sekunden sind
+Prestige-Stände zu früheren Zeitpunkten — vor und nach jedem Spieltag, jeder
+Woche und jedem Monat im Fenster, für die Ehrungen und die Laufbahn —, je
+Stand die Auszeichnungen aller zwölf Spieler über alle Partien bis dahin und
+die Rekorde zu diesem Zeitpunkt. Mit den 616 Partien von heute braucht ein
+Lauf 1,1 bis 1,6 Sekunden, vorher 1,5 bis 2,0.
+
+Der Generator läuft im Worker (`29c-news-worker.js`), und die Oberfläche
+wartet nicht auf ihn — solange der Worker nicht ausfällt. Er galt nach
+zwanzig Sekunden ohne Antwort als hängengeblieben, und dann rechnete der
+Hauptthread denselben Lauf und blieb für die Sitzung dabei: mit den elf
+Sekunden auf dem Rechner und einem Vielfachen davon auf einem Telefon wäre
+das bei einer Liga dieses Alters bei jedem Lauf geschehen, und das Telefon
+hätte so lange stillgestanden. Die zwanzig Sekunden gelten jetzt nur, bis
+ein neuer Worker den Lauf annimmt; danach hat er fünf Minuten
+(`docs/laufzeit.md`).
+
+Dazu zwei Formen, die erst mit den Jahren auffallen: Zahlen ab fünf
+Stellen standen ohne Tausenderpunkt im Satz („82820 Tore in 5152
+Partien"), und ein Tag stand ohne Jahr, auch wenn er Jahre zurücklag
+(„Der letzte Sieg gegen Leon war am 15.03."). Eine Revanche nach zweieinhalb
+Jahren hieß „nach 130 Wochen", Gold von vor dreizehn Monaten „vor 400 Tagen"
+[§C27].
+
+```
+node mockup/langlebig-lauf.js && node mockup/langlebig-pruef.js
+```

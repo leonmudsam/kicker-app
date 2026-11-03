@@ -601,8 +601,8 @@ function _buildStories(){
         // sagt etwas, das sonst nirgends steht — die Duo-Pleitenserie macht
         // es seit jeher so.
         desc: `${_zahlwortDe(c.streak)} Niederlagen am Stück.`
-            // Kein Punkt dahinter: „25.08." traegt seinen eigenen schon.
-            + (c.seit ? ` Der letzte Sieg liegt vor dem ${datumFmt(c.seit, 'tm')}` : ''),
+            // Den Punkt setzt `tagImSatz`: „25.08." trägt ihn schon, „25.08.26" nicht.
+            + (c.seit ? ` Der letzte Sieg liegt vor dem ${tagImSatz(c.seit)}` : ''),
         when: c.when,
         prio: STORY_PRIO.loss_streak + (c.streak >= 8 ? 4 : 0),
         dataRef: {type:'loss_streak', pid: c.pid, streak: c.streak,
@@ -1022,7 +1022,7 @@ function _buildStories(){
       }));
       if(fluch) neuSt.push({id:'fluch_' + fluch.w + '_' + fluch.l + '_' + m.id, cat:'rivalry', ic:'ghost',
         title:`${nameOf(fluch.w)} gewinnt nach ${fluch.n} Niederlagen in Folge wieder gegen ${nameOf(fluch.l)}`,
-        desc: fluch.sieg ? `Der letzte Sieg gegen ${nameOf(fluch.l)} war am ${datumFmt(fluch.sieg, 'tm')}`
+        desc: fluch.sieg ? `Der letzte Sieg gegen ${nameOf(fluch.l)} war am ${tagImSatz(fluch.sieg)}`
                          : `Es ist der erste Sieg gegen ${nameOf(fluch.l)} überhaupt.`,
         when:zeit, prio:STORY_PRIO.fluch,
         dataRef:{type:'fluch', pid:fluch.w, gegen:fluch.l, n:fluch.n, matchId:m.id, playerIds:[fluch.w, fluch.l]}});
@@ -3002,6 +3002,14 @@ function _buildStories(){
       s.dataRef = Object.assign({}, d, {fassung});
     });
   }
+
+  // Lange Zahlen mit Tausenderpunkt, hier für jede Story und nicht je Typ:
+  // die Sätze setzen ihre Zahlen roh ein, und mit den Jahren standen dort
+  // fünfstellige ohne Punkt (`tausender`).
+  stories.forEach(s => {
+    if(typeof s.title === 'string') s.title = tausender(s.title);
+    if(typeof s.desc === 'string') s.desc = tausender(s.desc);
+  });
 
   // ── Final-Sort ──
   // v8.2: PURE Chronologie (User-Wunsch). Neueste Story zuerst, älteste
