@@ -76,6 +76,8 @@ const messSeite = kopf + `<div class="ll-f">${faelle.map((f, i) => `<div class="
   const zahl = k => r.filter(x => x.art === k).length;
   const g = D.laufzeit.map(x => x.gen).sort((a, b) => a - b), k = D.laufzeit.map(x => x.kons).sort((a, b) => a - b);
   const median = l => l[l.length >> 1] || 0;
+  // Ab einer Sekunde in Sekunden, mit Komma.
+  const dauer = ms => ms >= 1000 ? z(Math.round(ms / 100) / 10) + ' s' : ms + ' ms';
   console.log(`${faelle.length} Fälle aus ${Object.keys(D.arten).length} Arten`);
   ['raus', 'ab', 'gekürzt', 'klein', 'quer'].forEach(a => { const l = r.filter(x => x.art === a);
     console.log(`${l.length ? (a === 'gekürzt' || a === 'klein' ? '•' : '✗') : '✓'} ${a}: ${l.length}`);
@@ -109,11 +111,11 @@ const messSeite = kopf + `<div class="ll-f">${faelle.map((f, i) => `<div class="
   <header class="ll-h"><p class="ll-o">Stories · nach gut vier Jahren</p><h1>Langlebigkeit der Stories</h1>
     <p class="ll-l">Die echten Partien bis Oktober neunmal hintereinander, jedes Mal 23 Wochen später, mit vertauschten Spielern und jedem vierten Ergebnis gedreht: ${D.liga.partien} Partien vom ${esc(D.liga.von)} bis ${esc(D.liga.bis)}, ${D.liga.monate} Monate. Die letzten 150 Tage, mit einem Jahreswechsel, liefen Tag für Tag durch den Generator der App; von jeder Art Karte stehen hier die Fälle mit der längsten Zahl und dem längsten Text, Karte und Blatt in Chromium gemessen.</p>
     <div class="ll-z"><span><b class="num">${D.liga.partien}</b> Partien</span><span><b class="num">${D.zahlen.spiele}</b> Partien des Fleißigsten</span>
-      <span><b class="num">${Object.keys(D.arten).length}</b> Arten Karten</span><span><b class="num">${median(g)} ms</b> Generator je Tag, Median</span>
-      <span><b class="num">${g[g.length - 1]} ms</b> höchstens</span>
+      <span><b class="num">${Object.keys(D.arten).length}</b> Arten Karten</span><span><b class="num">${dauer(median(g))}</b> Generator je Tag, Median</span>
+      <span><b class="num">${dauer(g[g.length - 1])}</b> höchstens</span>
       <span><b class="num">${zahl('raus') + zahl('ab') + zahl('quer')}</b> Überläufe und Abschnitte</span><span><b class="num">${D.befunde.length}</b> Sätze, die nicht mehr stimmen</span></div></header>
   <section class="ll-s"><h2>Laufzeit des Generators, Tag für Tag</h2><div class="ll-lz">${balken}</div>
-    <p class="ll-l">Jeder Balken ein Tag der letzten 150, die Höhe die Zeit für alle Stories dieses Tages (höchstens ${g[g.length - 1]} ms). Bündeln für den Feed: Median ${median(k)} ms.</p></section>
+    <p class="ll-l">Jeder Balken ein Tag der letzten 150, die Höhe die Zeit für alle Stories dieses Tages (höchstens ${dauer(g[g.length - 1])}), in Node auf einem Rechner, nicht auf einem Telefon. Bündeln für den Feed: Median ${dauer(median(k))}.</p></section>
   <section class="ll-s"><h2>Sätze, die mit Jahren nicht mehr stimmen</h2><div class="ll-t"><table><thead><tr><th>Befund</th><th>Art</th><th>Stelle</th><th>Satz</th></tr></thead><tbody>
     ${D.befunde.map(b => `<tr><td>${esc(b.name)}</td><td>${esc(b.form)}</td><td>„${esc(b.treffer)}“</td><td>${esc(b.text.slice(0, 160))}</td></tr>`).join('') || '<tr><td colspan="4">keine</td></tr>'}</tbody></table></div></section>
   <section class="ll-s"><h2>Gemessen in Karte und Blatt</h2><div class="ll-t"><table><thead><tr><th>Art</th><th>Wo</th><th>Befund</th><th>Text</th><th class="num">Wert</th></tr></thead><tbody>
