@@ -1,4 +1,4 @@
-// Köpfe und Füße der Karte einer Partie, dritte Runde: Entwürfe, an den
+// Köpfe und Füße der Karte einer Partie, vierte Runde: Entwürfe, an den
 // echten Partien gemessen. Der Lauf spielt alle 616 Partien bis Oktober nach,
 // rechnet je Partie, welcher Kopf und welcher Fuß zutreffen würde, und wählt
 // mit der Regel, die die Seite beschreibt: ein besonderer Ausgang zuerst,
@@ -106,6 +106,9 @@ P.forEach(p => {
   // lag, gezählt in Duellen: eine Bilanz, die bei einem Sieg mal hin und mal
   // her kippt, ist keine Nachricht.
   const fuehrtVor = Object.fromEntries(p.W.flatMap(w => p.L.map(l => [w + '|' + l, S.fuehrt[w + '|' + l]])));
+  // Mit wie vielen verschiedenen Partnern jeder vorher spielte, für das
+  // erste gemeinsame Spiel.
+  const partnerZahlVor = Object.fromEntries(vier.map(x => [x, Object.keys(S.partner[x] || {}).length]));
   const wocheVorAlle = JSON.parse(JSON.stringify(S.woche));
   const westenVor = (S.westen[p.sid] || []).slice();
 
@@ -135,7 +138,7 @@ P.forEach(p => {
   if(p.tief === 0) (S.westen[p.sid] = S.westen[p.sid] || []).push({mid:p.id, W:p.W, L:p.L, t:p.t});
   (S.paarung[pk] = S.paarung[pk] || []).push({t:p.t, sieger:duoKey(...p.W), hoch:p.hoch, tief:p.tief});
 
-  FAKT.push({p, vor, rangVor, rangNach, platz, kreuz, duoVor, wocheVorAlle, westenVor, paarungVor, fuehrtVor,
+  FAKT.push({p, vor, rangVor, rangNach, platz, kreuz, duoVor, wocheVorAlle, westenVor, paarungVor, fuehrtVor, partnerZahlVor,
     nach:Object.fromEntries(vier.map(x => [x, {serie:S.serie[x], tag:{s:S.tag[x].s, n:S.tag[x].n, folge:S.tag[x].folge.slice()},
       tagElo:S.tagElo[x].map(r1), mon:{s:S.mon[x].s, n:S.mon[x].n, q:S.mon[x].q.slice(), elo:S.mon[x].elo.slice()},
       gesamt:Object.assign({}, S.gesamt[x]), monTage:S.monTage[x].size, woche:Object.assign({}, S.woche[x])}])),
@@ -145,7 +148,9 @@ P.forEach(p => {
       .map(x => ({pid:x, n:S.partner[w][x].n, q:r1(S.partner[w][x].s / S.partner[w][x].n * 100)})).sort((a, b) => b.q - a.q)})),
     h2hFolge:p.W.flatMap(w => p.L.map(l => ({w, l, folge:S.h2hFolge[w + '|' + l].slice(-12)}))),
     duoNach:{W:Object.assign({}, S.duo[duoKey(...p.W)]), L:Object.assign({}, S.duo[duoKey(...p.L)])},
-    westen:(S.westen[p.sid] || []).slice()});
+    westen:(S.westen[p.sid] || []).slice(),
+    // Jedes Duell zweier seit dem ersten, für die Bilanzkurve.
+    h2hVoll:p.W.flatMap(w => p.L.map(l => ({w, l, folge:S.h2hFolge[w + '|' + l].slice()})))});
 });
 
 // ── Welche Köpfe zutreffen ──────────────────────────────────────────
@@ -224,7 +229,10 @@ function fuesse(F){
   const kippt = F.kreuz.map(k => { const s = k.s + 1, n = k.n + 1, zuletzt = F.fuehrtVor[k.w + '|' + k.l];
     return n >= 16 && k.s * 2 <= k.n && s * 2 > n && (zuletzt == null || n - zuletzt >= 10) ? {w:k.w, l:k.l, s, n} : null; })
     .filter(Boolean)[0];
-  if(kippt) add('kippt', 64, Object.assign(kippt, {folge:(F.h2hFolge.find(h => h.w === kippt.w && h.l === kippt.l) || {}).folge}), true);
+  // Die Bilanzkurve: nach jedem Duell, wie weit der Sieger vorn oder
+  // hinten lag.
+  if(kippt){ let d = 0; const voll = (F.h2hVoll.find(h => h.w === kippt.w && h.l === kippt.l) || {folge:[]}).folge;
+    add('kippt', 64, Object.assign(kippt, {verlauf:[0].concat(voll.map(r => (d += r ? 1 : -1)))}), true); }
   const jub = [];
   [['W', p.W], ['L', p.L]].forEach(([s, d]) => { const n = F.duoNach[s].n; if(n >= 25 && n % 25 === 0) jub.push({art:'duo', ids:d, n, s:F.duoNach[s].s}); });
   F.kreuz.forEach(k => { const n = k.n + 1; if(n >= 25 && n % 25 === 0) jub.push({art:'duell', ids:[k.w, k.l], n, s:k.s + 1}); });
@@ -241,7 +249,7 @@ function fuesse(F){
   if(serie) add('serie', 30 + 2 * Math.min(10, nach[serie].serie), {pid:serie, n:nach[serie].serie});
   const wende = p.W.filter(x => vor[x].serie <= -5).sort((a, b) => vor[a].serie - vor[b].serie)[0];
   if(wende) add('wende', 34 - vor[wende].serie, {pid:wende, n:-vor[wende].serie, folge:FAKT_LETZTE(wende, F)});
-  if(F.duoVor.W.n === 0) add('premiere', 18, {ids:p.W});
+  if(F.duoVor.W.n === 0) add('premiere', 18, {ids:p.W, partner:p.W.map(x => F.partnerZahlVor[x] + 1), n:p.W.map(x => F.vor[x].gesamt.n)});
   const plus = p.W.find(x => vor[x].tagElo.length >= 3 && Math.min(...vor[x].tagElo) <= -25
     && vor[x].tagElo[vor[x].tagElo.length - 1] < 0 && nach[x].tagElo[nach[x].tagElo.length - 1] > 0);
   if(plus) add('plus', 48, {pid:plus, verlauf:[0].concat(nach[plus].tagElo)});
@@ -372,7 +380,8 @@ function appFuesse(F, app){
     add('revanche', 54, {vorher:{t:v.t, hoch:v.hoch, tief:v.tief}}, true); }
   von('top_clash').slice(0, 1).forEach(x => { const ids = namenIn(x.titel);
     const rest = x.titel.split(' schlägt ')[1] || '', b = ID_VON[rest.replace(/ im Spitzenspiel.*$/, '').trim()];
-    if(ids[0] && b) add('spitzenspiel', 56, {a:ids[0], b, pa:F.platz(F.rangVor, ids[0]), pb:F.platz(F.rangVor, b)}, true); });
+    if(ids[0] && b) add('spitzenspiel', 56, {a:ids[0], b, pa:F.platz(F.rangVor, ids[0]), pb:F.platz(F.rangVor, b),
+      ea:r1(p.vorElo[ids[0]] || 0), eb:r1(p.vorElo[b] || 0), na:r1(p.nachElo[ids[0]] || 0), nb:r1(p.nachElo[b] || 0)}, true); });
   von('top_form').slice(0, 1).forEach(x => { const ids = namenIn(x.titel);
     if(ids[0]) add('form10', 30, {pid:ids[0], folge:FAKT_LETZTE(ids[0], F), s:+((x.titel.match(/gewinnt (\d+) der/) || [])[1] || 0)}); });
   von('tagesmarathon').slice(0, 1).forEach(x => { const ids = namenIn(x.titel);
@@ -508,6 +517,9 @@ const karte = w => {
     kreuz:F.kreuz, duo:F.duoVor, platz:Object.fromEntries(vier.map(x => [x, F.platz(F.rangNach, x)])),
     platzVor:Object.fromEntries(vier.map(x => [x, F.platz(F.rangVor, x)])), tabelle:F.rangNach.length,
     eloVor:Object.fromEntries(vier.map(x => [x, r1(p.vorElo[x] || 0)])), westen:F.westen.length,
+    // Die zwei Paare gegeneinander vor dieser Partie: Begegnungen und Siege
+    // der heutigen Sieger.
+    paarung:{n:F.paarungVor.length, s:F.paarungVor.filter(x => x.sieger === [...p.W].sort().join('|')).length},
     app:w.app ? {titel:w.app.titel, text:w.app.text, brk:w.app.brk, teile:w.app.teile.filter(x => x.typ !== 'spiel')} : null,
     zeilen:w.zeilen.map(z => ({key:z.key, ic:z.ic, text:z.text, html:ZEILE_HTML[z.text] || z.text}))};
 };

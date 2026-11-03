@@ -52,7 +52,7 @@ node('kopf-fuss-seite.js', {KF_ALLE:daten, KF_ALLE_HTML:seite});
     // Zeichen ohne eigenen Text, die einander trotzdem nicht berühren dürfen.
     const ZEICHEN = '.kf-wt i, .kf-rg-l em, .kf-zw-l i, .kf-wp-a, .kf-wp-n, .kf-tp-av, .kf-kal-g i, .kf-pk-r i, .kf-luecke, .kf-dom i, '
       + '.kf-kette i, .kf-kette u, .kf-fk, .kf-gauge, .kf-st-a, .kf-st-m, .kf-flap, .kf-tor, .kf-dv-s i, .kf-ew-a em, .kf-jub-m, '
-      + '.kf-b-b, .kf-bl-b, .kf-ch-b, .kf-ab-r i';
+      + '.kf-b-b, .kf-ch-b, .kf-ab-r i, .kf-sb i, .kf-nul-t, .kf-nul-b, .kf-od>i, .kf-sz-s>i, .kf-em-l em, .kf-rg-l em';
     document.querySelectorAll('.kf-karte').forEach(c => {
       out.karten++;
       const n = name(c);

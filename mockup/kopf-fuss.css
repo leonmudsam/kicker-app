@@ -1,4 +1,4 @@
-/* Köpfe und Füße, dritte Runde — die Seite und die Entwürfe. Die Seite steht
+/* Köpfe und Füße, vierte Runde — die Seite und die Entwürfe. Die Seite steht
    im Gewand der App: ihre Farben (`--acid`, `--gold`, `--red` …), ihre
    Schriften, dunkel. Die Karten sind 288 px breit wie im Feed bei 360 px. */
 :root{color-scheme:dark}
@@ -208,18 +208,6 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
 .kf-flagge{display:none}
 .kf-ziel.klein .kf-b-b{height:9px}
 
-/* Zu null */
-.kf-null{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:6px}
-.kf-nl-s{display:flex;flex-direction:column;align-items:center;gap:4px}
-.kf-nl-s b{font:400 30px/1 'Archivo Black',sans-serif}
-.kf-nl-s.w b{color:var(--acid);text-shadow:0 0 16px rgba(190,242,100,.45)}
-.kf-nl-s.aus{filter:grayscale(1);opacity:.5}
-.kf-tor{width:72px;height:50px}
-.kf-tor-r{fill:none;stroke:var(--ink2);stroke-width:2.5;stroke-linejoin:round}
-.kf-tor-n{stroke:rgba(255,255,255,.13);stroke-width:1}
-.kf-tor-z{font:400 19px 'Archivo Black',sans-serif;fill:var(--red);text-anchor:middle;opacity:.9}
-.kf-nl-t{grid-column:1/-1;justify-self:center;font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.18em;
-  text-transform:uppercase;color:var(--gold);font-style:normal}
 
 /* David gegen Goliath */
 .kf-david{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:end;gap:8px;height:122px}
@@ -270,15 +258,6 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
 .kf-dom i{flex:0 1 13px;height:20px;border-radius:3px;background:rgba(240,86,106,.5)}
 .kf-dom i.s{background:rgba(190,242,100,.5)}
 .kf-dom i.jetzt{background:var(--acid);box-shadow:0 0 12px rgba(190,242,100,.65)}
-.kf-wippe{position:relative;height:62px;margin:0 2px}
-.kf-wippe svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
-.kf-wp-b{stroke:var(--blue);stroke-width:4;stroke-linecap:round;vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 5px rgba(86,180,232,.55))}
-.kf-wp-alt{stroke:var(--faint);stroke-width:2;stroke-dasharray:4 4;stroke-linecap:round;vector-effect:non-scaling-stroke}
-.kf-wp-d{fill:rgba(86,180,232,.22);stroke:rgba(86,180,232,.55);stroke-width:1.2;stroke-linejoin:round;vector-effect:non-scaling-stroke}
-.kf-wp-a{position:absolute;z-index:1}
-.kf-wp-a:not(.w) .av{opacity:.8}
-.kf-wp-n{position:absolute;width:24px;font:400 14px/1 'Archivo Black',sans-serif;color:var(--muted)}
-.kf-wp-n.w{text-align:right;color:var(--blue)}
 .kf-jub{display:flex;align-items:center;justify-content:center;gap:12px}
 .kf-jub .av{--av:30px}
 .kf-jub-m{position:relative;display:grid;place-items:center;width:56px;height:56px}
@@ -300,20 +279,8 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
 .kf-wt b{position:relative;font:400 8px/1 'Archivo Black',sans-serif;color:var(--gold);text-align:center}
 .kf-wt small{position:absolute;left:50%;bottom:-13px;transform:translateX(-50%);font:500 7.5px 'Sometype Mono',monospace;color:var(--faint);white-space:nowrap}
 
-/* Rennen und Partner */
-.kf-bl{display:flex;flex-direction:column;gap:5px}
-.kf-bl-z{display:grid;grid-template-columns:20px 58px minmax(0,1fr) 42px 14px;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
-.kf-bl-z .av{--av:20px;font-size:7.5px}
-.kf-bl-z>span:nth-child(2){overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.kf-bl-b{position:relative;height:7px;border-radius:4px;background:var(--surface3)}
-.kf-bl-b i{position:absolute;inset:0 auto 0 0;border-radius:4px;background:var(--line2)}
-.kf-bl-z.an{color:var(--ink)}
-.kf-bl-z.an .kf-bl-b i{background:var(--fa);box-shadow:0 0 8px rgba(var(--fa-rgb),.45)}
-.kf-bl-z b{text-align:right;font:600 10.5px 'Sometype Mono',monospace;color:var(--ink2)}
-.kf-bl-z em{display:grid;place-items:center}
-.kf-bl-z em svg{width:13px;height:13px;color:var(--gold)}
 
-/* Treppe, Zählwerk, Kalender, Kurven */
+/* Treppe, Zählwerk, Kalender */
 .kf-treppe{position:relative;height:58px}
 .kf-treppe svg{width:100%;height:58px;display:block;overflow:visible}
 .kf-tp-l{stroke:var(--line2);stroke-width:1.5}
@@ -363,16 +330,6 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
 .kf-kal-g i.leer{background:none}
 .kf-kal-g i.s{background:rgba(86,180,232,.55)}
 .kf-kal-g i.jetzt{background:var(--blue);outline:1.5px solid var(--ink);outline-offset:1px;box-shadow:0 0 10px rgba(86,180,232,.6)}
-.kf-svg{width:100%;height:58px;display:block;overflow:visible}
-.kf-li{fill:none;stroke:var(--ink2);stroke-width:1.6;stroke-linejoin:round;stroke-linecap:round}
-.kf-li.pos{stroke:var(--acid);stroke-width:2.3}
-.kf-li.gold{stroke:var(--gold)}.kf-li.dick{stroke-width:3.2}
-.kf-fl-neg{fill:rgba(240,86,106,.22)}
-.kf-null-l{stroke:var(--line2);stroke-dasharray:3 3}
-.kf-null-l.gold{stroke:rgba(247,207,74,.6)}
-.kf-pkt-p{fill:var(--acid);filter:drop-shadow(0 0 5px rgba(190,242,100,.8))}
-.kf-pkt-g{fill:var(--gold);filter:drop-shadow(0 0 5px rgba(247,207,74,.8))}
-.kf-berg{fill:rgba(190,242,100,.13)}
 .kf-fahne{fill:var(--gold);stroke:var(--gold);stroke-width:1.2;stroke-linejoin:round}
 
 /* Auszeichnungen als Medaillen */
@@ -435,6 +392,110 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
 .kf-sam .nf-sam-z.kf-neu{box-shadow:inset 3px 0 0 -1px rgba(190,242,100,.55)}
 .kf-legende{display:inline-block;width:14px;height:12px;vertical-align:-1px;margin-right:4px;box-shadow:inset 3px 0 0 -1px rgba(190,242,100,.75);background:var(--surface2);border-radius:2px}
 
+/* ── Vierte Runde: Diagramme, Tabellen, Statistiken ────────────── */
+/* Statistikleiste unter der Anzeigetafel */
+.kf-stat{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;border-radius:9px;overflow:hidden}
+.kf-stat span{display:flex;flex-direction:column;align-items:center;gap:1px;padding:5px 2px;background:rgba(255,255,255,.035)}
+.kf-stat b{font:400 14px/1.1 'Archivo Black',sans-serif;color:var(--ink)}
+.kf-stat small{font:600 7.5px 'Sometype Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+/* Serien als Säulen: voll vorher, Rahmen danach */
+.kf-sb{position:relative;display:flex;justify-content:center;gap:4px;width:30px;height:44px}
+.kf-sb::before{content:"";position:absolute;left:-3px;right:-3px;top:22px;height:1px;background:var(--line2)}
+.kf-sb i{position:absolute;width:9px;border-radius:3px}
+.kf-sb i.v{left:4px}.kf-sb i.n{right:4px}
+.kf-sb i.auf{bottom:22px;border-radius:3px 3px 0 0}.kf-sb i.ab{top:23px;border-radius:0 0 3px 3px}
+.kf-sb i.null{top:21px;height:3px;background:var(--line2)}
+.kf-sb i.v.auf{background:var(--orange);box-shadow:0 0 6px rgba(255,120,73,.45)}.kf-sb i.v.ab{background:var(--blue)}
+.kf-sb i.n.auf{box-shadow:inset 0 0 0 1.5px var(--orange)}.kf-sb i.n.ab{box-shadow:inset 0 0 0 1.5px var(--blue)}
+.kf-sb-z{display:flex;align-items:center;gap:3px;font-size:9px;color:var(--muted);white-space:nowrap}
+.kf-sb-z .kf-fl{flex-wrap:nowrap;gap:1px}.kf-sb-z .kf-fl svg{width:10px;height:10px}.kf-sb-z .kf-fl b{font-size:12px}
+.kf-sb-z i{font-style:normal;font:600 9px 'Sometype Mono',monospace;color:var(--red)}.kf-sb-z i.w{color:var(--acid)}
+.kf-lg{display:flex;align-items:center;gap:4px}
+.kf-lg i{display:inline-block;width:7px;height:9px;border-radius:2px;margin-left:5px}
+.kf-lg i.v{background:var(--orange)}.kf-lg i.n{box-shadow:inset 0 0 0 1.5px var(--orange)}
+/* Duo gegen Duo: die direkte Bilanz in der Mitte */
+.kf-duo-m{display:flex;flex-direction:column;align-items:center;gap:2px}
+.kf-duo-m small{font:600 8.5px 'Sometype Mono',monospace;color:var(--ink2);white-space:nowrap}
+.kf-duo-m small+small{color:var(--muted);font-weight:500}
+/* Zu null: zwei Tore */
+.kf-nul{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);grid-template-rows:auto auto auto;align-items:center;justify-items:center;gap:6px 6px;
+  margin:-4px -4px 0;padding:8px 4px 4px;border-radius:11px;overflow:hidden;
+  /* Flutlicht: zwei Kegel von oben, unten der goldene Schein des leeren Tors */
+  background:linear-gradient(118deg,transparent 22%,rgba(255,255,255,.055) 30%,transparent 40%),
+    linear-gradient(242deg,transparent 22%,rgba(255,255,255,.055) 30%,transparent 40%),
+    radial-gradient(130px 70px at 22% 100%,rgba(247,207,74,.18),transparent 70%),
+    radial-gradient(160px 60px at 50% 0%,rgba(190,242,100,.10),transparent 70%)}
+.kf-nul>*{position:relative}
+.kf-nul-p.aus{filter:grayscale(1);opacity:.5}
+.kf-nul-z{display:flex;align-items:baseline;font:400 44px/1 'Archivo Black',sans-serif;letter-spacing:-.01em}
+.kf-nul-z b{font-weight:400;color:var(--acid);text-shadow:0 0 22px rgba(190,242,100,.55)}
+.kf-nul-z i{font-style:normal;color:var(--faint);font-size:.7em;margin:0 3px}
+.kf-nul-z u{text-decoration:none;color:transparent;-webkit-text-stroke:1.5px var(--gold);text-shadow:0 0 18px rgba(247,207,74,.45)}
+.kf-nul-tore{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;padding:0 4px}
+.kf-nul-t{width:100%;height:auto;aspect-ratio:100/58;overflow:visible}
+.kf-nt-n{fill:none;stroke:rgba(255,255,255,.14);stroke-width:.8}
+.kf-nt-r{fill:none;stroke:#eef3ef;stroke-width:3;stroke-linejoin:round}
+.kf-nt-b{stroke:var(--line2);stroke-width:1}
+.kf-nul-t.leer .kf-nt-r{stroke:var(--gold);filter:drop-shadow(0 0 6px rgba(247,207,74,.65))}
+.kf-nul-t.leer .kf-nt-n{stroke:rgba(247,207,74,.22)}
+.kf-nt-0{font:400 30px 'Archivo Black',sans-serif;fill:var(--gold);opacity:.32;text-anchor:middle}
+.kf-nul-t.voll .kf-nt-r{stroke:var(--ink2)}
+.kf-nt-ball{filter:drop-shadow(0 0 3px rgba(190,242,100,.55))}
+.kf-nul-b{display:flex;flex-direction:column;align-items:center;gap:2px;font-style:normal;padding:5px 8px;border-radius:9px;
+  border:1.5px solid rgba(247,207,74,.6);background:rgba(247,207,74,.08);box-shadow:0 0 16px rgba(247,207,74,.2)}
+.kf-nul-b svg{width:16px;height:16px;color:var(--gold)}
+.kf-nul-b b{font:600 9px 'Sometype Mono',monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);white-space:nowrap}
+.kf-nul-b small{font:500 8.5px 'Sometype Mono',monospace;color:var(--ink2);white-space:nowrap}
+.kf-nul-u{font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.06em;color:var(--muted);white-space:nowrap}
+.kf-nul-u.w{color:var(--gold)}
+/* Das Liniendiagramm */
+.kf-k{width:100%;height:auto;display:block;overflow:visible}
+.kf-k-g{stroke:rgba(255,255,255,.07);stroke-width:1}
+.kf-k-r{stroke:var(--fa);stroke-width:1;opacity:.6}
+.kf-k-t{font:500 8px 'Sometype Mono',monospace;fill:var(--muted);text-anchor:end}
+.kf-k-t.ref{fill:var(--fa);font-weight:700}
+.kf-k-x{font:500 8px 'Sometype Mono',monospace;fill:var(--faint)}
+.kf-k-x.re{text-anchor:end}
+.kf-k-f{fill:var(--fa);opacity:.12}.kf-k-f.neg{fill:var(--red);opacity:.16}
+.kf-k-l{fill:none;stroke:var(--fa);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.kf-k-l.neg{stroke:var(--red)}
+.kf-k-l.letzt{stroke:var(--gold);stroke-width:3.2;filter:drop-shadow(0 0 4px rgba(247,207,74,.6))}
+.kf-k-p{fill:var(--fa);stroke:var(--bg2);stroke-width:2}.kf-k-p.neg{fill:var(--red)}
+.kf-k-w{font:700 10px 'Sometype Mono',monospace;fill:var(--ink)}
+.kf-fahne{fill:var(--gold);stroke:var(--gold);stroke-width:1.2;stroke-linejoin:round}
+.kf-f-plus,.kf-f-hoehe{--fa:var(--acid);--fa-rgb:190,242,100}
+.kf-lgz{display:flex;align-items:center;gap:5px;font-size:9.5px;color:var(--muted);flex-wrap:wrap}
+.kf-lgz .av{--av:16px;font-size:6.5px;box-shadow:none}
+.kf-lgz small+.av{margin-left:6px}
+/* Rangliste der Spitze */
+.kf-rl{width:100%;border-collapse:collapse;font-size:11px;color:var(--muted)}
+.kf-rl td{padding:2px 3px;vertical-align:middle;white-space:nowrap}
+.kf-rl td:first-child{width:16px;font:600 9px 'Sometype Mono',monospace;color:var(--faint)}
+.kf-rl td:nth-child(2){width:1%}
+.kf-rl td:nth-child(2)>*{vertical-align:middle}
+/* Der Name hat seine ganze Länge: auf 48 px gekürzt stand „Johann…“. Der
+   Balken nimmt, was übrig bleibt. */
+.kf-rl td:nth-child(2) span{margin-left:5px}
+.kf-rl td.kf-rl-b{width:auto;min-width:40px}
+.kf-rl .av{--av:18px;font-size:7px;box-shadow:none}
+.kf-rl-b{position:relative}
+.kf-rl-b i{display:block;height:7px;border-radius:0 4px 4px 0;background:var(--line2)}
+.kf-rl-b u{position:absolute;top:2px;bottom:2px;width:1.5px;background:var(--ink2);transform:translateX(-50%)}
+.kf-rl th{font:600 7.5px 'Sometype Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);text-align:right;padding:0 3px 3px}
+.kf-rl-lg{display:flex;align-items:center;gap:6px;justify-content:flex-end;font:500 9px 'Sometype Mono',monospace;color:var(--muted)}
+.kf-rl-lg i{width:1.5px;height:10px;background:var(--ink2)}
+.kf-rl td.num{text-align:right;font:600 10px 'Sometype Mono',monospace;color:var(--ink2);width:28px}
+.kf-rl td.kf-rl-a{color:var(--faint);width:30px}
+.kf-rl tr.an td{color:var(--ink)}.kf-rl tr.an .kf-rl-b i{background:var(--fa);box-shadow:0 0 8px rgba(var(--fa-rgb),.45)}
+.kf-rl tr.an td:first-child{color:var(--fa)}
+/* Kleine Tabelle */
+.kf-tb{width:100%;border-collapse:collapse;font-size:11.5px;color:var(--ink)}
+.kf-tb th{font:600 8px 'Sometype Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:right;padding:0 4px 4px;border-bottom:1px solid var(--line)}
+.kf-tb td{padding:5px 4px;border-bottom:1px solid rgba(255,255,255,.04)}
+.kf-tb td:first-child>*{vertical-align:middle}.kf-tb td:first-child span{margin-left:6px;font-weight:600}
+.kf-tb td.num{text-align:right;font:600 12px 'Sometype Mono',monospace;color:var(--fa)}
+.kf-sz-s small{font:600 8.5px 'Sometype Mono',monospace;color:var(--muted);white-space:nowrap}
+
 /* ── Bewegung, nur wenn das Telefon sie erlaubt ─────────────────── */
 @media (prefers-reduced-motion:no-preference){
   .kf-flap b{animation:kfKlapp .55s cubic-bezier(.3,1.4,.5,1) both}
@@ -446,6 +507,8 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
   .kf-st-p{stroke-dasharray:7 5;animation:kfFluss 1.4s linear infinite}
   .kf-b-b i{transform-origin:left;animation:kfBahn .9s cubic-bezier(.2,.8,.2,1) both}
   .kf-luecke{animation:kfLuecke .5s .35s cubic-bezier(.3,1.4,.5,1) both}
+  .kf-nt-ball{animation:kfBall .5s cubic-bezier(.3,1.5,.5,1) both;animation-delay:calc(var(--i) * 60ms + .2s)}
+  .kf-nul-t.leer .kf-nt-r{animation:kfPuls 2.6s ease-in-out infinite}
   .kf-dom i.jetzt,.kf-kette.lauf i.jetzt,.kf-kal-g i.jetzt,.kf-wt i.an,.kf-zw-l span.jetzt i{animation:kfPuls 2.4s ease-in-out infinite}
 }
 @keyframes kfKlapp{from{transform:rotateX(-88deg);opacity:.2}}
@@ -453,4 +516,5 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
 @keyframes kfFluss{to{stroke-dashoffset:-24}}
 @keyframes kfBahn{from{transform:scaleX(0)}}
 @keyframes kfLuecke{from{transform:scaleX(.2);opacity:0}}
+@keyframes kfBall{from{transform:translateY(-26px);opacity:0}}
 @keyframes kfPuls{50%{filter:brightness(1.35)}}

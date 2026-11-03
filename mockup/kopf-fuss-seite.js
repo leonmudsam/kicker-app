@@ -1,6 +1,6 @@
-// Baut `kopf-fuss.html`: Köpfe und Füße der Karte einer Partie, dritte
-// Runde, mit allen Anlässen als Zeilen. Jeder Entwurf als ganze Karte aus echten Partien (`.kopf-fuss.json`
-// aus `kopf-fuss-lauf.js`), dazu die Regel, wann er kommt, wie oft er im
+// Baut `kopf-fuss.html`: Köpfe und Füße der Karte einer Partie, vierte
+// Runde, mit allen Anlässen als Zeilen. Jeder Entwurf als ganze Karte aus
+// echten Partien (`.kopf-fuss.json` aus `kopf-fuss-lauf.js`), dazu die Regel, wann er kommt, wie oft er im
 // Lauf kam, und die Auswahl, die für Abwechslung sorgt.
 //
 //   node tools/build.mjs && node mockup/kopf-fuss-anlaesse.js && node mockup/kopf-fuss-lauf.js && node mockup/kopf-fuss-seite.js [ziel.html]
@@ -50,6 +50,11 @@ const vier = (k, unter, mitte) => `<div class="kf-vier">
     ${k.L.map(x => `<div class="kf-sp">${av(x)}${unter(x, false)}</div>`).join('')}
   </div>`;
 const titel = t => `<em class="kf-k-t">${t}</em>`;
+// Drei Zahlen unter der Anzeigetafel, wie die Leiste unter einem Ergebnis im
+// Fernsehen: die Siegchance vor dem Anstoß, der Anteil der Tore, was ein
+// Sieger im Schnitt an Elo bekam.
+const statLeiste = k => `<div class="kf-stat">${[['Siegchance', k.chance + '\u00a0%'], ['Anteil Tore', prozent(k.hoch, k.hoch + k.tief) + '\u00a0%'],
+  ['Elo je Sieger', vz(Math.round(k.W.reduce((a, x) => a + k.delta[x], 0) / 2))]].map(([l, v]) => `<span><b class="num">${v}</b><small>${l}</small></span>`).join('')}</div>`;
 // Welche Plätze einer Leiste ihre Zahl tragen: bis zwölf alle, darüber der
 // erste, jeder fünfte und der letzte. Bei dreißig Plätzen lägen die Zahlen
 // sonst acht Pixel auseinander und liefen ineinander.
@@ -62,7 +67,7 @@ const KOPF = {
       <div class="kf-tf-s w">${paar(k.W)}<span class="num">${k.W.map(x => vz(k.delta[x])).join(' ')}</span></div>
       <div class="kf-tf-z"><span class="kf-flap w"><b>${k.hoch}</b></span><i></i><span class="kf-flap"><b>${k.tief}</b></span></div>
       <div class="kf-tf-s">${paar(k.L)}<span class="num">${k.L.map(x => vz(k.delta[x])).join(' ')}</span></div>
-    </div>`,
+    </div>${statLeiste(k)}`,
   // Torpucks: jedes Tor ein Puck, die fehlenden als leere Ringe.
   pucks:k => {
     const reihe = (n, w) => Array.from({length:10}, (_, i) => `<i class="${i < n ? (w ? 'w' : 'l') : ''}"></i>`).join('');
@@ -113,16 +118,19 @@ const KOPF = {
         ${lab(t, 'u', 'Anteil Tore')}</div>
       <em class="kf-ew-u ${art}">${urteil}</em></div>`;
   },
-  // Serie gegen Serie: unter jedem Gesicht die Serie davor, bei den Siegern
-  // der nächste Schritt, bei den Verlierern ihr Ende.
-  serien:k => titel('Serien vor der Partie') + vier(k, (x, sieg) => {
-    const s = k.vor[x].serie;
-    if(!s) return `<span class="kf-fl aus">–</span>`;
-    if(s > 0) return sieg ? `<span class="kf-fl">${flamme}<b class="num">${s}</b><i>→ ${s + 1}</i></span>`
-      : `<span class="kf-fl riss">${flamme}<b class="num">${s}</b><i>endet</i></span>`;
-    return sieg ? `<span class="kf-fl eis wende">${eis}<b class="num">${-s}</b><i>vorbei</i></span>`
-      : `<span class="kf-fl eis">${eis}<b class="num">${-s}</b><i>→ ${-s + 1}</i></span>`;
-  }),
+  // Serie gegen Serie als Säulendiagramm: je Spieler die Serie vor der
+  // Partie (voll) und danach (Rahmen), Siege nach oben, Niederlagen nach
+  // unten; darunter die Zahlen.
+  serien:k => {
+    // 3,5 px je Partie der Serie, ab sechs voll: bei zehn als Höchstem war
+    // eine Serie von zwei vier Pixel hoch und kaum zu sehen.
+    const saeule = (s, art) => s ? `<i class="${art} ${s > 0 ? 'auf' : 'ab'}" style="height:${(Math.min(6, Math.abs(s)) * 3.5).toFixed(1)}px"></i>` : `<i class="${art} null"></i>`;
+    return titel(`<span>Serien</span><span class="kf-lg"><i class="v"></i>vorher<i class="n"></i>danach</span>`) + vier(k, (x, sieg) => {
+      const s = k.vor[x].serie, n = k.nach[x].serie;
+      const zahl = v => v > 0 ? `<span class="kf-fl">${flamme}<b class="num">${v}</b></span>` : v < 0 ? `<span class="kf-fl eis">${eis}<b class="num">${-v}</b></span>` : '<span class="kf-fl aus">–</span>';
+      return `<span class="kf-sb">${saeule(s, 'v')}${saeule(n, 'n')}</span><span class="kf-sb-z">${zahl(s)}<i class="${sieg ? 'w' : ''}">→ ${n > 0 ? n : -n}</i></span>`;
+    });
+  },
   // Gegen die Form: die letzten fünf jedes Spielers als Formkurve, jeder
   // Sieg ein Schritt nach oben, jede Niederlage einer nach unten; die Linie
   // in der Farbe, wohin sie am Ende zeigt. Darunter die Siege von fünf.
@@ -157,7 +165,8 @@ const KOPF = {
       return `<span class="kf-duo-r${w ? ' w' : ''}"><svg viewBox="0 0 60 60"><circle cx="30" cy="30" r="25" class="kf-dr-g"/>
         <circle cx="30" cy="30" r="25" class="kf-dr-s" stroke-dasharray="${(q * U).toFixed(1)} ${U.toFixed(1)}"/></svg>${paar(ids)}
         <small class="num">${d.s}:${d.n - d.s} zusammen</small></span>`; };
-    return `<div class="kf-duo">${ring(k.duo.W, k.W, true)}${stand(k)}${ring(k.duo.L, k.L, false)}</div>`;
+    const d = k.paarung || {n:0, s:0};
+    return `<div class="kf-duo">${ring(k.duo.W, k.W, true)}<span class="kf-duo-m">${stand(k)}<small class="num">${d.n ? `direkt ${d.s + 1}:${d.n - d.s}` : 'erstes Duell'}</small><small>${d.n ? `${d.n + 1}. Begegnung` : 'der zwei Paare'}</small></span>${ring(k.duo.L, k.L, false)}</div>`;
   },
   // Fotofinish: zwei Bahnen bis zur Zielflagge, die eine erreicht sie, die
   // andere steht ein Tor davor.
@@ -166,12 +175,29 @@ const KOPF = {
         <span class="kf-b-b"><i style="width:${n * 10}%"></i></span><b class="num">${n}</b></div>`).join('')}
       <span class="kf-flagge"></span></div>`,
   // Zu null: der Kasten der Verlierer bleibt leer.
-  zunull:k => `<div class="kf-null">
-      <div class="kf-nl-s w">${paar(k.W)}<b class="num">${k.hoch}</b></div>
-      <svg class="kf-tor" viewBox="0 0 64 44" aria-hidden="true"><path d="M4 42V6h56v36" class="kf-tor-r"/>
-        <path d="M10 12h44M10 20h44M10 28h44M10 36h44M16 6v36M26 6v36M38 6v36M48 6v36" class="kf-tor-n"/><text x="32" y="30" class="kf-tor-z">0</text></svg>
-      <div class="kf-nl-s aus">${paar(k.L)}</div>
-      <em class="kf-nl-t">zu null</em></div>`,
+  // Zu null: zwei Tore. Das der Sieger leer und golden, das der Verlierer
+  // mit zehn Bällen im Netz, dazwischen das Band und welches Zu-null des
+  // Monats es ist. Vorher stand ein kleines Tor mit einer roten Null
+  // zwischen den Paaren, und die seltenste Partie sah aus wie jede andere.
+  zunull:k => {
+    const netz = `<path class="kf-nt-n" d="${Array.from({length:11}, (_, i) => `M${16 + i * 6.8} 2V46`).join('')}${Array.from({length:8}, (_, i) => `M16 ${2 + i * 6.3}H84`).join('')}M6 10L16 2M94 10L84 2M6 54L16 46M94 54L84 46"/>`;
+    const rahmen = `<path class="kf-nt-r" d="M6 55V10H94V55"/><path class="kf-nt-b" d="M2 55H98"/>`;
+    const lage = [[17, 48.5], [27.5, 48.5], [38, 48.5], [48.5, 48.5], [59, 48.5], [69.5, 48.5], [80, 48.5], [32, 38.5], [42.5, 38.5], [53, 38.5]];
+    const baelle = lage.map(([cx, cy], i) => `<circle class="kf-nt-ball" cx="${cx}" cy="${cy}" r="5" style="--i:${i}"/>`).join('');
+    const id = 'kfn' + (uid++);
+    return `<div class="kf-nul">
+      <div class="kf-nul-p w">${paar(k.W)}</div>
+      <span class="kf-nul-z num"><b>${k.hoch}</b><i>:</i><u>0</u></span>
+      <div class="kf-nul-p aus">${paar(k.L)}</div>
+      <div class="kf-nul-tore">
+      <svg class="kf-nul-t leer" viewBox="0 0 100 58" aria-hidden="true"><defs><radialGradient id="${id}" cx=".5" cy=".55" r=".6"><stop offset="0" stop-color="#f7cf4a" stop-opacity=".32"/><stop offset="1" stop-color="#f7cf4a" stop-opacity="0"/></radialGradient></defs>
+        <rect x="6" y="6" width="88" height="50" fill="url(#${id})"/>${netz}<text class="kf-nt-0" x="50" y="44">0</text>${rahmen}</svg>
+      <svg class="kf-nul-t voll" viewBox="0 0 100 58" aria-hidden="true"><defs><radialGradient id="${id}b" cx=".35" cy=".3" r=".7"><stop offset="0" stop-color="#f4ffd8"/><stop offset=".45" stop-color="#BEF264"/><stop offset="1" stop-color="#5f8a22"/></radialGradient></defs>
+        ${netz}<g fill="url(#${id}b)">${baelle}</g>${rahmen}</svg>
+      </div>
+      <small class="kf-nul-u w">kein Gegentor</small><em class="kf-nul-b">${ic('weisseWeste')}<b>Zu null</b><small class="num">${k.westen}. im ${monat(k.sid)}</small></em><small class="kf-nul-u">${k.hoch} Gegentore</small>
+    </div>`;
+  },
   // Außenseiter: die Paare auf Säulen aus ihrem Elo, die kleinere gewinnt;
   // in der Mitte ein Zeiger, wie viel Siegchance die Rechnung ihr gab.
   aussenseiter:k => {
@@ -199,23 +225,68 @@ const fkopf = (icon, label, wert) => `<div class="kf-f-k"><i>${ic(icon)}</i><spa
 // „Maxi, 69 von 137 Duellen" ein Stück, das nicht mehr umbrechen konnte.
 const EINHEIT = /(\d[\d.,]*\.?) (?=(Siege?n?|Elo|Partien|Partie|Duell(en?)?|Tor(en?)?|Mal|Spiele?|Niederlagen|Plätze|Tage?n?|%)(?![\wäöüß]))/g;
 const satz = s => `<div class="kf-satz">${s.replace(EINHEIT, '$1\u00a0').replace(/(Platz|zum|bei|nach|von|auf|um) (?=[+−-]?\d)/g, '$1\u00a0')}</div>`;
-const linie = (v, o) => {
-  const W = 259, H0 = o.h || 58, lo = Math.min(...v, o.lo != null ? o.lo : Infinity), hi = Math.max(...v, o.hi != null ? o.hi : -Infinity);
-  const X = i => 5 + i * (W - 10) / Math.max(1, v.length - 1), Y = y => 5 + (hi - y) * (H0 - 10) / Math.max(1, hi - lo);
-  return {W, H0, X, Y, d:v.map((y, i) => (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(y).toFixed(1)).join('')};
-};
+// ── Ein Liniendiagramm ──────────────────────────────────────────────
+// Jede Kurve im Fuß mit demselben Gerüst: links die Achse mit runden Werten,
+// unten Anfang und Ende, eine Bezugslinie (null, +75, 50 %) in der Farbe des
+// Fußes mit ihrem Wert, die Linie 2 px, darunter eine Fläche in einem Zehntel
+// ihrer Farbe, am Ende ein Punkt mit Ring und daneben sein Wert. Vorher
+// stand die Linie ohne Achse und ohne Zahl: man sah eine Form, aber keinen
+// Wert. Die Werte der Achse weichen der Bezugslinie aus, statt mit ihrem
+// Wert zusammenzufallen.
+const schritt = span => [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500].find(s => span / s <= 4) || 1000;
+function kurve(v, o){
+  const W = 244, H = o.h || 84, LI = 30, RE = 34, OB = 8, UN = 15, n = v.length - 1, f = o.fmt || (y => String(y));
+  let lo = Math.min(...v, o.ref != null ? o.ref : Infinity, o.lo != null ? o.lo : Infinity);
+  let hi = Math.max(...v, o.ref != null ? o.ref : -Infinity, o.hi != null ? o.hi : -Infinity);
+  if(hi === lo){ hi += 1; lo -= 1; }
+  const st = schritt(hi - lo); lo = Math.floor(lo / st) * st; hi = Math.ceil(hi / st) * st;
+  const X = i => LI + i * (W - LI - RE) / Math.max(1, n), Y = y => OB + (hi - y) * (H - OB - UN) / (hi - lo);
+  const r = x => x.toFixed(1);
+  const ticks = []; for(let y = lo; y <= hi + 1e-9; y += st) if(o.ref == null || Math.abs(Y(y) - Y(o.ref)) >= 9) ticks.push(y);
+  const d = v.map((y, i) => (i ? 'L' : 'M') + r(X(i)) + ' ' + r(Y(y))).join('');
+  const basis = o.ref != null ? o.ref : lo, id = 'kfk' + (uid++);
+  const flaeche = `${d}L${r(X(n))} ${r(Y(basis))}L${r(X(0))} ${r(Y(basis))}Z`;
+  // Über und unter der Bezugslinie zwei Farben, wo die Kurve sie kreuzt.
+  const fl = o.zwei
+    ? `<clipPath id="${id}o"><rect x="0" y="0" width="${W}" height="${r(Y(o.ref))}"/></clipPath><clipPath id="${id}u"><rect x="0" y="${r(Y(o.ref))}" width="${W}" height="${H}"/></clipPath>
+       <path class="kf-k-f" clip-path="url(#${id}o)" d="${flaeche}"/><path class="kf-k-f neg" clip-path="url(#${id}u)" d="${flaeche}"/>
+       <path class="kf-k-l" clip-path="url(#${id}o)" d="${d}"/><path class="kf-k-l neg" clip-path="url(#${id}u)" d="${d}"/>`
+    : `<path class="kf-k-f" d="${flaeche}"/><path class="kf-k-l" d="${d}"/>`;
+  const ey = Math.min(H - UN - 1, Math.max(OB + 6, Y(v[n]) + 3.5));
+  return `<svg class="kf-k" viewBox="0 0 ${W} ${H}" aria-hidden="true">
+    ${ticks.map(y => `<line class="kf-k-g" x1="${LI}" x2="${W - RE}" y1="${r(Y(y))}" y2="${r(Y(y))}"/><text class="kf-k-t" x="${LI - 5}" y="${r(Y(y) + 3)}">${esc(f(y))}</text>`).join('')}
+    ${o.ref != null ? `<line class="kf-k-r" x1="${LI}" x2="${W - RE}" y1="${r(Y(o.ref))}" y2="${r(Y(o.ref))}"/><text class="kf-k-t ref" x="${LI - 5}" y="${r(Y(o.ref) + 3)}">${esc(f(o.ref))}</text>` : ''}
+    ${fl}
+    ${o.letzt ? `<path class="kf-k-l letzt" d="M${r(X(n - 1))} ${r(Y(v[n - 1]))}L${r(X(n))} ${r(Y(v[n]))}"/>` : ''}
+    ${o.extra ? o.extra(X, Y) : ''}
+    <circle class="kf-k-p${o.zwei && v[n] < o.ref ? ' neg' : ''}" cx="${r(X(n))}" cy="${r(Y(v[n]))}" r="4"/>
+    <text class="kf-k-w" x="${r(X(n) + 8)}" y="${r(ey)}">${esc(o.ende != null ? o.ende : f(v[n]))}</text>
+    <text class="kf-k-x" x="${LI}" y="${H - 3}">${esc((o.x || [])[0] || '')}</text><text class="kf-k-x re" x="${r(X(n))}" y="${H - 3}">${esc((o.x || [])[1] || '')}</text>
+  </svg>`;
+}
 const dominos = (f, letzt) => `<span class="kf-dom">${f.map((r, i) => `<i class="${r ? 's' : 'n'}${letzt && i === f.length - 1 ? ' jetzt' : ''}"></i>`).join('')}</span>`;
-const balkenListe = (l, wert, label, hervor, krone) => {
-  const max = Math.max(1, ...l.map(wert));
-  return `<div class="kf-bl">${l.map((x, i) => `<div class="kf-bl-z${x.pid === hervor ? ' an' : ''}">${av(x.pid)}<span>${esc(nm(x.pid))}</span>
-    <span class="kf-bl-b"><i style="width:${Math.round(wert(x) / max * 100)}%"></i></span><b class="num">${label(x)}</b>${i === 0 && krone ? `<em>${ic(krone)}</em>` : ''}</div>`).join('')}</div>`;
-};
+// Eine kleine Rangliste als Tabelle: Platz, Gesicht und Name, ein Balken
+// von 0 bis `max`, der Wert und eine Zahl daneben; optional ein Strich für
+// den Schnitt. Dieselbe Form wie die Spitze, damit sich die Listen eines
+// Feeds gleich lesen [§C27].
+const rangTabelle = (l, o) => `<table class="kf-rl"><thead><tr><th></th><th></th><th></th><th>${esc(o.kopf[0])}</th><th>${esc(o.kopf[1])}</th></tr></thead><tbody>${l.map((q, i) =>
+  `<tr class="${q.id === o.hervor ? 'an' : ''}"><td class="num">${i + 1}.</td><td>${av(q.id)}<span>${esc(nm(q.id))}</span></td>
+   <td class="kf-rl-b"><i style="width:${Math.min(100, q.wert / o.max * 100).toFixed(1)}%"></i>${o.schnitt != null ? `<u style="left:${(o.schnitt / o.max * 100).toFixed(1)}%"></u>` : ''}</td>
+   <td class="num">${esc(q.zahl)}</td><td class="num kf-rl-a">${esc(q.neben)}</td></tr>`).join('')}</tbody></table>`;
+// Drei Zahlen als Leiste unter einer Zeichnung, wie unter der Anzeigetafel.
+const leiste = l => `<div class="kf-stat">${l.map(([lab, v]) => `<span><b class="num">${esc(v)}</b><small>${esc(lab)}</small></span>`).join('')}</div>`;
+// Die Bilanz zweier nach dieser Partie, aus den Duellen davor.
+const bilanzNach = (k, w, l) => { const c = (k.kreuz || []).find(q => q.w === w && q.l === l); return c ? [c.s + 1, c.n + 1] : null; };
 const FUSS = {
   riss:(k, x) => fkopf('flameBreak', 'Serie gerissen', x.n) + `<div class="kf-kette">${av(x.pid)}${x.n > 10 ? `<em class="num">+${x.n - 9}</em>` : ''}${Array.from({length:Math.min(x.n > 10 ? 9 : 10, x.n)}, () => `<i>${flamme}</i>`).join('')}<u></u></div>`
     + satz(`${b(nm(x.pid))} hatte ${x.n} Siege in Folge, ${b(und(k.W))} beenden die Serie.`),
-  spitze:(k, x) => fkopf('crown', x.vorher ? 'Neue Spitze' : 'Spitze in Reichweite', x.vorher ? '1.' : vz(x.liste[0].elo - (x.liste.find(q => q.id === x.pid) || {elo:0}).elo).replace('−', '') + ' Elo')
-    + balkenListe(x.liste.map(q => ({pid:q.id, elo:q.elo})), q => q.elo - x.liste[x.liste.length - 1].elo + 10, q => q.elo, x.pid, 'crown')
-    + satz(x.vorher ? `${b(nm(x.pid))} löst ${b(nm(x.vorher))} an der Spitze ab.` : `${b(nm(x.pid))} liegt noch ${x.liste[0].elo - (x.liste.find(q => q.id === x.pid) || {}).elo} Elo hinter ${b(nm(x.liste[0].id))}.`),
+  // Die Spitze als Rangliste: Balken aus dem Elo über dem fünften, der Wert
+  // am Ende, daneben der Abstand zum Ersten.
+  spitze:(k, x) => { const l = x.liste, top = l[0].elo, lo = Math.min(...l.map(q => q.elo)) - 20, ich = l.find(q => q.id === x.pid) || l[0];
+    return fkopf('crown', x.vorher ? 'Neue Spitze' : 'Spitze in Reichweite', x.vorher ? '1.' : `−${top - ich.elo} Elo`)
+      + `<table class="kf-rl"><tbody>${l.map((q, i) => `<tr class="${q.id === x.pid ? 'an' : ''}"><td class="num">${i + 1}.</td><td>${av(q.id)}<span>${esc(nm(q.id))}</span></td>
+        <td class="kf-rl-b"><i style="width:${((q.elo - lo) / Math.max(1, top - lo) * 100).toFixed(1)}%"></i></td><td class="num">${q.elo}</td><td class="num kf-rl-a">${i ? '−' + (top - q.elo) : ''}</td></tr>`).join('')}</tbody></table>`
+      + satz(x.vorher ? `${b(nm(x.pid))} löst ${b(nm(x.vorher))} an der Spitze ab, ${top - l[1].elo} Elo vor dem Zweiten.` : `${b(nm(x.pid))} liegt noch ${top - ich.elo} Elo hinter ${b(nm(l[0].id))}.`); },
   rangsprung:(k, x) => {
     const n = Math.max(x.vor, 8), X = r => 14 + (r - 1) * 212 / Math.max(1, n - 1), m = (X(x.vor) + X(x.nach)) / 2;
     return fkopf('stepsUp', 'Tabellensprung', `${x.vor}. → ${x.nach}.`) + `<div class="kf-treppe"><svg viewBox="0 0 240 58" aria-hidden="true">
@@ -234,23 +305,18 @@ const FUSS = {
       <small>${x.art === 'sieg' ? 'Siege' : 'Partien'}</small></div>
       <div class="kf-zw-l">${bis.concat(nach ? [nach] : []).map(m => `<span class="${m === x.wert ? 'jetzt' : m < x.wert ? 'da' : ''}"><i></i><small class="num">${m}</small></span>`).join('')}</div>`
     + satz(x.art === 'sieg' ? `${b(nm(x.pid))} gewinnt zum ${x.wert}. Mal, in ${x.n} Partien.` : `${b(nm(x.pid))} bestreitet die ${x.wert}. Partie, ${x.s} davon gewonnen.`); },
-  fluch:(k, x) => fkopf('bannbruch', 'Fluch gebrochen', `nach ${x.n}`) + `<div class="kf-duell">${av(x.w)}${dominos(x.folge, true)}${av(x.l)}</div>`
-    + satz(`${b(nm(x.w))} verlor die letzten ${x.n} Duelle gegen ${b(nm(x.l))}. Jetzt nicht mehr.`),
-  // Bilanz gekippt: eine Wippe. Die Seite des Siegers liegt jetzt unten,
-  // gestrichelt die Lage vor der Partie; wie weit sie kippt, folgt der
-  // Bilanz, aber mindestens so weit, dass man es sieht.
-  kippt:(k, x) => { const q = x.s / x.n, q0 = (x.s - 1) / (x.n - 1), grad = Math.PI / 180;
-    // Breite der Karte 244 px: x in Prozent, y in Pixeln; die Seite des
-    // Siegers (links) liegt unten, die alte Lage war höchstens waagrecht.
-    const w = Math.min(13, Math.max(6, (q - .5) * 160)) * grad, w0 = -Math.min(13, Math.max(0, (.5 - q0) * 160)) * grad;
-    const H = 80, M = 50, Y = 40, PX = 2.44, r = v => v.toFixed(1);
-    const ende = (a, s) => [M + s * H * Math.cos(a) / PX, Y - s * H * Math.sin(a)];
-    const [lx, ly] = ende(w, -1), [rx, ry] = ende(w, 1), [gx, gy] = ende(w0, -1), [hx, hy] = ende(w0, 1);
-    return fkopf('scaleBalance', 'Bilanz gekippt', `${x.s}:${x.n - x.s}`) + `<div class="kf-wippe">
-      <svg viewBox="0 0 100 62" preserveAspectRatio="none" aria-hidden="true"><line x1="${r(gx)}" y1="${r(gy)}" x2="${r(hx)}" y2="${r(hy)}" class="kf-wp-alt"/>
-        <line x1="${r(lx)}" y1="${r(ly)}" x2="${r(rx)}" y2="${r(ry)}" class="kf-wp-b"/><path d="M${M} ${Y}l-6 14h12z" class="kf-wp-d"/></svg>
-      <span class="kf-wp-a w" style="left:calc(${r(lx)}% - 11px);top:${r(ly - 23)}px">${av(x.w)}</span><b class="kf-wp-n w num" style="left:calc(${r(lx)}% - 40px);top:${r(ly - 19)}px">${x.s}</b>
-      <span class="kf-wp-a" style="left:calc(${r(rx)}% - 11px);top:${r(ry - 23)}px">${av(x.l)}</span><b class="kf-wp-n num" style="left:calc(${r(rx)}% + 14px);top:${r(ry - 19)}px">${x.n - x.s}</b></div>`
+  fluch:(k, x) => { const bi = bilanzNach(k, x.w, x.l);
+    return fkopf('bannbruch', 'Fluch gebrochen', `nach ${x.n}`) + `<div class="kf-duell">${av(x.w)}${dominos(x.folge, true)}${av(x.l)}</div>`
+    + (bi ? leiste([['Pleiten', x.n], ['Bilanz', `${bi[0]}:${bi[1] - bi[0]}`], ['Duelle', bi[1]]]) : '')
+    + satz(`${b(nm(x.w))} verlor die letzten ${x.n} Duelle gegen ${b(nm(x.l))}. Jetzt nicht mehr.`); },
+  // Bilanz gekippt: die Bilanzkurve zweier über alle Duelle, nach jedem
+  // Duell, wie weit der Sieger vorn (über null) oder hinten lag; der letzte
+  // Schritt kreuzt die Linie. Darüber, wer wofür steht: Farbe allein sagt es
+  // nicht.
+  kippt:(k, x) => { const v = x.verlauf, n = v.length - 1;
+    return fkopf('scaleBalance', 'Bilanz gekippt', `${x.s}:${x.n - x.s}`)
+      + `<div class="kf-lgz">${av(x.w)}<small>über null: ${esc(nm(x.w))} vorn</small>${av(x.l)}<small>darunter: ${esc(nm(x.l))}</small></div>`
+      + kurve(v, {ref:0, zwei:true, fmt:vz, x:['1. Duell', `${n}. Duell`], ende:`${x.s}:${x.n - x.s}`, letzt:true})
       + satz(`${b(nm(x.w))} führt jetzt gegen ${b(nm(x.l))}, ${x.s} von ${x.n} Duellen gewonnen.`); },
   // Jubiläum: die runde Zahl in einem Ring aus der Bilanz, der Anteil des
   // Ersten hell; bei einem Paar, wie oft es zusammen gewann.
@@ -272,36 +338,42 @@ const FUSS = {
         const l = je[i + 1] || [], an = l.includes(true);
         return `<span class="${an ? 'an' : ''}">${l.length > 4 ? `<b class="num">${l.length}</b>` : l.map(h => `<i class="${h ? 'an' : ''}"></i>`).join('')}${[1, 8, 15, 22, tage].includes(i + 1) ? `<small class="num">${i + 1}.</small>` : ''}</span>`; }).join('')}</div>`
       + satz(`Das ${x.n}. Spiel zu null im ${monat(x.sid)}, ${b(und(k.W))} gewinnen 10:0.`); },
-  wochenrennen:(k, x) => fkopf('weekKing', 'Rennen um die Woche', null) + balkenListe(x.liste, q => q.q, q => q.q + ' %', x.pid, 'crown')
+  // Das Rennen um die Woche als Tabelle: Quote als Balken von 0 bis 100 %,
+  // daneben Siege von Partien.
+  wochenrennen:(k, x) => fkopf('weekKing', 'Rennen um die Woche', null) + rangTabelle(x.liste.map(q => ({id:q.pid, wert:q.q,
+      zahl:q.q + '\u00a0%', neben:`${q.s}/${q.n}`})), {hervor:x.pid, max:100, kopf:['Quote', 'Siege']})
     + satz(`${b(nm(x.pid))} übernimmt die Woche: ${x.liste[0].s} von ${x.liste[0].n} gewonnen.`),
   serie:(k, x) => { const n = Math.min(x.n > 10 ? 9 : 10, x.n);
     return fkopf('flame', 'Siegesserie', x.n) + `<div class="kf-kette lauf">${av(x.pid)}${x.n > 10 ? `<em class="num">+${x.n - 9}</em>` : ''}${Array.from({length:n}, (_, i) => `<i class="${i === n - 1 ? 'jetzt' : ''}">${flamme}</i>`).join('')}</div>`
     + satz(`${b(nm(x.pid))} gewinnt zum ${x.n}. Mal in Folge.`); },
   wende:(k, x) => fkopf('comeback', 'Wende', `nach ${x.n}`) + `<div class="kf-duell solo">${av(x.pid)}${dominos(x.folge, true)}</div>`
+    + leiste([['Pleiten', x.n], [`Siege aus ${x.folge.length}`, x.folge.filter(Boolean).length], ['Serie', 1]])
     + satz(`${b(nm(x.pid))} beendet ${x.n} Niederlagen in Folge.`),
-  premiere:(k, x) => fkopf('premiere', 'Erstes gemeinsames Spiel', '1.') + `<div class="kf-jub prem">${av(x.ids[0])}<span class="kf-jub-m num">1.</span>${av(x.ids[1])}</div>`
+  // Das erste gemeinsame Spiel als Tabelle: der wievielte Partner es für
+  // jeden ist und wie viele Partien er schon hatte.
+  premiere:(k, x) => fkopf('premiere', 'Erstes gemeinsames Spiel', '1.')
+    + `<table class="kf-tb"><thead><tr><th></th><th>Partner</th><th>Partien</th></tr></thead><tbody>${x.ids.map((id, i) =>
+      `<tr><td>${av(id)}<span>${esc(nm(id))}</span></td><td class="num">${x.partner ? x.partner[i] + '.' : '–'}</td><td class="num">${x.n ? x.n[i] : '–'}</td></tr>`).join('')}</tbody></table>`
     + satz(`${b(und(x.ids))} spielen zum ersten Mal zusammen und gewinnen.`),
-  plus:(k, x) => { const v = x.verlauf, L = linie(v, {lo:0, hi:0}), n = v.length - 1, tief = Math.min(...v), id = 'kfp' + (uid++);
-    return fkopf('comeback', 'Ins Plus gedreht', vz(v[n])) + `<svg class="kf-svg" viewBox="0 0 ${L.W} ${L.H0}"><clipPath id="${id}"><rect x="0" y="${L.Y(0)}" width="${L.W}" height="${L.H0}"/></clipPath>
-      <path class="kf-fl-neg" clip-path="url(#${id})" d="${L.d}L${L.X(n)} ${L.Y(0)}L${L.X(0)} ${L.Y(0)}Z"/>
-      <line class="kf-null-l" x1="5" x2="${L.W - 5}" y1="${L.Y(0)}" y2="${L.Y(0)}"/><path class="kf-li" d="${L.d}"/>
-      <path class="kf-li pos" d="M${L.X(n - 1)} ${L.Y(v[n - 1])}L${L.X(n)} ${L.Y(v[n])}"/><circle class="kf-pkt-p" cx="${L.X(n)}" cy="${L.Y(v[n])}" r="3.5"/></svg>`
+  plus:(k, x) => { const v = x.verlauf, n = v.length - 1, tief = Math.min(...v);
+    return fkopf('comeback', 'Ins Plus gedreht', vz(v[n])) + kurve(v, {ref:0, zwei:true, fmt:vz, x:['Start', `${n}. Partie`]})
       + satz(`${b(nm(x.pid))} lag heute bei ${vz(tief)} Elo und steht nach der ${n}. Partie im Plus.`); },
-  hoehe:(k, x) => { const v = x.verlauf, L = linie(v, {lo:0, hi:Math.max(80, ...v)}), n = v.length - 1;
-    return fkopf('peak', 'Höhenmeter heute', vz(v[n])) + `<svg class="kf-svg" viewBox="0 0 ${L.W} ${L.H0}">
-      <path class="kf-berg" d="${L.d}L${L.X(n)} ${L.H0}L${L.X(0)} ${L.H0}Z"/><line class="kf-null-l gold" x1="5" x2="${L.W - 5}" y1="${L.Y(75)}" y2="${L.Y(75)}"/>
-      <path class="kf-li pos" d="${L.d}"/><path class="kf-fahne" d="M${L.X(n)} ${L.Y(v[n])}v-16l11 4-11 4"/></svg>`
-      + satz(`${b(nm(x.pid))} steht heute nach ${n} Partien bei ${vz(v[n])} Elo.`); },
-  sprung:(k, x) => { const v = x.verlauf, L = linie(v, {}), n = v.length - 1;
-    return fkopf('rakete', 'Größter Sprung im Monat', vz(x.gewinn)) + `<svg class="kf-svg" viewBox="0 0 ${L.W} ${L.H0}"><path class="kf-li" d="${L.d}"/>
-      <path class="kf-li gold dick" d="M${L.X(n - 1)} ${L.Y(v[n - 1])}L${L.X(n)} ${L.Y(v[n])}"/><circle class="kf-pkt-g" cx="${L.X(n)}" cy="${L.Y(v[n])}" r="3.5"/></svg>`
-      + satz(`${b(nm(x.pid))} holt ${x.gewinn} Elo, so viel wie in keiner Partie des Monats.`); },
-  halb:(k, x) => { const v = x.verlauf, L = linie(v, {lo:0, hi:100}), n = v.length - 1;
-    return fkopf('scaleBalance', 'Wieder bei 50 %', v[n] + ' %') + `<svg class="kf-svg" viewBox="0 0 ${L.W} ${L.H0}"><line class="kf-null-l" x1="5" x2="${L.W - 5}" y1="${L.Y(50)}" y2="${L.Y(50)}"/>
-      <path class="kf-li" d="${L.d}"/><circle class="kf-pkt-p" cx="${L.X(n)}" cy="${L.Y(v[n])}" r="3.5"/></svg>`
+  hoehe:(k, x) => { const v = x.verlauf, n = v.length - 1;
+    return fkopf('peak', 'Höhenmeter heute', vz(v[n])) + kurve(v, {ref:75, lo:0, fmt:vz, x:['Start', `${n}. Partie`],
+        extra:(X, Y) => `<path class="kf-fahne" d="M${X(n).toFixed(1)} ${(Y(v[n]) - 5).toFixed(1)}v-13l9 3.5-9 3.5"/>`})
+      + satz(`${b(nm(x.pid))} steht heute nach ${n} Partien bei ${vz(v[n])} Elo, zum ersten Mal über +75.`); },
+  sprung:(k, x) => { const v = x.verlauf.slice(1), n = v.length - 1;
+    return fkopf('rakete', 'Größter Gewinn im Monat', vz(x.gewinn)) + kurve(v, {letzt:true, x:['1. Partie', `${n + 1}. Partie`], ende:`${v[n]}`})
+      + satz(`${b(nm(x.pid))} holt ${x.gewinn} Elo, so viel wie in keiner Partie des Monats, und steht bei ${v[n]}.`); },
+  halb:(k, x) => { const v = x.verlauf, n = v.length - 1;
+    return fkopf('scaleBalance', 'Wieder bei 50 %', v[n] + ' %') + kurve(v, {ref:50, lo:0, hi:100, fmt:y => y + ' %', x:['1. Partie', `${n + 1}. Partie`]})
       + satz(`${b(nm(x.pid))} gewinnt im Monat wieder jede zweite Partie, nach ${x.n} Partien.`); },
+  // Der beste Partner als Tabelle: die Quote mit jedem Partner ab sechs
+  // Partien, dazu die Zahl der Partien, und als Strich durch alle Balken die
+  // Quote mit allen zusammen: wer darüber liegt, hebt ihn.
   partner:(k, x) => fkopf('partnerHebel', 'Der beste Partner', null)
-    + balkenListe(x.liste.map(q => Object.assign({}, q)), q => q.q, q => q.q + ' %', x.mit, null)
+    + rangTabelle(x.liste.map(q => ({id:q.pid, wert:q.q, zahl:q.q + '\u00a0%', neben:`${q.n} Sp.`})), {hervor:x.mit, max:100, schnitt:x.allg, kopf:['Quote', 'Partien']})
+    + `<div class="kf-rl-lg"><i></i>${x.allg}\u00a0% mit allen</div>`
     + satz(`Mit ${b(nm(x.mit))} gewinnt ${b(nm(x.pid))} öfter als mit jedem anderen, sonst ${x.allg} %.`),
   kalender:(k, x) => { const [y, m] = x.sid.split('-').map(Number), tage = new Date(y, m, 0).getDate(), start = (new Date(y, m - 1, 1).getDay() + 6) % 7;
     const set = new Set(x.tage.map(t => +t.slice(8)));
@@ -346,11 +418,12 @@ const FUSS = {
       + satz(`${b(und(k.W))} verloren ${heute ? 'um ' + uhr(v.t) + ' Uhr' : 'am ' + datum(v.t).replace(/^\w+\.,\s*/, '')} ${v.tief}:${v.hoch} gegen ${b(und(k.L))} und drehen es jetzt.`); },
   // Spitzenspiel: die zwei Ersten auf ihren Stufen, wie sie vor der Partie
   // standen, die Krone beim Sieger.
-  spitzenspiel:(k, x) => { const st = (id, pl, w) => `<span class="kf-sz-s${w ? ' w' : ''}" style="--h:${pl === 1 ? 34 : pl === 2 ? 24 : 16}px">${w ? ic('crown') : ''}${av(id)}<i><b class="num">${pl || '–'}.</b></i></span>`;
-    return fkopf('crown', 'Spitzenspiel', null) + `<div class="kf-sz">${st(x.a, x.pa, true)}<em>schlägt</em>${st(x.b, x.pb, false)}</div>`
+  spitzenspiel:(k, x) => { const st = (id, pl, w, e, n) => `<span class="kf-sz-s${w ? ' w' : ''}" style="--h:${pl === 1 ? 34 : pl === 2 ? 24 : 16}px">${w ? ic('crown') : ''}${av(id)}<i><b class="num">${pl || '–'}.</b></i><small class="num">${e != null ? `${e} → ${n}` : ''}</small></span>`;
+    return fkopf('crown', 'Spitzenspiel', null) + `<div class="kf-sz">${st(x.a, x.pa, true, x.ea, x.na)}<em>schlägt</em>${st(x.b, x.pb, false, x.eb, x.nb)}</div>`
       + satz(`${b(nm(x.a))} (${x.pa}.) schlägt ${b(nm(x.b))} (${x.pb}.) im Spitzenspiel.`); },
   // Formhoch: die letzten zehn als Punkte, die Siege gezählt.
   form10:(k, x) => fkopf('trendUp', 'In Form', `${x.s} von 10`) + `<div class="kf-duell solo">${av(x.pid)}${dominos(x.folge, true)}</div>`
+    + leiste([['Siege', x.s], ['Niederlagen', 10 - x.s], ['Quote', x.s * 10 + '\u00a0%']])
     + satz(`${b(nm(x.pid))} gewinnt ${x.s} der letzten 10 Partien.`),
   // Der lange Tag: jede Partie des Tages ein Stein, Sieg hell.
   marathon:(k, x) => fkopf('stopwatch', 'Der lange Tag', `${x.n}.`) + `<div class="kf-duell solo">${av(x.pid)}${dominos(x.folge.slice(-15), true)}</div>`
@@ -365,8 +438,10 @@ const FUSS = {
       + satz(`${b(nm(x.pid))} knackt ${x.marke} Elo, von ${x.vor} auf ${x.nach}.`); },
   // ── Füße für die neuen Zeilen ────────────────────────────────────
   // Der Lieblingsgegner: die Duelle als Dominos, die Serie hell.
-  liebling:(k, x) => fkopf('crossedSwords', 'Serie gegen einen', `${x.n}×`) + `<div class="kf-duell">${av(x.w)}${dominos(x.folge, true)}${av(x.l)}</div>`
-    + satz(`${b(nm(x.w))} gewinnt zum ${x.n}. Mal in Folge gegen ${b(nm(x.l))}.`),
+  liebling:(k, x) => { const bi = bilanzNach(k, x.w, x.l);
+    return fkopf('crossedSwords', 'Serie gegen einen', `${x.n}×`) + `<div class="kf-duell">${av(x.w)}${dominos(x.folge, true)}${av(x.l)}</div>`
+    + (bi ? leiste([['Serie', x.n], ['Bilanz', `${bi[0]}:${bi[1] - bi[0]}`], ['Quote', Math.round(bi[0] / bi[1] * 100) + '\u00a0%']]) : '')
+    + satz(`${b(nm(x.w))} gewinnt zum ${x.n}. Mal in Folge gegen ${b(nm(x.l))}.`); },
   // Dieselben zwei Paare: jede Begegnung ein Stein, die Bilanz daneben.
   paarung:(k, x) => fkopf('crossedSwords', 'Dieselben vier', `${x.n}.`) + `<div class="kf-duell">${paar(x.W)}${dominos(x.folge, true)}${paar(x.L, 'aus')}</div>`
     + `<div class="kf-jub-u num"><span><b>${x.s}</b> Siege</span><span><b>${x.n - x.s}</b> Siege</span></div>`
@@ -440,48 +515,48 @@ const bild = (k, unter) => `<figure class="kf-bsp"><div class="nf-wrap nf-liste"
 // ── Die Regeln ──────────────────────────────────────────────────────
 const KOEPFE = [
   ['Grundansichten', 'Jede trifft auf jede Partie zu und sagt so viel wie die anderen; sie wechseln sich ab, die am längsten nicht dran war, kommt.', [
-    ['tafel', 'Der Endstand auf Klappziffern wie an einer Anzeigetafel, die Sieger leuchten; neben jedem Paar, was die Partie ihm an Elo brachte.', 'immer'],
+    ['tafel', 'Der Endstand auf Klappziffern wie an einer Anzeigetafel, die Sieger leuchten; neben jedem Paar, was die Partie ihm an Elo brachte; darunter eine Leiste mit drei Zahlen: Siegchance, Anteil der Tore, Elo je Sieger.', 'immer'],
     ['pucks', 'Jedes Tor ein Puck, zehn Plätze je Reihe: die Sieger voll, die Verlierer mit ihren Toren und den fehlenden als leere Ringe. Der Abstand ist zu sehen, ohne zu rechnen.', 'immer'],
     ['strom', 'Was die Verlierer abgeben, fließt als Strom zu den Siegern, so breit wie die Punkte; die Ziffer steht an jedem Gesicht.', 'immer'],
     ['erwartung', 'Eine Skala von 0 bis 100 %: oben die Siegchance vor dem Anstoß als Ring, unten der Anteil der Tore danach als Punkt, dazwischen der Abstand, darunter das Urteil. Liegen beide bis fünf Punkte beieinander, sind sie eine Marke: genau nach Rechnung.', 'Siegchance zwischen 35 und 65 %']]],
   ['Besondere Ausgänge', 'Sie sind selbst die Geschichte und tragen den Kopf, außer derselbe stand auf einer der Karten davor (bei 10:9 und Kantersieg drei, sonst zwei): dann rückt der Ausgang in den Fuß.', [
     ['fotofinish', 'Zwei Bahnen bis zur Zielflagge: die Sieger erreichen sie, die Verlierer stehen ein Tor davor.', '10:9'],
-    ['zunull', 'Der Kasten der Verlierer bleibt leer, ihre Gesichter blass.', '10:0'],
+    ['zunull', 'Zwei Tore unter dem Endstand: das der Sieger leer und golden, mit der Null im Netz; das der Verlierer mit zehn Bällen, die hineinfallen. Dazwischen das Band, das wievielte Zu-null des Monats es ist, darunter „kein Gegentor“ und „10 Gegentore“, die Verlierer blass. Flutlicht von oben.', '10:0'],
     ['aussenseiter', 'Die Paare auf Säulen aus ihrem Elo, die kleinere trägt die Krone; in der Mitte ein Zeiger, wie viel Siegchance die Rechnung den Siegern gab.', 'Siegchance unter 35 %'],
     ['kantersieg', 'Die Pucks, und wo den Verlierern Tore fehlen, steht der Abstand als goldene Klammer. Nichts liegt über den Pucks.', 'mindestens sieben Tore Abstand']]],
   ['Befunde', 'Sie zeigen, was die vier mitbrachten. Sie kommen, wenn ihr Gewicht nach dem Abklingen noch 34 erreicht.', [
-    ['serien', 'Unter jedem Gesicht die Serie vor der Partie, Flamme oder Eis: bei den Siegern der nächste Schritt, bei den Verlierern ihr Ende.', 'eine Serie ab 3 auf der einen und ab 2 auf der anderen Seite, oder eine ab 5'],
+    ['serien', 'Ein Säulendiagramm je Spieler: die Serie vor der Partie voll, danach als Rahmen, Siege nach oben, Niederlagen nach unten; darunter die Zahl mit Flamme oder Eis und wohin sie geht.', 'eine Serie ab 3 auf der einen und ab 2 auf der anderen Seite, oder eine ab 5'],
     ['form', 'Die letzten fünf jedes Spielers als Formkurve, jeder Sieg ein Schritt nach oben, jede Niederlage einer nach unten, in der Farbe, wohin sie zeigt; oben die Siege beider Paare.', 'die Verlierer kamen mit mindestens drei Siegen mehr aus ihren letzten fünf'],
     ['rang', 'Unter jedem Gesicht der Platz danach und wie viele Plätze es hinauf oder hinunter ging; darunter die Tabelle als Leiste mit den vier als Marken, der Weg der Sieger über der Leiste, der der Verlierer darunter.', 'belastbare Tabelle, einer der ersten zwei dabei, mindestens vier Plätze Abstand'],
-    ['duo', 'Jedes Paar in einem Ring aus seiner gemeinsamen Bilanz.', 'beide Paare haben mindestens sechsmal zusammen gespielt']]],
+    ['duo', 'Jedes Paar in einem Ring aus seiner gemeinsamen Bilanz; in der Mitte die direkte Bilanz der zwei Paare und die wievielte Begegnung.', 'beide Paare haben mindestens sechsmal zusammen gespielt']]],
 ];
 const FUESSE = [
   ['Ereignisse', 'Sie geschehen einmal und gehen vor.', [
-    ['spitze', 'Neue Spitze oder Spitze in Reichweite: die ersten fünf mit ihrem Elo, die Krone an Platz 1.', 'ein Sieger übernimmt Platz 1, oder steht danach auf 2 oder 3, höchstens 12 Elo dahinter'],
+    ['spitze', 'Neue Spitze oder Spitze in Reichweite: die ersten fünf als Rangliste, Balken aus dem Elo, der Wert und der Abstand zum Ersten.', 'ein Sieger übernimmt Platz 1, oder steht danach auf 2 oder 3, höchstens 12 Elo dahinter'],
     ['riss', 'Die Flammen der Serie als Kette, das letzte Glied gerissen.', 'ein Verlierer hatte mindestens fünf Siege in Folge'],
     ['fluch', 'Die letzten Duelle als Dominos, rot bis auf den letzten.', 'der Sieger verlor die letzten fünf oder mehr Duelle gegen einen der Verlierer'],
-    ['kippt', 'Eine Wippe: die Seite des Siegers liegt jetzt unten, gestrichelt die Lage vor der Partie, an jedem Ende die Siege.', 'ab 16 Duellen führt der Sieger mit diesem Sieg wieder, und zuletzt lag er vor mindestens zehn Duellen vorn oder nie'],
+    ['kippt', 'Die Bilanzkurve über alle Duelle der zwei: nach jedem Duell, wie weit der Sieger vorn oder hinten lag, über null in seiner Farbe, darunter rot; der letzte Schritt kreuzt die Linie. Darüber, wer wofür steht.', 'ab 16 Duellen führt der Sieger mit diesem Sieg wieder, und zuletzt lag er vor mindestens zehn Duellen vorn oder nie'],
     ['rangsprung', 'Die Tabelle als Treppe, der Sprung als Bogen.', 'belastbare Tabelle, mindestens zwei Plätze nach oben'],
     ['zaehlwerk', 'Die Zahl auf Klappziffern, darunter die Leiste der Marken: die erreichten gefüllt, die heutige leuchtend, die nächste als Ring.', 'der 50., 100., 150. … Sieg oder die 50., 100. … Partie'],
     ['jubilaeum', 'Die runde Zahl in einem Ring aus der Bilanz zwischen den zwei Gesichtern, darunter die Siege.', 'die 25., 50., 75. … gemeinsame Partie eines Paars oder das 25., 50. … Duell zweier'],
     ['westen', 'Der Monat als Säulen, je Tag eine, jedes Spiel zu null ein Stein, das heutige gold; ab dem fünften am selben Tag die Zahl.', '10:0'],
-    ['wochenrennen', 'Die Siegquote der Woche ab fünf Siegen.', 'ein Sieger übernimmt die Führung der Woche'],
+    ['wochenrennen', 'Die Siegquote der Woche ab fünf Siegen als Tabelle: Platz, Balken bis 100 %, Quote, Siege von Partien.', 'ein Sieger übernimmt die Führung der Woche'],
     ['auszeichnung', 'Die Auszeichnungen der Partie als Medaillen, die Klasse als Farbe, darunter wer sie holt; bis drei, dahinter die Zahl.', 'die App meldet eine Auszeichnung oder eine runde Zahl einer Auszeichnung'],
     ['revanche', 'Die Begegnung davor und die von eben untereinander, dieselben vier.', 'die App meldet eine Revanche (dieselben Paare am selben Tag, davor klar verloren)'],
-    ['spitzenspiel', 'Die zwei Ersten auf ihren Stufen, wie sie vor der Partie standen, die Krone beim Sieger.', 'die App meldet ein Spitzenspiel'],
+    ['spitzenspiel', 'Die zwei Ersten auf ihren Stufen, wie sie vor der Partie standen, die Krone beim Sieger, darunter das Elo vorher und nachher.', 'die App meldet ein Spitzenspiel'],
     ['elomarke', 'Die Skala um die Marke, vorher und nachher, die Marke als goldene Linie.', 'die App meldet eine Elo-Marke'],
     ['liebling', 'Die Duelle zweier als Dominos, die Serie hell.', 'ein Sieger gewinnt zum 8., 10., 12., 15., 20. … Mal in Folge gegen einen der Verlierer'],
     ['paarung', 'Jede Begegnung dieser zwei Paare ein Stein, darunter die Bilanz.', 'dieselben zwei Paare treffen zum 5., 10., 15. … Mal aufeinander']]],
   ['Zustände', 'Sie gelten über viele Partien und treten zurück, wenn sie eben schon standen.', [
     ['serie', 'Die Flammen der laufenden Serie, die jüngste hell.', 'ein Sieger gewinnt mindestens zum dritten Mal in Folge'],
     ['wende', 'Die letzten zehn als Dominos, die Pleiten und der Sieg danach.', 'ein Sieger verlor davor mindestens fünfmal in Folge'],
-    ['plus', 'Das Elo des Tages, unter null rot, die Partie, die ins Plus dreht.', 'ab der vierten Partie des Tages, nach einem Tief von mindestens −25'],
-    ['hoehe', 'Das Elo des Tages als Berg über der Linie bei +75, mit Fahne.', 'ein Sieger kommt heute zum ersten Mal über +75'],
-    ['sprung', 'Die Elo-Kurve des Monats, dieser Schritt in Gold.', 'ab der achten Partie im Monat der größte Gewinn, mindestens 22'],
-    ['halb', 'Die Siegquote des Monats bis zur Linie bei 50 %.', 'ab der fünfzehnten Partie im Monat erreicht sie 50 % von unten'],
-    ['partner', 'Die Siegquote mit jedem Partner, der heutige hervorgehoben.', 'mit diesem Partner die beste Quote, mindestens acht Partien, jede achte'],
+    ['plus', 'Das Elo des Tages als Diagramm mit Achse: über null grün, darunter rot, am Ende der Wert.', 'ab der vierten Partie des Tages, nach einem Tief von mindestens −25'],
+    ['hoehe', 'Das Elo des Tages als Diagramm mit Achse, die Linie bei +75 mit ihrem Wert, am Ende die Fahne und der Wert.', 'ein Sieger kommt heute zum ersten Mal über +75'],
+    ['sprung', 'Die Elo-Kurve des Monats mit Achse, dieser Schritt in Gold, am Ende der Stand.', 'ab der achten Partie im Monat der größte Gewinn, mindestens 22'],
+    ['halb', 'Die Siegquote des Monats mit Achse von 0 bis 100 % und der Linie bei 50 %.', 'ab der fünfzehnten Partie im Monat erreicht sie 50 % von unten'],
+    ['partner', 'Eine Tabelle der Partner ab sechs Partien: Quote als Balken, Partien, und als Strich durch alle Balken die Quote mit allen zusammen.', 'mit diesem Partner die beste Quote, mindestens acht Partien, jede achte'],
     ['kalender', 'Der Monat als Kalender mit den Wochentagen, die Spieltage gefüllt, heute umrandet.', 'der 12., 16. oder 20. Spieltag im Monat'],
-    ['premiere', 'Zwei Gesichter um die 1.', 'das erste gemeinsame Spiel eines Paars, gewonnen'],
+    ['premiere', 'Eine kleine Tabelle: der wievielte Partner es für jeden ist und wie viele Partien er schon hatte.', 'das erste gemeinsame Spiel eines Paars, gewonnen'],
     ['duoserie', 'Das Paar vor der Flammenkette.', 'die App meldet eine Serie zu zweit'],
     ['form10', 'Die letzten zehn als Dominos.', 'die App meldet ein Formhoch'],
     ['marathon', 'Jede Partie des Tages ein Stein, darunter Siege und Niederlagen.', 'die App meldet die 10., 15. … Partie eines Spielers am Tag'],
@@ -533,7 +608,7 @@ const seite = `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta 
 <style>${fs.readFileSync(path.join(__dirname, 'kopf-fuss.css'), 'utf8')}</style>
 </head><body class="kf-seite">
 <header class="kf-held">
-  <p class="kf-ober">Die Karte einer Partie · Entwürfe, dritte Runde</p>
+  <p class="kf-ober">Die Karte einer Partie · Entwürfe, vierte Runde</p>
   <h1>Köpfe und Füße</h1>
   <p class="kf-lead">Der Kopf zeigt immer alle vier Gesichter und den Endstand: auf einen Blick ist klar, dass hier eine Partie gespielt wurde und wer sie gewann. Was er dazu zeigt, wechselt. Darunter steht jeder Anlass der Partie als Zeile, alle, die die App heute bündelt, und neue Fakten, wenn sie selten und spannend sind. Der Fuß zeichnet den schwersten davon. Gezeichnet aus den ${N.partien} echten Partien bis Oktober, mit den Anlässen, die der Generator der App für jede von ihnen schrieb, gewählt mit der Regel unten.</p>
   <div class="kf-kennz">
