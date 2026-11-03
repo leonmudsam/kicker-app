@@ -43,23 +43,26 @@
 // `typ` (die Typen der Meldung, bei Auszeichnungen mit Klasse), `form`
 // (der Schlüssel der App-Form), `gewicht`, `zustand` (gilt über viele
 // Partien), `neg` (eine Pleite), `fuss` (die Zeichnung: ein Fuß der App,
-// `app:<key>`, oder einer dieses Entwurfs), `deckt` (die Arten, deren Sache
+// `app:<key>`, oder einer dieses Entwurfs; Tabelle, Medaille und Marken
+// zeichnet der Entwurf selbst mit den Daten der App — die Tabelle der App
+// war neun Zeilen hoch, die Medaille kannte nur einen Träger, das Zählwerk
+// nur eine Marke), `deckt` (die Arten, deren Sache
 // er schon sagt), `thema` (worum es geht: eine Zeile je Thema, Schritt 5)
 // und `wann` (in Worten, für die Seite).
 const ANLASS = {
   // Meldungen des Generators
-  spitze:      {name:'Spitzenwechsel', quelle:'app', thema:'tabelle', typ:['lead_change'], gewicht:96, fuss:'app:spitze', wann:'ein Sieger übernimmt die Tabellenspitze des Monats'},
-  legendaer:   {name:'Legendäre Auszeichnung', quelle:'app', thema:'auszeichnung', typ:['badge_unlocked:legendary'], gewicht:92, fuss:'app:medaille', wann:'eine legendäre Auszeichnung aus der Partie'},
+  spitze:      {name:'Spitzenwechsel', quelle:'app', thema:'tabelle', typ:['lead_change'], gewicht:96, fuss:'tabelle', wann:'ein Sieger übernimmt die Tabellenspitze des Monats'},
+  legendaer:   {name:'Legendäre Auszeichnung', quelle:'app', thema:'auszeichnung', typ:['badge_unlocked:legendary'], gewicht:92, fuss:'medaille', wann:'eine legendäre Auszeichnung aus der Partie'},
   rekordserie: {name:'Serien-Rekord der Liga', quelle:'app', thema:'serie', typ:['streak_record'], gewicht:84, fuss:'app:serie', wann:'die längste Siegesserie, die die Liga je sah'},
   riss:        {name:'Serie gerissen', quelle:'app', thema:'serie', typ:['streak_killer'], gewicht:80, fuss:'app:riss', wann:'die Sieger beenden eine Serie ab vier Siegen'},
-  selten:      {name:'Seltene Auszeichnung', quelle:'app', thema:'auszeichnung', typ:['badge_unlocked:rare'], gewicht:66, fuss:'app:medaille', wann:'eine seltene Auszeichnung aus der Partie'},
+  selten:      {name:'Seltene Auszeichnung', quelle:'app', thema:'auszeichnung', typ:['badge_unlocked:rare'], gewicht:66, fuss:'medaille', wann:'eine seltene Auszeichnung aus der Partie'},
   fluch:       {name:'Fluch gebrochen', quelle:'app', thema:'duell', typ:['fluch'], gewicht:64, fuss:'app:gegner', wann:'erster Sieg gegen einen nach fünf oder mehr Niederlagen in Folge, frühestens zwei Wochen nach dem letzten'},
-  siegmarke:   {name:'Runde Zahl an Siegen', quelle:'app', thema:'zahl', typ:['milestone_wins'], gewicht:62, fuss:'app:zaehlwerk', wann:'der 100., 250., 500. … Sieg'},
-  elomarke:    {name:'Elo-Marke', quelle:'app', thema:'zahl', typ:['milestone_elo'], gewicht:60, fuss:'app:zaehlwerk', wann:'eine runde Elo-Marke wird zum ersten Mal geknackt'},
+  siegmarke:   {name:'Runde Zahl an Siegen', quelle:'app', thema:'zahl', typ:['milestone_wins'], gewicht:62, fuss:'marken', wann:'der 100., 250., 500. … Sieg'},
+  elomarke:    {name:'Elo-Marke', quelle:'app', thema:'zahl', typ:['milestone_elo'], gewicht:60, fuss:'marken', wann:'eine runde Elo-Marke wird zum ersten Mal geknackt'},
   elohoch:     {name:'Elo-Höchststand', quelle:'app', thema:'zahl', typ:['elo_hoch'], gewicht:60, fuss:'app:hoch', wann:'so viel Elo wie nie zuvor'},
-  tabellensprung:{name:'Tabellensprung', quelle:'app', thema:'tabelle', typ:['tabellensprung'], gewicht:59, fuss:'app:rang', wann:'ein Sieger springt in einer belastbaren Tabelle mindestens drei Plätze'},
-  tormarke:    {name:'Runde Zahl an Toren', quelle:'app', thema:'zahl', typ:['milestone_goals'], gewicht:58, fuss:'app:zaehlwerk', wann:'das 500., 1000., 2500. … Tor'},
-  jubilaeum:   {name:'Spiel-Jubiläum', quelle:'app', thema:'zahl', typ:['jubilee'], gewicht:56, fuss:'app:zaehlwerk', wann:'das 10., 25., 50. … Spiel'},
+  tabellensprung:{name:'Tabellensprung', quelle:'app', thema:'tabelle', typ:['tabellensprung'], gewicht:59, fuss:'tabelle', wann:'ein Sieger springt in einer belastbaren Tabelle mindestens drei Plätze'},
+  tormarke:    {name:'Runde Zahl an Toren', quelle:'app', thema:'zahl', typ:['milestone_goals'], gewicht:58, fuss:'marken', wann:'das 500., 1000., 2500. … Tor'},
+  jubilaeum:   {name:'Spiel-Jubiläum', quelle:'app', thema:'zahl', typ:['jubilee'], gewicht:56, fuss:'marken', wann:'das 10., 25., 50. … Spiel'},
   rivalmarke:  {name:'Rivalitätsmarke', quelle:'app', thema:'duell', typ:['rivalry_milestone'], gewicht:54, fuss:'app:duell', wann:'zwei treffen zum 50., 100., 200. oder 500. Mal aufeinander'},
   spitzenspiel:{name:'Spitzenspiel', quelle:'app', thema:'tabelle', typ:['top_clash'], gewicht:53, fuss:'app:gipfel', wann:'Erster gegen Zweiten der Tabelle'},
   revanche:    {name:'Revanche', quelle:'app', thema:'duell', typ:['revanche'], gewicht:52, fuss:'app:revanche', wann:'dieselben Paare am selben Tag, davor mit drei Toren oder mehr verloren'},
@@ -77,7 +80,7 @@ const ANLASS = {
   schande:     {name:'Negative Auszeichnung', quelle:'app', thema:'auszeichnung', typ:['badge_unlocked:negative'], gewicht:24, neg:true, fuss:null, wann:'ein Verlierer bekommt eine Auszeichnung, die keiner will'},
   gruppe:      {name:'Mehrere zugleich', quelle:'app', thema:'auszeichnung', typ:['group'], gewicht:20, fuss:null, wann:'mehrere Spieler mit derselben Sache in einer Partie'},
   // Formen der App aus der Partie selbst
-  zaehlwerk:   {name:'Zählwerk', quelle:'form', thema:'zahl', form:'zaehlwerk', gewicht:44, fuss:'app:zaehlwerk', deckt:['siegmarke', 'elomarke', 'tormarke', 'jubilaeum'], wann:'eine runde Zahl, die keine Meldung schon nennt'},
+  zaehlwerk:   {name:'Zählwerk', quelle:'form', thema:'zahl', form:'zaehlwerk', gewicht:44, fuss:'marken', deckt:['siegmarke', 'elomarke', 'tormarke', 'jubilaeum'], wann:'eine runde Zahl, die keine Meldung schon nennt'},
   gegner:      {name:'Lieblingsgegner', quelle:'form', thema:'duell', form:'gegner', gewicht:42, fuss:'app:gegner', deckt:['fluch'], wann:'jeder fünfte Sieg gegen einen, gegen den drei von vier Duellen gewonnen sind'},
   rueckkehr:   {name:'Zurück am Tisch', quelle:'form', thema:'rolle', form:'rueckkehr', gewicht:32, fuss:'app:rueckkehr', wann:'ein Sieg nach mindestens zehn Tagen ohne Partie'},
   ueberholt:   {name:'Überholt', quelle:'form', thema:'tabelle', form:'ueberholt', gewicht:30, fuss:'app:ueberholt', deckt:['spitze', 'tabellensprung'], wann:'ein Sieger zieht in der Tabelle an einem Verlierer vorbei'},

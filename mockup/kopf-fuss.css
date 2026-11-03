@@ -1,4 +1,4 @@
-/* Köpfe und Füße, sechste Runde — die Seite und die Entwürfe. Die Seite steht
+/* Köpfe und Füße, siebte Runde — die Seite und die Entwürfe. Die Seite steht
    im Gewand der App: ihre Farben (`--acid`, `--gold`, `--red` …), ihre
    Schriften, dunkel. Die Karten sind 288 px breit wie im Feed bei 360 px. */
 :root{color-scheme:dark}
@@ -136,6 +136,66 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
 .kf-k-krimi .kf-stat{grid-template-columns:repeat(3,minmax(0,1fr))}
 
 /* ── Die eigenen Füße, im Rahmen der App ────────────────────────── */
+/* Tabelle als Kette: ein Feld je Platz, darüber die Bögen der Sprünge. */
+.kf-tk{position:relative;display:flex;flex-direction:column}
+.kf-tk-s{display:block;width:100%;height:18px;overflow:visible}
+.kf-tk-b{fill:none;stroke:var(--acid);stroke-width:1.6;stroke-linecap:round;vector-effect:non-scaling-stroke;opacity:.85}
+.kf-tk-p{fill:var(--acid)}
+.kf-tk-r{position:relative;display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));container-type:inline-size}
+.kf-tk-f{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0}
+.kf-tk-f>i{display:grid;place-items:center;width:22px;height:22px}
+.kf-tk-f .av{--av:20px;font-size:7.5px;box-shadow:none}
+.kf-tk-f:not(.g):not(.r) .av{opacity:.55}
+.kf-tk-f.g .av{box-shadow:0 0 0 2px var(--surface2),0 0 0 3.5px var(--acid),0 0 10px rgba(190,242,100,.45)}
+.kf-tk-f.r .av{box-shadow:0 0 0 2px var(--surface2),0 0 0 3px rgba(240,86,106,.7)}
+.kf-tk-f.eins .av{box-shadow:0 0 0 2px var(--surface2),0 0 0 3.5px var(--gold),0 0 12px rgba(247,207,74,.55)}
+.kf-tk-f small{font:600 8.5px 'Sometype Mono',monospace;color:var(--faint)}
+.kf-tk-f.g small,.kf-tk-f.eins small{color:var(--ink2)}
+.kf-tk-g{position:absolute;top:1px;width:20px;height:20px;margin-left:-10px;border-radius:50%;border:1.5px dashed rgba(190,242,100,.5)}
+.kf-tk-t{font-size:11px;color:var(--muted);text-align:center}
+.kf-tk-t b{color:var(--ink2);font-weight:600}
+/* Die Medaille */
+/* Die Farben der Klasse am Rahmen des Fußes, nicht an der Medaille: die
+   Felder der Liga darunter sind ihre Geschwister und sahen sie sonst nicht. */
+.kf-f-legendaer{--m1:#fff3c4;--m2:#f7cf4a;--m3:#9c7618;--mr:247,207,74}
+.kf-f-selten{--m1:#e9e1ff;--m2:#a78bfa;--m3:#5b45a8;--mr:167,139,250}
+.kf-md{display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;align-items:center}
+.kf-md-m{position:relative;display:block;width:64px;height:74px;overflow:hidden;isolation:isolate}
+.kf-md-m svg{position:absolute;inset:0;width:100%;height:100%}
+.kf-md-m .s1{stop-color:var(--m1)}.kf-md-m .s2{stop-color:var(--m2)}.kf-md-m .s3{stop-color:var(--m3)}
+.kf-md-band{fill:rgba(var(--mr),.35);stroke:rgba(var(--mr),.7);stroke-width:.8}
+.kf-md-in{fill:rgba(10,12,11,.55);stroke:rgba(255,255,255,.35);stroke-width:.8}
+.kf-md-pkt{fill:rgba(255,255,255,.55)}
+.kf-md-ic{position:absolute;left:14px;top:28px;width:36px;height:36px;display:grid;place-items:center}
+.kf-md-ic .zk{--z:30px;margin:0}
+.kf-md-glanz{position:absolute;left:7px;top:21px;width:50px;height:50px;border-radius:50%;pointer-events:none;opacity:0;
+  background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.55) 50%,transparent 65%)}
+.kf-md-r{display:flex;flex-direction:column;gap:5px;min-width:0}
+.kf-md-n{font:400 15px/1.15 'Archivo Black',sans-serif;color:rgb(var(--mr));text-wrap:balance}
+.kf-md-w{display:flex;align-items:center;gap:7px;min-width:0;font-size:12px;color:var(--ink2)}
+.kf-md-w .av{--av:20px;font-size:7.5px}
+.kf-md-w b{color:var(--ink);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.kf-md-w em{margin-left:auto;font:600 9.5px 'Sometype Mono',monospace;font-style:normal;color:rgb(var(--mr));white-space:nowrap}
+.kf-md-w.mehr{color:var(--muted);font-size:11px}
+.kf-md-r small{font:500 9.5px 'Sometype Mono',monospace;color:var(--muted)}
+.kf-md-l{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.kf-md-l>span{display:flex;gap:2px}
+.kf-md-l i{width:7px;height:7px;border-radius:50%;box-shadow:inset 0 0 0 1.2px var(--line2)}
+.kf-md-l i.hat{background:rgba(var(--mr),.45);box-shadow:none}
+.kf-md-l i.neu{background:rgb(var(--mr));box-shadow:0 0 6px rgba(var(--mr),.7)}
+.kf-md-l small{font:500 9.5px 'Sometype Mono',monospace;color:var(--muted);white-space:nowrap}
+.kf-f-medaille .sp-k{color:rgb(var(--mr))}
+/* Runde Zahlen */
+.kf-zm{display:flex;flex-direction:column;gap:6px}
+.kf-zm-z{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;gap:8px;font-size:12px}
+.kf-zm-z .av{--av:22px}
+.kf-zm-z b{color:var(--ink);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kf-zm-d{display:flex;gap:2px;perspective:200px}
+.kf-zm-d i{display:grid;place-items:center;width:16px;height:22px;border-radius:4px;font:400 14px 'Archivo Black',sans-serif;font-style:normal;color:var(--gold);
+  background:linear-gradient(180deg,#26302a 0 50%,#1b221d 50% 100%);box-shadow:inset 0 -1px 0 rgba(0,0,0,.4)}
+.kf-zm-d u{text-decoration:none;align-self:flex-end;font:400 14px/1 'Archivo Black',sans-serif;color:var(--gold);margin-left:1px}
+.kf-zm-z em{font:600 10px 'Sometype Mono',monospace;font-style:normal;color:var(--muted);white-space:nowrap}
+
 .kf-fuss-app>.sp-fk{margin-bottom:10px}
 .kf-fk{--fa:var(--acid);--fa-rgb:190,242,100;display:flex;flex-direction:column;gap:6px}
 .kf-f-kippt,.kf-f-halb{--fa:var(--blue);--fa-rgb:86,180,232}
@@ -158,20 +218,20 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
 .kf-stat b{font:400 14px/1.1 'Archivo Black',sans-serif;color:var(--ink)}
 .kf-stat small{font:600 7.5px 'Sometype Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
 
-/* Zu null: der Stand zwischen den Paaren, darunter unter jedem Paar das
-   Tor, in das es traf, darunter das Band. */
+/* Zu null: der Stand zwischen den Paaren, darunter unter jedem Paar sein
+   eigenes Tor (bei den Siegern leer, bei den Verlierern getroffen), darunter
+   das Band. */
 .kf-nul{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;justify-items:center;gap:7px 6px;
   margin:-4px -4px 0;padding:8px 4px 2px;border-radius:11px;overflow:hidden;isolation:isolate;
   /* Flutlicht: zwei Kegel von oben, unten der goldene Schein des leeren Tors */
   background:linear-gradient(118deg,transparent 22%,rgba(255,255,255,.05) 30%,transparent 40%),
     linear-gradient(242deg,transparent 22%,rgba(255,255,255,.05) 30%,transparent 40%),
-    radial-gradient(130px 70px at 78% 82%,rgba(247,207,74,.17),transparent 70%),
+    radial-gradient(130px 70px at 22% 82%,rgba(247,207,74,.17),transparent 70%),
     radial-gradient(160px 60px at 22% 0%,rgba(190,242,100,.10),transparent 70%)}
 .kf-nul>*{position:relative}
 /* Das Flutlicht fährt einmal über die Tafel, wenn sie hereinkommt. */
 .kf-nul::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;opacity:0;
   background:linear-gradient(105deg,transparent 35%,rgba(255,244,200,.13) 48%,transparent 60%)}
-.kf-nul-p.aus{filter:grayscale(1);opacity:.5}
 .kf-nul-z{display:flex;align-items:baseline;font:400 42px/1 'Archivo Black',sans-serif;letter-spacing:-.01em}
 .kf-nul-z b{font-weight:400;color:var(--acid);text-shadow:0 0 22px rgba(190,242,100,.55)}
 .kf-nul-z i{font-style:normal;color:var(--faint);font-size:.7em;margin:0 3px}
@@ -184,7 +244,15 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
 .kf-nul-t.leer .kf-nt-r{stroke:var(--gold);filter:drop-shadow(0 0 6px rgba(247,207,74,.65))}
 .kf-nul-t.leer .kf-nt-n{stroke:rgba(247,207,74,.22)}
 .kf-nul-t.voll .kf-nt-r{stroke:var(--ink2)}
-.kf-nt-ball{filter:drop-shadow(0 0 3px rgba(190,242,100,.55))}
+/* Die Treffer: ein heller Ball, um ihn der Einschlag im Netz. */
+.kf-nt-ball{stroke:rgba(0,0,0,.35);stroke-width:.5}
+.kf-nt-ring{fill:rgba(190,242,100,.10);stroke:var(--acid);stroke-width:.8;opacity:.45}
+.kf-nt-glanz{fill:none;stroke:#fff;stroke-width:.9;stroke-linecap:round;opacity:.85}
+.kf-nt-hit{transform-box:fill-box;transform-origin:center}
+.kf-nul-p{display:flex;flex-direction:column;align-items:center;gap:3px}
+.kf-nul-p>span.num{font:600 10px 'Sometype Mono',monospace;color:var(--acid);white-space:nowrap}
+.kf-nul-p.aus>span.num{color:var(--red)}
+.kf-nul-p.aus .kf-paar{filter:grayscale(1);opacity:.5}
 .kf-nul-b{grid-column:1/-1;display:flex;align-items:center;gap:6px;font-style:normal;padding:3px 10px 3px 7px;border-radius:999px;
   border:1px solid rgba(247,207,74,.55);background:rgba(247,207,74,.08);box-shadow:0 0 14px rgba(247,207,74,.16)}
 .kf-nul-b svg{width:14px;height:14px;color:var(--gold)}
@@ -312,7 +380,18 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
   .kf-pk-r i:nth-child(8){animation-delay:.21s}.kf-pk-r i:nth-child(9){animation-delay:.24s}.kf-pk-r i:nth-child(10){animation-delay:.27s}
   .kf-st-p{animation:kfDa .7s ease-out both}
   .kf-st-p:nth-child(3){animation-delay:.08s}.kf-st-p:nth-child(4){animation-delay:.16s}.kf-st-p:nth-child(5){animation-delay:.24s}
-  .kf-nt-ball{animation:kfBall .5s cubic-bezier(.3,1.5,.5,1) both;animation-delay:calc(var(--i) * 60ms + .2s)}
+  .kf-nt-hit{animation:kfTreffer .42s cubic-bezier(.3,1.6,.5,1) both;animation-delay:calc(var(--i) * 70ms + .25s)}
+  .kf-nt-ring{animation:kfWelle .7s ease-out both;animation-delay:calc(var(--i) * 70ms + .3s)}
+  .kf-tk-f.g>i,.kf-tk-f.r>i{animation:kfGleit .8s cubic-bezier(.3,1.2,.4,1) .15s both}
+  .kf-tk-b,.kf-tk-p,.kf-tk-g{animation:kfDa .5s ease-out .75s both}
+  .kf-md-m svg,.kf-md-ic{animation:kfPraegen .55s cubic-bezier(.3,1.5,.5,1) both}
+  .kf-md-glanz{animation:kfGlanz 1.1s ease-in-out .6s both}
+  .kf-md-l i.neu{animation:kfPuck .4s cubic-bezier(.3,1.6,.5,1) .5s both}
+  .kf-zm-d i{animation:kfKlapp .5s cubic-bezier(.3,1.4,.5,1) both}
+  .kf-zm-d i:nth-child(2){animation-delay:.08s}.kf-zm-d i:nth-child(3){animation-delay:.16s}.kf-zm-d i:nth-child(4){animation-delay:.24s}
+  .kf-rl-b i{transform-origin:left center;animation:kfBalken .6s cubic-bezier(.3,1,.4,1) .1s both}
+  .kf-k-p{transform-box:fill-box;transform-origin:center;animation:kfPuck .4s cubic-bezier(.3,1.6,.5,1) .5s both}
+  .kf-k-l,.kf-k-f{animation:kfDa .6s ease-out both}
   .kf-nt-glut{animation:kfGlut 1.1s ease-in-out .9s 2 both}
   .kf-nul::before{animation:kfLicht 1.6s ease-in-out .3s both}
   .kf-ekg i{animation:kfPunkt 1.3s cubic-bezier(.45,0,.55,1) .2s 2 both}
@@ -321,7 +400,12 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
 @keyframes kfKlapp{from{transform:rotateX(-88deg);opacity:.2}}
 @keyframes kfPuck{from{transform:scale(.2);opacity:0}}
 @keyframes kfDa{from{opacity:0}}
-@keyframes kfBall{from{transform:translateY(-26px);opacity:0}}
+@keyframes kfTreffer{from{transform:scale(0);opacity:0}}
+@keyframes kfWelle{from{transform:scale(.3);opacity:1}}
+@keyframes kfGleit{from{transform:translateX(calc(var(--d) * 100cqw / var(--n)))}}
+@keyframes kfPraegen{from{transform:scale(.6);opacity:0}}
+@keyframes kfGlanz{0%{opacity:0;transform:translateX(-60%)}25%,75%{opacity:1}100%{opacity:0;transform:translateX(60%)}}
+@keyframes kfBalken{from{transform:scaleX(0)}}
 @keyframes kfGlut{50%{opacity:.35}}
 @keyframes kfLicht{0%{opacity:0;transform:translateX(-70%)}20%,80%{opacity:1}100%{opacity:0;transform:translateX(70%)}}
 @keyframes kfPunkt{0%{transform:translateX(-100%);opacity:0}12%{opacity:1}88%{opacity:1}100%{transform:translateX(0);opacity:0}}

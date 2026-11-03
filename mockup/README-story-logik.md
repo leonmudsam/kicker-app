@@ -85,7 +85,10 @@ dem Katalog (`sammeln`, `karteBauen`, `kopfWahl`). `kopf-fuss-seite.js`
 zeichnet die Seite: den Aufbau an einer Karte, jeden Kopf und jeden Fuß als
 Galerie, einen Spieltag am Stück, die Regel mit ihren Fällen, den Katalog
 mit Häufigkeiten, die Verteilung; eigene Zeichnungen nur für die Köpfe und
-Füße, die die App nicht kennt (`KOPF_BILD`, `FUSS_BILD`). Bewegung nur über
+Füße, die die App nicht kennt (`KOPF_BILD`, `FUSS_BILD`); dazu zeichnet der Entwurf Tabelle, Medaille und runde Zahlen selbst, mit
+den Daten der App (`daten` aus dem Nachlauf): die Tabelle als Kette statt
+neun Zeilen, die Medaille mit allen, die sie in der Partie holten, die Marken
+für jeden, der eine erreicht. Bewegung nur über
 Verschiebung und Deckkraft, jede endet von selbst und läuft erst, wenn die
 Karte ins Bild kommt [§C43]. `kopf-fuss-pruef.js` zeichnet jeden Kopf und
 jeden Anlass mit Zeichnung an jeder Partie, an der er zutrifft, und misst sie

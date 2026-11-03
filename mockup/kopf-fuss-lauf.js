@@ -1,4 +1,4 @@
-// Köpfe und Füße der Karte einer Partie, sechste Runde. Der Lauf spielt alle
+// Köpfe und Füße der Karte einer Partie, siebte Runde. Der Lauf spielt alle
 // 616 Partien bis Oktober nach und baut jede Karte nach der Regel des
 // Katalogs (`kopf-fuss-katalog.js`, dort stehen die fünf Schritte):
 // Anlässe sammeln, gewichten, Hauptanlass als Schlagzeile, Fuß, höchstens
@@ -217,6 +217,15 @@ function sammeln(F, app){
   ['premiere', 'wende', 'rolle'].forEach(art => { const x = app.partie[art];
     if(x && app.fuesse[art]) l.push({art, text:x.t, html:x.html}); });
   neueFakten(F).forEach(f => l.push(f));
+  // Die Daten der Zeichnungen, die der Entwurf statt der App zeichnet.
+  const D = app.daten || {};
+  l.forEach(a => { const f = ANLASS[a.art].fuss;
+    if(f === 'medaille'){ const kl = a.art === 'legendaer' ? 'legendary' : 'rare', m = (D.medaillen || []).filter(x => x.klasse === kl);
+      a.x = m.find(x => String(a.text).includes(x.name)) || m[0] || null; }
+    if(f === 'tabelle') a.x = ((a.art === 'spitze' ? app.fuesse.spitze : app.fuesse.rang) || {}).data || null;
+    if(f === 'marken'){ const z = app.formen.zaehlwerk && app.formen.zaehlwerk.data;
+      // Die Form der App zählt Siege (`sieg`) oder Spiele.
+      a.x = D.marken && D.marken.length ? D.marken : z && z.wer ? [{pid:z.wer, wert:z.wert, label:z.sieg ? 'Sieg' : 'Spiel'}] : null; } });
   const da = new Set(l.map(a => a.art));
   return l.filter(a => !(ANLASS[a.art].deckt || []).some(k => da.has(k)));
 }

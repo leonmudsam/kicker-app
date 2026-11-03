@@ -1,4 +1,4 @@
-// Baut `kopf-fuss.html`: die Karte einer Partie, sechste Runde. Jede Karte
+// Baut `kopf-fuss.html`: die Karte einer Partie, siebte Runde. Jede Karte
 // folgt der Regel des Katalogs (`kopf-fuss-katalog.js`): der Kopf zeigt, wie
 // die Partie ausging, die Schlagzeile den Hauptanlass, der Fuß zeichnet ihn,
 // darunter höchstens drei weitere Anlässe. Die Seite zeigt zuerst den Aufbau
@@ -93,29 +93,35 @@ const KOPF_BILD = {
       <span class="kf-kr-m"><small>Ein Tor</small>${stand(k)}</span>
       <span class="kf-ekg"><svg viewBox="0 0 60 40" preserveAspectRatio="none" aria-hidden="true"><path d="${L}"/></svg></span>
       ${pair(k.L, false)}</div>`
-      + leiste([['Chance vorher', k.chance + ' %'], ['Elo je Sieger', vz(Math.round(k.W.reduce((a, x) => a + k.delta[x], 0) / 2))],
+      // Jeder Sieger mit seinem Elo: die zwei bekommen selten dasselbe, und
+      // der Schnitt „Elo je Sieger“ stimmte für keinen von beiden.
+      + leiste([['Chance vorher', k.chance + ' %'], ['Elo der Sieger', k.W.map(x => vz(k.delta[x])).join(' ')],
         ['Krimi im Monat', k.krimiNr + '.']]);
   },
-  // Zu null: unter jedem Paar das Tor, in das es traf — bei den Siegern
-  // zehn Bälle im Netz unter der grünen Zehn, bei den Verlierern das leere,
-  // goldene Tor unter der goldenen Null. Vorher stand das leere Tor links
-  // unter den Siegern: gemeint war ihr eigenes, gelesen wurde „0 Tore“ unter
-  // der Zehn. Darunter das Band in einer Zeile: das wievielte Zu null des
-  // Monats; „kein Gegentor“ und „10 Gegentore“ sind fort, das sagt der Stand.
+  // Zu null: unter jedem Paar sein eigenes Tor — bei den Siegern leer und
+  // golden, kein Ball ging hinein; bei den Verlierern zehnmal getroffen.
+  // So steht es im Kicker: das Tor eines Paars zählt, was es kassiert hat.
+  // Darunter das Band in einer Zeile: das wievielte Zu null des Monats;
+  // „kein Gegentor“ und „10 Gegentore“ sind fort, das sagt der Stand.
   zunull:k => {
     const netz = `<path class="kf-nt-n" d="${Array.from({length:11}, (_, i) => `M${16 + i * 6.8} 2V46`).join('')}${Array.from({length:8}, (_, i) => `M16 ${2 + i * 6.3}H84`).join('')}M6 10L16 2M94 10L84 2M6 54L16 46M94 54L84 46"/>`;
     const rahmen = `<path class="kf-nt-r" d="M6 55V10H94V55"/><path class="kf-nt-b" d="M2 55H98"/>`;
-    const lage = [[17, 48.5], [27.5, 48.5], [38, 48.5], [48.5, 48.5], [59, 48.5], [69.5, 48.5], [80, 48.5], [32, 38.5], [42.5, 38.5], [53, 38.5]];
-    const baelle = lage.map(([cx, cy], i) => `<circle class="kf-nt-ball" cx="${cx}" cy="${cy}" r="5" style="--i:${i}"/>`).join('');
+    // Die Treffer liegen über das Netz verteilt, jeder mit seinem Einschlag:
+    // als grüne Kugeln zu einer Pyramide gestapelt sahen sie aus wie Obst
+    // in einer Kiste, nicht wie zehn Tore.
+    const lage = [[25, 15], [47, 11], [70, 17], [80, 31], [33, 30], [56, 25], [71, 41], [21, 41], [45, 40], [60, 45]];
     const id = 'kfn' + (uid++);
+    const treffer = lage.map(([x, y], i) => `<g transform="translate(${x} ${y})"><g class="kf-nt-hit" style="--i:${i}">`
+      + `<circle class="kf-nt-ring" r="7"/><circle class="kf-nt-ball" r="4.3" fill="url(#${id}b)"/><path class="kf-nt-glanz" d="M-2.2 -1.6a2.6 2.6 0 0 1 2.4-1.4"/></g></g>`).join('');
+    const sp = (ids, w) => `<div class="kf-nul-p${w ? '' : ' aus'}">${paar(ids)}<span class="num">${ids.map(x => vz(k.delta[x])).join(' ')}</span></div>`;
     return `<div class="kf-nul">
-      <div class="kf-nul-p">${paar(k.W)}</div>
+      ${sp(k.W, true)}
       <span class="kf-nul-z num"><b>${k.hoch}</b><i>:</i><u>0</u></span>
-      <div class="kf-nul-p aus">${paar(k.L)}</div>
-      <div class="kf-nul-tore"><svg class="kf-nul-t voll" viewBox="0 0 100 58" aria-hidden="true"><defs><radialGradient id="${id}b" cx=".35" cy=".3" r=".7"><stop offset="0" stop-color="#f4ffd8"/><stop offset=".45" stop-color="#BEF264"/><stop offset="1" stop-color="#5f8a22"/></radialGradient></defs>
-        ${netz}<g fill="url(#${id}b)">${baelle}</g>${rahmen}</svg>
-      <svg class="kf-nul-t leer" viewBox="0 0 100 58" aria-hidden="true"><defs><radialGradient id="${id}" cx=".5" cy=".55" r=".6"><stop offset="0" stop-color="#f7cf4a" stop-opacity=".32"/><stop offset="1" stop-color="#f7cf4a" stop-opacity="0"/></radialGradient></defs>
-        <rect class="kf-nt-glut" x="6" y="6" width="88" height="50" fill="url(#${id})"/>${netz}${rahmen}</svg></div>
+      ${sp(k.L, false)}
+      <div class="kf-nul-tore"><svg class="kf-nul-t leer" viewBox="0 0 100 58" aria-hidden="true"><defs><radialGradient id="${id}" cx=".5" cy=".55" r=".6"><stop offset="0" stop-color="#f7cf4a" stop-opacity=".32"/><stop offset="1" stop-color="#f7cf4a" stop-opacity="0"/></radialGradient></defs>
+        <rect class="kf-nt-glut" x="6" y="6" width="88" height="50" fill="url(#${id})"/>${netz}${rahmen}</svg>
+      <svg class="kf-nul-t voll" viewBox="0 0 100 58" aria-hidden="true"><defs><radialGradient id="${id}b" cx=".38" cy=".32" r=".75"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#ecebe2"/><stop offset="1" stop-color="#a9a89c"/></radialGradient></defs>
+        ${netz}${treffer}${rahmen}</svg></div>
       <em class="kf-nul-b">${ic('weisseWeste')}<b>Zu null</b><small class="num">${k.westen}. im ${monat(k.sid)}</small></em>
     </div>`;
   }
@@ -196,13 +202,61 @@ const FUSS_BILD = {
     rangTabelle(x.liste.map(q => ({id:q.pid, wert:q.q, zahl:q.q + ' %', neben:`${q.n} Sp.`})), {hervor:x.mit, max:100, schnitt:x.allg, kopf:['Quote', 'Partien']})
     + `<div class="kf-rl-lg"><i></i>${x.allg} % mit allen</div>`)
 };
+// Die Tabelle des Monats als Kette: jeder Platz ein Feld, die Gesichter auf
+// ihrem Platz nach der Partie, wer stieg, gleitet von seinem alten Feld
+// herüber, ein Bogen zeigt den Sprung. Die App zeichnete dafür neun Zeilen
+// mit Linien von „vorher“ nach „danach“, die höchste Zeichnung aller Füße.
+FUSS_BILD.tabelle = (k, x) => {
+  const n = x.bis - x.von + 1, nach = {};
+  x.zeilen.forEach(z => { nach[z.q] = z; });
+  const mitte = r => (r - x.von + .5) / n * 100;
+  const steiger = x.zeilen.filter(z => z.k === 'g'), fallen = x.zeilen.filter(z => z.k === 'r');
+  const boegen = steiger.map(z => { const a = mitte(z.p), c = mitte(z.q), h = Math.min(15, 6 + Math.abs(z.p - z.q) * 2.5);
+    return `<path class="kf-tk-b" d="M${a.toFixed(1)} 17Q${((a + c) / 2).toFixed(1)} ${(17 - h).toFixed(1)} ${c.toFixed(1)} 17"/><circle class="kf-tk-p" cx="${c.toFixed(1)}" cy="17" r="1.6"/>`; }).join('');
+  const felder = Array.from({length:n}, (_, i) => { const r = x.von + i, z = nach[r];
+    return `<span class="kf-tk-f${z && z.k !== 'm' ? ' ' + z.k : ''}${x.spitze && r === 1 ? ' eins' : ''}">${z ? `<i style="--d:${z.p - z.q}">${av(z.id)}</i>` : '<i></i>'}<small class="num">${r}</small></span>`; }).join('');
+  const geister = steiger.map(z => `<u class="kf-tk-g" style="left:${mitte(z.p).toFixed(1)}%"></u>`).join('');
+  // Höchstens zwei im Satz, die größten Sprünge; mit dreien brach er um.
+  const satz = (x.spitze ? x.zeilen.filter(z => z.q === 1 || z.p === 1).sort((u, v) => u.q - v.q)
+    : steiger.slice().sort((u, v) => (v.p - v.q) - (u.p - u.q))).slice(0, 2).map(z => `${b(nm(z.id))} ${z.p} → ${z.q}`).join(' · ');
+  return fk(`Monatstabelle${x.von > 1 ? ', ab Platz ' + x.von : ''}`, `<div class="kf-tk" style="--n:${n}">
+    <svg class="kf-tk-s" viewBox="0 0 100 18" preserveAspectRatio="none" aria-hidden="true">${boegen}</svg>
+    <div class="kf-tk-r">${geister}${felder}</div></div><div class="kf-tk-t">${satz}</div>`);
+};
+// Die Medaille: geprägt in der Farbe ihrer Klasse, mit dem Zeichen der
+// Auszeichnung, am Band; daneben jeder, der sie in dieser Partie holte,
+// mit dem wievielten Mal, darunter die Liga als zwölf Felder. Die App
+// nannte nur den ersten — holten Julian und Maxi „Absoluter Sieger“
+// zusammen, stand im Fuß nur Julian.
+FUSS_BILD.medaille = (k, x) => {
+  const gold = x.klasse === 'legendary', id = 'kfm' + (uid++), neu = new Set(x.wer.map(w => w.pid));
+  const traeger = new Set(x.traeger), alle = x.ids.length;
+  const wer = x.wer.slice(0, 3).map(w => `<div class="kf-md-w">${av(w.pid)}${b(nm(w.pid))}<em class="num">${w.rang === 1 ? 'zum ersten Mal' : w.rang + '. Mal'}</em></div>`).join('')
+    + (x.wer.length > 3 ? `<div class="kf-md-w mehr">+${x.wer.length - 3} weitere</div>` : '');
+  const naechste = x.wer.length === 1 && x.wer[0].rang > 1 && x.wer[0].naechste ? `<small>noch ${x.wer[0].naechste - x.wer[0].rang} bis zur ${x.wer[0].naechste}.</small>` : '';
+  return fk(gold ? 'Legendäre Auszeichnung' : 'Seltene Auszeichnung', `<div class="kf-md ${gold ? 'gold' : 'viol'}">
+    <span class="kf-md-m"><svg viewBox="0 0 64 74" aria-hidden="true"><defs>
+        <linearGradient id="${id}r" x1="0" y1="0" x2="1" y2="1"><stop offset="0" class="s1"/><stop offset=".5" class="s2"/><stop offset="1" class="s3"/></linearGradient></defs>
+        <path class="kf-md-band" d="M18 0h11l7 22-9 4zM46 0H35l-7 22 9 4z"/>
+        <circle cx="32" cy="46" r="25" fill="url(#${id}r)"/><circle class="kf-md-in" cx="32" cy="46" r="19.5"/>
+        ${Array.from({length:24}, (_, i) => { const w = i * 15 * Math.PI / 180; return `<circle class="kf-md-pkt" cx="${(32 + 22.3 * Math.cos(w)).toFixed(1)}" cy="${(46 + 22.3 * Math.sin(w)).toFixed(1)}" r=".9"/>`; }).join('')}
+      </svg><span class="kf-md-ic">${x.ic}</span><b class="kf-md-glanz"></b></span>
+    <div class="kf-md-r"><div class="kf-md-n">${esc(x.name)}</div>${wer}${naechste}</div></div>
+    <div class="kf-md-l"><span>${x.ids.map(p => `<i class="${neu.has(p) ? 'neu' : traeger.has(p) ? 'hat' : ''}"></i>`).join('')}</span>
+      <small class="num">${traeger.size} von ${alle} tragen sie</small></div>`);
+};
+// Runde Zahlen: jeder, der in dieser Partie eine erreicht, mit seiner Zahl
+// auf Klappziffern. Das Zählwerk der App kannte nur eine.
+FUSS_BILD.marken = (k, l) => fk(l.length > 1 ? 'Runde Zahlen in dieser Partie' : 'Runde Zahl', `<div class="kf-zm">${l.slice(0, 3).map(x =>
+  `<div class="kf-zm-z">${av(x.pid)}${b(nm(x.pid))}<span class="kf-zm-d">${String(x.wert).split('').map(c => `<i>${c}</i>`).join('')}${x.label === 'Elo' ? '' : '<u>.</u>'}</span><em>${esc(x.label)}</em></div>`).join('')}</div>`);
+
 // Die Namen der Zeichnungen, für Galerie und Verteilung.
 const BILD_NAME = {spitze:'Tabelle vorher und nachher', rang:'Tabelle vorher und nachher', medaille:'Medaille', serie:'Serie gegen den Bestwert',
   riss:'Gerissene Serie', gegner:'Duelle gegen einen', zaehlwerk:'Zählwerk', hoch:'Höchststand', duell:'Jede Begegnung', gipfel:'Gipfel der Tabelle',
   revanche:'Vorher und jetzt', chemie:'Duo-Ring', teamserie:'Duo-Serie', tagesring:'Tagesring', premiere:'Premiere', wende:'Elo-Kurve',
   rolle:'Seite der Rolle', rueckkehr:'Tage ohne Partie', ueberholt:'Überholt', uhr:'Uhr des Tages', duoserie:'Duo gegen Duo',
   kippt:'Bilanzkurve', woche:'Rangliste der Woche', plus:'Elo des Tages', hoehe:'Elo des Tages mit +75', monatsbest:'Elo des Monats',
-  halb:'Siegquote des Monats', partner:'Partner-Rangliste'};
+  halb:'Siegquote des Monats', partner:'Partner-Rangliste', tabelle:'Tabelle als Kette', marken:'Runde Zahlen'};
 const bildName = f => BILD_NAME[String(f).replace(/^app:/, '')] || f;
 
 // ── Die Karte ───────────────────────────────────────────────────────
@@ -216,7 +270,10 @@ const nummer = (o, n) => o && o.nr ? `<b class="kf-nr" aria-hidden="true">${n}</
 const zeile = a => `<div class="nf-sam-z${a.neg ? ' neg' : ''}${a.brk ? ' brk' : ''}${ANLASS[a.art].quelle === 'neu' ? ' kf-neu' : ''}">${a.html}`
   + (a.klasse ? `<b class="nf-sam-kl">${esc(a.klasse)}</b>` : '') + '</div>';
 const zeilen = (k, o) => k.zeilen.length ? `<div class="nf-sam kf-sam">${k.zeilen.map(zeile).join('')}${k.weitere ? `<div class="nf-sam-m">+${k.weitere} weitere</div>` : ''}${nummer(o, 3)}</div>` : '';
-const fussBild = k => k.fussHtml || `<div class="sp-fk kf-fk kf-f-${k.fuss.art}">${FUSS_BILD[k.fuss.art](k, k.fuss.x)}</div>`;
+// Die Zeichnung gehört zur Art des Fußes (`ANLASS[…].fuss`), nicht zum
+// Anlass: Spitzenwechsel und Tabellensprung teilen die Tabelle.
+const fussBild = k => { const f = ANLASS[k.fuss.art].fuss;
+  return k.fussHtml || `<div class="sp-fk kf-fk kf-f-${k.fuss.art} kf-f-${f}">${FUSS_BILD[f](k, k.fuss.x)}</div>`; };
 const fuss = (k, o) => {
   if(!k.fuss) return '';
   // Zeichnet der Fuß nicht den Hauptanlass, steht dessen Zeile als
@@ -304,7 +361,7 @@ const seiteHtml = `<!doctype html><html lang="de"><head><meta charset="utf-8"><m
 <style>${fs.readFileSync(path.join(__dirname, 'kopf-fuss.css'), 'utf8')}</style>
 </head><body class="kf-seite">
 <header class="kf-held">
-  <p class="kf-ober">Die Karte einer Partie · Entwürfe, sechste Runde</p>
+  <p class="kf-ober">Die Karte einer Partie · Entwürfe, siebte Runde</p>
   <h1>Köpfe und Füße</h1>
   <p class="kf-lead">Eine Partie, eine Karte, eine Ordnung: oben, wie es ausging, darunter der wichtigste Anlass mit seiner Zeichnung, dazwischen höchstens drei weitere. Die Sieger stehen immer links. Gerechnet an den ${N.partien} echten Partien bis Oktober.</p>
   <div class="kf-kennz">

@@ -129,7 +129,10 @@ for(let t = new Date(tagKey(ersterMs) + 'T00:00:00').getTime(); t <= letzterMs +
           _alleFuesse(m, _newsSpielFakten(s), '').forEach(k => {
             if(fuesse[k.key]) return;
             const dd = k.data();
-            if(dd) fuesse[k.key] = {rang:k.rang, html:bild(v => _spOccasionBild({key:k.key, data:v}), dd)};
+            // Die Tabelle zeichnet der Entwurf selbst, kompakter: er braucht
+            // ihre Daten, nicht nur ihr Bild.
+            if(dd) fuesse[k.key] = {rang:k.rang, html:bild(v => _spOccasionBild({key:k.key, data:v}), dd),
+              data:k.key === 'spitze' || k.key === 'rang' ? dd : undefined};
           });
         } catch(e){ fuesse = {fehler:String(e).slice(0, 80)}; }
         // Die Formen der App, die aus der Partie selbst kommen, mit ihrem Satz.
@@ -137,6 +140,7 @@ for(let t = new Date(tagKey(ersterMs) + 'T00:00:00').getTime(); t <= letzterMs +
         _spFormKand(m).filter(k => SP_ANLASS_FORMEN.has(k.key)).forEach(k => {
           let tx = {}; try { tx = SP_FORM[k.key].text(F, k.x) || {}; } catch(e){}
           formen[k.key] = {rang:k.rang, t:tx.t || '', d:tx.d || '',
+            data:k.key === 'zaehlwerk' ? (() => { try { return SP_FORM.zaehlwerk.daten(F, k.x); } catch(e){ return null; } })() : undefined,
             html:'<i class="nf-sam-i">' + svgI(SP_FORM[k.key].ic || 'chartBar') + '</i><span>' + _newsBetont(tx.t || '') + '</span>'};
         });
         // Jeder Kopf der App, der zutrifft.
@@ -156,8 +160,32 @@ for(let t = new Date(tagKey(ersterMs) + 'T00:00:00').getTime(); t <= letzterMs +
         try { const r = _spRolleDaten(m);
           if(r){ const x = _spName(r.pid) + ' gewinnt ' + (r.r === 'atk' ? 'im Sturm' : 'in der Abwehr') + ', sonst in ' + Math.round(r.anteil * 100) + ' % der Partien dort';
             partie.rolle = {t:x, html:zeile('posSwap', x)}; } } catch(e){}
+        // Was die eigenen Füße des Entwurfs brauchen: jede seltene oder
+        // legendäre Auszeichnung der Partie mit ALLEN, die sie in ihr holten
+        // (die App zeichnete nur den ersten), und jede Marke der Partie.
+        const daten = {};
+        try {
+          // Aus allen Meldungen der Partie, nicht aus dem Bündel: dessen Zeile
+          // „Maxi und Julian holen ‚Absoluter Sieger‘“ trägt nur einen der
+          // beiden in ihren Daten.
+          const fk = [...DB.values()].map(x => x.dataRef || {}).filter(y => y.matchId === m.id), gruppen = {};
+          fk.filter(y => y.type === 'badge_unlocked' && (y.rarity === 'rare' || y.rarity === 'legendary') && y.badgeId && y.playerId)
+            .forEach(y => { const g = gruppen[y.badgeId] = gruppen[y.badgeId] || []; if(!g.some(z => z.playerId === y.playerId)) g.push(y); });
+          daten.medaillen = Object.keys(gruppen).map(id => {
+            const l = gruppen[id].map(y => _spMedailleDaten({m, x:{pid:y.playerId, badgeId:id, rang:y.rang}})).filter(Boolean);
+            if(!l.length) return null;
+            const d0 = l[0], ton = d0.klasse === 'legendary' ? 'gold' : 'viol';
+            return {id, name:d0.name, klasse:d0.klasse, ic:zkHtml(d0.ic, 'g', ton), ids:d0.ids,
+              traeger:[...new Set(l.flatMap(d => d.traeger))],
+              wer:l.map(d => ({pid:d.wer, rang:d.rang || 1, naechste:_badgeNaechsteMarke(d.rang || 1)}))};
+          }).filter(Boolean);
+          const LABEL = {milestone_wins:'Sieg', milestone_elo:'Elo', milestone_goals:'Tor', jubilee:'Spiel'};
+          daten.marken = fk.filter((y, i) => LABEL[y.type] && y.pid && fk.findIndex(z => z.type === y.type && z.pid === y.pid) === i).map(y => ({pid:y.pid, label:LABEL[y.type],
+            wert:y.type === 'milestone_elo' ? (Number(y.mark) || parseInt(y.milestone, 10)) : y.type === 'jubilee' ? Number(y.total) : parseInt(y.milestone, 10)}))
+            .filter(x => x.wert > 0);
+        } catch(e){ daten.fehler = String(e).slice(0, 80); }
         const v = _spBild(s);
-        aus[d.matchId] = {titel:s.title, text:s.desc || '', brk:_isBreaking(s), teile, fuesse, formen, koepfe, partie,
+        aus[d.matchId] = {titel:s.title, text:s.desc || '', brk:_isBreaking(s), teile, fuesse, formen, koepfe, partie, daten,
           app:{kopf:v.form || '', fuss:v.key && v.key !== v.form ? v.key : ''}};
       });
       return JSON.stringify(aus);
