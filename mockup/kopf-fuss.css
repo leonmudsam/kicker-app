@@ -241,10 +241,10 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
 .kf-fuss{--fa:var(--acid);--fa-rgb:190,242,100;margin:0 10px 10px;padding:10px 11px 11px;border-radius:13px;
   background:linear-gradient(180deg,rgba(var(--fa-rgb),.05),rgba(255,255,255,.012));border:1px solid rgba(var(--fa-rgb),.16);
   display:flex;flex-direction:column;gap:9px}
-.kf-f-riss,.kf-f-serie,.kf-f-fluch{--fa:var(--orange);--fa-rgb:255,120,73}
-.kf-f-spitze,.kf-f-westen,.kf-f-zaehlwerk,.kf-f-wochenrennen,.kf-f-sprung,.kf-f-aussenseiter,.kf-f-kanter{--fa:var(--gold);--fa-rgb:247,207,74}
-.kf-f-jubilaeum,.kf-f-partner{--fa:var(--purple);--fa-rgb:167,139,250}
-.kf-f-kippt,.kf-f-kalender,.kf-f-halb{--fa:var(--blue);--fa-rgb:86,180,232}
+.kf-f-riss,.kf-f-serie,.kf-f-fluch,.kf-f-duoserie,.kf-f-liebling{--fa:var(--orange);--fa-rgb:255,120,73}
+.kf-f-spitze,.kf-f-westen,.kf-f-zaehlwerk,.kf-f-wochenrennen,.kf-f-sprung,.kf-f-aussenseiter,.kf-f-kanter,.kf-f-spitzenspiel,.kf-f-elomarke{--fa:var(--gold);--fa-rgb:247,207,74}
+.kf-f-jubilaeum,.kf-f-partner,.kf-f-auszeichnung,.kf-f-paarung{--fa:var(--purple);--fa-rgb:167,139,250}
+.kf-f-kippt,.kf-f-kalender,.kf-f-halb,.kf-f-marathon,.kf-f-pleiten{--fa:var(--blue);--fa-rgb:86,180,232}
 .kf-f-k{display:flex;align-items:center;gap:8px;min-width:0;font:600 9.5px 'Sometype Mono',monospace;letter-spacing:.13em;text-transform:uppercase;color:var(--ink2)}
 .kf-f-k>i{display:grid;place-items:center;width:23px;height:23px;border-radius:7px;background:rgba(var(--fa-rgb),.13);color:var(--fa);flex:0 0 auto}
 .kf-f-k>i svg{width:14px;height:14px}
@@ -374,6 +374,66 @@ html,body{height:auto;overflow:auto;background:var(--bg)}
 .kf-pkt-g{fill:var(--gold);filter:drop-shadow(0 0 5px rgba(247,207,74,.8))}
 .kf-berg{fill:rgba(190,242,100,.13)}
 .kf-fahne{fill:var(--gold);stroke:var(--gold);stroke-width:1.2;stroke-linejoin:round}
+
+/* Auszeichnungen als Medaillen */
+.kf-orden{display:flex;justify-content:center;align-items:flex-start;gap:10px}
+.kf-od{display:flex;flex-direction:column;align-items:center;gap:4px;width:72px;text-align:center}
+.kf-od>i{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;color:var(--ink);
+  background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.12),var(--surface3));box-shadow:inset 0 0 0 2px var(--line2)}
+.kf-od>i svg{width:22px;height:22px}
+.kf-od.selten>i{color:var(--purple);box-shadow:inset 0 0 0 2px rgba(167,139,250,.75),0 0 14px rgba(167,139,250,.35)}
+.kf-od.legendaer>i{color:var(--gold);box-shadow:inset 0 0 0 2px rgba(247,207,74,.85),0 0 16px rgba(247,207,74,.45)}
+.kf-od b{font:600 10.5px/1.25 'Space Grotesk',sans-serif;color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;hyphens:auto}
+.kf-od small{font:600 9px 'Sometype Mono',monospace;color:var(--fa)}
+.kf-od em{display:flex;gap:2px}.kf-od em .av{--av:16px;font-size:6.5px;box-shadow:none}
+.kf-od-mehr{align-self:center;font:400 14px 'Archivo Black',sans-serif;color:var(--muted)}
+.kf-od>span{display:flex;flex-direction:column;align-items:center;gap:3px}
+.kf-od.neg>i{color:var(--red);box-shadow:inset 0 0 0 2px rgba(240,86,106,.6)}
+/* Eine Auszeichnung allein steht quer: die Medaille, daneben ihr Name in
+   voller Länge. Unter einer Medaille von 72 px brach „Überholmanöver“
+   mitten im Wort. */
+.kf-orden.eins{justify-content:flex-start}
+.kf-orden.eins .kf-od{flex-direction:row;width:auto;gap:12px;text-align:left}
+.kf-orden.eins .kf-od>span{align-items:flex-start}
+.kf-orden.eins .kf-od b{font-size:13px;-webkit-line-clamp:unset;display:block}
+/* Pleiten: Eis statt Flammen */
+.kf-kette.eis i{background:rgba(86,180,232,.1)}
+.kf-kette.eis i svg{fill:none;stroke:var(--blue);stroke-width:2.4;width:11px;height:11px}
+/* Revanche */
+.kf-rv{display:flex;flex-direction:column;gap:6px}
+.kf-rv-z{display:grid;grid-template-columns:42px auto minmax(0,1fr) auto;align-items:center;gap:8px;opacity:.55}
+.kf-rv-z small{font:600 9px 'Sometype Mono',monospace;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.kf-rv-z b{justify-self:center;font:400 18px/1 'Archivo Black',sans-serif;color:var(--red)}
+.kf-rv-z b i{font-style:normal;color:var(--faint);margin:0 2px}
+.kf-rv-z.jetzt{opacity:1}
+.kf-rv-z.jetzt b{color:var(--acid);text-shadow:0 0 12px rgba(190,242,100,.45)}
+.kf-rv-z.jetzt small{color:var(--acid)}
+/* Spitzenspiel */
+.kf-sz{display:flex;align-items:flex-end;justify-content:center;gap:16px}
+.kf-sz>em{align-self:center;font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-style:normal}
+.kf-sz-s{display:flex;flex-direction:column;align-items:center;gap:3px}
+.kf-sz-s>svg{width:16px;height:16px;color:var(--gold);filter:drop-shadow(0 0 6px rgba(247,207,74,.6))}
+.kf-sz-s .av{--av:30px}
+.kf-sz-s>i{display:grid;place-items:center;width:52px;height:var(--h);border-radius:7px 7px 2px 2px;background:var(--surface3);border:1px solid var(--line2)}
+.kf-sz-s.w>i{background:linear-gradient(180deg,rgba(247,207,74,.45),rgba(247,207,74,.08));border-color:rgba(247,207,74,.6)}
+.kf-sz-s>i b{font:400 13px 'Archivo Black',sans-serif;color:var(--ink)}
+.kf-sz-s:not(.w) .av{opacity:.8}
+/* Elo-Marke */
+.kf-em{display:flex;align-items:center;gap:9px}
+.kf-em-l{position:relative;flex:1;height:30px;margin:0 6px}
+.kf-em-l::before{content:"";position:absolute;left:0;right:0;top:17px;height:4px;border-radius:2px;background:var(--surface3)}
+.kf-em-l u{position:absolute;top:17px;height:4px;border-radius:2px;background:linear-gradient(90deg,rgba(247,207,74,.3),var(--gold))}
+.kf-em-l>i{position:absolute;top:8px;bottom:3px;width:2px;background:var(--gold);transform:translateX(-50%);box-shadow:0 0 8px rgba(247,207,74,.7)}
+.kf-em-l>i small{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:1px;font:700 9px 'Sometype Mono',monospace;color:var(--gold)}
+.kf-em-l em{position:absolute;top:19px;width:10px;height:10px;border-radius:50%;transform:translate(-50%,-50%)}
+.kf-em-l em.v{border:2px solid var(--muted);background:var(--bg2)}
+.kf-em-l em.n{background:var(--gold);box-shadow:0 0 10px rgba(247,207,74,.8)}
+/* Die Zeilen: alle, ab der fünften enger. Gestrichelt nur auf dieser
+   Seite: die Zeilen, die dieser Entwurf neu dazunimmt. */
+.kf-sam.viele .nf-sam-z:nth-child(n+5){padding-top:5px;padding-bottom:5px;font-size:12px}
+.kf-sam.viele .nf-sam-z:nth-child(n+5) .nf-sam-i{transform:scale(.82)}
+.kf-sam .nf-sam-z.kf-neu{box-shadow:inset 3px 0 0 -1px rgba(190,242,100,.55)}
+.kf-legende{display:inline-block;width:14px;height:12px;vertical-align:-1px;margin-right:4px;box-shadow:inset 3px 0 0 -1px rgba(190,242,100,.75);background:var(--surface2);border-radius:2px}
 
 /* ── Bewegung, nur wenn das Telefon sie erlaubt ─────────────────── */
 @media (prefers-reduced-motion:no-preference){

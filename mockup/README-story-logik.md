@@ -10,6 +10,7 @@ node tools/build.mjs                 # die Seite liest dist/index.html
 node mockup/story-logik-lauf.js      # spielt die Partien nach → .story-logik.json (nicht eingecheckt)
 node mockup/story-neu-lauf.js        # misst die Entwürfe neuer Stories → .story-neu.json (nicht eingecheckt)
 node mockup/story-logik-seite.js     # baut story-logik.html, mit „Neue Stories" (story-neu-seite.js)
+node mockup/kopf-fuss-anlaesse.js    # spielt den Generator nach, je Partie Schlagzeile und alle Zeilen → .kopf-fuss-anlaesse.json (nicht eingecheckt)
 node mockup/kopf-fuss-lauf.js        # wählt Kopf und Fuß jeder Partie nach der Regel der Entwürfe → .kopf-fuss.json (nicht eingecheckt)
 node mockup/kopf-fuss-seite.js       # baut kopf-fuss.html
 node mockup/kopf-fuss-pruef.js       # misst jeden Kopf und Fuß an jeder Partie, baut kopf-fuss.html mit dem Ergebnis
@@ -62,8 +63,14 @@ behandelt. Die Schwellen sind an diesen Zählungen gewählt.
 
 `kopf-fuss.html` zeigt Entwürfe für die Karte einer Partie als ganze Karten
 aus echten Partien: zwölf Köpfe, die alle vier Gesichter und den Endstand
-zeigen (vier Grundansichten, vier besondere Ausgänge, vier Befunde), und
-achtzehn Füße, je mit einem Anlass (neun Ereignisse, neun Zustände).
+zeigen (vier Grundansichten, vier besondere Ausgänge, vier Befunde), darunter
+jeder Anlass der Partie als Zeile, und achtundzwanzig Füße, die den
+schwersten davon zeichnen. Die Zeilen sind alle, die der Generator der App
+für die Partie schreibt — `kopf-fuss-anlaesse.js` spielt ihn Tag für Tag nach
+wie `story-logik-lauf.js` und liest am Abend die Karte jeder Partie —, nicht
+nur die ersten vier, und dazu fünfzehn neue Fakten (`fakten` in
+`kopf-fuss-lauf.js`): jede Art mit einer Schwelle, keine, die ein Anlass der
+App schon sagt, höchstens drei je Karte, je Tag jede Art höchstens zweimal.
 `kopf-fuss-lauf.js` rechnet für jede der 616 Partien, welche zutreffen, und
 wählt nach der Regel der Seite: ein besonderer Ausgang zuerst, dann ein
 Befund nach Gewicht, das mit jedem Einsatz abklingt und für Seltenes steigt,

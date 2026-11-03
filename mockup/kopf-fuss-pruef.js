@@ -4,7 +4,7 @@
 // Partie mit der längsten Serie, dem vollsten Monat zu null und den engsten
 // Plätzen auf dem Prüfstand.
 //
-//   node tools/build.mjs && node mockup/kopf-fuss-pruef.js
+//   node tools/build.mjs && node mockup/kopf-fuss-anlaesse.js && node mockup/kopf-fuss-pruef.js
 //
 // Gemessen wird in Chromium am gezeichneten Markup, je Kopf und je Fuß:
 //  • über den Rand — ein Teil ragt über den Kasten hinaus (der Kopf schneidet
@@ -13,6 +13,7 @@
 //    liegen übereinander (Wippe, Leiste, Säulen, Pucks, Formkurven …);
 //  • abgeschnitten — ein Name oder eine Zahl passt nicht in ihr Feld;
 //  • Umbruch — eine Beschriftung außer dem Satz des Fußes bricht um.
+// Die Zeilen unter der Schlagzeile (`.nf-sam`) zählen für die ersten drei mit.
 // Das Ergebnis steht in `.kopf-fuss-pruef.json` und auf der Seite; der Lauf
 // endet rot, wenn eine Zahl nicht null ist.
 'use strict';
@@ -55,7 +56,9 @@ node('kopf-fuss-seite.js', {KF_ALLE:daten, KF_ALLE_HTML:seite});
     document.querySelectorAll('.kf-karte').forEach(c => {
       out.karten++;
       const n = name(c);
-      ['.kf-kopf', '.kf-fuss'].forEach(sel => {
+      // Die Zeilen (`.nf-sam`) zählen mit: Text bricht dort um, aber nichts
+      // darf übereinander liegen oder über den Rand stehen.
+      ['.kf-kopf', '.kf-fuss', '.nf-sam'].forEach(sel => {
         const box = c.querySelector(sel); if(!box) return;
         const B = rect(box), alle = [...box.querySelectorAll('*')].filter(sicht);
         alle.forEach(e => {
@@ -82,16 +85,21 @@ node('kopf-fuss-seite.js', {KF_ALLE:daten, KF_ALLE_HTML:seite});
         }
         alle.forEach(e => {
           if(e.closest('svg')) return;
-          if(e.scrollWidth > e.clientWidth + 1 && getComputedStyle(e).overflow !== 'visible')
+          const s = getComputedStyle(e);
+          // Quer abgeschnitten, oder nach seinen Zeilen (`line-clamp`) unten.
+          if((e.scrollWidth > e.clientWidth + 1 && s.overflow !== 'visible')
+             || (+s.webkitLineClamp > 0 && e.scrollHeight > e.clientHeight + 1))
             out.ab.push(`${n} | ${sel} | ${cls(e)} | „${e.textContent.trim().slice(0, 30)}“`);
         });
-        alle.forEach(e => {
+        if(sel !== '.nf-sam') alle.forEach(e => {
           if(e.closest('svg') || e.closest('.kf-satz') || e.closest('.av') || !mitText(e)) return;
           const s = getComputedStyle(e), lh = parseFloat(s.lineHeight) || parseFloat(s.fontSize) * 1.25;
           if(s.display === 'grid' || s.display === 'flex') return;
           const innen = rect(e).height - parseFloat(s.paddingTop) - parseFloat(s.paddingBottom) - parseFloat(s.borderTopWidth) - parseFloat(s.borderBottomWidth);
           const zeilen = e.getClientRects().length > 1 ? e.getClientRects().length : Math.floor(innen / lh + .35);
-          if(zeilen > 1) out.umbruch.push(`${n} | ${sel} | ${cls(e)} | „${e.textContent.trim().slice(0, 40)}“`);
+          // Ein Name unter einer Medaille darf auf so viele Zeilen umbrechen,
+          // wie sein `line-clamp` erlaubt; jede andere Beschriftung auf keine.
+          if(zeilen > Math.max(1, +s.webkitLineClamp || 0)) out.umbruch.push(`${n} | ${sel} | ${cls(e)} | „${e.textContent.trim().slice(0, 40)}“`);
         });
       });
     });

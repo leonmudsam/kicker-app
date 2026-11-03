@@ -1,9 +1,9 @@
 // Baut `kopf-fuss.html`: Köpfe und Füße der Karte einer Partie, dritte
-// Runde. Jeder Entwurf als ganze Karte aus echten Partien (`.kopf-fuss.json`
+// Runde, mit allen Anlässen als Zeilen. Jeder Entwurf als ganze Karte aus echten Partien (`.kopf-fuss.json`
 // aus `kopf-fuss-lauf.js`), dazu die Regel, wann er kommt, wie oft er im
 // Lauf kam, und die Auswahl, die für Abwechslung sorgt.
 //
-//   node tools/build.mjs && node mockup/kopf-fuss-lauf.js && node mockup/kopf-fuss-seite.js [ziel.html]
+//   node tools/build.mjs && node mockup/kopf-fuss-anlaesse.js && node mockup/kopf-fuss-lauf.js && node mockup/kopf-fuss-seite.js [ziel.html]
 //
 // Der Rahmen der Karte (`nf-card`, `nf-top`, `nf-gr`) und die Gesichter
 // (`.av`) sind die der App, aus `dist/index.html`; neu ist nur, was im Kopf
@@ -287,9 +287,9 @@ const FUSS = {
       <line class="kf-null-l" x1="5" x2="${L.W - 5}" y1="${L.Y(0)}" y2="${L.Y(0)}"/><path class="kf-li" d="${L.d}"/>
       <path class="kf-li pos" d="M${L.X(n - 1)} ${L.Y(v[n - 1])}L${L.X(n)} ${L.Y(v[n])}"/><circle class="kf-pkt-p" cx="${L.X(n)}" cy="${L.Y(v[n])}" r="3.5"/></svg>`
       + satz(`${b(nm(x.pid))} lag heute bei ${vz(tief)} Elo und steht nach der ${n}. Partie im Plus.`); },
-  hoehe:(k, x) => { const v = x.verlauf, L = linie(v, {lo:0, hi:Math.max(55, ...v)}), n = v.length - 1;
+  hoehe:(k, x) => { const v = x.verlauf, L = linie(v, {lo:0, hi:Math.max(80, ...v)}), n = v.length - 1;
     return fkopf('peak', 'Höhenmeter heute', vz(v[n])) + `<svg class="kf-svg" viewBox="0 0 ${L.W} ${L.H0}">
-      <path class="kf-berg" d="${L.d}L${L.X(n)} ${L.H0}L${L.X(0)} ${L.H0}Z"/><line class="kf-null-l gold" x1="5" x2="${L.W - 5}" y1="${L.Y(50)}" y2="${L.Y(50)}"/>
+      <path class="kf-berg" d="${L.d}L${L.X(n)} ${L.H0}L${L.X(0)} ${L.H0}Z"/><line class="kf-null-l gold" x1="5" x2="${L.W - 5}" y1="${L.Y(75)}" y2="${L.Y(75)}"/>
       <path class="kf-li pos" d="${L.d}"/><path class="kf-fahne" d="M${L.X(n)} ${L.Y(v[n])}v-16l11 4-11 4"/></svg>`
       + satz(`${b(nm(x.pid))} steht heute nach ${n} Partien bei ${vz(v[n])} Elo.`); },
   sprung:(k, x) => { const v = x.verlauf, L = linie(v, {}), n = v.length - 1;
@@ -321,12 +321,64 @@ const FUSS = {
     + satz(`${b(und(k.W))} gewinnen mit ${k.hoch - k.tief} Toren Abstand.`),
   aussenseiter:k => fkopf('underdog', 'Gegen die Rechnung', k.chance + '\u00a0%') + `<div class="kf-ch">${paar(k.W)}<span class="kf-ch-b"><i style="width:${k.chance}%"></i><small class="num">${k.chance}\u00a0%</small><small class="num">${100 - k.chance}\u00a0%</small></span>${paar(k.L, 'aus')}</div>`
     + satz(`${b(und(k.W))} gewinnen mit ${k.chance} % Siegchance.`),
+  // ── Füße für Anlässe der App ohne eigene Zeichnung ────────────────
+  // Die Auszeichnungen der Partie als Medaillen, die Klasse als Farbe, bis
+  // drei und dahinter die Zahl. Der Name steht unter der Medaille und bricht
+  // auf zwei Zeilen um, nie in die Nachbarin.
+  auszeichnung:(k, x) => { const l = x.liste, zeig = l.slice(0, 3), mehr = l.length - zeig.length;
+    return fkopf('medalTrio', l.length > 1 ? `${l.length} Auszeichnungen` : 'Auszeichnung', null) + `<div class="kf-orden${l.length === 1 ? ' eins' : ''}">${zeig.map(o =>
+      `<span class="kf-od ${o.klasse}"><i>${ic(o.ic)}</i><span><b>${esc(o.name)}</b>${o.mal > 1 ? `<small class="num">${o.mal}. Mal</small>` : ''}<em>${o.wer.map(id => av(id)).join('')}</em></span></span>`).join('')}
+      ${mehr > 0 ? `<span class="kf-od-mehr num">+${mehr}</span>` : ''}</div>`
+      + satz(l.length === 1 ? esc(l[0].titel).replace(/^(\S+( und \S+)?)/, '<b>$1</b>') + '.' : `${l.length} Auszeichnungen aus dieser Partie, ${zeig.map(o => '„' + esc(o.name) + '“').join(', ')}${mehr > 0 ? ` und ${mehr} weitere` : ''}.`); },
+  // Zwei, die zusammen in Serie gewinnen: das Paar vor der Flammenkette.
+  duoserie:(k, x) => { const n = Math.min(x.n > 10 ? 9 : 10, x.n);
+    return fkopf('flame', 'Serie zu zweit', x.n) + `<div class="kf-kette lauf">${paar(x.ids)}${x.n > 10 ? `<em class="num">+${x.n - 9}</em>` : ''}${Array.from({length:n}, (_, i) => `<i class="${i === n - 1 ? 'jetzt' : ''}">${flamme}</i>`).join('')}</div>`
+      + satz(`${b(und(x.ids))} gewinnen zusammen zum ${x.n}. Mal in Folge.`); },
+  // Pleiten in Folge: Eis statt Flammen, gedämpft.
+  pleiten:(k, x) => { const n = Math.min(x.n > 10 ? 9 : 10, x.n);
+    return fkopf('flameBreak', 'Pleiten in Folge', x.n) + `<div class="kf-kette eis">${av(x.pid)}${x.n > 10 ? `<em class="num">+${x.n - 9}</em>` : ''}${Array.from({length:n}, () => `<i>${eis}</i>`).join('')}</div>`
+      + satz(`${b(nm(x.pid))} verliert zum ${x.n}. Mal in Folge.`); },
+  // Revanche: die Begegnung davor und die von eben untereinander, dieselben
+  // vier, die Seiten getauscht.
+  revanche:(k, x) => { const v = x.vorher, heute = datum(v.t) === datum(k.t);
+    const reihe = (wann, links, rechts, a, c, jetzt) => `<div class="kf-rv-z${jetzt ? ' jetzt' : ''}"><small class="num">${wann}</small>${paar(links)}<b class="num">${a}<i>:</i>${c}</b>${paar(rechts)}</div>`;
+    return fkopf('boomerang', 'Revanche', `${k.hoch}:${k.tief}`) + `<div class="kf-rv">${reihe(heute ? uhr(v.t) : datum(v.t).replace(/^\w+\.,\s*/, ''), k.W, k.L, v.tief, v.hoch, false)}${reihe('jetzt', k.W, k.L, k.hoch, k.tief, true)}</div>`
+      + satz(`${b(und(k.W))} verloren ${heute ? 'um ' + uhr(v.t) + ' Uhr' : 'am ' + datum(v.t).replace(/^\w+\.,\s*/, '')} ${v.tief}:${v.hoch} gegen ${b(und(k.L))} und drehen es jetzt.`); },
+  // Spitzenspiel: die zwei Ersten auf ihren Stufen, wie sie vor der Partie
+  // standen, die Krone beim Sieger.
+  spitzenspiel:(k, x) => { const st = (id, pl, w) => `<span class="kf-sz-s${w ? ' w' : ''}" style="--h:${pl === 1 ? 34 : pl === 2 ? 24 : 16}px">${w ? ic('crown') : ''}${av(id)}<i><b class="num">${pl || '–'}.</b></i></span>`;
+    return fkopf('crown', 'Spitzenspiel', null) + `<div class="kf-sz">${st(x.a, x.pa, true)}<em>schlägt</em>${st(x.b, x.pb, false)}</div>`
+      + satz(`${b(nm(x.a))} (${x.pa}.) schlägt ${b(nm(x.b))} (${x.pb}.) im Spitzenspiel.`); },
+  // Formhoch: die letzten zehn als Punkte, die Siege gezählt.
+  form10:(k, x) => fkopf('trendUp', 'In Form', `${x.s} von 10`) + `<div class="kf-duell solo">${av(x.pid)}${dominos(x.folge, true)}</div>`
+    + satz(`${b(nm(x.pid))} gewinnt ${x.s} der letzten 10 Partien.`),
+  // Der lange Tag: jede Partie des Tages ein Stein, Sieg hell.
+  marathon:(k, x) => fkopf('stopwatch', 'Der lange Tag', `${x.n}.`) + `<div class="kf-duell solo">${av(x.pid)}${dominos(x.folge.slice(-15), true)}</div>`
+    + `<div class="kf-ab-u num" style="margin-left:31px"><span>${x.folge.filter(Boolean).length} Siege</span><span>${x.folge.filter(r => !r).length} Niederlagen</span></div>`
+    + satz(`${b(nm(x.pid))} bestreitet die ${x.n}. Partie des Tages${x.folge.length > 15 ? ', gezeigt die letzten 15' : ''}.`),
+  // Eine Elo-Marke: die Skala um die Marke, vorher und nachher, die Marke
+  // als goldene Linie.
+  elomarke:(k, x) => { const lo = Math.min(x.vor, x.marke) - 20, hi = Math.max(x.nach, x.marke) + 20, X = v => ((v - lo) / (hi - lo) * 100).toFixed(1);
+    return fkopf('target', 'Elo-Marke', x.marke) + `<div class="kf-em">${av(x.pid)}<div class="kf-em-l"><u style="left:${X(x.vor)}%;width:${(X(x.nach) - X(x.vor)).toFixed(1)}%"></u>
+        <i style="left:${X(x.marke)}%"><small class="num">${x.marke}</small></i><em class="v" style="left:${X(x.vor)}%"></em><em class="n" style="left:${X(x.nach)}%"></em></div></div>
+      <div class="kf-ab-u num" style="margin-left:31px"><span>vorher ${x.vor}</span><span>jetzt <b>${x.nach}</b></span></div>`
+      + satz(`${b(nm(x.pid))} knackt ${x.marke} Elo, von ${x.vor} auf ${x.nach}.`); },
+  // ── Füße für die neuen Zeilen ────────────────────────────────────
+  // Der Lieblingsgegner: die Duelle als Dominos, die Serie hell.
+  liebling:(k, x) => fkopf('crossedSwords', 'Serie gegen einen', `${x.n}×`) + `<div class="kf-duell">${av(x.w)}${dominos(x.folge, true)}${av(x.l)}</div>`
+    + satz(`${b(nm(x.w))} gewinnt zum ${x.n}. Mal in Folge gegen ${b(nm(x.l))}.`),
+  // Dieselben zwei Paare: jede Begegnung ein Stein, die Bilanz daneben.
+  paarung:(k, x) => fkopf('crossedSwords', 'Dieselben vier', `${x.n}.`) + `<div class="kf-duell">${paar(x.W)}${dominos(x.folge, true)}${paar(x.L, 'aus')}</div>`
+    + `<div class="kf-jub-u num"><span><b>${x.s}</b> Siege</span><span><b>${x.n - x.s}</b> Siege</span></div>`
+    + satz(`${b(und(x.W))} gegen ${b(und(x.L))} zum ${x.n}. Mal, ${x.s}:${x.n - x.s}.`),
   zunull:k => fkopf('weisseWeste', 'Zu null', '10:0') + `<div class="kf-nl-f">${paar(k.W)}<b class="num">10</b><i>:</i><b class="num null">0</b>${paar(k.L, 'aus')}</div>` + satz(`${b(und(k.L))} bleiben ohne Tor.`),
 };
 const FUSS_NAME = {riss:'Serie gerissen', spitze:'Spitze', rangsprung:'Tabellensprung', zaehlwerk:'Zählwerk',
   fluch:'Fluch gebrochen', kippt:'Bilanz gekippt', jubilaeum:'Jubiläum', westen:'Zu null im Monat',
   wochenrennen:'Rennen um die Woche', serie:'Siegesserie', wende:'Wende', premiere:'Erstes gemeinsames Spiel', plus:'Ins Plus gedreht',
   hoehe:'Höhenmeter', sprung:'Größter Sprung', halb:'Wieder bei 50 %', partner:'Der beste Partner', kalender:'Spieltage im Monat',
+  auszeichnung:'Auszeichnung', duoserie:'Serie zu zweit', pleiten:'Pleiten in Folge', revanche:'Revanche', spitzenspiel:'Spitzenspiel',
+  form10:'In Form', marathon:'Der lange Tag', elomarke:'Elo-Marke', liebling:'Serie gegen einen', paarung:'Dieselben vier',
   fotofinish:'Ein Tor (aus dem Kopf)', kanter:'Kantersieg (aus dem Kopf)', aussenseiter:'Gegen die Rechnung (aus dem Kopf)', zunull:'Zu null (aus dem Kopf)'};
 
 // ── Die Schlagzeile ─────────────────────────────────────────────────
@@ -349,16 +401,37 @@ function schlagzeile(k){
     premiere:() => `${W} gewinnen zum ersten Mal zusammen`,
     plus:() => `${nm(x.pid)} dreht den Tag ins Plus`,
     hoehe:() => `${nm(x.pid)} steht heute bei ${vz(x.verlauf[x.verlauf.length - 1])} Elo`,
+    liebling:() => `${nm(x.w)} gewinnt zum ${x.n}. Mal in Folge gegen ${nm(x.l)}`,
+    paarung:() => `${W} gegen ${L} zum ${x.n}. Mal`,
   }[k.fuss];
   if(f) return f();
   return {fotofinish:`${W} retten das 10:9`, zunull:`${W} gewinnen zu null`, aussenseiter:`${W} stürzen die Favoriten`,
     kantersieg:`${W} siegen ${k.hoch}:${k.tief}`}[k.kopf] || `${W} setzen sich gegen ${L} durch`;
 }
 
+// ── Die Zeilen ──────────────────────────────────────────────────────
+// Jeder Anlass der Partie als Zeile, wie das Sammelband der App sie setzt
+// (`.nf-sam`): erst alle, die die App heute bündelt, dann die neuen Fakten
+// dieses Entwurfs. Alle, nicht die ersten vier und „und n weitere“: wer die
+// Karte überfliegt, soll alles sehen, was die Partie trägt. Ab der fünften
+// rücken sie enger zusammen. Die neuen sind auf dieser Seite gestrichelt
+// markiert; in der App sähen sie aus wie jede Zeile.
+const zeilen = k => {
+  const app = (k.app && k.app.teile) || [];
+  const l = app.map(x => `<div class="nf-sam-z${x.neg ? ' neg' : ''}${x.brk ? ' brk' : ''}">${x.html}`
+      + (x.brk ? '<b class="nf-sam-brk">Der Anlass</b>' : '') + (x.klasse ? `<b class="nf-sam-kl">${esc(x.klasse)}</b>` : '')
+      + (x.wert ? `<b class="nf-sam-w">${esc(x.wert)}</b>` : '') + '</div>')
+    .concat((k.zeilen || []).map(z => `<div class="nf-sam-z kf-neu" data-art="${esc(z.key)}"><i class="nf-sam-i">${ic(z.ic)}</i><span>${z.html}</span></div>`));
+  return l.length ? `<div class="nf-sam kf-sam${l.length > 4 ? ' viele' : ''}">${l.join('')}</div>` : '';
+};
+// Die Schlagzeile: die der App, sobald sie Anlässe bündelt (höchstens drei,
+// der stärkste zuerst); sonst die des Entwurfs aus seinem Fuß.
+const titelVon = k => k.app && k.app.teile.length ? k.app.titel : schlagzeile(k);
 const karte = k => `<div class="nf-card nf-s-spiel nfc-highlight kf-karte">
     <div class="nf-top"><span class="nf-rub"><i>${ic('spielfeld')}</i><b>AM SPIELTAG</b></span><span class="nf-when">${ic('clock')}${uhr(k.t)}</span></div>
     <div class="kf-kopf kf-k-${k.kopf}">${KOPF[k.kopf](k)}${namen(k)}</div>
-    <div class="nf-gr"><div class="nf-gr-r"><div class="nf-h">${esc(schlagzeile(k))}</div></div><span class="nf-chev">${ic('chevron')}</span></div>
+    <div class="nf-gr"><div class="nf-gr-r"><div class="nf-h">${esc(titelVon(k))}</div>${k.app && k.app.text ? `<div class="nf-d">${esc(k.app.text)}</div>` : ''}</div><span class="nf-chev">${ic('chevron')}</span></div>
+    ${zeilen(k)}
     ${k.fuss && FUSS[k.fuss] ? `<div class="kf-fuss kf-f-${k.fuss}">${FUSS[k.fuss](k, k.fussX || {})}</div>` : ''}
   </div>`;
 const bild = (k, unter) => `<figure class="kf-bsp"><div class="nf-wrap nf-liste"><div class="nf-feed">${karte(k)}</div></div>
@@ -387,23 +460,49 @@ const FUESSE = [
     ['spitze', 'Neue Spitze oder Spitze in Reichweite: die ersten fünf mit ihrem Elo, die Krone an Platz 1.', 'ein Sieger übernimmt Platz 1, oder steht danach auf 2 oder 3, höchstens 12 Elo dahinter'],
     ['riss', 'Die Flammen der Serie als Kette, das letzte Glied gerissen.', 'ein Verlierer hatte mindestens fünf Siege in Folge'],
     ['fluch', 'Die letzten Duelle als Dominos, rot bis auf den letzten.', 'der Sieger verlor die letzten fünf oder mehr Duelle gegen einen der Verlierer'],
-    ['kippt', 'Eine Wippe: die Seite des Siegers liegt jetzt unten, gestrichelt die Lage vor der Partie, an jedem Ende die Siege.', 'ab 16 Duellen führt der Sieger mit diesem Sieg zum ersten Mal'],
+    ['kippt', 'Eine Wippe: die Seite des Siegers liegt jetzt unten, gestrichelt die Lage vor der Partie, an jedem Ende die Siege.', 'ab 16 Duellen führt der Sieger mit diesem Sieg wieder, und zuletzt lag er vor mindestens zehn Duellen vorn oder nie'],
     ['rangsprung', 'Die Tabelle als Treppe, der Sprung als Bogen.', 'belastbare Tabelle, mindestens zwei Plätze nach oben'],
     ['zaehlwerk', 'Die Zahl auf Klappziffern, darunter die Leiste der Marken: die erreichten gefüllt, die heutige leuchtend, die nächste als Ring.', 'der 50., 100., 150. … Sieg oder die 50., 100. … Partie'],
     ['jubilaeum', 'Die runde Zahl in einem Ring aus der Bilanz zwischen den zwei Gesichtern, darunter die Siege.', 'die 25., 50., 75. … gemeinsame Partie eines Paars oder das 25., 50. … Duell zweier'],
     ['westen', 'Der Monat als Säulen, je Tag eine, jedes Spiel zu null ein Stein, das heutige gold; ab dem fünften am selben Tag die Zahl.', '10:0'],
-    ['wochenrennen', 'Die Siegquote der Woche ab fünf Siegen.', 'ein Sieger übernimmt die Führung der Woche']]],
+    ['wochenrennen', 'Die Siegquote der Woche ab fünf Siegen.', 'ein Sieger übernimmt die Führung der Woche'],
+    ['auszeichnung', 'Die Auszeichnungen der Partie als Medaillen, die Klasse als Farbe, darunter wer sie holt; bis drei, dahinter die Zahl.', 'die App meldet eine Auszeichnung oder eine runde Zahl einer Auszeichnung'],
+    ['revanche', 'Die Begegnung davor und die von eben untereinander, dieselben vier.', 'die App meldet eine Revanche (dieselben Paare am selben Tag, davor klar verloren)'],
+    ['spitzenspiel', 'Die zwei Ersten auf ihren Stufen, wie sie vor der Partie standen, die Krone beim Sieger.', 'die App meldet ein Spitzenspiel'],
+    ['elomarke', 'Die Skala um die Marke, vorher und nachher, die Marke als goldene Linie.', 'die App meldet eine Elo-Marke'],
+    ['liebling', 'Die Duelle zweier als Dominos, die Serie hell.', 'ein Sieger gewinnt zum 8., 10., 12., 15., 20. … Mal in Folge gegen einen der Verlierer'],
+    ['paarung', 'Jede Begegnung dieser zwei Paare ein Stein, darunter die Bilanz.', 'dieselben zwei Paare treffen zum 5., 10., 15. … Mal aufeinander']]],
   ['Zustände', 'Sie gelten über viele Partien und treten zurück, wenn sie eben schon standen.', [
     ['serie', 'Die Flammen der laufenden Serie, die jüngste hell.', 'ein Sieger gewinnt mindestens zum dritten Mal in Folge'],
-    ['wende', 'Die letzten zehn als Dominos, die Pleiten und der Sieg danach.', 'ein Sieger verlor davor mindestens dreimal in Folge'],
+    ['wende', 'Die letzten zehn als Dominos, die Pleiten und der Sieg danach.', 'ein Sieger verlor davor mindestens fünfmal in Folge'],
     ['plus', 'Das Elo des Tages, unter null rot, die Partie, die ins Plus dreht.', 'ab der vierten Partie des Tages, nach einem Tief von mindestens −25'],
-    ['hoehe', 'Das Elo des Tages als Berg über der Linie bei +50, mit Fahne.', 'ein Sieger kommt heute zum ersten Mal über +50'],
+    ['hoehe', 'Das Elo des Tages als Berg über der Linie bei +75, mit Fahne.', 'ein Sieger kommt heute zum ersten Mal über +75'],
     ['sprung', 'Die Elo-Kurve des Monats, dieser Schritt in Gold.', 'ab der achten Partie im Monat der größte Gewinn, mindestens 22'],
-    ['halb', 'Die Siegquote des Monats bis zur Linie bei 50 %.', 'ab der zehnten Partie im Monat erreicht sie 50 % von unten'],
-    ['partner', 'Die Siegquote mit jedem Partner, der heutige hervorgehoben.', 'mit diesem Partner die beste Quote, mindestens acht Partien, jede vierte'],
-    ['kalender', 'Der Monat als Kalender mit den Wochentagen, die Spieltage gefüllt, heute umrandet.', 'der 8., 12., 16. oder 20. Spieltag im Monat'],
-    ['premiere', 'Zwei Gesichter um die 1.', 'das erste gemeinsame Spiel eines Paars, gewonnen']]],
+    ['halb', 'Die Siegquote des Monats bis zur Linie bei 50 %.', 'ab der fünfzehnten Partie im Monat erreicht sie 50 % von unten'],
+    ['partner', 'Die Siegquote mit jedem Partner, der heutige hervorgehoben.', 'mit diesem Partner die beste Quote, mindestens acht Partien, jede achte'],
+    ['kalender', 'Der Monat als Kalender mit den Wochentagen, die Spieltage gefüllt, heute umrandet.', 'der 12., 16. oder 20. Spieltag im Monat'],
+    ['premiere', 'Zwei Gesichter um die 1.', 'das erste gemeinsame Spiel eines Paars, gewonnen'],
+    ['duoserie', 'Das Paar vor der Flammenkette.', 'die App meldet eine Serie zu zweit'],
+    ['form10', 'Die letzten zehn als Dominos.', 'die App meldet ein Formhoch'],
+    ['marathon', 'Jede Partie des Tages ein Stein, darunter Siege und Niederlagen.', 'die App meldet die 10., 15. … Partie eines Spielers am Tag'],
+    ['pleiten', 'Eis statt Flammen, gedämpft.', 'die App meldet fünf oder mehr Niederlagen in Folge']]],
 ];
+const FAKTEN = [
+  ['erstsieg', 'Erster Sieg gegen einen', 'gegen einen der Verlierer nach mindestens drei Duellen ohne Sieg; ab fünf Pleiten in Folge meldet die App das als Fluch'],
+  ['liebling', 'Serie gegen einen', 'ein Sieger gewinnt zum 8., 10., 12., 15., 20. … Mal in Folge gegen einen der Verlierer'],
+  ['kippt', 'Bilanz gekippt', 'ab 16 Duellen führt der Sieger wieder, und zuletzt lag er vor mindestens zehn Duellen vorn oder nie'],
+  ['siege', 'Runde Zahl an Siegen', 'der 50., 100., 150. … Sieg; die Zahl der Spiele meldet die App selbst'],
+  ['woche', 'Die Woche übernommen', 'ein Sieger übernimmt die beste Siegquote der Woche, ab fünf Siegen'],
+  ['plus', 'Ins Plus gedreht', 'ab der vierten Partie des Tages, nach einem Tief von mindestens −25 Elo'],
+  ['westen', 'Zu null im Monat', 'das zweite, dritte … 10:0 im Monat'],
+  ['hoehe', 'Höhenmeter', 'ein Sieger kommt heute zum ersten Mal über +75 Elo'],
+  ['sprung', 'Größter Gewinn im Monat', 'ab der achten Partie im Monat der größte Gewinn, mindestens 22 Elo'],
+  ['wende', 'Wende', 'ein Sieger verlor davor mindestens fünfmal in Folge; die App meldet das Verlieren, nicht sein Ende'],
+  ['paarung', 'Dieselben vier', 'dieselben zwei Paare treffen zum 5., 10., 15. … Mal aufeinander'],
+  ['halb', 'Wieder bei 50 %', 'ab der fünfzehnten Partie im Monat erreicht die Siegquote 50 % von unten'],
+  ['partner', 'Der beste Partner', 'mit diesem Partner die beste Quote, mindestens acht Partien, jede achte'],
+  ['premiere', 'Erstes gemeinsames Spiel', 'zwei gewinnen ihr erstes gemeinsames Spiel'],
+  ['kalender', 'Spieltage im Monat', 'der 12., 16. oder 20. Spieltag eines Spielers im Monat']];
 const zahlText = (key, zahl, moeglich) => `<span class="kf-zahl num"><b>${zahl[key] || 0}</b> von ${N.partien}${moeglich[key] ? ` · zutreffend ${moeglich[key]}` : ''}</span>`;
 const regelKopf = ([key, was, wann]) => `<article class="kf-regel">
     <h4>${esc(KOPF_NAME[key])}</h4><p>${esc(was)}</p><dl><dt>Wann</dt><dd>${esc(wann)}</dd><dt>Im Lauf</dt><dd>${zahlText(key, N.kopfZahl, N.moeglichK)}</dd></dl>
@@ -413,8 +512,8 @@ const regelFuss = ([key, was, wann]) => `<article class="kf-regel">
     <div class="kf-bsp-l">${(N.bsp.fuss[key] || []).map(k => bild(k)).join('')}</div></article>`;
 
 // ── Die Verteilung ──────────────────────────────────────────────────
-const verteilung = (zahl, namen) => {
-  const l = Object.keys(zahl).sort((a, c) => zahl[c] - zahl[a]), max = Math.max(...l.map(k => zahl[k]));
+const verteilung = (zahl, namen, inFolge) => {
+  const l = inFolge ? Object.keys(zahl) : Object.keys(zahl).sort((a, c) => zahl[c] - zahl[a]), max = Math.max(...l.map(k => zahl[k]));
   return `<div class="kf-vt">${l.map(k => `<div class="kf-vt-z"><span>${esc(namen[k] || k)}</span><span class="kf-vt-b"><i style="width:${(zahl[k] / max * 100).toFixed(1)}%"></i></span>
     <b class="num">${zahl[k]}</b><small class="num">${z((zahl[k] / N.partien * 100).toFixed(1))} %</small></div>`).join('')}</div>`;
 };
@@ -436,21 +535,40 @@ const seite = `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta 
 <header class="kf-held">
   <p class="kf-ober">Die Karte einer Partie · Entwürfe, dritte Runde</p>
   <h1>Köpfe und Füße</h1>
-  <p class="kf-lead">Der Kopf zeigt immer alle vier Gesichter und den Endstand: auf einen Blick ist klar, dass hier eine Partie gespielt wurde und wer sie gewann. Was er dazu zeigt, wechselt. Der Fuß zeigt, was an dieser Partie besonders war. Gezeichnet aus den ${N.partien} echten Partien bis Oktober, gewählt mit der Regel unten.</p>
+  <p class="kf-lead">Der Kopf zeigt immer alle vier Gesichter und den Endstand: auf einen Blick ist klar, dass hier eine Partie gespielt wurde und wer sie gewann. Was er dazu zeigt, wechselt. Darunter steht jeder Anlass der Partie als Zeile, alle, die die App heute bündelt, und neue Fakten, wenn sie selten und spannend sind. Der Fuß zeichnet den schwersten davon. Gezeichnet aus den ${N.partien} echten Partien bis Oktober, mit den Anlässen, die der Generator der App für jede von ihnen schrieb, gewählt mit der Regel unten.</p>
   <div class="kf-kennz">
     <span><b class="num">${kopfZahl}</b> Köpfe</span><span><b class="num">${fussZahl}</b> Füße</span>
     <span><b class="num">${z((maxK / N.partien * 100).toFixed(1))} %</b> höchster Anteil eines Kopfs</span>
     <span><b class="num">${N.kopfFolge.max === 1 ? 'nie' : N.kopfFolge.max + '×'}</b> derselbe Kopf hintereinander</span>
     <span><b class="num">${N.fussFolge.max === 1 ? 'nie' : N.fussFolge.max + '×'}</b> derselbe Fuß hintereinander</span>
+    <span><b class="num">${N.zeilen.mitNeu}</b> Karten mit einer neuen Zeile</span>
     ${PR ? `<span><b class="num">${PR.ueber + PR.raus + PR.ab + PR.umbruch}</b> Überschneidungen und Überläufe in ${PR.karten} Karten</span>` : ''}
   </div>
-  <nav><a href="#tag">Ein Spieltag</a><a href="#koepfe">Die Köpfe</a><a href="#fuesse">Die Füße</a><a href="#wahl">Die Auswahl</a></nav>
+  <nav><a href="#tag">Ein Spieltag</a><a href="#anlaesse">Alle Anlässe</a><a href="#neu">Neue Zeilen</a><a href="#koepfe">Die Köpfe</a><a href="#fuesse">Die Füße</a><a href="#wahl">Die Auswahl</a></nav>
 </header>
 
 <section id="tag" class="kf-abschnitt">
   <h2>Ein Spieltag am Stück</h2>
   <p class="kf-satz-l">${esc(datum(N.tag.karten[0].t))}: alle ${N.tag.karten.length} Partien des Tages in ihrer Reihenfolge, so, wie der Feed sie zeigen würde. Kein Kopf steht zweimal hintereinander, und jeder Fuß erzählt etwas anderes.</p>
   <div class="kf-reihe">${N.tag.karten.map(k => bild(k)).join('')}</div>
+</section>
+
+<section id="anlaesse" class="kf-abschnitt">
+  <h2>Alle Anlässe einer Partie</h2>
+  <p class="kf-satz-l">Die App bündelt jeden Anlass einer Partie in deren Karte, wie bisher: die Schlagzeile nennt höchstens drei, der stärkste zuerst; jeder Anlass steht als Zeile darunter; der Fuß zeichnet den schwersten, der eine eigene Zeichnung hat. Auf der Karte stehen heute vier Zeilen und danach „und n weitere“, das Blatt zeigt alle. In diesen Entwürfen steht jede Zeile auf der Karte, ab der fünften enger. ${N.zeilen.karten - (N.zeilen.verteilung['0'] || 0)} von ${N.zeilen.karten} Karten tragen mindestens eine Zeile, ${Object.keys(N.zeilen.verteilung).filter(x => +x > 4).reduce((a, x) => a + N.zeilen.verteilung[x], 0)} mehr als vier, höchstens ${N.zeilen.max}. <span class="kf-legende"></span>Die Zeilen mit dem Strich links sind die neuen aus dem nächsten Abschnitt; in der App sähen sie aus wie jede andere.</p>
+  <div class="kf-zwei">
+    <div><h3>Zeilen je Karte</h3>${verteilung(Object.fromEntries(Object.keys(N.zeilen.verteilung).sort((a, b) => a - b).map(x => [x, N.zeilen.verteilung[x]])), Object.fromEntries(Object.keys(N.zeilen.verteilung).map(x => [x, (['keine', 'eine', 'zwei', 'drei', 'vier'][+x] || x) + (x === '1' ? ' Zeile' : ' Zeilen')])), true)}</div>
+  </div>
+  <h3>Die Karten mit den meisten Zeilen</h3>
+  <div class="kf-bsp-l">${N.bsp.viele.map(k => bild(k)).join('')}</div>
+</section>
+
+<section id="neu" class="kf-abschnitt">
+  <h2>Neue Zeilen</h2>
+  <p class="kf-satz-l">Spannende Fakten, die die App heute nicht meldet, als Zeile unter der Schlagzeile. Kein Spam: jede Art hat eine Schwelle, die sie selten macht; was die App schon als Anlass sagt, sagt keine neue Zeile noch einmal; je Karte höchstens drei, die schwersten; je Tag jede Art höchstens zweimal und derselbe Spieler mit derselben Art einmal. So tragen ${N.zeilen.mitNeu} von ${N.zeilen.karten} Karten eine neue Zeile, ${N.zeilen.weg} fielen über die drei hinaus weg. Wo eine neue Zeile eine eigene Zeichnung hat, kann der Fuß sie zeigen.</p>
+  <div class="kf-regeln">${FAKTEN.map(([key, name, wann]) => `<article class="kf-regel">
+    <h4>${esc(name)}</h4><dl><dt>Wann</dt><dd>${esc(wann)}</dd><dt>Im Lauf</dt><dd><span class="kf-zahl num"><b>${N.zeilen.je[key] || 0}</b> von ${N.partien}</span></dd></dl>
+    <div class="kf-bsp-l">${(N.bsp.zeile[key] || []).slice(0, 1).map(k => bild(k)).join('')}</div></article>`).join('')}</div>
 </section>
 
 <section id="koepfe" class="kf-abschnitt">
