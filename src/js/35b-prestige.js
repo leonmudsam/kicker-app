@@ -1350,9 +1350,9 @@ function _prestigeRegelKarten(){
       <em>1. und 2. Mal voll.<br>
       3. und 4. Mal ${Math.round(regel.abnahme * 100)} % weniger; danach paarweise flacher, nie 0.</em></span>`;
   return `<div class="lb-regeln">
-    ${karte('legendary', 'Legendary', spanne('legendary'), PRESTIGE_AUSZEICHNUNG.legendary)}
-    ${karte('rare', 'Rare', spanne('rare'), PRESTIGE_AUSZEICHNUNG.rare)}
-    ${karte('common', 'Common', spanne('common'), PRESTIGE_AUSZEICHNUNG.common)}
+    ${karte('legendary', RARITY_META.legendary.label, spanne('legendary'), PRESTIGE_AUSZEICHNUNG.legendary)}
+    ${karte('rare', RARITY_META.rare.label, spanne('rare'), PRESTIGE_AUSZEICHNUNG.rare)}
+    ${karte('common', RARITY_META.common.label, spanne('common'), PRESTIGE_AUSZEICHNUNG.common)}
   </div>`;
 }
 
@@ -1430,7 +1430,7 @@ function _prestigeQuellSatz(q, ohneKopf){
     teile.push(rechnung);
   }
   else if(q.q === 'auszeichnung'){
-    teile.push((RARITY_META[q.klasse] || {}).label || 'Common');
+    teile.push((RARITY_META[q.klasse] || RARITY_META.common).label);
     teile.push(`${q.mal}× erreicht`);
     teile.push(q.mal > 1
       ? `zuletzt ${zahl(auszeichnungsTeilwert(q.id, q.mal))} P`
@@ -1600,7 +1600,10 @@ function showLaufbahn(pid){
   const _fa = fingerabdruck(pid);
   const _faTon = rangTon(pid);
 
-  const zeile = (q, w) => `<div class="lb-q"${q.q === 'rekord' ? ` data-chron="${esc(q.id)}"` : ''}>
+  // Ein Rekord öffnet seine Chronik, eine Auszeichnung ihre Detailansicht:
+  // wann sie kam, in welchen Partien oder an welchem Schluss [§8.5].
+  const zeile = (q, w) => `<div class="lb-q"${q.q === 'rekord' ? ` data-chron="${esc(q.id)}"`
+      : q.q === 'auszeichnung' ? ` data-bp="${esc(q.id)}" data-bp-pid="${esc(pid)}"` : ''}>
       <span class="n">${esc(q.name)}<em>${esc(_prestigeQuellSatz(q))}</em></span>
       <span class="p num">${zahl(w)}</span>
     </div>`;
@@ -1680,6 +1683,7 @@ function showLaufbahn(pid){
    </div>
   `);
   _bindChronikClicks(document.getElementById('sheet'));
+  _bpBinden(document.getElementById('sheet'));
   document.querySelectorAll('#sheet [data-prestige-regeln]').forEach(el => {
     el.onclick = () => sheetNav(() => showPrestigeRegeln(pid));
   });

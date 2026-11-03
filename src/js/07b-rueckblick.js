@@ -207,6 +207,7 @@ function showPotwRecap(opts){
       root.querySelectorAll('[data-chron]').forEach(el => {
         el.onclick = () => sheetNav(()=>showChronicle(el.dataset.chron));
       });
+      _bpBinden(root);
     };
     bindeIn(wurzel);
     rcpSpaetLaden(wurzel, spaet, bindeIn);

@@ -7350,7 +7350,8 @@ const _eh = JSON.parse(K.eval(`JSON.stringify((function(){
       if(k.indexOf('<b>' + esc(pname(x.pid)) + '</b>') < 0) falsch.push(s.id + ': Kasten ' + i + ' nicht ' + pname(x.pid));
       x.posten.forEach(q => {
         const kl = q.klasse === 'common' ? 'eh-g-t' : 'eh-q';
-        const n = k.split('<div class="').filter(t => t.indexOf(kl + ' ' + q.klasse + '">') === 0
+        // Jeder Kasten öffnet seine Auszeichnung für diesen Spieler (data-bp).
+        const n = k.split('<div class="').filter(t => t.indexOf(kl + ' ' + q.klasse + '" data-bp="' + q.id + '" data-bp-pid="' + x.pid + '">') === 0
           && t.indexOf('<b>' + esc(q.name) + '</b>') >= 0).length;
         if(n !== 1) falsch.push(s.id + ' ' + pname(x.pid) + ': „' + q.name + '“ ' + n + '-mal als ' + kl);
         if(q.klasse === 'common') kacheln++; else zeilen++;

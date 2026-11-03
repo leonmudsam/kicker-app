@@ -748,6 +748,7 @@ function showSeasonRecap(season, opts){
     binden('[data-poshist]', el => sheetNav(()=>showPositionHistory(el.dataset.poshist)));
     binden('[data-stafel]', el => sheetNav(()=>showSeasonTable(el.dataset.stafel)));
     binden('[data-chron]', el => sheetNav(()=>showChronicle(el.dataset.chron)));
+    _bpBinden(root);
   };
   bindeIn(wurzel);
   _chronMehrBinden(wurzel);

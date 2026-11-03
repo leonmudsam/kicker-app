@@ -307,10 +307,13 @@ const BADGE_WUERDE = new Set([
   'award_collector', 'mr_perfect',
 ]);
 
+// Die Namen der Klassen auf Deutsch, wie in den Stories (`_newsRarityLabel`):
+// in der Detailansicht einer Auszeichnung stand „RARE", im Blatt darunter
+// „Selten" für dieselbe Klasse; die Oberfläche spricht Deutsch.
 const RARITY_META = {
-  legendary: {label:'Legendary', color:'var(--gold)',   total:10},
-  rare:      {label:'Rare',      color:'var(--purple)', total:14},
-  common:    {label:'Common',    color:'var(--acid)',   total:18},
+  legendary: {label:'Legendär',   color:'var(--gold)',   total:10},
+  rare:      {label:'Selten',     color:'var(--purple)', total:14},
+  common:    {label:'Gewöhnlich', color:'var(--acid)',   total:18},
   negative:  {label:'Schande',   color:'var(--red)',    total:8},
 };
 const RARITY_ORDER = ['legendary','rare','common','negative'];

@@ -295,7 +295,7 @@ function _ehrungSaeulen(sp, gross, o){
     // darin der höchste Wert — die Posten sind schon so geordnet.
     const top = posten[0];
     return `<span class="eh-s" data-pid="${esc(x.pid)}" style="--i:${i}">`
-      + `<span class="eh-s-z" title="${esc(top ? top.name : '')}">${top ? _ehrungKachel(top, o.still ? null : () => gold++, gross ? '' : 'k') : ''}</span>`
+      + `<span class="eh-s-z" title="${esc(top ? top.name : '')}"${top ? ` data-bp="${esc(top.id)}" data-bp-pid="${esc(x.pid)}"` : ''}>${top ? _ehrungKachel(top, o.still ? null : () => gold++, gross ? '' : 'k') : ''}</span>`
       + `<em class="eh-s-w num">+${_ehZahl(x.summe)}</em>`
       + `<span class="eh-saeule" style="height:${h}px">${stuecke}</span>`
       + `<span class="eh-s-av" title="${esc(pm[x.pid].name)}">${rcpAvHtml(x.pid, WAPPEN, {})}</span>`
@@ -519,12 +519,15 @@ function _ehrungBloeckeHtml(sp){
   const strich = q => `<span class="eh-q-m" role="img" aria-label="${Math.round(rest(q) * 100)} % des vollen Werts">`
     + `<i style="width:${(rest(q) * 100).toFixed(1)}%"></i></span>`;
   let gold = 0;
-  const zeile = q => `<div class="eh-q ${esc(q.klasse)}">${_ehrungKachel(q, () => gold++)}
+  // Jede Zeile und jede Kachel öffnet ihre Auszeichnung für diesen Spieler
+  // (`_bpBinden`): das wievielte Mal und den Wert erklärt erst sie.
+  const bp = (q, pid) => ` data-bp="${esc(q.id)}" data-bp-pid="${esc(pid)}"`;
+  const zeile = (q, pid) => `<div class="eh-q ${esc(q.klasse)}"${bp(q, pid)}>${_ehrungKachel(q, () => gold++)}
       <span class="eh-q-t"><b>${esc(q.name)}</b><small>${esc(_newsRarityLabel(q.klasse))} · ${esc(mal(q))}</small>${strich(q)}</span>
       <em class="num">+${_ehZahl(q.p)}<small>von ${_ehZahl(voll(q))}</small></em></div>`;
   // Oben die Zeichenkachel und der Wert, darunter der Name über die ganze
   // Breite: neben Zeichen und Wert brach „Pflichterfüller" mitten im Wort.
-  const kachel = q => `<div class="eh-g-t ${esc(q.klasse)}">`
+  const kachel = (q, pid) => `<div class="eh-g-t ${esc(q.klasse)}"${bp(q, pid)}>`
     + `<span class="eh-g-o">${_ehrungKachel(q, () => gold++)}<em class="num">+${_ehZahl(q.p)}</em></span>`
     + `<b>${esc(q.name)}</b><small>${esc(mal(q))}</small>${strich(q)}</div>`;
   return (Array.isArray(sp) ? sp : []).filter(x => x && pm[x.pid]).map((x, i) => {
@@ -533,8 +536,8 @@ function _ehrungBloeckeHtml(sp){
     return `<div class="eh-p" style="--i:${i}">
       <div class="eh-p-k" data-pid="${esc(x.pid)}" style="cursor:pointer">${rcpAvHtml(x.pid, 30, {})}
         <b>${esc(pm[x.pid].name)}</b><em class="num">+${_ehZahl(x.summe)}</em></div>
-      ${gross.map(zeile).join('')}
-      ${klein.length ? `<div class="eh-g">${klein.map(kachel).join('')}</div>` : ''}
+      ${gross.map(q => zeile(q, x.pid)).join('')}
+      ${klein.length ? `<div class="eh-g">${klein.map(q => kachel(q, x.pid)).join('')}</div>` : ''}
     </div>`;
   }).join('');
 }

@@ -1553,6 +1553,75 @@ const ok = (c, msg, det) => {
        && knapp.some(x => x.n > 5),
      'die Ehrung der Woche und des Monats steht knapp: Gesichter in einer Reihe, nichts über den Rand, bei 360 px höchstens 190 px und zwei Drittel der Wochenkarte, bei 320 px höchstens 225 px und drei Viertel',
      JSON.stringify(knapp.map(x => [x.art, x.b, x.n, x.karte && x.karte.h, x.karte && x.karte.reihe, x.ueber && x.ueber.h])));
+  // ── Eine Auszeichnung im Blatt öffnet ihre Detailansicht [§8.5] ──────
+  //    Wer in der Ehrung der Woche „Player of the Week" antippte, landete im
+  //    Profil und suchte die Auszeichnung dort zwischen sechzig anderen. Jede
+  //    Zeile und Kachel der Ehrung öffnet sie jetzt, über dem Blatt der Story
+  //    und nicht dahinter (mit z-index 120 lag sie unter der Story auf 140);
+  //    Escape schließt zuerst sie. Eine Auszeichnung ohne Partie nennt die
+  //    Wochen, für die sie kam, und eine davon öffnet ihren Rückblick. Die
+  //    Posten „Auszeichnungen" der Laufbahn öffnen sie ebenso, und die
+  //    Klasse heißt auf Deutsch wie in den Stories.
+  const bpBlatt = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const warte = ms => new Promise(r => setTimeout(r, ms));
+    const out = {};
+    const bestand = K('_cache._stories');
+    K('_cache._stories = _buildStories()');
+    try {
+      const e = K('_cache._stories').filter(x => /^ehrung_der_woche_/.test(x.id))
+        .find(x => x.dataRef.spieler.some(y => y.posten.some(q => q.id === 'potw')));
+      K(`openNewsDetail(${JSON.stringify(e.id)})`); await warte(400);
+      const nd = document.getElementById('nd'), bpBg = document.getElementById('bpBg'), bp = document.getElementById('bp');
+      const alle = [...nd.querySelectorAll('.eh-q, .eh-g-t')];
+      out.alle = alle.length; out.markiert = alle.filter(x => x.dataset.bp && x.dataset.bpPid).length;
+      const zeile = nd.querySelector('.eh-q[data-bp="potw"]');
+      out.pid = zeile && zeile.dataset.bpPid;
+      zeile.scrollIntoView({block:'center'}); await warte(80);
+      const r = zeile.getBoundingClientRect();
+      document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2).click(); await warte(400);
+      const b = bp.getBoundingClientRect();
+      const oben = document.elementFromPoint(b.left + b.width / 2, b.top + 12);
+      out.offen = bpBg.classList.contains('show') && !!oben && bp.contains(oben);
+      out.ndOffen = document.getElementById('ndBg').classList.contains('show');
+      out.titel = (bp.querySelector('.bp-title') || {}).textContent;
+      out.englisch = /\b(Legendary|Rare|Common)\b/.test(bp.textContent);
+      out.kopf = [...bp.querySelectorAll('.bp-section')].map(x => x.textContent.trim()).join('|');
+      out.wochen = bp.querySelectorAll('.bp-match[data-bp-zeit^="woche|"]').length;
+      out.soll = (K(`getCachedBadges(${JSON.stringify(out.pid)})`).find(x => x.id === 'potw') || {}).count;
+      document.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape'})); await warte(300);
+      out.escape = !bpBg.classList.contains('show') && document.getElementById('ndBg').classList.contains('show');
+      zeile.click(); await warte(400);
+      const w = bp.querySelector('.bp-match[data-bp-zeit^="woche|"]');
+      out.woche = w ? w.dataset.bpZeit.split('|')[1] : '';
+      if(w){ w.click(); await warte(700); }
+      out.rueckblick = !bpBg.classList.contains('show') && !document.getElementById('ndBg').classList.contains('show')
+        && document.getElementById('sheet').classList.contains('show');
+      // Eine Ebene zurück, wie der Schließknopf: darunter liegt der Feed, den
+      // die Prüfungen danach brauchen.
+      K('closeSheet()'); await warte(450);
+      // Die Laufbahn: jeder Posten einer Auszeichnung öffnet sie über dem Blatt.
+      K(`sheetNav(() => showLaufbahn(${JSON.stringify(out.pid)}))`); await warte(500);
+      const sheet = document.getElementById('sheet');
+      const lb = [...sheet.querySelectorAll('.lb-grp')].find(g => /Auszeichnungen/.test(g.textContent));
+      const posten = lb ? [...lb.querySelectorAll('.lb-q:not(.leer)')] : [];
+      out.lb = posten.length; out.lbMarkiert = posten.filter(x => x.dataset.bp && x.dataset.bpPid === out.pid).length;
+      if(posten[0]){ posten[0].click(); await warte(400); }
+      const b2 = bp.getBoundingClientRect();
+      const oben2 = document.elementFromPoint(b2.left + b2.width / 2, b2.top + 12);
+      out.lbOffen = bpBg.classList.contains('show') && !!oben2 && bp.contains(oben2) && sheet.classList.contains('show');
+      K('closeBadgePopover()'); await warte(300); K('closeSheet()'); await warte(450);
+      out.feed = !!sheet.querySelector('.nf-card');
+    } finally { K('(function(b){ _cache._stories = b; })')(bestand); }
+    return out;
+  });
+  ok(bpBlatt.alle > 10 && bpBlatt.markiert === bpBlatt.alle && bpBlatt.offen && bpBlatt.ndOffen && bpBlatt.titel === 'Player of the Week' && !bpBlatt.englisch,
+     'jede Auszeichnung im Blatt der Ehrung öffnet ihre Detailansicht über der Story, die offen bleibt, und ihre Klasse heißt deutsch', JSON.stringify(bpBlatt));
+  ok(bpBlatt.escape, 'Escape schließt zuerst die Auszeichnung, die Story bleibt', JSON.stringify(bpBlatt));
+  ok(/^Geholt in (einer|\d+) Wochen?$/.test(bpBlatt.kopf) && bpBlatt.wochen === bpBlatt.soll && bpBlatt.wochen > 0 && bpBlatt.woche && bpBlatt.rueckblick,
+     'eine Auszeichnung ohne Partie nennt jede Woche, für die sie kam, und eine Woche öffnet ihren Rückblick', JSON.stringify(bpBlatt));
+  ok(bpBlatt.lb > 0 && bpBlatt.lbMarkiert === bpBlatt.lb && bpBlatt.lbOffen && bpBlatt.feed,
+     'jeder Posten einer Auszeichnung in der Laufbahn öffnet sie über dem Blatt, und zurück steht der Feed', JSON.stringify(bpBlatt));
   // ── Was ein Schluss vergibt, als Grund eines Zeichens [§11.0e] ────
   //    In der Zeichen-Karte des Wochenschlusses: Kachel, Gesicht, Satz und
   //    Wort der Klasse in einer Zeile, die in der Karte bleibt — gemessen in

@@ -2401,14 +2401,14 @@ const _prMeilen = JSON.parse(K.eval(`JSON.stringify((function(){
   const ids = (h.match(/data-id="[a-z0-9_]+"/g) || []).map(x => x.slice(9, -1));
   const k = _prestigeRegelKarten();
   return {soll, ist, fehlt:Object.keys(soll).filter(id => ids.indexOf(id) < 0),
-    rare:/Rare<\\/b><strong>10–150 P/.test(k), common:/Common<\\/b><strong>3–60 P/.test(k)};
+    rare:/Selten<\\/b><strong>10–150 P/.test(k), common:/Gewöhnlich<\\/b><strong>3–60 P/.test(k)};
 })())`));
 ok(Object.keys(_prMeilen.soll).every(id => _prMeilen.ist[id] === _prMeilen.soll[id]),
    'die Meilensteine der Laufbahn tragen ihren eigenen Wert und zählen einmal voll',
    JSON.stringify(_prMeilen.ist));
 ok(_prMeilen.fehlt.length === 0, 'das Regelblatt nennt jeden Meilenstein mit seinem Wert',
    _prMeilen.fehlt.join(', ') || 'alle');
-ok(_prMeilen.rare && _prMeilen.common, 'die Karten von Rare und Common nennen die Spanne ihrer Startwerte',
+ok(_prMeilen.rare && _prMeilen.common, 'die Karten von Selten und Gewöhnlich nennen die Spanne ihrer Startwerte, die Klassen auf Deutsch',
    JSON.stringify([_prMeilen.rare, _prMeilen.common]));
 
 const _prTausch = JSON.parse(K.eval(`JSON.stringify({
