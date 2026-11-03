@@ -1,4 +1,4 @@
-// Köpfe und Füße der Karte einer Partie, fünfte Runde. Der Lauf spielt alle
+// Köpfe und Füße der Karte einer Partie, siebte Runde. Der Lauf spielt alle
 // 616 Partien bis Oktober nach und baut jede Karte nach der Regel des
 // Katalogs (`kopf-fuss-katalog.js`, dort stehen die fünf Schritte):
 // Anlässe sammeln, gewichten, Hauptanlass als Schlagzeile, Fuß, höchstens
@@ -217,6 +217,15 @@ function sammeln(F, app){
   ['premiere', 'wende', 'rolle'].forEach(art => { const x = app.partie[art];
     if(x && app.fuesse[art]) l.push({art, text:x.t, html:x.html}); });
   neueFakten(F).forEach(f => l.push(f));
+  // Die Daten der Zeichnungen, die der Entwurf statt der App zeichnet.
+  const D = app.daten || {};
+  l.forEach(a => { const f = ANLASS[a.art].fuss;
+    if(f === 'medaille'){ const kl = a.art === 'legendaer' ? 'legendary' : 'rare', m = (D.medaillen || []).filter(x => x.klasse === kl);
+      a.x = m.find(x => String(a.text).includes(x.name)) || m[0] || null; }
+    if(f === 'tabelle') a.x = ((a.art === 'spitze' ? app.fuesse.spitze : app.fuesse.rang) || {}).data || null;
+    if(f === 'marken'){ const z = app.formen.zaehlwerk && app.formen.zaehlwerk.data;
+      // Die Form der App zählt Siege (`sieg`) oder Spiele.
+      a.x = D.marken && D.marken.length ? D.marken : z && z.wer ? [{pid:z.wer, wert:z.wert, label:z.sieg ? 'Sieg' : 'Spiel'}] : null; } });
   const da = new Set(l.map(a => a.art));
   return l.filter(a => !(ANLASS[a.art].deckt || []).some(k => da.has(k)));
 }
@@ -227,7 +236,7 @@ function sammeln(F, app){
 // Pleiten, trägt das Ergebnis die Schlagzeile. Der Fuß zeichnet den schwersten mit Zeichnung, also
 // meist den Hauptanlass, außer dieselbe Zeichnung stand eben schon. Die
 // übrigen sind Zeilen, drei davon.
-const ZEILEN_MAX = 3;
+const ZEILEN_MAX = 3, NEBENSACHE = 30;
 const hatBild = (a, app) => { const f = ANLASS[a.art].fuss; return !!f && (f.startsWith('app:') ? !!app.fuesse[f.slice(4)] : !!a.x); };
 function karteBauen(anl, app, spurHaupt, fussZuletzt){
   const g = anl.map(a => Object.assign({}, a, {w:ANLASS[a.art].gewicht
@@ -239,8 +248,18 @@ function karteBauen(anl, app, spurHaupt, fussZuletzt){
   // mit einer anderen, wenn es einen gibt.
   const bilder = g.filter(a => hatBild(a, app)), bild = a => ANLASS[a.art].fuss;
   const fuss = bilder.find(a => bild(a) !== fussZuletzt) || bilder[0] || null;
-  const rest = g.filter(a => a !== haupt && a !== fuss);
-  return {haupt, fuss, zeilen:rest.slice(0, ZEILEN_MAX), weitere:rest.slice(ZEILEN_MAX)};
+  // Ein neues Thema geht vor: erst je Thema die schwerste, dann, ist noch
+  // Platz, die zweite eines Themas. Was dasselbe Thema hat wie Schlagzeile
+  // oder Fuß, kommt erst danach.
+  const themen = new Set([haupt, fuss].filter(Boolean).map(a => ANLASS[a.art].thema)), neu = [], wieder = [];
+  g.filter(a => a !== haupt && a !== fuss).forEach(a => {
+    const t = ANLASS[a.art].thema;
+    if(!themen.has(t)){ neu.push(a); themen.add(t); } else wieder.push(a);
+  });
+  // Eine Nebensache (Gewicht unter NEBENSACHE) steht nur im Blatt: nicht
+  // als Zeile und nicht in „+ X weitere“.
+  const rest = neu.concat(wieder), zeile = rest.filter(a => a.w >= NEBENSACHE);
+  return {haupt, fuss, zeilen:zeile.slice(0, ZEILEN_MAX), weitere:zeile.slice(ZEILEN_MAX), neben:rest.filter(a => a.w < NEBENSACHE)};
 }
 
 // ── Der Kopf ────────────────────────────────────────────────────────
@@ -248,7 +267,14 @@ function karteBauen(anl, app, spurHaupt, fussZuletzt){
 // längsten nicht dran war; gleich lange nach der Reihenfolge des Katalogs.
 // Ob eine Ansicht der App zutrifft, sagt die App (`koepfe`); die eigenen
 // prüfen ihre Regel hier.
-const EIGENER_KOPF = {zunull:F => F.p.tief === 0, tafel:() => true, strom:() => true, pucks:() => true};
+const EIGENER_KOPF = {zunull:F => F.p.tief === 0, krimi:F => F.p.hoch - F.p.tief === 1,
+  tafel:() => true, strom:() => true, pucks:() => true};
+// Der wievielte Krimi (ein Tor Abstand) des Monats die Partie ist; das
+// Zu null zählt `westen`.
+{
+  let sid = null, n = 0;
+  FAKT.forEach(F => { if(F.p.sid !== sid){ sid = F.p.sid; n = 0; } if(F.p.hoch - F.p.tief === 1) n++; F.krimiNr = n; });
+}
 const trifft = (k, F, app) => KOPF[k].quelle === 'app' ? !!(app.koepfe[KOPF[k].app] && app.koepfe[KOPF[k].app].html) : EIGENER_KOPF[k](F);
 function kopfWahl(F, app, spur){
   const keys = Object.keys(KOPF).filter(k => trifft(k, F, app));
@@ -295,6 +321,8 @@ const STAT = {
   alsWeitere:zahl(WAHL.flatMap(w => w.karte.weitere.map(a => a.art))),
   alsFuss:zahl(WAHL.map(w => w.karte.fuss && w.karte.fuss.art)),
   zeilen:zahl(WAHL.map(w => w.karte.zeilen.length)), weitere:WAHL.filter(w => w.karte.weitere.length).length,
+  alsNeben:zahl(WAHL.flatMap(w => w.karte.neben.map(a => a.art))), neben:WAHL.reduce((n, w) => n + w.karte.neben.length, 0),
+  zeilenSchnitt:WAHL.reduce((n, w) => n + w.karte.zeilen.length, 0) / WAHL.length,
   weitereMax:Math.max(0, ...WAHL.map(w => w.karte.weitere.length)),
   // Die App heute: wie oft der Anlass ihres Fußes noch einmal als Zeile
   // steht (dieselbe Meldung in Zeile und Bild), und wie viele Zeilen sie zeigt.
@@ -323,13 +351,22 @@ const NEU_HTML = {};
 // ── Die Karten für die Seite ────────────────────────────────────────
 // Eine Karte trägt nur, was die Seite zeichnet: Gesichter, Stand, Elo, den
 // Kopf (eigener oder der App), Schlagzeile, Satz, Zeilen und Fuß.
+// Die Namenszeile unter jedem Kopf sagt, wie es ausging: „Jane, Leo
+// schlagen Stefan, Maxi“. Mit „gegen“ las man den Sieger nur an der
+// Helligkeit der Namen ab. Die Köpfe der App tragen dieselbe Zeile
+// (`_spNz`); hier bekommt sie das Wort, das der Entwurf vorschlägt.
+// Die Wippe der App stellt die Favoriten links unten hin, also die
+// Verlierer: gespiegelt stehen die Sieger auch dort links (oben, sie
+// waren leichter). Die Linie spiegelt das CSS der Seite.
+const schlagen = h => h.replace(/<span class="sp-nz-gg">gegen<\/span>/g, '<span class="sp-nz-gg">schlagen</span>')
+  .replace(/(class="sp-wp-t(?: w)?" style="left:)([\d.]+)%/g, (_, a, x) => a + (100 - +x).toFixed(1) + '%');
 const anlassFuerSeite = a => a && {art:a.art, text:a.text, satz:a.satz || '', html:a.html || '', neg:!!a.neg, brk:!!a.brk, klasse:a.klasse || '', x:a.x || null};
 const karte = w => {
   const {F, app} = w, p = F.p, vier = p.W.concat(p.L), k = w.karte;
   const ergebnis = app.teile.find(t => t.typ === 'spiel') || {titel:app.titel, desc:app.text};
   return {mid:p.id, t:p.t, tag:p.tag, sid:p.sid, W:p.W, L:p.L, hoch:p.hoch, tief:p.tief, chance:r1(p.chance * 100),
-    delta:Object.fromEntries(vier.map(x => [x, r1(p.delta[x])])), westen:F.westen.length,
-    kopf:w.kopf, kopfHtml:KOPF[w.kopf].quelle === 'app' ? app.koepfe[KOPF[w.kopf].app].html : '',
+    delta:Object.fromEntries(vier.map(x => [x, r1(p.delta[x])])), westen:F.westen.length, krimiNr:F.krimiNr,
+    kopf:w.kopf, kopfHtml:KOPF[w.kopf].quelle === 'app' ? schlagen(app.koepfe[KOPF[w.kopf].app].html) : '',
     ergebnis:{titel:ergebnis.titel, satz:ergebnis.desc || ''},
     haupt:anlassFuerSeite(k.haupt), fuss:anlassFuerSeite(k.fuss),
     fussHtml:k.fuss && ANLASS[k.fuss.art].fuss.startsWith('app:') ? app.fuesse[ANLASS[k.fuss.art].fuss.slice(4)].html : '',
@@ -341,6 +378,31 @@ const karte = w => {
 const bsp = {anlass:{}, kopf:{}};
 Object.keys(ANLASS).forEach(a => { bsp.anlass[a] = WAHL.filter(w => w.karte.haupt && w.karte.haupt.art === a).slice(-2).reverse().map(karte); });
 Object.keys(KOPF).forEach(k => { bsp.kopf[k] = WAHL.filter(w => w.kopf === k).slice(-2).reverse().map(karte); });
+// Je Zeichnung eines Fußes die jüngste Karte, auf der sie den Hauptanlass
+// zeichnet: so steht jede Zeichnung mit dem Satz, zu dem sie gehört.
+bsp.fuss = {};
+Object.keys(ANLASS).filter(a => ANLASS[a].fuss).forEach(a => {
+  const l = WAHL.filter(w => w.karte.fuss && w.karte.fuss.art === a);
+  const am = l.filter(w => w.karte.fuss === w.karte.haupt);
+  if(l.length) bsp.fuss[a] = karte((am.length ? am : l)[(am.length ? am : l).length - 1]);
+});
+// Die Karte, an der die Seite den Aufbau zeigt: eigener Kopf, ein
+// Hauptanlass mit eigenem Fuß, drei Zeilen und „+ weitere“; dazu je ein Fall
+// der Regel.
+const jung = l => l[l.length - 1];
+const anat = jung(WAHL.filter(w => w.karte.haupt && w.karte.fuss === w.karte.haupt && w.karte.zeilen.length === 3
+  && w.karte.weitere.length && KOPF[w.kopf].quelle === 'neu' && KOPF[w.kopf].art === 'grund'))
+  || jung(WAHL.filter(w => w.karte.haupt && w.karte.fuss === w.karte.haupt && w.karte.zeilen.length >= 2));
+bsp.anatomie = anat ? karte(anat) : null;
+bsp.faelle = {
+  weitere:jung(WAHL.filter(w => w.karte.weitere.length >= 2 && w !== anat)),
+  fussTitel:jung(WAHL.filter(w => w.karte.fuss && w.karte.haupt && w.karte.fuss !== w.karte.haupt && w.karte.zeilen.length <= 1)),
+  ohne:jung(WAHL.filter(w => !w.karte.haupt && w.karte.zeilen.length)) || jung(WAHL.filter(w => !w.karte.haupt)),
+};
+bsp.faelle.neben = jung(WAHL.filter(w => w.karte.neben.length >= 2 && w.karte.zeilen.length <= 1 && w.karte.haupt
+  && w !== bsp.faelle.fussTitel && w !== bsp.faelle.weitere));
+Object.keys(bsp.faelle).forEach(f => { const w = bsp.faelle[f];
+  bsp.faelle[f] = w ? Object.assign(karte(w), {neben:w.karte.neben.map(a => a.text)}) : null; });
 bsp.viele = WAHL.slice().sort((a, b) => b.anl.length - a.anl.length || b.F.p.t - a.F.p.t).slice(0, 4).map(karte);
 const proTag = zahl(P.map(p => p.tag));
 const dichtester = Object.keys(proTag).filter(t => t >= '2026-10-01').sort((a, b) => proTag[b] - proTag[a])[0];

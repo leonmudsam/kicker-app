@@ -1735,7 +1735,9 @@
   .nd-vs{display:flex;align-items:center;gap:12px;background:var(--surface);
     border:1px solid var(--line);border-radius:12px;padding:14px 12px;margin-bottom:10px}
   .nd-vs-p{flex:1;text-align:center;min-width:0}
-  .nd-vs-p .av{margin:0 auto 7px;display:inline-flex;align-items:center;justify-content:center;
+  /* Nur das Gesicht ohne Wappen: im Wappen schob der Rand darunter das
+     Gesicht 3,5 px über die Mitte des Reifs. */
+  .nd-vs-p > .av{margin:0 auto 7px;display:inline-flex;align-items:center;justify-content:center;
     width:44px;height:44px;border-radius:50%;font-family:'Archivo Black',sans-serif;font-size:13px}
   .nd-vs-name{font-family:'Archivo Black',sans-serif;font-size:12px;line-height:1.1;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px}

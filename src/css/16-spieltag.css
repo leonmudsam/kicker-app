@@ -189,7 +189,10 @@
 .sp-rk-z s{position:absolute;left:-2px;right:-2px;top:50%;height:3px;margin-top:-1px;border-radius:2px;
   background:var(--red);transform:rotate(-14deg);box-shadow:0 0 10px rgba(240,86,106,.55)}
 .sp-rk-t{display:flex;align-items:center;gap:7px;min-width:0;flex:1}
-.sp-rk-t > span{display:flex;flex-direction:column;min-width:0;line-height:1.25}
+/* Das Gesicht ist auch ein `span` unter `.sp-rk-t`: als Spalte gesetzt,
+   standen die Initialen oben im Kreis, 5,6 px über der Mitte. Die Spalte
+   ist nur der Text daneben. Dasselbe gilt für `.sp-ro-k`. */
+.sp-rk-t > span:not(.av){display:flex;flex-direction:column;min-width:0;line-height:1.25}
 .sp-rk-t em{font-style:normal;font-size:11.5px;font-weight:600;color:var(--ink2)}
 .sp-rk-t small,.sp-rk-b small{font-size:9.5px;color:var(--muted)}
 .sp-rk-b{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex:0 0 auto}
@@ -219,7 +222,7 @@
 /* Der Rollentausch: der Anteil der Seite als Strahl, die heutige markiert. */
 .sp-ro{padding:10px 13px 10px;border-top:1px solid var(--line)}
 .sp-ro-k{display:flex;align-items:center;gap:8px;min-width:0}
-.sp-ro-k > span{display:flex;flex-direction:column;min-width:0;flex:1;line-height:1.25}
+.sp-ro-k > span:not(.av){display:flex;flex-direction:column;min-width:0;flex:1;line-height:1.25}
 .sp-ro-k em{font-style:normal;font-size:11.5px;font-weight:600;color:var(--ink2)}
 .sp-ro-k small{font-size:9.5px;color:var(--muted)}
 .sp-ro-k > b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:20px;line-height:1;color:var(--acid);flex:0 0 auto}

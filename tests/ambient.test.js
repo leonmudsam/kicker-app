@@ -8198,7 +8198,17 @@ ok(_bogen.wiederholt.length === 0,
 // Die neue Scoreebene hat einen strengeren Redaktionsfilter als die
 // historischen 13 Formen: Mosaik nur mit benanntem statistischem Befund,
 // Elo-Transfer nur in den obersten fuenf Prozent und mit Abstand zueinander.
+// Gezählt wird die Kette selbst, ohne Bestand. Der Generator wählt die
+// Köpfe seines Fensters ab einem Vorlauf davor (`SP_SCORE_VORLAUF`), und
+// eine volle Kette ab der ersten Partie trifft an der Grenze zu diesen
+// Karten nicht immer dieselbe Wahl: gemessen stand dort einmal dasselbe
+// Tauziehen zweimal, zwischen einer Partie vor dem Fenster, die keine
+// Karte mehr hat, und der ersten Karte darin. Dass der Bestand die Spur
+// trägt, prüfen die beiden Zusicherungen weiter unten.
 const _scoreWahl = JSON.parse(K.eval(`JSON.stringify((function(){
+  const _bestand = _cache._stories;
+  invalidateCache(); _cache._stories = [];
+  try {
   const reihe = [...matches].sort((a,b) => mts(a) - mts(b));
   const zahl = {}, falsch = [], transferBei = [], spur = [];
   reihe.forEach((m, i) => {
@@ -8234,6 +8244,7 @@ const _scoreWahl = JSON.parse(K.eval(`JSON.stringify((function(){
     .sort((a, b) => b[1] - a[1])[0];
   return {n:reihe.length, zahl, falsch, transfer:transferBei.length, eng,
           doppelt:doppelt.length, welten, grund, gewoehnlich};
+  } finally { invalidateCache(); _cache._stories = _bestand; }
 })())`));
 ok(_scoreWahl.falsch.length === 0,
    'Mosaik und Elo-Transfer erscheinen nur mit einem belegten besonderen Anlass',
@@ -8323,6 +8334,36 @@ ok(_publizierteForm.erster !== 'feld' && new Set(_publizierteForm.spur).size >= 
    _publizierteForm.spur.join(' → '));
 ok(_publizierteForm.stabil && _publizierteForm.kalt && _publizierteForm.alteFest,
    'publizierte Grafikdaten bleiben nach weiteren Partien und beim Kaltstart identisch');
+
+// Der Kopf einer neuen Partie rechnet nicht die ganze Liga nach. Der
+// Durchlauf fing bei der ersten Partie an, und weil der Bestand nur einen
+// Monat zurückreicht, wählte er bei jedem neuen Datenstand jeden älteren
+// Kopf noch einmal: mit vier Jahren Liga 3642 Wahlen für einen Spieltag.
+// Veröffentlicht sind hier die 150 Karten vor den fünf jüngsten Partien,
+// mit den Köpfen der vollen Kette; die fünf jüngsten fragt man wie der
+// Generator, die neueste zuerst. Sie bekommen dieselben Köpfe wie in der
+// vollen Kette, und gewählt wird nur im Vorlauf und für sie selbst.
+const _vorlauf = JSON.parse(K.eval(`JSON.stringify((function(){
+  const bestand = _cache._stories, orig = _spScoreKandidaten;
+  try {
+    invalidateCache(); _cache._stories = [];
+    const reihe = _spBasis().chrono.slice(), n = reihe.length;
+    reihe.forEach(m => _spScoreWahl(m));
+    const voll = new Map(reihe.map(m => [m.id, _spScoreSnapshot(m)]));
+    const pub = reihe.slice(n - 155, n - 5).map(m => ({id:'spiel_' + m.id, when:new Date(mts(m)),
+      dataRef:{type:'spiel', matchId:m.id, visual:{version:2, score:voll.get(m.id), occasion:null}}}));
+    let wahlen = 0;
+    _spScoreKandidaten = function(m){ wahlen++; return orig(m); };
+    invalidateCache(); _cache._stories = pub;
+    const neu = reihe.slice(-5).reverse();
+    const anders = neu.filter(m => _spScoreWahl(m).key !== voll.get(m.id).key).map(m => m.id);
+    return {wahlen, grenze:SP_SCORE_VORLAUF + neu.length, vorher:n - 150, anders};
+  } finally { _spScoreKandidaten = orig; invalidateCache(); _cache._stories = bestand; }
+})())`));
+ok(_vorlauf.wahlen <= _vorlauf.grenze && _vorlauf.anders.length === 0,
+   'der Kopf einer neuen Partie wählt nur im Vorlauf neu und trifft dieselbe Wahl wie die volle Kette',
+   _vorlauf.wahlen + ' Wahlen, erlaubt ' + _vorlauf.grenze + ' (ohne Vorlauf ' + _vorlauf.vorher + ')'
+   + (_vorlauf.anders.length ? ' · anders: ' + _vorlauf.anders.join(', ') : ''));
 
 // Dieselbe Rivalitaets-ID wird mit dem naechsten Duell neu berechnet. Der
 // erste Snapshot muss an der alten Partie und seiner damaligen Zahl bleiben.

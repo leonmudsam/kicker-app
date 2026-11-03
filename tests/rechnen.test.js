@@ -451,5 +451,27 @@ ok(ringe.c==='potw:Woche 8,potd:Spieltag 23.02.',
   'Wer danach nicht mehr spielte, trägt Woche und Tag seines letzten eigenen Zeitraums weiter: '+JSON.stringify(ringe));
 ok(ringe.a==='',
   'Wer seinen letzten eigenen Zeitraum nicht gewann, trägt keinen älteren Sieg, auch nicht nach der Reihenfolge der Schlüssel: '+JSON.stringify(ringe));
+// Mit den Jahren: eine Dauer in der Einheit, die man sagt, und eine lange
+// Zahl mit Tausenderpunkt. Nach den Wochen kam keine Einheit mehr („nach
+// 130 Wochen"), und die Fun Facts schrieben „82820 Tore".
+const lang=JSON.parse(K(`JSON.stringify((() => {
+  const T=864e5, s=ms=>{const x=_spSeit(ms);return x.n+' '+x.e+'|'+x.nom;};
+  return {seit:[s(3*T),s(20*T),s(70*T),s(400*T),s(910*T),s(366*T*3)],
+    zahl:[tausender('82820 Tore in 5152 Partien'),tausender('Im Schnitt 16,1 Tore, 123456,5 Punkte'),
+      tausender('Die Liga sieht ein 10:8 zum 1.012. Mal'),tausender('Rang 2029, -12345 Elo, Spiel m12345'),
+      tausender(tausender('100000'))]};
+})())`));
+ok(lang.seit.join()==='3 Tagen|Tage,3 Wochen|Wochen,2 Monaten|Monate,13 Monaten|Monate,2 Jahren|Jahre,3 Jahren|Jahre',
+  'Eine lange Dauer steht in Monaten und Jahren, nicht in Wochen: '+lang.seit.join(' · '));
+ok(lang.zahl.join(' · ')==='82.820 Tore in 5152 Partien · Im Schnitt 16,1 Tore, 123.456,5 Punkte · Die Liga sieht ein 10:8 zum 1.012. Mal · Rang 2029, -12.345 Elo, Spiel m12345 · 100.000',
+  'Eine Zahl ab fünf Stellen trägt Tausenderpunkte, eine vierstellige, eine schon gegliederte und eine in einem Namen nicht: '+lang.zahl.join(' · '));
+// Ein Tag in einem Satz trägt sein Jahr, wenn es nicht das laufende ist,
+// und am Satzende genau einen Punkt: „am 15.03." stand sonst drei Jahre
+// später da, und der Wochenrekord endete auf „21.06..".
+setNow(new Date(2027,4,10,12).getTime());
+const tage=JSON.parse(K(`JSON.stringify([datumFmt(new Date(2026,2,15),'tmx'),datumFmt(new Date(2027,2,15),'tmx'),
+  tagImSatz(new Date(2026,2,15)),tagImSatz(new Date(2027,2,15))])`));
+ok(tage.join(' ')==='15.03.26 15.03. 15.03.26. 15.03.',
+  'Ein Tag aus einem anderen Jahr trägt das Jahr, am Satzende mit genau einem Punkt: '+tage.join(' · '));
 console.log(fails?`${fails} von ${checks} CHECKS FEHLGESCHLAGEN`:`ALLE ${checks} CHECKS BESTANDEN`);
 process.exitCode=fails?1:0;

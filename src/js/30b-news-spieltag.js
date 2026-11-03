@@ -353,7 +353,7 @@ function _spVerteilungBild(d){
   return `<div class="sp-vt"><div class="sp-k">Alle ${_spZahl(d.gesamt)} Partien nach Gegentoren</div>
     <div class="sp-vt-g">${saeulen.join('')}</div>
     <div class="sp-vt-f"><b class="num">${_spZahl(d.so)}</b> von ${_spZahl(d.gesamt)} Partien so deutlich oder deutlicher`
-    + `${d.zuletzt ? `, zuletzt am ${datumFmt(d.zuletzt, 'tm')}` : ''}</div></div>`;
+    + `${d.zuletzt ? `, zuletzt am ${datumFmt(d.zuletzt, 'tmx')}` : ''}</div></div>`;
 }
 
 // ── Die Wippe: der Außenseitersieg ───────────────────────────────────
@@ -768,16 +768,22 @@ function _spNz(W, L, wort){
   return `<div class="sp-nz"><span class="w">${_spStapel(W)}</span><span class="sp-nz-gg">${wort || 'gegen'}</span>`
     + `<span class="re">${_spStapel(L)}</span></div>`;
 }
-// Wie lange etwas her ist, in der Einheit, die man sagen würde.
+// Wie lange etwas her ist, in der Einheit, die man sagen würde: `e` nach
+// „vor" und „nach", `nom` vor „her". Nach den Wochen kamen keine Einheiten
+// mehr, und mit einer Liga, die Jahre alt ist, stand eine Revanche „nach
+// 130 Wochen" da. Ab zwei Monaten zählen Monate, ab zwei Jahren Jahre.
 function _spSeit(ms){
+  const ein = (n, e1, eN, nom1, nomN) => ({n, e:n === 1 ? e1 : eN, nom:n === 1 ? nom1 : nomN});
   const min = Math.max(1, Math.round(ms / 60000));
-  if(min < 60) return {n:min, e:min === 1 ? 'Minute' : 'Minuten'};
+  if(min < 60) return ein(min, 'Minute', 'Minuten', 'Minute', 'Minuten');
   const h = Math.round(min / 60);
-  if(h < 24) return {n:h, e:h === 1 ? 'Stunde' : 'Stunden'};
+  if(h < 24) return ein(h, 'Stunde', 'Stunden', 'Stunde', 'Stunden');
   const t = Math.round(h / 24);
-  if(t < 14) return {n:t, e:t === 1 ? 'Tag' : 'Tagen'};
-  const w = Math.round(t / 7);
-  return {n:w, e:'Wochen'};
+  if(t < 14) return ein(t, 'Tag', 'Tagen', 'Tag', 'Tage');
+  if(t < 61) return ein(Math.round(t / 7), 'Woche', 'Wochen', 'Woche', 'Wochen');
+  const mo = Math.round(t / 30.44);
+  if(mo < 24) return ein(mo, 'Monat', 'Monaten', 'Monat', 'Monate');
+  return ein(Math.round(t / 365.25), 'Jahr', 'Jahren', 'Jahr', 'Jahre');
 }
 
 // Die Partien je Kalendertag und je Partie Siegchance, Abstand und Gewinn
@@ -959,7 +965,7 @@ const SP_FORM = {
       let z = null;
       for(let j = F.i - 1; j >= 0; j--) if(pk[j].g >= F.gewinn){ z = B.chrono[j]; break; }
       return {t:`${_spZahl(F.gewinn)} Elo wechseln die Seite`,
-        d:z ? `So viel brachte zuletzt eine Partie am ${datumFmt(mts(z), 'tm')}` : 'So viel brachte bis hier keine Partie der Liga.'};
+        d:z ? `So viel brachte zuletzt eine Partie am ${tagImSatz(mts(z))}` : 'So viel brachte bis hier keine Partie der Liga.'};
     }},
   // Eingespielt: ein Duo, das zusammen fast immer gewinnt, oder eine runde
   // Zahl gemeinsamer Siege.
@@ -991,12 +997,12 @@ const SP_FORM = {
       if(x.fluch){
         const s = eig.filter(y => _spGew(y, g.w)).pop();
         return {t:`${_spName(g.w)} schlägt ${_spName(g.l)} wieder`,
-          d:s ? `Der letzte Sieg gegen ${_spName(g.l)} war am ${datumFmt(mts(s), 'tm')}` : `Es ist der erste Sieg gegen ${_spName(g.l)} nach ${g.fluch} Niederlagen.`};
+          d:s ? `Der letzte Sieg gegen ${_spName(g.l)} war am ${tagImSatz(mts(s))}` : `Es ist der erste Sieg gegen ${_spName(g.l)} nach ${g.fluch} Niederlagen.`};
       }
       let k = 0; for(let j = eig.length - 1; j >= 0 && _spGew(eig[j], g.w); j--) k++;
       return {t:`${_spName(g.w)} schlägt ${_spName(g.l)} zum ${g.s}. Mal`,
         d:k ? `Das ist der ${k + 1}. Sieg in Folge gegen ${_spName(g.l)}.`
-          : `Die letzte Niederlage gegen ${_spName(g.l)} war am ${datumFmt(mts(eig[eig.length - 1]), 'tm')}`};
+          : `Die letzte Niederlage gegen ${_spName(g.l)} war am ${tagImSatz(mts(eig[eig.length - 1]))}`};
     }},
   // Die Revanche: dieselben zwei Duos, und diesmal gewinnt die andere Seite.
   revanche:{rang:28, ic:'rematch',
@@ -1030,7 +1036,7 @@ const SP_FORM = {
   rueckkehr:{rang:32, ic:'doorReturn',
     wann:F => F.pause.filter(p => p.tage != null && p.tage >= 10).sort((a, b) => b.tage - a.tage)[0] || null,
     daten:(F, x) => ({id:x.id, mit:F.W.find(o => o !== x.id), tage:x.tage, L:F.L, hoch:F.hoch, tief:F.tief}),
-    text:(F, x) => ({t:`${_spName(x.id)} ist zurück`, d:`Die letzte Partie davor war am ${datumFmt(mts(x.vorher), 'tm')}`}),
+    text:(F, x) => ({t:`${_spName(x.id)} ist zurück`, d:`Die letzte Partie davor war am ${tagImSatz(mts(x.vorher))}`}),
   },
   // Zwei Welten: im Sieger-Duo liegen mindestens 220 Elo zwischen beiden.
   gefaelle:{rang:16, ic:'weight',
@@ -1358,7 +1364,7 @@ function _spWesteBild(d){
     + `<path d="M30 3L55 12V33C55 50 44 61 30 67C16 61 5 50 5 33V12Z"/></svg>${_spSt(d)}</div>`
     + `<div class="sp-ws-t"><em>Weiße Weste</em>${_spChips(d.W)}`
     + `<span class="sp-ws-u">${d.n === 1 ? 'das erste Zu-null der Liga' : `das <b class="num">${_spZahl(d.n)}.</b> Zu-null der Liga`}</span>`
-    + (d.zuletzt ? `<span class="sp-ws-u">zuletzt am <b class="num">${datumFmt(d.zuletzt, 'tm')}</b></span>` : '') + `</div></div>`
+    + (d.zuletzt ? `<span class="sp-ws-u">zuletzt am <b class="num">${datumFmt(d.zuletzt, 'tmx')}</b></span>` : '') + `</div></div>`
     + _spNz(d.W, d.L);
 }
 function _spUhrBild(d){
@@ -1551,6 +1557,32 @@ function _spScoreAuswahl(x, spur, duos, ohne){
   }
   return w || null;
 }
+// ── Wo der Durchlauf anfängt ──────────────────────────────────────────
+// Bei der ältesten Partie, die noch jemand braucht, und SP_SCORE_VORLAUF
+// Partien davor. Er fing bei der ersten Partie der Liga an, und das bei
+// jedem neuen Datenstand: der Bestand reicht nur einen Monat zurück
+// (`newsAnzeigeAb`), also wählte der Generator für jede ältere Partie den
+// Kopf neu, um für die neue einen zu finden. Gemessen mit vier Jahren
+// Liga, 5544 Partien: 3642 Wahlen für einen Spieltag, elf von
+// vierundzwanzig Sekunden des Generators, und mit jedem Monat mehr.
+// Gebraucht wird die älteste veröffentlichte Karte, deren Form die Spur
+// festhält, und die älteste Partie im Fenster des Generators. Die Wahl
+// schaut höchstens dreißig Karten zurück (`_spScoreAuswahl`); der Vorlauf
+// ist das Vierfache, damit ein kalter Anfang zur Ruhe kommt, bevor eine
+// Karte zählt. Was in ihm gewählt wird, steht auf keiner Karte.
+const SP_SCORE_VORLAUF = 120;
+function _spScoreAb(B, pub){
+  let erste = B.chrono.length;
+  pub.forEach((v, id) => { const i = B.idx.get(id); if(i != null && i < erste) erste = i; });
+  const seit = Date.now() - NEWS_FENSTER_TAGE * 864e5;
+  let fenster = B.chrono.length;
+  while(fenster > 0 && mts(B.chrono[fenster - 1]) >= seit) fenster--;
+  return Math.max(0, Math.min(erste, fenster) - SP_SCORE_VORLAUF);
+}
+function _spScoreNeu(FB, ab){
+  FB.scoreWahl = new Map(); FB.scoreSpur = []; FB.scoreDuo = [];
+  FB.scoreAb = ab; FB.scoreBis = ab - 1;
+}
 function _spScoreWahl(m){
   const FB = _spFormBasis(), B = _spBasis();
   const roh = Array.isArray(_cache._stories) ? _cache._stories : null;
@@ -1566,12 +1598,16 @@ function _spScoreWahl(m){
       if(d.type === 'spiel' && d.matchId && d.visual && d.visual.version === 2
          && d.visual.score && d.visual.score.key) FB.scorePublished.set(d.matchId, d.visual);
     });
-    FB.scoreWahl = new Map(); FB.scoreSpur = []; FB.scoreDuo = []; FB.scoreBis = -1; FB.fussWahl = new Map();
+    FB.fussWahl = new Map();
+    _spScoreNeu(FB, _spScoreAb(B, FB.scorePublished));
   }
   let w = FB.scoreWahl && FB.scoreWahl.get(m.id);
   if(w) return w;
-  if(!FB.scoreWahl){ FB.scoreWahl = new Map(); FB.scoreSpur = []; FB.scoreDuo = []; FB.scoreBis = -1; }
+  if(!FB.scoreWahl) _spScoreNeu(FB, _spScoreAb(B, FB.scorePublished || new Map()));
   const bis = B.idx.get(m.id);
+  // Wer nach einer Partie vor dem Anfang fragt, bekommt den Durchlauf
+  // von der ersten Partie an, wie vor dem Vorlauf.
+  if(bis != null && bis < FB.scoreAb) _spScoreNeu(FB, 0);
   for(let j = FB.scoreBis + 1; j <= bis; j++){
     const x = B.chrono[j], spezial = _spScoreSpezial(x), spur = FB.scoreSpur;
     FB.scoreBis = j;

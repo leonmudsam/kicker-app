@@ -52,13 +52,15 @@ node('kopf-fuss-seite.js', {KF_ALLE:daten, KF_ALLE_HTML:seite});
       return q.width > 0 && q.height > 0 && s.visibility !== 'hidden' && s.display !== 'none' && +s.opacity > 0; };
     const mitText = e => [...e.childNodes].some(t => t.nodeType === 3 && t.textContent.trim());
     // Zeichen ohne eigenen Text, die einander trotzdem nicht berühren dürfen.
-    const ZEICHEN = '.kf-pk-r i, .kf-st-a, .kf-st-m, .kf-flap, .kf-nul-t, .kf-nul-b, .kf-rl-b, .kf-k';
+    const ZEICHEN = '.kf-pk-r i, .kf-st-a, .kf-st-m, .kf-flap, .kf-nul-t, .kf-nul-b, .kf-rl-b, .kf-k, .kf-ekg, .kf-kr-m';
     document.querySelectorAll('.kf-karte').forEach(c => {
       out.karten++;
       const n = name(c);
       // Die Zeilen (`.nf-sam`) zählen mit: Text bricht dort um, aber nichts
       // darf übereinander liegen oder über den Rand stehen.
-      ['.kf-kopf', '.kf-kopf-app', '.kf-fuss', '.kf-fuss-app', '.nf-sam'].forEach(sel => {
+      // Die eigenen Füße (`.kf-fk`) stehen im Rahmen der App, werden aber
+      // ganz gemessen.
+      ['.kf-kopf', '.kf-kopf-app', '.kf-fk', '.kf-fuss-app', '.nf-sam'].forEach(sel => {
         const box = c.querySelector(sel); if(!box) return;
         const B = rect(box), alle = [...box.querySelectorAll('*')].filter(sicht);
         // Die Zeichnungen der App misst die App selbst (\`tests/blatt\`):

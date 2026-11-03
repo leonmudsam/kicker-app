@@ -1062,6 +1062,142 @@ const ok = (c, msg, det) => {
   ok(zweitZeichen === 0, 'kein zweites Zeichen neben dem Namen',
      zweitZeichen + ' Fundstellen');
 
+  // ── Alles steht in der Mitte ───────────────────────────────────────
+  // Gemessen wird die Tinte, nicht die Box: bei einem Zeichen die Geometrie
+  // (getBBox, über getScreenCTM auf den Bildschirm), bei Initialen und
+  // Ziffern die Glyphen (Canvas, in 200 px gemessen und zurückgerechnet —
+  // Chromium rundet die Maße auf ganze Pixel). Vorher saß das Zeichen in
+  // den Kacheln des Monatsrückblicks 6,5 px über der Mitte, die Initialen in
+  // der Tabelle einer Partie 5,6 px, das Gesicht im Wappen des Vergleichs
+  // 3,5 px über dem Reif — jedes Mal, weil eine Regel für die `span` daneben
+  // auch die Kachel oder das Gesicht traf —, und 141 der 272 Zeichen des
+  // Katalogs lagen schon in ihrem eigenen Feld daneben.
+  {
+    const {createHarness} = require('../tools/performance.cjs');
+    const h = await createHarness({kontext:{reducedMotion:'reduce'}});
+    try {
+      await h.page.addStyleTag({url:'https://fonts.googleapis.com/css2?family=Archivo+Black&family=Sometype+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap'}).catch(() => {});
+      // Jedes Zeichen des Katalogs in seinem 24er-Feld.
+      const katalog = await h.page.evaluate(() => {
+        const ICONS = window.__perfEval('ICONS'), out = [];
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('width', '240'); svg.setAttribute('height', '240');
+        svg.style.cssText = 'position:absolute;left:0;top:0'; document.body.appendChild(svg);
+        Object.keys(ICONS).forEach(k => { svg.innerHTML = ICONS[k]; const b = svg.getBBox();
+          out.push({k, dx:b.x + b.width / 2 - 12, dy:b.y + b.height / 2 - 12, raus:b.x < -.01 || b.y < -.01 || b.x + b.width > 24.01 || b.y + b.height > 24.01}); });
+        svg.remove(); return out;
+      });
+      const schief = katalog.filter(x => Math.abs(x.dx) > .5 || Math.abs(x.dy) > .5 || x.raus)
+        .sort((a, b) => Math.max(Math.abs(b.dx), Math.abs(b.dy)) - Math.max(Math.abs(a.dx), Math.abs(a.dy)));
+      ok(katalog.length > 200 && schief.length === 0,
+        'jedes Zeichen des Katalogs steht in der Mitte seines Felds, auf eine halbe Einheit, und ragt nicht hinaus',
+        schief.length + ' von ' + katalog.length + ': ' + schief.slice(0, 5).map(x => x.k + ' ' + x.dx.toFixed(1) + '/' + x.dy.toFixed(1) + (x.raus ? ' ragt hinaus' : '')).join(', '));
+
+      const MESS = () => {
+        const out = {kachel:[], wappen:[], schrift:[]};
+        const sicht = e => { const r = e.getBoundingClientRect(); if(r.width < 3 || r.height < 3) return false;
+          for(let x = e; x && x.nodeType === 1; x = x.parentElement){ const s = getComputedStyle(x);
+            if(s.display === 'none' || s.visibility === 'hidden' || +s.opacity < .05) return false; }
+          return true; };
+        const rahmen = e => { if(!e || e.nodeType !== 1 || e.tagName === 'svg') return false; const s = getComputedStyle(e);
+          const bg = (s.backgroundColor !== 'rgba(0, 0, 0, 0)' && s.backgroundColor !== 'transparent') || s.backgroundImage !== 'none';
+          const bd = ['Top', 'Right', 'Bottom', 'Left'].every(k => parseFloat(s['border' + k + 'Width']) > 0 && s['border' + k + 'Style'] !== 'none');
+          return bg || bd || s.boxShadow !== 'none'; };
+        const rahmenVon = (e, gr) => { for(let x = e, i = 0; x && i < 4; x = x.parentElement, i++){
+            if(!rahmen(x)) continue; const r = x.getBoundingClientRect();
+            return r.width <= gr * 3.2 + 8 && r.height <= gr * 3.2 + 8 && r.width <= 120 && r.height <= 120 ? x : null; } return null; };
+        const name = e => { const c = typeof e.className === 'string' ? e.className.trim().split(/\s+/).slice(0, 2).join('.') : '';
+          const p = e.parentElement, pc = p && typeof p.className === 'string' ? p.className.trim().split(/\s+/)[0] : '';
+          return (pc ? '.' + pc + ' > ' : '') + e.tagName.toLowerCase() + (c ? '.' + c : ''); };
+        const mitte = r => ({x:(r.left + r.right) / 2, y:(r.top + r.bottom) / 2});
+        const abw = (a, b) => { const p = mitte(a), q = mitte(b); return Math.max(Math.abs(p.x - q.x), Math.abs(p.y - q.y)); };
+        document.querySelectorAll('svg').forEach(svg => {
+          if(svg.parentElement && svg.parentElement.closest('svg')) return;
+          if(!sicht(svg)) return; const r = svg.getBoundingClientRect(); if(r.width > 110 || r.height > 110) return;
+          let bb; try { bb = svg.getBBox(); } catch(e){ return; } if(!bb || (bb.width < .5 && bb.height < .5)) return;
+          const m = svg.getScreenCTM(); if(!m) return;
+          const p = [[bb.x, bb.y], [bb.x + bb.width, bb.y], [bb.x, bb.y + bb.height], [bb.x + bb.width, bb.y + bb.height]].map(([x, y]) => new DOMPoint(x, y).matrixTransform(m));
+          const ink = {left:Math.min(...p.map(q => q.x)), right:Math.max(...p.map(q => q.x)), top:Math.min(...p.map(q => q.y)), bottom:Math.max(...p.map(q => q.y))};
+          // Eine Kachel, ein Kreis, ein Chip, der nur dieses Zeichen trägt.
+          const f = rahmenVon(svg.parentElement, Math.max(ink.right - ink.left, ink.bottom - ink.top));
+          if(f && !f.textContent.trim() && [...f.querySelectorAll('svg')].filter(x => !x.parentElement.closest('svg') && sicht(x)).length === 1)
+            out.kachel.push({n:name(f), d:abw(ink, f.getBoundingClientRect())});
+        });
+        document.querySelectorAll('svg.ins').forEach(svg => {
+          if(!sicht(svg)) return; const av = [...svg.parentElement.children].find(c => c !== svg && (c.classList.contains('av') || c.classList.contains('rav-av')));
+          if(!av || !sicht(av)) return; const m = svg.getScreenCTM(); if(!m) return;
+          const p = new DOMPoint(50, 50).matrixTransform(m);
+          out.wappen.push({n:name(svg.parentElement.parentElement || svg.parentElement), d:abw({left:p.x, right:p.x, top:p.y, bottom:p.y}, av.getBoundingClientRect())});
+        });
+        const cv = document.createElement('canvas').getContext('2d');
+        document.querySelectorAll('body *').forEach(e => {
+          if(e.closest('svg')) return;
+          const tn = [...e.childNodes].filter(n => n.nodeType === 3 && n.textContent.trim());
+          if(tn.length !== 1 || [...e.children].some(c => c.textContent.trim())) return;
+          let t = tn[0].textContent.trim(); if(t.length > 3 || !sicht(e)) return;
+          const s = getComputedStyle(e); if(s.textTransform === 'uppercase') t = t.toUpperCase();
+          const range = document.createRange(); range.selectNodeContents(tn[0]); const lr = range.getBoundingClientRect();
+          const k = parseFloat(s.fontSize) / 200;
+          cv.font = s.fontStyle + ' ' + s.fontWeight + ' 200px ' + s.fontFamily;
+          try { cv.letterSpacing = s.letterSpacing === 'normal' ? '0px' : (parseFloat(s.letterSpacing) / k) + 'px'; } catch(x){}
+          const mt = cv.measureText(t), q = v => v * k;
+          const fh = q(mt.fontBoundingBoxAscent) + q(mt.fontBoundingBoxDescent);
+          const y0 = lr.top + (lr.height - fh) / 2 + q(mt.fontBoundingBoxAscent);
+          const ink = {left:lr.left - q(mt.actualBoundingBoxLeft), right:lr.left + q(mt.actualBoundingBoxRight), top:y0 - q(mt.actualBoundingBoxAscent), bottom:y0 + q(mt.actualBoundingBoxDescent)};
+          const f = rahmen(e) ? e : rahmenVon(e.parentElement, Math.max(ink.right - ink.left, ink.bottom - ink.top));
+          // Nur ein Rahmen, der allein diese Schrift trägt: ein Gesicht, ein Abzeichen.
+          if(f && f.textContent.replace(/\s+/g, '').toLowerCase() === tn[0].textContent.replace(/\s+/g, '').toLowerCase()
+             && ![...f.querySelectorAll('svg')].some(x => sicht(x) && x.getBoundingClientRect().width > 4))
+            out.schrift.push({n:name(f) + ' «' + t + '»', d:abw(ink, f.getBoundingClientRect())});
+        });
+        return out;
+      };
+      const ZU = `try { closeBadgePopover(); } catch(e){} try { closeNewsDetail(); } catch(e){} for(let i = 0; i < 6; i++){ try { closeSheet(true); } catch(e){} } 0`;
+      const ids = require('../tools/performance.cjs').fixtures.ids;
+      const ANSICHTEN = [
+        `tab='ranking';period='season';render()`, `tab='ranking';period='all';render()`, `tab='positions';render()`,
+        `tab='awards';awView='awards';render()`, `tab='awards';awView='rekorde';rekKammer='';render()`, `tab='awards';awView='chronik';render()`,
+        `tab='teams';render()`, `tab='history';histFilter='all';_histPage=0;render()`, `tab='match';render()`, `tab='settings';render()`,
+        `tab='ranking';render();showPlayer('${ids[8]}')`, `showPlayer('${ids[3]}')`, `showPlayerBadges('${ids[8]}')`, `showPlayerH2HList('${ids[8]}')`,
+        `showPlayerSeasons('${ids[8]}')`, `showLaufbahn('${ids[8]}')`, `showRangSystem()`, `showH2H('${ids[8]}','${ids[9]}')`,
+        `showTeam('${ids[8]}','${ids[9]}')`, `showMatchDetail(matches[matches.length-1].id)`, `showPotwRecap()`, `showPotdRecap()`,
+        `showSeasonRecap(seasons[seasons.length-1])`, `showPositionHistory()`, `showAward('upset')`, `openTopList('upset')`,
+        `showLigaChronik()`, `showSeasonTable(seasons[seasons.length-1].id)`, `showChronicle(CHRONICLES[0].id)`,
+        `showBadgePopover(getCachedBadges('${ids[8]}')[0].id,'${ids[8]}')`,
+        `_cache._stories=_buildStories();_cache._consolFrom=null;_cache._frischVon=null;openNewsFeed()`
+      ];
+      const alle = {kachel:[], wappen:[], schrift:[]}, fehlerAnsicht = [];
+      const messe = async code => {
+        try { await h.K(ZU); await h.K(code); } catch(e){ fehlerAnsicht.push(code.slice(0, 40) + ': ' + String(e).slice(0, 80)); return; }
+        await h.page.waitForTimeout(80);
+        await h.page.evaluate(() => { document.querySelectorAll('.nf-card').forEach(c => { c.style.contentVisibility = 'visible'; });
+          document.getAnimations().forEach(a => { try { a.finish(); } catch(e){} }); });
+        const r = await h.page.evaluate(MESS);
+        Object.keys(alle).forEach(k => alle[k].push(...r[k]));
+      };
+      await h.K(`tab='ranking';render();0`); await h.page.waitForTimeout(1500);
+      await h.page.evaluate(() => document.fonts.ready);
+      for(const c of ANSICHTEN) await messe(c);
+      // Je Art eine Story im Blatt.
+      const blaetter = JSON.parse(await h.K(`JSON.stringify((() => { const je = {};
+        getStoriesCache().forEach(s => { const d = s.dataRef || {}, k = (d.type || '-') + ':' + (d.sub || d.quelle || d.periode || ''); if(!je[k]) je[k] = s.id; });
+        return Object.values(je); })())`));
+      for(const id of blaetter) await messe(`openNewsFeed(); openNewsDetail(${JSON.stringify(id)})`);
+      const schlimm = (l, g) => { const je = new Map(); l.filter(x => x.d > g).forEach(x => { if(!je.has(x.n) || je.get(x.n) < x.d) je.set(x.n, x.d); });
+        return [...je].sort((a, b) => b[1] - a[1]).map(([n, d]) => n + ' ' + d.toFixed(1) + ' px'); };
+      const k1 = schlimm(alle.kachel, .75), k2 = schlimm(alle.wappen, .5), k3 = schlimm(alle.schrift, 1.5);
+      ok(fehlerAnsicht.length === 0 && alle.kachel.length > 500 && k1.length === 0,
+        'in jeder Ansicht, jedem Blatt und jeder Karte steht das Zeichen in der Mitte seiner Kachel, seines Kreises oder Chips',
+        fehlerAnsicht[0] || (k1.slice(0, 4).join(' | ') || alle.kachel.length + ' gemessen'));
+      ok(alle.wappen.length > 100 && k2.length === 0,
+        'jedes Gesicht im Wappen sitzt auf der Mitte des Reifs',
+        k2.slice(0, 4).join(' | ') || alle.wappen.length + ' gemessen');
+      ok(alle.schrift.length > 300 && k3.length === 0,
+        'Initialen und Ziffern stehen in der Mitte ihres Gesichts oder Abzeichens',
+        k3.slice(0, 4).join(' | ') || alle.schrift.length + ' gemessen');
+    } finally { await h.browser.close(); }
+  }
+
   console.log('\n' + '═'.repeat(60));
   console.log(fails === 0 ? `ALLE ${checks} CHECKS BESTANDEN` : `${fails} von ${checks} CHECKS FEHLGESCHLAGEN`);
   await browser.close();

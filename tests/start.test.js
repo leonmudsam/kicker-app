@@ -525,6 +525,39 @@ async function neueSeite(ctx){
       await new Promise(r => setTimeout(r, 1500));
       return K('window.__auftrag.schritt === 0');
     }), 'Ein neuer Datenstand bricht das Vorwärmen ab');
+    // Ein Worker, der rechnet, ist nicht hängengeblieben. Mit zwanzig
+    // Sekunden für alles übernahm der Hauptthread, sobald die Liga groß
+    // genug war, und hielt das Telefon so lange fest, wie der Worker
+    // gebraucht hätte. Die Fristen sind hier kurz und der Worker eine
+    // Attrappe: einer nimmt an und schweigt, einer nimmt nie an.
+    const frist = await w.page.evaluate(async () => {
+      const K = window.__K, warte = ms => new Promise(r => setTimeout(r, ms));
+      K('STORY_WORKER_FRIST.annahme = 150; STORY_WORKER_FRIST.rechnen = 1200; 0');
+      const haupt = window.__haupt;
+      window.__beendet = 0;
+      K(`_storyWorker = {postMessage(d){ setTimeout(() => _storyWorkerPost({data:{nr:d.nr, angenommen:true}}), 20); },
+        terminate(){ window.__beendet++; }}; _storyWorkerLebt = false; _storyWorkerStand = null; 0`);
+      let erg = 'offen';
+      K('_storiesImWorker()').then(x => { erg = x; });
+      await warte(600);
+      const zwischen = {erg, aus:K('_storyWorker === false'), haupt:window.__haupt - haupt};
+      await warte(1200);
+      const nach = {leer:Array.isArray(erg) && erg.length === 0, beendet:window.__beendet,
+        neu:K('_storyWorker === null'), haupt:window.__haupt - haupt};
+      K(`_storyWorker = {postMessage(){}, terminate(){ window.__beendet++; }}; _storyWorkerLebt = false; 0`);
+      let still = 'offen';
+      K('_storiesImWorker()').then(x => { still = x; });
+      await warte(600);
+      const tot = {erg:still, aus:K('_storyWorker === false')};
+      K('STORY_WORKER_FRIST.annahme = 20000; STORY_WORKER_FRIST.rechnen = 300000; _storyWorker = null; 0');
+      return {zwischen, nach, tot};
+    });
+    ok(frist.zwischen.erg === 'offen' && !frist.zwischen.aus && frist.zwischen.haupt === 0,
+       'Ein Worker, der den Lauf angenommen hat, rechnet über die Frist der Annahme hinaus, ohne dass der Hauptthread übernimmt ' + JSON.stringify(frist.zwischen));
+    ok(frist.nach.leer && frist.nach.beendet === 1 && frist.nach.neu && frist.nach.haupt === 0,
+       'Nach der Frist des Rechnens wird er beendet, der Lauf bringt nichts Neues, und der nächste startet einen neuen Worker ' + JSON.stringify(frist.nach));
+    ok(frist.tot.erg === null && frist.tot.aus,
+       'Ein Worker, der nie annimmt, gilt als ausgefallen, und der Hauptthread übernimmt ' + JSON.stringify(frist.tot));
     ok(w.fehler.length === 0, 'Worker-Start ohne Seitenfehler' + (w.fehler.length ? ': ' + w.fehler[0] : ''));
     await w.page.close();
 

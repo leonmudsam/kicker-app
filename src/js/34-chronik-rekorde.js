@@ -224,7 +224,10 @@ function _chronicleCtx(bisMs){
   // Die Rohsicht: je Spieler jede Partie aus seiner Sicht, in Spielreihenfolge
   // [§C39]. Sie liegt NEBEN `P`, nicht darin — `P` wird gecacht, sie nicht.
   const roh = {};
-  const dLabel = (k) => { const [y,m,d] = k.split('-'); return d + '.' + m + '.'; };
+  // Ein Rekord aller Zeiten nennt sein Jahr, wenn es nicht das laufende ist
+  // (`datumFmt` mit `tmx`): „Am 15.03. gewann" stand sonst Jahre später da.
+  const jahrJetzt = String(new Date().getFullYear());
+  const dLabel = (k) => { const [y,m,d] = k.split('-'); return d + '.' + m + '.' + (y === jahrJetzt ? '' : y.slice(2)); };
   const ensure = (id) => P[id] || (P[id] = {
     id, games:0, wins:0, losses:0, gf:0, ga:0, gd:0,
     atkG:0, atkW:0, defG:0, defW:0, atkGoals:0, defConceded:0,

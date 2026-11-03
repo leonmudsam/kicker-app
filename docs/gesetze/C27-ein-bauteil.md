@@ -9,8 +9,9 @@
 - Licht und Rand: Breaking bricht die Spalte und glimmt; die Karte des Tages schimmert leise golden; der Lichtlauf (`glanzZug`, ohne eigenes Abschneiden auf seiner Bahn `glanzBahn`) nur dort, wo EINER einen goldenen Titel trägt, und im Profil über allem Gewonnenen — jedem Liga-Titel, jedem gehaltenen Rekord, Platz 1 einer Saison, als Welle über den legendären Auszeichnungen —, versetzt (`glanzBahn(verzug)`), sodass er durch eine Reihe wandert; das Seltene trägt einen leisen Lauf in seiner Familienfarbe (`_newsGlanz`); der Rand (`--kante`, `--rahmen`) sagt das Gewicht; negativ trägt `.nf-neg`.
 - Metall statt Bewegung: Platz 1 bis 3 tragen ihr Metall als feste Veredelung — ein Rahmen im Verlauf von Gold, Silber oder Bronze (`border-box` unter `padding-box`), eine Lichtkante oben, ein Schein darunter, die Platzziffer mit Glanz; kein Strich an der Kante, nichts in einer Liste bewegt sich ohne Anlass. Bewegung nur auf eine Handlung hin, und sie endet von selbst: der gewählte Reiter federt (`reiterStoss`) und leuchtet fest, ein Blatt blendet beim Öffnen ein (`blattEin`), und beim Öffnen der App und beim ersten Betreten eines Reiters fährt das Kantenlicht (`kantenlicht`, `.kl`) im Metall um Platz 1 bis 3 und verlischt nach gut vier Sekunden [§C43]. Der Profilkopf trägt Kante und Hof im Rangton fest im Hintergrund und lebt sonst von Aura und Insignium; um seinen Rand läuft beim Öffnen und dann alle zehn Sekunden ein Licht in Rangfarbe (`.pp-rand`). Im Profil bewegt sich außerdem, was gewonnen ist oder gerade läuft: die Elo-Kurve zeichnet sich einmal, die Form springt auf, der laufende Monat und der eigene Rang atmen.
 - Story-Blatt: derselbe Bau (`_newsBlattKopf`, `_newsDetailMitte`, `_newsBlattFuss`), die Mitte zuerst gebaut, die Partie höchstens einmal, Scroll vor dem Markup auf null; was oben steht, steht unten nicht noch einmal (`_ndNeu`, `_ndOben`); kein Satz erklärt eine Grafik; das Blatt einer Partie zeigt Bühne, Siegchance auf der Skala, Elo-Wirkung, Duelle, Tagesleiste und Verteilung (`_ndBuehne`, `_ndChanceSkala`, `_ndEloWirkung`, `_ndDuelle`, `_ndTagLeiste`, `_ndVerteilung`); der Spieltag als Bahn (`_ndTagesbahn`); jedes Blatt zeigt, wovon seine Story handelt.
+- Mitte: jedes Zeichen des Katalogs steht mit der Mitte seiner Geometrie auf (12, 12) seines Felds; Zeichen in Kachel, Kreis oder Chip, das Gesicht auf dem Reif seines Wappens, Initialen und Ziffern in ihrem Gesicht stehen in der Mitte; eine Regel für die `span` eines Behälters trifft nie `.av`, `.zk` oder `.rav` (`:not(.av)`, `:not(.zk)`, `> .av`).
 - Zeichen: ein Strich aus EINER Regel (`--strich`); der Strahl des Positionsprofils gehört der überwiegenden Seite, die stärkere Rolle trägt ihre Farbe; das Insignium hat Reif, Kopf und Raute an fester Stelle; das Banner nur, wo ein Spieler allein und groß steht; die Kachel misst am Reif.
-- Eine Form je Sache: Kalendertag `tagKey`, Uhrzeit `datumFmt`, Dezimalkomma `komma`, Stand aus Sicht des Nebenstehenden `standFuer`, Überraschung als Siegchance der Sieger, Namen mit „&" nur in schmalen Zellen (`_chronHolderNames`), im Satz mit „und" (`_chronHalterSatz`, `_namenListe`), Elo-Grenzen in `expected` und `CHANCE_*`, der Platz im Feed aus der Gesamtliga (`_newsGesamtrang`). Zwei Rechnungen über dieselbe Frage, die bleiben müssen, hält ein Test aneinander.
+- Eine Form je Sache: Kalendertag `tagKey`, Uhrzeit `datumFmt`, ein Tag im Satz mit Jahr, wenn es nicht das laufende ist (`datumFmt` mit `tmx`, am Satzende `tagImSatz`), Dezimalkomma `komma`, eine Zahl ab fünf Stellen mit Tausenderpunkt (`tausender`, für jede Story im Generator), Stand aus Sicht des Nebenstehenden `standFuer`, Überraschung als Siegchance der Sieger, Namen mit „&" nur in schmalen Zellen (`_chronHolderNames`), im Satz mit „und" (`_chronHalterSatz`, `_namenListe`), Elo-Grenzen in `expected` und `CHANCE_*`, der Platz im Feed aus der Gesamtliga (`_newsGesamtrang`). Zwei Rechnungen über dieselbe Frage, die bleiben müssen, hält ein Test aneinander.
 - Layout: Raster mit `minmax(0,1fr)`; ein Knopf in einer Zeile so breit wie sein Wort; ein Reiter nennt sein Wort ganz (`METRIC_REITER`), ein langes Wort wird kleiner statt gebrochen (`_awLblLang`); eine Bilanz bricht nicht um; ein langer Wert in der Zahlenreihe wird kleiner, nicht breiter.
 - Ansichten: eine Grafik über einer Rangliste ist eine Zeile, die aufklappt (`einblickHtml`); der Positionsverlauf ist eine Tabelle über die Zeit (`_posvTabelle`, `posvVorschauHtml`); die Partie im Verlauf zeigt den Sieger (`vHistory`), das Duo seine Bilanz als Balken; die Siegchance steht beim Aufstellen unter der Score-Karte (`_matchChanceHtml`); der Direkte Vergleich zeigt jede Begegnung (`h2hBegegnungenHtml`); die Kammern des Rekorde-Reiters sind Felder; eine lange Erklärung steht hinter `.kopf-info`.
 
@@ -20,7 +21,7 @@ quer durch `src/js` und `src/css`; die Bauteile selbst in `05b-recap-teile.js`, 
 
 ## Prüfung
 
-`tests/blatt` (Geometrie, Bauteile, Text und Bewegung jedes Reiters und Blatts bei 360 px), `tests/bewegung` (Wischgeste, Abschlüsse), `tests/blatt` (was im Feed endlos läuft, bewegt nur transform und opacity; Platz 1 bis 3 mit Rahmen, Schein und glänzender Ziffer, ohne Strich, nichts in der Rangliste bewegt sich ohne Anlass, die offene Liga rechnet weder Stil noch Layout; das Profil lebt, wo etwas gewonnen ist oder läuft, endlos nur mit transform und opacity, bei Bewegungsruhe still), `tests/tafel` (Strich, Award-Tabelle, Kalendertag, Formatierer), `tests/zeichen`.
+`tests/blatt` (Geometrie, Bauteile, Text und Bewegung jedes Reiters und Blatts bei 360 px), `tests/bewegung` (Wischgeste, Abschlüsse), `tests/rechnen` (Tausenderpunkt ab fünf Stellen, Jahr eines Tages im Satz, Dauer in Monaten und Jahren), `tests/zeichen` (alles in der Mitte: Katalog, Kachel, Wappen, Initialen), `tests/blatt` (was im Feed endlos läuft, bewegt nur transform und opacity; Platz 1 bis 3 mit Rahmen, Schein und glänzender Ziffer, ohne Strich, nichts in der Rangliste bewegt sich ohne Anlass, die offene Liga rechnet weder Stil noch Layout; das Profil lebt, wo etwas gewonnen ist oder läuft, endlos nur mit transform und opacity, bei Bewegungsruhe still), `tests/tafel` (Strich, Award-Tabelle, Kalendertag, Formatierer), `tests/zeichen`.
 
 ## Herleitung
 
@@ -565,6 +566,27 @@ schreibt. Dasselbe galt außerhalb des Feeds an neunundvierzig Stellen: „4.00
 Gegentore" in der Betonmauer, „Ø 8.8" in der Positionsliste, „+1.5 Elo" in
 den Einstellungen, jede Kachel der Rückblicke. `tests/blatt` liest dafür den
 sichtbaren Text jedes Reiters und der Blätter mit Nachkommastellen.
+Mit den Jahren kamen zwei Formen dazu. Die Sätze setzen ihre Zahlen roh ein,
+und eine Liga mit über fünftausend Partien schrieb „82820 Tore in 5152
+Partien" und „16705 Tore insgesamt": ab fünf Stellen gruppiert `tausender`,
+einmal für jede Story am Ende des Generators und für den großen Wert der Fun
+Facts. Und ein Tag in einem Satz stand ohne Jahr: „Der letzte Sieg gegen
+Leon war am 15.03.", „Am 15.03. gewann Johannes 7 von 7" in den Rekorden
+aller Zeiten, auch wenn der März Jahre zurücklag. `tmx` setzt das Jahr, wenn
+es nicht das laufende ist, `tagImSatz` dazu genau einen Punkt ans Satzende —
+der Wochenrekord endete vorher auf „21.06..". `tests/rechnen` prüft beide.
+**Was in einem Rahmen steht, steht in seiner Mitte.** Gemessen an der Tinte
+in jedem Reiter, jedem Blatt und jeder Karte saß das Zeichen in den Kacheln
+des Monatsrückblicks 6,5 px über der Mitte, die Initialen in der Tabelle
+einer Partie 5,6 px, das Gesicht im Wappen des Vergleichs 3,5 px über dem
+Reif. Jedes Mal setzte eine Regel die `span` eines Behälters als Spalte
+(`.rcp-rw-r > span`, `.sp-rk-t > span`) oder gab ihr einen Rand
+(`.nd-vs-p .av`) und traf damit auch die Kachel oder das Gesicht darin. Und
+141 der 272 Zeichen des Katalogs lagen schon in ihrem eigenen Feld
+daneben: die Flamme 2,5 Einheiten zu hoch, die doppelten Flammen und
+Tropfen bis 4,5, der Bannbruch ragte oben hinaus und war abgeschnitten. Sie
+tragen jetzt ein `<g transform="translate(…)">`. `tests/zeichen` misst den
+Katalog und jede Ansicht.
 **Ein Stand gehört dem, der neben ihm steht** (`standFuer`): die eigenen
 Tore zuerst, ohne zweites Argument die der Sieger. Gespeichert ist er in
 der Reihenfolge der Eingabe, und sieben Stellen schrieben ihn so ab:

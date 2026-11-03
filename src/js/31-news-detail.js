@@ -1384,7 +1384,7 @@ function _ndInsigniumBlatt(s){
     + `<span class="nd-is-av">${avHtml(pm[pid], '', {px:58})}</span></span></div>`
     + `<b class="nd-is-n">${esc(ins.name)}</b><span class="nd-is-p"><b class="num">${punkte}</b> Prestige · ${esc(_spName(pid))}</span>`
     + (d.wieder ? `<span class="nd-is-wd">wieder getragen${typeof d.wieder === 'string'
-      ? ' · zuletzt ' + esc(datumFmt(d.wieder + 'T12:00:00', 'tm')) : ''}</span>` : '') + `</div>`;
+      ? ' · zuletzt ' + esc(datumFmt(d.wieder + 'T12:00:00', 'tmx')) : ''}</span>` : '') + `</div>`;
   // Woraus die Punkte kommen. Gespeichert ist die Aufteilung im Satz der
   // Karte; jüngere Karten tragen sie zusätzlich als Zahlen.
   let teile = d.teile || null;
