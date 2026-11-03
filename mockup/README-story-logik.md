@@ -9,7 +9,9 @@ des Generators mit seiner Regel, die **Uhr** eines Tages (was wann steht),
 node tools/build.mjs                 # die Seite liest dist/index.html
 node mockup/story-logik-lauf.js      # spielt die Partien nach → .story-logik.json (nicht eingecheckt)
 node mockup/story-neu-lauf.js        # misst die Entwürfe neuer Stories → .story-neu.json (nicht eingecheckt)
-node mockup/story-logik-seite.js     # baut story-logik.html, mit „Neue Stories" (story-neu-seite.js) und „Neue Köpfe und Füße" (story-kopf-fuss-seite.js)
+node mockup/story-logik-seite.js     # baut story-logik.html, mit „Neue Stories" (story-neu-seite.js)
+node mockup/kopf-fuss-lauf.js        # wählt Kopf und Fuß jeder Partie nach der Regel der Entwürfe → .kopf-fuss.json (nicht eingecheckt)
+node mockup/kopf-fuss-seite.js       # baut kopf-fuss.html
 ```
 
 Beide Läufe rechnen mit der Uhr der Liga (`Europe/Berlin`): Tage, Wochen
@@ -55,19 +57,21 @@ Karten im Rahmen des Feeds und nennt je Entwurf, was er neu zeigt, wann er
 käme, wo er stünde, ob er Breaking wäre und wie er das Karriereende
 behandelt. Die Schwellen sind an diesen Zählungen gewählt.
 
-## Neue Köpfe und Füße
+## Köpfe und Füße
 
-Der Teil „Neue Köpfe und Füße" zeigt Entwürfe für die Karte einer Partie
-als ganze Karten aus echten Partien: vier Köpfe (Serie gegen Serie, Gegen
-die Form, Erster Sieg des Tages, Kreuzduelle), die wie die Köpfe der App
-alle vier und das Ergebnis zeigen, und fünf Füße (Abstand zur Spitze, Ins
-Plus gedreht, Größter Sprung des Monats, Wieder bei 50 Prozent, Der beste
-Partner). `story-neu-lauf.js` zählt jede Regel über alle Partien und wählt
-als Beispiele Partien, in denen ein neuer Kopf und ein neuer Fuß zusammen
-auslösen; für jede fragt er den Generator der App, welchen Kopf und Fuß sie
-dort heute zeigt, und die Seite schreibt es unter die Karte.
-`story-kopf-fuss-seite.js` zeichnet sie in den Klassen der App (`sp-fk`,
-`sp-nz`, `sp-lg`).
+`kopf-fuss.html` zeigt Entwürfe für die Karte einer Partie als ganze Karten
+aus echten Partien: vierzehn Köpfe, die alle vier Gesichter und den Endstand
+zeigen (vier Grundansichten, vier besondere Ausgänge, sechs Befunde), und
+zwanzig Füße, je mit einem Anlass (zehn Ereignisse, zehn Zustände).
+`kopf-fuss-lauf.js` rechnet für jede der 616 Partien, welche zutreffen, und
+wählt nach der Regel der Seite: ein besonderer Ausgang zuerst, dann ein
+Befund nach Gewicht, das mit jedem Einsatz abklingt und für Seltenes steigt,
+sonst die Grundansicht, die am längsten nicht dran war; nie zweimal
+hintereinander, ein Fuß höchstens zweimal am Tag. Die Seite zeigt einen
+Spieltag am Stück, jede Zeichnung mit Regel und zwei Beispielen und die
+Verteilung über alle Partien. Den Rahmen der Karte und die Gesichter
+zeichnet die App (`dist/index.html`), Kopf und Fuß `kopf-fuss-seite.js` mit
+`kopf-fuss.css`.
 
 Die **Texte** stehen in `story-logik-seite.js`, gelesen aus
 `src/js/26-news-konstanten.js`, `27-news-generator.js`, `28-news-ambient.js`,
