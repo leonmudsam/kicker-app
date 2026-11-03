@@ -64,28 +64,35 @@ behandelt. Die Schwellen sind an diesen Zählungen gewählt.
 `kopf-fuss.html` zeigt die Karte einer Partie, wie sie nach einem Katalog
 aussähe. `kopf-fuss-katalog.js` nennt jeden Anlass und jeden Kopf genau
 einmal — Name, Quelle (Meldung der App, Form der App, aus der Partie, neu),
-Gewicht, Zeichnung, Bedingung — und beschreibt die Regel in fünf Schritten:
-sammeln, gewichten, Hauptanlass als Schlagzeile, Fuß, höchstens drei Zeilen
-und „+n weitere“. Jeder Anlass steht damit genau einmal auf der Karte. Der
-Kopf ist davon getrennt und zeigt nur das Ergebnis: ein besonderer Ausgang
-mit festem Bild, sonst die Grundansicht, die am längsten nicht dran war.
+Thema, Gewicht, Zeichnung, Bedingung — und beschreibt die Regel in fünf
+Schritten: sammeln, gewichten, Hauptanlass als Schlagzeile, Fuß, höchstens
+drei Zeilen (ein neues Thema zuerst) und „+ X weitere“; eine Nebensache
+(Gewicht unter 30) steht nur im Blatt. Jeder Anlass steht damit höchstens
+einmal auf der Karte. Der Kopf ist davon getrennt und zeigt nur, wie die
+Partie ausging, die Sieger immer links und in der Zeile darunter
+„schlagen“: ein besonderer Ausgang mit festem Bild, sonst die Grundansicht,
+die am längsten nicht dran war.
 
 `kopf-fuss-anlaesse.js` spielt den Generator der App Tag für Tag nach wie
 `story-logik-lauf.js` und liest am Abend jeder Partie, was die App über sie
 sagt und zeichnet: ihre Meldungen, ihre Formen, jeden Kopf und jeden Fuß, der
 zutrifft (gezeichnet mit `_spScoreBild` und `_spOccasionBild`, die Wappen als
-einfache Gesichter). `kopf-fuss-lauf.js` zählt den Stand vor und nach jeder
-Partie für die neuen Fakten (`neueFakten`) und baut jede Karte nach dem
-Katalog (`sammeln`, `karteBauen`, `kopfWahl`). `kopf-fuss-seite.js` zeichnet
-die Seite: die Regel, einen Spieltag am Stück, den Katalog als Tabelle mit
-Häufigkeiten und Beispielen, die Köpfe, die Verteilung; eigene Zeichnungen
-nur für die Köpfe und Füße, die die App nicht kennt (`KOPF_BILD`,
-`FUSS_BILD`). `kopf-fuss-pruef.js` zeichnet jeden Kopf und jeden Anlass mit
-Zeichnung an jeder Partie, an der er zutrifft, und misst sie in Chromium; die
-Zeichnungen der App nur auf Rand und Abschneiden, ihr Inneres misst die App
-selbst (`tests/blatt`).
+einfache Gesichter). Jede Partie ist dafür so gedreht, dass die Sieger Seite
+A sind; Elo, Meldungen und Sätze hängen nicht an der Seite, und die Köpfe der
+App zeichnen so die Sieger links. `kopf-fuss-lauf.js` zählt den Stand vor und
+nach jeder Partie für die neuen Fakten (`neueFakten`) und baut jede Karte nach
+dem Katalog (`sammeln`, `karteBauen`, `kopfWahl`). `kopf-fuss-seite.js`
+zeichnet die Seite: den Aufbau an einer Karte, jeden Kopf und jeden Fuß als
+Galerie, einen Spieltag am Stück, die Regel mit ihren Fällen, den Katalog
+mit Häufigkeiten, die Verteilung; eigene Zeichnungen nur für die Köpfe und
+Füße, die die App nicht kennt (`KOPF_BILD`, `FUSS_BILD`). Bewegung nur über
+Verschiebung und Deckkraft, jede endet von selbst und läuft erst, wenn die
+Karte ins Bild kommt [§C43]. `kopf-fuss-pruef.js` zeichnet jeden Kopf und
+jeden Anlass mit Zeichnung an jeder Partie, an der er zutrifft, und misst sie
+in Chromium; die Zeichnungen der App nur auf Rand und Abschneiden, ihr
+Inneres misst die App selbst (`tests/blatt`).
 
-Ergänzen: ein neuer Anlass ist eine Zeile in `ANLASS`; ist er neu, kommen
+Ergänzen: ein neuer Anlass ist eine Zeile in `ANLASS` mit Thema und Gewicht; ist er neu, kommen
 seine Bedingung in `neueFakten` und seine Zeichnung in `FUSS_BILD` dazu. Ein
 neuer Kopf ist eine Zeile in `KOPF`, und ist er neu, ein Eintrag in
 `KOPF_BILD`.

@@ -27,7 +27,23 @@ const liga = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'oktober.txt')
   return {id:'o' + String(i).padStart(4, '0'), a1:IDS[f[0]], a2:IDS[f[1]], b1:IDS[f[2]], b2:IDS[f[3]],
     a1_pos:pos(0), a2_pos:pos(1), b1_pos:pos(2), b2_pos:pos(3), score_a:f[8], score_b:f[9],
     winner:f[10] === 0 ? 'A' : 'B', exp_a:f[11] / 1000, created_at:new Date(f[12] * 1000).toISOString(), deltas:{}};
-});
+}).map(sortiert);
+// Die Sieger stehen links, in jedem Kopf. Die App zeichnet nach Seite A und
+// B: im Krimi stand „9 : 10“ mit den Verlierern links, im klaren Sieg
+// „3:10“, und wer gewann, las man erst an der Farbe. Der Entwurf dreht
+// jede Partie, sodass die Sieger Seite A sind, und stellt in jedem Paar die
+// Abwehr vor den Sturm — so, wie die eigenen Köpfe es tun. Elo, Meldungen
+// und Sätze hängen nicht an der Seite.
+function sortiert(m){
+  const tausch = (o, a, b) => { const x = o[a]; o[a] = o[b]; o[b] = x; };
+  if(m.winner === 'B'){
+    ['1', '2'].forEach(i => { tausch(m, 'a' + i, 'b' + i); tausch(m, 'a' + i + '_pos', 'b' + i + '_pos'); });
+    tausch(m, 'score_a', 'score_b'); m.winner = 'A'; m.exp_a = 1 - m.exp_a;
+  }
+  ['a', 'b'].forEach(s => { if(m[s + '1_pos'] === 'atk' && m[s + '2_pos'] === 'def'){
+    tausch(m, s + '1', s + '2'); tausch(m, s + '1_pos', s + '2_pos'); } });
+  return m;
+}
 
 const {K, setNow} = createRuntime();
 const ersterMs = Math.min(...liga.map(m => Date.parse(m.created_at)));
