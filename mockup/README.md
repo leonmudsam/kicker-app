@@ -25,7 +25,7 @@ eigenen Kopie: so entsteht kein zweiter Generator.
 
 | Eintrag | Inhalt |
 |---|---|
-| `README-story-logik.md`, `story-logik*` | Die Übersicht aller Stories: jede Kartenform mit echten, von der App gezeichneten Beispielen und ihrem Blatt, jeder Anlass mit seiner Regel, die Uhr eines Tages, Breaking, die Seiten und das Zusammenführen, an den Partien bis Oktober nachgespielt; dazu neun Entwürfe neuer Stories mit neuen Grafiken, an denselben Partien gemessen (`story-neu-*`) |
+| `README-story-logik.md`, `story-logik*` | Die Übersicht aller Stories: jede Kartenform mit echten, von der App gezeichneten Beispielen und ihrem Blatt, jeder Anlass mit seiner Regel, die Uhr eines Tages, Breaking, die Seiten und das Zusammenführen, an den Partien bis Oktober nachgespielt; dazu neun Entwürfe neuer Stories mit neuen Grafiken und vier neue Köpfe und fünf neue Füße der Partie-Karte, an denselben Partien gemessen (`story-neu-*`, `story-kopf-fuss-seite.js`) |
 | `story-labor.html` | Partien eintragen und sehen, welche Stories daraus werden. Lädt die ausgelieferte `index.html` in einen abgeriegelten Rahmen: Supabase-Attrappe, kein CDN-Script, kein `fetch`, ein eigener Speicher-Topf — App und Labor liegen auf derselben Adresse, und sonst überschriebe das Labor den Lesestand des Feeds |
 
 ## Gestaltungsentwürfe

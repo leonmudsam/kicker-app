@@ -329,10 +329,11 @@
   .bsh-card{cursor:pointer}
   .bsh-card:active{transform:scale(.985)}
 
-  /* ── Badge-Detail-Popover (Layer ÜBER dem Auszeichnungen-Sheet) ──
-     z-index 120/121 > Sheet (100/101), bleibt also visuell drüber.
+  /* ── Badge-Detail-Popover (Layer ÜBER Sheet und Story) ──
+     z-index 150/151 > Story (140/141) > Sheet (100/101): sie öffnet auch
+     aus dem Blatt einer Story, und mit 120 ging sie dahinter auf.
      Sheet bleibt aktiv und scrollbar nach Schließen des Popovers. */
-  .bp-bg{position:fixed;inset:0;z-index:120;background:rgba(0,0,0,.65);
+  .bp-bg{position:fixed;inset:0;z-index:150;background:rgba(0,0,0,.65);
     backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
     opacity:0;pointer-events:none;transition:opacity .2s;
     display:flex;align-items:center;justify-content:center;padding:24px}
@@ -340,7 +341,7 @@
   .bp{background:var(--bg2);border:1px solid var(--line);border-radius:18px;
     padding:18px 20px 16px;max-width:380px;width:100%;max-height:75vh;
     overflow-y:auto;transform:scale(.92);transition:transform .22s cubic-bezier(.2,.8,.2,1);
-    z-index:121;position:relative}
+    z-index:151;position:relative}
   .bp-bg.show .bp{transform:scale(1)}
   .bp-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
   .bp-ic{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;flex-shrink:0;background:var(--surface)}
@@ -365,6 +366,14 @@
   .bp-match-date{font-family:'Sometype Mono',monospace;font-size:9.5px;color:var(--muted);flex-shrink:0;width:62px}
   .bp-match-score{font-family:'Archivo Black',sans-serif;font-size:13px;flex:1}
   .bp-match-arr{color:var(--muted);font-size:11px;flex-shrink:0}
+  /* Ein Tag, eine Woche, ein Monat statt einer Partie: der Zeitraum ist die
+     Zeile, rechts leise, wohin sie führt. */
+  .bp-match:not([data-mid]) .bp-match-date{width:auto;flex:1 1 auto;font-size:11px;color:var(--ink)}
+  .bp-match:not([data-mid]):not([data-bp-zeit]){cursor:default}
+  .bp-schluss{flex:0 0 auto;font-family:inherit;font-size:10.5px;color:var(--muted)}
+  /* Eine Auszeichnung in einem Blatt öffnet ihre Detailansicht (`_bpBinden`). */
+  [data-bp][data-bp-pid]{cursor:pointer;-webkit-tap-highlight-color:transparent}
+  [data-bp][data-bp-pid]:active{opacity:.72}
   /* Fortschritts-Balken (locked) */
   .bp-prog{margin-bottom:8px}
   .bp-prog-bar{height:8px;background:var(--surface3);border-radius:4px;overflow:hidden}

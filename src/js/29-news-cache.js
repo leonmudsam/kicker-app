@@ -121,9 +121,9 @@ const STORY_ABGEMELDET = [
   // sie alles, was im Zeitraum geholt wurde (`ehrung_der_woche_…`,
   // `ehrung_des_monats_…`) [§11.6f]. Die alten Zeilen liegen gespeichert
   // daneben und nannten neben dem Rückblick des Oktobers vier Auszeichnungen
-  // statt aller. Die alte Ehrung eines Tages (`ehrung_tag_…`) steht nicht
-  // hier: sie geht in die Karte ihres Spielers des Tages auf
-  // (`_consolidateStories`), abgemeldet stünde sie nirgends mehr.
+  // statt aller. Die alte Ehrung eines Tages (`ehrung_tag_…`) und die einer
+  // Runde stehen nicht hier: sie gehen in die Karte ihres Tages auf
+  // (`_consolidateStories`), abgemeldet stünden sie nirgends mehr.
   'ehrung_woche_', 'ehrung_monat_',
   // ── Das Ergebnis hiess einmal anders ─────────────────────────────
   // Eine Ergebnis-Karte entstand nur fuer ein auffaelliges Muster und
@@ -259,69 +259,93 @@ function _consolidateStories(list){
   });
   let aus = _consolidateStoriesLegacy(vorbereitet);
 
-  // ── Der härteste Tag gehört zum Spieler des Tages ─────────────────
+  // ── Die Karte, die den Tag zusammenfasst ──────────────────────────
+  // Der Spieler des Tages; an einem Tag ohne ihn die Ehrung des Tages
+  // (`tagesehrung_<Tag>`, `voll`). Was den Tag sonst noch zusammenfasst,
+  // steht auf ihr und reist mit (`memberIds`), verloren geht nichts [§C33].
+  const tagKarte = () => {
+    const je = new Map();
+    aus.forEach(s => { const d = s.dataRef || {};
+      if(d.type === 'potd') je.set(d.dayKey || tagKey(s.when), s); });
+    aus.forEach(s => { const d = s.dataRef || {};
+      if(d.type === 'ehrung' && d.periode === 'tag' && d.voll && d.tag && !je.has(d.tag)) je.set(d.tag, s); });
+    return je;
+  };
+  const aufKarte = (dazu, weg) => {
+    if(weg.size) aus = aus.filter(s => !weg.has(s.id)).map(s => {
+      const z = dazu.get(s.id);
+      if(!z) return s;
+      const d = s.dataRef || {};
+      return Object.assign({}, s, {dataRef:Object.assign({}, d, z.felder,
+        {memberIds:[...new Set((d.memberIds || [s.id]).concat(z.ids))]})});
+    });
+  };
+
+  // ── Der härteste Tag gehört zu der Karte des Tages ────────────────
   // „Harter Tag für Leo" stand als eigene rote Karte eine Minute unter dem
   // Spieler des Tages: dieselbe Frage, wer den Tag geprägt hat, einmal von
-  // oben und einmal von unten, auf zwei Karten. Gibt es an dem Tag einen
-  // Spieler des Tages, steht der härteste Tag als Gegenstück auf dessen Karte
-  // und in dessen Blatt; die Meldung reist mit (`memberIds`), verloren geht
-  // nichts [§C33]. Ohne Spieler des Tages bleibt sie, wie sie war.
+  // oben und einmal von unten, auf zwei Karten. Er steht als Gegenstück auf
+  // der Karte des Tages und in deren Blatt. Gibt es keine, bleibt er, wie er
+  // war.
   {
-    const potdJeTag = new Map();
-    aus.forEach(s => { const d = s.dataRef || {};
-      if(d.type === 'potd') potdJeTag.set(d.dayKey || tagKey(s.when), s); });
+    const ziel = tagKarte();
     const weg = new Set(), dazu = new Map();
     aus.forEach(s => {
       const d = s.dataRef || {};
       if(d.type !== 'elo_swing' || !d.pid) return;
-      const p = potdJeTag.get(tagKey(s.when));
-      if(!p) return;
+      const p = ziel.get(tagKey(s.when));
+      if(!p || dazu.has(p.id)) return;
       const pd = p.dataRef || {};
       // Ist der Verlierer selbst der Spieler des Tages, ist es kein Gegenstück.
-      if(pd.playerId === d.pid || (pd.playerIds || []).includes(d.pid)) return;
+      if(pd.type === 'potd' && (pd.playerId === d.pid || (pd.playerIds || []).includes(d.pid))) return;
       weg.add(s.id);
-      dazu.set(p.id, {id:s.id, pid:d.pid, delta:d.delta, title:s.title, desc:s.desc});
+      dazu.set(p.id, {ids:[s.id], felder:{gegenstueck:{id:s.id, pid:d.pid, delta:d.delta, title:s.title, desc:s.desc}}});
     });
-    if(weg.size) aus = aus.filter(s => !weg.has(s.id)).map(s => {
-      const g = dazu.get(s.id);
-      if(!g) return s;
-      const d = s.dataRef || {};
-      return Object.assign({}, s, {dataRef:Object.assign({}, d, {gegenstueck:g,
-        memberIds:[...new Set((d.memberIds || [s.id]).concat([g.id]))]})});
-    });
+    aufKarte(dazu, weg);
   }
 
-  // ── Die Ehrung des Tages gehört zum Spieler des Tages ─────────────
-  // Je Tag stand eine eigene Ehrung dessen, was sein Schluss vergab
-  // (`ehrung_tag_<Tag>`), eine halbe Minute unter dem Spieler des Tages, und
-  // nannte ihn ein zweites Mal. Heute trägt dessen Karte sie selbst
-  // (`ehrung`, [§11.6f]). Gespeicherte Tage tragen sie als eigene Zeile, und
-  // ihr Spieler des Tages ist älter als sie und trägt keine; eine Zeile
-  // ändert sich nicht [§C33]. Abgemeldet stünde die Ehrung dieser Tage
-  // nirgends mehr. Sie kommt deshalb hier auf die Karte ihres Spielers des
-  // Tages und reist mit (`memberIds`); trägt die Karte schon eine, gilt die.
-  // Ohne Spieler des Tages bleibt sie, wie sie war.
+  // ── Die Ehrungen eines Tages gehören zu der Karte des Tages ───────
+  // Gespeichert liegen Ehrungen, die es so nicht mehr gibt: je Runde eine,
+  // zwei Stunden nach ihrer letzten Partie, und je Tag eine dessen, was sein
+  // Schluss vergab (`ehrung_tag_<Tag>`). Eine Zeile ändert sich nicht
+  // [§C33]; abgemeldet stünden diese Auszeichnungen nirgends mehr. Sie gehen
+  // deshalb hier in die Karte ihres Tages auf. Trägt die den ganzen Tag
+  // (`ehrungVoll`, `voll`), reisen sie nur mit; ein gespeicherter Spieler des
+  // Tages von vorher trägt höchstens den Schluss, und dann wird vereinigt
+  // (`_ehrungVereint`). Ohne Karte des Tages bleiben sie, wie sie waren:
+  // ihre Schlagzeile zählt, was sie zählen. Trägt eine größere Ehrung den
+  // Tag (`_ehrungGroessere`) und steht sie da, zeigt auch ein gespeicherter
+  // Spieler des Tages keine.
   {
-    const potdJeTag = new Map();
-    aus.forEach(s => { const d = s.dataRef || {};
-      if(d.type === 'potd') potdJeTag.set(d.dayKey || tagKey(s.when), s); });
-    const weg = new Set(), dazu = new Map();
+    const ziel = tagKarte();
+    const zeitraum = new Set(aus.filter(s => (s.dataRef || {}).type === 'ehrung' && /^ehrung_de[rs]_/.test(String(s.id)))
+      .map(s => s.dataRef.periode + '|' + tagKey(new Date(s.when).getTime() - 3600000)));
+    const quellen = new Map();
     aus.forEach(s => {
       const d = s.dataRef || {};
-      if(d.type !== 'ehrung' || d.periode !== 'tag' || !Array.isArray(d.spieler)) return;
-      const p = potdJeTag.get(d.tag || tagKey(s.when));
-      if(!p || dazu.has(p.id)) return;
-      weg.add(s.id);
-      dazu.set(p.id, s);
+      if(d.type !== 'ehrung' || !Array.isArray(d.spieler) || (d.periode && d.periode !== 'tag')) return;
+      const k = d.periode === 'tag' ? d.tag : tagKey(d.bis || s.when);
+      const p = ziel.get(k);
+      if(!p || p.id === s.id) return;
+      (quellen.get(p.id) || quellen.set(p.id, []).get(p.id)).push(s);
     });
-    if(weg.size) aus = aus.filter(s => !weg.has(s.id)).map(s => {
-      const e = dazu.get(s.id);
-      if(!e) return s;
-      const d = s.dataRef || {};
-      return Object.assign({}, s, {dataRef:Object.assign({}, d, {
-        ehrung:Array.isArray(d.ehrung) ? d.ehrung : e.dataRef.spieler,
-        memberIds:[...new Set((d.memberIds || [s.id]).concat([e.id]))]})});
+    const weg = new Set(), dazu = new Map();
+    aus.forEach(p => {
+      const l = quellen.get(p.id);
+      if(!l) return;
+      l.forEach(s => weg.add(s.id));
+      const d = p.dataRef || {};
+      const felder = {};
+      if(d.type === 'potd' && !d.ehrungVoll){
+        const tag = d.dayKey || tagKey(p.when), groesser = _ehrungGroessere(new Date(tag + 'T12:00:00').getTime());
+        const schluss = Array.isArray(d.ehrung) ? d.ehrung
+          : ((l.find(s => s.dataRef.periode === 'tag') || {}).dataRef || {}).spieler || [];
+        felder.ehrung = groesser && zeitraum.has(groesser + '|' + tag) ? []
+          : _ehrungVereint([schluss].concat(l.filter(s => !s.dataRef.periode).map(s => s.dataRef.spieler)));
+      }
+      dazu.set(p.id, {ids:l.map(s => s.id), felder});
     });
+    aufKarte(dazu, weg);
   }
 
   // Der sichtbare Tages-Tafel-Eintrag sitzt immer beim neuesten enthaltenen

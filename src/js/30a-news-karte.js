@@ -670,7 +670,8 @@ function _newsAbschlussHtml(liste, blatt){
   (Array.isArray(liste) ? liste : []).forEach(a => (a.spieler || []).forEach(x => {
     if(!pm[x.pid]) return;
     const ton = a.klasse === 'legendary' ? 'gold' : 'viol';
-    z.push(`<div class="nf-abs ${ton}"${blatt ? ` data-pid="${esc(x.pid)}"` : ''}>`
+    // Im Blatt öffnet die Zeile die Auszeichnung, die sie nennt (`_bpBinden`).
+    z.push(`<div class="nf-abs ${ton}"${blatt && a.id ? ` data-bp="${esc(a.id)}" data-bp-pid="${esc(x.pid)}"` : blatt ? ` data-pid="${esc(x.pid)}"` : ''}>`
       + zkHtml(a.ic, 'k', ton) + _spChip(x.pid)
       // Der Name der Auszeichnung bricht nicht: „Award-“ stand am Zeilenende
       // und „Sammler“ darunter.

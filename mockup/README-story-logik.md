@@ -9,7 +9,7 @@ des Generators mit seiner Regel, die **Uhr** eines Tages (was wann steht),
 node tools/build.mjs                 # die Seite liest dist/index.html
 node mockup/story-logik-lauf.js      # spielt die Partien nach → .story-logik.json (nicht eingecheckt)
 node mockup/story-neu-lauf.js        # misst die Entwürfe neuer Stories → .story-neu.json (nicht eingecheckt)
-node mockup/story-logik-seite.js     # baut story-logik.html, mit dem Teil „Neue Stories" aus story-neu-seite.js
+node mockup/story-logik-seite.js     # baut story-logik.html, mit „Neue Stories" (story-neu-seite.js) und „Neue Köpfe und Füße" (story-kopf-fuss-seite.js)
 ```
 
 Beide Läufe rechnen mit der Uhr der Liga (`Europe/Berlin`): Tage, Wochen
@@ -54,6 +54,20 @@ hält fest, wie oft er ausgelöst hätte; `story-neu-seite.js` zeichnet die
 Karten im Rahmen des Feeds und nennt je Entwurf, was er neu zeigt, wann er
 käme, wo er stünde, ob er Breaking wäre und wie er das Karriereende
 behandelt. Die Schwellen sind an diesen Zählungen gewählt.
+
+## Neue Köpfe und Füße
+
+Der Teil „Neue Köpfe und Füße" zeigt Entwürfe für die Karte einer Partie
+als ganze Karten aus echten Partien: vier Köpfe (Serie gegen Serie, Gegen
+die Form, Erster Sieg des Tages, Kreuzduelle), die wie die Köpfe der App
+alle vier und das Ergebnis zeigen, und fünf Füße (Abstand zur Spitze, Ins
+Plus gedreht, Größter Sprung des Monats, Wieder bei 50 Prozent, Der beste
+Partner). `story-neu-lauf.js` zählt jede Regel über alle Partien und wählt
+als Beispiele Partien, in denen ein neuer Kopf und ein neuer Fuß zusammen
+auslösen; für jede fragt er den Generator der App, welchen Kopf und Fuß sie
+dort heute zeigt, und die Seite schreibt es unter die Karte.
+`story-kopf-fuss-seite.js` zeichnet sie in den Klassen der App (`sp-fk`,
+`sp-nz`, `sp-lg`).
 
 Die **Texte** stehen in `story-logik-seite.js`, gelesen aus
 `src/js/26-news-konstanten.js`, `27-news-generator.js`, `28-news-ambient.js`,

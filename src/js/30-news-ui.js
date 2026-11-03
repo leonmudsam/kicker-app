@@ -369,13 +369,15 @@ function _isBreaking(s){
     // Karte des Schlusses selbst trägt (`EHRUNG_KOPF`), zählt nicht. Die
     // Ehrung einer Runde bleibt still, ihre legendären Auszeichnungen haben
     // ihre eigene Karte, und der Monat ist es mit seinem Rückblick schon.
+    // Gefragt wird nur, was der Schluss vergab (`ehrungBrk`, `breaking`),
+    // nicht jede legendäre der Partien: die Ehrung trägt den ganzen Tag, die
+    // ganze Woche. Gespeicherte Karten von vorher tragen nur, was ihr
+    // Schluss vergab, und werden daran gemessen.
     case 'potd':
-      return _ehrungBrichtVor(d.ehrung);
-    // Die Woche fragt nur, was ihr Schluss vergab (`breaking`), nicht jede
-    // legendäre ihrer Partien; eine gespeicherte Ehrung eines Tages ohne
-    // Spieler des Tages trägt ohnehin nur, was ihr Schluss vergab.
+      return typeof d.ehrungBrk === 'boolean' ? d.ehrungBrk : _ehrungBrichtVor(d.ehrung);
     case 'ehrung':
-      return d.periode === 'tag' ? _ehrungBrichtVor(d.spieler) : !!d.periode && d.breaking === true;
+      if(typeof d.breaking === 'boolean') return d.breaking;
+      return d.periode === 'tag' && _ehrungBrichtVor(d.spieler);
     // ── Nur der ERSTE Aufstieg in die oberen zwei Stufen ────────────
     // Prestige aus Liga-Rekorden wird geteilt und fällt mit einem verlorenen
     // Bestwert wieder [§C34]: dieselbe Stufe kann mehrmals erreicht werden,
@@ -674,10 +676,9 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
     // Das Gegenstück: wer an diesem Tag am meisten verloren hat. Eine rote
     // Zeile unter der Bahn, statt einer eigenen Karte darunter.
     const g = d.type === 'potd' && d.gegenstueck;
-    if(g && pmap()[g.pid]) fuss += `<div class="nf-gegen">${_spChip(g.pid)}<span><b>${esc(_spName(g.pid))}</b> gibt am meisten ab</span>`
-      + `<b class="num r">${_spVz(Number(g.delta) || 0)} Elo</b></div>`;
-    // Und was der Schluss des Tages vergab: die Ehrung des Tages als Teil
-    // seiner Karte [§11.6f].
+    if(g && pmap()[g.pid]) fuss += _spGegenHtml(g);
+    // Und was der Tag an Auszeichnungen brachte: die Ehrung des Tages als
+    // Teil seiner Karte [§11.6f].
     if(d.type === 'potd') fuss += _ehrungTagHtml(d.ehrung);
     if(!fuss) fuss = _newsZahlband([
       {v: d.wr != null ? Math.round(d.wr * 100) + ' %' : null, l:'Siegquote', f:'g'},

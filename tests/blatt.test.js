@@ -1413,8 +1413,9 @@ const ok = (c, msg, det) => {
                   'sp-fk',
                   // Die Insignium-Karte des Tages: die Verwandlung als Bühne.
                   'ni-b',
-                  // Die Ehrung: je Geehrtem eine Säule mit der Zeichenkachel.
-                  'eh-buehne'];
+                  // Die Ehrung: je Geehrtem eine Säule mit der Zeichenkachel;
+                  // knapp (Tag, Woche, Monat) die Gesichter mit ihrem Prestige.
+                  'eh-buehne', 'eh-kp'];
     arr.forEach(x => {
       host.innerHTML = x.html;
       const karte = host.querySelector('.nf-card');
@@ -1451,9 +1452,14 @@ const ok = (c, msg, det) => {
   const ehrung = await page.evaluate(() => {
     const K = window.__k.eval.bind(window.__k);
     const roh = K(`JSON.stringify((function(){
-      const alle = [], ids = new Set();
-      for(let t = Date.parse('2026-05-10'); t < Date.parse('2026-09-01'); t += NEWS_FENSTER_TAGE * 864e5 * 0.9)
-        _newsEhrungStories(t).forEach(s => { if(!ids.has(s.id)){ ids.add(s.id); alle.push(s); } });
+      // Gespeicherte Ehrungen einer Runde stehen weiter im Feed; gezeichnet
+      // aus der Ehrung jedes Tages, von seiner ersten bis zur letzten Partie.
+      const alle = [];
+      [...new Set(matches.map(m => tagKey(mts(m))))].forEach(tg => {
+        const ms = matches.filter(m => tagKey(mts(m)) === tg), t = new Date(tg + 'T23:59:00').getTime();
+        const s = _ehrungKarte(_ehrungDesTages(t), 'ehrung_' + ms[ms.length - 1].id, t, {ab:mts(ms[0]), bis:mts(ms[ms.length - 1])});
+        if(s) alle.push(s);
+      });
       alle.sort((a, b) => b.dataRef.spieler.length - a.dataRef.spieler.length);
       const mit = n => alle.find(s => s.dataRef.spieler.length === n);
       return [alle[0], mit(5), mit(4), alle[alle.length - 1]].filter(Boolean).map(s => ({n:s.dataRef.spieler.length,
@@ -1503,6 +1509,119 @@ const ok = (c, msg, det) => {
   ok(ehrung.some(x => x.kacheln > 0) && ehrung.every(x => !x.gebrochen.length),
      'im Blatt der Ehrung bricht kein Name einer Kachel mitten im Wort',
      ehrung.flatMap(x => x.gebrochen).join(', ') || ehrung.map(x => x.kacheln).join('+') + ' Kacheln');
+  // ── Die Ehrung einer Woche und eines Monats ist knapp ────────────
+  //    Sie steht unter der Wochenkarte und dem Monatsabschluss und darf sie
+  //    nicht überschatten: mit Säulen und Namen war die Ehrung der Woche
+  //    höher als ein Bildschirm. Gemessen in der Breite der Karte im Feed:
+  //    die Gesichter in einer Reihe, nichts über den Rand. Bei 360 px
+  //    (287 px Karte) höchstens 190 px und zwei Drittel der Wochenkarte
+  //    darüber; bei 320 px (247 px), wo Zeitraum und Legende umbrechen,
+  //    höchstens 225 px und drei Viertel. Mit Säulen und Namen waren es 340
+  //    und mehr, mit eigener Balkenzeile und Summe noch 233.
+  const knapp = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const roh = JSON.parse(K(`JSON.stringify((function(){
+      const l = _buildStories();
+      const e = l.filter(x => /^ehrung_der_woche_/.test(x.id)).sort((a, b) => b.dataRef.spieler.length - a.dataRef.spieler.length)[0];
+      const w = e && l.find(x => (x.dataRef||{}).type === 'woche' && +new Date(x.when) === +new Date(e.when));
+      const m = _newsZeitraumEhrungen(new Date(2026, 7, 5).getTime()).find(x => x.dataRef.periode === 'monat');
+      return {e:e ? _newsCardHtmlM2(e, false, false, '') : '', ne:e ? e.dataRef.spieler.length : 0,
+        w:w ? _newsCardHtmlM2(w, false, false, '') : '', m:m ? _newsCardHtmlM2(m, false, false, '') : '', nm:m ? m.dataRef.spieler.length : 0};
+    })())`));
+    const host = document.createElement('div');
+    host.style.cssText = 'position:absolute;left:0;top:0';
+    document.body.appendChild(host);
+    const miss = (html, breite) => {
+      host.style.width = breite + 'px';
+      host.innerHTML = '<div class="nf-feed">' + html + '</div>';
+      const k = host.querySelector('.nf-card');
+      if(!k) return null;
+      const r = k.getBoundingClientRect();
+      const s = [...k.querySelectorAll('.eh-kp-s')].map(x => x.getBoundingClientRect());
+      return {h:Math.round(r.height), reihe:new Set(s.map(q => Math.round(q.top))).size, n:s.length,
+        drin:[...k.querySelectorAll('.eh-kp-s, .eh-kp-l > *, .eh-kp-b')].every(x => { const q = x.getBoundingClientRect();
+          return q.left >= r.left - .5 && q.right <= r.right + .5; })};
+    };
+    const out = [];
+    [287, 247].forEach(b => { out.push({art:'woche', b, n:roh.ne, karte:miss(roh.e, b), ueber:miss(roh.w, b)});
+      out.push({art:'monat', b, n:roh.nm, karte:miss(roh.m, b)}); });
+    host.remove();
+    return out;
+  });
+  ok(knapp.length === 4 && knapp.every(x => x.karte && x.karte.reihe === 1 && x.karte.drin && x.karte.h <= (x.b === 287 ? 190 : 225))
+       && knapp.filter(x => x.art === 'woche').every(x => x.ueber && x.karte.h <= x.ueber.h * (x.b === 287 ? 2 / 3 : 3 / 4))
+       && knapp.some(x => x.n > 5),
+     'die Ehrung der Woche und des Monats steht knapp: Gesichter in einer Reihe, nichts über den Rand, bei 360 px höchstens 190 px und zwei Drittel der Wochenkarte, bei 320 px höchstens 225 px und drei Viertel',
+     JSON.stringify(knapp.map(x => [x.art, x.b, x.n, x.karte && x.karte.h, x.karte && x.karte.reihe, x.ueber && x.ueber.h])));
+  // ── Eine Auszeichnung im Blatt öffnet ihre Detailansicht [§8.5] ──────
+  //    Wer in der Ehrung der Woche „Player of the Week" antippte, landete im
+  //    Profil und suchte die Auszeichnung dort zwischen sechzig anderen. Jede
+  //    Zeile und Kachel der Ehrung öffnet sie jetzt, über dem Blatt der Story
+  //    und nicht dahinter (mit z-index 120 lag sie unter der Story auf 140);
+  //    Escape schließt zuerst sie. Eine Auszeichnung ohne Partie nennt die
+  //    Wochen, für die sie kam, und eine davon öffnet ihren Rückblick. Die
+  //    Posten „Auszeichnungen" der Laufbahn öffnen sie ebenso, und die
+  //    Klasse heißt auf Deutsch wie in den Stories.
+  const bpBlatt = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const warte = ms => new Promise(r => setTimeout(r, ms));
+    const out = {};
+    const bestand = K('_cache._stories');
+    K('_cache._stories = _buildStories()');
+    try {
+      const e = K('_cache._stories').filter(x => /^ehrung_der_woche_/.test(x.id))
+        .find(x => x.dataRef.spieler.some(y => y.posten.some(q => q.id === 'potw')));
+      K(`openNewsDetail(${JSON.stringify(e.id)})`); await warte(400);
+      const nd = document.getElementById('nd'), bpBg = document.getElementById('bpBg'), bp = document.getElementById('bp');
+      const alle = [...nd.querySelectorAll('.eh-q, .eh-g-t')];
+      out.alle = alle.length; out.markiert = alle.filter(x => x.dataset.bp && x.dataset.bpPid).length;
+      const zeile = nd.querySelector('.eh-q[data-bp="potw"]');
+      out.pid = zeile && zeile.dataset.bpPid;
+      zeile.scrollIntoView({block:'center'}); await warte(80);
+      const r = zeile.getBoundingClientRect();
+      document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2).click(); await warte(400);
+      const b = bp.getBoundingClientRect();
+      const oben = document.elementFromPoint(b.left + b.width / 2, b.top + 12);
+      out.offen = bpBg.classList.contains('show') && !!oben && bp.contains(oben);
+      out.ndOffen = document.getElementById('ndBg').classList.contains('show');
+      out.titel = (bp.querySelector('.bp-title') || {}).textContent;
+      out.englisch = /\b(Legendary|Rare|Common)\b/.test(bp.textContent);
+      out.kopf = [...bp.querySelectorAll('.bp-section')].map(x => x.textContent.trim()).join('|');
+      out.wochen = bp.querySelectorAll('.bp-match[data-bp-zeit^="woche|"]').length;
+      out.soll = (K(`getCachedBadges(${JSON.stringify(out.pid)})`).find(x => x.id === 'potw') || {}).count;
+      document.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape'})); await warte(300);
+      out.escape = !bpBg.classList.contains('show') && document.getElementById('ndBg').classList.contains('show');
+      zeile.click(); await warte(400);
+      const w = bp.querySelector('.bp-match[data-bp-zeit^="woche|"]');
+      out.woche = w ? w.dataset.bpZeit.split('|')[1] : '';
+      if(w){ w.click(); await warte(700); }
+      out.rueckblick = !bpBg.classList.contains('show') && !document.getElementById('ndBg').classList.contains('show')
+        && document.getElementById('sheet').classList.contains('show');
+      // Eine Ebene zurück, wie der Schließknopf: darunter liegt der Feed, den
+      // die Prüfungen danach brauchen.
+      K('closeSheet()'); await warte(450);
+      // Die Laufbahn: jeder Posten einer Auszeichnung öffnet sie über dem Blatt.
+      K(`sheetNav(() => showLaufbahn(${JSON.stringify(out.pid)}))`); await warte(500);
+      const sheet = document.getElementById('sheet');
+      const lb = [...sheet.querySelectorAll('.lb-grp')].find(g => /Auszeichnungen/.test(g.textContent));
+      const posten = lb ? [...lb.querySelectorAll('.lb-q:not(.leer)')] : [];
+      out.lb = posten.length; out.lbMarkiert = posten.filter(x => x.dataset.bp && x.dataset.bpPid === out.pid).length;
+      if(posten[0]){ posten[0].click(); await warte(400); }
+      const b2 = bp.getBoundingClientRect();
+      const oben2 = document.elementFromPoint(b2.left + b2.width / 2, b2.top + 12);
+      out.lbOffen = bpBg.classList.contains('show') && !!oben2 && bp.contains(oben2) && sheet.classList.contains('show');
+      K('closeBadgePopover()'); await warte(300); K('closeSheet()'); await warte(450);
+      out.feed = !!sheet.querySelector('.nf-card');
+    } finally { K('(function(b){ _cache._stories = b; })')(bestand); }
+    return out;
+  });
+  ok(bpBlatt.alle > 10 && bpBlatt.markiert === bpBlatt.alle && bpBlatt.offen && bpBlatt.ndOffen && bpBlatt.titel === 'Player of the Week' && !bpBlatt.englisch,
+     'jede Auszeichnung im Blatt der Ehrung öffnet ihre Detailansicht über der Story, die offen bleibt, und ihre Klasse heißt deutsch', JSON.stringify(bpBlatt));
+  ok(bpBlatt.escape, 'Escape schließt zuerst die Auszeichnung, die Story bleibt', JSON.stringify(bpBlatt));
+  ok(/^Geholt in (einer|\d+) Wochen?$/.test(bpBlatt.kopf) && bpBlatt.wochen === bpBlatt.soll && bpBlatt.wochen > 0 && bpBlatt.woche && bpBlatt.rueckblick,
+     'eine Auszeichnung ohne Partie nennt jede Woche, für die sie kam, und eine Woche öffnet ihren Rückblick', JSON.stringify(bpBlatt));
+  ok(bpBlatt.lb > 0 && bpBlatt.lbMarkiert === bpBlatt.lb && bpBlatt.lbOffen && bpBlatt.feed,
+     'jeder Posten einer Auszeichnung in der Laufbahn öffnet sie über dem Blatt, und zurück steht der Feed', JSON.stringify(bpBlatt));
   // ── Was ein Schluss vergibt, als Grund eines Zeichens [§11.0e] ────
   //    In der Zeichen-Karte des Wochenschlusses: Kachel, Gesicht, Satz und
   //    Wort der Klasse in einer Zeile, die in der Karte bleibt — gemessen in
@@ -1558,9 +1677,8 @@ const ok = (c, msg, det) => {
   const ehZeit = await page.evaluate(() => {
     const K = window.__k.eval.bind(window.__k);
     const karten = JSON.parse(K(`JSON.stringify((function(){
-      let s = null;
-      for(let t = Date.parse('2026-05-10'); !s && t < Date.parse('2026-09-01'); t += NEWS_FENSTER_TAGE * 864e5 * 0.9)
-        s = _newsEhrungStories(t)[0] || null;
+      const ms = matches.filter(m => tagKey(mts(m)) === tagKey(mts(matches[0]))), t0 = new Date(tagKey(mts(ms[0])) + 'T23:59:00').getTime();
+      const s = _ehrungKarte(_ehrungDesTages(t0), 'ehrung_' + ms[ms.length - 1].id, t0, {ab:mts(ms[0]), bis:mts(ms[ms.length - 1])});
       const um = (tage, h, m) => { const d = new Date(); d.setDate(d.getDate() - tage); d.setHours(h, m, 0, 0); return d.getTime(); };
       const mit = (ab, bis) => Object.assign({}, s, {dataRef:Object.assign({}, s.dataRef, {ab, bis})});
       return [[_newsEhrungHtml(s, false, ''), 0], [_newsEhrungHtml(mit(um(0, 13, 44), um(0, 15, 55)), false, ''), 1],
@@ -2912,8 +3030,12 @@ const ok = (c, msg, det) => {
       endlos(c).forEach(a => { if(a.playState === 'running') laufend.push(a.animationName + ' ' + Math.round(r.top) + ' px'); });
     });
     await warte(1200);
-    const imBild = karten().filter(c => { const r = c.getBoundingClientRect(); return r.bottom > -80 && r.top < hoch + 80; })
-      .map(c => c.classList.contains('im-bild'));
+    // Stehen oben nur Breaking und große Karten, wird bis zur ersten
+    // gewöhnlichen gescrollt: geprüft wird, dass sie im Bild läuft, nicht,
+    // welche Karte zuoberst steht.
+    const sicht = () => karten().filter(c => { const r = c.getBoundingClientRect(); return r.bottom > -80 && r.top < hoch + 80; });
+    if(!sicht().length && karten()[0]){ karten()[0].scrollIntoView({block:'center'}); await warte(1200); }
+    const imBild = sicht().map(c => c.classList.contains('im-bild'));
     window.__k.eval('closeSheet(true)');
     return {laufend, unten, imBild};
   });

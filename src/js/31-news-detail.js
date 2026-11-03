@@ -154,6 +154,9 @@ function openNewsDetail(sid){
       sheetNav(() => { try { showPlayer(pid); } catch(e){} }); // über den News-Feed stapeln
     };
   });
+  // Eine Auszeichnung öffnet ihre Detailansicht über dem Blatt, auch wo sie
+  // in einer Zeile steht, die sonst ins Profil führt [§8.5].
+  _bpBinden(nd);
   // §13: Titel-Plaketten und der „Ganze Tafel"-Button im Saison-Abschluss
   nd.querySelectorAll('[data-tplayer]').forEach(el => {
     el.onclick = () => {
@@ -405,11 +408,13 @@ function _newsBlattErgebnis(matchId){
 // ihr Zeichen in einem Ring, der die Klasse trägt, darunter die Bedingung
 // und die Zahl der Halter [§C34]. Die Klasse färbt den Ring, nicht die
 // ganze Fläche [§C25].
-function _newsMedaillon(ic, rarity, name, bedingung, badgeId){
+// `bp` macht das Medaillon antippbar: die Detailansicht der Auszeichnung für
+// diesen Spieler (`{id, pid}`, `_bpBinden`).
+function _newsMedaillon(ic, rarity, name, bedingung, badgeId, bp){
   const r = rarity || 'common';
   let halter = '';
   try { halter = _newsBadgeHalterText(badgeId); } catch(e){}
-  return `<div class="nd-med nd-med-${esc(r)}">
+  return `<div class="nd-med nd-med-${esc(r)}"${bp && bp.id && bp.pid ? ` data-bp="${esc(bp.id)}" data-bp-pid="${esc(bp.pid)}"` : ''}>
     <div class="nd-med-r">${svgI(ic || 'medal')}</div>
     <div class="nd-med-t">
       <div class="nd-med-n">${esc(name || '')}</div>
@@ -1035,7 +1040,7 @@ function _ndBadgeBlatt(s){
   if(!pids.length || !d.badgeId) return null;
   const bdef = (typeof BADGES !== 'undefined') ? BADGES.find(b => b.id === d.badgeId) : null;
   const medaille = _newsMedaillon(s.ic || (bdef && bdef.ic) || 'medal', d.rarity,
-    d.badgeName || (bdef && bdef.name) || '', bdef ? bdef.desc : '', null);
+    d.badgeName || (bdef && bdef.name) || '', bdef ? bdef.desc : '', null, {id:d.badgeId, pid:pids[0]});
   // Jeder, der sie an diesem Tag geholt hat; der fünfte fiel vorher still weg.
   const kopf = `<div class="nd-buehne nd-bd">${medaille}<div class="nd-bd-w">${pids.map(id =>
     `<span data-pid="${esc(id)}">${avHtml(pm[id], '', {ins:true, px:52, feuer:0})}<b>${esc(_spName(id))}</b></span>`).join('')}</div></div>`;

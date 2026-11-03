@@ -575,14 +575,15 @@ document.getElementById('bpBg').addEventListener('click', (e) => {
 });
 document.addEventListener('keydown', (e) => {
   if(e.key === 'Escape'){
-    // Reihenfolge: News-Detail > Badge-Popover (innerster zuerst)
-    const ndBg = document.getElementById('ndBg');
-    if(ndBg && ndBg.classList.contains('show')){
-      closeNewsDetail();
+    // Was oben liegt, schließt zuerst: die Auszeichnung liegt über der
+    // Story, aus deren Blatt sie aufging [§8.5].
+    const bpBg = document.getElementById('bpBg');
+    if(bpBg && bpBg.classList.contains('show')){
+      closeBadgePopover();
       return;
     }
-    const bpBg = document.getElementById('bpBg');
-    if(bpBg && bpBg.classList.contains('show')) closeBadgePopover();
+    const ndBg = document.getElementById('ndBg');
+    if(ndBg && ndBg.classList.contains('show')) closeNewsDetail();
   }
 });
 

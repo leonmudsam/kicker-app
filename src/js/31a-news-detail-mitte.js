@@ -670,7 +670,7 @@ function _ndMitteRoh(s){
         const bdef = (typeof BADGES !== 'undefined')
           ? BADGES.find(b => b.id === d.badgeId) : null;
         const medaille = _newsMedaillon(s.ic || (bdef && bdef.ic) || 'medal', d.rarity,
-          d.badgeName || (bdef && bdef.name) || '', bdef ? bdef.desc : '', d.badgeId);
+          d.badgeName || (bdef && bdef.name) || '', bdef ? bdef.desc : '', d.badgeId, {id:d.badgeId, pid:pids[0]});
         // Mehrere Spieler nur dann als Liste — bei einem steht er im Kopf.
         const playersHtml = pids.length > 1
           ? `<div class="nd-section">${pids.length} Spieler</div>` + pids.map(pid =>
@@ -702,7 +702,7 @@ function _ndMitteRoh(s){
           const b0 = def(l[0].badgeId);
           return _newsMedaillon((b0 && b0.ic) || s.ic || 'medal',
               rarityOf(l[0].badgeId),
-              l[0].name || (b0 && b0.name) || '', b0 ? b0.desc : '', l[0].badgeId)
+              l[0].name || (b0 && b0.name) || '', b0 ? b0.desc : '', l[0].badgeId, {id:l[0].badgeId, pid:l[0].pid})
             + (d.matchId ? `<div class="nd-section">Die Partie</div>`
                 + _newsMatchVsBlock(d.matchId) : '');
         }
@@ -710,7 +710,8 @@ function _ndMitteRoh(s){
           + l.map(x => rcpZeileHtml({ic:(def(x.badgeId) || {}).ic || 'medal',
               name:nameOf(x.pid), sub:x.name,
               rechts:'zum ' + x.rang + '. Mal',
-              attr:`data-pid="${esc(x.pid)}" style="cursor:pointer"`})).join('');
+              // Die Zeile ist die Marke: sie öffnet die Auszeichnung, nicht das Profil.
+              attr:`data-bp="${esc(x.badgeId)}" data-bp-pid="${esc(x.pid)}"`})).join('');
       }
       case 'rivalry': {
         // Live-Bilanz aus matches berechnen — günstig, da rivalry-Stories selten sind.

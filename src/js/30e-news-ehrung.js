@@ -1,110 +1,29 @@
 // ╔═══ §11.6f ─── DIE EHRUNG ──────────────────────────────────────────╗
-//     Welche Auszeichnungen nach einer Runde von Partien verdient wurden,
-//     von wem, und was jede davon genau diesem Spieler an Prestige bringt.
-//     Eine Auszeichnung stand bisher nur an ihrer Partie, und gewöhnliche
-//     nur an runden Marken (die fünfte, die zehnte): wer an einem Nachmittag
-//     elf holte, erfuhr von zwei. Was sie fürs Prestige wert waren, stand
+//     Welche Auszeichnungen in einem Zeitraum verdient wurden, von wem, und
+//     was jede davon genau diesem Spieler an Prestige bringt. Eine
+//     Auszeichnung stand bisher nur an ihrer Partie, und gewöhnliche nur an
+//     runden Marken (die fünfte, die zehnte): wer an einem Nachmittag elf
+//     holte, erfuhr von zwei. Was sie fürs Prestige wert waren, stand
 //     nirgends — die Ewige Tafel zählt Rekorde und Chroniken, nicht
 //     Auszeichnungen.
 //
-//     Die Karte entsteht zwei Stunden nach der letzten Partie, wenn keine
-//     mehr dazukam (`EHRUNG_PAUSE_MS`), und erzählt alles seit der Karte
-//     davor. Partien mit weniger als zwei Stunden Abstand gehören zu einer
-//     Karte: 13:44 und 15:40 ergeben eine um 17:40; 13:02 und 15:30 zwei,
-//     um 15:02 und um 17:30.
-//
-//     Was der Schluss eines Tages vergibt, trägt die Karte seines Spielers
-//     des Tages (`_ehrungTagesSchluss`, [§11.0e]): Unschlagbar und
-//     Comeback-Tag stehen dort und in keiner Ehrung einer Runde (`getragen`);
-//     nur an einem Tag ohne Spieler des Tages kommen sie in der nächsten
-//     Runde an. Woche und Monat haben ihre eigene Ehrung (`_newsZeitraum-
-//     Ehrungen`): alle Auszeichnungen des Zeitraums, wie im Rückblick, direkt
-//     unter dessen Karte.
+//     Der Tag hat eine Ehrung, und sie ist Teil der Karte seines Spielers
+//     des Tages um 23:59 (`_ehrungDesTages`): alles, was an diesem Tag geholt
+//     wurde, aus den Partien und mit dem Schluss des Tages. Ohne Spieler des
+//     Tages steht sie als eine Karte des Tages (`tagesehrung_<Tag>`). Es gab
+//     eine eigene Ehrung je Runde, zwei Stunden nach ihrer letzten Partie:
+//     an einem Spieltag standen so bis zu drei Ehrungen und der Spieler des
+//     Tages untereinander, jede mit einem Teil des Tages. Woche und Monat
+//     haben ihre eigene Ehrung (`_newsZeitraumEhrungen`), direkt unter ihrer
+//     Karte. Enden zwei davon zugleich, steht nur die größere
+//     (`_ehrungGroessere`).
 //
 //     Der Wert je Auszeichnung ist ihr Teilwert beim wievielten Mal
 //     (`auszeichnungsTeilwert`): das erste und zweite Mal voll, danach eine
-//     Stufe weniger [§C34]. Dieselbe Rechnung trägt die Laufbahn.
+//     Stufe weniger [§C34]. Gezählt wird für Tag, Woche und Monat dasselbe:
+//     der Unterschied zweier Prestige-Stände an den Grenzen des Zeitraums
+//     (`rcpLaufbahnDaten`) [§C27].
 // ╚══════════════════════════════════════════════════════════════════════╝
-const EHRUNG_PAUSE_MS = 2 * 3600e3;
-
-// Eine Karte je abgeschlossener Runde im Fenster des Feeds. Die Grenzen
-// werden über ALLE Partien gezogen: sonst begänne die erste Runde im
-// Fenster bei null und nähme Auszeichnungen von vor zwei Wochen mit.
-function _newsEhrungStories(nowMs, getragen){
-  const out = [];
-  const ms = (matches || []).slice().sort((a, b) => mts(a) - mts(b));
-  if(!ms.length) return out;
-  const ende = [], letzte = [];
-  ms.forEach((m, i) => {
-    const t = mts(m), n = i + 1 < ms.length ? mts(ms[i + 1]) : Infinity;
-    if(n - t >= EHRUNG_PAUSE_MS){ ende.push(t + EHRUNG_PAUSE_MS); letzte.push(m); }
-  });
-  // Jede Verleihung mit ihrem Rang über die ganze Laufbahn: der wievielte
-  // Erfolg es ist, entscheidet über seinen Wert. Zwei Partien können dieselbe
-  // Sekunde tragen, deshalb zählt die Partie, nicht der Zeitstempel.
-  const bMap = getBadgeEarnedCache();
-  const mVon = new Map(ms.map(m => [m.id, m]));
-  const zeiten = {}, ev = [];
-  Object.keys(bMap).forEach(mid => {
-    const m = mVon.get(mid);
-    if(!m) return;
-    const t = mts(m);
-    (bMap[mid] || []).forEach(e => {
-      const k = e.playerId + '|' + e.badge.id;
-      (zeiten[k] = zeiten[k] || []).push({t, mid});
-      const te = e.meta && e.meta.tagEnde;
-      let wann = t;
-      if(te){ const d = new Date(te + 'T00:00:00'); d.setHours(23, 57, 0, 0); wann = d.getTime(); }
-      // Was den ganzen Tag beschreibt, trägt die Karte des Spielers des
-      // Tages. Es stand in der nächsten Ehrung danach, oft der einer Runde
-      // Tage später: Julians Unschlagbar vom 11.06. kam so in einer Karte
-      // vom 15.06. an. Gezählt ist es oben schon: der Rang der nächsten
-      // hängt daran.
-      if(te && getragen && getragen.has(te + '|' + e.playerId + '|' + e.badge.id)) return;
-      ev.push({pid:e.playerId, badge:e.badge, mid, t, wann});
-    });
-  });
-  Object.keys(zeiten).forEach(k => zeiten[k].sort((a, b) => a.t - b.t));
-  const rang = e => {
-    const l = zeiten[e.pid + '|' + e.badge.id] || [];
-    const i = l.findIndex(x => x.mid === e.mid);
-    return i < 0 ? l.length : i + 1;
-  };
-  // Jede Verleihung gehört zu der ersten Karte, die nach ihr entsteht.
-  const fenster = ende.map(() => []);
-  ev.forEach(e => {
-    let lo = 0, hi = ende.length;
-    while(lo < hi){ const h = (lo + hi) >> 1; if(ende[h] > e.wann) hi = h; else lo = h + 1; }
-    if(lo < ende.length) fenster[lo].push(e);
-  });
-  const seit = nowMs - NEWS_FENSTER_TAGE * 864e5;
-  ende.forEach((T, i) => {
-    if(T > nowMs || T < seit) return;
-    const st = _newsEhrungStory(fenster[i], T, letzte[i], rang);
-    if(st) out.push(st);
-  });
-  return out;
-}
-
-function _newsEhrungStory(liste, T, letzteM, rang){
-  if(!liste.length) return null;
-  const je = {};
-  liste.forEach(e => {
-    // Ein Zeitraum: wer darin gespielt hat, steht darin [§C40].
-    if(!sichtbar(e.pid)) return;
-    const n = rang(e);
-    const p = auszeichnungsTeilwert(e.badge.id, n);
-    // Was kein Prestige gibt, steht nicht in einer Ehrung: die Schattenseiten
-    // meldet der Feed nicht [§C33].
-    if(!(p > 0)) return;
-    const j = je[e.pid] || (je[e.pid] = {pid:e.pid, summe:0, posten:{}});
-    const q = j.posten[e.badge.id] || (j.posten[e.badge.id] =
-      {id:e.badge.id, name:e.badge.name, ic:e.badge.ic, klasse:rarityOf(e.badge.id), mal:0, bis:0, p:0});
-    q.mal++; q.bis = Math.max(q.bis, n); q.p += p; j.summe += p;
-  });
-  return _ehrungKarte(Object.values(je).map(j => ({pid:j.pid, summe:j.summe, posten:Object.values(j.posten)})),
-    'ehrung_' + letzteM.id, T, {ab:Math.min(...liste.map(e => e.t)), bis:mts(letzteM)});
-}
 
 // Die Geehrten in ihrer Reihenfolge: je Spieler seine Posten (`{id, name,
 // ic, klasse, mal, bis, p}`), die seltenste Klasse zuerst, darin der höchste
@@ -185,11 +104,9 @@ const _ehrungBrichtVor = sp => (sp || []).some(x => ((x && x.posten) || [])
 // Gezählt wird mit der Auszeichnung selbst (`count` mit Schnitt), eine
 // Millisekunde vor dem Schluss gegen den Schluss: was dazwischen dazukam,
 // hat er gebracht. Ein Zeitraum: wer darin stand, steht darin [§C40].
-// `schon` sind die Verleihungen ('Spieler|Auszeichnung|wievieltes Mal'),
-// die eine gespeicherte Ehrung schon nennt: eine Karte ist ein Snapshot
-// [§C33], und was eine ältere Fassung in eine Runde legte, stünde sonst
-// zweimal da.
-function _ehrungSchlussPosten(schlussMs, ids, schon){
+// Gebraucht für Breaking (was vergab der Schluss selbst) und für die Woche,
+// die die Titel des Monats abzieht (`rcpWocheLaufbahn`).
+function _ehrungSchlussPosten(schlussMs, ids){
   const vor = schlussMs - 1, msA = _partienBis(vor), msB = _partienBis(schlussMs);
   const je = {};
   BADGES.forEach(b => {
@@ -201,10 +118,7 @@ function _ehrungSchlussPosten(schlussMs, ids, schon){
       try { a = b.count(p.id, msA, vor) || 0; n = b.count(p.id, msB, schlussMs) || 0; } catch(e){ return; }
       if(!(n > a)) return;
       let wert = 0, mal = 0;
-      for(let i = a + 1; i <= n; i++){
-        if(schon && schon.has(p.id + '|' + b.id + '|' + i)) continue;
-        wert += auszeichnungsTeilwert(b.id, i); mal++;
-      }
+      for(let i = a + 1; i <= n; i++){ wert += auszeichnungsTeilwert(b.id, i); mal++; }
       if(!(wert > 0)) return;
       const j = je[p.id] || (je[p.id] = {pid:p.id, summe:0, posten:[]});
       j.posten.push({id:b.id, name:b.name, ic:b.ic, klasse, mal, bis:n, p:wert});
@@ -213,26 +127,61 @@ function _ehrungSchlussPosten(schlussMs, ids, schon){
   });
   return Object.values(je);
 }
-// Was gespeicherte Ehrungen einer Runde schon nennen, je 'Spieler|
-// Auszeichnung|wievieltes Mal'.
-function _ehrungSchonGenannt(bestand){
-  const schon = new Set();
-  (Array.isArray(bestand) ? bestand : []).forEach(st => {
-    const d = (st && st.dataRef) || {};
-    if(d.type !== 'ehrung' || d.periode) return;
-    (d.spieler || []).forEach(x => ((x && x.posten) || []).forEach(q => {
-      for(let i = (q.bis | 0) - (q.mal | 0) + 1; i <= (q.bis | 0); i++) schon.add(x.pid + '|' + q.id + '|' + i);
-    }));
-  });
-  return schon;
+// Die Geehrten aus einem Paar von Prestige-Ständen (`rcpLaufbahnDaten`):
+// je Spieler die Posten seiner Auszeichnungen und ihre Summe.
+const _ehrungAusLaufbahn = daten => (daten || []).map(x => ({pid:x.pid,
+  summe:x.posten.reduce((n, q) => n + q.p, 0), posten:x.posten}));
+
+// Mehrere Ehrungen zu einer: je Spieler und Auszeichnung die Male und der
+// Wert zusammen, das wievielte Mal das höchste. Für gespeicherte Ehrungen,
+// die zusammen den Tag ergeben (`_consolidateStories`).
+function _ehrungVereint(listen){
+  const je = {};
+  (listen || []).forEach(l => (l || []).forEach(x => {
+    if(!x || !x.pid) return;
+    const j = je[x.pid] || (je[x.pid] = {});
+    (x.posten || []).forEach(q => {
+      const a = j[q.id] || (j[q.id] = Object.assign({}, q, {mal:0, bis:0, p:0}));
+      a.mal += q.mal || 0; a.bis = Math.max(a.bis, q.bis || 0); a.p += q.p || 0;
+    });
+  }));
+  return _ehrungSpieler(Object.keys(je).map(pid => { const posten = Object.values(je[pid]);
+    return {pid, summe:posten.reduce((n, q) => n + q.p, 0), posten}; }));
 }
 
-// ── Der Schluss eines Tages: eine Erweiterung des Spielers des Tages ──
-// Eine eigene Karte je Tag stand direkt neben dem Spieler des Tages und
-// nannte ihn ein zweites Mal; die Liga wollte sie dort, wo der Tag schon
-// seine Karte hat. `rep` ist 23:59 des Tages, der Schluss.
-function _ehrungTagesSchluss(rep, schon){
-  return _ehrungSpieler(_ehrungSchlussPosten(rep, EHRUNG_SCHLUSS.tag, schon));
+// ── Die größere Ehrung trägt den Tag ──────────────────────────────────
+// Endet mit einem Spieltag auch eine Woche (am Sonntag) oder ein Monat (an
+// seinem letzten Tag), enden sie in derselben Nacht: der Spieler des Tages
+// und die Woche um 23:59, der Rückblick des Monats um 00:00. Mit je einer
+// Ehrung standen dort zwei oder drei untereinander, und die kleinere stand
+// ganz in der größeren — die Woche zählt ihren Sonntag, der Monat seinen
+// letzten Tag und, endet er an einem Sonntag, seine letzte Woche bis zu
+// ihrem Schluss (`rcpMonatGrenzen`). Es steht nur die größte: der Spieler
+// des Tages bleibt, ohne Ehrung, ein Tag ohne ihn hat keine Karte, und die
+// Woche, die mit dem Monat endet, hat keine eigene Ehrung. 'monat', 'woche'
+// oder '' für einen Tag (irgendeine Zeit in ihm).
+function _ehrungGroessere(tagMs){
+  if(tagKey(seasonEnd(seasonOf(tagMs).id).getTime()) === tagKey(tagMs)) return 'monat';
+  return new Date(tagMs).getDay() === 0 ? 'woche' : '';
+}
+
+// ── Die Ehrung eines Tages ────────────────────────────────────────────
+// Alles, was an einem Tag geholt wurde: aus seinen Partien und mit seinem
+// Schluss um 23:59, zwischen den Grenzen des Tages (`_storyTagGrenzen`).
+// Er beginnt nach dem Schluss der Woche und endet vor dem des Monats: was
+// diese vergeben, steht in ihrer eigenen Ehrung. Ob sie gezeigt wird,
+// entscheidet `_ehrungGroessere`.
+function _ehrungDesTages(tagMs){
+  const g = _storyTagGrenzen(tagMs);
+  if(!g) return [];
+  return _ehrungSpieler(_ehrungAusLaufbahn(rcpLaufbahnDaten(g.vorMs + 1, g.nachMs)));
+}
+// Was der Schluss des Tages allein vergab: es entscheidet, ob die Karte
+// des Tages Breaking ist. Die legendären Auszeichnungen aus den Partien
+// haben ihre Zeile an der Partie und machten sonst jeden Tag mit einem
+// „Absoluten Sieger" zweimal zu Breaking.
+function _ehrungTagesSchluss(rep){
+  return _ehrungSpieler(_ehrungSchlussPosten(rep, EHRUNG_SCHLUSS.tag));
 }
 
 // ── Die Ehrung einer Woche und eines Monats ────────────────────────────
@@ -252,7 +201,9 @@ function _ehrungTagesSchluss(rep, schon){
 // Breaking ist sie nur, wenn der Schluss selbst eine legendäre Auszeichnung
 // vergab, die keine Schlagzeile ist (der Award-Sammler am Montag): die
 // legendären aus Partien hatten ihre eigene Karte, und der Monat ist es mit
-// seinem Rückblick schon.
+// seinem Rückblick schon. Die Woche trägt ihren Sonntag (`_ehrungGroessere`)
+// und fragt deshalb auch, was dessen Schluss vergab: dort hätte es die
+// Karte des Tages zum Breaking gemacht.
 function _newsZeitraumEhrungen(nowMs){
   const out = [], seit = nowMs - NEWS_FENSTER_TAGE * 864e5;
   const wochen = new Set(), monate = new Set();
@@ -263,20 +214,20 @@ function _newsZeitraumEhrungen(nowMs){
     const s = seasonOf(m.created_at);
     if(s && s.id) monate.add(s.id);
   });
-  const roh = daten => daten.map(x => ({pid:x.pid, summe:x.posten.reduce((n, q) => n + q.p, 0), posten:x.posten}));
   wochen.forEach(ab => {
     const ende = new Date(ab); ende.setDate(ende.getDate() + 7);
     const S = ende.getTime();
-    if(S > nowMs || S < seit) return;
-    const zu = _ehrungSpieler(_ehrungSchlussPosten(S, EHRUNG_SCHLUSS.woche));
-    const st = _ehrungKarte(roh(rcpWocheLaufbahn(ab, S - 1)), 'ehrung_der_woche_' + tagKey(ab), S - 60000 + 5000,
+    if(S > nowMs || S < seit || _ehrungGroessere(S - 1) === 'monat') return;
+    const sonntag = new Date(S - 1); sonntag.setHours(23, 59, 0, 0);
+    const zu = _ehrungSpieler(_ehrungSchlussPosten(S, EHRUNG_SCHLUSS.woche)).concat(_ehrungTagesSchluss(sonntag.getTime()));
+    const st = _ehrungKarte(_ehrungAusLaufbahn(rcpWocheLaufbahn(ab, S - 1)), 'ehrung_der_woche_' + tagKey(ab), S - 60000 + 5000,
       {periode:'woche', woche:tagKey(ab), von:ab, bis:S - 1, breaking:_ehrungBrichtVor(zu)});
     if(st) out.push(st);
   });
   monate.forEach(sid => {
-    const S = seasonEnd(sid).getTime();
+    const S = seasonEnd(sid).getTime(), mg = rcpMonatGrenzen(sid);
     if(S + 1 > nowMs || S + 1 < seit) return;
-    const st = _ehrungKarte(roh(rcpLaufbahnDaten(seasonStart(sid).getTime(), S)), 'ehrung_des_monats_' + sid, S + 1,
+    const st = _ehrungKarte(_ehrungAusLaufbahn(rcpLaufbahnDaten(mg.von, mg.bis)), 'ehrung_des_monats_' + sid, S + 1,
       {periode:'monat', sid, breaking:false});
     if(st) out.push(st);
   });
@@ -344,7 +295,7 @@ function _ehrungSaeulen(sp, gross, o){
     // darin der höchste Wert — die Posten sind schon so geordnet.
     const top = posten[0];
     return `<span class="eh-s" data-pid="${esc(x.pid)}" style="--i:${i}">`
-      + `<span class="eh-s-z" title="${esc(top ? top.name : '')}">${top ? _ehrungKachel(top, o.still ? null : () => gold++, gross ? '' : 'k') : ''}</span>`
+      + `<span class="eh-s-z" title="${esc(top ? top.name : '')}"${top ? ` data-bp="${esc(top.id)}" data-bp-pid="${esc(x.pid)}"` : ''}>${top ? _ehrungKachel(top, o.still ? null : () => gold++, gross ? '' : 'k') : ''}</span>`
       + `<em class="eh-s-w num">+${_ehZahl(x.summe)}</em>`
       + `<span class="eh-saeule" style="height:${h}px">${stuecke}</span>`
       + `<span class="eh-s-av" title="${esc(pm[x.pid].name)}">${rcpAvHtml(x.pid, WAPPEN, {})}</span>`
@@ -399,8 +350,9 @@ const _ehrungKlasseHtml = z => `<span class="eh-k ${z.id}"><i></i><b class="num"
 // Zeitraum nur vor dem „bis" umbricht: umbrochen stand „15:55" allein in
 // der zweiten Zeile, getrennt von seinem „bis".
 // Die Ehrung einer Woche oder eines Monats nennt den Zeitraum, nicht seine
-// Partien: „Geholt in der Woche vom 19.10. bis 25.10.", „Geholt im Oktober
-// 2026".
+// Partien: „Geholt vom 19.10. bis 25.10.", „Geholt im Oktober 2026". Ohne
+// „in der Woche": das sagt die Aufschrift darüber, und mit ihm brach der
+// Zeitraum der Woche auch bei 360 px in eine zweite Zeile.
 function _ehrungZeitraum(d){
   const jetzt = Date.now();
   const tag = t => tagKey(t) === tagKey(jetzt) ? 'heute'
@@ -412,7 +364,7 @@ function _ehrungZeitraum(d){
     return /^\d/.test(w) ? {vor:'Geholt am', wann:w} : {vor:'Geholt', wann:w};
   }
   if(d && d.periode === 'woche' && d.von && d.bis)
-    return {vor:'Geholt in der Woche', wann:`vom\u00a0${datumFmt(d.von, 'tm')} bis\u00a0${datumFmt(d.bis, 'tm')}`};
+    return {vor:'Geholt', wann:`vom\u00a0${datumFmt(d.von, 'tm')} bis\u00a0${datumFmt(d.bis, 'tm')}`};
   if(d && d.periode === 'monat' && d.sid) return {vor:'Geholt im', wann:seasonLabel(d.sid)};
   if(!d || !d.ab || !d.bis) return null;
   const von = t => { const w = tag(t); return (/^\d/.test(w) ? 'vom' : 'von') + '\u00a0' + w; };
@@ -435,7 +387,7 @@ function _newsEhrungHtml(s, isRead, fadenHtml){
   const d = s.dataRef || {};
   const sp = Array.isArray(d.spieler) ? d.spieler : [];
   const zr = _ehrungZeitraum(d);
-  if(d.periode === 'woche' || d.periode === 'monat') return _newsEhrungZeitraumHtml(s, d, sp, zr, isRead, fadenHtml);
+  if(d.periode) return _newsEhrungKompaktHtml(s, d, sp, zr, isRead, fadenHtml);
   const glanz = sp.some(x => (x.posten || []).some(q => q.klasse === 'legendary'));
   return `<div class="nf-card nf-s-badge nf-ehrung nfc-badge${glanz ? ' nf-glanz' : ''}${isRead ? ' read' : ''}" data-sid="${esc(s.id)}"`
     + `${glanz ? ` style="--gv:${_newsGlanzVersatz(s.id)}s"` : ''}>
@@ -447,45 +399,78 @@ function _newsEhrungHtml(s, isRead, fadenHtml){
       <span class="nf-chev">${svgI('chevron')}</span></div>${fadenHtml || ''}</div>`;
 }
 
-// ── Die Karte einer Woche und eines Monats ─────────────────────────────
-// Sie steht unter der Karte ihres Zeitraums und sieht aus wie ein Teil von
-// ihr, nicht wie eine Runde: Gold, die Farbe von Wochenkarte und
-// Meisterbühne, statt des Violetts der Ehrung einer Runde; die Rubrik sagt,
-// wessen Ehrung es ist. Oben stehen Schlagzeile und Zeitraum, darunter
-// dieselben Säulen mit Namen wie im Rückblick und, was jede Klasse brachte
-// [§C27] — eine Runde zeigt beides nur im Blatt, ein Zeitraum ist eine
-// Bilanz, und die ist die Nachricht. Ohne Schimmer: ein Monat trägt fast
-// immer eine legendäre, und der Rückblick darüber leuchtet schon.
-function _newsEhrungZeitraumHtml(s, d, sp, zr, isRead, fadenHtml){
-  const klassen = _ehrungKlassen(sp);
-  const monat = d.periode === 'monat';
-  return `<div class="nf-card nf-s-badge nf-ehrung nf-ehrung-zr zr-${monat ? 'monat' : 'woche'} nfc-badge${isRead ? ' read' : ''}" data-sid="${esc(s.id)}">
+// ── Die Karte eines Tages, einer Woche, eines Monats: knapp ─────────────
+// Sie steht direkt unter der Karte ihres Zeitraums und ist ein Teil von
+// ihr: Schlagzeile und Zeitraum, eine Reihe Gesichter mit ihrem Prestige,
+// die vorderen fünf, mehr als Zahl, und ein Balken, was jede Klasse
+// brachte. Säulen, Namen und jede einzelne Auszeichnung stehen im Blatt.
+// Mit den Säulen und Namen aller Geehrten war die Ehrung der Woche höher
+// als ein Bildschirm (61 Auszeichnungen für sieben Spieler: zwei Reihen
+// Wappen, darunter zwei Zeilen Klassen) und überschattete die Wochenkarte
+// darüber. Woche und Monat in Gold wie ihre Karte; der Tag ohne Spieler des
+// Tages in der Farbe der Ehrung, mit dem härtesten Tag darunter wie auf der
+// Karte des Spielers des Tages [§C27].
+const EH_KOMPAKT = 5;
+function _newsEhrungKompaktHtml(s, d, sp, zr, isRead, fadenHtml){
+  const pm = pmap(), klassen = _ehrungKlassen(sp);
+  const da = sp.filter(x => x && pm[x.pid] && x.summe > 0);
+  // Nie „+1": wer als Einziger übrig bliebe, steht mit Gesicht da [§C33].
+  const vorn = da.length > EH_KOMPAKT ? da.slice(0, EH_KOMPAKT - 1) : da, rest = da.length - vorn.length;
+  const art = {monat:['crown', 'EHRUNG DES MONATS'], woche:['weekKing', 'EHRUNG DER WOCHE'],
+    tag:['medal', 'EHRUNG DES TAGES']}[d.periode] || ['medal', 'DIE EHRUNG'];
+  const gold = d.periode === 'woche' || d.periode === 'monat';
+  const kopf = x => `<span class="eh-kp-s ${_ehrungTon((x.posten[0] || {}).klasse)}">${_spChip(x.pid)}`
+    + `<b class="num">+${_ehZahl(x.summe)}</b><small>${esc(_spName(x.pid))}</small></span>`;
+  const g = d.gegenstueck;
+  return `<div class="nf-card nf-s-badge nf-ehrung nf-ehrung-kp${gold ? ' nf-ehrung-zr zr-' + d.periode : ''} nfc-badge${isRead ? ' read' : ''}" data-sid="${esc(s.id)}">
     ${_newsMotiv('badge', s)}
-    <div class="nf-top"><span class="nf-rub"><i>${svgI(monat ? 'crown' : 'weekKing')}</i><b>${monat ? 'EHRUNG DES MONATS' : 'EHRUNG DER WOCHE'}</b></span>
+    <div class="nf-top"><span class="nf-rub"><i>${svgI(art[0])}</i><b>${art[1]}</b></span>
       <span class="nf-when">${svgI('clock')}${esc(_newsUhrzeit(s.when))}${isRead ? '' : '<span class="nf-dot"></span>'}</span></div>
     <div class="nf-gr"><div class="nf-gr-r"><div class="nf-h">${esc(s.title)}</div>${zr ? `<div class="eh-zr"><span class="eh-zr-k">${esc(zr.vor)}</span> <span class="eh-zr-t">${esc(zr.wann)}</span></div>` : ''}</div>
       <span class="nf-chev">${svgI('chevron')}</span></div>
-    ${_ehrungSaeulen(sp, true)}
-    ${klassen.length ? `<div class="eh-fuss">${klassen.map(_ehrungKlasseHtml).join('')}</div>` : ''}${fadenHtml || ''}</div>`;
+    <div class="eh-kp">${vorn.map(kopf).join('')}${rest ? `<span class="eh-kp-s eh-kp-rest"><i class="num">+${rest}</i><small>weitere</small></span>` : ''}</div>
+    ${klassen.length ? `<div class="eh-kp-k"><div class="eh-kp-l">${klassen.map(z => `<span class="eh-k ${z.id}"><i></i><b class="num">${z.n}</b> ${esc(z.wort)}</span>`).join('')}</div>`
+      + `<div class="eh-kp-b">${klassen.map(z => `<i class="${z.id}" style="flex-grow:${z.p}"></i>`).join('')}</div></div>` : ''}
+    ${g && pm[g.pid] ? _spGegenHtml(g) : ''}${fadenHtml || ''}</div>`;
 }
 
-// ── Unter dem Spieler des Tages: was der Schluss des Tages vergab ──────
-// Je Geehrtem eine Zeile: Gesicht, Name, darunter die Namen seiner
-// Auszeichnungen, rechts ihre Zeichenkacheln in der Farbe ihrer Klasse und
-// sein Prestige daraus [§C25]. Kein zweites Säulenbild: die Karte zeigt den
-// Tag schon als Bahn. Das Blatt zeigt statt dieser Zeilen die Kästen der
-// Ehrung (`_ehrungBloeckeHtml`).
+// Wer an einem Tag am meisten Elo abgab, als Zeile auf der Karte, die den
+// Tag zusammenfasst: auf dem Spieler des Tages und, ohne ihn, auf der
+// Ehrung des Tages — dieselbe Zeile [§C27].
+const _spGegenHtml = g => `<div class="nf-gegen">${_spChip(g.pid)}<span><b>${esc(_spName(g.pid))}</b> gibt am meisten ab</span>`
+  + `<b class="num r">${_spVz(Number(g.delta) || 0)} Elo</b></div>`;
+
+// ── Unter dem Spieler des Tages: alles, was der Tag vergab ─────────────
+// Je Geehrtem eine Zeile: Gesicht, Name, darunter die seltenen und
+// legendären Auszeichnungen mit Namen und die gewöhnlichen als Zahl, rechts
+// ihre Zeichenkacheln in der Farbe ihrer Klasse (die gewöhnlichen als eine
+// mit ihrer Zahl) und das Prestige daraus [§C25]. Mit allen Auszeichnungen
+// des Tages stand je gewöhnlicher ein Name und eine Kachel da, und eine
+// Zeile reichte über die Karte. Mehr als fünf Geehrte: die vorderen vier,
+// der Rest als Zahl, nie „+1" [§C33]. Kein zweites Säulenbild: die Karte
+// zeigt den Tag schon als Bahn. Das Blatt zeigt statt dieser Zeilen die
+// Kästen der Ehrung (`_ehrungBloeckeHtml`).
 function _ehrungTagHtml(sp){
   const pm = pmap();
   const l = (Array.isArray(sp) ? sp : []).filter(x => x && pm[x.pid] && x.summe > 0);
   if(!l.length) return '';
   const summe = l.reduce((n, x) => n + x.summe, 0);
+  const vorn = l.length > EH_KOMPAKT ? l.slice(0, EH_KOMPAKT - 1) : l, rest = l.length - vorn.length;
+  const zeile = x => {
+    const gross = x.posten.filter(q => q.klasse !== 'common'), klein = x.posten.filter(q => q.klasse === 'common');
+    const nKlein = klein.reduce((n, q) => n + q.mal, 0);
+    const text = gross.map(q => q.name + (q.mal > 1 ? ' ×' + q.mal : ''))
+      .concat(nKlein ? [nKlein === 1 ? klein[0].name : nKlein + ' gewöhnliche'] : []).join(' · ');
+    return `<div class="nf-eht-z">${_spChip(x.pid)}`
+      + `<span class="nf-eht-t"><b>${esc(_spName(x.pid))}</b><small>${esc(text)}</small></span>`
+      + `<span class="nf-eht-a">${gross.map(q => zkHtml(q.ic, 'k', _ehrungTon(q.klasse))).join('')}`
+      + (nKlein ? `<span class="nf-eht-g">${zkHtml(klein[0].ic, 'k', 'gruen')}${nKlein > 1 ? `<i class="num">${nKlein}</i>` : ''}</span>` : '')
+      + `</span><b class="num">+${_ehZahl(x.summe)}</b></div>`;
+  };
   return `<div class="nf-eht"><div class="nf-eht-k"><i>${svgI('medal')}</i>`
     + `<span>Ehrung des Tages</span><b class="num">+${_ehZahl(summe)}</b></div>`
-    + l.map(x => `<div class="nf-eht-z">${_spChip(x.pid)}`
-      + `<span class="nf-eht-t"><b>${esc(_spName(x.pid))}</b><small>${esc(x.posten.map(q => q.name + (q.mal > 1 ? ' ×' + q.mal : '')).join(' · '))}</small></span>`
-      + `<span class="nf-eht-a">${x.posten.map(q => zkHtml(q.ic, 'k', _ehrungTon(q.klasse))).join('')}</span>`
-      + `<b class="num">+${_ehZahl(x.summe)}</b></div>`).join('')
+    + vorn.map(zeile).join('')
+    + (rest ? `<div class="nf-eht-r">und ${rest} weitere</div>` : '')
     + `</div>`;
 }
 
@@ -514,8 +499,11 @@ function _ndEhrungBlatt(s){
     + `<div class="eh-anteil-l">${klassen.map(_ehrungKlasseHtml).join('')}</div></div>` : '';
   const zeit = _ehrungZeitraum(d);
   // Ein Datum trägt seinen Punkt schon: „Geholt am 22.10.." stand doppelt.
+  // Ohne Spieler des Tages trägt die Ehrung des Tages, wer am meisten abgab.
+  const g = d.gegenstueck;
+  const gegen = g && pm[g.pid] ? `<div class="nd-section">Der härteste Tag</div>${_spGegenHtml(g)}` : '';
   return {kopf, mitte: anteil + (zeit ? `<div class="nw-hinweis eh-zeit">${esc(zeit.vor + ' ' + zeit.wann)}${/\.$/.test(zeit.wann) ? '' : '.'}</div>` : '')
-    + `<div class="nd-section">Wer was geholt hat</div>${_ehrungBloeckeHtml(sp)}`
+    + `<div class="nd-section">Wer was geholt hat</div>${_ehrungBloeckeHtml(sp)}` + gegen
     + `<div class="nw-hinweis">Das erste und zweite Mal zählt eine Auszeichnung voll, danach etwas weniger. `
     + `Der Strich unter jeder zeigt, wie viel vom vollen Wert bleibt.</div>`};
 }
@@ -531,12 +519,15 @@ function _ehrungBloeckeHtml(sp){
   const strich = q => `<span class="eh-q-m" role="img" aria-label="${Math.round(rest(q) * 100)} % des vollen Werts">`
     + `<i style="width:${(rest(q) * 100).toFixed(1)}%"></i></span>`;
   let gold = 0;
-  const zeile = q => `<div class="eh-q ${esc(q.klasse)}">${_ehrungKachel(q, () => gold++)}
+  // Jede Zeile und jede Kachel öffnet ihre Auszeichnung für diesen Spieler
+  // (`_bpBinden`): das wievielte Mal und den Wert erklärt erst sie.
+  const bp = (q, pid) => ` data-bp="${esc(q.id)}" data-bp-pid="${esc(pid)}"`;
+  const zeile = (q, pid) => `<div class="eh-q ${esc(q.klasse)}"${bp(q, pid)}>${_ehrungKachel(q, () => gold++)}
       <span class="eh-q-t"><b>${esc(q.name)}</b><small>${esc(_newsRarityLabel(q.klasse))} · ${esc(mal(q))}</small>${strich(q)}</span>
       <em class="num">+${_ehZahl(q.p)}<small>von ${_ehZahl(voll(q))}</small></em></div>`;
   // Oben die Zeichenkachel und der Wert, darunter der Name über die ganze
   // Breite: neben Zeichen und Wert brach „Pflichterfüller" mitten im Wort.
-  const kachel = q => `<div class="eh-g-t ${esc(q.klasse)}">`
+  const kachel = (q, pid) => `<div class="eh-g-t ${esc(q.klasse)}"${bp(q, pid)}>`
     + `<span class="eh-g-o">${_ehrungKachel(q, () => gold++)}<em class="num">+${_ehZahl(q.p)}</em></span>`
     + `<b>${esc(q.name)}</b><small>${esc(mal(q))}</small>${strich(q)}</div>`;
   return (Array.isArray(sp) ? sp : []).filter(x => x && pm[x.pid]).map((x, i) => {
@@ -545,8 +536,8 @@ function _ehrungBloeckeHtml(sp){
     return `<div class="eh-p" style="--i:${i}">
       <div class="eh-p-k" data-pid="${esc(x.pid)}" style="cursor:pointer">${rcpAvHtml(x.pid, 30, {})}
         <b>${esc(pm[x.pid].name)}</b><em class="num">+${_ehZahl(x.summe)}</em></div>
-      ${gross.map(zeile).join('')}
-      ${klein.length ? `<div class="eh-g">${klein.map(kachel).join('')}</div>` : ''}
+      ${gross.map(q => zeile(q, x.pid)).join('')}
+      ${klein.length ? `<div class="eh-g">${klein.map(q => kachel(q, x.pid)).join('')}</div>` : ''}
     </div>`;
   }).join('');
 }

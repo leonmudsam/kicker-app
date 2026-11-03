@@ -1790,7 +1790,7 @@
   .bsh-card{cursor:pointer}
   .bsh-card:active{transform:scale(.985)}
 
-  .bp-bg{position:fixed;inset:0;z-index:120;background:rgba(0,0,0,.65);
+  .bp-bg{position:fixed;inset:0;z-index:150;background:rgba(0,0,0,.65);
     backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
     opacity:0;pointer-events:none;transition:opacity .2s;
     display:flex;align-items:center;justify-content:center;padding:24px}
@@ -1798,7 +1798,7 @@
   .bp{background:var(--bg2);border:1px solid var(--line);border-radius:18px;
     padding:18px 20px 16px;max-width:380px;width:100%;max-height:75vh;
     overflow-y:auto;transform:scale(.92);transition:transform .22s cubic-bezier(.2,.8,.2,1);
-    z-index:121;position:relative}
+    z-index:151;position:relative}
   .bp-bg.show .bp{transform:scale(1)}
   .bp-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
   .bp-ic{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;flex-shrink:0;background:var(--surface)}
@@ -1822,6 +1822,11 @@
   .bp-match-date{font-family:'Sometype Mono',monospace;font-size:9.5px;color:var(--muted);flex-shrink:0;width:62px}
   .bp-match-score{font-family:'Archivo Black',sans-serif;font-size:13px;flex:1}
   .bp-match-arr{color:var(--muted);font-size:11px;flex-shrink:0}
+  .bp-match:not([data-mid]) .bp-match-date{width:auto;flex:1 1 auto;font-size:11px;color:var(--ink)}
+  .bp-match:not([data-mid]):not([data-bp-zeit]){cursor:default}
+  .bp-schluss{flex:0 0 auto;font-family:inherit;font-size:10.5px;color:var(--muted)}
+  [data-bp][data-bp-pid]{cursor:pointer;-webkit-tap-highlight-color:transparent}
+  [data-bp][data-bp-pid]:active{opacity:.72}
   .bp-prog{margin-bottom:8px}
   .bp-prog-bar{height:8px;background:var(--surface3);border-radius:4px;overflow:hidden}
   .bp-prog-fill{height:100%;border-radius:4px;transition:.3s}
@@ -6114,13 +6119,26 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 .nf-card.nf-ehrung-zr{--story:var(--gold);--story-rgb:247,207,74;--tint:rgba(247,207,74,.06);
   --kante:3px;--rahmen:rgba(247,207,74,.25)}
 .nf-card.nf-ehrung-zr.zr-monat{--tint:rgba(247,207,74,.085)}
-.nf-ehrung-zr .nf-gr{padding-bottom:4px}
-.nf-ehrung-zr .eh-buehne{--fuge:6px;margin:6px 10px 0;padding:14px 6px 12px;gap:9px var(--fuge);
-  background:radial-gradient(120% 90% at 50% 100%,rgba(247,207,74,.12),transparent 62%),
-    linear-gradient(180deg,rgba(247,207,74,.05),transparent 72%);
-  border-color:rgba(247,207,74,.22)}
-.nf-ehrung-zr .eh-fuss{margin-top:10px}
+.nf-ehrung-kp .nf-gr{padding-bottom:2px}
 .nf-ehrung-zr .eh-zr{border-left-color:rgba(247,207,74,.45)}
+.nf-ehrung-kp .eh-zr{margin-top:4px}
+.nf-ehrung-kp .eh-zr-k,.nf-ehrung-kp .eh-zr-t{display:inline}
+.eh-kp{display:flex;justify-content:flex-start;gap:4px;padding:2px 13px 0;min-width:0}
+.eh-kp-s{flex:0 1 54px;min-width:0;display:flex;flex-direction:column;align-items:center;gap:1px}
+.eh-kp-s .av{--av:24px;width:24px;height:24px;font-size:9.5px;flex:0 0 auto;margin-bottom:1px}
+.eh-kp-s b{font-family:'Sometype Mono',monospace;font-size:10px;font-weight:700;line-height:1.15;color:var(--acid)}
+.eh-kp-s.viol b{color:var(--purple)}
+.eh-kp-s.gold b{color:var(--gold)}
+.eh-kp-s small{max-width:100%;font-size:9px;line-height:1.15;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.eh-kp-rest i{display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;margin-bottom:1px;
+  font-style:normal;font-size:10px;font-weight:700;color:var(--ink2);background:var(--surface3)}
+.eh-kp-k{position:relative;padding:5px 13px 10px}
+.eh-kp-l{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 7px}
+.eh-kp-l .eh-k{gap:3px;font-size:10px}.eh-kp-l .eh-k b{font-size:10.5px}.eh-kp-l .eh-k i{width:7px;height:7px}
+.eh-kp-b{position:absolute;left:0;right:0;bottom:0;display:flex;gap:2px;height:3px}
+.eh-kp-b i{min-width:3px}
+.eh-kp-b i.legendary{background:var(--gold)}.eh-kp-b i.rare{background:var(--purple)}.eh-kp-b i.common{background:var(--acid)}
+.nf-ehrung-kp .nf-gegen{margin-top:0}
 
 .nf-eht{margin:8px 13px 11px;padding:8px 10px 6px;border-radius:12px;
   background:linear-gradient(180deg,rgba(167,139,250,.07),rgba(167,139,250,.025));
@@ -6139,6 +6157,10 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 .nf-eht-t small{font-size:10.5px;line-height:1.3;color:var(--muted)}
 .nf-eht-a{flex:0 0 auto;display:flex;gap:3px}
 .nf-eht-z > b{flex:0 0 auto;font-family:'Sometype Mono',monospace;font-size:11.5px;font-weight:700;color:var(--gold)}
+.nf-eht-g{position:relative;display:flex}
+.nf-eht-g > i{position:absolute;right:-4px;bottom:-4px;min-width:14px;height:14px;padding:0 3px;border-radius:7px;
+  font-style:normal;font-size:9px;font-weight:700;line-height:14px;text-align:center;color:var(--bg);background:var(--acid)}
+.nf-eht-r{padding:4px 0 2px;border-top:1px solid var(--line);font-size:10.5px;color:var(--muted)}
 .eh-s-z .zk.gold > .glanz-bahn::after,.eh-q > .zk.gold > .glanz-bahn::after{
   content:"";position:absolute;top:0;bottom:0;left:0;width:250%;pointer-events:none;
   background:linear-gradient(105deg,transparent 38%,rgba(255,236,170,.55) 50%,transparent 62%);
@@ -6439,7 +6461,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.11.02.0ba875e2';
+const BUILD_VERSION='2026.11.03.8e819584';
 function forceReload(nach){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -8343,6 +8365,10 @@ function rcpLaufbahnDaten(vonMs, bisMs){
             von:lage(w.stufeVor, w.gradVor, w.vor), zu:lage(w.stufeNach, w.gradNach, w.nach)};
   });
 }
+function rcpMonatGrenzen(sid){
+  const von = seasonStart(sid).getTime(), S = seasonEnd(sid).getTime();
+  return {von:von + 1, bis:wochenBeginn(S + 1).getTime() === S + 1 ? S + 1 : S};
+}
 function rcpZeichenZuege(daten){
   return daten.map(x => {
     const a = insigniumPos(x.von), b = insigniumPos(x.zu);
@@ -8858,7 +8884,8 @@ function showSeasonRecap(season, opts){
   } catch(err){}
 
   const spaet = () => {
-    const daten = rcpLaufbahnDaten(vonMs, bisMs);
+    const mg = rcpMonatGrenzen(sid);
+    const daten = rcpLaufbahnDaten(mg.von, mg.bis);
     const zuege = rcpZeichenZuege(daten);
     const lb = rcpLaufbahnHtml(daten);
     const eh = rcpEhrungHtml(daten);
@@ -8936,6 +8963,7 @@ function showSeasonRecap(season, opts){
     binden('[data-poshist]', el => sheetNav(()=>showPositionHistory(el.dataset.poshist)));
     binden('[data-stafel]', el => sheetNav(()=>showSeasonTable(el.dataset.stafel)));
     binden('[data-chron]', el => sheetNav(()=>showChronicle(el.dataset.chron)));
+    _bpBinden(root);
   };
   bindeIn(wurzel);
   _chronMehrBinden(wurzel);
@@ -9702,6 +9730,7 @@ function showPotwRecap(opts){
       root.querySelectorAll('[data-chron]').forEach(el => {
         el.onclick = () => sheetNav(()=>showChronicle(el.dataset.chron));
       });
+      _bpBinden(root);
     };
     bindeIn(wurzel);
     rcpSpaetLaden(wurzel, spaet, bindeIn);
@@ -9711,7 +9740,7 @@ function showPotwRecap(opts){
 }
 
 function rcpWocheLaufbahn(vonMs, bisMs){
-  const daten = rcpLaufbahnDaten(vonMs, bisMs + 1);
+  const daten = rcpLaufbahnDaten(vonMs + 1, bisMs + 1);
   const je = new Map(daten.map(x => [x.pid, x]));
   const monate = new Set();
   for(let t = vonMs; t <= bisMs + 864e5; t += 864e5) monate.add(seasonOf(Math.min(t, bisMs)).id);
@@ -14864,13 +14893,13 @@ document.getElementById('bpBg').addEventListener('click', (e) => {
 });
 document.addEventListener('keydown', (e) => {
   if(e.key === 'Escape'){
-    const ndBg = document.getElementById('ndBg');
-    if(ndBg && ndBg.classList.contains('show')){
-      closeNewsDetail();
+    const bpBg = document.getElementById('bpBg');
+    if(bpBg && bpBg.classList.contains('show')){
+      closeBadgePopover();
       return;
     }
-    const bpBg = document.getElementById('bpBg');
-    if(bpBg && bpBg.classList.contains('show')) closeBadgePopover();
+    const ndBg = document.getElementById('ndBg');
+    if(ndBg && ndBg.classList.contains('show')) closeNewsDetail();
   }
 });
 
@@ -15041,9 +15070,9 @@ const BADGE_WUERDE = new Set([
 ]);
 
 const RARITY_META = {
-  legendary: {label:'Legendary', color:'var(--gold)',   total:10},
-  rare:      {label:'Rare',      color:'var(--purple)', total:14},
-  common:    {label:'Common',    color:'var(--acid)',   total:18},
+  legendary: {label:'Legendär',   color:'var(--gold)',   total:10},
+  rare:      {label:'Selten',     color:'var(--purple)', total:14},
+  common:    {label:'Gewöhnlich', color:'var(--acid)',   total:18},
   negative:  {label:'Schande',   color:'var(--red)',    total:8},
 };
 const RARITY_ORDER = ['legendary','rare','common','negative'];
@@ -17233,6 +17262,65 @@ function _badgeFireMatches(playerId, badgeId){
   return hits.sort((a,b) => mts(b)-mts(a));
 }
 
+function _badgeSchluesse(badgeId, playerId){
+  const def = BADGES.find(x => x.id === badgeId);
+  const arten = ['tag', 'woche', 'monat'].filter(k => EHRUNG_SCHLUSS[k].includes(badgeId));
+  if(!def || !arten.length) return [];
+  const tage = new Set(), wochen = new Set(), monate = new Set();
+  (matches || []).forEach(m => { const t = mts(m);
+    tage.add(tagKey(t)); wochen.add(wochenBeginn(new Date(t)).getTime()); monate.add(seasonOf(t).id); });
+  const zeiten = [];
+  if(arten.includes('tag')) tage.forEach(k => { const d = new Date(k + 'T00:00:00'); d.setHours(23, 59, 0, 0);
+    zeiten.push({art:'tag', T:d.getTime(), k}); });
+  if(arten.includes('woche')) wochen.forEach(ab => { const e = new Date(ab); e.setDate(e.getDate() + 7);
+    zeiten.push({art:'woche', T:e.getTime(), k:tagKey(ab), ab}); });
+  if(arten.includes('monat')) monate.forEach(sid => zeiten.push({art:'monat', T:seasonEnd(sid).getTime(), k:sid}));
+  const jetzt = Date.now(), out = [];
+  zeiten.filter(z => z.T <= jetzt).sort((x, y) => y.T - x.T).forEach(z => {
+    let a = 0, n = 0;
+    try { a = def.count(playerId, _partienBis(z.T - 1), z.T - 1) || 0; n = def.count(playerId, _partienBis(z.T), z.T) || 0; }
+    catch(e){ return; }
+    if(n > a) out.push(Object.assign(z, {mal:n - a}));
+  });
+  return out;
+}
+const _BP_SCHLUSS_WORT = {tag:['an einem Tag', 'an # Tagen'], woche:['in einer Woche', 'in # Wochen'],
+  monat:['in einem Monat', 'in # Monaten']};
+function _badgeSchlussKopf(sl){
+  const arten = [...new Set(sl.map(z => z.art))];
+  if(arten.length !== 1) return `Geholt ${sl.reduce((n, z) => n + z.mal, 0)}-mal`;
+  return 'Geholt ' + _BP_SCHLUSS_WORT[arten[0]][sl.length === 1 ? 0 : 1].replace('#', sl.length);
+}
+function _badgeSchlussZeile(z){
+  const was = z.art === 'tag' ? datumFmt(new Date(z.k + 'T12:00:00'), 'tmj')
+    : z.art === 'woche' ? `${datumFmt(z.ab, 'tm')} bis ${datumFmt(z.T - 1, 'tm')}`
+    : seasonLabel(z.k);
+  const ziel = z.art !== 'monat' || (seasons || []).some(x => x.id === z.k);
+  const wohin = z.art === 'tag' ? 'Rückblick auf den Tag' : z.art === 'woche' ? 'Rückblick auf die Woche' : 'Rückblick auf den Monat';
+  return `<div class="bp-match"${ziel ? ` data-bp-zeit="${esc(z.art + '|' + z.k)}"` : ''}>
+    <div class="bp-match-date">${esc(was)}${z.mal > 1 ? ` <span class="num">×${z.mal}</span>` : ''}</div>
+    ${ziel ? `<div class="bp-match-score bp-schluss">${esc(wohin)}</div>
+    <div class="bp-match-arr">›</div>` : ''}
+  </div>`;
+}
+function _bpWeiter(fn){
+  closeBadgePopover();
+  const ndBg = document.getElementById('ndBg');
+  if(ndBg && ndBg.classList.contains('show')) closeNewsDetail();
+  sheetNav(() => { try { fn(); } catch(e){} });
+}
+function _bpBinden(root){
+  if(!root) return;
+  root.querySelectorAll('[data-bp][data-bp-pid]').forEach(el => {
+    el.onclick = e => {
+      const innen = e.target && e.target.closest ? e.target.closest('[data-pid]') : null;
+      if(innen && innen !== el && el.contains(innen)) return;
+      e.stopPropagation();
+      showBadgePopover(el.dataset.bp, el.dataset.bpPid);
+    };
+  });
+}
+
 function _badgeProgress(badgeId, playerId){
   const playerMs = matches.filter(m => matchOf(playerId, m));
   switch(badgeId){
@@ -17461,14 +17549,16 @@ function showBadgePopover(badgeId, playerId){
         </div>`;
       }).join('');
       bodyHtml = `
-        <div class="bp-section">Ausgelöst in ${hits.length} ${hits.length===1?'Match':'Matches'}</div>
+        <div class="bp-section">Geholt in ${hits.length} ${hits.length===1?'Partie':'Partien'}</div>
         ${rowsHtml}`;
     } else {
-      bodyHtml = `
+      const sl = _badgeSchluesse(badgeId, playerId);
+      bodyHtml = sl.length ? `
+        <div class="bp-section">${esc(_badgeSchlussKopf(sl))}</div>
+        ${sl.map(_badgeSchlussZeile).join('')}` : `
         <div class="bp-section">Status</div>
         <div class="bp-locked-hint">
-          Diese Auszeichnung wird über Saison-/Karriere-Daten ermittelt und
-          ist nicht an ein einzelnes Match gebunden.
+          Sie hängt an keiner einzelnen Partie.
           ${isRepeatable
             ? `<br><br><span class="bp-locked-em">${cnt}×</span> bisher erreicht.`
             : `<br><br><span class="bp-locked-em">Freigeschaltet.</span>`}
@@ -17526,10 +17616,14 @@ function showBadgePopover(badgeId, playerId){
   _fensterLicht(bp, 'weiss');
   _verdecken('bp', true);
   bp.querySelectorAll('.bp-match[data-mid]').forEach(el => {
+    el.onclick = () => { const mid = el.dataset.mid; _bpWeiter(() => showMatchDetail(mid)); };
+  });
+  bp.querySelectorAll('.bp-match[data-bp-zeit]').forEach(el => {
     el.onclick = () => {
-      const mid = el.dataset.mid;
-      closeBadgePopover();
-      sheetNav(() => showMatchDetail(mid));
+      const [art, k] = String(el.dataset.bpZeit).split('|');
+      const se = art === 'monat' ? (seasons || []).find(x => x.id === k) : null;
+      _bpWeiter(() => art === 'tag' ? showPotdRecap({force:true, tag:k}) : art === 'woche' ? showPotwRecap({woche:k})
+        : showSeasonRecap(se));
     };
   });
   document.getElementById('bpCloseBtn').onclick = closeBadgePopover;
@@ -20019,10 +20113,9 @@ function _buildStories(){
     });
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] loss_streak', e); }
 
-  const _potdTage = new Map(), _tagGetragen = new Set();
+  const _potdTage = new Map(), _ehrungTage = new Map(), _tagGetragen = new Set();
   try {
     const seit = now.getTime() - NEWS_FENSTER_TAGE * 86400000;
-    const schon = _ehrungSchonGenannt(_cache._stories);
     const tage = new Map();
     matches.forEach(m => {
       const ts = mts(m);
@@ -20036,11 +20129,16 @@ function _buildStories(){
       const rep = new Date(dayKey + 'T00:00:00'); rep.setHours(23, 59, 0, 0);
       if(now.getTime() < rep.getTime()) return;
       const res = _newsPeriodWinner(dayMatches, 'tag');
-      if(!res) return;
-      let ehrung = [];
-      try { ehrung = _ehrungTagesSchluss(rep.getTime(), schon); } catch(e){ ehrung = []; }
+      let ehrung = [], brk = false, groesser = '';
+      try {
+        ehrung = _ehrungDesTages(rep.getTime());
+        groesser = _ehrungGroessere(rep.getTime());
+        brk = !groesser && _ehrungBrichtVor(_ehrungTagesSchluss(rep.getTime()));
+      } catch(e){ ehrung = []; }
       ehrung.forEach(x => x.posten.forEach(q => _tagGetragen.add(dayKey + '|' + x.pid + '|' + q.id)));
-      _potdTage.set(dayKey, {rep, res, ehrung});
+      if(groesser) ehrung = [];
+      if(res) _potdTage.set(dayKey, {rep, res, ehrung, brk, groesser});
+      else if(ehrung.length) _ehrungTage.set(dayKey, {rep, ehrung, brk});
     });
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] potd tage', e); }
 
@@ -21050,7 +21148,7 @@ function _buildStories(){
   } catch(e){}
 
   try {
-    _potdTage.forEach(({rep, res, ehrung}, dayKey) => {
+    _potdTage.forEach(({rep, res, ehrung, brk, groesser}, dayKey) => {
       const main = res.main;
       const names = res.winners.map(w => nameOf(w.id));
       const titleNames = _namenKurz(names);
@@ -21069,13 +21167,18 @@ function _buildStories(){
         dataRef: {type:'potd', dayKey, playerId: main.id,
                   playerIds: res.winners.map(w => w.id),
                   wins: main.wins, games: main.wins + main.losses, wr: main.wr,
-                  ehrung}
+                  ehrung, ehrungVoll:true, ehrungBrk:brk, ...(groesser ? {ehrungIn:groesser} : {})}
       });
     });
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] potd', e); }
 
-  try { _newsEhrungStories(now.getTime(), _tagGetragen).forEach(st => stories.push(st)); }
-  catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] ehrung', e); }
+  try {
+    _ehrungTage.forEach(({rep, ehrung, brk}, dayKey) => {
+      const st = _ehrungKarte(ehrung, 'tagesehrung_' + dayKey, rep.getTime(), {periode:'tag', tag:dayKey, voll:true, breaking:brk});
+      if(st) stories.push(st);
+    });
+  } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] tagesehrung', e); }
+
   try { _newsZeitraumEhrungen(now.getTime()).forEach(st => stories.push(st)); }
   catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] ehrung', e); }
   try { _newsRundenStories(now.getTime()).forEach(st => stories.push(st)); }
@@ -22793,51 +22896,70 @@ function _consolidateStories(list){
   });
   let aus = _consolidateStoriesLegacy(vorbereitet);
 
-  {
-    const potdJeTag = new Map();
+  const tagKarte = () => {
+    const je = new Map();
     aus.forEach(s => { const d = s.dataRef || {};
-      if(d.type === 'potd') potdJeTag.set(d.dayKey || tagKey(s.when), s); });
+      if(d.type === 'potd') je.set(d.dayKey || tagKey(s.when), s); });
+    aus.forEach(s => { const d = s.dataRef || {};
+      if(d.type === 'ehrung' && d.periode === 'tag' && d.voll && d.tag && !je.has(d.tag)) je.set(d.tag, s); });
+    return je;
+  };
+  const aufKarte = (dazu, weg) => {
+    if(weg.size) aus = aus.filter(s => !weg.has(s.id)).map(s => {
+      const z = dazu.get(s.id);
+      if(!z) return s;
+      const d = s.dataRef || {};
+      return Object.assign({}, s, {dataRef:Object.assign({}, d, z.felder,
+        {memberIds:[...new Set((d.memberIds || [s.id]).concat(z.ids))]})});
+    });
+  };
+
+  {
+    const ziel = tagKarte();
     const weg = new Set(), dazu = new Map();
     aus.forEach(s => {
       const d = s.dataRef || {};
       if(d.type !== 'elo_swing' || !d.pid) return;
-      const p = potdJeTag.get(tagKey(s.when));
-      if(!p) return;
+      const p = ziel.get(tagKey(s.when));
+      if(!p || dazu.has(p.id)) return;
       const pd = p.dataRef || {};
-      if(pd.playerId === d.pid || (pd.playerIds || []).includes(d.pid)) return;
+      if(pd.type === 'potd' && (pd.playerId === d.pid || (pd.playerIds || []).includes(d.pid))) return;
       weg.add(s.id);
-      dazu.set(p.id, {id:s.id, pid:d.pid, delta:d.delta, title:s.title, desc:s.desc});
+      dazu.set(p.id, {ids:[s.id], felder:{gegenstueck:{id:s.id, pid:d.pid, delta:d.delta, title:s.title, desc:s.desc}}});
     });
-    if(weg.size) aus = aus.filter(s => !weg.has(s.id)).map(s => {
-      const g = dazu.get(s.id);
-      if(!g) return s;
-      const d = s.dataRef || {};
-      return Object.assign({}, s, {dataRef:Object.assign({}, d, {gegenstueck:g,
-        memberIds:[...new Set((d.memberIds || [s.id]).concat([g.id]))]})});
-    });
+    aufKarte(dazu, weg);
   }
 
   {
-    const potdJeTag = new Map();
-    aus.forEach(s => { const d = s.dataRef || {};
-      if(d.type === 'potd') potdJeTag.set(d.dayKey || tagKey(s.when), s); });
-    const weg = new Set(), dazu = new Map();
+    const ziel = tagKarte();
+    const zeitraum = new Set(aus.filter(s => (s.dataRef || {}).type === 'ehrung' && /^ehrung_de[rs]_/.test(String(s.id)))
+      .map(s => s.dataRef.periode + '|' + tagKey(new Date(s.when).getTime() - 3600000)));
+    const quellen = new Map();
     aus.forEach(s => {
       const d = s.dataRef || {};
-      if(d.type !== 'ehrung' || d.periode !== 'tag' || !Array.isArray(d.spieler)) return;
-      const p = potdJeTag.get(d.tag || tagKey(s.when));
-      if(!p || dazu.has(p.id)) return;
-      weg.add(s.id);
-      dazu.set(p.id, s);
+      if(d.type !== 'ehrung' || !Array.isArray(d.spieler) || (d.periode && d.periode !== 'tag')) return;
+      const k = d.periode === 'tag' ? d.tag : tagKey(d.bis || s.when);
+      const p = ziel.get(k);
+      if(!p || p.id === s.id) return;
+      (quellen.get(p.id) || quellen.set(p.id, []).get(p.id)).push(s);
     });
-    if(weg.size) aus = aus.filter(s => !weg.has(s.id)).map(s => {
-      const e = dazu.get(s.id);
-      if(!e) return s;
-      const d = s.dataRef || {};
-      return Object.assign({}, s, {dataRef:Object.assign({}, d, {
-        ehrung:Array.isArray(d.ehrung) ? d.ehrung : e.dataRef.spieler,
-        memberIds:[...new Set((d.memberIds || [s.id]).concat([e.id]))]})});
+    const weg = new Set(), dazu = new Map();
+    aus.forEach(p => {
+      const l = quellen.get(p.id);
+      if(!l) return;
+      l.forEach(s => weg.add(s.id));
+      const d = p.dataRef || {};
+      const felder = {};
+      if(d.type === 'potd' && !d.ehrungVoll){
+        const tag = d.dayKey || tagKey(p.when), groesser = _ehrungGroessere(new Date(tag + 'T12:00:00').getTime());
+        const schluss = Array.isArray(d.ehrung) ? d.ehrung
+          : ((l.find(s => s.dataRef.periode === 'tag') || {}).dataRef || {}).spieler || [];
+        felder.ehrung = groesser && zeitraum.has(groesser + '|' + tag) ? []
+          : _ehrungVereint([schluss].concat(l.filter(s => !s.dataRef.periode).map(s => s.dataRef.spieler)));
+      }
+      dazu.set(p.id, {ids:l.map(s => s.id), felder});
     });
+    aufKarte(dazu, weg);
   }
 
   aus = aus.map(s => {
@@ -24312,9 +24434,10 @@ function _isBreaking(s){
     case 'badge_unlocked':
       return d.rarity === 'legendary';
     case 'potd':
-      return _ehrungBrichtVor(d.ehrung);
+      return typeof d.ehrungBrk === 'boolean' ? d.ehrungBrk : _ehrungBrichtVor(d.ehrung);
     case 'ehrung':
-      return d.periode === 'tag' ? _ehrungBrichtVor(d.spieler) : !!d.periode && d.breaking === true;
+      if(typeof d.breaking === 'boolean') return d.breaking;
+      return d.periode === 'tag' && _ehrungBrichtVor(d.spieler);
     case 'insignium_stufe':
       return !!d.oben && !d.wieder;
     case 'insignium_tag':
@@ -24477,8 +24600,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
     gesicht = `<div class="nf-gr-l">${av(pid, 52)}</div>`;
     if(d.type === 'potd') fuss = _spTagBild(_spTagDaten(s));
     const g = d.type === 'potd' && d.gegenstueck;
-    if(g && pmap()[g.pid]) fuss += `<div class="nf-gegen">${_spChip(g.pid)}<span><b>${esc(_spName(g.pid))}</b> gibt am meisten ab</span>`
-      + `<b class="num r">${_spVz(Number(g.delta) || 0)} Elo</b></div>`;
+    if(g && pmap()[g.pid]) fuss += _spGegenHtml(g);
     if(d.type === 'potd') fuss += _ehrungTagHtml(d.ehrung);
     if(!fuss) fuss = _newsZahlband([
       {v: d.wr != null ? Math.round(d.wr * 100) + ' %' : null, l:'Siegquote', f:'g'},
@@ -24995,7 +25117,7 @@ function _newsAbschlussHtml(liste, blatt){
   (Array.isArray(liste) ? liste : []).forEach(a => (a.spieler || []).forEach(x => {
     if(!pm[x.pid]) return;
     const ton = a.klasse === 'legendary' ? 'gold' : 'viol';
-    z.push(`<div class="nf-abs ${ton}"${blatt ? ` data-pid="${esc(x.pid)}"` : ''}>`
+    z.push(`<div class="nf-abs ${ton}"${blatt && a.id ? ` data-bp="${esc(a.id)}" data-bp-pid="${esc(x.pid)}"` : blatt ? ` data-pid="${esc(x.pid)}"` : ''}>`
       + zkHtml(a.ic, 'k', ton) + _spChip(x.pid)
       + `<span><b>${esc(_spName(x.pid))}</b> holt <em>„${esc(a.name)}“</em> zum `
       + `${x.mal > 1 ? x.mal + '.' : 'ersten'}\u00a0Mal</span>`
@@ -27430,71 +27552,6 @@ function _insAltZuTag(list){
   });
   return rest.map(s => ersetzt.get(s.id) || s);
 }
-const EHRUNG_PAUSE_MS = 2 * 3600e3;
-
-function _newsEhrungStories(nowMs, getragen){
-  const out = [];
-  const ms = (matches || []).slice().sort((a, b) => mts(a) - mts(b));
-  if(!ms.length) return out;
-  const ende = [], letzte = [];
-  ms.forEach((m, i) => {
-    const t = mts(m), n = i + 1 < ms.length ? mts(ms[i + 1]) : Infinity;
-    if(n - t >= EHRUNG_PAUSE_MS){ ende.push(t + EHRUNG_PAUSE_MS); letzte.push(m); }
-  });
-  const bMap = getBadgeEarnedCache();
-  const mVon = new Map(ms.map(m => [m.id, m]));
-  const zeiten = {}, ev = [];
-  Object.keys(bMap).forEach(mid => {
-    const m = mVon.get(mid);
-    if(!m) return;
-    const t = mts(m);
-    (bMap[mid] || []).forEach(e => {
-      const k = e.playerId + '|' + e.badge.id;
-      (zeiten[k] = zeiten[k] || []).push({t, mid});
-      const te = e.meta && e.meta.tagEnde;
-      let wann = t;
-      if(te){ const d = new Date(te + 'T00:00:00'); d.setHours(23, 57, 0, 0); wann = d.getTime(); }
-      if(te && getragen && getragen.has(te + '|' + e.playerId + '|' + e.badge.id)) return;
-      ev.push({pid:e.playerId, badge:e.badge, mid, t, wann});
-    });
-  });
-  Object.keys(zeiten).forEach(k => zeiten[k].sort((a, b) => a.t - b.t));
-  const rang = e => {
-    const l = zeiten[e.pid + '|' + e.badge.id] || [];
-    const i = l.findIndex(x => x.mid === e.mid);
-    return i < 0 ? l.length : i + 1;
-  };
-  const fenster = ende.map(() => []);
-  ev.forEach(e => {
-    let lo = 0, hi = ende.length;
-    while(lo < hi){ const h = (lo + hi) >> 1; if(ende[h] > e.wann) hi = h; else lo = h + 1; }
-    if(lo < ende.length) fenster[lo].push(e);
-  });
-  const seit = nowMs - NEWS_FENSTER_TAGE * 864e5;
-  ende.forEach((T, i) => {
-    if(T > nowMs || T < seit) return;
-    const st = _newsEhrungStory(fenster[i], T, letzte[i], rang);
-    if(st) out.push(st);
-  });
-  return out;
-}
-
-function _newsEhrungStory(liste, T, letzteM, rang){
-  if(!liste.length) return null;
-  const je = {};
-  liste.forEach(e => {
-    if(!sichtbar(e.pid)) return;
-    const n = rang(e);
-    const p = auszeichnungsTeilwert(e.badge.id, n);
-    if(!(p > 0)) return;
-    const j = je[e.pid] || (je[e.pid] = {pid:e.pid, summe:0, posten:{}});
-    const q = j.posten[e.badge.id] || (j.posten[e.badge.id] =
-      {id:e.badge.id, name:e.badge.name, ic:e.badge.ic, klasse:rarityOf(e.badge.id), mal:0, bis:0, p:0});
-    q.mal++; q.bis = Math.max(q.bis, n); q.p += p; j.summe += p;
-  });
-  return _ehrungKarte(Object.values(je).map(j => ({pid:j.pid, summe:j.summe, posten:Object.values(j.posten)})),
-    'ehrung_' + letzteM.id, T, {ab:Math.min(...liste.map(e => e.t)), bis:mts(letzteM)});
-}
 
 const EH_ORD = {legendary:0, rare:1, common:2};
 function _ehrungSpieler(roh){
@@ -27536,7 +27593,7 @@ const EHRUNG_KOPF = new Set(['potd', 'potw', 'champion', 'vice_champion', 'team_
 const _ehrungBrichtVor = sp => (sp || []).some(x => ((x && x.posten) || [])
   .some(q => q && q.klasse === 'legendary' && !EHRUNG_KOPF.has(q.id)));
 
-function _ehrungSchlussPosten(schlussMs, ids, schon){
+function _ehrungSchlussPosten(schlussMs, ids){
   const vor = schlussMs - 1, msA = _partienBis(vor), msB = _partienBis(schlussMs);
   const je = {};
   BADGES.forEach(b => {
@@ -27548,10 +27605,7 @@ function _ehrungSchlussPosten(schlussMs, ids, schon){
       try { a = b.count(p.id, msA, vor) || 0; n = b.count(p.id, msB, schlussMs) || 0; } catch(e){ return; }
       if(!(n > a)) return;
       let wert = 0, mal = 0;
-      for(let i = a + 1; i <= n; i++){
-        if(schon && schon.has(p.id + '|' + b.id + '|' + i)) continue;
-        wert += auszeichnungsTeilwert(b.id, i); mal++;
-      }
+      for(let i = a + 1; i <= n; i++){ wert += auszeichnungsTeilwert(b.id, i); mal++; }
       if(!(wert > 0)) return;
       const j = je[p.id] || (je[p.id] = {pid:p.id, summe:0, posten:[]});
       j.posten.push({id:b.id, name:b.name, ic:b.ic, klasse, mal, bis:n, p:wert});
@@ -27560,20 +27614,35 @@ function _ehrungSchlussPosten(schlussMs, ids, schon){
   });
   return Object.values(je);
 }
-function _ehrungSchonGenannt(bestand){
-  const schon = new Set();
-  (Array.isArray(bestand) ? bestand : []).forEach(st => {
-    const d = (st && st.dataRef) || {};
-    if(d.type !== 'ehrung' || d.periode) return;
-    (d.spieler || []).forEach(x => ((x && x.posten) || []).forEach(q => {
-      for(let i = (q.bis | 0) - (q.mal | 0) + 1; i <= (q.bis | 0); i++) schon.add(x.pid + '|' + q.id + '|' + i);
-    }));
-  });
-  return schon;
+const _ehrungAusLaufbahn = daten => (daten || []).map(x => ({pid:x.pid,
+  summe:x.posten.reduce((n, q) => n + q.p, 0), posten:x.posten}));
+
+function _ehrungVereint(listen){
+  const je = {};
+  (listen || []).forEach(l => (l || []).forEach(x => {
+    if(!x || !x.pid) return;
+    const j = je[x.pid] || (je[x.pid] = {});
+    (x.posten || []).forEach(q => {
+      const a = j[q.id] || (j[q.id] = Object.assign({}, q, {mal:0, bis:0, p:0}));
+      a.mal += q.mal || 0; a.bis = Math.max(a.bis, q.bis || 0); a.p += q.p || 0;
+    });
+  }));
+  return _ehrungSpieler(Object.keys(je).map(pid => { const posten = Object.values(je[pid]);
+    return {pid, summe:posten.reduce((n, q) => n + q.p, 0), posten}; }));
 }
 
-function _ehrungTagesSchluss(rep, schon){
-  return _ehrungSpieler(_ehrungSchlussPosten(rep, EHRUNG_SCHLUSS.tag, schon));
+function _ehrungGroessere(tagMs){
+  if(tagKey(seasonEnd(seasonOf(tagMs).id).getTime()) === tagKey(tagMs)) return 'monat';
+  return new Date(tagMs).getDay() === 0 ? 'woche' : '';
+}
+
+function _ehrungDesTages(tagMs){
+  const g = _storyTagGrenzen(tagMs);
+  if(!g) return [];
+  return _ehrungSpieler(_ehrungAusLaufbahn(rcpLaufbahnDaten(g.vorMs + 1, g.nachMs)));
+}
+function _ehrungTagesSchluss(rep){
+  return _ehrungSpieler(_ehrungSchlussPosten(rep, EHRUNG_SCHLUSS.tag));
 }
 
 function _newsZeitraumEhrungen(nowMs){
@@ -27586,20 +27655,20 @@ function _newsZeitraumEhrungen(nowMs){
     const s = seasonOf(m.created_at);
     if(s && s.id) monate.add(s.id);
   });
-  const roh = daten => daten.map(x => ({pid:x.pid, summe:x.posten.reduce((n, q) => n + q.p, 0), posten:x.posten}));
   wochen.forEach(ab => {
     const ende = new Date(ab); ende.setDate(ende.getDate() + 7);
     const S = ende.getTime();
-    if(S > nowMs || S < seit) return;
-    const zu = _ehrungSpieler(_ehrungSchlussPosten(S, EHRUNG_SCHLUSS.woche));
-    const st = _ehrungKarte(roh(rcpWocheLaufbahn(ab, S - 1)), 'ehrung_der_woche_' + tagKey(ab), S - 60000 + 5000,
+    if(S > nowMs || S < seit || _ehrungGroessere(S - 1) === 'monat') return;
+    const sonntag = new Date(S - 1); sonntag.setHours(23, 59, 0, 0);
+    const zu = _ehrungSpieler(_ehrungSchlussPosten(S, EHRUNG_SCHLUSS.woche)).concat(_ehrungTagesSchluss(sonntag.getTime()));
+    const st = _ehrungKarte(_ehrungAusLaufbahn(rcpWocheLaufbahn(ab, S - 1)), 'ehrung_der_woche_' + tagKey(ab), S - 60000 + 5000,
       {periode:'woche', woche:tagKey(ab), von:ab, bis:S - 1, breaking:_ehrungBrichtVor(zu)});
     if(st) out.push(st);
   });
   monate.forEach(sid => {
-    const S = seasonEnd(sid).getTime();
+    const S = seasonEnd(sid).getTime(), mg = rcpMonatGrenzen(sid);
     if(S + 1 > nowMs || S + 1 < seit) return;
-    const st = _ehrungKarte(roh(rcpLaufbahnDaten(seasonStart(sid).getTime(), S)), 'ehrung_des_monats_' + sid, S + 1,
+    const st = _ehrungKarte(_ehrungAusLaufbahn(rcpLaufbahnDaten(mg.von, mg.bis)), 'ehrung_des_monats_' + sid, S + 1,
       {periode:'monat', sid, breaking:false});
     if(st) out.push(st);
   });
@@ -27635,7 +27704,7 @@ function _ehrungSaeulen(sp, gross, o){
       .map(q => `<i class="${q.klasse}" style="flex-grow:${q.p}" title="${esc(q.name)}"></i>`).join('');
     const top = posten[0];
     return `<span class="eh-s" data-pid="${esc(x.pid)}" style="--i:${i}">`
-      + `<span class="eh-s-z" title="${esc(top ? top.name : '')}">${top ? _ehrungKachel(top, o.still ? null : () => gold++, gross ? '' : 'k') : ''}</span>`
+      + `<span class="eh-s-z" title="${esc(top ? top.name : '')}"${top ? ` data-bp="${esc(top.id)}" data-bp-pid="${esc(x.pid)}"` : ''}>${top ? _ehrungKachel(top, o.still ? null : () => gold++, gross ? '' : 'k') : ''}</span>`
       + `<em class="eh-s-w num">+${_ehZahl(x.summe)}</em>`
       + `<span class="eh-saeule" style="height:${h}px">${stuecke}</span>`
       + `<span class="eh-s-av" title="${esc(pm[x.pid].name)}">${rcpAvHtml(x.pid, WAPPEN, {})}</span>`
@@ -27671,7 +27740,7 @@ function _ehrungZeitraum(d){
     return /^\d/.test(w) ? {vor:'Geholt am', wann:w} : {vor:'Geholt', wann:w};
   }
   if(d && d.periode === 'woche' && d.von && d.bis)
-    return {vor:'Geholt in der Woche', wann:`vom\u00a0${datumFmt(d.von, 'tm')} bis\u00a0${datumFmt(d.bis, 'tm')}`};
+    return {vor:'Geholt', wann:`vom\u00a0${datumFmt(d.von, 'tm')} bis\u00a0${datumFmt(d.bis, 'tm')}`};
   if(d && d.periode === 'monat' && d.sid) return {vor:'Geholt im', wann:seasonLabel(d.sid)};
   if(!d || !d.ab || !d.bis) return null;
   const von = t => { const w = tag(t); return (/^\d/.test(w) ? 'vom' : 'von') + '\u00a0' + w; };
@@ -27685,7 +27754,7 @@ function _newsEhrungHtml(s, isRead, fadenHtml){
   const d = s.dataRef || {};
   const sp = Array.isArray(d.spieler) ? d.spieler : [];
   const zr = _ehrungZeitraum(d);
-  if(d.periode === 'woche' || d.periode === 'monat') return _newsEhrungZeitraumHtml(s, d, sp, zr, isRead, fadenHtml);
+  if(d.periode) return _newsEhrungKompaktHtml(s, d, sp, zr, isRead, fadenHtml);
   const glanz = sp.some(x => (x.posten || []).some(q => q.klasse === 'legendary'));
   return `<div class="nf-card nf-s-badge nf-ehrung nfc-badge${glanz ? ' nf-glanz' : ''}${isRead ? ' read' : ''}" data-sid="${esc(s.id)}"`
     + `${glanz ? ` style="--gv:${_newsGlanzVersatz(s.id)}s"` : ''}>
@@ -27697,30 +27766,53 @@ function _newsEhrungHtml(s, isRead, fadenHtml){
       <span class="nf-chev">${svgI('chevron')}</span></div>${fadenHtml || ''}</div>`;
 }
 
-function _newsEhrungZeitraumHtml(s, d, sp, zr, isRead, fadenHtml){
-  const klassen = _ehrungKlassen(sp);
-  const monat = d.periode === 'monat';
-  return `<div class="nf-card nf-s-badge nf-ehrung nf-ehrung-zr zr-${monat ? 'monat' : 'woche'} nfc-badge${isRead ? ' read' : ''}" data-sid="${esc(s.id)}">
+const EH_KOMPAKT = 5;
+function _newsEhrungKompaktHtml(s, d, sp, zr, isRead, fadenHtml){
+  const pm = pmap(), klassen = _ehrungKlassen(sp);
+  const da = sp.filter(x => x && pm[x.pid] && x.summe > 0);
+  const vorn = da.length > EH_KOMPAKT ? da.slice(0, EH_KOMPAKT - 1) : da, rest = da.length - vorn.length;
+  const art = {monat:['crown', 'EHRUNG DES MONATS'], woche:['weekKing', 'EHRUNG DER WOCHE'],
+    tag:['medal', 'EHRUNG DES TAGES']}[d.periode] || ['medal', 'DIE EHRUNG'];
+  const gold = d.periode === 'woche' || d.periode === 'monat';
+  const kopf = x => `<span class="eh-kp-s ${_ehrungTon((x.posten[0] || {}).klasse)}">${_spChip(x.pid)}`
+    + `<b class="num">+${_ehZahl(x.summe)}</b><small>${esc(_spName(x.pid))}</small></span>`;
+  const g = d.gegenstueck;
+  return `<div class="nf-card nf-s-badge nf-ehrung nf-ehrung-kp${gold ? ' nf-ehrung-zr zr-' + d.periode : ''} nfc-badge${isRead ? ' read' : ''}" data-sid="${esc(s.id)}">
     ${_newsMotiv('badge', s)}
-    <div class="nf-top"><span class="nf-rub"><i>${svgI(monat ? 'crown' : 'weekKing')}</i><b>${monat ? 'EHRUNG DES MONATS' : 'EHRUNG DER WOCHE'}</b></span>
+    <div class="nf-top"><span class="nf-rub"><i>${svgI(art[0])}</i><b>${art[1]}</b></span>
       <span class="nf-when">${svgI('clock')}${esc(_newsUhrzeit(s.when))}${isRead ? '' : '<span class="nf-dot"></span>'}</span></div>
     <div class="nf-gr"><div class="nf-gr-r"><div class="nf-h">${esc(s.title)}</div>${zr ? `<div class="eh-zr"><span class="eh-zr-k">${esc(zr.vor)}</span> <span class="eh-zr-t">${esc(zr.wann)}</span></div>` : ''}</div>
       <span class="nf-chev">${svgI('chevron')}</span></div>
-    ${_ehrungSaeulen(sp, true)}
-    ${klassen.length ? `<div class="eh-fuss">${klassen.map(_ehrungKlasseHtml).join('')}</div>` : ''}${fadenHtml || ''}</div>`;
+    <div class="eh-kp">${vorn.map(kopf).join('')}${rest ? `<span class="eh-kp-s eh-kp-rest"><i class="num">+${rest}</i><small>weitere</small></span>` : ''}</div>
+    ${klassen.length ? `<div class="eh-kp-k"><div class="eh-kp-l">${klassen.map(z => `<span class="eh-k ${z.id}"><i></i><b class="num">${z.n}</b> ${esc(z.wort)}</span>`).join('')}</div>`
+      + `<div class="eh-kp-b">${klassen.map(z => `<i class="${z.id}" style="flex-grow:${z.p}"></i>`).join('')}</div></div>` : ''}
+    ${g && pm[g.pid] ? _spGegenHtml(g) : ''}${fadenHtml || ''}</div>`;
 }
+
+const _spGegenHtml = g => `<div class="nf-gegen">${_spChip(g.pid)}<span><b>${esc(_spName(g.pid))}</b> gibt am meisten ab</span>`
+  + `<b class="num r">${_spVz(Number(g.delta) || 0)} Elo</b></div>`;
 
 function _ehrungTagHtml(sp){
   const pm = pmap();
   const l = (Array.isArray(sp) ? sp : []).filter(x => x && pm[x.pid] && x.summe > 0);
   if(!l.length) return '';
   const summe = l.reduce((n, x) => n + x.summe, 0);
+  const vorn = l.length > EH_KOMPAKT ? l.slice(0, EH_KOMPAKT - 1) : l, rest = l.length - vorn.length;
+  const zeile = x => {
+    const gross = x.posten.filter(q => q.klasse !== 'common'), klein = x.posten.filter(q => q.klasse === 'common');
+    const nKlein = klein.reduce((n, q) => n + q.mal, 0);
+    const text = gross.map(q => q.name + (q.mal > 1 ? ' ×' + q.mal : ''))
+      .concat(nKlein ? [nKlein === 1 ? klein[0].name : nKlein + ' gewöhnliche'] : []).join(' · ');
+    return `<div class="nf-eht-z">${_spChip(x.pid)}`
+      + `<span class="nf-eht-t"><b>${esc(_spName(x.pid))}</b><small>${esc(text)}</small></span>`
+      + `<span class="nf-eht-a">${gross.map(q => zkHtml(q.ic, 'k', _ehrungTon(q.klasse))).join('')}`
+      + (nKlein ? `<span class="nf-eht-g">${zkHtml(klein[0].ic, 'k', 'gruen')}${nKlein > 1 ? `<i class="num">${nKlein}</i>` : ''}</span>` : '')
+      + `</span><b class="num">+${_ehZahl(x.summe)}</b></div>`;
+  };
   return `<div class="nf-eht"><div class="nf-eht-k"><i>${svgI('medal')}</i>`
     + `<span>Ehrung des Tages</span><b class="num">+${_ehZahl(summe)}</b></div>`
-    + l.map(x => `<div class="nf-eht-z">${_spChip(x.pid)}`
-      + `<span class="nf-eht-t"><b>${esc(_spName(x.pid))}</b><small>${esc(x.posten.map(q => q.name + (q.mal > 1 ? ' ×' + q.mal : '')).join(' · '))}</small></span>`
-      + `<span class="nf-eht-a">${x.posten.map(q => zkHtml(q.ic, 'k', _ehrungTon(q.klasse))).join('')}</span>`
-      + `<b class="num">+${_ehZahl(x.summe)}</b></div>`).join('')
+    + vorn.map(zeile).join('')
+    + (rest ? `<div class="nf-eht-r">und ${rest} weitere</div>` : '')
     + `</div>`;
 }
 
@@ -27737,8 +27829,10 @@ function _ndEhrungBlatt(s){
     + `<div class="eh-anteil-b">${klassen.map(z => `<i class="${z.id}" style="flex-grow:${z.p}"></i>`).join('')}</div>`
     + `<div class="eh-anteil-l">${klassen.map(_ehrungKlasseHtml).join('')}</div></div>` : '';
   const zeit = _ehrungZeitraum(d);
+  const g = d.gegenstueck;
+  const gegen = g && pm[g.pid] ? `<div class="nd-section">Der härteste Tag</div>${_spGegenHtml(g)}` : '';
   return {kopf, mitte: anteil + (zeit ? `<div class="nw-hinweis eh-zeit">${esc(zeit.vor + ' ' + zeit.wann)}${/\.$/.test(zeit.wann) ? '' : '.'}</div>` : '')
-    + `<div class="nd-section">Wer was geholt hat</div>${_ehrungBloeckeHtml(sp)}`
+    + `<div class="nd-section">Wer was geholt hat</div>${_ehrungBloeckeHtml(sp)}` + gegen
     + `<div class="nw-hinweis">Das erste und zweite Mal zählt eine Auszeichnung voll, danach etwas weniger. `
     + `Der Strich unter jeder zeigt, wie viel vom vollen Wert bleibt.</div>`};
 }
@@ -27750,10 +27844,11 @@ function _ehrungBloeckeHtml(sp){
   const strich = q => `<span class="eh-q-m" role="img" aria-label="${Math.round(rest(q) * 100)} % des vollen Werts">`
     + `<i style="width:${(rest(q) * 100).toFixed(1)}%"></i></span>`;
   let gold = 0;
-  const zeile = q => `<div class="eh-q ${esc(q.klasse)}">${_ehrungKachel(q, () => gold++)}
+  const bp = (q, pid) => ` data-bp="${esc(q.id)}" data-bp-pid="${esc(pid)}"`;
+  const zeile = (q, pid) => `<div class="eh-q ${esc(q.klasse)}"${bp(q, pid)}>${_ehrungKachel(q, () => gold++)}
       <span class="eh-q-t"><b>${esc(q.name)}</b><small>${esc(_newsRarityLabel(q.klasse))} · ${esc(mal(q))}</small>${strich(q)}</span>
       <em class="num">+${_ehZahl(q.p)}<small>von ${_ehZahl(voll(q))}</small></em></div>`;
-  const kachel = q => `<div class="eh-g-t ${esc(q.klasse)}">`
+  const kachel = (q, pid) => `<div class="eh-g-t ${esc(q.klasse)}"${bp(q, pid)}>`
     + `<span class="eh-g-o">${_ehrungKachel(q, () => gold++)}<em class="num">+${_ehZahl(q.p)}</em></span>`
     + `<b>${esc(q.name)}</b><small>${esc(mal(q))}</small>${strich(q)}</div>`;
   return (Array.isArray(sp) ? sp : []).filter(x => x && pm[x.pid]).map((x, i) => {
@@ -27762,8 +27857,8 @@ function _ehrungBloeckeHtml(sp){
     return `<div class="eh-p" style="--i:${i}">
       <div class="eh-p-k" data-pid="${esc(x.pid)}" style="cursor:pointer">${rcpAvHtml(x.pid, 30, {})}
         <b>${esc(pm[x.pid].name)}</b><em class="num">+${_ehZahl(x.summe)}</em></div>
-      ${gross.map(zeile).join('')}
-      ${klein.length ? `<div class="eh-g">${klein.map(kachel).join('')}</div>` : ''}
+      ${gross.map(q => zeile(q, x.pid)).join('')}
+      ${klein.length ? `<div class="eh-g">${klein.map(q => kachel(q, x.pid)).join('')}</div>` : ''}
     </div>`;
   }).join('');
 }
@@ -27873,6 +27968,7 @@ function openNewsDetail(sid){
       sheetNav(() => { try { showPlayer(pid); } catch(e){} });
     };
   });
+  _bpBinden(nd);
   nd.querySelectorAll('[data-tplayer]').forEach(el => {
     el.onclick = () => {
       const pid = el.dataset.tplayer;
@@ -28037,11 +28133,11 @@ function _newsBlattErgebnis(matchId){
     </div></div>`;
 }
 
-function _newsMedaillon(ic, rarity, name, bedingung, badgeId){
+function _newsMedaillon(ic, rarity, name, bedingung, badgeId, bp){
   const r = rarity || 'common';
   let halter = '';
   try { halter = _newsBadgeHalterText(badgeId); } catch(e){}
-  return `<div class="nd-med nd-med-${esc(r)}">
+  return `<div class="nd-med nd-med-${esc(r)}"${bp && bp.id && bp.pid ? ` data-bp="${esc(bp.id)}" data-bp-pid="${esc(bp.pid)}"` : ''}>
     <div class="nd-med-r">${svgI(ic || 'medal')}</div>
     <div class="nd-med-t">
       <div class="nd-med-n">${esc(name || '')}</div>
@@ -28493,7 +28589,7 @@ function _ndBadgeBlatt(s){
   if(!pids.length || !d.badgeId) return null;
   const bdef = (typeof BADGES !== 'undefined') ? BADGES.find(b => b.id === d.badgeId) : null;
   const medaille = _newsMedaillon(s.ic || (bdef && bdef.ic) || 'medal', d.rarity,
-    d.badgeName || (bdef && bdef.name) || '', bdef ? bdef.desc : '', null);
+    d.badgeName || (bdef && bdef.name) || '', bdef ? bdef.desc : '', null, {id:d.badgeId, pid:pids[0]});
   const kopf = `<div class="nd-buehne nd-bd">${medaille}<div class="nd-bd-w">${pids.map(id =>
     `<span data-pid="${esc(id)}">${avHtml(pm[id], '', {ins:true, px:52, feuer:0})}<b>${esc(_spName(id))}</b></span>`).join('')}</div></div>`;
   const m = d.matchId ? (matches || []).find(x => x.id === d.matchId) : null;
@@ -29529,7 +29625,7 @@ function _ndMitteRoh(s){
         const bdef = (typeof BADGES !== 'undefined')
           ? BADGES.find(b => b.id === d.badgeId) : null;
         const medaille = _newsMedaillon(s.ic || (bdef && bdef.ic) || 'medal', d.rarity,
-          d.badgeName || (bdef && bdef.name) || '', bdef ? bdef.desc : '', d.badgeId);
+          d.badgeName || (bdef && bdef.name) || '', bdef ? bdef.desc : '', d.badgeId, {id:d.badgeId, pid:pids[0]});
         const playersHtml = pids.length > 1
           ? `<div class="nd-section">${pids.length} Spieler</div>` + pids.map(pid =>
               `<div class="nd-stat-row" data-pid="${esc(pid)}" style="cursor:pointer">
@@ -29552,7 +29648,7 @@ function _ndMitteRoh(s){
           const b0 = def(l[0].badgeId);
           return _newsMedaillon((b0 && b0.ic) || s.ic || 'medal',
               rarityOf(l[0].badgeId),
-              l[0].name || (b0 && b0.name) || '', b0 ? b0.desc : '', l[0].badgeId)
+              l[0].name || (b0 && b0.name) || '', b0 ? b0.desc : '', l[0].badgeId, {id:l[0].badgeId, pid:l[0].pid})
             + (d.matchId ? `<div class="nd-section">Die Partie</div>`
                 + _newsMatchVsBlock(d.matchId) : '');
         }
@@ -29560,7 +29656,7 @@ function _ndMitteRoh(s){
           + l.map(x => rcpZeileHtml({ic:(def(x.badgeId) || {}).ic || 'medal',
               name:nameOf(x.pid), sub:x.name,
               rechts:'zum ' + x.rang + '. Mal',
-              attr:`data-pid="${esc(x.pid)}" style="cursor:pointer"`})).join('');
+              attr:`data-bp="${esc(x.badgeId)}" data-bp-pid="${esc(x.pid)}"`})).join('');
       }
       case 'rivalry': {
         const h2h = _newsH2HRecord(d.a, d.b);
@@ -36577,9 +36673,9 @@ function _prestigeRegelKarten(){
       <em>1. und 2. Mal voll.<br>
       3. und 4. Mal ${Math.round(regel.abnahme * 100)} % weniger; danach paarweise flacher, nie 0.</em></span>`;
   return `<div class="lb-regeln">
-    ${karte('legendary', 'Legendary', spanne('legendary'), PRESTIGE_AUSZEICHNUNG.legendary)}
-    ${karte('rare', 'Rare', spanne('rare'), PRESTIGE_AUSZEICHNUNG.rare)}
-    ${karte('common', 'Common', spanne('common'), PRESTIGE_AUSZEICHNUNG.common)}
+    ${karte('legendary', RARITY_META.legendary.label, spanne('legendary'), PRESTIGE_AUSZEICHNUNG.legendary)}
+    ${karte('rare', RARITY_META.rare.label, spanne('rare'), PRESTIGE_AUSZEICHNUNG.rare)}
+    ${karte('common', RARITY_META.common.label, spanne('common'), PRESTIGE_AUSZEICHNUNG.common)}
   </div>`;
 }
 
@@ -36629,7 +36725,7 @@ function _prestigeQuellSatz(q, ohneKopf){
     teile.push(rechnung);
   }
   else if(q.q === 'auszeichnung'){
-    teile.push((RARITY_META[q.klasse] || {}).label || 'Common');
+    teile.push((RARITY_META[q.klasse] || RARITY_META.common).label);
     teile.push(`${q.mal}× erreicht`);
     teile.push(q.mal > 1
       ? `zuletzt ${zahl(auszeichnungsTeilwert(q.id, q.mal))} P`
@@ -36734,7 +36830,8 @@ function showLaufbahn(pid){
   const _fa = fingerabdruck(pid);
   const _faTon = rangTon(pid);
 
-  const zeile = (q, w) => `<div class="lb-q"${q.q === 'rekord' ? ` data-chron="${esc(q.id)}"` : ''}>
+  const zeile = (q, w) => `<div class="lb-q"${q.q === 'rekord' ? ` data-chron="${esc(q.id)}"`
+      : q.q === 'auszeichnung' ? ` data-bp="${esc(q.id)}" data-bp-pid="${esc(pid)}"` : ''}>
       <span class="n">${esc(q.name)}<em>${esc(_prestigeQuellSatz(q))}</em></span>
       <span class="p num">${zahl(w)}</span>
     </div>`;
@@ -36809,6 +36906,7 @@ function showLaufbahn(pid){
    </div>
   `);
   _bindChronikClicks(document.getElementById('sheet'));
+  _bpBinden(document.getElementById('sheet'));
   document.querySelectorAll('#sheet [data-prestige-regeln]').forEach(el => {
     el.onclick = () => sheetNav(() => showPrestigeRegeln(pid));
   });

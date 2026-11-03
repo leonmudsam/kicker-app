@@ -34,6 +34,8 @@ const esc = s => String(s == null ? '' : s)
 const c = s => `<code>${esc(s)}</code>`;
 // Der Teil „Neue Stories" (Entwürfe), wenn sein Lauf da ist.
 const NEU = require('./story-neu-seite.js')(esc);
+// Der Teil „Neue Köpfe und Füße" (Entwürfe für die Karte einer Partie).
+const KF = require('./story-kopf-fuss-seite.js')(esc);
 const zahl = n => Number(n).toLocaleString('de-DE');
 const K = D.konstanten, P = K.prio, L = K.limits;
 const datum = ms => new Date(ms).toLocaleDateString('de-DE', {weekday:'short', day:'2-digit', month:'2-digit'});
@@ -46,7 +48,7 @@ const SEITE = Object.fromEntries((K.seiten || []).map(s => [s.k, s.label]));
 const GRUPPEN = [
   ['Der Spieltag', ['spiel', 'sammel:spiel', 'runde', 'potd', 'elo_swing', 'badge_marken']],
   ['Tafel und Zeichen', ['sammel:tafel', 'insignium_tag', 'insignium_tag:woche']],
-  ['Die Ehrung', ['ehrung:runde', 'ehrung:woche', 'ehrung:monat']],
+  ['Die Ehrung', ['ehrung:tag', 'ehrung:woche', 'ehrung:monat']],
   ['Woche und Monat', ['woche', 'season_start', 'season_endgame', 'season_recap']],
   ['Die Liga', ['ambient', 'dry_spell', 'quiet_week', 'karriereende']],
 ];
@@ -63,9 +65,9 @@ const FORM = {
     was:`Dieselben vier Spieler am Tisch, mindestens ${c('RUNDE_MIN')} = 3 Partien ohne Pause über 30 Minuten (${c('RUNDE_PAUSE_MS')}): eine zusätzliche Karte mit der Bilanz der Runde. Die Karten der Partien bleiben daneben stehen.`,
     brk:'Nie.', zus:'Zählt gegen keinen Deckel.'},
   'potd': {name:'Spieler des Tages', id:'potd_<Tag>', wann:'Um 23:59 an jedem Spieltag mit einem Sieger.',
-    was:`Die Schlagzeile des Tages (Rang ${P.potd}). Darunter, wer am meisten Elo abgab (das Gegenstück, ${c('gegenstueck')}), und die Ehrung des Tages: was der Schluss des Tages vergab (Spieler des Tages, Unschlagbar, Comeback-Tag, Tag der Götter, Allwetter, Award-Sammler; ${c('EHRUNG_SCHLUSS.tag')}), je Geehrtem eine Zeile mit Gesicht, Auszeichnungen, Zeichen und Prestige (${c('dataRef.ehrung')}). Das Blatt zeigt das Feld des Tages, die Bahn des Tagessiegers in Partien, den härtesten Tag und die Ehrung des Tages mit jedem Posten.`,
+    was:`Die Schlagzeile des Tages (Rang ${P.potd}). Darunter, wer am meisten Elo abgab (das Gegenstück, ${c('gegenstueck')}), und die Ehrung des Tages: alles, was an diesem Tag geholt wurde, aus den Partien und mit dem Schluss um 23:59 (${c('_ehrungDesTages')}, der Unterschied der Prestige-Stände an den Grenzen des Tages), je Geehrtem eine Zeile mit Gesicht, den seltenen und legendären Auszeichnungen mit Namen, den gewöhnlichen als Zahl, den Zeichen und dem Prestige (${c('dataRef.ehrung')}). Das Blatt zeigt das Feld des Tages, die Bahn des Tagessiegers in Partien, den härtesten Tag und die Ehrung des Tages mit jedem Posten; jede Auszeichnung darin öffnet ihre Detailansicht.`,
     brk:'Nur, wenn der Schluss des Tages eine legendäre Auszeichnung vergab, die nicht selbst Schlagzeile ist (Tag der Götter, Award-Sammler).',
-    zus:'Trägt den härtesten Tag und die Ehrung des Tages; was sie trägt, steht nirgends sonst (keine eigene Karte um 23:57, keine Ehrung einer Runde). Eine gespeicherte eigene Ehrung des Tages (ältere Fassung) geht beim Anzeigen in sie auf.'},
+    zus:'Eine Karte fasst den Tag zusammen: sie trägt den härtesten Tag und die Ehrung des Tages, und was sie trägt, hat keine eigene Karte um 23:57. Endet mit dem Tag eine Woche (Sonntag) oder ein Monat, steht sie ohne Ehrung: die größere trägt den Tag (_ehrungGroessere, ehrungIn). Gespeicherte Ehrungen einer Runde oder eines Tagesschlusses aus älteren Fassungen gehen beim Anzeigen in sie auf.'},
   'elo_swing': {name:'Harter Tag', id:'elo_swing_day_<Spieler>_<Tag>', wann:'Um 23:58.',
     was:'Wer an einem Tag am meisten Elo abgegeben hat.',
     brk:'Nie; negativ.', zus:'Gibt es an dem Tag einen Spieler des Tages, steht er als dessen Gegenstück auf dessen Karte und im Blatt (memberIds) und nicht für sich. Allein steht er nur an Tagen ohne Spieler des Tages.'},
@@ -83,17 +85,17 @@ const FORM = {
   'insignium_tag:woche': {name:'Das Zeichen des Wochenschlusses', id:'instag_woche_<Montag>', wann:'Montag 00:00.',
     was:'Wer mit dem Schluss der Woche (Spieler der Woche, Award-Sammler) eine Stufe oder einen Grad weiter steht, aus dem Stand eine Millisekunde davor gegen den Schluss. Darunter der Grund (die Auszeichnung des Schlusses), im Blatt die Leiter der Liga nach der Woche.',
     brk:'Wie das Zeichen des Tages.', zus:'Entsteht nicht, wenn der Monat am selben Abend schließt: dann trägt der Monatsabschluss beide Zeichen.'},
-  'ehrung:runde': {name:'Die Ehrung einer Runde', id:'ehrung_<letzte Partie>', wann:`${K.ehrungPause / 3600e3} Stunden nach der letzten Partie, wenn keine mehr dazukam.`,
-    was:`Jede Auszeichnung seit der Ehrung davor: je Geehrtem eine Säule, so hoch wie das Prestige aus Auszeichnungen, gestapelt aus jeder seltenen und legendären und einem Stück für alle gewöhnlichen, darauf die Zeichenkachel der wertvollsten, unten das Wappen; höchstens fünf je Reihe, die Reihen um höchstens eine Säule verschieden. Der Wert ist der Teilwert beim wievielten Mal (${c('auszeichnungsTeilwert')}). Partien mit weniger als zwei Stunden Abstand teilen eine Karte. Darunter, in welchen Partien sie geholt sind.`,
-    brk:'Nie: die legendären Auszeichnungen einer Runde haben ihre eigene Zeile an ihrer Partie. Mit einer legendären trägt die Karte den Schimmer des Seltenen.',
-    zus:'Was der Schluss des Tages vergibt, steht beim Spieler des Tages und in keiner Runde. Nur, was Prestige gibt.'},
+  'ehrung:tag': {name:'Die Ehrung eines Tages ohne Spieler des Tages', id:'tagesehrung_<Tag>', wann:'Um 23:59, wie der Spieler des Tages, an einem Spieltag ohne ihn.',
+    was:`Alles, was an diesem Tag geholt wurde (${c('_ehrungDesTages')}), knapp wie die Ehrung der Woche: Rubrik, Schlagzeile, „Geholt am …", eine Reihe Gesichter mit Prestige und Namen (die vorderen fünf, mehr als „+n weitere"), die Zahl je Klasse in einer Zeile und der Balken der Klassen als Unterkante; im Violett der Ehrung. Darunter, wer am meisten Elo abgab, wie beim Spieler des Tages. Der Wert ist der Teilwert beim wievielten Mal (${c('auszeichnungsTeilwert')}). Eine Ehrung je Runde gibt es nicht mehr.`,
+    brk:'Nur, wenn der Schluss des Tages eine legendäre Auszeichnung vergab, die nicht Schlagzeile ist.',
+    zus:'Entsteht nicht, wenn mit dem Tag eine Woche oder ein Monat endet. Gespeicherte Ehrungen einer Runde, die in keiner Karte ihres Tages aufgehen, bleiben, wie sie waren (mit Säulen).'},
   'ehrung:woche': {name:'Die Ehrung der Woche', id:'ehrung_der_woche_<Montag>', wann:'Sonntag 23:59:05, zur Zeit der Wochenkarte und direkt darunter.',
-    was:`Alle Auszeichnungen der Woche, aus denselben zwei Ständen wie die Säulen ihres Rückblicks (${c('rcpWocheLaufbahn')}): gezählt bis zum Schluss am Montag 00:00, also mit Spieler der Woche und Award-Sammler, ohne die Titel eines Monats, der in der Woche endet. Gold wie die Wochenkarte, eigene Rubrik, oben Schlagzeile und Zeitraum, darunter die Säulen mit Namen (vier je Reihe) und was jede Klasse brachte.`,
-    brk:'Nur, wenn der Schluss der Woche eine legendäre Auszeichnung vergab, die nicht Schlagzeile ist (Award-Sammler); als breaking mitgespeichert.',
-    zus:'Steht bei gleicher Zeit unter der Wochenkarte, weil die wichtigere oben steht (_storyFolge).'},
+    was:`Alle Auszeichnungen der Woche, aus denselben zwei Ständen wie die Säulen ihres Rückblicks (${c('rcpWocheLaufbahn')}): ab einer Millisekunde nach ihrem Montag 00:00 (dort schließt die Woche davor) bis zu ihrem Schluss am Montag darauf, also mit Spieler der Woche und Award-Sammler, ohne die Titel eines Monats, der in der Woche endet. Knapp, damit sie die Wochenkarte nicht überschattet: Gold, eigene Rubrik, Schlagzeile, „Geholt vom … bis …", eine Reihe Gesichter mit Prestige und Namen, die Zahl je Klasse und der Balken der Klassen als Unterkante. Säulen, Namen und jede Auszeichnung stehen im Blatt.`,
+    brk:'Nur, wenn ihr Schluss oder der ihres Sonntags eine legendäre Auszeichnung vergab, die nicht Schlagzeile ist (Award-Sammler); als breaking mitgespeichert.',
+    zus:'Steht bei gleicher Zeit unter der Wochenkarte (_storyFolge). Trägt ihren Sonntag: der Spieler des Sonntags steht ohne Ehrung. Endet mit der Woche ein Monat, entsteht sie nicht; die Ehrung des Monats trägt sie.'},
   'ehrung:monat': {name:'Die Ehrung des Monats', id:'ehrung_des_monats_<Monat>', wann:'Am Ersten um 00:00, zur Zeit des Monatsabschlusses und direkt darunter.',
-    was:'Alle Auszeichnungen des Monats, dieselben wie die Säulen seines Rückblicks (rcpLaufbahnDaten): mit Meister, Vize-Meister, Team der Saison und Untouchable, die in der letzten Millisekunde des Monats kommen. Ab vier Geehrten nennt die Schlagzeile ihre Zahl statt der Namen.',
-    brk:'Nie: der Monat ist es mit seinem Rückblick schon.', zus:'Steht unter dem Monatsabschluss (_storyFolge).'},
+    was:'Alle Auszeichnungen des Monats, dieselben wie die Säulen seines Rückblicks, an denselben Grenzen (rcpMonatGrenzen): mit Meister, Vize-Meister, Team der Saison und Untouchable, die in der letzten Millisekunde des Monats kommen; endet er an einem Sonntag, bis zum Schluss dieser Woche, mit ihrem Spieler der Woche. Knapp wie die Ehrung der Woche, in Gold. Ab vier Geehrten nennt die Schlagzeile ihre Zahl statt der Namen.',
+    brk:'Nie: der Monat ist es mit seinem Rückblick schon.', zus:'Steht unter dem Monatsabschluss (_storyFolge). Trägt den letzten Tag des Monats und, endet er an einem Sonntag, dessen Woche.'},
   'woche': {name:'Die Woche', id:'woche_<Woche>', wann:'Sonntag 23:59:05, nach dem Spieler des Tages und vor dem Montag.',
     was:'Sechs Wertungen in einer Karte, nach Wertigkeit: Spieler der Woche, Team der Woche, Größter Aufwind (ab 50 Elo), Klarster Sieg, Größte Überraschung, Krimi der Woche. Das Blatt zeigt alle sechs; ein Knopf öffnet den Wochenrückblick.',
     brk:'Nie.', zus:'Erscheint nicht ohne Partie in der Woche. Darunter die Ehrung der Woche.'},
@@ -171,8 +173,9 @@ const marke = k => {
   if(a === 'fuss') return 'Fuß: ' + (FUSS[b] || b);
   if(a === 'teil') return name(b) + (x ? ' (' + x + ')' : '');
   if(a === 'bild') return 'Bild: ' + b;
+  if(a === 'in') return b === 'monat' ? 'getragen vom Monat' : 'getragen von der Woche';
   return {brk:'Breaking', neg:'negativ', gegen:'mit Gegenstück', ehrung:'mit Ehrung des Tages', potd:'Spieler des Tages',
-    viele:'viele', eins:'eine Bewegung', ab:'mit Rückfall', runde:'Runde', woche:'Woche', monat:'Monat'}[k] || k;
+    viele:'viele', eins:'eine Bewegung', ab:'mit Rückfall', runde:'Runde', tag:'Tag', woche:'Woche', monat:'Monat'}[k] || k;
 };
 
 // ── Das Wörterbuch der Zeichnungen ──────────────────────────────────
@@ -245,12 +248,12 @@ const UHR = [
   ['zur Partie', 'Das Zeichen des Tages, ebenso in Fassungen.', 'insignium_tag'],
   ['zur Partie', 'Die erste Tabelle eines Monats und der Schlusssprint der letzten sieben Tage.', 'season_start'],
   ['+30 Min.', 'Die Runde der Vier, nach mindestens drei Partien derselben vier ohne Pause.', 'runde'],
-  ['+2 Std.', 'Die Ehrung der Runde, wenn keine Partie mehr kam.', 'ehrung:runde'],
   ['15:00', 'Der Fun Fact des Tages.', 'ambient'],
   ['23:57', 'Was einen ganzen Tag beschreibt und der Spieler des Tages nicht trägt; die kleinen Marken des Tages.', 'badge_marken'],
   ['23:58', 'Der härteste Tag, nur an Tagen ohne Spieler des Tages.', 'elo_swing'],
-  ['23:59', 'Der Spieler des Tages mit Gegenstück und Ehrung des Tages; was das Zeichen erst mit dem Schluss des Tages bewegt.', 'potd'],
-  ['So 23:59:05', 'Die Woche, direkt darunter die Ehrung der Woche.', 'woche'],
+  ['23:59', 'Der Spieler des Tages mit Gegenstück und Ehrung des Tages (am Sonntag und am Monatsende ohne); was das Zeichen erst mit dem Schluss des Tages bewegt.', 'potd'],
+  ['23:59', 'Ohne Spieler des Tages: die Ehrung des Tages mit dem härtesten Tag, außer eine Woche oder ein Monat endet.', 'ehrung:tag'],
+  ['So 23:59:05', 'Die Woche, direkt darunter die Ehrung der Woche (nicht, wenn der Monat am selben Abend schließt).', 'woche'],
   ['Mo 00:00', 'Das Zeichen des Wochenschlusses (nicht, wenn der Monat am selben Abend schließt).', 'insignium_tag:woche'],
   ['1. 00:00', 'Der Monatsabschluss, direkt darunter die Ehrung des Monats.', 'season_recap'],
   ['beim Lauf', 'Spielpause und ruhige Woche tragen den Zeitpunkt, zu dem sie zuerst gespeichert wurden.', 'dry_spell'],
@@ -281,7 +284,7 @@ const inhalt = `
   <p class="sl-hinweis">Gestellt ist eine Sache: ein Karriereende kommt in den Partien nicht vor. Für das Beispiel beendet Anton am 20.10. um 18:00 die Karriere.</p>
   <nav class="sl-nav">
     <a href="#weg">Weg</a><a href="#uhr">Uhr</a><a href="#breaking">Breaking</a><a href="#seiten">Seiten</a>
-    <a href="#zusammen">Zusammenführen</a><a href="#karten">Karten</a><a href="#anlaesse">Anlässe</a>${NEU ? NEU.nav : ''}<a href="#zahlen">Zahlen</a>
+    <a href="#zusammen">Zusammenführen</a><a href="#karten">Karten</a><a href="#anlaesse">Anlässe</a>${NEU ? NEU.nav : ''}${KF ? KF.nav : ''}<a href="#zahlen">Zahlen</a>
   </nav>
 </header>
 
@@ -318,13 +321,13 @@ const inhalt = `
       <li>Monatsabschluss: der Meister steht fest</li><li>Schlusssprint bei offener Lage</li><li>Karriereende</li></ul>
       <h4>Unter Bedingung</h4><ul>
       <li>Auszeichnung: nur legendär</li>
-      <li>Spieler des Tages und Ehrung der Woche: wenn ihr Schluss eine legendäre Auszeichnung vergab, die nicht Schlagzeile ist (${c('EHRUNG_KOPF')}: ${esc(K.ehrungKopf.join(', '))})</li>
+      <li>Spieler des Tages, Ehrung des Tages und der Woche: wenn ihr Schluss eine legendäre Auszeichnung vergab, die nicht Schlagzeile ist (${c('EHRUNG_KOPF')}: ${esc(K.ehrungKopf.join(', '))}); die Woche fragt auch ihren Sonntag</li>
       <li>Zeichen des Tages: erster Aufstieg in die obersten zwei Stufen, ohne belegtes „wieder"</li>
       <li>Bündel und Sammelkarte: wenn ein Teil es ist</li></ul></div>
     <div><h4>Nie</h4><ul>
       <li>Rekord erstmals vergeben: in der Füllphase der Tafel wird jeder Rekord zum ersten Mal vergeben</li>
       <li>Spitzenspiel und Sensation: sie haben ihre Zeile an der Partie</li>
-      <li>Ehrung einer Runde und des Monats</li><li>Fun Facts, Rückblicke außer dem Monat, alles Negative</li></ul>
+      <li>Ehrung des Monats</li><li>Fun Facts, Rückblicke außer dem Monat, alles Negative</li></ul>
       <h4>Gemessen im Lauf</h4><ul>
       ${Object.keys(D.formen).filter(k => D.formen[k].brk).map(k => `<li>${esc(FORM[k] ? FORM[k].name : k)}: <span class="num">${D.formen[k].brk} von ${D.formen[k].n}</span></li>`).join('')}</ul></div>
   </div>
@@ -348,9 +351,11 @@ const inhalt = `
     <li><b>Eine Partie, eine Karte.</b> Alles mit derselben ${c('matchId')} hängt sich an ${c('spiel_<Partie>')}, auch Breaking, seltene Auszeichnungen und negative Zeilen. Verschiedene Partien werden nie über eine Minute zusammengelegt. Die Schlagzeile nennt höchstens drei Anlässe, der stärkste zuerst; das Bündel trägt den Rang seines stärksten Teils.</li>
     <li><b>Sammelkarten nach ihrem Grund.</b> Was im selben Moment aus demselben Grund passiert, kommt in eine Karte (${c('causalKey')}): die Tafel eines Spieltags, die kurze Strecke, die Spieler-Karte, die Erfolgs-Karte. Die Karte zeigt höchstens ${L.sammelZeilen} Zeilen ohne Ausbauten, das Blatt alle.</li>
     <li><b>Fassungen.</b> Tafel und Zeichen des Tages werden mit jeder Partie als ganze neue Fassung gespeichert; gezeigt wird je Tag nur die, die zu den Partien passt.</li>
-    <li><b>Der Spieler des Tages trägt den Tag.</b> Der härteste Tag steht als Gegenstück auf seiner Karte; was der Schluss des Tages vergab, als Ehrung des Tages. Was er trägt, hat keine eigene Karte um 23:57 und steht in keiner Ehrung einer Runde (${c('_tagGetragen')}). Gespeicherte eigene Ehrungen eines Tages aus einer älteren Fassung gehen beim Anzeigen in ihn auf.</li>
-    <li><b>Keine Auszeichnung zweimal.</b> Was eine gespeicherte Ehrung einer Runde schon nennt, lässt die Ehrung des Tages weg (${c('_ehrungSchonGenannt')}). Die Woche zieht die Titel eines Monats ab, der in ihr endet; die gehören dem Monat.</li>
-    <li><b>Schluss unter Schluss.</b> Ehrung der Woche und des Monats haben dieselbe Zeit wie Wochenkarte und Monatsabschluss und stehen direkt darunter.</li>
+    <li><b>Eine Karte fasst den Tag zusammen.</b> Der Spieler des Tages trägt den härtesten Tag als Gegenstück und alles, was der Tag an Auszeichnungen brachte, als Ehrung des Tages; ohne ihn tut es die Ehrung des Tages. Was sie trägt, hat keine eigene Karte um 23:57 (${c('_tagGetragen')}). Gespeicherte Ehrungen einer Runde oder eines Tagesschlusses aus älteren Fassungen gehen beim Anzeigen in sie auf (${c('_ehrungVereint')}).</li>
+    <li><b>Die größere Ehrung trägt den Tag.</b> Endet mit einem Spieltag eine Woche oder ein Monat, steht nur die größte Ehrung (${c('_ehrungGroessere')}): am Sonntag die der Woche, am letzten Tag eines Monats die des Monats, und endet der Monat an einem Sonntag, trägt er auch die Woche mit ihrem Spieler der Woche (${c('rcpMonatGrenzen')}).</li>
+    <li><b>Keine Auszeichnung zweimal.</b> Was um Montag 00:00 vergeben wird, gehört der Woche davor; die nächste Woche und der nächste Monat zählen ab einer Millisekunde danach. Die Woche zieht die Titel eines Monats ab, der in ihr endet; die gehören dem Monat.</li>
+    <li><b>Schluss unter Schluss.</b> Ehrung der Woche und des Monats haben dieselbe Zeit wie Wochenkarte und Monatsabschluss und stehen direkt darunter, knapp, damit sie die Karte darüber nicht überschatten.</li>
+    <li><b>Eine Auszeichnung führt zu sich.</b> In jedem Blatt öffnet eine Auszeichnung ihre Detailansicht darüber (${c('_bpBinden')}); kam sie ohne Partie, nennt die Detailansicht die Tage, Wochen oder Monate und öffnet deren Rückblick.</li>
     <li><b>Alte Zeilen.</b> Einzelne Stufen-Zeilen (${c('insignium_stufe')}) werden zur Zeichen-Karte ihres Tages; abgemeldete Präfixe erreichen den Feed nicht.</li>
   </ul>
 </section>
@@ -369,6 +374,8 @@ const inhalt = `
 </section>
 
 ${NEU ? NEU.html : ''}
+
+${KF ? KF.html : ''}
 
 <section id="zahlen" class="sl-abschnitt">
   <h2>Zahlen</h2>
@@ -519,7 +526,7 @@ const teil = `<title>Die Stories der Liga</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 ${fonts}
 <style>${appCss}</style>
-<style>${css}${NEU ? NEU.css : ''}</style>
+<style>${css}${NEU ? NEU.css : ''}${KF ? KF.css : ''}</style>
 <main class="sl-seite">${inhalt}</main>
 <div class="nd-bg" id="slNd" role="dialog" aria-modal="true" aria-label="Blatt"><div class="nd"></div></div>
 <script type="application/octet-stream" id="sl-daten">${daten}</script>

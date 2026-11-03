@@ -86,11 +86,12 @@ const MARKEN_JS = `(s => {
     if((d.teile || []).some(x => x && x.neg)) m.push('neg');
   }
   if(t === 'ambient') m.push('bild:' + (((d.bild || {}).f) || (d.leiter ? 'leiter' : '-')));
-  if(t === 'potd'){ m.push('potd'); if(d.gegenstueck) m.push('gegen'); if((d.ehrung || []).length) m.push('ehrung'); }
+  if(t === 'potd'){ m.push('potd'); if(d.gegenstueck) m.push('gegen'); if((d.ehrung || []).length) m.push('ehrung');
+    if(d.ehrungIn) m.push('in:' + d.ehrungIn); }
   if(t === 'insignium_tag'){ m.push((d.zuege || []).length > 1 ? 'viele' : 'eins');
     if((d.zuege || []).some(z => z && z.art === 'ab')) m.push('ab'); if(_isBreaking(s)) m.push('brk'); }
   if(t === 'ehrung'){ m.push(d.periode || 'runde'); if(_isBreaking(s)) m.push('brk');
-    if((d.spieler || []).length > 5) m.push('viele'); }
+    if((d.spieler || []).length > 5) m.push('viele'); if(d.gegenstueck) m.push('gegen'); }
   if(!m.length) m.push(t + (_isBreaking(s) ? ':brk' : ''));
   return m;
 })`;
@@ -230,7 +231,7 @@ const roh = JSON.parse(K(`(() => { const form = ${FORM_JS}, je = {};
 // Die Zahlen, die im Code stehen — nicht abgeschrieben, sondern gelesen.
 const konstanten = JSON.parse(K(`JSON.stringify({limits:NEWS_LIMITS, prio:STORY_PRIO, fenster:NEWS_FENSTER_TAGE,
   halten:NEWS_HALTEN_TAGE, abgemeldet:STORY_ABGEMELDET,
-  seiten:NEWS_SEITEN, ehrungPause:EHRUNG_PAUSE_MS, ehrungSchluss:EHRUNG_SCHLUSS, ehrungKopf:[...EHRUNG_KOPF],
+  seiten:NEWS_SEITEN, ehrungSchluss:EHRUNG_SCHLUSS, ehrungKopf:[...EHRUNG_KOPF],
   badgeMarken:NEWS_BADGE_MARKEN, badgeMarkenKlein:NEWS_BADGE_MARKEN_KLEIN,
   insOben:INSIGNIUM_OBEN})`));
 

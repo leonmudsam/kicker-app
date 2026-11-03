@@ -15,6 +15,13 @@
 //
 // Schließen: Backdrop-Click, ✕ Button, ESC. KEIN closeSheet — das darunter
 // liegende Auszeichnungen-Sheet bleibt scrollbar und sucht-fähig.
+//
+// Geöffnet wird sie überall, wo eine Auszeichnung in einem Blatt steht
+// (`_bpBinden`, `data-bp`): im Profil, im Blatt einer Story, in der
+// Laufbahn und in den Rückblicken. Vorher nur aus dem Profil — wer in der
+// Ehrung der Woche „Player of the Week" antippte, landete im Profil des
+// Spielers und suchte die Auszeichnung dort zwischen sechzig anderen. Sie
+// liegt deshalb über dem Blatt einer Story (`.bp-bg` über `.nd-bg`).
 // ═══════════════════════════════════════════════════════════════════════════
 
 // Helper: Matches, in denen das Badge für DIESEN Spieler gefeuert wurde.
@@ -31,6 +38,78 @@ function _badgeFireMatches(playerId, badgeId){
     }
   }
   return hits.sort((a,b) => mts(b)-mts(a));
+}
+
+// Wann eine Auszeichnung ohne Partie kam: mit dem Schluss eines Tages, einer
+// Woche oder eines Monats (`EHRUNG_SCHLUSS`) [§11.6f], je Schluss gezählt
+// wie in der Ehrung, eine Millisekunde davor gegen ihn
+// (`_ehrungSchlussPosten`). Vorher stand dort „Diese Auszeichnung wird über
+// Saison-/Karriere-Daten ermittelt", und für welche Woche jemand Spieler der
+// Woche war, stand nirgends. Die jüngste zuerst, wie die Partien.
+function _badgeSchluesse(badgeId, playerId){
+  const def = BADGES.find(x => x.id === badgeId);
+  const arten = ['tag', 'woche', 'monat'].filter(k => EHRUNG_SCHLUSS[k].includes(badgeId));
+  if(!def || !arten.length) return [];
+  const tage = new Set(), wochen = new Set(), monate = new Set();
+  (matches || []).forEach(m => { const t = mts(m);
+    tage.add(tagKey(t)); wochen.add(wochenBeginn(new Date(t)).getTime()); monate.add(seasonOf(t).id); });
+  const zeiten = [];
+  if(arten.includes('tag')) tage.forEach(k => { const d = new Date(k + 'T00:00:00'); d.setHours(23, 59, 0, 0);
+    zeiten.push({art:'tag', T:d.getTime(), k}); });
+  if(arten.includes('woche')) wochen.forEach(ab => { const e = new Date(ab); e.setDate(e.getDate() + 7);
+    zeiten.push({art:'woche', T:e.getTime(), k:tagKey(ab), ab}); });
+  if(arten.includes('monat')) monate.forEach(sid => zeiten.push({art:'monat', T:seasonEnd(sid).getTime(), k:sid}));
+  const jetzt = Date.now(), out = [];
+  zeiten.filter(z => z.T <= jetzt).sort((x, y) => y.T - x.T).forEach(z => {
+    let a = 0, n = 0;
+    try { a = def.count(playerId, _partienBis(z.T - 1), z.T - 1) || 0; n = def.count(playerId, _partienBis(z.T), z.T) || 0; }
+    catch(e){ return; }
+    if(n > a) out.push(Object.assign(z, {mal:n - a}));
+  });
+  return out;
+}
+const _BP_SCHLUSS_WORT = {tag:['an einem Tag', 'an # Tagen'], woche:['in einer Woche', 'in # Wochen'],
+  monat:['in einem Monat', 'in # Monaten']};
+function _badgeSchlussKopf(sl){
+  const arten = [...new Set(sl.map(z => z.art))];
+  if(arten.length !== 1) return `Geholt ${sl.reduce((n, z) => n + z.mal, 0)}-mal`;
+  return 'Geholt ' + _BP_SCHLUSS_WORT[arten[0]][sl.length === 1 ? 0 : 1].replace('#', sl.length);
+}
+function _badgeSchlussZeile(z){
+  const was = z.art === 'tag' ? datumFmt(new Date(z.k + 'T12:00:00'), 'tmj')
+    : z.art === 'woche' ? `${datumFmt(z.ab, 'tm')} bis ${datumFmt(z.T - 1, 'tm')}`
+    : seasonLabel(z.k);
+  // Ein Monat ohne Eintrag in der Tafel der Saisons hat keinen Rückblick.
+  const ziel = z.art !== 'monat' || (seasons || []).some(x => x.id === z.k);
+  const wohin = z.art === 'tag' ? 'Rückblick auf den Tag' : z.art === 'woche' ? 'Rückblick auf die Woche' : 'Rückblick auf den Monat';
+  return `<div class="bp-match"${ziel ? ` data-bp-zeit="${esc(z.art + '|' + z.k)}"` : ''}>
+    <div class="bp-match-date">${esc(was)}${z.mal > 1 ? ` <span class="num">×${z.mal}</span>` : ''}</div>
+    ${ziel ? `<div class="bp-match-score bp-schluss">${esc(wohin)}</div>
+    <div class="bp-match-arr">›</div>` : ''}
+  </div>`;
+}
+// Aus der Detailansicht weiter: sie schließt, und eine offene Story auch —
+// das Ziel ist ein Blatt, und das liegt unter der Story (`sheetNav`).
+function _bpWeiter(fn){
+  closeBadgePopover();
+  const ndBg = document.getElementById('ndBg');
+  if(ndBg && ndBg.classList.contains('show')) closeNewsDetail();
+  sheetNav(() => { try { fn(); } catch(e){} });
+}
+// Jede Auszeichnung in einem Blatt öffnet ihre Detailansicht: `data-bp` ist
+// die Auszeichnung, `data-bp-pid` der Spieler, für den sie gilt. Sie steht
+// oft in einer Zeile, die ins Profil führt; der Klick gehört dann ihr.
+function _bpBinden(root){
+  if(!root) return;
+  root.querySelectorAll('[data-bp][data-bp-pid]').forEach(el => {
+    el.onclick = e => {
+      // Ein Gesicht darin führt weiter ins Profil.
+      const innen = e.target && e.target.closest ? e.target.closest('[data-pid]') : null;
+      if(innen && innen !== el && el.contains(innen)) return;
+      e.stopPropagation();
+      showBadgePopover(el.dataset.bp, el.dataset.bpPid);
+    };
+  });
 }
 
 // Helper: Fortschritt für quantifizierbare Locked-Badges. Returnt
@@ -306,16 +385,18 @@ function showBadgePopover(badgeId, playerId){
         </div>`;
       }).join('');
       bodyHtml = `
-        <div class="bp-section">Ausgelöst in ${hits.length} ${hits.length===1?'Match':'Matches'}</div>
+        <div class="bp-section">Geholt in ${hits.length} ${hits.length===1?'Partie':'Partien'}</div>
         ${rowsHtml}`;
     } else {
-      // Saison-/Karriere-aggregierte Badges ohne fire-Trigger.
-      // Wir zeigen einen kurzen Hinweis statt einer Liste.
-      bodyHtml = `
+      // Ohne Partie: der Tag, die Woche oder der Monat, dessen Schluss sie
+      // vergab, und ein Tippen öffnet dessen Rückblick.
+      const sl = _badgeSchluesse(badgeId, playerId);
+      bodyHtml = sl.length ? `
+        <div class="bp-section">${esc(_badgeSchlussKopf(sl))}</div>
+        ${sl.map(_badgeSchlussZeile).join('')}` : `
         <div class="bp-section">Status</div>
         <div class="bp-locked-hint">
-          Diese Auszeichnung wird über Saison-/Karriere-Daten ermittelt und
-          ist nicht an ein einzelnes Match gebunden.
+          Sie hängt an keiner einzelnen Partie.
           ${isRepeatable
             ? `<br><br><span class="bp-locked-em">${cnt}×</span> bisher erreicht.`
             : `<br><br><span class="bp-locked-em">Freigeschaltet.</span>`}
@@ -378,12 +459,17 @@ function showBadgePopover(badgeId, playerId){
   bp.scrollTop = 0;
   _fensterLicht(bp, 'weiss');
   _verdecken('bp', true);
-  // Match-Click: schließt POPOVER und SHEET, öffnet Match-Detail
+  // Eine Partie öffnet ihr Blatt, ein Tag, eine Woche, ein Monat seinen
+  // Rückblick, über dem Blatt darunter gestapelt (`_bpWeiter`).
   bp.querySelectorAll('.bp-match[data-mid]').forEach(el => {
+    el.onclick = () => { const mid = el.dataset.mid; _bpWeiter(() => showMatchDetail(mid)); };
+  });
+  bp.querySelectorAll('.bp-match[data-bp-zeit]').forEach(el => {
     el.onclick = () => {
-      const mid = el.dataset.mid;
-      closeBadgePopover();
-      sheetNav(() => showMatchDetail(mid)); // Match-Detail über das aktuelle Sheet stapeln
+      const [art, k] = String(el.dataset.bpZeit).split('|');
+      const se = art === 'monat' ? (seasons || []).find(x => x.id === k) : null;
+      _bpWeiter(() => art === 'tag' ? showPotdRecap({force:true, tag:k}) : art === 'woche' ? showPotwRecap({woche:k})
+        : showSeasonRecap(se));
     };
   });
   document.getElementById('bpCloseBtn').onclick = closeBadgePopover;
