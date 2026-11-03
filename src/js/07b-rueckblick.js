@@ -227,10 +227,14 @@ function showPotwRecap(opts){
 // kommen der Spieler der Woche und der Award-Sammler. Bis zur letzten
 // Millisekunde des Sonntags gerechnet fehlten sie in den Auszeichnungen der
 // Woche, und die Ehrung der Woche, die dieselben Stände liest, hätte ihren
-// Spieler der Woche nicht genannt. Die neuen Zeichen bleiben, wie die Liga
-// sie in dieser Woche getragen hat — auch mit einem Titel.
+// Spieler der Woche nicht genannt. Gezählt wird ab einer Millisekunde nach
+// ihrem Beginn: um Montag 00:00 schließt die Woche davor, und ab Mitternacht
+// gezählt stand deren Spieler der Woche ein zweites Mal da — am 19.10.
+// „Spieler der Woche ×2" für Leon, einmal für die Woche davor. Die neuen
+// Zeichen bleiben, wie die Liga sie in dieser Woche getragen hat — auch mit
+// einem Titel.
 function rcpWocheLaufbahn(vonMs, bisMs){
-  const daten = rcpLaufbahnDaten(vonMs, bisMs + 1);
+  const daten = rcpLaufbahnDaten(vonMs + 1, bisMs + 1);
   const je = new Map(daten.map(x => [x.pid, x]));
   const monate = new Set();
   for(let t = vonMs; t <= bisMs + 864e5; t += 864e5) monate.add(seasonOf(Math.min(t, bisMs)).id);

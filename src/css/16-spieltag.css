@@ -1609,28 +1609,48 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 }
 @keyframes ehSetzt{from{opacity:0;transform:translateY(-8px) scale(.7)}}
 
-/* ── Die Ehrung einer Woche und eines Monats [§11.6f] ─────────────────── */
-/* Sie steht unter der Wochenkarte oder dem Rückblick und gehört zu ihnen:
-   Gold, die Familie dieser beiden Karten [§C25], mit ihrer breiteren Kante,
-   statt des Violetts einer Runde. Die Bühne trägt den Goldgrund der
-   Meisterbühne und ihre Fuge, die Säulen haben Namen wie im Rückblick
-   [§C27]. Unter den Säulen, was jede Klasse brachte. */
+/* ── Die Ehrung eines Tages, einer Woche, eines Monats: knapp [§11.6f] ── */
+/* Sie gehört zur Karte über ihr und nimmt ihr nicht den Platz: unter der
+   Schlagzeile eine Reihe Gesichter mit ihrem Prestige, darunter ein Balken
+   der Klassen. Woche und Monat in Gold, der Familie ihrer Karten [§C25];
+   der Tag ohne Spieler des Tages im Violett der Ehrung. Die Säulen mit
+   Namen machten die Karte der Woche höher als einen Bildschirm. */
 .nf-card.nf-ehrung-zr{--story:var(--gold);--story-rgb:247,207,74;--tint:rgba(247,207,74,.06);
   --kante:3px;--rahmen:rgba(247,207,74,.25)}
 .nf-card.nf-ehrung-zr.zr-monat{--tint:rgba(247,207,74,.085)}
-.nf-ehrung-zr .nf-gr{padding-bottom:4px}
-.nf-ehrung-zr .eh-buehne{--fuge:6px;margin:6px 10px 0;padding:14px 6px 12px;gap:9px var(--fuge);
-  background:radial-gradient(120% 90% at 50% 100%,rgba(247,207,74,.12),transparent 62%),
-    linear-gradient(180deg,rgba(247,207,74,.05),transparent 72%);
-  border-color:rgba(247,207,74,.22)}
-.nf-ehrung-zr .eh-fuss{margin-top:10px}
+.nf-ehrung-kp .nf-gr{padding-bottom:2px}
 .nf-ehrung-zr .eh-zr{border-left-color:rgba(247,207,74,.45)}
+/* Der Zeitraum in einer Zeile: untereinander kostete er die Höhe einer
+   Reihe Gesichter. */
+.nf-ehrung-kp .eh-zr{margin-top:4px}
+.nf-ehrung-kp .eh-zr-k,.nf-ehrung-kp .eh-zr-t{display:inline}
+.eh-kp{display:flex;justify-content:flex-start;gap:4px;padding:2px 13px 0;min-width:0}
+.eh-kp-s{flex:0 1 54px;min-width:0;display:flex;flex-direction:column;align-items:center;gap:1px}
+.eh-kp-s .av{--av:24px;width:24px;height:24px;font-size:9.5px;flex:0 0 auto;margin-bottom:1px}
+.eh-kp-s b{font-family:'Sometype Mono',monospace;font-size:10px;font-weight:700;line-height:1.15;color:var(--acid)}
+.eh-kp-s.viol b{color:var(--purple)}
+.eh-kp-s.gold b{color:var(--gold)}
+.eh-kp-s small{max-width:100%;font-size:9px;line-height:1.15;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.eh-kp-rest i{display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;margin-bottom:1px;
+  font-style:normal;font-size:10px;font-weight:700;color:var(--ink2);background:var(--surface3)}
+/* Darunter in einer Zeile, wie viele Auszeichnungen jeder Klasse; der
+   Balken, was sie an Prestige brachten, ist die Unterkante dieser Zeile
+   über die ganze Breite der Karte. Als eigene Zeile zwischen Gesichtern und
+   Legende, mit der Summe daneben, kostete er ein Viertel der Höhe; die
+   Summe steht im Blatt, die Gesichter tragen jedes ihren Teil. */
+.eh-kp-k{position:relative;padding:5px 13px 10px}
+.eh-kp-l{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 7px}
+.eh-kp-l .eh-k{gap:3px;font-size:10px}.eh-kp-l .eh-k b{font-size:10.5px}.eh-kp-l .eh-k i{width:7px;height:7px}
+.eh-kp-b{position:absolute;left:0;right:0;bottom:0;display:flex;gap:2px;height:3px}
+.eh-kp-b i{min-width:3px}
+.eh-kp-b i.legendary{background:var(--gold)}.eh-kp-b i.rare{background:var(--purple)}.eh-kp-b i.common{background:var(--acid)}
+.nf-ehrung-kp .nf-gegen{margin-top:0}
 
 /* ── Die Ehrung des Tages, unter dem Spieler des Tages [§11.6f] ──────── */
 /* Ein Kopf mit Zeichen und Summe, darunter je Geehrtem eine Zeile:
-   Gesicht, Name, darunter die Namen der Auszeichnungen, rechts ihre
-   Zeichenkacheln und das Prestige. Die Namen brechen nur zwischen zwei
-   Auszeichnungen um, die Kacheln nie. */
+   Gesicht, Name, darunter die seltenen und legendären Auszeichnungen und
+   die Zahl der gewöhnlichen, rechts ihre Zeichenkacheln — die gewöhnlichen
+   als eine mit ihrer Zahl — und das Prestige. Die Kacheln brechen nie. */
 .nf-eht{margin:8px 13px 11px;padding:8px 10px 6px;border-radius:12px;
   background:linear-gradient(180deg,rgba(167,139,250,.07),rgba(167,139,250,.025));
   border:1px solid rgba(167,139,250,.2)}
@@ -1650,6 +1670,10 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 .nf-eht-t small{font-size:10.5px;line-height:1.3;color:var(--muted)}
 .nf-eht-a{flex:0 0 auto;display:flex;gap:3px}
 .nf-eht-z > b{flex:0 0 auto;font-family:'Sometype Mono',monospace;font-size:11.5px;font-weight:700;color:var(--gold)}
+.nf-eht-g{position:relative;display:flex}
+.nf-eht-g > i{position:absolute;right:-4px;bottom:-4px;min-width:14px;height:14px;padding:0 3px;border-radius:7px;
+  font-style:normal;font-size:9px;font-weight:700;line-height:14px;text-align:center;color:var(--bg);background:var(--acid)}
+.nf-eht-r{padding:4px 0 2px;border-top:1px solid var(--line);font-size:10.5px;color:var(--muted)}
 /* Das Lauflicht über einer legendären Auszeichnung, wie im Profil [§C27];
    bei Bewegungsruhe nimmt 06-misc.css es weg. */
 .eh-s-z .zk.gold > .glanz-bahn::after,.eh-q > .zk.gold > .glanz-bahn::after{

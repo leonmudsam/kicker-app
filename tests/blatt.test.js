@@ -1413,8 +1413,9 @@ const ok = (c, msg, det) => {
                   'sp-fk',
                   // Die Insignium-Karte des Tages: die Verwandlung als Bühne.
                   'ni-b',
-                  // Die Ehrung: je Geehrtem eine Säule mit der Zeichenkachel.
-                  'eh-buehne'];
+                  // Die Ehrung: je Geehrtem eine Säule mit der Zeichenkachel;
+                  // knapp (Tag, Woche, Monat) die Gesichter mit ihrem Prestige.
+                  'eh-buehne', 'eh-kp'];
     arr.forEach(x => {
       host.innerHTML = x.html;
       const karte = host.querySelector('.nf-card');
@@ -1451,9 +1452,14 @@ const ok = (c, msg, det) => {
   const ehrung = await page.evaluate(() => {
     const K = window.__k.eval.bind(window.__k);
     const roh = K(`JSON.stringify((function(){
-      const alle = [], ids = new Set();
-      for(let t = Date.parse('2026-05-10'); t < Date.parse('2026-09-01'); t += NEWS_FENSTER_TAGE * 864e5 * 0.9)
-        _newsEhrungStories(t).forEach(s => { if(!ids.has(s.id)){ ids.add(s.id); alle.push(s); } });
+      // Gespeicherte Ehrungen einer Runde stehen weiter im Feed; gezeichnet
+      // aus der Ehrung jedes Tages, von seiner ersten bis zur letzten Partie.
+      const alle = [];
+      [...new Set(matches.map(m => tagKey(mts(m))))].forEach(tg => {
+        const ms = matches.filter(m => tagKey(mts(m)) === tg), t = new Date(tg + 'T23:59:00').getTime();
+        const s = _ehrungKarte(_ehrungDesTages(t), 'ehrung_' + ms[ms.length - 1].id, t, {ab:mts(ms[0]), bis:mts(ms[ms.length - 1])});
+        if(s) alle.push(s);
+      });
       alle.sort((a, b) => b.dataRef.spieler.length - a.dataRef.spieler.length);
       const mit = n => alle.find(s => s.dataRef.spieler.length === n);
       return [alle[0], mit(5), mit(4), alle[alle.length - 1]].filter(Boolean).map(s => ({n:s.dataRef.spieler.length,
@@ -1503,6 +1509,50 @@ const ok = (c, msg, det) => {
   ok(ehrung.some(x => x.kacheln > 0) && ehrung.every(x => !x.gebrochen.length),
      'im Blatt der Ehrung bricht kein Name einer Kachel mitten im Wort',
      ehrung.flatMap(x => x.gebrochen).join(', ') || ehrung.map(x => x.kacheln).join('+') + ' Kacheln');
+  // ── Die Ehrung einer Woche und eines Monats ist knapp ────────────
+  //    Sie steht unter der Wochenkarte und dem Monatsabschluss und darf sie
+  //    nicht überschatten: mit Säulen und Namen war die Ehrung der Woche
+  //    höher als ein Bildschirm. Gemessen in der Breite der Karte im Feed:
+  //    die Gesichter in einer Reihe, nichts über den Rand. Bei 360 px
+  //    (287 px Karte) höchstens 190 px und zwei Drittel der Wochenkarte
+  //    darüber; bei 320 px (247 px), wo Zeitraum und Legende umbrechen,
+  //    höchstens 225 px und drei Viertel. Mit Säulen und Namen waren es 340
+  //    und mehr, mit eigener Balkenzeile und Summe noch 233.
+  const knapp = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const roh = JSON.parse(K(`JSON.stringify((function(){
+      const l = _buildStories();
+      const e = l.filter(x => /^ehrung_der_woche_/.test(x.id)).sort((a, b) => b.dataRef.spieler.length - a.dataRef.spieler.length)[0];
+      const w = e && l.find(x => (x.dataRef||{}).type === 'woche' && +new Date(x.when) === +new Date(e.when));
+      const m = _newsZeitraumEhrungen(new Date(2026, 7, 5).getTime()).find(x => x.dataRef.periode === 'monat');
+      return {e:e ? _newsCardHtmlM2(e, false, false, '') : '', ne:e ? e.dataRef.spieler.length : 0,
+        w:w ? _newsCardHtmlM2(w, false, false, '') : '', m:m ? _newsCardHtmlM2(m, false, false, '') : '', nm:m ? m.dataRef.spieler.length : 0};
+    })())`));
+    const host = document.createElement('div');
+    host.style.cssText = 'position:absolute;left:0;top:0';
+    document.body.appendChild(host);
+    const miss = (html, breite) => {
+      host.style.width = breite + 'px';
+      host.innerHTML = '<div class="nf-feed">' + html + '</div>';
+      const k = host.querySelector('.nf-card');
+      if(!k) return null;
+      const r = k.getBoundingClientRect();
+      const s = [...k.querySelectorAll('.eh-kp-s')].map(x => x.getBoundingClientRect());
+      return {h:Math.round(r.height), reihe:new Set(s.map(q => Math.round(q.top))).size, n:s.length,
+        drin:[...k.querySelectorAll('.eh-kp-s, .eh-kp-l > *, .eh-kp-b')].every(x => { const q = x.getBoundingClientRect();
+          return q.left >= r.left - .5 && q.right <= r.right + .5; })};
+    };
+    const out = [];
+    [287, 247].forEach(b => { out.push({art:'woche', b, n:roh.ne, karte:miss(roh.e, b), ueber:miss(roh.w, b)});
+      out.push({art:'monat', b, n:roh.nm, karte:miss(roh.m, b)}); });
+    host.remove();
+    return out;
+  });
+  ok(knapp.length === 4 && knapp.every(x => x.karte && x.karte.reihe === 1 && x.karte.drin && x.karte.h <= (x.b === 287 ? 190 : 225))
+       && knapp.filter(x => x.art === 'woche').every(x => x.ueber && x.karte.h <= x.ueber.h * (x.b === 287 ? 2 / 3 : 3 / 4))
+       && knapp.some(x => x.n > 5),
+     'die Ehrung der Woche und des Monats steht knapp: Gesichter in einer Reihe, nichts über den Rand, bei 360 px höchstens 190 px und zwei Drittel der Wochenkarte, bei 320 px höchstens 225 px und drei Viertel',
+     JSON.stringify(knapp.map(x => [x.art, x.b, x.n, x.karte && x.karte.h, x.karte && x.karte.reihe, x.ueber && x.ueber.h])));
   // ── Was ein Schluss vergibt, als Grund eines Zeichens [§11.0e] ────
   //    In der Zeichen-Karte des Wochenschlusses: Kachel, Gesicht, Satz und
   //    Wort der Klasse in einer Zeile, die in der Karte bleibt — gemessen in
@@ -1558,9 +1608,8 @@ const ok = (c, msg, det) => {
   const ehZeit = await page.evaluate(() => {
     const K = window.__k.eval.bind(window.__k);
     const karten = JSON.parse(K(`JSON.stringify((function(){
-      let s = null;
-      for(let t = Date.parse('2026-05-10'); !s && t < Date.parse('2026-09-01'); t += NEWS_FENSTER_TAGE * 864e5 * 0.9)
-        s = _newsEhrungStories(t)[0] || null;
+      const ms = matches.filter(m => tagKey(mts(m)) === tagKey(mts(matches[0]))), t0 = new Date(tagKey(mts(ms[0])) + 'T23:59:00').getTime();
+      const s = _ehrungKarte(_ehrungDesTages(t0), 'ehrung_' + ms[ms.length - 1].id, t0, {ab:mts(ms[0]), bis:mts(ms[ms.length - 1])});
       const um = (tage, h, m) => { const d = new Date(); d.setDate(d.getDate() - tage); d.setHours(h, m, 0, 0); return d.getTime(); };
       const mit = (ab, bis) => Object.assign({}, s, {dataRef:Object.assign({}, s.dataRef, {ab, bis})});
       return [[_newsEhrungHtml(s, false, ''), 0], [_newsEhrungHtml(mit(um(0, 13, 44), um(0, 15, 55)), false, ''), 1],
@@ -2912,8 +2961,12 @@ const ok = (c, msg, det) => {
       endlos(c).forEach(a => { if(a.playState === 'running') laufend.push(a.animationName + ' ' + Math.round(r.top) + ' px'); });
     });
     await warte(1200);
-    const imBild = karten().filter(c => { const r = c.getBoundingClientRect(); return r.bottom > -80 && r.top < hoch + 80; })
-      .map(c => c.classList.contains('im-bild'));
+    // Stehen oben nur Breaking und große Karten, wird bis zur ersten
+    // gewöhnlichen gescrollt: geprüft wird, dass sie im Bild läuft, nicht,
+    // welche Karte zuoberst steht.
+    const sicht = () => karten().filter(c => { const r = c.getBoundingClientRect(); return r.bottom > -80 && r.top < hoch + 80; });
+    if(!sicht().length && karten()[0]){ karten()[0].scrollIntoView({block:'center'}); await warte(1200); }
+    const imBild = sicht().map(c => c.classList.contains('im-bild'));
     window.__k.eval('closeSheet(true)');
     return {laufend, unten, imBild};
   });

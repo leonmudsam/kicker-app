@@ -818,6 +818,18 @@ function rcpLaufbahnDaten(vonMs, bisMs){
             von:lage(w.stufeVor, w.gradVor, w.vor), zu:lage(w.stufeNach, w.gradNach, w.nach)};
   });
 }
+// Die Grenzen eines Monats für seine Laufbahn [§C31]. Er beginnt eine
+// Millisekunde nach Mitternacht des Ersten: ist der ein Montag, schließt um
+// 00:00 die Woche davor, und ihr Spieler der Woche gehört ihr — gezählt ab
+// Mitternacht stand er im Rückblick des Monats und im Monat davor. Endet
+// der Monat an einem Sonntag, endet mit ihm die Woche, und er zählt bis zu
+// ihrem Schluss am Montag um 00:00: ihre Ehrung trägt dann der Monat
+// (`_ehrungGroessere`), mit dem Spieler der Woche. Der Rückblick und die
+// Ehrung des Monats lesen dieselben Grenzen [§C27].
+function rcpMonatGrenzen(sid){
+  const von = seasonStart(sid).getTime(), S = seasonEnd(sid).getTime();
+  return {von:von + 1, bis:wochenBeginn(S + 1).getTime() === S + 1 ? S + 1 : S};
+}
 // Die neuen Zeichen: wer eine Stufe oder einen Grad weiter oder zurück
 // steht, in der Form der Insignium-Karte (`_insBewegungenHtml`).
 function rcpZeichenZuege(daten){

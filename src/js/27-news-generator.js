@@ -611,21 +611,24 @@ function _buildStories(){
     });
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] loss_streak', e); }
 
-  // ── Die Spieltage des Fensters und was ihr Schluss vergab [§11.6f] ──
-  // Je Spieltag, dessen Karte des Spielers des Tages steht (um 23:59, mit
-  // einem Sieger), die Ehrung des Tages als Teil dieser Karte
-  // (`_ehrungTagesSchluss`): Spieler des Tages, Unschlagbar, Comeback-Tag,
-  // Tag der Götter, Allwetter, Award-Sammler, mit allen Klassen. Eine eigene
-  // Karte stand direkt daneben und nannte den Spieler des Tages ein zweites
-  // Mal. Gerechnet vor den Auszeichnungen (6.) und der Ehrung der Runden: was
-  // die Karte des Tages trägt, steht in keiner eigenen Karte und in keiner
-  // Runde noch einmal, je 'Tag|Spieler|Auszeichnung' (`_tagGetragen`).
-  // Unschlagbar stand sonst um 23:57 als eigene Karte und Tage später in
-  // einer Ehrung. Was eine gespeicherte Ehrung schon nennt, lässt sie weg.
-  const _potdTage = new Map(), _tagGetragen = new Set();
+  // ── Die Spieltage des Fensters und was sie vergaben [§11.6f] ─────────
+  // Je Spieltag die Ehrung des Tages (`_ehrungDesTages`): alles, was an ihm
+  // geholt wurde, aus den Partien und mit dem Schluss um 23:59. Sie ist Teil
+  // der Karte des Spielers des Tages; ohne ihn steht sie als eine Karte des
+  // Tages (`tagesehrung_<Tag>`). Eine Karte, die den Tag zusammenfasst, und
+  // keine zweite: es gab daneben eine Ehrung je Runde, zwei Stunden nach
+  // ihrer letzten Partie, und an einem Spieltag standen bis zu drei davon
+  // und der Spieler des Tages untereinander, jede mit einem Teil des Tages.
+  // Gerechnet vor den Auszeichnungen (6.): was die Karte des Tages trägt,
+  // steht in keiner eigenen Karte um 23:57, je 'Tag|Spieler|Auszeichnung'
+  // (`_tagGetragen`). Breaking fragt nur, was der Schluss vergab
+  // (`_ehrungTagesSchluss`). Endet mit dem Tag eine Woche oder ein Monat,
+  // trägt deren Ehrung den Tag (`_ehrungGroessere`): der Spieler des Tages
+  // steht ohne Ehrung, ein Tag ohne ihn hat keine Karte — getragen ist er
+  // trotzdem, in der größeren.
+  const _potdTage = new Map(), _ehrungTage = new Map(), _tagGetragen = new Set();
   try {
     const seit = now.getTime() - NEWS_FENSTER_TAGE * 86400000;
-    const schon = _ehrungSchonGenannt(_cache._stories);
     const tage = new Map();
     matches.forEach(m => {
       const ts = mts(m);
@@ -645,11 +648,16 @@ function _buildStories(){
       // Tages-Regel = meiste Siege (Tiebreak Elo-Delta) — identisch zu
       // showPotdRecap und zum Badge-Zaehler countDayWins.
       const res = _newsPeriodWinner(dayMatches, 'tag');
-      if(!res) return;
-      let ehrung = [];
-      try { ehrung = _ehrungTagesSchluss(rep.getTime(), schon); } catch(e){ ehrung = []; }
+      let ehrung = [], brk = false, groesser = '';
+      try {
+        ehrung = _ehrungDesTages(rep.getTime());
+        groesser = _ehrungGroessere(rep.getTime());
+        brk = !groesser && _ehrungBrichtVor(_ehrungTagesSchluss(rep.getTime()));
+      } catch(e){ ehrung = []; }
       ehrung.forEach(x => x.posten.forEach(q => _tagGetragen.add(dayKey + '|' + x.pid + '|' + q.id)));
-      _potdTage.set(dayKey, {rep, res, ehrung});
+      if(groesser) ehrung = [];
+      if(res) _potdTage.set(dayKey, {rep, res, ehrung, brk, groesser});
+      else if(ehrung.length) _ehrungTage.set(dayKey, {rep, ehrung, brk});
     });
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] potd tage', e); }
 
@@ -2060,7 +2068,7 @@ function _buildStories(){
   // sonst Partien ohne Zusammenfassung. Die ID traegt den Tag, ist also
   // stabil, und ein zweiter Lauf legt keine Zeile dazu.
   try {
-    _potdTage.forEach(({rep, res, ehrung}, dayKey) => {
+    _potdTage.forEach(({rep, res, ehrung, brk, groesser}, dayKey) => {
       const main = res.main;
       const names = res.winners.map(w => nameOf(w.id));
       // Auch hier die Aufzaehlung der App [§C27]: „Leon & Martin holen den
@@ -2085,18 +2093,30 @@ function _buildStories(){
         dataRef: {type:'potd', dayKey, playerId: main.id,
                   playerIds: res.winners.map(w => w.id),
                   wins: main.wins, games: main.wins + main.losses, wr: main.wr,
-                  // Was der Schluss des Tages vergab, je Geehrtem mit Posten
-                  // und Wert: die Ehrung des Tages [§11.6f].
-                  ehrung}
+                  // Was der Tag an Auszeichnungen brachte, je Geehrtem mit
+                  // Posten und Wert: die Ehrung des Tages [§11.6f]. `ehrungVoll`
+                  // sagt, dass sie den ganzen Tag trägt (gespeicherte Karten
+                  // von vorher nur den Schluss), `ehrungBrk`, ob der Schluss
+                  // eine legendäre außer der Schlagzeile vergab, `ehrungIn`,
+                  // welche größere Ehrung den Tag trägt (dann ist sie leer).
+                  ehrung, ehrungVoll:true, ehrungBrk:brk, ...(groesser ? {ehrungIn:groesser} : {})}
       });
     });
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] potd', e); }
 
+  // ── Die Ehrung eines Tages ohne Spieler des Tages [§11.6f] ───────────
+  // Um 23:59 wie der Spieler des Tages; wer am meisten abgab, hängt sich
+  // beim Anzeigen an sie (`gegenstueck`).
+  try {
+    _ehrungTage.forEach(({rep, ehrung, brk}, dayKey) => {
+      const st = _ehrungKarte(ehrung, 'tagesehrung_' + dayKey, rep.getTime(), {periode:'tag', tag:dayKey, voll:true, breaking:brk});
+      if(st) stories.push(st);
+    });
+  } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] tagesehrung', e); }
+
   // ── Die Runde der Vier [§C33, §11.6c] ────────────────────────────────
   // Eine eigene Story je abgeschlossener Runde, dreißig Minuten nach ihrer
   // letzten Partie. Die Karten der Partien bleiben daneben stehen.
-  try { _newsEhrungStories(now.getTime(), _tagGetragen).forEach(st => stories.push(st)); }
-  catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] ehrung', e); }
   try { _newsZeitraumEhrungen(now.getTime()).forEach(st => stories.push(st)); }
   catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] ehrung', e); }
   try { _newsRundenStories(now.getTime()).forEach(st => stories.push(st)); }

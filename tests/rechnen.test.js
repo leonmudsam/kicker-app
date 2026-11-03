@@ -344,11 +344,13 @@ ok(rekMittag.makellos===0&&rekMittag.abschluss===1&&rekMittag.schluss===1&&rekMi
   'Um 14:26 zählt nur der Vortag in Rekorden und Chroniken, die nach dem ganzen Tag fragen: '+JSON.stringify(rekMittag));
 ok(rekAbend.makellos===1&&rekAbend.abschluss===2&&rekAbend.schluss===2&&rekAbend.besterTag===8&&rekAbend.tage===2,
   'Um 23:59 zählt der Tag überall mit: '+JSON.stringify(rekAbend));
-// Die Ehrung [§11.6f]: zwei Stunden nach der letzten Partie, wenn keine mehr
-// kam, mit allem seit der Karte davor. 13:02 und 15:30 sind zwei Runden
-// (Karten um 15:02 und um 18:50, die zweite bis zur Partie um 16:50), 13:44
-// und 15:40 eine (Karte um 17:40). Und was die Karten zusammen an Prestige
-// nennen, ist das Prestige der Auszeichnungen in der Laufbahn.
+// Die Ehrung [§11.6f]: der Tag hat eine, und sie ist Teil des Spielers des
+// Tages um 23:59, mit allem, was der Tag vergab. Es gab eine Ehrung je
+// Runde, zwei Stunden nach ihrer letzten Partie: 13:02 und 15:30 ergaben
+// zwei Karten (um 15:02 und um 18:50), und mit dem Spieler des Tages
+// standen drei untereinander, jede mit einem Teil des Tages. Was die Karte
+// des Tages an Prestige nennt, ist das Prestige der Auszeichnungen in der
+// Laufbahn.
 const ehrung=(zeiten,uhr)=>{
   setNow(Date.UTC(2026,9,19,uhr[0],uhr[1]));
   return K(`(() => {
@@ -357,27 +359,27 @@ const ehrung=(zeiten,uhr)=>{
       created_at:new Date(Date.UTC(2026,9,19,z[0],z[1])).toISOString(),winner:'A',
       score_a:10,score_b:i%2?9:4,deltas:{t0:20,t1:20,t2:-20,t3:-20}}));
     seasons=[];cfg={...window.__cfgBasis};invalidateCache();
-    const l=_buildStories().filter(s=>(s.dataRef||{}).type==='ehrung').sort((a,b)=>a.when-b.when);
+    const l=_buildStories();
+    const tag=l.find(s=>(s.dataRef||{}).type==='potd');
     const bMap=getBadgeEarnedCache();
-    const jePartie=mid=>(bMap[mid]||[]).filter(e=>auszeichnungsPunkte(e.badge.id,1)>0).length;
-    const summe=pid=>l.reduce((n,s)=>n+((s.dataRef.spieler.find(x=>x.pid===pid)||{}).summe||0),0);
-    return {karten:l.map(s=>s.id+'@'+new Date(s.when).toISOString().slice(11,16)+'#'+s.dataRef.zahl),
-      partien:matches.map(m=>jePartie(m.id)),
+    const ausPartien=matches.reduce((n,m)=>n+(bMap[m.id]||[]).filter(e=>auszeichnungsPunkte(e.badge.id,1)>0).length,0);
+    const sp=tag?tag.dataRef.ehrung:[];
+    const summe=pid=>((sp.find(x=>x.pid===pid)||{}).summe||0);
+    return {ehrungen:l.filter(s=>(s.dataRef||{}).type==='ehrung').map(s=>s.id),
+      tag:tag?new Date(tag.when).toISOString().slice(11,16):'',
+      genannt:sp.reduce((n,x)=>n+x.posten.reduce((m,q)=>m+q.mal,0),0), ausPartien,
+      schluss:sp.some(x=>x.posten.some(q=>q.id==='potd')),
       prestige:['t0','t2'].map(pid=>[Math.round(summe(pid)),Math.round((prestigeOf(pid).teile||{}).auszeichnung||0)])};
   })()`);
 };
-const zweiRunden=ehrung([[13,2],[15,30],[16,50]],[19,0]);
-const nochOffen=ehrung([[13,2],[15,30],[16,50]],[18,0]);
-const eineRunde=ehrung([[13,44],[15,40]],[17,40]);
-ok(zweiRunden.karten.length===2&&zweiRunden.karten[0].startsWith('ehrung_e0@15:02#')&&zweiRunden.karten[1].startsWith('ehrung_e2@18:50#')
-  &&+zweiRunden.karten[0].split('#')[1]===zweiRunden.partien[0]&&+zweiRunden.karten[1].split('#')[1]===zweiRunden.partien[1]+zweiRunden.partien[2],
-  'Die Ehrung kommt zwei Stunden nach der letzten Partie einer Runde und zählt alles seit der Karte davor: '+JSON.stringify(zweiRunden));
-ok(nochOffen.karten.length===1&&nochOffen.karten[0].startsWith('ehrung_e0@15:02'),
-  'Solange die zweite Runde keine zwei Stunden still ist, gibt es nur die erste Karte: '+JSON.stringify(nochOffen.karten));
-ok(eineRunde.karten.length===1&&eineRunde.karten[0].startsWith('ehrung_e1@17:40#')&&+eineRunde.karten[0].split('#')[1]===eineRunde.partien[0]+eineRunde.partien[1],
-  'Partien mit weniger als zwei Stunden Abstand ergeben eine Karte mit allem seit der ersten: '+JSON.stringify(eineRunde));
-ok(zweiRunden.prestige.every(([a,b])=>a>0&&Math.abs(a-b)<=1),
-  'Was die Ehrungen an Prestige nennen, ist das Prestige der Auszeichnungen in der Laufbahn: '+JSON.stringify(zweiRunden.prestige));
+const amNachmittag=ehrung([[13,2],[15,30],[16,50]],[19,0]);
+const amSchluss=ehrung([[13,2],[15,30],[16,50]],[23,59]);
+ok(!amNachmittag.ehrungen.length&&!amNachmittag.tag,
+  'Vor dem Schluss des Tages steht keine Ehrung, auch nicht zwei Stunden nach einer Runde: '+JSON.stringify(amNachmittag));
+ok(amSchluss.tag==='23:59'&&!amSchluss.ehrungen.length&&amSchluss.schluss&&amSchluss.genannt>amSchluss.ausPartien&&amSchluss.ausPartien>0,
+  'Um 23:59 trägt der Spieler des Tages alles, was die Partien und der Schluss des Tages vergaben, und keine Ehrung steht daneben: '+JSON.stringify(amSchluss));
+ok(amSchluss.prestige.every(([a,b])=>a>0&&Math.abs(a-b)<=1),
+  'Was die Ehrung des Tages an Prestige nennt, ist das Prestige der Auszeichnungen in der Laufbahn: '+JSON.stringify(amSchluss.prestige));
 // Tages- und Wochenkönig zählen den Anteil der eigenen Spieltage, nicht
 // die Zahl der Titel [§C28]: wer an 4 von 6 Spieltagen der Beste war, steht
 // vor dem, der es an 5 von 12 war.

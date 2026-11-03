@@ -634,12 +634,14 @@ function showSeasonRecap(season, opts){
   } catch(err){}
 
   // ─── Die Wirkung auf die Laufbahn ──────────────────────────────────
-  // Zwei Stände: das Ende des Vormonats und das Ende dieses Monats. Was
+  // Zwei Stände: das Ende des Vormonats und das Ende dieses Monats, an den
+  // Grenzen, die auch seine Ehrung liest (`rcpMonatGrenzen`). Was
   // dazwischen an Prestige kam oder ging, je Spieler nach Quelle, wer
   // dadurch ein neues Zeichen trägt, und die Auszeichnungen darin. Der Teil
   // kommt nach, wenn das Blatt steht (`rcpSpaetLaden`).
   const spaet = () => {
-    const daten = rcpLaufbahnDaten(vonMs, bisMs);
+    const mg = rcpMonatGrenzen(sid);
+    const daten = rcpLaufbahnDaten(mg.von, mg.bis);
     const zuege = rcpZeichenZuege(daten);
     const lb = rcpLaufbahnHtml(daten);
     const eh = rcpEhrungHtml(daten);
