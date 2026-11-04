@@ -5342,9 +5342,11 @@ ok(_stufen.falsch.length === 0,
 // Höchststand und Tabellensprung aus dem Fenster — die Spitzen aus Mai bis
 // Juli lagen höher, und im August übertraf sie niemand.
 const _partieRechnung = `(function(){
-  const T = ['fluch', 'duo_jubilaeum', 'revanche', 'tagesmarathon', 'elo_hoch', 'tabellensprung'];
+  const T = ['fluch', 'duo_jubilaeum', 'revanche', 'tagesmarathon', 'elo_hoch', 'tabellensprung',
+    'duell_kippt', 'woche_spitze', 'tag_plus', 'tag_hoehe', 'monat_gewinn', 'monat_halb', 'partner_best'];
   const FUSS = {fluch:'gegner', elo_hoch:'hoch', tabellensprung:'rang', revanche:'revanche',
-    duo_jubilaeum:'chemie', tagesmarathon:'tagesring'};
+    duo_jubilaeum:'chemie', tagesmarathon:'tagesring', duell_kippt:'kippt', woche_spitze:'woche',
+    tag_plus:'plus', tag_hoehe:'hoehe', monat_gewinn:'monatsbest', monat_halb:'halb', partner_best:'partner'};
   const roh = _buildStories();
   _cache._stories = roh.slice().sort((a,b)=>new Date(b.when)-new Date(a.when));
   _cache._consolFrom = null; _cache._frischVon = null;
@@ -5359,7 +5361,14 @@ const _partieRechnung = `(function(){
       || d.type === 'tagesmarathon' && ![10, 15, 20, 25, 30, 40].includes(d.n)
       || d.type === 'fluch' && d.n < 5
       || d.type === 'elo_hoch' && d.seit < 20
-      || d.type === 'tabellensprung' && d.pre - d.post < 3; }).map(s => s.title);
+      || d.type === 'tabellensprung' && d.pre - d.post < 3
+      || d.type === 'duell_kippt' && !(d.n >= 16 && d.s * 2 > d.n && (d.s - 1) * 2 <= d.n - 1)
+      || d.type === 'woche_spitze' && d.s < 5
+      || d.type === 'tag_plus' && !(d.tief <= -25 && d.elo > 0 && d.n >= 4)
+      || d.type === 'tag_hoehe' && d.elo < 75
+      || d.type === 'monat_gewinn' && !(d.elo >= 22 && d.n >= 8 && d.elo > d.vorher)
+      || d.type === 'monat_halb' && !(d.n >= 15 && d.s * 2 >= d.n && (d.s - 1) * 2 < d.n - 1)
+      || d.type === 'partner_best' && !(d.n >= 8 && d.n % 8 === 0); }).map(s => s.title);
   let folgt = 0; const fremd = [];
   roh.filter(s => (s.dataRef||{}).type === 'spiel').forEach(s => {
     const m = matches.find(x => x.id === s.dataRef.matchId); if(!m) return;
@@ -5414,6 +5423,71 @@ ok(_partie.gipfel === 'g-rek,g-ander,g-tag',
 ok(_partie.folgt > 0 && _partie.fremd.length === 0,
    'ist eins davon das stärkste der Partie, zeichnet der Fuß es',
    _partie.folgt + ' Füße' + (_partie.fremd.length ? ' · ' + _partie.fremd.slice(0, 3).join(' | ') : ''));
+
+// ── Die sieben Fakten des Katalogs, an den rohen Partien nachgerechnet ──
+// Jeder sagt etwas über die Partien bis zu seiner: dass ein Sieger im Duell
+// vorn liegt, die Woche anführt, den Tag ins Plus dreht oder über +75
+// kommt, den größten Gewinn des Monats holt, im Monat auf die Hälfte kommt
+// oder mit diesem Partner am besten gewinnt. Nachgezählt wird jede Zahl
+// aus `matches` und den Elo-Deltas, ohne die Rechnung des Generators.
+const _katalog = JSON.parse(K.eval(`JSON.stringify((function(){
+  const T = ['duell_kippt', 'woche_spitze', 'tag_plus', 'tag_hoehe', 'monat_gewinn', 'monat_halb', 'partner_best'];
+  const roh = _buildStories(), H = getHistoryByMatchId();
+  const reihe = matches.slice().sort((a, b) => mts(a) - mts(b));
+  const gew = (id, x) => (x.winner === 'A') === (x.a1 === id || x.a2 === id);
+  const dabei = (id, x) => [x.a1, x.a2, x.b1, x.b2].includes(id);
+  const delta = (id, x) => Number(((H.get(x.id) || {}).deltas || {})[id]) || 0;
+  const falsch = [], je = {};
+  roh.filter(s => T.includes((s.dataRef || {}).type)).forEach(s => {
+    const d = s.dataRef, m = matches.find(x => x.id === d.matchId), bis = reihe.indexOf(m);
+    je[d.type] = (je[d.type] || 0) + 1;
+    const vor = reihe.slice(0, bis + 1), fehler = t => falsch.push(s.title + ' (' + t + ')');
+    if(!gew(d.pid, m)) fehler('kein Sieger');
+    if(d.type === 'duell_kippt'){
+      const du = vor.filter(x => dabei(d.pid, x) && dabei(d.gegen, x) && gew(d.pid, x) !== gew(d.gegen, x));
+      let s0 = 0, vorn = -1;
+      du.forEach((x, i) => { if(gew(d.pid, x)) s0++; if(i < du.length - 1 && s0 * 2 > i + 1) vorn = i + 1; });
+      if(s0 !== d.s || du.length !== d.n || s0 * 2 <= du.length || du.length < 16 || (vorn >= 0 && du.length - vorn < 10)) fehler('Bilanz');
+    }
+    if(d.type === 'woche_spitze'){
+      const wk = _wochenKey(m.created_at);
+      const tab = (l) => { const z = {}; l.filter(x => _wochenKey(x.created_at) === wk).forEach(x => [x.a1, x.a2, x.b1, x.b2].forEach(id => {
+        const q = z[id] || (z[id] = {s:0, n:0}); q.n++; if(gew(id, x)) q.s++; }));
+        return Object.keys(z).filter(id => z[id].s >= 5).sort((a, b) => z[b].s / z[b].n - z[a].s / z[a].n || z[b].s - z[a].s); };
+      if(tab(vor)[0] !== d.pid || tab(vor.slice(0, -1))[0] === d.pid) fehler('Woche');
+    }
+    if(d.type === 'tag_plus' || d.type === 'tag_hoehe'){
+      let e = 0; const l = vor.filter(x => dabei(d.pid, x) && tagKey(x.created_at) === tagKey(m.created_at)).map(x => (e += delta(d.pid, x)));
+      const davor = l.slice(0, -1), jetzt = l[l.length - 1];
+      if(Math.round(jetzt) !== d.elo || l.length !== d.n) fehler('Elo des Tages');
+      if(d.type === 'tag_plus' && !(davor.length >= 3 && Math.min(...davor) <= -25 && davor[davor.length - 1] < 0 && jetzt > 0)) fehler('ins Plus');
+      if(d.type === 'tag_hoehe' && !(jetzt >= 75 && Math.max(0, ...davor) < 75)) fehler('über +75');
+    }
+    if(d.type === 'monat_gewinn' || d.type === 'monat_halb'){
+      const sid = seasonOf(m.created_at).id, l = vor.filter(x => dabei(d.pid, x) && seasonOf(x.created_at).id === sid);
+      if(d.type === 'monat_gewinn'){
+        const davor = l.slice(0, -1).filter(x => gew(d.pid, x)).map(x => delta(d.pid, x));
+        if(l.length < 8 || Math.round(delta(d.pid, m)) !== d.elo || d.elo < 22 || davor.some(v => v >= delta(d.pid, m))) fehler('Gewinn');
+      } else {
+        const s1 = l.filter(x => gew(d.pid, x)).length, n1 = l.length;
+        if(s1 !== d.s || n1 !== d.n || n1 < 15 || s1 * 2 < n1 || (s1 - 1) * 2 >= n1 - 1) fehler('Hälfte');
+      }
+    }
+    if(d.type === 'partner_best'){
+      const z = {};
+      vor.filter(x => dabei(d.pid, x)).forEach(x => { const mit = [x.a1, x.a2].includes(d.pid) ? [x.a1, x.a2].find(y => y !== d.pid) : [x.b1, x.b2].find(y => y !== d.pid);
+        const q = z[mit] || (z[mit] = {s:0, n:0}); q.n++; if(gew(d.pid, x)) q.s++; });
+      const best = Object.keys(z).filter(id => z[id].n >= 6).sort((a, b) => z[b].s / z[b].n - z[a].s / z[a].n || z[b].n - z[a].n)[0];
+      if(best !== d.mit || z[d.mit].n !== d.n || d.n % 8) fehler('Partner');
+    }
+    // Und sein Fuß zeichnet sich, im Blatt wie an der Karte.
+    if(!_spFaktBild(d)) fehler('ohne Zeichnung');
+  });
+  return {je, falsch};
+})())`));
+ok(Object.keys(_katalog.je).length === 7 && _katalog.falsch.length === 0,
+   'jeder der sieben Fakten stimmt mit den rohen Partien und hat seine Zeichnung',
+   JSON.stringify(_katalog.je) + (_katalog.falsch.length ? ' · ' + _katalog.falsch.slice(0, 3).join(' | ') : ''));
 
 // ── Der härteste Tag gehört zum Spieler des Tages ──────────────────────
 // „Harter Tag für Leo" stand als eigene rote Karte eine Minute unter dem

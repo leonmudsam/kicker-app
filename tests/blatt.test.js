@@ -2879,6 +2879,13 @@ const ok = (c, msg, det) => {
           _spMedailleBild({name:'Unüberwindliche Betonmauer der Liga', ic:'shield', klasse:'rare', wer:a, rang:12345, ids:alle, traeger:alle.slice(0, 4),
             alle:[{pid:a, rang:12345, naechste:12350}, {pid:b, rang:1}, {pid:c, rang:999}, {pid:e, rang:2}]}),
           _spMarkenBild({liste:[{pid:a, wert:12345, label:'Sieg'}, {pid:b, wert:99999, label:'Elo'}, {pid:c, wert:100000, label:'Partie'}, {pid:e, wert:5000, label:'Tor'}]}),
+          // Die Füße der sieben Fakten mit Grenzwerten [§C33].
+          _spKipptBild({w:a, l:b, s:12345, n:24689, ab:24628, verlauf:Array.from({length:61}, (_, i) => (i % 7) - 3)}),
+          _spWocheBild({pid:a, liste:[a, b, c, e, alle[4]].map((id, i) => ({id, s:999 - i, n:1200, q:83 - i * 9}))}),
+          _spTagEloBild({pid:a, ref:0, verlauf:[0, -1234, -2345, -999, 12345]}) + _spTagEloBild({pid:b, ref:75, verlauf:[0, 20, 60, 999]}),
+          _spMonatEloBild({pid:a, sid:'2026-09', verlauf:Array.from({length:80}, (_, i) => -1200 + i * 37)}),
+          _spMonatQuoteBild({pid:a, sid:'2026-09', verlauf:Array.from({length:120}, (_, i) => 40 + (i % 20))}),
+          _spPartnerBild({pid:a, mit:b, allg:43, liste:[b, c, e, alle[4], alle[5]].map((id, i) => ({id, s:900 - i, n:12345, q:73 - i * 7}))}),
           _spTagBild({pid:a, elo:-12345, partien:Array.from({length:31}, (_, i) => ({w:i % 3 > 0, e:(i % 5 - 2) * 1000}))}),
           // Die Formen der gewöhnlichen Partie [§C33], jede mit ihren Grenzwerten.
           _spMosaikBild({W:[a, b], L:[c, e], hoch:10, tief:8, diff:2, n:[0, 9000, 45495, 8000, 7000, 6000, 4000, 2000, 900, 90, 9], mal:45495}),

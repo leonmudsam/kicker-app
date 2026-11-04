@@ -1452,6 +1452,178 @@ function _spMarkenBild(d){
     + l.map(x => `<div class="sp-zm-z">${_spChip(x.pid)}<b>${esc(_spName(x.pid))}</b>`
       + `<span class="sp-zm-n"><span class="sp-zm-d num">${ziffern(x)}</span><em>${esc(x.label)}</em></span></div>`).join('') + `</div>`;
 }
+// ── Ein Liniendiagramm und eine kleine Rangliste ────────────────────
+// Für die Fakten des Katalogs [§C33]. Links die Achse mit runden Werten,
+// unten Anfang und Ende, eine Bezugslinie mit ihrem Wert, am Ende Punkt und
+// Wert; die Achse weicht der Bezugslinie aus. Über und unter ihr zwei
+// Farben, wo sie eine Richtung trennt [§C25]. Die Schrift steht in neun
+// Einheiten: die Zeichnung ist 244 breit und auf dem schmalsten Telefon
+// 216 px, darin bleibt sie über 8 px.
+// Ein runder Schritt für höchstens vier Abstände, bei jeder Spanne: eine
+// feste Reihe bis 500 legte bei 14 000 Elo Spanne fünfzehn Werte
+// übereinander.
+function _spSchritt(span){
+  const p = Math.pow(10, Math.floor(Math.log10(Math.max(1, span / 4))));
+  return [1, 2, 2.5, 5, 10].map(k => k * p).find(s => span / s <= 4) || 10 * p;
+}
+function _spLinie(v, o){
+  const W = 244, H = 80, OB = 8, UN = 16, n = v.length - 1;
+  const f = o.fmt || (y => (y < 0 ? '−' : '') + _spZahl(y)), r = x => x.toFixed(1);
+  let lo = Math.min(...v, o.ref != null ? o.ref : Infinity, o.lo != null ? o.lo : Infinity);
+  let hi = Math.max(...v, o.ref != null ? o.ref : -Infinity, o.hi != null ? o.hi : -Infinity);
+  if(hi === lo){ hi += 1; lo -= 1; }
+  const st = _spSchritt(hi - lo); lo = Math.floor(lo / st) * st; hi = Math.ceil(hi / st) * st;
+  // Die Ränder wachsen mit der längsten Beschriftung: mit festen Rändern
+  // ragte „12.345:12.344" rechts aus der Karte und „−12.000" links.
+  const ende = String(o.ende != null ? o.ende : f(v[n]));
+  const LI = Math.max(32, 8 + 5.6 * Math.max(String(f(lo)).length, String(f(hi)).length));
+  const RE = Math.max(38, 12 + 6.2 * ende.length);
+  const X = i => LI + i * (W - LI - RE) / Math.max(1, n), Y = y => OB + (hi - y) * (H - OB - UN) / (hi - lo);
+  const ticks = [];
+  for(let y = lo; y <= hi + 1e-9; y += st) if(o.ref == null || Math.abs(Y(y) - Y(o.ref)) >= 10) ticks.push(y);
+  const d = v.map((y, i) => (i ? 'L' : 'M') + r(X(i)) + ' ' + r(Y(y))).join('');
+  const basis = o.ref != null ? o.ref : lo, id = 'spl' + _spVisualHash(v.join() + '|' + o.ref + '|' + (o.x || []).join());
+  const flaeche = `${d}L${r(X(n))} ${r(Y(basis))}L${r(X(0))} ${r(Y(basis))}Z`;
+  const fl = o.zwei
+    ? `<clipPath id="${id}o"><rect x="0" y="0" width="${W}" height="${r(Y(o.ref))}"/></clipPath>`
+      + `<clipPath id="${id}u"><rect x="0" y="${r(Y(o.ref))}" width="${W}" height="${H}"/></clipPath>`
+      + `<path class="sp-ln-f" clip-path="url(#${id}o)" d="${flaeche}"/><path class="sp-ln-f neg" clip-path="url(#${id}u)" d="${flaeche}"/>`
+      + `<path class="sp-ln-l" clip-path="url(#${id}o)" d="${d}"/><path class="sp-ln-l neg" clip-path="url(#${id}u)" d="${d}"/>`
+    : `<path class="sp-ln-f" d="${flaeche}"/><path class="sp-ln-l" d="${d}"/>`;
+  const ey = Math.min(H - UN - 1, Math.max(OB + 7, Y(v[n]) + 3.5));
+  return `<svg class="sp-ln-s" viewBox="0 0 ${W} ${H}" aria-hidden="true">`
+    + ticks.map(y => `<line class="sp-ln-g" x1="${LI}" x2="${W - RE}" y1="${r(Y(y))}" y2="${r(Y(y))}"/>`
+      + `<text class="sp-ln-t" x="${LI - 5}" y="${r(Y(y) + 3)}">${esc(f(y))}</text>`).join('')
+    + (o.ref != null ? `<line class="sp-ln-r" x1="${LI}" x2="${W - RE}" y1="${r(Y(o.ref))}" y2="${r(Y(o.ref))}"/>`
+      + `<text class="sp-ln-t ref" x="${LI - 5}" y="${r(Y(o.ref) + 3)}">${esc(f(o.ref))}</text>` : '')
+    + fl
+    + (o.letzt && n > 0 ? `<path class="sp-ln-l letzt" d="M${r(X(n - 1))} ${r(Y(v[n - 1]))}L${r(X(n))} ${r(Y(v[n]))}"/>` : '')
+    + (o.fahne ? `<path class="sp-ln-fahne" d="M${r(X(n))} ${r(Y(v[n]) - 5)}v-13l9 3.5-9 3.5"/>` : '')
+    + `<circle class="sp-ln-p${o.zwei && v[n] < o.ref ? ' neg' : ''}" cx="${r(X(n))}" cy="${r(Y(v[n]))}" r="4"/>`
+    + `<text class="sp-ln-w" x="${r(X(n) + 8)}" y="${r(ey)}">${esc(ende)}</text>`
+    // Passen Anfang und Ende unten nicht nebeneinander, steht nur das Ende:
+    // „24.628. Duell" und „24.689. Duell" lagen sonst übereinander.
+    + (5.4 * (String((o.x || [])[0] || '').length + String((o.x || [])[1] || '').length) + 10 <= X(n) - LI
+      ? `<text class="sp-ln-x" x="${LI}" y="${H - 3}">${esc((o.x || [])[0] || '')}</text>` : '')
+    + `<text class="sp-ln-x re" x="${r(X(n))}" y="${H - 3}">${esc((o.x || [])[1] || '')}</text></svg>`;
+}
+// Platz, Gesicht und Name, ein Balken bis `max`, der Wert und eine Zahl
+// daneben, wahlweise ein Strich für den Schnitt. Der Name bricht um.
+function _spRangliste(l, o){
+  return `<table class="sp-rl"><thead><tr><th></th><th></th><th></th><th>${esc(o.kopf[0])}</th><th>${esc(o.kopf[1])}</th></tr></thead><tbody>`
+    + l.map((q, i) => `<tr class="${q.id === o.hervor ? 'an' : ''}"><td class="num">${_spZahl(i + 1)}.</td>`
+      + `<td><span class="sp-rl-n">${_spChip(q.id)}<span>${esc(_spName(q.id))}</span></span></td>`
+      + `<td class="sp-rl-b"><i style="width:${Math.min(100, q.wert / o.max * 100).toFixed(1)}%"></i>`
+      + (o.schnitt != null ? `<u style="left:${Math.min(100, o.schnitt / o.max * 100).toFixed(1)}%"></u>` : '') + `</td>`
+      + `<td class="num">${esc(q.zahl)}</td><td class="num sp-rl-a">${esc(q.neben)}</td></tr>`).join('')
+    + `</tbody></table>`;
+}
+// ── Die Füße der sieben Fakten ──────────────────────────────────────
+// Jeder rechnet aus den Partien bis zu dieser (`…Daten`) und zeichnet nur,
+// was er bekommt (`…Bild`), wie jeder Fuß [§C33].
+function _spKipptDaten(a){
+  const w = a.x.pid, l = a.x.gegen;
+  const duelle = _spEigene(w, a.m).filter(x => [x.a1, x.a2, x.b1, x.b2].includes(l) && _spSeite(x, w) !== _spSeite(x, l));
+  let d = 0; const voll = [0].concat(duelle.map(x => (d += _spGew(x, w) ? 1 : -1)));
+  // Sechzig Duelle reichen für die Kurve; davor zählt nur, wo sie stand.
+  const ab = Math.max(0, voll.length - 61);
+  return duelle.length ? {w, l, s:duelle.filter(x => _spGew(x, w)).length, n:duelle.length, ab, verlauf:voll.slice(ab)} : null;
+}
+function _spKipptBild(d){
+  if(!d || !d.verlauf || d.verlauf.length < 3) return '';
+  return `<div class="sp-fk sp-ln"><div class="sp-k">Bilanz, Duell für Duell</div>`
+    + `<div class="sp-ln-lg">${_spChip(d.w)}<small>darüber ${esc(_spName(d.w))} vorn</small>${_spChip(d.l)}<small>darunter ${esc(_spName(d.l))}</small></div>`
+    + _spLinie(d.verlauf, {ref:0, zwei:true, fmt:_spVz, letzt:true, ende:`${_spZahl(d.s)}:${_spZahl(d.n - d.s)}`,
+      x:[d.ab ? `${_spZahl(d.ab)}. Duell` : 'Beginn', `${_spZahl(d.n)}. Duell`]}) + `</div>`;
+}
+function _spWocheDaten(a){
+  const B = _spBasis(), i = B.idx.get(a.m.id), wk = _wochenKey(a.m.created_at), je = {};
+  for(let j = i; j != null && j >= 0 && _wochenKey(B.chrono[j].created_at) === wk; j--){
+    const x = B.chrono[j], W = _spSieger(x);
+    [x.a1, x.a2, x.b1, x.b2].forEach(id => { if(!id) return; const z = je[id] || (je[id] = {s:0, n:0}); z.n++; if(W.includes(id)) z.s++; });
+  }
+  const pm = pmap();
+  const liste = Object.keys(je).filter(id => je[id].s >= 5 && sichtbar(pm[id]))
+    .map(id => ({id, s:je[id].s, n:je[id].n, q:Math.round(100 * je[id].s / je[id].n)}))
+    .sort((p, q) => q.s / q.n - p.s / p.n || q.s - p.s).slice(0, 5);
+  return liste.length ? {pid:a.x.pid, liste} : null;
+}
+function _spWocheBild(d){
+  if(!d || !d.liste) return '';
+  return `<div class="sp-fk sp-ln"><div class="sp-k">Siegquote der Woche, ab fünf Siegen</div>`
+    + _spRangliste(d.liste.map(q => ({id:q.id, wert:q.q, zahl:_spZahl(q.q) + ' %', neben:`${_spZahl(q.s)}/${_spZahl(q.n)}`})),
+      {hervor:d.pid, max:100, kopf:['Quote', 'Siege']}) + `</div>`;
+}
+function _spTagEloDaten(a, ref){
+  const pid = a.x.pid, tag = tagKey(a.m.created_at);
+  let e = 0;
+  const verlauf = [0].concat(_spEigene(pid, a.m).filter(x => tagKey(x.created_at) === tag).map(x => (e += _newsEloDelta(pid, x.id) || 0)));
+  return verlauf.length >= 2 ? {pid, ref, verlauf} : null;
+}
+function _spTagEloBild(d){
+  if(!d || !d.verlauf) return '';
+  const n = d.verlauf.length - 1, hoehe = d.ref > 0, x = ['Beginn', `${_spZahl(n)}. Partie`];
+  return `<div class="sp-fk sp-ln"><div class="sp-k">Elo des Tages, ${esc(_spName(d.pid))}</div>`
+    + _spLinie(d.verlauf, hoehe ? {ref:d.ref, lo:0, fmt:_spVz, x, fahne:true} : {ref:0, zwei:true, fmt:_spVz, x}) + `</div>`;
+}
+function _spMonatEloDaten(a){
+  const pid = a.x.pid, sid = seasonOf(a.m.created_at).id, H = getHistoryByMatchId();
+  const verlauf = _spEigene(pid, a.m).filter(x => seasonOf(x.created_at).id === sid)
+    .map(x => Math.round(((H.get(x.id) || {}).eloAfter || {})[pid] || 0));
+  return verlauf.length >= 2 ? {pid, sid, verlauf} : null;
+}
+// Der Schritt dieser Partie hebt sich ab, in der Richtung, die er hat.
+function _spMonatEloBild(d){
+  if(!d || !d.verlauf) return '';
+  const n = d.verlauf.length;
+  return `<div class="sp-fk sp-ln metall"><div class="sp-k">Elo im ${esc(seasonLabel(d.sid).split(' ')[0])}, ${esc(_spName(d.pid))}</div>`
+    + _spLinie(d.verlauf, {letzt:true, x:['1. Partie', `${_spZahl(n)}. Partie`]}) + `</div>`;
+}
+function _spMonatQuoteDaten(a){
+  const pid = a.x.pid, sid = seasonOf(a.m.created_at).id;
+  let s = 0;
+  const verlauf = _spEigene(pid, a.m).filter(x => seasonOf(x.created_at).id === sid)
+    .map((x, i) => Math.round(100 * (s += _spGew(x, pid) ? 1 : 0) / (i + 1)));
+  return verlauf.length >= 2 ? {pid, sid, verlauf} : null;
+}
+function _spMonatQuoteBild(d){
+  if(!d || !d.verlauf) return '';
+  const n = d.verlauf.length;
+  return `<div class="sp-fk sp-ln"><div class="sp-k">Siegquote im ${esc(seasonLabel(d.sid).split(' ')[0])}, ${esc(_spName(d.pid))}</div>`
+    + _spLinie(d.verlauf, {ref:50, zwei:true, lo:0, hi:100, fmt:y => _spZahl(y) + ' %', x:['1. Partie', `${_spZahl(n)}. Partie`]}) + `</div>`;
+}
+function _spPartnerDaten(a){
+  const pid = a.x.pid, je = {}, pm = pmap();
+  let s = 0, n = 0;
+  _spEigene(pid, a.m).forEach(x => {
+    const mit = _spTeam(x, _spSeite(x, pid)).find(y => y && y !== pid), w = _spGew(x, pid);
+    n++; if(w) s++;
+    if(!mit) return;
+    const z = je[mit] || (je[mit] = {s:0, n:0}); z.n++; if(w) z.s++;
+  });
+  const liste = Object.keys(je).filter(id => je[id].n >= 6 && sichtbar(pm[id]))
+    .map(id => ({id, s:je[id].s, n:je[id].n, q:Math.round(100 * je[id].s / je[id].n)}))
+    .sort((p, q) => q.s / q.n - p.s / p.n || q.n - p.n).slice(0, 5);
+  return liste.length ? {pid, mit:a.x.mit, liste, allg:Math.round(100 * s / Math.max(1, n))} : null;
+}
+function _spPartnerBild(d){
+  if(!d || !d.liste) return '';
+  return `<div class="sp-fk sp-ln metall"><div class="sp-k">Siegquote je Partner, ${esc(_spName(d.pid))}</div>`
+    + _spRangliste(d.liste.map(q => ({id:q.id, wert:q.q, zahl:_spZahl(q.q) + ' %', neben:_spZahl(q.n)})),
+      {hervor:d.mit, max:100, schnitt:d.allg, kopf:['Quote', 'Partien']})
+    + `<div class="sp-rl-lg"><i></i>${_spZahl(d.allg)} % mit allen</div></div>`;
+}
+// Welcher Fuß welchen Fakt zeichnet und woraus; das Blatt eines einzeln
+// geöffneten Fakts zeichnet denselben (`_spFaktBild`).
+const SP_FAKT_FUSS = {duell_kippt:'kippt', woche_spitze:'woche', tag_plus:'plus', tag_hoehe:'hoehe',
+  monat_gewinn:'monatsbest', monat_halb:'halb', partner_best:'partner'};
+const SP_FAKT_DATEN = {kippt:_spKipptDaten, woche:_spWocheDaten, plus:a => _spTagEloDaten(a, 0),
+  hoehe:a => _spTagEloDaten(a, 75), monatsbest:_spMonatEloDaten, halb:_spMonatQuoteDaten, partner:_spPartnerDaten};
+function _spFaktBild(d){
+  const m = d && d.matchId && _spMatch(d.matchId), key = d && SP_FAKT_FUSS[d.type];
+  if(!m || !key) return '';
+  return _spOccasionBild({key, data:SP_FAKT_DATEN[key]({key, m, x:d})});
+}
 function _spTauziehenBild(d){
   // Der Knoten: so weit auf der Seite der Sieger, wie ihr Anteil an den Toren.
   const anteil = d.hoch / Math.max(1, d.hoch + d.tief);
@@ -1838,6 +2010,14 @@ function _spFussFakten(m, fakten){
   if((x = f('revanche'))) out.push({w:52, a:{key:'revanche', m, x}});
   if((x = f('duo_jubilaeum')) && x.sieg) out.push({w:50, a:{key:'chemie', m, x}});
   if((x = f('tagesmarathon')) && x.pid) out.push({w:40, a:{key:'tagesring', m, x}});
+  // Die sieben Fakten des Katalogs, gewogen wie in der Schlagzeile.
+  if((x = f('duell_kippt')) && x.pid && x.gegen) out.push({w:60, a:{key:'kippt', m, x}});
+  if((x = f('woche_spitze')) && x.pid) out.push({w:50, a:{key:'woche', m, x}});
+  if((x = f('tag_plus')) && x.pid) out.push({w:48, a:{key:'plus', m, x}});
+  if((x = f('tag_hoehe')) && x.pid) out.push({w:42, a:{key:'hoehe', m, x}});
+  if((x = f('monat_gewinn')) && x.pid) out.push({w:40, a:{key:'monatsbest', m, x}});
+  if((x = f('monat_halb')) && x.pid) out.push({w:38, a:{key:'halb', m, x}});
+  if((x = f('partner_best')) && x.pid && x.mit) out.push({w:36, a:{key:'partner', m, x}});
   if((x = f('rivalry_milestone')) && x.a && x.b) out.push({w:54, a:{key:'duell', m, x}});
   else if((x = f('rivalry')) && x.a && x.b) out.push({w:34, a:{key:'duell', m, x}});
   return out.sort((p, q) => q.w - p.w);
@@ -1889,7 +2069,7 @@ function _spAnlassSnapshot(m, fakten, scoreKey){
       chemie:() => SP_FORM.chemie.daten(F, {rund:true}),
       tagesring:() => SP_FORM.tagesring.daten(F, {id:a.x.pid,
         ms:F.tag.filter(y => [y.a1, y.a2, y.b1, y.b2].includes(a.x.pid))})
-    }[a.key];
+    }[a.key] || (SP_FAKT_DATEN[a.key] && (() => SP_FAKT_DATEN[a.key](a)));
     if(daten) kand.push({key:a.key, rang:w, data:daten, fakt:true, zustand:SP_FUSS_ZUSTAND.has(a.key)});
   });
 
@@ -1950,12 +2130,15 @@ const SP_THEMA = {lead_change:'tabelle', tabellensprung:'tabelle', top_clash:'ta
   streak_record:'serie', streak_killer:'serie', win_streak:'serie', top_form:'serie', loss_streak:'serie',
   fluch:'duell', rivalry_milestone:'duell', rivalry:'duell', revanche:'duell', giant_slayer:'duell',
   milestone_wins:'zahl', milestone_elo:'zahl', milestone_goals:'zahl', jubilee:'zahl', elo_hoch:'zahl',
-  duo_jubilaeum:'duo', team_streak:'duo', team_loss_streak:'duo', tagesmarathon:'tag'};
+  duo_jubilaeum:'duo', team_streak:'duo', team_loss_streak:'duo', tagesmarathon:'tag',
+  duell_kippt:'duell', woche_spitze:'tabelle', tag_plus:'tag', tag_hoehe:'tag',
+  monat_gewinn:'monat', monat_halb:'monat', partner_best:'duo'};
 // Welche Meldungen ein Fuß zeichnet, je Zeichnung.
 const SP_FUSS_TYP = {spitze:['lead_change'], riss:['streak_killer'], marken:Object.keys(SP_MARKEN),
   serie:['win_streak'], teamserie:['team_streak'], duell:['rivalry_milestone', 'rivalry'], gegner:['fluch'],
   hoch:['elo_hoch'], rang:['tabellensprung'], revanche:['revanche'], chemie:['duo_jubilaeum'],
   tagesring:['tagesmarathon'], medaille:['badge_unlocked']};
+Object.keys(SP_FAKT_FUSS).forEach(t => { SP_FUSS_TYP[SP_FAKT_FUSS[t]] = [t]; });
 function _spZeilen(teile, titel, occ){
   const kt = String(titel || '').trim();
   const ty = t => String((t && (t.typ || t.type)) || '');
@@ -2026,6 +2209,8 @@ function _spOccasionBild(v){
     spitze:_spTabelleBild, rang:_spTabelleBild, serie:_spSerieBild,
     wende:_spKurveBild, duell:_spDuellBild, riss:_spRissBild,
     teamserie:_spDuoBild, medaille:_spMedailleBild, marken:_spMarkenBild,
+    kippt:_spKipptBild, woche:_spWocheBild, plus:_spTagEloBild, hoehe:_spTagEloBild,
+    monatsbest:_spMonatEloBild, halb:_spMonatQuoteBild, partner:_spPartnerBild,
     premiere:_spPremiereBild, rolle:_spRolleBild,
     nerven:_spNervenBild, verteilung:_spVerteilungBild,
     aussenseiter:_spWippeBild

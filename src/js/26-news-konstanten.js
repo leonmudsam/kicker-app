@@ -399,6 +399,15 @@ const STORY_PRIO = {
   revanche:          51,
   duo_jubilaeum:     45,
   tagesmarathon:     43,
+  // Die sieben Fakten des Katalogs: sie stehen nie allein, ihr Rang zählt
+  // nur für die Reihenfolge der Zeilen ihrer Karte.
+  duell_kippt:       52,
+  woche_spitze:      48,
+  tag_plus:          47,
+  tag_hoehe:         44,
+  monat_gewinn:      42,
+  monat_halb:        41,
+  partner_best:      40,
   // Die gesammelten kleinen Marken eines Tages: eine Karte, und die
   // schwaechste des Spieltagsbandes. Sie sollen vorkommen, aber keinen
   // Platz von einer Geschichte nehmen, die von diesem Tag erzaehlt.

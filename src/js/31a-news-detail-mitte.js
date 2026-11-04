@@ -924,6 +924,11 @@ function _ndMitteRoh(s){
           <div class="nd-stat-row"><div class="nd-stat-label">Partien dazwischen</div>
             <div class="nd-stat-val">${esc(String(d.seit))}</div></div>`;
       }
+      // Die sieben Fakten des Katalogs zeichnen im Blatt denselben Fuß wie
+      // an ihrer Karte [§C27].
+      case 'duell_kippt': case 'woche_spitze': case 'tag_plus': case 'tag_hoehe':
+      case 'monat_gewinn': case 'monat_halb': case 'partner_best':
+        return _spFaktBild(d);
       case 'tabellensprung': {
         return `<div class="nd-gwert"><b>${esc(String(d.pre))} → ${esc(String(d.post))}</b><span>Platz in der Tabelle</span></div>
           <div class="nd-stat-row"><div class="nd-stat-label">Gewonnene Plätze</div>

@@ -735,7 +735,8 @@ function _consolidateStoriesLegacy(list){
     'lead_change','streak_record',
     // Was in einer einzelnen Partie passiert, gehört an ihre Karte und
     // nirgends sonst hin.
-    'fluch','duo_jubilaeum','revanche','tagesmarathon','elo_hoch','tabellensprung']);
+    'fluch','duo_jubilaeum','revanche','tagesmarathon','elo_hoch','tabellensprung',
+    'duell_kippt','woche_spitze','tag_plus','tag_hoehe','monat_gewinn','monat_halb','partner_best']);
   const SAMMEL_TAFEL = new Set(['rekord_erstmals','rekord_geholt','rekord_gesteigert',
     'chronik_geholt']);
   const _minKey = w => { const d = new Date(w); return tagKey(w)+'-'+d.getHours()+'-'+d.getMinutes(); };
@@ -1393,7 +1394,9 @@ function _consolidateStoriesLegacy(list){
         let w = {lead_change:96, streak_record:95, top_clash:86, giant_slayer:84, streak_killer:80,
                  milestone_wins:62, milestone_elo:60, milestone_goals:58, jubilee:56,
                  rivalry_milestone:54, top_form:44, rivalry:34, badge_marken:24,
-                 fluch:64, elo_hoch:60, tabellensprung:59, revanche:52, duo_jubilaeum:50, tagesmarathon:40}[typ];
+                 fluch:64, elo_hoch:60, tabellensprung:59, revanche:52, duo_jubilaeum:50, tagesmarathon:40,
+                 duell_kippt:60, woche_spitze:50, tag_plus:48, tag_hoehe:42, monat_gewinn:40, monat_halb:38,
+                 partner_best:36}[typ];
         if(typ === 'win_streak' || typ === 'team_streak') w = 46 + 2 * Math.min(17, Number(dt.streak) || 0);
         if(typ === 'badge_unlocked') w = dt.rarity === 'legendary' ? 92 : dt.rarity === 'rare' ? 66 : 50;
         // Was eine Auszeichnung derselben Partie schon erzählt, führt nicht:
@@ -1413,7 +1416,10 @@ function _consolidateStoriesLegacy(list){
         milestone_wins:'Siegmarke', milestone_goals:'Tormarke', milestone_elo:'Elo-Marke',
         rivalry_milestone:'Rivalitätsmarke', rivalry:'Rivalität',
         fluch:'gebrochener Fluch', duo_jubilaeum:'Duo-Jubiläum', revanche:'Revanche',
-        tagesmarathon:'langer Tag', elo_hoch:'Elo-Höchststand', tabellensprung:'Tabellensprung'};
+        tagesmarathon:'langer Tag', elo_hoch:'Elo-Höchststand', tabellensprung:'Tabellensprung',
+        duell_kippt:'gekippte Bilanz', woche_spitze:'Spitze der Woche', tag_plus:'Tag im Plus',
+        tag_hoehe:'Höhenflug des Tages', monat_gewinn:'größter Gewinn des Monats', monat_halb:'halbe Siege im Monat',
+        partner_best:'bester Partner'};
       const MEHRZAHL = {Siegesserie:'Siegesserien', Teamserie:'Teamserien', Durststrecke:'Durststrecken',
         'gemeinsame Durststrecke':'gemeinsame Durststrecken', Formlauf:'Formläufe', 'Jubiläum':'Jubiläen',
         Siegmarke:'Siegmarken', Tormarke:'Tormarken', 'Elo-Marke':'Elo-Marken', Serienbruch:'Serienbrüche'};
@@ -1449,6 +1455,8 @@ function _consolidateStoriesLegacy(list){
         if((dt.type === 'rivalry_milestone' || dt.type === 'rivalry') && dt.a && dt.b) return {wort:'zwischen', pids:[dt.a, dt.b]};
         if(dt.type === 'top_clash' && dt.p1 && dt.p2) return {wort:'zwischen', pids:[dt.p1, dt.p2]};
         if(dt.type === 'duo_jubilaeum' && dt.a && dt.b) return {wort:'für', pids:[dt.a, dt.b]};
+        if(dt.type === 'duell_kippt' && dt.pid) return {wort:'für', pids:[dt.pid]};
+        if(dt.type === 'partner_best' && dt.pid) return {wort:'für', pids:[dt.pid]};
         if(dt.type === 'revanche' && Array.isArray(dt.W)) return {wort:'für', pids:dt.W.slice()};
         if(dt.type === 'lead_change' && dt.newLeader) return {wort:'für', pids:[dt.newLeader]};
         if((dt.type === 'team_streak' || dt.type === 'team_loss_streak') && dt.a && dt.b) return {wort:'für', pids:[dt.a, dt.b]};
