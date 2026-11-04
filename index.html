@@ -4840,7 +4840,7 @@
 .sp-wp-t.w .av{box-shadow:0 0 0 2px var(--surface),0 0 0 3px rgba(190,242,100,.55)}
 .sp-wp-ls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-top:-6px}
 .sp-wp-l{display:flex;flex-direction:column;min-width:0;line-height:1.3}
-.sp-wp-l.w{text-align:right}
+.sp-wp-l:not(.w){text-align:right}
 .sp-wp-n{display:flex;flex-direction:column;font-size:10.5px;line-height:1.3;color:var(--muted)}
 .sp-wp-l.w .sp-wp-n b{color:var(--ink)}
 .sp-wp-z{font:600 9.5px 'Sometype Mono',monospace;color:var(--faint);margin-top:1px}
@@ -5133,6 +5133,131 @@
 .sp-nz .w b{color:var(--ink)}
 .sp-nz-gg{font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);align-self:center}
 .sp-fk + .sp-lg{padding:0 13px}
+.sp-nz > span.w{padding-left:7px;box-shadow:inset 2px 0 0 var(--acid)}
+.sp-nz > span.re{padding-right:7px;box-shadow:inset -2px 0 0 rgba(240,86,106,.65)}
+.sp-nz-gg{color:var(--ink2)}
+
+.sp-kp{display:inline-flex;flex:0 0 auto;gap:3px}
+.sp-kl{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:2px;margin-top:8px;border-radius:9px;overflow:hidden}
+.sp-kl span{display:flex;flex-direction:column;align-items:center;gap:1px;padding:5px 2px;background:rgba(255,255,255,.035)}
+.sp-kl b{font:400 14px/1.1 'Archivo Black',sans-serif;color:var(--ink);white-space:nowrap}
+.sp-kl small{font:600 8px 'Sometype Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+
+.sp-ag{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:6px}
+.sp-ag .av{--av:26px;width:26px;height:26px;font-size:9.5px}
+.sp-ag-s{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0}
+.sp-ag-s span.num{font:600 10.5px 'Sometype Mono',monospace;color:var(--red);white-space:nowrap}
+.sp-ag-s.w span.num{color:var(--acid)}
+.sp-ag-s:not(.w) .sp-kp{opacity:.78}
+.sp-ag-m{display:flex;flex-direction:column;align-items:center;gap:6px}
+.sp-ag-c{font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.06em;color:var(--muted);white-space:nowrap}
+.sp-ag-z{display:flex;align-items:center;gap:4px;perspective:300px}
+.sp-ag-z > i{width:4px;height:14px;background:radial-gradient(circle,var(--muted) 1.6px,transparent 2.1px) 0 0/4px 7px}
+.sp-ag-k{position:relative;display:inline-grid;place-items:center;min-width:46px;height:52px;padding:0 6px;border-radius:8px;
+  background:linear-gradient(180deg,#26302a 0 50%,#1b221d 50% 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),inset 0 -1px 0 rgba(0,0,0,.4),0 6px 14px rgba(0,0,0,.45)}
+.sp-ag-k::after{content:"";position:absolute;z-index:0;left:0;right:0;top:50%;height:1px;background:rgba(0,0,0,.6);box-shadow:0 1px 0 rgba(255,255,255,.035)}
+.sp-ag-k b{position:relative;z-index:1;font:400 32px/1 'Archivo Black',sans-serif;color:var(--ink2)}
+.sp-ag-k.w b{color:var(--acid);text-shadow:0 0 16px rgba(190,242,100,.5)}
+
+.sp-pu{display:flex;flex-direction:column;gap:8px}
+.sp-pu .av{--av:24px;width:24px;height:24px;font-size:9px}
+.sp-pu-z{display:grid;grid-template-columns:auto minmax(0,1fr) 30px;align-items:center;gap:9px}
+.sp-pu-z:not(.w) .sp-kp{opacity:.78}
+.sp-pu-r{position:relative;display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:3px;align-items:center}
+.sp-pu-r i{aspect-ratio:1;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--line2)}
+.sp-pu-r i.w{background:radial-gradient(circle at 35% 30%,#efffc2,var(--acid) 45%,#6f9a2c);box-shadow:0 0 7px rgba(190,242,100,.35)}
+.sp-pu-r i.l{background:radial-gradient(circle at 35% 30%,#ffc2ca,var(--red) 50%,#9b2c3f);opacity:.8}
+.sp-pu-r u{position:absolute;top:-4px;bottom:-4px;left:calc(var(--von) * 10% - 2px);right:-2px;border:1px dashed rgba(190,242,100,.35);border-radius:9px;pointer-events:none}
+.sp-pu-z b{font:400 22px/1 'Archivo Black',sans-serif;text-align:right;color:var(--ink2)}
+.sp-pu-z.w b{color:var(--acid)}
+
+.sp-sm{height:98px}
+.sp-sm svg{position:absolute;inset:10px;width:calc(100% - 20px);height:calc(100% - 20px);overflow:visible}
+.sp-sm-p{fill:none;stroke-linecap:round;opacity:.78;vector-effect:non-scaling-stroke}
+.sp-sm .av{--av:24px;width:24px;height:24px;font-size:9px}
+.sp-sm-a{position:absolute;z-index:1;display:flex;flex-direction:column;align-items:center;gap:1px;margin:10px 8px}
+.sp-sm-a b{font:600 10px 'Sometype Mono',monospace;color:var(--red);background:rgba(10,12,11,.8);border-radius:4px;padding:0 3px}
+.sp-sm-a.w b{color:var(--acid)}
+.sp-sm-a:not(.w) .av{opacity:.82}
+.sp-sm-m{position:absolute;z-index:1;left:50%;top:50%;transform:translate(-50%,-50%);padding:5px 9px;border-radius:11px;
+  background:rgba(10,12,11,.86);border:1px solid var(--line2);box-shadow:0 0 18px rgba(0,0,0,.55)}
+.sp-sm-m .sp-st{font-size:23px}
+.sp-sm-m .sp-st em{color:var(--acid);text-shadow:0 0 16px rgba(190,242,100,.35)}
+
+.sp-hz-g{display:grid;grid-template-columns:auto minmax(0,1fr) auto minmax(0,1fr) auto;align-items:center;gap:4px}
+.sp-hz .av{--av:24px;width:24px;height:24px;font-size:9px}
+.sp-hz-p{display:flex;flex-direction:column;gap:3px}
+.sp-hz-p:not(.w) .av{opacity:.7}
+.sp-hz-m{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 8px 5px;border-radius:11px;
+  background:rgba(10,12,11,.7);border:1px solid rgba(247,207,74,.4);box-shadow:0 0 16px rgba(247,207,74,.14)}
+.sp-hz-m small{font:600 8px 'Sometype Mono',monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);white-space:nowrap}
+.sp-hz-m .sp-st{font-size:26px}
+.sp-hz-m .sp-st em{color:var(--acid);text-shadow:0 0 16px rgba(190,242,100,.35)}
+.sp-hz-k{position:relative;display:block;height:40px;overflow:hidden}
+.sp-hz-k svg{display:block;width:100%;height:100%}
+.sp-hz-k path{fill:none;stroke:rgba(240,86,106,.6);stroke-width:1.6;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.sp-hz-k.w path{stroke:var(--acid);stroke-width:2}
+.sp-hz-k i{position:absolute;inset:0;opacity:0}
+.sp-hz-k i::after{content:"";position:absolute;right:0;top:50%;width:6px;height:6px;margin-top:-3px;border-radius:50%;
+  background:#f4ffd8;box-shadow:0 0 8px 2px rgba(190,242,100,.8)}
+
+.sp-zn{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;justify-items:center;gap:7px 6px;
+  background:linear-gradient(118deg,transparent 22%,rgba(255,255,255,.05) 30%,transparent 40%),
+    linear-gradient(242deg,transparent 22%,rgba(255,255,255,.05) 30%,transparent 40%),
+    radial-gradient(130px 70px at 22% 82%,rgba(247,207,74,.17),transparent 70%),
+    radial-gradient(160px 60px at 22% 0%,rgba(190,242,100,.10),transparent 70%),var(--surface2)}
+.sp-zn > *{position:relative}
+.sp-zn .av{--av:24px;width:24px;height:24px;font-size:9px}
+.sp-zn::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;opacity:0;
+  background:linear-gradient(105deg,transparent 35%,rgba(255,244,200,.13) 48%,transparent 60%)}
+.sp-zn-z{display:flex;align-items:baseline;font:400 40px/1 'Archivo Black',sans-serif;letter-spacing:-.01em}
+.sp-zn-z b{font-weight:400;color:var(--acid);text-shadow:0 0 22px rgba(190,242,100,.55)}
+.sp-zn-z i{font-style:normal;color:var(--faint);font-size:.7em;margin:0 3px}
+.sp-zn-z u{text-decoration:none;color:transparent;-webkit-text-stroke:1.5px var(--gold);text-shadow:0 0 18px rgba(247,207,74,.45)}
+.sp-zn-tore{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:16px;width:100%;padding:0 6px}
+.sp-zn-t{width:100%;height:auto;aspect-ratio:100/58;overflow:visible}
+.sp-zn-n{fill:none;stroke:rgba(255,255,255,.14);stroke-width:.8}
+.sp-zn-r{fill:none;stroke:#eef3ef;stroke-width:3;stroke-linejoin:round}
+.sp-zn-b{stroke:var(--line2);stroke-width:1}
+.sp-zn-t.leer .sp-zn-r{stroke:var(--gold)}
+.sp-zn-t.leer .sp-zn-n{stroke:rgba(247,207,74,.22)}
+.sp-zn-t.voll .sp-zn-r{stroke:var(--ink2)}
+.sp-zn-ball{stroke:rgba(0,0,0,.35);stroke-width:.5}
+.sp-zn-ring{fill:rgba(190,242,100,.10);stroke:var(--acid);stroke-width:.8;opacity:.45}
+.sp-zn-glanz{fill:none;stroke:#fff;stroke-width:.9;stroke-linecap:round;opacity:.85}
+.sp-zn-hit{transform-box:fill-box;transform-origin:center}
+.sp-zn-p{display:flex;flex-direction:column;align-items:center;gap:3px}
+.sp-zn-p > span.num{font:600 10px 'Sometype Mono',monospace;color:var(--acid);white-space:nowrap}
+.sp-zn-p.aus > span.num{color:var(--red)}
+.sp-zn-p.aus .sp-kp{opacity:.5}
+.sp-zn-band{grid-column:1/-1;display:flex;align-items:center;gap:6px;font-style:normal;padding:3px 10px 3px 7px;border-radius:999px;
+  border:1px solid rgba(247,207,74,.55);background:rgba(247,207,74,.08);box-shadow:0 0 14px rgba(247,207,74,.16)}
+.sp-zn-band .ic{font-size:14px;color:var(--gold)}
+.sp-zn-band b{font:600 9px 'Sometype Mono',monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);white-space:nowrap}
+.sp-zn-band small{font:500 9px 'Sometype Mono',monospace;color:var(--ink2);white-space:nowrap}
+.sp-zn-band small::before{content:"·";margin-right:6px;color:var(--faint)}
+
+@media (prefers-reduced-motion:no-preference){
+  .sp-ag-k b{animation:spKopfKlapp .55s cubic-bezier(.3,1.4,.5,1) both}
+  .sp-ag-z .sp-ag-k + i + .sp-ag-k b{animation-delay:.12s}
+  .sp-pu-r i.w,.sp-pu-r i.l{animation:spKopfPuck .35s cubic-bezier(.3,1.6,.5,1) both;animation-delay:calc(var(--n, 0) * 30ms)}
+  .sp-pu-r i:nth-child(2){--n:1}.sp-pu-r i:nth-child(3){--n:2}.sp-pu-r i:nth-child(4){--n:3}.sp-pu-r i:nth-child(5){--n:4}
+  .sp-pu-r i:nth-child(6){--n:5}.sp-pu-r i:nth-child(7){--n:6}.sp-pu-r i:nth-child(8){--n:7}.sp-pu-r i:nth-child(9){--n:8}.sp-pu-r i:nth-child(10){--n:9}
+  .sp-sm-p{animation:spDa .7s ease-out both}
+  .sp-zn-hit{animation:spKopfTreffer .42s cubic-bezier(.3,1.6,.5,1) both;animation-delay:calc(var(--i) * 70ms + .25s)}
+  .sp-zn-ring{animation:spKopfWelle .7s ease-out both;animation-delay:calc(var(--i) * 70ms + .3s)}
+  .sp-zn::before{animation:spKopfLicht 1.6s ease-in-out .3s both}
+  .sp-hz-k i{animation:spKopfPunkt 1.3s cubic-bezier(.45,0,.55,1) .2s 2 both}
+  .sp-hz-m{animation:spKopfSchlag .9s ease-out .55s 2 both}
+}
+@keyframes spKopfKlapp{from{transform:rotateX(-88deg);opacity:.2}}
+@keyframes spKopfPuck{from{transform:scale(.2);opacity:0}}
+@keyframes spKopfTreffer{from{transform:scale(0);opacity:0}}
+@keyframes spKopfWelle{from{transform:scale(.3);opacity:1}}
+@keyframes spKopfLicht{0%{opacity:0;transform:translateX(-70%)}20%,80%{opacity:1}100%{opacity:0;transform:translateX(70%)}}
+@keyframes spKopfPunkt{0%{transform:translateX(-100%);opacity:0}12%{opacity:1}88%{opacity:1}100%{transform:translateX(0);opacity:0}}
+@keyframes spKopfSchlag{0%,100%{transform:scale(1)}14%{transform:scale(1.07)}28%{transform:scale(1)}42%{transform:scale(1.04)}}
 
 .sp-mo-g{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
 .sp-mo-k{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:38px;padding:4px 0;border-radius:7px;
@@ -6464,7 +6589,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.11.03.09ebb98a';
+const BUILD_VERSION='2026.11.04.284517ba';
 function forceReload(nach){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -25897,8 +26022,8 @@ function _spWippeBild(d){
   const gap = Math.max(0, d.eloFav - d.eloDog);
   const th = Math.min(13, 5 + gap / 25) * Math.PI / 180;
   const px = 150, py = 86, r = 104;
-  const lx = px - r * Math.cos(th), ly = py + r * Math.sin(th);
-  const rx = px + r * Math.cos(th), ry = py - r * Math.sin(th);
+  const lx = px - r * Math.cos(th), ly = py - r * Math.sin(th);
+  const rx = px + r * Math.cos(th), ry = py + r * Math.sin(th);
   const P = (x, y) => `left:${(x / 300 * 100).toFixed(1)}%;top:${(y / 120 * 100).toFixed(1)}%`;
   const minus = v => (v < 0 ? '−' : '') + _spZahl(v);
   const schild = (ids, e, p, w) => `<div class="sp-wp-l${w ? ' w' : ''}"><span class="sp-wp-n">${_spStapel(ids)}</span>`
@@ -25912,10 +26037,10 @@ function _spWippeBild(d){
         <line class="sp-wp-bk" x1="${lx.toFixed(1)}" y1="${ly.toFixed(1)}" x2="${rx.toFixed(1)}" y2="${ry.toFixed(1)}"/>
         <circle class="sp-wp-ax" cx="${px}" cy="${py}" r="3.5"/>
       </svg>
-      <div class="sp-wp-t" style="${P(lx + 8, ly - 4)}">${_spChips(d.fav)}</div>
-      <div class="sp-wp-t w" style="${P(rx - 8, ry - 4)}">${_spChips(d.dog)}</div>
+      <div class="sp-wp-t w" style="${P(lx + 8, ly - 4)}">${_spChips(d.dog)}</div>
+      <div class="sp-wp-t" style="${P(rx - 8, ry - 4)}">${_spChips(d.fav)}</div>
     </div>
-    <div class="sp-wp-ls">${schild(d.fav, d.eloFav, 100 - d.pct, false)}${schild(d.dog, d.eloDog, d.pct, true)}</div>
+    <div class="sp-wp-ls">${schild(d.dog, d.eloDog, d.pct, true)}${schild(d.fav, d.eloFav, 100 - d.pct, false)}</div>
   </div>`;
 }
 
@@ -26193,7 +26318,7 @@ function _spTagBild(d){
 
 function _spSt(d){ return `<b class="sp-st num"><em>${_spZahl(d.hoch)}</em>:${_spZahl(d.tief)}</b>`; }
 function _spNz(W, L, wort){
-  return `<div class="sp-nz"><span class="w">${_spStapel(W)}</span><span class="sp-nz-gg">${wort || 'gegen'}</span>`
+  return `<div class="sp-nz"><span class="w">${_spStapel(W)}</span><span class="sp-nz-gg">${wort || 'schlagen'}</span>`
     + `<span class="re">${_spStapel(L)}</span></div>`;
 }
 function _spSeit(ms){
@@ -26287,13 +26412,26 @@ function _spMosaikBefund(F){
   return selten || haeufig || marke
     ? {grund:selten ? 'selten' : (haeufig ? 'haeufig' : 'marke')} : null;
 }
-function _spTransferBefund(F){
-  if(F.i < 60 || !Number.isFinite(F.gewinn)) return null;
-  const g = _spFormBasis().punkte.slice(0, F.i).map(p => p.g).filter(Number.isFinite);
-  const platz = 1 + g.filter(v => v >= F.gewinn).length;
-  const grenze = Math.max(1, Math.ceil((g.length + 1) * 0.05));
-  return platz <= grenze ? {platz, gesamt:g.length + 1} : null;
+
+function _spKopfDaten(F){
+  const m = F.m, rolle = id => m[(m.a1 === id ? 'a1' : m.a2 === id ? 'a2' : m.b1 === id ? 'b1' : 'b2') + '_pos'];
+  const ord = l => l.slice().sort((a, b) => (rolle(a) === 'def' ? 0 : 1) - (rolle(b) === 'def' ? 0 : 1));
+  const delta = {};
+  F.W.concat(F.L).forEach(id => { delta[id] = Math.round(F.delta[id] || 0); });
+  return {W:ord(F.W), L:ord(F.L), hoch:F.hoch, tief:F.tief, pct:F.c != null ? Math.round(F.c * 100) : null, delta};
 }
+function _spImMonat(F, art){
+  const B = _spBasis(), mon = tagKey(mts(F.m)).slice(0, 7);
+  let n = 0;
+  for(let j = F.i; j >= 0; j--){
+    const x = B.chrono[j];
+    if(tagKey(mts(x)).slice(0, 7) !== mon) break;
+    if(art(x)) n++;
+  }
+  return n;
+}
+const _spKrimi = x => Math.abs(x.score_a - x.score_b) === 1;
+const _spZuNull = x => Math.min(x.score_a, x.score_b) === 0;
 
 const SP_FORM = {
   mosaik:{rang:12, ic:'chartBar',
@@ -26496,6 +26634,35 @@ const SP_FORM = {
     daten:(F, x) => Object.assign({W:F.W, L:F.L, hoch:F.hoch, tief:F.tief}, x),
     text:(F, x) => ({t:`${_spNl(F.W)} schlagen ${_spNl(F.L)} zum ${x.k}. Mal in Folge`,
       d:`In diesem Duell steht es ${x.s}:${x.n - x.s}.`})},
+  tafel:{rang:10, ic:'spielfeld', v2:true,
+    wann:() => ({}),
+    daten:F => _spKopfDaten(F),
+    text:F => ({t:`${_spNl(F.W)} gewinnen gegen ${_spNl(F.L)}`,
+      d:F.c != null ? `Vor dem Anstoß lag die Siegchance bei ${Math.round(F.c * 100)} %.`
+        : `Für ${_spName(F.W[0])} bringt der Sieg ${_spVz(F.delta[F.W[0]])} Elo.`})},
+  pucks:{rang:10, ic:'ball', v2:true,
+    wann:() => ({}),
+    daten:F => _spKopfDaten(F),
+    text:F => ({t:`${_spNl(F.W)} gewinnen mit ${F.diff === 1 ? 'einem Tor' : _spZahl(F.diff) + ' Toren'} Abstand`,
+      d:F.tief ? `${_spNl(F.L)} treffen ${_spZahl(F.tief)}-mal.` : `${_spNl(F.L)} bleiben ohne Tor.`})},
+  strom:{rang:10, ic:'bolt', v2:true,
+    wann:() => ({}),
+    daten:F => _spKopfDaten(F),
+    text:F => {
+      const ab = -F.L.reduce((n, id) => n + (F.delta[id] || 0), 0);
+      return {t:`${_spNl(F.W)} holen zusammen ${_spZahl(F.gewinn)} Elo`,
+        d:`${_spNl(F.L)} geben ${_spZahl(ab)} Elo ab.`};
+    }},
+  herz:{rang:58, ic:'nerves', v2:true,
+    wann:F => F.diff === 1 ? {} : null,
+    daten:F => Object.assign(_spKopfDaten(F), {nr:_spImMonat(F, _spKrimi)}),
+    text:F => ({t:`${_spNl(F.W)} gewinnen mit einem Tor Abstand`,
+      d:`Es ist das ${_spImMonat(F, _spKrimi)}. Spiel mit einem Tor Abstand in diesem Monat.`})},
+  zunull:{rang:60, ic:'weisseWeste', v2:true,
+    wann:F => F.tief === 0 ? {} : null,
+    daten:F => Object.assign(_spKopfDaten(F), {nr:_spImMonat(F, _spZuNull),
+      monat:seasonLabel(tagKey(mts(F.m)).slice(0, 7)).split(' ')[0]}),
+    text:F => ({t:`${_spNl(F.W)} spielen zu null`, d:`Ein Spiel ohne Gegentor gegen ${_spNl(F.L)}.`})},
   feld:{rang:8, ic:'ball',
     wann:() => ({}),
     daten:F => _spFeldDaten({m:F.m, c:F.c}),
@@ -26764,12 +26931,74 @@ function _spHochBild(d){
     + `<span class="sp-ho-u">bisher <b class="num">${_spZahl(d.alt)}</b>${d.monat ? ` im ${esc(d.monat)}` : ''}${d.seit
       ? `, vor ${d.seit === 1 ? 'einer Partie' : `<b class="num">${_spZahl(d.seit)}</b> Partien`}` : ''}</span></div></div>`;
 }
+const _spKopfPaar = ids => `<span class="sp-kp">${ids.map(_spChip).join('')}</span>`;
+const _spKopfElo = (d, ids) => ids.map(id => _spVz((d.delta || {})[id] || 0)).join(' ');
+function _spAnzeigeBild(d){
+  const seite = (ids, w) => `<div class="sp-ag-s${w ? ' w' : ''}">${_spKopfPaar(ids)}<span class="num">${_spKopfElo(d, ids)}</span></div>`;
+  return `<div class="sp-fk sp-ag">${seite(d.W, true)}<div class="sp-ag-m"><div class="sp-ag-z">`
+    + `<span class="sp-ag-k w"><b>${_spZahl(d.hoch)}</b></span><i></i><span class="sp-ag-k"><b>${_spZahl(d.tief)}</b></span></div>`
+    + (d.pct != null ? `<small class="sp-ag-c num">Chance vorher ${_spZahl(d.pct)} %</small>` : '')
+    + `</div>${seite(d.L, false)}</div>` + _spNz(d.W, d.L);
+}
+function _spPucksBild(d){
+  const n = Math.max(10, d.hoch);
+  const reihe = (k, w) => k > 10 ? '' : Array.from({length:10}, (_, i) => `<i class="${i < k ? (w ? 'w' : 'l') : ''}"></i>`).join('');
+  const z = (ids, k, w) => `<div class="sp-pu-z${w ? ' w' : ''}">${_spKopfPaar(ids)}<span class="sp-pu-r">${reihe(k, w)}`
+    + (!w && n === 10 ? `<u style="--von:${k}"></u>` : '') + `</span><b class="num">${_spZahl(k)}</b></div>`;
+  return `<div class="sp-fk sp-pu">${z(d.W, d.hoch, true)}${z(d.L, d.tief, false)}</div>` + _spNz(d.W, d.L);
+}
+function _spStromBild(d){
+  const W = 240, H = 92, y = [15, 63];
+  const breit = id => Math.max(2.5, Math.min(10, Math.abs((d.delta || {})[id] || 0) / 2.2));
+  const pfad = (i, j) => `M${W - 32} ${y[j]}C${W / 2 + 16} ${y[j]},${W / 2 - 16} ${y[i]},32 ${y[i]}`;
+  const id = 'sps' + _spVisualHash(d.W.concat(d.L).join() + d.hoch + ':' + d.tief);
+  const stroeme = d.L.map((l, j) => d.W.map((w, i) => `<path class="sp-sm-p" d="${pfad(i, j)}" stroke="url(#${id})" stroke-width="${breit(l).toFixed(1)}"/>`).join('')).join('');
+  const ende = (x, i, w) => `<span class="sp-sm-a${w ? ' w' : ''}" style="top:${y[i] - 15}px;${w ? 'left' : 'right'}:2px">${_spChip(x)}<b class="num">${_spVz((d.delta || {})[x] || 0)}</b></span>`;
+  return `<div class="sp-fk sp-sm"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><defs>`
+    + `<linearGradient id="${id}" x1="1" x2="0" y1="0" y2="0"><stop offset="0" stop-color="#f0566a"/><stop offset=".5" stop-color="#f7cf4a"/>`
+    + `<stop offset="1" stop-color="#BEF264"/></linearGradient></defs>${stroeme}</svg>`
+    + d.W.map((x, i) => ende(x, i, true)).join('') + d.L.map((x, j) => ende(x, j, false)).join('')
+    + `<span class="sp-sm-m">${_spSt(d)}</span></div>` + _spNz(d.W, d.L);
+}
+function _spHerzBild(d){
+  const SW = 'M0 25H10l3-5 3 5h3l2 6 4-27 4 33 3-14h4q4-8 8 0H60';
+  const SL = 'M0 25h9l2-6 2 9 2-4h4l1 2 1-1H60';
+  const paar = (ids, w) => `<span class="sp-hz-p${w ? ' w' : ''}">${ids.map(_spChip).join('')}</span>`;
+  const kurve = (p, w) => `<span class="sp-hz-k${w ? ' w' : ''}"><svg viewBox="0 0 60 40" preserveAspectRatio="none" aria-hidden="true"><path d="${p}"/></svg>${w ? '<i></i>' : ''}</span>`;
+  const zelle = (lab, v) => `<span><b class="num">${esc(v)}</b><small>${lab}</small></span>`;
+  return `<div class="sp-fk sp-hz"><div class="sp-hz-g">${paar(d.W, true)}${kurve(SW, true)}`
+    + `<span class="sp-hz-m"><small>Ein Tor</small>${_spSt(d)}</span>${kurve(SL, false)}${paar(d.L, false)}</div>`
+    + `<div class="sp-kl">` + (d.pct != null ? zelle('Chance vorher', _spZahl(d.pct) + ' %') : '')
+    + zelle('Elo der Sieger', _spKopfElo(d, d.W)) + (d.nr ? zelle('im Monat', _spZahl(d.nr) + '.') : '') + `</div></div>`
+    + _spNz(d.W, d.L);
+}
+const SP_TREFFER = [[25, 15], [47, 11], [70, 17], [80, 31], [33, 30], [56, 25], [71, 41], [21, 41], [45, 40], [60, 45]];
+function _spZunullBild(d){
+  const id = 'spn' + _spVisualHash(d.W.concat(d.L).join() + ':' + d.hoch);
+  const netz = `<path class="sp-zn-n" d="${Array.from({length:11}, (_, i) => `M${16 + i * 6.8} 2V46`).join('')}`
+    + `${Array.from({length:8}, (_, i) => `M16 ${2 + i * 6.3}H84`).join('')}M6 10L16 2M94 10L84 2M6 54L16 46M94 54L84 46"/>`;
+  const rahmen = `<path class="sp-zn-r" d="M6 55V10H94V55"/><path class="sp-zn-b" d="M2 55H98"/>`;
+  const treffer = SP_TREFFER.slice(0, Math.min(10, d.hoch)).map(([x, y], i) => `<g transform="translate(${x} ${y})"><g class="sp-zn-hit" style="--i:${i}">`
+    + `<circle class="sp-zn-ring" r="7"/><circle class="sp-zn-ball" r="4.3" fill="url(#${id}b)"/><path class="sp-zn-glanz" d="M-2.2 -1.6a2.6 2.6 0 0 1 2.4-1.4"/></g></g>`).join('');
+  const paar = (ids, w) => `<div class="sp-zn-p${w ? '' : ' aus'}">${_spKopfPaar(ids)}<span class="num">${_spKopfElo(d, ids)}</span></div>`;
+  return `<div class="sp-fk sp-zn">${paar(d.W, true)}<span class="sp-zn-z num"><b>${_spZahl(d.hoch)}</b><i>:</i><u>0</u></span>${paar(d.L, false)}`
+    + `<div class="sp-zn-tore"><svg class="sp-zn-t leer" viewBox="0 0 100 58" aria-hidden="true"><defs><radialGradient id="${id}" cx=".5" cy=".55" r=".6">`
+    + `<stop offset="0" stop-color="#f7cf4a" stop-opacity=".32"/><stop offset="1" stop-color="#f7cf4a" stop-opacity="0"/></radialGradient></defs>`
+    + `<rect class="sp-zn-glut" x="6" y="6" width="88" height="50" fill="url(#${id})"/>${netz}${rahmen}</svg>`
+    + `<svg class="sp-zn-t voll" viewBox="0 0 100 58" aria-hidden="true"><defs><radialGradient id="${id}b" cx=".38" cy=".32" r=".75">`
+    + `<stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#ecebe2"/><stop offset="1" stop-color="#a9a89c"/></radialGradient></defs>`
+    + `${netz}${treffer}${rahmen}</svg></div>`
+    + (d.nr ? `<em class="sp-zn-band">${svgI('weisseWeste')}<b>Zu null</b><small class="num">${_spZahl(d.nr)}. im ${esc(d.monat || 'Monat')}</small></em>` : '')
+    + `</div>` + _spNz(d.W, d.L);
+}
+
 const SP_FORM_BILD = {mosaik:_spMosaikBild, tacho:_spTachoBild, streu:_spStreuBild, transfer:_spTransferBild,
   chemie:_spChemieBild, gegner:_spGegnerBild, revanche:_spRevancheBild, gipfel:_spGipfelBild,
   rueckkehr:_spRueckkehrBild, gefaelle:_spGefaelleBild, tagesring:_spTagesringBild, zaehlwerk:_spZaehlwerkBild,
   tauziehen:_spTauziehenBild, muenze:_spMuenzeBild, weste:_spWesteBild,
   uhr:_spUhrBild, ueberholt:_spUeberholtBild, duoserie:_spDuoserieBild, hoch:_spHochBild,
-  feld:_spFeldBild};
+  feld:_spFeldBild, tafel:_spAnzeigeBild, pucks:_spPucksBild, strom:_spStromBild,
+  herz:_spHerzBild, zunull:_spZunullBild};
 
 const _spZeile = a => _spZeileBild(_spZeileDaten(a.m));
 const SP_KOPF = {
@@ -26787,11 +27016,8 @@ const SP_FUSS = {
   premiere:a => _spPremiereBild(a.x), rolle:a => _spRolleBild(a.x)
 };
 
-const SP_SCORE_FORMEN = new Set(['mosaik','tacho','streu','transfer','gefaelle','feld','tauziehen','muenze']);
 const SP_ANLASS_FORMEN = new Set(['chemie','gegner','revanche','gipfel','rueckkehr','tagesring','zaehlwerk',
   'uhr','ueberholt','duoserie']);
-const SP_GRUNDFORMEN = new Set(['tacho','tauziehen','abstand','zeile','feld']);
-const SP_BEFUND_MIN = 12;
 function _spVisualHash(v){
   let h = 2166136261 >>> 0, s = String(v || '');
   for(let i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
@@ -26799,52 +27025,29 @@ function _spVisualHash(v){
 }
 function _spScoreSpezial(m){
   const c = _spChance(m), diff = Math.abs(m.score_a - m.score_b);
-  if(c != null && c < CHANCE_UPSET)
-    return {key:'aussenseiter', x:{c}};
-  if(diff === 1) return {key:'krimi', x:{c}};
-  if(Math.min(m.score_a, m.score_b) === 0) return {key:'weste', x:{}};
+  if(c != null && c < CHANCE_UPSET) return {key:'aussenseiter', x:{c}};
+  if(Math.min(m.score_a, m.score_b) === 0) return {key:'zunull', x:{}};
+  if(diff === 1) return {key:'herz', x:{}};
   if(diff >= 6) return {key:'deutlich', x:{}};
   return null;
 }
+const SP_KOPF_GRUND = ['tafel', 'strom', 'pucks', 'feld', 'tauziehen', 'tacho', 'muenze', 'gefaelle', 'mosaik', 'streu'];
 function _spScoreKandidaten(m){
   const F = _spFakten(m);
-  const k = _spFormKand(m)
-    .filter(x => SP_SCORE_FORMEN.has(x.key) && !['feld','mosaik','transfer'].includes(x.key));
-  const mosaik = _spMosaikBefund(F);
-  if(mosaik) k.push({key:'mosaik', x:mosaik,
-    rang:Math.max(SP_FORM.mosaik.rang, SP_FORM.mosaik.gewicht(mosaik))});
-  const transfer = _spTransferBefund(F);
-  if(transfer) k.push({key:'transfer', x:transfer,
-    rang:SP_FORM.transfer.rang + (transfer.platz === 1 ? 8 : 0)});
-  if(F.c != null && F.c >= .56 && !k.some(x => x.key === 'tacho'))
-    k.push({key:'tacho', x:{leicht:F.c < .62}, rang:14});
-  if(F.diff >= 3 && F.diff < 6) k.push({key:'abstand', x:{}, rang:13});
-  k.push({key:'zeile', x:{}, rang:10});
-  k.push({key:'feld', x:{}, rang:SP_FORM.feld.rang});
-  const jeKey = new Map();
-  k.forEach(x => { const alt = jeKey.get(x.key); if(!alt || x.rang > alt.rang) jeKey.set(x.key, x); });
-  return [...jeKey.values()].sort((a, b) => b.rang - a.rang || a.key.localeCompare(b.key));
+  return SP_KOPF_GRUND.map(key => {
+    let x = null;
+    try { x = key === 'mosaik' ? _spMosaikBefund(F) : SP_FORM[key].wann(F); } catch(e){ x = null; }
+    return x ? {key, x, rang:SP_FORM[key].rang} : null;
+  }).filter(Boolean);
 }
 function _spScoreAuswahl(x, spur, duos, ohne){
-  const zuletzt = spur[spur.length - 1], duo = _spSieger(x).slice().sort().join();
-  const oft = (k, n) => spur.slice(-n).filter(y => y === k).length;
+  const duo = _spSieger(x).slice().sort().join();
   const schonDuo = k => spur.slice(-30).some((y, i, a) => y === k && duos[duos.length - a.length + i] === duo);
-  const kand = _spScoreKandidaten(x).filter(c => c.key !== ohne && !(c.key === 'gefaelle' && schonDuo('gefaelle')));
-  const los = c => _spVisualHash(x.id + '|' + c.key);
-  const befund = kand.filter(c => !SP_GRUNDFORMEN.has(c.key))
-    .map(c => Object.assign({}, c, {eff:c.rang - 10 * oft(c.key, 2) - 4 * oft(c.key, 10)
-      - (c.key === 'transfer' ? 7 * oft(c.key, 12) : 0), los:los(c)}))
-    .sort((p, q) => q.eff - p.eff || q.rang - p.rang || p.los - q.los);
   const seit = k => { const i = spur.lastIndexOf(k); return i < 0 ? Infinity : spur.length - 1 - i; };
-  const grund = kand.filter(c => SP_GRUNDFORMEN.has(c.key))
-    .map(c => Object.assign({}, c, {seit:seit(c.key), los:los(c)}))
-    .sort((p, q) => q.seit - p.seit || q.rang - p.rang || p.los - q.los);
-  let w = befund[0] && befund[0].eff >= SP_BEFUND_MIN ? befund[0] : (grund[0] || befund[0]);
-  if(w && w.key === zuletzt){
-    const anders = (w === befund[0] ? befund.concat(grund) : grund.concat(befund)).find(c => c.key !== zuletzt);
-    if(anders) w = anders;
-  }
-  return w || null;
+  let best = null;
+  _spScoreKandidaten(x).filter(c => c.key !== ohne && !(c.key === 'gefaelle' && schonDuo('gefaelle')))
+    .forEach(c => { const st = seit(c.key); if(!best || st > best.st) best = {c, st}; });
+  return best ? best.c : null;
 }
 const SP_SCORE_VORLAUF = 120;
 function _spScoreAb(B, pub){
@@ -26985,8 +27188,8 @@ function _spAnlassSnapshot(m, fakten, scoreKey){
   const rolle = _spRolleDaten(m);
   if(rolle) plus('rolle', 30, () => rolle);
   if(c != null && c < CHANCE_UPSET && scoreKey !== 'aussenseiter') plus('aussenseiter', 40, () => _spWippeDaten({m, c}));
-  if(diff === 1) plus('nerven', scoreKey === 'krimi' ? 14 : 24, () => _spNervenDaten({m, c}));
-  if(diff >= 6) plus('verteilung', scoreKey === 'deutlich' ? 14 : 24, () => _spVerteilungDaten({m}));
+  if(diff === 1) plus('nerven', scoreKey === 'krimi' || scoreKey === 'herz' ? 14 : 24, () => _spNervenDaten({m, c}));
+  if(diff >= 6) plus('verteilung', scoreKey === 'deutlich' || scoreKey === 'zunull' ? 14 : 24, () => _spVerteilungDaten({m}));
   _spFormKand(m).filter(k => SP_ANLASS_FORMEN.has(k.key))
     .forEach(k => plus(k.key, k.rang, () => SP_FORM[k.key].daten(F, k.x)));
   if(!kand.length) return null;
@@ -27009,8 +27212,17 @@ function _spVisualSnapshot(m, fakten){
   if(fest) return fest;
   return {version:2, score, occasion:_spAnlassSnapshot(m, fakten || [], score.key)};
 }
+function _spLinks(d){
+  if(!d || typeof d !== 'object' || d.aw !== false) return d;
+  const o = Object.assign({}, d, {aw:true});
+  if(Array.isArray(d.A) && Array.isArray(d.B)){ o.A = d.B; o.B = d.A; }
+  if(d.sa != null && d.sb != null){ o.sa = d.sb; o.sb = d.sa; }
+  if(Array.isArray(d.slots) && d.slots.length === 4) o.slots = d.slots.slice().reverse();
+  return o;
+}
 function _spScoreBild(v){
   if(!v || !v.key) return '';
+  v = Object.assign({}, v, {data:_spLinks(v.data)});
   const spezial = {krimi:_spTafelBild, aussenseiter:_spWippeBild, deutlich:_spBandBild,
     zeile:_spZeileBild, abstand:_spBandBild};
   if(spezial[v.key]) return spezial[v.key](v.data);
@@ -27019,7 +27231,7 @@ function _spScoreBild(v){
 function _spOccasionBild(v){
   if(!v || !v.key) return '';
   const data = v.data && typeof v.data === 'object'
-    ? Object.assign({}, v.data, {nurAnlass:true}) : v.data;
+    ? Object.assign({}, _spLinks(v.data), {nurAnlass:true}) : v.data;
   const bild = {
     spitze:_spTabelleBild, rang:_spTabelleBild, serie:_spSerieBild,
     wende:_spKurveBild, duell:_spDuellBild, riss:_spRissBild,

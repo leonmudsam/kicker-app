@@ -1434,7 +1434,12 @@ const _feed = JSON.parse(K.eval(`JSON.stringify((function(){
         const kopf = _spBild(s).kopf;
         if(kopf.indexOf('class="sp-fk ') >= 0){
           const hoch = Math.max(m.score_a, m.score_b), tief = Math.min(m.score_a, m.score_b);
-          return kopf.indexOf('<em>' + hoch + '</em>:' + tief + '</b>') < 0;
+          if(kopf.indexOf('<em>' + hoch + '</em>:' + tief + '</b>') >= 0) return false;
+          // Klapptafel, Pucks und Tor zeichnen den Stand selbst: dann steht
+          // unter den Zahlen ohne Vorzeichen (die Elo der vier trägt eins)
+          // die Siegerzahl, und direkt danach die der Verlierer.
+          const z = (kopf.replace(/<[^>]+>/g, ' ').match(/(^|\\s)\\d+(?=\\s|$)/g) || []).map(t => +t);
+          return !z.some((v, i) => v === hoch && z[i + 1] === tief);
         }
         const gesichter = (html.match(/class="(rav zn|av)[ "]/g)||[]).length;
         const stand = html.indexOf('>' + m.score_a + '</em>') >= 0 && html.indexOf('>' + m.score_b + '</em>') >= 0
@@ -7971,7 +7976,8 @@ const _bogen = JSON.parse(K.eval(`JSON.stringify((function(){
   // Die gewöhnliche Partie trägt eine der Formen [§C33]: die Klasse folgt der Wahl.
   const FORMKL = {mosaik:'sp-mo', tacho:'sp-ta', streu:'sp-sd', transfer:'sp-et', chemie:'sp-ch', gegner:'sp-gg',
     revanche:'sp-rv', gipfel:'sp-gp', rueckkehr:'sp-zu', gefaelle:'sp-gf', tagesring:'sp-tr', zaehlwerk:'sp-zw', feld:'sp-feld',
-    tauziehen:'sp-tz', muenze:'sp-mz', weste:'sp-ws', uhr:'sp-uh', ueberholt:'sp-uo', duoserie:'sp-ds', hoch:'sp-ho'};
+    tauziehen:'sp-tz', muenze:'sp-mz', weste:'sp-ws', uhr:'sp-uh', ueberholt:'sp-uo', duoserie:'sp-ds', hoch:'sp-ho',
+    tafel:'sp-ag', pucks:'sp-pu', strom:'sp-sm', herz:'sp-hz', zunull:'sp-zn'};
   karten.forEach(s => {
     const d = s.dataRef, m = matches.find(x => x.id === d.matchId);
     if(!m) return;
@@ -8008,13 +8014,15 @@ const _bogen = JSON.parse(K.eval(`JSON.stringify((function(){
     const hoch = Math.max(m.score_a, m.score_b), tief = Math.min(m.score_a, m.score_b);
     const vor = reihe.slice(0, reihe.indexOf(m) + 1);
     const t = text(html);
-    // Das Spielfeld: Abwehr A, Sturm B, Sturm A, Abwehr B, und je Stange
-    // die Elo der Partie.
+    // Das Spielfeld: Abwehr der Sieger, Sturm der Verlierer, Sturm der
+    // Sieger, Abwehr der Verlierer, und je Stange die Elo der Partie. Die
+    // Sieger stehen links, auch wenn sie als B eingetragen sind [§C33].
     if(form === 'feld'){
       const rolle = (id) => m[(m.a1 === id ? 'a1' : m.a2 === id ? 'a2' : m.b1 === id ? 'b1' : 'b2') + '_pos'];
       const def = ids => ids.find(id => rolle(id) === 'def') || ids[0];
       const atk = ids => ids.find(id => id !== def(ids));
-      const soll = [def([m.a1,m.a2]), atk([m.b1,m.b2]), atk([m.a1,m.a2]), def([m.b1,m.b2])]
+      const [li, re] = m.winner === 'A' ? [[m.a1,m.a2], [m.b1,m.b2]] : [[m.b1,m.b2], [m.a1,m.a2]];
+      const soll = [def(li), atk(re), atk(li), def(re)]
         .map(id => _newsEloDelta(id, m.id)).map(v => (v > 0 ? '+' : v < 0 ? '−' : '±') + Math.abs(v));
       const ist = [...html.matchAll(/<em class="[gr] num">([^<]+)<\\/em><\\/div>/g)].map(x => x[1]);
       if(ist.join() !== soll.join()) falsch.push(s.id + ' Feld ' + ist + ' statt ' + soll);
@@ -8221,11 +8229,11 @@ const _scoreWahl = JSON.parse(K.eval(`JSON.stringify((function(){
          || !/SELTENER AUSGANG|HÄUFIGSTER AUSGANG|RUNDE ERGEBNISMARKE/.test(h))
         falsch.push(m.id + ' Mosaik ohne Befund');
     }
-    if(w.key === 'transfer'){
-      transferBei.push(i);
-      const b = _spTransferBefund(_spFakten(m));
-      if(!b || b.platz > Math.max(1, Math.ceil(b.gesamt * .05)))
-        falsch.push(m.id + ' Transfer ohne Ausreisser');
+    // Elo-Transfer, Klapptafel, Ergebniszeile, Abstand und Weste kommen aus
+    // der Wahl nicht mehr: sie zeigten die Verlierer links oder sagten, was
+    // jede Ansicht zeigt.
+    if(['transfer', 'krimi', 'zeile', 'abstand', 'weste'].includes(w.key)){
+      transferBei.push(i); falsch.push(m.id + ' alter Kopf ' + w.key);
     }
   });
   const eng = transferBei.some((v, i) => i && v - transferBei[i - 1] < 5);
@@ -8237,8 +8245,8 @@ const _scoreWahl = JSON.parse(K.eval(`JSON.stringify((function(){
     const vor = reihe.slice(Math.max(0, i - 30), i).findIndex((y, j) => spur[Math.max(0, i - 30) + j] === 'gefaelle'
       && _spSieger(y).slice().sort().join() === duo);
     if(vor >= 0) welten.push(m.id + ' ' + duo.split(',').map(pname).join(' und ')); });
-  const GRUND = ['tacho', 'tauziehen', 'abstand', 'zeile', 'feld'];
-  const SPEZIAL = ['krimi', 'deutlich', 'aussenseiter', 'weste'];
+  const GRUND = ['tafel', 'strom', 'pucks', 'feld'];
+  const SPEZIAL = ['herz', 'deutlich', 'aussenseiter', 'zunull'];
   const grund = GRUND.map(k => zahl[k] || 0);
   const gewoehnlich = Object.keys(zahl).filter(k => !SPEZIAL.includes(k)).map(k => [k, zahl[k]])
     .sort((a, b) => b[1] - a[1])[0];
@@ -8247,22 +8255,20 @@ const _scoreWahl = JSON.parse(K.eval(`JSON.stringify((function(){
   } finally { invalidateCache(); _cache._stories = _bestand; }
 })())`));
 ok(_scoreWahl.falsch.length === 0,
-   'Mosaik und Elo-Transfer erscheinen nur mit einem belegten besonderen Anlass',
-   _scoreWahl.falsch.join(' | ') || JSON.stringify(_scoreWahl.zahl));
-ok(_scoreWahl.transfer <= Math.ceil(_scoreWahl.n * .05) && !_scoreWahl.eng,
-   'die Elo-Transfergrafik bleibt ein seltener Ausreisser und wiederholt sich nicht in kurzem Abstand',
-   _scoreWahl.transfer + ' von ' + _scoreWahl.n + ', eng ' + _scoreWahl.eng);
+   'das Mosaik erscheint nur mit einem belegten Befund, und kein Kopf kommt aus der Zeit vor dem Katalog',
+   _scoreWahl.falsch.slice(0, 4).join(' | ') || JSON.stringify(_scoreWahl.zahl));
 ok(_scoreWahl.doppelt === 0,
    'neue Scoregrafiken wiederholen sich nicht direkt hintereinander',
    _scoreWahl.doppelt + ' Wiederholungen · ' + JSON.stringify(_scoreWahl.zahl));
 // Die Grundansichten einer gewöhnlichen Partie wechseln sich ab, statt dass
 // die mit dem höchsten Gewicht gewinnt: der Tacho stand auf 69 von 466
-// Karten, das Spielfeld auf vier. Kein Kopf ohne besonderen Ausgang steht
-// auf mehr als jeder zehnten Karte.
+// Karten, das Spielfeld auf vier. Die vier, die für jede Partie gelten
+// (Anzeigetafel, Elo-Strom, Torpucks, Spielfeld), stehen gleich oft, und
+// kein Kopf ohne besonderen Ausgang steht auf mehr als jeder zehnten Karte.
 ok(Math.min(..._scoreWahl.grund) > 0 && Math.max(..._scoreWahl.grund) <= 1.5 * Math.min(..._scoreWahl.grund)
    && _scoreWahl.gewoehnlich[1] <= _scoreWahl.n / 10,
    'die Grundansichten wechseln sich ab, und kein gewöhnlicher Kopf steht auf mehr als jeder zehnten Karte',
-   'Tacho, Tauziehen, Abstand, Zeile, Feld ' + _scoreWahl.grund.join('/') + ' · am häufigsten '
+   'Tafel, Strom, Pucks, Feld ' + _scoreWahl.grund.join('/') + ' · am häufigsten '
    + _scoreWahl.gewoehnlich.join(' ') + ' von ' + _scoreWahl.n);
 ok(_scoreWahl.welten.length === 0,
    'ein Duo gewinnt nicht zweimal in dreißig Karten „als ungleiches Paar“',

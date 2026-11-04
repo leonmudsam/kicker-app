@@ -2148,7 +2148,7 @@ const ok = (c, msg, det) => {
     const out = {fehlt:false,
       brk: !!(karte && karte.classList.contains('nf-brk')),
       // Das Ergebnis steht im Kopf der Partie, der ihrem Anlass folgt [§11.6c].
-      band: karte ? karte.querySelectorAll('.nf-erg, .sp-zeile, .sp-feld, .sp-at, .sp-wp, .sp-band').length : 0,
+      band: karte ? karte.querySelectorAll('.nf-erg, .sp-zeile, .sp-feld, .sp-at, .sp-wp, .sp-band, .sp-ag, .sp-pu, .sp-sm, .sp-hz, .sp-zn').length : 0,
       zeilen: zl.length,
       titel: karte ? (karte.querySelector('.nf-h') || {}).textContent || '' : '',
       zeilenText: zl.map(x => x.textContent.trim()).join(' | '),
@@ -2897,7 +2897,13 @@ const ok = (c, msg, det) => {
           _spUhrBild({n:99, W:[a, b], L:[c, e], hoch:10, tief:9, zeiten:Array.from({length:99}, (_, i) => 300 + i * 9)}),
           _spUeberholtBild({w:a, l:c, wPre:118, wPost:1, lPre:2, lPost:126, W:[a, b], L:[c, e], hoch:10, tief:9}),
           _spDuoserieBild({W:[a, b], L:[c, e], k:999, n:45495, s:12345, hoch:10, tief:9, folge:Array.from({length:16}, (_, i) => i > 2)}),
-          _spHochBild({pid:a, kurve:Array.from({length:40}, (_, i) => 900 + (i * 37) % 300).concat([12345]), elo:12345, alt:1199, seit:999})
+          _spHochBild({pid:a, kurve:Array.from({length:40}, (_, i) => 900 + (i * 37) % 300).concat([12345]), elo:12345, alt:1199, seit:999}),
+          // Die Köpfe des Katalogs, jeder mit Grenzwerten.
+          _spAnzeigeBild({W:[a, b], L:[c, e], hoch:10, tief:9, pct:99, delta:{[a]:12345, [b]:999, [c]:-12345, [e]:-999}}),
+          _spPucksBild({W:[a, b], L:[c, e], hoch:10, tief:9, delta:{}}) + _spPucksBild({W:[a, b], L:[c, e], hoch:12, tief:11, delta:{}}),
+          _spStromBild({W:[a, b], L:[c, e], hoch:10, tief:0, delta:{[a]:12345, [b]:999, [c]:-12345, [e]:-999}}),
+          _spHerzBild({W:[a, b], L:[c, e], hoch:10, tief:9, pct:1, nr:999, delta:{[a]:12345, [b]:999, [c]:-12345, [e]:-999}}),
+          _spZunullBild({W:[a, b], L:[c, e], hoch:10, tief:0, nr:999, monat:'September', delta:{[a]:12345, [b]:999, [c]:-12345, [e]:-999}})
         ].map(h => '<div class="nf-card nf-s-spiel">' + h + '</div>');
         const runde = {id:'probe', when:new Date(d0).toISOString(), cat:'highlight',
           title:'Jean-Baptiste von Hohenstein gewinnt die Runde mit 12 von 23 Partien',
