@@ -282,7 +282,7 @@ const inhalt = `
   <p class="sl-hinweis">Gestellt ist eine Sache: ein Karriereende kommt in den Partien nicht vor. Für das Beispiel beendet Anton am 20.10. um 18:00 die Karriere.</p>
   <nav class="sl-nav">
     <a href="#weg">Weg</a><a href="#uhr">Uhr</a><a href="#breaking">Breaking</a><a href="#seiten">Seiten</a>
-    <a href="#zusammen">Zusammenführen</a><a href="#karten">Karten</a><a href="#anlaesse">Anlässe</a>${NEU ? NEU.nav : ''}<a href="kopf-fuss.html">Köpfe und Füße</a><a href="#zahlen">Zahlen</a>
+    <a href="#zusammen">Zusammenführen</a><a href="#karten">Karten</a><a href="#anlaesse">Anlässe</a>${NEU ? NEU.nav : ''}<a href="#zahlen">Zahlen</a>
   </nav>
 </header>
 

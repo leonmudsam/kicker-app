@@ -309,8 +309,9 @@ function _ndMitteRoh(s){
           <div class="nd-wo">${zeilen}</div>`;
       }
       // ── Die Sammelkarte: was im selben Moment passiert ist ───────────
-      // Der Kopf fasst zusammen. Darunter stehen alle Teile gleichrangig;
-      // keines davon wird zum heimlichen zweiten Kopf.
+      // Der Kopf fasst zusammen, auf der Karte einer Partie ist er ihr
+      // Hauptanlass [§C33]. Darunter stehen alle Teile gleichrangig; keines
+      // wird hervorgehoben, auch nicht der Hauptanlass.
       case 'sammel': {
         const teile = Array.isArray(d.teile) ? d.teile : [];
         // Die Ergebnis-Karte handelt von zwei Partien, und eine Partie sieht
@@ -354,17 +355,22 @@ function _ndMitteRoh(s){
                 <small>${esc([bild.verb, zeit].filter(Boolean).join(' · '))}</small></span>
               <span class="nw-tz-r">${bild.rechts}${kurz ? `<b class="nd-tz-v num">${bild.wert}</b>` : ''}</span>${
               bild.wert && !kurz ? `<b class="nw-tz-lang">${bild.wert}</b>` : ''}</div>`;
+          // Die Zeile des Hauptanlasses: ihr Satz ist schon die Schlagzeile
+          // des Blatts [§C33], also steht dort ihr Beleg. Vorher stand derselbe
+          // Satz als Titel und gleich darunter als erste Zeile.
+          const titel = _ndNeu(t.titel) ? t.titel : (_ndNeu(t.text) || t.titel);
+          const text = titel === t.text ? '' : t.text;
           return `<div class="nw-zeile${t.neg ? ' neg' : ''}"${ziel ? ziel + ' style="cursor:pointer"'
               : (t.pids && t.pids[0]) ? ` data-pid="${esc(t.pids[0])}" style="cursor:pointer"` : ''}>
               <div class="nw-zeile-kopf">${t.ic
                 ? `<i class="nw-ic">${svgI(t.ic)}</i>` : ''}<span class="nw-label">${
-                esc(t.titel || '')}</span>${
+                esc(titel || '')}</span>${
                 t.klasse ? `<b class="nw-kl">${esc(t.klasse)}</b>` : ''}${
                 t.marke ? `<b class="nw-mk">${esc(t.marke)}</b>` : ''}${
                 t.wert ? `<span class="nw-wert">${esc(t.wert)}</span>` : ''}</div>
               ${zeit ? `<div class="nw-satz num">${esc(zeit)}</div>` : ''}
               ${jeZeileBand && t.matchId ? _newsMatchVsBlock(t.matchId) : ''}
-              ${_ndNeu(t.text) ? `<div class="nw-satz">${esc(t.text)}</div>` : ''}
+              ${_ndNeu(text) ? `<div class="nw-satz">${esc(text)}</div>` : ''}
             </div>`;
         };
         // ── Was hier relevant ist, steht in Zahlen davor ────────────

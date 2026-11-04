@@ -3661,7 +3661,7 @@ const _sam = JSON.parse(K.eval(`JSON.stringify((function(){
   const norm = t => String(t||'').replace(/<[^>]*>/g,' ')
     .replace(/&[a-z]+;/g,' ').replace(/[^0-9a-zA-ZäöüÄÖÜß%]+/g,' ').trim().toLowerCase();
   const sicht = getStoriesCache().filter(x => (x.dataRef||{}).type === 'sammel');
-  let kopfKopie = 0, textListe = 0, leer = 0, unvollstaendig = 0, markiert = 0;
+  let kopfKopie = 0, textListe = 0, leer = 0, unvollstaendig = 0, markiert = 0, blattDoppelt = 0;
   sicht.forEach(x => {
     const b = _newsDetailBody(x);
     const obenTitel = norm(x.title), obenText = norm(x.desc);
@@ -3675,6 +3675,9 @@ const _sam = JSON.parse(K.eval(`JSON.stringify((function(){
     const partie = String(x.id).indexOf('sammel_spiel_match_') === 0;
     const kopien = teile.filter(t => obenTitel === norm(t.titel) || obenText === norm(t.text)).length;
     if(partie ? kopien !== 1 : kopien > 0) kopfKopie++;
+    // Im Blatt trägt die Zeile des Hauptanlasses seinen Beleg: sein Satz
+    // stand dort als Titel und gleich darunter noch einmal als erste Zeile.
+    if(partie && labels.some(l => l === obenTitel)) blattDoppelt++;
     // Im Bündel einer Partie ist die Partie die Bühne und keine Zeile.
     const buehne = b.indexOf('nd-buehne') >= 0 ? teile.filter(t => (t.typ || t.type) === 'spiel').length : 0;
     if(labels.length !== teile.length - buehne) unvollstaendig++;
@@ -3683,7 +3686,7 @@ const _sam = JSON.parse(K.eval(`JSON.stringify((function(){
     const alle = (x.dataRef.teile||[]).map(t => norm(t.titel));
     if(alle.length > 1 && alle.every(t => t && norm(x.desc).indexOf(t) >= 0)) textListe++;
   });
-  return {n: sicht.length, kopfKopie, textListe, leer, unvollstaendig, markiert};
+  return {n: sicht.length, kopfKopie, textListe, leer, unvollstaendig, markiert, blattDoppelt};
 })())`));
 ok(_sam.n > 0, 'es gibt Sammelkarten mit Blatt', _sam.n + '');
 ok(_sam.kopfKopie === 0, 'der Sammelkarten-Kopf kopiert kein Einzelereignis, außer auf der Karte einer Partie genau ihren Hauptanlass',
@@ -3696,6 +3699,8 @@ ok(_sam.unvollstaendig === 0, 'das Blatt zeigt ausnahmslos alle Einzelereignisse
    _sam.unvollstaendig + ' unvollstaendig');
 ok(_sam.markiert === 0, 'kein Einzelereignis wird im Blatt hervorgehoben',
    _sam.markiert + ' markiert');
+ok(_sam.blattDoppelt === 0, 'im Blatt einer Partie steht der Satz des Hauptanlasses nicht noch einmal als Zeile',
+   _sam.blattDoppelt + ' doppelt');
 
 // ── Gebuendelt wird nur, was ein Subjekt teilt ──────────────────────
 // Die Minute allein reichte nicht: „Leon und Maxi gewinnen zusammen alles"
@@ -5305,6 +5310,28 @@ ok(_zeilenWahl.unter === 'zw-ws' && _zeilenWahl.zeilen.indexOf('zw-ws') < 0,
 ok(_zeilenWahl.zeilen.join() === 'zw-ms,zw-rv,zw-bm' && _zeilenWahl.weitere === 'und 2 weitere',
    'darunter höchstens drei Zeilen, ein neues Thema zuerst, eine Nebensache weder als Zeile noch in der Zahl',
    _zeilenWahl.zeilen.join(', ') + ' · ' + _zeilenWahl.weitere);
+
+// Welche Meldung der Fuß zeichnet, merkt er sich (`zeigt`). Nach Art und
+// Person geraten, galten beide Rivalitäten einer Partie als gezeichnet,
+// obwohl der Fuß nur eine zeigt, und die andere fehlte auf der Karte. Die
+// Medaille dagegen nennt jeden, der sie holte, und deckt alle.
+const _zeigt = JSON.parse(K.eval(`JSON.stringify((function(){
+  const m = matches[matches.length - 1], W = _spSieger(m), L = _spVerlierer(m);
+  const r1 = {type:'rivalry_milestone', a:W[0], b:L[0], n:50, matchId:m.id};
+  const r2 = {type:'rivalry', a:W[1], b:L[1], n:70, matchId:m.id};
+  const b1 = {type:'badge_unlocked', badgeId:'wall_badge', rarity:'rare', playerId:W[0], matchId:m.id};
+  const b2 = {type:'badge_unlocked', badgeId:'wall_badge', rarity:'rare', playerId:W[1], matchId:m.id};
+  const ff = _spFussFakten(m, [r1, r2, b1, b2]);
+  const duell = ff.find(x => x.a.key === 'duell'), med = ff.find(x => x.a.key === 'medaille');
+  const teil = (r, titel) => ({typ:r.type, titel, ref:r});
+  const z = _spZeilen([teil(r1, 'R1'), teil(r2, 'R2'), teil(b1, 'B1'), teil(b2, 'B2')], 'Kopf', {key:'duell', data:{}, zeigt:duell.ids});
+  const zm = _spZeilen([teil(r1, 'R1'), teil(b1, 'B1'), teil(b2, 'B2')], 'Kopf', {key:'medaille', data:{name:'Mauer'}, zeigt:med.ids});
+  return {zeilen:z.zeilen.map(t => t.titel).join(), unter:(z.unter || {}).titel,
+    medZeilen:zm.zeilen.map(t => t.titel).join(), medUnter:(zm.unter || {}).titel};
+})())`));
+ok(_zeigt.zeilen === 'B1,R2,B2' && _zeigt.unter === 'R1' && _zeigt.medZeilen === 'R1' && _zeigt.medUnter === 'B1',
+   'der Fuß blendet genau die Meldungen aus, die er zeichnet: die zweite Rivalität bleibt eine Zeile, die Medaille deckt jeden Halter',
+   JSON.stringify(_zeigt));
 
 // ── Was zählt, meldet Stufen, nicht jeden Schritt ─────────────────────
 // „Leon und Maxi treffen zum 207. Mal aufeinander" stand an jedem Spieltag

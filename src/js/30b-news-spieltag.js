@@ -1491,6 +1491,10 @@ function _spLinie(v, o){
       + `<path class="sp-ln-l" clip-path="url(#${id}o)" d="${d}"/><path class="sp-ln-l neg" clip-path="url(#${id}u)" d="${d}"/>`
     : `<path class="sp-ln-f" d="${flaeche}"/><path class="sp-ln-l" d="${d}"/>`;
   const ey = Math.min(H - UN - 1, Math.max(OB + 7, Y(v[n]) + 3.5));
+  // Passen Anfang und Ende unten nicht nebeneinander, steht nur das Ende:
+  // „24.628. Duell" und „24.689. Duell" lagen sonst übereinander.
+  const [xa, xe] = [String((o.x || [])[0] || ''), String((o.x || [])[1] || '')];
+  const anfang = 5.4 * (xa.length + xe.length) + 10 <= X(n) - LI;
   return `<svg class="sp-ln-s" viewBox="0 0 ${W} ${H}" aria-hidden="true">`
     + ticks.map(y => `<line class="sp-ln-g" x1="${LI}" x2="${W - RE}" y1="${r(Y(y))}" y2="${r(Y(y))}"/>`
       + `<text class="sp-ln-t" x="${LI - 5}" y="${r(Y(y) + 3)}">${esc(f(y))}</text>`).join('')
@@ -1501,11 +1505,8 @@ function _spLinie(v, o){
     + (o.fahne ? `<path class="sp-ln-fahne" d="M${r(X(n))} ${r(Y(v[n]) - 5)}v-13l9 3.5-9 3.5"/>` : '')
     + `<circle class="sp-ln-p${o.zwei && v[n] < o.ref ? ' neg' : ''}" cx="${r(X(n))}" cy="${r(Y(v[n]))}" r="4"/>`
     + `<text class="sp-ln-w" x="${r(X(n) + 8)}" y="${r(ey)}">${esc(ende)}</text>`
-    // Passen Anfang und Ende unten nicht nebeneinander, steht nur das Ende:
-    // „24.628. Duell" und „24.689. Duell" lagen sonst übereinander.
-    + (5.4 * (String((o.x || [])[0] || '').length + String((o.x || [])[1] || '').length) + 10 <= X(n) - LI
-      ? `<text class="sp-ln-x" x="${LI}" y="${H - 3}">${esc((o.x || [])[0] || '')}</text>` : '')
-    + `<text class="sp-ln-x re" x="${r(X(n))}" y="${H - 3}">${esc((o.x || [])[1] || '')}</text></svg>`;
+    + (anfang ? `<text class="sp-ln-x" x="${LI}" y="${H - 3}">${esc(xa)}</text>` : '')
+    + `<text class="sp-ln-x re" x="${r(X(n))}" y="${H - 3}">${esc(xe)}</text></svg>`;
 }
 // Platz, Gesicht und Name, ein Balken bis `max`, der Wert und eine Zahl
 // daneben, wahlweise ein Strich für den Schnitt. Der Name bricht um.
@@ -1957,11 +1958,7 @@ function _spScoreSnapshot(m){
   const fest = _spFormBasis().scorePublished.get(m.id);
   if(fest) return fest.score;
   if(w.key === 'aussenseiter') return {key:w.key, data:_spWippeDaten({m, c})};
-  // Alte Schlüssel kommen aus der Wahl nicht mehr; ihre Daten bleiben, falls
-  // eine Partie danach fragt, die vor dem Vorlauf liegt.
-  if(w.key === 'krimi') return {key:w.key, data:_spTafelDaten({m, c})};
   if(w.key === 'deutlich') return {key:w.key, data:_spZeileDaten(m)};
-  if(w.key === 'zeile' || w.key === 'abstand') return {key:w.key, data:_spZeileDaten(m)};
 
   const F = _spFakten(m);
   return {key:w.key, data:SP_FORM[w.key].daten(F, w.x)};
@@ -1977,49 +1974,59 @@ function _spScoreSnapshot(m){
 // zutreffende gewann immer: gemessen trugen 11 von 52 Partien in vierzehn
 // Tagen die Wende. Jetzt stehen alle zutreffenden Zeichnungen zur Wahl, und
 // was in den Partien davor schon stand, wiegt weniger — wie beim Kopf.
-const SP_MARKEN = {milestone_wins:{label:'Sieg', w:62}, milestone_elo:{label:'Elo', w:60},
-  milestone_goals:{label:'Tor', w:58}, jubilee:{label:'Partie', w:56}};
+// Welche Meldung ein Fuß zeichnet, steht als ihr Schlüssel im Schnappschuss
+// (`zeigt`), und genau diese lässt die Karte als Zeile weg (`_spZeilen`).
+// Nach Art und Person geraten, galten zwei Rivalitäten oder die
+// Duo-Jubiläen beider Seiten einer Partie als gezeichnet, obwohl der Fuß nur
+// eine zeigt, und die andere fehlte auf der Karte.
+function _spFaktId(r){
+  r = r || {};
+  return [r.type, r.pid || r.playerId || r.newLeader || r.victimPid || '', r.gegen || r.mit || '',
+    r.a || '', r.b || '', r.badgeId || ''].join('|');
+}
+const SP_MARKEN = {milestone_wins:'Sieg', milestone_elo:'Elo', milestone_goals:'Tor', jubilee:'Partie'};
+// Gewogen wie in der Schlagzeile (`anlassGewicht`); bei gleichem Gewicht
+// gewinnt, was hier zuerst steht.
 function _spFussFakten(m, fakten){
   const f = t => fakten.find(x => x.type === t), out = [];
+  const nimm = (key, x, daten, ids) => out.push({w:anlassGewicht(x.type, x), a:{key, m, x:daten || x}, ids:ids || [_spFaktId(x)]});
   let x;
-  if((x = f('lead_change')) && x.newLeader) out.push({w:96, a:{key:'spitze', m, x}});
+  if((x = f('lead_change')) && x.newLeader) nimm('spitze', x);
   if((x = fakten.find(y => y.type === 'badge_unlocked'
       && (y.rarity === 'rare' || y.rarity === 'legendary')
       && (!SP_ERGEBNIS_BADGE.has(y.badgeId) || (y.rang > 1 && _badgeTakt('rare', y.rang))))) && x.badgeId)
-    out.push({w:x.rarity === 'legendary' ? 92 : 66, a:{key:'medaille', m, x:{pid:x.playerId, badgeId:x.badgeId, rang:x.rang}}});
-  if((x = f('streak_killer')) && x.victimPid) out.push({w:80, a:{key:'riss', m, x}});
+    // Die Medaille nennt jeden, der sie in der Partie holte, also zeichnet
+    // sie jede dieser Meldungen.
+    nimm('medaille', x, {pid:x.playerId, badgeId:x.badgeId, rang:x.rang},
+      fakten.filter(y => y.type === 'badge_unlocked' && y.badgeId === x.badgeId).map(_spFaktId));
+  if((x = f('streak_killer')) && x.victimPid) nimm('riss', x);
   // Jede runde Zahl der Partie, von jedem: das Zählwerk zeichnete nur die
   // erste Marke ihrer Art, und erreichten Leo den hundertsten Sieg und Maxi
   // die tausendste Partie, stand nur der Sieg im Fuß. Gewogen wie die
   // schwerste darunter.
-  const marken = [];
-  fakten.forEach(y => { const t = SP_MARKEN[y.type];
-    if(!t || !y.pid) return;
+  const marken = [], markenIds = [];
+  fakten.forEach(y => { const label = SP_MARKEN[y.type];
+    if(!label || !y.pid) return;
     const wert = y.type === 'milestone_elo' ? (Number(y.mark) || parseInt(y.milestone, 10))
       : y.type === 'jubilee' ? Number(y.total) : parseInt(y.milestone, 10);
-    if(wert > 0 && !marken.some(z => z.pid === y.pid && z.label === t.label)) marken.push({pid:y.pid, wert, label:t.label, w:t.w}); });
-  if(marken.length) out.push({w:Math.max(...marken.map(z => z.w)), a:{key:'marken', m,
+    if(!(wert > 0)) return;
+    markenIds.push(_spFaktId(y));
+    if(!marken.some(z => z.pid === y.pid && z.label === label)) marken.push({pid:y.pid, wert, label, w:anlassGewicht(y.type, y)}); });
+  if(marken.length) out.push({w:Math.max(...marken.map(z => z.w)), ids:markenIds, a:{key:'marken', m,
     x:marken.sort((p, q) => q.w - p.w).map(z => ({pid:z.pid, wert:z.wert, label:z.label}))}});
-  if((x = f('win_streak')) && x.streak) out.push({w:46 + 2 * Math.min(17, x.streak), a:{key:'serie', m, x}});
-  if((x = f('team_streak')) && x.streak && x.a && x.b) out.push({w:46 + 2 * Math.min(17, x.streak), a:{key:'teamserie', m, x}});
+  if((x = f('win_streak')) && x.streak) nimm('serie', x);
+  if((x = f('team_streak')) && x.streak && x.a && x.b) nimm('teamserie', x);
   // Was in der einzelnen Partie passiert, mit der Zeichnung, die es zeigt.
-  if((x = f('fluch')) && x.pid && x.gegen) out.push({w:64, a:{key:'gegner', m, x}});
-  if((x = f('elo_hoch')) && x.pid) out.push({w:60, a:{key:'hoch', m, x}});
-  if((x = f('tabellensprung')) && x.pid && x.pre && x.post)
-    out.push({w:59, a:{key:'rang', m, x:[{pid:x.pid, r:{pre:x.pre, post:x.post}}]}});
-  if((x = f('revanche'))) out.push({w:52, a:{key:'revanche', m, x}});
-  if((x = f('duo_jubilaeum')) && x.sieg) out.push({w:50, a:{key:'chemie', m, x}});
-  if((x = f('tagesmarathon')) && x.pid) out.push({w:40, a:{key:'tagesring', m, x}});
-  // Die sieben Fakten des Katalogs, gewogen wie in der Schlagzeile.
-  if((x = f('duell_kippt')) && x.pid && x.gegen) out.push({w:60, a:{key:'kippt', m, x}});
-  if((x = f('woche_spitze')) && x.pid) out.push({w:50, a:{key:'woche', m, x}});
-  if((x = f('tag_plus')) && x.pid) out.push({w:48, a:{key:'plus', m, x}});
-  if((x = f('tag_hoehe')) && x.pid) out.push({w:42, a:{key:'hoehe', m, x}});
-  if((x = f('monat_gewinn')) && x.pid) out.push({w:40, a:{key:'monatsbest', m, x}});
-  if((x = f('monat_halb')) && x.pid) out.push({w:38, a:{key:'halb', m, x}});
-  if((x = f('partner_best')) && x.pid && x.mit) out.push({w:36, a:{key:'partner', m, x}});
-  if((x = f('rivalry_milestone')) && x.a && x.b) out.push({w:54, a:{key:'duell', m, x}});
-  else if((x = f('rivalry')) && x.a && x.b) out.push({w:34, a:{key:'duell', m, x}});
+  if((x = f('fluch')) && x.pid && x.gegen) nimm('gegner', x);
+  if((x = f('elo_hoch')) && x.pid) nimm('hoch', x);
+  if((x = f('tabellensprung')) && x.pid && x.pre && x.post) nimm('rang', x, [{pid:x.pid, r:{pre:x.pre, post:x.post}}]);
+  if((x = f('revanche'))) nimm('revanche', x);
+  if((x = f('duo_jubilaeum')) && x.sieg) nimm('chemie', x);
+  if((x = f('tagesmarathon')) && x.pid) nimm('tagesring', x);
+  // Die sieben Fakten des Katalogs.
+  Object.keys(SP_FAKT_FUSS).forEach(t => { if((x = f(t)) && x.pid) nimm(SP_FAKT_FUSS[t], x); });
+  if((x = f('rivalry_milestone')) && x.a && x.b) nimm('duell', x);
+  else if((x = f('rivalry')) && x.a && x.b) nimm('duell', x);
   return out.sort((p, q) => q.w - p.w);
 }
 // Zustände, die über viele Partien gelten: eine Serie, die Serie eines Duos,
@@ -2055,8 +2062,8 @@ function _spAnlassSnapshot(m, fakten, scoreKey){
   // Was die Karte als Zeile trägt, mit der Zeichnung dazu. Ein Ereignis
   // steht über allem, was die Partie selbst zeigt (+100); ein Zustand misst
   // sich mit ihm [SP_FUSS_ZUSTAND].
-  _spFussFakten(m, fakten).forEach(({w, a}) => {
-    const daten = {
+  _spFussFakten(m, fakten).forEach(({w, a, ids}) => {
+    const daten = SP_FAKT_DATEN[a.key] ? () => SP_FAKT_DATEN[a.key](a) : {
       marken:() => ({liste:a.x}),
       spitze:() => _spTabelleDaten(a, true), serie:() => _spSerieDaten(a),
       duell:() => _spDuellDaten(a), riss:() => _spRissDaten(a),
@@ -2069,8 +2076,8 @@ function _spAnlassSnapshot(m, fakten, scoreKey){
       chemie:() => SP_FORM.chemie.daten(F, {rund:true}),
       tagesring:() => SP_FORM.tagesring.daten(F, {id:a.x.pid,
         ms:F.tag.filter(y => [y.a1, y.a2, y.b1, y.b2].includes(a.x.pid))})
-    }[a.key] || (SP_FAKT_DATEN[a.key] && (() => SP_FAKT_DATEN[a.key](a)));
-    if(daten) kand.push({key:a.key, rang:w, data:daten, fakt:true, zustand:SP_FUSS_ZUSTAND.has(a.key)});
+    }[a.key];
+    if(daten) kand.push({key:a.key, rang:w, data:daten, fakt:true, zustand:SP_FUSS_ZUSTAND.has(a.key), zeigt:ids});
   });
 
   // Alle Zeichnungen, die aus der Partie selbst zutreffen, mit ihrem Gewicht.
@@ -2112,7 +2119,7 @@ function _spAnlassSnapshot(m, fakten, scoreKey){
     const i = gewertet.findIndex(k => k.key !== zuletzt);
     if(i > 0) gewertet.unshift(gewertet.splice(i, 1)[0]);
   }
-  for(const k of gewertet){ const dd = k.data(); if(dd) return merke({key:k.key, data:dd}); }
+  for(const k of gewertet){ const dd = k.data(); if(dd) return merke(k.zeigt ? {key:k.key, data:dd, zeigt:k.zeigt} : {key:k.key, data:dd}); }
   return null;
 }
 // ── Die Zeilen der Partie-Karte [§C33] ──────────────────────────────
@@ -2133,12 +2140,12 @@ const SP_THEMA = {lead_change:'tabelle', tabellensprung:'tabelle', top_clash:'ta
   duo_jubilaeum:'duo', team_streak:'duo', team_loss_streak:'duo', tagesmarathon:'tag',
   duell_kippt:'duell', woche_spitze:'tabelle', tag_plus:'tag', tag_hoehe:'tag',
   monat_gewinn:'monat', monat_halb:'monat', partner_best:'duo'};
-// Welche Meldungen ein Fuß zeichnet, je Zeichnung.
+// Welche Meldungen ein Fuß zeichnet, je Zeichnung: nur für Füße, die vor
+// `zeigt` gespeichert wurden.
 const SP_FUSS_TYP = {spitze:['lead_change'], riss:['streak_killer'], marken:Object.keys(SP_MARKEN),
   serie:['win_streak'], teamserie:['team_streak'], duell:['rivalry_milestone', 'rivalry'], gegner:['fluch'],
   hoch:['elo_hoch'], rang:['tabellensprung'], revanche:['revanche'], chemie:['duo_jubilaeum'],
   tagesring:['tagesmarathon'], medaille:['badge_unlocked']};
-Object.keys(SP_FAKT_FUSS).forEach(t => { SP_FUSS_TYP[SP_FAKT_FUSS[t]] = [t]; });
 function _spZeilen(teile, titel, occ){
   const kt = String(titel || '').trim();
   const ty = t => String((t && (t.typ || t.type)) || '');
@@ -2146,6 +2153,7 @@ function _spZeilen(teile, titel, occ){
   const thema = t => SP_THEMA[ty(t) === 'group' ? ref(t).sub : ty(t)] || '';
   const d = (occ && occ.data) || {}, l = occ && SP_FUSS_TYP[occ.key];
   const gezeichnet = t => {
+    if(Array.isArray(occ && occ.zeigt)) return occ.zeigt.indexOf(_spFaktId(ref(t))) >= 0;
     const r = ref(t), pid = r.pid || r.playerId;
     if(!l || l.indexOf(ty(t)) < 0) return false;
     if(occ.key === 'medaille') return (r.rarity === 'rare' || r.rarity === 'legendary')
@@ -2168,9 +2176,9 @@ function _spZeilen(teile, titel, occ){
     if(!th || !themen.has(th)){ neu.push(t); if(th) themen.add(th); } else wieder.push(t);
   });
   const zeilen = neu.concat(wieder, frei.filter(t => !neben(t) && t.neg));
+  // Die Nebensachen fehlen nur hier: das Blatt zeigt jedes Teil.
   return {zeilen:zeilen.filter(t => t.brk).concat(zeilen.filter(t => !t.brk)),
-    unter:fuss.length && fuss.indexOf(haupt) < 0 ? fuss[0] : null,
-    neben:frei.filter(neben)};
+    unter:fuss.length && fuss.indexOf(haupt) < 0 ? fuss[0] : null};
 }
 function _spVisualSnapshot(m, fakten){
   const score = _spScoreSnapshot(m);

@@ -328,6 +328,23 @@ function naechsteSerienMarke(n){
   return z;
 }
 
+// ── Was ein Anlass einer Partie wiegt [§C33] ─────────────────────────
+// Eine Tabelle für die Schlagzeile (`_leitWert`) und den Fuß
+// (`_spFussFakten`): der Fuß zeichnet, was die Schlagzeile trägt. Die Zahlen
+// standen zweimal, je Stelle eine Tabelle, und mussten von Hand gleich
+// bleiben. Eine Serie wiegt mit ihrer Länge, eine Auszeichnung nach ihrer
+// Klasse (`anlassGewicht`).
+const ANLASS_GEWICHT = {lead_change:96, streak_record:95, top_clash:86, giant_slayer:84, streak_killer:80,
+  fluch:64, milestone_wins:62, milestone_elo:60, elo_hoch:60, duell_kippt:60, tabellensprung:59,
+  milestone_goals:58, jubilee:56, rivalry_milestone:54, revanche:52, duo_jubilaeum:50, woche_spitze:50,
+  tag_plus:48, top_form:44, tag_hoehe:42, tagesmarathon:40, monat_gewinn:40, monat_halb:38,
+  partner_best:36, rivalry:34, badge_marken:24};
+function anlassGewicht(typ, dt){
+  dt = dt || {};
+  if(typ === 'win_streak' || typ === 'team_streak') return 46 + 2 * Math.min(17, Number(dt.streak) || 0);
+  if(typ === 'badge_unlocked') return dt.rarity === 'legendary' ? 92 : dt.rarity === 'rare' ? 66 : 50;
+  return ANLASS_GEWICHT[typ];
+}
 const STORY_PRIO = {
   // ── Breaking ──
   rekord_erstmals:   96,   // ein Liga-Rekord wird zum ersten Mal vergeben

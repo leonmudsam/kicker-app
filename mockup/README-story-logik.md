@@ -10,10 +10,6 @@ node tools/build.mjs                 # die Seite liest dist/index.html
 node mockup/story-logik-lauf.js      # spielt die Partien nach → .story-logik.json (nicht eingecheckt)
 node mockup/story-neu-lauf.js        # misst die Entwürfe neuer Stories → .story-neu.json (nicht eingecheckt)
 node mockup/story-logik-seite.js     # baut story-logik.html, mit „Neue Stories" (story-neu-seite.js)
-node mockup/kopf-fuss-anlaesse.js    # spielt den Generator nach, je Partie Meldungen, Formen, Köpfe und Füße der App → .kopf-fuss-anlaesse.json (nicht eingecheckt)
-node mockup/kopf-fuss-lauf.js        # baut jede Karte nach dem Katalog (kopf-fuss-katalog.js) → .kopf-fuss.json (nicht eingecheckt)
-node mockup/kopf-fuss-seite.js       # baut kopf-fuss.html
-node mockup/kopf-fuss-pruef.js       # misst jeden Kopf und Fuß an jeder Partie, baut kopf-fuss.html mit dem Ergebnis
 ```
 
 Beide Läufe rechnen mit der Uhr der Liga (`Europe/Berlin`): Tage, Wochen
@@ -61,44 +57,11 @@ behandelt. Die Schwellen sind an diesen Zählungen gewählt.
 
 ## Köpfe und Füße
 
-`kopf-fuss.html` zeigt die Karte einer Partie, wie sie nach einem Katalog
-aussähe. `kopf-fuss-katalog.js` nennt jeden Anlass und jeden Kopf genau
-einmal — Name, Quelle (Meldung der App, Form der App, aus der Partie, neu),
-Thema, Gewicht, Zeichnung, Bedingung — und beschreibt die Regel in fünf
-Schritten: sammeln, gewichten, Hauptanlass als Schlagzeile, Fuß, höchstens
-drei Zeilen (ein neues Thema zuerst) und „+ X weitere“; eine Nebensache
-(Gewicht unter 30) steht nur im Blatt. Jeder Anlass steht damit höchstens
-einmal auf der Karte. Der Kopf ist davon getrennt und zeigt nur, wie die
-Partie ausging, die Sieger immer links und in der Zeile darunter
-„schlagen“: ein besonderer Ausgang mit festem Bild, sonst die Grundansicht,
-die am längsten nicht dran war.
-
-`kopf-fuss-anlaesse.js` spielt den Generator der App Tag für Tag nach wie
-`story-logik-lauf.js` und liest am Abend jeder Partie, was die App über sie
-sagt und zeichnet: ihre Meldungen, ihre Formen, jeden Kopf und jeden Fuß, der
-zutrifft (gezeichnet mit `_spScoreBild` und `_spOccasionBild`, die Wappen als
-einfache Gesichter). Jede Partie ist dafür so gedreht, dass die Sieger Seite
-A sind; Elo, Meldungen und Sätze hängen nicht an der Seite, und die Köpfe der
-App zeichnen so die Sieger links. `kopf-fuss-lauf.js` zählt den Stand vor und
-nach jeder Partie für die neuen Fakten (`neueFakten`) und baut jede Karte nach
-dem Katalog (`sammeln`, `karteBauen`, `kopfWahl`). `kopf-fuss-seite.js`
-zeichnet die Seite: den Aufbau an einer Karte, jeden Kopf und jeden Fuß als
-Galerie, einen Spieltag am Stück, die Regel mit ihren Fällen, den Katalog
-mit Häufigkeiten, die Verteilung; eigene Zeichnungen nur für die Köpfe und
-Füße, die die App nicht kennt (`KOPF_BILD`, `FUSS_BILD`); dazu zeichnet der Entwurf Tabelle, Medaille und runde Zahlen selbst, mit
-den Daten der App (`daten` aus dem Nachlauf): die Tabelle als Kette statt
-neun Zeilen, die Medaille mit allen, die sie in der Partie holten, die Marken
-für jeden, der eine erreicht. Bewegung nur über
-Verschiebung und Deckkraft, jede endet von selbst und läuft erst, wenn die
-Karte ins Bild kommt [§C43]. `kopf-fuss-pruef.js` zeichnet jeden Kopf und
-jeden Anlass mit Zeichnung an jeder Partie, an der er zutrifft, und misst sie
-in Chromium; die Zeichnungen der App nur auf Rand und Abschneiden, ihr
-Inneres misst die App selbst (`tests/blatt`).
-
-Ergänzen: ein neuer Anlass ist eine Zeile in `ANLASS` mit Thema und Gewicht; ist er neu, kommen
-seine Bedingung in `neueFakten` und seine Zeichnung in `FUSS_BILD` dazu. Ein
-neuer Kopf ist eine Zeile in `KOPF`, und ist er neu, ein Eintrag in
-`KOPF_BILD`.
+Der Katalog der Partie-Karte ist eingebaut: wie Kopf, Schlagzeile, Zeilen
+und Fuß gewählt werden, steht in §C33 (`docs/gesetze/C33-feed.md`) und im
+Code (`30b-news-spieltag.js`); die Karten der Übersicht zeigen ihn mit den
+Zeichnungen der App. Der Entwurf mit eigener Kopie der Wahl ist entfernt,
+damit es die Regel nur einmal gibt.
 
 Die **Texte** stehen in `story-logik-seite.js`, gelesen aus
 `src/js/26-news-konstanten.js`, `27-news-generator.js`, `28-news-ambient.js`,

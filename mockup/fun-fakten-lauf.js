@@ -33,7 +33,7 @@ const liga = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'oktober.txt')
 const {K, setNow} = createRuntime();
 const letzterMs = Date.parse(liga[liga.length - 1].created_at);
 setNow(letzterMs + 7 * 864e5);
-// Wie `kopf-fuss-anlaesse.js`: die Saisontabelle trägt an jedem Tag genau
+// Wie in der App: die Saisontabelle trägt an jedem Tag genau
 // die Monate, die bis dahin zu sind, und die Stories liegen in einem
 // Speicher wie in der Datenbank (die erste Fassung einer ID gewinnt).
 K(`players = ${JSON.stringify(NAMES.map((n, i) => ({id:IDS[i], name:n, hidden:false, elo:0, atk:0.5, avatar_id:null})))};
