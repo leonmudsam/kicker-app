@@ -418,30 +418,42 @@ function _spTabelleDaten(a, spitze){
     });
   return {zeilen, von, bis, spitze};
 }
-// Eine SVG-Zeichnung kennt keinen Umbruch, also steht in ihr kein Name: an
-// den Enden jeder Linie das Gesicht und der Platz, links der Name, wenn alle
-// in die Spalte passen, und darunter in einem Satz, wer sich bewegt hat.
-// Die Gesichter liegen als HTML über der Zeichnung, damit sie dieselben
-// Chips sind wie überall [§C27].
+// Die Monatstabelle als Kette: jeder Platz ein Feld, das Gesicht auf seinem
+// Platz nach der Partie. Wer stieg, gleitet von seinem alten Feld herüber,
+// dort bleibt ein Umriss, und ein Bogen zeigt den Sprung; wer fiel, trägt
+// einen roten Rand, die neue Spitze Gold [§C25]. Vorher standen neun Zeilen
+// mit Linien von „vorher" nach „danach" da, die höchste Zeichnung aller
+// Füße, und wer sich nicht bewegte, nahm so viel Platz ein wie der Sprung.
+// Die Kette endet am letzten besetzten Platz: in einer Liga mit fünf
+// Spielern standen sonst vier leere Felder da. Die Daten sind dieselben wie
+// vorher, gespeicherte Karten zeichnen also auch die Kette.
 function _spTabelleBild(d){
-  if(!d || !d.zeilen.length) return '';
-  const H = (d.bis - d.von + 1) * 22;
-  const y = r => (r - d.von) * 22 + 11;
-  const reihen = d.zeilen.slice().sort((u, v) => (u.k !== 'm') - (v.k !== 'm'));
-  const linien = reihen.map(l => `<path class="sp-tb-l ${l.k}" d="M98 ${y(l.p)}C150 ${y(l.p)} 150 ${y(l.q)} 202 ${y(l.q)}"/>`).join('');
-  const mitNamen = _spPasst(d.zeilen.map(l => l.id), 10, true);
-  const ende = (l, links) => `<span class="sp-tb-e ${l.k}${links ? '' : ' re'}${d.spitze && !links && l.q === 1 ? ' gold' : ''}" `
-    + `style="top:${(y(links ? l.p : l.q) / H * 100).toFixed(2)}%">`
-    + (links ? `${mitNamen ? `<i>${esc(_spName(l.id))}</i>` : _spChip(l.id)}<b class="num">${_spZahl(l.p)}</b>`
-             : `<b class="num">${_spZahl(l.q)}</b>${_spChip(l.id)}`)
-    + `</span>`;
-  const bewegt = d.zeilen.filter(l => l.k !== 'm').sort((u, v) => u.q - v.q);
-  const satz = bewegt.map(l => `${_spNb(l.id)} ${l.k === 'g' ? 'steigt' : 'fällt'} von ${_spZahl(l.p)} auf ${_spZahl(l.q)}`
+  if(!d || !d.zeilen || !d.zeilen.length) return '';
+  const bis = Math.min(d.bis, Math.max(...d.zeilen.map(z => Math.max(z.p, z.q))));
+  const n = bis - d.von + 1, nach = {};
+  d.zeilen.forEach(z => { nach[z.q] = z; });
+  const mitte = r => (r - d.von + .5) / n * 100;
+  const steiger = d.zeilen.filter(z => z.k === 'g');
+  // Ein Bogen je Aufsteiger, so hoch wie der Sprung weit; ohne Punkt am
+  // Ende, weil die Zeichnung in der Breite gestreckt wird und ein Kreis
+  // darin zur Linse wurde.
+  const boegen = steiger.map(z => { const a = mitte(z.p), c = mitte(z.q), h = Math.min(15, 6 + Math.abs(z.p - z.q) * 2.5);
+    return `<path class="sp-tk-b" d="M${a.toFixed(1)} 17Q${((a + c) / 2).toFixed(1)} ${(17 - h).toFixed(1)} ${c.toFixed(1)} 17"/>`; }).join('');
+  const felder = Array.from({length:n}, (_, i) => { const r = d.von + i, z = nach[r];
+    const k = (z && z.k !== 'm' ? ' ' + z.k : '') + (d.spitze && r === 1 ? ' eins' : '');
+    return `<span class="sp-tk-f${k}">${z ? `<i style="--d:${z.p - z.q}">${_spChip(z.id)}</i>` : '<i></i>'}`
+      + `<small class="num">${_spZahl(r)}</small></span>`; }).join('');
+  const geister = steiger.map(z => `<u class="sp-tk-g" style="left:${mitte(z.p).toFixed(1)}%"></u>`).join('');
+  // Im Satz höchstens zwei: beim Spitzenwechsel die beiden an der Spitze,
+  // sonst die größten Sprünge. Mit allen, die sich bewegt hatten, brach er
+  // auf dem schmalsten Telefon in drei Zeilen um.
+  const wer = (d.spitze ? d.zeilen.filter(z => z.k !== 'm' && (z.q === 1 || z.p === 1)).sort((u, v) => u.q - v.q)
+    : d.zeilen.filter(z => z.k !== 'm').sort((u, v) => Math.abs(v.p - v.q) - Math.abs(u.p - u.q) || u.q - v.q)).slice(0, 2);
+  const satz = wer.map(l => `${_spNb(l.id)} ${l.k === 'g' ? 'steigt' : 'fällt'} von ${_spZahl(l.p)} auf ${_spZahl(l.q)}`
     + (d.spitze && l.q === 1 ? ' und führt' : '')).join(', ');
-  return `<div class="sp-tb"><div class="sp-tb-k"><span>vorher</span><span class="sp-k">Monatstabelle${d.von > 1 ? ` ab Platz ${_spZahl(d.von)}` : ''}</span><span>danach</span></div>
-    <div class="sp-tb-f" style="height:${H}px"><svg viewBox="0 0 300 ${H}" preserveAspectRatio="none" aria-hidden="true">${linien}</svg>
-    ${reihen.map(l => ende(l, true) + ende(l, false)).join('')}</div>
-    ${satz ? _spUnter(satz + '.') : ''}</div>`;
+  return `<div class="sp-fk sp-tk" style="--n:${n}"><div class="sp-k">Monatstabelle${d.von > 1 ? `, ab Platz ${_spZahl(d.von)}` : ''}</div>`
+    + `<svg class="sp-tk-s" viewBox="0 0 100 18" preserveAspectRatio="none" aria-hidden="true">${boegen}</svg>`
+    + `<div class="sp-tk-r">${geister}${felder}</div></div>${satz ? _spUnter(satz + '.') : ''}`;
 }
 
 // ── Der Lauf gegen den eigenen Bestwert und die Liga: die Serie ──────
@@ -629,10 +641,8 @@ function _spDuellBild(d){
 
 // ── Die Medaille: die Auszeichnung und wer sie in der Liga trägt ─────
 // „Selten" ist ein Wort; wie selten, zeigt die Liga: jeder Spieler ein
-// Platz, wer sie trägt, mit Gesicht, wer sie in dieser Partie geholt hat,
-// gerahmt. Violett ist die Familie der Auszeichnungen, Gold nur die
-// legendäre [§C25]. Ab sechzehn Spielern werden die Plätze zu Punkten —
-// vierzig Gesichter in einer Zeile wären eine Wand.
+// Punkt. Violett ist die Familie der Auszeichnungen, Gold nur die
+// legendäre [§C25].
 function _spMedailleDaten(a){
   const b = (typeof BADGES !== 'undefined' ? BADGES : []).find(x => x.id === a.x.badgeId);
   if(!b) return null;
@@ -670,47 +680,65 @@ function _spMedailleDaten(a){
   // Numerische Matchpositionen statt eines langen UUID-Schluessels je
   // Vergabe halten den Index klein. Der Rang braucht nur eine binaere Suche
   // im bereits vorhandenen Eventverlauf, keine neue Badge-Rechnung.
-  let rang = Number.isInteger(a.x.rang) && a.x.rang > 0 ? a.x.rang : 0;
-  if(!rang && i != null){
-    const folge = B.medaillen.vergaben.get(a.x.pid + '|' + b.id) || [];
+  const rangVon = pid => {
+    if(i == null) return 0;
+    const folge = B.medaillen.vergaben.get(pid + '|' + b.id) || [];
     let lo = 0, hi = folge.length;
     while(lo < hi){ const mid = (lo + hi) >>> 1; if(folge[mid] <= i) lo = mid + 1; else hi = mid; }
-    if(lo && folge[lo - 1] === i) rang = lo;
-  }
+    return lo && folge[lo - 1] === i ? lo : 0;
+  };
+  const rang = Number.isInteger(a.x.rang) && a.x.rang > 0 ? a.x.rang : rangVon(a.x.pid);
   const erreicht = rang >= 150 ? [Math.floor(rang / 25) * 25 - 25, Math.floor(rang / 25) * 25]
     : NEWS_BADGE_MARKEN.filter(k => k <= rang).slice(-2);
-  return {name:b.name, ic:b.ic, klasse:rarityOf(b.id), wer:a.x.pid, rang, ids, traeger,
+  // Jeder, der sie in dieser Partie holte, mit dem wievielten Mal: holten
+  // Julian und Maxi „Absoluter Sieger" zusammen, nannte der Fuß nur Julian,
+  // obwohl die Zeile darüber beide nannte.
+  const sicht = new Set(ids);
+  const alle = [a.x.pid].concat((quelle[a.m && a.m.id] || []).filter(ev => ev.badge && ev.badge.id === b.id).map(ev => ev.playerId))
+    .filter((pid, k, l) => pid && sicht.has(pid) && l.indexOf(pid) === k)
+    .map(pid => { const r = pid === a.x.pid ? rang : rangVon(pid); return {pid, rang:r, naechste:_badgeNaechsteMarke(r)}; });
+  return {name:b.name, ic:b.ic, klasse:rarityOf(b.id), wer:a.x.pid, rang, ids, traeger, alle,
     wiederholung:rang > 1, marken:erreicht.concat(_badgeNaechsteMarke(rang))};
 }
+// Geprägt in der Farbe ihrer Klasse, mit dem Zeichen der Auszeichnung, am
+// Band; daneben jeder, der sie hier holte, mit dem wievielten Mal, darunter
+// die Liga als Punkte: hell, wer sie trägt, leuchtend, wer sie hier holte.
+// Vorher gab es zwei Zeichnungen, eine für das erste Mal mit Plätzen und
+// eine für die Wiederholung mit Marken, und beide nannten nur einen. Alte
+// Daten ohne `alle` zeigen ihren einen, mit dem Rang, den sie trugen.
 function _spMedailleBild(d){
   if(!d) return '';
-  const tr = new Set(d.traeger), viele = d.ids.length > 16;
-  const ton = d.klasse === 'legendary' ? 'gold' : 'viol';
-  const kl = {legendary:'Legendär', rare:'Selten', common:'Gewöhnlich'}[d.klasse] || '';
-  // Nur neue Snapshots besitzen diesen Schalter. Alte V2-Drawings ohne ihn
-  // bleiben in ihrer publizierten Traegerform, auch wenn inzwischen mehr
-  // Verleihungen existieren. Wiederholungen sagen nie "neu dabei".
-  if(d.wiederholung && d.rang > 1){
-    const marken = (d.marken || []).slice(-3);
-    const schritte = marken.map(n => `<span class="${n < d.rang ? 'hat' : n === d.rang ? 'jetzt' : ''}"><b class="num">${_spZahl(n)}</b></span>`).join('');
-    const naechste = marken.find(n => n > d.rang);
-    return `<div class="sp-md sp-md-wieder ${ton}">${zkHtml(d.ic, 'g', ton)}<div class="sp-md-r">`
-      + `<div class="sp-md-k"><b>${esc(d.name)}</b><em class="${ton}">${kl}</em></div>`
-      + `<div class="sp-md-zahl"><b class="num">${_spZahl(d.rang)}.</b><span>Mal</span>${_spChip(d.wer)}</div>`
-      + (schritte ? `<div class="sp-md-marken" aria-label="Verleihungsmarken">${schritte}</div>` : '')
-      + _spUnter(`${_spNb(d.wer)} erreicht sie erneut.`
-        + (naechste ? ` Noch ${_spZahl(naechste - d.rang)} bis zur ${_spZahl(naechste)}. Vergabe.` : ''))
-      + `</div></div>`;
-  }
-  const plaetze = d.ids.slice().sort((a, b) => (tr.has(b) - tr.has(a)) || ((b === d.wer) - (a === d.wer))).map(id =>
-    viele ? `<i class="${tr.has(id) ? 'hat' : ''}${id === d.wer ? ' neu' : ''}"></i>`
-          : `<span class="${tr.has(id) ? 'hat' : ''}${id === d.wer ? ' neu' : ''}">${tr.has(id) ? _spChip(id) : ''}</span>`).join('');
-  const wer = d.wer && pmap()[d.wer]
-    ? (d.rang > 1 ? `, ${_spNb(d.wer)} zum ${_spZahl(d.rang)}. Mal` : `, neu dabei ${_spNb(d.wer)}`) : '';
-  return `<div class="sp-md">${zkHtml(d.ic, 'g', ton)}<div class="sp-md-r">
-      <div class="sp-md-k"><b>${esc(d.name)}</b><em class="${ton}">${kl}</em></div>
-      <div class="sp-md-p${viele ? ' punkte' : ''}">${plaetze}</div>
-      ${_spUnter(`${_spZahl(d.traeger.length)} von ${_spZahl(d.ids.length)} tragen sie${wer}.`)}</div></div>`;
+  const gold = d.klasse === 'legendary', ton = gold ? 'gold' : 'viol';
+  const alle = (Array.isArray(d.alle) && d.alle.length ? d.alle
+    : d.wer ? [{pid:d.wer, rang:d.rang, naechste:(d.marken || []).find(n => n > d.rang)}] : []).filter(x => pmap()[x.pid]);
+  const hier = new Set(alle.map(x => x.pid)), tr = new Set(d.traeger || []);
+  // Der Name bricht um statt abzuschneiden; das Mal steht ungeteilt dahinter.
+  const wer = alle.map(x => `<div class="sp-md-w">${_spChip(x.pid)}<span><b>${esc(_spName(x.pid))}</b> `
+    + `<em class="sp-md-zahl num">${x.rang > 1 ? `<b>${_spZahl(x.rang)}.</b> Mal` : 'zum ersten Mal'}</em></span></div>`).join('');
+  // Die nächste Marke nur für einen: bei zweien stünden zwei Rechnungen
+  // untereinander, die niemand vergleicht.
+  const eins = alle.length === 1 && alle[0].rang > 1 && alle[0].naechste > alle[0].rang ? alle[0] : null;
+  const id = 'spm' + _spVisualHash(d.name + '|' + alle.map(x => x.pid + ':' + x.rang).join());
+  const punkte = Array.from({length:24}, (_, k) => { const w = k * 15 * Math.PI / 180;
+    return `<circle class="sp-md-pkt" cx="${(32 + 22.3 * Math.cos(w)).toFixed(1)}" cy="${(46 + 22.3 * Math.sin(w)).toFixed(1)}" r=".9"/>`; }).join('');
+  // Ein Name mit einem langen Wort steht über der ganzen Breite: neben der
+  // Medaille bleiben auf dem schmalsten Telefon 140 px, und
+  // „Wiederholungstäter" brach dort mitten im Wort um.
+  const name = `<div class="sp-md-n">${esc(d.name)}</div>`;
+  const breit = String(d.name || '').split(/[\s-]+/).some(w => w.length > 11);
+  return `<div class="sp-fk sp-md ${ton}${d.wiederholung && d.rang > 1 ? ' sp-md-wieder' : ''}">`
+    + `<div class="sp-k">${gold ? 'Legendäre' : 'Seltene'} Auszeichnung</div>${breit ? name : ''}<div class="sp-md-g">`
+    + `<span class="sp-md-m"><svg viewBox="0 0 64 74" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1">`
+    + `<stop offset="0" class="s1"/><stop offset=".5" class="s2"/><stop offset="1" class="s3"/></linearGradient></defs>`
+    + `<path class="sp-md-band" d="M18 0h11l7 22-9 4zM46 0H35l-7 22 9 4z"/><circle cx="32" cy="46" r="25" fill="url(#${id})"/>`
+    + `<circle class="sp-md-in" cx="32" cy="46" r="19.5"/>${punkte}</svg>`
+    + `<span class="sp-md-ic">${zkHtml(d.ic, '', ton)}</span><b class="sp-md-glanz"></b></span>`
+    + `<div class="sp-md-r">${breit ? '' : name}${wer}`
+    + (eins ? `<small class="num">noch ${_spZahl(eins.naechste - eins.rang)} bis zur ${_spZahl(eins.naechste)}.</small>` : '')
+    + `</div></div>`
+    + (d.ids && d.ids.length ? `<div class="sp-md-l"><span>${d.ids.map(p => `<i class="${hier.has(p) ? 'neu' : tr.has(p) ? 'hat' : ''}"></i>`).join('')}</span>`
+      + `<small class="num">${_spZahl(tr.size)} von ${_spZahl(d.ids.length)} tragen sie</small></div>` : '')
+    + `</div>`;
 }
 
 // ── Der Spieler des Tages: die Tagesbahn und die Elo über den Tag ────
@@ -1409,6 +1437,21 @@ function _spZaehlwerkBild(d){
     <div class="sp-zw-s">${_spSt(d)}</div></div>`
     + (d.nurAnlass ? '' : _spNz(d.W, d.L));
 }
+// Runde Zahlen: jeder, der in dieser Partie eine erreicht, mit seiner Zahl
+// auf Klappziffern und dem, was gezählt wird. Der Name bricht um statt
+// abzuschneiden, und wird die Zahl so lang, dass er keinen Platz mehr
+// hätte, rückt sie mit ihrer Einheit in die Zeile darunter. Höchstens vier,
+// die schwersten zuerst: vier Zeilen sind schon die Höhe eines Kopfs, und
+// jede steht ohnehin als Zeile der Karte oder ihres Blatts.
+function _spMarkenBild(d){
+  const l = ((d && d.liste) || []).filter(x => pmap()[x.pid]).slice(0, 4);
+  if(!l.length) return '';
+  const ziffern = x => _spZahl(x.wert).split('').map(c => /\d/.test(c) ? `<i>${c}</i>` : `<s>${c}</s>`).join('')
+    + (x.label === 'Elo' ? '' : '<u>.</u>');
+  return `<div class="sp-fk sp-zm"><div class="sp-k">${l.length > 1 ? 'Runde Zahlen in dieser Partie' : 'Runde Zahl'}</div>`
+    + l.map(x => `<div class="sp-zm-z">${_spChip(x.pid)}<b>${esc(_spName(x.pid))}</b>`
+      + `<span class="sp-zm-n"><span class="sp-zm-d num">${ziffern(x)}</span><em>${esc(x.label)}</em></span></div>`).join('') + `</div>`;
+}
 function _spTauziehenBild(d){
   // Der Knoten: so weit auf der Seite der Sieger, wie ihr Anteil an den Toren.
   const anteil = d.hoch / Math.max(1, d.hoch + d.tief);
@@ -1762,6 +1805,8 @@ function _spScoreSnapshot(m){
 // zutreffende gewann immer: gemessen trugen 11 von 52 Partien in vierzehn
 // Tagen die Wende. Jetzt stehen alle zutreffenden Zeichnungen zur Wahl, und
 // was in den Partien davor schon stand, wiegt weniger — wie beim Kopf.
+const SP_MARKEN = {milestone_wins:{label:'Sieg', w:62}, milestone_elo:{label:'Elo', w:60},
+  milestone_goals:{label:'Tor', w:58}, jubilee:{label:'Partie', w:56}};
 function _spFussFakten(m, fakten){
   const f = t => fakten.find(x => x.type === t), out = [];
   let x;
@@ -1771,14 +1816,18 @@ function _spFussFakten(m, fakten){
       && (!SP_ERGEBNIS_BADGE.has(y.badgeId) || (y.rang > 1 && _badgeTakt('rare', y.rang))))) && x.badgeId)
     out.push({w:x.rarity === 'legendary' ? 92 : 66, a:{key:'medaille', m, x:{pid:x.playerId, badgeId:x.badgeId, rang:x.rang}}});
   if((x = f('streak_killer')) && x.victimPid) out.push({w:80, a:{key:'riss', m, x}});
-  if((x = f('milestone_wins')) && x.pid)
-    out.push({w:62, a:{key:'zaehlwerk', m, x:{wer:x.pid, wert:parseInt(x.milestone, 10), label:'Sieg'}}});
-  if((x = f('milestone_elo')) && x.pid)
-    out.push({w:60, a:{key:'zaehlwerk', m, x:{wer:x.pid, wert:Number(x.mark) || parseInt(x.milestone, 10), label:'Elo'}}});
-  if((x = f('milestone_goals')) && x.pid)
-    out.push({w:58, a:{key:'zaehlwerk', m, x:{wer:x.pid, wert:parseInt(x.milestone, 10), label:'Tor'}}});
-  if((x = f('jubilee')) && x.pid && x.total)
-    out.push({w:56, a:{key:'zaehlwerk', m, x:{wer:x.pid, wert:Number(x.total), label:'Partie'}}});
+  // Jede runde Zahl der Partie, von jedem: das Zählwerk zeichnete nur die
+  // erste Marke ihrer Art, und erreichten Leo den hundertsten Sieg und Maxi
+  // die tausendste Partie, stand nur der Sieg im Fuß. Gewogen wie die
+  // schwerste darunter.
+  const marken = [];
+  fakten.forEach(y => { const t = SP_MARKEN[y.type];
+    if(!t || !y.pid) return;
+    const wert = y.type === 'milestone_elo' ? (Number(y.mark) || parseInt(y.milestone, 10))
+      : y.type === 'jubilee' ? Number(y.total) : parseInt(y.milestone, 10);
+    if(wert > 0 && !marken.some(z => z.pid === y.pid && z.label === t.label)) marken.push({pid:y.pid, wert, label:t.label, w:t.w}); });
+  if(marken.length) out.push({w:Math.max(...marken.map(z => z.w)), a:{key:'marken', m,
+    x:marken.sort((p, q) => q.w - p.w).map(z => ({pid:z.pid, wert:z.wert, label:z.label}))}});
   if((x = f('win_streak')) && x.streak) out.push({w:46 + 2 * Math.min(17, x.streak), a:{key:'serie', m, x}});
   if((x = f('team_streak')) && x.streak && x.a && x.b) out.push({w:46 + 2 * Math.min(17, x.streak), a:{key:'teamserie', m, x}});
   // Was in der einzelnen Partie passiert, mit der Zeichnung, die es zeigt.
@@ -1828,7 +1877,7 @@ function _spAnlassSnapshot(m, fakten, scoreKey){
   // sich mit ihm [SP_FUSS_ZUSTAND].
   _spFussFakten(m, fakten).forEach(({w, a}) => {
     const daten = {
-      zaehlwerk:() => ({wer:a.x.wer, wert:a.x.wert, label:a.x.label, W:F.W, L:F.L, hoch:F.hoch, tief:F.tief}),
+      marken:() => ({liste:a.x}),
       spitze:() => _spTabelleDaten(a, true), serie:() => _spSerieDaten(a),
       duell:() => _spDuellDaten(a), riss:() => _spRissDaten(a),
       teamserie:() => _spDuoDaten(a), medaille:() => _spMedailleDaten(a),
@@ -1866,7 +1915,10 @@ function _spAnlassSnapshot(m, fakten, scoreKey){
   // sonst die Bilanz in engen Partien als zweites Bild desselben Tors.
   if(diff === 1) plus('nerven', scoreKey === 'krimi' || scoreKey === 'herz' ? 14 : 24, () => _spNervenDaten({m, c}));
   if(diff >= 6) plus('verteilung', scoreKey === 'deutlich' || scoreKey === 'zunull' ? 14 : 24, () => _spVerteilungDaten({m}));
-  _spFormKand(m).filter(k => SP_ANLASS_FORMEN.has(k.key))
+  // Das Zählwerk zählt dieselben Marken: steht schon der Fuß mit allen
+  // runden Zahlen zur Wahl, zeichnete es eine davon ein zweites Mal.
+  const mitMarken = kand.some(k => k.key === 'marken');
+  _spFormKand(m).filter(k => SP_ANLASS_FORMEN.has(k.key) && !(mitMarken && k.key === 'zaehlwerk'))
     .forEach(k => plus(k.key, k.rang, () => SP_FORM[k.key].daten(F, k.x)));
   if(!kand.length) return null;
   const spur = _spFussSpur(m, 8), zuletzt = spur[spur.length - 1];
@@ -1919,7 +1971,7 @@ function _spOccasionBild(v){
   const bild = {
     spitze:_spTabelleBild, rang:_spTabelleBild, serie:_spSerieBild,
     wende:_spKurveBild, duell:_spDuellBild, riss:_spRissBild,
-    teamserie:_spDuoBild, medaille:_spMedailleBild,
+    teamserie:_spDuoBild, medaille:_spMedailleBild, marken:_spMarkenBild,
     premiere:_spPremiereBild, rolle:_spRolleBild,
     nerven:_spNervenBild, verteilung:_spVerteilungBild,
     aussenseiter:_spWippeBild
@@ -1951,7 +2003,7 @@ function _spBild(s){
     if(v && v.version === 2 && v.score){
       const ok = v.occasion && v.occasion.key;
       r = {key:ok || v.score.key, form:v.score.key,
-        glanz:['zaehlwerk','rueckkehr','transfer'].includes(ok || v.score.key),
+        glanz:['zaehlwerk','marken','rueckkehr','transfer'].includes(ok || v.score.key),
         kopf:_spScoreBild(v.score), fuss:_spOccasionBild(v.occasion),
         zeigt:SP_ZEIGT_ALLES, pl:players};
       proStand.set(s, r);

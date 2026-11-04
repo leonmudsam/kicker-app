@@ -18,8 +18,8 @@
 .sp-lg b,.sp-z-n b,.sp-aufst b,.sp-at-n b,.sp-nv-n b,.sp-wp-n b,.sp-sl-n b,.sp-rd-n b{font-weight:600;color:var(--ink2)}
 .sp-chips{display:flex;flex:0 0 auto}
 .sp-chips .av+.av{margin-left:-6px}
-.nf-runde .av,.sp-rd-tafel .av,.sp-zeile .av,.sp-at .av,.sp-nv .av,.sp-wp .av,.sp-sl .av,.sp-ku .av,.sp-bg .av,.sp-rd-p .av,.sp-tb .av,
-.sp-rk .av,.sp-duo .av,.sp-md .av,.sp-pm .av,.sp-ro .av{--av:20px;width:20px;height:20px;font-size:8px;box-shadow:0 0 0 2px var(--surface);flex:0 0 auto}
+.nf-runde .av,.sp-rd-tafel .av,.sp-zeile .av,.sp-at .av,.sp-nv .av,.sp-wp .av,.sp-sl .av,.sp-ku .av,.sp-bg .av,.sp-rd-p .av,
+.sp-rk .av,.sp-duo .av,.sp-pm .av,.sp-ro .av{--av:20px;width:20px;height:20px;font-size:8px;box-shadow:0 0 0 2px var(--surface);flex:0 0 auto}
 /* Eine Zahl bricht nicht um, aus 12.345 würde sonst „12." über „345". */
 .nf-card .num,.nd .num{white-space:nowrap}
 
@@ -147,24 +147,6 @@
 .sp-wp-l.w .sp-wp-z{color:var(--acid)}
 
 /* ── Die Tabelle vorher und nachher ── */
-.sp-tb{padding:9px 13px 8px;border-top:1px solid var(--line)}
-.sp-tb-k{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:baseline;font-size:10px;color:var(--muted)}
-.sp-tb-k .sp-k{text-align:center}
-.sp-tb-f{position:relative;margin-top:6px}
-.sp-tb-f svg{position:absolute;inset:0;width:100%;height:100%}
-.sp-tb-l{fill:none;stroke-width:1.6;stroke:var(--line2);vector-effect:non-scaling-stroke}
-.sp-tb-l.g{stroke:var(--acid);stroke-width:2.4}.sp-tb-l.r{stroke:var(--red);stroke-width:2;opacity:.8}
-.sp-tb-e{position:absolute;right:68%;transform:translateY(-50%);display:flex;align-items:center;gap:5px;opacity:.55}
-.sp-tb-e.re{right:auto;left:68%}
-.sp-tb-e.g,.sp-tb-e.r{opacity:1}
-.sp-tb-e i{font-size:10px;font-style:normal;font-weight:600;color:var(--muted);white-space:nowrap}
-.sp-tb-e.g i,.sp-tb-e.r i{color:var(--ink)}
-.sp-tb-e.gold i{color:var(--gold)}
-.sp-tb-e b{font:700 10px 'Sometype Mono',monospace;color:var(--muted);min-width:14px;text-align:right}
-.sp-tb-e.re b{text-align:left}
-.sp-tb-e.g b{color:var(--ink)}
-.sp-tb-e.gold b{color:var(--gold)}
-.sp-tb-e.gold .av{box-shadow:0 0 0 2px var(--surface),0 0 0 3px var(--gold)}
 
 /* ── Die Serienleiter ── */
 .sp-sl{padding:9px 13px 10px;border-top:1px solid var(--line)}
@@ -249,35 +231,6 @@
 .sp-duo-l.balken i{max-width:none}
 
 /* ── Die Medaille ── */
-.sp-md{display:grid;grid-template-columns:48px minmax(0,1fr);gap:11px;align-items:start;padding:10px 13px 10px;border-top:1px solid var(--line)}
-.sp-md-r{min-width:0}
-.sp-md-k{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 8px}
-.sp-md-k b{font-size:12.5px;font-weight:700;color:var(--ink);line-height:1.3}
-.sp-md-k em{font:700 8.5px 'Sometype Mono',monospace;font-style:normal;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}
-.sp-md-k em.viol{color:#b9a3ff}.sp-md-k em.gold{color:var(--gold)}
-.sp-md-p{display:flex;flex-wrap:wrap;gap:4px;margin:7px 0 5px}
-.sp-md-p > span{width:20px;height:20px;border-radius:50%;box-shadow:inset 0 0 0 1px var(--line2)}
-.sp-md-p > span.hat{box-shadow:none}
-.sp-md-p > span.neu .av{box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px #b9a3ff}
-.sp-md-p.punkte{gap:3px}
-.sp-md-p.punkte i{width:7px;height:7px;border-radius:50%;background:var(--surface3)}
-.sp-md-p.punkte i.hat{background:#b9a3ff}
-.sp-md-p.punkte i.neu{box-shadow:0 0 0 1.5px var(--ink)}
-/* Wiederverleihung: die persoenliche Zahl statt eines vermeintlich neuen
-   Traegers. Drei Nachbarmarken, nie ein Feld je bisheriger Verleihung. */
-.sp-md-wieder{--medaille:var(--purple);background:linear-gradient(110deg,rgba(163,134,224,.06),transparent 82%)}
-.sp-md-wieder.gold{--medaille:var(--gold);background:linear-gradient(110deg,rgba(247,207,74,.06),transparent 82%)}
-.sp-md-zahl{display:flex;align-items:baseline;flex-wrap:wrap;gap:5px;margin:8px 0 7px;min-width:0}
-.sp-md-zahl > b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:28px;line-height:1;color:var(--medaille)}
-.sp-md-zahl > span{font:600 10px 'Sometype Mono',monospace;color:var(--muted)}
-.sp-md-zahl > .av{align-self:center;margin-left:auto}
-.sp-md-marken{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
-.sp-md-marken > span{position:relative;padding:5px 2px;border-radius:6px;text-align:center;min-width:0;
-  border:1px solid var(--line2);color:var(--muted);background:var(--surface2)}
-.sp-md-marken b{font:600 9px 'Sometype Mono',monospace}
-.sp-md-marken .hat{color:var(--ink2);border-color:var(--medaille)}
-.sp-md-marken .jetzt{color:var(--medaille);border-color:var(--medaille);background:var(--surface3)}
-.sp-md-wieder .sp-lg{margin-top:7px}
 
 /* ── Der Spieler des Tages ── */
 .sp-tg{padding:9px 13px 10px;border-top:1px solid var(--line)}
@@ -367,7 +320,7 @@
 
 /* ── Bewegung ── */
 @media (prefers-reduced-motion:no-preference){
-  .sp-f-sp,.sp-rd-sp,.sp-tb-e{animation:spDa .45s ease-out both;animation-delay:calc(var(--i,0) * 60ms)}
+  .sp-f-sp,.sp-rd-sp{animation:spDa .45s ease-out both;animation-delay:calc(var(--i,0) * 60ms)}
   .sp-vt-s i,.sp-tg-b i,.sp-duo-l i{transform-origin:bottom;animation:spY .55s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 35ms)}
   .sp-sl-r i.w,.sp-sl-voll{transform-origin:left;animation:spX .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 35ms)}
   .sp-bg rect{transform-box:fill-box;transform-origin:center;animation:spY .4s ease-out both;animation-delay:calc(var(--i,0) * 18ms)}
@@ -620,6 +573,85 @@
 @keyframes spKopfLicht{0%{opacity:0;transform:translateX(-70%)}20%,80%{opacity:1}100%{opacity:0;transform:translateX(70%)}}
 @keyframes spKopfPunkt{0%{transform:translateX(-100%);opacity:0}12%{opacity:1}88%{opacity:1}100%{transform:translateX(0);opacity:0}}
 @keyframes spKopfSchlag{0%,100%{transform:scale(1)}14%{transform:scale(1.07)}28%{transform:scale(1)}42%{transform:scale(1.04)}}
+
+/* ── Die Füße des Katalogs ───────────────────────────────────────── */
+.sp-tk .sp-k,.sp-md .sp-k,.sp-zm .sp-k{text-align:center;margin-bottom:4px}
+/* Die Monatstabelle als Kette (`_spTabelleBild`). Die Felder teilen sich
+   die Breite; ein Gesicht hat 20 px, bei neun Feldern auf 288 px bleiben je
+   Feld 29. */
+.sp-tk-s{display:block;width:100%;height:18px;overflow:visible}
+.sp-tk-b{fill:none;stroke:var(--acid);stroke-width:1.6;stroke-linecap:round;vector-effect:non-scaling-stroke;opacity:.85}
+.sp-tk-r{position:relative;display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));container-type:inline-size}
+.sp-tk-f{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0}
+.sp-tk-f > i{display:grid;place-items:center;width:22px;height:22px}
+.sp-tk-f:not(.g):not(.r):not(.eins) .av{opacity:.55}
+.sp-tk-f.g .av{box-shadow:0 0 0 2px var(--surface2),0 0 0 3.5px var(--acid),0 0 10px rgba(190,242,100,.45)}
+.sp-tk-f.r .av{box-shadow:0 0 0 2px var(--surface2),0 0 0 3px rgba(240,86,106,.7)}
+.sp-tk-f.eins .av{box-shadow:0 0 0 2px var(--surface2),0 0 0 3.5px var(--gold),0 0 12px rgba(247,207,74,.55)}
+.sp-tk-f small{font:600 8.5px 'Sometype Mono',monospace;color:var(--faint)}
+.sp-tk-f.g small,.sp-tk-f.eins small{color:var(--ink2)}
+.sp-tk-g{position:absolute;top:1px;width:20px;height:20px;margin-left:-10px;border-radius:50%;border:1.5px dashed rgba(190,242,100,.5);box-sizing:border-box}
+/* Die Medaille (`_spMedailleBild`): die Farben der Klasse am Rahmen, damit
+   die Punkte der Liga darunter dieselben tragen. */
+.sp-md.viol{--m1:#e9e1ff;--m2:#a78bfa;--m3:#5b45a8;--mr:167,139,250}
+.sp-md.gold{--m1:#fff3c4;--m2:#f7cf4a;--m3:#9c7618;--mr:247,207,74}
+.sp-md > .sp-k{color:rgb(var(--mr))}
+.sp-md-g{display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;align-items:center}
+.sp-md-m{position:relative;display:block;width:64px;height:74px;overflow:hidden;isolation:isolate}
+.sp-md-m svg{position:absolute;inset:0;width:100%;height:100%}
+.sp-md-m .s1{stop-color:var(--m1)}.sp-md-m .s2{stop-color:var(--m2)}.sp-md-m .s3{stop-color:var(--m3)}
+.sp-md-band{fill:rgba(var(--mr),.35);stroke:rgba(var(--mr),.7);stroke-width:.8}
+.sp-md-in{fill:rgba(10,12,11,.55);stroke:rgba(255,255,255,.35);stroke-width:.8}
+.sp-md-pkt{fill:rgba(255,255,255,.55)}
+.sp-md-ic{position:absolute;left:14px;top:28px;width:36px;height:36px;display:grid;place-items:center}
+.sp-md-ic .zk{--z:30px}
+/* Der Glanz zieht als Verlauf durch die Prägung, der Kasten bleibt stehen:
+   verschoben ragte er beim ersten Bild über den Rand der Karte. */
+.sp-md-glanz{position:absolute;left:7px;top:21px;width:50px;height:50px;border-radius:50%;pointer-events:none;opacity:0;
+  background:linear-gradient(115deg,transparent 42%,rgba(255,255,255,.55) 50%,transparent 58%) 100% 0/300% 100% no-repeat}
+.sp-md-r{display:flex;flex-direction:column;gap:5px;min-width:0}
+.sp-md-n{font:400 15px/1.15 'Archivo Black',sans-serif;color:rgb(var(--mr));text-wrap:balance;overflow-wrap:break-word;hyphens:auto}
+.sp-md > .sp-md-n{text-align:center;margin-bottom:8px}
+.sp-md-w{display:flex;align-items:center;gap:7px;min-width:0;font-size:12px;line-height:1.3;color:var(--ink2)}
+.sp-md-w > span{min-width:0;overflow-wrap:break-word}
+.sp-md-w b{color:var(--ink);font-weight:600}
+.sp-md-zahl{font:600 9.5px 'Sometype Mono',monospace;font-style:normal;color:rgb(var(--mr));white-space:nowrap}
+.sp-md-zahl b{font-weight:700;color:inherit}
+.sp-md-r > small{font:500 9.5px 'Sometype Mono',monospace;color:var(--muted)}
+.sp-md-l{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 10px;margin-top:8px}
+.sp-md-l > span{display:flex;flex-wrap:wrap;gap:2px}
+.sp-md-l i{width:7px;height:7px;border-radius:50%;box-shadow:inset 0 0 0 1.2px var(--line2)}
+.sp-md-l i.hat{background:rgba(var(--mr),.45);box-shadow:none}
+.sp-md-l i.neu{background:rgb(var(--mr));box-shadow:0 0 6px rgba(var(--mr),.7)}
+.sp-md-l small{font:500 9.5px 'Sometype Mono',monospace;color:var(--muted);white-space:nowrap}
+/* Runde Zahlen (`_spMarkenBild`) auf Klappziffern. */
+.sp-zm{display:flex;flex-direction:column;gap:6px}
+.sp-zm-z{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;font-size:12px}
+/* Der Name nimmt seine Breite, und erst wenn Name und Zahl nicht in eine
+   Zeile passen, rückt die Zahl darunter; mit einer festen Grundbreite
+   rückte sie auf dem schmalsten Telefon schon unter „Alex". */
+.sp-zm-z b{flex:1 1 auto;min-width:0;color:var(--ink);font-weight:600;overflow-wrap:break-word;line-height:1.25}
+.sp-zm-n{display:flex;align-items:center;gap:8px;margin-left:auto}
+.sp-zm-d{display:flex;align-items:flex-end;gap:2px;perspective:200px}
+.sp-zm-d i{display:grid;place-items:center;width:16px;height:22px;border-radius:4px;font:400 14px 'Archivo Black',sans-serif;font-style:normal;color:var(--gold);
+  background:linear-gradient(180deg,#26302a 0 50%,#1b221d 50% 100%);box-shadow:inset 0 -1px 0 rgba(0,0,0,.4)}
+.sp-zm-d s,.sp-zm-d u{text-decoration:none;font:400 14px/1 'Archivo Black',sans-serif;color:var(--gold)}
+.sp-zm-d u{margin-left:1px}
+.sp-zm-z em{font:600 10px 'Sometype Mono',monospace;font-style:normal;color:var(--muted);white-space:nowrap}
+@media (prefers-reduced-motion:no-preference){
+  .sp-tk-f.g > i,.sp-tk-f.r > i{animation:spFussGleit .8s cubic-bezier(.3,1.2,.4,1) .15s both}
+  .sp-tk-b,.sp-tk-g{animation:spDa .5s ease-out .75s both}
+  .sp-md-m svg,.sp-md-ic{animation:spFussPraegen .55s cubic-bezier(.3,1.5,.5,1) both}
+  .sp-md-glanz{animation:spFussGlanz 1.1s ease-in-out .6s both}
+  .sp-md-l i.neu{animation:spKopfPuck .4s cubic-bezier(.3,1.6,.5,1) .5s both}
+  .sp-zm-d i{animation:spKopfKlapp .5s cubic-bezier(.3,1.4,.5,1) both}
+  .sp-zm-d i:nth-child(2){animation-delay:.08s}.sp-zm-d i:nth-child(3){animation-delay:.16s}
+  .sp-zm-d i:nth-child(4){animation-delay:.24s}.sp-zm-d i:nth-child(n+5){animation-delay:.32s}
+}
+/* Der Weg vom alten Feld: so viele Felder weit, wie der Sprung war. */
+@keyframes spFussGleit{from{transform:translateX(calc(var(--d) * 100cqw / var(--n)))}}
+@keyframes spFussPraegen{from{transform:scale(.6);opacity:0}}
+@keyframes spFussGlanz{0%{opacity:0;background-position:100% 0}25%,75%{opacity:1}100%{opacity:0;background-position:0 0}}
 
 /* Das Mosaik: das Feld dieses Ergebnisses trägt den Stand. */
 .sp-mo-g{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}

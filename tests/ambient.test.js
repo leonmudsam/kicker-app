@@ -5417,10 +5417,10 @@ const _fuss = JSON.parse(K.eval(`JSON.stringify((function(){
   const roh = _buildStories();
   _cache._stories = roh.slice().sort((a,b)=>new Date(b.when)-new Date(a.when));
   _cache._consolFrom = null; _cache._frischVon = null;
-  const ZU = {lead_change:'spitze', streak_killer:'riss', milestone_wins:'zaehlwerk', milestone_goals:'zaehlwerk',
-    milestone_elo:'zaehlwerk', jubilee:'zaehlwerk', win_streak:'serie', team_streak:'teamserie',
+  const ZU = {lead_change:'spitze', streak_killer:'riss', milestone_wins:'marken', milestone_goals:'marken',
+    milestone_elo:'marken', jubilee:'marken', win_streak:'serie', team_streak:'teamserie',
     rivalry:'duell', rivalry_milestone:'duell'};
-  const FAKT = new Set(['spitze','medaille','riss','zaehlwerk','serie','teamserie','duell']);
+  const FAKT = new Set(['spitze','medaille','riss','marken','serie','teamserie','duell']);
   const falsch = [], fuesse = [];
   getStoriesCache().forEach(s => {
     const d = s.dataRef || {};
@@ -5451,6 +5451,21 @@ ok(_fuss.mit > 30 && _fuss.max[1] <= _fuss.mit / 5 && _fuss.arten >= 10,
 ok(_fuss.folge === 0,
    'zwei Partien hintereinander tragen nicht denselben frei gewählten Fuß',
    _fuss.folge + ' Wiederholungen');
+// Das Zählwerk zeichnete nur die erste runde Zahl ihrer Art: erreichten in
+// einer Partie der eine den hundertsten Sieg und der andere die
+// fünfhundertste Partie, stand nur der Sieg im Fuß. Gestellt: drei Marken
+// zweier Sieger in einer Partie, dazu eine doppelte, die nur einmal zählt.
+const _marken = JSON.parse(K.eval(`JSON.stringify((function(){
+  const m = matches[matches.length - 1], w = m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2];
+  const v = _spAnlassSnapshot(m, [{type:'jubilee', pid:w[1], total:500}, {type:'milestone_wins', pid:w[0], milestone:'100'},
+    {type:'milestone_elo', pid:w[0], mark:1500}, {type:'milestone_wins', pid:w[0], milestone:'100'}], 'feld');
+  const h = v ? _spOccasionBild(v) : '';
+  return {key:v && v.key, liste:((v && v.data && v.data.liste) || []).map(x => x.wert + ' ' + x.label),
+    namen:w.every(p => h.indexOf(esc(pmap()[p].name)) >= 0), ziffern:(h.match(/<i>\\d<\\/i>/g) || []).length};
+})())`));
+ok(_marken.key === 'marken' && _marken.liste.join() === '100 Sieg,1500 Elo,500 Partie' && _marken.namen && _marken.ziffern === 10,
+   'jede runde Zahl einer Partie steht im Fuß, von jedem und jede einmal, die schwerste zuerst, jede auf ihren Ziffern',
+   JSON.stringify(_marken));
 
 // ── Die Wochenkarte zeigt alle sechs Wertungen ──────────────────────
 // Sie zeigte drei und darunter „und 3 weitere Wertungen": die Ueberraschung,
@@ -7970,7 +7985,7 @@ const _bogen = JSON.parse(K.eval(`JSON.stringify((function(){
   const reihe = [...matches].sort((a, b) => mts(a) - mts(b));
   const gew = (pid, m) => (m.winner === 'A') === (m.a1 === pid || m.a2 === pid);
   const text = h => String(h).replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ');
-  const FORM = {feld:'sp-feld', krimi:'sp-at', aussenseiter:'sp-wp', deutlich:'sp-vt', spitze:'sp-tb', rang:'sp-tb',
+  const FORM = {feld:'sp-feld', krimi:'sp-at', aussenseiter:'sp-wp', deutlich:'sp-vt', spitze:'sp-tk', rang:'sp-tk', marken:'sp-zm',
     serie:'sp-sl', riss:'sp-rk', teamserie:'sp-duo', wende:'sp-ku', duell:'sp-bg', medaille:'sp-md',
     premiere:'sp-pm', rolle:'sp-ro'};
   // Die gewöhnliche Partie trägt eine der Formen [§C33]: die Klasse folgt der Wahl.
@@ -7995,7 +8010,7 @@ const _bogen = JSON.parse(K.eval(`JSON.stringify((function(){
     if(occ && OCCKL[occ] && html.indexOf('class="' + OCCKL[occ]) < 0
        && html.indexOf('class="sp-fk ' + OCCKL[occ]) < 0){
       falsch.push(s.id + ' ohne gespeicherte Anlassgrafik ' + occ); return; }
-    if(occ && ['chemie','gegner','revanche','rueckkehr','tagesring','zaehlwerk'].includes(occ)){
+    if(occ && ['chemie','gegner','revanche','rueckkehr','tagesring','zaehlwerk','marken'].includes(occ)){
       const oh = _spOccasionBild(visual.occasion);
       if(/class="sp-nz"/.test(oh)) wiederholt.push(s.id + ' ' + occ + ' wiederholt beide Teams');
       if(occ === 'chemie' && /Sieg zu zweit/.test(oh)) wiederholt.push(s.id + ' Chemietext bricht um');
@@ -8164,16 +8179,37 @@ const _bogen = JSON.parse(K.eval(`JSON.stringify((function(){
     medPasst = ersteDaten.rang === 1 && !ersteDaten.wiederholung
       && erste.includes(esc(ev.badge.name)) && marke.includes(esc(ev.badge.name))
       && ersteDaten.traeger.slice().sort().join() === [...traeger].sort().join()
-      && !/sp-md-wieder/.test(erste) && /class="sp-md-p/.test(erste)
+      && !/sp-md-wieder/.test(erste)
       && text(erste).includes(traeger.size + ' von ' + activePlayers().length + ' tragen sie')
-      && text(erste).includes('neu dabei ' + name)
+      && text(erste).includes(name + ' zum ersten Mal')
       && markeDaten.rang === 5 && markeDaten.wiederholung
       && markeDaten.marken.join() === '1,5,10'
-      && /class="sp-md sp-md-wieder /.test(marke)
-      && /class="sp-md-zahl"><b class="num">5\\.<\\/b><span>Mal<\\/span>/.test(marke)
-      && text(marke).includes(name + ' erreicht sie erneut.')
-      && !/neu dabei/.test(text(marke));
+      && /class="sp-fk sp-md (viol|gold) sp-md-wieder"/.test(marke)
+      && text(marke).includes(name + ' 5. Mal')
+      && text(marke).includes('noch 5 bis zur 10.')
+      && !/zum ersten Mal/.test(text(marke));
   }
+  // Holten zwei sie in derselben Partie, nannte die Medaille nur den, dessen
+  // Meldung zuerst kam. Gesucht an der ganzen Liga: jede Partie, in der mehr
+  // als einer dieselbe seltene oder legendäre holte, jeder mit dem
+  // wievielten Mal, nachgezählt an den rohen Vergaben.
+  const zaehl = {}, mehrere = [];
+  reihe.forEach(m => {
+    const je = {};
+    (bMap[m.id] || []).forEach(ev => {
+      const k = ev.playerId + '|' + ev.badge.id;
+      if((je[ev.badge.id] = je[ev.badge.id] || new Set()).has(ev.playerId)) return;
+      je[ev.badge.id].add(ev.playerId); zaehl[k] = (zaehl[k] || 0) + 1; });
+    Object.keys(je).forEach(b => { if(je[b].size > 1 && ['rare','legendary'].includes(rarityOf(b)))
+      mehrere.push({m, b, soll:[...je[b]].map(p => p + ':' + zaehl[p + '|' + b])}); });
+  });
+  const mehrFalsch = mehrere.filter(x => {
+    const d = _spMedailleDaten({m:x.m, x:{pid:x.soll[0].split(':')[0], badgeId:x.b}}), h = _spMedailleBild(d);
+    const ist = ((d && d.alle) || []).map(y => y.pid + ':' + y.rang);
+    return ist.slice().sort().join() !== x.soll.slice().sort().join()
+      || x.soll.some(y => { const [p, r] = y.split(':');
+        return !text(h).includes(pmap()[p].name + ' ' + (+r > 1 ? r + '. Mal' : 'zum ersten Mal')); });
+  }).map(x => x.m.id + ' ' + x.b);
   const ser = [_newsSerienBand(4, false, true), _newsSerienBand(8, false, true),
                _newsSerienBand(6, true, true), _newsSerienBand(5, false, false)];
   const leer = h => (h.match(/<i class="x">/g) || []).length;
@@ -8188,7 +8224,7 @@ const _bogen = JSON.parse(K.eval(`JSON.stringify((function(){
       || text(_spRolleBild(d)).indexOf(dort + ' von ' + vorher.length + ' Partien') < 0;
   }).map(x => x[0].id);
   return {n, falsch, wiederholt, formen, spitze, feldN, rolle:{n:ro.length, falsch:roFalsch},
-    gestellt: medPasst,
+    gestellt: medPasst, medMehrere:{n:mehrere.length, falsch:mehrFalsch},
     ser: ser.map(h => leer(h) + (/Marke (\\d+)/.exec(h) || [,'-'])[1])};
 })())`));
 const _formZahl = Object.keys(_bogen.formen).length;
@@ -8539,6 +8575,9 @@ ok(_bogen.rolle.n >= 3 && !_bogen.rolle.falsch.length,
 ok(_bogen.spitze === 'ok' && _bogen.gestellt,
    'der Spitzenwechsel zeigt vorher und nachher, die Erstvergabe historische Träger und die Wiederholung ihre Zahl',
    String(_bogen.spitze).slice(0, 120) + ' · Medaille ' + String(_bogen.gestellt));
+ok(_bogen.medMehrere.n > 0 && _bogen.medMehrere.falsch.length === 0,
+   'holen mehrere dieselbe Auszeichnung in einer Partie, nennt die Medaille jeden mit dem wievielten Mal',
+   _bogen.medMehrere.n + ' Partien' + (_bogen.medMehrere.falsch.length ? ': ' + _bogen.medMehrere.falsch.join(', ') : ''));
 ok(_bogen.ser.join() === '15,210,0-,0-',
    'der Lauf zeigt die nächste Marke als leere Felder, eine Pleitenserie hat keine',
    _bogen.ser.join(' · '));

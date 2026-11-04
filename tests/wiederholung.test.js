@@ -69,12 +69,13 @@ const ok=(c,msg)=>{checks++;if(!c)fails++;console.log((c?'  ok  ':'  ✗   ')+ms
         const layout=await page.evaluate(()=>{
           const box=document.querySelector('.sp-md'), r=box.getBoundingClientRect();
           return {overflow:box.scrollWidth>box.clientWidth+1||r.right>innerWidth,
-            marks:box.querySelectorAll('.sp-md-marken > span').length,
+            next:box.querySelector('.sp-md-r > small')?.textContent||'',
             count:box.querySelector('.sp-md-zahl')?.textContent,
             fresh:box.textContent.includes('neu dabei'),negative:box.textContent.includes('NaN')};
         });
-        ok(!layout.overflow && layout.marks<=3 && layout.count?.includes(n.toLocaleString('de-DE')) && !layout.fresh && !layout.negative,
-          `${n}. Vergabe bei ${width} px: Zahl sichtbar, keine falsche Erstvergabe, höchstens drei Marken und kein Überlauf`);
+        const naechste=await K(`_badgeNaechsteMarke(${n})`);
+        ok(!layout.overflow && layout.next.includes('bis zur '+naechste.toLocaleString('de-DE')+'.') && layout.count?.includes(n.toLocaleString('de-DE')) && !layout.fresh && !layout.negative,
+          `${n}. Vergabe bei ${width} px: Zahl und nächste Marke sichtbar, keine falsche Erstvergabe und kein Überlauf`);
       }
     }
     ok(errors.length===0,'Keine Browserfehler bei Verleihung, Snapshot und gemeinsamer Matchkarte');

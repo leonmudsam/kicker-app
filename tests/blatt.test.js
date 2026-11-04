@@ -2811,7 +2811,7 @@ const ok = (c, msg, det) => {
     const karten = [...sheet.querySelectorAll('.nf-card.nf-s-spiel')];
     const fehler = [], formen = {};
     let kleinste = 99;
-    const FORM = ['sp-feld','sp-at','sp-wp','sp-band','sp-zeile','sp-vt','sp-nv','sp-tb','sp-sl','sp-rk','sp-duo','sp-ku','sp-bg','sp-md','sp-rd-tafel','sp-pm','sp-ro','sp-rq'];
+    const FORM = ['sp-feld','sp-at','sp-wp','sp-band','sp-zeile','sp-vt','sp-nv','sp-tk','sp-zm','sp-sl','sp-rk','sp-duo','sp-ku','sp-bg','sp-md','sp-rd-tafel','sp-pm','sp-ro','sp-rq'];
     karten.forEach(k => {
       const r = pruefen(k);
       r.fehler.forEach(f => fehler.push(k.dataset.sid + ': ' + f));
@@ -2872,6 +2872,11 @@ const ok = (c, msg, det) => {
           _spDuellBild({A:a, B:b, gesamt:98765, aw:45678, spiele}),
           _spMedailleBild({name:'Unüberwindliche Betonmauer der Liga', ic:'shield', klasse:'legendary', wer:a, rang:1234, ids:alle, traeger:alle.slice(0, 7)})
             + _spMedailleBild({name:'Mauer', ic:'shield', klasse:'rare', wer:a, rang:2, ids:Array.from({length:40}, (_, i) => alle[i % alle.length]), traeger:[]}),
+          // Vier, die sie in einer Partie holten, und runde Zahlen mit
+          // sechs Stellen: der Name bricht um, die Zahl rückt darunter.
+          _spMedailleBild({name:'Unüberwindliche Betonmauer der Liga', ic:'shield', klasse:'rare', wer:a, rang:12345, ids:alle, traeger:alle.slice(0, 4),
+            alle:[{pid:a, rang:12345, naechste:12350}, {pid:b, rang:1}, {pid:c, rang:999}, {pid:e, rang:2}]}),
+          _spMarkenBild({liste:[{pid:a, wert:12345, label:'Sieg'}, {pid:b, wert:99999, label:'Elo'}, {pid:c, wert:100000, label:'Partie'}, {pid:e, wert:5000, label:'Tor'}]}),
           _spTagBild({pid:a, elo:-12345, partien:Array.from({length:31}, (_, i) => ({w:i % 3 > 0, e:(i % 5 - 2) * 1000}))}),
           // Die Formen der gewöhnlichen Partie [§C33], jede mit ihren Grenzwerten.
           _spMosaikBild({W:[a, b], L:[c, e], hoch:10, tief:8, diff:2, n:[0, 9000, 45495, 8000, 7000, 6000, 4000, 2000, 900, 90, 9], mal:45495}),
