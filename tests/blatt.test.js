@@ -2148,7 +2148,7 @@ const ok = (c, msg, det) => {
     const out = {fehlt:false,
       brk: !!(karte && karte.classList.contains('nf-brk')),
       // Das Ergebnis steht im Kopf der Partie, der ihrem Anlass folgt [§11.6c].
-      band: karte ? karte.querySelectorAll('.nf-erg, .sp-zeile, .sp-feld, .sp-at, .sp-wp, .sp-band').length : 0,
+      band: karte ? karte.querySelectorAll('.nf-erg, .sp-zeile, .sp-feld, .sp-at, .sp-wp, .sp-band, .sp-ag, .sp-pu, .sp-sm, .sp-hz, .sp-zn').length : 0,
       zeilen: zl.length,
       titel: karte ? (karte.querySelector('.nf-h') || {}).textContent || '' : '',
       zeilenText: zl.map(x => x.textContent.trim()).join(' | '),
@@ -2164,8 +2164,10 @@ const ok = (c, msg, det) => {
       doppelt: !!(sub && d && sub.textContent.trim() === d.textContent.trim())};
     host.remove(); return out;
   });
-  ok(!brkKarte.fehlt && brkKarte.brk && brkKarte.band === 1 && brkKarte.zeilen === 2,
-     'der gemeinsame Breaking-Moment zeigt Ergebnis und beide Meldungen',
+  // Die stärkere Meldung ist die Schlagzeile, die andere ihre Zeile [§C33].
+  ok(!brkKarte.fehlt && brkKarte.brk && brkKarte.band === 1 && brkKarte.zeilen === 1
+     && /Spitzenreiter/.test(brkKarte.titel) && /Absoluter Sieger/.test(brkKarte.zeilenText),
+     'der gemeinsame Breaking-Moment zeigt Ergebnis und beide Meldungen, eine als Schlagzeile',
      JSON.stringify(brkKarte));
   ok(brkKarte.anlassKante && brkKarte.anlassKante !== 'none' && brkKarte.anlassFlaeche,
      'und seine Anlass-Zeile traegt eine eigene Kante und eine eigene Flaeche',
@@ -2811,7 +2813,7 @@ const ok = (c, msg, det) => {
     const karten = [...sheet.querySelectorAll('.nf-card.nf-s-spiel')];
     const fehler = [], formen = {};
     let kleinste = 99;
-    const FORM = ['sp-feld','sp-at','sp-wp','sp-band','sp-zeile','sp-vt','sp-nv','sp-tb','sp-sl','sp-rk','sp-duo','sp-ku','sp-bg','sp-md','sp-rd-tafel','sp-pm','sp-ro','sp-rq'];
+    const FORM = ['sp-feld','sp-at','sp-wp','sp-band','sp-zeile','sp-vt','sp-nv','sp-tk','sp-zm','sp-sl','sp-rk','sp-duo','sp-ku','sp-bg','sp-md','sp-rd-tafel','sp-pm','sp-ro','sp-rq'];
     karten.forEach(k => {
       const r = pruefen(k);
       r.fehler.forEach(f => fehler.push(k.dataset.sid + ': ' + f));
@@ -2872,6 +2874,18 @@ const ok = (c, msg, det) => {
           _spDuellBild({A:a, B:b, gesamt:98765, aw:45678, spiele}),
           _spMedailleBild({name:'Unüberwindliche Betonmauer der Liga', ic:'shield', klasse:'legendary', wer:a, rang:1234, ids:alle, traeger:alle.slice(0, 7)})
             + _spMedailleBild({name:'Mauer', ic:'shield', klasse:'rare', wer:a, rang:2, ids:Array.from({length:40}, (_, i) => alle[i % alle.length]), traeger:[]}),
+          // Vier, die sie in einer Partie holten, und runde Zahlen mit
+          // sechs Stellen: der Name bricht um, die Zahl rückt darunter.
+          _spMedailleBild({name:'Unüberwindliche Betonmauer der Liga', ic:'shield', klasse:'rare', wer:a, rang:12345, ids:alle, traeger:alle.slice(0, 4),
+            alle:[{pid:a, rang:12345, naechste:12350}, {pid:b, rang:1}, {pid:c, rang:999}, {pid:e, rang:2}]}),
+          _spMarkenBild({liste:[{pid:a, wert:12345, label:'Sieg'}, {pid:b, wert:99999, label:'Elo'}, {pid:c, wert:100000, label:'Partie'}, {pid:e, wert:5000, label:'Tor'}]}),
+          // Die Füße der sieben Fakten mit Grenzwerten [§C33].
+          _spKipptBild({w:a, l:b, s:12345, n:24689, ab:24628, verlauf:Array.from({length:61}, (_, i) => (i % 7) - 3)}),
+          _spWocheBild({pid:a, liste:[a, b, c, e, alle[4]].map((id, i) => ({id, s:999 - i, n:1200, q:83 - i * 9}))}),
+          _spTagEloBild({pid:a, ref:0, verlauf:[0, -1234, -2345, -999, 12345]}) + _spTagEloBild({pid:b, ref:75, verlauf:[0, 20, 60, 999]}),
+          _spMonatEloBild({pid:a, sid:'2026-09', verlauf:Array.from({length:80}, (_, i) => -1200 + i * 37)}),
+          _spMonatQuoteBild({pid:a, sid:'2026-09', verlauf:Array.from({length:120}, (_, i) => 40 + (i % 20))}),
+          _spPartnerBild({pid:a, mit:b, allg:43, liste:[b, c, e, alle[4], alle[5]].map((id, i) => ({id, s:900 - i, n:12345, q:73 - i * 7}))}),
           _spTagBild({pid:a, elo:-12345, partien:Array.from({length:31}, (_, i) => ({w:i % 3 > 0, e:(i % 5 - 2) * 1000}))}),
           // Die Formen der gewöhnlichen Partie [§C33], jede mit ihren Grenzwerten.
           _spMosaikBild({W:[a, b], L:[c, e], hoch:10, tief:8, diff:2, n:[0, 9000, 45495, 8000, 7000, 6000, 4000, 2000, 900, 90, 9], mal:45495}),
@@ -2897,7 +2911,13 @@ const ok = (c, msg, det) => {
           _spUhrBild({n:99, W:[a, b], L:[c, e], hoch:10, tief:9, zeiten:Array.from({length:99}, (_, i) => 300 + i * 9)}),
           _spUeberholtBild({w:a, l:c, wPre:118, wPost:1, lPre:2, lPost:126, W:[a, b], L:[c, e], hoch:10, tief:9}),
           _spDuoserieBild({W:[a, b], L:[c, e], k:999, n:45495, s:12345, hoch:10, tief:9, folge:Array.from({length:16}, (_, i) => i > 2)}),
-          _spHochBild({pid:a, kurve:Array.from({length:40}, (_, i) => 900 + (i * 37) % 300).concat([12345]), elo:12345, alt:1199, seit:999})
+          _spHochBild({pid:a, kurve:Array.from({length:40}, (_, i) => 900 + (i * 37) % 300).concat([12345]), elo:12345, alt:1199, seit:999}),
+          // Die Köpfe des Katalogs, jeder mit Grenzwerten.
+          _spAnzeigeBild({W:[a, b], L:[c, e], hoch:10, tief:9, pct:99, delta:{[a]:12345, [b]:999, [c]:-12345, [e]:-999}}),
+          _spPucksBild({W:[a, b], L:[c, e], hoch:10, tief:9, delta:{}}) + _spPucksBild({W:[a, b], L:[c, e], hoch:12, tief:11, delta:{}}),
+          _spStromBild({W:[a, b], L:[c, e], hoch:10, tief:0, delta:{[a]:12345, [b]:999, [c]:-12345, [e]:-999}}),
+          _spHerzBild({W:[a, b], L:[c, e], hoch:10, tief:9, pct:1, nr:999, delta:{[a]:12345, [b]:999, [c]:-12345, [e]:-999}}),
+          _spZunullBild({W:[a, b], L:[c, e], hoch:10, tief:0, nr:999, monat:'September', delta:{[a]:12345, [b]:999, [c]:-12345, [e]:-999}})
         ].map(h => '<div class="nf-card nf-s-spiel">' + h + '</div>');
         const runde = {id:'probe', when:new Date(d0).toISOString(), cat:'highlight',
           title:'Jean-Baptiste von Hohenstein gewinnt die Runde mit 12 von 23 Partien',

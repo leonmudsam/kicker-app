@@ -4733,8 +4733,8 @@
 .sp-lg b,.sp-z-n b,.sp-aufst b,.sp-at-n b,.sp-nv-n b,.sp-wp-n b,.sp-sl-n b,.sp-rd-n b{font-weight:600;color:var(--ink2)}
 .sp-chips{display:flex;flex:0 0 auto}
 .sp-chips .av+.av{margin-left:-6px}
-.nf-runde .av,.sp-rd-tafel .av,.sp-zeile .av,.sp-at .av,.sp-nv .av,.sp-wp .av,.sp-sl .av,.sp-ku .av,.sp-bg .av,.sp-rd-p .av,.sp-tb .av,
-.sp-rk .av,.sp-duo .av,.sp-md .av,.sp-pm .av,.sp-ro .av{--av:20px;width:20px;height:20px;font-size:8px;box-shadow:0 0 0 2px var(--surface);flex:0 0 auto}
+.nf-runde .av,.sp-rd-tafel .av,.sp-zeile .av,.sp-at .av,.sp-nv .av,.sp-wp .av,.sp-sl .av,.sp-ku .av,.sp-bg .av,.sp-rd-p .av,
+.sp-rk .av,.sp-duo .av,.sp-pm .av,.sp-ro .av{--av:20px;width:20px;height:20px;font-size:8px;box-shadow:0 0 0 2px var(--surface);flex:0 0 auto}
 .nf-card .num,.nd .num{white-space:nowrap}
 
 .sp-zeile{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px;
@@ -4840,30 +4840,12 @@
 .sp-wp-t.w .av{box-shadow:0 0 0 2px var(--surface),0 0 0 3px rgba(190,242,100,.55)}
 .sp-wp-ls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-top:-6px}
 .sp-wp-l{display:flex;flex-direction:column;min-width:0;line-height:1.3}
-.sp-wp-l.w{text-align:right}
+.sp-wp-l:not(.w){text-align:right}
 .sp-wp-n{display:flex;flex-direction:column;font-size:10.5px;line-height:1.3;color:var(--muted)}
 .sp-wp-l.w .sp-wp-n b{color:var(--ink)}
 .sp-wp-z{font:600 9.5px 'Sometype Mono',monospace;color:var(--faint);margin-top:1px}
 .sp-wp-l.w .sp-wp-z{color:var(--acid)}
 
-.sp-tb{padding:9px 13px 8px;border-top:1px solid var(--line)}
-.sp-tb-k{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:baseline;font-size:10px;color:var(--muted)}
-.sp-tb-k .sp-k{text-align:center}
-.sp-tb-f{position:relative;margin-top:6px}
-.sp-tb-f svg{position:absolute;inset:0;width:100%;height:100%}
-.sp-tb-l{fill:none;stroke-width:1.6;stroke:var(--line2);vector-effect:non-scaling-stroke}
-.sp-tb-l.g{stroke:var(--acid);stroke-width:2.4}.sp-tb-l.r{stroke:var(--red);stroke-width:2;opacity:.8}
-.sp-tb-e{position:absolute;right:68%;transform:translateY(-50%);display:flex;align-items:center;gap:5px;opacity:.55}
-.sp-tb-e.re{right:auto;left:68%}
-.sp-tb-e.g,.sp-tb-e.r{opacity:1}
-.sp-tb-e i{font-size:10px;font-style:normal;font-weight:600;color:var(--muted);white-space:nowrap}
-.sp-tb-e.g i,.sp-tb-e.r i{color:var(--ink)}
-.sp-tb-e.gold i{color:var(--gold)}
-.sp-tb-e b{font:700 10px 'Sometype Mono',monospace;color:var(--muted);min-width:14px;text-align:right}
-.sp-tb-e.re b{text-align:left}
-.sp-tb-e.g b{color:var(--ink)}
-.sp-tb-e.gold b{color:var(--gold)}
-.sp-tb-e.gold .av{box-shadow:0 0 0 2px var(--surface),0 0 0 3px var(--gold)}
 
 .sp-sl{padding:9px 13px 10px;border-top:1px solid var(--line)}
 .sp-sl-k{display:flex;align-items:center;gap:7px;font-size:11.5px;min-width:0}
@@ -4939,33 +4921,6 @@
 .sp-duo-l i{flex:1;max-width:16px;min-width:2px;border-radius:3px;background:var(--acid)}
 .sp-duo-l.balken i{max-width:none}
 
-.sp-md{display:grid;grid-template-columns:48px minmax(0,1fr);gap:11px;align-items:start;padding:10px 13px 10px;border-top:1px solid var(--line)}
-.sp-md-r{min-width:0}
-.sp-md-k{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 8px}
-.sp-md-k b{font-size:12.5px;font-weight:700;color:var(--ink);line-height:1.3}
-.sp-md-k em{font:700 8.5px 'Sometype Mono',monospace;font-style:normal;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}
-.sp-md-k em.viol{color:#b9a3ff}.sp-md-k em.gold{color:var(--gold)}
-.sp-md-p{display:flex;flex-wrap:wrap;gap:4px;margin:7px 0 5px}
-.sp-md-p > span{width:20px;height:20px;border-radius:50%;box-shadow:inset 0 0 0 1px var(--line2)}
-.sp-md-p > span.hat{box-shadow:none}
-.sp-md-p > span.neu .av{box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px #b9a3ff}
-.sp-md-p.punkte{gap:3px}
-.sp-md-p.punkte i{width:7px;height:7px;border-radius:50%;background:var(--surface3)}
-.sp-md-p.punkte i.hat{background:#b9a3ff}
-.sp-md-p.punkte i.neu{box-shadow:0 0 0 1.5px var(--ink)}
-.sp-md-wieder{--medaille:var(--purple);background:linear-gradient(110deg,rgba(163,134,224,.06),transparent 82%)}
-.sp-md-wieder.gold{--medaille:var(--gold);background:linear-gradient(110deg,rgba(247,207,74,.06),transparent 82%)}
-.sp-md-zahl{display:flex;align-items:baseline;flex-wrap:wrap;gap:5px;margin:8px 0 7px;min-width:0}
-.sp-md-zahl > b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:28px;line-height:1;color:var(--medaille)}
-.sp-md-zahl > span{font:600 10px 'Sometype Mono',monospace;color:var(--muted)}
-.sp-md-zahl > .av{align-self:center;margin-left:auto}
-.sp-md-marken{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
-.sp-md-marken > span{position:relative;padding:5px 2px;border-radius:6px;text-align:center;min-width:0;
-  border:1px solid var(--line2);color:var(--muted);background:var(--surface2)}
-.sp-md-marken b{font:600 9px 'Sometype Mono',monospace}
-.sp-md-marken .hat{color:var(--ink2);border-color:var(--medaille)}
-.sp-md-marken .jetzt{color:var(--medaille);border-color:var(--medaille);background:var(--surface3)}
-.sp-md-wieder .sp-lg{margin-top:7px}
 
 .sp-tg{padding:9px 13px 10px;border-top:1px solid var(--line)}
 .sp-tg svg{display:block;width:100%;height:auto;overflow:visible}
@@ -5043,10 +4998,9 @@
 .sp-rd-a{display:flex;align-items:center;justify-content:flex-end;gap:4px;min-width:0;color:var(--ink2);text-align:right}
 .sp-rd-a > span{font:600 9px 'Sometype Mono',monospace;letter-spacing:.04em;line-height:1.3}
 .sp-rd-a svg{width:12px;height:12px;flex:0 0 auto;opacity:.8}
-.sp-rd-mehr{padding:6px 13px 9px;font-size:10.5px;color:var(--muted);border-top:1px solid rgba(255,255,255,.035)}
 
 @media (prefers-reduced-motion:no-preference){
-  .sp-f-sp,.sp-rd-sp,.sp-tb-e{animation:spDa .45s ease-out both;animation-delay:calc(var(--i,0) * 60ms)}
+  .sp-f-sp,.sp-rd-sp{animation:spDa .45s ease-out both;animation-delay:calc(var(--i,0) * 60ms)}
   .sp-vt-s i,.sp-tg-b i,.sp-duo-l i{transform-origin:bottom;animation:spY .55s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 35ms)}
   .sp-sl-r i.w,.sp-sl-voll{transform-origin:left;animation:spX .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 35ms)}
   .sp-bg rect{transform-box:fill-box;transform-origin:center;animation:spY .4s ease-out both;animation-delay:calc(var(--i,0) * 18ms)}
@@ -5133,6 +5087,242 @@
 .sp-nz .w b{color:var(--ink)}
 .sp-nz-gg{font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);align-self:center}
 .sp-fk + .sp-lg{padding:0 13px}
+.sp-nz > span.w{padding-left:7px;box-shadow:inset 2px 0 0 var(--acid)}
+.sp-nz > span.re{padding-right:7px;box-shadow:inset -2px 0 0 rgba(240,86,106,.65)}
+.sp-nz-gg{color:var(--ink2)}
+
+.sp-kp{display:inline-flex;flex:0 0 auto;gap:3px}
+.sp-kl{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:2px;margin-top:8px;border-radius:9px;overflow:hidden}
+.sp-kl span{display:flex;flex-direction:column;align-items:center;gap:1px;padding:5px 2px;background:rgba(255,255,255,.035)}
+.sp-kl b{font:400 14px/1.1 'Archivo Black',sans-serif;color:var(--ink);white-space:nowrap}
+.sp-kl small{font:600 8px 'Sometype Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+
+.sp-ag{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:6px}
+.sp-ag .av{--av:26px;width:26px;height:26px;font-size:9.5px}
+.sp-ag-s{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0}
+.sp-ag-s span.num{font:600 10.5px 'Sometype Mono',monospace;color:var(--red);white-space:nowrap}
+.sp-ag-s.w span.num{color:var(--acid)}
+.sp-ag-s:not(.w) .sp-kp{opacity:.78}
+.sp-ag-m{display:flex;flex-direction:column;align-items:center;gap:6px}
+.sp-ag-c{font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.06em;color:var(--muted);white-space:nowrap}
+.sp-ag-z{display:flex;align-items:center;gap:4px;perspective:300px}
+.sp-ag-z > i{width:4px;height:14px;background:radial-gradient(circle,var(--muted) 1.6px,transparent 2.1px) 0 0/4px 7px}
+.sp-ag-k{position:relative;display:inline-grid;place-items:center;min-width:46px;height:52px;padding:0 6px;border-radius:8px;
+  background:linear-gradient(180deg,#26302a 0 50%,#1b221d 50% 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),inset 0 -1px 0 rgba(0,0,0,.4),0 6px 14px rgba(0,0,0,.45)}
+.sp-ag-k::after{content:"";position:absolute;z-index:0;left:0;right:0;top:50%;height:1px;background:rgba(0,0,0,.6);box-shadow:0 1px 0 rgba(255,255,255,.035)}
+.sp-ag-k b{position:relative;z-index:1;font:400 32px/1 'Archivo Black',sans-serif;color:var(--ink2)}
+.sp-ag-k.w b{color:var(--acid);text-shadow:0 0 16px rgba(190,242,100,.5)}
+
+.sp-pu{display:flex;flex-direction:column;gap:8px}
+.sp-pu .av{--av:24px;width:24px;height:24px;font-size:9px}
+.sp-pu-z{display:grid;grid-template-columns:auto minmax(0,1fr) 30px;align-items:center;gap:9px}
+.sp-pu-z:not(.w) .sp-kp{opacity:.78}
+.sp-pu-r{position:relative;display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:3px;align-items:center}
+.sp-pu-r i{aspect-ratio:1;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--line2)}
+.sp-pu-r i.w{background:radial-gradient(circle at 35% 30%,#efffc2,var(--acid) 45%,#6f9a2c);box-shadow:0 0 7px rgba(190,242,100,.35)}
+.sp-pu-r i.l{background:radial-gradient(circle at 35% 30%,#ffc2ca,var(--red) 50%,#9b2c3f);opacity:.8}
+.sp-pu-r u{position:absolute;top:-4px;bottom:-4px;left:calc(var(--von) * 10% - 2px);right:-2px;border:1px dashed rgba(190,242,100,.35);border-radius:9px;pointer-events:none}
+.sp-pu-z b{font:400 22px/1 'Archivo Black',sans-serif;text-align:right;color:var(--ink2)}
+.sp-pu-z.w b{color:var(--acid)}
+
+.sp-sm{height:98px}
+.sp-sm svg{position:absolute;inset:10px;width:calc(100% - 20px);height:calc(100% - 20px);overflow:visible}
+.sp-sm-p{fill:none;stroke-linecap:round;opacity:.78;vector-effect:non-scaling-stroke}
+.sp-sm .av{--av:24px;width:24px;height:24px;font-size:9px}
+.sp-sm-a{position:absolute;z-index:1;display:flex;flex-direction:column;align-items:center;gap:1px;margin:10px 8px}
+.sp-sm-a b{font:600 10px 'Sometype Mono',monospace;color:var(--red);background:rgba(10,12,11,.8);border-radius:4px;padding:0 3px}
+.sp-sm-a.w b{color:var(--acid)}
+.sp-sm-a:not(.w) .av{opacity:.82}
+.sp-sm-m{position:absolute;z-index:1;left:50%;top:50%;transform:translate(-50%,-50%);padding:5px 9px;border-radius:11px;
+  background:rgba(10,12,11,.86);border:1px solid var(--line2);box-shadow:0 0 18px rgba(0,0,0,.55)}
+.sp-sm-m .sp-st{font-size:23px}
+.sp-sm-m .sp-st em{color:var(--acid);text-shadow:0 0 16px rgba(190,242,100,.35)}
+
+.sp-hz-g{display:grid;grid-template-columns:auto minmax(0,1fr) auto minmax(0,1fr) auto;align-items:center;gap:4px}
+.sp-hz .av{--av:24px;width:24px;height:24px;font-size:9px}
+.sp-hz-p{display:flex;flex-direction:column;gap:3px}
+.sp-hz-p:not(.w) .av{opacity:.7}
+.sp-hz-m{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 8px 5px;border-radius:11px;
+  background:rgba(10,12,11,.7);border:1px solid rgba(247,207,74,.4);box-shadow:0 0 16px rgba(247,207,74,.14)}
+.sp-hz-m small{font:600 8px 'Sometype Mono',monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);white-space:nowrap}
+.sp-hz-m .sp-st{font-size:26px}
+.sp-hz-m .sp-st em{color:var(--acid);text-shadow:0 0 16px rgba(190,242,100,.35)}
+.sp-hz-k{position:relative;display:block;height:40px;overflow:hidden}
+.sp-hz-k svg{display:block;width:100%;height:100%}
+.sp-hz-k path{fill:none;stroke:rgba(240,86,106,.6);stroke-width:1.6;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.sp-hz-k.w path{stroke:var(--acid);stroke-width:2}
+.sp-hz-k i{position:absolute;inset:0;opacity:0}
+.sp-hz-k i::after{content:"";position:absolute;right:0;top:50%;width:6px;height:6px;margin-top:-3px;border-radius:50%;
+  background:#f4ffd8;box-shadow:0 0 8px 2px rgba(190,242,100,.8)}
+
+.sp-zn{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;justify-items:center;gap:7px 6px;
+  background:linear-gradient(118deg,transparent 22%,rgba(255,255,255,.05) 30%,transparent 40%),
+    linear-gradient(242deg,transparent 22%,rgba(255,255,255,.05) 30%,transparent 40%),
+    radial-gradient(130px 70px at 22% 82%,rgba(247,207,74,.17),transparent 70%),
+    radial-gradient(160px 60px at 22% 0%,rgba(190,242,100,.10),transparent 70%),var(--surface2)}
+.sp-zn > *{position:relative}
+.sp-zn .av{--av:24px;width:24px;height:24px;font-size:9px}
+.sp-zn::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;opacity:0;
+  background:linear-gradient(105deg,transparent 35%,rgba(255,244,200,.13) 48%,transparent 60%)}
+.sp-zn-z{display:flex;align-items:baseline;font:400 40px/1 'Archivo Black',sans-serif;letter-spacing:-.01em}
+.sp-zn-z b{font-weight:400;color:var(--acid);text-shadow:0 0 22px rgba(190,242,100,.55)}
+.sp-zn-z i{font-style:normal;color:var(--faint);font-size:.7em;margin:0 3px}
+.sp-zn-z u{text-decoration:none;color:transparent;-webkit-text-stroke:1.5px var(--gold);text-shadow:0 0 18px rgba(247,207,74,.45)}
+.sp-zn-tore{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:16px;width:100%;padding:0 6px}
+.sp-zn-t{width:100%;height:auto;aspect-ratio:100/58;overflow:visible}
+.sp-zn-n{fill:none;stroke:rgba(255,255,255,.14);stroke-width:.8}
+.sp-zn-r{fill:none;stroke:#eef3ef;stroke-width:3;stroke-linejoin:round}
+.sp-zn-b{stroke:var(--line2);stroke-width:1}
+.sp-zn-t.leer .sp-zn-r{stroke:var(--gold)}
+.sp-zn-t.leer .sp-zn-n{stroke:rgba(247,207,74,.22)}
+.sp-zn-t.voll .sp-zn-r{stroke:var(--ink2)}
+.sp-zn-ball{stroke:rgba(0,0,0,.35);stroke-width:.5}
+.sp-zn-ring{fill:rgba(190,242,100,.10);stroke:var(--acid);stroke-width:.8;opacity:.45}
+.sp-zn-glanz{fill:none;stroke:#fff;stroke-width:.9;stroke-linecap:round;opacity:.85}
+.sp-zn-hit{transform-box:fill-box;transform-origin:center}
+.sp-zn-p{display:flex;flex-direction:column;align-items:center;gap:3px}
+.sp-zn-p > span.num{font:600 10px 'Sometype Mono',monospace;color:var(--acid);white-space:nowrap}
+.sp-zn-p.aus > span.num{color:var(--red)}
+.sp-zn-p.aus .sp-kp{opacity:.5}
+.sp-zn-band{grid-column:1/-1;display:flex;align-items:center;gap:6px;font-style:normal;padding:3px 10px 3px 7px;border-radius:999px;
+  border:1px solid rgba(247,207,74,.55);background:rgba(247,207,74,.08);box-shadow:0 0 14px rgba(247,207,74,.16)}
+.sp-zn-band .ic{font-size:14px;color:var(--gold)}
+.sp-zn-band b{font:600 9px 'Sometype Mono',monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);white-space:nowrap}
+.sp-zn-band small{font:500 9px 'Sometype Mono',monospace;color:var(--ink2);white-space:nowrap}
+.sp-zn-band small::before{content:"·";margin-right:6px;color:var(--faint)}
+
+@media (prefers-reduced-motion:no-preference){
+  .sp-ag-k b{animation:spKopfKlapp .55s cubic-bezier(.3,1.4,.5,1) both}
+  .sp-ag-z .sp-ag-k + i + .sp-ag-k b{animation-delay:.12s}
+  .sp-pu-r i.w,.sp-pu-r i.l{animation:spKopfPuck .35s cubic-bezier(.3,1.6,.5,1) both;animation-delay:calc(var(--n, 0) * 30ms)}
+  .sp-pu-r i:nth-child(2){--n:1}.sp-pu-r i:nth-child(3){--n:2}.sp-pu-r i:nth-child(4){--n:3}.sp-pu-r i:nth-child(5){--n:4}
+  .sp-pu-r i:nth-child(6){--n:5}.sp-pu-r i:nth-child(7){--n:6}.sp-pu-r i:nth-child(8){--n:7}.sp-pu-r i:nth-child(9){--n:8}.sp-pu-r i:nth-child(10){--n:9}
+  .sp-sm-p{animation:spDa .7s ease-out both}
+  .sp-zn-hit{animation:spKopfTreffer .42s cubic-bezier(.3,1.6,.5,1) both;animation-delay:calc(var(--i) * 70ms + .25s)}
+  .sp-zn-ring{animation:spKopfWelle .7s ease-out both;animation-delay:calc(var(--i) * 70ms + .3s)}
+  .sp-zn::before{animation:spKopfLicht 1.6s ease-in-out .3s both}
+  .sp-hz-k i{animation:spKopfPunkt 1.3s cubic-bezier(.45,0,.55,1) .2s 2 both}
+  .sp-hz-m{animation:spKopfSchlag .9s ease-out .55s 2 both}
+}
+@keyframes spKopfKlapp{from{transform:rotateX(-88deg);opacity:.2}}
+@keyframes spKopfPuck{from{transform:scale(.2);opacity:0}}
+@keyframes spKopfTreffer{from{transform:scale(0);opacity:0}}
+@keyframes spKopfWelle{from{transform:scale(.3);opacity:1}}
+@keyframes spKopfLicht{0%{opacity:0;transform:translateX(-70%)}20%,80%{opacity:1}100%{opacity:0;transform:translateX(70%)}}
+@keyframes spKopfPunkt{0%{transform:translateX(-100%);opacity:0}12%{opacity:1}88%{opacity:1}100%{transform:translateX(0);opacity:0}}
+@keyframes spKopfSchlag{0%,100%{transform:scale(1)}14%{transform:scale(1.07)}28%{transform:scale(1)}42%{transform:scale(1.04)}}
+
+.sp-fu-z{display:flex;align-items:center;gap:7px;margin:6px 13px 0;font-size:11px;line-height:1.35;color:var(--muted)}
+.sp-fu-z .nf-sam-i{width:16px;height:16px;border-radius:5px}
+.sp-fu-z .nf-sam-i svg{width:10px;height:10px}
+.sp-fu-z b{font-weight:600;color:var(--ink2)}
+.sp-tk .sp-k,.sp-md .sp-k,.sp-zm .sp-k{text-align:center;margin-bottom:4px}
+.sp-tk-s{display:block;width:100%;height:18px;overflow:visible}
+.sp-tk-b{fill:none;stroke:var(--acid);stroke-width:1.6;stroke-linecap:round;vector-effect:non-scaling-stroke;opacity:.85}
+.sp-tk-r{position:relative;display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));container-type:inline-size}
+.sp-tk-f{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0}
+.sp-tk-f > i{display:grid;place-items:center;width:22px;height:22px}
+.sp-tk-f:not(.g):not(.r):not(.eins) .av{opacity:.55}
+.sp-tk-f.g .av{box-shadow:0 0 0 2px var(--surface2),0 0 0 3.5px var(--acid),0 0 10px rgba(190,242,100,.45)}
+.sp-tk-f.r .av{box-shadow:0 0 0 2px var(--surface2),0 0 0 3px rgba(240,86,106,.7)}
+.sp-tk-f.eins .av{box-shadow:0 0 0 2px var(--surface2),0 0 0 3.5px var(--gold),0 0 12px rgba(247,207,74,.55)}
+.sp-tk-f small{font:600 8.5px 'Sometype Mono',monospace;color:var(--faint)}
+.sp-tk-f.g small,.sp-tk-f.eins small{color:var(--ink2)}
+.sp-tk-g{position:absolute;top:1px;width:20px;height:20px;margin-left:-10px;border-radius:50%;border:1.5px dashed rgba(190,242,100,.5);box-sizing:border-box}
+.sp-md.viol{--m1:#e9e1ff;--m2:#a78bfa;--m3:#5b45a8;--mr:167,139,250}
+.sp-md.gold{--m1:#fff3c4;--m2:#f7cf4a;--m3:#9c7618;--mr:247,207,74}
+.sp-md > .sp-k{color:rgb(var(--mr))}
+.sp-md-g{display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;align-items:center}
+.sp-md-m{position:relative;display:block;width:64px;height:74px;overflow:hidden;isolation:isolate}
+.sp-md-m svg{position:absolute;inset:0;width:100%;height:100%}
+.sp-md-m .s1{stop-color:var(--m1)}.sp-md-m .s2{stop-color:var(--m2)}.sp-md-m .s3{stop-color:var(--m3)}
+.sp-md-band{fill:rgba(var(--mr),.35);stroke:rgba(var(--mr),.7);stroke-width:.8}
+.sp-md-in{fill:rgba(10,12,11,.55);stroke:rgba(255,255,255,.35);stroke-width:.8}
+.sp-md-pkt{fill:rgba(255,255,255,.55)}
+.sp-md-ic{position:absolute;left:14px;top:28px;width:36px;height:36px;display:grid;place-items:center}
+.sp-md-ic .zk{--z:30px}
+.sp-md-glanz{position:absolute;left:7px;top:21px;width:50px;height:50px;border-radius:50%;pointer-events:none;opacity:0;
+  background:linear-gradient(115deg,transparent 42%,rgba(255,255,255,.55) 50%,transparent 58%) 100% 0/300% 100% no-repeat}
+.sp-md-r{display:flex;flex-direction:column;gap:5px;min-width:0}
+.sp-md-n{font:400 15px/1.15 'Archivo Black',sans-serif;color:rgb(var(--mr));text-wrap:balance;overflow-wrap:break-word;hyphens:auto}
+.sp-md > .sp-md-n{text-align:center;margin-bottom:8px}
+.sp-md-w{display:flex;align-items:center;gap:7px;min-width:0;font-size:12px;line-height:1.3;color:var(--ink2)}
+.sp-md-w > span{min-width:0;overflow-wrap:break-word}
+.sp-md-w b{color:var(--ink);font-weight:600}
+.sp-md-zahl{font:600 9.5px 'Sometype Mono',monospace;font-style:normal;color:rgb(var(--mr));white-space:nowrap}
+.sp-md-zahl b{font-weight:700;color:inherit}
+.sp-md-r > small{font:500 9.5px 'Sometype Mono',monospace;color:var(--muted)}
+.sp-md-l{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 10px;margin-top:8px}
+.sp-md-l > span{display:flex;flex-wrap:wrap;gap:2px}
+.sp-md-l i{width:7px;height:7px;border-radius:50%;box-shadow:inset 0 0 0 1.2px var(--line2)}
+.sp-md-l i.hat{background:rgba(var(--mr),.45);box-shadow:none}
+.sp-md-l i.neu{background:rgb(var(--mr));box-shadow:0 0 6px rgba(var(--mr),.7)}
+.sp-md-l small{font:500 9.5px 'Sometype Mono',monospace;color:var(--muted);white-space:nowrap}
+.sp-ln{--fa:var(--acid);display:flex;flex-direction:column;gap:6px}
+.sp-ln.metall{--fa:var(--ink2)}
+.sp-ln > .sp-k{text-align:center}
+.sp-ln-s{display:block;width:100%;height:auto;overflow:visible}
+.sp-ln-g{stroke:rgba(255,255,255,.07);stroke-width:1}
+.sp-ln-r{stroke:var(--ink2);stroke-width:1;stroke-dasharray:3 3;opacity:.7}
+.sp-ln-t{font:500 9px 'Sometype Mono',monospace;fill:var(--muted);text-anchor:end}
+.sp-ln-t.ref{fill:var(--ink2);font-weight:700}
+.sp-ln-x{font:500 9px 'Sometype Mono',monospace;fill:var(--faint)}
+.sp-ln-x.re{text-anchor:end}
+.sp-ln-f{fill:var(--fa);opacity:.12}.sp-ln-f.neg{fill:var(--red);opacity:.16}
+.sp-ln-l{fill:none;stroke:var(--fa);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.sp-ln-l.neg{stroke:var(--red)}
+.sp-ln-l.letzt{stroke:var(--acid);stroke-width:3.2}
+.sp-ln-p{fill:var(--fa);stroke:var(--surface2);stroke-width:2}.sp-ln-p.neg{fill:var(--red)}
+.sp-ln.metall .sp-ln-p{fill:var(--acid)}
+.sp-ln-w{font:700 10px 'Sometype Mono',monospace;fill:var(--ink)}
+.sp-ln-fahne{fill:var(--acid);stroke:var(--acid);stroke-width:1.2;stroke-linejoin:round}
+.sp-ln-lg{display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap;font-size:10px;color:var(--muted)}
+.sp-ln-lg .av{--av:16px;width:16px;height:16px;font-size:6.5px}
+.sp-ln-lg small{font-size:10px}
+.sp-ln-lg small + .av{margin-left:6px}
+.sp-rl{width:100%;border-collapse:collapse;font-size:11px;color:var(--muted)}
+.sp-rl td{padding:2px 3px;vertical-align:middle}
+.sp-rl td:first-child{width:16px;font:600 9px 'Sometype Mono',monospace;color:var(--faint);white-space:nowrap}
+.sp-rl-n{display:flex;align-items:center;gap:5px;min-width:0}
+.sp-rl-n > span{overflow-wrap:break-word;min-width:0}
+.sp-rl .av{--av:16px;width:16px;height:16px;font-size:6.5px}
+.sp-rl-b{position:relative;width:24%;min-width:28px}
+.sp-rl-b i{display:block;height:7px;border-radius:0 4px 4px 0;background:var(--line2)}
+.sp-rl-b u{position:absolute;top:2px;bottom:2px;width:1.5px;background:var(--ink2);transform:translateX(-50%)}
+.sp-rl th{font:600 8px 'Sometype Mono',monospace;color:var(--faint);text-align:right;padding:0 3px 3px;white-space:nowrap}
+.sp-rl td.num{text-align:right;font:600 10px 'Sometype Mono',monospace;color:var(--ink2);white-space:nowrap}
+.sp-rl td.sp-rl-a{color:var(--faint)}
+.sp-rl tr.an td{color:var(--ink)}
+.sp-rl tr.an .sp-rl-b i{background:var(--ink2)}
+.sp-rl-lg{display:flex;align-items:center;gap:6px;justify-content:flex-end;font:500 9px 'Sometype Mono',monospace;color:var(--muted)}
+.sp-rl-lg i{width:1.5px;height:10px;background:var(--ink2)}
+.sp-zm{display:flex;flex-direction:column;gap:6px}
+.sp-zm-z{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;font-size:12px}
+.sp-zm-z b{flex:1 1 auto;min-width:0;color:var(--ink);font-weight:600;overflow-wrap:break-word;line-height:1.25}
+.sp-zm-n{display:flex;align-items:center;gap:8px;margin-left:auto}
+.sp-zm-d{display:flex;align-items:flex-end;gap:2px;perspective:200px}
+.sp-zm-d i{display:grid;place-items:center;width:16px;height:22px;border-radius:4px;font:400 14px 'Archivo Black',sans-serif;font-style:normal;color:var(--gold);
+  background:linear-gradient(180deg,#26302a 0 50%,#1b221d 50% 100%);box-shadow:inset 0 -1px 0 rgba(0,0,0,.4)}
+.sp-zm-d s,.sp-zm-d u{text-decoration:none;font:400 14px/1 'Archivo Black',sans-serif;color:var(--gold)}
+.sp-zm-d u{margin-left:1px}
+.sp-zm-z em{font:600 10px 'Sometype Mono',monospace;font-style:normal;color:var(--muted);white-space:nowrap}
+@media (prefers-reduced-motion:no-preference){
+  .sp-tk-f.g > i,.sp-tk-f.r > i{animation:spFussGleit .8s cubic-bezier(.3,1.2,.4,1) .15s both}
+  .sp-tk-b,.sp-tk-g{animation:spDa .5s ease-out .75s both}
+  .sp-md-m svg,.sp-md-ic{animation:spFussPraegen .55s cubic-bezier(.3,1.5,.5,1) both}
+  .sp-md-glanz{animation:spFussGlanz 1.1s ease-in-out .6s both}
+  .sp-md-l i.neu{animation:spKopfPuck .4s cubic-bezier(.3,1.6,.5,1) .5s both}
+  .sp-zm-d i{animation:spKopfKlapp .5s cubic-bezier(.3,1.4,.5,1) both}
+  .sp-ln-l,.sp-ln-f{animation:spDa .6s ease-out both}
+  .sp-ln-p{transform-box:fill-box;transform-origin:center;animation:spKopfPuck .4s cubic-bezier(.3,1.6,.5,1) .5s both}
+  .sp-rl-b i{transform-origin:left center;animation:spX .6s cubic-bezier(.3,1,.4,1) .1s both}
+  .sp-zm-d i:nth-child(2){animation-delay:.08s}.sp-zm-d i:nth-child(3){animation-delay:.16s}
+  .sp-zm-d i:nth-child(4){animation-delay:.24s}.sp-zm-d i:nth-child(n+5){animation-delay:.32s}
+}
+@keyframes spFussGleit{from{transform:translateX(calc(var(--d) * 100cqw / var(--n)))}}
+@keyframes spFussPraegen{from{transform:scale(.6);opacity:0}}
+@keyframes spFussGlanz{0%{opacity:0;background-position:100% 0}25%,75%{opacity:1}100%{opacity:0;background-position:0 0}}
 
 .sp-mo-g{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
 .sp-mo-k{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:38px;padding:4px 0;border-radius:7px;
@@ -6464,7 +6654,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.11.03.09ebb98a';
+const BUILD_VERSION='2026.11.04.c45986ad';
 function forceReload(nach){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -19304,6 +19494,17 @@ function naechsteSerienMarke(n){
   return z;
 }
 
+const ANLASS_GEWICHT = {lead_change:96, streak_record:95, top_clash:86, giant_slayer:84, streak_killer:80,
+  fluch:64, milestone_wins:62, milestone_elo:60, elo_hoch:60, duell_kippt:60, tabellensprung:59,
+  milestone_goals:58, jubilee:56, rivalry_milestone:54, revanche:52, duo_jubilaeum:50, woche_spitze:50,
+  tag_plus:48, top_form:44, tag_hoehe:42, tagesmarathon:40, monat_gewinn:40, monat_halb:38,
+  partner_best:36, rivalry:34, badge_marken:24};
+function anlassGewicht(typ, dt){
+  dt = dt || {};
+  if(typ === 'win_streak' || typ === 'team_streak') return 46 + 2 * Math.min(17, Number(dt.streak) || 0);
+  if(typ === 'badge_unlocked') return dt.rarity === 'legendary' ? 92 : dt.rarity === 'rare' ? 66 : 50;
+  return ANLASS_GEWICHT[typ];
+}
 const STORY_PRIO = {
   rekord_erstmals:   96,
   elo_record:        95,
@@ -19345,6 +19546,13 @@ const STORY_PRIO = {
   revanche:          51,
   duo_jubilaeum:     45,
   tagesmarathon:     43,
+  duell_kippt:       52,
+  woche_spitze:      48,
+  tag_plus:          47,
+  tag_hoehe:         44,
+  monat_gewinn:      42,
+  monat_halb:        41,
+  partner_best:      40,
   badge_marken:      39,
   rekord_gesteigert: 40,
   elo_swing:         38,
@@ -20370,6 +20578,12 @@ function _buildStories(){
     const verlierer = m => m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2];
     const duo = ids => ids.slice().sort().join('|');
     const gegen = {}, zusammen = {}, tagN = {}, duelle = {}, hoch = {};
+    const bilanz = {}, woche = {}, tagElo = {}, monat = {}, partner = {}, gesamt = {};
+    const vz = v => (v > 0 ? '+' : v < 0 ? '−' : '±') + Math.abs(Math.round(v));
+    const quote = (s, n) => Math.round(100 * s / Math.max(1, n));
+    const wochenErster = o => Object.keys(o).filter(id => o[id].s >= 5 && zeig(id))
+      .map(id => ({id, s:o[id].s, n:o[id].n, q:o[id].s / o[id].n}))
+      .sort((a, b) => b.q - a.q || b.s - a.s)[0] || null;
     const freiMemo = new Map();
     const frei = m => {
       const k = tagKey(m.created_at);
@@ -20456,6 +20670,102 @@ function _buildStories(){
             when:zeit, prio:STORY_PRIO.tabellensprung,
             dataRef:{type:'tabellensprung', pid:id, pre:r.pre, post:r.post, matchId:m.id, playerIds:[id]}});
       });
+      const delta = id => Number((h.deltas || {})[id]) || 0;
+      let kippt = null;
+      W.forEach(w => L.forEach(l => {
+        const k = paarKey(w, l), b = bilanz[k] || (bilanz[k] = {n:0, s:{}, vorn:{}});
+        const s = (b.s[w] || 0) + 1, n = b.n + 1, zuletzt = b.vorn[w];
+        if(neu && !kippt && zeig(w) && zeig(l) && n >= 16 && (s - 1) * 2 <= b.n && s * 2 > n
+           && (zuletzt == null || n - zuletzt >= 10)) kippt = {w, l, s, n, zuletzt};
+        b.s[w] = s; b.n = n;
+        [w, l].forEach(x => { if((b.s[x] || 0) * 2 > n) b.vorn[x] = n; });
+      }));
+      if(kippt) neuSt.push({id:'kippt_' + kippt.w + '_' + kippt.l + '_' + m.id, cat:'rivalry', ic:'crossedSwords',
+        title:`${nameOf(kippt.w)} geht im Duell gegen ${nameOf(kippt.l)} in Führung, ${kippt.s}:${kippt.n - kippt.s}`,
+        desc:kippt.zuletzt == null ? `Zum ersten Mal in ${kippt.n} Duellen liegt ${nameOf(kippt.w)} vorn.`
+          : `Zuletzt lag ${nameOf(kippt.w)} vor ${kippt.n - kippt.zuletzt} Duellen vorn.`,
+        when:zeit, prio:STORY_PRIO.duell_kippt,
+        dataRef:{type:'duell_kippt', pid:kippt.w, gegen:kippt.l, s:kippt.s, n:kippt.n, matchId:m.id, playerIds:[kippt.w, kippt.l]}});
+      const wk = _wochenKey(m.created_at), wo = woche[wk] || (woche[wk] = {});
+      const wVor = wochenErster(wo);
+      W.concat(L).forEach(id => { const z = wo[id] || (wo[id] = {s:0, n:0}); z.n++; if(W.includes(id)) z.s++; });
+      const wNach = wochenErster(wo);
+      if(neu && wNach && W.includes(wNach.id) && (!wVor || wVor.id !== wNach.id))
+        neuSt.push({id:'wochenspitze_' + wNach.id + '_' + m.id, cat:'personal', ic:'calendar',
+          title:`${nameOf(wNach.id)} übernimmt die Woche, ${wNach.s} von ${wNach.n} gewonnen`,
+          desc:wVor ? `Vorher lag ${nameOf(wVor.id)} mit ${quote(wVor.s, wVor.n)} % vorn.`
+            : `${quote(wNach.s, wNach.n)} % der Partien dieser Woche gewonnen.`,
+          when:zeit, prio:STORY_PRIO.woche_spitze,
+          dataRef:{type:'woche_spitze', pid:wNach.id, s:wNach.s, n:wNach.n, vorher:wVor ? wVor.id : null,
+            matchId:m.id, playerIds:[wNach.id]}});
+      const tg = tagKey(m.created_at);
+      let tagFakt = null;
+      W.concat(L).forEach(id => {
+        const k = id + '|' + tg, l = tagElo[k] || (tagElo[k] = []);
+        const nach = (l.length ? l[l.length - 1] : 0) + delta(id);
+        if(neu && !tagFakt && W.includes(id) && zeig(id)){
+          if(l.length >= 3 && Math.min(...l) <= -25 && l[l.length - 1] < 0 && nach > 0)
+            tagFakt = {art:'plus', id, tief:Math.min(...l), elo:nach, n:l.length + 1};
+          else if(nach >= 75 && Math.max(0, ...l) < 75) tagFakt = {art:'hoehe', id, elo:nach, n:l.length + 1};
+        }
+        l.push(nach);
+      });
+      if(tagFakt && tagFakt.art === 'plus') neuSt.push({id:'tagplus_' + tagFakt.id + '_' + m.id, cat:'personal', ic:'comeback',
+        title:`${nameOf(tagFakt.id)} dreht den Tag ins Plus, nach ${vz(tagFakt.tief)} Elo`,
+        desc:`Nach ${tagFakt.n} Partien des Tages stehen ${vz(tagFakt.elo)} Elo zu Buche.`,
+        when:zeit, prio:STORY_PRIO.tag_plus,
+        dataRef:{type:'tag_plus', pid:tagFakt.id, tief:Math.round(tagFakt.tief), elo:Math.round(tagFakt.elo), n:tagFakt.n,
+          matchId:m.id, playerIds:[tagFakt.id]}});
+      if(tagFakt && tagFakt.art === 'hoehe') neuSt.push({id:'taghoehe_' + tagFakt.id + '_' + m.id, cat:'personal', ic:'trendUp',
+        title:`${nameOf(tagFakt.id)} kommt an diesem Tag auf ${vz(tagFakt.elo)} Elo`,
+        desc:`Zum ersten Mal an diesem Tag über +75, nach ${tagFakt.n} Partien.`,
+        when:zeit, prio:STORY_PRIO.tag_hoehe,
+        dataRef:{type:'tag_hoehe', pid:tagFakt.id, elo:Math.round(tagFakt.elo), n:tagFakt.n, matchId:m.id, playerIds:[tagFakt.id]}});
+      const sid = seasonOf(m.created_at).id;
+      let monatFakt = null;
+      W.concat(L).forEach(id => {
+        const k = id + '|' + sid, z = monat[k] || (monat[k] = {s:0, n:0, best:0});
+        const sieg = W.includes(id), d = delta(id), vor = {s:z.s, n:z.n, best:z.best};
+        z.n++; if(sieg){ z.s++; z.best = Math.max(z.best, d); }
+        const halb = !z.halb && vor.n >= 14 && vor.s * 2 < vor.n && z.s * 2 >= z.n;
+        if(halb) z.halb = true;
+        if(!neu || monatFakt || !sieg || !zeig(id)) return;
+        if(z.n >= 8 && d >= 22 && d > vor.best)
+          monatFakt = {art:'gewinn', id, elo:Math.round(d), vorher:Math.round(vor.best), n:z.n};
+        else if(halb) monatFakt = {art:'halb', id, s:z.s, n:z.n};
+      });
+      const monatName = seasonLabel(sid).split(' ')[0];
+      if(monatFakt && monatFakt.art === 'gewinn') neuSt.push({id:'monatsbest_' + monatFakt.id + '_' + m.id, cat:'personal', ic:'bolt',
+        title:`${nameOf(monatFakt.id)} holt ${vz(monatFakt.elo)} Elo, mehr als mit jedem Sieg davor im ${monatName}`,
+        desc:monatFakt.vorher > 0 ? `Der größte Gewinn davor im ${monatName}: ${vz(monatFakt.vorher)} Elo.`
+          : `Der erste Sieg im ${monatName} mit so viel Elo.`,
+        when:zeit, prio:STORY_PRIO.monat_gewinn,
+        dataRef:{type:'monat_gewinn', pid:monatFakt.id, elo:monatFakt.elo, vorher:monatFakt.vorher, n:monatFakt.n,
+          matchId:m.id, playerIds:[monatFakt.id]}});
+      if(monatFakt && monatFakt.art === 'halb') neuSt.push({id:'monathalb_' + monatFakt.id + '_' + m.id, cat:'personal', ic:'scaleBalance',
+        title:`${nameOf(monatFakt.id)} gewinnt im ${monatName} jetzt jede zweite Partie`,
+        desc:`${monatFakt.s} von ${monatFakt.n} Partien gewonnen, vor dieser waren es ${monatFakt.s - 1} von ${monatFakt.n - 1}.`,
+        when:zeit, prio:STORY_PRIO.monat_halb,
+        dataRef:{type:'monat_halb', pid:monatFakt.id, s:monatFakt.s, n:monatFakt.n, matchId:m.id, playerIds:[monatFakt.id]}});
+      [[W, true], [L, false]].forEach(([ids, sieg]) => ids.forEach((id, i) => {
+        const mit = ids[1 - i], p = partner[id] || (partner[id] = {}), z = p[mit] || (p[mit] = {s:0, n:0});
+        const g = gesamt[id] || (gesamt[id] = {s:0, n:0});
+        z.n++; g.n++; if(sieg){ z.s++; g.s++; }
+      }));
+      if(neu) for(const id of W){
+        const mit = W.find(x => x !== id), z = partner[id][mit];
+        if(!zeig(id) || !zeig(mit) || z.n < 8 || z.n % 8) continue;
+        const liste = Object.keys(partner[id]).filter(x => partner[id][x].n >= 6 && zeig(x))
+          .sort((a, b) => partner[id][b].s / partner[id][b].n - partner[id][a].s / partner[id][a].n || partner[id][b].n - partner[id][a].n);
+        if(liste[0] !== mit) continue;
+        const g = gesamt[id];
+        neuSt.push({id:'partner_' + id + '_' + mit + '_' + m.id, cat:'team', ic:'handshake',
+          title:`${nameOf(id)} gewinnt mit ${nameOf(mit)} ${quote(z.s, z.n)} % der Partien, mit allen ${quote(g.s, g.n)} %`,
+          desc:`${z.s} von ${z.n} gemeinsamen Partien gewonnen.`,
+          when:zeit, prio:STORY_PRIO.partner_best,
+          dataRef:{type:'partner_best', pid:id, mit, s:z.s, n:z.n, allg:quote(g.s, g.n), matchId:m.id, playerIds:[id, mit]}});
+        break;
+      }
     });
     neuSt.forEach(x => stories.push(x));
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] partie', e); }
@@ -23166,7 +23476,8 @@ function _consolidateStoriesLegacy(list){
     'loss_streak','win_streak','top_form','team_streak','team_loss_streak',
     'rivalry','rivalry_milestone','spiel',
     'lead_change','streak_record',
-    'fluch','duo_jubilaeum','revanche','tagesmarathon','elo_hoch','tabellensprung']);
+    'fluch','duo_jubilaeum','revanche','tagesmarathon','elo_hoch','tabellensprung',
+    'duell_kippt','woche_spitze','tag_plus','tag_hoehe','monat_gewinn','monat_halb','partner_best']);
   const SAMMEL_TAFEL = new Set(['rekord_erstmals','rekord_geholt','rekord_gesteigert',
     'chronik_geholt']);
   const _minKey = w => { const d = new Date(w); return tagKey(w)+'-'+d.getHours()+'-'+d.getMinutes(); };
@@ -23465,7 +23776,7 @@ function _consolidateStoriesLegacy(list){
         return `${nm(dt.pid)} stellt ${dt.streak ? 'mit ' + dt.streak + ' Siegen ' : ''}den Serien-Rekord der Liga auf`;
       if(dt.type === 'group' && ids.length > 1){
         const verb = {loss_streak:'stecken beide in einer Durststrecke', top_form:'spielen über dem eigenen Schnitt',
-          win_streak:'ziehen ihre Serien gemeinsam weiter', jubilee:'feiern ein Jubiläum',
+          win_streak:'setzen beide eine Siegesserie fort', jubilee:'feiern ein Jubiläum',
           milestone_wins:'erreichen eine Siegmarke', milestone_goals:'erreichen eine Tormarke',
           milestone_elo:'knacken eine Elo-Marke'}[dt.sub];
         if(verb) return `${und(ids)} ${ids.length > 2 ? verb.replace('beide ', 'alle ') : verb}`;
@@ -23543,12 +23854,7 @@ function _consolidateStoriesLegacy(list){
         let neg = false;
         try { neg = _newsIstNegativ(t); } catch(e){}
         if(neg) return -100 + (t.prio || 0) / 100;
-        let w = {lead_change:96, streak_record:95, top_clash:86, giant_slayer:84, streak_killer:80,
-                 milestone_wins:62, milestone_elo:60, milestone_goals:58, jubilee:56,
-                 rivalry_milestone:54, top_form:44, rivalry:34, badge_marken:24,
-                 fluch:64, elo_hoch:60, tabellensprung:59, revanche:52, duo_jubilaeum:50, tagesmarathon:40}[typ];
-        if(typ === 'win_streak' || typ === 'team_streak') w = 46 + 2 * Math.min(17, Number(dt.streak) || 0);
-        if(typ === 'badge_unlocked') w = dt.rarity === 'legendary' ? 92 : dt.rarity === 'rare' ? 66 : 50;
+        let w = anlassGewicht(typ, dt);
         if(typ === 'spiel' || typ === 'match_result')
           w = (_ergebnisGedeckt(dt) ? null : {zu_null:78, upset:74, krimi:58, kanter:52, eng:44}[dt.resultKind]) || 30;
         if(dt.type === 'group') w = (w || 40) + 10;
@@ -23602,8 +23908,9 @@ function _consolidateStoriesLegacy(list){
         if(dt.pid) return {wort:'für', pids:[dt.pid]};
         return {wort:'für', pids:(dt.playerIds || t.playerIds || []).filter(Boolean)};
       };
+      const einePartie = g.key.indexOf('spiel|match|') === 0;
       const phrasen = [];
-      teile.slice().sort((a, b) => _leitWert(b) - _leitWert(a)).forEach(t => {
+      if(!einePartie) teile.slice().sort((a, b) => _leitWert(b) - _leitWert(a)).forEach(t => {
         const dt = t.dataRef || {};
         if(dt.type === 'spiel' || dt.type === 'match_result') return;
         const et = _etikett(t);
@@ -23637,7 +23944,13 @@ function _consolidateStoriesLegacy(list){
       const spT = teile.find(t => ((t.dataRef || {}).type === 'spiel' || (t.dataRef || {}).type === 'match_result'));
       const spD = (spT && spT.dataRef) || {};
       const ort = spT && !_ergebnisGedeckt(spD) ? (ERGEBNIS_ORT[spD.resultKind] || '') : '';
-      if(phrasen.length){
+      const haupt = einePartie ? teile
+        .filter(t => { const ty = (t.dataRef || {}).type; return ty !== 'spiel' && ty !== 'match_result'; })
+        .map(t => ({t, w:_leitWert(t)})).filter(x => x.w >= 0)
+        .sort((a, b) => b.w - a.w)[0] : null;
+      if(einePartie){
+        neuTitel = haupt ? _achseZeile(haupt.t) : String((spT && spT.title) || '').trim();
+      } else if(phrasen.length){
         let bild = '';
         for(let zahl = Math.min(3, phrasen.length); zahl >= 1 && !bild; zahl--){
           const kern = _reihe(phrasen.slice(0, zahl));
@@ -24601,12 +24914,11 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
           ? `<span class="nf-brk-n">${brkTeile} Meldungen</span>` : '')
       + `<span class="nf-brk-zeit">${esc(_newsWhenLabel(s.when))}</span></div>`
     : '';
-  const sammelTeile = (d.type === 'sammel' && d.quelle === 'spiel'
-                       && d.matchId && !d.bandFremd)
-    ? (d.teile || []).filter(t => String((t && (t.typ || t.type)) || '') !== 'spiel')
-    : d.teile;
+  const partieBuendel = d.type === 'sammel' && d.quelle === 'spiel' && d.matchId && !d.bandFremd;
+  const spZeilen = partieBuendel ? _spZeilen(d.teile, s.title, _spBild(s).occ) : null;
+  const sammelTeile = spZeilen ? spZeilen.zeilen : d.teile;
   const sammelBand = (d.type === 'sammel')
-    ? _newsSammelBand(sammelTeile, [s.title], true) : '';
+    ? _newsSammelBand(sammelTeile, [s.title], !spZeilen) : '';
 
   let kopf = '', fuss = '', gesicht = '', faktBild = '';
   let satz = s.desc;
@@ -24617,7 +24929,9 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
     const bild = _spBild(s);
     kopf = d.bandFremd ? '' : bild.kopf;
     satz = _newsSpielSatz(s.desc, bild.zeigt);
-    fuss = bild.fuss + _newsZahlband(_newsSpielZahlen(s, bild.key));
+    const unter = spZeilen && spZeilen.unter && bild.fuss
+      ? `<div class="sp-fu-z"><i class="nf-sam-i">${svgI(spZeilen.unter.ic || 'chartBar')}</i><span>${_newsBetont(spZeilen.unter.titel || '')}</span></div>` : '';
+    fuss = bild.fuss + unter + _newsZahlband(_newsSpielZahlen(s, bild.key));
     if(!kopf) gesicht = _newsGesichtHtml(s);
   } else if(sorte === 'tafel'){
     const w = _newsTafelWert(s);
@@ -25897,8 +26211,8 @@ function _spWippeBild(d){
   const gap = Math.max(0, d.eloFav - d.eloDog);
   const th = Math.min(13, 5 + gap / 25) * Math.PI / 180;
   const px = 150, py = 86, r = 104;
-  const lx = px - r * Math.cos(th), ly = py + r * Math.sin(th);
-  const rx = px + r * Math.cos(th), ry = py - r * Math.sin(th);
+  const lx = px - r * Math.cos(th), ly = py - r * Math.sin(th);
+  const rx = px + r * Math.cos(th), ry = py + r * Math.sin(th);
   const P = (x, y) => `left:${(x / 300 * 100).toFixed(1)}%;top:${(y / 120 * 100).toFixed(1)}%`;
   const minus = v => (v < 0 ? '−' : '') + _spZahl(v);
   const schild = (ids, e, p, w) => `<div class="sp-wp-l${w ? ' w' : ''}"><span class="sp-wp-n">${_spStapel(ids)}</span>`
@@ -25912,10 +26226,10 @@ function _spWippeBild(d){
         <line class="sp-wp-bk" x1="${lx.toFixed(1)}" y1="${ly.toFixed(1)}" x2="${rx.toFixed(1)}" y2="${ry.toFixed(1)}"/>
         <circle class="sp-wp-ax" cx="${px}" cy="${py}" r="3.5"/>
       </svg>
-      <div class="sp-wp-t" style="${P(lx + 8, ly - 4)}">${_spChips(d.fav)}</div>
-      <div class="sp-wp-t w" style="${P(rx - 8, ry - 4)}">${_spChips(d.dog)}</div>
+      <div class="sp-wp-t w" style="${P(lx + 8, ly - 4)}">${_spChips(d.dog)}</div>
+      <div class="sp-wp-t" style="${P(rx - 8, ry - 4)}">${_spChips(d.fav)}</div>
     </div>
-    <div class="sp-wp-ls">${schild(d.fav, d.eloFav, 100 - d.pct, false)}${schild(d.dog, d.eloDog, d.pct, true)}</div>
+    <div class="sp-wp-ls">${schild(d.dog, d.eloDog, d.pct, true)}${schild(d.fav, d.eloFav, 100 - d.pct, false)}</div>
   </div>`;
 }
 
@@ -25936,24 +26250,26 @@ function _spTabelleDaten(a, spitze){
   return {zeilen, von, bis, spitze};
 }
 function _spTabelleBild(d){
-  if(!d || !d.zeilen.length) return '';
-  const H = (d.bis - d.von + 1) * 22;
-  const y = r => (r - d.von) * 22 + 11;
-  const reihen = d.zeilen.slice().sort((u, v) => (u.k !== 'm') - (v.k !== 'm'));
-  const linien = reihen.map(l => `<path class="sp-tb-l ${l.k}" d="M98 ${y(l.p)}C150 ${y(l.p)} 150 ${y(l.q)} 202 ${y(l.q)}"/>`).join('');
-  const mitNamen = _spPasst(d.zeilen.map(l => l.id), 10, true);
-  const ende = (l, links) => `<span class="sp-tb-e ${l.k}${links ? '' : ' re'}${d.spitze && !links && l.q === 1 ? ' gold' : ''}" `
-    + `style="top:${(y(links ? l.p : l.q) / H * 100).toFixed(2)}%">`
-    + (links ? `${mitNamen ? `<i>${esc(_spName(l.id))}</i>` : _spChip(l.id)}<b class="num">${_spZahl(l.p)}</b>`
-             : `<b class="num">${_spZahl(l.q)}</b>${_spChip(l.id)}`)
-    + `</span>`;
-  const bewegt = d.zeilen.filter(l => l.k !== 'm').sort((u, v) => u.q - v.q);
-  const satz = bewegt.map(l => `${_spNb(l.id)} ${l.k === 'g' ? 'steigt' : 'fällt'} von ${_spZahl(l.p)} auf ${_spZahl(l.q)}`
+  if(!d || !d.zeilen || !d.zeilen.length) return '';
+  const bis = Math.min(d.bis, Math.max(...d.zeilen.map(z => Math.max(z.p, z.q))));
+  const n = bis - d.von + 1, nach = {};
+  d.zeilen.forEach(z => { nach[z.q] = z; });
+  const mitte = r => (r - d.von + .5) / n * 100;
+  const steiger = d.zeilen.filter(z => z.k === 'g');
+  const boegen = steiger.map(z => { const a = mitte(z.p), c = mitte(z.q), h = Math.min(15, 6 + Math.abs(z.p - z.q) * 2.5);
+    return `<path class="sp-tk-b" d="M${a.toFixed(1)} 17Q${((a + c) / 2).toFixed(1)} ${(17 - h).toFixed(1)} ${c.toFixed(1)} 17"/>`; }).join('');
+  const felder = Array.from({length:n}, (_, i) => { const r = d.von + i, z = nach[r];
+    const k = (z && z.k !== 'm' ? ' ' + z.k : '') + (d.spitze && r === 1 ? ' eins' : '');
+    return `<span class="sp-tk-f${k}">${z ? `<i style="--d:${z.p - z.q}">${_spChip(z.id)}</i>` : '<i></i>'}`
+      + `<small class="num">${_spZahl(r)}</small></span>`; }).join('');
+  const geister = steiger.map(z => `<u class="sp-tk-g" style="left:${mitte(z.p).toFixed(1)}%"></u>`).join('');
+  const wer = (d.spitze ? d.zeilen.filter(z => z.k !== 'm' && (z.q === 1 || z.p === 1)).sort((u, v) => u.q - v.q)
+    : d.zeilen.filter(z => z.k !== 'm').sort((u, v) => Math.abs(v.p - v.q) - Math.abs(u.p - u.q) || u.q - v.q)).slice(0, 2);
+  const satz = wer.map(l => `${_spNb(l.id)} ${l.k === 'g' ? 'steigt' : 'fällt'} von ${_spZahl(l.p)} auf ${_spZahl(l.q)}`
     + (d.spitze && l.q === 1 ? ' und führt' : '')).join(', ');
-  return `<div class="sp-tb"><div class="sp-tb-k"><span>vorher</span><span class="sp-k">Monatstabelle${d.von > 1 ? ` ab Platz ${_spZahl(d.von)}` : ''}</span><span>danach</span></div>
-    <div class="sp-tb-f" style="height:${H}px"><svg viewBox="0 0 300 ${H}" preserveAspectRatio="none" aria-hidden="true">${linien}</svg>
-    ${reihen.map(l => ende(l, true) + ende(l, false)).join('')}</div>
-    ${satz ? _spUnter(satz + '.') : ''}</div>`;
+  return `<div class="sp-fk sp-tk" style="--n:${n}"><div class="sp-k">Monatstabelle${d.von > 1 ? `, ab Platz ${_spZahl(d.von)}` : ''}</div>`
+    + `<svg class="sp-tk-s" viewBox="0 0 100 18" preserveAspectRatio="none" aria-hidden="true">${boegen}</svg>`
+    + `<div class="sp-tk-r">${geister}${felder}</div></div>${satz ? _spUnter(satz + '.') : ''}`;
 }
 
 function _spSerieDaten(a){
@@ -26128,44 +26444,50 @@ function _spMedailleDaten(a){
   }
   const i = B.idx.get(a.m && a.m.id), erst = B.medaillen.erste.get(b.id);
   const traeger = ids.filter(id => erst && erst.has(id) && erst.get(id) <= i);
-  let rang = Number.isInteger(a.x.rang) && a.x.rang > 0 ? a.x.rang : 0;
-  if(!rang && i != null){
-    const folge = B.medaillen.vergaben.get(a.x.pid + '|' + b.id) || [];
+  const rangVon = pid => {
+    if(i == null) return 0;
+    const folge = B.medaillen.vergaben.get(pid + '|' + b.id) || [];
     let lo = 0, hi = folge.length;
     while(lo < hi){ const mid = (lo + hi) >>> 1; if(folge[mid] <= i) lo = mid + 1; else hi = mid; }
-    if(lo && folge[lo - 1] === i) rang = lo;
-  }
+    return lo && folge[lo - 1] === i ? lo : 0;
+  };
+  const rang = Number.isInteger(a.x.rang) && a.x.rang > 0 ? a.x.rang : rangVon(a.x.pid);
   const erreicht = rang >= 150 ? [Math.floor(rang / 25) * 25 - 25, Math.floor(rang / 25) * 25]
     : NEWS_BADGE_MARKEN.filter(k => k <= rang).slice(-2);
-  return {name:b.name, ic:b.ic, klasse:rarityOf(b.id), wer:a.x.pid, rang, ids, traeger,
+  const sicht = new Set(ids);
+  const alle = [a.x.pid].concat((quelle[a.m && a.m.id] || []).filter(ev => ev.badge && ev.badge.id === b.id).map(ev => ev.playerId))
+    .filter((pid, k, l) => pid && sicht.has(pid) && l.indexOf(pid) === k)
+    .map(pid => { const r = pid === a.x.pid ? rang : rangVon(pid); return {pid, rang:r, naechste:_badgeNaechsteMarke(r)}; });
+  return {name:b.name, ic:b.ic, klasse:rarityOf(b.id), wer:a.x.pid, rang, ids, traeger, alle,
     wiederholung:rang > 1, marken:erreicht.concat(_badgeNaechsteMarke(rang))};
 }
 function _spMedailleBild(d){
   if(!d) return '';
-  const tr = new Set(d.traeger), viele = d.ids.length > 16;
-  const ton = d.klasse === 'legendary' ? 'gold' : 'viol';
-  const kl = {legendary:'Legendär', rare:'Selten', common:'Gewöhnlich'}[d.klasse] || '';
-  if(d.wiederholung && d.rang > 1){
-    const marken = (d.marken || []).slice(-3);
-    const schritte = marken.map(n => `<span class="${n < d.rang ? 'hat' : n === d.rang ? 'jetzt' : ''}"><b class="num">${_spZahl(n)}</b></span>`).join('');
-    const naechste = marken.find(n => n > d.rang);
-    return `<div class="sp-md sp-md-wieder ${ton}">${zkHtml(d.ic, 'g', ton)}<div class="sp-md-r">`
-      + `<div class="sp-md-k"><b>${esc(d.name)}</b><em class="${ton}">${kl}</em></div>`
-      + `<div class="sp-md-zahl"><b class="num">${_spZahl(d.rang)}.</b><span>Mal</span>${_spChip(d.wer)}</div>`
-      + (schritte ? `<div class="sp-md-marken" aria-label="Verleihungsmarken">${schritte}</div>` : '')
-      + _spUnter(`${_spNb(d.wer)} erreicht sie erneut.`
-        + (naechste ? ` Noch ${_spZahl(naechste - d.rang)} bis zur ${_spZahl(naechste)}. Vergabe.` : ''))
-      + `</div></div>`;
-  }
-  const plaetze = d.ids.slice().sort((a, b) => (tr.has(b) - tr.has(a)) || ((b === d.wer) - (a === d.wer))).map(id =>
-    viele ? `<i class="${tr.has(id) ? 'hat' : ''}${id === d.wer ? ' neu' : ''}"></i>`
-          : `<span class="${tr.has(id) ? 'hat' : ''}${id === d.wer ? ' neu' : ''}">${tr.has(id) ? _spChip(id) : ''}</span>`).join('');
-  const wer = d.wer && pmap()[d.wer]
-    ? (d.rang > 1 ? `, ${_spNb(d.wer)} zum ${_spZahl(d.rang)}. Mal` : `, neu dabei ${_spNb(d.wer)}`) : '';
-  return `<div class="sp-md">${zkHtml(d.ic, 'g', ton)}<div class="sp-md-r">
-      <div class="sp-md-k"><b>${esc(d.name)}</b><em class="${ton}">${kl}</em></div>
-      <div class="sp-md-p${viele ? ' punkte' : ''}">${plaetze}</div>
-      ${_spUnter(`${_spZahl(d.traeger.length)} von ${_spZahl(d.ids.length)} tragen sie${wer}.`)}</div></div>`;
+  const gold = d.klasse === 'legendary', ton = gold ? 'gold' : 'viol';
+  const alle = (Array.isArray(d.alle) && d.alle.length ? d.alle
+    : d.wer ? [{pid:d.wer, rang:d.rang, naechste:(d.marken || []).find(n => n > d.rang)}] : []).filter(x => pmap()[x.pid]);
+  const hier = new Set(alle.map(x => x.pid)), tr = new Set(d.traeger || []);
+  const wer = alle.map(x => `<div class="sp-md-w">${_spChip(x.pid)}<span><b>${esc(_spName(x.pid))}</b> `
+    + `<em class="sp-md-zahl num">${x.rang > 1 ? `<b>${_spZahl(x.rang)}.</b> Mal` : 'zum ersten Mal'}</em></span></div>`).join('');
+  const eins = alle.length === 1 && alle[0].rang > 1 && alle[0].naechste > alle[0].rang ? alle[0] : null;
+  const id = 'spm' + _spVisualHash(d.name + '|' + alle.map(x => x.pid + ':' + x.rang).join());
+  const punkte = Array.from({length:24}, (_, k) => { const w = k * 15 * Math.PI / 180;
+    return `<circle class="sp-md-pkt" cx="${(32 + 22.3 * Math.cos(w)).toFixed(1)}" cy="${(46 + 22.3 * Math.sin(w)).toFixed(1)}" r=".9"/>`; }).join('');
+  const name = `<div class="sp-md-n">${esc(d.name)}</div>`;
+  const breit = String(d.name || '').split(/[\s-]+/).some(w => w.length > 11);
+  return `<div class="sp-fk sp-md ${ton}${d.wiederholung && d.rang > 1 ? ' sp-md-wieder' : ''}">`
+    + `<div class="sp-k">${gold ? 'Legendäre' : 'Seltene'} Auszeichnung</div>${breit ? name : ''}<div class="sp-md-g">`
+    + `<span class="sp-md-m"><svg viewBox="0 0 64 74" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1">`
+    + `<stop offset="0" class="s1"/><stop offset=".5" class="s2"/><stop offset="1" class="s3"/></linearGradient></defs>`
+    + `<path class="sp-md-band" d="M18 0h11l7 22-9 4zM46 0H35l-7 22 9 4z"/><circle cx="32" cy="46" r="25" fill="url(#${id})"/>`
+    + `<circle class="sp-md-in" cx="32" cy="46" r="19.5"/>${punkte}</svg>`
+    + `<span class="sp-md-ic">${zkHtml(d.ic, '', ton)}</span><b class="sp-md-glanz"></b></span>`
+    + `<div class="sp-md-r">${breit ? '' : name}${wer}`
+    + (eins ? `<small class="num">noch ${_spZahl(eins.naechste - eins.rang)} bis zur ${_spZahl(eins.naechste)}.</small>` : '')
+    + `</div></div>`
+    + (d.ids && d.ids.length ? `<div class="sp-md-l"><span>${d.ids.map(p => `<i class="${hier.has(p) ? 'neu' : tr.has(p) ? 'hat' : ''}"></i>`).join('')}</span>`
+      + `<small class="num">${_spZahl(tr.size)} von ${_spZahl(d.ids.length)} tragen sie</small></div>` : '')
+    + `</div>`;
 }
 
 function _spTagDaten(s){
@@ -26193,7 +26515,7 @@ function _spTagBild(d){
 
 function _spSt(d){ return `<b class="sp-st num"><em>${_spZahl(d.hoch)}</em>:${_spZahl(d.tief)}</b>`; }
 function _spNz(W, L, wort){
-  return `<div class="sp-nz"><span class="w">${_spStapel(W)}</span><span class="sp-nz-gg">${wort || 'gegen'}</span>`
+  return `<div class="sp-nz"><span class="w">${_spStapel(W)}</span><span class="sp-nz-gg">${wort || 'schlagen'}</span>`
     + `<span class="re">${_spStapel(L)}</span></div>`;
 }
 function _spSeit(ms){
@@ -26287,13 +26609,26 @@ function _spMosaikBefund(F){
   return selten || haeufig || marke
     ? {grund:selten ? 'selten' : (haeufig ? 'haeufig' : 'marke')} : null;
 }
-function _spTransferBefund(F){
-  if(F.i < 60 || !Number.isFinite(F.gewinn)) return null;
-  const g = _spFormBasis().punkte.slice(0, F.i).map(p => p.g).filter(Number.isFinite);
-  const platz = 1 + g.filter(v => v >= F.gewinn).length;
-  const grenze = Math.max(1, Math.ceil((g.length + 1) * 0.05));
-  return platz <= grenze ? {platz, gesamt:g.length + 1} : null;
+
+function _spKopfDaten(F){
+  const m = F.m, rolle = id => m[(m.a1 === id ? 'a1' : m.a2 === id ? 'a2' : m.b1 === id ? 'b1' : 'b2') + '_pos'];
+  const ord = l => l.slice().sort((a, b) => (rolle(a) === 'def' ? 0 : 1) - (rolle(b) === 'def' ? 0 : 1));
+  const delta = {};
+  F.W.concat(F.L).forEach(id => { delta[id] = Math.round(F.delta[id] || 0); });
+  return {W:ord(F.W), L:ord(F.L), hoch:F.hoch, tief:F.tief, pct:F.c != null ? Math.round(F.c * 100) : null, delta};
 }
+function _spImMonat(F, art){
+  const B = _spBasis(), mon = tagKey(mts(F.m)).slice(0, 7);
+  let n = 0;
+  for(let j = F.i; j >= 0; j--){
+    const x = B.chrono[j];
+    if(tagKey(mts(x)).slice(0, 7) !== mon) break;
+    if(art(x)) n++;
+  }
+  return n;
+}
+const _spKrimi = x => Math.abs(x.score_a - x.score_b) === 1;
+const _spZuNull = x => Math.min(x.score_a, x.score_b) === 0;
 
 const SP_FORM = {
   mosaik:{rang:12, ic:'chartBar',
@@ -26496,6 +26831,35 @@ const SP_FORM = {
     daten:(F, x) => Object.assign({W:F.W, L:F.L, hoch:F.hoch, tief:F.tief}, x),
     text:(F, x) => ({t:`${_spNl(F.W)} schlagen ${_spNl(F.L)} zum ${x.k}. Mal in Folge`,
       d:`In diesem Duell steht es ${x.s}:${x.n - x.s}.`})},
+  tafel:{rang:10, ic:'spielfeld', v2:true,
+    wann:() => ({}),
+    daten:F => _spKopfDaten(F),
+    text:F => ({t:`${_spNl(F.W)} gewinnen gegen ${_spNl(F.L)}`,
+      d:F.c != null ? `Vor dem Anstoß lag die Siegchance bei ${Math.round(F.c * 100)} %.`
+        : `Für ${_spName(F.W[0])} bringt der Sieg ${_spVz(F.delta[F.W[0]])} Elo.`})},
+  pucks:{rang:10, ic:'ball', v2:true,
+    wann:() => ({}),
+    daten:F => _spKopfDaten(F),
+    text:F => ({t:`${_spNl(F.W)} gewinnen mit ${F.diff === 1 ? 'einem Tor' : _spZahl(F.diff) + ' Toren'} Abstand`,
+      d:F.tief ? `${_spNl(F.L)} treffen ${_spZahl(F.tief)}-mal.` : `${_spNl(F.L)} bleiben ohne Tor.`})},
+  strom:{rang:10, ic:'bolt', v2:true,
+    wann:() => ({}),
+    daten:F => _spKopfDaten(F),
+    text:F => {
+      const ab = -F.L.reduce((n, id) => n + (F.delta[id] || 0), 0);
+      return {t:`${_spNl(F.W)} holen zusammen ${_spZahl(F.gewinn)} Elo`,
+        d:`${_spNl(F.L)} geben ${_spZahl(ab)} Elo ab.`};
+    }},
+  herz:{rang:58, ic:'nerves', v2:true,
+    wann:F => F.diff === 1 ? {} : null,
+    daten:F => Object.assign(_spKopfDaten(F), {nr:_spImMonat(F, _spKrimi)}),
+    text:F => ({t:`${_spNl(F.W)} gewinnen mit einem Tor Abstand`,
+      d:`Es ist das ${_spImMonat(F, _spKrimi)}. Spiel mit einem Tor Abstand in diesem Monat.`})},
+  zunull:{rang:60, ic:'weisseWeste', v2:true,
+    wann:F => F.tief === 0 ? {} : null,
+    daten:F => Object.assign(_spKopfDaten(F), {nr:_spImMonat(F, _spZuNull),
+      monat:seasonLabel(tagKey(mts(F.m)).slice(0, 7)).split(' ')[0]}),
+    text:F => ({t:`${_spNl(F.W)} spielen zu null`, d:`Ein Spiel ohne Gegentor gegen ${_spNl(F.L)}.`})},
   feld:{rang:8, ic:'ball',
     wann:() => ({}),
     daten:F => _spFeldDaten({m:F.m, c:F.c}),
@@ -26674,6 +27038,165 @@ function _spZaehlwerkBild(d){
     <div class="sp-zw-s">${_spSt(d)}</div></div>`
     + (d.nurAnlass ? '' : _spNz(d.W, d.L));
 }
+function _spMarkenBild(d){
+  const l = ((d && d.liste) || []).filter(x => pmap()[x.pid]).slice(0, 4);
+  if(!l.length) return '';
+  const ziffern = x => _spZahl(x.wert).split('').map(c => /\d/.test(c) ? `<i>${c}</i>` : `<s>${c}</s>`).join('')
+    + (x.label === 'Elo' ? '' : '<u>.</u>');
+  return `<div class="sp-fk sp-zm"><div class="sp-k">${l.length > 1 ? 'Runde Zahlen in dieser Partie' : 'Runde Zahl'}</div>`
+    + l.map(x => `<div class="sp-zm-z">${_spChip(x.pid)}<b>${esc(_spName(x.pid))}</b>`
+      + `<span class="sp-zm-n"><span class="sp-zm-d num">${ziffern(x)}</span><em>${esc(x.label)}</em></span></div>`).join('') + `</div>`;
+}
+function _spSchritt(span){
+  const p = Math.pow(10, Math.floor(Math.log10(Math.max(1, span / 4))));
+  return [1, 2, 2.5, 5, 10].map(k => k * p).find(s => span / s <= 4) || 10 * p;
+}
+function _spLinie(v, o){
+  const W = 244, H = 80, OB = 8, UN = 16, n = v.length - 1;
+  const f = o.fmt || (y => (y < 0 ? '−' : '') + _spZahl(y)), r = x => x.toFixed(1);
+  let lo = Math.min(...v, o.ref != null ? o.ref : Infinity, o.lo != null ? o.lo : Infinity);
+  let hi = Math.max(...v, o.ref != null ? o.ref : -Infinity, o.hi != null ? o.hi : -Infinity);
+  if(hi === lo){ hi += 1; lo -= 1; }
+  const st = _spSchritt(hi - lo); lo = Math.floor(lo / st) * st; hi = Math.ceil(hi / st) * st;
+  const ende = String(o.ende != null ? o.ende : f(v[n]));
+  const LI = Math.max(32, 8 + 5.6 * Math.max(String(f(lo)).length, String(f(hi)).length));
+  const RE = Math.max(38, 12 + 6.2 * ende.length);
+  const X = i => LI + i * (W - LI - RE) / Math.max(1, n), Y = y => OB + (hi - y) * (H - OB - UN) / (hi - lo);
+  const ticks = [];
+  for(let y = lo; y <= hi + 1e-9; y += st) if(o.ref == null || Math.abs(Y(y) - Y(o.ref)) >= 10) ticks.push(y);
+  const d = v.map((y, i) => (i ? 'L' : 'M') + r(X(i)) + ' ' + r(Y(y))).join('');
+  const basis = o.ref != null ? o.ref : lo, id = 'spl' + _spVisualHash(v.join() + '|' + o.ref + '|' + (o.x || []).join());
+  const flaeche = `${d}L${r(X(n))} ${r(Y(basis))}L${r(X(0))} ${r(Y(basis))}Z`;
+  const fl = o.zwei
+    ? `<clipPath id="${id}o"><rect x="0" y="0" width="${W}" height="${r(Y(o.ref))}"/></clipPath>`
+      + `<clipPath id="${id}u"><rect x="0" y="${r(Y(o.ref))}" width="${W}" height="${H}"/></clipPath>`
+      + `<path class="sp-ln-f" clip-path="url(#${id}o)" d="${flaeche}"/><path class="sp-ln-f neg" clip-path="url(#${id}u)" d="${flaeche}"/>`
+      + `<path class="sp-ln-l" clip-path="url(#${id}o)" d="${d}"/><path class="sp-ln-l neg" clip-path="url(#${id}u)" d="${d}"/>`
+    : `<path class="sp-ln-f" d="${flaeche}"/><path class="sp-ln-l" d="${d}"/>`;
+  const ey = Math.min(H - UN - 1, Math.max(OB + 7, Y(v[n]) + 3.5));
+  const [xa, xe] = [String((o.x || [])[0] || ''), String((o.x || [])[1] || '')];
+  const anfang = 5.4 * (xa.length + xe.length) + 10 <= X(n) - LI;
+  return `<svg class="sp-ln-s" viewBox="0 0 ${W} ${H}" aria-hidden="true">`
+    + ticks.map(y => `<line class="sp-ln-g" x1="${LI}" x2="${W - RE}" y1="${r(Y(y))}" y2="${r(Y(y))}"/>`
+      + `<text class="sp-ln-t" x="${LI - 5}" y="${r(Y(y) + 3)}">${esc(f(y))}</text>`).join('')
+    + (o.ref != null ? `<line class="sp-ln-r" x1="${LI}" x2="${W - RE}" y1="${r(Y(o.ref))}" y2="${r(Y(o.ref))}"/>`
+      + `<text class="sp-ln-t ref" x="${LI - 5}" y="${r(Y(o.ref) + 3)}">${esc(f(o.ref))}</text>` : '')
+    + fl
+    + (o.letzt && n > 0 ? `<path class="sp-ln-l letzt" d="M${r(X(n - 1))} ${r(Y(v[n - 1]))}L${r(X(n))} ${r(Y(v[n]))}"/>` : '')
+    + (o.fahne ? `<path class="sp-ln-fahne" d="M${r(X(n))} ${r(Y(v[n]) - 5)}v-13l9 3.5-9 3.5"/>` : '')
+    + `<circle class="sp-ln-p${o.zwei && v[n] < o.ref ? ' neg' : ''}" cx="${r(X(n))}" cy="${r(Y(v[n]))}" r="4"/>`
+    + `<text class="sp-ln-w" x="${r(X(n) + 8)}" y="${r(ey)}">${esc(ende)}</text>`
+    + (anfang ? `<text class="sp-ln-x" x="${LI}" y="${H - 3}">${esc(xa)}</text>` : '')
+    + `<text class="sp-ln-x re" x="${r(X(n))}" y="${H - 3}">${esc(xe)}</text></svg>`;
+}
+function _spRangliste(l, o){
+  return `<table class="sp-rl"><thead><tr><th></th><th></th><th></th><th>${esc(o.kopf[0])}</th><th>${esc(o.kopf[1])}</th></tr></thead><tbody>`
+    + l.map((q, i) => `<tr class="${q.id === o.hervor ? 'an' : ''}"><td class="num">${_spZahl(i + 1)}.</td>`
+      + `<td><span class="sp-rl-n">${_spChip(q.id)}<span>${esc(_spName(q.id))}</span></span></td>`
+      + `<td class="sp-rl-b"><i style="width:${Math.min(100, q.wert / o.max * 100).toFixed(1)}%"></i>`
+      + (o.schnitt != null ? `<u style="left:${Math.min(100, o.schnitt / o.max * 100).toFixed(1)}%"></u>` : '') + `</td>`
+      + `<td class="num">${esc(q.zahl)}</td><td class="num sp-rl-a">${esc(q.neben)}</td></tr>`).join('')
+    + `</tbody></table>`;
+}
+function _spKipptDaten(a){
+  const w = a.x.pid, l = a.x.gegen;
+  const duelle = _spEigene(w, a.m).filter(x => [x.a1, x.a2, x.b1, x.b2].includes(l) && _spSeite(x, w) !== _spSeite(x, l));
+  let d = 0; const voll = [0].concat(duelle.map(x => (d += _spGew(x, w) ? 1 : -1)));
+  const ab = Math.max(0, voll.length - 61);
+  return duelle.length ? {w, l, s:duelle.filter(x => _spGew(x, w)).length, n:duelle.length, ab, verlauf:voll.slice(ab)} : null;
+}
+function _spKipptBild(d){
+  if(!d || !d.verlauf || d.verlauf.length < 3) return '';
+  return `<div class="sp-fk sp-ln"><div class="sp-k">Bilanz, Duell für Duell</div>`
+    + `<div class="sp-ln-lg">${_spChip(d.w)}<small>darüber ${esc(_spName(d.w))} vorn</small>${_spChip(d.l)}<small>darunter ${esc(_spName(d.l))}</small></div>`
+    + _spLinie(d.verlauf, {ref:0, zwei:true, fmt:_spVz, letzt:true, ende:`${_spZahl(d.s)}:${_spZahl(d.n - d.s)}`,
+      x:[d.ab ? `${_spZahl(d.ab)}. Duell` : 'Beginn', `${_spZahl(d.n)}. Duell`]}) + `</div>`;
+}
+function _spWocheDaten(a){
+  const B = _spBasis(), i = B.idx.get(a.m.id), wk = _wochenKey(a.m.created_at), je = {};
+  for(let j = i; j != null && j >= 0 && _wochenKey(B.chrono[j].created_at) === wk; j--){
+    const x = B.chrono[j], W = _spSieger(x);
+    [x.a1, x.a2, x.b1, x.b2].forEach(id => { if(!id) return; const z = je[id] || (je[id] = {s:0, n:0}); z.n++; if(W.includes(id)) z.s++; });
+  }
+  const pm = pmap();
+  const liste = Object.keys(je).filter(id => je[id].s >= 5 && sichtbar(pm[id]))
+    .map(id => ({id, s:je[id].s, n:je[id].n, q:Math.round(100 * je[id].s / je[id].n)}))
+    .sort((p, q) => q.s / q.n - p.s / p.n || q.s - p.s).slice(0, 5);
+  return liste.length ? {pid:a.x.pid, liste} : null;
+}
+function _spWocheBild(d){
+  if(!d || !d.liste) return '';
+  return `<div class="sp-fk sp-ln"><div class="sp-k">Siegquote der Woche, ab fünf Siegen</div>`
+    + _spRangliste(d.liste.map(q => ({id:q.id, wert:q.q, zahl:_spZahl(q.q) + ' %', neben:`${_spZahl(q.s)}/${_spZahl(q.n)}`})),
+      {hervor:d.pid, max:100, kopf:['Quote', 'Siege']}) + `</div>`;
+}
+function _spTagEloDaten(a, ref){
+  const pid = a.x.pid, tag = tagKey(a.m.created_at);
+  let e = 0;
+  const verlauf = [0].concat(_spEigene(pid, a.m).filter(x => tagKey(x.created_at) === tag).map(x => (e += _newsEloDelta(pid, x.id) || 0)));
+  return verlauf.length >= 2 ? {pid, ref, verlauf} : null;
+}
+function _spTagEloBild(d){
+  if(!d || !d.verlauf) return '';
+  const n = d.verlauf.length - 1, hoehe = d.ref > 0, x = ['Beginn', `${_spZahl(n)}. Partie`];
+  return `<div class="sp-fk sp-ln"><div class="sp-k">Elo des Tages, ${esc(_spName(d.pid))}</div>`
+    + _spLinie(d.verlauf, hoehe ? {ref:d.ref, lo:0, fmt:_spVz, x, fahne:true} : {ref:0, zwei:true, fmt:_spVz, x}) + `</div>`;
+}
+function _spMonatEloDaten(a){
+  const pid = a.x.pid, sid = seasonOf(a.m.created_at).id, H = getHistoryByMatchId();
+  const verlauf = _spEigene(pid, a.m).filter(x => seasonOf(x.created_at).id === sid)
+    .map(x => Math.round(((H.get(x.id) || {}).eloAfter || {})[pid] || 0));
+  return verlauf.length >= 2 ? {pid, sid, verlauf} : null;
+}
+function _spMonatEloBild(d){
+  if(!d || !d.verlauf) return '';
+  const n = d.verlauf.length;
+  return `<div class="sp-fk sp-ln metall"><div class="sp-k">Elo im ${esc(seasonLabel(d.sid).split(' ')[0])}, ${esc(_spName(d.pid))}</div>`
+    + _spLinie(d.verlauf, {letzt:true, x:['1. Partie', `${_spZahl(n)}. Partie`]}) + `</div>`;
+}
+function _spMonatQuoteDaten(a){
+  const pid = a.x.pid, sid = seasonOf(a.m.created_at).id;
+  let s = 0;
+  const verlauf = _spEigene(pid, a.m).filter(x => seasonOf(x.created_at).id === sid)
+    .map((x, i) => Math.round(100 * (s += _spGew(x, pid) ? 1 : 0) / (i + 1)));
+  return verlauf.length >= 2 ? {pid, sid, verlauf} : null;
+}
+function _spMonatQuoteBild(d){
+  if(!d || !d.verlauf) return '';
+  const n = d.verlauf.length;
+  return `<div class="sp-fk sp-ln"><div class="sp-k">Siegquote im ${esc(seasonLabel(d.sid).split(' ')[0])}, ${esc(_spName(d.pid))}</div>`
+    + _spLinie(d.verlauf, {ref:50, zwei:true, lo:0, hi:100, fmt:y => _spZahl(y) + ' %', x:['1. Partie', `${_spZahl(n)}. Partie`]}) + `</div>`;
+}
+function _spPartnerDaten(a){
+  const pid = a.x.pid, je = {}, pm = pmap();
+  let s = 0, n = 0;
+  _spEigene(pid, a.m).forEach(x => {
+    const mit = _spTeam(x, _spSeite(x, pid)).find(y => y && y !== pid), w = _spGew(x, pid);
+    n++; if(w) s++;
+    if(!mit) return;
+    const z = je[mit] || (je[mit] = {s:0, n:0}); z.n++; if(w) z.s++;
+  });
+  const liste = Object.keys(je).filter(id => je[id].n >= 6 && sichtbar(pm[id]))
+    .map(id => ({id, s:je[id].s, n:je[id].n, q:Math.round(100 * je[id].s / je[id].n)}))
+    .sort((p, q) => q.s / q.n - p.s / p.n || q.n - p.n).slice(0, 5);
+  return liste.length ? {pid, mit:a.x.mit, liste, allg:Math.round(100 * s / Math.max(1, n))} : null;
+}
+function _spPartnerBild(d){
+  if(!d || !d.liste) return '';
+  return `<div class="sp-fk sp-ln metall"><div class="sp-k">Siegquote je Partner, ${esc(_spName(d.pid))}</div>`
+    + _spRangliste(d.liste.map(q => ({id:q.id, wert:q.q, zahl:_spZahl(q.q) + ' %', neben:_spZahl(q.n)})),
+      {hervor:d.mit, max:100, schnitt:d.allg, kopf:['Quote', 'Partien']})
+    + `<div class="sp-rl-lg"><i></i>${_spZahl(d.allg)} % mit allen</div></div>`;
+}
+const SP_FAKT_FUSS = {duell_kippt:'kippt', woche_spitze:'woche', tag_plus:'plus', tag_hoehe:'hoehe',
+  monat_gewinn:'monatsbest', monat_halb:'halb', partner_best:'partner'};
+const SP_FAKT_DATEN = {kippt:_spKipptDaten, woche:_spWocheDaten, plus:a => _spTagEloDaten(a, 0),
+  hoehe:a => _spTagEloDaten(a, 75), monatsbest:_spMonatEloDaten, halb:_spMonatQuoteDaten, partner:_spPartnerDaten};
+function _spFaktBild(d){
+  const m = d && d.matchId && _spMatch(d.matchId), key = d && SP_FAKT_FUSS[d.type];
+  if(!m || !key) return '';
+  return _spOccasionBild({key, data:SP_FAKT_DATEN[key]({key, m, x:d})});
+}
 function _spTauziehenBild(d){
   const anteil = d.hoch / Math.max(1, d.hoch + d.tief);
   const pos = Math.round((d.aw ? 1 - anteil : anteil) * 100);
@@ -26764,12 +27287,74 @@ function _spHochBild(d){
     + `<span class="sp-ho-u">bisher <b class="num">${_spZahl(d.alt)}</b>${d.monat ? ` im ${esc(d.monat)}` : ''}${d.seit
       ? `, vor ${d.seit === 1 ? 'einer Partie' : `<b class="num">${_spZahl(d.seit)}</b> Partien`}` : ''}</span></div></div>`;
 }
+const _spKopfPaar = ids => `<span class="sp-kp">${ids.map(_spChip).join('')}</span>`;
+const _spKopfElo = (d, ids) => ids.map(id => _spVz((d.delta || {})[id] || 0)).join(' ');
+function _spAnzeigeBild(d){
+  const seite = (ids, w) => `<div class="sp-ag-s${w ? ' w' : ''}">${_spKopfPaar(ids)}<span class="num">${_spKopfElo(d, ids)}</span></div>`;
+  return `<div class="sp-fk sp-ag">${seite(d.W, true)}<div class="sp-ag-m"><div class="sp-ag-z">`
+    + `<span class="sp-ag-k w"><b>${_spZahl(d.hoch)}</b></span><i></i><span class="sp-ag-k"><b>${_spZahl(d.tief)}</b></span></div>`
+    + (d.pct != null ? `<small class="sp-ag-c num">Chance vorher ${_spZahl(d.pct)} %</small>` : '')
+    + `</div>${seite(d.L, false)}</div>` + _spNz(d.W, d.L);
+}
+function _spPucksBild(d){
+  const n = Math.max(10, d.hoch);
+  const reihe = (k, w) => k > 10 ? '' : Array.from({length:10}, (_, i) => `<i class="${i < k ? (w ? 'w' : 'l') : ''}"></i>`).join('');
+  const z = (ids, k, w) => `<div class="sp-pu-z${w ? ' w' : ''}">${_spKopfPaar(ids)}<span class="sp-pu-r">${reihe(k, w)}`
+    + (!w && n === 10 ? `<u style="--von:${k}"></u>` : '') + `</span><b class="num">${_spZahl(k)}</b></div>`;
+  return `<div class="sp-fk sp-pu">${z(d.W, d.hoch, true)}${z(d.L, d.tief, false)}</div>` + _spNz(d.W, d.L);
+}
+function _spStromBild(d){
+  const W = 240, H = 92, y = [15, 63];
+  const breit = id => Math.max(2.5, Math.min(10, Math.abs((d.delta || {})[id] || 0) / 2.2));
+  const pfad = (i, j) => `M${W - 32} ${y[j]}C${W / 2 + 16} ${y[j]},${W / 2 - 16} ${y[i]},32 ${y[i]}`;
+  const id = 'sps' + _spVisualHash(d.W.concat(d.L).join() + d.hoch + ':' + d.tief);
+  const stroeme = d.L.map((l, j) => d.W.map((w, i) => `<path class="sp-sm-p" d="${pfad(i, j)}" stroke="url(#${id})" stroke-width="${breit(l).toFixed(1)}"/>`).join('')).join('');
+  const ende = (x, i, w) => `<span class="sp-sm-a${w ? ' w' : ''}" style="top:${y[i] - 15}px;${w ? 'left' : 'right'}:2px">${_spChip(x)}<b class="num">${_spVz((d.delta || {})[x] || 0)}</b></span>`;
+  return `<div class="sp-fk sp-sm"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><defs>`
+    + `<linearGradient id="${id}" x1="1" x2="0" y1="0" y2="0"><stop offset="0" stop-color="#f0566a"/><stop offset=".5" stop-color="#f7cf4a"/>`
+    + `<stop offset="1" stop-color="#BEF264"/></linearGradient></defs>${stroeme}</svg>`
+    + d.W.map((x, i) => ende(x, i, true)).join('') + d.L.map((x, j) => ende(x, j, false)).join('')
+    + `<span class="sp-sm-m">${_spSt(d)}</span></div>` + _spNz(d.W, d.L);
+}
+function _spHerzBild(d){
+  const SW = 'M0 25H10l3-5 3 5h3l2 6 4-27 4 33 3-14h4q4-8 8 0H60';
+  const SL = 'M0 25h9l2-6 2 9 2-4h4l1 2 1-1H60';
+  const paar = (ids, w) => `<span class="sp-hz-p${w ? ' w' : ''}">${ids.map(_spChip).join('')}</span>`;
+  const kurve = (p, w) => `<span class="sp-hz-k${w ? ' w' : ''}"><svg viewBox="0 0 60 40" preserveAspectRatio="none" aria-hidden="true"><path d="${p}"/></svg>${w ? '<i></i>' : ''}</span>`;
+  const zelle = (lab, v) => `<span><b class="num">${esc(v)}</b><small>${lab}</small></span>`;
+  return `<div class="sp-fk sp-hz"><div class="sp-hz-g">${paar(d.W, true)}${kurve(SW, true)}`
+    + `<span class="sp-hz-m"><small>Ein Tor</small>${_spSt(d)}</span>${kurve(SL, false)}${paar(d.L, false)}</div>`
+    + `<div class="sp-kl">` + (d.pct != null ? zelle('Chance vorher', _spZahl(d.pct) + ' %') : '')
+    + zelle('Elo der Sieger', _spKopfElo(d, d.W)) + (d.nr ? zelle('im Monat', _spZahl(d.nr) + '.') : '') + `</div></div>`
+    + _spNz(d.W, d.L);
+}
+const SP_TREFFER = [[25, 15], [47, 11], [70, 17], [80, 31], [33, 30], [56, 25], [71, 41], [21, 41], [45, 40], [60, 45]];
+function _spZunullBild(d){
+  const id = 'spn' + _spVisualHash(d.W.concat(d.L).join() + ':' + d.hoch);
+  const netz = `<path class="sp-zn-n" d="${Array.from({length:11}, (_, i) => `M${16 + i * 6.8} 2V46`).join('')}`
+    + `${Array.from({length:8}, (_, i) => `M16 ${2 + i * 6.3}H84`).join('')}M6 10L16 2M94 10L84 2M6 54L16 46M94 54L84 46"/>`;
+  const rahmen = `<path class="sp-zn-r" d="M6 55V10H94V55"/><path class="sp-zn-b" d="M2 55H98"/>`;
+  const treffer = SP_TREFFER.slice(0, Math.min(10, d.hoch)).map(([x, y], i) => `<g transform="translate(${x} ${y})"><g class="sp-zn-hit" style="--i:${i}">`
+    + `<circle class="sp-zn-ring" r="7"/><circle class="sp-zn-ball" r="4.3" fill="url(#${id}b)"/><path class="sp-zn-glanz" d="M-2.2 -1.6a2.6 2.6 0 0 1 2.4-1.4"/></g></g>`).join('');
+  const paar = (ids, w) => `<div class="sp-zn-p${w ? '' : ' aus'}">${_spKopfPaar(ids)}<span class="num">${_spKopfElo(d, ids)}</span></div>`;
+  return `<div class="sp-fk sp-zn">${paar(d.W, true)}<span class="sp-zn-z num"><b>${_spZahl(d.hoch)}</b><i>:</i><u>0</u></span>${paar(d.L, false)}`
+    + `<div class="sp-zn-tore"><svg class="sp-zn-t leer" viewBox="0 0 100 58" aria-hidden="true"><defs><radialGradient id="${id}" cx=".5" cy=".55" r=".6">`
+    + `<stop offset="0" stop-color="#f7cf4a" stop-opacity=".32"/><stop offset="1" stop-color="#f7cf4a" stop-opacity="0"/></radialGradient></defs>`
+    + `<rect class="sp-zn-glut" x="6" y="6" width="88" height="50" fill="url(#${id})"/>${netz}${rahmen}</svg>`
+    + `<svg class="sp-zn-t voll" viewBox="0 0 100 58" aria-hidden="true"><defs><radialGradient id="${id}b" cx=".38" cy=".32" r=".75">`
+    + `<stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#ecebe2"/><stop offset="1" stop-color="#a9a89c"/></radialGradient></defs>`
+    + `${netz}${treffer}${rahmen}</svg></div>`
+    + (d.nr ? `<em class="sp-zn-band">${svgI('weisseWeste')}<b>Zu null</b><small class="num">${_spZahl(d.nr)}. im ${esc(d.monat || 'Monat')}</small></em>` : '')
+    + `</div>` + _spNz(d.W, d.L);
+}
+
 const SP_FORM_BILD = {mosaik:_spMosaikBild, tacho:_spTachoBild, streu:_spStreuBild, transfer:_spTransferBild,
   chemie:_spChemieBild, gegner:_spGegnerBild, revanche:_spRevancheBild, gipfel:_spGipfelBild,
   rueckkehr:_spRueckkehrBild, gefaelle:_spGefaelleBild, tagesring:_spTagesringBild, zaehlwerk:_spZaehlwerkBild,
   tauziehen:_spTauziehenBild, muenze:_spMuenzeBild, weste:_spWesteBild,
   uhr:_spUhrBild, ueberholt:_spUeberholtBild, duoserie:_spDuoserieBild, hoch:_spHochBild,
-  feld:_spFeldBild};
+  feld:_spFeldBild, tafel:_spAnzeigeBild, pucks:_spPucksBild, strom:_spStromBild,
+  herz:_spHerzBild, zunull:_spZunullBild};
 
 const _spZeile = a => _spZeileBild(_spZeileDaten(a.m));
 const SP_KOPF = {
@@ -26787,11 +27372,8 @@ const SP_FUSS = {
   premiere:a => _spPremiereBild(a.x), rolle:a => _spRolleBild(a.x)
 };
 
-const SP_SCORE_FORMEN = new Set(['mosaik','tacho','streu','transfer','gefaelle','feld','tauziehen','muenze']);
 const SP_ANLASS_FORMEN = new Set(['chemie','gegner','revanche','gipfel','rueckkehr','tagesring','zaehlwerk',
   'uhr','ueberholt','duoserie']);
-const SP_GRUNDFORMEN = new Set(['tacho','tauziehen','abstand','zeile','feld']);
-const SP_BEFUND_MIN = 12;
 function _spVisualHash(v){
   let h = 2166136261 >>> 0, s = String(v || '');
   for(let i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
@@ -26799,52 +27381,29 @@ function _spVisualHash(v){
 }
 function _spScoreSpezial(m){
   const c = _spChance(m), diff = Math.abs(m.score_a - m.score_b);
-  if(c != null && c < CHANCE_UPSET)
-    return {key:'aussenseiter', x:{c}};
-  if(diff === 1) return {key:'krimi', x:{c}};
-  if(Math.min(m.score_a, m.score_b) === 0) return {key:'weste', x:{}};
+  if(c != null && c < CHANCE_UPSET) return {key:'aussenseiter', x:{c}};
+  if(Math.min(m.score_a, m.score_b) === 0) return {key:'zunull', x:{}};
+  if(diff === 1) return {key:'herz', x:{}};
   if(diff >= 6) return {key:'deutlich', x:{}};
   return null;
 }
+const SP_KOPF_GRUND = ['tafel', 'strom', 'pucks', 'feld', 'tauziehen', 'tacho', 'muenze', 'gefaelle', 'mosaik', 'streu'];
 function _spScoreKandidaten(m){
   const F = _spFakten(m);
-  const k = _spFormKand(m)
-    .filter(x => SP_SCORE_FORMEN.has(x.key) && !['feld','mosaik','transfer'].includes(x.key));
-  const mosaik = _spMosaikBefund(F);
-  if(mosaik) k.push({key:'mosaik', x:mosaik,
-    rang:Math.max(SP_FORM.mosaik.rang, SP_FORM.mosaik.gewicht(mosaik))});
-  const transfer = _spTransferBefund(F);
-  if(transfer) k.push({key:'transfer', x:transfer,
-    rang:SP_FORM.transfer.rang + (transfer.platz === 1 ? 8 : 0)});
-  if(F.c != null && F.c >= .56 && !k.some(x => x.key === 'tacho'))
-    k.push({key:'tacho', x:{leicht:F.c < .62}, rang:14});
-  if(F.diff >= 3 && F.diff < 6) k.push({key:'abstand', x:{}, rang:13});
-  k.push({key:'zeile', x:{}, rang:10});
-  k.push({key:'feld', x:{}, rang:SP_FORM.feld.rang});
-  const jeKey = new Map();
-  k.forEach(x => { const alt = jeKey.get(x.key); if(!alt || x.rang > alt.rang) jeKey.set(x.key, x); });
-  return [...jeKey.values()].sort((a, b) => b.rang - a.rang || a.key.localeCompare(b.key));
+  return SP_KOPF_GRUND.map(key => {
+    let x = null;
+    try { x = key === 'mosaik' ? _spMosaikBefund(F) : SP_FORM[key].wann(F); } catch(e){ x = null; }
+    return x ? {key, x, rang:SP_FORM[key].rang} : null;
+  }).filter(Boolean);
 }
 function _spScoreAuswahl(x, spur, duos, ohne){
-  const zuletzt = spur[spur.length - 1], duo = _spSieger(x).slice().sort().join();
-  const oft = (k, n) => spur.slice(-n).filter(y => y === k).length;
+  const duo = _spSieger(x).slice().sort().join();
   const schonDuo = k => spur.slice(-30).some((y, i, a) => y === k && duos[duos.length - a.length + i] === duo);
-  const kand = _spScoreKandidaten(x).filter(c => c.key !== ohne && !(c.key === 'gefaelle' && schonDuo('gefaelle')));
-  const los = c => _spVisualHash(x.id + '|' + c.key);
-  const befund = kand.filter(c => !SP_GRUNDFORMEN.has(c.key))
-    .map(c => Object.assign({}, c, {eff:c.rang - 10 * oft(c.key, 2) - 4 * oft(c.key, 10)
-      - (c.key === 'transfer' ? 7 * oft(c.key, 12) : 0), los:los(c)}))
-    .sort((p, q) => q.eff - p.eff || q.rang - p.rang || p.los - q.los);
   const seit = k => { const i = spur.lastIndexOf(k); return i < 0 ? Infinity : spur.length - 1 - i; };
-  const grund = kand.filter(c => SP_GRUNDFORMEN.has(c.key))
-    .map(c => Object.assign({}, c, {seit:seit(c.key), los:los(c)}))
-    .sort((p, q) => q.seit - p.seit || q.rang - p.rang || p.los - q.los);
-  let w = befund[0] && befund[0].eff >= SP_BEFUND_MIN ? befund[0] : (grund[0] || befund[0]);
-  if(w && w.key === zuletzt){
-    const anders = (w === befund[0] ? befund.concat(grund) : grund.concat(befund)).find(c => c.key !== zuletzt);
-    if(anders) w = anders;
-  }
-  return w || null;
+  let best = null;
+  _spScoreKandidaten(x).filter(c => c.key !== ohne && !(c.key === 'gefaelle' && schonDuo('gefaelle')))
+    .forEach(c => { const st = seit(c.key); if(!best || st > best.st) best = {c, st}; });
+  return best ? best.c : null;
 }
 const SP_SCORE_VORLAUF = 120;
 function _spScoreAb(B, pub){
@@ -26897,41 +27456,49 @@ function _spScoreSnapshot(m){
   const fest = _spFormBasis().scorePublished.get(m.id);
   if(fest) return fest.score;
   if(w.key === 'aussenseiter') return {key:w.key, data:_spWippeDaten({m, c})};
-  if(w.key === 'krimi') return {key:w.key, data:_spTafelDaten({m, c})};
   if(w.key === 'deutlich') return {key:w.key, data:_spZeileDaten(m)};
-  if(w.key === 'zeile' || w.key === 'abstand') return {key:w.key, data:_spZeileDaten(m)};
 
   const F = _spFakten(m);
   return {key:w.key, data:SP_FORM[w.key].daten(F, w.x)};
 }
+function _spFaktId(r){
+  r = r || {};
+  return [r.type, r.pid || r.playerId || r.newLeader || r.victimPid || '', r.gegen || r.mit || '',
+    r.a || '', r.b || '', r.badgeId || ''].join('|');
+}
+const SP_MARKEN = {milestone_wins:'Sieg', milestone_elo:'Elo', milestone_goals:'Tor', jubilee:'Partie'};
 function _spFussFakten(m, fakten){
   const f = t => fakten.find(x => x.type === t), out = [];
+  const nimm = (key, x, daten, ids) => out.push({w:anlassGewicht(x.type, x), a:{key, m, x:daten || x}, ids:ids || [_spFaktId(x)]});
   let x;
-  if((x = f('lead_change')) && x.newLeader) out.push({w:96, a:{key:'spitze', m, x}});
+  if((x = f('lead_change')) && x.newLeader) nimm('spitze', x);
   if((x = fakten.find(y => y.type === 'badge_unlocked'
       && (y.rarity === 'rare' || y.rarity === 'legendary')
       && (!SP_ERGEBNIS_BADGE.has(y.badgeId) || (y.rang > 1 && _badgeTakt('rare', y.rang))))) && x.badgeId)
-    out.push({w:x.rarity === 'legendary' ? 92 : 66, a:{key:'medaille', m, x:{pid:x.playerId, badgeId:x.badgeId, rang:x.rang}}});
-  if((x = f('streak_killer')) && x.victimPid) out.push({w:80, a:{key:'riss', m, x}});
-  if((x = f('milestone_wins')) && x.pid)
-    out.push({w:62, a:{key:'zaehlwerk', m, x:{wer:x.pid, wert:parseInt(x.milestone, 10), label:'Sieg'}}});
-  if((x = f('milestone_elo')) && x.pid)
-    out.push({w:60, a:{key:'zaehlwerk', m, x:{wer:x.pid, wert:Number(x.mark) || parseInt(x.milestone, 10), label:'Elo'}}});
-  if((x = f('milestone_goals')) && x.pid)
-    out.push({w:58, a:{key:'zaehlwerk', m, x:{wer:x.pid, wert:parseInt(x.milestone, 10), label:'Tor'}}});
-  if((x = f('jubilee')) && x.pid && x.total)
-    out.push({w:56, a:{key:'zaehlwerk', m, x:{wer:x.pid, wert:Number(x.total), label:'Partie'}}});
-  if((x = f('win_streak')) && x.streak) out.push({w:46 + 2 * Math.min(17, x.streak), a:{key:'serie', m, x}});
-  if((x = f('team_streak')) && x.streak && x.a && x.b) out.push({w:46 + 2 * Math.min(17, x.streak), a:{key:'teamserie', m, x}});
-  if((x = f('fluch')) && x.pid && x.gegen) out.push({w:64, a:{key:'gegner', m, x}});
-  if((x = f('elo_hoch')) && x.pid) out.push({w:60, a:{key:'hoch', m, x}});
-  if((x = f('tabellensprung')) && x.pid && x.pre && x.post)
-    out.push({w:59, a:{key:'rang', m, x:[{pid:x.pid, r:{pre:x.pre, post:x.post}}]}});
-  if((x = f('revanche'))) out.push({w:52, a:{key:'revanche', m, x}});
-  if((x = f('duo_jubilaeum')) && x.sieg) out.push({w:50, a:{key:'chemie', m, x}});
-  if((x = f('tagesmarathon')) && x.pid) out.push({w:40, a:{key:'tagesring', m, x}});
-  if((x = f('rivalry_milestone')) && x.a && x.b) out.push({w:54, a:{key:'duell', m, x}});
-  else if((x = f('rivalry')) && x.a && x.b) out.push({w:34, a:{key:'duell', m, x}});
+    nimm('medaille', x, {pid:x.playerId, badgeId:x.badgeId, rang:x.rang},
+      fakten.filter(y => y.type === 'badge_unlocked' && y.badgeId === x.badgeId).map(_spFaktId));
+  if((x = f('streak_killer')) && x.victimPid) nimm('riss', x);
+  const marken = [], markenIds = [];
+  fakten.forEach(y => { const label = SP_MARKEN[y.type];
+    if(!label || !y.pid) return;
+    const wert = y.type === 'milestone_elo' ? (Number(y.mark) || parseInt(y.milestone, 10))
+      : y.type === 'jubilee' ? Number(y.total) : parseInt(y.milestone, 10);
+    if(!(wert > 0)) return;
+    markenIds.push(_spFaktId(y));
+    if(!marken.some(z => z.pid === y.pid && z.label === label)) marken.push({pid:y.pid, wert, label, w:anlassGewicht(y.type, y)}); });
+  if(marken.length) out.push({w:Math.max(...marken.map(z => z.w)), ids:markenIds, a:{key:'marken', m,
+    x:marken.sort((p, q) => q.w - p.w).map(z => ({pid:z.pid, wert:z.wert, label:z.label}))}});
+  if((x = f('win_streak')) && x.streak) nimm('serie', x);
+  if((x = f('team_streak')) && x.streak && x.a && x.b) nimm('teamserie', x);
+  if((x = f('fluch')) && x.pid && x.gegen) nimm('gegner', x);
+  if((x = f('elo_hoch')) && x.pid) nimm('hoch', x);
+  if((x = f('tabellensprung')) && x.pid && x.pre && x.post) nimm('rang', x, [{pid:x.pid, r:{pre:x.pre, post:x.post}}]);
+  if((x = f('revanche'))) nimm('revanche', x);
+  if((x = f('duo_jubilaeum')) && x.sieg) nimm('chemie', x);
+  if((x = f('tagesmarathon')) && x.pid) nimm('tagesring', x);
+  Object.keys(SP_FAKT_FUSS).forEach(t => { if((x = f(t)) && x.pid) nimm(SP_FAKT_FUSS[t], x); });
+  if((x = f('rivalry_milestone')) && x.a && x.b) nimm('duell', x);
+  else if((x = f('rivalry')) && x.a && x.b) nimm('duell', x);
   return out.sort((p, q) => q.w - p.w);
 }
 const SP_FUSS_ZUSTAND = new Set(['serie', 'teamserie', 'duell']);
@@ -26952,9 +27519,9 @@ function _spAnlassSnapshot(m, fakten, scoreKey){
   if(!FB.fussWahl) FB.fussWahl = new Map();
   const merke = v => { if(v && v.key) FB.fussWahl.set(m.id, v.key); return v; };
   const F = _spFakten(m), kand = [];
-  _spFussFakten(m, fakten).forEach(({w, a}) => {
-    const daten = {
-      zaehlwerk:() => ({wer:a.x.wer, wert:a.x.wert, label:a.x.label, W:F.W, L:F.L, hoch:F.hoch, tief:F.tief}),
+  _spFussFakten(m, fakten).forEach(({w, a, ids}) => {
+    const daten = SP_FAKT_DATEN[a.key] ? () => SP_FAKT_DATEN[a.key](a) : {
+      marken:() => ({liste:a.x}),
       spitze:() => _spTabelleDaten(a, true), serie:() => _spSerieDaten(a),
       duell:() => _spDuellDaten(a), riss:() => _spRissDaten(a),
       teamserie:() => _spDuoDaten(a), medaille:() => _spMedailleDaten(a),
@@ -26967,7 +27534,7 @@ function _spAnlassSnapshot(m, fakten, scoreKey){
       tagesring:() => SP_FORM.tagesring.daten(F, {id:a.x.pid,
         ms:F.tag.filter(y => [y.a1, y.a2, y.b1, y.b2].includes(a.x.pid))})
     }[a.key];
-    if(daten) kand.push({key:a.key, rang:w, data:daten, fakt:true, zustand:SP_FUSS_ZUSTAND.has(a.key)});
+    if(daten) kand.push({key:a.key, rang:w, data:daten, fakt:true, zustand:SP_FUSS_ZUSTAND.has(a.key), zeigt:ids});
   });
 
   const diff = Math.abs(m.score_a - m.score_b);
@@ -26985,9 +27552,10 @@ function _spAnlassSnapshot(m, fakten, scoreKey){
   const rolle = _spRolleDaten(m);
   if(rolle) plus('rolle', 30, () => rolle);
   if(c != null && c < CHANCE_UPSET && scoreKey !== 'aussenseiter') plus('aussenseiter', 40, () => _spWippeDaten({m, c}));
-  if(diff === 1) plus('nerven', scoreKey === 'krimi' ? 14 : 24, () => _spNervenDaten({m, c}));
-  if(diff >= 6) plus('verteilung', scoreKey === 'deutlich' ? 14 : 24, () => _spVerteilungDaten({m}));
-  _spFormKand(m).filter(k => SP_ANLASS_FORMEN.has(k.key))
+  if(diff === 1) plus('nerven', scoreKey === 'krimi' || scoreKey === 'herz' ? 14 : 24, () => _spNervenDaten({m, c}));
+  if(diff >= 6) plus('verteilung', scoreKey === 'deutlich' || scoreKey === 'zunull' ? 14 : 24, () => _spVerteilungDaten({m}));
+  const mitMarken = kand.some(k => k.key === 'marken');
+  _spFormKand(m).filter(k => SP_ANLASS_FORMEN.has(k.key) && !(mitMarken && k.key === 'zaehlwerk'))
     .forEach(k => plus(k.key, k.rang, () => SP_FORM[k.key].daten(F, k.x)));
   if(!kand.length) return null;
   const spur = _spFussSpur(m, 8), zuletzt = spur[spur.length - 1];
@@ -27000,8 +27568,51 @@ function _spAnlassSnapshot(m, fakten, scoreKey){
     const i = gewertet.findIndex(k => k.key !== zuletzt);
     if(i > 0) gewertet.unshift(gewertet.splice(i, 1)[0]);
   }
-  for(const k of gewertet){ const dd = k.data(); if(dd) return merke({key:k.key, data:dd}); }
+  for(const k of gewertet){ const dd = k.data(); if(dd) return merke(k.zeigt ? {key:k.key, data:dd, zeigt:k.zeigt} : {key:k.key, data:dd}); }
   return null;
+}
+const SP_THEMA = {lead_change:'tabelle', tabellensprung:'tabelle', top_clash:'tabelle',
+  badge_unlocked:'auszeichnung', badge_marken:'auszeichnung',
+  streak_record:'serie', streak_killer:'serie', win_streak:'serie', top_form:'serie', loss_streak:'serie',
+  fluch:'duell', rivalry_milestone:'duell', rivalry:'duell', revanche:'duell', giant_slayer:'duell',
+  milestone_wins:'zahl', milestone_elo:'zahl', milestone_goals:'zahl', jubilee:'zahl', elo_hoch:'zahl',
+  duo_jubilaeum:'duo', team_streak:'duo', team_loss_streak:'duo', tagesmarathon:'tag',
+  duell_kippt:'duell', woche_spitze:'tabelle', tag_plus:'tag', tag_hoehe:'tag',
+  monat_gewinn:'monat', monat_halb:'monat', partner_best:'duo'};
+const SP_FUSS_TYP = {spitze:['lead_change'], riss:['streak_killer'], marken:Object.keys(SP_MARKEN),
+  serie:['win_streak'], teamserie:['team_streak'], duell:['rivalry_milestone', 'rivalry'], gegner:['fluch'],
+  hoch:['elo_hoch'], rang:['tabellensprung'], revanche:['revanche'], chemie:['duo_jubilaeum'],
+  tagesring:['tagesmarathon'], medaille:['badge_unlocked']};
+function _spZeilen(teile, titel, occ){
+  const kt = String(titel || '').trim();
+  const ty = t => String((t && (t.typ || t.type)) || '');
+  const ref = t => (t && (t.ref || t.dataRef)) || {};
+  const thema = t => SP_THEMA[ty(t) === 'group' ? ref(t).sub : ty(t)] || '';
+  const d = (occ && occ.data) || {}, l = occ && SP_FUSS_TYP[occ.key];
+  const gezeichnet = t => {
+    if(Array.isArray(occ && occ.zeigt)) return occ.zeigt.indexOf(_spFaktId(ref(t))) >= 0;
+    const r = ref(t), pid = r.pid || r.playerId;
+    if(!l || l.indexOf(ty(t)) < 0) return false;
+    if(occ.key === 'medaille') return (r.rarity === 'rare' || r.rarity === 'legendary')
+      && (r.badgeName || ((typeof BADGES !== 'undefined' && BADGES.find(b => b.id === r.badgeId)) || {}).name) === d.name;
+    if(occ.key === 'marken') return (d.liste || []).some(x => x.pid === pid);
+    return !(d.pid && pid && d.pid !== pid);
+  };
+  const neben = t => ty(t) === 'team_loss_streak' || (ty(t) === 'badge_unlocked' && ref(t).rarity === 'negative');
+  const alle = (teile || []).filter(t => ty(t) !== 'spiel');
+  const haupt = alle.find(t => String(t.titel || '').trim() === kt) || null;
+  const rest = alle.filter(t => t !== haupt);
+  const fuss = rest.filter(gezeichnet).concat(haupt && gezeichnet(haupt) ? [haupt] : []);
+  const frei = rest.filter(t => fuss.indexOf(t) < 0);
+  const themen = new Set([haupt, fuss[0]].filter(Boolean).map(thema).filter(Boolean));
+  const neu = [], wieder = [];
+  frei.filter(t => !neben(t) && !t.neg).forEach(t => {
+    const th = thema(t);
+    if(!th || !themen.has(th)){ neu.push(t); if(th) themen.add(th); } else wieder.push(t);
+  });
+  const zeilen = neu.concat(wieder, frei.filter(t => !neben(t) && t.neg));
+  return {zeilen:zeilen.filter(t => t.brk).concat(zeilen.filter(t => !t.brk)),
+    unter:fuss.length && fuss.indexOf(haupt) < 0 ? fuss[0] : null};
 }
 function _spVisualSnapshot(m, fakten){
   const score = _spScoreSnapshot(m);
@@ -27009,8 +27620,17 @@ function _spVisualSnapshot(m, fakten){
   if(fest) return fest;
   return {version:2, score, occasion:_spAnlassSnapshot(m, fakten || [], score.key)};
 }
+function _spLinks(d){
+  if(!d || typeof d !== 'object' || d.aw !== false) return d;
+  const o = Object.assign({}, d, {aw:true});
+  if(Array.isArray(d.A) && Array.isArray(d.B)){ o.A = d.B; o.B = d.A; }
+  if(d.sa != null && d.sb != null){ o.sa = d.sb; o.sb = d.sa; }
+  if(Array.isArray(d.slots) && d.slots.length === 4) o.slots = d.slots.slice().reverse();
+  return o;
+}
 function _spScoreBild(v){
   if(!v || !v.key) return '';
+  v = Object.assign({}, v, {data:_spLinks(v.data)});
   const spezial = {krimi:_spTafelBild, aussenseiter:_spWippeBild, deutlich:_spBandBild,
     zeile:_spZeileBild, abstand:_spBandBild};
   if(spezial[v.key]) return spezial[v.key](v.data);
@@ -27019,11 +27639,13 @@ function _spScoreBild(v){
 function _spOccasionBild(v){
   if(!v || !v.key) return '';
   const data = v.data && typeof v.data === 'object'
-    ? Object.assign({}, v.data, {nurAnlass:true}) : v.data;
+    ? Object.assign({}, _spLinks(v.data), {nurAnlass:true}) : v.data;
   const bild = {
     spitze:_spTabelleBild, rang:_spTabelleBild, serie:_spSerieBild,
     wende:_spKurveBild, duell:_spDuellBild, riss:_spRissBild,
-    teamserie:_spDuoBild, medaille:_spMedailleBild,
+    teamserie:_spDuoBild, medaille:_spMedailleBild, marken:_spMarkenBild,
+    kippt:_spKipptBild, woche:_spWocheBild, plus:_spTagEloBild, hoehe:_spTagEloBild,
+    monatsbest:_spMonatEloBild, halb:_spMonatQuoteBild, partner:_spPartnerBild,
     premiere:_spPremiereBild, rolle:_spRolleBild,
     nerven:_spNervenBild, verteilung:_spVerteilungBild,
     aussenseiter:_spWippeBild
@@ -27044,8 +27666,8 @@ function _spBild(s){
     const v = basis.visual;
     if(v && v.version === 2 && v.score){
       const ok = v.occasion && v.occasion.key;
-      r = {key:ok || v.score.key, form:v.score.key,
-        glanz:['zaehlwerk','rueckkehr','transfer'].includes(ok || v.score.key),
+      r = {key:ok || v.score.key, form:v.score.key, occ:v.occasion || null,
+        glanz:['zaehlwerk','marken','rueckkehr','transfer'].includes(ok || v.score.key),
         kopf:_spScoreBild(v.score), fuss:_spOccasionBild(v.occasion),
         zeigt:SP_ZEIGT_ALLES, pl:players};
       proStand.set(s, r);
@@ -29515,17 +30137,19 @@ function _ndMitteRoh(s){
                 <small>${esc([bild.verb, zeit].filter(Boolean).join(' · '))}</small></span>
               <span class="nw-tz-r">${bild.rechts}${kurz ? `<b class="nd-tz-v num">${bild.wert}</b>` : ''}</span>${
               bild.wert && !kurz ? `<b class="nw-tz-lang">${bild.wert}</b>` : ''}</div>`;
+          const titel = _ndNeu(t.titel) ? t.titel : (_ndNeu(t.text) || t.titel);
+          const text = titel === t.text ? '' : t.text;
           return `<div class="nw-zeile${t.neg ? ' neg' : ''}"${ziel ? ziel + ' style="cursor:pointer"'
               : (t.pids && t.pids[0]) ? ` data-pid="${esc(t.pids[0])}" style="cursor:pointer"` : ''}>
               <div class="nw-zeile-kopf">${t.ic
                 ? `<i class="nw-ic">${svgI(t.ic)}</i>` : ''}<span class="nw-label">${
-                esc(t.titel || '')}</span>${
+                esc(titel || '')}</span>${
                 t.klasse ? `<b class="nw-kl">${esc(t.klasse)}</b>` : ''}${
                 t.marke ? `<b class="nw-mk">${esc(t.marke)}</b>` : ''}${
                 t.wert ? `<span class="nw-wert">${esc(t.wert)}</span>` : ''}</div>
               ${zeit ? `<div class="nw-satz num">${esc(zeit)}</div>` : ''}
               ${jeZeileBand && t.matchId ? _newsMatchVsBlock(t.matchId) : ''}
-              ${_ndNeu(t.text) ? `<div class="nw-satz">${esc(t.text)}</div>` : ''}
+              ${_ndNeu(text) ? `<div class="nw-satz">${esc(text)}</div>` : ''}
             </div>`;
         };
         const prestigeSumme = (function(){
@@ -29946,6 +30570,9 @@ function _ndMitteRoh(s){
           <div class="nd-stat-row"><div class="nd-stat-label">Partien dazwischen</div>
             <div class="nd-stat-val">${esc(String(d.seit))}</div></div>`;
       }
+      case 'duell_kippt': case 'woche_spitze': case 'tag_plus': case 'tag_hoehe':
+      case 'monat_gewinn': case 'monat_halb': case 'partner_best':
+        return _spFaktBild(d);
       case 'tabellensprung': {
         return `<div class="nd-gwert"><b>${esc(String(d.pre))} → ${esc(String(d.post))}</b><span>Platz in der Tabelle</span></div>
           <div class="nd-stat-row"><div class="nd-stat-label">Gewonnene Plätze</div>

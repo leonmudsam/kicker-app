@@ -735,7 +735,8 @@ function _consolidateStoriesLegacy(list){
     'lead_change','streak_record',
     // Was in einer einzelnen Partie passiert, gehört an ihre Karte und
     // nirgends sonst hin.
-    'fluch','duo_jubilaeum','revanche','tagesmarathon','elo_hoch','tabellensprung']);
+    'fluch','duo_jubilaeum','revanche','tagesmarathon','elo_hoch','tabellensprung',
+    'duell_kippt','woche_spitze','tag_plus','tag_hoehe','monat_gewinn','monat_halb','partner_best']);
   const SAMMEL_TAFEL = new Set(['rekord_erstmals','rekord_geholt','rekord_gesteigert',
     'chronik_geholt']);
   const _minKey = w => { const d = new Date(w); return tagKey(w)+'-'+d.getHours()+'-'+d.getMinutes(); };
@@ -1260,9 +1261,12 @@ function _consolidateStoriesLegacy(list){
         return `${nm(dt.pid)} stellt ${dt.streak ? 'mit ' + dt.streak + ' Siegen ' : ''}den Serien-Rekord der Liga auf`;
       if(dt.type === 'group' && ids.length > 1){
         const verb = {loss_streak:'stecken beide in einer Durststrecke', top_form:'spielen über dem eigenen Schnitt',
-          win_streak:'ziehen ihre Serien gemeinsam weiter', jubilee:'feiern ein Jubiläum',
+          win_streak:'setzen beide eine Siegesserie fort', jubilee:'feiern ein Jubiläum',
           milestone_wins:'erreichen eine Siegmarke', milestone_goals:'erreichen eine Tormarke',
           milestone_elo:'knacken eine Elo-Marke'}[dt.sub];
+        // Ohne „ihre": seit die Gruppe auch Schlagzeile ist, stand „ziehen
+        // ihre Serien gemeinsam weiter" groß über der Karte, und über einen
+        // Spieler steht kein Possessivpronomen.
         if(verb) return `${und(ids)} ${ids.length > 2 ? verb.replace('beide ', 'alle ') : verb}`;
       }
       return ti;
@@ -1388,12 +1392,7 @@ function _consolidateStoriesLegacy(list){
         let neg = false;
         try { neg = _newsIstNegativ(t); } catch(e){}
         if(neg) return -100 + (t.prio || 0) / 100;
-        let w = {lead_change:96, streak_record:95, top_clash:86, giant_slayer:84, streak_killer:80,
-                 milestone_wins:62, milestone_elo:60, milestone_goals:58, jubilee:56,
-                 rivalry_milestone:54, top_form:44, rivalry:34, badge_marken:24,
-                 fluch:64, elo_hoch:60, tabellensprung:59, revanche:52, duo_jubilaeum:50, tagesmarathon:40}[typ];
-        if(typ === 'win_streak' || typ === 'team_streak') w = 46 + 2 * Math.min(17, Number(dt.streak) || 0);
-        if(typ === 'badge_unlocked') w = dt.rarity === 'legendary' ? 92 : dt.rarity === 'rare' ? 66 : 50;
+        let w = anlassGewicht(typ, dt);
         // Was eine Auszeichnung derselben Partie schon erzählt, führt nicht:
         // „Absoluter Sieger" IST das 10:0, und die Schlagzeile nennt es einmal.
         if(typ === 'spiel' || typ === 'match_result')
@@ -1454,8 +1453,12 @@ function _consolidateStoriesLegacy(list){
         if(dt.pid) return {wort:'für', pids:[dt.pid]};
         return {wort:'für', pids:(dt.playerIds || t.playerIds || []).filter(Boolean)};
       };
+      // Nur die Karte EINER Partie hat einen Hauptanlass; ein Bündel über eine
+      // Minute ohne gemeinsame Partie fasst seine Anlässe als Reihe zusammen,
+      // und nur dafür wird sie gebaut.
+      const einePartie = g.key.indexOf('spiel|match|') === 0;
       const phrasen = [];
-      teile.slice().sort((a, b) => _leitWert(b) - _leitWert(a)).forEach(t => {
+      if(!einePartie) teile.slice().sort((a, b) => _leitWert(b) - _leitWert(a)).forEach(t => {
         const dt = t.dataRef || {};
         if(dt.type === 'spiel' || dt.type === 'match_result') return;
         const et = _etikett(t);
@@ -1495,7 +1498,22 @@ function _consolidateStoriesLegacy(list){
       const spT = teile.find(t => ((t.dataRef || {}).type === 'spiel' || (t.dataRef || {}).type === 'match_result'));
       const spD = (spT && spT.dataRef) || {};
       const ort = spT && !_ergebnisGedeckt(spD) ? (ERGEBNIS_ORT[spD.resultKind] || '') : '';
-      if(phrasen.length){
+      // ── Auf der Achse der Partie ist die Schlagzeile ihr Hauptanlass ──
+      // Die Reihe stand über denselben Anlässen als Zeilen: „Teamserie für
+      // Leon und Maxi und Durststrecke für Leo" über „Leon und Maxi gewinnen
+      // zusammen zum 5. Mal in Folge" und „Leo verliert zum 5. Mal in Folge"
+      // — jeder Anlass zweimal auf derselben Karte. Jetzt ist der schwerste,
+      // der keine Pleite ist, die Schlagzeile, in seinem eigenen Satz
+      // (`_achseZeile`), und jeder andere steht einmal darunter [§C33]. Gibt
+      // es nur Pleiten, erzählt das Ergebnis: über einem Sieg stand sonst
+      // „Jane bekommt ‚Absoluter Verlierer‘".
+      const haupt = einePartie ? teile
+        .filter(t => { const ty = (t.dataRef || {}).type; return ty !== 'spiel' && ty !== 'match_result'; })
+        .map(t => ({t, w:_leitWert(t)})).filter(x => x.w >= 0)
+        .sort((a, b) => b.w - a.w)[0] : null;
+      if(einePartie){
+        neuTitel = haupt ? _achseZeile(haupt.t) : String((spT && spT.title) || '').trim();
+      } else if(phrasen.length){
         // Ein Anlass wiegt mehr als der Ort: zu lang, fällt zuerst der Ort.
         let bild = '';
         for(let zahl = Math.min(3, phrasen.length); zahl >= 1 && !bild; zahl--){

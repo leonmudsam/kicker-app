@@ -989,6 +989,15 @@ function _buildStories(){
     const verlierer = m => m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2];
     const duo = ids => ids.slice().sort().join('|');
     const gegen = {}, zusammen = {}, tagN = {}, duelle = {}, hoch = {};
+    // Für die sieben Fakten des Katalogs [§C33]: die Bilanz je Paar von
+    // Gegnern, die Woche, die Elo des Tages, der Monat und die Partner.
+    const bilanz = {}, woche = {}, tagElo = {}, monat = {}, partner = {}, gesamt = {};
+    const vz = v => (v > 0 ? '+' : v < 0 ? '−' : '±') + Math.abs(Math.round(v));
+    const quote = (s, n) => Math.round(100 * s / Math.max(1, n));
+    // Die beste Siegquote der Woche ab fünf Siegen, bei Gleichstand mehr Siege.
+    const wochenErster = o => Object.keys(o).filter(id => o[id].s >= 5 && zeig(id))
+      .map(id => ({id, s:o[id].s, n:o[id].n, q:o[id].s / o[id].n}))
+      .sort((a, b) => b.q - a.q || b.s - a.s)[0] || null;
     const freiMemo = new Map();
     const frei = m => {
       const k = tagKey(m.created_at);
@@ -1098,6 +1107,121 @@ function _buildStories(){
             when:zeit, prio:STORY_PRIO.tabellensprung,
             dataRef:{type:'tabellensprung', pid:id, pre:r.pre, post:r.post, matchId:m.id, playerIds:[id]}});
       });
+      // ── Die sieben Fakten des Katalogs [§C33] ──────────────────────
+      // Jeder sagt etwas, das weder eine Meldung noch eine Zeichnung der
+      // Partie schon sagt, und hat seine Schwelle, damit er nicht an jeder
+      // Partie hängt: gemessen am Entwurf stand jeder höchstens an jeder
+      // zehnten Karte. Alles zählt bis zu dieser Partie.
+      const delta = id => Number((h.deltas || {})[id]) || 0;
+      // (7) Die Bilanz kippt: ab sechzehn Duellen zweier Gegner liegt der
+      // Sieger vorn, und davor lag er zehn Duelle nicht vorn oder nie.
+      let kippt = null;
+      W.forEach(w => L.forEach(l => {
+        const k = paarKey(w, l), b = bilanz[k] || (bilanz[k] = {n:0, s:{}, vorn:{}});
+        const s = (b.s[w] || 0) + 1, n = b.n + 1, zuletzt = b.vorn[w];
+        if(neu && !kippt && zeig(w) && zeig(l) && n >= 16 && (s - 1) * 2 <= b.n && s * 2 > n
+           && (zuletzt == null || n - zuletzt >= 10)) kippt = {w, l, s, n, zuletzt};
+        b.s[w] = s; b.n = n;
+        [w, l].forEach(x => { if((b.s[x] || 0) * 2 > n) b.vorn[x] = n; });
+      }));
+      if(kippt) neuSt.push({id:'kippt_' + kippt.w + '_' + kippt.l + '_' + m.id, cat:'rivalry', ic:'crossedSwords',
+        title:`${nameOf(kippt.w)} geht im Duell gegen ${nameOf(kippt.l)} in Führung, ${kippt.s}:${kippt.n - kippt.s}`,
+        desc:kippt.zuletzt == null ? `Zum ersten Mal in ${kippt.n} Duellen liegt ${nameOf(kippt.w)} vorn.`
+          : `Zuletzt lag ${nameOf(kippt.w)} vor ${kippt.n - kippt.zuletzt} Duellen vorn.`,
+        when:zeit, prio:STORY_PRIO.duell_kippt,
+        dataRef:{type:'duell_kippt', pid:kippt.w, gegen:kippt.l, s:kippt.s, n:kippt.n, matchId:m.id, playerIds:[kippt.w, kippt.l]}});
+      // (8) Die Woche: ein Sieger übernimmt die beste Siegquote der Woche.
+      const wk = _wochenKey(m.created_at), wo = woche[wk] || (woche[wk] = {});
+      const wVor = wochenErster(wo);
+      W.concat(L).forEach(id => { const z = wo[id] || (wo[id] = {s:0, n:0}); z.n++; if(W.includes(id)) z.s++; });
+      const wNach = wochenErster(wo);
+      if(neu && wNach && W.includes(wNach.id) && (!wVor || wVor.id !== wNach.id))
+        neuSt.push({id:'wochenspitze_' + wNach.id + '_' + m.id, cat:'personal', ic:'calendar',
+          title:`${nameOf(wNach.id)} übernimmt die Woche, ${wNach.s} von ${wNach.n} gewonnen`,
+          desc:wVor ? `Vorher lag ${nameOf(wVor.id)} mit ${quote(wVor.s, wVor.n)} % vorn.`
+            : `${quote(wNach.s, wNach.n)} % der Partien dieser Woche gewonnen.`,
+          when:zeit, prio:STORY_PRIO.woche_spitze,
+          dataRef:{type:'woche_spitze', pid:wNach.id, s:wNach.s, n:wNach.n, vorher:wVor ? wVor.id : null,
+            matchId:m.id, playerIds:[wNach.id]}});
+      // (9) Der Tag: die Elo eines Siegers dreht ab der vierten Partie nach
+      // einem Tief von −25 ins Plus, oder kommt zum ersten Mal über +75.
+      const tg = tagKey(m.created_at);
+      let tagFakt = null;
+      W.concat(L).forEach(id => {
+        const k = id + '|' + tg, l = tagElo[k] || (tagElo[k] = []);
+        const nach = (l.length ? l[l.length - 1] : 0) + delta(id);
+        if(neu && !tagFakt && W.includes(id) && zeig(id)){
+          if(l.length >= 3 && Math.min(...l) <= -25 && l[l.length - 1] < 0 && nach > 0)
+            tagFakt = {art:'plus', id, tief:Math.min(...l), elo:nach, n:l.length + 1};
+          else if(nach >= 75 && Math.max(0, ...l) < 75) tagFakt = {art:'hoehe', id, elo:nach, n:l.length + 1};
+        }
+        l.push(nach);
+      });
+      if(tagFakt && tagFakt.art === 'plus') neuSt.push({id:'tagplus_' + tagFakt.id + '_' + m.id, cat:'personal', ic:'comeback',
+        title:`${nameOf(tagFakt.id)} dreht den Tag ins Plus, nach ${vz(tagFakt.tief)} Elo`,
+        desc:`Nach ${tagFakt.n} Partien des Tages stehen ${vz(tagFakt.elo)} Elo zu Buche.`,
+        when:zeit, prio:STORY_PRIO.tag_plus,
+        dataRef:{type:'tag_plus', pid:tagFakt.id, tief:Math.round(tagFakt.tief), elo:Math.round(tagFakt.elo), n:tagFakt.n,
+          matchId:m.id, playerIds:[tagFakt.id]}});
+      if(tagFakt && tagFakt.art === 'hoehe') neuSt.push({id:'taghoehe_' + tagFakt.id + '_' + m.id, cat:'personal', ic:'trendUp',
+        title:`${nameOf(tagFakt.id)} kommt an diesem Tag auf ${vz(tagFakt.elo)} Elo`,
+        desc:`Zum ersten Mal an diesem Tag über +75, nach ${tagFakt.n} Partien.`,
+        when:zeit, prio:STORY_PRIO.tag_hoehe,
+        dataRef:{type:'tag_hoehe', pid:tagFakt.id, elo:Math.round(tagFakt.elo), n:tagFakt.n, matchId:m.id, playerIds:[tagFakt.id]}});
+      // (10) Der Monat: der größte Gewinn eines Siegers ab der achten Partie
+      // und mindestens 22 Elo, oder die Siegquote erreicht ab der fünfzehnten
+      // Partie 50 % von unten. Der Monat ist die Saison der Partie.
+      const sid = seasonOf(m.created_at).id;
+      let monatFakt = null;
+      W.concat(L).forEach(id => {
+        const k = id + '|' + sid, z = monat[k] || (monat[k] = {s:0, n:0, best:0});
+        const sieg = W.includes(id), d = delta(id), vor = {s:z.s, n:z.n, best:z.best};
+        z.n++; if(sieg){ z.s++; z.best = Math.max(z.best, d); }
+        // Einmal je Monat: wer um die Hälfte pendelt, kam sonst an jeder
+        // zweiten Partie wieder darüber, gemessen Julian zweimal im August.
+        // Gemerkt auch vor dem Fenster, sonst meldete sich ein zweites Mal,
+        // sobald das erste aus dem Fenster fiel.
+        const halb = !z.halb && vor.n >= 14 && vor.s * 2 < vor.n && z.s * 2 >= z.n;
+        if(halb) z.halb = true;
+        if(!neu || monatFakt || !sieg || !zeig(id)) return;
+        if(z.n >= 8 && d >= 22 && d > vor.best)
+          monatFakt = {art:'gewinn', id, elo:Math.round(d), vorher:Math.round(vor.best), n:z.n};
+        else if(halb) monatFakt = {art:'halb', id, s:z.s, n:z.n};
+      });
+      const monatName = seasonLabel(sid).split(' ')[0];
+      if(monatFakt && monatFakt.art === 'gewinn') neuSt.push({id:'monatsbest_' + monatFakt.id + '_' + m.id, cat:'personal', ic:'bolt',
+        title:`${nameOf(monatFakt.id)} holt ${vz(monatFakt.elo)} Elo, mehr als mit jedem Sieg davor im ${monatName}`,
+        desc:monatFakt.vorher > 0 ? `Der größte Gewinn davor im ${monatName}: ${vz(monatFakt.vorher)} Elo.`
+          : `Der erste Sieg im ${monatName} mit so viel Elo.`,
+        when:zeit, prio:STORY_PRIO.monat_gewinn,
+        dataRef:{type:'monat_gewinn', pid:monatFakt.id, elo:monatFakt.elo, vorher:monatFakt.vorher, n:monatFakt.n,
+          matchId:m.id, playerIds:[monatFakt.id]}});
+      if(monatFakt && monatFakt.art === 'halb') neuSt.push({id:'monathalb_' + monatFakt.id + '_' + m.id, cat:'personal', ic:'scaleBalance',
+        title:`${nameOf(monatFakt.id)} gewinnt im ${monatName} jetzt jede zweite Partie`,
+        desc:`${monatFakt.s} von ${monatFakt.n} Partien gewonnen, vor dieser waren es ${monatFakt.s - 1} von ${monatFakt.n - 1}.`,
+        when:zeit, prio:STORY_PRIO.monat_halb,
+        dataRef:{type:'monat_halb', pid:monatFakt.id, s:monatFakt.s, n:monatFakt.n, matchId:m.id, playerIds:[monatFakt.id]}});
+      // (11) Der beste Partner: mit diesem Partner die beste Quote unter
+      // allen ab sechs gemeinsamen Partien, gemeldet jede achte davon.
+      [[W, true], [L, false]].forEach(([ids, sieg]) => ids.forEach((id, i) => {
+        const mit = ids[1 - i], p = partner[id] || (partner[id] = {}), z = p[mit] || (p[mit] = {s:0, n:0});
+        const g = gesamt[id] || (gesamt[id] = {s:0, n:0});
+        z.n++; g.n++; if(sieg){ z.s++; g.s++; }
+      }));
+      if(neu) for(const id of W){
+        const mit = W.find(x => x !== id), z = partner[id][mit];
+        if(!zeig(id) || !zeig(mit) || z.n < 8 || z.n % 8) continue;
+        const liste = Object.keys(partner[id]).filter(x => partner[id][x].n >= 6 && zeig(x))
+          .sort((a, b) => partner[id][b].s / partner[id][b].n - partner[id][a].s / partner[id][a].n || partner[id][b].n - partner[id][a].n);
+        if(liste[0] !== mit) continue;
+        const g = gesamt[id];
+        neuSt.push({id:'partner_' + id + '_' + mit + '_' + m.id, cat:'team', ic:'handshake',
+          title:`${nameOf(id)} gewinnt mit ${nameOf(mit)} ${quote(z.s, z.n)} % der Partien, mit allen ${quote(g.s, g.n)} %`,
+          desc:`${z.s} von ${z.n} gemeinsamen Partien gewonnen.`,
+          when:zeit, prio:STORY_PRIO.partner_best,
+          dataRef:{type:'partner_best', pid:id, mit, s:z.s, n:z.n, allg:quote(g.s, g.n), matchId:m.id, playerIds:[id, mit]}});
+        break;
+      }
     });
     neuSt.forEach(x => stories.push(x));
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] partie', e); }

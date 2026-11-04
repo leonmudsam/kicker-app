@@ -5,9 +5,9 @@
 - **Snapshot-Vertrag, er geht allem anderen vor:** eine veröffentlichte Zeile in `stories` bleibt in ID, Text, Zeitpunkt, Priorität, Beteiligten und Bild unverändert; weder gleicher Wortlaut noch spätere Stände noch ein Kontingent entfernen sie. Wo die Herleitung von Deckeln, Auffrischen oder Wegfallen erzählt, beschreibt sie, was der Generator VOR dem Veröffentlichen tut, oder einen früheren Stand. `_newsTexteAuffrischen` ist nur noch ein Identitätsweg; `_consolidateStories` verdichtet verlustfrei (`memberIds`, `sourceIds`). Der Feed reicht bis zum selben Tag des Vormonats (`newsAnzeigeAb`), und dieses Fenster wird vollständig geladen; eine Zeile hält vierzig Tage ab ihrem Ereignis (`NEWS_HALTEN_TAGE`), und was davor liegt, fällt auch aus dem Stand des Geräts (`_mergeStorySnapshots`). Der Generator bildet nur die letzten vierzehn Tage (`NEWS_FENSTER_TAGE`); was älter ist, kommt so aus der Datenbank, wie es veröffentlicht wurde.
 - Zwei Karten wachsen mit dem Spieltag: die Ewige Tafel (`tafel:<Datum>`) und die Insignium-Karte (`instag_<Datum>`). Sie wachsen in Fassungen, nie durch Ändern einer Zeile: jede Fassung ist der ganze Stand des Tages, eingefügt unter `<ID>~<Fassung>` (`_tafelFassung`: die letzte Partie des Tages, dahinter `z`, wenn der Tag zu ist), und gezeigt wird je Tag nur eine (`_tafelFassungen`): die zu den vorhandenen Partien passende, sonst die jüngste. Hochgeladen wird nur eingefügt; die Datenbank erlaubt kein Ändern.
 - Jede Story, die einen Spieler nennt, zeigt ihn (`_newsPids`, `_newsGesichtHtml`): bis drei Beteiligte alle Gesichter, ab vier zwei und die Zahl der übrigen („+2“), nie „+1“. Die Farbfamilie folgt der Kartenform, nicht der Datenkategorie [§C25].
-- Eine Partie, eine Karte: jede Partie bekommt ihre Karte (`spiel_<Partie>`), und alles mit derselben `matchId` bündelt sich daran, auch Breaking, seltene Auszeichnungen und negative Zeilen (`neg`). Verschiedene Match-IDs werden nie über eine Minute zusammengelegt. Das Ergebnisband steht einmal (`bandFremd`). Keine Meldung einer Partie entsteht ohne die Karte ihrer Partie (`_buildStories`, außer der Ewigen Tafel, die nach Tag bündelt). Die Schlagzeile eines Bündels fasst seine Anlässe als Reihe zusammen: höchstens drei, der stärkste zuerst (`_leitWert`), eine Pleite hinter einem Sieg, jeder mit genau seinen Leuten, zwei Anlässe derselben Leute unter einem Namen („Elo-Höchststand und Elo-Marke für Maxi“, `_gruppen`), dasselbe für mehrere in der Mehrzahl, höchstens 96 Zeichen; das Ergebnis hängt sich als Ort an, wenn Platz ist. Auf der Karte einer Partie ist jede Zeile ein Satz (`_satzZeile`), der sagt, was genau passiert ist: welche Marken, wie viele Siege oder Pleiten in Folge, wie viele der letzten Partien; das Blatt erklärt es. Der Fuß zeigt den schwersten Anlass mit eigener Zeichnung, gewogen wie in der Schlagzeile (`_spFussFakt`); ohne einen wählt er unter allen zutreffenden Zeichnungen mit Abzug für die Füße der Partien davor (`_spFussSpur`), nie zweimal dieselbe hintereinander.
-- Kopf und Fuß einer Partie folgen dem Anlass in fester Rangfolge (`_spAnlass`, `_spBild`); die gewöhnliche Partie hat Formen mit Regel und Gewicht (`SP_FORM`); sechs davon (`v2`: Tauziehen, Münzwurf, weiße Weste als Kopf, Uhr des Tages, Überholt, Duo gegen Duo als Fuß) gibt es nur für neue Karten, die alte Formkette kennt sie nicht; neue Karten speichern ihr Bild als `dataRef.visual` Version 2 (`score`, `occasion`, `_spScoreWahl`), alte bleiben über den V1-Pfad lesbar. Den Kopf trägt ein besonderer Ausgang (Krimi, klarer Sieg, Außenseiter, weiße Weste), außer derselbe stand auf einer der zwei Karten davor; sonst ein Befund, der nach den Abschlägen noch `SP_BEFUND_MIN` wiegt, und sonst die Grundansicht (`SP_GRUNDFORMEN`: Tacho, Tauziehen, Abstand, Ergebniszeile, Spielfeld), die am längsten nicht dran war (`_spScoreAuswahl`); „Zwei Welten" nur, wenn dasselbe Duo es auf den letzten dreißig Karten nicht hatte. Den Fuß trägt ein Ereignis der Partie vor allem anderen; ein Zustand (`SP_FUSS_ZUSTAND`: Serie, Duo-Serie, Rivalität) tritt zurück, wenn er auf einer der letzten Karten gezeichnet war, und misst sich dann mit dem, was die Partie selbst zeigt (`_spAnlassSnapshot`). Jedes Bauteil trennt `…Daten` und `…Bild`; nichts wird gekürzt oder geschrumpft (`_spPasst`, `.sp-lg`).
-- Was in einer einzelnen Partie passiert, ist eine Zeile ihrer Karte, nie eine eigene Karte, und hat ein eigenes Blatt: gebrochener Fluch (`fluch`, erster Sieg nach mindestens fünf Niederlagen in Folge gegen denselben, der letzte Sieg gegen ihn zwei Wochen her oder nie), Duo-Jubiläum (`duo_jubilaeum`, 25., 50., 75., 100. … gemeinsame Partie), Revanche (`revanche`, dieselben Duos am selben Tag, das Duell davor mit mindestens drei Toren verloren), langer Tag (`tagesmarathon`, 10., 15., 20., 25., 30., 40. Partie des Tages), Elo-Höchststand (`elo_hoch`, über den höchsten Stand, den er je in einem Monat hatte, nach mindestens zwanzig Partien; der Satz nennt den Monat der alten Marke, die Kurve des Fußes bleibt im Monat, weil die Elo jeden Monat neu beginnt; holt er damit „Der höchste Gipfel“, meldet ihn nur die Tafel) und Tabellensprung (`tabellensprung`, drei Plätze mit einem Sieg, nur in einer belastbaren Tabelle). Alle fragen `sichtbar` [§C40]. Ist eins das stärkste der Partie, zeichnet es der Fuß (Gegner, Höchststand, Tabelle, Revanche, Chemie, Tagesring).
+- Eine Partie, eine Karte: jede Partie bekommt ihre Karte (`spiel_<Partie>`), und alles mit derselben `matchId` bündelt sich daran, auch Breaking, seltene Auszeichnungen und negative Zeilen (`neg`). Verschiedene Match-IDs werden nie über eine Minute zusammengelegt. Das Ergebnisband steht einmal (`bandFremd`). Keine Meldung einer Partie entsteht ohne die Karte ihrer Partie (`_buildStories`, außer der Ewigen Tafel, die nach Tag bündelt). Die Schlagzeile der Karte einer Partie ist ihr Hauptanlass: der schwerste Anlass, der keine Pleite ist (`_leitWert`, Breaking vorn), in seinem eigenen Satz (`_achseZeile`); gibt es nur Pleiten, der Satz des Ergebnisses, und das Ergebnis selbst ist kein Anlass, den Ausgang zeigt der Kopf. Darunter steht jeder übrige Anlass einmal (`_spZeilen`): höchstens drei, ein neues Thema zuerst (`SP_THEMA`), eine Pleite hinter den Siegen, der Rest als „und N weitere“; was der Fuß zeichnet (`zeigt`; ein gespeicherter Fuß ohne nach Art und Person, `SP_FUSS_TYP`), steht nicht als Zeile, und ist es nicht der Hauptanlass, steht sein Satz klein unter dem Fuß (`.sp-fu-z`); eine Nebensache (die gemeinsame Pleite, eine Auszeichnung, die keiner will) steht nur im Blatt, auch nicht in der Zahl. Ein Bündel über eine Minute ohne gemeinsame Partie fasst seine Anlässe als Reihe zusammen: höchstens drei, der stärkste zuerst, eine Pleite hinter einem Sieg, jeder mit genau seinen Leuten, zwei Anlässe derselben Leute unter einem Namen (`_gruppen`), dasselbe für mehrere in der Mehrzahl, höchstens 96 Zeichen. Jede Zeile ist ein Satz (`_satzZeile`), der sagt, was genau passiert ist: welche Marken, wie viele Siege oder Pleiten in Folge, wie viele der letzten Partien, ohne „ihre“; das Blatt zeigt jede Zeile und erklärt sie, die des Hauptanlasses mit ihrem Beleg statt ihres Satzes, der schon die Schlagzeile ist. Der Fuß zeigt den schwersten Anlass mit eigener Zeichnung, gewogen wie in der Schlagzeile (eine Tabelle für beide, `ANLASS_GEWICHT`, `anlassGewicht`; `_spFussFakten`), und merkt sich im Schnappschuss, welche Meldungen er zeichnet (`zeigt`, `_spFaktId`): Spitzenwechsel und Rangsprung als Monatstabelle in einer Kette, ein Feld je Platz bis zum letzten besetzten (`_spTabelleBild`); eine seltene oder legendäre Auszeichnung als Medaille mit jedem, der sie in der Partie holte, und dem wievielten Mal (`alle`), einem allein mit der nächsten Marke, darunter die Liga als Punkte; jede runde Zahl der Partie, von jedem und jede einmal, in einem Fuß auf Klappziffern, die schwerste zuerst, höchstens vier (`marken`, `SP_MARKEN`, `_spMarkenBild`), und das Zählwerk der Form tritt dann zurück; ohne einen wählt er unter allen zutreffenden Zeichnungen mit Abzug für die Füße der Partien davor (`_spFussSpur`), nie zweimal dieselbe hintereinander.
+- Kopf und Fuß einer Partie folgen dem Anlass in fester Rangfolge (`_spAnlass`, `_spBild`); die gewöhnliche Partie hat Formen mit Regel und Gewicht (`SP_FORM`); elf davon (`v2`: Tauziehen, Münzwurf, weiße Weste, Klapptafel, Elo-Strom, Torpucks, Herzschlag und Zu null als Kopf, Uhr des Tages, Überholt, Duo gegen Duo als Fuß) gibt es nur für neue Karten, die alte Formkette kennt sie nicht; neue Karten speichern ihr Bild als `dataRef.visual` Version 2 (`score`, `occasion`, `_spScoreWahl`), alte bleiben über den V1-Pfad lesbar. Den Kopf trägt ein besonderer Ausgang in seinem Vorrang (`_spScoreSpezial`: Außenseitersieg mit der Wippe, zu null mit dem Tor, ein Tor Abstand mit dem Herzschlag, ab sechs Toren das Band), außer derselbe stand auf einer der zwei Karten davor; sonst die Grundansicht des Katalogs, die am längsten nicht dran war, bei Gleichstand die vordere (`SP_KOPF_GRUND`: Klapptafel, Elo-Strom, Torpucks, Spielfeld, Tauziehen, Tacho, Münzwurf, Zwei Welten, Mosaik, Erwartung gegen Ergebnis; `_spScoreAuswahl`); das Mosaik nur mit benanntem Befund, „Zwei Welten" nur, wenn dasselbe Duo es auf den letzten dreißig Karten nicht hatte. Jeder Kopf zeigt die Sieger links, auch wenn sie als B eingetragen sind (`_spLinks`), und endet mit der Namenszeile „… schlagen …" (`_spNz`); den Stand trägt `_spSt` oder die Zeichnung selbst, die Siegerzahl zuerst. Den Fuß trägt ein Ereignis der Partie vor allem anderen; ein Zustand (`SP_FUSS_ZUSTAND`: Serie, Duo-Serie, Rivalität) tritt zurück, wenn er auf einer der letzten Karten gezeichnet war, und misst sich dann mit dem, was die Partie selbst zeigt (`_spAnlassSnapshot`). Jedes Bauteil trennt `…Daten` und `…Bild`; nichts wird gekürzt oder geschrumpft (`_spPasst`, `.sp-lg`).
+- Was in einer einzelnen Partie passiert, ist eine Zeile ihrer Karte, nie eine eigene Karte, und hat ein eigenes Blatt: gebrochener Fluch (`fluch`, erster Sieg nach mindestens fünf Niederlagen in Folge gegen denselben, der letzte Sieg gegen ihn zwei Wochen her oder nie), Duo-Jubiläum (`duo_jubilaeum`, 25., 50., 75., 100. … gemeinsame Partie), Revanche (`revanche`, dieselben Duos am selben Tag, das Duell davor mit mindestens drei Toren verloren), langer Tag (`tagesmarathon`, 10., 15., 20., 25., 30., 40. Partie des Tages), Elo-Höchststand (`elo_hoch`, über den höchsten Stand, den er je in einem Monat hatte, nach mindestens zwanzig Partien; der Satz nennt den Monat der alten Marke, die Kurve des Fußes bleibt im Monat, weil die Elo jeden Monat neu beginnt; holt er damit „Der höchste Gipfel“, meldet ihn nur die Tafel) Tabellensprung (`tabellensprung`, drei Plätze mit einem Sieg, nur in einer belastbaren Tabelle) und die sieben Fakten des Katalogs, je Partie höchstens einer je Art: die gekippte Bilanz (`duell_kippt`, ab sechzehn Duellen liegt ein Sieger gegen einen Verlierer vorn, davor zehn Duelle nicht oder nie), die Spitze der Woche (`woche_spitze`, ein Sieger übernimmt die beste Siegquote der Woche ab fünf Siegen), der Tag im Plus (`tag_plus`, ab der vierten Partie des Tages nach einem Tief von −25 Elo), der Höhenflug des Tages (`tag_hoehe`, zum ersten Mal an diesem Tag über +75 Elo), der größte Gewinn des Monats (`monat_gewinn`, ab der achten Partie im Monat, mindestens 22 Elo und mehr als mit jedem eigenen Sieg davor), die halben Siege im Monat (`monat_halb`, ab der fünfzehnten Partie im Monat erreicht die Siegquote 50 % von unten, einmal je Monat) und der beste Partner (`partner_best`, mit diesem die beste Quote unter allen ab sechs gemeinsamen Partien, jede achte gemeinsame). Alle fragen `sichtbar` [§C40]. Ist eins das stärkste der Partie, zeichnet es der Fuß (Gegner, Höchststand, Tabelle, Revanche, Chemie, Tagesring; die Fakten als Kurve, `_spLinie`, mit einer Bezugslinie, über der Grün und unter der Rot steht, oder als Rangliste, `_spRangliste`), und ein einzeln geöffneter Fakt zeichnet im Blatt denselben Fuß (`_spFaktBild`).
 - Was einen ganzen Tag beschreibt (Unschlagbar, Comeback-Tag, Zusammenbruch, Schwarzer Tag), wird erst vergeben, wenn der Tag zu ist (`_tagZu`, 23:59), an der letzten Partie des Spielers und mit `tagEnde`; seine Karte steht um 23:57 für sich (`dataRef.tag`), die kleinen Marken des Tages in einer Sammelkarte `awards:<Tag>`, nie in der Karte einer Partie — außer eine Ehrung trägt es, die des Tages oder die größere, die ihn mitträgt; dann steht es nur dort (`_tagGetragen`).
 - **Was ein Zeitraum an Auszeichnungen brachte, steht in seiner Ehrung** (`30e-news-ehrung.js`): Tag, Woche und Monat zählen alles, was in ihnen geholt wurde, aus den Partien und mit ihrem Schluss, als Unterschied zweier Prestige-Stände an ihren Grenzen (`rcpLaufbahnDaten`) [§C27]. Manche Auszeichnung entsteht ohne Partie, mit dem Schluss eines Tages um 23:59 (Spieler des Tages, Unschlagbar, Comeback-Tag, Tag der Götter, Allwetter, Award-Sammler), einer Woche am Montag um 00:00 (Spieler der Woche, Award-Sammler) oder eines Monats in seiner letzten Millisekunde (Meister, Vize-Meister, Team der Saison, Untouchable); welche ein Schluss vergeben kann, steht fest (`EHRUNG_SCHLUSS`), gezählt mit der Auszeichnung selbst eine Millisekunde vor dem Schluss gegen den Schluss (`_ehrungSchlussPosten`), für Breaking und für die Woche, die die Titel des Monats abzieht. **Der Tag** (`_ehrungDesTages`, zwischen den Grenzen des Tages, `_storyTagGrenzen`) ist Teil der Karte seines Spielers des Tages um 23:59 (`dataRef.ehrung`, `ehrungVoll`): je Geehrtem eine Zeile mit Gesicht, Name, den seltenen und legendären Auszeichnungen mit Namen und den gewöhnlichen als Zahl, ihren Zeichenkacheln in der Farbe ihrer Klasse (die gewöhnlichen als eine mit ihrer Zahl) und dem Prestige, mehr als fünf Geehrte als „und n weitere“ (`_ehrungTagHtml`); im Blatt „Die Ehrung des Tages“ mit denselben Kästen wie im Blatt einer Ehrung (`_ehrungBloeckeHtml`). Ohne Spieler des Tages ist sie eine eigene Karte um 23:59 (`tagesehrung_<Tag>`, `periode:'tag'`, `voll`) in der knappen Form, mit dem härtesten Tag darunter wie beim Spieler des Tages (`_spGegenHtml`, im Blatt „Der härteste Tag“). Eine Karte fasst den Tag zusammen; eine Ehrung je Runde gibt es nicht. Gespeicherte Ehrungen einer Runde und eines Tagesschlusses (`ehrung_tag_<Tag>`) gehen in die Karte ihres Tages auf und reisen mit (`_consolidateStories`, `memberIds`); trägt die schon den ganzen Tag, gilt sie, sonst wird vereinigt (`_ehrungVereint`). **Woche und Monat**: `ehrung_der_woche_<Montag>` am Sonntag um 23:59:05, zur Zeit der Wochenkarte, gezählt ab einer Millisekunde nach ihrem Montag 00:00 (dort schließt die Woche davor) bis zu ihrem Schluss am Montag darauf, mit Spieler der Woche und Award-Sammler und ohne die Titel eines Monats, der in der Woche endet (`rcpWocheLaufbahn`); `ehrung_des_monats_<Saison>` am Ersten um 00:00, zur Zeit des Rückblicks, an denselben Grenzen wie dessen Laufbahn (`rcpMonatGrenzen`: ab einer Millisekunde nach Mitternacht des Ersten bis zu seiner letzten Millisekunde, endet er an einem Sonntag bis zum Schluss dieser Woche). Bei gleicher Zeit steht die wichtigere Karte oben (`_storyFolge`, in Generator, Bestand, Verdichtung und Realtime), die Ehrung also direkt unter ihrer Karte. **Die größere Ehrung trägt den Tag** (`_ehrungGroessere`): endet mit einem Spieltag eine Woche (Sonntag) oder ein Monat (sein letzter Tag), steht nur die größte. Der Spieler des Tages steht dann ohne Ehrung (`ehrungIn`: `woche` oder `monat`), ein Tag ohne ihn hat keine Karte, die Woche, die mit einem Monat endet, hat keine Ehrung, und die des Monats trägt dann deren Spieler der Woche; ein gespeicherter Spieler des Tages zeigt an einem solchen Tag keine Ehrung, wenn die größere im Feed steht. **Die knappe Karte** (Tag ohne Spieler des Tages, Woche, Monat; `_newsEhrungKompaktHtml`): Rubrik („EHRUNG DES TAGES“, „EHRUNG DER WOCHE“, „EHRUNG DES MONATS“), Schlagzeile, darunter der Zeitraum in einer Zeile („Geholt am 26.10.“, „Geholt vom 26.10. bis 01.11.“, „Geholt im Oktober 2026“), eine Reihe Gesichter mit Prestige und Namen, die vorderen fünf, mehr als „+n weitere“ (nie „+1“), darunter in einer Zeile die Zahl je Klasse und als Unterkante der Balken, was jede Klasse an Prestige brachte; Woche und Monat in Gold wie ihre Karten, der Tag im Violett der Ehrung; ohne Säulen, Summe und Schimmer; bei 360 px höchstens 190 px und zwei Drittel der Wochenkarte. Ab vier Geehrten nennt die Schlagzeile ihre Zahl statt der Namen. Breaking sind der Spieler des Tages, die Ehrung des Tages und die der Woche nur, wenn ihr Schluss selbst eine legendäre Auszeichnung vergab, die nicht Schlagzeile ist (`_ehrungBrkGrund`, je Datenstand und Schluss gemerkt; `EHRUNG_KOPF`: Spieler des Tages und der Woche, Meister, Vize, Team der Saison; mitgespeichert als `ehrungBrk` und `breaking`); die Woche fragt dazu den Schluss ihres Sonntags, den sie trägt; die Ehrung des Monats nie, der Monat ist es mit seinem Rückblick. Eine legendäre aus einer Partie ist an ihrer Partie-Karte Breaking und nirgends sonst, auch wenn die Ehrung sie trägt; ein gespeicherter Spieler des Tages ohne `ehrungBrk` fragt deshalb den Schluss seines Tages, nicht seine Ehrung. Ist eine solche Karte Breaking, trägt sie den Balken — die Ehrung mit ihrem Namen darin — und im Kleintext die Nachricht dazu, wer welche zum wievielten Mal holt („Julian holt sich zum Schluss der Woche die legendäre Auszeichnung „Award-Sammler“, zum ersten Mal.“; mehrere Spieler in einer Zeile: „Zum Schluss des Tages zweimal legendär: … für Maxi und … für Julian.“; keine Begründung der Regel, das Band sagt schon „Breaking“, `_ehrungBrkSatz`, `.nf-brk-sub`, im Blatt unter dem Balken `.nd-brk-grund`). Was eine Ehrung eines Tages trägt, auch über eine größere, hat keine eigene Karte um 23:57 (`_tagGetragen`). Die Ehrungen nur der letzten Millisekunde einer Woche und eines Monats sind abgemeldet (`ehrung_woche_`, `ehrung_monat_`).
 - **Die Zeichen-Karte des Wochenschlusses** (`instag_woche_<Montag>`, `insignium_tag` mit `schluss:'woche'`): wer mit dem Schluss der Woche eine Stufe oder einen Grad weiter steht, bekommt dieselbe Karte wie an einem Spieltag, am Montag um 00:00, aus dem Stand eine Millisekunde davor gegen den Schluss (`_insZuegeZwischen`, dieselbe Rechnung wie die Karte des Tages). Darunter steht, was der Schluss den Bewegten vergab (`grund` aus `_abschlussAuszeichnungen`, Spieler der Woche, Award-Sammler, als Zeile `_newsAbschlussHtml`), im Blatt dazu „Die Leiter der Liga nach der Woche". Sie ist ein Schnitt und keine Fassung: sie wächst nicht, steht nicht in `_tafelFassungen` und wird nach dem Veröffentlichen nicht neu gerechnet. Fällt der Schluss der Woche auf den des Monats, trägt der Monatsabschluss beide Zeichen, und sie entsteht nicht.
@@ -274,8 +274,11 @@ Partie), die **Teamserie** (der Lauf des Duos und seine Bilanz als Ring), der
 Partie), die **Premiere** (der erste gemeinsame Sieg eines Duos, beim ersten
 Mal oder ab dem dritten Versuch, und die Versuche als Lauf), die **Wende**
 (die Elo-Kurve der letzten zwölf Partien, ab drei Pleiten), der
-**Rangsprung** ab zwei Plätzen (die Monatstabelle vor und nach der Partie als
-Linien, die neue Spitze in Gold), der **Rollentausch** (ein Sieg auf der
+**Rangsprung** ab zwei Plätzen (die Monatstabelle als Kette: jeder Platz ein
+Feld, wer stieg, gleitet von seinem alten Feld herüber, ein Bogen zeigt den
+Sprung, die neue Spitze in Gold — vorher neun Zeilen mit Linien von „vorher"
+nach „danach", die höchste Zeichnung aller Füße, in der wer sich nicht
+bewegte so viel Platz nahm wie der Sprung), der **Rollentausch** (ein Sieg auf der
 Seite, die vorher unter einem Viertel der eigenen Partien lag, ab zwanzig,
 und ihr Anteil als Strahl), der **Ein-Tor-Krimi** (die Anzeigetafel und die
 Bilanz der Sieger in engen Partien), der **deutliche Sieg** ab sechs Toren
@@ -291,12 +294,23 @@ obwohl die Anzeigetafel genau das zeigt. Eine gewöhnliche Auszeichnung steht
 als Zeile im Sammelband, und was eine seltene nur als Ergebnis erzählt
 (`SP_ERGEBNIS_BADGE`, dieselbe Liste wie `BADGE_DECKT`), zeigt das Bild des
 Ergebnisses. Eine runde Wiederholung ist dagegen eine persönliche Leistung:
-`dataRef.rang` hält ihre historische Vergabezahl, die neue Medaille zeigt
-„x. Mal" und höchstens drei Nachbarmarken statt „neu dabei". Auch reine
+`dataRef.rang` hält ihre historische Vergabezahl. Auch reine
 Ergebnis-Badges dürfen an diesen Wiederholungsmarken die Medaille tragen.
-Takt und Grafik teilen `_badgeNaechsteMarke`; neue Occasiondaten speichern
-`rang`, `wiederholung` und `marken`, alte V2-Daten ohne den Schalter bleiben
-in ihrer publizierten Trägerform. Der erste Trägerstand und ein Legacy-Rang
+**Die Medaille nennt jeden, der sie in der Partie holte**, mit dem
+wievielten Mal („zum ersten Mal", „5. Mal"), einen allein mit der nächsten
+Marke („noch 5 bis zur 10."), und darunter die Liga als Punkte: hell, wer
+sie trägt, leuchtend, wer sie hier holte. Vorher gab es zwei Zeichnungen,
+eine mit Plätzen für das erste Mal und eine mit Marken für die
+Wiederholung, und beide nannten nur einen: holten Julian und Maxi
+„Absoluter Sieger" zusammen, stand im Fuß nur Julian. Takt und Grafik
+teilen `_badgeNaechsteMarke`; neue Occasiondaten speichern `rang`,
+`wiederholung`, `marken` und `alle`, alte V2-Daten ohne `alle` zeigen ihren
+einen Träger.
+**Runde Zahlen stehen zusammen** (`marken`): jeder Sieg, jede Elo, jedes
+Tor und jede Partie, die in dieser Partie rund wurde, von jedem, auf
+Klappziffern. Das Zählwerk zeichnete nur die erste Marke ihrer Art, und
+erreichten der eine den hundertsten Sieg und der andere die fünfhundertste
+Partie, stand nur der Sieg im Fuß. Der erste Trägerstand und ein Legacy-Rang
 kommen aus dem kanonischen Vergabe-Eventindex am `_spBasis`, gebunden an die
 Eventcache-Referenz, nicht aus einem heutigen Vollzensus je Spieler.
 **Der Rangsprung braucht eine Tabelle**: am Monatsanfang
@@ -330,27 +344,42 @@ Feed überfliegt, will wissen, welche Partie es war; beim Tagesring stand
 der Stand zuerst nur im Satz. Mehrere Anlässe teilen sich dagegen kein
 Bild: der stärkste wählt den Kopf, die übrigen hängen als Zeilen im
 Sammelband.
-**Die V2-Scorewahl ist abwechslungsreich und fest** (`_spScoreWahl`). Ein
-Befund gewinnt nach Abschlägen für die letzten zwei und zehn tatsächlich
-verwendeten Formen; Elo-Transfer erhält zusätzlich einen Abschlag über zwölf
-Partien. Die Grundansichten wechseln sich reihum ab: vorher entschied auch
-unter ihnen das Gewicht, und der Tacho (Gewicht 20) stand über jedem Sieg
-eines Favoriten — gemessen auf neun von 43 Karten in dreißig Tagen, an den
-Fixtures auf 69 von 466, das Spielfeld auf vier. „Leon und Henry gewinnen
-als ungleiches Paar" stand an zwei Tagen dreimal, weil die 220 Elo am Duo
-hängen und nicht an der Partie. Und der Fuß zeichnete jede Siegesserie,
-sobald sie zutraf: zwölf von 43 Karten, an einem Tag dreimal dieselbe. Bei
-gültiger Alternative steht dieselbe Form nicht direkt hintereinander. Auch
-wiederholte Krimis und klare Siege tragen dann einen anderen Scorekopf,
-ohne dass ihr Ausgang als Anlass verloren geht. Mosaik verlangt einen seltenen, häufigsten oder runden
-Verteilungsbefund; Transfer einen Ausreißer in den obersten fünf Prozent.
-Tacho, Abstand, Ergebniszeile und Spielfeld bieten auch gewöhnlichen Partien
-sachlich passende Alternativen. Die Spur liest gespeicherte V2-Grafiken aus
-dem Rohbestand, statt alte Spielfeldkarten nach neuen Regeln als andere Formen
-zu zählen. Ein chronologischer Durchlauf je Datenstand und deterministische
-Gleichstände ergeben beim Kaltstart dieselbe Wahl. Neue Partien ändern keine
-publizierte Score- oder Anlassgrafik. Der Legacy-Pfad `_spForm` bleibt für alte
-Karten lesbar; seine historischen dreizehn Formen werden nicht umgeschrieben.
+**Die V2-Scorewahl folgt dem Katalog und ist fest** (`_spScoreWahl`). Ein
+besonderer Ausgang ist selbst die Geschichte und trägt den Kopf in festem
+Vorrang: Außenseitersieg, zu null, ein Tor Abstand, ab sechs Toren — außer
+derselbe stand auf einer der zwei Karten davor, denn der klare Sieg trifft
+jede fünfte Partie und stand sonst viermal hintereinander. Sonst kommt die
+Grundansicht, die am längsten nicht dran war, bei Gleichstand die vordere
+des Katalogs (`SP_KOPF_GRUND`). Vorher gewann ein Befund nach Gewicht und
+Abschlägen, und drei Ansichten (Tacho, Klapptafel, Band) standen auf fast der
+Hälfte der Karten; der Tacho (Gewicht 20) stand über jedem Sieg eines
+Favoriten, gemessen auf neun von 43 Karten in dreißig Tagen. Gemessen an
+616 Partien verteilt der Katalog die Köpfe auf vierzehn Ansichten, keine
+zweimal hintereinander, in keinem Fenster von zehn Karten eine öfter als
+dreimal. „Leon und Henry gewinnen als ungleiches Paar" stand an zwei Tagen
+dreimal, weil die 220 Elo am Duo hängen und nicht an der Partie; „Zwei
+Welten" zählt deshalb nur, wenn dasselbe Duo es auf den letzten dreißig
+Karten nicht hatte. Das Mosaik verlangt einen seltenen, häufigsten oder
+runden Verteilungsbefund. Den Elo-Transfer gibt es nicht mehr: dieselben
+Zahlen zeigt der Elo-Strom, mit den Gesichtern an den Enden.
+**Die Sieger stehen links.** Elo-Transfer, Ergebniszeile und Spielfeld
+zeichneten die Partie so, wie sie eingetragen war, Team A links — gewann B,
+standen die Verlierer vorn, und die Klapptafel des Krimis zeigte „9 : 10".
+Jetzt dreht `_spLinks` die Daten eines Kopfs, dessen Sieger B sind, beim
+Zeichnen um; gespeicherte Daten bleiben, wie sie sind. Unter jedem Kopf
+steht die Namenszeile mit „schlagen" statt „gegen": mit „gegen" las man den
+Sieger nur an der Helligkeit der Namen ab. Der Stand ist `_spSt`, wo er
+neben der Zeichnung steht; bei Klapptafel, Torpucks und Tor ist er die
+Zeichnung selbst, die Siegerzahl zuerst. Ein eigener Stand für Strom und
+Herzschlag sah fast aus wie `_spSt` und war doch ein zweites Bauteil.
+Die Spur liest gespeicherte V2-Grafiken aus dem Rohbestand, statt alte
+Spielfeldkarten nach neuen Regeln als andere Formen zu zählen. Ein
+chronologischer Durchlauf je Datenstand und deterministische Gleichstände
+ergeben beim Kaltstart dieselbe Wahl. Neue Partien ändern keine publizierte
+Score- oder Anlassgrafik; eine gespeicherte Karte mit Krimi, Ergebniszeile,
+Abstand oder Transfer zeigt diese weiter. Der Legacy-Pfad `_spForm` bleibt
+für alte Karten lesbar; seine historischen dreizehn Formen werden nicht
+umgeschrieben.
 Die Fakten
 kommen aus den ungebündelten Meldungen (`_newsRohIndex`), weil eine
 Sammelzeile nur Titel und Zeichen trägt. Der **Spieler des Tages** zeigt
@@ -443,32 +472,51 @@ Gedeckelt wird nur noch, was **über** den Partien liegt und von gestern schon
 gelten könnte. Damit ist auch `matchProTagMin` gefallen: ein reservierter
 Platz für „eine Geschichte mit konkreter Partie" ist verschenkt, wenn jede
 Partie ohnehin eine Karte hat.
-**Und ihre Schlagzeile fasst zusammen, was in der Partie passiert ist.**
-Ein Bündel hieß „Ein Spiel, zwei Geschichten für Maxi und Henry" — das gilt
-für jeden Spieltag und sagt von keinem Anlass etwas. Es nennt die Anlässe
-als Reihe von Höhepunkten: „Serienbruch gegen Martin und Elo-Marke für
-Maxi im Ein-Tor-Krimi". Die Reihe hatte drei Fehler. Sie verlor Namen:
-„Siegesserie für Maxi und Durststrecke" sagte nicht, wessen, und
-„Durststrecke und Teamserie für Leon und Maxi" gab Leos Pleiten den beiden
-Siegern, weil gleiche Namenslisten zusammengelegt wurden. Jeder Anlass
-trägt jetzt genau seine Leute aus dem `dataRef`, mit dem Wort, das ihre
-Rolle sagt (der Serienbruch GEGEN den, der die Serie trug, die Rivalität
-ZWISCHEN zweien, alles andere FÜR den, dem es zählt); zusammengelegt wird
-nur derselbe Anlass, und dann in der Mehrzahl („Siegesserien für Leon und
-Maxi"). Sie begann mit irgendeinem Anlass: jetzt zuerst der stärkste
-(`_leitWert`), Breaking vorn, eine Pleite hinter jedem Sieg [§C25]. Und sie
-wurde lang: höchstens drei Anlässe und 96 Zeichen, drei Zeilen auf dem
-Telefon; ist es zu lang, fällt zuerst der Ort, dann der schwächste Anlass,
-und der Rest steht im Sammelband. Eine Auszeichnung nennt ihren Namen,
-eine Schande heißt Schande. Das Ergebnis gehört allen vier und hängt sich
-als Ort dahinter („im Ein-Tor-Krimi"), außer eine Auszeichnung derselben
-Partie erzählt es schon (`BADGE_DECKT`): „Absoluter Sieger" IST das 10:0.
-Hat die Partie keinen Anlass außer ihrem Ergebnis, ist dessen eigener
-Satz die Schlagzeile. Etiketten mit Doppelpunkt („Leo: Krimi-Versager",
-„50. Duell: Leo vs Martin") werden in den Zeilen darunter zu Sätzen
-(`_satzZeile`, aus dem `dataRef`; der gespeicherte Titel bleibt). Der Satz
-unter der Schlagzeile ist der Satz der Partie aus ihrer Form oder ihrem
-Anlass; „Eine Meldung hängt daran" beschrieb den Bau der Karte.
+**Und ihre Schlagzeile ist ihr Hauptanlass.** Ein Bündel hieß zuerst „Ein
+Spiel, zwei Geschichten für Maxi und Henry" — das gilt für jeden Spieltag
+und sagt von keinem Anlass etwas. Danach nannte es die Anlässe als Reihe
+(„Serienbruch gegen Martin und Elo-Marke für Maxi im Ein-Tor-Krimi"), mit
+genau ihren Leuten, dem stärksten zuerst und höchstens 96 Zeichen. Darunter
+standen aber dieselben Anlässe noch einmal als Zeilen, und die Serie, die
+der Fuß zeichnete, ein drittes Mal: jeder Anlass stand bis zu dreimal auf
+derselben Karte, fast jede zweite trug vier Zeilen und „und 2 weitere", und
+unter „Julian holt die legendäre Auszeichnung ‚Dominator‘" stand „Julian
+holt ‚Carry‘ zum 5. Mal". Jetzt ist der schwerste Anlass, der keine Pleite
+ist, die Schlagzeile in seinem eigenen Satz, jeder andere steht einmal: als
+Zeichnung des Fußes (mit seinem Satz klein darunter, wenn er nicht der
+Hauptanlass ist) oder als eine von höchstens drei Zeilen, ein neues Thema
+zuerst. Gemessen an dreißig Partie-Bündeln der Fixtures trug vorher jede
+mindestens eine Zeile und sieben drei oder mehr; jetzt tragen neunzehn
+keine, weil Schlagzeile und Fuß schon alles sagen. Was der Fuß zeichnet,
+wurde zuerst nach Art und Person geraten: zwei Rivalitäten oder die
+Duo-Jubiläen beider Seiten einer Partie galten beide als gezeichnet, und
+eine fehlte auf der Karte. Jetzt merkt sich der Fuß die Meldungen, die er
+zeigt, die Medaille jeden ihrer Halter. Im Blatt stand der Satz des
+Hauptanlasses als Titel und gleich darunter als erste Zeile; die Zeile
+trägt dort jetzt seinen Beleg. Eine
+Pleite steht nie als Schlagzeile über einem Sieg: über ihm stand sonst
+„Jane bekommt ‚Absoluter Verlierer‘"; gibt es nur Pleiten, erzählt das
+Ergebnis. Die gemeinsame Pleite und eine Auszeichnung, die keiner will,
+sind Nebensachen: sie standen als rote Zeilen unter jedem zweiten Sieg und
+stehen jetzt nur im Blatt. Ein Bündel über eine Minute ohne gemeinsame
+Partie behält die Reihe. Etiketten mit Doppelpunkt („Leo: Krimi-Versager",
+„50. Duell: Leo vs Martin") werden zu Sätzen (`_satzZeile`, aus dem
+`dataRef`; der gespeicherte Titel bleibt), und seit eine Zeile auch
+Schlagzeile ist, sagen sie nicht mehr „ziehen ihre Serien gemeinsam
+weiter". Der Satz unter der Schlagzeile ist der Satz der Partie aus ihrer
+Form oder ihrem Anlass; „Eine Meldung hängt daran" beschrieb den Bau der
+Karte.
+**Und jede Partie hat etwas, das nur sie sagt.** An gut der Hälfte der
+Partien hing kein einziger Anlass, und was die Liga in einer Partie
+wirklich bewegt — wer im Duell wieder vorn liegt, wer die Woche anführt,
+wer den Tag aus einem Tief ins Plus dreht —, sagte keine Meldung. Die
+sieben Fakten des Katalogs sagen es, jeder mit einer Schwelle, damit er
+nicht an jeder Partie hängt: gemessen an 52 Partien des Fensters stand
+jeder höchstens dreimal da, zusammen zwanzigmal. Die Hälfte der Siege im
+Monat kam zuerst an jeder zweiten Partie wieder, wenn jemand um 50 %
+pendelte (Julian zweimal im August); sie zählt einmal je Monat, gemerkt
+auch vor dem Fenster, sonst meldete sie sich ein zweites Mal, sobald das
+erste aus dem Fenster fiel.
 **Eine negative Meldung derselben Partie reist mit.** Das Subjekt ist das
 Spiel, nicht ausschließlich das Siegerteam. Schande und Durststrecke stehen
 als rote Zeilen mit ihren tatsächlichen Betroffenen neben den positiven
