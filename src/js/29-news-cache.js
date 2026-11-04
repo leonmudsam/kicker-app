@@ -1260,9 +1260,11 @@ function _consolidateStoriesLegacy(list){
         return `${nm(dt.pid)} stellt ${dt.streak ? 'mit ' + dt.streak + ' Siegen ' : ''}den Serien-Rekord der Liga auf`;
       if(dt.type === 'group' && ids.length > 1){
         const verb = {loss_streak:'stecken beide in einer Durststrecke', top_form:'spielen über dem eigenen Schnitt',
-          win_streak:'ziehen ihre Serien gemeinsam weiter', jubilee:'feiern ein Jubiläum',
+          win_streak:'setzen beide eine Siegesserie fort', jubilee:'feiern ein Jubiläum',
           milestone_wins:'erreichen eine Siegmarke', milestone_goals:'erreichen eine Tormarke',
           milestone_elo:'knacken eine Elo-Marke'}[dt.sub];
+        // Ohne „ihre": seit die Gruppe auch Schlagzeile ist, stand „ziehen
+        // ihre Serien gemeinsam weiter" groß über der Karte [allgemein].
         if(verb) return `${und(ids)} ${ids.length > 2 ? verb.replace('beide ', 'alle ') : verb}`;
       }
       return ti;
@@ -1495,7 +1497,25 @@ function _consolidateStoriesLegacy(list){
       const spT = teile.find(t => ((t.dataRef || {}).type === 'spiel' || (t.dataRef || {}).type === 'match_result'));
       const spD = (spT && spT.dataRef) || {};
       const ort = spT && !_ergebnisGedeckt(spD) ? (ERGEBNIS_ORT[spD.resultKind] || '') : '';
-      if(phrasen.length){
+      // ── Auf der Achse der Partie ist die Schlagzeile ihr Hauptanlass ──
+      // Die Reihe stand über denselben Anlässen als Zeilen: „Teamserie für
+      // Leon und Maxi und Durststrecke für Leo" über „Leon und Maxi gewinnen
+      // zusammen zum 5. Mal in Folge" und „Leo verliert zum 5. Mal in Folge"
+      // — jeder Anlass zweimal auf derselben Karte. Jetzt ist der schwerste,
+      // der keine Pleite ist, die Schlagzeile, in seinem eigenen Satz
+      // (`_achseZeile`), und jeder andere steht einmal darunter [§C33]. Gibt
+      // es nur Pleiten, erzählt das Ergebnis: über einem Sieg stand sonst
+      // „Jane bekommt ‚Absoluter Verlierer‘".
+      // Nur die Karte EINER Partie: ein Bündel über eine Minute ohne
+      // gemeinsame Partie fasst weiter zusammen.
+      const einePartie = g.key.indexOf('spiel|match|') === 0;
+      const haupt = einePartie ? teile
+        .filter(t => { const ty = (t.dataRef || {}).type; return ty !== 'spiel' && ty !== 'match_result'; })
+        .map(t => ({t, w:_leitWert(t)})).filter(x => x.w >= 0)
+        .sort((a, b) => b.w - a.w)[0] : null;
+      if(einePartie){
+        neuTitel = haupt ? _achseZeile(haupt.t) : String((spT && spT.title) || '').trim();
+      } else if(phrasen.length){
         // Ein Anlass wiegt mehr als der Ort: zu lang, fällt zuerst der Ort.
         let bild = '';
         for(let zahl = Math.min(3, phrasen.length); zahl >= 1 && !bild; zahl--){

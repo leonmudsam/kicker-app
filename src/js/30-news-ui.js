@@ -606,12 +606,13 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
   // Nur auf der Achse der PARTIE: eine Karte über zwei Ergebnisse desselben
   // Tages (`quelle:'ergebnis'`) besteht aus lauter Ergebnis-Zeilen, und die
   // sind dort die Aussage — gemessen blieben sonst elf Karten ohne Band.
-  const sammelTeile = (d.type === 'sammel' && d.quelle === 'spiel'
-                       && d.matchId && !d.bandFremd)
-    ? (d.teile || []).filter(t => String((t && (t.typ || t.type)) || '') !== 'spiel')
-    : d.teile;
+  const partieBuendel = d.type === 'sammel' && d.quelle === 'spiel' && d.matchId && !d.bandFremd;
+  // Auf der Karte einer Partie wählt `_spZeilen`, was als Zeile steht:
+  // höchstens drei, ohne das, was der Fuß zeichnet, und ohne Nebensache.
+  const spZeilen = partieBuendel ? _spZeilen(d.teile, s.title, _spBild(s).occ) : null;
+  const sammelTeile = spZeilen ? spZeilen.zeilen : d.teile;
   const sammelBand = (d.type === 'sammel')
-    ? _newsSammelBand(sammelTeile, [s.title], true) : '';
+    ? _newsSammelBand(sammelTeile, [s.title], !spZeilen) : '';
 
   // ── Je Sorte ein eigener Kopf und ein eigener Fuß ──────────────────
   // Vorher unterschied die Sorten nur eine Randfarbe, und zehn Karten
@@ -630,7 +631,11 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
     const bild = _spBild(s);
     kopf = d.bandFremd ? '' : bild.kopf;
     satz = _newsSpielSatz(s.desc, bild.zeigt);
-    fuss = bild.fuss + _newsZahlband(_newsSpielZahlen(s, bild.key));
+    // Zeichnet der Fuß nicht den Hauptanlass, steht der Satz dessen, was er
+    // zeigt, klein darunter und nicht als Zeile [§C33].
+    const unter = spZeilen && spZeilen.unter && bild.fuss
+      ? `<div class="sp-fu-z"><i class="nf-sam-i">${svgI(spZeilen.unter.ic || 'chartBar')}</i><span>${_newsBetont(spZeilen.unter.titel || '')}</span></div>` : '';
+    fuss = bild.fuss + unter + _newsZahlband(_newsSpielZahlen(s, bild.key));
     // Die Ergebnis-Sammelkarte hat ZWEI Partien und deshalb keine, die sie
     // als Band zeigen könnte: acht Wappen übereinander machten sie höher als
     // ihr Text [§C27]. Die Stände stehen im Sammelband, die Sieger als Chips

@@ -575,6 +575,12 @@
 @keyframes spKopfSchlag{0%,100%{transform:scale(1)}14%{transform:scale(1.07)}28%{transform:scale(1)}42%{transform:scale(1.04)}}
 
 /* ── Die Füße des Katalogs ───────────────────────────────────────── */
+/* Der Satz unter einem Fuß, der nicht den Hauptanlass zeichnet: klein,
+   damit er als Unterschrift der Zeichnung liest und nicht als Zeile. */
+.sp-fu-z{display:flex;align-items:center;gap:7px;margin:6px 13px 0;font-size:11px;line-height:1.35;color:var(--muted)}
+.sp-fu-z .nf-sam-i{width:16px;height:16px;border-radius:5px}
+.sp-fu-z .nf-sam-i svg{width:10px;height:10px}
+.sp-fu-z b{font-weight:600;color:var(--ink2)}
 .sp-tk .sp-k,.sp-md .sp-k,.sp-zm .sp-k{text-align:center;margin-bottom:4px}
 /* Die Monatstabelle als Kette (`_spTabelleBild`). Die Felder teilen sich
    die Breite; ein Gesicht hat 20 px, bei neun Feldern auf 288 px bleiben je

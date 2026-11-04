@@ -5214,6 +5214,10 @@
 @keyframes spKopfPunkt{0%{transform:translateX(-100%);opacity:0}12%{opacity:1}88%{opacity:1}100%{transform:translateX(0);opacity:0}}
 @keyframes spKopfSchlag{0%,100%{transform:scale(1)}14%{transform:scale(1.07)}28%{transform:scale(1)}42%{transform:scale(1.04)}}
 
+.sp-fu-z{display:flex;align-items:center;gap:7px;margin:6px 13px 0;font-size:11px;line-height:1.35;color:var(--muted)}
+.sp-fu-z .nf-sam-i{width:16px;height:16px;border-radius:5px}
+.sp-fu-z .nf-sam-i svg{width:10px;height:10px}
+.sp-fu-z b{font-weight:600;color:var(--ink2)}
 .sp-tk .sp-k,.sp-md .sp-k,.sp-zm .sp-k{text-align:center;margin-bottom:4px}
 .sp-tk-s{display:block;width:100%;height:18px;overflow:visible}
 .sp-tk-b{fill:none;stroke:var(--acid);stroke-width:1.6;stroke-linecap:round;vector-effect:non-scaling-stroke;opacity:.85}
@@ -6610,7 +6614,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.11.04.ba1f8fe5';
+const BUILD_VERSION='2026.11.04.b0c6b243';
 function forceReload(nach){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -23611,7 +23615,7 @@ function _consolidateStoriesLegacy(list){
         return `${nm(dt.pid)} stellt ${dt.streak ? 'mit ' + dt.streak + ' Siegen ' : ''}den Serien-Rekord der Liga auf`;
       if(dt.type === 'group' && ids.length > 1){
         const verb = {loss_streak:'stecken beide in einer Durststrecke', top_form:'spielen über dem eigenen Schnitt',
-          win_streak:'ziehen ihre Serien gemeinsam weiter', jubilee:'feiern ein Jubiläum',
+          win_streak:'setzen beide eine Siegesserie fort', jubilee:'feiern ein Jubiläum',
           milestone_wins:'erreichen eine Siegmarke', milestone_goals:'erreichen eine Tormarke',
           milestone_elo:'knacken eine Elo-Marke'}[dt.sub];
         if(verb) return `${und(ids)} ${ids.length > 2 ? verb.replace('beide ', 'alle ') : verb}`;
@@ -23783,7 +23787,14 @@ function _consolidateStoriesLegacy(list){
       const spT = teile.find(t => ((t.dataRef || {}).type === 'spiel' || (t.dataRef || {}).type === 'match_result'));
       const spD = (spT && spT.dataRef) || {};
       const ort = spT && !_ergebnisGedeckt(spD) ? (ERGEBNIS_ORT[spD.resultKind] || '') : '';
-      if(phrasen.length){
+      const einePartie = g.key.indexOf('spiel|match|') === 0;
+      const haupt = einePartie ? teile
+        .filter(t => { const ty = (t.dataRef || {}).type; return ty !== 'spiel' && ty !== 'match_result'; })
+        .map(t => ({t, w:_leitWert(t)})).filter(x => x.w >= 0)
+        .sort((a, b) => b.w - a.w)[0] : null;
+      if(einePartie){
+        neuTitel = haupt ? _achseZeile(haupt.t) : String((spT && spT.title) || '').trim();
+      } else if(phrasen.length){
         let bild = '';
         for(let zahl = Math.min(3, phrasen.length); zahl >= 1 && !bild; zahl--){
           const kern = _reihe(phrasen.slice(0, zahl));
@@ -24747,12 +24758,11 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
           ? `<span class="nf-brk-n">${brkTeile} Meldungen</span>` : '')
       + `<span class="nf-brk-zeit">${esc(_newsWhenLabel(s.when))}</span></div>`
     : '';
-  const sammelTeile = (d.type === 'sammel' && d.quelle === 'spiel'
-                       && d.matchId && !d.bandFremd)
-    ? (d.teile || []).filter(t => String((t && (t.typ || t.type)) || '') !== 'spiel')
-    : d.teile;
+  const partieBuendel = d.type === 'sammel' && d.quelle === 'spiel' && d.matchId && !d.bandFremd;
+  const spZeilen = partieBuendel ? _spZeilen(d.teile, s.title, _spBild(s).occ) : null;
+  const sammelTeile = spZeilen ? spZeilen.zeilen : d.teile;
   const sammelBand = (d.type === 'sammel')
-    ? _newsSammelBand(sammelTeile, [s.title], true) : '';
+    ? _newsSammelBand(sammelTeile, [s.title], !spZeilen) : '';
 
   let kopf = '', fuss = '', gesicht = '', faktBild = '';
   let satz = s.desc;
@@ -24763,7 +24773,9 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
     const bild = _spBild(s);
     kopf = d.bandFremd ? '' : bild.kopf;
     satz = _newsSpielSatz(s.desc, bild.zeigt);
-    fuss = bild.fuss + _newsZahlband(_newsSpielZahlen(s, bild.key));
+    const unter = spZeilen && spZeilen.unter && bild.fuss
+      ? `<div class="sp-fu-z"><i class="nf-sam-i">${svgI(spZeilen.unter.ic || 'chartBar')}</i><span>${_newsBetont(spZeilen.unter.titel || '')}</span></div>` : '';
+    fuss = bild.fuss + unter + _newsZahlband(_newsSpielZahlen(s, bild.key));
     if(!kopf) gesicht = _newsGesichtHtml(s);
   } else if(sorte === 'tafel'){
     const w = _newsTafelWert(s);
@@ -27247,6 +27259,47 @@ function _spAnlassSnapshot(m, fakten, scoreKey){
   for(const k of gewertet){ const dd = k.data(); if(dd) return merke({key:k.key, data:dd}); }
   return null;
 }
+const SP_THEMA = {lead_change:'tabelle', tabellensprung:'tabelle', top_clash:'tabelle',
+  badge_unlocked:'auszeichnung', badge_marken:'auszeichnung',
+  streak_record:'serie', streak_killer:'serie', win_streak:'serie', top_form:'serie', loss_streak:'serie',
+  fluch:'duell', rivalry_milestone:'duell', rivalry:'duell', revanche:'duell', giant_slayer:'duell',
+  milestone_wins:'zahl', milestone_elo:'zahl', milestone_goals:'zahl', jubilee:'zahl', elo_hoch:'zahl',
+  duo_jubilaeum:'duo', team_streak:'duo', team_loss_streak:'duo', tagesmarathon:'tag'};
+const SP_FUSS_TYP = {spitze:['lead_change'], riss:['streak_killer'], marken:Object.keys(SP_MARKEN),
+  serie:['win_streak'], teamserie:['team_streak'], duell:['rivalry_milestone', 'rivalry'], gegner:['fluch'],
+  hoch:['elo_hoch'], rang:['tabellensprung'], revanche:['revanche'], chemie:['duo_jubilaeum'],
+  tagesring:['tagesmarathon'], medaille:['badge_unlocked']};
+function _spZeilen(teile, titel, occ){
+  const kt = String(titel || '').trim();
+  const ty = t => String((t && (t.typ || t.type)) || '');
+  const ref = t => (t && (t.ref || t.dataRef)) || {};
+  const thema = t => SP_THEMA[ty(t) === 'group' ? ref(t).sub : ty(t)] || '';
+  const d = (occ && occ.data) || {}, l = occ && SP_FUSS_TYP[occ.key];
+  const gezeichnet = t => {
+    const r = ref(t), pid = r.pid || r.playerId;
+    if(!l || l.indexOf(ty(t)) < 0) return false;
+    if(occ.key === 'medaille') return (r.rarity === 'rare' || r.rarity === 'legendary')
+      && (r.badgeName || ((typeof BADGES !== 'undefined' && BADGES.find(b => b.id === r.badgeId)) || {}).name) === d.name;
+    if(occ.key === 'marken') return (d.liste || []).some(x => x.pid === pid);
+    return !(d.pid && pid && d.pid !== pid);
+  };
+  const neben = t => ty(t) === 'team_loss_streak' || (ty(t) === 'badge_unlocked' && ref(t).rarity === 'negative');
+  const alle = (teile || []).filter(t => ty(t) !== 'spiel');
+  const haupt = alle.find(t => String(t.titel || '').trim() === kt) || null;
+  const rest = alle.filter(t => t !== haupt);
+  const fuss = rest.filter(gezeichnet).concat(haupt && gezeichnet(haupt) ? [haupt] : []);
+  const frei = rest.filter(t => fuss.indexOf(t) < 0);
+  const themen = new Set([haupt, fuss[0]].filter(Boolean).map(thema).filter(Boolean));
+  const neu = [], wieder = [];
+  frei.filter(t => !neben(t) && !t.neg).forEach(t => {
+    const th = thema(t);
+    if(!th || !themen.has(th)){ neu.push(t); if(th) themen.add(th); } else wieder.push(t);
+  });
+  const zeilen = neu.concat(wieder, frei.filter(t => !neben(t) && t.neg));
+  return {zeilen:zeilen.filter(t => t.brk).concat(zeilen.filter(t => !t.brk)),
+    unter:fuss.length && fuss.indexOf(haupt) < 0 ? fuss[0] : null,
+    neben:frei.filter(neben)};
+}
 function _spVisualSnapshot(m, fakten){
   const score = _spScoreSnapshot(m);
   const fest = _spFormBasis().scorePublished.get(m.id);
@@ -27297,7 +27350,7 @@ function _spBild(s){
     const v = basis.visual;
     if(v && v.version === 2 && v.score){
       const ok = v.occasion && v.occasion.key;
-      r = {key:ok || v.score.key, form:v.score.key,
+      r = {key:ok || v.score.key, form:v.score.key, occ:v.occasion || null,
         glanz:['zaehlwerk','marken','rueckkehr','transfer'].includes(ok || v.score.key),
         kopf:_spScoreBild(v.score), fuss:_spOccasionBild(v.occasion),
         zeigt:SP_ZEIGT_ALLES, pl:players};

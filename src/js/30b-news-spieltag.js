@@ -1935,6 +1935,60 @@ function _spAnlassSnapshot(m, fakten, scoreKey){
   for(const k of gewertet){ const dd = k.data(); if(dd) return merke({key:k.key, data:dd}); }
   return null;
 }
+// ── Die Zeilen der Partie-Karte [§C33] ──────────────────────────────
+// Unter der Schlagzeile (dem Hauptanlass) steht jeder übrige Anlass einmal:
+// höchstens drei, ein neues Thema zuerst, eine Pleite hinter den Siegen,
+// der Rest als Zahl. Was der Fuß zeichnet, steht nicht noch einmal als
+// Zeile, und ist es nicht der Hauptanlass, steht sein Satz klein unter dem
+// Fuß. Eine Nebensache steht nur im Blatt. Vorher trug fast jede zweite
+// Karte vier Zeilen und darunter „und 2 weitere", unter „Julian holt die
+// legendäre Auszeichnung ‚Dominator‘" stand „Julian holt ‚Carry‘ zum 5. Mal"
+// — dieselbe Sorte Nachricht zweimal —, und die Serie, die der Fuß
+// zeichnete, stand daneben als Zeile.
+const SP_THEMA = {lead_change:'tabelle', tabellensprung:'tabelle', top_clash:'tabelle',
+  badge_unlocked:'auszeichnung', badge_marken:'auszeichnung',
+  streak_record:'serie', streak_killer:'serie', win_streak:'serie', top_form:'serie', loss_streak:'serie',
+  fluch:'duell', rivalry_milestone:'duell', rivalry:'duell', revanche:'duell', giant_slayer:'duell',
+  milestone_wins:'zahl', milestone_elo:'zahl', milestone_goals:'zahl', jubilee:'zahl', elo_hoch:'zahl',
+  duo_jubilaeum:'duo', team_streak:'duo', team_loss_streak:'duo', tagesmarathon:'tag'};
+// Welche Meldungen ein Fuß zeichnet, je Zeichnung.
+const SP_FUSS_TYP = {spitze:['lead_change'], riss:['streak_killer'], marken:Object.keys(SP_MARKEN),
+  serie:['win_streak'], teamserie:['team_streak'], duell:['rivalry_milestone', 'rivalry'], gegner:['fluch'],
+  hoch:['elo_hoch'], rang:['tabellensprung'], revanche:['revanche'], chemie:['duo_jubilaeum'],
+  tagesring:['tagesmarathon'], medaille:['badge_unlocked']};
+function _spZeilen(teile, titel, occ){
+  const kt = String(titel || '').trim();
+  const ty = t => String((t && (t.typ || t.type)) || '');
+  const ref = t => (t && (t.ref || t.dataRef)) || {};
+  const thema = t => SP_THEMA[ty(t) === 'group' ? ref(t).sub : ty(t)] || '';
+  const d = (occ && occ.data) || {}, l = occ && SP_FUSS_TYP[occ.key];
+  const gezeichnet = t => {
+    const r = ref(t), pid = r.pid || r.playerId;
+    if(!l || l.indexOf(ty(t)) < 0) return false;
+    if(occ.key === 'medaille') return (r.rarity === 'rare' || r.rarity === 'legendary')
+      && (r.badgeName || ((typeof BADGES !== 'undefined' && BADGES.find(b => b.id === r.badgeId)) || {}).name) === d.name;
+    if(occ.key === 'marken') return (d.liste || []).some(x => x.pid === pid);
+    return !(d.pid && pid && d.pid !== pid);
+  };
+  // Eine Nebensache: die gemeinsame Pleite und eine Auszeichnung, die keiner
+  // will. Sie stand als rote Zeile unter jedem zweiten Sieg.
+  const neben = t => ty(t) === 'team_loss_streak' || (ty(t) === 'badge_unlocked' && ref(t).rarity === 'negative');
+  const alle = (teile || []).filter(t => ty(t) !== 'spiel');
+  const haupt = alle.find(t => String(t.titel || '').trim() === kt) || null;
+  const rest = alle.filter(t => t !== haupt);
+  const fuss = rest.filter(gezeichnet).concat(haupt && gezeichnet(haupt) ? [haupt] : []);
+  const frei = rest.filter(t => fuss.indexOf(t) < 0);
+  const themen = new Set([haupt, fuss[0]].filter(Boolean).map(thema).filter(Boolean));
+  const neu = [], wieder = [];
+  frei.filter(t => !neben(t) && !t.neg).forEach(t => {
+    const th = thema(t);
+    if(!th || !themen.has(th)){ neu.push(t); if(th) themen.add(th); } else wieder.push(t);
+  });
+  const zeilen = neu.concat(wieder, frei.filter(t => !neben(t) && t.neg));
+  return {zeilen:zeilen.filter(t => t.brk).concat(zeilen.filter(t => !t.brk)),
+    unter:fuss.length && fuss.indexOf(haupt) < 0 ? fuss[0] : null,
+    neben:frei.filter(neben)};
+}
 function _spVisualSnapshot(m, fakten){
   const score = _spScoreSnapshot(m);
   const fest = _spFormBasis().scorePublished.get(m.id);
@@ -2002,7 +2056,7 @@ function _spBild(s){
     const v = basis.visual;
     if(v && v.version === 2 && v.score){
       const ok = v.occasion && v.occasion.key;
-      r = {key:ok || v.score.key, form:v.score.key,
+      r = {key:ok || v.score.key, form:v.score.key, occ:v.occasion || null,
         glanz:['zaehlwerk','marken','rueckkehr','transfer'].includes(ok || v.score.key),
         kopf:_spScoreBild(v.score), fuss:_spOccasionBild(v.occasion),
         zeigt:SP_ZEIGT_ALLES, pl:players};

@@ -2164,8 +2164,10 @@ const ok = (c, msg, det) => {
       doppelt: !!(sub && d && sub.textContent.trim() === d.textContent.trim())};
     host.remove(); return out;
   });
-  ok(!brkKarte.fehlt && brkKarte.brk && brkKarte.band === 1 && brkKarte.zeilen === 2,
-     'der gemeinsame Breaking-Moment zeigt Ergebnis und beide Meldungen',
+  // Die stärkere Meldung ist die Schlagzeile, die andere ihre Zeile [§C33].
+  ok(!brkKarte.fehlt && brkKarte.brk && brkKarte.band === 1 && brkKarte.zeilen === 1
+     && /Spitzenreiter/.test(brkKarte.titel) && /Absoluter Sieger/.test(brkKarte.zeilenText),
+     'der gemeinsame Breaking-Moment zeigt Ergebnis und beide Meldungen, eine als Schlagzeile',
      JSON.stringify(brkKarte));
   ok(brkKarte.anlassKante && brkKarte.anlassKante !== 'none' && brkKarte.anlassFlaeche,
      'und seine Anlass-Zeile traegt eine eigene Kante und eine eigene Flaeche',
