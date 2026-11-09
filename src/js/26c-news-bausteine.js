@@ -199,7 +199,12 @@ function _ersterSatz(txt){
   const m = s.match(/^([\s\S]*?[.!?])\s+[A-ZÄÖÜ]/);
   return m ? m[1] : s;
 }
-function _zahlwortDe(n){ return ['', 'ein', 'zwei', 'drei', 'vier'][n] || String(n); }
+// `gross` für den Satzanfang: „drei Siege in Folge." stand klein am Anfang
+// der Beschreibung.
+function _zahlwortDe(n, gross){
+  const w = ['', 'ein', 'zwei', 'drei', 'vier'][n] || String(n);
+  return gross ? w.charAt(0).toUpperCase() + w.slice(1) : w;
+}
 
 // Dieselbe Aufzählung, aber für eine Schlagzeile gedeckelt. Über einer Karte,
 // die von drei Leuten handelte, stand „Leon und Martin bewegen die Ewige
@@ -244,7 +249,10 @@ function _chronikZeigtSich(pids, sid, titleId, bisMs){
   } catch(e){ return null; }
 }
 
-function _evSatz(ev){
-  return String(ev || '').replace(/\s*·\s*/g, ', ').trim();
+// `gross` am Satzanfang: „auf 15 Partien 1,2 %-Punkte neben 31,0 %." begann
+// die Beschreibung einer Chronik klein.
+function _evSatz(ev, gross){
+  const s = String(ev || '').replace(/\s*·\s*/g, ', ').trim();
+  return gross ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 }
 

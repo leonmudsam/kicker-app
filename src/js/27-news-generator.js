@@ -392,19 +392,21 @@ function _buildStories(){
   try {
     const seit = now.getTime() - NEWS_FENSTER_TAGE * _dayMs;
     const TEAM_STREAK_MS = new Set([5, 7, 10, 15, 20]);
-    const lauf = {}, laufStart = {}, kand = [];
+    const lauf = {}, laufStart = {}, kand = [], zus = {};
     chronoMatches.forEach(m => {
       if(mts(m) > now.getTime()) return;
       [[m.a1, m.a2, m.winner === 'A'], [m.b1, m.b2, m.winner === 'B']].forEach(([x, y, won]) => {
         if(!x || !y) return;
         const ids = [x, y].sort(), k = ids.join('|');
+        const z = zus[k] || (zus[k] = {s:0, n:0});
+        z.n++; if(won) z.s++;
         lauf[k] = won ? (lauf[k] || 0) + 1 : 0;
         if(lauf[k] === 1) laufStart[k] = m.id;
         const n = lauf[k];
         if(!(TEAM_STREAK_MS.has(n) || (n > 20 && n % 5 === 0))) return;
         if(mts(m) < seit) return;
         kand.push({ids, streak:n, when:new Date(m.created_at), matchId:m.id,
-                   lauf:laufStart[k] || ''});
+                   lauf:laufStart[k] || '', s:z.s, n:z.n});
       });
     });
     // Eine Serie je Duo und Tag, die laengste: die laengere enthaelt die
@@ -423,7 +425,13 @@ function _buildStories(){
         cat: 'team',
         ic: 'unstoppable',
         title: `${nameOf(t.ids[0])} und ${nameOf(t.ids[1])} gewinnen zusammen alles`,
-        desc: `${_zahlwortDe(t.streak)} gemeinsame Spiele, ${_zahlwortDe(t.streak)} Siege.`,
+        // „Zehn gemeinsame Spiele, zehn Siege." las sich, als hätten die
+        // beiden nur zehnmal zusammen gespielt — darunter stand „spielen zum
+        // 75. Mal zusammen". Die Bilanz bis zu dieser Partie sagt, was die
+        // Serie für dieses Duo bedeutet.
+        desc: t.n > t.streak
+          ? `Zusammen ${t.s} Siege aus ${t.n} Partien.`
+          : `Jede gemeinsame Partie gewonnen.`,
         when: t.when,
         prio: STORY_PRIO.team_streak + (t.streak >= 7 ? 4 : 0),
         dataRef: {type:'team_streak', a:t.ids[0], b:t.ids[1], streak:t.streak,
@@ -600,7 +608,7 @@ function _buildStories(){
         // Angabe kam nicht dazu [§C33]. Der Tag, an dem die Serie anfing,
         // sagt etwas, das sonst nirgends steht — die Duo-Pleitenserie macht
         // es seit jeher so.
-        desc: `${_zahlwortDe(c.streak)} Niederlagen am Stück.`
+        desc: `${_zahlwortDe(c.streak, true)} Niederlagen am Stück.`
             // Den Punkt setzt `tagImSatz`: „25.08." trägt ihn schon, „25.08.26" nicht.
             + (c.seit ? ` Der letzte Sieg liegt vor dem ${tagImSatz(c.seit)}` : ''),
         when: c.when,
@@ -1218,8 +1226,10 @@ function _buildStories(){
         if(liste[0] !== mit) continue;
         const g = gesamt[id];
         neuSt.push({id:'partner_' + id + '_' + mit + '_' + m.id, cat:'team', ic:'handshake',
-          title:`${nameOf(id)} gewinnt mit ${nameOf(mit)} ${quote(z.s, z.n)} % der Partien, mit allen ${quote(g.s, g.n)} %`,
-          desc:`${z.s} von ${z.n} gemeinsamen Partien gewonnen.`,
+          // Der Vergleich gehört in den Satz: „…, mit allen 44 %" machte
+          // die Schlagzeile drei Zeilen lang und hieß nicht, mit wem.
+          title:`${nameOf(id)} gewinnt mit ${nameOf(mit)} ${quote(z.s, z.n)} % der Partien`,
+          desc:`${z.s} von ${z.n} gemeinsamen Partien gewonnen. Mit allen Partnern sind es ${quote(g.s, g.n)} %.`,
           when:zeit, prio:STORY_PRIO.partner_best,
           dataRef:{type:'partner_best', pid:id, mit, s:z.s, n:z.n, allg:quote(g.s, g.n), matchId:m.id, playerIds:[id, mit]}});
         break;
@@ -2158,7 +2168,7 @@ function _buildStories(){
           const t = new Date(c.when).getTime();
           const alle = (matchesOfPlayer(c.pid, matches) || []).filter(m => mts(m) <= t);
           const siege = alle.filter(m => won(c.pid, m)).length;
-          return `${_zahlwortDe(c.streak)} Siege in Folge. In der Laufbahn `
+          return `${_zahlwortDe(c.streak, true)} Siege in Folge. In der Laufbahn `
                + `stehen damit ${siege} Siege aus ${alle.length} Partien.`;
         })(),
         when: c.when,
@@ -2578,7 +2588,7 @@ function _buildStories(){
         // Der Beleg steht hier im Fliesstext, nicht in einer Listenzelle:
         // der Mittelpunkt darin trennte sonst mitten im Satz zwei Spalten,
         // die es gar nicht gibt.
-        const belegSatz = _evSatz(n.ev);
+        const belegSatz = _evSatz(n.ev, true);
         // Die Zeile einer Sammelkarte traegt die Bedingung nicht: gemessen
         // ueber die Ligageschichte waren die „Erstmals vergeben"-Zeilen 168
         // bis 175 Zeichen lang, weil `cond` jede Schwelle nennt [§C35]. In
@@ -2936,7 +2946,7 @@ function _buildStories(){
         // hielt eines von beidem fuer einen Fehler. Die Zeile nennt deshalb
         // ausdruecklich den Beitrag DIESES Eintrags; steht sie allein, faellt
         // der Name weg [§C33].
-        const zeileText = (n.ev ? _evSatz(n.ev) + '. ' : '') + `${artikel} Chronik`
+        const zeileText = (n.ev ? _evSatz(n.ev, true) + '. ' : '') + `${artikel} Chronik`
           + (mitPlus.length
              ? (mitPlus.length === 1
                  ? `, +${prestigeDelta[mitPlus[0]]} Prestige aus diesem Eintrag.`
@@ -2948,7 +2958,7 @@ function _buildStories(){
           title: titel,
           // Ohne die Punkte: die Karte zeigt sie als grossen Wert, und zweimal
           // dieselbe Zahl untereinander sagt nichts Neues [§C33].
-          desc: (n.ev ? _evSatz(n.ev) + '. ' : '')
+          desc: (n.ev ? _evSatz(n.ev, true) + '. ' : '')
               + `${artikel} Chronik.` + nachsatz + _zeigtSatz + prestigeSatz,
           klasse: t.klasse});
       });

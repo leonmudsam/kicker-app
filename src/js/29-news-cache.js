@@ -456,7 +456,7 @@ function _consolidateStoriesLegacy(list){
   const GROUPABLE = {
     loss_streak:     { label:'Pechvögel',           ic:'dropDouble', frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.streak})`, desc:f=>`Niederlagen nacheinander: ${f}.` },
     top_form:        { label:'über dem eigenen Schnitt', ic:'flame',  frag:s=>`${nameOf(s.dataRef.pid)} (+${s.dataRef.vorsprung ?? 0} Punkte)`, desc:f=>`Weiter vorn als sonst: ${f}.` },
-    win_streak:      { label:'Serien im Gleichschritt', ic:'flame', frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.streak})`, desc:f=>`Kein Stolpern bis zur Marke: ${f}.` },
+    win_streak:      { label:'Serien im Gleichschritt', ic:'flame', frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.streak})`, desc:f=>`Siege in Folge: ${f}.` },
     jubilee:         { label:'Jubiläen',            ic:'calendar',   frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.total}.)`, desc:f=>`Spiele-Meilensteine: ${f}.` },
     milestone_wins:  { label:'Sieg-Meilensteine',   ic:'medalTrio',  frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.milestone})`, desc:f=>`Erreicht: ${f}.` },
     milestone_goals: { label:'Tor-Meilensteine',    ic:'thriller',   frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.milestone})`, desc:f=>`Erreicht: ${f}.` },
@@ -1301,11 +1301,8 @@ function _consolidateStoriesLegacy(list){
       neuTitel = pids.length
         ? `${_namenKurz(pids.map(nameOf))} `
           + `${pids.length > 1 ? 'setzen' : 'setzt'} Marken auf kurzer Strecke`
-        : `${_zahlwortDe(teile.length)} Marken auf kurzer Strecke`;
-      // Gross am Satzanfang: `_zahlwortDe` liefert „drei", und der Satz
-      // begann damit klein.
-      const _zw = _zahlwortDe(teile.length);
-      neuText = `${_zw.charAt(0).toUpperCase() + _zw.slice(1)} `
+        : `${_zahlwortDe(teile.length, true)} Marken auf kurzer Strecke`;
+      neuText = `${_zahlwortDe(teile.length, true)} `
         + `${mz ? 'Bestmarken' : 'Bestmarke'} aus den letzten Partien. `
         + `${mz ? 'Sie halten' : 'Sie hält'}, solange das Fenster reicht.`;
     } else if(istTafel){
@@ -1545,7 +1542,7 @@ function _consolidateStoriesLegacy(list){
       const nf = Math.max(1, teile.length - (spTeil ? 1 : 0));
       const folge = nf === 1
         ? 'Eine Meldung hängt daran'
-        : `${(x => x.charAt(0).toUpperCase() + x.slice(1))(_zahlwortDe(nf))} Meldungen hängen daran`;
+        : `${_zahlwortDe(nf, true)} Meldungen hängen daran`;
       // Trägt die Karte einer Partie einen Hauptanlass, erklärt ihr Satz
       // ihn. Unter „Stefan holt die seltene Auszeichnung ‚Nerven aus Stahl‘"
       // stand „Nur 1 Tor trennt beide Teams" — der Satz der Partie, den ihr

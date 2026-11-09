@@ -1273,7 +1273,7 @@ function _ambientTemplatePool(now, pm, nameOf){
       // traegt ihr Datum. Und der grosse Wert zaehlte die Eintraege des
       // Katalogs, waehrend die Schlagzeile von EINER Fuehrung erzaehlte —
       // zwei Aussagen auf einer Karte, und die Zahl gehoerte der falschen.
-      desc:`${_evSatz(a.ev)}. ${held} von ${SEASON_TITLES.length} `
+      desc:`${_evSatz(a.ev, true)}. ${held} von ${SEASON_TITLES.length} `
         + `Chronik-Einträgen stehen schon.`,
       // Hier stand die erste Zahl des Belegs unter der Aufschrift „in
       // Führung". Beides war falsch: „in Führung" beschreibt den Spieler und
@@ -1319,7 +1319,7 @@ function _ambientTemplatePool(now, pm, nameOf){
       // „… gewonnen · 9. sonst hält ihn niemand." Der zweite Satz faengt jetzt
       // an, wo ein Satz anfaengt, und der Beleg traegt keinen Listentrenner
       // mehr mitten im Fliesstext.
-      desc:`${_evSatz(h.ev)}. ${h.shared ? 'Diesen Bestwert halten mehrere punktgleich.' : 'Sonst hält diesen Bestwert niemand.'}`,
+      desc:`${_evSatz(h.ev, true)}. ${h.shared ? 'Diesen Bestwert halten mehrere punktgleich.' : 'Sonst hält diesen Bestwert niemand.'}`,
       // Der grosse Wert war die Zeichenkette „1" mit der Aufschrift
       // „Rekordhalter" — eine Konstante und eine Aussage ueber den TRAeGER
       // statt ueber die Zahl. „1 Rekordhalter" gilt fuer jeden Rekord und

@@ -239,7 +239,7 @@ function _spZeileDaten(m){
 }
 function _spZeileBild(d){
   const s = (ids, w, re) => `<span class="sp-z-s${w ? ' w' : ''}${re ? ' re' : ''}">${_spChips(ids)}`
-    + `<span class="sp-z-n">${_spStapel(ids)}</span></span>`;
+    + (d.tz ? '' : `<span class="sp-z-n">${_spStapel(ids)}</span>`) + `</span>`;
   return `<div class="sp-zeile">${s(d.A, d.aw)}<b class="sp-z-sc num">${_spStand(d)}</b>${s(d.B, !d.aw, true)}</div>`;
 }
 // Das Band des klaren Siegs: dieselben Wappen wie das Ergebnisband der App,
@@ -247,7 +247,7 @@ function _spZeileBild(d){
 // Zeile wurde gekürzt.
 function _spBandBild(d){
   const s = (ids, w, re) => `<div class="sp-band-s${w ? ' w' : ''}${re ? ' re' : ''}"><span class="sp-band-avs">`
-    + `${ids.map(id => _spWappen(id, 48)).join('')}</span><span class="sp-z-n">${_spStapel(ids)}</span></div>`;
+    + `${ids.map(id => _spWappen(id, 48)).join('')}</span>${d.tz ? '' : `<span class="sp-z-n">${_spStapel(ids)}</span>`}</div>`;
   // Die Mitte zeigt den Abstand, denn um ihn geht es: der Stand groß, der
   // Sieger hell, darunter je Tor des Siegers ein Feld — so viele, wie die
   // Gegenseite auch geschossen hat, leise, und der Abstand hell. Der Stand
@@ -280,7 +280,7 @@ function _spFeldDaten(a){
 // Schrift. Passen die Namen nicht unter ihre Stange, steht die Aufstellung
 // darunter in zwei Spalten, eine je Team.
 function _spFeldBild(d){
-  const innen = _spPasst(d.slots.map(s => s.id), 9);
+  const innen = !d.tz && _spPasst(d.slots.map(s => s.id), 9);
   const aufst = w => d.slots.filter(s => s.w === w).sort((a, b) => (a.r === 'Abwehr') - (b.r === 'Abwehr'))
     .map(s => `<span><i>${s.r}</i>${_spNb(s.id)}</span>`).join('');
   return `<div class="sp-feld">
@@ -291,7 +291,7 @@ function _spFeldBild(d){
       + `<span class="sp-f-rolle">${s.r}</span>${_spWappen(s.id, 48)}`
       + (innen ? `<span class="sp-f-n">${esc(_spName(s.id))}</span>` : '')
       + (d.ohneElo ? '' : `<em class="${(s.d || 0) >= 0 ? 'g' : 'r'} num">${_spVz(s.d)}</em>`) + `</div>`).join('')}</div>
-  </div>${innen ? '' : `<div class="sp-aufst"><div class="w">${aufst(true)}</div><div class="re">${aufst(false)}</div></div>`}`;
+  </div>${innen || d.tz ? '' : `<div class="sp-aufst"><div class="w">${aufst(true)}</div><div class="re">${aufst(false)}</div></div>`}`;
 }
 
 // ── Die Anzeigetafel: der Ein-Tor-Krimi ──────────────────────────────
@@ -351,9 +351,11 @@ function _spVerteilungBild(d){
       + `<i style="height:${(d.n[k] / max * 100).toFixed(0)}%"></i><em>${10 - k}</em></span>`);
   }
   return `<div class="sp-vt"><div class="sp-k">Alle ${_spZahl(d.gesamt)} Partien nach Gegentoren</div>
-    <div class="sp-vt-g">${saeulen.join('')}</div>
-    <div class="sp-vt-f"><b class="num">${_spZahl(d.so)}</b> von ${_spZahl(d.gesamt)} Partien so deutlich oder deutlicher`
-    + `${d.zuletzt ? `, zuletzt am ${datumFmt(d.zuletzt, 'tmx')}` : ''}</div></div>`;
+    <div class="sp-vt-g">${saeulen.join('')}</div>`
+    // Auf der Karte steht der Satz als Zeile über dem Fuß („96 von 626
+    // Partien der Liga endeten so deutlich"), darunter stand er ein zweites Mal.
+    + (d.nurAnlass ? '' : `<div class="sp-vt-f"><b class="num">${_spZahl(d.so)}</b> von ${_spZahl(d.gesamt)} Partien so deutlich oder deutlicher`
+      + `${d.zuletzt ? `, zuletzt am ${datumFmt(d.zuletzt, 'tmx')}` : ''}</div>`) + `</div>`;
 }
 
 // ── Die Wippe: der Außenseitersieg ───────────────────────────────────
@@ -371,14 +373,15 @@ function _spWippeBild(d){
   const gap = Math.max(0, d.eloFav - d.eloDog);
   const th = Math.min(13, 5 + gap / 25) * Math.PI / 180;
   const px = 150, py = 86, r = 104;
-  // Die Sieger stehen links wie in jedem Kopf: sie waren leichter und
-  // sitzen oben. Vorher saßen die Favoriten links unten, also die
-  // Verlierer.
-  const lx = px - r * Math.cos(th), ly = py - r * Math.sin(th);
-  const rx = px + r * Math.cos(th), ry = py + r * Math.sin(th);
+  // Die Sieger waren leichter und sitzen oben, auf ihrer Seite des Tischs:
+  // Team A links, Team B rechts [§C33]. Gewann B, kippt die Wippe zur
+  // anderen Seite.
+  const re = d.aw === false, dx = r * Math.cos(th), dy = r * Math.sin(th);
+  const lx = re ? px + dx : px - dx, ly = py - dy;
+  const rx = re ? px - dx : px + dx, ry = py + dy;
   const P = (x, y) => `left:${(x / 300 * 100).toFixed(1)}%;top:${(y / 120 * 100).toFixed(1)}%`;
   const minus = v => (v < 0 ? '−' : '') + _spZahl(v);
-  const schild = (ids, e, p, w) => `<div class="sp-wp-l${w ? ' w' : ''}"><span class="sp-wp-n">${_spStapel(ids)}</span>`
+  const schild = (ids, e, p, w) => `<div class="sp-wp-l${w ? ' w' : ''}">${d.tz ? '' : `<span class="sp-wp-n">${_spStapel(ids)}</span>`}`
     + `<span class="sp-wp-z">Ø ${minus(e)} Elo · ${p} %</span></div>`;
   return `<div class="sp-wp">
     <div class="sp-wp-kopf"><b class="sp-wp-st num">${_spStand(d)}</b>
@@ -389,10 +392,11 @@ function _spWippeBild(d){
         <line class="sp-wp-bk" x1="${lx.toFixed(1)}" y1="${ly.toFixed(1)}" x2="${rx.toFixed(1)}" y2="${ry.toFixed(1)}"/>
         <circle class="sp-wp-ax" cx="${px}" cy="${py}" r="3.5"/>
       </svg>
-      <div class="sp-wp-t w" style="${P(lx + 8, ly - 4)}">${_spChips(d.dog)}</div>
-      <div class="sp-wp-t" style="${P(rx - 8, ry - 4)}">${_spChips(d.fav)}</div>
+      <div class="sp-wp-t w" style="${P(lx + (re ? -8 : 8), ly - 4)}">${_spChips(d.dog)}</div>
+      <div class="sp-wp-t" style="${P(rx + (re ? 8 : -8), ry - 4)}">${_spChips(d.fav)}</div>
     </div>
-    <div class="sp-wp-ls">${schild(d.dog, d.eloDog, d.pct, true)}${schild(d.fav, d.eloFav, 100 - d.pct, false)}</div>
+    <div class="sp-wp-ls">${re ? schild(d.fav, d.eloFav, 100 - d.pct, false) + schild(d.dog, d.eloDog, d.pct, true)
+      : schild(d.dog, d.eloDog, d.pct, true) + schild(d.fav, d.eloFav, 100 - d.pct, false)}</div>
   </div>`;
 }
 
@@ -477,7 +481,7 @@ function _spSerieBild(d){
   const selbst = d.ligaWer === d.pid && d.liga === d.eig;
   const legende = (d.eig ? `<span class="eig">eigener Bestwert ${_spZahl(d.eig)}${selbst ? ', zugleich Liga-Rekord' : ''}</span>` : '')
     + (!selbst && d.liga ? `<span class="liga">Liga-Rekord ${_spZahl(d.liga)}${d.ligaWer ? ` von ${_spNb(d.ligaWer)}` : ''}</span>` : '');
-  return `<div class="sp-sl"><div class="sp-sl-k">${_spChip(d.pid)}<em class="num">${_spZahl(d.laenge)} in Folge</em><span class="sp-sl-n">${_spNb(d.pid)}</span></div>
+  return `<div class="sp-sl"><div class="sp-sl-k">${_spChip(d.pid)}<em class="num">${_spZahl(d.laenge)} in Folge</em>${d.nurAnlass ? '' : `<span class="sp-sl-n">${_spNb(d.pid)}</span>`}</div>
     <div class="sp-sl-r${zellen ? '' : ' balken'}">${bahn}${strich(d.eig, 'eig')}${selbst ? '' : strich(d.liga, 'liga')}</div>
     <div class="sp-sl-ms">${legende}</div></div>`;
 }
@@ -1103,7 +1107,7 @@ const SP_FORM = {
       return lieb ? {g:lieb, fluch:false} : null;
     },
     gewicht:x => x.fluch ? 42 : 0,
-    daten:(F, x) => ({w:x.g.w, l:x.g.l, W:F.W, L:F.L, s:x.g.s, n:x.g.n, folge:x.g.folge.slice(-24), fluch:x.fluch ? x.g.fluch : 0, hoch:F.hoch, tief:F.tief}),
+    daten:(F, x) => ({w:x.g.w, l:x.g.l, W:F.W, L:F.L, s:x.g.s, n:x.g.n, folge:x.g.folge.slice(-24), fluch:x.fluch ? x.g.fluch : 0, hoch:F.hoch, tief:F.tief, awA:F.m.winner === 'A'}),
     text:(F, x) => {
       const g = x.g, eig = _spEigene(g.w, F.m).slice(0, -1).filter(y => [y.a1, y.a2, y.b1, y.b2].includes(g.l) && _spSeite(y, g.w) !== _spSeite(y, g.l));
       if(x.fluch){
@@ -1120,7 +1124,7 @@ const SP_FORM = {
   revanche:{rang:28, ic:'rematch',
     wann:F => F.revanche || null,
     daten:F => ({W:F.W, L:F.L, hoch:F.hoch, tief:F.tief, vHoch:Math.max(F.revanche.vorher.score_a, F.revanche.vorher.score_b),
-      vTief:Math.min(F.revanche.vorher.score_a, F.revanche.vorher.score_b), seit:_spSeit(F.revanche.ms)}),
+      vTief:Math.min(F.revanche.vorher.score_a, F.revanche.vorher.score_b), seit:_spSeit(F.revanche.ms), awA:F.m.winner === 'A'}),
     text:F => {
       const s = F.treffen.filter(y => _spGew(y, F.W[0])).length, n = F.treffen.length;
       return {t:F.revanche.ms <= 1800000 ? `${_spNl(F.W)} antworten sofort` : `${_spNl(F.W)} holen sich die Revanche`,
@@ -1241,7 +1245,7 @@ const SP_FORM = {
         ? {k, n:folge.length, s:folge.filter(Boolean).length, folge:folge.slice(-16)} : null;
     },
     gewicht:x => 28 + Math.min(10, x.k),
-    daten:(F, x) => Object.assign({W:F.W, L:F.L, hoch:F.hoch, tief:F.tief}, x),
+    daten:(F, x) => Object.assign({W:F.W, L:F.L, hoch:F.hoch, tief:F.tief, awA:F.m.winner === 'A'}, x),
     text:(F, x) => ({t:`${_spNl(F.W)} schlagen ${_spNl(F.L)} zum ${x.k}. Mal in Folge`,
       d:`In diesem Duell steht es ${x.s}:${x.n - x.s}.`})},
   // ── Die Köpfe des Katalogs ────────────────────────────────────────
@@ -1379,9 +1383,9 @@ function _spMosaikBild(d){
   const feld = k => `<div class="sp-mo-k${k === d.diff ? ' jetzt' : ''}" style="--a:${(d.n[k] / max).toFixed(2)};--i:${10 - k}">`
     + (k === d.diff ? _spSt(d) : `<b class="num">10:${10 - k}</b>`) + `<span class="num">${_spZahl(Math.round(d.n[k] / sum * 100))} %</span></div>`;
   const label = d.grund === 'selten' ? 'SELTENER AUSGANG'
-    : (d.grund === 'haeufig' ? 'HÄUFIGSTER AUSGANG' : 'RUNDE ERGEBNISMARKE');
+    : (d.grund === 'haeufig' ? 'HÄUFIGSTER AUSGANG' : 'RUNDE ZAHL');
   const beleg = d.grund === 'marke'
-    ? `${_spZahl(d.mal)}. Partie mit diesem Abstand`
+    ? `${_spZahl(d.mal)}. Partie mit diesem Ergebnis`
     : `${_spZahl(d.mal)} von ${_spZahl(d.gesamt || sum)} Partien`;
   return `<div class="sp-fk sp-mo"><div class="sp-mo-g">${Array.from({length:10}, (_, i) => feld(10 - i)).join('')}</div>`
     + (d.grund ? `<div class="sp-mo-a"><b>${label}</b><span>${beleg}</span></div>` : '')
@@ -1427,13 +1431,15 @@ function _spChemieBild(d){
     + `style="stroke-dasharray:${Math.max(0.5, l - 1.2).toFixed(2)} ${(U - l + 1.2).toFixed(2)};stroke-dashoffset:${(-l * k).toFixed(2)};--i:${k}"/>`).join('');
   return `<div class="sp-fk sp-ch"><div class="sp-ch-d">${_spWappen(d.A, 48)}<div class="sp-ch-r"><svg viewBox="0 0 56 56" aria-hidden="true">${seg}</svg>`
     + `<span><b class="num">${_spZahl(d.s)}.</b><i>DUO-SIEG</i></span></div>${_spWappen(d.B, 48)}</div>`
-    + `<div class="sp-ch-u">${d.nurAnlass ? '' : _spSt(d)}<span><b class="num">${_spZahl(d.s)}</b> von <b class="num">${_spZahl(d.p)}</b> zusammen gewonnen</span></div></div>`
+    // Auf der Karte zählt der Ring selbst: „18. Duo-Sieg" in einem Ring aus
+    // allen gemeinsamen Partien. Der Satz darunter wiederholte die 18.
+    + (d.nurAnlass ? '' : `<div class="sp-ch-u">${_spSt(d)}<span><b class="num">${_spZahl(d.s)}</b> von <b class="num">${_spZahl(d.p)}</b> zusammen gewonnen</span></div>`) + `</div>`
     + (d.nurAnlass ? '' : _spNz([d.A, d.B], d.L));
 }
 function _spGegnerBild(d){
   return `<div class="sp-fk sp-gg"><div class="sp-gg-p w">${_spWappen(d.w, 48)}</div>
     <div class="sp-gg-m"><em>${d.fluch ? 'Fluch gebrochen' : 'Lieblingsgegner'}</em>
-      <span class="sp-gg-b num"><b>${_spZahl(d.s)}</b>:${_spZahl(d.n - d.s)}</span>
+      <span class="sp-gg-b num">${d.ab ? `${_spZahl(d.n - d.s)}:<b>${_spZahl(d.s)}</b>` : `<b>${_spZahl(d.s)}</b>:${_spZahl(d.n - d.s)}`}</span>
       <span class="sp-gg-r">${d.folge.map((w, k) => `<i class="${w ? 'w' : 'l'}${k === d.folge.length - 1 ? ' jetzt' : ''}" style="--i:${k}"></i>`).join('')}</span>
       ${d.nurAnlass ? '' : `<span class="sp-gg-h">heute ${_spSt(d)}</span>`}</div>
     <div class="sp-gg-p">${_spWappen(d.l, 48)}</div></div>`
@@ -1441,7 +1447,7 @@ function _spGegnerBild(d){
 }
 function _spRevancheBild(d){
   return `<div class="sp-fk sp-rv"><span class="sp-rv-c">${_spChips(d.W)}</span>
-    <div class="sp-rv-m"><span class="sp-rv-t alt"><i>vorher</i><b class="num">${_spZahl(d.vTief)}:${_spZahl(d.vHoch)}</b></span>
+    <div class="sp-rv-m"><span class="sp-rv-t alt"><i>vorher</i><b class="num">${d.ab ? _spZahl(d.vHoch) + ':' + _spZahl(d.vTief) : _spZahl(d.vTief) + ':' + _spZahl(d.vHoch)}</b></span>
       <span class="sp-rv-p"><svg viewBox="0 0 60 24" aria-hidden="true"><path d="M4 18C18 2 42 2 56 16"/><path class="k" d="M50 15L56 16L55 10"/></svg>
         <i>nach ${_spZahl(d.seit.n)} ${d.seit.e}</i></span>
       <span class="sp-rv-t neu"><i>jetzt</i>${_spSt(d)}</span></div>
@@ -1457,7 +1463,7 @@ function _spGipfelBild(d){
 function _spRueckkehrBild(d){
   const n = Math.min(28, d.tage + 1);
   return `<div class="sp-fk sp-zu">${_spWappen(d.id, 48)}<div class="sp-zu-m">
-      <span class="sp-zu-z"><b class="num">${_spZahl(d.tage)}</b> Tage ohne Partie</span>
+      <span class="sp-zu-z"><b class="num">${_spZahl(d.tage)}</b> ${d.nurAnlass ? 'Tage' : 'Tage ohne Partie'}</span>
       <span class="sp-zu-k">${Array.from({length:n}, (_, k) => `<i class="${k === 0 ? 'alt' : ''}" style="--i:${k}"></i>`).join('')}${d.nurAnlass ? '' : _spSt(d)}</span></div></div>`
     + (d.nurAnlass ? '' : _spUnter(`${_spNb(d.id)} mit ${_spNb(d.mit)} gegen ${_spUnd(d.L)}.`));
 }
@@ -1487,8 +1493,8 @@ function _spZaehlwerkBild(d){
   // und ohne Bewegung braucht es niemand.
   const rolle = c => `<span class="sp-zw-r" style="--z:${c}"><b>${c}</b></span>`;
   return `<div class="sp-fk sp-zw">${d.wer ? _spWappen(d.wer, 48) : `<span class="sp-zw-l">${svgI('ball')}</span>`}
-    <div class="sp-zw-m"><span class="sp-zw-w num">${z.map(rolle).join('')}<b>.</b></span>
-      <span class="sp-zw-u">${einheit + (!d.nurAnlass && d.wer && _spPasst([d.wer], 12, true) ? ` von ${esc(_spName(d.wer))}` : '')}</span></div>
+    <div class="sp-zw-m"><span class="sp-zw-w num">${z.map(rolle).join('')}</span>
+      <span class="sp-zw-u">${(SP_MEHRZAHL[einheit] || einheit) + (!d.nurAnlass && d.wer && _spPasst([d.wer], 12, true) ? ` von ${esc(_spName(d.wer))}` : '')}</span></div>
     ${d.nurAnlass ? '' : `<div class="sp-zw-s">${_spSt(d)}</div>`}</div>`
     + (d.nurAnlass ? '' : _spNz(d.W, d.L));
 }
@@ -1498,14 +1504,18 @@ function _spZaehlwerkBild(d){
 // hätte, rückt sie mit ihrer Einheit in die Zeile darunter. Höchstens vier,
 // die schwersten zuerst: vier Zeilen sind schon die Höhe eines Kopfs, und
 // jede steht ohnehin als Zeile der Karte oder ihres Blatts.
+// Ein Zähler zeigt eine Menge, keine Ordnungszahl: „450 Partien der Liga".
+const SP_MEHRZAHL = {Sieg:'Siege', Partie:'Partien', Tor:'Tore', 'Partie der Liga':'Partien der Liga'};
 function _spMarkenBild(d){
   const l = ((d && d.liste) || []).filter(x => pmap()[x.pid]).slice(0, 4);
   if(!l.length) return '';
-  const ziffern = x => _spZahl(x.wert).split('').map(c => /\d/.test(c) ? `<i>${c}</i>` : `<s>${c}</s>`).join('')
-    + (x.label === 'Elo' ? '' : '<u>.</u>');
+  // Ohne Ordnungspunkt und mit der Einheit in der Mehrzahl: „150 Siege".
+  // Der Punkt stand nach den Klappziffern allein auf der Grundlinie und las
+  // sich als „1 5 0 ." [§C33].
+  const ziffern = x => _spZahl(x.wert).split('').map(c => /\d/.test(c) ? `<i>${c}</i>` : `<s>${c}</s>`).join('');
   return `<div class="sp-fk sp-zm"><div class="sp-k">${l.length > 1 ? 'Runde Zahlen in dieser Partie' : 'Runde Zahl'}</div>`
     + l.map(x => `<div class="sp-zm-z">${_spChip(x.pid)}<b>${esc(_spName(x.pid))}</b>`
-      + `<span class="sp-zm-n"><span class="sp-zm-d num">${ziffern(x)}</span><em>${esc(x.label)}</em></span></div>`).join('') + `</div>`;
+      + `<span class="sp-zm-n"><span class="sp-zm-d num">${ziffern(x)}</span><em>${esc(SP_MEHRZAHL[x.label] || x.label)}</em></span></div>`).join('') + `</div>`;
 }
 // ── Ein Liniendiagramm und eine kleine Rangliste ────────────────────
 // Für die Fakten des Katalogs [§C33]. Links die Achse mit runden Werten,
@@ -1690,13 +1700,18 @@ function _spTauziehenBild(d){
     + `<span class="sp-tz-mitte"></span><span class="sp-tz-k" style="left:${pos}%">${_spSt(d)}</span></div>${team(d.B, !d.aw)}</div>`
     + _spNz(d.W, d.L);
 }
+// Die Münze wird geworfen, dreht sich und landet: die Hälfte der Sieger so
+// groß wie ihre Chance vorher. Die Chance stand zweimal da, als „52:48"
+// unter der Münze und als „Siegchance vorher 52 %" daneben.
 function _spMuenzeBild(d){
-  return `<div class="sp-fk sp-mz"><div class="sp-mz-m"><svg viewBox="0 0 64 64" aria-hidden="true">`
-    + `<circle class="sp-mz-r" cx="32" cy="32" r="29"/><path class="sp-mz-w" d="M32 5A27 27 0 0 0 32 59Z"/>`
-    + `<path class="sp-mz-l" d="M32 5A27 27 0 0 1 32 59Z"/></svg>`
-    + `<span class="sp-mz-z num"><b>${_spZahl(d.pct)}</b>:${_spZahl(100 - d.pct)}</span></div>`
-    + `<div class="sp-mz-t"><em>Münzwurf</em><span class="sp-mz-h">${_spChips(d.W)}${_spSt(d)}</span>`
-    + `<span class="sp-mz-u">Siegchance vorher <b class="num">${_spZahl(d.pct)} %</b></span></div></div>`
+  const w = Math.max(1, Math.min(99, d.pct)) / 100, a = (w * 2 * Math.PI) - Math.PI / 2;
+  const x = (32 + 25 * Math.cos(a)).toFixed(2), y = (32 + 25 * Math.sin(a)).toFixed(2);
+  return `<div class="sp-fk sp-mz"><div class="sp-mz-m"><span class="sp-mz-c"><svg viewBox="0 0 64 64" aria-hidden="true">`
+    + `<circle class="sp-mz-r" cx="32" cy="32" r="30"/><circle class="sp-mz-l" cx="32" cy="32" r="25"/>`
+    + `<path class="sp-mz-w" d="M32 32V7A25 25 0 ${w > .5 ? 1 : 0} 1 ${x} ${y}Z"/>`
+    + `<circle class="sp-mz-i" cx="32" cy="32" r="21"/></svg></span>`
+    + `<span class="sp-mz-z num"><b>${_spZahl(d.pct)}</b> : ${_spZahl(100 - d.pct)}</span><small>Chance vorher</small></div>`
+    + `<div class="sp-mz-t"><em>Münzwurf</em><span class="sp-mz-h">${_spChips(d.W)}${_spSt(d)}</span></div></div>`
     + _spNz(d.W, d.L);
 }
 function _spWesteBild(d){
@@ -1745,9 +1760,12 @@ function _spUeberholtBild(d){
 }
 function _spDuoserieBild(d){
   return `<div class="sp-fk sp-ds"><span class="sp-ds-c">${_spChips(d.W)}</span><div class="sp-ds-m"><em>Duo gegen Duo</em>`
-    + `<span class="sp-ds-k"><b class="num">${_spZahl(d.k)}</b> Siege in Folge</span>`
+    + `<span class="sp-ds-k"><b class="num">${_spZahl(d.k)}</b> in Folge</span>`
     + `<span class="sp-ds-r">${d.folge.map((w, k) => `<i class="${w ? 'w' : 'l'}${k === d.folge.length - 1 ? ' jetzt' : ''}" style="--i:${k}"></i>`).join('')}</span>`
-    + `<span class="sp-ds-u"><b class="num">${_spZahl(d.s)}</b>:${_spZahl(d.n - d.s)} in ${_spZahl(d.n)} Duellen</span></div>`
+    // Die Bilanz aller Duelle nur, wenn sie mehr sagt als die Serie: unter
+    // „7 in Folge" stand „7:0 in 7 Duellen".
+    + (d.s === d.k && d.n === d.k ? '' : `<span class="sp-ds-u">${d.ab ? `${_spZahl(d.n - d.s)}:<b class="num">${_spZahl(d.s)}</b>`
+      : `<b class="num">${_spZahl(d.s)}</b>:${_spZahl(d.n - d.s)}`} in ${_spZahl(d.n)} Duellen</span>`) + `</div>`
     + `<span class="sp-ds-c re">${_spChips(d.L)}</span></div>`
     + (d.nurAnlass ? '' : _spNz(d.W, d.L));
 }
@@ -2353,7 +2371,11 @@ function _spVisualSnapshot(m, fakten){
 function _spScoreBild(v, m){
   if(!v || !v.key) return '';
   const aw = m ? m.winner === 'A' : (v.data && v.data.aw);
-  const data = v.data && typeof v.data === 'object' && v.data.aw == null && m ? Object.assign({}, v.data, {aw}) : v.data;
+  // Unter dem Kopf steht die Teamzeile mit allen vier Namen (`tz`). Band,
+  // Feld und Wippe schrieben sie ein zweites Mal unter ihre Gesichter, in
+  // anderer Reihenfolge („Stefan, Leon" über „Leon, Stefan").
+  const data = v.data && typeof v.data === 'object' && m
+    ? Object.assign({}, v.data, v.data.aw == null ? {aw} : {}, {tz:true}) : v.data;
   const spezial = {krimi:_spTafelBild, aussenseiter:_spWippeBild, deutlich:_spBandBild,
     zeile:_spZeileBild, abstand:_spBandBild};
   let h = spezial[v.key] ? spezial[v.key](data) : SP_FORM_BILD[v.key] ? SP_FORM_BILD[v.key](data) : '';
@@ -2384,7 +2406,16 @@ function _spOccasionBild(v){
   // der Zeichnung („Johannes steigt von 2 auf 1 und führt, Maxi fällt von 1
   // auf 2") sagte es ein zweites Mal, unter der Schlagzeile „Johannes
   // übernimmt die Tabellenspitze" ein drittes. Das Blatt behält ihn.
-  const h = bild[v.key] ? bild[v.key](data) : SP_FORM_BILD[v.key] ? SP_FORM_BILD[v.key](data) : '';
+  // Ein Fuß mit beiden Seiten steht wie der Kopf: Team A links, Team B
+  // rechts (`ab`), und seine Bilanz liest sich A:B. Die Seite steht als
+  // `awA` in den Daten und nicht als `aw`: daran liest `_spSt` die
+  // Reihenfolge des Stands, und die alte Formkette, die dieselben Daten
+  // ohne Spiegel zeichnet, las „8:10" neben den Siegern links.
+  // Gespeicherte Füße ohne `awA` behalten die Sieger links.
+  const ab = !!(data && data.awA === false && ['duoserie', 'revanche', 'gegner'].includes(v.key));
+  if(ab){ data.ab = true; data.aw = false; }
+  let h = bild[v.key] ? bild[v.key](data) : SP_FORM_BILD[v.key] ? SP_FORM_BILD[v.key](data) : '';
+  if(ab) h = h.replace(/^<div class="/, '<div class="sp-b ');
   return h.replace(/<div class="sp-lg">[\s\S]*?<\/div>/g, '');
 }
 // Der Satz einer Partie nannte überall dieselben zwei Zahlen — „Die

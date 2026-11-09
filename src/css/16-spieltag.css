@@ -16,8 +16,7 @@
 /* Die Textstelle unter einer Grafik: so breit wie die Karte, Namen fett. */
 .sp-lg{margin-top:6px;font-size:10.5px;line-height:1.45;color:var(--muted)}
 .sp-lg b,.sp-z-n b,.sp-aufst b,.sp-at-n b,.sp-nv-n b,.sp-wp-n b,.sp-sl-n b,.sp-rd-n b{font-weight:600;color:var(--ink2)}
-.sp-chips{display:flex;flex:0 0 auto}
-.sp-chips .av+.av{margin-left:-6px}
+.sp-chips{display:flex;flex:0 0 auto;gap:3px}
 .nf-runde .av,.sp-rd-tafel .av,.sp-zeile .av,.sp-at .av,.sp-nv .av,.sp-wp .av,.sp-sl .av,.sp-ku .av,.sp-bg .av,.sp-rd-p .av,
 .sp-rk .av,.sp-duo .av,.sp-pm .av,.sp-ro .av{--av:20px;width:20px;height:20px;font-size:8px;box-shadow:0 0 0 2px var(--surface);flex:0 0 auto}
 /* Eine Zahl bricht nicht um, aus 12.345 würde sonst „12." über „345". */
@@ -133,14 +132,13 @@
 .sp-wp-ax{fill:var(--surface);stroke:var(--ink2);stroke-width:1.5}
 .sp-wp-t{position:absolute;transform:translate(-50%,-100%)}
 .sp-wp-t .av{--av:26px;width:26px;height:26px;font-size:10px}
-.sp-wp-t .av+.av{margin-left:-7px}
 .sp-wp-t:not(.w){opacity:.6}
 .sp-wp-t.w .av{box-shadow:0 0 0 2px var(--surface),0 0 0 3px rgba(190,242,100,.55)}
 .sp-wp-ls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-top:-6px}
 .sp-wp-l{display:flex;flex-direction:column;min-width:0;line-height:1.3}
-/* Die Sieger stehen links, ihr Schild links bündig; der der Favoriten
-   rechts. */
-.sp-wp-l:not(.w){text-align:right}
+/* Team A links, links bündig; Team B rechts, rechts bündig. */
+.sp-wp-l + .sp-wp-l{text-align:right}
+.sp-wp-l + .sp-wp-l .sp-wp-n{align-items:flex-end}
 .sp-wp-n{display:flex;flex-direction:column;font-size:10.5px;line-height:1.3;color:var(--muted)}
 .sp-wp-l.w .sp-wp-n b{color:var(--ink)}
 .sp-wp-z{font:600 9.5px 'Sometype Mono',monospace;color:var(--faint);margin-top:1px}
@@ -435,9 +433,15 @@
 /* Gewann B, stehen die Sieger rechts: ein Kopf, der nach Siegern und
    Verlierern rechnet, kehrt seine Spalten um (`sp-b`); der Inhalt jeder
    Spalte bleibt, wie er ist, und eine Kurve läuft zum Sieger hin. */
-.sp-b.sp-ag,.sp-b .sp-ag-z,.sp-b .sp-hz-g,.sp-b.sp-zn,.sp-b .sp-zn-z,.sp-b .sp-zn-tore,.sp-b.sp-gf{direction:rtl}
+.sp-b.sp-ag,.sp-b .sp-ag-z,.sp-b .sp-hz-g,.sp-b.sp-zn,.sp-b.sp-gf{direction:rtl}
 .sp-b.sp-ag > *,.sp-b .sp-ag-z > *,.sp-b .sp-hz-g > *,.sp-b.sp-zn > *,.sp-b .sp-zn-z > *,.sp-b .sp-zn-tore > *,.sp-b.sp-gf > *{direction:ltr}
+/* Stand und Tore des Zu-null-Kopfs sind selbst Kinder der Spalten: die
+   Rückstellung darüber träfe sie mit, und der Stand las 10:0 neben den
+   Verlierern, das goldene Tor stand unter ihnen. */
+.sp-b.sp-zn > .sp-zn-z,.sp-b.sp-zn > .sp-zn-tore{direction:rtl}
 .sp-b .sp-hz-k svg{transform:scaleX(-1)}
+.sp-b.sp-ds,.sp-b.sp-rv,.sp-b.sp-gg{direction:rtl}
+.sp-b.sp-ds > *,.sp-b.sp-rv > *,.sp-b.sp-gg > *{direction:ltr}
 
 /* ── Die Köpfe des Katalogs ──────────────────────────────────────── */
 /* Ein Paar steht nebeneinander, ohne Überlappung: übereinander deckte das
@@ -924,13 +928,17 @@
 .sp-tz-k .sp-st{font-size:17px}
 
 /* Der Münzwurf: die Münze in zwei Hälften, darunter die Siegchance beider. */
-.sp-mz{display:grid;grid-template-columns:76px minmax(0,1fr);align-items:center;gap:12px}
-.sp-mz-m{display:flex;flex-direction:column;align-items:center;gap:2px}
-.sp-mz-m svg{display:block;width:60px;height:60px}
-.sp-mz-r{fill:none;stroke:var(--line2);stroke-width:2}
-.sp-mz-w{fill:rgba(190,242,100,.55)}.sp-mz-l{fill:rgba(194,201,208,.18)}
-.sp-mz-z{font:700 10px 'Sometype Mono',monospace;color:var(--faint)}
+.sp-mz{display:grid;grid-template-columns:84px minmax(0,1fr);align-items:center;gap:12px}
+.sp-mz-m{display:flex;flex-direction:column;align-items:center;gap:3px;perspective:300px}
+.sp-mz-c{display:block;width:64px;height:64px;transform-style:preserve-3d}
+.sp-mz-c svg{display:block;width:100%;height:100%;overflow:visible}
+.sp-mz-r{fill:rgba(247,207,74,.10);stroke:rgba(247,207,74,.55);stroke-width:1.5}
+.sp-mz-w{fill:rgba(190,242,100,.75)}.sp-mz-l{fill:rgba(194,201,208,.16)}
+.sp-mz-i{fill:none;stroke:rgba(0,0,0,.28);stroke-width:1;stroke-dasharray:1.5 2.5}
+.sp-mz-z{font:700 11px 'Sometype Mono',monospace;color:var(--faint);white-space:nowrap}
 .sp-mz-z b{color:var(--acid)}
+.sp-mz-m > small{font:600 8px 'Sometype Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);white-space:nowrap}
+.sp-mz-h .sp-st{font-size:26px}
 .sp-mz-t,.sp-ws-t,.sp-uh-t,.sp-uo-t{display:flex;flex-direction:column;align-items:flex-start;gap:5px;min-width:0}
 .sp-mz-t > em,.sp-ws-t > em,.sp-uh-t > em,.sp-uo-t > em,.sp-ds-m > em{font:600 8.5px 'Sometype Mono',monospace;font-style:normal;
   letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
@@ -1000,10 +1008,14 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 .sp-ho-u b{color:var(--ink)}
 
 /* Bewegung: jede erklärt etwas, und nur transform und Deckkraft. */
+@keyframes spMuenze{0%{transform:translateY(0) rotateY(0)}40%{transform:translateY(-16px) rotateY(720deg)}
+  75%{transform:translateY(0) rotateY(1260deg)}87%{transform:translateY(-3px) rotateY(1340deg)}100%{transform:translateY(0) rotateY(1440deg)}}
 @media (prefers-reduced-motion:no-preference){
   .sp-mo-k,.sp-gp-z,.sp-gg-r i,.sp-zu-k i,.sp-ch-r circle,.sp-tr-r circle,.sp-uh-s line,.sp-ds-r i{animation:spDa .35s ease-out both;animation-delay:calc(var(--i,0) * 40ms)}
   .sp-tz-k{animation:spZug .7s cubic-bezier(.3,1.4,.5,1) .15s both}
   .sp-ta-n{animation:spNadel 1.1s cubic-bezier(.3,1.4,.5,1) .15s both}
+  /* Geworfen, gedreht, gelandet — und dann liegt sie. */
+  .sp-mz-c{animation:spMuenze 1.3s cubic-bezier(.3,.7,.4,1) .15s both}
   .sp-sd-r{animation:spPuls 2.6s ease-out .6s infinite}
   .sp-et-m > i{animation:spFluss 1.8s cubic-bezier(.5,0,.5,1) infinite;animation-delay:calc(var(--i,0) * 150ms)}
   .sp-gf-s > i{animation:spY .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 80ms)}

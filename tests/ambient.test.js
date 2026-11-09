@@ -5415,11 +5415,38 @@ const _aufbau = JSON.parse(K.eval(`JSON.stringify((function(){
     const st = Math.max(m.score_a, m.score_b) + ':' + Math.min(m.score_a, m.score_b);
     if(String(c.desc || '').indexOf(st) >= 0) stand.push(c.id + ': ' + c.desc);
   });
+  // Der Kopf schreibt keinen Namen, den die Teamzeile darunter trägt; ein
+  // Fuß mit beiden Seiten steht wie der Kopf; ein Zähler trägt keinen
+  // Ordnungspunkt; und kein Satz beginnt klein („drei Siege in Folge.").
+  const namen = [], ab = [], punkt = [];
+  getStoriesCache().filter(c => _newsSorte(c) === 'spiel' && (c.dataRef || {}).matchId).forEach(c => {
+    const b = _spBild(c), occ = b.occ || {};
+    if(/class="(sp-z-n|sp-f-n|sp-aufst|sp-wp-n)"/.test(b.kopf || '')) namen.push(c.id + ' ' + b.form);
+    if(['duoserie', 'revanche', 'gegner'].includes(occ.key) && occ.data && occ.data.awA === false
+       && String(b.fuss || '').indexOf('<div class="sp-b ') !== 0) ab.push(c.id + ' ' + occ.key);
+    if(/<u>\\.<\\/u>|<b>\\.<\\/b><\\/span>/.test(b.fuss || '')) punkt.push(c.id + ' ' + occ.key);
+  });
+  const klein = roh.filter(s => /^[a-zäöüß]/.test(String(s.desc || '')) || /^[a-zäöüß]/.test(String(s.title || '')))
+    .map(s => s.id + ': ' + (s.desc || s.title));
+  // Die Serie eines Duos nennt dessen Bilanz bis zu ihrer Partie: „Zehn
+  // gemeinsame Spiele, zehn Siege." stand über „spielen zum 75. Mal zusammen".
+  const duo = roh.filter(s => (s.dataRef || {}).type === 'team_streak').map(s => {
+    const d = s.dataRef, bis = idx.get(d.matchId), k = [d.a, d.b];
+    let w = 0, n = 0;
+    reihe.slice(0, bis + 1).forEach(m => { const sa = [m.a1, m.a2], sb = [m.b1, m.b2];
+      const t = k.every(id => sa.includes(id)) ? 'A' : k.every(id => sb.includes(id)) ? 'B' : null;
+      if(t){ n++; if(m.winner === t) w++; } });
+    const soll = n > d.streak ? 'Zusammen ' + w + ' Siege aus ' + n + ' Partien.' : 'Jede gemeinsame Partie gewonnen.';
+    return s.desc === soll ? null : s.id + ': ' + s.desc + ' statt ' + soll;
+  });
+  const duoN = duo.length, duoFalsch = duo.filter(Boolean);
   // Die Zeile des Fußes steht über ihm, in der Liste der Anlässe.
   const fz = getStoriesCache().map(c => _newsCardHtmlM2(c, false, false)).filter(h => h.indexOf('sp-fz') >= 0);
   const fzOben = fz.filter(h => h.indexOf('sp-fz') < h.lastIndexOf('class="sp-')).length;
   return {p:istP.size, r:istR.size, pFehlt:diff(sollP, istP), pZuviel:diff(istP, sollP), rFehlt:diff(sollR, istR), rZuviel:diff(istR, sollR),
-    fuesse:fuss.size, doppelt, seiten, stand, fz:fz.length, fzOben,
+    fuesse:fuss.size, doppelt, seiten, stand, fz:fz.length, fzOben, namen, ab, punkt, klein, duoN, duoFalsch,
+    abN:roh.filter(s => { const o = ((s.dataRef || {}).visual || {}).occasion || {};
+      return ['duoserie', 'revanche', 'gegner'].includes(o.key) && o.data && o.data.awA === false; }).length,
     alt:getStoriesCache().some(c => _newsCardHtmlM2(c, false, false).indexOf('sp-fu-z') >= 0)};
 })())`));
 ok(_aufbau.p > 0 && !_aufbau.pFehlt.length && !_aufbau.pZuviel.length,
@@ -5434,6 +5461,13 @@ ok(!_aufbau.seiten.length, 'die Teamzeile nennt Team A links und markiert den Si
 ok(!_aufbau.stand.length, 'der Satz einer Partie-Karte nennt ihren Stand nicht noch einmal', _aufbau.stand.slice(0, 2).join(' | '));
 ok(_aufbau.fz > 0 && _aufbau.fzOben === _aufbau.fz && !_aufbau.alt,
    'die Zeile des Fußes steht über ihm in der Liste, keine Unterschrift darunter', _aufbau.fz + ' / ' + _aufbau.fzOben);
+ok(!_aufbau.namen.length, 'kein Kopf schreibt die Namen, die die Teamzeile darunter trägt', _aufbau.namen.slice(0, 3).join(', '));
+ok(_aufbau.abN > 0 && !_aufbau.ab.length, 'ein Fuß mit beiden Seiten steht wie der Kopf: Team A links',
+   _aufbau.ab.slice(0, 3).join(', ') || _aufbau.abN + ' Füße mit Sieg von B');
+ok(!_aufbau.punkt.length, 'ein Zähler im Fuß trägt keinen Ordnungspunkt nach seinen Ziffern', _aufbau.punkt.slice(0, 3).join(', '));
+ok(!_aufbau.klein.length, 'keine Meldung beginnt Schlagzeile oder Satz klein', _aufbau.klein.slice(0, 2).join(' | '));
+ok(_aufbau.duoN > 0 && !_aufbau.duoFalsch.length, 'die Serie eines Duos nennt dessen Bilanz bis zu ihrer Partie, nachgezählt',
+   _aufbau.duoFalsch.slice(0, 2).join(' | ') || _aufbau.duoN + ' Serien');
 
 // ── Was zählt, meldet Stufen, nicht jeden Schritt ─────────────────────
 // „Leon und Maxi treffen zum 207. Mal aufeinander" stand an jedem Spieltag
@@ -8275,9 +8309,9 @@ const _bogen = JSON.parse(K.eval(`JSON.stringify((function(){
       if(hoch - tief < 6) falsch.push(s.id + ' deutlich bei ' + hoch + ':' + tief);
       if(occ === 'verteilung'){
         const so = vor.filter(x => Math.abs(x.score_a - x.score_b) >= Math.min(10, hoch - tief)).length;
-        if(t.indexOf(so + ' von ' + vor.length + ' Partien so deutlich') < 0) falsch.push(s.id + ' Verteilung nennt nicht ' + so + ' von ' + vor.length);
-        const z = vor.slice(0, -1).filter(x => Math.abs(x.score_a - x.score_b) >= hoch - tief).pop();
-        if(z && t.indexOf('zuletzt am ' + datumFmt(mts(z), 'tm')) < 0) falsch.push(s.id + ' Verteilung zuletzt');
+        // Auf der Karte steht die Zahl einmal, als Zeile über dem Fuß; „zuletzt
+        // am" behält das Blatt.
+        if(t.indexOf(so + ' von ' + vor.length + ' Partien der Liga endeten so deutlich') < 0) falsch.push(s.id + ' Verteilung nennt nicht ' + so + ' von ' + vor.length);
       }
     }
     // Die Wippe nur unter der Linie der Überraschung.
@@ -8479,7 +8513,7 @@ const _scoreWahl = JSON.parse(K.eval(`JSON.stringify((function(){
     if(w.key === 'mosaik'){
       const d = snap.data || {}, h = _spScoreBild(snap);
       if(!['selten','haeufig','marke'].includes(d.grund)
-         || !/SELTENER AUSGANG|HÄUFIGSTER AUSGANG|RUNDE ERGEBNISMARKE/.test(h))
+         || !/SELTENER AUSGANG|HÄUFIGSTER AUSGANG|RUNDE ZAHL/.test(h))
         falsch.push(m.id + ' Mosaik ohne Befund');
     }
     // Elo-Transfer, Klapptafel, Ergebniszeile, Abstand und Weste kommen aus

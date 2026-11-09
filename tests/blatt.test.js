@@ -2837,6 +2837,24 @@ const ok = (c, msg, det) => {
      'im Feed liegt auf keiner Karte am Spieltag ein Text auf einem anderen oder einem Gesicht, keiner ragt hinaus oder ist abgeschnitten',
      spieltag.fehler.slice(0, 3).join(' | ') || spieltag.karten + ' Karten, ' + spieltag.runden + ' Runden, '
        + Object.keys(spieltag.formen).length + ' Formen, kleinste Schrift ' + spieltag.kleinste + ' px');
+  // Ein Paar steht nebeneinander, nie übereinander: in Tacho, Münzwurf,
+  // Tauziehen, Wippe und den Füßen deckte das zweite Gesicht die
+  // Buchstaben des ersten zu (`.sp-chips .av+.av{margin-left:-6px}`).
+  const paare = await page.evaluate(() => {
+    const sheet = document.getElementById('sheet'), zu = [];
+    let n = 0;
+    sheet.querySelectorAll('.nf-card.nf-s-spiel .sp-chips, .nf-card.nf-s-spiel .sp-wp-t').forEach(c => {
+      const av = [...c.querySelectorAll(':scope > .av')];
+      for(let i = 1; i < av.length; i++){
+        n++;
+        const a = av[i - 1].getBoundingClientRect(), b = av[i].getBoundingClientRect();
+        if(Math.min(a.right, b.right) - Math.max(a.left, b.left) > 0.5) zu.push(c.closest('.nf-card').dataset.sid + ' ' + c.className);
+      }
+    });
+    return {n, zu};
+  });
+  ok(paare.n > 20 && !paare.zu.length, 'kein Gesicht eines Paars liegt auf dem anderen, in Kopf und Fuß',
+     paare.zu.slice(0, 3).join(' | ') || paare.n + ' Paare');
   // Die Grenzwerte: 45.495 Partien, eine Bilanz von 12.345:9.876, 98.765
   // Begegnungen, eine Elo von −12.345, eine Serie von 57 gegen einen
   // Bestwert von 120, eine Runde aus 23 Partien, Platz 118 bis 126 der
