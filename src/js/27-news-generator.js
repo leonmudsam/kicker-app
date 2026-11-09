@@ -424,7 +424,7 @@ function _buildStories(){
         id: 'team_streak_' + t.ids.join('_') + '_' + t.matchId + '_' + t.streak,
         cat: 'team',
         ic: 'unstoppable',
-        title: `${nameOf(t.ids[0])} und ${nameOf(t.ids[1])} gewinnen zusammen alles`,
+        title: `${nameOf(t.ids[0])} und ${nameOf(t.ids[1])} gewinnen zusammen zum ${t.streak}. Mal in Folge`,
         // „Zehn gemeinsame Spiele, zehn Siege." las sich, als hätten die
         // beiden nur zehnmal zusammen gespielt — darunter stand „spielen zum
         // 75. Mal zusammen". Die Bilanz bis zu dieser Partie sagt, was die
@@ -475,13 +475,12 @@ function _buildStories(){
         id: 'team_loss_streak_' + t.ids.join('_') + '_' + t.matchId + '_' + t.streak,
         cat: 'team',
         ic: 'trendCrash',
-        title: `${nameOf(t.ids[0])} und ${nameOf(t.ids[1])} verlieren zusammen alles`,
+        title: `${nameOf(t.ids[0])} und ${nameOf(t.ids[1])} verlieren zusammen zum ${t.streak}. Mal in Folge`,
         // Der Satz war fuer jedes Duo derselbe und stand damit wortgleich
-        // zweimal im Feed. Die Namen stehen schon in der Schlagzeile; hier
-        // steht, seit wann und wie oft.
-        desc: `Seit dem `
-            + `${datumFmt(t.firstT || t.when, 'tm')} `
-            + `gehen ${_zahlwortDe(t.streak)} gemeinsame Spiele in Folge verloren.`,
+        // zweimal im Feed. Die Zahl steht in der Schlagzeile; hier steht,
+        // seit wann. „Seit dem 04.11. gehen drei gemeinsame Spiele in Folge
+        // verloren" stand unter „verlieren zusammen zum 3. Mal in Folge".
+        desc: `Ohne gemeinsamen Sieg seit dem ${tagImSatz(t.firstT || t.when)}`,
         when: t.when,
         prio: STORY_PRIO.team_loss_streak + (t.streak >= 7 ? 4 : 0),
         dataRef: {type:'team_loss_streak', a:t.ids[0], b:t.ids[1], streak:t.streak,
@@ -601,16 +600,17 @@ function _buildStories(){
         id: 'loss_streak_' + c.pid + '_' + c.matchId + '_' + c.streak,
         cat: 'misfortune',
         ic: c.streak >= 7 ? 'dropTriple' : 'dropDouble',
-        title: `${nameOf(c.pid)} findet gerade kein Mittel`,
+        title: `${nameOf(c.pid)} verliert zum ${c.streak}. Mal in Folge`,
         // ── Der zweite Satz nennt eine neue Zahl ─────────────────────
         // Er hiess „So lange hat Leo nicht mehr gewonnen": die Zahl stand
         // schon im ersten Satz, der Name in der Schlagzeile, und eine neue
         // Angabe kam nicht dazu [§C33]. Der Tag, an dem die Serie anfing,
         // sagt etwas, das sonst nirgends steht — die Duo-Pleitenserie macht
         // es seit jeher so.
-        desc: `${_zahlwortDe(c.streak, true)} Niederlagen am Stück.`
-            // Den Punkt setzt `tagImSatz`: „25.08." trägt ihn schon, „25.08.26" nicht.
-            + (c.seit ? ` Der letzte Sieg liegt vor dem ${tagImSatz(c.seit)}` : ''),
+        // Die Zahl steht in der Schlagzeile wie in der Zeile der Partie
+        // („verliert zum 5. Mal in Folge"); „Fünf Niederlagen am Stück."
+        // darunter sagte sie ein zweites Mal. Den Punkt setzt `tagImSatz`.
+        desc: c.seit ? `Der letzte Sieg liegt vor dem ${tagImSatz(c.seit)}` : '',
         when: c.when,
         prio: STORY_PRIO.loss_streak + (c.streak >= 8 ? 4 : 0),
         dataRef: {type:'loss_streak', pid: c.pid, streak: c.streak,
@@ -830,18 +830,31 @@ function _buildStories(){
       const gemeinsamesMatch = matchIds.length === 1
         && l.every(ev => ev.matchId === matchIds[0]) ? matchIds[0] : null;
       const zeile = ev => `${nameOf(ev.playerId)} holt „${ev.badge.name}“ zum ${_bRang(ev)}. Mal`;
+      const bed = ev => String(ev.badge.desc || '').trim().replace(/([^.!?])$/, '$1.');
+      // Mehrere Marken eines Spielers: die Schlagzeile nennt sie mit ihrer
+      // Zahl wie die Zeile im Bündel, der Satz sagt, wofür es sie gibt.
+      // Er wiederholte die Zeile („Alex holt ‚Überholmanöver' zum 5. Mal,
+      // Alex holt ‚Pflichterfüller' zum 10. Mal").
+      const eins = namen.length === 1 && l.length <= 3;
+      const gleich = l.every(ev => _bRang(ev) === _bRang(l[0]));
+      const einsTitel = () => `${namen[0]} holt ` + (gleich
+        ? `${_namenListe(l.map(ev => `„${ev.badge.name}“`))}, ${l.length === 2 ? 'beide' : 'alle'} zum ${_bRang(l[0])}. Mal`
+        : _namenListe(l.map(ev => `„${ev.badge.name}“ zum ${_bRang(ev)}. Mal`)));
       stories.push({
         id: gemeinsamesMatch ? 'badgemarken_match_' + gemeinsamesMatch
                              : 'badgemarken_slot_' + tag,
         cat: 'badge',
         ic: (l.length === 1 && l[0].badge.ic) || 'medal',
-        title: l.length === 1 ? zeile(l[0])
+        title: l.length === 1 ? zeile(l[0]) : eins ? einsTitel()
           : `${_namenKurz(namen)} ${namen.length > 1 ? 'erreichen' : 'erreicht'} runde Marken`,
         // Bei einer einzigen Marke steht alles schon in der Schlagzeile; dann
         // traegt der Text die Bedingung aus dem Katalog — die Ausnahme, die
         // fuer jede Auszeichnung gilt [§C33].
-        desc: l.length === 1
-          ? String(l[0].badge.desc || '').trim().replace(/([^.!?])$/, '$1.')
+        desc: l.length === 1 ? bed(l[0])
+          // Eine Bedingung, die nur den Stand nennt („Zittersieg": „10:9-Sieg"),
+          // sagt unter dem Kopf derselben Partie nichts Neues.
+          : eins ? (l.filter(ev => !/\d+:\d+/.test(bed(ev))).map(ev => `„${ev.badge.name}“: ${bed(ev)}`).join(' ')
+              || `${_zahlwortDe(l.length, true)} Auszeichnungen ${gemeinsamesMatch ? 'in dieser Partie' : 'an diesem Tag'}.`)
           : `${l.length} Auszeichnungen ${gemeinsamesMatch ? 'in dieser Partie' : 'an diesem Tag'}. `
             + l.map(zeile).join(', ') + '.',
         when: l[l.length - 1].when,
@@ -2168,8 +2181,9 @@ function _buildStories(){
           const t = new Date(c.when).getTime();
           const alle = (matchesOfPlayer(c.pid, matches) || []).filter(m => mts(m) <= t);
           const siege = alle.filter(m => won(c.pid, m)).length;
-          return `${_zahlwortDe(c.streak, true)} Siege in Folge. In der Laufbahn `
-               + `stehen damit ${siege} Siege aus ${alle.length} Partien.`;
+          // Die Länge steht in der Schlagzeile („zündet die 3er-Serie");
+          // „Drei Siege in Folge." darunter sagte sie ein zweites Mal.
+          return `In der Laufbahn stehen damit ${siege} Siege aus ${alle.length} Partien.`;
         })(),
         when: c.when,
         prio: STORY_PRIO.win_streak + (c.streak >= 10 ? 6 : c.streak >= 7 ? 3 : 0),

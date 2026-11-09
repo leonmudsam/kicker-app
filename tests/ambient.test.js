@@ -5440,11 +5440,26 @@ const _aufbau = JSON.parse(K.eval(`JSON.stringify((function(){
     return s.desc === soll ? null : s.id + ': ' + s.desc + ' statt ' + soll;
   });
   const duoN = duo.length, duoFalsch = duo.filter(Boolean);
+  // Steht die Zahl in der Schlagzeile, sagt der Satz sie nicht noch einmal:
+  // „Johannes zündet die 3er-Serie" über „Drei Siege in Folge.",
+  // „verliert zum 5. Mal in Folge" über „Fünf Niederlagen am Stück.",
+  // „verlieren zusammen zum 3. Mal in Folge" über „Seit dem 04.11. gehen
+  // drei gemeinsame Spiele in Folge verloren", und mehrere Marken eines
+  // Spielers mit „Alex holt ‚X' zum 5. Mal, Alex holt ‚Y' zum 10. Mal".
+  const WORT = {3:'drei', 4:'vier', 5:'fünf', 6:'sechs', 7:'sieben', 8:'acht', 9:'neun', 10:'zehn'};
+  const zweimal = roh.filter(s => ['win_streak','loss_streak','team_streak','team_loss_streak','badge_marken'].includes((s.dataRef || {}).type))
+    .filter(s => {
+      const d = String(s.desc || ''), n = Number((s.dataRef || {}).streak) || 0;
+      if(/zum \d+\. Mal/.test(d)) return (s.dataRef.playerIds || []).length === 1;
+      if(!n) return false;
+      return new RegExp('(^|\\D)' + n + ' (Siege|Niederlagen|gemeinsame)|\\b' + (WORT[n] || '#') + ' (Siege|Niederlagen|gemeinsame)', 'i').test(d);
+    }).map(s => s.id + ': ' + s.desc);
   // Die Zeile des Fußes steht über ihm, in der Liste der Anlässe.
   const fz = getStoriesCache().map(c => _newsCardHtmlM2(c, false, false)).filter(h => h.indexOf('sp-fz') >= 0);
   const fzOben = fz.filter(h => h.indexOf('sp-fz') < h.lastIndexOf('class="sp-')).length;
   return {p:istP.size, r:istR.size, pFehlt:diff(sollP, istP), pZuviel:diff(istP, sollP), rFehlt:diff(sollR, istR), rZuviel:diff(istR, sollR),
-    fuesse:fuss.size, doppelt, seiten, stand, fz:fz.length, fzOben, namen, ab, punkt, klein, duoN, duoFalsch,
+    fuesse:fuss.size, doppelt, seiten, stand, fz:fz.length, fzOben, namen, ab, punkt, klein, duoN, duoFalsch, zweimal,
+    serienN:roh.filter(s => ['win_streak','loss_streak','team_loss_streak'].includes((s.dataRef || {}).type)).length,
     abN:roh.filter(s => { const o = ((s.dataRef || {}).visual || {}).occasion || {};
       return ['duoserie', 'revanche', 'gegner'].includes(o.key) && o.data && o.data.awA === false; }).length,
     alt:getStoriesCache().some(c => _newsCardHtmlM2(c, false, false).indexOf('sp-fu-z') >= 0)};
@@ -5468,6 +5483,8 @@ ok(!_aufbau.punkt.length, 'ein Zähler im Fuß trägt keinen Ordnungspunkt nach 
 ok(!_aufbau.klein.length, 'keine Meldung beginnt Schlagzeile oder Satz klein', _aufbau.klein.slice(0, 2).join(' | '));
 ok(_aufbau.duoN > 0 && !_aufbau.duoFalsch.length, 'die Serie eines Duos nennt dessen Bilanz bis zu ihrer Partie, nachgezählt',
    _aufbau.duoFalsch.slice(0, 2).join(' | ') || _aufbau.duoN + ' Serien');
+ok(_aufbau.serienN > 0 && !_aufbau.zweimal.length, 'steht die Zahl einer Serie oder Marke in der Schlagzeile, sagt der Satz sie nicht noch einmal',
+   _aufbau.zweimal.slice(0, 3).join(' | ') || _aufbau.serienN + ' Serien');
 
 // ── Was zählt, meldet Stufen, nicht jeden Schritt ─────────────────────
 // „Leon und Maxi treffen zum 207. Mal aufeinander" stand an jedem Spieltag

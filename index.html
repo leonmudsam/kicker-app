@@ -6685,7 +6685,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.11.09.74737566';
+const BUILD_VERSION='2026.11.09.ba025385';
 function forceReload(nach){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -20244,7 +20244,7 @@ function _buildStories(){
         id: 'team_streak_' + t.ids.join('_') + '_' + t.matchId + '_' + t.streak,
         cat: 'team',
         ic: 'unstoppable',
-        title: `${nameOf(t.ids[0])} und ${nameOf(t.ids[1])} gewinnen zusammen alles`,
+        title: `${nameOf(t.ids[0])} und ${nameOf(t.ids[1])} gewinnen zusammen zum ${t.streak}. Mal in Folge`,
         desc: t.n > t.streak
           ? `Zusammen ${t.s} Siege aus ${t.n} Partien.`
           : `Jede gemeinsame Partie gewonnen.`,
@@ -20286,10 +20286,8 @@ function _buildStories(){
         id: 'team_loss_streak_' + t.ids.join('_') + '_' + t.matchId + '_' + t.streak,
         cat: 'team',
         ic: 'trendCrash',
-        title: `${nameOf(t.ids[0])} und ${nameOf(t.ids[1])} verlieren zusammen alles`,
-        desc: `Seit dem `
-            + `${datumFmt(t.firstT || t.when, 'tm')} `
-            + `gehen ${_zahlwortDe(t.streak)} gemeinsame Spiele in Folge verloren.`,
+        title: `${nameOf(t.ids[0])} und ${nameOf(t.ids[1])} verlieren zusammen zum ${t.streak}. Mal in Folge`,
+        desc: `Ohne gemeinsamen Sieg seit dem ${tagImSatz(t.firstT || t.when)}`,
         when: t.when,
         prio: STORY_PRIO.team_loss_streak + (t.streak >= 7 ? 4 : 0),
         dataRef: {type:'team_loss_streak', a:t.ids[0], b:t.ids[1], streak:t.streak,
@@ -20374,9 +20372,8 @@ function _buildStories(){
         id: 'loss_streak_' + c.pid + '_' + c.matchId + '_' + c.streak,
         cat: 'misfortune',
         ic: c.streak >= 7 ? 'dropTriple' : 'dropDouble',
-        title: `${nameOf(c.pid)} findet gerade kein Mittel`,
-        desc: `${_zahlwortDe(c.streak, true)} Niederlagen am Stück.`
-            + (c.seit ? ` Der letzte Sieg liegt vor dem ${tagImSatz(c.seit)}` : ''),
+        title: `${nameOf(c.pid)} verliert zum ${c.streak}. Mal in Folge`,
+        desc: c.seit ? `Der letzte Sieg liegt vor dem ${tagImSatz(c.seit)}` : '',
         when: c.when,
         prio: STORY_PRIO.loss_streak + (c.streak >= 8 ? 4 : 0),
         dataRef: {type:'loss_streak', pid: c.pid, streak: c.streak,
@@ -20513,15 +20510,22 @@ function _buildStories(){
       const gemeinsamesMatch = matchIds.length === 1
         && l.every(ev => ev.matchId === matchIds[0]) ? matchIds[0] : null;
       const zeile = ev => `${nameOf(ev.playerId)} holt „${ev.badge.name}“ zum ${_bRang(ev)}. Mal`;
+      const bed = ev => String(ev.badge.desc || '').trim().replace(/([^.!?])$/, '$1.');
+      const eins = namen.length === 1 && l.length <= 3;
+      const gleich = l.every(ev => _bRang(ev) === _bRang(l[0]));
+      const einsTitel = () => `${namen[0]} holt ` + (gleich
+        ? `${_namenListe(l.map(ev => `„${ev.badge.name}“`))}, ${l.length === 2 ? 'beide' : 'alle'} zum ${_bRang(l[0])}. Mal`
+        : _namenListe(l.map(ev => `„${ev.badge.name}“ zum ${_bRang(ev)}. Mal`)));
       stories.push({
         id: gemeinsamesMatch ? 'badgemarken_match_' + gemeinsamesMatch
                              : 'badgemarken_slot_' + tag,
         cat: 'badge',
         ic: (l.length === 1 && l[0].badge.ic) || 'medal',
-        title: l.length === 1 ? zeile(l[0])
+        title: l.length === 1 ? zeile(l[0]) : eins ? einsTitel()
           : `${_namenKurz(namen)} ${namen.length > 1 ? 'erreichen' : 'erreicht'} runde Marken`,
-        desc: l.length === 1
-          ? String(l[0].badge.desc || '').trim().replace(/([^.!?])$/, '$1.')
+        desc: l.length === 1 ? bed(l[0])
+          : eins ? (l.filter(ev => !/\d+:\d+/.test(bed(ev))).map(ev => `„${ev.badge.name}“: ${bed(ev)}`).join(' ')
+              || `${_zahlwortDe(l.length, true)} Auszeichnungen ${gemeinsamesMatch ? 'in dieser Partie' : 'an diesem Tag'}.`)
           : `${l.length} Auszeichnungen ${gemeinsamesMatch ? 'in dieser Partie' : 'an diesem Tag'}. `
             + l.map(zeile).join(', ') + '.',
         when: l[l.length - 1].when,
@@ -21491,8 +21495,7 @@ function _buildStories(){
           const t = new Date(c.when).getTime();
           const alle = (matchesOfPlayer(c.pid, matches) || []).filter(m => mts(m) <= t);
           const siege = alle.filter(m => won(c.pid, m)).length;
-          return `${_zahlwortDe(c.streak, true)} Siege in Folge. In der Laufbahn `
-               + `stehen damit ${siege} Siege aus ${alle.length} Partien.`;
+          return `In der Laufbahn stehen damit ${siege} Siege aus ${alle.length} Partien.`;
         })(),
         when: c.when,
         prio: STORY_PRIO.win_streak + (c.streak >= 10 ? 6 : c.streak >= 7 ? 3 : 0),
