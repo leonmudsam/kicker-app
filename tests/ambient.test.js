@@ -5428,6 +5428,10 @@ const _aufbau = JSON.parse(K.eval(`JSON.stringify((function(){
   });
   const klein = roh.filter(s => /^[a-zäöüß]/.test(String(s.desc || '')) || /^[a-zäöüß]/.test(String(s.title || '')))
     .map(s => s.id + ': ' + (s.desc || s.title));
+  // „75% aus 8 Spielen", „64% als Duo": im Satz steht ein Leerzeichen vor
+  // dem Prozentzeichen, wie überall sonst in der App.
+  const prozent = roh.filter(s => /\\d%/.test(String(s.desc || '') + ' ' + String(s.title || '')))
+    .map(s => s.id + ': ' + s.desc);
   // Die Serie eines Duos nennt dessen Bilanz bis zu ihrer Partie: „Zehn
   // gemeinsame Spiele, zehn Siege." stand über „spielen zum 75. Mal zusammen".
   const duo = roh.filter(s => (s.dataRef || {}).type === 'team_streak').map(s => {
@@ -5458,7 +5462,7 @@ const _aufbau = JSON.parse(K.eval(`JSON.stringify((function(){
   const fz = getStoriesCache().map(c => _newsCardHtmlM2(c, false, false)).filter(h => h.indexOf('sp-fz') >= 0);
   const fzOben = fz.filter(h => h.indexOf('sp-fz') < h.lastIndexOf('class="sp-')).length;
   return {p:istP.size, r:istR.size, pFehlt:diff(sollP, istP), pZuviel:diff(istP, sollP), rFehlt:diff(sollR, istR), rZuviel:diff(istR, sollR),
-    fuesse:fuss.size, doppelt, seiten, stand, fz:fz.length, fzOben, namen, ab, punkt, klein, duoN, duoFalsch, zweimal,
+    fuesse:fuss.size, doppelt, seiten, stand, fz:fz.length, fzOben, namen, ab, punkt, klein, duoN, duoFalsch, zweimal, prozent,
     serienN:roh.filter(s => ['win_streak','loss_streak','team_loss_streak'].includes((s.dataRef || {}).type)).length,
     abN:roh.filter(s => { const o = ((s.dataRef || {}).visual || {}).occasion || {};
       return ['duoserie', 'revanche', 'gegner'].includes(o.key) && o.data && o.data.awA === false; }).length,
@@ -5481,6 +5485,7 @@ ok(_aufbau.abN > 0 && !_aufbau.ab.length, 'ein Fuß mit beiden Seiten steht wie 
    _aufbau.ab.slice(0, 3).join(', ') || _aufbau.abN + ' Füße mit Sieg von B');
 ok(!_aufbau.punkt.length, 'ein Zähler im Fuß trägt keinen Ordnungspunkt nach seinen Ziffern', _aufbau.punkt.slice(0, 3).join(', '));
 ok(!_aufbau.klein.length, 'keine Meldung beginnt Schlagzeile oder Satz klein', _aufbau.klein.slice(0, 2).join(' | '));
+ok(!_aufbau.prozent.length, 'in keiner Meldung klebt das Prozentzeichen an der Zahl', _aufbau.prozent.slice(0, 2).join(' | '));
 ok(_aufbau.duoN > 0 && !_aufbau.duoFalsch.length, 'die Serie eines Duos nennt dessen Bilanz bis zu ihrer Partie, nachgezählt',
    _aufbau.duoFalsch.slice(0, 2).join(' | ') || _aufbau.duoN + ' Serien');
 ok(_aufbau.serienN > 0 && !_aufbau.zweimal.length, 'steht die Zahl einer Serie oder Marke in der Schlagzeile, sagt der Satz sie nicht noch einmal',
