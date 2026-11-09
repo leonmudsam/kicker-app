@@ -78,6 +78,13 @@ function _ladderCrossing(before, after, min){
   return hit;
 }
 
+// Eine runde Zahl: die Leiter ab `min` (10, 25, 50, 100, 250 …) und jede
+// fünfzigste ab 50. Die 150. und 450. Partie zählte vorher nur das Zählwerk
+// eines Fußes, ohne eigene Meldung.
+function _rundeMarke(n, min){
+  return n >= min && (n % 50 === 0 || _ladderCrossing(n - 1, n, min) === n);
+}
+
 // Ambient-Tag (v9.6): Fun Facts erscheinen TÄGLICH (um 19:00). Früher (v9.5)
 // nur alle 2 Tage über einen geraden Epoch-Tagesindex — jetzt ist jeder Tag ein
 // Ambient-Tag, damit jeden Abend genau 1 Fun Fact kommt. Die Story-ID bleibt

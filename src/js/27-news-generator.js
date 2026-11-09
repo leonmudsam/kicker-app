@@ -821,7 +821,7 @@ function _buildStories(){
       const matchIds = [...new Set(l.map(ev => ev.tagEnde ? null : ev.matchId).filter(Boolean))];
       const gemeinsamesMatch = matchIds.length === 1
         && l.every(ev => ev.matchId === matchIds[0]) ? matchIds[0] : null;
-      const zeile = ev => `${nameOf(ev.playerId)} holt „${ev.badge.name}" zum ${_bRang(ev)}. Mal`;
+      const zeile = ev => `${nameOf(ev.playerId)} holt „${ev.badge.name}“ zum ${_bRang(ev)}. Mal`;
       stories.push({
         id: gemeinsamesMatch ? 'badgemarken_match_' + gemeinsamesMatch
                              : 'badgemarken_slot_' + tag,
@@ -922,28 +922,27 @@ function _buildStories(){
     });
   } catch(e){}
 
-  // ── 8. Jubiläum (Spiele-Meilensteine, unbegrenzte Leiter ab 10) ──
-  // Trigger NUR wenn das jüngste Match dieses Spielers genau die Schwelle reißt.
-  // → keine Wiederholung in späteren Generator-Läufen (ID enthält Match-ID).
+  // ── 8. Jubiläum (Spiele-Meilensteine: Leiter ab 10, jede fünfzigste) ──
+  // Die ID enthält die Marke: keine Wiederholung in späteren Läufen.
   try {
     const candidates = [];
     // Aus seinen eigenen Partien: auch nach dem Karriereende eine Nachricht
     // über das, was er gespielt hat [§C40].
+    // Jede Partie im Fenster, nicht nur die jüngste: kamen zwei Partien
+    // eines Spielers zugleich an, riss die erste die Marke, und gefragt
+    // wurde nur die zweite. Die Leiter (10, 25, 50, 100, 250 …) und dazu
+    // jede fünfzigste: die 450. Partie stand nur im Zählwerk des Fußes,
+    // ohne Satz und nur, wenn der Fuß gerade sie wählte.
+    const seit = now.getTime() - NEWS_FENSTER_TAGE * _dayMs;
     players.filter(p => sichtbar(p)).forEach(p => {
-      // byPlayer ist bereits asc-sortiert (matches asc → push behält Reihenfolge).
-      // Keine zusätzliche Filterung/Sortierung nötig.
       const arr = byPlayer[p.id] || [];
-      const total = arr.length;
-      if(!total) return;
-      // v9.5: unbegrenzte Leiter (10, 25, 50, 100, 250, 500, 1000, 2500 …).
-      // Spiele wachsen um genau 1 pro Match → das jüngste Match reißt die Marke.
-      const mark = _ladderCrossing(total - 1, total, 10);
-      if(mark){
-        const last = arr[arr.length-1];
-        candidates.push({pid: p.id, total: mark, when: new Date(last.created_at), matchId: last.id});
-      }
+      arr.forEach((m, i) => {
+        const n = i + 1;
+        if(mts(m) < seit || mts(m) > now.getTime() || !_rundeMarke(n, 10)) return;
+        candidates.push({pid: p.id, total: n, when: new Date(m.created_at), matchId: m.id});
+      });
     });
-    candidates.sort((a,b) => b.when - a.when).slice(0, NEWS_LIMITS.jubilee).forEach(c => {
+    candidates.sort((a,b) => b.when - a.when).forEach(c => {
       stories.push({
         id: 'jubilee_'+c.pid+'_'+c.total,
         cat: 'history',
@@ -992,6 +991,9 @@ function _buildStories(){
     // Für die sieben Fakten des Katalogs [§C33]: die Bilanz je Paar von
     // Gegnern, die Woche, die Elo des Tages, der Monat und die Partner.
     const bilanz = {}, woche = {}, tagElo = {}, monat = {}, partner = {}, gesamt = {};
+    // Für das Ende einer Pleitenserie und die Rückkehr: die Niederlagen in
+    // Folge je Spieler und je Duo, der letzte Sieg, die letzte Partie.
+    const pleiten = {}, duoPleiten = {}, letzterSieg = {}, duoSieg = {}, zuletzt = {};
     const vz = v => (v > 0 ? '+' : v < 0 ? '−' : '±') + Math.abs(Math.round(v));
     const quote = (s, n) => Math.round(100 * s / Math.max(1, n));
     // Die beste Siegquote der Woche ab fünf Siegen, bei Gleichstand mehr Siege.
@@ -1222,6 +1224,50 @@ function _buildStories(){
           dataRef:{type:'partner_best', pid:id, mit, s:z.s, n:z.n, allg:quote(g.s, g.n), matchId:m.id, playerIds:[id, mit]}});
         break;
       }
+      // (12) Das Ende einer Pleitenserie: der erste Sieg nach mindestens
+      // fünf Niederlagen in Folge. Die Serie stand als „Stefan verliert zum
+      // 10. Mal in Folge" im Feed, ihr Ende nirgends: unter „Stefan und Leon
+      // retten ein 10:9" stand nur, dass Stefan wieder gegen Maxi gewann —
+      // dass es sein erster Sieg nach zwölf Niederlagen war, sagte keine
+      // Zeile. Fünf ist die erste Marke der Pleitenserie (Abschnitt 5).
+      W.forEach(id => {
+        const n = pleiten[id] || 0;
+        if(neu && n >= 5 && zeig(id)) neuSt.push({id:'pleitenende_' + id + '_' + m.id, cat:'comeback', ic:'comeback',
+          title:`${nameOf(id)} beendet eine Serie von ${n} Niederlagen`,
+          desc:letzterSieg[id] ? `Der letzte Sieg davor war am ${tagImSatz(letzterSieg[id])}`
+            : `Es ist der erste Sieg, nach ${n} Partien.`,
+          when:zeit, prio:STORY_PRIO.pleiten_ende,
+          dataRef:{type:'pleiten_ende', pid:id, n, matchId:m.id, playerIds:[id]}});
+      });
+      // (13) Dasselbe für ein Duo: der erste gemeinsame Sieg nach mindestens
+      // vier gemeinsamen Niederlagen in Folge. Die Pleitenserie eines Duos
+      // meldet sich ab drei (`team_loss_streak`), ihr Ende ab vier.
+      const dkW = duo(W), dn = duoPleiten[dkW] || 0;
+      if(neu && dn >= 4 && W.every(zeig)) neuSt.push({id:'duopleitenende_' + dkW.replace('|', '_') + '_' + m.id, cat:'team', ic:'comeback',
+        title:`${nameOf(W[0])} und ${nameOf(W[1])} gewinnen wieder zusammen, nach ${dn} Niederlagen`,
+        desc:duoSieg[dkW] ? `Zuletzt gewannen beide zusammen am ${tagImSatz(duoSieg[dkW])}`
+          : `Es ist der erste gemeinsame Sieg, nach ${dn} gemeinsamen Partien.`,
+        when:zeit, prio:STORY_PRIO.duo_pleiten_ende,
+        dataRef:{type:'duo_pleiten_ende', a:W[0], b:W[1], n:dn, matchId:m.id, playerIds:W.slice()}});
+      // (14) Die Rückkehr: die erste Partie nach mindestens vierzehn Tagen.
+      // Sie stand nur als Zeichnung im Fuß („Zurück"), ohne Satz, und nur,
+      // wenn der Fuß gerade sie wählte.
+      W.concat(L).forEach(id => {
+        const vor = zuletzt[id];
+        if(neu && vor && t - vor >= 14 * _dayMs && zeig(id)){
+          const tage = Math.floor((t - vor) / _dayMs), sieg = W.includes(id);
+          neuSt.push({id:'rueckkehr_' + id + '_' + m.id, cat:'personal', ic:'doorReturn',
+            title:sieg ? `${nameOf(id)} gewinnt nach ${tage} Tagen Pause` : `${nameOf(id)} spielt nach ${tage} Tagen wieder`,
+            desc:`Die letzte Partie davor war am ${tagImSatz(vor)}`,
+            when:zeit, prio:STORY_PRIO.rueckkehr,
+            dataRef:{type:'rueckkehr', pid:id, tage, sieg, vorher:vor, matchId:m.id, playerIds:[id]}});
+        }
+      });
+      W.forEach(id => { pleiten[id] = 0; letzterSieg[id] = t; });
+      L.forEach(id => { pleiten[id] = (pleiten[id] || 0) + 1; });
+      duoPleiten[dkW] = 0; duoSieg[dkW] = t;
+      duoPleiten[duo(L)] = (duoPleiten[duo(L)] || 0) + 1;
+      W.concat(L).forEach(id => { zuletzt[id] = t; });
     });
     neuSt.forEach(x => stories.push(x));
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] partie', e); }
@@ -1395,22 +1441,22 @@ function _buildStories(){
     });
   } catch(e){}
 
-  // ── 11. Persönliche Sieg-Milestones (unbegrenzte Leiter ab 100) ──
-  // Nutzt byPlayer + bestehendes won(). Trigger nur, wenn das JÜNGSTE Match
-  // (ein Sieg) eine Leiter-Marke reißt → stabil & einmalig (ID enthält Marke).
+  // ── 11. Persönliche Sieg-Milestones (Leiter ab 100, jede fünfzigste ab 50) ──
+  // Die ID enthält die Marke: stabil und einmalig.
   try {
     // Aus seinen eigenen Partien: auch nach dem Karriereende eine Nachricht
     // über das, was er gespielt hat [§C40].
+    // Wie das Jubiläum: jeder Sieg im Fenster, der die Leiter (100, 250,
+    // 500 …) oder eine Fünfzigste ab 50 reißt.
+    const seit = now.getTime() - NEWS_FENSTER_TAGE * _dayMs;
     players.filter(p => sichtbar(p)).forEach(p => {
       const arr = byPlayer[p.id] || [];
-      if(!arr.length) return;
       let wins = 0;
-      for(let i = 0; i < arr.length; i++) if(won(p.id, arr[i])) wins++;
-      const last = arr[arr.length-1];
-      const lastWon = won(p.id, last);
-      // v9.5: 100, 250, 500, 1000, 2500, 5000, … statt fixem Ende bei 1000.
-      const mark = _ladderCrossing(wins - (lastWon ? 1 : 0), wins, 100);
-      if(mark){
+      arr.forEach(last => {
+        if(!won(p.id, last)) return;
+        wins++;
+        const mark = wins;
+        if(mts(last) < seit || mts(last) > now.getTime() || !_rundeMarke(mark, 50)) return;
         stories.push({
           id: 'milestone_wins_'+p.id+'_'+mark,
           cat: 'personal',
@@ -1432,7 +1478,7 @@ function _buildStories(){
           prio: STORY_PRIO.milestone_wins + (mark >= 500 ? 6 : mark >= 250 ? 3 : 0),
           dataRef: {type:'milestone_wins', pid: p.id, milestone: mark+'. Sieg', matchId: last.id}
         });
-      }
+      });
     });
   } catch(e){}
 
@@ -1617,13 +1663,9 @@ function _buildStories(){
           // Reihenfolge der Tabelle („score_a:score_b"), und unter
           // „Leon schlägt Julian im Spitzenspiel" stand damit „9:10" —
           // dieselbe Karte behauptete zwei verschiedene Sieger.
-          desc: (() => {
-            const gewonnenA = m.winner === 'A';
-            const hoch = gewonnenA ? m.score_a : m.score_b;
-            const tief = gewonnenA ? m.score_b : m.score_a;
-            return `Platz 1 gegen Platz 2, und Platz 1 gewinnt. Es steht `
-              + `${hoch}:${tief}, der Abstand nach vorn wird größer.`;
-          })(),
+          // Der Stand steht im Kopf der Karte; im Satz stand er ein zweites
+          // Mal [§C33].
+          desc: `Platz 1 gegen Platz 2, und Platz 1 gewinnt. Der Abstand nach vorn wird größer.`,
           when: new Date(best.t),
           prio: STORY_PRIO.top_clash,
           dataRef: {type:'top_clash', matchId: m.id, winners: best.winners, losers: best.losers, p1: best.p1, p2: best.p2,
@@ -1803,9 +1845,16 @@ function _buildStories(){
       // sieht nur Partien bis zu dieser: der Wortlaut bleibt stehen.
       if(art === 'normal' || art === 'eng'){
         let tx = null;
-        try { tx = _spScoreText(m); }
+        try { tx = _spScoreText(m) || _spKontext(_spFakten(m)); }
         catch(e){ tx = null; }
         if(tx){ title = tx.t; desc = tx.d; }
+      } else {
+        // Der Satz unter einem besonderen Ausgang wiederholte ihn: „Nur 1
+        // Tor trennt beide Teams" unter dem Herzschlag mit „Ein Tor 10:9",
+        // „10:3 gegen Stefan und Julian. Mit 7 Toren Abstand ist das eine
+        // klare Angelegenheit." unter dem Stand 10:3. Er sagt jetzt, was
+        // der Kopf nicht zeigt (`_spKontext`).
+        try { desc = _spKontext(_spFakten(m)).d; } catch(e){}
       }
       stories.push({
         id: 'spiel_' + m.id,
@@ -2121,7 +2170,10 @@ function _buildStories(){
   } catch(e){}
 
   // ── 22. Längste Pause (kein Spielbetrieb in den letzten X Tagen) ──
-  // Story zeigt sich erst, wenn die aktuelle "Stille" ≥3 Tage andauert.
+  // Story zeigt sich erst, wenn die aktuelle Stille fünf Tage andauert. Ab
+  // drei Tagen meldete sie jedes Wochenende: gespielt wird werktags, und
+  // von Donnerstag bis Montag stand „3 Tage ohne Spiel" im Feed, obwohl
+  // nichts Ungewöhnliches geschah.
   // v9.17 FORMULIERUNG: Der Text behauptete pauschal „Längste Pause seit Langem"
   // — ungeprüft und bei einer 3-Tage-Lücke schlicht falsch. Jetzt wird die
   // längste Pause der Liga-Historie mitgerechnet (eine Schleife über die bereits
@@ -2131,7 +2183,7 @@ function _buildStories(){
     if(matches.length){
       const lastMatchTs = mts(matches[matches.length-1]);
       const sinceLastDays = Math.floor((now.getTime() - lastMatchTs) / 86400000);
-      if(sinceLastDays >= 3){
+      if(sinceLastDays >= NEWS_PAUSE_TAGE){
         let maxGapDays = 0;
         for(let i = 1; i < matches.length; i++){
           const gap = Math.floor((mts(matches[i]) - mts(matches[i-1])) / 86400000);
@@ -2545,7 +2597,7 @@ function _buildStories(){
           // Vorgaenger-Zahl gehoert deshalb nicht in den Satz — sie stand als
           // „Vorher hielt Leo den Rekord mit 70 %" unter einem neuen Bestwert
           // von 67 % und behauptete damit einen Rueckschritt als Uebernahme.
-          title = `${namen} ${neuN.length > 1 ? 'ziehen' : 'zieht'} bei „${def.name}" gleich`;
+          title = `${namen} ${neuN.length > 1 ? 'ziehen' : 'zieht'} bei „${def.name}“ gleich`;
           desc = `${belegSatz}. Geteilt mit ${_namenListe(
             altPids.filter(id => n.pids.indexOf(id) >= 0).map(nameOf))}.`;
         } else if(fall === 'allein'){
@@ -2553,7 +2605,7 @@ function _buildStories(){
           // werden die, die weg sind — der neue Halter stand vorher selbst
           // mit drin, und „Vorher hielt Leon … den Rekord" nannte ihn damit
           // als seinen eigenen Vorgaenger.
-          title = `${namen} ${neuN.length > 1 ? 'halten' : 'hält'} „${def.name}" jetzt allein`;
+          title = `${namen} ${neuN.length > 1 ? 'halten' : 'hält'} „${def.name}“ jetzt allein`;
           desc = `${belegSatz}. Vorher ${_namenListe(
             altPids.filter(id => n.pids.indexOf(id) < 0).map(nameOf))} auch.`;
         } else if(fall === 'uebernommen'){
@@ -2564,7 +2616,7 @@ function _buildStories(){
           const weg = altPids.filter(id => n.pids.indexOf(id) < 0);
           const altN = _namenListe(weg.map(nameOf)) || altNamen || 'der bisherige Halter';
           const hielten = weg.length > 1 ? 'hielten' : 'hielt';
-          title = `${namen} ${verb} „${def.name}"`;
+          title = `${namen} ${verb} „${def.name}“`;
           // Die Vorgaenger-Zahl nur, wenn sie sichtbar anders ist: „8.9 Tore
           // … Julian stand bei 8.9" nennt zweimal dieselbe Zahl und erklaert
           // damit gar nichts.
@@ -2581,7 +2633,7 @@ function _buildStories(){
             ? `Vorher ${hielten} ${altN} den Rekord mit ${wertAlt}.`
             : `Vorher gehörte der Rekord ${altN}.`);
         } else {
-          title = `${namen} ${baut} „${def.name}" aus`;
+          title = `${namen} ${baut} „${def.name}“ aus`;
           // „Vorher 71 %." ist kein Satz. Und die Richtung gehoert dazu: die
           // Meldung gibt es nur, wenn der Wert besser geworden ist [§C33].
           desc = `${belegSatz}. Vorher waren es ${wertAlt}.`;
@@ -2785,10 +2837,10 @@ function _buildStories(){
         });
         const namen = _namenKurz(wer.map(nameOf));
         const mz = wer.length > 1;
-        const titel = art === 'erstmals'  ? `${namen} ${mz ? 'holen' : 'holt'} „${t.name}"`
-                    : art === 'allein'    ? `${namen} ${mz ? 'halten' : 'hält'} „${t.name}" jetzt allein`
-                    : art === 'dazu'      ? `${namen} ${mz ? 'ziehen' : 'zieht'} bei „${t.name}" gleich`
-                    : `${namen} ${mz ? 'übernehmen' : 'übernimmt'} „${t.name}"`;
+        const titel = art === 'erstmals'  ? `${namen} ${mz ? 'holen' : 'holt'} „${t.name}“`
+                    : art === 'allein'    ? `${namen} ${mz ? 'halten' : 'hält'} „${t.name}“ jetzt allein`
+                    : art === 'dazu'      ? `${namen} ${mz ? 'ziehen' : 'zieht'} bei „${t.name}“ gleich`
+                    : `${namen} ${mz ? 'übernehmen' : 'übernimmt'} „${t.name}“`;
         // Genannt wird, wer WEG ist — dieselbe Regel wie beim Rekord: aus
         // {A,B} kann {A,C} werden, und dann stand A als sein eigener
         // Vorgaenger im Satz.

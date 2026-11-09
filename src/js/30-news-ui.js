@@ -609,10 +609,15 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
   const partieBuendel = d.type === 'sammel' && d.quelle === 'spiel' && d.matchId && !d.bandFremd;
   // Auf der Karte einer Partie wählt `_spZeilen`, was als Zeile steht:
   // höchstens drei, ohne das, was der Fuß zeichnet, und ohne Nebensache.
-  const spZeilen = partieBuendel ? _spZeilen(d.teile, s.title, _spBild(s).occ) : null;
+  // Auch die Karte einer Partie ohne weitere Meldung: ihr Fuß hat eine Zeile.
+  const spZeilen = partieBuendel || (d.type === 'spiel' && d.matchId && !d.bandFremd)
+    ? _spZeilen(d.teile || [], s.title, _spBild(s).occ) : null;
   const sammelTeile = spZeilen ? spZeilen.zeilen : d.teile;
-  const sammelBand = (d.type === 'sammel')
-    ? _newsSammelBand(sammelTeile, [s.title], !spZeilen) : '';
+  // Die Zeile des Fußes steht als letzte der Liste über ihm, nur wenn es
+  // einen Fuß gibt, den sie erklärt.
+  const fz = spZeilen && spZeilen.unter && _spBild(s).fuss ? spZeilen.unter : null;
+  const sammelBand = (d.type === 'sammel' || fz)
+    ? _newsSammelBand(d.type === 'sammel' ? sammelTeile : [], [s.title], !spZeilen, fz) : '';
 
   // ── Je Sorte ein eigener Kopf und ein eigener Fuß ──────────────────
   // Vorher unterschied die Sorten nur eine Randfarbe, und zehn Karten
@@ -631,11 +636,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
     const bild = _spBild(s);
     kopf = d.bandFremd ? '' : bild.kopf;
     satz = _newsSpielSatz(s.desc, bild.zeigt);
-    // Zeichnet der Fuß nicht den Hauptanlass, steht der Satz dessen, was er
-    // zeigt, klein darunter und nicht als Zeile [§C33].
-    const unter = spZeilen && spZeilen.unter && bild.fuss
-      ? `<div class="sp-fu-z"><i class="nf-sam-i">${svgI(spZeilen.unter.ic || 'chartBar')}</i><span>${_newsBetont(spZeilen.unter.titel || '')}</span></div>` : '';
-    fuss = bild.fuss + unter + _newsZahlband(_newsSpielZahlen(s, bild.key));
+    fuss = bild.fuss + _newsZahlband(_newsSpielZahlen(s, bild.key));
     // Die Ergebnis-Sammelkarte hat ZWEI Partien und deshalb keine, die sie
     // als Band zeigen könnte: acht Wappen übereinander machten sie höher als
     // ihr Text [§C27]. Die Stände stehen im Sammelband, die Sieger als Chips
@@ -822,8 +823,11 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
   // jeder anderen Breaking-Karte zweimal untereinander — auf der
   // gebuendelten „Neue Tabellenspitze und Auszeichnung in einer Partie" und
   // auf jeder legendaeren Auszeichnung [§C33].
+  // Die Karte einer Partie trägt keinen: ihr Satz erklärt schon den
+  // Hauptanlass, und unter „Johannes übernimmt die Tabellenspitze" stand die
+  // Spitze danach dreimal — Schlagzeile, Tabelle im Fuß und dieser Satz.
   let brkSub = '';
-  if(brk){
+  if(brk && sorte !== 'spiel'){
     const h = _breakingHeroText(s);
     if(String(h || '').trim() !== String(s.desc || '').trim()) brkSub = h;
   }

@@ -5080,16 +5080,22 @@
 .sp-fk .av,.sp-nz .av{--av:20px;width:20px;height:20px;font-size:8px;box-shadow:0 0 0 2px var(--surface2);flex:0 0 auto}
 .sp-st{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:22px;letter-spacing:-.03em;line-height:1;color:var(--faint);white-space:nowrap}
 .sp-st em{font-style:normal;color:var(--ink)}
-.sp-nz{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px;margin:6px 10px 0;font-size:10.5px;line-height:1.3;color:var(--muted)}
+.sp-nz{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px;margin:8px 10px 0;font-size:10.5px;line-height:1.3;color:var(--muted)}
 .sp-nz > span{display:flex;flex-direction:column;min-width:0}
 .sp-nz > span.re{text-align:right;align-items:flex-end}
 .sp-nz b{font-weight:600;color:var(--ink2)}
 .sp-nz .w b{color:var(--ink)}
 .sp-nz-gg{font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);align-self:center}
 .sp-fk + .sp-lg{padding:0 13px}
-.sp-nz > span.w{padding-left:7px;box-shadow:inset 2px 0 0 var(--acid)}
-.sp-nz > span.re{padding-right:7px;box-shadow:inset -2px 0 0 rgba(240,86,106,.65)}
+.sp-nz > span:not(.sp-nz-gg){padding-left:7px;box-shadow:inset 2px 0 0 var(--nz-c,transparent)}
+.sp-nz > span.re{padding-left:0;padding-right:7px;box-shadow:inset -2px 0 0 var(--nz-c,transparent)}
+.sp-nz > span.w{--nz-c:var(--acid)}
+.sp-nz > span.l,.sp-nz > span.re:not(.w):not(.l){--nz-c:rgba(240,86,106,.65)}
+.sp-nz > span.l b{color:var(--ink2)}
 .sp-nz-gg{color:var(--ink2)}
+.sp-b.sp-ag,.sp-b .sp-ag-z,.sp-b .sp-hz-g,.sp-b.sp-zn,.sp-b .sp-zn-z,.sp-b .sp-zn-tore,.sp-b.sp-gf{direction:rtl}
+.sp-b.sp-ag > *,.sp-b .sp-ag-z > *,.sp-b .sp-hz-g > *,.sp-b.sp-zn > *,.sp-b .sp-zn-z > *,.sp-b .sp-zn-tore > *,.sp-b.sp-gf > *{direction:ltr}
+.sp-b .sp-hz-k svg{transform:scaleX(-1)}
 
 .sp-kp{display:inline-flex;flex:0 0 auto;gap:3px}
 .sp-kl{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:2px;margin-top:8px;border-radius:9px;overflow:hidden}
@@ -5127,8 +5133,9 @@
 .sp-pu-z.w b{color:var(--acid)}
 
 .sp-sm{height:98px}
-.sp-sm svg{position:absolute;inset:10px;width:calc(100% - 20px);height:calc(100% - 20px);overflow:visible}
-.sp-sm-p{fill:none;stroke-linecap:round;opacity:.78;vector-effect:non-scaling-stroke}
+.sp-sm svg{position:absolute;inset:10px;width:calc(100% - 20px);height:78px;overflow:visible}
+.sp-sm-p{fill:none;stroke-linecap:butt;opacity:.62;vector-effect:non-scaling-stroke}
+.sp-sm-p.w{opacity:.85}
 .sp-sm .av{--av:24px;width:24px;height:24px;font-size:9px}
 .sp-sm-a{position:absolute;z-index:1;display:flex;flex-direction:column;align-items:center;gap:1px;margin:10px 8px}
 .sp-sm-a b{font:600 10px 'Sometype Mono',monospace;color:var(--red);background:rgba(10,12,11,.8);border-radius:4px;padding:0 3px}
@@ -5138,6 +5145,30 @@
   background:rgba(10,12,11,.86);border:1px solid var(--line2);box-shadow:0 0 18px rgba(0,0,0,.55)}
 .sp-sm-m .sp-st{font-size:23px}
 .sp-sm-m .sp-st em{color:var(--acid);text-shadow:0 0 16px rgba(190,242,100,.35)}
+
+.sp-lb{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:end;gap:8px}
+.sp-lb .av{--av:24px;width:24px;height:24px;font-size:9px}
+.sp-lb-s{display:flex;flex-direction:column;gap:7px;min-width:0}
+.sp-lb-k{display:flex;align-items:center;gap:6px}
+.sp-lb-s.re .sp-lb-k{flex-direction:row-reverse}
+.sp-lb-k > span.num{font:600 10px 'Sometype Mono',monospace;color:var(--red);white-space:nowrap}
+.sp-lb-s.w .sp-lb-k > span.num{color:var(--acid)}
+.sp-lb-s:not(.w) .sp-kp{opacity:.75}
+.sp-lb-b{position:relative;display:block;height:14px;border-radius:4px;overflow:hidden;
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,.07) 0 calc(10% - 2px),transparent calc(10% - 2px) 10%);
+  box-shadow:inset 0 0 0 1px var(--line2)}
+.sp-lb-b i{position:absolute;top:0;bottom:0;left:0;width:var(--r);border-radius:4px;
+  background:linear-gradient(90deg,#6f9a2c,var(--acid));box-shadow:0 0 12px rgba(190,242,100,.35)}
+.sp-lb-s.re .sp-lb-b i{left:auto;right:0;background:linear-gradient(270deg,#6f9a2c,var(--acid))}
+.sp-lb-b em{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:400 9px 'Archivo Black',sans-serif;
+  letter-spacing:.14em;color:var(--red);font-style:normal}
+.sp-lb-m{padding-bottom:0}
+.sp-lb-m .sp-st{font-size:24px}
+@media (prefers-reduced-motion:no-preference){
+  .sp-lb-b i{animation:spLbLeer 1.1s cubic-bezier(.3,0,.2,1) .25s both}
+  .sp-lb-b em{animation:spDa .4s ease-out 1.2s both}
+}
+@keyframes spLbLeer{from{width:100%}}
 
 .sp-hz-g{display:grid;grid-template-columns:auto minmax(0,1fr) auto minmax(0,1fr) auto;align-items:center;gap:4px}
 .sp-hz .av{--av:24px;width:24px;height:24px;font-size:9px}
@@ -5150,11 +5181,9 @@
 .sp-hz-m .sp-st em{color:var(--acid);text-shadow:0 0 16px rgba(190,242,100,.35)}
 .sp-hz-k{position:relative;display:block;height:40px;overflow:hidden}
 .sp-hz-k svg{display:block;width:100%;height:100%}
-.sp-hz-k path{fill:none;stroke:rgba(240,86,106,.6);stroke-width:1.6;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}
-.sp-hz-k.w path{stroke:var(--acid);stroke-width:2}
-.sp-hz-k i{position:absolute;inset:0;opacity:0}
-.sp-hz-k i::after{content:"";position:absolute;right:0;top:50%;width:6px;height:6px;margin-top:-3px;border-radius:50%;
-  background:#f4ffd8;box-shadow:0 0 8px 2px rgba(190,242,100,.8)}
+.sp-hz-k path{fill:none;stroke:rgba(240,86,106,.6);stroke-width:1.6;stroke-linejoin:round;stroke-linecap:round}
+.sp-hz-k.w path.sp-hz-b{stroke:var(--acid);stroke-width:2}
+.sp-hz-k path.sp-hz-lauf{stroke:#f4ffd8;stroke-width:3;stroke-dasharray:12 100;stroke-dashoffset:12;opacity:0}
 
 .sp-zn{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;justify-items:center;gap:7px 6px;
   background:linear-gradient(118deg,transparent 22%,rgba(255,255,255,.05) 30%,transparent 40%),
@@ -5198,11 +5227,13 @@
   .sp-pu-r i.w,.sp-pu-r i.l{animation:spKopfPuck .35s cubic-bezier(.3,1.6,.5,1) both;animation-delay:calc(var(--n, 0) * 30ms)}
   .sp-pu-r i:nth-child(2){--n:1}.sp-pu-r i:nth-child(3){--n:2}.sp-pu-r i:nth-child(4){--n:3}.sp-pu-r i:nth-child(5){--n:4}
   .sp-pu-r i:nth-child(6){--n:5}.sp-pu-r i:nth-child(7){--n:6}.sp-pu-r i:nth-child(8){--n:7}.sp-pu-r i:nth-child(9){--n:8}.sp-pu-r i:nth-child(10){--n:9}
-  .sp-sm-p{animation:spDa .7s ease-out both}
+  .sp-sm-p{animation:spDa .6s ease-out both}
+  .sp-sm-p.w{animation-delay:.45s}
   .sp-zn-hit{animation:spKopfTreffer .42s cubic-bezier(.3,1.6,.5,1) both;animation-delay:calc(var(--i) * 70ms + .25s)}
   .sp-zn-ring{animation:spKopfWelle .7s ease-out both;animation-delay:calc(var(--i) * 70ms + .3s)}
   .sp-zn::before{animation:spKopfLicht 1.6s ease-in-out .3s both}
-  .sp-hz-k i{animation:spKopfPunkt 1.3s cubic-bezier(.45,0,.55,1) .2s 2 both}
+  .sp-hz-k path.sp-hz-b{stroke-dasharray:100;animation:spHerzZug .8s ease-out both}
+  .sp-hz-k.w path.sp-hz-lauf{animation:spHerzLauf 1.25s cubic-bezier(.45,0,.55,1) .8s 2}
   .sp-hz-m{animation:spKopfSchlag .9s ease-out .55s 2 both}
 }
 @keyframes spKopfKlapp{from{transform:rotateX(-88deg);opacity:.2}}
@@ -5210,13 +5241,11 @@
 @keyframes spKopfTreffer{from{transform:scale(0);opacity:0}}
 @keyframes spKopfWelle{from{transform:scale(.3);opacity:1}}
 @keyframes spKopfLicht{0%{opacity:0;transform:translateX(-70%)}20%,80%{opacity:1}100%{opacity:0;transform:translateX(70%)}}
-@keyframes spKopfPunkt{0%{transform:translateX(-100%);opacity:0}12%{opacity:1}88%{opacity:1}100%{transform:translateX(0);opacity:0}}
+@keyframes spHerzZug{from{stroke-dashoffset:100}to{stroke-dashoffset:0}}
+@keyframes spHerzLauf{0%{stroke-dashoffset:12;opacity:0}10%{opacity:1}90%{opacity:1}100%{stroke-dashoffset:-100;opacity:0}}
 @keyframes spKopfSchlag{0%,100%{transform:scale(1)}14%{transform:scale(1.07)}28%{transform:scale(1)}42%{transform:scale(1.04)}}
 
-.sp-fu-z{display:flex;align-items:center;gap:7px;margin:6px 13px 0;font-size:11px;line-height:1.35;color:var(--muted)}
-.sp-fu-z .nf-sam-i{width:16px;height:16px;border-radius:5px}
-.sp-fu-z .nf-sam-i svg{width:10px;height:10px}
-.sp-fu-z b{font-weight:600;color:var(--ink2)}
+.nf-sam-z.sp-fz .nf-sam-i{color:var(--ink)}
 .sp-tk .sp-k,.sp-md .sp-k,.sp-zm .sp-k{text-align:center;margin-bottom:4px}
 .sp-tk-s{display:block;width:100%;height:18px;overflow:visible}
 .sp-tk-b{fill:none;stroke:var(--acid);stroke-width:1.6;stroke-linecap:round;vector-effect:non-scaling-stroke;opacity:.85}
@@ -5534,6 +5563,8 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   font:600 8px 'Sometype Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
 .sp-uo-p{display:flex;align-items:center;gap:6px}
 .sp-uo-p i{font:600 9px 'Sometype Mono',monospace;font-style:normal;color:var(--muted)}
+.sp-uo-p.w,.sp-uo-p.l{font-size:11.5px;font-weight:600;color:var(--ink);padding-left:7px;box-shadow:inset 2px 0 0 var(--acid)}
+.sp-uo-p.l{color:var(--ink2);box-shadow:inset 2px 0 0 rgba(240,86,106,.65)}
 
 .sp-ds{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:8px}
 .sp-ds-c.re{opacity:.55}
@@ -6090,7 +6121,7 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
     color:var(--muted);opacity:.32}
   .ff-vt i svg{width:10px;height:10px}
   .ff-vt.gold i svg{width:14px;height:14px}
-  .ff-vt i.hat{opacity:1;background:rgba(var(--story-rgb),.16);color:var(--ink)}
+  .ff-vt i.hat{opacity:var(--a,1);background:rgba(var(--story-rgb),.16);color:var(--ink)}
   .ff-vt i.hat.legendary{color:var(--purple);background:rgba(167,139,250,.14)}
 
   .ff-md{display:flex;gap:14px;align-items:center}
@@ -6272,21 +6303,12 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 .eh-p-k b{flex:1 1 auto;min-width:0;font-family:'Archivo Black',sans-serif;font-weight:400;font-size:13px;
   color:var(--ink);overflow-wrap:anywhere}
 .eh-p-k em{font-style:normal;font-family:'Archivo Black',sans-serif;font-size:15px;color:var(--gold)}
-.eh-q{display:flex;align-items:center;gap:10px;padding:8px 13px}
-.eh-q + .eh-q{border-top:1px solid var(--line)}
-.eh-q > .zk{position:relative;overflow:hidden}
-.eh-q-t{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px}
-.eh-q-t b{font-size:12.5px;font-weight:700;color:var(--ink);overflow-wrap:anywhere}
-.eh-q-t small{font-family:'Sometype Mono',monospace;font-size:9.5px;color:var(--muted);letter-spacing:.03em}
 .eh-q-m{display:block;height:3px;margin-top:3px;border-radius:2px;background:rgba(255,255,255,.06);overflow:hidden}
 .eh-q-m i{display:block;height:100%;border-radius:2px;background:var(--acid)}
-.eh-q.legendary .eh-q-m i{background:var(--gold)}
-.eh-q.rare .eh-q-m i{background:var(--purple)}
-.eh-q em{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;gap:1px;font-style:normal;
-  font-family:'Sometype Mono',monospace;font-size:12px;font-weight:700;color:var(--gold)}
-.eh-q em small{font-size:9px;font-weight:400;color:var(--muted)}
 .eh-g{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px 9px 9px}
-.eh-q + .eh-g{border-top:1px solid var(--line)}
+.eh-g-t.legendary .eh-q-m i{background:var(--gold)}
+.eh-g-t.rare .eh-q-m i{background:var(--purple)}
+.eh-g-t > .zk,.eh-g-o > .zk{position:relative;overflow:hidden}
 .eh-g-t{position:relative;display:flex;flex-direction:column;gap:2px;min-width:0;padding:7px 9px 9px;border-radius:10px;
   background:var(--surface2);border:1px solid var(--line);overflow:hidden}
 .eh-g-o{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:3px}
@@ -6354,7 +6376,7 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 .nf-eht-g > i{position:absolute;right:-4px;bottom:-4px;min-width:14px;height:14px;padding:0 3px;border-radius:7px;
   font-style:normal;font-size:9px;font-weight:700;line-height:14px;text-align:center;color:var(--bg);background:var(--acid)}
 .nf-eht-r{padding:4px 0 2px;border-top:1px solid var(--line);font-size:10.5px;color:var(--muted)}
-.eh-s-z .zk.gold > .glanz-bahn::after,.eh-q > .zk.gold > .glanz-bahn::after{
+.eh-s-z .zk.gold > .glanz-bahn::after,.eh-g-o > .zk.gold > .glanz-bahn::after{
   content:"";position:absolute;top:0;bottom:0;left:0;width:250%;pointer-events:none;
   background:linear-gradient(105deg,transparent 38%,rgba(255,236,170,.55) 50%,transparent 62%);
   transform:translateX(-84%);animation:glanzZug 9s ease-in-out infinite;animation-delay:var(--gd,0s)}
@@ -6654,7 +6676,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.11.04.c45986ad';
+const BUILD_VERSION='2026.11.09.c9141d91';
 function forceReload(nach){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -9247,7 +9269,11 @@ function ohneStoriesNachAbschied(list){
   if(!weg.length) return list;
   const text = s => {
     let x = _storyText.get(s);
-    if(x == null){ x = JSON.stringify(s.dataRef || {}); _storyText.set(s, x); }
+    if(x == null){
+      const d = s.dataRef || {};
+      x = JSON.stringify(d.visual ? Object.assign({}, d, {visual:null}) : d);
+      _storyText.set(s, x);
+    }
     return x;
   };
   const bleibt = list.filter(s => {
@@ -19437,12 +19463,12 @@ const NEWS_TOAST_COOLDOWN_MS = 6 * 60 * 60 * 1000;
 const NEWS_TOAST_MS = 4000;
 const NEWS_TOAST_START_MS = 7000;
 
+const NEWS_PAUSE_TAGE = 5;
 const NEWS_LIMITS = {
   topForm: 2,
   lossStreak: 2,
   winStreak: 8,
   giantSlayer: 4,
-  jubilee: 3,
   badgeUnlocked: 6,
   rivalry: 1,
   rivalryMarke: 4,
@@ -19503,6 +19529,9 @@ function anlassGewicht(typ, dt){
   dt = dt || {};
   if(typ === 'win_streak' || typ === 'team_streak') return 46 + 2 * Math.min(17, Number(dt.streak) || 0);
   if(typ === 'badge_unlocked') return dt.rarity === 'legendary' ? 92 : dt.rarity === 'rare' ? 66 : 50;
+  if(typ === 'pleiten_ende') return 58 + Math.min(20, Number(dt.n) || 0);
+  if(typ === 'duo_pleiten_ende') return 44 + Math.min(16, Number(dt.n) || 0);
+  if(typ === 'rueckkehr') return 42 + Math.min(14, Math.floor((Number(dt.tage) || 0) / 7));
   return ANLASS_GEWICHT[typ];
 }
 const STORY_PRIO = {
@@ -19547,6 +19576,9 @@ const STORY_PRIO = {
   duo_jubilaeum:     45,
   tagesmarathon:     43,
   duell_kippt:       52,
+  pleiten_ende:      54,
+  duo_pleiten_ende:  46,
+  rueckkehr:         45,
   woche_spitze:      48,
   tag_plus:          47,
   tag_hoehe:         44,
@@ -19855,6 +19887,10 @@ function _ladderCrossing(before, after, min){
     p *= 10;
   }
   return hit;
+}
+
+function _rundeMarke(n, min){
+  return n >= min && (n % 50 === 0 || _ladderCrossing(n - 1, n, min) === n);
 }
 
 function _isAmbientDay(d){
@@ -20461,7 +20497,7 @@ function _buildStories(){
       const matchIds = [...new Set(l.map(ev => ev.tagEnde ? null : ev.matchId).filter(Boolean))];
       const gemeinsamesMatch = matchIds.length === 1
         && l.every(ev => ev.matchId === matchIds[0]) ? matchIds[0] : null;
-      const zeile = ev => `${nameOf(ev.playerId)} holt „${ev.badge.name}" zum ${_bRang(ev)}. Mal`;
+      const zeile = ev => `${nameOf(ev.playerId)} holt „${ev.badge.name}“ zum ${_bRang(ev)}. Mal`;
       stories.push({
         id: gemeinsamesMatch ? 'badgemarken_match_' + gemeinsamesMatch
                              : 'badgemarken_slot_' + tag,
@@ -20540,17 +20576,16 @@ function _buildStories(){
 
   try {
     const candidates = [];
+    const seit = now.getTime() - NEWS_FENSTER_TAGE * _dayMs;
     players.filter(p => sichtbar(p)).forEach(p => {
       const arr = byPlayer[p.id] || [];
-      const total = arr.length;
-      if(!total) return;
-      const mark = _ladderCrossing(total - 1, total, 10);
-      if(mark){
-        const last = arr[arr.length-1];
-        candidates.push({pid: p.id, total: mark, when: new Date(last.created_at), matchId: last.id});
-      }
+      arr.forEach((m, i) => {
+        const n = i + 1;
+        if(mts(m) < seit || mts(m) > now.getTime() || !_rundeMarke(n, 10)) return;
+        candidates.push({pid: p.id, total: n, when: new Date(m.created_at), matchId: m.id});
+      });
     });
-    candidates.sort((a,b) => b.when - a.when).slice(0, NEWS_LIMITS.jubilee).forEach(c => {
+    candidates.sort((a,b) => b.when - a.when).forEach(c => {
       stories.push({
         id: 'jubilee_'+c.pid+'_'+c.total,
         cat: 'history',
@@ -20579,6 +20614,7 @@ function _buildStories(){
     const duo = ids => ids.slice().sort().join('|');
     const gegen = {}, zusammen = {}, tagN = {}, duelle = {}, hoch = {};
     const bilanz = {}, woche = {}, tagElo = {}, monat = {}, partner = {}, gesamt = {};
+    const pleiten = {}, duoPleiten = {}, letzterSieg = {}, duoSieg = {}, zuletzt = {};
     const vz = v => (v > 0 ? '+' : v < 0 ? '−' : '±') + Math.abs(Math.round(v));
     const quote = (s, n) => Math.round(100 * s / Math.max(1, n));
     const wochenErster = o => Object.keys(o).filter(id => o[id].s >= 5 && zeig(id))
@@ -20766,6 +20802,38 @@ function _buildStories(){
           dataRef:{type:'partner_best', pid:id, mit, s:z.s, n:z.n, allg:quote(g.s, g.n), matchId:m.id, playerIds:[id, mit]}});
         break;
       }
+      W.forEach(id => {
+        const n = pleiten[id] || 0;
+        if(neu && n >= 5 && zeig(id)) neuSt.push({id:'pleitenende_' + id + '_' + m.id, cat:'comeback', ic:'comeback',
+          title:`${nameOf(id)} beendet eine Serie von ${n} Niederlagen`,
+          desc:letzterSieg[id] ? `Der letzte Sieg davor war am ${tagImSatz(letzterSieg[id])}`
+            : `Es ist der erste Sieg, nach ${n} Partien.`,
+          when:zeit, prio:STORY_PRIO.pleiten_ende,
+          dataRef:{type:'pleiten_ende', pid:id, n, matchId:m.id, playerIds:[id]}});
+      });
+      const dkW = duo(W), dn = duoPleiten[dkW] || 0;
+      if(neu && dn >= 4 && W.every(zeig)) neuSt.push({id:'duopleitenende_' + dkW.replace('|', '_') + '_' + m.id, cat:'team', ic:'comeback',
+        title:`${nameOf(W[0])} und ${nameOf(W[1])} gewinnen wieder zusammen, nach ${dn} Niederlagen`,
+        desc:duoSieg[dkW] ? `Zuletzt gewannen beide zusammen am ${tagImSatz(duoSieg[dkW])}`
+          : `Es ist der erste gemeinsame Sieg, nach ${dn} gemeinsamen Partien.`,
+        when:zeit, prio:STORY_PRIO.duo_pleiten_ende,
+        dataRef:{type:'duo_pleiten_ende', a:W[0], b:W[1], n:dn, matchId:m.id, playerIds:W.slice()}});
+      W.concat(L).forEach(id => {
+        const vor = zuletzt[id];
+        if(neu && vor && t - vor >= 14 * _dayMs && zeig(id)){
+          const tage = Math.floor((t - vor) / _dayMs), sieg = W.includes(id);
+          neuSt.push({id:'rueckkehr_' + id + '_' + m.id, cat:'personal', ic:'doorReturn',
+            title:sieg ? `${nameOf(id)} gewinnt nach ${tage} Tagen Pause` : `${nameOf(id)} spielt nach ${tage} Tagen wieder`,
+            desc:`Die letzte Partie davor war am ${tagImSatz(vor)}`,
+            when:zeit, prio:STORY_PRIO.rueckkehr,
+            dataRef:{type:'rueckkehr', pid:id, tage, sieg, vorher:vor, matchId:m.id, playerIds:[id]}});
+        }
+      });
+      W.forEach(id => { pleiten[id] = 0; letzterSieg[id] = t; });
+      L.forEach(id => { pleiten[id] = (pleiten[id] || 0) + 1; });
+      duoPleiten[dkW] = 0; duoSieg[dkW] = t;
+      duoPleiten[duo(L)] = (duoPleiten[duo(L)] || 0) + 1;
+      W.concat(L).forEach(id => { zuletzt[id] = t; });
     });
     neuSt.forEach(x => stories.push(x));
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] partie', e); }
@@ -20893,15 +20961,15 @@ function _buildStories(){
   } catch(e){}
 
   try {
+    const seit = now.getTime() - NEWS_FENSTER_TAGE * _dayMs;
     players.filter(p => sichtbar(p)).forEach(p => {
       const arr = byPlayer[p.id] || [];
-      if(!arr.length) return;
       let wins = 0;
-      for(let i = 0; i < arr.length; i++) if(won(p.id, arr[i])) wins++;
-      const last = arr[arr.length-1];
-      const lastWon = won(p.id, last);
-      const mark = _ladderCrossing(wins - (lastWon ? 1 : 0), wins, 100);
-      if(mark){
+      arr.forEach(last => {
+        if(!won(p.id, last)) return;
+        wins++;
+        const mark = wins;
+        if(mts(last) < seit || mts(last) > now.getTime() || !_rundeMarke(mark, 50)) return;
         stories.push({
           id: 'milestone_wins_'+p.id+'_'+mark,
           cat: 'personal',
@@ -20918,7 +20986,7 @@ function _buildStories(){
           prio: STORY_PRIO.milestone_wins + (mark >= 500 ? 6 : mark >= 250 ? 3 : 0),
           dataRef: {type:'milestone_wins', pid: p.id, milestone: mark+'. Sieg', matchId: last.id}
         });
-      }
+      });
     });
   } catch(e){}
 
@@ -21068,13 +21136,7 @@ function _buildStories(){
           cat: 'highlight',
           ic: 'kingClass',
           title: `${nameOf(best.p1)} schlägt ${nameOf(best.p2)} im Spitzenspiel`,
-          desc: (() => {
-            const gewonnenA = m.winner === 'A';
-            const hoch = gewonnenA ? m.score_a : m.score_b;
-            const tief = gewonnenA ? m.score_b : m.score_a;
-            return `Platz 1 gegen Platz 2, und Platz 1 gewinnt. Es steht `
-              + `${hoch}:${tief}, der Abstand nach vorn wird größer.`;
-          })(),
+          desc: `Platz 1 gegen Platz 2, und Platz 1 gewinnt. Der Abstand nach vorn wird größer.`,
           when: new Date(best.t),
           prio: STORY_PRIO.top_clash,
           dataRef: {type:'top_clash', matchId: m.id, winners: best.winners, losers: best.losers, p1: best.p1, p2: best.p2,
@@ -21197,9 +21259,11 @@ function _buildStories(){
       }
       if(art === 'normal' || art === 'eng'){
         let tx = null;
-        try { tx = _spScoreText(m); }
+        try { tx = _spScoreText(m) || _spKontext(_spFakten(m)); }
         catch(e){ tx = null; }
         if(tx){ title = tx.t; desc = tx.d; }
+      } else {
+        try { desc = _spKontext(_spFakten(m)).d; } catch(e){}
       }
       stories.push({
         id: 'spiel_' + m.id,
@@ -21427,7 +21491,7 @@ function _buildStories(){
     if(matches.length){
       const lastMatchTs = mts(matches[matches.length-1]);
       const sinceLastDays = Math.floor((now.getTime() - lastMatchTs) / 86400000);
-      if(sinceLastDays >= 3){
+      if(sinceLastDays >= NEWS_PAUSE_TAGE){
         let maxGapDays = 0;
         for(let i = 1; i < matches.length; i++){
           const gap = Math.floor((mts(matches[i]) - mts(matches[i-1])) / 86400000);
@@ -21673,23 +21737,23 @@ function _buildStories(){
           zeileText = `${belegSatz}. Diesen Rekord hat vorher niemand gehalten.`;
           desc = `${zeileText} Verlangt ist: ${def.cond}.`;
         } else if(fall === 'dazu'){
-          title = `${namen} ${neuN.length > 1 ? 'ziehen' : 'zieht'} bei „${def.name}" gleich`;
+          title = `${namen} ${neuN.length > 1 ? 'ziehen' : 'zieht'} bei „${def.name}“ gleich`;
           desc = `${belegSatz}. Geteilt mit ${_namenListe(
             altPids.filter(id => n.pids.indexOf(id) >= 0).map(nameOf))}.`;
         } else if(fall === 'allein'){
-          title = `${namen} ${neuN.length > 1 ? 'halten' : 'hält'} „${def.name}" jetzt allein`;
+          title = `${namen} ${neuN.length > 1 ? 'halten' : 'hält'} „${def.name}“ jetzt allein`;
           desc = `${belegSatz}. Vorher ${_namenListe(
             altPids.filter(id => n.pids.indexOf(id) < 0).map(nameOf))} auch.`;
         } else if(fall === 'uebernommen'){
           const weg = altPids.filter(id => n.pids.indexOf(id) < 0);
           const altN = _namenListe(weg.map(nameOf)) || altNamen || 'der bisherige Halter';
           const hielten = weg.length > 1 ? 'hielten' : 'hielt';
-          title = `${namen} ${verb} „${def.name}"`;
+          title = `${namen} ${verb} „${def.name}“`;
           desc = `${belegSatz}. ` + (wertAlt && wertAlt !== wertNeu && !def.fenster
             ? `Vorher ${hielten} ${altN} den Rekord mit ${wertAlt}.`
             : `Vorher gehörte der Rekord ${altN}.`);
         } else {
-          title = `${namen} ${baut} „${def.name}" aus`;
+          title = `${namen} ${baut} „${def.name}“ aus`;
           desc = `${belegSatz}. Vorher waren es ${wertAlt}.`;
         }
         const _verlierer = (fall === 'dazu'
@@ -21774,10 +21838,10 @@ function _buildStories(){
         });
         const namen = _namenKurz(wer.map(nameOf));
         const mz = wer.length > 1;
-        const titel = art === 'erstmals'  ? `${namen} ${mz ? 'holen' : 'holt'} „${t.name}"`
-                    : art === 'allein'    ? `${namen} ${mz ? 'halten' : 'hält'} „${t.name}" jetzt allein`
-                    : art === 'dazu'      ? `${namen} ${mz ? 'ziehen' : 'zieht'} bei „${t.name}" gleich`
-                    : `${namen} ${mz ? 'übernehmen' : 'übernimmt'} „${t.name}"`;
+        const titel = art === 'erstmals'  ? `${namen} ${mz ? 'holen' : 'holt'} „${t.name}“`
+                    : art === 'allein'    ? `${namen} ${mz ? 'halten' : 'hält'} „${t.name}“ jetzt allein`
+                    : art === 'dazu'      ? `${namen} ${mz ? 'ziehen' : 'zieht'} bei „${t.name}“ gleich`
+                    : `${namen} ${mz ? 'übernehmen' : 'übernimmt'} „${t.name}“`;
         const altWeg = alt.filter(id => n.pids.indexOf(id) < 0);
         const nachsatz = art === 'uebernommen'
             ? ` Vorher ${altWeg.length > 1 ? 'hielten' : 'hielt'} sie `
@@ -22763,24 +22827,27 @@ function _ambientTemplatePool(now, pm, nameOf){
 
   T.push({ key:'award_gold_leader', weight:2, make: () => {
     if(typeof getCachedBadges !== 'function' || typeof rarityOf !== 'function') return null;
-    const goldOf = pid => getCachedBadges(pid).filter(b => rarityOf(b.id) === 'legendary').length;
-    const rank = _awardRank(activePids, goldOf);
+    const gold = pid => getCachedBadges(pid).filter(b => rarityOf(b.id) === 'legendary');
+    const summe = l => l.reduce((n, b) => n + (Number(b.count) || 1), 0);
+    const rank = _awardRank(activePids, pid => summe(gold(pid)));
     if(!rank.length) return null;
     const lead = _awardLeaders(rank), top = rank[0];
+    const wort = n => n === 1 ? 'goldene Auszeichnung' : 'goldene Auszeichnungen';
     if(lead.length > 1){
       return { cat:'badge', ic:'trophyStar', prio:6,
-        title:`Wettrüsten in Gold`,
-        desc:`${_namesOf(lead)} halten je ${top.v} goldene ${top.v === 1 ? 'Auszeichnung' : 'Auszeichnungen'}. Niemand hat mehr.`,
+        title:`Gleichstand in Gold`,
+        desc:`${_namesOf(lead)} holten je ${top.v} ${wort(top.v)}.`,
         vv: top.v, vl:'Gold',
         dataRef:{ ambientPids: lead.slice(0,2).map(x=>x.pid), pairKind:'duel', bild:_bRennen(rank.map(x => ({p:x.pid, v:x.v, n:x.v, t:String(x.v)})), false, 'sammlung') } };
     }
-    const gold = getCachedBadges(top.pid).filter(b => rarityOf(b.id) === 'legendary');
-    const names = gold.map(b => b.name);
+    const meine = gold(top.pid).slice().sort((a, b) => (b.count || 1) - (a.count || 1));
+    const liste = meine.slice(0, 3).map(b => (b.count > 1 ? `${b.count}× ` : '') + `„${b.name}“`);
     return { cat:'badge', ic:'trophyStar', prio:6,
-      title:`${nameOf(top.pid)} sammelt Gold`,
-      desc:`${top.v} goldene ${top.v === 1 ? 'Auszeichnung' : 'Auszeichnungen'}. ${names.join(', ')}.`,
+      title:`${nameOf(top.pid)} holt am häufigsten Gold`,
+      desc:`${top.v} ${wort(top.v)}, darunter ${liste.join(', ')}.`,
       vv: top.v, vl:'Gold',
-      dataRef:{ ambientPid: top.pid, bild:{f:'vitrine', p:top.pid, gold:true, hat:gold.map(b => b.id)} } };
+      dataRef:{ ambientPid: top.pid, bild:{f:'vitrine', p:top.pid, gold:true, hat:meine.map(b => b.id),
+        n:Object.fromEntries(meine.map(b => [b.id, b.count || 1])), gesamt:top.v} } };
   }});
 
   T.push({ key:'award_latest_gold', weight:2, make: () => {
@@ -22805,7 +22872,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     const her = days < 2 ? null : days < 14 ? {n:days, e:'Tagen', nom:'Tage'} : _spSeit(now.getTime() - latest.t);
     return { cat:'badge', ic: latest.badge.ic || 'trophyStar', prio:5,
       title:`${nameOf(latest.pid)} holte zuletzt Gold`,
-      desc:`Die Auszeichnung „${latest.badge.name}" ${days === 0 ? 'heute' : days === 1 ? 'gestern' : 'vor ' + her.n + ' ' + her.e}. ${latest.badge.desc}.`,
+      desc:`Die Auszeichnung „${latest.badge.name}“ ${days === 0 ? 'heute' : days === 1 ? 'gestern' : 'vor ' + her.n + ' ' + her.e}. ${latest.badge.desc}.`,
       vv:String(days === 0 ? 'heute' : days === 1 ? 'gestern' : her.n),
       vl:her ? her.nom + ' her' : 'geholt',
       dataRef:{ ambientPid: latest.pid, bild:{f:'medaille', p:latest.pid, b:latest.badge.id,
@@ -22814,15 +22881,18 @@ function _ambientTemplatePool(now, pm, nameOf){
 
   T.push({ key:'award_total_leader', make: () => {
     if(typeof getCachedBadges !== 'function') return null;
-    const rank = _awardRank(activePids, pid => getCachedBadges(pid).length);
+    const summe = pid => getCachedBadges(pid).reduce((n, b) => n + (Number(b.count) || 1), 0);
+    const rank = _awardRank(activePids, summe);
     if(rank.length < 2) return null;
     const lead = _awardLeaders(rank), top = rank[0], nxt = rank[lead.length];
     if(lead.length > 1 || !nxt) return null;
+    const meine = getCachedBadges(top.pid);
     return { cat:'badge', ic:'medalTrio', prio:4,
-      title:`${nameOf(top.pid)} hat die volle Vitrine`,
-      desc:`${top.v} verschiedene Auszeichnungen freigeschaltet. ${nameOf(nxt.pid)} kommt auf ${nxt.v}.`,
-      vv: top.v, vl:'Awards',
-      dataRef:{ ambientPid: top.pid, bild:{f:'vitrine', p:top.pid, hat:getCachedBadges(top.pid).map(b => b.id), zweiter:nxt.v} } };
+      title:`${nameOf(top.pid)} hat die meisten Auszeichnungen`,
+      desc:`${top.v} Auszeichnungen, ${meine.length} verschiedene. ${nameOf(nxt.pid)} kommt auf ${nxt.v}.`,
+      vv: top.v, vl:'Auszeichnungen',
+      dataRef:{ ambientPid: top.pid, bild:{f:'vitrine', p:top.pid, hat:meine.map(b => b.id),
+        n:Object.fromEntries(meine.map(b => [b.id, b.count || 1])), gesamt:top.v, zweiter:nxt.v} } };
   }});
 
 
@@ -22903,7 +22973,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     const a = cur[0];
     const held = T2.awarded.length, open = SEASON_TITLES.length - held;
     return { cat:'season', ic:a.ic, prio:5,
-      title:`${nameOf(a.pid)} führt bei „${a.name}"`,
+      title:`${nameOf(a.pid)} führt bei „${a.name}“`,
       desc:`${_evSatz(a.ev)}. ${held} von ${SEASON_TITLES.length} `
         + `Chronik-Einträgen stehen schon.`,
       vv:String(open), vl:'noch offen',
@@ -22921,7 +22991,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     const d = recs[day % recs.length];
     const h = by[d.id];
     return { cat:'fun', ic:d.ic, prio:4,
-      title:`${h.shared ? _chronHalterSatz(h) + ' halten' : nameOf(h.pid) + ' hält'} „${d.name}"`,
+      title:`${h.shared ? _chronHalterSatz(h) + ' halten' : nameOf(h.pid) + ' hält'} „${d.name}“`,
       desc:`${_evSatz(h.ev)}. ${h.shared ? 'Diesen Bestwert halten mehrere punktgleich.' : 'Sonst hält diesen Bestwert niemand.'}`,
       vv:_chronKurz(h.ev),
       vl:((CHRON_KINDS[d.kind] || {}).label || 'Bestwert'),
@@ -22987,7 +23057,7 @@ function _ambientTemplatePool(now, pm, nameOf){
       ? `${_halter} ${_mehr ? 'halten' : 'hält'} den Bestwert mit ${s.stand}`
       : String(s.txt || '');
     return { cat:'personal', ic:s.ic, prio:5,
-      title:`${nameOf(pid)} kann „${s.name}" holen`,
+      title:`${nameOf(pid)} kann „${s.name}“ holen`,
       desc: (_bed ? `Dafür zählt: ${_bed}. ` : '')
         + (_stand ? _stand + '. ' : '')
         + (s.mein ? `${nameOf(pid)} steht bei ${s.mein}. ` : '')
@@ -23202,10 +23272,10 @@ function _consolidateStories(list){
     normal.push(Object.assign({}, s, {
       id:unveraendert ? s.id : 'badgemarken_match_' + g.mid,
       title:unveraendert ? s.title : l.length === 1
-        ? `${namen[0]} holt „${l[0].name}" zum ${l[0].rang}. Mal`
+        ? `${namen[0]} holt „${l[0].name}“ zum ${l[0].rang}. Mal`
         : `${_namenKurz(namen)} ${namen.length > 1 ? 'erreichen' : 'erreicht'} runde Marken`,
       desc:unveraendert ? s.desc : l.map(x =>
-        `${(pmap()[x.pid] || {}).name || '?'}: „${x.name}", ${x.rang}. Verleihung`).join('. ') + '.',
+        `${(pmap()[x.pid] || {}).name || '?'}: „${x.name}“, ${x.rang}. Verleihung`).join('. ') + '.',
       when:zeit,
       dataRef:Object.assign({}, d, {matchId:g.mid, playerIds:ids, marken:l,
         sourceStoryIds:[...g.ids], causalKey:_storyGruppeKey('match', g.mid)})
@@ -23477,7 +23547,8 @@ function _consolidateStoriesLegacy(list){
     'rivalry','rivalry_milestone','spiel',
     'lead_change','streak_record',
     'fluch','duo_jubilaeum','revanche','tagesmarathon','elo_hoch','tabellensprung',
-    'duell_kippt','woche_spitze','tag_plus','tag_hoehe','monat_gewinn','monat_halb','partner_best']);
+    'duell_kippt','woche_spitze','tag_plus','tag_hoehe','monat_gewinn','monat_halb','partner_best',
+    'pleiten_ende','duo_pleiten_ende','rueckkehr']);
   const SAMMEL_TAFEL = new Set(['rekord_erstmals','rekord_geholt','rekord_gesteigert',
     'chronik_geholt']);
   const _minKey = w => { const d = new Date(w); return tagKey(w)+'-'+d.getHours()+'-'+d.getMinutes(); };
@@ -23870,7 +23941,9 @@ function _consolidateStoriesLegacy(list){
         milestone_wins:'Siegmarke', milestone_goals:'Tormarke', milestone_elo:'Elo-Marke',
         rivalry_milestone:'Rivalitätsmarke', rivalry:'Rivalität',
         fluch:'gebrochener Fluch', duo_jubilaeum:'Duo-Jubiläum', revanche:'Revanche',
-        tagesmarathon:'langer Tag', elo_hoch:'Elo-Höchststand', tabellensprung:'Tabellensprung'};
+        tagesmarathon:'langer Tag', elo_hoch:'Elo-Höchststand', tabellensprung:'Tabellensprung',
+        pleiten_ende:'Ende der Durststrecke', duo_pleiten_ende:'Ende der gemeinsamen Durststrecke',
+        rueckkehr:'Rückkehr'};
       const MEHRZAHL = {Siegesserie:'Siegesserien', Teamserie:'Teamserien', Durststrecke:'Durststrecken',
         'gemeinsame Durststrecke':'gemeinsame Durststrecken', Formlauf:'Formläufe', 'Jubiläum':'Jubiläen',
         Siegmarke:'Siegmarken', Tormarke:'Tormarken', 'Elo-Marke':'Elo-Marken', Serienbruch:'Serienbrüche'};
@@ -23903,7 +23976,7 @@ function _consolidateStoriesLegacy(list){
         if(dt.type === 'duo_jubilaeum' && dt.a && dt.b) return {wort:'für', pids:[dt.a, dt.b]};
         if(dt.type === 'revanche' && Array.isArray(dt.W)) return {wort:'für', pids:dt.W.slice()};
         if(dt.type === 'lead_change' && dt.newLeader) return {wort:'für', pids:[dt.newLeader]};
-        if((dt.type === 'team_streak' || dt.type === 'team_loss_streak') && dt.a && dt.b) return {wort:'für', pids:[dt.a, dt.b]};
+        if((dt.type === 'team_streak' || dt.type === 'team_loss_streak' || dt.type === 'duo_pleiten_ende') && dt.a && dt.b) return {wort:'für', pids:[dt.a, dt.b]};
         if(dt.playerId) return {wort:'für', pids:[dt.playerId]};
         if(dt.pid) return {wort:'für', pids:[dt.pid]};
         return {wort:'für', pids:(dt.playerIds || t.playerIds || []).filter(Boolean)};
@@ -23967,7 +24040,9 @@ function _consolidateStoriesLegacy(list){
       const folge = nf === 1
         ? 'Eine Meldung hängt daran'
         : `${(x => x.charAt(0).toUpperCase() + x.slice(1))(_zahlwortDe(nf))} Meldungen hängen daran`;
-      if(ds.quote != null){
+      if(einePartie && haupt && String(haupt.t.desc || '').trim()){
+        neuText = String(haupt.t.desc).trim();
+      } else if(ds.quote != null){
         neuText = spTeil.desc || '';
       } else if(brkBundle){
         neuText = `${folge}, und jede davon kommt nur wenige Male je Saison.`;
@@ -24915,10 +24990,12 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
       + `<span class="nf-brk-zeit">${esc(_newsWhenLabel(s.when))}</span></div>`
     : '';
   const partieBuendel = d.type === 'sammel' && d.quelle === 'spiel' && d.matchId && !d.bandFremd;
-  const spZeilen = partieBuendel ? _spZeilen(d.teile, s.title, _spBild(s).occ) : null;
+  const spZeilen = partieBuendel || (d.type === 'spiel' && d.matchId && !d.bandFremd)
+    ? _spZeilen(d.teile || [], s.title, _spBild(s).occ) : null;
   const sammelTeile = spZeilen ? spZeilen.zeilen : d.teile;
-  const sammelBand = (d.type === 'sammel')
-    ? _newsSammelBand(sammelTeile, [s.title], !spZeilen) : '';
+  const fz = spZeilen && spZeilen.unter && _spBild(s).fuss ? spZeilen.unter : null;
+  const sammelBand = (d.type === 'sammel' || fz)
+    ? _newsSammelBand(d.type === 'sammel' ? sammelTeile : [], [s.title], !spZeilen, fz) : '';
 
   let kopf = '', fuss = '', gesicht = '', faktBild = '';
   let satz = s.desc;
@@ -24929,9 +25006,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
     const bild = _spBild(s);
     kopf = d.bandFremd ? '' : bild.kopf;
     satz = _newsSpielSatz(s.desc, bild.zeigt);
-    const unter = spZeilen && spZeilen.unter && bild.fuss
-      ? `<div class="sp-fu-z"><i class="nf-sam-i">${svgI(spZeilen.unter.ic || 'chartBar')}</i><span>${_newsBetont(spZeilen.unter.titel || '')}</span></div>` : '';
-    fuss = bild.fuss + unter + _newsZahlband(_newsSpielZahlen(s, bild.key));
+    fuss = bild.fuss + _newsZahlband(_newsSpielZahlen(s, bild.key));
     if(!kopf) gesicht = _newsGesichtHtml(s);
   } else if(sorte === 'tafel'){
     const w = _newsTafelWert(s);
@@ -25031,7 +25106,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
 
   const negativ = _newsIstNegativ(s);
   let brkSub = '';
-  if(brk){
+  if(brk && sorte !== 'spiel'){
     const h = _breakingHeroText(s);
     if(String(h || '').trim() !== String(s.desc || '').trim()) brkSub = h;
   }
@@ -25148,12 +25223,14 @@ function _newsSerienBand(laenge, verloren, mitZiel){
     + `<span>${n} ${verloren ? 'Pleiten' : 'Siege'} nacheinander${ziel ? ` · Marke ${ziel}` : ''}</span></div>`;
 }
 
-function _newsSammelBand(teile, kopfTitel, vollstaendig){
+function _newsSammelBand(teile, kopfTitel, vollstaendig, fz){
   const alle = Array.isArray(teile) ? teile : [];
   const kt = (Array.isArray(kopfTitel) ? kopfTitel : [kopfTitel])
     .map(x => String(x || '').trim()).filter(Boolean);
   const rest = alle.filter(t => kt.indexOf(String(t.titel || '').trim()) < 0);
-  if(!rest.length) return '';
+  const fussZeile = fz && fz.titel ? `<div class="nf-sam-z sp-fz" data-story-id="${esc(fz.id || '')}"><i class="nf-sam-i">${svgI(fz.ic || 'chartBar')}</i>`
+    + `<span>${_newsBetont(fz.titel)}</span></div>` : '';
+  if(!rest.length) return fussZeile ? `<div class="nf-sam">${fussZeile}</div>` : '';
   const grenze = vollstaendig
     ? Math.min(rest.length, NEWS_LIMITS.sammelZeilen || rest.length) : 3;
   const wechsel = rest.filter(t => String((t && (t.typ || t.type)) || '') !== 'rekord_gesteigert');
@@ -25180,7 +25257,7 @@ function _newsSammelBand(teile, kopfTitel, vollstaendig){
     + `</div>`;
   }).join('')}`
     + (uebrig > 0 ? `<div class="nf-sam-m">und ${uebrig} weitere</div>` : '')
-    + `</div>`;
+    + fussZeile + `</div>`;
 }
 
 function _newsPrestigeBand(s){
@@ -25266,12 +25343,8 @@ function _newsSpielSatz(desc, zeigt){
 }
 
 const NEWS_FADEN_ART = {
-  ende:     {kap:'ENDE',          vor:'Beendet'},
-  wende:    {kap:'WENDE',         vor:'Beendet'},
-  revanche: {kap:'REVANCHE',      vor:'Antwort auf'},
   zurueck:  {kap:'RÜCKEROBERUNG', vor:'Folgt auf'},
   weiter:   {kap:'FORTSETZUNG',   vor:'Setzt fort'},
-  spitze:   {kap:'WECHSEL',       vor:'Folgt auf'},
 };
 const _newsFadenMemo = new WeakMap();
 function _newsFaeden(cards){
@@ -25281,28 +25354,17 @@ function _newsFaeden(cards){
   const map = new Map();
   _newsFadenMemo.set(roh, {m: matches, n: cards.length, map});
   const rohId = new Map(roh.map(x => [x.id, x]));
-  const karteVon = new Map();
+  const partie = c => { const d = c.dataRef || {};
+    return d.type === 'spiel' || d.type === 'runde' || !!d.matchId
+      || (d.type === 'sammel' && (d.teile || []).some(t => /^spiel_/.test(String((t && t.id) || '')))); };
+  cards = cards.filter(c => !partie(c));
   const glieder = new Map();
   cards.forEach(c => {
     const d = c.dataRef || {};
     const ids = d.type === 'sammel' && Array.isArray(d.teile)
       ? d.teile.map(t => t && t.id).filter(Boolean) : [c.id];
-    const g = ids.map(id => rohId.get(id) || (id === c.id ? c : null)).filter(Boolean);
-    g.forEach(x => karteVon.set(x.id, c));
-    glieder.set(c.id, g);
+    glieder.set(c.id, ids.map(id => rohId.get(id) || (id === c.id ? c : null)).filter(Boolean));
   });
-  const idx = new Map();
-  const reihe = [...(matches || [])].sort((a, b) => mts(a) - mts(b));
-  reihe.forEach((m, i) => idx.set(m.id, i));
-  const sieger = m => m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2];
-  const verlierer = m => m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2];
-  const gleich = (x, y) => x.length === y.length && x.every(v => y.includes(v));
-  const dazwischen = (vonId, bisId, f) => {
-    const a = idx.get(vonId), b = idx.get(bisId);
-    if(a == null || b == null || a >= b) return true;
-    for(let i = a + 1; i < b; i++) if(f(reihe[i])) return true;
-    return false;
-  };
   const alle = [];
   cards.forEach(c => (glieder.get(c.id) || []).forEach(x => alle.push({x, c})));
   alle.sort((p, q) => new Date(q.c.when) - new Date(p.c.when));
@@ -25314,62 +25376,21 @@ function _newsFaeden(cards){
     }
     return null;
   };
-  const RANG = ['ende', 'wende', 'revanche', 'zurueck', 'spitze', 'weiter'];
   cards.forEach(c => {
     let best = null;
-    const nimm = (art, ziel) => {
-      if(!ziel) return;
-      if(!best || RANG.indexOf(art) < RANG.indexOf(best.art)) best = {art, ziel: ziel.id};
-    };
     (glieder.get(c.id) || []).forEach(x => {
-      const d = x.dataRef || {};
-      const t = d.type || '';
-      if(t === 'streak_killer' && d.victimPid && d.matchId){
-        const v = d.victimPid;
-        nimm('ende', suche(c, e => e.type === 'win_streak' && e.pid === v && e.matchId
-          && !dazwischen(e.matchId, d.matchId, m => verlierer(m).includes(v))));
-      }
-      if(t === 'spiel' && d.matchId){
-        const m = reihe[idx.get(d.matchId)];
-        if(!m) return;
-        const w = sieger(m), l = verlierer(m);
-        nimm('wende', suche(c, e => e.type === 'team_loss_streak' && e.matchId
-          && gleich([e.a, e.b], w)
-          && !dazwischen(e.matchId, d.matchId, n => gleich(sieger(n), w))));
-        nimm('wende', suche(c, e => e.type === 'loss_streak' && e.matchId && w.includes(e.pid)
-          && !dazwischen(e.matchId, d.matchId, n => sieger(n).includes(e.pid))));
-        let vor = null;
-        for(let i = idx.get(m.id) - 1; i >= 0; i--){
-          const n = reihe[i];
-          const seiten = [[n.a1, n.a2], [n.b1, n.b2]];
-          if(seiten.some(sd => gleich(sd, w)) && seiten.some(sd => gleich(sd, l))){ vor = n; break; }
-        }
-        if(vor && gleich(sieger(vor), l) && tagKey(mts(vor)) !== tagKey(mts(m))){
-          const k = karteVon.get('spiel_' + vor.id);
-          if(k && k !== c && new Date(k.when) < new Date(c.when)) nimm('revanche', k);
-        }
-      }
-      if(/^(win_streak|loss_streak|team_streak|team_loss_streak)$/.test(t) && d.lauf){
-        nimm('weiter', suche(c, e => e.type === t && e.lauf === d.lauf
-          && (e.pid || '') === (d.pid || '') && (e.a || '') === (d.a || '') && (e.b || '') === (d.b || '')));
-      }
-      if((/^rekord_/.test(t) && d.rekordId) || (t === 'chronik_geholt' && d.titleId)){
-        const zielK = suche(c, e => t === 'chronik_geholt'
-          ? e.type === 'chronik_geholt' && e.titleId === d.titleId && e.sid === d.sid
-          : /^rekord_/.test(e.type || '') && e.rekordId === d.rekordId);
-        if(zielK){
-          const ze = (glieder.get(zielK.id) || []).map(y => y.dataRef || {})
-            .find(e => t === 'chronik_geholt' ? e.titleId === d.titleId : e.rekordId === d.rekordId) || {};
-          const jetzt = d.halter || d.playerIds || [];
-          const damalsWeg = ze.vorher || [];
-          const damalsNeu = ze.halter || ze.playerIds || [];
-          const zurueck = jetzt.some(p => damalsWeg.includes(p)) && !jetzt.some(p => damalsNeu.includes(p));
-          nimm(zurueck ? 'zurueck' : 'weiter', zielK);
-        }
-      }
-      if(t === 'lead_change' && d.sid){
-        nimm('spitze', suche(c, e => e.type === 'lead_change' && e.sid === d.sid));
-      }
+      const d = x.dataRef || {}, t = d.type || '';
+      if(!((/^rekord_/.test(t) && d.rekordId) || (t === 'chronik_geholt' && d.titleId))) return;
+      const zielK = suche(c, e => t === 'chronik_geholt'
+        ? e.type === 'chronik_geholt' && e.titleId === d.titleId && e.sid === d.sid
+        : /^rekord_/.test(e.type || '') && e.rekordId === d.rekordId);
+      if(!zielK) return;
+      const ze = (glieder.get(zielK.id) || []).map(y => y.dataRef || {})
+        .find(e => t === 'chronik_geholt' ? e.titleId === d.titleId : e.rekordId === d.rekordId) || {};
+      const jetzt = d.halter || d.playerIds || [];
+      const zurueck = jetzt.some(p => (ze.vorher || []).includes(p))
+        && !jetzt.some(p => (ze.halter || ze.playerIds || []).includes(p));
+      if(!best || (zurueck && best.art !== 'zurueck')) best = {art: zurueck ? 'zurueck' : 'weiter', ziel: zielK.id};
     });
     if(best) map.set(c.id, best);
   });
@@ -25721,7 +25742,7 @@ function _breakingHeroText(s){
         return sch ? _ehrungBrkSatz(_ehrungBrkGrund(sch.art, sch.ms), sch.art) : '';
       }
       case 'badge_unlocked':
-        return `${nm(d.playerId)} schnappt sich mit „${d.badgeName || s.title}" eine der seltensten Auszeichnungen der Liga. Das gelingt fast niemandem.`;
+        return `${nm(d.playerId)} schnappt sich mit „${d.badgeName || s.title}“ eine der seltensten Auszeichnungen der Liga. Das gelingt fast niemandem.`;
       case 'elo_record':
         return `${nm(d.pid)} schreibt Liga-Geschichte: Mit ${d.elo} Elo steht kein Spieler jemals höher. Eine neue Bestmarke für die Ewigkeit. Wer traut sich, sie anzugreifen?`;
       case 'streak_record':
@@ -26417,10 +26438,16 @@ function _spDuellBild(d){
     ${_spUnter(`${_spNb(d.A)} oben, ${_spNb(d.B)} unten: ${_spZahl(d.gesamt)} ${d.gesamt === 1 ? 'Begegnung' : 'Begegnungen'}${mehr}.`)}</div>`;
 }
 
+function _spNoch(id, m){
+  const p = _spielerVon(id);
+  if(!p || !sichtbar(p)) return false;
+  const ab = ruhestandAbschlussMs(p);
+  return !ab || mts(m) <= ab;
+}
 function _spMedailleDaten(a){
   const b = (typeof BADGES !== 'undefined' ? BADGES : []).find(x => x.id === a.x.badgeId);
   if(!b) return null;
-  const ids = players.filter(p => sichtbar(p)).map(p => p.id);
+  const ids = players.filter(p => _spNoch(p.id, a.m)).map(p => p.id);
   const B = _spBasis(), quelle = getBadgeEarnedCache();
   if(!B.medaillen || B.medaillen.quelle !== quelle){
     const erste = new Map(), vergaben = new Map();
@@ -26513,10 +26540,20 @@ function _spTagBild(d){
 }
 
 
-function _spSt(d){ return `<b class="sp-st num"><em>${_spZahl(d.hoch)}</em>:${_spZahl(d.tief)}</b>`; }
+function _spSt(d){
+  return d.aw === false ? `<b class="sp-st num">${_spZahl(d.tief)}:<em>${_spZahl(d.hoch)}</em></b>`
+    : `<b class="sp-st num"><em>${_spZahl(d.hoch)}</em>:${_spZahl(d.tief)}</b>`;
+}
 function _spNz(W, L, wort){
   return `<div class="sp-nz"><span class="w">${_spStapel(W)}</span><span class="sp-nz-gg">${wort || 'schlagen'}</span>`
     + `<span class="re">${_spStapel(L)}</span></div>`;
+}
+function _spTeamZeile(m){
+  const aw = m.winner === 'A';
+  const rolle = id => m[(m.a1 === id ? 'a1' : m.a2 === id ? 'a2' : m.b1 === id ? 'b1' : 'b2') + '_pos'];
+  const ord = s => _spTeam(m, s).slice().sort((a, b) => (rolle(a) === 'def' ? 0 : 1) - (rolle(b) === 'def' ? 0 : 1));
+  return `<div class="sp-nz"><span class="${aw ? 'w' : 'l'}">${_spStapel(ord('A'))}</span><span class="sp-nz-gg">gegen</span>`
+    + `<span class="re ${aw ? 'l' : 'w'}">${_spStapel(ord('B'))}</span></div>`;
 }
 function _spSeit(ms){
   const ein = (n, e1, eN, nom1, nomN) => ({n, e:n === 1 ? e1 : eN, nom:n === 1 ? nom1 : nomN});
@@ -26615,7 +26652,8 @@ function _spKopfDaten(F){
   const ord = l => l.slice().sort((a, b) => (rolle(a) === 'def' ? 0 : 1) - (rolle(b) === 'def' ? 0 : 1));
   const delta = {};
   F.W.concat(F.L).forEach(id => { delta[id] = Math.round(F.delta[id] || 0); });
-  return {W:ord(F.W), L:ord(F.L), hoch:F.hoch, tief:F.tief, pct:F.c != null ? Math.round(F.c * 100) : null, delta};
+  return {W:ord(F.W), L:ord(F.L), hoch:F.hoch, tief:F.tief, aw:F.m.winner === 'A',
+    pct:F.c != null ? Math.round(F.c * 100) : null, delta};
 }
 function _spImMonat(F, art){
   const B = _spBasis(), mon = tagKey(mts(F.m)).slice(0, 7);
@@ -26626,6 +26664,26 @@ function _spImMonat(F, art){
     if(art(x)) n++;
   }
   return n;
+}
+function _spKontext(F){
+  const W = _spNl(F.W), L = _spNl(F.L), n = F.treffen.length;
+  const s = F.treffen.filter(x => _spGew(x, F.W[0])).length;
+  const wahl = [];
+  if(n >= 3) wahl.push({
+    t:s * 2 > n ? (s - 1) * 2 <= n - 1 ? `${W} gehen gegen ${L} in Führung` : `${W} bleiben gegen ${L} vorn`
+      : s * 2 === n ? `${W} gleichen gegen ${L} aus` : `${W} verkürzen gegen ${L}`,
+    d:`Von ${_spZahl(n)} Treffen dieser beiden Duos gingen ${_spZahl(s)} an ${W}.`});
+  if(F.duo.p >= 2) wahl.push({t:`${W} gewinnen zum ${_spZahl(F.duo.s)}. Mal zusammen`,
+    d:`Das sind ${_spZahl(Math.round(F.duo.s / F.duo.p * 100))} % der ${_spZahl(F.duo.p)} gemeinsamen Partien.`});
+  const tag = F.W.map(id => { const l = F.tag.filter(x => [x.a1, x.a2, x.b1, x.b2].includes(id));
+    return {id, k:l.length, w:l.filter(x => _spGew(x, id)).length}; }).filter(x => x.k >= 3).sort((a, b) => b.w - a.w)[0];
+  if(tag) wahl.push({t:`${_spName(tag.id)} holt den ${_spZahl(tag.w)}. Sieg des Tages`,
+    d:`${_spZahl(tag.w)} Siege aus ${_spZahl(tag.k)} Partien an diesem Tag.`});
+  if(!wahl.length) wahl.push(F.duo.p <= 1 ? {t:`${W} gewinnen die erste gemeinsame Partie`,
+      d:n > 1 ? `Von ${_spZahl(n)} Treffen dieser beiden Duos gingen ${_spZahl(s)} an ${W}.` : `Es ist das erste Treffen dieser beiden Duos.`}
+    : {t:`${W} gewinnen zum ${_spZahl(F.duo.s)}. Mal zusammen`,
+      d:`Das sind ${_spZahl(Math.round(F.duo.s / F.duo.p * 100))} % der ${_spZahl(F.duo.p)} gemeinsamen Partien.`});
+  return wahl[_spVisualHash(F.m.id + '|kontext') % wahl.length];
 }
 const _spKrimi = x => Math.abs(x.score_a - x.score_b) === 1;
 const _spZuNull = x => Math.min(x.score_a, x.score_b) === 0;
@@ -26789,12 +26847,11 @@ const SP_FORM = {
     wann:F => F.diff >= 2 && F.diff <= 5 ? {} : null,
     daten:F => ({A:_spTeam(F.m, 'A'), B:_spTeam(F.m, 'B'), aw:F.W.includes(F.m.a1), W:F.W, L:F.L,
       hoch:F.hoch, tief:F.tief, delta:Object.assign({}, F.delta)}),
-    text:F => ({t:`${_spNl(F.W)} ziehen das Spiel zu sich`,
-      d:F.hoch === 10 ? `Die Liga sieht ein ${F.hoch}:${F.tief} zum ${_spZahl(F.vert[F.diff] || 1)}. Mal.` : `${_spNl(F.L)} verlieren mit ${_spZahl(F.diff)} Toren Abstand.`})},
+    text:F => _spKontext(F)},
   muenze:{rang:18, ic:'target', v2:true,
     wann:F => F.c != null && Math.abs(F.c - 0.5) <= 0.03 ? {} : null,
     daten:F => ({W:F.W, L:F.L, hoch:F.hoch, tief:F.tief, pct:Math.round(F.c * 100)}),
-    text:F => ({t:`${_spNl(F.W)} gewinnen den Münzwurf`, d:`Vor dem Anstoß lag keine Seite vorn.`})},
+    text:F => ({t:`${_spNl(F.W)} gewinnen den Münzwurf`, d:_spKontext(F).d})},
   weste:{rang:60, ic:'shield', v2:true,
     wann:F => F.tief === 0 ? {} : null,
     daten:F => {
@@ -26834,22 +26891,20 @@ const SP_FORM = {
   tafel:{rang:10, ic:'spielfeld', v2:true,
     wann:() => ({}),
     daten:F => _spKopfDaten(F),
-    text:F => ({t:`${_spNl(F.W)} gewinnen gegen ${_spNl(F.L)}`,
-      d:F.c != null ? `Vor dem Anstoß lag die Siegchance bei ${Math.round(F.c * 100)} %.`
-        : `Für ${_spName(F.W[0])} bringt der Sieg ${_spVz(F.delta[F.W[0]])} Elo.`})},
+    text:F => _spKontext(F)},
   pucks:{rang:10, ic:'ball', v2:true,
     wann:() => ({}),
     daten:F => _spKopfDaten(F),
-    text:F => ({t:`${_spNl(F.W)} gewinnen mit ${F.diff === 1 ? 'einem Tor' : _spZahl(F.diff) + ' Toren'} Abstand`,
-      d:F.tief ? `${_spNl(F.L)} treffen ${_spZahl(F.tief)}-mal.` : `${_spNl(F.L)} bleiben ohne Tor.`})},
+    text:F => _spKontext(F)},
+
   strom:{rang:10, ic:'bolt', v2:true,
     wann:() => ({}),
     daten:F => _spKopfDaten(F),
-    text:F => {
-      const ab = -F.L.reduce((n, id) => n + (F.delta[id] || 0), 0);
-      return {t:`${_spNl(F.W)} holen zusammen ${_spZahl(F.gewinn)} Elo`,
-        d:`${_spNl(F.L)} geben ${_spZahl(ab)} Elo ab.`};
-    }},
+    text:F => _spKontext(F)},
+  balken:{rang:10, ic:'chartBar', v2:true,
+    wann:() => ({}),
+    daten:F => _spKopfDaten(F),
+    text:F => _spKontext(F)},
   herz:{rang:58, ic:'nerves', v2:true,
     wann:F => F.diff === 1 ? {} : null,
     daten:F => Object.assign(_spKopfDaten(F), {nr:_spImMonat(F, _spKrimi)}),
@@ -26863,11 +26918,7 @@ const SP_FORM = {
   feld:{rang:8, ic:'ball',
     wann:() => ({}),
     daten:F => _spFeldDaten({m:F.m, c:F.c}),
-    text:F => {
-      const n = F.treffen.length;
-      return {t:`${_spNl(F.W)} setzen sich gegen ${_spNl(F.L)} durch`,
-        d:n > 1 ? `Diese beiden Duos treffen sich zum ${n}. Mal.` : `Diese beiden Duos spielen zum 1. Mal gegeneinander.`};
-    }}
+    text:F => _spKontext(F)}
 };
 
 function _spFormKand(m){
@@ -26976,7 +27027,7 @@ function _spChemieBild(d){
     + `style="stroke-dasharray:${Math.max(0.5, l - 1.2).toFixed(2)} ${(U - l + 1.2).toFixed(2)};stroke-dashoffset:${(-l * k).toFixed(2)};--i:${k}"/>`).join('');
   return `<div class="sp-fk sp-ch"><div class="sp-ch-d">${_spWappen(d.A, 48)}<div class="sp-ch-r"><svg viewBox="0 0 56 56" aria-hidden="true">${seg}</svg>`
     + `<span><b class="num">${_spZahl(d.s)}.</b><i>DUO-SIEG</i></span></div>${_spWappen(d.B, 48)}</div>`
-    + `<div class="sp-ch-u">${_spSt(d)}<span><b class="num">${_spZahl(d.s)}</b> von <b class="num">${_spZahl(d.p)}</b> zusammen gewonnen</span></div></div>`
+    + `<div class="sp-ch-u">${d.nurAnlass ? '' : _spSt(d)}<span><b class="num">${_spZahl(d.s)}</b> von <b class="num">${_spZahl(d.p)}</b> zusammen gewonnen</span></div></div>`
     + (d.nurAnlass ? '' : _spNz([d.A, d.B], d.L));
 }
 function _spGegnerBild(d){
@@ -26984,7 +27035,7 @@ function _spGegnerBild(d){
     <div class="sp-gg-m"><em>${d.fluch ? 'Fluch gebrochen' : 'Lieblingsgegner'}</em>
       <span class="sp-gg-b num"><b>${_spZahl(d.s)}</b>:${_spZahl(d.n - d.s)}</span>
       <span class="sp-gg-r">${d.folge.map((w, k) => `<i class="${w ? 'w' : 'l'}${k === d.folge.length - 1 ? ' jetzt' : ''}" style="--i:${k}"></i>`).join('')}</span>
-      <span class="sp-gg-h">heute ${_spSt(d)}</span></div>
+      ${d.nurAnlass ? '' : `<span class="sp-gg-h">heute ${_spSt(d)}</span>`}</div>
     <div class="sp-gg-p">${_spWappen(d.l, 48)}</div></div>`
     + (d.nurAnlass ? '' : _spNz(d.W, d.L));
 }
@@ -27001,13 +27052,13 @@ function _spGipfelBild(d){
   return `<div class="sp-fk sp-gp">${d.zeilen.map((z, k) => `<div class="sp-gp-z${z.w ? ' w' : ''}" style="--i:${k}">`
     + `<span class="num">${z.pre ? _spZahl(z.pre) + '.' : '–'}</span>${_spChip(z.id)}<span class="sp-gp-n">${esc(_spName(z.id))}</span>`
     + `<em class="num ${z.post && z.pre && z.post < z.pre ? 'g' : z.post && z.pre && z.post > z.pre ? 'r' : ''}">${z.post && z.post !== z.pre ? '→ ' + _spZahl(z.post) + '.' : '='}</em></div>`).join('')}
-    <div class="sp-gp-f">${_spSt(d)}<span>Platz 1 und 2 am Tisch</span></div></div>`;
+    <div class="sp-gp-f">${d.nurAnlass ? '' : _spSt(d)}<span>Platz 1 und 2 am Tisch</span></div></div>`;
 }
 function _spRueckkehrBild(d){
   const n = Math.min(28, d.tage + 1);
   return `<div class="sp-fk sp-zu">${_spWappen(d.id, 48)}<div class="sp-zu-m">
       <span class="sp-zu-z"><b class="num">${_spZahl(d.tage)}</b> Tage ohne Partie</span>
-      <span class="sp-zu-k">${Array.from({length:n}, (_, k) => `<i class="${k === 0 ? 'alt' : ''}" style="--i:${k}"></i>`).join('')}${_spSt(d)}</span></div></div>`
+      <span class="sp-zu-k">${Array.from({length:n}, (_, k) => `<i class="${k === 0 ? 'alt' : ''}" style="--i:${k}"></i>`).join('')}${d.nurAnlass ? '' : _spSt(d)}</span></div></div>`
     + (d.nurAnlass ? '' : _spUnter(`${_spNb(d.id)} mit ${_spNb(d.mit)} gegen ${_spUnd(d.L)}.`));
 }
 function _spGefaelleBild(d){
@@ -27025,7 +27076,7 @@ function _spTagesringBild(d){
     + `style="stroke-dasharray:${Math.max(0.5, l - 2.4).toFixed(2)} ${(U - l + 2.4).toFixed(2)};stroke-dashoffset:${(-l * k).toFixed(2)};--i:${k}"/>`).join('');
   return `<div class="sp-fk sp-tr"><div class="sp-tr-r"><svg viewBox="0 0 76 76" aria-hidden="true">${seg}</svg><span>${_spWappen(d.id, 48)}</span></div>
     <div class="sp-tr-t"><em>heute</em><span class="sp-tr-z"><b class="num">${_spZahl(s)}</b> von ${_spZahl(n)}</span>
-      <span class="sp-tr-j">Partie ${_spZahl(n)} ${_spSt(d)}</span></div></div>`
+      <span class="sp-tr-j">Partie ${_spZahl(n)}${d.nurAnlass ? '' : ' ' + _spSt(d)}</span></div></div>`
     + (d.nurAnlass ? '' : _spUnter(`${_spNb(d.id)} mit ${_spNb(d.mit)} gegen ${_spUnd(d.L)}.`));
 }
 function _spZaehlwerkBild(d){
@@ -27035,7 +27086,7 @@ function _spZaehlwerkBild(d){
   return `<div class="sp-fk sp-zw">${d.wer ? _spWappen(d.wer, 48) : `<span class="sp-zw-l">${svgI('ball')}</span>`}
     <div class="sp-zw-m"><span class="sp-zw-w num">${z.map(rolle).join('')}<b>.</b></span>
       <span class="sp-zw-u">${einheit + (!d.nurAnlass && d.wer && _spPasst([d.wer], 12, true) ? ` von ${esc(_spName(d.wer))}` : '')}</span></div>
-    <div class="sp-zw-s">${_spSt(d)}</div></div>`
+    ${d.nurAnlass ? '' : `<div class="sp-zw-s">${_spSt(d)}</div>`}</div>`
     + (d.nurAnlass ? '' : _spNz(d.W, d.L));
 }
 function _spMarkenBild(d){
@@ -27118,8 +27169,7 @@ function _spWocheDaten(a){
     const x = B.chrono[j], W = _spSieger(x);
     [x.a1, x.a2, x.b1, x.b2].forEach(id => { if(!id) return; const z = je[id] || (je[id] = {s:0, n:0}); z.n++; if(W.includes(id)) z.s++; });
   }
-  const pm = pmap();
-  const liste = Object.keys(je).filter(id => je[id].s >= 5 && sichtbar(pm[id]))
+  const liste = Object.keys(je).filter(id => je[id].s >= 5 && _spNoch(id, a.m))
     .map(id => ({id, s:je[id].s, n:je[id].n, q:Math.round(100 * je[id].s / je[id].n)}))
     .sort((p, q) => q.s / q.n - p.s / p.n || q.s - p.s).slice(0, 5);
   return liste.length ? {pid:a.x.pid, liste} : null;
@@ -27168,7 +27218,7 @@ function _spMonatQuoteBild(d){
     + _spLinie(d.verlauf, {ref:50, zwei:true, lo:0, hi:100, fmt:y => _spZahl(y) + ' %', x:['1. Partie', `${_spZahl(n)}. Partie`]}) + `</div>`;
 }
 function _spPartnerDaten(a){
-  const pid = a.x.pid, je = {}, pm = pmap();
+  const pid = a.x.pid, je = {};
   let s = 0, n = 0;
   _spEigene(pid, a.m).forEach(x => {
     const mit = _spTeam(x, _spSeite(x, pid)).find(y => y && y !== pid), w = _spGew(x, pid);
@@ -27176,7 +27226,7 @@ function _spPartnerDaten(a){
     if(!mit) return;
     const z = je[mit] || (je[mit] = {s:0, n:0}); z.n++; if(w) z.s++;
   });
-  const liste = Object.keys(je).filter(id => je[id].n >= 6 && sichtbar(pm[id]))
+  const liste = Object.keys(je).filter(id => je[id].n >= 6 && _spNoch(id, a.m))
     .map(id => ({id, s:je[id].s, n:je[id].n, q:Math.round(100 * je[id].s / je[id].n)}))
     .sort((p, q) => q.s / q.n - p.s / p.n || q.n - p.n).slice(0, 5);
   return liste.length ? {pid, mit:a.x.mit, liste, allg:Math.round(100 * s / Math.max(1, n))} : null;
@@ -27239,7 +27289,7 @@ function _spUhrBild(d){
     + `<line class="sp-uh-z" x1="50" y1="50" x2="${zx}" y2="${zy}"/><circle class="sp-uh-n" cx="50" cy="50" r="2.6"/></svg></div>`
     + `<div class="sp-uh-t"><em>Dauerbetrieb</em><span class="sp-uh-g"><b class="num">${_spZahl(d.n)}.</b> Partie des Tages</span>`
     + `<span class="sp-uh-u">seit <b class="num">${zeit(d.zeiten[0])}</b> Uhr, diese um <b class="num">${zeit(jetzt)}</b></span>`
-    + `<span class="sp-uh-e">${_spChips(d.W)}${_spSt(d)}</span></div></div>`
+    + `<span class="sp-uh-e">${_spChips(d.W)}${d.nurAnlass ? '' : _spSt(d)}</span></div></div>`
     + (d.nurAnlass ? '' : _spNz(d.W, d.L));
 }
 function _spUeberholtBild(d){
@@ -27252,8 +27302,10 @@ function _spUeberholtBild(d){
     + `<circle class="sp-uo-l" cx="78" cy="${y(d.lPost)}" r="3"/><circle class="sp-uo-w" cx="78" cy="${y(d.wPost)}" r="3.6"/>`
     + platz(4, d.wPre, 'w') + platz(4, d.lPre, 'l') + platz(84, d.wPost, 'w') + platz(84, d.lPost, 'l')
     + `</svg><div class="sp-uo-a"><span>vorher</span><span>nachher</span></div></div>`
-    + `<div class="sp-uo-t"><em>Überholt</em><span class="sp-uo-p">${_spChip(d.w)}<i>zieht vorbei an</i>${_spChip(d.l)}</span>`
-    + `<span class="sp-uo-u">Platz <b class="num">${_spZahl(d.wPost)}</b> statt <b class="num">${_spZahl(d.wPre)}</b></span></div></div>`
+    + (d.nurAnlass ? `<div class="sp-uo-t"><span class="sp-uo-p w">${_spChip(d.w)}${esc(_spName(d.w))}</span>`
+        + `<span class="sp-uo-p l">${_spChip(d.l)}${esc(_spName(d.l))}</span></div></div>`
+      : `<div class="sp-uo-t"><em>Überholt</em><span class="sp-uo-p">${_spChip(d.w)}<i>zieht vorbei an</i>${_spChip(d.l)}</span>`
+        + `<span class="sp-uo-u">Platz <b class="num">${_spZahl(d.wPost)}</b> statt <b class="num">${_spZahl(d.wPre)}</b></span></div></div>`)
     + (d.nurAnlass ? '' : _spNz(d.W, d.L));
 }
 function _spDuoserieBild(d){
@@ -27304,28 +27356,54 @@ function _spPucksBild(d){
   return `<div class="sp-fk sp-pu">${z(d.W, d.hoch, true)}${z(d.L, d.tief, false)}</div>` + _spNz(d.W, d.L);
 }
 function _spStromBild(d){
-  const W = 240, H = 92, y = [15, 63];
-  const breit = id => Math.max(2.5, Math.min(10, Math.abs((d.delta || {})[id] || 0) / 2.2));
-  const pfad = (i, j) => `M${W - 32} ${y[j]}C${W / 2 + 16} ${y[j]},${W / 2 - 16} ${y[i]},32 ${y[i]}`;
+  const W = 240, H = 78, cx = W / 2, aw = d.aw !== false, dl = d.delta || {};
+  const A = aw ? d.W : d.L, B = aw ? d.L : d.W;
+  const breit = id => Math.max(3, Math.min(13, Math.abs(dl[id] || 0) / 2.2));
   const id = 'sps' + _spVisualHash(d.W.concat(d.L).join() + d.hoch + ':' + d.tief);
-  const stroeme = d.L.map((l, j) => d.W.map((w, i) => `<path class="sp-sm-p" d="${pfad(i, j)}" stroke="url(#${id})" stroke-width="${breit(l).toFixed(1)}"/>`).join('')).join('');
-  const ende = (x, i, w) => `<span class="sp-sm-a${w ? ' w' : ''}" style="top:${y[i] - 15}px;${w ? 'left' : 'right'}:2px">${_spChip(x)}<b class="num">${_spVz((d.delta || {})[x] || 0)}</b></span>`;
+  const yEnde = [18, 60];
+  const seite = (ids, links, sieg) => {
+    const summe = ids.reduce((n, x) => n + breit(x), 0);
+    let off = H / 2 - summe / 2;
+    return ids.map((x, i) => {
+      const b = breit(x), ym = off + b / 2; off += b;
+      const xa = links ? 34 : W - 34, xm = links ? cx - 30 : cx + 30, xk = (xa + xm) / 2;
+      const pfad = sieg ? `M${xm} ${ym.toFixed(1)}C${xk} ${ym.toFixed(1)},${xk} ${yEnde[i]},${xa} ${yEnde[i]}`
+        : `M${xa} ${yEnde[i]}C${xk} ${yEnde[i]},${xk} ${ym.toFixed(1)},${xm} ${ym.toFixed(1)}`;
+      return `<path class="sp-sm-p${sieg ? ' w' : ''}" d="${pfad}" stroke="url(#${id})" stroke-width="${b.toFixed(1)}"/>`;
+    }).join('');
+  };
+  const ende = (x, i, links, sieg) => `<span class="sp-sm-a${sieg ? ' w' : ''}" style="top:${yEnde[i] - 12}px;${links ? 'left' : 'right'}:2px">`
+    + `${_spChip(x)}<b class="num">${_spVz(dl[x] || 0)}</b></span>`;
+  const [x1, x2] = aw ? [W, 0] : [0, W];
   return `<div class="sp-fk sp-sm"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><defs>`
-    + `<linearGradient id="${id}" x1="1" x2="0" y1="0" y2="0"><stop offset="0" stop-color="#f0566a"/><stop offset=".5" stop-color="#f7cf4a"/>`
-    + `<stop offset="1" stop-color="#BEF264"/></linearGradient></defs>${stroeme}</svg>`
-    + d.W.map((x, i) => ende(x, i, true)).join('') + d.L.map((x, j) => ende(x, j, false)).join('')
+    + `<linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="${x1}" x2="${x2}" y1="0" y2="0"><stop offset=".08" stop-color="#f0566a"/>`
+    + `<stop offset=".5" stop-color="#f7cf4a"/><stop offset=".92" stop-color="#BEF264"/></linearGradient></defs>`
+    + seite(A, true, aw) + seite(B, false, !aw) + `</svg>`
+    + A.map((x, i) => ende(x, i, true, aw)).join('') + B.map((x, i) => ende(x, i, false, !aw)).join('')
     + `<span class="sp-sm-m">${_spSt(d)}</span></div>` + _spNz(d.W, d.L);
 }
 function _spHerzBild(d){
   const SW = 'M0 25H10l3-5 3 5h3l2 6 4-27 4 33 3-14h4q4-8 8 0H60';
   const SL = 'M0 25h9l2-6 2 9 2-4h4l1 2 1-1H60';
   const paar = (ids, w) => `<span class="sp-hz-p${w ? ' w' : ''}">${ids.map(_spChip).join('')}</span>`;
-  const kurve = (p, w) => `<span class="sp-hz-k${w ? ' w' : ''}"><svg viewBox="0 0 60 40" preserveAspectRatio="none" aria-hidden="true"><path d="${p}"/></svg>${w ? '<i></i>' : ''}</span>`;
+  const kurve = (p, w) => `<span class="sp-hz-k${w ? ' w' : ''}"><svg viewBox="0 0 60 40" preserveAspectRatio="none" aria-hidden="true">`
+    + `<path class="sp-hz-b" pathLength="100" d="${p}"/>${w ? `<path class="sp-hz-lauf" pathLength="100" d="${p}"/>` : ''}</svg></span>`;
   const zelle = (lab, v) => `<span><b class="num">${esc(v)}</b><small>${lab}</small></span>`;
   return `<div class="sp-fk sp-hz"><div class="sp-hz-g">${paar(d.W, true)}${kurve(SW, true)}`
     + `<span class="sp-hz-m"><small>Ein Tor</small>${_spSt(d)}</span>${kurve(SL, false)}${paar(d.L, false)}</div>`
     + `<div class="sp-kl">` + (d.pct != null ? zelle('Chance vorher', _spZahl(d.pct) + ' %') : '')
     + zelle('Elo der Sieger', _spKopfElo(d, d.W)) + (d.nr ? zelle('im Monat', _spZahl(d.nr) + '.') : '') + `</div></div>`
+    + _spNz(d.W, d.L);
+}
+function _spBalkenBild(d){
+  const aw = d.aw !== false, dl = d.delta || {};
+  const A = aw ? d.W : d.L, B = aw ? d.L : d.W;
+  const rest = (gegen) => Math.max(0, Math.min(100, 100 - gegen * 10));
+  const sa = aw ? d.hoch : d.tief, sb = aw ? d.tief : d.hoch;
+  const seite = (ids, sieg, links, gegen) => `<div class="sp-lb-s${sieg ? ' w' : ''}${links ? '' : ' re'}">`
+    + `<span class="sp-lb-k">${_spKopfPaar(ids)}<span class="num">${_spKopfElo(d, ids)}</span></span>`
+    + `<span class="sp-lb-b"><i style="--r:${rest(gegen)}%"></i>${sieg ? '' : '<em>K.o.</em>'}</span></div>`;
+  return `<div class="sp-fk sp-lb">${seite(A, aw, true, sb)}<span class="sp-lb-m">${_spSt(d)}</span>${seite(B, !aw, false, sa)}</div>`
     + _spNz(d.W, d.L);
 }
 const SP_TREFFER = [[25, 15], [47, 11], [70, 17], [80, 31], [33, 30], [56, 25], [71, 41], [21, 41], [45, 40], [60, 45]];
@@ -27353,7 +27431,7 @@ const SP_FORM_BILD = {mosaik:_spMosaikBild, tacho:_spTachoBild, streu:_spStreuBi
   rueckkehr:_spRueckkehrBild, gefaelle:_spGefaelleBild, tagesring:_spTagesringBild, zaehlwerk:_spZaehlwerkBild,
   tauziehen:_spTauziehenBild, muenze:_spMuenzeBild, weste:_spWesteBild,
   uhr:_spUhrBild, ueberholt:_spUeberholtBild, duoserie:_spDuoserieBild, hoch:_spHochBild,
-  feld:_spFeldBild, tafel:_spAnzeigeBild, pucks:_spPucksBild, strom:_spStromBild,
+  feld:_spFeldBild, tafel:_spAnzeigeBild, pucks:_spPucksBild, strom:_spStromBild, balken:_spBalkenBild,
   herz:_spHerzBild, zunull:_spZunullBild};
 
 const _spZeile = a => _spZeileBild(_spZeileDaten(a.m));
@@ -27387,7 +27465,7 @@ function _spScoreSpezial(m){
   if(diff >= 6) return {key:'deutlich', x:{}};
   return null;
 }
-const SP_KOPF_GRUND = ['tafel', 'strom', 'pucks', 'feld', 'tauziehen', 'tacho', 'muenze', 'gefaelle', 'mosaik', 'streu'];
+const SP_KOPF_GRUND = ['tafel', 'strom', 'balken', 'feld', 'tauziehen', 'tacho', 'muenze', 'gefaelle', 'mosaik', 'streu'];
 function _spScoreKandidaten(m){
   const F = _spFakten(m);
   return SP_KOPF_GRUND.map(key => {
@@ -27496,6 +27574,8 @@ function _spFussFakten(m, fakten){
   if((x = f('revanche'))) nimm('revanche', x);
   if((x = f('duo_jubilaeum')) && x.sieg) nimm('chemie', x);
   if((x = f('tagesmarathon')) && x.pid) nimm('tagesring', x);
+  if((x = fakten.filter(y => y.type === 'pleiten_ende' && y.pid).sort((p, q) => q.n - p.n)[0])) nimm('wende', x);
+  if((x = fakten.find(y => y.type === 'rueckkehr' && y.pid && y.sieg))) nimm('rueckkehr', x);
   Object.keys(SP_FAKT_FUSS).forEach(t => { if((x = f(t)) && x.pid) nimm(SP_FAKT_FUSS[t], x); });
   if((x = f('rivalry_milestone')) && x.a && x.b) nimm('duell', x);
   else if((x = f('rivalry')) && x.a && x.b) nimm('duell', x);
@@ -27532,44 +27612,77 @@ function _spAnlassSnapshot(m, fakten, scoreKey){
       revanche:() => F.revanche ? SP_FORM.revanche.daten(F, {}) : null,
       chemie:() => SP_FORM.chemie.daten(F, {rund:true}),
       tagesring:() => SP_FORM.tagesring.daten(F, {id:a.x.pid,
-        ms:F.tag.filter(y => [y.a1, y.a2, y.b1, y.b2].includes(a.x.pid))})
+        ms:F.tag.filter(y => [y.a1, y.a2, y.b1, y.b2].includes(a.x.pid))}),
+      wende:() => _spKurveDaten({key:'wende', m, x:{pid:a.x.pid, n:a.x.n}}),
+      rueckkehr:() => SP_FORM.rueckkehr.daten(F, {id:a.x.pid, tage:a.x.tage})
     }[a.key];
     if(daten) kand.push({key:a.key, rang:w, data:daten, fakt:true, zustand:SP_FUSS_ZUSTAND.has(a.key), zeigt:ids});
   });
 
   const diff = Math.abs(m.score_a - m.score_b);
-  const plus = (key, rang, data) => { if(key !== scoreKey) kand.push({key, rang, data}); };
+  const plus = (key, rang, data, zeile) => { if(key !== scoreKey) kand.push({key, rang, data, zeile}); };
+  const nl = ids => _namenListe(ids.map(_spName));
+  const pz = v => Math.max(1, Math.round(v * 100));
   let x;
-  if((x = _spPremiereDaten(m))) plus('premiere', 36, () => x);
+  if((x = _spPremiereDaten(m))){ const p = x;
+    plus('premiere', 36, () => p, () => p.versuch === 1 ? `${nl([p.A, p.B])} gewinnen die erste gemeinsame Partie`
+      : `${nl([p.A, p.B])} gewinnen zum ersten Mal zusammen, im ${_spZahl(p.versuch)}. Versuch`); }
   const wende = _spSieger(m).map(pid => ({pid, n:_newsPleitenVor(pid, m)}))
-    .filter(w => w.n >= 3).sort((p, q) => q.n - p.n)[0];
-  if(wende) plus('wende', 30, () => _spKurveDaten({key:'wende', m, x:wende}));
+    .filter(w => w.n >= 3 && w.n < 5).sort((p, q) => q.n - p.n)[0];
+  if(wende && !kand.some(k => k.key === 'wende') && !fakten.some(y => y.type === 'duo_pleiten_ende'))
+    plus('wende', 30, () => _spKurveDaten({key:'wende', m, x:wende}),
+      () => `${_spName(wende.pid)} gewinnt nach ${_spZahl(wende.n)} Niederlagen wieder`);
   let frei = false;
   try { frei = _storyRangFrei(seasonOf(m.created_at).id, mts(m)).frei; } catch(e){}
   const sprung = frei ? _spSieger(m).map(pid => ({pid, r:_newsRankChange(pid, m.id)}))
-    .filter(w => w.r && w.r.pre - w.r.post >= 2) : [];
-  if(sprung.length) plus('rang', 34, () => _spTabelleDaten({key:'rang', m, x:sprung}, false));
+    .filter(w => w.r && w.r.pre - w.r.post >= 2).sort((p, q) => (q.r.pre - q.r.post) - (p.r.pre - p.r.post)) : [];
+  if(sprung.length && !kand.some(k => k.key === 'rang'))
+    plus('rang', 34, () => _spTabelleDaten({key:'rang', m, x:sprung}, false),
+      () => `${_spName(sprung[0].pid)} springt von Platz ${sprung[0].r.pre} auf Platz ${sprung[0].r.post}`);
   const rolle = _spRolleDaten(m);
-  if(rolle) plus('rolle', 30, () => rolle);
-  if(c != null && c < CHANCE_UPSET && scoreKey !== 'aussenseiter') plus('aussenseiter', 40, () => _spWippeDaten({m, c}));
-  if(diff === 1) plus('nerven', scoreKey === 'krimi' || scoreKey === 'herz' ? 14 : 24, () => _spNervenDaten({m, c}));
-  if(diff >= 6) plus('verteilung', scoreKey === 'deutlich' || scoreKey === 'zunull' ? 14 : 24, () => _spVerteilungDaten({m}));
-  const mitMarken = kand.some(k => k.key === 'marken');
-  _spFormKand(m).filter(k => SP_ANLASS_FORMEN.has(k.key) && !(mitMarken && k.key === 'zaehlwerk'))
-    .forEach(k => plus(k.key, k.rang, () => SP_FORM[k.key].daten(F, k.x)));
+  if(rolle) plus('rolle', 30, () => rolle,
+    () => `${_spName(rolle.pid)} gewinnt ${rolle.r === 'atk' ? 'im Sturm' : 'in der Abwehr'}, sonst nur in ${pz(rolle.anteil)} % der Partien dort`);
+  if(c != null && c < CHANCE_UPSET && scoreKey !== 'aussenseiter')
+    plus('aussenseiter', 40, () => _spWippeDaten({m, c}),
+      () => `${nl(_spSieger(m))} gewinnen als Außenseiter, mit ${pz(c)} % Siegchance`);
+  if(diff === 1){ const nv = _spNervenDaten({m, c}), b = nv.zeilen.slice().sort((p, q) => q.w - p.w)[0];
+    plus('nerven', scoreKey === 'krimi' || scoreKey === 'herz' ? 14 : 24, () => nv,
+      () => `${_spName(b.id)} gewinnt ${_spZahl(b.w)} von ${_spZahl(b.w + b.l)} Partien mit einem Tor Abstand`); }
+  if(diff >= 6){ const vt = _spVerteilungDaten({m});
+    plus('verteilung', scoreKey === 'deutlich' || scoreKey === 'zunull' ? 14 : 24, () => vt,
+      () => `${_spZahl(vt.so)} von ${_spZahl(vt.gesamt)} Partien der Liga endeten so deutlich`); }
+  _spFormKand(m).filter(k => SP_ANLASS_FORMEN.has(k.key) && k.key !== 'zaehlwerk' && k.key !== 'rueckkehr')
+    .forEach(k => plus(k.key, k.rang, () => SP_FORM[k.key].daten(F, k.x), () => SP_FORM[k.key].text(F, k.x).t));
   if(!kand.length) return null;
-  const spur = _spFussSpur(m, 8), zuletzt = spur[spur.length - 1];
-  const oft = (k, n) => spur.slice(-n).filter(y => y === k).length;
-  const gewertet = kand.map(k => Object.assign({}, k, {eff:k.fakt && !k.zustand ? k.rang + 100
-      : k.rang - (k.zustand ? 14 * oft(k.key, 2) + 5 * oft(k.key, 8) : 8 * oft(k.key, 2) + 3 * oft(k.key, 8)),
-    los:_spVisualHash(m.id + '|fuss|' + k.key)}))
+  const spur = _spFussSpur(m, 8), vorher = _spFussVorher(m);
+  const fam = k => SP_FUSS_FAMILIE[k] || k;
+  const oft = (f, n) => spur.slice(-n).filter(y => fam(y) === f).length;
+  const gewertet = kand.filter(k => !vorher || fam(k.key) !== fam(vorher))
+    .map(k => Object.assign({}, k, {eff:(k.fakt && !k.zustand ? k.rang + 100 : k.rang)
+        - (k.zustand ? 14 * oft(fam(k.key), 2) + 5 * oft(fam(k.key), 8) : 8 * oft(fam(k.key), 2) + 3 * oft(fam(k.key), 8)),
+      los:_spVisualHash(m.id + '|fuss|' + k.key)}))
     .sort((p, q) => q.eff - p.eff || q.rang - p.rang || p.los - q.los);
-  if(gewertet[0].key === zuletzt && !(gewertet[0].fakt && !gewertet[0].zustand)){
-    const i = gewertet.findIndex(k => k.key !== zuletzt);
-    if(i > 0) gewertet.unshift(gewertet.splice(i, 1)[0]);
+  for(const k of gewertet){
+    const dd = k.data();
+    if(!dd) continue;
+    const v = {key:k.key, data:dd};
+    if(k.zeigt) v.zeigt = k.zeigt;
+    else if(k.zeile){ try { v.zeile = k.zeile(); } catch(e){} }
+    return merke(v);
   }
-  for(const k of gewertet){ const dd = k.data(); if(dd) return merke(k.zeigt ? {key:k.key, data:dd, zeigt:k.zeigt} : {key:k.key, data:dd}); }
   return null;
+}
+const SP_FUSS_FAMILIE = {kippt:'linie', plus:'linie', hoehe:'linie', monatsbest:'linie', halb:'linie',
+  wende:'linie', hoch:'linie', woche:'rangliste', partner:'rangliste', spitze:'tabelle', rang:'tabelle',
+  ueberholt:'tabelle', gipfel:'tabelle', serie:'serie', teamserie:'serie', duoserie:'serie',
+  duell:'duell', gegner:'duell', nerven:'statistik', verteilung:'statistik', mosaik:'statistik',
+  marken:'zahl', zaehlwerk:'zahl', tagesring:'tag', uhr:'tag'};
+function _spFussVorher(m){
+  const FB = _spFormBasis(), B = _spBasis(), bis = B.idx.get(m.id);
+  if(bis == null || bis < 1) return null;
+  const id = B.chrono[bis - 1].id;
+  const pub = FB.scorePublished && FB.scorePublished.get(id);
+  return pub ? ((pub.occasion && pub.occasion.key) || null) : ((FB.fussWahl && FB.fussWahl.get(id)) || null);
 }
 const SP_THEMA = {lead_change:'tabelle', tabellensprung:'tabelle', top_clash:'tabelle',
   badge_unlocked:'auszeichnung', badge_marken:'auszeichnung',
@@ -27578,7 +27691,8 @@ const SP_THEMA = {lead_change:'tabelle', tabellensprung:'tabelle', top_clash:'ta
   milestone_wins:'zahl', milestone_elo:'zahl', milestone_goals:'zahl', jubilee:'zahl', elo_hoch:'zahl',
   duo_jubilaeum:'duo', team_streak:'duo', team_loss_streak:'duo', tagesmarathon:'tag',
   duell_kippt:'duell', woche_spitze:'tabelle', tag_plus:'tag', tag_hoehe:'tag',
-  monat_gewinn:'monat', monat_halb:'monat', partner_best:'duo'};
+  monat_gewinn:'monat', monat_halb:'monat', partner_best:'duo',
+  pleiten_ende:'serie', duo_pleiten_ende:'duo', rueckkehr:'pause'};
 const SP_FUSS_TYP = {spitze:['lead_change'], riss:['streak_killer'], marken:Object.keys(SP_MARKEN),
   serie:['win_streak'], teamserie:['team_streak'], duell:['rivalry_milestone', 'rivalry'], gegner:['fluch'],
   hoch:['elo_hoch'], rang:['tabellensprung'], revanche:['revanche'], chemie:['duo_jubilaeum'],
@@ -27611,8 +27725,10 @@ function _spZeilen(teile, titel, occ){
     if(!th || !themen.has(th)){ neu.push(t); if(th) themen.add(th); } else wieder.push(t);
   });
   const zeilen = neu.concat(wieder, frei.filter(t => !neben(t) && t.neg));
-  return {zeilen:zeilen.filter(t => t.brk).concat(zeilen.filter(t => !t.brk)),
-    unter:fuss.length && fuss.indexOf(haupt) < 0 ? fuss[0] : null};
+  const ic = occ && ((SP_FORM[occ.key] || {}).ic || (SP_ANLASS[occ.key] || {}).ic);
+  const unter = fuss.length ? (fuss.indexOf(haupt) < 0 ? fuss[0] : null)
+    : (occ && occ.zeile ? {titel:occ.zeile, ic:ic || 'chartBar', form:true} : null);
+  return {zeilen:zeilen.filter(t => t.brk).concat(zeilen.filter(t => !t.brk)), unter};
 }
 function _spVisualSnapshot(m, fakten){
   const score = _spScoreSnapshot(m);
@@ -27620,26 +27736,23 @@ function _spVisualSnapshot(m, fakten){
   if(fest) return fest;
   return {version:2, score, occasion:_spAnlassSnapshot(m, fakten || [], score.key)};
 }
-function _spLinks(d){
-  if(!d || typeof d !== 'object' || d.aw !== false) return d;
-  const o = Object.assign({}, d, {aw:true});
-  if(Array.isArray(d.A) && Array.isArray(d.B)){ o.A = d.B; o.B = d.A; }
-  if(d.sa != null && d.sb != null){ o.sa = d.sb; o.sb = d.sa; }
-  if(Array.isArray(d.slots) && d.slots.length === 4) o.slots = d.slots.slice().reverse();
-  return o;
-}
-function _spScoreBild(v){
+function _spScoreBild(v, m){
   if(!v || !v.key) return '';
-  v = Object.assign({}, v, {data:_spLinks(v.data)});
+  const aw = m ? m.winner === 'A' : (v.data && v.data.aw);
+  const data = v.data && typeof v.data === 'object' && v.data.aw == null && m ? Object.assign({}, v.data, {aw}) : v.data;
   const spezial = {krimi:_spTafelBild, aussenseiter:_spWippeBild, deutlich:_spBandBild,
     zeile:_spZeileBild, abstand:_spBandBild};
-  if(spezial[v.key]) return spezial[v.key](v.data);
-  return SP_FORM_BILD[v.key] ? SP_FORM_BILD[v.key](v.data) : '';
+  let h = spezial[v.key] ? spezial[v.key](data) : SP_FORM_BILD[v.key] ? SP_FORM_BILD[v.key](data) : '';
+  if(!h || !m) return h;
+  h = h.replace(/<div class="sp-nz">[\s\S]*?<\/div>/g, '');
+  if(aw === false && !SP_KOPF_AB.has(v.key)) h = h.replace(/^<div class="/, '<div class="sp-b ');
+  return h + _spTeamZeile(m);
 }
+const SP_KOPF_AB = new Set(['deutlich', 'abstand', 'zeile', 'krimi', 'feld', 'tauziehen', 'aussenseiter']);
 function _spOccasionBild(v){
   if(!v || !v.key) return '';
   const data = v.data && typeof v.data === 'object'
-    ? Object.assign({}, _spLinks(v.data), {nurAnlass:true}) : v.data;
+    ? Object.assign({}, v.data, {nurAnlass:true}) : v.data;
   const bild = {
     spitze:_spTabelleBild, rang:_spTabelleBild, serie:_spSerieBild,
     wende:_spKurveBild, duell:_spDuellBild, riss:_spRissBild,
@@ -27650,8 +27763,8 @@ function _spOccasionBild(v){
     nerven:_spNervenBild, verteilung:_spVerteilungBild,
     aussenseiter:_spWippeBild
   };
-  if(bild[v.key]) return bild[v.key](data);
-  return SP_FORM_BILD[v.key] ? SP_FORM_BILD[v.key](data) : '';
+  const h = bild[v.key] ? bild[v.key](data) : SP_FORM_BILD[v.key] ? SP_FORM_BILD[v.key](data) : '';
+  return h.replace(/<div class="sp-lg">[\s\S]*?<\/div>/g, '');
 }
 const SP_ZEIGT_ALLES = {chance:true, elo:true};
 const _spBildMemo = new WeakMap();
@@ -27668,7 +27781,7 @@ function _spBild(s){
       const ok = v.occasion && v.occasion.key;
       r = {key:ok || v.score.key, form:v.score.key, occ:v.occasion || null,
         glanz:['zaehlwerk','marken','rueckkehr','transfer'].includes(ok || v.score.key),
-        kopf:_spScoreBild(v.score), fuss:_spOccasionBild(v.occasion),
+        kopf:_spScoreBild(v.score, _spMatch(basis.matchId)), fuss:_spOccasionBild(v.occasion),
         zeigt:SP_ZEIGT_ALLES, pl:players};
       proStand.set(s, r);
       return r;
@@ -27923,10 +28036,14 @@ function _ffPause(d){
 function _ffVitrine(b){
   const pm = pmap();
   if(!pm[b.p]) return '';
-  const hat = new Set(b.hat || []);
+  const hat = new Set(b.hat || []), n = b.n || {};
   const kat = b.gold ? BADGES.filter(x => rarityOf(x.id) === 'legendary') : BADGES;
-  const felder = kat.map(x => `<i class="${hat.has(x.id) ? 'hat ' + rarityOf(x.id) : ''}">${svgI(x.ic || 'trophy')}</i>`).join('');
-  return `<div class="ff-vt-k">${_ffChip(b.p)}${_ffNm(b.p)}<b class="num">${hat.size}<small> von ${kat.length}</small></b></div>`
+  const max = Math.max(1, ...kat.map(x => Number(n[x.id]) || 0));
+  const st = x => b.gesamt && hat.has(x.id)
+    ? ` style="--a:${(0.45 + 0.55 * Math.log1p(Number(n[x.id]) || 1) / Math.log1p(max)).toFixed(2)}"` : '';
+  const felder = kat.map(x => `<i class="${hat.has(x.id) ? 'hat ' + rarityOf(x.id) : ''}"${st(x)}>${svgI(x.ic || 'trophy')}</i>`).join('');
+  const zahl = b.gesamt ? `${_spZahl(b.gesamt)}<small> geholt</small>` : `${hat.size}<small> von ${kat.length}</small>`;
+  return `<div class="ff-vt-k">${_ffChip(b.p)}${_ffNm(b.p)}<b class="num">${zahl}</b></div>`
     + `<span class="ff-vt${b.gold ? ' gold' : ''}">${felder}</span>`;
 }
 
@@ -28567,8 +28684,8 @@ function _ndEhrungBlatt(s){
   const gegen = g && pm[g.pid] ? `<div class="nd-section">Der härteste Tag</div>${_spGegenHtml(g)}` : '';
   return {kopf, mitte: anteil + (zeit ? `<div class="nw-hinweis eh-zeit">${esc(zeit.vor + ' ' + zeit.wann)}${/\.$/.test(zeit.wann) ? '' : '.'}</div>` : '')
     + `<div class="nd-section">Wer was geholt hat</div>${_ehrungBloeckeHtml(sp)}` + gegen
-    + `<div class="nw-hinweis">Das erste und zweite Mal zählt eine Auszeichnung voll, danach etwas weniger. `
-    + `Der Strich unter jeder zeigt, wie viel vom vollen Wert bleibt.</div>`};
+    + `<div class="nw-hinweis">Der Strich unter jeder Auszeichnung zeigt, wie viel ihres vollen Werts sie diesmal brachte. `
+    + `Ab dem dritten Mal bringt sie etwas weniger.</div>`};
 }
 function _ehrungBloeckeHtml(sp){
   const pm = pmap();
@@ -28579,20 +28696,15 @@ function _ehrungBloeckeHtml(sp){
     + `<i style="width:${(rest(q) * 100).toFixed(1)}%"></i></span>`;
   let gold = 0;
   const bp = (q, pid) => ` data-bp="${esc(q.id)}" data-bp-pid="${esc(pid)}"`;
-  const zeile = (q, pid) => `<div class="eh-q ${esc(q.klasse)}"${bp(q, pid)}>${_ehrungKachel(q, () => gold++)}
-      <span class="eh-q-t"><b>${esc(q.name)}</b><small>${esc(_newsRarityLabel(q.klasse))} · ${esc(mal(q))}</small>${strich(q)}</span>
-      <em class="num">+${_ehZahl(q.p)}<small>von ${_ehZahl(voll(q))}</small></em></div>`;
   const kachel = (q, pid) => `<div class="eh-g-t ${esc(q.klasse)}"${bp(q, pid)}>`
     + `<span class="eh-g-o">${_ehrungKachel(q, () => gold++)}<em class="num">+${_ehZahl(q.p)}</em></span>`
     + `<b>${esc(q.name)}</b><small>${esc(mal(q))}</small>${strich(q)}</div>`;
   return (Array.isArray(sp) ? sp : []).filter(x => x && pm[x.pid]).map((x, i) => {
-    const gross = (x.posten || []).filter(q => q.klasse !== 'common');
-    const klein = (x.posten || []).filter(q => q.klasse === 'common');
+    const posten = x.posten || [];
     return `<div class="eh-p" style="--i:${i}">
       <div class="eh-p-k" data-pid="${esc(x.pid)}" style="cursor:pointer">${rcpAvHtml(x.pid, 30, {})}
         <b>${esc(pm[x.pid].name)}</b><em class="num">+${_ehZahl(x.summe)}</em></div>
-      ${gross.map(q => zeile(q, x.pid)).join('')}
-      ${klein.length ? `<div class="eh-g">${klein.map(q => kachel(q, x.pid)).join('')}</div>` : ''}
+      ${posten.length ? `<div class="eh-g">${posten.map(q => kachel(q, x.pid)).join('')}</div>` : ''}
     </div>`;
   }).join('');
 }
@@ -29719,9 +29831,10 @@ function _ndHeldBuehne(pid, wert, label, neg, extra){
     + `<span class="nd-hz-t"><em>${esc(_spName(pid))}</em><b class="num">${esc(String(wert))}</b><small>${esc(label)}</small></span></div>`
     + (extra || '') + `</div>`;
 }
-function _ndMarkenLeiter(wert, min, schritt){
+function _ndMarkenLeiter(wert, min, schritt, fuenfzig){
   const marken = [];
   if(schritt){ for(let v = min; v <= wert + schritt; v += schritt) marken.push(v); }
+  else if(fuenfzig){ for(let v = min; v <= wert * 2 + 50; v++) if(_rundeMarke(v, min)) marken.push(v); }
   else { let p = 1; while(p <= wert * 10){ [1, 2.5, 5].forEach(r => { const v = r * p; if(Number.isInteger(v) && v >= min && v <= wert * 10) marken.push(v); }); p *= 10; } }
   marken.sort((a, b) => a - b);
   const i = marken.indexOf(wert);
@@ -29755,11 +29868,11 @@ function _ndEloLinie(pid, bisId, marke){
 function _ndMeilensteinBlatt(s){
   const d = s.dataRef || {}, pm = pmap(), pid = d.pid;
   if(!pid || !pm[pid]) return null;
-  const art = {jubilee:['Partien', 10, 0], milestone_wins:['Siege', 100, 0], milestone_goals:['Tore', 500, 0],
+  const art = {jubilee:['Partien', 10, 0, true], milestone_wins:['Siege', 50, 0, true], milestone_goals:['Tore', 500, 0],
     milestone_elo:['Elo', (cfg.start_elo ?? 1000) + 200, 100]}[d.type];
   const wert = d.type === 'jubilee' ? Number(d.total) : d.type === 'milestone_elo' ? Number(d.mark) || parseInt(d.milestone, 10) : parseInt(d.milestone, 10);
   if(!art || !Number.isFinite(wert)) return null;
-  const kopf = _ndHeldBuehne(pid, _spZahl(wert), art[0], false, _ndMarkenLeiter(wert, art[1], art[2]));
+  const kopf = _ndHeldBuehne(pid, _spZahl(wert), art[0], false, _ndMarkenLeiter(wert, art[1], art[2], art[3]));
   const st = _ndBilanzBis(pid, s);
   const ab = (t, html) => html ? `<div class="nd-section">${esc(t)}</div>${html}` : '';
   const m = d.matchId ? (matches || []).find(x => x.id === d.matchId) : null;
@@ -30137,6 +30250,7 @@ function _ndMitteRoh(s){
                 <small>${esc([bild.verb, zeit].filter(Boolean).join(' · '))}</small></span>
               <span class="nw-tz-r">${bild.rechts}${kurz ? `<b class="nd-tz-v num">${bild.wert}</b>` : ''}</span>${
               bild.wert && !kurz ? `<b class="nw-tz-lang">${bild.wert}</b>` : ''}</div>`;
+          if(!_ndNeu(t.titel) && !_ndNeu(t.text) && String(t.text || '').trim()) return '';
           const titel = _ndNeu(t.titel) ? t.titel : (_ndNeu(t.text) || t.titel);
           const text = titel === t.text ? '' : t.text;
           return `<div class="nw-zeile${t.neg ? ' neg' : ''}"${ziel ? ziel + ' style="cursor:pointer"'
@@ -30573,6 +30687,11 @@ function _ndMitteRoh(s){
       case 'duell_kippt': case 'woche_spitze': case 'tag_plus': case 'tag_hoehe':
       case 'monat_gewinn': case 'monat_halb': case 'partner_best':
         return _spFaktBild(d);
+      case 'pleiten_ende': case 'duo_pleiten_ende':
+        return `<div class="nd-gwert"><b>${esc(String(d.n))}</b><span>${d.type === 'pleiten_ende'
+          ? 'Niederlagen in Folge davor' : 'gemeinsame Niederlagen in Folge davor'}</span></div>`;
+      case 'rueckkehr':
+        return `<div class="nd-gwert"><b>${esc(String(d.tage))}</b><span>Tage ohne Partie</span></div>`;
       case 'tabellensprung': {
         return `<div class="nd-gwert"><b>${esc(String(d.pre))} → ${esc(String(d.post))}</b><span>Platz in der Tabelle</span></div>
           <div class="nd-stat-row"><div class="nd-stat-label">Gewonnene Plätze</div>
@@ -35334,7 +35453,7 @@ function showDisziplin(tid, sid){
         + `<b>${esc(def.beiname)}</b></span>` : ''}
     </div>
     ${_chronFaktenHtml(def, eigene.length ? eigene[0].wert : undefined, schattenM)}
-    ${schattenM ? `<div class="tnote">„${esc(schattenM.name)}“ überschattet diese Chronik im selben Monat: die Schattenseite geht mindestens doppelt so weit über ihre Schwelle hinaus wie diese über ihre. Die Chronik bleibt in der Tafel und bringt kein Prestige.</div>` : ''}
+    ${schattenM ? `<div class="tnote">„${esc(schattenM.name)}“ wiegt in diesem Monat schwerer. Diese Chronik bleibt in der Tafel, bringt aber kein Prestige.</div>` : ''}
     ${def.wie ? `<div class="tnote">${esc(def.wie)}</div>` : ''}
     ${beleg}
     ${rang.length
@@ -35397,9 +35516,8 @@ function showChronicle(cid){
     <div class="rek-def">${fakten.map(([l, v]) =>
       `<div class="rek-df"><span class="l">${esc(l)}</span><span class="v">${esc(v)}</span></div>`
     ).join('')}</div>
-    ${halterN > 1 ? `<div class="tnote">Diesen Rekord halten ${halterN} Spieler
-      punktgleich. Der Grundwert wird deshalb durch ${halterN} geteilt; jeder
-      von ihnen hält ihn vollständig, bis einer ihn überbietet.</div>` : ''}
+    ${halterN > 1 ? `<div class="tnote">${halterN} Spieler halten diesen Rekord gemeinsam und teilen sich sein Prestige,
+      bis einer ihn überbietet.</div>` : ''}
     ${def.wie ? `<div class="tnote">${esc(def.wie)}</div>` : ''}
     ${beleg}
     ${rang.length
@@ -35467,8 +35585,7 @@ function ligaRekordeHtml(weit){
         <span class="hd">${esc(_chronHolderNames(h))}</span>
       </div>`;
     }).join('')}</div>
-    <div class="tnote">Jeder Rekord gehört dem, der ihn wirklich hält — bei exaktem
-      Gleichstand allen, die ihn halten. Tippen zeigt die Bedingung.</div>`;
+    <div class="tnote">Tippen zeigt, wie ein Rekord gezählt wird.</div>`;
   const karte = (d) => {
     const h = holders[d.id];
     if(!h) return `<div class="rek offen" data-chron="${esc(d.id)}" data-kammer="${esc(d.kind)}">

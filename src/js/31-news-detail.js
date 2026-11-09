@@ -1591,9 +1591,11 @@ function _ndHeldBuehne(pid, wert, label, neg, extra){
 }
 // Die Leiter einer Marke: zwei davor, diese, die nächste. Dieselbe Leiter,
 // nach der der Generator die Marke vergibt (`_ladderCrossing`).
-function _ndMarkenLeiter(wert, min, schritt){
+// `fuenfzig`: Partien und Siege zählen auch jede fünfzigste (`_rundeMarke`).
+function _ndMarkenLeiter(wert, min, schritt, fuenfzig){
   const marken = [];
   if(schritt){ for(let v = min; v <= wert + schritt; v += schritt) marken.push(v); }
+  else if(fuenfzig){ for(let v = min; v <= wert * 2 + 50; v++) if(_rundeMarke(v, min)) marken.push(v); }
   else { let p = 1; while(p <= wert * 10){ [1, 2.5, 5].forEach(r => { const v = r * p; if(Number.isInteger(v) && v >= min && v <= wert * 10) marken.push(v); }); p *= 10; } }
   marken.sort((a, b) => a - b);
   const i = marken.indexOf(wert);
@@ -1629,11 +1631,11 @@ function _ndEloLinie(pid, bisId, marke){
 function _ndMeilensteinBlatt(s){
   const d = s.dataRef || {}, pm = pmap(), pid = d.pid;
   if(!pid || !pm[pid]) return null;
-  const art = {jubilee:['Partien', 10, 0], milestone_wins:['Siege', 100, 0], milestone_goals:['Tore', 500, 0],
+  const art = {jubilee:['Partien', 10, 0, true], milestone_wins:['Siege', 50, 0, true], milestone_goals:['Tore', 500, 0],
     milestone_elo:['Elo', (cfg.start_elo ?? 1000) + 200, 100]}[d.type];
   const wert = d.type === 'jubilee' ? Number(d.total) : d.type === 'milestone_elo' ? Number(d.mark) || parseInt(d.milestone, 10) : parseInt(d.milestone, 10);
   if(!art || !Number.isFinite(wert)) return null;
-  const kopf = _ndHeldBuehne(pid, _spZahl(wert), art[0], false, _ndMarkenLeiter(wert, art[1], art[2]));
+  const kopf = _ndHeldBuehne(pid, _spZahl(wert), art[0], false, _ndMarkenLeiter(wert, art[1], art[2], art[3]));
   const st = _ndBilanzBis(pid, s);
   const ab = (t, html) => html ? `<div class="nd-section">${esc(t)}</div>${html}` : '';
   const m = d.matchId ? (matches || []).find(x => x.id === d.matchId) : null;

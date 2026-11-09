@@ -105,9 +105,21 @@ function ohneStoriesNachAbschied(list){
   if(!Array.isArray(list)) return list;
   const weg = ruhestandSpieler().map(p => ({id:p.id, ab:ruhestandAbschlussMs(p)}));
   if(!weg.length) return list;
+  // Gesucht wird in dem, was die Story sagt, nicht in ihrer Zeichnung
+  // (`visual`). Die Zeichnung einer Partie trägt Ranglisten anderer Spieler
+  // — Monatstabelle, Träger einer Medaille, Partner —, und stand darin
+  // jemand, der aufgehört hatte, fiel die ganze Karte der Partie weg:
+  // gemessen fehlten nach Janes Abschied zwei Partien vom 04. und 09.11.
+  // ganz im Feed, weil ihr Fuß Jane unter den Trägern von „Mauer" und
+  // Martin unter Alex' Partnern zeigte. Was die Zeichnung über ihn zeigt,
+  // filtert der Fuß selbst (`_spNoch`).
   const text = s => {
     let x = _storyText.get(s);
-    if(x == null){ x = JSON.stringify(s.dataRef || {}); _storyText.set(s, x); }
+    if(x == null){
+      const d = s.dataRef || {};
+      x = JSON.stringify(d.visual ? Object.assign({}, d, {visual:null}) : d);
+      _storyText.set(s, x);
+    }
     return x;
   };
   const bleibt = list.filter(s => {

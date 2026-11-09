@@ -1573,9 +1573,9 @@ const ok = (c, msg, det) => {
         .find(x => x.dataRef.spieler.some(y => y.posten.some(q => q.id === 'potw')));
       K(`openNewsDetail(${JSON.stringify(e.id)})`); await warte(400);
       const nd = document.getElementById('nd'), bpBg = document.getElementById('bpBg'), bp = document.getElementById('bp');
-      const alle = [...nd.querySelectorAll('.eh-q, .eh-g-t')];
+      const alle = [...nd.querySelectorAll('.eh-g-t')];
       out.alle = alle.length; out.markiert = alle.filter(x => x.dataset.bp && x.dataset.bpPid).length;
-      const zeile = nd.querySelector('.eh-q[data-bp="potw"]');
+      const zeile = nd.querySelector('.eh-g-t[data-bp="potw"]');
       out.pid = zeile && zeile.dataset.bpPid;
       zeile.scrollIntoView({block:'center'}); await warte(80);
       const r = zeile.getBoundingClientRect();
@@ -1999,7 +1999,12 @@ const ok = (c, msg, det) => {
         if(host.querySelector('.nd-erg, .nd-held')) falsch.push(s.id + ' Stand oder Wappen doppelt');
         if(/besonders macht|gewinnen diese Partie|Siegchance lag|hängt daran|hängen daran/.test(host.textContent + ' ' + s.desc)) falsch.push(s.id + ' erklärt');
         if(s.dataRef.type === 'sammel'){ buendel++;
-          if(s.dataRef.teile.filter(t => (t.typ || t.type) !== 'spiel').length !== host.querySelectorAll('.nw-zeile').length) falsch.push(s.id + ' Bündelzeilen'); }
+          // Steht der Hauptanlass mit Schlagzeile und Satz schon oben, hat er
+          // keine eigene Zeile mehr: sie wiederholte beides [§C33].
+          const oben = s.dataRef.teile.filter(t => (t.typ || t.type) !== 'spiel'
+            && String(t.titel || '').trim() === String(s.title || '').trim() && String(t.text || '').trim()
+            && String(t.text || '').trim() === String(s.desc || '').trim()).length;
+          if(s.dataRef.teile.filter(t => (t.typ || t.type) !== 'spiel').length - oben !== host.querySelectorAll('.nw-zeile').length) falsch.push(s.id + ' Bündelzeilen'); }
         const chanceOben = /class="(sp-fk )?(sp-feld|sp-ta|sp-sd|sp-wp)/.test(kopf);
         if(chanceOben && host.querySelector('.nd-chance')) falsch.push(s.id + ' Siegchance doppelt');
         if(/class="(sp-fk )?sp-et/.test(kopf) && host.querySelector('.nd-elo')) falsch.push(s.id + ' Elo doppelt');
@@ -2825,7 +2830,9 @@ const ok = (c, msg, det) => {
       if(r.left < k.left - .5 || r.right > k.right + .5) fehler.push('Faden ragt aus der Karte'); });
     return {karten:karten.length, runden:sheet.querySelectorAll('.nf-runde').length, fehler, formen, kleinste, faeden:fd.length};
   }, PRUEFEN.toString());
-  ok(spieltag.karten > 20 && spieltag.runden > 0 && Object.keys(spieltag.formen).length >= 8 && spieltag.faeden > 0
+  // Keine Karte am Spieltag trägt einen Faden: was eine Partie beendet oder
+  // fortsetzt, sagt ihre eigene Zeile [§C33].
+  ok(spieltag.karten > 20 && spieltag.runden > 0 && Object.keys(spieltag.formen).length >= 8 && spieltag.faeden === 0
      && spieltag.fehler.length === 0,
      'im Feed liegt auf keiner Karte am Spieltag ein Text auf einem anderen oder einem Gesicht, keiner ragt hinaus oder ist abgeschnitten',
      spieltag.fehler.slice(0, 3).join(' | ') || spieltag.karten + ' Karten, ' + spieltag.runden + ' Runden, '
@@ -2956,7 +2963,16 @@ const ok = (c, msg, det) => {
      'und mit Grenzwerten und langen Namen auch nicht, mit grossem Spielfeld-Score auf schmalen und gewöhnlichen Telefonen',
      grenz[288].fehler.concat(grenz[360].fehler).slice(0, 3).join(' | ')
        || grenz[288].n + ' Teile, kleinste Schrift ' + Math.min(grenz[288].kleinste, grenz[360].kleinste) + ' px');
+  // Den Faden tragen nur noch Tafel-Karten: zwei gestellte Karten zum
+  // selben Rekord, die zweite holt ihn zurück [§C33].
   const fadenAuf = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    K(`(function(){ const [A, B] = players.map(p => p.id), jetzt = Date.now();
+      const mk = (id, ms, halter, vorher) => ({id, cat:'tafel', ic:'trophy', prio:80, title:id === 'tf_alt' ? 'Rekord geholt' : 'Rekord zurückgeholt',
+        desc:'Ein Rekord wechselt.', when:new Date(ms), dataRef:{type:'rekord_geholt', rekordId:'peak', halter, vorher, playerIds:halter}});
+      _cache._stories = [mk('tf_neu', jetzt - 864e5, [A], [B]), mk('tf_alt', jetzt - 3 * 864e5, [B], [A])]
+        .concat(_cache._stories || []).sort((a, b) => new Date(b.when) - new Date(a.when));
+      _cache._consolFrom = null; _cache._frischVon = null; openNewsFeed(); _newsFeedRest(); })()`);
     const sheet = document.getElementById('sheet');
     const f = sheet.querySelector('.nf-faden');
     if(!f) return {ok:false};

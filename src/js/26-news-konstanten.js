@@ -85,13 +85,15 @@ const NEWS_TOAST_MS = 4000;
 const NEWS_TOAST_START_MS = 7000;
 
 // Generator-Limits — Schutz gegen zu viele Stories pro Typ
+// Ab so vielen Tagen ohne Partie meldet sich die Pause. Drei Tage sind ein
+// gewöhnliches Wochenende, gespielt wird werktags.
+const NEWS_PAUSE_TAGE = 5;
 const NEWS_LIMITS = {
   // v9.4: bewusst kleiner → weniger News-Flut direkt nach Matches.
   topForm: 2,       // max Spieler "in Top-Form" gleichzeitig
   lossStreak: 2,
   winStreak: 8,     // jüngste echte Serienmarken im 14-Tage-Fenster
   giantSlayer: 4,   // starke Upsets: höchstens einer je Spieltag
-  jubilee: 3,
   badgeUnlocked: 6, // letzte N freigeschalteten Badges
   // Zwei Rivalitätskarten mit derselben Schlagzeile und einer anderen Zahl
   // sind kein Paar, sondern eine Wiederholung. Es bleibt die mit den meisten
@@ -343,6 +345,12 @@ function anlassGewicht(typ, dt){
   dt = dt || {};
   if(typ === 'win_streak' || typ === 'team_streak') return 46 + 2 * Math.min(17, Number(dt.streak) || 0);
   if(typ === 'badge_unlocked') return dt.rarity === 'legendary' ? 92 : dt.rarity === 'rare' ? 66 : 50;
+  // Das Ende einer Pleitenserie wiegt mit ihrer Länge: nach zwölf
+  // Niederlagen ist der erste Sieg die Nachricht der Partie, nach fünf eine
+  // Zeile unter ihr.
+  if(typ === 'pleiten_ende') return 58 + Math.min(20, Number(dt.n) || 0);
+  if(typ === 'duo_pleiten_ende') return 44 + Math.min(16, Number(dt.n) || 0);
+  if(typ === 'rueckkehr') return 42 + Math.min(14, Math.floor((Number(dt.tage) || 0) / 7));
   return ANLASS_GEWICHT[typ];
 }
 const STORY_PRIO = {
@@ -419,6 +427,9 @@ const STORY_PRIO = {
   // Die sieben Fakten des Katalogs: sie stehen nie allein, ihr Rang zählt
   // nur für die Reihenfolge der Zeilen ihrer Karte.
   duell_kippt:       52,
+  pleiten_ende:      54,
+  duo_pleiten_ende:  46,
+  rueckkehr:         45,
   woche_spitze:      48,
   tag_plus:          47,
   tag_hoehe:         44,

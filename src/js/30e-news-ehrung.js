@@ -577,8 +577,8 @@ function _ndEhrungBlatt(s){
   const gegen = g && pm[g.pid] ? `<div class="nd-section">Der härteste Tag</div>${_spGegenHtml(g)}` : '';
   return {kopf, mitte: anteil + (zeit ? `<div class="nw-hinweis eh-zeit">${esc(zeit.vor + ' ' + zeit.wann)}${/\.$/.test(zeit.wann) ? '' : '.'}</div>` : '')
     + `<div class="nd-section">Wer was geholt hat</div>${_ehrungBloeckeHtml(sp)}` + gegen
-    + `<div class="nw-hinweis">Das erste und zweite Mal zählt eine Auszeichnung voll, danach etwas weniger. `
-    + `Der Strich unter jeder zeigt, wie viel vom vollen Wert bleibt.</div>`};
+    + `<div class="nw-hinweis">Der Strich unter jeder Auszeichnung zeigt, wie viel ihres vollen Werts sie diesmal brachte. `
+    + `Ab dem dritten Mal bringt sie etwas weniger.</div>`};
 }
 // Je Spieler sein Kasten, im Blatt einer Ehrung und unter dem Spieler des
 // Tages derselbe [§C27].
@@ -595,22 +595,22 @@ function _ehrungBloeckeHtml(sp){
   // Jede Zeile und jede Kachel öffnet ihre Auszeichnung für diesen Spieler
   // (`_bpBinden`): das wievielte Mal und den Wert erklärt erst sie.
   const bp = (q, pid) => ` data-bp="${esc(q.id)}" data-bp-pid="${esc(pid)}"`;
-  const zeile = (q, pid) => `<div class="eh-q ${esc(q.klasse)}"${bp(q, pid)}>${_ehrungKachel(q, () => gold++)}
-      <span class="eh-q-t"><b>${esc(q.name)}</b><small>${esc(_newsRarityLabel(q.klasse))} · ${esc(mal(q))}</small>${strich(q)}</span>
-      <em class="num">+${_ehZahl(q.p)}<small>von ${_ehZahl(voll(q))}</small></em></div>`;
   // Oben die Zeichenkachel und der Wert, darunter der Name über die ganze
   // Breite: neben Zeichen und Wert brach „Pflichterfüller" mitten im Wort.
   const kachel = (q, pid) => `<div class="eh-g-t ${esc(q.klasse)}"${bp(q, pid)}>`
     + `<span class="eh-g-o">${_ehrungKachel(q, () => gold++)}<em class="num">+${_ehZahl(q.p)}</em></span>`
     + `<b>${esc(q.name)}</b><small>${esc(mal(q))}</small>${strich(q)}</div>`;
+  // Jede Auszeichnung ist dieselbe Kachel, zwei je Zeile, die seltensten
+  // zuerst (`posten` ist so geordnet); die Klasse sagt die Farbe [§C25].
+  // Eine seltene und eine legendäre standen vorher als eigene Zeile über
+  // die ganze Breite, mit „Selten · 1. Mal" und „+25 von 25": dieselbe
+  // Angabe in einer anderen Form, und „von 25" wiederholte die Zahl daneben.
   return (Array.isArray(sp) ? sp : []).filter(x => x && pm[x.pid]).map((x, i) => {
-    const gross = (x.posten || []).filter(q => q.klasse !== 'common');
-    const klein = (x.posten || []).filter(q => q.klasse === 'common');
+    const posten = x.posten || [];
     return `<div class="eh-p" style="--i:${i}">
       <div class="eh-p-k" data-pid="${esc(x.pid)}" style="cursor:pointer">${rcpAvHtml(x.pid, 30, {})}
         <b>${esc(pm[x.pid].name)}</b><em class="num">+${_ehZahl(x.summe)}</em></div>
-      ${gross.map(q => zeile(q, x.pid)).join('')}
-      ${klein.length ? `<div class="eh-g">${klein.map(q => kachel(q, x.pid)).join('')}</div>` : ''}
+      ${posten.length ? `<div class="eh-g">${posten.map(q => kachel(q, x.pid)).join('')}</div>` : ''}
     </div>`;
   }).join('');
 }

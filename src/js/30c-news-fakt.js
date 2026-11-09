@@ -145,13 +145,20 @@ function _ffPause(d){
 }
 
 // ── Die Vitrine: jede Auszeichnung des Katalogs als Feld ────────────────
+// Neue Karten zählen jedes Mal (`gesamt`, je Auszeichnung `n`): ein Feld
+// leuchtet so stark, wie oft sie geholt wurde, und die große Zahl ist die
+// Summe. Gespeicherte Karten ohne `gesamt` zeigen weiter „41 von 50".
 function _ffVitrine(b){
   const pm = pmap();
   if(!pm[b.p]) return '';
-  const hat = new Set(b.hat || []);
+  const hat = new Set(b.hat || []), n = b.n || {};
   const kat = b.gold ? BADGES.filter(x => rarityOf(x.id) === 'legendary') : BADGES;
-  const felder = kat.map(x => `<i class="${hat.has(x.id) ? 'hat ' + rarityOf(x.id) : ''}">${svgI(x.ic || 'trophy')}</i>`).join('');
-  return `<div class="ff-vt-k">${_ffChip(b.p)}${_ffNm(b.p)}<b class="num">${hat.size}<small> von ${kat.length}</small></b></div>`
+  const max = Math.max(1, ...kat.map(x => Number(n[x.id]) || 0));
+  const st = x => b.gesamt && hat.has(x.id)
+    ? ` style="--a:${(0.45 + 0.55 * Math.log1p(Number(n[x.id]) || 1) / Math.log1p(max)).toFixed(2)}"` : '';
+  const felder = kat.map(x => `<i class="${hat.has(x.id) ? 'hat ' + rarityOf(x.id) : ''}"${st(x)}>${svgI(x.ic || 'trophy')}</i>`).join('');
+  const zahl = b.gesamt ? `${_spZahl(b.gesamt)}<small> geholt</small>` : `${hat.size}<small> von ${kat.length}</small>`;
+  return `<div class="ff-vt-k">${_ffChip(b.p)}${_ffNm(b.p)}<b class="num">${zahl}</b></div>`
     + `<span class="ff-vt${b.gold ? ' gold' : ''}">${felder}</span>`;
 }
 

@@ -330,10 +330,15 @@ console.log('\n=== REGEL 4: DAS TOR DES FEEDS ===');
   K.eval(`globalThis.__neu = [
     {id:'neu_nach', cat:'tafel', title:'a', desc:'a', prio:40, when:new Date(${+nach}), dataRef:{type:'neu_typ', verfolger:[{pid:'${MARTIN}', wert:3}]}},
     {id:'neu_zwischen', cat:'tafel', title:'b', desc:'b', prio:40, when:new Date(${+zwischen}), dataRef:{type:'neu_typ', playerIds:['${MARTIN}']}},
-    {id:'neu_anderer', cat:'tafel', title:'c', desc:'c', prio:40, when:new Date(${+nach}), dataRef:{type:'neu_typ', playerIds:['${ANDERER}']}}];`);
+    {id:'neu_anderer', cat:'tafel', title:'c', desc:'c', prio:40, when:new Date(${+nach}), dataRef:{type:'neu_typ', playerIds:['${ANDERER}']}},
+    {id:'neu_bild', cat:'highlight', title:'d', desc:'d', prio:40, when:new Date(${+nach}), dataRef:{type:'spiel', playerIds:['${ANDERER}'],
+      visual:{version:2, occasion:{key:'medaille', data:{alle:['${MARTIN}']}}}}}];`);
   const ids = J('ohneStoriesNachAbschied(__neu).map(s => s.id)');
-  ok(gleich(ids, ['neu_zwischen', 'neu_anderer']),
+  ok(gleich(ids, ['neu_zwischen', 'neu_anderer', 'neu_bild']),
      'ein neuer Story-Typ ohne eigene Abfrage nennt ihn nach dem Abschluss nicht, auch nicht in einer Liste; davor schon', ids.join(', '));
+  // Die Karte einer Partie anderer fällt nicht weg, weil ihre Zeichnung ihn
+  // in einer Rangliste trug: nach Janes Abschied fehlten so zwei Partien.
+  ok(ids.includes('neu_bild'), 'eine Partie anderer bleibt, auch wenn ihre Zeichnung ihn früher in einer Rangliste trug');
   const alt = J(`_buildStories().find(s => +new Date(s.when) < Date.parse('${ENDE}') && (s.dataRef||{}).type === 'spiel'
     && JSON.stringify(s.dataRef).includes('${MARTIN}'))`);
   K.eval(`globalThis.__db = Object.assign({}, ${JSON.stringify(alt)}, {id:'db_nach_abschluss', when:new Date(${+nach})});

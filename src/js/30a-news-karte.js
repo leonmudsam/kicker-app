@@ -147,14 +147,20 @@ function _newsSerienBand(laenge, verloren, mitZiel){
 //
 // Der Gruppentitel wird vorsichtshalber herausgefiltert; aktuelle Karten
 // bauen ihn eigens, sodass regulaer jede Einzelzeile im Band bleibt.
-function _newsSammelBand(teile, kopfTitel, vollstaendig){
+// `fz` ist die Zeile des Fußes einer Partie-Karte: sie steht als letzte,
+// direkt über der Zeichnung, die sie erklärt, in derselben Form wie jede
+// andere Zeile. Sie stand klein unter dem Fuß, getrennt von den übrigen
+// Anlässen, und las sich wie eine Bildunterschrift statt wie ein Anlass.
+function _newsSammelBand(teile, kopfTitel, vollstaendig, fz){
   const alle = Array.isArray(teile) ? teile : [];
   // Alte persistierte Karten koennen noch einen Gruppentitel als Zeile
   // enthalten; nur diese echte Doppelung faellt heraus.
   const kt = (Array.isArray(kopfTitel) ? kopfTitel : [kopfTitel])
     .map(x => String(x || '').trim()).filter(Boolean);
   const rest = alle.filter(t => kt.indexOf(String(t.titel || '').trim()) < 0);
-  if(!rest.length) return '';
+  const fussZeile = fz && fz.titel ? `<div class="nf-sam-z sp-fz" data-story-id="${esc(fz.id || '')}"><i class="nf-sam-i">${svgI(fz.ic || 'chartBar')}</i>`
+    + `<span>${_newsBetont(fz.titel)}</span></div>` : '';
+  if(!rest.length) return fussZeile ? `<div class="nf-sam">${fussZeile}</div>` : '';
   // Drei Zeilen und dahinter die Zahl. Eine Sammelkarte zeigt mehr, aber
   // nicht alles: gemessen trug ein Tafel-Moment neunzehn Zeilen, und die
   // Karte bedeckte damit den ganzen Bildschirm — die vollstaendige Liste
@@ -214,7 +220,7 @@ function _newsSammelBand(teile, kopfTitel, vollstaendig){
     + `</div>`;
   }).join('')}`
     + (uebrig > 0 ? `<div class="nf-sam-m">und ${uebrig} weitere</div>` : '')
-    + `</div>`;
+    + fussZeile + `</div>`;
 }
 
 // ── Die Bilanz des Prestiges steht auf der Karte ────────────────────
@@ -348,35 +354,32 @@ function _newsSpielSatz(desc, zeigt){
 }
 
 // ── Der Faden [§C33] ────────────────────────────────────────────────
-// Eine Karte, die eine frühere fortsetzt, sagt es. Im Feed standen „Anton
-// und Johannes verlieren zusammen alles" am 24.08. und „Johannes und Anton
-// stürzen die Favoriten" am 26.08. als zwei Fremde — dass die zweite die
-// erste beendet, musste der Leser selbst finden. Der Faden ist eine
-// ABLEITUNG wie `_isBreaking`: nichts davon wird gespeichert, und er zeigt
-// nur auf eine Karte, die im Feed steht und älter ist.
+// Eine Tafel-Karte, die eine frühere fortsetzt, sagt es: derselbe Rekord
+// oder dieselbe Monatschronik, wieder geholt oder weiter ausgebaut. Der
+// Faden ist eine ABLEITUNG wie `_isBreaking`: nichts davon wird
+// gespeichert, und er zeigt nur auf eine Karte, die im Feed steht und älter
+// ist.
 //
 // Gefragt wird nach dem Fakt, nicht nach der Karte: eine Sammelkarte trägt
-// ihre Zeilen, und die Serie, die sie beendet, kann in einer anderen
+// ihre Zeilen, und der Rekord, an den sie anschließt, kann in einer anderen
 // Sammelkarte stecken. Deshalb läuft die Suche über die ungebündelten
 // Meldungen (`_newsTexteAuffrischen`, dieselbe Referenz wie in
 // `getStoriesCache`) und bildet sie auf die Karte ab, in der sie stehen.
 //
-// Jede Beziehung wird an den Partien nachgeprüft, nicht am Wortlaut: eine
-// Pleitenserie ist erst mit dem ERSTEN Sieg danach gewendet, eine Revanche
-// nur die nächste Begegnung derselben zwei Duos, und eine Serie endet nur,
-// wenn dazwischen keine Niederlage lag. Ohne diese Prüfung zeigte jede
-// spätere Partie derselben Leute auf dieselbe alte Karte.
-//
-// Die „Rückkehr" aus dem Entwurf gibt es nicht: die Karte der Pause fällt
-// mit der nächsten Partie weg (`_consolidateStories` prüft `lastMatchId`),
-// also steht nie eine im Feed, auf die eine Rückkehr zeigen könnte.
+// Keine Karte einer Partie trägt einen Faden, und keine ist sein Ziel.
+// Unter „Stefan und Leon retten ein 10:9" stand „Beendet · 04.11. Maxi holt
+// die seltene Auszeichnung ‚Mauer'": die Pleitenserie, die der Faden meinte,
+// steckte als Zeile in einer früheren Partie-Karte, deren Schlagzeile ein
+// ganz anderer Anlass war. „Setzt fort · 27.10. Leo und Maxi entscheiden
+// ein enges Spiel" zeigte ebenso auf eine Partie, die mit der Serie nichts
+// zu tun hatte, außer dass die Meldung darin stand. Was eine Partie beendet
+// oder fortsetzt, sagt ihre eigene Zeile („erster Sieg nach zwölf
+// Niederlagen in Folge"). Mit den Partien fielen Ende, Wende, Revanche,
+// Spitzenwechsel und die Fortsetzung einer Serie weg: alle hängen an einer
+// Partie.
 const NEWS_FADEN_ART = {
-  ende:     {kap:'ENDE',          vor:'Beendet'},
-  wende:    {kap:'WENDE',         vor:'Beendet'},
-  revanche: {kap:'REVANCHE',      vor:'Antwort auf'},
   zurueck:  {kap:'RÜCKEROBERUNG', vor:'Folgt auf'},
   weiter:   {kap:'FORTSETZUNG',   vor:'Setzt fort'},
-  spitze:   {kap:'WECHSEL',       vor:'Folgt auf'},
 };
 const _newsFadenMemo = new WeakMap();
 function _newsFaeden(cards){
@@ -386,30 +389,18 @@ function _newsFaeden(cards){
   const map = new Map();
   _newsFadenMemo.set(roh, {m: matches, n: cards.length, map});
   const rohId = new Map(roh.map(x => [x.id, x]));
-  // Jede Meldung → die Karte, in der sie steht.
-  const karteVon = new Map();
+  const partie = c => { const d = c.dataRef || {};
+    return d.type === 'spiel' || d.type === 'runde' || !!d.matchId
+      || (d.type === 'sammel' && (d.teile || []).some(t => /^spiel_/.test(String((t && t.id) || '')))); };
+  cards = cards.filter(c => !partie(c));
+  // Jede Karte → ihre Meldungen.
   const glieder = new Map();
   cards.forEach(c => {
     const d = c.dataRef || {};
     const ids = d.type === 'sammel' && Array.isArray(d.teile)
       ? d.teile.map(t => t && t.id).filter(Boolean) : [c.id];
-    const g = ids.map(id => rohId.get(id) || (id === c.id ? c : null)).filter(Boolean);
-    g.forEach(x => karteVon.set(x.id, c));
-    glieder.set(c.id, g);
+    glieder.set(c.id, ids.map(id => rohId.get(id) || (id === c.id ? c : null)).filter(Boolean));
   });
-  const idx = new Map();
-  const reihe = [...(matches || [])].sort((a, b) => mts(a) - mts(b));
-  reihe.forEach((m, i) => idx.set(m.id, i));
-  const sieger = m => m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2];
-  const verlierer = m => m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2];
-  const gleich = (x, y) => x.length === y.length && x.every(v => y.includes(v));
-  // Lag zwischen zwei Partien (beide ausgeschlossen) eine, auf die `f` passt?
-  const dazwischen = (vonId, bisId, f) => {
-    const a = idx.get(vonId), b = idx.get(bisId);
-    if(a == null || b == null || a >= b) return true;
-    for(let i = a + 1; i < b; i++) if(f(reihe[i])) return true;
-    return false;
-  };
   // Alle Meldungen, zeitlich von neu nach alt — die jüngste passende ältere
   // Karte gewinnt.
   const alle = [];
@@ -423,72 +414,23 @@ function _newsFaeden(cards){
     }
     return null;
   };
-  const RANG = ['ende', 'wende', 'revanche', 'zurueck', 'spitze', 'weiter'];
   cards.forEach(c => {
     let best = null;
-    const nimm = (art, ziel) => {
-      if(!ziel) return;
-      if(!best || RANG.indexOf(art) < RANG.indexOf(best.art)) best = {art, ziel: ziel.id};
-    };
     (glieder.get(c.id) || []).forEach(x => {
-      const d = x.dataRef || {};
-      const t = d.type || '';
-      if(t === 'streak_killer' && d.victimPid && d.matchId){
-        const v = d.victimPid;
-        nimm('ende', suche(c, e => e.type === 'win_streak' && e.pid === v && e.matchId
-          && !dazwischen(e.matchId, d.matchId, m => verlierer(m).includes(v))));
-      }
-      if(t === 'spiel' && d.matchId){
-        const m = reihe[idx.get(d.matchId)];
-        if(!m) return;
-        const w = sieger(m), l = verlierer(m);
-        // Die Wende: der erste gemeinsame Sieg nach der Pleitenserie des Duos,
-        // oder der erste eigene nach einer Pleitenserie.
-        nimm('wende', suche(c, e => e.type === 'team_loss_streak' && e.matchId
-          && gleich([e.a, e.b], w)
-          && !dazwischen(e.matchId, d.matchId, n => gleich(sieger(n), w))));
-        nimm('wende', suche(c, e => e.type === 'loss_streak' && e.matchId && w.includes(e.pid)
-          && !dazwischen(e.matchId, d.matchId, n => sieger(n).includes(e.pid))));
-        // Die Revanche: die vorige Begegnung genau dieser zwei Duos ging an
-        // die andere Seite.
-        let vor = null;
-        for(let i = idx.get(m.id) - 1; i >= 0; i--){
-          const n = reihe[i];
-          const seiten = [[n.a1, n.a2], [n.b1, n.b2]];
-          if(seiten.some(sd => gleich(sd, w)) && seiten.some(sd => gleich(sd, l))){ vor = n; break; }
-        }
-        // Nur über Tage: das Rückspiel direkt danach ist am Kicker der Normalfall
-        // und keine Geschichte — gemessen waren es sieben von zehn Fäden, und
-        // jede zweite Partie eines Spieltags zeigte auf die davor.
-        if(vor && gleich(sieger(vor), l) && tagKey(mts(vor)) !== tagKey(mts(m))){
-          const k = karteVon.get('spiel_' + vor.id);
-          if(k && k !== c && new Date(k.when) < new Date(c.when)) nimm('revanche', k);
-        }
-      }
-      // Dieselbe Serie über mehrere Tage: derselbe Lauf, eine frühere Marke.
-      if(/^(win_streak|loss_streak|team_streak|team_loss_streak)$/.test(t) && d.lauf){
-        nimm('weiter', suche(c, e => e.type === t && e.lauf === d.lauf
-          && (e.pid || '') === (d.pid || '') && (e.a || '') === (d.a || '') && (e.b || '') === (d.b || '')));
-      }
+      const d = x.dataRef || {}, t = d.type || '';
       // Derselbe Rekord, dieselbe Monatschronik: wer ihn vor der früheren
       // Karte hielt und ihn jetzt wieder hat, holt ihn zurück.
-      if((/^rekord_/.test(t) && d.rekordId) || (t === 'chronik_geholt' && d.titleId)){
-        const zielK = suche(c, e => t === 'chronik_geholt'
-          ? e.type === 'chronik_geholt' && e.titleId === d.titleId && e.sid === d.sid
-          : /^rekord_/.test(e.type || '') && e.rekordId === d.rekordId);
-        if(zielK){
-          const ze = (glieder.get(zielK.id) || []).map(y => y.dataRef || {})
-            .find(e => t === 'chronik_geholt' ? e.titleId === d.titleId : e.rekordId === d.rekordId) || {};
-          const jetzt = d.halter || d.playerIds || [];
-          const damalsWeg = ze.vorher || [];
-          const damalsNeu = ze.halter || ze.playerIds || [];
-          const zurueck = jetzt.some(p => damalsWeg.includes(p)) && !jetzt.some(p => damalsNeu.includes(p));
-          nimm(zurueck ? 'zurueck' : 'weiter', zielK);
-        }
-      }
-      if(t === 'lead_change' && d.sid){
-        nimm('spitze', suche(c, e => e.type === 'lead_change' && e.sid === d.sid));
-      }
+      if(!((/^rekord_/.test(t) && d.rekordId) || (t === 'chronik_geholt' && d.titleId))) return;
+      const zielK = suche(c, e => t === 'chronik_geholt'
+        ? e.type === 'chronik_geholt' && e.titleId === d.titleId && e.sid === d.sid
+        : /^rekord_/.test(e.type || '') && e.rekordId === d.rekordId);
+      if(!zielK) return;
+      const ze = (glieder.get(zielK.id) || []).map(y => y.dataRef || {})
+        .find(e => t === 'chronik_geholt' ? e.titleId === d.titleId : e.rekordId === d.rekordId) || {};
+      const jetzt = d.halter || d.playerIds || [];
+      const zurueck = jetzt.some(p => (ze.vorher || []).includes(p))
+        && !jetzt.some(p => (ze.halter || ze.playerIds || []).includes(p));
+      if(!best || (zurueck && best.art !== 'zurueck')) best = {art: zurueck ? 'zurueck' : 'weiter', ziel: zielK.id};
     });
     if(best) map.set(c.id, best);
   });
@@ -1041,7 +983,7 @@ function _breakingHeroText(s){
         return sch ? _ehrungBrkSatz(_ehrungBrkGrund(sch.art, sch.ms), sch.art) : '';
       }
       case 'badge_unlocked':
-        return `${nm(d.playerId)} schnappt sich mit „${d.badgeName || s.title}" eine der seltensten Auszeichnungen der Liga. Das gelingt fast niemandem.`;
+        return `${nm(d.playerId)} schnappt sich mit „${d.badgeName || s.title}“ eine der seltensten Auszeichnungen der Liga. Das gelingt fast niemandem.`;
       case 'elo_record':
         return `${nm(d.pid)} schreibt Liga-Geschichte: Mit ${d.elo} Elo steht kein Spieler jemals höher. Eine neue Bestmarke für die Ewigkeit. Wer traut sich, sie anzugreifen?`;
       case 'streak_record':

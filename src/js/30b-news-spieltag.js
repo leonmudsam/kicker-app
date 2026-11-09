@@ -643,12 +643,21 @@ function _spDuellBild(d){
 // „Selten" ist ein Wort; wie selten, zeigt die Liga: jeder Spieler ein
 // Punkt. Violett ist die Familie der Auszeichnungen, Gold nur die
 // legendäre [§C25].
+// Steht jemand zum Zeitpunkt der Partie noch in der Liga? Die Ranglisten
+// eines Fußes (Träger, Partner, Woche) nennen nach dem Abschied niemanden,
+// den keine Story mehr nennt [§C40]; was er davor tat, bleibt.
+function _spNoch(id, m){
+  const p = _spielerVon(id);
+  if(!p || !sichtbar(p)) return false;
+  const ab = ruhestandAbschlussMs(p);
+  return !ab || mts(m) <= ab;
+}
 function _spMedailleDaten(a){
   const b = (typeof BADGES !== 'undefined' ? BADGES : []).find(x => x.id === a.x.badgeId);
   if(!b) return null;
   // Wer eine Auszeichnung trägt, ist Geschichte [§C40]: ein späteres
   // Karriereende nimmt der Karte ihre Träger nicht.
-  const ids = players.filter(p => sichtbar(p)).map(p => p.id);
+  const ids = players.filter(p => _spNoch(p.id, a.m)).map(p => p.id);
   // Kein heutiger Badge-Zensus fuer eine vergangene Partie: der kanonische
   // Event-Cache weiss, WANN jemand Traeger wurde und das wievielte Mal es
   // war. Ein Index am vorhandenen Datenstand ersetzt Vollrechnungen je
@@ -792,7 +801,12 @@ function _spTagBild(d){
 // nicht die Anzeige: Kopf, Schlagzeile und Satz kommen aus derselben Wahl.
 
 // Der Stand gehört dem Sieger: seine Zahl zuerst und hell [§C33].
-function _spSt(d){ return `<b class="sp-st num"><em>${_spZahl(d.hoch)}</em>:${_spZahl(d.tief)}</b>`; }
+// Der Stand in der Reihenfolge der Seiten, A zuerst, der Sieger hell. Ohne
+// `aw` (gespeicherte Daten) die Siegerzahl zuerst.
+function _spSt(d){
+  return d.aw === false ? `<b class="sp-st num">${_spZahl(d.tief)}:<em>${_spZahl(d.hoch)}</em></b>`
+    : `<b class="sp-st num"><em>${_spZahl(d.hoch)}</em>:${_spZahl(d.tief)}</b>`;
+}
 // Die Namen beider Teams als Textstelle unter der Zeichnung, je einer in
 // seiner Zeile [§11.6c]. Die Sieger stehen vorn, und das Wort dazwischen
 // sagt, wie es ausging: mit „gegen" las man den Sieger nur an der
@@ -800,6 +814,21 @@ function _spSt(d){ return `<b class="sp-st num"><em>${_spZahl(d.hoch)}</em>:${_s
 function _spNz(W, L, wort){
   return `<div class="sp-nz"><span class="w">${_spStapel(W)}</span><span class="sp-nz-gg">${wort || 'schlagen'}</span>`
     + `<span class="re">${_spStapel(L)}</span></div>`;
+}
+// ── Die Teamzeile unter dem Kopf: Team A links, Team B rechts ──────────
+// Wie am Tisch und bei der Eingabe. Die Sieger standen immer links, und
+// spielten dieselben vier mehrmals hintereinander, wechselten die Namen bei
+// jedem Sieg der anderen Seite die Seite. Der Sieger trägt den grünen
+// Strich, der Verlierer den roten [§C25]; dazwischen steht „gegen", denn
+// „schlagen" stimmt nur, wenn der Sieger links steht.
+// Je Paar die Abwehr zuerst, wie die Gesichter im Kopf (`_spKopfDaten`):
+// unter Julian über Leon stand sonst „Leon, Julian".
+function _spTeamZeile(m){
+  const aw = m.winner === 'A';
+  const rolle = id => m[(m.a1 === id ? 'a1' : m.a2 === id ? 'a2' : m.b1 === id ? 'b1' : 'b2') + '_pos'];
+  const ord = s => _spTeam(m, s).slice().sort((a, b) => (rolle(a) === 'def' ? 0 : 1) - (rolle(b) === 'def' ? 0 : 1));
+  return `<div class="sp-nz"><span class="${aw ? 'w' : 'l'}">${_spStapel(ord('A'))}</span><span class="sp-nz-gg">gegen</span>`
+    + `<span class="re ${aw ? 'l' : 'w'}">${_spStapel(ord('B'))}</span></div>`;
 }
 // Wie lange etwas her ist, in der Einheit, die man sagen würde: `e` nach
 // „vor" und „nach", `nom` vor „her". Nach den Wochen kamen keine Einheiten
@@ -923,7 +952,8 @@ function _spKopfDaten(F){
   const ord = l => l.slice().sort((a, b) => (rolle(a) === 'def' ? 0 : 1) - (rolle(b) === 'def' ? 0 : 1));
   const delta = {};
   F.W.concat(F.L).forEach(id => { delta[id] = Math.round(F.delta[id] || 0); });
-  return {W:ord(F.W), L:ord(F.L), hoch:F.hoch, tief:F.tief, pct:F.c != null ? Math.round(F.c * 100) : null, delta};
+  return {W:ord(F.W), L:ord(F.L), hoch:F.hoch, tief:F.tief, aw:F.m.winner === 'A',
+    pct:F.c != null ? Math.round(F.c * 100) : null, delta};
 }
 // Die wievielte Partie dieser Art im Monat diese ist, sie eingeschlossen.
 function _spImMonat(F, art){
@@ -935,6 +965,35 @@ function _spImMonat(F, art){
     if(art(x)) n++;
   }
   return n;
+}
+// ── Was eine gewöhnliche Partie sagt, das ihr Kopf nicht zeigt ─────────
+// Kopf und Teamzeile zeigen schon, wer gegen wen wie hoch gewann, mit
+// welcher Elo und Chance. „Maxi und Johannes gewinnen mit 2 Toren
+// Abstand" über zehn und acht Pucks, darunter „Leon und Stefan treffen
+// 8-mal" und im Fuß noch einmal 10:8 — dieselbe Zahl viermal. Die
+// Schlagzeile nennt deshalb etwas aus der Geschichte dieser Leute: das
+// Duell dieser zwei Duos, die gemeinsamen Siege, den Tag eines Siegers.
+// Welche, entscheidet die Partie selbst (`_spVisualHash`), damit nicht
+// jede Karte dieselbe Sorte Satz trägt.
+function _spKontext(F){
+  const W = _spNl(F.W), L = _spNl(F.L), n = F.treffen.length;
+  const s = F.treffen.filter(x => _spGew(x, F.W[0])).length;
+  const wahl = [];
+  if(n >= 3) wahl.push({
+    t:s * 2 > n ? (s - 1) * 2 <= n - 1 ? `${W} gehen gegen ${L} in Führung` : `${W} bleiben gegen ${L} vorn`
+      : s * 2 === n ? `${W} gleichen gegen ${L} aus` : `${W} verkürzen gegen ${L}`,
+    d:`Von ${_spZahl(n)} Treffen dieser beiden Duos gingen ${_spZahl(s)} an ${W}.`});
+  if(F.duo.p >= 2) wahl.push({t:`${W} gewinnen zum ${_spZahl(F.duo.s)}. Mal zusammen`,
+    d:`Das sind ${_spZahl(Math.round(F.duo.s / F.duo.p * 100))} % der ${_spZahl(F.duo.p)} gemeinsamen Partien.`});
+  const tag = F.W.map(id => { const l = F.tag.filter(x => [x.a1, x.a2, x.b1, x.b2].includes(id));
+    return {id, k:l.length, w:l.filter(x => _spGew(x, id)).length}; }).filter(x => x.k >= 3).sort((a, b) => b.w - a.w)[0];
+  if(tag) wahl.push({t:`${_spName(tag.id)} holt den ${_spZahl(tag.w)}. Sieg des Tages`,
+    d:`${_spZahl(tag.w)} Siege aus ${_spZahl(tag.k)} Partien an diesem Tag.`});
+  if(!wahl.length) wahl.push(F.duo.p <= 1 ? {t:`${W} gewinnen die erste gemeinsame Partie`,
+      d:n > 1 ? `Von ${_spZahl(n)} Treffen dieser beiden Duos gingen ${_spZahl(s)} an ${W}.` : `Es ist das erste Treffen dieser beiden Duos.`}
+    : {t:`${W} gewinnen zum ${_spZahl(F.duo.s)}. Mal zusammen`,
+      d:`Das sind ${_spZahl(Math.round(F.duo.s / F.duo.p * 100))} % der ${_spZahl(F.duo.p)} gemeinsamen Partien.`});
+  return wahl[_spVisualHash(F.m.id + '|kontext') % wahl.length];
 }
 const _spKrimi = x => Math.abs(x.score_a - x.score_b) === 1;
 const _spZuNull = x => Math.min(x.score_a, x.score_b) === 0;
@@ -1136,13 +1195,12 @@ const SP_FORM = {
     wann:F => F.diff >= 2 && F.diff <= 5 ? {} : null,
     daten:F => ({A:_spTeam(F.m, 'A'), B:_spTeam(F.m, 'B'), aw:F.W.includes(F.m.a1), W:F.W, L:F.L,
       hoch:F.hoch, tief:F.tief, delta:Object.assign({}, F.delta)}),
-    text:F => ({t:`${_spNl(F.W)} ziehen das Spiel zu sich`,
-      d:F.hoch === 10 ? `Die Liga sieht ein ${F.hoch}:${F.tief} zum ${_spZahl(F.vert[F.diff] || 1)}. Mal.` : `${_spNl(F.L)} verlieren mit ${_spZahl(F.diff)} Toren Abstand.`})},
+    text:F => _spKontext(F)},
   // Der Münzwurf: vor dem Anstoß lag keine Seite vorn (47 bis 53 %).
   muenze:{rang:18, ic:'target', v2:true,
     wann:F => F.c != null && Math.abs(F.c - 0.5) <= 0.03 ? {} : null,
     daten:F => ({W:F.W, L:F.L, hoch:F.hoch, tief:F.tief, pct:Math.round(F.c * 100)}),
-    text:F => ({t:`${_spNl(F.W)} gewinnen den Münzwurf`, d:`Vor dem Anstoß lag keine Seite vorn.`})},
+    text:F => ({t:`${_spNl(F.W)} gewinnen den Münzwurf`, d:_spKontext(F).d})},
   // Die weiße Weste: ein Spiel ohne Gegentor. Ein Sonderfall wie der Krimi
   // (`_spScoreSpezial`), und so selten, dass es seine eigene Zeichnung trägt.
   weste:{rang:60, ic:'shield', v2:true,
@@ -1197,25 +1255,26 @@ const SP_FORM = {
   tafel:{rang:10, ic:'spielfeld', v2:true,
     wann:() => ({}),
     daten:F => _spKopfDaten(F),
-    text:F => ({t:`${_spNl(F.W)} gewinnen gegen ${_spNl(F.L)}`,
-      d:F.c != null ? `Vor dem Anstoß lag die Siegchance bei ${Math.round(F.c * 100)} %.`
-        : `Für ${_spName(F.W[0])} bringt der Sieg ${_spVz(F.delta[F.W[0]])} Elo.`})},
+    text:F => _spKontext(F)},
   // Die Torpucks: jedes Tor ein Puck, was fehlt, ein leerer Ring.
   pucks:{rang:10, ic:'ball', v2:true,
     wann:() => ({}),
     daten:F => _spKopfDaten(F),
-    text:F => ({t:`${_spNl(F.W)} gewinnen mit ${F.diff === 1 ? 'einem Tor' : _spZahl(F.diff) + ' Toren'} Abstand`,
-      d:F.tief ? `${_spNl(F.L)} treffen ${_spZahl(F.tief)}-mal.` : `${_spNl(F.L)} bleiben ohne Tor.`})},
+    text:F => _spKontext(F)},
+
   // Der Elo-Strom: was von den Verlierern zu den Siegern floss, je Spieler
   // so breit wie seine Punkte.
   strom:{rang:10, ic:'bolt', v2:true,
     wann:() => ({}),
     daten:F => _spKopfDaten(F),
-    text:F => {
-      const ab = -F.L.reduce((n, id) => n + (F.delta[id] || 0), 0);
-      return {t:`${_spNl(F.W)} holen zusammen ${_spZahl(F.gewinn)} Elo`,
-        d:`${_spNl(F.L)} geben ${_spZahl(ab)} Elo ab.`};
-    }},
+    // Die Elo zeigt der Strom selbst; „holen zusammen 60 Elo" stand über
+    // der Zeichnung, die genau das zeichnet.
+    text:F => _spKontext(F)},
+  // Die Lebensbalken (`_spBalkenBild`): was jedem Team am Ende blieb.
+  balken:{rang:10, ic:'chartBar', v2:true,
+    wann:() => ({}),
+    daten:F => _spKopfDaten(F),
+    text:F => _spKontext(F)},
   // Das Herzschlagfinale: ein Tor Abstand. Bei den Siegern schlägt der Puls
   // bis zum letzten Tor hoch, bei den Verlierern läuft er flach aus.
   herz:{rang:58, ic:'nerves', v2:true,
@@ -1236,11 +1295,7 @@ const SP_FORM = {
   feld:{rang:8, ic:'ball',
     wann:() => ({}),
     daten:F => _spFeldDaten({m:F.m, c:F.c}),
-    text:F => {
-      const n = F.treffen.length;
-      return {t:`${_spNl(F.W)} setzen sich gegen ${_spNl(F.L)} durch`,
-        d:n > 1 ? `Diese beiden Duos treffen sich zum ${n}. Mal.` : `Diese beiden Duos spielen zum 1. Mal gegeneinander.`};
-    }}
+    text:F => _spKontext(F)}
 };
 
 // Die Kandidaten einer Partie, schwerste zuerst.
@@ -1372,7 +1427,7 @@ function _spChemieBild(d){
     + `style="stroke-dasharray:${Math.max(0.5, l - 1.2).toFixed(2)} ${(U - l + 1.2).toFixed(2)};stroke-dashoffset:${(-l * k).toFixed(2)};--i:${k}"/>`).join('');
   return `<div class="sp-fk sp-ch"><div class="sp-ch-d">${_spWappen(d.A, 48)}<div class="sp-ch-r"><svg viewBox="0 0 56 56" aria-hidden="true">${seg}</svg>`
     + `<span><b class="num">${_spZahl(d.s)}.</b><i>DUO-SIEG</i></span></div>${_spWappen(d.B, 48)}</div>`
-    + `<div class="sp-ch-u">${_spSt(d)}<span><b class="num">${_spZahl(d.s)}</b> von <b class="num">${_spZahl(d.p)}</b> zusammen gewonnen</span></div></div>`
+    + `<div class="sp-ch-u">${d.nurAnlass ? '' : _spSt(d)}<span><b class="num">${_spZahl(d.s)}</b> von <b class="num">${_spZahl(d.p)}</b> zusammen gewonnen</span></div></div>`
     + (d.nurAnlass ? '' : _spNz([d.A, d.B], d.L));
 }
 function _spGegnerBild(d){
@@ -1380,7 +1435,7 @@ function _spGegnerBild(d){
     <div class="sp-gg-m"><em>${d.fluch ? 'Fluch gebrochen' : 'Lieblingsgegner'}</em>
       <span class="sp-gg-b num"><b>${_spZahl(d.s)}</b>:${_spZahl(d.n - d.s)}</span>
       <span class="sp-gg-r">${d.folge.map((w, k) => `<i class="${w ? 'w' : 'l'}${k === d.folge.length - 1 ? ' jetzt' : ''}" style="--i:${k}"></i>`).join('')}</span>
-      <span class="sp-gg-h">heute ${_spSt(d)}</span></div>
+      ${d.nurAnlass ? '' : `<span class="sp-gg-h">heute ${_spSt(d)}</span>`}</div>
     <div class="sp-gg-p">${_spWappen(d.l, 48)}</div></div>`
     + (d.nurAnlass ? '' : _spNz(d.W, d.L));
 }
@@ -1397,13 +1452,13 @@ function _spGipfelBild(d){
   return `<div class="sp-fk sp-gp">${d.zeilen.map((z, k) => `<div class="sp-gp-z${z.w ? ' w' : ''}" style="--i:${k}">`
     + `<span class="num">${z.pre ? _spZahl(z.pre) + '.' : '–'}</span>${_spChip(z.id)}<span class="sp-gp-n">${esc(_spName(z.id))}</span>`
     + `<em class="num ${z.post && z.pre && z.post < z.pre ? 'g' : z.post && z.pre && z.post > z.pre ? 'r' : ''}">${z.post && z.post !== z.pre ? '→ ' + _spZahl(z.post) + '.' : '='}</em></div>`).join('')}
-    <div class="sp-gp-f">${_spSt(d)}<span>Platz 1 und 2 am Tisch</span></div></div>`;
+    <div class="sp-gp-f">${d.nurAnlass ? '' : _spSt(d)}<span>Platz 1 und 2 am Tisch</span></div></div>`;
 }
 function _spRueckkehrBild(d){
   const n = Math.min(28, d.tage + 1);
   return `<div class="sp-fk sp-zu">${_spWappen(d.id, 48)}<div class="sp-zu-m">
       <span class="sp-zu-z"><b class="num">${_spZahl(d.tage)}</b> Tage ohne Partie</span>
-      <span class="sp-zu-k">${Array.from({length:n}, (_, k) => `<i class="${k === 0 ? 'alt' : ''}" style="--i:${k}"></i>`).join('')}${_spSt(d)}</span></div></div>`
+      <span class="sp-zu-k">${Array.from({length:n}, (_, k) => `<i class="${k === 0 ? 'alt' : ''}" style="--i:${k}"></i>`).join('')}${d.nurAnlass ? '' : _spSt(d)}</span></div></div>`
     + (d.nurAnlass ? '' : _spUnter(`${_spNb(d.id)} mit ${_spNb(d.mit)} gegen ${_spUnd(d.L)}.`));
 }
 function _spGefaelleBild(d){
@@ -1421,7 +1476,7 @@ function _spTagesringBild(d){
     + `style="stroke-dasharray:${Math.max(0.5, l - 2.4).toFixed(2)} ${(U - l + 2.4).toFixed(2)};stroke-dashoffset:${(-l * k).toFixed(2)};--i:${k}"/>`).join('');
   return `<div class="sp-fk sp-tr"><div class="sp-tr-r"><svg viewBox="0 0 76 76" aria-hidden="true">${seg}</svg><span>${_spWappen(d.id, 48)}</span></div>
     <div class="sp-tr-t"><em>heute</em><span class="sp-tr-z"><b class="num">${_spZahl(s)}</b> von ${_spZahl(n)}</span>
-      <span class="sp-tr-j">Partie ${_spZahl(n)} ${_spSt(d)}</span></div></div>`
+      <span class="sp-tr-j">Partie ${_spZahl(n)}${d.nurAnlass ? '' : ' ' + _spSt(d)}</span></div></div>`
     + (d.nurAnlass ? '' : _spUnter(`${_spNb(d.id)} mit ${_spNb(d.mit)} gegen ${_spUnd(d.L)}.`));
 }
 function _spZaehlwerkBild(d){
@@ -1434,7 +1489,7 @@ function _spZaehlwerkBild(d){
   return `<div class="sp-fk sp-zw">${d.wer ? _spWappen(d.wer, 48) : `<span class="sp-zw-l">${svgI('ball')}</span>`}
     <div class="sp-zw-m"><span class="sp-zw-w num">${z.map(rolle).join('')}<b>.</b></span>
       <span class="sp-zw-u">${einheit + (!d.nurAnlass && d.wer && _spPasst([d.wer], 12, true) ? ` von ${esc(_spName(d.wer))}` : '')}</span></div>
-    <div class="sp-zw-s">${_spSt(d)}</div></div>`
+    ${d.nurAnlass ? '' : `<div class="sp-zw-s">${_spSt(d)}</div>`}</div>`
     + (d.nurAnlass ? '' : _spNz(d.W, d.L));
 }
 // Runde Zahlen: jeder, der in dieser Partie eine erreicht, mit seiner Zahl
@@ -1543,8 +1598,7 @@ function _spWocheDaten(a){
     const x = B.chrono[j], W = _spSieger(x);
     [x.a1, x.a2, x.b1, x.b2].forEach(id => { if(!id) return; const z = je[id] || (je[id] = {s:0, n:0}); z.n++; if(W.includes(id)) z.s++; });
   }
-  const pm = pmap();
-  const liste = Object.keys(je).filter(id => je[id].s >= 5 && sichtbar(pm[id]))
+  const liste = Object.keys(je).filter(id => je[id].s >= 5 && _spNoch(id, a.m))
     .map(id => ({id, s:je[id].s, n:je[id].n, q:Math.round(100 * je[id].s / je[id].n)}))
     .sort((p, q) => q.s / q.n - p.s / p.n || q.s - p.s).slice(0, 5);
   return liste.length ? {pid:a.x.pid, liste} : null;
@@ -1594,7 +1648,7 @@ function _spMonatQuoteBild(d){
     + _spLinie(d.verlauf, {ref:50, zwei:true, lo:0, hi:100, fmt:y => _spZahl(y) + ' %', x:['1. Partie', `${_spZahl(n)}. Partie`]}) + `</div>`;
 }
 function _spPartnerDaten(a){
-  const pid = a.x.pid, je = {}, pm = pmap();
+  const pid = a.x.pid, je = {};
   let s = 0, n = 0;
   _spEigene(pid, a.m).forEach(x => {
     const mit = _spTeam(x, _spSeite(x, pid)).find(y => y && y !== pid), w = _spGew(x, pid);
@@ -1602,7 +1656,7 @@ function _spPartnerDaten(a){
     if(!mit) return;
     const z = je[mit] || (je[mit] = {s:0, n:0}); z.n++; if(w) z.s++;
   });
-  const liste = Object.keys(je).filter(id => je[id].n >= 6 && sichtbar(pm[id]))
+  const liste = Object.keys(je).filter(id => je[id].n >= 6 && _spNoch(id, a.m))
     .map(id => ({id, s:je[id].s, n:je[id].n, q:Math.round(100 * je[id].s / je[id].n)}))
     .sort((p, q) => q.s / q.n - p.s / p.n || q.n - p.n).slice(0, 5);
   return liste.length ? {pid, mit:a.x.mit, liste, allg:Math.round(100 * s / Math.max(1, n))} : null;
@@ -1668,7 +1722,7 @@ function _spUhrBild(d){
     + `<line class="sp-uh-z" x1="50" y1="50" x2="${zx}" y2="${zy}"/><circle class="sp-uh-n" cx="50" cy="50" r="2.6"/></svg></div>`
     + `<div class="sp-uh-t"><em>Dauerbetrieb</em><span class="sp-uh-g"><b class="num">${_spZahl(d.n)}.</b> Partie des Tages</span>`
     + `<span class="sp-uh-u">seit <b class="num">${zeit(d.zeiten[0])}</b> Uhr, diese um <b class="num">${zeit(jetzt)}</b></span>`
-    + `<span class="sp-uh-e">${_spChips(d.W)}${_spSt(d)}</span></div></div>`
+    + `<span class="sp-uh-e">${_spChips(d.W)}${d.nurAnlass ? '' : _spSt(d)}</span></div></div>`
     + (d.nurAnlass ? '' : _spNz(d.W, d.L));
 }
 function _spUeberholtBild(d){
@@ -1681,8 +1735,12 @@ function _spUeberholtBild(d){
     + `<circle class="sp-uo-l" cx="78" cy="${y(d.lPost)}" r="3"/><circle class="sp-uo-w" cx="78" cy="${y(d.wPost)}" r="3.6"/>`
     + platz(4, d.wPre, 'w') + platz(4, d.lPre, 'l') + platz(84, d.wPost, 'w') + platz(84, d.lPost, 'l')
     + `</svg><div class="sp-uo-a"><span>vorher</span><span>nachher</span></div></div>`
-    + `<div class="sp-uo-t"><em>Überholt</em><span class="sp-uo-p">${_spChip(d.w)}<i>zieht vorbei an</i>${_spChip(d.l)}</span>`
-    + `<span class="sp-uo-u">Platz <b class="num">${_spZahl(d.wPost)}</b> statt <b class="num">${_spZahl(d.wPre)}</b></span></div></div>`
+    // Auf der Karte sagt die Zeile darüber „Johannes zieht an Maxi vorbei";
+    // daneben stehen nur die beiden Gesichter in der Farbe ihrer Linie.
+    + (d.nurAnlass ? `<div class="sp-uo-t"><span class="sp-uo-p w">${_spChip(d.w)}${esc(_spName(d.w))}</span>`
+        + `<span class="sp-uo-p l">${_spChip(d.l)}${esc(_spName(d.l))}</span></div></div>`
+      : `<div class="sp-uo-t"><em>Überholt</em><span class="sp-uo-p">${_spChip(d.w)}<i>zieht vorbei an</i>${_spChip(d.l)}</span>`
+        + `<span class="sp-uo-u">Platz <b class="num">${_spZahl(d.wPost)}</b> statt <b class="num">${_spZahl(d.wPre)}</b></span></div></div>`)
     + (d.nurAnlass ? '' : _spNz(d.W, d.L));
 }
 function _spDuoserieBild(d){
@@ -1749,35 +1807,76 @@ function _spPucksBild(d){
     + (!w && n === 10 ? `<u style="--von:${k}"></u>` : '') + `</span><b class="num">${_spZahl(k)}</b></div>`;
   return `<div class="sp-fk sp-pu">${z(d.W, d.hoch, true)}${z(d.L, d.tief, false)}</div>` + _spNz(d.W, d.L);
 }
+// ── Der Elo-Strom: was die Verlierer abgaben, fließt zu den Siegern ────
+// Von jedem Verlierer ein Band zur Mitte, so breit wie seine Punkte, dort
+// der Stand, und von der Mitte zu jedem Sieger sein Band. Team A steht
+// links. Vorher liefen vier Bänder von jedem Verlierer zu jedem Sieger und
+// kreuzten sich in einem X: welche Punkte wohin gingen, war nicht zu lesen,
+// und die Bänder sagten dasselbe viermal.
 function _spStromBild(d){
-  // Vier Ströme von je einem Verlierer zu je einem Sieger, so breit wie die
-  // Punkte, die der Verlierer abgab. Die Gesichter stehen an den Enden, die
-  // Zahl jedes Spielers darunter, der Stand in der Mitte.
-  const W = 240, H = 92, y = [15, 63];
-  const breit = id => Math.max(2.5, Math.min(10, Math.abs((d.delta || {})[id] || 0) / 2.2));
-  const pfad = (i, j) => `M${W - 32} ${y[j]}C${W / 2 + 16} ${y[j]},${W / 2 - 16} ${y[i]},32 ${y[i]}`;
+  const W = 240, H = 78, cx = W / 2, aw = d.aw !== false, dl = d.delta || {};
+  const A = aw ? d.W : d.L, B = aw ? d.L : d.W;
+  const breit = id => Math.max(3, Math.min(13, Math.abs(dl[id] || 0) / 2.2));
   const id = 'sps' + _spVisualHash(d.W.concat(d.L).join() + d.hoch + ':' + d.tief);
-  const stroeme = d.L.map((l, j) => d.W.map((w, i) => `<path class="sp-sm-p" d="${pfad(i, j)}" stroke="url(#${id})" stroke-width="${breit(l).toFixed(1)}"/>`).join('')).join('');
-  const ende = (x, i, w) => `<span class="sp-sm-a${w ? ' w' : ''}" style="top:${y[i] - 15}px;${w ? 'left' : 'right'}:2px">${_spChip(x)}<b class="num">${_spVz((d.delta || {})[x] || 0)}</b></span>`;
+  const yEnde = [18, 60];
+  // Die Bänder einer Seite laufen in der Mitte übereinander zusammen.
+  const seite = (ids, links, sieg) => {
+    const summe = ids.reduce((n, x) => n + breit(x), 0);
+    let off = H / 2 - summe / 2;
+    return ids.map((x, i) => {
+      const b = breit(x), ym = off + b / 2; off += b;
+      const xa = links ? 34 : W - 34, xm = links ? cx - 30 : cx + 30, xk = (xa + xm) / 2;
+      // Der Fluss läuft vom Verlierer zur Mitte und von der Mitte zum Sieger.
+      const pfad = sieg ? `M${xm} ${ym.toFixed(1)}C${xk} ${ym.toFixed(1)},${xk} ${yEnde[i]},${xa} ${yEnde[i]}`
+        : `M${xa} ${yEnde[i]}C${xk} ${yEnde[i]},${xk} ${ym.toFixed(1)},${xm} ${ym.toFixed(1)}`;
+      return `<path class="sp-sm-p${sieg ? ' w' : ''}" d="${pfad}" stroke="url(#${id})" stroke-width="${b.toFixed(1)}"/>`;
+    }).join('');
+  };
+  const ende = (x, i, links, sieg) => `<span class="sp-sm-a${sieg ? ' w' : ''}" style="top:${yEnde[i] - 12}px;${links ? 'left' : 'right'}:2px">`
+    + `${_spChip(x)}<b class="num">${_spVz(dl[x] || 0)}</b></span>`;
+  // Rot bei den Verlierern, Gold in der Mitte, Grün bei den Siegern [§C25].
+  const [x1, x2] = aw ? [W, 0] : [0, W];
   return `<div class="sp-fk sp-sm"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><defs>`
-    + `<linearGradient id="${id}" x1="1" x2="0" y1="0" y2="0"><stop offset="0" stop-color="#f0566a"/><stop offset=".5" stop-color="#f7cf4a"/>`
-    + `<stop offset="1" stop-color="#BEF264"/></linearGradient></defs>${stroeme}</svg>`
-    + d.W.map((x, i) => ende(x, i, true)).join('') + d.L.map((x, j) => ende(x, j, false)).join('')
+    + `<linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="${x1}" x2="${x2}" y1="0" y2="0"><stop offset=".08" stop-color="#f0566a"/>`
+    + `<stop offset=".5" stop-color="#f7cf4a"/><stop offset=".92" stop-color="#BEF264"/></linearGradient></defs>`
+    + seite(A, true, aw) + seite(B, false, !aw) + `</svg>`
+    + A.map((x, i) => ende(x, i, true, aw)).join('') + B.map((x, i) => ende(x, i, false, !aw)).join('')
     + `<span class="sp-sm-m">${_spSt(d)}</span></div>` + _spNz(d.W, d.L);
 }
 function _spHerzBild(d){
   // Der Herzschlag der Sieger steigt bis zum letzten Tor, der der Verlierer
-  // zuckt noch einmal und läuft flach aus. Die Klapptafel davor zeigte
-  // „9 : 10" mit den Verlierern links.
+  // zuckt noch einmal und läuft flach aus. Über die Kurve der Sieger läuft
+  // ein Lichtpunkt wie auf einem Monitor — auf der Kurve selbst (`lauf`):
+  // vorher lief er waagerecht durch die Spalte und kreuzte die Zacken.
   const SW = 'M0 25H10l3-5 3 5h3l2 6 4-27 4 33 3-14h4q4-8 8 0H60';
   const SL = 'M0 25h9l2-6 2 9 2-4h4l1 2 1-1H60';
   const paar = (ids, w) => `<span class="sp-hz-p${w ? ' w' : ''}">${ids.map(_spChip).join('')}</span>`;
-  const kurve = (p, w) => `<span class="sp-hz-k${w ? ' w' : ''}"><svg viewBox="0 0 60 40" preserveAspectRatio="none" aria-hidden="true"><path d="${p}"/></svg>${w ? '<i></i>' : ''}</span>`;
+  const kurve = (p, w) => `<span class="sp-hz-k${w ? ' w' : ''}"><svg viewBox="0 0 60 40" preserveAspectRatio="none" aria-hidden="true">`
+    + `<path class="sp-hz-b" pathLength="100" d="${p}"/>${w ? `<path class="sp-hz-lauf" pathLength="100" d="${p}"/>` : ''}</svg></span>`;
   const zelle = (lab, v) => `<span><b class="num">${esc(v)}</b><small>${lab}</small></span>`;
   return `<div class="sp-fk sp-hz"><div class="sp-hz-g">${paar(d.W, true)}${kurve(SW, true)}`
     + `<span class="sp-hz-m"><small>Ein Tor</small>${_spSt(d)}</span>${kurve(SL, false)}${paar(d.L, false)}</div>`
     + `<div class="sp-kl">` + (d.pct != null ? zelle('Chance vorher', _spZahl(d.pct) + ' %') : '')
     + zelle('Elo der Sieger', _spKopfElo(d, d.W)) + (d.nr ? zelle('im Monat', _spZahl(d.nr) + '.') : '') + `</div></div>`
+    + _spNz(d.W, d.L);
+}
+// ── Die Lebensbalken: wie viel jedem Team am Ende blieb ───────────────
+// Jedes Team beginnt mit vollem Balken, und jedes Gegentor nimmt ein
+// Zehntel. Der Verlierer endet leer, der Sieger mit dem, was ihm blieb:
+// ein 10:9 lässt ein Zehntel, ein 10:2 fast alles. Statt der Pucks, die
+// die Tore zweimal zählten — als Kugeln und als Zahl daneben —, zeigt der
+// Balken den Abstand, den die Zahlen nicht auf einen Blick sagen. Team A
+// links, die Balken laufen von außen zur Mitte, die Elo jedes Spielers
+// außen.
+function _spBalkenBild(d){
+  const aw = d.aw !== false, dl = d.delta || {};
+  const A = aw ? d.W : d.L, B = aw ? d.L : d.W;
+  const rest = (gegen) => Math.max(0, Math.min(100, 100 - gegen * 10));
+  const sa = aw ? d.hoch : d.tief, sb = aw ? d.tief : d.hoch;
+  const seite = (ids, sieg, links, gegen) => `<div class="sp-lb-s${sieg ? ' w' : ''}${links ? '' : ' re'}">`
+    + `<span class="sp-lb-k">${_spKopfPaar(ids)}<span class="num">${_spKopfElo(d, ids)}</span></span>`
+    + `<span class="sp-lb-b"><i style="--r:${rest(gegen)}%"></i>${sieg ? '' : '<em>K.o.</em>'}</span></div>`;
+  return `<div class="sp-fk sp-lb">${seite(A, aw, true, sb)}<span class="sp-lb-m">${_spSt(d)}</span>${seite(B, !aw, false, sa)}</div>`
     + _spNz(d.W, d.L);
 }
 // Die Treffer liegen über das Netz verteilt, jeder mit seinem Einschlag:
@@ -1807,7 +1906,7 @@ const SP_FORM_BILD = {mosaik:_spMosaikBild, tacho:_spTachoBild, streu:_spStreuBi
   rueckkehr:_spRueckkehrBild, gefaelle:_spGefaelleBild, tagesring:_spTagesringBild, zaehlwerk:_spZaehlwerkBild,
   tauziehen:_spTauziehenBild, muenze:_spMuenzeBild, weste:_spWesteBild,
   uhr:_spUhrBild, ueberholt:_spUeberholtBild, duoserie:_spDuoserieBild, hoch:_spHochBild,
-  feld:_spFeldBild, tafel:_spAnzeigeBild, pucks:_spPucksBild, strom:_spStromBild,
+  feld:_spFeldBild, tafel:_spAnzeigeBild, pucks:_spPucksBild, strom:_spStromBild, balken:_spBalkenBild,
   herz:_spHerzBild, zunull:_spZunullBild};
 
 // ── Kopf und Fuß je Anlass ───────────────────────────────────────────
@@ -1858,7 +1957,7 @@ function _spScoreSpezial(m){
 // Partie (Anzeigetafel, Elo-Strom, Torpucks), das Spielfeld, und sechs, die
 // eine Bedingung haben. Ob eine zutrifft, sagt ihre Form (`wann`); das
 // Mosaik nur mit einem benannten Befund (`_spMosaikBefund`).
-const SP_KOPF_GRUND = ['tafel', 'strom', 'pucks', 'feld', 'tauziehen', 'tacho', 'muenze', 'gefaelle', 'mosaik', 'streu'];
+const SP_KOPF_GRUND = ['tafel', 'strom', 'balken', 'feld', 'tauziehen', 'tacho', 'muenze', 'gefaelle', 'mosaik', 'streu'];
 function _spScoreKandidaten(m){
   const F = _spFakten(m);
   return SP_KOPF_GRUND.map(key => {
@@ -2023,6 +2122,10 @@ function _spFussFakten(m, fakten){
   if((x = f('revanche'))) nimm('revanche', x);
   if((x = f('duo_jubilaeum')) && x.sieg) nimm('chemie', x);
   if((x = f('tagesmarathon')) && x.pid) nimm('tagesring', x);
+  // Das Ende einer Pleitenserie zeichnet die Elo über die Serie, die
+  // Rückkehr eines Siegers die Pause; die eines Verlierers bleibt Zeile.
+  if((x = fakten.filter(y => y.type === 'pleiten_ende' && y.pid).sort((p, q) => q.n - p.n)[0])) nimm('wende', x);
+  if((x = fakten.find(y => y.type === 'rueckkehr' && y.pid && y.sieg))) nimm('rueckkehr', x);
   // Die sieben Fakten des Katalogs.
   Object.keys(SP_FAKT_FUSS).forEach(t => { if((x = f(t)) && x.pid) nimm(SP_FAKT_FUSS[t], x); });
   if((x = f('rivalry_milestone')) && x.a && x.b) nimm('duell', x);
@@ -2075,52 +2178,100 @@ function _spAnlassSnapshot(m, fakten, scoreKey){
       revanche:() => F.revanche ? SP_FORM.revanche.daten(F, {}) : null,
       chemie:() => SP_FORM.chemie.daten(F, {rund:true}),
       tagesring:() => SP_FORM.tagesring.daten(F, {id:a.x.pid,
-        ms:F.tag.filter(y => [y.a1, y.a2, y.b1, y.b2].includes(a.x.pid))})
+        ms:F.tag.filter(y => [y.a1, y.a2, y.b1, y.b2].includes(a.x.pid))}),
+      wende:() => _spKurveDaten({key:'wende', m, x:{pid:a.x.pid, n:a.x.n}}),
+      rueckkehr:() => SP_FORM.rueckkehr.daten(F, {id:a.x.pid, tage:a.x.tage})
     }[a.key];
     if(daten) kand.push({key:a.key, rang:w, data:daten, fakt:true, zustand:SP_FUSS_ZUSTAND.has(a.key), zeigt:ids});
   });
 
-  // Alle Zeichnungen, die aus der Partie selbst zutreffen, mit ihrem Gewicht.
+  // Alle Zeichnungen, die aus der Partie selbst zutreffen, mit ihrem Gewicht
+  // und dem Satz, der über ihnen steht (`zeile`). Ohne ihn stand eine
+  // Zeichnung ohne jede Erklärung im Fuß: „Zurück" über Alex, der nach 41
+  // Tagen wieder spielte, ohne dass die Karte es irgendwo sagte.
   const diff = Math.abs(m.score_a - m.score_b);
-  const plus = (key, rang, data) => { if(key !== scoreKey) kand.push({key, rang, data}); };
+  const plus = (key, rang, data, zeile) => { if(key !== scoreKey) kand.push({key, rang, data, zeile}); };
+  const nl = ids => _namenListe(ids.map(_spName));
+  const pz = v => Math.max(1, Math.round(v * 100));
   let x;
-  if((x = _spPremiereDaten(m))) plus('premiere', 36, () => x);
+  if((x = _spPremiereDaten(m))){ const p = x;
+    plus('premiere', 36, () => p, () => p.versuch === 1 ? `${nl([p.A, p.B])} gewinnen die erste gemeinsame Partie`
+      : `${nl([p.A, p.B])} gewinnen zum ersten Mal zusammen, im ${_spZahl(p.versuch)}. Versuch`); }
+  // Die Wende ab drei Niederlagen; ab fünf ist sie ein Fakt (`pleiten_ende`).
   const wende = _spSieger(m).map(pid => ({pid, n:_newsPleitenVor(pid, m)}))
-    .filter(w => w.n >= 3).sort((p, q) => q.n - p.n)[0];
-  if(wende) plus('wende', 30, () => _spKurveDaten({key:'wende', m, x:wende}));
+    .filter(w => w.n >= 3 && w.n < 5).sort((p, q) => q.n - p.n)[0];
+  if(wende && !kand.some(k => k.key === 'wende') && !fakten.some(y => y.type === 'duo_pleiten_ende'))
+    plus('wende', 30, () => _spKurveDaten({key:'wende', m, x:wende}),
+      () => `${_spName(wende.pid)} gewinnt nach ${_spZahl(wende.n)} Niederlagen wieder`);
   let frei = false;
   try { frei = _storyRangFrei(seasonOf(m.created_at).id, mts(m)).frei; } catch(e){}
   const sprung = frei ? _spSieger(m).map(pid => ({pid, r:_newsRankChange(pid, m.id)}))
-    .filter(w => w.r && w.r.pre - w.r.post >= 2) : [];
-  if(sprung.length) plus('rang', 34, () => _spTabelleDaten({key:'rang', m, x:sprung}, false));
+    .filter(w => w.r && w.r.pre - w.r.post >= 2).sort((p, q) => (q.r.pre - q.r.post) - (p.r.pre - p.r.post)) : [];
+  if(sprung.length && !kand.some(k => k.key === 'rang'))
+    plus('rang', 34, () => _spTabelleDaten({key:'rang', m, x:sprung}, false),
+      () => `${_spName(sprung[0].pid)} springt von Platz ${sprung[0].r.pre} auf Platz ${sprung[0].r.post}`);
   const rolle = _spRolleDaten(m);
-  if(rolle) plus('rolle', 30, () => rolle);
+  if(rolle) plus('rolle', 30, () => rolle,
+    () => `${_spName(rolle.pid)} gewinnt ${rolle.r === 'atk' ? 'im Sturm' : 'in der Abwehr'}, sonst nur in ${pz(rolle.anteil)} % der Partien dort`);
   // Ein besonderer Ausgang, den der Kopf nicht zeigt, bleibt als Fuß sichtbar.
-  if(c != null && c < CHANCE_UPSET && scoreKey !== 'aussenseiter') plus('aussenseiter', 40, () => _spWippeDaten({m, c}));
+  if(c != null && c < CHANCE_UPSET && scoreKey !== 'aussenseiter')
+    plus('aussenseiter', 40, () => _spWippeDaten({m, c}),
+      () => `${nl(_spSieger(m))} gewinnen als Außenseiter, mit ${pz(c)} % Siegchance`);
   // Zeigt der Kopf den Ausgang schon (Herzschlag, Tor zu null), tritt der
   // Fuß dazu zurück wie unter Krimi und Band: über einem Herzschlag stand
   // sonst die Bilanz in engen Partien als zweites Bild desselben Tors.
-  if(diff === 1) plus('nerven', scoreKey === 'krimi' || scoreKey === 'herz' ? 14 : 24, () => _spNervenDaten({m, c}));
-  if(diff >= 6) plus('verteilung', scoreKey === 'deutlich' || scoreKey === 'zunull' ? 14 : 24, () => _spVerteilungDaten({m}));
-  // Das Zählwerk zählt dieselben Marken: steht schon der Fuß mit allen
-  // runden Zahlen zur Wahl, zeichnete es eine davon ein zweites Mal.
-  const mitMarken = kand.some(k => k.key === 'marken');
-  _spFormKand(m).filter(k => SP_ANLASS_FORMEN.has(k.key) && !(mitMarken && k.key === 'zaehlwerk'))
-    .forEach(k => plus(k.key, k.rang, () => SP_FORM[k.key].daten(F, k.x)));
+  if(diff === 1){ const nv = _spNervenDaten({m, c}), b = nv.zeilen.slice().sort((p, q) => q.w - p.w)[0];
+    plus('nerven', scoreKey === 'krimi' || scoreKey === 'herz' ? 14 : 24, () => nv,
+      () => `${_spName(b.id)} gewinnt ${_spZahl(b.w)} von ${_spZahl(b.w + b.l)} Partien mit einem Tor Abstand`); }
+  if(diff >= 6){ const vt = _spVerteilungDaten({m});
+    plus('verteilung', scoreKey === 'deutlich' || scoreKey === 'zunull' ? 14 : 24, () => vt,
+      () => `${_spZahl(vt.so)} von ${_spZahl(vt.gesamt)} Partien der Liga endeten so deutlich`); }
+  // Die Zeichnungen aus dem Katalog der Formen. Das Zählwerk und die
+  // Rückkehr sind Fakten geworden (Jubiläum, Siegmarke, `rueckkehr`): als
+  // Form standen sie ohne Satz da.
+  _spFormKand(m).filter(k => SP_ANLASS_FORMEN.has(k.key) && k.key !== 'zaehlwerk' && k.key !== 'rueckkehr')
+    .forEach(k => plus(k.key, k.rang, () => SP_FORM[k.key].daten(F, k.x), () => SP_FORM[k.key].text(F, k.x).t));
   if(!kand.length) return null;
-  const spur = _spFussSpur(m, 8), zuletzt = spur[spur.length - 1];
-  const oft = (k, n) => spur.slice(-n).filter(y => y === k).length;
-  const gewertet = kand.map(k => Object.assign({}, k, {eff:k.fakt && !k.zustand ? k.rang + 100
-      : k.rang - (k.zustand ? 14 * oft(k.key, 2) + 5 * oft(k.key, 8) : 8 * oft(k.key, 2) + 3 * oft(k.key, 8)),
-    los:_spVisualHash(m.id + '|fuss|' + k.key)}))
+  // ── Nie dieselbe Zeichnung zweimal hintereinander [§C33] ──────────────
+  // Gemeint ist das Bild, nicht der Anlass: „Julian dreht den Tag ins Plus"
+  // und „Johannes kommt an diesem Tag auf +88" sind zwei Fakten und dieselbe
+  // Kurve „Elo des Tages", und sie standen auf zwei Karten untereinander.
+  // Ein Fakt ging vorher immer vor, auch derselbe Fuß wie davor. Jetzt fällt
+  // die Familie des vorigen Fußes ganz aus der Wahl; bleibt nichts, trägt
+  // die Karte keinen Fuß, und der Fakt steht als Zeile.
+  const spur = _spFussSpur(m, 8), vorher = _spFussVorher(m);
+  const fam = k => SP_FUSS_FAMILIE[k] || k;
+  const oft = (f, n) => spur.slice(-n).filter(y => fam(y) === f).length;
+  const gewertet = kand.filter(k => !vorher || fam(k.key) !== fam(vorher))
+    .map(k => Object.assign({}, k, {eff:(k.fakt && !k.zustand ? k.rang + 100 : k.rang)
+        - (k.zustand ? 14 * oft(fam(k.key), 2) + 5 * oft(fam(k.key), 8) : 8 * oft(fam(k.key), 2) + 3 * oft(fam(k.key), 8)),
+      los:_spVisualHash(m.id + '|fuss|' + k.key)}))
     .sort((p, q) => q.eff - p.eff || q.rang - p.rang || p.los - q.los);
-  // Dieselbe Zeichnung nicht zweimal hintereinander, außer für ein Ereignis.
-  if(gewertet[0].key === zuletzt && !(gewertet[0].fakt && !gewertet[0].zustand)){
-    const i = gewertet.findIndex(k => k.key !== zuletzt);
-    if(i > 0) gewertet.unshift(gewertet.splice(i, 1)[0]);
+  for(const k of gewertet){
+    const dd = k.data();
+    if(!dd) continue;
+    const v = {key:k.key, data:dd};
+    if(k.zeigt) v.zeigt = k.zeigt;
+    else if(k.zeile){ try { v.zeile = k.zeile(); } catch(e){} }
+    return merke(v);
   }
-  for(const k of gewertet){ const dd = k.data(); if(dd) return merke(k.zeigt ? {key:k.key, data:dd, zeigt:k.zeigt} : {key:k.key, data:dd}); }
   return null;
+}
+// Welche Füße als dieselbe Zeichnung gelten: jede Kurve ist eine Kurve,
+// jede kleine Rangliste eine Rangliste, die Tabelle ist die Tabelle.
+const SP_FUSS_FAMILIE = {kippt:'linie', plus:'linie', hoehe:'linie', monatsbest:'linie', halb:'linie',
+  wende:'linie', hoch:'linie', woche:'rangliste', partner:'rangliste', spitze:'tabelle', rang:'tabelle',
+  ueberholt:'tabelle', gipfel:'tabelle', serie:'serie', teamserie:'serie', duoserie:'serie',
+  duell:'duell', gegner:'duell', nerven:'statistik', verteilung:'statistik', mosaik:'statistik',
+  marken:'zahl', zaehlwerk:'zahl', tagesring:'tag', uhr:'tag'};
+// Der Fuß der unmittelbar vorigen Partie, veröffentlicht oder in diesem
+// Lauf gewählt; null, wenn sie keinen trug.
+function _spFussVorher(m){
+  const FB = _spFormBasis(), B = _spBasis(), bis = B.idx.get(m.id);
+  if(bis == null || bis < 1) return null;
+  const id = B.chrono[bis - 1].id;
+  const pub = FB.scorePublished && FB.scorePublished.get(id);
+  return pub ? ((pub.occasion && pub.occasion.key) || null) : ((FB.fussWahl && FB.fussWahl.get(id)) || null);
 }
 // ── Die Zeilen der Partie-Karte [§C33] ──────────────────────────────
 // Unter der Schlagzeile (dem Hauptanlass) steht jeder übrige Anlass einmal:
@@ -2139,7 +2290,8 @@ const SP_THEMA = {lead_change:'tabelle', tabellensprung:'tabelle', top_clash:'ta
   milestone_wins:'zahl', milestone_elo:'zahl', milestone_goals:'zahl', jubilee:'zahl', elo_hoch:'zahl',
   duo_jubilaeum:'duo', team_streak:'duo', team_loss_streak:'duo', tagesmarathon:'tag',
   duell_kippt:'duell', woche_spitze:'tabelle', tag_plus:'tag', tag_hoehe:'tag',
-  monat_gewinn:'monat', monat_halb:'monat', partner_best:'duo'};
+  monat_gewinn:'monat', monat_halb:'monat', partner_best:'duo',
+  pleiten_ende:'serie', duo_pleiten_ende:'duo', rueckkehr:'pause'};
 // Welche Meldungen ein Fuß zeichnet, je Zeichnung: nur für Füße, die vor
 // `zeigt` gespeichert wurden.
 const SP_FUSS_TYP = {spitze:['lead_change'], riss:['streak_killer'], marken:Object.keys(SP_MARKEN),
@@ -2176,9 +2328,14 @@ function _spZeilen(teile, titel, occ){
     if(!th || !themen.has(th)){ neu.push(t); if(th) themen.add(th); } else wieder.push(t);
   });
   const zeilen = neu.concat(wieder, frei.filter(t => !neben(t) && t.neg));
+  // Die Zeile des Fußes: der Fakt, den er zeichnet, oder bei einer Form ihr
+  // gespeicherter Satz (`zeile`). Sie steht als letzte Zeile direkt über
+  // ihm. Zeichnet er den Hauptanlass, sagt es schon die Schlagzeile.
+  const ic = occ && ((SP_FORM[occ.key] || {}).ic || (SP_ANLASS[occ.key] || {}).ic);
+  const unter = fuss.length ? (fuss.indexOf(haupt) < 0 ? fuss[0] : null)
+    : (occ && occ.zeile ? {titel:occ.zeile, ic:ic || 'chartBar', form:true} : null);
   // Die Nebensachen fehlen nur hier: das Blatt zeigt jedes Teil.
-  return {zeilen:zeilen.filter(t => t.brk).concat(zeilen.filter(t => !t.brk)),
-    unter:fuss.length && fuss.indexOf(haupt) < 0 ? fuss[0] : null};
+  return {zeilen:zeilen.filter(t => t.brk).concat(zeilen.filter(t => !t.brk)), unter};
 }
 function _spVisualSnapshot(m, fakten){
   const score = _spScoreSnapshot(m);
@@ -2186,33 +2343,31 @@ function _spVisualSnapshot(m, fakten){
   if(fest) return fest;
   return {version:2, score, occasion:_spAnlassSnapshot(m, fakten || [], score.key)};
 }
-// Die Sieger stehen links, auch in Daten, die Seite A und B tragen: das
-// Ergebnisband, der klare Sieg, die Klapptafel, das Tauziehen, das Spielfeld
-// und die Wippe zeichneten Seite A links, also bei jeder zweiten Partie die
-// Verlierer. Gespiegelt wird beim Zeichnen; gespeicherte Daten bleiben, wie
-// sie sind [§C33].
-function _spLinks(d){
-  if(!d || typeof d !== 'object' || d.aw !== false) return d;
-  const o = Object.assign({}, d, {aw:true});
-  if(Array.isArray(d.A) && Array.isArray(d.B)){ o.A = d.B; o.B = d.A; }
-  if(d.sa != null && d.sb != null){ o.sa = d.sb; o.sb = d.sa; }
-  // Das Spielfeld von der anderen Seite des Tischs: Abwehr der Sieger,
-  // Sturm der Verlierer, Sturm der Sieger, Abwehr der Verlierer.
-  if(Array.isArray(d.slots) && d.slots.length === 4) o.slots = d.slots.slice().reverse();
-  return o;
-}
-function _spScoreBild(v){
+// ── Der Kopf zeichnet Team A links und Team B rechts ──────────────────
+// Bisher wurden Daten mit Seite A und B beim Zeichnen gespiegelt, damit die
+// Sieger links stehen (`_spLinks`). Jetzt bleibt jede Seite, wo sie am
+// Tisch steht: Daten mit A und B zeichnen sich so, wie sie sind, und ein
+// Kopf, der nach Siegern und Verlierern rechnet, wird gespiegelt, wenn B
+// gewann (`sp-b`, CSS). Der Stand liest sich dabei immer A:B (`_spSt`).
+// Die Namen stehen in einer Zeile für alle Köpfe darunter (`_spTeamZeile`).
+function _spScoreBild(v, m){
   if(!v || !v.key) return '';
-  v = Object.assign({}, v, {data:_spLinks(v.data)});
+  const aw = m ? m.winner === 'A' : (v.data && v.data.aw);
+  const data = v.data && typeof v.data === 'object' && v.data.aw == null && m ? Object.assign({}, v.data, {aw}) : v.data;
   const spezial = {krimi:_spTafelBild, aussenseiter:_spWippeBild, deutlich:_spBandBild,
     zeile:_spZeileBild, abstand:_spBandBild};
-  if(spezial[v.key]) return spezial[v.key](v.data);
-  return SP_FORM_BILD[v.key] ? SP_FORM_BILD[v.key](v.data) : '';
+  let h = spezial[v.key] ? spezial[v.key](data) : SP_FORM_BILD[v.key] ? SP_FORM_BILD[v.key](data) : '';
+  if(!h || !m) return h;
+  h = h.replace(/<div class="sp-nz">[\s\S]*?<\/div>/g, '');
+  if(aw === false && !SP_KOPF_AB.has(v.key)) h = h.replace(/^<div class="/, '<div class="sp-b ');
+  return h + _spTeamZeile(m);
 }
+// Köpfe, deren Daten schon Seite A und B tragen: sie werden nicht gespiegelt.
+const SP_KOPF_AB = new Set(['deutlich', 'abstand', 'zeile', 'krimi', 'feld', 'tauziehen', 'aussenseiter']);
 function _spOccasionBild(v){
   if(!v || !v.key) return '';
   const data = v.data && typeof v.data === 'object'
-    ? Object.assign({}, _spLinks(v.data), {nurAnlass:true}) : v.data;
+    ? Object.assign({}, v.data, {nurAnlass:true}) : v.data;
   const bild = {
     spitze:_spTabelleBild, rang:_spTabelleBild, serie:_spSerieBild,
     wende:_spKurveBild, duell:_spDuellBild, riss:_spRissBild,
@@ -2223,8 +2378,14 @@ function _spOccasionBild(v){
     nerven:_spNervenBild, verteilung:_spVerteilungBild,
     aussenseiter:_spWippeBild
   };
-  if(bild[v.key]) return bild[v.key](data);
-  return SP_FORM_BILD[v.key] ? SP_FORM_BILD[v.key](data) : '';
+  // Ein Fuß zeichnet den Stand der Partie nicht noch einmal (`nurAnlass`):
+  // „10:8" stand im Kopf, in der Schlagzeile und im Kasten des Zählwerks.
+  // Auf der Karte sagt die Zeile über dem Fuß, was er zeigt. Der Satz in
+  // der Zeichnung („Johannes steigt von 2 auf 1 und führt, Maxi fällt von 1
+  // auf 2") sagte es ein zweites Mal, unter der Schlagzeile „Johannes
+  // übernimmt die Tabellenspitze" ein drittes. Das Blatt behält ihn.
+  const h = bild[v.key] ? bild[v.key](data) : SP_FORM_BILD[v.key] ? SP_FORM_BILD[v.key](data) : '';
+  return h.replace(/<div class="sp-lg">[\s\S]*?<\/div>/g, '');
 }
 // Der Satz einer Partie nannte überall dieselben zwei Zahlen — „Die
 // Siegchance lag vor dem Anstoß bei 73 %, für Maxi bringt der Sieg +13
@@ -2251,7 +2412,7 @@ function _spBild(s){
       const ok = v.occasion && v.occasion.key;
       r = {key:ok || v.score.key, form:v.score.key, occ:v.occasion || null,
         glanz:['zaehlwerk','marken','rueckkehr','transfer'].includes(ok || v.score.key),
-        kopf:_spScoreBild(v.score), fuss:_spOccasionBild(v.occasion),
+        kopf:_spScoreBild(v.score, _spMatch(basis.matchId)), fuss:_spOccasionBild(v.occasion),
         zeigt:SP_ZEIGT_ALLES, pl:players};
       proStand.set(s, r);
       return r;

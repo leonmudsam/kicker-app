@@ -230,10 +230,10 @@ function _consolidateStories(list){
     normal.push(Object.assign({}, s, {
       id:unveraendert ? s.id : 'badgemarken_match_' + g.mid,
       title:unveraendert ? s.title : l.length === 1
-        ? `${namen[0]} holt „${l[0].name}" zum ${l[0].rang}. Mal`
+        ? `${namen[0]} holt „${l[0].name}“ zum ${l[0].rang}. Mal`
         : `${_namenKurz(namen)} ${namen.length > 1 ? 'erreichen' : 'erreicht'} runde Marken`,
       desc:unveraendert ? s.desc : l.map(x =>
-        `${(pmap()[x.pid] || {}).name || '?'}: „${x.name}", ${x.rang}. Verleihung`).join('. ') + '.',
+        `${(pmap()[x.pid] || {}).name || '?'}: „${x.name}“, ${x.rang}. Verleihung`).join('. ') + '.',
       when:zeit,
       dataRef:Object.assign({}, d, {matchId:g.mid, playerIds:ids, marken:l,
         sourceStoryIds:[...g.ids], causalKey:_storyGruppeKey('match', g.mid)})
@@ -736,7 +736,8 @@ function _consolidateStoriesLegacy(list){
     // Was in einer einzelnen Partie passiert, gehört an ihre Karte und
     // nirgends sonst hin.
     'fluch','duo_jubilaeum','revanche','tagesmarathon','elo_hoch','tabellensprung',
-    'duell_kippt','woche_spitze','tag_plus','tag_hoehe','monat_gewinn','monat_halb','partner_best']);
+    'duell_kippt','woche_spitze','tag_plus','tag_hoehe','monat_gewinn','monat_halb','partner_best',
+    'pleiten_ende','duo_pleiten_ende','rueckkehr']);
   const SAMMEL_TAFEL = new Set(['rekord_erstmals','rekord_geholt','rekord_gesteigert',
     'chronik_geholt']);
   const _minKey = w => { const d = new Date(w); return tagKey(w)+'-'+d.getHours()+'-'+d.getMinutes(); };
@@ -1410,7 +1411,9 @@ function _consolidateStoriesLegacy(list){
         milestone_wins:'Siegmarke', milestone_goals:'Tormarke', milestone_elo:'Elo-Marke',
         rivalry_milestone:'Rivalitätsmarke', rivalry:'Rivalität',
         fluch:'gebrochener Fluch', duo_jubilaeum:'Duo-Jubiläum', revanche:'Revanche',
-        tagesmarathon:'langer Tag', elo_hoch:'Elo-Höchststand', tabellensprung:'Tabellensprung'};
+        tagesmarathon:'langer Tag', elo_hoch:'Elo-Höchststand', tabellensprung:'Tabellensprung',
+        pleiten_ende:'Ende der Durststrecke', duo_pleiten_ende:'Ende der gemeinsamen Durststrecke',
+        rueckkehr:'Rückkehr'};
       const MEHRZAHL = {Siegesserie:'Siegesserien', Teamserie:'Teamserien', Durststrecke:'Durststrecken',
         'gemeinsame Durststrecke':'gemeinsame Durststrecken', Formlauf:'Formläufe', 'Jubiläum':'Jubiläen',
         Siegmarke:'Siegmarken', Tormarke:'Tormarken', 'Elo-Marke':'Elo-Marken', Serienbruch:'Serienbrüche'};
@@ -1448,7 +1451,7 @@ function _consolidateStoriesLegacy(list){
         if(dt.type === 'duo_jubilaeum' && dt.a && dt.b) return {wort:'für', pids:[dt.a, dt.b]};
         if(dt.type === 'revanche' && Array.isArray(dt.W)) return {wort:'für', pids:dt.W.slice()};
         if(dt.type === 'lead_change' && dt.newLeader) return {wort:'für', pids:[dt.newLeader]};
-        if((dt.type === 'team_streak' || dt.type === 'team_loss_streak') && dt.a && dt.b) return {wort:'für', pids:[dt.a, dt.b]};
+        if((dt.type === 'team_streak' || dt.type === 'team_loss_streak' || dt.type === 'duo_pleiten_ende') && dt.a && dt.b) return {wort:'für', pids:[dt.a, dt.b]};
         if(dt.playerId) return {wort:'für', pids:[dt.playerId]};
         if(dt.pid) return {wort:'für', pids:[dt.pid]};
         return {wort:'für', pids:(dt.playerIds || t.playerIds || []).filter(Boolean)};
@@ -1543,7 +1546,15 @@ function _consolidateStoriesLegacy(list){
       const folge = nf === 1
         ? 'Eine Meldung hängt daran'
         : `${(x => x.charAt(0).toUpperCase() + x.slice(1))(_zahlwortDe(nf))} Meldungen hängen daran`;
-      if(ds.quote != null){
+      // Trägt die Karte einer Partie einen Hauptanlass, erklärt ihr Satz
+      // ihn. Unter „Stefan holt die seltene Auszeichnung ‚Nerven aus Stahl‘"
+      // stand „Nur 1 Tor trennt beide Teams" — der Satz der Partie, den ihr
+      // Kopf schon zeigt —, und unter „Johannes übernimmt die
+      // Tabellenspitze" stand „Die Liga sieht ein 10:6 zum 75. Mal", der
+      // Satz einer Form, die gar nicht gezeichnet war.
+      if(einePartie && haupt && String(haupt.t.desc || '').trim()){
+        neuText = String(haupt.t.desc).trim();
+      } else if(ds.quote != null){
         neuText = spTeil.desc || '';
       } else if(brkBundle){
         neuText = `${folge}, und jede davon kommt nur wenige Male je Saison.`;

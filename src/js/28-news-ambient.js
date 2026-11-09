@@ -1079,26 +1079,32 @@ function _ambientTemplatePool(now, pm, nameOf){
   }});
 
   // ── Award: meiste goldene Auszeichnungen ──
+  // Gezählt wird jedes Mal, das eine goldene Auszeichnung geholt wurde, nicht
+  // die verschiedenen. Der Katalog hat nur wenige goldene; wer sie alle hat,
+  // stand mit allen anderen gleichauf, und die Karte sagte nichts mehr.
   T.push({ key:'award_gold_leader', weight:2, make: () => {
     if(typeof getCachedBadges !== 'function' || typeof rarityOf !== 'function') return null;
-    const goldOf = pid => getCachedBadges(pid).filter(b => rarityOf(b.id) === 'legendary').length;
-    const rank = _awardRank(activePids, goldOf);
+    const gold = pid => getCachedBadges(pid).filter(b => rarityOf(b.id) === 'legendary');
+    const summe = l => l.reduce((n, b) => n + (Number(b.count) || 1), 0);
+    const rank = _awardRank(activePids, pid => summe(gold(pid)));
     if(!rank.length) return null;
     const lead = _awardLeaders(rank), top = rank[0];
+    const wort = n => n === 1 ? 'goldene Auszeichnung' : 'goldene Auszeichnungen';
     if(lead.length > 1){
       return { cat:'badge', ic:'trophyStar', prio:6,
-        title:`Wettrüsten in Gold`,
-        desc:`${_namesOf(lead)} halten je ${top.v} goldene ${top.v === 1 ? 'Auszeichnung' : 'Auszeichnungen'}. Niemand hat mehr.`,
+        title:`Gleichstand in Gold`,
+        desc:`${_namesOf(lead)} holten je ${top.v} ${wort(top.v)}.`,
         vv: top.v, vl:'Gold',
         dataRef:{ ambientPids: lead.slice(0,2).map(x=>x.pid), pairKind:'duel', bild:_bRennen(rank.map(x => ({p:x.pid, v:x.v, n:x.v, t:String(x.v)})), false, 'sammlung') } };
     }
-    const gold = getCachedBadges(top.pid).filter(b => rarityOf(b.id) === 'legendary');
-    const names = gold.map(b => b.name);
+    const meine = gold(top.pid).slice().sort((a, b) => (b.count || 1) - (a.count || 1));
+    const liste = meine.slice(0, 3).map(b => (b.count > 1 ? `${b.count}× ` : '') + `„${b.name}“`);
     return { cat:'badge', ic:'trophyStar', prio:6,
-      title:`${nameOf(top.pid)} sammelt Gold`,
-      desc:`${top.v} goldene ${top.v === 1 ? 'Auszeichnung' : 'Auszeichnungen'}. ${names.join(', ')}.`,
+      title:`${nameOf(top.pid)} holt am häufigsten Gold`,
+      desc:`${top.v} ${wort(top.v)}, darunter ${liste.join(', ')}.`,
       vv: top.v, vl:'Gold',
-      dataRef:{ ambientPid: top.pid, bild:{f:'vitrine', p:top.pid, gold:true, hat:gold.map(b => b.id)} } };
+      dataRef:{ ambientPid: top.pid, bild:{f:'vitrine', p:top.pid, gold:true, hat:meine.map(b => b.id),
+        n:Object.fromEntries(meine.map(b => [b.id, b.count || 1])), gesamt:top.v} } };
   }});
 
   // ── Award: die zuletzt vergebene goldene Auszeichnung ──
@@ -1133,7 +1139,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     const her = days < 2 ? null : days < 14 ? {n:days, e:'Tagen', nom:'Tage'} : _spSeit(now.getTime() - latest.t);
     return { cat:'badge', ic: latest.badge.ic || 'trophyStar', prio:5,
       title:`${nameOf(latest.pid)} holte zuletzt Gold`,
-      desc:`Die Auszeichnung „${latest.badge.name}" ${days === 0 ? 'heute' : days === 1 ? 'gestern' : 'vor ' + her.n + ' ' + her.e}. ${latest.badge.desc}.`,
+      desc:`Die Auszeichnung „${latest.badge.name}“ ${days === 0 ? 'heute' : days === 1 ? 'gestern' : 'vor ' + her.n + ' ' + her.e}. ${latest.badge.desc}.`,
       // Ohne Wert blieb der grosse Block der Karte leer [§6].
       vv:String(days === 0 ? 'heute' : days === 1 ? 'gestern' : her.n),
       vl:her ? her.nom + ' her' : 'geholt',
@@ -1142,17 +1148,25 @@ function _ambientTemplatePool(now, pm, nameOf){
   }});
 
   // ── Award: die meisten Auszeichnungen insgesamt ──
+  // Gezählt wird jedes Mal, nicht die verschiedenen. „Leon hat die volle
+  // Vitrine, 41 verschiedene" hört auf zu stimmen, sobald alle alles haben:
+  // der Katalog ist endlich, und nach einigen Jahren stünde jeder bei 50 von
+  // 50 und die Karte fiele für immer weg. Die Summe aller Male wächst mit
+  // jeder Partie weiter und trennt auch dann noch.
   T.push({ key:'award_total_leader', make: () => {
     if(typeof getCachedBadges !== 'function') return null;
-    const rank = _awardRank(activePids, pid => getCachedBadges(pid).length);
+    const summe = pid => getCachedBadges(pid).reduce((n, b) => n + (Number(b.count) || 1), 0);
+    const rank = _awardRank(activePids, summe);
     if(rank.length < 2) return null;
     const lead = _awardLeaders(rank), top = rank[0], nxt = rank[lead.length];
-    if(lead.length > 1 || !nxt) return null; // Gleichstand → kein „hat die volle Vitrine"
+    if(lead.length > 1 || !nxt) return null;
+    const meine = getCachedBadges(top.pid);
     return { cat:'badge', ic:'medalTrio', prio:4,
-      title:`${nameOf(top.pid)} hat die volle Vitrine`,
-      desc:`${top.v} verschiedene Auszeichnungen freigeschaltet. ${nameOf(nxt.pid)} kommt auf ${nxt.v}.`,
-      vv: top.v, vl:'Awards',
-      dataRef:{ ambientPid: top.pid, bild:{f:'vitrine', p:top.pid, hat:getCachedBadges(top.pid).map(b => b.id), zweiter:nxt.v} } };
+      title:`${nameOf(top.pid)} hat die meisten Auszeichnungen`,
+      desc:`${top.v} Auszeichnungen, ${meine.length} verschiedene. ${nameOf(nxt.pid)} kommt auf ${nxt.v}.`,
+      vv: top.v, vl:'Auszeichnungen',
+      dataRef:{ ambientPid: top.pid, bild:{f:'vitrine', p:top.pid, hat:meine.map(b => b.id),
+        n:Object.fromEntries(meine.map(b => [b.id, b.count || 1])), gesamt:top.v, zweiter:nxt.v} } };
   }});
 
   // ══ Persönliche Nuggets (v9.17) ═══════════════════════════════════════
@@ -1254,7 +1268,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     const a = cur[0];
     const held = T2.awarded.length, open = SEASON_TITLES.length - held;
     return { cat:'season', ic:a.ic, prio:5,
-      title:`${nameOf(a.pid)} führt bei „${a.name}"`,
+      title:`${nameOf(a.pid)} führt bei „${a.name}“`,
       // „Das ist der Stand von heute" sagte nichts: jede Karte im Feed
       // traegt ihr Datum. Und der grosse Wert zaehlte die Eintraege des
       // Katalogs, waehrend die Schlagzeile von EINER Fuehrung erzaehlte —
@@ -1297,7 +1311,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     const d = recs[day % recs.length];
     const h = by[d.id];
     return { cat:'fun', ic:d.ic, prio:4,
-      title:`${h.shared ? _chronHalterSatz(h) + ' halten' : nameOf(h.pid) + ' hält'} „${d.name}"`,
+      title:`${h.shared ? _chronHalterSatz(h) + ' halten' : nameOf(h.pid) + ' hält'} „${d.name}“`,
       // Die Bedingung stand hier im Klartext und machte aus zwei Zeilen
       // fünf. Sie gehört ins Detail, nicht auf die Karte — die Karte sagt,
       // WAS jemand hält, das Detail sagt, wofür.
@@ -1405,7 +1419,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     // Schwelle am Ende ueberboten ist [§C39] — der Gewinn ist hier also
     // eine Untergrenze und steht als solche da.
     return { cat:'personal', ic:s.ic, prio:5,
-      title:`${nameOf(pid)} kann „${s.name}" holen`,
+      title:`${nameOf(pid)} kann „${s.name}“ holen`,
       desc: (_bed ? `Dafür zählt: ${_bed}. ` : '')
         + (_stand ? _stand + '. ' : '')
         + (s.mein ? `${nameOf(pid)} steht bei ${s.mein}. ` : '')

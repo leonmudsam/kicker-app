@@ -366,7 +366,7 @@ function showDisziplin(tid, sid){
         + `<b>${esc(def.beiname)}</b></span>` : ''}
     </div>
     ${_chronFaktenHtml(def, eigene.length ? eigene[0].wert : undefined, schattenM)}
-    ${schattenM ? `<div class="tnote">„${esc(schattenM.name)}“ überschattet diese Chronik im selben Monat: die Schattenseite geht mindestens doppelt so weit über ihre Schwelle hinaus wie diese über ihre. Die Chronik bleibt in der Tafel und bringt kein Prestige.</div>` : ''}
+    ${schattenM ? `<div class="tnote">„${esc(schattenM.name)}“ wiegt in diesem Monat schwerer. Diese Chronik bleibt in der Tafel, bringt aber kein Prestige.</div>` : ''}
     ${def.wie ? `<div class="tnote">${esc(def.wie)}</div>` : ''}
     ${beleg}
     ${rang.length
@@ -455,9 +455,8 @@ function showChronicle(cid){
     <div class="rek-def">${fakten.map(([l, v]) =>
       `<div class="rek-df"><span class="l">${esc(l)}</span><span class="v">${esc(v)}</span></div>`
     ).join('')}</div>
-    ${halterN > 1 ? `<div class="tnote">Diesen Rekord halten ${halterN} Spieler
-      punktgleich. Der Grundwert wird deshalb durch ${halterN} geteilt; jeder
-      von ihnen hält ihn vollständig, bis einer ihn überbietet.</div>` : ''}
+    ${halterN > 1 ? `<div class="tnote">${halterN} Spieler halten diesen Rekord gemeinsam und teilen sich sein Prestige,
+      bis einer ihn überbietet.</div>` : ''}
     ${def.wie ? `<div class="tnote">${esc(def.wie)}</div>` : ''}
     ${beleg}
     ${rang.length
@@ -555,8 +554,7 @@ function ligaRekordeHtml(weit){
         <span class="hd">${esc(_chronHolderNames(h))}</span>
       </div>`;
     }).join('')}</div>
-    <div class="tnote">Jeder Rekord gehört dem, der ihn wirklich hält — bei exaktem
-      Gleichstand allen, die ihn halten. Tippen zeigt die Bedingung.</div>`;
+    <div class="tnote">Tippen zeigt, wie ein Rekord gezählt wird.</div>`;
   // Die große Form: ein Rekord ist ein Besitz, also bekommt er eine Karte
   // mit Halter-Gesicht und Beleg — nicht nur einen Namen am Zeilenende.
   //

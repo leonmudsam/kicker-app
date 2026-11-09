@@ -357,7 +357,10 @@ function _ndMitteRoh(s){
               bild.wert && !kurz ? `<b class="nw-tz-lang">${bild.wert}</b>` : ''}</div>`;
           // Die Zeile des Hauptanlasses: ihr Satz ist schon die Schlagzeile
           // des Blatts [§C33], also steht dort ihr Beleg. Vorher stand derselbe
-          // Satz als Titel und gleich darunter als erste Zeile.
+          // Satz als Titel und gleich darunter als erste Zeile. Steht auch ihr
+          // Text schon oben (die Karte einer Partie erklärt ihren
+          // Hauptanlass mit seinem eigenen Satz), fällt die Zeile weg.
+          if(!_ndNeu(t.titel) && !_ndNeu(t.text) && String(t.text || '').trim()) return '';
           const titel = _ndNeu(t.titel) ? t.titel : (_ndNeu(t.text) || t.titel);
           const text = titel === t.text ? '' : t.text;
           return `<div class="nw-zeile${t.neg ? ' neg' : ''}"${ziel ? ziel + ' style="cursor:pointer"'
@@ -935,6 +938,13 @@ function _ndMitteRoh(s){
       case 'duell_kippt': case 'woche_spitze': case 'tag_plus': case 'tag_hoehe':
       case 'monat_gewinn': case 'monat_halb': case 'partner_best':
         return _spFaktBild(d);
+      // Das Ende einer Pleitenserie und die Rückkehr: die Zahl, um die es
+      // geht, groß; den Tag davor nennt schon der Satz.
+      case 'pleiten_ende': case 'duo_pleiten_ende':
+        return `<div class="nd-gwert"><b>${esc(String(d.n))}</b><span>${d.type === 'pleiten_ende'
+          ? 'Niederlagen in Folge davor' : 'gemeinsame Niederlagen in Folge davor'}</span></div>`;
+      case 'rueckkehr':
+        return `<div class="nd-gwert"><b>${esc(String(d.tage))}</b><span>Tage ohne Partie</span></div>`;
       case 'tabellensprung': {
         return `<div class="nd-gwert"><b>${esc(String(d.pre))} → ${esc(String(d.post))}</b><span>Platz in der Tabelle</span></div>
           <div class="nd-stat-row"><div class="nd-stat-label">Gewonnene Plätze</div>
