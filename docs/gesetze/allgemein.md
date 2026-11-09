@@ -7,7 +7,8 @@
 - Nichts sagt zweimal dasselbe — keine Zahl ein zweites Mal in einer Karte über der Tabelle, keine Rechnung zweimal (wer einen Tag oder eine Woche gewinnt, sagt `_periodeRangliste`).
 - Keine persönliche Ansprache, keine Possessivpronomen über einen Spieler, kein „Abend".
 - Jede `font-family` endet auf einer Familie (`sans-serif`, `monospace`).
-- Dieselbe Sache hat einen Namen (Siegquote, Partner, Torbilanz, Größte Überraschung, Direkter Vergleich); kein Befehl in Du-Form, kein englisches Wort außer den Namen der Wertungen, kein Kürzel, Einzahl wo eins steht.
+- Dieselbe Sache hat einen Namen (Partie, Siegquote, Partner, Torbilanz, Größte Überraschung, Direkter Vergleich); kein Befehl in Du-Form, kein englisches Wort außer den Namen der Wertungen, kein Kürzel, Einzahl wo eins steht.
+- Eine Erklärung sagt, was zählt, und steht für sich: kein „Der Nenner sind …", kein „Dieselbe Rechnung wie beim …", kein „Das Gegenstück zu …", keine Begründung der Rechnung („damit …", „logarithmisch, weil …"). Die Richtung steht im Wort, nicht im Vorzeichen („12 %-Punkte unter der Rechnung", nicht „−12 %-Punkte über"), und eine Zahl über 100 % ist keine Wahrscheinlichkeit.
 - Ein leeres Feld liest sich als Fehler: nicht vergebene Auszeichnungen gestrichelt, eine ungerade Kachel nimmt die ganze Reihe.
 - Ein Blatt zeigt alles: kein „+1", kein „und 3 weitere", kein „Mehr anzeigen". Jeder Name, jedes Wappen, jeder Grund, jeder Posten steht da; was nicht in eine Reihe passt, bricht um. Ausnahmen, alle mit genauer Zahl und an Ort und Stelle aufklappbar (`_chronMehrKnopf`): die Liga-Rekorde im Profil zeigen zwei („8 weitere anzeigen"), die Laufbahn je Gruppe ihre fünf wertvollsten Posten, die Chronik der Saison je Spieler den Eintrag, der zählt; dazu stehen die Mitspieler unter den Beziehungen in einer Zeile mit „+N weitere" (N mindestens drei), und ihre ganze Liste ist ein Tippen weiter.
 
@@ -17,7 +18,7 @@ quer durch `src/`.
 
 ## Prüfung
 
-`tests/blatt` liest Reiter und Blätter auf Namen und Sprache und zählt in Blatt, Profil, Laufbahn und Auszeichnung nach, dass nichts abgeschnitten ist, `tests/disziplinen` prüft Belege und Bedingungen auf Pronomen, `tests/tafel` die Schriftangaben.
+`tests/blatt` liest Reiter und Blätter auf Namen und Sprache und zählt in Blatt, Profil, Laufbahn und Auszeichnung nach, dass nichts abgeschnitten ist, `tests/disziplinen` prüft Belege, Bedingungen und Erklärungen auf Pronomen und Rechensprache, `tests/tafel` die Schriftangaben.
 
 ## Herleitung
 
@@ -60,7 +61,14 @@ Wortlaut zitiert, nicht mit einer Nummer.
   „Auslösendes Match". Jetzt: Siegquote,
   Partner, Torbilanz (sie passt in eine Kachel von 73 px, „Tordifferenz"
   nicht), Größte Überraschung, Direkter Vergleich. „Player of the Week/Day/
-  Season" bleiben, das sind die Namen der Wertungen. Ebenso wenig steht dort
+  Season" bleiben, das sind die Namen der Wertungen. „Match" und „Partie"
+  standen nebeneinander: der Liga-Kopf zählte „19 Matches", der Verlauf
+  „634 Matches", der Feed erzählte von Partien. Es heißt überall Partie;
+  nur die Sicherungsdatei behält ihr Blatt „Matches", das ist ihr Format.
+  Die Einstellungen sprachen von „MoV-Dämpfung", „Underdog-Boost
+  (Spiele-Gap)" und „tanh-skaliert"; ihre Regler heißen jetzt, was sie tun
+  („Tordifferenz bei Niederlagen", „Aufhol-Zuschlag"), und die Posten der
+  Elo-Analyse heißen wie ihr Regler. Ebenso wenig steht dort
   ein Befehl in Du-Form („Tippe auf eine Linie"), ein englisches Wort
   („Tap für Details", „Letztes Update", „Rollen-Performance", „Peak",
   „Savepoint", „Backup") oder ein Kürzel („min. 5 Siege", „Min. Spiele",

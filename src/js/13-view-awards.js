@@ -912,7 +912,7 @@ function _vAwardsCore(){
   const R=awardRankings(awPeriod);
   const pl=awPeriodLabel();
   if(!R.counts.matches)
-    return `${periodBar}${emptyState('trophy','Keine Matches in diesem Zeitraum')}`;
+    return `${periodBar}${emptyState('trophy','Keine Partien in diesem Zeitraum')}`;
   // Wer eine Kachel trägt, wie viel und woraus, sagt AW_WERT [§5.3d];
   // gezeichnet wird sie von awKachelHtml. Hier steht nur noch, welche
   // Kacheln in welchem Abschnitt stehen.

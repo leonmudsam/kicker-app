@@ -962,9 +962,12 @@ function _breakingHeroText(s){
         // Sieger-Team für alte, vor v9.3 persistierte Stories.
         const a = d.p1 ? nm(d.p1) : (Array.isArray(d.winners) ? d.winners.map(nm).join(' & ') : '');
         const b = d.p2 ? nm(d.p2) : null;
+        // Nüchtern und ohne Etikett mit Doppelpunkt vorn [§7]: „Gipfeltreffen
+        // an der Spitze: Tabellenführer … baut den Vorsprung an der Spitze
+        // aus" sagte „Spitze" zweimal in einem Satz.
         return b
-          ? `Gipfeltreffen an der Spitze: Tabellenführer ${a} bezwingt Verfolger ${b} im direkten Duell und baut den Vorsprung an der Spitze aus.`
-          : `Gipfeltreffen an der Spitze: ${a} setzt sich im Spitzenspiel durch und zieht weiter davon.`;
+          ? `Tabellenführer ${a} schlägt ${b} im direkten Duell und baut den Vorsprung aus.`
+          : `${a} gewinnt das Spitzenspiel und zieht weiter davon.`;
       }
       // Der Countdown hat keinen Nachsatz. Er hiess „Nur noch 6 Tage bis zum
       // Saisonende: Martin führt, doch der Vorsprung von 11 Elo ist alles
@@ -983,16 +986,18 @@ function _breakingHeroText(s){
         return sch ? _ehrungBrkSatz(_ehrungBrkGrund(sch.art, sch.ms), sch.art) : '';
       }
       case 'badge_unlocked':
-        return `${nm(d.playerId)} schnappt sich mit „${d.badgeName || s.title}“ eine der seltensten Auszeichnungen der Liga. Das gelingt fast niemandem.`;
+        // Ohne Werbesprache und ohne Frage an den Leser [§7]: „Das gelingt
+        // fast niemandem.", „Wer stoppt diesen Lauf?".
+        return `${nm(d.playerId)} holt „${d.badgeName || s.title}“, eine der seltensten Auszeichnungen der Liga.`;
       case 'elo_record':
-        return `${nm(d.pid)} schreibt Liga-Geschichte: Mit ${d.elo} Elo steht kein Spieler jemals höher. Eine neue Bestmarke für die Ewigkeit. Wer traut sich, sie anzugreifen?`;
+        return `${nm(d.pid)} steht mit ${d.elo} Elo so hoch wie noch kein Spieler der Liga.`;
       case 'streak_record':
-        return `${nm(d.pid)} stellt einen Liga-Rekord für die Ewigkeit auf: ${d.streak} Siege in Folge. Keine Serie war jemals länger. Wer stoppt diesen Lauf?`;
+        return `${nm(d.pid)} gewinnt ${d.streak}-mal in Folge. Keine Serie der Liga war länger.`;
       case 'giant_slayer': {
         const w = Array.isArray(d.winners) ? d.winners.map(nm).join(' & ') : '';
         const l = Array.isArray(d.losers) ? d.losers.map(nm).join(' & ') : 'den Favoriten';
         const pct = d.chance!=null ? Math.max(1, Math.round(d.chance*100)) : null;
-        return `Die Sensation des Spieltags: Mit nur ${pct!=null?pct+'%':'minimaler'} Siegchance bezwingt ${w} das Favoriten-Team ${l}. So einen Coup sieht man in der Liga fast nie.`;
+        return `Mit nur ${pct!=null?pct+' %':'minimaler'} Siegchance schlägt ${w} die Favoriten ${l}.`;
       }
       // ── Eine gebuendelte Karte erbt ihr Breaking von einer Zeile ──
       // Der Schalter kennt sieben Typen und fiel sonst auf `desc` zurueck;

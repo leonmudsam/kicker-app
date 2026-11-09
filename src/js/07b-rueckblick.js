@@ -136,7 +136,7 @@ function showPotwRecap(opts){
     openSheet(
       rcpKopfHtml({ic:'weekly', titel:weekLabel,
         marke: geteilt ? 'Players of the Week' : 'Player of the Week',
-        meta: rcpMeta([dateRange, ms.length+' Matches', uniquePlayers.size+' Spieler',
+        meta: rcpMeta([dateRange, ms.length+' Partien', uniquePlayers.size+' Spieler',
                        totalGoals ? totalGoals+' Tore' : ''])})
       + rcpHeldHtml({
           pid: mainPotwPlayerId,
@@ -487,7 +487,7 @@ function showPotdRecap(opts){
 
     openSheet(
       rcpKopfHtml({ic:'trophyDay', marke:'Player of the Day', titel:dayStr,
-        meta: rcpMeta([dayMatches.length+' Matches', uniquePlayers.size+' Spieler'])})
+        meta: rcpMeta([dayMatches.length+' Partien', uniquePlayers.size+' Spieler'])})
       + rcpHeldHtml({pid:potdId, band:false, px:104, marke:'Spieler des Tages', strahl:true,
           zahlen: rcpZahlenHtml([
             {v:s.wins,      l:'Siege',       ton:'gruen'},

@@ -586,7 +586,7 @@ const mostGames = Object.keys(CX.P).reduce((a,b)=>CX.P[a].games>=CX.P[b].games?a
 console.log('\n=== 12. AUSZEICHNUNGEN ===');
 const bdefs = K.eval("BADGES.filter(b=>['games250','wins200','climber_100','dominator_400','dynasty_600'].includes(b.id)).map(b=>({id:b.id,desc:b.desc,multi:b.multi}))");
 const byBid = {}; bdefs.forEach(b=>byBid[b.id]=b);
-ok(/300 Matches/.test(byBid.games250.desc), 'Urgestein steht auf 300 Spielen', byBid.games250.desc);
+ok(/300 Partien/.test(byBid.games250.desc), 'Urgestein steht auf 300 Spielen', byBid.games250.desc);
 ok(/300 Siege/.test(byBid.wins200.desc), 'Siegermaschine steht auf 300 Siegen', byBid.wins200.desc);
 ['climber_100','dominator_400','dynasty_600'].forEach(id => {
   ok(byBid[id].multi === true, id + ' ist mehrfach zaehlbar');
@@ -4551,6 +4551,13 @@ const APP_SPRACHE = [
   /gehörte immer/i, /gewann, wer/i, /\bwüchse\b/i, /hing damit an/i,
   /steckten die/i, /Deshalb wiegt/i, /wiegt darum/i,
   /nicht auseinanderlaufen/i, /\bDie App\b/,
+  // Die Rechnung statt der Sache: „Der Nenner sind die eigenen Pleiten",
+  // „Dieselbe Rechnung wie beim Sturmführer", „Das Gegenstück zum
+  // Kaltstart", „Gemessen logarithmisch, weil …", „Zwei gleich große
+  // Fenster, damit die Frage für jeden dieselbe ist". Gesagt wird, was
+  // zählt, und jeder Text steht für sich.
+  /\bNenner\b/i, /\bZähler\b/, /Dieselbe Rechnung/i, /Das Gegenstück/i, /logarithm/i,
+  /\bFenster\b/, /Mindestbasis/i, /damit (?:ein|die|„)/i,
 ];
 const _sprachFund = JSON.parse(K.eval(`JSON.stringify((function(){
   const muster = ${JSON.stringify(APP_SPRACHE.map(r => [r.source, r.flags]))}
@@ -4571,6 +4578,26 @@ const _sprachFund = JSON.parse(K.eval(`JSON.stringify((function(){
 ok(_sprachFund.length === 0,
    'kein sichtbarer Text eines Rekords oder einer Chronik erklaert die App',
    _sprachFund.slice(0, 5).join(' · ') || 'alle Texte sauber');
+
+// Die Richtung steht im Wort, nicht im Vorzeichen: unter „Am nächsten
+// dran" stand „−12 %-Punkte über der Rechnung", „-0,2 Tore mehr im Sturm",
+// „gegen 3 Gegner zuletzt −13 %-Punkte stärker" und „bei 15 Partien war
+// damit zu 227,2 % zu rechnen". Gelesen wird der Beleg jedes Nächsten an
+// jeder Monatschronik in jedem Monat der Fixture.
+const _richtung = JSON.parse(K.eval(`JSON.stringify((function(){
+  const falsch = [], R = [/[−-]\\d+(?:,\\d+)? %-Punkte (?:über|stärker|besser|weiter)/, /[−-]\\d+(?:,\\d+)? (?:eigene )?(?:Gegen)?[Tt]ore (?:mehr|weniger)/,
+    /zu (?:\\d{3,}|[1-9]\\d{2})(?:,\\d+)? % zu rechnen/, /(?<![\\d,])1 (?:Wochen|Prozentpunkte)\\b/];
+  let n = 0;
+  availableSeasons().forEach(sid => SEASON_TITLES.forEach(d => {
+    const x = _stNahDef(sid, d.id);
+    if(!x || !x.ev) return;
+    n++;
+    R.forEach(r => { if(r.test(x.ev)) falsch.push(sid + ' ' + d.id + ': ' + x.ev); });
+  }));
+  return {n, falsch};
+})())`));
+ok(_richtung.n > 50 && !_richtung.falsch.length, 'ein Beleg nennt die Richtung im Wort, keine Zahl über 100 % als Wahrscheinlichkeit, Einzahl bei eins',
+   _richtung.falsch.slice(0, 3).join(' | ') || _richtung.n + ' Belege');
 // Und es gibt die Marke „Neu"/„Ueberarbeitet" gar nicht mehr.
 ok(K.eval(`CHRONICLES.every(c => c.stand === undefined)`)
    && K.eval(`typeof REKORD_STAND === 'undefined'`),

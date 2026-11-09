@@ -168,7 +168,7 @@ async function _loadAllDurchlauf(){
     const _today = new Date().toDateString() + (_tagZu(tagKey(Date.now())) ? '|zu' : '');
     if(_fp === _lastLoadFingerprint && _today === _lastLoadDay){
       // Nichts geändert seit dem letzten Tick → UI in Ruhe lassen.
-      setConn(activePlayers().length+' Spieler · '+matches.length+' Matches','ok');
+      setConn(activePlayers().length+' Spieler · '+matches.length+' Partien','ok');
       return;
     }
     _lastLoadFingerprint = _fp;
@@ -187,7 +187,7 @@ async function _loadAllDurchlauf(){
     _overridesNachziehen();
     // Nur aktive Spieler zählen für Anzeige
     const active=activePlayers();
-    setConn(active.length+' Spieler · '+matches.length+' Matches','ok');
+    setConn(active.length+' Spieler · '+matches.length+' Partien','ok');
     // Erst zeichnen, dann archivieren: `autoArchiveSeasons` wartet je
     // abgeschlossenem Monat auf einen Upsert, und am ersten Tag eines Monats
     // stand die Rangliste so lange leer. Ändert das Archiv etwas, wird neu
@@ -595,7 +595,7 @@ function showSeasonRecap(season, opts){
   const zahlenHtml = rcpAbschnitt('Der Monat in Zahlen')
     + rcpKalenderHtml(ms, seasonStart(sid), seasonEnd(sid).getDate())
     + rcpZahlenHtml([
-        {v:ms.length, l:'Matches', d:unterschied(ms.length, vorMs.length)},
+        {v:ms.length, l:'Partien', d:unterschied(ms.length, vorMs.length)},
         {v:tage, l:'Spieltage', d:unterschied(tage, new Set(vorMs.map(mdayKey)).size)},
         {v:spielerImMonat.size, l:'Spieler', d:unterschied(spielerImMonat.size, vorSpieler)},
         {v:tore, l:'Tore', d:unterschied(tore, vorTore)}])

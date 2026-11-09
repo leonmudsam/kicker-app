@@ -234,7 +234,7 @@ function bind(){
     if(!(await bestaetigen({ic:'alert', gefahr:true, ja:'Neu berechnen',
       titel:'Alle Partien neu berechnen?',
       text:'Die gespeicherte Elo jeder Partie wird mit den aktuellen Reglern überschrieben. Vergangene Saisons und Auszeichnungen können sich dadurch ändern. Das lässt sich nicht rückgängig machen.'}))) return;
-    toast('Berechne alle Matches neu…');
+    toast('Alle Partien werden neu berechnet …');
     await persistRecalc(matches);
     toast('Neuberechnung abgeschlossen','ok');
     await loadAll();

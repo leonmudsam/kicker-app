@@ -108,7 +108,7 @@ function showSeasonTable(sid){
   const ch = T.champ;
   openSheet(`
     ${blattKopfHtml({ic:'scroll', ton:'gold', titel:'Die Chronik der Saison',
-      unter:T.label + ' · ' + T.matches + ' Matches an ' + T.days + ' Spieltag' + (T.days===1?'':'en') + (T.live ? ' · läuft noch' : '')})}
+      unter:T.label + ' · ' + T.matches + ' Partien an ' + T.days + ' Spieltag' + (T.days===1?'':'en') + (T.live ? ' · läuft noch' : '')})}
     ${T.live ? `<div class="tnote">Stand von heute, bis zum Monatsende kann sich alles noch ändern.</div>` : ''}
     ${ch ? `<div class="chron-one" style="--tt:${gt.c};--ttr:${gt.rgb}" data-tplayer="${esc(ch.pid)}">
         <span class="ic">${svgI('crown')}</span>

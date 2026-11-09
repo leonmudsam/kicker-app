@@ -32,7 +32,7 @@ function showH2H(idA, idB){
         </div>
         <div style="font-family:'Archivo Black',sans-serif;font-size:18px;letter-spacing:-.02em;line-height:1.1;margin-top:12px">${esc(pA.name)} <span style="color:var(--muted);font-size:14px">vs</span> ${esc(pB.name)}</div>
       </div>
-      ${emptyState('crossedSwords','Noch keine gemeinsamen Matches')}
+      ${emptyState('crossedSwords','Noch keine gemeinsamen Partien')}
     `);
     return;
   }

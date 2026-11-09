@@ -791,35 +791,39 @@ function _consolidateStoriesLegacy(list){
   // Die Schlagzeile nennt ALLE Beteiligten und die Sache; der Satz sagt, wie
   // viele es zugleich sind. Ihn vom Kopf zu borgen wäre falsch: „385 Prestige
   // zusammen" gehört einem der drei, und die Karte handelt von allen.
+  // Der Satz sagt schlicht, dass es dieselbe Partie war. Er hieß „Ein Sieg
+  // mit mehrfachem Nachhall" und „Dieser Treffer hallt in drei Laufbahnen
+  // nach" — Werbesprache, und „alle zwei" ist kein Deutsch [§7].
+  const _alleN = n => n === 2 ? 'Beide' : 'Alle ' + _zahlwortDe(n);
   const SAMMEL_ERFOLG = {
     insignium_stufe: {
       sache: d => 'ins|' + d.stufe,
       titel: (nm, d) => `${nm} tragen jetzt den ${d.stufeName || 'Reif'}`,
-      satz:  n => `Ein gemeinsamer Sprung auf der Laufbahn: ${_zahlwortDe(n)} Zeichen wechseln zugleich ihre Form.`,
+      satz:  n => `${_alleN(n)} steigen zugleich auf.`,
       zeile: (nm, d) => `${nm}: ${d.punkte} Prestige`
     },
     jubilee: {
       sache: d => 'jub|' + (d.total || ''),
       titel: (nm, d) => `${nm} feiern das ${d.total}. Spiel`,
-      satz:  (n, d) => `Derselbe Schlusspfiff macht für ${_zahlwortDe(n)} Laufbahnen die ${d.total} voll.`,
+      satz:  (n, d) => `${_alleN(n)} erreichen die ${d.total} in derselben Partie.`,
       zeile: nm => nm
     },
     milestone_wins: {
       sache: d => 'mw|' + (d.milestone || ''),
       titel: (nm, d) => `${nm} feiern den ${parseInt(d.milestone, 10)}. Sieg`,
-      satz:  n => `Ein Sieg mit mehrfachem Nachhall: ${_zahlwortDe(n)} Bilanzen springen gemeinsam über die Marke.`,
+      satz:  n => `${_alleN(n)} erreichen die Marke mit demselben Sieg.`,
       zeile: nm => nm
     },
     milestone_goals: {
       sache: d => 'mg|' + (d.milestone || ''),
       titel: (nm, d) => `${nm} feiern das ${parseInt(d.milestone, 10)}. Tor`,
-      satz:  n => `Dieser Treffer hallt in ${_zahlwortDe(n)} Laufbahnen nach: Die Marke fällt gemeinsam.`,
+      satz:  n => `${_alleN(n)} erreichen die Marke in derselben Partie.`,
       zeile: nm => nm
     },
     milestone_elo: {
       sache: d => 'me|' + (d.mark || d.milestone || ''),
       titel: (nm, d) => `${nm} knacken ${d.mark || parseInt(d.milestone, 10)} Elo`,
-      satz:  n => `Ein gemeinsamer Satz nach oben: ${_zahlwortDe(n)} Laufbahnen durchbrechen die Marke.`,
+      satz:  n => `${_alleN(n)} erreichen die Marke in derselben Partie.`,
       zeile: nm => nm
     }
   };
@@ -1288,7 +1292,7 @@ function _consolidateStoriesLegacy(list){
     let neuTitel = '', neuText = '';
     if(art === 'spieler'){
       neuTitel = _spielerTitel(nameOf(g.pid), teile);
-      neuText = `Ein Moment mit Nachhall: Für ${nameOf(g.pid)} verändert sich die Laufbahn gleich an ${_zahlwortDe(teile.length)} Stellen.`;
+      neuText = `Für ${nameOf(g.pid)} ändert sich die Laufbahn an ${_zahlwortDe(teile.length)} Stellen.`;
     } else if(art === 'erfolg'){
       const cfg = SAMMEL_ERFOLG[(kopf.dataRef || {}).type] || {};
       const namen = pids.map(nameOf);

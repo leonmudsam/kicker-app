@@ -191,7 +191,7 @@ function _ndMitteRoh(s){
         const row = d.pid ? `<div class="nd-stat-row" data-pid="${esc(d.pid)}" style="cursor:pointer"><div class="nd-stat-label">Rekordhalter</div><div class="nd-stat-val acid">${esc(nameOf(d.pid))} ›</div></div>` : '';
         const eloRow = d.elo!=null ? `<div class="nd-stat-row"><div class="nd-stat-label">Höchststand</div><div class="nd-stat-val acid">${d.elo} Elo</div></div>` : '';
         const matchHtml = d.matchId ? _newsMatchVsBlock(d.matchId) : '';
-        return `<div class="nd-section">Liga-Rekord</div>${row}${eloRow}` + (matchHtml ? `<div class="nd-section">Rekord-Match</div>${matchHtml}` : '');
+        return `<div class="nd-section">Liga-Rekord</div>${row}${eloRow}` + (matchHtml ? `<div class="nd-section">Rekordpartie</div>${matchHtml}` : '');
       }
       case 'streak_record': {
         const row = d.pid ? `<div class="nd-stat-row" data-pid="${esc(d.pid)}" style="cursor:pointer"><div class="nd-stat-label">Rekordhalter</div><div class="nd-stat-val acid">${esc(nameOf(d.pid))} ›</div></div>` : '';
@@ -960,9 +960,9 @@ function _ndMitteRoh(s){
       case 'dry_spell': {
         return `<div class="nd-section">Liga-Pause</div>
           <div class="nd-stat-row">
-            <div class="nd-stat-label">Tage ohne Match</div>
+            <div class="nd-stat-label">Tage ohne Partie</div>
             <div class="nd-stat-val gold">${d.daysSince}</div></div>
-          ${d.lastMatchId ? `<div class="nd-section">Letztes Match</div>${_newsMatchVsBlock(d.lastMatchId)}` : ''}`;
+          ${d.lastMatchId ? `<div class="nd-section">Letzte Partie</div>${_newsMatchVsBlock(d.lastMatchId)}` : ''}`;
       }
     }
   } catch(e){ /* defensiv */ }

@@ -172,7 +172,7 @@ function vTeams(nurErgebnis=false){
 //     Filterbar nach Spieler. Zeigt Badge-Chips pro Match.
 // ╚═════════════════════════════════════════════════════════════════════════╝
 function vHistory(){
-  if(!matches.length)return `<div class="view-head"><h2>Verlauf</h2></div>${emptyState('scroll','Noch keine Matches')}`;
+  if(!matches.length)return `<div class="view-head"><h2>Verlauf</h2></div>${emptyState('scroll','Noch keine Partien')}`;
   let list=[...matches].reverse();
   if(histFilter!=='all')
     list=list.filter(m=>[m.a1,m.a2,m.b1,m.b2].includes(histFilter));
@@ -238,12 +238,12 @@ function vHistory(){
   ` : '';
 
   return `
-    <div class="view-head"><h2>Verlauf</h2><p>${list.length} Matches</p></div>
+    <div class="view-head"><h2>Verlauf</h2><p>${list.length} Partien</p></div>
     <div class="search" style="margin-bottom:14px">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 3H2l8 9.5V19l4 2v-8.5L22 3z"/></svg>
       <select id="histSel" style="padding-left:40px">${opts}</select>
     </div>
-    ${list.length?`<div class="mlist">${rows}</div>${paginationControls}`:emptyState('search','Keine Matches für diesen Filter')}`;
+    ${list.length?`<div class="mlist">${rows}</div>${paginationControls}`:emptyState('search','Keine Partien für diesen Filter')}`;
 }
 
 
@@ -263,7 +263,7 @@ function vMatch(){
     </div></div><div class="possel">${pos(key)}</div></div>`;
   };
   return `
-    <div class="view-head"><h2>Match</h2><p>Aufstellen, Tore eintragen, speichern</p></div>
+    <div class="view-head"><h2>Neue Partie</h2><p>Aufstellen, Tore eintragen, speichern</p></div>
     <div class="builder">
       <div class="team-block A"><div class="team-label">Team A <span class="tag" id="avgA"></span></div>${slot('A',1)}${slot('A',2)}</div>
       <div class="vs-mid"><span class="line"></span><span class="vs">VS</span><span class="line"></span></div>
@@ -314,101 +314,101 @@ function vSettings(){
     lowDamp:    Math.round((cfg.low_elo_loss_damp ?? 0)*100),
   };
   return `
-    <div class="view-head"><h2>Formel</h2><p>Feintuning der Elo-Berechnung</p></div>
+    <div class="view-head"><h2>Elo-Formel</h2><p>Wie Siege und Niederlagen die Elo verändern</p></div>
 
-    <div class="cfg-section-title">Grundparameter</div>
+    <div class="cfg-section-title">Grundwerte</div>
     <div class="card">
-      ${sl('cfgK','K-Faktor (Tempo)',c.k,8,64,'')}
-      ${sl('cfgStartElo','Start-Elo pro Saison',c.startElo,0,1000,'')}
+      ${sl('cfgK','Tempo (K-Faktor)',c.k,8,64,'')}
+      ${sl('cfgStartElo','Start-Elo jeder Saison',c.startElo,0,1000,'')}
     </div>
 
-    <div class="cfg-section-title">Spielerlast & Position</div>
+    <div class="cfg-section-title">Partner und Position</div>
     <div class="card">
-      ${sl('cfgRisk','Risiko-Split (schwacher Partner)',c.risk,0,100,'%')}
-      ${sl('cfgPos','Positions-Swing',c.pos,0,100,'%')}
+      ${sl('cfgRisk','Last des schwächeren Partners',c.risk,0,100,'%')}
+      ${sl('cfgPos','Ausgleich der Position',c.pos,0,100,'%')}
     </div>
 
-    <div class="cfg-section-title">Sieg & Niederlage</div>
+    <div class="cfg-section-title">Sieg und Niederlage</div>
     <div class="card">
-      ${sl('cfgWinBoost','Sieg-Boost',c.winBoost,100,140,'%')}
-      ${sl('cfgMovDamp','MoV-Dämpfung Niederlage',c.movDamp,0,100,'%')}
-      ${sl('cfgMovMax','MoV-Max-Boost (Kantersieg)',c.movMax,0,100,'%')}
-      ${sl('cfgLowEloLossDamp','Low-Elo Verlustschutz',c.lowDamp,0,100,'%')}
+      ${sl('cfgWinBoost','Mehr für Siege',c.winBoost,100,140,'%')}
+      ${sl('cfgMovDamp','Tordifferenz bei Niederlagen',c.movDamp,0,100,'%')}
+      ${sl('cfgMovMax','Zuschlag für Kantersiege',c.movMax,0,100,'%')}
+      ${sl('cfgLowEloLossDamp','Schutz für Schwächere',c.lowDamp,0,100,'%')}
     </div>
 
-    <div class="cfg-section-title">Bonus-System</div>
+    <div class="cfg-section-title">Zuschläge</div>
     <div class="card">
-      ${sl('cfgBonus','Spielbonus pro Match',Math.round((cfg.match_bonus ?? 1.5)*10),0,50,)}
-      ${sl('cfgExpProt','Erfahrungs-Schutz Maximum',c.expProt,0,30,'%')}
-      ${sl('cfgUdElo','Underdog-Boost (Elo-Gap)',c.udElo,0,100,'%')}
-      ${sl('cfgUdGames','Underdog-Boost (Spiele-Gap)',c.udGames,0,100,'%')}
+      ${sl('cfgBonus','Zuschlag je Partie',Math.round((cfg.match_bonus ?? 1.5)*10),0,50,)}
+      ${sl('cfgExpProt','Schutz für Erfahrene',c.expProt,0,30,'%')}
+      ${sl('cfgUdElo','Außenseiter-Zuschlag (Elo)',c.udElo,0,100,'%')}
+      ${sl('cfgUdGames','Aufhol-Zuschlag (Partien)',c.udGames,0,100,'%')}
     </div>
 
-    <div class="cfg-section-title">K-Faktor-Dynamik</div>
+    <div class="cfg-section-title">Tempo nach Erfahrung</div>
     <div class="card">
-      ${sl('cfgNpMult','Neuling-Multi (&lt;5 Spiele)',c.npMult,100,200,'%')}
-      ${sl('cfgNpMidMult','Anfänger-Multi (&lt;15 Spiele)',c.npMidMult,100,200,'%')}
-      ${sl('cfgVetDamp','Veteran-Elogewinn (&gt;Start+400 Elo)',c.vetDamp,0,100,'%')}
+      ${sl('cfgNpMult','Neulinge (unter 5 Partien)',c.npMult,100,200,'%')}
+      ${sl('cfgNpMidMult','Anfänger (unter 15 Partien)',c.npMidMult,100,200,'%')}
+      ${sl('cfgVetDamp','Spitze (über Start + 400 Elo)',c.vetDamp,0,100,'%')}
     </div>
 
+    ${/* Die Erklärungen standen in Fachsprache da („MoV-Dämpfung",
+          „tanh-skaliert nach 30 Spiele-Differenz", „Neuling-Multi") und
+          heißen jetzt wie ihr Regler. Was ein Regler bewirkt, nicht wie
+          die Kurve dahinter verläuft. */ ''}
     <div class="card">
-      <div class="mini-label">Mechaniken</div>
+      <div class="mini-label">So wirken die Regler</div>
       <div style="font-size:12px;color:var(--ink2);line-height:1.8">
-        <b style="color:var(--acid)">K-Faktor</b> — Wie stark einzelne Matches die Elo verändern. Hoch = schnelle Änderungen, niedrig = stabile Elo.<br>
-        <b style="color:var(--acid)">Start-Elo</b> — Der Wert auf den jeder Spieler zu Saisonbeginn zurückgesetzt wird. Höhere Werte machen Verluste in den ersten Matches "weniger schmerzhaft".<br>
-        <b style="color:var(--acid)">Risiko-Split</b> — Wie viel Last der schwächere Mitspieler trägt. Bei ${c.risk} % verliert weniger Elo, wer mit einem deutlich schwächeren Partner spielt.<br>
-        <b style="color:var(--acid)">Positions-Swing</b> — Ausgleich für die schwächere Position. Ein Sieg dort bringt mehr Elo, und eine Niederlage kostet genauso viel weniger, höchstens ${Math.round(POS_GRENZE*100)} %. Auf der stärkeren Position dämpft ein Sieg, und eine Niederlage kostet zusätzlich, höchstens ${Math.round(POS_DAEMPFER*100)} %. Wie viel davon gilt, folgt der Klarheit der Einstufung; der Regler bestimmt, wie schnell die Grenze erreicht ist. Welche Position die schwächere ist, sagt das Positions-Profil: vor allem Sieg und Torverhältnis gegen die Erwartung, die Gegner und Mitspieler kennt, und daneben, wo jemand spielt.<br>
-        <b style="color:var(--acid)">Sieg-Boost</b> — Siege bringen ${c.winBoost-100}% mehr als Niederlagen kosten. Sorgt für langfristigen Aufwärtstrend.<br>
-        <b style="color:var(--acid)">MoV-Dämpfung</b> — Tordifferenz bei Niederlagen nur ${c.movDamp}% so stark wie bei Siegen. Eine 0:10 Niederlage bestraft so nicht 3× so hart wie 5:10.<br>
-        <b style="color:var(--acid)">MoV-Max-Boost</b> — Maximaler Multiplikator durch Tordifferenz bei einem Kantersieg. ${c.movMax}% heißt: ein 10:0 zählt bis zu ${(100+c.movMax)}% des normalen Werts.<br>
-        <b style="color:var(--acid)">Low-Elo Verlustschutz</b> — Spieler unter dem Match-Durchschnitts-Elo verlieren bei Niederlagen bis zu ${c.lowDamp}% weniger Elo (tanh-skaliert nach 200 Elo Abstand zum Match-Durchschnitt). Symmetrisch zum Underdog-Boost — schützt schwache Spieler vor Elo-Absturz, aber nur wenn sie tatsächlich schwächer als der Schnitt im Match sind.<br>
-        <b style="color:var(--acid)">Spielbonus</b> — +${c.bonus} Elo pro Match, egal ob Sieg oder Niederlage. Belohnt aktive Spieler.<br>
-        <b style="color:var(--acid)">Erfahrungs-Schutz Max</b> — Erfahrene Spieler verlieren bei Niederlagen bis zu ${c.expProt}% weniger Elo (linear ab 5 bis 30 Saison-Matches). Schützt vor Absturz durch Pech-Serien.<br>
-        <b style="color:var(--acid)">Underdog-Boost (Elo-Gap)</b> — Schwächere Spieler bekommen bis zu ${c.udElo}% Bonus bei Siegen gegen stärkere Gegner (tanh-skaliert nach 400 Elo-Differenz). Wirkt nur als Belohnung, nie als Bestrafung.<br>
-        <b style="color:var(--acid)">Underdog-Boost (Spiele-Gap)</b> — Spieler mit weniger Matches bekommen bis zu ${c.udGames}% zusätzlichen Boost (tanh-skaliert nach 30 Spiele-Differenz). Hilft Neueinsteigern beim Aufholen. Veteranen werden nicht bestraft — beide Komponenten wirken unabhängig.<br>
-        <b style="color:var(--acid)">Neuling-Multi</b> — In den ersten 5 Saison-Spielen wirkt K-Faktor um ${c.npMult}% verstärkt. Neue Spieler finden so schnell ihr Niveau.<br>
-        <b style="color:var(--acid)">Anfänger-Multi</b> — Zwischen 5–14 Saison-Spielen wirkt K-Faktor um ${c.npMidMult}% verstärkt. Sanfter Übergang zur Normal-Bewertung.<br>
-        <b style="color:var(--acid)">Veteran-Dämpfung</b> — Sehr starke Spieler (&gt; Start+400 Elo) bewegen sich um ${c.vetDamp}% des K-Faktors. Verhindert dass Top-Spieler durch Pflicht-Siege ewig weiter wachsen.<br>
-        <b style="color:var(--acid)">Saison-Reset</b> — Jeden Monatswechsel werden alle Elo-Werte auf den Start-Wert zurückgesetzt. Karriere-Elo = gewichteter Durchschnitt der Saison-End-Elos.
+        <b style="color:var(--acid)">Tempo</b> — Wie stark eine einzelne Partie die Elo verändert. Hoch heißt schnelle Ausschläge, niedrig ruhige Werte.<br>
+        <b style="color:var(--acid)">Start-Elo</b> — Mit diesem Wert beginnt jeder Spieler eine Saison.<br>
+        <b style="color:var(--acid)">Last des schwächeren Partners</b> — Bei ${c.risk} % verliert weniger Elo, wer mit einem deutlich schwächeren Partner spielt.<br>
+        <b style="color:var(--acid)">Ausgleich der Position</b> — Auf der schwächeren Position bringt ein Sieg mehr und kostet eine Niederlage weniger, höchstens ${Math.round(POS_GRENZE*100)} %. Auf der stärkeren ist es umgekehrt, höchstens ${Math.round(POS_DAEMPFER*100)} %. Welche Position die schwächere ist, zeigt das Positionsprofil im Profil; der Regler bestimmt, wie schnell die Grenze erreicht ist.<br>
+        <b style="color:var(--acid)">Mehr für Siege</b> — Ein Sieg bringt ${c.winBoost-100} % mehr, als eine Niederlage kostet. So steigt die Elo über die Zeit.<br>
+        <b style="color:var(--acid)">Tordifferenz bei Niederlagen</b> — Sie zählt bei einer Niederlage nur zu ${c.movDamp} %. Ein 0:10 kostet so nicht dreimal so viel wie ein 5:10.<br>
+        <b style="color:var(--acid)">Zuschlag für Kantersiege</b> — Ein 10:0 zählt bis zu ${100+c.movMax} % einer gewöhnlichen Partie.<br>
+        <b style="color:var(--acid)">Schutz für Schwächere</b> — Wer unter dem Elo-Schnitt der Partie liegt, verliert bei einer Niederlage weniger, je weiter darunter, desto mehr, bis zu ${c.lowDamp} %.<br>
+        <b style="color:var(--acid)">Zuschlag je Partie</b> — ${c.bonus} Elo für jede Partie, ob Sieg oder Niederlage.<br>
+        <b style="color:var(--acid)">Schutz für Erfahrene</b> — Ab der 5. Partie einer Saison kostet eine Niederlage weniger, ab der 30. bis zu ${c.expProt} %.<br>
+        <b style="color:var(--acid)">Außenseiter-Zuschlag</b> — Wer gegen deutlich Stärkere gewinnt, bekommt bis zu ${c.udElo} % mehr. Er kostet nie etwas.<br>
+        <b style="color:var(--acid)">Aufhol-Zuschlag</b> — Wer weniger Partien hat als die Gegner, bekommt bis zu ${c.udGames} % mehr. Er kostet nie etwas.<br>
+        <b style="color:var(--acid)">Neulinge und Anfänger</b> — In den ersten 5 Partien einer Saison wirkt das Tempo zu ${c.npMult} %, bis zur 14. Partie zu ${c.npMidMult} %.<br>
+        <b style="color:var(--acid)">Spitze</b> — Wer mehr als 400 Elo über dem Start steht, bewegt sich nur mit ${c.vetDamp} % des Tempos.<br>
+        <b style="color:var(--acid)">Saison</b> — Mit jedem Monat beginnt die Elo neu beim Startwert. Die Elo der Laufbahn ist der gewichtete Schnitt der Saisonenden.
       </div>
     </div>
     <div class="card" style="margin-top:14px;border:1px solid rgba(190,242,100,.18);background:linear-gradient(155deg,rgba(190,242,100,.06),var(--surface) 80%)">
       <div class="mini-label" style="color:var(--acid);display:flex;align-items:center;gap:6px">${svgI('info')}Wirkung der Regler</div>
       <p style="font-size:12px;color:var(--ink2);line-height:1.55;margin-top:8px">
-        Änderungen an den Reglern wirken <b style="color:var(--acid)">nur auf neue Matches</b>.
-        Vergangene Matches behalten ihre damaligen Elo-Werte — abgeschlossene Saisons bleiben stabil,
-        Awards &amp; Achievements ändern sich nicht.
+        Änderungen an den Reglern wirken <b style="color:var(--acid)">nur auf neue Partien</b>.
+        Vergangene Partien behalten ihre Elo, abgeschlossene Saisons und Auszeichnungen bleiben, wie sie sind.
       </p>
-      <p style="font-size:11px;color:var(--muted);line-height:1.55;margin-top:6px">
-        Sollen die Regler <b>rückwirkend</b> für die gesamte Historie gelten, lassen sich alle
-        Matches neu berechnen. <b style="color:var(--red)">Achtung:</b> dabei werden alle bisher
-        gespeicherten Match-Deltas überschrieben.
+      <p style="font-size:12px;color:var(--ink2);line-height:1.55;margin-top:6px">
+        Sollen die Regler auch rückwirkend gelten, lassen sich alle Partien neu berechnen.
+        <b style="color:var(--red)">Dabei wird die gespeicherte Elo jeder Partie überschrieben.</b>
       </p>
-      <button class="btn" id="recalcBtn" style="margin-top:14px;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('neuRechnen')} Alle Matches rückwirkend neu berechnen</button>
+      <button class="btn" id="recalcBtn" style="margin-top:14px;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('neuRechnen')} Alle Partien neu berechnen</button>
     </div>
 
     <div class="card" style="margin-top:14px">
       <div class="mini-label">Sicherung und Export</div>
       <p style="font-size:11.5px;color:var(--ink2);line-height:1.6;margin-top:10px">
-        Die Liga lebt in einer Datenbank in der Cloud. Damit sie auch dann nicht verloren geht,
-        wenn dort etwas passiert, lässt sich hier jederzeit eine eigene Kopie ziehen.
+        Hier lässt sich jederzeit eine eigene Kopie der Liga speichern, falls in der Cloud etwas verloren geht.
       </p>
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
-        <button class="btn ghost" id="expXlsxBtn" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('scroll')} Matches als Excel (.xlsx)</button>
+        <button class="btn ghost" id="expXlsxBtn" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('scroll')} Partien als Excel (.xlsx)</button>
         <button class="btn ghost" id="expSaveBtn" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('sichern')} Sicherung speichern (.json)</button>
         <button class="btn ghost sm" id="expCsvBtn" style="width:100%;font-size:11px">Stattdessen als CSV</button>
       </div>
       <p style="font-size:11px;color:var(--muted);line-height:1.6;margin-top:12px">
-        <b style="color:var(--acid)">Excel</b>: alle ${matches.length} Matches mit Namen, Positionen und Ergebnissen,
-        dazu je ein Blatt für Spieler und Saisons. Zum Anschauen, Auswerten und Weitergeben.<br>
-        <b style="color:var(--acid)">Sicherung</b>: die vollständige Kopie mit allen Elo-Werten und den
-        Einstellungen der Elo-Rechnung. Das ist die Datei, mit der sich die Liga im Ernstfall wieder aufbauen lässt.
+        <b style="color:var(--acid)">Excel</b>: alle ${matches.length} Partien mit Namen, Positionen und Ergebnissen,
+        dazu Spieler und Saisons. Zum Anschauen und Weitergeben.<br>
+        <b style="color:var(--acid)">Sicherung</b>: die vollständige Kopie mit Elo und Einstellungen.
+        Mit ihr lässt sich die Liga im Ernstfall wieder aufbauen.
       </p>
       <div style="height:1px;background:var(--line);margin:14px 0"></div>
       <button class="btn" id="impBackupBtn" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('hochladen')} Datei einspielen</button>
       <p style="font-size:11px;color:var(--muted);line-height:1.6;margin-top:10px">
-        Nimmt .xlsx, .csv und .json. Vor dem Schreiben erscheint eine Vorschau, was ergänzt würde.
-        <b style="color:var(--acid)">Es wird nie etwas gelöscht oder überschrieben</b>, nur fehlende Matches kommen dazu.
+        Nimmt .xlsx, .csv und .json. Vorher zeigt eine Vorschau, was dazukommt.
+        <b style="color:var(--acid)">Es wird nie etwas gelöscht oder überschrieben</b>, nur fehlende Partien kommen dazu.
       </p>
     </div>
 
@@ -419,7 +419,7 @@ function vSettings(){
         <button class="btn ghost sm" id="forceReloadBtn" style="width:auto;padding:7px 12px;font-size:11px;flex-shrink:0">Neu laden</button>
       </div>
       <p style="font-size:11px;color:var(--muted);line-height:1.55;margin-top:10px">
-        Wenn eine Neuerung nicht auftaucht, hält das Telefon meist noch den alten Stand fest. Der Knopf holt ihn frisch. Sonst meldet sich ein neuer Stand von selbst mit einem Hinweis oben.
+        Fehlt etwas Neues, hält das Telefon noch den alten Stand. Der Knopf lädt ihn neu; sonst meldet sich ein neuer Stand von selbst.
       </p>
     </div>
     ${players.filter(p=>p.hidden).length?`
@@ -565,7 +565,7 @@ function _matchChanceHtml(c){
 
 async function doSaveMatch(){
   if(doSaveMatch._busy) return;
-  readM(); if(!validM()){toast('Match unvollständig',true);return;}
+  readM(); if(!validM()){toast('Partie unvollständig',true);return;}
   const state=M,draft={...M},save=document.getElementById('saveM'),saveHtml=save?save.innerHTML:'';
   doSaveMatch._busy=true;
   if(save){save.disabled=true;save.setAttribute('aria-busy','true');save.textContent='Speichere…';}
@@ -628,7 +628,7 @@ async function doSaveMatch(){
       // Stand vertippt hat, musste bisher die Partie suchen, öffnen und
       // löschen.
       const sieger = winner === 'A' ? [row.a1,row.a2] : [row.b1,row.b2];
-      toast('Match gespeichert', 'ok', {
+      toast('Partie gespeichert', 'ok', {
         sub: sieger.map(pname).join(' & ') + ' gewinnen ' + standFuer(savedRow),
         aktion: {label:'Rückgängig', fn: () => partieLoeschen(savedRow.id)}});
     }
@@ -642,7 +642,7 @@ async function doSaveMatch(){
       M={A1:'',A2:'',B1:'',B2:'',pA1:'atk',pA2:'def',pB1:'atk',pB2:'def',sa:0,sb:0};
       if(tab==='match') render();
     }
-    toast(insertedRow?'Match gespeichert. Anzeige fehlgeschlagen.':'Speichern fehlgeschlagen.',true);
+    toast(insertedRow?'Partie gespeichert. Anzeige fehlgeschlagen.':'Speichern fehlgeschlagen.',true);
   } finally {
     doSaveMatch._busy=false;
     if(save && save.isConnected){save.removeAttribute('aria-busy');save.innerHTML=saveHtml;}

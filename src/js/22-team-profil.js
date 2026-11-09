@@ -484,23 +484,23 @@ function showMatchDetail(mid){
       const factors=[];
       factors.push({label:'Basis (Erwartung)',val:b.rawBase,desc:b.won?'Sieg'+(b.expected<0.5?' gegen stärkeres Team':''):'Niederlage'+(b.expected>0.5?' gegen schwächeres Team':'')});
       if(zeigt(b.movEffect)) factors.push({label:'Tordifferenz',val:b.movEffect,desc:b.won?'Klarer Sieg':'Hohe Niederlage'+(b.movMult<1.2?' (gedämpft)':'')});
-      if(zeigt(b.winBoostEffect)) factors.push({label:'Sieg-Boost',val:b.winBoostEffect,desc:'+'+komma(((b.winBoost-1)*100),1)+'% für Siege'});
-      if(b.expProtect<1) factors.push({label:'Erfahrungs-Schutz',val:b.expProtectEffect,desc:komma(((1-b.expProtect)*100),1)+'% Schutz'});
+      if(zeigt(b.winBoostEffect)) factors.push({label:'Mehr für Siege',val:b.winBoostEffect,desc:'+'+komma(((b.winBoost-1)*100),1)+'% für Siege'});
+      if(b.expProtect<1) factors.push({label:'Schutz für Erfahrene',val:b.expProtectEffect,desc:komma(((1-b.expProtect)*100),1)+'% Schutz'});
       if(b.lowEloDamp!==undefined && zeigt(b.lowEloEffect||0)){
-        factors.push({label:'Low-Elo Schutz',val:b.lowEloEffect,desc:komma(((1-b.lowEloDamp)*100),1)+'% Schutz (schwacher Spieler)'});
+        factors.push({label:'Schutz für Schwächere',val:b.lowEloEffect,desc:komma(((1-b.lowEloDamp)*100),1)+'% weniger Verlust'});
       }
       if(zeigt(b.rawBase*b.movMult*b.winBoost*b.expProtect*(b.underdogMult-1))){
         // Underdog-Boost setzt sich aus zwei unabhängig clampten Komponenten zusammen
         // (Elo-Gap + Spiele-Gap). Wir zeigen nur die wirksamen (positiven) Anteile,
         // weil negative Differenzen keinen Effekt mehr haben.
         const eloPart   = b.underdogEloDiff>0   ? b.underdogEloDiff+' Elo schwächer'   : null;
-        const gamesPart = b.underdogGamesDiff>0 ? b.underdogGamesDiff+' Spiele weniger' : null;
-        const desc = [eloPart, gamesPart].filter(Boolean).join(' · ') || 'Underdog';
+        const gamesPart = b.underdogGamesDiff>0 ? b.underdogGamesDiff+' Partien weniger' : null;
+        const desc = [eloPart, gamesPart].filter(Boolean).join(' · ') || 'Außenseiter';
         // Effekt ohne lowElo-Anteil: rawBase*mov*boost*expProtect*(underdogMult-1)
         const undEffect = b.rawBase*b.movMult*b.winBoost*b.expProtect*(b.underdogMult-1);
-        factors.push({label:'Underdog-Boost',val:undEffect, desc});
+        factors.push({label:'Außenseiter-Zuschlag',val:undEffect, desc});
       }
-      if(zeigt(b.riskEffect)) factors.push({label:b.riskShare<1?'Risiko-Split (stark)':'Risiko-Split (schwach)',val:b.riskEffect,desc:'Stärkeverteilung im Team'});
+      if(zeigt(b.riskEffect)) factors.push({label:b.riskShare<1?'Last im Team (stärker)':'Last im Team (schwächer)',val:b.riskEffect,desc:'Stärkeverteilung im Team'});
       // Schwach oder stark sagt der Faktor, nicht der Multiplikator: nach
       // einer Niederlage auf der schwachen Position ist der kleiner als
       // eins, und dort stand „Starke Position". Dahinter steht, was der
@@ -508,10 +508,10 @@ function showMatchDetail(mid){
       // zu sehen, warum 0,49 bei einem und 2,48 beim anderen stand [§C44].
       if(zeigt(b.posEffect)){
         const schwach=b.posFactor>1, pz=komma(Math.abs(b.posFactor-1)*100,1)+'% ';
-        factors.push({label:'Positions-Bonus',val:b.posEffect,
+        factors.push({label:'Ausgleich der Position',val:b.posEffect,
           desc:(schwach?'Schwache':'Starke')+' Position · '+pz+(schwach?(b.won?'Bonus':'Schutz'):(b.won?'Dämpfer':'Abzug'))});
       }
-      factors.push({label:'Spielbonus',val:b.matchBonus,desc:'fest +'+komma(b.matchBonus,2)+' je Match'});
+      factors.push({label:'Zuschlag je Partie',val:b.matchBonus,desc:'fest +'+komma(b.matchBonus,2)}); 
       const factorRows=factors.map(f=>`<div class="ea-posten" style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:11px">
         <div><span style="color:var(--ink)">${f.label}</span> <span style="color:var(--muted);font-size:10px">${f.desc}</span></div>
         <span class="ea-wert" style="font-family:'Sometype Mono',monospace;font-weight:700;color:${f.val>=0?'var(--acid)':'var(--red)'}">${sign(f.val)}</span>
@@ -536,7 +536,7 @@ function showMatchDetail(mid){
       </div>`;
     }).join('');
     const banner=anyDiverged?`<div style="background:rgba(247,207,74,.08);border:1px solid rgba(247,207,74,.3);border-radius:10px;padding:10px 12px;margin-top:10px;font-size:11.5px;color:var(--gold);line-height:1.5">
-      Verbucht wurde, was am Tag der Partie galt; die Zeilen darunter rechnen mit den heutigen Einstellungen. <b>Alle Matches rückwirkend neu berechnen</b> in den Einstellungen bringt beides zusammen.
+      Verbucht wurde, was am Tag der Partie galt; die Zeilen darunter rechnen mit den heutigen Einstellungen. <b>Alle Partien neu berechnen</b> in den Einstellungen bringt beides zusammen.
     </div>`:'';
     slot.innerHTML=`<div class="mini-label" style="margin-top:14px">Elo-Analyse</div>${banner}${rows}`;
     document.getElementById('showBreakdownBtn').style.display='none';

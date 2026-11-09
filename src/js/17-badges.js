@@ -30,15 +30,15 @@
 const BADGES=[
   // ══ EINMALIGE BADGES (Karriere-Meilensteine) ══
   // Zeile 1 — Debütant, Stammgast
-  {id:'first_match',ic:'egg',name:'Debütant',desc:'Erstes Match gespielt',
+  {id:'first_match',ic:'egg',name:'Debütant',desc:'Erste Partie gespielt',
     multi:true,count:(id,ms)=>countGames(id,ms)>=1?1:0},
-  {id:'games25',ic:'controller',name:'Stammgast',desc:'25 Matches gespielt',
+  {id:'games25',ic:'controller',name:'Stammgast',desc:'25 Partien gespielt',
     multi:true,count:(id,ms)=>countGames(id,ms)>=25?1:0},
   // Zeile 2 — Dauerbrenner, Allrounder
   // Nicht „Legende": so heißt die oberste Stufe des Karriere-Rangs, und im
   // Profil standen der Rang und eine Auszeichnung für 150 Partien unter
   // demselben Wort.
-  {id:'games150',ic:'dauerbrenner',name:'Dauerbrenner',desc:'150 Matches gespielt',
+  {id:'games150',ic:'dauerbrenner',name:'Dauerbrenner',desc:'150 Partien gespielt',
     multi:true,count:(id,ms)=>countGames(id,ms)>=150?1:0},
   {id:'allrounder',ic:'bothSides',name:'Allrounder',desc:'Mindestens 20 Siege auf jeder Position',
     multi:true,count:(id,ms)=>{const s=playerStats(id,ms);return(s.atkW>=20&&s.defW>=20)?1:0;}},
@@ -50,7 +50,7 @@ const BADGES=[
   // Die IDs nennen noch die alten Schwellen (250/200). Sie bleiben stehen,
   // weil sie in News-, Toast- und Popover-Zuordnungen stecken; maßgeblich ist
   // allein die Zahl in count/desc — seit v9.18 jeweils 300.
-  {id:'games250',ic:'urgestein',name:'Urgestein',desc:'300 Matches gespielt',
+  {id:'games250',ic:'urgestein',name:'Urgestein',desc:'300 Partien gespielt',
     multi:true,count:(id,ms)=>countGames(id,ms)>=300?1:0},
   {id:'wins200',ic:'siegermaschine',name:'Siegermaschine',desc:'300 Siege gesammelt',
     multi:true,count:(id,ms)=>countWins(id,ms)>=300?1:0},
@@ -77,14 +77,14 @@ const BADGES=[
   {id:'upset_king',ic:'underdog',name:'Außenseiterkönig',desc:'Als Außenseiter gewonnen (unter 35 % Siegchance)',
     multi:true,count:(id,ms)=>matchesOfPlayer(id,ms).filter(m=>won(id,m)&&myExp(id,m)<0.35).length},
   // Zeile 6 — Frühschicht, Unschlagbar (Tages-Patterns)
-  {id:'early_bird',ic:'sunrise',name:'Frühschicht',desc:'Erstes Match des Tages gewonnen',
+  {id:'early_bird',ic:'sunrise',name:'Frühschicht',desc:'Erste Partie des Tages gewonnen',
     multi:true,count:(id,ms)=>countEarlyBirdDays(id,ms)},
   {id:'unbeatable',ic:'crownPlus',name:'Unschlagbar',desc:'Ganzer Tag ohne Niederlage (ab 3 Partien)',
     multi:true,count:(id,ms,bis)=>countUnbeatableDays(id,ms,bis)},
   // Zeile 7 — Comeback-Tag, Revanchist (Wiedergutmachung)
   {id:'comeback_day',ic:'comeback',name:'Comeback-Tag',desc:'Tag mit einer Niederlage begonnen und mit einem Sieg beendet (ab 3 Partien an dem Tag)',
     multi:true,count:(id,ms,bis)=>countComebackDays(id,ms,bis)},
-  {id:'revanchist',ic:'rematch',name:'Revanchist',desc:'Nach Niederlage gegen ein Team direkt im nächsten Match wieder auf dasselbe Team getroffen und gewonnen',
+  {id:'revanchist',ic:'rematch',name:'Revanchist',desc:'Nach einer Niederlage gegen ein Team direkt in der nächsten Partie wieder auf dasselbe Team getroffen und gewonnen',
     multi:true,count:(id,ms)=>countRevenge(id,ms)},
   // Zeile 8 — Klares Ding, Krimi-Reihe (Tordifferenz-Pattern)
   {id:'clear_win',ic:'thumbsUp',name:'Klares Ding',desc:'Sieg mit mindestens 7 Toren Vorsprung',

@@ -516,7 +516,7 @@ function _vRankingCore(){
       };
       return `
         <div class="view-head"><h2>Liga</h2><p>${periodLabel(period, saisonArg)} · ${
-          duos.length} Duo${duos.length===1?'':'s'} · ${totalMatches} Matches</p></div>
+          duos.length} Duo${duos.length===1?'':'s'} · ${totalMatches} Partien</p></div>
         ${periodBar}
         ${kontextHtml}
         ${saisonWahl}
@@ -527,14 +527,14 @@ function _vRankingCore(){
     }
 
     return `
-      <div class="view-head"><h2>Liga</h2><p>${periodLabel(period, saisonArg)} · ${ps.length} aktiv · ${totalMatches} Matches</p></div>
+      <div class="view-head"><h2>Liga</h2><p>${periodLabel(period, saisonArg)} · ${ps.length} aktiv · ${totalMatches} Partien</p></div>
       ${periodBar}
       ${kontextHtml}
       ${saisonWahl}
       ${nebenHtml}
       ${sichtBar}
       ${metrikLeisteHtml(period)}
-      ${ps.length||leerZeile?`<div class="rlist">${leerZeile}${rows}</div>`:emptyState('calendar','Keine Matches in diesem Zeitraum')}`;
+      ${ps.length||leerZeile?`<div class="rlist">${leerZeile}${rows}</div>`:emptyState('calendar','Keine Partien in diesem Zeitraum')}`;
   }
 
 
@@ -663,11 +663,11 @@ function _vRankingCore(){
 
   return `
     <div class="view-head"><h2>Ewige Tafel</h2><p>Karriere-Elo über ${
-      seasons.length} Saison${seasons.length===1?'':'s'} · ${matches.length} Matches</p></div>
+      seasons.length} Saison${seasons.length===1?'':'s'} · ${matches.length} Partien</p></div>
     ${periodBar}
     ${hofHtml || `<div class="stat-strip">
       <div class="s"><div class="v num">${activePlayers().length}</div><div class="l">Spieler</div></div>
-      <div class="s"><div class="v num">${matches.length}</div><div class="l">Matches</div></div>
+      <div class="s"><div class="v num">${matches.length}</div><div class="l">Partien</div></div>
       <div class="s"><div class="v num">${top||'–'}</div><div class="l">Top-Elo</div></div>
     </div>`}
     ${hofPodsHtml}

@@ -317,7 +317,7 @@ function showPositionHistory(seasonId){
     openSheet(`
       <div class="posv-empty">
         <div class="posv-empty-title">Noch kein Verlauf</div>
-        <div>Sobald in dieser Saison die ersten Matches gespielt sind,<br>steht hier die Entwicklung der Tabellenplätze.</div>
+        <div>Sobald in dieser Saison die ersten Partien gespielt sind,<br>steht hier die Entwicklung der Tabellenplätze.</div>
       </div>
     `);
     return;
