@@ -52,7 +52,7 @@ const GRUPPEN = [
 ];
 const FORM = {
   'spiel': {name:'Die Partie', id:'spiel_<Partie>', wann:'Zur Minute der Partie.',
-    was:`Jede Partie bekommt genau eine Karte. Oben das Ergebnisband: vier Wappen und der Endstand aus Sicht des Siegers. Den Kopf trägt ein besonderer Ausgang (Krimi, deutlicher Sieg, Außenseiter, weiße Weste), sonst ein Befund, der nach den Abschlägen noch zählt, sonst die Grundansicht, die am längsten nicht dran war: Tacho, Tauziehen, Abstand, Ergebniszeile, Spielfeld (${c('_spAnlass')}, ${c('SP_FORM')}, ${c('_spScoreAuswahl')}). Den Fuß trägt das stärkste Ereignis der Partie (Gegner, Höchststand, Tabelle, Revanche, Chemie, Tagesring …); ein Zustand wie Serie oder Rivalität tritt zurück, wenn er auf einer der letzten Karten schon gezeichnet war, und nie steht derselbe Fuß zweimal hintereinander. Das Bild wird mit der Karte gespeichert (${c('dataRef.visual')}).`,
+    was:`Jede Partie bekommt genau eine Karte, immer gleich gebaut: oben der Kopf, darunter die Teamzeile „A gegen B" (Team A links, Team B rechts wie am Tisch, die Sieger mit grüner, die Verlierer mit roter Kante, ${c('_spTeamZeile')}), die Schlagzeile mit dem Hauptanlass, ein Satz, der ihn erklärt, bis zu drei weitere Anlässe als Zeilen, als letzte Zeile die des Fußes und darunter der Fuß. Den Kopf trägt ein besonderer Ausgang (ein Tor Abstand mit dem Herzschlag, zu null mit den Toren, ein Außenseitersieg mit der Wippe, ab sechs Toren das Band), sonst die Grundansicht, die am längsten nicht dran war (Klapptafel, Elo-Strom, Lebensbalken, Spielfeld, Tauziehen, Tacho, Münzwurf, Zwei Welten, Mosaik, Erwartung gegen Ergebnis; ${c('SP_KOPF_GRUND')}, ${c('_spScoreAuswahl')}). Kein Kopf schreibt die Namen der Teamzeile noch einmal, und der Stand liest sich A:B (${c('_spSt')}). Den Fuß trägt das stärkste Ereignis oder ein Fakt der Partie; die ganze Familie des vorigen Fußes fällt aus der Wahl (${c('SP_FUSS_FAMILIE')}), ein Fuß zeichnet den Stand nicht und trägt keinen Satz. Das Bild wird mit der Karte gespeichert (${c('dataRef.visual')}).`,
     brk:'Allein nie. Bündelt sich ein Breaking-Anlass an sie, wird das Bündel Breaking.',
     zus:'Alles mit derselben Partie hängt sich an diese Karte; dann steht sie als Bündel (nächste Form).'},
   'sammel:spiel': {name:'Die Partie mit ihren Anlässen', id:'spiel_<Partie> + Teile', wann:'Zur Minute der Partie.',
@@ -109,8 +109,8 @@ const FORM = {
   'ambient': {name:'Fun Fact', id:'ambient_<Tag>_15', wann:'Um 15:00, je Tag ein Platz.',
     was:'Ein Fun Fact je Tag, nachgetragen für stille Tage im Fenster des Generators. Gezogen wird deterministisch mit Rotation von Vorlage, Rubrik und These; die Rubrik des Fun Facts davor ist gesperrt, und zuerst gezogen wird eine Karte über jemanden, der in den drei Tagen davor keine eigene Karte hatte. Jedes Bild kommt aus dataRef.bild (30c-news-fakt.js).',
     brk:'Nie.', zus:'Wird eine Karte im Platz abgemeldet, ist der Platz frei, und der Ersatz trägt die nächste ID (ambient_<Tag>_15_2), weil die Datenbank keine Zeile ändert.'},
-  'dry_spell': {name:'Spielpause', id:'dry_spell_<letzte Partie>', wann:'Beim ersten Lauf nach drei Tagen ohne Partie.',
-    was:'Ab drei Tagen ohne Partie. Die ID trägt die letzte Partie: je Pause eine Karte, mit dem Zeitpunkt, zu dem sie zuerst gespeichert wurde.',
+  'dry_spell': {name:'Spielpause', id:'dry_spell_<letzte Partie>', wann:`Beim ersten Lauf nach ${K.pauseTage || 5} Tagen ohne Partie.`,
+    was:`Ab ${K.pauseTage || 5} Tagen ohne Partie (${c('NEWS_PAUSE_TAGE')}); ein Wochenende allein ist keine Pause. Die ID trägt die letzte Partie: je Pause eine Karte, mit dem Zeitpunkt, zu dem sie zuerst gespeichert wurde.`,
     brk:'Nie.', zus:''},
   'quiet_week': {name:'Ruhige Woche', id:'quiet_week_<Woche>', wann:'Beim ersten Lauf in der ruhigen Woche.',
     was:'Die letzten sieben Tage hatten höchstens halb so viele Partien wie im Schnitt der vier Wochen davor, und dieser Schnitt liegt bei mindestens zwanzig.',
@@ -140,8 +140,18 @@ const ANLASS = {
   badge_marken:['Kleine Marken', 'tag', 'Gewöhnliche Auszeichnungen beim 5., 10., 25., 50., 100. Mal, je Partie in einer Zeile.'],
   rivalry:['Rivalität', 'partie', 'Jedes zehnte Duell zweier Spieler ab dem 50., an der Partie, in der es gespielt wurde.'],
   rivalry_milestone:['Rivalitäts-Meilenstein', 'partie', 'Das 50., 100., 200. und 500. Duell.'],
-  jubilee:['Spiel-Jubiläum', 'partie', 'Runde Zahlen der eigenen Partien, Leiter ab 10.'],
-  milestone_wins:['Sieg-Meilenstein', 'partie', 'Runde Zahlen der eigenen Siege, Leiter ab 100.'],
+  jubilee:['Spiel-Jubiläum', 'partie', 'Runde Zahlen der eigenen Partien, Leiter ab 10 und dazu jede fünfzigste, an jeder Partie des Fensters (_rundeMarke).'],
+  milestone_wins:['Sieg-Meilenstein', 'partie', 'Runde Zahlen der eigenen Siege, Leiter ab 50 und dazu jeder fünfzigste (_rundeMarke).'],
+  pleiten_ende:['Ende einer Pleitenserie', 'partie', 'Der erste Sieg nach mindestens fünf Niederlagen in Folge, mit dem Tag des letzten Siegs.'],
+  duo_pleiten_ende:['Ende einer Duo-Pleitenserie', 'partie', 'Der erste gemeinsame Sieg nach mindestens vier gemeinsamen Niederlagen in Folge.'],
+  rueckkehr:['Rückkehr', 'partie', 'Die erste Partie nach mindestens vierzehn Tagen ohne Partie, gewonnen oder nicht.'],
+  duell_kippt:['Duell kippt', 'partie', 'Die direkte Bilanz zweier Spieler kippt zum Sieger dieser Partie, ab 16 Duellen und höchstens alle zehn Duelle.'],
+  woche_spitze:['Spitze der Woche', 'partie', 'Ein Sieger übernimmt die beste Siegquote der Kalenderwoche, ab fünf Siegen.'],
+  tag_plus:['Tag im Plus', 'partie', 'Ein Sieg dreht den Tag ins Plus, nach mindestens drei Partien und einem Tief von −25 Elo oder tiefer.'],
+  tag_hoehe:['Elo des Tages', 'partie', 'Ein Sieg bringt den Tag zum ersten Mal auf +75 Elo oder mehr.'],
+  monat_gewinn:['Größter Elo-Gewinn im Monat', 'partie', 'Der größte Elo-Gewinn einer Partie im Monat, ab der achten Partie und ab 22 Elo.'],
+  monat_halb:['Jede zweite Partie', 'partie', 'Nach mindestens 14 Partien unter der Hälfte gewinnt ein Spieler im Monat wieder jede zweite.'],
+  partner_best:['Bester Partner', 'partie', 'Jede achte gemeinsame Partie mit dem Partner, neben dem die Siegquote am höchsten ist (Partner ab sechs Partien); der Satz nennt die Quote neben allen.'],
   milestone_goals:['Tor-Meilenstein', 'partie', 'Runde Zahlen der eigenen Tore, Leiter ab 500.'],
   milestone_elo:['Elo-Marke', 'partie', 'Runde Elo-Marken der Laufbahn.'],
   fluch:['Gebrochener Fluch', 'partie', 'Erster Sieg nach mindestens fünf Niederlagen in Folge gegen denselben, der letzte Sieg gegen ihn zwei Wochen her oder nie.'],
@@ -158,12 +168,17 @@ const ANLASS = {
 };
 
 // ── Zeichnungen und Anlässe einer Karte, lesbar ─────────────────────
-const KOPF = {tacho:'Tacho', muenze:'Münzwurf', tauziehen:'Tauziehen', abstand:'Abstand', deutlich:'Deutlicher Sieg',
-  aussenseiter:'Außenseiter', krimi:'Krimi', feld:'Spielfeld', streu:'Streuung', mosaik:'Mosaik', zeile:'Ergebniszeile',
-  gefaelle:'Gefälle', transfer:'Transfer'};
+const KOPF = {tafel:'Klapptafel', strom:'Elo-Strom', balken:'Lebensbalken', herz:'Herzschlag', zunull:'Zu null',
+  tacho:'Tacho', muenze:'Münzwurf', tauziehen:'Tauziehen', abstand:'Abstand', deutlich:'Band des klaren Siegs',
+  aussenseiter:'Wippe', krimi:'Krimi', feld:'Spielfeld', streu:'Erwartung gegen Ergebnis', mosaik:'Mosaik', zeile:'Ergebniszeile',
+  gefaelle:'Zwei Welten', transfer:'Transfer', pucks:'Pucks'};
 const FUSS = {premiere:'Premiere', gegner:'Gegner', revanche:'Revanche', tagesring:'Tagesring', chemie:'Chemie',
   rolle:'Rolle', wende:'Wende', rang:'Rang', verteilung:'Verteilung', uhr:'Uhr des Tages', ueberholt:'Überholt',
-  duoserie:'Duo-Serie', zaehlwerk:'Zählwerk', gipfel:'Gipfel', nerven:'Nerven', rueckkehr:'Rückkehr'};
+  duoserie:'Duo gegen Duo', zaehlwerk:'Zählwerk', gipfel:'Gipfel', nerven:'Nerven', rueckkehr:'Rückkehr',
+  spitze:'Tabelle', serie:'Serie', riss:'Serienbruch', teamserie:'Duo-Serie', duell:'Rivalität', medaille:'Auszeichnung',
+  marken:'Runde Zahl', kippt:'Duell kippt', woche:'Woche', plus:'Tag im Plus', hoehe:'Elo des Tages',
+  monatsbest:'Bester Tag des Monats', halb:'Jede zweite Partie', partner:'Partner', aussenseiter:'Wippe',
+  weste:'Weiße Weste', hoch:'Höchststand'};
 const name = t => (ANLASS[t] && ANLASS[t][0]) || (FORM[t] && FORM[t].name) || t;
 const marke = k => {
   const [a, b, x] = k.split(':');
@@ -298,7 +313,7 @@ const inhalt = `
     <li><b>Ordnen.</b> Die Reihenfolge ist die Zeit. Bei gleicher Zeit steht die wichtigere Karte oben (${c('_storyFolge')}); so stehen die Ehrungen der Woche und des Monats direkt unter ihrer Karte.</li>
     <li><b>Auszeichnen.</b> Breaking entscheidet ${c('_isBreaking')} nach dem Verdichten. Die Karte des Tages (${c('_newsTagKarte')}) hebt an Spieltagen ab der ${L.tagKartePartien}. Partie die spannendste hervor, nie Breaking, den Spieler des Tages, einen Rückblick oder eine negative Karte.</li>
     <li><b>Einsortieren.</b> Jede Karte gehört genau einer Seite (${c('_newsSeite')}); Breaking liegt quer dazu.</li>
-    <li><b>Lesen.</b> Neu ist, was seit dem Lesestand dazukam. Setzt eine Karte eine frühere fort, sagt sie es mit einem Faden, an den Partien nachgeprüft (${c('_newsFaeden')}). Neue Zeilen anderer Geräte kommen über Realtime und sortieren sich nach derselben Regel ein.</li>
+    <li><b>Lesen.</b> Neu ist, was seit dem Lesestand dazukam. Setzt eine Karte der Tafel eine frühere fort, sagt sie es mit einem Faden, an den Partien nachgeprüft (${c('_newsFaeden')}); eine Partie-Karte trägt keinen, was sie beendet oder fortsetzt, sagt ihre eigene Zeile. Neue Zeilen anderer Geräte kommen über Realtime und sortieren sich nach derselben Regel ein.</li>
   </ol>
 </section>
 

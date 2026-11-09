@@ -230,7 +230,7 @@ const roh = JSON.parse(K(`(() => { const form = ${FORM_JS}, je = {};
 
 // Die Zahlen, die im Code stehen — nicht abgeschrieben, sondern gelesen.
 const konstanten = JSON.parse(K(`JSON.stringify({limits:NEWS_LIMITS, prio:STORY_PRIO, fenster:NEWS_FENSTER_TAGE,
-  halten:NEWS_HALTEN_TAGE, abgemeldet:STORY_ABGEMELDET,
+  halten:NEWS_HALTEN_TAGE, abgemeldet:STORY_ABGEMELDET, pauseTage:NEWS_PAUSE_TAGE,
   seiten:NEWS_SEITEN, ehrungSchluss:EHRUNG_SCHLUSS, ehrungKopf:[...EHRUNG_KOPF],
   badgeMarken:NEWS_BADGE_MARKEN, badgeMarkenKlein:NEWS_BADGE_MARKEN_KLEIN,
   insOben:INSIGNIUM_OBEN})`));
