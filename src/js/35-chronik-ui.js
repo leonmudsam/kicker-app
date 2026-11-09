@@ -48,13 +48,20 @@ function _chronKlasse(tid){ return tid ? chronikStufe(tid) : ''; }
 // `schatten` ist die Schattenseite, die den Halter in diesem Monat
 // überschattet (`chronikUeberschattet`): dann steht die Null da, die er
 // bekommt, und nicht der Wert, den die Chronik sonst hätte.
+// Eine Schattenseite trägt denselben Abstand (`chronikSchattenGewicht`):
+// nach ihm entscheidet sich, ob sie eine besondere Chronik desselben Monats
+// überschattet [§C39]. Ihr Blatt zeigte nur den Ausschlag der Schwelle, und
+// ob „Der Pechvogel" eine andere Chronik auslöscht, war nicht abzulesen.
 function _chronFaktenHtml(def, wert, schatten){
   if(!def || !CHRONIK_KLASSE_NAME[def.klasse]) return '';
   const p = schatten ? 0 : chronikPunkte(def.id, wert);
-  const z = chronikUeber(def.id, wert);
+  const z = chronikUeber(def.id, wert) ?? chronikSchattenGewicht(def.id, wert);
+  // Bei einer Schattenseite heißen Klasse und Art gleich: „Schattenseite"
+  // stand zweimal nebeneinander und lief bei 390 px aus beiden Kacheln.
+  const klasse = CHRONIK_KLASSE_NAME[def.klasse], art = CHRONIK_ART_NAME[def.kunst] || '—';
   return rcpZahlenHtml([
-    {v:CHRONIK_KLASSE_NAME[def.klasse], l:'Klasse'},
-    {v:CHRONIK_ART_NAME[def.kunst] || '—', l:'Art'},
+    {v:klasse, l:'Klasse'},
+    art !== klasse ? {v:art, l:'Art'} : null,
     {v:chronikSigma(def.aus), l:'Ausschlag', d:z > 0 ? '+' + chronikSigma(z) : null},
     p > 0 ? {v:'+' + p, l:'Prestige', ton:'gold',
              d:z == null ? '+ Bonus' : CHRONIK_GRUNDWERT + ' + ' + chronikBonus(def.id, wert)}
@@ -337,6 +344,14 @@ function showDisziplin(tid, sid){
   // Überschattet wird je Halter; das Blatt nennt es, wenn es einen einzigen
   // Halter gibt und der überschattet ist.
   const schattenM = eigene.length === 1 ? chronikUeberschattet(T, eigene[0]) : null;
+  // Und umgekehrt: das Blatt einer Schattenseite nennt, was sie bei ihrem
+  // Halter überschattet. Sonst stand das nur im Blatt der anderen Chronik.
+  // Ob Schattenseite, steht an der Disziplin (`_chronikMonat`), nicht am
+  // Eintrag der Saison: `def.monat` gibt es dort nicht, und der Kopf eines
+  // Schattenseiten-Blatts stand deshalb in Gold statt in Rot.
+  const mon = _chronikMonat(tid), monatSchatten = !!(mon && mon.art === 'schatten');
+  const loescht = eigene.length === 1 && monatSchatten
+    ? T.awarded.filter(a => a.pid === eigene[0].pid && chronikUeberschattet(T, a) === eigene[0]) : [];
   const zweitM = reihe.find(r => !halterM.has(r.pid)) || null;
   const zweitMA = zweitM ? belegAnteil(zweitM.wert) : null;
   const beleg = reihe.length ? belegHtml({
@@ -347,7 +362,6 @@ function showDisziplin(tid, sid){
   }) : '';
 
   // Der Kopf jedes Blatts [§C27]; der Kasten darunter trägt die Bedingung.
-  const monatSchatten = def.monat && def.monat.art === 'schatten';
   openSheet(`
     ${blattKopfHtml({ic:def.ic, ton:monatSchatten ? 'rot' : 'gold', titel:def.name,
       unter:'Monatschronik · ' + seasonLabel(sid) + (T.live ? ' · läuft noch' : '')})}
@@ -367,6 +381,8 @@ function showDisziplin(tid, sid){
     </div>
     ${_chronFaktenHtml(def, eigene.length ? eigene[0].wert : undefined, schattenM)}
     ${schattenM ? `<div class="tnote">„${esc(schattenM.name)}“ wiegt in diesem Monat schwerer. Diese Chronik bleibt in der Tafel, bringt aber kein Prestige.</div>` : ''}
+    ${loescht.length ? `<div class="tnote">Wiegt in diesem Monat schwerer als ${esc(_namenListe(loescht.map(a => '„' + a.name + '“')))}. ${
+      loescht.length === 1 ? 'Sie bleibt' : loescht.length === 2 ? 'Beide bleiben' : 'Alle bleiben'} in der Tafel, ${esc(pname(eigene[0].pid))} bekommt dafür aber kein Prestige.</div>` : ''}
     ${def.wie ? `<div class="tnote">${esc(def.wie)}</div>` : ''}
     ${beleg}
     ${rang.length

@@ -3290,9 +3290,9 @@ const ok = (c, msg, det) => {
   //    „legendär" ist neun Zeichen und passt, „Konstanz" acht und passt
   //    knapper.
   console.log('\n═══ DIE ZAHLENREIHE DER CHRONIK ═══');
-  const zahlen = await page.evaluate(() => {
+  const ZAHLEN = (breite) => {
     const box = document.createElement('div');
-    box.style.width = '430px';
+    box.style.width = breite + 'px';
     document.body.appendChild(box);
     const K = window.__k.eval.bind(window.__k);
     // Jede Chronik des Katalogs, nicht nur die, die heute jemand haelt —
@@ -3336,7 +3336,12 @@ const ok = (c, msg, det) => {
       K('closeSheet()');
     }
     return {zu, n, nd, blatt};
-  });
+  };
+  // Bei 430 und bei 320 px Blattbreite, so schmal wie das Blatt auf einem
+  // Telefon mit 360 px: „Schattenseite" passte bei 430 und lief bei 390 aus
+  // seiner Kachel.
+  const zahlen = await page.evaluate(ZAHLEN, 430);
+  zahlen.zu = zahlen.zu.concat((await page.evaluate(ZAHLEN, 320)).zu.map(z => '320 px: ' + z));
   ok(zahlen.n > 0 && zahlen.nd > 0, 'die Zahlenreihe der Chronik wird gebaut', zahlen.n + ' Zellen, ' + zahlen.nd + ' Zeilen darunter');
   ok(zahlen.zu.length === 0, 'kein Wert und keine Zeile darunter laeuft ueber ihre Zelle',
      zahlen.zu.slice(0, 3).join(', ') || 'keiner');
@@ -3344,6 +3349,47 @@ const ok = (c, msg, det) => {
        && zahlen.blatt.d === '100 + ' + zahlen.blatt.soll.b && /^\+\d+,?\d* σ$/.test(zahlen.blatt.ueber),
      'das Blatt einer gehaltenen Chronik zeigt Grundwert, Bonus und den Abstand zur Schwelle',
      JSON.stringify(zahlen.blatt));
+
+  // ── Die Schattenseite zeigt ihren Abstand zur Schwelle ─────────────
+  //    Nach ihm entscheidet sich, ob sie eine besondere Chronik desselben
+  //    Monats überschattet [§C39]. „Der Pechvogel" zeigte nur „1,54 σ",
+  //    den Ausschlag der Schwelle, und nicht, wie weit Leon darüber lag.
+  //    Überschattet sie etwas, nennt ihr Blatt es.
+  const schattenBlatt = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const fall = JSON.parse(K(`JSON.stringify((function(){
+      let ab = null, ue = null;
+      for(const sid of availableSeasons()){
+        const T = seasonTitles(sid);
+        for(const a of T.awarded){
+          const g = chronikSchattenGewicht(a.titleId, a.wert);
+          const allein = T.awarded.filter(x => x.titleId === a.titleId).length === 1;
+          if(!ab && g > 0 && allein) ab = {sid, id:a.titleId, soll:'+' + chronikSigma(g)};
+          const s = chronikUeberschattet(T, a);
+          if(!ue && s && T.awarded.filter(x => x.titleId === s.titleId).length === 1) ue = {sid, id:s.titleId, name:a.name};
+        }
+        if(ab && ue) break;
+      }
+      return {ab, ue};
+    })())`));
+    const lies = f => {
+      if(!f) return null;
+      K('showDisziplin(' + JSON.stringify(f.id) + ',' + JSON.stringify(f.sid) + ')');
+      const zellen = [...document.querySelectorAll('#sheet .rcp-z-s')];
+      const aus = zellen.find(z => /Ausschlag/.test((z.querySelector('.rcp-z-l') || {}).textContent || ''));
+      const r = {ueber:aus && aus.querySelector('.rcp-z-d') ? aus.querySelector('.rcp-z-d').textContent.trim() : '',
+                 noten:[...document.querySelectorAll('#sheet .tnote')].map(n => n.textContent.trim())};
+      K('closeSheet()');
+      return r;
+    };
+    return {fall, ab:lies(fall.ab), ue:lies(fall.ue)};
+  });
+  ok(schattenBlatt.fall.ab && schattenBlatt.ab && schattenBlatt.ab.ueber === schattenBlatt.fall.ab.soll,
+     'das Blatt einer Schattenseite zeigt, wie weit ihr Halter über der Schwelle liegt',
+     JSON.stringify({fall:schattenBlatt.fall.ab, blatt:schattenBlatt.ab && schattenBlatt.ab.ueber}));
+  ok(!schattenBlatt.fall.ue || (schattenBlatt.ue && schattenBlatt.ue.noten.some(t => t.includes('„' + schattenBlatt.fall.ue.name + '“') && /kein Prestige/.test(t))),
+     'das Blatt einer Schattenseite nennt die Chronik, die sie im selben Monat überschattet',
+     JSON.stringify({fall:schattenBlatt.fall.ue, noten:schattenBlatt.ue && schattenBlatt.ue.noten}));
 
   console.log('\n═══ DIE CHRONIK-MATRIX ═══');
   const matrix = await page.evaluate(() => {
