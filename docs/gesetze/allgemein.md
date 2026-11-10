@@ -68,7 +68,9 @@ Wortlaut zitiert, nicht mit einer Nummer.
   Die Einstellungen sprachen von „MoV-Dämpfung", „Underdog-Boost
   (Spiele-Gap)" und „tanh-skaliert"; ihre Regler heißen jetzt, was sie tun
   („Tordifferenz bei Niederlagen", „Aufhol-Zuschlag"), und die Posten der
-  Elo-Analyse heißen wie ihr Regler. Ebenso wenig steht dort
+  Elo-Analyse heißen wie ihr Regler. Ein Regler zeigt den Wert, mit dem
+  gerechnet wird, nicht seine Schritte: beim „Zuschlag je Partie" stand
+  „15 Elo", gemeint sind 1,5. Ebenso wenig steht dort
   ein Befehl in Du-Form („Tippe auf eine Linie"), ein englisches Wort
   („Tap für Details", „Letztes Update", „Rollen-Performance", „Peak",
   „Savepoint", „Backup") oder ein Kürzel („min. 5 Siege", „Min. Spiele",

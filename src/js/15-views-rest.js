@@ -292,8 +292,10 @@ function vMatch(){
 //     Spieler verwalten, Saison-Recap, App-Reset (hinter Passwort-Lock).
 // ╚═════════════════════════════════════════════════════════════════════════╝
 function vSettings(){
-  const sl=(id,name,val,min,max,suf)=>`<div class="slider-wrap">
-    <div class="sh"><span class="sn">${name}</span><span class="sv"><span id="${id}v">${val}</span>${suf||''}</span></div>
+  // `zeig` ist die Beschriftung, wenn der Regler in anderen Schritten zählt
+  // als der Wert: der Zuschlag je Partie stand als „15" da und meint 1,5 Elo.
+  const sl=(id,name,val,min,max,suf,zeig)=>`<div class="slider-wrap">
+    <div class="sh"><span class="sn">${name}</span><span class="sv"><span id="${id}v">${zeig==null?val:zeig}</span>${suf||''}</span></div>
     <input type="range" id="${id}" min="${min}" max="${max}" value="${val}"></div>`;
   // Aktuelle Werte für Erklärungen (mit Fallbacks)
   const c = {
@@ -338,7 +340,7 @@ function vSettings(){
 
     <div class="cfg-section-title">Zuschläge</div>
     <div class="card">
-      ${sl('cfgBonus','Zuschlag je Partie',Math.round((cfg.match_bonus ?? 1.5)*10),0,50,)}
+      ${sl('cfgBonus','Zuschlag je Partie',Math.round((cfg.match_bonus ?? 1.5)*10),0,50,' Elo',c.bonus)}
       ${sl('cfgExpProt','Schutz für Erfahrene',c.expProt,0,30,'%')}
       ${sl('cfgUdElo','Außenseiter-Zuschlag (Elo)',c.udElo,0,100,'%')}
       ${sl('cfgUdGames','Aufhol-Zuschlag (Partien)',c.udGames,0,100,'%')}

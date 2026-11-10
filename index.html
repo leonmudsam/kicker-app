@@ -3088,7 +3088,7 @@
   .rcp-aw-label{font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);
     font-family:'Sometype Mono',monospace;font-weight:700}
   .rcp-aw-name{font-family:'Archivo Black',sans-serif;font-size:13px;margin-top:3px;
-    letter-spacing:-.01em;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    letter-spacing:-.01em;line-height:1.15;overflow-wrap:break-word}
   .rcp-aw-val{font-family:'Sometype Mono',monospace;font-size:10.5px;color:var(--ink2);margin-top:3px;font-weight:600}
 
 
@@ -6685,7 +6685,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.11.10.29085bd7';
+const BUILD_VERSION='2026.11.10.29250ea0';
 function forceReload(nach){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -14310,8 +14310,8 @@ function vMatch(){
 }
 
 function vSettings(){
-  const sl=(id,name,val,min,max,suf)=>`<div class="slider-wrap">
-    <div class="sh"><span class="sn">${name}</span><span class="sv"><span id="${id}v">${val}</span>${suf||''}</span></div>
+  const sl=(id,name,val,min,max,suf,zeig)=>`<div class="slider-wrap">
+    <div class="sh"><span class="sn">${name}</span><span class="sv"><span id="${id}v">${zeig==null?val:zeig}</span>${suf||''}</span></div>
     <input type="range" id="${id}" min="${min}" max="${max}" value="${val}"></div>`;
   const c = {
     k:          Math.round(cfg.k_factor),
@@ -14355,7 +14355,7 @@ function vSettings(){
 
     <div class="cfg-section-title">Zuschläge</div>
     <div class="card">
-      ${sl('cfgBonus','Zuschlag je Partie',Math.round((cfg.match_bonus ?? 1.5)*10),0,50,)}
+      ${sl('cfgBonus','Zuschlag je Partie',Math.round((cfg.match_bonus ?? 1.5)*10),0,50,' Elo',c.bonus)}
       ${sl('cfgExpProt','Schutz für Erfahrene',c.expProt,0,30,'%')}
       ${sl('cfgUdElo','Außenseiter-Zuschlag (Elo)',c.udElo,0,100,'%')}
       ${sl('cfgUdGames','Aufhol-Zuschlag (Partien)',c.udGames,0,100,'%')}
@@ -18330,7 +18330,7 @@ function bind(){
   bindSlider('cfgWinBoost','win_boost',v=>v/100,v=>Math.round(v));
   bindSlider('cfgMovDamp','mov_loss_damp',v=>v/100,v=>Math.round(v));
   bindSlider('cfgLowEloLossDamp','low_elo_loss_damp',v=>v/100,v=>Math.round(v));
-  bindSlider('cfgBonus','match_bonus',v=>v/10,v=>Math.round(v));
+  bindSlider('cfgBonus','match_bonus',v=>v/10,v=>komma(v/10,1));
   bindSlider('cfgStartElo','start_elo',v=>v,v=>Math.round(v));
   bindSlider('cfgMovMax','mov_max_boost',v=>v/100,v=>Math.round(v));
   bindSlider('cfgExpProt','exp_protect_max',v=>v/100,v=>Math.round(v));

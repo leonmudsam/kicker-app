@@ -219,7 +219,7 @@ function bind(){
   bindSlider('cfgWinBoost','win_boost',v=>v/100,v=>Math.round(v));
   bindSlider('cfgMovDamp','mov_loss_damp',v=>v/100,v=>Math.round(v));
   bindSlider('cfgLowEloLossDamp','low_elo_loss_damp',v=>v/100,v=>Math.round(v));
-  bindSlider('cfgBonus','match_bonus',v=>v/10,v=>Math.round(v));
+  bindSlider('cfgBonus','match_bonus',v=>v/10,v=>komma(v/10,1));
   // Neue Slider
   bindSlider('cfgStartElo','start_elo',v=>v,v=>Math.round(v));
   bindSlider('cfgMovMax','mov_max_boost',v=>v/100,v=>Math.round(v));

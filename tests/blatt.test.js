@@ -5810,6 +5810,36 @@ return JSON.stringify(funde,null,1);
   ok(rueck.tag.bahn && rueck.tag.zeilen === 0 && rueck.tag.elo && rueck.tag.feld > 3 && rueck.tag.datum && rueck.tag.fehler.length === 0,
      'der Tagesrückblick zeigt den gewählten Tag als Bahn, die Elo über den Tag und das Feld',
      JSON.stringify(rueck.tag).slice(0, 200));
+  // Die Kachel eines Höhepunkts kürzt keinen Namen: die größte Überraschung
+  // eines Tages gehört einem Duo, und „Leon & Johannes" stand als „Leon &
+  // Joha…" da. Gemessen mit zwei langen Namen in zwei Spalten bei 360 px.
+  const kachel = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const box = document.createElement('div');
+    box.style.cssText = 'width:320px;position:absolute;left:0;top:0';
+    box.innerHTML = '<div class="rcp-awards">' + K(`rcpKachelHtml({ic:'ball', label:'Torjäger', name:'Julian', wert:'10,0 Tore', ton:'metall'})
+      + rcpKachelHtml({ic:'bolt', label:'Größte Überraschung', name:'Johannes & Maximilian', wert:'44 % Chance', ton:'metall'})`) + '</div>';
+    document.body.appendChild(box);
+    const n = [...box.querySelectorAll('.rcp-aw-name')].map(e => ({t:e.textContent, zu:e.scrollWidth > e.clientWidth + 1, kappe:getComputedStyle(e).textOverflow,
+      raus:e.getBoundingClientRect().right > e.closest('.rcp-aw').getBoundingClientRect().right + 0.5}));
+    box.remove();
+    return n;
+  });
+  ok(kachel.length === 2 && kachel.every(k => !k.zu && !k.raus && k.kappe !== 'ellipsis'),
+     'die Kachel eines Höhepunkts im Rückblick kürzt keinen Namen und hält ihn in ihrer Karte', JSON.stringify(kachel));
+  // Der Regler „Zuschlag je Partie" zählt in Zehnteln und stand als „15"
+  // da, wo 1,5 Elo gemeint sind; auch beim Ziehen.
+  const regler = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    K("closeSheet(true); tab='settings'; render()");
+    const v = document.getElementById('cfgBonusv'), sl = document.getElementById('cfgBonus');
+    const out = {start:v && v.textContent, soll:K('komma(cfg.match_bonus ?? 1.5, 1)'), einheit:v ? v.parentElement.textContent.replace(v.textContent, '').trim() : ''};
+    if(sl){ const alt = sl.value; sl.value = '20'; sl.dispatchEvent(new Event('input')); out.gezogen = v.textContent; sl.value = alt; sl.dispatchEvent(new Event('input')); }
+    K("tab='ranking'; render()");
+    return out;
+  });
+  ok(regler.start === regler.soll && regler.gezogen === '2,0' && regler.einheit === 'Elo',
+     'der Regler „Zuschlag je Partie" zeigt Elo mit Komma, auch beim Ziehen', JSON.stringify(regler));
   ok(rueck.saisonVgl.d === rueck.saisonVgl.soll && rueck.saisonVgl.auf.length > 0
        && rueck.saisonVgl.auf.join() === rueck.saisonVgl.aufSoll.join() && rueck.saisonVgl.ab.join() === rueck.saisonVgl.abSoll.join()
        && rueck.saisonVgl.buehne && rueck.saisonVgl.zuerst && rueck.saisonVgl.awards >= 10,

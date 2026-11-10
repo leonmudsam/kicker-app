@@ -12,6 +12,7 @@
 - Von selbst öffnet sich höchstens ein Rückblick am Tag (`_autoRueckblickHeute`, gemerkt, sobald er geplant ist): der Saison-Rückblick in den ersten drei Tagen des Monats (`autoShowSeasonRecap`) geht vor, die Woche kommt am Montag oder Dienstag, und am Mittwoch, wenn der Monat an einem dieser Tage wechselt. Gesehen ist ein Rückblick, sobald er offen ist; Wegwischen zählt. Der Monatsabschluss im Feed öffnet den Saison-Rückblick.
 - Was sich von selbst öffnet — Monat, Woche, Abschied —, deckt nichts zu, das offen ist (`_etwasOffen`): kein Blatt, keine Story, kein Popover, keinen Dialog, kein Formular, in das jemand schreibt. Ist beim Öffnen des Monats etwas offen, nimmt er seine Merker zurück und kommt beim nächsten Abruf; vorher ging er 600 ms nach einem Datenabruf über das Bearbeiten einer Partie auf.
 - Ein Rückblick zeigt den Stand von damals (`insigniumSvg` mit `opt.titel`, `opt.pos`); der Reif bleibt der heutige.
+- Eine Kachel schreibt jeden Namen aus (`.rcp-aw-name` bricht um): ein Award kann einem Duo gehören, und „Leon & Johannes" stand bei 390 px als „Leon & Joha…" da.
 - Gestaltung steht im CSS; ein `style`-Attribut trägt nur einen berechneten Wert.
 
 ## Stellen

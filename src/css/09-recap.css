@@ -72,8 +72,11 @@
   .rcp-aw-info{flex:1;min-width:0}
   .rcp-aw-label{font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);
     font-family:'Sometype Mono',monospace;font-weight:700}
+  /* Der Name bricht um, statt mit „…" zu enden [§C31]: die größte
+     Überraschung eines Tages gehört einem Duo, und „Leon & Johannes" stand
+     bei 390 px als „Leon & Joha…" da. */
   .rcp-aw-name{font-family:'Archivo Black',sans-serif;font-size:13px;margin-top:3px;
-    letter-spacing:-.01em;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    letter-spacing:-.01em;line-height:1.15;overflow-wrap:break-word}
   .rcp-aw-val{font-family:'Sometype Mono',monospace;font-size:10.5px;color:var(--ink2);margin-top:3px;font-weight:600}
 
   /* ── [§C31] Die Bauteile der Rückblicke ──────────────────────────────
