@@ -1095,7 +1095,11 @@ const SP_FORM = {
       const q = id => { const p = F.W.find(o => o !== id);
         const ohne = _spEigene(id, F.m).filter(y => !(_spTeam(y, _spSeite(y, id)).includes(p)));
         return Math.round(ohne.filter(y => _spGew(y, id)).length / Math.max(1, ohne.length) * 100); };
-      return {t:x.rund ? `${_spNl(F.W)} feiern den ${F.duo.s}. gemeinsamen Sieg` : `${_spNl(F.W)} sind eingespielt`,
+      // Derselbe Wortlaut wie die Schlagzeile einer gewöhnlichen Partie
+      // (`_spKontext`): unter „Leon und Leo gewinnen zum 5. Mal zusammen"
+      // stand als Zeile des Fußes „Leon und Leo feiern den 5. gemeinsamen
+      // Sieg". Bei gleichem Wortlaut lässt `_spZeilen` die Zeile weg.
+      return {t:x.rund ? `${_spNl(F.W)} gewinnen zum ${F.duo.s}. Mal zusammen` : `${_spNl(F.W)} sind eingespielt`,
         d:`Mit anderen Partnern gewinnt ${_spName(F.W[0])} ${q(F.W[0])} % und ${_spName(F.W[1])} ${q(F.W[1])} %.`};
     }},
   // Der Lieblingsgegner und der gebrochene Fluch: Spieler gegen Spieler.
@@ -2334,7 +2338,10 @@ function _spZeilen(teile, titel, occ){
   // Eine Nebensache: die gemeinsame Pleite und eine Auszeichnung, die keiner
   // will. Sie stand als rote Zeile unter jedem zweiten Sieg.
   const neben = t => ty(t) === 'team_loss_streak' || (ty(t) === 'badge_unlocked' && ref(t).rarity === 'negative');
-  const alle = (teile || []).filter(t => ty(t) !== 'spiel');
+  // Der Serien-Rekord enthält die Serie: unter „Leon stellt mit 5 Siegen
+  // den Serien-Rekord der Liga auf" stand „Leon zündet die 5er-Serie".
+  const rekordVon = new Set((teile || []).filter(t => ty(t) === 'streak_record').map(t => ref(t).pid));
+  const alle = (teile || []).filter(t => ty(t) !== 'spiel' && !(ty(t) === 'win_streak' && rekordVon.has(ref(t).pid)));
   const haupt = alle.find(t => String(t.titel || '').trim() === kt) || null;
   const rest = alle.filter(t => t !== haupt);
   const fuss = rest.filter(gezeichnet).concat(haupt && gezeichnet(haupt) ? [haupt] : []);
@@ -2350,8 +2357,13 @@ function _spZeilen(teile, titel, occ){
   // gespeicherter Satz (`zeile`). Sie steht als letzte Zeile direkt über
   // ihm. Zeichnet er den Hauptanlass, sagt es schon die Schlagzeile.
   const ic = occ && ((SP_FORM[occ.key] || {}).ic || (SP_ANLASS[occ.key] || {}).ic);
+  // Sagt die Zeile einer Form dasselbe wie die Schlagzeile, zeichnet der
+  // Fuß die Schlagzeile, und sie fällt weg. Gespeicherte Karten tragen den
+  // alten Wortlaut („feiern den 5. gemeinsamen Sieg"), deshalb der Vergleich
+  // auf den gemeinsamen Nenner.
+  const gleich = x => String(x || '').trim().replace(/feiern den (\d+)\. gemeinsamen Sieg$/, 'gewinnen zum $1. Mal zusammen');
   const unter = fuss.length ? (fuss.indexOf(haupt) < 0 ? fuss[0] : null)
-    : (occ && occ.zeile ? {titel:occ.zeile, ic:ic || 'chartBar', form:true} : null);
+    : (occ && occ.zeile && gleich(occ.zeile) !== gleich(kt) ? {titel:occ.zeile, ic:ic || 'chartBar', form:true} : null);
   // Die Nebensachen fehlen nur hier: das Blatt zeigt jedes Teil.
   return {zeilen:zeilen.filter(t => t.brk).concat(zeilen.filter(t => !t.brk)), unter};
 }

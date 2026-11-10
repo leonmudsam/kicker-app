@@ -4581,22 +4581,38 @@ ok(_sprachFund.length === 0,
 
 // Die Richtung steht im Wort, nicht im Vorzeichen: unter „Am nächsten
 // dran" stand „−12 %-Punkte über der Rechnung", „-0,2 Tore mehr im Sturm",
-// „gegen 3 Gegner zuletzt −13 %-Punkte stärker" und „bei 15 Partien war
-// damit zu 227,2 % zu rechnen". Gelesen wird der Beleg jedes Nächsten an
-// jeder Monatschronik in jedem Monat der Fixture.
+// „gegen 3 Gegner zuletzt −13 %-Punkte stärker", „-103 Elo vor Leon auf
+// Platz zwei", „von Platz 1 auf Platz 2 · -1 Plätze" und „bei 15 Partien war
+// damit zu 227,2 % zu rechnen"; im Rekord „-262 Elo" und „1 Tage"; hinter
+// dem Beleg „gewertet 106 %" und „gewertet −4 Prozentpunkte". Gelesen wird
+// jeder Beleg, den die App zeigen kann: Halter, das ganze Feld und der
+// Nächste jeder Monatschronik in jedem Monat der Fixture, Halter und
+// Rangliste jedes Liga-Rekords.
 const _richtung = JSON.parse(K.eval(`JSON.stringify((function(){
-  const falsch = [], R = [/[−-]\\d+(?:,\\d+)? %-Punkte (?:über|stärker|besser|weiter)/, /[−-]\\d+(?:,\\d+)? (?:eigene )?(?:Gegen)?[Tt]ore (?:mehr|weniger)/,
-    /zu (?:\\d{3,}|[1-9]\\d{2})(?:,\\d+)? % zu rechnen/, /(?<![\\d,])1 (?:Wochen|Prozentpunkte)\\b/];
+  const falsch = [], R = [
+    /[−-]\\d+(?:,\\d+)? %-Punkte (?:über|unter|stärker|schwächer|besser|schlechter|öfter|seltener|weiter|mehr|weniger)/,
+    /[−-]\\d+(?:,\\d+)? (?:eigene )?(?:Gegen)?[Tt]ore (?:mehr|weniger)/,
+    /[−-]\\d+ (?:Plätze|Platz|Elo (?:vor|hinter))/,
+    /(?:^|[\\s(])-\\d/, /\\+[−-]\\d/, /NaN|undefined|null/,
+    /zu (?:\\d{3,})(?:,\\d+)? % zu rechnen/, /gewertet (?:−|1\\d\\d|[2-9]\\d\\d)/,
+    /(?<![\\d,.:−-])\\b1 (?:Wochen|Prozentpunkte|Plätze|Tage|Spieltage|Siege|Partien|Niederlagen|Duelle|Gegner|Partner)\\b/];
   let n = 0;
-  availableSeasons().forEach(sid => SEASON_TITLES.forEach(d => {
-    const x = _stNahDef(sid, d.id);
-    if(!x || !x.ev) return;
-    n++;
-    R.forEach(r => { if(r.test(x.ev)) falsch.push(sid + ' ' + d.id + ': ' + x.ev); });
-  }));
+  const lies = (wo, t) => { if(!t) return; n++; R.forEach(r => { if(r.test(String(t))) falsch.push(wo + ': ' + t); }); };
+  availableSeasons().forEach(sid => {
+    seasonTitles(sid).awarded.forEach(a => lies(sid + ' ' + a.titleId + ' Halter', a.ev));
+    SEASON_TITLES.forEach(d => {
+      const x = _stNahDef(sid, d.id);
+      if(x) lies(sid + ' ' + d.id + ' nah', x.ev);
+      try { const r = d.pick(_seasonTitleCtx(sid), new Set());
+        if(r && r.rang && r.evFuer) r.rang.forEach(pid => lies(sid + ' ' + d.id + ' Feld', r.evFuer(pid))); } catch(e){ falsch.push(sid + ' ' + d.id + ': ' + e.message); }
+    });
+  });
+  const H = chronicleHolders();
+  CHRONICLES.forEach(c => { if(H[c.id]) lies(c.id + ' Halter', H[c.id].ev);
+    try { (chronicleRang(c.id) || []).forEach(x => lies(c.id + ' Rang', x.ev)); } catch(e){ falsch.push(c.id + ': ' + e.message); } });
   return {n, falsch};
 })())`));
-ok(_richtung.n > 50 && !_richtung.falsch.length, 'ein Beleg nennt die Richtung im Wort, keine Zahl über 100 % als Wahrscheinlichkeit, Einzahl bei eins',
+ok(_richtung.n > 500 && !_richtung.falsch.length, 'ein Beleg nennt die Richtung im Wort, kein Minus als Bindestrich, keine Zahl über 100 % als Wahrscheinlichkeit oder Wertung, Einzahl bei eins',
    _richtung.falsch.slice(0, 3).join(' | ') || _richtung.n + ' Belege');
 // Und es gibt die Marke „Neu"/„Ueberarbeitet" gar nicht mehr.
 ok(K.eval(`CHRONICLES.every(c => c.stand === undefined)`)

@@ -232,6 +232,13 @@ const _ppZeichen = v => { const d = Math.round(v * 100); return d > 0 ? '+' + d 
 // der Rechnung" und „-0,2 Tore mehr im Sturm" lasen sich als Widerspruch.
 const _ppLage = (v, plus, minus) => { const d = Math.round(v * 100); return `${Math.abs(d)} %-Punkte ${d < 0 ? minus : plus}`; };
 const _stRichtung = (v, mehr, weniger) => `${komma(Math.abs(v))} ${v < 0 ? weniger : mehr}`;
+// Eine Elo unter null trägt das Minuszeichen und keinen Bindestrich:
+// „-2 statt 178 Elo" stand im Beleg des Gegenwinds.
+const _stElo = v => { const d = Math.round(v); return (d < 0 ? '−' : '') + Math.abs(d); };
+// Plätze mit Richtung und Einzahl: unter „Am nächsten dran" stand „von
+// Platz 1 auf Platz 2 · -1 Plätze" und „von Platz 3 auf Platz 2 · 1 Plätze".
+const _stPlaetze = (v, plus, minus) => { const n = Math.abs(Math.round(v));
+  return `${n} ${n === 1 ? 'Platz' : 'Plätze'}${n ? ' ' + (v < 0 ? minus : plus) : ''}`; };
 // Die Vergleichsquote eines Belegs, aus der eigenen Quote und dem Abstand:
 // so ergibt die Rechnung auf dem Bildschirm genau den Abstand davor. Einzeln
 // gerundet stand „+13 %-Punkte · 67 statt 55 %", und wer nachrechnete, kam
@@ -721,7 +728,7 @@ const DISZIPLINEN = [
       wie:'Ein voller Spieltag hat vier oder mehr eigene Partien. Gezählt wird, an wie vielen davon keine Partie verloren ging, geteilt durch alle vollen Spieltage.',
       cond:'Höchster Anteil voller Spieltage ohne Niederlage, ab 8 vollen Spieltagen',
       val:p => p.bigDays >= 8 ? p.perfDays/p.bigDays : null,
-      ev:(p,v) => `${Math.round(v*100)} % aller ${p.bigDays} vollen Spieltage ohne eine einzige Niederlage · ${p.perfDays} Tage`
+      ev:(p,v) => `${Math.round(v*100)} % aller ${p.bigDays} vollen Spieltage ohne eine einzige Niederlage · ${p.perfDays} ${p.perfDays === 1 ? 'Tag' : 'Tage'}`
     }},
 
   {id:'kopfhoch', name:'Der Tagesabschluss', short:'Tagesende', ic:'tagesabschluss', tone:'blue', art:'leistung',
@@ -746,7 +753,7 @@ const DISZIPLINEN = [
       wie:'Für jeden Partner wird die gemeinsame Siegquote mit der aus allen übrigen Partien dieses Partners verglichen. Gemittelt über alle Partner, gewichtet nach den gemeinsamen Partien.',
       cond:'Größter positiver Einfluss auf die eigenen Partner, ab 3 Partnern mit je 15 gemeinsamen Partien',
       val:p => (p.einflussN >= 3 && p.einflussD != null && p.einflussD > 0) ? p.einflussD : null,
-      ev:(p,v) => `+${Math.round(v*100)} %-Punkte gewinnen die ${p.einflussN} Partner an dieser Seite häufiger`
+      ev:(p,v) => `${Math.abs(Math.round(v*100))} %-Punkte ${v < 0 ? 'verlieren' : 'gewinnen'} die ${p.einflussN} Partner an dieser Seite häufiger`
     }},
 
   {id:'ausgleich', name:'Der Ausgleicher', short:'Ausgleich', ic:'jederPartner', tone:'gold', art:'leistung',
@@ -780,7 +787,7 @@ const DISZIPLINEN = [
         const d = (p.closeW/p.close) - ((p.wins - p.closeW)/rest);
         return d > 0 ? d : null;
       },
-      ev:(p,v) => `+${Math.round(v*100)} %-Punkte in engen Spielen · ${pct(p.closeW/p.close)} statt ${_ppGegen(p.closeW/p.close, v)} % sonst`
+      ev:(p,v) => `${_ppZeichen(v)} %-Punkte in engen Spielen · ${pct(p.closeW/p.close)} statt ${_ppGegen(p.closeW/p.close, v)} % sonst`
     },
     // Dieselbe Rechnung auf der Monatsachse [§13.1]: enge gegen die uebrigen
     // eigenen Partien desselben Monats. Gegen das Eigene gemessen, also fuer
@@ -801,7 +808,7 @@ const DISZIPLINEN = [
         p => _stQuoteRoh(p.partien.filter(_stEng)) - _stQuoteRoh(p.partien.filter(s => !_stEng(s))),
         0.35,
         (p, v) => { const e = p.partien.filter(_stEng);
-          return `+${pct(v)} %-Punkte in engen Partien · ${_stSiege(e)} von ${e.length} gewonnen`; }))}},
+          return `${_ppZeichen(v)} %-Punkte in engen Partien · ${_stSiege(e)} von ${e.length} gewonnen`; }))}},
 
   {id:'gleichauf', name:'Auf Augenhöhe', short:'Auf Höhe', ic:'augenhoehe', tone:'gold', art:'leistung',
     // Die Laufbahn-Achse derselben Frage [§13.1]. „Die ruhige Hand" darueber
@@ -816,7 +823,7 @@ const DISZIPLINEN = [
       wie:'Ausgeglichen heißt: die Elo-Rechnung gab beiden Teams zwischen 45 und 55 Prozent Siegchance. Verglichen wird die Siegquote in diesen Partien mit der Siegquote in allen übrigen eigenen Partien, in Prozentpunkten.',
       cond:'Größter Leistungssprung in ausgeglichen erwarteten Partien, ab 20 solchen Partien',
       val:p => (p.ahDelta != null && p.ahDelta > 0) ? p.ahDelta : null,
-      ev:(p,v) => `+${Math.round(v*100)} %-Punkte in offenen Partien · ${pct(p.ahQ)} statt ${_ppGegen(p.ahQ, v)} % sonst`
+      ev:(p,v) => `${_ppZeichen(v)} %-Punkte in offenen Partien · ${pct(p.ahQ)} statt ${_ppGegen(p.ahQ, v)} % sonst`
     },
     monat:{
       beiname:'Der Entscheider',
@@ -940,7 +947,7 @@ const DISZIPLINEN = [
       wie:'Nur Partien, in denen das eigene Team unter 45 Prozent Siegchance hatte, getrennt nach Sturm und Abwehr. Gezählt wird, um wie viel öfter gewonnen wurde als erwartet; die bessere Position gilt.',
       cond:'Größter Vorsprung auf die Erwartung als Außenseiter auf einer Position, ab 20 solchen Partien',
       val:p => (p.rcDelta != null && p.rcDelta > 0) ? p.rcDelta : null,
-      ev:(p,v) => `+${Math.round(v*100)} %-Punkte über der Erwartung · ${pct(p.rcQ)} % statt ${_ppGegen(p.rcQ, v)} % ${p.rcPos === 'atk' ? 'im Sturm' : 'in der Abwehr'}`
+      ev:(p,v) => `${_ppZeichen(v)} %-Punkte über der Erwartung · ${pct(p.rcQ)} % statt ${_ppGegen(p.rcQ, v)} % ${p.rcPos === 'atk' ? 'im Sturm' : 'in der Abwehr'}`
     }},
 
   {id:'comeback_king', name:'Der Stehaufmann', short:'Comeback', ic:'comeback', tone:'acid', art:'leistung',
@@ -957,7 +964,7 @@ const DISZIPLINEN = [
         const d = p.afterLoss/p.afterLossOpp - (p.wins - p.afterLoss)/rest;
         return d > 0 ? d : null;
       },
-      ev:(p,v) => `+${Math.round(v*100)} %-Punkte nach einer Pleite · ${pct(p.afterLoss/p.afterLossOpp)} statt ${_ppGegen(p.afterLoss/p.afterLossOpp, v)} % sonst`
+      ev:(p,v) => `${_ppZeichen(v)} %-Punkte nach einer Pleite · ${pct(p.afterLoss/p.afterLossOpp)} statt ${_ppGegen(p.afterLoss/p.afterLossOpp, v)} % sonst`
     }},
 
   {id:'damage_control', name:'Der Widerstand', short:'Zähigkeit', ic:'widerstand', tone:'blue', art:'leistung',
@@ -1146,7 +1153,7 @@ const DISZIPLINEN = [
       wie:'Die letzten zwanzig eigenen Partien gegen die zwanzig davor.',
       cond:'Größte Verbesserung der letzten 20 Partien gegenüber den 20 davor, ab 40 Partien',
       val:p => (p.hfDelta != null && p.hfDelta > 0) ? p.hfDelta : null,
-      ev:(p,v) => `+${Math.round(v*100)} %-Punkte · ${pct(p.hfNeu)} % in den letzten 20 statt ${_ppGegen(p.hfNeu, v)} % in den 20 davor`
+      ev:(p,v) => `${_ppZeichen(v)} %-Punkte · ${pct(p.hfNeu)} % in den letzten 20 statt ${_ppGegen(p.hfNeu, v)} % in den 20 davor`
     }},
   {id:'kaltstart', name:'Der Kaltstart', short:'Kaltstart', ic:'sunrise', tone:'gold', art:'leistung',
     monat:{
@@ -1168,7 +1175,7 @@ const DISZIPLINEN = [
       wie:'Für jeden eigenen Spieltag mit mindestens drei Partien wird die erste Partie mit allen übrigen dieses Tages verglichen.',
       cond:'Größter Vorsprung im ersten Spiel eines Spieltags, ab 10 Spieltagen mit je 3 Partien',
       val:p => (p.ksDelta != null && p.ksN >= 10 && p.ksDelta > 0) ? p.ksDelta : null,
-      ev:(p,v) => `+${Math.round(v*100)} %-Punkte · ${pct(p.ksDrin)} % in ${p.ksN} Startspielen, sonst ${_ppGegen(p.ksDrin, v)} %`
+      ev:(p,v) => `${_ppZeichen(v)} %-Punkte · ${pct(p.ksDrin)} % in ${p.ksN} Startspielen, sonst ${_ppGegen(p.ksDrin, v)} %`
     }},
 
   // Dieselbe Frage wie der Kaltstart darueber und deshalb hier [§C35], nur
@@ -1187,7 +1194,7 @@ const DISZIPLINEN = [
       wie:`Ein Rückkehrspiel ist die erste eigene Partie nach ${REKORD_PAUSE_STUNDEN} vollständigen Stunden, also ${REKORD_PAUSE_STUNDEN / 24} Tagen, ohne eigenes Match. Die Siegquote dieser Rückkehrspiele wird gegen die Siegquote aller übrigen eigenen Partien gestellt. Der Wert ist der Abstand in Prozentpunkten. Gerechnet wird mit dem Abstand der Zeitpunkte und nicht mit Kalendertagen; die allererste Partie einer Laufbahn zählt nicht mit.`,
       cond:`Größter Vorsprung in der ersten Partie nach ${REKORD_PAUSE_STUNDEN / 24} Tagen Pause gegenüber den übrigen Partien, ab 4 Rückkehrspielen`,
       val:p => (p.weDelta != null && p.weN >= 4 && pct(p.weDelta) > 0) ? p.weDelta : null,
-      ev:(p,v) => `+${Math.round(v*100)} %-Punkte · ${pct(p.weW / p.weN)} % in ${p.weN} Rückkehrspielen, sonst ${_ppGegen(p.weW / p.weN, v)} %`
+      ev:(p,v) => `${_ppZeichen(v)} %-Punkte · ${pct(p.weW / p.weN)} % in ${p.weN} Rückkehrspielen, sonst ${_ppGegen(p.weW / p.weN, v)} %`
     }},
   {id:'schlussball', name:'Der letzte Ball', short:'Schluss', ic:'whistle', tone:'gold', art:'leistung',
     monat:{
@@ -1209,7 +1216,7 @@ const DISZIPLINEN = [
       wie:'Für jeden eigenen Spieltag mit mindestens drei Partien wird die zeitlich letzte Partie gegen alle übrigen dieses Tages gestellt. Der Vergleich läuft innerhalb desselben Tages.',
       cond:'Größter Vorsprung im letzten Spiel eines Spieltags, ab 10 Spieltagen mit je 3 Partien',
       val:p => (p.sbDelta != null && p.sbN >= 10 && p.sbDelta > 0) ? p.sbDelta : null,
-      ev:(p,v) => `+${Math.round(v*100)} %-Punkte · ${pct(p.sbDrin)} % in ${p.sbN} Schlussspielen, sonst ${_ppGegen(p.sbDrin, v)} %`
+      ev:(p,v) => `${_ppZeichen(v)} %-Punkte · ${pct(p.sbDrin)} % in ${p.sbN} Schlussspielen, sonst ${_ppGegen(p.sbDrin, v)} %`
     }},
 
   {id:'unstoppable', name:'Der Unaufhaltsame', short:'Serie', ic:'flameTriple', tone:'orange', art:'ereignis',
@@ -1220,7 +1227,7 @@ const DISZIPLINEN = [
       wie:'Gezählt werden Siege, die ohne Niederlage dazwischen aufeinanderfolgen, über Spieltage und Saisons hinweg. Eine Niederlage setzt die Zählung auf null.',
       cond:'Längste Siegesserie der Ligageschichte',
       unit:'Siege in Folge', min:1, raw:p => p.winStreak,
-      ev:(p,v) => `${v} Siege in Folge`,
+      ev:(p,v) => v === 1 ? `1 Sieg` : `${v} Siege in Folge`,
       zeit:p => p.winSpan || ''
     }},
 
@@ -1247,7 +1254,7 @@ const DISZIPLINEN = [
       wie:'Für jeden eigenen Spieltag mit mindestens fünf Partien wird die Siegquote dieses Tages gegen die eigene Siegquote der ganzen Laufbahn gestellt. Gehalten wird der Tag mit dem größten Abstand.',
       cond:'Größter Vorsprung eines Spieltags auf die eigene Siegquote, ab 5 Partien an diesem Tag',
       val:p => (p.gtDelta != null && pct(p.gtDelta) > 0) ? p.gtDelta : null,
-      ev:(p,v) => `+${Math.round(v*100)} %-Punkte · ${p.gtW} von ${p.gtN} gewonnen, sonst ${_ppGegen(p.gtW / p.gtN, v)} %`,
+      ev:(p,v) => `${_ppZeichen(v)} %-Punkte · ${p.gtW} von ${p.gtN} gewonnen, sonst ${_ppGegen(p.gtW / p.gtN, v)} %`,
       zeit:p => p.gtLabel || ''
     }},
 
@@ -1269,7 +1276,7 @@ const DISZIPLINEN = [
       wie:'Ein Spieltag ist im Soll, wenn am Ende mindestens so viele Siege stehen, wie die Siegchancen vor den Partien dieses Tages zusammen erwarten ließen. Gezählt werden die eigenen Spieltage hintereinander, ein Tag darunter beendet die Folge. Gegen einen starken Gegner reichen weniger Siege als gegen einen schwachen.',
       cond:'Längste Folge eigener Spieltage, an denen jedes Mal mindestens so viele Siege standen, wie die Elo-Rechnung erwartet hat',
       unit:'Spieltage in Folge', min:1, raw:p => p.sollLauf,
-      ev:(p,v) => `${v} Spieltage in Folge mindestens im Soll`,
+      ev:(p,v) => `${v} ${v === 1 ? 'Spieltag' : 'Spieltage in Folge'} mindestens im Soll`,
       zeit:p => p.sollSpan || ''
     }},
 
@@ -1435,7 +1442,7 @@ const DISZIPLINEN = [
       wie:'Gezählt werden nur Partien mit genau einem Tor Unterschied, aus eigener Sicht also 10:9 oder 9:10. Jedes 10:9 verlängert die Folge, ein 9:10 beendet sie; Partien mit anderem Ausgang dazwischen zählen nicht und unterbrechen sie nicht. Tag und Monat unterbrechen sie ebenso wenig.',
       cond:'Längste Folge gewonnener Partien mit einem Tor Unterschied, ohne eine solche Niederlage dazwischen',
       unit:'Siege mit einem Tor in Folge', min:1, raw:p => p.eiskaltLauf,
-      ev:(p,v) => `${v} Siege mit einem Tor Unterschied in Folge`,
+      ev:(p,v) => v === 1 ? `1 Sieg mit einem Tor Unterschied` : `${v} Siege mit einem Tor Unterschied in Folge`,
       zeit:p => p.eiskaltSpan || ''
     }},
 
@@ -1702,7 +1709,7 @@ const DISZIPLINEN = [
       wie:'Für jede Partie zählt die Elo des Mitspielers, wie sie unmittelbar vor dem Anpfiff stand. Gemittelt über die letzten 25 Partien und über die 25 davor; gewertet wird der Anstieg. Über die eigene Leistung sagt die Zahl nichts.',
       cond:'Größter Anstieg der Mitspielerstärke in den letzten 25 Partien, ab 50 Partien',
       val:p => (p.rwDelta != null && p.rwDelta > 0) ? p.rwDelta : null,
-      ev:(p,v) => `+${Math.round(v)} Elo stärkere Mitspieler · ${Math.round(p.rwNeu)} statt ${Math.round(p.rwAlt)} Elo`
+      ev:(p,v) => `+${Math.round(v)} Elo stärkere Mitspieler · ${_stElo(p.rwNeu)} statt ${_stElo(p.rwAlt)} Elo`
     }},
 
   {id:'solorun', name:'Der Einzelkämpfer', short:'Alleingang', ic:'soloPath', tone:'blue',
@@ -1714,7 +1721,7 @@ const DISZIPLINEN = [
       wie:'Für jede Partie zählt die Elo des Mitspielers vor dem Anpfiff. Gemittelt über die letzten 25 Partien und über die 25 davor; gewertet wird der Rückgang. Über die eigene Leistung sagt die Zahl nichts.',
       cond:'Größter Rückgang der Mitspielerstärke in den letzten 25 Partien, ab 50 Partien',
       val:p => (p.rwDelta != null && p.rwDelta < 0) ? -p.rwDelta : null,
-      ev:(p,v) => `${Math.round(v)} Elo schwächere Mitspieler · ${Math.round(p.rwNeu)} statt ${Math.round(p.rwAlt)} Elo`
+      ev:(p,v) => `${Math.round(v)} Elo schwächere Mitspieler · ${_stElo(p.rwNeu)} statt ${_stElo(p.rwAlt)} Elo`
     }},
 
   {id:'drought', name:'Die Durststrecke', short:'Flaute', ic:'trendCrash', tone:'red', art:'schatten',
@@ -1729,7 +1736,7 @@ const DISZIPLINEN = [
         p=>true,
         p=>{let l=0,b=0;p.partien.forEach(s=>{if(s.win)l=0;else{l++;b=Math.max(b,l);}});return b;},
         10,
-        (p,v)=>`${v} Niederlagen in Folge`))},
+        (p,v)=>v === 1 ? `1 Niederlage` : `${v} Niederlagen in Folge`))},
     allzeit:{
       kammer:'shame', basis:REKORD_GRUNDWERT.schatten,
       zeitraum:'Ganze Ligageschichte',
@@ -1737,7 +1744,7 @@ const DISZIPLINEN = [
       wie:'Gezählt werden Niederlagen, die ohne Sieg dazwischen aufeinanderfolgen, über Spieltage und Saisons hinweg. Ein Sieg setzt die Zählung auf null.',
       cond:'Längste Niederlagenserie der Ligageschichte',
       min:1, raw:p => p.lossStreak,
-      ev:(p,v) => `${v} Niederlagen in Folge`,
+      ev:(p,v) => v === 1 ? `1 Niederlage` : `${v} Niederlagen in Folge`,
       zeit:p => p.lossSpan || ''
     }},
 
@@ -1827,7 +1834,7 @@ const DISZIPLINEN = [
       wie:'Verglichen werden die Elo-Endstände zweier aufeinanderfolgender Saisons, in denen jeweils mindestens zehn Partien gespielt wurden. Gewertet wird der größte Rückgang.',
       cond:'Größter Elo-Verlust von einem Saisonende zum nächsten, ab 10 Partien in beiden Saisons',
       val:p => (p.fall && p.fall.d < 0) ? -p.fall.d : null,
-      ev:p => `${Math.round(p.fall.d)} Elo von ${p.fall.from} auf ${p.fall.to}`,
+      ev:p => `${_stElo(p.fall.d)} Elo von ${p.fall.from} auf ${p.fall.to}`,
       zeit:p => p.fall ? p.fall.to : ''
     }},
 
@@ -1926,7 +1933,7 @@ const DISZIPLINEN = [
         (p, C) => { const x = _stDuellWende(p, C, 1); return x.kq - x.mq; },
         0.35,
         (p, v, C) => { const x = _stDuellWende(p, C, 1);
-          return `${pct(v)} %-Punkte unter der Laufbahn gegen ${pname(x.fid)} · ${x.mw} von ${x.mn} Duellen, davor ${pct(x.kq)} % in ${x.kn}`; }))}},
+          return `${_ppLage(v, 'unter', 'über')} der Laufbahn gegen ${pname(x.fid)} · ${x.mw} von ${x.mn} Duellen, davor ${pct(x.kq)} % in ${x.kn}`; }))}},
 
   // Das Gegenstück zum Stammduell: gegen den häufigsten Gegner des Monats so
   // selten gewonnen, wie es die Rechnung kaum erwartete. Der Angstgegner
@@ -1970,7 +1977,7 @@ const DISZIPLINEN = [
         const d = (p.expSum/p.games) - (p.wins/p.games);
         return d > 0 ? d : null;
       },
-      ev:(p,v) => `${Math.round(v*100)} %-Punkte unter der Rechnung · ${pct(p.wins/p.games)} statt ${_ppGegen(p.wins/p.games, -v)} % in ${p.games} Partien`
+      ev:(p,v) => `${_ppLage(v, 'unter', 'über')} der Rechnung · ${pct(p.wins/p.games)} statt ${_ppGegen(p.wins/p.games, -v)} % in ${p.games} Partien`
     }},
 
   // ── Vier neue Schanden [§C35] ────────────────────────────────────
@@ -2040,7 +2047,7 @@ const DISZIPLINEN = [
         const d = (p.wins - p.afterLoss)/rest - p.afterLoss/p.afterLossOpp;
         return d > 0 ? d : null;
       },
-      ev:(p,v) => `${Math.round(v*100)} %-Punkte weniger nach einer Pleite · ${pct(p.afterLoss/p.afterLossOpp)} statt ${_ppGegen(p.afterLoss/p.afterLossOpp, -v)} % sonst`
+      ev:(p,v) => `${_ppLage(v, 'weniger', 'mehr')} nach einer Pleite · ${pct(p.afterLoss/p.afterLossOpp)} statt ${_ppGegen(p.afterLoss/p.afterLossOpp, -v)} % sonst`
     }},
 
   {id:'favflop', name:'Der Wackelkandidat', short:'Wackel', ic:'wobbleStep', tone:'red', art:'schatten',
@@ -2077,7 +2084,7 @@ const DISZIPLINEN = [
       wie:'Für jeden Partner wird die gemeinsame Siegquote mit der aus allen übrigen Partien dieses Partners verglichen. Gewertet wird der Rückgang, gemittelt über alle Partner und gewichtet nach den gemeinsamen Partien.',
       cond:'Größter negativer Einfluss auf die eigenen Partner, ab 3 Partnern mit je 15 gemeinsamen Partien',
       val:p => (p.einflussN >= 3 && p.einflussD != null && p.einflussD < 0) ? -p.einflussD : null,
-      ev:(p,v) => `${Math.round(v*100)} %-Punkte verlieren die ${p.einflussN} Partner an dieser Seite häufiger`
+      ev:(p,v) => `${Math.abs(Math.round(v*100))} %-Punkte ${v < 0 ? 'gewinnen' : 'verlieren'} die ${p.einflussN} Partner an dieser Seite häufiger`
     }},
   // Die zwei Gegenstücke zu Wiedereinstieg und Aufschwung, gegen das
   // EIGENE gemessen wie die Schandtafel es verlangt [§C35]: nach einer Pause
@@ -2092,7 +2099,7 @@ const DISZIPLINEN = [
       wie:`Ein Rückkehrspiel ist die erste eigene Partie nach ${REKORD_PAUSE_STUNDEN} vollständigen Stunden, also ${REKORD_PAUSE_STUNDEN / 24} Tagen, ohne eigenes Match. Die Siegquote dieser Rückkehrspiele wird gegen die Siegquote aller übrigen eigenen Partien gestellt. Der Wert ist der Rückstand in Prozentpunkten.`,
       cond:`Größter Rückstand in der ersten Partie nach ${REKORD_PAUSE_STUNDEN / 24} Tagen Pause gegenüber den übrigen Partien, ab 4 Rückkehrspielen`,
       val:p => (p.weDelta != null && p.weN >= 4 && pct(p.weDelta) < 0) ? -p.weDelta : null,
-      ev:(p,v) => `−${Math.round(v*100)} %-Punkte · ${pct(p.weW / p.weN)} % in ${p.weN} Rückkehrspielen, sonst ${_ppGegen(p.weW / p.weN, -v)} %`
+      ev:(p,v) => `${_ppZeichen(-v)} %-Punkte · ${pct(p.weW / p.weN)} % in ${p.weN} Rückkehrspielen, sonst ${_ppGegen(p.weW / p.weN, -v)} %`
     }},
   {id:'abschwung', name:'Der Abschwung', short:'Abschwung', ic:'abschwung', tone:'red', art:'schatten',
     allzeit:{
@@ -2102,7 +2109,7 @@ const DISZIPLINEN = [
       wie:'Die Siegquote der letzten 25 eigenen Partien gegen die Siegquote aller Partien davor. Der Wert ist der Rückstand in Prozentpunkten. Vorn steht, wer heute dauerhaft schwächer spielt als früher.',
       cond:'Größter Rückgang der letzten 25 Partien gegenüber der Laufbahn davor, ab 50 Partien',
       val:p => (p.asDelta != null && pct(p.asDelta) < 0) ? -p.asDelta : null,
-      ev:(p,v) => `−${Math.round(v*100)} %-Punkte · ${pct(p.asNeu)} % in den letzten 25 statt ${_ppGegen(p.asNeu, -v)} % davor`
+      ev:(p,v) => `${_ppZeichen(-v)} %-Punkte · ${pct(p.asNeu)} % in den letzten 25 statt ${_ppGegen(p.asNeu, -v)} % davor`
     },
     // Dieselbe Frage im Monat [§13.1], das Gegenstück zum Ausnahmemonat:
     // der Monat gegen die Laufbahn davor, nicht die letzten fünfundzwanzig.
@@ -2180,7 +2187,10 @@ const DISZIPLINEN = [
         (p, C) => { const ich = C.rank.find(r => r.id === p.pid), zweit = C.rank.find(r => r.id !== p.pid);
           return ich && zweit ? ich.elo - zweit.elo : null; },
         100,
-        (p, v, C) => `${Math.round(v)} Elo vor ${pname(C.rank.find(r => r.id !== p.pid).id)} auf Platz zwei`))}},
+        // Wer nicht vorne steht, liegt hinter dem Ersten: „-103 Elo vor Leon
+        // auf Platz zwei" stand unter „Am nächsten dran".
+        (p, v, C) => { const n = pname(C.rank.find(r => r.id !== p.pid).id);
+          return v < 0 ? `${Math.round(-v)} Elo hinter ${n} auf Platz eins` : `${Math.round(v)} Elo vor ${n} auf Platz zwei`; }))}},
 
   {id:'angstfrei', name:'Ohne Angstgegner', short:'Angstfrei', ic:'geistBann', tone:'gold', art:'leistung',
     monat:{
@@ -2762,7 +2772,7 @@ const DISZIPLINEN = [
         p=>p.platzErst != null && p.platzLetzt != null,
         p=>p.platzErst-p.platzLetzt,
         8,
-        (p,v)=>`von Platz ${p.platzErst} auf Platz ${p.platzLetzt} · ${v} Plätze`))}},
+        (p,v)=>`von Platz ${p.platzErst} auf Platz ${p.platzLetzt} · ${_stPlaetze(v, 'nach vorn', 'zurück')}`))}},
 
   // ── Gegen den eigenen Vormonat [§C39] ─────────────────────────────────
   // Die beiden Chroniken stellen einen Spieler gegen sich selbst, einen
@@ -2795,7 +2805,7 @@ const DISZIPLINEN = [
         (p,C)=>p.games>=8 && _stVormonat(p,C)!=null && _stVormonatPlatz(p,C)!=null,
         (p,C)=>{const x=_stVormonatPlatz(p,C);return x.vor-x.jetzt;},
         5,
-        (p,v,C)=>{const x=_stVormonatPlatz(p,C);return `von Platz ${x.vor} auf Platz ${x.jetzt} · ${v} Plätze`;}))}},
+        (p,v,C)=>{const x=_stVormonatPlatz(p,C);return `von Platz ${x.vor} auf Platz ${x.jetzt} · ${_stPlaetze(v, 'nach vorn', 'zurück')}`;}))}},
 
   {id:'zitterkoenig', name:'Der Zitterkönig', short:'Zittersieg', ic:'zitterkrone', tone:'purple', art:'ereignis',
     monat:{
@@ -2920,7 +2930,7 @@ const DISZIPLINEN = [
         p=>{const r=_stRollen(p); return _stQuote(r.aus)-_stQuote(r.fav);},
         0.05,
         (p,v)=>{const r=_stRollen(p);
-          return `${pct(v)} %-Punkte öfter gewonnen als Außenseiter · ${pct(_stQuote(r.aus))} % gegen ${_ppGegen(_stQuote(r.aus), v)} % als Favorit`;}))}},
+          return `${_ppLage(v, 'öfter', 'seltener')} gewonnen als Außenseiter · ${pct(_stQuote(r.aus))} % gegen ${_ppGegen(_stQuote(r.aus), v)} % als Favorit`;}))}},
 
   // Erste und letzte Partie eines Spieltags mit verschiedenem Ergebnis.
   // Wer die Haelfte seiner Partien gewinnt, hat dafuer von selbst die
@@ -2942,7 +2952,7 @@ const DISZIPLINEN = [
       return um-2*p.wins*p.losses/(p.games*(p.games-1));},
         0.25,
         (p,v)=>{const t=Object.values(p.tagGrp).filter(a=>a.length>=3);
-      return `${pct(v)} %-Punkte über der eigenen Bilanz · ${t.filter(a=>a[0].win!==a[a.length-1].win).length} von ${t.length} Spieltagen endeten anders, als sie begannen`;}))}},
+      return `${_ppLage(v, 'über', 'unter')} der eigenen Bilanz · ${t.filter(a=>a[0].win!==a[a.length-1].win).length} von ${t.length} Spieltagen endeten anders, als sie begannen`;}))}},
 
   {id:'randlage', name:'Immer am Rand', short:'Am Rand', ic:'search', tone:'purple', art:'ereignis',
     monat:{
@@ -3321,7 +3331,7 @@ const DISZIPLINEN = [
         (p, C) => p.games >= 8 && _stVormonat(p, C) != null && _stVormonatPlatz(p, C) != null,
         (p, C) => { const x = _stVormonatPlatz(p, C); return x.jetzt - x.vor; },
         5,
-        (p, v, C) => { const x = _stVormonatPlatz(p, C); return `von Platz ${x.vor} auf Platz ${x.jetzt} · ${v} Plätze`; }))}},
+        (p, v, C) => { const x = _stVormonatPlatz(p, C); return `von Platz ${x.vor} auf Platz ${x.jetzt} · ${_stPlaetze(v, 'zurück', 'nach vorn')}`; }))}},
 
   // Das Zielwasser andersherum: im Sturm weniger getroffen als in den
   // Sturmspielen der Laufbahn davor. Die Ladehemmung vergleicht mit dem
@@ -3471,7 +3481,7 @@ const DISZIPLINEN = [
         p => -_stUeberSoll(_stNachSieg(p)),
         0.25,
         (p, v) => { const a = _stNachSieg(p);
-          return `${_stSiege(a)} von ${a.length} Partien nach einem Sieg · ${pct(v)} %-Punkte unter der Rechnung`; }))}},
+          return `${_stSiege(a)} von ${a.length} Partien nach einem Sieg · ${_ppLage(v, 'unter', 'über')} der Rechnung`; }))}},
 
   {id:'ehrfurcht', name:'Die Ehrfurcht', short:'Ehrfurcht', ic:'ehrfurcht', tone:'red', art:'schatten',
     monat:{
@@ -3486,7 +3496,7 @@ const DISZIPLINEN = [
         (p, C) => -_stUeberSoll(_stSpitzeGegen(p, C)),
         0.30,
         (p, v, C) => { const a = _stSpitzeGegen(p, C);
-          return `${_stSiege(a)} von ${a.length} Partien gegen die Spitze · ${pct(v)} %-Punkte unter der Rechnung`; }))}},
+          return `${_stSiege(a)} von ${a.length} Partien gegen die Spitze · ${_ppLage(v, 'unter', 'über')} der Rechnung`; }))}},
 
   {id:'rueckfall', name:'Der Rückfall', short:'Rückfall', ic:'rueckfall', tone:'red', art:'schatten',
     monat:{
@@ -3500,7 +3510,7 @@ const DISZIPLINEN = [
         p => p.games >= TITLE_MIN_GAMES && _stLernkurve(p) != null,
         p => -_stLernkurve(p).v,
         0.25,
-        (p, v) => `gegen ${_stLernkurve(p).n} Gegner zuletzt ${pct(v)} %-Punkte schwächer als zu Beginn`))}},
+        (p, v) => `gegen ${_stLernkurve(p).n} Gegner zuletzt ${_ppLage(v, 'schwächer', 'stärker')} als zu Beginn`))}},
 
   // Das Gegenstück zu Neuland: neben Partnern, mit denen es vor diesem
   // Monat keine Partie gab, unter der Rechnung.
@@ -3517,7 +3527,7 @@ const DISZIPLINEN = [
         (p, C) => -_stUeberSoll(_stNeuland(p, C)),
         0.30,
         (p, v, C) => { const a = _stNeuland(p, C);
-          return `${_stSiege(a)} von ${a.length} Partien neben neuen Partnern · ${pct(v)} %-Punkte unter der Rechnung`; }))}},
+          return `${_stSiege(a)} von ${a.length} Partien neben neuen Partnern · ${_ppLage(v, 'unter', 'über')} der Rechnung`; }))}},
 
   // Der Ausreißer andersherum: ein Spieltag, den die Rechnung so schlecht
   // kaum erwartete. Die schwarze Woche fragt nach dem Abstand über eine
@@ -3553,7 +3563,7 @@ const DISZIPLINEN = [
         p => -Math.min(..._stWochen(p).map(a => _stUeberSoll(a))),
         0.35,
         (p, v) => { const a = _stWochen(p).slice().sort((x, y) => _stUeberSoll(x) - _stUeberSoll(y))[0];
-          return `${_stSiege(a)} von ${a.length} Partien in der schwächsten Woche · ${pct(v)} %-Punkte unter der Rechnung`; }))}},
+          return `${_stSiege(a)} von ${a.length} Partien in der schwächsten Woche · ${_ppLage(v, 'unter', 'über')} der Rechnung`; }))}},
 
   // ── Wie viel jemand dabei war, gegen die eigenen Monate davor [§C39] ──
   // Kein Pensum: wer am meisten spielt, haelt keine der beiden. Gefragt ist
@@ -3738,7 +3748,10 @@ function _stGleichesMass(m){
       const r = roh(p, C), text = evRoh(p, r, C);
       if(!zeig || v == null || r == null || !isFinite(v) || !isFinite(r)) return text;
       const a = zeig(r), b = zeig(v);
-      return a === b ? text : text + ' · gewertet ' + b;
+      // Ein gewerteter Wert unter null heißt nur „auf der anderen Seite":
+      // „67 % in 3 Schlussspielen, 60 % davor · gewertet −4 Prozentpunkte"
+      // sagte unter „Am nächsten dran" nichts, was der Beleg nicht sagt.
+      return a === b || b.charAt(0) === '−' ? text : text + ' · gewertet ' + b;
     };
   }
   m.pick = (C, t) => _stPickTop(C, t, p => {
@@ -3752,10 +3765,18 @@ function _stGleichesMass(m){
 // Schwelle mit „höchstens" steht als negativer Wert im Katalog und wird
 // mit umgekehrtem Vorzeichen gezeigt.
 function _stEinheit(cond, ab){
-  const m = String(cond || '').match(/\d+(?:,\d+)?\s*(%|Prozentpunkte?|Gegentore?|Tore?)(?![a-zäöü])/);
+  const m = String(cond || '').match(/(\d+(?:,\d+)?)\s*(%|Prozentpunkte?|Gegentore?|Tore?)(?![a-zäöü])/);
   if(!m) return null;
+  // Nur, wenn die Schwelle in der Einheit der Bedingung steht. „Ohne
+  // schwache Woche" misst logarithmisch (höchstens 2 Prozentpunkte sind dort
+  // 1,70), und hinter ihrem Beleg stand „gewertet 194 Prozentpunkte".
+  const zahl = parseFloat(m[1].replace(',', '.')), mal = (m[2] === '%' || m[2].startsWith('Prozentpunkt')) ? 100 : 1;
+  if(Math.abs(Math.abs(ab) * mal - zahl) > 0.011 * Math.max(1, zahl)) return null;
+  m[1] = m[2];
   const s = ab < 0 ? -1 : 1;
-  if(m[1] === '%') return v => pct(s * v) + ' %';
+  // Ein Anteil steht höchstens mit 100 % da: die Umrechnung auf die übliche
+  // Spielzahl ergab „5 von 5 … gewonnen · gewertet 106 %".
+  if(m[1] === '%') return v => Math.max(0, Math.min(100, pct(s * v))) + ' %';
   if(m[1].startsWith('Prozentpunkt')) return v => { const d = Math.round(s * v * 100);
     return (d < 0 ? '−' + (-d) : d) + (Math.abs(d) === 1 ? ' Prozentpunkt' : ' Prozentpunkte'); };
   const wort = m[1].startsWith('Gegentor') ? ' Gegentore' : ' Tore';

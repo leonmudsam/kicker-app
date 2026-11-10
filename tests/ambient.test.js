@@ -1148,12 +1148,19 @@ ok(_tafelGrund.falscheAchse === 0,
 const _fenAus = JSON.parse(K.eval(`JSON.stringify((function(){
   const alle = matches.slice();
   const tage = [...new Set(alle.map(m => mdayKey(m)))].sort();
-  const ausbau = [], fenster = [];
-  tage.filter((t, i) => i % 4 === 0).forEach(tag => {
+  const ausbau = [], fenster = [], sprache = [];
+  // Derselbe Durchlauf liest jede Schlagzeile und jeden Satz: Einzahl bei
+  // eins („Aus 10 Partien sind 1 Siege geworden"), ein Minus als
+  // Bindestrich („-2 statt 178 Elo") und Platzhalter.
+  const SPR = [/(?<![\\d.,:−-])\\b1 (?:Siege|Partien|Niederlagen|Tore|Duelle|Tage|Wochen|Spieltage|Plätze|Auszeichnungen|Spiele)\\b/,
+    /(?:^|[\\s(])-\\d/, /undefined|NaN|\\bnull\\b/];
+  tage.filter((t, i) => i % 4 === 0 || i % 4 === 2).forEach((tag, nr) => {
     matches = alle.filter(m => mdayKey(m) <= tag);
     invalidateCache();
     _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
     let roh = []; try { roh = _buildStories() || []; } catch(e){ return; }
+    roh.forEach(s => [s.title, s.desc].forEach(t => { if(t && SPR.some(r => r.test(String(t)))) sprache.push(tag + ' ' + s.id + ': ' + t); }));
+    if(nr % 2) return;
     roh.forEach(s => {
       const d = s.dataRef || {};
       if(d.type !== 'rekord_gesteigert') return;
@@ -1164,7 +1171,7 @@ const _fenAus = JSON.parse(K.eval(`JSON.stringify((function(){
   matches = alle; invalidateCache();
   _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
   return {ausbau:ausbau.length, arten:[...new Set(ausbau)].length,
-          fenster:[...new Set(fenster)],
+          fenster:[...new Set(fenster)], sprache:[...new Set(sprache.map(x => x.replace(/^\\S+ /, '')))],
           katalog:CHRONICLES.filter(c => c.fenster).map(c => c.id)};
 })())`));
 console.log('  Ausbau-Karten im Durchlauf: ' + _fenAus.ausbau + ' aus ' + _fenAus.arten + ' Rekorden'
@@ -1176,6 +1183,8 @@ ok(_fenAus.ausbau >= 10, 'der Durchlauf trifft ueberhaupt Ausbau-Karten',
    _fenAus.ausbau + ' Karten');
 ok(_fenAus.fenster.length === 0, 'kein gleitendes Fenster meldet ein Ausbauen',
    _fenAus.fenster.slice(0, 3).join(' | ') || _fenAus.ausbau + ' Ausbau-Karten, keine davon');
+ok(_fenAus.sprache.length === 0, 'über jeden zweiten Spieltag der Ligageschichte: Einzahl bei eins, kein Bindestrich als Minus, kein Platzhalter',
+   _fenAus.sprache.slice(0, 3).join(' | ') || 'jede Meldung sauber');
 ok(_tafel.kammer, 'Schattenseiten meldet der Feed nicht');
 ok(_tafel.kat, 'Rekorde stehen in der Kammer „Ewige Tafel"');
 ok(_tafel.gesichter, 'jede Rekordkarte zeigt ihren Halter [§C33]');
@@ -5371,6 +5380,28 @@ const _zeigt = JSON.parse(K.eval(`JSON.stringify((function(){
 ok(_zeigt.zeilen === 'B1,R2,B2' && _zeigt.unter === 'R1' && _zeigt.medZeilen === 'R1' && _zeigt.medUnter === 'B1',
    'der Fuß blendet genau die Meldungen aus, die er zeichnet: die zweite Rivalität bleibt eine Zeile, die Medaille deckt jeden Halter',
    JSON.stringify(_zeigt));
+
+// ── Fuß und Schlagzeile sagen nicht dasselbe [§C33] ────────────────────
+// Unter „Leon und Leo gewinnen zum 5. Mal zusammen" stand als Zeile des
+// Fußes „Leon und Leo feiern den 5. gemeinsamen Sieg" (auf gespeicherten
+// Karten im alten Wortlaut), und unter „Leon stellt mit 5 Siegen den
+// Serien-Rekord der Liga auf" die Zeile „Leon zündet die 5er-Serie".
+const _gleich = JSON.parse(K.eval(`JSON.stringify((function(){
+  const T = 'Leon und Leo gewinnen zum 5. Mal zusammen';
+  const alt = _spZeilen([], T, {key:'chemie', zeile:'Leon und Leo feiern den 5. gemeinsamen Sieg'}).unter;
+  const neu = _spZeilen([], T, {key:'chemie', zeile:T}).unter;
+  const anders = _spZeilen([], 'Leon und Leo gehen gegen Maxi und Jane in Führung', {key:'chemie', zeile:T}).unter;
+  const z = _spZeilen([{typ:'streak_record', ref:{pid:'a'}, titel:'R'}, {typ:'win_streak', ref:{pid:'a'}, titel:'S'},
+    {typ:'win_streak', ref:{pid:'b'}, titel:'S2'}], 'R', null).zeilen.map(t => t.titel);
+  // Und die Form selbst spricht wie die Schlagzeile der gewöhnlichen Partie.
+  const m = matches.slice().reverse().find(x => { const F = _spFakten(x); const c = SP_FORM.chemie.wann(F); return c && c.rund && F.duo.p >= 2; });
+  const F = m && _spFakten(m);
+  return {alt:alt ? alt.titel : null, neu:neu ? neu.titel : null, anders:anders ? anders.titel : null, z,
+    form:F ? SP_FORM.chemie.text(F, SP_FORM.chemie.wann(F)).t : '', soll:F ? _spNl(F.W) + ' gewinnen zum ' + F.duo.s + '. Mal zusammen' : '-'};
+})())`));
+ok(_gleich.alt === null && _gleich.neu === null && _gleich.anders && _gleich.form === _gleich.soll,
+   'die Zeile des Fußes fällt weg, wenn sie dasselbe sagt wie die Schlagzeile, im alten und im neuen Wortlaut', JSON.stringify(_gleich));
+ok(_gleich.z.join() === 'S2', 'unter dem Serien-Rekord steht die Serie desselben Spielers nicht noch einmal als Zeile', _gleich.z.join());
 
 // ── Die Karte einer Partie: neue Anlässe, Fuß, Seiten, Satz [§C33] ──────
 // Jedes Ende einer Pleitenserie und jede Rückkehr wird an den rohen

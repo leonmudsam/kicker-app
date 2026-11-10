@@ -26,6 +26,8 @@
 - Die Rohsicht liegt in der Engine (`_seasonTitleCtx`: `partien`, `tagGrp`, `wochGrp`, `partnerGrp`, `gegnerGrp`).
 - Spieltage zählen erst, wenn sie zu sind (`_tagZu`): `tagGrp`, die letzte Partie eines Tages, die Tagesquoten und das Tagesende von „Auf dem Thron"; „Der Tagesregent" teilt durch diese Tage (`tagN`). Wochen bleiben offen gezählt — eine Woche geht Tage nach ihrer letzten Partie zu, und ihr Ende stünde in der Tafel eines anderen Tages.
 
+- **Ein Beleg liest sich für jeden, der ihn trägt** — auch für den Nächsten unter der Schwelle und für jeden im Feld. Die Richtung steht im Wort (`_ppLage`, `_stRichtung`, `_stPlaetze`: „12 %-Punkte unter der Rechnung", „1 Platz zurück", „103 Elo hinter Leon auf Platz eins"), ein Wert unter null trägt das Minuszeichen (`_stElo`, `_ppZeichen`), bei eins steht die Einzahl. Der gewertete Wert steht nur dahinter, wenn er in der Einheit der Bedingung zu lesen ist (`_stEinheit`): nie unter null, ein Anteil nie über 100 %, und nicht bei einer Chronik, die logarithmisch misst.
+
 ## Stellen
 
 `32-chronik-katalog.js` (`DISZIPLINEN`, `_stWertung`, `_stSoll`, `_stTorSteigung`, `_stErsterBall`, `_stVormonat`, `_stVormonatPlatz`, `_stLaufbahnVor`, `_stDuelleVor`, `_stDuellWende`, `_stPartnerTief`, `_stUnwahr`, `_stRivale`, `_stLangeTage`, `_stSpaeteRevanchen`, `_stPlatzwechsel`, `_stSiegeszug`, `CHRONIK_MIN_SPIELE`, `_stGleichesMass`, `_stEinheit`), `33-chronik-engine.js` (`_seasonTitleCtx`, das Ligamittel `L`, `zuWenig`), `35-chronik-ui.js`, `35b-prestige.js` (`chronikPunkte`, `chronikBonus`, `chronikUeber`, `chronikHalbierungenJeSigma`, `chronikSchattenGewicht`, `chronikUeberschattet`, `CHRONIK_GRUNDWERT`, `CHRONIK_BONUS_JE_HALBIERUNG`, `CHRONIK_SCHATTEN_FAKTOR`, `CHRONIK_SCHATTEN_MIN`), `27-news-generator.js` (Wechsel vom ersten Spieltag an).
@@ -536,3 +538,14 @@ Blättern. Ihr Kopf stand dabei in Gold statt in Rot (das Blatt fragte ein
 Feld, das es am Eintrag der Saison nicht gibt), und „Schattenseite" stand
 als Klasse und als Art zweimal nebeneinander; die Art fällt weg, wenn sie
 wie die Klasse heißt.
+
+**Ein Beleg für jeden, der ihn trägt.** Die Vorlagen der Belege waren für
+den Halter geschrieben, dessen Wert über der Schwelle liegt. Unter „Am
+nächsten dran" und im Feld ist der Wert oft kleiner als null, und dort
+stand „-32 %-Punkte öfter gewonnen als Außenseiter", „-103 Elo vor Leon auf
+Platz zwei", „von Platz 1 auf Platz 2 · -1 Plätze" und „67 % in 3
+Schlussspielen, 60 % davor · gewertet −4 Prozentpunkte". Dazu kamen „1
+Tage", „1 Spieltage in Folge" und „1 Siege mit einem Tor Unterschied in
+Folge" in den Ranglisten der Rekorde, „-262 Elo" beim Sturzflug, „gewertet
+106 %" bei fünf von fünf gewonnenen Wochenabschlüssen und „gewertet 194
+Prozentpunkte" bei „Ohne schwache Woche", deren Wert ein Logarithmus ist.

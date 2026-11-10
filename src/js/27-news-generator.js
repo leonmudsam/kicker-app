@@ -979,7 +979,8 @@ function _buildStories(){
           const t = new Date(c.when).getTime();
           const alle = (matchesOfPlayer(c.pid, matches) || []).filter(m => mts(m) <= t);
           const siege = alle.filter(m => won(c.pid, m)).length;
-          return `Aus ${c.total} Partien sind ${siege} Siege geworden, `
+          // „Aus 10 Partien sind 1 Siege geworden" stand beim ersten Jubiläum.
+          return `${siege} ${siege === 1 ? 'Sieg' : 'Siege'} in ${c.total} Partien, `
                + `das sind ${Math.round(100 * siege / Math.max(1, c.total))} %.`;
         })(),
         when: c.when,

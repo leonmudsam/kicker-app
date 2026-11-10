@@ -1008,8 +1008,8 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 .sp-ho-u b{color:var(--ink)}
 
 /* Bewegung: jede erklärt etwas, und nur transform und Deckkraft. */
-@keyframes spMuenze{0%{transform:translateY(0) rotateY(0)}40%{transform:translateY(-16px) rotateY(720deg)}
-  75%{transform:translateY(0) rotateY(1260deg)}87%{transform:translateY(-3px) rotateY(1340deg)}100%{transform:translateY(0) rotateY(1440deg)}}
+@keyframes spMuenze{0%{transform:translateY(0) rotateY(0)}40%{transform:translateY(-7px) rotateY(720deg)}
+  75%{transform:translateY(0) rotateY(1260deg)}87%{transform:translateY(-2px) rotateY(1340deg)}100%{transform:translateY(0) rotateY(1440deg)}}
 @media (prefers-reduced-motion:no-preference){
   .sp-mo-k,.sp-gp-z,.sp-gg-r i,.sp-zu-k i,.sp-ch-r circle,.sp-tr-r circle,.sp-uh-s line,.sp-ds-r i{animation:spDa .35s ease-out both;animation-delay:calc(var(--i,0) * 40ms)}
   .sp-tz-k{animation:spZug .7s cubic-bezier(.3,1.4,.5,1) .15s both}
