@@ -25,8 +25,10 @@
   .aw-li-pair{display:flex;flex-shrink:0}
   .aw-li-pair .aw-li-av+.aw-li-av{margin-left:-10px;border:1.5px solid var(--surface)}
   .aw-li-info{flex:1;min-width:0}
+  /* Der Name bricht um, statt mit „…" zu enden: bei 360 px bleiben einem Duo
+     125 px, und „Johannes & Julian" stand als „Johannes & Jul…" da. */
   .aw-li-name{font-family:'Archivo Black',sans-serif;font-size:14px;letter-spacing:-.01em;
-    line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    line-height:1.15;overflow-wrap:break-word}
   .aw-li-detail{font-size:10px;color:var(--muted);margin-top:3px;font-family:'Sometype Mono',monospace}
   .aw-li-val{font-family:'Sometype Mono',monospace;font-size:13px;font-weight:700;color:var(--ink);flex-shrink:0}
   .aw-li.shame .aw-li-val{color:var(--red)}

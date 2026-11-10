@@ -1153,7 +1153,11 @@ const _fenAus = JSON.parse(K.eval(`JSON.stringify((function(){
   // eins („Aus 10 Partien sind 1 Siege geworden"), ein Minus als
   // Bindestrich („-2 statt 178 Elo") und Platzhalter.
   const SPR = [/(?<![\\d.,:−-])\\b1 (?:Siege|Partien|Niederlagen|Tore|Duelle|Tage|Wochen|Spieltage|Plätze|Auszeichnungen|Spiele)\\b/,
-    /(?:^|[\\s(])-\\d/, /undefined|NaN|\\bnull\\b/];
+    /(?:^|[\\s(])-\\d/, /undefined|NaN|\\bnull\\b/,
+    // Eine Partie heißt Partie („feiert das 100. Spiel", „Tage ohne Spiel"),
+    // die Redensart „im Spiel bleiben" ausgenommen, und Prozent steht mit
+    // Leerzeichen.
+    /(?<!im )\\bSpiel(?:e|en|s)?\\b/, /\\d%/];
   tage.filter((t, i) => i % 4 === 0 || i % 4 === 2).forEach((tag, nr) => {
     matches = alle.filter(m => mdayKey(m) <= tag);
     invalidateCache();
@@ -1183,7 +1187,7 @@ ok(_fenAus.ausbau >= 10, 'der Durchlauf trifft ueberhaupt Ausbau-Karten',
    _fenAus.ausbau + ' Karten');
 ok(_fenAus.fenster.length === 0, 'kein gleitendes Fenster meldet ein Ausbauen',
    _fenAus.fenster.slice(0, 3).join(' | ') || _fenAus.ausbau + ' Ausbau-Karten, keine davon');
-ok(_fenAus.sprache.length === 0, 'über jeden zweiten Spieltag der Ligageschichte: Einzahl bei eins, kein Bindestrich als Minus, kein Platzhalter',
+ok(_fenAus.sprache.length === 0, 'über jeden zweiten Spieltag der Ligageschichte: Einzahl bei eins, kein Bindestrich als Minus, kein Platzhalter, Partie statt Spiel, Prozent mit Leerzeichen',
    _fenAus.sprache.slice(0, 3).join(' | ') || 'jede Meldung sauber');
 ok(_tafel.kammer, 'Schattenseiten meldet der Feed nicht');
 ok(_tafel.kat, 'Rekorde stehen in der Kammer „Ewige Tafel"');

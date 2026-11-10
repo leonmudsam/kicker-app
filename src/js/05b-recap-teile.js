@@ -438,7 +438,7 @@ function saisonPodestHtml(sid, rang, o){
                               px:platz === 1 ? (o.px1 || 88) : (o.px || 70), klasse:'pod-av'});
     // Ohne Titel steht dort die Spielzahl — ein Strich sähe aus, als fehlte
     // die Zahl, statt zu sagen: dieser Spieler hat noch keinen.
-    const sub = titelBis ? titelBis + ' Titel' : (e.wins + e.losses) + ' Spiele';
+    const sub = titelBis ? titelBis + ' Titel' : (e.wins + e.losses) + (e.wins + e.losses === 1 ? ' Partie' : ' Partien');
     return `<div class="pod-karte ${METALL[platz - 1]}${platz === 1 ? ' erster' : ''}" ${o.attr || 'data-detail'}="${esc(e.id)}">
       <div class="pod-platz num">${String(platz).padStart(2, '0')}</div>
       ${av}

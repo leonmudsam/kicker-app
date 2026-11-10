@@ -55,9 +55,9 @@ const BADGES=[
   {id:'wins200',ic:'siegermaschine',name:'Siegermaschine',desc:'300 Siege gesammelt',
     multi:true,count:(id,ms)=>countWins(id,ms)>=300?1:0},
   // Zeile 3 — Abwehrchef, Mittelstürmer
-  {id:'def50',ic:'posAbwehr',name:'Abwehrchef',desc:'50 Spiele als Abwehrspieler',
+  {id:'def50',ic:'posAbwehr',name:'Abwehrchef',desc:'50 Partien als Abwehrspieler',
     multi:true,count:(id,ms)=>{const s=playerStats(id,ms);return s.defG>=50?1:0;}},
-  {id:'atk50',ic:'posSturm',name:'Mittelstürmer',desc:'50 Spiele als Stürmer',
+  {id:'atk50',ic:'posSturm',name:'Mittelstürmer',desc:'50 Partien als Stürmer',
     multi:true,count:(id,ms)=>{const s=playerStats(id,ms);return s.atkG>=50?1:0;}},
   // Zeile 4 — Aufsteiger, Dominator
   // v9.18: JEDE SAISON neu erreichbar. Gezählt wird die Anzahl der Saisons, in

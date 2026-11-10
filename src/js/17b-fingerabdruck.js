@@ -23,10 +23,10 @@ const FINGER_MIN_SPIELE = 12;
 const FINGER_ACHSEN = [
   {id:'wr',     name:'Siege',
    roh: d => d.st.wr,
-   zeig: v => Math.round(v * 100) + '%'},
+   zeig: v => Math.round(v * 100) + '\u00A0%'},
   {id:'atk',    name:'Sturm',
    roh: d => d.st.atkWr,
-   zeig: v => Math.round(v * 100) + '%'},
+   zeig: v => Math.round(v * 100) + '\u00A0%'},
   {id:'tore',   name:'Tore',
    roh: d => d.st.games ? d.st.gd / d.st.games : 0,
    zeig: v => (v < 0 ? '−' : '+') + komma(Math.abs(v))},
@@ -38,7 +38,7 @@ const FINGER_ACHSEN = [
    zeig: v => Math.round(v) + '×'},
   {id:'def',    name:'Abwehr',
    roh: d => d.st.defWr,
-   zeig: v => Math.round(v * 100) + '%'},
+   zeig: v => Math.round(v * 100) + '\u00A0%'},
 ];
 
 // Die Laufbahnen einmal rechnen und an der Cache-Version hängen: für die

@@ -1348,7 +1348,7 @@ function _prestigeRegelKarten(){
   const karte = (klasse, titel, start, regel) => `<span class="${klasse}">
       <b>${titel}</b><strong>${start} P Start</strong>
       <em>1. und 2. Mal voll.<br>
-      3. und 4. Mal ${Math.round(regel.abnahme * 100)} % weniger; danach paarweise flacher, nie 0.</em></span>`;
+      3. und 4. Mal ${Math.round(regel.abnahme * 100)}&nbsp;% weniger; danach paarweise flacher, nie 0.</em></span>`;
   return `<div class="lb-regeln">
     ${karte('legendary', RARITY_META.legendary.label, spanne('legendary'), PRESTIGE_AUSZEICHNUNG.legendary)}
     ${karte('rare', RARITY_META.rare.label, spanne('rare'), PRESTIGE_AUSZEICHNUNG.rare)}
@@ -1634,7 +1634,7 @@ function showLaufbahn(pid){
   openSheet(`
    <div class="pp-root lb-root st-${P.insignie.key}" style="--ak:${t.c};--ak-rgb:${t.rgb}">
     <h3>Die Laufbahn</h3>
-    <div class="sheet-sub num">${esc(p.name)} · Platz ${P.platz} von ${P.von} im Prestige</div>
+    <div class="sheet-sub num">${esc(p.name)}${P.platz ? ` · Platz ${P.platz} von ${P.von} im Prestige` : ''}</div>
 
     <div class="lb-karus" id="lbLeiter">
       <div class="lb-k-band">${karten}</div>

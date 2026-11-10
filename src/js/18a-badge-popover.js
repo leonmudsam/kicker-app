@@ -118,16 +118,16 @@ function _badgeProgress(badgeId, playerId){
   const playerMs = matches.filter(m => matchOf(playerId, m));
   switch(badgeId){
     case 'first_match':
-      return {cur: Math.min(playerMs.length, 1), tgt: 1, label: 'Spiele'};
+      return {cur: Math.min(playerMs.length, 1), tgt: 1, label: 'Partien'};
     case 'games25':
-      return {cur: Math.min(playerMs.length, 25), tgt: 25, label: 'Spiele'};
+      return {cur: Math.min(playerMs.length, 25), tgt: 25, label: 'Partien'};
     case 'games150':
-      return {cur: Math.min(playerMs.length, 150), tgt: 150, label: 'Spiele'};
+      return {cur: Math.min(playerMs.length, 150), tgt: 150, label: 'Partien'};
     // v9.17: einsehbarer Zähler für die goldenen Langzeit-Auszeichnungen.
     // playerMs ist bereits „alle Matches dieses Spielers" (= countGames), die
     // Siege kommen aus derselben Menge (= countWins) — keine zweite Rechnung.
     case 'games250':
-      return {cur: Math.min(playerMs.length, 300), tgt: 300, label: 'Spiele'};
+      return {cur: Math.min(playerMs.length, 300), tgt: 300, label: 'Partien'};
     case 'wins200': {
       const w = playerMs.filter(m => won(playerId, m)).length;
       return {cur: Math.min(w, 300), tgt: 300, label: 'Siege'};
@@ -137,14 +137,14 @@ function _badgeProgress(badgeId, playerId){
         const slot=m.a1===playerId?'a1':m.a2===playerId?'a2':m.b1===playerId?'b1':'b2';
         return m[slot+'_pos']==='def';
       }).length;
-      return {cur: Math.min(def, 50), tgt: 50, label: 'Abwehr-Spiele'};
+      return {cur: Math.min(def, 50), tgt: 50, label: 'Partien in der Abwehr'};
     }
     case 'atk50': {
       const atk = playerMs.filter(m => {
         const slot=m.a1===playerId?'a1':m.a2===playerId?'a2':m.b1===playerId?'b1':'b2';
         return m[slot+'_pos']==='atk';
       }).length;
-      return {cur: Math.min(atk, 50), tgt: 50, label: 'Sturm-Spiele'};
+      return {cur: Math.min(atk, 50), tgt: 50, label: 'Partien im Sturm'};
     }
     case 'streak5':
     case 'streak10':
@@ -314,7 +314,7 @@ function _badgeStreakSectionHtml(badgeId, playerId, rarity){
         <div class="bp-prog-bar"><div class="bp-prog-fill ${rarity}" style="width:${pct}%"></div></div>
         <div class="bp-prog-label">
           <span>${mt.cur} / ${mt.tgt} <span class="bp-prog-target">${esc(mt.label)}</span></span>
-          <span>${done?'✓':pct+'%'}</span>
+          <span>${done?'✓':pct+'\u00A0%'}</span>
         </div>
       </div>`;
     }).join('');
@@ -344,7 +344,7 @@ function _badgeStreakSectionHtml(badgeId, playerId, rarity){
       <div class="bp-prog-bar"><div class="bp-prog-fill ${rarity}" style="width:${pct}%"></div></div>
       <div class="bp-prog-label">
         <span>${cur} / ${st.tgt} <span class="bp-prog-target">${esc(st.label)}</span></span>
-        <span>${pct}%</span>
+        <span>${pct}\u00A0%</span>
       </div>
     </div>
     <div class="bp-run-hint">${esc(st.hint)}</div>`;
@@ -413,7 +413,7 @@ function showBadgePopover(badgeId, playerId){
           <div class="bp-prog-bar"><div class="bp-prog-fill ${r}" style="width:${Math.min(pct,100)}%"></div></div>
           <div class="bp-prog-label">
             <span>${prog.cur} / ${prog.tgt} <span class="bp-prog-target">${esc(prog.label)}</span></span>
-            <span>${pct}%</span>
+            <span>${pct}\u00A0%</span>
           </div>
         </div>`;
     } else {

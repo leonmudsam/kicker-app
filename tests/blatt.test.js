@@ -4678,8 +4678,22 @@ const ok = (c, msg, det) => {
     // Groß und klein: `innerText` liefert die Schreibweise nach
     // `text-transform`, und „Bester Mate" steht dort als „BESTER MATE".
     // „Match" neben „Partie": der Liga-Kopf zählte „19 Matches", der Feed
-    // erzählte von Partien.
-    const WORT = /\b(Mate|Siegrate|Winrate|Tordiff|Head-to-Head|Sheet|Upset|All-Time|Tippe|Tap|Update|Highlights|Stats|Win-Rate|Performance|Peak|Savepoint|Backup|Match|Matches)\b|\bSp\.|(?<![A-Za-zÄÖÜäöüß])[TG] = als|(?<![\d,])1 (?:Niederlagen|Siege)\b|(?<![A-Za-zÄÖÜäöüß])(min|mind|max)\.\s|zu \d+\. gehalten|\b(?:du|dein\w*)\b(?=\s[a-zäöü])/gi;
+    // erzählte von Partien. Ebenso „Spiele": das Profil zählte „431 Spiele",
+    // der Vergleich „1 Spiele", die Positionen „Tore je Spiel".
+    // Prozent steht mit Leerzeichen, wie im Feed und in der Chronik: Liga,
+    // Awards, Profil und Duo schrieben „75%". Gelesen wird je Textknoten —
+    // der Ring der Rollen setzt sein kleines Zeichen selbst daneben.
+    // Das Hauptwort, nicht das Verb („spielen zu null"), und nicht die
+    // Redensart „im Spiel bleiben": deshalb ohne das `i` von WORT.
+    const SPIEL = /\b(Spiele|Spielen|SPIELE|SPIELEN|SPIEL)\b|(?<!im )\bSpiel\b/g;
+    const prozentOhne = (wurzel, name) => {
+      const tw = document.createTreeWalker(wurzel, NodeFilter.SHOW_TEXT);
+      for(let n = tw.nextNode(); n; n = tw.nextNode()){
+        const m = n.nodeValue.match(/\d%/);
+        if(m && n.parentElement && n.parentElement.closest('svg') == null) woerter.push(name + ': ' + n.nodeValue.trim().slice(0, 24));
+      }
+    };
+    const WORT = /\b(Mate|Siegrate|Winrate|Tordiff|Head-to-Head|Sheet|Upset|All-Time|Tippe|Tap|Update|Highlights|Stats|Win-Rate|Performance|Peak|Savepoint|Backup|Match|Matches)\b|\bSp\.|(?<![A-Za-zÄÖÜäöüß])[TG] = als|(?<![\d,])1 (?:Niederlagen|Siege|Partien)\b|(?<![A-Za-zÄÖÜäöüß])(min|mind|max)\.\s|zu \d+\. gehalten|\b(?:du|dein\w*)\b(?=\s[a-zäöü])/gi;
     for(const [name, auf] of blaetter){
       try{ K('closeSheet(true)'); K(auf); }catch(e){ out.push(name + ': ' + e.message); continue; }
       await new Promise(r => requestAnimationFrame(r));
@@ -4687,6 +4701,15 @@ const ok = (c, msg, det) => {
       const m = (txt.match(/(^|[^\d.,])\d{1,3}\.\d{1,2}(?![\d.])/g) || []).map(x => x.trim());
       if(m.length) out.push(name + ': ' + m.slice(0,3).join(' '));
       (txt.match(WORT) || []).forEach(w => woerter.push(name + ': ' + w));
+      (txt.match(SPIEL) || []).forEach(w => woerter.push(name + ': ' + w));
+      prozentOhne(document.getElementById('sheet'), name);
+      // Der Name in einer Award-Liste bricht um, statt zu enden: mit der
+      // Schrift der App blieben einem Duo bei 360 px 125 px, und „Johannes &
+      // Julian" stand als „Johannes & Jul…" da. Gefragt wird die Regel, nicht
+      // die Breite — die Ersatzschrift des Prüflaufs ist schmaler.
+      const nm = document.querySelector('#sheet .aw-li-name');
+      if(nm && getComputedStyle(nm).textOverflow === 'ellipsis' && getComputedStyle(nm).whiteSpace === 'nowrap')
+        rand.push(name + ': der Name der Liste kann mit „…" enden');
       // Keine zwei Beschriftungen einer Achse übereinander: am 26. standen
       // im Positionsverlauf „25" und „26" als „2526".
       const ticks = [...document.querySelectorAll('#sheet .posv-x-tick')].map(t => t.getBoundingClientRect());
@@ -4744,11 +4767,14 @@ const ok = (c, msg, det) => {
     }
     K('closeSheet(true)');
     for(const [name, setz] of [['Liga', "tab='ranking'"], ['Teams', "tab='teams'"],
-        ['Awards', "tab='awards';awView='awards'"], ['Einstellungen', "tab='settings'"]]){
+        ['Awards', "tab='awards';awView='awards'"], ['Einstellungen', "tab='settings'"],
+        ['Positionen', "tab='positions'"], ['Liga gesamt', "tab='ranking';period='all'"]]){
       K(setz + ';render()');
       (document.getElementById('main').innerText.match(WORT) || []).forEach(w => woerter.push(name + ': ' + w));
+      (document.getElementById('main').innerText.match(SPIEL) || []).forEach(w => woerter.push(name + ': ' + w));
+      prozentOhne(document.getElementById('main'), name);
     }
-    K("tab='ranking';render()");
+    K("tab='ranking';period='season';render()");
     return {out, woerter, rand:[...new Set(rand)].slice(0, 8), gesicht:[...new Set(gesicht)].slice(0, 6)};
   });
   ok(blattPunkt.gesicht.length === 0, 'jedes Gesicht in einem Blatt hat eine Größe und ist rund',
@@ -4844,13 +4870,13 @@ const ok = (c, msg, det) => {
       K("showAward('upset')");
       // Die Bühne nennt die Siegchance der Sieger [§C27].
       const blatt = (document.getElementById('sheet').innerText.match(/Siegchance (\d+)\s?%/) || [])[1];
-      if(kachel && kachel !== blatt + '%') fehler.push(p + ' Überraschung: Kachel ' + kachel + ', Blatt ' + blatt + '%');
+      if(kachel && !(/^\d+\s%$/.test(kachel) && parseInt(kachel, 10) === +blatt)) fehler.push(p + ' Überraschung: Kachel ' + kachel + ', Blatt ' + blatt + ' %');
       K('closeSheet(true)');
       const ud = K("(awardRankings(awPeriod, awSeasonId).underdogList||[]).map(x=>x.pct)");
       if(ud.some((v, i) => i && v > ud[i-1])) fehler.push(p + ' Underdog-Held nicht nach Quote');
       K("showAward('underdog')");
       const udW = [...document.querySelectorAll('#sheet .aw-winner-val, #sheet .aw-li-val')].map(e => e.textContent.trim());
-      if(ud.length && !udW.every(w => /^\d+%/.test(w))) fehler.push(p + ' Underdog-Held zeigt ' + udW.slice(0, 3).join(', '));
+      if(ud.length && !udW.every(w => /^\d+\s%/.test(w))) fehler.push(p + ' Underdog-Held zeigt ' + udW.slice(0, 3).join(', '));
       K('closeSheet(true)');
     }
     // Neben den Siegern steht ihr Stand zuerst: „Stefan & Martin 8:10".
@@ -4935,7 +4961,7 @@ const ok = (c, msg, det) => {
       // Ein Story-Blatt steht in #nd, nicht im Blatt-Stapel.
       const txt = (document.getElementById('nd') || {}).innerText || '';
       if(/in derselben Partie|im selben Moment/.test(txt)) fehler.push(x.id);
-      if(x.t === 'woche' && /Spiele an \d+ Tag/.test(txt) && /Partien in dieser Woche/i.test(txt)) fehler.push(x.id + ' doppelt');
+      if(x.t === 'woche' && /(Spiele|Partien) an \d+ Tag/.test(txt) && /Partien in dieser Woche/i.test(txt)) fehler.push(x.id + ' doppelt');
     }
     K('closeSheet(true); typeof closeNewsDetail === "function" && closeNewsDetail()');
     return {n: ziel.length, fehler};

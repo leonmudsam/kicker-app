@@ -65,6 +65,14 @@ Wortlaut zitiert, nicht mit einer Nummer.
   standen nebeneinander: der Liga-Kopf zählte „19 Matches", der Verlauf
   „634 Matches", der Feed erzählte von Partien. Es heißt überall Partie;
   nur die Sicherungsdatei behält ihr Blatt „Matches", das ist ihr Format.
+  Dasselbe gilt für „Spiel": das Profil zählte „431 Spiele", der Vergleich
+  „1 Spiele", die Positionen „Tore je Spiel", der Feed „feiert das 100.
+  Spiel". Es bleiben die Zusammensetzungen („Sturmspiel", „Rückkehrspiel")
+  und die Redensart „im Spiel bleiben". Prozent steht mit Leerzeichen
+  („75 %"): Liga, Awards, Profil und Duo schrieben „75%", Feed und Chronik
+  „75 %". In einer Zelle, die nur die Zahl trägt, ist es ein geschütztes
+  Leerzeichen — bei 360 px stand das Zeichen sonst allein in der nächsten
+  Zeile.
   Die Einstellungen sprachen von „MoV-Dämpfung", „Underdog-Boost
   (Spiele-Gap)" und „tanh-skaliert"; ihre Regler heißen jetzt, was sie tun
   („Tordifferenz bei Niederlagen", „Aufhol-Zuschlag"), und die Posten der

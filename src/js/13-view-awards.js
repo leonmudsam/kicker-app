@@ -1187,7 +1187,7 @@ const AWARD_META={
 //   gilt   was ein Eintrag mindestens braucht, um Halter zu sein
 //   einzeln  eine einzelne Partie: der Platz ist die Reihenfolge der Liste
 //   gegner   zwei Spieler, die sich gegenüberstehen — kein Duo
-const _awPz = v => Math.round(v * 100) + '%';
+const _awPz = v => Math.round(v * 100) + '\u00A0%';
 const _awN = (n, eins, viele) => n === 1 ? eins : viele;
 const _awSieger = x => x.m.winner === 'A' ? [x.m.a1, x.m.a2] : [x.m.b1, x.m.b2];
 const AW_WERT = {

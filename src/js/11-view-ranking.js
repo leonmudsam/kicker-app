@@ -86,7 +86,7 @@ function ruhestandTafelHtml(){
     // stehen in einer eigenen Zeile: neben dem Datum liefen sie bei 390 px
     // in die Zahl hinein.
     const r = getPlayerRank(p.id);
-    const zweite = [s.games + ' Spiele', t ? t + ' Titel' : '',
+    const zweite = [s.games + (s.games === 1 ? ' Partie' : ' Partien'), t ? t + ' Titel' : '',
                     rek ? rek + (rek === 1 ? ' Rekord' : ' Rekorde') : ''].filter(Boolean).join(' · ');
     return `<div class="rrow ruhe-row" data-detail="${esc(p.id)}">
       ${avHtml(p, '', {ins:true, px:52})}
@@ -216,11 +216,11 @@ function _vRankingCore(){
     const wertVon=(x)=>{
       const wr=x.games?Math.round(x.wins/x.games*100):0;
       if(metrik==='wins')     return {big:x.wins, small:'Siege'};
-      if(metrik==='winrate')  return {big:wr+'%', small:x.wins+'–'+x.losses};
+      if(metrik==='winrate')  return {big:wr+'\u00A0%', small:x.wins+'–'+x.losses};
       if(metrik==='goaldiff') return {big:(x.gd>=0?'+':'')+x.gd, small:'Torbilanz'};
       if(metrik==='streak')   return {big:x.curStreak>0?x.curStreak+'W':x.curStreak<0?(-x.curStreak)+'L':'–',
                                       small:x.curStreak>0?'Siege':x.curStreak<0?'Niederlagen':'neutral'};
-      if(metrik==='games')    return {big:x.games, small:'Spiele'};
+      if(metrik==='games')    return {big:x.games, small:'Partien'};
       return period==='season'
         ? {big:x.elo, small:'Elo'}
         : {big:(x.eloNet>=0?'+':'')+x.eloNet, small:'Elo'};
@@ -247,7 +247,7 @@ function _vRankingCore(){
             _titleMarkHtml(x.id, i<3?'lg':'', {ohneChamp:true, einfarbig:true})}${
             lossStreakInline(x.curStreak)}</div>
           <div class="rmeta"><span>${x.wins}–${x.losses}</span>
-            <span class="wbar"><i style="width:${wr}%"></i></span><span>${wr}%</span></div>
+            <span class="wbar"><i style="width:${wr}%"></i></span><span>${wr}\u00A0%</span></div>
           ${dots||x.games?`<div class="rzuletzt">
             ${dots?`<div class="form-dots">${dots}</div>`:''}
             ${x.games?`<div class="elo-gain-bar"><span class="gain">+${x.eloGain}</span><span class="loss">${x.eloLoss}</span></div>`:''}
@@ -314,7 +314,7 @@ function _vRankingCore(){
               ${avHtml(wp,'',{ins:true,band:true,px:72})}
               <div class="nw-mid">
                 <div class="nw-name">${esc(wp.name)}</div>
-                <div class="nw-meta">${winner.wins}–${winner.losses} · ${wWr}% Quote</div>
+                <div class="nw-meta">${winner.wins}–${winner.losses} · ${wWr}\u00A0% Quote</div>
               </div>
               <div class="nw-val"><div class="v num${winner.eloNet<0?' minus':''}">${
                 winner.eloNet>=0?'+':''}${winner.eloNet}</div><div class="l">${eloLabel}</div></div>
@@ -378,7 +378,7 @@ function _vRankingCore(){
         ? renderHl('streak','Siegesserie',AW_IC.streaks, topStreak?pname(topStreak.id):null,
             topStreak?`${topStreak.v} in Folge`:'', topStreak?'data-toplist="periodStreak"':'')
         : renderHl('upset','Überraschung',AW_IC.upset, upsetName,
-            topUpset?`${topUpset.winPct}% Chance`:'', topUpset?'data-toplist="periodUpset"':'');
+            topUpset?`${topUpset.winPct}\u00A0% Chance`:'', topUpset?'data-toplist="periodUpset"':'');
       nebenHtml+=`
         <div class="wk-highlights">
           ${renderHl('team','Bestes Team',AW_IC.mvt, teamName, bestTeam?`+${Math.round(bestTeam.elo)} Elo`:'', bestTeam?'data-toplist="periodTeam"':'')}
@@ -508,7 +508,7 @@ function _vRankingCore(){
             ${i===0?'<div class="held-label">Team der Saison</div>':''}
             <div class="rname">${esc(t.ids.map(pname).join(' & '))}</div>
             <div class="rmeta"><span>${t.w}–${t.g-t.w}</span>
-              <span class="wbar"><i style="width:${wr}%"></i></span><span>${wr}%</span></div>
+              <span class="wbar"><i style="width:${wr}%"></i></span><span>${wr}\u00A0%</span></div>
           </div>
           <div class="rval"><div class="big num">${e>=0?'+':''}${e}</div>
             <div class="small">Elo</div></div>
@@ -523,7 +523,7 @@ function _vRankingCore(){
         ${sichtBar}
         ${duos.length
           ? `<div class="rlist">${duos.map(duoZeile).join('')}</div>`
-          : emptyState('handshake','Noch kein Duo mit zwei gemeinsamen Spielen')}`;
+          : emptyState('handshake','Noch kein Duo mit zwei gemeinsamen Partien')}`;
     }
 
     return `
@@ -631,7 +631,7 @@ function _vRankingCore(){
       const rek = chroniclesOfPlayer(pp.id).filter(x => !x.neg).length;
       // Ausgeschrieben: „90 Sp." und „10 Rek." waren die letzten Kürzel
       // der Tafel, und jede Zeile steht auf einer eigenen Linie.
-      const sub = [t ? t + ' Titel' : '', entry.s.games + ' Spiele',
+      const sub = [t ? t + ' Titel' : '', entry.s.games + (entry.s.games === 1 ? ' Partie' : ' Partien'),
                    rek ? rek + (rek === 1 ? ' Rekord' : ' Rekorde') : '']
         .filter(Boolean).map(x => `<span>${esc(x)}</span>`).join('');
       return `
@@ -689,7 +689,7 @@ function rrow(p, s, i, metric, globalElo, letzte){
     small=r?`<span class="ic svg-ic" style="font-size:11px;color:${r.color};margin-right:3px;vertical-align:-1px">${svgI(r.icon)}</span>${r.label}`:'–';
   }
 
-  else if(metric==='winrate'){big=Math.round(s.wr*100)+'%'; small=s.wins+'–'+s.losses;}
+  else if(metric==='winrate'){big=Math.round(s.wr*100)+'\u00A0%'; small=s.wins+'–'+s.losses;}
   else if(metric==='goaldiff'){
     // Geschrieben wie Plus-Minus, mit derselben Regel [§C27]: „Ø +1,4" und
     // darunter „je Partie" — „Torbilanz" steht schon im gewählten Reiter,
@@ -707,7 +707,7 @@ function rrow(p, s, i, metric, globalElo, letzte){
     big=pr.punkte;
     small=pr.insignie.name;
   }
-  else{big=s.games; small='Spiele';}
+  else{big=s.games; small='Partien';}
   const neutral = metric!=='elo' && !(metric==='goaldiff'&&s.gd>=0) ? ' neutral':'';
   const pleite = lossStreakInline(s.curStreak);
   return `<div class="rrow ${cls}" data-detail="${p.id}">
@@ -721,7 +721,7 @@ function rrow(p, s, i, metric, globalElo, letzte){
       <div class="rmeta">
         <span>${s.wins}–${s.losses}</span>
         <span class="wbar"><i style="width:${Math.round(s.wr*100)}%"></i></span>
-        <span>${Math.round(s.wr*100)}%</span>
+        <span>${Math.round(s.wr*100)}\u00A0%</span>
       </div>
       ${letzte&&letzte.length?`<div class="rzuletzt"><div class="form-dots">${
         formDotsHtml(letzte, s.curStreak)}</div></div>`:''}

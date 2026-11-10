@@ -430,7 +430,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     if(!bk) return null;
     return { cat:'fun', ic:'thriller', prio:3,
       title:`${g} Tore in ${matches.length} Partien`,
-      desc:`Im Schnitt fallen ${komma(g/matches.length)} Tore pro Spiel. Am häufigsten endet eine Partie ${bk}, das war ${bn} Mal so.`,
+      desc:`Im Schnitt fallen ${komma(g/matches.length)} Tore je Partie. Am häufigsten endet eine Partie ${bk}, das war ${bn} Mal so.`,
       vv: g, vl:'Tore',
       dataRef:{ bild:{f:'verteilung', je:[0,1,2,3,4,5,6,7,8,9].map(i => cnt['10:' + i] || 0), hl:[Number(bk.split(':')[1])]} } };
   }});
@@ -458,7 +458,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     return { cat:'personal', ic:'medalTrio', prio:3,
       title:`${nameOf(pid)} ist Dauergast`,
       desc:`Niemand spielt mehr: ${stats[pid].games} Partien auf dem Konto.`,
-      vv: stats[pid].games, vl:'Spiele',
+      vv: stats[pid].games, vl:'Partien',
       dataRef:{ ambientPid: pid, bild:_bZahl(withStats, p2 => stats[p2].games) } };
   }});
 
@@ -622,7 +622,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     return { cat:'fun', ic:'calendar', prio:2,
       title:'Rekord-Spieltag',
       desc:`Die meisten Partien an einem Tag: ${bn} am ${p[2]}.${p[1]}.${p[0]}.`,
-      vv: bn, vl:'Spiele',
+      vv: bn, vl:'Partien',
       dataRef:{ bild:(() => { const ks = Object.keys(byDay).sort().slice(-24);
         if(!ks.includes(bk)){ ks.shift(); ks.push(bk); ks.sort(); }
         return {f:'saeulen', v:ks.map(k => byDay[k]), hl:[ks.indexOf(bk)], l:'Spieltage'}; })() } };
@@ -690,7 +690,7 @@ function _ambientTemplatePool(now, pm, nameOf){
       { noun:'Meiste Siege',         ic:'trophy',  pool:withStats, val: pid => stats[pid].wins,               fmt: v => v+' Siege' },
       { noun:'Bestes Torverhältnis', ic:'plusMinus', pool:withStats, val: pid => stats[pid].gf - stats[pid].ga, fmt: v => (v>0?'+':'')+v+' Tordifferenz' },
       { noun:'Meiste Tore',          ic:'ball',    pool:withStats, val: pid => stats[pid].gf,                 fmt: v => v+' Tore' },
-      { noun:'Höchste Karriere-Elo', ic:'crown',   pool:elig,      val: pid => Math.round(career[pid]||0),    fmt: v => v+' Elo', qual:' (ab 5 Spielen)' },
+      { noun:'Höchste Karriere-Elo', ic:'crown',   pool:elig,      val: pid => Math.round(career[pid]||0),    fmt: v => v+' Elo', qual:' (ab 5 Partien)' },
     ];
     const c = cats[Math.floor(rng()*cats.length)];
     let best = null, second = null;
@@ -829,7 +829,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     return { cat:'personal', ic:'trendUp', prio:5,
       title:`${nameOf(best.pid)} ist in Topform`,
       desc:`Beste Siegquote der letzten 14 Tage: ${Math.round(best.v*100)} % aus ${a.g} Partien.`,
-      vv: Math.round(best.v*100)+'%', vl:'14 Tage',
+      vv: Math.round(best.v*100)+'\u00A0%', vl:'14 Tage',
       dataRef:{ ambientPid: best.pid, bild:_bReihe(elig, id => agg[id].w / agg[id].g, v => Math.round(v * 100) + ' %') } };
   }});
 
@@ -876,7 +876,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     return { cat:'personal', ic:'target', prio:5,
       title:`${nameOf(best.pid)} hat Nerven aus Stahl`,
       desc:`Gewinnt aktuell ${Math.round(best.v*100)} % der engen Partien (höchstens 2 Tore Unterschied), ${a.cw} von ${a.cg} in 14 Tagen.`,
-      vv: Math.round(best.v*100)+'%', vl:'eng gewonnen',
+      vv: Math.round(best.v*100)+'\u00A0%', vl:'eng gewonnen',
       dataRef:{ ambientPid: best.pid, bild:_bReihe(elig, id => agg[id].cw / agg[id].cg, v => Math.round(v * 100) + ' %') } };
   }});
 
@@ -910,7 +910,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     return { cat:'personal', ic:'medalTrio', prio:3,
       title:`${nameOf(best.pid)} gibt Vollgas`,
       desc:`Aktivster Spieler der letzten 14 Tage: ${best.v} Partien in zwei Wochen.`,
-      vv: best.v, vl:'Spiele',
+      vv: best.v, vl:'Partien',
       dataRef:{ ambientPid: best.pid, bild:_bReihe(Object.keys(agg), id => agg[id].g, v => String(v)) } };
   }});
 
@@ -1217,7 +1217,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     return { cat:'team', ic:'duo', prio:4,
       title:`Beste Freunde: ${nameOf(c.pid)} und ${nameOf(c.mate)}`,
       desc:`Zusammen ${c.w} von ${c.g} Partien gewonnen, ${Math.round(c.wr*100)} %.`,
-      vv: Math.round(c.wr*100) + '%', vl:'als Duo',
+      vv: Math.round(c.wr*100) + '\u00A0%', vl:'als Duo',
       dataRef:{ ambientPids:[c.pid, c.mate], pairKind:'team', bild:{f:'duo', a:c.pid, b:c.mate, w:c.w, g:c.g} } };
   }});
 
@@ -1236,7 +1236,7 @@ function _ambientTemplatePool(now, pm, nameOf){
         // Ohne Wert blieb der grosse Block der Karte leer. Die Aussage ist
         // die Quote, die in BEIDEN Rollen gilt — nicht der Abstand, der
         // hier gerade null sein soll.
-        vv: Math.round((st.atkW + st.defW) / (st.atkG + st.defG) * 100) + '%',
+        vv: Math.round((st.atkW + st.defW) / (st.atkG + st.defG) * 100) + '\u00A0%',
         vl:'in beiden Rollen',
         dataRef:{ ambientPid: pid, bild:{f:'rolle', p:pid, s:Math.round(atkWr*100), a:Math.round(defWr*100), gs:st.atkG, ga:st.defG} } };
     }
@@ -1246,7 +1246,7 @@ function _ambientTemplatePool(now, pm, nameOf){
       desc: strong
         ? `Im Sturm ${Math.round(atkWr*100)} % Siege (${st.atkG} Partien), in der Abwehr nur ${Math.round(defWr*100)} %.`
         : `In der Abwehr ${Math.round(defWr*100)} % Siege (${st.defG} Partien), im Sturm nur ${Math.round(atkWr*100)} %.`,
-      vv: Math.round((strong ? atkWr : defWr)*100) + '%', vl: strong ? 'im Sturm' : 'in Abwehr',
+      vv: Math.round((strong ? atkWr : defWr)*100) + '\u00A0%', vl: strong ? 'im Sturm' : 'in Abwehr',
       dataRef:{ ambientPid: pid, bild:{f:'rolle', p:pid, s:Math.round(atkWr*100), a:Math.round(defWr*100), gs:st.atkG, ga:st.defG} } };
   }});
 
@@ -1524,7 +1524,7 @@ function _ambientTemplatePool(now, pm, nameOf){
       return { cat:'season', ic:'stopwatch', prio:6,
         title:`Halbzeit im ${seasonLabel(sid)}`,
         desc: `${T2.matches} Partien an ${T2.days} Spieltagen. `
-          + (fuehrend ? `${nameOf(fuehrend.pid)} führt mit ${fuehrend.elo} Elo aus ${fuehrend.games} Spielen. ` : '')
+          + (fuehrend ? `${nameOf(fuehrend.pid)} führt mit ${fuehrend.elo} Elo aus ${fuehrend.games} Partien. ` : '')
           + `${T2.awarded.length} von ${SEASON_TITLES.length} Monatschroniken sind vergeben, ${offen} noch offen`
           + (ohne ? `, ${ohne} Spieler ${ohne === 1 ? 'trägt' : 'tragen'} noch keine.` : '.')
           + ` Die zweite Monatshälfte entscheidet.`,

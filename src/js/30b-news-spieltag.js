@@ -1218,7 +1218,7 @@ const SP_FORM = {
       const z = vor[vor.length - 1];
       return {W:F.W, L:F.L, hoch:F.hoch, tief:F.tief, n:vor.length + 1, zuletzt:z ? mts(z) : null};
     },
-    text:F => ({t:`${_spNl(F.W)} spielen zu null`, d:`Ein Spiel ohne Gegentor gegen ${_spNl(F.L)}.`})},
+    text:F => ({t:`${_spNl(F.W)} spielen zu null`, d:`Eine Partie ohne Gegentor gegen ${_spNl(F.L)}.`})},
   // Die Uhr des Tages: ab der sechsten Partie eines Tages, jede als Strich
   // auf dem Zifferblatt, diese hell.
   uhr:{rang:24, ic:'clock', v2:true,
@@ -1289,7 +1289,7 @@ const SP_FORM = {
     wann:F => F.diff === 1 ? {} : null,
     daten:F => Object.assign(_spKopfDaten(F), {nr:_spImMonat(F, _spKrimi)}),
     text:F => ({t:`${_spNl(F.W)} gewinnen mit einem Tor Abstand`,
-      d:`Es ist das ${_spImMonat(F, _spKrimi)}. Spiel mit einem Tor Abstand in diesem Monat.`})},
+      d:`Es ist die ${_spImMonat(F, _spKrimi)}. Partie mit einem Tor Abstand in diesem Monat.`})},
   // Zu null: unter jedem Paar sein eigenes Tor. Bei den Siegern leer und
   // golden, bei den Verlierern zehnmal getroffen — so steht es im Kicker:
   // das Tor eines Paars zählt, was es kassiert hat.
@@ -1297,7 +1297,7 @@ const SP_FORM = {
     wann:F => F.tief === 0 ? {} : null,
     daten:F => Object.assign(_spKopfDaten(F), {nr:_spImMonat(F, _spZuNull),
       monat:seasonLabel(tagKey(mts(F.m)).slice(0, 7)).split(' ')[0]}),
-    text:F => ({t:`${_spNl(F.W)} spielen zu null`, d:`Ein Spiel ohne Gegentor gegen ${_spNl(F.L)}.`})},
+    text:F => ({t:`${_spNl(F.W)} spielen zu null`, d:`Eine Partie ohne Gegentor gegen ${_spNl(F.L)}.`})},
   // Das Spielfeld: wer an welcher Stange stand. Es bleibt der Rückfall und
   // erzählt dann, wie oft sich genau diese beiden Duos schon trafen.
   feld:{rang:8, ic:'ball',

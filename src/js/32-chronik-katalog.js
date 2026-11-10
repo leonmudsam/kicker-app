@@ -702,7 +702,7 @@ const DISZIPLINEN = [
       wie:'Gewertet wird der beste einzelne Monat einer Laufbahn und nicht der Schnitt über alle Monate. Monate mit weniger als fünfzehn eigenen Partien bleiben außen vor.',
       cond:'Höchste Siegquote in einem einzelnen Monat, ab 15 Partien in diesem Monat',
       val:p => p.bestMonth ? p.bestMonth.q : null,
-      ev:(p,v) => `${Math.round(v*100)} % aus ${p.bestMonth.g} Spielen`,
+      ev:(p,v) => `${Math.round(v*100)} % aus ${p.bestMonth.g} Partien`,
       zeit:p => p.bestMonth ? seasonLabel(p.bestMonth.sid) : ''
     }},
 
@@ -787,7 +787,7 @@ const DISZIPLINEN = [
         const d = (p.closeW/p.close) - ((p.wins - p.closeW)/rest);
         return d > 0 ? d : null;
       },
-      ev:(p,v) => `${_ppZeichen(v)} %-Punkte in engen Spielen · ${pct(p.closeW/p.close)} statt ${_ppGegen(p.closeW/p.close, v)} % sonst`
+      ev:(p,v) => `${_ppZeichen(v)} %-Punkte in engen Partien · ${pct(p.closeW/p.close)} statt ${_ppGegen(p.closeW/p.close, v)} % sonst`
     },
     // Dieselbe Rechnung auf der Monatsachse [§13.1]: enge gegen die uebrigen
     // eigenen Partien desselben Monats. Gegen das Eigene gemessen, also fuer
@@ -1045,7 +1045,7 @@ const DISZIPLINEN = [
       zeitraum:'Ganze Laufbahn, beide Positionen',
       mind:'20 Sturmspiele und 20 Abwehrspiele',
       wie:'Die Leistung gegen die Elo-Erwartung, getrennt für Sturm und Abwehr. Gewertet wird die schwächere der beiden Positionen: vorne steht, wer auf beiden über der Erwartung liegt.',
-      cond:'Größter Abstand zur Erwartung auf der schwächeren Position, ab 20 Spielen je Position',
+      cond:'Größter Abstand zur Erwartung auf der schwächeren Position, ab 20 Partien je Position',
       // Ohne Latte bei null: „über der Rechnung auf beiden" liess den Rekord
       // leer, sobald sein einziger Halter aufgehört hatte. Ein Rekord ist der
       // beste Wert, den es gibt [§C35]; verlangt wird nur die Stichprobe.
@@ -1173,7 +1173,7 @@ const DISZIPLINEN = [
       zeitraum:'Ganze Laufbahn, je Spieltag',
       mind:'10 Spieltage mit je 3 eigenen Partien',
       wie:'Für jeden eigenen Spieltag mit mindestens drei Partien wird die erste Partie mit allen übrigen dieses Tages verglichen.',
-      cond:'Größter Vorsprung im ersten Spiel eines Spieltags, ab 10 Spieltagen mit je 3 Partien',
+      cond:'Größter Vorsprung in der ersten Partie eines Spieltags, ab 10 Spieltagen mit je 3 Partien',
       val:p => (p.ksDelta != null && p.ksN >= 10 && p.ksDelta > 0) ? p.ksDelta : null,
       ev:(p,v) => `${_ppZeichen(v)} %-Punkte · ${pct(p.ksDrin)} % in ${p.ksN} Startspielen, sonst ${_ppGegen(p.ksDrin, v)} %`
     }},
@@ -1191,7 +1191,7 @@ const DISZIPLINEN = [
       // Vier Rückkehrspiele und nicht acht: nach sechs Tagen Pause kamen an
       // den echten Partien nur zwei Spieler auf acht, und der Rost blieb leer.
       mind:'4 Rückkehrspiele',
-      wie:`Ein Rückkehrspiel ist die erste eigene Partie nach ${REKORD_PAUSE_STUNDEN} vollständigen Stunden, also ${REKORD_PAUSE_STUNDEN / 24} Tagen, ohne eigenes Match. Die Siegquote dieser Rückkehrspiele wird gegen die Siegquote aller übrigen eigenen Partien gestellt. Der Wert ist der Abstand in Prozentpunkten. Gerechnet wird mit dem Abstand der Zeitpunkte und nicht mit Kalendertagen; die allererste Partie einer Laufbahn zählt nicht mit.`,
+      wie:`Ein Rückkehrspiel ist die erste eigene Partie nach ${REKORD_PAUSE_STUNDEN} vollständigen Stunden, also ${REKORD_PAUSE_STUNDEN / 24} Tagen, ohne eigene Partie. Die Siegquote dieser Rückkehrspiele wird gegen die Siegquote aller übrigen eigenen Partien gestellt. Der Wert ist der Abstand in Prozentpunkten. Gerechnet wird mit dem Abstand der Zeitpunkte und nicht mit Kalendertagen; die allererste Partie einer Laufbahn zählt nicht mit.`,
       cond:`Größter Vorsprung in der ersten Partie nach ${REKORD_PAUSE_STUNDEN / 24} Tagen Pause gegenüber den übrigen Partien, ab 4 Rückkehrspielen`,
       val:p => (p.weDelta != null && p.weN >= 4 && pct(p.weDelta) > 0) ? p.weDelta : null,
       ev:(p,v) => `${_ppZeichen(v)} %-Punkte · ${pct(p.weW / p.weN)} % in ${p.weN} Rückkehrspielen, sonst ${_ppGegen(p.weW / p.weN, v)} %`
@@ -1214,7 +1214,7 @@ const DISZIPLINEN = [
       zeitraum:'Ganze Laufbahn, je Spieltag',
       mind:'10 Spieltage mit je 3 eigenen Partien',
       wie:'Für jeden eigenen Spieltag mit mindestens drei Partien wird die zeitlich letzte Partie gegen alle übrigen dieses Tages gestellt. Der Vergleich läuft innerhalb desselben Tages.',
-      cond:'Größter Vorsprung im letzten Spiel eines Spieltags, ab 10 Spieltagen mit je 3 Partien',
+      cond:'Größter Vorsprung in der letzten Partie eines Spieltags, ab 10 Spieltagen mit je 3 Partien',
       val:p => (p.sbDelta != null && p.sbN >= 10 && p.sbDelta > 0) ? p.sbDelta : null,
       ev:(p,v) => `${_ppZeichen(v)} %-Punkte · ${pct(p.sbDrin)} % in ${p.sbN} Schlussspielen, sonst ${_ppGegen(p.sbDrin, v)} %`
     }},
@@ -1417,7 +1417,7 @@ const DISZIPLINEN = [
       kammer:'fuegung', basis:REKORD_GRUNDWERT.fuegung, offen:true,
       zeitraum:'Ganze Ligageschichte',
       mind:'30 Partien',
-      wie:'Favorit heißt über 55 % Siegchance vor dem Anpfiff, Außenseiter unter 45 %. Die Lage dazwischen unterbricht die Folge, dieselbe Lage zweimal hintereinander beginnt sie neu, und ein Wechsel braucht zwei Partien. Wie die Rechnung ein Spiel sieht, entscheidet die Aufstellung, nicht das Ergebnis.',
+      wie:'Favorit heißt über 55 % Siegchance vor dem Anpfiff, Außenseiter unter 45 %. Die Lage dazwischen unterbricht die Folge, dieselbe Lage zweimal hintereinander beginnt sie neu, und ein Wechsel braucht zwei Partien. Wie die Rechnung eine Partie sieht, entscheidet die Aufstellung, nicht das Ergebnis.',
       cond:'Längste Folge von Partien, abwechselnd als Favorit und als Außenseiter',
       unit:'Partien in Folge', min:2, raw:p => p.spLauf,
       ev:(p,v) => `${v} Partien in Folge abwechselnd Favorit und Außenseiter`,
@@ -1651,7 +1651,7 @@ const DISZIPLINEN = [
       wie:'Für jedes Sturmspiel steht die eigene Tordifferenz. Gewertet wird deren Streuung, also wie weit die einzelnen Ergebnisse vom eigenen Schnitt abweichen. Niedrig ist besser.',
       cond:'Gleichmäßigste Tordifferenz im Sturm, ab 40 Sturmspielen',
       val:p => (p.atkSd != null && p.atkG >= 40) ? -p.atkSd : null,
-      ev:p => `${komma(p.atkSd)} Tore Streuung im Sturm · Schnitt ${p.atkMit >= 0 ? '+' : '−'}${komma(Math.abs(p.atkMit))} in ${p.atkG} Spielen`
+      ev:p => `${komma(p.atkSd)} Tore Streuung im Sturm · Schnitt ${p.atkMit >= 0 ? '+' : '−'}${komma(Math.abs(p.atkMit))} in ${p.atkG} Partien`
     }},
 
   {id:'bedrock', name:'Das Fundament', short:'Statik', ic:'baseLine', tone:'blue',
@@ -1663,7 +1663,7 @@ const DISZIPLINEN = [
       wie:'Für jedes Abwehrspiel steht die eigene Tordifferenz. Gewertet wird deren Streuung, also wie weit die einzelnen Ergebnisse vom eigenen Schnitt abweichen. Niedrig ist besser. Über die Höhe der Differenz sagt die Zahl nichts.',
       cond:'Gleichmäßigste Tordifferenz in der Abwehr, ab 40 Abwehrspielen',
       val:p => (p.defSd != null && p.defG >= 40) ? -p.defSd : null,
-      ev:p => `${komma(p.defSd)} Tore Streuung in der Abwehr · Schnitt ${p.defMit >= 0 ? '+' : '−'}${komma(Math.abs(p.defMit))} in ${p.defG} Spielen`
+      ev:p => `${komma(p.defSd)} Tore Streuung in der Abwehr · Schnitt ${p.defMit >= 0 ? '+' : '−'}${komma(Math.abs(p.defMit))} in ${p.defG} Partien`
     }},
 
   {id:'unruffled', name:'Der Unaufgeregte', short:'Ruhe', ic:'flatWave', tone:'acid',
@@ -1851,7 +1851,7 @@ const DISZIPLINEN = [
         p => p.defG >= ST_TEIL,
         p => p.defConceded / p.defG,
         9.75,
-        (p, v) => `${komma(v)} Gegentore je Abwehrspiel · ${p.defG} Spiele`))},
+        (p, v) => `${komma(v)} Gegentore je Abwehrspiel · ${p.defG} Partien hinten`))},
     allzeit:{
       kammer:'shame', basis:REKORD_GRUNDWERT.schatten,
       zeitraum:'Ganze Laufbahn, alle Abwehrspiele',
@@ -2096,7 +2096,7 @@ const DISZIPLINEN = [
       kammer:'shame', basis:REKORD_GRUNDWERT.schatten, offen:true,
       zeitraum:'Ganze Laufbahn, jede Rückkehr',
       mind:'4 Rückkehrspiele',
-      wie:`Ein Rückkehrspiel ist die erste eigene Partie nach ${REKORD_PAUSE_STUNDEN} vollständigen Stunden, also ${REKORD_PAUSE_STUNDEN / 24} Tagen, ohne eigenes Match. Die Siegquote dieser Rückkehrspiele wird gegen die Siegquote aller übrigen eigenen Partien gestellt. Der Wert ist der Rückstand in Prozentpunkten.`,
+      wie:`Ein Rückkehrspiel ist die erste eigene Partie nach ${REKORD_PAUSE_STUNDEN} vollständigen Stunden, also ${REKORD_PAUSE_STUNDEN / 24} Tagen, ohne eigene Partie. Die Siegquote dieser Rückkehrspiele wird gegen die Siegquote aller übrigen eigenen Partien gestellt. Der Wert ist der Rückstand in Prozentpunkten.`,
       cond:`Größter Rückstand in der ersten Partie nach ${REKORD_PAUSE_STUNDEN / 24} Tagen Pause gegenüber den übrigen Partien, ab 4 Rückkehrspielen`,
       val:p => (p.weDelta != null && p.weN >= 4 && pct(p.weDelta) < 0) ? -p.weDelta : null,
       ev:(p,v) => `${_ppZeichen(-v)} %-Punkte · ${pct(p.weW / p.weN)} % in ${p.weN} Rückkehrspielen, sonst ${_ppGegen(p.weW / p.weN, -v)} %`
@@ -2707,7 +2707,7 @@ const DISZIPLINEN = [
       beiname:'Der Zugeknöpfte',
       art:'koennen',
       klasse:'besonders', aus:2.13, streu:0.0579, mitte:0.0762, n0:42, echt:0.7,
-      wie:'Gezählt wird der Anteil, nicht die Anzahl. Ein Spiel geht auf zehn, drei Gegentore sind eine geschlossene Partie.',
+      wie:'Gezählt wird der Anteil, nicht die Anzahl. Eine Partie geht bis zehn, drei Gegentore sind eine geschlossene Partie.',
       stichprobe:p => p.games,
       cond:'Mindestens 20 % der Partien mit höchstens drei Gegentoren',
       ...(_stWertung(

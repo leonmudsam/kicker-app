@@ -32,11 +32,11 @@ function positionsListe(pos, spieler){
 // stehen in keiner Rangfolge der aktiven Liga, also trägt die Zeile keinen
 // Platz und kein Metall der ersten drei.
 function positionsBlockHtml(arr, pos, ohneRang){
-  if(!arr.length) return emptyState(pos==='atk'?'bolt':'shield','Noch keine Spiele auf dieser Position');
+  if(!arr.length) return emptyState(pos==='atk'?'bolt':'shield','Noch keine Partien auf dieser Position');
   // Die Tore stehen in einer eigenen Zeile. Hinter Bilanz, Balken und
   // Quote war bei 360 px kein Platz mehr: „Ø 8,8 T…" brach mitten im Wort
   // ab, und die Bilanz „81–40" stand auf zwei Zeilen.
-  const valLbl = pos==='atk' ? 'Tore je Spiel' : 'Gegentore je Spiel';
+  const valLbl = pos==='atk' ? 'Tore je Partie' : 'Gegentore je Partie';
   return `<div class="rlist">${arr.map((x,i)=>{
     const perfChip = x.pAvg>0.08?'<span class="perf-up">▲</span>':x.pAvg<-0.08?'<span class="perf-dn">▼</span>':'';
     const goalsTxt = komma(x.goalsAvg,1);
@@ -53,9 +53,9 @@ function positionsBlockHtml(arr, pos, ohneRang){
         <div class="rmeta">
           <span>${x.w}–${x.g-x.w}</span>
           <span class="wbar"><i style="width:${Math.round(x.wr*100)}%"></i></span>
-          <span>${Math.round(x.wr*100)}%</span>
+          <span>${Math.round(x.wr*100)}\u00A0%</span>
         </div>
-        <div class="rmeta rmeta-tore">Ø ${goalsTxt} ${valLbl}</div>
+        <div class="rmeta rmeta-tore">${goalsTxt} ${valLbl}</div>
       </div>
       <div class="rval"><div class="big num">${wert}</div><div class="small">Wert</div></div>
     </div>`;}).join('')}</div>`;

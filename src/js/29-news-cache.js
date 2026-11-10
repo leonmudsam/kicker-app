@@ -457,7 +457,7 @@ function _consolidateStoriesLegacy(list){
     loss_streak:     { label:'Pechvögel',           ic:'dropDouble', frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.streak})`, desc:f=>`Niederlagen nacheinander: ${f}.` },
     top_form:        { label:'über dem eigenen Schnitt', ic:'flame',  frag:s=>`${nameOf(s.dataRef.pid)} (+${s.dataRef.vorsprung ?? 0} Punkte)`, desc:f=>`Weiter vorn als sonst: ${f}.` },
     win_streak:      { label:'Serien im Gleichschritt', ic:'flame', frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.streak})`, desc:f=>`Siege in Folge: ${f}.` },
-    jubilee:         { label:'Jubiläen',            ic:'calendar',   frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.total}.)`, desc:f=>`Spiele-Meilensteine: ${f}.` },
+    jubilee:         { label:'Jubiläen',            ic:'calendar',   frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.total}.)`, desc:f=>`Runde Partien: ${f}.` },
     milestone_wins:  { label:'Sieg-Meilensteine',   ic:'medalTrio',  frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.milestone})`, desc:f=>`Erreicht: ${f}.` },
     milestone_goals: { label:'Tor-Meilensteine',    ic:'thriller',   frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.milestone})`, desc:f=>`Erreicht: ${f}.` },
     milestone_elo:   { label:'Elo-Meilensteine',    ic:'peak',       frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.milestone})`, desc:f=>`Neue Bestwerte: ${f}.` },
@@ -804,7 +804,7 @@ function _consolidateStoriesLegacy(list){
     },
     jubilee: {
       sache: d => 'jub|' + (d.total || ''),
-      titel: (nm, d) => `${nm} feiern das ${d.total}. Spiel`,
+      titel: (nm, d) => `${nm} feiern die ${d.total}. Partie`,
       satz:  (n, d) => `${_alleN(n)} erreichen die ${d.total} in derselben Partie.`,
       zeile: nm => nm
     },
@@ -1419,7 +1419,7 @@ function _consolidateStoriesLegacy(list){
         'gemeinsame Durststrecke':'gemeinsame Durststrecken', Formlauf:'Formläufe', 'Jubiläum':'Jubiläen',
         Siegmarke:'Siegmarken', Tormarke:'Tormarken', 'Elo-Marke':'Elo-Marken', Serienbruch:'Serienbrüche'};
       const ERGEBNIS_ORT = {zu_null:'mit einem Sieg ohne Gegentor', upset:'im Favoritensturz',
-        krimi:'im Ein-Tor-Krimi', kanter:'mit einem klaren Sieg', eng:'im engen Spiel'};
+        krimi:'im Ein-Tor-Krimi', kanter:'mit einem klaren Sieg', eng:'in der engen Partie'};
       const _etikett = t => {
         const dt = (t && t.dataRef) || {};
         const typ = dt.type === 'group' ? (dt.sub || '') : (dt.type || '');

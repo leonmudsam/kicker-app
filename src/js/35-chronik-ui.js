@@ -113,7 +113,7 @@ function showSeasonTable(sid){
     ${ch ? `<div class="chron-one" style="--tt:${gt.c};--ttr:${gt.rgb}" data-tplayer="${esc(ch.pid)}">
         <span class="ic">${svgI('crown')}</span>
         <span class="tx"><span class="n">${esc(pname(ch.pid))} ${T.live ? 'führt die Saison an' : 'ist Meister'}</span>
-          <span class="e num">${ch.elo} Elo · ${ch.wins} Siege aus ${ch.games} Spielen</span></span>
+          <span class="e num">${ch.elo} Elo · ${ch.wins} Siege aus ${ch.games} Partien</span></span>
       </div><div style="height:14px"></div>` : ''}
     <div class="tplates">${offen.map(a => _titlePlateHtml(a, {sid, schatten:chronikUeberschattet(T, a)})).join('')}</div>
     ${weitere.length ? `<div class="tplates chron-rest">${weitere.map(a => _titlePlateHtml(a, {sid, schatten:chronikUeberschattet(T, a)})).join('')}</div>

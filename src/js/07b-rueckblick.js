@@ -16,7 +16,7 @@ function showPotwRecap(opts){
     const {start:weekStart, end:weekEnd}=opts.woche ? _potwWocheVon(opts.woche) : _potwLastWeekRange();
     const ms=_potwMatchesInRange(weekStart,weekEnd);
     const wkKey=_potwKeyOf(weekStart);
-    if(!ms.length){ toast('Letzte Woche keine Spiele','info'); return; }
+    if(!ms.length){ toast('Letzte Woche keine Partien','info'); return; }
 
     // Spieler-Stats für die Woche (inkl. längster Serie innerhalb der Woche).
     // Torjäger, Abwehr, Team und Überraschung rechnet der Rückblick nicht
@@ -128,7 +128,7 @@ function showPotwRecap(opts){
 
     const serieHtml = mainPotwStats.bestStreak >= 3
       ? rcpNotizHtml({ic:'flame',
-          text:`Siegesserie von <b class="num">${mainPotwStats.bestStreak}</b> Spielen am Stück`,
+          text:`Siegesserie von <b class="num">${mainPotwStats.bestStreak}</b> Partien am Stück`,
           attr:`data-potw-player="${esc(mainPotwPlayerId)}"`})
       : '';
 
@@ -148,7 +148,7 @@ function showPotwRecap(opts){
           zahlen: rcpZahlenHtml([
             {v:mainPotwStats.wins,   l:'Siege',       ton:'gruen'},
             {v:mainPotwStats.losses, l:'Niederlagen', ton:'rot'},
-            {v:winrate+'%',          l:'Quote'},
+            {v:winrate+'\u00A0%',          l:'Quote'},
             {v:eloDeltaStr,          l:'Elo', ton:eloDelta>=0 ? 'gruen' : 'rot'}
           ])})
       + serieHtml
@@ -477,12 +477,12 @@ function showPotdRecap(opts){
     // Größter Aufwind ist keine Kachel mehr: die Elo jedes Spielers steht im
     // Feld des Tages, dieselbe Zahl stand sonst zweimal da.
     tagHl('bolt', 'Größte Überraschung', upsetSieger ? pname(upsetSieger[0])+' & '+pname(upsetSieger[1]) : null,
-          tagUpset ? Math.round(tagUpset.chance*100)+'% Chance' : null,
+          tagUpset ? Math.round(tagUpset.chance*100)+'\u00A0% Chance' : null,
           upsetSieger ? `data-potd-team="${esc(upsetSieger.slice().sort().join('|'))}"` : '');
 
     const serieHtml = s.bestStreak >= 3
       ? rcpNotizHtml({ic:'flame',
-          text:`Siegesserie von <b class="num">${s.bestStreak}</b> Spielen am Stück`})
+          text:`Siegesserie von <b class="num">${s.bestStreak}</b> Partien am Stück`})
       : '';
 
     openSheet(
@@ -492,7 +492,7 @@ function showPotdRecap(opts){
           zahlen: rcpZahlenHtml([
             {v:s.wins,      l:'Siege',       ton:'gruen'},
             {v:s.losses,    l:'Niederlagen', ton:'rot'},
-            {v:winrate+'%', l:'Quote'},
+            {v:winrate+'\u00A0%', l:'Quote'},
             {v:eloDeltaStr, l:'Elo', ton:eloDelta>=0 ? 'gruen' : 'rot'}
           ])})
       + serieHtml

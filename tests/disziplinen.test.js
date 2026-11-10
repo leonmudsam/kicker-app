@@ -4558,6 +4558,10 @@ const APP_SPRACHE = [
   // zählt, und jeder Text steht für sich.
   /\bNenner\b/i, /\bZähler\b/, /Dieselbe Rechnung/i, /Das Gegenstück/i, /logarithm/i,
   /\bFenster\b/, /Mindestbasis/i, /damit (?:ein|die|„)/i,
+  // Eine Partie heißt Partie: „ohne eigenes Match", „Ein Spiel geht auf
+  // zehn", „im ersten Spiel eines Spieltags" standen neben „Partien".
+  // Zusammensetzungen wie „Sturmspiel" und „Rückkehrspiel" bleiben.
+  /\bMatch(?:es)?\b/, /\bSpiel(?:e|en|s)?\b/,
 ];
 const _sprachFund = JSON.parse(K.eval(`JSON.stringify((function(){
   const muster = ${JSON.stringify(APP_SPRACHE.map(r => [r.source, r.flags]))}

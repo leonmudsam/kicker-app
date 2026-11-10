@@ -776,7 +776,7 @@ function _buildStories(){
         // hier ein zweites Mal, gleich darunter.
         _bdesc = `5 Pleiten in Folge gegen ${nameOf(_nemOpp)}.`;
       } else if(ev.badge.id === 'games250'){
-        _bdesc = `300 Partien am Kicker. ${nameOf(ev.playerId)} steht nach dieser Partie bei ${_spEigene(ev.playerId, badgeMatches.get(ev.matchId)).length} Spielen.`;
+        _bdesc = `${nameOf(ev.playerId)} hat ${_spEigene(ev.playerId, badgeMatches.get(ev.matchId)).length} Partien am Kicker gespielt.`;
       } else if(ev.badge.id === 'wins200'){
         _bdesc = `300 Siege in der Karriere. ${nameOf(ev.playerId)} hält nach dieser Partie bei ${_spEigene(ev.playerId, badgeMatches.get(ev.matchId)).filter(m => _spGew(m, ev.playerId)).length}.`;
       } else {
@@ -971,7 +971,7 @@ function _buildStories(){
         // „feiert 250. Spiel" ohne Artikel, und darunter dieselbe Zahl noch
         // einmal. Der Satz nennt jetzt, was in diesen Partien zusammengekommen
         // ist [§C33].
-        title: `${nameOf(c.pid)} feiert das ${c.total}. Spiel`,
+        title: `${nameOf(c.pid)} feiert die ${c.total}. Partie`,
         // Die Siege der ersten hundert Partien, nicht die von heute: gezählt
         // wurde über die ganze Laufbahn, und unter „Aus 100 Partien" konnten
         // damit mehr als hundert Siege stehen.
@@ -1316,7 +1316,7 @@ function _buildStories(){
         cat: 'fun',
         ic: 'clock',
         title: 'Ruhige Woche',
-        desc: `Nur ${lastWeek} Spiele in den letzten 7 Tagen. Normal wären ${Math.round(avg)}.`,
+        desc: `Nur ${lastWeek} ${lastWeek === 1 ? 'Partie' : 'Partien'} in den letzten 7 Tagen. Normal wären ${Math.round(avg)}.`,
         when: now,
         prio: STORY_PRIO.quiet_week,
         dataRef: {type:'quiet_week', lastWeek, avg: Math.round(avg)}
@@ -1421,7 +1421,7 @@ function _buildStories(){
         title: `${champ} ist Meister im ${monat}`,
         // Der Satz nennt, was weder Schlagzeile noch Podest zeigen: Meister,
         // Monat und Elo standen vorher in allen dreien und im Satz darunter.
-        desc: `${_fakten.spiele} Partien, ${_fakten.tore} Tore und ${_fakten.engeSpiele} enge Spiele prägten den Monat.`,
+        desc: `${_fakten.spiele} Partien und ${_fakten.tore} Tore prägten den Monat, ${_fakten.engeSpiele === 1 ? 'eine Partie endete' : _fakten.engeSpiele + ' Partien endeten'} knapp.`,
         // ── Der Abschluss steht über dem Abend, der ihn beschließt ──
         // Am 1. um 00:00: beim ersten Öffnen nach dem Monatswechsel ist er die
         // jüngste Karte, über dem Spieler des letzten Tages (23:59:00) und
@@ -1839,7 +1839,7 @@ function _buildStories(){
       } else if(chance >= CHANCE_SENSATION && chance < CHANCE_UPSET){
         art = 'upset'; rang = 8; ic = 'giantSlayer';
         title = `${wn} stürzen die Favoriten`;
-        desc = `Nur ${pct} % Siegchance vor dem Anstoß. Trotzdem fällt das Spiel gegen ${ln} an die Außenseiter.`;
+        desc = `Nur ${pct} % Siegchance vor dem Anstoß. Trotzdem geht die Partie gegen ${ln} an die Außenseiter.`;
       } else if(diff === 1 && tief >= 8){
         art = 'krimi'; rang = 6; ic = 'thriller';
         title = `${wn} retten ein ${hoch}:${tief} ins Ziel`;
@@ -1850,7 +1850,7 @@ function _buildStories(){
         desc = `${hoch}:${tief} gegen ${ln}. Mit ${diff} Toren Abstand ist das eine klare Angelegenheit.`;
       } else if(diff === 2 && tief >= 8){
         art = 'eng'; rang = 2; ic = 'thriller';
-        title = `${wn} entscheiden ein enges Spiel`;
+        title = `${wn} entscheiden eine enge Partie`;
         desc = `${ln} halten die Partie bis in die Schlussphase offen. Am Ende steht ein ${hoch}:${tief}.`;
       } else {
         // Eine Partie ohne Muster hat trotzdem zwei Zahlen, die jede hat.
@@ -1950,7 +1950,7 @@ function _buildStories(){
         cat: 'highlight',
         ic: 'crossedSwords',
         title: `${breakerNames} brechen ${nameOf(kill.victimPid)}s ${kill.streak}er-Serie`,
-        desc: `${nameOf(kill.victimPid)} hatte ${kill.streak} Spiele in Folge gewonnen. Jetzt ist Schluss.`,
+        desc: `${nameOf(kill.victimPid)} hatte ${kill.streak} Partien in Folge gewonnen. Jetzt ist Schluss.`,
         when: new Date(kill.t),
         prio: STORY_PRIO.streak_killer + (kill.streak >= 10 ? 4 : 0),
         dataRef: {type:'streak_killer', matchId: m.id, streak: kill.streak, victimPid: kill.victimPid, breakerIds}
@@ -1982,7 +1982,7 @@ function _buildStories(){
       _wochenTeile.push({
         art: 'thriller', ic: 'thriller', label: 'Krimi der Woche',
         pids: _tg, wert: standFuer(m), matchId: m.id,
-        satz: `${_tg.map(nameOf).join(' und ')} entscheiden das Spiel mit dem letzten Tor. ${thriller.totalScore} Tore fielen, mehr als in jeder anderen Partie dieser Woche.`
+        satz: `${_tg.map(nameOf).join(' und ')} entscheiden die Partie mit dem letzten Tor. ${thriller.totalScore} Tore fielen, mehr als in jeder anderen Partie dieser Woche.`
       });
     }
   } catch(e){}
@@ -2221,7 +2221,7 @@ function _buildStories(){
           id: 'dry_spell_'+matches[matches.length-1].id,
           cat: 'fun',
           ic: 'clock',
-          title: `${sinceLastDays} Tage ohne Spiel`,
+          title: `${sinceLastDays} Tage ohne Partie`,
           desc: isRecord
             ? `So lange stand der Kicker noch nie still.`
             : `Die längste Pause der Liga waren ${maxGapDays} Tage.`,
@@ -2251,7 +2251,7 @@ function _buildStories(){
           art: 'potw', ic: 'weekKing', label: 'Spieler der Woche', held: true,
           pids: res.winners.map(w => w.id), wert: Math.round(main.wr*100) + ' %',
           satz: `${_namenListe(names)} ${names.length > 1 ? 'gewinnen' : 'gewinnt'} `
-              + `${main.wins} von ${main.wins + main.losses} Spielen und ${names.length > 1 ? 'haben' : 'hat'} damit die beste Quote.`,
+              + `${main.wins} von ${main.wins + main.losses} Partien und ${names.length > 1 ? 'haben' : 'hat'} damit die beste Quote.`,
           potw: {weekKey: _potwKeyOf(range.start), playerId: main.id,
                  playerIds: res.winners.map(w => w.id), wins: main.wins, wr: main.wr}
         });
@@ -2286,7 +2286,7 @@ function _buildStories(){
         // Tagessiege vergeben (siehe `_newsPeriodWinner`). Die Quote bleibt als
         // Kontext, damit die Zahl einordbar ist. „Am 16.07. hat niemand mehr
         // geholt" — geholt WAS? Der Satz nennt, worum es geht: mehr Siege.
-        desc: `${main.wins} von ${main.wins + main.losses} Spielen gewonnen, `
+        desc: `${main.wins} von ${main.wins + main.losses} Partien gewonnen, `
             + `das sind ${Math.round(main.wr*100)} %. Mehr Siege hat am `
             + `${dLabel} niemand geholt.`,
         when: rep,
@@ -2387,7 +2387,7 @@ function _buildStories(){
         cat: 'season',
         ic: 'weekKing',
         title: _wHeld.art === 'potw' ? `Die Woche gehört ${_wName}` : `Die Woche der Liga`,
-        desc: `${_wSpiele.length} Spiele an ${_wTage} ${_wTage === 1 ? 'Tag' : 'Tagen'}. `
+        desc: `${_wSpiele.length} ${_wSpiele.length === 1 ? 'Partie' : 'Partien'} an ${_wTage} ${_wTage === 1 ? 'Tag' : 'Tagen'}. `
             + _wHeld.satz,
         when: _wSchluss,
         prio: STORY_PRIO.woche,

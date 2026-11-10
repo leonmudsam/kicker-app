@@ -199,7 +199,7 @@ function _ndMitteRoh(s){
         return `<div class="nd-section">Liga-Rekord</div>${row}${sRow}`;
       }
       case 'giant_slayer': {
-        const pct = d.chance!=null ? `<div class="nd-stat-row"><div class="nd-stat-label">Siegchance</div><div class="nd-stat-val red">${Math.max(1,Math.round(d.chance*100))}%</div></div>` : '';
+        const pct = d.chance!=null ? `<div class="nd-stat-row"><div class="nd-stat-label">Siegchance</div><div class="nd-stat-val red">${Math.max(1,Math.round(d.chance*100))}\u00A0%</div></div>` : '';
         const matchHtml = d.matchId ? _newsMatchVsBlock(d.matchId) : '';
         return `<div class="nd-section">Die Sensation</div>${pct}` + (matchHtml ? matchHtml : '');
       }
@@ -215,12 +215,12 @@ function _ndMitteRoh(s){
       case 'match_result': {
         const fakten = {
           zu_null: ['Ohne Gegentor', 'Kein Treffer für die Gegenseite'],
-          upset:   ['Vor dem Spiel', d.chance != null ? `${Math.max(1, Math.round(d.chance * 100))} % Siegchance` : 'Außenseiter'],
+          upset:   ['Vor der Partie', d.chance != null ? `${Math.max(1, Math.round(d.chance * 100))} % Siegchance` : 'Außenseiter'],
           krimi:   ['Entscheidung', '1 Tor Unterschied'],
           kanter:  ['Entscheidung', `${d.margin || 0} Tore Unterschied`],
           eng:     ['Entscheidung', `${d.margin || 2} Tore Unterschied`]
         }[d.resultKind] || ['Ergebnis', 'Besondere Partie'];
-        return `<div class="nd-section">Was dieses Spiel besonders macht</div>
+        return `<div class="nd-section">Was diese Partie besonders macht</div>
           <div class="nd-stat-row"><div class="nd-stat-label">${esc(fakten[0])}</div>
             <div class="nd-stat-val acid">${esc(fakten[1])}</div></div>`;
       }
@@ -780,7 +780,7 @@ function _ndMitteRoh(s){
       case 'jubilee': {
         // Karriere-Bilanz nutzen statt nur Total — bestehende Stats-Funktion.
         const stats = _ndBilanzBis(d.pid, s);
-        return `<div class="nd-section">Die ersten ${esc(String(d.total))} Spiele</div>
+        return `<div class="nd-section">Die ersten ${esc(String(d.total))} Partien</div>
           ${stats ? `<div class="nd-stat-row">
             <div class="nd-stat-label">Siege / Niederlagen</div>
             <div class="nd-stat-val">${stats.wins} / ${stats.losses}</div></div>
@@ -791,8 +791,8 @@ function _ndMitteRoh(s){
       }
       case 'quiet_week': {
         return `<div class="nd-section">Aktivität</div>
-          <div class="nd-stat-row"><div class="nd-stat-label">Letzte 7 Tage</div><div class="nd-stat-val">${d.lastWeek} Spiele</div></div>
-          <div class="nd-stat-row"><div class="nd-stat-label">4-Wochen-Schnitt</div><div class="nd-stat-val">${d.avg} Spiele</div></div>`;
+          <div class="nd-stat-row"><div class="nd-stat-label">Letzte 7 Tage</div><div class="nd-stat-val">${d.lastWeek} ${d.lastWeek === 1 ? 'Partie' : 'Partien'}</div></div>
+          <div class="nd-stat-row"><div class="nd-stat-label">4-Wochen-Schnitt</div><div class="nd-stat-val">${d.avg} Partien</div></div>`;
       }
       // Die Karte sagt, dass der Monat eine Tabelle hat, und ihr Blatt zeigte
       // nur die Saison-ID — eine Zeichenkette, die niemanden interessiert. Die

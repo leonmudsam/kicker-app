@@ -10,7 +10,7 @@ function vTeams(nurErgebnis=false){
   const ruheT=T0.filter(t=>t.ids.every(id=>sichtbar(id))&&t.ids.some(id=>imRuhestand(id)));
   if(!T.length&&!ruheT.length){
     const html=emptyState('handshake','Noch nicht genug Daten');
-    return nurErgebnis?{kopf:'Ab 4 gemeinsamen Spielen',html,ruhe:''}:`<div class="view-head"><h2>Teams</h2><p>Ab 4 gemeinsamen Spielen</p></div>${html}`;
+    return nurErgebnis?{kopf:'Ab 4 gemeinsamen Partien',html,ruhe:''}:`<div class="view-head"><h2>Teams</h2><p>Ab 4 gemeinsamen Partien</p></div>${html}`;
   }
   const showBest=teamView!=='worst';
   
@@ -96,7 +96,7 @@ function vTeams(nurErgebnis=false){
     // sie dem ersten Platz gehört (weiter unten über TOP[]).
     let mainValue, mainColor;
     if(teamSort==='wr'){
-      mainValue=wr+'%';
+      mainValue=wr+'\u00A0%';
       mainColor='var(--ink)';
     } else if(teamSort==='gd'){
       // Der Schnitt steht rechts, die Summe bleibt in der Zeile darunter.
@@ -139,7 +139,7 @@ function vTeams(nurErgebnis=false){
   const ruhe=ruheF.length?`<div class="rlist">${ruheF.map((t,i)=>zeile(t,i,true)).join('')}</div>`:'';
 
 
-  const ergebnis={kopf:`${arrF.length} Duo${arrF.length===1?'':'s'}${_tq?' gefunden':' ab 4 gemeinsamen Spielen, über alle Partien'}`,
+  const ergebnis={kopf:`${arrF.length} Duo${arrF.length===1?'':'s'}${_tq?' gefunden':' ab 4 gemeinsamen Partien, über alle Saisons'}`,
     html:arrF.length ? `<div class="rlist">${rows}</div>` : emptyState('search','Keine Teams gefunden'),
     ruhe, ruheZahl:ruheF.length};
   // Die Suche zeichnet nur die Ergebnisse. Keine zweite Filter-/Sortierformel
@@ -326,31 +326,31 @@ function vSettings(){
 
     <div class="cfg-section-title">Partner und Position</div>
     <div class="card">
-      ${sl('cfgRisk','Last des schwächeren Partners',c.risk,0,100,'%')}
-      ${sl('cfgPos','Ausgleich der Position',c.pos,0,100,'%')}
+      ${sl('cfgRisk','Last des schwächeren Partners',c.risk,0,100,'\u00A0%')}
+      ${sl('cfgPos','Ausgleich der Position',c.pos,0,100,'\u00A0%')}
     </div>
 
     <div class="cfg-section-title">Sieg und Niederlage</div>
     <div class="card">
-      ${sl('cfgWinBoost','Mehr für Siege',c.winBoost,100,140,'%')}
-      ${sl('cfgMovDamp','Tordifferenz bei Niederlagen',c.movDamp,0,100,'%')}
-      ${sl('cfgMovMax','Zuschlag für Kantersiege',c.movMax,0,100,'%')}
-      ${sl('cfgLowEloLossDamp','Schutz für Schwächere',c.lowDamp,0,100,'%')}
+      ${sl('cfgWinBoost','Mehr für Siege',c.winBoost,100,140,'\u00A0%')}
+      ${sl('cfgMovDamp','Tordifferenz bei Niederlagen',c.movDamp,0,100,'\u00A0%')}
+      ${sl('cfgMovMax','Zuschlag für Kantersiege',c.movMax,0,100,'\u00A0%')}
+      ${sl('cfgLowEloLossDamp','Schutz für Schwächere',c.lowDamp,0,100,'\u00A0%')}
     </div>
 
     <div class="cfg-section-title">Zuschläge</div>
     <div class="card">
       ${sl('cfgBonus','Zuschlag je Partie',Math.round((cfg.match_bonus ?? 1.5)*10),0,50,' Elo',c.bonus)}
-      ${sl('cfgExpProt','Schutz für Erfahrene',c.expProt,0,30,'%')}
-      ${sl('cfgUdElo','Außenseiter-Zuschlag (Elo)',c.udElo,0,100,'%')}
-      ${sl('cfgUdGames','Aufhol-Zuschlag (Partien)',c.udGames,0,100,'%')}
+      ${sl('cfgExpProt','Schutz für Erfahrene',c.expProt,0,30,'\u00A0%')}
+      ${sl('cfgUdElo','Außenseiter-Zuschlag (Elo)',c.udElo,0,100,'\u00A0%')}
+      ${sl('cfgUdGames','Aufhol-Zuschlag (Partien)',c.udGames,0,100,'\u00A0%')}
     </div>
 
     <div class="cfg-section-title">Tempo nach Erfahrung</div>
     <div class="card">
-      ${sl('cfgNpMult','Neulinge (unter 5 Partien)',c.npMult,100,200,'%')}
-      ${sl('cfgNpMidMult','Anfänger (unter 15 Partien)',c.npMidMult,100,200,'%')}
-      ${sl('cfgVetDamp','Spitze (über Start + 400 Elo)',c.vetDamp,0,100,'%')}
+      ${sl('cfgNpMult','Neulinge (unter 5 Partien)',c.npMult,100,200,'\u00A0%')}
+      ${sl('cfgNpMidMult','Anfänger (unter 15 Partien)',c.npMidMult,100,200,'\u00A0%')}
+      ${sl('cfgVetDamp','Spitze (über Start + 400 Elo)',c.vetDamp,0,100,'\u00A0%')}
     </div>
 
     ${/* Die Erklärungen standen in Fachsprache da („MoV-Dämpfung",
@@ -562,7 +562,7 @@ function _matchChanceHtml(c){
   const mitte = wort === 'Favorit' ? (c >= .5 ? '← Favorit' : 'Favorit →') : wort;
   return `<div class="m-chance"><div class="m-ch-r">${rcpPaarHtml([M.A1, M.A2], 26)}`
     + `<span class="m-ch-w">${esc(mitte)}</span>${rcpPaarHtml([M.B1, M.B2], 26)}</div>`
-    + `<div class="prob"><div class="pa" style="width:${pA}%">${pA}%</div><div class="pb" style="width:${pB}%">${pB}%</div></div></div>`;
+    + `<div class="prob"><div class="pa" style="width:${pA}%">${pA}\u00A0%</div><div class="pb" style="width:${pB}%">${pB}\u00A0%</div></div></div>`;
 }
 
 async function doSaveMatch(){

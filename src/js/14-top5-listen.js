@@ -111,7 +111,7 @@ function openTopList(kind){
       rows:_upsetRanking(matchesInPeriod(period)).map(u=>{
         const w=u.m.winner==='A'?[u.m.a1,u.m.a2]:[u.m.b1,u.m.b2];
         return {ids:w, matchId:u.m.id, name:w.map(pname).join(' & '),
-          val:u.winPct+'%', detail:standFuer(u.m)+' · '+dateStr(u.m.created_at)};
+          val:u.winPct+'\u00A0%', detail:standFuer(u.m)+' · '+dateStr(u.m.created_at)};
       }),
       why:'Der Sieg mit der niedrigsten Siegchance vor dem Anpfiff.'});
   }
@@ -219,7 +219,7 @@ function showAward(key){
               <div class="aw-li-name" style="font-size:12px">${esc(aN)}</div>
               <div class="aw-li-name" style="font-size:9.5px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-top:2px">vs ${esc(bN)}</div>
             </div>
-            <div class="aw-li-val">${Math.round(e.pct*100)}% · ${e.g}×</div>
+            <div class="aw-li-val">${Math.round(e.pct*100)}\u00A0% · ${e.g}×</div>
           </div>`;
         }).join('');
         bodyHtml += `${blattAbschnittHtml('medal', 'Weitere Rivalitäten')}<div class="aw-list">${items}</div>`;

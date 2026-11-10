@@ -56,16 +56,16 @@ function showH2H(idA, idB){
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
         <span class="svg-ic" style="color:var(--blue);width:16px;height:16px">${svgI('handshake')}</span>
         <span style="font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:var(--blue);font-weight:700;font-family:'Sometype Mono',monospace">Als Team</span>
-        <span style="margin-left:auto;font-size:11px;color:var(--muted);font-family:'Sometype Mono',monospace">${d.asTeam.g} Spiele</span>
+        <span style="margin-left:auto;font-size:11px;color:var(--muted);font-family:'Sometype Mono',monospace">${d.asTeam.g} ${d.asTeam.g === 1 ? 'Partie' : 'Partien'}</span>
       </div>
       <div style="display:flex;height:7px;border-radius:99px;overflow:hidden;background:var(--line);margin-bottom:6px">
         <div style="width:${teamWr}%;background:var(--acid)"></div>
         <div style="width:${100-teamWr}%;background:var(--red);opacity:.85"></div>
       </div>
       <div style="display:flex;justify-content:space-between;font-size:11px;font-family:'Sometype Mono',monospace;margin-bottom:11px">
-        <span style="color:var(--acid);font-weight:700">${d.asTeam.w} Siege</span>
-        <span style="font-weight:700">${teamWr}%</span>
-        <span style="color:var(--red);font-weight:700">${d.asTeam.g-d.asTeam.w} Niederlagen</span>
+        <span style="color:var(--acid);font-weight:700">${d.asTeam.w} ${d.asTeam.w === 1 ? 'Sieg' : 'Siege'}</span>
+        <span style="font-weight:700">${teamWr}\u00A0%</span>
+        <span style="color:var(--red);font-weight:700">${d.asTeam.g-d.asTeam.w} ${d.asTeam.g-d.asTeam.w === 1 ? 'Niederlage' : 'Niederlagen'}</span>
       </div>
       <div style="display:flex;gap:7px">
         <div style="flex:1;background:var(--bg2);border-radius:9px;padding:8px;text-align:center">
@@ -89,7 +89,7 @@ function showH2H(idA, idB){
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
         <span class="svg-ic" style="color:var(--purple);width:16px;height:16px">${svgI('crossedSwords')}</span>
         <span style="font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:var(--purple);font-weight:700;font-family:'Sometype Mono',monospace">Als Gegner</span>
-        <span style="margin-left:auto;font-size:11px;color:var(--muted);font-family:'Sometype Mono',monospace">${d.asOppForA.g} Spiele</span>
+        <span style="margin-left:auto;font-size:11px;color:var(--muted);font-family:'Sometype Mono',monospace">${d.asOppForA.g} ${d.asOppForA.g === 1 ? 'Partie' : 'Partien'}</span>
       </div>
       <div style="font-size:11px;color:var(--muted);margin-bottom:8px;font-family:'Sometype Mono',monospace">
         <span style="color:var(--ink)">${esc(pA.name)}</span> vs <span style="color:var(--ink)">${esc(pB.name)}</span>
@@ -100,7 +100,7 @@ function showH2H(idA, idB){
       </div>
       <div style="display:flex;justify-content:space-between;font-size:11px;font-family:'Sometype Mono',monospace;margin-bottom:11px">
         <span style="color:var(--acid);font-weight:700">${d.asOppForA.w}× gewonnen</span>
-        <span style="font-weight:700">${oppWr}%</span>
+        <span style="font-weight:700">${oppWr}\u00A0%</span>
         <span style="color:var(--red);font-weight:700">${d.asOppForA.g-d.asOppForA.w}× verloren</span>
       </div>
       <div style="display:flex;gap:7px">

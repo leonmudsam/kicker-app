@@ -3693,7 +3693,7 @@
   .aw-li-pair .aw-li-av+.aw-li-av{margin-left:-10px;border:1.5px solid var(--surface)}
   .aw-li-info{flex:1;min-width:0}
   .aw-li-name{font-family:'Archivo Black',sans-serif;font-size:14px;letter-spacing:-.01em;
-    line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    line-height:1.15;overflow-wrap:break-word}
   .aw-li-detail{font-size:10px;color:var(--muted);margin-top:3px;font-family:'Sometype Mono',monospace}
   .aw-li-val{font-family:'Sometype Mono',monospace;font-size:13px;font-weight:700;color:var(--ink);flex-shrink:0}
   .aw-li.shame .aw-li-val{color:var(--red)}
@@ -6685,7 +6685,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.11.10.29250ea0';
+const BUILD_VERSION='2026.11.10.6537bfcc';
 function forceReload(nach){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -7788,7 +7788,7 @@ function rankBadgeHtml(id, size='sm'){
 
 
 const METRIC_LABEL={elo:'Elo',wins:'Siege',winrate:'Siegquote',
-  goaldiff:'Torbilanz',prestige:'Prestige',games:'Spiele'};
+  goaldiff:'Torbilanz',prestige:'Prestige',games:'Partien'};
 const METRIC_REITER={winrate:'Quote'};
 const PERIOD_METRICS={
   season:['elo'],
@@ -8309,7 +8309,7 @@ function saisonPodestHtml(sid, rang, o){
     const titelBis = seasons.filter(x => x.id <= sid && seasonChampion(x.id) === e.id).length;
     const av = avHtml(p, '', {ins:true, band:true, pos:platz, titel:titelBis, feuer:0,
                               px:platz === 1 ? (o.px1 || 88) : (o.px || 70), klasse:'pod-av'});
-    const sub = titelBis ? titelBis + ' Titel' : (e.wins + e.losses) + ' Spiele';
+    const sub = titelBis ? titelBis + ' Titel' : (e.wins + e.losses) + (e.wins + e.losses === 1 ? ' Partie' : ' Partien');
     return `<div class="pod-karte ${METALL[platz - 1]}${platz === 1 ? ' erster' : ''}" ${o.attr || 'data-detail'}="${esc(e.id)}">
       <div class="pod-platz num">${String(platz).padStart(2, '0')}</div>
       ${av}
@@ -9812,7 +9812,7 @@ function showPotwRecap(opts){
     const {start:weekStart, end:weekEnd}=opts.woche ? _potwWocheVon(opts.woche) : _potwLastWeekRange();
     const ms=_potwMatchesInRange(weekStart,weekEnd);
     const wkKey=_potwKeyOf(weekStart);
-    if(!ms.length){ toast('Letzte Woche keine Spiele','info'); return; }
+    if(!ms.length){ toast('Letzte Woche keine Partien','info'); return; }
 
     const ps={};
     const run={};
@@ -9895,7 +9895,7 @@ function showPotwRecap(opts){
 
     const serieHtml = mainPotwStats.bestStreak >= 3
       ? rcpNotizHtml({ic:'flame',
-          text:`Siegesserie von <b class="num">${mainPotwStats.bestStreak}</b> Spielen am Stück`,
+          text:`Siegesserie von <b class="num">${mainPotwStats.bestStreak}</b> Partien am Stück`,
           attr:`data-potw-player="${esc(mainPotwPlayerId)}"`})
       : '';
 
@@ -9912,7 +9912,7 @@ function showPotwRecap(opts){
           zahlen: rcpZahlenHtml([
             {v:mainPotwStats.wins,   l:'Siege',       ton:'gruen'},
             {v:mainPotwStats.losses, l:'Niederlagen', ton:'rot'},
-            {v:winrate+'%',          l:'Quote'},
+            {v:winrate+'\u00A0%',          l:'Quote'},
             {v:eloDeltaStr,          l:'Elo', ton:eloDelta>=0 ? 'gruen' : 'rot'}
           ])})
       + serieHtml
@@ -10155,12 +10155,12 @@ function showPotdRecap(opts){
           tagScorer ? 'Ø '+komma(tagScorer.avg,1)+' Tore' : null,
           tagScorer ? `data-potd-player="${esc(tagScorer.id)}"` : '');
     tagHl('bolt', 'Größte Überraschung', upsetSieger ? pname(upsetSieger[0])+' & '+pname(upsetSieger[1]) : null,
-          tagUpset ? Math.round(tagUpset.chance*100)+'% Chance' : null,
+          tagUpset ? Math.round(tagUpset.chance*100)+'\u00A0% Chance' : null,
           upsetSieger ? `data-potd-team="${esc(upsetSieger.slice().sort().join('|'))}"` : '');
 
     const serieHtml = s.bestStreak >= 3
       ? rcpNotizHtml({ic:'flame',
-          text:`Siegesserie von <b class="num">${s.bestStreak}</b> Spielen am Stück`})
+          text:`Siegesserie von <b class="num">${s.bestStreak}</b> Partien am Stück`})
       : '';
 
     openSheet(
@@ -10170,7 +10170,7 @@ function showPotdRecap(opts){
           zahlen: rcpZahlenHtml([
             {v:s.wins,      l:'Siege',       ton:'gruen'},
             {v:s.losses,    l:'Niederlagen', ton:'rot'},
-            {v:winrate+'%', l:'Quote'},
+            {v:winrate+'\u00A0%', l:'Quote'},
             {v:eloDeltaStr, l:'Elo', ton:eloDelta>=0 ? 'gruen' : 'rot'}
           ])})
       + serieHtml
@@ -12149,7 +12149,7 @@ function ruhestandTafelHtml(){
     const t = meisterTitel(p.id);
     const rek = chroniclesOfPlayer(p.id).filter(x => !x.neg).length;
     const r = getPlayerRank(p.id);
-    const zweite = [s.games + ' Spiele', t ? t + ' Titel' : '',
+    const zweite = [s.games + (s.games === 1 ? ' Partie' : ' Partien'), t ? t + ' Titel' : '',
                     rek ? rek + (rek === 1 ? ' Rekord' : ' Rekorde') : ''].filter(Boolean).join(' · ');
     return `<div class="rrow ruhe-row" data-detail="${esc(p.id)}">
       ${avHtml(p, '', {ins:true, px:52})}
@@ -12228,11 +12228,11 @@ function _vRankingCore(){
     const wertVon=(x)=>{
       const wr=x.games?Math.round(x.wins/x.games*100):0;
       if(metrik==='wins')     return {big:x.wins, small:'Siege'};
-      if(metrik==='winrate')  return {big:wr+'%', small:x.wins+'–'+x.losses};
+      if(metrik==='winrate')  return {big:wr+'\u00A0%', small:x.wins+'–'+x.losses};
       if(metrik==='goaldiff') return {big:(x.gd>=0?'+':'')+x.gd, small:'Torbilanz'};
       if(metrik==='streak')   return {big:x.curStreak>0?x.curStreak+'W':x.curStreak<0?(-x.curStreak)+'L':'–',
                                       small:x.curStreak>0?'Siege':x.curStreak<0?'Niederlagen':'neutral'};
-      if(metrik==='games')    return {big:x.games, small:'Spiele'};
+      if(metrik==='games')    return {big:x.games, small:'Partien'};
       return period==='season'
         ? {big:x.elo, small:'Elo'}
         : {big:(x.eloNet>=0?'+':'')+x.eloNet, small:'Elo'};
@@ -12254,7 +12254,7 @@ function _vRankingCore(){
             _titleMarkHtml(x.id, i<3?'lg':'', {ohneChamp:true, einfarbig:true})}${
             lossStreakInline(x.curStreak)}</div>
           <div class="rmeta"><span>${x.wins}–${x.losses}</span>
-            <span class="wbar"><i style="width:${wr}%"></i></span><span>${wr}%</span></div>
+            <span class="wbar"><i style="width:${wr}%"></i></span><span>${wr}\u00A0%</span></div>
           ${dots||x.games?`<div class="rzuletzt">
             ${dots?`<div class="form-dots">${dots}</div>`:''}
             ${x.games?`<div class="elo-gain-bar"><span class="gain">+${x.eloGain}</span><span class="loss">${x.eloLoss}</span></div>`:''}
@@ -12301,7 +12301,7 @@ function _vRankingCore(){
               ${avHtml(wp,'',{ins:true,band:true,px:72})}
               <div class="nw-mid">
                 <div class="nw-name">${esc(wp.name)}</div>
-                <div class="nw-meta">${winner.wins}–${winner.losses} · ${wWr}% Quote</div>
+                <div class="nw-meta">${winner.wins}–${winner.losses} · ${wWr}\u00A0% Quote</div>
               </div>
               <div class="nw-val"><div class="v num${winner.eloNet<0?' minus':''}">${
                 winner.eloNet>=0?'+':''}${winner.eloNet}</div><div class="l">${eloLabel}</div></div>
@@ -12342,7 +12342,7 @@ function _vRankingCore(){
         ? renderHl('streak','Siegesserie',AW_IC.streaks, topStreak?pname(topStreak.id):null,
             topStreak?`${topStreak.v} in Folge`:'', topStreak?'data-toplist="periodStreak"':'')
         : renderHl('upset','Überraschung',AW_IC.upset, upsetName,
-            topUpset?`${topUpset.winPct}% Chance`:'', topUpset?'data-toplist="periodUpset"':'');
+            topUpset?`${topUpset.winPct}\u00A0% Chance`:'', topUpset?'data-toplist="periodUpset"':'');
       nebenHtml+=`
         <div class="wk-highlights">
           ${renderHl('team','Bestes Team',AW_IC.mvt, teamName, bestTeam?`+${Math.round(bestTeam.elo)} Elo`:'', bestTeam?'data-toplist="periodTeam"':'')}
@@ -12426,7 +12426,7 @@ function _vRankingCore(){
             ${i===0?'<div class="held-label">Team der Saison</div>':''}
             <div class="rname">${esc(t.ids.map(pname).join(' & '))}</div>
             <div class="rmeta"><span>${t.w}–${t.g-t.w}</span>
-              <span class="wbar"><i style="width:${wr}%"></i></span><span>${wr}%</span></div>
+              <span class="wbar"><i style="width:${wr}%"></i></span><span>${wr}\u00A0%</span></div>
           </div>
           <div class="rval"><div class="big num">${e>=0?'+':''}${e}</div>
             <div class="small">Elo</div></div>
@@ -12441,7 +12441,7 @@ function _vRankingCore(){
         ${sichtBar}
         ${duos.length
           ? `<div class="rlist">${duos.map(duoZeile).join('')}</div>`
-          : emptyState('handshake','Noch kein Duo mit zwei gemeinsamen Spielen')}`;
+          : emptyState('handshake','Noch kein Duo mit zwei gemeinsamen Partien')}`;
     }
 
     return `
@@ -12496,7 +12496,7 @@ function _vRankingCore(){
                                         px:platz===1?88:70, klasse:'pod-av'});
       const t = meisterTitel(pp.id);
       const rek = chroniclesOfPlayer(pp.id).filter(x => !x.neg).length;
-      const sub = [t ? t + ' Titel' : '', entry.s.games + ' Spiele',
+      const sub = [t ? t + ' Titel' : '', entry.s.games + (entry.s.games === 1 ? ' Partie' : ' Partien'),
                    rek ? rek + (rek === 1 ? ' Rekord' : ' Rekorde') : '']
         .filter(Boolean).map(x => `<span>${esc(x)}</span>`).join('');
       return `
@@ -12541,7 +12541,7 @@ function rrow(p, s, i, metric, globalElo, letzte){
     small=r?`<span class="ic svg-ic" style="font-size:11px;color:${r.color};margin-right:3px;vertical-align:-1px">${svgI(r.icon)}</span>${r.label}`:'–';
   }
 
-  else if(metric==='winrate'){big=Math.round(s.wr*100)+'%'; small=s.wins+'–'+s.losses;}
+  else if(metric==='winrate'){big=Math.round(s.wr*100)+'\u00A0%'; small=s.wins+'–'+s.losses;}
   else if(metric==='goaldiff'){
     big = AW_WERT.plusMinus.z({v: s.games ? s.gd / s.games : 0});
     small = s.games >= AW_MIN.spielerSaldo ? 'je Partie' : 'ab ' + AW_MIN.spielerSaldo + ' Partien';
@@ -12551,7 +12551,7 @@ function rrow(p, s, i, metric, globalElo, letzte){
     big=pr.punkte;
     small=pr.insignie.name;
   }
-  else{big=s.games; small='Spiele';}
+  else{big=s.games; small='Partien';}
   const neutral = metric!=='elo' && !(metric==='goaldiff'&&s.gd>=0) ? ' neutral':'';
   const pleite = lossStreakInline(s.curStreak);
   return `<div class="rrow ${cls}" data-detail="${p.id}">
@@ -12565,7 +12565,7 @@ function rrow(p, s, i, metric, globalElo, letzte){
       <div class="rmeta">
         <span>${s.wins}–${s.losses}</span>
         <span class="wbar"><i style="width:${Math.round(s.wr*100)}%"></i></span>
-        <span>${Math.round(s.wr*100)}%</span>
+        <span>${Math.round(s.wr*100)}\u00A0%</span>
       </div>
       ${letzte&&letzte.length?`<div class="rzuletzt"><div class="form-dots">${
         formDotsHtml(letzte, s.curStreak)}</div></div>`:''}
@@ -12596,8 +12596,8 @@ function positionsListe(pos, spieler){
 }
 
 function positionsBlockHtml(arr, pos, ohneRang){
-  if(!arr.length) return emptyState(pos==='atk'?'bolt':'shield','Noch keine Spiele auf dieser Position');
-  const valLbl = pos==='atk' ? 'Tore je Spiel' : 'Gegentore je Spiel';
+  if(!arr.length) return emptyState(pos==='atk'?'bolt':'shield','Noch keine Partien auf dieser Position');
+  const valLbl = pos==='atk' ? 'Tore je Partie' : 'Gegentore je Partie';
   return `<div class="rlist">${arr.map((x,i)=>{
     const perfChip = x.pAvg>0.08?'<span class="perf-up">▲</span>':x.pAvg<-0.08?'<span class="perf-dn">▼</span>':'';
     const goalsTxt = komma(x.goalsAvg,1);
@@ -12610,9 +12610,9 @@ function positionsBlockHtml(arr, pos, ohneRang){
         <div class="rmeta">
           <span>${x.w}–${x.g-x.w}</span>
           <span class="wbar"><i style="width:${Math.round(x.wr*100)}%"></i></span>
-          <span>${Math.round(x.wr*100)}%</span>
+          <span>${Math.round(x.wr*100)}\u00A0%</span>
         </div>
-        <div class="rmeta rmeta-tore">Ø ${goalsTxt} ${valLbl}</div>
+        <div class="rmeta rmeta-tore">${goalsTxt} ${valLbl}</div>
       </div>
       <div class="rval"><div class="big num">${wert}</div><div class="small">Wert</div></div>
     </div>`;}).join('')}</div>`;
@@ -13537,7 +13537,7 @@ const AWARD_META={
   favoriteLoser:{title:'Favoriten-Versager',   cls:'red',   why:`Die höchste Niederlagenquote als Favorit (Siegchance ab 65 %). Ab ${AW_MIN.favorit} solchen Partien.`}
 };
 
-const _awPz = v => Math.round(v * 100) + '%';
+const _awPz = v => Math.round(v * 100) + '\u00A0%';
 const _awN = (n, eins, viele) => n === 1 ? eins : viele;
 const _awSieger = x => x.m.winner === 'A' ? [x.m.a1, x.m.a2] : [x.m.b1, x.m.b2];
 const AW_WERT = {
@@ -13786,7 +13786,7 @@ function openTopList(kind){
       rows:_upsetRanking(matchesInPeriod(period)).map(u=>{
         const w=u.m.winner==='A'?[u.m.a1,u.m.a2]:[u.m.b1,u.m.b2];
         return {ids:w, matchId:u.m.id, name:w.map(pname).join(' & '),
-          val:u.winPct+'%', detail:standFuer(u.m)+' · '+dateStr(u.m.created_at)};
+          val:u.winPct+'\u00A0%', detail:standFuer(u.m)+' · '+dateStr(u.m.created_at)};
       }),
       why:'Der Sieg mit der niedrigsten Siegchance vor dem Anpfiff.'});
   }
@@ -13878,7 +13878,7 @@ function showAward(key){
               <div class="aw-li-name" style="font-size:12px">${esc(aN)}</div>
               <div class="aw-li-name" style="font-size:9.5px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-top:2px">vs ${esc(bN)}</div>
             </div>
-            <div class="aw-li-val">${Math.round(e.pct*100)}% · ${e.g}×</div>
+            <div class="aw-li-val">${Math.round(e.pct*100)}\u00A0% · ${e.g}×</div>
           </div>`;
         }).join('');
         bodyHtml += `${blattAbschnittHtml('medal', 'Weitere Rivalitäten')}<div class="aw-list">${items}</div>`;
@@ -14076,7 +14076,7 @@ function vTeams(nurErgebnis=false){
   const ruheT=T0.filter(t=>t.ids.every(id=>sichtbar(id))&&t.ids.some(id=>imRuhestand(id)));
   if(!T.length&&!ruheT.length){
     const html=emptyState('handshake','Noch nicht genug Daten');
-    return nurErgebnis?{kopf:'Ab 4 gemeinsamen Spielen',html,ruhe:''}:`<div class="view-head"><h2>Teams</h2><p>Ab 4 gemeinsamen Spielen</p></div>${html}`;
+    return nurErgebnis?{kopf:'Ab 4 gemeinsamen Partien',html,ruhe:''}:`<div class="view-head"><h2>Teams</h2><p>Ab 4 gemeinsamen Partien</p></div>${html}`;
   }
   const showBest=teamView!=='worst';
   
@@ -14143,7 +14143,7 @@ function vTeams(nurErgebnis=false){
     
     let mainValue, mainColor;
     if(teamSort==='wr'){
-      mainValue=wr+'%';
+      mainValue=wr+'\u00A0%';
       mainColor='var(--ink)';
     } else if(teamSort==='gd'){
       mainValue=AW_WERT.plusMinus.z({v:gd/t.g});
@@ -14180,7 +14180,7 @@ function vTeams(nurErgebnis=false){
   const ruhe=ruheF.length?`<div class="rlist">${ruheF.map((t,i)=>zeile(t,i,true)).join('')}</div>`:'';
 
 
-  const ergebnis={kopf:`${arrF.length} Duo${arrF.length===1?'':'s'}${_tq?' gefunden':' ab 4 gemeinsamen Spielen, über alle Partien'}`,
+  const ergebnis={kopf:`${arrF.length} Duo${arrF.length===1?'':'s'}${_tq?' gefunden':' ab 4 gemeinsamen Partien, über alle Saisons'}`,
     html:arrF.length ? `<div class="rlist">${rows}</div>` : emptyState('search','Keine Teams gefunden'),
     ruhe, ruheZahl:ruheF.length};
   if(nurErgebnis) return ergebnis;
@@ -14341,31 +14341,31 @@ function vSettings(){
 
     <div class="cfg-section-title">Partner und Position</div>
     <div class="card">
-      ${sl('cfgRisk','Last des schwächeren Partners',c.risk,0,100,'%')}
-      ${sl('cfgPos','Ausgleich der Position',c.pos,0,100,'%')}
+      ${sl('cfgRisk','Last des schwächeren Partners',c.risk,0,100,'\u00A0%')}
+      ${sl('cfgPos','Ausgleich der Position',c.pos,0,100,'\u00A0%')}
     </div>
 
     <div class="cfg-section-title">Sieg und Niederlage</div>
     <div class="card">
-      ${sl('cfgWinBoost','Mehr für Siege',c.winBoost,100,140,'%')}
-      ${sl('cfgMovDamp','Tordifferenz bei Niederlagen',c.movDamp,0,100,'%')}
-      ${sl('cfgMovMax','Zuschlag für Kantersiege',c.movMax,0,100,'%')}
-      ${sl('cfgLowEloLossDamp','Schutz für Schwächere',c.lowDamp,0,100,'%')}
+      ${sl('cfgWinBoost','Mehr für Siege',c.winBoost,100,140,'\u00A0%')}
+      ${sl('cfgMovDamp','Tordifferenz bei Niederlagen',c.movDamp,0,100,'\u00A0%')}
+      ${sl('cfgMovMax','Zuschlag für Kantersiege',c.movMax,0,100,'\u00A0%')}
+      ${sl('cfgLowEloLossDamp','Schutz für Schwächere',c.lowDamp,0,100,'\u00A0%')}
     </div>
 
     <div class="cfg-section-title">Zuschläge</div>
     <div class="card">
       ${sl('cfgBonus','Zuschlag je Partie',Math.round((cfg.match_bonus ?? 1.5)*10),0,50,' Elo',c.bonus)}
-      ${sl('cfgExpProt','Schutz für Erfahrene',c.expProt,0,30,'%')}
-      ${sl('cfgUdElo','Außenseiter-Zuschlag (Elo)',c.udElo,0,100,'%')}
-      ${sl('cfgUdGames','Aufhol-Zuschlag (Partien)',c.udGames,0,100,'%')}
+      ${sl('cfgExpProt','Schutz für Erfahrene',c.expProt,0,30,'\u00A0%')}
+      ${sl('cfgUdElo','Außenseiter-Zuschlag (Elo)',c.udElo,0,100,'\u00A0%')}
+      ${sl('cfgUdGames','Aufhol-Zuschlag (Partien)',c.udGames,0,100,'\u00A0%')}
     </div>
 
     <div class="cfg-section-title">Tempo nach Erfahrung</div>
     <div class="card">
-      ${sl('cfgNpMult','Neulinge (unter 5 Partien)',c.npMult,100,200,'%')}
-      ${sl('cfgNpMidMult','Anfänger (unter 15 Partien)',c.npMidMult,100,200,'%')}
-      ${sl('cfgVetDamp','Spitze (über Start + 400 Elo)',c.vetDamp,0,100,'%')}
+      ${sl('cfgNpMult','Neulinge (unter 5 Partien)',c.npMult,100,200,'\u00A0%')}
+      ${sl('cfgNpMidMult','Anfänger (unter 15 Partien)',c.npMidMult,100,200,'\u00A0%')}
+      ${sl('cfgVetDamp','Spitze (über Start + 400 Elo)',c.vetDamp,0,100,'\u00A0%')}
     </div>
 
     ${
@@ -14555,7 +14555,7 @@ function _matchChanceHtml(c){
   const mitte = wort === 'Favorit' ? (c >= .5 ? '← Favorit' : 'Favorit →') : wort;
   return `<div class="m-chance"><div class="m-ch-r">${rcpPaarHtml([M.A1, M.A2], 26)}`
     + `<span class="m-ch-w">${esc(mitte)}</span>${rcpPaarHtml([M.B1, M.B2], 26)}</div>`
-    + `<div class="prob"><div class="pa" style="width:${pA}%">${pA}%</div><div class="pb" style="width:${pB}%">${pB}%</div></div></div>`;
+    + `<div class="prob"><div class="pa" style="width:${pA}%">${pA}\u00A0%</div><div class="pb" style="width:${pB}%">${pB}\u00A0%</div></div></div>`;
 }
 
 async function doSaveMatch(){
@@ -15142,9 +15142,9 @@ const BADGES=[
     multi:true,count:(id,ms)=>countGames(id,ms)>=300?1:0},
   {id:'wins200',ic:'siegermaschine',name:'Siegermaschine',desc:'300 Siege gesammelt',
     multi:true,count:(id,ms)=>countWins(id,ms)>=300?1:0},
-  {id:'def50',ic:'posAbwehr',name:'Abwehrchef',desc:'50 Spiele als Abwehrspieler',
+  {id:'def50',ic:'posAbwehr',name:'Abwehrchef',desc:'50 Partien als Abwehrspieler',
     multi:true,count:(id,ms)=>{const s=playerStats(id,ms);return s.defG>=50?1:0;}},
-  {id:'atk50',ic:'posSturm',name:'Mittelstürmer',desc:'50 Spiele als Stürmer',
+  {id:'atk50',ic:'posSturm',name:'Mittelstürmer',desc:'50 Partien als Stürmer',
     multi:true,count:(id,ms)=>{const s=playerStats(id,ms);return s.atkG>=50?1:0;}},
   {id:'climber_100',ic:'climb',name:'Aufsteiger',desc:'In einer Saison 100 Elo erreicht (je Saison zählbar)',
     multi:true,count:(id,ms)=>countSeasonsAtElo(id,100,ms)},
@@ -16269,10 +16269,10 @@ const FINGER_MIN_SPIELE = 12;
 const FINGER_ACHSEN = [
   {id:'wr',     name:'Siege',
    roh: d => d.st.wr,
-   zeig: v => Math.round(v * 100) + '%'},
+   zeig: v => Math.round(v * 100) + '\u00A0%'},
   {id:'atk',    name:'Sturm',
    roh: d => d.st.atkWr,
-   zeig: v => Math.round(v * 100) + '%'},
+   zeig: v => Math.round(v * 100) + '\u00A0%'},
   {id:'tore',   name:'Tore',
    roh: d => d.st.games ? d.st.gd / d.st.games : 0,
    zeig: v => (v < 0 ? '−' : '+') + komma(Math.abs(v))},
@@ -16284,7 +16284,7 @@ const FINGER_ACHSEN = [
    zeig: v => Math.round(v) + '×'},
   {id:'def',    name:'Abwehr',
    roh: d => d.st.defWr,
-   zeig: v => Math.round(v * 100) + '%'},
+   zeig: v => Math.round(v * 100) + '\u00A0%'},
 ];
 
 function fingerFeld(pid){
@@ -16651,7 +16651,7 @@ function showPlayer(id){
   if(rInfo){
     const pct = rangPerzentil(id);
     if(pct > 0){
-      percentileTxt = 'Top ' + Math.ceil(pct) + '%';
+      percentileTxt = 'Top ' + Math.ceil(pct) + '\u00A0%';
       percentilePct = pct;
     }
   }
@@ -16842,7 +16842,7 @@ const rankProgHtml = rInfo ? `
         if(tot === 0){
           return `<div class="pp-pos-combined">
             <div class="head"><div class="t">Sturm und Abwehr</div></div>
-            <div class="pp-roles-empty">Keine Spiele</div>
+            <div class="pp-roles-empty">Keine Partien</div>
           </div>`;
         }
         const _stark = posLage.staerker;
@@ -16853,7 +16853,7 @@ const rankProgHtml = rInfo ? `
                 <div class="pp-rd-inner"><div class="pp-rd-wr" style="color:var(--muted)">–</div></div>
               </div>
               <div class="pp-rd-lbl"><span class="ic">${svgI(icon)}</span>${lbl}</div>
-              <div class="pp-rd-empty">noch keine Spiele</div>
+              <div class="pp-rd-empty">noch keine Partien</div>
             </div>`;
           const matt = (_stark !== 'beide' && _stark !== cls);
           return `
@@ -16881,11 +16881,11 @@ const rankProgHtml = rInfo ? `
     <div class="pp-sec" style="animation-delay:.35s">
       <div class="pp-sec-title">
         <div class="l"><span class="ic svg-ic">${svgI('chartBar')}</span><h4>Gesamtbilanz</h4></div>
-        <div class="m">${s.games} Spiele</div>
+        <div class="m">${s.games} ${s.games === 1 ? 'Partie' : 'Partien'}</div>
       </div>
       <div class="pp-kpi">
         <div class="pp-k"><div class="v">${s.wins}</div><div class="l">Siege</div></div>
-        <div class="pp-k f" style="--q:${(wr / 100).toFixed(2)}"><div class="v">${wr}%</div><div class="l">Siegquote</div></div>
+        <div class="pp-k f" style="--q:${(wr / 100).toFixed(2)}"><div class="v">${wr}\u00A0%</div><div class="l">Siegquote</div></div>
         <div class="pp-k ${s.gd>=0?'pos':'neg'}"><div class="v">${s.gd>=0?'+':''}${s.gd}</div><div class="l">Torbilanz</div></div>
       </div>
     </div>
@@ -16983,7 +16983,7 @@ const rankProgHtml = rInfo ? `
               <div class="info">
                 <div class="l">${svgI(icKey)}${label}</div>
                 <div class="name">${empty?'–':esc(name.label)}</div>
-                <div class="stat">${empty?'':`<span class="v">${Math.round(wr*100)}%</span> <span class="g">(${Math.round(wr*g)}/${g})</span>`}</div>
+                <div class="stat">${empty?'':`<span class="v">${Math.round(wr*100)}\u00A0%</span> <span class="g">(${Math.round(wr*g)}/${g})</span>`}</div>
               </div>
             </div>`;
           };
@@ -17079,7 +17079,7 @@ const rankProgHtml = rInfo ? `
       <div class="pp-posprof ${atkPct > defPct + 4 ? 'atk-seite' : defPct > atkPct + 4 ? 'def-seite' : 'neutral'}" style="--atk:${atkPct}%;--strahl:${Math.max(atkPct, defPct)}%">
         <div class="pph">
           <span class="lf">${svgI('posSturm')}Sturm</span>
-          <span><span class="pct">${atkPct}%</span> / <span class="pct">${defPct}%</span></span>
+          <span><span class="pct">${atkPct}\u00A0%</span> / <span class="pct">${defPct}\u00A0%</span></span>
           <span class="rt">Abwehr${svgI('posAbwehr')}</span>
         </div>
         <!-- Der Strahl beginnt an der staerkeren Seite und laeuft zur
@@ -17329,7 +17329,7 @@ function showRangSystem(){
     const prev=RANKS[i-1];
     const fromPct=prev?Math.round(prev.pct*100):0;
     const toPct=Math.round(r.pct*100);
-    const label=i===0?'Top '+toPct+'%':fromPct+'% – '+toPct+'%';
+    const label=i===0?'Top '+toPct+'\u00A0%':fromPct+'\u00A0% – '+toPct+'\u00A0%';
     const inRank=ranked.filter((_,idx)=>{
       const pct=(idx+1)/ranked.length;
       const prevR=RANKS[i-1];
@@ -17551,13 +17551,13 @@ function _badgeProgress(badgeId, playerId){
   const playerMs = matches.filter(m => matchOf(playerId, m));
   switch(badgeId){
     case 'first_match':
-      return {cur: Math.min(playerMs.length, 1), tgt: 1, label: 'Spiele'};
+      return {cur: Math.min(playerMs.length, 1), tgt: 1, label: 'Partien'};
     case 'games25':
-      return {cur: Math.min(playerMs.length, 25), tgt: 25, label: 'Spiele'};
+      return {cur: Math.min(playerMs.length, 25), tgt: 25, label: 'Partien'};
     case 'games150':
-      return {cur: Math.min(playerMs.length, 150), tgt: 150, label: 'Spiele'};
+      return {cur: Math.min(playerMs.length, 150), tgt: 150, label: 'Partien'};
     case 'games250':
-      return {cur: Math.min(playerMs.length, 300), tgt: 300, label: 'Spiele'};
+      return {cur: Math.min(playerMs.length, 300), tgt: 300, label: 'Partien'};
     case 'wins200': {
       const w = playerMs.filter(m => won(playerId, m)).length;
       return {cur: Math.min(w, 300), tgt: 300, label: 'Siege'};
@@ -17567,14 +17567,14 @@ function _badgeProgress(badgeId, playerId){
         const slot=m.a1===playerId?'a1':m.a2===playerId?'a2':m.b1===playerId?'b1':'b2';
         return m[slot+'_pos']==='def';
       }).length;
-      return {cur: Math.min(def, 50), tgt: 50, label: 'Abwehr-Spiele'};
+      return {cur: Math.min(def, 50), tgt: 50, label: 'Partien in der Abwehr'};
     }
     case 'atk50': {
       const atk = playerMs.filter(m => {
         const slot=m.a1===playerId?'a1':m.a2===playerId?'a2':m.b1===playerId?'b1':'b2';
         return m[slot+'_pos']==='atk';
       }).length;
-      return {cur: Math.min(atk, 50), tgt: 50, label: 'Sturm-Spiele'};
+      return {cur: Math.min(atk, 50), tgt: 50, label: 'Partien im Sturm'};
     }
     case 'streak5':
     case 'streak10':
@@ -17710,7 +17710,7 @@ function _badgeStreakSectionHtml(badgeId, playerId, rarity){
         <div class="bp-prog-bar"><div class="bp-prog-fill ${rarity}" style="width:${pct}%"></div></div>
         <div class="bp-prog-label">
           <span>${mt.cur} / ${mt.tgt} <span class="bp-prog-target">${esc(mt.label)}</span></span>
-          <span>${done?'✓':pct+'%'}</span>
+          <span>${done?'✓':pct+'\u00A0%'}</span>
         </div>
       </div>`;
     }).join('');
@@ -17739,7 +17739,7 @@ function _badgeStreakSectionHtml(badgeId, playerId, rarity){
       <div class="bp-prog-bar"><div class="bp-prog-fill ${rarity}" style="width:${pct}%"></div></div>
       <div class="bp-prog-label">
         <span>${cur} / ${st.tgt} <span class="bp-prog-target">${esc(st.label)}</span></span>
-        <span>${pct}%</span>
+        <span>${pct}\u00A0%</span>
       </div>
     </div>
     <div class="bp-run-hint">${esc(st.hint)}</div>`;
@@ -17800,7 +17800,7 @@ function showBadgePopover(badgeId, playerId){
           <div class="bp-prog-bar"><div class="bp-prog-fill ${r}" style="width:${Math.min(pct,100)}%"></div></div>
           <div class="bp-prog-label">
             <span>${prog.cur} / ${prog.tgt} <span class="bp-prog-target">${esc(prog.label)}</span></span>
-            <span>${pct}%</span>
+            <span>${pct}\u00A0%</span>
           </div>
         </div>`;
     } else {
@@ -18544,16 +18544,16 @@ function showH2H(idA, idB){
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
         <span class="svg-ic" style="color:var(--blue);width:16px;height:16px">${svgI('handshake')}</span>
         <span style="font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:var(--blue);font-weight:700;font-family:'Sometype Mono',monospace">Als Team</span>
-        <span style="margin-left:auto;font-size:11px;color:var(--muted);font-family:'Sometype Mono',monospace">${d.asTeam.g} Spiele</span>
+        <span style="margin-left:auto;font-size:11px;color:var(--muted);font-family:'Sometype Mono',monospace">${d.asTeam.g} ${d.asTeam.g === 1 ? 'Partie' : 'Partien'}</span>
       </div>
       <div style="display:flex;height:7px;border-radius:99px;overflow:hidden;background:var(--line);margin-bottom:6px">
         <div style="width:${teamWr}%;background:var(--acid)"></div>
         <div style="width:${100-teamWr}%;background:var(--red);opacity:.85"></div>
       </div>
       <div style="display:flex;justify-content:space-between;font-size:11px;font-family:'Sometype Mono',monospace;margin-bottom:11px">
-        <span style="color:var(--acid);font-weight:700">${d.asTeam.w} Siege</span>
-        <span style="font-weight:700">${teamWr}%</span>
-        <span style="color:var(--red);font-weight:700">${d.asTeam.g-d.asTeam.w} Niederlagen</span>
+        <span style="color:var(--acid);font-weight:700">${d.asTeam.w} ${d.asTeam.w === 1 ? 'Sieg' : 'Siege'}</span>
+        <span style="font-weight:700">${teamWr}\u00A0%</span>
+        <span style="color:var(--red);font-weight:700">${d.asTeam.g-d.asTeam.w} ${d.asTeam.g-d.asTeam.w === 1 ? 'Niederlage' : 'Niederlagen'}</span>
       </div>
       <div style="display:flex;gap:7px">
         <div style="flex:1;background:var(--bg2);border-radius:9px;padding:8px;text-align:center">
@@ -18576,7 +18576,7 @@ function showH2H(idA, idB){
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
         <span class="svg-ic" style="color:var(--purple);width:16px;height:16px">${svgI('crossedSwords')}</span>
         <span style="font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:var(--purple);font-weight:700;font-family:'Sometype Mono',monospace">Als Gegner</span>
-        <span style="margin-left:auto;font-size:11px;color:var(--muted);font-family:'Sometype Mono',monospace">${d.asOppForA.g} Spiele</span>
+        <span style="margin-left:auto;font-size:11px;color:var(--muted);font-family:'Sometype Mono',monospace">${d.asOppForA.g} ${d.asOppForA.g === 1 ? 'Partie' : 'Partien'}</span>
       </div>
       <div style="font-size:11px;color:var(--muted);margin-bottom:8px;font-family:'Sometype Mono',monospace">
         <span style="color:var(--ink)">${esc(pA.name)}</span> vs <span style="color:var(--ink)">${esc(pB.name)}</span>
@@ -18587,7 +18587,7 @@ function showH2H(idA, idB){
       </div>
       <div style="display:flex;justify-content:space-between;font-size:11px;font-family:'Sometype Mono',monospace;margin-bottom:11px">
         <span style="color:var(--acid);font-weight:700">${d.asOppForA.w}× gewonnen</span>
-        <span style="font-weight:700">${oppWr}%</span>
+        <span style="font-weight:700">${oppWr}\u00A0%</span>
         <span style="color:var(--red);font-weight:700">${d.asOppForA.g-d.asOppForA.w}× verloren</span>
       </div>
       <div style="display:flex;gap:7px">
@@ -18695,7 +18695,7 @@ function showTeam(p1Id,p2Id){
         <div style="font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:var(--muted);font-weight:700;font-family:'Sometype Mono',monospace">Team</div>
         <h3 style="margin-top:8px">${esc(pA.name)} &amp; ${esc(pB.name)}</h3>
       </div>
-      ${emptyState('handshake','Noch keine gemeinsamen Spiele')}
+      ${emptyState('handshake','Noch keine gemeinsamen Partien')}
     `);
     return;
   }
@@ -18738,7 +18738,7 @@ function showTeam(p1Id,p2Id){
     const o1=pm[oppIds[0]], o2=pm[oppIds[1]];
     const won=kind!=='loss';
     const meta = kind==='upset'
-      ? `Erwartung ${Math.round(entry.expected*100)}%`
+      ? `Erwartung ${Math.round(entry.expected*100)}\u00A0%`
       : dateStr(m.created_at);
     const labelMap={
       win:    {l:'Höchster Sieg',     ic:'explosion', col:'var(--acid)'},
@@ -18789,7 +18789,7 @@ function showTeam(p1Id,p2Id){
     kennzahlenHtml = `<div class="duo-kz">
       <div class="duo-kz-k"><div class="duo-kz-w"><b class="${wr >= 50 ? 'auf' : 'ab'}">${wr} %</b><span>Siegquote</span></div>
         <div class="duo-kz-zellen">${zellen}</div>
-        <div class="duo-kz-s num">${d.wins} Siege · ${d.losses} Niederlagen${folge.length > 50 ? ' · die letzten 50' : ''}</div></div>
+        <div class="duo-kz-s num">${d.wins} ${d.wins === 1 ? 'Sieg' : 'Siege'} · ${d.losses} ${d.losses === 1 ? 'Niederlage' : 'Niederlagen'}${folge.length > 50 ? ' · die letzten 50' : ''}</div></div>
       <div class="duo-kz-k"><div class="duo-kz-w"><b class="${d.gd >= 0 ? 'auf' : 'ab'}">${gdStr}</b><span>Torbilanz</span></div>
         <div class="duo-kz-skala"><i class="${jePartie >= 0 ? 'auf' : 'ab'}" style="${jePartie >= 0 ? 'left:50%' : 'right:50%'};width:${bw.toFixed(1)}%"></i></div>
         <div class="duo-kz-s num">Ø ${jePartie >= 0 ? '+' : ''}${komma(jePartie, 1)} je Partie</div></div>
@@ -18798,7 +18798,7 @@ function showTeam(p1Id,p2Id){
         <div class="duo-kz-s num">aus ${d.games} ${d.games === 1 ? 'Partie' : 'Partien'}, alle Saisons</div></div>
       <div class="duo-kz-k"><div class="duo-kz-w"><b class="${cs > 0 ? 'auf' : cs < 0 ? 'ab' : ''}">${serieZ}</b><span>${serieE}</span></div>
         ${lauf ? `<div class="aw-lauf duo-kz-lauf ${cs > 0 ? 'auf' : 'ab'}">${'<i></i>'.repeat(lauf)}</div>` : ''}
-        <div class="duo-kz-s num">am längsten ${d.longestWinStreak || 0} Siege · ${d.longestLossStreak || 0} Niederlagen</div></div>
+        <div class="duo-kz-s num">am längsten ${d.longestWinStreak || 0} ${d.longestWinStreak === 1 ? 'Sieg' : 'Siege'} · ${d.longestLossStreak || 0} ${d.longestLossStreak === 1 ? 'Niederlage' : 'Niederlagen'}</div></div>
     </div>`;
   }
 
@@ -18846,8 +18846,8 @@ function showTeam(p1Id,p2Id){
       <div style="margin-bottom:18px">
         ${blattAbschnittHtml('users', 'Aufstellungs-Vergleich')}
         <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">
-          ${buildLineupCard('Typisch', typWr+'% aus '+typGames, d.posStats[d.ids[0]].dom, 48)}
-          ${buildLineupCard('Beste Quote', bestWr+'% aus '+d.bestLineup.games, d.bestLineup.p0, 48)}
+          ${buildLineupCard('Typisch', typWr+'\u00A0% aus '+typGames, d.posStats[d.ids[0]].dom, 48)}
+          ${buildLineupCard('Beste Quote', bestWr+'\u00A0% aus '+d.bestLineup.games, d.bestLineup.p0, 48)}
         </div>
       </div>`;
   } else {
@@ -18867,7 +18867,7 @@ function showTeam(p1Id,p2Id){
     };
     const lineupFooter = d.games >= 2 ? `
       <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-family:'Sometype Mono',monospace;font-size:10.5px">
-        <span style="color:var(--ink2)">In <span style="color:var(--ink);font-weight:700">${d.dominantCount} / ${d.games}</span> Spielen</span>
+        <span style="color:var(--ink2)">In <span style="color:var(--ink);font-weight:700">${d.dominantCount} / ${d.games}</span> Partien</span>
         <span style="color:var(--ink2)"><span style="color:var(--muted)">⇄</span> ${d.swapped}× getauscht</span>
       </div>` : '';
     lineupHtml = `
@@ -18986,7 +18986,7 @@ function showTeam(p1Id,p2Id){
 
     ${recentRows?`
     <div>
-      ${blattAbschnittHtml('clock', 'Letzte ' + Math.min(10,d.recent.length) + ' Spiele')}
+      ${blattAbschnittHtml('clock', d.recent.length === 1 ? 'Letzte Partie' : 'Letzte ' + Math.min(10,d.recent.length) + ' Partien')}
       <div style="display:flex;flex-direction:column;gap:6px">${recentRows}</div>
     </div>`:''}
   `);
@@ -19077,10 +19077,10 @@ function showMatchDetail(mid){
       const factors=[];
       factors.push({label:'Basis (Erwartung)',val:b.rawBase,desc:b.won?'Sieg'+(b.expected<0.5?' gegen stärkeres Team':''):'Niederlage'+(b.expected>0.5?' gegen schwächeres Team':'')});
       if(zeigt(b.movEffect)) factors.push({label:'Tordifferenz',val:b.movEffect,desc:b.won?'Klarer Sieg':'Hohe Niederlage'+(b.movMult<1.2?' (gedämpft)':'')});
-      if(zeigt(b.winBoostEffect)) factors.push({label:'Mehr für Siege',val:b.winBoostEffect,desc:'+'+komma(((b.winBoost-1)*100),1)+'% für Siege'});
-      if(b.expProtect<1) factors.push({label:'Schutz für Erfahrene',val:b.expProtectEffect,desc:komma(((1-b.expProtect)*100),1)+'% Schutz'});
+      if(zeigt(b.winBoostEffect)) factors.push({label:'Mehr für Siege',val:b.winBoostEffect,desc:'+'+komma(((b.winBoost-1)*100),1)+'\u00A0% für Siege'});
+      if(b.expProtect<1) factors.push({label:'Schutz für Erfahrene',val:b.expProtectEffect,desc:komma(((1-b.expProtect)*100),1)+'\u00A0% Schutz'});
       if(b.lowEloDamp!==undefined && zeigt(b.lowEloEffect||0)){
-        factors.push({label:'Schutz für Schwächere',val:b.lowEloEffect,desc:komma(((1-b.lowEloDamp)*100),1)+'% weniger Verlust'});
+        factors.push({label:'Schutz für Schwächere',val:b.lowEloEffect,desc:komma(((1-b.lowEloDamp)*100),1)+'\u00A0% weniger Verlust'});
       }
       if(zeigt(b.rawBase*b.movMult*b.winBoost*b.expProtect*(b.underdogMult-1))){
         const eloPart   = b.underdogEloDiff>0   ? b.underdogEloDiff+' Elo schwächer'   : null;
@@ -19091,7 +19091,7 @@ function showMatchDetail(mid){
       }
       if(zeigt(b.riskEffect)) factors.push({label:b.riskShare<1?'Last im Team (stärker)':'Last im Team (schwächer)',val:b.riskEffect,desc:'Stärkeverteilung im Team'});
       if(zeigt(b.posEffect)){
-        const schwach=b.posFactor>1, pz=komma(Math.abs(b.posFactor-1)*100,1)+'% ';
+        const schwach=b.posFactor>1, pz=komma(Math.abs(b.posFactor-1)*100,1)+'\u00A0% ';
         factors.push({label:'Ausgleich der Position',val:b.posEffect,
           desc:(schwach?'Schwache':'Starke')+' Position · '+pz+(schwach?(b.won?'Bonus':'Schutz'):(b.won?'Dämpfer':'Abzug'))});
       }
@@ -19109,7 +19109,7 @@ function showMatchDetail(mid){
         <div style="font-size:10px;color:var(--muted);margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--line)">
           <div style="display:flex;justify-content:space-between">
             <span>${seasonBefore} → ${seasonAfter}</span>
-            <span>K=${komma(b.kFactor,1)} · Erw. ${komma((b.expected*100),1)}%</span>
+            <span>K=${komma(b.kFactor,1)} · Erw. ${komma((b.expected*100),1)}\u00A0%</span>
           </div>
         </div>
         ${factorRows}
@@ -20472,7 +20472,7 @@ function _buildStories(){
       if(_nemOpp){
         _bdesc = `5 Pleiten in Folge gegen ${nameOf(_nemOpp)}.`;
       } else if(ev.badge.id === 'games250'){
-        _bdesc = `300 Partien am Kicker. ${nameOf(ev.playerId)} steht nach dieser Partie bei ${_spEigene(ev.playerId, badgeMatches.get(ev.matchId)).length} Spielen.`;
+        _bdesc = `${nameOf(ev.playerId)} hat ${_spEigene(ev.playerId, badgeMatches.get(ev.matchId)).length} Partien am Kicker gespielt.`;
       } else if(ev.badge.id === 'wins200'){
         _bdesc = `300 Siege in der Karriere. ${nameOf(ev.playerId)} hält nach dieser Partie bei ${_spEigene(ev.playerId, badgeMatches.get(ev.matchId)).filter(m => _spGew(m, ev.playerId)).length}.`;
       } else {
@@ -20609,7 +20609,7 @@ function _buildStories(){
         id: 'jubilee_'+c.pid+'_'+c.total,
         cat: 'history',
         ic: 'calendar',
-        title: `${nameOf(c.pid)} feiert das ${c.total}. Spiel`,
+        title: `${nameOf(c.pid)} feiert die ${c.total}. Partie`,
         desc: (function(){
           const t = new Date(c.when).getTime();
           const alle = (matchesOfPlayer(c.pid, matches) || []).filter(m => mts(m) <= t);
@@ -20875,7 +20875,7 @@ function _buildStories(){
         cat: 'fun',
         ic: 'clock',
         title: 'Ruhige Woche',
-        desc: `Nur ${lastWeek} Spiele in den letzten 7 Tagen. Normal wären ${Math.round(avg)}.`,
+        desc: `Nur ${lastWeek} ${lastWeek === 1 ? 'Partie' : 'Partien'} in den letzten 7 Tagen. Normal wären ${Math.round(avg)}.`,
         when: now,
         prio: STORY_PRIO.quiet_week,
         dataRef: {type:'quiet_week', lastWeek, avg: Math.round(avg)}
@@ -20947,7 +20947,7 @@ function _buildStories(){
         cat: 'season',
         ic: 'crown',
         title: `${champ} ist Meister im ${monat}`,
-        desc: `${_fakten.spiele} Partien, ${_fakten.tore} Tore und ${_fakten.engeSpiele} enge Spiele prägten den Monat.`,
+        desc: `${_fakten.spiele} Partien und ${_fakten.tore} Tore prägten den Monat, ${_fakten.engeSpiele === 1 ? 'eine Partie endete' : _fakten.engeSpiele + ' Partien endeten'} knapp.`,
         when: new Date(sStart.getFullYear(), sStart.getMonth(), 1, 0, 0, 0, 0),
         prio: STORY_PRIO.season_recap,
         dataRef: {type:'season_recap', sid, championId:topElo[0].id, championElo:topElo[0].elo,
@@ -21258,7 +21258,7 @@ function _buildStories(){
       } else if(chance >= CHANCE_SENSATION && chance < CHANCE_UPSET){
         art = 'upset'; rang = 8; ic = 'giantSlayer';
         title = `${wn} stürzen die Favoriten`;
-        desc = `Nur ${pct} % Siegchance vor dem Anstoß. Trotzdem fällt das Spiel gegen ${ln} an die Außenseiter.`;
+        desc = `Nur ${pct} % Siegchance vor dem Anstoß. Trotzdem geht die Partie gegen ${ln} an die Außenseiter.`;
       } else if(diff === 1 && tief >= 8){
         art = 'krimi'; rang = 6; ic = 'thriller';
         title = `${wn} retten ein ${hoch}:${tief} ins Ziel`;
@@ -21269,7 +21269,7 @@ function _buildStories(){
         desc = `${hoch}:${tief} gegen ${ln}. Mit ${diff} Toren Abstand ist das eine klare Angelegenheit.`;
       } else if(diff === 2 && tief >= 8){
         art = 'eng'; rang = 2; ic = 'thriller';
-        title = `${wn} entscheiden ein enges Spiel`;
+        title = `${wn} entscheiden eine enge Partie`;
         desc = `${ln} halten die Partie bis in die Schlussphase offen. Am Ende steht ein ${hoch}:${tief}.`;
       } else {
         title = `${wn} setzen sich gegen ${ln} durch`;
@@ -21336,7 +21336,7 @@ function _buildStories(){
         cat: 'highlight',
         ic: 'crossedSwords',
         title: `${breakerNames} brechen ${nameOf(kill.victimPid)}s ${kill.streak}er-Serie`,
-        desc: `${nameOf(kill.victimPid)} hatte ${kill.streak} Spiele in Folge gewonnen. Jetzt ist Schluss.`,
+        desc: `${nameOf(kill.victimPid)} hatte ${kill.streak} Partien in Folge gewonnen. Jetzt ist Schluss.`,
         when: new Date(kill.t),
         prio: STORY_PRIO.streak_killer + (kill.streak >= 10 ? 4 : 0),
         dataRef: {type:'streak_killer', matchId: m.id, streak: kill.streak, victimPid: kill.victimPid, breakerIds}
@@ -21364,7 +21364,7 @@ function _buildStories(){
       _wochenTeile.push({
         art: 'thriller', ic: 'thriller', label: 'Krimi der Woche',
         pids: _tg, wert: standFuer(m), matchId: m.id,
-        satz: `${_tg.map(nameOf).join(' und ')} entscheiden das Spiel mit dem letzten Tor. ${thriller.totalScore} Tore fielen, mehr als in jeder anderen Partie dieser Woche.`
+        satz: `${_tg.map(nameOf).join(' und ')} entscheiden die Partie mit dem letzten Tor. ${thriller.totalScore} Tore fielen, mehr als in jeder anderen Partie dieser Woche.`
       });
     }
   } catch(e){}
@@ -21520,7 +21520,7 @@ function _buildStories(){
           id: 'dry_spell_'+matches[matches.length-1].id,
           cat: 'fun',
           ic: 'clock',
-          title: `${sinceLastDays} Tage ohne Spiel`,
+          title: `${sinceLastDays} Tage ohne Partie`,
           desc: isRecord
             ? `So lange stand der Kicker noch nie still.`
             : `Die längste Pause der Liga waren ${maxGapDays} Tage.`,
@@ -21544,7 +21544,7 @@ function _buildStories(){
           art: 'potw', ic: 'weekKing', label: 'Spieler der Woche', held: true,
           pids: res.winners.map(w => w.id), wert: Math.round(main.wr*100) + ' %',
           satz: `${_namenListe(names)} ${names.length > 1 ? 'gewinnen' : 'gewinnt'} `
-              + `${main.wins} von ${main.wins + main.losses} Spielen und ${names.length > 1 ? 'haben' : 'hat'} damit die beste Quote.`,
+              + `${main.wins} von ${main.wins + main.losses} Partien und ${names.length > 1 ? 'haben' : 'hat'} damit die beste Quote.`,
           potw: {weekKey: _potwKeyOf(range.start), playerId: main.id,
                  playerIds: res.winners.map(w => w.id), wins: main.wins, wr: main.wr}
         });
@@ -21564,7 +21564,7 @@ function _buildStories(){
         cat: 'highlight',
         ic: 'dayKing',
         title: names.length > 1 ? `${titleNames}: Spieler des Tages` : `${titleNames} ist Spieler des Tages`,
-        desc: `${main.wins} von ${main.wins + main.losses} Spielen gewonnen, `
+        desc: `${main.wins} von ${main.wins + main.losses} Partien gewonnen, `
             + `das sind ${Math.round(main.wr*100)} %. Mehr Siege hat am `
             + `${dLabel} niemand geholt.`,
         when: rep,
@@ -21633,7 +21633,7 @@ function _buildStories(){
         cat: 'season',
         ic: 'weekKing',
         title: _wHeld.art === 'potw' ? `Die Woche gehört ${_wName}` : `Die Woche der Liga`,
-        desc: `${_wSpiele.length} Spiele an ${_wTage} ${_wTage === 1 ? 'Tag' : 'Tagen'}. `
+        desc: `${_wSpiele.length} ${_wSpiele.length === 1 ? 'Partie' : 'Partien'} an ${_wTage} ${_wTage === 1 ? 'Tag' : 'Tagen'}. `
             + _wHeld.satz,
         when: _wSchluss,
         prio: STORY_PRIO.woche,
@@ -22348,7 +22348,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     if(!bk) return null;
     return { cat:'fun', ic:'thriller', prio:3,
       title:`${g} Tore in ${matches.length} Partien`,
-      desc:`Im Schnitt fallen ${komma(g/matches.length)} Tore pro Spiel. Am häufigsten endet eine Partie ${bk}, das war ${bn} Mal so.`,
+      desc:`Im Schnitt fallen ${komma(g/matches.length)} Tore je Partie. Am häufigsten endet eine Partie ${bk}, das war ${bn} Mal so.`,
       vv: g, vl:'Tore',
       dataRef:{ bild:{f:'verteilung', je:[0,1,2,3,4,5,6,7,8,9].map(i => cnt['10:' + i] || 0), hl:[Number(bk.split(':')[1])]} } };
   }});
@@ -22372,7 +22372,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     return { cat:'personal', ic:'medalTrio', prio:3,
       title:`${nameOf(pid)} ist Dauergast`,
       desc:`Niemand spielt mehr: ${stats[pid].games} Partien auf dem Konto.`,
-      vv: stats[pid].games, vl:'Spiele',
+      vv: stats[pid].games, vl:'Partien',
       dataRef:{ ambientPid: pid, bild:_bZahl(withStats, p2 => stats[p2].games) } };
   }});
 
@@ -22511,7 +22511,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     return { cat:'fun', ic:'calendar', prio:2,
       title:'Rekord-Spieltag',
       desc:`Die meisten Partien an einem Tag: ${bn} am ${p[2]}.${p[1]}.${p[0]}.`,
-      vv: bn, vl:'Spiele',
+      vv: bn, vl:'Partien',
       dataRef:{ bild:(() => { const ks = Object.keys(byDay).sort().slice(-24);
         if(!ks.includes(bk)){ ks.shift(); ks.push(bk); ks.sort(); }
         return {f:'saeulen', v:ks.map(k => byDay[k]), hl:[ks.indexOf(bk)], l:'Spieltage'}; })() } };
@@ -22567,7 +22567,7 @@ function _ambientTemplatePool(now, pm, nameOf){
       { noun:'Meiste Siege',         ic:'trophy',  pool:withStats, val: pid => stats[pid].wins,               fmt: v => v+' Siege' },
       { noun:'Bestes Torverhältnis', ic:'plusMinus', pool:withStats, val: pid => stats[pid].gf - stats[pid].ga, fmt: v => (v>0?'+':'')+v+' Tordifferenz' },
       { noun:'Meiste Tore',          ic:'ball',    pool:withStats, val: pid => stats[pid].gf,                 fmt: v => v+' Tore' },
-      { noun:'Höchste Karriere-Elo', ic:'crown',   pool:elig,      val: pid => Math.round(career[pid]||0),    fmt: v => v+' Elo', qual:' (ab 5 Spielen)' },
+      { noun:'Höchste Karriere-Elo', ic:'crown',   pool:elig,      val: pid => Math.round(career[pid]||0),    fmt: v => v+' Elo', qual:' (ab 5 Partien)' },
     ];
     const c = cats[Math.floor(rng()*cats.length)];
     let best = null, second = null;
@@ -22663,7 +22663,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     return { cat:'personal', ic:'trendUp', prio:5,
       title:`${nameOf(best.pid)} ist in Topform`,
       desc:`Beste Siegquote der letzten 14 Tage: ${Math.round(best.v*100)} % aus ${a.g} Partien.`,
-      vv: Math.round(best.v*100)+'%', vl:'14 Tage',
+      vv: Math.round(best.v*100)+'\u00A0%', vl:'14 Tage',
       dataRef:{ ambientPid: best.pid, bild:_bReihe(elig, id => agg[id].w / agg[id].g, v => Math.round(v * 100) + ' %') } };
   }});
 
@@ -22706,7 +22706,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     return { cat:'personal', ic:'target', prio:5,
       title:`${nameOf(best.pid)} hat Nerven aus Stahl`,
       desc:`Gewinnt aktuell ${Math.round(best.v*100)} % der engen Partien (höchstens 2 Tore Unterschied), ${a.cw} von ${a.cg} in 14 Tagen.`,
-      vv: Math.round(best.v*100)+'%', vl:'eng gewonnen',
+      vv: Math.round(best.v*100)+'\u00A0%', vl:'eng gewonnen',
       dataRef:{ ambientPid: best.pid, bild:_bReihe(elig, id => agg[id].cw / agg[id].cg, v => Math.round(v * 100) + ' %') } };
   }});
 
@@ -22734,7 +22734,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     return { cat:'personal', ic:'medalTrio', prio:3,
       title:`${nameOf(best.pid)} gibt Vollgas`,
       desc:`Aktivster Spieler der letzten 14 Tage: ${best.v} Partien in zwei Wochen.`,
-      vv: best.v, vl:'Spiele',
+      vv: best.v, vl:'Partien',
       dataRef:{ ambientPid: best.pid, bild:_bReihe(Object.keys(agg), id => agg[id].g, v => String(v)) } };
   }});
 
@@ -22952,7 +22952,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     return { cat:'team', ic:'duo', prio:4,
       title:`Beste Freunde: ${nameOf(c.pid)} und ${nameOf(c.mate)}`,
       desc:`Zusammen ${c.w} von ${c.g} Partien gewonnen, ${Math.round(c.wr*100)} %.`,
-      vv: Math.round(c.wr*100) + '%', vl:'als Duo',
+      vv: Math.round(c.wr*100) + '\u00A0%', vl:'als Duo',
       dataRef:{ ambientPids:[c.pid, c.mate], pairKind:'team', bild:{f:'duo', a:c.pid, b:c.mate, w:c.w, g:c.g} } };
   }});
 
@@ -22967,7 +22967,7 @@ function _ambientTemplatePool(now, pm, nameOf){
       return { cat:'personal', ic:'refresh', prio:3,
         title:`${nameOf(pid)} ist beidfüßig`,
         desc:`Im Sturm ${Math.round(atkWr*100)} %, in der Abwehr ${Math.round(defWr*100)} %. Die Position spielt keine Rolle.`,
-        vv: Math.round((st.atkW + st.defW) / (st.atkG + st.defG) * 100) + '%',
+        vv: Math.round((st.atkW + st.defW) / (st.atkG + st.defG) * 100) + '\u00A0%',
         vl:'in beiden Rollen',
         dataRef:{ ambientPid: pid, bild:{f:'rolle', p:pid, s:Math.round(atkWr*100), a:Math.round(defWr*100), gs:st.atkG, ga:st.defG} } };
     }
@@ -22977,7 +22977,7 @@ function _ambientTemplatePool(now, pm, nameOf){
       desc: strong
         ? `Im Sturm ${Math.round(atkWr*100)} % Siege (${st.atkG} Partien), in der Abwehr nur ${Math.round(defWr*100)} %.`
         : `In der Abwehr ${Math.round(defWr*100)} % Siege (${st.defG} Partien), im Sturm nur ${Math.round(atkWr*100)} %.`,
-      vv: Math.round((strong ? atkWr : defWr)*100) + '%', vl: strong ? 'im Sturm' : 'in Abwehr',
+      vv: Math.round((strong ? atkWr : defWr)*100) + '\u00A0%', vl: strong ? 'im Sturm' : 'in Abwehr',
       dataRef:{ ambientPid: pid, bild:{f:'rolle', p:pid, s:Math.round(atkWr*100), a:Math.round(defWr*100), gs:st.atkG, ga:st.defG} } };
   }});
 
@@ -23151,7 +23151,7 @@ function _ambientTemplatePool(now, pm, nameOf){
       return { cat:'season', ic:'stopwatch', prio:6,
         title:`Halbzeit im ${seasonLabel(sid)}`,
         desc: `${T2.matches} Partien an ${T2.days} Spieltagen. `
-          + (fuehrend ? `${nameOf(fuehrend.pid)} führt mit ${fuehrend.elo} Elo aus ${fuehrend.games} Spielen. ` : '')
+          + (fuehrend ? `${nameOf(fuehrend.pid)} führt mit ${fuehrend.elo} Elo aus ${fuehrend.games} Partien. ` : '')
           + `${T2.awarded.length} von ${SEASON_TITLES.length} Monatschroniken sind vergeben, ${offen} noch offen`
           + (ohne ? `, ${ohne} Spieler ${ohne === 1 ? 'trägt' : 'tragen'} noch keine.` : '.')
           + ` Die zweite Monatshälfte entscheidet.`,
@@ -23433,7 +23433,7 @@ function _consolidateStoriesLegacy(list){
     loss_streak:     { label:'Pechvögel',           ic:'dropDouble', frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.streak})`, desc:f=>`Niederlagen nacheinander: ${f}.` },
     top_form:        { label:'über dem eigenen Schnitt', ic:'flame',  frag:s=>`${nameOf(s.dataRef.pid)} (+${s.dataRef.vorsprung ?? 0} Punkte)`, desc:f=>`Weiter vorn als sonst: ${f}.` },
     win_streak:      { label:'Serien im Gleichschritt', ic:'flame', frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.streak})`, desc:f=>`Siege in Folge: ${f}.` },
-    jubilee:         { label:'Jubiläen',            ic:'calendar',   frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.total}.)`, desc:f=>`Spiele-Meilensteine: ${f}.` },
+    jubilee:         { label:'Jubiläen',            ic:'calendar',   frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.total}.)`, desc:f=>`Runde Partien: ${f}.` },
     milestone_wins:  { label:'Sieg-Meilensteine',   ic:'medalTrio',  frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.milestone})`, desc:f=>`Erreicht: ${f}.` },
     milestone_goals: { label:'Tor-Meilensteine',    ic:'thriller',   frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.milestone})`, desc:f=>`Erreicht: ${f}.` },
     milestone_elo:   { label:'Elo-Meilensteine',    ic:'peak',       frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.milestone})`, desc:f=>`Neue Bestwerte: ${f}.` },
@@ -23595,7 +23595,7 @@ function _consolidateStoriesLegacy(list){
     },
     jubilee: {
       sache: d => 'jub|' + (d.total || ''),
-      titel: (nm, d) => `${nm} feiern das ${d.total}. Spiel`,
+      titel: (nm, d) => `${nm} feiern die ${d.total}. Partie`,
       satz:  (n, d) => `${_alleN(n)} erreichen die ${d.total} in derselben Partie.`,
       zeile: nm => nm
     },
@@ -23966,7 +23966,7 @@ function _consolidateStoriesLegacy(list){
         'gemeinsame Durststrecke':'gemeinsame Durststrecken', Formlauf:'Formläufe', 'Jubiläum':'Jubiläen',
         Siegmarke:'Siegmarken', Tormarke:'Tormarken', 'Elo-Marke':'Elo-Marken', Serienbruch:'Serienbrüche'};
       const ERGEBNIS_ORT = {zu_null:'mit einem Sieg ohne Gegentor', upset:'im Favoritensturz',
-        krimi:'im Ein-Tor-Krimi', kanter:'mit einem klaren Sieg', eng:'im engen Spiel'};
+        krimi:'im Ein-Tor-Krimi', kanter:'mit einem klaren Sieg', eng:'in der engen Partie'};
       const _etikett = t => {
         const dt = (t && t.dataRef) || {};
         const typ = dt.type === 'group' ? (dt.sub || '') : (dt.type || '');
@@ -26879,7 +26879,7 @@ const SP_FORM = {
       const z = vor[vor.length - 1];
       return {W:F.W, L:F.L, hoch:F.hoch, tief:F.tief, n:vor.length + 1, zuletzt:z ? mts(z) : null};
     },
-    text:F => ({t:`${_spNl(F.W)} spielen zu null`, d:`Ein Spiel ohne Gegentor gegen ${_spNl(F.L)}.`})},
+    text:F => ({t:`${_spNl(F.W)} spielen zu null`, d:`Eine Partie ohne Gegentor gegen ${_spNl(F.L)}.`})},
   uhr:{rang:24, ic:'clock', v2:true,
     wann:F => SP_TAG_STUFEN.has(F.tag.length) && F.tag.length >= 6 ? {n:F.tag.length} : null,
     daten:(F, x) => ({n:x.n, W:F.W, L:F.L, hoch:F.hoch, tief:F.tief,
@@ -26929,12 +26929,12 @@ const SP_FORM = {
     wann:F => F.diff === 1 ? {} : null,
     daten:F => Object.assign(_spKopfDaten(F), {nr:_spImMonat(F, _spKrimi)}),
     text:F => ({t:`${_spNl(F.W)} gewinnen mit einem Tor Abstand`,
-      d:`Es ist das ${_spImMonat(F, _spKrimi)}. Spiel mit einem Tor Abstand in diesem Monat.`})},
+      d:`Es ist die ${_spImMonat(F, _spKrimi)}. Partie mit einem Tor Abstand in diesem Monat.`})},
   zunull:{rang:60, ic:'weisseWeste', v2:true,
     wann:F => F.tief === 0 ? {} : null,
     daten:F => Object.assign(_spKopfDaten(F), {nr:_spImMonat(F, _spZuNull),
       monat:seasonLabel(tagKey(mts(F.m)).slice(0, 7)).split(' ')[0]}),
-    text:F => ({t:`${_spNl(F.W)} spielen zu null`, d:`Ein Spiel ohne Gegentor gegen ${_spNl(F.L)}.`})},
+    text:F => ({t:`${_spNl(F.W)} spielen zu null`, d:`Eine Partie ohne Gegentor gegen ${_spNl(F.L)}.`})},
   feld:{rang:8, ic:'ball',
     wann:() => ({}),
     daten:F => _spFeldDaten({m:F.m, c:F.c}),
@@ -28117,9 +28117,9 @@ function _ffRolle(b){
   const s = Math.max(0, Math.min(100, b.s | 0)), a = Math.max(0, Math.min(100, b.a | 0));
   const stark = Math.abs(s - a) < 10 ? '' : s > a ? 's' : 'a';
   return `<div class="ff-rl-k">${_ffChip(b.p)}${_ffNm(b.p)}</div>`
-    + `<div class="ff-rl${stark ? ' st-' + stark : ''}"><span class="ff-rl-l"><b class="num">${s} %</b><small>Sturm · ${b.gs | 0} Spiele</small></span>`
+    + `<div class="ff-rl${stark ? ' st-' + stark : ''}"><span class="ff-rl-l"><b class="num">${s} %</b><small>Sturm · ${b.gs | 0} Partien</small></span>`
     + `<span class="ff-rl-b"><span><i class="s" style="width:${s}%"></i></span><span><i class="a" style="width:${a}%"></i></span></span>`
-    + `<span class="ff-rl-r"><b class="num">${a} %</b><small>Abwehr · ${b.ga | 0} Spiele</small></span></div>`;
+    + `<span class="ff-rl-r"><b class="num">${a} %</b><small>Abwehr · ${b.ga | 0} Partien</small></span></div>`;
 }
 
 function _ffVerteilung(b){
@@ -30184,7 +30184,7 @@ function _ndMitteRoh(s){
         return `<div class="nd-section">Liga-Rekord</div>${row}${sRow}`;
       }
       case 'giant_slayer': {
-        const pct = d.chance!=null ? `<div class="nd-stat-row"><div class="nd-stat-label">Siegchance</div><div class="nd-stat-val red">${Math.max(1,Math.round(d.chance*100))}%</div></div>` : '';
+        const pct = d.chance!=null ? `<div class="nd-stat-row"><div class="nd-stat-label">Siegchance</div><div class="nd-stat-val red">${Math.max(1,Math.round(d.chance*100))}\u00A0%</div></div>` : '';
         const matchHtml = d.matchId ? _newsMatchVsBlock(d.matchId) : '';
         return `<div class="nd-section">Die Sensation</div>${pct}` + (matchHtml ? matchHtml : '');
       }
@@ -30192,12 +30192,12 @@ function _ndMitteRoh(s){
       case 'match_result': {
         const fakten = {
           zu_null: ['Ohne Gegentor', 'Kein Treffer für die Gegenseite'],
-          upset:   ['Vor dem Spiel', d.chance != null ? `${Math.max(1, Math.round(d.chance * 100))} % Siegchance` : 'Außenseiter'],
+          upset:   ['Vor der Partie', d.chance != null ? `${Math.max(1, Math.round(d.chance * 100))} % Siegchance` : 'Außenseiter'],
           krimi:   ['Entscheidung', '1 Tor Unterschied'],
           kanter:  ['Entscheidung', `${d.margin || 0} Tore Unterschied`],
           eng:     ['Entscheidung', `${d.margin || 2} Tore Unterschied`]
         }[d.resultKind] || ['Ergebnis', 'Besondere Partie'];
-        return `<div class="nd-section">Was dieses Spiel besonders macht</div>
+        return `<div class="nd-section">Was diese Partie besonders macht</div>
           <div class="nd-stat-row"><div class="nd-stat-label">${esc(fakten[0])}</div>
             <div class="nd-stat-val acid">${esc(fakten[1])}</div></div>`;
       }
@@ -30583,7 +30583,7 @@ function _ndMitteRoh(s){
       }
       case 'jubilee': {
         const stats = _ndBilanzBis(d.pid, s);
-        return `<div class="nd-section">Die ersten ${esc(String(d.total))} Spiele</div>
+        return `<div class="nd-section">Die ersten ${esc(String(d.total))} Partien</div>
           ${stats ? `<div class="nd-stat-row">
             <div class="nd-stat-label">Siege / Niederlagen</div>
             <div class="nd-stat-val">${stats.wins} / ${stats.losses}</div></div>
@@ -30594,8 +30594,8 @@ function _ndMitteRoh(s){
       }
       case 'quiet_week': {
         return `<div class="nd-section">Aktivität</div>
-          <div class="nd-stat-row"><div class="nd-stat-label">Letzte 7 Tage</div><div class="nd-stat-val">${d.lastWeek} Spiele</div></div>
-          <div class="nd-stat-row"><div class="nd-stat-label">4-Wochen-Schnitt</div><div class="nd-stat-val">${d.avg} Spiele</div></div>`;
+          <div class="nd-stat-row"><div class="nd-stat-label">Letzte 7 Tage</div><div class="nd-stat-val">${d.lastWeek} ${d.lastWeek === 1 ? 'Partie' : 'Partien'}</div></div>
+          <div class="nd-stat-row"><div class="nd-stat-label">4-Wochen-Schnitt</div><div class="nd-stat-val">${d.avg} Partien</div></div>`;
       }
       case 'season_start': {
         const pA = d.leader, pB = d.second;
@@ -31255,7 +31255,7 @@ const DISZIPLINEN = [
       wie:'Gewertet wird der beste einzelne Monat einer Laufbahn und nicht der Schnitt über alle Monate. Monate mit weniger als fünfzehn eigenen Partien bleiben außen vor.',
       cond:'Höchste Siegquote in einem einzelnen Monat, ab 15 Partien in diesem Monat',
       val:p => p.bestMonth ? p.bestMonth.q : null,
-      ev:(p,v) => `${Math.round(v*100)} % aus ${p.bestMonth.g} Spielen`,
+      ev:(p,v) => `${Math.round(v*100)} % aus ${p.bestMonth.g} Partien`,
       zeit:p => p.bestMonth ? seasonLabel(p.bestMonth.sid) : ''
     }},
 
@@ -31340,7 +31340,7 @@ const DISZIPLINEN = [
         const d = (p.closeW/p.close) - ((p.wins - p.closeW)/rest);
         return d > 0 ? d : null;
       },
-      ev:(p,v) => `${_ppZeichen(v)} %-Punkte in engen Spielen · ${pct(p.closeW/p.close)} statt ${_ppGegen(p.closeW/p.close, v)} % sonst`
+      ev:(p,v) => `${_ppZeichen(v)} %-Punkte in engen Partien · ${pct(p.closeW/p.close)} statt ${_ppGegen(p.closeW/p.close, v)} % sonst`
     },
     monat:{
       beiname:'Der Abgeklärte',
@@ -31540,7 +31540,7 @@ const DISZIPLINEN = [
       zeitraum:'Ganze Laufbahn, beide Positionen',
       mind:'20 Sturmspiele und 20 Abwehrspiele',
       wie:'Die Leistung gegen die Elo-Erwartung, getrennt für Sturm und Abwehr. Gewertet wird die schwächere der beiden Positionen: vorne steht, wer auf beiden über der Erwartung liegt.',
-      cond:'Größter Abstand zur Erwartung auf der schwächeren Position, ab 20 Spielen je Position',
+      cond:'Größter Abstand zur Erwartung auf der schwächeren Position, ab 20 Partien je Position',
       val:p => (p.atkG < 20 || p.defG < 20) ? null
         : Math.min(p.atkPerf / p.atkG, p.defPerf / p.defG),
       ev:(p,v) => `${_ppZeichen(v)} %-Punkte auf der schwächeren Position · ${_ppZeichen(p.atkPerf/p.atkG)} vorne, ${_ppZeichen(p.defPerf/p.defG)} hinten`
@@ -31636,7 +31636,7 @@ const DISZIPLINEN = [
       zeitraum:'Ganze Laufbahn, je Spieltag',
       mind:'10 Spieltage mit je 3 eigenen Partien',
       wie:'Für jeden eigenen Spieltag mit mindestens drei Partien wird die erste Partie mit allen übrigen dieses Tages verglichen.',
-      cond:'Größter Vorsprung im ersten Spiel eines Spieltags, ab 10 Spieltagen mit je 3 Partien',
+      cond:'Größter Vorsprung in der ersten Partie eines Spieltags, ab 10 Spieltagen mit je 3 Partien',
       val:p => (p.ksDelta != null && p.ksN >= 10 && p.ksDelta > 0) ? p.ksDelta : null,
       ev:(p,v) => `${_ppZeichen(v)} %-Punkte · ${pct(p.ksDrin)} % in ${p.ksN} Startspielen, sonst ${_ppGegen(p.ksDrin, v)} %`
     }},
@@ -31646,7 +31646,7 @@ const DISZIPLINEN = [
       kammer:'koennen', basis:REKORD_GRUNDWERT.koennen, offen:true,
       zeitraum:'Ganze Laufbahn, jede Rückkehr',
       mind:'4 Rückkehrspiele',
-      wie:`Ein Rückkehrspiel ist die erste eigene Partie nach ${REKORD_PAUSE_STUNDEN} vollständigen Stunden, also ${REKORD_PAUSE_STUNDEN / 24} Tagen, ohne eigenes Match. Die Siegquote dieser Rückkehrspiele wird gegen die Siegquote aller übrigen eigenen Partien gestellt. Der Wert ist der Abstand in Prozentpunkten. Gerechnet wird mit dem Abstand der Zeitpunkte und nicht mit Kalendertagen; die allererste Partie einer Laufbahn zählt nicht mit.`,
+      wie:`Ein Rückkehrspiel ist die erste eigene Partie nach ${REKORD_PAUSE_STUNDEN} vollständigen Stunden, also ${REKORD_PAUSE_STUNDEN / 24} Tagen, ohne eigene Partie. Die Siegquote dieser Rückkehrspiele wird gegen die Siegquote aller übrigen eigenen Partien gestellt. Der Wert ist der Abstand in Prozentpunkten. Gerechnet wird mit dem Abstand der Zeitpunkte und nicht mit Kalendertagen; die allererste Partie einer Laufbahn zählt nicht mit.`,
       cond:`Größter Vorsprung in der ersten Partie nach ${REKORD_PAUSE_STUNDEN / 24} Tagen Pause gegenüber den übrigen Partien, ab 4 Rückkehrspielen`,
       val:p => (p.weDelta != null && p.weN >= 4 && pct(p.weDelta) > 0) ? p.weDelta : null,
       ev:(p,v) => `${_ppZeichen(v)} %-Punkte · ${pct(p.weW / p.weN)} % in ${p.weN} Rückkehrspielen, sonst ${_ppGegen(p.weW / p.weN, v)} %`
@@ -31669,7 +31669,7 @@ const DISZIPLINEN = [
       zeitraum:'Ganze Laufbahn, je Spieltag',
       mind:'10 Spieltage mit je 3 eigenen Partien',
       wie:'Für jeden eigenen Spieltag mit mindestens drei Partien wird die zeitlich letzte Partie gegen alle übrigen dieses Tages gestellt. Der Vergleich läuft innerhalb desselben Tages.',
-      cond:'Größter Vorsprung im letzten Spiel eines Spieltags, ab 10 Spieltagen mit je 3 Partien',
+      cond:'Größter Vorsprung in der letzten Partie eines Spieltags, ab 10 Spieltagen mit je 3 Partien',
       val:p => (p.sbDelta != null && p.sbN >= 10 && p.sbDelta > 0) ? p.sbDelta : null,
       ev:(p,v) => `${_ppZeichen(v)} %-Punkte · ${pct(p.sbDrin)} % in ${p.sbN} Schlussspielen, sonst ${_ppGegen(p.sbDrin, v)} %`
     }},
@@ -31833,7 +31833,7 @@ const DISZIPLINEN = [
       kammer:'fuegung', basis:REKORD_GRUNDWERT.fuegung, offen:true,
       zeitraum:'Ganze Ligageschichte',
       mind:'30 Partien',
-      wie:'Favorit heißt über 55 % Siegchance vor dem Anpfiff, Außenseiter unter 45 %. Die Lage dazwischen unterbricht die Folge, dieselbe Lage zweimal hintereinander beginnt sie neu, und ein Wechsel braucht zwei Partien. Wie die Rechnung ein Spiel sieht, entscheidet die Aufstellung, nicht das Ergebnis.',
+      wie:'Favorit heißt über 55 % Siegchance vor dem Anpfiff, Außenseiter unter 45 %. Die Lage dazwischen unterbricht die Folge, dieselbe Lage zweimal hintereinander beginnt sie neu, und ein Wechsel braucht zwei Partien. Wie die Rechnung eine Partie sieht, entscheidet die Aufstellung, nicht das Ergebnis.',
       cond:'Längste Folge von Partien, abwechselnd als Favorit und als Außenseiter',
       unit:'Partien in Folge', min:2, raw:p => p.spLauf,
       ev:(p,v) => `${v} Partien in Folge abwechselnd Favorit und Außenseiter`,
@@ -32012,7 +32012,7 @@ const DISZIPLINEN = [
       wie:'Für jedes Sturmspiel steht die eigene Tordifferenz. Gewertet wird deren Streuung, also wie weit die einzelnen Ergebnisse vom eigenen Schnitt abweichen. Niedrig ist besser.',
       cond:'Gleichmäßigste Tordifferenz im Sturm, ab 40 Sturmspielen',
       val:p => (p.atkSd != null && p.atkG >= 40) ? -p.atkSd : null,
-      ev:p => `${komma(p.atkSd)} Tore Streuung im Sturm · Schnitt ${p.atkMit >= 0 ? '+' : '−'}${komma(Math.abs(p.atkMit))} in ${p.atkG} Spielen`
+      ev:p => `${komma(p.atkSd)} Tore Streuung im Sturm · Schnitt ${p.atkMit >= 0 ? '+' : '−'}${komma(Math.abs(p.atkMit))} in ${p.atkG} Partien`
     }},
 
   {id:'bedrock', name:'Das Fundament', short:'Statik', ic:'baseLine', tone:'blue',
@@ -32024,7 +32024,7 @@ const DISZIPLINEN = [
       wie:'Für jedes Abwehrspiel steht die eigene Tordifferenz. Gewertet wird deren Streuung, also wie weit die einzelnen Ergebnisse vom eigenen Schnitt abweichen. Niedrig ist besser. Über die Höhe der Differenz sagt die Zahl nichts.',
       cond:'Gleichmäßigste Tordifferenz in der Abwehr, ab 40 Abwehrspielen',
       val:p => (p.defSd != null && p.defG >= 40) ? -p.defSd : null,
-      ev:p => `${komma(p.defSd)} Tore Streuung in der Abwehr · Schnitt ${p.defMit >= 0 ? '+' : '−'}${komma(Math.abs(p.defMit))} in ${p.defG} Spielen`
+      ev:p => `${komma(p.defSd)} Tore Streuung in der Abwehr · Schnitt ${p.defMit >= 0 ? '+' : '−'}${komma(Math.abs(p.defMit))} in ${p.defG} Partien`
     }},
 
   {id:'unruffled', name:'Der Unaufgeregte', short:'Ruhe', ic:'flatWave', tone:'acid',
@@ -32181,7 +32181,7 @@ const DISZIPLINEN = [
         p => p.defG >= ST_TEIL,
         p => p.defConceded / p.defG,
         9.75,
-        (p, v) => `${komma(v)} Gegentore je Abwehrspiel · ${p.defG} Spiele`))},
+        (p, v) => `${komma(v)} Gegentore je Abwehrspiel · ${p.defG} Partien hinten`))},
     allzeit:{
       kammer:'shame', basis:REKORD_GRUNDWERT.schatten,
       zeitraum:'Ganze Laufbahn, alle Abwehrspiele',
@@ -32388,7 +32388,7 @@ const DISZIPLINEN = [
       kammer:'shame', basis:REKORD_GRUNDWERT.schatten, offen:true,
       zeitraum:'Ganze Laufbahn, jede Rückkehr',
       mind:'4 Rückkehrspiele',
-      wie:`Ein Rückkehrspiel ist die erste eigene Partie nach ${REKORD_PAUSE_STUNDEN} vollständigen Stunden, also ${REKORD_PAUSE_STUNDEN / 24} Tagen, ohne eigenes Match. Die Siegquote dieser Rückkehrspiele wird gegen die Siegquote aller übrigen eigenen Partien gestellt. Der Wert ist der Rückstand in Prozentpunkten.`,
+      wie:`Ein Rückkehrspiel ist die erste eigene Partie nach ${REKORD_PAUSE_STUNDEN} vollständigen Stunden, also ${REKORD_PAUSE_STUNDEN / 24} Tagen, ohne eigene Partie. Die Siegquote dieser Rückkehrspiele wird gegen die Siegquote aller übrigen eigenen Partien gestellt. Der Wert ist der Rückstand in Prozentpunkten.`,
       cond:`Größter Rückstand in der ersten Partie nach ${REKORD_PAUSE_STUNDEN / 24} Tagen Pause gegenüber den übrigen Partien, ab 4 Rückkehrspielen`,
       val:p => (p.weDelta != null && p.weN >= 4 && pct(p.weDelta) < 0) ? -p.weDelta : null,
       ev:(p,v) => `${_ppZeichen(-v)} %-Punkte · ${pct(p.weW / p.weN)} % in ${p.weN} Rückkehrspielen, sonst ${_ppGegen(p.weW / p.weN, -v)} %`
@@ -32912,7 +32912,7 @@ const DISZIPLINEN = [
       beiname:'Der Zugeknöpfte',
       art:'koennen',
       klasse:'besonders', aus:2.13, streu:0.0579, mitte:0.0762, n0:42, echt:0.7,
-      wie:'Gezählt wird der Anteil, nicht die Anzahl. Ein Spiel geht auf zehn, drei Gegentore sind eine geschlossene Partie.',
+      wie:'Gezählt wird der Anteil, nicht die Anzahl. Eine Partie geht bis zehn, drei Gegentore sind eine geschlossene Partie.',
       stichprobe:p => p.games,
       cond:'Mindestens 20 % der Partien mit höchstens drei Gegentoren',
       ...(_stWertung(
@@ -35300,7 +35300,7 @@ function showSeasonTable(sid){
     ${ch ? `<div class="chron-one" style="--tt:${gt.c};--ttr:${gt.rgb}" data-tplayer="${esc(ch.pid)}">
         <span class="ic">${svgI('crown')}</span>
         <span class="tx"><span class="n">${esc(pname(ch.pid))} ${T.live ? 'führt die Saison an' : 'ist Meister'}</span>
-          <span class="e num">${ch.elo} Elo · ${ch.wins} Siege aus ${ch.games} Spielen</span></span>
+          <span class="e num">${ch.elo} Elo · ${ch.wins} Siege aus ${ch.games} Partien</span></span>
       </div><div style="height:14px"></div>` : ''}
     <div class="tplates">${offen.map(a => _titlePlateHtml(a, {sid, schatten:chronikUeberschattet(T, a)})).join('')}</div>
     ${weitere.length ? `<div class="tplates chron-rest">${weitere.map(a => _titlePlateHtml(a, {sid, schatten:chronikUeberschattet(T, a)})).join('')}</div>
@@ -37574,7 +37574,7 @@ function _prestigeRegelKarten(){
   const karte = (klasse, titel, start, regel) => `<span class="${klasse}">
       <b>${titel}</b><strong>${start} P Start</strong>
       <em>1. und 2. Mal voll.<br>
-      3. und 4. Mal ${Math.round(regel.abnahme * 100)} % weniger; danach paarweise flacher, nie 0.</em></span>`;
+      3. und 4. Mal ${Math.round(regel.abnahme * 100)}&nbsp;% weniger; danach paarweise flacher, nie 0.</em></span>`;
   return `<div class="lb-regeln">
     ${karte('legendary', RARITY_META.legendary.label, spanne('legendary'), PRESTIGE_AUSZEICHNUNG.legendary)}
     ${karte('rare', RARITY_META.rare.label, spanne('rare'), PRESTIGE_AUSZEICHNUNG.rare)}
@@ -37760,7 +37760,7 @@ function showLaufbahn(pid){
   openSheet(`
    <div class="pp-root lb-root st-${P.insignie.key}" style="--ak:${t.c};--ak-rgb:${t.rgb}">
     <h3>Die Laufbahn</h3>
-    <div class="sheet-sub num">${esc(p.name)} · Platz ${P.platz} von ${P.von} im Prestige</div>
+    <div class="sheet-sub num">${esc(p.name)}${P.platz ? ` · Platz ${P.platz} von ${P.von} im Prestige` : ''}</div>
 
     <div class="lb-karus" id="lbLeiter">
       <div class="lb-k-band">${karten}</div>

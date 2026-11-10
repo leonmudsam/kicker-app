@@ -315,7 +315,7 @@ function showPlayer(id){
   if(rInfo){
     const pct = rangPerzentil(id);
     if(pct > 0){
-      percentileTxt = 'Top ' + Math.ceil(pct) + '%';
+      percentileTxt = 'Top ' + Math.ceil(pct) + '\u00A0%';
       percentilePct = pct;
     }
   }
@@ -558,7 +558,7 @@ const rankProgHtml = rInfo ? `
         if(tot === 0){
           return `<div class="pp-pos-combined">
             <div class="head"><div class="t">Sturm und Abwehr</div></div>
-            <div class="pp-roles-empty">Keine Spiele</div>
+            <div class="pp-roles-empty">Keine Partien</div>
           </div>`;
         }
         // Die staerkere Rolle traegt ihre Farbe, die schwaechere steht
@@ -579,7 +579,7 @@ const rankProgHtml = rInfo ? `
                 <div class="pp-rd-inner"><div class="pp-rd-wr" style="color:var(--muted)">–</div></div>
               </div>
               <div class="pp-rd-lbl"><span class="ic">${svgI(icon)}</span>${lbl}</div>
-              <div class="pp-rd-empty">noch keine Spiele</div>
+              <div class="pp-rd-empty">noch keine Partien</div>
             </div>`;
           const matt = (_stark !== 'beide' && _stark !== cls);
           return `
@@ -607,11 +607,11 @@ const rankProgHtml = rInfo ? `
     <div class="pp-sec" style="animation-delay:.35s">
       <div class="pp-sec-title">
         <div class="l"><span class="ic svg-ic">${svgI('chartBar')}</span><h4>Gesamtbilanz</h4></div>
-        <div class="m">${s.games} Spiele</div>
+        <div class="m">${s.games} ${s.games === 1 ? 'Partie' : 'Partien'}</div>
       </div>
       <div class="pp-kpi">
         <div class="pp-k"><div class="v">${s.wins}</div><div class="l">Siege</div></div>
-        <div class="pp-k f" style="--q:${(wr / 100).toFixed(2)}"><div class="v">${wr}%</div><div class="l">Siegquote</div></div>
+        <div class="pp-k f" style="--q:${(wr / 100).toFixed(2)}"><div class="v">${wr}\u00A0%</div><div class="l">Siegquote</div></div>
         <div class="pp-k ${s.gd>=0?'pos':'neg'}"><div class="v">${s.gd>=0?'+':''}${s.gd}</div><div class="l">Torbilanz</div></div>
       </div>
     </div>
@@ -723,7 +723,7 @@ const rankProgHtml = rInfo ? `
               <div class="info">
                 <div class="l">${svgI(icKey)}${label}</div>
                 <div class="name">${empty?'–':esc(name.label)}</div>
-                <div class="stat">${empty?'':`<span class="v">${Math.round(wr*100)}%</span> <span class="g">(${Math.round(wr*g)}/${g})</span>`}</div>
+                <div class="stat">${empty?'':`<span class="v">${Math.round(wr*100)}\u00A0%</span> <span class="g">(${Math.round(wr*g)}/${g})</span>`}</div>
               </div>
             </div>`;
           };
@@ -836,7 +836,7 @@ const rankProgHtml = rInfo ? `
       <div class="pp-posprof ${atkPct > defPct + 4 ? 'atk-seite' : defPct > atkPct + 4 ? 'def-seite' : 'neutral'}" style="--atk:${atkPct}%;--strahl:${Math.max(atkPct, defPct)}%">
         <div class="pph">
           <span class="lf">${svgI('posSturm')}Sturm</span>
-          <span><span class="pct">${atkPct}%</span> / <span class="pct">${defPct}%</span></span>
+          <span><span class="pct">${atkPct}\u00A0%</span> / <span class="pct">${defPct}\u00A0%</span></span>
           <span class="rt">Abwehr${svgI('posAbwehr')}</span>
         </div>
         <!-- Der Strahl beginnt an der staerkeren Seite und laeuft zur
@@ -1117,7 +1117,7 @@ function showRangSystem(){
     const prev=RANKS[i-1];
     const fromPct=prev?Math.round(prev.pct*100):0;
     const toPct=Math.round(r.pct*100);
-    const label=i===0?'Top '+toPct+'%':fromPct+'% – '+toPct+'%';
+    const label=i===0?'Top '+toPct+'\u00A0%':fromPct+'\u00A0% – '+toPct+'\u00A0%';
     const inRank=ranked.filter((_,idx)=>{
       const pct=(idx+1)/ranked.length;
       const prevR=RANKS[i-1];

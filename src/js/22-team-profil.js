@@ -13,7 +13,7 @@ function showTeam(p1Id,p2Id){
         <div style="font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:var(--muted);font-weight:700;font-family:'Sometype Mono',monospace">Team</div>
         <h3 style="margin-top:8px">${esc(pA.name)} &amp; ${esc(pB.name)}</h3>
       </div>
-      ${emptyState('handshake','Noch keine gemeinsamen Spiele')}
+      ${emptyState('handshake','Noch keine gemeinsamen Partien')}
     `);
     return;
   }
@@ -66,7 +66,7 @@ function showTeam(p1Id,p2Id){
     const o1=pm[oppIds[0]], o2=pm[oppIds[1]];
     const won=kind!=='loss';
     const meta = kind==='upset'
-      ? `Erwartung ${Math.round(entry.expected*100)}%`
+      ? `Erwartung ${Math.round(entry.expected*100)}\u00A0%`
       : dateStr(m.created_at);
     const labelMap={
       win:    {l:'Höchster Sieg',     ic:'explosion', col:'var(--acid)'},
@@ -131,7 +131,7 @@ function showTeam(p1Id,p2Id){
     kennzahlenHtml = `<div class="duo-kz">
       <div class="duo-kz-k"><div class="duo-kz-w"><b class="${wr >= 50 ? 'auf' : 'ab'}">${wr} %</b><span>Siegquote</span></div>
         <div class="duo-kz-zellen">${zellen}</div>
-        <div class="duo-kz-s num">${d.wins} Siege · ${d.losses} Niederlagen${folge.length > 50 ? ' · die letzten 50' : ''}</div></div>
+        <div class="duo-kz-s num">${d.wins} ${d.wins === 1 ? 'Sieg' : 'Siege'} · ${d.losses} ${d.losses === 1 ? 'Niederlage' : 'Niederlagen'}${folge.length > 50 ? ' · die letzten 50' : ''}</div></div>
       <div class="duo-kz-k"><div class="duo-kz-w"><b class="${d.gd >= 0 ? 'auf' : 'ab'}">${gdStr}</b><span>Torbilanz</span></div>
         <div class="duo-kz-skala"><i class="${jePartie >= 0 ? 'auf' : 'ab'}" style="${jePartie >= 0 ? 'left:50%' : 'right:50%'};width:${bw.toFixed(1)}%"></i></div>
         <div class="duo-kz-s num">Ø ${jePartie >= 0 ? '+' : ''}${komma(jePartie, 1)} je Partie</div></div>
@@ -140,7 +140,7 @@ function showTeam(p1Id,p2Id){
         <div class="duo-kz-s num">aus ${d.games} ${d.games === 1 ? 'Partie' : 'Partien'}, alle Saisons</div></div>
       <div class="duo-kz-k"><div class="duo-kz-w"><b class="${cs > 0 ? 'auf' : cs < 0 ? 'ab' : ''}">${serieZ}</b><span>${serieE}</span></div>
         ${lauf ? `<div class="aw-lauf duo-kz-lauf ${cs > 0 ? 'auf' : 'ab'}">${'<i></i>'.repeat(lauf)}</div>` : ''}
-        <div class="duo-kz-s num">am längsten ${d.longestWinStreak || 0} Siege · ${d.longestLossStreak || 0} Niederlagen</div></div>
+        <div class="duo-kz-s num">am längsten ${d.longestWinStreak || 0} ${d.longestWinStreak === 1 ? 'Sieg' : 'Siege'} · ${d.longestLossStreak || 0} ${d.longestLossStreak === 1 ? 'Niederlage' : 'Niederlagen'}</div></div>
     </div>`;
   }
 
@@ -204,8 +204,8 @@ function showTeam(p1Id,p2Id){
       <div style="margin-bottom:18px">
         ${blattAbschnittHtml('users', 'Aufstellungs-Vergleich')}
         <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">
-          ${buildLineupCard('Typisch', typWr+'% aus '+typGames, d.posStats[d.ids[0]].dom, 48)}
-          ${buildLineupCard('Beste Quote', bestWr+'% aus '+d.bestLineup.games, d.bestLineup.p0, 48)}
+          ${buildLineupCard('Typisch', typWr+'\u00A0% aus '+typGames, d.posStats[d.ids[0]].dom, 48)}
+          ${buildLineupCard('Beste Quote', bestWr+'\u00A0% aus '+d.bestLineup.games, d.bestLineup.p0, 48)}
         </div>
       </div>`;
   } else {
@@ -226,7 +226,7 @@ function showTeam(p1Id,p2Id){
     };
     const lineupFooter = d.games >= 2 ? `
       <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-family:'Sometype Mono',monospace;font-size:10.5px">
-        <span style="color:var(--ink2)">In <span style="color:var(--ink);font-weight:700">${d.dominantCount} / ${d.games}</span> Spielen</span>
+        <span style="color:var(--ink2)">In <span style="color:var(--ink);font-weight:700">${d.dominantCount} / ${d.games}</span> Partien</span>
         <span style="color:var(--ink2)"><span style="color:var(--muted)">⇄</span> ${d.swapped}× getauscht</span>
       </div>` : '';
     lineupHtml = `
@@ -359,7 +359,7 @@ function showTeam(p1Id,p2Id){
 
     ${recentRows?`
     <div>
-      ${blattAbschnittHtml('clock', 'Letzte ' + Math.min(10,d.recent.length) + ' Spiele')}
+      ${blattAbschnittHtml('clock', d.recent.length === 1 ? 'Letzte Partie' : 'Letzte ' + Math.min(10,d.recent.length) + ' Partien')}
       <div style="display:flex;flex-direction:column;gap:6px">${recentRows}</div>
     </div>`:''}
   `);
@@ -484,10 +484,10 @@ function showMatchDetail(mid){
       const factors=[];
       factors.push({label:'Basis (Erwartung)',val:b.rawBase,desc:b.won?'Sieg'+(b.expected<0.5?' gegen stärkeres Team':''):'Niederlage'+(b.expected>0.5?' gegen schwächeres Team':'')});
       if(zeigt(b.movEffect)) factors.push({label:'Tordifferenz',val:b.movEffect,desc:b.won?'Klarer Sieg':'Hohe Niederlage'+(b.movMult<1.2?' (gedämpft)':'')});
-      if(zeigt(b.winBoostEffect)) factors.push({label:'Mehr für Siege',val:b.winBoostEffect,desc:'+'+komma(((b.winBoost-1)*100),1)+'% für Siege'});
-      if(b.expProtect<1) factors.push({label:'Schutz für Erfahrene',val:b.expProtectEffect,desc:komma(((1-b.expProtect)*100),1)+'% Schutz'});
+      if(zeigt(b.winBoostEffect)) factors.push({label:'Mehr für Siege',val:b.winBoostEffect,desc:'+'+komma(((b.winBoost-1)*100),1)+'\u00A0% für Siege'});
+      if(b.expProtect<1) factors.push({label:'Schutz für Erfahrene',val:b.expProtectEffect,desc:komma(((1-b.expProtect)*100),1)+'\u00A0% Schutz'});
       if(b.lowEloDamp!==undefined && zeigt(b.lowEloEffect||0)){
-        factors.push({label:'Schutz für Schwächere',val:b.lowEloEffect,desc:komma(((1-b.lowEloDamp)*100),1)+'% weniger Verlust'});
+        factors.push({label:'Schutz für Schwächere',val:b.lowEloEffect,desc:komma(((1-b.lowEloDamp)*100),1)+'\u00A0% weniger Verlust'});
       }
       if(zeigt(b.rawBase*b.movMult*b.winBoost*b.expProtect*(b.underdogMult-1))){
         // Underdog-Boost setzt sich aus zwei unabhängig clampten Komponenten zusammen
@@ -507,7 +507,7 @@ function showMatchDetail(mid){
       // Faktor tut, in Prozent wie beim Sieg-Boost: ohne die Zahl war nicht
       // zu sehen, warum 0,49 bei einem und 2,48 beim anderen stand [§C44].
       if(zeigt(b.posEffect)){
-        const schwach=b.posFactor>1, pz=komma(Math.abs(b.posFactor-1)*100,1)+'% ';
+        const schwach=b.posFactor>1, pz=komma(Math.abs(b.posFactor-1)*100,1)+'\u00A0% ';
         factors.push({label:'Ausgleich der Position',val:b.posEffect,
           desc:(schwach?'Schwache':'Starke')+' Position · '+pz+(schwach?(b.won?'Bonus':'Schutz'):(b.won?'Dämpfer':'Abzug'))});
       }
@@ -528,7 +528,7 @@ function showMatchDetail(mid){
         <div style="font-size:10px;color:var(--muted);margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--line)">
           <div style="display:flex;justify-content:space-between">
             <span>${seasonBefore} → ${seasonAfter}</span>
-            <span>K=${komma(b.kFactor,1)} · Erw. ${komma((b.expected*100),1)}%</span>
+            <span>K=${komma(b.kFactor,1)} · Erw. ${komma((b.expected*100),1)}\u00A0%</span>
           </div>
         </div>
         ${factorRows}
