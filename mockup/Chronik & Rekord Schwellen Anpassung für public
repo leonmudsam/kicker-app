@@ -1,0 +1,14 @@
+Danach kleine anpassung an prestige punkten für chronik und rekorde:
+Chronik Grundwert 50, Rekord Grundwert 40 und 30.
+Danach Insignium Schwellen anpassen:
+Reif: 0-499.
+Schildring: 500-999.
+Volutenkranz: 1000-1699.
+Zierkranz: 1700-2799.
+Lorbeerreif: 2800-3999.
+Kronenreif: 4000-5499.
+Ordenstern: ab 5500
+
+
+Achte auf Anpassung für alle dazu relevanten texte, grafiken, usw.
+Achte dass alles was damit zusammenhängt angepasst wird, sodass keine inhaltlichen fehler entstehen.
