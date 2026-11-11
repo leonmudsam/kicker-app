@@ -1043,6 +1043,23 @@
   .blatt-text{font-size:12.5px;color:var(--ink2);line-height:1.55;padding:0 2px}
   .leerstand{text-align:center;color:var(--muted);padding:48px 20px;font-size:13px}
   .leerstand .ee{font-size:34px;margin-bottom:12px;opacity:.5}
+  .vorschau{position:relative;margin:0 0 16px;padding:16px;border:1px solid var(--line);border-radius:var(--r);
+    background:var(--surface);transition:opacity .2s ease,transform .2s ease}
+  .vorschau.weg{opacity:0;transform:scale(.97)}
+  .vs-zu{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;
+    border:1.5px solid rgba(190,242,100,.55);background:rgba(190,242,100,.12);color:var(--acid);
+    display:grid;place-items:center;cursor:pointer;padding:0;box-shadow:0 0 0 3px rgba(190,242,100,.06)}
+  .vs-zu svg{width:16px;height:16px}
+  .vs-zu:hover{background:rgba(190,242,100,.2)}
+  .vs-zu:focus-visible{outline:2px solid var(--acid);outline-offset:2px}
+  .vs-zu:active{transform:scale(.92)}
+  .vs-kopf{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ink);padding-right:44px;min-height:34px}
+  .vs-ic{flex:none;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
+    background:rgba(190,242,100,.1);color:var(--acid)}
+  .vs-ic svg{width:17px;height:17px}
+  .vs-satz{margin:10px 0 0;color:var(--muted);font-size:12.5px;line-height:1.5}
+  .vs-satz b{color:var(--ink);font-weight:600}
+  @media (prefers-reduced-motion: reduce){ .vorschau{transition:none} }
 
   @keyframes glanzZug{0%,78%{transform:translateX(-84%)}100%{transform:translateX(24%)}}
   .glanz-bahn{position:absolute;inset:0;border-radius:inherit;overflow:hidden;pointer-events:none}
@@ -6685,7 +6702,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.11.10.6537bfcc';
+const BUILD_VERSION='2026.11.11.70bdf021';
 function forceReload(nach){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -6873,6 +6890,7 @@ const ICONS = {
   dropDouble:    `<g transform="translate(0 3.75)"><path d="M7 3s3 4 3 7.5a3 3 0 11-6 0c0-3.5 3-7.5 3-7.5z"/><path d="M17 3s3 4 3 7.5a3 3 0 11-6 0c0-3.5 3-7.5 3-7.5z"/></g>`,
   dropTriple:    `<g transform="translate(0 3.75)"><path d="M5 6s2 3 2 5a2 2 0 11-4 0c0-2 2-5 2-5z"/><path d="M12 3s3 4 3 7.5a3 3 0 11-6 0c0-3.5 3-7.5 3-7.5z"/><path d="M19 6s2 3 2 5a2 2 0 11-4 0c0-2 2-5 2-5z"/></g>`,
   info:          `<circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16v.5"/>`,
+  frage:         `<circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1.1.9-1.1 1.6v.5M12 16.3v.4"/>`,
   peak:          `<path d="M3 20h18M5 20l5-10 3 6 2-3 4 7"/><polygon points="10,4 11,6 13,6.2 11.6,7.5 12,9.5 10,8.5 8,9.5 8.4,7.5 7,6.2 9,6"/>`,
   medal2:        `<g transform="translate(0 0.5)"><circle cx="12" cy="14" r="6"/><path d="M9 8L7 3h10l-2 5"/><polyline points="10,15 12,12 14,15"/></g>`,
   climb:         `<g transform="translate(0 0.5)"><path d="M3 20h18M3 20l5-8 4 4 5-7 4 4"/><polyline points="15,7 19,3 21,7"/><path d="M19 3v6"/></g>`,
@@ -12433,8 +12451,9 @@ function _vRankingCore(){
         </div>`;
       };
       return `
-        <div class="view-head"><h2>Liga</h2><p>${periodLabel(period, saisonArg)} · ${
+        <div class="view-head"><h2>Liga ${hilfeKnopf('liga')}</h2><p>${periodLabel(period, saisonArg)} · ${
           duos.length} Duo${duos.length===1?'':'s'} · ${totalMatches} Partien</p></div>
+        ${erklaerKarte('ligaDuos')}
         ${periodBar}
         ${kontextHtml}
         ${saisonWahl}
@@ -12445,7 +12464,8 @@ function _vRankingCore(){
     }
 
     return `
-      <div class="view-head"><h2>Liga</h2><p>${periodLabel(period, saisonArg)} · ${ps.length} aktiv · ${totalMatches} Partien</p></div>
+      <div class="view-head"><h2>Liga ${hilfeKnopf('liga')}</h2><p>${periodLabel(period, saisonArg)} · ${ps.length} aktiv · ${totalMatches} Partien</p></div>
+      ${erklaerKarte('liga')}
       ${periodBar}
       ${kontextHtml}
       ${saisonWahl}
@@ -12517,8 +12537,9 @@ function _vRankingCore(){
 
 
   return `
-    <div class="view-head"><h2>Ewige Tafel</h2><p>Karriere-Elo über ${
+    <div class="view-head"><h2>Ewige Tafel ${hilfeKnopf('liga')}</h2><p>Karriere-Elo über ${
       seasons.length} Saison${seasons.length===1?'':'s'} · ${matches.length} Partien</p></div>
+    ${erklaerKarte('tafel')}
     ${periodBar}
     ${hofHtml || `<div class="stat-strip">
       <div class="s"><div class="v num">${activePlayers().length}</div><div class="l">Spieler</div></div>
@@ -12629,7 +12650,8 @@ function vPositions(){
   const arr = positionsListe(which);
   const ruhe = positionsListe(which, ruhestandSpieler()).length;
   return `
-    <div class="view-head"><h2>Positionen <button class="kopf-info" type="button" data-info="positionen" aria-label="So entsteht der Wert">${svgI('info')}</button></h2><p>Sturm und Abwehr, über alle Partien</p></div>
+    <div class="view-head"><h2>Positionen ${hilfeKnopf('positionen')}</h2><p>Sturm und Abwehr, über alle Partien</p></div>
+    ${erklaerKarte('positionen')}
     ${einblickHtml('rollen')}
     <div class="ui-switch">
       <button data-postoggle="atk" class="${which==='atk'?'on':''}"><span class="pos-chip atk">${svgI('posSturm')}Sturm</span></button>
@@ -12641,13 +12663,6 @@ function vPositions(){
 }
 
 
-function zeigePositionsInfo(){
-  openSheet(blattKopfHtml({ic:'info', titel:'So entsteht der Wert', unter:'Positionen'})
-    + `<div class="pos-info">
-      <p>Der Wert verbindet vier Dinge: die Siegquote auf dieser Position, die Leistung gegen die Erwartung — gemessen an Partner und Gegnern —, die Tore, vorne die eigenen und hinten die zugelassenen, und die Erfahrung, also wie oft jemand dort gespielt hat.</p>
-      <p><b>▲</b> heißt über, <b>▼</b> unter der Erwartung. Gerechnet wird über alle Partien.</p>
-      <p>Der Wert vergleicht die Liga auf einer Position. Auf welcher Position jemand selbst stärker ist, sagt das Positions-Profil im Profil.</p></div>`);
-}
 const AW_MIN = {
   teamSpiele: 3,
   teamEnge: 2,
@@ -13460,14 +13475,16 @@ function vAwards(){
       <button data-awview="rekorde" class="${awView==='rekorde'?'on':''}">Rekorde</button>
       <button data-awview="chronik" class="${awView==='chronik'?'on':''}">Chronik</button>
     </div>`;
-  const kopf = `<div class="view-head"><h2>Awards</h2><p>${unter}</p></div>${schalter}`;
+  const kopf = `<div class="view-head"><h2>Awards ${hilfeKnopf('awards')}</h2><p>${unter}</p></div>${schalter}`;
   if(awView === 'rekorde'){
     const liste = ligaRekordeHtml(true);
-    return kopf + (liste || emptyState('trophyStar','Noch hält niemand einen Liga-Rekord.'));
+    return kopf + (liste ? erklaerKarte('rekorde') + liste
+      : erklaerKarte('rekorde', emptyState('trophyStar','Noch hält niemand einen Liga-Rekord.')));
   }
   if(awView === 'chronik'){
     const matrix = ligaChronikMatrixHtml();
-    return kopf + (matrix || emptyState('scroll','Sobald ein Monat gespielt ist, füllt sich die Chronik.'));
+    return kopf + (matrix ? erklaerKarte('chronik') + matrix
+      : erklaerKarte('chronik', emptyState('scroll','Sobald ein Monat gespielt ist, füllt sich die Chronik.')));
   }
   let bis = null;
   if(awPeriod==='season' && awSeasonId && awSeasonId !== currentSeason().id) bis = seasonEnd(awSeasonId).getTime();
@@ -13475,7 +13492,7 @@ function vAwards(){
     const ende = new Date(awWeekStart); ende.setHours(0,0,0,0); ende.setDate(ende.getDate() + 7);
     if(ende.getTime() <= Date.now()) bis = ende.getTime() - 1;
   }
-  return kopf + geschichteHtml(_vAwardsCore(), bis);
+  return kopf + erklaerKarte('awards') + geschichteHtml(_vAwardsCore(), bis);
 }
 
 const AW_IC = {
@@ -14075,8 +14092,8 @@ function vTeams(nurErgebnis=false){
   const T=T0.filter(t=>t.ids.every(id=>ligaAktiv(id)));
   const ruheT=T0.filter(t=>t.ids.every(id=>sichtbar(id))&&t.ids.some(id=>imRuhestand(id)));
   if(!T.length&&!ruheT.length){
-    const html=emptyState('handshake','Noch nicht genug Daten');
-    return nurErgebnis?{kopf:'Ab 4 gemeinsamen Partien',html,ruhe:''}:`<div class="view-head"><h2>Teams</h2><p>Ab 4 gemeinsamen Partien</p></div>${html}`;
+    const html=emptyState('handshake','Noch kein Duo mit 4 gemeinsamen Partien');
+    return nurErgebnis?{kopf:'Ab 4 gemeinsamen Partien',html,ruhe:''}:`<div class="view-head"><h2>Teams ${hilfeKnopf('teams')}</h2><p>Ab 4 gemeinsamen Partien</p></div>${erklaerKarte('teams', html)}`;
   }
   const showBest=teamView!=='worst';
   
@@ -14185,7 +14202,8 @@ function vTeams(nurErgebnis=false){
     ruhe, ruheZahl:ruheF.length};
   if(nurErgebnis) return ergebnis;
   return `
-    <div class="view-head"><h2>Teams</h2><p id="teamCount">${ergebnis.kopf}</p></div>
+    <div class="view-head"><h2>Teams ${hilfeKnopf('teams')}</h2><p id="teamCount">${ergebnis.kopf}</p></div>
+    ${erklaerKarte('teams')}
     ${einblickHtml('netz', 'ab 4 Partien')}
     <div class="search">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
@@ -14208,7 +14226,7 @@ function vTeams(nurErgebnis=false){
 
 
 function vHistory(){
-  if(!matches.length)return `<div class="view-head"><h2>Verlauf</h2></div>${emptyState('scroll','Noch keine Partien')}`;
+  if(!matches.length)return `<div class="view-head"><h2>Verlauf ${hilfeKnopf('verlauf')}</h2></div>${erklaerKarte('verlauf', emptyState('scroll','Noch keine Partien'))}`;
   let list=[...matches].reverse();
   if(histFilter!=='all')
     list=list.filter(m=>[m.a1,m.a2,m.b1,m.b2].includes(histFilter));
@@ -14262,7 +14280,8 @@ function vHistory(){
   ` : '';
 
   return `
-    <div class="view-head"><h2>Verlauf</h2><p>${list.length} Partien</p></div>
+    <div class="view-head"><h2>Verlauf ${hilfeKnopf('verlauf')}</h2><p>${list.length} Partien</p></div>
+    ${erklaerKarte('verlauf')}
     <div class="search" style="margin-bottom:14px">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 3H2l8 9.5V19l4 2v-8.5L22 3z"/></svg>
       <select id="histSel" style="padding-left:40px">${opts}</select>
@@ -14284,7 +14303,8 @@ function vMatch(){
     </div></div><div class="possel">${pos(key)}</div></div>`;
   };
   return `
-    <div class="view-head"><h2>Neue Partie</h2><p>Aufstellen, Tore eintragen, speichern</p></div>
+    <div class="view-head"><h2>Neue Partie ${hilfeKnopf('eingabe')}</h2><p>Aufstellen, Tore eintragen, speichern</p></div>
+    ${erklaerKarte('eingabe')}
     <div class="builder">
       <div class="team-block A"><div class="team-label">Team A <span class="tag" id="avgA"></span></div>${slot('A',1)}${slot('A',2)}</div>
       <div class="vs-mid"><span class="line"></span><span class="vs">VS</span><span class="line"></span></div>
@@ -14331,7 +14351,8 @@ function vSettings(){
     lowDamp:    Math.round((cfg.low_elo_loss_damp ?? 0)*100),
   };
   return `
-    <div class="view-head"><h2>Elo-Formel</h2><p>Wie Siege und Niederlagen die Elo verändern</p></div>
+    <div class="view-head"><h2>Elo-Formel ${hilfeKnopf('formel')}</h2><p>Wie Siege und Niederlagen die Elo verändern</p></div>
+    ${erklaerKarte('formel')}
 
     <div class="cfg-section-title">Grundwerte</div>
     <div class="card">
@@ -14425,6 +14446,18 @@ function vSettings(){
         Nimmt .xlsx, .csv und .json. Vorher zeigt eine Vorschau, was dazukommt.
         <b style="color:var(--acid)">Es wird nie etwas gelöscht oder überschrieben</b>, nur fehlende Partien kommen dazu.
       </p>
+    </div>
+
+    ${
+ ''}
+    <div class="card" style="margin-top:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+        <div><div class="mini-label">Erklärkarten</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:6px" id="hinweiseZahl">${hinweiseWeg().size
+            ? (hinweiseWeg().size === 1 ? 'Eine' : hinweiseWeg().size) + ' auf diesem Gerät geschlossen'
+            : 'Alle werden gezeigt'}</div></div>
+        <button class="btn ghost sm" id="hinweiseZurueckBtn" style="width:auto;padding:7px 12px;font-size:11px;flex-shrink:0" ${hinweiseWeg().size?'':'disabled'}>Alle wieder zeigen</button>
+      </div>
     </div>
 
     <div class="card" style="margin-top:14px">
@@ -18174,7 +18207,9 @@ function showAddPlayer(){
 
 function bind(){
   const main=document.getElementById('main');if(!main) return;
-  main.querySelectorAll('[data-info="positionen"]').forEach(b => b.onclick = zeigePositionsInfo);
+  main.querySelectorAll('[data-hilfe]').forEach(b => b.onclick = () => zeigeHilfe(b.dataset.hilfe));
+  const hz=main.querySelector('#hinweiseZurueckBtn');
+  if(hz) hz.onclick=()=>{ hinweiseWeg().clear(); _hinweiseSpeichern(); toast('Die Erklärkarten werden wieder gezeigt','ok'); render(); };
   einblickBinden(document.getElementById('main'));
   main.querySelectorAll('.einblick.auf .einblick-i').forEach(bindDetailLinks);
 
@@ -19358,6 +19393,117 @@ function standFuer(m, gewonnen = true){
 function emptyState(e,t){
   const inner = icPfad(e) ? `<div class="ee svg-ic">${svgI(e)}</div>` : `<div class="ee">${e}</div>`;
   return `<div class="leerstand">${inner}${t}</div>`;
+}
+
+const HINWEISE_WEG_LS = 'kicker_hinweise_weg_v1';
+let _hinweiseWeg = null;
+function hinweiseWeg(){
+  if(!_hinweiseWeg){
+    try{
+      const a = JSON.parse(localStorage.getItem(HINWEISE_WEG_LS) || '[]');
+      _hinweiseWeg = new Set(Array.isArray(a) ? a.filter(x => typeof x === 'string') : []);
+    }catch(e){ _hinweiseWeg = new Set(); }
+  }
+  return _hinweiseWeg;
+}
+function _hinweiseSpeichern(){
+  try{
+    if(_hinweiseWeg && _hinweiseWeg.size) localStorage.setItem(HINWEISE_WEG_LS, JSON.stringify([..._hinweiseWeg]));
+    else localStorage.removeItem(HINWEISE_WEG_LS);
+  }catch(e){}
+}
+function vorschauHtml(ic, titel, satz, ersatz){
+  if(hinweiseWeg().has(titel)) return ersatz || '';
+  return `<div class="vorschau" data-hinweis="${esc(titel)}">
+    <button type="button" class="vs-zu" data-hinweis-zu aria-label="Hinweis schließen">${svgI('x')}</button>
+    <div class="vs-kopf"><span class="vs-ic">${svgI(ic)}</span><b>${esc(titel)}</b></div>
+    ${satz ? `<p class="vs-satz">${satz}</p>` : ''}${ersatz ? `<template>${ersatz}</template>` : ''}
+  </div>`;
+}
+if(typeof document !== 'undefined' && document.addEventListener) document.addEventListener('click', e => {
+  const zu = e.target && e.target.closest && e.target.closest('[data-hinweis-zu]');
+  if(!zu) return;
+  e.preventDefault(); e.stopPropagation();
+  const karte = zu.closest('.vorschau');
+  if(!karte) return;
+  hinweiseWeg().add(karte.dataset.hinweis);
+  _hinweiseSpeichern();
+  document.querySelectorAll('.vorschau[data-hinweis]').forEach(k => {
+    if(k.dataset.hinweis !== karte.dataset.hinweis) return;
+    const ers = k.querySelector(':scope > template');
+    const ende = () => { if(!k.isConnected) return; if(ers) k.replaceWith(ers.content.cloneNode(true)); else k.remove(); };
+    if(k !== karte || matchMedia('(prefers-reduced-motion: reduce)').matches){ ende(); return; }
+    k.classList.add('weg');
+    setTimeout(ende, 200);
+  });
+});
+const ERKLAERKARTEN = {
+  liga:      ['chartBar', 'Die Liga', () =>
+    `Die Rangliste der Saison, der Woche, des Spieltags oder der ganzen Laufbahn. Jede Partie verschiebt die Elo der vier Spieler, je nach Ausgang und der Stärke von Partner und Gegnern; jede Saison beginnt bei der Start-Elo.`],
+  ligaDuos:  ['handshake', 'Die Duos der Saison', () =>
+    `Jedes Duo mit zwei gemeinsamen Partien in dieser Saison, geordnet nach der Elo, die beide zusammen gewonnen oder verloren haben.`],
+  tafel:     ['temple', 'Die Ewige Tafel', () =>
+    `Die Elo der Laufbahn über alle Saisons: der gewichtete Schnitt der Saisonenden. Darüber stehen die Titel und Bestwerte der Liga.`],
+  positionen:['posSturm', 'Sturm und Abwehr', () =>
+    `Wer auf welcher Position der Stärkste der Liga ist. Der Wert verbindet die Siegquote dort, die Leistung gegen die Erwartung, die Tore und wie oft jemand dort stand.`],
+  awards:    ['trophy', 'Die Awards', () =>
+    `Auszeichnungen für den gewählten Zeitraum: jede Kachel stellt eine Frage an die Partien dieser Saison oder Woche, ein Tippen zeigt die ersten drei. Darunter stehen die Wertungen, die niemand gern hält.`],
+  rekorde:   ['rekord', 'Die Liga-Rekorde', () =>
+    `Bestwerte über alle Saisons. Wer einen übertrifft, nimmt ihn dem bisherigen Halter ab; jede Karte nennt ihre Bedingung, ein Tippen zeigt, wie gezählt wird.`],
+  chronik:   ['scroll', 'Die Chronik', () =>
+    `Jeder Monat schreibt Einträge für das, worin jemand besonders war, ab ${CHRONIK_MIN_SPIELE} Partien im Monat. Ein Tippen öffnet den Eintrag; Einträge, Rekorde und Auszeichnungen ergeben zusammen das Prestige.`],
+  teams:     ['handshake', 'Die Duos der Liga', () =>
+    `Jedes Duo ab 4 gemeinsamen Partien über alle Saisons. Gezählt werden nur die Partien, die beide zusammen gespielt haben.`],
+  verlauf:   ['verlauf', 'Der Verlauf', () =>
+    `Jede Partie der Liga, die neueste zuerst. Eine Partie öffnet, wie sich die Elo der vier Spieler verändert hat und warum.`],
+  eingabe:   ['edit', 'Eine Partie eintragen', () =>
+    `Vier Spieler mit ihrer Position und die Tore beider Teams. Gespeichert verschiebt die Partie die Elo und steht im Verlauf und in den News.`],
+  formel:    ['neuRechnen', 'Die Elo-Formel', () =>
+    `Die Regler bestimmen, wie stark eine Partie die Elo bewegt. Eine Änderung gilt für neue Partien, bis alle neu berechnet werden.`],
+};
+function erklaerKarte(key, leer){
+  const k = ERKLAERKARTEN[key];
+  return k ? vorschauHtml(k[0], k[1], k[2](), leer) : (leer || '');
+}
+
+const HILFE = {
+  liga: {titel:'Liga', absaetze:[
+    '<b>Saison</b> ist der laufende Monat; jeder beginnt ihn mit der Start-Elo. <b>Woche</b> und <b>Tag</b> zeigen die laufende Woche und den Spieltag, <b>Gesamt</b> die Ewige Tafel mit der Elo der Laufbahn über alle Saisons.',
+    'Jede Partie verschiebt die Elo der vier Spieler. Wie viel, hängt von der Elo aller vier ab: ein Sieg gegen Stärkere bringt mehr, eine Niederlage gegen Schwächere kostet mehr.',
+    'Die Leiste über der Liste sortiert um, nach Elo, Siegquote, Torbilanz und mehr. <b>Spieler</b> und <b>Teams</b> wechseln zwischen Einzelnen und Duos. Ein Name öffnet das Profil.',
+    'Partien trägt das Plus unten rechts ein.']},
+  positionen: {titel:'Positionen', absaetze:[
+    'Wer auf welcher Position der Stärkste der Liga ist, getrennt nach Sturm und Abwehr. Die Position kommt aus der Aufstellung jeder Partie.',
+    'Der Wert verbindet vier Dinge: die Siegquote auf dieser Position, die Leistung gegen die Erwartung, gemessen an Partner und Gegnern, die Tore, vorne die eigenen und hinten die zugelassenen, und die Erfahrung, also wie oft jemand dort gespielt hat.',
+    '<b>▲</b> heißt über, <b>▼</b> unter der Erwartung. Gerechnet wird über alle Partien.',
+    'Der Wert vergleicht die Liga auf einer Position. Auf welcher Position jemand selbst stärker ist, sagt das Positions-Profil im Profil.']},
+  awards: {titel:'Awards, Rekorde, Chronik', absaetze:[
+    '<b>Awards</b> gelten einem Zeitraum, der Saison oder der Woche. Jede Kachel stellt eine Frage, ein Tippen zeigt die ersten drei und den Verlauf.',
+    '<b>Rekorde</b> sind Bestwerte über alle Saisons. Wer einen übertrifft, nimmt ihn dem bisherigen Halter ab.',
+    () => `<b>Chronik</b>: jeder Monat schreibt Einträge für das, worin jemand besonders war, ab ${CHRONIK_MIN_SPIELE} Partien im Monat.`,
+    'Auszeichnungen, Rekorde und Chronik-Einträge ergeben zusammen das Prestige und damit das Insignium am Wappen.']},
+  teams: {titel:'Teams', absaetze:[
+    'Jedes Duo ab 4 gemeinsamen Partien, sortiert nach Siegquote, Torbilanz oder Elo-Zuwachs; <b>Schlechteste</b> dreht die Reihenfolge um.',
+    'Ein Duo öffnet die gemeinsame Bilanz: Partien, Elo und welche Aufstellung besser läuft. Das Netz der Duos zeigt, wer mit wem wie oft spielt.']},
+  verlauf: {titel:'Verlauf', absaetze:[
+    'Jede Partie, die neueste zuerst; oben lässt sich nach einem Spieler filtern.',
+    'Eine Partie öffnet die Elo jedes Spielers und wie sie zustande kam. Dort lässt sie sich bearbeiten oder löschen; die Liga rechnet danach neu.']},
+  eingabe: {titel:'Neue Partie', absaetze:[
+    'Vier Spieler wählen, je Team zwei, und für jeden die Position: Sturm oder Abwehr.',
+    'Die Tore beider Teams eintragen. Vor dem Speichern zeigt die Vorschau, wie viel Elo die Partie bringt und kostet.']},
+  formel: {titel:'Elo-Formel', absaetze:[
+    'Die Regler bestimmen, wie stark eine Partie die Elo bewegt; unter „So wirken die Regler" steht jeder einzeln.',
+    'Eine Änderung gilt für neue Partien. „Alle Partien neu berechnen" wendet sie auf die ganze Liga an.',
+    'Sicherung und Export speichern eine Kopie der Liga als Datei.']},
+};
+function hilfeKnopf(key){
+  const h = HILFE[key];
+  return h ? `<button class="kopf-info" type="button" data-hilfe="${key}" aria-label="So funktioniert ${esc(h.titel)}">${svgI('frage')}</button>` : '';
+}
+function zeigeHilfe(key){
+  const h = HILFE[key]; if(!h) return;
+  openSheet(blattKopfHtml({ic:'frage', titel:h.titel, unter:'So funktioniert es'})
+    + `<div class="pos-info">${h.absaetze.map(a => `<p>${typeof a === 'function' ? a() : a}</p>`).join('')}</div>`);
 }
 let tt;
 const TOAST_ROLLE = {ok:['check','gruen'], err:['x','rot'], info:['info',''], lauf:['hourglass','']};

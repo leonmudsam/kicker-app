@@ -73,7 +73,8 @@ function vPositions(){
   const arr = positionsListe(which);
   const ruhe = positionsListe(which, ruhestandSpieler()).length;
   return `
-    <div class="view-head"><h2>Positionen <button class="kopf-info" type="button" data-info="positionen" aria-label="So entsteht der Wert">${svgI('info')}</button></h2><p>Sturm und Abwehr, über alle Partien</p></div>
+    <div class="view-head"><h2>Positionen ${hilfeKnopf('positionen')}</h2><p>Sturm und Abwehr, über alle Partien</p></div>
+    ${erklaerKarte('positionen')}
     ${einblickHtml('rollen')}
     <div class="ui-switch">
       <button data-postoggle="atk" class="${which==='atk'?'on':''}"><span class="pos-chip atk">${svgI('posSturm')}Sturm</span></button>
@@ -85,18 +86,3 @@ function vPositions(){
 }
 
 
-// ── Wie der Wert entsteht ────────────────────────────────────────────
-// Die Erklärung stand als zwei Zeilen unter der Überschrift und nahm der
-// Liste bei jedem Öffnen den Platz. Sie steht jetzt hinter dem kleinen Knopf
-// neben dem Wort — wer sie braucht, tippt, alle anderen sehen die Liste.
-// Die Erklärung nannte drei Dinge, `posLeistung` rechnet vier: die Tore
-// fehlten. Und sie grenzt sich vom Positions-Profil ab [§C44] — der Wert
-// hier fragt, wer auf einer Position der Beste der Liga ist, das Profil,
-// wo jemand selbst besser ist.
-function zeigePositionsInfo(){
-  openSheet(blattKopfHtml({ic:'info', titel:'So entsteht der Wert', unter:'Positionen'})
-    + `<div class="pos-info">
-      <p>Der Wert verbindet vier Dinge: die Siegquote auf dieser Position, die Leistung gegen die Erwartung — gemessen an Partner und Gegnern —, die Tore, vorne die eigenen und hinten die zugelassenen, und die Erfahrung, also wie oft jemand dort gespielt hat.</p>
-      <p><b>▲</b> heißt über, <b>▼</b> unter der Erwartung. Gerechnet wird über alle Partien.</p>
-      <p>Der Wert vergleicht die Liga auf einer Position. Auf welcher Position jemand selbst stärker ist, sagt das Positions-Profil im Profil.</p></div>`);
-}

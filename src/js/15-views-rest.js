@@ -9,8 +9,8 @@ function vTeams(nurErgebnis=false){
   const T=T0.filter(t=>t.ids.every(id=>ligaAktiv(id)));
   const ruheT=T0.filter(t=>t.ids.every(id=>sichtbar(id))&&t.ids.some(id=>imRuhestand(id)));
   if(!T.length&&!ruheT.length){
-    const html=emptyState('handshake','Noch nicht genug Daten');
-    return nurErgebnis?{kopf:'Ab 4 gemeinsamen Partien',html,ruhe:''}:`<div class="view-head"><h2>Teams</h2><p>Ab 4 gemeinsamen Partien</p></div>${html}`;
+    const html=emptyState('handshake','Noch kein Duo mit 4 gemeinsamen Partien');
+    return nurErgebnis?{kopf:'Ab 4 gemeinsamen Partien',html,ruhe:''}:`<div class="view-head"><h2>Teams ${hilfeKnopf('teams')}</h2><p>Ab 4 gemeinsamen Partien</p></div>${erklaerKarte('teams', html)}`;
   }
   const showBest=teamView!=='worst';
   
@@ -146,7 +146,8 @@ function vTeams(nurErgebnis=false){
   // und kein Ersetzen des Eingabefelds samt Fokus, Cursor oder IME-Komposition.
   if(nurErgebnis) return ergebnis;
   return `
-    <div class="view-head"><h2>Teams</h2><p id="teamCount">${ergebnis.kopf}</p></div>
+    <div class="view-head"><h2>Teams ${hilfeKnopf('teams')}</h2><p id="teamCount">${ergebnis.kopf}</p></div>
+    ${erklaerKarte('teams')}
     ${einblickHtml('netz', 'ab 4 Partien')}
     <div class="search">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
@@ -172,7 +173,7 @@ function vTeams(nurErgebnis=false){
 //     Filterbar nach Spieler. Zeigt Badge-Chips pro Match.
 // ╚═════════════════════════════════════════════════════════════════════════╝
 function vHistory(){
-  if(!matches.length)return `<div class="view-head"><h2>Verlauf</h2></div>${emptyState('scroll','Noch keine Partien')}`;
+  if(!matches.length)return `<div class="view-head"><h2>Verlauf ${hilfeKnopf('verlauf')}</h2></div>${erklaerKarte('verlauf', emptyState('scroll','Noch keine Partien'))}`;
   let list=[...matches].reverse();
   if(histFilter!=='all')
     list=list.filter(m=>[m.a1,m.a2,m.b1,m.b2].includes(histFilter));
@@ -238,7 +239,8 @@ function vHistory(){
   ` : '';
 
   return `
-    <div class="view-head"><h2>Verlauf</h2><p>${list.length} Partien</p></div>
+    <div class="view-head"><h2>Verlauf ${hilfeKnopf('verlauf')}</h2><p>${list.length} Partien</p></div>
+    ${erklaerKarte('verlauf')}
     <div class="search" style="margin-bottom:14px">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 3H2l8 9.5V19l4 2v-8.5L22 3z"/></svg>
       <select id="histSel" style="padding-left:40px">${opts}</select>
@@ -263,7 +265,8 @@ function vMatch(){
     </div></div><div class="possel">${pos(key)}</div></div>`;
   };
   return `
-    <div class="view-head"><h2>Neue Partie</h2><p>Aufstellen, Tore eintragen, speichern</p></div>
+    <div class="view-head"><h2>Neue Partie ${hilfeKnopf('eingabe')}</h2><p>Aufstellen, Tore eintragen, speichern</p></div>
+    ${erklaerKarte('eingabe')}
     <div class="builder">
       <div class="team-block A"><div class="team-label">Team A <span class="tag" id="avgA"></span></div>${slot('A',1)}${slot('A',2)}</div>
       <div class="vs-mid"><span class="line"></span><span class="vs">VS</span><span class="line"></span></div>
@@ -316,7 +319,8 @@ function vSettings(){
     lowDamp:    Math.round((cfg.low_elo_loss_damp ?? 0)*100),
   };
   return `
-    <div class="view-head"><h2>Elo-Formel</h2><p>Wie Siege und Niederlagen die Elo verändern</p></div>
+    <div class="view-head"><h2>Elo-Formel ${hilfeKnopf('formel')}</h2><p>Wie Siege und Niederlagen die Elo verändern</p></div>
+    ${erklaerKarte('formel')}
 
     <div class="cfg-section-title">Grundwerte</div>
     <div class="card">
@@ -412,6 +416,18 @@ function vSettings(){
         Nimmt .xlsx, .csv und .json. Vorher zeigt eine Vorschau, was dazukommt.
         <b style="color:var(--acid)">Es wird nie etwas gelöscht oder überschrieben</b>, nur fehlende Partien kommen dazu.
       </p>
+    </div>
+
+    ${/* Die Erklärkarten: wer eine geschlossen hat, holt sie hier zurück.
+          Nur dieses Gerät, nichts in der Liga. */ ''}
+    <div class="card" style="margin-top:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+        <div><div class="mini-label">Erklärkarten</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:6px" id="hinweiseZahl">${hinweiseWeg().size
+            ? (hinweiseWeg().size === 1 ? 'Eine' : hinweiseWeg().size) + ' auf diesem Gerät geschlossen'
+            : 'Alle werden gezeigt'}</div></div>
+        <button class="btn ghost sm" id="hinweiseZurueckBtn" style="width:auto;padding:7px 12px;font-size:11px;flex-shrink:0" ${hinweiseWeg().size?'':'disabled'}>Alle wieder zeigen</button>
+      </div>
     </div>
 
     <div class="card" style="margin-top:14px">

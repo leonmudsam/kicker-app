@@ -1065,17 +1065,19 @@ function vAwards(){
       <button data-awview="rekorde" class="${awView==='rekorde'?'on':''}">Rekorde</button>
       <button data-awview="chronik" class="${awView==='chronik'?'on':''}">Chronik</button>
     </div>`;
-  const kopf = `<div class="view-head"><h2>Awards</h2><p>${unter}</p></div>${schalter}`;
+  const kopf = `<div class="view-head"><h2>Awards ${hilfeKnopf('awards')}</h2><p>${unter}</p></div>${schalter}`;
   if(awView === 'rekorde'){
     // Keine eigene Überschrift mehr: die Liste bringt jetzt ihre drei
     // Gruppenüberschriften mit, und „LIGA-REKORDE" stand dadurch zweimal
     // direkt untereinander.
     const liste = ligaRekordeHtml(true);
-    return kopf + (liste || emptyState('trophyStar','Noch hält niemand einen Liga-Rekord.'));
+    return kopf + (liste ? erklaerKarte('rekorde') + liste
+      : erklaerKarte('rekorde', emptyState('trophyStar','Noch hält niemand einen Liga-Rekord.')));
   }
   if(awView === 'chronik'){
     const matrix = ligaChronikMatrixHtml();
-    return kopf + (matrix || emptyState('scroll','Sobald ein Monat gespielt ist, füllt sich die Chronik.'));
+    return kopf + (matrix ? erklaerKarte('chronik') + matrix
+      : erklaerKarte('chronik', emptyState('scroll','Sobald ein Monat gespielt ist, füllt sich die Chronik.')));
   }
   // Ein abgeschlossener Monat oder eine vergangene Woche ist Geschichte [§C40].
   let bis = null;
@@ -1084,7 +1086,7 @@ function vAwards(){
     const ende = new Date(awWeekStart); ende.setHours(0,0,0,0); ende.setDate(ende.getDate() + 7);
     if(ende.getTime() <= Date.now()) bis = ende.getTime() - 1;
   }
-  return kopf + geschichteHtml(_vAwardsCore(), bis);
+  return kopf + erklaerKarte('awards') + geschichteHtml(_vAwardsCore(), bis);
 }
 
 // Award-ID -> Icon-Name. Eine Tabelle für Awards-Reiter, Award-Blatt,

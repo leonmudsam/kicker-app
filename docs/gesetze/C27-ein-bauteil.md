@@ -15,14 +15,15 @@
 - Layout: Raster mit `minmax(0,1fr)`; ein Knopf in einer Zeile so breit wie sein Wort; ein Reiter nennt sein Wort ganz (`METRIC_REITER`), ein langes Wort wird kleiner statt gebrochen (`_awLblLang`); eine Bilanz bricht nicht um; ein langer Wert in der Zahlenreihe wird kleiner, nicht breiter.
 - Partie-Karte: der Stand ist `_spSt` (A:B, der Sieger hell) oder die Zeichnung selbst, die Namen stehen unter jedem Kopf in derselben Teamzeile (`_spTeamZeile`: Team A links, je Paar die Abwehr zuerst, Sieger mit grüner, Verlierer mit roter Kante); eine Zeile der Karte, auch die des Fußes, ist dieselbe Zeile (`_newsSammelBand`); ein Verlauf ist eine Kurve (`_spLinie`: runde Achse, die die Beschriftung nicht überlappt, Bezugslinie, über ihr Grün und unter ihr Rot, wo sie eine Richtung trennt, Ränder so breit wie die längste Beschriftung) und ein Vergleich weniger eine Rangliste (`_spRangliste`: Platz, Gesicht, Name, Balken, Wert, Zahl, wahlweise der Schnitt); beide nutzen alle Fakten des Katalogs und ihr Blatt (`_spFaktBild`).
 - Ansichten: eine Grafik über einer Rangliste ist eine Zeile, die aufklappt (`einblickHtml`); der Positionsverlauf ist eine Tabelle über die Zeit (`_posvTabelle`, `posvVorschauHtml`); die Partie im Verlauf zeigt den Sieger (`vHistory`), das Duo seine Bilanz als Balken; die Siegchance steht beim Aufstellen unter der Score-Karte (`_matchChanceHtml`); der Direkte Vergleich zeigt jede Begegnung (`h2hBegegnungenHtml`); die Kammern des Rekorde-Reiters sind Felder; eine lange Erklärung steht hinter `.kopf-info`.
+- Hilfe: jeder Reiter trägt neben seiner Überschrift ein „?" (`hilfeKnopf`, `.kopf-info`), das ein Blatt öffnet, wie der Reiter funktioniert und wie seine Werte entstehen (`HILFE`, `zeigeHilfe`); oben in jedem Reiter und Unterreiter steht eine Erklärkarte (`erklaerKarte` aus `ERKLAERKARTEN`, gezeichnet von `vorschauHtml`, `.vorschau`) in der leeren wie in der laufenden Liga, mit einem Kreuz in der Akzentfarbe (`.vs-zu`); geschlossen bleibt sie auf diesem Gerät zu, gemerkt am Titel (`hinweiseWeg`, `kicker_hinweise_weg_v1`), in allen Reitern und nach jedem Neuladen; war sie der einzige Inhalt einer leeren Ansicht, bleibt deren Zeile stehen; die Einstellungen holen alle zurück.
 
 ## Stellen
 
-quer durch `src/js` und `src/css`; die Bauteile selbst in `05b-recap-teile.js`, `09-ui-infra.js`, `09c-zeichen.js`, `13-view-awards.js`, `16-sheet-infra.js`, `30a-news-karte.js`, `30b-news-spieltag.js`, `31-news-detail.js`, `31a-news-detail-mitte.js`.
+quer durch `src/js` und `src/css`; die Bauteile selbst in `05b-recap-teile.js`, `09-ui-infra.js`, `09c-zeichen.js`, `13-view-awards.js`, `16-sheet-infra.js`, `25-helpers.js`, `30a-news-karte.js`, `30b-news-spieltag.js`, `31-news-detail.js`, `31a-news-detail-mitte.js`.
 
 ## Prüfung
 
-`tests/blatt` (Geometrie, Bauteile, Text und Bewegung jedes Reiters und Blatts bei 360 px), `tests/bewegung` (Wischgeste, Abschlüsse), `tests/rechnen` (Tausenderpunkt ab fünf Stellen, Jahr eines Tages im Satz, Dauer in Monaten und Jahren), `tests/zeichen` (alles in der Mitte: Katalog, Kachel, Wappen, Initialen), `tests/blatt` (was im Feed endlos läuft, bewegt nur transform und opacity; Platz 1 bis 3 mit Rahmen, Schein und glänzender Ziffer, ohne Strich, nichts in der Rangliste bewegt sich ohne Anlass, die offene Liga rechnet weder Stil noch Layout; das Profil lebt, wo etwas gewonnen ist oder läuft, endlos nur mit transform und opacity, bei Bewegungsruhe still), `tests/tafel` (Strich, Award-Tabelle, Kalendertag, Formatierer), `tests/zeichen`.
+`tests/blatt` (Geometrie, Bauteile, Text und Bewegung jedes Reiters und Blatts bei 360 px), `tests/bewegung` (Wischgeste, Abschlüsse), `tests/start` (eine geschlossene Erklärkarte bleibt zu, nach Reiterwechsel und Neuladen), `tests/rechnen` (Tausenderpunkt ab fünf Stellen, Jahr eines Tages im Satz, Dauer in Monaten und Jahren), `tests/zeichen` (alles in der Mitte: Katalog, Kachel, Wappen, Initialen), `tests/blatt` (was im Feed endlos läuft, bewegt nur transform und opacity; Platz 1 bis 3 mit Rahmen, Schein und glänzender Ziffer, ohne Strich, nichts in der Rangliste bewegt sich ohne Anlass, die offene Liga rechnet weder Stil noch Layout; das Profil lebt, wo etwas gewonnen ist oder läuft, endlos nur mit transform und opacity, bei Bewegungsruhe still), `tests/tafel` (Strich, Award-Tabelle, Kalendertag, Formatierer), `tests/zeichen`.
 
 ## Herleitung
 
@@ -693,7 +694,15 @@ Bewegung aus den rohen Plätzen nach.
 **Eine Erklärung steht hinter einem Knopf, wenn sie länger ist als die
 Ansicht kurz** (`.kopf-info`): der Absatz über den Positionen nahm drei
 Zeilen vor der Liste ein. Er steht in einem Blatt hinter dem Zeichen neben
-der Überschrift, darunter bleibt eine Zeile.
+der Überschrift, darunter bleibt eine Zeile. Lange hatten nur die
+Positionen einen solchen Knopf, mit einem „i" und einer eigenen Funktion;
+wer neu dazukam, erfuhr in keinem anderen Reiter, wie Liga, Awards,
+Rekorde oder Chronik zustande kommen, und in einer leeren Liga stand nur
+„Noch keine Partien". Jetzt trägt jeder Reiter das „?" (`HILFE`), und oben
+steht eine Erklärkarte mit ein, zwei Sätzen. Sie lässt sich schließen und
+kommt dann auf diesem Gerät nicht wieder, gemerkt am Titel und nicht am
+Text: ein umformulierter Satz holt sie nicht zurück. Das Kreuz steht in der
+Akzentfarbe, weil es grau auf grau wie ein Zierrat aussah.
 **Die Siegchance steht beim Aufstellen unter der Score-Karte**
 (`#chanceSlot`, `_matchChanceHtml`), sobald vier Spieler gewählt sind, aus
 derselben Rechnung, mit der die Partie danach gewertet wird

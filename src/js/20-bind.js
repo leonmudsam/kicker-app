@@ -3,7 +3,11 @@
 // ╚═════════════════════════════════════════════════════════════════════════╝
 function bind(){
   const main=document.getElementById('main');if(!main) return;
-  main.querySelectorAll('[data-info="positionen"]').forEach(b => b.onclick = zeigePositionsInfo);
+  // Die „?"-Knöpfe der Reiter [§C27]: ein Blatt, wie der Reiter funktioniert.
+  main.querySelectorAll('[data-hilfe]').forEach(b => b.onclick = () => zeigeHilfe(b.dataset.hilfe));
+  // Geschlossene Erklärkarten wieder zeigen: nur dieses Gerät, nichts in der Liga.
+  const hz=main.querySelector('#hinweiseZurueckBtn');
+  if(hz) hz.onclick=()=>{ hinweiseWeg().clear(); _hinweiseSpeichern(); toast('Die Erklärkarten werden wieder gezeigt','ok'); render(); };
   // Die Einblicke über den Ranglisten klappen auf, ohne neu zu zeichnen.
   einblickBinden(document.getElementById('main'));
   main.querySelectorAll('.einblick.auf .einblick-i').forEach(bindDetailLinks);

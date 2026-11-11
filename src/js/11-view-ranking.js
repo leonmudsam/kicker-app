@@ -515,8 +515,9 @@ function _vRankingCore(){
         </div>`;
       };
       return `
-        <div class="view-head"><h2>Liga</h2><p>${periodLabel(period, saisonArg)} · ${
+        <div class="view-head"><h2>Liga ${hilfeKnopf('liga')}</h2><p>${periodLabel(period, saisonArg)} · ${
           duos.length} Duo${duos.length===1?'':'s'} · ${totalMatches} Partien</p></div>
+        ${erklaerKarte('ligaDuos')}
         ${periodBar}
         ${kontextHtml}
         ${saisonWahl}
@@ -527,7 +528,8 @@ function _vRankingCore(){
     }
 
     return `
-      <div class="view-head"><h2>Liga</h2><p>${periodLabel(period, saisonArg)} · ${ps.length} aktiv · ${totalMatches} Partien</p></div>
+      <div class="view-head"><h2>Liga ${hilfeKnopf('liga')}</h2><p>${periodLabel(period, saisonArg)} · ${ps.length} aktiv · ${totalMatches} Partien</p></div>
+      ${erklaerKarte('liga')}
       ${periodBar}
       ${kontextHtml}
       ${saisonWahl}
@@ -662,8 +664,9 @@ function _vRankingCore(){
   // unerreichbare Ansichten; sie sind entfernt.
 
   return `
-    <div class="view-head"><h2>Ewige Tafel</h2><p>Karriere-Elo über ${
+    <div class="view-head"><h2>Ewige Tafel ${hilfeKnopf('liga')}</h2><p>Karriere-Elo über ${
       seasons.length} Saison${seasons.length===1?'':'s'} · ${matches.length} Partien</p></div>
+    ${erklaerKarte('tafel')}
     ${periodBar}
     ${hofHtml || `<div class="stat-strip">
       <div class="s"><div class="v num">${activePlayers().length}</div><div class="l">Spieler</div></div>

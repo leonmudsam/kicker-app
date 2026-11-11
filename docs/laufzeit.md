@@ -39,6 +39,12 @@ Der Schnellstart [§C42] hält zwei Werte in `06c-stand.js`: `_standOffen`
 `_standGezeigt` (sein Fingerabdruck, bis der Live-Abruf ihn bestätigt oder
 ersetzt; ein Fehler leert ihn).
 
+Die Erklärkarten [§C27] merken sich in `25-helpers.js`, welche auf diesem
+Gerät geschlossen sind: `_hinweiseWeg` (die Titel, einmal je Start aus
+`kicker_hinweise_weg_v1` gelesen, nicht bei jedem Zeichnen) und der Speicher
+selbst. Zurückgesetzt wird beides nur über „Alle wieder zeigen" in den
+Einstellungen; fehlt der Speicher, erscheinen die Karten wieder.
+
 Die Rückblicke, die sich von selbst öffnen [§C31], merken sich in
 `06-db.js`, was gesehen ist: `_autoRecapSeen` für die laufende Sitzung (ein
 Neuladen alle dreißig Sekunden soll nichts zweimal öffnen) und auf dem Gerät

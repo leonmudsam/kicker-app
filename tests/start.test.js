@@ -726,6 +726,58 @@ async function neueSeite(ctx){
     ok(!anfragen.some(x => x.pfad === '/icon.png'), 'Der Start lädt das große Symbol nicht: das Zeichen steht in der Seite');
     await bctx.close();
 
+    // ── Eine geschlossene Erklärkarte bleibt zu [§C27] ──────────────
+    // Die Karte oben in jedem Reiter erklärt, was dort zu sehen ist. Wer sie
+    // mit dem Kreuz schließt, will sie auf diesem Gerät nicht wiedersehen:
+    // nicht im nächsten Reiter, nicht nach dem Neuladen. Gemerkt wird im
+    // Speicher des Geräts, unter dem Titel der Karte; die Einstellungen
+    // holen alle zurück. Geprüft an einer echten Seite mit eigenem Ursprung,
+    // weil nur dort der Speicher ein Neuladen überlebt.
+    const hctx = await browser.newContext({viewport:{width:390, height:844}, serviceWorkers:'block', ...LIGA_GERAET});
+    await hctx.addInitScript(({daten, jetzt}) => {
+      Object.defineProperty(Navigator.prototype, 'webdriver', {get:() => false});
+      window.__startDaten = daten;
+      const RD = Date;
+      window.Date = class extends RD{ constructor(...a){ a.length ? super(...a) : super(jetzt); } static now(){ return jetzt; } };
+      window.setInterval = () => 0;
+      window.__vorStart = K => { window.__K = K; };
+    }, {daten:DATEN, jetzt:JETZT});
+    const karte = async (pg, titel) => pg.evaluate(t => !!document.querySelector('#main .vorschau[data-hinweis="' + t + '"]'), titel);
+    const h1 = await neueSeite(hctx);
+    await h1.page.goto(BASIS);
+    await h1.page.waitForFunction(() => document.querySelector('#main .rlist') && window.__K, null, {timeout:20000});
+    const vorher = await karte(h1.page, 'Die Liga');
+    const knopf = await h1.page.evaluate(() => !!document.querySelector('#main .view-head [data-hilfe="liga"]'));
+    await h1.page.click('#main .vorschau[data-hinweis="Die Liga"] [data-hinweis-zu]');
+    await h1.page.waitForTimeout(400);
+    const weg = !await karte(h1.page, 'Die Liga');
+    // Ein anderer Reiter und zurück: das Neuzeichnen holt sie nicht wieder.
+    await h1.page.evaluate(() => window.__K("_reiterSetzen('positions')"));
+    await h1.page.waitForTimeout(300);
+    const andere = await karte(h1.page, 'Sturm und Abwehr');
+    await h1.page.evaluate(() => window.__K("_reiterSetzen('ranking')"));
+    await h1.page.waitForTimeout(300);
+    const nachReiter = !await karte(h1.page, 'Die Liga');
+    await h1.page.reload();
+    await h1.page.waitForFunction(() => document.querySelector('#main .rlist') && window.__K, null, {timeout:20000});
+    await h1.page.waitForTimeout(400);
+    const nachLaden = !await karte(h1.page, 'Die Liga');
+    const gemerkt = await h1.page.evaluate(() => { try { return JSON.parse(localStorage.getItem('kicker_hinweise_weg_v1')); } catch(e){ return null; } });
+    ok(vorher && knopf, 'Die Liga trägt ihre Erklärkarte und den Knopf zur Hilfe');
+    ok(weg && andere, 'Das Kreuz schließt die Karte, die Karten anderer Reiter bleiben');
+    ok(nachReiter && nachLaden && JSON.stringify(gemerkt) === '["Die Liga"]',
+      'Eine geschlossene Karte bleibt zu, nach dem Reiterwechsel und nach dem Neuladen (' + JSON.stringify(gemerkt) + ')');
+    // Die Einstellungen holen alle zurück.
+    await h1.page.evaluate(() => window.__K("settingsUnlocked = true; tab = 'settings'; _renderNachEingabe()"));
+    await h1.page.waitForTimeout(300);
+    await h1.page.click('#hinweiseZurueckBtn');
+    await h1.page.evaluate(() => window.__K("_reiterSetzen('ranking')"));
+    await h1.page.waitForTimeout(300);
+    ok(await karte(h1.page, 'Die Liga') && await h1.page.evaluate(() => localStorage.getItem('kicker_hinweise_weg_v1') === null),
+      'Die Einstellungen zeigen alle Erklärkarten wieder');
+    ok(h1.fehler.length === 0, 'Erklärkarten ohne Seitenfehler' + (h1.fehler.length ? ': ' + h1.fehler[0] : ''));
+    await hctx.close();
+
     // ── Der Service Worker ────────────────────────────────────────────
     const swCtx = await browser.newContext({viewport:{width:390, height:844}});
     await swCtx.addInitScript(({daten, jetzt}) => {

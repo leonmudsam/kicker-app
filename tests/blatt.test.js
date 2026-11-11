@@ -4100,6 +4100,11 @@ const ok = (c, msg, det) => {
   ok(ebenen.schein.length === 0 && ebenen.zahl.ansichten > 30,
      'kein Symbol, Emoji oder Zeichen trägt seinen Schein über filter — ein Lichthof, ein Text- oder Kastenschatten statt dessen',
      ebenen.schein.slice(0, 6).join(' | '));
+  // Die Bewegung der Ranglisten wird an der Liga eines Spielers gemessen,
+  // der die Erklärkarten schon geschlossen hat [§C27]: offen schiebt die
+  // Karte oben das Podest bei 844 px Höhe unter den Rand, und Licht gibt es
+  // nur für Plätze ganz im Bild. Danach stehen die Karten wieder offen.
+  await page.evaluate(() => window.__k.eval("Object.values(ERKLAERKARTEN).forEach(k => hinweiseWeg().add(k[1])); render()"));
   // Der Verlauf bleibt ruhig [§C43]: über die Leiste betreten und beim
   // Wählen eines Spielers baut sich nichts auf, und kein Licht fährt. Die
   // Liga danach baut sich wie immer auf — so zählt die Prüfung überhaupt.
@@ -4420,6 +4425,34 @@ const ok = (c, msg, det) => {
      'die Karte des leisen Lichts kommt aus dem offenen Reiter und seiner Ansicht', JSON.stringify(an));
   ok(!leise.zweites && leise.bedient && !leise.blatt && leise.plan[0] >= 7000 && leise.plan[1] <= 12000 && leise.plan[2] === 2000,
      'auch gleich nach einer Berührung, nicht neben anderem Licht, nicht unter einem Blatt, alle 7 bis 12 s und nach einem ausgesetzten Versuch nach 2 s', JSON.stringify(leise));
+  await page.evaluate(() => window.__k.eval("hinweiseWeg().clear(); render()"));
+  // Jeder Reiter und Unterreiter trägt das „?" und seine Erklärkarte
+  // [§C27]; das „?" öffnet ein Blatt. War die Karte der einzige Inhalt einer
+  // leeren Ansicht, steht nach dem Schließen deren Zeile da, keine leere
+  // Fläche.
+  const hilfe = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const fehlt = [];
+    for(const [t, sub] of [['ranking'], ['positions'], ['awards', 'awards'], ['awards', 'rekorde'], ['awards', 'chronik'], ['teams'], ['history'], ['match']]){
+      K(`closeSheet(true); tab=${JSON.stringify(t)}; ${sub ? `awView=${JSON.stringify(sub)};` : ''} render()`);
+      const knopf = document.querySelector('#main .view-head [data-hilfe]'), karte = document.querySelector('#main .vorschau .vs-zu');
+      if(!knopf || !karte) { fehlt.push(t + (sub ? ' ' + sub : '') + (knopf ? '' : ' ohne ?') + (karte ? '' : ' ohne Karte')); continue; }
+      knopf.click();
+      if(!document.querySelector('#sheet .pos-info p')) fehlt.push(t + ' öffnet kein Blatt');
+    }
+    K('closeSheet(true)');
+    // `invalidateCache` leert auch die Stories; der Feed weiter unten braucht sie.
+    K("window.__altPartien = matches; window.__altStories = [_cache._stories, _cache._consolFrom, _cache._frischVon]; matches = []; invalidateCache(); tab='history'; render()");
+    const vor = !!document.querySelector('#main .vorschau') && !document.querySelector('#main > .view > .leerstand, #main .leerstand');
+    document.querySelector('#main .vorschau [data-hinweis-zu]').click();
+    await new Promise(r => setTimeout(r, 300));
+    const nach = !document.querySelector('#main .vorschau') && /Noch keine Partien/.test((document.querySelector('#main .leerstand') || {}).textContent || '');
+    K("matches = window.__altPartien; delete window.__altPartien; invalidateCache(); [_cache._stories, _cache._consolFrom, _cache._frischVon] = window.__altStories; delete window.__altStories; hinweiseWeg().clear(); _hinweiseSpeichern(); tab='ranking'; render()");
+    return {fehlt, vor, nach};
+  });
+  ok(hilfe.fehlt.length === 0 && hilfe.vor && hilfe.nach,
+     'jeder Reiter trägt das „?" mit seinem Blatt und eine Erklärkarte; geschlossen lässt sie in einer leeren Ansicht deren Zeile stehen',
+     JSON.stringify(hilfe));
   // Was endlos läuft und nicht im Bild steht, hält an [§C43], und läuft
   // weiter, wenn es hereinkommt: im Feed ganz unten stehen die Bewegungen
   // der Karten oben, wieder oben laufen sie; im Profil ebenso der Kopf.
