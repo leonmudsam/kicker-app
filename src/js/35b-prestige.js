@@ -211,34 +211,28 @@ const PRESTIGE_REICHWEITE = 0.5;
 
 // Die sieben Stufen. `min` ist die Schwelle, ab der die Stufe getragen wird.
 //
-// 0, 600, 1200, 2100, 3100, 4500, 6000 — vorgegeben, nicht gerechnet. Jede
-// Spanne ist mindestens so teuer wie die vorige (600, 600, 900, 1000, 1400,
+// 0, 500, 1000, 1700, 2800, 4000, 5500 — vorgegeben, nicht gerechnet. Jede
+// Spanne ist mindestens so teuer wie die vorige (500, 500, 700, 1100, 1200,
 // 1500), und die letzte führt zum Ordensstern, dessen Grade je 500 Prestige
-// auseinanderliegen (ORDENSSTERN_GRAD). Kronenreif und Ordensstern lagen bei
-// 4300 und 5600: die Spitze der Liga stand mit 4208 Prestige 92 vor dem
-// Kronenreif, und die beiden obersten Stufen — deren erster Aufstieg
-// Breaking ist [§C33] — wären nach wenigen Spieltagen gefallen. Mit 1400
-// und 1500 bleiben sie, was sie sein sollen; die Grade des Kronenreifs
-// liegen jetzt wie die des Ordenssterns je 500 auseinander (4500, 5000,
-// 5500). Davor lagen alle Schwellen bei 500 bis 4500;
-// mit den höheren Startwerten der Auszeichnungen und Rekorde [§C34] stieg
-// das Prestige der Spitze um gut ein Viertel, und ohne neue Schwellen wäre
-// sie über Nacht eine Stufe höher gestanden, ohne etwas dafür getan zu haben.
-// Als die Meilensteine der Laufbahn eigene Werte bekamen, blieben die
-// Schwellen bewusst stehen: wer 300 Siege oder 300 Partien hinter sich hat,
-// hat den Aufstieg erarbeitet — an den echten Partien drei Spieler vom
-// Zierkranz zum Lorbeerreif, der Ordensstern weiter für niemanden.
+// auseinanderliegen (ORDENSSTERN_GRAD). Sie sanken mit den Grundwerten von
+// Chronik und Rekorden [§C34]: die Leiter lag bei 0, 600, 1200, 2100, 3100,
+// 4500 und 6000, und mit halb so schweren Chroniken und Rekorden wäre die
+// ganze Liga über Nacht eine Stufe tiefer gefallen, ohne gespielt zu haben.
+// Die beiden obersten Stufen, deren erster Aufstieg Breaking ist [§C33],
+// kosten 1200 und 1500 — die längsten Spannen der Leiter. Die Grade des
+// Kronenreifs liegen wie die des Ordenssterns je 500 auseinander (4000,
+// 4500, 5000).
 //
-// Der Reif beginnt sofort. Der Schildring markiert ab 600 den ersten großen
+// Der Reif beginnt sofort. Der Schildring markiert ab 500 den ersten großen
 // Laufbahnschritt.
 const INSIGNIEN = [
   {key:'reif',    name:'Reif',          min:0},
-  {key:'schild',  name:'Schildring',    min:600},
-  {key:'volute',  name:'Volutenkranz',  min:1200},
-  {key:'zier',    name:'Zierkranz',     min:2100},
-  {key:'lorbeer', name:'Lorbeerreif',   min:3100},
-  {key:'krone',   name:'Kronenreif',    min:4500},
-  {key:'stern',   name:'Ordensstern',   min:6000},
+  {key:'schild',  name:'Schildring',    min:500},
+  {key:'volute',  name:'Volutenkranz',  min:1000},
+  {key:'zier',    name:'Zierkranz',     min:1700},
+  {key:'lorbeer', name:'Lorbeerreif',   min:2800},
+  {key:'krone',   name:'Kronenreif',    min:4000},
+  {key:'stern',   name:'Ordensstern',   min:5500},
 ];
 // Die beiden obersten Stufen. Ihr ERSTER Aufstieg ist Breaking [§C33] —
 // als Zahl im Generator („stufe >= 3") wäre die Grenze beim Einfügen einer
@@ -252,8 +246,8 @@ const INSIGNIUM_OBEN = INSIGNIEN.length - 2;
 const INSIGNIUM_GRADE = 3;
 const INSIGNIUM_GRAD_NAME = ['I', 'II', 'III'];
 // Die Grade teilen die Spanne bis zur nächsten Stufe in Drittel, abgerundet
-// auf volle Hundert: der Zierkranz (2100 bis 3099) hat Grad II ab 2400 und
-// Grad III ab 2700. Sie lagen bei 16 und 40 % der Spanne, und damit waren
+// auf volle Hundert: der Zierkranz (1700 bis 2799) hat Grad II ab 2000 und
+// Grad III ab 2400. Sie lagen bei 16 und 40 % der Spanne, und damit waren
 // Grad I und II kurz und Grad III über die halbe Stufe lang: wer Grad III
 // erreichte, trug ihn länger als die beiden davor zusammen. Eine runde
 // Schwelle kann man sich merken und im Laufbahnblatt nachprüfen.
@@ -269,7 +263,7 @@ function insigniumStufeVon(punkte){
 }
 // Der Ordensstern hat keine nächste Stufe, deren Spanne man dritteln
 // könnte; seine Grade liegen deshalb je ORDENSSTERN_GRAD auseinander: I ab
-// 6000, II ab 6500, III ab 7000. Er zählte vorher Zacken, acht beim
+// 5500, II ab 6000, III ab 6500. Er zählte vorher Zacken, acht beim
 // Erreichen und alle 500 eine mehr, und war damit die einzige Stufe, die
 // anders zählte: in der Laufbahn stand „8 9 10“ neben „I II III“, auf der
 // Karte „erreicht die 9. Zacke“ neben „steigt auf Zierkranz III“.
@@ -332,7 +326,12 @@ function _chronikMonat(titleId){
 // Halter, sobald neue Monate sie verschieben, und genau dieser Fehler
 // steckte schon einmal in den Auszeichnungen [§C34]. Der Wert des Halters
 // steht dazu in der Tafel und im eingefrorenen Monat (`wert`).
-const CHRONIK_GRUNDWERT = 100;
+// Der Grundwert war 100, so viel wie ein Können-Rekord; eine Chronik gilt
+// einem Monat und nicht der ganzen Laufbahn, und mit 100 je Eintrag trug
+// die Chronik eines Vielspielers ihn eine Stufe höher als seine Titel. Mit
+// 50 wiegt sie zwischen Fügung und Können eines Rekords; der Bonus über der
+// Schwelle bleibt, wie er ist.
+const CHRONIK_GRUNDWERT = 50;
 const CHRONIK_BONUS_JE_HALBIERUNG = 10;
 // Die komplementäre Fehlerfunktion (Numerical Recipes, `erfcc`, relativ
 // genauer als 1,2·10⁻⁷) und daraus die Halbierungen je σ an einem Ausschlag.

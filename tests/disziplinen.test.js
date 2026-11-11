@@ -857,7 +857,7 @@ const _pkt = JSON.parse(K.eval(`JSON.stringify((function(){
     const d=DISZIPLINEN.find(x=>x.id===t.id), m=d.monat;
     // Ohne den Wert eines Halters steht der Grundwert da, für jede Klasse
     // und jede Art gleich.
-    const soll = m.art==='schatten' ? 0 : 100;
+    const soll = m.art==='schatten' ? 0 : 50;
     if(chronikPunkte(t.id) !== soll) bad.push(t.id + '=' + chronikPunkte(t.id));
     if((m.art === 'schatten') !== (m.klasse === 'schatten')) band.push(t.id + ': Schattenseite als ' + m.klasse);
     if(m.wende && m.klasse !== 'selten') band.push(t.id + ': Wende als ' + m.klasse);
@@ -870,7 +870,7 @@ const _pkt = JSON.parse(K.eval(`JSON.stringify((function(){
   });
   return {bad, band, streu};
 })())`));
-ok(_pkt.bad.length === 0, 'jede Chronik bringt den Grundwert 100, gleich welcher Klasse', _pkt.bad.join(', '));
+ok(_pkt.bad.length === 0, 'jede Chronik bringt den Grundwert 50, gleich welcher Klasse', _pkt.bad.join(', '));
 ok(_pkt.band.length === 0, 'die Klasse folgt der Leistung: legendaer nur Koennen oder Konstanz ohne Wende, jede Wende selten, eine Schattenseite als Schattenseite', _pkt.band.join(', '));
 ok(_pkt.streu.length === 0, 'jede Chronik trägt ihre Streuung, auch eine Schattenseite',
    _pkt.streu.join(', '));
@@ -927,33 +927,33 @@ const _bonus = JSON.parse(K.eval(`JSON.stringify((function(){
           landung:chronikPunkte('evenkeel', m('evenkeel').wert({gf:212, ga:212, games:30})),
           einTor:chronikPunkte('evenkeel', m('evenkeel').wert({gf:212, ga:211, games:30}))};
 })())`));
-ok(_bonus.regent === 126 && _bonus.genau === 100,
-   '71 % statt 60 % Player of the Day bringen 100 und 26 Bonus, genau 60 % den Grundwert',
+ok(_bonus.regent === 76 && _bonus.genau === 50,
+   '71 % statt 60 % Player of the Day bringen 50 und 26 Bonus, genau 60 % den Grundwert',
    JSON.stringify(_bonus));
 ok(JSON.stringify(_bonus.steigung) === '[24,41,54]',
    'je σ bringt der Bonus bei 1,2 σ Ausschlag 24, bei 2,5 σ 41 und bei 3,5 σ 54', JSON.stringify(_bonus.steigung));
 const _s = _bonus.ausbruchSteigung;
-ok(_bonus.hauch === 101 && _bonus.eins === 100 + Math.round(_s) && _bonus.zwei === 100 + Math.round(2 * _s)
-   && _bonus.drei === 100 + Math.round(3 * _s) && _bonus.ohneWert === 100,
+ok(_bonus.hauch === 51 && _bonus.eins === 50 + Math.round(_s) && _bonus.zwei === 50 + Math.round(2 * _s)
+   && _bonus.drei === 50 + Math.round(3 * _s) && _bonus.ohneWert === 50,
    'der Bonus waechst gleichmaessig mit der Abweichung, mindestens 1 und nach oben offen', JSON.stringify(_bonus));
 ok(_bonus.weitDraussen > _bonus.naheAmFeld + 30,
    'eine Schwelle weit draussen bringt je σ mehr als eine nahe am Feld', _bonus.weitDraussen + ' gegen ' + _bonus.naheAmFeld);
-ok(_bonus.metronomAb < 0 && _bonus.metronom === 100 + Math.round(0.6 * _bonus.metronomSteigung),
+ok(_bonus.metronomAb < 0 && _bonus.metronom === 50 + Math.round(0.6 * _bonus.metronomSteigung),
    'eine Chronik „höchstens" rechnet den Bonus in dieselbe Richtung', JSON.stringify(_bonus));
-ok(_bonus.schatten === 0 && _bonus.hoechstes === 100,
+ok(_bonus.schatten === 0 && _bonus.hoechstes === 50,
    'eine Schattenseite bringt nichts, eine Schwelle, die schon das Höchste ist, keinen Bonus',
    JSON.stringify(_bonus));
 // Die Wochenkrone verlangt zwei Drittel der Wochen; wer jede Woche holt,
 // liegt darueber und bekommt Bonus.
-ok(_bonus.krone > 125, 'jede eigene Woche Player of the Week bringt bei der Wochenkrone Bonus', String(_bonus.krone));
+ok(_bonus.krone > 75, 'jede eigene Woche Player of the Week bringt bei der Wochenkrone Bonus', String(_bonus.krone));
 // Eine Chronik mit „hoechstens" bringt mehr, je naeher sie am Ziel liegt.
 // Der unmoegliche Monat rechnete mit eins minus der Wahrscheinlichkeit:
 // zwischen 5 % und 0,05 % lagen damit 0,05, ein Zehntel der Streuung, und
 // ein hundertmal unwahrscheinlicherer Monat brachte drei Punkte mehr. Die
 // Punktlandung stellte 212:212 gleich mit 212:211.
-ok(_bonus.moeglich === 100 && _bonus.unmoeglich - _bonus.moeglich >= 50,
+ok(_bonus.moeglich === 50 && _bonus.unmoeglich - _bonus.moeglich >= 50,
    'der unmoegliche Monat zaehlt mehr, je unwahrscheinlicher er war', JSON.stringify(_bonus));
-ok(_bonus.landung > _bonus.einTor && _bonus.einTor > 100,
+ok(_bonus.landung > _bonus.einTor && _bonus.einTor > 50,
    'die Punktlandung ohne Tor Unterschied zaehlt mehr als ein Tor daneben', JSON.stringify(_bonus));
 // ── Die Schattenseite ueberschattet eine besondere Chronik [§C39] ────
 // Wer viele Schattenseiten sammelte, holte trotzdem jeden Monat eine
@@ -2439,7 +2439,7 @@ const _prChron = JSON.parse(K.eval(`JSON.stringify((function(){
       alle.push(q);
       const a = seasonTitleOf(pid, q.sid);
       if(q.bonus > 0) mitBonus++;
-      if(!a || q.grundwert!==100 || q.voll!==chronikPunkte(a.titleId, a.wert)
+      if(!a || q.grundwert!==50 || q.voll!==chronikPunkte(a.titleId, a.wert)
          || q.bonus!==q.voll-q.grundwert || q.p==null) falsch.push(q.id);
     }));
   return {n:alle.length,falsch,mitBonus,
@@ -2641,10 +2641,10 @@ console.log('  Getragen:  ' + _lb.namen.map((n,i)=>n+' '+_lb.stufen[i]).join(' �
 console.log('  Bester Stand: ' + _lb.hoechste);
 console.log('  Spitze: ' + _lb.werte.slice(0,3).map(x=>x.name+' '+x.punkte+' / '+x.stufe+'.'+x.grad).join(' · '));
 
-// Die Schwellen sind vorgegeben, nicht kalibriert [§C30]: 0, 600, 1200,
-// 2100, 3100, 4500, 6000. Kronenreif und Ordensstern lagen bei 4300 und
+// Die Schwellen sind vorgegeben, nicht kalibriert [§C30]: 0, 500, 1000,
+// 1700, 2800, 4000, 5500. Kronenreif und Ordensstern lagen bei 4300 und
 // 5600, und die Spitze der Liga stand 92 Prestige vor dem Kronenreif.
-ok(_lb.min.join(',') === '0,600,1200,2100,3100,4500,6000',
+ok(_lb.min.join(',') === '0,500,1000,1700,2800,4000,5500',
    'die sieben Insignien beginnen an den festgelegten Schwellen',
    _lb.min.join(' · '));
 const _sternI = _lb.min.length - 1;
@@ -2652,8 +2652,8 @@ const _sternI = _lb.min.length - 1;
 // als einzige Stufe mit „8 9 10“ in der Laufbahn und „erreicht die 9.
 // Zacke“ auf der Karte. Seine Grade liegen je 500 auseinander, und über dem
 // dritten zählt er nicht weiter: Ordensstern III ist das oberste Feld.
-ok(_lb.sternGrade.join(',') === '6000,6500,7000' && _lb.kroneGrade.join(',') === '4500,5000,5500',
-   'der Ordensstern hat drei Grade wie jede Stufe: I ab 6000, II ab 6500, III ab 7000; der Kronenreif 4500, 5000, 5500',
+ok(_lb.sternGrade.join(',') === '5500,6000,6500' && _lb.kroneGrade.join(',') === '4000,4500,5000',
+   'der Ordensstern hat drei Grade wie jede Stufe: I ab 5500, II ab 6000, III ab 6500; der Kronenreif 4000, 4500, 5000',
    _lb.sternGrade.join(' · '));
 const _sternLagen = JSON.parse(K.eval(`JSON.stringify((function(){
   const alt = prestigeTabelle;
@@ -2662,7 +2662,7 @@ const _sternLagen = JSON.parse(K.eval(`JSON.stringify((function(){
     try { const P = prestigeOf('x');
       return {p, name:_insLageName(P), pos:insigniumPos(P), zacken:'zacken' in P}; }
     finally { prestigeTabelle = alt; } };
-  return [5999, 6000, 6499, 6500, 7000, 99999].map(lage);
+  return [5499, 5500, 5999, 6000, 6500, 99999].map(lage);
 })())`));
 ok(_sternLagen.map(x => x.name).join('|')
      === 'Kronenreif III|Ordensstern I|Ordensstern I|Ordensstern II|Ordensstern III|Ordensstern III'
@@ -3986,30 +3986,31 @@ ok(_rkIntern.length === 0, 'kein interner Begriff in einem sichtbaren Text',
    _rkIntern.join(', ') || 'keiner');
 
 // Die Grundwerte je Kammer [§C34]. Koennen und die leistungsbezogene Form
-// wiegen 100, eine Rolle und eine Fuegung 75, eine Schattenseite null. Mit
-// 150 wog ein Koennen-Rekord so viel wie ein Meistertitel. Geprueft wird die
+// wiegen 40, eine Rolle und eine Fuegung 30, eine Schattenseite null. Mit
+// 150 wog ein Koennen-Rekord so viel wie ein Meistertitel, mit 100 so viel
+// wie eine legendaere Auszeichnung. Geprueft wird die
 // Zahl selbst und nicht nur `REKORD_GRUNDWERT`: die Konstante stimmt immer
 // mit sich selbst ueberein.
 const _rolle = ['dauersturm','abwehrmauer','tailwind','solorun',
                 'wall','sturmtreue','switcher'];
 const _basisFehler = _rk.filter(c => {
   const soll = c.kind === 'shame' ? 0
-    : c.kind === 'fuegung' ? 75
-    : _rolle.indexOf(c.id) >= 0 ? 75 : 100;
+    : c.kind === 'fuegung' ? 30
+    : _rolle.indexOf(c.id) >= 0 ? 30 : 40;
   return c.basis !== soll;
 }).map(c => c.id + ' ' + c.basis);
 ok(_basisFehler.length === 0, 'jede Kammer traegt ihren Grundwert',
-   _basisFehler.join(', ') || '100 / 75 / 0');
-ok(_rk.filter(c => c.kind === 'koennen').every(c => c.basis === 100),
-   'Koennen gibt 100 Punkte Grundwert');
+   _basisFehler.join(', ') || '40 / 30 / 0');
+ok(_rk.filter(c => c.kind === 'koennen').every(c => c.basis === 40),
+   'Koennen gibt 40 Punkte Grundwert');
 ok(_rk.filter(c => c.kind === 'form' && _rolle.indexOf(c.id) < 0)
-     .every(c => c.basis === 100),
-   'leistungsbezogene Form gibt 100 Punkte Grundwert');
+     .every(c => c.basis === 40),
+   'leistungsbezogene Form gibt 40 Punkte Grundwert');
 ok(_rk.filter(c => c.kind === 'form' && _rolle.indexOf(c.id) >= 0)
-     .every(c => c.basis === 75),
-   'rollenbezogene Form gibt 75 Punkte Grundwert');
-ok(_rk.filter(c => c.kind === 'fuegung').every(c => c.basis === 75),
-   'eine Fuegung gibt 75 Punkte Grundwert');
+     .every(c => c.basis === 30),
+   'rollenbezogene Form gibt 30 Punkte Grundwert');
+ok(_rk.filter(c => c.kind === 'fuegung').every(c => c.basis === 30),
+   'eine Fuegung gibt 30 Punkte Grundwert');
 ok(_rk.filter(c => c.kind === 'shame').every(c => c.basis === 0),
    'eine Schattenseite gibt null Punkte');
 // Und keine Schattenseite bringt Prestige.
@@ -4049,10 +4050,10 @@ ok(_tBasis.length === 0, 'die Quelle rechnet mit dem Grundwert des Katalogs',
    _tBasis.join(', ') || 'alle');
 // Ohne Grundwert am Eintrag gilt der der Kammer. Der Rueckfall las vorher
 // einen Faktor je Art mit Schluesseln, die der Katalog nicht fuehrt, und gab
-// jedem Eintrag 75 — auch einem Koennen-Rekord.
+// jedem Eintrag den der Fuegung — auch einem Koennen-Rekord.
 const _rueckfall = JSON.parse(K.eval(`JSON.stringify(['koennen','form','mark','fuegung','shame']
   .map(k => k + ':' + _rekordBasis({kind:k})))`)).join(' ');
-ok(_rueckfall === 'koennen:100 form:100 mark:100 fuegung:75 shame:0',
+ok(_rueckfall === 'koennen:40 form:40 mark:40 fuegung:30 shame:0',
    'ohne Grundwert am Eintrag gilt der Wert der Kammer', _rueckfall);
 const _tHalter = _teil.filter(x => x.halter !== x.echt).map(x => x.id);
 ok(_tHalter.length === 0, 'die Quelle teilt durch die Zahl der heutigen Halter',
@@ -4450,7 +4451,7 @@ console.log('\n═══ KONSTANT SCHLECHT GEWINNT NICHTS ═══');
 // 0:10 verliert, ist gleichmaessig. Dasselbe gilt fuer die ROLLENWERTE: „Der
 // Wandler" misst eine Aufstellung von fuenfzig zu fuenfzig, und wo jemand
 // steht, entscheidet die Auslosung. Beide zeichnen niemanden aus, sie
-// gehoeren jemandem [§C35] — deshalb wiegen sie 75 und nicht 100. Geprueft
+// gehoeren jemandem [§C35] — deshalb wiegen sie 30 und nicht 40. Geprueft
 // wird also genau das, was den Grundwert des Koennens traegt.
 const _nullLauf = {
   id:'probe', games:60, wins:0, losses:60, gf:0, ga:600, gd:-600,

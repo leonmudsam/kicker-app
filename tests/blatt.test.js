@@ -353,7 +353,7 @@ const ok = (c, msg, det) => {
   ok(!alle.fehlt && alle.felder === 21, 'die Laufbahn zeigt alle einundzwanzig Felder',
      JSON.stringify({felder: alle.felder}));
   ok(!alle.fehlt && alle.jetzt.length === 1, 'genau ein Feld ist das eigene', JSON.stringify(alle.jetzt));
-  ok(!alle.fehlt && alle.sternKnoepfe === 'I II III' && /II 6500 · III 7000/.test(alle.sternSchwellen) && !alle.zacke,
+  ok(!alle.fehlt && alle.sternKnoepfe === 'I II III' && /II 6000 · III 6500/.test(alle.sternSchwellen) && !alle.zacke,
      'der Ordensstern steht in der Laufbahn mit den Graden I, II, III und ihren Schwellen',
      JSON.stringify({knoepfe:alle.sternKnoepfe, schwellen:alle.sternSchwellen, zacke:alle.zacke}));
   if(!alle.fehlt){
@@ -767,7 +767,25 @@ const ok = (c, msg, det) => {
   const tafel = await page.evaluate(() => {
     // Der Cache wird sonst aus der DB gefuellt; im Harness gibt es keine.
     // Der Generator liefert dieselben Stories, die die App persistiert haette.
-    window.__k.eval('_cache._stories = _buildStories().slice().sort((a,b)=>new Date(b.when)-new Date(a.when)); openNewsFeed(); _newsFeedRest()');
+    // Die Insignium-Karte entsteht nur am letzten Spieltag; die App hat die
+    // der Tage davor längst gespeichert. Ohne sie hing die Seite „Zeichen"
+    // daran, ob gerade der letzte Spieltag eine Stufe bewegt hat — die
+    // Bewegung des Vortags wird deshalb nachgetragen, wie sie in der
+    // Datenbank stünde.
+    window.__k.eval(`globalThis.__mitZeichen = function(){
+      const alle = matches, tage = [...new Set(alle.map(m => tagKey(mts(m))))].sort(), frueher = [];
+      for(let i = tage.length - 2; i >= Math.max(0, tage.length - 8) && !frueher.length; i--){
+        matches = alle.filter(m => tagKey(mts(m)) <= tage[i]); invalidateCache();
+        try { frueher.push(..._buildStories().filter(s => (s.dataRef || {}).type === 'insignium_tag')); }
+        finally { matches = alle; invalidateCache(); }
+      }
+      const jetzt = _buildStories(), da = new Set(jetzt.map(s => s.id));
+      return jetzt.concat(frueher.filter(s => !da.has(s.id)));
+    };
+    // Erst rechnen, dann zuweisen: der Nachtrag ersetzt \`_cache\` (invalidateCache),
+    // und eine Zuweisung in einem Ausdruck schriebe in das alte Objekt.
+    const mitZeichen = __mitZeichen();
+    _cache._stories = mitZeichen.sort((a,b)=>new Date(b.when)-new Date(a.when)); _cache._consolFrom = null; _cache._frischVon = null; openNewsFeed(); _newsFeedRest()`);
     const sheet = document.getElementById('sheet');
     const koepfe = sheet ? [...sheet.querySelectorAll('.nf-tag')] : [];
     const gruppen = sheet ? [...sheet.querySelectorAll('.nf-feed')] : [];
@@ -1377,7 +1395,7 @@ const ok = (c, msg, det) => {
   const kartenMobil = await page.evaluate(() => {
     const K = window.__k.eval.bind(window.__k);
     const roh = K(`JSON.stringify((function(){
-      const r = _buildStories();
+      const r = __mitZeichen();
       _cache._stories = r.slice().sort((a,b)=>new Date(b.when)-new Date(a.when));
       _cache._consolFrom = null; _cache._frischVon = null;
       const alle = getStoriesCache();
@@ -3346,7 +3364,7 @@ const ok = (c, msg, det) => {
   ok(zahlen.zu.length === 0, 'kein Wert und keine Zeile darunter laeuft ueber ihre Zelle',
      zahlen.zu.slice(0, 3).join(', ') || 'keiner');
   ok(zahlen.blatt && zahlen.blatt.v === '+' + zahlen.blatt.soll.p
-       && zahlen.blatt.d === '100 + ' + zahlen.blatt.soll.b && /^\+\d+,?\d* σ$/.test(zahlen.blatt.ueber),
+       && zahlen.blatt.d === '50 + ' + zahlen.blatt.soll.b && /^\+\d+,?\d* σ$/.test(zahlen.blatt.ueber),
      'das Blatt einer gehaltenen Chronik zeigt Grundwert, Bonus und den Abstand zur Schwelle',
      JSON.stringify(zahlen.blatt));
 
@@ -3561,7 +3579,7 @@ const ok = (c, msg, det) => {
   });
   // Grundwert und Bonus mit seinem Grund: „+16" allein sagt nicht, wofuer.
   ok(!chronRechnung.fehlt && chronRechnung.bonus > 0
-     && new RegExp('Grundwert 100 \\+ ' + chronRechnung.bonus + ' für [\\d,]+ σ weiter als verlangt').test(chronRechnung.text),
+     && new RegExp('Grundwert 50 \\+ ' + chronRechnung.bonus + ' für [\\d,]+ σ weiter als verlangt').test(chronRechnung.text),
      'das Laufbahnblatt nennt Grundwert und Bonus einer Chronik',
      chronRechnung.text.slice(0,220));
   ok(chronRechnung.rang === 1 || new RegExp(chronRechnung.rang + '\\. Chronik.*√' + chronRechnung.staffel).test(chronRechnung.text),

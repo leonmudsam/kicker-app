@@ -4327,7 +4327,7 @@ ok(_achsen.ic[0] && /^Schildring für [^,]+, [^,]+ und [^,]+$/.test(_achsen.ic[0
    'die Schlagzeile nennt die Stufe einmal und alle drei', (_achsen.ic[0]||{}).ti);
 // Der Satz erklärt die Stufe und behauptet nichts, was eine alte Zeile nicht
 // weiß: wie viele sie tragen, steht nur in neuen Karten.
-ok(_achsen.ic[0] && /^Der Schildring ist die zweite Stufe der Leiter und beginnt bei 600 Prestige\.$/.test(_achsen.ic[0].tx),
+ok(_achsen.ic[0] && /^Der Schildring ist die zweite Stufe der Leiter und beginnt bei 500 Prestige\.$/.test(_achsen.ic[0].tx),
    'ihr Satz erklärt die Stufe ohne Floskel', (_achsen.ic[0]||{}).tx);
 // Und jede Bewegung steht darauf: die besonderste als Bühne, jede übrige als
 // Zeile — es standen höchstens drei Zeilen und der Rest als Zahl.
@@ -9085,7 +9085,18 @@ const _tafelBl = JSON.parse(K.eval(`JSON.stringify((function(){
   // Die Insignium-Karte des Tages: die Bewegung der Schlagzeile als Bühne,
   // jede Bewegung mit den drei Graden ihrer Stufe, ihre Wirkung aus den drei
   // Quellen und die Leiter der Liga.
-  const ins = typ('insignium_tag')[0];
+  // Die Insignium-Karte entsteht nur am letzten Spieltag; bewegt er keine
+  // Stufe, stammt sie vom Spieltag davor, so wie die App sie gespeichert hat.
+  const insFrueher = () => {
+    const alle = matches, tage = [...new Set(alle.map(m => tagKey(mts(m))))].sort();
+    for(let i = tage.length - 2; i >= Math.max(0, tage.length - 8); i--){
+      matches = alle.filter(m => tagKey(mts(m)) <= tage[i]); invalidateCache();
+      try { const k = _buildStories().find(s => (s.dataRef || {}).type === 'insignium_tag'); if(k) return k; }
+      finally { matches = alle; invalidateCache(); }
+    }
+    return null;
+  };
+  const ins = typ('insignium_tag')[0] || insFrueher();
   if(ins){
     const b = blatt(ins), d = ins.dataRef, z = d.zuege[0];
     r.ins = {buehne:/class="nd-is-z"/.test(b.k), grade:zahl(/class="nd-is-gf/g, b.m),

@@ -57,7 +57,7 @@ damit wertvoller als das einmalige Wochentags-Sammelziel.
 | dort `zufall` | `'quote'` oder `'fund'`, **nur** wenn der Eintrag kein Können misst | ohne ihn steht die Fügung in der Kammer „Bestmarken" neben dem höchsten Elo-Stand der Ligageschichte. Der Wert entscheidet, welche Zusicherung in `tests/disziplinen` für ihn gilt [§C35] |
 | dort `paar` | die **id** des Eintrags, der das andere Ende desselben Werts wertet, **nur** bei einer Quoten-Fügung mit Vorzeichen | ohne ihn verlangt `tests/disziplinen` für jede Hälfte einzeln, dass die halbe Liga im Rennen steht — die Regel ist gegen eine zu hohe SCHWELLE geschrieben, und ein Vorzeichen ist keine Schwelle: gemessen standen fünf über und fünf unter dem eigenen Mittel, und beide Hälften fielen durch. Die Marke ist keine Beschriftung: der Partner muss zurückzeigen, und die beiden Rennen dürfen sich nicht schneiden. `paar` muss außerdem in der Projektion `_chronRoh` stehen — `CHRONICLES` nennt nur, was sie kennt, und ein Feld, das sie nicht nennt, kommt im Test gar nicht an |
 | `allzeit.kammer` | `koennen`, `form`, `mark`, `fuegung` oder `shame` [§C35] | ohne sie wird die Kammer aus `art` erraten, und die Ableitung kennt „Aktuelle Form" nicht: ein Fenster-Rekord landet im Können und steht dort neben einem Laufbahnwert. `tests/disziplinen` zählt die fünf Kammern und ihre Zahlen (16/6/8/18/14) nach |
-| `allzeit.basis` | der Grundwert fürs Prestige, immer aus `REKORD_GRUNDWERT` (`32-chronik-katalog.js`) und nie als Zahl: `.koennen` (100) für Können, leistungsbezogene Form und leistungsbezogene Bestmarke, `.fuegung` (75) für Rollenwert und Fügung, `.schatten` (0) für eine Schattenseite [§C34] | ohne ihn nimmt `_rekordBasis` den Wert der Kammer, und eine Bestmarke, die wie das Können wiegen soll, fiele auf ihn zurück. Als Zahl geschrieben bleibt der Eintrag stehen, wenn die Gewichtung sich ändert: die 150 des Könnens stand an 26 Einträgen einzeln. Er ist NICHT, was jemand bekommt — erst durch die Halter geteilt, dann gedämpft. `tests/disziplinen` prüft die Zahl je Kammer und beide Schritte in dieser Reihenfolge |
+| `allzeit.basis` | der Grundwert fürs Prestige, immer aus `REKORD_GRUNDWERT` (`32-chronik-katalog.js`) und nie als Zahl: `.koennen` (40) für Können, leistungsbezogene Form und leistungsbezogene Bestmarke, `.fuegung` (30) für Rollenwert und Fügung, `.schatten` (0) für eine Schattenseite [§C34] | ohne ihn nimmt `_rekordBasis` den Wert der Kammer, und eine Bestmarke, die wie das Können wiegen soll, fiele auf ihn zurück. Als Zahl geschrieben bleibt der Eintrag stehen, wenn die Gewichtung sich ändert: die 150 des Könnens stand an 26 Einträgen einzeln. Er ist NICHT, was jemand bekommt — erst durch die Halter geteilt, dann gedämpft. `tests/disziplinen` prüft die Zahl je Kammer und beide Schritte in dieser Reihenfolge |
 | `allzeit.mind` | die Mindestbasis in Worten, so wie sie auf der Karte steht | sie stand nur im Bedingungssatz, und wer die Karte las, musste sie daraus heraussuchen. Ein Gegenpaar muss dieselbe Zahl tragen, sonst ist eine Hälfte leichter zu halten als die andere — `tests/disziplinen` vergleicht die Zahlen der zwölf Paare |
 | `allzeit.zeitraum` | über welche Strecke gerechnet wird („Ganze Laufbahn", „Die letzten 40 Partien", „Ein einzelner Spieltag") | ohne ihn steht auf der Karte nicht, ob der Wert für immer gilt oder für die letzten vierzig Partien, und das ist der Unterschied zwischen zwei Kammern |
 | `allzeit.offen` | `true`, **nur** wenn die Bedingung mit fünfzig Partien in der Laufbahn erfüllbar ist [§C35] | ohne die Marke wächst der Katalog still zum Vielspieler: 13 der 21 bestehenden Rekorde mit lesbarer Mindestzahl sind für einen 50-Spieler unerreichbar. Die Marke ist keine Beschriftung — `tests/disziplinen` verlangt, dass im Rennen jemand mit unter hundert Partien steht, dass der Rekord vergeben ist und dass er nicht nur den drei Besten gehört |
@@ -127,10 +127,11 @@ der ihn hält — und für sonst niemanden.
 3. **Die Schwellen in `INSIGNIEN` werden an der echten Liga kalibriert**
    [§C30]. Keine Spanne ist kürzer als 500 und keine kürzer als die vorige:
    die Spitze trägt den Lorbeerreif im ersten Grad, die beiden dahinter
-   stehen darunter, im Zierkranz oder in der Volute, und der erste Ordensstern bei **6.000 Prestige** soll
+   stehen darunter, im Zierkranz oder in der Volute, und der erste Ordensstern bei **5.500 Prestige** soll
    langfristig erreichbar sein; seine Grade II und III folgen je 500 darüber.
-   Wer Startwerte anhebt, zieht die Schwellen mit — sonst steigt die Liga
-   über Nacht, ohne gespielt zu haben. Ausnahme ist eine Anhebung, die
+   Wer Startwerte ändert, zieht die Schwellen mit — sonst steigt oder fällt
+   die Liga über Nacht, ohne gespielt zu haben; mit den Grundwerten von
+   Chronik (50) und Rekorden (40, 30) sanken sie auf 500 bis 5500. Ausnahme ist eine Anhebung, die
    einen Fortschritt nachträgt, der schon erarbeitet ist: die Meilensteine
    der Laufbahn hoben drei Spieler zum Lorbeerreif, und das war gewollt.
 
@@ -148,7 +149,7 @@ Partien und fällt, wenn es kippt:
 | nur Kronenreif und Ordensstern sind die obersten Stufen | die Breaking-Grenze beim Einfügen einer Stufe verrutscht [§C33] |
 | Glut und Hof in der Rangfarbe werden mit der Leiter nicht schwächer, die Lichter tragen die Rangfarbe | der Schimmer nicht mehr sagt, wer weiter oben steht [§C30] |
 | keine Spanne ist kürzer als 500 | eine Stufe fast geschenkt ist |
-| der Ordensstern hat drei Grade, I ab 6000, II ab 6500, III ab 7000, der Kronenreif 4500, 5000, 5500, und Ordensstern III ist das oberste Feld | er wieder anders zählt als jede andere Stufe [§C30] |
+| der Ordensstern hat drei Grade, I ab 5500, II ab 6000, III ab 6500, der Kronenreif 4000, 4500, 5000, und Ordensstern III ist das oberste Feld | er wieder anders zählt als jede andere Stufe [§C30] |
 | die Spitze trägt den Lorbeerreif im ersten Grad, die beiden dahinter stehen darunter, im Zierkranz oder in der Volute | Schwellen und Grade die heutige Liga falsch abbilden. Gemessen wird ohne Namen und ohne Reihenfolge: die war festgeschrieben, und damit fiel die Zusicherung bei jedem Rekord, der Punkte verschiebt — kalibriert ist die Leiter und nicht die Tabelle |
 | nur die Rekorde des Niveaus folgen der Siegquote | ein Rekord die Siegquote anders verpackt noch einmal zählt und damit dem Besten Prestige schenkt, das er schon hat [§C35] |
 | das Langzeitmodell kann den Ordensstern erreichen | ein weicher Deckel zur harten Obergrenze wird |

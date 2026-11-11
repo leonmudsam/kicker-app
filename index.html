@@ -6702,7 +6702,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.11.11.70bdf021';
+const BUILD_VERSION='2026.11.11.3f84c81d';
 function forceReload(nach){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -31071,7 +31071,7 @@ const CHRONIK_KLASSE_NAME = {legendaer:'legendär', selten:'selten', besonders:'
 const CHRONIK_ART_NAME = {koennen:'Können', konstanz:'Konstanz',
                           fuegung:'Fügung', schatten:'Schattenseite'};
 
-const REKORD_GRUNDWERT = {koennen:100, fuegung:75, schatten:0};
+const REKORD_GRUNDWERT = {koennen:40, fuegung:30, schatten:0};
 
 function titleTone(tone){ return TITLE_TONES[tone] || TITLE_TONES.acid; }
 
@@ -37063,12 +37063,12 @@ const PRESTIGE_REICHWEITE = 0.5;
 
 const INSIGNIEN = [
   {key:'reif',    name:'Reif',          min:0},
-  {key:'schild',  name:'Schildring',    min:600},
-  {key:'volute',  name:'Volutenkranz',  min:1200},
-  {key:'zier',    name:'Zierkranz',     min:2100},
-  {key:'lorbeer', name:'Lorbeerreif',   min:3100},
-  {key:'krone',   name:'Kronenreif',    min:4500},
-  {key:'stern',   name:'Ordensstern',   min:6000},
+  {key:'schild',  name:'Schildring',    min:500},
+  {key:'volute',  name:'Volutenkranz',  min:1000},
+  {key:'zier',    name:'Zierkranz',     min:1700},
+  {key:'lorbeer', name:'Lorbeerreif',   min:2800},
+  {key:'krone',   name:'Kronenreif',    min:4000},
+  {key:'stern',   name:'Ordensstern',   min:5500},
 ];
 const INSIGNIUM_OBEN = INSIGNIEN.length - 2;
 const INSIGNIUM_GRADE = 3;
@@ -37092,7 +37092,7 @@ function _chronikMonat(titleId){
   return (d && d.monat) || null;
 }
 
-const CHRONIK_GRUNDWERT = 100;
+const CHRONIK_GRUNDWERT = 50;
 const CHRONIK_BONUS_JE_HALBIERUNG = 10;
 function _erfc(x){
   const z = Math.abs(x), t = 1 / (1 + 0.5 * z);

@@ -6,8 +6,8 @@
 - Je Monat zählt der Eintrag, der in der Matrix steht [§C32]; für abgeschlossene Monate aus dem Einfrierer (`_frozenTitlesOf`), nicht aus einer neuen Rechnung — außer der Monat wurde mit einer älteren Fassung des Katalogs eingefroren (`SEASON_TITLES_FREEZE_V`).
 - Jede positive Auszeichnung zählt jedes Mal. Standard je Klasse in `PRESTIGE_AUSZEICHNUNG` (Rare 25 / −18 %, Common 3 / −25 %); jede legendäre, POTW/POTD und die acht Meilensteine der Laufbahn tragen einen eigenen Startwert in `PRESTIGE_AUSZEICHNUNG_SPEZIAL` (Siegermaschine 150, Urgestein 100, Abwehrchef und Mittelstürmer 60, Allrounder und Dauerbrenner 50, Stammgast 10, Debütant 5). Je zwei Verleihungen teilen eine Stufe, danach flacht die harmonische Kurve paarweise ab und endet nie. Schanden geben null.
 - Das Regelblatt liest die Startwerte aus der Tabelle (`_prestigeRegelListe`), nicht aus einer festen Liste.
-- Chroniken behalten ihren Wert aus `chronikPunkte`: der Grundwert 100 für jede Klasse und Art, dazu je σ, um die der Halter die Schwelle überbietet, zehn Punkte mal die Halbierungen an der Schwelle (`chronikBonus`, `chronikHalbierungenJeSigma`: 24 bei 1,2 σ Ausschlag, 54 bei 3,5 σ), eine Schattenseite nichts [§C39]; je Monat zählt der wertvollste Eintrag (`chronikEintragVon`), eine besondere Chronik, die eine Schattenseite desselben Monats überschattet (`chronikUeberschattet`), mit null; die Sammlung wird nach Wert gedämpft: Platz 1–2 voll, 3–5 ÷ √2, 6–8 ÷ √3, danach alle drei eine Wurzelstufe weiter.
-- Rekorde beginnen bei `allzeit.basis` aus `REKORD_GRUNDWERT` (`_rekordBasis`; 100 Können/Form/Bestmarke, 75 Rollenwert/Fügung, 0 Schattenseite; fehlt er, gilt der Wert der Kammer), werden durch die Zahl der heutigen Halter geteilt und wie Chroniken gestapelt. Keine Quelle hat einen harten Deckel.
+- Chroniken behalten ihren Wert aus `chronikPunkte`: der Grundwert 50 für jede Klasse und Art, dazu je σ, um die der Halter die Schwelle überbietet, zehn Punkte mal die Halbierungen an der Schwelle (`chronikBonus`, `chronikHalbierungenJeSigma`: 24 bei 1,2 σ Ausschlag, 54 bei 3,5 σ), eine Schattenseite nichts [§C39]; je Monat zählt der wertvollste Eintrag (`chronikEintragVon`), eine besondere Chronik, die eine Schattenseite desselben Monats überschattet (`chronikUeberschattet`), mit null; die Sammlung wird nach Wert gedämpft: Platz 1–2 voll, 3–5 ÷ √2, 6–8 ÷ √3, danach alle drei eine Wurzelstufe weiter.
+- Rekorde beginnen bei `allzeit.basis` aus `REKORD_GRUNDWERT` (`_rekordBasis`; 40 Können/Form/Bestmarke, 30 Rollenwert/Fügung, 0 Schattenseite; fehlt er, gilt der Wert der Kammer), werden durch die Zahl der heutigen Halter geteilt und wie Chroniken gestapelt. Keine Quelle hat einen harten Deckel.
 - Ein geänderter Grundwert gilt für jede Rechnung von heute: Laufbahn, Rangfolge, Insignium, Ziele, neue Stories und den Stand eines Ruheständlers bis zu seinem Abschluss. Gespeicherte Stories behalten die Zahlen ihres Tages; ein gespeicherter Abschluss eines Ruheständlers bleibt, wie er ist [§C40].
 - Das Blatt einer Rekord- oder Tafel-Karte zeigt die Wirkung aus den beiden gespeicherten Ständen (`laufbahn`, `_ndWirkungBlock`), keinen Rechentext; die Rechnung steht im Laufbahnblatt (`_prestigeQuellSatz`). Alle drei Rekordfälle teilen dieses Blatt. Die Zahl ist die Bewegung des ganzen Spieltags; darunter steht sie nach Quellen aufgeteilt (Rekorde, Monatschroniken, Auszeichnungen, `_ndWirkungQuellen`), die zusammen die Zahl ergeben, und bis zu zwei Posten in ihrer Richtung, die die Karte sonst nicht nennt. Neue Karten speichern die Quellen (`rek`, `mon`), ältere werden an den Ständen des Tages nachgerechnet und nur gezeigt, wenn sie die gespeicherte Zahl treffen.
 - Die Blätter der Ewigen Tafel tragen eine Bühne (`_ndWechselBuehne`, `_ndChronikBlatt`, `_ndMonatBlatt`, `_ndInsigniumBlatt`, `_ndInsTagBlatt`, `_ndTafelMomentBlatt`, `_ndHeldBuehne`, `_ndFaktBlatt`); eine Zeile führt zu ihrem Eintrag (`_ndTafelZiel`); keine Überschrift ohne Inhalt (`_ndOhneLeere`).
@@ -96,9 +96,16 @@ der Tafel steht [§C39]. Erst die Zusammenrechnung dämpft die nach Wert sortier
 Sammlung: Platz 1–2 zählen voll, 3–5 durch √2, 6–8 durch √3 und danach alle
 drei Werte eine Wurzelstufe weiter. Liga-Rekorde beginnen bei dem
 **Grundwert, der an ihrem Katalogeintrag steht** (`allzeit.basis`,
-`_rekordBasis`, die Zahlen in `REKORD_GRUNDWERT`): 100 für Können, für die
-leistungsbezogene Form und für eine leistungsbezogene Bestmarke, 75 für
-einen Rollenwert und eine Fügung, 0 für eine Schattenseite. Er stand
+`_rekordBasis`, die Zahlen in `REKORD_GRUNDWERT`): 40 für Können, für die
+leistungsbezogene Form und für eine leistungsbezogene Bestmarke, 30 für
+einen Rollenwert und eine Fügung, 0 für eine Schattenseite. Sie lagen bei
+100 und 75, und eine Chronik bei 100: ein Rekord wog so viel wie eine
+legendäre Auszeichnung, und wer viele Bestwerte und Monatseinträge
+sammelte, stieg mit ihnen allein eine Stufe — die Leiter belohnte das
+Festhalten mehr als das Gewinnen. Mit 40, 30 und 50 tragen die
+Auszeichnungen die Laufbahn; die Schwellen des Insigniums sanken
+mit [§C30], sonst wäre die ganze Liga über Nacht eine Stufe tiefer
+gestanden. Er stand
 vorher allein in einem Faktor je `art` — und damit konnte „Der
 Unaufhaltsame" nicht wie das Können wiegen, ohne gleichzeitig seinen Platz
 in der Katalogreihenfolge und in der Monatstafel zu verschieben: `art`
@@ -127,9 +134,9 @@ Grundwert, Halterteilung, Rang und Wurzelstufe. Die drei Quellensummen stehen
 bereits oben; im echten Bestand tragen Auszeichnungen rund 63 %, Chroniken
 17 % und Rekorde 20 % des Prestigevolumens. Eine runde Zahl ist im Blatt
 nachrechenbar: „96, geteilt durch zwei Halter, dann durch Wurzel zwei"
-liest niemand nach, 100 schon.
+liest niemand nach, 40 schon.
 **Der rohe Grundwert ist nicht, was jemand bekommt.** Ein zehnter Rekord
-gibt nicht 100 Prestige: er wird durch die Zahl seiner Halter geteilt,
+gibt nicht seine 40 Prestige: er wird durch die Zahl seiner Halter geteilt,
 landet auf einem Rang im Rekordstapel und wird dort durch die Wurzel seiner
 Staffel geteilt — und weil er die anderen Rekorde mit verschiebt, ist der
 Nettozuwachs am Ende noch eine dritte Zahl. Das Blatt einer Rekord-Karte

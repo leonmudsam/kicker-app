@@ -127,13 +127,16 @@ const CHRONIK_ART_NAME = {koennen:'Können', konstanz:'Konstanz',
 
 // ─── Der Grundwert eines Liga-Rekords im Prestige [§C34] ─────────────
 // Eine Stelle für alle Rekorde. Wer misst, was jemand kann — Können,
-// Bestmarke, Form —, beginnt bei 100; wer festhält, wo jemand steht oder was
-// Auslosung und letzter Ball entschieden (Rollenwert, Fügung), bei 75; eine
+// Bestmarke, Form —, beginnt bei 40; wer festhält, wo jemand steht oder was
+// Auslosung und letzter Ball entschieden (Rollenwert, Fügung), bei 30; eine
 // Schattenseite bringt nichts. Die Zahl stand an jedem der 63 Einträge
 // einzeln, und mit 150 wog ein Können-Rekord so viel wie ein Meistertitel:
 // wer zehn Bestwerte hielt, stand auf der Leiter vor dem, der die Liga
-// gewann.
-const REKORD_GRUNDWERT = {koennen:100, fuegung:75, schatten:0};
+// gewann. Auch 100 und 75 waren noch zu viel: ein Rekord wog so viel wie
+// eine legendäre Auszeichnung, und wer viele Bestwerte hielt, stieg mit
+// ihnen allein eine Stufe — die Leiter belohnte das Festhalten mehr als das
+// Gewinnen.
+const REKORD_GRUNDWERT = {koennen:40, fuegung:30, schatten:0};
 
 function titleTone(tone){ return TITLE_TONES[tone] || TITLE_TONES.acid; }
 
