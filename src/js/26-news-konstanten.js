@@ -473,21 +473,32 @@ function _storyFolge(a, b){
   return (new Date(b.when) - new Date(a.when)) || ((b.prio || 0) - (a.prio || 0));
 }
 
-// Ambiente Fun-Fact-Stories (v8.5, v9.5) — Fun Facts / persönliche Nuggets,
-// damit der Feed auch ohne neue Matches lebt.
-//   RHYTHMUS (v9.7): TÄGLICH zwei Fun Facts — um 10:00 (Vormittag) und um
-//                    19:00 (Feierabend). Früher (v9.6) nur abends einer.
-//                    _isAmbientDay ist immer true → jeder Tag hat die Slots.
-//   AMBIENT_SLOTS  = die eine Slot-Stunde; je Tag erscheint hoechstens eine Story,
-//                    jeweils erst ab dieser Uhrzeit.
+// Ambiente Fun-Fact-Stories — Fun Facts / persönliche Nuggets, damit der Feed
+// an einem Tag ohne Partie lebt.
+//   RHYTHMUS:      höchstens einer am Tag, um 15:00, wenn bis dahin an diesem
+//                  Tag keine Partie und kein Saisonabschluss lag und die letzte
+//                  Partie weniger als AMBIENT_RUHE_TAGE zurückliegt.
+//   AMBIENT_SLOTS  = die eine Slot-Stunde; die Story erscheint erst ab ihr.
 //   Anti-Spam:     IDs sind tages+stunden-deterministisch (`ambient_<datum>_<stunde>`)
 //                  → ON CONFLICT DO NOTHING → keine Doppel über Geräte/Syncs.
-//                  Die beiden Slots eines Tages zeigen nie denselben Typ.
 //   Auswahl:       tages-seeded gezogen (Pseudo-Zufall, überall identisch) plus
 //                  COOLDOWN: zuletzt (letzte AMBIENT_COOLDOWN_DAYS Tage)
 //                  verwendete Fun-Fact-Typen werden gesperrt → Rotation statt
 //                  vorhersehbarer Reihenfolge, keine schnellen Wiederholungen.
 const AMBIENT_SLOTS = [15];
+// Ein Fun Fact gehört zu einer Liga, die gerade spielt. Liegt die letzte
+// Partie vor dem Slot drei Tage (72 Stunden) oder länger zurück, bleibt er
+// leer, bis wieder gespielt wird. Ohne diese Grenze stand in jeder Pause Tag
+// für Tag ein Fun Fact im Feed: nach der Partie vom 12.10. um 17:20 sieben
+// hintereinander, vom 13. bis 19.10.; jetzt sind es die drei bis zum 15.
+// Die Grenze sind 72 Stunden, nicht Kalendertage: nach einer Partie am
+// Donnerstag um 14 Uhr bleibt der Sonntag leer, nach einer um 16 Uhr nicht.
+// Gezählt wird ab der letzten Partie VOR dem Slot, sodass jedes Gerät
+// denselben Slot sieht; eine Partie nach 15 Uhr öffnet erst den Slot des
+// nächsten Tages.
+// Jede Partie zählt, auch die eines späteren Ruheständlers [§C40]: gefragt
+// ist, ob die Liga spielt, nicht wer.
+const AMBIENT_RUHE_TAGE = 3;
 // Der einzelne 15-Uhr-Slot mischt Stand und Geschichte. Die Rotation darunter
 // sorgt fuer den Themenwechsel zwischen Form, Laufbahn, Rekorden und Liga.
 //

@@ -3,7 +3,8 @@
 // Feed auch OHNE neue Matches lebendig wirkt.
 //
 // KERNPRINZIP (kein Spam, Cross-Device-konsistent):
-//   - RHYTHMUS: hoechstens ein Fun Fact pro Tag, fest um 15:00 Uhr.
+//   - RHYTHMUS: hoechstens ein Fun Fact pro Tag, fest um 15:00 Uhr, und nur,
+//     solange die letzte Partie weniger als AMBIENT_RUHE_TAGE zurueckliegt.
 //     Verpasste stille Tage im Feed-Fenster werden beim naechsten Oeffnen gefuellt.
 //   - Story-ID ist tages+stunden-deterministisch: `ambient_<datum>_<stunde>`.
 //     → ON CONFLICT DO NOTHING beim Upload: der erste Insert gewinnt den
@@ -29,7 +30,9 @@ function _buildAmbientStories(now, pm, nameOf, tagesStories){
   // Ein Slot entsteht beim ersten Öffnen nach 15 Uhr. Wurde die Liga mehrere
   // Tage nicht geöffnet, werden stille vergangene Tage des Feed-Fensters
   // deterministisch nachgetragen. Tage mit Partien oder Saisonabschluss
-  // bleiben frei. Ein persistierter Slot wird nie neu gezogen.
+  // bleiben frei, ebenso jeder Tag, an dem die letzte Partie vor dem Slot
+  // AMBIENT_RUHE_TAGE oder länger zurückliegt. Ein persistierter Slot wird
+  // nie neu gezogen.
   //
   // Der Zeitstempel ist die SLOT-STUNDE und nicht der Moment des Entstehens.
   // Er war einmal `now`; damit nannte die Karte die Uhrzeit ihres Lesers und
@@ -48,6 +51,14 @@ function _buildAmbientStories(now, pm, nameOf, tagesStories){
   const dueSlots = [];
   const slotHours = AMBIENT_SLOTS.slice().sort((a, b) => a - b);
   const tageMitMatch = new Set((matches || []).map(m => tagKey(m.created_at)));
+  // Die Zeitpunkte aller Partien, aufsteigend: der Slot fragt nach der
+  // letzten davor (`AMBIENT_RUHE_TAGE`).
+  const partienMs = (matches || []).map(mts).filter(Number.isFinite).sort((a, b) => a - b);
+  const ruhtSeit = slotMs => {
+    let lo = 0, hi = partienMs.length;
+    while(lo < hi){ const mi = (lo + hi) >> 1; if(partienMs[mi] <= slotMs) lo = mi + 1; else hi = mi; }
+    return lo ? slotMs - partienMs[lo - 1] : Infinity;
+  };
   const generation = Array.isArray(tagesStories) ? tagesStories : [];
   // Fehlende stille Tage werden innerhalb des Feed-Fensters nachgetragen.
   // Vergangene Tage sind nur still, wenn an ihnen gar nicht gespielt wurde.
@@ -61,6 +72,7 @@ function _buildAmbientStories(now, pm, nameOf, tagesStories){
       if(faellig.getTime() > now.getTime()) continue;
       if(!istHeute && tageMitMatch.has(dk)) continue;
       if(istHeute && (matches || []).some(m => tagKey(m.created_at) === dk && mts(m) <= faellig.getTime())) continue;
+      if(ruhtSeit(faellig.getTime()) >= AMBIENT_RUHE_TAGE * _dayMs) continue;
       const saisonEnde = generation.some(s => (s.dataRef || {}).type === 'season_recap'
         && tagKey(s.when) === dk && new Date(s.when).getTime() <= faellig.getTime());
       if(saisonEnde) continue;

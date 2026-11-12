@@ -6708,7 +6708,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.11.12.b55cd862';
+const BUILD_VERSION='2026.11.12.bc708de5';
 function forceReload(nach){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -19761,6 +19761,7 @@ function _storyFolge(a, b){
 }
 
 const AMBIENT_SLOTS = [15];
+const AMBIENT_RUHE_TAGE = 3;
 const AMBIENT_SLOT_ROLLE = {
   form_best_wr:'stand', form_striker:'stand', form_defender:'stand',
   form_clutch:'stand', form_close_wins:'stand', form_most_active:'stand',
@@ -22243,6 +22244,12 @@ function _buildAmbientStories(now, pm, nameOf, tagesStories){
   const dueSlots = [];
   const slotHours = AMBIENT_SLOTS.slice().sort((a, b) => a - b);
   const tageMitMatch = new Set((matches || []).map(m => tagKey(m.created_at)));
+  const partienMs = (matches || []).map(mts).filter(Number.isFinite).sort((a, b) => a - b);
+  const ruhtSeit = slotMs => {
+    let lo = 0, hi = partienMs.length;
+    while(lo < hi){ const mi = (lo + hi) >> 1; if(partienMs[mi] <= slotMs) lo = mi + 1; else hi = mi; }
+    return lo ? slotMs - partienMs[lo - 1] : Infinity;
+  };
   const generation = Array.isArray(tagesStories) ? tagesStories : [];
   const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - NEWS_FENSTER_TAGE + 1);
   for(let tag = new Date(start); tag <= now; tag.setDate(tag.getDate() + 1)){
@@ -22252,6 +22259,7 @@ function _buildAmbientStories(now, pm, nameOf, tagesStories){
       if(faellig.getTime() > now.getTime()) continue;
       if(!istHeute && tageMitMatch.has(dk)) continue;
       if(istHeute && (matches || []).some(m => tagKey(m.created_at) === dk && mts(m) <= faellig.getTime())) continue;
+      if(ruhtSeit(faellig.getTime()) >= AMBIENT_RUHE_TAGE * _dayMs) continue;
       const saisonEnde = generation.some(s => (s.dataRef || {}).type === 'season_recap'
         && tagKey(s.when) === dk && new Date(s.when).getTime() <= faellig.getTime());
       if(saisonEnde) continue;

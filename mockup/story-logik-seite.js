@@ -106,7 +106,7 @@ const FORM = {
   'season_recap': {name:'Monatsabschluss', id:'season_recap_<Monat>', wann:'Am Ersten um 00:00.',
     was:'Eine Karte: Podest, Titelrennen, darunter das Team der Saison mit Bilanz und Elo, die Chronik des Monats mit ihrer Zahl, die drei mit den meisten Einträgen und wer zum ersten Mal darin steht, und jede Insignium-Bewegung, die erst mit den Titeln kam. Ein Tippen öffnet den Saison-Rückblick; ein eigenes Blatt hat sie nicht.',
     brk:'Immer: der Meister steht fest.', zus:'Darunter die Ehrung des Monats. Ist sie da, ist sie beim ersten Öffnen danach die jüngste Karte.'},
-  'ambient': {name:'Fun Fact', id:'ambient_<Tag>_15', wann:'Um 15:00, je Tag ein Platz.',
+  'ambient': {name:'Fun Fact', id:'ambient_<Tag>_15', wann:'Um 15:00, je Tag ein Platz, solange die letzte Partie weniger als drei Tage zurückliegt.',
     was:'Ein Fun Fact je Tag, nachgetragen für stille Tage im Fenster des Generators. Gezogen wird deterministisch mit Rotation von Vorlage, Rubrik und These; die Rubrik des Fun Facts davor ist gesperrt, und zuerst gezogen wird eine Karte über jemanden, der in den drei Tagen davor keine eigene Karte hatte. Jedes Bild kommt aus dataRef.bild (30c-news-fakt.js).',
     brk:'Nie.', zus:'Wird eine Karte im Platz abgemeldet, ist der Platz frei, und der Ersatz trägt die nächste ID (ambient_<Tag>_15_2), weil die Datenbank keine Zeile ändert.'},
   'dry_spell': {name:'Spielpause', id:'dry_spell_<letzte Partie>', wann:`Beim ersten Lauf nach ${K.pauseTage || 5} Tagen ohne Partie.`,

@@ -309,6 +309,19 @@ ok(_kleinerPool.n >= 1 && _kleinerPool.sauber,
 const _pflichtKeys = new Set(K.eval(
   `_ambientTemplatePool(new Date(), pmap(), id=>pname(id))`
   + `.filter(t => typeof t.pflicht === 'function').map(t => t.key)`));
+// Eine Liga, die weiterspielt: ein Fun Fact steht nur, solange die letzte
+// Partie weniger als drei Tage zurückliegt (`AMBIENT_RUHE_TAGE`). Die
+// Referenzdaten enden am 26.08.; für vierzig Tage Rotation spielt die Liga
+// deshalb jeden Abend um 18 Uhr eine Partie weiter, nach dem 15-Uhr-Slot,
+// mit dem Ergebnis einer echten Partie.
+K.eval(`(function(){
+  const vorlage = matches.slice(-40);
+  for(let d = 0; d < 40; d++){
+    const t = new Date('2026-08-27T18:00:00'); t.setDate(t.getDate() + d);
+    matches.push(Object.assign({}, vorlage[d % vorlage.length], {id:'weiter-' + d, created_at:t.toISOString()}));
+  }
+  invalidateCache();
+})()`);
 const _thesen = (function(){
   const start = new Date('2026-08-20T00:00:00').getTime();
   const bestand = [];
@@ -345,11 +358,14 @@ const _thesen = (function(){
 })();
 console.log('  Vierzig Tage Rotation: ' + _thesen.karten + ' Karten, '
   + _thesen.thesen + ' Thesen');
-ok(_thesen.karten >= 40, 'der Nachlauf fuellt ueberhaupt Slots',
+// Vierzig Tage, an denen die Liga spielt: Tage mit einer Partie vor 15 Uhr
+// haben keinen Slot, also sind es weniger als vierzig Karten.
+ok(_thesen.karten >= 30, 'der Nachlauf fuellt ueberhaupt Slots',
    _thesen.karten + ' Karten');
 ok(_thesen.verstoesse.length <= 2,
    'die Nachholung bleibt trotz grosser Luecke abwechslungsreich',
    _thesen.verstoesse.slice(0, 3).join(' | ') || 'keine Wiederholung');
+K.eval(`matches = matches.filter(m => String(m.id).indexOf('weiter-') !== 0); invalidateCache();`);
 
 // ── Eine abgemeldete Karte gibt ihren Slot frei ───────────────────────
 // Am 28.10. schrieb ein Gerät mit der Fassung vor dem Streichen des
@@ -380,26 +396,26 @@ ok(morning.some(s => s.id.indexOf('ambient_2026-08-27_') !== 0),
 const _slotNachMatch = JSON.parse(K.eval(`JSON.stringify((function(){
   const vorher = _cache._stories, pm = pmap(), nameOf = id => pname(id);
   const basis = Object.assign({}, matches[0]);
-  const id = 'ambient_2026-09-03_15';
+  const id = 'ambient_2026-08-27_15';
   let spaet = null, sichtbar = false, vorzeitig = false, nachSaisonende = false;
   try {
-    const mSpaet = Object.assign({}, basis, {id:'slot-spaet', created_at:'2026-09-03T15:20:00'});
+    const mSpaet = Object.assign({}, basis, {id:'slot-spaet', created_at:'2026-08-27T15:20:00'});
     matches.push(mSpaet); _cache._stories = [];
-    spaet = _buildAmbientStories(new Date('2026-09-03T15:05:00'), pm, nameOf, []).find(s => s.id === id);
+    spaet = _buildAmbientStories(new Date('2026-08-27T15:05:00'), pm, nameOf, []).find(s => s.id === id);
     _cache._stories = spaet ? [spaet] : [];
-    _buildAmbientStories(new Date('2026-09-03T15:30:00'), pm, nameOf, []);
+    _buildAmbientStories(new Date('2026-08-27T15:30:00'), pm, nameOf, []);
     _cache._snapshotConsolFrom = null;
     sichtbar = getStoriesCache().some(s => s.id === id);
     matches.pop();
-    const mFrueh = Object.assign({}, basis, {id:'slot-frueh', created_at:'2026-09-03T14:50:00'});
+    const mFrueh = Object.assign({}, basis, {id:'slot-frueh', created_at:'2026-08-27T14:50:00'});
     matches.push(mFrueh); _cache._stories = [];
-    vorzeitig = _buildAmbientStories(new Date('2026-09-03T15:05:00'), pm, nameOf, [])
+    vorzeitig = _buildAmbientStories(new Date('2026-08-27T15:05:00'), pm, nameOf, [])
       .some(s => s.id === id);
     matches.pop();
     _cache._stories = [];
-    nachSaisonende = _buildAmbientStories(new Date('2026-09-04T15:05:00'), pm, nameOf, [{
-      when:new Date('2026-09-04T14:55:00'), dataRef:{type:'season_recap'}
-    }]).some(s => s.id === 'ambient_2026-09-04_15');
+    nachSaisonende = _buildAmbientStories(new Date('2026-08-28T15:05:00'), pm, nameOf, [{
+      when:new Date('2026-08-28T14:55:00'), dataRef:{type:'season_recap'}
+    }]).some(s => s.id === 'ambient_2026-08-28_15');
   } finally {
     if(matches[matches.length - 1] && /^slot-/.test(matches[matches.length - 1].id || '')) matches.pop();
     _cache._stories = vorher; _cache._snapshotConsolFrom = null;
@@ -413,6 +429,41 @@ ok(!_slotNachMatch.vorzeitig,
    'eine Partie vor 15 Uhr verhindert den Funfact dieses Tages');
 ok(!_slotNachMatch.nachSaisonende,
    'ein Saisonabschluss vor 15 Uhr verhindert den Funfact dieses Tages');
+
+// Ein Fun Fact gehört zu einer Liga, die spielt (`AMBIENT_RUHE_TAGE`): liegt
+// die letzte Partie vor dem Slot drei Tage oder länger zurück, bleibt er
+// leer. Vorher stand in jeder Pause Tag für Tag einer im Feed, nach dem
+// 12.10. sieben hintereinander. Gerechnet wird in der Uhr des Prüflaufs:
+// jeder Slot, der kommt, liegt weniger als 72 Stunden nach der letzten
+// Partie, und der Tag nach dem letzten liegt darüber.
+const _ruhe = JSON.parse(K.eval(`JSON.stringify((function(){
+  const vorher = _cache._stories, pm = pmap(), nameOf = id => pname(id);
+  const tage = l => l.filter(s => /^ambient_/.test(s.id)).map(s => s.id.slice(8, 18));
+  try {
+    _cache._stories = [];
+    const pause = tage(_buildAmbientStories(new Date('2026-09-05T15:30:00'), pm, nameOf, []));
+    // Eine Partie nach 15 Uhr öffnet erst den Slot des nächsten Tages.
+    matches.push(Object.assign({}, matches[matches.length - 1], {id:'ruhe-zurueck', created_at:'2026-09-03T18:00:00'}));
+    _cache._stories = [];
+    const amTag = tage(_buildAmbientStories(new Date('2026-09-03T15:30:00'), pm, nameOf, []));
+    _cache._stories = [];
+    const danach = tage(_buildAmbientStories(new Date('2026-09-04T15:30:00'), pm, nameOf, []));
+    const letzte = Math.max(...matches.filter(m => m.id !== 'ruhe-zurueck').map(mts));
+    const slot = t => new Date(t + 'T15:00:00').getTime();
+    const naechster = t => { const d = new Date(t + 'T15:00:00'); d.setDate(d.getDate() + 1); return d.getTime(); };
+    const ok72 = pause.every(t => slot(t) - letzte < 72 * 3600000)
+      && pause.length > 0 && naechster(pause[pause.length - 1]) - letzte >= 72 * 3600000;
+    return {pause, amTag, danach, ok72};
+  } finally {
+    matches = matches.filter(m => m.id !== 'ruhe-zurueck');
+    _cache._stories = vorher;
+  }
+})())`));
+ok(_ruhe.ok72 && !_ruhe.pause.some(t => t >= '2026-08-30'),
+   'drei Tage nach der letzten Partie steht kein Fun Fact mehr', _ruhe.pause.join(', '));
+ok(!_ruhe.amTag.includes('2026-09-03') && _ruhe.danach.includes('2026-09-04'),
+   'eine Partie nach 15 Uhr öffnet den Slot des nächsten Tages, nicht den eigenen',
+   JSON.stringify(_ruhe));
 
 console.log('\n=== 6. BLICKRICHTUNG DES SLOTS ===');
 // Der einzelne Slot mischt Stand und Rueckblick.
