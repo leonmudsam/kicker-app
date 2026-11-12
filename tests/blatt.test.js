@@ -1451,6 +1451,54 @@ const ok = (c, msg, det) => {
             ohneBild: [...new Set(ohneBild)]};
   });
   ok(kartenMobil.n >= 20, 'jede Sorte baut ihre Karte', kartenMobil.n + ' Fassungen');
+  // Der Elo-Pegel [§C33]: die Säulen der Sieger stehen über der Nulllinie,
+  // die der Verlierer darunter, je länger, je mehr Punkte, Team A links.
+  // Und die Kante der Teamzeile ist ein Rand: als innerer Schatten zog
+  // Chrome auf dem Telefon an halben Pixeln Linien über und unter die Namen.
+  const pegel = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const host = document.createElement('div');
+    host.style.cssText = 'width:360px;position:absolute;left:0;top:0';
+    document.body.appendChild(host);
+    const html = K(`(function(){
+      const out = [];
+      for(const w of ['A', 'B']){
+        const m = matches.slice().reverse().find(x => x.winner === w);
+        const F = _spFakten(m);
+        out.push({w, html:'<div class="nf-card">' + _spScoreBild({key:'strom', data:SP_FORM.strom.daten(F, {})}, m) + '</div>',
+          a:[m.a1, m.a2], delta:_spKopfDaten(F).delta});
+      }
+      return JSON.stringify(out);
+    })()`);
+    const fehler = [];
+    JSON.parse(html).forEach(c => {
+      host.innerHTML = c.html;
+      const kopf = host.querySelector('.sp-pg');
+      if(!kopf){ fehler.push(c.w + ': kein Pegel'); return; }
+      const nl = kopf.getBoundingClientRect().top + kopf.getBoundingClientRect().height / 2;
+      const s = [...kopf.querySelectorAll('.sp-pg-s')];
+      s.forEach(x => {
+        const i = x.querySelector('i').getBoundingClientRect(), w = x.classList.contains('w');
+        if(w ? i.bottom > nl : i.top < nl) fehler.push(c.w + ': Säule auf der falschen Seite');
+      });
+      const links = s.slice(0, 2).map(x => x.querySelector('.av'));
+      const sieg = s.filter(x => x.classList.contains('w')).length;
+      if(sieg !== 2) fehler.push(c.w + ': ' + sieg + ' Sieger');
+      if((c.w === 'A') !== s[0].classList.contains('w')) fehler.push(c.w + ': Team A steht nicht links');
+      const h = s.map(x => x.querySelector('i').getBoundingClientRect().height);
+      const d = s.map(x => Math.abs(parseInt(x.querySelector('b').textContent.replace('−', '-'), 10)));
+      for(let i = 0; i < 4; i++) for(let j = 0; j < 4; j++) if(d[i] > d[j] && h[i] < h[j]) fehler.push(c.w + ': mehr Punkte, kürzere Säule');
+      [...host.querySelectorAll('.sp-nz > span:not(.sp-nz-gg)')].forEach(sp => {
+        const cs = getComputedStyle(sp);
+        if(/inset/.test(cs.boxShadow)) fehler.push(c.w + ': Kante als Schatten');
+        if(!(parseFloat(cs.borderLeftWidth) === 2 || parseFloat(cs.borderRightWidth) === 2)) fehler.push(c.w + ': Kante fehlt');
+      });
+    });
+    host.remove();
+    return fehler;
+  });
+  ok(pegel.length === 0, 'der Elo-Pegel stellt Sieger über und Verlierer unter die Nulllinie, nach Punkten, Team A links, und die Teamzeile trägt ihre Kante als Rand',
+     pegel.join(' | ') || 'stimmt');
   ok(kartenMobil.ohneBild.length === 0,
      'und jede traegt eine Bildzone, nicht nur Text',
      kartenMobil.ohneBild.join(', ') || 'jede mit Bild');
@@ -2171,7 +2219,7 @@ const ok = (c, msg, det) => {
     const out = {fehlt:false,
       brk: !!(karte && karte.classList.contains('nf-brk')),
       // Das Ergebnis steht im Kopf der Partie, der ihrem Anlass folgt [§11.6c].
-      band: karte ? karte.querySelectorAll('.nf-erg, .sp-zeile, .sp-feld, .sp-at, .sp-wp, .sp-band, .sp-ag, .sp-pu, .sp-sm, .sp-hz, .sp-zn').length : 0,
+      band: karte ? karte.querySelectorAll('.nf-erg, .sp-zeile, .sp-feld, .sp-at, .sp-wp, .sp-band, .sp-ag, .sp-pu, .sp-pg, .sp-hz, .sp-zn').length : 0,
       zeilen: zl.length,
       titel: karte ? (karte.querySelector('.nf-h') || {}).textContent || '' : '',
       zeilenText: zl.map(x => x.textContent.trim()).join(' | '),

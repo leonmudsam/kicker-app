@@ -8300,7 +8300,7 @@ const _bogen = JSON.parse(K.eval(`JSON.stringify((function(){
   const FORMKL = {mosaik:'sp-mo', tacho:'sp-ta', streu:'sp-sd', transfer:'sp-et', chemie:'sp-ch', gegner:'sp-gg',
     revanche:'sp-rv', gipfel:'sp-gp', rueckkehr:'sp-zu', gefaelle:'sp-gf', tagesring:'sp-tr', zaehlwerk:'sp-zw', feld:'sp-feld',
     tauziehen:'sp-tz', muenze:'sp-mz', weste:'sp-ws', uhr:'sp-uh', ueberholt:'sp-uo', duoserie:'sp-ds', hoch:'sp-ho',
-    tafel:'sp-ag', pucks:'sp-pu', balken:'sp-lb', strom:'sp-sm', herz:'sp-hz', zunull:'sp-zn'};
+    tafel:'sp-ag', pucks:'sp-pu', balken:'sp-lb', strom:'sp-pg', herz:'sp-hz', zunull:'sp-zn'};
   karten.forEach(s => {
     const d = s.dataRef, m = matches.find(x => x.id === d.matchId);
     if(!m) return;

@@ -5103,8 +5103,8 @@
 .sp-nz .w b{color:var(--ink)}
 .sp-nz-gg{font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);align-self:center}
 .sp-fk + .sp-lg{padding:0 13px}
-.sp-nz > span:not(.sp-nz-gg){padding-left:7px;box-shadow:inset 2px 0 0 var(--nz-c,transparent)}
-.sp-nz > span.re{padding-left:0;padding-right:7px;box-shadow:inset -2px 0 0 var(--nz-c,transparent)}
+.sp-nz > span:not(.sp-nz-gg){padding-left:7px;border-left:2px solid var(--nz-c,transparent)}
+.sp-nz > span.re{padding-left:0;padding-right:7px;border-left:0;border-right:2px solid var(--nz-c,transparent)}
 .sp-nz > span.w{--nz-c:var(--acid)}
 .sp-nz > span.l,.sp-nz > span.re:not(.w):not(.l){--nz-c:rgba(240,86,106,.65)}
 .sp-nz > span.l b{color:var(--ink2)}
@@ -5151,19 +5151,22 @@
 .sp-pu-z b{font:400 22px/1 'Archivo Black',sans-serif;text-align:right;color:var(--ink2)}
 .sp-pu-z.w b{color:var(--acid)}
 
-.sp-sm{height:98px}
-.sp-sm svg{position:absolute;inset:10px;width:calc(100% - 20px);height:78px;overflow:visible}
-.sp-sm-p{fill:none;stroke-linecap:butt;opacity:.62;vector-effect:non-scaling-stroke}
-.sp-sm-p.w{opacity:.85}
-.sp-sm .av{--av:24px;width:24px;height:24px;font-size:9px}
-.sp-sm-a{position:absolute;z-index:1;display:flex;flex-direction:column;align-items:center;gap:1px;margin:10px 8px}
-.sp-sm-a b{font:600 10px 'Sometype Mono',monospace;color:var(--red);background:rgba(10,12,11,.8);border-radius:4px;padding:0 3px}
-.sp-sm-a.w b{color:var(--acid)}
-.sp-sm-a:not(.w) .av{opacity:.82}
-.sp-sm-m{position:absolute;z-index:1;left:50%;top:50%;transform:translate(-50%,-50%);padding:5px 9px;border-radius:11px;
-  background:rgba(10,12,11,.86);border:1px solid var(--line2);box-shadow:0 0 18px rgba(0,0,0,.55)}
-.sp-sm-m .sp-st{font-size:23px}
-.sp-sm-m .sp-st em{color:var(--acid);text-shadow:0 0 16px rgba(190,242,100,.35)}
+.sp-pg{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:6px;height:116px}
+.sp-pg::before{content:"";position:absolute;left:12px;right:12px;top:50%;height:1px;background:var(--line2)}
+.sp-pg-t{display:flex;justify-content:center;gap:14px;min-width:0}
+.sp-pg-s{position:relative;width:30px;height:96px;display:grid;place-items:center}
+.sp-pg .av{--av:26px;width:26px;height:26px;font-size:9.5px;position:relative;z-index:1}
+.sp-pg-s i{position:absolute;left:50%;width:10px;margin-left:-5px;height:var(--h);border-radius:4px}
+.sp-pg-s b{position:absolute;left:50%;transform:translateX(-50%);font:700 10.5px 'Sometype Mono',monospace;white-space:nowrap}
+.sp-pg-s.w i{bottom:calc(50% + 15px);background:linear-gradient(0deg,rgba(190,242,100,.45),var(--acid));
+  box-shadow:0 0 10px rgba(190,242,100,.25);transform-origin:bottom}
+.sp-pg-s.w b{bottom:calc(50% + 18px + var(--h));color:var(--acid)}
+.sp-pg-s.l i{top:calc(50% + 15px);background:linear-gradient(180deg,rgba(240,86,106,.4),var(--red));transform-origin:top}
+.sp-pg-s.l b{top:calc(50% + 18px + var(--h));color:var(--red)}
+.sp-pg-s.l .av{opacity:.82}
+.sp-pg-m{display:grid;place-items:center;padding:0 2px;position:relative;z-index:1}
+.sp-pg-m .sp-st{font-size:23px;padding:4px 8px;border-radius:10px;background:var(--surface2);box-shadow:inset 0 0 0 1px var(--line2)}
+.sp-pg-m .sp-st em{color:var(--acid)}
 
 .sp-lb{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:end;gap:8px}
 .sp-lb .av{--av:24px;width:24px;height:24px;font-size:9px}
@@ -5246,8 +5249,10 @@
   .sp-pu-r i.w,.sp-pu-r i.l{animation:spKopfPuck .35s cubic-bezier(.3,1.6,.5,1) both;animation-delay:calc(var(--n, 0) * 30ms)}
   .sp-pu-r i:nth-child(2){--n:1}.sp-pu-r i:nth-child(3){--n:2}.sp-pu-r i:nth-child(4){--n:3}.sp-pu-r i:nth-child(5){--n:4}
   .sp-pu-r i:nth-child(6){--n:5}.sp-pu-r i:nth-child(7){--n:6}.sp-pu-r i:nth-child(8){--n:7}.sp-pu-r i:nth-child(9){--n:8}.sp-pu-r i:nth-child(10){--n:9}
-  .sp-sm-p{animation:spDa .6s ease-out both}
-  .sp-sm-p.w{animation-delay:.45s}
+  .sp-pg-s i{animation:spPgWachs .5s cubic-bezier(.3,1.3,.5,1) both}
+  .sp-pg-s.w i{animation-delay:.3s}
+  .sp-pg-s b{animation:spDa .3s ease-out both;animation-delay:.45s}
+  .sp-pg-s.w b{animation-delay:.7s}
   .sp-zn-hit{animation:spKopfTreffer .42s cubic-bezier(.3,1.6,.5,1) both;animation-delay:calc(var(--i) * 70ms + .25s)}
   .sp-zn-ring{animation:spKopfWelle .7s ease-out both;animation-delay:calc(var(--i) * 70ms + .3s)}
   .sp-zn::before{animation:spKopfLicht 1.6s ease-in-out .3s both}
@@ -6406,6 +6411,7 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   content:"";position:absolute;top:0;bottom:0;left:0;width:250%;pointer-events:none;
   background:linear-gradient(105deg,transparent 38%,rgba(255,236,170,.55) 50%,transparent 62%);
   transform:translateX(-84%);animation:glanzZug 9s ease-in-out infinite;animation-delay:var(--gd,0s)}
+@keyframes spPgWachs{from{transform:scaleY(0)}to{transform:scaleY(1)}}
 
   .geruest{position:relative;overflow:hidden;pointer-events:none}
   .gk{display:block;border-radius:7px;background:var(--surface2)}
@@ -6702,7 +6708,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.11.11.3f84c81d';
+const BUILD_VERSION='2026.11.12.b55cd862';
 function forceReload(nach){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -27525,31 +27531,14 @@ function _spPucksBild(d){
   return `<div class="sp-fk sp-pu">${z(d.W, d.hoch, true)}${z(d.L, d.tief, false)}</div>` + _spNz(d.W, d.L);
 }
 function _spStromBild(d){
-  const W = 240, H = 78, cx = W / 2, aw = d.aw !== false, dl = d.delta || {};
+  const aw = d.aw !== false, dl = d.delta || {};
   const A = aw ? d.W : d.L, B = aw ? d.L : d.W;
-  const breit = id => Math.max(3, Math.min(13, Math.abs(dl[id] || 0) / 2.2));
-  const id = 'sps' + _spVisualHash(d.W.concat(d.L).join() + d.hoch + ':' + d.tief);
-  const yEnde = [18, 60];
-  const seite = (ids, links, sieg) => {
-    const summe = ids.reduce((n, x) => n + breit(x), 0);
-    let off = H / 2 - summe / 2;
-    return ids.map((x, i) => {
-      const b = breit(x), ym = off + b / 2; off += b;
-      const xa = links ? 34 : W - 34, xm = links ? cx - 30 : cx + 30, xk = (xa + xm) / 2;
-      const pfad = sieg ? `M${xm} ${ym.toFixed(1)}C${xk} ${ym.toFixed(1)},${xk} ${yEnde[i]},${xa} ${yEnde[i]}`
-        : `M${xa} ${yEnde[i]}C${xk} ${yEnde[i]},${xk} ${ym.toFixed(1)},${xm} ${ym.toFixed(1)}`;
-      return `<path class="sp-sm-p${sieg ? ' w' : ''}" d="${pfad}" stroke="url(#${id})" stroke-width="${b.toFixed(1)}"/>`;
-    }).join('');
-  };
-  const ende = (x, i, links, sieg) => `<span class="sp-sm-a${sieg ? ' w' : ''}" style="top:${yEnde[i] - 12}px;${links ? 'left' : 'right'}:2px">`
-    + `${_spChip(x)}<b class="num">${_spVz(dl[x] || 0)}</b></span>`;
-  const [x1, x2] = aw ? [W, 0] : [0, W];
-  return `<div class="sp-fk sp-sm"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><defs>`
-    + `<linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="${x1}" x2="${x2}" y1="0" y2="0"><stop offset=".08" stop-color="#f0566a"/>`
-    + `<stop offset=".5" stop-color="#f7cf4a"/><stop offset=".92" stop-color="#BEF264"/></linearGradient></defs>`
-    + seite(A, true, aw) + seite(B, false, !aw) + `</svg>`
-    + A.map((x, i) => ende(x, i, true, aw)).join('') + B.map((x, i) => ende(x, i, false, !aw)).join('')
-    + `<span class="sp-sm-m">${_spSt(d)}</span></div>` + _spNz(d.W, d.L);
+  const alle = d.W.concat(d.L), mx = Math.max(1, ...alle.map(id => Math.abs(dl[id] || 0)));
+  const saeule = (id, sieg) => `<span class="sp-pg-s ${sieg ? 'w' : 'l'}" style="--h:${Math.round(5 + 17 * Math.abs(dl[id] || 0) / mx)}px">`
+    + `<i></i><b class="num">${_spVz(dl[id] || 0)}</b>${_spChip(id)}</span>`;
+  const team = (ids, sieg) => `<span class="sp-pg-t">${ids.map(id => saeule(id, sieg)).join('')}</span>`;
+  return `<div class="sp-fk sp-pg">${team(A, aw)}<span class="sp-pg-m">${_spSt(d)}</span>${team(B, !aw)}</div>`
+    + _spNz(d.W, d.L);
 }
 function _spHerzBild(d){
   const SW = 'M0 25H10l3-5 3 5h3l2 6 4-27 4 33 3-14h4q4-8 8 0H60';

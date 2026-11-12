@@ -1270,12 +1270,13 @@ const SP_FORM = {
     daten:F => _spKopfDaten(F),
     text:F => _spKontext(F)},
 
-  // Der Elo-Strom: was von den Verlierern zu den Siegern floss, je Spieler
-  // so breit wie seine Punkte.
+  // Der Elo-Pegel (`_spStromBild`, Schlüssel `strom` wie in gespeicherten
+  // Karten): was jeder Spieler gewann oder verlor, als Säule über und unter
+  // einer Nulllinie.
   strom:{rang:10, ic:'bolt', v2:true,
     wann:() => ({}),
     daten:F => _spKopfDaten(F),
-    // Die Elo zeigt der Strom selbst; „holen zusammen 60 Elo" stand über
+    // Die Elo zeigt der Pegel selbst; „holen zusammen 60 Elo" stand über
     // der Zeichnung, die genau das zeichnet.
     text:F => _spKontext(F)},
   // Die Lebensbalken (`_spBalkenBild`): was jedem Team am Ende blieb.
@@ -1835,35 +1836,24 @@ function _spPucksBild(d){
 // links. Vorher liefen vier Bänder von jedem Verlierer zu jedem Sieger und
 // kreuzten sich in einem X: welche Punkte wohin gingen, war nicht zu lesen,
 // und die Bänder sagten dasselbe viermal.
+// Der Elo-Pegel: eine Nulllinie durch die Gesichter und den Stand, über ihr
+// die Säulen der Sieger, unter ihr die der Verlierer, je Spieler so lang wie
+// seine Punkte, die Zahl an der Spitze. Team A steht links. Vorher
+// lief hier ein Strom aus vier Bändern von den Verlierern zu den Siegern:
+// die Bänder trafen sich hinter dem Stand, ihre Breite las niemand als
+// Zahl, und die Punkte standen klein neben dem Gesicht. Der Pegel sagt
+// dasselbe auf einen Blick: wer gewann, wer verlor, und wie viel.
 function _spStromBild(d){
-  const W = 240, H = 78, cx = W / 2, aw = d.aw !== false, dl = d.delta || {};
+  const aw = d.aw !== false, dl = d.delta || {};
   const A = aw ? d.W : d.L, B = aw ? d.L : d.W;
-  const breit = id => Math.max(3, Math.min(13, Math.abs(dl[id] || 0) / 2.2));
-  const id = 'sps' + _spVisualHash(d.W.concat(d.L).join() + d.hoch + ':' + d.tief);
-  const yEnde = [18, 60];
-  // Die Bänder einer Seite laufen in der Mitte übereinander zusammen.
-  const seite = (ids, links, sieg) => {
-    const summe = ids.reduce((n, x) => n + breit(x), 0);
-    let off = H / 2 - summe / 2;
-    return ids.map((x, i) => {
-      const b = breit(x), ym = off + b / 2; off += b;
-      const xa = links ? 34 : W - 34, xm = links ? cx - 30 : cx + 30, xk = (xa + xm) / 2;
-      // Der Fluss läuft vom Verlierer zur Mitte und von der Mitte zum Sieger.
-      const pfad = sieg ? `M${xm} ${ym.toFixed(1)}C${xk} ${ym.toFixed(1)},${xk} ${yEnde[i]},${xa} ${yEnde[i]}`
-        : `M${xa} ${yEnde[i]}C${xk} ${yEnde[i]},${xk} ${ym.toFixed(1)},${xm} ${ym.toFixed(1)}`;
-      return `<path class="sp-sm-p${sieg ? ' w' : ''}" d="${pfad}" stroke="url(#${id})" stroke-width="${b.toFixed(1)}"/>`;
-    }).join('');
-  };
-  const ende = (x, i, links, sieg) => `<span class="sp-sm-a${sieg ? ' w' : ''}" style="top:${yEnde[i] - 12}px;${links ? 'left' : 'right'}:2px">`
-    + `${_spChip(x)}<b class="num">${_spVz(dl[x] || 0)}</b></span>`;
-  // Rot bei den Verlierern, Gold in der Mitte, Grün bei den Siegern [§C25].
-  const [x1, x2] = aw ? [W, 0] : [0, W];
-  return `<div class="sp-fk sp-sm"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><defs>`
-    + `<linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="${x1}" x2="${x2}" y1="0" y2="0"><stop offset=".08" stop-color="#f0566a"/>`
-    + `<stop offset=".5" stop-color="#f7cf4a"/><stop offset=".92" stop-color="#BEF264"/></linearGradient></defs>`
-    + seite(A, true, aw) + seite(B, false, !aw) + `</svg>`
-    + A.map((x, i) => ende(x, i, true, aw)).join('') + B.map((x, i) => ende(x, i, false, !aw)).join('')
-    + `<span class="sp-sm-m">${_spSt(d)}</span></div>` + _spNz(d.W, d.L);
+  const alle = d.W.concat(d.L), mx = Math.max(1, ...alle.map(id => Math.abs(dl[id] || 0)));
+  // Die längste Säule misst 22 px; jede andere steht im Verhältnis dazu,
+  // mindestens 5 px, damit auch ein Punkt sichtbar bleibt.
+  const saeule = (id, sieg) => `<span class="sp-pg-s ${sieg ? 'w' : 'l'}" style="--h:${Math.round(5 + 17 * Math.abs(dl[id] || 0) / mx)}px">`
+    + `<i></i><b class="num">${_spVz(dl[id] || 0)}</b>${_spChip(id)}</span>`;
+  const team = (ids, sieg) => `<span class="sp-pg-t">${ids.map(id => saeule(id, sieg)).join('')}</span>`;
+  return `<div class="sp-fk sp-pg">${team(A, aw)}<span class="sp-pg-m">${_spSt(d)}</span>${team(B, !aw)}</div>`
+    + _spNz(d.W, d.L);
 }
 function _spHerzBild(d){
   // Der Herzschlag der Sieger steigt bis zum letzten Tor, der der Verlierer
@@ -1976,7 +1966,7 @@ function _spScoreSpezial(m){
   return null;
 }
 // Die Grundansichten des Katalogs in seiner Reihenfolge: drei für jede
-// Partie (Anzeigetafel, Elo-Strom, Torpucks), das Spielfeld, und sechs, die
+// Partie (Anzeigetafel, Elo-Pegel, Torpucks), das Spielfeld, und sechs, die
 // eine Bedingung haben. Ob eine zutrifft, sagt ihre Form (`wann`); das
 // Mosaik nur mit einem benannten Befund (`_spMosaikBefund`).
 const SP_KOPF_GRUND = ['tafel', 'strom', 'balken', 'feld', 'tauziehen', 'tacho', 'muenze', 'gefaelle', 'mosaik', 'streu'];
