@@ -49,9 +49,12 @@
   .sval{cursor:pointer;border-radius:8px;transition:.15s}
   .sval:active{background:var(--surface3)}
 
-  .vs-mid{display:flex;align-items:center;justify-content:center;gap:14px;padding:2px 0}
-  .vs-mid .line{flex:1;height:1px;background:var(--line)}
-  .vs-mid .vs{font-family:'Archivo Black',sans-serif;font-size:13px;color:var(--muted);letter-spacing:.1em}
+  /* Nicht `.vs`: so heißt die Klasse, die die Vorstellung eines Rückblicks
+     an seine Teile hängt (17-bewegung.css), und ihre Regel `.sheet.show
+     .vs` griff im Blatt „Partie bearbeiten“ auf dieses VS. */
+  .gegen{display:flex;align-items:center;justify-content:center;gap:14px;padding:2px 0}
+  .gegen .line{flex:1;height:1px;background:var(--line)}
+  .gegen-wort{font-family:'Archivo Black',sans-serif;font-size:13px;color:var(--muted);letter-spacing:.1em}
 
   .score-board{display:flex;align-items:stretch;gap:10px;background:var(--surface);
     border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:12px}

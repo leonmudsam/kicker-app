@@ -24,7 +24,7 @@ function showEditMatch(mid){
   openSheet(`${blattKopfHtml({ic:'edit', titel:'Partie bearbeiten', unter:'Änderungen lösen eine Neuberechnung aus'})}
     <div class="builder" style="margin-top:16px">
       <div class="team-block A"><div class="team-label">Team A</div>${slot('A',1)}${slot('A',2)}</div>
-      <div class="vs-mid"><span class="line"></span><span class="vs">VS</span><span class="line"></span></div>
+      <div class="gegen"><span class="line"></span><span class="gegen-wort">VS</span><span class="line"></span></div>
       <div class="team-block B"><div class="team-label">Team B</div>${slot('B',1)}${slot('B',2)}</div>
     </div>
     <div class="score-board" style="margin-top:12px">

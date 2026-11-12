@@ -742,13 +742,13 @@ async function neueSeite(ctx){
       window.setInterval = () => 0;
       window.__vorStart = K => { window.__K = K; };
     }, {daten:DATEN, jetzt:JETZT});
-    const karte = async (pg, titel) => pg.evaluate(t => !!document.querySelector('#main .vorschau[data-hinweis="' + t + '"]'), titel);
+    const karte = async (pg, titel) => pg.evaluate(t => !!document.querySelector('#main .erklaer[data-hinweis="' + t + '"]'), titel);
     const h1 = await neueSeite(hctx);
     await h1.page.goto(BASIS);
     await h1.page.waitForFunction(() => document.querySelector('#main .rlist') && window.__K, null, {timeout:20000});
     const vorher = await karte(h1.page, 'Die Liga');
     const knopf = await h1.page.evaluate(() => !!document.querySelector('#main .view-head [data-hilfe="liga"]'));
-    await h1.page.click('#main .vorschau[data-hinweis="Die Liga"] [data-hinweis-zu]');
+    await h1.page.click('#main .erklaer[data-hinweis="Die Liga"] [data-hinweis-zu]');
     await h1.page.waitForTimeout(400);
     const weg = !await karte(h1.page, 'Die Liga');
     // Ein anderer Reiter und zurück: das Neuzeichnen holt sie nicht wieder.

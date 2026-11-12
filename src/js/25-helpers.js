@@ -110,10 +110,10 @@ function _hinweiseSpeichern(){
 }
 function vorschauHtml(ic, titel, satz, ersatz){
   if(hinweiseWeg().has(titel)) return ersatz || '';
-  return `<div class="vorschau" data-hinweis="${esc(titel)}">
-    <button type="button" class="vs-zu" data-hinweis-zu aria-label="Hinweis schließen">${svgI('x')}</button>
-    <div class="vs-kopf"><span class="vs-ic">${svgI(ic)}</span><b>${esc(titel)}</b></div>
-    ${satz ? `<p class="vs-satz">${satz}</p>` : ''}${ersatz ? `<template>${ersatz}</template>` : ''}
+  return `<div class="erklaer" data-hinweis="${esc(titel)}">
+    <button type="button" class="ek-zu" data-hinweis-zu aria-label="Hinweis schließen">${svgI('x')}</button>
+    <div class="ek-kopf"><span class="ek-ic">${svgI(ic)}</span><b>${esc(titel)}</b></div>
+    ${satz ? `<p class="ek-satz">${satz}</p>` : ''}${ersatz ? `<template>${ersatz}</template>` : ''}
   </div>`;
 }
 // Ein Zuhörer für alle Karten: sie stehen in jedem Reiter und Unterreiter,
@@ -126,13 +126,13 @@ if(typeof document !== 'undefined' && document.addEventListener) document.addEve
   const zu = e.target && e.target.closest && e.target.closest('[data-hinweis-zu]');
   if(!zu) return;
   e.preventDefault(); e.stopPropagation();
-  const karte = zu.closest('.vorschau');
+  const karte = zu.closest('.erklaer');
   if(!karte) return;
   hinweiseWeg().add(karte.dataset.hinweis);
   _hinweiseSpeichern();
   // Dieselbe Karte steht unter Saison, Tag und Spieler wie Teams: alle
   // gleichen gehen mit.
-  document.querySelectorAll('.vorschau[data-hinweis]').forEach(k => {
+  document.querySelectorAll('.erklaer[data-hinweis]').forEach(k => {
     if(k.dataset.hinweis !== karte.dataset.hinweis) return;
     const ers = k.querySelector(':scope > template');
     const ende = () => { if(!k.isConnected) return; if(ers) k.replaceWith(ers.content.cloneNode(true)); else k.remove(); };

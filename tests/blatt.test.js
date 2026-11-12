@@ -4501,23 +4501,30 @@ const ok = (c, msg, det) => {
     const fehlt = [];
     for(const [t, sub] of [['ranking'], ['positions'], ['awards', 'awards'], ['awards', 'rekorde'], ['awards', 'chronik'], ['teams'], ['history'], ['match']]){
       K(`closeSheet(true); tab=${JSON.stringify(t)}; ${sub ? `awView=${JSON.stringify(sub)};` : ''} render()`);
-      const knopf = document.querySelector('#main .view-head [data-hilfe]'), karte = document.querySelector('#main .vorschau .vs-zu');
+      const knopf = document.querySelector('#main .view-head [data-hilfe]'), karte = document.querySelector('#main .erklaer .ek-zu');
       if(!knopf || !karte) { fehlt.push(t + (sub ? ' ' + sub : '') + (knopf ? '' : ' ohne ?') + (karte ? '' : ' ohne Karte')); continue; }
+      // `vs` und `vs-*` hängt nur die Vorstellung eines Rückblicks an
+      // [§C43]; trägt ein Bauteil denselben Namen, greifen ihre Regeln auf
+      // ihn — der Kopf der Erklärkarte hieß `.vs-kopf`.
+      const vs = '[class~="vs"], [class^="vs-"], [class*=" vs-"]';
+      if(document.querySelector('#main ' + vs.replace(/, /g, ', #main '))) fehlt.push(t + ' trägt eine Klasse der Vorstellung');
       knopf.click();
       if(!document.querySelector('#sheet .pos-info p')) fehlt.push(t + ' öffnet kein Blatt');
     }
+    K('closeSheet(true); showEditMatch(matches[matches.length - 1].id)');
+    if(document.querySelector('#sheet [class~="vs"], #sheet [class^="vs-"], #sheet [class*=" vs-"]')) fehlt.push('Partie bearbeiten trägt eine Klasse der Vorstellung');
     K('closeSheet(true)');
     // `invalidateCache` leert auch die Stories; der Feed weiter unten braucht sie.
     K("window.__altPartien = matches; window.__altStories = [_cache._stories, _cache._consolFrom, _cache._frischVon]; matches = []; invalidateCache(); tab='history'; render()");
-    const vor = !!document.querySelector('#main .vorschau') && !document.querySelector('#main > .view > .leerstand, #main .leerstand');
-    document.querySelector('#main .vorschau [data-hinweis-zu]').click();
+    const vor = !!document.querySelector('#main .erklaer') && !document.querySelector('#main > .view > .leerstand, #main .leerstand');
+    document.querySelector('#main .erklaer [data-hinweis-zu]').click();
     await new Promise(r => setTimeout(r, 300));
-    const nach = !document.querySelector('#main .vorschau') && /Noch keine Partien/.test((document.querySelector('#main .leerstand') || {}).textContent || '');
+    const nach = !document.querySelector('#main .erklaer') && /Noch keine Partien/.test((document.querySelector('#main .leerstand') || {}).textContent || '');
     K("matches = window.__altPartien; delete window.__altPartien; invalidateCache(); [_cache._stories, _cache._consolFrom, _cache._frischVon] = window.__altStories; delete window.__altStories; hinweiseWeg().clear(); _hinweiseSpeichern(); tab='ranking'; render()");
     return {fehlt, vor, nach};
   });
   ok(hilfe.fehlt.length === 0 && hilfe.vor && hilfe.nach,
-     'jeder Reiter trägt das „?" mit seinem Blatt und eine Erklärkarte; geschlossen lässt sie in einer leeren Ansicht deren Zeile stehen',
+     'jeder Reiter trägt das „?" mit seinem Blatt und eine Erklärkarte, ohne eine Klasse der Vorstellung; geschlossen lässt sie in einer leeren Ansicht deren Zeile stehen',
      JSON.stringify(hilfe));
   // Was endlos läuft und nicht im Bild steht, hält an [§C43], und läuft
   // weiter, wenn es hereinkommt: im Feed ganz unten stehen die Bewegungen
@@ -5997,6 +6004,19 @@ return JSON.stringify(funde,null,1);
     const imBild = () => [...sh.querySelectorAll('.vs-w')].filter(e => e.getBoundingClientRect().height > 0 && e.getBoundingClientRect().top < unten())
       .map(e => String(e.className).split(' ')[0] + ' ' + Math.round(e.getBoundingClientRect().top) + '/' + Math.round(unten()));
     const out = {};
+    // Der Kopf eines Rückblicks: Marke, Titel und Wähler untereinander und
+    // auf der Mitte, beim ersten Öffnen wie beim Wechsel des Monats. Die
+    // Erklärkarte hieß `.vs-kopf` wie die Klasse, die die Vorstellung an den
+    // Kopf hängt, und ihr `display:flex` stellte beim ersten Öffnen Marke,
+    // Monat und Wähler nebeneinander.
+    const kopf = () => {
+      const h = q('.rcp-head'), hr = h.getBoundingClientRect(), mx = r => (r.left + r.right) / 2;
+      const teile = [':scope > .rcp-label', ':scope > .rcp-month', ':scope > .rcp-meta', ':scope > .saisonwahl']
+        .map(s => h.querySelector(s)).filter(Boolean).map(e => e.getBoundingClientRect());
+      return {hoehe:Math.round(hr.height), teile:teile.length,
+        untereinander:teile.every((r, i) => !i || r.top >= teile[i - 1].bottom - 1),
+        mitte:Math.round(Math.max(...teile.slice(0, 2).map(r => Math.abs(mx(r) - mx(hr)))))};
+    };
     const juli = `showSeasonRecap(seasons.find(s => s.id === '2026-07'))`;
     K(`closeSheet(true); 'x'`); await warte(350);
     K(juli + `; 'x'`);
@@ -6020,7 +6040,7 @@ return JSON.stringify(funde,null,1);
     await warte(300);
     out.saison = {erst, gross:+gross.toFixed(2), mitte:Math.round(mitte), goldBeimTeam:goldBeimTeam && +goldBeimTeam.toFixed(3),
       spaetWaehrend, spaetDanach:!!q('[data-rcp-spaet]'), groessBleibt:!!q('.vs-gross'),
-      wartetImBild:imBild()};
+      wartetImBild:imBild(), lage:kopf()};
     // Unter dem Rand wartet die Tabelle, und was in ihr wächst, steht still;
     // hereingescrollt kommt sie, mit Licht um Platz 1 bis 3.
     const tab = q('.rcp-tab');
@@ -6053,14 +6073,14 @@ return JSON.stringify(funde,null,1);
       await bild();
     }
     out.woche = {erst:we, heldMax:+heldMax.toFixed(3), gross:!!q('.vs-gross, .vs-spot'),
-      licht:!!held.querySelector(':scope > .kl.kl-gold.kl-innen'), ring:held.matches('.vs-ring')};
+      licht:!!held.querySelector(':scope > .kl.kl-gold.kl-innen'), ring:held.matches('.vs-ring'), lage:kopf()};
     // Ein anderer Monat aus dem Wähler im Blatt: der Kopf steht, der Meister
     // kommt zuerst, ohne Auftritt.
     K(`closeSheet(true); ${juli}; 'x'`); await warte(3200);
     K(`showSeasonRecap(seasons.find(s => s.id === '2026-06'), {wechsel:true}); 'x'`); await warte(60);
     const kopfAn = q('.rcp-head').getAnimations({subtree:true}).filter(a => a instanceof CSSAnimation).map(a => a.animationName);
     out.wechsel = {kopf:kopfAn, gross:!!q('.vs-gross, .vs-spot'), gold:q('.rcp-buehne .pod-karte.gold').matches('.vs-da'),
-      silberWartet:q('.rcp-buehne .pod-karte.silber').matches('.vs-w')};
+      silberWartet:q('.rcp-buehne .pod-karte.silber').matches('.vs-w'), lage:kopf()};
     // Zurück aus einem Blatt darüber stellt nichts vor.
     K(`closeSheet(true); ${juli}; 'x'`); await warte(500);
     K(`sheetNav(() => showPlayer(players[0].id)); 'x'`); await warte(500);
@@ -6094,6 +6114,11 @@ return JSON.stringify(funde,null,1);
   ok(vorst.wechsel.kopf.length === 0 && !vorst.wechsel.gross && vorst.wechsel.gold && vorst.wechsel.silberWartet,
      'ein anderer Monat im Blatt: der Kopf steht, der Meister kommt zuerst, ohne Auftritt',
      JSON.stringify(vorst.wechsel));
+  const kS = vorst.saison.lage, kW = vorst.wechsel.lage, kWo = vorst.woche.lage;
+  ok(kS.teile === 3 && kS.untereinander && kS.mitte <= 2 && kW.untereinander && kW.mitte <= 2 && Math.abs(kS.hoehe - kW.hoehe) <= 1
+       && kWo.untereinander && kWo.mitte <= 2,
+     'der Kopf eines Rückblicks steht beim ersten Öffnen wie beim Wechsel: Marke, Titel und Wähler untereinander und auf der Mitte',
+     JSON.stringify({saison:kS, wechsel:kW, woche:kWo}));
   ok(vorst.zurueck.buehne && vorst.zurueck.vs === 0 && !vorst.zurueck.vor,
      'zurück aus einem Blatt darüber stellt der Rückblick nichts vor', JSON.stringify(vorst.zurueck));
   await page.emulateMedia({reducedMotion: 'reduce'});

@@ -12,28 +12,32 @@
   /* Die Erklärkarte (erklaerKarte, vorschauHtml) [§C27]: was ein Reiter
      zeigt und wie es entsteht. Eine ruhige Fläche wie jede Karte, kein
      Leuchten und kein Gold — sie ist eine Erklärung und kein Ereignis
-     [§C25]. */
-  .vorschau{position:relative;margin:0 0 16px;padding:16px;border:1px solid var(--line);border-radius:var(--r);
+     [§C25]. Ihre Teile heißen `ek-`, nicht `vs-`: `vs` und `vs-*` sind die
+     Klassen, die die Vorstellung an die Teile eines Rückblicks hängt
+     (17-bewegung.css). Der Kopf der Karte hieß `.vs-kopf`, und sein
+     `display:flex` stellte beim ersten Öffnen eines Rückblicks Marke,
+     Monat und Wähler nebeneinander. */
+  .erklaer{position:relative;margin:0 0 16px;padding:16px;border:1px solid var(--line);border-radius:var(--r);
     background:var(--surface);transition:opacity .2s ease,transform .2s ease}
-  .vorschau.weg{opacity:0;transform:scale(.97)}
+  .erklaer.weg{opacity:0;transform:scale(.97)}
   /* Das Kreuz: groß genug für den Daumen und in der Akzentfarbe, damit man
      es sofort findet — grau auf grau sieht es aus wie ein Zierrat, und die
      Karte wirkt, als ließe sie sich nicht schließen. Der Titel läuft nicht
      darunter. */
-  .vs-zu{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;
+  .ek-zu{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;
     border:1.5px solid rgba(190,242,100,.55);background:rgba(190,242,100,.12);color:var(--acid);
     display:grid;place-items:center;cursor:pointer;padding:0;box-shadow:0 0 0 3px rgba(190,242,100,.06)}
-  .vs-zu svg{width:16px;height:16px}
-  .vs-zu:hover{background:rgba(190,242,100,.2)}
-  .vs-zu:focus-visible{outline:2px solid var(--acid);outline-offset:2px}
-  .vs-zu:active{transform:scale(.92)}
-  .vs-kopf{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ink);padding-right:44px;min-height:34px}
-  .vs-ic{flex:none;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
+  .ek-zu svg{width:16px;height:16px}
+  .ek-zu:hover{background:rgba(190,242,100,.2)}
+  .ek-zu:focus-visible{outline:2px solid var(--acid);outline-offset:2px}
+  .ek-zu:active{transform:scale(.92)}
+  .ek-kopf{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ink);padding-right:44px;min-height:34px}
+  .ek-ic{flex:none;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
     background:rgba(190,242,100,.1);color:var(--acid)}
-  .vs-ic svg{width:17px;height:17px}
-  .vs-satz{margin:10px 0 0;color:var(--muted);font-size:12.5px;line-height:1.5}
-  .vs-satz b{color:var(--ink);font-weight:600}
-  @media (prefers-reduced-motion: reduce){ .vorschau{transition:none} }
+  .ek-ic svg{width:17px;height:17px}
+  .ek-satz{margin:10px 0 0;color:var(--muted);font-size:12.5px;line-height:1.5}
+  .ek-satz b{color:var(--ink);font-weight:600}
+  @media (prefers-reduced-motion: reduce){ .erklaer{transition:none} }
 
   /* ── Der Glanz [§C25] ──────────────────────────────────────────────
      Breaking glimmt und die Karte des Tages trägt ein Lauflicht. Dasselbe

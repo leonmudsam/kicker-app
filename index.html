@@ -494,9 +494,9 @@
   .sval{cursor:pointer;border-radius:8px;transition:.15s}
   .sval:active{background:var(--surface3)}
 
-  .vs-mid{display:flex;align-items:center;justify-content:center;gap:14px;padding:2px 0}
-  .vs-mid .line{flex:1;height:1px;background:var(--line)}
-  .vs-mid .vs{font-family:'Archivo Black',sans-serif;font-size:13px;color:var(--muted);letter-spacing:.1em}
+  .gegen{display:flex;align-items:center;justify-content:center;gap:14px;padding:2px 0}
+  .gegen .line{flex:1;height:1px;background:var(--line)}
+  .gegen-wort{font-family:'Archivo Black',sans-serif;font-size:13px;color:var(--muted);letter-spacing:.1em}
 
   .score-board{display:flex;align-items:stretch;gap:10px;background:var(--surface);
     border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:12px}
@@ -1043,23 +1043,23 @@
   .blatt-text{font-size:12.5px;color:var(--ink2);line-height:1.55;padding:0 2px}
   .leerstand{text-align:center;color:var(--muted);padding:48px 20px;font-size:13px}
   .leerstand .ee{font-size:34px;margin-bottom:12px;opacity:.5}
-  .vorschau{position:relative;margin:0 0 16px;padding:16px;border:1px solid var(--line);border-radius:var(--r);
+  .erklaer{position:relative;margin:0 0 16px;padding:16px;border:1px solid var(--line);border-radius:var(--r);
     background:var(--surface);transition:opacity .2s ease,transform .2s ease}
-  .vorschau.weg{opacity:0;transform:scale(.97)}
-  .vs-zu{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;
+  .erklaer.weg{opacity:0;transform:scale(.97)}
+  .ek-zu{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;
     border:1.5px solid rgba(190,242,100,.55);background:rgba(190,242,100,.12);color:var(--acid);
     display:grid;place-items:center;cursor:pointer;padding:0;box-shadow:0 0 0 3px rgba(190,242,100,.06)}
-  .vs-zu svg{width:16px;height:16px}
-  .vs-zu:hover{background:rgba(190,242,100,.2)}
-  .vs-zu:focus-visible{outline:2px solid var(--acid);outline-offset:2px}
-  .vs-zu:active{transform:scale(.92)}
-  .vs-kopf{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ink);padding-right:44px;min-height:34px}
-  .vs-ic{flex:none;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
+  .ek-zu svg{width:16px;height:16px}
+  .ek-zu:hover{background:rgba(190,242,100,.2)}
+  .ek-zu:focus-visible{outline:2px solid var(--acid);outline-offset:2px}
+  .ek-zu:active{transform:scale(.92)}
+  .ek-kopf{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ink);padding-right:44px;min-height:34px}
+  .ek-ic{flex:none;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
     background:rgba(190,242,100,.1);color:var(--acid)}
-  .vs-ic svg{width:17px;height:17px}
-  .vs-satz{margin:10px 0 0;color:var(--muted);font-size:12.5px;line-height:1.5}
-  .vs-satz b{color:var(--ink);font-weight:600}
-  @media (prefers-reduced-motion: reduce){ .vorschau{transition:none} }
+  .ek-ic svg{width:17px;height:17px}
+  .ek-satz{margin:10px 0 0;color:var(--muted);font-size:12.5px;line-height:1.5}
+  .ek-satz b{color:var(--ink);font-weight:600}
+  @media (prefers-reduced-motion: reduce){ .erklaer{transition:none} }
 
   @keyframes glanzZug{0%,78%{transform:translateX(-84%)}100%{transform:translateX(24%)}}
   .glanz-bahn{position:absolute;inset:0;border-radius:inherit;overflow:hidden;pointer-events:none}
@@ -6708,7 +6708,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.11.12.708815fe';
+const BUILD_VERSION='2026.11.12.47cffdcf';
 function forceReload(nach){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -14313,7 +14313,7 @@ function vMatch(){
     ${erklaerKarte('eingabe')}
     <div class="builder">
       <div class="team-block A"><div class="team-label">Team A <span class="tag" id="avgA"></span></div>${slot('A',1)}${slot('A',2)}</div>
-      <div class="vs-mid"><span class="line"></span><span class="vs">VS</span><span class="line"></span></div>
+      <div class="gegen"><span class="line"></span><span class="gegen-wort">VS</span><span class="line"></span></div>
       <div class="team-block B"><div class="team-label">Team B <span class="tag" id="avgB"></span></div>${slot('B',1)}${slot('B',2)}</div>
     </div>
     <div class="score-board" style="margin-top:12px">
@@ -19214,7 +19214,7 @@ function showEditMatch(mid){
   openSheet(`${blattKopfHtml({ic:'edit', titel:'Partie bearbeiten', unter:'Änderungen lösen eine Neuberechnung aus'})}
     <div class="builder" style="margin-top:16px">
       <div class="team-block A"><div class="team-label">Team A</div>${slot('A',1)}${slot('A',2)}</div>
-      <div class="vs-mid"><span class="line"></span><span class="vs">VS</span><span class="line"></span></div>
+      <div class="gegen"><span class="line"></span><span class="gegen-wort">VS</span><span class="line"></span></div>
       <div class="team-block B"><div class="team-label">Team B</div>${slot('B',1)}${slot('B',2)}</div>
     </div>
     <div class="score-board" style="margin-top:12px">
@@ -19420,21 +19420,21 @@ function _hinweiseSpeichern(){
 }
 function vorschauHtml(ic, titel, satz, ersatz){
   if(hinweiseWeg().has(titel)) return ersatz || '';
-  return `<div class="vorschau" data-hinweis="${esc(titel)}">
-    <button type="button" class="vs-zu" data-hinweis-zu aria-label="Hinweis schließen">${svgI('x')}</button>
-    <div class="vs-kopf"><span class="vs-ic">${svgI(ic)}</span><b>${esc(titel)}</b></div>
-    ${satz ? `<p class="vs-satz">${satz}</p>` : ''}${ersatz ? `<template>${ersatz}</template>` : ''}
+  return `<div class="erklaer" data-hinweis="${esc(titel)}">
+    <button type="button" class="ek-zu" data-hinweis-zu aria-label="Hinweis schließen">${svgI('x')}</button>
+    <div class="ek-kopf"><span class="ek-ic">${svgI(ic)}</span><b>${esc(titel)}</b></div>
+    ${satz ? `<p class="ek-satz">${satz}</p>` : ''}${ersatz ? `<template>${ersatz}</template>` : ''}
   </div>`;
 }
 if(typeof document !== 'undefined' && document.addEventListener) document.addEventListener('click', e => {
   const zu = e.target && e.target.closest && e.target.closest('[data-hinweis-zu]');
   if(!zu) return;
   e.preventDefault(); e.stopPropagation();
-  const karte = zu.closest('.vorschau');
+  const karte = zu.closest('.erklaer');
   if(!karte) return;
   hinweiseWeg().add(karte.dataset.hinweis);
   _hinweiseSpeichern();
-  document.querySelectorAll('.vorschau[data-hinweis]').forEach(k => {
+  document.querySelectorAll('.erklaer[data-hinweis]').forEach(k => {
     if(k.dataset.hinweis !== karte.dataset.hinweis) return;
     const ers = k.querySelector(':scope > template');
     const ende = () => { if(!k.isConnected) return; if(ers) k.replaceWith(ers.content.cloneNode(true)); else k.remove(); };
