@@ -309,9 +309,9 @@ function _chronikMonat(titleId){
 // fast immer hinter einer seltenen oder besonderen mit mehr Bonus: der
 // unmögliche Monat stand mit 101 da, ein Punkt über dem Grundwert. Weit
 // draußen ist jeder Schritt seltener als nahe am Feld, und das zählt jetzt.
-// Der Bonus bleibt linear in der Abweichung: mehr Abweichung bringt immer
-// mehr, und eine besondere Chronik mit viel davon steht weiter vor einer
-// legendären mit wenig. Die
+// Der Bonus ist linear in der Abweichung bis zum Deckel
+// (`CHRONIK_BONUS_MAX`): mehr Abweichung bringt bis dorthin mehr, und eine
+// besondere Chronik mit viel davon steht vor einer legendären mit wenig. Die
 // Seltenheit selbst als Bonus (die Halbierungen bis zum Wert des Halters,
 // nicht bis eine σ über der Schwelle) wüchse im Quadrat und gäbe einem
 // einzigen Monat weit draußen über tausend Punkte.
@@ -329,9 +329,14 @@ function _chronikMonat(titleId){
 // Der Grundwert war 100, so viel wie ein Können-Rekord; eine Chronik gilt
 // einem Monat und nicht der ganzen Laufbahn, und mit 100 je Eintrag trug
 // die Chronik eines Vielspielers ihn eine Stufe höher als seine Titel. Mit
-// 50 wiegt sie zwischen Fügung und Können eines Rekords; der Bonus über der
-// Schwelle bleibt, wie er ist.
+// 50 wiegt sie zwischen Fügung und Können eines Rekords.
 const CHRONIK_GRUNDWERT = 50;
+// Der Bonus ist gedeckelt. Linear in σ wuchs er ohne Ende: „Der makellose
+// Tag" mit zwei von vier Spieltagen ohne Niederlage stand 6,1 σ über der
+// Schwelle und brachte 339 Punkte Bonus — ein einzelner Monat mit vier
+// Spieltagen mehr als eine legendäre Auszeichnung und zwei Meistertitel
+// zusammen. Eine Chronik bleibt besonders, aber höchstens 50 + 100.
+const CHRONIK_BONUS_MAX = 100;
 const CHRONIK_BONUS_JE_HALBIERUNG = 10;
 // Die komplementäre Fehlerfunktion (Numerical Recipes, `erfcc`, relativ
 // genauer als 1,2·10⁻⁷) und daraus die Halbierungen je σ an einem Ausschlag.
@@ -360,12 +365,13 @@ function chronikUeber(titleId, wert){
   return z > 1e-9 ? z : 0;
 }
 // Wer die Schwelle überhaupt überbietet, bekommt mindestens 1: eine Null
-// neben „über der Schwelle" läse sich als Fehler.
+// neben „über der Schwelle" läse sich als Fehler; mehr als
+// CHRONIK_BONUS_MAX bekommt niemand.
 function chronikBonus(titleId, wert){
   const z = chronikUeber(titleId, wert);
   if(!(z > 0)) return 0;
   const m = _chronikMonat(titleId);
-  return Math.max(1, Math.round(CHRONIK_BONUS_JE_HALBIERUNG * chronikHalbierungenJeSigma(m.aus) * z));
+  return Math.min(CHRONIK_BONUS_MAX, Math.max(1, Math.round(CHRONIK_BONUS_JE_HALBIERUNG * chronikHalbierungenJeSigma(m.aus) * z)));
 }
 // Wie schwer eine Schattenseite wiegt: wie weit sie über ihre Schwelle
 // hinausgeht, in σ ihrer eigenen Streuung. Dieselbe Rechnung wie der Bonus
@@ -1448,7 +1454,10 @@ function _prestigeQuellSatz(q, ohneKopf){
     // mit „höchstens" (die Punktlandung, die Wahrscheinlichkeit eines
     // Monats) las sich „über der Schwelle" so, als brächte der größere
     // Abstand den Bonus. Er kommt aus dem kleineren.
-    if(q.bonus > 0) rechnung += ` + ${zahl(q.bonus)} für ${chronikSigma(q.ueber)} weiter als verlangt`;
+    // Am Deckel sagt die Zeile, dass mehr nicht geht: „+ 100 für 6,1 σ"
+    // läse sich sonst wie eine Rechnung, die nicht aufgeht.
+    if(q.bonus > 0) rechnung += ` + ${zahl(q.bonus)} für ${chronikSigma(q.ueber)} weiter als verlangt`
+      + (q.bonus >= CHRONIK_BONUS_MAX ? ', der höchste Bonus' : '');
     if(q.staffel > 1) rechnung += ` · ${q.rang}. Chronik ÷ √${q.staffel}`;
     teile.push(rechnung);
   }

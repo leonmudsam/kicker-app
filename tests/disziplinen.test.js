@@ -911,7 +911,7 @@ ok(_streuMess.n >= 60 && _streuMess.daneben.length === 0,
 const _bonus = JSON.parse(K.eval(`JSON.stringify((function(){
   const m = id => _chronikMonat(id), P = (id, k) => chronikPunkte(id, m(id).ab + k * m(id).streu);
   return {regent:chronikPunkte('tagesregent', 0.71), genau:chronikPunkte('tagesregent', 0.6),
-          hauch:P('ausbruch', 1e-4), eins:P('ausbruch', 1), zwei:P('ausbruch', 2), drei:P('ausbruch', 3),
+          hauch:P('ausbruch', 1e-4), eins:P('ausbruch', 1), zwei:P('ausbruch', 2), drei:P('ausbruch', 3), zehn:P('ausbruch', 10),
           metronom:P('metronom', 0.6), metronomAb:m('metronom').ab, ohneWert:chronikPunkte('ausbruch'),
           steigung:[1.2, 2.5, 3.5].map(a => Math.round(10 * chronikHalbierungenJeSigma(a))),
           ausbruchSteigung:10 * chronikHalbierungenJeSigma(m('ausbruch').aus),
@@ -933,9 +933,11 @@ ok(_bonus.regent === 76 && _bonus.genau === 50,
 ok(JSON.stringify(_bonus.steigung) === '[24,41,54]',
    'je σ bringt der Bonus bei 1,2 σ Ausschlag 24, bei 2,5 σ 41 und bei 3,5 σ 54', JSON.stringify(_bonus.steigung));
 const _s = _bonus.ausbruchSteigung;
+// Der Bonus ist gedeckelt: linear wuchs er ohne Ende, und „Der makellose
+// Tag" brachte bei 6,1 σ 339 Punkte Bonus aus vier Spieltagen.
 ok(_bonus.hauch === 51 && _bonus.eins === 50 + Math.round(_s) && _bonus.zwei === 50 + Math.round(2 * _s)
-   && _bonus.drei === 50 + Math.round(3 * _s) && _bonus.ohneWert === 50,
-   'der Bonus waechst gleichmaessig mit der Abweichung, mindestens 1 und nach oben offen', JSON.stringify(_bonus));
+   && _bonus.drei === 50 + Math.min(100, Math.round(3 * _s)) && _bonus.zehn === 150 && _bonus.ohneWert === 50,
+   'der Bonus waechst gleichmaessig mit der Abweichung, mindestens 1 und hoechstens 100', JSON.stringify(_bonus));
 ok(_bonus.weitDraussen > _bonus.naheAmFeld + 30,
    'eine Schwelle weit draussen bringt je σ mehr als eine nahe am Feld', _bonus.weitDraussen + ' gegen ' + _bonus.naheAmFeld);
 ok(_bonus.metronomAb < 0 && _bonus.metronom === 50 + Math.round(0.6 * _bonus.metronomSteigung),
