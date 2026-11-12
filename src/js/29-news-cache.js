@@ -1959,10 +1959,13 @@ function _storyIstTafelUpdate(s, jetzt){
   return tagKey(w) === tagKey(jetzt || new Date());
 }
 // Der Stand, aus dem eine Fassung der Tafel gerechnet ist: die letzte
-// Partie ihres Tages und, ob der Tag zu ist (`_tagZu`) — um 23:59 ändert
-// sich die Tafel auch ohne Partie [§C35]. Als Zeichenkette sortierbar.
+// Partie ihres Tages. Als Zeichenkette sortierbar. Sie trug dahinter ein
+// „z", wenn der Tag zu war: um 23:59 entstand eine neue Fassung ohne
+// Partie, und die gelesene Karte des Tages stand wieder als ungelesen da.
+// Die Tafel steht jetzt nach der letzten Partie fest (`_storyTagGrenzen`);
+// gespeicherte Fassungen mit „z" verlieren gegen die ohne (`_tafelFassungen`).
 function _tafelFassung(tag, letzteMs){
-  return String(letzteMs) + (_tagZu(tag) ? 'z' : '');
+  return String(letzteMs);
 }
 // Von jeder wachsenden Tageskarte gilt eine Fassung, die jüngste [§C33].
 // Eine Fassung ist der ganze Stand des Tages: was in einer älteren stand und

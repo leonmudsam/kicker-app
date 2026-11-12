@@ -503,6 +503,7 @@ function _newsEhrungKompaktHtml(s, d, sp, zr, isRead, fadenHtml){
     <div class="eh-kp">${vorn.map(kopf).join('')}${rest ? `<span class="eh-kp-s eh-kp-rest"><i class="num">+${rest}</i><small>weitere</small></span>` : ''}</div>
     ${klassen.length ? `<div class="eh-kp-k"><div class="eh-kp-l">${klassen.map(z => `<span class="eh-k ${z.id}"><i></i><b class="num">${z.n}</b> ${esc(z.wort)}</span>`).join('')}</div>`
       + `<div class="eh-kp-b">${klassen.map(z => `<i class="${z.id}" style="flex-grow:${z.p}"></i>`).join('')}</div></div>` : ''}
+    ${_ehrungSchlussHtml(d.tagesschluss, {max:3, kopf:true})}
     ${g && pm[g.pid] ? _spGegenHtml(g) : ''}
     ${grund ? `<div class="nf-brk-sub">${esc(grund)}</div>` : ''}${fadenHtml || ''}</div>` + (brk ? '</div>' : '');
 }
@@ -523,10 +524,13 @@ const _spGegenHtml = g => `<div class="nf-gegen">${_spChip(g.pid)}<span><b>${esc
 // der Rest als Zahl, nie „+1" [§C33]. Kein zweites Säulenbild: die Karte
 // zeigt den Tag schon als Bahn. Das Blatt zeigt statt dieser Zeilen die
 // Kästen der Ehrung (`_ehrungBloeckeHtml`).
-function _ehrungTagHtml(sp){
+function _ehrungTagHtml(sp, schluss){
   const pm = pmap();
   const l = (Array.isArray(sp) ? sp : []).filter(x => x && pm[x.pid] && x.summe > 0);
-  if(!l.length) return '';
+  // Darunter, was der Schluss an Tafel und Leiter änderte — auch an einem
+  // Tag, dessen Auszeichnungen eine größere Ehrung trägt (`ehrungIn`).
+  const ts = _ehrungSchlussHtml(schluss, {max:3, kopf:true});
+  if(!l.length) return ts;
   const summe = l.reduce((n, x) => n + x.summe, 0);
   const vorn = l.length > EH_KOMPAKT ? l.slice(0, EH_KOMPAKT - 1) : l, rest = l.length - vorn.length;
   const zeile = x => {
@@ -544,7 +548,38 @@ function _ehrungTagHtml(sp){
     + `<span>Ehrung des Tages</span><b class="num">+${_ehZahl(summe)}</b></div>`
     + vorn.map(zeile).join('')
     + (rest ? `<div class="nf-eht-r">und ${rest} weitere</div>` : '')
-    + `</div>`;
+    + `</div>` + ts;
+}
+
+// ── Mit dem Schluss des Tages ───────────────────────────────────────
+// Was der Schluss um 23:59 an Liga-Rekorden, Chroniken und Zeichen änderte
+// (`tagesschluss`, `_tagesschlussTafel`). Die Tafel-Karte des Tages steht
+// nach seiner letzten Partie fest; vorher schrieb der Schluss sie neu, und
+// die gelesene Karte stand am Morgen wieder als ungelesen da. Dieselben
+// Zeilen wie in der Tafel-Karte, im Ton ihrer Kammer [§C27]. Ohne Marke
+// „In der Chronik": die sagt in der Tafel, welcher Eintrag eines Spielers
+// in der Chronik steht, und hier ist das nicht gerechnet [§C41]. `max`
+// begrenzt die Karte, das Blatt zeigt jede Zeile; `kopf` setzt die
+// Überschrift in die Karte, das Blatt hat seine eigene.
+function _ehrungSchlussHtml(l, o){
+  o = o || {};
+  // Die Wechsel vor dem Zeichen, ein Ausbau zuletzt. Auf der Karte steht wie
+  // auf der Tafel-Karte kein Ausbau, solange es einen Wechsel gibt: mit vier
+  // Zeilen standen dort zwei Ausbauten, und „Stefan zieht bei ‚Der
+  // Wiedergänger' gleich" war eine Zahl dahinter [§C33].
+  const rang = x => x.fall === 'gesteigert' ? 2 : x.art === 'insignium' ? 1 : 0;
+  const z = (Array.isArray(l) ? l : []).filter(x => x && x.text).sort((a, b) => rang(a) - rang(b));
+  if(!z.length) return '';
+  const wechsel = z.filter(x => x.fall !== 'gesteigert');
+  const vorn = o.max ? (wechsel.length ? wechsel : z).slice(0, o.max) : z, rest = z.length - vorn.length;
+  const ton = x => x.art === 'chronik' ? 'chronik' : x.art === 'insignium' ? 'insignium'
+    : x.kammer === 'mark' ? 'marke' : x.kammer === 'fuegung' ? 'fuegung' : 'rekord';
+  const satz = x => x.namen && String(x.text).indexOf(x.namen) === 0
+    ? `<b>${esc(x.namen)}</b>${esc(String(x.text).slice(x.namen.length))}` : esc(x.text);
+  return `<div class="nf-sam eh-ts">${o.kopf ? '<div class="eh-ts-k">Mit dem Schluss des Tages</div>' : ''}`
+    + vorn.map(x => `<div class="nf-sam-z nf-sam-${ton(x)}"><i class="nf-sam-i">${svgI(x.ic || 'award')}</i>`
+      + `<span>${satz(x)}</span></div>`).join('')
+    + (rest ? `<div class="nf-sam-m">und ${rest} weitere</div>` : '') + '</div>';
 }
 
 // ── Das Blatt ───────────────────────────────────────────────────────
@@ -576,7 +611,9 @@ function _ndEhrungBlatt(s){
   const g = d.gegenstueck;
   const gegen = g && pm[g.pid] ? `<div class="nd-section">Der härteste Tag</div>${_spGegenHtml(g)}` : '';
   return {kopf, mitte: anteil + (zeit ? `<div class="nw-hinweis eh-zeit">${esc(zeit.vor + ' ' + zeit.wann)}${/\.$/.test(zeit.wann) ? '' : '.'}</div>` : '')
-    + `<div class="nd-section">Wer was geholt hat</div>${_ehrungBloeckeHtml(sp)}` + gegen
+    + `<div class="nd-section">Wer was geholt hat</div>${_ehrungBloeckeHtml(sp)}`
+    + (d.tagesschluss ? (h => h ? `<div class="nd-section">Mit dem Schluss des Tages</div>${h}` : '')(_ehrungSchlussHtml(d.tagesschluss)) : '')
+    + gegen
     + `<div class="nw-hinweis">Der Strich unter jeder Auszeichnung zeigt, wie viel ihres vollen Werts sie diesmal brachte. `
     + `Ab dem dritten Mal bringt sie etwas weniger.</div>`};
 }

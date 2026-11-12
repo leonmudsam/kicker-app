@@ -692,7 +692,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
     if(g && pmap()[g.pid]) fuss += _spGegenHtml(g);
     // Und was der Tag an Auszeichnungen brachte: die Ehrung des Tages als
     // Teil seiner Karte [§11.6f].
-    if(d.type === 'potd') fuss += _ehrungTagHtml(d.ehrung);
+    if(d.type === 'potd') fuss += _ehrungTagHtml(d.ehrung, d.tagesschluss);
     if(!fuss) fuss = _newsZahlband([
       {v: d.wr != null ? Math.round(d.wr * 100) + ' %' : null, l:'Siegquote', f:'g'},
       {v: (d.wins != null && d.games != null) ? d.wins + ' : ' + (d.games - d.wins) : null,

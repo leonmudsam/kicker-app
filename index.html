@@ -2272,20 +2272,22 @@
     display:grid;place-items:center;background:var(--surface2);
     border:1px solid var(--line);color:var(--muted)}
   .nf-sam-i svg{width:12px;height:12px;fill:none;stroke:currentColor;}
-  .nf-s-tafel .nf-sam-z{--zeile-rgb:135,168,178;border-left:2px solid
+  .nf-s-tafel .nf-sam-z,.eh-ts .nf-sam-z{--zeile-rgb:135,168,178;border-left:2px solid
     rgba(var(--zeile-rgb),.24);padding-left:11px;
     background:linear-gradient(90deg,rgba(var(--zeile-rgb),.045),transparent 58%)}
-  .nf-s-tafel .nf-sam-rekord{--zeile-rgb:105,169,196}
-  .nf-s-tafel .nf-sam-marke{--zeile-rgb:167,184,117}
-  .nf-s-tafel .nf-sam-chronik{--zeile-rgb:154,134,189}
-  .nf-s-tafel .nf-sam-fuegung{--zeile-rgb:195,154,110}
+  .nf-s-tafel .nf-sam-rekord,.eh-ts .nf-sam-rekord{--zeile-rgb:105,169,196}
+  .nf-s-tafel .nf-sam-marke,.eh-ts .nf-sam-marke{--zeile-rgb:167,184,117}
+  .nf-s-tafel .nf-sam-chronik,.eh-ts .nf-sam-chronik{--zeile-rgb:154,134,189}
+  .nf-s-tafel .nf-sam-fuegung,.eh-ts .nf-sam-fuegung{--zeile-rgb:195,154,110}
   .nf-s-tafel .nf-sam-schatten{--zeile-rgb:184,129,136}
-  .nf-s-tafel .nf-sam-insignium{--zeile-rgb:164,138,196}
-  .nf-s-tafel .nf-sam-z .nf-sam-i{color:rgb(var(--zeile-rgb));
+  .nf-s-tafel .nf-sam-insignium,.eh-ts .nf-sam-insignium{--zeile-rgb:164,138,196}
+  .nf-s-tafel .nf-sam-z .nf-sam-i,.eh-ts .nf-sam-z .nf-sam-i{color:rgb(var(--zeile-rgb));
     border-color:rgba(var(--zeile-rgb),.22);background:rgba(var(--zeile-rgb),.075);
     box-shadow:0 0 12px -8px rgba(var(--zeile-rgb),.72)}
   .nf-sam-m{padding:8px 13px 12px;font-size:10.5px;color:var(--muted);
     border-top:1px solid var(--line);letter-spacing:.02em}
+  .eh-ts-k{padding:8px 13px 4px;font-family:'Sometype Mono',monospace;font-size:9.5px;font-weight:700;
+    letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 
   .nf-duo{gap:0}
   .nf-duo > *:nth-child(2){margin-left:-10px}
@@ -6708,7 +6710,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.11.12.47cffdcf';
+const BUILD_VERSION='2026.11.12.593119f7';
 function forceReload(nach){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -19942,6 +19944,63 @@ function _insZuegeZwischen(vor, nach, best, wann){
       return x && x.stufe === i; }).length)};
 }
 
+const _tagesschlussMemo = new WeakMap();
+function _tagesschlussTafel(tagMs){
+  const g = _storyTagGrenzen(tagMs);
+  if(!g || !_tagZu(g.tag)) return [];
+  let m = _tagesschlussMemo.get(matches);
+  if(!m || m.pl !== players){ m = {pl:players, je:new Map()}; _tagesschlussMemo.set(matches, m); }
+  if(m.je.has(g.tag)) return m.je.get(g.tag);
+  const A = _storyStand(g.letzte), B = _storyStand(g.nachMs);
+  const amTag = new Set();
+  (matches || []).forEach(x => { const t = mts(x);
+    if(t >= g.vonMs && t <= g.letzte) [x.a1, x.a2, x.b1, x.b2].forEach(p => { if(p) amTag.add(p); }); });
+  const nm = pid => pname(pid);
+  const satz = (fall, wer, name) => {
+    const n = _namenKurz(wer.map(nm)), mz = wer.length > 1;
+    return fall === 'gesteigert' ? `${n} ${mz ? 'bauen' : 'baut'} „${name}“ aus`
+      : fall === 'dazu' ? `${n} ${mz ? 'ziehen' : 'zieht'} bei „${name}“ gleich`
+      : fall === 'allein' ? `${n} ${mz ? 'halten' : 'hält'} „${name}“ jetzt allein`
+      : fall === 'uebernommen' ? `${n} ${mz ? 'übernehmen' : 'übernimmt'} „${name}“`
+      : `${n} ${mz ? 'holen' : 'holt'} „${name}“`;
+  };
+  const zeilen = [];
+  const zeile = (art, def, a, n, fall) => {
+    const alt = (a && a.pids) || [];
+    const wer = (fall === 'dazu' || fall === 'uebernommen' ? n.pids.filter(id => alt.indexOf(id) < 0) : n.pids)
+      .filter(pid => sichtbar(pid));
+    if(!wer.length || !wer.some(p => amTag.has(p))) return;
+    zeilen.push({art, id:def.id, name:def.name, ic:def.ic || '', kammer:def.kind || '', fall, wer:wer.slice(0, 4),
+      namen:_namenKurz(wer.map(nm)), text:satz(fall, wer, def.name)});
+  };
+  try {
+    const ra = A.rekorde(), rb = B.rekorde();
+    CHRONICLES.forEach(def => {
+      if(def.kind === 'shame') return;
+      const a = ra[def.id], n = rb[def.id], art = _rekordArt(a, n);
+      if(!art || (art === 'gesteigert' && def.fenster)) return;
+      zeile('rekord', def, a, n, art === 'geholt' ? _halterFall((a && a.pids) || [], n.pids) : art);
+    });
+  } catch(e){}
+  try {
+    const sid = seasonOf(g.vonMs).id, ca = A.chronik(sid) || {}, cb = B.chronik(sid) || {};
+    SEASON_TITLES.forEach(t => {
+      if(t.kunst === 'schatten') return;
+      const a = ca[t.id], n = cb[t.id];
+      if(!n || (a && a.pids.slice().sort().join(',') === n.pids.slice().sort().join(','))) return;
+      zeile('chronik', t, a, n, _halterFall((a && a.pids) || [], n.pids));
+    });
+  } catch(e){}
+  try {
+    const schluss = new Date(g.vonMs); schluss.setHours(23, 59, 0, 0);
+    const L = _insZuegeZwischen(A, B, _insBestVor(g.vonMs, _cache._stories), () => ({ms:schluss.getTime()}));
+    L.zuege.forEach(z => zeilen.push({art:'insignium', id:'ins_' + z.pid, name:'', ic:'award', kammer:'', fall:z.art,
+      wer:[z.pid], namen:nm(z.pid), text:_insTagTexte([z]).title}));
+  } catch(e){}
+  m.je.set(g.tag, zeilen);
+  return zeilen;
+}
+
 const STORY_RANG_MIN_PARTIEN = 15;
 const STORY_RANG_MIN_EINSAETZE = 4;
 function _storyRangFrei(sid, bisMs){
@@ -20559,8 +20618,12 @@ function _buildStories(){
       } catch(e){ ehrung = []; }
       ehrung.forEach(x => x.posten.forEach(q => _tagGetragen.add(dayKey + '|' + x.pid + '|' + q.id)));
       if(groesser) ehrung = [];
-      if(res) _potdTage.set(dayKey, {rep, res, ehrung, brk, groesser});
-      else if(ehrung.length) _ehrungTage.set(dayKey, {rep, ehrung, brk});
+      const _bestand = Array.isArray(_cache._stories) ? _cache._stories : [];
+      let tagesschluss = [];
+      if(!_bestand.some(x => x && (x.id === 'potd_' + dayKey || x.id === 'tagesehrung_' + dayKey)))
+        try { tagesschluss = _tagesschlussTafel(rep.getTime()); } catch(e){ tagesschluss = []; }
+      if(res) _potdTage.set(dayKey, {rep, res, ehrung, brk, groesser, tagesschluss});
+      else if(ehrung.length) _ehrungTage.set(dayKey, {rep, ehrung, brk, tagesschluss});
     });
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] potd tage', e); }
 
@@ -21706,7 +21769,7 @@ function _buildStories(){
   } catch(e){}
 
   try {
-    _potdTage.forEach(({rep, res, ehrung, brk, groesser}, dayKey) => {
+    _potdTage.forEach(({rep, res, ehrung, brk, groesser, tagesschluss}, dayKey) => {
       const main = res.main;
       const names = res.winners.map(w => nameOf(w.id));
       const titleNames = _namenKurz(names);
@@ -21725,14 +21788,16 @@ function _buildStories(){
         dataRef: {type:'potd', dayKey, playerId: main.id,
                   playerIds: res.winners.map(w => w.id),
                   wins: main.wins, games: main.wins + main.losses, wr: main.wr,
-                  ehrung, ehrungVoll:true, ehrungBrk:brk, ...(groesser ? {ehrungIn:groesser} : {})}
+                  ehrung, ehrungVoll:true, ehrungBrk:brk, ...(groesser ? {ehrungIn:groesser} : {}),
+                  ...(tagesschluss && tagesschluss.length ? {tagesschluss} : {})}
       });
     });
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] potd', e); }
 
   try {
-    _ehrungTage.forEach(({rep, ehrung, brk}, dayKey) => {
-      const st = _ehrungKarte(ehrung, 'tagesehrung_' + dayKey, rep.getTime(), {periode:'tag', tag:dayKey, voll:true, breaking:brk});
+    _ehrungTage.forEach(({rep, ehrung, brk, tagesschluss}, dayKey) => {
+      const st = _ehrungKarte(ehrung, 'tagesehrung_' + dayKey, rep.getTime(), Object.assign({periode:'tag', tag:dayKey, voll:true, breaking:brk},
+        tagesschluss && tagesschluss.length ? {tagesschluss} : {}));
       if(st) stories.push(st);
     });
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] tagesehrung', e); }
@@ -21801,7 +21866,7 @@ function _buildStories(){
 
   const _tafelTag = _storyTagGrenzen(matches.length ? mts(matches[matches.length - 1]) : 0);
   const _tafelVor = _tafelTag ? _storyStand(_tafelTag.vorMs) : null;
-  const _tafelNach = _tafelTag ? _storyStand(_tafelTag.nachMs) : null;
+  const _tafelNach = _tafelTag ? _storyStand(_tafelTag.letzte) : null;
   const _tafelWirkung = pid => _prestigeWirkung(pid, _tafelVor, _tafelNach);
   const _mitVorgaengern = (wer, vorher) => {
     const o = (wer || []).slice(0, 3);
@@ -24404,7 +24469,7 @@ function _storyIstTafelUpdate(s, jetzt){
   return tagKey(w) === tagKey(jetzt || new Date());
 }
 function _tafelFassung(tag, letzteMs){
-  return String(letzteMs) + (_tagZu(tag) ? 'z' : '');
+  return String(letzteMs);
 }
 function _tafelFassungen(list){
   if(!Array.isArray(list)) return list;
@@ -25212,7 +25277,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
     if(d.type === 'potd') fuss = _spTagBild(_spTagDaten(s));
     const g = d.type === 'potd' && d.gegenstueck;
     if(g && pmap()[g.pid]) fuss += _spGegenHtml(g);
-    if(d.type === 'potd') fuss += _ehrungTagHtml(d.ehrung);
+    if(d.type === 'potd') fuss += _ehrungTagHtml(d.ehrung, d.tagesschluss);
     if(!fuss) fuss = _newsZahlband([
       {v: d.wr != null ? Math.round(d.wr * 100) + ' %' : null, l:'Siegquote', f:'g'},
       {v: (d.wins != null && d.games != null) ? d.wins + ' : ' + (d.games - d.wins) : null,
@@ -28808,6 +28873,7 @@ function _newsEhrungKompaktHtml(s, d, sp, zr, isRead, fadenHtml){
     <div class="eh-kp">${vorn.map(kopf).join('')}${rest ? `<span class="eh-kp-s eh-kp-rest"><i class="num">+${rest}</i><small>weitere</small></span>` : ''}</div>
     ${klassen.length ? `<div class="eh-kp-k"><div class="eh-kp-l">${klassen.map(z => `<span class="eh-k ${z.id}"><i></i><b class="num">${z.n}</b> ${esc(z.wort)}</span>`).join('')}</div>`
       + `<div class="eh-kp-b">${klassen.map(z => `<i class="${z.id}" style="flex-grow:${z.p}"></i>`).join('')}</div></div>` : ''}
+    ${_ehrungSchlussHtml(d.tagesschluss, {max:3, kopf:true})}
     ${g && pm[g.pid] ? _spGegenHtml(g) : ''}
     ${grund ? `<div class="nf-brk-sub">${esc(grund)}</div>` : ''}${fadenHtml || ''}</div>` + (brk ? '</div>' : '');
 }
@@ -28815,10 +28881,11 @@ function _newsEhrungKompaktHtml(s, d, sp, zr, isRead, fadenHtml){
 const _spGegenHtml = g => `<div class="nf-gegen">${_spChip(g.pid)}<span><b>${esc(_spName(g.pid))}</b> gibt am meisten ab</span>`
   + `<b class="num r">${_spVz(Number(g.delta) || 0)} Elo</b></div>`;
 
-function _ehrungTagHtml(sp){
+function _ehrungTagHtml(sp, schluss){
   const pm = pmap();
   const l = (Array.isArray(sp) ? sp : []).filter(x => x && pm[x.pid] && x.summe > 0);
-  if(!l.length) return '';
+  const ts = _ehrungSchlussHtml(schluss, {max:3, kopf:true});
+  if(!l.length) return ts;
   const summe = l.reduce((n, x) => n + x.summe, 0);
   const vorn = l.length > EH_KOMPAKT ? l.slice(0, EH_KOMPAKT - 1) : l, rest = l.length - vorn.length;
   const zeile = x => {
@@ -28836,7 +28903,24 @@ function _ehrungTagHtml(sp){
     + `<span>Ehrung des Tages</span><b class="num">+${_ehZahl(summe)}</b></div>`
     + vorn.map(zeile).join('')
     + (rest ? `<div class="nf-eht-r">und ${rest} weitere</div>` : '')
-    + `</div>`;
+    + `</div>` + ts;
+}
+
+function _ehrungSchlussHtml(l, o){
+  o = o || {};
+  const rang = x => x.fall === 'gesteigert' ? 2 : x.art === 'insignium' ? 1 : 0;
+  const z = (Array.isArray(l) ? l : []).filter(x => x && x.text).sort((a, b) => rang(a) - rang(b));
+  if(!z.length) return '';
+  const wechsel = z.filter(x => x.fall !== 'gesteigert');
+  const vorn = o.max ? (wechsel.length ? wechsel : z).slice(0, o.max) : z, rest = z.length - vorn.length;
+  const ton = x => x.art === 'chronik' ? 'chronik' : x.art === 'insignium' ? 'insignium'
+    : x.kammer === 'mark' ? 'marke' : x.kammer === 'fuegung' ? 'fuegung' : 'rekord';
+  const satz = x => x.namen && String(x.text).indexOf(x.namen) === 0
+    ? `<b>${esc(x.namen)}</b>${esc(String(x.text).slice(x.namen.length))}` : esc(x.text);
+  return `<div class="nf-sam eh-ts">${o.kopf ? '<div class="eh-ts-k">Mit dem Schluss des Tages</div>' : ''}`
+    + vorn.map(x => `<div class="nf-sam-z nf-sam-${ton(x)}"><i class="nf-sam-i">${svgI(x.ic || 'award')}</i>`
+      + `<span>${satz(x)}</span></div>`).join('')
+    + (rest ? `<div class="nf-sam-m">und ${rest} weitere</div>` : '') + '</div>';
 }
 
 function _ndEhrungBlatt(s){
@@ -28855,7 +28939,9 @@ function _ndEhrungBlatt(s){
   const g = d.gegenstueck;
   const gegen = g && pm[g.pid] ? `<div class="nd-section">Der härteste Tag</div>${_spGegenHtml(g)}` : '';
   return {kopf, mitte: anteil + (zeit ? `<div class="nw-hinweis eh-zeit">${esc(zeit.vor + ' ' + zeit.wann)}${/\.$/.test(zeit.wann) ? '' : '.'}</div>` : '')
-    + `<div class="nd-section">Wer was geholt hat</div>${_ehrungBloeckeHtml(sp)}` + gegen
+    + `<div class="nd-section">Wer was geholt hat</div>${_ehrungBloeckeHtml(sp)}`
+    + (d.tagesschluss ? (h => h ? `<div class="nd-section">Mit dem Schluss des Tages</div>${h}` : '')(_ehrungSchlussHtml(d.tagesschluss)) : '')
+    + gegen
     + `<div class="nw-hinweis">Der Strich unter jeder Auszeichnung zeigt, wie viel ihres vollen Werts sie diesmal brachte. `
     + `Ab dem dritten Mal bringt sie etwas weniger.</div>`};
 }
@@ -29685,7 +29771,8 @@ function _ndPotdBlatt(s){
       + _ndTagesbahn([g.pid], _newsTagPartien(d.dayKey, [g.pid])) : '';
   return {kopf, mitte:ab('Das Feld des Tages', balken) + ab(pids.length > 1 ? 'Der Tag der Tagessieger' : 'Der Tag in Partien', bahn)
     + ab('Der härteste Tag', gegen)
-    + ab('Die Ehrung des Tages', _ehrungBloeckeHtml(d.ehrung))};
+    + ab('Die Ehrung des Tages', _ehrungBloeckeHtml(d.ehrung))
+    + ab('Mit dem Schluss des Tages', _ehrungSchlussHtml(d.tagesschluss))};
 }
 
 function _ndEndspurtBlatt(s){

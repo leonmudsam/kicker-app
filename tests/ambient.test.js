@@ -3011,6 +3011,40 @@ ok(_tagSchluss.karte && _tagSchluss.blatt && _tagSchluss.eigene === 0,
 ok(_tagSchluss.voll && _tagSchluss.zahl === _tagSchluss.soll && _tagSchluss.zahl > 5,
    'sie nennt alles, was der Tag vergab, so viel wie die Laufbahn an den Grenzen des Tages', JSON.stringify(_tagSchluss));
 
+// ── Die Tafel steht nach der letzten Partie fest ─────────────────────
+// Um 23:59 schloss der Tag, und der Generator schrieb die Tafel und die
+// Zeichen-Karte des Tages in einer neuen Fassung („z") neu: mit dem
+// Prestige des Spielers des Tages und mit Bestmarken, die erst der
+// geschlossene Tag vergibt. Gemessen stand die gelesene Tafel vom 12.11.,
+// 16:31, um 0:03 wieder als ungelesen da. Jetzt ist sie nach dem Schluss
+// dieselbe wie nach der letzten Partie, und was der Schluss ändert, steht
+// unter dem Spieler des Tages (`tagesschluss`) — am 26.08. ziehen damit Maxi
+// bei „Die Sollstrecke" gleich und Martin holt „Die Tagesumkehr".
+const _fest = ms => _schlussAm(ms, `
+  const tafel = roh.filter(x => STORY_TAFEL_UPDATE.has((x.dataRef||{}).type) && tagKey(x.when) === '2026-08-26')
+    .map(x => x.id + '|' + x.title + '|' + JSON.stringify(x.dataRef.laufbahn || {}) + '|' + JSON.stringify(x.dataRef.zuege || [])).sort();
+  const p = roh.find(x => x.id === 'potd_2026-08-26');
+  const ts = ((p && p.dataRef.tagesschluss) || []).map(z => z.text);
+  return {tafel, ts, z:tafel.filter(x => x.split('|')[0].slice(-1) === 'z').length,
+    karte:p ? _newsCardHtmlM2(p, false, false, '') : '', blatt:p ? String((_ndPotdBlatt(p) || {}).mitte || '') : ''};`);
+const _festVor = _fest(new RealDate(2026, 7, 26, 18, 0, 0).getTime());
+const _festNach = _fest(new RealDate(2026, 7, 27, 0, 5, 0).getTime());
+ok(_festVor.tafel.length > 0 && JSON.stringify(_festVor.tafel) === JSON.stringify(_festNach.tafel) && _festNach.z === 0,
+   'die Tafel des 26.08. ist nach dem Schluss um 23:59 dieselbe wie nach der letzten Partie: dieselben IDs, Zeilen und Wirkungen',
+   _festVor.tafel.length + ' / ' + _festNach.tafel.length + ' Zeilen, '
+   + [_festNach.tafel.filter(x => _festVor.tafel.indexOf(x) < 0)[0], _festVor.tafel.filter(x => _festNach.tafel.indexOf(x) < 0)[0]]
+       .map(x => String(x || 'gleich').slice(0, 300)).join(' / statt / ') + ', z ' + _festNach.z);
+const _festSoll = ['Maxi zieht bei „Die Sollstrecke“ gleich', 'Martin holt „Die Tagesumkehr“'];
+ok(_festVor.ts.length === 0 && _festSoll.every(t => _festNach.ts.indexOf(t) >= 0)
+     && !_festNach.tafel.some(x => _festSoll.some(t => x.indexOf('|' + t + '|') >= 0)),
+   'was der Schluss an der Tafel ändert, trägt der Spieler des Tages und nicht die Tafel',
+   JSON.stringify(_festNach.ts));
+ok(/class="nf-sam eh-ts"/.test(_festNach.karte) && /Mit dem Schluss des Tages/.test(_festNach.karte)
+     && _festSoll.every(t => _festNach.karte.indexOf(t.replace(/^\S+/, '')) >= 0)
+     && /Mit dem Schluss des Tages/.test(_festNach.blatt) && _festSoll.every(t => _festNach.blatt.indexOf(t.replace(/^\S+/, '')) >= 0),
+   'die Karte des Spielers des Tages und ihr Blatt zeigen diese Zeilen unter der Ehrung',
+   (_festNach.karte.match(/eh-ts[\s\S]{0,200}/) || ['keine'])[0].slice(0, 200));
+
 // Gespeichert liegt die Ehrung eines Tages noch als eigene Zeile
 // (`ehrung_tag_<Tag>`), und ihr Spieler des Tages ist älter als sie und
 // trägt keine. Abgemeldet stand die Ehrung dieser Tage nirgends mehr; sie
@@ -3902,8 +3936,12 @@ const _chrg = JSON.parse(K.eval(`JSON.stringify((function(){
   const amTag = new Set();
   matches.forEach(m => { if(mts(m) < t0.getTime()) return;
     [m.a1,m.a2,m.b1,m.b2].forEach(p => { if(p) amTag.add(p); }); });
-  const aenderungen = Object.keys(jetzt).filter(id => {
-    const t = SEASON_TITLE_BY_ID[id], n = jetzt[id], a = vorher[id];
+  // Die Tafel steht nach der letzten Partie fest; was der Schluss um 23:59
+  // ändert, trägt der Spieler des Tages (tagesschluss). Gezählt wird
+  // deshalb gegen den Stand nach der letzten Partie.
+  const nachLetzter = seasonTitleHalter(sid, letzte);
+  const aenderungen = Object.keys(nachLetzter).filter(id => {
+    const t = SEASON_TITLE_BY_ID[id], n = nachLetzter[id], a = vorher[id];
     if(!(t && t.kunst !== 'schatten' && n
       && (!a || a.pids.join(',') !== n.pids.join(',')))) return false;
     const alt = (a && a.pids) || [];
@@ -3916,10 +3954,10 @@ const _chrg = JSON.parse(K.eval(`JSON.stringify((function(){
   // gespielt hat.
   const ohneEigenePartie = chr.filter(s =>
     !((s.dataRef||{}).playerIds || []).some(p => amTag.has(p))).length;
-  // Verglichen wird bis zum Ende des Tages, wie die Karte selbst: was den
-  // ganzen Tag beschreibt, kommt erst um 23:59 [§11.0e].
+  // Verglichen wird bis zur letzten Partie des Tages, wie die Karte selbst:
+  // was der Schluss um 23:59 ändert, steht unter dem Spieler des Tages.
   const vorPrestige = prestigeTabelle(t0.getTime() - 1).byPid;
-  const jetztPrestige = prestigeTabelle(_storyTagGrenzen(letzte).nachMs).byPid;
+  const jetztPrestige = prestigeTabelle(letzte).byPid;
   const gemeldet = {};
   chr.forEach(s => Object.entries((s.dataRef||{}).prestigeDelta || {}).forEach(([pid, x]) => {
     gemeldet[pid] = (gemeldet[pid] || 0) + (Number(x) || 0);
@@ -3931,7 +3969,7 @@ const _chrg = JSON.parse(K.eval(`JSON.stringify((function(){
   // einer Chronik-Karte: gemessen holte Johannes „Den Beidfüßigen", sein
   // „Aufdreher" stieg am selben Tag von 158 auf 159, und die Karte sagte
   // richtig „kein zusätzliches Prestige".
-  const nachMs = _storyTagGrenzen(letzte).nachMs;
+  const nachMs = letzte;
   const profil = (pid, t) => (seasonTitleOf(pid, sid, t) || {}).titleId || '';
   const deltaFalsch = Object.keys(gemeldet).filter(pid => {
     const echt = Math.max(0, ((((jetztPrestige[pid]||{}).teile||{}).monat)||0)
@@ -6022,6 +6060,9 @@ ok(_ms.zeitOk, 'der Meilenstein steht am Tag der kreuzenden Partie');
 //    trug vierzehn Meldungen und im Feed keine einzige Karte.
 console.log('\n═══ DER TAG IST DAS MASS ═══');
 const _tagmix = JSON.parse(K.eval(`JSON.stringify((function(){
+  // Ohne Bestand: eine gespeicherte Karte des Tages ändert sich nicht, und
+  // der Generator rechnet für sie nicht nach, was der Schluss änderte.
+  _cache._stories = null; _cache._buildStoriesKey = null;
   const roh = _buildStories();
   _cache._stories = roh.slice().sort((a,b)=>new Date(b.when)-new Date(a.when));
   _cache._consolFrom = null; _cache._frischVon = null;
@@ -6091,8 +6132,12 @@ const _tagmix = JSON.parse(K.eval(`JSON.stringify((function(){
   const ohneSpieltag = beides.filter(k => !(proTag[k] || []).some(istSpieltagsKarte));
   const mischung = beides.map(k => {
     let t = 0, sp = 0;
+    // Was der Schluss um 23:59 an der Tafel änderte, steht als Zeilen auf
+    // der Karte des Spielers des Tages (tagesschluss): Inhalt der Tafel,
+    // auch wenn er auf einer Spieltagskarte steht.
     (proTag[k] || []).forEach(s => { if(istTafel(s)) t += gew(s);
-      else if(istSpieltagsKarte(s)) sp += gew(s); });
+      else if(istSpieltagsKarte(s)){ sp += gew(s);
+        const ts = (s.dataRef||{}).tagesschluss; if(Array.isArray(ts)) t += ts.length; } });
     return {tag: k, t, sp, anteil: Math.round(100 * t / Math.max(1, t + sp))};
   });
   return {karten: feed.length, tage: Object.keys(proTag).length,
@@ -8009,7 +8054,9 @@ const _rekBlatt = JSON.parse(K.eval(`JSON.stringify((function(){
   const s0 = k[0], d0 = s0.dataRef;
   const pid = (d0.playerIds || [])[0];
   const w = (d0.laufbahn || {})[pid] || null;
-  const P = prestigeTabelle().byPid[pid] || {};
+  // Der Stand nach der letzten Partie des Tages: die Tafel steht dort fest,
+  // was der Schluss um 23:59 ändert, steht unter dem Spieler des Tages.
+  const P = prestigeTabelle(mts(matches[matches.length - 1])).byPid[pid] || {};
   const q = (P.quellen || []).find(x => x.q === 'rekord' && x.id === d0.rekordId) || null;
   const mitte = pid => String(_newsDetailMitte(s0) || '');
   const m0 = mitte();
@@ -8022,8 +8069,7 @@ const _rekBlatt = JSON.parse(K.eval(`JSON.stringify((function(){
   const mAlt = String(_newsDetailMitte(alt) || '');
   return {n:k.length, typen:[...new Set(k.map(x => x.dataRef.type))],
     hatWirkung:!!w, laengen,
-    // Der gespeicherte Stand ist der von jetzt: der jüngste Spieltag rechnet
-    // „nachher" als 0 und damit gegen den heissen Cache [§11.0e].
+    // Der gespeicherte Stand ist der nach der letzten Partie [§11.0e].
     standStimmt: w ? w.nach === Math.round(P.punkte || 0) : false,
     quelleStimmt: (w && q) ? (w.basis === Math.round(q.basis)
       && w.halter === q.halter && w.staffel === q.staffel) : false,

@@ -664,8 +664,16 @@ function _buildStories(){
       } catch(e){ ehrung = []; }
       ehrung.forEach(x => x.posten.forEach(q => _tagGetragen.add(dayKey + '|' + x.pid + '|' + q.id)));
       if(groesser) ehrung = [];
-      if(res) _potdTage.set(dayKey, {rep, res, ehrung, brk, groesser});
-      else if(ehrung.length) _ehrungTage.set(dayKey, {rep, ehrung, brk});
+      // Was der Schluss an Tafel und Leiter ändert, steht auf der Karte des
+      // Tages und nicht mehr als neue Fassung der Tafel (`_tagesschlussTafel`).
+      // Eine gespeicherte Karte ändert sich nicht [§C33]: für sie werden die
+      // zwei Stände je Tag nicht noch einmal geschnitten.
+      const _bestand = Array.isArray(_cache._stories) ? _cache._stories : [];
+      let tagesschluss = [];
+      if(!_bestand.some(x => x && (x.id === 'potd_' + dayKey || x.id === 'tagesehrung_' + dayKey)))
+        try { tagesschluss = _tagesschlussTafel(rep.getTime()); } catch(e){ tagesschluss = []; }
+      if(res) _potdTage.set(dayKey, {rep, res, ehrung, brk, groesser, tagesschluss});
+      else if(ehrung.length) _ehrungTage.set(dayKey, {rep, ehrung, brk, tagesschluss});
     });
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] potd tage', e); }
 
@@ -2269,7 +2277,7 @@ function _buildStories(){
   // sonst Partien ohne Zusammenfassung. Die ID traegt den Tag, ist also
   // stabil, und ein zweiter Lauf legt keine Zeile dazu.
   try {
-    _potdTage.forEach(({rep, res, ehrung, brk, groesser}, dayKey) => {
+    _potdTage.forEach(({rep, res, ehrung, brk, groesser, tagesschluss}, dayKey) => {
       const main = res.main;
       const names = res.winners.map(w => nameOf(w.id));
       // Auch hier die Aufzaehlung der App [§C27]: „Leon & Martin holen den
@@ -2300,7 +2308,11 @@ function _buildStories(){
                   // von vorher nur den Schluss), `ehrungBrk`, ob der Schluss
                   // eine legendäre außer der Schlagzeile vergab, `ehrungIn`,
                   // welche größere Ehrung den Tag trägt (dann ist sie leer).
-                  ehrung, ehrungVoll:true, ehrungBrk:brk, ...(groesser ? {ehrungIn:groesser} : {})}
+                  // `tagesschluss`: was der Schluss um 23:59 an Liga-Rekorden,
+                  // Chroniken und Zeichen änderte — die Tafel des Tages steht
+                  // nach seiner letzten Partie fest (`_tagesschlussTafel`).
+                  ehrung, ehrungVoll:true, ehrungBrk:brk, ...(groesser ? {ehrungIn:groesser} : {}),
+                  ...(tagesschluss && tagesschluss.length ? {tagesschluss} : {})}
       });
     });
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] potd', e); }
@@ -2309,8 +2321,9 @@ function _buildStories(){
   // Um 23:59 wie der Spieler des Tages; wer am meisten abgab, hängt sich
   // beim Anzeigen an sie (`gegenstueck`).
   try {
-    _ehrungTage.forEach(({rep, ehrung, brk}, dayKey) => {
-      const st = _ehrungKarte(ehrung, 'tagesehrung_' + dayKey, rep.getTime(), {periode:'tag', tag:dayKey, voll:true, breaking:brk});
+    _ehrungTage.forEach(({rep, ehrung, brk, tagesschluss}, dayKey) => {
+      const st = _ehrungKarte(ehrung, 'tagesehrung_' + dayKey, rep.getTime(), Object.assign({periode:'tag', tag:dayKey, voll:true, breaking:brk},
+        tagesschluss && tagesschluss.length ? {tagesschluss} : {}));
       if(st) stories.push(st);
     });
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] tagesehrung', e); }
@@ -2421,7 +2434,11 @@ function _buildStories(){
   // die stehen dann auf drei Karten derselben Minute.
   const _tafelTag = _storyTagGrenzen(matches.length ? mts(matches[matches.length - 1]) : 0);
   const _tafelVor = _tafelTag ? _storyStand(_tafelTag.vorMs) : null;
-  const _tafelNach = _tafelTag ? _storyStand(_tafelTag.nachMs) : null;
+  // Nach der letzten Partie, nicht am Ende des Tages: die Karte steht fest,
+  // sobald gespielt ist. Um 23:59 schrieb der Schluss sie mit `nachMs` neu,
+  // und die gelesene Karte von 16:31 war am Morgen wieder ungelesen. Was der
+  // Schluss ändert, trägt die Ehrung des Tages (`_tagesschlussTafel`).
+  const _tafelNach = _tafelTag ? _storyStand(_tafelTag.letzte) : null;
   // Was eine Aenderung wirklich gebracht hat, steht an EINER Stelle: der
   // Katalogwert ist der Grundwert, nicht der Zuwachs [§C34].
   const _tafelWirkung = pid => _prestigeWirkung(pid, _tafelVor, _tafelNach);
@@ -3045,7 +3062,7 @@ function _buildStories(){
   // ein Rückfall auch nicht: wer den Volutenkranz wieder verlor, erfuhr es
   // nur aus dem Profil. Die Leiter bekommt deshalb EINE eigene Karte je
   // Spieltag, die wie die Tafel mitläuft: Stand vor dem Spieltag gegen den
-  // von jetzt, bei jedem Lauf neu, abends eingefroren [§C33]. Eine Bewegung,
+  // nach seiner letzten Partie, bei jedem Lauf neu [§C33]. Eine Bewegung,
   // die sich im Lauf des Tages wieder aufhebt, steht damit gar nicht erst da.
   //
   // Was gemeldet wird, steht bei `_insZuegeZwischen` (26b-story-fakten.js).
@@ -3054,10 +3071,9 @@ function _buildStories(){
       const tagMs = matches.filter(m => mts(m) > _tafelTag.vorMs && mts(m) <= _tafelTag.letzte)
         .slice().sort((a, b) => mts(a) - mts(b));
       // Der erste Augenblick des Tages, an dem die neue Lage stand. Geprüft
-      // an den Partien des Tages, halbiert wie bisher. Steht sie an keiner,
-      // kam sie mit dem Schluss des Tages um 23:59 (der Spieler des Tages,
-      // was den ganzen Tag beschreibt): die Karte stand sonst bei der letzten
-      // Partie, Stunden bevor es so war.
+      // an den Partien des Tages, halbiert wie bisher. Die Lage ist die nach
+      // der letzten Partie, also steht sie spätestens dort; was der Schluss
+      // um 23:59 bewegt, steht in der Ehrung des Tages.
       const schluss = new Date(_tafelTag.vonMs); schluss.setHours(23, 59, 0, 0);
       const wann = (pid, art, pb) => {
         const erreicht = art === 'ab' ? (x => x <= pb) : (x => x >= pb);

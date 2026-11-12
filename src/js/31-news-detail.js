@@ -1148,7 +1148,9 @@ function _ndPotdBlatt(s){
     // Was der Schluss des Tages vergab, im Blatt mit jedem Posten, dem
     // wievielten Mal und dem Rest seines Werts — derselbe Kasten wie im
     // Blatt einer Ehrung [§11.6f, §C27].
-    + ab('Die Ehrung des Tages', _ehrungBloeckeHtml(d.ehrung))};
+    + ab('Die Ehrung des Tages', _ehrungBloeckeHtml(d.ehrung))
+    // Was der Schluss an Tafel und Leiter änderte, jede Zeile [§11.6f].
+    + ab('Mit dem Schluss des Tages', _ehrungSchlussHtml(d.tagesschluss))};
 }
 
 // ── Der Endspurt der Saison [§C33] ──────────────────────────────────
