@@ -1724,6 +1724,20 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   .ff-tf-t>span{display:flex;align-items:center;gap:5px}
   .ff-tf-t b{font-family:'Sometype Mono',monospace;font-size:11px;color:var(--muted)}
 
+  /* Die Halbzeit: Sturm und Abwehr nebeneinander, je drei Zeilen des
+     Rennens. Ein Name bricht um, statt gekürzt zu werden. */
+  /* Zwei Spalten, solange ein Name ganz hineinpasst: im Blatt bei 360 px
+     brach „Johannes" als „Johanne / s" um. Darunter stehen Sturm und Abwehr
+     untereinander. */
+  .ff-hz{display:grid;grid-template-columns:repeat(auto-fit,minmax(138px,1fr));gap:10px 14px}
+  .ff-hz .ff-nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;overflow-wrap:normal}
+  .ff-hz-s{min-width:0}
+  .ff-hz-k{display:flex;align-items:center;gap:5px;margin-bottom:3px;font-family:'Sometype Mono',monospace;
+    font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  .ff-hz-k svg{width:12px;height:12px;fill:none;stroke:currentColor}
+  .ff-hz .ff-r{gap:6px}
+  .ff-hz .ff-r>b{font-size:11px}
+
   .ff-zw{display:flex;gap:14px;align-items:center}
   .ff-zw-z{display:flex;gap:3px;flex-shrink:0}
   .ff-zw-z i{font-style:normal;font-family:'Archivo Black',sans-serif;font-size:22px;width:25px;height:36px;

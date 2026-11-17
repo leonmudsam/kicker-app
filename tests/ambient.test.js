@@ -9424,5 +9424,70 @@ ok(_wz.n >= 6 && _wz.fakten > 0 && !_wz.falsch.length,
    _wz.falsch.join(' | ') || _wz.n + ' Arten, ' + _wz.fakten + ' Fun Facts');
 ok(!_wz.leer.length, 'kein Blatt trägt eine Überschrift ohne etwas darunter', _wz.leer.join(', '));
 
+console.log('\n=== FUN FACTS: HALBZEIT UND SAETZE ===');
+// Die Halbzeit zeigt Sturm und Abwehr des Monats: je die drei mit der
+// besten Siegquote auf der Position, ab HALBZEIT_MIN_PARTIEN Partien dort,
+// ohne Ruhestaendler. Vorher zeigte sie nur die Tafel der Chroniken, und ihr
+// Blatt nannte die letzten zehn Partien des Tabellenfuehrers.
+const _hz = JSON.parse(K.eval(`JSON.stringify((function(){
+  const pm = pmap(), nameOf = pid => (pm[pid]||{}).name || '?';
+  const T = _ambientTemplatePool(new Date(2026, 7, 15, 15, 30), pm, nameOf);
+  const t = T.find(x => x.key === 'rueckblick_halbzeit');
+  const c = t && t.make(_ambientRng(7));
+  if(!c) return {fehlt:true};
+  const b = (c.dataRef || {}).bild || {};
+  const falsch = [];
+  ['sturm', 'abwehr'].forEach(k => {
+    const l = b[k] || [];
+    if(!l.length || l.length > 3) falsch.push(k + ' hat ' + l.length + ' Zeilen');
+    l.forEach((x, i) => {
+      if(x[2] < HALBZEIT_MIN_PARTIEN) falsch.push(k + ' ' + nameOf(x[0]) + ' mit ' + x[2] + ' Partien');
+      if(!sichtbar(x[0])) falsch.push(k + ' ' + nameOf(x[0]) + ' im Ruhestand');
+      if(i && x[1] / x[2] > l[i-1][1] / l[i-1][2]) falsch.push(k + ' nicht nach Quote');
+    });
+  });
+  const s = {id:'ambient_hz', type:'ambient', cat:c.cat, ic:c.ic, title:c.title, desc:c.desc,
+    when:new Date(2026, 7, 15, 15, 30).toISOString(), dataRef:Object.assign({type:'ambient', sub:t.key}, c.dataRef)};
+  const karte = _faktBild(s, false) || '';
+  const bl = _ndFaktBlatt(s) || {};
+  return {f:b.f, falsch, desc:c.desc,
+    karte:/class="ff-hz"/.test(karte) && /Sturm/.test(karte) && /Abwehr/.test(karte),
+    blatt:/Die Spitze des Monats/.test(bl.mitte || '') && /Die Monatschroniken/.test(bl.mitte || '')
+      && !/Die letzten zehn Partien/.test(bl.mitte || '')};
+})())`));
+ok(!_hz.fehlt && _hz.f === 'halbzeit' && !_hz.falsch.length,
+   'die Halbzeit zeigt Sturm und Abwehr des Monats, je bis zu drei nach Siegquote',
+   _hz.fehlt ? 'keine Karte' : (_hz.f + ' ' + _hz.falsch.join(' | ')));
+ok(!!_hz.karte, 'die Karte zeichnet beide Positionen nebeneinander');
+ok(!!_hz.blatt, 'das Blatt zeigt die Spitze des Monats und die Chroniken, nicht die Partien eines Spielers');
+ok(!_hz.fehlt && !/\d %/.test(_hz.desc) && _hz.desc.length <= 140,
+   'der Satz der Halbzeit passt auf die Karte, das Prozentzeichen bricht nicht allein um', _hz.desc);
+
+// Die Saetze aller Fun Facts an mehreren Tagen: kein Etikett mit
+// Doppelpunkt im Titel, kein „vs", kein „mit 218 Siege", kein Bruchstueck
+// ohne Punkt am Ende. Gemessen standen „Duell der Liga: Leon vs Maxi",
+// „Rekord im Fokus: …", „Meiste Siege: Leon fuehrt … mit 218 Siege" und
+// „Die Auszeichnung ‚Absoluter Sieger' vor 3 Tagen." im Feed.
+const _ffs = JSON.parse(K.eval(`JSON.stringify((function(){
+  const pm = pmap(), nameOf = pid => (pm[pid]||{}).name || '?';
+  const falsch = [], gesehen = new Set();
+  for(let t = 6; t <= 28; t += 2){
+    const T = _ambientTemplatePool(new Date(2026, 7, t, 15, 30), pm, nameOf);
+    T.forEach(x => { let c = null; try { c = x.make(_ambientRng(t)); } catch(e){ c = null; }
+      if(!c) return; gesehen.add(x.key);
+      const ti = String(c.title || ''), de = String(c.desc || '');
+      if(/^[^„"]*: /.test(ti)) falsch.push(x.key + ' Titel mit Etikett: ' + ti);
+      if(/ vs\.? /i.test(ti + ' ' + de)) falsch.push(x.key + ' mit vs: ' + ti);
+      if(/\\bmit \\d+ (Siege|Tore)\\b/.test(de)) falsch.push(x.key + ' Dativ: ' + de);
+      if(x.key === 'form_defender' && /Abwehrspiel/.test(de)) falsch.push(x.key + ': ' + de);
+      if(de && !/[.)“]$/.test(de.trim())) falsch.push(x.key + ' ohne Punkt: ' + de);
+      if(x.key === 'fun_random_stat' && !/Nummer [123] |führt/.test(ti + ' ' + de)) falsch.push(x.key + ' nicht vorn: ' + ti);
+    });
+  }
+  return {falsch:[...new Set(falsch)], n:gesehen.size};
+})())`));
+ok(_ffs.n >= 20 && !_ffs.falsch.length, 'jeder Fun Fact spricht in ganzen Saetzen',
+   _ffs.falsch.slice(0, 6).join(' | ') || _ffs.n + ' Vorlagen');
+
 console.log('\n' + (fails ? '✗ ' + fails + ' von ' + checks + ' CHECKS FEHLGESCHLAGEN' : '✓ ALLE ' + checks + ' CHECKS BESTANDEN'));
 process.exit(fails ? 1 : 0);

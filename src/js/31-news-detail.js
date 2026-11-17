@@ -1725,8 +1725,16 @@ function _ndFaktBlatt(s){
     let mitte = '';
     if(d.type === 'dry_spell') mitte = ab('Die letzte Partie', d.lastMatchId ? _newsBlattErgebnis(d.lastMatchId) : '');
     else if(b.f === 'duell' && pm[b.a] && pm[b.b]) mitte = ab('Jede Begegnung', h2hBegegnungenHtml(b.a, b.b));
+    // Die Halbzeit: die Spitze des Monats und seine Chroniken, so wie sie
+    // am Tag der Karte standen — nicht die Partien des Tabellenführers.
+    else if(b.f === 'halbzeit') mitte = ab('Die Spitze des Monats', (b.tab || []).some(x => pm[x[0]])
+        ? `<div class="ff ff-rennen gross">${_ffRennen({r:(b.tab || []).filter(x => pm[x[0]]).map(x => ({p:x[0],
+          w:Math.max(0, x[1]) / Math.max(1, ...(b.tab || []).map(y => y[1])), t:x[1] + ' Elo'}))})}</div>` : '')
+      + ab('Die Monatschroniken', b.tafel ? `<div class="ff ff-tafel gross">${_ffTafel(b.tafel)}</div>` : '');
     else if(d.prestige && pid && pm[pid]) mitte = ab('Der Stand am Zeichen', _newsInsigniumBlock(pid));
-    else if(pid && pm[pid]) mitte = ab('Die letzten zehn Partien', _ndFaktLauf(pid, s));
+    // Wessen Partien es sind, steht dabei: „Die letzten zehn Partien" unter
+    // einer Karte über die ganze Liga las sich als die der Liga.
+    else if(pid && pm[pid]) mitte = ab('Die letzten zehn Partien von ' + pm[pid].name, _ndFaktLauf(pid, s));
     return {kopf:`<div class="nd-buehne nd-ff">${bild}</div>`, mitte};
   }
   if(d.leiter || !pid || !pm[pid] || d.vv == null || d.vv === '') return null;
@@ -1734,8 +1742,8 @@ function _ndFaktBlatt(s){
   const ab = (t, html) => html ? `<div class="nd-section">${esc(t)}</div>${html}` : '';
   if(d.prestige) return {kopf, mitte:ab('Der Stand am Zeichen', _newsInsigniumBlock(pid))};
   if(d.chronicle) return {kopf, mitte:_newsVerfolger(d.chronicle, [pid], null)
-    || ab('Die letzten zehn Partien', _ndFaktLauf(pid, s))};
-  return {kopf, mitte:ab('Die letzten zehn Partien', _ndFaktLauf(pid, s))};
+    || ab('Die letzten zehn Partien von ' + pm[pid].name, _ndFaktLauf(pid, s))};
+  return {kopf, mitte:ab('Die letzten zehn Partien von ' + pm[pid].name, _ndFaktLauf(pid, s))};
 }
 // Die zehn Partien vor der Karte als Lauf und als Bilanz.
 function _ndFaktLauf(pid, s){

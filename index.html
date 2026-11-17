@@ -6234,6 +6234,15 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   .ff-tf-t>span{display:flex;align-items:center;gap:5px}
   .ff-tf-t b{font-family:'Sometype Mono',monospace;font-size:11px;color:var(--muted)}
 
+  .ff-hz{display:grid;grid-template-columns:repeat(auto-fit,minmax(138px,1fr));gap:10px 14px}
+  .ff-hz .ff-nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;overflow-wrap:normal}
+  .ff-hz-s{min-width:0}
+  .ff-hz-k{display:flex;align-items:center;gap:5px;margin-bottom:3px;font-family:'Sometype Mono',monospace;
+    font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  .ff-hz-k svg{width:12px;height:12px;fill:none;stroke:currentColor}
+  .ff-hz .ff-r{gap:6px}
+  .ff-hz .ff-r>b{font-size:11px}
+
   .ff-zw{display:flex;gap:14px;align-items:center}
   .ff-zw-z{display:flex;gap:3px;flex-shrink:0}
   .ff-zw-z i{font-style:normal;font-family:'Archivo Black',sans-serif;font-size:22px;width:25px;height:36px;
@@ -6689,7 +6698,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.11.16.de5d5673';
+const BUILD_VERSION='2026.11.17.40a001f6';
 function forceReload(nach){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -19743,6 +19752,7 @@ function _storyFolge(a, b){
 
 const AMBIENT_SLOTS = [15];
 const AMBIENT_RUHE_TAGE = 3;
+const HALBZEIT_MIN_PARTIEN = 4;
 const AMBIENT_SLOT_ROLLE = {
   form_best_wr:'stand', form_striker:'stand', form_defender:'stand',
   form_clutch:'stand', form_close_wins:'stand', form_most_active:'stand',
@@ -22606,8 +22616,8 @@ function _ambientTemplatePool(now, pm, nameOf){
     }
     if(!best) return null;
     return { cat:'rivalry', ic:'crossedSwords', prio:4,
-      title:`Duell der Liga: ${nameOf(best.pa)} vs ${nameOf(best.pb)}`,
-      desc:`${best.total} direkte Duelle. Siege: ${nameOf(best.pa)} ${best.wa}, ${nameOf(best.pb)} ${best.wb}.`,
+      title:`${nameOf(best.pa)} und ${nameOf(best.pb)} sind das Duell der Liga`,
+      desc:`${best.total} direkte Duelle, ${nameOf(best.pa)} gewinnt ${best.wa}, ${nameOf(best.pb)} ${best.wb}.`,
       vv: best.total, vl:'Duelle',
       dataRef:{ ambientPids:[best.pa, best.pb], pairKind:'duel', bild:{f:'duell', a:best.pa, b:best.pb, wa:best.wa, wb:best.wb} } };
   }});
@@ -22626,8 +22636,9 @@ function _ambientTemplatePool(now, pm, nameOf){
     }
     if(!best) return null;
     return { cat:'rivalry', ic:'crossedSwords', prio:4,
-      title:`Kopf-an-Kopf: ${nameOf(best.pa)} und ${nameOf(best.pb)}`,
-      desc:`${best.total} direkte Duelle, ${best.diff === 0 ? 'absolut ausgeglichen' : 'nur ' + best.diff + ' Sieg' + (best.diff === 1 ? '' : 'e') + ' Unterschied'}. ${best.diff === 0 ? `Es steht ${best.wa}:${best.wb}.` : `Es steht ${Math.max(best.wa, best.wb)}:${Math.min(best.wa, best.wb)} für ${nameOf(best.wa > best.wb ? best.pa : best.pb)}.`}`,
+      title:`${nameOf(best.pa)} und ${nameOf(best.pb)} liegen Kopf an Kopf`,
+      desc:best.diff === 0 ? `${best.total} direkte Duelle, und jeder hat ${best.wa} gewonnen.`
+        : `${best.total} direkte Duelle, nur ${best.diff} ${best.diff === 1 ? 'Sieg' : 'Siege'} Unterschied. Es steht ${Math.max(best.wa, best.wb)}:${Math.min(best.wa, best.wb)} für ${nameOf(best.wa > best.wb ? best.pa : best.pb)}.`,
       vv: best.wa+':'+best.wb, vl:'Bilanz',
       dataRef:{ ambientPids:[best.pa, best.pb], pairKind:'duel', bild:{f:'duell', a:best.pa, b:best.pb, wa:best.wa, wb:best.wb} } };
   }});
@@ -22693,12 +22704,19 @@ function _ambientTemplatePool(now, pm, nameOf){
       if(!best || diff > best.diff) best = {diff, hi, lo, m};
     }
     if(!best || best.diff < 6) return null;
-    const dt = new Date(best.m.created_at);
+    const gleich = matches.filter(m => Math.max(m.score_a||0, m.score_b||0) === best.hi
+      && Math.min(m.score_a||0, m.score_b||0) === best.lo && mts(m) <= now.getTime());
+    const zuletzt = gleich.length ? gleich[gleich.length - 1] : best.m;
+    const sieger = (zuletzt.winner === 'A' ? [zuletzt.a1, zuletzt.a2] : [zuletzt.b1, zuletzt.b2]).filter(id => pm[id]);
+    const dt = new Date(zuletzt.created_at), am = `${String(dt.getDate()).padStart(2,'0')}.${String(dt.getMonth()+1).padStart(2,'0')}.`;
+    const wer = sieger.length ? ` für ${_namenListe(sieger.map(nameOf))}` : '';
     return { cat:'fun', ic:'thriller', prio:3,
-      title:'Klarste Klatsche der Liga',
-      desc:`Höchster Sieg aller Zeiten: ${best.hi}:${best.lo} am ${String(dt.getDate()).padStart(2,'0')}.${String(dt.getMonth()+1).padStart(2,'0')}.`,
+      title:'Der klarste Sieg der Liga',
+      desc: gleich.length > 1
+        ? `${gleich.length}-mal endete eine Partie so, zuletzt am ${am}${wer}.`
+        : `So endete nur eine Partie, am ${am}${wer}.`,
       vv: best.hi+':'+best.lo, vl:'Rekord',
-      dataRef:{ bild:{f:'verteilung', je:[0,1,2,3,4,5,6,7,8,9].map(i => matches.filter(m =>
+      dataRef:{ ambientPids:sieger.slice(0, 2), bild:{f:'verteilung', je:[0,1,2,3,4,5,6,7,8,9].map(i => matches.filter(m =>
         Math.max(m.score_a||0, m.score_b||0) === 10 && Math.min(m.score_a||0, m.score_b||0) === i).length), hl:[best.lo]} } };
   }});
 
@@ -22714,8 +22732,8 @@ function _ambientTemplatePool(now, pm, nameOf){
     if(bn < 5) return null;
     const p = bk.split('-');
     return { cat:'fun', ic:'calendar', prio:2,
-      title:'Rekord-Spieltag',
-      desc:`Die meisten Partien an einem Tag: ${bn} am ${p[2]}.${p[1]}.${p[0]}.`,
+      title:'Der Spieltag mit den meisten Partien',
+      desc:`Am ${p[2]}.${p[1]}.${p[0]} wurden ${bn} Partien gespielt, so viele wie an keinem anderen Tag.`,
       vv: bn, vl:'Partien',
       dataRef:{ bild:(() => { const ks = Object.keys(byDay).sort().slice(-24);
         if(!ks.includes(bk)){ ks.shift(); ks.push(bk); ks.sort(); }
@@ -22756,8 +22774,8 @@ function _ambientTemplatePool(now, pm, nameOf){
     const r = l[Math.floor(rng() * l.length)], pids = r.pids.filter(aktiv);
     const namen = pids.slice(0, 3).map(nameOf);
     return {cat:'history', ic:r.ic || 'trophy', prio:5,
-      title:`Rekord im Fokus: ${r.name}`,
-      desc:`${_namenListe(namen)} ${pids.length === 1 ? 'hält' : 'halten'} diese Bestmarke. ${String(r.ev || r.cond || 'Der Beleg steht in der Ewigen Tafel.').replace(/\s*[·•]\s*/g, '. ')}`,
+      title:`${_namenListe(namen)} ${pids.length === 1 ? 'hält' : 'halten'} „${r.name}“`,
+      desc:`${String(r.ev || r.cond || 'Der Beleg steht in der Ewigen Tafel').replace(/\s*[·•]\s*/g, '. ').replace(/\.?\s*$/, '.')}`,
       vv:_chronKurz(r.ev) || String(r.val), vl:'Bestwert', dataRef:{ambientPids:pids.slice(0, 3), rekordId:r.id,
         bild:_bRennen(_rekRang(r.id).map(x => ({p:x.pid, v:x.wert, t:_chronKurz(x.ev) || komma(x.wert)})), false, 'podest')}};
   }});
@@ -22769,10 +22787,10 @@ function _ambientTemplatePool(now, pm, nameOf){
     const elig = withStats.filter(pid => stats[pid].games >= 5);
     if(elig.length < 2) return null;
     const cats = [
-      { noun:'Meiste Siege',         ic:'trophy',  pool:withStats, val: pid => stats[pid].wins,               fmt: v => v+' Siege' },
-      { noun:'Bestes Torverhältnis', ic:'plusMinus', pool:withStats, val: pid => stats[pid].gf - stats[pid].ga, fmt: v => (v>0?'+':'')+v+' Tordifferenz' },
-      { noun:'Meiste Tore',          ic:'ball',    pool:withStats, val: pid => stats[pid].gf,                 fmt: v => v+' Tore' },
-      { noun:'Höchste Karriere-Elo', ic:'crown',   pool:elig,      val: pid => Math.round(career[pid]||0),    fmt: v => v+' Elo', qual:' (ab 5 Partien)' },
+      { noun:'Meiste Siege',         bei:'den Siegen',        ic:'trophy',  pool:withStats, val: pid => stats[pid].wins,               fmt: v => v+' Siege', dat: v => v+' Siegen' },
+      { noun:'Bestes Torverhältnis', bei:'der Tordifferenz',  ic:'plusMinus', pool:withStats, val: pid => stats[pid].gf - stats[pid].ga, fmt: v => (v>0?'+':'')+v+' Tordifferenz' },
+      { noun:'Meiste Tore',          bei:'den Toren',         ic:'ball',    pool:withStats, val: pid => stats[pid].gf,                 fmt: v => v+' Tore', dat: v => v+' Toren' },
+      { noun:'Höchste Karriere-Elo', bei:'der Karriere-Elo',  ic:'crown',   pool:elig,      val: pid => Math.round(career[pid]||0),    fmt: v => v+' Elo', qual:' (ab 5 Partien)' },
     ];
     const c = cats[Math.floor(rng()*cats.length)];
     let best = null, second = null;
@@ -22784,9 +22802,9 @@ function _ambientTemplatePool(now, pm, nameOf){
     if(!best) return null;
     if(second && second.v === best.v) return null;
     return { cat:'personal', ic:c.ic, prio:5,
-      title:`${c.noun}: ${nameOf(best.pid)} führt`,
+      title:`${nameOf(best.pid)} führt bei ${c.bei}`,
       desc: second
-        ? `${c.fmt(best.v)}. Liga-Bestwert${c.qual||''}, vor ${nameOf(second.pid)} mit ${c.fmt(second.v)}.`
+        ? `${c.fmt(best.v)}. Liga-Bestwert${c.qual||''}, vor ${nameOf(second.pid)} mit ${(c.dat || c.fmt)(second.v)}.`
         : `${nameOf(best.pid)} hält den Liga-Bestwert${c.qual||''}. ${c.fmt(best.v)}.`,
       vv: best.v, vl: c.noun.replace(/^(Meiste|Bestes|Höchste)\s+/, ''),
       dataRef:{ ambientPid: best.pid, bild:_bReihe(c.pool, c.val, v => (c.fmt(v).match(/^[+-]?\d+/) || [String(v)])[0]) } };
@@ -22813,13 +22831,12 @@ function _ambientTemplatePool(now, pm, nameOf){
       if(!platz) return;
       if(!bestes || platz < bestes.platz) bestes = {f, platz, wert:f.v(pid), von:reihe.length};
     });
-    if(!bestes) return null;
+    if(!bestes || bestes.platz > 3) return null;
     return { cat:'personal', ic:'chartBar', prio:4,
       title: bestes.platz === 1
         ? `${nameOf(pid)} führt die Liga bei ${bestes.f.n} an`
         : `${nameOf(pid)} ist Nummer ${bestes.platz} bei ${bestes.f.n}`,
-      desc:`${bestes.f.fmt(bestes.wert)}, unter ${bestes.von} Spielern. `
-         + (bestes.platz === 1 ? `` : `In keiner anderen Kennzahl steht ${nameOf(pid)} weiter vorn.`),
+      desc:`${bestes.f.fmt(bestes.wert)}, unter ${bestes.von} Spielern.`,
       vv: 'Platz ' + bestes.platz, vl:'von ' + (bestes.von || ''),
       dataRef:{ ambientPid: pid, bild:{f:'platz', p:pid, platz:bestes.platz, von:bestes.von, t:bestes.f.fmt(bestes.wert)} } };
   }});
@@ -22848,7 +22865,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     const isRecord = t.best === topBest;
     const nm = `${nameOf(t.ids[0])} und ${nameOf(t.ids[1])}`;
     return { cat:'team', ic:'unstoppable', prio:isRecord ? 5 : 4,
-      title: isRecord ? `Rekord-Duo: ${nm}` : `Eingespielt: ${nm}`,
+      title: isRecord ? `${nm} sind das Rekord-Duo` : `${nm} sind eingespielt`,
       desc: isRecord
         ? `${t.best} gemeinsame Siege in Serie. Kein Duo der Liga war je länger unschlagbar.`
         : `${t.best} gemeinsame Siege in Serie. Das ist Platz ${rank} von ${ranked.length} Duos, `
@@ -22896,7 +22913,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     const a = agg[best.pid];
     return { cat:'personal', ic:'shieldCheck', prio:5,
       title:`${nameOf(best.pid)} macht die Bude dicht`,
-      desc:`Im Schnitt ${komma(a.dGa/a.dG)} Gegentore in ${a.dG} Abwehrspielen der letzten 14 Tage.`,
+      desc:`Im Schnitt ${komma(a.dGa/a.dG)} Gegentore in ${a.dG} Partien in der Abwehr, in den letzten 14 Tagen.`,
       vv: komma(a.dGa/a.dG), vl:'Ø Gegentore',
       dataRef:{ ambientPid: best.pid, bild:_bReihe(elig, id => agg[id].dGa / agg[id].dG, v => komma(v), true) } };
   }});
@@ -23095,7 +23112,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     const her = days < 2 ? null : days < 14 ? {n:days, e:'Tagen', nom:'Tage'} : _spSeit(now.getTime() - latest.t);
     return { cat:'badge', ic: latest.badge.ic || 'trophyStar', prio:5,
       title:`${nameOf(latest.pid)} holte zuletzt Gold`,
-      desc:`Die Auszeichnung „${latest.badge.name}“ ${days === 0 ? 'heute' : days === 1 ? 'gestern' : 'vor ' + her.n + ' ' + her.e}. ${latest.badge.desc}.`,
+      desc:`${days === 0 ? 'Heute' : days === 1 ? 'Gestern' : 'Vor ' + her.n + ' ' + her.e} kam „${latest.badge.name}“ dazu, eine der legendären Auszeichnungen.`,
       vv:String(days === 0 ? 'heute' : days === 1 ? 'gestern' : her.n),
       vl:her ? her.nom + ' her' : 'geholt',
       dataRef:{ ambientPid: latest.pid, bild:{f:'medaille', p:latest.pid, b:latest.badge.id,
@@ -23155,8 +23172,8 @@ function _ambientTemplatePool(now, pm, nameOf){
     if(!cands.length) return null;
     const c = cands[Math.floor(rng()*cands.length)];
     return { cat:'team', ic:'duo', prio:4,
-      title:`Beste Freunde: ${nameOf(c.pid)} und ${nameOf(c.mate)}`,
-      desc:`Zusammen ${c.w} von ${c.g} Partien gewonnen, ${Math.round(c.wr*100)} %.`,
+      title:`${nameOf(c.pid)} und ${nameOf(c.mate)} gewinnen zusammen`,
+      desc:`${c.w} von ${c.g} gemeinsamen Partien, das sind ${Math.round(c.wr*100)} %.`,
       vv: Math.round(c.wr*100) + '\u00A0%', vl:'als Duo',
       dataRef:{ ambientPids:[c.pid, c.mate], pairKind:'team', bild:{f:'duo', a:c.pid, b:c.mate, w:c.w, g:c.g} } };
   }});
@@ -23352,17 +23369,34 @@ function _ambientTemplatePool(now, pm, nameOf){
       if(!T2) return null;
       const offen = SEASON_TITLES.length - T2.awarded.length;
       const fuehrend = T2.champ && pm[T2.champ.pid] ? T2.champ : null;
-      const ohne = (T2.empty || []).filter(id => pm[id]).length;
+      const je = {atk:{}, def:{}};
+      (matchesInSeason(sid) || []).filter(m => mts(m) <= now.getTime()).forEach(m => {
+        const a = m.winner === 'A';
+        [[m.a1, m.a1_pos, a], [m.a2, m.a2_pos, a], [m.b1, m.b1_pos, !a], [m.b2, m.b2_pos, !a]].forEach(([pid, pos, w]) => {
+          if(!pid || !pm[pid] || !sichtbar(pid)) return;
+          const o = je[pos === 'def' ? 'def' : 'atk'], x = o[pid] || (o[pid] = {g:0, w:0});
+          x.g++; if(w) x.w++;
+        });
+      });
+      const drei = o => Object.keys(o).filter(pid => o[pid].g >= HALBZEIT_MIN_PARTIEN)
+        .sort((x, y) => (o[y].w / o[y].g) - (o[x].w / o[x].g) || o[y].g - o[x].g || nameOf(x).localeCompare(nameOf(y), 'de'))
+        .slice(0, 3).map(pid => [pid, o[pid].w, o[pid].g]);
+      const sturm = drei(je.atk), abwehr = drei(je.def);
+      const q = x => Math.round(x[1] / x[2] * 100);
+      let tab = [];
+      try { tab = saisonRang(sid).filter(e => pm[e.id]).slice(0, 5).map(e => [e.id, Math.round(e.elo), e.wins + e.losses]); } catch(e){ tab = []; }
       return { cat:'season', ic:'stopwatch', prio:6,
         title:`Halbzeit im ${seasonLabel(sid)}`,
         desc: `${T2.matches} Partien an ${T2.days} Spieltagen. `
-          + (fuehrend ? `${nameOf(fuehrend.pid)} führt mit ${fuehrend.elo} Elo aus ${fuehrend.games} Partien. ` : '')
-          + `${T2.awarded.length} von ${SEASON_TITLES.length} Monatschroniken sind vergeben, ${offen} noch offen`
-          + (ohne ? `, ${ohne} Spieler ${ohne === 1 ? 'trägt' : 'tragen'} noch keine.` : '.')
-          + ` Die zweite Monatshälfte entscheidet.`,
+          + (fuehrend ? `${nameOf(fuehrend.pid)} führt mit ${fuehrend.elo} Elo. ` : '')
+          + (sturm.length && abwehr.length
+            ? `Im Sturm gewinnt ${nameOf(sturm[0][0])} ${q(sturm[0])}\u00a0%, in der Abwehr ${nameOf(abwehr[0][0])} ${q(abwehr[0])}\u00a0%.`
+            : `${T2.awarded.length} von ${SEASON_TITLES.length} Monatschroniken sind vergeben.`),
         vv:String(offen), vl:'noch offen',
-        dataRef:{ ambientPid: fuehrend ? fuehrend.pid : null, seasonTable:sid, bild:{f:'tafel', voll:T2.awarded.length,
-          alle:SEASON_TITLES.length, traeger:_tafelTraeger(T2.awarded)} } };
+        dataRef:{ ambientPid: fuehrend ? fuehrend.pid : null, seasonTable:sid,
+          bild:sturm.length && abwehr.length
+            ? {f:'halbzeit', sturm, abwehr, tab, tafel:{voll:T2.awarded.length, alle:SEASON_TITLES.length, traeger:_tafelTraeger(T2.awarded)}}
+            : {f:'tafel', voll:T2.awarded.length, alle:SEASON_TITLES.length, traeger:_tafelTraeger(T2.awarded)} } };
     }});
 
   T.push({ key:'rueckblick_jahr',
@@ -28379,6 +28413,20 @@ function _ffTafel(b){
     + (tr.length ? `<div class="ff-tf-t">${tr.map(x => `<span>${_ffChip(x[0])}${_ffNm(x[0])}<b class="num">${x[1]}</b></span>`).join('')}</div>` : '');
 }
 
+function _ffHalbzeit(b){
+  const seite = (l, ic, wort) => {
+    const z = (l || []).filter(x => pmap()[x[0]]);
+    if(!z.length) return '';
+    return `<div class="ff-hz-s"><div class="ff-hz-k">${svgI(ic)}<b>${wort}</b></div>`
+      + z.map((x, k) => { const q = x[2] ? Math.round(x[1] / x[2] * 100) : 0;
+        return `<div class="ff-r${k === 0 ? ' eins' : ''}" style="--k:${k}">${_ffChip(x[0])}`
+          + `<span class="ff-r-m">${_ffNm(x[0])}<span class="ff-bar"><i style="width:${q}%"></i></span></span>`
+          + `<b class="num">${q}\u00a0%</b></div>`; }).join('') + `</div>`;
+  };
+  const s = seite(b.sturm, 'bolt', 'Sturm'), a = seite(b.abwehr, 'shield', 'Abwehr');
+  return s && a ? `<div class="ff-hz">${s}${a}</div>` : '';
+}
+
 function _ffZaehler(b){
   const ziffern = String(b.n | 0).split('').map((z, i) => `<i class="num" style="--k:${i}">${z}</i>`).join('');
   const s = (b.sieger || []).filter(id => pmap()[id]);
@@ -28395,7 +28443,7 @@ function _ffLauf(b){
 const _FF_FORM = {
   rennen:_ffRennen, podest:_ffPodest, sammlung:_ffSammlung, sterne:_ffSterne, zahl:_ffZahl, duell:_ffDuell, duo:_ffDuo, vitrine:_ffVitrine, medaille:_ffMedaille,
   stufe:_ffStufe, ziel:_ffZiel, rolle:_ffRolle, verteilung:_ffVerteilung, saeulen:_ffSaeulen,
-  platz:_ffPlatz, tafel:_ffTafel, zaehler:_ffZaehler, lauf:_ffLauf
+  platz:_ffPlatz, tafel:_ffTafel, zaehler:_ffZaehler, lauf:_ffLauf, halbzeit:_ffHalbzeit
 };
 
 const INS_ORDNUNG = ['erste', 'zweite', 'dritte', 'vierte', 'fünfte', 'sechste', 'siebte'];
@@ -30190,8 +30238,12 @@ function _ndFaktBlatt(s){
     let mitte = '';
     if(d.type === 'dry_spell') mitte = ab('Die letzte Partie', d.lastMatchId ? _newsBlattErgebnis(d.lastMatchId) : '');
     else if(b.f === 'duell' && pm[b.a] && pm[b.b]) mitte = ab('Jede Begegnung', h2hBegegnungenHtml(b.a, b.b));
+    else if(b.f === 'halbzeit') mitte = ab('Die Spitze des Monats', (b.tab || []).some(x => pm[x[0]])
+        ? `<div class="ff ff-rennen gross">${_ffRennen({r:(b.tab || []).filter(x => pm[x[0]]).map(x => ({p:x[0],
+          w:Math.max(0, x[1]) / Math.max(1, ...(b.tab || []).map(y => y[1])), t:x[1] + ' Elo'}))})}</div>` : '')
+      + ab('Die Monatschroniken', b.tafel ? `<div class="ff ff-tafel gross">${_ffTafel(b.tafel)}</div>` : '');
     else if(d.prestige && pid && pm[pid]) mitte = ab('Der Stand am Zeichen', _newsInsigniumBlock(pid));
-    else if(pid && pm[pid]) mitte = ab('Die letzten zehn Partien', _ndFaktLauf(pid, s));
+    else if(pid && pm[pid]) mitte = ab('Die letzten zehn Partien von ' + pm[pid].name, _ndFaktLauf(pid, s));
     return {kopf:`<div class="nd-buehne nd-ff">${bild}</div>`, mitte};
   }
   if(d.leiter || !pid || !pm[pid] || d.vv == null || d.vv === '') return null;
@@ -30199,8 +30251,8 @@ function _ndFaktBlatt(s){
   const ab = (t, html) => html ? `<div class="nd-section">${esc(t)}</div>${html}` : '';
   if(d.prestige) return {kopf, mitte:ab('Der Stand am Zeichen', _newsInsigniumBlock(pid))};
   if(d.chronicle) return {kopf, mitte:_newsVerfolger(d.chronicle, [pid], null)
-    || ab('Die letzten zehn Partien', _ndFaktLauf(pid, s))};
-  return {kopf, mitte:ab('Die letzten zehn Partien', _ndFaktLauf(pid, s))};
+    || ab('Die letzten zehn Partien von ' + pm[pid].name, _ndFaktLauf(pid, s))};
+  return {kopf, mitte:ab('Die letzten zehn Partien von ' + pm[pid].name, _ndFaktLauf(pid, s))};
 }
 function _ndFaktLauf(pid, s){
   const t = new Date(s.when).getTime();

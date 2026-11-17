@@ -501,8 +501,10 @@ function _ambientTemplatePool(now, pm, nameOf){
     }
     if(!best) return null;
     return { cat:'rivalry', ic:'crossedSwords', prio:4,
-      title:`Duell der Liga: ${nameOf(best.pa)} vs ${nameOf(best.pb)}`,
-      desc:`${best.total} direkte Duelle. Siege: ${nameOf(best.pa)} ${best.wa}, ${nameOf(best.pb)} ${best.wb}.`,
+      // Ganze Sätze statt Etikett und „vs" [§C33]: „Duell der Liga: Leon vs
+      // Maxi" und „Siege: Leon 152, Maxi 89." waren Aufschriften.
+      title:`${nameOf(best.pa)} und ${nameOf(best.pb)} sind das Duell der Liga`,
+      desc:`${best.total} direkte Duelle, ${nameOf(best.pa)} gewinnt ${best.wa}, ${nameOf(best.pb)} ${best.wb}.`,
       vv: best.total, vl:'Duelle',
       dataRef:{ ambientPids:[best.pa, best.pb], pairKind:'duel', bild:{f:'duell', a:best.pa, b:best.pb, wa:best.wa, wb:best.wb} } };
   }});
@@ -522,11 +524,12 @@ function _ambientTemplatePool(now, pm, nameOf){
     }
     if(!best) return null;
     return { cat:'rivalry', ic:'crossedSwords', prio:4,
-      title:`Kopf-an-Kopf: ${nameOf(best.pa)} und ${nameOf(best.pb)}`,
+      title:`${nameOf(best.pa)} und ${nameOf(best.pb)} liegen Kopf an Kopf`,
       // Zwischen den beiden Zahlen stand ein Halbgeviertstrich, und der ist in
       // einem Satz ein Gedankenstrich und kein Bilanzstrich. Die Bilanz steht
       // jetzt als Doppelpunkt-Paar da, wie ueberall sonst in der App.
-      desc:`${best.total} direkte Duelle, ${best.diff === 0 ? 'absolut ausgeglichen' : 'nur ' + best.diff + ' Sieg' + (best.diff === 1 ? '' : 'e') + ' Unterschied'}. ${best.diff === 0 ? `Es steht ${best.wa}:${best.wb}.` : `Es steht ${Math.max(best.wa, best.wb)}:${Math.min(best.wa, best.wb)} für ${nameOf(best.wa > best.wb ? best.pa : best.pb)}.`}`,
+      desc:best.diff === 0 ? `${best.total} direkte Duelle, und jeder hat ${best.wa} gewonnen.`
+        : `${best.total} direkte Duelle, nur ${best.diff} ${best.diff === 1 ? 'Sieg' : 'Siege'} Unterschied. Es steht ${Math.max(best.wa, best.wb)}:${Math.min(best.wa, best.wb)} für ${nameOf(best.wa > best.wb ? best.pa : best.pb)}.`,
       vv: best.wa+':'+best.wb, vl:'Bilanz',
       dataRef:{ ambientPids:[best.pa, best.pb], pairKind:'duel', bild:{f:'duell', a:best.pa, b:best.pb, wa:best.wa, wb:best.wb} } };
   }});
@@ -610,12 +613,24 @@ function _ambientTemplatePool(now, pm, nameOf){
       if(!best || diff > best.diff) best = {diff, hi, lo, m};
     }
     if(!best || best.diff < 6) return null;
-    const dt = new Date(best.m.created_at);
+    // „Höchster Sieg aller Zeiten: 10:0 am 01.06." nannte den ERSTEN von
+    // vielen und niemanden, der ihn holte. Gezählt wird, wie oft es so klar
+    // ausging, und genannt wird das letzte Mal mit seinen Siegern [§C33].
+    const gleich = matches.filter(m => Math.max(m.score_a||0, m.score_b||0) === best.hi
+      && Math.min(m.score_a||0, m.score_b||0) === best.lo && mts(m) <= now.getTime());
+    const zuletzt = gleich.length ? gleich[gleich.length - 1] : best.m;
+    const sieger = (zuletzt.winner === 'A' ? [zuletzt.a1, zuletzt.a2] : [zuletzt.b1, zuletzt.b2]).filter(id => pm[id]);
+    const dt = new Date(zuletzt.created_at), am = `${String(dt.getDate()).padStart(2,'0')}.${String(dt.getMonth()+1).padStart(2,'0')}.`;
+    const wer = sieger.length ? ` für ${_namenListe(sieger.map(nameOf))}` : '';
     return { cat:'fun', ic:'thriller', prio:3,
-      title:'Klarste Klatsche der Liga',
-      desc:`Höchster Sieg aller Zeiten: ${best.hi}:${best.lo} am ${String(dt.getDate()).padStart(2,'0')}.${String(dt.getMonth()+1).padStart(2,'0')}.`,
+      // Der Titel bleibt, das Ergebnis steht groß daneben und die Zahl im
+      // Satz: „11-mal 10:0" neben dem großen „10:0" sagte es zweimal.
+      title:'Der klarste Sieg der Liga',
+      desc: gleich.length > 1
+        ? `${gleich.length}-mal endete eine Partie so, zuletzt am ${am}${wer}.`
+        : `So endete nur eine Partie, am ${am}${wer}.`,
       vv: best.hi+':'+best.lo, vl:'Rekord',
-      dataRef:{ bild:{f:'verteilung', je:[0,1,2,3,4,5,6,7,8,9].map(i => matches.filter(m =>
+      dataRef:{ ambientPids:sieger.slice(0, 2), bild:{f:'verteilung', je:[0,1,2,3,4,5,6,7,8,9].map(i => matches.filter(m =>
         Math.max(m.score_a||0, m.score_b||0) === 10 && Math.min(m.score_a||0, m.score_b||0) === i).length), hl:[best.lo]} } };
   }});
 
@@ -632,8 +647,8 @@ function _ambientTemplatePool(now, pm, nameOf){
     if(bn < 5) return null;
     const p = bk.split('-');
     return { cat:'fun', ic:'calendar', prio:2,
-      title:'Rekord-Spieltag',
-      desc:`Die meisten Partien an einem Tag: ${bn} am ${p[2]}.${p[1]}.${p[0]}.`,
+      title:'Der Spieltag mit den meisten Partien',
+      desc:`Am ${p[2]}.${p[1]}.${p[0]} wurden ${bn} Partien gespielt, so viele wie an keinem anderen Tag.`,
       vv: bn, vl:'Partien',
       dataRef:{ bild:(() => { const ks = Object.keys(byDay).sort().slice(-24);
         if(!ks.includes(bk)){ ks.shift(); ks.push(bk); ks.sort(); }
@@ -678,8 +693,9 @@ function _ambientTemplatePool(now, pm, nameOf){
     const r = l[Math.floor(rng() * l.length)], pids = r.pids.filter(aktiv);
     const namen = pids.slice(0, 3).map(nameOf);
     return {cat:'history', ic:r.ic || 'trophy', prio:5,
-      title:`Rekord im Fokus: ${r.name}`,
-      desc:`${_namenListe(namen)} ${pids.length === 1 ? 'hält' : 'halten'} diese Bestmarke. ${String(r.ev || r.cond || 'Der Beleg steht in der Ewigen Tafel.').replace(/\s*[·•]\s*/g, '. ')}`,
+      // „Rekord im Fokus: X" war ein Etikett, und der Beleg endete ohne Punkt.
+      title:`${_namenListe(namen)} ${pids.length === 1 ? 'hält' : 'halten'} „${r.name}“`,
+      desc:`${String(r.ev || r.cond || 'Der Beleg steht in der Ewigen Tafel').replace(/\s*[·•]\s*/g, '. ').replace(/\.?\s*$/, '.')}`,
       // Der Wert stand roh da: „0.72" mit englischem Punkt für 72 Prozent.
       // Der Beleg beginnt mit dem Sortierwert [§C35] und trägt seine Einheit.
       vv:_chronKurz(r.ev) || String(r.val), vl:'Bestwert', dataRef:{ambientPids:pids.slice(0, 3), rekordId:r.id,
@@ -699,10 +715,12 @@ function _ambientTemplatePool(now, pm, nameOf){
     // Mindestanzahl. Nur die Karriere-Elo (eine Wertung, keine Summe) behält den
     // 5-Spiele-Filter, und der steht dann auch im Text.
     const cats = [
-      { noun:'Meiste Siege',         ic:'trophy',  pool:withStats, val: pid => stats[pid].wins,               fmt: v => v+' Siege' },
-      { noun:'Bestes Torverhältnis', ic:'plusMinus', pool:withStats, val: pid => stats[pid].gf - stats[pid].ga, fmt: v => (v>0?'+':'')+v+' Tordifferenz' },
-      { noun:'Meiste Tore',          ic:'ball',    pool:withStats, val: pid => stats[pid].gf,                 fmt: v => v+' Tore' },
-      { noun:'Höchste Karriere-Elo', ic:'crown',   pool:elig,      val: pid => Math.round(career[pid]||0),    fmt: v => v+' Elo', qual:' (ab 5 Partien)' },
+      // `bei` ist die Wertung im Satz, `dat` die Zahl nach „mit": „vor Maxi
+      // mit 218 Siege" stand im Feed.
+      { noun:'Meiste Siege',         bei:'den Siegen',        ic:'trophy',  pool:withStats, val: pid => stats[pid].wins,               fmt: v => v+' Siege', dat: v => v+' Siegen' },
+      { noun:'Bestes Torverhältnis', bei:'der Tordifferenz',  ic:'plusMinus', pool:withStats, val: pid => stats[pid].gf - stats[pid].ga, fmt: v => (v>0?'+':'')+v+' Tordifferenz' },
+      { noun:'Meiste Tore',          bei:'den Toren',         ic:'ball',    pool:withStats, val: pid => stats[pid].gf,                 fmt: v => v+' Tore', dat: v => v+' Toren' },
+      { noun:'Höchste Karriere-Elo', bei:'der Karriere-Elo',  ic:'crown',   pool:elig,      val: pid => Math.round(career[pid]||0),    fmt: v => v+' Elo', qual:' (ab 5 Partien)' },
     ];
     const c = cats[Math.floor(rng()*cats.length)];
     let best = null, second = null;
@@ -718,9 +736,9 @@ function _ambientTemplatePool(now, pm, nameOf){
     // sein Gleichstand in einem Satz.
     if(second && second.v === best.v) return null;
     return { cat:'personal', ic:c.ic, prio:5,
-      title:`${c.noun}: ${nameOf(best.pid)} führt`,
+      title:`${nameOf(best.pid)} führt bei ${c.bei}`,
       desc: second
-        ? `${c.fmt(best.v)}. Liga-Bestwert${c.qual||''}, vor ${nameOf(second.pid)} mit ${c.fmt(second.v)}.`
+        ? `${c.fmt(best.v)}. Liga-Bestwert${c.qual||''}, vor ${nameOf(second.pid)} mit ${(c.dat || c.fmt)(second.v)}.`
         : `${nameOf(best.pid)} hält den Liga-Bestwert${c.qual||''}. ${c.fmt(best.v)}.`,
       vv: best.v, vl: c.noun.replace(/^(Meiste|Bestes|Höchste)\s+/, ''),
       dataRef:{ ambientPid: best.pid, bild:_bReihe(c.pool, c.val, v => (c.fmt(v).match(/^[+-]?\d+/) || [String(v)])[0]) } };
@@ -757,15 +775,16 @@ function _ambientTemplatePool(now, pm, nameOf){
       if(!platz) return;
       if(!bestes || platz < bestes.platz) bestes = {f, platz, wert:f.v(pid), von:reihe.length};
     });
-    if(!bestes) return null;
+    // Nur auf dem Podest: „Alex ist Nummer 9 bei der Siegquote" stand als
+    // Fun Fact im Feed und sagte, dass er in keiner Kennzahl vorne liegt.
+    if(!bestes || bestes.platz > 3) return null;
     return { cat:'personal', ic:'chartBar', prio:4,
       title: bestes.platz === 1
         ? `${nameOf(pid)} führt die Liga bei ${bestes.f.n} an`
         : `${nameOf(pid)} ist Nummer ${bestes.platz} bei ${bestes.f.n}`,
       // Der Platz steht in der Schlagzeile („ist Nummer 9", „führt … an");
       // „Platz 9 von 11." darunter sagte ihn ein zweites Mal.
-      desc:`${bestes.f.fmt(bestes.wert)}, unter ${bestes.von} Spielern. `
-         + (bestes.platz === 1 ? `` : `In keiner anderen Kennzahl steht ${nameOf(pid)} weiter vorn.`),
+      desc:`${bestes.f.fmt(bestes.wert)}, unter ${bestes.von} Spielern.`,
       // „1 Platz" las sich wie eine Anzahl. Ein Rang heisst „Platz 1".
       vv: 'Platz ' + bestes.platz, vl:'von ' + (bestes.von || ''),
       dataRef:{ ambientPid: pid, bild:{f:'platz', p:pid, platz:bestes.platz, von:bestes.von, t:bestes.f.fmt(bestes.wert)} } };
@@ -813,7 +832,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     const isRecord = t.best === topBest;
     const nm = `${nameOf(t.ids[0])} und ${nameOf(t.ids[1])}`;
     return { cat:'team', ic:'unstoppable', prio:isRecord ? 5 : 4,
-      title: isRecord ? `Rekord-Duo: ${nm}` : `Eingespielt: ${nm}`,
+      title: isRecord ? `${nm} sind das Rekord-Duo` : `${nm} sind eingespielt`,
       desc: isRecord
         ? `${t.best} gemeinsame Siege in Serie. Kein Duo der Liga war je länger unschlagbar.`
         : `${t.best} gemeinsame Siege in Serie. Das ist Platz ${rank} von ${ranked.length} Duos, `
@@ -872,7 +891,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     const a = agg[best.pid];
     return { cat:'personal', ic:'shieldCheck', prio:5,
       title:`${nameOf(best.pid)} macht die Bude dicht`,
-      desc:`Im Schnitt ${komma(a.dGa/a.dG)} Gegentore in ${a.dG} Abwehrspielen der letzten 14 Tage.`,
+      desc:`Im Schnitt ${komma(a.dGa/a.dG)} Gegentore in ${a.dG} Partien in der Abwehr, in den letzten 14 Tagen.`,
       vv: komma(a.dGa/a.dG), vl:'Ø Gegentore',
       dataRef:{ ambientPid: best.pid, bild:_bReihe(elig, id => agg[id].dGa / agg[id].dG, v => komma(v), true) } };
   }});
@@ -1153,7 +1172,9 @@ function _ambientTemplatePool(now, pm, nameOf){
     const her = days < 2 ? null : days < 14 ? {n:days, e:'Tagen', nom:'Tage'} : _spSeit(now.getTime() - latest.t);
     return { cat:'badge', ic: latest.badge.ic || 'trophyStar', prio:5,
       title:`${nameOf(latest.pid)} holte zuletzt Gold`,
-      desc:`Die Auszeichnung „${latest.badge.name}“ ${days === 0 ? 'heute' : days === 1 ? 'gestern' : 'vor ' + her.n + ' ' + her.e}. ${latest.badge.desc}.`,
+      // Ein Satz mit Verb: „Die Auszeichnung ‚Absoluter Sieger' vor 3 Tagen.
+      // 10:0-Sieg." waren zwei Bruchstücke.
+      desc:`${days === 0 ? 'Heute' : days === 1 ? 'Gestern' : 'Vor ' + her.n + ' ' + her.e} kam „${latest.badge.name}“ dazu, eine der legendären Auszeichnungen.`,
       // Ohne Wert blieb der grosse Block der Karte leer [§6].
       vv:String(days === 0 ? 'heute' : days === 1 ? 'gestern' : her.n),
       vl:her ? her.nom + ' her' : 'geholt',
@@ -1227,8 +1248,8 @@ function _ambientTemplatePool(now, pm, nameOf){
     if(!cands.length) return null;
     const c = cands[Math.floor(rng()*cands.length)];
     return { cat:'team', ic:'duo', prio:4,
-      title:`Beste Freunde: ${nameOf(c.pid)} und ${nameOf(c.mate)}`,
-      desc:`Zusammen ${c.w} von ${c.g} Partien gewonnen, ${Math.round(c.wr*100)} %.`,
+      title:`${nameOf(c.pid)} und ${nameOf(c.mate)} gewinnen zusammen`,
+      desc:`${c.w} von ${c.g} gemeinsamen Partien, das sind ${Math.round(c.wr*100)} %.`,
       vv: Math.round(c.wr*100) + '\u00A0%', vl:'als Duo',
       dataRef:{ ambientPids:[c.pid, c.mate], pairKind:'team', bild:{f:'duo', a:c.pid, b:c.mate, w:c.w, g:c.g} } };
   }});
@@ -1523,6 +1544,14 @@ function _ambientTemplatePool(now, pm, nameOf){
   // NICHT am Losverfahren: `pflicht` belegt den Slot direkt, damit ein
   // Rückblick nie ausfällt, weil an dem Tag zufällig etwas anderes zog.
 
+  // ── Die Halbzeit: Sturm und Abwehr des Monats ─────────────────────
+  // Die Karte zeigte das Raster der vergebenen Monatschroniken, und ihr
+  // Blatt „Die letzten zehn Partien" — die des Tabellenführers, ohne dass
+  // sein Name darüberstand. Zur Halbzeit fragt man, wer im Monat vorne
+  // liegt und wo: das Bild zeigt je Position die drei mit der besten
+  // Siegquote im Monat (ab `HALBZEIT_MIN_PARTIEN` auf der Position), das
+  // Blatt darunter die Spitze der Tabelle und die Monatschroniken. Ein
+  // Monat ist ein Zeitraum [§C40]: wer in ihm spielte, steht darin.
   T.push({ key:'rueckblick_halbzeit',
     pflicht: (tag, stunde) => stunde >= 15 && Number(tag.slice(8, 10)) === 15,
     make: () => {
@@ -1532,17 +1561,39 @@ function _ambientTemplatePool(now, pm, nameOf){
       if(!T2) return null;
       const offen = SEASON_TITLES.length - T2.awarded.length;
       const fuehrend = T2.champ && pm[T2.champ.pid] ? T2.champ : null;
-      const ohne = (T2.empty || []).filter(id => pm[id]).length;
+      const je = {atk:{}, def:{}};
+      (matchesInSeason(sid) || []).filter(m => mts(m) <= now.getTime()).forEach(m => {
+        const a = m.winner === 'A';
+        [[m.a1, m.a1_pos, a], [m.a2, m.a2_pos, a], [m.b1, m.b1_pos, !a], [m.b2, m.b2_pos, !a]].forEach(([pid, pos, w]) => {
+          if(!pid || !pm[pid] || !sichtbar(pid)) return;
+          const o = je[pos === 'def' ? 'def' : 'atk'], x = o[pid] || (o[pid] = {g:0, w:0});
+          x.g++; if(w) x.w++;
+        });
+      });
+      const drei = o => Object.keys(o).filter(pid => o[pid].g >= HALBZEIT_MIN_PARTIEN)
+        .sort((x, y) => (o[y].w / o[y].g) - (o[x].w / o[x].g) || o[y].g - o[x].g || nameOf(x).localeCompare(nameOf(y), 'de'))
+        .slice(0, 3).map(pid => [pid, o[pid].w, o[pid].g]);
+      const sturm = drei(je.atk), abwehr = drei(je.def);
+      const q = x => Math.round(x[1] / x[2] * 100);
+      let tab = [];
+      try { tab = saisonRang(sid).filter(e => pm[e.id]).slice(0, 5).map(e => [e.id, Math.round(e.elo), e.wins + e.losses]); } catch(e){ tab = []; }
       return { cat:'season', ic:'stopwatch', prio:6,
         title:`Halbzeit im ${seasonLabel(sid)}`,
+        // Kurz genug für die Karte: mit der Zahl der Partien des Führenden
+        // und den vergebenen Chroniken war der Satz auf 288 px abgeschnitten.
+        // Die Chroniken stehen im Blatt, im Satz nur, wenn die Karte sie
+        // statt der Positionen zeigt. Vor „%" ein fester Abstand, sonst stand
+        // es allein am Anfang einer Zeile.
         desc: `${T2.matches} Partien an ${T2.days} Spieltagen. `
-          + (fuehrend ? `${nameOf(fuehrend.pid)} führt mit ${fuehrend.elo} Elo aus ${fuehrend.games} Partien. ` : '')
-          + `${T2.awarded.length} von ${SEASON_TITLES.length} Monatschroniken sind vergeben, ${offen} noch offen`
-          + (ohne ? `, ${ohne} Spieler ${ohne === 1 ? 'trägt' : 'tragen'} noch keine.` : '.')
-          + ` Die zweite Monatshälfte entscheidet.`,
+          + (fuehrend ? `${nameOf(fuehrend.pid)} führt mit ${fuehrend.elo} Elo. ` : '')
+          + (sturm.length && abwehr.length
+            ? `Im Sturm gewinnt ${nameOf(sturm[0][0])} ${q(sturm[0])}\u00a0%, in der Abwehr ${nameOf(abwehr[0][0])} ${q(abwehr[0])}\u00a0%.`
+            : `${T2.awarded.length} von ${SEASON_TITLES.length} Monatschroniken sind vergeben.`),
         vv:String(offen), vl:'noch offen',
-        dataRef:{ ambientPid: fuehrend ? fuehrend.pid : null, seasonTable:sid, bild:{f:'tafel', voll:T2.awarded.length,
-          alle:SEASON_TITLES.length, traeger:_tafelTraeger(T2.awarded)} } };
+        dataRef:{ ambientPid: fuehrend ? fuehrend.pid : null, seasonTable:sid,
+          bild:sturm.length && abwehr.length
+            ? {f:'halbzeit', sturm, abwehr, tab, tafel:{voll:T2.awarded.length, alle:SEASON_TITLES.length, traeger:_tafelTraeger(T2.awarded)}}
+            : {f:'tafel', voll:T2.awarded.length, alle:SEASON_TITLES.length, traeger:_tafelTraeger(T2.awarded)} } };
     }});
 
   T.push({ key:'rueckblick_jahr',

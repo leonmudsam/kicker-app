@@ -499,6 +499,10 @@ const AMBIENT_SLOTS = [15];
 // Jede Partie zählt, auch die eines späteren Ruheständlers [§C40]: gefragt
 // ist, ob die Liga spielt, nicht wer.
 const AMBIENT_RUHE_TAGE = 3;
+// Die Halbzeit nennt je Position die besten drei des Monats nach Siegquote.
+// Ab vier Partien auf der Position: mit zweien stand ein 2:0 über einem
+// 12:3, und eine Quote aus zwei Partien ist keine Form.
+const HALBZEIT_MIN_PARTIEN = 4;
 // Der einzelne 15-Uhr-Slot mischt Stand und Geschichte. Die Rotation darunter
 // sorgt fuer den Themenwechsel zwischen Form, Laufbahn, Rekorden und Liga.
 //
