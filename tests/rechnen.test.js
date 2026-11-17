@@ -295,15 +295,15 @@ const tag=(uhr,jetzt,mitPleite)=>{
     const ev=Object.entries(getBadgeEarnedCache()).flatMap(([mid,l])=>l.map(e=>({mid,pid:e.playerId,b:e.badge.id,ende:e.meta&&e.meta.tagEnde})));
     const n=(pid,b)=>(computeBadges(pid).find(x=>x.id===b)||{}).count||0;
     // Wo Unschlagbar steht: eine eigene Karte, die Karte einer Partie oder —
-    // seit der Schluss des Tages seine Ehrung hat — die Karte des Spielers
-    // des Tages, als Ehrung des Tages [§11.6f]. Dort stand es sonst ein
-    // zweites Mal.
+    // seit der Schluss des Tages seine Ehrung hat — die Ehrung des Tages
+    // unter dem Spieler des Tages [§11.6f]. Dort stand es sonst ein zweites
+    // Mal.
     let karte='';
     try { const l=_buildStories(), s=l.find(x=>(x.dataRef||{}).badgeId==='unbeatable');
-      const t=l.find(x=>(x.dataRef||{}).type==='potd'&&(x.dataRef.ehrung||[]).some(y=>y.posten.some(q=>q.id==='unbeatable')));
+      const t=l.find(x=>(x.dataRef||{}).type==='ehrung'&&x.dataRef.periode==='tag'&&(x.dataRef.spieler||[]).some(y=>y.posten.some(q=>q.id==='unbeatable')));
       const k=[];
       if(s) k.push(new Date(s.when).toISOString().slice(11,16)+(s.dataRef.matchId?' an der Partie':' eigene Karte'));
-      if(t) k.push(new Date(t.when).toISOString().slice(11,16)+' Spieler des Tages');
+      if(t) k.push(new Date(t.when).toISOString().slice(11,16)+' Ehrung des Tages');
       karte=k.join(', '); } catch(e){ karte='Fehler '+e.message; }
     return {karte,unschlagbar:n('t0','unbeatable'),schwarz:n('t2','black_day'),zusammenbruch:n('t0','crash_day'),
       comeback:n('t2','comeback_day'),potd:n('t0','potd'),
@@ -313,9 +313,9 @@ const tag=(uhr,jetzt,mitPleite)=>{
 const mittag=tag([14,26],0,false), abend=tag([23,59],0,false), pleite=tag([23,59],0,true), pleiteMittag=tag([17,30],0,true);
 ok(mittag.unschlagbar===0&&mittag.schwarz===0&&mittag.potd===0&&mittag.ev==='',
   'Um 14:26 ist kein Tag zu: weder Unschlagbar noch Schwarzer Tag noch Spieler des Tages, und keine Vergabe: '+JSON.stringify(mittag));
-ok(abend.unschlagbar===1&&abend.schwarz===1&&abend.potd===1&&abend.karte==='23:59 Spieler des Tages'
+ok(abend.unschlagbar===1&&abend.schwarz===1&&abend.potd===1&&abend.karte==='23:59 Ehrung des Tages'
   &&abend.ev==='t0:unbeatable@t3/2026-10-19 t1:unbeatable@t3/2026-10-19 t2:black_day@t3/2026-10-19 t3:black_day@t3/2026-10-19',
-  'Um 23:59 gilt der Tag, an der letzten Partie, und Unschlagbar steht einmal, am Tagesende in der Karte des Spielers des Tages statt in der Karte einer Partie: '+JSON.stringify(abend));
+  'Um 23:59 gilt der Tag, an der letzten Partie, und Unschlagbar steht einmal, am Tagesende in der Ehrung des Tages statt in der Karte einer Partie: '+JSON.stringify(abend));
 ok(pleiteMittag.zusammenbruch===0&&pleiteMittag.comeback===0&&pleiteMittag.ev==='',
   'Nach einer Niederlage um 17 Uhr ist der Tag noch nicht „mit einer Niederlage beendet": '+JSON.stringify(pleiteMittag));
 ok(pleite.unschlagbar===0&&pleite.schwarz===0&&pleite.zusammenbruch===1&&pleite.comeback===1
@@ -361,12 +361,13 @@ const ehrung=(zeiten,uhr)=>{
     seasons=[];cfg={...window.__cfgBasis};invalidateCache();
     const l=_buildStories();
     const tag=l.find(s=>(s.dataRef||{}).type==='potd');
+    const eh=l.find(s=>(s.dataRef||{}).type==='ehrung'&&s.dataRef.periode==='tag');
     const bMap=getBadgeEarnedCache();
     const ausPartien=matches.reduce((n,m)=>n+(bMap[m.id]||[]).filter(e=>auszeichnungsPunkte(e.badge.id,1)>0).length,0);
-    const sp=tag?tag.dataRef.ehrung:[];
+    const sp=eh?eh.dataRef.spieler:[];
     const summe=pid=>((sp.find(x=>x.pid===pid)||{}).summe||0);
     return {ehrungen:l.filter(s=>(s.dataRef||{}).type==='ehrung').map(s=>s.id),
-      tag:tag?new Date(tag.when).toISOString().slice(11,16):'',
+      tag:tag?new Date(tag.when).toISOString().slice(11,16):'', eh:eh?new Date(eh.when).toISOString().slice(11,16):'',
       genannt:sp.reduce((n,x)=>n+x.posten.reduce((m,q)=>m+q.mal,0),0), ausPartien,
       schluss:sp.some(x=>x.posten.some(q=>q.id==='potd')),
       prestige:['t0','t2'].map(pid=>[Math.round(summe(pid)),Math.round((prestigeOf(pid).teile||{}).auszeichnung||0)])};
@@ -376,8 +377,8 @@ const amNachmittag=ehrung([[13,2],[15,30],[16,50]],[19,0]);
 const amSchluss=ehrung([[13,2],[15,30],[16,50]],[23,59]);
 ok(!amNachmittag.ehrungen.length&&!amNachmittag.tag,
   'Vor dem Schluss des Tages steht keine Ehrung, auch nicht zwei Stunden nach einer Runde: '+JSON.stringify(amNachmittag));
-ok(amSchluss.tag==='23:59'&&!amSchluss.ehrungen.length&&amSchluss.schluss&&amSchluss.genannt>amSchluss.ausPartien&&amSchluss.ausPartien>0,
-  'Um 23:59 trägt der Spieler des Tages alles, was die Partien und der Schluss des Tages vergaben, und keine Ehrung steht daneben: '+JSON.stringify(amSchluss));
+ok(amSchluss.tag==='23:59'&&amSchluss.eh==='23:59'&&amSchluss.ehrungen.length===1&&amSchluss.schluss&&amSchluss.genannt>amSchluss.ausPartien&&amSchluss.ausPartien>0,
+  'Um 23:59 trägt die eine Ehrung des Tages unter dem Spieler des Tages alles, was die Partien und der Schluss des Tages vergaben: '+JSON.stringify(amSchluss));
 ok(amSchluss.prestige.every(([a,b])=>a>0&&Math.abs(a-b)<=1),
   'Was die Ehrung des Tages an Prestige nennt, ist das Prestige der Auszeichnungen in der Laufbahn: '+JSON.stringify(amSchluss.prestige));
 // Tages- und Wochenkönig zählen den Anteil der eigenen Spieltage, nicht

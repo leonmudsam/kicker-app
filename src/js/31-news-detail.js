@@ -1145,11 +1145,9 @@ function _ndPotdBlatt(s){
       + _ndTagesbahn([g.pid], _newsTagPartien(d.dayKey, [g.pid])) : '';
   return {kopf, mitte:ab('Das Feld des Tages', balken) + ab(pids.length > 1 ? 'Der Tag der Tagessieger' : 'Der Tag in Partien', bahn)
     + ab('Der härteste Tag', gegen)
-    // Was der Schluss des Tages vergab, im Blatt mit jedem Posten, dem
-    // wievielten Mal und dem Rest seines Werts — derselbe Kasten wie im
-    // Blatt einer Ehrung [§11.6f, §C27].
-    + ab('Die Ehrung des Tages', _ehrungBloeckeHtml(d.ehrung))
-    // Was der Schluss an Tafel und Leiter änderte, jede Zeile [§11.6f].
+    // Die Ehrung des Tages hat ihr eigenes Blatt [§11.6f]. Hier steht nur,
+    // was der Schluss an Tafel und Leiter änderte, wenn eine größere Ehrung
+    // den Tag trägt.
     + ab('Mit dem Schluss des Tages', _ehrungSchlussHtml(d.tagesschluss))};
 }
 

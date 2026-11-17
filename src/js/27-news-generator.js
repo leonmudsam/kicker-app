@@ -621,10 +621,12 @@ function _buildStories(){
 
   // ── Die Spieltage des Fensters und was sie vergaben [§11.6f] ─────────
   // Je Spieltag die Ehrung des Tages (`_ehrungDesTages`): alles, was an ihm
-  // geholt wurde, aus den Partien und mit dem Schluss um 23:59. Sie ist Teil
-  // der Karte des Spielers des Tages; ohne ihn steht sie als eine Karte des
-  // Tages (`tagesehrung_<Tag>`). Eine Karte, die den Tag zusammenfasst, und
-  // keine zweite: es gab daneben eine Ehrung je Runde, zwei Stunden nach
+  // geholt wurde, aus den Partien und mit dem Schluss um 23:59. Sie steht als
+  // eigene, knappe Karte (`tagesehrung_<Tag>`) direkt unter dem Spieler des
+  // Tages, wie die Ehrung der Woche unter der Wochenkarte [§C27]. In seiner
+  // Karte stand sie mit einer Zeile je Geehrtem, ihren Kacheln und Namen,
+  // und die Karte des Tages war höher als ein Bildschirm. Eine Ehrung je Tag
+  // und keine zweite: es gab daneben eine Ehrung je Runde, zwei Stunden nach
   // ihrer letzten Partie, und an einem Spieltag standen bis zu drei davon
   // und der Spieler des Tages untereinander, jede mit einem Teil des Tages.
   // Gerechnet vor den Auszeichnungen (6.): was die Karte des Tages trägt,
@@ -636,7 +638,11 @@ function _buildStories(){
   // trotzdem, in der größeren.
   const _potdTage = new Map(), _ehrungTage = new Map(), _tagGetragen = new Set();
   try {
-    const seit = now.getTime() - NEWS_FENSTER_TAGE * 86400000;
+    // Ganze Tage: ein Fenster auf die Millisekunde schnitt den ältesten Tag
+    // mitten durch. Am 16.11. sah der Generator vom 02.11. nur die Partien
+    // nach 17 Uhr, fand keinen Spieler des Tages und legte eine Ehrung des
+    // Tages neben den gespeicherten.
+    const seit = (t => { t.setHours(0, 0, 0, 0); return t.getTime(); })(new Date(now.getTime() - NEWS_FENSTER_TAGE * 86400000));
     const tage = new Map();
     matches.forEach(m => {
       const ts = mts(m);
@@ -664,16 +670,18 @@ function _buildStories(){
       } catch(e){ ehrung = []; }
       ehrung.forEach(x => x.posten.forEach(q => _tagGetragen.add(dayKey + '|' + x.pid + '|' + q.id)));
       if(groesser) ehrung = [];
-      // Was der Schluss an Tafel und Leiter ändert, steht auf der Karte des
-      // Tages und nicht mehr als neue Fassung der Tafel (`_tagesschlussTafel`).
-      // Eine gespeicherte Karte ändert sich nicht [§C33]: für sie werden die
-      // zwei Stände je Tag nicht noch einmal geschnitten.
+      // Was der Schluss an Tafel und Leiter ändert, steht in der Ehrung des
+      // Tages und nicht als neue Fassung der Tafel (`_tagesschlussTafel`);
+      // trägt eine größere Ehrung den Tag, unter dem Spieler des Tages. Eine
+      // gespeicherte Karte ändert sich nicht [§C33]: für sie werden die zwei
+      // Stände je Tag nicht noch einmal geschnitten.
       const _bestand = Array.isArray(_cache._stories) ? _cache._stories : [];
+      const _ziel = (ehrung.length ? 'tagesehrung_' : 'potd_') + dayKey;
       let tagesschluss = [];
-      if(!_bestand.some(x => x && (x.id === 'potd_' + dayKey || x.id === 'tagesehrung_' + dayKey)))
+      if(!_bestand.some(x => x && x.id === _ziel))
         try { tagesschluss = _tagesschlussTafel(rep.getTime()); } catch(e){ tagesschluss = []; }
-      if(res) _potdTage.set(dayKey, {rep, res, ehrung, brk, groesser, tagesschluss});
-      else if(ehrung.length) _ehrungTage.set(dayKey, {rep, ehrung, brk, tagesschluss});
+      if(res) _potdTage.set(dayKey, {rep, res, groesser, tagesschluss:ehrung.length ? [] : tagesschluss});
+      if(ehrung.length) _ehrungTage.set(dayKey, {rep, ehrung, brk, tagesschluss});
     });
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] potd tage', e); }
 
@@ -2277,7 +2285,7 @@ function _buildStories(){
   // sonst Partien ohne Zusammenfassung. Die ID traegt den Tag, ist also
   // stabil, und ein zweiter Lauf legt keine Zeile dazu.
   try {
-    _potdTage.forEach(({rep, res, ehrung, brk, groesser, tagesschluss}, dayKey) => {
+    _potdTage.forEach(({rep, res, groesser, tagesschluss}, dayKey) => {
       const main = res.main;
       const names = res.winners.map(w => nameOf(w.id));
       // Auch hier die Aufzaehlung der App [§C27]: „Leon & Martin holen den
@@ -2302,24 +2310,23 @@ function _buildStories(){
         dataRef: {type:'potd', dayKey, playerId: main.id,
                   playerIds: res.winners.map(w => w.id),
                   wins: main.wins, games: main.wins + main.losses, wr: main.wr,
-                  // Was der Tag an Auszeichnungen brachte, je Geehrtem mit
-                  // Posten und Wert: die Ehrung des Tages [§11.6f]. `ehrungVoll`
-                  // sagt, dass sie den ganzen Tag trägt (gespeicherte Karten
-                  // von vorher nur den Schluss), `ehrungBrk`, ob der Schluss
-                  // eine legendäre außer der Schlagzeile vergab, `ehrungIn`,
-                  // welche größere Ehrung den Tag trägt (dann ist sie leer).
-                  // `tagesschluss`: was der Schluss um 23:59 an Liga-Rekorden,
-                  // Chroniken und Zeichen änderte — die Tafel des Tages steht
-                  // nach seiner letzten Partie fest (`_tagesschlussTafel`).
-                  ehrung, ehrungVoll:true, ehrungBrk:brk, ...(groesser ? {ehrungIn:groesser} : {}),
+                  // Die Ehrung des Tages ist eine eigene Karte darunter
+                  // (`tagesehrung_<Tag>`) [§11.6f]; gespeicherte Karten trugen
+                  // sie als `ehrung` und bekommen sie beim Anzeigen als
+                  // eigene Karte (`_consolidateStories`). `ehrungIn`: welche
+                  // größere Ehrung den Tag trägt. `tagesschluss` steht hier
+                  // nur, wenn es keine Ehrung des Tages gibt: was der Schluss
+                  // um 23:59 an Liga-Rekorden, Chroniken und Zeichen änderte.
+                  ...(groesser ? {ehrungIn:groesser} : {}),
                   ...(tagesschluss && tagesschluss.length ? {tagesschluss} : {})}
       });
     });
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] potd', e); }
 
-  // ── Die Ehrung eines Tages ohne Spieler des Tages [§11.6f] ───────────
-  // Um 23:59 wie der Spieler des Tages; wer am meisten abgab, hängt sich
-  // beim Anzeigen an sie (`gegenstueck`).
+  // ── Die Ehrung eines Tages [§11.6f] ──────────────────────────────────
+  // Um 23:59 wie der Spieler des Tages und, weniger wichtig, direkt unter
+  // ihm (`_storyFolge`). Ohne ihn hängt sich wer am meisten abgab beim
+  // Anzeigen an sie (`gegenstueck`).
   try {
     _ehrungTage.forEach(({rep, ehrung, brk, tagesschluss}, dayKey) => {
       const st = _ehrungKarte(ehrung, 'tagesehrung_' + dayKey, rep.getTime(), Object.assign({periode:'tag', tag:dayKey, voll:true, breaking:brk},
