@@ -474,5 +474,20 @@ const tage=JSON.parse(K(`JSON.stringify([datumFmt(new Date(2026,2,15),'tmx'),dat
   tagImSatz(new Date(2026,2,15)),tagImSatz(new Date(2027,2,15))])`));
 ok(tage.join(' ')==='15.03.26 15.03. 15.03.26. 15.03.',
   'Ein Tag aus einem anderen Jahr trägt das Jahr, am Satzende mit genau einem Punkt: '+tage.join(' · '));
+// Die Bildauswahl im Profil: jede id und jedes Bild genau einmal, weil die
+// Datenbank die id speichert und zwei gleiche Bilder nicht zu unterscheiden
+// sind; mit dem Feld der Initialen volle Fünferreihen; kein Zeichen der App
+// [§C41]; was nach den ersten 54 dazukam, ohne Verbindungszeichen, das auf
+// älteren Telefonen in zwei Bilder zerfällt.
+const avatare=JSON.parse(K(`JSON.stringify(AVATAR_OPTIONS)`));
+const avFalsch=[];
+if(new Set(avatare.map(a=>a.id)).size!==avatare.length)avFalsch.push('doppelte id');
+if(new Set(avatare.map(a=>a.em)).size!==avatare.length)avFalsch.push('doppeltes Bild');
+if((avatare.length+1)%5)avFalsch.push((avatare.length+1)+' Felder');
+avatare.forEach((a,i)=>{
+  if(/[\u{1F525}\u{2B50}\u{1F31F}\u{1F451}\u{1F3C6}]/u.test(a.em))avFalsch.push(a.id+' ist ein Zeichen der App');
+  if(i>=54&&/‍/.test(a.em))avFalsch.push(a.id+' mit Verbindungszeichen');
+});
+ok(avatare.length>54&&!avFalsch.length,'Die Bildauswahl: '+avatare.length+' Bilder, jedes einmal, volle Reihen'+(avFalsch.length?' — '+avFalsch.join(', '):''));
 console.log(fails?`${fails} von ${checks} CHECKS FEHLGESCHLAGEN`:`ALLE ${checks} CHECKS BESTANDEN`);
 process.exitCode=fails?1:0;

@@ -1022,7 +1022,7 @@ function showEditPlayer(id){
     <div class="field-label">Profilbild</div>
     ${avPickerHtml}
 
-    <div class="btn-row" style="margin-top:20px">
+    <div class="btn-row sheet-fuss">
       <button class="btn ghost" id="editCancel">Abbrechen</button>
       <button class="btn" id="editSave">Speichern</button>
     </div>

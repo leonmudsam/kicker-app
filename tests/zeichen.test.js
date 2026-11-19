@@ -1198,6 +1198,33 @@ const ok = (c, msg, det) => {
     } finally { await h.browser.close(); }
   }
 
+  // Die Knöpfe eines Formulars stehen unten im Blatt, auch wenn darüber
+  // achtzehn Reihen Bilder liegen: vorher musste man zum Speichern ganz
+  // nach unten. Gemessen am Profil, oben und ganz unten im Blatt.
+  {
+    const {createHarness} = require('../tools/performance.cjs');
+    const h = await createHarness({daten:{players:[{id:'p1', name:'Leon', hidden:false, elo:0, atk:.5}], matches:[], seasons:[]},
+      kontext:{viewport:{width:390, height:844}, reducedMotion:'reduce'}});
+    try {
+      await h.K(`showEditPlayer('p1')`);
+      await h.page.waitForTimeout(500);
+      const lage = () => h.page.evaluate(() => {
+        const sh = document.getElementById('sheet'), r = sh.getBoundingClientRect();
+        const z = ['editCancel', 'editSave'].map(id => document.getElementById(id).getBoundingClientRect());
+        return {lang:sh.scrollHeight > sh.clientHeight * 1.5,
+          drin:z.every(b => b.top >= r.top && b.bottom <= r.bottom && b.height > 30),
+          unten:z.every(b => r.bottom - b.bottom < 40)};
+      });
+      const oben = await lage();
+      await h.page.evaluate(() => { const s = document.getElementById('sheet'); s.scrollTop = s.scrollHeight; });
+      await h.page.waitForTimeout(150);
+      const ende = await lage();
+      ok(oben.lang && oben.drin && oben.unten && ende.drin && ende.unten,
+        'Abbrechen und Speichern stehen im Profil unten im Blatt, ohne Scrollen',
+        JSON.stringify({oben, ende}));
+    } finally { await h.browser.close(); }
+  }
+
   console.log('\n' + '═'.repeat(60));
   console.log(fails === 0 ? `ALLE ${checks} CHECKS BESTANDEN` : `${fails} von ${checks} CHECKS FEHLGESCHLAGEN`);
   await browser.close();

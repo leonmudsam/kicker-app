@@ -908,6 +908,9 @@
   .sheet-grab{width:38px;height:4px;border-radius:2px;background:var(--line2);margin:6px auto 16px}
   .sheet-leiste{position:sticky;top:-10px;z-index:6;margin-top:-10px;padding-top:10px;
     background:linear-gradient(180deg,var(--bg2) 55%,rgba(15,19,17,0))}
+  .sheet-fuss{position:sticky;bottom:calc(-26px - var(--safe-bot));z-index:6;
+    margin:8px 0 calc(-26px - var(--safe-bot));padding:22px 0 calc(14px + var(--safe-bot));
+    background:linear-gradient(0deg,var(--bg2) 62%,rgba(15,19,17,0))}
   .sheet-zu{position:absolute;top:8px;right:0;width:34px;height:34px;border-radius:11px;
     display:grid;place-items:center;cursor:pointer;color:var(--muted);
     background:var(--surface);border:1px solid var(--line)}
@@ -6698,7 +6701,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.11.17.40a001f6';
+const BUILD_VERSION='2026.11.19.8bba3f02';
 function forceReload(nach){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -10706,7 +10709,19 @@ const AVATAR_OPTIONS = [
   {id:'mosquito',      em:'🦟'}, {id:'beer',      em:'🍺'}, {id:'sloth',   em:'🦥'},
   {id:'hedgehog', em:'🦔'}, {id:'swan',      em:'🦢'}, {id:'butterfly',em:'🦋'},
   {id:'scorpion', em:'🦂'}, {id:'burner',    em:'👨🏼‍🏭'}, {id:'snake',   em:'🐍'},
-  {id:'lizard',   em:'🦎'}, {id:'gorilla',   em:'🦍'}, 
+  {id:'lizard',   em:'🦎'}, {id:'gorilla',   em:'🦍'},
+  {id:'octopus',  em:'🐙'}, {id:'squid',     em:'🦑'}, {id:'croc',    em:'🐊'},
+  {id:'trex',     em:'🦖'}, {id:'penguin',   em:'🐧'}, {id:'flamingo',em:'🦩'},
+  {id:'fox',      em:'🦊'}, {id:'tiger',     em:'🐯'}, {id:'koala',   em:'🐨'},
+  {id:'otter',    em:'🦦'}, {id:'bee',       em:'🐝'}, {id:'snail',   em:'🐌'},
+  {id:'parrot',   em:'🦜'}, {id:'llama',     em:'🦙'}, {id:'goat',    em:'🐐'},
+  {id:'whale',    em:'🐳'}, {id:'robot',     em:'🤖'}, {id:'ghost',   em:'👻'},
+  {id:'skull',    em:'💀'}, {id:'vampire',   em:'🧛'}, {id:'genie',   em:'🧞'},
+  {id:'cowboy',   em:'🤠'}, {id:'nerd',      em:'🤓'}, {id:'shades',  em:'😎'},
+  {id:'mindblown',em:'🤯'}, {id:'hotface',   em:'🥵'}, {id:'money',   em:'🤑'},
+  {id:'invader',  em:'👾'}, {id:'pizza',     em:'🍕'}, {id:'taco',    em:'🌮'},
+  {id:'pretzel',  em:'🥨'}, {id:'avocado',   em:'🥑'}, {id:'cactus',  em:'🌵'},
+  {id:'mushroom', em:'🍄'}, {id:'moonface',  em:'🌚'},
 ];
 
 function avatarEmoji(avId){const a=AVATAR_OPTIONS.find(x=>x.id===avId);return a?a.em:null;}
@@ -17277,7 +17292,7 @@ function showEditPlayer(id){
     <div class="field-label">Profilbild</div>
     ${avPickerHtml}
 
-    <div class="btn-row" style="margin-top:20px">
+    <div class="btn-row sheet-fuss">
       <button class="btn ghost" id="editCancel">Abbrechen</button>
       <button class="btn" id="editSave">Speichern</button>
     </div>

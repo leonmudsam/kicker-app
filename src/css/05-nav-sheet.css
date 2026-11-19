@@ -75,6 +75,16 @@
      hält den Knopf lesbar, ohne eine Kante zu ziehen. */
   .sheet-leiste{position:sticky;top:-10px;z-index:6;margin-top:-10px;padding-top:10px;
     background:linear-gradient(180deg,var(--bg2) 55%,rgba(15,19,17,0))}
+  /* Die Knöpfe eines Formulars bleiben unten stehen: in der Bildauswahl
+     lagen „Abbrechen" und „Speichern" unter achtzehn Reihen, und zum
+     Speichern musste man ganz nach unten. Wie die Leiste oben gleicht der
+     negative Abstand den Innenabstand des Blatts aus, sonst stünde sie
+     über dessen Rand frei. Seitlich bleibt sie im Innenabstand wie der
+     Inhalt, sonst läuft das Blatt über seinen Rand; der Verlauf darüber lässt den Inhalt darunter
+     auslaufen statt an einer Kante abzubrechen. */
+  .sheet-fuss{position:sticky;bottom:calc(-26px - var(--safe-bot));z-index:6;
+    margin:8px 0 calc(-26px - var(--safe-bot));padding:22px 0 calc(14px + var(--safe-bot));
+    background:linear-gradient(0deg,var(--bg2) 62%,rgba(15,19,17,0))}
   .sheet-zu{position:absolute;top:8px;right:0;width:34px;height:34px;border-radius:11px;
     display:grid;place-items:center;cursor:pointer;color:var(--muted);
     background:var(--surface);border:1px solid var(--line)}

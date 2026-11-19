@@ -4,9 +4,15 @@
 const AV_COLORS=['#BEF264','#ff7849','#56b4e8','#f7cf4a','#a78bfa','#4ade80','#f0566a','#22d3ee','#fb923c','#e879f9'];
 function avColor(id){let h=0;for(let i=0;i<id.length;i++)h=id.charCodeAt(i)+((h<<5)-h);return AV_COLORS[Math.abs(h)%AV_COLORS.length];}
 
-// 54 Avatar-Optionen (29 Originale + 25 Neue)
+// Die Reihenfolge ist die der Auswahl im Profil; angehängt wird nur hinten,
+// weil die Datenbank die `id` speichert und ein Spieler sonst sein Bild an
+// der gewohnten Stelle nicht wiederfindet. Mit dem Feld der Initialen geht
+// das Raster in Fünferreihen auf, deshalb kommen neue Bilder zu fünft.
+// Nur Zeichen mit eigener Emoji-Darstellung und ohne Verbindungszeichen:
+// eine Folge mit ZWJ zerfällt auf älteren Telefonen in zwei Bilder. Keins
+// davon ist ein Zeichen der App [§C41] — Feuer, Stern, Krone und Pokal
+// tragen dort eine Bedeutung und stehen deshalb nicht zur Wahl.
 const AVATAR_OPTIONS = [
-  // Originale 29
   {id:'wolf',     em:'🐺'}, {id:'smiletear', em:'🥲'}, {id:'cloud',   em:'😶‍🌫️'},
   {id:'cold',     em:'🥶'}, {id:'poop',      em:'💩'}, {id:'clown',   em:'🤡'},
   {id:'alien',    em:'👽'}, {id:'eye',       em:'👁'},  {id:'detective',em:'🕵'},
@@ -17,7 +23,6 @@ const AVATAR_OPTIONS = [
   {id:'unicorn',  em:'🦄'}, {id:'shark',     em:'🦈'}, {id:'eagle',   em:'🦅'},
   {id:'tropicaldrink',    em:'🍹'}, {id:'xray',      em:'🩻'}, {id:'cigarette',em:'🚬'},
   {id:'moai',     em:'🗿'}, {id:'owl',       em:'🦉'},
-  // 29 Neue Avatar-Optionen
   {id:'twoface',   em:'🎭'}, {id:'bat',     em:'🦇'}, {id:'champagne',   em:'🍾'},
   {id:'juggle',   em:'🤹🏼‍♂️'}, {id:'biohazard',     em:'☣️'}, {id:'devil',   em:'😈'},
   {id:'ogre',     em:'👹'}, {id:'goblin',    em:'👺'}, {id:'dragon',  em:'🐉'},
@@ -26,7 +31,19 @@ const AVATAR_OPTIONS = [
   {id:'mosquito',      em:'🦟'}, {id:'beer',      em:'🍺'}, {id:'sloth',   em:'🦥'},
   {id:'hedgehog', em:'🦔'}, {id:'swan',      em:'🦢'}, {id:'butterfly',em:'🦋'},
   {id:'scorpion', em:'🦂'}, {id:'burner',    em:'👨🏼‍🏭'}, {id:'snake',   em:'🐍'},
-  {id:'lizard',   em:'🦎'}, {id:'gorilla',   em:'🦍'}, 
+  {id:'lizard',   em:'🦎'}, {id:'gorilla',   em:'🦍'},
+  {id:'octopus',  em:'🐙'}, {id:'squid',     em:'🦑'}, {id:'croc',    em:'🐊'},
+  {id:'trex',     em:'🦖'}, {id:'penguin',   em:'🐧'}, {id:'flamingo',em:'🦩'},
+  {id:'fox',      em:'🦊'}, {id:'tiger',     em:'🐯'}, {id:'koala',   em:'🐨'},
+  {id:'otter',    em:'🦦'}, {id:'bee',       em:'🐝'}, {id:'snail',   em:'🐌'},
+  {id:'parrot',   em:'🦜'}, {id:'llama',     em:'🦙'}, {id:'goat',    em:'🐐'},
+  {id:'whale',    em:'🐳'}, {id:'robot',     em:'🤖'}, {id:'ghost',   em:'👻'},
+  {id:'skull',    em:'💀'}, {id:'vampire',   em:'🧛'}, {id:'genie',   em:'🧞'},
+  {id:'cowboy',   em:'🤠'}, {id:'nerd',      em:'🤓'}, {id:'shades',  em:'😎'},
+  {id:'mindblown',em:'🤯'}, {id:'hotface',   em:'🥵'}, {id:'money',   em:'🤑'},
+  {id:'invader',  em:'👾'}, {id:'pizza',     em:'🍕'}, {id:'taco',    em:'🌮'},
+  {id:'pretzel',  em:'🥨'}, {id:'avocado',   em:'🥑'}, {id:'cactus',  em:'🌵'},
+  {id:'mushroom', em:'🍄'}, {id:'moonface',  em:'🌚'},
 ];
 
 function avatarEmoji(avId){const a=AVATAR_OPTIONS.find(x=>x.id===avId);return a?a.em:null;}
