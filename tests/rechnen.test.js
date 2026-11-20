@@ -286,7 +286,7 @@ ok(verlauf.n===7&&verlauf.absteigend&&verlauf.neueste,'Der Saisonverlauf zeigt j
 const tag=(uhr,jetzt,mitPleite)=>{
   setNow(Date.UTC(2026,9,19,uhr[0],uhr[1]));
   return K(`(() => {
-    players=Array.from({length:4},(_,i)=>({id:'t'+i,name:'Tag '+i,hidden:false,elo:0,atk:.5}));
+    players=Array.from({length:5},(_,i)=>({id:'t'+i,name:'Tag '+i,hidden:false,elo:0,atk:.5}));
     const p=(id,h,m,a)=>({...window.__partie,id,a1:'t0',a2:'t1',b1:'t2',b2:'t3',
       created_at:new Date(Date.UTC(2026,9,19,h,m)).toISOString(),winner:a?'A':'B',
       score_a:a?10:4,score_b:a?4:10,deltas:{t0:a?20:-20,t1:a?20:-20,t2:a?-20:20,t3:a?-20:20}});
@@ -323,16 +323,20 @@ ok(pleite.unschlagbar===0&&pleite.schwarz===0&&pleite.zusammenbruch===1&&pleite.
   'Mit der Niederlage am Abend ist der Tag nicht unschlagbar, sondern ein Zusammenbruch, und für die Gegner ein Comeback-Tag: '+JSON.stringify(pleite));
 // Dieselbe Regel in Liga-Rekorden und Monatschronik: „Der makellose Tag",
 // „Der Tagesabschluss", „Der Schlussstrich" und die Tagesquoten fragen nach
-// dem ganzen Tag. Ein Vortag mit 22 Partien im Wechsel (die Rekorde zählen
-// ab dreißig), dann acht Siege bis 13:30, gefragt um 14:26 und um 23:59.
+// dem ganzen Tag. Ein Vortag mit 22 Partien im Wechsel, dann acht Siege bis
+// 13:30, gefragt um 14:26 und um 23:59. Davor zwanzig Partien im August
+// ohne t0, damit die Liga über dem Tor der Rekorde steht (CHRON_MIN_GAMES
+// Partien der Liga) und t0 trotzdem nur die eigenen hat.
 const tagesRekord=(uhr)=>{
   setNow(Date.UTC(2026,9,19,uhr[0],uhr[1]));
   return K(`(() => {
-    players=Array.from({length:4},(_,i)=>({id:'t'+i,name:'Tag '+i,hidden:false,elo:0,atk:.5}));
+    players=Array.from({length:5},(_,i)=>({id:'t'+i,name:'Tag '+i,hidden:false,elo:0,atk:.5}));
     const p=(id,tag,min,a)=>({...window.__partie,id,a1:'t0',a2:'t1',b1:'t2',b2:'t3',
       created_at:new Date(Date.UTC(2026,9,tag,10,min)).toISOString(),winner:a?'A':'B',
       score_a:a?10:4,score_b:a?4:10,deltas:{t0:a?20:-20,t1:a?20:-20,t2:a?-20:20,t3:a?-20:20}});
-    matches=Array.from({length:22},(_,i)=>p('v'+i,18,i*20,i%2===0))
+    const vorher=Array.from({length:20},(_,i)=>({...p('a'+i,18,i,i%2===0),a1:'t4',
+      created_at:new Date(Date.UTC(2026,7,10,10,i)).toISOString(),deltas:{}}));
+    matches=vorher.concat(Array.from({length:22},(_,i)=>p('v'+i,18,i*20,i%2===0)))
       .concat(Array.from({length:8},(_,i)=>p('r'+i,19,i*30,true)));
     seasons=[];cfg={...window.__cfgBasis};invalidateCache();
     const r=_chronicleCtx().P.t0||{}, m=_seasonTitleCtx('2026-10').P.t0||{};
@@ -354,7 +358,7 @@ ok(rekAbend.makellos===1&&rekAbend.abschluss===2&&rekAbend.schluss===2&&rekAbend
 const ehrung=(zeiten,uhr)=>{
   setNow(Date.UTC(2026,9,19,uhr[0],uhr[1]));
   return K(`(() => {
-    players=Array.from({length:4},(_,i)=>({id:'t'+i,name:'Tag '+i,hidden:false,elo:0,atk:.5}));
+    players=Array.from({length:5},(_,i)=>({id:'t'+i,name:'Tag '+i,hidden:false,elo:0,atk:.5}));
     matches=${JSON.stringify(zeiten)}.map((z,i)=>({...window.__partie,id:'e'+i,a1:'t0',a2:'t1',b1:'t2',b2:'t3',
       created_at:new Date(Date.UTC(2026,9,19,z[0],z[1])).toISOString(),winner:'A',
       score_a:10,score_b:i%2?9:4,deltas:{t0:20,t1:20,t2:-20,t3:-20}}));
@@ -474,6 +478,20 @@ const tage=JSON.parse(K(`JSON.stringify([datumFmt(new Date(2026,2,15),'tmx'),dat
   tagImSatz(new Date(2026,2,15)),tagImSatz(new Date(2027,2,15))])`));
 ok(tage.join(' ')==='15.03.26 15.03. 15.03.26. 15.03.',
   'Ein Tag aus einem anderen Jahr trägt das Jahr, am Satzende mit genau einem Punkt: '+tage.join(' · '));
+// Eine neue Liga erfährt, ab wann es Rekorde gibt: vergeben wird ab
+// CHRON_MIN_GAMES Partien der LIGA, und bis dahin sagen Erklärkarte, Leiste
+// und Blatt, wie weit sie ist. Vorher stand das Tor je Spieler, und nirgends
+// stand, ab wann sich der leere Reiter füllt.
+const neueLiga=JSON.parse(K(`(()=>{const alt=matches,altP=players;
+  players=Array.from({length:4},(_,i)=>({id:'p'+i,name:'Spieler '+i,hidden:false,elo:0,atk:.5}));
+  matches=Array.from({length:12},(_,i)=>({...window.__partie,id:'n'+i,a1:'p0',a2:i<5?'p1':'p2',b1:'p3',b2:i<5?'p2':'p1',
+    created_at:new Date(Date.now()-(20-i)*36e5).toISOString()}));invalidateCache();
+  const r={karte:ERKLAERKARTEN.rekorde[2](),tor:rekordTor(),halter:Object.keys(chronicleHolders()).length,
+    reiter:ligaRekordeHtml(true)};
+  matches=alt;players=altP;invalidateCache();return JSON.stringify(r);})()`));
+ok(/sobald die Liga <b>40 Partien<\/b>/.test(neueLiga.karte)&&neueLiga.tor.n===12&&neueLiga.tor.offen===false&&neueLiga.halter===0
+  &&/Wer die Tafel hält/.test(neueLiga.reiter)&&/<b>12<\/b> gespielt/.test(neueLiga.reiter)&&/noch 28/.test(neueLiga.reiter),
+  'Eine neue Liga liest, ab wie vielen Partien der Liga es Rekorde gibt und wie weit sie ist (12 von 40, keine vergeben)');
 // Die Bildauswahl im Profil: jede id und jedes Bild genau einmal, weil die
 // Datenbank die id speichert und zwei gleiche Bilder nicht zu unterscheiden
 // sind; mit dem Feld der Initialen volle Fünferreihen; kein Zeichen der App
@@ -489,5 +507,59 @@ avatare.forEach((a,i)=>{
   if(i>=54&&/‍/.test(a.em))avFalsch.push(a.id+' mit Verbindungszeichen');
 });
 ok(avatare.length>54&&!avFalsch.length,'Die Bildauswahl: '+avatare.length+' Bilder, jedes einmal, volle Reihen'+(avFalsch.length?' — '+avFalsch.join(', '):''));
+// Die Monatschronik bis zur letzten Partie eines Tages ist vor und nach dem
+// Schluss um 23:59 dieselbe: die Ewige Tafel rechnet bis dorthin und steht
+// danach fest [§C33]. Gezählt wurden die Spieltage bis zum Stand, die
+// Spieler des Tages und der Woche aber bis zur Uhr; nach dem Schluss hatte
+// Leon am 19.11. damit einen Tagessieg mehr als Spieltage, und die Tafel
+// meldete um 01:16 „Der Tagesregent" für 17:15. Geprüft an jedem Spieltag
+// der echten Herbstpartien, am Tag danach mittags — montags ist damit auch
+// die Woche zu.
+{
+  const fsx=require('node:fs');
+  const NAMEN=['Alex','Anton','Henry','Jane','Jannik','Johannes','Julian','Leo','Leon','Martin','Maxi','Stefan'];
+  const IDX=NAMEN.map((n,i)=>'00000000-0000-4000-8000-'+String(i).padStart(12,'0'));
+  const liga=fsx.readFileSync(__dirname+'/fixtures/oktober.txt','utf8').trim().split(';').map((row,i)=>{
+    const f=row.split(',').map(Number),pos=j=>f[4+j]===0?'atk':'def';
+    return {id:'o'+String(i).padStart(4,'0'),a1:IDX[f[0]],a2:IDX[f[1]],b1:IDX[f[2]],b2:IDX[f[3]],
+      a1_pos:pos(0),a2_pos:pos(1),b1_pos:pos(2),b2_pos:pos(3),score_a:f[8],score_b:f[9],
+      winner:f[10]===0?'A':'B',exp_a:f[11]/1000,created_at:new Date(f[12]*1000).toISOString(),deltas:{}};
+  });
+  const R=require('./runtime.js').createRuntime();
+  const letzte={};
+  liga.forEach(m=>{const t=Date.parse(m.created_at),d=new Date(t);
+    const k=d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); letzte[k]=Math.max(letzte[k]||0,t);});
+  const tage=Object.values(letzte).sort((a,b)=>a-b).filter(t=>t>=Date.parse('2026-09-01T00:00:00'));
+  R.setNow(tage[tage.length-1]+1);
+  R.K(`players=${JSON.stringify(NAMEN.map((n,i)=>({id:IDX[i],name:n,hidden:false,elo:0,atk:.5})))};
+    matches=${JSON.stringify(liga)};seasons=[];invalidateCache();
+    const _d=new Map(simulateEloWithSliders(matches).history.map(h=>[h.matchId,h.deltas]));
+    matches.forEach(m=>{m.deltas=_d.get(m.id)||{}});window.__alle=matches.slice();invalidateCache();0`);
+  const stand=(t,jetzt)=>{R.setNow(jetzt);
+    // Nur die Partien bis dahin: um diese Uhrzeit gab es keine spätere, und
+    // die Elo des laufenden Monats käme sonst aus Partien der Zukunft.
+    return R.K(`(()=>{matches=window.__alle.filter(m=>mts(m)<=${t});invalidateCache();const sid=seasonOf(new Date(${t})).id;
+      const h=seasonTitleHalter(sid,${t});
+      return JSON.stringify(Object.keys(h).sort().map(k=>k+':'+[].concat(h[k].halter||h[k].pids||h[k]).join('+')));})()`);};
+  const anders=[];
+  tage.forEach(t=>{
+    const morgen=new Date(t);morgen.setDate(morgen.getDate()+1);morgen.setHours(12,0,0,0);
+    const vor=stand(t,t+60000),nach=stand(t,morgen.getTime());
+    if(vor!==nach){const a=JSON.parse(vor),b=JSON.parse(nach);
+      anders.push(new Date(t).toISOString().slice(0,10)+': '+b.filter(x=>!a.includes(x)).concat(a.filter(x=>!b.includes(x)).map(x=>'−'+x)).join(' '));}
+  });
+  ok(tage.length>20&&!anders.length,'Die Monatschronik bis zur letzten Partie eines Tages ändert sich mit dem Schluss um 23:59 nicht ('+tage.length+' Spieltage)'+(anders.length?' — '+anders.slice(0,3).join(' | '):''));
+  // Das Tor der Rekorde gilt für die Liga, nicht für den Einzelnen: mit 30
+  // eigenen Partien je Spieler kam Maxi nach 40 Partien der echten Liga als
+  // Einziger darüber und hielt alle 20 vergebenen Rekorde allein.
+  R.setNow(Date.parse(liga[liga.length-1].created_at)+864e5);
+  const frueh=JSON.parse(R.K(`(()=>{matches=window.__alle.slice(0,40);invalidateCache();const h=chronicleHolders(),c={};
+    Object.keys(h).forEach(k=>[].concat(h[k].pids||[h[k].pid]).forEach(p=>c[p]=(c[p]||0)+1));
+    const r={rek:Object.keys(h).length,halter:Object.keys(c).length,max:Math.max(0,...Object.values(c))};
+    matches=window.__alle.slice(0,39);invalidateCache();r.davor=Object.keys(chronicleHolders()).length;
+    matches=window.__alle;invalidateCache();return JSON.stringify(r);})()`));
+  ok(frueh.davor===0&&frueh.rek>10&&frueh.halter>=4&&frueh.max<frueh.rek/2,
+    'Mit der 40. Partie der Liga werden die Rekorde vergeben, verteilt statt an einen ('+frueh.rek+' Rekorde, '+frueh.halter+' Halter, höchstens '+frueh.max+' bei einem, mit 39 Partien '+frueh.davor+')');
+}
 console.log(fails?`${fails} von ${checks} CHECKS FEHLGESCHLAGEN`:`ALLE ${checks} CHECKS BESTANDEN`);
 process.exitCode=fails?1:0;

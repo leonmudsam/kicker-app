@@ -473,7 +473,10 @@ function _seasonTitleCtxRechnen(sid, bisMs){
   // (`_periodWinnerMap`), damit Chronik und Auszeichnung nicht auseinander-
   // laufen. Sie rechnet ueber ALLE Partien, nicht nur die des Monats — eine
   // Woche kann ueber den Monatswechsel gehen.
-  const wochenSieger = _periodWinnerMap(matches || [], 'week');
+  // Bis zum Stand, nach dem gefragt wird, wie die Tage (`offen`): ohne ihn
+  // zählte die Uhr, und die Ewige Tafel, die bis zur letzten Partie rechnet,
+  // bekam mit dem Schluss der Woche den Spieler der Woche nachträglich dazu.
+  const wochenSieger = _periodWinnerMap(matches || [], 'week', bisMs);
   const prevId = _prevSeasonId(sid);
   const prevElos = prevId ? (gSim.seasonEndElos[prevId] || {}) : {};
   const prevPlayed = prevId ? (gSim.seasonPlayed[prevId] || {}) : {};
@@ -502,7 +505,11 @@ function _seasonTitleCtxRechnen(sid, bisMs){
   // davon gewinnen oder verlieren. Die Player-of-the-Day-Titel kommen aus
   // derselben Quelle wie das Badge — Tage liegen nie über einem Monatsende,
   // also ist die Saison-Teilmenge hier deckungsgleich mit der Gesamtrechnung.
-  const potdOfSeason = _winnerCountsOf(ms, 'day');
+  // Gezählt bis zum Stand, wie die Spieltage (`tagN`, `offen`): nach der
+  // Uhr kam um 23:59 der Spieler des Tages dazu, der Tag selbst aber nicht.
+  // Die Tafel, die bis zur letzten Partie rechnet, meldete damit nach dem
+  // Schluss „Der Tagesregent" — mit einem Tag mehr gewonnen als gespielt.
+  const potdOfSeason = _winnerCountsOf(ms, 'day', bisMs);
   Object.keys(P).forEach(id => {
     const dc = dayCount[id] || {}, dw = dayWins[id] || {};
     let big = 0, perf = 0, pos = 0, bestPerfTag = 0;

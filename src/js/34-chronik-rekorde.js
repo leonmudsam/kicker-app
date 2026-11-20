@@ -72,9 +72,14 @@ const CHRON_KINDS = {
   shame:   {label:'Schattenseite', pl:'Schattenseiten', kurz:'Schatten', ic:'ghost',      ord:4,
             satz:'Die Kehrseite. Sie bringt kein Prestige'},
 };
-// Unter dieser Spielzahl bekommt niemand eine Chronik. Eine Laufbahn braucht
-// eine Laufbahn — sonst trägt ein Gast nach zwölf Spielen einen Liga-Rekord.
-const CHRON_MIN_GAMES = 30;
+// Vergeben werden die Liga-Rekorde, sobald die LIGA so viele Partien gespielt
+// hat. Das Tor stand vorher je Spieler (30 eigene Partien): wer in einer
+// neuen Liga viel mehr spielte als die anderen, kam als Erster darüber und
+// hielt für eine Weile jeden Rekord allein, weil niemand sonst gewertet
+// wurde. Wie viel ein Einzelner gespielt haben muss, sagt die Mindestbasis
+// jedes Rekords (`mind`, in `val` geprüft); ein Ereignis wie die längste
+// Serie braucht nur sich selbst. Dieselbe Regel hat die Padel-Liga.
+const CHRON_MIN_GAMES = 40;
 // Was „eine Pause" heisst, steht als `REKORD_PAUSE_STUNDEN` im Katalog:
 // Bedingung und Erklaerung nennen die Zahl, und sie werden vor dieser Datei
 // geladen.
@@ -471,16 +476,23 @@ function _chronicleCtx(bisMs){
     seasonCount: allSeasons.size,
   };
 
-  // Zu kurze Laufbahnen und versteckte Spieler fliegen raus, BEVOR die
-  // Rekorde vergeben werden — sonst hält ein Gast den Liga-Rekord. Ein
+  // Versteckte Spieler fliegen raus, BEVOR die Rekorde vergeben werden. Ein
   // Ruheständler auch, und zwar auch in einem Zeitschnitt vor seinem
   // Karriereende [§C40]: ein Liga-Rekord ist ein Vergleich mit der Liga von
   // heute. Sonst schriebe der Feed am Tag nach dem Abschied „X übernimmt"
   // für jeden Rekord, den der Ruheständler abgeben musste, und hängte es an
   // eine Partie, die damit nichts zu tun hat. Seine eigenen Rekorde stehen
   // eingefroren im Profil (`ruhestandStand`).
+  //
+  // Vor dem Tor der Liga (CHRON_MIN_GAMES Partien bis zum gefragten Stand)
+  // steht niemand im Rennen. Die Zahl wird gemerkt (`partien`, `offen`),
+  // damit Reiter und Blatt sagen können, wie weit die Liga ist. Gezählt
+  // werden alle Partien bis zum Schnitt, auch die von Ruheständlern — es ist
+  // die Liga, die gespielt hat.
+  C.partien = ms.length;
+  C.offen = ms.length >= CHRON_MIN_GAMES;
   Object.keys(P).forEach(id => {
-    if(!ligaAktiv(id) || P[id].games < CHRON_MIN_GAMES){ delete P[id]; return; }
+    if(!C.offen || !ligaAktiv(id)) delete P[id];
   });
 
   // ── Die zwei Kammern [§C35]: ein Durchlauf ueber die Rohsicht ──────
@@ -1134,6 +1146,15 @@ function rekordZaehlung(){
   _cache._rekZKey = key;
   _cache._rekZ = res;
   return res;
+}
+
+// Wie weit die Liga bis zum Tor der Rekorde ist: ihre Partien und ob vergeben
+// wird. Reiter und Blatt lesen dieselbe Zahl, die auch über das Tor
+// entscheidet, damit beide nie etwas anderes sagen als die Rechnung [§C27].
+function rekordTor(){
+  let C;
+  try { C = _chronicleCtx(); } catch(e){ return {n:0, offen:false}; }
+  return {n:C.partien || 0, offen:!!C.offen};
 }
 
 // Die vollstaendige Reihenfolge EINES Rekords — das Podest im Blatt und die

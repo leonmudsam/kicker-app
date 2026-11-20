@@ -479,7 +479,13 @@ function showChronicle(cid){
       ? `<div class="pp-sec-title" style="margin-top:14px"><div class="l"><h4>Die Tafel</h4></div>
            <div class="m num">${rang.length} von ${allChronicles().rated} erfüllen die Mindestbasis</div></div>
          ${_chronPodestHtml(rang.map(r => ({pid:r.pid, wert:_chronKurz(r.ev), zeit:r.zeit, v:r.wert})))}`
-      : emptyState('scroll', 'Diesen Rekord hat noch niemand erreicht.')}
+      : emptyState('scroll', (() => {
+        // Vor dem Tor der Liga hieß es auch nach vierzehn Siegen in Folge nur
+        // „noch niemand", und woran es lag, stand nirgends.
+        const tor = rekordTor();
+        return tor.offen ? 'Diesen Rekord hat noch niemand erreicht.'
+          : `Die Rekorde werden vergeben, sobald die Liga ${CHRON_MIN_GAMES} Partien gespielt hat. Bisher sind es ${tor.n}.`;
+      })())}
     ${verfolger.length ? `<div class="rek-verfolger">${verfolger.map((r, i) => {
       const p = pmap()[r.pid];
       return `<div class="rvf" data-tplayer="${esc(r.pid)}">
@@ -555,7 +561,10 @@ function _titlePillHtml(pid){
 function ligaRekordeHtml(weit){
   const holders = chronicleHolders();
   const recs = CHRONICLES.filter(d => holders[d.id]);
-  if(!recs.length) return '';
+  // Vor dem Tor der Liga zeigt der Reiter trotzdem jede Karte und darüber,
+  // wie weit die Liga ist; danach heißt eine leere Tafel, dass niemand eine
+  // Bedingung erfüllt.
+  if(!recs.length && (!weit || rekordTor().offen)) return '';
   if(!weit) return `
     <div class="pp-sec-title" style="margin-top:20px">
       <div class="l"><span class="ic svg-ic">${svgI('rekord')}</span><h4>Liga-Rekorde</h4></div>
@@ -652,17 +661,28 @@ function ligaRekordeHtml(weit){
   const zaehl = rekordZaehlung();
   const maxN = Math.max(1, ...zaehl.map(z => z.n));
   const haltungen = zaehl.reduce((a, z) => a + z.n, 0);
-  const leiste = zaehl.length ? `<div class="rek-besitz">
+  // ── Bis die Liga so weit ist ──────────────────────────────────────
+  // Bis CHRON_MIN_GAMES Partien steht in der Leiste, wie weit die Liga ist:
+  // eine Zelle je Partie wie der Kalender eines Monats [§C27], gespielt hell.
+  const tor = rekordTor();
+  const torHtml = tor.offen ? '' : `<div class="rek-tor">
+      <div class="rek-tor-s">Die Rekorde werden vergeben, sobald die Liga <b>${CHRON_MIN_GAMES} Partien</b> gespielt hat.</div>
+      <div class="rek-tor-zellen" style="--n:${CHRON_MIN_GAMES}">${
+        Array.from({length:CHRON_MIN_GAMES}, (_, i) => `<i${i < tor.n ? ' class="an"' : ''}></i>`).join('')}</div>
+      <div class="rek-tor-z num"><span><b>${tor.n}</b> gespielt</span><span>noch ${CHRON_MIN_GAMES - tor.n}</span></div>
+    </div>`;
+  const leiste = zaehl.length || !tor.offen ? `<div class="rek-besitz">
     <div class="rek-bk"><span class="l">Wer die Tafel hält</span>
-      <span class="r num">${haltungen} Haltungen · ${recs.length} Rekorde</span></div>
-    <div class="rek-saeulen">${zaehl.map(z => {
+      <span class="r num">${zaehl.length ? `${haltungen} Haltungen · ${recs.length} Rekorde` : ''}</span></div>
+    ${zaehl.length ? `<div class="rek-saeulen">${zaehl.map(z => {
       const p = pmap()[z.pid];
       return `<span class="rek-sl${z.n ? '' : ' null'}" data-tplayer="${esc(z.pid)}">
         <span class="z num">${z.n}</span>
         <span class="b" style="height:${z.n ? (4 + z.n / maxN * 34).toFixed(1) : 3}px"></span>
         ${p ? avHtml(p, '') : ''}
       </span>`;
-    }).join('')}</div>
+    }).join('')}</div>` : ''}
+    ${torHtml}
   </div>` : '';
 
   const gruppen = Object.keys(CHRON_KINDS)

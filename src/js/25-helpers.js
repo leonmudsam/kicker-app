@@ -155,7 +155,9 @@ const ERKLAERKARTEN = {
   awards:    ['trophy', 'Die Awards', () =>
     `Auszeichnungen für den gewählten Zeitraum: jede Kachel stellt eine Frage an die Partien dieser Saison oder Woche, ein Tippen zeigt die ersten drei. Darunter stehen die Wertungen, die niemand gern hält.`],
   rekorde:   ['rekord', 'Die Liga-Rekorde', () =>
-    `Bestwerte über alle Saisons. Wer einen übertrifft, nimmt ihn dem bisherigen Halter ab; jede Karte nennt ihre Bedingung, ein Tippen zeigt, wie gezählt wird.`],
+    // Das Tor der Liga steht im Satz: in einer neuen Liga war der Reiter
+    // leer, und nichts sagte, ab wann sich das ändert.
+    `Bestwerte über alle Saisons. Vergeben werden sie, sobald die Liga <b>${CHRON_MIN_GAMES} Partien</b> gespielt hat; danach zählt für jeden die Bedingung der Karte. Wer einen Rekord übertrifft, nimmt ihn dem bisherigen Halter ab; ein Tippen zeigt, wie gezählt wird.`],
   chronik:   ['scroll', 'Die Chronik', () =>
     `Jeder Monat schreibt Einträge für das, worin jemand besonders war, ab ${CHRONIK_MIN_SPIELE} Partien im Monat. Ein Tippen öffnet den Eintrag; Einträge, Rekorde und Auszeichnungen ergeben zusammen das Prestige.`],
   teams:     ['handshake', 'Die Duos der Liga', () =>

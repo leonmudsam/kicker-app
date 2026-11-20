@@ -6,6 +6,7 @@
 - Die Siegquote zählt einmal. Nach dem Niveau fragen nur der beste Monat, der höchste Gipfel, die längste Siegesserie, die Form von jetzt und die beiden Positionen (`NIVEAU` in `tests/disziplinen`); jeder andere Rekord mit dem Grundwert des Könnens (100) fragt nach dem Abstand zum Eigenen [§C38], nach einer Teilmenge oder nach einer Folge und folgt der Siegquote gemessen mit r unter 0,75.
 - Die Karte nennt Zeitraum, Grundwert und Mindestbasis (`zeitraum`, `basis`, `mind`) und zeigt, wie weit der Halter vorn liegt (`_rekFeldHtml`, aus `chronicleRang`); der Kopf jeder Kammer sagt in einem Satz, was sie misst (`CHRON_KINDS.satz`). Kein Text beschreibt die App oder eine frühere Rechnung.
 - Ein Rekord hat keine Wertlatte, nur eine Stichprobe (Partien, Spieltage, Wochen, Niederlagen). Was ein Wert von sich aus braucht (erstes Glied, zwei Partien, eine Richtung, die sein Name verspricht: Sprung, Vorsprung, Aufschwung), bleibt; eine Teilmenge, die beschreibt, welche Partien zählen, ist keine Latte. Ein Abstand, der auf null rundet, ist keine Richtung.
+- Vergeben wird ab `CHRON_MIN_GAMES` (40) Partien der **Liga** bis zum gefragten Stand (`_chronicleCtx`: `partien`, `offen`; `rekordTor`), nicht ab einer Zahl je Spieler. Davor steht niemand im Rennen, und Erklärkarte, Leiste („Wer die Tafel hält“, eine Zelle je Partie) und Blatt sagen, wie weit die Liga ist. Wie viel ein Einzelner gespielt haben muss, sagt die Mindestbasis jedes Rekords (`mind`, in `val` geprüft).
 - Was einen ganzen Spieltag beschreibt (der makellose Tag, Kaltstart und Tagesabschluss, der Glanztag, die Fügungen eines Abends), zählt nur Tage, die für den gefragten Stand zu sind (`_tagZu`); ein laufender Tag hat noch keine letzte Partie und keine Tagesquote.
 - Aktuelle Form ist ein festes Endfenster der letzten 20, 25, 40 oder 50 eigenen Partien, nie der beste Abschnitt; kein Fenster ist kürzer als zwanzig Partien. „Der Lauf" zählt die letzten 40, „Der Höhenflug" vergleicht die letzten 20 mit den 20 davor. Ein gleitendes Fenster (`fenster`) meldet kein „ausgebaut" und nennt nicht den Wert seines Vorgängers.
 - Gemessen wird der Anteil, nicht die Anzahl; der Beleg (`ev`) beginnt mit dem Sortierwert. Ein Anteil an den eigenen Gelegenheiten kennt die Spielzahl nicht. Stehen neben einem Abstand seine beiden Quoten, ist er ihre Differenz, so wie sie dastehen: die Vergleichsquote folgt aus der eigenen Quote und dem Abstand (`_ppGegen`), der Wandler zeigt die Anteile des Profils.
@@ -23,7 +24,7 @@
 
 ## Prüfung
 
-`tests/rechnen` (der laufende Tag zählt erst um 23:59), `tests/disziplinen` (Katalog, Kammern und ihre Zahlen, die Siegquote, die nur das Niveau trägt, Schwellen im Text, offene Rennen, Paare, Fenster, Halterdeckel, Schandtafel, sichtbarer Text), `tests/ambient` (jede Rekord-Karte gegen den ganzen Katalog), `tests/blatt` (Kammerfelder und Besitzleiste).
+`tests/rechnen` (der laufende Tag zählt erst um 23:59, das Tor der Liga und die Verteilung danach), `tests/disziplinen` (Katalog, Kammern und ihre Zahlen, die Siegquote, die nur das Niveau trägt, Schwellen im Text, offene Rennen, Paare, Fenster, Halterdeckel, Schandtafel, sichtbarer Text), `tests/ambient` (jede Rekord-Karte gegen den ganzen Katalog), `tests/blatt` (Kammerfelder und Besitzleiste).
 
 ## Herleitung
 
@@ -414,3 +415,13 @@ Muster — sie trägt deshalb nur die Laufbahn.
 `tests/disziplinen` misst das alles: die Verteilung, die beiden Achsen und
 dass keine Schattenseite Prestige gibt; `tests/ambient` prüft den Feed
 gegen den ganzen Katalog, damit ein neuer Eintrag nicht still durchrutscht.
+
+**Das Tor gehört der Liga, nicht dem Einzelnen.** Es stand bei dreißig
+eigenen Partien je Spieler. In einer neuen Liga kam damit zuerst darüber,
+wer am meisten spielte, und hielt eine Weile jeden Rekord allein, weil
+niemand sonst gewertet wurde: an den echten Partien hatte Maxi nach der
+40. Partie der Liga alle zwanzig vergebenen Rekorde. Mit dem Tor der Liga
+sind es an derselben Stelle 23 Rekorde bei sieben Haltern; ab etwa
+zweihundert Partien ist die Verteilung dieselbe wie mit dem alten Tor.
+Zugleich stand nirgends, ab wann sich der leere Reiter füllt. Die
+Padel-Liga hatte das Tor schon so.

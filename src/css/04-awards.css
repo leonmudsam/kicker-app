@@ -286,6 +286,18 @@
   .rek-sl.null .z{color:var(--faint)}
   .rek-sl .rav,.rek-sl .av{flex:0 0 auto}
   .rek-sl .av{--av:20px;width:20px;height:20px;font-size:8px;box-shadow:none}
+  /* Bis die Liga ihre Partien für die Rekorde hat, steht hier, wie weit sie
+     ist: ab wann vergeben wird, stand sonst nirgends, und jede Karte darunter
+     sagte nur „noch niemand". Eine Zelle je Partie wie der Kalender eines
+     Monats, gespielt in Gold, der Rest gestrichelt — kein Balken, der in
+     der Breite wächst [§C27]. */
+  .rek-tor-s{font-size:12px;color:var(--ink2);line-height:1.45}
+  .rek-tor-zellen{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:2px;
+    height:12px;margin:9px 0 6px}
+  .rek-tor-zellen i{border-radius:2px;border:1px dashed var(--line2)}
+  .rek-tor-zellen i.an{border:0;background:linear-gradient(180deg,var(--gold),#b8952c)}
+  .rek-tor-z{display:flex;justify-content:space-between;gap:8px;font-size:10.5px;color:var(--muted)}
+  .rek-tor-z b{color:var(--gold)}
 
   /* Der Kammerfilter: sechs Felder in zwei Reihen. Als waagerecht
      scrollende Reiterleiste standen sechs Wörter in 11,5 px eng aneinander,
