@@ -414,12 +414,25 @@ ok(koenige.join(' ')==='a:4/6 b:5/12',
 // in ihr Player of the Week. Mit drei Wochen als Schwelle stand der Award
 // einer Saison bis in ihre vierte Woche leer, und das Blatt sagte „Keine
 // Daten", obwohl die Liga längst Spieler der Woche hatte.
+// Ebenso der Tageskönig: nach zwei Spieltagen hat a zwei von zwei, und mit
+// fünf Spieltagen als Schwelle stand dort niemand.
 const wochenKoenig=K(`(() => {
   const l=awListe('weekKing', awardRankings('all'));
-  return {liste:l.map(x=>x.id+':'+x.v+'/'+x.n), satz:AWARD_META.weekKing.why};
+  const _m=matches; matches=_m.filter(m=>new Date(m.created_at).getUTCDate()<=2); invalidateCache();
+  const t=awListe('dayKing', awardRankings('all'));
+  matches=_m; invalidateCache();
+  return {liste:l.map(x=>x.id+':'+x.v+'/'+x.n), tag:t.map(x=>x.id+':'+x.v+'/'+x.n),
+    satz:[AWARD_META.weekKing.why, AWARD_META.dayKing.why]};
 })()`);
-ok(wochenKoenig.liste.includes('a:1/1') && !/\bab \d/.test(wochenKoenig.satz),
-  'Der Wochenkönig zählt ab der ersten abgeschlossenen Woche, und seine Erklärung nennt keine Schwelle: '+JSON.stringify(wochenKoenig));
+ok(wochenKoenig.liste.includes('a:1/1') && wochenKoenig.tag[0]==='a:2/2' && wochenKoenig.satz.every(t=>!/\bab \d/.test(t)),
+  'Wochen- und Tageskönig zählen ab der ersten abgeschlossenen Woche, ihre Erklärungen nennen keine Schwelle: '+JSON.stringify(wochenKoenig));
+// Dieselbe Sache hat einen Namen: der Feed sagte „Spieler des Tages", Profil
+// und Awards „Player of the Day".
+{
+  const html=require('fs').readFileSync(require('./ziel.js'),'utf8');
+  const fund=html.match(/Spieler des Tages|Spieler der Woche/g)||[];
+  ok(fund.length===0, 'Kein „Spieler des Tages" oder „Spieler der Woche" neben „Player of the Day/Week": '+JSON.stringify([...new Set(fund)]));
+}
 // Der Ring am Avatar trägt jeden Zustand, nicht nur den ersten [§13.7]:
 // Player of the Week und Player of the Day, je Spieler aus SEINER letzten
 // abgeschlossenen Woche und SEINEM letzten abgeschlossenen Spieltag mit

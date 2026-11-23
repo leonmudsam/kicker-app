@@ -144,7 +144,7 @@ function showPotwRecap(opts){
           // Ohne Banner: im Schild stünde die Ligaposition von heute, und die
           // hat mit dieser Woche nichts zu tun. Der Reif bleibt — er ist die
           // Laufbahn und gehört zur Person [§C31].
-          band:false, px:104, marke:'Spieler der Woche', strahl:true,
+          band:false, px:104, marke:'Player of the Week', strahl:true,
           zahlen: rcpZahlenHtml([
             {v:mainPotwStats.wins,   l:'Siege',       ton:'gruen'},
             {v:mainPotwStats.losses, l:'Niederlagen', ton:'rot'},
@@ -488,7 +488,7 @@ function showPotdRecap(opts){
     openSheet(
       rcpKopfHtml({ic:'trophyDay', marke:'Player of the Day', titel:dayStr,
         meta: rcpMeta([dayMatches.length+' Partien', uniquePlayers.size+' Spieler'])})
-      + rcpHeldHtml({pid:potdId, band:false, px:104, marke:'Spieler des Tages', strahl:true,
+      + rcpHeldHtml({pid:potdId, band:false, px:104, marke:'Player of the Day', strahl:true,
           zahlen: rcpZahlenHtml([
             {v:s.wins,      l:'Siege',       ton:'gruen'},
             {v:s.losses,    l:'Niederlagen', ton:'rot'},

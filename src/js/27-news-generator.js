@@ -2264,7 +2264,7 @@ function _buildStories(){
         const main = res.main;
         const names = res.winners.map(w => nameOf(w.id));
         _wochenTeile.unshift({
-          art: 'potw', ic: 'weekKing', label: 'Spieler der Woche', held: true,
+          art: 'potw', ic: 'weekKing', label: 'Player of the Week', held: true,
           pids: res.winners.map(w => w.id), wert: Math.round(main.wr*100) + ' %',
           satz: `${_namenListe(names)} ${names.length > 1 ? 'gewinnen' : 'gewinnt'} `
               + `${main.wins} von ${main.wins + main.losses} Partien und ${names.length > 1 ? 'haben' : 'hat'} damit die beste Quote.`,
@@ -2297,7 +2297,10 @@ function _buildStories(){
         id: 'potd_' + dayKey,
         cat: 'highlight',
         ic: 'dayKing',
-        title: names.length > 1 ? `${titleNames}: Spieler des Tages` : `${titleNames} ist Spieler des Tages`,
+        // Derselbe Name wie im Profil und unter den Awards: hier stand
+        // „Spieler des Tages", dort „Player of the Day", und bei mehreren ein
+        // Etikett mit Doppelpunkt („A, B: Spieler des Tages").
+        title: names.length > 1 ? `${titleNames} sind Player of the Day` : `${titleNames} ist Player of the Day`,
         // Die Siegquote steht NICHT vorn — der Titel wird ueber die absoluten
         // Tagessiege vergeben (siehe `_newsPeriodWinner`). Die Quote bleibt als
         // Kontext, damit die Zahl einordbar ist. „Am 16.07. hat niemand mehr

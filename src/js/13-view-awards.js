@@ -450,9 +450,12 @@ function _awardRankingsUncached(period, sid){
   // Zahl der Titel: als Zahl gewann, wer am häufigsten spielt — zwölf
   // Tagessiege aus zwanzig Spieltagen standen hinter dreizehn aus hundert.
   // Gezählt werden die eigenen Tage und Wochen, die zu sind, wie die Titel
-  // selbst (`_tagZu`, die laufende Woche nicht). Wer weniger als
-  // `KOENIG_MIN` hat, steht hinter allen anderen: ein Titel aus einem
-  // einzigen Spieltag ist kein Anteil.
+  // selbst (`_tagZu`, die laufende Woche nicht). Eine Mindestzahl gibt es
+  // nicht: mit fünf Spieltagen und drei Wochen standen Tages- und
+  // Wochenkönig einer Saison bis weit in den Monat leer, und das Blatt sagte
+  // „Keine Daten", obwohl die Liga längst Player of the Day und Week hatte.
+  // Ein Award zeigt ab der ersten abgeschlossenen Woche. Bei gleichem Anteil
+  // steht vorn, wer öfter Player of the Day oder Week war.
   const visiblePlayers = players.filter(dabei);
   const eigene = {};
   const laufendeWoche = _wochenKey(Date.now());
@@ -465,14 +468,14 @@ function _awardRankingsUncached(period, sid){
       if(w !== laufendeWoche) e.wochen.add(w);
     });
   });
-  const koenig = (id, v, n, ab) => ({id, v, n, q:n ? v / n : 0, gilt:n >= ab});
-  const koenigFolge = (a, b) => (b.gilt - a.gilt) || (b.q - a.q) || (b.v - a.v);
+  const koenig = (id, v, n) => ({id, v, n, q:n ? v / n : 0});
+  const koenigFolge = (a, b) => (b.q - a.q) || (b.v - a.v);
   const weekKingList = visiblePlayers
-    .map(p=>koenig(p.id, countPeriodWins(p.id, ms, 'week'), ((eigene[p.id] || {}).wochen || new Set()).size, KOENIG_MIN.woche))
+    .map(p=>koenig(p.id, countPeriodWins(p.id, ms, 'week'), ((eigene[p.id] || {}).wochen || new Set()).size))
     .filter(x=>x.v>0)
     .sort(koenigFolge);
   const dayKingList = visiblePlayers
-    .map(p=>koenig(p.id, countDayWins(p.id, ms), ((eigene[p.id] || {}).tage || new Set()).size, KOENIG_MIN.tag))
+    .map(p=>koenig(p.id, countDayWins(p.id, ms), ((eigene[p.id] || {}).tage || new Set()).size))
     .filter(x=>x.v>0)
     .sort(koenigFolge);
 
@@ -1117,13 +1120,6 @@ const AW_IC = {
   cheesePlatter:'cheese', favoriteLoser:'crownFallen'
 };
 
-// Ab wie vielen eigenen Spieltagen und Wochen ein Anteil zählt [§C28]. Vor
-// `AWARD_META`, das sie in seinen Erklärungen nennt. Die Woche hat keine
-// Schwelle: mit drei Wochen stand der Wochenkönig einer Saison bis in ihre
-// vierte Woche leer, und im Blatt stand „Keine Daten", obwohl die Liga
-// längst Spieler der Woche hatte. Eine Saison ist ein Monat mit vier
-// Wochen; ein Award zeigt ab der ersten abgeschlossenen.
-const KOENIG_MIN = {tag:5, woche:1};
 
 // ⚑ HOTSPOT — Award-Metadaten (Titel, Klasse, Erklärung).
 // Eine fehlende Erweiterung hier führt dazu, dass das Detail-Sheet im
@@ -1163,7 +1159,7 @@ const AWARD_META={
   zirkus:      {title:'Zirkus',                cls:'red',   why:`Das Duo, bei dem die meisten Niederlagen hoch ausfallen (ab 5 Tore Unterschied), gemessen an allen Niederlagen. Ab ${AW_MIN.teamPleiten} Niederlagen.`},
   baustelle:   {title:'Baustelle',             cls:'red',   why:`Das Duo mit der längsten gemeinsamen Niederlagenserie.`},
   weekKing:    {title:'Wochenkönig',           cls:'gold',  why:`Der größte Anteil der eigenen Wochen als Player of the Week. Die laufende Woche zählt noch nicht.`},
-  dayKing:     {title:'Tageskönig',            cls:'gold',  why:`Der größte Anteil der eigenen Spieltage als Player of the Day, ab ${KOENIG_MIN.tag} Spieltagen. Der laufende Tag zählt noch nicht.`},
+  dayKing:     {title:'Tageskönig',            cls:'gold',  why:`Der größte Anteil der eigenen Spieltage als Player of the Day. Der laufende Tag zählt noch nicht.`},
   // ── AWARDS v3 ──
   plusMinus:   {title:'Plus-Minus',            cls:'orange',why:`Der höchste Torsaldo je Partie (Tore minus Gegentore). Ab ${AW_MIN.spielerSaldo} Partien.`},
   underdog:    {title:'Underdog-Held',         cls:'purple',why:`Die höchste Siegquote als Außenseiter (Siegchance unter 35 %). Ab ${AW_MIN.unter} solchen Partien.`},
@@ -1208,9 +1204,9 @@ const AW_WERT = {
   streaks:     {l:R=>R.streaks, s:x=>x.v, z:x=>x.v, e:x=>_awN(x.v,'Sieg in Folge','Siege in Folge'), lauf:true},
   showmaster:  {l:R=>R.showmasterList, s:x=>x.v, z:x=>x.v+'×', e:()=>'10:0 gewonnen'},
   weekKing:    {l:R=>R.weekKingList||[], s:x=>Math.round(x.q*1000), z:x=>_awPz(x.q), e:()=>'der eigenen Wochen',
-                b:x=>x.v+' von '+x.n+' als Player of the Week', f:x=>x.q, gilt:x=>x.gilt},
+                b:x=>x.v+' von '+x.n+' als Player of the Week', f:x=>x.q},
   dayKing:     {l:R=>R.dayKingList||[], s:x=>Math.round(x.q*1000), z:x=>_awPz(x.q), e:()=>'der eigenen Spieltage',
-                b:x=>x.v+' von '+x.n+' als Player of the Day', f:x=>x.q, gilt:x=>x.gilt},
+                b:x=>x.v+' von '+x.n+' als Player of the Day', f:x=>x.q},
   mvt:         {l:R=>R.mvt, s:x=>Math.round(x.v), z:x=>(x.v>=0?'+':'')+Math.round(x.v), e:()=>'Elo zusammen', b:x=>x.g+' Partien zusammen'},
   bestDuo:     {l:R=>R.bestDuo, s:x=>x.g, z:x=>x.g, e:()=>'Partien zusammen', b:x=>x.w+' davon gewonnen', gilt:x=>x.g>=2},
   unstoppable: {l:R=>R.unstoppableList, s:x=>x.v, z:x=>x.v, e:x=>_awN(x.v,'Sieg in Folge','Siege in Folge'), lauf:true},
