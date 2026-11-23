@@ -77,7 +77,7 @@ function showSeasonTable(sid){
   const T = seasonTitles(sid);
   if(!T.awarded.length && !T.champ){
     openSheet(`${blattKopfHtml({ic:'scroll', ton:'gold', titel:seasonLabel(sid), unter:'Noch keine Chronik-Einträge'})}
-      ${emptyState('trophy', T.live ? 'Die Saison läuft, noch erfüllt niemand eine Bedingung.' : 'Kein Eintrag in dieser Saison')}`);
+      ${emptyState('trophy', T.live ? 'Die Saison läuft, noch erfüllt niemand eine Bedingung' : 'Kein Eintrag in dieser Saison')}`);
     return;
   }
   const emptyNames = T.empty.map(pname).filter(Boolean);
@@ -483,7 +483,7 @@ function showChronicle(cid){
         // Vor dem Tor der Liga hieß es auch nach vierzehn Siegen in Folge nur
         // „noch niemand", und woran es lag, stand nirgends.
         const tor = rekordTor();
-        return tor.offen ? 'Diesen Rekord hat noch niemand erreicht.'
+        return tor.offen ? 'Diesen Rekord hat noch niemand erreicht'
           : `Die Rekorde werden vergeben, sobald die Liga ${CHRON_MIN_GAMES} Partien gespielt hat. Bisher sind es ${tor.n}.`;
       })())}
     ${verfolger.length ? `<div class="rek-verfolger">${verfolger.map((r, i) => {
@@ -579,7 +579,7 @@ function ligaRekordeHtml(weit){
         <span class="hd">${esc(_chronHolderNames(h))}</span>
       </div>`;
     }).join('')}</div>
-    <div class="tnote">Tippen zeigt, wie ein Rekord gezählt wird.</div>`;
+    <div class="tnote">Ein Tippen zeigt, wie ein Rekord gezählt wird.</div>`;
   // Die große Form: ein Rekord ist ein Besitz, also bekommt er eine Karte
   // mit Halter-Gesicht und Beleg — nicht nur einen Namen am Zeilenende.
   //
@@ -671,9 +671,13 @@ function ligaRekordeHtml(weit){
         Array.from({length:CHRON_MIN_GAMES}, (_, i) => `<i${i < tor.n ? ' class="an"' : ''}></i>`).join('')}</div>
       <div class="rek-tor-z num"><span><b>${tor.n}</b> gespielt</span><span>noch ${CHRON_MIN_GAMES - tor.n}</span></div>
     </div>`;
+  // Rechts steht nur die Zahl der Haltungen: wie viele Rekorde es gibt,
+  // sagt das Feld „Alle" darunter, wie viele noch offen sind, die Zeile
+  // jeder Kammer. Mit beiden Zahlen brachen bei 360 px Titel und Zahl in
+  // zwei Zeilen, sobald die Zahl in 10,5 px stand wie in jedem Kopf.
   const leiste = zaehl.length || !tor.offen ? `<div class="rek-besitz">
     <div class="rek-bk"><span class="l">Wer die Tafel hält</span>
-      <span class="r num">${zaehl.length ? `${haltungen} Haltungen · ${recs.length} Rekorde` : ''}</span></div>
+      <span class="r num">${zaehl.length ? `${haltungen} Haltungen` : ''}</span></div>
     ${zaehl.length ? `<div class="rek-saeulen">${zaehl.map(z => {
       const p = pmap()[z.pid];
       return `<span class="rek-sl${z.n ? '' : ' null'}" data-tplayer="${esc(z.pid)}">
@@ -899,7 +903,7 @@ function showLigaChronik(){
   if(!matrix){
     openSheet(`${blattKopfHtml({ic:'scroll', ton:'gold', titel:'Liga-Chronik',
       unter:recs.length ? recs.length + ' Liga-Rekorde · noch keine Saison mit Chronik' : 'Noch keine Saison mit Chronik'})}
-      ${recHtml || emptyState('scroll','Sobald ein Monat gespielt ist, füllt sich die Chronik.')}`);
+      ${recHtml || emptyState('scroll','Sobald ein Monat gespielt ist, füllt sich die Chronik')}`);
     _bindChronikClicks(document.getElementById('sheet'));
     return;
   }

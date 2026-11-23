@@ -1054,10 +1054,15 @@ function _vAwardsCore(){
 // Zeile, die man erst als Knopf erkennen musste, und die Rekorde noch eine
 // Ebene tiefer darin.
 function vAwards(){
+  // Die Unterzeile nennt den Zeitraum wie in Liga, Teams und Verlauf; was
+  // ein Tippen zeigt, sagt die Erklärkarte darunter. Hier stand „tippen"
+  // klein in drei Formen, kein anderer Reiter trug es in der Unterzeile,
+  // und „Bestwerte über alle Saisons" war wortgleich der erste Satz der
+  // Karte.
   const unter = {
-    awards:  awPeriodLabel() + ' · tippen für Top 3 und Verlauf',
-    rekorde: 'Bestwerte über alle Saisons · tippen zeigt die Bedingung',
-    chronik: 'Saison für Saison · tippen öffnet den Monat'
+    awards:  awPeriodLabel(),
+    rekorde: 'Über alle Saisons',
+    chronik: 'Saison für Saison'
   }[awView] || '';
   const schalter = `
     <div class="ui-switch">
@@ -1072,12 +1077,12 @@ function vAwards(){
     // direkt untereinander.
     const liste = ligaRekordeHtml(true);
     return kopf + (liste ? erklaerKarte('rekorde') + liste
-      : erklaerKarte('rekorde', emptyState('trophyStar','Noch hält niemand einen Liga-Rekord.')));
+      : erklaerKarte('rekorde', emptyState('trophyStar','Noch hält niemand einen Liga-Rekord')));
   }
   if(awView === 'chronik'){
     const matrix = ligaChronikMatrixHtml();
     return kopf + (matrix ? erklaerKarte('chronik') + matrix
-      : erklaerKarte('chronik', emptyState('scroll','Sobald ein Monat gespielt ist, füllt sich die Chronik.')));
+      : erklaerKarte('chronik', emptyState('scroll','Sobald ein Monat gespielt ist, füllt sich die Chronik')));
   }
   // Ein abgeschlossener Monat oder eine vergangene Woche ist Geschichte [§C40].
   let bis = null;
@@ -1113,8 +1118,12 @@ const AW_IC = {
 };
 
 // Ab wie vielen eigenen Spieltagen und Wochen ein Anteil zählt [§C28]. Vor
-// `AWARD_META`, das sie in seinen Erklärungen nennt.
-const KOENIG_MIN = {tag:5, woche:3};
+// `AWARD_META`, das sie in seinen Erklärungen nennt. Die Woche hat keine
+// Schwelle: mit drei Wochen stand der Wochenkönig einer Saison bis in ihre
+// vierte Woche leer, und im Blatt stand „Keine Daten", obwohl die Liga
+// längst Spieler der Woche hatte. Eine Saison ist ein Monat mit vier
+// Wochen; ein Award zeigt ab der ersten abgeschlossenen.
+const KOENIG_MIN = {tag:5, woche:1};
 
 // ⚑ HOTSPOT — Award-Metadaten (Titel, Klasse, Erklärung).
 // Eine fehlende Erweiterung hier führt dazu, dass das Detail-Sheet im
@@ -1153,7 +1162,7 @@ const AWARD_META={
   formtief:    {title:'Formtief',              cls:'red',   why:`Der größte Abstand zwischen dem höchsten und dem aktuellen Elo-Stand innerhalb einer Saison.`},
   zirkus:      {title:'Zirkus',                cls:'red',   why:`Das Duo, bei dem die meisten Niederlagen hoch ausfallen (ab 5 Tore Unterschied), gemessen an allen Niederlagen. Ab ${AW_MIN.teamPleiten} Niederlagen.`},
   baustelle:   {title:'Baustelle',             cls:'red',   why:`Das Duo mit der längsten gemeinsamen Niederlagenserie.`},
-  weekKing:    {title:'Wochenkönig',           cls:'gold',  why:`Der größte Anteil der eigenen Wochen als Player of the Week, ab ${KOENIG_MIN.woche} Wochen. Die laufende Woche zählt noch nicht.`},
+  weekKing:    {title:'Wochenkönig',           cls:'gold',  why:`Der größte Anteil der eigenen Wochen als Player of the Week. Die laufende Woche zählt noch nicht.`},
   dayKing:     {title:'Tageskönig',            cls:'gold',  why:`Der größte Anteil der eigenen Spieltage als Player of the Day, ab ${KOENIG_MIN.tag} Spieltagen. Der laufende Tag zählt noch nicht.`},
   // ── AWARDS v3 ──
   plusMinus:   {title:'Plus-Minus',            cls:'orange',why:`Der höchste Torsaldo je Partie (Tore minus Gegentore). Ab ${AW_MIN.spielerSaldo} Partien.`},

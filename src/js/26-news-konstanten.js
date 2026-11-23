@@ -26,7 +26,11 @@ const NEWS_CATEGORIES = {
   breaking:   {label:'Breaking',    descLabel:'Breaking News',    ic:'sirene'},
   highlight:  {label:'Highlights',  descLabel:'Highlight',        ic:'funkeln'},
   season:     {label:'Saison',      descLabel:'Saison',           ic:'saisonKal'},
-  badge:      {label:'Awards',      descLabel:'Badge & Awards',   ic:'abzeichen'},
+  // Die Rubrik trägt die Abzeichen des Katalogs, und die heißen in Profil
+  // und Prestige Auszeichnungen; „Awards" sind die Wertungen eines
+  // Zeitraums, und „Badge" war ein englisches Wort. Gelesen wird der
+  // Schlüssel `badge`, nie das Wort: gespeicherte Storys bleiben gültig.
+  badge:      {label:'Auszeichnungen', descLabel:'Auszeichnung', ic:'abzeichen'},
   fun:        {label:'Fun Facts',   descLabel:'Fun Fact',         ic:'idee'},
   rivalry:    {label:'Rivalität',   descLabel:'Rivalität',        ic:'crossedSwords'},
   team:       {label:'Teams',       descLabel:'Team',             ic:'users'},

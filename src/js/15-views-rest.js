@@ -1,16 +1,21 @@
 // ╔═══ §5.4 ─── VIEW: TEAMS ────────────────────────────────────────────╗
 //     Team-Tab mit Team-Statistiken und Top-Teams.
 // ╚═════════════════════════════════════════════════════════════════════════╝
+// Ab wie vielen gemeinsamen Partien ein Duo im Teams-Reiter steht. Die 4
+// stand im Filter und in sechs Sätzen (Unterzeile, leerer Zustand, Netz,
+// Erklärkarte, Hilfe): ein geänderter Filter hätte Karte und Hilfe
+// widersprechen lassen.
+const DUOS_AB = 4;
 function vTeams(nurErgebnis=false){
   // Ein Duo mit einem Ruheständler spielt nie wieder [§C40]: es steht nicht
   // in der Liste der aktiven Liga, sondern am Ende in einer Zeile, die
   // aufklappt. Ein Duo mit einem ausgeblendeten Spieler steht nirgends.
-  const T0=teamStats().filter(t=>t.g>=4);
+  const T0=teamStats().filter(t=>t.g>=DUOS_AB);
   const T=T0.filter(t=>t.ids.every(id=>ligaAktiv(id)));
   const ruheT=T0.filter(t=>t.ids.every(id=>sichtbar(id))&&t.ids.some(id=>imRuhestand(id)));
   if(!T.length&&!ruheT.length){
-    const html=emptyState('handshake','Noch kein Duo mit 4 gemeinsamen Partien');
-    return nurErgebnis?{kopf:'Ab 4 gemeinsamen Partien',html,ruhe:''}:`<div class="view-head"><h2>Teams ${hilfeKnopf('teams')}</h2><p>Ab 4 gemeinsamen Partien</p></div>${erklaerKarte('teams', html)}`;
+    const html=emptyState('handshake',`Noch kein Duo mit ${DUOS_AB} gemeinsamen Partien`);
+    return nurErgebnis?{kopf:'Über alle Saisons',html,ruhe:''}:`<div class="view-head"><h2>Teams ${hilfeKnopf('teams')}</h2><p>Über alle Saisons</p></div>${erklaerKarte('teams', html)}`;
   }
   const showBest=teamView!=='worst';
   
@@ -139,8 +144,11 @@ function vTeams(nurErgebnis=false){
   const ruhe=ruheF.length?`<div class="rlist">${ruheF.map((t,i)=>zeile(t,i,true)).join('')}</div>`:'';
 
 
-  const ergebnis={kopf:`${arrF.length} Duo${arrF.length===1?'':'s'}${_tq?' gefunden':' ab 4 gemeinsamen Partien, über alle Saisons'}`,
-    html:arrF.length ? `<div class="rlist">${rows}</div>` : emptyState('search','Keine Teams gefunden'),
+  // Die Unterzeile nennt Zahl und Zeitraum wie in Liga und Verlauf; die
+  // Schwelle sagt die Erklärkarte darunter. „43 Duos ab 4 gemeinsamen
+  // Partien, über alle Saisons" stand fast wortgleich zweimal untereinander.
+  const ergebnis={kopf:`${arrF.length} Duo${arrF.length===1?'':'s'}${_tq?' gefunden':' · über alle Saisons'}`,
+    html:arrF.length ? `<div class="rlist">${rows}</div>` : emptyState('search','Keine Duos gefunden'),
     ruhe, ruheZahl:ruheF.length};
   // Die Suche zeichnet nur die Ergebnisse. Keine zweite Filter-/Sortierformel
   // und kein Ersetzen des Eingabefelds samt Fokus, Cursor oder IME-Komposition.
@@ -148,7 +156,7 @@ function vTeams(nurErgebnis=false){
   return `
     <div class="view-head"><h2>Teams ${hilfeKnopf('teams')}</h2><p id="teamCount">${ergebnis.kopf}</p></div>
     ${erklaerKarte('teams')}
-    ${einblickHtml('netz', 'ab 4 Partien')}
+    ${einblickHtml('netz', `ab ${DUOS_AB} Partien`)}
     <div class="search">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
         <circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/>
@@ -363,7 +371,7 @@ function vSettings(){
           die Kurve dahinter verläuft. */ ''}
     <div class="card">
       <div class="mini-label">So wirken die Regler</div>
-      <div style="font-size:12px;color:var(--ink2);line-height:1.8">
+      <div class="cfg-satz" style="line-height:1.8">
         <b style="color:var(--acid)">Tempo</b> — Wie stark eine einzelne Partie die Elo verändert. Hoch heißt schnelle Ausschläge, niedrig ruhige Werte.<br>
         <b style="color:var(--acid)">Start-Elo</b> — Mit diesem Wert beginnt jeder Spieler eine Saison.<br>
         <b style="color:var(--acid)">Last des schwächeren Partners</b> — Bei ${c.risk} % verliert weniger Elo, wer mit einem deutlich schwächeren Partner spielt.<br>
@@ -378,16 +386,16 @@ function vSettings(){
         <b style="color:var(--acid)">Aufhol-Zuschlag</b> — Wer weniger Partien hat als die Gegner, bekommt bis zu ${c.udGames} % mehr. Er kostet nie etwas.<br>
         <b style="color:var(--acid)">Neulinge und Anfänger</b> — In den ersten 5 Partien einer Saison wirkt das Tempo zu ${c.npMult} %, bis zur 14. Partie zu ${c.npMidMult} %.<br>
         <b style="color:var(--acid)">Spitze</b> — Wer mehr als 400 Elo über dem Start steht, bewegt sich nur mit ${c.vetDamp} % des Tempos.<br>
-        <b style="color:var(--acid)">Saison</b> — Mit jedem Monat beginnt die Elo neu beim Startwert. Die Elo der Laufbahn ist der gewichtete Schnitt der Saisonenden.
+        <b style="color:var(--acid)">Saison</b> — Mit jedem Monat beginnt die Elo neu beim Startwert. Die Karriere-Elo ist der gewichtete Schnitt der Saisonenden.
       </div>
     </div>
     <div class="card" style="margin-top:14px;border:1px solid rgba(190,242,100,.18);background:linear-gradient(155deg,rgba(190,242,100,.06),var(--surface) 80%)">
       <div class="mini-label" style="color:var(--acid);display:flex;align-items:center;gap:6px">${svgI('info')}Wirkung der Regler</div>
-      <p style="font-size:12px;color:var(--ink2);line-height:1.55;margin-top:8px">
+      <p class="cfg-satz" style="margin-top:8px">
         Änderungen an den Reglern wirken <b style="color:var(--acid)">nur auf neue Partien</b>.
         Vergangene Partien behalten ihre Elo, abgeschlossene Saisons und Auszeichnungen bleiben, wie sie sind.
       </p>
-      <p style="font-size:12px;color:var(--ink2);line-height:1.55;margin-top:6px">
+      <p class="cfg-satz" style="margin-top:6px">
         Sollen die Regler auch rückwirkend gelten, lassen sich alle Partien neu berechnen.
         <b style="color:var(--red)">Dabei wird die gespeicherte Elo jeder Partie überschrieben.</b>
       </p>
@@ -396,7 +404,7 @@ function vSettings(){
 
     <div class="card" style="margin-top:14px">
       <div class="mini-label">Sicherung und Export</div>
-      <p style="font-size:11.5px;color:var(--ink2);line-height:1.6;margin-top:10px">
+      <p class="cfg-satz" style="margin-top:10px">
         Hier lässt sich jederzeit eine eigene Kopie der Liga speichern, falls in der Cloud etwas verloren geht.
       </p>
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
@@ -404,15 +412,15 @@ function vSettings(){
         <button class="btn ghost" id="expSaveBtn" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('sichern')} Sicherung speichern (.json)</button>
         <button class="btn ghost sm" id="expCsvBtn" style="width:100%;font-size:11px">Stattdessen als CSV</button>
       </div>
-      <p style="font-size:11px;color:var(--muted);line-height:1.6;margin-top:12px">
-        <b style="color:var(--acid)">Excel</b>: alle ${matches.length} Partien mit Namen, Positionen und Ergebnissen,
-        dazu Spieler und Saisons. Zum Anschauen und Weitergeben.<br>
-        <b style="color:var(--acid)">Sicherung</b>: die vollständige Kopie mit Elo und Einstellungen.
+      <p class="cfg-satz leise" style="margin-top:12px">
+        <b style="color:var(--acid)">Excel</b> enthält alle ${matches.length} Partien mit Namen, Positionen und Ergebnissen,
+        dazu Spieler und Saisons, zum Anschauen und Weitergeben.<br>
+        Die <b style="color:var(--acid)">Sicherung</b> ist die vollständige Kopie mit Elo und Einstellungen.
         Mit ihr lässt sich die Liga im Ernstfall wieder aufbauen.
       </p>
       <div style="height:1px;background:var(--line);margin:14px 0"></div>
       <button class="btn" id="impBackupBtn" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('hochladen')} Datei einspielen</button>
-      <p style="font-size:11px;color:var(--muted);line-height:1.6;margin-top:10px">
+      <p class="cfg-satz leise" style="margin-top:10px">
         Nimmt .xlsx, .csv und .json. Vorher zeigt eine Vorschau, was dazukommt.
         <b style="color:var(--acid)">Es wird nie etwas gelöscht oder überschrieben</b>, nur fehlende Partien kommen dazu.
       </p>
@@ -436,7 +444,7 @@ function vSettings(){
         <div style="font-size:12px;color:var(--ink2);font-family:'Sometype Mono',monospace">${BUILD_VERSION}</div>
         <button class="btn ghost sm" id="forceReloadBtn" style="width:auto;padding:7px 12px;font-size:11px;flex-shrink:0">Neu laden</button>
       </div>
-      <p style="font-size:11px;color:var(--muted);line-height:1.55;margin-top:10px">
+      <p class="cfg-satz leise" style="margin-top:10px">
         Fehlt etwas Neues, hält das Telefon noch den alten Stand. Der Knopf lädt ihn neu; sonst meldet sich ein neuer Stand von selbst.
       </p>
     </div>

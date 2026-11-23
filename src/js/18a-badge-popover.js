@@ -417,12 +417,14 @@ function showBadgePopover(badgeId, playerId){
           </div>
         </div>`;
     } else {
-      // Kein Fortschritt definierbar — knapper Hinweis
+      // Kein Fortschritt definierbar — knapper Hinweis. Ohne Befehl in
+      // Du-Form und ohne „Spiel": hier stand „Erfüll die Voraussetzung im
+      // nächsten Spiel".
       bodyHtml = `
         <div class="bp-section">Status</div>
         <div class="bp-locked-hint">
           Noch <span class="bp-locked-em">nicht erreicht</span>.<br>
-          Erfüll die Voraussetzung im nächsten Spiel oder über die Saison hinweg.
+          Erreichbar in einer der nächsten Partien oder über die Saison.
         </div>`;
     }
   }

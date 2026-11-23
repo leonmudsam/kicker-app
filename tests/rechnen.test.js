@@ -410,6 +410,16 @@ const koenige=K(`(() => {
 })()`);
 ok(koenige.join(' ')==='a:4/6 b:5/12',
   'Der Tageskönig ist, wer den größten Anteil seiner Spieltage gewann, nicht wer die meisten Titel sammelte: '+JSON.stringify(koenige));
+// Der Wochenkönig hat keine Schwelle: a spielte nur in einer Woche und war
+// in ihr Player of the Week. Mit drei Wochen als Schwelle stand der Award
+// einer Saison bis in ihre vierte Woche leer, und das Blatt sagte „Keine
+// Daten", obwohl die Liga längst Spieler der Woche hatte.
+const wochenKoenig=K(`(() => {
+  const l=awListe('weekKing', awardRankings('all'));
+  return {liste:l.map(x=>x.id+':'+x.v+'/'+x.n), satz:AWARD_META.weekKing.why};
+})()`);
+ok(wochenKoenig.liste.includes('a:1/1') && !/\bab \d/.test(wochenKoenig.satz),
+  'Der Wochenkönig zählt ab der ersten abgeschlossenen Woche, und seine Erklärung nennt keine Schwelle: '+JSON.stringify(wochenKoenig));
 // Der Ring am Avatar trägt jeden Zustand, nicht nur den ersten [§13.7]:
 // Player of the Week und Player of the Day, je Spieler aus SEINER letzten
 // abgeschlossenen Woche und SEINEM letzten abgeschlossenen Spieltag mit
@@ -489,7 +499,7 @@ const neueLiga=JSON.parse(K(`(()=>{const alt=matches,altP=players;
   const r={karte:ERKLAERKARTEN.rekorde[2](),tor:rekordTor(),halter:Object.keys(chronicleHolders()).length,
     reiter:ligaRekordeHtml(true)};
   matches=alt;players=altP;invalidateCache();return JSON.stringify(r);})()`));
-ok(/sobald die Liga <b>40 Partien<\/b>/.test(neueLiga.karte)&&neueLiga.tor.n===12&&neueLiga.tor.offen===false&&neueLiga.halter===0
+ok(/ab <b>40 Partien<\/b> der Liga/.test(neueLiga.karte)&&neueLiga.tor.n===12&&neueLiga.tor.offen===false&&neueLiga.halter===0
   &&/Wer die Tafel hält/.test(neueLiga.reiter)&&/<b>12<\/b> gespielt/.test(neueLiga.reiter)&&/noch 28/.test(neueLiga.reiter),
   'Eine neue Liga liest, ab wie vielen Partien der Liga es Rekorde gibt und wie weit sie ist (12 von 40, keine vergeben)');
 // Die Bildauswahl im Profil: jede id und jedes Bild genau einmal, weil die

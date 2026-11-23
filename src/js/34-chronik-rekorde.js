@@ -60,16 +60,23 @@
 // Bestmarken stehen vorn: eine Serie, ein Gipfel, ein Tag sind ohne
 // Erklärung zu lesen, und mit dem Können zuerst begann der Reiter mit
 // siebzehn Karten aus Schnitten und Erwartungsabständen.
+// Feld und Überschrift einer Kammer tragen denselben Namen (`kurz` = `pl`):
+// das Feld hieß „Marken", die Überschrift direkt darunter „Bestmarken", und
+// man suchte den Unterschied. Die langen passen bei 360 px nicht in die
+// Felder (gemessen: „Schattenseiten" läuft über, „Aktuelle Form" bricht),
+// also gelten die kurzen. `label` ist die Einzahl im Blatt und im Feed,
+// wo „Bestmarke" und „Schattenseite" auch die Rubrik und die Klasse der
+// Monatschronik heißen.
 const CHRON_KINDS = {
-  mark:    {label:'Bestmarke',     pl:'Bestmarken',     kurz:'Marken',   ic:'target',     ord:0,
+  mark:    {label:'Bestmarke',     pl:'Marken',         kurz:'Marken',   ic:'target',     ord:0,
             satz:'Einzelne Bestleistungen, jede an einem Tag erreicht'},
   koennen: {label:'Können',        pl:'Können',         kurz:'Können',   ic:'trophyStar', ord:1,
             satz:'Schnitt und Quote über die ganze Laufbahn'},
-  form:    {label:'Aktuelle Form', pl:'Aktuelle Form',  kurz:'Form',     ic:'trendUp',    ord:2,
+  form:    {label:'Aktuelle Form', pl:'Form',           kurz:'Form',     ic:'trendUp',    ord:2,
             satz:'Gerechnet über die letzten eigenen Partien'},
   fuegung: {label:'Fügung',        pl:'Fügungen',       kurz:'Fügungen', ic:'weatherMix', ord:3,
             satz:'Was Auslosung und letzter Ball entscheiden'},
-  shame:   {label:'Schattenseite', pl:'Schattenseiten', kurz:'Schatten', ic:'ghost',      ord:4,
+  shame:   {label:'Schattenseite', pl:'Schatten',       kurz:'Schatten', ic:'ghost',      ord:4,
             satz:'Die Kehrseite. Sie bringt kein Prestige'},
 };
 // Vergeben werden die Liga-Rekorde, sobald die LIGA so viele Partien gespielt

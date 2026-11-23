@@ -338,7 +338,7 @@ print(base64.b64encode(buf.getvalue()).decode())
     return {html: s.innerHTML, hasApply: !!document.getElementById('impApply'), hasCancel: !!document.getElementById('impCancel')};
   }, xlsxB64);
   ok(prev.hasApply && prev.hasCancel, 'Vorschau mit Bestätigen- und Abbrechen-Button');
-  ok(/Neue Matches/.test(prev.html) && /Es wird nichts gelöscht/.test(prev.html), 'Vorschau nennt Anzahl und Sicherheitshinweis');
+  ok(/Neue Partien/.test(prev.html) && /Es wird nichts gelöscht/.test(prev.html), 'Vorschau nennt Anzahl und Sicherheitshinweis');
 
   console.log('\n13) Keine Laufzeitfehler insgesamt');
   ok(errors.length === 0, errors.length ? errors.join(' | ') : 'sauber');

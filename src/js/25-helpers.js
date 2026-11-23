@@ -64,6 +64,9 @@ function standFuer(m, gewonnen = true){
   const s = m.winner === 'B' ? [m.score_b, m.score_a] : [m.score_a, m.score_b];
   return gewonnen ? s[0] + ':' + s[1] : s[1] + ':' + s[0];
 }
+// Der Satz eines leeren Zustands steht ohne Schlusspunkt und mit der Zahl
+// als Ziffer, wie die Zeile einer Liste: vier von siebzehn endeten auf
+// einen Punkt, und „mit zwei gemeinsamen Partien" stand neben „mit 4".
 function emptyState(e,t){
   // Wenn 'e' ein Icon-Name aus ICONS ist → SVG rendern; sonst als Text/Emoji belassen
   const inner = icPfad(e) ? `<div class="ee svg-ic">${svgI(e)}</div>` : `<div class="ee">${e}</div>`;
@@ -144,26 +147,38 @@ if(typeof document !== 'undefined' && document.addEventListener) document.addEve
 // Die Karten der Reiter, an einer Stelle: der Titel ist der Schlüssel, und
 // zwei Ansichten mit derselben Karte schließen sie gemeinsam.
 const ERKLAERKARTEN = {
+  // Jede Karte einer Liste sagt in derselben Reihenfolge: was der Reiter
+  // zeigt; ab wann etwas zählt, die Schwelle fett; was ein Tippen zeigt oder
+  // öffnet, immer als eigener Satz „Ein Tippen …"; höchstens ein Satz mehr.
+  // Vorher nannte nur die Rekorde-Karte ihre Schwelle fett, die Chronik
+  // dieselbe Art Schwelle nicht, die Duos sie als Wort („zwei"), und ein
+  // Tippen stand einmal am Satzende, einmal nach einem Doppelpunkt und
+  // meist gar nicht — wer zwei Karten nebeneinander las, suchte einen
+  // Unterschied, den es nicht gab. Die Chronik-Karte versprach, ein Tippen
+  // öffne den Eintrag; es öffnet den Monat.
   liga:      ['chartBar', 'Die Liga', () =>
-    `Die Rangliste der Saison, der Woche, des Spieltags oder der ganzen Laufbahn. Jede Partie verschiebt die Elo der vier Spieler, je nach Ausgang und der Stärke von Partner und Gegnern; jede Saison beginnt bei der Start-Elo.`],
+    `Die Rangliste der Saison, der Woche, des Spieltags oder der ganzen Laufbahn. Ein Tippen öffnet das Profil. Jede Partie verschiebt die Elo der vier Spieler nach Ausgang und der Stärke von Partner und Gegnern; jede Saison beginnt bei der Start-Elo.`],
   ligaDuos:  ['handshake', 'Die Duos der Saison', () =>
-    `Jedes Duo mit zwei gemeinsamen Partien in dieser Saison, geordnet nach der Elo, die beide zusammen gewonnen oder verloren haben.`],
+    `Die Duos der Saison, geordnet nach der Elo, die beide zusammen gewonnen oder verloren haben. Ein Duo zählt ab <b>${DUOS_SAISON_AB} gemeinsamen Partien</b>. Ein Tippen öffnet die gemeinsame Bilanz.`],
   tafel:     ['temple', 'Die Ewige Tafel', () =>
-    `Die Elo der Laufbahn über alle Saisons: der gewichtete Schnitt der Saisonenden. Darüber stehen die Titel und Bestwerte der Liga.`],
+    `Die Karriere-Elo über alle Saisons, der gewichtete Schnitt der Saisonenden. Ein Tippen öffnet das Profil. Darüber stehen die Titel und Bestwerte der Liga.`],
   positionen:['posSturm', 'Sturm und Abwehr', () =>
-    `Wer auf welcher Position der Stärkste der Liga ist. Der Wert verbindet die Siegquote dort, die Leistung gegen die Erwartung, die Tore und wie oft jemand dort stand.`],
+    `Wer auf welcher Position der Stärkste der Liga ist. Ein Tippen öffnet das Profil. Der Wert verbindet die Siegquote dort, die Leistung gegen die Erwartung, die Tore und wie oft jemand dort stand.`],
+  // „Awards" und nicht „Auszeichnungen": Auszeichnungen heißen in Profil
+  // und Prestige die Abzeichen des Katalogs, Awards die Wertungen eines
+  // Zeitraums. Die Karte nannte die Awards „Auszeichnungen".
   awards:    ['trophy', 'Die Awards', () =>
-    `Auszeichnungen für den gewählten Zeitraum: jede Kachel stellt eine Frage an die Partien dieser Saison oder Woche, ein Tippen zeigt die ersten drei. Darunter stehen die Wertungen, die niemand gern hält.`],
+    `Die Awards des gewählten Zeitraums: jede Kachel stellt eine Frage an die Partien dieser Saison oder Woche. Ein Tippen zeigt die ersten drei und den Verlauf. Darunter stehen die Wertungen, die niemand gern hält.`],
   rekorde:   ['rekord', 'Die Liga-Rekorde', () =>
     // Das Tor der Liga steht im Satz: in einer neuen Liga war der Reiter
     // leer, und nichts sagte, ab wann sich das ändert.
-    `Bestwerte über alle Saisons. Vergeben werden sie, sobald die Liga <b>${CHRON_MIN_GAMES} Partien</b> gespielt hat; danach zählt für jeden die Bedingung der Karte. Wer einen Rekord übertrifft, nimmt ihn dem bisherigen Halter ab; ein Tippen zeigt, wie gezählt wird.`],
+    `Bestwerte über alle Saisons. Vergeben werden sie ab <b>${CHRON_MIN_GAMES} Partien</b> der Liga; danach zählt die Bedingung der Karte. Ein Tippen zeigt, wie gezählt wird. Wer einen Rekord übertrifft, nimmt ihn dem bisherigen Halter ab.`],
   chronik:   ['scroll', 'Die Chronik', () =>
-    `Jeder Monat schreibt Einträge für das, worin jemand besonders war, ab ${CHRONIK_MIN_SPIELE} Partien im Monat. Ein Tippen öffnet den Eintrag; Einträge, Rekorde und Auszeichnungen ergeben zusammen das Prestige.`],
+    `Jeder Monat schreibt Einträge für das, worin jemand besonders war. Ein Eintrag zählt ab <b>${CHRONIK_MIN_SPIELE} Partien im Monat</b>. Ein Tippen öffnet den Monat. Auszeichnungen, Chronik-Einträge und Rekorde ergeben zusammen das Prestige.`],
   teams:     ['handshake', 'Die Duos der Liga', () =>
-    `Jedes Duo ab 4 gemeinsamen Partien über alle Saisons. Gezählt werden nur die Partien, die beide zusammen gespielt haben.`],
+    `Jedes Duo über alle Saisons, gezählt nur aus den Partien, die beide zusammen gespielt haben. Ein Duo zählt ab <b>${DUOS_AB} gemeinsamen Partien</b>. Ein Tippen öffnet die gemeinsame Bilanz.`],
   verlauf:   ['verlauf', 'Der Verlauf', () =>
-    `Jede Partie der Liga, die neueste zuerst. Eine Partie öffnet, wie sich die Elo der vier Spieler verändert hat und warum.`],
+    `Jede Partie der Liga, die neueste zuerst. Ein Tippen zeigt, wie sich die Elo der vier Spieler verändert hat und warum.`],
   eingabe:   ['edit', 'Eine Partie eintragen', () =>
     `Vier Spieler mit ihrer Position und die Tore beider Teams. Gespeichert verschiebt die Partie die Elo und steht im Verlauf und in den News.`],
   formel:    ['neuRechnen', 'Die Elo-Formel', () =>
@@ -184,39 +199,46 @@ function erklaerKarte(key, leer){
 // statt als Absatz über der Liste, die sonst jeder bei jedem Öffnen
 // wegscrollen müsste. Die Positionen hatten als einzige einen solchen
 // Knopf, mit einem „i" und einer eigenen Funktion; alle Reiter teilen ihn.
+// Der Titel eines Blatts ist der Titel der Erklärkarte desselben Reiters;
+// „Neue Partie" und „Eine Partie eintragen" lasen sich als zwei Dinge.
+// Dieselbe Schwelle steht hier wie dort fett und aus derselben Konstante.
 const HILFE = {
-  liga: {titel:'Liga', absaetze:[
-    '<b>Saison</b> ist der laufende Monat; jeder beginnt ihn mit der Start-Elo. <b>Woche</b> und <b>Tag</b> zeigen die laufende Woche und den Spieltag, <b>Gesamt</b> die Ewige Tafel mit der Elo der Laufbahn über alle Saisons.',
+  liga: {titel:'Die Liga', absaetze:[
+    '<b>Saison</b> ist der laufende Monat; jeder beginnt ihn mit der Start-Elo. <b>Woche</b> und <b>Tag</b> zeigen die laufende Woche und den Spieltag, <b>Gesamt</b> die Ewige Tafel mit der Karriere-Elo über alle Saisons.',
     'Jede Partie verschiebt die Elo der vier Spieler. Wie viel, hängt von der Elo aller vier ab: ein Sieg gegen Stärkere bringt mehr, eine Niederlage gegen Schwächere kostet mehr.',
-    'Die Leiste über der Liste sortiert um, nach Elo, Siegquote, Torbilanz und mehr. <b>Spieler</b> und <b>Teams</b> wechseln zwischen Einzelnen und Duos. Ein Name öffnet das Profil.',
+    // Die Leiste steht nur in Gesamt (metrikLeisteHtml); der Satz klang,
+    // als sortiere sie auch Saison, Woche und Tag.
+    'In <b>Gesamt</b> sortiert die Leiste über der Liste um: Elo, Siegquote, Torbilanz, Prestige, Partien. <b>Spieler</b> und <b>Teams</b> wechseln zwischen Einzelnen und Duos. Ein Tippen auf einen Namen öffnet das Profil.',
     'Partien trägt das Plus unten rechts ein.']},
-  positionen: {titel:'Positionen', absaetze:[
+  positionen: {titel:'Sturm und Abwehr', absaetze:[
     'Wer auf welcher Position der Stärkste der Liga ist, getrennt nach Sturm und Abwehr. Die Position kommt aus der Aufstellung jeder Partie.',
     'Der Wert verbindet vier Dinge: die Siegquote auf dieser Position, die Leistung gegen die Erwartung, gemessen an Partner und Gegnern, die Tore, vorne die eigenen und hinten die zugelassenen, und die Erfahrung, also wie oft jemand dort gespielt hat.',
     '<b>▲</b> heißt über, <b>▼</b> unter der Erwartung. Gerechnet wird über alle Partien.',
     'Der Wert vergleicht die Liga auf einer Position. Auf welcher Position jemand selbst stärker ist, sagt das Positions-Profil im Profil.']},
   awards: {titel:'Awards, Rekorde, Chronik', absaetze:[
-    '<b>Awards</b> gelten einem Zeitraum, der Saison oder der Woche. Jede Kachel stellt eine Frage, ein Tippen zeigt die ersten drei und den Verlauf.',
-    '<b>Rekorde</b> sind Bestwerte über alle Saisons. Wer einen übertrifft, nimmt ihn dem bisherigen Halter ab.',
-    () => `<b>Chronik</b>: jeder Monat schreibt Einträge für das, worin jemand besonders war, ab ${CHRONIK_MIN_SPIELE} Partien im Monat.`,
-    'Auszeichnungen, Rekorde und Chronik-Einträge ergeben zusammen das Prestige und damit das Insignium am Wappen.']},
-  teams: {titel:'Teams', absaetze:[
-    'Jedes Duo ab 4 gemeinsamen Partien, sortiert nach Siegquote, Torbilanz oder Elo-Zuwachs; <b>Schlechteste</b> dreht die Reihenfolge um.',
-    'Ein Duo öffnet die gemeinsame Bilanz: Partien, Elo und welche Aufstellung besser läuft. Das Netz der Duos zeigt, wer mit wem wie oft spielt.']},
-  verlauf: {titel:'Verlauf', absaetze:[
+    '<b>Awards</b> gelten einem Zeitraum, der Saison oder der Woche. Jede Kachel stellt eine Frage. Ein Tippen zeigt die ersten drei und den Verlauf.',
+    () => `<b>Rekorde</b> sind Bestwerte über alle Saisons, vergeben ab <b>${CHRON_MIN_GAMES} Partien</b> der Liga. Wer einen übertrifft, nimmt ihn dem bisherigen Halter ab. Ein Tippen zeigt, wie gezählt wird.`,
+    // Kein Etikett mit Doppelpunkt: „Chronik: jeder Monat …" war der
+    // einzige Absatz, der so anfing.
+    () => `Die <b>Chronik</b> schreibt jeden Monat Einträge für das, worin jemand besonders war; ein Eintrag zählt ab <b>${CHRONIK_MIN_SPIELE} Partien im Monat</b>. Ein Tippen öffnet den Monat.`,
+    'Auszeichnungen, Chronik-Einträge und Rekorde ergeben zusammen das Prestige und damit das Insignium am Wappen.']},
+  teams: {titel:'Die Duos der Liga', absaetze:[
+    () => `Jedes Duo ab <b>${DUOS_AB} gemeinsamen Partien</b>, sortiert nach Siegquote, Torbilanz oder Elo-Zuwachs; <b>Schlechteste</b> dreht die Reihenfolge um.`,
+    'Ein Tippen auf ein Duo öffnet die gemeinsame Bilanz: Partien, Elo und welche Aufstellung besser läuft. Das Netz der Duos zeigt, wer mit wem wie oft spielt.']},
+  verlauf: {titel:'Der Verlauf', absaetze:[
     'Jede Partie, die neueste zuerst; oben lässt sich nach einem Spieler filtern.',
-    'Eine Partie öffnet die Elo jedes Spielers und wie sie zustande kam. Dort lässt sie sich bearbeiten oder löschen; die Liga rechnet danach neu.']},
-  eingabe: {titel:'Neue Partie', absaetze:[
+    'Ein Tippen auf eine Partie zeigt, wie sich die Elo der vier Spieler verändert hat und warum. Dort lässt sie sich bearbeiten oder löschen; die Liga rechnet danach neu.']},
+  eingabe: {titel:'Eine Partie eintragen', absaetze:[
     'Vier Spieler wählen, je Team zwei, und für jeden die Position: Sturm oder Abwehr.',
     'Die Tore beider Teams eintragen. Vor dem Speichern zeigt die Vorschau, wie viel Elo die Partie bringt und kostet.']},
-  formel: {titel:'Elo-Formel', absaetze:[
+  formel: {titel:'Die Elo-Formel', absaetze:[
     'Die Regler bestimmen, wie stark eine Partie die Elo bewegt; unter „So wirken die Regler" steht jeder einzeln.',
     'Eine Änderung gilt für neue Partien. „Alle Partien neu berechnen" wendet sie auf die ganze Liga an.',
     'Sicherung und Export speichern eine Kopie der Liga als Datei.']},
 };
 function hilfeKnopf(key){
   const h = HILFE[key];
-  return h ? `<button class="kopf-info" type="button" data-hilfe="${key}" aria-label="So funktioniert ${esc(h.titel)}">${svgI('frage')}</button>` : '';
+  return h ? `<button class="kopf-info" type="button" data-hilfe="${key}" aria-label="So funktioniert ${esc(h.titel.replace(/^(Die|Der|Eine) /, w => w.toLowerCase()))}">${svgI('frage')}</button>` : '';
 }
 function zeigeHilfe(key){
   const h = HILFE[key]; if(!h) return;

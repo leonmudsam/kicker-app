@@ -436,7 +436,10 @@
   /* v9: „Saison-Tools" am Ende der Rangliste (Recap + Positionsverlauf,
      aus dem App-Header hierher verschoben) */
   .seasontools{margin-top:16px}
-  .st-sec{font-family:'Sometype Mono',monospace;font-size:9.5px;letter-spacing:.16em;
+  /* Größe, Gewicht und Abstand wie jede Überschrift eines Reiters (.aw-sect,
+     .rek-g-n, .cfg-section-title): in 9,5 px und dünn sah „Mehr zur
+     Saison" nach einer anderen Art Überschrift aus. */
+  .st-sec{font-family:'Sometype Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.18em;
     text-transform:uppercase;color:var(--muted);margin:2px 2px 9px;display:flex;align-items:center;gap:9px}
   .st-sec::after{content:"";flex:1;height:1px;background:var(--line)}
   .st-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}

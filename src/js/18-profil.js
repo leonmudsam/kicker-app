@@ -287,7 +287,9 @@ function showPlayer(id){
   const seasonHistory = computeSeasonHistory(id);
   // Saison-Trend: vergleicht jüngste mit älteren Platzierungen, über die
   // letzten fünf. Über die ganze Laufbahn verglichen hieße „Form" das erste
-  // halbe Jahr gegen das zweite.
+  // halbe Jahr gegen das zweite. Im Kopf des Abschnitts steht der Trend
+  // rechts hinter der Zahl der Saisons, wie jede Zahl im Profil; die Zahl
+  // stand als einzige in Klammern im Titel.
   const seasonTrend = (() => {
     if(!seasonHistory || seasonHistory.length < 2) return null;
     const places = seasonHistory.slice(0, 5).map(h => h.place).filter(p => p > 0);
@@ -669,7 +671,7 @@ const rankProgHtml = rInfo ? `
     <div class="pp-sec" style="animation-delay:.425s">
       <div class="pp-sec-title">
         <div class="l">${svgI('abzeichen')}<h4>Auszeichnungen</h4></div>
-        <div class="m">${_have} / ${_kat.length}</div>
+        <div class="m">${_have} von ${_kat.length}</div>
       </div>
       <div class="pp-bcard" id="ppBadgesBtn">
         <div class="pp-bcard-row">
@@ -813,8 +815,8 @@ const rankProgHtml = rInfo ? `
     ${seasonHistory.length?`
     <div class="pp-sec" style="animation-delay:.7s">
       <div class="pp-sec-title">
-        <div class="l">${svgI('saisonKal')}<h4>Saisonverlauf <span style="color:var(--muted);font-weight:500;letter-spacing:.02em;text-transform:none">(${seasonHistory.length})</span></h4></div>
-        <div class="m">${seasonTrend ? `<span class="trend ${seasonTrend.cls}">${seasonTrend.arrow} ${esc(seasonTrend.text)}</span>` : seasonHistory.length+' Saisons'}</div>
+        <div class="l">${svgI('saisonKal')}<h4>Saisonverlauf</h4></div>
+        <div class="m">${seasonHistory.length} Saison${seasonHistory.length===1?'':'s'}${seasonTrend ? ` · <span class="trend ${seasonTrend.cls}">${seasonTrend.arrow} ${esc(seasonTrend.text)}</span>` : ''}</div>
       </div>
       ${seasonRailHtml}
     </div>`:''}
@@ -1163,10 +1165,9 @@ function showPlayerAwards(playerId, awards){
 
   const body = awards.length
     ? `<div style="margin-top:16px">${awVitrineHtml(awards.map(trophy))}</div>`
-    : `<div class="leerstand" style="margin-top:24px;text-align:center;color:var(--muted)">
-        <div class="ee svg-ic" style="color:var(--faint);margin-bottom:6px">${svgI('trophy')}</div>
-        Noch kein Award auf Platz 1
-       </div>`;
+    // Der leere Zustand ist `emptyState` wie überall [§C27]; hier stand er
+    // nachgebaut, mit eigenem Abstand und kleinerem Zeichen.
+    : emptyState('trophy', 'Noch kein Award auf Platz 1');
 
   openSheet(`
     ${blattKopfHtml({ic:'trophy', ton:'gold', titel:'Awards',

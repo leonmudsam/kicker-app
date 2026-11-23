@@ -82,8 +82,11 @@
   .aw-shame-divider{margin:32px 4px 14px;display:flex;align-items:center;gap:10px}
   .aw-shame-divider .line{flex:1;height:1px;background:linear-gradient(to right,transparent,rgba(240,86,106,.4))}
   .aw-shame-divider .line.r{background:linear-gradient(to left,transparent,rgba(240,86,106,.4))}
+  /* So groß und so weit gesperrt wie die Gruppen darüber (.aw-sect): die
+     Schandtafel ist eine Gruppe wie sie, ihr Gewicht trägt das Rot und die
+     Linie zu beiden Seiten, nicht ein Pixel mehr Schrift. */
   .aw-shame-divider .lbl{display:flex;align-items:center;gap:7px;font-family:'Sometype Mono',monospace;
-    font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--red)}
+    font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--red)}
   .aw-shame-divider .lbl svg{width:14px;height:14px;fill:none;stroke:currentColor;
     stroke-linecap:round;stroke-linejoin:round}
 
@@ -269,8 +272,11 @@
   .rek-bk{display:flex;align-items:baseline;justify-content:space-between;
     gap:8px;margin-bottom:9px}
   .rek-bk .l{font-family:'Sometype Mono',monospace;font-size:10px;font-weight:700;
-    letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
-  .rek-bk .r{font-size:9.5px;color:var(--muted)}
+    letter-spacing:.18em;text-transform:uppercase;color:var(--gold);white-space:nowrap}
+  /* Die Zahl neben einer Überschrift steht überall in 10,5 px Mono und
+     gedämpft (.pp-sec-title .m, .rek-g-z, .blatt-abschn em); hier stand
+     sie in 9,5, bei den Gruppen in 11, im Blatt in 10 und blasser. */
+  .rek-bk .r{font-size:10.5px;color:var(--muted)}
   /* Zahl, Säule und Gesicht brauchen zusammen 84 px; bei 62 lief das
      Gesicht unten aus der Karte. */
   .rek-saeulen{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:4px;
@@ -328,7 +334,7 @@
   .rek-g-ic svg{width:13px;height:13px;fill:none;stroke:currentColor;
     stroke-linecap:round;stroke-linejoin:round}
   .rek-g-line{flex:1;height:1px;background:linear-gradient(to right,var(--line),transparent)}
-  .rek-g-z{font-size:11px;color:var(--muted)}
+  .rek-g-z{font-size:10.5px;font-weight:400;letter-spacing:normal;color:var(--muted)}
   .rek-g-sub{display:flex;align-items:center;justify-content:space-between;gap:10px;
     margin:-4px 4px 10px;font-size:11px;color:var(--muted)}
   .rek-g-satz{min-width:0}

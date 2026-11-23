@@ -1,6 +1,8 @@
 // ╔═══ §9.3 ─── TEAM PROFIL SHEET ──────────────────────────────────────╗
 //     Statistiken für ein konkretes Duo.
 // ╚═════════════════════════════════════════════════════════════════════════╝
+// Die Marke über den Namen heißt „Duo" wie die Liste, aus der man kommt
+// („43 Duos", „Die Duos der Liga"); „Team" ist die Seite einer Partie.
 function showTeam(p1Id,p2Id){
   const pm=pmap();
   const pA=pm[p1Id], pB=pm[p2Id];
@@ -10,7 +12,7 @@ function showTeam(p1Id,p2Id){
   if(!d.games){
     openSheet(`
       <div style="text-align:center;margin-bottom:18px">
-        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:var(--muted);font-weight:700;font-family:'Sometype Mono',monospace">Team</div>
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:var(--muted);font-weight:700;font-family:'Sometype Mono',monospace">Duo</div>
         <h3 style="margin-top:8px">${esc(pA.name)} &amp; ${esc(pB.name)}</h3>
       </div>
       ${emptyState('handshake','Noch keine gemeinsamen Partien')}
@@ -332,7 +334,7 @@ function showTeam(p1Id,p2Id){
 
   openSheet(`
     <div style="text-align:center;margin-bottom:18px">
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:var(--muted);font-weight:700;font-family:'Sometype Mono',monospace">Team</div>
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:var(--muted);font-weight:700;font-family:'Sometype Mono',monospace">Duo</div>
       <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:14px">
         <div data-detail="${esc(pA.id)}" style="cursor:pointer">${avBig(pA)}</div>
         <div style="font-family:'Archivo Black',sans-serif;font-size:18px;color:var(--muted)">&amp;</div>
@@ -392,8 +394,11 @@ function showMatchDetail(mid){
   };
   // Auszeichnungen durch dieses Match
   const earned=badgesEarnedInMatch(mid);
+  // Abschnitte des Blatts tragen den Kopf jedes Blatts (blattAbschnittHtml)
+  // [§C27]; hier stand als einzige Stelle ein `.mini-label` in anderer
+  // Schrift, anderem Gewicht und engerem Abstand.
   const earnedHtml=earned.length?`
-    <div class="mini-label" style="margin-top:14px">Auszeichnungen in dieser Partie</div>
+    ${blattAbschnittHtml('abzeichen', 'Auszeichnungen in dieser Partie')}
     <div style="display:flex;flex-direction:column;gap:5px">
       ${(()=>{
         // Eine Zeile je Spieler, nicht je Auszeichnung: fünf Marken zweier
@@ -445,7 +450,9 @@ function showMatchDetail(mid){
     document.getElementById('showBreakdownBtn').onclick=()=>{
     const bd=matchBreakdown(mid);
     const slot=document.getElementById('breakdownSlot');
-    if(!bd||!Object.keys(bd).length){slot.innerHTML='<p style="font-size:12px;color:var(--muted);text-align:center">Keine Daten verfügbar</p>';return;}
+    // Ohne Aufschlüsselung sagt der Leerstand, was fehlt [§C27], statt
+    // „Keine Daten verfügbar" in eigener Form, das nach einem Fehler klang.
+    if(!bd||!Object.keys(bd).length){slot.innerHTML='<div class="leerstand">Für diese Partie gibt es keine Aufschlüsselung</div>';return;}
     // DB-First-Werte (was tatsächlich in der DB steht & oben angezeigt wird).
     // Die Aufschlüsselungs-Faktoren stammen aus simulateEloWithSliders und können
     // abweichen, wenn Slider oder Code-Logik seit dem Match geändert wurden.
@@ -538,7 +545,7 @@ function showMatchDetail(mid){
     const banner=anyDiverged?`<div style="background:rgba(247,207,74,.08);border:1px solid rgba(247,207,74,.3);border-radius:10px;padding:10px 12px;margin-top:10px;font-size:11.5px;color:var(--gold);line-height:1.5">
       Verbucht wurde, was am Tag der Partie galt; die Zeilen darunter rechnen mit den heutigen Einstellungen. <b>Alle Partien neu berechnen</b> in den Einstellungen bringt beides zusammen.
     </div>`:'';
-    slot.innerHTML=`<div class="mini-label" style="margin-top:14px">Elo-Analyse</div>${banner}${rows}`;
+    slot.innerHTML=`${blattAbschnittHtml('chartBar', 'Elo-Analyse')}${banner}${rows}`;
     document.getElementById('showBreakdownBtn').style.display='none';
   };
 

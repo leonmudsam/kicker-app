@@ -72,15 +72,17 @@ function vPositions(){
   const which = rankMetric==='def'?'def':'atk';
   const arr = positionsListe(which);
   const ruhe = positionsListe(which, ruhestandSpieler()).length;
+  // Die Unterzeile nennt Zeitraum und Zahl wie in der Ewigen Tafel; „Sturm
+  // und Abwehr" stand darunter noch einmal als Titel der Erklärkarte.
   return `
-    <div class="view-head"><h2>Positionen ${hilfeKnopf('positionen')}</h2><p>Sturm und Abwehr, über alle Partien</p></div>
+    <div class="view-head"><h2>Positionen ${hilfeKnopf('positionen')}</h2><p>Über alle Saisons · ${matches.length} Partien</p></div>
     ${erklaerKarte('positionen')}
     ${einblickHtml('rollen')}
     <div class="ui-switch">
       <button data-postoggle="atk" class="${which==='atk'?'on':''}"><span class="pos-chip atk">${svgI('posSturm')}Sturm</span></button>
       <button data-postoggle="def" class="${which==='def'?'on':''}"><span class="pos-chip def">${svgI('posAbwehr')}Abwehr</span></button>
     </div>
-    <div class="mini-label">▲ über · ▼ unter der Erwartung, gemessen an Partner und Gegnern</div>
+    <div class="mini-label legende">▲ über · ▼ unter der Erwartung, gemessen an Partner und Gegnern</div>
     ${positionsBlockHtml(arr, which)}
     ${ruhe ? `<div class="ruhe-ende">${einblickHtml('ruhe_pos', ruhe === 1 ? 'ein Spieler' : ruhe + ' Spieler')}</div>` : ''}`;
 }

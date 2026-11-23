@@ -35,6 +35,7 @@
   button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{
     outline:2px solid var(--acid2);outline-offset:2px}
   html,body{overscroll-behavior-y:none}
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
   body{
     font-family:'Space Grotesk',system-ui,sans-serif;
     background:var(--bg); color:var(--ink);
@@ -137,7 +138,7 @@
   .kopf-info{display:inline-grid;place-items:center;width:26px;height:26px;margin-left:6px;vertical-align:4px;
     border:1px solid var(--line2);border-radius:50%;background:none;color:var(--muted);cursor:pointer}
   .kopf-info .ic,.kopf-info svg{width:14px;height:14px}
-  .pos-info p{font-size:13px;line-height:1.5;color:var(--ink2);margin:0 0 10px}
+  .pos-info p{font-size:14px;line-height:1.5;color:var(--ink2);margin:0 0 10px}
   .pos-info b{color:var(--ink)}
   .pos-info-tab{display:grid;grid-template-columns:1fr auto auto;gap:6px 14px;align-items:baseline;
     margin:0 0 14px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;
@@ -616,7 +617,7 @@
   .aw-shame-divider .line{flex:1;height:1px;background:linear-gradient(to right,transparent,rgba(240,86,106,.4))}
   .aw-shame-divider .line.r{background:linear-gradient(to left,transparent,rgba(240,86,106,.4))}
   .aw-shame-divider .lbl{display:flex;align-items:center;gap:7px;font-family:'Sometype Mono',monospace;
-    font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--red)}
+    font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--red)}
   .aw-shame-divider .lbl svg{width:14px;height:14px;fill:none;stroke:currentColor;
     stroke-linecap:round;stroke-linejoin:round}
 
@@ -729,8 +730,8 @@
   .rek-bk{display:flex;align-items:baseline;justify-content:space-between;
     gap:8px;margin-bottom:9px}
   .rek-bk .l{font-family:'Sometype Mono',monospace;font-size:10px;font-weight:700;
-    letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
-  .rek-bk .r{font-size:9.5px;color:var(--muted)}
+    letter-spacing:.18em;text-transform:uppercase;color:var(--gold);white-space:nowrap}
+  .rek-bk .r{font-size:10.5px;color:var(--muted)}
   .rek-saeulen{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:4px;
     align-items:end;height:84px}
   .rek-sl{display:flex;flex-direction:column;align-items:center;gap:4px;
@@ -769,7 +770,7 @@
   .rek-g-ic svg{width:13px;height:13px;fill:none;stroke:currentColor;
     stroke-linecap:round;stroke-linejoin:round}
   .rek-g-line{flex:1;height:1px;background:linear-gradient(to right,var(--line),transparent)}
-  .rek-g-z{font-size:11px;color:var(--muted)}
+  .rek-g-z{font-size:10.5px;font-weight:400;letter-spacing:normal;color:var(--muted)}
   .rek-g-sub{display:flex;align-items:center;justify-content:space-between;gap:10px;
     margin:-4px 4px 10px;font-size:11px;color:var(--muted)}
   .rek-g-satz{min-width:0}
@@ -946,7 +947,7 @@
     font-family:'Sometype Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.14em;
     text-transform:uppercase;color:var(--muted)}
   .blatt-abschn .ic{font-size:13px;color:var(--faint)}
-  .blatt-abschn em{margin-left:auto;font-style:normal;letter-spacing:.04em;color:var(--faint);white-space:nowrap}
+  .blatt-abschn em{margin-left:auto;font-style:normal;font-size:10.5px;font-weight:400;letter-spacing:normal;color:var(--muted);white-space:nowrap}
 
   .botnav{position:fixed;left:0;right:0;bottom:0;z-index:50;max-width:520px;margin:0 auto;
     padding:8px 10px calc(8px + var(--safe-bot));
@@ -1067,7 +1068,7 @@
   .ek-ic{flex:none;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
     background:rgba(190,242,100,.1);color:var(--acid)}
   .ek-ic svg{width:17px;height:17px}
-  .ek-satz{margin:10px 0 0;color:var(--muted);font-size:12.5px;line-height:1.5}
+  .ek-satz{margin:10px 0 0;color:var(--muted);font-size:14px;line-height:1.5}
   .ek-satz b{color:var(--ink);font-weight:600}
   @media (prefers-reduced-motion: reduce){ .erklaer{transition:none} }
 
@@ -1100,8 +1101,9 @@
     .nf-card.nf-glanz::after,.nf-card.nf-s-held:not(.read)::after,.nf-card.nf-s-woche:not(.read)::after,
     .glanz-bahn::after{animation:none!important;background:none!important}}
 
-  .mini-label{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);
-    margin:0 2px 8px;font-weight:600}
+  .mini-label{font-family:'Sometype Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.18em;
+    color:var(--muted);margin:0 2px 8px;font-weight:700}
+  .mini-label.legende{font-family:'Space Grotesk',system-ui,sans-serif;letter-spacing:.12em;font-weight:600}
 
   .slider-wrap{margin:14px 0}
   .slider-wrap .sh{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
@@ -1120,6 +1122,8 @@
   .cfg-section-title::after{content:"";flex:1;height:1px;
     background:linear-gradient(to right,var(--line),transparent)}
   .cfg-section-title:first-of-type{margin-top:4px}
+  .cfg-satz{font-size:13px;line-height:1.55;color:var(--ink2)}
+  .cfg-satz.leise{color:var(--muted)}
 
   .setup{max-width:440px;margin:0 auto;padding:calc(var(--safe-top) + 60px) 24px}
   .setup .card{background:var(--surface)}
@@ -1903,7 +1907,7 @@
   .news-pill .news-btn-badge{background:var(--red);color:#fff;box-shadow:0 0 0 2px var(--bg)}
 
   .seasontools{margin-top:16px}
-  .st-sec{font-family:'Sometype Mono',monospace;font-size:9.5px;letter-spacing:.16em;
+  .st-sec{font-family:'Sometype Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.18em;
     text-transform:uppercase;color:var(--muted);margin:2px 2px 9px;display:flex;align-items:center;gap:9px}
   .st-sec::after{content:"";flex:1;height:1px;background:var(--line)}
   .st-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -3713,7 +3717,7 @@
   .aw-li.shame .aw-li-rank{color:var(--red);opacity:.65}
   .aw-li-zn{flex-shrink:0}
   .aw-li-zn .zn-fx{left:50%;top:50%;width:155%;height:155%;
-    transform:translate(-50%,-60%);filter:blur(.7px)}
+    transform:translate(-50%,-60%)}
   .aw-li-av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:18px;
     background:linear-gradient(155deg,#3a4540,#212824);flex-shrink:0}
   .aw-li-av:not(.has-emoji){font-family:'Archivo Black',sans-serif;font-size:12px;color:var(--bg)}
@@ -3969,8 +3973,8 @@
   .tplate.hero .tplate-w{justify-content:center;font-size:14px;color:var(--ink)}
   .tplate.hero .tplate-e{font-size:11px}
 
-  .tnote{font-size:11.5px;color:var(--muted);border-left:2px solid var(--line2);
-    padding:2px 0 2px 10px;margin:10px 0;line-height:1.45}
+  .tnote{font-size:13px;color:var(--muted);border-left:2px solid var(--line2);
+    padding:2px 0 2px 10px;margin:10px 0;line-height:1.5}
   .tempty{background:var(--surface);border:1px solid var(--line);border-radius:12px;
     padding:11px 13px;font-size:13px;color:var(--ink2);margin-top:8px}
   .tempty span{display:block;font-size:10.5px;color:var(--muted);margin-top:3px;
@@ -4350,14 +4354,14 @@
   .rav .zn-fx{left:50%;top:50%;
     width:calc(var(--rav) * .930);height:calc(var(--rav) * .930);
     transform:translate(-50%,-60%);
-    filter:blur(calc(var(--rav) * .021))}
+    --zn-blur:calc(var(--rav) * .021)}
   .rav.zn-l1 .zn-fx{opacity:.82}
   .rav.zn-l2 .zn-fx{opacity:.92}
   .rav.zn-l3 .zn-fx{opacity:1}
-  .rav.zn-l1 .zn-fx .zf{filter:drop-shadow(0 0 3px rgba(var(--zn-rgb,255,143,74),.6))}
-  .rav.zn-l2 .zn-fx .zf{filter:drop-shadow(0 0 4px rgba(var(--zn-rgb,255,143,74),.7))}
-  .rav.zn-l3 .zn-fx .zf{filter:drop-shadow(0 0 5px rgba(var(--zn-rgb,255,143,74),.8))}
-  .rav .zn-fx .zk{fill:#fff;opacity:.38;filter:none}
+  .rav.zn-l1 .zn-fx{--zn-sr:3px;--zn-sc:rgba(var(--zn-rgb,255,143,74),.6)}
+  .rav.zn-l2 .zn-fx{--zn-sr:4px;--zn-sc:rgba(var(--zn-rgb,255,143,74),.7)}
+  .rav.zn-l3 .zn-fx{--zn-sr:5px;--zn-sc:rgba(var(--zn-rgb,255,143,74),.8)}
+  .rav .zn-fx .zk{fill:#fff;opacity:.38}
   .rav.zn::after{content:"";position:absolute;left:50%;top:45%;
     width:88%;height:88%;transform:translate(-50%,-50%);
     border-radius:50%;z-index:-1;pointer-events:none;opacity:0;
@@ -4682,7 +4686,7 @@
       #000 0 80%,rgba(0,0,0,.88) 89%,rgba(0,0,0,.5) 95%,transparent 100%);
     mask-image:radial-gradient(ellipse 52% 52% at 50% 60%,
       #000 0 80%,rgba(0,0,0,.88) 89%,rgba(0,0,0,.5) 95%,transparent 100%);
-    filter:blur(.9px)}
+    filter:blur(var(--zn-blur,.9px)) drop-shadow(0 0 var(--zn-sr,0px) var(--zn-sc,transparent))}
   .zn-fx .zf{fill:var(--zn-c,#ff8f4a);opacity:0}
   .zn-fx .zk{fill:#ffdca8}
   .zn-fx .zf.f1{opacity:1}
@@ -4690,12 +4694,12 @@
   .zn-l1 .zn-fx{opacity:.85}
   .zn-l2 .zn-fx{opacity:.92}
   .zn-l3 .zn-fx{opacity:1}
-  .zn-l1 .zn-fx .zf{filter:drop-shadow(0 0 2.5px rgba(255,143,74,.55))}
-  .zn-l2 .zn-fx .zf{filter:drop-shadow(0 0 3.5px rgba(255,143,74,.65))}
-  .zn-l3 .zn-fx .zf{filter:drop-shadow(0 0 4.5px rgba(255,120,73,.75))}
-  .zn-rang.zn-l1 .zn-fx .zf{filter:drop-shadow(0 0 2.5px rgba(var(--ak-rgb),.45))}
-  .zn-rang.zn-l2 .zn-fx .zf{filter:drop-shadow(0 0 3.5px rgba(var(--ak-rgb),.55))}
-  .zn-rang.zn-l3 .zn-fx .zf{filter:drop-shadow(0 0 4.5px rgba(var(--ak-rgb),.65))}
+  .zn-l1 .zn-fx{--zn-sr:2.5px;--zn-sc:rgba(255,143,74,.55)}
+  .zn-l2 .zn-fx{--zn-sr:3.5px;--zn-sc:rgba(255,143,74,.65)}
+  .zn-l3 .zn-fx{--zn-sr:4.5px;--zn-sc:rgba(255,120,73,.75)}
+  .zn-rang.zn-l1 .zn-fx{--zn-sc:rgba(var(--ak-rgb),.45)}
+  .zn-rang.zn-l2 .zn-fx{--zn-sc:rgba(var(--ak-rgb),.55)}
+  .zn-rang.zn-l3 .zn-fx{--zn-sc:rgba(var(--ak-rgb),.65)}
 
   @media (prefers-reduced-motion: no-preference){
     .zn-l1 .zn-fx .zf.f1{animation:zn-a2 1.6s steps(1,end) infinite}
@@ -4715,9 +4719,11 @@
   .zn-ti{position:absolute;left:50%;bottom:-5px;transform:translateX(-50%);
     z-index:2;line-height:0;pointer-events:none}
   .zn-ti .zs-k{fill:none;stroke:var(--bg);stroke-width:3.2;stroke-linejoin:round}
-  .zn-ti .zs{fill:var(--gold)}
-  .zn-ti .zn-ti-n{fill:var(--gold);font-family:'Sometype Mono',monospace;
-    font-size:8px;font-weight:700}
+  .zn-ti .zs{fill:#cf961a}
+  .zn-ti .zs-h{fill:#ffe39a}
+  .zn-ti .zn-ti-n{fill:#ffe39a;font-family:'Archivo Black',sans-serif;
+    font-size:8.5px;font-weight:700;stroke:var(--bg);stroke-width:2.4px;
+    stroke-linejoin:round;paint-order:stroke}
 
   .zn-rang{--zn-c:var(--ak)}
   .zn-rang.zn-l1 .zn-fx{opacity:.30}
@@ -4746,7 +4752,7 @@
     left:50%; top:50%;
     width:calc(var(--ins-w) * .6020); height:calc(var(--ins-w) * .9030);
     transform:translate(-50%,-73.333%);
-    filter:blur(calc(var(--ins-w) * .0058));
+    --zn-blur:calc(var(--ins-w) * .0058);
     -webkit-mask-image:none; mask-image:none}
   .pp-av-wrap.zn-l2{--feuerluft:6px}
   .pp-av-wrap.zn-l3{--feuerluft:20px}
@@ -4754,8 +4760,8 @@
   .pp-av-wrap.zn-l1 .zn-fx{opacity:.80}
   .pp-av-wrap.zn-l2 .zn-fx{opacity:.90}
   .pp-av-wrap.zn-l3 .zn-fx{opacity:1}
-  .pp-av-wrap .zn-fx .zf{filter:drop-shadow(0 0 6px rgba(var(--ak-rgb),.5))}
-  .pp-av-wrap .zn-fx .zk{fill:#fff;opacity:.30;filter:none}
+  .pp-av-wrap .zn-fx{--zn-sr:6px;--zn-sc:rgba(var(--ak-rgb),.5)}
+  .pp-av-wrap .zn-fx .zk{fill:#fff;opacity:.30}
 
 .sp-k{font:600 9px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);line-height:1.4}
 .sp-lg{margin-top:6px;font-size:10.5px;line-height:1.45;color:var(--muted)}
@@ -6708,7 +6714,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.11.20.39daf4a2';
+const BUILD_VERSION='2026.11.23.10192c69';
 function forceReload(nach){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -7813,7 +7819,7 @@ function rankBadgeHtml(id, size='sm'){
 
 const METRIC_LABEL={elo:'Elo',wins:'Siege',winrate:'Siegquote',
   goaldiff:'Torbilanz',prestige:'Prestige',games:'Partien'};
-const METRIC_REITER={winrate:'Quote'};
+const METRIC_REITER={};
 const PERIOD_METRICS={
   season:['elo'],
   week:  ['elo'],
@@ -11118,26 +11124,46 @@ const ZN_FEUER_GROSS = _znSatz('zn-fx pp-feuer', ZN_GEO_PROFIL);
 function _znStern(cx, cy, r){
   let d = '';
   for(let i=0;i<10;i++){
-    const rr = i%2 ? r*0.45 : r, a = -90 + i*36;
+    const rr = i%2 ? r*.45 : r, a = -90 + i*36;
     d += (i?'L':'M') + _znF(cx + rr*Math.cos(a*ZN_RAD)) + ' ' + _znF(cy + rr*Math.sin(a*ZN_RAD));
   }
   return d + 'Z';
+}
+
+const ZN_STERN_HELL = '#ffe39a';
+const ZN_STERN_TIEF = '#cf961a';
+function _znSternHell(cx, cy, r, f){
+  f = f || _znF;
+  let d = '';
+  for(let i=0;i<5;i++){
+    const a = -90 + i*72;
+    d += 'M' + f(cx) + ' ' + f(cy)
+      + 'L' + f(cx + r*Math.cos(a*ZN_RAD)) + ' ' + f(cy + r*Math.sin(a*ZN_RAD))
+      + 'L' + f(cx + r*.45*Math.cos((a-36)*ZN_RAD)) + ' ' + f(cy + r*.45*Math.sin((a-36)*ZN_RAD)) + 'Z';
+  }
+  return d;
 }
 
 const _ZN_STERNE_CACHE = {};
 function _znSterneSvg(n){
   if(n <= 0) return '';
   if(_ZN_STERNE_CACHE[n]) return _ZN_STERNE_CACHE[n];
-  const zeig = Math.min(n, 5);
-  const w = 9, r = 3.6, h = 10;
-  let d = '';
-  for(let i=0;i<zeig;i++) d += _znStern(w/2 + i*w, h/2, r);
-  const breite = zeig*w + (n>5 ? 11 : 0);
-  const zahl = n>5
-    ? `<text x="${zeig*w+1}" y="${h/2+2.6}" class="zn-ti-n">${n}</text>` : '';
-  const svg = `<span class="zn-ti" aria-hidden="true"><svg viewBox="0 0 ${breite} ${h}"
-    width="${breite}" height="${h}" focusable="false"><path class="zs-k" d="${d}"/>
-    <path class="zs" d="${d}"/>${zahl}</svg></span>`;
+  const h = 10;
+  let d = '', hell = '', breite, zahl = '';
+  const stern = (cx, r) => { d += _znStern(cx, h/2, r); hell += _znSternHell(cx, h/2, r); };
+  if(n <= 5){
+    const w = 9, r = 3.7;
+    for(let i=0;i<n;i++) stern(w/2 + i*w, r);
+    breite = n*w;
+  } else {
+    const w = 8, r = 3.3, zw = String(n).length*5.4 + 2.4;
+    stern(w/2, r); stern(w + zw + w/2, r);
+    breite = w + zw + w;
+    zahl = `<text x="${_znF(breite/2)}" y="${h/2+3}" text-anchor="middle" class="zn-ti-n">${n}</text>`;
+  }
+  const svg = `<span class="zn-ti" aria-hidden="true"><svg viewBox="0 0 ${_znF(breite)} ${h}"
+    width="${_znF(breite)}" height="${h}" focusable="false"><path class="zs-k" d="${d}"/>
+    <path class="zs" d="${d}"/><path class="zs-h" d="${hell}"/>${zahl}</svg></span>`;
   _ZN_STERNE_CACHE[n] = svg;
   return svg;
 }
@@ -12478,7 +12504,7 @@ function _vRankingCore(){
         ${sichtBar}
         ${duos.length
           ? `<div class="rlist">${duos.map(duoZeile).join('')}</div>`
-          : emptyState('handshake','Noch kein Duo mit zwei gemeinsamen Partien')}`;
+          : emptyState('handshake',`Noch kein Duo mit ${DUOS_SAISON_AB} gemeinsamen Partien`)}`;
     }
 
     return `
@@ -12668,14 +12694,14 @@ function vPositions(){
   const arr = positionsListe(which);
   const ruhe = positionsListe(which, ruhestandSpieler()).length;
   return `
-    <div class="view-head"><h2>Positionen ${hilfeKnopf('positionen')}</h2><p>Sturm und Abwehr, über alle Partien</p></div>
+    <div class="view-head"><h2>Positionen ${hilfeKnopf('positionen')}</h2><p>Über alle Saisons · ${matches.length} Partien</p></div>
     ${erklaerKarte('positionen')}
     ${einblickHtml('rollen')}
     <div class="ui-switch">
       <button data-postoggle="atk" class="${which==='atk'?'on':''}"><span class="pos-chip atk">${svgI('posSturm')}Sturm</span></button>
       <button data-postoggle="def" class="${which==='def'?'on':''}"><span class="pos-chip def">${svgI('posAbwehr')}Abwehr</span></button>
     </div>
-    <div class="mini-label">▲ über · ▼ unter der Erwartung, gemessen an Partner und Gegnern</div>
+    <div class="mini-label legende">▲ über · ▼ unter der Erwartung, gemessen an Partner und Gegnern</div>
     ${positionsBlockHtml(arr, which)}
     ${ruhe ? `<div class="ruhe-ende">${einblickHtml('ruhe_pos', ruhe === 1 ? 'ein Spieler' : ruhe + ' Spieler')}</div>` : ''}`;
 }
@@ -13483,9 +13509,9 @@ function _vAwardsCore(){
 
 function vAwards(){
   const unter = {
-    awards:  awPeriodLabel() + ' · tippen für Top 3 und Verlauf',
-    rekorde: 'Bestwerte über alle Saisons · tippen zeigt die Bedingung',
-    chronik: 'Saison für Saison · tippen öffnet den Monat'
+    awards:  awPeriodLabel(),
+    rekorde: 'Über alle Saisons',
+    chronik: 'Saison für Saison'
   }[awView] || '';
   const schalter = `
     <div class="ui-switch">
@@ -13497,12 +13523,12 @@ function vAwards(){
   if(awView === 'rekorde'){
     const liste = ligaRekordeHtml(true);
     return kopf + (liste ? erklaerKarte('rekorde') + liste
-      : erklaerKarte('rekorde', emptyState('trophyStar','Noch hält niemand einen Liga-Rekord.')));
+      : erklaerKarte('rekorde', emptyState('trophyStar','Noch hält niemand einen Liga-Rekord')));
   }
   if(awView === 'chronik'){
     const matrix = ligaChronikMatrixHtml();
     return kopf + (matrix ? erklaerKarte('chronik') + matrix
-      : erklaerKarte('chronik', emptyState('scroll','Sobald ein Monat gespielt ist, füllt sich die Chronik.')));
+      : erklaerKarte('chronik', emptyState('scroll','Sobald ein Monat gespielt ist, füllt sich die Chronik')));
   }
   let bis = null;
   if(awPeriod==='season' && awSeasonId && awSeasonId !== currentSeason().id) bis = seasonEnd(awSeasonId).getTime();
@@ -13528,7 +13554,7 @@ const AW_IC = {
   cheesePlatter:'cheese', favoriteLoser:'crownFallen'
 };
 
-const KOENIG_MIN = {tag:5, woche:3};
+const KOENIG_MIN = {tag:5, woche:1};
 
 const AWARD_META={
   wins:        {title:'Meiste Siege',          cls:'gold',  why:`Die meisten gewonnenen Partien im Zeitraum.`},
@@ -13557,7 +13583,7 @@ const AWARD_META={
   formtief:    {title:'Formtief',              cls:'red',   why:`Der größte Abstand zwischen dem höchsten und dem aktuellen Elo-Stand innerhalb einer Saison.`},
   zirkus:      {title:'Zirkus',                cls:'red',   why:`Das Duo, bei dem die meisten Niederlagen hoch ausfallen (ab 5 Tore Unterschied), gemessen an allen Niederlagen. Ab ${AW_MIN.teamPleiten} Niederlagen.`},
   baustelle:   {title:'Baustelle',             cls:'red',   why:`Das Duo mit der längsten gemeinsamen Niederlagenserie.`},
-  weekKing:    {title:'Wochenkönig',           cls:'gold',  why:`Der größte Anteil der eigenen Wochen als Player of the Week, ab ${KOENIG_MIN.woche} Wochen. Die laufende Woche zählt noch nicht.`},
+  weekKing:    {title:'Wochenkönig',           cls:'gold',  why:`Der größte Anteil der eigenen Wochen als Player of the Week. Die laufende Woche zählt noch nicht.`},
   dayKing:     {title:'Tageskönig',            cls:'gold',  why:`Der größte Anteil der eigenen Spieltage als Player of the Day, ab ${KOENIG_MIN.tag} Spieltagen. Der laufende Tag zählt noch nicht.`},
   plusMinus:   {title:'Plus-Minus',            cls:'orange',why:`Der höchste Torsaldo je Partie (Tore minus Gegentore). Ab ${AW_MIN.spielerSaldo} Partien.`},
   underdog:    {title:'Underdog-Held',         cls:'purple',why:`Die höchste Siegquote als Außenseiter (Siegchance unter 35 %). Ab ${AW_MIN.unter} solchen Partien.`},
@@ -13744,6 +13770,7 @@ function _teamEloRanking(ms, minGames){
   });
   return Object.values(T).filter(t=>t.g>=(minGames||1)).sort((a,b)=>b.elo-a.elo||b.g-a.g);
 }
+const DUOS_SAISON_AB = 2;
 function _seasonTeamRanking(seasonMs, sid){
   const gsim=getGlobalSim();
   const map=gsim.seasonTeamElo[sid||currentSeason().id]||{};
@@ -13752,7 +13779,7 @@ function _seasonTeamRanking(seasonMs, sid){
   return Object.entries(map).map(([k,elo])=>{
     const c=counts[k];
     return c ? {ids:k.split('|'), elo, g:c.g, w:c.w} : null;
-  }).filter(t=>t && t.g>=2).sort((a,b)=>b.elo-a.elo||b.g-a.g);
+  }).filter(t=>t && t.g>=DUOS_SAISON_AB).sort((a,b)=>b.elo-a.elo||b.g-a.g);
 }
 function _upsetRanking(ms){
   return ms.map(m=>{
@@ -13788,7 +13815,7 @@ function showTopList(c){
       titel:c.title || '', unter:c.sub || ''})}
     ${items?`${blattAbschnittHtml('medal', c.listLabel || ('Top ' + rows.length))}
       <div class="aw-list">${items}</div>`
-     :`<div class="leerstand" style="margin-top:24px">Noch keine Daten</div>`}
+     :`<div class="leerstand" style="margin-top:24px">${esc(c.leer || 'Noch nicht vergeben')}</div>`}
     ${c.why?`${blattAbschnittHtml('info', 'So wird gewertet')}<div class="blatt-text">${esc(c.why)}</div>`:''}`);
   document.querySelectorAll('.aw-li[data-li-player]').forEach(el=>{
     el.onclick=()=>{ sheetNav(()=>showPlayer(el.dataset.liPlayer)); };
@@ -13833,11 +13860,14 @@ function openTopList(kind){
       rows:list.map(k=>({ids:[k.id], name:pname(k.id), val:Math.round(k.q*100)+' %',
         detail:`${k.v} von ${k.n} ${isWeek?'Wochen':'Spieltagen'}`+(k.gilt?'':` · ab ${isWeek?KOENIG_MIN.woche:KOENIG_MIN.tag}`)})),
       why:isWeek
-        ? `Der Anteil der eigenen abgeschlossenen Wochen, die ein Spieler als Bester beendet hat (mit mindestens 5 Siegen), ab ${KOENIG_MIN.woche} Wochen.`
+        ? `Der Anteil der eigenen abgeschlossenen Wochen, die ein Spieler als Bester beendet hat (mit mindestens 5 Siegen).`
         : `Der Anteil der eigenen Spieltage, die ein Spieler als Bester beendet hat (mit mindestens 3 Siegen), ab ${KOENIG_MIN.tag} Spieltagen.`});
   }
 }
 
+function _awLeerHtml(key){
+  return `<div class="leerstand" style="margin-top:24px">${esc(AW_LEER[key] || 'Noch nicht vergeben')}</div>`;
+}
 function showAward(key){
   const R=awardRankings(awPeriod); const pl=awPeriodLabel(); const meta=AWARD_META[key]; if(!meta)return;
   _sheetSetReopen(()=>showAward(key));
@@ -13863,7 +13893,7 @@ function showAward(key){
         {label:'Zur Partie', ic:'clock', prim:true, attr:`data-li-match="${esc(m.id)}"`},
         {label:'Zum Duo', ic:'users', attr:`data-li-team="${esc(_awSieger(top).slice().sort().join('|'))}"`}]);
     } else {
-      bodyHtml = `<div class="leerstand" style="margin-top:24px">Keine Daten</div>`;
+      bodyHtml = _awLeerHtml(key);
     }
   } else if(FAVS_AWARDS.has(key)){
     const arr = R.favoritenschreckList;
@@ -13888,7 +13918,7 @@ function showAward(key){
         bodyHtml += `${blattAbschnittHtml('medal', 'Weitere Coups')}<div class="aw-list">${items}</div>`;
       }
     } else {
-      bodyHtml = `<div class="leerstand" style="margin-top:24px">Keine Daten</div>`;
+      bodyHtml = _awLeerHtml(key);
     }
   } else if(RIVALRY_AWARDS.has(key)){
     const arr = R.rivalryList;
@@ -13919,7 +13949,7 @@ function showAward(key){
         bodyHtml += `${blattAbschnittHtml('medal', 'Weitere Rivalitäten')}<div class="aw-list">${items}</div>`;
       }
     } else {
-      bodyHtml = `<div class="leerstand" style="margin-top:24px">Keine Daten</div>`;
+      bodyHtml = _awLeerHtml(key);
     }
   } else {
     const arr = awListe(key, R).map(x => {
@@ -13929,7 +13959,7 @@ function showAward(key){
     });
 
     if(!arr.length){
-      bodyHtml = `<div class="leerstand" style="margin-top:24px">Keine Daten</div>`;
+      bodyHtml = _awLeerHtml(key);
     } else {
       const isTeamAward = arr[0].ids.length === 2;
       const isNeg = awNeg(key);
@@ -14105,13 +14135,14 @@ function showAward(key){
 
 
 
+const DUOS_AB = 4;
 function vTeams(nurErgebnis=false){
-  const T0=teamStats().filter(t=>t.g>=4);
+  const T0=teamStats().filter(t=>t.g>=DUOS_AB);
   const T=T0.filter(t=>t.ids.every(id=>ligaAktiv(id)));
   const ruheT=T0.filter(t=>t.ids.every(id=>sichtbar(id))&&t.ids.some(id=>imRuhestand(id)));
   if(!T.length&&!ruheT.length){
-    const html=emptyState('handshake','Noch kein Duo mit 4 gemeinsamen Partien');
-    return nurErgebnis?{kopf:'Ab 4 gemeinsamen Partien',html,ruhe:''}:`<div class="view-head"><h2>Teams ${hilfeKnopf('teams')}</h2><p>Ab 4 gemeinsamen Partien</p></div>${erklaerKarte('teams', html)}`;
+    const html=emptyState('handshake',`Noch kein Duo mit ${DUOS_AB} gemeinsamen Partien`);
+    return nurErgebnis?{kopf:'Über alle Saisons',html,ruhe:''}:`<div class="view-head"><h2>Teams ${hilfeKnopf('teams')}</h2><p>Über alle Saisons</p></div>${erklaerKarte('teams', html)}`;
   }
   const showBest=teamView!=='worst';
   
@@ -14215,14 +14246,14 @@ function vTeams(nurErgebnis=false){
   const ruhe=ruheF.length?`<div class="rlist">${ruheF.map((t,i)=>zeile(t,i,true)).join('')}</div>`:'';
 
 
-  const ergebnis={kopf:`${arrF.length} Duo${arrF.length===1?'':'s'}${_tq?' gefunden':' ab 4 gemeinsamen Partien, über alle Saisons'}`,
-    html:arrF.length ? `<div class="rlist">${rows}</div>` : emptyState('search','Keine Teams gefunden'),
+  const ergebnis={kopf:`${arrF.length} Duo${arrF.length===1?'':'s'}${_tq?' gefunden':' · über alle Saisons'}`,
+    html:arrF.length ? `<div class="rlist">${rows}</div>` : emptyState('search','Keine Duos gefunden'),
     ruhe, ruheZahl:ruheF.length};
   if(nurErgebnis) return ergebnis;
   return `
     <div class="view-head"><h2>Teams ${hilfeKnopf('teams')}</h2><p id="teamCount">${ergebnis.kopf}</p></div>
     ${erklaerKarte('teams')}
-    ${einblickHtml('netz', 'ab 4 Partien')}
+    ${einblickHtml('netz', `ab ${DUOS_AB} Partien`)}
     <div class="search">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
         <circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/>
@@ -14411,7 +14442,7 @@ function vSettings(){
  ''}
     <div class="card">
       <div class="mini-label">So wirken die Regler</div>
-      <div style="font-size:12px;color:var(--ink2);line-height:1.8">
+      <div class="cfg-satz" style="line-height:1.8">
         <b style="color:var(--acid)">Tempo</b> — Wie stark eine einzelne Partie die Elo verändert. Hoch heißt schnelle Ausschläge, niedrig ruhige Werte.<br>
         <b style="color:var(--acid)">Start-Elo</b> — Mit diesem Wert beginnt jeder Spieler eine Saison.<br>
         <b style="color:var(--acid)">Last des schwächeren Partners</b> — Bei ${c.risk} % verliert weniger Elo, wer mit einem deutlich schwächeren Partner spielt.<br>
@@ -14426,16 +14457,16 @@ function vSettings(){
         <b style="color:var(--acid)">Aufhol-Zuschlag</b> — Wer weniger Partien hat als die Gegner, bekommt bis zu ${c.udGames} % mehr. Er kostet nie etwas.<br>
         <b style="color:var(--acid)">Neulinge und Anfänger</b> — In den ersten 5 Partien einer Saison wirkt das Tempo zu ${c.npMult} %, bis zur 14. Partie zu ${c.npMidMult} %.<br>
         <b style="color:var(--acid)">Spitze</b> — Wer mehr als 400 Elo über dem Start steht, bewegt sich nur mit ${c.vetDamp} % des Tempos.<br>
-        <b style="color:var(--acid)">Saison</b> — Mit jedem Monat beginnt die Elo neu beim Startwert. Die Elo der Laufbahn ist der gewichtete Schnitt der Saisonenden.
+        <b style="color:var(--acid)">Saison</b> — Mit jedem Monat beginnt die Elo neu beim Startwert. Die Karriere-Elo ist der gewichtete Schnitt der Saisonenden.
       </div>
     </div>
     <div class="card" style="margin-top:14px;border:1px solid rgba(190,242,100,.18);background:linear-gradient(155deg,rgba(190,242,100,.06),var(--surface) 80%)">
       <div class="mini-label" style="color:var(--acid);display:flex;align-items:center;gap:6px">${svgI('info')}Wirkung der Regler</div>
-      <p style="font-size:12px;color:var(--ink2);line-height:1.55;margin-top:8px">
+      <p class="cfg-satz" style="margin-top:8px">
         Änderungen an den Reglern wirken <b style="color:var(--acid)">nur auf neue Partien</b>.
         Vergangene Partien behalten ihre Elo, abgeschlossene Saisons und Auszeichnungen bleiben, wie sie sind.
       </p>
-      <p style="font-size:12px;color:var(--ink2);line-height:1.55;margin-top:6px">
+      <p class="cfg-satz" style="margin-top:6px">
         Sollen die Regler auch rückwirkend gelten, lassen sich alle Partien neu berechnen.
         <b style="color:var(--red)">Dabei wird die gespeicherte Elo jeder Partie überschrieben.</b>
       </p>
@@ -14444,7 +14475,7 @@ function vSettings(){
 
     <div class="card" style="margin-top:14px">
       <div class="mini-label">Sicherung und Export</div>
-      <p style="font-size:11.5px;color:var(--ink2);line-height:1.6;margin-top:10px">
+      <p class="cfg-satz" style="margin-top:10px">
         Hier lässt sich jederzeit eine eigene Kopie der Liga speichern, falls in der Cloud etwas verloren geht.
       </p>
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
@@ -14452,15 +14483,15 @@ function vSettings(){
         <button class="btn ghost" id="expSaveBtn" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('sichern')} Sicherung speichern (.json)</button>
         <button class="btn ghost sm" id="expCsvBtn" style="width:100%;font-size:11px">Stattdessen als CSV</button>
       </div>
-      <p style="font-size:11px;color:var(--muted);line-height:1.6;margin-top:12px">
-        <b style="color:var(--acid)">Excel</b>: alle ${matches.length} Partien mit Namen, Positionen und Ergebnissen,
-        dazu Spieler und Saisons. Zum Anschauen und Weitergeben.<br>
-        <b style="color:var(--acid)">Sicherung</b>: die vollständige Kopie mit Elo und Einstellungen.
+      <p class="cfg-satz leise" style="margin-top:12px">
+        <b style="color:var(--acid)">Excel</b> enthält alle ${matches.length} Partien mit Namen, Positionen und Ergebnissen,
+        dazu Spieler und Saisons, zum Anschauen und Weitergeben.<br>
+        Die <b style="color:var(--acid)">Sicherung</b> ist die vollständige Kopie mit Elo und Einstellungen.
         Mit ihr lässt sich die Liga im Ernstfall wieder aufbauen.
       </p>
       <div style="height:1px;background:var(--line);margin:14px 0"></div>
       <button class="btn" id="impBackupBtn" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('hochladen')} Datei einspielen</button>
-      <p style="font-size:11px;color:var(--muted);line-height:1.6;margin-top:10px">
+      <p class="cfg-satz leise" style="margin-top:10px">
         Nimmt .xlsx, .csv und .json. Vorher zeigt eine Vorschau, was dazukommt.
         <b style="color:var(--acid)">Es wird nie etwas gelöscht oder überschrieben</b>, nur fehlende Partien kommen dazu.
       </p>
@@ -14484,7 +14515,7 @@ function vSettings(){
         <div style="font-size:12px;color:var(--ink2);font-family:'Sometype Mono',monospace">${BUILD_VERSION}</div>
         <button class="btn ghost sm" id="forceReloadBtn" style="width:auto;padding:7px 12px;font-size:11px;flex-shrink:0">Neu laden</button>
       </div>
-      <p style="font-size:11px;color:var(--muted);line-height:1.55;margin-top:10px">
+      <p class="cfg-satz leise" style="margin-top:10px">
         Fehlt etwas Neues, hält das Telefon noch den alten Stand. Der Knopf lädt ihn neu; sonst meldet sich ein neuer Stand von selbst.
       </p>
     </div>
@@ -14768,7 +14799,7 @@ function _einblickNetz(){
     const k = paarKey(x, y);
     duo[k] = duo[k] || {g:0, w:0}; duo[k].g++; if(w) duo[k].w++;
   }));
-  const ks = Object.keys(duo).filter(k => duo[k].g >= 4).sort((a, b) => duo[b].g - duo[a].g).slice(0, 18).reverse();
+  const ks = Object.keys(duo).filter(k => duo[k].g >= DUOS_AB).sort((a, b) => duo[b].g - duo[a].g).slice(0, 18).reverse();
   if(!ks.length) return '';
   const gmax = Math.max(1, ...ks.map(k => duo[k].g));
   const linien = ks.map((k, i) => {
@@ -16985,7 +17016,7 @@ const rankProgHtml = rInfo ? `
     <div class="pp-sec" style="animation-delay:.425s">
       <div class="pp-sec-title">
         <div class="l">${svgI('abzeichen')}<h4>Auszeichnungen</h4></div>
-        <div class="m">${_have} / ${_kat.length}</div>
+        <div class="m">${_have} von ${_kat.length}</div>
       </div>
       <div class="pp-bcard" id="ppBadgesBtn">
         <div class="pp-bcard-row">
@@ -17107,8 +17138,8 @@ const rankProgHtml = rInfo ? `
     ${seasonHistory.length?`
     <div class="pp-sec" style="animation-delay:.7s">
       <div class="pp-sec-title">
-        <div class="l">${svgI('saisonKal')}<h4>Saisonverlauf <span style="color:var(--muted);font-weight:500;letter-spacing:.02em;text-transform:none">(${seasonHistory.length})</span></h4></div>
-        <div class="m">${seasonTrend ? `<span class="trend ${seasonTrend.cls}">${seasonTrend.arrow} ${esc(seasonTrend.text)}</span>` : seasonHistory.length+' Saisons'}</div>
+        <div class="l">${svgI('saisonKal')}<h4>Saisonverlauf</h4></div>
+        <div class="m">${seasonHistory.length} Saison${seasonHistory.length===1?'':'s'}${seasonTrend ? ` · <span class="trend ${seasonTrend.cls}">${seasonTrend.arrow} ${esc(seasonTrend.text)}</span>` : ''}</div>
       </div>
       ${seasonRailHtml}
     </div>`:''}
@@ -17422,10 +17453,7 @@ function showPlayerAwards(playerId, awards){
 
   const body = awards.length
     ? `<div style="margin-top:16px">${awVitrineHtml(awards.map(trophy))}</div>`
-    : `<div class="leerstand" style="margin-top:24px;text-align:center;color:var(--muted)">
-        <div class="ee svg-ic" style="color:var(--faint);margin-bottom:6px">${svgI('trophy')}</div>
-        Noch kein Award auf Platz 1
-       </div>`;
+    : emptyState('trophy', 'Noch kein Award auf Platz 1');
 
   openSheet(`
     ${blattKopfHtml({ic:'trophy', ton:'gold', titel:'Awards',
@@ -17859,7 +17887,7 @@ function showBadgePopover(badgeId, playerId){
         <div class="bp-section">Status</div>
         <div class="bp-locked-hint">
           Noch <span class="bp-locked-em">nicht erreicht</span>.<br>
-          Erfüll die Voraussetzung im nächsten Spiel oder über die Saison hinweg.
+          Erreichbar in einer der nächsten Partien oder über die Saison.
         </div>`;
     }
   }
@@ -18147,8 +18175,8 @@ function showPlayerH2HList(playerId){
 
   openSheet(`
     ${blattKopfHtml({ic:'users', titel:'Bilanzen', unter:p.name + ' · ' + h2hList.length + ' Mitspieler'})}
-    <div style="font-size:10px;color:var(--muted);font-family:'Sometype Mono',monospace;letter-spacing:.04em;margin-top:14px;margin-bottom:10px">
-      Siege und Niederlagen <span style="color:var(--blue);font-weight:700">mit</span> und <span style="color:var(--purple);font-weight:700">gegen</span> jeden · Antippen für Einzelheiten
+    <div style="font-size:12px;line-height:1.5;color:var(--muted);font-family:'Sometype Mono',monospace;letter-spacing:.02em;margin-top:14px;margin-bottom:10px">
+      Siege und Niederlagen <span style="color:var(--blue);font-weight:700">mit</span> und <span style="color:var(--purple);font-weight:700">gegen</span> jeden. Ein Tippen zeigt die Einzelheiten.
     </div>
     ${h2hList.length ? `<div class="rlist">${rows}</div>` : emptyState('crossedSwords','Noch keine Mitspieler ab 3 Begegnungen')}
     <button class="btn ghost sm" id="backToPlayerH2H" style="margin-top:16px">← Zurück zum Profil</button>
@@ -18745,7 +18773,7 @@ function showTeam(p1Id,p2Id){
   if(!d.games){
     openSheet(`
       <div style="text-align:center;margin-bottom:18px">
-        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:var(--muted);font-weight:700;font-family:'Sometype Mono',monospace">Team</div>
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:var(--muted);font-weight:700;font-family:'Sometype Mono',monospace">Duo</div>
         <h3 style="margin-top:8px">${esc(pA.name)} &amp; ${esc(pB.name)}</h3>
       </div>
       ${emptyState('handshake','Noch keine gemeinsamen Partien')}
@@ -19012,7 +19040,7 @@ function showTeam(p1Id,p2Id){
 
   openSheet(`
     <div style="text-align:center;margin-bottom:18px">
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:var(--muted);font-weight:700;font-family:'Sometype Mono',monospace">Team</div>
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:var(--muted);font-weight:700;font-family:'Sometype Mono',monospace">Duo</div>
       <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:14px">
         <div data-detail="${esc(pA.id)}" style="cursor:pointer">${avBig(pA)}</div>
         <div style="font-family:'Archivo Black',sans-serif;font-size:18px;color:var(--muted)">&amp;</div>
@@ -19067,7 +19095,7 @@ function showMatchDetail(mid){
   };
   const earned=badgesEarnedInMatch(mid);
   const earnedHtml=earned.length?`
-    <div class="mini-label" style="margin-top:14px">Auszeichnungen in dieser Partie</div>
+    ${blattAbschnittHtml('abzeichen', 'Auszeichnungen in dieser Partie')}
     <div style="display:flex;flex-direction:column;gap:5px">
       ${(()=>{
         const jeSpieler = new Map();
@@ -19105,7 +19133,7 @@ function showMatchDetail(mid){
     document.getElementById('showBreakdownBtn').onclick=()=>{
     const bd=matchBreakdown(mid);
     const slot=document.getElementById('breakdownSlot');
-    if(!bd||!Object.keys(bd).length){slot.innerHTML='<p style="font-size:12px;color:var(--muted);text-align:center">Keine Daten verfügbar</p>';return;}
+    if(!bd||!Object.keys(bd).length){slot.innerHTML='<div class="leerstand">Für diese Partie gibt es keine Aufschlüsselung</div>';return;}
     const histById=getHistoryByMatchId();
     const hist=histById.get(mid);
     const dbDeltas=(hist&&hist.deltas)||{};
@@ -19172,7 +19200,7 @@ function showMatchDetail(mid){
     const banner=anyDiverged?`<div style="background:rgba(247,207,74,.08);border:1px solid rgba(247,207,74,.3);border-radius:10px;padding:10px 12px;margin-top:10px;font-size:11.5px;color:var(--gold);line-height:1.5">
       Verbucht wurde, was am Tag der Partie galt; die Zeilen darunter rechnen mit den heutigen Einstellungen. <b>Alle Partien neu berechnen</b> in den Einstellungen bringt beides zusammen.
     </div>`:'';
-    slot.innerHTML=`<div class="mini-label" style="margin-top:14px">Elo-Analyse</div>${banner}${rows}`;
+    slot.innerHTML=`${blattAbschnittHtml('chartBar', 'Elo-Analyse')}${banner}${rows}`;
     document.getElementById('showBreakdownBtn').style.display='none';
   };
 
@@ -19457,23 +19485,23 @@ if(typeof document !== 'undefined' && document.addEventListener) document.addEve
 });
 const ERKLAERKARTEN = {
   liga:      ['chartBar', 'Die Liga', () =>
-    `Die Rangliste der Saison, der Woche, des Spieltags oder der ganzen Laufbahn. Jede Partie verschiebt die Elo der vier Spieler, je nach Ausgang und der Stärke von Partner und Gegnern; jede Saison beginnt bei der Start-Elo.`],
+    `Die Rangliste der Saison, der Woche, des Spieltags oder der ganzen Laufbahn. Ein Tippen öffnet das Profil. Jede Partie verschiebt die Elo der vier Spieler nach Ausgang und der Stärke von Partner und Gegnern; jede Saison beginnt bei der Start-Elo.`],
   ligaDuos:  ['handshake', 'Die Duos der Saison', () =>
-    `Jedes Duo mit zwei gemeinsamen Partien in dieser Saison, geordnet nach der Elo, die beide zusammen gewonnen oder verloren haben.`],
+    `Die Duos der Saison, geordnet nach der Elo, die beide zusammen gewonnen oder verloren haben. Ein Duo zählt ab <b>${DUOS_SAISON_AB} gemeinsamen Partien</b>. Ein Tippen öffnet die gemeinsame Bilanz.`],
   tafel:     ['temple', 'Die Ewige Tafel', () =>
-    `Die Elo der Laufbahn über alle Saisons: der gewichtete Schnitt der Saisonenden. Darüber stehen die Titel und Bestwerte der Liga.`],
+    `Die Karriere-Elo über alle Saisons, der gewichtete Schnitt der Saisonenden. Ein Tippen öffnet das Profil. Darüber stehen die Titel und Bestwerte der Liga.`],
   positionen:['posSturm', 'Sturm und Abwehr', () =>
-    `Wer auf welcher Position der Stärkste der Liga ist. Der Wert verbindet die Siegquote dort, die Leistung gegen die Erwartung, die Tore und wie oft jemand dort stand.`],
+    `Wer auf welcher Position der Stärkste der Liga ist. Ein Tippen öffnet das Profil. Der Wert verbindet die Siegquote dort, die Leistung gegen die Erwartung, die Tore und wie oft jemand dort stand.`],
   awards:    ['trophy', 'Die Awards', () =>
-    `Auszeichnungen für den gewählten Zeitraum: jede Kachel stellt eine Frage an die Partien dieser Saison oder Woche, ein Tippen zeigt die ersten drei. Darunter stehen die Wertungen, die niemand gern hält.`],
+    `Die Awards des gewählten Zeitraums: jede Kachel stellt eine Frage an die Partien dieser Saison oder Woche. Ein Tippen zeigt die ersten drei und den Verlauf. Darunter stehen die Wertungen, die niemand gern hält.`],
   rekorde:   ['rekord', 'Die Liga-Rekorde', () =>
-    `Bestwerte über alle Saisons. Vergeben werden sie, sobald die Liga <b>${CHRON_MIN_GAMES} Partien</b> gespielt hat; danach zählt für jeden die Bedingung der Karte. Wer einen Rekord übertrifft, nimmt ihn dem bisherigen Halter ab; ein Tippen zeigt, wie gezählt wird.`],
+    `Bestwerte über alle Saisons. Vergeben werden sie ab <b>${CHRON_MIN_GAMES} Partien</b> der Liga; danach zählt die Bedingung der Karte. Ein Tippen zeigt, wie gezählt wird. Wer einen Rekord übertrifft, nimmt ihn dem bisherigen Halter ab.`],
   chronik:   ['scroll', 'Die Chronik', () =>
-    `Jeder Monat schreibt Einträge für das, worin jemand besonders war, ab ${CHRONIK_MIN_SPIELE} Partien im Monat. Ein Tippen öffnet den Eintrag; Einträge, Rekorde und Auszeichnungen ergeben zusammen das Prestige.`],
+    `Jeder Monat schreibt Einträge für das, worin jemand besonders war. Ein Eintrag zählt ab <b>${CHRONIK_MIN_SPIELE} Partien im Monat</b>. Ein Tippen öffnet den Monat. Auszeichnungen, Chronik-Einträge und Rekorde ergeben zusammen das Prestige.`],
   teams:     ['handshake', 'Die Duos der Liga', () =>
-    `Jedes Duo ab 4 gemeinsamen Partien über alle Saisons. Gezählt werden nur die Partien, die beide zusammen gespielt haben.`],
+    `Jedes Duo über alle Saisons, gezählt nur aus den Partien, die beide zusammen gespielt haben. Ein Duo zählt ab <b>${DUOS_AB} gemeinsamen Partien</b>. Ein Tippen öffnet die gemeinsame Bilanz.`],
   verlauf:   ['verlauf', 'Der Verlauf', () =>
-    `Jede Partie der Liga, die neueste zuerst. Eine Partie öffnet, wie sich die Elo der vier Spieler verändert hat und warum.`],
+    `Jede Partie der Liga, die neueste zuerst. Ein Tippen zeigt, wie sich die Elo der vier Spieler verändert hat und warum.`],
   eingabe:   ['edit', 'Eine Partie eintragen', () =>
     `Vier Spieler mit ihrer Position und die Tore beider Teams. Gespeichert verschiebt die Partie die Elo und steht im Verlauf und in den News.`],
   formel:    ['neuRechnen', 'Die Elo-Formel', () =>
@@ -19485,38 +19513,38 @@ function erklaerKarte(key, leer){
 }
 
 const HILFE = {
-  liga: {titel:'Liga', absaetze:[
-    '<b>Saison</b> ist der laufende Monat; jeder beginnt ihn mit der Start-Elo. <b>Woche</b> und <b>Tag</b> zeigen die laufende Woche und den Spieltag, <b>Gesamt</b> die Ewige Tafel mit der Elo der Laufbahn über alle Saisons.',
+  liga: {titel:'Die Liga', absaetze:[
+    '<b>Saison</b> ist der laufende Monat; jeder beginnt ihn mit der Start-Elo. <b>Woche</b> und <b>Tag</b> zeigen die laufende Woche und den Spieltag, <b>Gesamt</b> die Ewige Tafel mit der Karriere-Elo über alle Saisons.',
     'Jede Partie verschiebt die Elo der vier Spieler. Wie viel, hängt von der Elo aller vier ab: ein Sieg gegen Stärkere bringt mehr, eine Niederlage gegen Schwächere kostet mehr.',
-    'Die Leiste über der Liste sortiert um, nach Elo, Siegquote, Torbilanz und mehr. <b>Spieler</b> und <b>Teams</b> wechseln zwischen Einzelnen und Duos. Ein Name öffnet das Profil.',
+    'In <b>Gesamt</b> sortiert die Leiste über der Liste um: Elo, Siegquote, Torbilanz, Prestige, Partien. <b>Spieler</b> und <b>Teams</b> wechseln zwischen Einzelnen und Duos. Ein Tippen auf einen Namen öffnet das Profil.',
     'Partien trägt das Plus unten rechts ein.']},
-  positionen: {titel:'Positionen', absaetze:[
+  positionen: {titel:'Sturm und Abwehr', absaetze:[
     'Wer auf welcher Position der Stärkste der Liga ist, getrennt nach Sturm und Abwehr. Die Position kommt aus der Aufstellung jeder Partie.',
     'Der Wert verbindet vier Dinge: die Siegquote auf dieser Position, die Leistung gegen die Erwartung, gemessen an Partner und Gegnern, die Tore, vorne die eigenen und hinten die zugelassenen, und die Erfahrung, also wie oft jemand dort gespielt hat.',
     '<b>▲</b> heißt über, <b>▼</b> unter der Erwartung. Gerechnet wird über alle Partien.',
     'Der Wert vergleicht die Liga auf einer Position. Auf welcher Position jemand selbst stärker ist, sagt das Positions-Profil im Profil.']},
   awards: {titel:'Awards, Rekorde, Chronik', absaetze:[
-    '<b>Awards</b> gelten einem Zeitraum, der Saison oder der Woche. Jede Kachel stellt eine Frage, ein Tippen zeigt die ersten drei und den Verlauf.',
-    '<b>Rekorde</b> sind Bestwerte über alle Saisons. Wer einen übertrifft, nimmt ihn dem bisherigen Halter ab.',
-    () => `<b>Chronik</b>: jeder Monat schreibt Einträge für das, worin jemand besonders war, ab ${CHRONIK_MIN_SPIELE} Partien im Monat.`,
-    'Auszeichnungen, Rekorde und Chronik-Einträge ergeben zusammen das Prestige und damit das Insignium am Wappen.']},
-  teams: {titel:'Teams', absaetze:[
-    'Jedes Duo ab 4 gemeinsamen Partien, sortiert nach Siegquote, Torbilanz oder Elo-Zuwachs; <b>Schlechteste</b> dreht die Reihenfolge um.',
-    'Ein Duo öffnet die gemeinsame Bilanz: Partien, Elo und welche Aufstellung besser läuft. Das Netz der Duos zeigt, wer mit wem wie oft spielt.']},
-  verlauf: {titel:'Verlauf', absaetze:[
+    '<b>Awards</b> gelten einem Zeitraum, der Saison oder der Woche. Jede Kachel stellt eine Frage. Ein Tippen zeigt die ersten drei und den Verlauf.',
+    () => `<b>Rekorde</b> sind Bestwerte über alle Saisons, vergeben ab <b>${CHRON_MIN_GAMES} Partien</b> der Liga. Wer einen übertrifft, nimmt ihn dem bisherigen Halter ab. Ein Tippen zeigt, wie gezählt wird.`,
+    () => `Die <b>Chronik</b> schreibt jeden Monat Einträge für das, worin jemand besonders war; ein Eintrag zählt ab <b>${CHRONIK_MIN_SPIELE} Partien im Monat</b>. Ein Tippen öffnet den Monat.`,
+    'Auszeichnungen, Chronik-Einträge und Rekorde ergeben zusammen das Prestige und damit das Insignium am Wappen.']},
+  teams: {titel:'Die Duos der Liga', absaetze:[
+    () => `Jedes Duo ab <b>${DUOS_AB} gemeinsamen Partien</b>, sortiert nach Siegquote, Torbilanz oder Elo-Zuwachs; <b>Schlechteste</b> dreht die Reihenfolge um.`,
+    'Ein Tippen auf ein Duo öffnet die gemeinsame Bilanz: Partien, Elo und welche Aufstellung besser läuft. Das Netz der Duos zeigt, wer mit wem wie oft spielt.']},
+  verlauf: {titel:'Der Verlauf', absaetze:[
     'Jede Partie, die neueste zuerst; oben lässt sich nach einem Spieler filtern.',
-    'Eine Partie öffnet die Elo jedes Spielers und wie sie zustande kam. Dort lässt sie sich bearbeiten oder löschen; die Liga rechnet danach neu.']},
-  eingabe: {titel:'Neue Partie', absaetze:[
+    'Ein Tippen auf eine Partie zeigt, wie sich die Elo der vier Spieler verändert hat und warum. Dort lässt sie sich bearbeiten oder löschen; die Liga rechnet danach neu.']},
+  eingabe: {titel:'Eine Partie eintragen', absaetze:[
     'Vier Spieler wählen, je Team zwei, und für jeden die Position: Sturm oder Abwehr.',
     'Die Tore beider Teams eintragen. Vor dem Speichern zeigt die Vorschau, wie viel Elo die Partie bringt und kostet.']},
-  formel: {titel:'Elo-Formel', absaetze:[
+  formel: {titel:'Die Elo-Formel', absaetze:[
     'Die Regler bestimmen, wie stark eine Partie die Elo bewegt; unter „So wirken die Regler" steht jeder einzeln.',
     'Eine Änderung gilt für neue Partien. „Alle Partien neu berechnen" wendet sie auf die ganze Liga an.',
     'Sicherung und Export speichern eine Kopie der Liga als Datei.']},
 };
 function hilfeKnopf(key){
   const h = HILFE[key];
-  return h ? `<button class="kopf-info" type="button" data-hilfe="${key}" aria-label="So funktioniert ${esc(h.titel)}">${svgI('frage')}</button>` : '';
+  return h ? `<button class="kopf-info" type="button" data-hilfe="${key}" aria-label="So funktioniert ${esc(h.titel.replace(/^(Die|Der|Eine) /, w => w.toLowerCase()))}">${svgI('frage')}</button>` : '';
 }
 function zeigeHilfe(key){
   const h = HILFE[key]; if(!h) return;
@@ -19605,7 +19633,7 @@ const NEWS_CATEGORIES = {
   breaking:   {label:'Breaking',    descLabel:'Breaking News',    ic:'sirene'},
   highlight:  {label:'Highlights',  descLabel:'Highlight',        ic:'funkeln'},
   season:     {label:'Saison',      descLabel:'Saison',           ic:'saisonKal'},
-  badge:      {label:'Awards',      descLabel:'Badge & Awards',   ic:'abzeichen'},
+  badge:      {label:'Auszeichnungen', descLabel:'Auszeichnung', ic:'abzeichen'},
   fun:        {label:'Fun Facts',   descLabel:'Fun Fact',         ic:'idee'},
   rivalry:    {label:'Rivalität',   descLabel:'Rivalität',        ic:'crossedSwords'},
   team:       {label:'Teams',       descLabel:'Team',             ic:'users'},
@@ -34740,15 +34768,15 @@ function seasonTitleHistory(pid, bisMs){
 }
 
 const CHRON_KINDS = {
-  mark:    {label:'Bestmarke',     pl:'Bestmarken',     kurz:'Marken',   ic:'target',     ord:0,
+  mark:    {label:'Bestmarke',     pl:'Marken',         kurz:'Marken',   ic:'target',     ord:0,
             satz:'Einzelne Bestleistungen, jede an einem Tag erreicht'},
   koennen: {label:'Können',        pl:'Können',         kurz:'Können',   ic:'trophyStar', ord:1,
             satz:'Schnitt und Quote über die ganze Laufbahn'},
-  form:    {label:'Aktuelle Form', pl:'Aktuelle Form',  kurz:'Form',     ic:'trendUp',    ord:2,
+  form:    {label:'Aktuelle Form', pl:'Form',           kurz:'Form',     ic:'trendUp',    ord:2,
             satz:'Gerechnet über die letzten eigenen Partien'},
   fuegung: {label:'Fügung',        pl:'Fügungen',       kurz:'Fügungen', ic:'weatherMix', ord:3,
             satz:'Was Auslosung und letzter Ball entscheiden'},
-  shame:   {label:'Schattenseite', pl:'Schattenseiten', kurz:'Schatten', ic:'ghost',      ord:4,
+  shame:   {label:'Schattenseite', pl:'Schatten',       kurz:'Schatten', ic:'ghost',      ord:4,
             satz:'Die Kehrseite. Sie bringt kein Prestige'},
 };
 const CHRON_MIN_GAMES = 40;
@@ -35582,7 +35610,7 @@ function showSeasonTable(sid){
   const T = seasonTitles(sid);
   if(!T.awarded.length && !T.champ){
     openSheet(`${blattKopfHtml({ic:'scroll', ton:'gold', titel:seasonLabel(sid), unter:'Noch keine Chronik-Einträge'})}
-      ${emptyState('trophy', T.live ? 'Die Saison läuft, noch erfüllt niemand eine Bedingung.' : 'Kein Eintrag in dieser Saison')}`);
+      ${emptyState('trophy', T.live ? 'Die Saison läuft, noch erfüllt niemand eine Bedingung' : 'Kein Eintrag in dieser Saison')}`);
     return;
   }
   const emptyNames = T.empty.map(pname).filter(Boolean);
@@ -35871,7 +35899,7 @@ function showChronicle(cid){
          ${_chronPodestHtml(rang.map(r => ({pid:r.pid, wert:_chronKurz(r.ev), zeit:r.zeit, v:r.wert})))}`
       : emptyState('scroll', (() => {
         const tor = rekordTor();
-        return tor.offen ? 'Diesen Rekord hat noch niemand erreicht.'
+        return tor.offen ? 'Diesen Rekord hat noch niemand erreicht'
           : `Die Rekorde werden vergeben, sobald die Liga ${CHRON_MIN_GAMES} Partien gespielt hat. Bisher sind es ${tor.n}.`;
       })())}
     ${verfolger.length ? `<div class="rek-verfolger">${verfolger.map((r, i) => {
@@ -35934,7 +35962,7 @@ function ligaRekordeHtml(weit){
         <span class="hd">${esc(_chronHolderNames(h))}</span>
       </div>`;
     }).join('')}</div>
-    <div class="tnote">Tippen zeigt, wie ein Rekord gezählt wird.</div>`;
+    <div class="tnote">Ein Tippen zeigt, wie ein Rekord gezählt wird.</div>`;
   const karte = (d) => {
     const h = holders[d.id];
     if(!h) return `<div class="rek offen" data-chron="${esc(d.id)}" data-kammer="${esc(d.kind)}">
@@ -35981,7 +36009,7 @@ function ligaRekordeHtml(weit){
     </div>`;
   const leiste = zaehl.length || !tor.offen ? `<div class="rek-besitz">
     <div class="rek-bk"><span class="l">Wer die Tafel hält</span>
-      <span class="r num">${zaehl.length ? `${haltungen} Haltungen · ${recs.length} Rekorde` : ''}</span></div>
+      <span class="r num">${zaehl.length ? `${haltungen} Haltungen` : ''}</span></div>
     ${zaehl.length ? `<div class="rek-saeulen">${zaehl.map(z => {
       const p = pmap()[z.pid];
       return `<span class="rek-sl${z.n ? '' : ' null'}" data-tplayer="${esc(z.pid)}">
@@ -36141,7 +36169,7 @@ function showLigaChronik(){
   if(!matrix){
     openSheet(`${blattKopfHtml({ic:'scroll', ton:'gold', titel:'Liga-Chronik',
       unter:recs.length ? recs.length + ' Liga-Rekorde · noch keine Saison mit Chronik' : 'Noch keine Saison mit Chronik'})}
-      ${recHtml || emptyState('scroll','Sobald ein Monat gespielt ist, füllt sich die Chronik.')}`);
+      ${recHtml || emptyState('scroll','Sobald ein Monat gespielt ist, füllt sich die Chronik')}`);
     _bindChronikClicks(document.getElementById('sheet'));
     return;
   }
@@ -37557,7 +37585,6 @@ function rangTon(pid){
   return titleTone(RANG_TON[(getPlayerRank(pid) || {}).label] || 'blue');
 }
 
-const INS_GOLD = '#E8C25E';
 const INS_GOLD_TIEF = '#6E4A0E';
 
 function _insSatz(rang){
@@ -37646,34 +37673,30 @@ function _insFuss(pos){
       font-family="'Archivo Black',sans-serif" font-weight="700" fill="#EEF2F5">${pos}</text>`;
 }
 
-function _insSternPfad(cx, cy, r){
-  let d = '';
-  for(let i = 0; i < 10; i++){
-    const a = i/10*Math.PI*2 - Math.PI/2;
-    const rr = i % 2 ? r*.44 : r;
-    d += (i ? 'L' : 'M') + _n(cx + Math.cos(a)*rr) + ' ' + _n(cy + Math.sin(a)*rr);
-  }
-  return d + 'Z';
-}
 const INS_STERN_R = 78;
 const INS_STERN_GR = 3.8;
 function _insSterne(n, id){
   if(n <= 0) return '';
-  const zeig = Math.min(n, 5), gr = INS_STERN_GR, R = INS_STERN_R;
+  const gr = INS_STERN_GR, R = INS_STERN_R;
   const schritt = 2.5 * gr / R;
-  const felder = zeig + (n > 5 ? 1.5 : 0);
-  const w = i => (i - (felder - 1) / 2) * schritt;
-  let d = '';
-  for(let i = 0; i < zeig; i++)
-    d += _insSternPfad(50 + Math.sin(w(i))*R, 50 - Math.cos(w(i))*R, gr);
-  let s = `<path d="${d}" fill="url(#${id}gd)" stroke="${INS_GOLD_TIEF}"
-    stroke-width=".55" stroke-linejoin="round"/>`;
-  if(n > 5){
-    const a = w(zeig + .45);
-    s += `<text x="${_n(50 + Math.sin(a)*R)}" y="${_n(50 - Math.cos(a)*R + gr*.92)}"
-      text-anchor="middle" font-size="${_n(gr*2.4)}"
+  const mit = n > 5;
+  const zahlHalb = String(n).length * gr * .78 + gr * .55;
+  const winkel = mit
+    ? [-(zahlHalb + gr * 1.1) / R, (zahlHalb + gr * 1.1) / R]
+    : Array.from({length:n}, (_, i) => (i - (n - 1) / 2) * schritt);
+  const r = mit ? gr * .9 : gr;
+  let d = '', hell = '';
+  winkel.forEach(w => {
+    const x = 50 + Math.sin(w)*R, y = 50 - Math.cos(w)*R;
+    d += _znStern(x, y, r); hell += _znSternHell(x, y, r, _n);
+  });
+  let s = `<path d="${d}" fill="${ZN_STERN_TIEF}"/><path d="${hell}" fill="${ZN_STERN_HELL}"/>
+    <path d="${d}" fill="none" stroke="${INS_GOLD_TIEF}" stroke-width=".55" stroke-linejoin="round"/>`;
+  if(mit){
+    s += `<text x="50" y="${_n(50 - R + gr*1.05)}"
+      text-anchor="middle" font-size="${_n(gr*2.2)}"
       font-family="'Archivo Black',sans-serif" font-weight="700"
-      fill="${INS_GOLD}" stroke="${INS_GOLD_TIEF}" stroke-width=".5"
+      fill="${ZN_STERN_HELL}" stroke="${INS_GOLD_TIEF}" stroke-width=".5"
       paint-order="stroke">${n}</text>`;
   }
   return s;
@@ -38711,7 +38734,7 @@ function _backupStamp(){
 }
 
 async function exportMatchesXlsx(){
-  if(!matches.length){ toast('Keine Matches zum Exportieren','info'); return; }
+  if(!matches.length){ toast('Keine Partien zum Exportieren','info'); return; }
   try{
     const data = await _xlsxBuild([
       {name:'Matches', rows:_backupMatchRows()},
@@ -38720,17 +38743,17 @@ async function exportMatchesXlsx(){
     ]);
     const blob = new Blob([data], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
     await _saveFile(blob, 'kicker-liga_' + _backupStamp() + '.xlsx');
-    toast(matches.length + ' Matches als Excel exportiert','ok');
+    toast(matches.length + (matches.length === 1 ? ' Partie' : ' Partien') + ' als Excel exportiert','ok');
   }catch(e){
     toast('Export fehlgeschlagen: ' + e.message, true);
   }
 }
 async function exportMatchesCsv(){
-  if(!matches.length){ toast('Keine Matches zum Exportieren','info'); return; }
+  if(!matches.length){ toast('Keine Partien zum Exportieren','info'); return; }
   try{
     const blob = new Blob([_csvBuild(_backupMatchRows())], {type:'text/csv;charset=utf-8'});
     await _saveFile(blob, 'kicker-matches_' + _backupStamp() + '.csv');
-    toast(matches.length + ' Matches als CSV exportiert','ok');
+    toast(matches.length + (matches.length === 1 ? ' Partie' : ' Partien') + ' als CSV exportiert','ok');
   }catch(e){
     toast('Export fehlgeschlagen: ' + e.message, true);
   }
@@ -38752,7 +38775,7 @@ async function exportSavepoint(){
     const json = JSON.stringify(_buildSavepoint(), null, 1);
     const blob = new Blob([json], {type:'application/json'});
     await _saveFile(blob, 'kicker-savepoint_' + _backupStamp() + '.json');
-    toast('Sicherung gespeichert · ' + matches.length + ' Matches','ok');
+    toast('Sicherung gespeichert · ' + matches.length + (matches.length === 1 ? ' Partie' : ' Partien'),'ok');
   }catch(e){
     toast('Sicherung fehlgeschlagen: ' + e.message, true);
   }
@@ -38962,11 +38985,11 @@ function _showImportPreview(filename){
       <div class="nd-section">Sicherung</div>
       ${line('Erstellt', new Date(sp.createdAt).toLocaleString('de-DE'))}
       ${line('App-Version', sp.build || '—')}
-      ${line('Enthält', `${(sp.players||[]).length} Spieler · ${sp.matches.length} Matches`)}
+      ${line('Enthält', `${(sp.players||[]).length} Spieler · ${sp.matches.length} ${sp.matches.length === 1 ? 'Partie' : 'Partien'}`)}
       <div class="nd-section">Wird ergänzt</div>
       ${line('Neue Spieler', p.neuP.length, p.neuP.length ? 'var(--acid)' : '')}
       ${line('Neue Saisons', p.neuS.length, p.neuS.length ? 'var(--acid)' : '')}
-      ${line('Neue Matches', p.neuM.length, p.neuM.length ? 'var(--acid)' : '')}
+      ${line('Neue Partien', p.neuM.length, p.neuM.length ? 'var(--acid)' : '')}
       ${line('Bereits vorhanden', sp.matches.length - p.neuM.length)}`;
   } else {
     const a = p.analyse;
@@ -38976,7 +38999,7 @@ function _showImportPreview(filename){
          <b style="color:var(--red)">Zeile ${f.zeile}</b> — ${esc(f.grund)}</div>`).join('');
     body = `
       <div class="nd-section">Gefunden</div>
-      ${line('Neue Matches', a.neu.length, a.neu.length ? 'var(--acid)' : '')}
+      ${line('Neue Partien', a.neu.length, a.neu.length ? 'var(--acid)' : '')}
       ${p.neueSpieler.length ? line('Neue Spieler', p.neueSpieler.length, 'var(--acid)') : ''}
       ${line('Bereits vorhanden', a.vorhanden)}
       ${line('Übersprungen', a.fehler.length, a.fehler.length ? 'var(--red)' : '')}
@@ -39044,7 +39067,7 @@ async function _applyBackupImport(){
     invalidateCache();
     await loadAll();
     const parts = [];
-    if(addedM) parts.push(addedM + ' Matches');
+    if(addedM) parts.push(addedM + (addedM === 1 ? ' Partie' : ' Partien'));
     if(addedP) parts.push(addedP + ' Spieler');
     if(addedS) parts.push(addedS + ' Saisons');
     toast(parts.length ? (parts.join(' · ') + ' ergänzt') : 'Nichts zu ergänzen', 'ok');

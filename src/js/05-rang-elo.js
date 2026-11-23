@@ -85,10 +85,12 @@ function rankBadgeHtml(id, size='sm'){
 // als Punkt.
 const METRIC_LABEL={elo:'Elo',wins:'Siege',winrate:'Siegquote',
   goaldiff:'Torbilanz',prestige:'Prestige',games:'Partien'};
-// Fünf Reiter teilen sich 328 px: „Siegquote" stand dort als „Siegq…".
-// Im Reiter reicht das Wort, das die Spalte meint; unter der Zahl steht
-// weiter der volle Name.
-const METRIC_REITER={winrate:'Quote'};
+// Ein Reiter, dessen Wort nicht in seine Spalte passt, bekommt hier ein
+// kürzeres. Fünf Reiter teilen sich 328 px: in 12,5 px stand „Siegquote"
+// als „Siegq…", und der Reiter hieß deshalb „Quote", während Teams-Leiste,
+// Profil und Spalte „Siegquote" sagten. In 11 px passt das Wort: gemessen
+// bei 360 px 55 von 61 px. Leer, solange jedes Wort passt.
+const METRIC_REITER={};
 // Die LIGA-Rangliste ist die Elo-Rangliste — in Saison, Woche und Tag gibt
 // es dort nichts zu sortieren. Wer nach Siegrate oder Tordiff schaut, sucht
 // keine Rangliste, sondern eine Bestenliste, und die steht im Awards-Tab.

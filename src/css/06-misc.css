@@ -35,7 +35,11 @@
   .ek-ic{flex:none;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
     background:rgba(190,242,100,.1);color:var(--acid)}
   .ek-ic svg{width:17px;height:17px}
-  .ek-satz{margin:10px 0 0;color:var(--muted);font-size:12.5px;line-height:1.5}
+  /* 14 px wie der Absatz des Hilfe-Blatts, das dieselben Fakten trägt.
+     Bei 12,5 px hing die Größe davon ab, ob iOS einen Absatz für lang
+     genug hielt, ihn zu vergrößern; seit `text-size-adjust:100%` stünde
+     er wirklich so klein da. */
+  .ek-satz{margin:10px 0 0;color:var(--muted);font-size:14px;line-height:1.5}
   .ek-satz b{color:var(--ink);font-weight:600}
   @media (prefers-reduced-motion: reduce){ .erklaer{transition:none} }
 
@@ -96,8 +100,15 @@
     .nf-card.nf-glanz::after,.nf-card.nf-s-held:not(.read)::after,.nf-card.nf-s-woche:not(.read)::after,
     .glanz-bahn::after{animation:none!important;background:none!important}}
 
-  .mini-label{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);
-    margin:0 2px 8px;font-weight:600}
+  /* Die Überschrift einer Karte trägt die Schrift jeder Überschrift eines
+     Reiters (.cfg-section-title, .aw-sect): in Space Grotesk, 600 und
+     enger gesperrt stand „So wirken die Regler" unter „Grundwerte" wie
+     eine andere Art Überschrift. Die Legende der Positionen ist ein Satz
+     und keine Überschrift (`.legende`): in Mono und weit gesperrt bräche
+     sie bei 360 px in zwei Zeilen. */
+  .mini-label{font-family:'Sometype Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.18em;
+    color:var(--muted);margin:0 2px 8px;font-weight:700}
+  .mini-label.legende{font-family:'Space Grotesk',system-ui,sans-serif;letter-spacing:.12em;font-weight:600}
 
   .slider-wrap{margin:14px 0}
   .slider-wrap .sh{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
@@ -117,6 +128,13 @@
   .cfg-section-title::after{content:"";flex:1;height:1px;
     background:linear-gradient(to right,var(--line),transparent)}
   .cfg-section-title:first-of-type{margin-top:4px}
+  /* Der Satz einer Karte in den Einstellungen, in einer Größe: dort standen
+     12, 11,5 und 11 px nebeneinander, und die langen Absätze hielt iOS für
+     lang genug, sie von selbst zu vergrößern. Seit `text-size-adjust:100%`
+     stünden sie wirklich in 11 px. Die Rolle trägt die Farbe: der Satz,
+     der erklärt, hell; der Hinweis darunter (`leise`) gedämpft. */
+  .cfg-satz{font-size:13px;line-height:1.55;color:var(--ink2)}
+  .cfg-satz.leise{color:var(--muted)}
 
   .setup{max-width:440px;margin:0 auto;padding:calc(var(--safe-top) + 60px) 24px}
   .setup .card{background:var(--surface)}

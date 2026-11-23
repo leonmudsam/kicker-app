@@ -524,7 +524,7 @@ function _vRankingCore(){
         ${sichtBar}
         ${duos.length
           ? `<div class="rlist">${duos.map(duoZeile).join('')}</div>`
-          : emptyState('handshake','Noch kein Duo mit zwei gemeinsamen Partien')}`;
+          : emptyState('handshake',`Noch kein Duo mit ${DUOS_SAISON_AB} gemeinsamen Partien`)}`;
     }
 
     return `

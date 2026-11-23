@@ -4023,6 +4023,11 @@ const ok = (c, msg, det) => {
   // Silber und Bronze — auf dem iPhone kam Platz 1 sichtbar nach Platz 2. Im
   // ersten Bild trägt jetzt jede Karte nur ihr eigenes Einblenden, Licht und
   // Band warten ohne Kasten und laufen zu ihrer Zeit.
+  // Gemessen werden die ersten drei Karten, also müssen sie im Bild stehen:
+  // Licht gibt es nur für das, was man sieht [§C43]. Bei 780 px lag die
+  // dritte Zeile der Liga unter der Erklärkarte, seit deren Satz 14 px
+  // misst, ganz unterhalb des Bildes, und der Test sah dort kein Licht.
+  await page.setViewportSize({width:360, height:900});
   const erstesBild = await page.evaluate(async () => {
     const K = window.__k.eval.bind(window.__k);
     const bild = () => new Promise(r => requestAnimationFrame(r));
@@ -4047,6 +4052,7 @@ const ok = (c, msg, det) => {
   ok(Object.values(erstesBild).every(r => r.darin.every(d => d.length === 0) && r.wartet.every(Boolean) && r.danach.every(n => n >= 2)),
      'im ersten Bild trägt jede der ersten drei Karten nur ihr eigenes Einblenden; Licht und Band warten ohne Kasten und laufen danach — in Liga, Positionen, Duos und Awards',
      JSON.stringify(erstesBild));
+  await page.setViewportSize({width:360, height:780});
   // Der leere Zustand einer Ansicht behält seine Form, während sie sich
   // aufbaut: als `[class="empty"]` galt die Regel nur ohne weitere Klasse,
   // und mit `bau` stand „Keine Matches in diesem Zeitraum" eine halbe
@@ -6747,6 +6753,93 @@ return JSON.stringify(funde,null,1);
   ok(banner.every(x => x.deckend && x.naht),
      'das Band ist deckend, an beiden Enden auch, und trägt innen eine durchgezogene Naht',
      JSON.stringify(banner.map(x => ({deckend:x.deckend, naht:x.naht}))));
+
+  console.log('\n═══ WAS ZUSAMMENGEHÖRT, SIEHT GLEICH AUS ═══');
+  // Auf dem iPhone stand die Erklärkarte unter „Rekorde" größer als die unter
+  // „Chronik", obwohl beide dieselbe Klasse und 12,5 px trugen: iOS vergrößert
+  // lange Absätze von selbst, kurze nicht. Dazu war ihr Aufbau verschieden —
+  // die eine nannte ihre Schwelle fett, die andere nicht, und jede sagte
+  // anders, was ein Tippen tut. Gemessen wird jede Karte einer Liste.
+  const karten = await K(`(() => {
+    _hinweiseWeg = new Set();
+    const faelle = [['Liga', "tab='ranking';period='season';rankMetric='elo'"], ['Tafel', "tab='ranking';period='all'"],
+      ['Positionen', "tab='positions';rankMetric='atk'"], ['Awards', "tab='awards';awView='awards'"],
+      ['Rekorde', "tab='awards';awView='rekorde';rekKammer=''"], ['Chronik', "tab='awards';awView='chronik'"],
+      ['Teams', "tab='teams'"], ['Verlauf', "tab='history';histFilter='all'"]];
+    const out = [];
+    for(const [n, c] of faelle){
+      eval(c); render();
+      document.querySelectorAll('#main .erklaer .ek-satz').forEach(p => {
+        const ohneFett = p.innerHTML.replace(/<b>[^<]*<[/]b>/g, '');
+        out.push({n, px: getComputedStyle(p).fontSize,
+          tippen: (p.textContent.match(/(^|[.;] )Ein Tippen (zeigt|öffnet)/g) || []).length,
+          fett: /<b>[^<]*[0-9]/.test(p.innerHTML), ziffer: /[0-9]/.test(ohneFett.replace(/Start-Elo/g, ''))});
+      });
+      document.querySelectorAll('#main .view-head p').forEach(p => { if(/tippen/i.test(p.textContent)) out.push({n, kopf: p.textContent}); });
+    }
+    return {karten: out, anpassen: getComputedStyle(document.documentElement).webkitTextSizeAdjust};
+  })()`);
+  ok(karten.anpassen === '100%',
+     'die Schriftgröße bestimmt das CSS, nicht der Browser (text-size-adjust 100 %)', karten.anpassen);
+  const kk = karten.karten.filter(x => x.px);
+  ok(kk.length >= 8 && kk.every(x => x.px === '14px'),
+     'jede Erklärkarte einer Liste steht in 14 px', JSON.stringify(kk.map(x => x.n + ':' + x.px)));
+  ok(kk.every(x => x.tippen === 1),
+     'jede Erklärkarte einer Liste sagt in genau einem Satz „Ein Tippen zeigt/öffnet …"', JSON.stringify(kk.map(x => x.n + ':' + x.tippen)));
+  ok(kk.every(x => !x.ziffer) && ['Rekorde','Chronik','Teams'].every(n => kk.some(x => x.n === n && x.fett)),
+     'jede Schwelle einer Erklärkarte steht fett, und Rekorde, Chronik und Teams nennen ihre', JSON.stringify({ohne: kk.filter(x => x.ziffer).map(x => x.n), fett: kk.filter(x => x.fett).map(x => x.n)}));
+  ok(!karten.karten.some(x => x.kopf),
+     'die Kopfzeile einer Ansicht sagt nicht, was ein Tippen tut — das sagt die Karte',
+     JSON.stringify(karten.karten.filter(x => x.kopf)));
+  const hilfePx = await K(`(() => { closeSheet(true); zeigeHilfe('awards');
+    const p = document.querySelector('#sheet .pos-info p'); const px = p ? getComputedStyle(p).fontSize : null; closeSheet(true); return px; })()`);
+  ok(hilfePx === '14px', 'das Hilfe-Blatt steht in derselben Größe wie die Erklärkarte', String(hilfePx));
+
+  console.log('\n═══ DAS AWARD-BLATT OHNE TRÄGER UND MIT FEUER ═══');
+
+  // Kein Filter im Filter am Feuer. In den Top-5-Listen der Awards lag ein
+  // Weichzeichner auf dem ganzen Feuer, und jede Flamme darin trug schon
+  // ihren Schein (`drop-shadow`). Safari zeichnete daraus auf dem Telefon
+  // einen violetten Strich rechts neben dem Kreis, sobald jemand eine Serie
+  // hatte. Chromium zeichnet das sauber; prüfbar ist die Ursache: an keiner
+  // Flamme hat ein Vorfahr bis zum Zeichen selbst noch einen Filter.
+  const filterImFilter = await K(`(() => {
+    const _f = znFeuer; znFeuer = () => 3;
+    try {
+      tab='ranking';period='season';rankMetric='elo';render();
+        const zaehle = wo => [...document.querySelectorAll(wo + ' .zn-fx')].map(fx => {
+          const zn = fx.closest('.zn'); let n = 0;
+          for(let e = fx; e && e !== zn.parentElement; e = e.parentElement) if(getComputedStyle(e).filter !== 'none') n++;
+          fx.querySelectorAll('*').forEach(e => { if(getComputedStyle(e).filter !== 'none') n++; });
+          return n;
+        });
+        const liste = zaehle('#main');
+        showAward('wins');
+        const blatt = zaehle('#sheet');
+        return ({flammen: liste.length + blatt.length, out: liste.concat(blatt).filter(n => n > 1).map(n => n + ' Filter')});
+      } finally { znFeuer = _f; closeSheet(true); }
+  })()`);
+  ok(filterImFilter.flammen > 0 && filterImFilter.out.length === 0,
+     'Feuer in Rangliste und Top-5-Liste: höchstens ein Filter je Feuer, kein Filter im Filter',
+     JSON.stringify(filterImFilter));
+
+  // Ein Award ohne Träger sagt im Blatt, was noch fehlt, wie seine Kachel
+  // (`AW_LEER`) [§C27]. Dort stand „Keine Daten" — der Wochenkönig sagte auf
+  // der Kachel „Noch keine Woche abgeschlossen" und im Blatt etwas, das nach
+  // einem Fehler klang.
+  const leerBlatt = await K(`(() => {
+    const _m = matches;
+    try {
+      matches = []; invalidateCache();
+      return ['wins', 'weekKing', 'biggest', 'rivalry', 'favoritenschreck'].map(k => {
+        showAward(k);
+        const l = document.querySelector('#sheet .leerstand');
+        return {k, text: l ? l.textContent.trim() : null, kachel: AW_LEER[k] || 'Noch nicht vergeben'};
+      });
+    } finally { matches = _m; invalidateCache(); closeSheet(true); }
+  })()`);
+  ok(leerBlatt.every(x => x.text === x.kachel),
+     'ein leeres Award-Blatt sagt dasselbe wie seine Kachel, nie „Keine Daten"', JSON.stringify(leerBlatt));
 
   await page.setViewportSize({width:430, height:932});
 

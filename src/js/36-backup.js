@@ -510,8 +510,11 @@ function _backupStamp(){
 }
 
 // ─── §12.7 — Export-Aktionen ─────────────────────────────────────────
+// Hinweise und Vorschau sagen „Partien" wie die ganze App; nur das Blatt
+// der Datei heißt „Matches", das ist ihr Format. Hier stand „466 Matches
+// als Excel exportiert" unter einer Liste, die „466 Partien" zählte.
 async function exportMatchesXlsx(){
-  if(!matches.length){ toast('Keine Matches zum Exportieren','info'); return; }
+  if(!matches.length){ toast('Keine Partien zum Exportieren','info'); return; }
   try{
     const data = await _xlsxBuild([
       {name:'Matches', rows:_backupMatchRows()},
@@ -520,17 +523,17 @@ async function exportMatchesXlsx(){
     ]);
     const blob = new Blob([data], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
     await _saveFile(blob, 'kicker-liga_' + _backupStamp() + '.xlsx');
-    toast(matches.length + ' Matches als Excel exportiert','ok');
+    toast(matches.length + (matches.length === 1 ? ' Partie' : ' Partien') + ' als Excel exportiert','ok');
   }catch(e){
     toast('Export fehlgeschlagen: ' + e.message, true);
   }
 }
 async function exportMatchesCsv(){
-  if(!matches.length){ toast('Keine Matches zum Exportieren','info'); return; }
+  if(!matches.length){ toast('Keine Partien zum Exportieren','info'); return; }
   try{
     const blob = new Blob([_csvBuild(_backupMatchRows())], {type:'text/csv;charset=utf-8'});
     await _saveFile(blob, 'kicker-matches_' + _backupStamp() + '.csv');
-    toast(matches.length + ' Matches als CSV exportiert','ok');
+    toast(matches.length + (matches.length === 1 ? ' Partie' : ' Partien') + ' als CSV exportiert','ok');
   }catch(e){
     toast('Export fehlgeschlagen: ' + e.message, true);
   }
@@ -554,7 +557,7 @@ async function exportSavepoint(){
     const json = JSON.stringify(_buildSavepoint(), null, 1);
     const blob = new Blob([json], {type:'application/json'});
     await _saveFile(blob, 'kicker-savepoint_' + _backupStamp() + '.json');
-    toast('Sicherung gespeichert · ' + matches.length + ' Matches','ok');
+    toast('Sicherung gespeichert · ' + matches.length + (matches.length === 1 ? ' Partie' : ' Partien'),'ok');
   }catch(e){
     toast('Sicherung fehlgeschlagen: ' + e.message, true);
   }
@@ -781,11 +784,11 @@ function _showImportPreview(filename){
       <div class="nd-section">Sicherung</div>
       ${line('Erstellt', new Date(sp.createdAt).toLocaleString('de-DE'))}
       ${line('App-Version', sp.build || '—')}
-      ${line('Enthält', `${(sp.players||[]).length} Spieler · ${sp.matches.length} Matches`)}
+      ${line('Enthält', `${(sp.players||[]).length} Spieler · ${sp.matches.length} ${sp.matches.length === 1 ? 'Partie' : 'Partien'}`)}
       <div class="nd-section">Wird ergänzt</div>
       ${line('Neue Spieler', p.neuP.length, p.neuP.length ? 'var(--acid)' : '')}
       ${line('Neue Saisons', p.neuS.length, p.neuS.length ? 'var(--acid)' : '')}
-      ${line('Neue Matches', p.neuM.length, p.neuM.length ? 'var(--acid)' : '')}
+      ${line('Neue Partien', p.neuM.length, p.neuM.length ? 'var(--acid)' : '')}
       ${line('Bereits vorhanden', sp.matches.length - p.neuM.length)}`;
   } else {
     const a = p.analyse;
@@ -798,7 +801,7 @@ function _showImportPreview(filename){
          <b style="color:var(--red)">Zeile ${f.zeile}</b> — ${esc(f.grund)}</div>`).join('');
     body = `
       <div class="nd-section">Gefunden</div>
-      ${line('Neue Matches', a.neu.length, a.neu.length ? 'var(--acid)' : '')}
+      ${line('Neue Partien', a.neu.length, a.neu.length ? 'var(--acid)' : '')}
       ${p.neueSpieler.length ? line('Neue Spieler', p.neueSpieler.length, 'var(--acid)') : ''}
       ${line('Bereits vorhanden', a.vorhanden)}
       ${line('Übersprungen', a.fehler.length, a.fehler.length ? 'var(--red)' : '')}
@@ -872,7 +875,7 @@ async function _applyBackupImport(){
     invalidateCache();
     await loadAll();
     const parts = [];
-    if(addedM) parts.push(addedM + ' Matches');
+    if(addedM) parts.push(addedM + (addedM === 1 ? ' Partie' : ' Partien'));
     if(addedP) parts.push(addedP + ' Spieler');
     if(addedS) parts.push(addedS + ' Saisons');
     toast(parts.length ? (parts.join(' · ') + ' ergänzt') : 'Nichts zu ergänzen', 'ok');

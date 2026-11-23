@@ -22,6 +22,10 @@ function _teamEloRanking(ms, minGames){
   });
   return Object.values(T).filter(t=>t.g>=(minGames||1)).sort((a,b)=>b.elo-a.elo||b.g-a.g);
 }
+// Ab wie vielen gemeinsamen Partien ein Duo in der Liga-Ansicht einer
+// Saison steht. Die Zahl stand als 2 im Filter und als „zwei" in Karte und
+// leerem Zustand: wer den Filter änderte, ließ beide Sätze falsch stehen.
+const DUOS_SAISON_AB = 2;
 // Team of the Season: Elo-Zuwachs aus der Sim (konsistent zur Tabelle),
 // Spielzahlen aus den Saison-Matches. Absteigend sortiert.
 function _seasonTeamRanking(seasonMs, sid){
@@ -32,7 +36,7 @@ function _seasonTeamRanking(seasonMs, sid){
   return Object.entries(map).map(([k,elo])=>{
     const c=counts[k];
     return c ? {ids:k.split('|'), elo, g:c.g, w:c.w} : null;
-  }).filter(t=>t && t.g>=2).sort((a,b)=>b.elo-a.elo||b.g-a.g);
+  }).filter(t=>t && t.g>=DUOS_SAISON_AB).sort((a,b)=>b.elo-a.elo||b.g-a.g);
 }
 // Upsets eines Match-Sets: niedrigste Siegerwartung des Siegers zuerst.
 function _upsetRanking(ms){
@@ -45,6 +49,8 @@ function _upsetRanking(ms){
 
 // Generisches Top-N-Sheet. rows: [{ids:[pid…]|null, matchId?, name, val, detail?}]
 // ids mit 1 Element → Spieler-Zeile, 2 Elemente → Team-Zeile, matchId → Match.
+// Eine leere Liste sagt, was noch fehlt (`c.leer`), sonst dasselbe wie eine
+// leere Award-Kachel. „Noch keine Daten" klang nach einem Fehler [§C27].
 function showTopList(c){
   if(!c) return;
   _sheetSetReopen(()=>showTopList(c));
@@ -71,7 +77,7 @@ function showTopList(c){
       titel:c.title || '', unter:c.sub || ''})}
     ${items?`${blattAbschnittHtml('medal', c.listLabel || ('Top ' + rows.length))}
       <div class="aw-list">${items}</div>`
-     :`<div class="leerstand" style="margin-top:24px">Noch keine Daten</div>`}
+     :`<div class="leerstand" style="margin-top:24px">${esc(c.leer || 'Noch nicht vergeben')}</div>`}
     ${c.why?`${blattAbschnittHtml('info', 'So wird gewertet')}<div class="blatt-text">${esc(c.why)}</div>`:''}`);
   // Zeilen weiterverlinken — gleiche Ziele wie vorher die Karte selbst.
   document.querySelectorAll('.aw-li[data-li-player]').forEach(el=>{
@@ -123,11 +129,17 @@ function openTopList(kind){
       rows:list.map(k=>({ids:[k.id], name:pname(k.id), val:Math.round(k.q*100)+' %',
         detail:`${k.v} von ${k.n} ${isWeek?'Wochen':'Spieltagen'}`+(k.gilt?'':` · ab ${isWeek?KOENIG_MIN.woche:KOENIG_MIN.tag}`)})),
       why:isWeek
-        ? `Der Anteil der eigenen abgeschlossenen Wochen, die ein Spieler als Bester beendet hat (mit mindestens 5 Siegen), ab ${KOENIG_MIN.woche} Wochen.`
+        ? `Der Anteil der eigenen abgeschlossenen Wochen, die ein Spieler als Bester beendet hat (mit mindestens 5 Siegen).`
         : `Der Anteil der eigenen Spieltage, die ein Spieler als Bester beendet hat (mit mindestens 3 Siegen), ab ${KOENIG_MIN.tag} Spieltagen.`});
   }
 }
 
+// Ein Award ohne Träger sagt im Blatt dasselbe wie auf seiner Kachel
+// (`AW_LEER`) [§C27]. Hier stand „Keine Daten": die Kachel des Wochenkönigs
+// sagte „Noch keine Woche abgeschlossen", sein Blatt klang nach einem Fehler.
+function _awLeerHtml(key){
+  return `<div class="leerstand" style="margin-top:24px">${esc(AW_LEER[key] || 'Noch nicht vergeben')}</div>`;
+}
 function showAward(key){
   const R=awardRankings(awPeriod); const pl=awPeriodLabel(); const meta=AWARD_META[key]; if(!meta)return;
   _sheetSetReopen(()=>showAward(key));
@@ -158,7 +170,7 @@ function showAward(key){
         {label:'Zur Partie', ic:'clock', prim:true, attr:`data-li-match="${esc(m.id)}"`},
         {label:'Zum Duo', ic:'users', attr:`data-li-team="${esc(_awSieger(top).slice().sort().join('|'))}"`}]);
     } else {
-      bodyHtml = `<div class="leerstand" style="margin-top:24px">Keine Daten</div>`;
+      bodyHtml = _awLeerHtml(key);
     }
   } else if(FAVS_AWARDS.has(key)){
     // Favoritenschreck: Match-Detail aus dem Top-Eintrag der Liste rendern.
@@ -187,7 +199,7 @@ function showAward(key){
         bodyHtml += `${blattAbschnittHtml('medal', 'Weitere Coups')}<div class="aw-list">${items}</div>`;
       }
     } else {
-      bodyHtml = `<div class="leerstand" style="margin-top:24px">Keine Daten</div>`;
+      bodyHtml = _awLeerHtml(key);
     }
   } else if(RIVALRY_AWARDS.has(key)){
     // Erzfeinde: Team-Paar mit zwei Bilanz-Boxen (Team A | Team B) + Torverhältnis.
@@ -225,7 +237,7 @@ function showAward(key){
         bodyHtml += `${blattAbschnittHtml('medal', 'Weitere Rivalitäten')}<div class="aw-list">${items}</div>`;
       }
     } else {
-      bodyHtml = `<div class="leerstand" style="margin-top:24px">Keine Daten</div>`;
+      bodyHtml = _awLeerHtml(key);
     }
   } else {
     // Liste, Sortierung, Zahl, Einheit und Stichprobe kommen aus AW_WERT
@@ -240,7 +252,7 @@ function showAward(key){
 
     // Hero (#1) + Liste der weiteren Plätze
     if(!arr.length){
-      bodyHtml = `<div class="leerstand" style="margin-top:24px">Keine Daten</div>`;
+      bodyHtml = _awLeerHtml(key);
     } else {
       const isTeamAward = arr[0].ids.length === 2;
       const isNeg = awNeg(key);

@@ -39,10 +39,14 @@ function showPlayerH2HList(playerId){
     </div>`;
   }).join('');
 
+  // Der Satz über der Liste in 12 px und mit „Ein Tippen …" wie jede
+  // Erklärung: in 10 px stand er nur dank der Vergrößerung von iOS lesbar
+  // da, und „Antippen für Einzelheiten" war eine dritte Form neben „Ein
+  // Tippen zeigt" und „tippen für".
   openSheet(`
     ${blattKopfHtml({ic:'users', titel:'Bilanzen', unter:p.name + ' · ' + h2hList.length + ' Mitspieler'})}
-    <div style="font-size:10px;color:var(--muted);font-family:'Sometype Mono',monospace;letter-spacing:.04em;margin-top:14px;margin-bottom:10px">
-      Siege und Niederlagen <span style="color:var(--blue);font-weight:700">mit</span> und <span style="color:var(--purple);font-weight:700">gegen</span> jeden · Antippen für Einzelheiten
+    <div style="font-size:12px;line-height:1.5;color:var(--muted);font-family:'Sometype Mono',monospace;letter-spacing:.02em;margin-top:14px;margin-bottom:10px">
+      Siege und Niederlagen <span style="color:var(--blue);font-weight:700">mit</span> und <span style="color:var(--purple);font-weight:700">gegen</span> jeden. Ein Tippen zeigt die Einzelheiten.
     </div>
     ${h2hList.length ? `<div class="rlist">${rows}</div>` : emptyState('crossedSwords','Noch keine Mitspieler ab 3 Begegnungen')}
     <button class="btn ghost sm" id="backToPlayerH2H" style="margin-top:16px">← Zurück zum Profil</button>

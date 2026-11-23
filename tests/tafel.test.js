@@ -586,12 +586,14 @@ console.log('\n═══ 7e. DIE REKORDE SIND SORTIERT, DIE VITRINE HAT KEINE L�
   // Fuenf Kammern, die Bestmarken vorn: mit dem Koennen zuerst begann der
   // Reiter mit siebzehn Karten aus Schnitten und Erwartungsabstaenden. Die
   // Leiste darueber steht in derselben Reihenfolge wie die Liste.
-  const erwartet = ['Bestmarken', 'Können', 'Aktuelle Form', 'Fügungen', 'Schattenseiten'];
+  // Gruppe und Feld der Leiste heißen gleich [§C27]: die Leiste sagte
+  // „Marken", die Gruppe darunter „Bestmarken" — dieselbe Kammer, zwei Namen.
+  const erwartet = ['Marken', 'Können', 'Form', 'Fügungen', 'Schatten'];
   const rang = koepfe.map(k => erwartet.findIndex(e => k.indexOf(e) === 0));
   const leiste = (rek.match(/data-rekkammer="([^"]*)"/g) || []).map(x => x.replace(/.*="|"/g, ''));
   ok(rang.every((r, i) => r > -1 && (i === 0 || r > rang[i-1]))
      && leiste.join(',') === ',mark,koennen,form,fuegung,shame',
-     'Alle, Bestmarken, Können, Form, Fügungen, Schatten — in der Leiste wie in der Liste',
+     'Alle, Marken, Können, Form, Fügungen, Schatten — dieselben Namen in der Leiste wie in der Liste',
      koepfe.join(' · ') + ' | ' + leiste.join(','));
   // Keine Karte steht vor der ersten Überschrift.
   ok(rek.indexOf('class="rek-gruppe') < rek.indexOf('class="rek"'),

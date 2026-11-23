@@ -362,12 +362,41 @@ const ok = (c, msg, det) => {
   console.log('\n═══ 4. DAS TITELBAND ═══');
   ok(mass[0].sterne === 1 && mass[1].sterne === 2 && mass[2].sterne === 3,
      'ein Stern je Titel', JSON.stringify(mass.map(x => x.sterne)));
-  const viele = await K(`[6,9].map(n => ({
-    sterne: (_znSterneSvg(n).split('class="zs" d="')[1]||'').split('M').length - 1,
-    ziffer: _znSterneSvg(n).indexOf('zn-ti-n') >= 0
-  }))`);
-  ok(viele.every(v => v.sterne === 5 && v.ziffer),
-     'ab sechs Titeln fünf Sterne plus Ziffer', JSON.stringify(viele));
+  // Bis fünf Titel ein Stern je Titel, ab sechs die Zahl zwischen zwei
+  // Sternen [§C26]. Es standen fünf Sterne und dahinter die Ziffer:
+  // „★★★★★25" lief breiter als der Reif, und die Ziffer am Ende las sich
+  // wie ein Platz. Gemessen wird am Markup: wie viele Sterne, ob die Zahl
+  // genau zwischen ihnen steht und ob das Band schmaler bleibt als fünf.
+  const band = await K(`[1,5,6,9,12,25].map(n => {
+    const s = _znSterneSvg(n);
+    const sterne = (s.split('class="zs" d="')[1]||'').split('"')[0].split('M').length - 1;
+    const facetten = (s.split('class="zs-h" d="')[1]||'').split('"')[0].split('M').length - 1;
+    const breite = +((s.match(/width="([0-9.]+)"/)||[])[1] || 0);
+    const t = s.match(/<text x="([0-9.]+)"[^>]*>([0-9]+)<[/]text>/);
+    return {n, sterne, facetten, breite, zahl: t ? +t[2] : null, mitte: t ? +t[1] : null};
+  })`);
+  ok(band.filter(b => b.n <= 5).every(b => b.sterne === b.n && b.zahl === null),
+     'bis fünf Titel ein Stern je Titel und keine Zahl', JSON.stringify(band.slice(0, 2)));
+  ok(band.filter(b => b.n > 5).every(b => b.sterne === 2 && b.zahl === b.n
+       && Math.abs(b.mitte - b.breite / 2) < .2),
+     'ab sechs Titeln die Zahl mittig zwischen zwei Sternen', JSON.stringify(band.slice(2)));
+  const fuenf = band.find(b => b.n === 5).breite;
+  ok(band.filter(b => b.n > 5).every(b => b.breite < fuenf),
+     'mit Zahl ist das Band schmaler als fünf Sterne', JSON.stringify(band.map(b => b.n + ':' + b.breite)));
+  ok(band.every(b => b.facetten === 5 * b.sterne),
+     'jeder Stern trägt fünf helle Facetten', JSON.stringify(band.map(b => b.n + ':' + b.facetten)));
+  // Dieselbe Form über dem Zeichen (`_insSterne`), sonst sagte die Zahl in
+  // Zeile und Profil zweierlei [§C27].
+  const bogen = await K(`[3,8,25].map(n => {
+    const s = _insSterne(n, 'b_');
+    const d = (s.match(/<path d="([^"]*)"/)||[])[1] || '';
+    const t = s.match(/<text x="([0-9.]+)"[^>]*>\\s*([0-9]+)<[/]text>/);
+    return {n, sterne: d.split('M').length - 1, zahl: t ? +t[2] : null, x: t ? +t[1] : null};
+  })`);
+  ok(bogen[0].sterne === 3 && bogen[0].zahl === null
+       && bogen.slice(1).every(b => b.sterne === 2 && b.zahl === b.n && b.x === 50),
+     'über dem Zeichen dieselbe Form: ab sechs die Zahl mittig zwischen zwei Sternen',
+     JSON.stringify(bogen));
   ok(await K(`_znSterneSvg(0) === ''`), 'ohne Titel kein Band');
 
   console.log('\n═══ 5. DIE DREI METALLE ═══');
