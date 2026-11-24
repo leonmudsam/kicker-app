@@ -1,9 +1,10 @@
 // ╔═══ §5.2 ─── VIEW: POSITIONS-RANGLISTE ──────────────────────────────╗
 //     Spezial-View für Sturm/Abwehr-Rangliste.
 // ╚═════════════════════════════════════════════════════════════════════════╝
-// Die Rangliste einer Position: eine Rechnung für die Liste und die
-// Rollen-Landkarte darüber — zwei Rechnungen über dieselbe Frage nennten
-// irgendwann zwei Beste [§C27].
+// Die Rangliste einer Position: wer dort der Beste der Liga ist. Die
+// Rollen-Landkarte darüber fragt etwas anderes — wo jemand spielt und wo er
+// gegen den eigenen Schnitt stärker ist — und liest das Positionsprofil
+// [§C44]; mit diesem Wert war sie eine Diagonale der Stärke.
 // `spieler` nimmt eine andere Liste als die aktive Liga — die Ruheständler,
 // mit derselben Rechnung [§C40].
 function positionsListe(pos, spieler){

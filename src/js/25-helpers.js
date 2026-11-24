@@ -214,7 +214,10 @@ const HILFE = {
     'Wer auf welcher Position der Stärkste der Liga ist, getrennt nach Sturm und Abwehr. Die Position kommt aus der Aufstellung jeder Partie.',
     'Der Wert verbindet vier Dinge: die Siegquote auf dieser Position, die Leistung gegen die Erwartung, gemessen an Partner und Gegnern, die Tore, vorne die eigenen und hinten die zugelassenen, und die Erfahrung, also wie oft jemand dort gespielt hat.',
     '<b>▲</b> heißt über, <b>▼</b> unter der Erwartung. Gerechnet wird über alle Partien.',
-    'Der Wert vergleicht die Liga auf einer Position. Auf welcher Position jemand selbst stärker ist, sagt das Positions-Profil im Profil.']},
+    // Die Rollen-Landkarte rechnet seit dem Positionsprofil [§C44] nicht mehr
+    // mit diesem Wert; der Absatz nannte nur das Profil und ließ glauben, die
+    // Landkarte darüber kreuze die beiden Ranglisten.
+    'Der Wert vergleicht die Liga auf einer Position. Auf welcher Position jemand selbst stärker ist, sagen das Positions-Profil im Profil und die Rollen-Landkarte über der Liste. Die Landkarte stellt jeden danach auf, wie oft er im Sturm steht und wo er, gemessen am eigenen Schnitt, besser spielt.']},
   awards: {titel:'Awards, Rekorde, Chronik', absaetze:[
     '<b>Awards</b> gelten einem Zeitraum, der Saison oder der Woche. Jede Kachel stellt eine Frage. Ein Tippen zeigt die ersten drei und den Verlauf.',
     () => `<b>Rekorde</b> sind Bestwerte über alle Saisons, vergeben ab <b>${CHRON_MIN_GAMES} Partien</b> der Liga. Wer einen übertrifft, nimmt ihn dem bisherigen Halter ab. Ein Tippen zeigt, wie gezählt wird.`,
@@ -224,7 +227,10 @@ const HILFE = {
     'Auszeichnungen, Chronik-Einträge und Rekorde ergeben zusammen das Prestige und damit das Insignium am Wappen.']},
   teams: {titel:'Die Duos der Liga', absaetze:[
     () => `Jedes Duo ab <b>${DUOS_AB} gemeinsamen Partien</b>, sortiert nach Siegquote, Torbilanz oder Elo-Zuwachs; <b>Schlechteste</b> dreht die Reihenfolge um.`,
-    'Ein Tippen auf ein Duo öffnet die gemeinsame Bilanz: Partien, Elo und welche Aufstellung besser läuft. Das Netz der Duos zeigt, wer mit wem wie oft spielt.']},
+    // Das Netz färbt nach der Leistung gegen die Erwartung, nicht nach der
+    // Siegquote; der Satz sagte nur „wie oft", und Grün und Rot blieben
+    // ohne Erklärung.
+    'Ein Tippen auf ein Duo öffnet die gemeinsame Bilanz: Partien, Elo und welche Aufstellung besser läuft. Das Netz der Duos zeigt, wer mit wem wie oft spielt und ob ein Duo zusammen besser oder schlechter spielt, als die Elo aller vier erwarten lässt.']},
   verlauf: {titel:'Der Verlauf', absaetze:[
     'Jede Partie, die neueste zuerst; oben lässt sich nach einem Spieler filtern.',
     'Ein Tippen auf eine Partie zeigt, wie sich die Elo der vier Spieler verändert hat und warum. Dort lässt sie sich bearbeiten oder löschen; die Liga rechnet danach neu.']},

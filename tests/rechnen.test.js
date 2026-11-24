@@ -180,6 +180,33 @@ const profil=K(`(() => {
 })()`);
 ok(profil.henry.kl==='Reiner Verteidiger' && profil.henry.wert<profil.henry.anteil,
   'Henry steht als Reiner Verteidiger, unter dem Anteil seiner Sturmpartien, weil er vorne schwächer ist: '+JSON.stringify(profil.henry));
+// Die Einblicke messen jeden gegen sich selbst [§C44]. Die Rollen-Landkarte
+// trug den Wert der Positions-Rangliste vorn gegen hinten auf und war eine
+// Diagonale der Stärke: die Schwachen standen „auf beiden unter der Mitte".
+// Jetzt steht jeder rechts, wenn er meist im Sturm steht, und oben, wenn er
+// dort gegen den eigenen Schnitt stärker ist. Das Netz der Duos färbte nach
+// der rohen Siegquote, und zwei schwächere Spieler waren zusammen immer rot;
+// jetzt zählt Sieg und Torverhältnis gegen die Erwartung, zum Schnitt
+// gezogen. Gerechnet wird hier unabhängig vom Einblick.
+const einblick=K(`(() => {
+  const html=_einblickRollen();
+  const faces=[...html.matchAll(/class="rk-p" data-detail="([^"]+)" style="left:([0-9.]+)%;top:([0-9.]+)%/g)].map(m=>({id:m[1],x:+m[2],y:+m[3]}));
+  const falsch=faces.filter(f=>{const l=positionsLage(posPerfFrom(f.id,matches));
+    return (f.x>=50)!==(l.anteil>=.5) || (l.staerker==='atk' && f.y>=50) || (l.staerker==='def' && f.y<=50);}).map(f=>pname(f.id));
+  const net=_einblickNetz();
+  const cls=[...net.matchAll(/class="netz-l ([a-z])"/g)].map(m=>m[1]);
+  const teams=[...net.matchAll(/class="netz-t" data-team="([^"]+)"/g)].map(m=>m[1]);
+  const soll=teams.map(k=>{const [x,y]=k.split('|');let s=0,g=0;
+    matches.forEach(m=>{const onA=[m.a1,m.a2].includes(x)&&[m.a1,m.a2].includes(y), onB=[m.b1,m.b2].includes(x)&&[m.b1,m.b2].includes(y);
+      if(!onA&&!onB) return; const exp=onA?m.exp_a:1-m.exp_a, won=(m.winner==='A')===onA;
+      s+=((won?1:0)-exp+posTorLeistung(onA?m.score_a:m.score_b,onA?m.score_b:m.score_a,exp))/2; g++;});
+    const v=s/(g+POS_SCHRUMPF); return v>.03?'w':v<-.03?'l':'m';});
+  return {gesichter:faces.length, falsch, netz:cls.join(''), soll:soll.join(''), uhr:/Uhrzeigersinn/.test(net)};
+})()`);
+ok(einblick.gesichter>=10 && einblick.falsch.length===0,
+  'Die Rollen-Landkarte setzt jeden nach dem Positionsprofil: rechts, wer meist im Sturm steht, oben, wer dort stärker ist: '+JSON.stringify(einblick.falsch));
+ok(einblick.netz.length>0 && einblick.netz===einblick.soll && !einblick.uhr,
+  'Das Netz der Duos färbt nach Sieg und Torverhältnis gegen die Erwartung, nicht nach der Siegquote: '+einblick.netz+' / '+einblick.soll);
 ok(Math.abs(profil.gleich-profil.gleichSoll)<1e-12,
   'Gleiche Leistung je Partie auf beiden Seiten lässt nur die Aufstellung übrig, gewogen nach den Partien auf der selteneren Seite: '+profil.gleich);
 ok(profil.wenig>profil.viel && profil.wenig<0,
