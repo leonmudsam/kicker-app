@@ -6799,9 +6799,7 @@ return JSON.stringify(funde,null,1);
 
   // Kein Filter im Filter am Feuer. In den Top-5-Listen der Awards lag ein
   // Weichzeichner auf dem ganzen Feuer, und jede Flamme darin trug schon
-  // ihren Schein (`drop-shadow`). Safari zeichnete daraus auf dem Telefon
-  // einen violetten Strich rechts neben dem Kreis, sobald jemand eine Serie
-  // hatte. Chromium zeichnet das sauber; prüfbar ist die Ursache: an keiner
+  // ihren Schein (`drop-shadow`): jede Flamme eine eigene Ebene. An keiner
   // Flamme hat ein Vorfahr bis zum Zeichen selbst noch einen Filter.
   const filterImFilter = await K(`(() => {
     const _f = znFeuer; znFeuer = () => 3;
@@ -6822,6 +6820,16 @@ return JSON.stringify(funde,null,1);
   ok(filterImFilter.flammen > 0 && filterImFilter.out.length === 0,
      'Feuer in Rangliste und Top-5-Liste: höchstens ein Filter je Feuer, kein Filter im Filter',
      JSON.stringify(filterImFilter));
+  // Das Gesicht liegt vor seinem Feuer [§C26]. In den Top-5-Listen trug es
+  // `.aw-li-av` statt `.av`, blieb ohne Position, und das Feuer lag samt
+  // Maske und Unschärfe über dem Emoji; Safari zeichnete daraus einen
+  // violetten Strich neben dem Kreis, bei jedem mit einer Serie.
+  const vorn = await K(`(() => { const _f = znFeuer; znFeuer = () => 3;
+    try { showAward('wins'); return [...document.querySelectorAll('#sheet .aw-li-zn')].map(z => {
+      const a = getComputedStyle(z.querySelector('.aw-li-av')), f = getComputedStyle(z.querySelector('.zn-fx'));
+      return a.position !== 'static' && (parseInt(a.zIndex) || 0) > (parseInt(f.zIndex) || 0); }); }
+    finally { znFeuer = _f; closeSheet(true); } })()`);
+  ok(vorn.length > 0 && vorn.every(Boolean), 'In der Top-5-Liste liegt jedes Gesicht vor seinem Feuer', vorn.filter(Boolean).length + ' von ' + vorn.length);
 
   // Ein Award ohne Träger sagt im Blatt, was noch fehlt, wie seine Kachel
   // (`AW_LEER`) [§C27]. Dort stand „Keine Daten" — der Wochenkönig sagte auf
