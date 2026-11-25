@@ -457,7 +457,7 @@ ok(wochenKoenig.liste.includes('a:1/1') && wochenKoenig.tag[0]==='a:2/2' && woch
 // und Awards „Player of the Day".
 {
   const html=require('fs').readFileSync(require('./ziel.js'),'utf8');
-  const fund=html.match(/Spieler des Tages|Spieler der Woche/g)||[];
+  const fund=html.match(/Spieler des Tages|Spieler der Woche/gi)||[];
   ok(fund.length===0, 'Kein „Spieler des Tages" oder „Spieler der Woche" neben „Player of the Day/Week": '+JSON.stringify([...new Set(fund)]));
 }
 // Der Ring am Avatar trägt jeden Zustand, nicht nur den ersten [§13.7]:
