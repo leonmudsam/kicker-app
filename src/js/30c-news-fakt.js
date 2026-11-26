@@ -343,7 +343,7 @@ const _FF_FORM = (() => {
     return r.map((x, i) => `<div class="ff-ew-z${x.hell ? ' eins' : ''}" style="--k:${i}">${chip(x.p)}`
       + `<span class="ff-r-m">${_ffNm(x.p)}<span class="ff-ew-b"><i style="width:${prozent(x.w, x.g)}%"></i>`
       + `<u style="left:${prozent(x.e, x.g)}%"></u></span></span>`
-      + `<span class="ff-ew-w"><b class="num">${esc(vz(+(x.w - x.e).toFixed(1)))}</b><small class="num">${x.w | 0} von ${x.g | 0}</small></span></div>`).join('')
+      + `<span class="ff-ew-w"><b class="num">${esc(vz(Math.round(x.w - x.e)))}</b><small class="num">${x.w | 0} von ${x.g | 0}</small></span></div>`).join('')
       + `<div class="ff-leg"><span class="g">Siege</span><span class="e">erwartet</span></div>`;
   };
 
@@ -413,18 +413,22 @@ const _FF_FORM = (() => {
 
   // ── Die Chemie eines Duos: zwei Gesichter und ihr Bogen ───────────
   // Der Bogen ist die Linie aus dem Netz der Duos [§C27], gefärbt wie
-  // dort: Grün über der Erwartung. Darunter die beiden nächsten Duos als
-  // Zeilen, damit die Zahl einen Maßstab hat.
+  // dort: Grün, wo mehr gewonnen wurde als erwartet. Die Zahl sind die
+  // Siege mehr als nach Elo erwartet: „+6 über der Erwartung" in
+  // Prozentpunkten las niemand. Gespeicherte Karten tragen Siege und
+  // Erwartung (`w`, `e`) und zeigen dieselbe Zahl; ihre Nachbarn ohne
+  // diese Zahl stehen mit den gemeinsamen Partien.
   const chemie = b => {
     if(!pm()[b.a] || !pm()[b.b]) return '';
     const dick = (1.6 + Math.min(1, (b.g | 0) / 60) * 4.4).toFixed(1);
     const weitere = (b.dz || []).filter(x => pm()[x[0]] && pm()[x[1]]);
+    const mehr = b.m != null ? b.m : Math.round((b.w | 0) - (Number(b.e) || 0));
     return `<div class="ff-cm"><span class="ff-cm-p">${gesicht(b.a, 36)}${_ffNm(b.a)}</span>`
       + `<span class="ff-cm-m"><svg viewBox="0 0 120 34" preserveAspectRatio="none" aria-hidden="true"><path class="netz-l w" d="M4 32Q60 -8 116 32" stroke-width="${dick}"/></svg>`
-      + `<b class="num">${esc(vz(b.pp | 0))}</b><small>über der Erwartung</small></span>`
+      + `<b class="num">${esc(vz(mehr | 0))}</b><small>Siege mehr als erwartet</small></span>`
       + `<span class="ff-cm-p">${gesicht(b.b, 36)}${_ffNm(b.b)}</span></div>`
       + (weitere.length ? `<div class="ff-cm-w">${weitere.map(x => `<span><span class="sp-chips">${chip(x[0])}${chip(x[1])}</span>`
-        + `<span class="ff-nms">${_ffNm(x[0])}${_ffNm(x[1])}</span><b class="num">${esc(vz(x[2] | 0))}</b></span>`).join('')}</div>` : '');
+        + `<span class="ff-nms">${_ffNm(x[0])}${_ffNm(x[1])}</span><b class="num">${esc(x[4] != null ? vz(x[4] | 0) : (x[3] | 0) + ' Partien')}</b></span>`).join('')}</div>` : '');
   };
 
   // ── Die Rolle: ein Ausschnitt der Rollen-Landkarte ─────────────────
@@ -464,10 +468,261 @@ const _FF_FORM = (() => {
         + `<em><i style="height:${Math.max(4, x[1] / max * 100).toFixed(1)}%"></i></em><small>${esc(x[0])}</small></span>`).join('')}</div>`;
   };
 
+  // ══ Die Bilder der zweiten Runde [28-news-ambient] ════════════════════
+  // Wie die acht davor: Metall, die Farbe der Karte (`--story`) an dem,
+  // worum es geht, Gold nur am Titel, Grün und Rot nur für eine Richtung
+  // [§C25]. Ein Name steht unter oder neben jedem Gesicht [§C33].
+
+  // Ein Podest mit Wert und Unterzeile, Platz zwei, eins, drei; die Höhe ist
+  // der Platz [§C27]. `ins` trägt das Wappen, `u` je Stufe eine Zeile unter
+  // dem Sockel (der Platz vor vierzehn Tagen, der Platz von jetzt).
+  const podest = (l, o) => {
+    const r = (l || []).filter(x => pm()[x.p]).slice(0, 3);
+    if(!r.length) return '';
+    const hl = new Set(o.hl || []);
+    const folge = r.length >= 3 ? [1, 0, 2] : r.length === 2 ? [1, 0] : [0];
+    return `<div class="ff-pd ff-pd2">` + folge.map(k => { const x = r[k];
+      return `<span class="ff-pd-s p${k + 1}${hl.has(x.p) ? ' hl' : ''}" style="--k:${k}">`
+        + (o.ins ? gesicht(x.p, 48) : `<span class="ff-av" style="--av:${k ? 30 : 36}px">${chip(x.p)}</span>`)
+        + `${_ffNm(x.p)}<em><b class="num">${esc(String(x.t))}</b>${o.ohnePlatz ? '' : `<small class="num">${k + 1}</small>`}</em>`
+        + (o.u ? `<i class="ff-pd-u">${o.u(x, k)}</i>` : '') + `</span>`; }).join('') + `</div>`;
+  };
+  const bewegung = (jetzt, vorher) => !vorher ? `<i class="ff-bw neu">neu</i>`
+    : vorher > jetzt ? `<i class="ff-bw auf">▲${vorher - jetzt}</i>`
+    : vorher < jetzt ? `<i class="ff-bw ab">▼${jetzt - vorher}</i>` : `<i class="ff-bw">–</i>`;
+
+  // ── Die Tabelle des Monats mit der Bewegung seit der Vorwoche ─────
+  // Platz, Gesicht, Name, Elo, und wie viele Plätze es in sieben Tagen
+  // waren. Die Zeilen, um die es geht, in der Farbe der Karte.
+  const tabelle = b => {
+    const z = (b.z || []).filter(x => pm()[x[0]]);
+    if(z.length < 3) return '';
+    const hl = new Set(b.hl || []);
+    return `<div class="ff-tb">` + z.map((x, i) => `<div class="ff-tb-z${hl.has(x[0]) ? ' hl' : ''}" style="--k:${i}">`
+      + `<b class="num ff-tb-p">${i + 1}</b>${chip(x[0])}${_ffNm(x[0])}`
+      + `<span class="ff-tb-e num">${zahl(x[1])}<small> Elo</small></span>${bewegung(i + 1, x[2])}</div>`).join('')
+      + `</div><div class="ff-leg"><span>Bewegung seit dem ${esc(b.seit || '')}</span></div>`;
+  };
+
+  // ── Die Ewige Tafel: das Podest der Karriere-Elo mit Wappen ───────
+  // Unter jeder Stufe die Bewegung in vierzehn Tagen, wie in der Tabelle
+  // des Monats; hat sich oben nichts bewegt, steht keine.
+  const mitBewegung = (b, o) => {
+    const l = (b.pd || []).slice(0, 3), still = l.every((x, k) => x.v === k + 1);
+    const h = podest(b.pd, Object.assign({hl:b.hl}, o, still ? {} : {u:(x, k) => bewegung(k + 1, x.v)}));
+    return h && !still ? h + `<div class="ff-leg"><span>Bewegung in 14 Tagen</span></div>` : h;
+  };
+  const karriere = b => mitBewegung(b, {ins:true});
+
+  // ── Die Aufholjagd: zwei Bahnen auf einer gezoomten Achse ──────────
+  // Bei 300 gegen 290 Partien wären zwei volle Balken gleich lang. Die
+  // Achse beginnt deshalb knapp unter dem kleinsten der vier Stände, und
+  // der Strich auf jeder Bahn ist der Stand vor dreißig Tagen.
+  const AUF_WORT = {siege:'Siege', partien:'Partien', tore:'Tore'};
+  const aufholjagd = b => {
+    const z = (b.z || []).filter(x => pm()[x[0]]);
+    if(z.length !== 2) return '';
+    const werte = z.flatMap(x => [x[1], x[2]]), lo0 = Math.min(...werte), hi = Math.max(...werte);
+    const lo = Math.max(0, lo0 - Math.max(1, (hi - lo0) * .15)), sp = Math.max(1, hi - lo);
+    const w = v => ((v - lo) / sp * 100).toFixed(1);
+    const ab = (x, y) => Math.abs(x - y);
+    // Wer vorn lag und wer vorn liegt, mit dem Abstand: beim Vorbeiziehen
+    // sind das zwei verschiedene.
+    const vorn = (i) => z[0][i] >= z[1][i] ? z[0] : z[1];
+    const stand = (i, wort) => { const v = vorn(i); return `<span><small>${wort}</small><b class="num">+${zahl(ab(z[0][i], z[1][i]))}</b>`
+      + `<em>${esc(_spName(v[0]))} vorn</em></span>`; };
+    return `<div class="ff-aj"><div class="ff-hz-k">${svgI(b.art === 'tore' ? 'ball' : b.art === 'siege' ? 'trophy' : 'spielfeld')}<b>${esc(AUF_WORT[b.art] || '')} der Laufbahn</b></div>`
+      + z.map((x, i) => `<div class="ff-aj-z${x[0] === b.hl ? ' hl' : ''}" style="--k:${i}">${chip(x[0])}`
+      + `<span class="ff-r-m">${_ffNm(x[0])}<span class="ff-aj-b"><i style="width:${w(x[1])}%"></i><u style="left:${w(x[2])}%"></u></span></span>`
+      + `<b class="num">${zahl(x[1])}</b></div>`).join('')
+      + `<div class="ff-aj-ab">${stand(2, 'vor 30 Tagen')}<i></i>${stand(1, 'heute')}</div></div>`
+      + `<div class="ff-leg"><span class="g">heute</span><span class="e">vor 30 Tagen</span></div>`;
+  };
+
+  // ── Die Meister: je Monat der Stern, das Gesicht, der Abstand ──────
+  // Gold, denn es ist ein Titel [§C25]; wer sie gesammelt hat, steht hell.
+  const STERN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.7 5.8 6.3.7-4.7 4.3 1.3 6.2L12 16.7l-5.6 3.1 1.3-6.2L3 9.3l6.3-.7z"/></svg>';
+  const meister = b => {
+    const m = (b.m || []).filter(x => pm()[x[1]]);
+    if(m.length < 2) return '';
+    return `<div class="ff-ms" style="--n:${m.length}">` + m.map((x, i) => `<span class="ff-ms-c${!b.hl || x[1] === b.hl ? ' hl' : ''}" style="--k:${i}">`
+      + `<small>${esc(String(seasonLabel(x[0])).split(' ')[0])}</small>${STERN}${gesicht(x[1], 30)}${_ffNm(x[1])}`
+      + `<b class="num">${zahl(x[2])}</b>${x[4] != null ? `<i class="num">+${zahl(x[2] - x[4])}</i>` : ''}</span>`).join('') + `</div>`
+      + `<div class="ff-leg"><span>Elo zum Monatsende und Vorsprung</span></div>`;
+  };
+
+  // ── Die Leiter: Bahnen des Prestiges mit den Stufen als Sprossen ──
+  // Jede Bahn reicht bis zu den Punkten, die Sprossen stehen an den
+  // Grenzen der Stufen des Insigniums; über der ersten Bahn das Zeichen
+  // jeder Stufe, die eine Bahn erreicht oder als nächste vor sich hat.
+  const leiter = b => {
+    const z = (b.z || []).filter(x => pm()[x[0]]), st = (b.st || []);
+    if(z.length < 3 || !st.length) return '';
+    // Die Achse beginnt an der Stufe des Hintersten: von null an lagen
+    // Schildring und Volutenkranz übereinander, und alle Bahnen begannen
+    // im selben leeren Stück.
+    const max = Math.max(...z.map(x => x[1])), min = Math.min(...z.map(x => x[1]));
+    const naechste = st.find(s => s[1] > max), unten = st.filter(s => s[1] <= min).pop();
+    const lo = unten ? unten[1] : 0, ende = naechste ? naechste[1] : max * 1.08;
+    const w = v => Math.max(0, Math.min(100, (v - lo) / Math.max(1, ende - lo) * 100)).toFixed(2);
+    const sichtbarSt = st.filter(s => s[1] >= lo && s[1] <= ende);
+    const hl = new Set(b.hl || []);
+    const rang = pid => (getPlayerRank(pid) || {}).label;
+    const zeichen = s => { try { return insigniumStufeSvg(s[0], rang(z[0][0]), 0, {bild:true}) || ''; } catch(e){ return ''; } };
+    const sprossen = sichtbarSt.map(s => `<u style="left:${w(s[1])}%"></u>`).join('');
+    return `<div class="ff-lt"><div class="ff-lt-z ax" aria-hidden="true"><span></span><span class="ff-lt-b">`
+      // Ein Name steht nur, wo er Platz hat; das Zeichen steht immer. Auf
+      // 288 px lagen Volutenkranz und Zierkranz übereinander.
+      + (() => { let letzt = -100; return sichtbarSt.map((s, i) => { const x = Number(w(s[1])), mitName = x - letzt >= 45 || i === sichtbarSt.length - 1;
+        if(mitName) letzt = x;
+        return `<em class="${i === 0 ? 'li' : i === sichtbarSt.length - 1 ? 're' : ''}" style="left:${x}%">${zeichen(s)}<small${mitName ? '' : ' class="still"'}>${mitName ? esc(s[2]) : '&nbsp;'}</small></em>`; }).join(''); })()
+      + `</span><span></span></div>`
+      + z.map((x, i) => `<div class="ff-lt-z${hl.has(x[0]) ? ' hl' : ''}" style="--k:${i}">${chip(x[0])}`
+        + `<span class="ff-r-m">${_ffNm(x[0])}<span class="ff-lt-b"><i style="width:${w(x[1])}%"></i>${sprossen}</span></span>`
+        + `<b class="num">${zahl(x[1])}</b></div>`).join('') + `</div>`;
+  };
+
+  // ── Die Ausbeute des Monats: je Spieler eine Bahn aus drei Klassen ─
+  // Legendär Gold, selten Violett, gewöhnlich Metall — die Farben der
+  // Klassen überall [§C25]; die Länge ist die Zahl der Auszeichnungen.
+  const ausbeute = b => {
+    const z = (b.z || []).filter(x => pm()[x[0]]);
+    if(!z.length) return '';
+    const max = Math.max(1, ...z.map(x => x[1]));
+    return z.map((x, i) => `<div class="ff-ab-z${x[0] === b.hl ? ' hl' : ''}" style="--k:${i}">${chip(x[0])}`
+      + `<span class="ff-r-m">${_ffNm(x[0])}<span class="ff-ab-b" style="width:${(x[1] / max * 100).toFixed(1)}%">`
+      + [['legendary', x[2]], ['rare', x[3]], ['common', x[4]]].filter(q => q[1] > 0).map(q => `<i class="${q[0]}" style="flex-grow:${q[1]}"></i>`).join('')
+      + `</span></span><b class="num">${zahl(x[1])}</b></div>`).join('')
+      + `<div class="ff-leg ff-ab-leg"><span class="legendary">legendär</span><span class="rare">selten</span><span class="common">gewöhnlich</span></div>`;
+  };
+
+  // ── Die Serie: je Sieg ein Feld, dahinter die Bestmarken ───────────
+  // Die Felder der Serie in der Farbe der Karte, gestrichelt bis zur
+  // eigenen Bestmarke, der Strich die längste Serie der Liga.
+  // Ein Duo in Serie zeichnet sich gleich, mit zwei Gesichtern (`a`, `b`).
+  const serie = b => {
+    const duo = b.a && b.b;
+    if(duo ? !(pm()[b.a] && pm()[b.b]) : !pm()[b.p]) return '';
+    const n = b.n | 0, best = b.best | 0, liga = b.liga | 0, len = Math.min(24, Math.max(n, best, liga));
+    const felder = Array.from({length:len}, (_, i) => `<i class="${i < n ? 'w' : i < best ? 'ziel' : 'leer'}${i + 1 === liga && liga > n ? ' liga' : ''}" style="--k:${i}"></i>`).join('');
+    const wer = duo ? `<span class="sp-chips">${chip(b.a)}${chip(b.b)}</span><span class="ff-nms ff-und">${_ffNm(b.a)}${_ffNm(b.b)}</span>`
+      : `${gesicht(b.p, 30)}${_ffNm(b.p)}`;
+    return `<div class="ff-se-k">${wer}<span class="ff-se-w"><b class="num">${n}</b><small>Siege in Folge</small></span></div>`
+      + `<span class="ff-se">${felder}</span>`
+      + `<div class="ff-leg"><span class="g">seit dem ${esc(b.seit || '')}</span>`
+      + (best > n ? `<span class="z">${duo ? 'beste der beiden' : 'eigene Bestmarke'} ${best}</span>` : '')
+      + (liga > n ? `<span class="l">${duo ? 'längste eines Duos' : 'längste der Liga'} ${liga}</span>` : '') + `</div>`;
+  };
+
+  // ── Der Gipfel: die Elo des Monats gegen den höchsten Stand davor ──
+  // Dieselbe Kurve wie der Aufwind (`_spLinie`), die Bezugslinie ist der
+  // höchste Stand eines Monats davor; was darüber liegt, ist neu.
+  const gipfel = b => {
+    const v = (b.v || []).map(Number);
+    if(!pm()[b.p] || v.length < 3) return '';
+    // Ohne `zwei`: unter der Bezugslinie läge sonst der ganze Monat rot,
+    // und der Weg zum Gipfel las sich als Absturz [§C25].
+    const svg = _spLinie(v, {ref:b.peak != null ? b.peak : undefined, fmt:y => (y < 0 ? '−' : '') + _spZahl(y), ende:'', x:b.x || []});
+    const p = /<circle class="sp-ln-p[^"]*" cx="([\d.]+)" cy="([\d.]+)"/.exec(svg);
+    const face = p ? `<span class="ff-af-p" style="left:${(Number(p[1]) / 244 * 100).toFixed(2)}%;top:${(Number(p[2]) / 80 * 100).toFixed(2)}%">${chip(b.p)}</span>` : '';
+    return `<div class="ff-af-k">${_ffNm(b.p)}<span class="ff-af-w"><b class="num">${zahl(v[v.length - 1])}</b><small>Elo im ${esc(b.mon || '')}</small></span></div>`
+      + `<div class="sp-ln metall ff-af ff-gp"><div class="ff-af-l">${svg}${face}</div></div>`
+      + (b.peak != null ? `<div class="ff-leg"><span class="r">${b.neu ? 'bester Monat davor' : 'eigener Höchststand'}</span></div>` : '');
+  };
+
+  // ── Die Saisons: der Platz Monat für Monat ─────────────────────────
+  // Platz 1 oben, eine Linie durch die Monate wie im Positionsverlauf
+  // [§C27]; der laufende Monat in der Farbe der Karte, die Plätze des
+  // Podests in ihrem Metall.
+  const saisons = b => {
+    // Die Monate stehen unter `mo`, nicht unter `r`: `r` ist überall sonst
+    // eine Rangliste von Spielern ({p, w}), und eine Reihe von Monaten unter
+    // demselben Namen las jede Prüfung als Rennen.
+    const r = (b.mo || []).filter(x => x[1] > 0);
+    if(!pm()[b.p] || r.length < 2) return '';
+    const W = 244, H = 84, n = r.length, unten = Math.max(4, ...r.map(x => x[1]));
+    const X = i => 18 + i * (W - 36) / Math.max(1, n - 1), Y = p => 14 + (p - 1) / Math.max(1, unten - 1) * (H - 36);
+    const d = r.map((x, i) => (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(x[1]).toFixed(1)).join('');
+    const metall = p => p === 1 ? 'm1' : p === 2 ? 'm2' : p === 3 ? 'm3' : '';
+    return `<div class="ff-ss-k">${gesicht(b.p, 30)}${_ffNm(b.p)}</div><div class="ff-ss"><svg viewBox="0 0 ${W} ${H}" aria-hidden="true">`
+      + `<line class="ff-ss-g" x1="8" x2="${W - 8}" y1="${Y(1).toFixed(1)}" y2="${Y(1).toFixed(1)}"/>`
+      + `<path class="ff-ss-l" d="${d}"/>`
+      + r.map((x, i) => `<g class="ff-ss-p ${metall(x[1])}${i === n - 1 ? ' jetzt' : ''}"><circle cx="${X(i).toFixed(1)}" cy="${Y(x[1]).toFixed(1)}" r="10"/>`
+        + `<text x="${X(i).toFixed(1)}" y="${(Y(x[1]) + 3.6).toFixed(1)}">${x[1]}</text>`
+        + `<text class="m" x="${X(i).toFixed(1)}" y="${H - 3}">${esc(x[0])}</text></g>`).join('') + `</svg></div>`;
+  };
+
+  // ── Der Monat davor: sein Podest und der Platz von jetzt ───────────
+  const vormonat = b => podest(b.pd, {ins:true, u:x => x.j ? `im ${esc(b.mon || '')} <b class="num">${x.j}.</b>` : `im ${esc(b.mon || '')} ohne Partie`});
+
+  // ── Eine Position: ihr Zeichen, das Podest mit dem Wert ────────────
+  const position = b => {
+    const pd = mitBewegung(b, {});
+    return pd ? `<div class="ff-hz-k ff-po-k">${svgI(b.pos === 'atk' ? 'bolt' : 'shield')}<b>${b.pos === 'atk' ? 'Sturm' : 'Abwehr'}</b><small>Wert der Rangliste</small></div>${pd}` : '';
+  };
+
+  // ── Das Netz eines Spielers: jeder Partner auf einem Kreis ─────────
+  // Die Linie so stark wie die gemeinsamen Partien, wie im Netz der Duos
+  // [§C27]; wer fehlt, steht ohne Linie und gestrichelt, wer neu dazukam,
+  // in der Farbe der Karte. Jeder Name klein unter seinem Gesicht.
+  const partnernetz = b => {
+    const z = (b.z || []).filter(x => pm()[x[0]]);
+    if(!pm()[b.p] || z.length < 4) return '';
+    const fehlt = new Set(b.fehlt || []), max = Math.max(1, ...z.map(x => x[1]));
+    const n = z.length, pos = i => { const a = -Math.PI / 2 + i * 2 * Math.PI / n; return [50 + 41 * Math.cos(a), 50 + 38 * Math.sin(a)]; };
+    const linien = z.map((x, i) => { if(!x[1]) return ''; const [px, py] = pos(i);
+      return `<line class="netz-l${x[0] === b.neu ? ' neu' : ''}" x1="50" y1="50" x2="${px.toFixed(1)}" y2="${py.toFixed(1)}" stroke-width="${(.8 + x[1] / max * 3.4).toFixed(2)}"/>`; }).join('');
+    return `<div class="ff-pn"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${linien}</svg>`
+      + z.map((x, i) => { const [px, py] = pos(i);
+        return `<span class="ff-pn-p${fehlt.has(x[0]) ? ' fehlt' : ''}${x[0] === b.neu ? ' neu' : ''}" style="left:${px.toFixed(1)}%;top:${py.toFixed(1)}%">${chip(x[0])}<b>${esc(_spName(x[0]))}</b></span>`; }).join('')
+      + `<span class="ff-pn-m">${gesicht(b.p, 40)}${_ffNm(b.p)}</span></div>`;
+  };
+
+  // ── Die Duos: ein Podest aus Paaren ────────────────────────────────
+  // Ein Duo hat keinen Rang und kein Wappen [allgemein]: zwei Gesichter,
+  // die Höhe der Stufe ist die Reihenfolge der Teams-Liste, im Sockel die
+  // Siegquote, darunter die gemeinsamen Partien.
+  const duopodest = b => {
+    const r = (b.pd || []).filter(x => pm()[x[0]] && pm()[x[1]]).slice(0, 3);
+    if(!r.length) return '';
+    const folge = r.length >= 3 ? [1, 0, 2] : r.length === 2 ? [1, 0] : [0];
+    return `<div class="ff-pd ff-pd2 ff-dp">` + folge.map(k => { const x = r[k], key = paarKey(x[0], x[1]);
+      return `<span class="ff-pd-s p${k + 1}${key === b.hl ? ' hl' : ''}" style="--k:${k}"><span class="sp-chips">${chip(x[0])}${chip(x[1])}</span>`
+        + `<span class="ff-nms">${_ffNm(x[0])}${_ffNm(x[1])}</span>`
+        + `<em><b class="num">${Math.round(x[2] / Math.max(1, x[3]) * 100)}&nbsp;%</b><small class="num">${x[2]} von ${x[3]}</small></em></span>`; }).join('') + `</div>`;
+  };
+
+  // ── Das Rennen um das Team der Saison: Paare als Bahnen ────────────
+  const duorennen = b => {
+    const z = (b.z || []).filter(x => pm()[x[0]] && pm()[x[1]]);
+    if(!z.length) return '';
+    const max = Math.max(1, ...z.map(x => x[2]));
+    return z.map((x, i) => `<div class="ff-dr-z${paarKey(x[0], x[1]) === b.hl ? ' hl' : ''}" style="--k:${i}"><span class="sp-chips">${chip(x[0])}${chip(x[1])}</span>`
+      + `<span class="ff-r-m"><span class="ff-nms">${_ffNm(x[0])}${_ffNm(x[1])}</span><span class="ff-bar"><i style="width:${(Math.max(0, x[2]) / max * 100).toFixed(1)}%"></i></span></span>`
+      + `<span class="ff-ew-w"><b class="num">${esc(vz(x[2]))}</b><small class="num">${x[3]} Partien</small></span></div>`).join('')
+      + `<div class="ff-leg"><span>Elo zusammen im Monat</span></div>`;
+  };
+
+  // ── Das Duell: das Tauziehen, darunter die letzten Begegnungen ─────
+  // Jede Begegnung ein Feld auf der Seite ihres Siegers, links der eine,
+  // rechts der andere, die jüngste zuletzt.
+  const rivale = b => {
+    const t = _ffDuell(b);
+    if(!t) return '';
+    const z = String(b.z || '').split('').filter(c => c === 'a' || c === 'b');
+    // Oben die Siege dessen, von dem die Karte handelt (`h`), unten die
+    // des anderen; ohne ihn der Linke oben.
+    const h = b.h === 'b' ? 'b' : 'a';
+    return t + (z.length ? `<div class="ff-rv">${z.map((c, i) => `<i class="${c === h ? 'o' : 'u'}" style="--k:${i}"></i>`).join('')}</div>`
+        + `<div class="ff-leg ff-rv-l"><span>die letzten ${z.length}, die jüngste rechts</span></div>` : '');
+  };
+
   return {
     rennen:_ffRennen, podest:_ffPodest, sammlung:_ffSammlung, sterne:_ffSterne, zahl:_ffZahl, duell:_ffDuell, duo:_ffDuo, vitrine:_ffVitrine, medaille:_ffMedaille,
     stufe:_ffStufe, ziel:_ffZiel, rolle:_ffRolle, verteilung:_ffVerteilung, saeulen:_ffSaeulen,
     platz:_ffPlatz, tafel:_ffTafel, zaehler:_ffZaehler, lauf:_ffLauf, halbzeit:_ffHalbzeit,
-    aufwind, erwartung, hantel, marke, chronik, chemie, landkarte, liga
+    aufwind, erwartung, hantel, marke, chronik, chemie, landkarte, liga,
+    tabelle, karriere, aufholjagd, meister, leiter, ausbeute, serie, duoserie:serie, gipfel, saisons, vormonat, position,
+    partnernetz, duopodest, duorennen, rivale
   };
 })();

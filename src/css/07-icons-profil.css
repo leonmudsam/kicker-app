@@ -1180,6 +1180,10 @@
   .nf-fakt-auszeichnung,.nd-fakt-auszeichnung{--story:#9b96a3;--story-rgb:155,150,163}
   .nf-fakt-form,.nd-fakt-form{--story:#94a08e;--story-rgb:148,160,142}
   .nf-fakt-duell,.nd-fakt-duell{--story:#a19990;--story-rgb:161,153,144}
+  /* Das Duo: ein Rosé im selben Metall, zwischen dem Violett der Spieler
+     und der Bronze des Duells — zwei, die zusammen spielen, sind weder
+     einer noch zwei Gegner. */
+  .nf-fakt-duo,.nd-fakt-duo{--story:#a6959e;--story-rgb:166,149,158}
 
   /* ── Motiv, Winkel und fette Akzente ──────────────────────────────
      Die Karte war ein dunkles Rechteck mit Text darin, und zehn davon

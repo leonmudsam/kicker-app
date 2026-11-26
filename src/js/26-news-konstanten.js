@@ -65,6 +65,10 @@ const NEWS_AMBIENT_STIL = {
   laufbahn:     {label:'AUS DER LAUFBAHN',  ton:'laufbahn'},
   chronik:      {label:'AUS DER CHRONIK',   ton:'chronik'},
   auszeichnung: {label:'AUSZEICHNUNGEN',    ton:'auszeichnung'},
+  // Ein Duo ist kein Spieler im Fokus: die Chemie zweier stand unter dieser
+  // Aufschrift und nannte zwei. Gespeicherte Karten mit `persoenlich`
+  // behalten ihre Rubrik [§C33].
+  duo:          {label:'DUO IM FOKUS',      ton:'duo'},
 };
 
 const NEWS_LS_SEEN  = 'eso_news_seen_v1';

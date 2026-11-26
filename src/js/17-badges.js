@@ -27,6 +27,13 @@
 //   - ggf. fire('badge_id') in getBadgeEarnedCache (§7.4) — sonst kein
 //     Match-Trigger / kein Achievement-Toast / kein Chip im Match-Review
 // ─── §7.1 Der Katalog der Auszeichnungen ─────────────────────────────
+// Die Mindestzahl an Siegen für den Spieler des Tages, der Woche und des
+// Monats steht hier an EINER Stelle, vor dem Katalog, der sie liest. Sie stand als blanke 3, 5 und 10 in der
+// Rangliste, im Liga-Reiter, im Blatt des Wochenkönigs, im Katalog und im
+// Feed; wer sie an einer Stelle änderte, ließ die anderen falsch stehen.
+// Gemessen spielt ein Spieler im Mittel vier Partien am Tag und acht in der
+// Woche: die Zahlen passen dazu.
+const PERIODE_MIN_SIEGE = {tag:3, woche:5, monat:10};
 const BADGES=[
   // ══ EINMALIGE BADGES (Karriere-Meilensteine) ══
   // Zeile 1 — Debütant, Stammgast
@@ -143,9 +150,9 @@ const BADGES=[
   {id:'award_collector',ic:'medalTrio',name:'Award-Sammler',desc:'In einer Saison mindestens 5-mal Player of the Day und 2-mal Player of the Week',
     multi:true,count:(id,ms,bis)=>countAwardCollector(id,ms,bis)},
   // Zeile 17 — POTW, POTD (Perioden-Auszeichnungen, ganz am Ende)
-  {id:'potw',ic:'weekKing',name:'Player of the Week',desc:'Höchste Siegquote einer Kalenderwoche (ab 5 Siegen)',
+  {id:'potw',ic:'weekKing',name:'Player of the Week',desc:'Höchste Siegquote einer Kalenderwoche (ab '+PERIODE_MIN_SIEGE.woche+' Siegen)',
     multi:true,count:(id,ms,bis)=>countPeriodWins(id,ms,'week',bis)},
-  {id:'potd',ic:'dayKing',name:'Player of the Day',desc:'Die meisten Siege eines Spieltags (ab 3)',
+  {id:'potd',ic:'dayKing',name:'Player of the Day',desc:'Die meisten Siege eines Spieltags (ab '+PERIODE_MIN_SIEGE.tag+')',
     multi:true,count:(id,ms,bis)=>countDayWins(id,ms,bis)},
   // ── NEUE BADGES v4 ──
   // Thronfäller: Sieg gegen den Top-1 der laufenden Saison-Rangliste (Stand vor dem Match)
@@ -592,10 +599,10 @@ const _winnerCountsMemo = new WeakMap(); // msArray → { '<kind>_<curKey>': {pi
 // Wer einen Zeitraum gewinnt, an EINER Stelle. Die Regel stand viermal im
 // Code — hier, im Wochen- und im Tagesrückblick und im Feed —, und eine
 // Fassung verglich die Quote ohne die Toleranz der anderen.
-//   'tag'    mindestens 3 Siege; mehr Siege, dann mehr Elo am Tag
-//   'woche'  mindestens 5 Siege; höchste Quote (bis 0,001 gilt gleich),
-//            dann mehr Siege, dann mehr Elo
-//   'monat'  wie die Woche, mindestens 10 Siege
+//   'tag'    ab PERIODE_MIN_SIEGE.tag Siegen; mehr Siege, dann mehr Elo am Tag
+//   'woche'  ab PERIODE_MIN_SIEGE.woche Siegen; höchste Quote (bis 0,001
+//            gilt gleich), dann mehr Siege, dann mehr Elo
+//   'monat'  wie die Woche, ab PERIODE_MIN_SIEGE.monat Siegen
 // Liefert jeden, der die Mindestzahl erreicht, in dieser Reihenfolge, als
 // {id, wins, losses, eloDelta, wr}. Bei Gleichstand in allem bleibt die
 // Reihenfolge der ersten Partie, in der jemand auftaucht. `nurSichtbar`
@@ -608,7 +615,7 @@ function _periodeRangliste(ms, regel, nurSichtbar){
     if((onA&&m.winner==='A')||(!onA&&m.winner==='B')) s.wins++; else s.losses++;
     s.eloDelta += (m.deltas && m.deltas[pid]) || 0;
   }));
-  const minW = regel==='tag' ? 3 : regel==='woche' ? 5 : 10;
+  const minW = PERIODE_MIN_SIEGE[regel];
   const pm = nurSichtbar ? pmap() : null;
   return Object.values(ps)
     .filter(s=>s.wins>=minW && (!pm || sichtbar(pm[s.id])))

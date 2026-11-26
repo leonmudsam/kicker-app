@@ -199,15 +199,28 @@ function openNewsDetail(sid){
   // Grafik über der Rangliste ist), die Chronik oder ein Duo. Ein Reiter
   // liegt unter dem Feed, also schließen Blatt und Feed; ein Duo ist ein
   // Blatt und stapelt sich wie ein Profil darüber.
+  // Ein Reiter öffnet in der Sicht, nach der die Karte fragt: die Ewige
+  // Tafel ist die Rangliste über alle Saisons, das Rennen um das Team der
+  // Saison die der Duos, der Sturm die Positions-Rangliste des Sturms. Der
+  // Wechsel des Reiters setzt sie zurück, also danach; gezeichnet wird erst
+  // im nächsten Bild (`_renderNachEingabe`).
+  const FF_SICHT = {
+    'ranking:saison':() => { period = 'season'; }, 'ranking:gesamt':() => { period = 'all'; },
+    'ranking:duos':() => { period = 'season'; ligaSicht = 'duos'; },
+    'positions:sturm':() => { rankMetric = 'atk'; }, 'positions:abwehr':() => { rankMetric = 'def'; }
+  };
   nd.querySelectorAll('[data-ffziel]').forEach(el => {
     el.onclick = () => {
-      const [ziel, mehr] = String(el.dataset.ffziel).split(':');
+      const roh = String(el.dataset.ffziel), [ziel, mehr] = roh.split(':');
       closeNewsDetail();
       if(ziel === 'team'){ const [a, b] = String(mehr || '').split('|'); sheetNav(() => { try { showTeam(a, b); } catch(e){} }); return; }
+      if(ziel === 'h2h'){ const [a, b] = String(mehr || '').split('|'); sheetNav(() => { try { showH2H(a, b); } catch(e){} }); return; }
+      if(ziel === 'saison'){ const se = (seasons || []).find(x => x.id === mehr); if(se) sheetNav(() => { try { showSeasonRecap(se); } catch(e){} }); return; }
       try { closeSheet(true); } catch(e){}
       _reiterSetzen(ziel === 'chronik' ? 'awards' : ziel);
       if(ziel === 'chronik') awView = 'chronik';
-      if(mehr) einblickOffen = mehr;
+      if(FF_SICHT[roh]) FF_SICHT[roh]();
+      else if(mehr) einblickOffen = mehr;
     };
   });
   nd.querySelectorAll('[data-chron]').forEach(el => {
@@ -1767,8 +1780,8 @@ function _ndFaktBlatt(s){
       + fuss([prim(profil(b.p)), {label:'Zur Rangliste', ic:'chartBar', attr:'data-ffziel="ranking"'}]),
     erwartung:(b, ab) => {
       const x = (b.z || []).find(y => y.hell) || {}, n = pm[x.p] ? pm[x.p].name : '';
-      const teil = (l, q) => q && q[0] ? zeile(l, `${q[1]} von ${q[0]}, erwartet ${komma(q[2])}`) : '';
-      return ab(n ? 'Die Siege von ' + n + ' nach der Erwartung' : '', teil('Als Favorit', b.fav) + teil('Als Außenseiter', b.aus))
+      const teil = (l, q) => q && q[0] ? zeile(l, `${q[1]} von ${q[0]} gewonnen, ${Math.round(q[2])} erwartet`) : '';
+      return ab(n ? `${n} als Favorit und als Außenseiter` : '', teil('Als Favorit', b.fav) + teil('Als Außenseiter', b.aus))
         + fuss([prim(profil(x.p)), {label:'Zur Rangliste', ic:'chartBar', attr:'data-ffziel="ranking"'}]);
     },
     hantel:(b, ab) => { const x = (b.z || []).find(y => y.hell) || {};
@@ -1787,8 +1800,8 @@ function _ndFaktBlatt(s){
     // Beim Wechsel das Profil über die Laufbahn (der Satz nennt nur die
     // vierzehn Tage), bei beiden, was es in der Elo bewirkt.
     landkarte:(b, ab) => (b.art === 'wechsel' && b.aG != null ? ab('Das Positionsprofil über die Laufbahn',
-        zeile(`Im Sturm, ${b.aG} Partien`, `${Math.abs(b.rA)} Prozentpunkte ${b.rA >= 0 ? 'über' : 'unter'} dem Schnitt`)
-        + zeile(`In der Abwehr, ${b.dG} Partien`, `${Math.abs(b.rD)} Prozentpunkte ${b.rD >= 0 ? 'über' : 'unter'} dem Schnitt`)) : '')
+        zeile(`Im Sturm, ${b.aG} Partien`, b.rA > 0 ? 'besser als im Schnitt' : b.rA < 0 ? 'schlechter als im Schnitt' : 'wie im Schnitt')
+        + zeile(`In der Abwehr, ${b.dG} Partien`, b.rD > 0 ? 'besser als im Schnitt' : b.rD < 0 ? 'schlechter als im Schnitt' : 'wie im Schnitt')) : '')
       + ab('Was ein Sieg in der Elo bringt', b.fa == null ? '' : [['Im Sturm', b.fa], ['In der Abwehr', b.fd]].map(([l, f]) =>
         zeile(l, f > 0 ? `${f}\u00a0% mehr` : f < 0 ? `${-f}\u00a0% weniger` : 'so viel wie sonst')).join(''))
       + fuss([{label:'Zur Rollen-Landkarte', ic:'sideSwap', attr:'data-ffziel="positions:rollen"', prim:true}]),
@@ -1796,7 +1809,75 @@ function _ndFaktBlatt(s){
         + zeile('Tore', _spZahl(b.summe[1])) + zeile('Spieltage', _spZahl(b.summe[2]))
         + zeile('Tore je Partie', komma(b.summe[1] / Math.max(1, b.summe[0]))) : '')
       + ab(b.art === 'tore' ? 'Die Partie des Tors' : 'Die Partie', b.mid ? _newsBlattErgebnis(b.mid) : '')
-      + fuss([{label:'Zur Rangliste', ic:'chartBar', attr:'data-ffziel="ranking"', prim:true}])
+      + fuss([{label:'Zur Rangliste', ic:'chartBar', attr:'data-ffziel="ranking"', prim:true}]),
+    // ── Die zweite Runde [§C33] ──────────────────────────────────────
+    // Jede Frage führt in den Teil der App, der sie stellt: die Tabelle
+    // des Monats, die Ewige Tafel, die Positions- und die Teams-Liste, die
+    // Laufbahn, der Rekord, der Saison-Rückblick, der Direkte Vergleich.
+    // Was das Bild schon zeigt — die Spitze, die Elo, die Bewegung —, steht
+    // unten nicht noch einmal [§C27]; darunter die Partien dessen, um den
+    // es geht, und bei der Ewigen Tafel, den Positionen und den Duos die
+    // Plätze hinter dem Podest.
+    tabelle:(b, ab) => lauf((b.hl || [])[0])
+      + fuss([{label:'Zur Rangliste', ic:'chartBar', attr:'data-ffziel="ranking:saison"', prim:true}, profil((b.hl || [])[0])]),
+    karriere:(b, ab) => ab('Dahinter', (b.pd || []).slice(3).filter(x => pm[x.p]).map((x, i) =>
+        zeile(`${i + 4}. ${pm[x.p].name}`, x.t, x.p)).join(''))
+      + lauf((b.hl || [])[b.hl && b.hl.length > 1 ? 1 : 0])
+      + fuss([{label:'Zur Ewigen Tafel', ic:'tafelStein', attr:'data-ffziel="ranking:gesamt"', prim:true}, profil((b.hl || [])[0])]),
+    aufholjagd:(b, ab) => ab('Vor 30 Tagen und heute', (b.z || []).filter(x => pm[x[0]]).map(x =>
+        zeile(pm[x[0]].name, `${_spZahl(x[2])} → ${_spZahl(x[1])}`, x[0])).join(''))
+      + fuss([prim(profil(b.hl)), {label:'Zur Ewigen Tafel', ic:'tafelStein', attr:'data-ffziel="ranking:gesamt"'}]),
+    meister:(b, ab) => { const m = (b.m || []).filter(x => pm[x[1]]), letzt = m[m.length - 1];
+      return ab('Monat für Monat', m.map(x => zeile(String(seasonLabel(x[0])), `${pm[x[1]].name}, ${x[2]} Elo`
+          + (x[3] && pm[x[3]] ? `, vor ${pm[x[3]].name} mit ${x[4]}` : ''), x[1])).join(''))
+        + fuss([letzt ? {label:'Zum Saison-Rückblick', ic:'calendar', attr:`data-ffziel="saison:${esc(letzt[0])}"`, prim:true} : null, profil(b.hl)]); },
+    leiter:(b, ab) => { const id = (b.hl || [])[b.hl && b.hl.length > 1 ? 1 : 0];
+      return ab('Der Stand am Zeichen', pm[id] ? _newsInsigniumBlock(id) : '')
+        + fuss([pm[id] ? {label:'Zur Laufbahn', ic:'leiterAuf', attr:`data-laufbahn="${esc(id)}"`, prim:true} : null, profil(id)]); },
+    ausbeute:(b, ab) => ab('Nach Klassen', (b.z || []).filter(x => pm[x[0]]).map(x => zeile(pm[x[0]].name,
+        [[x[2], 'legendär'], [x[3], 'selten'], [x[4], 'gewöhnlich']].filter(q => q[0] > 0).map(q => q[0] + ' ' + q[1]).join(', '), x[0])).join('')
+        + (b.vor && pm[b.hl] ? zeile(`${pm[b.hl].name} im ganzen ${b.vm}`, String(b.vor), b.hl) : ''))
+      + fuss([prim(profil(b.hl)), {label:'Zu den Auszeichnungen', ic:'medal', attr:'data-ffziel="awards"'}]),
+    serie:(b, ab) => lauf(b.p) + fuss([prim(profil(b.p)), {label:'Zur Rangliste', ic:'chartBar', attr:'data-ffziel="ranking:saison"'}]),
+    gipfel:(b, ab) => lauf(b.p) + fuss([prim(profil(b.p)), {label:'Zur Rangliste', ic:'chartBar', attr:'data-ffziel="ranking:saison"'}]),
+    saisons:(b, ab) => ab('Monat für Monat', (b.r || []).filter(x => x[1] > 0).map(x => zeile(x[0], `Platz ${x[1]} von ${x[2]}`)).join(''))
+      + fuss([prim(profil(b.p)), {label:'Zur Rangliste', ic:'chartBar', attr:'data-ffziel="ranking:saison"'}]),
+    // Ein Rekord in Reichweite: wer hinter dem Halter liegt, wie im Blatt
+    // des Rekords. Gespeicherte Karten der Bildform tragen keinen Rekord und
+    // zeigen die letzten zehn Partien.
+    ziel:(b, ab) => (b.cid && CHRONICLE_BY_ID[b.cid]
+        ? ab('Die Bedingung', zeile(CHRONICLE_BY_ID[b.cid].name, CHRONICLE_BY_ID[b.cid].cond || '')) + (_newsVerfolger(b.cid, b.halter || [], null) || '')
+        : lauf(b.p))
+      + fuss([b.cid ? {label:'Zum Rekord', ic:'trophy', attr:`data-chron="${esc(b.cid)}"`, prim:true} : null, b.cid ? profil(b.p) : prim(profil(b.p))]),
+    vormonat:(b, ab) => ab('Der Monat davor', (b.pd || []).filter(x => pm[x.p]).map((x, i) => zeile(`${i + 1}. ${pm[x.p].name}`,
+        `${x.g} Partien`, x.p)).join('')
+        + (Array.isArray(b.team) && pm[b.team[0]] && pm[b.team[1]] ? zeile('Team der Saison', `${pm[b.team[0]].name} und ${pm[b.team[1]].name}`) : ''))
+      + fuss([{label:'Zum Saison-Rückblick', ic:'calendar', attr:`data-ffziel="saison:${esc(b.sid)}"`, prim:true},
+        {label:'Zur Rangliste', ic:'chartBar', attr:'data-ffziel="ranking:saison"'}]),
+    position:(b, ab) => ab(b.pos === 'atk' ? 'Siege im Sturm' : 'Siege in der Abwehr', (b.pd || []).filter(x => pm[x.p]).map((x, i) =>
+        zeile(`${i + 1}. ${pm[x.p].name}`, `${x.w} von ${x.g}, Wert ${x.t}`, x.p)).join(''))
+      + fuss([{label:b.pos === 'atk' ? 'Zur Rangliste des Sturms' : 'Zur Rangliste der Abwehr', ic:b.pos === 'atk' ? 'bolt' : 'shield',
+        attr:`data-ffziel="positions:${b.pos === 'atk' ? 'sturm' : 'abwehr'}"`, prim:true}, profil((b.hl || [])[0])]),
+    partnernetz:(b, ab) => ab('Partner nach gemeinsamen Partien', (b.z || []).filter(x => pm[x[0]]).slice().sort((x, y) => y[1] - x[1])
+        .map(x => zeile(pm[x[0]].name, x[1] ? `${x[1]} ${x[1] === 1 ? 'Partie' : 'Partien'}` : 'noch nie', x[0])).join(''))
+      + fuss([prim(profil(b.p)), {label:'Zu allen Duos', ic:'users', attr:'data-ffziel="teams:netz"'}]),
+    duopodest:(b, ab) => { const [a1, a2] = String(b.hl || '').split('|');
+      return ab('Dahinter', (b.pd || []).slice(3).filter(x => pm[x[0]] && pm[x[1]]).map((x, i) =>
+          zeile(`${i + 4}. ${pm[x[0]].name} und ${pm[x[1]].name}`, `${x[2]} von ${x[3]}, ${Math.round(x[2] / Math.max(1, x[3]) * 100)}\u00a0%`)).join(''))
+        + ab(pm[a1] && pm[a2] ? `Die letzten zehn Partien von ${pm[a1].name} und ${pm[a2].name}` : '', pm[a1] && pm[a2] ? duoLauf(a1, a2) : '')
+        + fuss([pm[a1] && pm[a2] ? {label:'Zum Duo', ic:'duo', attr:`data-ffziel="team:${esc(a1)}|${esc(a2)}"`, prim:true} : null,
+          {label:'Zu allen Duos', ic:'users', attr:'data-ffziel="teams"'}]); },
+    // Das Duo in Serie: seine letzten zehn gemeinsamen Partien. Auch
+    // gespeicherte Karten dieser Bildform tragen ihr Duo.
+    duoserie:(b, ab) => FF_FRAGEN.duo(b, ab),
+    duo:(b, ab) => ab(pm[b.a] && pm[b.b] ? `Die letzten zehn Partien von ${pm[b.a].name} und ${pm[b.b].name}` : '', duoLauf(b.a, b.b))
+      + fuss([pm[b.a] && pm[b.b] ? {label:'Zum Duo', ic:'duo', attr:`data-ffziel="team:${esc(b.a)}|${esc(b.b)}"`, prim:true} : null]),
+    duorennen:(b, ab) => { const [a1, a2] = String(b.hl || '').split('|');
+      return ab(pm[a1] && pm[a2] ? `Die letzten zehn Partien von ${pm[a1].name} und ${pm[a2].name}` : '', pm[a1] && pm[a2] ? duoLauf(a1, a2) : '')
+        + fuss([{label:'Zur Rangliste der Duos', ic:'chartBar', attr:'data-ffziel="ranking:duos"', prim:true},
+          pm[a1] && pm[a2] ? {label:'Zum Duo', ic:'duo', attr:`data-ffziel="team:${esc(a1)}|${esc(a2)}"`} : null]); },
+    rivale:(b, ab) => ab('Jede Begegnung', pm[b.a] && pm[b.b] ? h2hBegegnungenHtml(b.a, b.b) : '')
+      + fuss([pm[b.a] && pm[b.b] ? {label:'Zum Direkten Vergleich', ic:'crossedSwords', attr:`data-ffziel="h2h:${esc(b.a)}|${esc(b.b)}"`, prim:true} : null])
   };
   if(bild){
     const ab = (t, html) => html ? `<div class="nd-section">${esc(t)}</div>${html}` : '';

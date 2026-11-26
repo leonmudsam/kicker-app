@@ -611,5 +611,14 @@ ok(avatare.length>54&&!avFalsch.length,'Die Bildauswahl: '+avatare.length+' Bild
   ok(frueh.davor===0&&frueh.rek>10&&frueh.halter>=4&&frueh.max<frueh.rek/2,
     'Mit der 40. Partie der Liga werden die Rekorde vergeben, verteilt statt an einen ('+frueh.rek+' Rekorde, '+frueh.halter+' Halter, höchstens '+frueh.max+' bei einem, mit 39 Partien '+frueh.davor+')');
 }
+// Die Mindestzahl an Siegen für den Spieler des Tages und der Woche steht an
+// einer Stelle (`PERIODE_MIN_SIEGE`). Sie stand als blanke 3 und 5 in der
+// Rangliste, im Liga-Reiter, im Blatt des Wochenkönigs, im Katalog und im
+// Feed; geändert an einer Stelle, standen die anderen falsch.
+{
+  const html=require('fs').readFileSync(require('./ziel.js'),'utf8');
+  const fest=(html.match(/ab [35] Siegen ·|mindestens [35] Siegen\)|Kalenderwoche \(ab 5|Spieltags \(ab 3\)|s >= 5 && zeig|regel==='tag' \? 3/g)||[]);
+  ok(/PERIODE_MIN_SIEGE/.test(html)&&!fest.length,'Die Mindestzahl des Spielers des Tages und der Woche steht an einer Stelle'+(fest.length?' — fest im Code: '+[...new Set(fest)].join(', '):''));
+}
 console.log(fails?`${fails} von ${checks} CHECKS FEHLGESCHLAGEN`:`ALLE ${checks} CHECKS BESTANDEN`);
 process.exitCode=fails?1:0;

@@ -1935,6 +1935,188 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
     .ff-ew-z,.ff-ht-z,.ff-cr-c,.ff-mo>span{animation:ffAuf .45s ease both;animation-delay:calc(var(--k,0) * 45ms)}
   }
 
+  /* ── Die zweite Runde [§C33] ────────────────────────────────────────
+     Dieselben Töne: die Farbe der Karte an dem, worum es geht, Gold nur am
+     Titel, Grün und Rot nur für eine Richtung [§C25], sonst Metall. */
+  /* Das Podest mit Unterzeile: der Platz vor vierzehn Tagen oder der von
+     jetzt, klein unter dem Sockel. Die Stufen bleiben die des Podests. */
+  .ff-pd2 .ff-pd-s{gap:3px}
+  .ff-pd2 .ff-pd-s.hl:not(.p1) em{background:linear-gradient(180deg,rgba(var(--story-rgb),.22),rgba(var(--story-rgb),.05))}
+  .ff-pd2 .ff-pd-s.hl .ff-nm{color:var(--ink);font-weight:600}
+  .ff-pd-u b{color:var(--ink2)}
+  .ff-pd-u .ff-bw{font-size:11px;text-align:center}
+  .ff-pd-u{font-style:normal;font-family:'Sometype Mono',monospace;font-size:9px;color:var(--muted);line-height:1.25;
+    margin-top:3px;text-align:center}
+  .ff-pd2 .rav{margin-bottom:0}
+  .ff-po-k{margin-bottom:8px}
+  .ff-po-k small{margin-left:auto;font-weight:400;letter-spacing:.04em;text-transform:none}
+
+  /* Die Tabelle des Monats: Platz, Gesicht, Name, Elo, Bewegung. */
+  .ff-tb{display:flex;flex-direction:column;gap:2px}
+  .ff-tb-z{display:grid;grid-template-columns:16px 22px minmax(0,1fr) auto 34px;gap:8px;align-items:center;
+    padding:4px 6px;margin:0 -6px;border-radius:8px}
+  .ff-tb-z.hl{background:rgba(var(--story-rgb),.12);box-shadow:inset 2px 0 0 rgb(var(--story-rgb))}
+  .ff-tb-p{font-family:'Archivo Black',sans-serif;font-size:11px;color:var(--muted);text-align:center}
+  .ff-tb-z:nth-child(1) .ff-tb-p{color:var(--gold)}
+  .ff-tb-z:nth-child(2) .ff-tb-p{color:var(--silber)}
+  .ff-tb-z:nth-child(3) .ff-tb-p{color:var(--bronze)}
+  .ff-tb-z:not(.hl) .ff-nm{color:var(--ink2);font-weight:500}
+  .ff-tb-e{font-family:'Sometype Mono',monospace;font-size:12px;font-weight:700;color:var(--ink);white-space:nowrap}
+  .ff-tb-e small{font-size:9px;font-weight:400}
+  .ff-bw{font-style:normal;font-family:'Sometype Mono',monospace;font-size:10px;text-align:right;color:var(--faint);white-space:nowrap}
+  .ff-bw.auf{color:var(--acid)}
+  .ff-bw.ab{color:var(--red)}
+  .ff-bw.neu{color:var(--ink2);font-size:9px;letter-spacing:.04em;text-transform:uppercase}
+
+  /* Die Aufholjagd: zwei Bahnen, der Strich der Stand vor dreißig Tagen. */
+  .ff-aj-z{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:9px;align-items:center;padding:4px 0}
+  .ff-aj-z>b{font-family:'Sometype Mono',monospace;font-size:13px;color:var(--ink2);white-space:nowrap}
+  .ff-aj-z.hl>b{color:var(--ink);font-weight:700}
+  .ff-aj-z:not(.hl) .ff-nm{color:var(--ink2);font-weight:500}
+  .ff-aj-b{position:relative;display:block;height:9px;border-radius:5px;background:var(--surface3)}
+  .ff-aj-b i{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:var(--muted)}
+  .ff-aj-z.hl .ff-aj-b i{background:rgb(var(--story-rgb));box-shadow:0 0 8px rgba(var(--story-rgb),.45)}
+  .ff-aj-b u{position:absolute;top:-3px;bottom:-3px;width:2px;margin-left:-1px;border-radius:1px;background:var(--ink)}
+  .ff-aj .ff-hz-k{margin-bottom:4px}
+  .ff-aj-ab{display:grid;grid-template-columns:auto minmax(18px,1fr) auto;align-items:center;gap:8px;margin-top:8px;padding-top:8px;
+    border-top:1px solid var(--line)}
+  .ff-aj-ab>span{display:flex;flex-direction:column;gap:2px}
+  .ff-aj-ab>span em{font-style:normal;font-size:11px;color:var(--ink2)}
+  .ff-aj-ab>span:nth-child(3){align-items:flex-end;text-align:right}
+  .ff-aj-ab b{font-family:'Archivo Black',sans-serif;font-size:18px;line-height:1;color:var(--muted)}
+  .ff-aj-ab>span:nth-child(3) b{color:var(--ink);font-size:22px}
+  .ff-aj-ab>i{height:2px;border-radius:1px;background:linear-gradient(90deg,var(--line),rgb(var(--story-rgb)))}
+
+  /* Die Meister: je Monat eine Säule mit Stern, Gesicht, Elo. */
+  .ff-ms{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:6px}
+  .ff-ms-c{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;text-align:center;
+    padding:8px 2px 7px;border-radius:10px;background:var(--surface2)}
+  .ff-ms-c.hl{background:linear-gradient(180deg,rgba(247,207,74,.16),rgba(247,207,74,.03));box-shadow:inset 0 0 0 1px rgba(247,207,74,.3)}
+  .ff-ms-c>small{font-size:9px;letter-spacing:.08em;text-transform:uppercase}
+  .ff-ms-c>svg{width:16px;height:16px;fill:var(--gold);stroke:none;opacity:.5}
+  .ff-ms-c.hl>svg{opacity:1;filter:drop-shadow(0 0 4px rgba(247,207,74,.5))}
+  .ff-ms-c .ff-nm{font-size:11px}
+  .ff-ms-c:not(.hl) .ff-nm{color:var(--ink2);font-weight:500}
+  .ff-ms-c>b{font-family:'Sometype Mono',monospace;font-size:11px;color:var(--ink)}
+  .ff-ms-c>i{font-style:normal;font-family:'Sometype Mono',monospace;font-size:9px;color:var(--muted)}
+
+  /* Die Leiter: Bahnen bis zum Prestige, die Stufen als Sprossen. */
+  .ff-lt-z{display:grid;grid-template-columns:22px minmax(0,1fr) 46px;gap:9px;align-items:center;padding:4px 0}
+  .ff-lt-z>b{font-family:'Sometype Mono',monospace;font-size:12px;color:var(--ink2);text-align:right;white-space:nowrap}
+  .ff-lt-z.hl>b{color:var(--ink);font-weight:700}
+  .ff-lt-z:not(.hl):not(.ax) .ff-nm{color:var(--ink2);font-weight:500}
+  .ff-lt-b{position:relative;display:block;height:8px;border-radius:4px;background:var(--surface3)}
+  .ff-lt-b i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--muted)}
+  .ff-lt-z.hl .ff-lt-b i{background:rgb(var(--story-rgb));box-shadow:0 0 8px rgba(var(--story-rgb),.45)}
+  .ff-lt-b u{position:absolute;top:-2px;bottom:-2px;width:2px;margin-left:-1px;background:var(--bg2);opacity:.9}
+  .ff-lt-z.ax{padding:0 0 2px}
+  .ff-lt-z.ax .ff-lt-b{height:34px;background:none}
+  .ff-lt-z.ax em{position:absolute;bottom:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;
+    font-style:normal}
+  .ff-lt-z.ax em svg{width:20px;height:20px;display:block;opacity:.85}
+  .ff-lt-z.ax em small{font-size:8px;letter-spacing:.02em;white-space:nowrap;color:var(--faint)}
+  .ff-lt-z.ax em.li{transform:translateX(-10px);align-items:flex-start}
+  .ff-lt-z.ax em.re{transform:translateX(calc(-100% + 10px));align-items:flex-end}
+
+  /* Die Ausbeute: eine Bahn aus den drei Klassen. */
+  .ff-ab-z{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:9px;align-items:center;padding:4px 0}
+  .ff-ab-z>b{font-family:'Archivo Black',sans-serif;font-size:14px;color:var(--ink2);white-space:nowrap}
+  .ff-ab-z.hl>b{color:var(--ink)}
+  .ff-ab-z:not(.hl) .ff-nm{color:var(--ink2);font-weight:500}
+  .ff-ab-b{display:flex;gap:2px;height:10px;min-width:6px}
+  .ff-ab-b i{display:block;min-width:3px;border-radius:2px}
+  .ff-ab-b i.legendary,.ff-ab-leg .legendary::before{background:var(--gold)}
+  .ff-ab-b i.rare,.ff-ab-leg .rare::before{background:var(--purple)}
+  .ff-ab-b i.common,.ff-ab-leg .common::before{background:var(--muted)}
+  .ff-ab-z:not(.hl) .ff-ab-b{opacity:.6}
+  .ff-ab-z.hl .ff-ab-b i.legendary{box-shadow:0 0 8px rgba(247,207,74,.45)}
+  .ff-ab-leg span::before{width:10px;height:6px;border-radius:2px}
+
+  /* Die Serie: Felder, gestrichelt bis zur Bestmarke, ein Strich für die Liga. */
+  .ff-se-k{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+  .ff-se-k .sp-chips .av{--av:28px}
+  .ff-und{gap:0 4px}
+  .ff-und .ff-nm+.ff-nm::before{content:'und ';font-weight:400;color:var(--muted)}
+  .ff-lt-z.ax em small.still{visibility:hidden}
+  .ff-se-w{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;line-height:1}
+  .ff-se-w b{font-family:'Archivo Black',sans-serif;font-size:24px;color:var(--ink)}
+  .ff-se-w small{margin-top:3px;font-size:9px}
+  .ff-se{display:grid;grid-template-columns:repeat(auto-fill,minmax(9px,1fr));gap:3px}
+  .ff-se i{position:relative;height:18px;border-radius:3px;background:var(--surface3)}
+  .ff-se i.w{background:rgb(var(--story-rgb));box-shadow:0 0 6px rgba(var(--story-rgb),.35)}
+  .ff-se i.ziel{background:transparent;box-shadow:inset 0 0 0 1px rgba(var(--story-rgb),.55)}
+  .ff-se i.leer{background:transparent;box-shadow:inset 0 0 0 1px var(--line)}
+  .ff-se i.liga::after{content:'';position:absolute;top:-4px;bottom:-4px;right:-3px;width:2px;border-radius:1px;background:var(--ink)}
+  .ff-leg .z::before{width:10px;height:8px;border-radius:2px;box-shadow:inset 0 0 0 1px rgba(var(--story-rgb),.7)}
+  .ff-leg .l::before{width:2px;height:11px;border-radius:1px;background:var(--ink)}
+
+  /* Der Gipfel: die Kurve des Aufwinds, die Bezugslinie der Gipfel davor. */
+  .ff-gp .sp-ln-l{stroke:rgb(var(--story-rgb));opacity:.9}
+  .ff-gp .sp-ln-r{stroke-dasharray:3 3}
+  .ff-leg .r::before{width:14px;height:0;border-top:1.5px dashed var(--ink2)}
+
+  /* Die Saisons: der Platz je Monat, Platz 1 oben. */
+  .ff-ss-k{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+  .ff-ss svg{display:block;width:100%;height:auto;overflow:visible}
+  .ff-ss-g{stroke:var(--line);stroke-width:1;stroke-dasharray:2 3}
+  .ff-ss-l{fill:none;stroke:var(--muted);stroke-width:1.6;stroke-linejoin:round;opacity:.7}
+  .ff-ss-p circle{fill:var(--surface2);stroke:var(--line);stroke-width:1.2}
+  .ff-ss-p text{font:700 9.5px 'Sometype Mono',monospace;fill:var(--ink2);text-anchor:middle}
+  .ff-ss-p text.m{font-weight:400;font-size:8.5px;fill:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+  .ff-ss-p.m1 circle{stroke:var(--gold)}
+  .ff-ss-p.m2 circle{stroke:var(--silber)}
+  .ff-ss-p.m3 circle{stroke:var(--bronze)}
+  .ff-ss-p.jetzt circle{fill:rgb(var(--story-rgb));stroke:rgb(var(--story-rgb));filter:drop-shadow(0 0 4px rgba(var(--story-rgb),.55))}
+  .ff-ss-p.jetzt text{fill:var(--bg)}
+  .ff-ss-p.jetzt text.m{fill:var(--ink)}
+
+  /* Das Netz eines Spielers: der Kreis der Partner um sein Gesicht. */
+  .ff-pn{position:relative;height:190px;margin:4px 14px 2px}
+  .ff.gross .ff-pn{height:230px}
+  .ff-pn svg{position:absolute;inset:0;width:100%;height:100%}
+  .ff-pn .netz-l{stroke:var(--muted);stroke-opacity:.5;vector-effect:non-scaling-stroke}
+  .ff-pn .netz-l.neu{stroke:rgb(var(--story-rgb));stroke-opacity:1}
+  .ff-pn-p{position:absolute;transform:translate(-50%,-11px);display:flex;flex-direction:column;align-items:center;gap:1px}
+  .ff-pn-p .av{--av:22px;box-shadow:0 0 0 2px var(--bg2)}
+  .ff-pn-p>b{font-size:8.5px;font-weight:500;color:var(--muted);white-space:nowrap}
+  .ff-pn-p.fehlt .av{opacity:.55;box-shadow:0 0 0 2px var(--bg2),0 0 0 3px var(--muted)}
+  .ff-pn-p.fehlt>b{color:var(--ink);font-weight:700}
+  .ff-pn-p.neu .av{box-shadow:0 0 0 2px var(--bg2),0 0 0 3.5px rgb(var(--story-rgb))}
+  .ff-pn-p.neu>b{color:var(--ink);font-weight:700}
+  .ff-pn-m{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px}
+  .ff-pn-m .ff-nm{font-size:11px;padding:0 4px;border-radius:4px;background:var(--bg2)}
+
+  /* Die Duos: ein Podest aus Paaren, ohne Platzziffer. */
+  .ff-dp .sp-chips .av{--av:24px}
+  .ff-dp .ff-pd-s.p1 .sp-chips .av{--av:28px}
+  .ff-dp .ff-nms{flex-direction:column;align-items:center;gap:0}
+  .ff-dp .ff-pd-s em{height:46px;justify-content:center}
+  .ff-dp .ff-pd-s.p1 em{height:58px}
+  .ff-dp .ff-pd-s.p3 em{height:38px}
+  .ff-dp .ff-pd-s em small{font-family:'Sometype Mono',monospace;font-size:9px;opacity:.75}
+  .ff-dp .ff-pd-s.hl .sp-chips .av{box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px rgb(var(--story-rgb))}
+
+  /* Das Rennen um das Team der Saison: Paare als Bahnen. */
+  .ff-dr-z{display:grid;grid-template-columns:auto minmax(0,1fr) 62px;gap:9px;align-items:center;padding:4px 0}
+  .ff-dr-z .sp-chips .av{--av:22px}
+  .ff-dr-z .ff-nms{gap:0 4px}
+  .ff-dr-z .ff-nms .ff-nm+.ff-nm::before{content:'und ';font-weight:400;color:var(--muted)}
+  .ff-dr-z:not(.hl) .ff-nm{color:var(--ink2);font-weight:500}
+  .ff-dr-z .ff-r-m{gap:4px}
+  .ff-dr-z.hl .ff-bar i{background:rgb(var(--story-rgb));box-shadow:0 0 8px rgba(var(--story-rgb),.5)}
+  .ff-dr-z.hl .ff-ew-w b{color:var(--ink);font-size:14px}
+
+  /* Das Duell: jede Begegnung auf der Seite ihres Siegers. */
+  .ff-rv{display:flex;align-items:stretch;gap:3px;height:22px;margin-top:10px}
+  .ff-rv i{flex:1;max-width:16px;height:9px;border-radius:2px}
+  .ff-rv i.o{align-self:flex-start;background:rgb(var(--story-rgb))}
+  .ff-rv i.u{align-self:flex-end;background:var(--muted);opacity:.7}
+  .ff-rv-l{margin-top:4px}
+  @media (prefers-reduced-motion:no-preference){
+    .ff-tb-z,.ff-aj-z,.ff-ms-c,.ff-lt-z,.ff-ab-z,.ff-dr-z,.ff-se i,.ff-rv i,.ff-pn-p{animation:ffAuf .45s ease both;animation-delay:calc(var(--k,0) * 45ms)}
+    .ff-se i,.ff-rv i{animation-delay:calc(var(--k,0) * 22ms)}
+  }
+
 /* ── Die Ehrung [§11.6f] ───────────────────────────────────────────── */
 /* Die Bühne der Karte: je Geehrtem eine Säule wie im Säulenbild eines
    Spieltags, unten das Gesicht, oben die Zeichenkachel seiner wertvollsten

@@ -344,6 +344,11 @@ const _thesen = (function(){
         // nach 19 Tagen, obwohl 31 dazwischen liegen — die Sperre der App
         // rechnet ebenso am Zeitpunkt der Karte.
         const tag = Math.round(new Date(x.when).getTime() / 864e5);
+        // Halbzeit und Jahresblick haben ihren Tag: sie lagen auch im
+        // gewöhnlichen Losverfahren (die Halbzeit stand am 9.08.).
+        const slotTag = String(x.id).slice(8, 18);
+        if((x.sub === 'rueckblick_halbzeit' && slotTag.slice(8) !== '15') || (x.sub === 'rueckblick_jahr' && slotTag.slice(5) !== '01-01'))
+          verstoesse.push(x.sub + ' am ' + slotTag);
         (x.pids && x.pids.length ? x.pids : ['']).forEach(pid => {
           const k = x.sub + '|' + pid;
           thesen++;
@@ -360,11 +365,10 @@ console.log('  Vierzig Tage Rotation: ' + _thesen.karten + ' Karten, '
   + _thesen.thesen + ' Thesen');
 // Vierzig Tage, an denen die Liga spielt: Tage mit einer Partie vor 15 Uhr
 // haben keinen Slot, also sind es weniger als vierzig Karten.
-// Ein Fun Fact entsteht nur, wenn er etwas Neues sagt [§C33]: seit der
-// Pool acht Fragen trägt statt vierzig Vorlagen, bleibt an den echten
-// Partien rund jeder zweite Slot leer, statt dieselbe These über dieselbe
-// Person nach acht Tagen zu wiederholen. Gefüllt wird trotzdem jede Woche.
-ok(_thesen.karten >= 15, 'der Nachlauf fuellt ueberhaupt Slots',
+// Ein Fun Fact entsteht nur, wenn er etwas Neues sagt [§C33]. Mit acht
+// Fragen blieb an den echten Partien jeder zweite Slot leer (21 Karten);
+// mit 25 Fragen sind es über dreißig, ohne Wiederholung.
+ok(_thesen.karten >= 30, 'der Nachlauf fuellt die meisten Slots',
    _thesen.karten + ' Karten');
 // Keine These über dieselbe Person zweimal in 30 Tagen, in keinem
 // Durchgang: der Notnagel liess die Sperre fallen und schrieb dieselbe
@@ -515,14 +519,23 @@ console.log('\n=== 8. DIE ACHT FRAGEN DER FUN FACTS ===');
 // keinen Einzeleintrag [§C33]. Der Pool trug vierzig Vorlagen — „holte
 // zuletzt Gold", „29 von 118 Chronik-Einträgen vergeben", eine Zufallszahl
 // —, und jede hatte dieselbe Zahlkachel. Jetzt beantwortet jede Vorlage
-// genau eine der acht Fragen, dazu die Halbzeit und der Jahresrückblick.
+// genau eine Frage, dazu die Halbzeit und der Jahresrückblick. Mit acht
+// Fragen blieb jeder zweite Slot leer; jetzt sind es 25, in Rubriken, die
+// sich nicht überschneiden.
 const FF_FRAGEN = ['form_aufwind','form_erwartung','form_gegen_laufbahn','laufbahn_marke',
-                   'chronik_reihe','duo_chemie','rolle_seite','liga_marke'];
+                   'chronik_reihe','duo_chemie','rolle_seite','liga_marke',
+                   'saison_spitze','tafel_karriere','laufbahn_rennen','titel_sterne','prestige_leiter',
+                   'auszeichnung_monat','form_serie','form_gipfel','saison_vergleich','rekord_reichweite',
+                   'saison_rueckblick','positionen_spitze','partner_netz','duo_rangliste','duo_lauf',
+                   'duo_saison','rivalitaet'];
 const FF_POOL = FF_FRAGEN.concat(['rueckblick_halbzeit','rueckblick_jahr']);
 const gebaut = JSON.parse(K.eval(`(function(){
   const pm = pmap(), nameOf = pid => (pm[pid]||{}).name || '?';
   const tage = [new Date(2026, 7, 26, 15, 5), new Date(2026, 6, 20, 15, 5), new Date(2026, 5, 18, 15, 5),
-    new Date(2026, 7, 10, 15, 5), new Date(2026, 6, 6, 15, 5), new Date(2026, 5, 30, 15, 5)];
+    new Date(2026, 7, 10, 15, 5), new Date(2026, 6, 6, 15, 5), new Date(2026, 5, 30, 15, 5),
+    // Der Vergleich mit dem Vormonat steht erst ab dem 8., der Rückblick auf
+    // ihn bis zum 12.: ein Tag in diesem Fenster gehört dazu.
+    new Date(2026, 6, 8, 15, 5)];
   const pool = _ambientTemplatePool(tage[0], pm, nameOf).map(t => t.key);
   const out = {};
   tage.forEach(now => {
@@ -539,7 +552,7 @@ const gebaut = JSON.parse(K.eval(`(function(){
 })()`));
 const _fremd = gebaut.pool.filter(k => !FF_POOL.includes(k)), _fehlt = FF_POOL.filter(k => !gebaut.pool.includes(k));
 ok(_fremd.length === 0 && _fehlt.length === 0,
-   'der Pool trägt genau die acht Fragen, die Halbzeit und den Jahresrückblick',
+   'der Pool trägt genau die ' + FF_FRAGEN.length + ' Fragen, die Halbzeit und den Jahresrückblick',
    'fremd: ' + _fremd.join(' ') + ' · fehlt: ' + _fehlt.join(' '));
 FF_POOL.forEach(k => ok(gebaut.out[k] && !gebaut.out[k].err, 'Vorlage ' + k + ' läuft ohne Fehler',
   gebaut.out[k] ? gebaut.out[k].err || '' : 'fehlt'));
@@ -548,6 +561,21 @@ FF_FRAGEN.forEach(k => ok(gebaut.out[k] && gebaut.out[k].n > 0,
 FF_FRAGEN.forEach(k => (gebaut.out[k] ? gebaut.out[k].texte : []).forEach(t =>
   ok(!/undefined|NaN|\[object|: /.test(t.split(' | ')[0]) && /[.]$/.test(t.split(' | ')[1].trim()),
      k + ' spricht in ganzen Sätzen ohne Etikett', t)));
+// Ein Fun Fact liest sich beim ersten Mal: der Titel ein einfacher
+// Hauptsatz bis zwölf Wörter, darunter höchstens zwei Sätze, Alltagswörter.
+// „Kein Duo spielt deutlicher über der Erwartung als Leon und Maxi" mit „die
+// Elo der vier ließ 43,7 erwarten" darunter musste man zweimal lesen.
+const _ffSprache = [];
+FF_POOL.forEach(k => (gebaut.out[k] ? gebaut.out[k].texte : []).forEach(t => {
+  const [ti, de] = t.split(' | ');
+  if(/^(Kein|Keine|Niemand)\b/.test(ti) || /\b(Kein|Keine|Niemand)\b[^.]*\b(deutlicher|öfter|mehr|besser) als\b/.test(ti)) _ffSprache.push(k + ' verneinte Steigerung: ' + ti);
+  if(/über der Erwartung|ließ[^.]*erwarten|Prozentpunkt|Überleistung/.test(t)) _ffSprache.push(k + ' Rechenwort: ' + t);
+  if(/\d,\d+ (zu )?erwart/.test(de)) _ffSprache.push(k + ' erwartete Siege mit Komma: ' + de);
+  if(ti.split(/\s+/).length > 12) _ffSprache.push(k + ' Titel zu lang: ' + ti);
+  if((de.replace(/\d\.\d|\d{2}\.\d{2}\.(\d{2,4}\.?)?/g, '').match(/[.]( |$)/g) || []).length > 2) _ffSprache.push(k + ' mehr als zwei Sätze: ' + de);
+}));
+ok(_ffSprache.length === 0, 'jeder Fun Fact in einfachen Sätzen: Hauptsatz als Titel, höchstens zwei Sätze, keine Rechenwörter',
+   _ffSprache.slice(0, 4).join(' · ') || 'alle');
 
 console.log('\n=== 8b. JEDER FUN FACT HAT SEIN BILD ===');
 // Jeder Fun Fact trug dieselbe Form: eine große Zahl links, der Satz rechts —
@@ -560,7 +588,7 @@ console.log('\n=== 8b. JEDER FUN FACT HAT SEIN BILD ===');
 const _ffB = JSON.parse(K.eval(`(function(){
   const pm = pmap(), nameOf = pid => (pm[pid]||{}).name || '?';
   const out = [], seen = new Set(), h2h = _ensureH2HMap();
-  [new Date(2026, 7, 26, 15, 5), new Date(2026, 6, 20, 15, 5), new Date(2026, 5, 18, 15, 5)].forEach(now => {
+  [new Date(2026, 7, 26, 15, 5), new Date(2026, 6, 20, 15, 5), new Date(2026, 5, 18, 15, 5), new Date(2026, 6, 8, 15, 5)].forEach(now => {
     const T = _ambientTemplatePool(now, pm, nameOf);
     for(let seed = 1; seed <= 6; seed++) T.forEach(t => {
       let r = null; try { r = t.make(_ambientRng(seed)); } catch(e){ out.push({k:t.key, err:e.message}); return; }
@@ -618,9 +646,11 @@ const _ffB = JSON.parse(K.eval(`(function(){
 const _ffOhne = _ffB.filter(x => !x.err && !x.leiter && !x.f).map(x => x.k);
 ok(_ffB.length >= 8 && !_ffB.some(x => x.err) && _ffOhne.length === 0,
    'jede Fun-Fact-Vorlage trägt die Daten ihres Bilds', [...new Set(_ffOhne)].join(' ') || _ffB.filter(x => x.err).map(x => x.k + ': ' + x.err).join(' '));
-const FF_BILDER = ['aufwind','erwartung','hantel','marke','chronik','chemie','landkarte','liga'];
+const FF_BILDER = ['aufwind','erwartung','hantel','marke','chronik','chemie','landkarte','liga',
+  'tabelle','karriere','aufholjagd','meister','leiter','ausbeute','serie','gipfel','saisons','ziel',
+  'vormonat','position','partnernetz','duopodest','duoserie','duorennen','rivale'];
 ok(FF_BILDER.every(f => _ffB.some(x => x.f === f)),
-   'und jede der acht Fragen hat ihr eigenes Bild', [...new Set(_ffB.map(x => x.f))].join(' '));
+   'und jede Frage hat ihr eigenes Bild', [...new Set(_ffB.map(x => x.f))].join(' '));
 const _ffFalsch = _ffB.filter(x => x.f && (!x.gezeichnet || x.namen.length || x.fehler.length));
 ok(_ffFalsch.length === 0,
    'jedes Bild steht auf der Karte, nennt jeden Namen und passt zu seiner Quelle',
