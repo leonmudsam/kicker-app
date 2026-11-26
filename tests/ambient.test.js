@@ -394,6 +394,20 @@ const _abBeide = build(NOW, [_abKarte(_abSlot.id, 'personal_umsteiger'), _abKart
 ok(!_abBeide.some(x => x.id.indexOf(_abSlot.id) === 0),
    'steht der Ersatz schon, entsteht kein zweiter', _abBeide.filter(x => x.id.indexOf(_abSlot.id) === 0).map(x => x.id).join(', ') || 'keiner');
 
+// Ein Rückblick mit festem Termin gilt nur an seinem Tag (`AMBIENT_TERMIN`).
+// Die Halbzeit lag auch im gewöhnlichen Losverfahren und konnte an jedem
+// Tag des Monats im Feed stehen.
+const _termin = JSON.parse(K.eval(`JSON.stringify([
+  ['ambient_2026-11-26_15','rueckblick_halbzeit'], ['ambient_2026-11-15_15','rueckblick_halbzeit'],
+  ['ambient_2027-03-02_15','rueckblick_jahr'], ['ambient_2027-01-01_15','rueckblick_jahr']
+].map(([id, sub]) => _storyAbgemeldet({id, dataRef:{type:'ambient', sub}})))`));
+ok(_termin.join() === 'true,false,true,false',
+   'Halbzeit nur am 15., Jahresblick nur am 1. Januar, an jedem anderen Tag tritt die Karte zurück', _termin.join());
+const _tSlot = fresh.find(x => x.id.slice(16, 18) !== '15');
+const _abTermin = _tSlot ? build(NOW, [_abKarte(_tSlot.id, 'rueckblick_halbzeit')]) : [];
+ok(!!_tSlot && _abTermin.some(x => x.id === _tSlot.id + '_2'),
+   'eine Halbzeit außerhalb des 15. gibt ihren Slot frei', (_tSlot ? _tSlot.id : 'kein Slot') + ' → ' + (_tSlot && _abTermin.filter(x => x.id.indexOf(_tSlot.id) === 0).map(x => x.id).join(', ') || 'kein Ersatz'));
+
 console.log('\n=== 6. ZUKUENFTIGE SLOTS BLEIBEN ZU ===');
 const morning = build('2026-08-27T11:30:00Z', []);   // vor 15:00 lokal
 ok(!morning.some(s => s.id === 'ambient_2026-08-27_15'), 'der heutige 15-Uhr-Slot wartet noch');
