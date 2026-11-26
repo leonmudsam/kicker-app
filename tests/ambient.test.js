@@ -655,6 +655,18 @@ const _ffFalsch = _ffB.filter(x => x.f && (!x.gezeichnet || x.namen.length || x.
 ok(_ffFalsch.length === 0,
    'jedes Bild steht auf der Karte, nennt jeden Namen und passt zu seiner Quelle',
    _ffFalsch.slice(0, 4).map(x => x.k + ':' + x.f + (x.gezeichnet ? '' : ' nicht gezeichnet') + (x.namen.length ? ' ohne ' + x.namen.join(',') : '') + ' ' + x.fehler.join(',')).join(' | '));
+// Eine Karte über ein Duo zeigt ein Duo: darunter stand ein zweites mit
+// seinen Partien („Julian und Henry · 18 Partien"), und was es mit der
+// Aussage zu tun hatte, sagte nichts. Auch eine gespeicherte Karte mit
+// Nachbarn (`dz`) zeichnet nur die beiden und die Bahn der Erwartung.
+const _ffCm = JSON.parse(K.eval(`(function(){
+  const ids = Object.keys(pmap()).slice(0, 4), pm = pmap();
+  const h = _faktBild({dataRef:{type:'ambient', sub:'duo_chemie', bild:{f:'chemie', a:ids[0], b:ids[1], g:79, w:51, e:43.7,
+    dz:[[ids[2], ids[3], 5, 18]]}}}) || '';
+  return JSON.stringify({fremd:[ids[2], ids[3]].filter(id => h.indexOf('>' + esc(pm[id].name) + '<') >= 0).length,
+    bahn:/ff-ew-b/.test(h), partien:/18 Partien/.test(h)});
+})()`));
+ok(_ffCm.fremd === 0 && !_ffCm.partien && _ffCm.bahn, 'die Duo-Chemie zeigt nur ihr Duo und die Bahn der Erwartung', JSON.stringify(_ffCm));
 // Die Pause trägt ihre Zahlen schon und zeichnet je Tag ein Feld.
 const _ffPz = K.eval(`_faktBild({dataRef:{type:'dry_spell', daysSince:5, maxGapDays:9}})`);
 ok((_ffPz.match(/class="still/g) || []).length === 5 && /pz-max/.test(_ffPz),

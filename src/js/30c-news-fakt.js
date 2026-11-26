@@ -416,19 +416,24 @@ const _FF_FORM = (() => {
   // dort: Grün, wo mehr gewonnen wurde als erwartet. Die Zahl sind die
   // Siege mehr als nach Elo erwartet: „+6 über der Erwartung" in
   // Prozentpunkten las niemand. Gespeicherte Karten tragen Siege und
-  // Erwartung (`w`, `e`) und zeigen dieselbe Zahl; ihre Nachbarn ohne
-  // diese Zahl stehen mit den gemeinsamen Partien.
+  // Erwartung (`w`, `e`) und zeigen dieselbe Zahl.
+  // Darunter die Bahn der Erwartung, wie bei „mehr Siege als erwartet":
+  // der Balken die Siege, der Strich die Erwartung. Hier stand ein zweites
+  // Duo mit seinen Partien („Julian und Henry · 18 Partien"); was es mit
+  // der Karte zu tun hatte, sagte nichts, und eine Karte über ein Duo
+  // zeigte zwei.
   const chemie = b => {
     if(!pm()[b.a] || !pm()[b.b]) return '';
     const dick = (1.6 + Math.min(1, (b.g | 0) / 60) * 4.4).toFixed(1);
-    const weitere = (b.dz || []).filter(x => pm()[x[0]] && pm()[x[1]]);
     const mehr = b.m != null ? b.m : Math.round((b.w | 0) - (Number(b.e) || 0));
     return `<div class="ff-cm"><span class="ff-cm-p">${gesicht(b.a, 36)}${_ffNm(b.a)}</span>`
       + `<span class="ff-cm-m"><svg viewBox="0 0 120 34" preserveAspectRatio="none" aria-hidden="true"><path class="netz-l w" d="M4 32Q60 -8 116 32" stroke-width="${dick}"/></svg>`
       + `<b class="num">${esc(vz(mehr | 0))}</b><small>Siege mehr als erwartet</small></span>`
       + `<span class="ff-cm-p">${gesicht(b.b, 36)}${_ffNm(b.b)}</span></div>`
-      + (weitere.length ? `<div class="ff-cm-w">${weitere.map(x => `<span><span class="sp-chips">${chip(x[0])}${chip(x[1])}</span>`
-        + `<span class="ff-nms">${_ffNm(x[0])}${_ffNm(x[1])}</span><b class="num">${esc(x[4] != null ? vz(x[4] | 0) : (x[3] | 0) + ' Partien')}</b></span>`).join('')}</div>` : '');
+      + (b.g > 0 ? `<div class="ff-cm-ew"><span class="ff-ew-b"><i style="width:${prozent(b.w | 0, b.g)}%"></i>`
+        + `<u style="left:${prozent(Number(b.e) || 0, b.g)}%"></u></span>`
+        + `<span class="ff-ew-w"><b class="num">${b.w | 0} von ${b.g | 0}</b><small class="num">erwartet ${Math.round(Number(b.e) || 0)}</small></span></div>`
+        + `<div class="ff-leg"><span class="g">Siege</span><span class="e">erwartet</span></div>` : '');
   };
 
   // ── Die Rolle: ein Ausschnitt der Rollen-Landkarte ─────────────────

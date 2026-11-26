@@ -722,13 +722,8 @@ function _ambientTemplatePool(now, pm, nameOf){
         });
     });
     const wert = k => duo[k].s / (duo[k].g + POS_SCHRUMPF);
-    // Wer zählt, entscheidet die Rechnung des Netzes; geordnet wird nach
-    // dem, was die Karte sagt, den Siegen mehr als erwartet. Nach dem Wert
-    // geordnet stand im Bild „+5" neben einem Duo mit „+4" im Titel, und
-    // die Rangfolge las sich verkehrt.
-    const plus = k => duo[k].w - duo[k].e;
     const ks = Object.keys(duo).filter(k => duo[k].g >= CHEMIE_MIN_PARTIEN && duo[k].t >= ab14 && wert(k) >= CHEMIE_MIN_WERT)
-      .sort((a, b) => plus(b) - plus(a) || wert(b) - wert(a) || (a < b ? -1 : 1));
+      .sort((a, b) => wert(b) - wert(a) || duo[b].g - duo[a].g || (a < b ? -1 : 1));
     if(!ks.length) return null;
     const k = ziehe(ks, rng), d = duo[k], [a, b] = k.split('|');
     // Gewählt wird nach der Rechnung des Netzes; gesagt wird, was man
@@ -739,10 +734,14 @@ function _ambientTemplatePool(now, pm, nameOf){
     const nn = `${nameOf(a)} und ${nameOf(b)}`;
     return { cat:'team', ic:'duo', prio:5,
       title:mehr >= 2 ? `${nn} gewinnen ${wort(mehr)} Partien mehr als erwartet` : `${nn} gewinnen zusammen mehr als erwartet`,
-      desc:`${d.w} Siege aus ${d.g} gemeinsamen Partien. Nach Elo waren ${Math.round(d.e)} zu erwarten.`,
+      // Die Zahlen stehen in der Bahn darunter; der Satz sagt, woher die
+      // Erwartung kommt. „Die Elo der vier ließ 43,7 erwarten" warf die
+      // Frage auf, was die Gegner damit zu tun haben.
+      desc:`Erwartet ist, was die Elo beider Duos vor jeder Partie voraussagt.`,
       vv:'+' + mehr, vl:'Siege mehr als erwartet',
-      dataRef:{ ambientPids:[a, b], pairKind:'team', bild:{f:'chemie', a, b, pp, m:mehr, g:d.g, w:d.w, e:+d.e.toFixed(1),
-        dz:ks.slice(0, 3).filter(y => y !== k).slice(0, 2).map(y => [...y.split('|'), Math.round(wert(y) * 100), duo[y].g, Math.round(duo[y].w - duo[y].e)])} } };
+      // Ohne zweites Duo im Bild: eine Karte über ein Duo zeigte zwei, und
+      // „Julian und Henry · 18 Partien" hatte mit der Aussage nichts zu tun.
+      dataRef:{ ambientPids:[a, b], pairKind:'team', bild:{f:'chemie', a, b, pp, m:mehr, g:d.g, w:d.w, e:+d.e.toFixed(1)} } };
   }});
 
   // ── 7. Die Rolle: wo jemand spielt und wo er besser ist ─────────────
