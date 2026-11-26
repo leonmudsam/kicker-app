@@ -115,8 +115,11 @@ function _buildAmbientStories(now, pm, nameOf, tagesStories){
     if(/^award_/.test(key)) return 'auszeichnung';
     if(/^rivalry_/.test(key)) return 'duell';
     if(/^personal_/.test(key)) return 'persoenlich';
-    if(/^(insignium_|titelband_)/.test(key)) return 'laufbahn';
-    if(/^(chronicle_|season_|history_)/.test(key)) return 'chronik';
+    // Die acht Fragen [§C33]; die Präfixe davor lesen gespeicherte Karten,
+    // deren Zeile noch keine `ambientRubrik` trug.
+    if(/^(duo_|rolle_)/.test(key)) return 'persoenlich';
+    if(/^(insignium_|titelband_|laufbahn_)/.test(key)) return 'laufbahn';
+    if(/^(chronicle_|season_|history_|chronik_)/.test(key)) return 'chronik';
     if(/^(form_|fun_streak|fun_comeback)/.test(key)) return 'form';
     return 'liga';
   };
@@ -235,10 +238,11 @@ function _buildAmbientStories(now, pm, nameOf, tagesStories){
     // Der 15-Uhr-Slot mischt aktuelle Staende und Rueckblicke.
     const rolle = _ambientRolleFuerSlot(slot.slotHour);
     // Vier Durchgaenge. Die Paar-Sperre (derselbe Fakt ueber dieselbe Person
-    // hoechstens einmal im Monat) gilt in den ersten dreien; erst der vierte
-    // laesst sie fallen, damit ein Slot nie leer bleibt. Vorher galt sie nur in
-    // den ersten beiden, und der Notnagel-Durchgang schrieb genau die
-    // Wiederholung, die sie verhindern soll.
+    // hoechstens einmal im Monat) gilt in jedem: findet keiner etwas Frisches,
+    // bleibt der Slot leer — ein Fun Fact entsteht nur, wenn er etwas Neues
+    // sagt. Seit ein Fun Fact eine von acht Fragen beantwortet [§C33], liess
+    // der letzte Durchgang sie fallen und schrieb dieselbe Duo-Chemie ueber
+    // dieselben zwei nach acht Tagen wieder, in vierzig Tagen fuenfzehnmal.
     // Durchgang −1 ist Durchgang 0 mit einer Bedingung mehr: die Karte zeigt
     // jemanden, der in den drei Tagen davor keine eigene Karte hatte.
     for(let pass = -1; pass < 4 && !chosen; pass++){
@@ -261,11 +265,11 @@ function _buildAmbientStories(now, pm, nameOf, tagesStories){
           if(pids.length && pids.some(p => usedPids.has(p) || recentPids.has(p))) continue;
         }
         if(pass < 0 && (!pids.length || pids.some(p => feedPids.has(p)))) continue;
-        // Derselbe Fakt über dieselbe Person nicht zweimal im Monat. Diese
-        // Sperre haelt bis in den dritten Durchgang.
-        if(pass < 3 && (pids.length
+        // Derselbe Fakt über dieselbe Person nicht zweimal im Monat, in
+        // keinem Durchgang.
+        if(pids.length
             ? pids.some(p => recentPaare.has(t.key + '|' + p))
-            : recentPaare.has(t.key + '|'))) continue;
+            : recentPaare.has(t.key + '|')) continue;
         chosen = res; chosenKey = t.key; break;
       }
     }
@@ -330,1213 +334,477 @@ function _ambientShuffle(arr, rng){
   return a;
 }
 
-// Template-Pool: jede make()-Funktion liefert {cat, ic, title, desc, prio?,
-// dataRef?} aus ECHTEN Daten — oder null, wenn die Datenlage nicht reicht.
-// Icons sind bewusst auf die in NEWS_CATEGORIES bekannten beschränkt.
+// ── Was ein Fun Fact ist [§C33] ───────────────────────────────────────
+// Ein Fun Fact erzählt eine Entwicklung, keinen Einzeleintrag. Hier standen
+// vierzig Vorlagen, und die meisten nannten einen Stand: „Jannik holte
+// zuletzt Gold", „Johannes führt bei ‚Der makellose Tag', 29 von 118
+// vergeben", „Leo ist Dauergast, 312 Partien", eine Zufallskennzahl eines
+// Zufallsspielers. Dazu dieselben Bilder immer wieder — Podest, Rennen,
+// Strichliste —, und was eine Karte sagte, sagte die Rangliste schon.
+//
+// Jede Vorlage beantwortet jetzt genau EINE Frage, und jede hat ihr eigenes
+// Bild aus echten Daten (`bild.f`, gezeichnet in 30c-news-fakt.js):
+//   form_aufwind         wer hat in vierzehn Tagen am meisten Elo geholt?
+//   form_erwartung       wer gewinnt mehr, als die Elo aller vier erwarten ließ?
+//   form_gegen_laufbahn  wessen Form liegt am weitesten über der eigenen Laufbahn?
+//   laufbahn_marke       wem fehlt wenig bis zu einer runden Marke der Laufbahn?
+//   chronik_reihe        wessen Reihe in der Chronik ist ununterbrochen, wer ist neu?
+//   duo_chemie           welches Duo spielt am deutlichsten über der Erwartung?
+//   rolle_seite          wer wechselte die Position, wer spielt meist auf der schwächeren?
+//   liga_marke           welche runde Zahl hat die Liga erreicht, und wie wuchs sie?
+// Dazu die Halbzeit am 15. und der Jahresrückblick am 1. Januar, die am
+// Datum hängen und nicht am Los.
+//
+// Jede Vorlage nennt ihre Mindestmenge als Konstante in ihrem Kopf, gemessen
+// an den echten Partien: ein Fun Fact entsteht nur, wenn seine Daten tragen.
+// Die Liga spielt an etwa vier Tagen der Woche, ein Spieler kommt in
+// vierzehn Tagen auf zwanzig bis vierzig Partien.
+//
+// Gesehen wird nur, was bis zum Zeitpunkt der Ziehung gespielt war
+// (`mts(m) <= now`): die Karte von 15 Uhr weiß nichts von einer Partie um
+// 17 Uhr. Gesperrt ist jeder Ruheständler [§C40] — ein Fun Fact vergleicht
+// über die Laufbahn mit der Liga von heute (`ligaAktiv`).
 function _ambientTemplatePool(now, pm, nameOf){
-  const stats = allPlayerStats() || {};
-  // Ein Fun Fact erzählt von der Liga, wie sie heute antritt [§C40]: ein
-  // Ruheständler kommt nicht vor — auch nicht als Paar oder Partner.
   const aktiv = id => ligaAktiv(pm[id]);
   const activePids = Object.keys(pm).filter(aktiv);
-  const withStats = activePids.filter(pid => stats[pid] && stats[pid].games > 0);
   const T = [];
+  const TAG = 86400000, jetzt = now.getTime(), ab14 = jetzt - 14 * TAG, ab56 = jetzt - 56 * TAG;
 
-  // ── v9.13: Zeitbasierte "Form"-Aggregation der letzten 14 Tage ──
-  // EINMALIG (lazy + memoisiert) über nur die jüngsten Matches. `matches` ist
-  // aufsteigend nach created_at sortiert → wir laufen von hinten und brechen ab,
-  // sobald ein Match älter als das Fenster ist (O(Fenster) statt O(alle)).
-  // Positionen (atk/def), enge Spiele (Tordiff ≤ 2) und 1-Tor-Siege werden
-  // gleich mitgezählt, damit ALLE Form-Templates diese eine Schleife teilen —
-  // pro Pool-Aufbau wird sie höchstens einmal ausgeführt.
-  const RECENT_DAYS = 14;
-  let _recentMemo;
-  const recentAgg = () => {
-    if(_recentMemo) return _recentMemo;
-    const cutoff = now.getTime() - RECENT_DAYS * 86400000;
-    const agg = {};
-    let count = 0;
-    for(let i = matches.length - 1; i >= 0; i--){
-      const m = matches[i];
-      if(mts(m) < cutoff) break; // asc-sortiert → alles davor ist älter
-      count++;
-      const diff = Math.abs((m.score_a||0) - (m.score_b||0));
-      const aWon = m.winner === 'A';
-      const seats = [[m.a1, m.a1_pos, true], [m.a2, m.a2_pos, true], [m.b1, m.b1_pos, false], [m.b2, m.b2_pos, false]];
-      for(const [id, pos, onA] of seats){
-        if(!id || !aktiv(id)) continue;
-        const won = onA ? aWon : !aWon;
-        const gf = onA ? (m.score_a||0) : (m.score_b||0);
-        const ga = onA ? (m.score_b||0) : (m.score_a||0);
-        let a = agg[id];
-        if(!a) a = agg[id] = { g:0, w:0, aG:0, aGoals:0, aW:0, dG:0, dGa:0, cg:0, cw:0, c1w:0 };
-        a.g++; if(won) a.w++;
-        if(pos === 'atk'){ a.aG++; a.aGoals += gf; if(won) a.aW++; }
-        else if(pos === 'def'){ a.dG++; a.dGa += ga; }
-        if(diff <= 2){ a.cg++; if(won) a.cw++; }
-        if(won && diff === 1) a.c1w++;
-      }
-    }
-    _recentMemo = { agg, count };
-    return _recentMemo;
-  };
-  // Deterministischer "Bester nach Metrik"-Picker (Gleichstand → kleinere pid).
-  const _formPick = (elig, metric) => {
-    let best = null;
-    for(const pid of elig){
-      const v = metric(pid);
-      if(v == null) continue;
-      if(!best || v > best.v || (v === best.v && pid < best.pid)) best = { pid, v };
-    }
-    return best;
-  };
-
-  // ── Das Bild eines Fun Facts [§C33] ──────────────────────────────
-  // Jede Karte trug dieselbe Form: eine große Zahl links, der Satz rechts —
-  // die Pause sah aus wie die Vitrine, das Duell wie das Prestige. Jede
-  // Vorlage legt jetzt die Daten ihres Bilds in `bild`, und der Feed zeichnet
-  // daraus den Kopf ihres Anlasses (`_faktBild`). Gespeichert wird es mit der
-  // Karte: ein Fun Fact ist eine Ziehung und erzählt vom Tag, an dem er stand.
-  // Die Breite eines Balkens steht mit dabei, weil ein Wert wie „Ø 6,5
-  // Gegentore" kleiner besser ist und das Bild das nicht wissen soll.
-  // `kleinerBesser` nur für eine Reihe, die aufsteigend sortiert ist. Die
-  // Reihenfolge eines Rekords (`chronicleRang`) ist schon nach dem Wert
-  // geordnet, auch wo weniger besser ist — dort steht der Wert negiert.
-  const _bRennen = (l, kleinerBesser, form) => {
-    const r = l.filter(x => x && pm[x.p]).slice(0, 3);
-    if(!r.length) return null;
-    const v = r.map(x => Number(x.v) || 0), max = Math.max(...v), min = Math.min(...v);
-    return {f:form || 'rennen', r:r.map((x, k) => ({p:x.p, t:String(x.t), n:x.n, w:+(
-      kleinerBesser ? (max > 0 ? min / Math.max(v[k], 1e-9) : 1 - k * .2)
-      : (max > 0 && min >= 0 ? v[k] / max : 1 - k * .2)).toFixed(3)}))};
-  };
-  const _bReihe = (pool, val, fmt, kleinerBesser, form) => _bRennen(pool
-    .map(pid => ({p:pid, v:val(pid)})).filter(x => x.v != null && isFinite(x.v))
-    .sort((a, b) => kleinerBesser ? a.v - b.v : b.v - a.v)
-    .map(x => ({p:x.p, v:x.v, t:fmt(x.v), n:x.v})), kleinerBesser, form);
-  // Eine große Summe als Zählwerk, dahinter der Zweite und der Abstand.
-  const _bZahl = (pool, val) => {
-    const r = pool.filter(pid => pm[pid]).map(pid => ({p:pid, v:val(pid)})).sort((a, b) => b.v - a.v);
-    return r.length ? {f:'zahl', p:r[0].p, n:r[0].v, zweiter:r[1] ? {p:r[1].p, n:r[1].v} : null} : null;
-  };
-
-  // ── Fun Fact: Tore insgesamt ──
-  // ── Fun Fact: die Tore der Liga ──
-  // Vorher standen hier drei Karten: „Tor-Bilanz", „Kicker-Tag" und „Liga in
-  // Zahlen". Der Kicker-Tag meldete, dass montags am meisten gespielt wird —
-  // Montag IST der Spieltag, die Karte sagte also, dass die Liga ihren Termin
-  // einhält. „Liga in Zahlen" nannte keinen Spieler und behauptete mit „und es
-  // werden mehr" etwas über die Zukunft. Übrig bleibt eine Karte, die zwei
-  // Zahlen verbindet: wie viele Tore fallen und wie eine Partie meistens ausgeht.
-  T.push({ key:'fun_goals', make: () => {
-    if(matches.length < 10) return null;
-    let g = 0; const cnt = {};
-    for(const m of matches){
-      g += (m.score_a||0) + (m.score_b||0);
-      const hi = Math.max(m.score_a||0, m.score_b||0), lo = Math.min(m.score_a||0, m.score_b||0);
-      const k = hi + ':' + lo;
-      cnt[k] = (cnt[k] || 0) + 1;
-    }
-    let bk = null, bn = 0;
-    for(const k in cnt) if(cnt[k] > bn){ bn = cnt[k]; bk = k; }
-    if(!bk) return null;
-    return { cat:'fun', ic:'thriller', prio:3,
-      title:`${g} Tore in ${matches.length} Partien`,
-      desc:`Im Schnitt fallen ${komma(g/matches.length)} Tore je Partie. Am häufigsten endet eine Partie ${bk}, das war ${bn} Mal so.`,
-      vv: g, vl:'Tore',
-      dataRef:{ bild:{f:'verteilung', je:[0,1,2,3,4,5,6,7,8,9].map(i => cnt['10:' + i] || 0), hl:[Number(bk.split(':')[1])]} } };
-  }});
-
-  // ── Persönlich: Siegquoten-Führer (min. 5 Spiele) ──
-  T.push({ key:'personal_wr', make: () => {
-    const elig = withStats.filter(pid => stats[pid].games >= 5);
-    if(!elig.length) return null;
-    elig.sort((a,b) => stats[b].wr - stats[a].wr);
-    const pid = elig[0], st = stats[pid];
-    return { cat:'personal', ic:'crown', prio:4,
-      // v9.17: Der Filter ist „ab 5 Spielen" — das gehört auch in den Text,
-      // sonst behauptet die News eine Liga-Bestmarke, die sie gar nicht prüft.
-      title:`${nameOf(pid)} gewinnt einfach`,
-      desc:`Beste Siegquote der Liga (ab 5 Partien): ${Math.round(st.wr*100)} % aus ${st.games} Partien.`,
-      vv: Math.round(st.wr*100)+' %', vl:'Siegquote',
-      dataRef:{ ambientPid: pid, bild:_bReihe(elig, p2 => stats[p2].wr, v => Math.round(v * 100) + ' %', false, 'podest') } };
-  }});
-
-  // ── Persönlich: Vielspieler ──
-  T.push({ key:'personal_grinder', make: () => {
-    if(!withStats.length) return null;
-    const pid = withStats.slice().sort((a,b) => stats[b].games - stats[a].games)[0];
-    if(stats[pid].games < 10) return null;
-    return { cat:'personal', ic:'medalTrio', prio:3,
-      title:`${nameOf(pid)} ist Dauergast`,
-      desc:`Niemand spielt mehr: ${stats[pid].games} Partien auf dem Konto.`,
-      vv: stats[pid].games, vl:'Partien',
-      dataRef:{ ambientPid: pid, bild:_bZahl(withStats, p2 => stats[p2].games) } };
-  }});
-
-  // ── Persönlich: heißeste aktuelle Serie ──
-  T.push({ key:'personal_streak', make: () => {
-    if(!withStats.length) return null;
-    const pid = withStats.slice().sort((a,b) => (stats[b].curStreak||0) - (stats[a].curStreak||0))[0];
-    const cs = stats[pid].curStreak || 0;
-    if(cs < 3) return null;
-    return { cat:'personal', ic:'trendUp', prio:5,
-      title:`${nameOf(pid)} läuft heiß`,
-      desc:`${cs} Siege in Folge. Aktuell die heißeste Serie der Liga.`,
-      vv: cs+'×', vl:'in Folge',
-      dataRef:{ ambientPid: pid, bild:{f:'lauf', p:pid, n:cs} } };
-  }});
-
-  // ── Rivalität: meistgespieltes Duell ──
-  T.push({ key:'rivalry_most', make: () => {
-    const map = _ensureH2HMap();
-    if(!map || !map.size) return null;
-    let best = null;
-    for(const [k, e] of map){
-      const [pa, pb] = k.split('|');
-      if(!aktiv(pa) || !aktiv(pb)) continue;
-      const wa = e.wins[pa]||0, wb = e.wins[pb]||0, total = wa + wb;
-      if(total < 3) continue;
-      if(!best || total > best.total) best = { pa, pb, total, wa, wb };
-    }
-    if(!best) return null;
-    return { cat:'rivalry', ic:'crossedSwords', prio:4,
-      // Ganze Sätze statt Etikett und „vs" [§C33]: „Duell der Liga: Leon vs
-      // Maxi" und „Siege: Leon 152, Maxi 89." waren Aufschriften.
-      title:`${nameOf(best.pa)} und ${nameOf(best.pb)} sind das Duell der Liga`,
-      desc:`${best.total} direkte Duelle, ${nameOf(best.pa)} gewinnt ${best.wa}, ${nameOf(best.pb)} ${best.wb}.`,
-      vv: best.total, vl:'Duelle',
-      dataRef:{ ambientPids:[best.pa, best.pb], pairKind:'duel', bild:{f:'duell', a:best.pa, b:best.pb, wa:best.wa, wb:best.wb} } };
-  }});
-
-  // ── Rivalität: engste Bilanz (min. 4) ──
-  T.push({ key:'rivalry_close', make: () => {
-    const map = _ensureH2HMap();
-    if(!map || !map.size) return null;
-    let best = null;
-    for(const [k, e] of map){
-      const [pa, pb] = k.split('|');
-      if(!aktiv(pa) || !aktiv(pb)) continue;
-      const wa = e.wins[pa]||0, wb = e.wins[pb]||0, total = wa + wb;
-      if(total < 4) continue;
-      const diff = Math.abs(wa - wb);
-      if(!best || diff < best.diff || (diff === best.diff && total > best.total)) best = { pa, pb, wa, wb, total, diff };
-    }
-    if(!best) return null;
-    return { cat:'rivalry', ic:'crossedSwords', prio:4,
-      title:`${nameOf(best.pa)} und ${nameOf(best.pb)} liegen Kopf an Kopf`,
-      // Zwischen den beiden Zahlen stand ein Halbgeviertstrich, und der ist in
-      // einem Satz ein Gedankenstrich und kein Bilanzstrich. Die Bilanz steht
-      // jetzt als Doppelpunkt-Paar da, wie ueberall sonst in der App.
-      desc:best.diff === 0 ? `${best.total} direkte Duelle, und jeder hat ${best.wa} gewonnen.`
-        : `${best.total} direkte Duelle, nur ${best.diff} ${best.diff === 1 ? 'Sieg' : 'Siege'} Unterschied. Es steht ${Math.max(best.wa, best.wb)}:${Math.min(best.wa, best.wb)} für ${nameOf(best.wa > best.wb ? best.pa : best.pb)}.`,
-      vv: best.wa+':'+best.wb, vl:'Bilanz',
-      dataRef:{ ambientPids:[best.pa, best.pb], pairKind:'duel', bild:{f:'duell', a:best.pa, b:best.pb, wa:best.wa, wb:best.wb} } };
-  }});
-
-  // ── Historie: Liga-Alter ──
-  // ── Historie: das Jubiläum ──
-  // Hieß „Die Liga lebt" und zählte den Kalender: die Zahl wuchs jeden Tag um
-  // eins und war an keinem Tag eine Nachricht. Jetzt meldet sich die Karte nur
-  // zu einer runden Zahl, und dann sagt sie, wer sie gespielt hat.
-  T.push({ key:'history_age', make: () => {
-    if(matches.length < 50) return null;
-    const stufe = matches.length >= 1000 ? 500 : matches.length >= 300 ? 100 : 50;
-    const marke = Math.floor(matches.length / stufe) * stufe;
-    if(matches.length - marke > 5) return null;   // nur frisch nach der Marke
-    const mObj = matches[marke - 1];
-    if(!mObj) return null;
-    const sieger = (mObj.winner === 'A' ? [mObj.a1, mObj.a2] : [mObj.b1, mObj.b2])
-      .filter(id => sichtbar(pm[id])).map(nameOf);
-    const d = new Date(mObj.created_at);
-    const dd = String(d.getDate()).padStart(2,'0') + '.' + String(d.getMonth()+1).padStart(2,'0') + '.';
-    return { cat:'history', ic:'calendar', prio:5,
-      title:`Die ${marke}. Partie der Liga`,
-      desc: sieger.length
-        ? `Gespielt am ${dd}, gewonnen von ${sieger.join(' und ')} mit ${standFuer(mObj)}.`
-        : `Gespielt am ${dd}, Endstand ${mObj.score_a}:${mObj.score_b}.`,
-      vv: marke, vl:'Partien',
-      dataRef:{ bild:{f:'zaehler', n:marke, sieger:(mObj.winner === 'A' ? [mObj.a1, mObj.a2] : [mObj.b1, mObj.b2]).filter(id => pm[id]),
-        stand:standFuer(mObj)} } };
-  }});
-
-  // ── Fun Fact: Torschützenkönig (meiste Karriere-Tore, v8.8) ──
-  // v9.17: Der Mindestspiele-Filter ist hier raus. Die Aussage lautet „kein
-  // Spieler hat mehr erzielt" — eine Gesamtsumme braucht keine Mindestanzahl,
-  // und mit Filter wäre der Satz streng genommen nicht belegt.
-  T.push({ key:'fun_top_scorer', make: () => {
-    const elig = withStats.filter(pid => stats[pid].gf > 0);
-    if(!elig.length) return null;
-    const sorted = elig.slice().sort((a,b) => stats[b].gf - stats[a].gf);
-    const pid = sorted[0];
-    const runnerUp = sorted[1] ? stats[pid].gf - stats[sorted[1]].gf : null;
-    return { cat:'personal', ic:'thriller', prio:3,
-      title:`${nameOf(pid)} ist Torschützenkönig`,
-      desc: runnerUp != null
-        ? `${stats[pid].gf} Tore insgesamt. ${runnerUp} mehr als ${nameOf(sorted[1])} dahinter.`
-        : `${stats[pid].gf} Tore insgesamt. Kein Spieler hat mehr erzielt.`,
-      vv: stats[pid].gf, vl:'Tore',
-      dataRef:{ ambientPid: pid, bild:_bZahl(sorted, p2 => stats[p2].gf) } };
-  }});
-
-  // ── Fun Fact: aktueller Spitzenreiter (Elo-#1, v8.8) ──
-  // v9.17 KONSISTENZ: Der Spitzenreiter kam aus getGlobalSim().elo, gefiltert
-  // nach KARRIERE-Spielen ≥3. Die Rangliste (§5.1) zeigt dagegen die
-  // SAISON-Tabelle aus periodPlayerStats('season') — wer in der laufenden Saison
-  // noch nicht gespielt hat, steht dort gar nicht drin. Direkt nach einem
-  // Saison-Reset stehen zudem alle auf dem Startwert, und die News kürte einen
-  // beliebigen „Spitzenreiter" mit 0 Punkten Vorsprung. Jetzt dieselbe Quelle
-  // und dieselbe Sortierung wie die Rangliste — eine Wahrheit, keine Abweichung.
-  T.push({ key:'fun_leader', make: () => {
-    if(typeof periodPlayerStats !== 'function') return null;
-    const ranked = periodPlayerStats('season')
-      .filter(r => aktiv(r.id))
-      .slice()
-      .sort((a,b) => b.elo - a.elo || b.wins - a.wins);
-    if(ranked.length < 2) return null;
-    const lead = ranked[0].elo - ranked[1].elo;
-    if(lead <= 0) return null; // Gleichstand an der Spitze → kein „thront"
-    return { cat:'personal', ic:'crown', prio:4,
-      title:`${nameOf(ranked[0].id)} thront an der Spitze`,
-      desc:`${ranked[0].elo} Elo in dieser Saison. ${lead} Punkte vor ${nameOf(ranked[1].id)}.`,
-      vv: ranked[0].elo, vl:'Elo',
-      dataRef:{ ambientPid: ranked[0].id, bild:_bRennen(ranked.map(r => ({p:r.id, v:r.elo, t:r.elo + ' Elo'})), false, 'podest') } };
-  }});
-
-  // ── Fun Fact: höchster Sieg aller Zeiten (v8.8) ──
-  T.push({ key:'fun_biggest_win', make: () => {
-    if(matches.length < 5) return null;
-    let best = null;
-    for(const m of matches){
-      const hi = Math.max(m.score_a||0, m.score_b||0), lo = Math.min(m.score_a||0, m.score_b||0);
-      const diff = hi - lo;
-      if(!best || diff > best.diff) best = {diff, hi, lo, m};
-    }
-    if(!best || best.diff < 6) return null;
-    // „Höchster Sieg aller Zeiten: 10:0 am 01.06." nannte den ERSTEN von
-    // vielen und niemanden, der ihn holte. Gezählt wird, wie oft es so klar
-    // ausging, und genannt wird das letzte Mal mit seinen Siegern [§C33].
-    const gleich = matches.filter(m => Math.max(m.score_a||0, m.score_b||0) === best.hi
-      && Math.min(m.score_a||0, m.score_b||0) === best.lo && mts(m) <= now.getTime());
-    const zuletzt = gleich.length ? gleich[gleich.length - 1] : best.m;
-    const sieger = (zuletzt.winner === 'A' ? [zuletzt.a1, zuletzt.a2] : [zuletzt.b1, zuletzt.b2]).filter(id => pm[id]);
-    const dt = new Date(zuletzt.created_at), am = `${String(dt.getDate()).padStart(2,'0')}.${String(dt.getMonth()+1).padStart(2,'0')}.`;
-    const wer = sieger.length ? ` für ${_namenListe(sieger.map(nameOf))}` : '';
-    return { cat:'fun', ic:'thriller', prio:3,
-      // Der Titel bleibt, das Ergebnis steht groß daneben und die Zahl im
-      // Satz: „11-mal 10:0" neben dem großen „10:0" sagte es zweimal.
-      title:'Der klarste Sieg der Liga',
-      desc: gleich.length > 1
-        ? `${gleich.length}-mal endete eine Partie so, zuletzt am ${am}${wer}.`
-        : `So endete nur eine Partie, am ${am}${wer}.`,
-      vv: best.hi+':'+best.lo, vl:'Rekord',
-      dataRef:{ ambientPids:sieger.slice(0, 2), bild:{f:'verteilung', je:[0,1,2,3,4,5,6,7,8,9].map(i => matches.filter(m =>
-        Math.max(m.score_a||0, m.score_b||0) === 10 && Math.min(m.score_a||0, m.score_b||0) === i).length), hl:[best.lo]} } };
-  }});
-
-  // ── Fun Fact: aktivster Spieltag (v8.8) ──
-  T.push({ key:'fun_busiest_day', make: () => {
-    if(matches.length < 8) return null;
-    const byDay = {};
-    for(const m of matches){
-      const dk = tagKey(m.created_at);
-      byDay[dk] = (byDay[dk] || 0) + 1;
-    }
-    let bk = null, bn = 0;
-    for(const dk in byDay){ if(byDay[dk] > bn){ bn = byDay[dk]; bk = dk; } }
-    if(bn < 5) return null;
-    const p = bk.split('-');
-    return { cat:'fun', ic:'calendar', prio:2,
-      title:'Der Spieltag mit den meisten Partien',
-      desc:`Am ${p[2]}.${p[1]}.${p[0]} wurden ${bn} Partien gespielt, so viele wie an keinem anderen Tag.`,
-      vv: bn, vl:'Partien',
-      dataRef:{ bild:(() => { const ks = Object.keys(byDay).sort().slice(-24);
-        if(!ks.includes(bk)){ ks.shift(); ks.push(bk); ks.sort(); }
-        return {f:'saeulen', v:ks.map(k => byDay[k]), hl:[ks.indexOf(bk)], l:'Spieltage'}; })() } };
-  }});
-
-  // Spielreichste oder ruhigste tatsächlich bespielte Kalenderwoche. Das
-  // erklärt den Rhythmus der Liga statt eine beliebige Einzelzahl zu ziehen.
-  T.push({ key:'history_week_volume', weight:2, make: rng => {
-    if(matches.length < 12) return null;
-    const wochen = {};
-    for(const m of matches){
-      const d = new Date(m.created_at), tag = wochentagMo(d);
-      const mo = new Date(d.getFullYear(), d.getMonth(), d.getDate() - tag);
-      const k = tagKey(mo);
-      if(!wochen[k]) wochen[k] = {n:0, von:mo};
-      wochen[k].n++;
-    }
-    const l = Object.values(wochen).sort((a, b) => b.n - a.n || a.von - b.von);
-    if(l.length < 3) return null;
-    const laut = l[0], still = l.slice().sort((a, b) => a.n - b.n || a.von - b.von)[0];
-    const x = rng() < .55 ? laut : still, istLaut = x === laut;
-    const bis = new Date(x.von.getFullYear(), x.von.getMonth(), x.von.getDate() + 6);
-    return {cat:'history', ic:istLaut ? 'flame' : 'calendar', prio:4,
-      title:istLaut ? 'Die spielreichste Woche bisher' : 'Die ruhigste Spielwoche bisher',
-      desc:`${x.n} ${x.n === 1 ? 'Partie' : 'Partien'} zwischen ${datumFmt(x.von, 'tmx')} und ${tagImSatz(bis)} `
-        + (istLaut ? `Der bisherige Wochenrekord.` : `Weniger wurde in keiner Woche mit Spielbetrieb gespielt.`),
-      vv:String(x.n), vl:'Partien',
-      dataRef:{ bild:(() => { const ws = Object.values(wochen).sort((a, b) => a.von - b.von).slice(-24);
-        if(!ws.includes(x)){ ws.shift(); ws.push(x); ws.sort((a, b) => a.von - b.von); }
-        return {f:'saeulen', v:ws.map(w => w.n), hl:[ws.indexOf(x)], l:'Wochen', still:!istLaut}; })() }};
-  }});
-
-  // Ein Rekord aus dem echten Awards-Katalog, mit Halter und Beleg. So macht
-  // der Funfact zugleich auf eine Funktion der App aufmerksam.
-  T.push({ key:'record_spotlight', weight:2, make: rng => {
-    let byId = null;
-    try { byId = (allChronicles() || {}).byId; } catch(e){ return null; }
-    const l = Object.values(byId || {}).filter(r => r && r.pids && r.pids.length
-      && r.pids.some(aktiv));
-    if(!l.length) return null;
-    const r = l[Math.floor(rng() * l.length)], pids = r.pids.filter(aktiv);
-    const namen = pids.slice(0, 3).map(nameOf);
-    return {cat:'history', ic:r.ic || 'trophy', prio:5,
-      // „Rekord im Fokus: X" war ein Etikett, und der Beleg endete ohne Punkt.
-      title:`${_namenListe(namen)} ${pids.length === 1 ? 'hält' : 'halten'} „${r.name}“`,
-      desc:`${String(r.ev || r.cond || 'Der Beleg steht in der Ewigen Tafel').replace(/\s*[·•]\s*/g, '. ').replace(/\.?\s*$/, '.')}`,
-      // Der Wert stand roh da: „0.72" mit englischem Punkt für 72 Prozent.
-      // Der Beleg beginnt mit dem Sortierwert [§C35] und trägt seine Einheit.
-      vv:_chronKurz(r.ev) || String(r.val), vl:'Bestwert', dataRef:{ambientPids:pids.slice(0, 3), rekordId:r.id,
-        bild:_bRennen(_rekRang(r.id).map(x => ({p:x.pid, v:x.wert, t:_chronKurz(x.ev) || komma(x.wert)})), false, 'podest')}};
-  }});
-
-  // ══ Neue lebendige Fun Facts (v9.1) ══
-  const _gsim = () => getGlobalSim() || {};
-
-  // ── Fun Fact: Random Top-1 eines Awards/Rankings ──
-  T.push({ key:'fun_award_leader', make: (rng) => {
-    const career = _gsim().careerElo || {};
-    const elig = withStats.filter(pid => stats[pid].games >= 5);
-    if(elig.length < 2) return null;
-    // v9.17: Kumulative Kennzahlen (Siege, Tore, Tordifferenz) werden über ALLE
-    // Spieler mit Spielen ermittelt — eine Gesamtsumme braucht keine
-    // Mindestanzahl. Nur die Karriere-Elo (eine Wertung, keine Summe) behält den
-    // 5-Spiele-Filter, und der steht dann auch im Text.
-    const cats = [
-      // `bei` ist die Wertung im Satz, `dat` die Zahl nach „mit": „vor Maxi
-      // mit 218 Siege" stand im Feed.
-      { noun:'Meiste Siege',         bei:'den Siegen',        ic:'trophy',  pool:withStats, val: pid => stats[pid].wins,               fmt: v => v+' Siege', dat: v => v+' Siegen' },
-      { noun:'Bestes Torverhältnis', bei:'der Tordifferenz',  ic:'plusMinus', pool:withStats, val: pid => stats[pid].gf - stats[pid].ga, fmt: v => (v>0?'+':'')+v+' Tordifferenz' },
-      { noun:'Meiste Tore',          bei:'den Toren',         ic:'ball',    pool:withStats, val: pid => stats[pid].gf,                 fmt: v => v+' Tore', dat: v => v+' Toren' },
-      { noun:'Höchste Karriere-Elo', bei:'der Karriere-Elo',  ic:'crown',   pool:elig,      val: pid => Math.round(career[pid]||0),    fmt: v => v+' Elo', qual:' (ab 5 Partien)' },
-    ];
-    const c = cats[Math.floor(rng()*cats.length)];
-    let best = null, second = null;
-    for(const pid of c.pool){
-      const v = c.val(pid);
-      if(best === null || v > best.v){ second = best; best = {pid, v}; }
-      else if(second === null || v > second.v){ second = {pid, v}; }
-    }
-    if(!best) return null;
-    // Bei Gleichstand führt niemand allein. Der Vergleich schob den zweiten
-    // Spieler mit DEMSELBEN Wert in den Else-Zweig, und die Karte las sich als
-    // „221 Siege. Liga-Bestwert, vor Martin mit 221 Siegen" — ein Bestwert und
-    // sein Gleichstand in einem Satz.
-    if(second && second.v === best.v) return null;
-    return { cat:'personal', ic:c.ic, prio:5,
-      title:`${nameOf(best.pid)} führt bei ${c.bei}`,
-      desc: second
-        ? `${c.fmt(best.v)}. Liga-Bestwert${c.qual||''}, vor ${nameOf(second.pid)} mit ${(c.dat || c.fmt)(second.v)}.`
-        : `${nameOf(best.pid)} hält den Liga-Bestwert${c.qual||''}. ${c.fmt(best.v)}.`,
-      vv: best.v, vl: c.noun.replace(/^(Meiste|Bestes|Höchste)\s+/, ''),
-      dataRef:{ ambientPid: best.pid, bild:_bReihe(c.pool, c.val, v => (c.fmt(v).match(/^[+-]?\d+/) || [String(v)])[0]) } };
-  }});
-
-  // ── Fun Fact: Random Stat zu random Spieler ──
-  // v9.11: bewusst höher gewichtet (weight 3) + kürzerer Cooldown (3 statt 7
-  // Tage). Dieser Typ hat die größte inhaltliche Variabilität (zufälliger
-  // Spieler × zufällige Kennzahl), darf also vergleichsweise öfter kommen, ohne
-  // zu langweilen — Standard-Cooldown wäre sonst die harte Frequenz-Obergrenze.
-  T.push({ key:'fun_random_stat', weight:3, cooldown:3, make: (rng) => {
-    const elig = withStats.filter(pid => stats[pid].games >= 5);
-    if(!elig.length) return null;
-    const pid = elig[Math.floor(rng()*elig.length)];
-    const st = stats[pid];
-    // Vorher zog diese Karte eine BELIEBIGE Kennzahl: „Henry gewinnt 39 %
-    // seiner Spiele" stand als Nachricht im Feed und sagte ihrem Helden, dass
-    // er unterdurchschnittlich ist. Eine Meldung über einen Spieler soll ihn
-    // belohnen — gesucht wird deshalb die Kennzahl, in der er am WEITESTEN
-    // vorne steht, und genannt wird sein Platz darin.
-    const felder = [
-      {n:'Partien',          v:p2 => stats[p2].games,                        fmt:v => `${v} Partien`},
-      {n:'Siegen',           v:p2 => stats[p2].wins,                         fmt:v => `${v} Siege`},
-      {n:'erzielten Toren',  v:p2 => stats[p2].gf,                           fmt:v => `${v} Tore`},
-      {n:'der Siegquote',    v:p2 => stats[p2].games ? stats[p2].wins/stats[p2].games : 0,
-                             fmt:v => `${Math.round(v*100)} % Siegquote`},
-      {n:'Toren je Partie',  v:p2 => stats[p2].games ? stats[p2].gf/stats[p2].games : 0,
-                             fmt:v => `${komma(v)} Tore je Partie`},
-    ];
-    let bestes = null;
-    felder.forEach(f => {
-      const reihe = elig.slice().sort((x, y) => f.v(y) - f.v(x));
-      const platz = reihe.indexOf(pid) + 1;
-      if(!platz) return;
-      if(!bestes || platz < bestes.platz) bestes = {f, platz, wert:f.v(pid), von:reihe.length};
+  // ── Eine Schleife für alle ──────────────────────────────────────────
+  // Laufbahn, die vierzehn Tage und die sechs Wochen davor, je Spieler in
+  // einem Durchgang über die Partien bis zur Ziehung. Gemerkt für den einen
+  // Aufbau des Pools: jede Vorlage fragt dieselben Zahlen.
+  let _memo = null;
+  const lage = () => {
+    if(_memo) return _memo;
+    const bis = (matches || []).filter(m => mts(m) <= jetzt);
+    const je = {};
+    const zu = id => je[id] || (je[id] = {g:0, w:0, gf:0, g14:0, w14:0, e14:0, d14:0, gf14:0,
+      aG14:0, dG14:0, gV:0, wV:0, aGV:0, dGV:0, dV:0, tage:new Map(), tageN:new Map(), tage14:new Set(),
+      fav:[0, 0, 0], aus:[0, 0, 0]});
+    bis.forEach(m => {
+      const t = mts(m), e = m.exp_a != null && isFinite(m.exp_a) ? Number(m.exp_a) : .5, aW = m.winner === 'A';
+      [[m.a1, m.a1_pos, true], [m.a2, m.a2_pos, true], [m.b1, m.b1_pos, false], [m.b2, m.b2_pos, false]].forEach(([id, pos, aufA]) => {
+        if(!id || !pm[id]) return;
+        const x = zu(id), w = aufA ? aW : !aW, gf = (aufA ? m.score_a : m.score_b) || 0;
+        const dl = Number((m.deltas || {})[id]) || 0;
+        x.g++; if(w) x.w++; x.gf += gf;
+        // Der Verlauf je Spieltag, im Fenster getrennt vom Tag davor: der
+        // Tag, an dem das Fenster um 15 Uhr beginnt, hat Partien auf beiden
+        // Seiten der Grenze.
+        if(t >= ab56){
+          const k = (t >= ab14 ? 'b' : 'a') + tagKey(m.created_at);
+          x.tage.set(k, (x.tage.get(k) || 0) + dl); x.tageN.set(k, (x.tageN.get(k) || 0) + 1);
+        }
+        if(t >= ab14){
+          const ex = aufA ? e : 1 - e, seite = ex >= .5 ? x.fav : x.aus;
+          x.g14++; if(w) x.w14++; x.e14 += ex; x.d14 += dl; x.gf14 += gf;
+          seite[0]++; if(w) seite[1]++; seite[2] += ex;
+          if(pos === 'atk') x.aG14++; else x.dG14++;
+          x.tage14.add(tagKey(m.created_at));
+        } else {
+          x.gV++; if(w) x.wV++;
+          if(pos === 'atk') x.aGV++; else x.dGV++;
+          if(t >= ab56) x.dV += dl;
+        }
+      });
     });
-    // Nur auf dem Podest: „Alex ist Nummer 9 bei der Siegquote" stand als
-    // Fun Fact im Feed und sagte, dass er in keiner Kennzahl vorne liegt.
-    if(!bestes || bestes.platz > 3) return null;
-    return { cat:'personal', ic:'chartBar', prio:4,
-      title: bestes.platz === 1
-        ? `${nameOf(pid)} führt die Liga bei ${bestes.f.n} an`
-        : `${nameOf(pid)} ist Nummer ${bestes.platz} bei ${bestes.f.n}`,
-      // Der Platz steht in der Schlagzeile („ist Nummer 9", „führt … an");
-      // „Platz 9 von 11." darunter sagte ihn ein zweites Mal.
-      desc:`${bestes.f.fmt(bestes.wert)}, unter ${bestes.von} Spielern.`,
-      // „1 Platz" las sich wie eine Anzahl. Ein Rang heisst „Platz 1".
-      vv: 'Platz ' + bestes.platz, vl:'von ' + (bestes.von || ''),
-      dataRef:{ ambientPid: pid, bild:{f:'platz', p:pid, platz:bestes.platz, von:bestes.von, t:bestes.f.fmt(bestes.wert)} } };
-  }});
-
-  // ── Fun Fact: Platzierung in der ewigen Gesamt-Rangliste (random Spieler) ──
-  // ── Gestrichen: „X auf Platz 12 von 12" ──
-  // Der Typ zog einen zufälligen Spieler aus der Rangliste und nannte seinen
-  // Platz. Bei zwölf Spielern traf das regelmäßig den Letzten, und eine Karte
-  // über einen Spieler soll ihn belohnen. Die Kennzahl, in der jemand am
-  // weitesten vorne steht, sucht `fun_random_stat`.
-
-  // ── Fun Fact: längste gemeinsame Team-Serie ──
-  // v9.17 FORMULIERUNG: Hieß pauschal „Rekord-Duo", zog aber ein ZUFÄLLIGES Duo
-  // mit ≥3 gemeinsamen Siegen in Serie — das ist per Definition kein Rekord und
-  // „einer der besten Läufe der Liga" war schlicht ungeprüft. Jetzt wird die
-  // Bestmarke der Liga mitberechnet: nur das tatsächlich führende Duo heißt
-  // „Rekord-Duo", alle anderen bekommen eine ehrliche Einordnung (Platz + Abstand
-  // zur Bestmarke). Die Zufallsauswahl bleibt — sie sorgt für die Abwechslung.
-  T.push({ key:'fun_team_record', make: (rng) => {
-    const rec = {}; // teamKey → {ids, best, cur}
-    for(const m of matches){
-      const sides = [[m.a1,m.a2,m.winner==='A'],[m.b1,m.b2,m.winner==='B']];
-      for(const [x,y,won] of sides){
-        if(!x || !y) continue;
-        const ids = [x,y].sort(), k = ids.join('|');
-        if(!rec[k]) rec[k] = {ids, best:0, cur:0};
-        rec[k].cur = won ? rec[k].cur + 1 : 0;
-        if(rec[k].cur > rec[k].best) rec[k].best = rec[k].cur;
-      }
-    }
-    const cands = Object.values(rec).filter(t =>
-      t.best >= 3 && aktiv(t.ids[0]) && aktiv(t.ids[1]));
-    if(!cands.length) return null;
-    // Bestmarke + Rang aus derselben Liste — keine zweite Berechnung.
-    const ranked = cands.slice().sort((a,b) => b.best - a.best || (a.ids[0] < b.ids[0] ? -1 : 1));
-    const topBest = ranked[0].best;
-    // Gezogen wird aus dem vorderen Drittel, nicht aus allen. Gleichverteilt
-    // ueber das Feld stand „Eingespielt: Martin & Stefan" ueber einem Duo auf
-    // Platz 24 von 24 — eine Karte, die einen Spieler feiert und ihm dabei
-    // sagt, dass er Letzter ist [§C33].
-    const feld = ranked.slice(0, Math.max(3, Math.ceil(ranked.length / 3)));
-    const t = feld[Math.floor(rng()*feld.length)] || feld[0];
-    const rank = ranked.findIndex(x => x.ids[0] === t.ids[0] && x.ids[1] === t.ids[1]) + 1;
-    const isRecord = t.best === topBest;
-    const nm = `${nameOf(t.ids[0])} und ${nameOf(t.ids[1])}`;
-    return { cat:'team', ic:'unstoppable', prio:isRecord ? 5 : 4,
-      title: isRecord ? `${nm} sind das Rekord-Duo` : `${nm} sind eingespielt`,
-      desc: isRecord
-        ? `${t.best} gemeinsame Siege in Serie. Kein Duo der Liga war je länger unschlagbar.`
-        : `${t.best} gemeinsame Siege in Serie. Das ist Platz ${rank} von ${ranked.length} Duos, `
-          + `nur ${topBest - t.best} hinter der Bestmarke.`,
-      vv: t.best, vl:'in Serie',
-      dataRef:{ ambientPids:[t.ids[0], t.ids[1]], pairKind:'team', bild:{f:'duo', a:t.ids[0], b:t.ids[1], lauf:t.best, best:topBest} } };
-  }});
-
-  // ══ Zeitbasierte Form-Fakten (v9.13) — Momentaufnahme der letzten 14 Tage ══
-  // Diese Typen leben von der aktuellen Form: das Fenster rollt täglich weiter,
-  // die Bestenlisten ändern sich also von allein und bringen Abwechslung — ein
-  // Mittelfeldspieler kann kurzfristig heiß laufen, auch wenn seine Karriere-Werte
-  // unauffällig sind. Alle teilen recentAgg() (eine einzige Schleife, s.o.) und
-  // greifen auf bereits vorhandene Konventionen zurück (Positionen atk/def,
-  // enge Spiele Tordiff ≤ 2 = wie Clutch-Award, 1-Tor-Sieg = Zittersieg).
-
-  // ── Beste Siegquote der letzten 14 Tage ──
-  T.push({ key:'form_best_wr', make: () => {
-    const { agg, count } = recentAgg();
-    if(count < 6) return null;
-    const elig = Object.keys(agg).filter(id => agg[id].g >= 4);
-    const best = _formPick(elig, id => agg[id].w / agg[id].g);
-    if(!best || best.v <= 0) return null;
-    const a = agg[best.pid];
-    return { cat:'personal', ic:'trendUp', prio:5,
-      title:`${nameOf(best.pid)} ist in Topform`,
-      desc:`Beste Siegquote der letzten 14 Tage: ${Math.round(best.v*100)} % aus ${a.g} Partien.`,
-      vv: Math.round(best.v*100)+'\u00A0%', vl:'14 Tage',
-      dataRef:{ ambientPid: best.pid, bild:_bReihe(elig, id => agg[id].w / agg[id].g, v => Math.round(v * 100) + ' %') } };
-  }});
-
-  // ── Aktuell bester Stürmer (Ø Tore + Siegquote im Sturm, letzte 14 Tage) ──
-  T.push({ key:'form_striker', make: () => {
-    const { agg, count } = recentAgg();
-    if(count < 6) return null;
-    const elig = Object.keys(agg).filter(id => agg[id].aG >= 3);
-    const best = _formPick(elig, id => agg[id].aGoals / agg[id].aG);
-    if(!best || best.v <= 0) return null;
-    const a = agg[best.pid];
-    const wrAtk = Math.round(a.aW / a.aG * 100);
-    return { cat:'personal', ic:'bolt', prio:5,
-      title:`${nameOf(best.pid)} ist der Sturm-Chef`,
-      desc:`Bester Stürmer der letzten 14 Tage: im Schnitt ${komma(best.v)} Tore und ${wrAtk} % Siege im Sturm.`,
-      vv: komma(best.v), vl:'Ø Tore',
-      dataRef:{ ambientPid: best.pid, bild:_bReihe(elig, id => agg[id].aGoals / agg[id].aG, v => komma(v)) } };
-  }});
-
-  // ── Aktuell bester Abwehrspieler (wenigste Gegentore als Abwehr, 14 Tage) ──
-  T.push({ key:'form_defender', make: () => {
-    const { agg, count } = recentAgg();
-    if(count < 6) return null;
-    const elig = Object.keys(agg).filter(id => agg[id].dG >= 3);
-    // Wenigste Gegentore/Spiel = am besten → Negativ-Metrik maximieren.
-    const best = _formPick(elig, id => -(agg[id].dGa / agg[id].dG));
-    if(!best) return null;
-    const a = agg[best.pid];
-    return { cat:'personal', ic:'shieldCheck', prio:5,
-      title:`${nameOf(best.pid)} macht die Bude dicht`,
-      desc:`Im Schnitt ${komma(a.dGa/a.dG)} Gegentore in ${a.dG} Partien in der Abwehr, in den letzten 14 Tagen.`,
-      vv: komma(a.dGa/a.dG), vl:'Ø Gegentore',
-      dataRef:{ ambientPid: best.pid, bild:_bReihe(elig, id => agg[id].dGa / agg[id].dG, v => komma(v), true) } };
-  }});
-
-  // ── Clutch: höchste Siegquote in engen Spielen (Tordiff ≤ 2, 14 Tage) ──
-  T.push({ key:'form_clutch', make: () => {
-    const { agg, count } = recentAgg();
-    if(count < 6) return null;
-    const elig = Object.keys(agg).filter(id => agg[id].cg >= 3);
-    const best = _formPick(elig, id => agg[id].cw / agg[id].cg);
-    if(!best || best.v <= 0) return null;
-    const a = agg[best.pid];
-    return { cat:'personal', ic:'target', prio:5,
-      title:`${nameOf(best.pid)} hat Nerven aus Stahl`,
-      desc:`Gewinnt aktuell ${Math.round(best.v*100)} % der engen Partien (höchstens 2 Tore Unterschied), ${a.cw} von ${a.cg} in 14 Tagen.`,
-      vv: Math.round(best.v*100)+'\u00A0%', vl:'eng gewonnen',
-      dataRef:{ ambientPid: best.pid, bild:_bReihe(elig, id => agg[id].cw / agg[id].cg, v => Math.round(v * 100) + ' %') } };
-  }});
-
-  // ── Knappe Siege: höchster Anteil 1-Tor-Siege an allen Spielen (14 Tage) ──
-  T.push({ key:'form_close_wins', make: () => {
-    const { agg, count } = recentAgg();
-    if(count < 6) return null;
-    const elig = Object.keys(agg).filter(id => agg[id].g >= 4 && agg[id].c1w >= 2);
-    const best = _formPick(elig, id => agg[id].c1w / agg[id].g);
-    if(!best || best.v <= 0) return null;
-    const a = agg[best.pid];
-    return { cat:'personal', ic:'nerves', prio:4,
-      title:`${nameOf(best.pid)} zittert sich durch`,
-      // „12 % ALLER Spiele der letzten 14 Tage" stand da, gerechnet war
-      // aber der Anteil an den Partien DIESES Spielers — die Zahl gehoerte
-      // dem Helden, der Satz der Liga. Und die Stichprobe gehoert zur
-      // Aussage: „x von y", nicht nur der Anteil [§C37].
-      desc:`${a.c1w} von ${a.g} Partien der letzten 14 Tage gewann `
-        + `${nameOf(best.pid)} mit einem Tor Unterschied, das sind `
-        + `${Math.round(best.v*100)} %.`,
-      vv: a.c1w, vl:'Zittersiege',
-      dataRef:{ ambientPid: best.pid, bild:_bReihe(elig, id => agg[id].c1w / agg[id].g, v => Math.round(v * 100) + ' %') } };
-  }});
-
-  // ── Aktivster Spieler der letzten 14 Tage ──
-  T.push({ key:'form_most_active', make: () => {
-    const { agg, count } = recentAgg();
-    if(count < 8) return null;
-    const best = _formPick(Object.keys(agg), id => agg[id].g);
-    if(!best || best.v < 4) return null;
-    return { cat:'personal', ic:'medalTrio', prio:3,
-      title:`${nameOf(best.pid)} gibt Vollgas`,
-      desc:`Aktivster Spieler der letzten 14 Tage: ${best.v} Partien in zwei Wochen.`,
-      vv: best.v, vl:'Partien',
-      dataRef:{ ambientPid: best.pid, bild:_bReihe(Object.keys(agg), id => agg[id].g, v => String(v)) } };
-  }});
-
-  // ══ Award-Fokus (v9.17) ═══════════════════════════════════════════════
-  // Wunsch: die Top-1-Spieler der Auszeichnungen sollen in den 10-und-19-Uhr-
-  // News deutlich öfter vorkommen. Diese Typen sind darum höher gewichtet
-  // (weight 2) — der Spieler-Cooldown (AMBIENT_PLAYER_COOLDOWN_DAYS) sorgt
-  // weiterhin dafür, dass nicht tagelang derselbe Kopf gefeiert wird.
-  //
-  // WICHTIG: Alle Zahlen kommen aus den BESTEHENDEN Zählern (countDayWins,
-  // countPeriodWins, getCachedBadges/rarityOf) — exakt die Werte, die auch im
-  // Spielerprofil und im Auszeichnungen-Sheet stehen. Keine zweite Berechnung,
-  // also auch keine Abweichung.
-
-  // Kleiner Helfer: Rangliste über einen Award-Zähler, absteigend, Gleichstand
-  // deterministisch nach pid. Liefert [{pid, v}] ohne Nullwerte.
-  const _awardRank = (pids, val) => pids
-    .map(pid => ({ pid, v: val(pid) || 0 }))
-    .filter(x => x.v > 0)
-    .sort((a, b) => b.v - a.v || (a.pid < b.pid ? -1 : 1));
-  // Bei Gleichstand an der Spitze darf kein Einzelner als Bestwert-Halter
-  // ausgerufen werden („Bestwert, X folgt mit 3" bei 3:3 liest sich falsch).
-  // Liefert alle Spieler mit dem Höchstwert.
-  const _awardLeaders = rank => rank.filter(x => x.v === rank[0].v);
-  // Die Aufzaehlung hat die App schon (`_namenListe`, §C27). Hier stand eine
-  // zweite mit „&" dazwischen, und das Zeichen gehoert in eine Tabellenzelle,
-  // nicht in einen Satz: „Leon & Martin liegen gleichauf" war die einzige
-  // Stelle im Feed, die zwei Namen nicht ausschrieb [§C33].
-  const _namesOf = arr => _namenListe(arr.map(x => nameOf(x.pid)));
-
-  // ── Eine Führung ist die des REKORDS, nicht die der Anzahl [§C35] ──
-  // „Leon ist der Tageskönig · 17× Spieler des Tages. Mehr als alle anderen"
-  // stand im Feed, während der Rekord auf denselben Anteil Julian gehörte:
-  // Leon hatte 17 von 54 eigenen Spieltagen gewonnen (31 %), Julian 12 von 23
-  // (52 %). Die Karte kürte damit den, der am meisten dabei war, und
-  // widersprach dem Rekorde-Reiter derselben App.
-  // Gerechnet wird deshalb nicht neu: `chronicleRang` ist die Reihenfolge,
-  // die auch das Rekord-Blatt zeigt [§C27]. Zwei Rechnungen über dieselbe
-  // Frage nennen irgendwann zwei verschiedene Beste.
-  const _rekRang = (cid) => {
-    if(typeof chronicleRang !== 'function') return [];
-    try { return chronicleRang(cid) || []; } catch(e){ return []; }
+    return _memo = {bis, je};
   };
-  // Alle, die den Bestwert punktgleich halten. Bei Gleichstand darf kein
-  // Einzelner als Halter ausgerufen werden.
-  const _rekSpitze = (r) => r.filter(x => x.wert === r[0].wert);
-  // Wer wie viele Einträge der laufenden Tafel hält, die drei vorn.
+  const von = id => lage().je[id] || null;
+  // Der Beste nach einem Wert, bei Gleichstand der mit mehr Partien im
+  // Fenster und dann der Name: dieselbe Ziehung auf jedem Gerät.
+  const besteNach = (ids, wert) => ids.map(id => ({id, v:wert(id)})).filter(x => x.v != null && isFinite(x.v))
+    .sort((a, b) => b.v - a.v || (von(b.id).g14 - von(a.id).g14) || nameOf(a.id).localeCompare(nameOf(b.id), 'de'));
+  const pct = q => Math.round(q * 100);
+  // Gezogen wird unter den ersten drei, die die Schwelle nehmen, nicht
+  // immer der Erste: die Sperre derselben These über dieselbe Person
+  // (`AMBIENT_PAAR_COOLDOWN_DAYS`) ließ sonst nach wenigen Tagen jede Frage
+  // leer, weil sie stets denselben Kopf nannte, und der Notnagel schrieb
+  // genau die Wiederholung, die sie verhindern soll. Ein Superlativ steht
+  // nur im Satz, wenn der Gezogene der Erste ist.
+  const ziehe = (l, rng) => l[Math.min(l.length - 1, Math.floor((rng ? rng() : 0) * Math.min(3, l.length)))];
+  const wort = n => ['null', 'ein', 'zwei', 'drei', 'vier', 'fünf', 'sechs', 'sieben', 'acht', 'neun', 'zehn', 'elf', 'zwölf'][n] || String(n);
+
+  // ── 1. Der Aufwind: wer holt in vierzehn Tagen am meisten Elo ────────
+  // Gezählt werden die Punkte der Partien, nicht der Stand: die Elo beginnt
+  // jeden Monat neu [§3.5a], und ein Stand am 3. sagte über die Form so
+  // wenig wie einer am 30. Die Summe der Deltas läuft über die Grenze des
+  // Monats hinweg. Die Kurve zeigt acht Wochen, die letzten zwei hell, und
+  // die sechs Wochen davor stehen im Satz: ohne sie ist ein Plus von 60 kein
+  // Aufwind, sondern vielleicht der Normalfall. Ein Aufwind holt in zwei
+  // Wochen mehr als in den sechs davor und mindestens AUFWIND_MIN_ELO: an
+  // den echten Partien holt der Beste der vierzehn Tage zwischen 50 und 340,
+  // und unter hundert war es meist der Erste eines ruhigen Fensters. Ohne
+  // AUFWIND_MIN_DAVOR Partien vor dem Fenster gibt es kein Davor: „In den
+  // sechs Wochen davor stand die Elo still" stand über einem, der erst zwei
+  // Wochen dabei war.
+  const AUFWIND_MIN_PARTIEN = 8, AUFWIND_MIN_ELO = 100, AUFWIND_MIN_DAVOR = 20;
+  T.push({ key:'form_aufwind', make: rng => {
+    const ids = activePids.filter(id => { const x = von(id);
+      return x && x.g14 >= AUFWIND_MIN_PARTIEN && x.gV >= AUFWIND_MIN_DAVOR && x.d14 >= AUFWIND_MIN_ELO && x.d14 > x.dV; });
+    const r = besteNach(ids, id => von(id).d14);
+    if(!r.length) return null;
+    const pid = ziehe(r, rng).id, x = von(pid), plus = Math.round(x.d14), vor = Math.round(x.dV);
+    const ks = [...x.tage.keys()].sort();
+    let sum = 0;
+    const v = [0].concat(ks.map(k => Math.round(sum += x.tage.get(k))));
+    const k = ks.filter(z => z[0] === 'a').length;
+    // Die Spieltage des Fensters für das Blatt: Tag, Elo, Partien.
+    const tg = ks.filter(z => z[0] === 'b').map(z => { const d = new Date(z.slice(1) + 'T12:00:00');
+      return [datumFmt(d, 'wt').slice(0, 2) + ' ' + datumFmt(d, 'tm'), Math.round(x.tage.get(z)), x.tageN.get(z)]; });
+    // Der Satz nennt den Nächsten: hinter dem Ersten den Zweiten, sonst den,
+    // der noch mehr holte.
+    const i = r.findIndex(y => y.id === pid), neben = i === 0 ? r[1] : r[0];
+    const zweiter = neben ? {p:neben.id, d:Math.round(von(neben.id).d14), vorn:i !== 0} : null;
+    return { cat:'personal', ic:'trendUp', prio:5,
+      title:`${nameOf(pid)} holt in 14 Tagen ${plus} Elo`,
+      desc:`${x.w14} Siege aus ${x.g14} Partien. In den sechs Wochen davor `
+        + (vor > 0 ? `kamen ${vor} Elo dazu.` : vor < 0 ? `gingen ${-vor} Elo verloren.` : `stand die Elo still.`)
+        + (!zweiter ? '' : zweiter.vorn ? ` Mehr holte nur ${nameOf(zweiter.p)}, ${zweiter.d} Elo.` : ` Dahinter folgt ${nameOf(zweiter.p)} mit ${zweiter.d} Elo.`),
+      vv:'+' + plus, vl:'Elo in 14 Tagen',
+      dataRef:{ ambientPid:pid, bild:{f:'aufwind', p:pid, v, k, d:plus, vor, g:x.g14, w:x.w14,
+        x:[datumFmt(new Date(ab56), 'tm'), datumFmt(now, 'tm')], nb:zweiter, tg} } };
+  }});
+
+  // ── 2. Über der Erwartung: mehr Siege, als die Elo aller vier versprach ─
+  // Die Erwartung ist die der Partie (`m.exp_a`), aus der Elo von Gegnern
+  // und Mitspieler vor ihr — dieselbe Erwartung wie im Positionsprofil
+  // [§C44]. Wer viele Siege holt, weil er mit Starken spielt, steht hier
+  // nicht vorn; wer mit Schwächeren gewinnt, schon. Gezählt wird der Sieg,
+  // nicht das Torverhältnis: „gewinnt 3,4 Partien mehr als erwartet" ist
+  // ein Satz, den man nachzählen kann.
+  // Ab drei Siegen über der Erwartung: an den echten Partien lag der Erste
+  // der vierzehn Tage zwischen 1,5 und 7, und darunter trennte ihn vom
+  // Zweiten oft eine Zehntelpartie.
+  const ERWARTUNG_MIN_PARTIEN = 10, ERWARTUNG_MIN_PLUS = 3;
+  T.push({ key:'form_erwartung', make: rng => {
+    const ids = activePids.filter(id => { const x = von(id); return x && x.g14 >= ERWARTUNG_MIN_PARTIEN; });
+    const r = besteNach(ids, id => von(id).w14 - von(id).e14).filter(y => y.v > 0);
+    const q = r.filter(y => y.v >= ERWARTUNG_MIN_PLUS);
+    if(!q.length) return null;
+    const c = ziehe(q, rng), pid = c.id, x = von(pid), i = r.indexOf(c);
+    // Die Zeilen sind die ersten drei, der Gezogene steht darin; ist er
+    // Vierter, steht er als dritte Zeile.
+    const zeilen = r.slice(0, 3).concat(i > 2 ? [c] : []).slice(-3).map(y => { const z = von(y.id);
+      return {p:y.id, w:z.w14, g:z.g14, e:+z.e14.toFixed(1), hell:y === c ? 1 : 0}; });
+    const neben = i === 0 ? r[1] : r[0];
+    return { cat:'personal', ic:'sollPlus', prio:5,
+      title:`${nameOf(pid)} gewinnt ${komma(c.v)} Partien mehr als erwartet`,
+      desc:`${x.w14} Siege aus ${x.g14} Partien in 14 Tagen, die Elo aller vier ließ ${komma(x.e14)} erwarten.`
+        + (!neben ? '' : i === 0 ? ` Dahinter folgt ${nameOf(neben.id)} mit ${komma(neben.v)} mehr.` : ` Weiter darüber liegt nur ${nameOf(neben.id)}, mit ${komma(neben.v)}.`),
+      vv:'+' + komma(c.v), vl:'Siege über der Erwartung',
+      dataRef:{ ambientPid:pid, bild:{f:'erwartung', z:zeilen,
+        fav:[x.fav[0], x.fav[1], +x.fav[2].toFixed(1)], aus:[x.aus[0], x.aus[1], +x.aus[2].toFixed(1)]} } };
+  }});
+
+  // ── 3. Form gegen Laufbahn: die Quote der vierzehn Tage gegen die davor ─
+  // „Beste Siegquote der letzten 14 Tage" stand hier und kürte meist, wer
+  // ohnehin am meisten gewinnt. Gefragt ist, wer über sich selbst
+  // hinauswächst: die Laufbahn davor ist der Maßstab. Nur nach oben — ein
+  // Formtief ist kein Fun Fact über jemanden [§C33].
+  const FORM_MIN_PARTIEN = 10, FORM_MIN_LAUFBAHN = 40, FORM_MIN_ABSTAND = .12;
+  T.push({ key:'form_gegen_laufbahn', make: rng => {
+    const ids = activePids.filter(id => { const x = von(id); return x && x.g14 >= FORM_MIN_PARTIEN && x.gV >= FORM_MIN_LAUFBAHN; });
+    const r = besteNach(ids, id => { const x = von(id); return x.w14 / x.g14 - x.wV / x.gV; }).filter(y => y.v > 0);
+    const q = r.filter(y => y.v >= FORM_MIN_ABSTAND);
+    if(!q.length) return null;
+    const c = ziehe(q, rng), pid = c.id, x = von(pid), jetztQ = pct(x.w14 / x.g14), sonst = pct(x.wV / x.gV);
+    const zeilen = r.slice(0, 3).concat(r.indexOf(c) > 2 ? [c] : []).slice(-3).map(y => { const z = von(y.id);
+      return {p:y.id, v:pct(z.wV / z.gV), j:pct(z.w14 / z.g14), g:z.g14, w:z.w14, hell:y === c ? 1 : 0}; });
+    return { cat:'personal', ic:'steigerung', prio:5,
+      title:`${nameOf(pid)} gewinnt zuletzt ${jetztQ}\u00a0% der Partien`,
+      desc:`${x.w14} von ${x.g14} in 14 Tagen, in den ${x.gV} Partien davor ${sonst}\u00a0%.`
+        + (r[0] === c ? ` Bei keinem liegt die Form weiter über der eigenen Laufbahn.` : ''),
+      vv:jetztQ + '\u00a0%', vl:'in 14 Tagen',
+      dataRef:{ ambientPid:pid, bild:{f:'hantel', z:zeilen} } };
+  }});
+
+  // ── 4. Eine Marke in Sicht ──────────────────────────────────────────
+  // Siege und Partien an denselben Marken wie die Karte einer Partie
+  // (`_rundeMarke`: jede fünfzigste, dazu 100, 250, 500 …), Tore an jeder
+  // fünfhundertsten und der Leiter ab 100, Prestige an der nächsten Stufe
+  // des Insigniums. „In Sicht" heißt: am nächsten Spieltag erreichbar, so
+  // schnell, wie der Spieler in den vierzehn Tagen Partien, Siege und Tore
+  // sammelte — eine Marke, die rechnerisch drei Spieltage entfernt liegt,
+  // ist noch keine Nachricht. Gewählt wird die nächste, gemessen an diesem
+  // Tempo. Prestige hat kein Tempo je Partie, es kommt in Sprüngen; dort
+  // zählt der Rest der Stufe.
+  // Tore erst ab 500: jedes Tor des Teams zählt für beide, ein Spieler
+  // kommt auf rund acht je Partie, und „7 Tore bis zum 100. Tor" war nach
+  // zwölf Partien erreicht.
+  const MARKE_MIN_PARTIEN = 4, MARKE_PRESTIGE_REST = .06;
+  const toreRund = v => v >= 500 && (v % 500 === 0 || _ladderCrossing(v - 1, v, 500) === v);
+  T.push({ key:'laufbahn_marke', make: rng => {
+    const kand = [];
+    const naechste = (ist, rund) => { let v = ist + 1; while(!rund(v)) v++; return v; };
+    activePids.forEach(id => {
+      const x = von(id);
+      if(!x || x.g14 < MARKE_MIN_PARTIEN || !x.tage14.size) return;
+      const jeTag = x.g14 / x.tage14.size;
+      const neben = [
+        {art:'siege', ist:x.w, rate:x.w14 / x.g14, rund:v => _rundeMarke(v, 50)},
+        {art:'partien', ist:x.g, rate:1, rund:v => _rundeMarke(v, 50)},
+        {art:'tore', ist:x.gf, rate:x.gf14 / x.g14, rund:toreRund}];
+      neben.forEach(o => {
+        if(!(o.rate > 0)) return;
+        const ziel = naechste(o.ist, o.rund), rest = ziel - o.ist, partien = rest / o.rate;
+        if(partien <= jeTag) kand.push({id, art:o.art, ist:o.ist, ziel, rest, nah:partien / jeTag, zu14:o.art === 'siege' ? x.w14 : o.art === 'partien' ? x.g14 : x.gf14});
+      });
+      let P = null; try { P = prestigeOf(id); } catch(e){ P = null; }
+      if(P && P.naechste && P.punkte > 0){
+        const spanne = Math.max(1, P.naechste.min - P.insignie.min);
+        if(P.fehlt / spanne <= MARKE_PRESTIGE_REST) kand.push({id, art:'prestige', ist:P.punkte, ziel:P.naechste.min,
+          rest:P.fehlt, nah:P.fehlt / spanne / MARKE_PRESTIGE_REST, stufe:P.naechste.key, name:P.naechste.name,
+          vonMin:P.insignie.min, vonKey:P.insignie.key, vonName:P.insignie.name});
+      }
+    });
+    if(!kand.length) return null;
+    kand.sort((a, b) => a.nah - b.nah || b.ziel - a.ziel || nameOf(a.id).localeCompare(nameOf(b.id), 'de'));
+    // Je Spieler seine nächste Marke, gezogen unter den drei nächsten.
+    const je = kand.filter((y, i) => kand.findIndex(z => z.id === y.id) === i);
+    const c = ziehe(je, rng), n = nameOf(c.id), x = von(c.id);
+    // Fehlt genau eins, steht der Spieler davor: „fehlt ein Sieg bis zum
+    // 50." endete auf der Ordnungszahl, „bis zum 50. Sieg" nannte den Sieg
+    // zweimal.
+    const einer = c.rest === 1;
+    const title = c.art === 'prestige' ? `${n} fehlen ${c.rest} Prestige bis zum ${c.name}`
+      : c.art === 'siege' ? (einer ? `${n} steht vor dem ${c.ziel}. Sieg` : `${n} fehlen ${c.rest} Siege bis zum ${c.ziel}. Sieg`)
+      : c.art === 'partien' ? (einer ? `${n} steht vor der ${c.ziel}. Partie` : `${n} fehlen ${c.rest} Partien bis zur ${c.ziel}. Partie`)
+      : (einer ? `${n} steht vor dem ${c.ziel}. Tor` : `${n} fehlen ${c.rest} Tore bis zum ${c.ziel}. Tor`);
+    const fehlt = !einer ? '' : c.art === 'siege' ? 'Es fehlt ein Sieg. ' : c.art === 'partien' ? 'Es fehlt eine Partie. ' : 'Es fehlt ein Tor. ';
+    const desc = c.art === 'prestige'
+      ? `${c.ist} Prestige, ${pct(1 - c.rest / Math.max(1, c.ziel - c.vonMin))}\u00a0% der Stufe ${c.vonName} sind geschafft.`
+      : fehlt + (c.art === 'siege' ? `${c.ist} Siege aus ${x.g} Partien, ${c.zu14} davon in den letzten 14 Tagen.`
+        : c.art === 'partien' ? `${c.ist} Partien bisher, ${c.zu14} davon in den letzten 14 Tagen.`
+        : `${c.ist} Tore aus ${x.g} Partien, ${c.zu14} davon in den letzten 14 Tagen.`);
+    // Die Marke davor ist der Anfang des Rings: er zeigt den Weg von der
+    // letzten runden Zahl zur nächsten, nicht von null.
+    let vorher = c.art === 'prestige' ? c.vonMin : 0;
+    if(c.art !== 'prestige'){
+      const rund = c.art === 'tore' ? toreRund : (v => _rundeMarke(v, 50));
+      for(let v = c.ist; v > 0; v--) if(rund(v)){ vorher = v; break; }
+    }
+    return { cat:'personal', ic:c.art === 'prestige' ? 'peak' : 'marke', prio:5,
+      title, desc: tausender(desc), vv:String(c.rest), vl:'fehlen',
+      dataRef:{ ambientPid:c.id, prestige:c.art === 'prestige',
+        bild:{f:'marke', p:c.id, art:c.art, ist:c.ist, ziel:c.ziel, vorher, rest:c.rest,
+          stufe:c.stufe || null, name:c.name || null, vonKey:c.vonKey || null} } };
+  }});
+
+  // ── 5. Die Chronik einer Laufbahn ───────────────────────────────────
+  // Die Chronik vergibt jeden Monat ihre Einträge [§C39], und wer sie
+  // Monat für Monat hält, sieht man nur in der Matrix. Gezählt werden die
+  // abgeschlossenen Monate: der laufende kann bis zu seinem Ende noch
+  // wechseln. Er steht im Bild gestrichelt dabei, wie in der Matrix, und
+  // zählt nicht mit. Eine Schattenseite zählt nicht als Eintrag einer
+  // Reihe — sie steht rot in der Zelle, aber eine Reihe aus Schattenseiten
+  // ist kein Fun Fact über jemanden.
+  //   gold   in jedem der letzten Monate ein legendärer Eintrag, ab zwei
+  //   reihe  in jedem der letzten Monate ein Eintrag, ab CHRONIK_MIN_REIHE,
+  //          und nur, solange es höchstens CHRONIK_MAX_GLEICH andere so
+  //          weit gebracht haben: an den echten Partien hielten zehn von
+  //          zwölf im Juni und im Juli einen Eintrag, und „steht in jedem
+  //          Monat" war dann die Regel und keine Nachricht
+  //   neu    der erste Eintrag überhaupt im letzten Monat, nach Monaten ohne
+  const CHRONIK_MIN_REIHE = 3, CHRONIK_MAX_GLEICH = 2, CHRONIK_MIN_GOLD = 2;
+  T.push({ key:'chronik_reihe', make: rng => {
+    let alle = [];
+    try { alle = allSeasonTitles().slice().reverse(); } catch(e){ alle = []; }
+    const zu = alle.filter(t => !t.live && seasonEnd(t.sid).getTime() <= jetzt);
+    if(zu.length < 2) return null;
+    const cols = alle.filter(t => seasonStart(t.sid).getTime() <= jetzt).slice(-8);
+    const zellen = id => cols.map(t => {
+      const a = chronikEintragVon(t, id), offen = !zu.includes(t);
+      const gewertet = (t.awarded || []).some(x => x.pid === id) || (t.empty || []).includes(id);
+      if(!a) return [t.sid, gewertet ? '' : null, '', '', offen ? 1 : 0];
+      return [t.sid, chronikZellStufe(t, id) || '', a.ic || 'trophy', a.short || a.name || '', offen ? 1 : 0];
+    });
+    const kand = [];
+    activePids.forEach(id => {
+      const z = zellen(id), fest = z.filter(c => !c[4]);
+      const positiv = c => !!(c[1] && c[1] !== 'schatten');
+      let lauf = 0, gold = 0;
+      for(let i = fest.length - 1; i >= 0 && positiv(fest[i]); i--) lauf++;
+      for(let i = fest.length - 1; i >= 0 && fest[i][1] === 'legendaer'; i--) gold++;
+      const gesamt = fest.filter(positiv).length, gespielt = fest.filter(c => c[1] !== null).length;
+      if(gold >= CHRONIK_MIN_GOLD) kand.push({id, art:'gold', z, lauf:gold, w:300 + gold});
+      else if(lauf >= CHRONIK_MIN_REIHE) kand.push({id, art:'reihe', z, lauf, w:200 + lauf});
+      else if(gesamt === 1 && positiv(fest[fest.length - 1]) && gespielt >= 3) kand.push({id, art:'neu', z, lauf:1, w:100 + gespielt});
+    });
+    const gleich = c => kand.filter(y => y.art === c.art && y.lauf >= c.lauf).length - 1;
+    const r = kand.filter(c => c.art !== 'reihe' || gleich(c) <= CHRONIK_MAX_GLEICH)
+      .sort((a, b) => b.w - a.w || nameOf(a.id).localeCompare(nameOf(b.id), 'de'));
+    if(!r.length) return null;
+    const c = ziehe(r, rng), n = nameOf(c.id), letzterT = zu[zu.length - 1];
+    const monat = sid => String(seasonLabel(sid)).split(' ')[0];
+    const e = chronikEintragVon(letzterT, c.id) || {};
+    const andere = gleich(c);
+    const zahl = wort(c.lauf).replace(/^./, s => s.toUpperCase());
+    const title = c.art === 'gold' ? `${n} hält ${wort(c.lauf)} Monate in Folge eine legendäre Chronik`
+      : c.art === 'reihe' ? `${n} steht seit ${monat(c.z.filter(y => !y[4]).slice(-c.lauf)[0][0])} in jedem Monat der Chronik`
+      : `${n} steht zum ersten Mal in der Chronik`;
+    const desc = c.art === 'neu'
+      ? `Im ${monat(letzterT.sid)} kam „${e.name || 'der erste Eintrag'}“ dazu, nach ${c.z.filter(y => !y[4] && y[1] !== null).length - 1} Monaten ohne.`
+      : `Zuletzt „${e.name || ''}“ im ${monat(letzterT.sid)}. `
+        + (andere > 0 ? `${zahl} Monate in Folge schaffte sonst nur ${andere === 1 ? 'einer' : wort(andere)}.`
+          : `${zahl} Monate in Folge schaffte sonst niemand.`);
+    return { cat:'history', ic:'verlauf', prio:4, title, desc,
+      vv:String(c.lauf), vl:c.art === 'neu' ? 'erster Eintrag' : 'Monate in Folge',
+      dataRef:{ ambientPid:c.id, bild:{f:'chronik', p:c.id, art:c.art, z:c.z, lauf:c.lauf} } };
+  }});
+
+  // ── 6. Die Chemie eines Duos ────────────────────────────────────────
+  // Dieselbe Rechnung wie das Netz der Duos [§C44]: Sieg und Torverhältnis
+  // gegen die Erwartung der Partie, je zur Hälfte, die Summe geteilt durch
+  // die gemeinsamen Partien plus `POS_SCHRUMPF`. Die Siegquote fragte etwas
+  // anderes: zwei Starke gewinnen zusammen immer, zwei Schwächere nie, und
+  // „gewinnen zusammen" stand über einem Duo, das genau so spielte, wie
+  // seine Elo es versprach. Gezeigt wird nur ein Duo, das in den vierzehn
+  // Tagen zusammen gespielt hat — die Chemie von vor drei Monaten ist
+  // Geschichte, kein Fun Fact.
+  const CHEMIE_MIN_PARTIEN = 12, CHEMIE_MIN_WERT = .05;
+  T.push({ key:'duo_chemie', make: rng => {
+    const duo = {};
+    lage().bis.forEach(m => {
+      const e = m.exp_a != null && isFinite(m.exp_a) ? Number(m.exp_a) : .5;
+      [[m.a1, m.a2, m.winner === 'A', m.score_a, m.score_b, e], [m.b1, m.b2, m.winner === 'B', m.score_b, m.score_a, 1 - e]]
+        .forEach(([a, b, w, gf, ga, ex]) => {
+          if(!a || !b || !aktiv(a) || !aktiv(b)) return;
+          const k = paarKey(a, b), d = duo[k] || (duo[k] = {g:0, s:0, w:0, e:0, t:0});
+          d.g++; if(w) d.w++; d.e += ex; d.t = Math.max(d.t, mts(m));
+          d.s += ((w ? 1 : 0) - ex + posTorLeistung(gf, ga, ex)) / 2;
+        });
+    });
+    const wert = k => duo[k].s / (duo[k].g + POS_SCHRUMPF);
+    const ks = Object.keys(duo).filter(k => duo[k].g >= CHEMIE_MIN_PARTIEN && duo[k].t >= ab14 && wert(k) >= CHEMIE_MIN_WERT)
+      .sort((a, b) => wert(b) - wert(a) || duo[b].g - duo[a].g || (a < b ? -1 : 1));
+    if(!ks.length) return null;
+    const k = ziehe(ks, rng), d = duo[k], [a, b] = k.split('|');
+    const pp = Math.round(wert(k) * 100);
+    return { cat:'team', ic:'duo', prio:5,
+      title:k === ks[0] ? `Kein Duo spielt deutlicher über der Erwartung als ${nameOf(a)} und ${nameOf(b)}`
+        : `${nameOf(a)} und ${nameOf(b)} spielen zusammen ${pp} Prozentpunkte über der Erwartung`,
+      desc:`${d.w} Siege aus ${d.g} gemeinsamen Partien, die Elo der vier ließ ${komma(d.e)} erwarten.`,
+      vv:'+' + pp, vl:'Prozentpunkte',
+      dataRef:{ ambientPids:[a, b], pairKind:'team', bild:{f:'chemie', a, b, pp, g:d.g, w:d.w, e:+d.e.toFixed(1),
+        dz:ks.slice(0, 3).filter(y => y !== k).slice(0, 2).map(y => [...y.split('|'), Math.round(wert(y) * 100), duo[y].g])} } };
+  }});
+
+  // ── 7. Die Rolle: wo jemand spielt und wo er besser ist ─────────────
+  // Das Positionsprofil [§C44] und seine Landkarte: waagerecht, wo jemand
+  // spielt, senkrecht, wo er gegen den eigenen Schnitt besser ist. Zwei
+  // Geschichten erzählt sie: der Wechsel (in den vierzehn Tagen steht
+  // jemand deutlich öfter auf der anderen Seite als davor) und der Spieler,
+  // der meist auf der Seite steht, auf der er schwächer ist. Der Wechsel
+  // geht vor, er ist eine Entwicklung. „X gehört nach vorn" maß die rohe
+  // Siegquote je Position und widersprach damit dem Profil im Profil.
+  const ROLLE_MIN_PARTIEN = 10, ROLLE_MIN_LAUFBAHN = 30, ROLLE_MIN_WECHSEL = .35;
+  const ROLLE_MIN_GESAMT = 40, ROLLE_MIN_ABSTAND = .05, ROLLE_MIN_ANTEIL = .6;
+  T.push({ key:'rolle_seite', make: rng => {
+    const L = {};
+    activePids.forEach(id => { try { L[id] = positionsLage(posPerfFrom(id, lage().bis)); } catch(e){} });
+    const ids = Object.keys(L).filter(id => L[id].aG + L[id].dG > 0);
+    if(!ids.length) return null;
+    const skala = Math.max(.10, ...ids.map(id => Math.abs(L[id].rA - L[id].rD)));
+    const pp = v => Math.round(Math.abs(v) * 100);
+    const bonus = (l, pos) => { try { return Math.round((posFactor(l, pos, cfg.pos_swing) - 1) * 100); } catch(e){ return 0; } };
+    const wechsel = besteNach(ids.filter(id => { const x = von(id); return x && x.g14 >= ROLLE_MIN_PARTIEN && x.gV >= ROLLE_MIN_LAUFBAHN; }),
+      id => { const x = von(id); return Math.abs(x.aG14 / x.g14 - x.aGV / x.gV); }).filter(y => y.v >= ROLLE_MIN_WECHSEL);
+    // Beim Wechsel steht das Gesicht dort, wo der Spieler in den vierzehn
+    // Tagen stand, und der Ring dort, wo er davor stand; die Höhe bleibt die
+    // des Profils über die ganze Laufbahn.
+    const bild = (id, art, a, a0) => ({f:'landkarte', p:id, art, a:+a.toFixed(3), d:+(L[id].rA - L[id].rD).toFixed(3),
+      st:L[id].staerker, s:+skala.toFixed(3), a0:a0 == null ? null : +a0.toFixed(3),
+      aG:L[id].aG, dG:L[id].dG, rA:Math.round(L[id].rA * 100), rD:Math.round(L[id].rD * 100),
+      // Was das Profil in der Elo bewirkt: der Positionsbonus eines Siegs
+      // auf jeder Seite [§C44], so wie er am Tag der Karte galt.
+      fa:bonus(L[id], 'atk'), fd:bonus(L[id], 'def')});
+    const schwach = besteNach(ids.filter(id => {
+      const l = L[id];
+      if(l.aG + l.dG < ROLLE_MIN_GESAMT || l.staerker === 'beide' || Math.abs(l.rA - l.rD) < ROLLE_MIN_ABSTAND) return false;
+      return (l.staerker === 'atk' ? 1 - l.anteil : l.anteil) >= ROLLE_MIN_ANTEIL;
+    }), id => Math.abs(L[id].rA - L[id].rD));
+    const alle = wechsel.map(y => ({id:y.id, art:'wechsel'}))
+      .concat(schwach.filter(y => !wechsel.some(w => w.id === y.id)).map(y => ({id:y.id, art:'schwach'})));
+    if(!alle.length) return null;
+    const wahl = ziehe(alle, rng);
+    if(wahl.art === 'wechsel'){
+      const id = wahl.id, x = von(id), sturm = x.aG14 / x.g14 > x.aGV / x.gV;
+      const jetztN = sturm ? x.aG14 : x.dG14, vorQ = pct(sturm ? x.aGV / x.gV : x.dGV / x.gV);
+      const wo = sturm ? 'im Sturm' : 'in der Abwehr';
+      const st = L[id].staerker;
+      return { cat:'personal', ic:'sideSwap', prio:5,
+        title:`${nameOf(id)} steht zuletzt meist ${wo}`,
+        desc:`${jetztN} von ${x.g14} Partien der letzten 14 Tage ${wo}, davor ${vorQ}\u00a0%. `
+          + (st === 'beide' ? `Das Positionsprofil sieht ${nameOf(id)} in Sturm und Abwehr gleichauf.`
+            : `Das Positionsprofil sieht ${nameOf(id)} ${st === 'atk' ? 'im Sturm' : 'in der Abwehr'} stärker.`),
+        vv:pct(jetztN / x.g14) + '\u00a0%', vl:wo,
+        dataRef:{ ambientPid:id, bild:bild(id, 'wechsel', x.aG14 / x.g14, x.aGV / x.gV) } };
+    }
+    const id = wahl.id, l = L[id], sturmStark = l.staerker === 'atk';
+    const n = l.aG + l.dG, dort = sturmStark ? l.dG : l.aG;
+    const stark = sturmStark ? l.rA : l.rD, schw = sturmStark ? l.rD : l.rA;
+    return { cat:'personal', ic:'sideSwap', prio:4,
+      title:`${nameOf(id)} steht meist ${sturmStark ? 'in der Abwehr' : 'im Sturm'} und ist ${sturmStark ? 'im Sturm' : 'in der Abwehr'} stärker`,
+      desc:`${dort} von ${n} Partien ${sturmStark ? 'in der Abwehr' : 'im Sturm'}. `
+        + `${sturmStark ? 'Im Sturm' : 'In der Abwehr'} ${pp(stark)} Prozentpunkte ${stark >= 0 ? 'über' : 'unter'} dem eigenen Schnitt, `
+        + `${sturmStark ? 'in der Abwehr' : 'im Sturm'} ${pp(schw)} ${schw >= 0 ? 'darüber' : 'darunter'}.`,
+      vv:pct(dort / n) + '\u00a0%', vl:sturmStark ? 'in der Abwehr' : 'im Sturm',
+      dataRef:{ ambientPid:id, bild:bild(id, 'schwach', l.anteil, null) } };
+  }});
+
+  // ── 8. Die Liga in Zahlen: eine runde Marke und wie sie wuchs ───────
+  // Hier standen „7.512 Tore in 466 Partien" und „Die Liga lebt seit 96
+  // Tagen" — Zahlen, die jeden Tag stimmten und an keinem eine Nachricht
+  // waren. Die Karte meldet sich jetzt nur, wenn die Liga eine runde Marke
+  // überschritten hat, in den sieben Tagen davor, und zeigt dazu jeden
+  // Monat als Säule: so sieht man, ob die Liga schneller wird. Die Partie,
+  // die die Marke riss, steht mit ihren Siegern im Satz.
+  const LIGA_FRISCH_TAGE = 7;
+  T.push({ key:'liga_marke', make: () => {
+    const bis = lage().bis;
+    if(bis.length < 50) return null;
+    const rundP = v => v >= 100 && (v < 1000 ? v % 100 === 0 : v % 500 === 0);
+    const rundT = v => v >= 1000 && (v < 20000 ? v % 1000 === 0 : v % 5000 === 0);
+    let tore = 0, hit = null;
+    bis.forEach((m, i) => {
+      const vor = tore; tore += (m.score_a || 0) + (m.score_b || 0);
+      if(mts(m) < jetzt - LIGA_FRISCH_TAGE * TAG) return;
+      if(rundP(i + 1)) hit = {art:'partien', n:i + 1, m};
+      else if(!hit || hit.art !== 'partien'){ for(let v = vor + 1; v <= tore; v++) if(rundT(v)){ hit = {art:'tore', n:v, m}; } }
+    });
+    if(!hit) return null;
+    const mon = {};
+    bis.forEach(m => { const sid = (seasonOf(m.created_at) || {}).id; if(!sid) return;
+      mon[sid] = (mon[sid] || 0) + (hit.art === 'partien' ? 1 : (m.score_a || 0) + (m.score_b || 0)); });
+    const sids = Object.keys(mon).sort().slice(-8);
+    const cur = (seasonOf(hit.m.created_at) || {}).id;
+    const sieger = (hit.m.winner === 'A' ? [hit.m.a1, hit.m.a2] : [hit.m.b1, hit.m.b2]).filter(id => sichtbar(pm[id]));
+    const wer = !sieger.length ? '' : hit.art === 'partien'
+      ? `, gewonnen von ${_namenListe(sieger.map(nameOf))} mit ${standFuer(hit.m)}`
+      : ` in einer Partie, die ${_namenListe(sieger.map(nameOf))} mit ${standFuer(hit.m)} gewannen`;
+    const monat = seasonLabel(cur).split(' ')[0], im = mon[cur] || 0;
+    const davor = sids.filter(s => s < cur).map(s => mon[s]);
+    const vergleich = davor.length && im > Math.max(...davor) ? `, mehr als in jedem Monat davor` : '';
+    const einheit = hit.art === 'partien' ? 'Partien' : 'Tore';
+    return { cat:'history', ic:'hundred', prio:5,
+      title: hit.art === 'partien' ? `Die Liga hat ihre ${hit.n}. Partie gespielt` : `In der Liga ist das ${hit.n}. Tor gefallen`,
+      desc: tausender(`${hit.art === 'partien' ? 'Gespielt' : 'Gefallen'} am ${datumFmt(hit.m.created_at, 'tmx')}${wer}. `
+        + `Im ${monat} kamen bisher ${im} ${einheit} dazu${vergleich}.`),
+      vv:String(hit.n), vl:einheit,
+      dataRef:{ ambientPids:sieger.slice(0, 2), bild:{f:'liga', art:hit.art, n:hit.n, mid:hit.m.id, sieger,
+        summe:[bis.length, tore, new Set(bis.map(m => tagKey(m.created_at))).size], stand:standFuer(hit.m),
+        m:sids.map(s => [String(seasonLabel(s)).split(' ')[0].slice(0, 3), mon[s]]), hl:sids.indexOf(cur)} } };
+  }});
+
+  // Wer wie viele Einträge der laufenden Tafel hält, die drei vorn — für
+  // die Tafel der Halbzeit.
   const _tafelTraeger = (aw) => {
     const n = {};
     (aw || []).forEach(a => { if(pm[a.pid]) n[a.pid] = (n[a.pid] || 0) + 1; });
     return Object.keys(n).sort((x, y) => n[y] - n[x] || (x < y ? -1 : 1)).slice(0, 3).map(pid => [pid, n[pid]]);
   };
-
-  // ── Bestmarken gegen das Eigene [§C38] ──
-  //    Der Fun Fact nennt den Halter eines Liga-Rekords, der gegen die
-  //    eigene Quote misst: den besten Spieltag. Die Partie nach dem
-  //    Positionswechsel und die letzten 25 Partien sind als Rekorde
-  //    gestrichen und ihre Karten mit ihnen [§C35]. Hier standen vorher die
-  //    Anteile gewonnener Spieltage und Wochen und die Tore je Sturmspiel —
-  //    alle drei zählten die Siegquote noch einmal und zeigten fast immer
-  //    dieselben zwei Spieler. Diese drei gehören nicht automatisch dem, der
-  //    am meisten gewinnt.
-  //    Der Satz kommt aus den Feldern des Halters und nicht aus dem Beleg:
-  //    der Beleg ist eine Aufzählung für die Tafel, im Feed steht ein Satz.
-  //    Die Vergleichsquote im Satz folgt aus der eigenen Quote und dem
-  //    großen Wert daneben (`_ppGegen`), sonst ergab die Rechnung auf der
-  //    Karte einen Punkt mehr oder weniger als die Zahl über ihr.
-  const _bestmarke = (key, cid, titel, satz) => T.push({ key, weight:2, make: () => {
-    const def = CHRONICLE_BY_ID[cid], rank = _rekRang(cid);
-    if(!def || !rank.length) return null;
-    const lead = _rekSpitze(rank), top = rank[0], nxt = rank[lead.length];
-    const p = (_chronicleCtx().P || {})[top.pid];
-    if(!p) return null;
-    const pkt = x => '+' + Math.round(x.wert * 100);
-    const bild = _bRennen(rank.map(x => ({p:x.pid, v:x.wert, t:pkt(x)})));
-    if(lead.length > 1) return { cat:'personal', ic:def.ic, prio:4,
-      title:`Gleichstand beim ${def.name.replace(/^Der /, '')}`,
-      desc:`${_namesOf(lead)} liegen gleichauf, je ${pkt(top)} Prozentpunkte über der eigenen Quote.`,
-      vv:pkt(top), vl:'%-Punkte',
-      dataRef:{ ambientPids: lead.slice(0, 2).map(x => x.pid), pairKind:'duel', bild } };
-    return { cat:'personal', ic:def.ic, prio:4,
-      title:titel(nameOf(top.pid)),
-      desc:`${satz(p, nameOf(top.pid), top.wert)}. Bestwert der Liga`
-        + (nxt ? `, ${nameOf(nxt.pid)} folgt mit ${pkt(nxt)} Prozentpunkten.` : '.'),
-      vv:pkt(top), vl:'%-Punkte',
-      dataRef:{ ambientPid: top.pid, bild } };
-  }});
-  _bestmarke('personal_glanztag', 'glanztag', n => `Der Glanztag gehört ${n}`,
-    (p, n, v) => `Am ${p.gtLabel} gewann ${n} ${p.gtW} von ${p.gtN} Partien, sonst sind es ${_ppGegen(p.gtW / p.gtN, v)} %`);
-
-  // ── Das Kaltblut: wem der letzte Ball gehört ──
-  //    Der Rekord misst den Anteil der 10:9 an den eigenen Partien mit 10:9
-  //    oder 9:10, nicht den Abstand zur eigenen Quote; deshalb eine eigene
-  //    Karte und nicht `_bestmarke`, deren Satz eine zweite Quote verlangt.
-  //    Sie steht an der Stelle der beiden gestrichenen Bestmarken-Karten:
-  //    ohne sie wiederholte die Rotation über vierzig Tage drei Fakten über
-  //    dieselbe Person statt zwei (`tests/ambient`). Gerechnet wird über
-  //    `chronicleRang` wie im Rekord-Blatt [§C27], damit die Karte nur den
-  //    Halter nennt, den auch der Rekorde-Reiter nennt.
-  T.push({ key:'personal_kaltblut', weight:2, make: () => {
-    const def = CHRONICLE_BY_ID.kaltblut, rank = _rekRang('kaltblut');
-    if(!def || !rank.length) return null;
-    const lead = _rekSpitze(rank), top = rank[0], nxt = rank[lead.length];
-    const P = _chronicleCtx().P || {}, p = P[top.pid], q = nxt && P[nxt.pid];
-    if(!p) return null;
-    const pc = x => Math.round(x.wert * 100);
-    const bild = _bRennen(rank.map(x => ({p:x.pid, v:x.wert, t:pc(x) + ' %'})));
-    if(lead.length > 1) return { cat:'personal', ic:def.ic, prio:4,
-      title:'Gleichstand beim Kaltblut',
-      desc:`${_namesOf(lead)} gewinnen je ${pc(top)} % der Partien, die 10:9 oder 9:10 ausgingen.`,
-      vv:pc(top) + ' %', vl:'der Zitterpartien',
-      dataRef:{ ambientPids: lead.slice(0, 2).map(x => x.pid), pairKind:'duel', bild } };
-    return { cat:'personal', ic:def.ic, prio:4,
-      title:`Das Kaltblut gehört ${nameOf(top.pid)}`,
-      desc:`${nameOf(top.pid)} gewann ${p.nail} von ${p.nail + p.bitter} Partien, die 10:9 oder 9:10 ausgingen, das sind ${pc(top)} %. Bestwert der Liga`
-        // Der Verfolger mit seinen Partien und nicht mit dem Anteil: 27 von
-        // 49 und 23 von 42 runden beide auf 55 %, und „folgt mit 55 %" stand
-        // gleichauf neben dem Bestwert.
-        + (q ? `, ${nameOf(nxt.pid)} folgt mit ${q.nail} von ${q.nail + q.bitter}.` : '.'),
-      vv:pc(top) + ' %', vl:'der Zitterpartien',
-      dataRef:{ ambientPid: top.pid, bild } };
-  }});
-
-  // ── Der alte Zähler-Weg, nur noch für die Auszeichnungs-Vitrine ──
-  T.push({ key:'award_potd_zahl', weight:1, make: () => {
-    if(typeof countDayWins !== 'function') return null;
-    const rank = _awardRank(activePids, pid => countDayWins(pid, matches));
-    if(!rank.length) return null;
-    const lead = _awardLeaders(rank), top = rank[0], nxt = rank[lead.length];
-    if(lead.length > 1){
-      return { cat:'badge', ic:'trophyDay', prio:4,
-        title:`Kopf-an-Kopf um die Tagessiege`,
-        desc:`${_namesOf(lead)} stehen gleichauf bei je ${top.v}× Player of the Day.`,
-        vv: top.v + '×', vl:'Tagessiege',
-        dataRef:{ ambientPids: lead.slice(0,2).map(x=>x.pid), pairKind:'duel', bild:_bRennen(rank.map(x => ({p:x.pid, v:x.v, n:x.v, t:x.v + '×'})), false, 'sammlung') } };
-    }
-    // Hier steht bewusst KEIN „Bestwert der Liga": die Anzahl ist eine
-    // Sammlung und keine Bestmarke, sie wächst mit jedem Spieltag.
-    return { cat:'badge', ic:'trophyDay', prio:4,
-      title:`${nameOf(top.pid)} sammelt Tagessiege`,
-      desc: nxt
-        ? `${top.v}× Player of the Day, so oft wie sonst niemand. ${nameOf(nxt.pid)} kommt auf ${nxt.v}.`
-        : `${top.v}× Player of the Day. Bislang der Einzige mit diesem Titel.`,
-      vv: top.v + '×', vl:'Tagessiege',
-      dataRef:{ ambientPid: top.pid, bild:_bRennen(rank.map(x => ({p:x.pid, v:x.v, n:x.v, t:x.v + '×'})), false, 'sammlung') } };
-  }});
-
-  // ── Der Zähler daneben: eine Sammlung, keine Bestmarke ──
-  T.push({ key:'award_potw_zahl', weight:1, make: () => {
-    if(typeof countPeriodWins !== 'function') return null;
-    const rank = _awardRank(activePids, pid => countPeriodWins(pid, matches, 'week'));
-    if(!rank.length) return null;
-    const lead = _awardLeaders(rank), top = rank[0], nxt = rank[lead.length];
-    if(lead.length > 1){
-      return { cat:'badge', ic:'weekKing', prio:4,
-        title:`Kopf-an-Kopf um die Wochensiege`,
-        desc:`${_namesOf(lead)} stehen gleichauf bei je ${top.v}× Player of the Week.`,
-        vv: top.v + '×', vl:'Wochensiege',
-        dataRef:{ ambientPids: lead.slice(0,2).map(x=>x.pid), pairKind:'duel', bild:_bRennen(rank.map(x => ({p:x.pid, v:x.v, n:x.v, t:x.v + '×'})), false, 'sammlung') } };
-    }
-    return { cat:'badge', ic:'weekKing', prio:4,
-      title:`${nameOf(top.pid)} sammelt Wochensiege`,
-      desc: nxt
-        ? `${top.v}× Player of the Week, so oft wie sonst niemand. ${nameOf(nxt.pid)} kommt auf ${nxt.v}.`
-        : `${top.v}× Player of the Week. Bisher hat das sonst niemand geschafft.`,
-      vv: top.v + '×', vl:'Wochensiege',
-      dataRef:{ ambientPid: top.pid, bild:_bRennen(rank.map(x => ({p:x.pid, v:x.v, n:x.v, t:x.v + '×'})), false, 'sammlung') } };
-  }});
-
-  // ── Award: meiste goldene Auszeichnungen ──
-  // Gezählt wird jedes Mal, das eine goldene Auszeichnung geholt wurde, nicht
-  // die verschiedenen. Der Katalog hat nur wenige goldene; wer sie alle hat,
-  // stand mit allen anderen gleichauf, und die Karte sagte nichts mehr.
-  T.push({ key:'award_gold_leader', weight:2, make: () => {
-    if(typeof getCachedBadges !== 'function' || typeof rarityOf !== 'function') return null;
-    const gold = pid => getCachedBadges(pid).filter(b => rarityOf(b.id) === 'legendary');
-    const summe = l => l.reduce((n, b) => n + (Number(b.count) || 1), 0);
-    const rank = _awardRank(activePids, pid => summe(gold(pid)));
-    if(!rank.length) return null;
-    const lead = _awardLeaders(rank), top = rank[0];
-    const wort = n => n === 1 ? 'goldene Auszeichnung' : 'goldene Auszeichnungen';
-    if(lead.length > 1){
-      return { cat:'badge', ic:'trophyStar', prio:6,
-        title:`Gleichstand in Gold`,
-        desc:`${_namesOf(lead)} holten je ${top.v} ${wort(top.v)}.`,
-        vv: top.v, vl:'Gold',
-        dataRef:{ ambientPids: lead.slice(0,2).map(x=>x.pid), pairKind:'duel', bild:_bRennen(rank.map(x => ({p:x.pid, v:x.v, n:x.v, t:String(x.v)})), false, 'sammlung') } };
-    }
-    const meine = gold(top.pid).slice().sort((a, b) => (b.count || 1) - (a.count || 1));
-    const liste = meine.slice(0, 3).map(b => (b.count > 1 ? `${b.count}× ` : '') + `„${b.name}“`);
-    return { cat:'badge', ic:'trophyStar', prio:6,
-      title:`${nameOf(top.pid)} holt am häufigsten Gold`,
-      desc:`${top.v} ${wort(top.v)}, darunter ${liste.join(', ')}.`,
-      vv: top.v, vl:'Gold',
-      dataRef:{ ambientPid: top.pid, bild:{f:'vitrine', p:top.pid, gold:true, hat:meine.map(b => b.id),
-        n:Object.fromEntries(meine.map(b => [b.id, b.count || 1])), gesamt:top.v} } };
-  }});
-
-  // ── Award: die zuletzt vergebene goldene Auszeichnung ──
-  T.push({ key:'award_latest_gold', weight:2, make: () => {
-    if(typeof getBadgeEarnedCache !== 'function' || typeof rarityOf !== 'function') return null;
-    const bMap = getBadgeEarnedCache();
-    // Match-Index einmal aufbauen statt pro Badge-Event über alle Matches zu
-    // suchen (O(Badges × Matches) → O(Matches + Badges)).
-    const byId = new Map();
-    for(const mm of matches) byId.set(mm.id, mm);
-    let latest = null;
-    for(const mid in bMap){
-      const mObj = byId.get(mid);
-      if(!mObj) continue;
-      const t = mts(mObj);
-      for(const ev of (bMap[mid] || [])){
-        if(rarityOf(ev.badge.id) !== 'legendary') continue;
-        if(!aktiv(ev.playerId)) continue;
-        // ── Ein Fun Fact weiss nichts von einer spaeteren Partie ──
-        // `now` ist die Uhrzeit des Slots, `matches` aber die ganze Liste.
-        // Die Karte von 10 Uhr sah damit eine Auszeichnung aus einer Partie
-        // um 11:39 und rechnete „vor -1 Tagen".
-        if(t > now.getTime()) continue;
-        if(!latest || t > latest.t) latest = { t, pid: ev.playerId, badge: ev.badge, mid };
-      }
-    }
-    if(!latest) return null;
-    const days = Math.floor((now.getTime() - latest.t) / 86400000);
-    // Ab dem zweiten Tag in der Einheit, die man sagen würde (`_spSeit`):
-    // eine Liga, in der Gold selten geworden ist, schrieb sonst „vor 400
-    // Tagen" und darüber „400 Tage her".
-    const her = days < 2 ? null : days < 14 ? {n:days, e:'Tagen', nom:'Tage'} : _spSeit(now.getTime() - latest.t);
-    return { cat:'badge', ic: latest.badge.ic || 'trophyStar', prio:5,
-      title:`${nameOf(latest.pid)} holte zuletzt Gold`,
-      // Ein Satz mit Verb: „Die Auszeichnung ‚Absoluter Sieger' vor 3 Tagen.
-      // 10:0-Sieg." waren zwei Bruchstücke.
-      desc:`${days === 0 ? 'Heute' : days === 1 ? 'Gestern' : 'Vor ' + her.n + ' ' + her.e} kam „${latest.badge.name}“ dazu, eine der legendären Auszeichnungen.`,
-      // Ohne Wert blieb der grosse Block der Karte leer [§6].
-      vv:String(days === 0 ? 'heute' : days === 1 ? 'gestern' : her.n),
-      vl:her ? her.nom + ' her' : 'geholt',
-      dataRef:{ ambientPid: latest.pid, bild:{f:'medaille', p:latest.pid, b:latest.badge.id,
-        n:activePids.filter(p2 => getCachedBadges(p2).some(b => b.id === latest.badge.id)).length} } };
-  }});
-
-  // ── Award: die meisten Auszeichnungen insgesamt ──
-  // Gezählt wird jedes Mal, nicht die verschiedenen. „Leon hat die volle
-  // Vitrine, 41 verschiedene" hört auf zu stimmen, sobald alle alles haben:
-  // der Katalog ist endlich, und nach einigen Jahren stünde jeder bei 50 von
-  // 50 und die Karte fiele für immer weg. Die Summe aller Male wächst mit
-  // jeder Partie weiter und trennt auch dann noch.
-  T.push({ key:'award_total_leader', make: () => {
-    if(typeof getCachedBadges !== 'function') return null;
-    const summe = pid => getCachedBadges(pid).reduce((n, b) => n + (Number(b.count) || 1), 0);
-    const rank = _awardRank(activePids, summe);
-    if(rank.length < 2) return null;
-    const lead = _awardLeaders(rank), top = rank[0], nxt = rank[lead.length];
-    if(lead.length > 1 || !nxt) return null;
-    const meine = getCachedBadges(top.pid);
-    return { cat:'badge', ic:'medalTrio', prio:4,
-      title:`${nameOf(top.pid)} hat die meisten Auszeichnungen`,
-      desc:`${top.v} Auszeichnungen, ${meine.length} verschiedene. ${nameOf(nxt.pid)} kommt auf ${nxt.v}.`,
-      vv: top.v, vl:'Auszeichnungen',
-      dataRef:{ ambientPid: top.pid, bild:{f:'vitrine', p:top.pid, hat:meine.map(b => b.id),
-        n:Object.fromEntries(meine.map(b => [b.id, b.count || 1])), gesamt:top.v, zweiter:nxt.v} } };
-  }});
-
-  // ══ Persönliche Nuggets (v9.17) ═══════════════════════════════════════
-  // Weniger Liga-Superlative, mehr Geschichten über EINEN Kopf — das ist es,
-  // was einen Fun Fact persönlich macht. Alle Werte stammen aus allPlayerStats
-  // bzw. der H2H-Map, beide bereits gecached.
-
-  // ── Persönlich: Lieblingsgegner (höchste Siegquote im direkten Duell) ──
-  T.push({ key:'personal_favourite_opp', weight:2, make: (rng) => {
-    const map = _ensureH2HMap();
-    if(!map || !map.size) return null;
-    const cands = [];
-    for(const [k, e] of map){
-      const [pa, pb] = k.split('|');
-      if(!aktiv(pa) || !aktiv(pb)) continue;
-      const wa = e.wins[pa]||0, wb = e.wins[pb]||0, total = wa + wb;
-      if(total < 6) continue;
-      if(wa >= wb && wa / total >= 0.7) cands.push({ pid: pa, opp: pb, w: wa, l: wb, total });
-      if(wb >  wa && wb / total >= 0.7) cands.push({ pid: pb, opp: pa, w: wb, l: wa, total });
-    }
-    if(!cands.length) return null;
-    const c = cands[Math.floor(rng()*cands.length)];
-    return { cat:'rivalry', ic:'devilMask', prio:4,
-      title:`${nameOf(c.opp)} ist ${nameOf(c.pid)}s Lieblingsgegner`,
-      desc:`${c.w}:${c.l} aus ${c.total} direkten Duellen. Diese Paarung geht fast immer gleich aus.`,
-      vv: c.w + ':' + c.l, vl:'Duelle',
-      dataRef:{ ambientPids:[c.pid, c.opp], pairKind:'duel', bild:{f:'duell', a:c.pid, b:c.opp, wa:c.w, wb:c.l} } };
-  }});
-
-  // ── Persönlich: Lieblings-Mate (bestes gemeinsames Team) ──
-  T.push({ key:'personal_best_mate', weight:2, make: (rng) => {
-    const cands = [];
-    for(const pid of withStats){
-      const mates = stats[pid].mates || {};
-      for(const mid in mates){
-        const g = mates[mid].g, w = mates[mid].w;
-        if(g < 6 || !aktiv(mid)) continue;
-        if(w / g < 0.65) continue;
-        // Nur einmal pro Paar (kleinere pid führt), sonst doppelte Kandidaten.
-        if(pid > mid) continue;
-        cands.push({ pid, mate: mid, g, w, wr: w/g });
-      }
-    }
-    if(!cands.length) return null;
-    const c = cands[Math.floor(rng()*cands.length)];
-    return { cat:'team', ic:'duo', prio:4,
-      title:`${nameOf(c.pid)} und ${nameOf(c.mate)} gewinnen zusammen`,
-      desc:`${c.w} von ${c.g} gemeinsamen Partien, das sind ${Math.round(c.wr*100)} %.`,
-      vv: Math.round(c.wr*100) + '\u00A0%', vl:'als Duo',
-      dataRef:{ ambientPids:[c.pid, c.mate], pairKind:'team', bild:{f:'duo', a:c.pid, b:c.mate, w:c.w, g:c.g} } };
-  }});
-
-  // ── Persönlich: Lieblingsposition (Sturm vs. Abwehr) ──
-  T.push({ key:'personal_position', weight:2, make: (rng) => {
-    const elig = withStats.filter(pid => stats[pid].atkG >= 5 && stats[pid].defG >= 5);
-    if(!elig.length) return null;
-    const pid = elig[Math.floor(rng()*elig.length)];
-    const st = stats[pid];
-    const atkWr = st.atkW / st.atkG, defWr = st.defW / st.defG;
-    const diff = Math.abs(atkWr - defWr);
-    if(diff < 0.1) {
-      return { cat:'personal', ic:'refresh', prio:3,
-        title:`${nameOf(pid)} ist beidfüßig`,
-        desc:`Im Sturm ${Math.round(atkWr*100)} %, in der Abwehr ${Math.round(defWr*100)} %. Die Position spielt keine Rolle.`,
-        // Ohne Wert blieb der grosse Block der Karte leer. Die Aussage ist
-        // die Quote, die in BEIDEN Rollen gilt — nicht der Abstand, der
-        // hier gerade null sein soll.
-        vv: Math.round((st.atkW + st.defW) / (st.atkG + st.defG) * 100) + '\u00A0%',
-        vl:'in beiden Rollen',
-        dataRef:{ ambientPid: pid, bild:{f:'rolle', p:pid, s:Math.round(atkWr*100), a:Math.round(defWr*100), gs:st.atkG, ga:st.defG} } };
-    }
-    const strong = atkWr > defWr;
-    return { cat:'personal', ic: strong ? 'bolt2' : 'shieldStar', prio:4,
-      title:`${nameOf(pid)} gehört ${strong ? 'nach vorn' : 'nach hinten'}`,
-      desc: strong
-        ? `Im Sturm ${Math.round(atkWr*100)} % Siege (${st.atkG} Partien), in der Abwehr nur ${Math.round(defWr*100)} %.`
-        : `In der Abwehr ${Math.round(defWr*100)} % Siege (${st.defG} Partien), im Sturm nur ${Math.round(atkWr*100)} %.`,
-      vv: Math.round((strong ? atkWr : defWr)*100) + '\u00A0%', vl: strong ? 'im Sturm' : 'in Abwehr',
-      dataRef:{ ambientPid: pid, bild:{f:'rolle', p:pid, s:Math.round(atkWr*100), a:Math.round(defWr*100), gs:st.atkG, ga:st.defG} } };
-  }});
-
-  // ── Fun Fact: häufigstes Endergebnis der Liga ──
-  // ── Saison-Titel: das Rennen um die laufende Tafel (§13, v9.18) ──────
-  // Die Tafel wird erst am Monatsende vergeben. Damit der Monat trotzdem
-  // Spannung hat, greift dieser Fun Fact den aktuellen Stand auf — als
-  // normale Karte, NICHT als Breaking News. Der Saisonabschluss selbst
-  // bleibt die einzige Breaking-Meldung des Titel-Systems.
-  T.push({ key:'season_title_race', weight:2, make: () => {
-    if(typeof seasonTitles !== 'function') return null;
-    let T2 = null;
-    try { T2 = seasonTitles(currentSeason().id); } catch(e){ return null; }
-    if(!T2 || !T2.awarded.length) return null;
-    const cur = T2.awarded.filter(a => pm[a.pid]);
-    if(!cur.length) return null;
-    // Bewusst deterministisch (kein Zufall), damit die memoisierte Story bei
-    // gleichem Datenstand stabil bleibt. Den Tabellenführer muss hier niemand
-    // mehr aussortieren: Platz 1 ist seit v9.18 kein Chronik-Eintrag mehr,
-    // die Spitze bespielt die Saison-Endspurt-Story.
-    const a = cur[0];
-    const held = T2.awarded.length, open = SEASON_TITLES.length - held;
-    return { cat:'season', ic:a.ic, prio:5,
-      title:`${nameOf(a.pid)} führt bei „${a.name}“`,
-      // „Das ist der Stand von heute" sagte nichts: jede Karte im Feed
-      // traegt ihr Datum. Und der grosse Wert zaehlte die Eintraege des
-      // Katalogs, waehrend die Schlagzeile von EINER Fuehrung erzaehlte —
-      // zwei Aussagen auf einer Karte, und die Zahl gehoerte der falschen.
-      desc:`${_evSatz(a.ev, true)}. ${held} von ${SEASON_TITLES.length} `
-        + `Chronik-Einträgen stehen schon.`,
-      // Hier stand die erste Zahl des Belegs unter der Aufschrift „in
-      // Führung". Beides war falsch: „in Führung" beschreibt den Spieler und
-      // nicht die Zahl, und die erste Zahl eines MONATSBELEGS ist nicht der
-      // Sortierwert. „Der makellose Tag" misst einen Anteil und belegt ihn
-      // mit „1 von 4 Spieltagen ohne Niederlage" — im Block stand damit die
-      // 1, also die Anzahl. Nur beim Liga-Rekord garantiert §C35, dass der
-      // Beleg mit dem Sortierwert beginnt; die Monatswertung traegt ihren
-      // Zahlenwert gar nicht mit.
-      //
-      // Die Karte heisst „das Rennen um die laufende Tafel", also traegt der
-      // Block die Zahl des Rennens. Der Satz nennt dafuer nur noch die
-      // vergebenen — zweimal dieselbe Zahl waere eine zu viel [§C27].
-      vv:String(open), vl:'noch offen',
-      dataRef:{ ambientPid:a.pid, seasonTable:T2.sid, bild:{f:'tafel', voll:held, alle:SEASON_TITLES.length,
-        traeger:_tafelTraeger(T2.awarded)} } };
-  }});
-
-  // ── Chronik: ein Liga-Rekord im Rampenlicht (§13.4b) ────────────────
-  // Chroniken ändern sich selten — deshalb genau eine ruhige Karte, keine
-  // Breaking News. Der Eintrag rotiert über den Tag im Slot, damit über die
-  // Wochen alle Rekorde einmal drankommen.
-  T.push({ key:'chronicle_spotlight', weight:2, make: () => {
-    if(typeof chronicleHolders !== 'function') return null;
-    let by = null;
-    try { by = chronicleHolders(); } catch(e){ return null; }
-    // Keine Schattenseite: der Feed meldet sie nicht [§C35]. Der Topf lief
-    // ueber ALLE 56 vergebenen Rekorde, zwoelf davon negativ, und die
-    // Rotation haengt am Kalendertag — an jedem fuenften Tag stand damit
-    // „Alex haelt ‚Das Scheunentor'" als Fun Fact im Feed.
-    const recs = CHRONICLES.filter(d => by[d.id] && pm[by[d.id].pid] && !d.neg);
-    if(!recs.length) return null;
-    // Deterministisch aus dem Tag gewählt: gleicher Tag → gleiche Karte.
-    const day = Math.floor(now.getTime() / 86400000);
-    const d = recs[day % recs.length];
-    const h = by[d.id];
-    return { cat:'fun', ic:d.ic, prio:4,
-      title:`${h.shared ? _chronHalterSatz(h) + ' halten' : nameOf(h.pid) + ' hält'} „${d.name}“`,
-      // Die Bedingung stand hier im Klartext und machte aus zwei Zeilen
-      // fünf. Sie gehört ins Detail, nicht auf die Karte — die Karte sagt,
-      // WAS jemand hält, das Detail sagt, wofür.
-      // Der Beleg endet mit einem Punkt, und danach stand ein Kleinbuchstabe:
-      // „… gewonnen · 9. sonst hält ihn niemand." Der zweite Satz faengt jetzt
-      // an, wo ein Satz anfaengt, und der Beleg traegt keinen Listentrenner
-      // mehr mitten im Fliesstext.
-      desc:`${_evSatz(h.ev, true)}. ${h.shared ? 'Diesen Bestwert halten mehrere punktgleich.' : 'Sonst hält diesen Bestwert niemand.'}`,
-      // Der grosse Wert war die Zeichenkette „1" mit der Aufschrift
-      // „Rekordhalter" — eine Konstante und eine Aussage ueber den TRAeGER
-      // statt ueber die Zahl. „1 Rekordhalter" gilt fuer jeden Rekord und
-      // sagt damit nichts; gemessen trug die Vorlage 25 verschiedene Titel
-      // und immer denselben Wert.
-      //
-      // Die Zahl ist der Wert der Bestmarke, und wie sie heisst, sagt die
-      // Kammer des Katalogs [§C33] — dieselbe Quelle, aus der `_newsWertBlock`
-      // die Aufschrift einer Rekordkarte nimmt [§C27]. Beim Rekord beginnt
-      // der Beleg garantiert mit dem Sortierwert [§C35], also trifft
-      // `_chronKurz` hier das Richtige.
-      vv:_chronKurz(h.ev),
-      vl:((CHRON_KINDS[d.kind] || {}).label || 'Bestwert'),
-      dataRef:{ ambientPid:h.pid, chronicle:d.id,
-        bild:_bRennen(_rekRang(d.id).map(x => ({p:x.pid, v:x.wert, t:_chronKurz(x.ev) || komma(x.wert)})), false, 'podest') } };
-  }});
-
-
-  // ── Prestige & Insignium (§13.8/§13.9) ──────────────────────────────
-  // Fünf Karten, die das neue System sichtbar machen. Der gemischte
-  // 15-Uhr-Slot rotiert zwischen Stand und Geschichte. `dataRef.prestige` sagt der Karte, dass
-  // sie das Insignium des Spielers als Bild zeigen soll [§11.6b].
-
-  T.push({ key:'prestige_fuehrung', weight:2, make: () => {
-    if(typeof prestigeTabelle !== 'function') return null;
-    let P = null; try { P = prestigeTabelle(); } catch(e){ return null; }
-    const rang = P.rang.filter(id => pm[id]);
-    if(rang.length < 2) return null;
-    const a = P.byPid[rang[0]], b = P.byPid[rang[1]];
-    if(!a || !b || a.punkte <= 0) return null;
-    const e = prestigeOf(rang[0]);
-    return { cat:'highlight', ic:'trophyStar', prio:5,
-      title:`${nameOf(rang[0])} führt das Prestige an`,
-      desc:`${a.punkte} Punkte, ${a.punkte - b.punkte} mehr als ${nameOf(rang[1])}. `
-        + `Am Wappen trägt ${nameOf(rang[0])} damit den ${e.insignie.name}`
-        + (e.naechste ? `, bis zum ${e.naechste.name} fehlen ${e.fehlt}.` : `, die letzte Stufe.`),
-      vv:String(a.punkte), vl:'Prestige',
-      dataRef:{ ambientPid:rang[0], prestige:true,
-        bild:Object.assign(_bRennen(rang.map(id => ({p:id, v:P.byPid[id].punkte, t:String(P.byPid[id].punkte)})), false, 'podest') || {}, {ins:true}) } };
-  }});
-
-  T.push({ key:'prestige_schwelle', weight:2, make: () => {
-    if(typeof prestigeTabelle !== 'function') return null;
-    let P = null; try { P = prestigeTabelle(); } catch(e){ return null; }
-    // Wer ist der nächsten Stufe am nächsten? Wer schon auf der letzten
-    // steht, zählt hier nicht: für ihn gibt es keine nächste Stufe.
-    let best = null;
-    Object.keys(P.byPid).forEach(pid => {
-      if(!pm[pid]) return;
-      const e = prestigeOf(pid);
-      if(!e.naechste || e.punkte <= 0) return;
-      if(!best || e.fehlt < best.fehlt) best = e;
-    });
-    if(!best) return null;
-    const spanne = best.naechste.min - best.insignie.min;
-    return { cat:'season', ic:'peak', prio:5,
-      title:`${nameOf(best.pid)} steht kurz vor dem ${best.naechste.name}`,
-      desc:`Noch ${best.fehlt} Prestige, `
-        + `${Math.round((1 - best.fehlt / spanne) * 100)} % der Stufe sind geschafft. `
-        + `Dann ändert der Reif um das Wappen seine Form.`,
-      vv:String(best.fehlt), vl:'fehlen',
-      dataRef:{ ambientPid:best.pid, prestige:true, bild:{f:'stufe', p:best.pid, punkte:best.punkte,
-        von:best.insignie.key, vonMin:best.insignie.min, nach:best.naechste.key, nachMin:best.naechste.min} } };
-  }});
-
-  T.push({ key:'prestige_schritt', weight:2, make: (rng) => {
-    if(typeof prestigeSchritte !== 'function') return null;
-    const kandidaten = activePids.filter(pid => {
-      try { return prestigeSchritte(pid, 1).length > 0; } catch(e){ return false; }
-    });
-    if(!kandidaten.length) return null;
-    const pid = kandidaten[Math.floor(rng() * kandidaten.length)] || kandidaten[0];
-    const s = prestigeSchritte(pid, 1)[0];
-    if(!s) return null;
-    // „X liegt ‚Das Sonntagskind' am naechsten" sagte nicht, worum es geht,
-    // und der Text darunter nannte nur den Halter: was jemand tun muss, um
-    // den Rekord zu holen, stand nirgends. Die Karte sagt jetzt die Aufgabe
-    // (die Bedingung aus dem Katalog), den Stand des Halters und den Gewinn.
-    // „Holt er ihn" stand ausserdem einmal direkt hinter dem Namen des
-    // HALTERS und zeigte damit auf den Falschen.
-    const _bed = s.cond || '';
-    // ── Die Karte nennt den eigenen Stand ───────────────────────────
-    // Sie sagte die Schwelle und den Bestwert des Halters, aber nicht, wo
-    // der Spieler selbst steht: „Martin & Julian haelt den Bestwert mit
-    // 84 %" ist ohne die eigenen 71 % keine Auskunft darueber, wie weit es
-    // noch ist. Mehrere Halter bekommen dazu ihr Verb — und „&" gehoert in
-    // eine Tabellenzelle, nicht in einen Satz [§C33].
-    const _mehr = (s.halterN || 0) > 1;
-    const _halter = String(s.halter || '');
-    const _stand = _halter && s.stand
-      ? `${_halter} ${_mehr ? 'halten' : 'hält'} den Bestwert mit ${s.stand}`
-      : String(s.txt || '');
-    // „Kein anderer ist gerade so nah dran" behauptete einen Vergleich, den
-    // die Karte nie angestellt hat: der Spieler wird unter allen gezogen,
-    // die ueberhaupt einen offenen Schritt haben, nicht als der naechste.
-    // Eine Monatschronik bringt den Grundwert und dazu, wie weit die
-    // Schwelle am Ende ueberboten ist [§C39] — der Gewinn ist hier also
-    // eine Untergrenze und steht als solche da.
-    return { cat:'personal', ic:s.ic, prio:5,
-      title:`${nameOf(pid)} kann „${s.name}“ holen`,
-      desc: (_bed ? `Dafür zählt: ${_bed}. ` : '')
-        + (_stand ? _stand + '. ' : '')
-        + (s.mein ? `${nameOf(pid)} steht bei ${s.mein}. ` : '')
-        + `Gelingt es, bringt das ${s.art === 'monat' ? 'mindestens ' : ''}${s.gewinn} Prestige.`,
-      // Der grosse Wert war die Aussicht auf Prestige — eine Zahl, die
-      // niemand geholt hat, im Goldrahmen einer gehaltenen Bestmarke
-      // [§C25]. Er zeigt jetzt den eigenen Stand: das ist die Zahl, mit
-      // der man etwas anfangen kann. Fehlt er, steht der zu schlagende
-      // Wert dort — auch das ist eine Tatsache und keine Aussicht.
-      vv: s.mein || s.stand || ('+' + s.gewinn),
-      vl: s.mein ? 'aktuell' : (s.stand ? 'zu schlagen' : 'Prestige'),
-      dataRef:{ ambientPid:pid, prestige:true, bild:{f:'ziel', p:pid, ic:s.ic || 'trophy', mein:s.mein || '',
-        stand:s.stand || '', gewinn:s.gewinn,
-        nah:+Math.max(0, Math.min(1, 1 - (s.rel || 0))).toFixed(3),
-        halter:(((allChronicles() || {}).byId || {})[s.id] || {pids:[]}).pids.filter(id => pm[id]).slice(0, 3)} } };
-  }});
-
-  // ── Die Leiter der Liga [§C30] ────────────────────────────────────
-  //     Die Leiter hat einundzwanzig Zeichen, und die meisten hat nie
-  //     jemand gesehen: wer im Zierkranz steht, erfährt vom Kronenreif nur,
-  //     wenn er in der Laufbahn zufällig so weit schiebt. Diese Karte zeigt
-  //     sie der ganzen Liga — die sieben Stufen mit der Zahl ihrer Träger,
-  //     und im Blatt jedes Feld mit den Gesichtern, die es tragen.
-  //     Der Stand wird MIT der Karte gespeichert (`leiter`): ein Fun Fact ist
-  //     eine Ziehung und erzählt vom Tag, an dem er stand [§C33].
-  T.push({ key:'insignium_stand', make: () => {
-    if(typeof prestigeTabelle !== 'function' || typeof INSIGNIEN === 'undefined') return null;
-    let P = null; try { P = prestigeTabelle(); } catch(e){ return null; }
-    const zahl = INSIGNIEN.map(() => 0), felder = [];
-    let n = 0, spitze = null;
-    Object.keys(P.byPid).forEach(pid => {
-      if(!pm[pid]) return;
-      const S = prestigeOf(pid);
-      zahl[S.stufe]++; n++;
-      felder.push([pid, S.stufe, _insBildNr(S.insignie.key, S.grad)]);
-      if(!spitze || S.punkte > spitze.punkte) spitze = S;
-    });
-    if(!n || !spitze) return null;
-    const leer = zahl.filter(v => v === 0).length;
-    const wort = x => ['keine', 'eine', 'zwei', 'drei', 'vier', 'fünf', 'sechs'][x] || String(x);
-    const letzte = INSIGNIEN[INSIGNIEN.length - 1];
-    return { cat:'history', ic:'medalTrio', prio:4,
-      // Die Schlagzeile nennt, was noch niemand gesehen hat: das ist der
-      // Grund, die Karte zu öffnen. „Die Liga trägt drei verschiedene
-      // Insignien" zählte, was jeder in der Rangliste ohnehin sieht.
-      title: leer === 0 ? 'Jede Stufe der Leiter ist vergeben'
-        : leer === 1 ? 'Eine Stufe der Leiter trägt noch niemand'
-        : `${wort(leer).replace(/^./, c => c.toUpperCase())} Stufen der Leiter trägt noch niemand`,
-      desc: `Die Spitze trägt den ${spitze.insignie.name}`
-        + (spitze.naechste
-            ? `, bis zum ${spitze.naechste.name} fehlen ${spitze.fehlt} Prestige.`
-              + (spitze.insignie.key !== letzte.key && spitze.naechste.key !== letzte.key
-                  ? ` Der ${letzte.name} beginnt bei ${letzte.min}.` : '')
-            : ` ${INSIGNIUM_GRAD_NAME[spitze.grad] || 'I'}.`),
-      // „12 gewertet" sagte nicht, WAS gewertet ist. Die Zahl zaehlt Spieler.
-      vv:String(n), vl:'Spieler',
-      dataRef:{ ambientPids:[], leiter:{je:zahl, felder} } };
-  }});
-
-  T.push({ key:'titelband_stand', make: () => {
-    if(typeof meisterTitel !== 'function') return null;
-    const mit = activePids.map(pid => ({pid, n:meisterTitel(pid)}))
-      .filter(x => x.n > 0).sort((a, b) => b.n - a.n);
-    if(!mit.length) return null;
-    const top = mit[0];
-    const gesamt = mit.reduce((a, x) => a + x.n, 0);
-    return { cat:'history', ic:'crown', prio:4,
-      // Die Karte sprach von der Schwinge, vom Titelband als leerem Umriss
-      // und von einer Krone ab fünf Titeln — drei Zeichen, die es seit der
-      // Aura nicht mehr gibt [§C36], und „Die hat er" setzte ein Pronomen
-      // unter ein Wappen [§6].
-      title:`${nameOf(top.pid)} trägt die hellste Aura`,
-      desc:`${top.n} Meistertitel von ${gesamt}, die die Liga bisher vergeben hat. `
-        + (mit.length === 1
-            ? `Sonst hat noch niemand einen Monat gewonnen.`
-            : `${mit.length} Spieler haben überhaupt schon einen geholt.`),
-      vv:String(top.n), vl:'Titel',
-      dataRef:{ ambientPid:top.pid, prestige:true,
-        bild:_bRennen(mit.map(x => ({p:x.pid, v:x.n, n:x.n, t:x.n + ' Titel'})), false, 'sterne') } };
-  }});
-
-
   // ── §11.1c Rückblicke mit festem Termin ─────────────────────────────
   // Woche und Monat hat der Generator schon: der gestaffelte Montags-Block
   // [§11.1] und der season_recap beim Archivieren. Was fehlte, waren die

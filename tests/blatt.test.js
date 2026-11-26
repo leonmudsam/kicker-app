@@ -5691,6 +5691,14 @@ return JSON.stringify(funde,null,1);
             dataRef:Object.assign({type:'ambient', sub:t.key}, r.dataRef)}, false, false, ''));
         });
       });
+      // Gespeicherte Karten tragen die alten Bildformen weiter: das Podest
+      // kommt seit den acht Fragen aus keiner Vorlage mehr, wird aber
+      // gezeichnet, solange eine gespeicherte Karte es trägt [§C33].
+      const ids = activePlayers().slice(0, 3).map(p => p.id);
+      [['ffb_podest', false], ['ffb_podest_i', true]].forEach(([id, ins]) => out.push(_newsCardHtmlM2({id,
+        title:nameOf(ids[0]) + ' führt die Wertung an', desc:'Dahinter folgen zwei.', when:new Date(2026, 7, 26), cat:'personal', ic:'trophy',
+        dataRef:{type:'ambient', sub:'fun_leader', ambientPid:ids[0], bild:Object.assign({f:'podest',
+          r:ids.map((p, k) => ({p, t:(1500 - k * 40) + ' Elo', n:1500 - k * 40, w:1 - k * .03}))}, ins ? {ins:true} : {})}}, false, false, '')));
       out.push(_newsCardHtmlM2({id:'ffb_pause', title:'5 Tage ohne Spiel', desc:'Die längste Pause der Liga waren 9 Tage.',
         when:new Date(2026, 7, 26), cat:'fun', ic:'clock', dataRef:{type:'dry_spell', daysSince:5, maxGapDays:9}}, false, false, ''));
       return out.join('');
@@ -5743,7 +5751,7 @@ return JSON.stringify(funde,null,1);
   ok(fakt.podeste >= 2 && fakt.sockel.length === 0,
      'im Fun-Fact-Podest trägt jeder Sockel seinen Wert und seine Ziffer, und die Stufen fallen von Platz 1 nach 3',
      fakt.podeste + ' Podeste · ' + fakt.sockel.slice(0, 4).join(' | '));
-  ok(fakt.formen >= 12 && fakt.fehler.length === 0,
+  ok(fakt.formen >= 11 && fakt.fehler.length === 0,
      'jedes Fun-Fact-Bild bleibt bei 288 und 360 px in seiner Karte, ohne Text auf Text und ohne Kürzung',
      fakt.formen + ' Bilder · ' + fakt.fehler.slice(0, 4).join(' | '));
 

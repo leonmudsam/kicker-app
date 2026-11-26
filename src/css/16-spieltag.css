@@ -1793,6 +1793,148 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   .nd-ff .ff{margin:0}
   .ff-zw-m small b{color:var(--ink);font-weight:600}
 
+  /* ── Die acht Fragen [§C33] ─────────────────────────────────────────
+     Jede Frage hat ihr Bild (30c-news-fakt.js). Dieselben Töne wie die
+     Formen davor: die Farbe der Karte (`--story`) nur am Ersten und an dem,
+     worum es geht, Grün und Rot nur für eine Richtung [§C25], sonst Metall.
+     Ein Name bricht um statt gekürzt zu werden; nichts wächst in der Breite. */
+  .ff-av{display:inline-flex;flex-shrink:0}
+  .ff-av .av{--av:inherit}
+  .ff-leg{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:7px;font-family:'Sometype Mono',monospace;
+    font-size:9.5px;letter-spacing:.04em;color:var(--muted)}
+  .ff-leg span{display:inline-flex;align-items:center;gap:6px}
+  .ff-leg span::before{content:'';flex-shrink:0}
+  .ff-leg .g::before{width:14px;height:5px;border-radius:3px;background:rgb(var(--story-rgb))}
+  .ff-leg .e::before{width:2px;height:11px;border-radius:1px;background:var(--ink)}
+  .ff-leg .v::before,.ff-leg .j::before{width:8px;height:8px;border-radius:50%}
+  .ff-leg .v::before{background:var(--surface);box-shadow:inset 0 0 0 2px var(--muted)}
+  .ff-leg .j::before{background:rgb(var(--story-rgb))}
+
+  /* Der Aufwind: Kopf mit Name und Plus, die Kurve, das Gesicht am Ende. */
+  .ff-af-k{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-bottom:2px}
+  .ff-af-k .ff-nm{font-size:13px}
+  .ff-af-w{display:flex;flex-direction:column;align-items:flex-end;line-height:1}
+  .ff-af-w b{font-family:'Archivo Black',sans-serif;font-size:20px;color:var(--acid);letter-spacing:-.01em}
+  .ff-af-w small{margin-top:3px}
+  .ff-af{gap:0}
+  .ff-af-l{position:relative}
+  .ff-af .sp-ln-l{stroke-width:1.6;opacity:.75}
+  .ff-af .sp-ln-f{opacity:.06}
+  .ff-af-hl{fill:none;stroke:var(--acid);stroke-width:2.6;stroke-linejoin:round;stroke-linecap:round;
+    filter:drop-shadow(0 0 3px rgba(190,242,100,.45))}
+  .ff-af-fl{fill:var(--acid);opacity:.14}
+  .ff-af .sp-ln-p{opacity:0}
+  .ff-af-p{position:absolute;transform:translate(-50%,-50%);display:flex;border-radius:50%;
+    box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px var(--acid),0 0 12px rgba(190,242,100,.35)}
+  .ff-af-p .av{--av:22px}
+  .ff.gross .ff-af-p .av{--av:28px}
+
+  /* Über der Erwartung und die Hantel: Zeilen wie das Rennen. */
+  .ff-ew-z,.ff-ht-z{display:grid;grid-template-columns:22px minmax(0,1fr) 62px;gap:9px;align-items:center;padding:4px 0}
+  .ff-ew-z:not(.eins) .ff-nm,.ff-ht-z:not(.eins) .ff-nm{color:var(--muted);font-weight:500}
+  .ff-ew-w{display:flex;flex-direction:column;align-items:flex-end;line-height:1.1;min-width:0}
+  .ff-ew-w b{font-family:'Sometype Mono',monospace;font-size:12.5px;font-weight:700;color:var(--ink2);white-space:nowrap}
+  .ff-ew-z.eins .ff-ew-w b,.ff-ht-z.eins .ff-ew-w b{color:var(--ink);font-size:14px}
+  .ff-ew-w small{font-size:9px;white-space:nowrap}
+  .ff-ew-b{position:relative;display:block;height:8px;border-radius:4px;background:var(--surface3)}
+  .ff-ew-b i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--muted)}
+  .ff-ew-z.eins .ff-ew-b i{background:rgb(var(--story-rgb));box-shadow:0 0 8px rgba(var(--story-rgb),.45)}
+  .ff-ew-b u{position:absolute;top:-3px;bottom:-3px;width:2px;margin-left:-1px;border-radius:1px;background:var(--ink)}
+  .ff-ht-b{position:relative;display:block;height:12px;margin:0 5px}
+  .ff-ht-b::before{content:'';position:absolute;left:0;right:0;top:5px;height:2px;border-radius:1px;background:var(--surface3)}
+  .ff-ht-b s{position:absolute;top:4px;height:4px;border-radius:2px;background:var(--muted);text-decoration:none}
+  .ff-ht-z.eins .ff-ht-b s{background:rgba(var(--story-rgb),.7)}
+  .ff-ht-b i{position:absolute;top:1px;width:10px;height:10px;margin-left:-5px;border-radius:50%}
+  .ff-ht-b i.v{background:var(--surface);box-shadow:inset 0 0 0 2px var(--muted)}
+  .ff-ht-b i.j{background:var(--ink2)}
+  .ff-ht-z.eins .ff-ht-b i.j{background:rgb(var(--story-rgb));box-shadow:0 0 8px rgba(var(--story-rgb),.55)}
+  /* Die Achse ist eine Zeile wie die anderen: dieselben Spalten, damit 0,
+     50 und 100 unter den Punkten stehen. */
+  .ff-ht-z.ax{padding:0}
+  .ff-ht-z.ax .ff-ht-b{height:11px}
+  .ff-ht-z.ax .ff-ht-b::before{display:none}
+  .ff-ht-z.ax em{position:absolute;top:0;transform:translateX(-50%);font:400 8.5px 'Sometype Mono',monospace;
+    font-style:normal;color:var(--faint);white-space:nowrap}
+
+  /* Die Marke: der Ring um das Gesicht, daneben der Rest groß. */
+  .ff-mk{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center}
+  .ff-mk-r{position:relative;width:72px;height:72px;flex-shrink:0}
+  .ff-mk-r svg{position:absolute;inset:0;width:100%;height:100%}
+  .ff-mk-r.ins{width:84px;height:84px}
+  .ff-mk-t{fill:none;stroke:var(--bg2);stroke-width:6}
+  .ff-mk-f{fill:none;stroke:rgb(var(--story-rgb));stroke-width:6;stroke-linecap:round;
+    filter:drop-shadow(0 0 4px rgba(var(--story-rgb),.45))}
+  .ff-mk-ziel{stroke:var(--ink);stroke-width:2;stroke-linecap:round}
+  .ff-mk-g{position:absolute;inset:0;display:grid;place-items:center}
+  .ff-mk-m{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .ff-mk-n{display:flex;align-items:baseline;gap:6px;margin-top:2px}
+  .ff-mk-n b{font-family:'Archivo Black',sans-serif;font-size:28px;line-height:1;color:var(--ink)}
+  .ff-mk-n em{font-style:normal;font-size:12px;font-weight:600;color:var(--ink2)}
+  .ff-mk-m small:first-of-type{font-family:inherit;font-size:11.5px;color:var(--ink2)}
+  .ff-mk-z{display:flex;flex-direction:column;align-items:center}
+  .ff-mk-z svg{width:44px;height:44px;display:block;opacity:.6}
+
+  /* Die Chronik einer Laufbahn: Zellen der Matrix in einer Reihe. */
+  .ff-cr-k{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .ff-cr-w{margin-left:auto;display:flex;align-items:baseline;gap:5px;white-space:nowrap}
+  .ff-cr-w b{font-family:'Archivo Black',sans-serif;font-size:18px;line-height:1;color:var(--ink)}
+  .ff-cr{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:5px}
+  .ff-cr-c{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+  .ff-cr-c small{font-size:9px;letter-spacing:.06em;text-transform:uppercase}
+  .ff-cr .lc-cell{width:100%;max-width:64px;cursor:inherit;padding:7px 2px}
+  .ff-cr .lc-cell .n{font-size:8px}
+  .ff-cr-leer{display:grid;place-items:center;width:100%;max-width:64px;height:47px;border-radius:11px;
+    box-shadow:inset 0 0 0 1px var(--line);opacity:.6}
+  .ff-cr-leer.gewertet{opacity:1;background:var(--surface2);box-shadow:none}
+
+  /* Die Chemie: zwei Gesichter, der Bogen des Netzes, der Wert darunter. */
+  .ff-cm{display:grid;grid-template-columns:minmax(0,1fr) minmax(96px,1.3fr) minmax(0,1fr);gap:6px;align-items:end}
+  .ff-cm-p{display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;min-width:0}
+  .ff-cm-m{display:flex;flex-direction:column;align-items:center;line-height:1;padding-bottom:16px}
+  .ff-cm-m svg{width:100%;height:30px;overflow:visible;margin-bottom:-6px}
+  .ff-cm-m .netz-l{stroke-opacity:.9;filter:drop-shadow(0 0 4px rgba(190,242,100,.4))}
+  .ff-cm-m b{font-family:'Archivo Black',sans-serif;font-size:22px;color:var(--acid)}
+  .ff-cm-m small{margin-top:3px;font-size:9px}
+  .ff-cm-w{display:flex;flex-direction:column;gap:4px;margin-top:9px;padding-top:8px;border-top:1px solid var(--line)}
+  .ff-cm-w>span{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:center}
+  .ff-cm-w .ff-nm{color:var(--muted);font-weight:500;font-size:11px}
+  .ff-cm-w .ff-nms{gap:0 4px}
+  .ff-cm-w .ff-nms .ff-nm+.ff-nm::before{content:'und ';font-weight:400}
+  .ff-cm-w b{font-family:'Sometype Mono',monospace;font-size:11px;color:var(--ink2)}
+  .ff-cm-w .av{--av:18px}
+
+  /* Die Rolle: ein Ausschnitt der Landkarte, dieselben Felder und Linien. */
+  .ff-lk{position:relative;height:118px}
+  .ff-lk svg{position:absolute;inset:0;width:100%;height:100%}
+  .ff-lk-f{position:absolute;left:8px;font-family:'Sometype Mono',monospace;font-size:8.5px;color:var(--faint);
+    letter-spacing:.04em}
+  .ff-lk-f.o{top:6px}.ff-lk-f.u{bottom:6px}
+  .ff-lk-w{stroke:var(--ink2);stroke-width:1.5;stroke-dasharray:3 3;vector-effect:non-scaling-stroke}
+  .ff-lk-v{fill:var(--surface);stroke:var(--muted);stroke-width:1.5;vector-effect:non-scaling-stroke}
+  .ff-lk .rk-p{transform:translate(-50%,-13px)}
+  .ff-lk .rk-p .rcp-av{box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px rgb(var(--story-rgb))}
+  .ff .rk-ax{display:flex;justify-content:space-between;margin-top:4px;font-family:'Sometype Mono',monospace;
+    font-size:9px;color:var(--muted)}
+
+  /* Die Liga in Zahlen: Klappziffern, darunter die Monate als Säulen. */
+  .ff-lg-k{display:flex;gap:12px;align-items:center;margin-bottom:9px}
+  .ff-lg-k .ff-zw-m>b{font-family:'Sometype Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--muted)}
+  .ff-lg-k .ff-zw-m>span{display:flex;flex-wrap:wrap;gap:4px;align-items:baseline}
+  .ff-lg-k .ff-zw-m i{font-style:normal;font-size:11px;color:var(--muted)}
+  .ff-mo{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:6px;height:76px}
+  .ff-mo>span{display:flex;flex-direction:column;align-items:center;min-width:0}
+  .ff-mo em{flex:1;display:flex;align-items:flex-end;width:100%;max-width:34px}
+  .ff-mo em i{display:block;width:100%;border-radius:4px 4px 0 0;background:linear-gradient(180deg,var(--surface3),var(--surface2))}
+  .ff-mo .hl em i{background:rgb(var(--story-rgb));box-shadow:0 0 10px rgba(var(--story-rgb),.4)}
+  .ff-mo b{font-family:'Sometype Mono',monospace;font-size:9px;font-weight:400;color:var(--muted);margin-bottom:3px}
+  .ff-mo .hl b{color:var(--ink);font-weight:700}
+  .ff-mo small{font-size:9px;margin-top:4px;text-transform:uppercase;letter-spacing:.06em}
+  .ff-mo .hl small{color:var(--ink)}
+  @media (prefers-reduced-motion:no-preference){
+    .ff-ew-z,.ff-ht-z,.ff-cr-c,.ff-mo>span{animation:ffAuf .45s ease both;animation-delay:calc(var(--k,0) * 45ms)}
+  }
+
 /* ── Die Ehrung [§11.6f] ───────────────────────────────────────────── */
 /* Die Bühne der Karte: je Geehrtem eine Säule wie im Säulenbild eines
    Spieltags, unten das Gesicht, oben die Zeichenkachel seiner wertvollsten

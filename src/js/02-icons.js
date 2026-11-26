@@ -80,7 +80,6 @@ const ICONS = {
   // Badges (zusätzlich)
   stopwatch:     `<g transform="translate(0 0.5)"><circle cx="12" cy="13" r="8"/><path d="M12 8v5l3 2M9 2h6M12 5V2"/></g>`, // Stammgast (Zeit) — alternativ falls Controller doppelt
   refresh:       `<path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6z"/><polygon points="13,8 9,14 12,14 11,18 15,12 12,12"/>`, // Allrounder: Shield mit Bolt drin
-  bolt2:         `<polygon points="13,2 4,14 11,14 9,22 20,10 13,10"/><circle cx="13" cy="14" r="1.5"/>`, // Mittelstürmer (Bolt+Punkt)
   flameDouble:   `<g transform="translate(0 4.5)"><path d="M7 3s3 3 3 6a3 3 0 11-6 0c0-1.2.6-1.8.6-1.8s.3 1.2 1.2 1.2c-.6-1.8 1.2-2.4 1.2-5.4z"/><path d="M17 3s3 3 3 6a3 3 0 11-6 0c0-1.2.6-1.8.6-1.8s.3 1.2 1.2 1.2c-.6-1.8 1.2-2.4 1.2-5.4z"/></g>`, // 10er Serie
   flameTriple:   `<g transform="translate(0 4.5)"><path d="M5 6s2 2 2 4a2 2 0 11-4 0c0-.8.4-1.2.4-1.2s.2.8.8.8c-.4-1.2.8-1.6.8-3.6z"/><path d="M12 3s3 3 3 6a3 3 0 11-6 0c0-1.2.6-1.8.6-1.8s.3 1.2 1.2 1.2c-.6-1.8 1.2-2.4 1.2-5.4z"/><path d="M19 6s2 2 2 4a2 2 0 11-4 0c0-.8.4-1.2.4-1.2s.2.8.8.8c-.4-1.2.8-1.6.8-3.6z"/></g>`, // 15er Serie
   crownFlame:    `<g transform="translate(0 -2)"><path d="M2 8l4 6 6-9 6 9 4-6v8H2z"/><path d="M12 17s2 2 2 4a2 2 0 01-4 0c0-1 .5-1.5.5-1.5"/></g>`, // 30er Serie (Crown+Flame)
@@ -542,7 +541,7 @@ const ICONS = {
 const ZEICHEN_ALT = {
   weightSmall:'weight', heartBroken:'pille', concreteWall:'betonmauer', blackDay:'schwarzerTag',
   overtake:'ueberholen', rocket:'rakete', chartUp:'trendUp', chartDown:'trendDown', swords:'crossedSwords',
-  iceCube:'dropTriple',
+  iceCube:'dropTriple', bolt2:'posSturm',
 };
 // Die Zeichnung zu einem Namen, auch zu einem alten. Jeder Zugriff auf den
 // Katalog geht hierüber — ein direktes `ICONS[name]` sähe die alten Namen

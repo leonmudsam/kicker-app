@@ -299,17 +299,12 @@ brk.forEach(b => console.log(`     ! ${b.type}  ${b.t}`));
 ok(feed.filter(f => f.type === 'season_recap').length <= 1, 'höchstens EINE Saison-Abschluss-Karte');
 ok(!feed.some(f => f.type === 'season_titles'), 'kein eigener Story-Typ für Titel (kein Extra-Breaking)');
 ok(!brk.some(f => /Ehrentitel/i.test(f.t)), 'keine Ehrentitel-Karte mehr im Feed');
-// Die Titel-Fun-Fact-Vorlage baut und ist NICHT breaking
-const amb = K.eval(`(()=>{const pm2=pmap();const T=_ambientTemplatePool(new Date(),pm2,id=>(pm2[id]&&pm2[id].name)||'?');
-  const t=T.find(x=>x.key==='season_title_race'); if(!t) return 'MISSING';
-  const r=t.make(); return r?JSON.stringify(r):'NULL';})()`);
-ok(amb !== 'MISSING', 'Fun-Fact-Vorlage season_title_race existiert');
-ok(amb !== 'NULL', 'Fun-Fact-Vorlage liefert Daten');
-if(amb !== 'MISSING' && amb !== 'NULL'){
-  const a = JSON.parse(amb);
-  console.log(`     Fun Fact: „${a.title}" — ${a.desc}`);
-  ok(a.cat !== 'breaking', 'Titelrennen ist Fun Fact, nicht Breaking');
-}
+// Kein Fun Fact ist Breaking: er erzählt eine Entwicklung der Liga [§C33].
+// Geprüft war hier das Titelrennen, das es als Vorlage nicht mehr gibt.
+const amb = JSON.parse(K.eval(`(()=>{const pm2=pmap();const T=_ambientTemplatePool(new Date(2026,7,26,15,5),pm2,id=>(pm2[id]&&pm2[id].name)||'?');
+  return JSON.stringify(T.map(t=>{let r=null;try{r=t.make(_ambientRng(1));}catch(e){}return r?{k:t.key,cat:r.cat}:null;}).filter(Boolean));})()`));
+ok(amb.length > 0, 'Fun-Fact-Vorlagen liefern Daten', amb.map(a => a.k).join(' '));
+ok(amb.every(a => a.cat !== 'breaking'), 'kein Fun Fact ist Breaking', amb.filter(a => a.cat === 'breaking').map(a => a.k).join(' '));
 
 console.log('\n═══ 7. RENDERING ═══');
 const render = (label, expr) => {

@@ -360,11 +360,18 @@ console.log('  Vierzig Tage Rotation: ' + _thesen.karten + ' Karten, '
   + _thesen.thesen + ' Thesen');
 // Vierzig Tage, an denen die Liga spielt: Tage mit einer Partie vor 15 Uhr
 // haben keinen Slot, also sind es weniger als vierzig Karten.
-ok(_thesen.karten >= 30, 'der Nachlauf fuellt ueberhaupt Slots',
+// Ein Fun Fact entsteht nur, wenn er etwas Neues sagt [§C33]: seit der
+// Pool acht Fragen trägt statt vierzig Vorlagen, bleibt an den echten
+// Partien rund jeder zweite Slot leer, statt dieselbe These über dieselbe
+// Person nach acht Tagen zu wiederholen. Gefüllt wird trotzdem jede Woche.
+ok(_thesen.karten >= 15, 'der Nachlauf fuellt ueberhaupt Slots',
    _thesen.karten + ' Karten');
-ok(_thesen.verstoesse.length <= 2,
+// Keine These über dieselbe Person zweimal in 30 Tagen, in keinem
+// Durchgang: der Notnagel liess die Sperre fallen und schrieb dieselbe
+// Duo-Chemie über dieselben zwei nach acht Tagen wieder.
+ok(_thesen.verstoesse.length === 0,
    'die Nachholung bleibt trotz grosser Luecke abwechslungsreich',
-   _thesen.verstoesse.slice(0, 3).join(' | ') || 'keine Wiederholung');
+   _thesen.verstoesse.length + ': ' + _thesen.verstoesse.join(' | ') || 'keine Wiederholung');
 K.eval(`matches = matches.filter(m => String(m.id).indexOf('weiter-') !== 0); invalidateCache();`);
 
 // ── Eine abgemeldete Karte gibt ihren Slot frei ───────────────────────
@@ -489,56 +496,44 @@ const vorher = build('2026-08-14T15:30:00', []).find(s => s.id === 'ambient_2026
 ok(!vorher || vorher.sub !== 'rueckblick_halbzeit', 'am 14. nicht',
    vorher ? vorher.sub : '—');
 
-console.log('\n=== 8. DIE NEUEN PRESTIGE-KARTEN ===');
-const neuKeys = ['prestige_fuehrung','prestige_schwelle','prestige_schritt',
-                 'insignium_stand','titelband_stand','rueckblick_halbzeit','rueckblick_jahr'];
+console.log('\n=== 8. DIE ACHT FRAGEN DER FUN FACTS ===');
+// Ein Fun Fact erzählt eine Entwicklung, einen Vergleich oder ein Ziel,
+// keinen Einzeleintrag [§C33]. Der Pool trug vierzig Vorlagen — „holte
+// zuletzt Gold", „29 von 118 Chronik-Einträgen vergeben", eine Zufallszahl
+// —, und jede hatte dieselbe Zahlkachel. Jetzt beantwortet jede Vorlage
+// genau eine der acht Fragen, dazu die Halbzeit und der Jahresrückblick.
+const FF_FRAGEN = ['form_aufwind','form_erwartung','form_gegen_laufbahn','laufbahn_marke',
+                   'chronik_reihe','duo_chemie','rolle_seite','liga_marke'];
+const FF_POOL = FF_FRAGEN.concat(['rueckblick_halbzeit','rueckblick_jahr']);
 const gebaut = JSON.parse(K.eval(`(function(){
   const pm = pmap(), nameOf = pid => (pm[pid]||{}).name || '?';
-  const T = _ambientTemplatePool(new Date(), pm, nameOf);
-  const rng = _ambientRng(_ambientHash('test'));
+  const tage = [new Date(2026, 7, 26, 15, 5), new Date(2026, 6, 20, 15, 5), new Date(2026, 5, 18, 15, 5),
+    new Date(2026, 7, 10, 15, 5), new Date(2026, 6, 6, 15, 5), new Date(2026, 5, 30, 15, 5)];
+  const pool = _ambientTemplatePool(tage[0], pm, nameOf).map(t => t.key);
   const out = {};
-  ${JSON.stringify(neuKeys)}.forEach(k => {
-    const t = T.find(x => x.key === k);
-    if(!t){ out[k] = {fehlt:true}; return; }
-    let r = null, err = null;
-    try { r = t.make(rng); } catch(e){ err = e.message; }
-    out[k] = r ? {title:r.title, desc:r.desc, ref:r.dataRef||{}} : {leer:true, err};
+  tage.forEach(now => {
+    const T = _ambientTemplatePool(now, pm, nameOf);
+    for(let seed = 1; seed <= 4; seed++) T.forEach(t => {
+      const o = out[t.key] || (out[t.key] = {n:0, err:null, texte:[]});
+      let r = null;
+      try { r = t.make(_ambientRng(seed)); } catch(e){ o.err = e.message; return; }
+      if(!r) return;
+      o.n++; if(o.texte.length < 3) o.texte.push(r.title + ' | ' + r.desc);
+    });
   });
-  return JSON.stringify(out);
+  return JSON.stringify({pool, out});
 })()`));
-neuKeys.forEach(k => ok(!gebaut[k].fehlt, 'Template ' + k + ' ist im Pool'));
-neuKeys.forEach(k => ok(!gebaut[k].err, 'Template ' + k + ' laeuft ohne Fehler', gebaut[k].err || ''));
-// Alle ausser dem Jahresrueckblick muessen auf den echten Daten etwas liefern:
-// 2025 hat die Liga noch nicht gespielt, also ist `null` dort das richtige.
-neuKeys.filter(k => k !== 'rueckblick_jahr')
-  .forEach(k => ok(!gebaut[k].leer, 'Template ' + k + ' liefert eine Karte'));
-ok(gebaut.rueckblick_jahr.leer, 'der Jahresrueckblick schweigt ohne Vorjahr');
-['prestige_fuehrung','prestige_schwelle','prestige_schritt','titelband_stand']
-  .forEach(k => ok(gebaut[k].ref && gebaut[k].ref.prestige === true,
-    k + ' zeigt das Insignium als Bild'));
-neuKeys.filter(k => !gebaut[k].leer).forEach(k =>
-  ok(!/undefined|NaN|\[object/.test(gebaut[k].title + gebaut[k].desc),
-     k + ' sauber formuliert', gebaut[k].desc));
-// Die Leiter der Liga [§C30]: die Karte trägt ihren Stand mit — je Stufe die
-// Zahl der Träger und je Spieler sein Feld —, und beides muss zur Tabelle
-// passen, sonst zeigt das Blatt Gesichter auf Feldern, die sie nicht tragen.
-const _leiter = JSON.parse(K.eval(`(function(){
-  const pm = pmap(), nameOf = pid => (pm[pid]||{}).name || '?';
-  const t = _ambientTemplatePool(new Date(), pm, nameOf).find(x => x.key === 'insignium_stand');
-  const r = t && t.make(_ambientRng(1));
-  const L = r && r.dataRef && r.dataRef.leiter;
-  if(!L) return JSON.stringify({fehlt:true});
-  const falsch = L.felder.filter(([pid, si, nr]) => {
-    const P = prestigeOf(pid);
-    return P.stufe !== si || _insBildNr(P.insignie.key, P.grad) !== nr;
-  }).length;
-  return JSON.stringify({je:L.je, felder:L.felder.length, falsch, n:+r.vv, title:r.title});
-})()`));
-ok(!_leiter.fehlt && _leiter.je.length === 7
-   && _leiter.je.reduce((a, b) => a + b, 0) === _leiter.n && _leiter.felder === _leiter.n,
-   'die Leiter der Liga zaehlt jeden Spieler genau einmal', JSON.stringify(_leiter));
-ok(!_leiter.fehlt && _leiter.falsch === 0,
-   'und jeder steht auf dem Feld, das er traegt', JSON.stringify(_leiter));
+const _fremd = gebaut.pool.filter(k => !FF_POOL.includes(k)), _fehlt = FF_POOL.filter(k => !gebaut.pool.includes(k));
+ok(_fremd.length === 0 && _fehlt.length === 0,
+   'der Pool trägt genau die acht Fragen, die Halbzeit und den Jahresrückblick',
+   'fremd: ' + _fremd.join(' ') + ' · fehlt: ' + _fehlt.join(' '));
+FF_POOL.forEach(k => ok(gebaut.out[k] && !gebaut.out[k].err, 'Vorlage ' + k + ' läuft ohne Fehler',
+  gebaut.out[k] ? gebaut.out[k].err || '' : 'fehlt'));
+FF_FRAGEN.forEach(k => ok(gebaut.out[k] && gebaut.out[k].n > 0,
+  'Vorlage ' + k + ' liefert an den echten Partien eine Karte', gebaut.out[k] ? (gebaut.out[k].texte[0] || '') : ''));
+FF_FRAGEN.forEach(k => (gebaut.out[k] ? gebaut.out[k].texte : []).forEach(t =>
+  ok(!/undefined|NaN|\[object|: /.test(t.split(' | ')[0]) && /[.]$/.test(t.split(' | ')[1].trim()),
+     k + ' spricht in ganzen Sätzen ohne Etikett', t)));
 
 console.log('\n=== 8b. JEDER FUN FACT HAT SEIN BILD ===');
 // Jeder Fun Fact trug dieselbe Form: eine große Zahl links, der Satz rechts —
@@ -575,6 +570,28 @@ const _ffB = JSON.parse(K.eval(`(function(){
         if(b.r[0].w !== 1 || b.r.some((x, i) => i && x.w > b.r[i - 1].w + 1e-9)) f.push('Balken nicht absteigend');
       }
       if(b && b.f === 'zahl' && String(b.n) !== String(r.vv)) f.push('Zählwerk ' + b.n + ' statt ' + r.vv);
+      // Die acht Fragen gegen ihre Quelle, unabhängig nachgerechnet: das
+      // Fenster sind die vierzehn Tage bis zur Ziehung, die Erwartung ist die
+      // der Partie (exp_a), der Wert des Duos der des Netzes der Duos.
+      const _bis = matches.filter(m => mts(m) <= now.getTime()), _ab14 = now.getTime() - 14 * 864e5;
+      const _seite = (m, id) => [m.a1, m.a2].includes(id) ? 'A' : [m.b1, m.b2].includes(id) ? 'B' : null;
+      if(b && b.f === 'aufwind'){
+        const d = Math.round(_bis.filter(m => mts(m) >= _ab14 && _seite(m, b.p)).reduce((n, m) => n + (Number((m.deltas || {})[b.p]) || 0), 0));
+        if(d !== b.d) f.push('Aufwind ' + b.d + ' statt ' + d);
+      }
+      if(b && b.f === 'erwartung') (b.z || []).forEach(z => {
+        const ms = _bis.filter(m => mts(m) >= _ab14 && _seite(m, z.p));
+        const w = ms.filter(m => m.winner === _seite(m, z.p)).length;
+        const e = ms.reduce((n, m) => n + (_seite(m, z.p) === 'A' ? m.exp_a : 1 - m.exp_a), 0);
+        if(ms.length !== z.g || w !== z.w || Math.abs(e - z.e) > .06) f.push('Erwartung ' + pm[z.p].name + ' ' + z.w + '/' + z.g + '/' + z.e + ' statt ' + w + '/' + ms.length + '/' + e.toFixed(1));
+      });
+      if(b && b.f === 'chemie'){
+        let sum = 0, g = 0;
+        _bis.forEach(m => { const sa = _seite(m, b.a); if(!sa || sa !== _seite(m, b.b)) return;
+          const onA = sa === 'A', exp = onA ? m.exp_a : 1 - m.exp_a, won = m.winner === sa;
+          sum += ((won ? 1 : 0) - exp + posTorLeistung(onA ? m.score_a : m.score_b, onA ? m.score_b : m.score_a, exp)) / 2; g++; });
+        if(g !== b.g || Math.round(sum / (g + POS_SCHRUMPF) * 100) !== b.pp) f.push('Chemie ' + b.pp + ' statt ' + Math.round(sum / (g + POS_SCHRUMPF) * 100));
+      }
       if(b && b.f === 'vitrine' && (b.gesamt != null ? b.gesamt : b.hat.length) !== +r.vv) f.push('Vitrine ' + (b.gesamt != null ? b.gesamt : b.hat.length) + ' statt ' + r.vv);
       if(b && b.f === 'tafel' && b.alle - b.voll !== +r.vv) f.push('Tafel ' + (b.alle - b.voll) + ' statt ' + r.vv);
       if(b && b.f === 'platz' && 'Platz ' + b.platz !== r.vv) f.push('Platz ' + b.platz + ' statt ' + r.vv);
@@ -585,10 +602,11 @@ const _ffB = JSON.parse(K.eval(`(function(){
   return JSON.stringify(out);
 })()`));
 const _ffOhne = _ffB.filter(x => !x.err && !x.leiter && !x.f).map(x => x.k);
-ok(_ffB.length > 30 && !_ffB.some(x => x.err) && _ffOhne.length === 0,
+ok(_ffB.length >= 8 && !_ffB.some(x => x.err) && _ffOhne.length === 0,
    'jede Fun-Fact-Vorlage trägt die Daten ihres Bilds', [...new Set(_ffOhne)].join(' ') || _ffB.filter(x => x.err).map(x => x.k + ': ' + x.err).join(' '));
-ok(new Set(_ffB.map(x => x.f).filter(Boolean)).size >= 12,
-   'und es sind mindestens zwölf verschiedene Bilder', [...new Set(_ffB.map(x => x.f))].join(' '));
+const FF_BILDER = ['aufwind','erwartung','hantel','marke','chronik','chemie','landkarte','liga'];
+ok(FF_BILDER.every(f => _ffB.some(x => x.f === f)),
+   'und jede der acht Fragen hat ihr eigenes Bild', [...new Set(_ffB.map(x => x.f))].join(' '));
 const _ffFalsch = _ffB.filter(x => x.f && (!x.gezeichnet || x.namen.length || x.fehler.length));
 ok(_ffFalsch.length === 0,
    'jedes Bild steht auf der Karte, nennt jeden Namen und passt zu seiner Quelle',
@@ -611,20 +629,6 @@ const _pause = JSON.parse(K.eval(`JSON.stringify((function(){
 })())`));
 ok(_pause.vier === 0 && _pause.fuenf === 1, 'die Pause meldet sich ab fünf Tagen, nicht schon nach einem Wochenende',
    JSON.stringify(_pause));
-// Die Vitrine zählt jedes Mal: nach einigen Jahren hat jeder alle
-// Auszeichnungen, und „41 verschiedene" hätte niemanden mehr getrennt.
-const _vitrine = JSON.parse(K.eval(`JSON.stringify((function(){
-  const t = _ambientTemplatePool(new Date(), pmap(), id => pname(id)).find(x => x.key === 'award_total_leader');
-  const r = t && t.make();
-  if(!r) return {fehlt:true};
-  const b = r.dataRef.bild, summe = getCachedBadges(b.p).reduce((n, x) => n + x.count, 0);
-  return {titel:r.title, gesamt:b.gesamt, summe, verschieden:getCachedBadges(b.p).length,
-    html:_faktBild({dataRef:{type:'ambient', bild:b}})};
-})())`));
-ok(!_vitrine.fehlt && _vitrine.gesamt === _vitrine.summe && _vitrine.summe > _vitrine.verschieden
-   && /die meisten Auszeichnungen/.test(_vitrine.titel) && _vitrine.html.indexOf('>' + _vitrine.summe + '<small> geholt') >= 0,
-   'die Vitrine zählt jedes geholte Mal, auch wenn alle alles haben', _vitrine.titel + ' · ' + _vitrine.gesamt + '/' + _vitrine.summe);
-
 console.log('\n=== 9. BREAKING: NUR DAS SELTENSTE ===');
 // Breaking heisst: extrem seltene Auszeichnung oder echtes Ereignis. Ein
 // Countdown gehoert nicht dazu — `season_endgame` („Noch 5 Tage") war zeitweise
@@ -4885,88 +4889,6 @@ ok(_sperre.weitAuseinander === 2, 'vier Tage auseinander bleiben beide stehen',
 ok(_sperre.wechsel === 2, 'ein Halterwechsel ist jedes Mal eine eigene Nachricht',
    String(_sperre.wechsel));
 
-// ── Eine Karte sagt, was zu tun ist ─────────────────────────────────
-// „Jane liegt ‚Das Sonntagskind' am naechsten" nannte weder, worum es geht,
-// noch was dafuer verlangt ist: darunter stand allein „Leon haelt den
-// Bestwert". Wer die Karte las, wusste danach nur, dass ihm irgendetwas
-// fehlt. Die Bedingung steht im Katalog und gehoert auf die Karte.
-const _ziel = JSON.parse(K.eval(`JSON.stringify((function(){
-  const pm = pmap();
-  const nameOf = pid => (pm[pid] && pm[pid].name) || '?';
-  const T = _ambientTemplatePool(new Date(), pm, nameOf);
-  const v = T.find(x => x.key === 'prestige_schritt');
-  if(!v) return {fehlt:true};
-  const k = v.make(() => 0.42);
-  if(!k) return {leer:true};
-  const bedingungen = [];
-  // Jeder offene Schritt jedes Spielers, damit die Regeln nicht am
-  // einen Fall haengen, den die Karte gerade zufaellig zieht.
-  const alle = [];
-  players.forEach(p => prestigeSchritte(p.id, 99).forEach(s => {
-    alle.push(s);
-    if(s.cond) bedingungen.push(s.cond);
-  }));
-  // Der Katalog schreibt negativ, die abgeleitete Rekordliste neg. Die
-  // Zusicherung fragt beide Felder ab, sonst prueft sie am falschen Namen
-  // vorbei und ist immer gruen.
-  const neg = alle.filter(s => {
-    const d = (s.art === 'monat' ? DISZIPLINEN : CHRONICLES).find(x => x.id === s.id);
-    return d && (d.art === 'schatten' || d.negativ === true || d.neg === true);
-  }).map(s => s.art + '/' + s.id);
-  // Der eigene Stand: ohne ihn sagt die Karte nicht, wie weit es noch ist.
-  const ohneStand = alle.filter(s => s.art === 'rekord' && s.stand && !s.mein).length;
-  // Und ein Verb je Halterzahl.
-  const karten = [];
-  players.forEach(p => {
-    const st = prestigeSchritte(p.id, 1);
-    if(!st.length) return;
-    const kk = v.make(() => (players.indexOf(p) + 0.5) / players.length);
-    if(kk) karten.push(kk.desc || '');
-  });
-  // Gemessen wird an ALLEN Schritten, nicht an der einen Karte, die der
-  // Wuerfel gerade zieht: ein Rekord mit mehreren Haltern kommt in den
-  // zwoelf gezogenen Karten nicht zwangslaeufig vor.
-  const viele = alle.filter(x => (x.halterN || 0) > 1);
-  return {t:k.title, d:k.desc, passt:bedingungen.some(c => k.desc.indexOf(c) >= 0),
-          neg, ohneStand, n:alle.length,
-          vieleN:viele.length,
-          amp:alle.filter(x => /&/.test(String(x.halter) + String(x.txt))).length,
-          verb:viele.filter(x => / hält /.test(String(x.txt))).map(x => x.txt),
-          steht:karten.filter(t => / steht bei /.test(t)).length, k:karten.length};
-})())`));
-ok(!_ziel.fehlt && !_ziel.leer, 'die Karte zum naechsten Rekord entsteht', JSON.stringify(_ziel));
-ok(!/am nächsten/.test(_ziel.t || ''), 'ihre Schlagzeile sagt nicht nur, wer am naechsten liegt',
-   _ziel.t);
-ok(_ziel.passt,
-   'und ihr Text nennt die Bedingung aus dem Katalog', (_ziel.d || '').slice(0, 90));
-ok(/Prestige/.test(_ziel.d || ''), 'samt dem, was der Rekord einbringt', (_ziel.d || '').slice(0, 90));
-
-// ── Ein Ziel, das niemand haben will, ist kein Ziel ─────────────────
-// „Alex kann ‚Die bitterste Pleite' holen" stand im Feed: die hoechste
-// Siegchance, mit der je jemand verlor, als Aufgabe. Gefiltert war nur die
-// Schattenseite, nicht die negative Fuegung — `nextRecordFor` kennt die
-// Regel seit jeher [§C25].
-ok(_ziel.neg.length === 0, 'kein negativer Eintrag wird als Ziel vorgeschlagen',
-   _ziel.neg.join(', ') || 'keiner');
-// ── Und die Karte nennt den eigenen Stand ───────────────────────────
-// Sie sagte die Schwelle und den Bestwert des Halters. „Martin haelt den
-// Bestwert mit 84 %" ist ohne die eigenen 71 % keine Auskunft darueber, wie
-// weit es noch ist.
-ok(_ziel.n > 0, 'es gibt offene Schritte zu messen', String(_ziel.n));
-ok(_ziel.ohneStand === 0, 'jeder offene Rekord kennt den eigenen Stand',
-   String(_ziel.ohneStand));
-ok(_ziel.k > 0 && _ziel.steht > 0, 'und die Karte schreibt ihn hin',
-   _ziel.steht + ' von ' + _ziel.k);
-// ── „&" gehoert in eine Zelle, nicht in einen Satz ──────────────────
-// `_chronHolderNames` ist die Form fuer die schmale Zelle des
-// Rekorde-Reiters. Im Fliesstext stand damit „Martin & Julian haelt den
-// Bestwert mit 84 %": das Zeichen als einziges im Satz, und das Verb im
-// Singular ueber zwei Leute [§C33].
-ok(_ziel.vieleN > 0, 'es gibt Rekorde mit mehreren Haltern', String(_ziel.vieleN));
-ok(_ziel.amp === 0, 'kein Kaufmanns-Und in einem Prestige-Satz', String(_ziel.amp));
-ok(_ziel.verb.length === 0, 'zwei Halter halten, nicht haelt',
-   _ziel.verb[0] || 'keiner');
-
 // ── Jede Ambient-Karte traegt einen Wert, mit dem man etwas anfangen
 // kann ──────────────────────────────────────────────────────────────
 // Sie stehen an vierzig Stellen und wurden nie zusammen gemessen, also
@@ -5017,7 +4939,7 @@ const _amb = JSON.parse(K.eval(`JSON.stringify((function(){
   return { n:T0.length, raus,
            doppelt:Object.keys(einzig).filter(k => einzig[k] > 1) };
 })())`));
-ok(_amb.n >= 30, 'der Rundlauf sieht alle Vorlagen', String(_amb.n));
+ok(_amb.n >= 9, 'der Rundlauf sieht alle Vorlagen', String(_amb.n));
 
 // ── Der grosse Wert ist eine Zahl der Karte, keine Konstante ────────
 // „1" mit der Aufschrift „Rekordhalter" stand im Block des Chronik-
@@ -5061,7 +4983,7 @@ const _schand = JSON.parse(K.eval(`JSON.stringify((function(){
   const pm = pmap();
   const nameOf = pid => (pm[pid] && pm[pid].name) || '?';
   const neg = {};
-  CHRONICLES.forEach(d => { if(d.neg) neg[d.name] = 1; });
+  DISZIPLINEN.forEach(d => { if(d.monat && (d.art === 'schatten' || d.negativ)) neg[d.name] = 1; });
   // Die Auswahl haengt am KALENDERTAG (\`day % recs.length\`), also trifft nur
   // ein voller Umlauf jeden Eintrag des Topfes. Achtzig Tage reichen dafuer:
   // der Topf ist kleiner. Gemessen wird die Karte selbst und nicht der Topf
@@ -5071,21 +4993,19 @@ const _schand = JSON.parse(K.eval(`JSON.stringify((function(){
   for(let t = 0; t < 80; t++){
     const t0 = new Date(Date.now() - t * 86400000);
     const v = _ambientTemplatePool(t0, pm, nameOf)
-      .find(x => x.key === 'chronicle_spotlight');
+      .find(x => x.key === 'chronik_reihe');
     if(!v) return ['die Vorlage gibt es nicht mehr'];
     let k = null;
     try { k = v.make(() => 0.5); } catch(e){ continue; }
     if(!k) continue;
     Object.keys(neg).forEach(n => {
-      if(String(k.title || '').indexOf('„' + n + '“') >= 0) raus[n] = 1; });
-    const m = String(k.title || '').match(/„([^“]+)“/);
-    if(m) getroffen[m[1]] = 1;
+      if(String((k.title || '') + (k.desc || '')).indexOf('„' + n + '“') >= 0) raus[n] = 1; });
+    getroffen[k.title] = 1;
   }
   const liste = Object.keys(raus);
-  return liste.length ? liste : (Object.keys(getroffen).length < 5
-    ? ['der Umlauf traf nur ' + Object.keys(getroffen).length + ' Eintraege'] : []);
+  return liste.length ? liste : (!Object.keys(getroffen).length ? ['der Umlauf traf keine Karte'] : []);
 })())`));
-ok(_schand.length === 0, 'das Chronik-Rampenlicht zeigt keine Schattenseite',
+ok(_schand.length === 0, 'die Chronik-Reihe feiert keine Schattenseite',
    _schand.join(', ') || 'achtzig Tage nachgespielt, kein negativer Eintrag');
 ok(_amb.doppelt.length === 0, 'jede Vorlage hat ihren eigenen Schluessel',
    _amb.doppelt.join(', ') || 'keine');
@@ -5122,87 +5042,6 @@ ok(_keineSchande.stories > 0 && _keineSchande.ids >= 12,
    _keineSchande.stories + ' Stories, ' + _keineSchande.ids + ' Schande-IDs');
 ok(_keineSchande.treffer.length === 0, 'keine Schande steht im Feed',
    _keineSchande.treffer.slice(0, 4).join(', ') || 'keine');
-
-// ── Wer eine Bestmarke ausruft, nennt ihren Halter ──────────────────
-// „Leon beherrscht die Wochen · 6x Spieler der Woche. Bestwert der Liga"
-// stand im Feed, und derselbe Bestwert gehoerte im Rekorde-Reiter Julian:
-// Leon hat 4 von 15 eigenen Wochen gewonnen, Julian 4 von 13. Die Karte
-// zaehlte die Titel, der Rekord misst den Anteil — und die Anzahl gehoert
-// dem, der oefter dabei war [§C35]. Gerechnet wird deshalb an EINER Stelle
-// [§C27]: `chronicleRang` ist die Reihenfolge, die auch das Rekord-Blatt
-// zeigt. Geprueft wird der genannte Spieler, nicht der Wortlaut: die Karte
-// darf nur Halter benennen.
-const _bmk = JSON.parse(K.eval(`JSON.stringify((function(){
-  const pm = pmap();
-  const nameOf = pid => (pm[pid] && pm[pid].name) || '?';
-  // Der Umsteiger und der Aufschwung sind gestrichen; ihre Karten mit ihnen.
-  const paare = { personal_glanztag:'glanztag' };
-  const T = _ambientTemplatePool(new Date(), pm, nameOf);
-  const out = [];
-  Object.keys(paare).forEach(key => {
-    const v = T.find(x => x.key === key);
-    if(!v){ out.push({ key, fehlt:true }); return; }
-    const r = chronicleRang(paare[key]) || [];
-    const halter = r.filter(x => x.wert === (r[0] || {}).wert).map(x => x.pid);
-    for(let i = 0; i < 12; i++){
-      let k = null;
-      try { k = v.make(() => (i + 0.5) / 12); } catch(e){ continue; }
-      if(!k) continue;
-      const d = k.dataRef || {};
-      const pids = d.ambientPids || (d.ambientPid ? [d.ambientPid] : []);
-      // Die beiden Quoten des Satzes: ein Anteil in Prozent oder „x von n".
-      const q = [...String(k.desc || '').matchAll(/([0-9]+) von ([0-9]+) Partien|([0-9]+) %/g)]
-        .map(x => x[3] != null ? +x[3] : Math.round(+x[1] / +x[2] * 100));
-      out.push({ key, rek:paare[key], n:pids.length,
-        fremd: pids.filter(x => halter.indexOf(x) < 0).map(nameOf),
-        halter: halter.map(nameOf),
-        rechnung: q.length >= 2 && Math.abs(parseInt(k.vv, 10)) === Math.abs(q[0] - q[1]),
-        satz: k.vv + ' · ' + k.desc });
-    }
-  });
-  return out;
-})())`));
-ok(_bmk.length >= 1 && !_bmk.some(x => x.fehlt),
-   'die Bestmarken-Karte steht im Pool',
-   _bmk.filter(x => x.fehlt).map(x => x.key).join(', ') || String(_bmk.length));
-ok(_bmk.every(x => x.fehlt || x.n > 0),
-   'jede Bestmarken-Karte nennt ueberhaupt einen Spieler',
-   (_bmk.find(x => !x.fehlt && !x.n) || {}).key || 'alle');
-const _bmkFremd = _bmk.filter(x => x.fremd && x.fremd.length);
-ok(_bmkFremd.length === 0, 'jede Bestmarken-Karte nennt nur Halter des Rekords',
-   _bmkFremd.length ? _bmkFremd[0].key + ': ' + _bmkFremd[0].fremd.join(', ')
-     + ' statt ' + _bmkFremd[0].halter.join(', ') : 'keine Abweichung');
-// Der grosse Wert ist der Abstand der beiden Quoten im Satz darunter, so wie
-// sie dastehen: „+13 %-Punkte … 32 % der Partien, sonst 20 %" stand da, weil
-// der Wert ungerundet gerundet wurde und die Quoten einzeln.
-const _bmkRechnung = _bmk.filter(x => !x.fehlt && x.n && !x.rechnung);
-ok(_bmk.some(x => x.rechnung) && _bmkRechnung.length === 0,
-   'der Wert einer Bestmarken-Karte ist die Differenz der Quoten im Satz',
-   _bmkRechnung.length ? _bmkRechnung[0].satz : 'stimmt');
-
-// „Das Kaltblut" misst einen Anteil und keinen Abstand: die Karte nennt nur
-// Halter des Rekords, und ihr grosser Wert ist der Anteil, den das „x von n"
-// im Satz ergibt — nicht ein zweites Mal gerechnet und anders gerundet.
-const _kbl = JSON.parse(K.eval(`JSON.stringify((function(){
-  const pm = pmap();
-  const nameOf = pid => (pm[pid] && pm[pid].name) || '?';
-  const v = _ambientTemplatePool(new Date(), pm, nameOf).find(x => x.key === 'personal_kaltblut');
-  if(!v) return {fehlt:true};
-  const r = chronicleRang('kaltblut') || [];
-  const halter = r.filter(x => x.wert === (r[0] || {}).wert).map(x => x.pid);
-  const k = v.make(() => 0.5);
-  if(!k) return {leer:true, n:r.length};
-  const d = k.dataRef || {};
-  const pids = d.ambientPids || (d.ambientPid ? [d.ambientPid] : []);
-  const m = String(k.desc).match(/([0-9]+) von ([0-9]+) Partien/);
-  return {n:pids.length, fremd:pids.filter(x => halter.indexOf(x) < 0).map(nameOf),
-    stimmt: !!m && parseInt(k.vv, 10) === Math.round(+m[1] / +m[2] * 100),
-    satz: k.vv + ' · ' + k.desc};
-})())`));
-ok(!_kbl.fehlt && !_kbl.leer && _kbl.n > 0 && _kbl.fremd.length === 0,
-   'die Kaltblut-Karte steht im Pool und nennt nur Halter des Rekords',
-   _kbl.fehlt ? 'fehlt' : _kbl.leer ? 'leer bei ' + _kbl.n + ' im Rennen' : (_kbl.fremd.join(', ') || _kbl.satz));
-ok(_kbl.stimmt, 'der Wert der Kaltblut-Karte ist der Anteil aus dem Satz darunter', _kbl.satz || '');
 
 // ── Kein Listentrenner im Fliesstext ────────────────────────────────
 // Ein Beleg wie „20 % aller 25 Siege endeten 10:9 · 5" ist fuer eine Zelle
@@ -9486,7 +9325,7 @@ const _ffs = JSON.parse(K.eval(`JSON.stringify((function(){
   }
   return {falsch:[...new Set(falsch)], n:gesehen.size};
 })())`));
-ok(_ffs.n >= 20 && !_ffs.falsch.length, 'jeder Fun Fact spricht in ganzen Saetzen',
+ok(_ffs.n >= 9 && !_ffs.falsch.length, 'jeder Fun Fact spricht in ganzen Saetzen',
    _ffs.falsch.slice(0, 6).join(' | ') || _ffs.n + ' Vorlagen');
 
 console.log('\n' + (fails ? '✗ ' + fails + ' von ' + checks + ' CHECKS FEHLGESCHLAGEN' : '✓ ALLE ' + checks + ' CHECKS BESTANDEN'));

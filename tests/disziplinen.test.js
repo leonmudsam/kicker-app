@@ -533,13 +533,17 @@ console.log('  Stories:', stories.length, '· davon Breaking:', breaking.length)
 breaking.forEach(s => console.log('    ! ' + s.title));
 ok(breaking.length <= 3, 'Breaking bleibt sparsam', breaking.length+'');
 ok(!stories.some(s => /Ehrentitel/.test(s.title + s.desc)), 'Keine Ehrentitel-Story mehr');
+// Die Chronik erzählt im Feed als Reihe einer Laufbahn (`chronik_reihe`),
+// nicht als „X führt bei Y" mit dem Vergabestand des Monats [§C33].
 const spot = K.eval(`(function(){
-  const T=_ambientTemplatePool(new Date(), pmap(), id=>pname(id));
-  const t=T.find(x=>x.key==='chronicle_spotlight');
-  return t? t.make(Math.random) : null;
+  for(const t0 of [new Date(2026,7,26,15,5), new Date(2026,7,5,15,5), new Date(2026,6,20,15,5), new Date(2026,6,2,15,5)]){
+    const t=_ambientTemplatePool(t0, pmap(), id=>pname(id)).find(x=>x.key==='chronik_reihe');
+    for(let i=1;i<=4 && t;i++){ const r=t.make(_ambientRng(i)); if(r) return r; }
+  }
+  return null;
 })()`);
-if(spot){ console.log('  Chronik-Spotlight:', spot.title, '—', spot.desc); }
-ok(spot && spot.title, 'Chronik-Spotlight liefert eine Karte');
+if(spot){ console.log('  Chronik-Reihe:', spot.title, '—', spot.desc); }
+ok(spot && spot.title && spot.dataRef && spot.dataRef.bild && spot.dataRef.bild.f === 'chronik', 'die Chronik-Reihe liefert eine Karte mit ihrem Bild');
 
 console.log('\n=== 10. CHRONIK OHNE MEISTER/KRONPRINZ ===');
 const stIds = K.eval('SEASON_TITLES.map(t=>t.id)');
@@ -2724,10 +2728,13 @@ const _endlos = JSON.parse(K.eval(`JSON.stringify((function(){
     .filter(([k])=>k!=='negative').map(([k,r])=>({k,
       delta:auszeichnungsPunkte(BADGES.find(b=>rarityOf(b.id)===k).id,10000)
            -auszeichnungsPunkte(BADGES.find(b=>rarityOf(b.id)===k).id,9999)}));
+  // Der Zuwachs eines weiteren Eintrags, gerechnet mit der Staffel selbst.
+  const summe=a=>a.slice().sort((x,y)=>y-x).reduce((n,x,i)=>n+x/Math.sqrt(_wurzelStaffel(i+1,3)),0);
+  const zuwachs=(werte,neu)=>Math.max(0,summe(werte.concat([neu]))-summe(werte));
   const chroniken=Array.from({length:10000},()=>100);
-  const chronikDelta=_wurzelZuwachs(chroniken,100,3);
+  const chronikDelta=zuwachs(chroniken,100);
   const rekorde=Array.from({length:10000},()=>48);
-  const rekordDelta=_wurzelZuwachs(rekorde,48,3);
+  const rekordDelta=zuwachs(rekorde,48);
   return {ziel,n,wert:karriere(n),klassen,chronikDelta,rekordDelta};
 })())`));
 ok(_endlos.klassen.every(x=>x.delta>0)

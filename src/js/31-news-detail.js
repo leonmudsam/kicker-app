@@ -194,6 +194,22 @@ function openNewsDetail(sid){
       sheetNav(() => { try { showLaufbahn(pid); } catch(e){} });
     };
   });
+  // Der Fuß eines Fun Facts [§C33] führt in den Teil der App, der dieselbe
+  // Frage stellt: ein Reiter (mit aufgeklapptem Einblick, wo die Frage eine
+  // Grafik über der Rangliste ist), die Chronik oder ein Duo. Ein Reiter
+  // liegt unter dem Feed, also schließen Blatt und Feed; ein Duo ist ein
+  // Blatt und stapelt sich wie ein Profil darüber.
+  nd.querySelectorAll('[data-ffziel]').forEach(el => {
+    el.onclick = () => {
+      const [ziel, mehr] = String(el.dataset.ffziel).split(':');
+      closeNewsDetail();
+      if(ziel === 'team'){ const [a, b] = String(mehr || '').split('|'); sheetNav(() => { try { showTeam(a, b); } catch(e){} }); return; }
+      try { closeSheet(true); } catch(e){}
+      _reiterSetzen(ziel === 'chronik' ? 'awards' : ziel);
+      if(ziel === 'chronik') awView = 'chronik';
+      if(mehr) einblickOffen = mehr;
+    };
+  });
   nd.querySelectorAll('[data-chron]').forEach(el => {
     el.onclick = () => {
       const cid = el.dataset.chron;
@@ -1719,6 +1735,69 @@ function _ndFaktBlatt(s){
   // Bild wie die Karte, sonst verlöre das Blatt, wegen dem man getippt hat.
   // Darunter steht, was das Bild nicht zeigt.
   const bild = d.leiter ? '' : _faktBild(s, true);
+  // Eine Zeile der Zahlen: was gezählt ist, und der Wert. Mit `pid` führt
+  // sie ins Profil, wie jede Zeile mit einem Namen.
+  const zeile = (l, w, id) => `<div class="nd-stat-row"${id && pm[id] ? ` data-pid="${esc(id)}" style="cursor:pointer"` : ''}>`
+    + `<div class="nd-stat-label">${esc(l)}</div><div class="nd-stat-val">${esc(w)}</div></div>`;
+  const vz = n => _spVz(n);
+  const profil = id => pm[id] ? {label:'Zum Profil', ic:'user', attr:`data-pid="${esc(id)}"`} : null;
+  const fuss = k => blattFussHtml(k);
+  const prim = k => k ? Object.assign({}, k, {prim:true}) : null;
+  const lauf = id => pm[id] ? `<div class="nd-section">Die letzten zehn Partien von ${esc(pm[id].name)}</div>${_ndFaktLauf(id, s)}` : '';
+  // Die letzten zehn gemeinsamen Partien eines Duos bis zur Karte, wie
+  // `_ndFaktLauf` für einen Spieler.
+  const duoLauf = (a, b2) => {
+    const t = new Date(s.when).getTime();
+    const l = (matches || []).filter(m => mts(m) <= t && ((m.a1 === a && m.a2 === b2) || (m.a1 === b2 && m.a2 === a)
+      || (m.b1 === a && m.b2 === b2) || (m.b1 === b2 && m.b2 === a))).slice(-10);
+    if(!l.length) return '';
+    const w = l.filter(m => _spGew(m, a)).length;
+    return `<span class="nd-lf nd-hz-lf">${l.map(m => `<i class="${_spGew(m, a) ? 'w' : 'l'}"></i>`).join('')}</span>`
+      + _ndBilanzBalken({wins:w, losses:l.length - w, winRate:Math.round(w / l.length * 100)});
+  };
+  // Was unter der Bühne steht, nennt, was weder der Satz darüber noch das
+  // Bild schon sagen: die Spieltage des Fensters, die Partien als Favorit
+  // und als Außenseiter, die Monate mit dem ganzen Namen des Eintrags, die
+  // Liga als Summe. Gemessen stand unter dem Bild des Duos dreimal dieselbe
+  // Zahl — im Satz, im Bild und in der Liste darunter.
+  const FF_FRAGEN = {
+    aufwind:(b, ab) => ab('Die 14 Tage, Spieltag für Spieltag', (b.tg || []).map(x =>
+        zeile(`${x[0]}, ${x[2]} ${x[2] === 1 ? 'Partie' : 'Partien'}`, vz(x[1] | 0) + ' Elo')).join(''))
+      + lauf(b.p)
+      + fuss([prim(profil(b.p)), {label:'Zur Rangliste', ic:'chartBar', attr:'data-ffziel="ranking"'}]),
+    erwartung:(b, ab) => {
+      const x = (b.z || []).find(y => y.hell) || {}, n = pm[x.p] ? pm[x.p].name : '';
+      const teil = (l, q) => q && q[0] ? zeile(l, `${q[1]} von ${q[0]}, erwartet ${komma(q[2])}`) : '';
+      return ab(n ? 'Die Siege von ' + n + ' nach der Erwartung' : '', teil('Als Favorit', b.fav) + teil('Als Außenseiter', b.aus))
+        + fuss([prim(profil(x.p)), {label:'Zur Rangliste', ic:'chartBar', attr:'data-ffziel="ranking"'}]);
+    },
+    hantel:(b, ab) => { const x = (b.z || []).find(y => y.hell) || {};
+      return lauf(x.p) + fuss([prim(profil(x.p)), {label:'Zur Rangliste', ic:'chartBar', attr:'data-ffziel="ranking"'}]); },
+    marke:(b, ab) => (b.art === 'prestige' ? ab('Der Stand am Zeichen', pm[b.p] ? _newsInsigniumBlock(b.p) : '') : lauf(b.p))
+      + fuss(b.art === 'prestige'
+        ? [{label:'Zur Laufbahn', ic:'leiterAuf', attr:`data-laufbahn="${esc(b.p)}"`, prim:true}, profil(b.p)]
+        : [prim(profil(b.p)), {label:'Zur Laufbahn', ic:'leiterAuf', attr:`data-laufbahn="${esc(b.p)}"`}]),
+    chronik:(b, ab) => ab('Monat für Monat', (b.z || []).map(c => zeile(String(seasonLabel(c[0])),
+        c[1] == null ? 'nicht gewertet' : !c[1] ? 'ohne Eintrag'
+          : (c[3] || '') + ', ' + (CHRONIK_KLASSE_NAME[c[1]] || '') + (c[4] ? ', läuft noch' : ''))).join(''))
+      + fuss([{label:'Zur Chronik', ic:'verlauf', attr:'data-ffziel="chronik"', prim:true}, profil(b.p)]),
+    chemie:(b, ab) => ab(pm[b.a] && pm[b.b] ? `Die letzten zehn Partien von ${pm[b.a].name} und ${pm[b.b].name}` : '', duoLauf(b.a, b.b))
+      + fuss([pm[b.a] && pm[b.b] ? {label:'Zum Duo', ic:'duo', attr:`data-ffziel="team:${esc(b.a)}|${esc(b.b)}"`, prim:true} : null,
+        {label:'Zu allen Duos', ic:'users', attr:'data-ffziel="teams:netz"'}]),
+    // Beim Wechsel das Profil über die Laufbahn (der Satz nennt nur die
+    // vierzehn Tage), bei beiden, was es in der Elo bewirkt.
+    landkarte:(b, ab) => (b.art === 'wechsel' && b.aG != null ? ab('Das Positionsprofil über die Laufbahn',
+        zeile(`Im Sturm, ${b.aG} Partien`, `${Math.abs(b.rA)} Prozentpunkte ${b.rA >= 0 ? 'über' : 'unter'} dem Schnitt`)
+        + zeile(`In der Abwehr, ${b.dG} Partien`, `${Math.abs(b.rD)} Prozentpunkte ${b.rD >= 0 ? 'über' : 'unter'} dem Schnitt`)) : '')
+      + ab('Was ein Sieg in der Elo bringt', b.fa == null ? '' : [['Im Sturm', b.fa], ['In der Abwehr', b.fd]].map(([l, f]) =>
+        zeile(l, f > 0 ? `${f}\u00a0% mehr` : f < 0 ? `${-f}\u00a0% weniger` : 'so viel wie sonst')).join(''))
+      + fuss([{label:'Zur Rollen-Landkarte', ic:'sideSwap', attr:'data-ffziel="positions:rollen"', prim:true}]),
+    liga:(b, ab) => ab('Die Liga bis zu diesem Tag', Array.isArray(b.summe) ? zeile('Partien', _spZahl(b.summe[0]))
+        + zeile('Tore', _spZahl(b.summe[1])) + zeile('Spieltage', _spZahl(b.summe[2]))
+        + zeile('Tore je Partie', komma(b.summe[1] / Math.max(1, b.summe[0]))) : '')
+      + ab(b.art === 'tore' ? 'Die Partie des Tors' : 'Die Partie', b.mid ? _newsBlattErgebnis(b.mid) : '')
+      + fuss([{label:'Zur Rangliste', ic:'chartBar', attr:'data-ffziel="ranking"', prim:true}])
+  };
   if(bild){
     const ab = (t, html) => html ? `<div class="nd-section">${esc(t)}</div>${html}` : '';
     const b = d.bild || {};
@@ -1731,6 +1810,13 @@ function _ndFaktBlatt(s){
         ? `<div class="ff ff-rennen gross">${_ffRennen({r:(b.tab || []).filter(x => pm[x[0]]).map(x => ({p:x[0],
           w:Math.max(0, x[1]) / Math.max(1, ...(b.tab || []).map(y => y[1])), t:x[1] + ' Elo'}))})}</div>` : '')
       + ab('Die Monatschroniken', b.tafel ? `<div class="ff ff-tafel gross">${_ffTafel(b.tafel)}</div>` : '');
+    // Die acht Fragen [§C33]: unter der Bühne die Zahlen, aus denen das
+    // Bild entsteht, so wie sie am Tag der Karte standen, und im Fuß der
+    // Weg zu dem Teil der App, der dieselbe Frage stellt. Vorher endete
+    // jedes Fun-Fact-Blatt bei den letzten zehn Partien, und wer die
+    // Landkarte oder das Duo sehen wollte, aus dem die Zahl kam, musste
+    // es selbst suchen.
+    else if(FF_FRAGEN[b.f]) mitte = FF_FRAGEN[b.f](b, ab) || '';
     else if(d.prestige && pid && pm[pid]) mitte = ab('Der Stand am Zeichen', _newsInsigniumBlock(pid));
     // Wessen Partien es sind, steht dabei: „Die letzten zehn Partien" unter
     // einer Karte über die ganze Liga las sich als die der Liga.
