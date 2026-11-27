@@ -628,7 +628,11 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
   let kopf = '', fuss = '', gesicht = '', faktBild = '';
   // Der Satz unter der Schlagzeile. Nur die Partie-Karte kürzt ihn: was ihr
   // Fuß als Bogen und Chips zeigt, sagt er nicht noch einmal (_newsSpielSatz).
-  let satz = s.desc;
+  // Ein Fun Fact trägt auf der Karte nur Schlagzeile und Bild; sein Satz
+  // steht im Blatt unter der Bühne (`_ndFaktBlatt`) [§C33], auch der einer
+  // gespeicherten Karte. Text und Bild nannten dieselben Zahlen zwei- und
+  // dreimal: „51 Siege aus 79" unter „51 von 79 · erwartet 44".
+  let satz = d.type === 'ambient' ? '' : s.desc;
   const pm = pmap();
   // 48 px ist die Untergrenze fuer ein Wappen [§6]; darunter gibt `insAvWrap`
   // nur den Avatar zurueck, und die Karte verloere ihr Gesicht [§C33].

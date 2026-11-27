@@ -16,6 +16,12 @@
 // ihre Zahl links. Die Bilder sind leise wie die Karte [§C25]: Metall, die
 // Farbe ihrer Familie (`--story`) nur am Ersten und an dem, worum es geht.
 //
+// Die Karte trägt Titel und Bild, keinen Satz [§C33]; das Bild belegt den
+// Titel und nennt keine seiner Zahlen noch einmal als Beschriftung — es darf
+// sie als Größe zeigen (Balken, Bogen, Lage). „+7 Siege mehr als erwartet"
+// stand unter „gewinnen sieben Partien mehr als erwartet". Beschriftungen
+// sind Achsen und Namen, keine Sätze, und nicht unter 9 px.
+//
 // Jedes Bild nennt die Namen seiner Spieler im Text, nicht nur als Gesicht:
 // wer den Feed überfliegt, will wissen, wer gemeint ist, und ein Gesicht mit
 // zwei Buchstaben sagt das nicht [§C33]. Kein Name wird gekürzt; er bricht um.
@@ -328,7 +334,9 @@ const _FF_FORM = (() => {
       svg = svg.replace(/(<circle class="sp-ln-p)/, `<path class="ff-af-fl" d="${fl}"/><path class="ff-af-hl" d="${d}"/>$1`);
     }
     const face = p ? `<span class="ff-af-p" style="left:${(Number(p[1]) / 244 * 100).toFixed(2)}%;top:${(Number(p[2]) / 80 * 100).toFixed(2)}%">${chip(b.p)}</span>` : '';
-    return `<div class="ff-af-k">${_ffNm(b.p)}<span class="ff-af-w"><b class="num">${esc(_spVz(b.d | 0))}</b><small>Elo in 14 Tagen</small></span></div>`
+    // Kein „+124 · Elo in 14 Tagen" im Kopf: die Zahl steht im Titel, und
+    // die Kurve zeigt sie als Höhe über der Bezugslinie.
+    return `<div class="ff-af-k">${_ffNm(b.p)}<span class="ff-leg"><span class="g">zuletzt</span><span class="m">davor</span></span></div>`
       + `<div class="sp-ln metall ff-af"><div class="ff-af-l">${svg}${face}</div></div>`;
   };
 
@@ -343,7 +351,9 @@ const _FF_FORM = (() => {
     return r.map((x, i) => `<div class="ff-ew-z${x.hell ? ' eins' : ''}" style="--k:${i}">${chip(x.p)}`
       + `<span class="ff-r-m">${_ffNm(x.p)}<span class="ff-ew-b"><i style="width:${prozent(x.w, x.g)}%"></i>`
       + `<u style="left:${prozent(x.e, x.g)}%"></u></span></span>`
-      + `<span class="ff-ew-w"><b class="num">${esc(vz(Math.round(x.w - x.e)))}</b><small class="num">${x.w | 0} von ${x.g | 0}</small></span></div>`).join('')
+      // Rechts die Siege aus den Partien; den Abstand zur Erwartung zeigt
+      // die Bahn, und für den Genannten nennt ihn der Titel.
+      + `<span class="ff-ew-w"><b class="num">${x.w | 0}</b><small class="num">von ${x.g | 0}</small></span></div>`).join('')
       + `<div class="ff-leg"><span class="g">Siege</span><span class="e">erwartet</span></div>`;
   };
 
@@ -359,7 +369,9 @@ const _FF_FORM = (() => {
       return `<div class="ff-ht-z${x.hell ? ' eins' : ''}" style="--k:${i}">${chip(x.p)}`
         + `<span class="ff-r-m">${_ffNm(x.p)}<span class="ff-ht-b"><s style="left:${lo}%;width:${hi - lo}%"></s>`
         + `<i class="v" style="left:${x.v}%"></i><i class="j" style="left:${x.j}%"></i></span></span>`
-        + `<span class="ff-ew-w"><b class="num">${esc(vz(x.j - x.v))}</b><small class="num">${x.v} → ${x.j}\u00a0%</small></span></div>`;
+        // Rechts der Sprung; die Quote der vierzehn Tage steht im Titel und
+        // als Punkt auf der Achse.
+        + `<span class="ff-ew-w"><b class="num">${esc(vz(x.j - x.v))}</b></span></div>`;
     }).join('') + `<div class="ff-ht-z ax" aria-hidden="true"><span></span><span class="ff-ht-b">`
       + `<em style="left:0">0</em><em style="left:50%">50</em><em style="left:100%">100\u00a0%</em></span><span></span></div>`
       + `<div class="ff-leg"><span class="v">Laufbahn davor</span><span class="j">14 Tage</span></div>`;
@@ -377,17 +389,20 @@ const _FF_FORM = (() => {
       + `<line class="ff-mk-ziel" x1="40" y1="${40 - R - 5}" x2="40" y2="${40 - R + 5}"/></svg>`;
     const pr = b.art === 'prestige';
     const w = MARKE_WORT[b.art] || ['', '', ''];
-    const ziel = pr ? esc(b.name || '') : `${zahl(b.ziel)}. ${w[0]}`;
-    const rest = b.rest | 0;
     let neben = '';
     if(pr && b.stufe){
       const rang = (getPlayerRank(b.p) || {}).label;
       try { neben = `<span class="ff-mk-z">${insigniumStufeSvg(b.stufe, rang, 0, {bild:true}) || ''}</span>`; } catch(e){ neben = ''; }
     }
+    // Rest und Ziel stehen im Titel; das Bild zeigt den Stand und das Tempo
+    // der vierzehn Tage (`z14`), der Ring den Weg von der letzten Marke.
+    // Gespeicherte Karten ohne `z14` zeigen nur den Stand.
     return `<div class="ff-mk"><span class="ff-mk-r${pr ? ' ins' : ''}">${ring}<span class="ff-mk-g">${gesicht(b.p, pr ? 48 : 40)}</span></span>`
-      + `<span class="ff-mk-m">${_ffNm(b.p)}<span class="ff-mk-n"><b class="num">${zahl(rest)}</b>`
-      + `<em>${esc(pr ? 'Prestige' : rest === 1 ? w[0] : w[1])}</em></span>`
-      + `<small>bis ${pr ? 'zum' : w[2]} ${ziel}</small><small class="num">${zahl(b.ist)} von ${zahl(b.ziel)}</small></span>${neben}</div>`;
+      + `<span class="ff-mk-m">${_ffNm(b.p)}<span class="ff-mk-n"><b class="num">${zahl(b.ist)}</b>`
+      + `<em>${esc(pr ? 'Prestige' : w[1])}</em></span>`
+      // Ist das Tempo so groß wie der Rest des Titels, steht es nicht da:
+      // „fehlen 4 Partien" über „+4 in 14 Tagen".
+      + (b.z14 > 0 && b.z14 !== (b.rest | 0) ? `<small class="num">+${zahl(b.z14)} in 14 Tagen</small>` : '') + `</span>${neben}</div>`;
   };
 
   // ── Die Chronik einer Laufbahn: die Monatsreihe als Zellen ─────────
@@ -406,8 +421,8 @@ const _FF_FORM = (() => {
       return `<span class="ff-cr-c" style="--k:${i}"><span class="lc-cell${offen ? ' live' : ''}" data-kl="${esc(kl)}" style="--tt:${t.c};--ttr:${t.rgb};--k:${i}">`
         + `<span class="i">${svgI(ic || 'trophy')}</span><span class="n">${esc(kurz || '')}</span></span>${mon}</span>`;
     }).join('');
-    const wort = b.art === 'neu' ? 'erster Eintrag' : b.art === 'gold' ? 'legendär in Folge' : 'Monate in Folge';
-    return `<div class="ff-cr-k">${chip(b.p)}${_ffNm(b.p)}<span class="ff-cr-w">${b.art === 'neu' ? '' : `<b class="num">${b.lauf | 0}</b>`}<small>${wort}</small></span></div>`
+    // Wie viele Monate in Folge, sagt der Titel; die Zellen zeigen sie.
+    return `<div class="ff-cr-k">${chip(b.p)}${_ffNm(b.p)}</div>`
       + `<div class="ff-cr" style="--n:${z.length}">${zellen}</div>`;
   };
 
@@ -428,11 +443,13 @@ const _FF_FORM = (() => {
     const mehr = b.m != null ? b.m : Math.round((b.w | 0) - (Number(b.e) || 0));
     return `<div class="ff-cm"><span class="ff-cm-p">${gesicht(b.a, 36)}${_ffNm(b.a)}</span>`
       + `<span class="ff-cm-m"><svg viewBox="0 0 120 34" preserveAspectRatio="none" aria-hidden="true"><path class="netz-l w" d="M4 32Q60 -8 116 32" stroke-width="${dick}"/></svg>`
-      + `<b class="num">${esc(vz(mehr | 0))}</b><small>Siege mehr als erwartet</small></span>`
+      // Unter dem Bogen die gemeinsamen Partien; wie viele Siege mehr, sagt
+      // der Titel, und die Bahn zeigt es als Abstand zwischen Balken und
+      // Strich. Gespeicherte Karten ohne `g` tragen die Zahl im Bogen.
+      + (b.g > 0 ? `<b class="num">${b.g | 0}</b><small>Partien zusammen</small>` : `<b class="num">${esc(vz(mehr | 0))}</b><small>Siege mehr</small>`) + `</span>`
       + `<span class="ff-cm-p">${gesicht(b.b, 36)}${_ffNm(b.b)}</span></div>`
       + (b.g > 0 ? `<div class="ff-cm-ew"><span class="ff-ew-b"><i style="width:${prozent(b.w | 0, b.g)}%"></i>`
-        + `<u style="left:${prozent(Number(b.e) || 0, b.g)}%"></u></span>`
-        + `<span class="ff-ew-w"><b class="num">${b.w | 0} von ${b.g | 0}</b><small class="num">erwartet ${Math.round(Number(b.e) || 0)}</small></span></div>`
+        + `<u style="left:${prozent(Number(b.e) || 0, b.g)}%"></u></span></div>`
         + `<div class="ff-leg"><span class="g">Siege</span><span class="e">erwartet</span></div>` : '');
   };
 
@@ -449,7 +466,10 @@ const _FF_FORM = (() => {
     const x = X(b.a), y = Y(b.d), x0 = b.a0 == null ? null : X(b.a0);
     const pfeil = x0 == null ? '' : `<line class="ff-lk-w" x1="${x0.toFixed(1)}" y1="${y.toFixed(1)}" x2="${(x + (x0 < x ? -16 : 16)).toFixed(1)}" y2="${y.toFixed(1)}"/>`
       + `<circle class="ff-lk-v" cx="${x0.toFixed(1)}" cy="${y.toFixed(1)}" r="6"/>`;
-    return `<div class="ff-lk"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">`
+    // Die Felder stehen auf der Seite, auf der das Gesicht nicht steht:
+    // links lag „in der Abwehr stärker" unter dem Namen dessen, der meist in
+    // der Abwehr spielt.
+    return `<div class="ff-lk${x < MX ? ' re' : ''}"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">`
       + `<rect class="rk-q" x="${MX}" y="0" width="${MX}" height="${MY}"/><rect class="rk-q" x="0" y="${MY}" width="${MX}" height="${MY}"/>`
       + `<line class="rk-m" x1="${MX}" x2="${MX}" y1="0" y2="${H}"/><line class="rk-m" x1="0" x2="${W}" y1="${MY}" y2="${MY}"/>`
       + `<rect class="rk-a" x=".5" y=".5" width="${W - 1}" height="${H - 1}" rx="8"/>${pfeil}</svg>`
@@ -466,11 +486,15 @@ const _FF_FORM = (() => {
     if(!(b.n > 0) || !m.length) return '';
     const max = Math.max(1, ...m.map(x => x[1]));
     const s = (b.sieger || []).filter(id => pm()[id]);
-    const ziffern = String(b.n | 0).split('').map((c, i) => `<i class="num" style="--k:${i}">${c}</i>`).join('');
-    return `<div class="ff-lg-k"><span class="ff-zw-z">${ziffern}</span><span class="ff-zw-m"><b>${b.art === 'tore' ? 'Tore der Liga' : 'Partien der Liga'}</b>`
-      + (s.length ? `<span>${s.map(_ffNm).join('<i>und</i>')}</span>` : '') + (b.stand ? `<small class="num">${esc(b.stand)}</small>` : '') + `</span></div>`
+    // Die Marke steht im Titel; die Klappziffern zeigten sie ein zweites
+    // Mal. Oben steht jetzt die Partie, die sie riss: Sieger, Stand, Tag.
+    const mm = b.mid ? (matches || []).find(x => x.id === b.mid) : null;
+    const tag = b.tag || (mm ? datumFmt(mm.created_at, 'tmx') : '');
+    return `<div class="ff-lg-k">${s.length ? `<span class="sp-chips">${s.map(chip).join('')}</span><span class="ff-lg-n">${s.map(_ffNm).join('<i>und</i>')}</span>` : ''}`
+      + `<span class="ff-lg-p">${b.stand ? `<b class="num">${esc(b.stand)}</b>` : ''}${tag ? `<small class="num">${esc(tag)}</small>` : ''}</span></div>`
       + `<div class="ff-mo">${m.map((x, i) => `<span class="${i === b.hl ? 'hl' : ''}" style="--k:${i}"><b class="num">${zahl(x[1])}</b>`
-        + `<em><i style="height:${Math.max(4, x[1] / max * 100).toFixed(1)}%"></i></em><small>${esc(x[0])}</small></span>`).join('')}</div>`;
+        + `<em><i style="height:${Math.max(4, x[1] / max * 100).toFixed(1)}%"></i></em><small>${esc(x[0])}</small></span>`).join('')}</div>`
+      + `<div class="ff-leg"><span>${b.art === 'tore' ? 'Tore' : 'Partien'} je Monat</span></div>`;
   };
 
   // ══ Die Bilder der zweiten Runde [28-news-ambient] ════════════════════
@@ -530,17 +554,13 @@ const _FF_FORM = (() => {
     const werte = z.flatMap(x => [x[1], x[2]]), lo0 = Math.min(...werte), hi = Math.max(...werte);
     const lo = Math.max(0, lo0 - Math.max(1, (hi - lo0) * .15)), sp = Math.max(1, hi - lo);
     const w = v => ((v - lo) / sp * 100).toFixed(1);
-    const ab = (x, y) => Math.abs(x - y);
-    // Wer vorn lag und wer vorn liegt, mit dem Abstand: beim Vorbeiziehen
-    // sind das zwei verschiedene.
-    const vorn = (i) => z[0][i] >= z[1][i] ? z[0] : z[1];
-    const stand = (i, wort) => { const v = vorn(i); return `<span><small>${wort}</small><b class="num">+${zahl(ab(z[0][i], z[1][i]))}</b>`
-      + `<em>${esc(_spName(v[0]))} vorn</em></span>`; };
     return `<div class="ff-aj"><div class="ff-hz-k">${svgI(b.art === 'tore' ? 'ball' : b.art === 'siege' ? 'trophy' : 'spielfeld')}<b>${esc(AUF_WORT[b.art] || '')} der Laufbahn</b></div>`
       + z.map((x, i) => `<div class="ff-aj-z${x[0] === b.hl ? ' hl' : ''}" style="--k:${i}">${chip(x[0])}`
       + `<span class="ff-r-m">${_ffNm(x[0])}<span class="ff-aj-b"><i style="width:${w(x[1])}%"></i><u style="left:${w(x[2])}%"></u></span></span>`
       + `<b class="num">${zahl(x[1])}</b></div>`).join('')
-      + `<div class="ff-aj-ab">${stand(2, 'vor 30 Tagen')}<i></i>${stand(1, 'heute')}</div></div>`
+      // Der Abstand von heute stand hier und im Titel („nur noch 5
+      // hinter"); Bahn und Strich zeigen beide Abstände als Länge.
+      + `</div>`
       + `<div class="ff-leg"><span class="g">heute</span><span class="e">vor 30 Tagen</span></div>`;
   };
 
@@ -612,7 +632,8 @@ const _FF_FORM = (() => {
     const felder = Array.from({length:len}, (_, i) => `<i class="${i < n ? 'w' : i < best ? 'ziel' : 'leer'}${i + 1 === liga && liga > n ? ' liga' : ''}" style="--k:${i}"></i>`).join('');
     const wer = duo ? `<span class="sp-chips">${chip(b.a)}${chip(b.b)}</span><span class="ff-nms ff-und">${_ffNm(b.a)}${_ffNm(b.b)}</span>`
       : `${gesicht(b.p, 30)}${_ffNm(b.p)}`;
-    return `<div class="ff-se-k">${wer}<span class="ff-se-w"><b class="num">${n}</b><small>Siege in Folge</small></span></div>`
+    // Die Länge der Serie steht im Titel; die Felder zeigen sie.
+    return `<div class="ff-se-k">${wer}</div>`
       + `<span class="ff-se">${felder}</span>`
       + `<div class="ff-leg"><span class="g">seit dem ${esc(b.seit || '')}</span>`
       + (best > n ? `<span class="z">${duo ? 'beste der beiden' : 'eigene Bestmarke'} ${best}</span>` : '')
@@ -630,7 +651,8 @@ const _FF_FORM = (() => {
     const svg = _spLinie(v, {ref:b.peak != null ? b.peak : undefined, fmt:y => (y < 0 ? '−' : '') + _spZahl(y), ende:'', x:b.x || []});
     const p = /<circle class="sp-ln-p[^"]*" cx="([\d.]+)" cy="([\d.]+)"/.exec(svg);
     const face = p ? `<span class="ff-af-p" style="left:${(Number(p[1]) / 244 * 100).toFixed(2)}%;top:${(Number(p[2]) / 80 * 100).toFixed(2)}%">${chip(b.p)}</span>` : '';
-    return `<div class="ff-af-k">${_ffNm(b.p)}<span class="ff-af-w"><b class="num">${zahl(v[v.length - 1])}</b><small>Elo im ${esc(b.mon || '')}</small></span></div>`
+    // Die Elo von jetzt nennt der Titel oder zeigt das Ende der Kurve.
+    return `<div class="ff-af-k">${_ffNm(b.p)}<span class="ff-leg"><span>Elo im ${esc(b.mon || '')}</span></span></div>`
       + `<div class="sp-ln metall ff-af ff-gp"><div class="ff-af-l">${svg}${face}</div></div>`
       + (b.peak != null ? `<div class="ff-leg"><span class="r">${b.neu ? 'bester Monat davor' : 'eigener Höchststand'}</span></div>` : '');
   };
@@ -646,14 +668,21 @@ const _FF_FORM = (() => {
     const r = (b.mo || []).filter(x => x[1] > 0);
     if(!pm()[b.p] || r.length < 2) return '';
     const W = 244, H = 84, n = r.length, unten = Math.max(4, ...r.map(x => x[1]));
-    const X = i => 18 + i * (W - 36) / Math.max(1, n - 1), Y = p => 14 + (p - 1) / Math.max(1, unten - 1) * (H - 36);
+    const X = i => 40 + i * (W - 58) / Math.max(1, n - 1), Y = p => 14 + (p - 1) / Math.max(1, unten - 1) * (H - 36);
     const d = r.map((x, i) => (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(x[1]).toFixed(1)).join('');
     const metall = p => p === 1 ? 'm1' : p === 2 ? 'm2' : p === 3 ? 'm3' : '';
+    // Ein Platz, den der Titel nennt, steht auch an einem früheren Monat nicht.
+    const genannt = new Set(r.slice(-2).map(x => x[1]));
+    // Die beiden letzten Plätze stehen nicht in ihren Punkten: der Titel
+    // nennt sie („von Platz 8 im Juli auf Platz 3"), die Höhe zeigt sie. Die
+    // Monate davor tragen ihren Platz, die Achse den ersten. Jeder Platz
+    // steht im Blatt.
     return `<div class="ff-ss-k">${gesicht(b.p, 30)}${_ffNm(b.p)}</div><div class="ff-ss"><svg viewBox="0 0 ${W} ${H}" aria-hidden="true">`
-      + `<line class="ff-ss-g" x1="8" x2="${W - 8}" y1="${Y(1).toFixed(1)}" y2="${Y(1).toFixed(1)}"/>`
+      + `<line class="ff-ss-g" x1="30" x2="${W - 8}" y1="${Y(1).toFixed(1)}" y2="${Y(1).toFixed(1)}"/>`
+      + `<text class="ax" x="2" y="${(Y(1) + 3.6).toFixed(1)}">1.</text>`
       + `<path class="ff-ss-l" d="${d}"/>`
-      + r.map((x, i) => `<g class="ff-ss-p ${metall(x[1])}${i === n - 1 ? ' jetzt' : ''}"><circle cx="${X(i).toFixed(1)}" cy="${Y(x[1]).toFixed(1)}" r="10"/>`
-        + `<text x="${X(i).toFixed(1)}" y="${(Y(x[1]) + 3.6).toFixed(1)}">${x[1]}</text>`
+      + r.map((x, i) => `<g class="ff-ss-p ${metall(x[1])}${i === n - 1 ? ' jetzt' : ''}"><circle cx="${X(i).toFixed(1)}" cy="${Y(x[1]).toFixed(1)}" r="${i < n - 2 ? 10 : 7}"/>`
+        + (i < n - 2 && !genannt.has(x[1]) ? `<text x="${X(i).toFixed(1)}" y="${(Y(x[1]) + 3.6).toFixed(1)}">${x[1]}</text>` : '')
         + `<text class="m" x="${X(i).toFixed(1)}" y="${H - 3}">${esc(x[0])}</text></g>`).join('') + `</svg></div>`;
   };
 
@@ -712,14 +741,18 @@ const _FF_FORM = (() => {
   // Jede Begegnung ein Feld auf der Seite ihres Siegers, links der eine,
   // rechts der andere, die jüngste zuletzt.
   const rivale = b => {
-    const t = _ffDuell(b);
+    // Ohne „N Duelle" unter dem Tauziehen: nach so vielen Duellen fragt der
+    // Titel eines Gleichstands, und die Summe zeigt die Bahn.
+    const t = _ffDuell(b).replace(/<small class="num">\d+ Duelle<\/small>/, '<span></span>');
     if(!t) return '';
     const z = String(b.z || '').split('').filter(c => c === 'a' || c === 'b');
     // Oben die Siege dessen, von dem die Karte handelt (`h`), unten die
     // des anderen; ohne ihn der Linke oben.
     const h = b.h === 'b' ? 'b' : 'a';
     return t + (z.length ? `<div class="ff-rv">${z.map((c, i) => `<i class="${c === h ? 'o' : 'u'}" style="--k:${i}"></i>`).join('')}</div>`
-        + `<div class="ff-leg ff-rv-l"><span>die letzten ${z.length}, die jüngste rechts</span></div>` : '');
+        // Ohne die Zahl der Felder: „die letzten 12" stand unter „gewinnt
+        // 12 Duelle in Folge".
+        + `<div class="ff-leg ff-rv-l"><span>jüngstes Duell rechts</span></div>` : '');
   };
 
   return {

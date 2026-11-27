@@ -562,7 +562,7 @@ FF_FRAGEN.forEach(k => (gebaut.out[k] ? gebaut.out[k].texte : []).forEach(t =>
   ok(!/undefined|NaN|\[object|: /.test(t.split(' | ')[0]) && /[.]$/.test(t.split(' | ')[1].trim()),
      k + ' spricht in ganzen Sätzen ohne Etikett', t)));
 // Ein Fun Fact liest sich beim ersten Mal: der Titel ein einfacher
-// Hauptsatz bis zwölf Wörter, darunter höchstens zwei Sätze, Alltagswörter.
+// Hauptsatz bis zwölf Wörter, im Blatt höchstens vier Sätze, Alltagswörter.
 // „Kein Duo spielt deutlicher über der Erwartung als Leon und Maxi" mit „die
 // Elo der vier ließ 43,7 erwarten" darunter musste man zweimal lesen.
 const _ffSprache = [];
@@ -572,9 +572,9 @@ FF_POOL.forEach(k => (gebaut.out[k] ? gebaut.out[k].texte : []).forEach(t => {
   if(/über der Erwartung|ließ[^.]*erwarten|Prozentpunkt|Überleistung/.test(t)) _ffSprache.push(k + ' Rechenwort: ' + t);
   if(/\d,\d+ (zu )?erwart/.test(de)) _ffSprache.push(k + ' erwartete Siege mit Komma: ' + de);
   if(ti.split(/\s+/).length > 12) _ffSprache.push(k + ' Titel zu lang: ' + ti);
-  if((de.replace(/\d\.\d|\d{2}\.\d{2}\.(\d{2,4}\.?)?/g, '').match(/[.]( |$)/g) || []).length > 2) _ffSprache.push(k + ' mehr als zwei Sätze: ' + de);
+  if((de.replace(/\d\.\d|\d{2}\.\d{2}\.(\d{2,4}\.?)?/g, '').match(/[.]( |$)/g) || []).length > 4) _ffSprache.push(k + ' mehr als vier Sätze: ' + de);
 }));
-ok(_ffSprache.length === 0, 'jeder Fun Fact in einfachen Sätzen: Hauptsatz als Titel, höchstens zwei Sätze, keine Rechenwörter',
+ok(_ffSprache.length === 0, 'jeder Fun Fact in einfachen Sätzen: Hauptsatz als Titel, im Blatt höchstens vier Sätze, keine Rechenwörter',
    _ffSprache.slice(0, 4).join(' · ') || 'alle');
 
 console.log('\n=== 8b. JEDER FUN FACT HAT SEIN BILD ===');
@@ -659,6 +659,42 @@ ok(_ffFalsch.length === 0,
 // seinen Partien („Julian und Henry · 18 Partien"), und was es mit der
 // Aussage zu tun hatte, sagte nichts. Auch eine gespeicherte Karte mit
 // Nachbarn (`dz`) zeichnet nur die beiden und die Bahn der Erwartung.
+// Die Karte zeigt, das Blatt erklärt [§C33]: im Feed stehen Titel und
+// Grafik ohne Satz, die Zahl des Titels steht in der Grafik nicht noch
+// einmal als Ziffer, und der Satz steht im Blatt unter der Grafik. Titel,
+// Satz und Grafik nannten dieselben drei Zahlen: „gewinnen sieben Partien
+// mehr als erwartet" über „+7", „51 von 79 · erwartet 44" und „51 Siege aus
+// 79 Partien". Ein Stand („10:8") ist ein Zeichen; dass ein anderer Wert der
+// Grafik zufällig gleich groß ist, kommt vor und bleibt unter 5 %.
+const _ffKarte = JSON.parse(K.eval(`(function(){
+  const pm = pmap(), nameOf = pid => (pm[pid]||{}).name || '?', satz = [], blatt = [], doppelt = [];
+  let n = 0;
+  const zahlen = t => { t = String(t).replace(/(\\d)\\.(\\d{3})/g, '$1$2').replace(/\\d+:\\d+|\\d{1,2}\\.\\d{1,2}\\.(\\d{2,4})?/g, ' ');
+    return t.match(/\\d+(,\\d+)?/g) || []; };
+  [new Date(2026, 7, 26, 15, 5), new Date(2026, 6, 20, 15, 5), new Date(2026, 5, 18, 15, 5), new Date(2026, 6, 8, 15, 5),
+   new Date(2026, 7, 10, 15, 5), new Date(2026, 6, 6, 15, 5)].forEach(now => {
+    const T = _ambientTemplatePool(now, pm, nameOf);
+    for(let seed = 1; seed <= 4; seed++) T.forEach(t => {
+      let r = null; try { r = t.make(_ambientRng(seed)); } catch(e){ return; }
+      if(!r) return;
+      const s = {id:'ambient_t', title:r.title, desc:r.desc, when:now, cat:r.cat, ic:r.ic,
+        dataRef:Object.assign({type:'ambient', sub:t.key}, r.dataRef || {})};
+      n++;
+      if(/class="nf-d"/.test(_newsCardHtmlM2(s, false, false, '') || '')) satz.push(t.key);
+      const bild = (_faktBild(s) || '').replace(/<svg[\\s\\S]*?<\\/svg>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/&nbsp;|\\u00a0/g, ' ');
+      const zt = new Set(zahlen(r.title));
+      if(zahlen(bild).some(z => zt.has(z))) doppelt.push(t.key + ': ' + r.title);
+      const bl = _ndFaktBlatt(s) || {}, k = String(bl.kopf || '');
+      if(r.desc && !(k.indexOf('nd-buehne') >= 0 && k.indexOf('nd-ff-erkl') > k.indexOf('nd-buehne'))) blatt.push(t.key);
+    });
+  });
+  return JSON.stringify({n, satz:[...new Set(satz)], blatt:[...new Set(blatt)], doppelt});
+})()`));
+ok(_ffKarte.n > 100 && !_ffKarte.satz.length, 'die Karte eines Fun Facts trägt Titel und Grafik ohne Satz darunter',
+   _ffKarte.satz.join(' ') || _ffKarte.n + ' Karten');
+ok(_ffKarte.doppelt.length <= _ffKarte.n * .05, 'die Zahl des Titels steht in der Grafik nicht noch einmal',
+   _ffKarte.doppelt.length + ' von ' + _ffKarte.n + (_ffKarte.doppelt.length ? ': ' + _ffKarte.doppelt.slice(0, 3).join(' · ') : ''));
+ok(!_ffKarte.blatt.length, 'das Blatt trägt den erklärenden Satz unter der Grafik', _ffKarte.blatt.join(' ') || 'alle');
 const _ffCm = JSON.parse(K.eval(`(function(){
   const ids = Object.keys(pmap()).slice(0, 4), pm = pmap();
   const h = _faktBild({dataRef:{type:'ambient', sub:'duo_chemie', bild:{f:'chemie', a:ids[0], b:ids[1], g:79, w:51, e:43.7,

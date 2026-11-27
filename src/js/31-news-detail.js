@@ -79,6 +79,9 @@ function openNewsDetail(sid){
   if(body.indexOf('nd-mo') >= 0) lead = lead.split(/(?<=\.)\s+/)
     .filter(x => !/(Einträge? (gehen|geht|stehen|steht)|^Vorn steh)/.test(x)).join(' ');
   try { if(_newsSorte(s) === 'spiel') lead = _newsSpielSatz(lead, SP_ZEIGT_ALLES); } catch(e){}
+  // Ein Fun Fact mit Bild erklärt sich unter seiner Bühne (`nd-ff-erkl`,
+  // `_ndFaktBlatt`), nicht über ihr [§C33].
+  if(body.indexOf('nd-ff-erkl') >= 0) lead = '';
   const nd = document.getElementById('nd');
   const bg = document.getElementById('ndBg');
   if(!nd || !bg) return;
@@ -1774,7 +1777,7 @@ function _ndFaktBlatt(s){
   // Liga als Summe. Gemessen stand unter dem Bild des Duos dreimal dieselbe
   // Zahl — im Satz, im Bild und in der Liste darunter.
   const FF_FRAGEN = {
-    aufwind:(b, ab) => ab('Die 14 Tage, Spieltag für Spieltag', (b.tg || []).map(x =>
+    aufwind:(b, ab) => ab('Die 14 Tage, Spieltag für Spieltag', (b.g ? zeile('Siege', `${b.w | 0} von ${b.g | 0}`) : '') + (b.tg || []).map(x =>
         zeile(`${x[0]}, ${x[2]} ${x[2] === 1 ? 'Partie' : 'Partien'}`, vz(x[1] | 0) + ' Elo')).join(''))
       + lauf(b.p)
       + fuss([prim(profil(b.p)), {label:'Zur Rangliste', ic:'chartBar', attr:'data-ffziel="ranking"'}]),
@@ -1785,7 +1788,9 @@ function _ndFaktBlatt(s){
         + fuss([prim(profil(x.p)), {label:'Zur Rangliste', ic:'chartBar', attr:'data-ffziel="ranking"'}]);
     },
     hantel:(b, ab) => { const x = (b.z || []).find(y => y.hell) || {};
-      return lauf(x.p) + fuss([prim(profil(x.p)), {label:'Zur Rangliste', ic:'chartBar', attr:'data-ffziel="ranking"'}]); },
+      return ab(pm[x.p] ? 'Die Quoten von ' + pm[x.p].name : '', x.g ? zeile('Zuletzt gewonnen', `${x.w | 0} von ${x.g | 0}`)
+          + zeile('Siegquote der Laufbahn davor', `${x.v}\u00a0%`) : '')
+        + lauf(x.p) + fuss([prim(profil(x.p)), {label:'Zur Rangliste', ic:'chartBar', attr:'data-ffziel="ranking"'}]); },
     marke:(b, ab) => (b.art === 'prestige' ? ab('Der Stand am Zeichen', pm[b.p] ? _newsInsigniumBlock(b.p) : '') : lauf(b.p))
       + fuss(b.art === 'prestige'
         ? [{label:'Zur Laufbahn', ic:'leiterAuf', attr:`data-laufbahn="${esc(b.p)}"`, prim:true}, profil(b.p)]
@@ -1794,12 +1799,17 @@ function _ndFaktBlatt(s){
         c[1] == null ? 'nicht gewertet' : !c[1] ? 'ohne Eintrag'
           : (c[3] || '') + ', ' + (CHRONIK_KLASSE_NAME[c[1]] || '') + (c[4] ? ', läuft noch' : ''))).join(''))
       + fuss([{label:'Zur Chronik', ic:'verlauf', attr:'data-ffziel="chronik"', prim:true}, profil(b.p)]),
-    chemie:(b, ab) => ab(pm[b.a] && pm[b.b] ? `Die letzten zehn Partien von ${pm[b.a].name} und ${pm[b.b].name}` : '', duoLauf(b.a, b.b))
+    // Die Siege und ihre Erwartung stehen hier als Zahl; auf der Karte nur
+    // als Bahn, weil der Titel ihren Abstand nennt.
+    chemie:(b, ab) => (b.g > 0 ? ab('Zusammen', zeile('Siege', String(b.w | 0)) + zeile('Nach Elo erwartet', String(Math.round(Number(b.e) || 0)))) : '')
+      + ab(pm[b.a] && pm[b.b] ? `Die letzten zehn Partien von ${pm[b.a].name} und ${pm[b.b].name}` : '', duoLauf(b.a, b.b))
       + fuss([pm[b.a] && pm[b.b] ? {label:'Zum Duo', ic:'duo', attr:`data-ffziel="team:${esc(b.a)}|${esc(b.b)}"`, prim:true} : null,
         {label:'Zu allen Duos', ic:'users', attr:'data-ffziel="teams:netz"'}]),
     // Beim Wechsel das Profil über die Laufbahn (der Satz nennt nur die
     // vierzehn Tage), bei beiden, was es in der Elo bewirkt.
-    landkarte:(b, ab) => (b.art === 'wechsel' && b.aG != null ? ab('Das Positionsprofil über die Laufbahn',
+    landkarte:(b, ab) => (b.art === 'wechsel' && b.a0 != null ? ab('Im Sturm gestanden',
+        zeile('Zuletzt', `${Math.round(b.a * 100)}\u00a0% der Partien`) + zeile('Davor', `${Math.round(b.a0 * 100)}\u00a0% der Partien`)) : '')
+      + (b.aG != null ? ab('Das Positionsprofil über die Laufbahn',
         zeile(`Im Sturm, ${b.aG} Partien`, b.rA > 0 ? 'besser als im Schnitt' : b.rA < 0 ? 'schlechter als im Schnitt' : 'wie im Schnitt')
         + zeile(`In der Abwehr, ${b.dG} Partien`, b.rD > 0 ? 'besser als im Schnitt' : b.rD < 0 ? 'schlechter als im Schnitt' : 'wie im Schnitt')) : '')
       + ab('Was ein Sieg in der Elo bringt', b.fa == null ? '' : [['Im Sturm', b.fa], ['In der Abwehr', b.fd]].map(([l, f]) =>
@@ -1818,10 +1828,13 @@ function _ndFaktBlatt(s){
     // unten nicht noch einmal [§C27]; darunter die Partien dessen, um den
     // es geht, und bei der Ewigen Tafel, den Positionen und den Duos die
     // Plätze hinter dem Podest.
-    tabelle:(b, ab) => lauf((b.hl || [])[0])
+    tabelle:(b, ab) => (Array.isArray(b.pl) && pm[b.pl[0]] ? ab('In sieben Tagen', zeile(pm[b.pl[0]].name, vz(b.pl[1] | 0) + ' Elo', b.pl[0])) : '')
+      + ab('Partien im Monat', (b.z || []).filter(x => pm[x[0]] && (b.hl || []).includes(x[0])).map(x => zeile(pm[x[0]].name, String(x[3]), x[0])).join(''))
+      + lauf((b.hl || [])[0])
       + fuss([{label:'Zur Rangliste', ic:'chartBar', attr:'data-ffziel="ranking:saison"', prim:true}, profil((b.hl || [])[0])]),
     karriere:(b, ab) => ab('Dahinter', (b.pd || []).slice(3).filter(x => pm[x.p]).map((x, i) =>
         zeile(`${i + 4}. ${pm[x.p].name}`, x.t, x.p)).join(''))
+      + ab('Partien der Laufbahn', (b.pd || []).filter(x => pm[x.p] && (b.hl || []).includes(x.p) && x.g).map(x => zeile(pm[x.p].name, String(x.g), x.p)).join(''))
       + lauf((b.hl || [])[b.hl && b.hl.length > 1 ? 1 : 0])
       + fuss([{label:'Zur Ewigen Tafel', ic:'tafelStein', attr:'data-ffziel="ranking:gesamt"', prim:true}, profil((b.hl || [])[0])]),
     aufholjagd:(b, ab) => ab('Vor 30 Tagen und heute', (b.z || []).filter(x => pm[x[0]]).map(x =>
@@ -1832,30 +1845,37 @@ function _ndFaktBlatt(s){
           + (x[3] && pm[x[3]] ? `, vor ${pm[x[3]].name} mit ${x[4]}` : ''), x[1])).join(''))
         + fuss([letzt ? {label:'Zum Saison-Rückblick', ic:'calendar', attr:`data-ffziel="saison:${esc(letzt[0])}"`, prim:true} : null, profil(b.hl)]); },
     leiter:(b, ab) => { const id = (b.hl || [])[b.hl && b.hl.length > 1 ? 1 : 0];
-      return ab('Der Stand am Zeichen', pm[id] ? _newsInsigniumBlock(id) : '')
+      return (Array.isArray(b.pl) && pm[b.pl[0]] ? ab('In 14 Tagen', zeile(pm[b.pl[0]].name, '+' + _spZahl(b.pl[1]) + ' Prestige', b.pl[0])) : '')
+        + ab('Der Stand am Zeichen', pm[id] ? _newsInsigniumBlock(id) : '')
         + fuss([pm[id] ? {label:'Zur Laufbahn', ic:'leiterAuf', attr:`data-laufbahn="${esc(id)}"`, prim:true} : null, profil(id)]); },
     ausbeute:(b, ab) => ab('Nach Klassen', (b.z || []).filter(x => pm[x[0]]).map(x => zeile(pm[x[0]].name,
-        [[x[2], 'legendär'], [x[3], 'selten'], [x[4], 'gewöhnlich']].filter(q => q[0] > 0).map(q => q[0] + ' ' + q[1]).join(', '), x[0])).join('')
-        + (b.vor && pm[b.hl] ? zeile(`${pm[b.hl].name} im ganzen ${b.vm}`, String(b.vor), b.hl) : ''))
+        [[x[2], 'legendär'], [x[3], 'selten'], [x[4], 'gewöhnlich']].filter(q => q[0] > 0).map(q => q[0] + ' ' + q[1]).join(', '), x[0])).join(''))
       + fuss([prim(profil(b.hl)), {label:'Zu den Auszeichnungen', ic:'medal', attr:'data-ffziel="awards"'}]),
     serie:(b, ab) => lauf(b.p) + fuss([prim(profil(b.p)), {label:'Zur Rangliste', ic:'chartBar', attr:'data-ffziel="ranking:saison"'}]),
     gipfel:(b, ab) => lauf(b.p) + fuss([prim(profil(b.p)), {label:'Zur Rangliste', ic:'chartBar', attr:'data-ffziel="ranking:saison"'}]),
-    saisons:(b, ab) => ab('Monat für Monat', (b.r || []).filter(x => x[1] > 0).map(x => zeile(x[0], `Platz ${x[1]} von ${x[2]}`)).join(''))
-      + fuss([prim(profil(b.p)), {label:'Zur Rangliste', ic:'chartBar', attr:'data-ffziel="ranking:saison"'}]),
+    // Die Monate stehen unter `mo` (30c `saisons`); hier stand `r`, und die
+    // Zeilen blieben leer.
+    saisons:(b, ab) => { const MON = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+      // Im Bild steht der Monat gekürzt, im Blatt ganz [allgemein].
+      const ganz = k => MON.find(m => m.startsWith(String(k))) || String(k);
+      return ab('Monat für Monat', (b.mo || b.r || []).filter(x => x[1] > 0).map(x => zeile(ganz(x[0]), `Platz ${x[1]} von ${x[2]}`)).join(''))
+      + ab('Siegquote', (b.q || []).map(x => zeile(`${x[0]}, ${x[2]} Partien`, `${x[1]}\u00a0%`)).join(''))
+        + fuss([prim(profil(b.p)), {label:'Zur Rangliste', ic:'chartBar', attr:'data-ffziel="ranking:saison"'}]); },
     // Ein Rekord in Reichweite: wer hinter dem Halter liegt, wie im Blatt
     // des Rekords. Gespeicherte Karten der Bildform tragen keinen Rekord und
     // zeigen die letzten zehn Partien.
     ziel:(b, ab) => (b.cid && CHRONICLE_BY_ID[b.cid]
-        ? ab('Die Bedingung', zeile(CHRONICLE_BY_ID[b.cid].name, CHRONICLE_BY_ID[b.cid].cond || '')) + (_newsVerfolger(b.cid, b.halter || [], null) || '')
+        ? ab('Die Bedingung', zeile(CHRONICLE_BY_ID[b.cid].name, CHRONICLE_BY_ID[b.cid].cond || ''))
+          + (Array.isArray(b.w) && pm[b.p] ? ab('Siege von ' + pm[b.p].name, zeile('Die letzten 20 Partien', String(b.w[0])) + zeile('Die 20 davor', String(b.w[1]))) : '')
+          + (_newsVerfolger(b.cid, b.halter || [], null) || '')
         : lauf(b.p))
       + fuss([b.cid ? {label:'Zum Rekord', ic:'trophy', attr:`data-chron="${esc(b.cid)}"`, prim:true} : null, b.cid ? profil(b.p) : prim(profil(b.p))]),
     vormonat:(b, ab) => ab('Der Monat davor', (b.pd || []).filter(x => pm[x.p]).map((x, i) => zeile(`${i + 1}. ${pm[x.p].name}`,
-        `${x.g} Partien`, x.p)).join('')
-        + (Array.isArray(b.team) && pm[b.team[0]] && pm[b.team[1]] ? zeile('Team der Saison', `${pm[b.team[0]].name} und ${pm[b.team[1]].name}`) : ''))
+        `${x.g} Partien`, x.p)).join(''))
       + fuss([{label:'Zum Saison-Rückblick', ic:'calendar', attr:`data-ffziel="saison:${esc(b.sid)}"`, prim:true},
         {label:'Zur Rangliste', ic:'chartBar', attr:'data-ffziel="ranking:saison"'}]),
     position:(b, ab) => ab(b.pos === 'atk' ? 'Siege im Sturm' : 'Siege in der Abwehr', (b.pd || []).filter(x => pm[x.p]).map((x, i) =>
-        zeile(`${i + 1}. ${pm[x.p].name}`, `${x.w} von ${x.g}, Wert ${x.t}`, x.p)).join(''))
+        zeile(`${i + 1}. ${pm[x.p].name}`, `${x.w} von ${x.g}`, x.p)).join(''))
       + fuss([{label:b.pos === 'atk' ? 'Zur Rangliste des Sturms' : 'Zur Rangliste der Abwehr', ic:b.pos === 'atk' ? 'bolt' : 'shield',
         attr:`data-ffziel="positions:${b.pos === 'atk' ? 'sturm' : 'abwehr'}"`, prim:true}, profil((b.hl || [])[0])]),
     partnernetz:(b, ab) => ab('Partner nach gemeinsamen Partien', (b.z || []).filter(x => pm[x[0]]).slice().sort((x, y) => y[1] - x[1])
@@ -1870,7 +1890,8 @@ function _ndFaktBlatt(s){
     // Das Duo in Serie: seine letzten zehn gemeinsamen Partien. Auch
     // gespeicherte Karten dieser Bildform tragen ihr Duo.
     duoserie:(b, ab) => FF_FRAGEN.duo(b, ab),
-    duo:(b, ab) => ab(pm[b.a] && pm[b.b] ? `Die letzten zehn Partien von ${pm[b.a].name} und ${pm[b.b].name}` : '', duoLauf(b.a, b.b))
+    duo:(b, ab) => (b.f === 'duoserie' && b.g > 0 ? ab('Zusammen', zeile('Siege', `${b.w | 0} von ${b.g | 0}`)) : '')
+      + ab(pm[b.a] && pm[b.b] ? `Die letzten zehn Partien von ${pm[b.a].name} und ${pm[b.b].name}` : '', duoLauf(b.a, b.b))
       + fuss([pm[b.a] && pm[b.b] ? {label:'Zum Duo', ic:'duo', attr:`data-ffziel="team:${esc(b.a)}|${esc(b.b)}"`, prim:true} : null]),
     duorennen:(b, ab) => { const [a1, a2] = String(b.hl || '').split('|');
       return ab(pm[a1] && pm[a2] ? `Die letzten zehn Partien von ${pm[a1].name} und ${pm[a2].name}` : '', pm[a1] && pm[a2] ? duoLauf(a1, a2) : '')
@@ -1902,7 +1923,11 @@ function _ndFaktBlatt(s){
     // Wessen Partien es sind, steht dabei: „Die letzten zehn Partien" unter
     // einer Karte über die ganze Liga las sich als die der Liga.
     else if(pid && pm[pid]) mitte = ab('Die letzten zehn Partien von ' + pm[pid].name, _ndFaktLauf(pid, s));
-    return {kopf:`<div class="nd-buehne nd-ff">${bild}</div>`, mitte};
+    // Unter der Bühne die Erklärung: was gemessen ist und ab wann es zählt.
+    // Auf der Karte steht sie nicht [§C33]; gespeicherte Karten zeigen hier
+    // ihren alten Satz.
+    const erkl = String(s.desc || '').trim();
+    return {kopf:`<div class="nd-buehne nd-ff">${bild}</div>` + (erkl ? `<div class="nd-desc nd-ff-erkl">${_newsBetont(erkl)}</div>` : ''), mitte};
   }
   if(d.leiter || !pid || !pm[pid] || d.vv == null || d.vv === '') return null;
   const kopf = _ndHeldBuehne(pid, d.vv, d.vl || '', false, '');

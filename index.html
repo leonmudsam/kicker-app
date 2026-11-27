@@ -6322,6 +6322,8 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   .nd-ff .ff{margin:0}
   .ff-zw-m small b{color:var(--ink);font-weight:600}
 
+  .nd-ff-erkl{margin:0 0 12px;font-size:13px}
+
   .ff-av{display:inline-flex;flex-shrink:0}
   .ff-av .av{--av:inherit}
   .ff-leg{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:7px;font-family:'Sometype Mono',monospace;
@@ -6333,12 +6335,11 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   .ff-leg .v::before,.ff-leg .j::before{width:8px;height:8px;border-radius:50%}
   .ff-leg .v::before{background:var(--surface);box-shadow:inset 0 0 0 2px var(--muted)}
   .ff-leg .j::before{background:rgb(var(--story-rgb))}
+  .ff-leg .m::before{width:14px;height:2px;border-radius:1px;background:var(--muted)}
+  .ff-af-k .ff-leg{margin-top:0}
 
   .ff-af-k{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-bottom:2px}
   .ff-af-k .ff-nm{font-size:13px}
-  .ff-af-w{display:flex;flex-direction:column;align-items:flex-end;line-height:1}
-  .ff-af-w b{font-family:'Archivo Black',sans-serif;font-size:20px;color:var(--acid);letter-spacing:-.01em}
-  .ff-af-w small{margin-top:3px}
   .ff-af{gap:0}
   .ff-af-l{position:relative}
   .ff-af .sp-ln-l{stroke-width:1.6;opacity:.75}
@@ -6347,6 +6348,7 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
     filter:drop-shadow(0 0 3px rgba(190,242,100,.45))}
   .ff-af-fl{fill:var(--acid);opacity:.14}
   .ff-af .sp-ln-p{opacity:0}
+  .ff-af .sp-ln-t,.ff-af .sp-ln-x{font-size:9.5px}
   .ff-af-p{position:absolute;transform:translate(-50%,-50%);display:flex;border-radius:50%;
     box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px var(--acid),0 0 12px rgba(190,242,100,.35)}
   .ff-af-p .av{--av:22px}
@@ -6373,7 +6375,7 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   .ff-ht-z.ax{padding:0}
   .ff-ht-z.ax .ff-ht-b{height:11px}
   .ff-ht-z.ax .ff-ht-b::before{display:none}
-  .ff-ht-z.ax em{position:absolute;top:0;transform:translateX(-50%);font:400 8.5px 'Sometype Mono',monospace;
+  .ff-ht-z.ax em{position:absolute;top:0;transform:translateX(-50%);font:400 9px 'Sometype Mono',monospace;
     font-style:normal;color:var(--faint);white-space:nowrap}
 
   .ff-mk{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center}
@@ -6394,13 +6396,12 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   .ff-mk-z svg{width:44px;height:44px;display:block;opacity:.6}
 
   .ff-cr-k{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-  .ff-cr-w{margin-left:auto;display:flex;align-items:baseline;gap:5px;white-space:nowrap}
-  .ff-cr-w b{font-family:'Archivo Black',sans-serif;font-size:18px;line-height:1;color:var(--ink)}
   .ff-cr{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:5px}
   .ff-cr-c{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
   .ff-cr-c small{font-size:9px;letter-spacing:.06em;text-transform:uppercase}
   .ff-cr .lc-cell{width:100%;max-width:64px;cursor:inherit;padding:7px 2px}
-  .ff-cr .lc-cell .n{font-size:8px}
+  .ff-cr .lc-cell .n{font-size:9px}
+  .ff:not(.gross) .ff-cr .lc-cell .n{display:none}
   .ff-cr-leer{display:grid;place-items:center;width:100%;max-width:64px;height:47px;border-radius:11px;
     box-shadow:inset 0 0 0 1px var(--line);opacity:.6}
   .ff-cr-leer.gewertet{opacity:1;background:var(--surface2);box-shadow:none}
@@ -6417,9 +6418,10 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 
   .ff-lk{position:relative;height:118px}
   .ff-lk svg{position:absolute;inset:0;width:100%;height:100%}
-  .ff-lk-f{position:absolute;left:8px;font-family:'Sometype Mono',monospace;font-size:8.5px;color:var(--faint);
+  .ff-lk-f{position:absolute;left:8px;font-family:'Sometype Mono',monospace;font-size:9px;color:var(--faint);
     letter-spacing:.04em}
   .ff-lk-f.o{top:6px}.ff-lk-f.u{bottom:6px}
+  .ff-lk.re .ff-lk-f{left:auto;right:8px;text-align:right}
   .ff-lk-w{stroke:var(--ink2);stroke-width:1.5;stroke-dasharray:3 3;vector-effect:non-scaling-stroke}
   .ff-lk-v{fill:var(--surface);stroke:var(--muted);stroke-width:1.5;vector-effect:non-scaling-stroke}
   .ff-lk .rk-p{transform:translate(-50%,-13px)}
@@ -6428,10 +6430,12 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
     font-size:9px;color:var(--muted)}
 
   .ff-lg-k{display:flex;gap:12px;align-items:center;margin-bottom:9px}
-  .ff-lg-k .ff-zw-m>b{font-family:'Sometype Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.12em;
-    text-transform:uppercase;color:var(--muted)}
-  .ff-lg-k .ff-zw-m>span{display:flex;flex-wrap:wrap;gap:4px;align-items:baseline}
-  .ff-lg-k .ff-zw-m i{font-style:normal;font-size:11px;color:var(--muted)}
+  .ff-lg-k .sp-chips .av{--av:26px}
+  .ff-lg-n{display:flex;flex-wrap:wrap;gap:2px 5px;align-items:baseline;min-width:0}
+  .ff-lg-n i{font-style:normal;font-size:11px;color:var(--muted)}
+  .ff-lg-p{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;line-height:1;flex-shrink:0}
+  .ff-lg-p b{font-family:'Archivo Black',sans-serif;font-size:18px;color:var(--ink)}
+  .ff-lg-p small{margin-top:4px;font-size:9.5px;color:var(--muted)}
   .ff-mo{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:6px;height:76px}
   .ff-mo>span{display:flex;flex-direction:column;align-items:center;min-width:0}
   .ff-mo em{flex:1;display:flex;align-items:flex-end;width:100%;max-width:34px}
@@ -6481,14 +6485,6 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   .ff-aj-z.hl .ff-aj-b i{background:rgb(var(--story-rgb));box-shadow:0 0 8px rgba(var(--story-rgb),.45)}
   .ff-aj-b u{position:absolute;top:-3px;bottom:-3px;width:2px;margin-left:-1px;border-radius:1px;background:var(--ink)}
   .ff-aj .ff-hz-k{margin-bottom:4px}
-  .ff-aj-ab{display:grid;grid-template-columns:auto minmax(18px,1fr) auto;align-items:center;gap:8px;margin-top:8px;padding-top:8px;
-    border-top:1px solid var(--line)}
-  .ff-aj-ab>span{display:flex;flex-direction:column;gap:2px}
-  .ff-aj-ab>span em{font-style:normal;font-size:11px;color:var(--ink2)}
-  .ff-aj-ab>span:nth-child(3){align-items:flex-end;text-align:right}
-  .ff-aj-ab b{font-family:'Archivo Black',sans-serif;font-size:18px;line-height:1;color:var(--muted)}
-  .ff-aj-ab>span:nth-child(3) b{color:var(--ink);font-size:22px}
-  .ff-aj-ab>i{height:2px;border-radius:1px;background:linear-gradient(90deg,var(--line),rgb(var(--story-rgb)))}
 
   .ff-ms{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:6px}
   .ff-ms-c{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;text-align:center;
@@ -6515,7 +6511,7 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   .ff-lt-z.ax em{position:absolute;bottom:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;
     font-style:normal}
   .ff-lt-z.ax em svg{width:20px;height:20px;display:block;opacity:.85}
-  .ff-lt-z.ax em small{font-size:8px;letter-spacing:.02em;white-space:nowrap;color:var(--faint)}
+  .ff-lt-z.ax em small{font-size:9px;letter-spacing:.02em;white-space:nowrap;color:var(--faint)}
   .ff-lt-z.ax em.li{transform:translateX(-10px);align-items:flex-start}
   .ff-lt-z.ax em.re{transform:translateX(calc(-100% + 10px));align-items:flex-end}
 
@@ -6537,9 +6533,6 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   .ff-und{gap:0 4px}
   .ff-und .ff-nm+.ff-nm::before{content:'und ';font-weight:400;color:var(--muted)}
   .ff-lt-z.ax em small.still{visibility:hidden}
-  .ff-se-w{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;line-height:1}
-  .ff-se-w b{font-family:'Archivo Black',sans-serif;font-size:24px;color:var(--ink)}
-  .ff-se-w small{margin-top:3px;font-size:9px}
   .ff-se{display:grid;grid-template-columns:repeat(auto-fill,minmax(9px,1fr));gap:3px}
   .ff-se i{position:relative;height:18px;border-radius:3px;background:var(--surface3)}
   .ff-se i.w{background:rgb(var(--story-rgb));box-shadow:0 0 6px rgba(var(--story-rgb),.35)}
@@ -6559,7 +6552,8 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   .ff-ss-l{fill:none;stroke:var(--muted);stroke-width:1.6;stroke-linejoin:round;opacity:.7}
   .ff-ss-p circle{fill:var(--surface2);stroke:var(--line);stroke-width:1.2}
   .ff-ss-p text{font:700 9.5px 'Sometype Mono',monospace;fill:var(--ink2);text-anchor:middle}
-  .ff-ss-p text.m{font-weight:400;font-size:8.5px;fill:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+  .ff-ss-p text.m{font-weight:400;font-size:10px;fill:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+  .ff-ss text.ax{font:700 10px 'Sometype Mono',monospace;fill:var(--gold)}
   .ff-ss-p.m1 circle{stroke:var(--gold)}
   .ff-ss-p.m2 circle{stroke:var(--silber)}
   .ff-ss-p.m3 circle{stroke:var(--bronze)}
@@ -6574,7 +6568,7 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   .ff-pn .netz-l.neu{stroke:rgb(var(--story-rgb));stroke-opacity:1}
   .ff-pn-p{position:absolute;transform:translate(-50%,-11px);display:flex;flex-direction:column;align-items:center;gap:1px}
   .ff-pn-p .av{--av:22px;box-shadow:0 0 0 2px var(--bg2)}
-  .ff-pn-p>b{font-size:8.5px;font-weight:500;color:var(--muted);white-space:nowrap}
+  .ff-pn-p>b{font-size:9px;font-weight:500;color:var(--muted);white-space:nowrap}
   .ff-pn-p.fehlt .av{opacity:.55;box-shadow:0 0 0 2px var(--bg2),0 0 0 3px var(--muted)}
   .ff-pn-p.fehlt>b{color:var(--ink);font-weight:700}
   .ff-pn-p.neu .av{box-shadow:0 0 0 2px var(--bg2),0 0 0 3.5px rgb(var(--story-rgb))}
@@ -7015,7 +7009,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.11.26.9c2bcfee';
+const BUILD_VERSION='2026.11.27.f475708e';
 function forceReload(nach){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -22748,6 +22742,11 @@ function _buildAmbientStories(now, pm, nameOf, tagesStories){
     rivalitaet:'duell',
     liga_marke:'liga', saison_spitze:'liga'
   };
+  const FORM_FAMILIE = {aufwind:'kurve', gipfel:'kurve',
+    erwartung:'bahnen', hantel:'bahnen', ausbeute:'bahnen', duorennen:'bahnen', aufholjagd:'bahnen', leiter:'bahnen', ziel:'bahnen', halbzeit:'bahnen',
+    karriere:'podest', position:'podest', vormonat:'podest', duopodest:'podest',
+    serie:'felder', duoserie:'felder', chronik:'felder', rivale:'felder', meister:'monate', saisons:'monate'};
+  const familieVon = dr => { const f = ((dr || {}).bild || {}).f; return f ? (FORM_FAMILIE[f] || f) : null; };
   const rubrikVon = key => {
     if(RUBRIK[key]) return RUBRIK[key];
     if(/^award_/.test(key)) return 'auszeichnung';
@@ -22768,7 +22767,7 @@ function _buildAmbientStories(now, pm, nameOf, tagesStories){
     const sub = (s.dataRef && s.dataRef.sub) || null;
     history.push({day: md[1], ts: new Date(md[1] + 'T00:00:00').getTime(), sub,
                   rubrik:(s.dataRef && s.dataRef.ambientRubrik) || rubrikVon(sub || ''),
-                  pids: pidsOf(s.dataRef)});
+                  pids: pidsOf(s.dataRef), familie:familieVon(s.dataRef)});
   }
 
   for(const slot of dueSlots){
@@ -22807,6 +22806,7 @@ function _buildAmbientStories(now, pm, nameOf, tagesStories){
     let letzte = null;
     for(const h of history){ if(h.ts < refMs && h.rubrik && (!letzte || h.ts > letzte.ts)) letzte = h; }
     if(letzte) recentRubriken.add(letzte.rubrik);
+    const letzteFamilie = letzte ? letzte.familie : null;
     const feedPids = feedPidsZwischen(refMs - 3 * _dayMs, slot.when.getTime());
 
     const rng = _ambientRng(_ambientHash(slot.dateKey + '_' + slot.slotHour));
@@ -22845,6 +22845,7 @@ function _buildAmbientStories(now, pm, nameOf, tagesStories){
           if(pids.length && pids.some(p => usedPids.has(p) || recentPids.has(p))) continue;
         }
         if(pass < 0 && (!pids.length || pids.some(p => feedPids.has(p)))) continue;
+        if(pass < 2 && letzteFamilie && familieVon(res.dataRef) === letzteFamilie) continue;
         if(pids.length
             ? pids.some(p => recentPaare.has(t.key + '|' + p))
             : recentPaare.has(t.key + '|')) continue;
@@ -22854,7 +22855,7 @@ function _buildAmbientStories(now, pm, nameOf, tagesStories){
     if(chosenPflicht){ chosen = chosenPflicht; chosenKey = chosenPflichtKey; }
     if(!chosen) continue;
     history.push({day: slot.dateKey, ts: refMs, sub: chosenKey,
-                  rubrik:rubrikVon(chosenKey), pids: pidsOf(chosen.dataRef)});
+                  rubrik:rubrikVon(chosenKey), pids: pidsOf(chosen.dataRef), familie:familieVon(chosen.dataRef)});
 
     out.push({
       id:    slotId,
@@ -22942,6 +22943,8 @@ function _ambientTemplatePool(now, pm, nameOf){
   const pct = q => Math.round(q * 100);
   const ziehe = (l, rng) => l[Math.min(l.length - 1, Math.floor((rng ? rng() : 0) * Math.min(3, l.length)))];
   const wort = n => ['null', 'ein', 'zwei', 'drei', 'vier', 'fünf', 'sechs', 'sieben', 'acht', 'neun', 'zehn', 'elf', 'zwölf'][n] || String(n);
+  const seit14 = datumFmt(new Date(ab14), 'tm');
+
 
   const AUFWIND_MIN_PARTIEN = 8, AUFWIND_MIN_ELO = 100, AUFWIND_MIN_DAVOR = 20;
   T.push({ key:'form_aufwind', make: rng => {
@@ -22960,8 +22963,8 @@ function _ambientTemplatePool(now, pm, nameOf){
     const zweiter = neben ? {p:neben.id, d:Math.round(von(neben.id).d14), vorn:i !== 0} : null;
     return { cat:'personal', ic:'trendUp', prio:5,
       title:`${nameOf(pid)} holt in 14 Tagen ${plus} Elo`,
-      desc:`${x.w14} Siege aus ${x.g14} Partien. In den sechs Wochen davor `
-        + (vor > 0 ? `kamen ${vor} Elo dazu.` : vor < 0 ? `gingen ${-vor} Elo verloren.` : `stand die Elo still.`),
+      desc:`Gezählt sind die Elo-Punkte aller Partien seit dem ${seit14}, über die Grenze des Monats hinweg. `
+        + `Zum Vergleich stehen die sechs Wochen davor. Ein Aufwind braucht mindestens ${AUFWIND_MIN_ELO} Elo und mehr als in diesen sechs Wochen.`,
       vv:'+' + plus, vl:'Elo in 14 Tagen',
       dataRef:{ ambientPid:pid, bild:{f:'aufwind', p:pid, v, k, d:plus, vor, g:x.g14, w:x.w14,
         x:[datumFmt(new Date(ab56), 'tm'), datumFmt(now, 'tm')], nb:zweiter, tg} } };
@@ -22979,7 +22982,9 @@ function _ambientTemplatePool(now, pm, nameOf){
     const neben = i === 0 ? r[1] : r[0];
     return { cat:'personal', ic:'sollPlus', prio:5,
       title:`${nameOf(pid)} gewinnt ${Math.round(c.v)} Partien mehr als erwartet`,
-      desc:`${x.w14} Siege aus ${x.g14} Partien in 14 Tagen. Nach Elo waren ${Math.round(x.e14)} zu erwarten.`,
+      desc:`Vor jeder Partie gibt die Elo der Spieler beider Teams jedem Team eine Siegchance. `
+        + `Zusammengezählt ergeben die Chancen der Partien seit dem ${seit14} die erwarteten Siege. `
+        + `Vorn steht, wer gegen Stärkere gewinnt, nicht wer mit Starken spielt.`,
       vv:'+' + Math.round(c.v), vl:'Siege mehr als erwartet',
       dataRef:{ ambientPid:pid, bild:{f:'erwartung', z:zeilen,
         fav:[x.fav[0], x.fav[1], +x.fav[2].toFixed(1)], aus:[x.aus[0], x.aus[1], +x.aus[2].toFixed(1)]} } };
@@ -22996,7 +23001,8 @@ function _ambientTemplatePool(now, pm, nameOf){
       return {p:y.id, v:pct(z.wV / z.gV), j:pct(z.w14 / z.g14), g:z.g14, w:z.w14, hell:y === c ? 1 : 0}; });
     return { cat:'personal', ic:'steigerung', prio:5,
       title:`${nameOf(pid)} gewinnt zuletzt ${jetztQ}\u00a0% der Partien`,
-      desc:`${x.w14} Siege aus ${x.g14} Partien in 14 Tagen. Davor gewann ${nameOf(pid)} ${sonst}\u00a0% von ${x.gV} Partien.`,
+      desc:`Verglichen ist die Siegquote der Partien seit dem ${seit14} mit der ganzen Laufbahn davor. `
+        + `Genannt wird, wer zuletzt ${FORM_MIN_PARTIEN} und davor ${FORM_MIN_LAUFBAHN} Partien gespielt hat, und nur nach oben.`,
       vv:jetztQ + '\u00a0%', vl:'Siegquote in 14 Tagen',
       dataRef:{ ambientPid:pid, bild:{f:'hantel', z:zeilen} } };
   }});
@@ -23030,17 +23036,17 @@ function _ambientTemplatePool(now, pm, nameOf){
     if(!kand.length) return null;
     kand.sort((a, b) => a.nah - b.nah || b.ziel - a.ziel || nameOf(a.id).localeCompare(nameOf(b.id), 'de'));
     const je = kand.filter((y, i) => kand.findIndex(z => z.id === y.id) === i);
-    const c = ziehe(je, rng), n = nameOf(c.id), x = von(c.id);
+    const c = ziehe(je, rng), n = nameOf(c.id);
     const einer = c.rest === 1;
     const title = c.art === 'prestige' ? `${n} fehlen ${c.rest} Prestige bis zum ${c.name}`
       : c.art === 'siege' ? (einer ? `${n} steht vor dem ${c.ziel}. Sieg` : `${n} fehlen ${c.rest} Siege bis zum ${c.ziel}. Sieg`)
       : c.art === 'partien' ? (einer ? `${n} steht vor der ${c.ziel}. Partie` : `${n} fehlen ${c.rest} Partien bis zur ${c.ziel}. Partie`)
       : (einer ? `${n} steht vor dem ${c.ziel}. Tor` : `${n} fehlen ${c.rest} Tore bis zum ${c.ziel}. Tor`);
     const desc = c.art === 'prestige'
-      ? `${n} hat ${c.ist} Prestige. Vom ${c.vonName} bis zum ${c.name} sind ${pct(1 - c.rest / Math.max(1, c.ziel - c.vonMin))}\u00a0% geschafft.`
-      : c.art === 'siege' ? `${c.ist} Siege aus ${x.g} Partien. In den letzten 14 Tagen kamen ${c.zu14} dazu.`
-        : c.art === 'partien' ? `${c.ist} Partien bisher. In den letzten 14 Tagen kamen ${c.zu14} dazu.`
-        : `${c.ist} Tore aus ${x.g} Partien. In den letzten 14 Tagen kamen ${c.zu14} dazu.`;
+      ? `Prestige kommt aus Auszeichnungen, Monatschroniken und Rekorden. Mit dem ${c.name} wechselt das Zeichen am Wappen. `
+        + `Genannt wird, wem weniger als ${pct(MARKE_PRESTIGE_REST)}\u00a0% der Stufe fehlen.`
+      : `Gez\u00e4hlt ${c.art === 'partien' ? 'ist jede Partie' : c.art === 'siege' ? 'ist jeder Sieg' : 'ist jedes Tor des eigenen Teams'} seit der ersten Partie der Liga. `
+        + `In Sicht ist eine runde Marke, wenn sie beim Tempo seit dem ${seit14} schon am nächsten Spieltag fallen kann.`;
     let vorher = c.art === 'prestige' ? c.vonMin : 0;
     if(c.art !== 'prestige'){
       const rund = c.art === 'tore' ? toreRund : (v => _rundeMarke(v, 50));
@@ -23051,7 +23057,7 @@ function _ambientTemplatePool(now, pm, nameOf){
         : c.art === 'partien' ? (einer ? 'Partie fehlt' : 'Partien fehlen') : (einer ? 'Tor fehlt' : 'Tore fehlen'),
       dataRef:{ ambientPid:c.id, prestige:c.art === 'prestige',
         bild:{f:'marke', p:c.id, art:c.art, ist:c.ist, ziel:c.ziel, vorher, rest:c.rest,
-          stufe:c.stufe || null, name:c.name || null, vonKey:c.vonKey || null} } };
+          stufe:c.stufe || null, name:c.name || null, vonKey:c.vonKey || null, z14:c.art === 'prestige' ? null : c.zu14} } };
   }});
 
   const CHRONIK_MIN_REIHE = 3, CHRONIK_MAX_GLEICH = 2, CHRONIK_MIN_GOLD = 2;
@@ -23087,15 +23093,17 @@ function _ambientTemplatePool(now, pm, nameOf){
     const monat = sid => String(seasonLabel(sid)).split(' ')[0];
     const e = chronikEintragVon(letzterT, c.id) || {};
     const andere = gleich(c);
-    const zahl = wort(c.lauf).replace(/^./, s => s.toUpperCase());
     const title = c.art === 'gold' ? `${n} hält ${wort(c.lauf)} Monate in Folge eine legendäre Chronik`
       : c.art === 'reihe' ? `${n} steht seit ${monat(c.z.filter(y => !y[4]).slice(-c.lauf)[0][0])} in jedem Monat der Chronik`
       : `${n} steht zum ersten Mal in der Chronik`;
+    const ohne = c.z.filter(y => !y[4] && y[1] !== null).length - 1;
     const desc = c.art === 'neu'
-      ? `Im ${monat(letzterT.sid)} kam „${e.name || 'der erste Eintrag'}“ dazu. Davor blieben ${wort(c.z.filter(y => !y[4] && y[1] !== null).length - 1)} Monate ohne Eintrag.`
-      : `Zuletzt kam im ${monat(letzterT.sid)} „${e.name || ''}“ dazu. `
-        + (andere > 0 ? `${zahl} Monate in Folge schaffte sonst nur ${andere === 1 ? 'einer' : wort(andere)}.`
-          : `Das schaffte sonst keiner.`);
+      ? `Jeder Monat vergibt die Einträge der Chronik neu. Im ${monat(letzterT.sid)} kam „${e.name || 'der erste Eintrag'}“ dazu, `
+        + `nach ${ohne === 1 ? 'einem gewerteten Monat' : wort(ohne) + ' gewerteten Monaten'} ohne.`
+      : (c.art === 'gold' ? `Legendär ist die höchste Stufe eines Eintrags der Chronik. ` : `Jeder Monat vergibt die Einträge der Chronik neu. `)
+        + `Gezählt sind abgeschlossene Monate, der laufende kann bis zum Monatsende noch wechseln. `
+        + (andere > 0 ? (andere === 1 ? `So lange in Folge schaffte das sonst nur einer.` : `So lange in Folge schafften das sonst nur ${wort(andere)}.`)
+          : `So lange in Folge schaffte das sonst keiner.`);
     return { cat:'history', ic:'verlauf', prio:4, title, desc,
       vv:String(c.lauf), vl:c.art === 'neu' ? 'erster Eintrag' : 'Monate in Folge',
       dataRef:{ ambientPid:c.id, bild:{f:'chronik', p:c.id, art:c.art, z:c.z, lauf:c.lauf} } };
@@ -23123,7 +23131,8 @@ function _ambientTemplatePool(now, pm, nameOf){
     const nn = `${nameOf(a)} und ${nameOf(b)}`;
     return { cat:'team', ic:'duo', prio:5,
       title:mehr >= 2 ? `${nn} gewinnen ${wort(mehr)} Partien mehr als erwartet` : `${nn} gewinnen zusammen mehr als erwartet`,
-      desc:`Erwartet ist, was die Elo beider Duos vor jeder Partie voraussagt.`,
+      desc:`Vor jeder gemeinsamen Partie gibt die Elo beider Duos eine Siegchance; zusammengezählt sind das die erwarteten Siege. `
+        + `Genannt wird ein Duo ab ${CHEMIE_MIN_PARTIEN} gemeinsamen Partien, das seit dem ${seit14} zusammen spielte.`,
       vv:'+' + mehr, vl:'Siege mehr als erwartet',
       dataRef:{ ambientPids:[a, b], pairKind:'team', bild:{f:'chemie', a, b, pp, m:mehr, g:d.g, w:d.w, e:+d.e.toFixed(1)} } };
   }});
@@ -23160,9 +23169,8 @@ function _ambientTemplatePool(now, pm, nameOf){
       const st = L[id].staerker;
       return { cat:'personal', ic:'sideSwap', prio:5,
         title:`${nameOf(id)} steht zuletzt meist ${wo}`,
-        desc:`In 14 Tagen stand ${nameOf(id)} in ${jetztN} von ${x.g14} Partien ${wo}, davor in ${vorQ}\u00a0%. `
-          + (st === 'beide' ? `Sturm und Abwehr liegen ${nameOf(id)} gleich gut.`
-            : `Stärker ist ${nameOf(id)} ${st === 'atk' ? 'im Sturm' : 'in der Abwehr'}.`),
+        desc:`Verglichen ist, wo ${nameOf(id)} in den Partien seit dem ${seit14} stand, mit allen Partien davor. `
+          + `Stärker heißt: auf dieser Position gewinnt jemand über die ganze Laufbahn gegen die Erwartung mehr als im eigenen Schnitt.`,
         vv:pct(jetztN / x.g14) + '\u00a0%', vl:wo,
         dataRef:{ ambientPid:id, bild:bild(id, 'wechsel', x.aG14 / x.g14, x.aGV / x.gV) } };
     }
@@ -23171,8 +23179,8 @@ function _ambientTemplatePool(now, pm, nameOf){
     const stark = sturmStark ? l.rA : l.rD, schw = sturmStark ? l.rD : l.rA;
     return { cat:'personal', ic:'sideSwap', prio:4,
       title:`${nameOf(id)} steht meist ${sturmStark ? 'in der Abwehr' : 'im Sturm'} und ist ${sturmStark ? 'im Sturm' : 'in der Abwehr'} stärker`,
-      desc:`${dort} von ${n} Partien ${sturmStark ? 'in der Abwehr' : 'im Sturm'}. `
-        + `${sturmStark ? 'Im Sturm' : 'In der Abwehr'} spielt ${nameOf(id)} besser als im eigenen Schnitt.`,
+      desc:`Das Positionsprofil vergleicht Sturm und Abwehr mit dem eigenen Schnitt: wo jemand gegen die Erwartung mehr gewinnt, ist er stärker. `
+        + `Genannt wird ab ${ROLLE_MIN_GESAMT} Partien, wenn mindestens drei von fünf auf der schwächeren Position stehen.`,
       vv:pct(dort / n) + '\u00a0%', vl:sturmStark ? 'in der Abwehr' : 'im Sturm',
       dataRef:{ ambientPid:id, bild:bild(id, 'schwach', l.anteil, null) } };
   }});
@@ -23197,18 +23205,15 @@ function _ambientTemplatePool(now, pm, nameOf){
     const sids = Object.keys(mon).sort().slice(-8);
     const cur = (seasonOf(hit.m.created_at) || {}).id;
     const sieger = (hit.m.winner === 'A' ? [hit.m.a1, hit.m.a2] : [hit.m.b1, hit.m.b2]).filter(id => sichtbar(pm[id]));
-    const wer = sieger.length ? _namenListe(sieger.map(nameOf)) : '';
-    const monat = seasonLabel(cur).split(' ')[0], im = mon[cur] || 0;
-    const davor = sids.filter(s => s < cur).map(s => mon[s]);
-    const vergleich = davor.length && im > Math.max(...davor) ? `, mehr als in jedem Monat davor` : '';
     const tag = datumFmt(hit.m.created_at, 'tmx');
     const einheit = hit.art === 'partien' ? 'Partien' : 'Tore';
     return { cat:'history', ic:'hundred', prio:5,
       title: hit.art === 'partien' ? `Die Liga hat ihre ${hit.n}. Partie gespielt` : `In der Liga ist das ${hit.n}. Tor gefallen`,
-      desc: tausender((wer ? `${wer} ${sieger.length > 1 ? 'gewannen' : 'gewann'} die Partie am ${tag} mit ${standFuer(hit.m)}. ` : `Gespielt wurde sie am ${tag}. `)
-        + `Im ${monat} ${hit.art === 'partien' ? 'sind es' : 'fielen'} bisher ${im} ${einheit}${vergleich}.`),
+      desc: tausender(hit.art === 'partien'
+        ? `Gezählt ist jede Partie seit dem ${datumFmt(bis[0].created_at, 'tmx')}, dem ersten Spieltag der Liga. Runde Marken sind jede hundertste, ab der tausendsten jede fünfhundertste.`
+        : `Gezählt sind die Tore beider Teams seit dem ${datumFmt(bis[0].created_at, 'tmx')}, dem ersten Spieltag der Liga. Runde Marken sind jedes tausendste Tor.`),
       vv:String(hit.n), vl:einheit,
-      dataRef:{ ambientPids:sieger.slice(0, 2), bild:{f:'liga', art:hit.art, n:hit.n, mid:hit.m.id, sieger,
+      dataRef:{ ambientPids:sieger.slice(0, 2), bild:{f:'liga', art:hit.art, n:hit.n, mid:hit.m.id, sieger, tag,
         summe:[bis.length, tore, new Set(bis.map(m => tagKey(m.created_at))).size], stand:standFuer(hit.m),
         m:sids.map(s => [String(seasonLabel(s)).split(' ')[0].slice(0, 3), mon[s]]), hl:sids.indexOf(cur)} } };
   }});
@@ -23324,25 +23329,24 @@ function _ambientTemplatePool(now, pm, nameOf){
     const c = ziehe(kand, rng), x = l[platzIn(l, c.id) - 1], mon = monatVon(sidJetzt);
     const y = v[platzIn(v, c.id) - 1] || null, plus = x.elo - (y ? y.elo : cfg.start_elo);
     const n = nameOf(c.id);
-    let title, desc;
+    let title;
     if(c.art === 'spitze'){
       title = c.ueber ? `${n} übernimmt die Spitze des ${mon} von ${nameOf(c.ueber)}` : `${n} steht an der Spitze des ${mon}`;
-      desc = `${n} holte in sieben Tagen ${plus} Elo. Jetzt sind es ${x.elo} aus ${x.g} Partien.`;
     } else if(c.art === 'podest'){
       title = c.vorher ? `${n} klettert in einer Woche von Platz ${c.vorher} auf Platz ${c.platz}`
         : `${n} steht nach einer Woche auf Platz ${c.platz}`;
-      desc = (plus > 0 ? `${n} holte in sieben Tagen ${plus} Elo. ` : '') + `Vorn liegt ${nameOf(l[0].id)} mit ${l[0].elo} Elo.`;
     } else {
       const um = c.d === 0 ? 'keine Elo' : c.d === 1 ? 'ein Elo' : c.d + ' Elo';
       title = c.d === 0 ? `${nameOf(c.vor)} und ${n} stehen im ${mon} gleichauf auf Platz ${c.platz - 1}`
         : c.platz === 2 ? `${nameOf(c.vor)} führt im ${mon} mit ${um} vor ${n}`
         : `${nameOf(c.vor)} liegt im ${mon} ${um} vor ${n} auf Platz 2`;
-      desc = `${nameOf(c.vor)} hat ${l[c.platz - 2].elo} Elo aus ${l[c.platz - 2].g} Partien, ${n} ${x.elo} aus ${x.g}.`;
     }
+    const desc = `Die Tabelle des ${mon} ordnet nach der Elo, die jeden Monat neu beginnt. `
+      + `Verglichen ist mit dem Stand der Vorwoche; genannt wird ab ${SPITZE_MIN_PARTIEN} Partien im Monat.`;
     const pids = c.art === 'eng' ? [c.vor, c.id] : [c.id];
     return { cat:'season', ic:'chartBar', prio:5, title, desc,
       vv:String(x.elo), vl:'Elo im ' + mon,
-      dataRef:{ ambientPids:pids, bild:{f:'tabelle', sid:sidJetzt, seit:datumFmt(new Date(ab), 'tm'), hl:pids,
+      dataRef:{ ambientPids:pids, bild:{f:'tabelle', sid:sidJetzt, seit:datumFmt(new Date(ab), 'tm'), hl:pids, pl:[c.id, plus],
         z:l.slice(0, 5).map(r => [r.id, r.elo, platzIn(v, r.id), r.g])} } };
   }});
 
@@ -23354,15 +23358,12 @@ function _ambientTemplatePool(now, pm, nameOf){
       .filter(c => l[c.platz - 1].g >= TAFEL_MIN_PARTIEN && (c.art !== 'eng' || l[c.platz - 2].g >= TAFEL_MIN_PARTIEN));
     if(!kand.length) return null;
     const c = ziehe(kand, rng), n = nameOf(c.id), x = l[c.platz - 1];
-    const y = v.find(z => z.id === c.id);
     const title = c.art === 'spitze' ? (c.ueber ? `${n} überholt ${nameOf(c.ueber)} an der Spitze der Ewigen Tafel` : `${n} führt die Ewige Tafel an`)
       : c.art === 'podest' ? `${n} steht neu auf Platz ${c.platz} der Ewigen Tafel`
       : c.d === 0 ? `${nameOf(c.vor)} und ${n} stehen auf der Ewigen Tafel gleichauf`
       : `${nameOf(c.vor)} liegt auf der Ewigen Tafel ${c.d} Elo vor ${n}`;
-    const desc = c.art === 'eng'
-      ? `${nameOf(c.vor)} hat ${l[c.platz - 2].elo} Karriere-Elo aus ${l[c.platz - 2].g} Partien, ${n} ${x.elo} aus ${x.g}.`
-      : c.vorher ? `Vor 14 Tagen stand ${n} auf Platz ${c.vorher}. Jetzt sind es ${x.elo} Karriere-Elo aus ${x.g} Partien.`
-      : `${n} hat ${x.elo} Karriere-Elo aus ${x.g} Partien.`;
+    const desc = `Die Karriere-Elo ist der Schnitt der Elo am Ende jedes Monats, gewichtet nach den Partien darin. `
+      + `Verglichen ist mit dem Stand vom ${seit14}; genannt wird ab ${TAFEL_MIN_PARTIEN} Partien der Laufbahn.`;
     const pids = c.art === 'eng' ? [c.vor, c.id] : [c.id];
     return { cat:'history', ic:'tafelStein', prio:5, title, desc, vv:String(x.elo), vl:'Karriere-Elo',
       dataRef:{ ambientPids:pids, bild:{f:'karriere', hl:pids,
@@ -23397,9 +23398,8 @@ function _ambientTemplatePool(now, pm, nameOf){
     const wortE = {siege:['Siegen', 'Siege', 'Sieg'], partien:['Partien', 'Partien', 'Partie'], tore:['Toren', 'Tore', 'Tor']}[c.art];
     const title = c.an === 'vorbei' ? `${n} überholt ${o} bei den ${wortE[0]} der Laufbahn`
       : `${n} liegt bei den ${wortE[0]} der Laufbahn nur noch ${tausender(String(c.jetztAb))} hinter ${o}`;
-    const desc = tausender(c.an === 'vorbei'
-      ? `Vor 30 Tagen lag ${o} noch ${c.vorAb} ${c.vorAb === 1 ? wortE[2] : wortE[1]} vorn. Jetzt steht es ${A[c.p][c.art]} zu ${A[c.q][c.art]}.`
-      : `Vor 30 Tagen waren es noch ${c.vorAb}. ${o} hat ${A[c.q][c.art]}, ${n} ${A[c.p][c.art]}.`);
+    const desc = `Gezählt ist die ganze Laufbahn. Ein Rennen steht hier, wenn der Zweite seit dem ${datumFmt(new Date(ab30), 'tm')} `
+      + `vorbeizog oder fast ein Drittel des Abstands aufholte.`;
     const fuehrt = c.an === 'vorbei' ? c.p : c.q, folgt = c.an === 'vorbei' ? c.q : c.p;
     return { cat:'personal', ic:'trendUp', prio:5, title, desc, vv:tausender(String(A[c.p][c.art])), vl:wortE[1],
       dataRef:{ ambientPid:c.p, bild:{f:'aufholjagd', art:c.art, an:c.an,
@@ -23416,7 +23416,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     meister.forEach(([, pid]) => { n[pid] = (n[pid] || 0) + 1; });
     const r = Object.keys(n).filter(aktiv).sort((a, b) => n[b] - n[a] || nameOf(a).localeCompare(nameOf(b), 'de'));
     if(!r.length) return null;
-    const letzter = meister[meister.length - 1], N = meister.length;
+    const N = meister.length;
     const alleVerschieden = Object.keys(n).length === N;
     const eins = r[0], k = n[eins];
     if(!alleVerschieden && k < 2) return null;
@@ -23425,11 +23425,8 @@ function _ambientTemplatePool(now, pm, nameOf){
     const title = alleVerschieden ? `Jeder der ${wort(N)} Monate hatte einen anderen Meister`
       : k === N ? `${nameOf(eins)} holte alle ${wort(N)} Meistertitel der Liga`
       : `${nameOf(eins)} holte ${wort(k)} der ${wort(N)} Meistertitel der Liga`;
-    const zuletzt = monate[monate.length - 1];
-    const knapp = monate.filter(x => x[4] != null).sort((a, b) => (a[2] - a[4]) - (b[2] - b[4]))[0];
-    const desc = alleVerschieden ? `Den ${monatVon(letzter[0])} gewann ${nameOf(letzter[1])}, davor ${_namenListe(meister.slice(0, -1).reverse().map(x => nameOf(x[1])))}.`
-      : (k === N ? '' : `Den ${monatVon(zuletzt[0])} gewann ${nameOf(zuletzt[1])}. `)
-        + (knapp ? `Am knappsten war der ${monatVon(knapp[0])}, ${knapp[2] - knapp[4]} Elo vor ${nameOf(knapp[3])}.` : '');
+    const desc = `Meister ist, wer einen abgeschlossenen Monat an der Spitze der Elo beendet. `
+      + `Der Vorsprung ist der Abstand zum Zweiten am letzten Tag des Monats.`;
     return { cat:'history', ic:'trophy', prio:4, title, desc:desc.trim(), vv:String(alleVerschieden ? N : k), vl:'Meistertitel',
       dataRef:{ ambientPids:alleVerschieden ? [] : [eins], bild:{f:'meister', hl:alleVerschieden ? null : eins, m:monate} } };
   }});
@@ -23444,25 +23441,23 @@ function _ambientTemplatePool(now, pm, nameOf){
     const kand = podestLage(l, v, x => x.p, x => x.p * PRESTIGE_ENG).filter(c => l[c.platz - 1].p >= PRESTIGE_MIN);
     if(!kand.length) return null;
     const c = ziehe(kand, rng), n = nameOf(c.id), x = l[c.platz - 1], y = v.find(z => z.id === c.id);
-    let P = null; try { P = prestigeOf(c.id, jetzt); } catch(e){ P = null; }
     const title = c.art === 'spitze' ? (c.ueber ? `${n} überholt ${nameOf(c.ueber)} im Prestige` : `${n} führt im Prestige`)
       : c.art === 'podest' ? `${n} steht im Prestige neu auf Platz ${c.platz}`
       : `${nameOf(c.vor)} liegt im Prestige ${c.d} Punkte vor ${n}`;
-    const desc = tausender((c.art === 'eng'
-      ? `${nameOf(c.vor)} hat ${l[c.platz - 2].p} Prestige, ${n} ${x.p}.`
-      : y && y.p > 0 ? `${n} holte in 14 Tagen ${x.p - y.p} Prestige und hat jetzt ${x.p}.` : `${n} hat ${x.p} Prestige.`)
-      + (P && P.insignie ? ` Das Zeichen ist der ${P.insignie.name}.` : ''));
+    const desc = `Prestige kommt aus Auszeichnungen, Monatschroniken und Rekorden, und die Leiter des Insigniums teilt es in Stufen. `
+      + `Verglichen ist mit dem Stand vom ${seit14}; genannt wird ab ${PRESTIGE_MIN} Prestige.`;
     const pids = c.art === 'eng' ? [c.vor, c.id] : [c.id];
     const stufen = INSIGNIEN.map(s => [s.key, s.min, s.name]);
     return { cat:'personal', ic:'peak', prio:5, title, desc, vv:tausender(String(x.p)), vl:'Prestige',
-      dataRef:{ ambientPids:pids, prestige:true, bild:{f:'leiter', hl:pids, st:stufen,
+      dataRef:{ ambientPids:pids, prestige:true, bild:{f:'leiter', hl:pids, st:stufen, pl:y && y.p > 0 ? [c.id, x.p - y.p] : null,
         z:l.slice(0, 5).map(z => { let q = null; try { q = prestigeOf(z.id, jetzt); } catch(e){}
           return [z.id, z.p, q ? q.insignie.key : null]; })} } };
   }});
 
-  const AUSZ_MIN = 8;
+  const AUSZ_MIN = 8, AUSZ_MIN_TAGE = 5;
   T.push({ key:'auszeichnung_monat', make: rng => {
     if(!sidJetzt || tagImMonat < 8) return null;
+    if(new Set(lage().bis.filter(m => (seasonOf(m.created_at) || {}).id === sidJetzt).map(m => tagKey(m.created_at))).size < AUSZ_MIN_TAGE) return null;
     const von = seasonStart(sidJetzt).getTime() + 1;
     let D = [], V = [];
     try { D = rcpLaufbahnDaten(von, jetzt); } catch(e){ return null; }
@@ -23475,15 +23470,15 @@ function _ambientTemplatePool(now, pm, nameOf){
     if(!q.length || r.length < 3) return null;
     const c = ziehe(q, rng), n = nameOf(c.id), mon = monatVon(sidJetzt);
     const vor = V.find(x => x.pid === c.id), vorN = vor ? zahl(vor) : 0;
-    const gold = c.posten.filter(p => p.klasse === 'legendary').reduce((s, p) => s + p.mal, 0);
     const allein = c === r[0] && (!r[1] || r[1].n < c.n);
-    const mehr = r.filter(x => x.n > c.n).map(x => nameOf(x.id)), gleich = r.filter(x => x !== c && x.n === c.n).map(x => nameOf(x.id));
-    const title = allein ? `${n} holt im ${mon} die meisten Auszeichnungen` : `${n} holt im ${mon} schon ${c.n} Auszeichnungen`;
-    const desc = (allein ? `Es sind ${c.n}` + (gold ? `, ${gold === 1 ? 'eine' : wort(gold)} davon legendär. ` : '. ')
-      : mehr.length ? `Mehr ${mehr.length > 1 ? 'holten' : 'holte'} nur ${_namenListe(mehr)}. `
-      : `Genauso viele ${gleich.length > 1 ? 'holten' : 'holte'} ${_namenListe(gleich)}. `)
-      + (vorN ? `Im ganzen ${monatVon(vs)} waren es ${vorN}.`
-        : lage().bis.some(m => (seasonOf(m.created_at) || {}).id === vs) ? `Im ${monatVon(vs)} holte ${n} keine.` : '');
+    const mehr = r.filter(x => x.n > c.n).length, gleich = r.filter(x => x !== c && x.n === c.n).map(x => nameOf(x.id));
+    const title = allein ? `${n} holt im ${mon} die meisten Auszeichnungen`
+      : !mehr ? `${n} holt im ${mon} so viele Auszeichnungen wie ${_namenListe(gleich)}`
+      : `${n} holt im ${mon} die ${mehr === 1 ? 'zweit' : 'dritt'}meisten Auszeichnungen`;
+    const vorGespielt = lage().bis.some(m => (seasonOf(m.created_at) || {}).id === vs);
+    const desc = `Gezählt ist jede Auszeichnung seit Beginn des ${mon}, so wie im Rückblick des Monats. `
+      + `Genannt wird ab ${AUSZ_MIN} Auszeichnungen. `
+      + (vorN ? `Im ganzen ${monatVon(vs)} holte ${n} ${vorN}.` : vorGespielt ? `Im ${monatVon(vs)} holte ${n} keine.` : '');
     const klassen = x => ['legendary', 'rare', 'common'].map(k => x.posten.filter(p => p.klasse === k).reduce((s, p) => s + p.mal, 0));
     const zeilen = r.slice(0, 3).concat(r.indexOf(c) > 2 ? [c] : []).slice(-3);
     return { cat:'personal', ic:'medal', prio:5, title, desc:desc.trim(), vv:String(c.n), vl:'im ' + mon,
@@ -23503,11 +23498,8 @@ function _ambientTemplatePool(now, pm, nameOf){
       : z.serie === liga ? `${n} stellt mit ${z.serie} Siegen in Folge die längste Serie der Liga ein`
       : z.serie >= eigen ? `${n} gewinnt ${z.serie} Partien in Folge, so viele wie nie zuvor`
       : `${n} gewinnt seit ${z.serie} Partien`;
-    const desc = `Seit dem ${ab} hat ${n} keine Partie verloren. `
-      + (z.serie >= liga ? `Die längste Serie eines anderen liegt bei ${liga}.`
-        : z.serie >= eigen ? `Die längste der Liga liegt bei ${liga}.`
-        : eigen >= liga ? `Den Rekord der Liga hält ${n} selbst, mit ${eigen}.`
-        : `Die eigene Bestmarke liegt bei ${eigen}, die der Liga bei ${liga}.`);
+    const desc = `Gezählt sind Siege in Folge bis zur Karte, mit jedem Partner. `
+      + `Verglichen wird mit der eigenen besten Serie und der längsten eines anderen Spielers der Liga.`;
     return { cat:'personal', ic:'flame', prio:5, title, desc, vv:String(z.serie), vl:'Siege in Folge',
       dataRef:{ ambientPid:c.id, bild:{f:'serie', p:c.id, n:z.serie, best:eigen, liga, seit:ab} } };
   }});
@@ -23538,10 +23530,10 @@ function _ambientTemplatePool(now, pm, nameOf){
     const neu = c.sid === sidJetzt;
     const title = neu ? (c.elo >= c.peak ? `${n} steht mit ${c.elo} Elo so hoch wie nie` : `${n} erreichte im ${mon} den eigenen Höchststand`)
       : `${n} fehlen ${c.peak - c.elo} Elo zum eigenen Höchststand`;
-    const desc = neu
-      ? (c.elo < c.peak ? `Der Höchststand lag bei ${c.peak} Elo, jetzt sind es ${c.elo}. ` : '')
-        + (vorher ? `In keinem Monat davor kam ${n} über ${vorher.e}.` : '')
-      : `Den Höchststand von ${c.peak} Elo erreichte ${n} im ${monatVon(c.sid)}. Im ${mon} sind es jetzt ${c.elo}.`;
+    const desc = `Die Elo beginnt jeden Monat neu. `
+      + (neu ? `Verglichen ist der Verlauf des ${mon} mit dem höchsten Stand, den ${n} in einem Monat davor erreichte. `
+        : `Verglichen ist der Verlauf des ${mon} mit dem eigenen Höchststand aus dem ${monatVon(c.sid)}. `)
+      + `Genannt wird ab ${GIPFEL_MIN_PARTIEN} Partien im Monat und einem Höchststand von ${GIPFEL_MIN_ELO} Elo.`;
     const tg = tage;
     return { cat:'personal', ic:'peak', prio:5, title, desc:desc.trim(), vv:String(c.elo), vl:'Elo im ' + mon,
       dataRef:{ ambientPid:c.id, bild:{f:'gipfel', p:c.id, v, peak:neu ? (vorher ? vorher.e : null) : c.peak, neu:neu ? 1 : 0,
@@ -23566,9 +23558,11 @@ function _ambientTemplatePool(now, pm, nameOf){
     const qj = pct(c.x.w / c.x.g), qv = pct(c.y.w / c.y.g);
     return { cat:'season', ic:'steigerung', prio:5,
       title:`${n} springt von Platz ${pv} im ${monatVon(vs)} auf Platz ${c.i + 1}`,
-      desc:`Im ${mon} hat ${n} ${c.x.elo} Elo aus ${c.x.g} Partien. Die Siegquote stieg von ${qv} auf ${qj}\u00a0%.`,
+      desc:`Verglichen ist der Platz in der Tabelle des ${mon} mit dem Endstand des ${monatVon(vs)}. `
+        + `Die Tabelle ordnet nach der Elo, die jeden Monat neu beginnt; genannt wird ab ${VERGLEICH_MIN_PARTIEN} Partien in beiden Monaten.`,
       vv:'Platz ' + (c.i + 1), vl:'im ' + mon,
-      dataRef:{ ambientPid:c.x.id, bild:{f:'saisons', p:c.x.id, mo:reihe.map(x => [monatVon(x[0]).slice(0, 3), x[1], x[2]])} } };
+      dataRef:{ ambientPid:c.x.id, bild:{f:'saisons', p:c.x.id, mo:reihe.map(x => [monatVon(x[0]).slice(0, 3), x[1], x[2]]),
+        q:[[monatVon(vs), qv, c.y.g], [mon, qj, c.x.g]], elo:c.x.elo} } };
   }});
 
   const REICH_SIEGE = 2, REICH_REKORDE = {lauf:{n:40, min:.6}, hochform:{n:20, min:.25}};
@@ -23593,16 +23587,16 @@ function _ambientTemplatePool(now, pm, nameOf){
     const c = ziehe(kand, rng), n = nameOf(c.id), def = CHRONICLE_BY_ID[c.cid];
     const halter = (c.lead.pids || []).filter(aktiv);
     if(!halter.length) return null;
-    const mein = c.cid === 'lauf' ? `${c.P.l40W} von 40` : `+${Math.round(c.v * 20)} Siege`;
-    const stand = c.cid === 'lauf' ? `${Math.round(c.lead.val * 40)} von 40` : `+${Math.round(c.lead.val * 20)} Siege`;
+    const mein = c.cid === 'lauf' ? `${c.P.l40W} Siege` : `+${Math.round(c.v * 20)} Siege`;
+    const stand = c.cid === 'lauf' ? `${Math.round(c.lead.val * 40)} Siege` : `+${Math.round(c.lead.val * 20)} Siege`;
     const zahlw = c.fehlt === 1 ? 'ein Sieg' : wort(c.fehlt) + ' Siege';
     const title = `${n} ${c.fehlt === 1 ? 'fehlt' : 'fehlen'} ${zahlw} zum Rekord „${def.name}“`;
-    const desc = (c.cid === 'lauf'
-      ? `${n} gewann ${c.P.l40W} der letzten 40 Partien`
-      : `${n} gewann ${Math.round(c.P.hfNeu * 20)} der letzten 20 Partien und ${Math.round(c.P.hfAlt * 20)} der 20 davor`)
-      + `. Den Rekord ${halter.length > 1 ? 'halten' : 'hält'} ${_namenListe(halter.map(nameOf))}.`;
+    const desc = c.cid === 'lauf'
+      ? `Der Rekord „${def.name}“ zählt die Siege der letzten ${c.fenster} Partien. Mit jeder neuen Partie fällt die älteste heraus, der Rekord ist der beste Wert der Liga.`
+      : `Der Rekord „${def.name}“ zählt, wie viele Siege die letzten ${c.fenster} Partien mehr bringen als die ${c.fenster} davor. Mit jeder neuen Partie rückt das Fenster weiter.`;
     return { cat:'history', ic:def.ic || 'trophy', prio:5, title, desc, vv:String(c.fehlt), vl:c.fehlt === 1 ? 'Sieg fehlt' : 'Siege fehlen',
       dataRef:{ ambientPid:c.id, chronicle:c.cid, bild:{f:'ziel', p:c.id, ic:def.ic || 'trophy', halter, mein, stand,
+        w:c.cid === 'lauf' ? null : [Math.round(c.P.hfNeu * 20), Math.round(c.P.hfAlt * 20)],
         nah:Math.max(0, Math.min(1, c.v / Math.max(1e-9, c.lead.val))), cid:c.cid, name:def.name} } };
   }});
 
@@ -23625,9 +23619,9 @@ function _ambientTemplatePool(now, pm, nameOf){
       : oben.length === 3 ? `Das Podest des ${mv} steht auch im ${mon} vorn`
       : `Vom Podest des ${mv} ${oben.length === 1 ? 'ist' : 'sind'} im ${mon} nur ${_namenListe(oben.map(x => nameOf(x.id)))} vorn`;
     const team2 = team && pm[team[0]] && pm[team[1]] ? `${nameOf(team[0])} und ${nameOf(team[1])}` : '';
-    const desc = meisterVorn ? `Den ${mv} gewann ${nameOf(mei)} mit ${alt[0].elo} Elo.` + (team2 ? ` Team der Saison wurden ${team2}.` : '')
-      : `Meister des ${mv} wurde ${nameOf(mei)}` + (team2 ? `, Team der Saison ${team2}.` : '.') + ` Im ${mon} führt ${nameOf(l[0].id)}.`;
-    return { cat:'season', ic:'calendar', prio:4, title, desc, vv:jetztP[0] ? 'Platz ' + jetztP[0] : String(alt[0].elo),
+    const desc = `Das Podest ist der Endstand des ${mv}, die Tabelle des ${mon} beginnt wieder bei null. `
+      + (team2 ? `Team der Saison wurden ${team2}. ` : '') + (meisterVorn ? '' : `Im ${mon} führt ${nameOf(l[0].id)}.`);
+    return { cat:'season', ic:'calendar', prio:4, title, desc:desc.trim(), vv:jetztP[0] ? 'Platz ' + jetztP[0] : String(alt[0].elo),
       vl:jetztP[0] ? 'Meister im ' + mon : 'Elo im ' + mv,
       dataRef:{ ambientPids:alt.map(x => x.id).filter(aktiv), seasonRecap:vs, bild:{f:'vormonat', sid:vs, mon,
         pd:alt.map((x, i) => ({p:x.id, t:x.elo + ' Elo', j:jetztP[i], g:x.g})), team:team || null} } };
@@ -23664,10 +23658,9 @@ function _ambientTemplatePool(now, pm, nameOf){
       : c.art === 'podest' ? `${n} steht ${wo} neu auf Platz ${c.platz}`
       : c.d === 0 ? `${Wo} stehen ${nameOf(c.vor)} und ${n} gleichauf`
       : `${nameOf(c.vor)} liegt ${wo} knapp vor ${n}`;
-    const desc = c.art === 'eng'
-      ? `${nameOf(c.vor)} gewann dort ${l[c.platz - 2].w} von ${l[c.platz - 2].g} Partien, ${n} ${x.w} von ${x.g}.`
-      : `${n} gewann ${x.w} von ${x.g} Partien ${wo}, ${pct(x.w / x.g)}\u00a0%. `
-        + (c.vorher ? `Vor 14 Tagen stand ${n} dort auf Platz ${c.vorher}.` : `Vor 14 Tagen stand ${n} dort noch nicht in der Liste.`);
+    const desc = `Der Wert der Positions-Rangliste verbindet die Siegquote ${wo}, die Leistung gegen die Erwartung und `
+      + `${c.pos === 'atk' ? 'die geschossenen Tore' : 'wenige Gegentore'}, gewogen mit der Erfahrung dort. `
+      + `Verglichen ist mit dem Stand vom ${seit14}; genannt wird ab ${POSITION_MIN} Partien auf der Position.`;
     const pids = c.art === 'eng' ? [c.vor, c.id] : [c.id];
     return { cat:'personal', ic:c.pos === 'atk' ? 'bolt' : 'shield', prio:5, title, desc, vv:String(x.wert), vl:'Wert ' + wo,
       dataRef:{ ambientPids:pids, bild:{f:'position', pos:c.pos, hl:pids,
@@ -23696,9 +23689,10 @@ function _ambientTemplatePool(now, pm, nameOf){
     const meist = [...z.partner.entries()].filter(e => feld.includes(e[0])).sort((a, b) => b[1] - a[1])[0];
     const title = c.art === 'voll' ? `${n} spielte jetzt mit jedem der Liga im Duo`
       : `${n} spielte noch nie mit ${_namenListe(c.fehlt.map(nameOf))} im Duo`;
-    const desc = (c.art === 'voll' ? `Zuletzt kam ${nameOf(c.letzter)} dazu, nach ${x.g} Partien. `
-      : `Mit ${c.n - c.fehlt.length} von ${c.n} möglichen Partnern spielte ${n} schon zusammen. `)
-      + (meist ? `Am häufigsten mit ${nameOf(meist[0])}, ${meist[1]}-mal.` : '');
+    const desc = c.art === 'voll'
+      ? `Gezählt sind alle Partien als Duo seit der ersten Partie der Liga. Zuletzt kam ${nameOf(c.letzter)} dazu.`
+      : `Gezählt sind alle Partien als Duo, mit jedem, der selbst ${NETZ_MIN_PARTNER} Partien gespielt hat. `
+        + `Wer fehlt, spielte seit dem ${seit14} selbst, das Duo ist also möglich.`;
     return { cat:'personal', ic:'users', prio:4, title, desc, vv:String(c.n - (c.fehlt || []).length), vl:'von ' + c.n + ' Partnern',
       dataRef:{ ambientPid:c.id, bild:{f:'partnernetz', p:c.id, fehlt:c.fehlt || [], neu:c.letzter || null,
         z:feld.filter(o => o !== c.id).map(o => [o, z.partner.get(o) || 0])} } };
@@ -23718,8 +23712,8 @@ function _ambientTemplatePool(now, pm, nameOf){
     const c = ziehe(kand, rng), x = l[c.platz - 1], [a, b] = c.id.split('|');
     const nn = `${nameOf(a)} und ${nameOf(b)}`;
     const title = c.art === 'spitze' ? `${nn} führen die Rangliste der Duos an` : `${nn} stehen bei den Duos neu auf Platz ${c.platz}`;
-    const desc = `${x.w} Siege aus ${x.g} gemeinsamen Partien, ${pct(x.w / x.g)}\u00a0%. `
-      + (c.vorher ? `Vor 14 Tagen standen die beiden auf Platz ${c.vorher}.` : `Vor 14 Tagen standen die beiden noch nicht in der Liste.`);
+    const desc = `Die Rangliste der Duos ordnet nach der Siegquote, dann nach der Torbilanz, ab ${DUOS_AB} gemeinsamen Partien. `
+      + (c.vorher ? `Am ${seit14} standen die beiden auf Platz ${c.vorher}.` : `Am ${seit14} standen die beiden noch nicht in der Liste.`);
     return { cat:'team', ic:'duo', prio:5, title, desc, vv:pct(x.w / x.g) + '\u00a0%', vl:'Siegquote zusammen',
       dataRef:{ ambientPids:[a, b], pairKind:'team', bild:{f:'duopodest', hl:c.id,
         pd:l.slice(0, 5).map(z => [...z.id.split('|'), z.w, z.g, (v.findIndex(q => q.id === z.id) + 1) || 0])} } };
@@ -23735,11 +23729,10 @@ function _ambientTemplatePool(now, pm, nameOf){
     const liga = Math.max(...Object.keys(D).filter(q => q.split('|').every(aktiv)).map(q => D[q].best));
     const title = d.serie >= liga ? `${nn} halten mit ${d.serie} Siegen den Rekord der Duos`
       : `${nn} gewinnen zusammen seit ${d.serie} Partien`;
-    const desc = (d.serie >= liga ? `Die ${d.serie} Siege in Folge sind die längste Serie eines Duos.`
-      : d.serie >= d.best ? `So lang war die Serie der beiden noch nie.` : `Die beste Serie der beiden liegt bei ${d.best}.`)
-      + (d.serie < liga ? ` Die längste eines Duos liegt bei ${liga}.` : ` Insgesamt gewannen die beiden ${d.w} von ${d.g} Partien.`);
+    const desc = `Gezählt sind die gemeinsamen Siege der beiden in Folge, bis zur Karte. `
+      + `Verglichen wird mit der besten Serie der beiden und der längsten eines anderen Duos.`;
     return { cat:'team', ic:'duo', prio:5, title, desc, vv:String(d.serie), vl:'Siege in Folge',
-      dataRef:{ ambientPids:[a, b], pairKind:'team', bild:{f:'duoserie', a, b, n:d.serie, best:d.best, liga, seit:datumFmt(new Date((d.l[d.l.length - d.serie] || [d.t])[0]), 'tm')} } };
+      dataRef:{ ambientPids:[a, b], pairKind:'team', bild:{f:'duoserie', a, b, n:d.serie, best:d.best, liga, w:d.w, g:d.g, seit:datumFmt(new Date((d.l[d.l.length - d.serie] || [d.t])[0]), 'tm')} } };
   }});
 
   const DUOSAISON_MIN = 5;
@@ -23756,8 +23749,8 @@ function _ambientTemplatePool(now, pm, nameOf){
     const neben = i === 0 ? ks[1] : ks[0], ne = Math.round(D[neben].se[sidJetzt]), [c1, c2] = neben.split('|');
     const title = i === 0 ? `${nn} führen im Rennen um das Team der Saison`
       : `${nn} liegen ${ne - e} Elo hinter ${nameOf(c1)} und ${nameOf(c2)}`;
-    const desc = (i === 0 ? `${e} Elo aus ${d.sg[sidJetzt]} gemeinsamen Partien im ${mon}. Dahinter folgen ${nameOf(c1)} und ${nameOf(c2)} mit ${ne}.`
-      : `Es geht um das Team der Saison. Die beiden holten im ${mon} ${e} Elo aus ${d.sg[sidJetzt]} Partien.`);
+    const desc = `Team der Saison wird das Duo, das im ${mon} zusammen die meisten Elo holt, gezählt aus den gemeinsamen Partien. `
+      + `Im Rennen ist ein Duo ab ${DUOSAISON_MIN} gemeinsamen Partien im Monat.`;
     return { cat:'team', ic:'duo', prio:5, title, desc, vv:'+' + e, vl:'Elo zusammen',
       dataRef:{ ambientPids:[a, b], pairKind:'team', bild:{f:'duorennen', sid:sidJetzt, hl:k,
         z:ks.slice(0, 3).concat(i > 2 ? [k] : []).slice(-3).map(y => [...y.split('|'), Math.round(D[y].se[sidJetzt]), D[y].sg[sidJetzt]])} } };
@@ -23786,9 +23779,10 @@ function _ambientTemplatePool(now, pm, nameOf){
       : c.art === 'wende' ? `${ns} gewinnt ${c.n} der letzten zehn Duelle gegen ${no}`
       : `${na} und ${nb} stehen nach ${c.n} Duellen ${c.wa === c.wb ? 'gleichauf' : 'fast gleichauf'}`;
     const ws = s === c.a ? c.wa : c.wb, wo = s === c.a ? c.wb : c.wa;
-    const desc = c.art === 'knapp' ? `${na} gewann ${c.wa}, ${nb} ${c.wb}. Das letzte Duell ging an ${nameOf(c.l[c.l.length - 1][1])}.`
-      : c.art === 'wende' ? `Insgesamt liegt ${no} noch vorn, mit ${wo} zu ${ws} Siegen.`
-      : `Insgesamt steht es ${ws} zu ${wo} für ${ns}.`;
+    const desc = `Ein Duell ist jede Partie, in der die beiden gegeneinander standen, mit welchem Partner auch immer. `
+      + (c.art === 'knapp' ? `Das letzte ging an ${nameOf(c.l[c.l.length - 1][1])}.`
+        : c.art === 'wende' ? (wo > ws ? `Über alle Duelle liegt ${no} trotzdem noch vorn.` : `Über alle Duelle liegt ${ns} vorn.`)
+        : `Die Serie läuft bis zur jüngsten Begegnung.`);
     return { cat:'rivalry', ic:'crossedSwords', prio:5, title, desc, vv:String(c.n), vl:c.art === 'knapp' ? 'Duelle' : 'Siege',
       dataRef:{ ambientPids:[c.a, c.b], pairKind:'duell', bild:{f:'rivale', a:c.a, b:c.b, wa:c.wa, wb:c.wb, art:c.art, h:s === c.b ? 'b' : 'a',
         z:c.l.slice(-12).map(e => e[1] === c.a ? 'a' : 'b').join('')} } };
@@ -23828,10 +23822,10 @@ function _ambientTemplatePool(now, pm, nameOf){
       tab = tab0.slice(0, 5).map(e => [e.id, e.elo, e.g]);
       return { cat:'season', ic:'stopwatch', prio:6,
         title:`Halbzeit im ${seasonLabel(sid)}`,
-        desc: (fuehrend ? `${nameOf(fuehrend.pid)} führt nach ${T2.matches} Partien mit ${fuehrend.elo} Elo. ` : `${T2.matches} Partien an ${T2.days} Spieltagen. `)
+        desc: (fuehrend ? `Zur Halbzeit führt ${nameOf(fuehrend.pid)} die Tabelle des Monats an. ` : '')
           + (sturm.length && abwehr.length
-            ? `Im Sturm gewinnt ${nameOf(sturm[0][0])} ${q(sturm[0])}\u00a0%, in der Abwehr ${nameOf(abwehr[0][0])} ${q(abwehr[0])}\u00a0%.`
-            : `${T2.awarded.length} von ${SEASON_TITLES.length} Monatschroniken sind vergeben.`),
+            ? `Gemessen ist je Position die Siegquote im Monat bis heute, ab ${HALBZEIT_MIN_PARTIEN} Partien dort.`
+            : `Die Monatschroniken bleiben bis zum Ende des Monats offen.`),
         vv:String(offen), vl:'noch offen',
         dataRef:{ ambientPid: fuehrend ? fuehrend.pid : null, seasonTable:sid,
           bild:sturm.length && abwehr.length
@@ -23858,13 +23852,16 @@ function _ambientTemplatePool(now, pm, nameOf){
       const zaehler = {};
       meister.forEach(pid => { zaehler[pid] = (zaehler[pid] || 0) + 1; });
       const bester = Object.keys(zaehler).sort((a, b) => zaehler[b] - zaehler[a])[0];
+      const jeMonat = Array.from({length:12}, (_, i) => imJahr.filter(m => new Date(m.created_at).getMonth() === i).length);
+      const ab = jeMonat.findIndex(n => n > 0);
+      const v = jeMonat.slice(Math.max(0, ab)), hoch = v.indexOf(Math.max(...v));
       return { cat:'history', ic:'calendar', prio:7,
         title:`${tausender(String(imJahr.length))} Partien spielte die Liga im Jahr ${jahr}`,
         desc: tausender(`An ${tage} Spieltagen fielen ${tore} Tore. `
           + (bester ? `${nameOf(bester)} holte ${zaehler[bester]} von ${meister.length} Meistertiteln.`
             : spitze ? `Im Prestige liegt ${nameOf(spitze)} vorn, mit ${Math.round(prestigeOf(spitze).punkte)} Punkten.` : '')).trim(),
         vv:String(imJahr.length), vl:'Partien',
-        dataRef:{ ambientPid: spitze || null, prestige: !!spitze } };
+        dataRef:{ ambientPid: spitze || null, prestige: !!spitze, bild:{f:'saeulen', v, hl:[hoch], l:'Partien je Monat'} } };
     }});
 
   return T;
@@ -25740,7 +25737,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
     ? _newsSammelBand(d.type === 'sammel' ? sammelTeile : [], [s.title], !spZeilen, fz) : '';
 
   let kopf = '', fuss = '', gesicht = '', faktBild = '';
-  let satz = s.desc;
+  let satz = d.type === 'ambient' ? '' : s.desc;
   const pm = pmap();
   const av = (pid, px) => (pm[pid] ? avHtml(pm[pid], '', {ins:true, px:px||48, feuer:0}) : '');
 
@@ -28913,7 +28910,7 @@ const _FF_FORM = (() => {
       svg = svg.replace(/(<circle class="sp-ln-p)/, `<path class="ff-af-fl" d="${fl}"/><path class="ff-af-hl" d="${d}"/>$1`);
     }
     const face = p ? `<span class="ff-af-p" style="left:${(Number(p[1]) / 244 * 100).toFixed(2)}%;top:${(Number(p[2]) / 80 * 100).toFixed(2)}%">${chip(b.p)}</span>` : '';
-    return `<div class="ff-af-k">${_ffNm(b.p)}<span class="ff-af-w"><b class="num">${esc(_spVz(b.d | 0))}</b><small>Elo in 14 Tagen</small></span></div>`
+    return `<div class="ff-af-k">${_ffNm(b.p)}<span class="ff-leg"><span class="g">zuletzt</span><span class="m">davor</span></span></div>`
       + `<div class="sp-ln metall ff-af"><div class="ff-af-l">${svg}${face}</div></div>`;
   };
 
@@ -28923,7 +28920,7 @@ const _FF_FORM = (() => {
     return r.map((x, i) => `<div class="ff-ew-z${x.hell ? ' eins' : ''}" style="--k:${i}">${chip(x.p)}`
       + `<span class="ff-r-m">${_ffNm(x.p)}<span class="ff-ew-b"><i style="width:${prozent(x.w, x.g)}%"></i>`
       + `<u style="left:${prozent(x.e, x.g)}%"></u></span></span>`
-      + `<span class="ff-ew-w"><b class="num">${esc(vz(Math.round(x.w - x.e)))}</b><small class="num">${x.w | 0} von ${x.g | 0}</small></span></div>`).join('')
+      + `<span class="ff-ew-w"><b class="num">${x.w | 0}</b><small class="num">von ${x.g | 0}</small></span></div>`).join('')
       + `<div class="ff-leg"><span class="g">Siege</span><span class="e">erwartet</span></div>`;
   };
 
@@ -28935,7 +28932,7 @@ const _FF_FORM = (() => {
       return `<div class="ff-ht-z${x.hell ? ' eins' : ''}" style="--k:${i}">${chip(x.p)}`
         + `<span class="ff-r-m">${_ffNm(x.p)}<span class="ff-ht-b"><s style="left:${lo}%;width:${hi - lo}%"></s>`
         + `<i class="v" style="left:${x.v}%"></i><i class="j" style="left:${x.j}%"></i></span></span>`
-        + `<span class="ff-ew-w"><b class="num">${esc(vz(x.j - x.v))}</b><small class="num">${x.v} → ${x.j}\u00a0%</small></span></div>`;
+        + `<span class="ff-ew-w"><b class="num">${esc(vz(x.j - x.v))}</b></span></div>`;
     }).join('') + `<div class="ff-ht-z ax" aria-hidden="true"><span></span><span class="ff-ht-b">`
       + `<em style="left:0">0</em><em style="left:50%">50</em><em style="left:100%">100\u00a0%</em></span><span></span></div>`
       + `<div class="ff-leg"><span class="v">Laufbahn davor</span><span class="j">14 Tage</span></div>`;
@@ -28951,17 +28948,15 @@ const _FF_FORM = (() => {
       + `<line class="ff-mk-ziel" x1="40" y1="${40 - R - 5}" x2="40" y2="${40 - R + 5}"/></svg>`;
     const pr = b.art === 'prestige';
     const w = MARKE_WORT[b.art] || ['', '', ''];
-    const ziel = pr ? esc(b.name || '') : `${zahl(b.ziel)}. ${w[0]}`;
-    const rest = b.rest | 0;
     let neben = '';
     if(pr && b.stufe){
       const rang = (getPlayerRank(b.p) || {}).label;
       try { neben = `<span class="ff-mk-z">${insigniumStufeSvg(b.stufe, rang, 0, {bild:true}) || ''}</span>`; } catch(e){ neben = ''; }
     }
     return `<div class="ff-mk"><span class="ff-mk-r${pr ? ' ins' : ''}">${ring}<span class="ff-mk-g">${gesicht(b.p, pr ? 48 : 40)}</span></span>`
-      + `<span class="ff-mk-m">${_ffNm(b.p)}<span class="ff-mk-n"><b class="num">${zahl(rest)}</b>`
-      + `<em>${esc(pr ? 'Prestige' : rest === 1 ? w[0] : w[1])}</em></span>`
-      + `<small>bis ${pr ? 'zum' : w[2]} ${ziel}</small><small class="num">${zahl(b.ist)} von ${zahl(b.ziel)}</small></span>${neben}</div>`;
+      + `<span class="ff-mk-m">${_ffNm(b.p)}<span class="ff-mk-n"><b class="num">${zahl(b.ist)}</b>`
+      + `<em>${esc(pr ? 'Prestige' : w[1])}</em></span>`
+      + (b.z14 > 0 && b.z14 !== (b.rest | 0) ? `<small class="num">+${zahl(b.z14)} in 14 Tagen</small>` : '') + `</span>${neben}</div>`;
   };
 
   const chronik = b => {
@@ -28976,8 +28971,7 @@ const _FF_FORM = (() => {
       return `<span class="ff-cr-c" style="--k:${i}"><span class="lc-cell${offen ? ' live' : ''}" data-kl="${esc(kl)}" style="--tt:${t.c};--ttr:${t.rgb};--k:${i}">`
         + `<span class="i">${svgI(ic || 'trophy')}</span><span class="n">${esc(kurz || '')}</span></span>${mon}</span>`;
     }).join('');
-    const wort = b.art === 'neu' ? 'erster Eintrag' : b.art === 'gold' ? 'legendär in Folge' : 'Monate in Folge';
-    return `<div class="ff-cr-k">${chip(b.p)}${_ffNm(b.p)}<span class="ff-cr-w">${b.art === 'neu' ? '' : `<b class="num">${b.lauf | 0}</b>`}<small>${wort}</small></span></div>`
+    return `<div class="ff-cr-k">${chip(b.p)}${_ffNm(b.p)}</div>`
       + `<div class="ff-cr" style="--n:${z.length}">${zellen}</div>`;
   };
 
@@ -28987,11 +28981,10 @@ const _FF_FORM = (() => {
     const mehr = b.m != null ? b.m : Math.round((b.w | 0) - (Number(b.e) || 0));
     return `<div class="ff-cm"><span class="ff-cm-p">${gesicht(b.a, 36)}${_ffNm(b.a)}</span>`
       + `<span class="ff-cm-m"><svg viewBox="0 0 120 34" preserveAspectRatio="none" aria-hidden="true"><path class="netz-l w" d="M4 32Q60 -8 116 32" stroke-width="${dick}"/></svg>`
-      + `<b class="num">${esc(vz(mehr | 0))}</b><small>Siege mehr als erwartet</small></span>`
+      + (b.g > 0 ? `<b class="num">${b.g | 0}</b><small>Partien zusammen</small>` : `<b class="num">${esc(vz(mehr | 0))}</b><small>Siege mehr</small>`) + `</span>`
       + `<span class="ff-cm-p">${gesicht(b.b, 36)}${_ffNm(b.b)}</span></div>`
       + (b.g > 0 ? `<div class="ff-cm-ew"><span class="ff-ew-b"><i style="width:${prozent(b.w | 0, b.g)}%"></i>`
-        + `<u style="left:${prozent(Number(b.e) || 0, b.g)}%"></u></span>`
-        + `<span class="ff-ew-w"><b class="num">${b.w | 0} von ${b.g | 0}</b><small class="num">erwartet ${Math.round(Number(b.e) || 0)}</small></span></div>`
+        + `<u style="left:${prozent(Number(b.e) || 0, b.g)}%"></u></span></div>`
         + `<div class="ff-leg"><span class="g">Siege</span><span class="e">erwartet</span></div>` : '');
   };
 
@@ -29003,7 +28996,7 @@ const _FF_FORM = (() => {
     const x = X(b.a), y = Y(b.d), x0 = b.a0 == null ? null : X(b.a0);
     const pfeil = x0 == null ? '' : `<line class="ff-lk-w" x1="${x0.toFixed(1)}" y1="${y.toFixed(1)}" x2="${(x + (x0 < x ? -16 : 16)).toFixed(1)}" y2="${y.toFixed(1)}"/>`
       + `<circle class="ff-lk-v" cx="${x0.toFixed(1)}" cy="${y.toFixed(1)}" r="6"/>`;
-    return `<div class="ff-lk"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">`
+    return `<div class="ff-lk${x < MX ? ' re' : ''}"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">`
       + `<rect class="rk-q" x="${MX}" y="0" width="${MX}" height="${MY}"/><rect class="rk-q" x="0" y="${MY}" width="${MX}" height="${MY}"/>`
       + `<line class="rk-m" x1="${MX}" x2="${MX}" y1="0" y2="${H}"/><line class="rk-m" x1="0" x2="${W}" y1="${MY}" y2="${MY}"/>`
       + `<rect class="rk-a" x=".5" y=".5" width="${W - 1}" height="${H - 1}" rx="8"/>${pfeil}</svg>`
@@ -29017,11 +29010,13 @@ const _FF_FORM = (() => {
     if(!(b.n > 0) || !m.length) return '';
     const max = Math.max(1, ...m.map(x => x[1]));
     const s = (b.sieger || []).filter(id => pm()[id]);
-    const ziffern = String(b.n | 0).split('').map((c, i) => `<i class="num" style="--k:${i}">${c}</i>`).join('');
-    return `<div class="ff-lg-k"><span class="ff-zw-z">${ziffern}</span><span class="ff-zw-m"><b>${b.art === 'tore' ? 'Tore der Liga' : 'Partien der Liga'}</b>`
-      + (s.length ? `<span>${s.map(_ffNm).join('<i>und</i>')}</span>` : '') + (b.stand ? `<small class="num">${esc(b.stand)}</small>` : '') + `</span></div>`
+    const mm = b.mid ? (matches || []).find(x => x.id === b.mid) : null;
+    const tag = b.tag || (mm ? datumFmt(mm.created_at, 'tmx') : '');
+    return `<div class="ff-lg-k">${s.length ? `<span class="sp-chips">${s.map(chip).join('')}</span><span class="ff-lg-n">${s.map(_ffNm).join('<i>und</i>')}</span>` : ''}`
+      + `<span class="ff-lg-p">${b.stand ? `<b class="num">${esc(b.stand)}</b>` : ''}${tag ? `<small class="num">${esc(tag)}</small>` : ''}</span></div>`
       + `<div class="ff-mo">${m.map((x, i) => `<span class="${i === b.hl ? 'hl' : ''}" style="--k:${i}"><b class="num">${zahl(x[1])}</b>`
-        + `<em><i style="height:${Math.max(4, x[1] / max * 100).toFixed(1)}%"></i></em><small>${esc(x[0])}</small></span>`).join('')}</div>`;
+        + `<em><i style="height:${Math.max(4, x[1] / max * 100).toFixed(1)}%"></i></em><small>${esc(x[0])}</small></span>`).join('')}</div>`
+      + `<div class="ff-leg"><span>${b.art === 'tore' ? 'Tore' : 'Partien'} je Monat</span></div>`;
   };
 
 
@@ -29064,15 +29059,11 @@ const _FF_FORM = (() => {
     const werte = z.flatMap(x => [x[1], x[2]]), lo0 = Math.min(...werte), hi = Math.max(...werte);
     const lo = Math.max(0, lo0 - Math.max(1, (hi - lo0) * .15)), sp = Math.max(1, hi - lo);
     const w = v => ((v - lo) / sp * 100).toFixed(1);
-    const ab = (x, y) => Math.abs(x - y);
-    const vorn = (i) => z[0][i] >= z[1][i] ? z[0] : z[1];
-    const stand = (i, wort) => { const v = vorn(i); return `<span><small>${wort}</small><b class="num">+${zahl(ab(z[0][i], z[1][i]))}</b>`
-      + `<em>${esc(_spName(v[0]))} vorn</em></span>`; };
     return `<div class="ff-aj"><div class="ff-hz-k">${svgI(b.art === 'tore' ? 'ball' : b.art === 'siege' ? 'trophy' : 'spielfeld')}<b>${esc(AUF_WORT[b.art] || '')} der Laufbahn</b></div>`
       + z.map((x, i) => `<div class="ff-aj-z${x[0] === b.hl ? ' hl' : ''}" style="--k:${i}">${chip(x[0])}`
       + `<span class="ff-r-m">${_ffNm(x[0])}<span class="ff-aj-b"><i style="width:${w(x[1])}%"></i><u style="left:${w(x[2])}%"></u></span></span>`
       + `<b class="num">${zahl(x[1])}</b></div>`).join('')
-      + `<div class="ff-aj-ab">${stand(2, 'vor 30 Tagen')}<i></i>${stand(1, 'heute')}</div></div>`
+      + `</div>`
       + `<div class="ff-leg"><span class="g">heute</span><span class="e">vor 30 Tagen</span></div>`;
   };
 
@@ -29126,7 +29117,7 @@ const _FF_FORM = (() => {
     const felder = Array.from({length:len}, (_, i) => `<i class="${i < n ? 'w' : i < best ? 'ziel' : 'leer'}${i + 1 === liga && liga > n ? ' liga' : ''}" style="--k:${i}"></i>`).join('');
     const wer = duo ? `<span class="sp-chips">${chip(b.a)}${chip(b.b)}</span><span class="ff-nms ff-und">${_ffNm(b.a)}${_ffNm(b.b)}</span>`
       : `${gesicht(b.p, 30)}${_ffNm(b.p)}`;
-    return `<div class="ff-se-k">${wer}<span class="ff-se-w"><b class="num">${n}</b><small>Siege in Folge</small></span></div>`
+    return `<div class="ff-se-k">${wer}</div>`
       + `<span class="ff-se">${felder}</span>`
       + `<div class="ff-leg"><span class="g">seit dem ${esc(b.seit || '')}</span>`
       + (best > n ? `<span class="z">${duo ? 'beste der beiden' : 'eigene Bestmarke'} ${best}</span>` : '')
@@ -29139,7 +29130,7 @@ const _FF_FORM = (() => {
     const svg = _spLinie(v, {ref:b.peak != null ? b.peak : undefined, fmt:y => (y < 0 ? '−' : '') + _spZahl(y), ende:'', x:b.x || []});
     const p = /<circle class="sp-ln-p[^"]*" cx="([\d.]+)" cy="([\d.]+)"/.exec(svg);
     const face = p ? `<span class="ff-af-p" style="left:${(Number(p[1]) / 244 * 100).toFixed(2)}%;top:${(Number(p[2]) / 80 * 100).toFixed(2)}%">${chip(b.p)}</span>` : '';
-    return `<div class="ff-af-k">${_ffNm(b.p)}<span class="ff-af-w"><b class="num">${zahl(v[v.length - 1])}</b><small>Elo im ${esc(b.mon || '')}</small></span></div>`
+    return `<div class="ff-af-k">${_ffNm(b.p)}<span class="ff-leg"><span>Elo im ${esc(b.mon || '')}</span></span></div>`
       + `<div class="sp-ln metall ff-af ff-gp"><div class="ff-af-l">${svg}${face}</div></div>`
       + (b.peak != null ? `<div class="ff-leg"><span class="r">${b.neu ? 'bester Monat davor' : 'eigener Höchststand'}</span></div>` : '');
   };
@@ -29148,14 +29139,16 @@ const _FF_FORM = (() => {
     const r = (b.mo || []).filter(x => x[1] > 0);
     if(!pm()[b.p] || r.length < 2) return '';
     const W = 244, H = 84, n = r.length, unten = Math.max(4, ...r.map(x => x[1]));
-    const X = i => 18 + i * (W - 36) / Math.max(1, n - 1), Y = p => 14 + (p - 1) / Math.max(1, unten - 1) * (H - 36);
+    const X = i => 40 + i * (W - 58) / Math.max(1, n - 1), Y = p => 14 + (p - 1) / Math.max(1, unten - 1) * (H - 36);
     const d = r.map((x, i) => (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(x[1]).toFixed(1)).join('');
     const metall = p => p === 1 ? 'm1' : p === 2 ? 'm2' : p === 3 ? 'm3' : '';
+    const genannt = new Set(r.slice(-2).map(x => x[1]));
     return `<div class="ff-ss-k">${gesicht(b.p, 30)}${_ffNm(b.p)}</div><div class="ff-ss"><svg viewBox="0 0 ${W} ${H}" aria-hidden="true">`
-      + `<line class="ff-ss-g" x1="8" x2="${W - 8}" y1="${Y(1).toFixed(1)}" y2="${Y(1).toFixed(1)}"/>`
+      + `<line class="ff-ss-g" x1="30" x2="${W - 8}" y1="${Y(1).toFixed(1)}" y2="${Y(1).toFixed(1)}"/>`
+      + `<text class="ax" x="2" y="${(Y(1) + 3.6).toFixed(1)}">1.</text>`
       + `<path class="ff-ss-l" d="${d}"/>`
-      + r.map((x, i) => `<g class="ff-ss-p ${metall(x[1])}${i === n - 1 ? ' jetzt' : ''}"><circle cx="${X(i).toFixed(1)}" cy="${Y(x[1]).toFixed(1)}" r="10"/>`
-        + `<text x="${X(i).toFixed(1)}" y="${(Y(x[1]) + 3.6).toFixed(1)}">${x[1]}</text>`
+      + r.map((x, i) => `<g class="ff-ss-p ${metall(x[1])}${i === n - 1 ? ' jetzt' : ''}"><circle cx="${X(i).toFixed(1)}" cy="${Y(x[1]).toFixed(1)}" r="${i < n - 2 ? 10 : 7}"/>`
+        + (i < n - 2 && !genannt.has(x[1]) ? `<text x="${X(i).toFixed(1)}" y="${(Y(x[1]) + 3.6).toFixed(1)}">${x[1]}</text>` : '')
         + `<text class="m" x="${X(i).toFixed(1)}" y="${H - 3}">${esc(x[0])}</text></g>`).join('') + `</svg></div>`;
   };
 
@@ -29200,12 +29193,12 @@ const _FF_FORM = (() => {
   };
 
   const rivale = b => {
-    const t = _ffDuell(b);
+    const t = _ffDuell(b).replace(/<small class="num">\d+ Duelle<\/small>/, '<span></span>');
     if(!t) return '';
     const z = String(b.z || '').split('').filter(c => c === 'a' || c === 'b');
     const h = b.h === 'b' ? 'b' : 'a';
     return t + (z.length ? `<div class="ff-rv">${z.map((c, i) => `<i class="${c === h ? 'o' : 'u'}" style="--k:${i}"></i>`).join('')}</div>`
-        + `<div class="ff-leg ff-rv-l"><span>die letzten ${z.length}, die jüngste rechts</span></div>` : '');
+        + `<div class="ff-leg ff-rv-l"><span>jüngstes Duell rechts</span></div>` : '');
   };
 
   return {
@@ -29819,6 +29812,7 @@ function openNewsDetail(sid){
   if(body.indexOf('nd-mo') >= 0) lead = lead.split(/(?<=\.)\s+/)
     .filter(x => !/(Einträge? (gehen|geht|stehen|steht)|^Vorn steh)/.test(x)).join(' ');
   try { if(_newsSorte(s) === 'spiel') lead = _newsSpielSatz(lead, SP_ZEIGT_ALLES); } catch(e){}
+  if(body.indexOf('nd-ff-erkl') >= 0) lead = '';
   const nd = document.getElementById('nd');
   const bg = document.getElementById('ndBg');
   if(!nd || !bg) return;
@@ -31040,7 +31034,7 @@ function _ndFaktBlatt(s){
       + _ndBilanzBalken({wins:w, losses:l.length - w, winRate:Math.round(w / l.length * 100)});
   };
   const FF_FRAGEN = {
-    aufwind:(b, ab) => ab('Die 14 Tage, Spieltag für Spieltag', (b.tg || []).map(x =>
+    aufwind:(b, ab) => ab('Die 14 Tage, Spieltag für Spieltag', (b.g ? zeile('Siege', `${b.w | 0} von ${b.g | 0}`) : '') + (b.tg || []).map(x =>
         zeile(`${x[0]}, ${x[2]} ${x[2] === 1 ? 'Partie' : 'Partien'}`, vz(x[1] | 0) + ' Elo')).join(''))
       + lauf(b.p)
       + fuss([prim(profil(b.p)), {label:'Zur Rangliste', ic:'chartBar', attr:'data-ffziel="ranking"'}]),
@@ -31051,7 +31045,9 @@ function _ndFaktBlatt(s){
         + fuss([prim(profil(x.p)), {label:'Zur Rangliste', ic:'chartBar', attr:'data-ffziel="ranking"'}]);
     },
     hantel:(b, ab) => { const x = (b.z || []).find(y => y.hell) || {};
-      return lauf(x.p) + fuss([prim(profil(x.p)), {label:'Zur Rangliste', ic:'chartBar', attr:'data-ffziel="ranking"'}]); },
+      return ab(pm[x.p] ? 'Die Quoten von ' + pm[x.p].name : '', x.g ? zeile('Zuletzt gewonnen', `${x.w | 0} von ${x.g | 0}`)
+          + zeile('Siegquote der Laufbahn davor', `${x.v}\u00a0%`) : '')
+        + lauf(x.p) + fuss([prim(profil(x.p)), {label:'Zur Rangliste', ic:'chartBar', attr:'data-ffziel="ranking"'}]); },
     marke:(b, ab) => (b.art === 'prestige' ? ab('Der Stand am Zeichen', pm[b.p] ? _newsInsigniumBlock(b.p) : '') : lauf(b.p))
       + fuss(b.art === 'prestige'
         ? [{label:'Zur Laufbahn', ic:'leiterAuf', attr:`data-laufbahn="${esc(b.p)}"`, prim:true}, profil(b.p)]
@@ -31060,10 +31056,13 @@ function _ndFaktBlatt(s){
         c[1] == null ? 'nicht gewertet' : !c[1] ? 'ohne Eintrag'
           : (c[3] || '') + ', ' + (CHRONIK_KLASSE_NAME[c[1]] || '') + (c[4] ? ', läuft noch' : ''))).join(''))
       + fuss([{label:'Zur Chronik', ic:'verlauf', attr:'data-ffziel="chronik"', prim:true}, profil(b.p)]),
-    chemie:(b, ab) => ab(pm[b.a] && pm[b.b] ? `Die letzten zehn Partien von ${pm[b.a].name} und ${pm[b.b].name}` : '', duoLauf(b.a, b.b))
+    chemie:(b, ab) => (b.g > 0 ? ab('Zusammen', zeile('Siege', String(b.w | 0)) + zeile('Nach Elo erwartet', String(Math.round(Number(b.e) || 0)))) : '')
+      + ab(pm[b.a] && pm[b.b] ? `Die letzten zehn Partien von ${pm[b.a].name} und ${pm[b.b].name}` : '', duoLauf(b.a, b.b))
       + fuss([pm[b.a] && pm[b.b] ? {label:'Zum Duo', ic:'duo', attr:`data-ffziel="team:${esc(b.a)}|${esc(b.b)}"`, prim:true} : null,
         {label:'Zu allen Duos', ic:'users', attr:'data-ffziel="teams:netz"'}]),
-    landkarte:(b, ab) => (b.art === 'wechsel' && b.aG != null ? ab('Das Positionsprofil über die Laufbahn',
+    landkarte:(b, ab) => (b.art === 'wechsel' && b.a0 != null ? ab('Im Sturm gestanden',
+        zeile('Zuletzt', `${Math.round(b.a * 100)}\u00a0% der Partien`) + zeile('Davor', `${Math.round(b.a0 * 100)}\u00a0% der Partien`)) : '')
+      + (b.aG != null ? ab('Das Positionsprofil über die Laufbahn',
         zeile(`Im Sturm, ${b.aG} Partien`, b.rA > 0 ? 'besser als im Schnitt' : b.rA < 0 ? 'schlechter als im Schnitt' : 'wie im Schnitt')
         + zeile(`In der Abwehr, ${b.dG} Partien`, b.rD > 0 ? 'besser als im Schnitt' : b.rD < 0 ? 'schlechter als im Schnitt' : 'wie im Schnitt')) : '')
       + ab('Was ein Sieg in der Elo bringt', b.fa == null ? '' : [['Im Sturm', b.fa], ['In der Abwehr', b.fd]].map(([l, f]) =>
@@ -31074,10 +31073,13 @@ function _ndFaktBlatt(s){
         + zeile('Tore je Partie', komma(b.summe[1] / Math.max(1, b.summe[0]))) : '')
       + ab(b.art === 'tore' ? 'Die Partie des Tors' : 'Die Partie', b.mid ? _newsBlattErgebnis(b.mid) : '')
       + fuss([{label:'Zur Rangliste', ic:'chartBar', attr:'data-ffziel="ranking"', prim:true}]),
-    tabelle:(b, ab) => lauf((b.hl || [])[0])
+    tabelle:(b, ab) => (Array.isArray(b.pl) && pm[b.pl[0]] ? ab('In sieben Tagen', zeile(pm[b.pl[0]].name, vz(b.pl[1] | 0) + ' Elo', b.pl[0])) : '')
+      + ab('Partien im Monat', (b.z || []).filter(x => pm[x[0]] && (b.hl || []).includes(x[0])).map(x => zeile(pm[x[0]].name, String(x[3]), x[0])).join(''))
+      + lauf((b.hl || [])[0])
       + fuss([{label:'Zur Rangliste', ic:'chartBar', attr:'data-ffziel="ranking:saison"', prim:true}, profil((b.hl || [])[0])]),
     karriere:(b, ab) => ab('Dahinter', (b.pd || []).slice(3).filter(x => pm[x.p]).map((x, i) =>
         zeile(`${i + 4}. ${pm[x.p].name}`, x.t, x.p)).join(''))
+      + ab('Partien der Laufbahn', (b.pd || []).filter(x => pm[x.p] && (b.hl || []).includes(x.p) && x.g).map(x => zeile(pm[x.p].name, String(x.g), x.p)).join(''))
       + lauf((b.hl || [])[b.hl && b.hl.length > 1 ? 1 : 0])
       + fuss([{label:'Zur Ewigen Tafel', ic:'tafelStein', attr:'data-ffziel="ranking:gesamt"', prim:true}, profil((b.hl || [])[0])]),
     aufholjagd:(b, ab) => ab('Vor 30 Tagen und heute', (b.z || []).filter(x => pm[x[0]]).map(x =>
@@ -31088,27 +31090,31 @@ function _ndFaktBlatt(s){
           + (x[3] && pm[x[3]] ? `, vor ${pm[x[3]].name} mit ${x[4]}` : ''), x[1])).join(''))
         + fuss([letzt ? {label:'Zum Saison-Rückblick', ic:'calendar', attr:`data-ffziel="saison:${esc(letzt[0])}"`, prim:true} : null, profil(b.hl)]); },
     leiter:(b, ab) => { const id = (b.hl || [])[b.hl && b.hl.length > 1 ? 1 : 0];
-      return ab('Der Stand am Zeichen', pm[id] ? _newsInsigniumBlock(id) : '')
+      return (Array.isArray(b.pl) && pm[b.pl[0]] ? ab('In 14 Tagen', zeile(pm[b.pl[0]].name, '+' + _spZahl(b.pl[1]) + ' Prestige', b.pl[0])) : '')
+        + ab('Der Stand am Zeichen', pm[id] ? _newsInsigniumBlock(id) : '')
         + fuss([pm[id] ? {label:'Zur Laufbahn', ic:'leiterAuf', attr:`data-laufbahn="${esc(id)}"`, prim:true} : null, profil(id)]); },
     ausbeute:(b, ab) => ab('Nach Klassen', (b.z || []).filter(x => pm[x[0]]).map(x => zeile(pm[x[0]].name,
-        [[x[2], 'legendär'], [x[3], 'selten'], [x[4], 'gewöhnlich']].filter(q => q[0] > 0).map(q => q[0] + ' ' + q[1]).join(', '), x[0])).join('')
-        + (b.vor && pm[b.hl] ? zeile(`${pm[b.hl].name} im ganzen ${b.vm}`, String(b.vor), b.hl) : ''))
+        [[x[2], 'legendär'], [x[3], 'selten'], [x[4], 'gewöhnlich']].filter(q => q[0] > 0).map(q => q[0] + ' ' + q[1]).join(', '), x[0])).join(''))
       + fuss([prim(profil(b.hl)), {label:'Zu den Auszeichnungen', ic:'medal', attr:'data-ffziel="awards"'}]),
     serie:(b, ab) => lauf(b.p) + fuss([prim(profil(b.p)), {label:'Zur Rangliste', ic:'chartBar', attr:'data-ffziel="ranking:saison"'}]),
     gipfel:(b, ab) => lauf(b.p) + fuss([prim(profil(b.p)), {label:'Zur Rangliste', ic:'chartBar', attr:'data-ffziel="ranking:saison"'}]),
-    saisons:(b, ab) => ab('Monat für Monat', (b.r || []).filter(x => x[1] > 0).map(x => zeile(x[0], `Platz ${x[1]} von ${x[2]}`)).join(''))
-      + fuss([prim(profil(b.p)), {label:'Zur Rangliste', ic:'chartBar', attr:'data-ffziel="ranking:saison"'}]),
+    saisons:(b, ab) => { const MON = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+      const ganz = k => MON.find(m => m.startsWith(String(k))) || String(k);
+      return ab('Monat für Monat', (b.mo || b.r || []).filter(x => x[1] > 0).map(x => zeile(ganz(x[0]), `Platz ${x[1]} von ${x[2]}`)).join(''))
+      + ab('Siegquote', (b.q || []).map(x => zeile(`${x[0]}, ${x[2]} Partien`, `${x[1]}\u00a0%`)).join(''))
+        + fuss([prim(profil(b.p)), {label:'Zur Rangliste', ic:'chartBar', attr:'data-ffziel="ranking:saison"'}]); },
     ziel:(b, ab) => (b.cid && CHRONICLE_BY_ID[b.cid]
-        ? ab('Die Bedingung', zeile(CHRONICLE_BY_ID[b.cid].name, CHRONICLE_BY_ID[b.cid].cond || '')) + (_newsVerfolger(b.cid, b.halter || [], null) || '')
+        ? ab('Die Bedingung', zeile(CHRONICLE_BY_ID[b.cid].name, CHRONICLE_BY_ID[b.cid].cond || ''))
+          + (Array.isArray(b.w) && pm[b.p] ? ab('Siege von ' + pm[b.p].name, zeile('Die letzten 20 Partien', String(b.w[0])) + zeile('Die 20 davor', String(b.w[1]))) : '')
+          + (_newsVerfolger(b.cid, b.halter || [], null) || '')
         : lauf(b.p))
       + fuss([b.cid ? {label:'Zum Rekord', ic:'trophy', attr:`data-chron="${esc(b.cid)}"`, prim:true} : null, b.cid ? profil(b.p) : prim(profil(b.p))]),
     vormonat:(b, ab) => ab('Der Monat davor', (b.pd || []).filter(x => pm[x.p]).map((x, i) => zeile(`${i + 1}. ${pm[x.p].name}`,
-        `${x.g} Partien`, x.p)).join('')
-        + (Array.isArray(b.team) && pm[b.team[0]] && pm[b.team[1]] ? zeile('Team der Saison', `${pm[b.team[0]].name} und ${pm[b.team[1]].name}`) : ''))
+        `${x.g} Partien`, x.p)).join(''))
       + fuss([{label:'Zum Saison-Rückblick', ic:'calendar', attr:`data-ffziel="saison:${esc(b.sid)}"`, prim:true},
         {label:'Zur Rangliste', ic:'chartBar', attr:'data-ffziel="ranking:saison"'}]),
     position:(b, ab) => ab(b.pos === 'atk' ? 'Siege im Sturm' : 'Siege in der Abwehr', (b.pd || []).filter(x => pm[x.p]).map((x, i) =>
-        zeile(`${i + 1}. ${pm[x.p].name}`, `${x.w} von ${x.g}, Wert ${x.t}`, x.p)).join(''))
+        zeile(`${i + 1}. ${pm[x.p].name}`, `${x.w} von ${x.g}`, x.p)).join(''))
       + fuss([{label:b.pos === 'atk' ? 'Zur Rangliste des Sturms' : 'Zur Rangliste der Abwehr', ic:b.pos === 'atk' ? 'bolt' : 'shield',
         attr:`data-ffziel="positions:${b.pos === 'atk' ? 'sturm' : 'abwehr'}"`, prim:true}, profil((b.hl || [])[0])]),
     partnernetz:(b, ab) => ab('Partner nach gemeinsamen Partien', (b.z || []).filter(x => pm[x[0]]).slice().sort((x, y) => y[1] - x[1])
@@ -31121,7 +31127,8 @@ function _ndFaktBlatt(s){
         + fuss([pm[a1] && pm[a2] ? {label:'Zum Duo', ic:'duo', attr:`data-ffziel="team:${esc(a1)}|${esc(a2)}"`, prim:true} : null,
           {label:'Zu allen Duos', ic:'users', attr:'data-ffziel="teams"'}]); },
     duoserie:(b, ab) => FF_FRAGEN.duo(b, ab),
-    duo:(b, ab) => ab(pm[b.a] && pm[b.b] ? `Die letzten zehn Partien von ${pm[b.a].name} und ${pm[b.b].name}` : '', duoLauf(b.a, b.b))
+    duo:(b, ab) => (b.f === 'duoserie' && b.g > 0 ? ab('Zusammen', zeile('Siege', `${b.w | 0} von ${b.g | 0}`)) : '')
+      + ab(pm[b.a] && pm[b.b] ? `Die letzten zehn Partien von ${pm[b.a].name} und ${pm[b.b].name}` : '', duoLauf(b.a, b.b))
       + fuss([pm[b.a] && pm[b.b] ? {label:'Zum Duo', ic:'duo', attr:`data-ffziel="team:${esc(b.a)}|${esc(b.b)}"`, prim:true} : null]),
     duorennen:(b, ab) => { const [a1, a2] = String(b.hl || '').split('|');
       return ab(pm[a1] && pm[a2] ? `Die letzten zehn Partien von ${pm[a1].name} und ${pm[a2].name}` : '', pm[a1] && pm[a2] ? duoLauf(a1, a2) : '')
@@ -31143,7 +31150,8 @@ function _ndFaktBlatt(s){
     else if(FF_FRAGEN[b.f]) mitte = FF_FRAGEN[b.f](b, ab) || '';
     else if(d.prestige && pid && pm[pid]) mitte = ab('Der Stand am Zeichen', _newsInsigniumBlock(pid));
     else if(pid && pm[pid]) mitte = ab('Die letzten zehn Partien von ' + pm[pid].name, _ndFaktLauf(pid, s));
-    return {kopf:`<div class="nd-buehne nd-ff">${bild}</div>`, mitte};
+    const erkl = String(s.desc || '').trim();
+    return {kopf:`<div class="nd-buehne nd-ff">${bild}</div>` + (erkl ? `<div class="nd-desc nd-ff-erkl">${_newsBetont(erkl)}</div>` : ''), mitte};
   }
   if(d.leiter || !pid || !pm[pid] || d.vv == null || d.vv === '') return null;
   const kopf = _ndHeldBuehne(pid, d.vv, d.vl || '', false, '');

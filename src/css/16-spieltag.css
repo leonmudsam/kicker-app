@@ -1793,6 +1793,8 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   .nd-ff .ff{margin:0}
   .ff-zw-m small b{color:var(--ink);font-weight:600}
 
+  .nd-ff-erkl{margin:0 0 12px;font-size:13px}
+
   /* ── Die acht Fragen [§C33] ─────────────────────────────────────────
      Jede Frage hat ihr Bild (30c-news-fakt.js). Dieselben Töne wie die
      Formen davor: die Farbe der Karte (`--story`) nur am Ersten und an dem,
@@ -1809,13 +1811,13 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   .ff-leg .v::before,.ff-leg .j::before{width:8px;height:8px;border-radius:50%}
   .ff-leg .v::before{background:var(--surface);box-shadow:inset 0 0 0 2px var(--muted)}
   .ff-leg .j::before{background:rgb(var(--story-rgb))}
+  .ff-leg .m::before{width:14px;height:2px;border-radius:1px;background:var(--muted)}
+  /* Im Kopf eines Verlaufs steht die Legende statt der Zahl des Titels. */
+  .ff-af-k .ff-leg{margin-top:0}
 
-  /* Der Aufwind: Kopf mit Name und Plus, die Kurve, das Gesicht am Ende. */
+  /* Der Aufwind: Kopf mit Name und Legende, die Kurve, das Gesicht am Ende. */
   .ff-af-k{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-bottom:2px}
   .ff-af-k .ff-nm{font-size:13px}
-  .ff-af-w{display:flex;flex-direction:column;align-items:flex-end;line-height:1}
-  .ff-af-w b{font-family:'Archivo Black',sans-serif;font-size:20px;color:var(--acid);letter-spacing:-.01em}
-  .ff-af-w small{margin-top:3px}
   .ff-af{gap:0}
   .ff-af-l{position:relative}
   .ff-af .sp-ln-l{stroke-width:1.6;opacity:.75}
@@ -1824,6 +1826,9 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
     filter:drop-shadow(0 0 3px rgba(190,242,100,.45))}
   .ff-af-fl{fill:var(--acid);opacity:.14}
   .ff-af .sp-ln-p{opacity:0}
+  /* Die Kurve wird auf 288 px um ein Zwanzigstel kleiner gezeichnet; die
+     Achse stand dort in 8,7 px. */
+  .ff-af .sp-ln-t,.ff-af .sp-ln-x{font-size:9.5px}
   .ff-af-p{position:absolute;transform:translate(-50%,-50%);display:flex;border-radius:50%;
     box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px var(--acid),0 0 12px rgba(190,242,100,.35)}
   .ff-af-p .av{--av:22px}
@@ -1853,7 +1858,7 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   .ff-ht-z.ax{padding:0}
   .ff-ht-z.ax .ff-ht-b{height:11px}
   .ff-ht-z.ax .ff-ht-b::before{display:none}
-  .ff-ht-z.ax em{position:absolute;top:0;transform:translateX(-50%);font:400 8.5px 'Sometype Mono',monospace;
+  .ff-ht-z.ax em{position:absolute;top:0;transform:translateX(-50%);font:400 9px 'Sometype Mono',monospace;
     font-style:normal;color:var(--faint);white-space:nowrap}
 
   /* Die Marke: der Ring um das Gesicht, daneben der Rest groß. */
@@ -1876,13 +1881,15 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 
   /* Die Chronik einer Laufbahn: Zellen der Matrix in einer Reihe. */
   .ff-cr-k{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-  .ff-cr-w{margin-left:auto;display:flex;align-items:baseline;gap:5px;white-space:nowrap}
-  .ff-cr-w b{font-family:'Archivo Black',sans-serif;font-size:18px;line-height:1;color:var(--ink)}
   .ff-cr{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:5px}
   .ff-cr-c{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
   .ff-cr-c small{font-size:9px;letter-spacing:.06em;text-transform:uppercase}
   .ff-cr .lc-cell{width:100%;max-width:64px;cursor:inherit;padding:7px 2px}
-  .ff-cr .lc-cell .n{font-size:8px}
+  /* Auf der Karte trägt die Zelle nur ihr Zeichen: der Kurzname stand in
+     8 px und passte bei acht Monaten auf 288 px nicht in 9 px. Das Blatt
+     zeigt ihn, und die Zeilen darunter nennen den ganzen Namen [§C33]. */
+  .ff-cr .lc-cell .n{font-size:9px}
+  .ff:not(.gross) .ff-cr .lc-cell .n{display:none}
   .ff-cr-leer{display:grid;place-items:center;width:100%;max-width:64px;height:47px;border-radius:11px;
     box-shadow:inset 0 0 0 1px var(--line);opacity:.6}
   .ff-cr-leer.gewertet{opacity:1;background:var(--surface2);box-shadow:none}
@@ -1901,9 +1908,12 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   /* Die Rolle: ein Ausschnitt der Landkarte, dieselben Felder und Linien. */
   .ff-lk{position:relative;height:118px}
   .ff-lk svg{position:absolute;inset:0;width:100%;height:100%}
-  .ff-lk-f{position:absolute;left:8px;font-family:'Sometype Mono',monospace;font-size:8.5px;color:var(--faint);
+  .ff-lk-f{position:absolute;left:8px;font-family:'Sometype Mono',monospace;font-size:9px;color:var(--faint);
     letter-spacing:.04em}
   .ff-lk-f.o{top:6px}.ff-lk-f.u{bottom:6px}
+  /* Steht das Gesicht links, stehen die Felder rechts: sonst lag
+     „in der Abwehr stärker" unter dem Namen. */
+  .ff-lk.re .ff-lk-f{left:auto;right:8px;text-align:right}
   .ff-lk-w{stroke:var(--ink2);stroke-width:1.5;stroke-dasharray:3 3;vector-effect:non-scaling-stroke}
   .ff-lk-v{fill:var(--surface);stroke:var(--muted);stroke-width:1.5;vector-effect:non-scaling-stroke}
   .ff-lk .rk-p{transform:translate(-50%,-13px)}
@@ -1913,10 +1923,13 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
 
   /* Die Liga in Zahlen: Klappziffern, darunter die Monate als Säulen. */
   .ff-lg-k{display:flex;gap:12px;align-items:center;margin-bottom:9px}
-  .ff-lg-k .ff-zw-m>b{font-family:'Sometype Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.12em;
-    text-transform:uppercase;color:var(--muted)}
-  .ff-lg-k .ff-zw-m>span{display:flex;flex-wrap:wrap;gap:4px;align-items:baseline}
-  .ff-lg-k .ff-zw-m i{font-style:normal;font-size:11px;color:var(--muted)}
+  /* Die Partie der Marke: Sieger, Stand, Tag. Die Marke selbst steht im Titel. */
+  .ff-lg-k .sp-chips .av{--av:26px}
+  .ff-lg-n{display:flex;flex-wrap:wrap;gap:2px 5px;align-items:baseline;min-width:0}
+  .ff-lg-n i{font-style:normal;font-size:11px;color:var(--muted)}
+  .ff-lg-p{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;line-height:1;flex-shrink:0}
+  .ff-lg-p b{font-family:'Archivo Black',sans-serif;font-size:18px;color:var(--ink)}
+  .ff-lg-p small{margin-top:4px;font-size:9.5px;color:var(--muted)}
   .ff-mo{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:6px;height:76px}
   .ff-mo>span{display:flex;flex-direction:column;align-items:center;min-width:0}
   .ff-mo em{flex:1;display:flex;align-items:flex-end;width:100%;max-width:34px}
@@ -1973,14 +1986,6 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   .ff-aj-z.hl .ff-aj-b i{background:rgb(var(--story-rgb));box-shadow:0 0 8px rgba(var(--story-rgb),.45)}
   .ff-aj-b u{position:absolute;top:-3px;bottom:-3px;width:2px;margin-left:-1px;border-radius:1px;background:var(--ink)}
   .ff-aj .ff-hz-k{margin-bottom:4px}
-  .ff-aj-ab{display:grid;grid-template-columns:auto minmax(18px,1fr) auto;align-items:center;gap:8px;margin-top:8px;padding-top:8px;
-    border-top:1px solid var(--line)}
-  .ff-aj-ab>span{display:flex;flex-direction:column;gap:2px}
-  .ff-aj-ab>span em{font-style:normal;font-size:11px;color:var(--ink2)}
-  .ff-aj-ab>span:nth-child(3){align-items:flex-end;text-align:right}
-  .ff-aj-ab b{font-family:'Archivo Black',sans-serif;font-size:18px;line-height:1;color:var(--muted)}
-  .ff-aj-ab>span:nth-child(3) b{color:var(--ink);font-size:22px}
-  .ff-aj-ab>i{height:2px;border-radius:1px;background:linear-gradient(90deg,var(--line),rgb(var(--story-rgb)))}
 
   /* Die Meister: je Monat eine Säule mit Stern, Gesicht, Elo. */
   .ff-ms{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:6px}
@@ -2009,7 +2014,7 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   .ff-lt-z.ax em{position:absolute;bottom:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;
     font-style:normal}
   .ff-lt-z.ax em svg{width:20px;height:20px;display:block;opacity:.85}
-  .ff-lt-z.ax em small{font-size:8px;letter-spacing:.02em;white-space:nowrap;color:var(--faint)}
+  .ff-lt-z.ax em small{font-size:9px;letter-spacing:.02em;white-space:nowrap;color:var(--faint)}
   .ff-lt-z.ax em.li{transform:translateX(-10px);align-items:flex-start}
   .ff-lt-z.ax em.re{transform:translateX(calc(-100% + 10px));align-items:flex-end}
 
@@ -2033,9 +2038,6 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   .ff-und{gap:0 4px}
   .ff-und .ff-nm+.ff-nm::before{content:'und ';font-weight:400;color:var(--muted)}
   .ff-lt-z.ax em small.still{visibility:hidden}
-  .ff-se-w{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;line-height:1}
-  .ff-se-w b{font-family:'Archivo Black',sans-serif;font-size:24px;color:var(--ink)}
-  .ff-se-w small{margin-top:3px;font-size:9px}
   .ff-se{display:grid;grid-template-columns:repeat(auto-fill,minmax(9px,1fr));gap:3px}
   .ff-se i{position:relative;height:18px;border-radius:3px;background:var(--surface3)}
   .ff-se i.w{background:rgb(var(--story-rgb));box-shadow:0 0 6px rgba(var(--story-rgb),.35)}
@@ -2057,7 +2059,8 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   .ff-ss-l{fill:none;stroke:var(--muted);stroke-width:1.6;stroke-linejoin:round;opacity:.7}
   .ff-ss-p circle{fill:var(--surface2);stroke:var(--line);stroke-width:1.2}
   .ff-ss-p text{font:700 9.5px 'Sometype Mono',monospace;fill:var(--ink2);text-anchor:middle}
-  .ff-ss-p text.m{font-weight:400;font-size:8.5px;fill:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+  .ff-ss-p text.m{font-weight:400;font-size:10px;fill:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+  .ff-ss text.ax{font:700 10px 'Sometype Mono',monospace;fill:var(--gold)}
   .ff-ss-p.m1 circle{stroke:var(--gold)}
   .ff-ss-p.m2 circle{stroke:var(--silber)}
   .ff-ss-p.m3 circle{stroke:var(--bronze)}
@@ -2073,7 +2076,7 @@ circle.sp-uo-w{fill:var(--acid)}circle.sp-uo-l{fill:rgba(240,86,106,.8)}
   .ff-pn .netz-l.neu{stroke:rgb(var(--story-rgb));stroke-opacity:1}
   .ff-pn-p{position:absolute;transform:translate(-50%,-11px);display:flex;flex-direction:column;align-items:center;gap:1px}
   .ff-pn-p .av{--av:22px;box-shadow:0 0 0 2px var(--bg2)}
-  .ff-pn-p>b{font-size:8.5px;font-weight:500;color:var(--muted);white-space:nowrap}
+  .ff-pn-p>b{font-size:9px;font-weight:500;color:var(--muted);white-space:nowrap}
   .ff-pn-p.fehlt .av{opacity:.55;box-shadow:0 0 0 2px var(--bg2),0 0 0 3px var(--muted)}
   .ff-pn-p.fehlt>b{color:var(--ink);font-weight:700}
   .ff-pn-p.neu .av{box-shadow:0 0 0 2px var(--bg2),0 0 0 3.5px rgb(var(--story-rgb))}
