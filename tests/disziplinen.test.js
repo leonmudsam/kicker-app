@@ -1396,6 +1396,10 @@ const _monate = JSON.parse(KH(`JSON.stringify((function(){
     SEASON_TITLES.forEach(t => { const r = t.pick(C, new Set());
       if(r && r.halter && r.halter.length) (n[t.id] = n[t.id] || []).push(sid.slice(5)); }); });
   return {n, m:sids.length}; })())`));
+// „Die weiße Weste" fragt alle Siege des Monats, keinen Ausschnitt: eine
+// seltene Chronik [§C39]. Als besondere überschattete sie eine Schattenseite,
+// und vier Siege zu null oder zu eins brachten im August kein Prestige.
+ok(_klasseVon.zunull === 'selten', 'die weiße Weste ist eine seltene Chronik', _klasseVon.zunull);
 const _monN = _monate.m, _drittel = Math.ceil(_monN / 3);
 // Ausgenommen sind die Schwellen, die die Liga selbst festgelegt hat: sie
 // sind eine Ansage wie der Tagesregent und die Wochenkrone und werden nicht

@@ -2277,11 +2277,16 @@ const DISZIPLINEN = [
         0.6,
         (p,v)=>`${pname(p._sm.mid)} gewinnt an dieser Seite ${pct(p._sm.q)} %, sonst ${pct(p._sm.q-v)} %`))}},
 
+  // Selten, nicht besonders: gefragt sind alle Siege des Monats, nicht ein
+  // Ausschnitt, und jeder zehnte davon mit höchstens einem Gegentor ist eine
+  // klare Leistung über den ganzen Monat [§C39]. Als besondere Chronik
+  // konnte eine Schattenseite sie überschatten, und ihr Halter bekam für den
+  // Monat kein Prestige aus ihr.
   {id:'zunull', name:'Die weiße Weste', short:'Weste', ic:'weisseWeste', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Saubermann',
       art:'koennen',
-      klasse:'besonders', aus:2.14, streu:0.0331, mitte:0.0292, n0:22, echt:1,
+      klasse:'selten', aus:2.14, streu:0.0331, mitte:0.0292, n0:22, echt:1,
       wie:'Ein Sieg zu null oder zu eins ist die seltenste Art zu gewinnen.',
       stichprobe:p => p.wins,
       cond:'Mindestens 10 % der eigenen Siege mit höchstens einem Gegentor, ab 5 Siegen',
