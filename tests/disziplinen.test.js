@@ -844,7 +844,7 @@ ok(K.eval(`(function(){
   return stimmt;
 })()`), 'die Wochenkrone zaehlt dieselben Wochen wie _periodWinnerMap');
 
-// Jede Chronik außer einer Schattenseite bringt denselben Grundwert, 100,
+// Jede Chronik außer einer Schattenseite bringt denselben Grundwert, 50,
 // gleich welcher Klasse und Art [§C39]; die Klasse ist Farbe und Name.
 // Vorher war die Klasse der Wert, 150, 100 und 50: ein besonderer Monat
 // brachte ein Drittel eines legendären, auch wenn sein Halter die Latte weit
